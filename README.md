@@ -1047,11 +1047,13 @@ answers are recorded here rather than deleted, because each one was a plausible 
 - **`alpha` and the taste offset are confounded at a fixed protocol.** The *combination*
   is identified — the suggested time converges — but the individual parameters are not.
   Varying egg size or cooling method separates them.
-- **The Swift port is half done.** `ios/EggTimerCore` carries `constants`, `thermo`,
-  `geometry`, `kinetics` and `sphere`, held to this implementation by a conformance
-  suite over generated fixtures (`npm run conformance`). `protocol.ts` and `solve.ts`
-  are not ported; `fixtures/scenarios.json` already contains the 13 whole cooks they
-  will have to reproduce. See `ios/README.md`.
+- **The Swift port has a complete physics core.** `ios/EggTimerCore` carries every
+  module except the calibration, and is held to this implementation by a conformance
+  suite over generated fixtures (`npm run conformance`): the pure functions to 1e-12,
+  and 13 whole cooks — times, peak temperatures, doses and the reachability verdicts —
+  to the same, where the measured disagreement is 7e-15. What is missing is `infer.ts`
+  and `doseGrid.ts`, so the Swift core cannot yet learn a kitchen, and the app itself:
+  no SwiftUI, no notifications, no Live Activity. See `ios/README.md`.
 
 ### 11.6 Sources that returned fabricated citations
 

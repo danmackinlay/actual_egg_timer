@@ -33,6 +33,8 @@ algebraic mistake is never that small.
 | `geometry.ts` | `Geometry.swift` | 8 masses, 6 diameters, tau |
 | `kinetics.ts` | `Kinetics.swift` | z-values, hold times, 20-step accumulation |
 | `sphere.ts` | `Sphere.swift` | 42 series points, 40-step integration, 30-step ramp |
+| `protocol.ts` | `Protocol.swift` | every scenario's schedule, via the cooks below |
+| `solve.ts` | `Solve.swift` | 13 whole cooks: times, peaks, doses, verdicts |
 
 The integrator is covered against both a **held** surface and a **moving** one.
 The second matters: a step-only test cannot catch a sign error in the Duhamel
@@ -49,15 +51,28 @@ amplified by 1e9. The two implementations differ by ~1e-8 there and by nothing
 anywhere else. That is the expression, not either implementation, and the model
 reads the quantity to five decimal places.
 
+### How closely they agree
+
+Tighter than expected. Probing the whole-cook suite at 1e-15 puts the worst
+disagreement at **7e-15 relative**, on an accumulated dose after roughly 20,000
+calls each to `exp()` and `pow()` — where two libm implementations are entitled
+to differ in the last bit every single time. Cook times, peak temperatures and
+the boolean verdicts (`reachable`, `whiteSets`) agree at 1e-15 outright, which
+is to say exactly.
+
+The suite runs at 1e-12: three orders of headroom over that noise floor, and
+still ten orders tighter than anything that could change an answer.
+
+The whole-cook suite takes about 14 seconds, nearly all of it the standing
+scans. That is the price of not assuming monotonicity, and it is worth paying
+here — the two standing scenarios in the fixtures are the ones a bisection would
+have got wrong.
+
 ## Not ported yet
 
-`protocol.ts` (the surface schedule) and `solve.ts` (simulate, the bisection,
-the standing scan) — in that order, since solve depends on protocol.
-`fixtures/scenarios.json` is already generated and waiting for them: 13 whole
-cooks with cook times, peak temperatures and doses, including the standing cases
-and the pan that never sets the white.
+`infer.ts` and `doseGrid.ts` — the Bayesian calibration. The app works without
+them; they are what lets it learn your kitchen. Version 2.
 
-`infer.ts` and `doseGrid.ts` (the Bayesian calibration) can wait for a version 2.
 `sousvide.ts` is a joke and can wait forever.
 
 ## When you need Xcode
