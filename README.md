@@ -1047,8 +1047,11 @@ answers are recorded here rather than deleted, because each one was a plausible 
 - **`alpha` and the taste offset are confounded at a fixed protocol.** The *combination*
   is identified — the suggested time converges — but the individual parameters are not.
   Varying egg size or cooling method separates them.
-- **No Swift port.** `src/core/` is written in a restricted subset to make it a
-  near-mechanical transliteration, but the port has not been attempted or compile-tested.
+- **The Swift port is half done.** `ios/EggTimerCore` carries `constants`, `thermo`,
+  `geometry`, `kinetics` and `sphere`, held to this implementation by a conformance
+  suite over generated fixtures (`npm run conformance`). `protocol.ts` and `solve.ts`
+  are not ported; `fixtures/scenarios.json` already contains the 13 whole cooks they
+  will have to reproduce. See `ios/README.md`.
 
 ### 11.6 Sources that returned fabricated citations
 
