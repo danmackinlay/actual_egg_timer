@@ -1,0 +1,388 @@
+% actual_egg_timer — further reading.
+%
+% Everything the model rests on, plus the things worth reading next. The `note`
+% field on each entry says what it is actually good for and whether it was read
+% at first hand; README.md section 10 carries the same list in prose, and
+% section 11 says which questions each one settled.
+%
+% Access notes matter here because the first build of this model recorded the
+% primary literature as unreachable. It is not: the free copies are named.
+
+% ---------------------------------------------------------------------------
+% Heat transfer in eggs
+% ---------------------------------------------------------------------------
+
+@misc{williams1998egg,
+  author       = {Williams, Charles D. H.},
+  title        = {The Science of Boiling an Egg},
+  howpublished = {University of Exeter, Physics and Astronomy},
+  year         = {1998},
+  url          = {https://newton.ex.ac.uk/teaching/CDHW/egg/},
+  note         = {Originally a letter to \emph{New Scientist}, ``The Last Word'',
+                  4 April 1998. Source of the one-term formula, its 0.76
+                  coefficient, and the soft-boiled criterion of 63 C at the yolk
+                  boundary. Gives no hard-boiled target: the 70 C on the page is
+                  the greening threshold. Stated properties rho = 1.038 g/cm^3,
+                  c = 3.7 J/g/K, K = 5.4e-3 W/cm/K reproduce his published 0.451
+                  prefactor. The host is dead; read it via the Internet Archive}
+}
+
+@article{buay2006egg,
+  author  = {Buay, D. and Foong, S. K. and Kiang, D. and Kuppan, L. and Liew, V. H.},
+  title   = {How long does it take to boil an egg? {R}evisited},
+  journal = {European Journal of Physics},
+  volume  = {27},
+  number  = {1},
+  pages   = {119--131},
+  year    = {2006},
+  doi     = {10.1088/0143-0807/27/1/013},
+  note    = {The most useful single source for this model. Type-K thermocouple at
+             the centre of a real egg (semi-axes 27.11 x 21.22 mm) in a stirred
+             100.5 C bath: centre reaches 85 C at 750 s measured, 745 s
+             predicted. Fits a whole-egg alpha = 1.6e-7 m^2/s, bounded 1.5-1.8e-7.
+             Determines the hard-boiled criterion experimentally as 85 C at the
+             yolk CENTRE. States explicitly that Williams' 0.76 belongs to the
+             yolk boundary and their coefficient 2 to the yolk centre. Uses the
+             surface-to-volume equivalent radius 2ab/(b + beta a), not the
+             equal-volume radius. No cooling data}
+}
+
+@article{roura2000egg,
+  author  = {Roura, P. and Fort, J. and Saurina, J.},
+  title   = {How long does it take to boil an egg? {A} simple approach to the
+             energy transfer equation},
+  journal = {European Journal of Physics},
+  volume  = {21},
+  number  = {1},
+  pages   = {95--100},
+  year    = {2000},
+  url     = {https://copernic.udg.edu/QuimFort/EJP_00.pdf},
+  note    = {Free PDF at the URL. A scaling argument rather than a solution:
+             thermalisation when the Fourier modulus approaches unity. Takes
+             70 C as the cooking temperature, measured by heating egg in a test
+             tube. Reports their own measurement alpha_white = 1.5 alpha_water
+             and alpha_yolk = 1.1 alpha_water, i.e. 2.3e-7 and 1.7e-7 m^2/s --
+             higher than everyone else's, and not used here}
+}
+
+@article{abbasnezhad2016egg,
+  author  = {Abbasnezhad, Behzad and Hamdami, Nasser and Monteau, Jean-Yves and
+             Vatankhah, Hamed},
+  title   = {Numerical modeling of heat transfer and pasteurizing value during
+             thermal processing of intact egg},
+  journal = {Food Science \& Nutrition},
+  volume  = {4},
+  number  = {1},
+  pages   = {42--49},
+  year    = {2016},
+  doi     = {10.1002/fsn3.257},
+  note    = {Free at PMC4708634 (Wiley blocks robots). Settles the albumen
+             diffusivity question: k_white = 0.0013 T + 0.5125, rho_white =
+             -0.0041 T^2 - 0.0115 T + 1043.3, c_p = 3800, giving alpha rising
+             1.36e-7 at 20 C to 1.69e-7 at 100 C. Yolk k = 0.0008 T + 0.395.
+             Shell 2.25 W/mK, credited to Denys. Meshes the yolk as a sphere of
+             radius 1.6 cm inside a 6 x 4.5 cm egg. Contains nothing resembling
+             the impossible 0.026 W/mK sometimes attributed to it}
+}
+
+@article{denys2004cfd,
+  author  = {Denys, Siegfried and Pieters, Jan G. and Dewettinck, Koen},
+  title   = {Computational fluid dynamics analysis of combined conductive and
+             convective heat transfer in model eggs},
+  journal = {Journal of Food Engineering},
+  volume  = {63},
+  number  = {3},
+  pages   = {281--290},
+  year    = {2004},
+  doi     = {10.1016/j.jfoodeng.2003.06.002},
+  note    = {Buoyancy-driven flow in liquid albumen (Ra 1e6-1e7) measurably
+             speeds heating and moves the cold spot off-centre and downwards;
+             the yolk, being layered, stays conduction-only. Measured eggshell
+             thickness 0.35-0.5 mm. Yolk properties k = 0.337 W/mK, c_p = 3560,
+             rho = 1035 from Romanoff and Romanoff. Quotes the measured surface
+             coefficient h = 490 W/m^2K from Denys et al. (2003)}
+}
+
+@article{denys2003surface,
+  author  = {Denys, Siegfried and Pieters, Jan G. and Dewettinck, Koen},
+  title   = {Combined {CFD} and experimental approach for determination of the
+             surface heat transfer coefficient during thermal processing of eggs},
+  journal = {Journal of Food Science},
+  volume  = {68},
+  number  = {3},
+  pages   = {943--951},
+  year    = {2003},
+  note    = {NOT READ DIRECTLY. The origin of h = 490 W/m^2K for intact eggs, and
+             apparently of the shell c_p = 888 and rho = 2300 that circulate via
+             Abbasnezhad. H_EFF turns on this paper; worth obtaining}
+}
+
+@article{dilorenzo2025periodic,
+  author  = {Di Lorenzo, E. and Romano, F. and Ciriaco, L. and Iaccarino, N. and
+             Izzo, L. and Randazzo, A. and Musto, P. and Di Maio, E.},
+  title   = {Periodic cooking of eggs},
+  journal = {Communications Engineering},
+  volume  = {4},
+  pages   = {5},
+  year    = {2025},
+  doi     = {10.1038/s44172-024-00334-w},
+  note    = {Open access. Source of the 85 C albumen / 65 C yolk pairing, stated
+             in the introduction. Alternates the egg between 100 C and 30 C water
+             for 32 minutes. Not implemented here: a different protocol entirely}
+}
+
+@misc{lorig2026softboiled,
+  author       = {Lorig, Matthew},
+  title        = {How to Cook a Soft-Boiled Egg Optimally: {A} {L}aplace-Transform
+                  Solution of a Two-Domain Heat Equation},
+  howpublished = {arXiv:2606.22156},
+  year         = {2026},
+  doi          = {10.48550/arXiv.2606.22156},
+  note         = {The closest published two-domain treatment, and the method is
+                  sound. CHECK EVERY PARAMETER BEFORE ADOPTING IT: Table 1 gives
+                  a 1.1 cm yolk radius credited to Abbasnezhad, who says 1.6 cm,
+                  and credits kappa_Y = 0.34 and alpha_W = 1.7e-7 to Coimbra,
+                  which are not Coimbra's numbers. Also carries the internally
+                  inconsistent kappa_W = 0.52 with alpha_W = 1.7e-7}
+}
+
+@book{romanoff1949avian,
+  author    = {Romanoff, Alexis L. and Romanoff, Anastasia J.},
+  title     = {The Avian Egg},
+  publisher = {John Wiley and Sons},
+  address   = {New York},
+  year      = {1949},
+  note      = {NOT READ DIRECTLY. The ultimate origin of most egg thermal
+               properties in the food-engineering literature, including the yolk
+               values that imply alpha_yolk = 9.1e-8 m^2/s -- the low end of a
+               1.7x spread across sources}
+}
+
+@article{unsworth1979sphere,
+  author  = {Unsworth, J. and Duarte, F. J.},
+  title   = {Heat diffusion in a solid sphere and {F}ourier theory: an elementary
+             practical example},
+  journal = {American Journal of Physics},
+  volume  = {47},
+  pages   = {981--983},
+  year    = {1979},
+  note    = {NOT READ DIRECTLY. The series solution that both Buay et al. and
+             Vega and Mercad{\'e}-Prieto build on, and the same one implemented
+             in src/core/sphere.ts}
+}
+
+% ---------------------------------------------------------------------------
+% Denaturation kinetics
+% ---------------------------------------------------------------------------
+
+@article{vega2011culinary,
+  author  = {Vega, C{\'e}sar and Mercad{\'e}-Prieto, Ruben},
+  title   = {Culinary Biophysics: on the Nature of the 6{X}$^\circ${C} Egg},
+  journal = {Food Biophysics},
+  volume  = {6},
+  pages   = {152--159},
+  year    = {2011},
+  doi     = {10.1007/s11483-010-9200-1},
+  note    = {Source of Z_YOLK. Rheology of yolk gelation at constant temperature,
+             54-70 C: Ea = 469 +/- 13 kJ/mol from isothermal gelation time and
+             483 +/- 37 from the viscosity-rise slope, so z = 4.65 K at 338 K is
+             interpolation rather than extrapolation. Publishes the absolute
+             Arrhenius fit, which read at 63 C gives a yolk gel point of 67
+             equivalent minutes -- the one doneness anchor here that comes from a
+             measurement. NB the printed equation has its exponent sign
+             transposed; use t_gel = 8.85e-72 exp(469e3/RT) minutes, which
+             reproduces their figure 4. Concludes there is no such thing as a
+             63 C egg: texture is time AND temperature. Also records that fitting
+             a conduction-only model to a 6X C cook needs alpha > 2e-7, because
+             the unset white convects}
+}
+
+@article{weijers2003ovalbumin,
+  author  = {Weijers, M. and Barneveld, P. A. and Cohen Stuart, M. A. and
+             Visschers, R. W.},
+  title   = {Heat-induced denaturation and aggregation of ovalbumin at neutral
+             {pH} described by irreversible first-order kinetics},
+  journal = {Protein Science},
+  volume  = {12},
+  pages   = {2693--2703},
+  year    = {2003},
+  doi     = {10.1110/ps.03242803},
+  note    = {Free at PMC2366979 (Wiley blocks robots). Ea about 480 kJ/mol, with
+             430-490 across techniques. This corrected Z_WHITE from 5.2 to
+             4.97 K: an earlier draft of this model assumed 460 kJ/mol}
+}
+
+@incollection{powrie1985eggs,
+  author    = {Powrie, W. D. and Nakai, S.},
+  title     = {Characteristics of edible fluids of animal origin: eggs},
+  booktitle = {Food Chemistry},
+  edition   = {2},
+  editor    = {Fennema, O. R.},
+  publisher = {Dekker},
+  address   = {New York},
+  pages     = {830--851},
+  year      = {1985},
+  note      = {NOT READ DIRECTLY. The denaturation ranges quoted by Buay et al.:
+               white turns opaque from about 60 C, soft curd at 75 C, toughening
+               to 87 C, ovalbumin denaturing 79-84 C. Brackets WHITE_DOSE_TARGET}
+}
+
+% ---------------------------------------------------------------------------
+% Physical properties and geometry
+% ---------------------------------------------------------------------------
+
+@article{coimbra2006density,
+  author  = {Coimbra, Jane S. R. and Gabas, Ana L. and Minim, Luis A. and
+             Garcia Rojas, Edwin E. and Telis, V{\^a}nia R. N. and
+             Telis-Romero, Javier},
+  title   = {Density, heat capacity and thermal conductivity of liquid egg products},
+  journal = {Journal of Food Engineering},
+  volume  = {74},
+  number  = {2},
+  pages   = {186--190},
+  year    = {2006},
+  doi     = {10.1016/j.jfoodeng.2005.01.043},
+  note    = {ABSTRACT ONLY. rho 1023-1143 kg/m^3, c_p 2.6-3.7 J/g/K, k 0.4-0.6
+             W/mK, measured at or below 38 C -- which is why room-temperature
+             values must not be used at cooking temperature. Frequently
+             mis-cited; see the note on Lorig}
+}
+
+@article{stull1947vapor,
+  author  = {Stull, Daniel R.},
+  title   = {Vapor Pressure of Pure Substances. {O}rganic and Inorganic Compounds},
+  journal = {Industrial \& Engineering Chemistry},
+  volume  = {39},
+  number  = {4},
+  pages   = {517--540},
+  year    = {1947},
+  note    = {Antoine coefficients for water, as served by the NIST WebBook.
+             Inverted in src/core/thermo.ts for the boiling point against
+             altitude}
+}
+
+@article{hoyt1979eggs,
+  author  = {Hoyt, Donald F.},
+  title   = {Practical methods of estimating volume and fresh weight of bird eggs},
+  journal = {The Auk},
+  volume  = {96},
+  number  = {1},
+  pages   = {73--77},
+  year    = {1979},
+  url     = {https://academic.oup.com/auk/article-pdf/96/1/73/32910692/auk0073.pdf},
+  note    = {Free PDF at the URL. V = 0.51 L B^2 within 2 percent: the source of
+             EGG_VOLUME_COEFF}
+}
+
+@article{carter1974hen,
+  author  = {Carter, T. C.},
+  title   = {The hen's egg: estimation of shell superficial area and egg volume
+             from four shell measurements},
+  journal = {British Poultry Science},
+  volume  = {15},
+  pages   = {507--511},
+  year    = {1974},
+  note    = {NOT READ DIRECTLY. Gives surface AREA as well as volume, which is
+             what a Biot-number estimate actually needs and what Hoyt does not
+             provide}
+}
+
+% ---------------------------------------------------------------------------
+% Cooling — the weakest part of this model
+% ---------------------------------------------------------------------------
+
+@article{almonacid2007eggs,
+  author  = {Almonacid, Sergio and Simpson, Ricardo and Teixeira, Arthur},
+  title   = {Heat transfer models for predicting {\emph{Salmonella enteritidis}}
+             in shell eggs through supply chain distribution},
+  journal = {Journal of Food Science},
+  volume  = {72},
+  number  = {9},
+  pages   = {E508--E517},
+  year    = {2007},
+  doi     = {10.1111/j.1750-3841.2007.00528.x},
+  note    = {NOT READ DIRECTLY. Cited by Vega and Mercad{\'e}-Prieto as reporting
+             high effective alpha when eggs are COOLED, which is exactly the
+             regime TAU_AIR guesses at}
+}
+
+@article{sabliov2002cooling,
+  author  = {Sabliov, C. M. and Farkas, B. E. and Keener, K. M. and Curtis, P. A.},
+  title   = {Cooling of shell eggs with cryogenic carbon dioxide: a finite element
+             analysis of heat transfer},
+  journal = {Lebensmittel-Wissenschaft und-Technologie},
+  volume  = {35},
+  pages   = {568--574},
+  year    = {2002},
+  note    = {NOT READ DIRECTLY. The closest published treatment of the carryover
+             problem, albeit with entirely the wrong coolant}
+}
+
+% ---------------------------------------------------------------------------
+% Practice, for sanity-checking the outputs
+% ---------------------------------------------------------------------------
+
+@misc{baldwin2012sousvide,
+  author       = {Baldwin, Douglas E.},
+  title        = {A Practical Guide to Sous Vide Cooking},
+  howpublished = {\url{https://douglasbaldwin.com/sous-vide.html}},
+  note         = {Time-temperature tables for eggs, useful as a cross-check on
+                  the low end of the doneness slider}
+}
+
+@misc{chefsteps_eggcalculator,
+  author       = {{ChefSteps}},
+  title        = {The Egg Calculator},
+  howpublished = {\url{https://www.chefsteps.com/activities/the-egg-calculator}},
+  note         = {Empirical time-temperature mapping from a kitchen rather than a
+                  model}
+}
+
+@misc{lopezalt2022eggs,
+  author       = {L{\'o}pez-Alt, J. Kenji},
+  title        = {Perfect Hard-Boiled Eggs},
+  howpublished = {\url{https://www.splendidtable.org/story/2022/11/22/j-kenji-lopezalts-perfect-hard-boiled-eggs}},
+  note         = {On peelability and egg age, neither of which this model
+                  attempts}
+}
+
+@misc{lersch2009softboiled,
+  author       = {Lersch, Martin},
+  title        = {Towards the perfect soft boiled egg},
+  howpublished = {Khymos, \url{https://khymos.org/2009/04/09/towards-the-perfect-soft-boiled-egg/}},
+  year         = {2009},
+  note         = {Careful amateur time-temperature work, and a good survey of the
+                  disagreement between published target temperatures}
+}
+
+@misc{omnicalculator_egg,
+  author       = {{Omni Calculator}},
+  title        = {Ideal Egg Boiling Calculator},
+  howpublished = {\url{https://www.omnicalculator.com/food/egg-boiling}},
+  note         = {Cited as an ERROR, not a source: it writes Williams' formula
+                  with the 0.76 named ywr and glossed as the ratio of white to
+                  yolk. It is the first-eigenmode amplitude at the yolk boundary.
+                  Uses 65 C for soft and caps hard at 77 C, neither of which is
+                  traceable to Williams}
+}
+
+% ---------------------------------------------------------------------------
+% Standards
+% ---------------------------------------------------------------------------
+
+@misc{usda_altitude,
+  author       = {{USDA Food Safety and Inspection Service}},
+  title        = {High Altitude Cooking and Food Safety},
+  howpublished = {\url{https://www.fsis.usda.gov/food-safety/safe-food-handling-and-preparation/food-safety-basics/high-altitude-cooking}},
+  note         = {Kept only as a cross-check on the boiling-point-against-altitude
+                  curve}
+}
+
+@misc{eu589_2008,
+  author       = {{European Commission}},
+  title        = {Commission Regulation (EC) No 589/2008, Article 4: egg weight
+                  grading},
+  year         = {2008},
+  note         = {S/M/L/XL weight bands, which is why SIZE_CLASSES is labelled in
+                  grams: an EU Large is a US Extra Large}
+}
