@@ -566,6 +566,10 @@ sound, which is why the model works. The exposure is **the ramp**: a cold-start 
 spends several minutes below 60 °C with a liquid, convecting white, so the effective
 diffusivity early in a cold start is higher than `ALPHA_DEFAULT`. That is also the
 phase §1 argues matters most. Do not use this model for sous-vide.
+`src/core/sousvide.ts` computes the isothermal limit regardless, for exactly one
+purpose: to answer the question in the model's own units, and let the answer speak
+for itself. The white's dose target lives at 80 °C, so a 58 °C bath needs about
+22 hours of it.
 
 **The cooling phase is different, and weaker.** In still air `Bi ~ 0.6` and Dirichlet
 would be badly wrong, so the cooling phase instead drives the surface along the egg's

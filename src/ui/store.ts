@@ -10,6 +10,10 @@ const BOIL_KEY = 'aet.boil.v1';
 
 export type StartTempMode = 'fridge' | 'room' | 'custom';
 
+/** The Start control offers one more option than the solver understands.
+ *  'sous' never reaches core: see buildSetup in app.ts. */
+export type UiStartMode = StartMode | 'sous';
+
 export interface Settings {
   /** Index into SIZE_CLASSES, or -1 for a custom measured diameter. */
   sizeIndex: number;
@@ -17,7 +21,7 @@ export interface Settings {
   startTempMode: StartTempMode;
   customStart_C: number;
   altitude_m: number;
-  startMode: StartMode;
+  startMode: UiStartMode;
   cooling: Cooling;
   waterLitres: number;
   eggCount: number;
@@ -103,7 +107,7 @@ export function loadSettings(): Settings {
     startTempMode: oneOf(raw['startTempMode'], ['fridge', 'room', 'custom'] as const, 'fridge'),
     customStart_C: clampNumber(raw['customStart_C'], -2, 40, DEFAULT_SETTINGS.customStart_C),
     altitude_m: clampNumber(raw['altitude_m'], -400, 5000, 0),
-    startMode: oneOf(raw['startMode'], ['cold', 'hot'] as const, 'cold'),
+    startMode: oneOf(raw['startMode'], ['cold', 'hot', 'sous'] as const, 'cold'),
     cooling: oneOf(raw['cooling'], ['ice', 'tap', 'counter'] as const, 'ice'),
     waterLitres: clampNumber(raw['waterLitres'], 0.25, 12, DEFAULT_SETTINGS.waterLitres),
     eggCount: Math.round(clampNumber(raw['eggCount'], 1, 24, DEFAULT_SETTINGS.eggCount)),

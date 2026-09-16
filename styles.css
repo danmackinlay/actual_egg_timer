@@ -155,7 +155,7 @@ main {
   color: var(--dim);
   padding: 0;
 }
-.field--slider, fieldset.field { display: block; }
+.field--slider, .field--measure, fieldset.field { display: block; }
 fieldset.field legend { margin-bottom: 7px; }
 
 .field .hint {
@@ -165,6 +165,13 @@ fieldset.field legend { margin-bottom: 7px; }
 }
 
 .field--pair { display: flex; gap: 16px; }
+
+/* Three ways of saying the same size. They stay in step, so they read as one
+   control rather than three competing ones. */
+.measure { display: flex; flex-direction: column; gap: 10px; }
+.measure > div { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.measure__legend { margin: 0 0 10px; color: var(--dim); }
+.field--measure input[type="number"] { max-width: 40vw; }
 .field--pair > div { flex: 1; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 
 select, input[type="number"] {
@@ -340,6 +347,13 @@ body:not([data-phase="IDLE"]) #bigtime { font-size: clamp(5rem, 32vw, 9rem); }
 
 /* A cold start hides "after boiling" until the boil has actually been timed. */
 body[data-start="hot"] #afterBoilStat { display: none; }
+body[data-start="sous"] #afterBoilStat { display: none; }
+
+/* "Yesterday" is not a clock face, and will not fit like one. */
+body[data-start="sous"][data-phase="IDLE"] #bigtime {
+  font-size: clamp(2rem, 11vw, 3.4rem);
+  letter-spacing: -0.01em;
+}
 
 body[data-phase="PULL"] #readout {
   border-color: var(--warn);

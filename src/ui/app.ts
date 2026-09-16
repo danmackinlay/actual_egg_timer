@@ -9,6 +9,7 @@
 import { Egg, eggFromMass, eggFromMinorDiameter, SIZE_CLASSES } from '../core/geometry.js';
 import { boilingPointAtAltitude } from '../core/thermo.js';
 import { Cooling, CookSetup, StartMode } from '../core/protocol.js';
+import { SOUS_VIDE_BATH_C, sousVideEstimate } from '../core/sousvide.js';
 import {
   DONENESS_ANCHORS, DonenessAnchor, Solution,
   donenessFromSlider, solveCookTime,
@@ -19,9 +20,10 @@ import {
   calibrationSpread, recordOutcome,
 } from './calibration.js';
 import {
-  Settings, clampNumber, estimateTimeToBoil, hasBoilMemory,
+  Settings, UiStartMode, clampNumber, estimateTimeToBoil, hasBoilMemory,
   loadBoilMemory, loadSettings, rememberTimeToBoil, saveSettings,
 } from './store.js';
+import { sousVideCopy } from './sousvide.js';
 import {
   Machine, advance, beginCooling, idleMachine, isRunning, recordBoil, reviseProvisional,
   secondsAfterBoil, secondsHeating, secondsToCool, secondsToPull, startCold, startHot,
@@ -53,8 +55,9 @@ const dom = {
   donenessTicks: el<HTMLDivElement>('donenessTicks'),
   donenessValue: el<HTMLParagraphElement>('donenessValue'),
   size: el<HTMLSelectElement>('size'),
-  customSizeField: el<HTMLDivElement>('customSizeField'),
-  customMinor: el<HTMLInputElement>('customMinor'),
+  measureMass: el<HTMLInputElement>('measureMass'),
+  measureGirth: el<HTMLInputElement>('measureGirth'),
+  measureMinor: el<HTMLInputElement>('measureMinor'),
   customTempField: el<HTMLDivElement>('customTempField'),
   customTemp: el<HTMLInputElement>('customTemp'),
   litres: el<HTMLInputElement>('litres'),
@@ -113,6 +116,28 @@ function currentEgg(): Egg {
   return eggFromMass(SIZE_CLASSES[settings.sizeIndex].mass_kg);
 }
 
+/** The three ways a person can measure an egg are one number in three units.
+ *  The model egg's equator is a circle, so girth = pi * B exactly; mass goes
+ *  through the same ovoid volume the solver uses (V = k_v * ratio * B^3), so
+ *  nothing here is a second opinion about the geometry. */
+function minorFromGirth_mm(girth_mm: number): number {
+  return girth_mm / Math.PI;
+}
+
+function minorFromMass_mm(mass_g: number): number {
+  return eggFromMass(mass_g / 1000).minorDiameter_m * 1000;
+}
+
+/** Rewrite whichever measurement boxes the user is not currently typing in, so
+ *  filling in one fills in the rest without the field fighting the cursor. */
+function syncMeasurements(except: EventTarget | null): void {
+  const egg = currentEgg();
+  const minor_mm = egg.minorDiameter_m * 1000;
+  if (except !== dom.measureMass) dom.measureMass.value = (egg.mass_kg * 1000).toFixed(0);
+  if (except !== dom.measureGirth) dom.measureGirth.value = (Math.PI * minor_mm).toFixed(0);
+  if (except !== dom.measureMinor) dom.measureMinor.value = minor_mm.toFixed(1);
+}
+
 function eggStart_C(): number {
   if (settings.startTempMode === 'fridge') return 4;
   if (settings.startTempMode === 'room') return 20;
@@ -123,9 +148,20 @@ function boilingPoint_C(): number {
   return boilingPointAtAltitude(settings.altitude_m);
 }
 
+/** What the solver is told. The Start control has three positions; the model
+ *  has two. Sous-vide is answered by src/core/sousvide.ts instead, so as far as
+ *  the cook solver is concerned it is an egg going into water already hot. */
+function coreStartMode(): StartMode {
+  return settings.startMode === 'cold' ? 'cold' : 'hot';
+}
+
+function isSousVide(): boolean {
+  return settings.startMode === 'sous';
+}
+
 function buildSetup(egg: Egg, timeToBoil_s: number): CookSetup {
   return {
-    startMode: settings.startMode,
+    startMode: coreStartMode(),
     eggStart_C: eggStart_C(),
     ambient_C: 20,
     boiling_C: boilingPoint_C(),
@@ -294,6 +330,37 @@ function render(now_ms: number): void {
   let subline = '';
   let spoken = '';
 
+  // Sous-vide is answered honestly and separately: no cook to run, no clock to
+  // start, and a start time that has already been and gone.
+  if (isSousVide() && machine.phase === 'IDLE') {
+    const egg = currentEgg();
+    const doneness = donenessFromSlider(settings.doneness);
+    const est = sousVideEstimate(
+      egg.radius_m, calibrationParams(calib).alpha_m2s, SOUS_VIDE_BATH_C,
+      doneness.yolkDose_min, doneness.whiteDose_min,
+    );
+    const copy = sousVideCopy(est, now_ms);
+
+    dom.phaseLabel.textContent = 'Start time';
+    dom.digits.textContent = copy.headline;
+    dom.subline.textContent = copy.subline;
+    dom.statYolk.textContent = `${est.bath_C.toFixed(0)}°C`;
+    dom.note.textContent = copy.note;
+    dom.warn.textContent = copy.warn;
+    dom.warn.hidden = false;
+    setPrimary('', copy.hint, false);
+    dom.secondary.hidden = true;
+    dom.feedback.hidden = true;
+
+    const key = `SOUS|${copy.headline}`;
+    if (key !== lastAnnounced) {
+      lastAnnounced = key;
+      dom.announce.textContent = `Sous-vide. You should have started ${copy.headline.toLowerCase()},`
+        + ` ${copy.subline}`;
+    }
+    return;
+  }
+
   if (machine.phase === 'IDLE') {
     label = 'Total time';
     digits = formatClock(cookTime_s);
@@ -305,7 +372,7 @@ function render(now_ms: number): void {
       settings.startMode === 'cold' ? 'Start heating' : 'Eggs in',
       settings.startMode === 'cold'
         ? 'eggs in the pan, lid on, then tap'
-        : 'water should already be at a full rolling boil',
+        : `water at a full rolling boil, and kept there for the whole ${formatClock(cookTime_s)}`,
       true,
     );
     dom.secondary.hidden = true;
@@ -319,14 +386,22 @@ function render(now_ms: number): void {
     dom.secondary.hidden = false;
     dom.secondary.textContent = 'Cancel';
   } else if (machine.phase === 'COOKING') {
-    label = 'Cooking';
+    // Same idiom as the cooling phase: the one instruction the user has to act
+    // on goes in the phase label, where it sits next to the clock. The model
+    // holds the water at its boiling point for the whole cook, so this is not
+    // a style note - a pan taken off the heat under-cooks by minutes.
+    label = 'Cooking — keep it boiling';
     digits = formatClock(secondsToPull(machine, now_ms));
     subline = settings.startMode === 'cold'
       ? `boil took ${formatClock(machine.assumedBoil_s)} · `
         + `${formatClock(secondsAfterBoil(machine))} after the boil`
       : 'in the water';
     spoken = `Cooking. ${spokenClock(secondsToPull(machine, now_ms))} left`;
-    setPrimary('', '', false);
+    // The model holds the water at its boiling point for the whole cook. A pan
+    // turned down to a bare simmer is still near enough; a covered pan taken
+    // off the heat is a different recipe and will under-cook by minutes.
+    setPrimary('', `keep it boiling — the timing assumes ${boilingPoint_C().toFixed(0)}°C `
+      + `right up to the pull`, false);
     dom.secondary.hidden = false;
     dom.secondary.textContent = 'Cancel';
   } else if (machine.phase === 'PULL') {
@@ -447,27 +522,42 @@ function onFeedback(value: Feedback): void {
 
 /* ------------------------------------------------------------------ input */
 
-function readInputs(): void {
+function readInputs(source: EventTarget | null): void {
   const sizeIndex = Number(dom.size.value);
   settings.sizeIndex = Number.isFinite(sizeIndex) ? sizeIndex : 2;
-  settings.customMinor_mm = clampNumber(dom.customMinor.value, 30, 60, settings.customMinor_mm);
+
+  // Measuring the egg any of the three ways overrides the size class, because
+  // a measured egg is better information than a box label.
+  let measured_mm = -1;
+  if (source === dom.measureMass) {
+    measured_mm = minorFromMass_mm(clampNumber(dom.measureMass.value, 25, 120, 62));
+  } else if (source === dom.measureGirth) {
+    measured_mm = minorFromGirth_mm(clampNumber(dom.measureGirth.value, 90, 200, 137));
+  } else if (source === dom.measureMinor) {
+    measured_mm = clampNumber(dom.measureMinor.value, 30, 60, settings.customMinor_mm);
+  }
+  if (measured_mm > 0) {
+    settings.customMinor_mm = clampNumber(measured_mm, 30, 60, settings.customMinor_mm);
+    settings.sizeIndex = -1;
+    dom.size.value = '-1';
+  }
   settings.startTempMode = radioValue('startTemp', 'fridge') as Settings['startTempMode'];
   settings.customStart_C = clampNumber(dom.customTemp.value, -2, 40, settings.customStart_C);
   settings.altitude_m = clampNumber(dom.altitude.value, -400, 5000, settings.altitude_m);
-  settings.startMode = radioValue('startMode', 'cold') as StartMode;
+  settings.startMode = radioValue('startMode', 'cold') as UiStartMode;
   settings.cooling = radioValue('cooling', 'ice') as Cooling;
   settings.waterLitres = clampNumber(dom.litres.value, 0.25, 12, settings.waterLitres);
   settings.eggCount = Math.round(clampNumber(dom.eggCount.value, 1, 24, settings.eggCount));
   settings.doneness = clampNumber(dom.doneness.value, 0, 1, settings.doneness);
 
-  dom.customSizeField.hidden = settings.sizeIndex >= 0;
   dom.customTempField.hidden = settings.startTempMode !== 'custom';
+  syncMeasurements(source);
   machine = { ...machine, cooling: settings.cooling };
   saveSettings(settings);
 }
 
-function onInput(): void {
-  readInputs();
+function onInput(event: Event): void {
+  readInputs(event.target);
   // Instant feedback on the two readings the eye is on while dragging; the
   // full solve (tens of milliseconds) follows and corrects them.
   dom.donenessValue.textContent = anchorNear(settings.doneness).label;
@@ -589,7 +679,7 @@ function buildSizeOptions(): void {
   }
   const custom = document.createElement('option');
   custom.value = '-1';
-  custom.textContent = 'Measured width…';
+  custom.textContent = 'Measured below…';
   dom.size.append(custom);
 }
 
@@ -605,7 +695,7 @@ function buildTicks(): void {
 function applySettingsToDom(): void {
   dom.size.value = String(settings.sizeIndex);
   if (dom.size.value === '') dom.size.value = '-1';
-  dom.customMinor.value = String(settings.customMinor_mm);
+  syncMeasurements(null);
   selectRadio('startTemp', settings.startTempMode);
   dom.customTemp.value = String(settings.customStart_C);
   selectRadio('startMode', settings.startMode);
@@ -614,7 +704,6 @@ function applySettingsToDom(): void {
   dom.eggCount.value = String(settings.eggCount);
   dom.altitude.value = String(settings.altitude_m);
   dom.doneness.value = String(settings.doneness);
-  dom.customSizeField.hidden = settings.sizeIndex >= 0;
   dom.customTempField.hidden = settings.startTempMode !== 'custom';
 }
 
