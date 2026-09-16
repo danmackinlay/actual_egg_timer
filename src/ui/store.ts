@@ -3,7 +3,7 @@
  * disabled, full, or throwing (Safari private mode throws on setItem).
  */
 
-import { StartMode, Cooling } from '../core/protocol.js';
+import { StartMode, Cooling, HeatAfterBoil } from '../core/protocol.js';
 
 const SETTINGS_KEY = 'aet.settings.v1';
 const BOIL_KEY = 'aet.boil.v1';
@@ -22,6 +22,7 @@ export interface Settings {
   customStart_C: number;
   altitude_m: number;
   startMode: UiStartMode;
+  afterBoil: HeatAfterBoil;
   cooling: Cooling;
   waterLitres: number;
   eggCount: number;
@@ -36,6 +37,7 @@ export const DEFAULT_SETTINGS: Settings = {
   customStart_C: 12,
   altitude_m: 0,
   startMode: 'cold',
+  afterBoil: 'hold',
   cooling: 'ice',
   waterLitres: 2,
   eggCount: 2,
@@ -108,6 +110,7 @@ export function loadSettings(): Settings {
     customStart_C: clampNumber(raw['customStart_C'], -2, 40, DEFAULT_SETTINGS.customStart_C),
     altitude_m: clampNumber(raw['altitude_m'], -400, 5000, 0),
     startMode: oneOf(raw['startMode'], ['cold', 'hot', 'sous'] as const, 'cold'),
+    afterBoil: oneOf(raw['afterBoil'], ['hold', 'off'] as const, 'hold'),
     cooling: oneOf(raw['cooling'], ['ice', 'tap', 'counter'] as const, 'ice'),
     waterLitres: clampNumber(raw['waterLitres'], 0.25, 12, DEFAULT_SETTINGS.waterLitres),
     eggCount: Math.round(clampNumber(raw['eggCount'], 1, 24, DEFAULT_SETTINGS.eggCount)),

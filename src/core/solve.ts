@@ -174,6 +174,12 @@ export function simulate(
   };
 }
 
+/** Fraction of the saturated dose that counts as "as far as this pan goes".
+ *  Standing approaches its limit asymptotically, so without this the answer to
+ *  an impossible request is an hour-long cook that differs from a fifteen
+ *  minute one in the second decimal place. */
+const STANDING_KNEE = 0.95;
+
 const SOLVE_LO_S = 20.0;
 const SOLVE_HI_S = 3600.0;
 const SOLVE_TOL_S = 1.0;
@@ -204,6 +210,15 @@ export interface Solution {
   minCookTime_s: number;
   /** Softest yolk doneness achievable with this setup, as a slider position. */
   softestLevel: number;
+  /** Hardest yolk doneness achievable, as a slider position. 1 whenever the
+   *  water stays at the boil; less than 1 when the heat is off and the pan
+   *  runs out of heat before the yolk gets there. */
+  hardestLevel: number;
+  /** False when the white never sets at all - only possible with the heat off,
+   *  where the water can fall past the white's own target while the egg is
+   *  still in it. There is no cook time to offer in that case, only the
+   *  furthest this pan goes. */
+  whiteSets: boolean;
 }
 
 /** Solve for the cook time that delivers the requested doneness. */
@@ -213,17 +228,46 @@ export function solveCookTime(
   const minCook = bisect(egg, setup, params, doneness.whiteDose_min, (r) => r.whiteDose_min);
   const atMin = simulate(egg, setup, params, minCook);
   const softestLevel = sliderFromYolkDose(atMin.yolkDose_min);
+  // bisect returns its ceiling when the target is out of reach, so a white dose
+  // still short of target there means it is never met at all.
+  const whiteSets = atMin.whiteDose_min >= doneness.whiteDose_min;
+
+  // Held at the boil the dose grows without limit, so the only way to miss a
+  // target is from below. With the heat off the water is falling, both doses
+  // saturate, and a long enough cook stops being an answer - so the top of the
+  // slider has to be checked too, and so does whether the white ever sets.
+  // Only then: it costs a full simulation.
+  let hardestLevel = 1.0;
+  if (setup.afterBoil === 'off') {
+    const atMax = simulate(egg, setup, params, SOLVE_HI_S);
+    hardestLevel = sliderFromYolkDose(atMax.yolkDose_min);
+    if (!whiteSets || atMax.yolkDose_min < doneness.yolkDose_min) {
+      // This pan saturates below what was asked. Answer with the cook that gets
+      // closest in a time a person would actually wait, not with the asymptote:
+      // the last few per cent of the dose take another half hour and deliver a
+      // tenth of a degree. 95% of the saturated dose is the knee of the curve.
+      const knee = bisect(egg, setup, params, STANDING_KNEE * atMax.yolkDose_min, (r) => r.yolkDose_min);
+      return {
+        result: simulate(egg, setup, params, knee), reachable: false,
+        minCookTime_s: minCook, softestLevel: softestLevel,
+        hardestLevel: hardestLevel, whiteSets: whiteSets,
+      };
+    }
+  }
 
   if (atMin.yolkDose_min >= doneness.yolkDose_min) {
     // Even the shortest white-setting cook overcooks the yolk past the target.
     return {
       result: atMin, reachable: false,
       minCookTime_s: minCook, softestLevel: softestLevel,
+      hardestLevel: hardestLevel, whiteSets: whiteSets,
     };
   }
+
   const cook = bisect(egg, setup, params, doneness.yolkDose_min, (r) => r.yolkDose_min);
   return {
     result: simulate(egg, setup, params, cook), reachable: true,
     minCookTime_s: minCook, softestLevel: softestLevel,
+    hardestLevel: hardestLevel, whiteSets: whiteSets,
   };
 }

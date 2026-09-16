@@ -168,6 +168,42 @@ energy balance: four 62 g fridge eggs into 2 L drops it 8.3 °C; into 1 L, 15.4 
 is why the same recipe fails in a small pan. Recovery is exponential with
 `TAU_DIP_RECOVERY = 60 s`.
 
+**Heat off at the boil (the standing method).** "Bring to the boil, cover, take it off
+the heat, wait" is a real recipe — it is Williams' own hard-boiling method — and the
+modal solver takes it for free, because it is driven by an arbitrary piecewise-linear
+surface temperature. A pan losing heat to the room is Newtonian:
+
+```
+T(t) = Tamb + (Tboil - Tamb) * exp(-t/tau_pan)
+```
+
+and `tau_pan = m*c/(U*A)` is **the same time constant that shapes the ramp**, so the
+user's one measurement already contains it:
+
+```
+t_boil = tau_pan * ln(r/(r-1))   =>   tau_pan = t_boil / 0.405   (at r = 3)
+```
+
+An 8-minute boil implies `tau_pan = 19.7 min`. No new measurement is needed, and the
+dependence on water volume comes along for free: more water takes longer to boil, which
+*is* the statement that it holds more heat.
+
+Two things fall out that are worth more than the feature itself:
+
+- **The dose saturates.** The water is falling, so past about 12 minutes of standing
+  nothing further happens: 20 minutes and 30 minutes give a yolk within 0.01% of the same
+  dose. That is why a folk method can say "about seventeen minutes" and be right.
+- **The pan decides, not the clock.** A 10-minute boil reaches hard in 6 minutes of
+  standing; a 6-minute boil cannot get past fudgy; and a 4-minute boil — a small pan on a
+  strong burner, storing almost nothing — never sets the white at all, at any doneness,
+  because the water falls past what the white needs while the egg is still in it. The app
+  refuses the settings it cannot deliver rather than printing a time that will not work
+  (§7). Both refusals are new failure modes: held at the boil, the dose only grows, so the
+  only way to miss was ever from the soft end.
+
+`TAU_STANDING_SCALE` holds open the one real question: whether the pan's loss constant is
+really the same with the burner off and a lid on. See §6 and §11.3.
+
 **Boiling point.** ISA barometric formula for pressure against altitude, then the
 Antoine equation (Stull 1947) inverted for temperature. The engineering one-liner
 `T_b = 100 - h/300` is kept as a cross-check and agrees to within 0.031 °C from 0 to
@@ -413,6 +449,7 @@ distrust.
 | `TAU_AIR` | 2030 | s | Lumped `m*c/(h*A)` with `h ~ 15 W/m²K` in still air. **Lowest confidence in the model** — no published carryover curve has been found (§11.3). Carries a wide calibration prior (`tauAirScale`). |
 | `H_EFF` | 850 | W/m²K | Natural convection on a sphere (~1100) in series with shell + membranes (~3200). Used for the Biot number. **Known high**: Denys et al. (2003) measured 490 W/m²K at the shell, ~450 effective with their measured shell in series — `Bi ~ 18`, not 34 (§11.2). It enters as a justification rather than a driver, which is the only reason it still stands. |
 | `RAMP_R` | 3.0 | — | Hob overshoot ratio; `1/r` is the fraction of full power needed to hold a boil, which measured cooktop studies put near 1/3. **Medium-low.** |
+| `TAU_STANDING_SCALE` | 1.0 | — | Multiplier on the pan's loss time constant once the heat is off and the lid is on. The ramp already identifies `tau = m*c/(U*A)`, so this only asks whether it is the *same* constant with the burner off: a lid argues for more than 1, evaporation inflating the ramp's own `tau` argues for less. 1.0 is a refusal to guess, and it reproduces Williams' seventeen-minute method (§7). **Lowest confidence in the standing path** — see §11.3. |
 
 ### Physical properties
 
@@ -490,6 +527,24 @@ expectation of 9.2 min, which corresponds to roughly 3700 m in the present code.
 planning figure predates the implemented ramp and dose machinery and appears to be the
 stale one, but it has not been chased down. Treat altitude predictions as carrying that
 1-minute question mark until it is resolved.
+
+### The standing method against Williams' own recipe
+
+Williams describes hard-boiling as: cold water, bring to the boil, remove the heat, lid
+on, stand about seventeen minutes, then cool. With `TAU_STANDING_SCALE = 1.0` and an
+8-minute boil the model puts that at a peak yolk of **75.6 °C** and a yolk dose just past
+this app's *Hard* — and flat: the dose at 20 minutes and at 30 minutes agree to 0.01%.
+
+| time to boil | pan time constant | hardest reachable | standing time for hard |
+|---|---|---|---|
+| 4 min | 9.9 min | nothing | never sets the white |
+| 6 min | 14.8 min | Fudgy | cannot reach hard |
+| 8 min | 19.7 min | Hard | 10.1 min |
+| 10 min | 24.7 min | Hard | 5.9 min |
+
+Read that table before trusting the method: it is not forgiving in the pan, only in the
+clock. It is also a single folk anchor with an unstated pot, which is exactly why
+`TAU_STANDING_SCALE` exists.
 
 ### Against somebody else's measurements
 
@@ -628,21 +683,41 @@ pasteurisation calculator built for it — and check what z-value it uses.
 The model can only be as good as what you tell it. In descending order of how much each
 one matters:
 
-1. **Measure the egg.** A kitchen scale beats a ruler on an ovoid; enter mass if you
-   have it. Size class is a fallback, and the labels differ between the EU and the US
-   (which is why the app labels them in grams).
-2. **Say where the egg came from.** Fridge (4 °C) versus counter (20 °C) is over a
-   minute.
-3. **Time the boil honestly.** Press the boil button at a **full rolling boil**, not at
-   first bubbles. First bubbles are nucleation on the pan base at maybe 85-95 °C;
-   tapping there under-measures the ramp by 15-25% and the model will under-cook.
-4. **Use enough water and note how much.** Four cold eggs into 1 L drops the water by
-   15 °C; into 2 L, by 8 °C.
-5. **Commit to a cooling protocol and actually do it.** This is not a garnish on the
-   recipe; it is 11 °C of peak yolk temperature (§5). "Ice bath" means ice *and* water,
-   in enough volume that it stays cold.
-6. **Set altitude once.** The app derives the boiling point; you do not need to guess a
-   rule of thumb.
+1. **Time the boil honestly** — worth up to **4 minutes**. Press the boil button at a
+   **full rolling boil**, not at first bubbles. First bubbles are nucleation on the pan
+   base at maybe 85-95 °C; tapping there under-measures the ramp by 15-25% and the model
+   will under-cook. This is the single most valuable thing you can tell the app, because
+   the correct "minutes after boiling" varies by nearly a factor of five with hob power
+   alone (§1) — and with the heat off at the boil it is also the *only* measurement of
+   your pan's heat capacity (§2.4).
+2. **Commit to a cooling protocol and actually do it** — worth **11 °C of peak yolk**,
+   which is the difference between jammy and set (§5). This is not a garnish on the
+   recipe. "Ice bath" means ice *and* water, in enough volume that it stays cold.
+3. **Measure the egg** — worth **2.2 minutes** between a small and an extra-large. A
+   kitchen scale beats a ruler on an ovoid. Failing that, a paper strip round the middle
+   beats calipers: the app takes weight, girth or width and derives the other two. Size
+   class is the fallback, and the labels differ between the EU and the US (which is why
+   the app labels them in grams).
+4. **Say where the egg came from** — worth **1.2 minutes**. Fridge (4 °C) versus counter
+   (20 °C).
+5. **Set altitude once** — worth **0.85 minutes** at 2000 m. The app derives the boiling
+   point; you do not need to guess a rule of thumb.
+6. **Water volume and egg count** — worth **seconds**, unless you turn the heat off.
+   Cold eggs entering boiling water cool it, by a straight energy balance over both: four
+   62 g fridge eggs into 1 L drops the water 15 °C, into 2 L, 8 °C. Those numbers sound
+   alarming and are nearly free, because `TAU_DIP_RECOVERY` puts the water back inside a
+   minute and the dose that matters accrues at the end of the cook, not the start. Across
+   the whole realistic range — 0.75 to 4 L, one to eight eggs — the cook time moves **22
+   seconds**, and the worst corner (eight eggs into 0.75 L) costs 17 s against the
+   reference. On a *cold* start there is no dip at all, since the eggs are in the pan
+   from the beginning; volume acts only by making the boil take longer, which the app
+   measures rather than computes.
+
+   Two caveats in the other direction. `TAU_DIP_RECOVERY = 60 s` is a guess (**Low**
+   confidence, §6), and it is the constant that turns those degrees into seconds — on a
+   weak hob with eight eggs, recovery could take minutes and the cost would be several
+   times larger. And if you kill the heat at the boil, water volume stops being a
+   rounding error and becomes the whole cook (§2.4).
 
 Keep those fixed and the same setting will give you the same egg. Change one and the
 app will tell you what it costs.
@@ -885,11 +960,16 @@ answers are recorded here rather than deleted, because each one was a plausible 
    W/m²K under gentle forced circulation at 40-60 °C. Nobody appears to have measured it
    with bubble agitation at 100 °C, which is the only condition this app cares about.
 
-3. **A logged temperature-vs-time curve for a domestic pot of water.** `RAMP_R = 3.0`
-   comes from cooktop *efficiency* studies ("about a third of full burner power holds a
-   boil"), not from a measured heating curve. Twenty minutes with a thermocouple would
-   beat every source found, and the app already measures your time-to-boil, so the shape
-   parameter is the only thing left guessed.
+3. **A logged temperature-vs-time curve for a domestic pot of water**, heating *and*
+   cooling. `RAMP_R = 3.0` comes from cooktop *efficiency* studies ("about a third of
+   full burner power holds a boil"), not from a measured heating curve, and
+   `TAU_STANDING_SCALE = 1.0` asserts without evidence that a covered pan with the burner
+   off loses heat on the same time constant as one being heated. The second is the
+   weaker claim of the two: evaporation dominates the loss at the boil and stops being
+   replenished once the lid is on, so the real standing constant is probably longer, and
+   the app probably refuses the standing method more often than it should. One
+   thermocouple, one pot, forty minutes — heat it, log the boil time, kill the heat, keep
+   logging — would settle both constants at once and beat every source found.
 
 ### 11.4 Modelling work deliberately not done
 

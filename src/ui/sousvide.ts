@@ -69,18 +69,14 @@ export function sousVideCopy(est: SousVideEstimate, now_ms: number): SousVideCop
   const duration = formatLongDuration(est.total_s);
   const bath = est.bath_C.toFixed(0);
 
-  const binding = est.whiteBound
-    ? `${formatLongDuration(est.whiteHold_s)} of that is the white`
-    : `${formatLongDuration(est.yolkHold_s)} of that is the yolk`;
-
   return {
     headline: whenToStart(start_ms, now_ms),
     subline: `at ${clockOf(start_ms)} — ${duration} at ${bath}°C, to eat now`,
     note: est.whiteBound ? 'white still not set, yolk creamy' : 'yolk set, white still not',
-    warn: `A ${bath}°C bath is below where egg white sets: only ovotransferrin `
-      + `denatures this low, so the white stays loose however long you wait. `
-      + `${binding}, and it is a waiting time, not a cooking time. The model is `
-      + `also conduction-only down here, which flatters it. Use the pan.`,
+    warn: `A ${bath}°C bath is below the temperature at which egg white sets — `
+      + `only one of its proteins reacts down here — so the white stays loose `
+      + `however long you leave it. This app was built for boiling water and is `
+      + `out of its depth below 60°C anyway. Use the pan.`,
     hint: `nothing to start — you are ${duration} late`,
   };
 }

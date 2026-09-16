@@ -94,6 +94,24 @@ export const K_EGG = 0.60;
  *  1/3. r -> infinity is a linear ramp. */
 export const RAMP_R = 3.0;
 
+/** Multiplier on the pan's Newtonian loss time constant once the heat is off
+ *  and the lid is on.
+ *
+ *  The ramp already identifies that time constant: tau = m*c/(U*A) is exactly
+ *  what sets the shape of the approach to the boil, so a measured time to boil
+ *  gives it for free (see panTimeConstant). Whether it is the SAME constant
+ *  with the burner off is the question this multiplier holds open. Two effects
+ *  push in opposite directions: a lid and no burner cut the loss (argues > 1),
+ *  while the ramp's own tau is inflated by evaporation near the boil, which is
+ *  not Newtonian at all (argues < 1).
+ *
+ *  1.0 is a deliberate refusal to guess, and it reproduces Williams' folk
+ *  method — bring to the boil, cover, off the heat, seventeen minutes, and it
+ *  is hard-boiled — to within a few per cent for an 8-minute boil. That is one
+ *  anchor with an unstated pan, not a measurement. It is the least-verified
+ *  number in the standing path; see README section 11.3. */
+export const TAU_STANDING_SCALE = 1.0;
+
 /** Lumped cooling time constant of an egg in still air, s.
  *  m*c/(h*A) with h ~ 15 W/m^2K. Internal equilibration takes ~270 s, so this
  *  is ~7x slower: a rested egg carries over almost adiabatically.

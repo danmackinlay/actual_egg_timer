@@ -162,10 +162,14 @@ function isSousVide(): boolean {
 function buildSetup(egg: Egg, timeToBoil_s: number): CookSetup {
   return {
     startMode: coreStartMode(),
+    afterBoil: settings.afterBoil,
     eggStart_C: eggStart_C(),
     ambient_C: 20,
     boiling_C: boilingPoint_C(),
-    timeToBoil_s: settings.startMode === 'cold' ? timeToBoil_s : 0,
+    // Passed on a hot start too, where no ramp is simulated: with the heat off
+    // it is also the pan's loss time constant (see panTimeConstant), which is
+    // the one number that decides whether standing works at all.
+    timeToBoil_s: timeToBoil_s,
     cooling: settings.cooling,
     waterLitres: settings.waterLitres,
     eggCount: settings.eggCount,
@@ -228,6 +232,25 @@ function refusalText(wanted: number, softest: number, cooling: Cooling): string 
     + `Softest here is ${softestLabel}.`;
 }
 
+/** The standing method's worst failure: the water falls past the temperature
+ *  the white needs before the white has had it, so there is no cook here at
+ *  all - not a soft one, not a hard one. */
+function whiteNeverSetsText(): string {
+  return `With the heat off this pan never sets the white: the water falls below `
+    + `what the white needs while the egg is still in it. Nothing on the slider is `
+    + `reachable. More water, a slower boil, or keep it boiling.`;
+}
+
+/** The standing method's own failure: the pan cools off before the yolk gets
+ *  where it was asked to go, and no amount of waiting fixes it. */
+function standingRefusalText(wanted: number, hardest: number): string {
+  const wantedLabel = anchorNear(wanted).label.toLowerCase();
+  const hardestLabel = anchorNear(hardest).label.toLowerCase();
+  return `With the heat off, the water runs out before the yolk gets there — `
+    + `${wantedLabel} isn't reachable in ${settings.waterLitres} L. `
+    + `Hardest here is ${hardestLabel}. More water, or keep it boiling.`;
+}
+
 /** Solve for the current inputs, clamping the slider to what is physically
  *  achievable. `reachable: false` means even the shortest cook that sets the
  *  white already overshoots the requested yolk. */
@@ -240,6 +263,30 @@ function solve(timeToBoil_s: number): Solution {
 
   if (result.reachable) {
     refusal = '';
+    return result;
+  }
+
+  // Two ways to be unreachable, and they snap the slider in opposite
+  // directions: too soft for the white (snap up), or harder than a cooling pan
+  // can manage (snap down).
+  if (!result.whiteSets) {
+    // Nothing to snap to: the slider has no reachable position at all. The
+    // numbers shown are the furthest this pan goes, which is the only honest
+    // thing left to put on screen.
+    refusal = whiteNeverSetsText();
+    return result;
+  }
+
+  if (settings.doneness > result.hardestLevel) {
+    // No re-solve: the solver already answered with the furthest this pan goes,
+    // so the numbers on screen are the numbers for the only cook on offer.
+    refusal = standingRefusalText(settings.doneness, result.hardestLevel);
+    const capped = clampNumber(Math.floor(result.hardestLevel * 100) / 100, 0, 1, 0);
+    if (capped < settings.doneness) {
+      settings.doneness = capped;
+      dom.doneness.value = String(capped);
+      saveSettings(settings);
+    }
     return result;
   }
 
@@ -318,7 +365,12 @@ function render(now_ms: number): void {
   dom.statYolk.textContent = `${sol.result.peakYolk_C.toFixed(0)}°C`;
   dom.statAfter.textContent = formatClock(cookTime_s - boil_s);
   dom.statBoil.textContent = `${boilingPoint_C().toFixed(1)}°C`;
-  dom.note.textContent = textureNote(sol.result.peakYolk_C, sol.result.peakWhite_C);
+  // The texture note reads peak temperatures; the white's own criterion is a
+  // dose. They disagree only when the pan never gets the white there at all,
+  // and then the dose is the one telling the truth.
+  dom.note.textContent = sol.whiteSets
+    ? textureNote(sol.result.peakYolk_C, sol.result.peakWhite_C)
+    : 'white stays runny';
   dom.warn.textContent = refusal;
   dom.warn.hidden = refusal === '';
   dom.donenessValue.textContent = `${anchorNear(settings.doneness).label} · `
@@ -368,11 +420,14 @@ function render(now_ms: number): void {
       ? `${hasBoilMemory(boilMemory) ? 'assumes' : 'guesses'} ${formatClock(boil_s)} to a rolling boil`
       : 'from eggs in to eggs out';
     spoken = `Total ${spokenClock(cookTime_s)}`;
+    const standing = settings.afterBoil === 'off';
     setPrimary(
       settings.startMode === 'cold' ? 'Start heating' : 'Eggs in',
       settings.startMode === 'cold'
         ? 'eggs in the pan, lid on, then tap'
-        : `water at a full rolling boil, and kept there for the whole ${formatClock(cookTime_s)}`,
+        : standing
+          ? 'eggs into boiling water, then lid on and heat off'
+          : `water at a full rolling boil, and kept there for the whole ${formatClock(cookTime_s)}`,
       true,
     );
     dom.secondary.hidden = true;
@@ -382,7 +437,13 @@ function render(now_ms: number): void {
     subline = `${formatClock(secondsHeating(machine, now_ms))} heating · `
       + `provisional, assumes ${formatClock(machine.assumedBoil_s)} to boil`;
     spoken = `Heating. ${spokenClock(secondsToPull(machine, now_ms))} left in total`;
-    setPrimary('Full rolling boil', 'wait for the whole surface to roll', true);
+    setPrimary(
+      'Full rolling boil',
+      settings.afterBoil === 'off'
+        ? 'wait for the whole surface to roll, then lid on and heat off'
+        : 'wait for the whole surface to roll',
+      true,
+    );
     dom.secondary.hidden = false;
     dom.secondary.textContent = 'Cancel';
   } else if (machine.phase === 'COOKING') {
@@ -390,7 +451,7 @@ function render(now_ms: number): void {
     // on goes in the phase label, where it sits next to the clock. The model
     // holds the water at its boiling point for the whole cook, so this is not
     // a style note - a pan taken off the heat under-cooks by minutes.
-    label = 'Cooking — keep it boiling';
+    label = settings.afterBoil === 'off' ? 'Cooking — heat off, lid on' : 'Cooking — keep it boiling';
     digits = formatClock(secondsToPull(machine, now_ms));
     subline = settings.startMode === 'cold'
       ? `boil took ${formatClock(machine.assumedBoil_s)} · `
@@ -400,8 +461,11 @@ function render(now_ms: number): void {
     // The model holds the water at its boiling point for the whole cook. A pan
     // turned down to a bare simmer is still near enough; a covered pan taken
     // off the heat is a different recipe and will under-cook by minutes.
-    setPrimary('', `keep it boiling — the timing assumes ${boilingPoint_C().toFixed(0)}°C `
-      + `right up to the pull`, false);
+    setPrimary('', settings.afterBoil === 'off'
+      ? `lid on, burner off — the timing assumes the water cools on its own from `
+        + `${boilingPoint_C().toFixed(0)}°C`
+      : `keep it boiling — the timing assumes ${boilingPoint_C().toFixed(0)}°C right up to the pull`,
+      false);
     dom.secondary.hidden = false;
     dom.secondary.textContent = 'Cancel';
   } else if (machine.phase === 'PULL') {
@@ -545,6 +609,7 @@ function readInputs(source: EventTarget | null): void {
   settings.customStart_C = clampNumber(dom.customTemp.value, -2, 40, settings.customStart_C);
   settings.altitude_m = clampNumber(dom.altitude.value, -400, 5000, settings.altitude_m);
   settings.startMode = radioValue('startMode', 'cold') as UiStartMode;
+  settings.afterBoil = radioValue('afterBoil', 'hold') as Settings['afterBoil'];
   settings.cooling = radioValue('cooling', 'ice') as Cooling;
   settings.waterLitres = clampNumber(dom.litres.value, 0.25, 12, settings.waterLitres);
   settings.eggCount = Math.round(clampNumber(dom.eggCount.value, 1, 24, settings.eggCount));
@@ -699,6 +764,7 @@ function applySettingsToDom(): void {
   selectRadio('startTemp', settings.startTempMode);
   dom.customTemp.value = String(settings.customStart_C);
   selectRadio('startMode', settings.startMode);
+  selectRadio('afterBoil', settings.afterBoil);
   selectRadio('cooling', settings.cooling);
   dom.litres.value = String(settings.waterLitres);
   dom.eggCount.value = String(settings.eggCount);

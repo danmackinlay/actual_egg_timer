@@ -407,3 +407,87 @@ test('14. the Biot number in water justifies the Dirichlet treatment', () => {
   close(biotNumber(2 * H_EFF, EU_LARGE.radius_m), 2 * bi, 1e-9, 'Bi linear in h');
   close(biotNumber(H_EFF, 2 * EU_LARGE.radius_m), 2 * bi, 1e-9, 'Bi linear in R');
 });
+
+// --------------------------------------------------------------------------
+// 15. heat off at the boil
+// --------------------------------------------------------------------------
+
+test('15a. with the heat off the water falls, and the dose saturates', () => {
+  const standing = setupOf({
+    startMode: 'cold', afterBoil: 'off', timeToBoil_s: 480, cooling: 'tap',
+  });
+  const twenty = simulate(EU_LARGE, standing, DEFAULT_PARAMS, 480 + 20 * 60);
+  const forty = simulate(EU_LARGE, standing, DEFAULT_PARAMS, 480 + 40 * 60);
+
+  // Held at the boil, twice the time is orders of magnitude more dose. Here the
+  // pan has nothing left to give, so the two cooks are the same egg. This is
+  // why Williams can say "about seventeen minutes" and be right.
+  close(forty.peakYolk_C, twenty.peakYolk_C, 0.1, 'peak yolk saturates');
+  assert.ok(
+    forty.yolkDose_min < twenty.yolkDose_min * 1.05,
+    `dose should saturate: ${twenty.yolkDose_min} -> ${forty.yolkDose_min}`,
+  );
+
+  const held = simulate(
+    EU_LARGE, setupOf({ startMode: 'cold', timeToBoil_s: 480, cooling: 'tap' }),
+    DEFAULT_PARAMS, 480 + 40 * 60,
+  );
+  assert.ok(
+    held.yolkDose_min > forty.yolkDose_min * 100,
+    'holding the boil must cook far harder than standing, for the same clock time',
+  );
+});
+
+test('15b. a pan that boiled fast cannot stand its way to hard', () => {
+  const hard = donenessFromSlider(1.0);
+  // Time to boil is the only measurement of the pan's heat capacity there is:
+  // a four-minute boil is a pan that was never holding much heat.
+  const fast = solveCookTime(
+    EU_LARGE,
+    setupOf({ startMode: 'cold', afterBoil: 'off', timeToBoil_s: 240, cooling: 'ice' }),
+    DEFAULT_PARAMS, hard,
+  );
+  assert.equal(fast.reachable, false, 'hard should be out of reach after a fast boil');
+  assert.ok(fast.hardestLevel < 1, `hardestLevel should be capped, got ${fast.hardestLevel}`);
+
+  const slow = solveCookTime(
+    EU_LARGE,
+    setupOf({ startMode: 'cold', afterBoil: 'off', timeToBoil_s: 600, cooling: 'ice' }),
+    DEFAULT_PARAMS, hard,
+  );
+  assert.equal(slow.reachable, true, 'a ten-minute boil has heat to spare');
+  close(slow.hardestLevel, 1, 1e-9, 'nothing is capped when the target is reachable');
+});
+
+test('15c. holding the boil is never capped at the hard end', () => {
+  const sol = solveCookTime(
+    EU_LARGE, setupOf({}), DEFAULT_PARAMS, donenessFromSlider(1.0),
+  );
+  close(sol.hardestLevel, 1, 1e-9, 'a boiling pan can always cook harder');
+});
+
+test('15d. a pan with too little heat never sets the white at all', () => {
+  // Four minutes to the boil is a small pan on a strong burner: almost no heat
+  // stored, and with the burner off the water is past the white's own target
+  // within minutes. There is no cook time to offer here, at any doneness.
+  const sol = solveCookTime(
+    EU_LARGE,
+    setupOf({ startMode: 'cold', afterBoil: 'off', timeToBoil_s: 240, waterLitres: 2, eggCount: 2 }),
+    DEFAULT_PARAMS, donenessFromSlider(0.41),
+  );
+  assert.equal(sol.whiteSets, false, 'the white should never set');
+  assert.equal(sol.reachable, false);
+  // And the answer must still be a time a person could act on, not the hour-long
+  // asymptote the dose curve creeps toward.
+  assert.ok(
+    sol.result.cookTime_s < 30 * 60,
+    `expected the practical knee, got ${(sol.result.cookTime_s / 60).toFixed(1)} min`,
+  );
+
+  const generous = solveCookTime(
+    EU_LARGE,
+    setupOf({ startMode: 'cold', afterBoil: 'off', timeToBoil_s: 600, waterLitres: 2, eggCount: 2 }),
+    DEFAULT_PARAMS, donenessFromSlider(0.41),
+  );
+  assert.equal(generous.whiteSets, true, 'a ten-minute boil has heat to spare');
+});

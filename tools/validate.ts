@@ -16,10 +16,10 @@ import { seriesTheta, biotNumber } from '../src/core/sphere.js';
 import { zFromActivationEnergy } from '../src/core/kinetics.js';
 import { ALPHA_DEFAULT, H_EFF, Z_YOLK, Z_WHITE, TREF_YOLK_C } from '../src/core/constants.js';
 import { boilingPointAtAltitude, boilingPointApprox, pressureAtAltitude } from '../src/core/thermo.js';
-import { CookSetup } from '../src/core/protocol.js';
+import { CookSetup, panTimeConstant } from '../src/core/protocol.js';
 import {
   simulate, solveCookTime, donenessFromSlider, sliderFromYolkDose,
-  DEFAULT_PARAMS, DONENESS_ANCHORS,
+  DEFAULT_PARAMS, DONENESS_ANCHORS, YOLK_DOSE_HARD,
 } from '../src/core/solve.js';
 
 // --------------------------------------------------------------------------
@@ -83,6 +83,17 @@ function setupOf(over: Partial<CookSetup>): CookSetup {
     eggMass_kg: EU_LARGE.mass_kg,
   };
   return { ...base, ...over };
+}
+
+/** The doneness label nearest a slider position, for the report tables. */
+function anchorNear(level: number): string {
+  let best = DONENESS_ANCHORS[0];
+  for (let i = 0; i < DONENESS_ANCHORS.length; i++) {
+    if (Math.abs(DONENESS_ANCHORS[i].level - level) < Math.abs(best.level - level)) {
+      best = DONENESS_ANCHORS[i];
+    }
+  }
+  return best.label;
 }
 
 /** Cook time in minutes for a target doneness. */
@@ -189,6 +200,61 @@ for (let h = 0; h <= 5000; h += 500) {
   ]);
 }
 check('T_b(h) vs 100 - h/300, 0-5000 m (worst case)', worstApproxError, 0.0, 0.05, 'C');
+
+// --------------------------------------------------------------------------
+// the standing method: boil, cover, heat off
+// --------------------------------------------------------------------------
+
+const standingRows: string[][] = [];
+
+/** Cold start, heat killed at the boil, cooled under the tap - Williams'
+ *  description of the method, as closely as this model can express it. */
+function standingSetup(boil_s: number, litres: number): CookSetup {
+  return setupOf({
+    startMode: 'cold', afterBoil: 'off', timeToBoil_s: boil_s,
+    waterLitres: litres, cooling: 'tap',
+  });
+}
+
+// Williams: "put the eggs into a pan of cold water and bring it to the boil,
+// then remove the heat and let the pan stand with its lid on for about
+// seventeen minutes". With an 8-minute boil that lands just past this app's
+// Hard - and the interesting part is that it does not matter much: the water is
+// falling, so the dose saturates and 12 minutes of standing gives the same egg
+// as 30. That is why a folk method can get away with "about".
+const williams = simulate(EU_LARGE, standingSetup(480, 2), DEFAULT_PARAMS, 480 + 17 * 60);
+check("Williams' standing method: 17 min, peak yolk", williams.peakYolk_C, 75.6, 1.0, 'C');
+check(
+  "Williams' standing method: 17 min reaches hard",
+  williams.yolkDose_min >= YOLK_DOSE_HARD ? 1 : 0, 1, 0, '',
+);
+
+const standing20 = simulate(EU_LARGE, standingSetup(480, 2), DEFAULT_PARAMS, 480 + 20 * 60);
+const standing30 = simulate(EU_LARGE, standingSetup(480, 2), DEFAULT_PARAMS, 480 + 30 * 60);
+check(
+  'standing dose saturates: 20 min vs 30 min',
+  100 * (standing30.yolkDose_min / standing20.yolkDose_min - 1), 0.0, 1.0, '%',
+);
+
+// The pan is the whole story. A fast boil means a pan that could not hold much
+// heat in the first place, and it runs out before the yolk is done.
+for (const boil of [240, 360, 480, 600]) {
+  const sol = solveCookTime(EU_LARGE, standingSetup(boil, 2), DEFAULT_PARAMS, donenessFromSlider(1.0));
+  standingRows.push([
+    `${boil / 60} min`,
+    `${(panTimeConstant(boil) / 60).toFixed(1)} min`,
+    sol.whiteSets ? anchorNear(sol.hardestLevel) : 'nothing',
+    sol.reachable ? `${((sol.result.cookTime_s - boil) / 60).toFixed(1)} min`
+      : sol.whiteSets ? 'cannot reach hard' : 'never sets the white',
+  ]);
+}
+check(
+  'a 4-minute boil cannot stand its way to hard',
+  solveCookTime(EU_LARGE, standingSetup(240, 2), DEFAULT_PARAMS, donenessFromSlider(1.0))
+    .hardestLevel < 1 ? 1 : 0,
+  1, 0, '',
+);
+
 
 // --------------------------------------------------------------------------
 // external validation: published measurements, not our own targets
@@ -389,6 +455,12 @@ printTable(
   'Doneness slider (EU Large, fridge, sea level, ice bath)',
   ['level', 'label', 'cook (min)', 'peak yolk (C)', 'peak white (C)', 'reachable'],
   sliderRows,
+);
+
+printTable(
+  'Heat off at the boil - what the pan can still do',
+  ['time to boil', 'pan time constant', 'hardest reachable', 'standing time for hard'],
+  standingRows,
 );
 
 printTable(

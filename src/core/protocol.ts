@@ -5,7 +5,7 @@
 
 import {
   RAMP_R, TAU_AIR, T_ICE_BATH_C, T_COLD_TAP_C, T_ROOM_C,
-  TAU_DIP_RECOVERY, C_WATER, C_EGG, TAU_PLUNGE,
+  TAU_DIP_RECOVERY, TAU_STANDING_SCALE, C_WATER, C_EGG, TAU_PLUNGE,
 } from './constants.js';
 
 /** Cold start: eggs go in the cold pan and heat with the water. Hot start:
@@ -16,6 +16,12 @@ export type StartMode = 'cold' | 'hot';
 /** What happens after the egg comes out. This is not a detail: it changes the
  *  peak yolk temperature by ~20 C. */
 export type Cooling = 'ice' | 'tap' | 'counter';
+
+/** What happens to the burner once the water boils. 'hold' keeps the water at
+ *  its boiling point, which is what every recipe silently assumes. 'off' is the
+ *  standing method - cover the pan, kill the heat, and let a falling water
+ *  temperature finish the egg. */
+export type HeatAfterBoil = 'hold' | 'off';
 
 export interface CookSetup {
   startMode: StartMode;
@@ -28,8 +34,12 @@ export interface CookSetup {
   /** Measured time for the pan to reach a full rolling boil, s. Cold start only. */
   timeToBoil_s: number;
   cooling: Cooling;
-  /** Water volume, litres - sets how far the water dips when eggs go in. */
+  /** Water volume, litres. Sets how far the water dips when eggs go in, and -
+   *  with the heat off - how long the pan holds its temperature. */
   waterLitres: number;
+  /** Burner after the boil. Omitted means 'hold', which is what every recipe
+   *  assumes without saying so. */
+  afterBoil?: HeatAfterBoil;
   eggCount: number;
   eggMass_kg: number;
 }
@@ -72,6 +82,41 @@ export function dipMagnitude(setup: CookSetup): number {
   const total = waterCapacity + eggCapacity;
   if (total <= 0.0) return 0.0;
   return eggCapacity * (setup.boiling_C - setup.eggStart_C) / total;
+}
+
+/**
+ * The pan's Newtonian loss time constant, seconds.
+ *
+ * tau = m*c/(U*A) is the same quantity that shapes the ramp, so the user's one
+ * measurement - time to a rolling boil - already contains it:
+ *
+ *   T(t) = Tamb + r*(Tboil - Tamb)*(1 - exp(-t/tau))  reaches Tboil at
+ *   t_boil = tau * ln(r/(r-1))
+ *
+ * It therefore scales with water volume without being told to, which is the
+ * whole reason the standing method works in a stockpot and not in a milk pan.
+ * TAU_STANDING_SCALE holds open the question of whether the constant is really
+ * the same with the burner off and a lid on; see constants.ts.
+ */
+export function panTimeConstant(timeToBoil_s: number): number {
+  return TAU_STANDING_SCALE * timeToBoil_s / Math.log(RAMP_R / (RAMP_R - 1.0));
+}
+
+/**
+ * Water temperature once the heat is off: Newtonian cooling of the pan toward
+ * the room, starting from `from_C`.
+ *
+ * Nothing else in the cook phase changes. The modal solver is driven by an
+ * arbitrary piecewise-linear surface temperature, so a falling bath costs no
+ * more than a constant one - the egg simply sees a schedule that runs out of
+ * heat instead of one that does not.
+ */
+export function standingTemperature(
+  elapsedSinceOff_s: number, from_C: number, ambient_C: number, timeToBoil_s: number,
+): number {
+  const tau = panTimeConstant(timeToBoil_s);
+  if (!(tau > 0.0)) return from_C;
+  return ambient_C + (from_C - ambient_C) * Math.exp(-elapsedSinceOff_s / tau);
 }
 
 /**
@@ -123,13 +168,25 @@ export function surfaceTemperature(
       setup.cooling, t_s - cookEnd_s, waterAtPull_C, meanAtPull_C, tauAirScale,
     );
   }
+  const standing = setup.afterBoil === 'off';
   if (setup.startMode === 'cold') {
-    return rampTemperature(t_s, setup.timeToBoil_s, setup.ambient_C, setup.boiling_C);
+    if (t_s < setup.timeToBoil_s) {
+      return rampTemperature(t_s, setup.timeToBoil_s, setup.ambient_C, setup.boiling_C);
+    }
+    if (!standing) return setup.boiling_C;
+    return standingTemperature(
+      t_s - setup.timeToBoil_s, setup.boiling_C, setup.ambient_C, setup.timeToBoil_s,
+    );
   }
-  // Hot start: the water is already boiling but dips when the eggs go in, then
-  // the burner pulls it back over roughly a minute.
+  // Hot start: the water is already boiling but dips when the eggs go in.
   const dip = dipMagnitude(setup);
-  return setup.boiling_C - dip * Math.exp(-t_s / TAU_DIP_RECOVERY);
+  // With the burner on it pulls the dip back over roughly a minute. With the
+  // burner off nothing pulls it back: the dip is permanent, and the water falls
+  // from there. This is why the standing method is so much more sensitive to
+  // pan size than a boiling one - the same eggs take a bite out of the only
+  // heat left in the room.
+  if (!standing) return setup.boiling_C - dip * Math.exp(-t_s / TAU_DIP_RECOVERY);
+  return standingTemperature(t_s, setup.boiling_C - dip, setup.ambient_C, setup.timeToBoil_s);
 }
 
 /** Water temperature at the moment the egg goes in - the sphere's initial
