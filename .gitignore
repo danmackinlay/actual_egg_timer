@@ -70,3 +70,5 @@ _site/
 
 # Swift package build products
 .build/
+ios/ActualEggTimer.xcodeproj/
+ios/build/

@@ -75,7 +75,34 @@ them; they are what lets it learn your kitchen. Version 2.
 
 `sousvide.ts` is a joke and can wait forever.
 
-## When you need Xcode
+## The app
+
+```sh
+cd ios && xcodegen        # regenerate ActualEggTimer.xcodeproj from project.yml
+open ios/ActualEggTimer.xcodeproj
+```
+
+The project file is **generated, not committed**. `project.yml` is twenty lines
+and fits on a screen; a pbxproj is three thousand lines of machine-written XML
+that every branch conflicts on and nobody reviews. `ActualEggTimer.xcodeproj` is
+gitignored — run `xcodegen` after cloning, and after any change to targets,
+sources or settings.
+
+The first screen is deliberately a vertical slice rather than a port of the web
+UI: a doneness slider, egg mass, where the egg came from, what happens after the
+pull, and the cook time the ported physics says it needs. It exists to prove the
+chain from the Swift package to a screen, and to be the thing notifications and
+a Live Activity get bolted onto.
+
+It agrees with the web app on screen: 62.3 g, fridge, ice bath, jammy gives
+**7:21** with a peak yolk of 65 °C and a peak white of 81 °C, which is what
+`solveCookTime` returns in TypeScript for the same inputs (441.28 s, 64.8 °C,
+80.6 °C).
+
+Signing is off (`CODE_SIGNING_ALLOWED: NO`) because this is simulator-only so
+far. A device build turns it back on and adds a team.
+
+## What Xcode is still needed for
 
 Not yet. Everything above is `swift test` in a terminal, and that is the right
 place to finish the core: fast, headless, no simulator.
