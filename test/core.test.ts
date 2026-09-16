@@ -491,3 +491,59 @@ test('15d. a pan with too little heat never sets the white at all', () => {
   );
   assert.equal(generous.whiteSets, true, 'a ten-minute boil has heat to spare');
 });
+
+// --------------------------------------------------------------------------
+// 16. the invariant the two search strategies rest on
+// --------------------------------------------------------------------------
+
+/** Worst (most negative) change in a dose between adjacent cook times. */
+function worstDoseStep(
+  setup: CookSetup, pick: (r: { yolkDose_min: number; whiteDose_min: number }) => number,
+): number {
+  const start = setup.startMode === 'cold' ? setup.timeToBoil_s : 20;
+  let worst = 0;
+  let prev = Number.NEGATIVE_INFINITY;
+  for (let t = start; t <= start + 1800; t += 20) {
+    const dose = pick(simulate(EU_LARGE, setup, DEFAULT_PARAMS, t));
+    if (prev > Number.NEGATIVE_INFINITY && dose - prev < worst) worst = dose - prev;
+    prev = dose;
+  }
+  return worst;
+}
+
+test('16a. held at the boil, both doses are monotonic in cook time', () => {
+  // This is what licenses `bisect`. The trajectory before the pull does not
+  // depend on when you pull, so the dose banked by then only grows; and while
+  // the water is at or climbing to the boil the egg is always colder than it,
+  // so a later pull also starts carryover from a HOTTER egg. Growing plus
+  // growing. Nothing here may ever go backwards.
+  const cases: CookSetup[] = [
+    setupOf({}),
+    setupOf({ cooling: 'tap' }),
+    setupOf({ cooling: 'counter' }),
+    setupOf({ startMode: 'cold', timeToBoil_s: 480 }),
+    setupOf({ startMode: 'cold', timeToBoil_s: 480, cooling: 'counter' }),
+    setupOf({ startMode: 'cold', timeToBoil_s: 720 }),
+    setupOf({ eggCount: 8, waterLitres: 0.75 }),
+    setupOf({ boiling_C: 83.3 }),
+  ];
+  for (const setup of cases) {
+    assert.equal(worstDoseStep(setup, (r) => r.yolkDose_min), 0, 'yolk dose must not fall');
+    assert.equal(worstDoseStep(setup, (r) => r.whiteDose_min), 0, 'white dose must not fall');
+  }
+});
+
+test('16b. with the heat off they are not, which is why standing scans', () => {
+  // Pulling later means pulling from cooler water, so the carryover that
+  // follows is smaller. Past the crossover the total dose FALLS with a longer
+  // cook, and a bisection on it lands anywhere. If this test ever goes green in
+  // the other direction, solveStanding can go back to bisecting - and not
+  // before.
+  const standing = setupOf({
+    startMode: 'cold', afterBoil: 'off', timeToBoil_s: 480, cooling: 'counter',
+  });
+  assert.ok(
+    worstDoseStep(standing, (r) => r.yolkDose_min) < 0,
+    'standing should be non-monotonic in the yolk dose',
+  );
+});
