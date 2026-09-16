@@ -18,6 +18,13 @@
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
 
+# Icons and the social card change only when the artwork does, but they keep
+# their filenames when they do - so a day, not a year, and no immutable.
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=86400"
+
 [[headers]]
   for = "/index.html"
   [headers.values]

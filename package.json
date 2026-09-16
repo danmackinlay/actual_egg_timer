@@ -13,7 +13,7 @@
     "test": "tsc && node --test dist/test/*.test.js",
     "validate": "tsc && node dist/tools/validate.js",
     "serve": "python3 -m http.server 8080",
-    "build:site": "tsc -p tsconfig.site.json && cp index.html styles.css _site/",
+    "build:site": "tsc -p tsconfig.site.json && cp index.html styles.css site.webmanifest _site/ && cp -R assets _site/assets",
     "serve:site": "python3 -m http.server 8080 --directory _site"
   },
   "devDependencies": {
