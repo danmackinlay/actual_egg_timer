@@ -1,4 +1,4 @@
-# PLAN.md — build state for `actual_egg_timer`
+# PLAN.md — build state for Actual Egg Timer
 
 Resumable working notes. Updated **in the same commit** as the work it describes.
 For the science, see `README.md`. This file is for whoever picks the build back up.

@@ -370,6 +370,7 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
   color: var(--dim);
 }
 #colophon p { margin: 0; }
+#colophon strong { color: var(--fg); font-weight: 600; }
 #colophon a { color: inherit; text-underline-offset: 2px; }
 #colophon a:hover, #colophon a:focus-visible { color: var(--fg); }
 

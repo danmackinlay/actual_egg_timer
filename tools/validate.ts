@@ -446,7 +446,7 @@ externalRows.push([
 // report
 // --------------------------------------------------------------------------
 
-console.log('# actual_egg_timer — validation report');
+console.log('# Actual Egg Timer — validation report');
 console.log(
   '\nReference egg: EU Large, 43.5 mm minor diameter, ' +
   `${(1000 * EU_LARGE.mass_kg).toFixed(1)} g, equal-volume radius ` +

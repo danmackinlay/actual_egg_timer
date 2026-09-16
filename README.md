@@ -1,4 +1,4 @@
-# actual_egg_timer
+# Actual Egg Timer
 
 A boiled-egg timer that computes the time from physics instead of reciting it: transient
 heat conduction in a sphere, coupled to Arrhenius denaturation kinetics, with the pan
