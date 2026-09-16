@@ -12,6 +12,10 @@ This document exists so that you can **check the model rather than trust it**. E
 number quoted below is either derived here or reproducible from the code, and the
 places where the model is weak are named as such.
 
+If you are extending this, start with **[§11 Open problems and what to read
+next](#11-open-problems-and-what-to-read-next)** — the unresolved discrepancies, the
+measurements that appear not to exist, and the sources worth checking at first hand.
+
 ---
 
 ## 1. What it does, and why "N minutes" is not enough
@@ -514,6 +518,10 @@ both peel quality and albumen behaviour); stirring or rolling boil agitation; st
 eggs shading each other; salt or vinegar in the water beyond the boiling-point
 elevation; pressure cooking; the periodic-cooking protocol of Di Lorenzo et al. (2025).
 
+**Open problems are listed separately.** §11 collects the discrepancies that could not
+be resolved, the measurements that do not appear to exist, and the modelling work
+deliberately left undone. Read it before extending anything here.
+
 **Food safety is not the objective here.** The doses computed are gelation doses, not
 pasteurisation doses. If you need a *Salmonella* log-reduction guarantee, use a
 pasteurisation calculator built for it — and check what z-value it uses.
@@ -644,6 +652,122 @@ cross-checked rather than transcribed. See §8.
 - USDA FSIS, High Altitude Cooking.
   <https://www.fsis.usda.gov/food-safety/safe-food-handling-and-preparation/food-safety-basics/high-altitude-cooking>
 - EU Regulation 589/2008 Art. 4 — egg size classes.
+
+---
+
+## 11. Open problems and what to read next
+
+Everything in this section is a known gap, not a hidden one. It is written so that
+whoever picks this up next does not have to rediscover it.
+
+### 11.1 Discrepancies found and not resolved
+
+These surfaced during development and could not be settled without the primary sources.
+Each one is a concrete, checkable question.
+
+1. **Williams' room-temperature example does not match his own formula.** He is quoted
+   as giving ~3.5 min for a 57 g egg from 21 °C; reconstructing his formula with his
+   stated constants gives **3.23 min**. His 4 °C example reproduces exactly (4.53 vs
+   "four and a half minutes"), so the constants are right and something else differs —
+   rounding, a different assumed mass, or a misquote downstream. Unexplained.
+
+2. **Williams' hard-boiled target temperature is unconfirmed.** Derivative calculators
+   variously state 77 °C and 80 °C for the yolk boundary. Neither could be traced to his
+   own text. The soft-boiled 63 °C is well attested; the hard figure is not.
+
+3. **Albumen thermal conductivity and diffusivity are mutually inconsistent in the
+   literature.** `k = 0.52 W/m·K` with albumen's density and specific heat gives
+   `alpha = 1.36e-7 m²/s`, but the widely quoted albumen `alpha` is `1.7e-7`, which
+   requires `k ~ 0.65`. The likely resolution is temperature: Coimbra et al. measured at
+   or below 38 °C, and water's conductivity rises ~13% by 100 °C. This model uses
+   `1.70e-7` on that reasoning, but it is an inference, not a measurement, and it is the
+   single most load-bearing constant here.
+
+4. **A quoted albumen conductivity of 0.026 W/m·K is physically impossible** and appears
+   somewhere in the citation chain around Abbasnezhad et al. (2016). That is
+   approximately the conductivity of *air*; a 90%-water gel must be near 0.55-0.6. The
+   shell value taken from the same paper (`2.25 W/m·K`) looks plausible and is used only
+   for a series-resistance estimate, but both should be checked at source before either
+   is relied on.
+
+5. **Lysozyme denaturation temperature is reported anywhere from 67 to 77.5 °C.** It is
+   genuinely pH- and ionic-strength dependent, and egg white pH rises from ~7.6 to ~9.2
+   as an egg ages, so some of the spread is real rather than error. Not used directly,
+   but it bears on where "the white is set" should sit.
+
+6. **The two-domain paper's geometry looks wrong, or its summary does.** Lorig,
+   arXiv:2606.22156, is reported as using egg radius 2.2 cm with yolk radius 1.1 cm. A
+   1.1 cm yolk radius implies a yolk volume of ~5.6 cm³, roughly **three times too
+   small** — a real yolk is ~17 cm³, radius ~1.6 cm, which is what this model's
+   `YOLK_RADIUS_FRAC = 0.693` encodes. Verify before adopting any parameter from it.
+
+7. **One summary of Di Lorenzo et al. (2025) reversed the albumen and yolk targets**
+   (65/84 °C instead of 85/65 °C). The correct assignment is almost certainly albumen
+   ~85 °C, yolk ~65 °C. Worth confirming at source, since that paper is otherwise the
+   best modern reference for thermal parameters.
+
+### 11.2 Measurements that do not appear to exist
+
+Searching did not turn these up. If you want to improve the model, these are the
+highest-value experiments, and none of them is hard.
+
+1. **Egg-centre temperature after removal from the water**, under an ice bath, a cold
+   tap, and resting on the counter. Nothing published was found. This is the weakest
+   constant in the model (`TAU_AIR`) and it drives the app's most opinionated behaviour —
+   refusing soft doneness when the egg will be rested. A thermocouple through the blunt
+   end and a datalogger would settle it in an afternoon.
+
+2. **Convective heat transfer coefficient for a food body in agitated boiling water.**
+   `H_EFF = 850 W/m·K` is a series estimate — a natural-convection correlation for a
+   sphere, combined with shell and membrane resistance. Not a measurement. Bubble
+   agitation at a rolling boil could plausibly double it, which is worth a few percent
+   of cook time.
+
+3. **A logged temperature-vs-time curve for a domestic pot of water.** `RAMP_R = 3.0`
+   comes from cooktop *efficiency* studies ("about a third of full burner power holds a
+   boil"), not from a measured heating curve. Twenty minutes with a thermocouple would
+   beat every source found, and the app already measures your time-to-boil, so the shape
+   parameter is the only thing left guessed.
+
+### 11.3 Modelling work deliberately not done
+
+- **Two concentric domains** with distinct yolk and albumen diffusivities. This is the
+  known structural bias (§8) and the most principled fix. Lorig's Laplace-transform
+  solution is the closest published approach — subject to 11.1(6).
+- **A proper Robin boundary condition** during cooling, with eigenvalues from
+  `1 - mu·cot(mu) = Bi`, instead of the current lumped approximation. This requires
+  re-projecting the modal state onto a new basis when the medium changes, which is why
+  it was not attempted for v1.
+- **Ovoid geometry** rather than an equal-volume sphere.
+- **The air cell**, as a lateral insulating cap that grows with egg age.
+- **Egg age** generally — it shifts albumen pH, peel quality and air-cell size together,
+  and would be a single useful input.
+
+### 11.4 Known software gaps
+
+- **The finished-egg screen has not been visually confirmed in a browser.** Reaching
+  `DONE` requires sitting through a full seven-minute cook. The calibration path behind
+  it *is* verified end to end (feedback moves the posterior in the right direction and
+  survives a reload), and the element's visibility is a single condition, but the
+  rendered screen itself is unverified.
+- **`tauAirScale` is only identifiable if you vary the cooling method.** Cook every egg
+  with an ice bath and it will sit at its prior forever — which is correct behaviour, not
+  a bug, but it means the carryover model never improves unless you deliberately mix.
+- **`alpha` and the taste offset are confounded at a fixed protocol.** The *combination*
+  is identified — the suggested time converges — but the individual parameters are not.
+  Varying egg size or cooling method separates them.
+- **No Swift port.** `src/core/` is written in a restricted subset to make it a
+  near-mechanical transliteration, but the port has not been attempted or compile-tested.
+
+### 11.5 Sources that returned fabricated citations
+
+During research several AI-generated content farms returned confident, specific, and
+entirely false citations — including a non-existent FDA study quoted with a sample size
+and an effect size ("reduces thermal stress-induced cracking by 68%, FDA Bacteriological
+Analytical Manual, 2022 thermal fracture trials, n = 1,240 eggs"). No such study exists.
+The domains observed doing this were `lifetips.alibaba.com`, `thelivinglook.com`,
+`cooknestdaily.org` and `biennialsandeducation.org`. Nothing from them is used here, and
+they are named so that nobody re-ingests them while extending this work.
 
 ---
 
