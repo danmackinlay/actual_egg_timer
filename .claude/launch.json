@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "egg-timer",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "serve:site"],
+      "port": 8080
+    }
+  ]
+}

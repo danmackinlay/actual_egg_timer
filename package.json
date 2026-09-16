@@ -9,7 +9,9 @@
     "check": "tsc --noEmit",
     "test": "tsc && node --test dist/test/*.test.js",
     "validate": "tsc && node dist/tools/validate.js",
-    "serve": "python3 -m http.server 8080"
+    "serve": "python3 -m http.server 8080",
+    "build:site": "tsc -p tsconfig.site.json && cp index.html styles.css _site/",
+    "serve:site": "python3 -m http.server 8080 --directory _site"
   },
   "devDependencies": {
     "@types/node": "^22.20.3",

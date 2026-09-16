@@ -64,3 +64,6 @@ fastlane/test_output
 # Build output
 dist/
 node_modules/
+_site/
+.netlify/
+.vercel/

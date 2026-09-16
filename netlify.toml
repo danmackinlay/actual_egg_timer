@@ -1,0 +1,22 @@
+# The app is static: TypeScript compiled to ES modules, no bundler, no runtime
+# dependencies. `npm run build:site` compiles src/ and copies the two static
+# files next to it, so that index.html's <script src="dist/src/ui/main.js">
+# resolves identically whether you are serving _site/ or the repo root.
+
+[build]
+  command = "npm run build:site"
+  publish = "_site"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+# Everything is immutable per deploy except the entry point.
+[[headers]]
+  for = "/dist/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
