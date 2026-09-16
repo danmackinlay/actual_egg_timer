@@ -186,8 +186,9 @@ t = (M^(2/3) * c * rho^(1/3)) / (K * pi^2 * (4*pi/3)^(2/3))
       * ln( 0.76 * (Tw - T0) / (Tw - Ty) )
 ```
 
-The popular explanation of the 0.76 is wrong, including on Omnicalculator and in
-ScienceAlert, both of which call it a "yolk-to-white ratio". It is not.
+The popular explanation of the 0.76 is wrong. Omnicalculator's egg page writes the
+formula with the coefficient named `ywr` and glossed as the ratio of white to yolk;
+other derivative calculators repeat the same story. It is not that.
 
 **0.76 is `2*sinc(pi*x)` evaluated at the yolk boundary.** It is the amplitude of the
 first eigenmode at `x = r_yolk/R`. The yolk is about 33% of the egg's volume, so
@@ -212,7 +213,13 @@ stated properties (rho = 1.038 g/cm^3, c = 3.7 J/g/K, K = 5.4e-3 W/cm/K) gives
 27.05 s/g^(2/3) = **0.451 min**, which is the prefactor he publishes. Feeding his own
 worked example through it — 57 g egg, 4 °C to a 63 °C yolk boundary in 100 °C water —
 gives **4.53 min** against his published ~4.5 min. Both are reproduced in
-`tools/validate.ts`.
+`tools/validate.ts`. So are his other two examples (47 g -> 4 min, 67 g -> 5 min).
+
+**A third check, from the primary literature.** Buay et al. (2006) set both formulas
+side by side — their eq. (11) carrying the centre coefficient 2, Williams' eq. (12)
+carrying the 0.76 — and say outright why they differ: Williams' criterion is the
+*boundary* of the yolk, theirs is the *centre* of the yolk. The eigenmode reading is
+not an inference from the number; it is what the physics lineage states.
 
 ### Why we do not use it
 
@@ -239,16 +246,23 @@ method-of-images series both return **0.41142**; the one-term value is 0.38281.
 ## 4. Doneness is a thermal dose, not a peak temperature
 
 Protein denaturation is an irreversible, roughly first-order process with a very large
-activation energy — `Ea ~ 470 kJ/mol` for yolk gelation (Vega & Mercadé-Prieto 2011).
-Converted to a decimal-reduction slope,
+activation energy. Vega & Mercadé-Prieto (2011) fit **`Ea = 469 ± 13 kJ/mol`** (95% CI)
+to isothermal yolk gelation times measured between 54 and 70 °C, and `483 ± 37 kJ/mol`
+independently to the viscosity-rise slope. Converted to a decimal-reduction slope,
 
 ```
 z = ln(10) * R_gas * T^2 / Ea
 ```
 
-At `T = 338 K` with `Ea = 470 kJ/mol` this gives **z = 4.65 K**: an extra 4.7 °C makes
-the reaction **ten times faster**. Egg white (ovalbumin, `Ea ~ 460 kJ/mol` at 353 K)
-gives `z = 5.2 K`.
+At `T = 338 K` — mid-range for their data, not an extrapolation — this gives
+**z = 4.65 K**: an extra 4.7 °C makes the reaction **ten times faster**. Their
+confidence interval maps to `z = 4.54-4.80 K`, so the model's 4.65 sits inside it.
+
+Egg white is ovalbumin, and Weijers et al. (2003) report `Ea ~ 480 kJ/mol` (430-490
+across techniques), which at 353 K gives **`z = 4.97 K`**. An earlier draft of this
+model used 460 kJ/mol and `z = 5.2`; that was wrong and has been corrected. Nothing in
+the validation table moves, because the white dose only binds at the reachability
+edge.
 
 Because cooking is not isothermal — and because the egg keeps cooking after it leaves
 the water — the honest criterion is the integral, not the peak:
@@ -262,7 +276,7 @@ read as **equivalent minutes at Tref**. The app tracks two doses:
 | dose | z (K) | Tref (°C) | evaluated at |
 |---|---|---|---|
 | yolk gelation | 4.65 | 63 | the yolk centre (`x = 0`) |
-| white setting | 5.2 | 80 | the yolk boundary (`x = 0.693`) |
+| white setting | 4.97 | 80 | the yolk boundary (`x = 0.693`) |
 
 The white is evaluated at the yolk boundary because the *innermost* white is the last to
 set — which is precisely the radius Williams' 0.76 encodes.
@@ -302,6 +316,31 @@ The labelled anchors, for the reference scenario:
 | Jammy | 0.41 | 7.36 | 64.8 | 80.6 |
 | Fudgy | 0.62 | 8.22 | 69.3 | 83.4 |
 | Hard | 1.00 | 10.12 | 77.4 | 88.2 |
+
+### An absolute anchor for the dose scale
+
+Vega & Mercadé-Prieto also publish the Arrhenius fit itself, which converts directly
+into this model's units. Read at 63 °C, their isothermal gelation time **is** a dose in
+equivalent minutes at 63 °C:
+
+| yolk held at | time to gel |
+|---|---|
+| 60 °C | 305 min |
+| 63 °C | **67 min** |
+| 65 °C | 25 min |
+| 70 °C | 2.2 min |
+
+So a *gelled* yolk — tan δ = 1 in a rheometer, i.e. properly set — is about
+**67 min-eq @ 63 °C**, which lands at slider **0.68**: past Jammy (0.41), short of Hard
+(1.00). That is the right place for it, and it is the first number on the doneness scale
+that comes from a measurement rather than from kitchen practice. (Their printed equation
+is typeset with the exponent sign transposed; the form above is the one that reproduces
+their own figure 4. `tools/validate.ts` carries the check.)
+
+The same paper is worth reading for what it refuses to give you: its conclusion is that
+there is no such thing as a 63 °C egg or a 65 °C egg, because texture is set by time
+*and* temperature together. That is the entire argument for §4 in one sentence, from
+people who measured it.
 
 The white has its own floor: the shortest cook that still sets the white is 5.76 min
 here, giving a peak inner-white temperature near 75 °C. That is genuinely set but
@@ -361,16 +400,18 @@ specifies, whose effect is larger than a full minute of boiling.
 ## 6. Every constant, with provenance
 
 Values are in `src/core/constants.ts` (and the dose targets in `src/core/solve.ts`).
-Confidence is our own honest assessment, not a formal uncertainty.
+Confidence is our own honest assessment, not a formal uncertainty. Constants that have
+been checked against the primary source say so; the ones that have not are the ones to
+distrust.
 
 ### Calibratable — these carry the model error
 
 | constant | value | units | source / confidence |
 |---|---|---|---|
-| `ALPHA_DEFAULT` | 1.70e-7 | m²/s | Albumen at cooking temperature. **The calibration knob.** Only the group `tau = R^2/alpha` is identifiable, so radius and diffusivity cannot be fitted separately: geometry is fixed honestly and `alpha` absorbs the model error. Room-temperature literature values (~1.36e-7) are inconsistent with reported `alpha`; water's conductivity rises ~13% by 100 °C, which resolves it in favour of the higher value. For the reference egg `tau = R^2/alpha = 3340 s`. **Medium** — reproduces kitchen practice. |
+| `ALPHA_DEFAULT` | 1.70e-7 | m²/s | Albumen at cooking temperature. **The calibration knob.** Only the group `tau = R^2/alpha` is identifiable, so radius and diffusivity cannot be fitted separately: geometry is fixed honestly and `alpha` absorbs the model error. Abbasnezhad's measured correlations give albumen `alpha` rising 1.36e-7 (20 °C) → 1.69e-7 (100 °C), and Buay's whole-egg fit to a real thermocouple trace gives 1.6e-7 (1.5-1.8e-7); 1.70e-7 is inside that band, at the fast end. For the reference egg `tau = R^2/alpha = 3340 s`. **Medium-high** — measured band plus kitchen practice, but 4.6% fast against Buay's trace (§7). |
 | `ALPHA_REL_SD` | 0.119 | — | Prior width for calibration, chosen so `tau` has sd ~400 s at the reference radius. **Judgement.** |
-| `TAU_AIR` | 2030 | s | Lumped `m*c/(h*A)` with `h ~ 15 W/m²K` in still air. **Lowest confidence in the model** — no published egg-centre measurements after removal from water were found. Carries a wide calibration prior (`tauAirScale`). |
-| `H_EFF` | 850 | W/m²K | Natural convection on a sphere (~1100) in series with shell + membranes (~3200). Estimated, not measured. Used for the Biot number. **Low**, but it only enters as a justification, not as a driver (see §8). |
+| `TAU_AIR` | 2030 | s | Lumped `m*c/(h*A)` with `h ~ 15 W/m²K` in still air. **Lowest confidence in the model** — no published carryover curve has been found (§11.3). Carries a wide calibration prior (`tauAirScale`). |
+| `H_EFF` | 850 | W/m²K | Natural convection on a sphere (~1100) in series with shell + membranes (~3200). Used for the Biot number. **Known high**: Denys et al. (2003) measured 490 W/m²K at the shell, ~450 effective with their measured shell in series — `Bi ~ 18`, not 34 (§11.2). It enters as a justification rather than a driver, which is the only reason it still stands. |
 | `RAMP_R` | 3.0 | — | Hob overshoot ratio; `1/r` is the fraction of full power needed to hold a boil, which measured cooktop studies put near 1/3. **Medium-low.** |
 
 ### Physical properties
@@ -388,20 +429,20 @@ Confidence is our own honest assessment, not a formal uncertainty.
 |---|---|---|---|
 | `EGG_VOLUME_COEFF` | 0.51 | — | `V = k_v * L * B^2` (Hoyt 1979). The ovoid taper removes ~2.5% from a prolate spheroid's `pi/6 = 0.5236`. **High.** |
 | `EGG_LENGTH_RATIO` | 1.35 | — | `L/B`; shape index `100*B/L ~ 74`. **Medium** — varies by breed and bird age. |
-| `YOLK_RADIUS_FRAC` | 0.693 | — | Yolk = 33% of egg volume, `(1/3)^(1/3)`. **High** — three independent routes agree (§3). |
+| `YOLK_RADIUS_FRAC` | 0.693 | — | Yolk = 33% of egg volume, `(1/3)^(1/3)`. **High** — four independent routes agree (§3), including Abbasnezhad's meshed 1.6 cm yolk sphere. |
 | `SIZE_CLASSES` | 48/58/68/76 | g | EU Regulation 589/2008 Art. 4. Labelled in grams deliberately: EU/UK "Large" (63-73 g) is a US "Extra Large", and a US "Large" (57 g) is an EU "Medium". Using names would systematically mis-time for one audience. |
 
 ### Kinetics
 
 | constant | value | units | source / confidence |
 |---|---|---|---|
-| `Z_YOLK` | 4.65 | K | From `Ea ~ 470 kJ/mol` (Vega & Mercadé-Prieto 2011) at 338 K. Recomputed: 4.653. **Medium-high** for the slope, **medium** for `Ea` itself. |
+| `Z_YOLK` | 4.65 | K | From `Ea = 469 ± 13 kJ/mol` (Vega & Mercadé-Prieto 2011, measured 54-70 °C) at 338 K. Their CI maps to 4.54-4.80 K. **High** — measured, with 338 K inside the data range. |
 | `TREF_YOLK_C` | 63 | °C | Reference for the yolk dose integral. Definitional. |
-| `Z_WHITE` | 5.2 | K | Ovalbumin, `Ea ~ 460 kJ/mol` at 353 K (Weijers et al. 2003). Recomputed: 5.186. **Medium.** |
+| `Z_WHITE` | 4.97 | K | Ovalbumin, `Ea ~ 480 kJ/mol` at 353 K (Weijers et al. 2003; 430-490 across techniques). **Corrected** from 5.2, which assumed 460. **Medium-high.** |
 | `TREF_WHITE_C` | 80 | °C | Definitional. |
-| `WHITE_DOSE_TARGET` | 0.05 | min-eq @80 °C | Calibrated so the shortest white-setting cook is ~5.8 min for a fridge-cold reference egg into boiling water, peak inner white ~75 °C. **Calibrated to kitchen practice, not measured.** |
+| `WHITE_DOSE_TARGET` | 0.05 | min-eq @80 °C | Calibrated so the shortest white-setting cook is ~5.8 min for a fridge-cold reference egg into boiling water, peak inner white ~75 °C. **Calibrated to kitchen practice, not measured.** Powrie & Nakai's ranges (opaque from ~60 °C, soft curd 75 °C, ovalbumin 79-84 °C) bracket it. |
 | `YOLK_DOSE_RUNNY` | 0.05 | min-eq @63 °C | Slider floor (~56 °C peak yolk). **Definitional.** |
-| `YOLK_DOSE_HARD` | 2000 | min-eq @63 °C | Slider ceiling (~77 °C peak yolk). **Definitional.** |
+| `YOLK_DOSE_HARD` | 2000 | min-eq @63 °C | Slider ceiling (~77 °C peak yolk). **Definitional.** For scale, Vega's measured yolk gel point is 67 min-eq @63 °C, i.e. slider 0.68 (§4). |
 
 ### Protocol and numerics
 
@@ -450,6 +491,30 @@ planning figure predates the implemented ramp and dose machinery and appears to 
 stale one, but it has not been chased down. Treat altitude predictions as carrying that
 1-minute question mark until it is resolved.
 
+### Against somebody else's measurements
+
+Everything above checks that the model still reproduces *itself*. These rows check it
+against published numbers that nobody here chose. They are regenerated by the same
+`npm run validate`.
+
+| source | quantity | published | this model |
+|---|---|---|---|
+| Buay et al. 2006 | centre of a 27.11 × 21.22 mm egg to 85 °C, 100.5 °C bath | **750 s measured** | 716 s (4.6% fast) |
+| Buay et al. 2006 | their own eq. 18 prediction, using their radius convention and `α = 1.6e-7` | 745 s | **745.0 s** |
+| Buay et al. 2006 | whole-egg `α` fitted to that trace | 1.6e-7 (1.5-1.8e-7) | 1.70e-7, inside the band |
+| Vega & Mercadé-Prieto 2011 | yolk gel point | 67 min-eq @63 °C | slider 0.68 |
+| Vega & Mercadé-Prieto 2011 | `Ea` yolk → `z` at 338 K | 469 ± 13 kJ/mol → 4.54-4.80 K | `Z_YOLK` 4.65 |
+| Weijers et al. 2003 | `Ea` ovalbumin → `z` at 353 K | ~480 kJ/mol → 4.97 K | `Z_WHITE` 4.97 |
+| Denys et al. 2003 | surface coefficient + measured shell in series | 451 W/m²K (Bi 18) | `H_EFF` 850 (Bi 34) |
+
+The Buay row is the single most useful line in this document: a thermocouple in a real
+egg, no ramp, no dip, no carryover, straight into boiling water. Reproducing his
+published prediction to 0.1 s with our own series solver says `sphere.ts` is right.
+Missing his *measured* 750 s by 4.6% says `ALPHA_DEFAULT` is a little fast — which is
+expected, since it is also absorbing the Dirichlet and shape errors, but it is the
+first honest external error bar the model has. The `H_EFF` row is an open problem, not
+a pass: see §11.2.
+
 `PLAN.md` also carries a correction worth repeating: the planning estimate for
 counter-resting was 85.3 °C, computed with a model that relaxed the surface from the
 *water* temperature. A lumped egg in still air relaxes from its own *volume-average*
@@ -462,16 +527,15 @@ still decisive (jammy versus fully set) but smaller than first computed.
 
 Read this section before trusting a number to better than half a minute.
 
-**The sources could not be fetched.** During development the network egress proxy
-blocked direct retrieval of the primary literature. **Every constant here is re-derived
-and cross-validated rather than transcribed from the source.** Three independent checks
-passed and are worth the weight they carry: Williams' published 0.451 prefactor was
-reconstructed from his stated properties; his published 4.5-minute worked example
-reproduces at 4.53 min; and two independently derived series solutions (eigenfunction
-and method of images) agree to five decimal places. Those checks constrain the
-*conduction* half of the model well. They say nothing about the target temperatures.
-**If you are going to verify one thing, verify Williams' stated target temperatures
-against the original paper** — §8's dominant uncertainty is exactly there.
+**The constants were re-derived first, and checked at source afterwards.** During the
+initial build the primary literature was not retrieved, and every constant here was
+re-derived and cross-validated rather than transcribed. That work stands — the
+derivations are in §3 and §4 — but the sources have since been read at first hand, and
+the earlier claim that they *could not* be fetched was wrong: most are freely available
+(§10 records where). Where a source changed a constant, the constant changed: `Z_WHITE`
+is now 4.97, not 5.2. Where a source confirmed an inference, it is now cited as a
+measurement rather than an argument: `ALPHA_DEFAULT`, `YOLK_RADIUS_FRAC`, and the
+reading of Williams' 0.76 are all now backed by published data (§7).
 
 **Homogeneous sphere, one diffusivity.** There is no separate yolk domain. The yolk has
 a higher solids content and is genuinely more insulating than albumen, so expect the
@@ -480,17 +544,38 @@ absorbs this into `alpha`, but it absorbs it as an average across the whole cook
 a structural correction. An egg is also not a sphere: the equal-volume sphere is a good
 approximation for the centre and a worse one near the surface.
 
-**Dirichlet surface in the water.** The model clamps the surface to the water
-temperature. With `H_EFF = 850 W/m²K` the Biot number is `h*R/k ~ 34`, so this is good
-to a few percent; pure Dirichlet under-predicts cook time by roughly 5%, which
-calibration of `alpha` absorbs. This is a real approximation, but a well-bounded one.
+**Dirichlet surface in the water, on a Biot number that is probably too high.** The
+model clamps the surface to the water temperature. With `H_EFF = 850 W/m²K` the Biot
+number is `h*R/k ~ 34` and pure Dirichlet under-predicts cook time by roughly 5%, which
+calibration of `alpha` absorbs. But Denys et al. (2003) *measured* the surface
+coefficient on intact eggs at 490 W/m²K, and with their measured shell (0.35-0.5 mm at
+2.25 W/m·K) in series that is an effective ~450 — `Bi ~ 18`, half of what this model
+assumes, and roughly double the Dirichlet error. Their bath was 40-60 °C with gentle
+forced circulation, so a rolling boil should be higher; but `H_EFF` is about twice the
+only published measurement, and the approximation is less well-bounded than this
+section used to claim.
+
+**Convection inside the white is real, and the model has none.** Denys et al. (2004)
+found buoyancy-driven flow in liquid albumen (Ra 10⁶-10⁷) strong enough to move the
+cold spot off-centre and speed heating noticeably, while the yolk — layered, and
+effectively immobilised — stays conduction-only. Vega & Mercadé-Prieto report the same
+thing from the other direction: fitting a conduction-only model to a 6X °C cook needs
+`α > 2e-7`, well above any measured value, because the white is still liquid and
+circulating. In boiling water the white sets within a minute and conduction-only is
+sound, which is why the model works. The exposure is **the ramp**: a cold-start cook
+spends several minutes below 60 °C with a liquid, convecting white, so the effective
+diffusivity early in a cold start is higher than `ALPHA_DEFAULT`. That is also the
+phase §1 argues matters most. Do not use this model for sous-vide.
 
 **The cooling phase is different, and weaker.** In still air `Bi ~ 0.6` and Dirichlet
 would be badly wrong, so the cooling phase instead drives the surface along the egg's
 own *lumped* decay from its volume-average temperature. That is a different
 approximation from the one used during the cook, and it is the **least verified part of
-the model**. No published measurements of egg-centre temperature after removal from
-water were found. The qualitative conclusion (counter-resting is nearly adiabatic) is
+the model**. No published *carryover curve* has been found — egg-centre temperature
+against time after removal from the water — though the measurement clearly exists:
+Vega & Mercadé-Prieto plunged instrumented eggs into ice-water and recorded the
+decrease, without plotting it, and Almonacid et al. (2007) and Sabliov et al. (2002)
+both model shell-egg cooling. The qualitative conclusion (counter-resting is nearly adiabatic) is
 robust because it depends only on the ratio of two time constants that differ by ~7x,
 but the specific 76.3 °C is soft.
 
@@ -500,7 +585,13 @@ egg. Expect a small systematic bias that grows with how long the eggs have sat.
 
 **Target temperatures disagree in the literature, and that dominates everything.**
 Published "correct" yolk temperatures for a given doneness differ by 3-6 °C between
-sources. Because `z ~ 4.65 K`, **a 5 °C disagreement is roughly a tenfold change in
+sources, and the spread survives first-hand checking: Williams uses 63 °C at the yolk
+boundary for soft; Omnicalculator uses 65 °C and caps hard at 77 °C; Buay et al.
+determined 85 °C at the yolk *centre* for hard by cutting eggs open; Roura et al. found
+70 °C by cooking egg in a test tube; Di Lorenzo et al. and Lorig take 65 °C yolk and
+85 °C albumen. Some of that is genuine disagreement and some of it is different
+criteria at different radii being quoted as though they were the same number. Because
+`z ~ 4.65 K`, **a 5 °C disagreement is roughly a tenfold change in
 thermal dose.** No amount of care in the conduction model compensates for that. This is
 the single largest source of uncertainty in the app, larger than the diffusivity,
 larger than the cooling model, larger than the egg geometry. The doneness anchors should
@@ -590,52 +681,106 @@ to port to Swift essentially unchanged.
 
 ## 10. References
 
-Sources marked **(not fetched)** could not be retrieved directly during development —
-the egress proxy blocked them — so the values attributed to them were re-derived and
-cross-checked rather than transcribed. See §8.
+Every source below has now been read at first hand except where marked. `references.bib`
+carries the full BibTeX, including the items that turned out to matter but were never
+cited in the first draft. The access notes are there because the first build of this
+model recorded these as unreachable; they are not.
 
 **Heat transfer in eggs**
 
 - C.D.H. Williams, "The Science of Boiling an Egg", University of Exeter.
-  <https://newton.ex.ac.uk/teaching/CDHW/egg/> (PDF:
-  <https://newton.ex.ac.uk/teaching/CDHW/egg/CW061201-1.pdf>). Originally *New
-  Scientist*, "The Last Word", 4 April 1998. **(not fetched)** — source of the 0.76
-  coefficient and the one-term formula; prefactor and worked example independently
-  reproduced (§3).
-- Roura, Fort, Saurina, "How long does it take to boil an egg? A simple approach to the
-  energy transfer equation", *Eur. J. Phys.*
-  <https://copernic.udg.edu/QuimFort/EJP_00.pdf> **(not fetched)**
-- Buay, Foong, Kiang, Kuppan, Liew, "How long does it take to boil an egg? Revisited",
-  *Eur. J. Phys.* **27**:119 (2006).
-  <https://iopscience.iop.org/article/10.1088/0143-0807/27/1/013> **(not fetched)**
-- Abbasnezhad et al., "Numerical modeling of heat transfer and pasteurizing value during
-  thermal processing of intact egg", *Food Sci. Nutr.* **4**(1) (2016).
-  <https://onlinelibrary.wiley.com/doi/full/10.1002/fsn3.257> **(not fetched)**
-- Di Lorenzo et al., "Periodic cooking of eggs", *Communications Engineering* **4**
-  (2025). <https://www.nature.com/articles/s44172-024-00334-w> **(not fetched)** — not
-  implemented; a different protocol entirely.
+  <https://newton.ex.ac.uk/teaching/CDHW/egg/>. Originally *New Scientist*, "The Last
+  Word", 4 April 1998. Source of the 0.76 coefficient and of `T_yolk ~ 63 °C` for soft.
+  *The host is dead — the page is readable in the Internet Archive.* He gives **no**
+  hard-boiled target; the ~70 °C on that page is the greening threshold, not a
+  doneness criterion.
+- D. Buay, S.K. Foong, D. Kiang, L. Kuppan, V.H. Liew, "How long does it take to boil an
+  egg? Revisited", *Eur. J. Phys.* **27**(1):119-131 (2006).
+  doi:10.1088/0143-0807/27/1/013. **The most useful source here.** Thermocouple in a
+  real egg in a stirred 100.5 °C bath; fitted whole-egg `α = 1.6e-7 m²/s` (1.5-1.8e-7);
+  hard-boiled determined experimentally as **85 °C at the yolk centre**; and an explicit
+  statement that Williams' 0.76 is the yolk *boundary* criterion against their own
+  yolk-*centre* criterion. Validated against in §7.
+- P. Roura, J. Fort, J. Saurina, "How long does it take to boil an egg? A simple approach
+  to the energy transfer equation", *Eur. J. Phys.* **21**(1):95-100 (2000).
+  <https://copernic.udg.edu/QuimFort/EJP_00.pdf> — free. Scaling argument rather than a
+  solution; reports their own measurement of `α_white = 1.5 α_water` and
+  `α_yolk = 1.1 α_water` (i.e. 2.3e-7 and 1.7e-7), which is *higher* than everyone
+  else's and is not used here. Takes 70 °C as the cooking temperature.
+- B. Abbasnezhad, N. Hamdami, J.-Y. Monteau, H. Vatankhah, "Numerical modeling of heat
+  transfer and pasteurizing value during thermal processing of intact egg",
+  *Food Sci. Nutr.* **4**(1):42-49 (2016). doi:10.1002/fsn3.257 — free at PMC4708634.
+  Source of the albumen and yolk property correlations used to settle the diffusivity
+  question (§11.1), and of the yolk geometry: a **1.6 cm** yolk sphere in a 6 × 4.5 cm
+  egg.
+- S. Denys, J.G. Pieters, K. Dewettinck, "Computational fluid dynamics analysis of
+  combined conductive and convective heat transfer in model eggs", *J. Food Eng.*
+  **63**(3):281-290 (2004). Natural convection in liquid albumen; the yolk is
+  conduction-only. Shell `k = 2.25 W/m·K`, measured shell thickness 0.35-0.5 mm, yolk
+  properties from Romanoff & Romanoff (1949).
+- S. Denys, J.G. Pieters, K. Dewettinck, "Combined CFD and experimental approach for
+  determination of the surface heat transfer coefficient during thermal processing of
+  eggs", *J. Food Sci.* **68**(3):943-951 (2003). **(not read directly)** — the source
+  of the measured `h = 490 W/m²K`, quoted via the 2004 paper. Worth getting: `H_EFF`
+  turns on it.
+- E. Di Lorenzo et al., "Periodic cooking of eggs", *Communications Engineering* **4**
+  (2025). <https://www.nature.com/articles/s44172-024-00334-w> — free. Not implemented;
+  a different protocol entirely. Source of the "85 °C albumen, 65 °C yolk" pairing.
+- M. Lorig, "How to Cook a Soft-Boiled Egg Optimally: A Laplace-Transform Solution of a
+  Two-Domain Heat Equation", arXiv:2606.22156 (2026). The closest published two-domain
+  treatment — but **check every parameter before adopting any of it**: its Table 1 gives
+  a 1.1 cm yolk radius credited to Abbasnezhad (who says 1.6 cm), and `κ_Y = 0.34` and
+  `α_W = 1.7e-7` credited to Coimbra (the first is Romanoff's value via Denys; the
+  second is not Coimbra's). The method is sound; the sourcing is not.
+- A.L. Romanoff, A.J. Romanoff, *The Avian Egg*, Wiley (1949). **(not read directly)** —
+  the origin of most egg thermal properties in the food-engineering literature,
+  including `k_yolk = 0.337`, `c_p = 3560`, `ρ = 1035`.
 
 **Denaturation kinetics**
 
-- Vega & Mercadé-Prieto, "Culinary Biophysics: on the Nature of the 6X °C Egg", *Food
-  Biophysics* **6**:152-159 (2011).
-  <https://link.springer.com/article/10.1007/s11483-010-9200-1> **(not fetched)** —
-  source of `Ea ~ 470 kJ/mol` for yolk, hence `z = 4.65 K`.
-- Weijers et al., "Heat-induced denaturation and aggregation of ovalbumin at neutral pH
-  described by irreversible first-order kinetics", *Protein Science*
-  **12**:2693-2703 (2003).
-  <https://onlinelibrary.wiley.com/doi/full/10.1110/ps.03242803> **(not fetched)** —
-  source of `Ea ~ 460 kJ/mol` for ovalbumin.
+- C. Vega, R. Mercadé-Prieto, "Culinary Biophysics: on the Nature of the 6X °C Egg",
+  *Food Biophysics* **6**:152-159 (2011). doi:10.1007/s11483-010-9200-1. `Ea = 469 ± 13
+  kJ/mol` for yolk gelation over 54-70 °C, hence `z = 4.65 K`; an absolute gelation-time
+  Arrhenius fit (§4); and the conclusion that no single "correct" yolk temperature
+  exists.
+- M. Weijers, P.A. Barneveld, M.A. Cohen Stuart, R.W. Visschers, "Heat-induced
+  denaturation and aggregation of ovalbumin at neutral pH described by irreversible
+  first-order kinetics", *Protein Science* **12**:2693-2703 (2003). doi:10.1110/ps.03242803
+  — free at PMC2366979. `Ea ~ 480 kJ/mol` (430-490), hence `z = 4.97 K`. **This
+  corrected a constant.**
+- W.D. Powrie, S. Nakai, "Characteristics of edible fluids of animal origin: eggs", in
+  *Food Chemistry* 2nd edn (1985). **(not read directly)** — the denaturation
+  temperature ranges quoted by Buay et al.: opaque white from ~60 °C, soft curd at
+  75 °C, toughening to 87 °C, ovalbumin 79-84 °C.
 
 **Physical properties**
 
-- Coimbra et al., "Density, heat capacity and thermal conductivity of liquid egg
+- J.S.R. Coimbra, A.L. Gabas, L.A. Minim, E.E. Garcia Rojas, V.R.N. Telis,
+  J. Telis-Romero, "Density, heat capacity and thermal conductivity of liquid egg
   products", *J. Food Eng.* **74**(2):186-190 (2006).
-  doi:10.1016/j.jfoodeng.2005.01.043 **(not fetched)**
-- Stull, D.R., *Ind. Eng. Chem.* **39**(4):517-540 (1947) — Antoine coefficients for
-  water. **(not fetched)**
-- Hoyt, "Practical methods of estimating volume and fresh weight of bird eggs" (1979) —
-  the `k_v = 0.51` shape coefficient. **(not fetched)**
+  doi:10.1016/j.jfoodeng.2005.01.043. **(abstract only)** — ρ 1023-1143 kg/m³,
+  c_p 2.6-3.7 J/g·K, k 0.4-0.6 W/m·K, measured at or below 38 °C. Widely mis-cited; see
+  the Lorig note above.
+- D.R. Stull, "Vapor Pressure of Pure Substances", *Ind. Eng. Chem.* **39**(4):517-540
+  (1947) — Antoine coefficients for water, as served by the NIST WebBook.
+- D.F. Hoyt, "Practical methods of estimating volume and fresh weight of bird eggs",
+  *The Auk* **96**(1):73-77 (1979) — free. `V = 0.51·L·B²`, accurate to 2%: the source of
+  `EGG_VOLUME_COEFF`.
+- T.C. Carter, "The hen's egg: estimation of shell superficial area and egg volume from
+  four shell measurements", *Br. Poult. Sci.* **15**:507-511 (1974). **(not read
+  directly)** — gives surface *area* as well as volume, which is what a Biot estimate
+  actually needs.
+
+**Cooling**
+
+- S. Almonacid, R. Simpson, A. Teixeira, "Heat transfer models for predicting
+  *Salmonella enteritidis* in shell eggs through supply chain distribution",
+  *J. Food Sci.* **72**(9):E508-E517 (2007). **(not read directly)** — cited by Vega as
+  reporting high effective `α` when eggs are cooled.
+- C.M. Sabliov, B.E. Farkas, K.M. Keener, P.A. Curtis, "Cooling of shell eggs with
+  cryogenic carbon dioxide: a finite element analysis of heat transfer", *LWT* **35**:
+  568-574 (2002). **(not read directly)** — the closest published thing to the carryover
+  problem, albeit with the wrong coolant.
 
 **Practice, for sanity-checking the outputs**
 
@@ -646,6 +791,9 @@ cross-checked rather than transcribed. See §8.
   <https://www.splendidtable.org/story/2022/11/22/j-kenji-lopezalts-perfect-hard-boiled-eggs>
 - Martin Lersch, Khymos, "Towards the perfect soft boiled egg".
   <https://khymos.org/2009/04/09/towards-the-perfect-soft-boiled-egg/>
+- Omnicalculator, Ideal Egg Boiling Calculator.
+  <https://www.omnicalculator.com/food/egg-boiling> — cited as an example of the
+  mis-reading of Williams' 0.76 (§3), not as a source.
 
 **Standards**
 
@@ -660,68 +808,78 @@ cross-checked rather than transcribed. See §8.
 Everything in this section is a known gap, not a hidden one. It is written so that
 whoever picks this up next does not have to rediscover it.
 
-### 11.1 Discrepancies found and not resolved
+### 11.1 Resolved at source
 
-These surfaced during development and could not be settled without the primary sources.
-Each one is a concrete, checkable question.
+These were open questions in the first draft. The primary literature settled them; the
+answers are recorded here rather than deleted, because each one was a plausible error.
 
-1. **Williams' room-temperature example does not match his own formula.** He is quoted
-   as giving ~3.5 min for a 57 g egg from 21 °C; reconstructing his formula with his
-   stated constants gives **3.23 min**. His 4 °C example reproduces exactly (4.53 vs
-   "four and a half minutes"), so the constants are right and something else differs —
-   rounding, a different assumed mass, or a misquote downstream. Unexplained.
+1. **Williams' hard-boiled target: there isn't one.** His page gives no hard-boiled
+   criterion at all. The 77 °C and 80 °C quoted by derivative calculators trace to
+   neither him nor anyone else in the lineage. The published figure is Buay's **85 °C at
+   the yolk centre**, determined by cooking eggs to centre temperatures between 77 and
+   87 °C and cutting them open. Williams' soft-boiled 63 °C at the yolk boundary stands.
 
-2. **Williams' hard-boiled target temperature is unconfirmed.** Derivative calculators
-   variously state 77 °C and 80 °C for the yolk boundary. Neither could be traced to his
-   own text. The soft-boiled 63 °C is well attested; the hard figure is not.
+2. **The albumen conductivity/diffusivity inconsistency: temperature, as suspected.**
+   Abbasnezhad et al. give albumen `k = 0.0013·T + 0.5125` with a measured `ρ(T)` and
+   `c_p = 3800`, i.e. `α` rising from **1.36e-7 at 20 °C to 1.69e-7 at 100 °C**. The
+   inference the model was built on turns out to be a measurement. Buay's independent
+   whole-egg fit of 1.6e-7 (1.5-1.8e-7) agrees.
 
-3. **Albumen thermal conductivity and diffusivity are mutually inconsistent in the
-   literature.** `k = 0.52 W/m·K` with albumen's density and specific heat gives
-   `alpha = 1.36e-7 m²/s`, but the widely quoted albumen `alpha` is `1.7e-7`, which
-   requires `k ~ 0.65`. The likely resolution is temperature: Coimbra et al. measured at
-   or below 38 °C, and water's conductivity rises ~13% by 100 °C. This model uses
-   `1.70e-7` on that reasoning, but it is an inference, not a measurement, and it is the
-   single most load-bearing constant here.
+3. **The impossible 0.026 W/m·K albumen conductivity is not in Abbasnezhad.** That paper
+   gives 0.51-0.64 W/m·K for white and 0.40-0.48 for yolk. The 0.026 came from somewhere
+   in the secondary-source layer and can be discarded. The shell's 2.25 W/m·K *is* in
+   the paper, credited to Denys et al.
 
-4. **A quoted albumen conductivity of 0.026 W/m·K is physically impossible** and appears
-   somewhere in the citation chain around Abbasnezhad et al. (2016). That is
-   approximately the conductivity of *air*; a 90%-water gel must be near 0.55-0.6. The
-   shell value taken from the same paper (`2.25 W/m·K`) looks plausible and is used only
-   for a series-resistance estimate, but both should be checked at source before either
-   is relied on.
+4. **The two-domain paper's geometry is wrong, not its summary.** Lorig's Table 1 really
+   does use a 1.1 cm yolk radius in a 2.2 cm egg — 12.5% of the volume — and really does
+   credit it to Abbasnezhad, who meshes a **1.6 cm** yolk sphere (17 cm³, ~33% of
+   volume, matching `YOLK_RADIUS_FRAC = 0.693`). Two more of his Table 1 entries are
+   credited to Coimbra but are not Coimbra's.
 
-5. **Lysozyme denaturation temperature is reported anywhere from 67 to 77.5 °C.** It is
-   genuinely pH- and ionic-strength dependent, and egg white pH rises from ~7.6 to ~9.2
-   as an egg ages, so some of the spread is real rather than error. Not used directly,
-   but it bears on where "the white is set" should sit.
+5. **Di Lorenzo's targets are 85 °C albumen / 65 °C yolk**, as the model assumed. The
+   reversed summary was the summary's error.
 
-6. **The two-domain paper's geometry looks wrong, or its summary does.** Lorig,
-   arXiv:2606.22156, is reported as using egg radius 2.2 cm with yolk radius 1.1 cm. A
-   1.1 cm yolk radius implies a yolk volume of ~5.6 cm³, roughly **three times too
-   small** — a real yolk is ~17 cm³, radius ~1.6 cm, which is what this model's
-   `YOLK_RADIUS_FRAC = 0.693` encodes. Verify before adopting any parameter from it.
+### 11.2 Still open
 
-7. **One summary of Di Lorenzo et al. (2025) reversed the albumen and yolk targets**
-   (65/84 °C instead of 85/65 °C). The correct assignment is almost certainly albumen
-   ~85 °C, yolk ~65 °C. Worth confirming at source, since that paper is otherwise the
-   best modern reference for thermal parameters.
+1. **Williams' room-temperature example does not match his own formula.** He prints
+   ~3.5 min for a 57 g egg from 21 °C; his stated constants give **3.23 min**. His other
+   three examples reproduce exactly (4 °C → 4.53 vs "four and a half"; 47 g → 3.99 vs
+   "four"; 67 g → 5.05 vs "five"). So the constants are right and one example is not.
+   This is on his own page, in his own words — not a misquote downstream, as previously
+   guessed. Unexplained.
 
-### 11.2 Measurements that do not appear to exist
+2. **`H_EFF = 850 W/m²K` is about twice the only published measurement.** Denys et al.
+   (2003) measured 490 W/m²K at the shell surface; in series with their measured shell
+   that is ~450 effective, giving `Bi ~ 18` rather than 34. Their conditions were gentler
+   than a rolling boil, so the truth is somewhere between, but the Dirichlet error is
+   larger than §8 used to claim. Changing `H_EFF` alone would simply be re-absorbed by
+   `ALPHA_DEFAULT`; the honest fix is a Robin boundary condition (§11.4).
 
-Searching did not turn these up. If you want to improve the model, these are the
-highest-value experiments, and none of them is hard.
+3. **Yolk diffusivity varies by 1.7× across the literature.** Romanoff & Romanoff (via
+   Denys) imply `α_yolk = 9.1e-8`; Vega quotes 1.22e-7; Abbasnezhad's correlation gives
+   1.28-1.52e-7. The model uses a single `α` for the whole egg, so this feeds directly
+   into §8's homogeneous-sphere bias — and the bias may be bigger than "calibration
+   partly absorbs this" suggests.
 
-1. **Egg-centre temperature after removal from the water**, under an ice bath, a cold
-   tap, and resting on the counter. Nothing published was found. This is the weakest
-   constant in the model (`TAU_AIR`) and it drives the app's most opinionated behaviour —
-   refusing soft doneness when the egg will be rested. A thermocouple through the blunt
-   end and a datalogger would settle it in an afternoon.
+4. **Lysozyme denaturation is reported anywhere from 67 to 77.5 °C.** Genuinely pH- and
+   ionic-strength dependent, and egg white pH rises from ~7.6 to ~9.2 with age, so some
+   of the spread is real. Not used directly, but it bears on where "the white is set"
+   should sit.
 
-2. **Convective heat transfer coefficient for a food body in agitated boiling water.**
-   `H_EFF = 850 W/m·K` is a series estimate — a natural-convection correlation for a
-   sphere, combined with shell and membrane resistance. Not a measurement. Bubble
-   agitation at a rolling boil could plausibly double it, which is worth a few percent
-   of cook time.
+### 11.3 Measurements that still appear not to exist
+
+1. **A carryover curve: egg-centre temperature against time *after* removal from the
+   water**, under an ice bath, a cold tap, and resting on the counter. This remains the
+   weakest constant in the model (`TAU_AIR`) and it drives the app's most opinionated
+   behaviour — refusing soft doneness when the egg will be rested. Two leads: Vega &
+   Mercadé-Prieto instrumented yolks and plunged them into ice-water, recording the
+   decrease but not publishing the curve; Sabliov et al. (2002) and Almonacid et al.
+   (2007) both model shell-egg cooling, the first cryogenically. A thermocouple through
+   the blunt end and a datalogger would still settle it in an afternoon.
+
+2. **Convective heat transfer coefficient at a rolling boil.** Denys et al. measured 490
+   W/m²K under gentle forced circulation at 40-60 °C. Nobody appears to have measured it
+   with bubble agitation at 100 °C, which is the only condition this app cares about.
 
 3. **A logged temperature-vs-time curve for a domestic pot of water.** `RAMP_R = 3.0`
    comes from cooktop *efficiency* studies ("about a third of full burner power holds a
@@ -729,21 +887,27 @@ highest-value experiments, and none of them is hard.
    beat every source found, and the app already measures your time-to-boil, so the shape
    parameter is the only thing left guessed.
 
-### 11.3 Modelling work deliberately not done
+### 11.4 Modelling work deliberately not done
 
 - **Two concentric domains** with distinct yolk and albumen diffusivities. This is the
-  known structural bias (§8) and the most principled fix. Lorig's Laplace-transform
-  solution is the closest published approach — subject to 11.1(6).
-- **A proper Robin boundary condition** during cooling, with eigenvalues from
-  `1 - mu·cot(mu) = Bi`, instead of the current lumped approximation. This requires
-  re-projecting the modal state onto a new basis when the medium changes, which is why
-  it was not attempted for v1.
-- **Ovoid geometry** rather than an equal-volume sphere.
+  known structural bias (§8) and the most principled fix; §11.2(3) makes it more urgent
+  than it looked. Lorig's Laplace-transform solution is the closest published approach —
+  the method, not the parameters (§11.1(4)).
+- **A proper Robin boundary condition** during cooking, with eigenvalues from
+  `1 - mu·cot(mu) = Bi`, instead of clamping the surface. At `Bi ~ 18` rather than 34
+  this matters more than first thought. It requires re-projecting the modal state onto a
+  new basis when the medium changes, which is why it was not attempted for v1.
+- **Convection in the liquid white during the ramp** (§8). Not tractable in this
+  architecture; the practical mitigation is to keep `ALPHA_DEFAULT` calibrated against
+  whole cooks rather than against steady-state property data.
+- **Ovoid geometry** rather than an equal-volume sphere. Note that Buay's equivalent
+  radius `2ab/(b + βa)` preserves surface-to-volume rather than volume, and is 1% smaller
+  than ours for the same egg.
 - **The air cell**, as a lateral insulating cap that grows with egg age.
 - **Egg age** generally — it shifts albumen pH, peel quality and air-cell size together,
   and would be a single useful input.
 
-### 11.4 Known software gaps
+### 11.5 Known software gaps
 
 - **The finished-egg screen has not been visually confirmed in a browser.** Reaching
   `DONE` requires sitting through a full seven-minute cook. The calibration path behind
@@ -759,7 +923,7 @@ highest-value experiments, and none of them is hard.
 - **No Swift port.** `src/core/` is written in a restricted subset to make it a
   near-mechanical transliteration, but the port has not been attempted or compile-tested.
 
-### 11.5 Sources that returned fabricated citations
+### 11.6 Sources that returned fabricated citations
 
 During research several AI-generated content farms returned confident, specific, and
 entirely false citations — including a non-existent FDA study quoted with a sample size

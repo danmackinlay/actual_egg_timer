@@ -125,8 +125,8 @@ eggs rather than lie about them.
 | `TAU_REF` | 3354 | s | R²/α for a 57 g egg. **The single calibration knob.** ∝ M^(2/3). Medium confidence — reproduces kitchen practice. |
 | `ALPHA` | 1.70e−7 | m²/s | albumen at cooking temperature. Low-T literature values (1.36e−7) are inconsistent with reported α; water's k rises ~13% by 100 °C. |
 | `YOLK_RADIUS_FRAC` | 0.693 | — | yolk = 33% of volume. High confidence: three independent routes agree. |
-| `Z_YOLK` / `TREF_YOLK` | 4.65 / 63 | K / °C | from Eₐ ≈ 470 kJ/mol (Vega & Mercadé-Prieto 2011). |
-| `Z_WHITE` / `TREF_WHITE` | 5.2 / 80 | K / °C | ovalbumin, Eₐ ≈ 460 kJ/mol. |
+| `Z_YOLK` / `TREF_YOLK` | 4.65 / 63 | K / °C | from Eₐ ≈ 470 kJ/mol (Vega & Mercadé-Prieto 2011). Since checked at source: Eₐ = 469 ± 13 kJ/mol, measured 54-70 °C. |
+| `Z_WHITE` / `TREF_WHITE` | ~~5.2~~ **4.97** / 80 | K / °C | ovalbumin. Planned with Eₐ ≈ 460 kJ/mol; Weijers et al. (2003) report ≈ 480, so the constant was corrected. |
 | `H_EFF` | 850 | W/m²K | convection + shell + membranes in series. Estimated, not measured. |
 | `RAMP_R` | 3.0 | — | hob overshoot ratio; 1/r = fraction of full power to hold a boil. |
 | `TAU_AIR` | 2030 | s | lumped cooling time constant in still air. **Least-verified constant in the model.** |
@@ -134,10 +134,17 @@ eggs rather than lie about them.
 | `WHITE_DOSE_TARGET` | 0.05 | min-eq @80C | calibrated so the shortest white-setting cook is ~5.9 min for a fridge-cold large egg, peak inner white ~75 C: set but tender. |
 | `YOLK_DOSE_RUNNY` / `_HARD` | 0.05 / 2000 | min-eq @63C | slider endpoints. Log-interpolating dose is equivalent to linearly interpolating peak yolk temperature, so the slider spans ~56–77 C evenly. |
 
-⚠️ The egress proxy blocked direct fetches of primary sources, so these are re-derived
-and cross-validated rather than transcribed. Three independent checks passed:
-Williams' published 0.451 prefactor, his published 4.5-min worked example, and two
-independent series solutions agreeing to 5 decimal places.
+⚠️ **Superseded — kept as a record of the planning phase.** At planning time the
+primary sources were not fetched, so these were re-derived and cross-validated rather
+than transcribed. Three independent checks passed: Williams' published 0.451 prefactor,
+his published 4.5-min worked example, and two independent series solutions agreeing to
+5 decimal places.
+
+The sources have since been read at first hand — most of them are freely available —
+and the derivations held up, with one constant corrected (`Z_WHITE`) and one known to be
+high (`H_EFF`). See `references.bib`, README §10 for what each source says, and §11 for
+what is still open. The model is now also checked against two published measurements it
+did not choose: see README §7.
 
 ## Validation targets
 

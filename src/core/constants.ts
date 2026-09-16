@@ -1,9 +1,11 @@
 /**
  * Every tunable in the model, with its provenance.
  *
- * Sources could not be fetched directly (network egress restrictions during
- * development), so these values are re-derived and cross-validated rather than
- * transcribed. See README.md for the full derivation and the confidence notes.
+ * Values were first re-derived rather than transcribed, because the primary
+ * literature was not retrieved during the initial build. It has since been
+ * read at first hand: see references.bib, and README.md section 10 for what
+ * each source actually says. Constants that changed as a result are marked
+ * CHECKED AT SOURCE; ones still resting on an inference are marked INFERRED.
  */
 
 /** Number of eigenmodes retained in the sphere series.
@@ -16,9 +18,16 @@ export const MODE_COUNT = 40;
  *  THIS IS THE CALIBRATION PARAMETER. Only the group tau = R^2/alpha affects
  *  the answer, so radius and diffusivity are degenerate; we fix the geometry
  *  honestly and let alpha absorb the model error.
- *  Room-temperature literature values (~1.36e-7) are inconsistent with the
- *  reported alpha of 1.7e-7; water's conductivity rises ~13% by 100 C, which
- *  resolves it in favour of the higher value at cooking temperature. */
+ *
+ *  CHECKED AT SOURCE. Abbasnezhad et al. (2016) give albumen k = 0.0013*T +
+ *  0.5125 with rho(T) and c_p = 3800, i.e. alpha rising 1.36e-7 (20 C) ->
+ *  1.69e-7 (100 C). The temperature argument for preferring the higher value
+ *  is therefore a measurement, not an inference. Independently, Buay et al.
+ *  (2006) fitted a WHOLE EGG in boiling water and obtained alpha = 1.6e-7,
+ *  bounded 1.5e-7 to 1.8e-7. 1.70e-7 sits inside that band, at the fast end -
+ *  which is expected, since it also absorbs the Dirichlet and shape errors.
+ *  Beware the spread on the yolk: Romanoff & Romanoff (1949), via Denys et al.
+ *  (2004), imply alpha_yolk = 9.1e-8, against 1.22e-7 to 1.52e-7 elsewhere. */
 export const ALPHA_DEFAULT = 1.70e-7;
 
 /** Relative standard deviation on ALPHA for the calibration prior.
@@ -26,32 +35,54 @@ export const ALPHA_DEFAULT = 1.70e-7;
 export const ALPHA_REL_SD = 0.119;
 
 /** Yolk boundary as a fraction of egg radius. Yolk is ~33% of egg volume, so
- *  r/R = (1/3)^(1/3) = 0.693. Three independent routes agree:
+ *  r/R = (1/3)^(1/3) = 0.693. Four independent routes agree:
  *  (a) 2*sinc(pi*0.693) = 0.754 ~ Williams' famous 0.76 coefficient,
  *  (b) inverting 2*sinc(pi*x) = 0.76 gives x = 0.691 (33.0% volume),
- *  (c) real composition data (31% yolk by mass) gives r_y/R = 0.693.
+ *  (c) real composition data (31% yolk by mass) gives r_y/R = 0.693,
+ *  (d) CHECKED AT SOURCE: Abbasnezhad et al. (2016) mesh the yolk as a sphere
+ *      of radius 1.6 cm inside a 6 x 4.5 cm egg - 17 cm^3, i.e. r_y/R ~ 0.68.
  *  NOTE: Williams' 0.76 is the first-eigenmode amplitude AT THIS RADIUS. It is
- *  not a "yolk-white ratio" (a common error) and not the yolk centre, whose
- *  coefficient would be exactly 2.0. */
+ *  not a "yolk-white ratio" (a common error, e.g. Omnicalculator) and not the
+ *  yolk centre, whose coefficient would be exactly 2.0. Buay et al. (2006)
+ *  confirm the reading explicitly: their eq. 11 carries the centre coefficient
+ *  2, Williams' eq. 12 carries 0.76, and they state the difference is yolk
+ *  CENTRE versus yolk BOUNDARY. */
 export const YOLK_RADIUS_FRAC = 0.693;
 
 /** Arrhenius sharpness for yolk gelation.
- *  z = ln(10)*R*T^2/Ea with Ea ~ 470 kJ/mol (Vega & Mercade-Prieto 2011)
- *  at T = 338 K gives z = 4.65 K: +4.7 C is 10x faster.
+ *  z = ln(10)*R*T^2/Ea at T = 338 K: +4.65 C is 10x faster.
+ *  CHECKED AT SOURCE. Vega & Mercade-Prieto (2011) fit Ea = 469 +/- 13 kJ/mol
+ *  (95% CI) to isothermal yolk gelation times measured over 54-70 C, and
+ *  483 +/- 37 kJ/mol to the viscosity-rise slope. 338 K is mid-range, not an
+ *  extrapolation. The CI maps to z = 4.54-4.80 K, so 4.65 sits inside it.
  *  WARNING: the standard food-engineering cook-value uses z = 33.1 K, which is
  *  7x too shallow for egg protein. Do not substitute it. */
 export const Z_YOLK = 4.65;
 export const TREF_YOLK_C = 63.0;
 
-/** Same for egg white (ovalbumin), Ea ~ 460 kJ/mol at T = 353 K. */
-export const Z_WHITE = 5.2;
+/** Same for egg white (ovalbumin) at T = 353 K.
+ *  CHECKED AT SOURCE, AND CORRECTED. Weijers et al. (2003) report Ea ~ 480
+ *  kJ/mol (430-490 across techniques), not the 460 assumed while building
+ *  this, so z falls from 5.2 to 4.97 K. No validation target moves: the white
+ *  dose only binds at the reachability edge. */
+export const Z_WHITE = 4.97;
 export const TREF_WHITE_C = 80.0;
 
 /** Effective surface heat transfer coefficient in water, W/m^2K.
  *  Natural convection on a sphere (~1100) in series with shell + membranes
  *  (~3200) gives ~820. Bi = h*R/k ~ 33, so the surface is nearly - but not
  *  exactly - clamped at the water temperature: pure Dirichlet under-predicts
- *  cook time by ~5%. Estimated, not measured. */
+ *  cook time by ~5%.
+ *
+ *  KNOWN HIGH, AND NOT YET CHANGED. Denys et al. (2003) measured h = 490
+ *  W/m^2K on the outer shell of intact eggs (combined CFD + experiment); with
+ *  their measured shell (0.35-0.5 mm at 2.25 W/mK) in series that is an
+ *  effective ~450, i.e. Bi ~ 18, about half of what this constant implies.
+ *  Their bath was 40-60 C with 0.01 m/s forced circulation, so a rolling boil
+ *  should be higher - but 850 is roughly twice the only published measurement
+ *  and the Dirichlet error is correspondingly larger than ~5%. Changing it
+ *  would simply be re-absorbed by ALPHA_DEFAULT, which is why it still stands;
+ *  see README section 11. */
 export const H_EFF = 850.0;
 
 /** Thermal conductivity of egg contents, W/m K (albumen-dominated near the
