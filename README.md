@@ -783,7 +783,14 @@ npm run build      # tsc
 npm test           # node --test
 npm run validate   # regenerates the validation table in §7
 npm run serve      # static server on :8080
+npm run build:site # the deployable tree, in _site/
 ```
+
+Node version is pinned in `.node-version`, which nvm, fnm and Netlify all read,
+so the deploy compiles on the same Node the tests ran on. There is nothing else
+to configure: `netlify.toml` and `vercel.json` each carry the two settings their
+host needs, and the build is `tsc` plus two `cp`s — no bundler, no runtime
+dependencies, no environment variables, no secrets.
 
 `src/core/` has zero dependencies, no DOM, no `Date`, no I/O and no `async`. It is plain
 interfaces and top-level functions with explicit loops, which is deliberate: it is meant

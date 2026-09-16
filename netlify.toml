@@ -7,8 +7,10 @@
   command = "npm run build:site"
   publish = "_site"
 
-[build.environment]
-  NODE_VERSION = "22"
+# Node version lives in .node-version, not here: one file, which nvm, fnm and
+# Netlify all read, so the deploy builds on the same Node the tests ran on.
+# Netlify's own default is 24 as of July 2026; NODE_VERSION set here would
+# silently override the file, so it deliberately is not set.
 
 # Everything is immutable per deploy except the entry point.
 [[headers]]
