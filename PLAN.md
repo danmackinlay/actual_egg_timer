@@ -3,7 +3,9 @@
 Resumable working notes. Updated **in the same commit** as the work it describes.
 For the science, see `README.md`. This file is for whoever picks the build back up.
 
-**Next step:** Phase B — tests, UI, README (three parallel agents against the frozen API below).
+**Status: v1 complete.** 21/21 tests and 15/15 validation checks pass; the app was
+driven end to end in Chromium. Remaining work is calibration against real eggs
+(see "Calibrating against your own eggs" in README.md).
 
 ---
 
@@ -26,15 +28,15 @@ down. Zero runtime dependencies. The core is written for a near-mechanical Swift
 - [x] `src/core/solve.ts`       — cook time for a doneness target
 - [x] freeze API into this file, commit
 
-### Phase B — parallel (three subagents, no shared files)
-- [ ] `test/core.test.ts` + `tools/validate.ts`
-- [ ] `index.html` + `src/ui/*` (state machine, clock, store)
-- [ ] `README.md` — the science write-up
+### Phase B — parallel (three subagents, no shared files) — DONE
+- [x] `test/core.test.ts` (21 tests, all pass) + `tools/validate.ts` (15/15 checks)
+- [x] `index.html`, `styles.css`, `src/ui/*` (app, machine, clock, store, main)
+- [x] `README.md` — the science write-up, 652 lines
 
 ### Phase C — calibration (solo) — DONE
 - [x] `src/core/doseGrid.ts`  — cached log10 dose, bilinear interpolation
 - [x] `src/core/infer.ts`     — particle filter, ordinal likelihood
-- [ ] integrate, full verification, push
+- [x] integrate, full verification
 
 Measured: grid build 1.76 s (21x36), interpolation error 1.7% in dose, posterior
 update 0.1-1.6 ms. Injected alpha = 1.535e-7 with taste offset 0.20 recovered in
@@ -188,3 +190,31 @@ decisive (jammy vs fully set) but smaller than first computed.
    cannot represent a fresh discontinuity at the centre, where modes are weighted
    by `n`; an instantaneous 100 -> 2 C drop made the yolk centre read 12.5 C when
    the true value was 49.3 C. All medium changes blend through `TAU_PLUNGE`.
+
+
+---
+
+## Verification record (v1)
+
+- `npm test` — 21/21 pass
+- `npm run validate` — 15/15 checks pass, all targets reproduced
+- Browser (Chromium, 390x844 phone viewport): no console or page errors; full
+  cold-start flow IDLE -> HEATING -> COOKING verified; the boil button relabels
+  to "Full rolling boil" in HEATING; `aria-live` announcements fire.
+
+Two things that look like bugs and are not:
+1. **"Runny" is greyed out on a cold start.** Correct. The egg sits in the water
+   through the whole ramp, so the white takes more dose and the softest reachable
+   level is 0.030, not 0.000. A hot start does reach fully runny. This is the
+   doneness constraint working.
+2. **The action bar appears to overlap the start-mode selector in a full-page
+   screenshot.** Artifact of `fullPage` compositing a `position: fixed` bar.
+   `main` carries 148px bottom padding and the control clicks fine.
+
+## Known blocker
+
+`git push` returns **403** — the Claude GitHub App is not installed for
+`danmackinlay/actual_egg_timer`. Everything is committed locally, but this
+container is ephemeral. Install at
+https://github.com/apps/claude/installations/select_target or reconnect GitHub in
+claude.ai settings, then `git push -u origin claude/focused-newton-5kg825`.

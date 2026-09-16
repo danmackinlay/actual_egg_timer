@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark light">
+<meta name="theme-color" content="#111214">
+<title>Egg timer</title>
+<link rel="stylesheet" href="styles.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='14' font-size='14'>&#129370;</text></svg>">
+</head>
+<body data-phase="IDLE" data-start="cold">
+
+<main>
+
+  <!-- ------------------------------------------------------------ readout -->
+  <section id="readout">
+    <p id="phaseLabel">Total time</p>
+
+    <div id="bigtime" role="timer" aria-live="polite">
+      <span id="digits" aria-hidden="true">--:--</span>
+      <span class="sr-only" id="announce"></span>
+    </div>
+
+    <p id="subline"></p>
+
+    <dl id="stats">
+      <div><dt>peak yolk</dt><dd id="statYolk">--</dd></div>
+      <div id="afterBoilStat"><dt>after boiling</dt><dd id="statAfter">--</dd></div>
+      <div><dt>water boils at</dt><dd id="statBoil">--</dd></div>
+    </dl>
+
+    <p id="note"></p>
+    <p id="warn" hidden></p>
+  </section>
+
+  <!-- ----------------------------------------------------------- controls -->
+  <form id="controls" autocomplete="off">
+
+    <div class="field field--slider">
+      <label for="doneness" id="donenessLabel">Doneness</label>
+      <div class="slider">
+        <div class="slider__track" aria-hidden="true">
+          <div class="slider__blocked" id="donenessBlocked"></div>
+        </div>
+        <input type="range" id="doneness" min="0" max="1" step="0.01" value="0.41"
+               aria-describedby="donenessValue">
+        <div class="slider__ticks" id="donenessTicks" aria-hidden="true"></div>
+      </div>
+      <p class="value" id="donenessValue"></p>
+    </div>
+
+    <div class="field">
+      <label for="size">Egg size</label>
+      <select id="size"></select>
+    </div>
+
+    <div class="field" id="customSizeField" hidden>
+      <label for="customMinor">Width across the middle</label>
+      <span class="unit"><input type="number" id="customMinor" min="30" max="60" step="0.5" inputmode="decimal"><span>mm</span></span>
+    </div>
+
+    <fieldset class="field">
+      <legend>Egg from</legend>
+      <div class="seg">
+        <input type="radio" name="startTemp" id="tempFridge" value="fridge">
+        <label for="tempFridge">Fridge 4&deg;</label>
+        <input type="radio" name="startTemp" id="tempRoom" value="room">
+        <label for="tempRoom">Room 20&deg;</label>
+        <input type="radio" name="startTemp" id="tempCustom" value="custom">
+        <label for="tempCustom">Custom</label>
+      </div>
+    </fieldset>
+
+    <div class="field" id="customTempField" hidden>
+      <label for="customTemp">Egg temperature</label>
+      <span class="unit"><input type="number" id="customTemp" min="-2" max="40" step="1" inputmode="decimal"><span>&deg;C</span></span>
+    </div>
+
+    <fieldset class="field">
+      <legend>Start</legend>
+      <div class="seg">
+        <input type="radio" name="startMode" id="startCold" value="cold">
+        <label for="startCold">Cold pan</label>
+        <input type="radio" name="startMode" id="startHot" value="hot">
+        <label for="startHot">Boiling water</label>
+      </div>
+      <p class="hint">Hot start peels far better; cold start needs no timing of the drop-in.</p>
+    </fieldset>
+
+    <fieldset class="field">
+      <legend>Then</legend>
+      <div class="seg">
+        <input type="radio" name="cooling" id="coolIce" value="ice">
+        <label for="coolIce">Ice bath</label>
+        <input type="radio" name="cooling" id="coolTap" value="tap">
+        <label for="coolTap">Cold tap</label>
+        <input type="radio" name="cooling" id="coolCounter" value="counter">
+        <label for="coolCounter">Counter</label>
+      </div>
+    </fieldset>
+
+    <div class="field field--pair">
+      <div>
+        <label for="litres">Water</label>
+        <span class="unit"><input type="number" id="litres" min="0.25" max="12" step="0.25" inputmode="decimal"><span>L</span></span>
+      </div>
+      <div>
+        <label for="eggCount">Eggs</label>
+        <span class="unit"><input type="number" id="eggCount" min="1" max="24" step="1" inputmode="numeric"><span></span></span>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="altitude">Altitude</label>
+      <span class="unit"><input type="number" id="altitude" min="-400" max="5000" step="50" inputmode="numeric"><span>m</span></span>
+    </div>
+
+  </form>
+
+  <!-- ------------------------------------------------------------ actions -->
+  <div id="actions">
+    <p id="primaryHint"></p>
+    <button type="button" id="primary" class="primary">Start heating</button>
+    <button type="button" id="secondary" class="secondary" hidden>Cancel</button>
+  </div>
+
+</main>
+
+<script type="module" src="dist/src/ui/main.js"></script>
+</body>
+</html>

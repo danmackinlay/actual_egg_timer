@@ -7,7 +7,7 @@
   "scripts": {
     "build": "tsc",
     "check": "tsc --noEmit",
-    "test": "tsc && node --test dist/test/",
+    "test": "tsc && node --test dist/test/*.test.js",
     "validate": "tsc && node dist/tools/validate.js",
     "serve": "python3 -m http.server 8080"
   },

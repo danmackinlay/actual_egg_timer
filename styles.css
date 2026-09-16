@@ -1,0 +1,361 @@
+/* Ultra-functionalist: read at arm's length, hit with a wet thumb.
+   Dark by default; the light scheme is an override, not the base. */
+
+:root {
+  --bg: #0c0d0f;
+  --panel: #17181c;
+  --line: #2a2c31;
+  --fg: #f5f5f6;
+  --dim: #a0a2a8;
+  --accent: #ffb020;
+  --accent-fg: #1a1200;
+  --track: #3a3d43;
+  --blocked: #26282d;
+  --warn: #ff7a4d;
+  --ok: #5ad17f;
+  --focus: #6fb5ff;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #f7f7f8;
+    --panel: #ffffff;
+    --line: #d8d9dd;
+    --fg: #121316;
+    --dim: #55575e;
+    --accent: #8a4b00;
+    --accent-fg: #ffffff;
+    --track: #cbccd1;
+    --blocked: #e6e7ea;
+    --warn: #a33000;
+    --ok: #17703a;
+    --focus: #0b5fd0;
+  }
+}
+
+* { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font: 16px/1.35 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-variant-numeric: tabular-nums;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+main {
+  max-width: 32rem;
+  margin: 0 auto;
+  padding: 12px 16px 148px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  margin: -1px; padding: 0; border: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* ---------------------------------------------------------------- readout */
+
+#readout {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px 16px 16px;
+  text-align: center;
+}
+
+#phaseLabel {
+  margin: 0;
+  font-size: 0.8125rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+#bigtime {
+  font-size: clamp(4rem, 26vw, 7.5rem);
+  line-height: 0.95;
+  font-weight: 650;
+  letter-spacing: -0.03em;
+  margin: 2px 0 0;
+}
+
+#subline {
+  margin: 4px 0 0;
+  min-height: 1.2em;
+  font-size: 0.875rem;
+  color: var(--dim);
+}
+
+#stats {
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin: 12px 0 0;
+  padding: 12px 0 0;
+  border-top: 1px solid var(--line);
+}
+#stats div { text-align: center; }
+#stats dt {
+  font-size: 0.6875rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+#stats dd { margin: 1px 0 0; font-size: 1.125rem; font-weight: 600; }
+
+#note {
+  margin: 10px 0 0;
+  font-size: 0.9375rem;
+  color: var(--dim);
+}
+
+#warn {
+  margin: 10px 0 0;
+  padding: 9px 11px;
+  text-align: left;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--warn) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--warn) 45%, transparent);
+  color: var(--fg);
+  font-size: 0.875rem;
+}
+#warn[hidden] { display: none; }
+
+/* --------------------------------------------------------------- controls */
+
+#controls { margin: 14px 0 0; }
+
+.field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 0;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  margin: 0;
+}
+.field > label, .field legend {
+  font-size: 0.9375rem;
+  color: var(--dim);
+  padding: 0;
+}
+.field--slider, fieldset.field { display: block; }
+fieldset.field legend { margin-bottom: 7px; }
+
+.field .hint {
+  margin: 7px 0 0;
+  font-size: 0.8125rem;
+  color: var(--dim);
+}
+
+.field--pair { display: flex; gap: 16px; }
+.field--pair > div { flex: 1; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+
+select, input[type="number"] {
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px 10px;
+  min-height: 46px;
+  max-width: 62vw;
+}
+input[type="number"] { width: 5.5rem; text-align: right; }
+select { max-width: 60vw; }
+
+.unit { display: inline-flex; align-items: center; gap: 6px; color: var(--dim); }
+
+/* segmented radio group: big targets, no decoration */
+.seg { display: flex; gap: 6px; position: relative; }
+.seg input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  width: 1px; height: 1px;
+}
+.seg label {
+  flex: 1;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 6px 4px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  font-size: 0.9375rem;
+  cursor: pointer;
+}
+.seg input[type="radio"]:checked + label {
+  background: var(--accent);
+  color: var(--accent-fg);
+  border-color: var(--accent);
+  font-weight: 600;
+}
+.seg input[type="radio"]:focus-visible + label {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* ----------------------------------------------------------------- slider */
+
+.field--slider > label { display: block; margin-bottom: 2px; }
+
+.slider { position: relative; height: 68px; }
+
+.slider__track {
+  position: absolute;
+  left: 17px; right: 17px;
+  top: 19px;
+  height: 10px;
+  border-radius: 5px;
+  background: var(--track);
+  overflow: hidden;
+}
+/* The unreachable region: below this the white would still be raw. */
+.slider__blocked {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 0;
+  background: repeating-linear-gradient(
+    -45deg, var(--blocked) 0 5px, var(--line) 5px 10px);
+}
+
+.slider input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  position: absolute;
+  left: 0; right: 0; top: 0;
+  width: 100%;
+  height: 48px;
+  margin: 0;
+  background: transparent;
+}
+.slider input[type="range"]::-webkit-slider-runnable-track {
+  height: 48px; background: transparent; border: 0;
+}
+.slider input[type="range"]::-moz-range-track {
+  height: 48px; background: transparent; border: 0;
+}
+.slider input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 34px; height: 34px;
+  margin-top: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 3px solid var(--panel);
+  cursor: pointer;
+}
+.slider input[type="range"]::-moz-range-thumb {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 3px solid var(--panel);
+  cursor: pointer;
+}
+
+.slider__ticks { position: absolute; left: 17px; right: 17px; top: 46px; height: 20px; }
+.slider__ticks span {
+  position: absolute;
+  transform: translateX(-50%);
+  font-size: 0.75rem;
+  color: var(--dim);
+  white-space: nowrap;
+}
+.slider__ticks span.blocked { text-decoration: line-through; opacity: 0.5; }
+
+.value { margin: 0; font-size: 0.875rem; color: var(--dim); }
+
+/* ---------------------------------------------------------------- actions */
+
+#actions {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  background: linear-gradient(to top, var(--bg) 62%, transparent);
+  padding: 20px 16px calc(14px + env(safe-area-inset-bottom));
+}
+#actions > * { max-width: 32rem; margin-left: auto; margin-right: auto; }
+
+#primaryHint {
+  margin: 0 auto 6px;
+  text-align: center;
+  font-size: 0.8125rem;
+  color: var(--dim);
+  min-height: 1.1em;
+}
+
+button {
+  font: inherit;
+  display: block;
+  width: 100%;
+  border-radius: 12px;
+  cursor: pointer;
+  min-height: 64px;
+}
+button.primary {
+  background: var(--accent);
+  color: var(--accent-fg);
+  border: 0;
+  font-size: 1.375rem;
+  font-weight: 650;
+  padding: 14px;
+}
+button.secondary {
+  margin-top: 8px;
+  min-height: 48px;
+  background: transparent;
+  color: var(--dim);
+  border: 1px solid var(--line);
+  font-size: 1rem;
+  padding: 10px;
+}
+button[hidden] { display: none; }
+button:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* ----------------------------------------------------------- running view */
+
+/* While a cook is under way the inputs are locked and out of the way: the
+   screen is a clock and one button. */
+body:not([data-phase="IDLE"]) #controls { display: none; }
+body:not([data-phase="IDLE"]) main { padding-top: 6vh; }
+body:not([data-phase="IDLE"]) #bigtime { font-size: clamp(5rem, 32vw, 9rem); }
+
+/* A cold start hides "after boiling" until the boil has actually been timed. */
+body[data-start="hot"] #afterBoilStat { display: none; }
+
+body[data-phase="PULL"] #readout {
+  border-color: var(--warn);
+  background: color-mix(in srgb, var(--warn) 14%, var(--panel));
+}
+body[data-phase="PULL"] #bigtime { color: var(--warn); }
+body[data-phase="DONE"] #readout { border-color: var(--ok); }
+body[data-phase="DONE"] #bigtime { color: var(--ok); }
+
+body[data-phase="PULL"] #readout { animation: flash 1s steps(2, end) infinite; }
+@keyframes flash { 50% { opacity: 0.75; } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
