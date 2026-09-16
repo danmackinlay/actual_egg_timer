@@ -34,8 +34,6 @@ export interface Machine {
   cooling: Cooling;
   /** Epoch ms when the egg entered the pan/water. 0 while idle. */
   startedAt_ms: number;
-  /** Epoch ms of the rolling-boil tap. 0 until tapped; unused on a hot start. */
-  boiledAt_ms: number;
   /** Epoch ms the egg must come out of the water. */
   cookEnd_ms: number;
   /** Epoch ms the egg left the water. */
@@ -44,7 +42,8 @@ export interface Machine {
   coolEnd_ms: number;
   /** Cook time currently in force, s (from egg-in to egg-out). */
   cookTime_s: number;
-  /** Time to a rolling boil currently assumed, s. */
+  /** Time to a rolling boil currently assumed, s. Always 0 on a hot start,
+   *  where no ramp is on the clock. */
   assumedBoil_s: number;
   /** True while `assumedBoil_s` is remembered/guessed rather than measured. */
   provisional: boolean;
@@ -55,7 +54,6 @@ export function idleMachine(cooling: Cooling): Machine {
     phase: 'IDLE',
     cooling: cooling,
     startedAt_ms: 0,
-    boiledAt_ms: 0,
     cookEnd_ms: 0,
     pulledAt_ms: 0,
     coolEnd_ms: 0,
@@ -74,7 +72,6 @@ export function startCold(
     phase: 'HEATING',
     cooling: cooling,
     startedAt_ms: now_ms,
-    boiledAt_ms: 0,
     cookEnd_ms: now_ms + cookTime_s * 1000,
     pulledAt_ms: 0,
     coolEnd_ms: 0,
@@ -90,7 +87,6 @@ export function startHot(now_ms: number, cookTime_s: number, cooling: Cooling): 
     phase: 'COOKING',
     cooling: cooling,
     startedAt_ms: now_ms,
-    boiledAt_ms: now_ms,
     cookEnd_ms: now_ms + cookTime_s * 1000,
     pulledAt_ms: 0,
     coolEnd_ms: 0,
@@ -107,10 +103,9 @@ export function recordBoil(m: Machine, now_ms: number, cookTime_s: number): Mach
   return {
     ...m,
     phase: 'COOKING',
-    boiledAt_ms: now_ms,
     cookEnd_ms: m.startedAt_ms + cookTime_s * 1000,
     cookTime_s: cookTime_s,
-    assumedBoil_s: (now_ms - m.startedAt_ms) / 1000,
+    assumedBoil_s: secondsHeating(m, now_ms),
     provisional: false,
   };
 }
@@ -133,9 +128,7 @@ export function reviseProvisional(m: Machine, cookTime_s: number, assumedBoil_s:
  *  being left on the counter (where "cooling" is just carryover). */
 export function beginCooling(m: Machine, now_ms: number): Machine {
   if (m.phase !== 'PULL') return m;
-  if (m.cooling === 'counter') {
-    return { ...m, phase: 'DONE', pulledAt_ms: m.pulledAt_ms, coolEnd_ms: 0 };
-  }
+  if (m.cooling === 'counter') return { ...m, phase: 'DONE' };
   return { ...m, phase: 'COOLING', coolEnd_ms: now_ms + COOLING_SECONDS * 1000 };
 }
 
@@ -163,13 +156,6 @@ export function advance(m: Machine, now_ms: number): Advance {
     return { machine: { ...m, phase: 'DONE' }, event: 'done' };
   }
   return { machine: m, event: 'none' };
-}
-
-/** True while a cook is in progress (used to decide about wake locks and
- *  whether the inputs should still be editable). */
-export function isRunning(m: Machine): boolean {
-  return m.phase === 'HEATING' || m.phase === 'COOKING'
-    || m.phase === 'PULL' || m.phase === 'COOLING';
 }
 
 /** Seconds until the egg must come out. May be negative. */

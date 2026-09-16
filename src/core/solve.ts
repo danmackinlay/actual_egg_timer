@@ -8,7 +8,9 @@ import {
   DT_SIM, CARRYOVER_WINDOW,
 } from './constants.js';
 import { Egg } from './geometry.js';
-import { CookSetup, surfaceTemperature, initialSurfaceTemperature } from './protocol.js';
+import {
+  CookSetup, bathTemperature, coolingTemperature, initialSurfaceTemperature,
+} from './protocol.js';
 import {
   createSphere, stepSphere, temperatureAt, centreTemperature, meanTemperature,
 } from './sphere.js';
@@ -107,9 +109,8 @@ export interface CookResult {
 export function simulate(
   egg: Egg, setup: CookSetup, params: ModelParams, cookTime_s: number,
 ): CookResult {
-  const sphere = createSphere(
-    egg.radius_m, params.alpha_m2s, setup.eggStart_C, initialSurfaceTemperature(setup),
-  );
+  const initialSurface = initialSurfaceTemperature(setup);
+  const sphere = createSphere(egg.radius_m, params.alpha_m2s, setup.eggStart_C, initialSurface);
   const yolkDose: Dose = createDose(Z_YOLK, TREF_YOLK_C);
   const whiteDose: Dose = createDose(Z_WHITE, TREF_WHITE_C);
 
@@ -124,19 +125,25 @@ export function simulate(
   // Captured when the egg leaves the water: a lumped egg in air relaxes from
   // its own volume-average temperature, which is also the ceiling on carryover.
   let meanAtPull = setup.eggStart_C;
-  let waterAtPull = initialSurfaceTemperature(setup);
+  let waterAtPull = initialSurface;
 
   const endTime = cookTime_s + CARRYOVER_WINDOW;
   while (t < endTime) {
-    if (!pullRecorded && t + DT_SIM >= cookTime_s) {
-      meanAtPull = meanTemperature(sphere);
-      waterAtPull = sphere.surface_C;
+    const tNext = t + DT_SIM;
+    let next: number;
+    if (tNext < cookTime_s) {
+      next = bathTemperature(setup, tNext);
+    } else {
+      if (!pullRecorded) {
+        meanAtPull = meanTemperature(sphere);
+        waterAtPull = sphere.surface_C;
+      }
+      next = coolingTemperature(
+        setup, tNext - cookTime_s, waterAtPull, meanAtPull, params.tauAirScale,
+      );
     }
-    const next = surfaceTemperature(
-      setup, t + DT_SIM, cookTime_s, params.tauAirScale, meanAtPull, waterAtPull,
-    );
     stepSphere(sphere, DT_SIM, next);
-    t += DT_SIM;
+    t = tNext;
 
     const yolkCentre = centreTemperature(sphere);
     const whiteInner = temperatureAt(sphere, YOLK_RADIUS_FRAC);
@@ -174,100 +181,45 @@ export function simulate(
   };
 }
 
-/** Fraction of the best available dose that counts as "as far as this pan
- *  goes". The maximum sits on a plateau - the last per cent of the dose can
- *  take another quarter of an hour and change the yolk by a tenth of a degree -
- *  so the time worth printing is the start of that plateau, not its peak. */
-const STANDING_KNEE = 0.99;
-
-/** How long past the boil it is worth looking, with the heat off. The water is
- *  falling; half an hour after the burner dies there is nothing left to give,
- *  and a longer search only costs simulations. */
-const STANDING_HORIZON_S = 1800.0;
+/* ------------------------------------------------------------------ search */
 
 const SOLVE_LO_S = 20.0;
 const SOLVE_HI_S = 3600.0;
 const SOLVE_TOL_S = 1.0;
 
-/** Coarse step for the standing scan, seconds. Fine enough that the bracket it
- *  hands to the bisection is locally monotonic; coarse enough to keep the scan
- *  to a few dozen simulations. */
-const SCAN_STEP_S = 30.0;
+/** Which dose a search is looking at. */
+type Metric = (r: CookResult) => number;
 
-/** Result of scanning cook times with the heat off. */
-interface Scan {
-  /** First cook time whose total dose reaches the target, or -1. */
-  cook_s: number;
-  /** Largest dose this pan can deliver at any cook time. */
-  maxDose: number;
-  /** Cook time at which that maximum is reached. */
-  maxAt_s: number;
-}
+function yolkOf(r: CookResult): number { return r.yolkDose_min; }
+function whiteOf(r: CookResult): number { return r.whiteDose_min; }
 
-/**
- * First cook time at which `metric` reaches `target`, WITHOUT assuming
- * monotonicity.
- *
- * Held at the boil, a longer cook always means more dose, and `bisect` is
- * exact. With the heat off that is false: pulling later means pulling from
- * cooler water, so the carryover that follows is smaller, and past a certain
- * point the total dose FALLS with a longer cook. Bisection on a non-monotonic
- * function does not merely lose accuracy - it lands anywhere, which showed up
- * as cook times jumping between 3 and 13 minutes for a 5 C change in room
- * temperature.
- *
- * So: step forward until the target is first met, then bisect inside that one
- * step, where the function is monotonic. The scan also records the largest dose
- * available at any pull time, which is what says whether a target is reachable
- * at all.
- */
-function scanForCrossing(
+/** Cook time in [lo, hi] at which `metric` first reaches `target`, assuming
+ *  the metric is monotonic across that bracket. Returns the upper end of the
+ *  final bracket: the shortest cook KNOWN to meet the target, to within
+ *  SOLVE_TOL_S. The midpoint would be as accurate, but could sit a hair short
+ *  of the target, and callers compare the dose at the answer against it. */
+function bisectBetween(
   egg: Egg, setup: CookSetup, params: ModelParams,
-  target: number, metric: (r: CookResult) => number, horizon_s: number,
-): Scan {
-  let maxDose = -1.0;
-  let maxAt = SOLVE_LO_S;
-  let prev = SOLVE_LO_S;
-  let t = SOLVE_LO_S;
-  while (t <= horizon_s) {
-    const dose = metric(simulate(egg, setup, params, t));
-    if (dose > maxDose) {
-      maxDose = dose;
-      maxAt = t;
-    }
-    if (dose >= target) {
-      // Inside one step the dose is still rising, so bisection is safe again.
-      let lo = prev;
-      let hi = t;
-      while (hi - lo > SOLVE_TOL_S) {
-        const mid = 0.5 * (lo + hi);
-        if (metric(simulate(egg, setup, params, mid)) < target) lo = mid;
-        else hi = mid;
-      }
-      return { cook_s: 0.5 * (lo + hi), maxDose: maxDose, maxAt_s: maxAt };
-    }
-    prev = t;
-    t += SCAN_STEP_S;
-  }
-  return { cook_s: -1.0, maxDose: maxDose, maxAt_s: maxAt };
-}
-
-/** Bisect for the cook time at which `metric` reaches `target`. Both doses are
- *  monotonically increasing in cook time while the water is held at the boil,
- *  so bisection is safe there. See scanForCrossing for what happens when the
- *  heat goes off. */
-function bisect(
-  egg: Egg, setup: CookSetup, params: ModelParams,
-  target: number, metric: (r: CookResult) => number,
+  target: number, metric: Metric, lo_s: number, hi_s: number,
 ): number {
-  let lo = SOLVE_LO_S;
-  let hi = SOLVE_HI_S;
+  let lo = lo_s;
+  let hi = hi_s;
   while (hi - lo > SOLVE_TOL_S) {
     const mid = 0.5 * (lo + hi);
     if (metric(simulate(egg, setup, params, mid)) < target) lo = mid;
     else hi = mid;
   }
-  return 0.5 * (lo + hi);
+  return hi;
+}
+
+/** Bisect the whole search range. Both doses are monotonically increasing in
+ *  cook time while the water is held at the boil (test 16a pins this), so
+ *  bisection is exact there. See solveStanding for what happens when the heat
+ *  goes off. */
+function bisect(
+  egg: Egg, setup: CookSetup, params: ModelParams, target: number, metric: Metric,
+): number {
+  return bisectBetween(egg, setup, params, target, metric, SOLVE_LO_S, SOLVE_HI_S);
 }
 
 export interface Solution {
@@ -291,33 +243,116 @@ export interface Solution {
   whiteSets: boolean;
 }
 
+function solutionOf(
+  result: CookResult, reachable: boolean, minCookTime_s: number,
+  softestLevel: number, hardestLevel: number, whiteSets: boolean,
+): Solution {
+  return {
+    result: result, reachable: reachable, minCookTime_s: minCookTime_s,
+    softestLevel: softestLevel, hardestLevel: hardestLevel, whiteSets: whiteSets,
+  };
+}
+
 /** Solve for the cook time that delivers the requested doneness. */
 export function solveCookTime(
   egg: Egg, setup: CookSetup, params: ModelParams, doneness: Doneness,
 ): Solution {
   if (setup.afterBoil === 'off') return solveStanding(egg, setup, params, doneness);
 
-  const minCook = bisect(egg, setup, params, doneness.whiteDose_min, (r) => r.whiteDose_min);
+  const minCook = bisect(egg, setup, params, doneness.whiteDose_min, whiteOf);
   const atMin = simulate(egg, setup, params, minCook);
   const softestLevel = sliderFromYolkDose(atMin.yolkDose_min);
   const whiteSets = atMin.whiteDose_min >= doneness.whiteDose_min;
-  const hardestLevel = 1.0;
 
   if (atMin.yolkDose_min >= doneness.yolkDose_min) {
     // Even the shortest white-setting cook overcooks the yolk past the target.
-    return {
-      result: atMin, reachable: false,
-      minCookTime_s: minCook, softestLevel: softestLevel,
-      hardestLevel: hardestLevel, whiteSets: whiteSets,
-    };
+    return solutionOf(atMin, false, minCook, softestLevel, 1.0, whiteSets);
   }
 
-  const cook = bisect(egg, setup, params, doneness.yolkDose_min, (r) => r.yolkDose_min);
-  return {
-    result: simulate(egg, setup, params, cook), reachable: true,
-    minCookTime_s: minCook, softestLevel: softestLevel,
-    hardestLevel: hardestLevel, whiteSets: whiteSets,
-  };
+  const cook = bisect(egg, setup, params, doneness.yolkDose_min, yolkOf);
+  return solutionOf(
+    simulate(egg, setup, params, cook), true, minCook, softestLevel, 1.0, whiteSets,
+  );
+}
+
+/* --------------------------------------------------------------- standing */
+
+/** Fraction of the best available dose that counts as "as far as this pan
+ *  goes". The maximum sits on a plateau - the last per cent of the dose can
+ *  take another quarter of an hour and change the yolk by a tenth of a degree -
+ *  so the time worth printing is the start of that plateau, not its peak. */
+const STANDING_KNEE = 0.99;
+
+/** How long past the boil it is worth looking, with the heat off. The water is
+ *  falling; half an hour after the burner dies there is nothing left to give,
+ *  and a longer search only costs simulations. */
+const STANDING_HORIZON_S = 1800.0;
+
+/** Coarse step for the standing scan, seconds. Fine enough that the bracket it
+ *  hands to the bisection is locally monotonic; coarse enough to keep the scan
+ *  to a few dozen simulations. */
+const SCAN_STEP_S = 30.0;
+
+/** Both doses sampled at every scan step, from the shortest cook to the
+ *  horizon. One pass answers every question the standing solver has. */
+interface DoseCurve {
+  times_s: number[];
+  yolk: number[];
+  white: number[];
+}
+
+function scanStanding(
+  egg: Egg, setup: CookSetup, params: ModelParams, horizon_s: number,
+): DoseCurve {
+  const times: number[] = [];
+  const yolk: number[] = [];
+  const white: number[] = [];
+  for (let t = SOLVE_LO_S; t <= horizon_s; t += SCAN_STEP_S) {
+    const r = simulate(egg, setup, params, t);
+    times.push(t);
+    yolk.push(r.yolkDose_min);
+    white.push(r.whiteDose_min);
+  }
+  return { times_s: times, yolk: yolk, white: white };
+}
+
+/** Index of the largest sample. The curve is never empty: the horizon is at
+ *  least STANDING_HORIZON_S past a non-negative time to boil. */
+function indexOfMax(values: number[]): number {
+  let best = 0;
+  for (let i = 1; i < values.length; i++) {
+    if (values[i] > values[best]) best = i;
+  }
+  return best;
+}
+
+/**
+ * First cook time at which a sampled dose reaches `target`, WITHOUT assuming
+ * monotonicity - or -1 if it never does.
+ *
+ * Held at the boil, a longer cook always means more dose, and `bisect` is
+ * exact. With the heat off that is false: pulling later means pulling from
+ * cooler water, so the carryover that follows is smaller, and past a certain
+ * point the total dose FALLS with a longer cook. Bisection on a non-monotonic
+ * function does not merely lose accuracy - it lands anywhere, which showed up
+ * as cook times jumping between 3 and 13 minutes for a 5 C change in room
+ * temperature.
+ *
+ * So: walk the samples until the target is first met, then bisect inside that
+ * one step, where the function is still rising.
+ */
+function firstCrossing(
+  egg: Egg, setup: CookSetup, params: ModelParams,
+  curve: DoseCurve, values: number[], target: number, metric: Metric,
+): number {
+  for (let i = 0; i < values.length; i++) {
+    if (values[i] < target) continue;
+    if (i === 0) return curve.times_s[0];
+    return bisectBetween(
+      egg, setup, params, target, metric, curve.times_s[i - 1], curve.times_s[i],
+    );
+  }
+  return -1.0;
 }
 
 /**
@@ -326,54 +361,51 @@ export function solveCookTime(
  *
  * Scanning is unavoidable, but it is bounded: the water is falling, so past
  * roughly half an hour of standing nothing changes at all, and there is no
- * point looking further.
+ * point looking further. The scan runs to the horizon regardless of where the
+ * target is crossed, so `hardestLevel` is the true ceiling of this pan and
+ * not merely "at least what was asked".
  */
 function solveStanding(
   egg: Egg, setup: CookSetup, params: ModelParams, doneness: Doneness,
 ): Solution {
-  const horizon = setup.timeToBoil_s + STANDING_HORIZON_S;
-  const white = scanForCrossing(
-    egg, setup, params, doneness.whiteDose_min, (r) => r.whiteDose_min, horizon,
+  const curve = scanStanding(egg, setup, params, setup.timeToBoil_s + STANDING_HORIZON_S);
+  const whiteCook = firstCrossing(
+    egg, setup, params, curve, curve.white, doneness.whiteDose_min, whiteOf,
   );
-  const yolk = scanForCrossing(
-    egg, setup, params, doneness.yolkDose_min, (r) => r.yolkDose_min, horizon,
+  const yolkCook = firstCrossing(
+    egg, setup, params, curve, curve.yolk, doneness.yolkDose_min, yolkOf,
   );
 
-  const hardestLevel = sliderFromYolkDose(yolk.maxDose);
-  const whiteSets = white.cook_s > 0;
-  const minCook = whiteSets ? white.cook_s : yolk.maxAt_s;
+  const peak = indexOfMax(curve.yolk);
+  const maxDose = curve.yolk[peak];
+  const maxAt = curve.times_s[peak];
+  const hardestLevel = sliderFromYolkDose(maxDose);
+  const whiteSets = whiteCook > 0;
+  const minCook = whiteSets ? whiteCook : maxAt;
   const atMin = simulate(egg, setup, params, minCook);
   const softestLevel = sliderFromYolkDose(atMin.yolkDose_min);
 
-  if (!whiteSets || yolk.cook_s < 0) {
+  if (!whiteSets || yolkCook < 0) {
     // Either the water never gets the white where it needs to go, or it runs
     // out before the yolk does. Answer with the furthest this pan goes, rather
     // than with a time that does not deliver what was asked - but take the
     // START of the plateau, since waiting past it achieves nothing.
-    const knee = scanForCrossing(
-      egg, setup, params, STANDING_KNEE * yolk.maxDose, (r) => r.yolkDose_min, horizon,
+    const knee = firstCrossing(
+      egg, setup, params, curve, curve.yolk, STANDING_KNEE * maxDose, yolkOf,
     );
-    return {
-      result: simulate(egg, setup, params, knee.cook_s > 0 ? knee.cook_s : yolk.maxAt_s),
-      reachable: false,
-      minCookTime_s: minCook, softestLevel: softestLevel,
-      hardestLevel: hardestLevel, whiteSets: whiteSets,
-    };
+    const at = knee > 0 ? knee : maxAt;
+    return solutionOf(
+      simulate(egg, setup, params, at), false, minCook, softestLevel, hardestLevel, whiteSets,
+    );
   }
 
   if (atMin.yolkDose_min >= doneness.yolkDose_min) {
-    return {
-      result: atMin, reachable: false,
-      minCookTime_s: minCook, softestLevel: softestLevel,
-      hardestLevel: hardestLevel, whiteSets: whiteSets,
-    };
+    return solutionOf(atMin, false, minCook, softestLevel, hardestLevel, whiteSets);
   }
 
   // Both constraints have to hold at the same pull, so take the later crossing.
-  const cook = yolk.cook_s > white.cook_s ? yolk.cook_s : white.cook_s;
-  return {
-    result: simulate(egg, setup, params, cook), reachable: true,
-    minCookTime_s: minCook, softestLevel: softestLevel,
-    hardestLevel: hardestLevel, whiteSets: whiteSets,
-  };
+  const cook = yolkCook > whiteCook ? yolkCook : whiteCook;
+  return solutionOf(
+    simulate(egg, setup, params, cook), true, minCook, softestLevel, hardestLevel, whiteSets,
+  );
 }

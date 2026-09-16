@@ -4,8 +4,14 @@
  * The app is the timer. It measures the time to a rolling boil rather than
  * asking the user to stopwatch it elsewhere, which is the one measurement the
  * model cannot guess and the user cannot be bothered to take separately.
+ *
+ * While a cook is running the inputs are hidden (styles.css), so everything on
+ * screen describes the cook that was started, not one the user is composing.
+ * That is what lets the machine's deadlines and the solver's readout be
+ * derived from the same settings without reconciling them mid-cook.
  */
 
+import { T_ROOM_C } from '../core/constants.js';
 import { Egg, eggFromMass, eggFromMinorDiameter, SIZE_CLASSES } from '../core/geometry.js';
 import { boilingPointAtAltitude } from '../core/thermo.js';
 import { Cooling, CookSetup, StartMode } from '../core/protocol.js';
@@ -20,16 +26,20 @@ import {
   calibrationSpread, recordOutcome,
 } from './calibration.js';
 import {
-  Settings, UiStartMode, clampNumber, estimateTimeToBoil, hasBoilMemory,
-  loadBoilMemory, loadSettings, rememberTimeToBoil, saveSettings,
+  LIMITS, Limit, START_TEMP_PRESETS_C, Settings, UiStartMode, clampNumber,
+  estimateTimeToBoil, hasBoilMemory, loadBoilMemory, loadSettings,
+  rememberTimeToBoil, saveSettings,
 } from './store.js';
 import { sousVideCopy } from './sousvide.js';
 import {
-  Machine, advance, beginCooling, idleMachine, isRunning, recordBoil, reviseProvisional,
+  Machine, advance, beginCooling, idleMachine, recordBoil, reviseProvisional,
   secondsAfterBoil, secondsHeating, secondsToCool, secondsToPull, startCold, startHot,
   COOLING_SECONDS, PULL_GRACE_SECONDS,
 } from './machine.js';
-import { Ticker, blip, keepScreenAwake, primeAudio, releaseScreen, ringAlarm, startTicker, stopAlarm } from './clock.js';
+import {
+  Ticker, blip, keepScreenAwake, primeAudio, releaseScreen, ringAlarm, setMuted, startTicker,
+  stopAlarm,
+} from './clock.js';
 
 /* ------------------------------------------------------------------- DOM */
 
@@ -50,14 +60,19 @@ const dom = {
   statBoil: el<HTMLElement>('statBoil'),
   note: el<HTMLParagraphElement>('note'),
   warn: el<HTMLParagraphElement>('warn'),
+  mute: el<HTMLButtonElement>('mute'),
   doneness: el<HTMLInputElement>('doneness'),
-  donenessBlocked: el<HTMLDivElement>('donenessBlocked'),
+  donenessBlockedSoft: el<HTMLDivElement>('donenessBlockedSoft'),
+  donenessBlockedHard: el<HTMLDivElement>('donenessBlockedHard'),
   donenessTicks: el<HTMLDivElement>('donenessTicks'),
   donenessValue: el<HTMLParagraphElement>('donenessValue'),
   size: el<HTMLSelectElement>('size'),
   measureMass: el<HTMLInputElement>('measureMass'),
   measureGirth: el<HTMLInputElement>('measureGirth'),
   measureMinor: el<HTMLInputElement>('measureMinor'),
+  tempFridgeDeg: el<HTMLSpanElement>('tempFridgeDeg'),
+  tempRoomDeg: el<HTMLSpanElement>('tempRoomDeg'),
+  sousDeg: el<HTMLSpanElement>('sousDeg'),
   customTempField: el<HTMLDivElement>('customTempField'),
   customTemp: el<HTMLInputElement>('customTemp'),
   litres: el<HTMLInputElement>('litres'),
@@ -69,11 +84,6 @@ const dom = {
   feedback: el<HTMLDivElement>('feedback'),
   calibNote: el<HTMLParagraphElement>('calibNote'),
 };
-
-/** Posterior over the model's uncertain constants, learned from how the user's
- *  own eggs actually turn out. Before any feedback this is the prior mean,
- *  i.e. the literature values. */
-let calib: Calibration = loadCalibration();
 
 function radios(name: string): HTMLInputElement[] {
   return Array.from(
@@ -96,16 +106,20 @@ function radioValue(name: string, fallback: string): string {
 
 let settings: Settings = loadSettings();
 let boilMemory = loadBoilMemory();
+/** Posterior over the model's uncertain constants, learned from how the user's
+ *  own eggs actually turn out. Before any feedback this is the prior mean,
+ *  i.e. the literature values. */
+const calib: Calibration = loadCalibration();
 let machine: Machine = idleMachine(settings.cooling);
 let solution: Solution | null = null;
-/** Time to boil, s, that the current solution was computed with. */
-let solvedBoil_s = 0;
 /** Set when the requested doneness had to be clamped; empty otherwise. */
 let refusal = '';
 let ticker: Ticker | null = null;
 let solveHandle = 0;
 let lastRevise_ms = 0;
 let lastAnnounced = '';
+/** One report per egg: the feedback buttons go away once one is pressed. */
+let feedbackGiven = false;
 
 /* --------------------------------------------------------------- physics */
 
@@ -139,10 +153,14 @@ function syncMeasurements(except: EventTarget | null): void {
 }
 
 function eggStart_C(): number {
-  if (settings.startTempMode === 'fridge') return 4;
-  if (settings.startTempMode === 'room') return 20;
-  return settings.customStart_C;
+  if (settings.startTempMode === 'custom') return settings.customStart_C;
+  return START_TEMP_PRESETS_C[settings.startTempMode];
 }
+
+/** An egg at or above this has been sitting out, and so says what the room
+ *  is. Below it the egg came from somewhere colder than any kitchen and says
+ *  nothing about the room at all. */
+const ROOM_FROM_EGG_MIN_C = 15;
 
 /** The room, as far as the model is concerned.
  *
@@ -154,11 +172,8 @@ function eggStart_C(): number {
  *  already told us: an egg that has been sitting out IS at room temperature.
  *  A fridge egg says nothing about the room, so that case keeps the default. */
 function ambient_C(): number {
-  if (settings.startTempMode === 'room') return 20;
-  if (settings.startTempMode === 'custom' && settings.customStart_C >= 15) {
-    return settings.customStart_C;
-  }
-  return 20;
+  const egg = eggStart_C();
+  return egg >= ROOM_FROM_EGG_MIN_C ? egg : T_ROOM_C;
 }
 
 function boilingPoint_C(): number {
@@ -183,9 +198,6 @@ function buildSetup(egg: Egg, timeToBoil_s: number): CookSetup {
     eggStart_C: eggStart_C(),
     ambient_C: ambient_C(),
     boiling_C: boilingPoint_C(),
-    // Passed on a hot start too, where no ramp is simulated: with the heat off
-    // it is also the pan's loss time constant (see panTimeConstant), which is
-    // the one number that decides whether standing works at all.
     timeToBoil_s: timeToBoil_s,
     cooling: settings.cooling,
     waterLitres: settings.waterLitres,
@@ -194,9 +206,24 @@ function buildSetup(egg: Egg, timeToBoil_s: number): CookSetup {
   };
 }
 
-/** Best available time to a rolling boil before one has been measured. */
-function provisionalBoil_s(): number {
+/** Time to a rolling boil, s - the pan's one measured number, and the one
+ *  thing the solver needs that the settings do not hold.
+ *
+ *  Before a cook it is remembered or guessed. Once a cold start is under way
+ *  the machine carries it: the guess, then the revision if the hob is slow,
+ *  then the measurement when the boil is tapped. A hot start never times it,
+ *  but the solver still wants it - with the heat off it is the pan's loss time
+ *  constant (see panTimeConstant), on either start - so a hot start keeps
+ *  using the remembered value throughout. */
+function timeToBoil_s(): number {
+  if (machine.phase !== 'IDLE' && settings.startMode === 'cold') return machine.assumedBoil_s;
   return estimateTimeToBoil(boilMemory, settings.waterLitres);
+}
+
+/** How much of the clock the ramp takes: all of the time to boil on a cold
+ *  start, none of it otherwise. */
+function rampSeconds(): number {
+  return settings.startMode === 'cold' ? timeToBoil_s() : 0;
 }
 
 /** Peak yolk temperature the slider is asking for, interpolated between the
@@ -263,20 +290,37 @@ function whiteNeverSetsText(): string {
 function standingRefusalText(wanted: number, hardest: number): string {
   const wantedLabel = anchorNear(wanted).label.toLowerCase();
   const hardestLabel = anchorNear(hardest).label.toLowerCase();
+  // Same rule as the soft end: a sliver off the top is not worth a sentence.
+  if (wantedLabel === hardestLabel) return '';
   return `With the heat off, the water runs out before the yolk gets there — `
     + `${wantedLabel} isn't reachable in ${settings.waterLitres} L. `
     + `Hardest here is ${hardestLabel}. More water, or keep it boiling.`;
 }
 
+/** Positions per unit of slider travel. The input element's step is set from
+ *  this, so a snapped level always lands where the thumb can sit. */
+const SLIDER_STEPS = 100;
+
+/** Round a level onto the slider's grid, away from the unreachable side. The
+ *  nudge keeps a level already on the grid from being pushed a whole step by
+ *  floating-point noise. */
+function snapUp(level: number): number {
+  return clampNumber(Math.ceil(level * SLIDER_STEPS - 1e-9) / SLIDER_STEPS, LIMITS.doneness, 1);
+}
+
+function snapDown(level: number): number {
+  return clampNumber(Math.floor(level * SLIDER_STEPS + 1e-9) / SLIDER_STEPS, LIMITS.doneness, 0);
+}
+
 /** Solve for the current inputs, clamping the slider to what is physically
  *  achievable. `reachable: false` means even the shortest cook that sets the
- *  white already overshoots the requested yolk. */
+ *  white already overshoots the requested yolk. Sets `refusal` as a side
+ *  effect, and may move the slider. */
 function solve(timeToBoil_s: number): Solution {
   const egg = currentEgg();
   const setup = buildSetup(egg, timeToBoil_s);
   const params = calibrationParams(calib);
   let result = solveCookTime(egg, setup, params, donenessFromSlider(settings.doneness));
-  solvedBoil_s = settings.startMode === 'cold' ? timeToBoil_s : 0;
 
   if (result.reachable) {
     refusal = '';
@@ -298,7 +342,7 @@ function solve(timeToBoil_s: number): Solution {
     // No re-solve: the solver already answered with the furthest this pan goes,
     // so the numbers on screen are the numbers for the only cook on offer.
     refusal = standingRefusalText(settings.doneness, result.hardestLevel);
-    const capped = clampNumber(Math.floor(result.hardestLevel * 100) / 100, 0, 1, 0);
+    const capped = snapDown(result.hardestLevel);
     if (capped < settings.doneness) {
       settings.doneness = capped;
       dom.doneness.value = String(capped);
@@ -308,7 +352,7 @@ function solve(timeToBoil_s: number): Solution {
   }
 
   refusal = refusalText(settings.doneness, result.softestLevel, settings.cooling);
-  const snapped = clampNumber(Math.ceil(result.softestLevel * 100) / 100, 0, 1, 1);
+  const snapped = snapUp(result.softestLevel);
   if (snapped > settings.doneness) {
     settings.doneness = snapped;
     dom.doneness.value = String(snapped);
@@ -351,16 +395,44 @@ function textureNote(peakYolk_C: number, peakWhite_C: number): string {
   return `${white}, ${yolk}`;
 }
 
-function renderDonenessScale(softestLevel: number): void {
-  const blockedPercent = Math.max(0, Math.min(100, softestLevel * 100));
-  dom.donenessBlocked.style.width = `${blockedPercent}%`;
+/** The reading under the slider. The same shape whether the temperature is
+ *  the solver's or the quick interpolation that tracks the thumb, so it does
+ *  not flicker between two formats mid-drag. */
+function donenessValueText(peakYolk_C: number): string {
+  return `${anchorNear(settings.doneness).label} · peak yolk ${peakYolk_C.toFixed(0)}°C`;
+}
+
+/** Stripe out the parts of the track this setup cannot deliver: the soft end
+ *  the white forbids, and - with the heat off - the hard end the pan cannot
+ *  reach. If the white never sets there is nothing to offer, and the whole
+ *  track says so. */
+function renderDonenessScale(sol: Solution): void {
+  const softest = sol.whiteSets ? sol.softestLevel : 1;
+  const hardest = sol.whiteSets ? sol.hardestLevel : 0;
+  dom.donenessBlockedSoft.style.width = `${clampNumber(softest * 100, { lo: 0, hi: 100 }, 0)}%`;
+  dom.donenessBlockedHard.style.width = `${clampNumber((1 - hardest) * 100, { lo: 0, hi: 100 }, 0)}%`;
   dom.doneness.setAttribute('aria-valuetext', anchorNear(settings.doneness).label);
   const ticks = dom.donenessTicks.children;
   for (let i = 0; i < ticks.length; i += 1) {
     const anchor = DONENESS_ANCHORS[i];
     if (anchor === undefined) continue;
-    ticks[i].classList.toggle('blocked', anchor.level < softestLevel - 0.005);
+    const blocked = anchor.level < softest - 0.005 || anchor.level > hardest + 0.005;
+    ticks[i].classList.toggle('blocked', blocked);
   }
+}
+
+function renderMute(): void {
+  dom.mute.textContent = settings.muted ? 'Muted' : 'Sound on';
+  dom.mute.setAttribute('aria-pressed', settings.muted ? 'true' : 'false');
+}
+
+/** Sound is a setting, not a phase: the toggle works mid-cook, and muting
+ *  while the alarm is going stops it. */
+function onToggleMute(): void {
+  settings.muted = !settings.muted;
+  setMuted(settings.muted);
+  saveSettings(settings);
+  renderMute();
 }
 
 function setPrimary(label: string, hint: string, visible: boolean): void {
@@ -377,7 +449,8 @@ function render(now_ms: number): void {
   dom.body.dataset['start'] = settings.startMode;
 
   const cookTime_s = machine.phase === 'IDLE' ? sol.result.cookTime_s : machine.cookTime_s;
-  const boil_s = machine.phase === 'IDLE' ? solvedBoil_s : machine.assumedBoil_s;
+  const boil_s = rampSeconds();
+  const standing = settings.afterBoil === 'off';
 
   dom.statYolk.textContent = `${sol.result.peakYolk_C.toFixed(0)}°C`;
   dom.statAfter.textContent = formatClock(cookTime_s - boil_s);
@@ -390,9 +463,8 @@ function render(now_ms: number): void {
     : 'white stays runny';
   dom.warn.textContent = refusal;
   dom.warn.hidden = refusal === '';
-  dom.donenessValue.textContent = `${anchorNear(settings.doneness).label} · `
-    + `peak yolk ${sol.result.peakYolk_C.toFixed(0)}°C`;
-  renderDonenessScale(sol.softestLevel);
+  dom.donenessValue.textContent = donenessValueText(sol.result.peakYolk_C);
+  renderDonenessScale(sol);
 
   let label = '';
   let digits = '';
@@ -437,7 +509,6 @@ function render(now_ms: number): void {
       ? `${hasBoilMemory(boilMemory) ? 'assumes' : 'guesses'} ${formatClock(boil_s)} to a rolling boil`
       : 'from eggs in to eggs out';
     spoken = `Total ${spokenClock(cookTime_s)}`;
-    const standing = settings.afterBoil === 'off';
     setPrimary(
       settings.startMode === 'cold' ? 'Start heating' : 'Eggs in',
       settings.startMode === 'cold'
@@ -456,7 +527,7 @@ function render(now_ms: number): void {
     spoken = `Heating. ${spokenClock(secondsToPull(machine, now_ms))} left in total`;
     setPrimary(
       'Full rolling boil',
-      settings.afterBoil === 'off'
+      standing
         ? 'wait for the whole surface to roll, then lid on and heat off'
         : 'wait for the whole surface to roll',
       true,
@@ -464,25 +535,23 @@ function render(now_ms: number): void {
     dom.secondary.hidden = false;
     dom.secondary.textContent = 'Cancel';
   } else if (machine.phase === 'COOKING') {
-    // Same idiom as the cooling phase: the one instruction the user has to act
-    // on goes in the phase label, where it sits next to the clock. The model
-    // holds the water at its boiling point for the whole cook, so this is not
-    // a style note - a pan taken off the heat under-cooks by minutes.
-    label = settings.afterBoil === 'off' ? 'Cooking — heat off, lid on' : 'Cooking — keep it boiling';
+    // The one instruction the user has to act on goes in the phase label, where
+    // it sits next to the clock. The model holds the water at its boiling point
+    // for the whole cook - or, with the heat off, assumes it cools on its own -
+    // so this is not a style note: a pan taken off the heat when the model
+    // expected a boil under-cooks by minutes, and vice versa.
+    label = standing ? 'Cooking — heat off, lid on' : 'Cooking — keep it boiling';
     digits = formatClock(secondsToPull(machine, now_ms));
     subline = settings.startMode === 'cold'
       ? `boil took ${formatClock(machine.assumedBoil_s)} · `
         + `${formatClock(secondsAfterBoil(machine))} after the boil`
       : 'in the water';
     spoken = `Cooking. ${spokenClock(secondsToPull(machine, now_ms))} left`;
-    // The model holds the water at its boiling point for the whole cook. A pan
-    // turned down to a bare simmer is still near enough; a covered pan taken
-    // off the heat is a different recipe and will under-cook by minutes.
-    setPrimary('', settings.afterBoil === 'off'
+    setPrimary('', standing
       ? `lid on, burner off — the timing assumes the water cools on its own from `
         + `${boilingPoint_C().toFixed(0)}°C`
       : `keep it boiling — the timing assumes ${boilingPoint_C().toFixed(0)}°C right up to the pull`,
-      false);
+    false);
     dom.secondary.hidden = false;
     dom.secondary.textContent = 'Cancel';
   } else if (machine.phase === 'PULL') {
@@ -543,11 +612,7 @@ function render(now_ms: number): void {
 /* -------------------------------------------------------------- recompute */
 
 function recompute(): void {
-  solution = solve(
-    isRunning(machine) && !machine.provisional && machine.phase !== 'HEATING'
-      ? machine.assumedBoil_s
-      : provisionalBoil_s(),
-  );
+  solution = solve(timeToBoil_s());
   render(Date.now());
 }
 
@@ -563,8 +628,6 @@ function scheduleSolve(): void {
 
 /* ------------------------------------------------------------ calibration */
 
-let feedbackGiven = false;
-
 function renderCalibNote(): void {
   if (calib.eggsLogged === 0) {
     dom.calibNote.textContent = 'Telling it tunes the model to your eggs and your pan.';
@@ -572,21 +635,23 @@ function renderCalibNote(): void {
   }
   dom.calibNote.textContent =
     `tuned on ${calib.eggsLogged} egg${calib.eggsLogged === 1 ? '' : 's'}`
-    + ` · \u00b1${calibrationSpread(calib).toFixed(0)}%`;
+    + ` · ±${calibrationSpread(calib).toFixed(0)}%`;
 }
 
 /** Fold one outcome into the posterior. Rebuilding the dose surface takes a
  *  couple of seconds, so the buttons are disabled while it runs - it happens
- *  once, after the egg is eaten, never in the render path. */
+ *  once, after the egg is eaten, never in the render path. The readout is left
+ *  describing the egg that was eaten; the recalibrated model shows up on the
+ *  next "Start again". */
 function onFeedback(value: Feedback): void {
   if (feedbackGiven) return;
   feedbackGiven = true;
   const buttons = dom.feedback.querySelectorAll<HTMLButtonElement>('button.fb');
   for (let i = 0; i < buttons.length; i++) buttons[i].disabled = true;
-  dom.calibNote.textContent = 'learning\u2026';
+  dom.calibNote.textContent = 'learning…';
 
   const egg = currentEgg();
-  const setup = buildSetup(egg, machine.assumedBoil_s);
+  const setup = buildSetup(egg, timeToBoil_s());
   const logTarget = Math.log10(donenessFromSlider(settings.doneness).yolkDose_min);
 
   // Yield first so the disabled state and the "learning" note actually paint
@@ -597,7 +662,6 @@ function onFeedback(value: Feedback): void {
     for (let i = 0; i < buttons.length; i++) buttons[i].disabled = false;
     dom.feedback.hidden = true;
     renderCalibNote();
-    recompute();
   }, 30);
 }
 
@@ -611,30 +675,29 @@ function readInputs(source: EventTarget | null): void {
   // a measured egg is better information than a box label.
   let measured_mm = -1;
   if (source === dom.measureMass) {
-    measured_mm = minorFromMass_mm(clampNumber(dom.measureMass.value, 25, 120, 62));
+    measured_mm = minorFromMass_mm(clampNumber(dom.measureMass.value, LIMITS.mass_g, 62));
   } else if (source === dom.measureGirth) {
-    measured_mm = minorFromGirth_mm(clampNumber(dom.measureGirth.value, 90, 200, 137));
+    measured_mm = minorFromGirth_mm(clampNumber(dom.measureGirth.value, LIMITS.girth_mm, 137));
   } else if (source === dom.measureMinor) {
-    measured_mm = clampNumber(dom.measureMinor.value, 30, 60, settings.customMinor_mm);
+    measured_mm = clampNumber(dom.measureMinor.value, LIMITS.minor_mm, settings.customMinor_mm);
   }
   if (measured_mm > 0) {
-    settings.customMinor_mm = clampNumber(measured_mm, 30, 60, settings.customMinor_mm);
+    settings.customMinor_mm = clampNumber(measured_mm, LIMITS.minor_mm, settings.customMinor_mm);
     settings.sizeIndex = -1;
     dom.size.value = '-1';
   }
   settings.startTempMode = radioValue('startTemp', 'fridge') as Settings['startTempMode'];
-  settings.customStart_C = clampNumber(dom.customTemp.value, -2, 40, settings.customStart_C);
-  settings.altitude_m = clampNumber(dom.altitude.value, -400, 5000, settings.altitude_m);
+  settings.customStart_C = clampNumber(dom.customTemp.value, LIMITS.eggTemp_C, settings.customStart_C);
+  settings.altitude_m = clampNumber(dom.altitude.value, LIMITS.altitude_m, settings.altitude_m);
   settings.startMode = radioValue('startMode', 'cold') as UiStartMode;
   settings.afterBoil = radioValue('afterBoil', 'hold') as Settings['afterBoil'];
   settings.cooling = radioValue('cooling', 'ice') as Cooling;
-  settings.waterLitres = clampNumber(dom.litres.value, 0.25, 12, settings.waterLitres);
-  settings.eggCount = Math.round(clampNumber(dom.eggCount.value, 1, 24, settings.eggCount));
-  settings.doneness = clampNumber(dom.doneness.value, 0, 1, settings.doneness);
+  settings.waterLitres = clampNumber(dom.litres.value, LIMITS.waterLitres, settings.waterLitres);
+  settings.eggCount = Math.round(clampNumber(dom.eggCount.value, LIMITS.eggCount, settings.eggCount));
+  settings.doneness = clampNumber(dom.doneness.value, LIMITS.doneness, settings.doneness);
 
   dom.customTempField.hidden = settings.startTempMode !== 'custom';
   syncMeasurements(source);
-  machine = { ...machine, cooling: settings.cooling };
   saveSettings(settings);
 }
 
@@ -642,7 +705,7 @@ function onInput(event: Event): void {
   readInputs(event.target);
   // Instant feedback on the two readings the eye is on while dragging; the
   // full solve (tens of milliseconds) follows and corrects them.
-  dom.donenessValue.textContent = anchorNear(settings.doneness).label;
+  dom.donenessValue.textContent = donenessValueText(targetPeakYolk_C(settings.doneness));
   dom.statYolk.textContent = `${targetPeakYolk_C(settings.doneness).toFixed(0)}°C`;
   dom.statBoil.textContent = `${boilingPoint_C().toFixed(1)}°C`;
   dom.body.dataset['start'] = settings.startMode;
@@ -651,30 +714,31 @@ function onInput(event: Event): void {
 
 /* ------------------------------------------------------------------ cook */
 
+/** A slow hob: when this little of the provisional countdown is left and the
+ *  water has still not boiled, push the estimate out by REVISE_EXTRA_S, at
+ *  most once per REVISE_INTERVAL_MS. */
+const REVISE_WHEN_LEFT_S = 45;
+const REVISE_EXTRA_S = 60;
+const REVISE_INTERVAL_MS = 10000;
+
 function onTick(): void {
   const now = Date.now();
 
-  if (machine.phase === 'HEATING' && secondsToPull(machine, now) < 45
-      && now - lastRevise_ms > 10000) {
+  if (machine.phase === 'HEATING' && secondsToPull(machine, now) < REVISE_WHEN_LEFT_S
+      && now - lastRevise_ms > REVISE_INTERVAL_MS) {
     // The hob is slower than we assumed. Push the estimate out rather than
     // count down to an alarm for an egg that has not begun cooking.
     lastRevise_ms = now;
-    const assumed = secondsHeating(machine, now) + 60;
-    const revised = solve(assumed);
-    solution = revised;
-    machine = reviseProvisional(machine, revised.result.cookTime_s, assumed);
+    const assumed = secondsHeating(machine, now) + REVISE_EXTRA_S;
+    solution = solve(assumed);
+    machine = reviseProvisional(machine, solution.result.cookTime_s, assumed);
   }
 
   const step = advance(machine, now);
   if (step.machine !== machine) {
     machine = step.machine;
     if (step.event === 'pull') ringAlarm(true);
-    if (step.event === 'done') ringAlarm(false);
-    if (machine.phase === 'DONE') {
-      // Nothing left to count. Stop repainting and let the screen sleep.
-      stopTicking();
-      releaseScreen();
-    }
+    if (step.event === 'done') finishCook();
   }
   render(now);
 }
@@ -690,15 +754,18 @@ function stopTicking(): void {
   }
 }
 
-function resetFeedbackLatch(): void {
-  feedbackGiven = false;
+/** The egg is done: ring, then stop repainting and let the screen sleep. */
+function finishCook(): void {
+  ringAlarm(false);
+  stopTicking();
+  releaseScreen();
 }
 
 function reset(): void {
   stopAlarm();
   stopTicking();
   releaseScreen();
-  resetFeedbackLatch();
+  feedbackGiven = false;
   machine = idleMachine(settings.cooling);
   recompute();
 }
@@ -712,7 +779,7 @@ function onPrimary(): void {
     // silently blocked later, when it matters.
     primeAudio();
     keepScreenAwake();
-    const boil = provisionalBoil_s();
+    const boil = timeToBoil_s();
     solution = solve(boil);
     const cook = solution.result.cookTime_s;
     machine = settings.startMode === 'cold'
@@ -727,8 +794,7 @@ function onPrimary(): void {
 
   if (machine.phase === 'HEATING') {
     const measured = secondsHeating(machine, now);
-    rememberTimeToBoil(settings.waterLitres, measured);
-    boilMemory = loadBoilMemory();
+    boilMemory = rememberTimeToBoil(boilMemory, settings.waterLitres, measured);
     solution = solve(measured);
     machine = recordBoil(machine, now, solution.result.cookTime_s);
     blip();
@@ -738,11 +804,7 @@ function onPrimary(): void {
 
   if (machine.phase === 'PULL') {
     machine = beginCooling(machine, now);
-    if (machine.phase === 'DONE') {
-      ringAlarm(false);
-      stopTicking();
-      releaseScreen();
-    }
+    if (machine.phase === 'DONE') finishCook();
     render(now);
     return;
   }
@@ -774,9 +836,30 @@ function buildTicks(): void {
   }
 }
 
+function applyLimit(input: HTMLInputElement, limit: Limit): void {
+  input.min = String(limit.lo);
+  input.max = String(limit.hi);
+}
+
+/** Everything the markup says about numbers comes from the same tables the
+ *  model reads, so a bound or a preset changed in one place changes here too. */
+function applyConstantsToDom(): void {
+  applyLimit(dom.measureMass, LIMITS.mass_g);
+  applyLimit(dom.measureGirth, LIMITS.girth_mm);
+  applyLimit(dom.measureMinor, LIMITS.minor_mm);
+  applyLimit(dom.customTemp, LIMITS.eggTemp_C);
+  applyLimit(dom.altitude, LIMITS.altitude_m);
+  applyLimit(dom.litres, LIMITS.waterLitres);
+  applyLimit(dom.eggCount, LIMITS.eggCount);
+  applyLimit(dom.doneness, LIMITS.doneness);
+  dom.doneness.step = String(1 / SLIDER_STEPS);
+  dom.tempFridgeDeg.textContent = `${START_TEMP_PRESETS_C.fridge}°`;
+  dom.tempRoomDeg.textContent = `${START_TEMP_PRESETS_C.room}°`;
+  dom.sousDeg.textContent = `${SOUS_VIDE_BATH_C}°`;
+}
+
 function applySettingsToDom(): void {
   dom.size.value = String(settings.sizeIndex);
-  if (dom.size.value === '') dom.size.value = '-1';
   syncMeasurements(null);
   selectRadio('startTemp', settings.startTempMode);
   dom.customTemp.value = String(settings.customStart_C);
@@ -793,6 +876,7 @@ function applySettingsToDom(): void {
 export function boot(): void {
   buildSizeOptions();
   buildTicks();
+  applyConstantsToDom();
   applySettingsToDom();
 
   const form = el<HTMLFormElement>('controls');
@@ -802,6 +886,9 @@ export function boot(): void {
 
   dom.primary.addEventListener('click', onPrimary);
   dom.secondary.addEventListener('click', reset);
+  dom.mute.addEventListener('click', onToggleMute);
+  setMuted(settings.muted);
+  renderMute();
 
   const fbButtons = dom.feedback.querySelectorAll<HTMLButtonElement>('button.fb');
   for (let i = 0; i < fbButtons.length; i++) {

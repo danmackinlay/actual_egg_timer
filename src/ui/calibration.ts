@@ -15,9 +15,10 @@ import { CookSetup } from '../core/protocol.js';
 import { ModelParams, DEFAULT_PARAMS } from '../core/solve.js';
 import { buildDoseGrid } from '../core/doseGrid.js';
 import {
-  Posterior, Feedback, createPrior, updatePosterior,
+  Particle, Posterior, Feedback, createPrior, updatePosterior,
   posteriorParams, posteriorAlphaRelSd,
 } from '../core/infer.js';
+import { readStorage, writeStorage } from './store.js';
 
 const KEY = 'aet.calibration.v1';
 const PARTICLES = 1000;
@@ -57,9 +58,10 @@ export function recordOutcome(
   c: Calibration, egg: Egg, setup: CookSetup,
   cookTime_s: number, logNominalTarget: number, feedback: Feedback,
 ): void {
-  const centre = calibrationParams(c).alpha_m2s;
+  const params = calibrationParams(c);
+  const centre = params.alpha_m2s;
   const grid = buildDoseGrid(
-    egg, setup, calibrationParams(c).tauAirScale,
+    egg, setup, params.tauAirScale,
     centre * 0.55, centre * 1.8, 21,
     Math.max(60, cookTime_s * 0.35), cookTime_s * 2.4, 32,
   );
@@ -69,6 +71,8 @@ export function recordOutcome(
 
 /* ------------------------------------------------------------- persistence */
 
+/** Column-wise and rounded: a thousand particles at full precision is ~90 KB
+ *  of JSON, and nothing downstream can tell the difference at five figures. */
 interface StoredCalibration {
   v: 1;
   n: number;
@@ -80,49 +84,57 @@ interface StoredCalibration {
 }
 
 export function saveCalibration(c: Calibration): void {
-  try {
-    const p = c.posterior.particles;
-    const stored: StoredCalibration = {
-      v: 1, n: c.eggsLogged, rng: c.posterior.rng,
-      a: [], o: [], t: [], w: [],
-    };
-    for (let i = 0; i < p.length; i++) {
-      stored.a.push(Number(p[i].alpha_m2s.toPrecision(7)));
-      stored.o.push(Number(p[i].logDoseOffset.toPrecision(5)));
-      stored.t.push(Number(p[i].tauAirScale.toPrecision(5)));
-      stored.w.push(Number(c.posterior.weights[i].toPrecision(5)));
-    }
-    window.localStorage.setItem(KEY, JSON.stringify(stored));
-  } catch {
-    // Private browsing, quota, or no storage at all. Calibration is a
-    // convenience; the app must work without it.
+  const p = c.posterior.particles;
+  const stored: StoredCalibration = {
+    v: 1, n: c.eggsLogged, rng: c.posterior.rng,
+    a: [], o: [], t: [], w: [],
+  };
+  for (let i = 0; i < p.length; i++) {
+    stored.a.push(Number(p[i].alpha_m2s.toPrecision(7)));
+    stored.o.push(Number(p[i].logDoseOffset.toPrecision(5)));
+    stored.t.push(Number(p[i].tauAirScale.toPrecision(5)));
+    stored.w.push(Number(c.posterior.weights[i].toPrecision(5)));
   }
+  writeStorage(KEY, JSON.stringify(stored));
 }
 
+function finiteArray(value: unknown, length: number): value is number[] {
+  if (!Array.isArray(value) || value.length !== length) return false;
+  for (let i = 0; i < length; i++) {
+    if (typeof value[i] !== 'number' || !Number.isFinite(value[i])) return false;
+  }
+  return true;
+}
+
+/** Whatever is in storage, or a fresh prior if it is missing, from another
+ *  version, or damaged. A half-valid posterior is worse than none: a single
+ *  NaN weight would poison every solve. */
 export function loadCalibration(): Calibration {
+  const raw = readStorage(KEY);
+  if (raw === null) return freshCalibration();
+  let s: Partial<StoredCalibration> | null;
   try {
-    const raw = window.localStorage.getItem(KEY);
-    if (raw === null) return freshCalibration();
-    const s = JSON.parse(raw) as StoredCalibration;
-    if (s.v !== 1 || !Array.isArray(s.a) || s.a.length === 0) return freshCalibration();
-    const base = createPrior(s.a.length, SEED);
-    for (let i = 0; i < s.a.length; i++) {
-      base.particles[i] = {
-        alpha_m2s: s.a[i], logDoseOffset: s.o[i], tauAirScale: s.t[i],
-      };
-      base.weights[i] = s.w[i];
-    }
-    base.rng = s.rng;
-    return { posterior: base, eggsLogged: s.n };
+    s = JSON.parse(raw) as Partial<StoredCalibration> | null;
   } catch {
     return freshCalibration();
   }
-}
-
-export function clearCalibration(): void {
-  try {
-    window.localStorage.removeItem(KEY);
-  } catch {
-    // ignore
+  if (s === null || typeof s !== 'object' || s.v !== 1) return freshCalibration();
+  if (!Array.isArray(s.a) || s.a.length === 0) return freshCalibration();
+  const n = s.a.length;
+  if (!finiteArray(s.a, n) || !finiteArray(s.o, n) || !finiteArray(s.t, n) || !finiteArray(s.w, n)) {
+    return freshCalibration();
   }
+  if (typeof s.n !== 'number' || !Number.isFinite(s.n) || typeof s.rng !== 'number') {
+    return freshCalibration();
+  }
+  const particles: Particle[] = new Array<Particle>(n);
+  const weights: number[] = new Array<number>(n);
+  for (let i = 0; i < n; i++) {
+    particles[i] = { alpha_m2s: s.a[i], logDoseOffset: s.o[i], tauAirScale: s.t[i] };
+    weights[i] = s.w[i];
+  }
+  return {
+    posterior: { particles: particles, weights: weights, rng: s.rng },
+    eggsLogged: s.n,
+  };
 }

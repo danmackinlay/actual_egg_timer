@@ -32,19 +32,22 @@
 
     <p id="note"></p>
     <p id="warn" hidden></p>
+    <button type="button" id="mute" class="mute" aria-pressed="false">Sound on</button>
   </section>
 
   <!-- ----------------------------------------------------------- controls -->
+  <!-- Numeric bounds and the preset temperatures are filled in at boot from
+       src/ui/store.ts, so the markup cannot disagree with the model. -->
   <form id="controls" autocomplete="off">
 
     <div class="field field--slider">
       <label for="doneness" id="donenessLabel">Doneness</label>
       <div class="slider">
         <div class="slider__track" aria-hidden="true">
-          <div class="slider__blocked" id="donenessBlocked"></div>
+          <div class="slider__blocked" id="donenessBlockedSoft"></div>
+          <div class="slider__blocked slider__blocked--hard" id="donenessBlockedHard"></div>
         </div>
-        <input type="range" id="doneness" min="0" max="1" step="0.01" value="0.41"
-               aria-describedby="donenessValue">
+        <input type="range" id="doneness" value="0.41" aria-describedby="donenessValue">
         <div class="slider__ticks" id="donenessTicks" aria-hidden="true"></div>
       </div>
       <p class="value" id="donenessValue"></p>
@@ -60,15 +63,15 @@
       <div class="measure" role="group" aria-labelledby="measureLegend">
         <div>
           <label for="measureMass">Weight</label>
-          <span class="unit"><input type="number" id="measureMass" min="25" max="120" step="0.5" inputmode="decimal"><span>g</span></span>
+          <span class="unit"><input type="number" id="measureMass" step="0.5" inputmode="decimal"><span>g</span></span>
         </div>
         <div>
           <label for="measureGirth">Around the middle</label>
-          <span class="unit"><input type="number" id="measureGirth" min="90" max="200" step="1" inputmode="decimal"><span>mm</span></span>
+          <span class="unit"><input type="number" id="measureGirth" step="1" inputmode="decimal"><span>mm</span></span>
         </div>
         <div>
           <label for="measureMinor">Across the middle</label>
-          <span class="unit"><input type="number" id="measureMinor" min="30" max="60" step="0.5" inputmode="decimal"><span>mm</span></span>
+          <span class="unit"><input type="number" id="measureMinor" step="0.5" inputmode="decimal"><span>mm</span></span>
         </div>
       </div>
       <p class="hint">A kitchen scale is the accurate one. Otherwise wrap a strip of
@@ -80,9 +83,9 @@
       <legend>Egg from</legend>
       <div class="seg">
         <input type="radio" name="startTemp" id="tempFridge" value="fridge">
-        <label for="tempFridge">Fridge 4&deg;</label>
+        <label for="tempFridge">Fridge <span id="tempFridgeDeg"></span></label>
         <input type="radio" name="startTemp" id="tempRoom" value="room">
-        <label for="tempRoom">Room 20&deg;</label>
+        <label for="tempRoom">Room <span id="tempRoomDeg"></span></label>
         <input type="radio" name="startTemp" id="tempCustom" value="custom">
         <label for="tempCustom">Custom</label>
       </div>
@@ -90,7 +93,7 @@
 
     <div class="field" id="customTempField" hidden>
       <label for="customTemp">Egg temperature</label>
-      <span class="unit"><input type="number" id="customTemp" min="-2" max="40" step="1" inputmode="decimal"><span>&deg;C</span></span>
+      <span class="unit"><input type="number" id="customTemp" step="1" inputmode="decimal"><span>&deg;C</span></span>
     </div>
 
     <fieldset class="field">
@@ -101,7 +104,7 @@
         <input type="radio" name="startMode" id="startHot" value="hot">
         <label for="startHot">Boiling water</label>
         <input type="radio" name="startMode" id="startSous" value="sous">
-        <label for="startSous">Sous-vide 58&deg;</label>
+        <label for="startSous">Sous-vide <span id="sousDeg"></span></label>
       </div>
       <p class="hint">Hot start peels far better; cold start needs no timing of the drop-in.</p>
     </fieldset>
@@ -133,17 +136,17 @@
     <div class="field field--pair">
       <div>
         <label for="litres">Water</label>
-        <span class="unit"><input type="number" id="litres" min="0.25" max="12" step="0.25" inputmode="decimal"><span>L</span></span>
+        <span class="unit"><input type="number" id="litres" step="0.25" inputmode="decimal"><span>L</span></span>
       </div>
       <div>
         <label for="eggCount">Eggs</label>
-        <span class="unit"><input type="number" id="eggCount" min="1" max="24" step="1" inputmode="numeric"><span></span></span>
+        <span class="unit"><input type="number" id="eggCount" step="1" inputmode="numeric"><span></span></span>
       </div>
     </div>
 
     <div class="field">
       <label for="altitude">Altitude</label>
-      <span class="unit"><input type="number" id="altitude" min="-400" max="5000" step="50" inputmode="numeric"><span>m</span></span>
+      <span class="unit"><input type="number" id="altitude" step="50" inputmode="numeric"><span>m</span></span>
     </div>
 
   </form>

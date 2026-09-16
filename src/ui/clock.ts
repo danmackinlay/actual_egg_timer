@@ -108,6 +108,14 @@ type AudioContextCtor = new () => AudioContext;
 
 let audio: AudioContext | null = null;
 let ringing: OscillatorNode[] = [];
+let muted = false;
+
+/** Silence the alarm and the blips. Muting mid-ring stops the ring. The audio
+ *  context is still primed on the Start tap, so unmuting later works. */
+export function setMuted(value: boolean): void {
+  muted = value;
+  if (muted) stopAlarm();
+}
 
 function audioCtor(): AudioContextCtor | null {
   const w = window as unknown as {
@@ -162,7 +170,7 @@ const BURSTS = 25;
 export function ringAlarm(urgent: boolean): void {
   primeAudio();
   const ctx = audio;
-  if (ctx === null) return;
+  if (ctx === null || muted) return;
   stopAlarm();
   const base = ctx.currentTime + 0.05;
   for (let i = 0; i < BURSTS; i += 1) {
@@ -188,6 +196,6 @@ export function stopAlarm(): void {
 /** A single short confirmation blip, for state changes that are not alarms. */
 export function blip(): void {
   const ctx = audio;
-  if (ctx === null) return;
+  if (ctx === null || muted) return;
   scheduleBeep(ctx, ctx.currentTime + 0.01, 660, 0.07);
 }

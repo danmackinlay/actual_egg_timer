@@ -1,14 +1,26 @@
 /**
- * Persistence. Everything here must survive localStorage being absent,
- * disabled, full, or throwing (Safari private mode throws on setItem).
+ * Persistence, and the bounds on what can be typed.
+ *
+ * Everything here must survive localStorage being absent, disabled, full, or
+ * throwing (Safari private mode throws on setItem).
  */
 
+import { T_ROOM_C } from '../core/constants.js';
+import { SIZE_CLASSES } from '../core/geometry.js';
 import { StartMode, Cooling, HeatAfterBoil } from '../core/protocol.js';
 
 const SETTINGS_KEY = 'aet.settings.v1';
 const BOIL_KEY = 'aet.boil.v1';
 
 export type StartTempMode = 'fridge' | 'room' | 'custom';
+
+/** What the two named egg-temperature buttons mean, C. Their labels are
+ *  rendered from this, so the button cannot say one thing and the model
+ *  another. */
+export const START_TEMP_PRESETS_C: Record<'fridge' | 'room', number> = {
+  fridge: 4,
+  room: T_ROOM_C,
+};
 
 /** The Start control offers one more option than the solver understands.
  *  'sous' never reaches core: see buildSetup in app.ts. */
@@ -28,6 +40,8 @@ export interface Settings {
   eggCount: number;
   /** Doneness slider position, [0, 1]. */
   doneness: number;
+  /** No alarm, no blips. The countdown still runs. */
+  muted: boolean;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -42,6 +56,31 @@ export const DEFAULT_SETTINGS: Settings = {
   waterLitres: 2,
   eggCount: 2,
   doneness: 0.41,
+  muted: false,
+};
+
+/** Inclusive bounds on a number. */
+export interface Limit {
+  lo: number;
+  hi: number;
+}
+
+/** Bounds on every number the user can type, in one place. They go onto the
+ *  input elements, onto what is typed, and onto what comes back out of
+ *  storage, so the three cannot drift apart. */
+export const LIMITS = {
+  mass_g: { lo: 25, hi: 120 },
+  girth_mm: { lo: 90, hi: 200 },
+  minor_mm: { lo: 30, hi: 60 },
+  eggTemp_C: { lo: -2, hi: 40 },
+  altitude_m: { lo: -400, hi: 5000 },
+  waterLitres: { lo: 0.25, hi: 12 },
+  eggCount: { lo: 1, hi: 24 },
+  doneness: { lo: 0, hi: 1 },
+  sizeIndex: { lo: -1, hi: SIZE_CLASSES.length - 1 },
+  /** A tap under half a minute is a double tap, not a boil; over two hours is
+   *  a tab left open. */
+  timeToBoil_s: { lo: 30, hi: 7200 },
 };
 
 /** Remembered time to a rolling boil, seconds, keyed by water volume in
@@ -51,7 +90,9 @@ export type BoilMemory = Record<string, number>;
 /** Fallback when nothing has ever been measured. */
 export const DEFAULT_TIME_TO_BOIL_S = 480;
 
-function readRaw(key: string): string | null {
+/* ------------------------------------------------------------- raw storage */
+
+export function readStorage(key: string): string | null {
   try {
     return window.localStorage.getItem(key);
   } catch {
@@ -59,7 +100,7 @@ function readRaw(key: string): string | null {
   }
 }
 
-function writeRaw(key: string, value: string): void {
+export function writeStorage(key: string, value: string): void {
   try {
     window.localStorage.setItem(key, value);
   } catch {
@@ -78,19 +119,25 @@ function parseObject(raw: string | null): Record<string, unknown> | null {
   }
 }
 
+/* --------------------------------------------------------------- numbers */
+
 /** Clamp to a finite number in range, falling back when given junk or NaN.
  *  Nothing from an input element or from storage reaches the solver without
  *  passing through here. */
-export function clampNumber(value: unknown, lo: number, hi: number, fallback: number): number {
+export function clampNumber(value: unknown, limit: Limit, fallback: number): number {
   // An empty or blank field is "not yet typed", not zero: Number('') is 0,
   // which would silently clamp to the minimum while the user is mid-edit.
   if (value === null || value === undefined) return fallback;
   if (typeof value === 'string' && value.trim() === '') return fallback;
   const n = typeof value === 'number' ? value : Number(value);
   if (!Number.isFinite(n)) return fallback;
-  if (n < lo) return lo;
-  if (n > hi) return hi;
+  if (n < limit.lo) return limit.lo;
+  if (n > limit.hi) return limit.hi;
   return n;
+}
+
+function isWithin(value: number, limit: Limit): boolean {
+  return Number.isFinite(value) && value >= limit.lo && value <= limit.hi;
 }
 
 function oneOf<T extends string>(value: unknown, allowed: readonly T[], fallback: T): T {
@@ -100,52 +147,62 @@ function oneOf<T extends string>(value: unknown, allowed: readonly T[], fallback
   return fallback;
 }
 
+/* -------------------------------------------------------------- settings */
+
 export function loadSettings(): Settings {
-  const raw = parseObject(readRaw(SETTINGS_KEY));
+  const raw = parseObject(readStorage(SETTINGS_KEY));
   if (raw === null) return { ...DEFAULT_SETTINGS };
+  const d = DEFAULT_SETTINGS;
   return {
-    sizeIndex: Math.round(clampNumber(raw['sizeIndex'], -1, 32, DEFAULT_SETTINGS.sizeIndex)),
-    customMinor_mm: clampNumber(raw['customMinor_mm'], 30, 60, DEFAULT_SETTINGS.customMinor_mm),
-    startTempMode: oneOf(raw['startTempMode'], ['fridge', 'room', 'custom'] as const, 'fridge'),
-    customStart_C: clampNumber(raw['customStart_C'], -2, 40, DEFAULT_SETTINGS.customStart_C),
-    altitude_m: clampNumber(raw['altitude_m'], -400, 5000, 0),
-    startMode: oneOf(raw['startMode'], ['cold', 'hot', 'sous'] as const, 'cold'),
-    afterBoil: oneOf(raw['afterBoil'], ['hold', 'off'] as const, 'hold'),
-    cooling: oneOf(raw['cooling'], ['ice', 'tap', 'counter'] as const, 'ice'),
-    waterLitres: clampNumber(raw['waterLitres'], 0.25, 12, DEFAULT_SETTINGS.waterLitres),
-    eggCount: Math.round(clampNumber(raw['eggCount'], 1, 24, DEFAULT_SETTINGS.eggCount)),
-    doneness: clampNumber(raw['doneness'], 0, 1, DEFAULT_SETTINGS.doneness),
+    sizeIndex: Math.round(clampNumber(raw['sizeIndex'], LIMITS.sizeIndex, d.sizeIndex)),
+    customMinor_mm: clampNumber(raw['customMinor_mm'], LIMITS.minor_mm, d.customMinor_mm),
+    startTempMode: oneOf(raw['startTempMode'], ['fridge', 'room', 'custom'] as const, d.startTempMode),
+    customStart_C: clampNumber(raw['customStart_C'], LIMITS.eggTemp_C, d.customStart_C),
+    altitude_m: clampNumber(raw['altitude_m'], LIMITS.altitude_m, d.altitude_m),
+    startMode: oneOf(raw['startMode'], ['cold', 'hot', 'sous'] as const, d.startMode),
+    afterBoil: oneOf(raw['afterBoil'], ['hold', 'off'] as const, d.afterBoil),
+    cooling: oneOf(raw['cooling'], ['ice', 'tap', 'counter'] as const, d.cooling),
+    waterLitres: clampNumber(raw['waterLitres'], LIMITS.waterLitres, d.waterLitres),
+    eggCount: Math.round(clampNumber(raw['eggCount'], LIMITS.eggCount, d.eggCount)),
+    doneness: clampNumber(raw['doneness'], LIMITS.doneness, d.doneness),
+    muted: raw['muted'] === true,
   };
 }
 
 export function saveSettings(settings: Settings): void {
-  writeRaw(SETTINGS_KEY, JSON.stringify(settings));
+  writeStorage(SETTINGS_KEY, JSON.stringify(settings));
 }
 
+/* ----------------------------------------------------------- boil memory */
+
 function volumeKey(litres: number): string {
-  return clampNumber(litres, 0.25, 12, 2).toFixed(1);
+  return clampNumber(litres, LIMITS.waterLitres, DEFAULT_SETTINGS.waterLitres).toFixed(1);
 }
 
 export function loadBoilMemory(): BoilMemory {
-  const raw = parseObject(readRaw(BOIL_KEY));
+  const raw = parseObject(readStorage(BOIL_KEY));
   const out: BoilMemory = {};
   if (raw === null) return out;
   for (const key of Object.keys(raw)) {
     const seconds = Number(raw[key]);
-    if (Number.isFinite(seconds) && seconds > 10 && seconds < 7200) out[key] = seconds;
+    if (isWithin(seconds, LIMITS.timeToBoil_s)) out[key] = seconds;
   }
   return out;
 }
 
-/** Record a measured boil, blended with whatever we already knew for this
- *  volume so one odd run (lid off, pan half empty) does not dominate. */
-export function rememberTimeToBoil(litres: number, seconds: number): void {
-  if (!Number.isFinite(seconds) || seconds <= 10 || seconds > 7200) return;
-  const memory = loadBoilMemory();
+/** Record a measured boil, blended with whatever was already known for this
+ *  volume so one odd run (lid off, pan half empty) does not dominate. Returns
+ *  the updated memory, which is also written through. */
+export function rememberTimeToBoil(
+  memory: BoilMemory, litres: number, seconds: number,
+): BoilMemory {
+  if (!isWithin(seconds, LIMITS.timeToBoil_s)) return memory;
   const key = volumeKey(litres);
   const previous = memory[key];
-  memory[key] = previous === undefined ? seconds : 0.5 * previous + 0.5 * seconds;
-  writeRaw(BOIL_KEY, JSON.stringify(memory));
+  const updated: BoilMemory = { ...memory };
+  updated[key] = previous === undefined ? seconds : 0.5 * previous + 0.5 * seconds;
+  writeStorage(BOIL_KEY, JSON.stringify(updated));
+  return updated;
 }
 
 /** Best guess at the time to a rolling boil for this volume: the exact
@@ -170,7 +227,7 @@ export function estimateTimeToBoil(memory: BoilMemory, litres: number): number {
   const nearLitres = Number(bestKey);
   const nearSeconds = memory[bestKey];
   if (nearSeconds === undefined || !(nearLitres > 0)) return DEFAULT_TIME_TO_BOIL_S;
-  return clampNumber(nearSeconds * (litres / nearLitres), 30, 7200, DEFAULT_TIME_TO_BOIL_S);
+  return clampNumber(nearSeconds * (litres / nearLitres), LIMITS.timeToBoil_s, DEFAULT_TIME_TO_BOIL_S);
 }
 
 /** True when the estimate is a real measurement rather than the default. */

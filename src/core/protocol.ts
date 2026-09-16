@@ -33,7 +33,10 @@ export interface CookSetup {
   ambient_C: number;
   /** Boiling point at the user's altitude, C. */
   boiling_C: number;
-  /** Measured time for the pan to reach a full rolling boil, s. Cold start only. */
+  /** Measured time for the pan to reach a full rolling boil, s. On a cold
+   *  start it is how long the ramp lasts. With the heat off it also sets the
+   *  pan's loss time constant (see panTimeConstant), on either start - it is
+   *  the only measurement of the pan there is. */
   timeToBoil_s: number;
   cooling: Cooling;
   /** Water volume, litres. Sets how far the water dips when eggs go in, and -
@@ -140,21 +143,20 @@ export function standingTemperature(
  * least-verified part of the model, so it is learned rather than asserted.
  */
 export function coolingTemperature(
-  cooling: Cooling, elapsedSincePull_s: number,
+  setup: CookSetup, elapsedSincePull_s: number,
   waterAtPull_C: number, meanAtPull_C: number, tauAirScale: number,
-  ambient_C: number,
 ): number {
   let target: number;
-  if (cooling === 'ice') {
+  if (setup.cooling === 'ice') {
     target = T_ICE_BATH_C;
-  } else if (cooling === 'tap') {
+  } else if (setup.cooling === 'tap') {
     // Mains water is NOT room temperature: it arrives at something closer to
     // ground temperature, usually below the room and occasionally - a long run
     // of pipe in a hot summer - well above it. It gets its own constant.
     target = T_COLD_TAP_C;
   } else {
     const tau = TAU_AIR * tauAirScale;
-    target = ambient_C + (meanAtPull_C - ambient_C) * Math.exp(-elapsedSincePull_s / tau);
+    target = setup.ambient_C + (meanAtPull_C - setup.ambient_C) * Math.exp(-elapsedSincePull_s / tau);
   }
   // Blend out of the water temperature rather than jumping, so the surface is
   // continuous at the moment of pulling. See TAU_PLUNGE.
@@ -162,19 +164,12 @@ export function coolingTemperature(
 }
 
 /**
- * The full schedule: surface temperature at time t_s, where t = 0 is when the
- * egg enters the pan and `cookEnd_s` is when it comes out.
+ * Water temperature while the egg is still in the pan, at time t_s after it
+ * went in. This is the whole in-water schedule - ramp, boil, dip, and with the
+ * heat off the pan cooling toward the room. What happens after the pull is
+ * coolingTemperature's business, and the two never need each other's inputs.
  */
-export function surfaceTemperature(
-  setup: CookSetup, t_s: number, cookEnd_s: number, tauAirScale: number,
-  meanAtPull_C: number, waterAtPull_C: number,
-): number {
-  if (t_s >= cookEnd_s) {
-    return coolingTemperature(
-      setup.cooling, t_s - cookEnd_s, waterAtPull_C, meanAtPull_C, tauAirScale,
-      setup.ambient_C,
-    );
-  }
+export function bathTemperature(setup: CookSetup, t_s: number): number {
   const standing = setup.afterBoil === 'off';
   if (setup.startMode === 'cold') {
     if (t_s < setup.timeToBoil_s) {
@@ -199,5 +194,5 @@ export function surfaceTemperature(
 /** Water temperature at the moment the egg goes in - the sphere's initial
  *  surface condition. */
 export function initialSurfaceTemperature(setup: CookSetup): number {
-  return surfaceTemperature(setup, 0.0, Number.POSITIVE_INFINITY, 1.0, 0.0, 0.0);
+  return bathTemperature(setup, 0.0);
 }

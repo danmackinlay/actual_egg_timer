@@ -4,8 +4,9 @@
  * Values were first re-derived rather than transcribed, because the primary
  * literature was not retrieved during the initial build. It has since been
  * read at first hand: see references.bib, and README.md section 10 for what
- * each source actually says. Constants that changed as a result are marked
- * CHECKED AT SOURCE; ones still resting on an inference are marked INFERRED.
+ * each source actually says. Constants that were confirmed or corrected as a
+ * result are marked CHECKED AT SOURCE; the two still resting on an inference
+ * (H_EFF, TAU_AIR) say so in their own comments.
  */
 
 /** Number of eigenmodes retained in the sphere series.

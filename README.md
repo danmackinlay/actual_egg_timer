@@ -767,10 +767,13 @@ To calibrate: cook eggs, and after each one record whether the result was softer
 harder than you asked for. Ordinal feedback is enough — you do not need a thermocouple,
 and a judgement of "too soft" is far more reliable than a guess at a temperature. Vary
 one thing at a time, and include at least a few cooks with a *different* cooling step if
-you want `tauAirScale` to mean anything. The inference machinery for this
-(`src/core/infer.ts`) is Phase C and is not built yet; until it lands, the manual
-version is to nudge `alpha_m2s` down if your eggs come out consistently underdone and up
-if they come out consistently overdone, by about 7% per half-minute of error.
+you want `tauAirScale` to mean anything. The app does this for you: after every cook
+it asks "How was it?", and the answer goes into a particle filter (`src/core/infer.ts`)
+whose posterior mean is what the next solve uses. There is no reset button; clearing
+the site's storage starts the prior again. The manual equivalent, if you are working
+from the core directly, is to nudge `alpha_m2s` down if your eggs come out
+consistently underdone and up if they come out consistently overdone, by about 7% per
+half-minute of error.
 
 ### Running it
 
@@ -1023,11 +1026,9 @@ answers are recorded here rather than deleted, because each one was a plausible 
 
 ### 11.5 Known software gaps
 
-- **The finished-egg screen has not been visually confirmed in a browser.** Reaching
-  `DONE` requires sitting through a full seven-minute cook. The calibration path behind
-  it *is* verified end to end (feedback moves the posterior in the right direction and
-  survives a reload), and the element's visibility is a single condition, but the
-  rendered screen itself is unverified.
+- **No way to reset calibration from the app.** A run of wrong answers to "How was
+  it?" is undone only by clearing the site's storage. The posterior is honest about its
+  spread, so it recovers on its own after a few more eggs, but a button would be kinder.
 - **`tauAirScale` is only identifiable if you vary the cooling method.** Cook every egg
   with an ice bath and it will sit at its prior forever — which is correct behaviour, not
   a bug, but it means the carryover model never improves unless you deliberately mix.

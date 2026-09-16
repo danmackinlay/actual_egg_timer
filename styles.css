@@ -136,6 +136,24 @@ main {
 }
 #warn[hidden] { display: none; }
 
+/* Mute: a pill, not a bar. It has to be reachable from every phase, so it lives
+   in the readout rather than with the hidden controls. */
+button.mute {
+  width: auto;
+  min-height: 36px;
+  margin: 12px auto 0;
+  padding: 6px 14px;
+  font-size: 0.8125rem;
+  color: var(--dim);
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+}
+button.mute[aria-pressed="true"] {
+  color: var(--warn);
+  border-color: color-mix(in srgb, var(--warn) 55%, transparent);
+}
+
 /* --------------------------------------------------------------- controls */
 
 #controls { margin: 14px 0 0; }
@@ -237,7 +255,8 @@ select { max-width: 60vw; }
   background: var(--track);
   overflow: hidden;
 }
-/* The unreachable region: below this the white would still be raw. */
+/* The unreachable regions: at the soft end the white would still be raw; at
+   the hard end (heat off only) the pan runs out of heat first. */
 .slider__blocked {
   position: absolute;
   left: 0; top: 0; bottom: 0;
@@ -245,6 +264,7 @@ select { max-width: 60vw; }
   background: repeating-linear-gradient(
     -45deg, var(--blocked) 0 5px, var(--line) 5px 10px);
 }
+.slider__blocked--hard { left: auto; right: 0; }
 
 .slider input[type="range"] {
   -webkit-appearance: none;

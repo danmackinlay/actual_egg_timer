@@ -30,25 +30,23 @@ export function eggVolumeFromMinorDiameter(minorDiameter_m: number): number {
  *  sphere is slightly larger than the equatorial one. */
 export function eggFromMinorDiameter(minorDiameter_m: number): Egg {
   const volume = eggVolumeFromMinorDiameter(minorDiameter_m);
-  const radius = Math.cbrt(3.0 * volume / (4.0 * Math.PI));
-  return {
-    radius_m: radius,
-    minorDiameter_m: minorDiameter_m,
-    mass_kg: RHO_EGG * volume,
-    volume_m3: volume,
-  };
+  return eggFromVolume(volume, minorDiameter_m, RHO_EGG * volume);
 }
 
 /** Build an Egg from mass, kg - kitchen scales beat ruler-measuring an ovoid. */
 export function eggFromMass(mass_kg: number): Egg {
   const volume = mass_kg / RHO_EGG;
-  const radius = Math.cbrt(3.0 * volume / (4.0 * Math.PI));
   const b = Math.cbrt(volume / (EGG_VOLUME_COEFF * EGG_LENGTH_RATIO));
+  return eggFromVolume(volume, b, mass_kg);
+}
+
+/** The equal-volume sphere is the one thing both constructors compute. */
+function eggFromVolume(volume_m3: number, minorDiameter_m: number, mass_kg: number): Egg {
   return {
-    radius_m: radius,
-    minorDiameter_m: b,
+    radius_m: Math.cbrt(3.0 * volume_m3 / (4.0 * Math.PI)),
+    minorDiameter_m: minorDiameter_m,
     mass_kg: mass_kg,
-    volume_m3: volume,
+    volume_m3: volume_m3,
   };
 }
 
