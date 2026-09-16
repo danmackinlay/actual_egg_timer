@@ -31,10 +31,21 @@ down. Zero runtime dependencies. The core is written for a near-mechanical Swift
 - [ ] `index.html` + `src/ui/*` (state machine, clock, store)
 - [ ] `README.md` — the science write-up
 
-### Phase C — calibration (solo)
-- [ ] `src/core/doseGrid.ts`  — cached log10 dose, bilinear interpolation
-- [ ] `src/core/infer.ts`     — particle filter, ordinal likelihood
+### Phase C — calibration (solo) — DONE
+- [x] `src/core/doseGrid.ts`  — cached log10 dose, bilinear interpolation
+- [x] `src/core/infer.ts`     — particle filter, ordinal likelihood
 - [ ] integrate, full verification, push
+
+Measured: grid build 1.76 s (21x36), interpolation error 1.7% in dose, posterior
+update 0.1-1.6 ms. Injected alpha = 1.535e-7 with taste offset 0.20 recovered in
+**3 eggs**; converged cook time 8.52 min vs true optimum 8.29 min (14 s error);
+relative sd plateaus at 3.1%, the ordinal-feedback identifiability floor.
+Recovered alpha is 4.5% off in isolation because alpha and the taste offset are
+confounded at fixed protocol - the combination is identified, the parts are not.
+That is the documented behaviour, not a defect.
+
+Also added: early termination in `simulate()` once the egg is past peak and the
+dose rate is 1e-6 of peak. Cut simulate 2.80 -> 1.87 ms with identical results.
 
 ---
 

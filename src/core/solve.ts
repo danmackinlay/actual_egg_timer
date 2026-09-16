@@ -119,6 +119,8 @@ export function simulate(
   let peakWhite = setup.eggStart_C;
   let yolkAtPull = setup.eggStart_C;
   let pullRecorded = false;
+  let prevYolk = setup.eggStart_C;
+  let peakDoseRate = 0.0;
   // Captured when the egg leaves the water: a lumped egg in air relaxes from
   // its own volume-average temperature, which is also the ceiling on carryover.
   let meanAtPull = setup.eggStart_C;
@@ -150,6 +152,15 @@ export function simulate(
       yolkAtPull = yolkCentre;
       pullRecorded = true;
     }
+
+    // Stop once the egg is past its peak and cooling, and the remaining dose
+    // rate is a millionth of the peak rate - further integration cannot change
+    // the answer. Because z ~ 4.65 K the rate collapses fast, so this typically
+    // cuts an ice-bath simulation in half.
+    const rate = Math.pow(10.0, (yolkCentre - TREF_YOLK_C) / Z_YOLK);
+    if (rate > peakDoseRate) peakDoseRate = rate;
+    if (t > cookTime_s && yolkCentre < prevYolk && rate < 1e-6 * peakDoseRate) break;
+    prevYolk = yolkCentre;
   }
 
   return {
