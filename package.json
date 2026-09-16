@@ -1,0 +1,17 @@
+{
+  "name": "actual-egg-timer",
+  "version": "0.1.0",
+  "description": "A physics-based egg timer: transient conduction + denaturation kinetics",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "check": "tsc --noEmit",
+    "test": "tsc && node --test dist/test/",
+    "validate": "tsc && node dist/tools/validate.js",
+    "serve": "python3 -m http.server 8080"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0"
+  }
+}
