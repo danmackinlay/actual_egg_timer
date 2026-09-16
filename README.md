@@ -787,10 +787,15 @@ npm run build:site # the deployable tree, in _site/
 ```
 
 Node version is pinned in `.node-version`, which nvm, fnm and Netlify all read,
-so the deploy compiles on the same Node the tests ran on. There is nothing else
-to configure: `netlify.toml` and `vercel.json` each carry the two settings their
-host needs, and the build is `tsc` plus two `cp`s — no bundler, no runtime
-dependencies, no environment variables, no secrets.
+so a Netlify build compiles on the same Node the tests ran on. Vercel offers only
+20.x, 22.x and 24.x — it does not carry a 26 — so `engines.node` is a range
+rather than a pin, and Vercel takes its newest. The range is a statement about
+the APIs this uses (`node:test`, ES2022), not a tested claim: 26 is what runs
+here and what CI would run.
+
+There is nothing else to configure. `netlify.toml` and `vercel.json` each carry
+the two settings their host needs, and the build is `tsc` plus two `cp`s — no
+bundler, no runtime dependencies, no environment variables, no secrets.
 
 `src/core/` has zero dependencies, no DOM, no `Date`, no I/O and no `async`. It is plain
 interfaces and top-level functions with explicit loops, which is deliberate: it is meant

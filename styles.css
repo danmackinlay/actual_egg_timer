@@ -361,6 +361,22 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
 
 /* While a cook is under way the inputs are locked and out of the way: the
    screen is a clock and one button. */
+#colophon {
+  margin: 22px 0 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--dim);
+}
+#colophon p { margin: 0; }
+#colophon a { color: inherit; text-underline-offset: 2px; }
+#colophon a:hover, #colophon a:focus-visible { color: var(--fg); }
+
+/* Opening the source mid-cook must not take the timer with it: the link opens
+   in a new tab, and the colophon steps out of the way while a cook is running
+   so there is nothing to tap by accident. */
+body:not([data-phase="IDLE"]) #colophon { display: none; }
 body:not([data-phase="IDLE"]) #controls { display: none; }
 body:not([data-phase="IDLE"]) main { padding-top: 6vh; }
 body:not([data-phase="IDLE"]) #bigtime { font-size: clamp(5rem, 32vw, 9rem); }

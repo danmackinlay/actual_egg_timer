@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "description": "A physics-based egg timer: transient conduction + denaturation kinetics",
   "license": "MIT",
+  "engines": {
+    "node": ">=22"
+  },
   "type": "module",
   "scripts": {
     "build": "tsc",
