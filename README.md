@@ -486,8 +486,8 @@ distrust.
 | constant | value | units | source / confidence |
 |---|---|---|---|
 | `T_ICE_BATH_C` | 2 | °C | Ice water. **High.** |
-| `T_COLD_TAP_C` | 15 | °C | Varies by season and country; this is a middling mains temperature. **Low, and it matters little** (§5). |
-| `T_ROOM_C` | 20 | °C | Default room. |
+| `T_COLD_TAP_C` | 15 | °C | Varies by season and country; this is a middling mains temperature. Deliberately *not* tied to room temperature: mains water arrives at something nearer ground temperature, usually below the room, though a long run of pipe in a hot summer can beat it. **Low, and it matters little** (§5). |
+| `T_ROOM_C` | 20 | °C | **Default** room, not *the* room. Every path that cools toward the room takes `CookSetup.ambient_C`; this is only where that field starts. There is deliberately no input for it — see §9. |
 | `TAU_PLUNGE` | 4 | s | Surface equilibration on changing medium. Physical (finite Bi, finite handling time) *and* a required numerical regulariser (§2.3). **Low as physics, mandatory as numerics.** |
 | `TAU_DIP_RECOVERY` | 60 | s | Burner recovery after cold eggs enter. **Low.** |
 | `MODE_COUNT` | 40 | — | Eigenmodes retained. Exact to machine precision at these Fourier numbers. **Numerical.** |
@@ -718,6 +718,36 @@ one matters:
    weak hob with eight eggs, recovery could take minutes and the cost would be several
    times larger. And if you kill the heat at the boil, water volume stops being a
    rounding error and becomes the whole cook (§2.4).
+
+### What the app deliberately does not ask
+
+**Room temperature.** The model has an `ambient_C` and uses it properly — the pan starts
+there, standing water decays toward it, a counter-rested egg cools toward it — but there
+is no input for it, because across a 20 °C swing of kitchen it is worth almost nothing:
+
+| room | hot start, jammy | cold start, jammy | standing for jammy | counter-rested peak yolk |
+|---|---|---|---|---|
+| 10 °C | 7.36 min | 11.22 min | 3.72 min | 75.94 °C |
+| 20 °C | 7.36 min | 10.89 min | 3.20 min | 76.33 °C |
+| 30 °C | 7.36 min | 10.52 min | 2.73 min | 76.78 °C |
+
+On the default path — eggs into boiling water, straight into an ice bath — it is worth
+*exactly* nothing, to three decimal places, and `tools/validate.ts` checks that it stays
+that way. A cold start costs about two seconds per degree. Even counter-resting, where
+the room is the thing the egg is cooling toward, moves the peak yolk by 0.04 °C per
+degree of room, because the carryover peak happens in the first few minutes while the egg
+is still far above the room whatever the room is doing.
+
+Only the standing method is properly sensitive (about three seconds of standing per
+degree, and it moves what is reachable at all), and there the app already has the
+information: it takes the room from **Egg from** when the user has said the egg was
+sitting out, since an egg that has been on the counter *is* at room temperature. A fridge
+egg says nothing about the room, so that case keeps the 20 °C default.
+
+**Tap water temperature.** Tempting to tie to the room, and wrong: mains water arrives at
+something closer to ground temperature. It keeps its own constant (§6), and §5 shows why
+it barely matters anyway — ice and tap differ by 0.6 °C of peak yolk, while the counter
+differs by 11.
 
 Keep those fixed and the same setting will give you the same egg. Change one and the
 app will tell you what it costs.

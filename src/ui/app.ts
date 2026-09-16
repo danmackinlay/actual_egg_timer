@@ -144,6 +144,23 @@ function eggStart_C(): number {
   return settings.customStart_C;
 }
 
+/** The room, as far as the model is concerned.
+ *
+ *  There is no separate input for it, and there should not be: on the app's
+ *  default path - eggs into boiling water, straight into an ice bath - the room
+ *  is worth nothing at all, and on a cold start it is worth about two seconds
+ *  per degree. It earns its keep in exactly two places, resting on the counter
+ *  and standing with the heat off, and in both of those the user has usually
+ *  already told us: an egg that has been sitting out IS at room temperature.
+ *  A fridge egg says nothing about the room, so that case keeps the default. */
+function ambient_C(): number {
+  if (settings.startTempMode === 'room') return 20;
+  if (settings.startTempMode === 'custom' && settings.customStart_C >= 15) {
+    return settings.customStart_C;
+  }
+  return 20;
+}
+
 function boilingPoint_C(): number {
   return boilingPointAtAltitude(settings.altitude_m);
 }
@@ -164,7 +181,7 @@ function buildSetup(egg: Egg, timeToBoil_s: number): CookSetup {
     startMode: coreStartMode(),
     afterBoil: settings.afterBoil,
     eggStart_C: eggStart_C(),
-    ambient_C: 20,
+    ambient_C: ambient_C(),
     boiling_C: boilingPoint_C(),
     // Passed on a hot start too, where no ramp is simulated: with the heat off
     // it is also the pan's loss time constant (see panTimeConstant), which is

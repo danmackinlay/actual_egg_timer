@@ -4,7 +4,7 @@
  */
 
 import {
-  RAMP_R, TAU_AIR, T_ICE_BATH_C, T_COLD_TAP_C, T_ROOM_C,
+  RAMP_R, TAU_AIR, T_ICE_BATH_C, T_COLD_TAP_C,
   TAU_DIP_RECOVERY, TAU_STANDING_SCALE, C_WATER, C_EGG, TAU_PLUNGE,
 } from './constants.js';
 
@@ -27,7 +27,9 @@ export interface CookSetup {
   startMode: StartMode;
   /** Egg temperature when it goes in, C (fridge ~4, room ~20). */
   eggStart_C: number;
-  /** Room air temperature, C - the pan starts here on a cold start. */
+  /** Room air temperature, C. The pan starts here on a cold start, the water
+   *  decays toward it with the heat off, and an egg resting on the counter
+   *  cools toward it. One room, one number. */
   ambient_C: number;
   /** Boiling point at the user's altitude, C. */
   boiling_C: number;
@@ -140,15 +142,19 @@ export function standingTemperature(
 export function coolingTemperature(
   cooling: Cooling, elapsedSincePull_s: number,
   waterAtPull_C: number, meanAtPull_C: number, tauAirScale: number,
+  ambient_C: number,
 ): number {
   let target: number;
   if (cooling === 'ice') {
     target = T_ICE_BATH_C;
   } else if (cooling === 'tap') {
+    // Mains water is NOT room temperature: it arrives at something closer to
+    // ground temperature, usually below the room and occasionally - a long run
+    // of pipe in a hot summer - well above it. It gets its own constant.
     target = T_COLD_TAP_C;
   } else {
     const tau = TAU_AIR * tauAirScale;
-    target = T_ROOM_C + (meanAtPull_C - T_ROOM_C) * Math.exp(-elapsedSincePull_s / tau);
+    target = ambient_C + (meanAtPull_C - ambient_C) * Math.exp(-elapsedSincePull_s / tau);
   }
   // Blend out of the water temperature rather than jumping, so the surface is
   // continuous at the moment of pulling. See TAU_PLUNGE.
@@ -166,6 +172,7 @@ export function surfaceTemperature(
   if (t_s >= cookEnd_s) {
     return coolingTemperature(
       setup.cooling, t_s - cookEnd_s, waterAtPull_C, meanAtPull_C, tauAirScale,
+      setup.ambient_C,
     );
   }
   const standing = setup.afterBoil === 'off';

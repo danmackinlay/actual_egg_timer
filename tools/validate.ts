@@ -201,6 +201,45 @@ for (let h = 0; h <= 5000; h += 500) {
 }
 check('T_b(h) vs 100 - h/300, 0-5000 m (worst case)', worstApproxError, 0.0, 0.05, 'C');
 
+
+// --------------------------------------------------------------------------
+// room temperature: where it matters, and where it does not
+//
+// There is no input for this. The table is the argument for that decision.
+// --------------------------------------------------------------------------
+
+const roomRows: string[][] = [];
+for (const room of [10, 20, 30]) {
+  const hot = cookMinutes(EU_LARGE, setupOf({ ambient_C: room }), 0.41);
+  const cold = cookMinutes(
+    EU_LARGE, setupOf({ ambient_C: room, startMode: 'cold', timeToBoil_s: 480 }), 0.41,
+  );
+  const standing = solveCookTime(
+    EU_LARGE,
+    setupOf({ ambient_C: room, startMode: 'cold', afterBoil: 'off', timeToBoil_s: 480 }),
+    DEFAULT_PARAMS, donenessFromSlider(0.41),
+  );
+  const counter = simulate(
+    EU_LARGE, setupOf({ ambient_C: room, cooling: 'counter' }), DEFAULT_PARAMS, 7.4 * 60,
+  );
+  roomRows.push([
+    `${room} °C`,
+    hot.toFixed(2),
+    cold.toFixed(2),
+    ((standing.result.cookTime_s - 480) / 60).toFixed(2),
+    counter.peakYolk_C.toFixed(2),
+  ]);
+}
+
+// The default path does not care at all: the ramp is not simulated and an ice
+// bath does not care what the room is doing.
+check(
+  'room temperature is inert on a hot start into an ice bath',
+  cookMinutes(EU_LARGE, setupOf({ ambient_C: 30 }), 0.41)
+  - cookMinutes(EU_LARGE, setupOf({ ambient_C: 10 }), 0.41),
+  0.0, 0.001, 'min',
+);
+
 // --------------------------------------------------------------------------
 // the standing method: boil, cover, heat off
 // --------------------------------------------------------------------------
@@ -455,6 +494,13 @@ printTable(
   'Doneness slider (EU Large, fridge, sea level, ice bath)',
   ['level', 'label', 'cook (min)', 'peak yolk (C)', 'peak white (C)', 'reachable'],
   sliderRows,
+);
+
+printTable(
+  'Room temperature - 10 C to 30 C, everything else fixed',
+  ['room', 'hot start, jammy (min)', 'cold start, jammy (min)',
+    'standing for jammy (min after boil)', 'counter-rested peak yolk (C)'],
+  roomRows,
 );
 
 printTable(

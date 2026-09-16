@@ -123,6 +123,9 @@ export const TAU_AIR = 2030.0;
 export const T_ICE_BATH_C = 2.0;
 export const T_COLD_TAP_C = 15.0;
 export const T_ROOM_C = 20.0;
+/** NOTE: this is the DEFAULT room, not the room. Every code path that cools
+ *  toward the room takes CookSetup.ambient_C, so that a kitchen at 28 C and one
+ *  at 12 C are different cooks. T_ROOM_C is only where that field starts. */
 
 /** Time constant for the egg surface to equilibrate with a new medium when it
  *  leaves the water, s.
