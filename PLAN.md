@@ -36,6 +36,7 @@ down. Zero runtime dependencies. The core is written for a near-mechanical Swift
 ### Phase C — calibration (solo) — DONE
 - [x] `src/core/doseGrid.ts`  — cached log10 dose, bilinear interpolation
 - [x] `src/core/infer.ts`     — particle filter, ordinal likelihood
+- [x] `src/ui/calibration.ts` — posterior lifecycle, persistence, feedback wiring
 - [x] integrate, full verification
 
 Measured: grid build 1.76 s (21x36), interpolation error 1.7% in dose, posterior
@@ -201,6 +202,14 @@ decisive (jammy vs fully set) but smaller than first computed.
 - Browser (Chromium, 390x844 phone viewport): no console or page errors; full
   cold-start flow IDLE -> HEATING -> COOKING verified; the boil button relabels
   to "Full rolling boil" in HEATING; `aria-live` announcements fire.
+
+Calibration verified in-browser: feeding back "too soft" four times walks the
+suggestion 7.73 -> 9.69 min (correct direction), posterior spread narrows
+10.3% -> 6.0%, and the particle set round-trips through localStorage (~34 KB).
+
+Not visually confirmed: the DONE screen itself, which needs a full 7-minute cook
+to reach. The feedback element exists and its visibility is one condition
+(`phase !== 'DONE' || feedbackGiven`); the calibration path behind it is verified.
 
 Two things that look like bugs and are not:
 1. **"Runny" is greyed out on a cold start.** Correct. The egg sits in the water

@@ -123,6 +123,15 @@
     <p id="primaryHint"></p>
     <button type="button" id="primary" class="primary">Start heating</button>
     <button type="button" id="secondary" class="secondary" hidden>Cancel</button>
+    <div id="feedback" hidden>
+      <p id="feedbackAsk">How was it?</p>
+      <div class="seg">
+        <button type="button" class="fb" data-fb="-1">Too soft</button>
+        <button type="button" class="fb" data-fb="0">Just right</button>
+        <button type="button" class="fb" data-fb="1">Too firm</button>
+      </div>
+      <p class="hint" id="calibNote"></p>
+    </div>
   </div>
 
 </main>

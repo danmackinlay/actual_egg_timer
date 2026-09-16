@@ -10,9 +10,14 @@ import { Egg, eggFromMass, eggFromMinorDiameter, SIZE_CLASSES } from '../core/ge
 import { boilingPointAtAltitude } from '../core/thermo.js';
 import { Cooling, CookSetup, StartMode } from '../core/protocol.js';
 import {
-  DEFAULT_PARAMS, DONENESS_ANCHORS, DonenessAnchor, Solution,
+  DONENESS_ANCHORS, DonenessAnchor, Solution,
   donenessFromSlider, solveCookTime,
 } from '../core/solve.js';
+import { Feedback } from '../core/infer.js';
+import {
+  Calibration, loadCalibration, saveCalibration, calibrationParams,
+  calibrationSpread, recordOutcome,
+} from './calibration.js';
 import {
   Settings, clampNumber, estimateTimeToBoil, hasBoilMemory,
   loadBoilMemory, loadSettings, rememberTimeToBoil, saveSettings,
@@ -58,7 +63,14 @@ const dom = {
   primary: el<HTMLButtonElement>('primary'),
   primaryHint: el<HTMLParagraphElement>('primaryHint'),
   secondary: el<HTMLButtonElement>('secondary'),
+  feedback: el<HTMLDivElement>('feedback'),
+  calibNote: el<HTMLParagraphElement>('calibNote'),
 };
+
+/** Posterior over the model's uncertain constants, learned from how the user's
+ *  own eggs actually turn out. Before any feedback this is the prior mean,
+ *  i.e. the literature values. */
+let calib: Calibration = loadCalibration();
 
 function radios(name: string): HTMLInputElement[] {
   return Array.from(
@@ -186,7 +198,8 @@ function refusalText(wanted: number, softest: number, cooling: Cooling): string 
 function solve(timeToBoil_s: number): Solution {
   const egg = currentEgg();
   const setup = buildSetup(egg, timeToBoil_s);
-  let result = solveCookTime(egg, setup, DEFAULT_PARAMS, donenessFromSlider(settings.doneness));
+  const params = calibrationParams(calib);
+  let result = solveCookTime(egg, setup, params, donenessFromSlider(settings.doneness));
   solvedBoil_s = settings.startMode === 'cold' ? timeToBoil_s : 0;
 
   if (result.reachable) {
@@ -201,7 +214,7 @@ function solve(timeToBoil_s: number): Solution {
     dom.doneness.value = String(snapped);
     // Re-solve at the snapped position so the numbers on screen are the
     // numbers for the cook the user is now being offered.
-    const retry = solveCookTime(egg, setup, DEFAULT_PARAMS, donenessFromSlider(snapped));
+    const retry = solveCookTime(egg, setup, params, donenessFromSlider(snapped));
     if (retry.reachable) result = retry;
     saveSettings(settings);
   }
@@ -350,6 +363,11 @@ function render(now_ms: number): void {
     dom.secondary.hidden = true;
   }
 
+  // The model is calibrated against the literature, not against this kitchen.
+  // Asking once per egg is what closes that gap.
+  dom.feedback.hidden = machine.phase !== 'DONE' || feedbackGiven;
+  if (!dom.feedback.hidden) renderCalibNote();
+
   dom.phaseLabel.textContent = label;
   dom.digits.textContent = digits;
   dom.subline.textContent = subline;
@@ -385,6 +403,46 @@ function scheduleSolve(): void {
     solveHandle = 0;
     recompute();
   }, 90);
+}
+
+/* ------------------------------------------------------------ calibration */
+
+let feedbackGiven = false;
+
+function renderCalibNote(): void {
+  if (calib.eggsLogged === 0) {
+    dom.calibNote.textContent = 'Telling it tunes the model to your eggs and your pan.';
+    return;
+  }
+  dom.calibNote.textContent =
+    `tuned on ${calib.eggsLogged} egg${calib.eggsLogged === 1 ? '' : 's'}`
+    + ` · \u00b1${calibrationSpread(calib).toFixed(0)}%`;
+}
+
+/** Fold one outcome into the posterior. Rebuilding the dose surface takes a
+ *  couple of seconds, so the buttons are disabled while it runs - it happens
+ *  once, after the egg is eaten, never in the render path. */
+function onFeedback(value: Feedback): void {
+  if (feedbackGiven) return;
+  feedbackGiven = true;
+  const buttons = dom.feedback.querySelectorAll<HTMLButtonElement>('button.fb');
+  for (let i = 0; i < buttons.length; i++) buttons[i].disabled = true;
+  dom.calibNote.textContent = 'learning\u2026';
+
+  const egg = currentEgg();
+  const setup = buildSetup(egg, machine.assumedBoil_s);
+  const logTarget = Math.log10(donenessFromSlider(settings.doneness).yolkDose_min);
+
+  // Yield first so the disabled state and the "learning" note actually paint
+  // before the synchronous grid build blocks the main thread.
+  window.setTimeout(() => {
+    recordOutcome(calib, egg, setup, machine.cookTime_s, logTarget, value);
+    saveCalibration(calib);
+    for (let i = 0; i < buttons.length; i++) buttons[i].disabled = false;
+    dom.feedback.hidden = true;
+    renderCalibNote();
+    recompute();
+  }, 30);
 }
 
 /* ------------------------------------------------------------------ input */
@@ -460,10 +518,15 @@ function stopTicking(): void {
   }
 }
 
+function resetFeedbackLatch(): void {
+  feedbackGiven = false;
+}
+
 function reset(): void {
   stopAlarm();
   stopTicking();
   releaseScreen();
+  resetFeedbackLatch();
   machine = idleMachine(settings.cooling);
   recompute();
 }
@@ -567,6 +630,14 @@ export function boot(): void {
 
   dom.primary.addEventListener('click', onPrimary);
   dom.secondary.addEventListener('click', reset);
+
+  const fbButtons = dom.feedback.querySelectorAll<HTMLButtonElement>('button.fb');
+  for (let i = 0; i < fbButtons.length; i++) {
+    fbButtons[i].addEventListener('click', () => {
+      const raw = Number(fbButtons[i].dataset['fb']);
+      onFeedback((raw === -1 ? -1 : raw === 1 ? 1 : 0) as Feedback);
+    });
+  }
 
   // A reload mid-cook loses the deadlines; better to say so by starting clean
   // than to resume a timer that may be minutes wrong.
