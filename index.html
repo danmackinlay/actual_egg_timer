@@ -83,12 +83,13 @@
       <legend>Egg from</legend>
       <div class="seg">
         <input type="radio" name="startTemp" id="tempFridge" value="fridge">
-        <label for="tempFridge">Fridge <span id="tempFridgeDeg"></span></label>
+        <label for="tempFridge">Fridge</label>
         <input type="radio" name="startTemp" id="tempRoom" value="room">
-        <label for="tempRoom">Room <span id="tempRoomDeg"></span></label>
+        <label for="tempRoom">Room</label>
         <input type="radio" name="startTemp" id="tempCustom" value="custom">
         <label for="tempCustom">Custom</label>
       </div>
+      <p class="hint" id="startTempHint"></p>
     </fieldset>
 
     <div class="field" id="customTempField" hidden>
@@ -104,7 +105,7 @@
         <input type="radio" name="startMode" id="startHot" value="hot">
         <label for="startHot">Boiling water</label>
         <input type="radio" name="startMode" id="startSous" value="sous">
-        <label for="startSous">Sous-vide <span id="sousDeg"></span></label>
+        <label for="startSous" id="startSousLabel">Sous-vide</label>
       </div>
       <p class="hint">Hot start peels far better; cold start needs no timing of the drop-in.</p>
     </fieldset>

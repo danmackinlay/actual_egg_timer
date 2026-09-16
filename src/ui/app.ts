@@ -70,9 +70,8 @@ const dom = {
   measureMass: el<HTMLInputElement>('measureMass'),
   measureGirth: el<HTMLInputElement>('measureGirth'),
   measureMinor: el<HTMLInputElement>('measureMinor'),
-  tempFridgeDeg: el<HTMLSpanElement>('tempFridgeDeg'),
-  tempRoomDeg: el<HTMLSpanElement>('tempRoomDeg'),
-  sousDeg: el<HTMLSpanElement>('sousDeg'),
+  startTempHint: el<HTMLParagraphElement>('startTempHint'),
+  startSousLabel: el<HTMLLabelElement>('startSousLabel'),
   customTempField: el<HTMLDivElement>('customTempField'),
   customTemp: el<HTMLInputElement>('customTemp'),
   litres: el<HTMLInputElement>('litres'),
@@ -853,9 +852,12 @@ function applyConstantsToDom(): void {
   applyLimit(dom.eggCount, LIMITS.eggCount);
   applyLimit(dom.doneness, LIMITS.doneness);
   dom.doneness.step = String(1 / SLIDER_STEPS);
-  dom.tempFridgeDeg.textContent = `${START_TEMP_PRESETS_C.fridge}°`;
-  dom.tempRoomDeg.textContent = `${START_TEMP_PRESETS_C.room}°`;
-  dom.sousDeg.textContent = `${SOUS_VIDE_BATH_C}°`;
+  // The presets are assumptions, and are labelled as such rather than baked
+  // into the buttons: a room is not necessarily 20 C, and Custom is there for
+  // anyone who knows better.
+  dom.startTempHint.textContent = `Fridge is taken as ${START_TEMP_PRESETS_C.fridge}°C and `
+    + `room as ${START_TEMP_PRESETS_C.room}°C. Pick Custom if yours differ.`;
+  dom.startSousLabel.textContent = `Sous-vide ${SOUS_VIDE_BATH_C}°`;
 }
 
 function applySettingsToDom(): void {
