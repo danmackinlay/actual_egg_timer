@@ -75,6 +75,17 @@ export const T_ICE_BATH_C = 2.0;
 export const T_COLD_TAP_C = 15.0;
 export const T_ROOM_C = 20.0;
 
+/** Time constant for the egg surface to equilibrate with a new medium when it
+ *  leaves the water, s.
+ *
+ *  Physically this is finite because the Biot number is finite and because it
+ *  takes a few seconds to actually move an egg into a bath. It also matters
+ *  numerically: a truncated modal basis cannot represent a fresh temperature
+ *  discontinuity at the centre, where modes are weighted by n, so an
+ *  instantaneous surface drop produces large spurious ringing. A continuous
+ *  transition is both more honest and better conditioned. */
+export const TAU_PLUNGE = 4.0;
+
 /** Water temperature recovery constant after cold eggs are added, s. */
 export const TAU_DIP_RECOVERY = 60.0;
 

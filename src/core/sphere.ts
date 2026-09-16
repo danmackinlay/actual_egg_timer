@@ -97,6 +97,24 @@ export function centreTemperature(s: SphereState): number {
 }
 
 /**
+ * Volume-average temperature of the sphere, C.
+ *
+ *   Tavg = Ts + (3/(2R^2)) * sum b_n * c_n
+ *
+ * from integrating the modal expansion over the volume. This is the
+ * temperature a perfectly insulated egg would equilibrate to, so it sets how
+ * far carryover can possibly go - and it is where the surface of a lumped egg
+ * in still air relaxes from once it leaves the water.
+ */
+export function meanTemperature(s: SphereState): number {
+  let sum = 0.0;
+  for (let i = 0; i < MODE_COUNT; i++) {
+    sum += s.amp[i] * s.coef[i];
+  }
+  return s.surface_C + 1.5 * sum / (s.radius_m * s.radius_m);
+}
+
+/**
  * Closed-form solution for a step change in surface temperature, used to
  * validate the integrator. Returns theta/theta0 = (T - Ts)/(T0 - Ts).
  *
