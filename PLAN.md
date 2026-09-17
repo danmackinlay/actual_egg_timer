@@ -282,3 +282,64 @@ What was cleaned up, so nobody re-introduces it:
 - Dead state removed: `boiledAt_ms`, `isRunning`, `clearCalibration`,
   `solvedBoil_s`, and the `recompute` branch for mid-cook input changes that
   the stylesheet makes impossible.
+
+---
+
+## Handoff — 17 September 2026
+
+Where this stands, and what the next person (or the next context window) needs
+that is not obvious from the code.
+
+### Done and verified
+
+- **The web app is live** at <https://actualeggtimer.netlify.app>. Netlify
+  builds it from `netlify.toml` on push; nothing is configured in a web form.
+  `og:` tags carry absolute URLs at that domain, so a domain change is a commit.
+- **Every constant has been checked against the primary literature.** `Z_WHITE`
+  was corrected; `H_EFF` is known high and recorded as an open problem (§11.2).
+  `references.bib` has the sources with notes on what each is good for.
+- **The Swift core is complete except the calibration** and conformant against
+  the TypeScript: pure functions to 1e-12, 13 whole cooks to the same, measured
+  disagreement 7e-15. `npm run conformance`.
+- **The iOS app schedules local notifications and they fire.** Verified by
+  running a real 7:21 cook in the simulator with the app backgrounded and
+  waiting for it (`d1cbeea`), not by reading the documentation.
+
+### Next, in order
+
+1. **ActivityKit Live Activity.** Countdown on the Lock Screen and in the
+   Dynamic Island. Needs a widget extension target — four more lines of
+   `ios/project.yml`. This is the feature that makes the native app worth having
+   rather than merely correct: the notification says *when*, a Live Activity
+   says *how long left* without unlocking anything.
+2. **`.timeSensitive` interruption level**, so the alarm cuts through a Focus
+   mode. Needs an entitlement, so it needs the Apple Developer Program
+   membership that nothing so far has required.
+3. **The rest of the inputs**: altitude, water volume, pan, cold start with its
+   boil-timing step, and the standing method. The core already answers all of
+   them; only the UI is missing. Take the BEHAVIOUR of `src/ui/machine.ts` and
+   leave its mechanism — `Cook.swift` is already the better shape.
+4. **`infer.ts` and `doseGrid.ts`**, so the Swift core can learn a kitchen.
+   Version 2; the app is honest without it.
+
+### Things that cost an hour to find out
+
+- **The Xcode project is generated.** `cd ios && xcodegen`. It is gitignored.
+  Do not look for `ActualEggTimer.xcodeproj` in the history and do not commit
+  it. `ios/project.yml` is the source of truth and fits on a screen.
+- **SwiftUI `Slider` ignores synthetic drags** from the simulator control tools —
+  `swipe` and a slow sampled `touch_path` both do nothing. Taps land fine
+  (buttons, segmented controls, system alerts). To exercise a slider-dependent
+  path, change the default in `Kitchen.swift` and rebuild; an incremental build
+  is two seconds.
+- **`sudo xcode-select -s ...` was a red herring.** When the simulator
+  integration reports "Xcode is installed but not selected" while
+  `xcode-select -p` already prints the right path, the fix is restarting the
+  desktop app, not the command.
+- **More than one agent may be committing in this working tree.** Stage
+  explicitly rather than `git add -A`, or you will sweep up someone else's
+  half-finished edit and put your name on it.
+- **Fixtures are generated from the TypeScript and never regenerated to make
+  the Swift pass.** If that rule is broken once, the reference implementation
+  silently becomes whatever the port happens to do, and the conformance suite
+  becomes decoration.
