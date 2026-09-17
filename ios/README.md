@@ -152,6 +152,35 @@ both are the model refusing to lie:
 The measured time to boil is remembered per water volume and blended with what
 was already known, so one odd run — lid off, pan half empty — does not dominate.
 
+### It asks how the egg was
+
+After the cook the app asks one question, with three answers: too soft, just
+right, too hard. That is not a poor interface for a rating — it is the whole
+measurement. Ordinal feedback is worth one to two bits per egg, and asking for a
+number out of ten would collect precision that is not there.
+
+The answer goes into the particle filter. Building the dose surface for the cook
+that was actually performed costs about a second of arithmetic, so it runs in a
+detached task, once, after the egg has been eaten and never while anything is
+being adjusted — which is the entire reason the surface is cached rather than
+simulated per particle.
+
+Before any feedback the filter's prior mean IS the literature value, so the app
+is fully useful on day one and calibration is purely additive. Afterwards the
+suggested time moves: a room-temperature 62 g egg rested on the counter at fudgy
+goes 4:07 to 4:29 on the first "too soft", and the posterior's spread on alpha
+is reported next to it. That spread plateaus near 3% rather than collapsing,
+which is the honest answer — repeated agreement is consistent with a range.
+
+There is a "Forget what it learned" button, which the web app still lacks
+(README §11.5). The posterior recovers on its own after a few more eggs, so this
+is for people who would rather not wait.
+
+The taste offset the filter learns is deliberately NOT applied to the solve. It
+is a nuisance parameter: it absorbs the difference between the user's palate and
+the nominal doneness scale so that `alpha` does not have to, which keeps the
+physics honest. Only `alpha` and `tauAirScale` feed back into the cook time.
+
 It agrees with the web app on screen. 62.3 g, fridge, ice bath, jammy gives
 **7:21** with a peak yolk of 65 °C and a peak white of 81 °C, against 441.28 s,
 64.8 °C and 80.6 °C from `solveCookTime` in TypeScript. The same egg at 400 m

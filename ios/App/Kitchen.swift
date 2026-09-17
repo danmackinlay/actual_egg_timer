@@ -32,6 +32,12 @@ final class Kitchen {
 
     private(set) var solution: Solution?
     private(set) var solving = false
+    /// What this kitchen has learned from its own eggs. Before any feedback it
+    /// is the prior, whose mean IS the literature value - so calibration is
+    /// purely additive and the app is fully useful on day one.
+    private(set) var calibration = Calibrations.load()
+    /// True while the dose surface is being rebuilt after an outcome.
+    private(set) var learning = false
     /// Why the requested doneness was refused, in words, or empty. The point is
     /// to teach the constraint rather than merely to block the control.
     private(set) var refusal = ""
@@ -104,6 +110,14 @@ final class Kitchen {
     /// The label moves with the finger; the numbers follow when the solve lands.
     var label: String { Self.anchorNear(doneness).label }
 
+    var eggsLogged: Int { calibration.eggsLogged }
+    var calibrationSpread: Double { Calibrations.spread(calibration) }
+
+    /// log10 of the yolk dose the slider is currently asking for. This is what
+    /// the filter treats as the nominal target, and the user's taste offset is
+    /// learned relative to it, so it carries across slider positions.
+    var logNominalTarget: Double { log10(donenessFromSlider(doneness).yolkDoseMin) }
+
     // MARK: - Solving
 
     private func changed() {
@@ -118,8 +132,9 @@ final class Kitchen {
         let level = doneness
         let setup = setup
         let egg = egg
+        let params = Calibrations.params(calibration)
         task = Task {
-            let answer = await Self.solve(egg: egg, setup: setup, level: level)
+            let answer = await Self.solve(egg: egg, setup: setup, level: level, params: params)
             guard !Task.isCancelled else { return }
             self.apply(answer)
             self.solving = false
@@ -131,11 +146,11 @@ final class Kitchen {
     /// directions: too soft for the white (snap up), or harder than a cooling
     /// pan can manage (snap down).
     private nonisolated static func solve(
-        egg: Egg, setup: CookSetup, level: Double
+        egg: Egg, setup: CookSetup, level: Double, params: ModelParams
     ) async -> Answer {
         await Task.detached(priority: .userInitiated) {
             var result = solveCookTime(
-                egg: egg, setup: setup, params: .default, doneness: donenessFromSlider(level)
+                egg: egg, setup: setup, params: params, doneness: donenessFromSlider(level)
             )
             if result.reachable {
                 return Answer(solution: result, refusal: "", snapTo: nil)
@@ -166,7 +181,7 @@ final class Kitchen {
                 // Re-solve at the snapped position, so the numbers on screen are
                 // the numbers for the cook now being offered.
                 let retry = solveCookTime(
-                    egg: egg, setup: setup, params: .default,
+                    egg: egg, setup: setup, params: params,
                     doneness: donenessFromSlider(snapped)
                 )
                 if retry.reachable { result = retry }
@@ -181,7 +196,8 @@ final class Kitchen {
     /// whenever a slow hob forces the estimate out.
     func cookTime(timeToBoilS: Double) async -> Double? {
         let answer = await Self.solve(
-            egg: egg, setup: setup(timeToBoilS: timeToBoilS), level: doneness
+            egg: egg, setup: setup(timeToBoilS: timeToBoilS), level: doneness,
+            params: Calibrations.params(calibration)
         )
         solution = answer.solution
         refusal = answer.refusal
@@ -204,6 +220,40 @@ final class Kitchen {
         var refusal: String
         /// Where the slider must move to, if anywhere.
         var snapTo: Double?
+    }
+
+    // MARK: - Learning from an egg
+
+    /// Fold in one outcome and re-solve with what was learned.
+    ///
+    /// The grid build is roughly a second of arithmetic, so it goes to a
+    /// detached task. It happens once, after the egg has been eaten, and never
+    /// while anything is being adjusted - which is the whole reason the surface
+    /// is cached rather than simulated per particle.
+    func record(feedback: Feedback, cookTimeS: Double, logNominalTarget: Double) async {
+        guard !learning else { return }
+        learning = true
+        let current = calibration
+        let egg = egg
+        let setup = setup
+        let updated = await Task.detached(priority: .userInitiated) {
+            Calibrations.recordOutcome(
+                current, egg: egg, setup: setup,
+                cookTimeS: cookTimeS, logNominalTarget: logNominalTarget, feedback: feedback
+            )
+        }.value
+        calibration = updated
+        Calibrations.save(updated)
+        learning = false
+        // The egg just eaten keeps the numbers it was cooked with; the new
+        // ones show up on the next cook.
+        recompute()
+    }
+
+    func resetCalibration() {
+        Calibrations.reset()
+        calibration = Calibrations.fresh()
+        recompute()
     }
 
     // MARK: - Measuring the boil

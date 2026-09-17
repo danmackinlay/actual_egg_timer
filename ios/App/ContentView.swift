@@ -11,6 +11,9 @@ struct ContentView: View {
     @State private var kitchen = Kitchen()
     @State private var cook = Cook()
     @State private var showPan = false
+    /// One report per egg: the buttons go away once one is pressed.
+    @State private var feedbackGiven = false
+    @State private var confirmReset = false
 
     var body: some View {
         NavigationStack {
@@ -26,6 +29,11 @@ struct ContentView: View {
                         VStack(spacing: 24) {
                             readout
                             action
+                            // Inside the TimelineView for the same reason as
+                            // the readout: reaching DONE changes no stored
+                            // property, so nothing outside would redraw and the
+                            // question would never appear.
+                            if cook.phase == .done { feedback }
                         }
                     }
                     if cook.phase == .idle {
@@ -33,12 +41,21 @@ struct ContentView: View {
                     } else {
                         cookNote
                     }
+                    idleCalibrationLine
                     colophon
                 }
                 .padding(20)
             }
             .navigationTitle("Actual Egg Timer")
             .navigationBarTitleDisplayMode(.inline)
+            .confirmationDialog(
+                "Forget the calibration?", isPresented: $confirmReset, titleVisibility: .visible
+            ) {
+                Button("Forget it", role: .destructive) { kitchen.resetCalibration() }
+                Button("Keep it", role: .cancel) {}
+            } message: {
+                Text("The model goes back to the literature values it shipped with.")
+            }
         }
         .onAppear {
             // Install the notification delegate before anything can fire.
@@ -72,19 +89,21 @@ struct ContentView: View {
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
 
-            if let result = kitchen.solution?.result {
+            // The COOK's own record once one is running, not the live inputs:
+            // what is in the pan cannot change after "Eggs in", and answering
+            // "how was it?" re-solves for the NEXT egg - which must not rewrite
+            // the numbers describing the one just eaten.
+            if let peaks = peaks {
                 HStack(spacing: 24) {
-                    stat("peak yolk", "\(Int(result.peakYolkC.rounded()))°C")
-                    stat("peak white", "\(Int(result.peakWhiteC.rounded()))°C")
-                    // The COOK's own record once one is running, not the live
-                    // inputs: what is in the pan cannot change after "Eggs in".
+                    stat("peak yolk", "\(Int(peaks.yolk.rounded()))°C")
+                    stat("peak white", "\(Int(peaks.white.rounded()))°C")
                     if cook.ticket?.coldStart ?? kitchen.coldStart {
                         stat("after boil", clockString(afterBoilSeconds))
                     }
                 }
                 .padding(.top, 10)
 
-                Text(textureNote(peakYolkC: result.peakYolkC, peakWhiteC: result.peakWhiteC))
+                Text(textureNote(peakYolkC: peaks.yolk, peakWhiteC: peaks.white))
                     .font(.footnote)
                     .foregroundStyle(.secondary)
                     .padding(.top, 2)
@@ -102,6 +121,14 @@ struct ContentView: View {
         .padding(.vertical, 22)
         .padding(.horizontal, 12)
         .background(.quaternary.opacity(0.4), in: RoundedRectangle(cornerRadius: 18))
+    }
+
+    /// The peak temperatures to display: the cook's own, if one is running or
+    /// has just finished, otherwise the current solve.
+    private var peaks: (yolk: Double, white: Double)? {
+        if let ticket = cook.ticket { return (ticket.peakYolkC, ticket.peakWhiteC) }
+        guard let result = kitchen.solution?.result else { return nil }
+        return (result.peakYolkC, result.peakWhiteC)
     }
 
     private func stat(_ label: String, _ value: String) -> some View {
@@ -184,10 +211,12 @@ struct ContentView: View {
                 guard let solution = kitchen.solution else { return }
                 let ticket = Cook.Ticket(
                     doneness: kitchen.label,
-                    peakYolkC: Int(solution.result.peakYolkC.rounded()),
+                    peakYolkC: solution.result.peakYolkC,
+                    peakWhiteC: solution.result.peakWhiteC,
                     eggGrams: kitchen.eggMassG,
                     cooling: kitchen.cooling,
-                    coldStart: kitchen.coldStart
+                    coldStart: kitchen.coldStart,
+                    logNominalTarget: kitchen.logNominalTarget
                 )
                 Task {
                     await cook.start(
@@ -227,10 +256,13 @@ struct ContentView: View {
             }
 
         case .done:
-            Button("Start again") { cook.cancel() }
-                .buttonStyle(.bordered)
-                .controlSize(.large)
-                .frame(maxWidth: .infinity)
+            Button("Start again") {
+                cook.cancel()
+                feedbackGiven = false
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.large)
+            .frame(maxWidth: .infinity)
 
         default:
             Button("Cancel", role: .destructive) { cook.cancel() }
@@ -245,10 +277,84 @@ struct ContentView: View {
     private var cookNote: some View {
         if let ticket = cook.ticket {
             Text("\(Int(ticket.eggGrams.rounded())) g · \(ticket.doneness.lowercased()) · "
-                 + "peak yolk \(ticket.peakYolkC)°C")
+                 + "peak yolk \(Int(ticket.peakYolkC.rounded()))°C")
                 .font(.footnote)
                 .foregroundStyle(.secondary)
         }
+    }
+
+    // MARK: - Learning from the egg
+
+    /// The one question the app asks. Three answers is not a poor interface for
+    /// a rating - it is the whole measurement. Ordinal feedback is worth one to
+    /// two bits per egg, and asking for a number out of ten would collect
+    /// precision that is not there.
+    private var feedback: some View {
+        VStack(spacing: 12) {
+            // The block stays put and answers back rather than vanishing on
+            // tap. Learning takes about a second, and an interface that
+            // disappears the moment it is used leaves no way to tell whether
+            // anything was recorded.
+            if feedbackGiven {
+                Text(kitchen.learning ? "learning…" : "Thanks — it has adjusted.")
+                    .font(.subheadline)
+                Text(kitchen.learning ? " " : tunedLine)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .monospacedDigit()
+            } else {
+                Text("How was it?")
+                    .font(.headline)
+
+                HStack(spacing: 10) {
+                    feedbackButton("Too soft", .tooSoft)
+                    feedbackButton("Just right", .justRight)
+                    feedbackButton("Too hard", .tooHard)
+                }
+
+                Text(calibrationNote)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+            }
+        }
+        .padding(.vertical, 16)
+        .padding(.horizontal, 12)
+        .frame(maxWidth: .infinity)
+        .background(.quaternary.opacity(0.25), in: RoundedRectangle(cornerRadius: 18))
+    }
+
+    private func feedbackButton(_ label: String, _ value: Feedback) -> some View {
+        Button {
+            feedbackGiven = true
+            Task {
+                await kitchen.record(
+                    feedback: value,
+                    cookTimeS: cook.cookSeconds,
+                    logNominalTarget: cook.ticket?.logNominalTarget ?? kitchen.logNominalTarget
+                )
+            }
+        } label: {
+            Text(label)
+                .font(.subheadline)
+                .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(.bordered)
+        .disabled(kitchen.learning)
+    }
+
+    private var calibrationNote: String {
+        if kitchen.learning { return "learning…" }
+        if kitchen.eggsLogged == 0 {
+            return "Telling it tunes the model to your eggs and your pan."
+        }
+        return tunedLine
+    }
+
+    private var tunedLine: String {
+        let eggs = kitchen.eggsLogged
+        let plural = eggs == 1 ? "egg" : "eggs"
+        return "tuned on \(eggs) \(plural) · ±\(Int(kitchen.calibrationSpread.rounded()))%"
     }
 
     // MARK: - Controls
@@ -354,6 +460,23 @@ struct ContentView: View {
                        + "becomes your pan rather than a guess.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
+
+                if kitchen.eggsLogged > 0 {
+                    Divider()
+                    // No "tuned on N eggs" here: that line sits under the
+                    // controls, where it is visible without opening anything.
+                    // This section only carries the thing you came here for.
+                    Button("Forget what it learned", role: .destructive) {
+                        confirmReset = true
+                    }
+                    .font(.footnote)
+
+                    Text("The posterior is honest about its own spread, so a few wrong "
+                         + "answers wash out after a few more eggs. This is for when you "
+                         + "would rather not wait.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
             }
             .padding(.top, 12)
         }
@@ -370,6 +493,15 @@ struct ContentView: View {
                     .foregroundStyle(.secondary)
                     .monospacedDigit()
             }
+        }
+    }
+
+    @ViewBuilder
+    private var idleCalibrationLine: some View {
+        if cook.phase == .idle && kitchen.eggsLogged > 0 {
+            Text(tunedLine)
+                .font(.caption)
+                .foregroundStyle(.tertiary)
         }
     }
 

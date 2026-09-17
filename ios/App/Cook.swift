@@ -47,10 +47,15 @@ final class Cook {
     /// back out of the controls.
     struct Ticket: Equatable, Codable {
         var doneness: String
-        var peakYolkC: Int
+        var peakYolkC: Double
+        var peakWhiteC: Double
         var eggGrams: Double
         var cooling: Cooling
         var coldStart: Bool
+        /// log10 of the yolk dose this cook was ASKED for, captured at "Eggs
+        /// in". The calibration needs what was requested, not what the slider
+        /// happens to say by the time the egg is eaten.
+        var logNominalTarget: Double
     }
 
     private(set) var startedAt: Date?
@@ -107,6 +112,14 @@ final class Cook {
         return now < coolDoneAt ? .cooling : .done
     }
 
+    /// The cook time actually used, egg-in to egg-out. This is what the
+    /// calibration is told, and it is derived from the two dates rather than
+    /// remembered separately, so a cold start's revisions are already in it.
+    var cookSeconds: TimeInterval {
+        guard let startedAt, let pullAt else { return 0 }
+        return pullAt.timeIntervalSince(startedAt)
+    }
+
     var secondsToPull: TimeInterval { max(0, (pullAt ?? .now).timeIntervalSinceNow) }
     var secondsToCoolDone: TimeInterval { max(0, (coolDoneAt ?? .now).timeIntervalSinceNow) }
     /// Seconds of cooking after the boil is reached - the number every recipe
@@ -139,7 +152,7 @@ final class Cook {
             await LiveActivity.start(
                 CookActivity(
                     doneness: ticket.doneness,
-                    peakYolkC: ticket.peakYolkC,
+                    peakYolkC: Int(ticket.peakYolkC.rounded()),
                     eggGrams: ticket.eggGrams
                 ),
                 state: state
@@ -266,7 +279,7 @@ final class Cook {
                 await LiveActivity.start(
                     CookActivity(
                         doneness: saved.ticket.doneness,
-                        peakYolkC: saved.ticket.peakYolkC,
+                        peakYolkC: Int(saved.ticket.peakYolkC.rounded()),
                         eggGrams: saved.ticket.eggGrams
                     ),
                     state: state

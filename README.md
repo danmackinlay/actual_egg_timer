@@ -1038,9 +1038,10 @@ answers are recorded here rather than deleted, because each one was a plausible 
 
 ### 11.5 Known software gaps
 
-- **No way to reset calibration from the app.** A run of wrong answers to "How was
+- **No way to reset calibration from the WEB app.** A run of wrong answers to "How was
   it?" is undone only by clearing the site's storage. The posterior is honest about its
   spread, so it recovers on its own after a few more eggs, but a button would be kinder.
+  The iOS app has one ("Forget what it learned"); the web app should copy it.
 - **`tauAirScale` is only identifiable if you vary the cooling method.** Cook every egg
   with an ice bath and it will sit at its prior forever — which is correct behaviour, not
   a bug, but it means the carryover model never improves unless you deliberately mix.
@@ -1051,12 +1052,13 @@ answers are recorded here rather than deleted, because each one was a plausible 
   module except the calibration, and is held to this implementation by a conformance
   suite over generated fixtures (`npm run conformance`): the pure functions to 1e-12,
   and 13 whole cooks — times, peak temperatures, doses and the reachability verdicts —
-  to the same, where the measured disagreement is 7e-15. The iOS app on top of it
-  carries every input this document describes, schedules its alarm at absolute fire
-  dates with a time-sensitive interruption level, and shows the countdown on the Lock
-  Screen and in the Dynamic Island. What is still missing is `infer.ts` and
-  `doseGrid.ts`, so the Swift core cannot yet learn a kitchen — the iOS app is
-  therefore honest but uncalibrated, and cannot be taught. See `ios/README.md`.
+  to the same, where the measured disagreement is 7e-15. The port is now COMPLETE:
+  `doseGrid.ts` and `infer.ts` came across too, held to fixtures that carry every
+  particle and every weight of a seven-observation run. The iOS app carries every input
+  this document describes, schedules its alarm at absolute fire dates with a
+  time-sensitive interruption level, shows the countdown on the Lock Screen and in the
+  Dynamic Island, and asks "How was it?" after each egg. Only `sousvide.ts` is unported,
+  and it is a joke. See `ios/README.md`.
 
 ### 11.6 Sources that returned fabricated citations
 

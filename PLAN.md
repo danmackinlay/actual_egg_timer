@@ -62,7 +62,7 @@ dose rate is 1e-6 of peak. Cut simulate 2.80 -> 1.87 ms with identical results.
 - [x] `ios/App/Kitchen.swift` — every input, the refusals, the boil memory
 - [x] `ios/Widget/` — the Live Activity: Lock Screen and Dynamic Island
 - [x] `ios/EggTimerCore/DoseGrid.swift`, `Infer.swift` — the calibration
-- [ ] wire the calibration into the SwiftUI app: ask "how was it?" and learn
+- [x] `ios/App/Calibration.swift` — "how was it?", and the app learns
 
 The SwiftUI layer takes the BEHAVIOUR of `src/ui/machine.ts` and leaves its
 mechanism. `clock.ts` in particular exists to fight the backgrounding problem
@@ -328,19 +328,21 @@ that is not obvious from the code.
 
 ### Next, in order
 
-1. **Wire the calibration into the SwiftUI app.** The Swift core now carries it
-   and is conformant, but nothing asks the user "how was it?" yet, so the
-   posterior is never fed. That is the remaining gap between the two apps, and
-   it is the feature that makes the model's own uncertainty (§11.2, §11.3) stop
-   mattering to the user, because the app calibrates around it.
+1. **Calibrate against real eggs.** Both apps now learn, and neither has been
+   fed a single real egg. The standing thermocouple experiment in README §11.3
+   would settle `TAU_AIR` and `RAMP_R` in an afternoon each and beat every
+   published source found; failing that, cooking a dozen eggs and answering
+   honestly is the cheapest experiment available and the one the app was built
+   to make worthwhile.
 2. **Run it on a real phone.** Signing is done and verified: the Time Sensitive
    Notifications capability is registered against the App ID, and a device build
    signs with the entitlement present in the binary (see `ios/README.md`
    §Signing for how to re-check). Nobody has yet cooked an actual egg with it.
-3. **Calibration against real eggs** — the standing thermocouple experiment in
-   README §11.3 would settle `TAU_AIR` and `RAMP_R` in an afternoon each and
-   beat every published source found.
-4. **A calibration reset** in both apps (README §11.5).
+3. **A calibration reset in the WEB app.** iOS has one now; the web app is the
+   one still requiring you to clear site storage (README §11.5).
+4. **The web app could stop shipping its own dose grid build on the main
+   thread.** iOS runs it detached; the web version blocks for ~2 s behind a
+   `setTimeout(30)` so the "learning" note paints first.
 
 Considered and NOT queued: a watchOS target. A paired watch already rings,
 because iOS forwards notifications to the wrist whenever the phone is locked —
@@ -432,3 +434,20 @@ invisible to the way the app had been checked before:
    otherwise. The previous verification had the app backgrounded.
 3. **Every setting but the first reverted on relaunch**, because restoring one
    property fired a save of all of them while the rest were still at defaults.
+
+### Calibration, verified against the reference
+
+One real cook driven to the end in the simulator, then "Too soft", with the same
+scenario computed independently in Node beforehand:
+
+| | app | TypeScript |
+|---|---|---|
+| suggested, uncalibrated | 4:07 | 247.2 s |
+| weighted mean alpha after one "too soft" | 1.567630e-7 | 1.5676e-7 |
+| suggested, after | 4:29 | 269.1 s |
+| reported spread | ±11% | 10.8% |
+
+The posterior round-trips through `UserDefaults` at 39.8 kB for 1000 particles,
+survives a reinstall, and "Forget what it learned" clears the key and returns
+the suggestion to 4:07 - which is the literature value, exactly as it should be,
+because the prior's mean IS the literature value.
