@@ -25,7 +25,7 @@ packages:
 # cannot be signed and the alarm cannot cut through a Focus mode.
 settings:
   base:
-    DEVELOPMENT_TEAM: 7RNTX96N3A
+    DEVELOPMENT_TEAM: L4D3TWC3A4
     CODE_SIGN_STYLE: Automatic
     SWIFT_VERSION: "6.0"
     MARKETING_VERSION: "0.2"

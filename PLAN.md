@@ -345,6 +345,12 @@ that is not obvious from the code.
 - **The Xcode project is generated.** `cd ios && xcodegen`. It is gitignored,
   and so is `ios/Widget/Info.plist`. Do not look for either in the history.
   `ios/project.yml` is the source of truth and fits on a screen.
+- **The Team ID is the certificate's `OU`, not the number in its name.**
+  `Apple Development: someone@example.com (7RNTX96N3A)` shows the certificate
+  ID in the parentheses; `DEVELOPMENT_TEAM` wants the `OU` field, which is a
+  different ten-character string. Read it off a provisioning profile
+  (`security cms -D -i x.mobileprovision`, then `TeamIdentifier`) rather than
+  off the identity list, where it is not shown at all.
 - **`INFOPLIST_KEY_*` build settings cannot express a nested dictionary.**
   `INFOPLIST_KEY_NSExtensionPointIdentifier` is accepted and then silently
   dropped, and the widget extension builds, embeds, and is simply never

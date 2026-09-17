@@ -212,7 +212,7 @@ The project is configured for the Apple Developer Program membership on this
 machine:
 
 ```yaml
-DEVELOPMENT_TEAM: 7RNTX96N3A
+DEVELOPMENT_TEAM: L4D3TWC3A4
 CODE_SIGN_STYLE: Automatic
 ```
 
