@@ -451,3 +451,39 @@ The posterior round-trips through `UserDefaults` at 39.8 kB for 1000 particles,
 survives a reinstall, and "Forget what it learned" clears the key and returns
 the suggestion to 4:07 - which is the literature value, exactly as it should be,
 because the prior's mean IS the literature value.
+
+### The random number generator, measured rather than argued about
+
+`infer.ts` uses xorshift32 (shifts 13/17/5) because JavaScript's bitwise
+operators are 32-bit, which rules out the 64-bit generators one would otherwise
+reach for without dragging in BigInt. It is a pure LFSR over GF(2) and fails the
+linearity tests in a full battery, so it is fair to ask whether it is good
+enough here. Two details make the question sharper: `toUnit` keeps only the LOW
+24 bits, which are an LFSR's weakest, and Box-Muller is fed two CONSECUTIVE
+outputs, which is where a lattice would show.
+
+Measured, in exactly the usage the app has:
+
+| test | result | noise floor |
+|---|---|---|
+| uniformity, 1000 bins, 2e6 draws | z = −0.53 | ±1 |
+| 2D chi-square, 64x64, on the Box-Muller pairs | z = +0.14 | ±1 |
+| serial correlation, lags 1, 2, 3, 5, 17 | ≤ 4.8e−4 | 7.1e−4 |
+| skew / kurtosis of the three prior normals | ≤ 0.003 / 3.010 | 0 / 3 |
+| correlation between the three prior dimensions | ≤ 1.5e−4 | 1.4e−3 |
+
+The cross-dimension correlations are an order of magnitude BELOW the sampling
+noise of the test, so the six consecutive outputs behind each particle are not
+detectably dependent. The known failures of xorshift32 need ~1e8 values and
+probe GF(2) structure directly; a 1000-particle filter reading weighted means
+and quantiles is not sensitive to them.
+
+One real limit, harmless here: 24-bit uniforms truncate the Gaussian tail at
+about ±5.8 sigma. The prior spans ±4.
+
+Verdict: leave it. Replacing it would change the reference implementation, hence
+every fixture, and would buy nothing measurable. If it is ever replaced, the
+32-bit-portable upgrade is **xoshiro128\*\***, which keeps exact cross-language
+reproducibility - and that is worth keeping, because bit-identical particles are
+what make the conformance suite able to catch an error in the WEIGHTS or the
+RESAMPLING, where a bug produces a plausible posterior rather than a wrong one.
