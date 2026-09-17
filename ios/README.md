@@ -285,6 +285,39 @@ entitlement, so being given a specific one is the portal agreeing.
 A different team means one line in `project.yml` and a new bundle identifier
 prefix.
 
+### Onto the phone
+
+No Xcode needed once signing is set up. Find the device, build, install, launch:
+
+```sh
+xcrun devicectl list devices
+cd ios && xcodebuild -project ActualEggTimer.xcodeproj -scheme ActualEggTimer \
+  -destination 'platform=iOS,id=<UDID>' -derivedDataPath build-device \
+  -allowProvisioningUpdates build
+xcrun devicectl device install app --device <UDID> \
+  'build-device/Build/Products/Debug-iphoneos/Actual Egg Timer.app'
+xcrun devicectl device process launch --device <UDID> name.danmackinlay.actualeggtimer
+```
+
+The device must be **unlocked**, or the build fails with "needs to be unlocked
+to enable development services" before it compiles anything. A state of
+`connected (no DDI)` in the device list is not a problem: the developer disk
+image mounts itself when the first build prepares the device.
+
+### The Apple Watch
+
+Nothing to do. A paired watch already rings for the alarm, because iOS forwards
+notifications to the wrist whenever the phone is locked and the watch is on and
+unlocked — which is exactly the situation this app is built for. The
+`.timeSensitive` level carries across, so it breaks through a Focus on the watch
+too.
+
+The gap is the reverse case: with the phone unlocked and in your hand, the
+notification stays on the phone. Closing that needs a real watchOS target, and
+the honest cost is a second UI to keep in sync rather than the target itself —
+`EggTimerCore` is pure Swift with no UIKit and already compiles for watchOS
+unchanged. Worth it only if the wrist is meant to be the primary display.
+
 ## What Xcode is still needed for
 
 Not much. `swift test` finishes the core in a terminal, and `xcodebuild` builds,

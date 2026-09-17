@@ -342,6 +342,13 @@ that is not obvious from the code.
    beat every published source found.
 4. **A calibration reset** in both apps (README §11.5).
 
+Considered and NOT queued: a watchOS target. A paired watch already rings,
+because iOS forwards notifications to the wrist whenever the phone is locked —
+which is the situation this app is for. A real watch app would only add the
+phone-unlocked case, and its cost is a second UI to keep in sync, not the
+target. `EggTimerCore` already compiles for watchOS unchanged, so this stays
+cheap to revisit.
+
 ### Things that cost an hour to find out
 
 - **The Xcode project is generated.** `cd ios && xcodegen`. It is gitignored,
