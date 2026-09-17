@@ -102,6 +102,33 @@ It agrees with the web app on screen: 62.3 g, fridge, ice bath, jammy gives
 Signing is off (`CODE_SIGNING_ALLOWED: NO`) because this is simulator-only so
 far. A device build turns it back on and adds a team.
 
+## The alarm
+
+`Alarm.swift` is the reason this is a native app rather than a bookmark.
+
+A home-screen web app's timers are suspended the moment the screen locks, and
+WebKit has never shipped a way to schedule a local notification — so the web
+version can only ring while you are looking at it, which is exactly when you do
+not need it. Nothing of ours runs in the background either. The difference is
+that a native app can hand the system **absolute fire dates** up front and let
+it do the waiting.
+
+Two are scheduled at "Eggs in": the pull, and the end of the cooling step
+(skipped when the egg is resting on the counter, where there is nothing to time).
+Cancelling removes both. The app shows the wall-clock time the alarm is set for,
+and reads the pending count back from `UNUserNotificationCenter` rather than
+assuming — an egg timer that claims an alarm it has not got is worse than one
+with no alarm at all.
+
+`Cook.swift` holds the state, and holds it as **absolute dates**: every phase is
+derived from `Date.now` rather than counted down, so a ticker that stops —
+backgrounded, locked, or simply busy — cannot make the egg wrong. The ticker
+exists only to redraw. This is the native form of the same discipline the web
+app uses when it recomputes from timestamps on `visibilitychange`.
+
+Not done yet: `.timeSensitive` interruption level, which would let the alarm
+through a Focus mode and needs an entitlement, and a Live Activity.
+
 ## What Xcode is still needed for
 
 Not yet. Everything above is `swift test` in a terminal, and that is the right
