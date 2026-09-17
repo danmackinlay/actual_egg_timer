@@ -3,11 +3,13 @@
 Resumable working notes. Updated **in the same commit** as the work it describes.
 For the science, see `README.md`. This file is for whoever picks the build back up.
 
-**Status: v1 complete, plus the standing method, sous-vide and a debt pass.**
-27/27 tests and 27/27 validation checks pass; the app was driven end to end in
-Chromium, including the DONE screen and the feedback path (see the verification
-record). Remaining work is calibration against real eggs (see "Calibrating against
-your own eggs" in README.md).
+**Status: web app v1 complete; the iOS app now carries the whole model too.**
+27/27 tests, 27/27 validation checks and 18 Swift conformance tests pass. The web
+app was driven end to end in Chromium, including the DONE screen and the feedback
+path; the iOS app was driven end to end in the simulator, including the Live
+Activity (see the verification records). Remaining work is calibration against
+real eggs (see "Calibrating against your own eggs" in README.md) and porting the
+calibration to Swift.
 
 ---
 
@@ -51,6 +53,19 @@ That is the documented behaviour, not a defect.
 
 Also added: early termination in `simulate()` once the egg is past peak and the
 dose rate is 1e-6 of peak. Cut simulate 2.80 -> 1.87 ms with identical results.
+
+### Phase D — the iOS app (solo) — DONE except calibration
+
+- [x] `ios/EggTimerCore` — the physics in Swift, held to generated fixtures
+- [x] `ios/App/Cook.swift` — the phase machine, absolute dates, survives relaunch
+- [x] `ios/App/Alarm.swift` — local notifications, `.timeSensitive`, foreground
+- [x] `ios/App/Kitchen.swift` — every input, the refusals, the boil memory
+- [x] `ios/Widget/` — the Live Activity: Lock Screen and Dynamic Island
+- [ ] `infer.ts` / `doseGrid.ts` in Swift — the app cannot yet learn a kitchen
+
+The SwiftUI layer takes the BEHAVIOUR of `src/ui/machine.ts` and leaves its
+mechanism. `clock.ts` in particular exists to fight the backgrounding problem
+that a local notification solves properly, and has no counterpart here.
 
 ---
 
@@ -301,37 +316,60 @@ that is not obvious from the code.
 - **The Swift core is complete except the calibration** and conformant against
   the TypeScript: pure functions to 1e-12, 13 whole cooks to the same, measured
   disagreement 7e-15. `npm run conformance`.
-- **The iOS app schedules local notifications and they fire.** Verified by
-  running a real 7:21 cook in the simulator with the app backgrounded and
-  waiting for it (`d1cbeea`), not by reading the documentation.
+- **The iOS app carries the whole model.** Every input the solver has, the
+  reachability refusals, the cold start with its boil-timing step, and the
+  standing method. Driven end to end in the simulator against the TypeScript's
+  own numbers.
+- **The alarm fires, at `.timeSensitive`,** and now presents even with the app
+  in the foreground.
+- **The Live Activity works** on the Lock Screen and in the Dynamic Island.
 
 ### Next, in order
 
-1. **ActivityKit Live Activity.** Countdown on the Lock Screen and in the
-   Dynamic Island. Needs a widget extension target — four more lines of
-   `ios/project.yml`. This is the feature that makes the native app worth having
-   rather than merely correct: the notification says *when*, a Live Activity
-   says *how long left* without unlocking anything.
-2. **`.timeSensitive` interruption level**, so the alarm cuts through a Focus
-   mode. Needs an entitlement, so it needs the Apple Developer Program
-   membership that nothing so far has required.
-3. **The rest of the inputs**: altitude, water volume, pan, cold start with its
-   boil-timing step, and the standing method. The core already answers all of
-   them; only the UI is missing. Take the BEHAVIOUR of `src/ui/machine.ts` and
-   leave its mechanism — `Cook.swift` is already the better shape.
-4. **`infer.ts` and `doseGrid.ts`**, so the Swift core can learn a kitchen.
-   Version 2; the app is honest without it.
+1. **`infer.ts` and `doseGrid.ts` in Swift**, so the native app can learn a
+   kitchen. This is now the only thing the web app does that the iOS app cannot,
+   and the iOS app is the one people will actually use. It is also the feature
+   that makes the model's remaining uncertainty (§11.2, §11.3) stop mattering to
+   the user, because the app calibrates around it.
+2. **A device build.** Everything so far is the simulator. The signing is
+   configured (see `ios/README.md` §Signing) but the Time Sensitive
+   Notifications capability still has to be registered against the App ID in the
+   developer portal, which is a one-off in Xcode.
+3. **Calibration against real eggs** — the standing thermocouple experiment in
+   README §11.3 would settle `TAU_AIR` and `RAMP_R` in an afternoon each and
+   beat every published source found.
+4. **A calibration reset** in both apps (README §11.5).
 
 ### Things that cost an hour to find out
 
-- **The Xcode project is generated.** `cd ios && xcodegen`. It is gitignored.
-  Do not look for `ActualEggTimer.xcodeproj` in the history and do not commit
-  it. `ios/project.yml` is the source of truth and fits on a screen.
+- **The Xcode project is generated.** `cd ios && xcodegen`. It is gitignored,
+  and so is `ios/Widget/Info.plist`. Do not look for either in the history.
+  `ios/project.yml` is the source of truth and fits on a screen.
+- **`INFOPLIST_KEY_*` build settings cannot express a nested dictionary.**
+  `INFOPLIST_KEY_NSExtensionPointIdentifier` is accepted and then silently
+  dropped, and the widget extension builds, embeds, and is simply never
+  recognised as a widget. An extension needs a real `Info.plist`.
+- **An app extension whose version does not match its host app is refused at
+  install time.** Both read `$(MARKETING_VERSION)`.
+- **ActivityKit's `Activity` is a non-Sendable class with off-actor methods**, so
+  Swift 6 will not let a `@MainActor` object hold one and await on it. Ask the
+  system what is running instead of keeping the handle.
+- **`@Observable` creates no dependency on a property the view never reads.** A
+  counter bumped by a ticker to force a redraw does nothing at all. Countdowns
+  are `TimelineView`'s job. This bug sat on screen for a whole release because
+  the only cook anyone had watched was watched from the Lock Screen.
+- **A foreground notification shows nothing by default** — no banner, no sound,
+  not even a Lock Screen entry. It needs
+  `UNUserNotificationCenterDelegate.willPresent`.
+- **Interleaving a settings load with a settings save clobbers the load.**
+  Restoring one property fired a `didSet` that wrote the whole object back while
+  the rest were still at their defaults, so every setting but the first reverted
+  on the next launch. Suppress saving while loading.
 - **SwiftUI `Slider` ignores synthetic drags** from the simulator control tools —
   `swipe` and a slow sampled `touch_path` both do nothing. Taps land fine
-  (buttons, segmented controls, system alerts). To exercise a slider-dependent
-  path, change the default in `Kitchen.swift` and rebuild; an incremental build
-  is two seconds.
+  (buttons, steppers, segmented controls, system alerts). To exercise a
+  slider-dependent path, write the value into the app's `UserDefaults` plist in
+  the simulator container and relaunch; an incremental build is two seconds.
 - **`sudo xcode-select -s ...` was a red herring.** When the simulator
   integration reports "Xcode is installed but not selected" while
   `xcode-select -p` already prints the right path, the fix is restarting the
@@ -343,3 +381,39 @@ that is not obvious from the code.
   the Swift pass.** If that rule is broken once, the reference implementation
   silently becomes whatever the port happens to do, and the conformance suite
   becomes decoration.
+
+---
+
+## Verification record (iOS, September 2026)
+
+Driven in the iPhone 17 simulator on iOS 27, against numbers computed from
+`src/core/` in Node for the same inputs:
+
+| scenario | app | TypeScript |
+|---|---|---|
+| 62.3 g, fridge, ice bath, jammy | 7:21, 65 / 81 °C | 441.3 s, 64.8 / 80.6 °C |
+| same at 400 m | 7:31, boils at 98.7 °C | 450.9 s, 98.7 °C |
+| room egg, cold start, 8 min boil | 10:20, 2:20 after boil | 620.45 s |
+| room egg, counter cooling, jammy | refused, snaps to fudgy | `reachable: false`, softest 0.608 |
+| heat off, 2 L | start button dead | `whiteSets: false` |
+
+Also confirmed on screen: the heating phase and its "Full rolling boil" button;
+the countdown ticking down to the pull; COOKING -> PULL -> DONE, with the
+cooling step correctly skipped for a counter rest; the alarm's wall-clock time
+matching the deadline, and its banner appearing with the app in the FOREGROUND;
+the Live Activity in the Dynamic Island and on the Lock Screen; settings
+surviving a relaunch; and a cook in progress surviving being killed and
+reinstalled mid-cook.
+
+Three bugs were found by watching rather than by reading, and all three were
+invisible to the way the app had been checked before:
+
+1. **The on-screen countdown never moved.** `@Observable` records no dependency
+   on a property the view does not read, so the ticker's counter did nothing.
+   The previous verification watched a backgrounded cook, where the only clock
+   on screen was the system's.
+2. **The alarm was silent with the app open.** iOS delivers a foreground
+   notification to the app and shows nothing at all unless the delegate says
+   otherwise. The previous verification had the app backgrounded.
+3. **Every setting but the first reverted on relaunch**, because restoring one
+   property fired a save of all of them while the rest were still at defaults.

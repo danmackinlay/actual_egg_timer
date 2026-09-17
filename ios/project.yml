@@ -20,15 +20,33 @@ packages:
     # The physics, already conformant against the TypeScript. See ios/README.md.
     path: EggTimerCore
 
+# Settings that both targets need, in one place. The team is the Apple
+# Developer Program membership; without it the time-sensitive entitlement
+# cannot be signed and the alarm cannot cut through a Focus mode.
+settings:
+  base:
+    DEVELOPMENT_TEAM: 7RNTX96N3A
+    CODE_SIGN_STYLE: Automatic
+    SWIFT_VERSION: "6.0"
+    MARKETING_VERSION: "0.2"
+    CURRENT_PROJECT_VERSION: "1"
+    # The simulator needs no identity and must not wait on one: keeping it
+    # unsigned is what makes the build-run-screenshot loop two seconds. Device
+    # builds sign normally, which is what the entitlement requires.
+    CODE_SIGNING_ALLOWED[sdk=iphonesimulator*]: NO
+    CODE_SIGNING_REQUIRED[sdk=iphonesimulator*]: NO
+
 targets:
   ActualEggTimer:
     type: application
     platform: iOS
     sources:
       - path: App
+      - path: Shared
     dependencies:
       - package: EggTimerCore
         product: EggTimerCore
+      - target: EggTimerWidget
     # A shared scheme, so xcodebuild (and anything driving it) can find the
     # target without Xcode having opened the project first and invented one.
     scheme:
@@ -37,16 +55,44 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: name.danmackinlay.actualeggtimer
         PRODUCT_NAME: Actual Egg Timer
-        MARKETING_VERSION: "0.1"
-        CURRENT_PROJECT_VERSION: "1"
-        SWIFT_VERSION: "6.0"
         GENERATE_INFOPLIST_FILE: YES
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         INFOPLIST_KEY_CFBundleDisplayName: Actual Egg Timer
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
         INFOPLIST_KEY_UIStatusBarStyle: UIStatusBarStyleDefault
-        # Simulator only for now: no signing identity is needed and none is
-        # assumed. A device build turns these back on and adds a team.
-        CODE_SIGNING_ALLOWED: NO
-        CODE_SIGNING_REQUIRED: NO
+        # Without this the system refuses to start a Live Activity at all.
+        INFOPLIST_KEY_NSSupportsLiveActivities: YES
+        CODE_SIGN_ENTITLEMENTS: App/ActualEggTimer.entitlements
+
+  # WidgetKit extension. It exists only to draw the Live Activity: the Lock
+  # Screen and Dynamic Island countdown. It deliberately does NOT depend on
+  # EggTimerCore - the physics has already run in the app by the time anything
+  # here is asked to draw, and an extension that cannot solve cannot be wrong.
+  EggTimerWidget:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: Widget
+      - path: Shared
+    # An extension needs a real Info.plist: NSExtension is a nested dictionary,
+    # and the INFOPLIST_KEY_* build settings that generate a plist can only
+    # express flat values - the key is silently dropped, and the result is an
+    # extension the system does not recognise as a widget at all. So xcodegen
+    # writes this one, from here. Widget/Info.plist is generated and gitignored
+    # for the same reason the pbxproj is.
+    info:
+      path: Widget/Info.plist
+      properties:
+        CFBundleDisplayName: Egg Timer
+        # An extension whose version does not match its host app is refused at
+        # install time, so both read the same project-level settings.
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: name.danmackinlay.actualeggtimer.widget
+        PRODUCT_NAME: EggTimerWidget
+        SKIP_INSTALL: YES

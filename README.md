@@ -1051,9 +1051,12 @@ answers are recorded here rather than deleted, because each one was a plausible 
   module except the calibration, and is held to this implementation by a conformance
   suite over generated fixtures (`npm run conformance`): the pure functions to 1e-12,
   and 13 whole cooks — times, peak temperatures, doses and the reachability verdicts —
-  to the same, where the measured disagreement is 7e-15. What is missing is `infer.ts`
-  and `doseGrid.ts`, so the Swift core cannot yet learn a kitchen, and the app itself:
-  no SwiftUI, no notifications, no Live Activity. See `ios/README.md`.
+  to the same, where the measured disagreement is 7e-15. The iOS app on top of it
+  carries every input this document describes, schedules its alarm at absolute fire
+  dates with a time-sensitive interruption level, and shows the countdown on the Lock
+  Screen and in the Dynamic Island. What is still missing is `infer.ts` and
+  `doseGrid.ts`, so the Swift core cannot yet learn a kitchen — the iOS app is
+  therefore honest but uncalibrated, and cannot be taught. See `ios/README.md`.
 
 ### 11.6 Sources that returned fabricated citations
 

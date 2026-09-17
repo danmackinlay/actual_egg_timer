@@ -11,14 +11,40 @@ import UserNotifications
 /// Nothing of ours runs in the background either. The difference is that we can
 /// hand the system ABSOLUTE fire dates up front and let it do the waiting.
 @MainActor
-final class Alarm {
+final class Alarm: NSObject, UNUserNotificationCenterDelegate {
     static let shared = Alarm()
 
     private let centre = UNUserNotificationCenter.current()
     private let pullID = "cook.pull"
     private let coolID = "cook.cool"
 
-    private init() {}
+    private override init() {
+        super.init()
+        centre.delegate = self
+    }
+
+    /// Touch the singleton early, so the delegate below is installed before any
+    /// notification can be delivered.
+    func activate() {}
+
+    /// Present the alarm even when the app is already open.
+    ///
+    /// Without this iOS hands a foreground notification straight to the app and
+    /// shows nothing: no banner, no sound, not even an entry on the Lock
+    /// Screen. For most apps that is the right default and for this one it is a
+    /// silent failure - watching the countdown is the case where the egg timer
+    /// must be loudest, not quietest.
+    /// Declared `nonisolated`, and the completion-handler form rather than the
+    /// async one, because both parameters are non-Sendable: the async version
+    /// cannot be satisfied by a main-actor method without sending them across
+    /// the boundary. Nothing here touches either, so there is nothing to send.
+    nonisolated func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        willPresent notification: UNNotification,
+        withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
+    ) {
+        completionHandler([.banner, .sound, .list])
+    }
 
     /// Ask once. Returns false if the user has said no, in which case the cook
     /// still runs - it just cannot shout.
@@ -73,6 +99,15 @@ final class Alarm {
         content.title = title
         content.body = body
         content.sound = .default
+        // An egg is time-sensitive in the literal sense the name was coined
+        // for: thirty seconds late is a different egg. This level is what lets
+        // the alarm through a Focus mode, and it is why the app carries the
+        // matching entitlement (see ActualEggTimer.entitlements). Unsigned
+        // simulator builds have no entitlement and silently fall back to the
+        // default level, which is the correct failure: quieter, never wrong.
+        content.interruptionLevel = .timeSensitive
+        // Sorts the alarm above whatever else has piled up on the Lock Screen.
+        content.relevanceScore = 1.0
 
         // An interval trigger rather than a calendar one: the cook is a
         // duration, and a clock that changes underneath it - a timezone, a

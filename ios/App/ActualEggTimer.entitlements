@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Lets the "eggs out" alarm through a Focus mode. An egg timer that is
+	     silenced by Do Not Disturb is an egg timer that has failed: the whole
+	     point is that you put the phone down and walk away. Signing this
+	     requires an Apple Developer Program membership; the simulator build is
+	     unsigned and simply falls back to the default interruption level. -->
+	<key>com.apple.developer.usernotifications.time-sensitive</key>
+	<true/>
+</dict>
+</plist>
