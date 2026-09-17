@@ -4,6 +4,7 @@
   "constants": {
     "MODE_COUNT": 40,
     "ALPHA_DEFAULT": 1.7e-7,
+    "ALPHA_REL_SD": 0.119,
     "YOLK_RADIUS_FRAC": 0.693,
     "Z_YOLK": 4.65,
     "TREF_YOLK_C": 63,

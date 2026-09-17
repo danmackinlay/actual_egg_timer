@@ -39,6 +39,8 @@ algebraic mistake is never that small.
 | `sphere.ts` | `Sphere.swift` | 42 series points, 40-step integration, 30-step ramp |
 | `protocol.ts` | `Protocol.swift` | every scenario's schedule, via the cooks below |
 | `solve.ts` | `Solve.swift` | 13 whole cooks: times, peaks, doses, verdicts |
+| `doseGrid.ts` | `DoseGrid.swift` | every cell, interpolation, the clamp, the inverse |
+| `infer.ts` | `Infer.swift` | every particle and weight, prior and 7 updates |
 
 The integrator is covered against both a **held** surface and a **moving** one.
 The second matters: a step-only test cannot catch a sign error in the Duhamel
@@ -72,10 +74,35 @@ scans. That is the price of not assuming monotonicity, and it is worth paying
 here — the two standing scenarios in the fixtures are the ones a bisection would
 have got wrong.
 
-## Not ported yet
+### The calibration, and why its fixtures are so much bigger
 
-`infer.ts` and `doseGrid.ts` — the Bayesian calibration. The app works without
-them; they are what lets it learn your kitchen. Version 2.
+`infer.ts` is the one module with STATE and a random number generator, and it is
+where a transliteration slip is least likely to announce itself. A wrong shift
+does not crash or produce a NaN: it draws a different but entirely plausible
+prior, and the two implementations quietly stop being the same model. Summary
+statistics would not catch it either — any seed gives a sensible mean and
+spread. So `fixtures/calibration.json` carries **every particle and every
+weight**, before the first observation and after each of seven, and the Swift
+compares all of them.
+
+The RNG is xorshift32 written in terms of JavaScript's integer operators, where
+`<<` and `^` coerce to a SIGNED 32-bit int and `>>>` is the unsigned right
+shift. Doing the arithmetic in `UInt32` and reinterpreting the bits reproduces
+it exactly; Swift's fixed-width shifts discard overflow rather than trapping,
+so no masking is needed. The recorded state goes negative partway through the
+fixture sequence on purpose — that is the case a port reaching for `UInt32` or
+`Int` throughout would get wrong, and it is checked as an `Int32`.
+
+Three of the seven updates drive the effective sample size below n/2 and
+resample, which is the only part of the filter that touches the RNG after the
+prior is drawn, and the only part where the ORDER of the particles matters.
+
+One ordering subtlety that is not in the TypeScript because it does not have to
+be: `predictCookTime` sorts particles by predicted time, and JavaScript's sort
+is required to be stable while Swift's is not. The Swift sorts by time with the
+original index as a tie-break, which is the same thing.
+
+## Not ported yet
 
 `sousvide.ts` is a joke and can wait forever.
 

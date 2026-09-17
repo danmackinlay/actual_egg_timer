@@ -12,6 +12,9 @@ public enum Constants {
     /// Thermal diffusivity of egg albumen at cooking temperature, m^2/s.
     /// The calibration parameter.
     public static let alphaDefault = 1.70e-7
+
+    /// Relative standard deviation on alpha for the calibration prior.
+    /// Chosen so tau has sd ~400 s at the reference egg radius.
     public static let alphaRelSD = 0.119
 
     /// Yolk boundary as a fraction of egg radius: (1/3)^(1/3).

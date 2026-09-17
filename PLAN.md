@@ -61,7 +61,8 @@ dose rate is 1e-6 of peak. Cut simulate 2.80 -> 1.87 ms with identical results.
 - [x] `ios/App/Alarm.swift` — local notifications, `.timeSensitive`, foreground
 - [x] `ios/App/Kitchen.swift` — every input, the refusals, the boil memory
 - [x] `ios/Widget/` — the Live Activity: Lock Screen and Dynamic Island
-- [ ] `infer.ts` / `doseGrid.ts` in Swift — the app cannot yet learn a kitchen
+- [x] `ios/EggTimerCore/DoseGrid.swift`, `Infer.swift` — the calibration
+- [ ] wire the calibration into the SwiftUI app: ask "how was it?" and learn
 
 The SwiftUI layer takes the BEHAVIOUR of `src/ui/machine.ts` and leaves its
 mechanism. `clock.ts` in particular exists to fight the backgrounding problem
@@ -327,11 +328,11 @@ that is not obvious from the code.
 
 ### Next, in order
 
-1. **`infer.ts` and `doseGrid.ts` in Swift**, so the native app can learn a
-   kitchen. This is now the only thing the web app does that the iOS app cannot,
-   and the iOS app is the one people will actually use. It is also the feature
-   that makes the model's remaining uncertainty (§11.2, §11.3) stop mattering to
-   the user, because the app calibrates around it.
+1. **Wire the calibration into the SwiftUI app.** The Swift core now carries it
+   and is conformant, but nothing asks the user "how was it?" yet, so the
+   posterior is never fed. That is the remaining gap between the two apps, and
+   it is the feature that makes the model's own uncertainty (§11.2, §11.3) stop
+   mattering to the user, because the app calibrates around it.
 2. **Run it on a real phone.** Signing is done and verified: the Time Sensitive
    Notifications capability is registered against the App ID, and a device build
    signs with the entitlement present in the binary (see `ios/README.md`

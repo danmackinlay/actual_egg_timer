@@ -35,6 +35,7 @@ struct ConstantsConformance {
     func constants() {
         expectClose(Double(Constants.modeCount), Fixtures.constant("MODE_COUNT"), "MODE_COUNT")
         expectClose(Constants.alphaDefault, Fixtures.constant("ALPHA_DEFAULT"), "ALPHA_DEFAULT")
+        expectClose(Constants.alphaRelSD, Fixtures.constant("ALPHA_REL_SD"), "ALPHA_REL_SD")
         expectClose(Constants.yolkRadiusFrac, Fixtures.constant("YOLK_RADIUS_FRAC"), "YOLK_RADIUS_FRAC")
         expectClose(Constants.zYolk, Fixtures.constant("Z_YOLK"), "Z_YOLK")
         expectClose(Constants.tRefYolkC, Fixtures.constant("TREF_YOLK_C"), "TREF_YOLK_C")
