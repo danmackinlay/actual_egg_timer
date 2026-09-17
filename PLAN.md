@@ -321,7 +321,8 @@ that is not obvious from the code.
   standing method. Driven end to end in the simulator against the TypeScript's
   own numbers.
 - **The alarm fires, at `.timeSensitive`,** and now presents even with the app
-  in the foreground.
+  in the foreground. The entitlement is signed and verified in a device build,
+  not merely requested in a plist.
 - **The Live Activity works** on the Lock Screen and in the Dynamic Island.
 
 ### Next, in order
@@ -331,10 +332,10 @@ that is not obvious from the code.
    and the iOS app is the one people will actually use. It is also the feature
    that makes the model's remaining uncertainty (§11.2, §11.3) stop mattering to
    the user, because the app calibrates around it.
-2. **A device build.** Everything so far is the simulator. The signing is
-   configured (see `ios/README.md` §Signing) but the Time Sensitive
-   Notifications capability still has to be registered against the App ID in the
-   developer portal, which is a one-off in Xcode.
+2. **Run it on a real phone.** Signing is done and verified: the Time Sensitive
+   Notifications capability is registered against the App ID, and a device build
+   signs with the entitlement present in the binary (see `ios/README.md`
+   §Signing for how to re-check). Nobody has yet cooked an actual egg with it.
 3. **Calibration against real eggs** — the standing thermocouple experiment in
    README §11.3 would settle `TAU_AIR` and `RAMP_R` in an afternoon each and
    beat every published source found.

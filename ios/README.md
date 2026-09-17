@@ -220,18 +220,40 @@ Simulator builds stay unsigned — `CODE_SIGNING_ALLOWED[sdk=iphonesimulator*]: 
 — because that is what keeps the build-run-screenshot loop at two seconds and no
 identity is needed for it. Device builds sign normally.
 
-To put it on a phone, once:
+This is **done** on this machine. The steps, once, for a new one:
 
 1. Open the project in Xcode, sign in under **Settings > Accounts** with the
    account that holds the membership.
 2. Select the **ActualEggTimer** target, **Signing & Capabilities**, and confirm
-   automatic signing resolves the team. Do the same for **EggTimerWidget**.
-3. Add the **Time Sensitive Notifications** capability to the app target. Xcode
-   registers it against the App ID in the developer portal; the entitlements
-   file already asks for it, but the portal has to agree.
-4. Build to the device. The entitlement is what makes the alarm cut through a
-   Focus mode, so this is the step that changes behaviour rather than merely
-   permitting a build.
+   automatic signing resolves the team. Check the same on **EggTimerWidget**.
+3. Add the **Time Sensitive Notifications** capability to the **app** target
+   only. The entitlements file already asks for it, but the App ID in the
+   developer portal has to agree, and that registration is what this step does.
+
+Note the Team ID is the certificate's `OU` field, not the ten characters in its
+common name — that is the certificate id, and using it silently produces a
+project that cannot sign. Read it off a profile instead:
+
+```sh
+security cms -D -i ~/Library/Developer/Xcode/UserData/Provisioning\ Profiles/*.mobileprovision \
+  | plutil -extract TeamIdentifier.0 raw -
+```
+
+To check the whole chain actually worked, build for a device and look at what
+came out — a build that merely succeeds proves nothing, because an entitlement
+the portal refused is dropped rather than fatal:
+
+```sh
+xcodebuild -project ActualEggTimer.xcodeproj -scheme ActualEggTimer \
+  -destination 'generic/platform=iOS' -derivedDataPath build-device build
+codesign -d --entitlements - --xml 'build-device/Build/Products/Debug-iphoneos/Actual Egg Timer.app' \
+  | plutil -p - | grep time-sensitive
+```
+
+Two things say it worked. The entitlement is present in the signed binary, and
+Xcode resolved a profile named for the bundle id rather than the wildcard
+`iOS Team Provisioning Profile: *` — a wildcard profile cannot carry an
+entitlement, so being given a specific one is the portal agreeing.
 
 A different team means one line in `project.yml` and a new bundle identifier
 prefix.
