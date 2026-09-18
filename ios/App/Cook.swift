@@ -84,6 +84,18 @@ final class Cook {
     private var lastRevise: Date?
     private var pushedStage: CookActivity.Stage?
 
+    /// Bumped whenever the cook this object represents changes identity - a
+    /// start, or a cancel.
+    ///
+    /// Every method below that awaits is holding values it read BEFORE the
+    /// await, and the user can press Cancel during it. Without this guard, a
+    /// cancel that lands while `recordBoil` or the slow-hob revision is waiting
+    /// on a solve gets overwritten the moment the solve returns: `setDeadlines`
+    /// writes `pullAt` back from a captured `startedAt`, and since `phase` keys
+    /// off `pullAt`, the app springs back to a cook the user had just stopped.
+    /// That is not hypothetical - it is what "cancel doesn't reset" looks like.
+    private var generation = 0
+
     /// How long the cooling step is given before the egg counts as done.
     /// Matches COOLING_SECONDS in the web app's machine.
     static let coolingSeconds: TimeInterval = 180
@@ -98,12 +110,14 @@ final class Cook {
     private static let reviseExtraS: TimeInterval = 60
     private static let reviseEverySSeconds: TimeInterval = 10
 
-    init() {
-        restore()
-    }
-
     var phase: Phase {
-        guard let pullAt else { return .idle }
+        // A cook is its START, its DEADLINE and its ticket, or it is nothing.
+        // Keying off `pullAt` alone let a half-written state read as a running
+        // cook: anything that set a deadline without a start - a late async
+        // continuation, a partial restore - resurrected a timer the user had
+        // cancelled. Requiring all three makes that unrepresentable rather than
+        // merely unlikely, which is the right guarantee for a Cancel button.
+        guard let pullAt, startedAt != nil, ticket != nil else { return .idle }
         if provisional { return .heating }
         let now = Date.now
         if now < pullAt { return .cooking }
@@ -134,6 +148,8 @@ final class Cook {
     func start(
         cookSeconds: Double, assumedBoilS: Double, coldStart: Bool, ticket: Ticket
     ) async {
+        generation &+= 1
+        let gen = generation
         let now = Date.now
         startedAt = now
         self.ticket = ticket
@@ -144,9 +160,11 @@ final class Cook {
         setDeadlines(from: now, cookSeconds: cookSeconds, cooling: ticket.cooling)
 
         let authorized = await Alarm.shared.authorize()
+        guard gen == generation else { return }
         alarmAuthorized = authorized
         if authorized { scheduleAlarms() }
         pendingAlarms = await Alarm.shared.pendingCount()
+        guard gen == generation else { return }
 
         if let state = activityState {
             await LiveActivity.start(
@@ -157,6 +175,7 @@ final class Cook {
                 ),
                 state: state
             )
+            guard gen == generation else { return }
             pushedStage = state.stage
         }
         startTicking()
@@ -169,18 +188,23 @@ final class Cook {
     @discardableResult
     func recordBoil() async -> Double? {
         guard phase == .heating, let startedAt, let ticket else { return nil }
+        let gen = generation
         let measured = Date.now.timeIntervalSince(startedAt)
         guard let total = await resolveCookTime?(measured) else { return nil }
+        // Cancelled while the solve was running: there is no cook to correct.
+        guard gen == generation else { return nil }
         assumedBoilS = measured
         provisional = false
         setDeadlines(from: startedAt, cookSeconds: total, cooling: ticket.cooling)
         if alarmAuthorized == true { scheduleAlarms() }
         pendingAlarms = await Alarm.shared.pendingCount()
+        guard gen == generation else { return nil }
         pushActivity(force: true)
         return measured
     }
 
     func cancel() {
+        generation &+= 1
         Alarm.shared.cancel()
         Task { await LiveActivity.endAll() }
         ticker?.cancel()
@@ -244,7 +268,15 @@ final class Cook {
         }
     }
 
-    private func restore() {
+    /// Pick up a cook that was running when the app was last closed.
+    ///
+    /// Called by the view, NOT from `init`. `@State private var cook = Cook()`
+    /// evaluates its initial value every time the enclosing view struct is
+    /// constructed, and SwiftUI keeps only the first - so anything with side
+    /// effects in `init` runs on instances that are then thrown away, starting
+    /// tickers nobody will ever cancel.
+    func restoreIfNeeded() {
+        guard startedAt == nil else { return }
         guard
             let data = UserDefaults.standard.data(forKey: Self.savedKey),
             let saved = try? JSONDecoder().decode(Saved.self, from: data)
@@ -317,8 +349,10 @@ final class Cook {
         if let lastRevise, now.timeIntervalSince(lastRevise) < Self.reviseEverySSeconds { return }
         lastRevise = now
 
+        let gen = generation
         let assumed = now.timeIntervalSince(startedAt) + Self.reviseExtraS
         guard let total = await resolveCookTime?(assumed) else { return }
+        guard gen == generation else { return }
         assumedBoilS = assumed
         setDeadlines(from: startedAt, cookSeconds: total, cooling: ticket.cooling)
         if alarmAuthorized == true { scheduleAlarms() }

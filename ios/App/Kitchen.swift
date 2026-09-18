@@ -20,7 +20,11 @@ final class Kitchen {
     var cooling: Cooling = .ice { didSet { changed() } }
     /// Cold start: egg into cold water, and the heating ramp is part of the
     /// cook. Hot start: into water already at a rolling boil.
-    var coldStart: Bool = false { didSet { changed() } }
+    ///
+    /// Cold is the default because it is the better way to boil an egg: the
+    /// shell is never thermally shocked, and the app can MEASURE the ramp
+    /// instead of assuming it. The cost is that it needs you to tap the boil.
+    var coldStart: Bool = true { didSet { changed() } }
     /// The standing method - heat off at the boil, lid on. The pan coasts down
     /// and the cook is whatever the stored heat can still do.
     var heatOff: Bool = false { didSet { changed() } }
@@ -247,6 +251,16 @@ final class Kitchen {
         learning = false
         // The egg just eaten keeps the numbers it was cooked with; the new
         // ones show up on the next cook.
+        recompute()
+    }
+
+    /// Re-solve for the inputs as they stand.
+    ///
+    /// Needed after a cancel. A cold start's boil tap re-solves with the
+    /// MEASURED ramp and leaves that answer in `solution`; without this, the
+    /// idle screen goes on showing the cook that was just abandoned, which
+    /// reads as a Cancel button that did not work.
+    func refresh() {
         recompute()
     }
 

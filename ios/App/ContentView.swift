@@ -66,6 +66,9 @@ struct ContentView: View {
             cook.resolveCookTime = { [kitchen] seconds in
                 await kitchen.cookTime(timeToBoilS: seconds)
             }
+            // After the solver is wired, so a restored cold start can revise
+            // straight away rather than waiting for the next attempt.
+            cook.restoreIfNeeded()
         }
     }
 
@@ -173,7 +176,9 @@ struct ContentView: View {
     private var subline: String {
         switch cook.phase {
         case .idle:
-            kitchen.coldStart ? "from eggs into cold water to eggs out" : "from eggs in to eggs out"
+            kitchen.coldStart
+                ? "from eggs into COLD water, heat on, to eggs out"
+                : "from eggs into BOILING water to eggs out"
         case .heating:
             "estimate — the clock corrects itself when you tap the boil"
         case .cooking:
@@ -250,25 +255,32 @@ struct ContentView: View {
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
 
-                Button("Cancel", role: .destructive) { cook.cancel() }
-                    .buttonStyle(.bordered)
-                    .frame(maxWidth: .infinity)
+                Button("Cancel", role: .destructive) {
+                    cook.cancel()
+                    kitchen.refresh()
+                }
+                .buttonStyle(.bordered)
+                .frame(maxWidth: .infinity)
             }
 
         case .done:
             Button("Start again") {
                 cook.cancel()
                 feedbackGiven = false
+                kitchen.refresh()
             }
             .buttonStyle(.bordered)
             .controlSize(.large)
             .frame(maxWidth: .infinity)
 
         default:
-            Button("Cancel", role: .destructive) { cook.cancel() }
-                .buttonStyle(.bordered)
-                .controlSize(.large)
-                .frame(maxWidth: .infinity)
+            Button("Cancel", role: .destructive) {
+                cook.cancel()
+                kitchen.refresh()
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.large)
+            .frame(maxWidth: .infinity)
         }
     }
 
@@ -276,11 +288,32 @@ struct ContentView: View {
     @ViewBuilder
     private var cookNote: some View {
         if let ticket = cook.ticket {
-            Text("\(Int(ticket.eggGrams.rounded())) g · \(ticket.doneness.lowercased()) · "
-                 + "peak yolk \(Int(ticket.peakYolkC.rounded()))°C")
-                .font(.footnote)
-                .foregroundStyle(.secondary)
+            VStack(spacing: 4) {
+                // The method, stated rather than implied. "Keep it boiling" is
+                // an instruction to the hob and says nothing about whether the
+                // egg went into cold water or boiling, which is the one thing
+                // you cannot check once the controls are gone.
+                Text(methodLine(ticket))
+                    .font(.footnote.weight(.medium))
+                Text("\(Int(ticket.eggGrams.rounded())) g · \(ticket.doneness.lowercased()) · "
+                     + "peak yolk \(Int(ticket.peakYolkC.rounded()))°C")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            .multilineTextAlignment(.center)
+            .frame(maxWidth: .infinity)
         }
+    }
+
+    private func methodLine(_ ticket: Cook.Ticket) -> String {
+        let start = ticket.coldStart ? "Cold start" : "Into boiling water"
+        let after: String
+        switch ticket.cooling {
+        case .ice: after = "ice bath"
+        case .tap: after = "cold tap"
+        case .counter: after = "rest on the counter"
+        }
+        return "\(start) · then \(after)"
     }
 
     // MARK: - Learning from the egg

@@ -124,7 +124,7 @@ by the build system instead).
 The screen carries the whole model now:
 
 - doneness, egg mass, fridge or room
-- cold start or straight into boiling water
+- cold start (the default) or straight into boiling water
 - ice bath, cold tap, or resting on the counter
 - keep boiling, or the standing method — heat off at the boil, lid on
 - water volume, eggs in the pan, altitude
@@ -141,6 +141,11 @@ both are the model refusing to lie:
   allows, and says why in a sentence. Ask for anything at all with the heat off
   in too little water and the start button goes dead, because that pan never
   sets the white.
+- **The method is always on screen.** Which cooking method a running timer is
+  for is the one thing you cannot check once the controls are hidden, and a hob
+  instruction like "keep it boiling" does not answer it. The readout says "Cold
+  start - then ice bath", and the idle subline says what the clock is measured
+  FROM rather than the ambiguous "from eggs in".
 - **A cold start is provisional until you tap the boil.** The countdown says so.
   `t = 0` is the egg going into the cold pan — the same `t = 0` the physics core
   uses — so one deadline covers the ramp and the boil together, and tapping

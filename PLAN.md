@@ -452,6 +452,43 @@ survives a reinstall, and "Forget what it learned" clears the key and returns
 the suggestion to 4:07 - which is the literature value, exactly as it should be,
 because the prior's mean IS the literature value.
 
+### Three things a real egg found that the simulator did not
+
+Reported from an actual cook on a phone, 18 September:
+
+1. **You could not tell which method the running timer was for.** The label said
+   "Cooking - keep it boiling", which is an instruction to the HOB and says
+   nothing about whether the egg went into cold water or boiling. The controls
+   are hidden during a cook, so there was no way to check. Fixed by stating the
+   method on screen - "Cold start - then ice bath" - and by making the idle
+   subline say what the clock is measured FROM rather than the ambiguous "from
+   eggs in".
+
+2. **Cancel did not reset.** Two separate causes, both real:
+   - `Kitchen.cookTime` writes its answer into `solution` as a side effect,
+     which is what lets a cold start's boil tap correct the readout. Nothing
+     re-solved on cancel, so the idle screen kept showing the abandoned cook's
+     numbers - including an "after boil" of 0:00, because the stale total was
+     computed against the MEASURED ramp while the stat used the remembered one.
+     Cancel now re-solves.
+   - Every `await` in `Cook` was holding values read BEFORE it. A cancel landing
+     during `recordBoil`'s solve was overwritten the moment it returned:
+     `setDeadlines` wrote `pullAt` back from a captured `startedAt`, and since
+     `phase` keyed off `pullAt` alone, the app sprang back to a cook that had
+     been stopped. Fixed with a generation counter checked after every await,
+     and by making `phase` require a start, a deadline AND a ticket - so a
+     half-written cook is unrepresentable rather than merely unlikely.
+
+3. **The default is now a cold start**, which is the better way to boil an egg:
+   the shell is never thermally shocked, and the app gets to MEASURE the ramp
+   instead of assuming it.
+
+Also fixed while in there: `Cook()` did its restore in `init`, and
+`@State private var cook = Cook()` evaluates its initial value every time the
+view struct is constructed. SwiftUI keeps the first and throws the rest away -
+along with any ticker they started. Restoring is now something the view asks
+for, after the solver is wired up.
+
 ### The random number generator, measured rather than argued about
 
 `infer.ts` uses xorshift32 (shifts 13/17/5) because JavaScript's bitwise
