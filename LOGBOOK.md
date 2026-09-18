@@ -118,6 +118,13 @@ What was cleaned up, so nobody re-introduces it:
 - **More than one agent may be committing in this working tree.** Stage
   explicitly rather than `git add -A`, or you will sweep up someone else's
   half-finished edit and put your name on it.
+- **`xcrun simctl spawn <udid> defaults` is NOT the app's UserDefaults.** It
+  reads and writes a domain outside the app's container. Seeding a value that
+  way and then watching the app fail to delete it looks exactly like a broken
+  reset - the app reads the outer value at launch, removes only its own, and the
+  outer one reappears. `defaults read` also cannot see a value the app wrote
+  itself, which is the tell. Drive the app to create the state, and check the
+  result on screen after a terminate-and-relaunch.
 - **Fixtures are generated from the TypeScript and never regenerated to make
   the Swift pass.** If that rule is broken once, the reference implementation
   silently becomes whatever the port happens to do, and the conformance suite
@@ -145,7 +152,7 @@ the Live Activity in the Dynamic Island and on the Lock Screen; settings
 surviving a relaunch; and a cook in progress surviving being killed and
 reinstalled mid-cook.
 
-**One line of this record was wrong for a year of commits.** It used to claim
+**One line of this record was wrong from the day it was written.** It claimed
 "COOKING -> PULL -> DONE, with the cooling step correctly skipped for a counter
 rest" had been confirmed on screen. That is the WEB app's behaviour. This app
 checked for a cooling deadline before checking the pull grace, and a counter
@@ -329,3 +336,43 @@ did all three of the real-egg bugs recorded above. The fix was never thirty
 patches; it was moving the line the fixtures are drawn at. A rule that both
 implementations have to obey, and that nothing checks, is not a rule — it is a
 coincidence with a comment on it.
+
+---
+
+## Follow-up pass (18 September 2026)
+
+The conformance pass above was itself reviewed, and four things had not actually
+landed. Worth recording because three of the four were comments that described a
+fix rather than a fix — the exact failure this file exists to catch.
+
+- **`Task { }` does not inherit cancellation.** The iOS solve was moved out of
+  `Task.detached` into a plain `Task` under a comment saying that was what let
+  cancellation reach the work. It is not: an unstructured task inherits priority
+  and actor context and nothing else, so the `isCancelled` guard inside it was
+  dead and superseded solves still ran to completion, exactly as before. Only
+  the new 90 ms coalesce was doing anything. There is no inner task now — the
+  function is `nonisolated async`, which is all that is needed to get off the
+  main actor, and the caller's cancellation then applies.
+- **`phase(at:)` was added and never called.** The pure form went in, the
+  `TimelineView` closure went on discarding the date it is handed, and the view
+  went on reading the clock-sampling `cook.phase` ten times per body. Two
+  explicit reads now: one per timeline tick, one for the static parts.
+- **The restore notice never cleared.** `restored` was set and never reset, so
+  once a cook had been picked back up, every later cook in that tab was
+  captioned with a reload that had nothing to do with it. A new bug, introduced
+  by the fix for an old one.
+- **The two Forget buttons diverged again.** The web clears the posterior and
+  the pan together; iOS gained a `BoilMemories.reset` that nothing called. A
+  fresh divergence in the layer that had just been unified, which is a fair
+  indication that the unification is only as good as the next person's habit of
+  checking both sides.
+
+Also: the mid-cook re-solve really does keep the frozen target now. Both apps
+still retried at the snapped position, so an unreachable target answered with a
+cook at a doneness nobody had chosen. It was about a second on the clock and the
+calibration was told the right thing, so it was a wrong comment rather than a
+wrong cook — but a wrong comment is what the three items above are made of.
+
+**The rule this pass earned:** a comment that says what the code now does is a
+claim, and claims in this repo get a fixture or a test. Three of these four
+would have been caught by anything that executed the sentence.

@@ -14,32 +14,39 @@ struct ContentView: View {
     @State private var confirmReset = false
 
     var body: some View {
-        NavigationStack {
+        // One clock read for everything outside the timeline. `cook.phase(at:)`
+        // takes the instant rather than sampling `Date.now` itself, so a phase
+        // boundary cannot land between two reads and leave the label describing
+        // one phase while the button below it describes the next.
+        let outerPhase = cook.phase(at: .now)
+
+        return NavigationStack {
             ScrollView {
                 VStack(spacing: 24) {
                     // The readout and the action button are functions of the
                     // CLOCK, not of any stored property, so nothing the
                     // observation system watches ever changes while a cook
                     // counts down. TimelineView is what redraws them: it asks
-                    // for a new body once a second, and each one recomputes the
-                    // phase from `Date.now`.
-                    TimelineView(.periodic(from: .now, by: 1)) { _ in
+                    // for a new body once a second, and hands over the date it
+                    // drew for - which is the date the phase is computed from.
+                    TimelineView(.periodic(from: .now, by: 1)) { context in
+                        let phase = cook.phase(at: context.date)
                         VStack(spacing: 24) {
-                            readout
-                            action
+                            readout(phase)
+                            action(phase)
                             // Inside the TimelineView for the same reason as
                             // the readout: reaching DONE changes no stored
                             // property, so nothing outside would redraw and the
                             // question would never appear.
-                            if cook.phase == .done { feedback }
+                            if phase == .done { feedback }
                         }
                     }
-                    if cook.phase == .idle {
+                    if outerPhase == .idle {
                         controls
                     } else {
                         cookNote
                     }
-                    idleCalibrationLine
+                    idleCalibrationLine(outerPhase)
                     colophon
                 }
                 .padding(20)
@@ -52,7 +59,8 @@ struct ContentView: View {
                 Button("Forget it", role: .destructive) { kitchen.resetCalibration() }
                 Button("Keep it", role: .cancel) {}
             } message: {
-                Text("The model goes back to the literature values it shipped with.")
+                Text("The model goes back to the literature values it shipped with, and "
+                     + "the time to boil goes back to a guess.")
             }
         }
         .onAppear {
@@ -77,20 +85,20 @@ struct ContentView: View {
 
     // MARK: - Readout
 
-    private var readout: some View {
+    private func readout(_ phase: Cook.Phase) -> some View {
         VStack(spacing: 6) {
-            Text(phaseLabel)
+            Text(phaseLabel(phase))
                 .font(.caption.smallCaps())
-                .foregroundStyle(cook.phase == .pull ? .orange : .secondary)
+                .foregroundStyle(phase == .pull ? .orange : .secondary)
                 .multilineTextAlignment(.center)
 
-            Text(bigTime)
+            Text(bigTime(phase))
                 .font(.system(size: 76, weight: .semibold, design: .rounded))
                 .monospacedDigit()
                 .contentTransition(.numericText())
-                .animation(.snappy, value: bigTime)
+                .animation(.snappy, value: bigTime(phase))
 
-            Text(subline)
+            Text(subline(phase))
                 .font(.footnote)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
@@ -104,7 +112,7 @@ struct ContentView: View {
                     stat("peak yolk", "\(Int(peaks.yolk.rounded()))°C")
                     stat("peak white", "\(Int(peaks.white.rounded()))°C")
                     if cook.ticket?.coldStart ?? kitchen.coldStart {
-                        stat("after boil", clockString(afterBoilSeconds))
+                        stat("after boil", clockString(afterBoilSeconds(phase)))
                     }
                 }
                 .padding(.top, 10)
@@ -115,7 +123,7 @@ struct ContentView: View {
                     .padding(.top, 2)
             }
 
-            if !kitchen.refusal.isEmpty && cook.phase == .idle {
+            if !kitchen.refusal.isEmpty && phase == .idle {
                 Text(kitchen.refusal)
                     .font(.footnote)
                     .foregroundStyle(.orange)
@@ -148,26 +156,31 @@ struct ContentView: View {
 
     /// Cooking time after the boil is reached - the number every recipe quotes,
     /// and the only part of a cold start comparable to one.
-    private var afterBoilSeconds: Double {
-        if cook.phase == .idle {
+    private func afterBoilSeconds(_ phase: Cook.Phase) -> Double {
+        if phase == .idle {
             return (kitchen.solution?.result.cookTimeS ?? 0) - kitchen.timeToBoilS
         }
         return cook.secondsAfterBoil
     }
 
-    private var phaseLabel: String {
-        switch cook.phase {
+    private func phaseLabel(_ phase: Cook.Phase) -> String {
+        switch phase {
         case .idle: kitchen.coldStart ? "Total time, lid on" : "Total time"
         case .heating: "Heating — tap when it boils"
         case .cooking: kitchen.heatOff ? "Cooking — heat off, lid on" : "Cooking — keep it boiling"
         case .pull: "Out of the water — now"
-        case .cooling: kitchen.cooling == .ice ? "Cooling — leave in the ice" : "Cooling"
+        case .cooling:
+            switch kitchen.cooling {
+            case .ice: "Cooling — leave in the ice"
+            case .tap: "Cooling — keep the water running"
+            case .counter: "Cooling"
+            }
         case .done: "Done"
         }
     }
 
-    private var bigTime: String {
-        switch cook.phase {
+    private func bigTime(_ phase: Cook.Phase) -> String {
+        switch phase {
         case .idle: kitchen.solution.map { clockString($0.result.cookTimeS) } ?? "--:--"
         case .heating, .cooking: clockString(cook.secondsToPull)
         case .pull: "NOW"
@@ -176,8 +189,8 @@ struct ContentView: View {
         }
     }
 
-    private var subline: String {
-        switch cook.phase {
+    private func subline(_ phase: Cook.Phase) -> String {
+        switch phase {
         case .idle:
             kitchen.coldStart
                 ? "from eggs into COLD water, heat on, to eggs out"
@@ -225,8 +238,8 @@ struct ContentView: View {
     // MARK: - Action
 
     @ViewBuilder
-    private var action: some View {
-        switch cook.phase {
+    private func action(_ phase: Cook.Phase) -> some View {
+        switch phase {
         case .idle:
             Button {
                 guard let solution = kitchen.solution else { return }
@@ -525,7 +538,11 @@ struct ContentView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
 
-                if kitchen.eggsLogged > 0 {
+                // Offered whenever there is anything to forget - a measured pan
+                // counts, not just logged eggs. The button clears both, as the
+                // web app's does, so gating it on eggs alone would leave someone
+                // who had only ever timed a boil with no way to take it back.
+                if kitchen.eggsLogged > 0 || kitchen.hasBoilMemory {
                     Divider()
                     // No "tuned on N eggs" here: that line sits under the
                     // controls, where it is visible without opening anything.
@@ -535,9 +552,10 @@ struct ContentView: View {
                     }
                     .font(.footnote)
 
-                    Text("The posterior is honest about its own spread, so a few wrong "
-                         + "answers wash out after a few more eggs. This is for when you "
-                         + "would rather not wait.")
+                    Text("Clears both what it learned from your eggs and the time it "
+                         + "measured for your pan. The posterior is honest about its own "
+                         + "spread, so a few wrong answers wash out after a few more eggs "
+                         + "anyway - this is for when you would rather not wait.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -576,8 +594,8 @@ struct ContentView: View {
     }
 
     @ViewBuilder
-    private var idleCalibrationLine: some View {
-        if cook.phase == .idle && kitchen.eggsLogged > 0 {
+    private func idleCalibrationLine(_ phase: Cook.Phase) -> some View {
+        if phase == .idle && kitchen.eggsLogged > 0 {
             Text(tunedLine)
                 .font(.caption)
                 .foregroundStyle(.tertiary)

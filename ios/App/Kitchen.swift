@@ -108,7 +108,7 @@ final class Kitchen {
     /// heat off, and in both the user has usually already said: an egg that has
     /// been sitting out IS at room temperature. A fridge egg says nothing about
     /// the room, so that case keeps the default.
-    var ambientC: Double { eggStartC >= 15 ? eggStartC : 20 }
+    var ambientC: Double { ambientFor(eggStartC: eggStartC) }
 
     var boilingC: Double { Thermo.boilingPointAtAltitude(altitudeM) }
 
@@ -180,46 +180,59 @@ final class Kitchen {
 
     /// Solve, and read the result as a decision about the slider.
     ///
-    /// A plain `Task` rather than `Task.detached`, so cancellation actually
-    /// reaches the work: `.detached` inherits nothing, which is why superseded
-    /// solves used to run to completion. It still leaves the main actor - this
-    /// is `nonisolated`, so the `await` hops to the cooperative pool - which is
-    /// the part that mattered for keeping the slider smooth.
+    /// No inner `Task` of any kind. This is `nonisolated async`, which is all
+    /// that is needed to get off the main actor, and it means the CALLER's
+    /// cancellation applies: `Task.isCancelled` below is the recompute task,
+    /// which `recompute()` cancels.
+    ///
+    /// Wrapping the body in `Task { }` - as this did, with a comment claiming
+    /// it fixed the cancellation - does not work. An unstructured task inherits
+    /// priority and actor context but NOT cancellation, exactly like the
+    /// `Task.detached` it replaced, so the guard inside it was dead code and
+    /// superseded solves still ran to completion. Only the 90 ms coalesce was
+    /// doing anything.
+    ///
+    /// `snapRetry` is false for a cook already under way: the target is frozen,
+    /// so re-solving at a snapped position would answer for an egg nobody is
+    /// cooking.
     private nonisolated static func solve(
-        egg: Egg, setup: CookSetup, level: Double, params: ModelParams
+        egg: Egg, setup: CookSetup, level: Double, params: ModelParams, snapRetry: Bool = true
     ) async -> Answer {
-        await Task(priority: .userInitiated) {
-            var result = solveCookTime(
-                egg: egg, setup: setup, params: params, doneness: donenessFromSlider(level)
-            )
-            let verdict = verdictFor(result, level: level)
+        var result = solveCookTime(
+            egg: egg, setup: setup, params: params, doneness: donenessFromSlider(level)
+        )
+        let verdict = verdictFor(result, level: level)
 
-            // Re-solve at the position the user is actually being offered, so
-            // the numbers on screen are the numbers for that cook rather than
-            // for one that was refused. Only worth it when the slider moves,
-            // and only if nobody has asked a newer question in the meantime.
-            if let snapTo = verdict.snapTo, !Task.isCancelled {
-                let retry = solveCookTime(
-                    egg: egg, setup: setup, params: params, doneness: donenessFromSlider(snapTo)
-                )
-                if retry.reachable { result = retry }
-            }
-            return Answer(solution: result, verdict: verdict, setup: setup)
-        }.value
+        // Re-solve at the position the user is actually being offered, so the
+        // numbers on screen are the numbers for that cook rather than for one
+        // that was refused. Only worth it when the slider is going to move, and
+        // only if nobody has asked a newer question in the meantime.
+        if snapRetry, let snapTo = verdict.snapTo, !Task.isCancelled {
+            let retry = solveCookTime(
+                egg: egg, setup: setup, params: params, doneness: donenessFromSlider(snapTo)
+            )
+            if retry.reachable { result = retry }
+        }
+        return Answer(solution: result, verdict: verdict, setup: setup)
     }
 
     /// Re-solve a cook already under way, for a corrected time to boil.
     ///
     /// The doneness is the one the cook was STARTED at, and nothing here may
-    /// move it. This used to call the same path as the idle solve, discard its
-    /// `snapTo`, and return the SNAPPED solution's cook time - so a measured
-    /// ramp that made the requested doneness unreachable quietly re-timed the
-    /// pan for a different egg while the slider, the stored setting and the
-    /// already-captured ticket all still described the one that was asked for.
+    /// move it - not the slider, and not the answer. This used to call the idle
+    /// path, discard its `snapTo` and return the SNAPPED solution's cook time,
+    /// so a measured ramp that made the requested doneness unreachable quietly
+    /// re-timed the pan for a different egg while the slider, the stored
+    /// setting and the captured ticket all still described the one asked for.
+    ///
+    /// `snapRetry: false` is what makes that true rather than merely intended:
+    /// an unreachable target now answers with the furthest this pan goes, which
+    /// is the only cook on offer, instead of with a cook at a target nobody
+    /// chose.
     func cookTime(timeToBoilS: Double, level: Double) async -> Double? {
         let answer = await Self.solve(
             egg: egg, setup: setup(timeToBoilS: timeToBoilS), level: level,
-            params: Calibrations.params(calibration)
+            params: Calibrations.params(calibration), snapRetry: false
         )
         // The numbers on screen follow the cook; the refusal does not. A
         // refusal is advice about a control that is no longer on screen.
@@ -292,9 +305,14 @@ final class Kitchen {
         recompute()
     }
 
+    /// Take it all back: the posterior AND the measured pan. The web app clears
+    /// both from one button, and a kitchen that has forgotten your taste but
+    /// still insists it knows your hob is not a state anyone asked for.
     func resetCalibration() {
         Calibrations.reset()
         calibration = Calibrations.fresh()
+        BoilMemories.reset()
+        boilMemory = [:]
         recompute()
     }
 

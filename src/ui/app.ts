@@ -131,11 +131,19 @@ let solveHandle = 0;
 let saveHandle = 0;
 let lastRevise_ms = 0;
 let lastAnnounced = '';
-/** True for the first render after a reload picked a cook back up, so the app
- *  says so once rather than every second. */
+/** True while the cook on screen is one that was picked back up after a reload.
+ *  Cleared when that cook ends or is cancelled: it is a fact about a particular
+ *  cook, not about the tab, and left set it would caption every later cook with
+ *  a reload that had nothing to do with it. */
 let restored = false;
 /** One report per egg: the feedback buttons go away once one is pressed. */
 let feedbackGiven = false;
+
+/** The same cook, against a time to boil that is now known rather than
+ *  guessed. Everything else about it is frozen. */
+function withTimeToBoil(t: Ticket, timeToBoil_s: number): Ticket {
+  return { ...t, setup: { ...t.setup, timeToBoil_s: timeToBoil_s } };
+}
 
 /** The cook that was started: the only thing the calibration is allowed to
  *  learn from. */
@@ -300,8 +308,11 @@ interface Answer {
 }
 
 /** Solve for the given inputs. Pure apart from reading `settings`: it moves
- *  nothing and writes nothing. */
-function answerFor(timeToBoil_s: number, level: number): Answer {
+ *  nothing and writes nothing.
+ *
+ *  `snapRetry` is false for a cook already under way: the target is frozen, so
+ *  re-solving at a snapped position would answer for an egg nobody is cooking. */
+function answerFor(timeToBoil_s: number, level: number, snapRetry = true): Answer {
   const egg = currentEgg();
   const setup = buildSetup(timeToBoil_s);
   const params = calibrationParams(calib);
@@ -311,7 +322,7 @@ function answerFor(timeToBoil_s: number, level: number): Answer {
   // Re-solve at the position the user is actually being offered, so the
   // numbers on screen are the numbers for that cook rather than for one that
   // was refused. Only worth it when the slider is going to move.
-  if (verdict.snapTo !== null) {
+  if (snapRetry && verdict.snapTo !== null) {
     const retry = solveCookTime(egg, setup, params, donenessFromSlider(verdict.snapTo));
     if (retry.reachable) return { solution: retry, verdict: verdict };
   }
@@ -667,12 +678,14 @@ function recompute(): void {
 
 /** Re-solve a cook already under way, for a corrected time to boil.
  *
- *  The doneness is whatever the cook was STARTED at, and it does not move: the
- *  egg is in the water, the controls are gone, and a slider that snapped now
- *  would describe a cook nobody is having. The refusal is left alone too - it
- *  is advice about a control the user cannot reach. */
+ *  The doneness is whatever the cook was STARTED at, and nothing here moves it
+ *  - not the slider, and not the answer. The egg is in the water and the
+ *  controls are gone, so a snapped re-solve would describe a cook nobody is
+ *  having; an unreachable target answers with the furthest this pan goes, which
+ *  is the only cook on offer. The refusal is left alone for the same reason:
+ *  it is advice about a control the user cannot reach. */
 function resolveDuring(timeToBoil_s: number): Solution {
-  return answerFor(timeToBoil_s, machine.targetLevel).solution;
+  return answerFor(timeToBoil_s, machine.targetLevel, false).solution;
 }
 
 /** Coalesce solves: a solve is tens of milliseconds, which is too long to run
@@ -846,7 +859,7 @@ function onTick(): void {
     lastRevise_ms = now;
     const assumed = secondsHeating(machine, now) + REVISE_EXTRA_S;
     solution = resolveDuring(assumed);
-    if (ticket !== null) ticket = { ...ticket, setup: buildSetup(assumed) };
+    if (ticket !== null) ticket = withTimeToBoil(ticket, assumed);
     setMachine(reviseProvisional(machine, solution.result.cookTime_s, assumed));
   }
 
@@ -882,6 +895,7 @@ function reset(): void {
   stopTicking();
   releaseScreen();
   feedbackGiven = false;
+  restored = false;
   ticket = null;
   machine = idleMachine(settings.cooling);
   clearCook();
@@ -904,6 +918,8 @@ function onPrimary(): void {
     solution = applyAnswer(answerFor(boil, settings.doneness));
     const target = settings.doneness;
     const cook = solution.result.cookTime_s;
+    // A cook started here is this tab's own, whatever happened before it.
+    restored = false;
     ticket = {
       egg: currentEgg(),
       setup: buildSetup(boil),
@@ -923,7 +939,10 @@ function onPrimary(): void {
     const measured = secondsHeating(machine, now);
     boilMemory = rememberTimeToBoil(boilMemory, settings.waterLitres, measured);
     solution = resolveDuring(measured);
-    if (ticket !== null) ticket = { ...ticket, setup: buildSetup(measured) };
+    // Patch the measured ramp into the frozen setup rather than rebuilding it
+    // from the live controls. They cannot change mid-cook today, which is what
+    // made rebuilding harmless rather than correct.
+    if (ticket !== null) ticket = withTimeToBoil(ticket, measured);
     setMachine(recordBoil(machine, now, solution.result.cookTime_s));
     blip();
     onTick();
@@ -1079,13 +1098,41 @@ function restoreCook(): void {
 function restoreTicket(raw: unknown): Ticket | null {
   if (raw === null || typeof raw !== 'object') return null;
   const r = raw as Record<string, unknown>;
-  const egg = r['egg'];
-  const setup = r['setup'];
+
   const target = r['logNominalTarget'];
-  if (egg === null || typeof egg !== 'object') return null;
-  if (setup === null || typeof setup !== 'object') return null;
   if (typeof target !== 'number' || !Number.isFinite(target)) return null;
-  if (!Number.isFinite((egg as Egg).radius_m) || !((egg as Egg).radius_m > 0)) return null;
-  if (!Number.isFinite((setup as CookSetup).boiling_C)) return null;
+
+  const egg = positiveFields(r['egg'], ['radius_m', 'minorDiameter_m', 'mass_kg', 'volume_m3']);
+  if (egg === null) return null;
+
+  const setup = r['setup'];
+  if (setup === null || typeof setup !== 'object') return null;
+  const st = setup as Record<string, unknown>;
+  // Every number the solver will read. A partial setup does not throw - it
+  // produces a plausible wrong answer, and then teaches it to the posterior.
+  if (positiveFields(setup, ['boiling_C', 'waterLitres', 'eggCount']) === null) return null;
+  for (const key of ['eggStart_C', 'ambient_C', 'timeToBoil_s']) {
+    const value = st[key];
+    if (typeof value !== 'number' || !Number.isFinite(value)) return null;
+  }
+  if (st['startMode'] !== 'cold' && st['startMode'] !== 'hot') return null;
+  if (st['cooling'] !== 'ice' && st['cooling'] !== 'tap' && st['cooling'] !== 'counter') return null;
+  if (st['afterBoil'] !== undefined && st['afterBoil'] !== 'hold' && st['afterBoil'] !== 'off') {
+    return null;
+  }
+
   return { egg: egg as Egg, setup: setup as CookSetup, logNominalTarget: target };
+}
+
+/** The object, if every named field on it is a finite number above zero.
+ *  Returns null rather than narrowing by assertion, so the cast at the end of
+ *  `restoreTicket` is the last step rather than the only check. */
+function positiveFields(raw: unknown, keys: string[]): object | null {
+  if (raw === null || typeof raw !== 'object') return null;
+  const r = raw as Record<string, unknown>;
+  for (const key of keys) {
+    const value = r[key];
+    if (typeof value !== 'number' || !Number.isFinite(value) || !(value > 0)) return null;
+  }
+  return raw as object;
 }
