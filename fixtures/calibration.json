@@ -14,8 +14,7 @@
     "timeToBoil_s": 0,
     "cooling": "ice",
     "waterLitres": 2,
-    "eggCount": 4,
-    "eggMass_kg": 0.062
+    "eggCount": 4
   },
   "grid": {
     "tauAirScale": 1,

@@ -1,7 +1,7 @@
 import Foundation
 
 /// Egg geometry, transliterated from `src/core/geometry.ts`.
-public struct Egg: Sendable, Equatable {
+public struct Egg: Sendable, Equatable, Codable {
     /// Equal-volume sphere radius, m. This is what the conduction model uses.
     public let radiusM: Double
     /// Minor (equatorial) diameter as measured, m.

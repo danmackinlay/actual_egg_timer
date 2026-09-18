@@ -85,10 +85,17 @@ final class Alarm: NSObject, UNUserNotificationCenterDelegate {
         centre.removePendingNotificationRequests(withIdentifiers: [pullID, coolID])
     }
 
-    /// What the system says it is holding for us, for the UI to show. Claiming
-    /// an alarm is set without asking is how an egg timer loses trust.
+    /// What the system says it is holding FOR THIS COOK, for the UI to show.
+    /// Claiming an alarm is set without asking is how an egg timer loses trust.
+    ///
+    /// Counts our two identifiers rather than every pending request on the
+    /// device. The unfiltered count was a weak check that any other app's
+    /// notification could satisfy - and nothing read it anyway.
     func pendingCount() async -> Int {
-        await centre.pendingNotificationRequests().count
+        let ours: Set<String> = [pullID, coolID]
+        return await centre.pendingNotificationRequests()
+            .filter { ours.contains($0.identifier) }
+            .count
     }
 
     private func request(id: String, at date: Date, title: String, body: String) {

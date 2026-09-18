@@ -55,8 +55,9 @@ import {
 import {
   LIMITS, SLIDER_STEPS, PARTICLE_COUNT as POLICY_PARTICLES, CALIBRATION_SEED,
   DEFAULTS, DEFAULT_EGG_MASS_KG, DEFAULT_TIME_TO_BOIL_S, START_TEMP_PRESETS_C,
-  BoilMemory, ambientFor, anchorNear, calibrationGrid, estimateTimeToBoil,
-  rememberBoil, snapDown, snapUp, targetPeakYolk_C, textureFor, verdictFor,
+  BoilMemory, COOLING_SECONDS, PULL_GRACE_SECONDS, ambientFor, anchorNear,
+  calibrationGrid, estimateTimeToBoil, phaseAt, rememberBoil, snapDown, snapUp,
+  targetPeakYolk_C, textureFor, verdictFor,
 } from '../src/core/policy.js';
 
 /* ------------------------------------------------------------------ cases */
@@ -209,7 +210,6 @@ function setupOf(over: Partial<CookSetup>): CookSetup {
     cooling: 'ice',
     waterLitres: 2,
     eggCount: 4,
-    eggMass_kg: EU_LARGE.mass_kg,
   };
   return { ...base, ...over };
 }
@@ -287,7 +287,7 @@ const scenarios = {
  * through the interpolation while keeping `swift test` quick. */
 
 const CALIB_EGG = eggFromMass(0.062);
-const CALIB_SETUP: CookSetup = setupOf({ eggMass_kg: eggFromMass(0.062).mass_kg });
+const CALIB_SETUP: CookSetup = setupOf({});
 const CALIB_ALPHA_MIN = 1.2e-7;
 const CALIB_ALPHA_MAX = 2.4e-7;
 const CALIB_ALPHA_COUNT = 9;
@@ -551,6 +551,34 @@ const policy = {
   })),
   limits: LIMITS,
   calibration: { particles: POLICY_PARTICLES, seed: CALIBRATION_SEED },
+  phase: {
+    coolingSeconds: COOLING_SECONDS,
+    pullGraceSeconds: PULL_GRACE_SECONDS,
+    /* Two timelines from the same cook, differing only in whether there is a
+     * cooling step to time. The counter one is the bug: with no cooling
+     * deadline, the iOS app used to fall from COOKING straight to DONE and
+     * never show the pull at all. Sampled either side of every boundary. */
+    timelines: [
+      { name: 'ice bath', cookEnd_s: 600, coolEnd_s: 600 + PULL_GRACE_SECONDS + COOLING_SECONDS },
+      { name: 'counter rest', cookEnd_s: 600, coolEnd_s: null },
+    ].map((t) => ({
+      name: t.name,
+      cookEnd_s: t.cookEnd_s,
+      coolEnd_s: t.coolEnd_s,
+      samples: [
+        0, 1, 599, 599.999, 600, 600.001, 619, 619.999, 620, 620.001,
+        700, 799, 799.999, 800, 800.001, 10000,
+      ].map((now_s) => ({
+        now_s: now_s,
+        provisional: phaseAt(
+          { cookEnd_s: t.cookEnd_s, coolEnd_s: t.coolEnd_s, provisional: true }, now_s,
+        ),
+        phase: phaseAt(
+          { cookEnd_s: t.cookEnd_s, coolEnd_s: t.coolEnd_s, provisional: false }, now_s,
+        ),
+      })),
+    })),
+  },
 };
 
 /* ------------------------------------------------------------------ write */

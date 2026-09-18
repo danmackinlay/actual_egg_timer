@@ -11,8 +11,6 @@ struct ContentView: View {
     @State private var kitchen = Kitchen()
     @State private var cook = Cook()
     @State private var showPan = false
-    /// One report per egg: the buttons go away once one is pressed.
-    @State private var feedbackGiven = false
     @State private var confirmReset = false
 
     var body: some View {
@@ -63,9 +61,14 @@ struct ContentView: View {
             // The machine cannot solve for itself. A cold start needs a fresh
             // answer twice: when the boil is tapped, and whenever a slow hob
             // forces the estimate out.
-            cook.resolveCookTime = { [kitchen] seconds in
-                await kitchen.cookTime(timeToBoilS: seconds)
+            cook.resolveCookTime = { [kitchen] seconds, level in
+                await kitchen.cookTime(timeToBoilS: seconds, level: level)
             }
+            // The kitchen's own stored state, read here rather than in its
+            // init: @State evaluates its initial value on every construction of
+            // this struct and keeps only the first, so init was doing the I/O
+            // and starting a solve for Kitchens that were then thrown away.
+            kitchen.load()
             // After the solver is wired, so a restored cold start can revise
             // straight away rather than waiting for the next attempt.
             cook.restoreIfNeeded()
@@ -192,11 +195,24 @@ struct ContentView: View {
         }
     }
 
+    /// What the alarm actually is, not what permission was granted.
+    ///
+    /// This used to read the authorization result alone, so it said "alarm set"
+    /// whether or not the request had been accepted - while ios/README.md
+    /// claimed the app reads the pending count back "rather than assuming",
+    /// which it did and then ignored. An egg timer that claims an alarm it has
+    /// not got is worse than one with no alarm at all.
     private var alarmLine: String {
         switch cook.alarmAuthorized {
-        case .some(true): "alarm set for \(Self.clock.string(from: cook.pullAt ?? .now))"
-        case .some(false): "no notification permission — keep the app open"
-        case .none: "setting the alarm…"
+        case .none:
+            return "setting the alarm…"
+        case .some(false):
+            return "no notification permission — keep the app open"
+        case .some(true):
+            guard cook.pendingAlarms > 0 else {
+                return "the alarm did not take — keep the app open"
+            }
+            return "alarm set for \(Self.clock.string(from: cook.pullAt ?? .now))"
         }
     }
 
@@ -214,6 +230,9 @@ struct ContentView: View {
         case .idle:
             Button {
                 guard let solution = kitchen.solution else { return }
+                // Everything the cook is, frozen here. The calibration learns
+                // from this and from nothing else, so a slider left somewhere
+                // different afterwards cannot rewrite what was cooked.
                 let ticket = Cook.Ticket(
                     doneness: kitchen.label,
                     peakYolkC: solution.result.peakYolkC,
@@ -221,7 +240,10 @@ struct ContentView: View {
                     eggGrams: kitchen.eggMassG,
                     cooling: kitchen.cooling,
                     coldStart: kitchen.coldStart,
-                    logNominalTarget: kitchen.logNominalTarget
+                    logNominalTarget: kitchen.logNominalTarget,
+                    level: kitchen.doneness,
+                    egg: kitchen.egg,
+                    setup: kitchen.setup
                 )
                 Task {
                     await cook.start(
@@ -266,7 +288,6 @@ struct ContentView: View {
         case .done:
             Button("Start again") {
                 cook.cancel()
-                feedbackGiven = false
                 kitchen.refresh()
             }
             .buttonStyle(.bordered)
@@ -328,7 +349,7 @@ struct ContentView: View {
             // tap. Learning takes about a second, and an interface that
             // disappears the moment it is used leaves no way to tell whether
             // anything was recorded.
-            if feedbackGiven {
+            if cook.feedbackGiven {
                 Text(kitchen.learning ? "learning…" : "Thanks — it has adjusted.")
                     .font(.subheadline)
                 Text(kitchen.learning ? " " : tunedLine)
@@ -359,12 +380,18 @@ struct ContentView: View {
 
     private func feedbackButton(_ label: String, _ value: Feedback) -> some View {
         Button {
-            feedbackGiven = true
+            // The cook owns this flag now, and persists it. As view state it
+            // did not survive a relaunch, so a restored DONE screen asked again
+            // and a second answer folded the same egg in twice.
+            guard let ticket = cook.ticket, !cook.feedbackGiven else { return }
+            cook.recordFeedbackGiven()
             Task {
                 await kitchen.record(
                     feedback: value,
+                    egg: ticket.egg,
+                    setup: ticket.setup,
                     cookTimeS: cook.cookSeconds,
-                    logNominalTarget: cook.ticket?.logNominalTarget ?? kitchen.logNominalTarget
+                    logNominalTarget: ticket.logNominalTarget
                 )
             }
         } label: {
@@ -412,12 +439,19 @@ struct ContentView: View {
                 LabeledContent("Egg") {
                     Text("\(kitchen.eggMassG, specifier: "%.1f") g").foregroundStyle(.secondary)
                 }
-                Slider(value: $kitchen.eggMassG, in: 42...80, step: 0.5)
+                // The table, not a narrower guess at it. This said 42...80,
+                // so a stored mass that Settings.load had faithfully clamped to
+                // Limits could not be represented by the control that set it -
+                // in a file whose own comment promises every control reads the
+                // same numbers.
+                Slider(value: $kitchen.eggMassG, in: Limits.massG, step: 0.5)
             }
 
+            // Rendered from the constants, so a button cannot say one thing
+            // and the model another. The web app learned this the hard way.
             Picker("Egg from", selection: $kitchen.fromFridge) {
-                Text("Fridge 4°").tag(true)
-                Text("Room 20°").tag(false)
+                Text("Fridge \(Int(StartTempPresets.fridgeC))°").tag(true)
+                Text("Room \(Int(StartTempPresets.roomC))°").tag(false)
             }
             .pickerStyle(.segmented)
 
@@ -462,10 +496,7 @@ struct ContentView: View {
                     "Water", value: $kitchen.waterLitres, range: Limits.waterLitres,
                     step: 0.25, format: "%.2f L"
                 )
-                stepperRow(
-                    "Eggs in the pan", value: $kitchen.eggCount, range: Limits.eggCount,
-                    step: 1, format: "%.0f"
-                )
+                countRow("Eggs in the pan", value: $kitchen.eggCount, range: Limits.eggCount)
                 stepperRow(
                     "Altitude", value: $kitchen.altitudeM, range: Limits.altitudeM,
                     step: 100, format: "%.0f m"
@@ -514,6 +545,21 @@ struct ContentView: View {
             .padding(.top, 12)
         }
         .font(.subheadline)
+    }
+
+    /// A whole number of eggs. The core counts them as a Double because it
+    /// mirrors a TypeScript `number`; that stops here rather than reaching the
+    /// control.
+    private func countRow(
+        _ label: String, value: Binding<Int>, range: ClosedRange<Double>
+    ) -> some View {
+        Stepper(value: value, in: Int(range.lowerBound)...Int(range.upperBound)) {
+            LabeledContent(label) {
+                Text("\(value.wrappedValue)")
+                    .foregroundStyle(.secondary)
+                    .monospacedDigit()
+            }
+        }
     }
 
     private func stepperRow(

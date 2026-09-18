@@ -22,8 +22,7 @@
         "timeToBoil_s": 0,
         "cooling": "ice",
         "waterLitres": 2,
-        "eggCount": 4,
-        "eggMass_kg": 0.062339655881250004
+        "eggCount": 4
       },
       "solution": {
         "reachable": true,
@@ -55,8 +54,7 @@
         "timeToBoil_s": 0,
         "cooling": "ice",
         "waterLitres": 2,
-        "eggCount": 4,
-        "eggMass_kg": 0.062339655881250004
+        "eggCount": 4
       },
       "solution": {
         "reachable": true,
@@ -88,8 +86,7 @@
         "timeToBoil_s": 0,
         "cooling": "ice",
         "waterLitres": 2,
-        "eggCount": 4,
-        "eggMass_kg": 0.062339655881250004
+        "eggCount": 4
       },
       "solution": {
         "reachable": true,
@@ -121,8 +118,7 @@
         "timeToBoil_s": 0,
         "cooling": "ice",
         "waterLitres": 2,
-        "eggCount": 4,
-        "eggMass_kg": 0.062339655881250004
+        "eggCount": 4
       },
       "solution": {
         "reachable": true,
@@ -154,8 +150,7 @@
         "timeToBoil_s": 0,
         "cooling": "ice",
         "waterLitres": 2,
-        "eggCount": 4,
-        "eggMass_kg": 0.062339655881250004
+        "eggCount": 4
       },
       "solution": {
         "reachable": true,
@@ -187,8 +182,7 @@
         "timeToBoil_s": 480,
         "cooling": "ice",
         "waterLitres": 2,
-        "eggCount": 4,
-        "eggMass_kg": 0.062339655881250004
+        "eggCount": 4
       },
       "solution": {
         "reachable": true,
@@ -220,8 +214,7 @@
         "timeToBoil_s": 720,
         "cooling": "ice",
         "waterLitres": 2,
-        "eggCount": 4,
-        "eggMass_kg": 0.062339655881250004
+        "eggCount": 4
       },
       "solution": {
         "reachable": true,
@@ -253,8 +246,7 @@
         "timeToBoil_s": 0,
         "cooling": "counter",
         "waterLitres": 2,
-        "eggCount": 4,
-        "eggMass_kg": 0.062339655881250004
+        "eggCount": 4
       },
       "solution": {
         "reachable": false,
@@ -286,8 +278,7 @@
         "timeToBoil_s": 0,
         "cooling": "tap",
         "waterLitres": 2,
-        "eggCount": 4,
-        "eggMass_kg": 0.062339655881250004
+        "eggCount": 4
       },
       "solution": {
         "reachable": true,
@@ -319,8 +310,7 @@
         "timeToBoil_s": 0,
         "cooling": "ice",
         "waterLitres": 0.75,
-        "eggCount": 8,
-        "eggMass_kg": 0.062339655881250004
+        "eggCount": 8
       },
       "solution": {
         "reachable": true,
@@ -353,7 +343,6 @@
         "cooling": "ice",
         "waterLitres": 2,
         "eggCount": 4,
-        "eggMass_kg": 0.062339655881250004,
         "afterBoil": "off"
       },
       "solution": {
@@ -387,7 +376,6 @@
         "cooling": "ice",
         "waterLitres": 2,
         "eggCount": 4,
-        "eggMass_kg": 0.062339655881250004,
         "afterBoil": "off"
       },
       "solution": {
@@ -421,7 +409,6 @@
         "cooling": "ice",
         "waterLitres": 2,
         "eggCount": 4,
-        "eggMass_kg": 0.062339655881250004,
         "afterBoil": "off"
       },
       "solution": {

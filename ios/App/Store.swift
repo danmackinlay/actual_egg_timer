@@ -1,74 +1,31 @@
 import Foundation
 import EggTimerCore
 
-/// Input bounds, in one table.
+/// Persistence: UserDefaults in, UserDefaults out.
 ///
-/// The web app learned this the hard way: limits that live in the markup, in
-/// the read path and in the load path drift apart. Here every control's range
-/// and every clamp reads the same numbers.
-enum Limits {
-    static let eggMassG = 25.0...120.0
-    static let altitudeM = -400.0...5000.0
-    static let waterLitres = 0.25...12.0
-    static let eggCount = 1.0...24.0
-    static let doneness = 0.0...1.0
-    /// A tap under half a minute is a double tap, not a boil; over two hours is
-    /// an app left open.
-    static let timeToBoilS = 30.0...7200.0
-}
+/// The BOUNDS and the blending rules used to live here too. They now live in
+/// EggTimerCore's Policy, because the web app had its own hand-copied set and
+/// the two drifted - and because `estimate` walked this Dictionary in whatever
+/// order it felt like, so two equidistant pans could give the two apps
+/// different answers. This file applies the rules; it no longer decides them.
 
-func clamped(_ value: Double, to range: ClosedRange<Double>) -> Double {
-    min(range.upperBound, max(range.lowerBound, value))
-}
-
-/// Remembered time to a rolling boil, seconds, keyed by water volume in litres
-/// to one decimal place. Same pan, same hob, same answer next time.
-struct BoilMemory {
+/// Where a boil memory is kept. How the numbers combine is `rememberBoil` and
+/// `estimateTimeToBoil` in the core.
+enum BoilMemories {
     private static let key = "boilMemory"
-    /// Fallback when nothing has ever been measured.
-    static let defaultSeconds = 480.0
-
-    private var byVolume: [String: Double]
-
-    var isEmpty: Bool { byVolume.isEmpty }
 
     static func load() -> BoilMemory {
-        let stored = UserDefaults.standard.dictionary(forKey: key) as? [String: Double]
-        return BoilMemory(byVolume: stored ?? [:])
+        (UserDefaults.standard.dictionary(forKey: key) as? BoilMemory) ?? [:]
     }
 
-    private static func volumeKey(_ litres: Double) -> String {
-        String(format: "%.1f", litres)
+    static func save(_ memory: BoilMemory) {
+        UserDefaults.standard.set(memory, forKey: key)
     }
 
-    /// Blend a new measurement with what was already known for this volume, so
-    /// one odd run does not dominate.
-    mutating func remember(litres: Double, seconds: Double) {
-        guard Limits.timeToBoilS.contains(seconds) else { return }
-        let key = Self.volumeKey(litres)
-        byVolume[key] = byVolume[key].map { 0.5 * $0 + 0.5 * seconds } ?? seconds
-        UserDefaults.standard.set(byVolume, forKey: Self.key)
-    }
-
-    /// The exact remembered value, else the nearest remembered volume scaled by
-    /// litres (energy is roughly proportional to mass), else the default.
-    func estimate(litres: Double) -> Double {
-        if let exact = byVolume[Self.volumeKey(litres)] { return exact }
-
-        var bestLitres = 0.0
-        var bestSeconds = 0.0
-        var bestDistance = Double.infinity
-        for (key, seconds) in byVolume {
-            guard let candidate = Double(key) else { continue }
-            let distance = abs(candidate - litres)
-            if distance < bestDistance {
-                bestDistance = distance
-                bestLitres = candidate
-                bestSeconds = seconds
-            }
-        }
-        guard bestLitres > 0 else { return Self.defaultSeconds }
-        return clamped(bestSeconds * (litres / bestLitres), to: Limits.timeToBoilS)
+    /// Forget every measured pan. Paired with the calibration reset: someone
+    /// taking their learning back usually means the whole kitchen.
+    static func reset() {
+        UserDefaults.standard.removeObject(forKey: key)
     }
 }
 
@@ -79,11 +36,11 @@ enum Settings {
     static func load(into kitchen: Kitchen) {
         let store = UserDefaults.standard
         guard store.object(forKey: "doneness") != nil else { return }
-        kitchen.doneness = clamped(store.double(forKey: "doneness"), to: Limits.doneness)
-        kitchen.eggMassG = clamped(store.double(forKey: "eggMassG"), to: Limits.eggMassG)
-        kitchen.altitudeM = clamped(store.double(forKey: "altitudeM"), to: Limits.altitudeM)
-        kitchen.waterLitres = clamped(store.double(forKey: "waterLitres"), to: Limits.waterLitres)
-        kitchen.eggCount = clamped(store.double(forKey: "eggCount"), to: Limits.eggCount)
+        kitchen.doneness = clamp(store.double(forKey: "doneness"), to: Limits.doneness)
+        kitchen.eggMassG = clamp(store.double(forKey: "eggMassG"), to: Limits.massG)
+        kitchen.altitudeM = clamp(store.double(forKey: "altitudeM"), to: Limits.altitudeM)
+        kitchen.waterLitres = clamp(store.double(forKey: "waterLitres"), to: Limits.waterLitres)
+        kitchen.eggCount = Int(clamp(store.double(forKey: "eggCount"), to: Limits.eggCount).rounded())
         kitchen.fromFridge = store.bool(forKey: "fromFridge")
         kitchen.coldStart = store.bool(forKey: "coldStart")
         kitchen.heatOff = store.bool(forKey: "heatOff")
@@ -97,7 +54,7 @@ enum Settings {
         store.set(kitchen.eggMassG, forKey: "eggMassG")
         store.set(kitchen.altitudeM, forKey: "altitudeM")
         store.set(kitchen.waterLitres, forKey: "waterLitres")
-        store.set(kitchen.eggCount, forKey: "eggCount")
+        store.set(Double(kitchen.eggCount), forKey: "eggCount")
         store.set(kitchen.fromFridge, forKey: "fromFridge")
         store.set(kitchen.coldStart, forKey: "coldStart")
         store.set(kitchen.heatOff, forKey: "heatOff")

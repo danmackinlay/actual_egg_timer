@@ -1,6 +1,6 @@
 {
   "name": "actual-egg-timer",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Actual Egg Timer: a boiled-egg timer that computes the time from transient conduction and denaturation kinetics",
   "license": "MIT",
   "engines": {

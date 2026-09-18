@@ -18,11 +18,11 @@ struct Calibration: Sendable {
 
 enum Calibrations {
     private static let key = "calibration.v1"
-    private static let particleCount = 1000
-    private static let seed: Int32 = 0x5eed_1e
 
     static func fresh() -> Calibration {
-        Calibration(posterior: createPrior(count: particleCount, seed: seed), eggsLogged: 0)
+        Calibration(
+            posterior: createPrior(count: particleCount, seed: calibrationSeed), eggsLogged: 0
+        )
     }
 
     /// Parameters to solve with. Before any feedback this is the prior mean,
@@ -50,11 +50,14 @@ enum Calibrations {
         cookTimeS: Double, logNominalTarget: Double, feedback: Feedback
     ) -> Calibration {
         let current = params(c)
-        let centre = current.alphaM2s
+        // The grid's extent decides what the filter can see, and therefore what
+        // the posterior becomes. It is core policy precisely so that the web
+        // app cannot learn something different from the same egg.
+        let g = calibrationGrid(alphaCentre: current.alphaM2s, cookTimeS: cookTimeS)
         let grid = buildDoseGrid(
             egg: egg, setup: setup, tauAirScale: current.tauAirScale,
-            alphaMin: centre * 0.55, alphaMax: centre * 1.8, alphaCount: 21,
-            timeMinS: max(60, cookTimeS * 0.35), timeMaxS: cookTimeS * 2.4, timeCount: 32
+            alphaMin: g.alphaMin, alphaMax: g.alphaMax, alphaCount: g.alphaCount,
+            timeMinS: g.timeMinS, timeMaxS: g.timeMaxS, timeCount: g.timeCount
         )
         var posterior = c.posterior
         updatePosterior(

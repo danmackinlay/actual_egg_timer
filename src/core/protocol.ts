@@ -7,6 +7,7 @@ import {
   RAMP_R, TAU_AIR, T_ICE_BATH_C, T_COLD_TAP_C,
   TAU_DIP_RECOVERY, TAU_STANDING_SCALE, C_WATER, C_EGG, TAU_PLUNGE,
 } from './constants.js';
+import { Egg } from './geometry.js';
 
 /** Cold start: eggs go in the cold pan and heat with the water. Hot start:
  *  eggs are lowered into water already boiling - peels far better, and the
@@ -46,8 +47,13 @@ export interface CookSetup {
    *  assumes without saying so. */
   afterBoil?: HeatAfterBoil;
   eggCount: number;
-  eggMass_kg: number;
 }
+
+/* The egg's MASS is not here. It was, and it duplicated `Egg.mass_kg` - so
+ * `simulate(egg, setup, ...)` took the same number twice and every caller had
+ * to keep the two in step by hand. `tools/validate.ts` had to remember an
+ * override in its size sweep or it would silently have modelled four different
+ * eggs against one fixed water dip. The setup is the POT; the egg is the egg. */
 
 /**
  * Pan heating ramp. Constant power into a lumped water mass with Newtonian
@@ -81,9 +87,9 @@ export function rampTemperature(
  * into 2 L drops it ~8 C; into 1 L, ~14 C. Worth modelling - it is why the
  * same recipe fails in a small pan.
  */
-export function dipMagnitude(setup: CookSetup): number {
+export function dipMagnitude(egg: Egg, setup: CookSetup): number {
   const waterCapacity = setup.waterLitres * C_WATER;
-  const eggCapacity = setup.eggCount * setup.eggMass_kg * C_EGG;
+  const eggCapacity = setup.eggCount * egg.mass_kg * C_EGG;
   const total = waterCapacity + eggCapacity;
   if (total <= 0.0) return 0.0;
   return eggCapacity * (setup.boiling_C - setup.eggStart_C) / total;
@@ -169,7 +175,7 @@ export function coolingTemperature(
  * heat off the pan cooling toward the room. What happens after the pull is
  * coolingTemperature's business, and the two never need each other's inputs.
  */
-export function bathTemperature(setup: CookSetup, t_s: number): number {
+export function bathTemperature(egg: Egg, setup: CookSetup, t_s: number): number {
   const standing = setup.afterBoil === 'off';
   if (setup.startMode === 'cold') {
     if (t_s < setup.timeToBoil_s) {
@@ -181,7 +187,7 @@ export function bathTemperature(setup: CookSetup, t_s: number): number {
     );
   }
   // Hot start: the water is already boiling but dips when the eggs go in.
-  const dip = dipMagnitude(setup);
+  const dip = dipMagnitude(egg, setup);
   // With the burner on it pulls the dip back over roughly a minute. With the
   // burner off nothing pulls it back: the dip is permanent, and the water falls
   // from there. This is why the standing method is so much more sensitive to
@@ -193,6 +199,6 @@ export function bathTemperature(setup: CookSetup, t_s: number): number {
 
 /** Water temperature at the moment the egg goes in - the sphere's initial
  *  surface condition. */
-export function initialSurfaceTemperature(setup: CookSetup): number {
-  return bathTemperature(setup, 0.0);
+export function initialSurfaceTemperature(egg: Egg, setup: CookSetup): number {
+  return bathTemperature(egg, setup, 0.0);
 }

@@ -360,3 +360,52 @@ export function estimateTimeToBoil(memory: BoilMemory, litres: number): number {
 export function hasBoilMemory(memory: BoilMemory): boolean {
   return Object.keys(memory).length > 0;
 }
+
+/* --------------------------------------------------------- the phase rule */
+
+/**
+ * The phases of a cook, in order.
+ *
+ *   IDLE -> HEATING -> COOKING -> PULL -> COOLING -> DONE
+ */
+export type Phase = 'IDLE' | 'HEATING' | 'COOKING' | 'PULL' | 'COOLING' | 'DONE';
+
+/** Counted-down cooling. Carryover is what ruins a soft egg, so this is a
+ *  stage of the cook, not a suggestion appended to the end of it. */
+export const COOLING_SECONDS = 180;
+
+/** If nobody confirms the transfer, assume it happened. A stalled timer at the
+ *  hob is worse than a slightly optimistic one. */
+export const PULL_GRACE_SECONDS = 20;
+
+/** The deadlines a cook is made of, as epoch seconds. `coolEnd_s` is null when
+ *  there is no cooling step to time - resting on the counter, where the
+ *  carryover IS the point rather than something to wait out. */
+export interface Deadlines {
+  cookEnd_s: number;
+  coolEnd_s: number | null;
+  /** True on a cold start until the boil is tapped: the deadline is a guess. */
+  provisional: boolean;
+}
+
+/**
+ * Which phase a cook is in at a given instant.
+ *
+ * Pure, and it takes the clock rather than reading it, so one render sees one
+ * time. This is the rule both apps derive from, and it exists here because
+ * they did not agree on it: the iOS app checked for a cooling deadline BEFORE
+ * checking the pull grace, so a counter rest - which has no cooling deadline -
+ * fell straight from COOKING to DONE. "Out of the water, now" never appeared,
+ * the 20 s grace never ran, and the phone still fired the pull notification at
+ * a screen that already said Done. The web app always passed through PULL.
+ *
+ * PULL is therefore unconditional: every cook has a moment where the egg has
+ * to come out, whatever happens to it next.
+ */
+export function phaseAt(d: Deadlines, now_s: number): Phase {
+  if (d.provisional) return 'HEATING';
+  if (now_s < d.cookEnd_s) return 'COOKING';
+  if (now_s < d.cookEnd_s + PULL_GRACE_SECONDS) return 'PULL';
+  if (d.coolEnd_s === null) return 'DONE';
+  return now_s < d.coolEnd_s ? 'COOLING' : 'DONE';
+}

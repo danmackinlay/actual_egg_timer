@@ -109,7 +109,7 @@ export interface CookResult {
 export function simulate(
   egg: Egg, setup: CookSetup, params: ModelParams, cookTime_s: number,
 ): CookResult {
-  const initialSurface = initialSurfaceTemperature(setup);
+  const initialSurface = initialSurfaceTemperature(egg, setup);
   const sphere = createSphere(egg.radius_m, params.alpha_m2s, setup.eggStart_C, initialSurface);
   const yolkDose: Dose = createDose(Z_YOLK, TREF_YOLK_C);
   const whiteDose: Dose = createDose(Z_WHITE, TREF_WHITE_C);
@@ -132,7 +132,7 @@ export function simulate(
     const tNext = t + DT_SIM;
     let next: number;
     if (tNext < cookTime_s) {
-      next = bathTemperature(setup, tNext);
+      next = bathTemperature(egg, setup, tNext);
     } else {
       if (!pullRecorded) {
         meanAtPull = meanTemperature(sphere);

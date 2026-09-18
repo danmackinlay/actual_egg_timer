@@ -252,3 +252,49 @@ struct DefaultsConformance {
         }
     }
 }
+
+@Suite("The phase rule matches the reference implementation")
+struct PhaseConformance {
+    /// The counter-rest timeline is the regression test for the divergence the
+    /// review found: with no cooling deadline, this app used to fall from
+    /// COOKING straight to DONE, so "Out of the water — now" never appeared and
+    /// the 20 s grace never ran - while the pull notification still fired at a
+    /// screen that already said Done. Sampled either side of every boundary.
+    @Test("every boundary, with and without a cooling step")
+    func timelines() {
+        for timeline in Fixtures.policyCases("phase.timelines") {
+            let name = timeline.str("name")
+            let cookEndS = timeline.num("cookEnd_s")
+            let coolEndS = timeline.optionalNum("coolEnd_s")
+            guard let samples = timeline["samples"] as? [[String: Any]] else {
+                Issue.record("timeline \(name) has no samples")
+                continue
+            }
+            for sample in samples {
+                let nowS = sample.num("now_s")
+                let running = phaseAt(
+                    Deadlines(cookEndS: cookEndS, coolEndS: coolEndS, provisional: false),
+                    nowS: nowS
+                )
+                #expect(
+                    running.rawValue == sample.str("phase"),
+                    "\(name) at \(nowS) s: expected \(sample.str("phase")), got \(running.rawValue)"
+                )
+                let guessing = phaseAt(
+                    Deadlines(cookEndS: cookEndS, coolEndS: coolEndS, provisional: true),
+                    nowS: nowS
+                )
+                let what = "\(name) at \(nowS) s, boil not yet tapped:"
+                    + " expected \(sample.str("provisional")), got \(guessing.rawValue)"
+                #expect(guessing.rawValue == sample.str("provisional"), "\(what)")
+            }
+        }
+    }
+
+    @Test("the cooling step and the pull grace are the same lengths")
+    func constants() {
+        let phase = Fixtures.policyObject("phase")
+        expectClose(coolingSeconds, phase.num("coolingSeconds"), "coolingSeconds")
+        expectClose(pullGraceSeconds, phase.num("pullGraceSeconds"), "pullGraceSeconds")
+    }
+}

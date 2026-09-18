@@ -5,17 +5,30 @@ import EggTimerCore
 /// Every input the solver has, and the answer it last gave.
 ///
 /// The solve is roughly a dozen full simulations of ten thousand steps each, so
-/// it does not belong on the main actor while a finger is on the slider. The
-/// pattern here is the smallest one that is actually correct: each change starts
-/// a fresh task and cancels the one in flight, and a result is only published if
-/// it is still the answer to the current question.
+/// it does not belong on the main actor while a finger is on the slider. Each
+/// change coalesces for a moment, then starts a task that cancels the one in
+/// flight, and a result is only published if it is still the answer to the
+/// current question.
+///
+/// The cancel used to be a lie. The work ran inside `Task.detached`, which does
+/// not inherit cancellation and never checked for it, so `task?.cancel()`
+/// cancelled only the wrapper: every superseded slider tick still ran its full
+/// scan to completion - about a second each with the heat off - and the result
+/// was thrown away at the end. There was no debounce either, so a single drag
+/// queued dozens of them. Now the coalesce keeps most of them from starting,
+/// and the ones that do start inherit cancellation and check it between solves.
+///
+/// What this class decides is only what a KITCHEN knows. The decisions above
+/// the physics - snapping, which refusal applies, the texture bands, the
+/// calibration grid, the bounds and the defaults - live in EggTimerCore's
+/// Policy, so this app and the web app cannot answer differently.
 @Observable
 @MainActor
 final class Kitchen {
     // MARK: - Inputs
 
-    var doneness: Double = 0.41 { didSet { changed() } }
-    var eggMassG: Double = 62.3 { didSet { changed() } }
+    var doneness: Double = Defaults.doneness { didSet { changed() } }
+    var eggMassG: Double = Defaults.eggMassKg * 1000 { didSet { changed() } }
     var fromFridge: Bool = true { didSet { changed() } }
     var cooling: Cooling = .ice { didSet { changed() } }
     /// Cold start: egg into cold water, and the heating ramp is part of the
@@ -28,18 +41,20 @@ final class Kitchen {
     /// The standing method - heat off at the boil, lid on. The pan coasts down
     /// and the cook is whatever the stored heat can still do.
     var heatOff: Bool = false { didSet { changed() } }
-    var altitudeM: Double = 0 { didSet { changed() } }
-    var waterLitres: Double = 2 { didSet { changed() } }
-    var eggCount: Double = 4 { didSet { changed() } }
+    var altitudeM: Double = Defaults.altitudeM { didSet { changed() } }
+    var waterLitres: Double = Defaults.waterLitres { didSet { changed() } }
+    /// An Int, because eggs are. It was a Double only because the core mirrors
+    /// a TypeScript `number`, and that is the core's business rather than the
+    /// app's - the conversion belongs at the boundary, not in the control.
+    var eggCount: Int = Defaults.eggCount { didSet { changed() } }
 
     // MARK: - Outputs
 
     private(set) var solution: Solution?
-    private(set) var solving = false
     /// What this kitchen has learned from its own eggs. Before any feedback it
     /// is the prior, whose mean IS the literature value - so calibration is
     /// purely additive and the app is fully useful on day one.
-    private(set) var calibration = Calibrations.load()
+    private(set) var calibration = Calibrations.fresh()
     /// True while the dose surface is being rebuilt after an outcome.
     private(set) var learning = false
     /// Why the requested doneness was refused, in words, or empty. The point is
@@ -50,15 +65,29 @@ final class Kitchen {
     /// Set while the solver is moving the slider itself, so that snapping to a
     /// reachable position does not start another solve.
     private var applying = false
-    private var boilMemory = BoilMemory.load()
+    private var boilMemory: BoilMemory = [:]
+    private var loaded = false
 
-    init() {
-        // Load with saving suppressed. Each assignment below would otherwise
-        // fire `changed()` and write the WHOLE settings object back - including
-        // the properties not yet loaded, still sitting at their defaults - so
+    /// Read what was stored and solve for it.
+    ///
+    /// NOT `init`. `@State private var kitchen = Kitchen()` evaluates its
+    /// initial value on every construction of the view struct, and SwiftUI
+    /// keeps only the first instance - so I/O and a solve in `init` ran for
+    /// every discarded Kitchen as well, and those solves ran to completion.
+    /// `Cook` already avoids exactly this by doing its restore from
+    /// `onAppear`; this does the same, and is idempotent so a second
+    /// `onAppear` costs nothing.
+    func load() {
+        guard !loaded else { return }
+        loaded = true
+        // Load with saving suppressed. Each assignment would otherwise fire
+        // `changed()` and write the WHOLE settings object back - including the
+        // properties not yet loaded, still sitting at their defaults - so
         // restoring `doneness` would overwrite the stored altitude with zero
         // before the next line ever got to read it.
         applying = true
+        calibration = Calibrations.load()
+        boilMemory = BoilMemories.load()
         Settings.load(into: self)
         applying = false
         recompute()
@@ -68,7 +97,7 @@ final class Kitchen {
 
     var egg: Egg { Geometry.eggFromMass(eggMassG / 1000.0) }
 
-    var eggStartC: Double { fromFridge ? 4 : 20 }
+    var eggStartC: Double { fromFridge ? StartTempPresets.fridgeC : StartTempPresets.roomC }
 
     /// The room, as far as the model is concerned.
     ///
@@ -88,9 +117,9 @@ final class Kitchen {
     /// answer next time. Note the solver wants it on a HOT start too: with the
     /// heat off it is the pan's loss time constant, which is the only
     /// measurement of the pan there is.
-    var timeToBoilS: Double { boilMemory.estimate(litres: waterLitres) }
+    var timeToBoilS: Double { estimateTimeToBoil(boilMemory, litres: waterLitres) }
 
-    var hasBoilMemory: Bool { boilMemory.isEmpty == false }
+    var hasBoilMemory: Bool { EggTimerCore.hasBoilMemory(boilMemory) }
 
     var setup: CookSetup {
         setup(timeToBoilS: timeToBoilS)
@@ -106,13 +135,12 @@ final class Kitchen {
             cooling: cooling,
             waterLitres: waterLitres,
             afterBoil: heatOff ? .off : .hold,
-            eggCount: eggCount,
-            eggMassKg: egg.massKg
+            eggCount: Double(eggCount)
         )
     }
 
     /// The label moves with the finger; the numbers follow when the solve lands.
-    var label: String { Self.anchorNear(doneness).label }
+    var label: String { anchorNear(doneness).label }
 
     var eggsLogged: Int { calibration.eggsLogged }
     var calibrationSpread: Double { Calibrations.spread(calibration) }
@@ -130,88 +158,79 @@ final class Kitchen {
         recompute()
     }
 
+    /// Coalesce solves. A drag fires `didSet` on every step, and a solve is
+    /// far too long to run on each one - with the heat off it is a standing
+    /// scan of about a second. 90 ms, the same window the web app uses.
+    private static let coalesceNanos: UInt64 = 90_000_000
+
     private func recompute() {
         task?.cancel()
-        solving = true
         let level = doneness
         let setup = setup
         let egg = egg
         let params = Calibrations.params(calibration)
-        task = Task {
+        task = Task { [weak self] in
+            try? await Task.sleep(nanoseconds: Self.coalesceNanos)
+            guard !Task.isCancelled else { return }
             let answer = await Self.solve(egg: egg, setup: setup, level: level, params: params)
             guard !Task.isCancelled else { return }
-            self.apply(answer)
-            self.solving = false
+            self?.apply(answer)
         }
     }
 
-    /// Solve, then clamp the slider to what is physically achievable.
-    /// `reachable == false` happens two ways, and they snap in opposite
-    /// directions: too soft for the white (snap up), or harder than a cooling
-    /// pan can manage (snap down).
+    /// Solve, and read the result as a decision about the slider.
+    ///
+    /// A plain `Task` rather than `Task.detached`, so cancellation actually
+    /// reaches the work: `.detached` inherits nothing, which is why superseded
+    /// solves used to run to completion. It still leaves the main actor - this
+    /// is `nonisolated`, so the `await` hops to the cooperative pool - which is
+    /// the part that mattered for keeping the slider smooth.
     private nonisolated static func solve(
         egg: Egg, setup: CookSetup, level: Double, params: ModelParams
     ) async -> Answer {
-        await Task.detached(priority: .userInitiated) {
+        await Task(priority: .userInitiated) {
             var result = solveCookTime(
                 egg: egg, setup: setup, params: params, doneness: donenessFromSlider(level)
             )
-            if result.reachable {
-                return Answer(solution: result, refusal: "", snapTo: nil)
-            }
+            let verdict = verdictFor(result, level: level)
 
-            if !result.whiteSets {
-                // Nothing to snap to: the slider has no reachable position at
-                // all. The numbers shown are the furthest this pan goes, which
-                // is the only honest thing left to put on screen.
-                return Answer(solution: result, refusal: whiteNeverSetsText(), snapTo: nil)
-            }
-
-            if level > result.hardestLevel {
-                // No re-solve: the solver already answered with the furthest
-                // this pan goes, so the numbers on screen are the only cook on
-                // offer.
-                let capped = snapDown(result.hardestLevel)
-                return Answer(
-                    solution: result,
-                    refusal: standingRefusalText(level, result.hardestLevel, setup),
-                    snapTo: capped < level ? capped : nil
-                )
-            }
-
-            let text = refusalText(level, result.softestLevel, setup.cooling)
-            let snapped = snapUp(result.softestLevel)
-            if snapped > level {
-                // Re-solve at the snapped position, so the numbers on screen are
-                // the numbers for the cook now being offered.
+            // Re-solve at the position the user is actually being offered, so
+            // the numbers on screen are the numbers for that cook rather than
+            // for one that was refused. Only worth it when the slider moves,
+            // and only if nobody has asked a newer question in the meantime.
+            if let snapTo = verdict.snapTo, !Task.isCancelled {
                 let retry = solveCookTime(
-                    egg: egg, setup: setup, params: params,
-                    doneness: donenessFromSlider(snapped)
+                    egg: egg, setup: setup, params: params, doneness: donenessFromSlider(snapTo)
                 )
                 if retry.reachable { result = retry }
-                return Answer(solution: result, refusal: text, snapTo: snapped)
             }
-            return Answer(solution: result, refusal: text, snapTo: nil)
+            return Answer(solution: result, verdict: verdict, setup: setup)
         }.value
     }
 
-    /// Re-solve for a different time to boil, answering with the total cook
-    /// time. This is what a cold start calls when the boil is tapped, and again
-    /// whenever a slow hob forces the estimate out.
-    func cookTime(timeToBoilS: Double) async -> Double? {
+    /// Re-solve a cook already under way, for a corrected time to boil.
+    ///
+    /// The doneness is the one the cook was STARTED at, and nothing here may
+    /// move it. This used to call the same path as the idle solve, discard its
+    /// `snapTo`, and return the SNAPPED solution's cook time - so a measured
+    /// ramp that made the requested doneness unreachable quietly re-timed the
+    /// pan for a different egg while the slider, the stored setting and the
+    /// already-captured ticket all still described the one that was asked for.
+    func cookTime(timeToBoilS: Double, level: Double) async -> Double? {
         let answer = await Self.solve(
-            egg: egg, setup: setup(timeToBoilS: timeToBoilS), level: doneness,
+            egg: egg, setup: setup(timeToBoilS: timeToBoilS), level: level,
             params: Calibrations.params(calibration)
         )
+        // The numbers on screen follow the cook; the refusal does not. A
+        // refusal is advice about a control that is no longer on screen.
         solution = answer.solution
-        refusal = answer.refusal
         return answer.solution.result.cookTimeS
     }
 
     private func apply(_ answer: Answer) {
         solution = answer.solution
-        refusal = answer.refusal
-        if let snapTo = answer.snapTo, snapTo != doneness {
+        refusal = refusalText(answer.verdict, setup: answer.setup)
+        if let snapTo = answer.verdict.snapTo, snapTo != doneness {
             applying = true
             doneness = snapTo
             applying = false
@@ -221,9 +240,11 @@ final class Kitchen {
 
     private struct Answer: Sendable {
         var solution: Solution
-        var refusal: String
-        /// Where the slider must move to, if anywhere.
-        var snapTo: Double?
+        /// Why it was refused, if it was, and where the slider must go.
+        var verdict: Verdict
+        /// The setup this answer is about, so the refusal can quote the pan
+        /// the answer was computed for rather than whatever is current.
+        var setup: CookSetup
     }
 
     // MARK: - Learning from an egg
@@ -234,12 +255,19 @@ final class Kitchen {
     /// detached task. It happens once, after the egg has been eaten, and never
     /// while anything is being adjusted - which is the whole reason the surface
     /// is cached rather than simulated per particle.
-    func record(feedback: Feedback, cookTimeS: Double, logNominalTarget: Double) async {
+    /// `egg` and `setup` are the ones the cook was RUN with, carried on the
+    /// ticket. They used to be read off the kitchen as it stood at the moment
+    /// the user got round to answering, so the time to boil came from the
+    /// blended memory - a pan that had never cooked this egg - rather than from
+    /// this cook's measured ramp. The grid is built from the setup, so the
+    /// outcome was being attributed to a cook that never happened.
+    func record(
+        feedback: Feedback, egg: Egg, setup: CookSetup,
+        cookTimeS: Double, logNominalTarget: Double
+    ) async {
         guard !learning else { return }
         learning = true
         let current = calibration
-        let egg = egg
-        let setup = setup
         let updated = await Task.detached(priority: .userInitiated) {
             Calibrations.recordOutcome(
                 current, egg: egg, setup: setup,
@@ -276,91 +304,84 @@ final class Kitchen {
     /// volume. Blended with whatever was already known, so one odd run - lid
     /// off, pan half empty - does not dominate.
     func rememberBoil(seconds: Double) {
-        boilMemory.remember(litres: waterLitres, seconds: seconds)
+        boilMemory = EggTimerCore.rememberBoil(boilMemory, litres: waterLitres, seconds: seconds)
+        BoilMemories.save(boilMemory)
     }
 
-    // MARK: - Slider arithmetic
-
-    /// Positions per unit of slider travel, so a snapped level always lands
-    /// where the thumb can sit.
-    private nonisolated static let sliderSteps = 100.0
-
-    /// Round away from the unreachable side. The nudge keeps a level already on
-    /// the grid from being pushed a whole step by floating-point noise.
-    fileprivate nonisolated static func snapUp(_ level: Double) -> Double {
-        min(1, max(0, (level * sliderSteps - 1e-9).rounded(.up) / sliderSteps))
-    }
-
-    fileprivate nonisolated static func snapDown(_ level: Double) -> Double {
-        min(1, max(0, (level * sliderSteps + 1e-9).rounded(.down) / sliderSteps))
-    }
-
-    nonisolated static func anchorNear(_ level: Double) -> DonenessAnchor {
-        var best = donenessAnchors[0]
-        for anchor in donenessAnchors
-        where abs(anchor.level - level) < abs(best.level - level) {
-            best = anchor
-        }
-        return best
-    }
 }
 
 // MARK: - Refusals, in words
 
-private func refusalText(_ wanted: Double, _ softest: Double, _ cooling: Cooling) -> String {
-    let wantedLabel = Kitchen.anchorNear(wanted).label.lowercased()
-    let softestLabel = Kitchen.anchorNear(softest).label.lowercased()
-    // A sliver of unreachable track at the runny end is normal and not worth a
-    // sentence; only explain a refusal the user can actually feel.
-    if wantedLabel == softestLabel { return "" }
-    switch cooling {
-    case .counter:
-        return "Resting on the counter keeps cooking the yolk — \(wantedLabel) isn't reachable. "
-            + "Softest here is \(softestLabel). Use an ice bath."
-    case .tap:
-        return "A cold tap doesn't pull the heat out fast enough — \(wantedLabel) isn't reachable. "
-            + "Softest here is \(softestLabel). Ice water gets you further."
-    case .ice:
-        return "Any shorter and the white is still raw — \(wantedLabel) isn't reachable for this egg. "
-            + "Softest here is \(softestLabel)."
+/// The refusal, in words.
+///
+/// The DECISION - which refusal applies, where the slider must move to, and
+/// whether the gap is big enough to be worth a sentence at all - is
+/// `verdictFor` in EggTimerCore, so that this app and the web app cannot refuse
+/// differently. What is left here is the sentence, which is this app's own: the
+/// point is to teach the constraint, not merely to block the control.
+private func refusalText(_ v: Verdict, setup: CookSetup) -> String {
+    guard v.worthSaying else { return "" }
+    let wanted = v.wanted.label.lowercased()
+    let limit = v.limit.label.lowercased()
+
+    switch v.kind {
+    case .none:
+        return ""
+
+    case .whiteNeverSets:
+        // The standing method's worst failure: the water falls past the
+        // temperature the white needs before the white has had it, so there is
+        // no cook here at all - not a soft one, not a hard one.
+        return "With the heat off this pan never sets the white: the water falls below what the "
+            + "white needs while the egg is still in it. Nothing on the slider is reachable. "
+            + "More water, a slower boil, or keep it boiling."
+
+    case .harderThanPanReaches:
+        // The standing method's own failure: the pan cools off before the yolk
+        // gets where it was asked to go, and no amount of waiting fixes it.
+        return "With the heat off, the water runs out before the yolk gets there — "
+            + "\(wanted) isn't reachable in \(litresText(setup.waterLitres)) L. "
+            + "Hardest here is \(limit). More water, or keep it boiling."
+
+    case .tooSoftForWhite:
+        switch setup.cooling {
+        case .counter:
+            return "Resting on the counter keeps cooking the yolk — \(wanted) isn't reachable. "
+                + "Softest here is \(limit). Use an ice bath."
+        case .tap:
+            return "A cold tap doesn't pull the heat out fast enough — \(wanted) isn't reachable. "
+                + "Softest here is \(limit). Ice water gets you further."
+        case .ice:
+            return "Any shorter and the white is still raw — \(wanted) isn't reachable for this egg. "
+                + "Softest here is \(limit)."
+        }
     }
 }
 
-/// The standing method's worst failure: the water falls past the temperature
-/// the white needs before the white has had it, so there is no cook here at all
-/// - not a soft one, not a hard one.
-private func whiteNeverSetsText() -> String {
-    "With the heat off this pan never sets the white: the water falls below what the "
-        + "white needs while the egg is still in it. Nothing on the slider is reachable. "
-        + "More water, a slower boil, or keep it boiling."
-}
-
-/// The standing method's own failure: the pan cools off before the yolk gets
-/// where it was asked to go, and no amount of waiting fixes it.
-private func standingRefusalText(_ wanted: Double, _ hardest: Double, _ setup: CookSetup) -> String {
-    let wantedLabel = Kitchen.anchorNear(wanted).label.lowercased()
-    let hardestLabel = Kitchen.anchorNear(hardest).label.lowercased()
-    if wantedLabel == hardestLabel { return "" }
-    let litres = setup.waterLitres
-    let volume = litres == litres.rounded() ? String(Int(litres)) : String(format: "%.1f", litres)
-    return "With the heat off, the water runs out before the yolk gets there — "
-        + "\(wantedLabel) isn't reachable in \(volume) L. "
-        + "Hardest here is \(hardestLabel). More water, or keep it boiling."
+/// Litres as someone would say them: "2", not "1.7500000000000002".
+private func litresText(_ litres: Double) -> String {
+    litres == litres.rounded() ? String(Int(litres)) : String(format: "%.1f", litres)
 }
 
 // MARK: - Presentation helpers
 
-/// One line on what the model expects of this cook - the same wording the web
-/// app uses, because it is the same model saying it.
+/// One line on what the model expects of this cook. Which band a temperature
+/// falls in is core policy; what the band is called is this app's copy.
 func textureNote(peakYolkC: Double, peakWhiteC: Double) -> String {
-    let white = peakWhiteC < 71 ? "white just set" : (peakWhiteC < 82 ? "white set" : "white firm")
+    let t = textureFor(peakYolkC: peakYolkC, peakWhiteC: peakWhiteC)
+    let white: String
+    switch t.white {
+    case .justSet: white = "white just set"
+    case .set: white = "white set"
+    case .firm: white = "white firm"
+    }
     let yolk: String
-    switch peakYolkC {
-    case ..<58: yolk = "yolk liquid"
-    case ..<63: yolk = "yolk soft, barely thickened"
-    case ..<68: yolk = "yolk jammy"
-    case ..<73: yolk = "yolk fudgy"
-    default: yolk = "yolk fully set"
+    switch t.yolk {
+    case .liquid: yolk = "yolk liquid"
+    case .soft: yolk = "yolk soft, barely thickened"
+    case .jammy: yolk = "yolk jammy"
+    case .fudgy: yolk = "yolk fudgy"
+    case .set: yolk = "yolk fully set"
     }
     return "\(white), \(yolk)"
 }

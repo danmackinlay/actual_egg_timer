@@ -53,8 +53,7 @@ private func loadScenarios() -> (egg: Egg, params: ModelParams, cases: [Scenario
             cooling: cooling,
             waterLitres: setupJSON.num("waterLitres"),
             afterBoil: afterBoil,
-            eggCount: setupJSON.num("eggCount"),
-            eggMassKg: setupJSON.num("eggMass_kg")
+            eggCount: setupJSON.num("eggCount")
         )
         return Scenario(
             name: name, level: c.num("level"), setup: setup, solution: solution, atFixed: atFixed

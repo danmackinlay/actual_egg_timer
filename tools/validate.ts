@@ -80,7 +80,6 @@ function setupOf(over: Partial<CookSetup>): CookSetup {
     cooling: 'ice',
     waterLitres: 2,
     eggCount: 4,
-    eggMass_kg: EU_LARGE.mass_kg,
   };
   return { ...base, ...over };
 }
@@ -126,7 +125,7 @@ for (let i = 0; i < SIZE_GRAMS.length; i++) {
   const egg = eggFromMass(SIZE_GRAMS[i] / 1000);
   check(
     `jammy, ${SIZE_GRAMS[i]} g egg`,
-    cookMinutes(egg, setupOf({ eggMass_kg: egg.mass_kg }), 0.41),
+    cookMinutes(egg, setupOf({}), 0.41),
     SIZE_EXPECTED[i], TOL_MIN, 'min',
   );
 }

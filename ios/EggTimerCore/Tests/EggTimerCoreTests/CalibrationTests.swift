@@ -56,8 +56,7 @@ private func loadCalibration() -> Calibration {
         cooling: cooling,
         waterLitres: setupJSON.num("waterLitres"),
         afterBoil: afterBoil,
-        eggCount: setupJSON.num("eggCount"),
-        eggMassKg: setupJSON.num("eggMass_kg")
+        eggCount: setupJSON.num("eggCount")
     )
     return Calibration(egg: egg, setup: setup, file: file, gridJSON: gridJSON)
 }

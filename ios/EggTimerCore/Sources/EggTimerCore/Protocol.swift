@@ -22,7 +22,7 @@ public enum HeatAfterBoil: String, Sendable, Codable {
     case hold, off
 }
 
-public struct CookSetup: Sendable {
+public struct CookSetup: Sendable, Codable, Equatable {
     public var startMode: StartMode
     /// Egg temperature when it goes in, C.
     public var eggStartC: Double
@@ -42,12 +42,16 @@ public struct CookSetup: Sendable {
     /// absent as `hold`; here the default does the same job.
     public var afterBoil: HeatAfterBoil
     public var eggCount: Double
-    public var eggMassKg: Double
+
+    /* The egg's MASS is not here. It was, and it duplicated `Egg.massKg` - so
+     * `simulate(egg, setup, ...)` took the same number twice and every caller
+     * had to keep the two in step by hand. The setup is the POT; the egg is the
+     * egg. */
 
     public init(
         startMode: StartMode, eggStartC: Double, ambientC: Double, boilingC: Double,
         timeToBoilS: Double, cooling: Cooling, waterLitres: Double,
-        afterBoil: HeatAfterBoil = .hold, eggCount: Double, eggMassKg: Double
+        afterBoil: HeatAfterBoil = .hold, eggCount: Double
     ) {
         self.startMode = startMode
         self.eggStartC = eggStartC
@@ -58,7 +62,6 @@ public struct CookSetup: Sendable {
         self.waterLitres = waterLitres
         self.afterBoil = afterBoil
         self.eggCount = eggCount
-        self.eggMassKg = eggMassKg
     }
 }
 
@@ -77,9 +80,9 @@ public enum Protocols {
 
     /// How far the water drops when cold eggs go into boiling water, C.
     /// Straight energy balance over water + eggs.
-    public static func dipMagnitude(_ setup: CookSetup) -> Double {
+    public static func dipMagnitude(_ egg: Egg, _ setup: CookSetup) -> Double {
         let waterCapacity = setup.waterLitres * Constants.cWater
-        let eggCapacity = setup.eggCount * setup.eggMassKg * Constants.cEgg
+        let eggCapacity = setup.eggCount * egg.massKg * Constants.cEgg
         let total = waterCapacity + eggCapacity
         if total <= 0.0 { return 0.0 }
         return eggCapacity * (setup.boilingC - setup.eggStartC) / total
@@ -128,7 +131,7 @@ public enum Protocols {
     /// Water temperature while the egg is still in the pan, `tS` after it went
     /// in: ramp, boil, dip, and with the heat off the pan cooling toward the
     /// room.
-    public static func bathTemperature(_ setup: CookSetup, tS: Double) -> Double {
+    public static func bathTemperature(_ egg: Egg, _ setup: CookSetup, tS: Double) -> Double {
         let standing = setup.afterBoil == .off
         if setup.startMode == .cold {
             if tS < setup.timeToBoilS {
@@ -144,7 +147,7 @@ public enum Protocols {
             )
         }
         // Hot start: already boiling, but it dips when the eggs go in.
-        let dip = dipMagnitude(setup)
+        let dip = dipMagnitude(egg, setup)
         // With the burner on it pulls the dip back over roughly a minute. With
         // the burner off nothing pulls it back: the dip is permanent.
         if !standing {
@@ -157,7 +160,7 @@ public enum Protocols {
     }
 
     /// Water temperature at the moment the egg goes in.
-    public static func initialSurfaceTemperature(_ setup: CookSetup) -> Double {
-        bathTemperature(setup, tS: 0.0)
+    public static func initialSurfaceTemperature(_ egg: Egg, _ setup: CookSetup) -> Double {
+        bathTemperature(egg, setup, tS: 0.0)
     }
 }

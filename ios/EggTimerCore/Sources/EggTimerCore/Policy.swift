@@ -356,3 +356,61 @@ public func estimateTimeToBoil(_ memory: BoilMemory, litres: Double) -> Double {
 public func hasBoilMemory(_ memory: BoilMemory) -> Bool {
     !memory.isEmpty
 }
+
+// MARK: - The phase rule
+
+/// The phases of a cook, in order.
+///
+///     IDLE -> HEATING -> COOKING -> PULL -> COOLING -> DONE
+public enum Phase: String, Sendable {
+    case idle = "IDLE"
+    case heating = "HEATING"
+    case cooking = "COOKING"
+    case pull = "PULL"
+    case cooling = "COOLING"
+    case done = "DONE"
+}
+
+/// Counted-down cooling. Carryover is what ruins a soft egg, so this is a stage
+/// of the cook, not a suggestion appended to the end of it.
+public let coolingSeconds = 180.0
+
+/// If nobody confirms the transfer, assume it happened. A stalled timer at the
+/// hob is worse than a slightly optimistic one.
+public let pullGraceSeconds = 20.0
+
+/// The deadlines a cook is made of, as epoch seconds. `coolEndS` is nil when
+/// there is no cooling step to time - resting on the counter, where the
+/// carryover IS the point rather than something to wait out.
+public struct Deadlines: Sendable {
+    public let cookEndS: Double
+    public let coolEndS: Double?
+    /// True on a cold start until the boil is tapped: the deadline is a guess.
+    public let provisional: Bool
+
+    public init(cookEndS: Double, coolEndS: Double?, provisional: Bool) {
+        self.cookEndS = cookEndS
+        self.coolEndS = coolEndS
+        self.provisional = provisional
+    }
+}
+
+/// Which phase a cook is in at a given instant.
+///
+/// Pure, and it takes the clock rather than reading it, so one render sees one
+/// time. This is the rule both apps derive from, and it exists here because
+/// they did not agree on it: this app checked for a cooling deadline BEFORE
+/// checking the pull grace, so a counter rest - which has no cooling deadline -
+/// fell straight from COOKING to DONE. "Out of the water — now" never appeared,
+/// the 20 s grace never ran, and the phone still fired the pull notification at
+/// a screen that already said Done. The web app always passed through PULL.
+///
+/// PULL is therefore unconditional: every cook has a moment where the egg has
+/// to come out, whatever happens to it next.
+public func phaseAt(_ d: Deadlines, nowS: Double) -> Phase {
+    if d.provisional { return .heating }
+    if nowS < d.cookEndS { return .cooking }
+    if nowS < d.cookEndS + pullGraceSeconds { return .pull }
+    guard let coolEndS = d.coolEndS else { return .done }
+    return nowS < coolEndS ? .cooling : .done
+}

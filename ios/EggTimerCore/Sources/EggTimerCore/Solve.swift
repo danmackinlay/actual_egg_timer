@@ -83,7 +83,7 @@ public struct CookResult: Sendable {
 public func simulate(
     egg: Egg, setup: CookSetup, params: ModelParams, cookTimeS: Double
 ) -> CookResult {
-    let initialSurface = Protocols.initialSurfaceTemperature(setup)
+    let initialSurface = Protocols.initialSurfaceTemperature(egg, setup)
     var sphere = SphereState(
         radiusM: egg.radiusM, alphaM2s: params.alphaM2s,
         initialC: setup.eggStartC, surfaceC: initialSurface
@@ -109,7 +109,7 @@ public func simulate(
         let tNext = t + Constants.dtSim
         let next: Double
         if tNext < cookTimeS {
-            next = Protocols.bathTemperature(setup, tS: tNext)
+            next = Protocols.bathTemperature(egg, setup, tS: tNext)
         } else {
             if !pullRecorded {
                 meanAtPull = sphere.meanTemperature

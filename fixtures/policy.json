@@ -1652,5 +1652,185 @@
   "calibration": {
     "particles": 1000,
     "seed": 6221086
+  },
+  "phase": {
+    "coolingSeconds": 180,
+    "pullGraceSeconds": 20,
+    "timelines": [
+      {
+        "name": "ice bath",
+        "cookEnd_s": 600,
+        "coolEnd_s": 800,
+        "samples": [
+          {
+            "now_s": 0,
+            "provisional": "HEATING",
+            "phase": "COOKING"
+          },
+          {
+            "now_s": 1,
+            "provisional": "HEATING",
+            "phase": "COOKING"
+          },
+          {
+            "now_s": 599,
+            "provisional": "HEATING",
+            "phase": "COOKING"
+          },
+          {
+            "now_s": 599.999,
+            "provisional": "HEATING",
+            "phase": "COOKING"
+          },
+          {
+            "now_s": 600,
+            "provisional": "HEATING",
+            "phase": "PULL"
+          },
+          {
+            "now_s": 600.001,
+            "provisional": "HEATING",
+            "phase": "PULL"
+          },
+          {
+            "now_s": 619,
+            "provisional": "HEATING",
+            "phase": "PULL"
+          },
+          {
+            "now_s": 619.999,
+            "provisional": "HEATING",
+            "phase": "PULL"
+          },
+          {
+            "now_s": 620,
+            "provisional": "HEATING",
+            "phase": "COOLING"
+          },
+          {
+            "now_s": 620.001,
+            "provisional": "HEATING",
+            "phase": "COOLING"
+          },
+          {
+            "now_s": 700,
+            "provisional": "HEATING",
+            "phase": "COOLING"
+          },
+          {
+            "now_s": 799,
+            "provisional": "HEATING",
+            "phase": "COOLING"
+          },
+          {
+            "now_s": 799.999,
+            "provisional": "HEATING",
+            "phase": "COOLING"
+          },
+          {
+            "now_s": 800,
+            "provisional": "HEATING",
+            "phase": "DONE"
+          },
+          {
+            "now_s": 800.001,
+            "provisional": "HEATING",
+            "phase": "DONE"
+          },
+          {
+            "now_s": 10000,
+            "provisional": "HEATING",
+            "phase": "DONE"
+          }
+        ]
+      },
+      {
+        "name": "counter rest",
+        "cookEnd_s": 600,
+        "coolEnd_s": null,
+        "samples": [
+          {
+            "now_s": 0,
+            "provisional": "HEATING",
+            "phase": "COOKING"
+          },
+          {
+            "now_s": 1,
+            "provisional": "HEATING",
+            "phase": "COOKING"
+          },
+          {
+            "now_s": 599,
+            "provisional": "HEATING",
+            "phase": "COOKING"
+          },
+          {
+            "now_s": 599.999,
+            "provisional": "HEATING",
+            "phase": "COOKING"
+          },
+          {
+            "now_s": 600,
+            "provisional": "HEATING",
+            "phase": "PULL"
+          },
+          {
+            "now_s": 600.001,
+            "provisional": "HEATING",
+            "phase": "PULL"
+          },
+          {
+            "now_s": 619,
+            "provisional": "HEATING",
+            "phase": "PULL"
+          },
+          {
+            "now_s": 619.999,
+            "provisional": "HEATING",
+            "phase": "PULL"
+          },
+          {
+            "now_s": 620,
+            "provisional": "HEATING",
+            "phase": "DONE"
+          },
+          {
+            "now_s": 620.001,
+            "provisional": "HEATING",
+            "phase": "DONE"
+          },
+          {
+            "now_s": 700,
+            "provisional": "HEATING",
+            "phase": "DONE"
+          },
+          {
+            "now_s": 799,
+            "provisional": "HEATING",
+            "phase": "DONE"
+          },
+          {
+            "now_s": 799.999,
+            "provisional": "HEATING",
+            "phase": "DONE"
+          },
+          {
+            "now_s": 800,
+            "provisional": "HEATING",
+            "phase": "DONE"
+          },
+          {
+            "now_s": 800.001,
+            "provisional": "HEATING",
+            "phase": "DONE"
+          },
+          {
+            "now_s": 10000,
+            "provisional": "HEATING",
+            "phase": "DONE"
+          }
+        ]
+      }
+    ]
   }
 }

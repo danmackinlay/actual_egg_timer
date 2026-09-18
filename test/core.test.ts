@@ -46,7 +46,6 @@ function setupOf(over: Partial<CookSetup>): CookSetup {
     cooling: 'ice',
     waterLitres: 2,
     eggCount: 4,
-    eggMass_kg: EU_LARGE.mass_kg,
   };
   return { ...base, ...over };
 }

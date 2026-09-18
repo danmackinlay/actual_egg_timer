@@ -204,7 +204,9 @@ function isSousVide(): boolean {
   return settings.startMode === 'sous';
 }
 
-function buildSetup(egg: Egg, timeToBoil_s: number): CookSetup {
+/** What the solver is told about the POT. The egg is a separate argument
+ *  everywhere the core takes both, so there is no mass here to keep in step. */
+function buildSetup(timeToBoil_s: number): CookSetup {
   return {
     startMode: coreStartMode(),
     afterBoil: settings.afterBoil,
@@ -215,7 +217,6 @@ function buildSetup(egg: Egg, timeToBoil_s: number): CookSetup {
     cooling: settings.cooling,
     waterLitres: settings.waterLitres,
     eggCount: settings.eggCount,
-    eggMass_kg: egg.mass_kg,
   };
 }
 
@@ -302,7 +303,7 @@ interface Answer {
  *  nothing and writes nothing. */
 function answerFor(timeToBoil_s: number, level: number): Answer {
   const egg = currentEgg();
-  const setup = buildSetup(egg, timeToBoil_s);
+  const setup = buildSetup(timeToBoil_s);
   const params = calibrationParams(calib);
   const result = solveCookTime(egg, setup, params, donenessFromSlider(level));
   const verdict = verdictFor(result, level);
@@ -845,7 +846,7 @@ function onTick(): void {
     lastRevise_ms = now;
     const assumed = secondsHeating(machine, now) + REVISE_EXTRA_S;
     solution = resolveDuring(assumed);
-    if (ticket !== null) ticket = { ...ticket, setup: buildSetup(ticket.egg, assumed) };
+    if (ticket !== null) ticket = { ...ticket, setup: buildSetup(assumed) };
     setMachine(reviseProvisional(machine, solution.result.cookTime_s, assumed));
   }
 
@@ -905,7 +906,7 @@ function onPrimary(): void {
     const cook = solution.result.cookTime_s;
     ticket = {
       egg: currentEgg(),
-      setup: buildSetup(currentEgg(), boil),
+      setup: buildSetup(boil),
       logNominalTarget: Math.log10(donenessFromSlider(target).yolkDose_min),
     };
     setMachine(settings.startMode === 'cold'
@@ -922,7 +923,7 @@ function onPrimary(): void {
     const measured = secondsHeating(machine, now);
     boilMemory = rememberTimeToBoil(boilMemory, settings.waterLitres, measured);
     solution = resolveDuring(measured);
-    if (ticket !== null) ticket = { ...ticket, setup: buildSetup(ticket.egg, measured) };
+    if (ticket !== null) ticket = { ...ticket, setup: buildSetup(measured) };
     setMachine(recordBoil(machine, now, solution.result.cookTime_s));
     blip();
     onTick();

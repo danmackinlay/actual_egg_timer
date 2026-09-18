@@ -52,10 +52,31 @@ final class Cook {
         var eggGrams: Double
         var cooling: Cooling
         var coldStart: Bool
-        /// log10 of the yolk dose this cook was ASKED for, captured at "Eggs
-        /// in". The calibration needs what was requested, not what the slider
+        /// log10 of the yolk dose this cook is being RUN at, captured at "Eggs
+        /// in". The calibration needs what was cooked, not what the slider
         /// happens to say by the time the egg is eaten.
         var logNominalTarget: Double
+        /// The doneness level that target came from, so a mid-cook re-solve can
+        /// answer for the cook in the pan rather than for the slider.
+        var level: Double
+        /// The egg and the pan this cook was run with.
+        ///
+        /// These used to be read off the kitchen at the moment the user
+        /// answered "How was it?" - so the time to boil came from the blended
+        /// memory rather than from THIS cook's measured ramp, and the dose grid
+        /// the posterior was updated against described a pan that had never
+        /// cooked this egg. Frozen here, and updated only when the ramp is
+        /// actually measured.
+        var egg: Egg
+        var setup: CookSetup
+
+        /// The same cook, against a time to boil that is now known rather than
+        /// guessed.
+        func withTimeToBoil(_ seconds: Double) -> Ticket {
+            var next = self
+            next.setup.timeToBoilS = seconds
+            return next
+        }
     }
 
     private(set) var startedAt: Date?
@@ -73,12 +94,28 @@ final class Cook {
     /// screen for a second or two, and during that second the app must not
     /// claim it has no permission - it does not know yet.
     private(set) var alarmAuthorized: Bool?
+    /// Alarms the system says it is actually holding for this cook, read back
+    /// from `UNUserNotificationCenter` rather than assumed from the permission
+    /// prompt. An egg timer that claims an alarm it has not got is worse than
+    /// one with no alarm at all - which is what ios/README.md has always said,
+    /// and what the subline did not do.
     private(set) var pendingAlarms = 0
+    /// One report per egg, and it has to outlive the view.
+    ///
+    /// This was `@State` on ContentView, so a relaunch inside the hour that
+    /// `restoreIfNeeded` covers brought back a finished cook with the question
+    /// unasked. Answering it a second time folded the same egg into the
+    /// posterior twice - a double weight on one observation, from a user who
+    /// thought they were answering once.
+    private(set) var feedbackGiven = false
 
     /// Re-solve for a time to boil, answering with the total cook time. The
     /// machine cannot solve for itself and should not try: this is set by the
     /// view, which owns the inputs. Returning nil leaves the deadline alone.
-    var resolveCookTime: ((Double) async -> Double?)?
+    ///
+    /// Takes the level the cook is being RUN at, so a corrected ramp re-times
+    /// the egg in the pan instead of whatever the slider now says.
+    var resolveCookTime: ((Double, Double) async -> Double?)?
 
     private var ticker: Task<Void, Never>?
     private var lastRevise: Date?
@@ -96,12 +133,11 @@ final class Cook {
     /// That is not hypothetical - it is what "cancel doesn't reset" looks like.
     private var generation = 0
 
-    /// How long the cooling step is given before the egg counts as done.
-    /// Matches COOLING_SECONDS in the web app's machine.
-    static let coolingSeconds: TimeInterval = 180
-    /// If nobody confirms the transfer, assume it happened. A stalled timer at
-    /// the hob is worse than a slightly optimistic one.
-    static let pullGraceSeconds: TimeInterval = 20
+    /// Both from EggTimerCore, so the two apps cannot time the same egg
+    /// differently. They used to be a pair of literals here and another pair in
+    /// the web app's machine, with a comment asserting they matched.
+    static let coolingSeconds: TimeInterval = EggTimerCore.coolingSeconds
+    static let pullGraceSeconds: TimeInterval = EggTimerCore.pullGraceSeconds
 
     /// A cold start still not boiling this close to its provisional deadline
     /// has a slower hob than we assumed. Push the estimate out rather than
@@ -110,7 +146,17 @@ final class Cook {
     private static let reviseExtraS: TimeInterval = 60
     private static let reviseEverySSeconds: TimeInterval = 10
 
-    var phase: Phase {
+    var phase: Phase { phase(at: .now) }
+
+    /// The phase at a given instant.
+    ///
+    /// Takes the clock rather than reading it, so one render sees ONE time. The
+    /// computed `phase` used to call `Date.now` on every access and a single
+    /// `body` pass reads it about ten times, so a phase boundary could land
+    /// between two of those reads and the label could describe one phase while
+    /// the button below it described the next. `TimelineView` already hands the
+    /// view a date; this is what it is for.
+    func phase(at now: Date) -> Phase {
         // A cook is its START, its DEADLINE and its ticket, or it is nothing.
         // Keying off `pullAt` alone let a half-written state read as a running
         // cook: anything that set a deadline without a start - a late async
@@ -118,12 +164,24 @@ final class Cook {
         // cancelled. Requiring all three makes that unrepresentable rather than
         // merely unlikely, which is the right guarantee for a Cancel button.
         guard let pullAt, startedAt != nil, ticket != nil else { return .idle }
-        if provisional { return .heating }
-        let now = Date.now
-        if now < pullAt { return .cooking }
-        guard let coolDoneAt else { return .done }
-        if now < pullAt.addingTimeInterval(Self.pullGraceSeconds) { return .pull }
-        return now < coolDoneAt ? .cooling : .done
+        // The ORDER of the remaining tests is core policy, and it is core
+        // policy because the two apps disagreed about it. See `phaseAt`.
+        let core = EggTimerCore.phaseAt(
+            Deadlines(
+                cookEndS: pullAt.timeIntervalSince1970,
+                coolEndS: coolDoneAt?.timeIntervalSince1970,
+                provisional: provisional
+            ),
+            nowS: now.timeIntervalSince1970
+        )
+        switch core {
+        case .idle: return .idle
+        case .heating: return .heating
+        case .cooking: return .cooking
+        case .pull: return .pull
+        case .cooling: return .cooling
+        case .done: return .done
+        }
     }
 
     /// The cook time actually used, egg-in to egg-out. This is what the
@@ -190,11 +248,14 @@ final class Cook {
         guard phase == .heating, let startedAt, let ticket else { return nil }
         let gen = generation
         let measured = Date.now.timeIntervalSince(startedAt)
-        guard let total = await resolveCookTime?(measured) else { return nil }
+        guard let total = await resolveCookTime?(measured, ticket.level) else { return nil }
         // Cancelled while the solve was running: there is no cook to correct.
         guard gen == generation else { return nil }
         assumedBoilS = measured
         provisional = false
+        // The pan that actually cooked this egg. The calibration is told about
+        // the measured ramp, not the blend that was guessed at "Eggs in".
+        self.ticket = ticket.withTimeToBoil(measured)
         setDeadlines(from: startedAt, cookSeconds: total, cooling: ticket.cooling)
         if alarmAuthorized == true { scheduleAlarms() }
         pendingAlarms = await Alarm.shared.pendingCount()
@@ -217,8 +278,18 @@ final class Cook {
         provisional = false
         pendingAlarms = 0
         alarmAuthorized = nil
+        feedbackGiven = false
         pushedStage = nil
         lastRevise = nil
+        persist()
+    }
+
+    /// Record that this egg has been reported on. Idempotent by construction:
+    /// the caller asks first, and a second call cannot fold a second
+    /// observation because there is nothing left to fold.
+    func recordFeedbackGiven() {
+        guard !feedbackGiven else { return }
+        feedbackGiven = true
         persist()
     }
 
@@ -249,6 +320,9 @@ final class Cook {
         var coolDoneAt: Date?
         var assumedBoilS: Double
         var provisional: Bool
+        /// Defaulted, so a record written before this field existed restores as
+        /// unanswered rather than failing to decode.
+        var feedbackGiven: Bool = false
         var ticket: Ticket
     }
 
@@ -261,7 +335,8 @@ final class Cook {
         }
         let saved = Saved(
             startedAt: startedAt, pullAt: pullAt, coolDoneAt: coolDoneAt,
-            assumedBoilS: assumedBoilS, provisional: provisional, ticket: ticket
+            assumedBoilS: assumedBoilS, provisional: provisional,
+            feedbackGiven: feedbackGiven, ticket: ticket
         )
         if let data = try? JSONEncoder().encode(saved) {
             UserDefaults.standard.set(data, forKey: Self.savedKey)
@@ -295,6 +370,7 @@ final class Cook {
         coolDoneAt = saved.coolDoneAt
         assumedBoilS = saved.assumedBoilS
         provisional = saved.provisional
+        feedbackGiven = saved.feedbackGiven
         ticket = saved.ticket
         // The alarms were handed to the system at absolute dates and are still
         // pending; read the count back rather than assuming it.
@@ -351,9 +427,10 @@ final class Cook {
 
         let gen = generation
         let assumed = now.timeIntervalSince(startedAt) + Self.reviseExtraS
-        guard let total = await resolveCookTime?(assumed) else { return }
+        guard let total = await resolveCookTime?(assumed, ticket.level) else { return }
         guard gen == generation else { return }
         assumedBoilS = assumed
+        self.ticket = ticket.withTimeToBoil(assumed)
         setDeadlines(from: startedAt, cookSeconds: total, cooling: ticket.cooling)
         if alarmAuthorized == true { scheduleAlarms() }
         pushActivity(force: true)

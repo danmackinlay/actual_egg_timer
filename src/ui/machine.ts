@@ -20,16 +20,15 @@
  */
 
 import { Cooling } from '../core/protocol.js';
+import { COOLING_SECONDS, PULL_GRACE_SECONDS } from '../core/policy.js';
+
+/** The lengths of the two untimed stages, from the core. They were a pair of
+ *  literals here and another pair in ios/App/Cook.swift, with a comment on the
+ *  Swift side asserting that they matched. `phaseAt` in the core now states the
+ *  whole timeline, and test/machine.test.ts holds this file to it. */
+export { COOLING_SECONDS, PULL_GRACE_SECONDS } from '../core/policy.js';
 
 export type Phase = 'IDLE' | 'HEATING' | 'COOKING' | 'PULL' | 'COOLING' | 'DONE';
-
-/** Counted-down cooling. Carryover is what ruins a soft egg, so this is a
- *  stage of the cook, not a suggestion appended to the end of it. */
-export const COOLING_SECONDS = 180;
-
-/** If nobody confirms the transfer, assume it happened. A stalled timer at the
- *  hob is worse than a slightly optimistic one. */
-export const PULL_GRACE_SECONDS = 20;
 
 export interface Machine {
   phase: Phase;

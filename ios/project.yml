@@ -28,7 +28,10 @@ settings:
     DEVELOPMENT_TEAM: L4D3TWC3A4
     CODE_SIGN_STYLE: Automatic
     SWIFT_VERSION: "6.0"
-    MARKETING_VERSION: "0.2"
+    # Same number as package.json. Two version schemes for one program is one
+    # more than anybody can keep straight, and these had already drifted to 0.2
+    # against 0.1.0.
+    MARKETING_VERSION: "0.2.0"
     CURRENT_PROJECT_VERSION: "1"
     # The simulator needs no identity and must not wait on one: keeping it
     # unsigned is what makes the build-run-screenshot loop two seconds. Device
