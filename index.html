@@ -47,7 +47,7 @@
     <p id="subline"></p>
 
     <dl id="stats">
-      <div><dt>peak yolk</dt><dd id="statYolk">--</dd></div>
+      <div><dt id="statYolkLabel">peak yolk</dt><dd id="statYolk">--</dd></div>
       <div id="afterBoilStat"><dt>after boiling</dt><dd id="statAfter">--</dd></div>
       <div><dt>water boils at</dt><dd id="statBoil">--</dd></div>
     </dl>
@@ -173,6 +173,12 @@
     </div>
 
   </form>
+
+  <!-- What the app has learned from this kitchen, and the way to take it back. -->
+  <div id="learned">
+    <p class="hint" id="learnedNote"></p>
+    <button type="button" id="forget" class="secondary" hidden>Forget what it learned</button>
+  </div>
 
   <!-- ------------------------------------------------------------ actions -->
   <div id="actions">

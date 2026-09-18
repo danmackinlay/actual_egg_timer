@@ -18,11 +18,10 @@ import {
   Particle, Posterior, Feedback, createPrior, updatePosterior,
   posteriorParams, posteriorAlphaRelSd,
 } from '../core/infer.js';
-import { readStorage, writeStorage } from './store.js';
+import { PARTICLE_COUNT, CALIBRATION_SEED, calibrationGrid } from '../core/policy.js';
+import { readStorage, writeStorage, removeStorage } from './store.js';
 
 const KEY = 'aet.calibration.v1';
-const PARTICLES = 1000;
-const SEED = 0x5eed1e;
 
 export interface Calibration {
   posterior: Posterior;
@@ -30,7 +29,7 @@ export interface Calibration {
 }
 
 export function freshCalibration(): Calibration {
-  return { posterior: createPrior(PARTICLES, SEED), eggsLogged: 0 };
+  return { posterior: createPrior(PARTICLE_COUNT, CALIBRATION_SEED), eggsLogged: 0 };
 }
 
 /** Parameters to solve with. Before any feedback this is the prior mean, which
@@ -59,11 +58,14 @@ export function recordOutcome(
   cookTime_s: number, logNominalTarget: number, feedback: Feedback,
 ): void {
   const params = calibrationParams(c);
-  const centre = params.alpha_m2s;
+  // The grid's extent decides what the filter can see, and therefore what the
+  // posterior becomes. It is core policy precisely so that the iOS app cannot
+  // learn something different from the same egg.
+  const g = calibrationGrid(params.alpha_m2s, cookTime_s);
   const grid = buildDoseGrid(
     egg, setup, params.tauAirScale,
-    centre * 0.55, centre * 1.8, 21,
-    Math.max(60, cookTime_s * 0.35), cookTime_s * 2.4, 32,
+    g.alphaMin, g.alphaMax, g.alphaCount,
+    g.timeMin_s, g.timeMax_s, g.timeCount,
   );
   updatePosterior(c.posterior, grid, cookTime_s, logNominalTarget, feedback);
   c.eggsLogged += 1;
@@ -98,10 +100,21 @@ export function saveCalibration(c: Calibration): void {
   writeStorage(KEY, JSON.stringify(stored));
 }
 
-function finiteArray(value: unknown, length: number): value is number[] {
+/** Finite, the right length, and - where `floor` says so - above it.
+ *
+ *  Finiteness alone is not enough, which is what the iOS loader knew and this
+ *  one did not. A stored `alpha_m2s` of zero or below is perfectly finite, and
+ *  it reaches `createSphere` as a Fourier number of zero: non-finite
+ *  temperatures, hence non-finite doses, hence exactly the poisoned posterior
+ *  the comment below promises to refuse. */
+function numberArray(
+  value: unknown, length: number, floor: number, strict: boolean,
+): value is number[] {
   if (!Array.isArray(value) || value.length !== length) return false;
   for (let i = 0; i < length; i++) {
-    if (typeof value[i] !== 'number' || !Number.isFinite(value[i])) return false;
+    const n: unknown = value[i];
+    if (typeof n !== 'number' || !Number.isFinite(n)) return false;
+    if (strict ? !(n > floor) : !(n >= floor)) return false;
   }
   return true;
 }
@@ -121,12 +134,17 @@ export function loadCalibration(): Calibration {
   if (s === null || typeof s !== 'object' || s.v !== 1) return freshCalibration();
   if (!Array.isArray(s.a) || s.a.length === 0) return freshCalibration();
   const n = s.a.length;
-  if (!finiteArray(s.a, n) || !finiteArray(s.o, n) || !finiteArray(s.t, n) || !finiteArray(s.w, n)) {
+  // alpha and tauAirScale are strictly positive; a weight may be zero but
+  // never negative; the taste offset is a log-dose shift and may be anything
+  // finite. Same rules as ios/App/Calibration.swift.
+  if (
+    !numberArray(s.a, n, 0, true) || !numberArray(s.o, n, -Infinity, false)
+    || !numberArray(s.t, n, 0, true) || !numberArray(s.w, n, 0, false)
+  ) {
     return freshCalibration();
   }
-  if (typeof s.n !== 'number' || !Number.isFinite(s.n) || typeof s.rng !== 'number') {
-    return freshCalibration();
-  }
+  if (typeof s.n !== 'number' || !Number.isFinite(s.n) || s.n < 0) return freshCalibration();
+  if (typeof s.rng !== 'number' || !Number.isFinite(s.rng)) return freshCalibration();
   const particles: Particle[] = new Array<Particle>(n);
   const weights: number[] = new Array<number>(n);
   for (let i = 0; i < n; i++) {
@@ -137,4 +155,13 @@ export function loadCalibration(): Calibration {
     posterior: { particles: particles, weights: weights, rng: s.rng },
     eggsLogged: s.n,
   };
+}
+
+/** Forget every egg. A run of wrong answers to "How was it?" is otherwise
+ *  undone only by clearing the site's storage, and the honest thing is to let
+ *  someone take it back. The iOS app has had this since it shipped; README
+ *  11.5 has listed its absence here as a known gap. */
+export function clearCalibration(): Calibration {
+  removeStorage(KEY);
+  return freshCalibration();
 }

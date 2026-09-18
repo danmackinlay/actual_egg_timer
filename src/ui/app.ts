@@ -11,30 +11,32 @@
  * derived from the same settings without reconciling them mid-cook.
  */
 
-import { T_ROOM_C } from '../core/constants.js';
 import { Egg, eggFromMass, eggFromMinorDiameter, SIZE_CLASSES } from '../core/geometry.js';
 import { boilingPointAtAltitude } from '../core/thermo.js';
 import { Cooling, CookSetup, StartMode } from '../core/protocol.js';
 import { SOUS_VIDE_BATH_C, sousVideEstimate } from '../core/sousvide.js';
 import {
-  DONENESS_ANCHORS, DonenessAnchor, Solution,
-  donenessFromSlider, solveCookTime,
+  DONENESS_ANCHORS, Solution, donenessFromSlider, solveCookTime,
 } from '../core/solve.js';
+import {
+  SLIDER_STEPS, Verdict, ambientFor, anchorNear, targetPeakYolk_C, textureFor,
+  verdictFor,
+} from '../core/policy.js';
 import { Feedback } from '../core/infer.js';
 import {
-  Calibration, loadCalibration, saveCalibration, calibrationParams,
+  Calibration, clearCalibration, loadCalibration, saveCalibration, calibrationParams,
   calibrationSpread, recordOutcome,
 } from './calibration.js';
 import {
   LIMITS, Limit, START_TEMP_PRESETS_C, Settings, UiStartMode, clampNumber,
-  estimateTimeToBoil, hasBoilMemory, loadBoilMemory, loadSettings,
-  rememberTimeToBoil, saveSettings,
+  clearBoilMemory, clearCook, estimateTimeToBoil, hasBoilMemory, loadBoilMemory,
+  loadCook, loadSettings, rememberTimeToBoil, saveCook, saveSettings,
 } from './store.js';
 import { sousVideCopy } from './sousvide.js';
 import {
-  Machine, advance, beginCooling, idleMachine, recordBoil, reviseProvisional,
-  secondsAfterBoil, secondsHeating, secondsToCool, secondsToPull, startCold, startHot,
-  COOLING_SECONDS, PULL_GRACE_SECONDS,
+  Machine, advance, beginCooling, idleMachine, recordBoil, restoreMachine,
+  reviseProvisional, secondsAfterBoil, secondsHeating, secondsToCool, secondsToPull,
+  startCold, startHot, COOLING_SECONDS, PULL_GRACE_SECONDS,
 } from './machine.js';
 import {
   Ticker, blip, keepScreenAwake, primeAudio, releaseScreen, ringAlarm, setMuted, startTicker,
@@ -56,6 +58,7 @@ const dom = {
   announce: el<HTMLSpanElement>('announce'),
   subline: el<HTMLParagraphElement>('subline'),
   statYolk: el<HTMLElement>('statYolk'),
+  statYolkLabel: el<HTMLElement>('statYolkLabel'),
   statAfter: el<HTMLElement>('statAfter'),
   statBoil: el<HTMLElement>('statBoil'),
   note: el<HTMLParagraphElement>('note'),
@@ -82,6 +85,8 @@ const dom = {
   secondary: el<HTMLButtonElement>('secondary'),
   feedback: el<HTMLDivElement>('feedback'),
   calibNote: el<HTMLParagraphElement>('calibNote'),
+  learnedNote: el<HTMLParagraphElement>('learnedNote'),
+  forget: el<HTMLButtonElement>('forget'),
 };
 
 function radios(name: string): HTMLInputElement[] {
@@ -108,17 +113,39 @@ let boilMemory = loadBoilMemory();
 /** Posterior over the model's uncertain constants, learned from how the user's
  *  own eggs actually turn out. Before any feedback this is the prior mean,
  *  i.e. the literature values. */
-const calib: Calibration = loadCalibration();
+let calib: Calibration = loadCalibration();
 let machine: Machine = idleMachine(settings.cooling);
 let solution: Solution | null = null;
 /** Set when the requested doneness had to be clamped; empty otherwise. */
 let refusal = '';
+/** What the running cook is, frozen at the moment it started.
+ *
+ *  The calibration must learn from the egg that was actually cooked, not from
+ *  whatever the controls happen to say when the user gets round to answering
+ *  "How was it?" - which may be after a reload, and is certainly after the
+ *  measured time to boil has replaced the guess. Everything the posterior
+ *  update needs is captured here and nowhere else. */
+let ticket: Ticket | null = null;
 let ticker: Ticker | null = null;
 let solveHandle = 0;
+let saveHandle = 0;
 let lastRevise_ms = 0;
 let lastAnnounced = '';
+/** True for the first render after a reload picked a cook back up, so the app
+ *  says so once rather than every second. */
+let restored = false;
 /** One report per egg: the feedback buttons go away once one is pressed. */
 let feedbackGiven = false;
+
+/** The cook that was started: the only thing the calibration is allowed to
+ *  learn from. */
+interface Ticket {
+  egg: Egg;
+  setup: CookSetup;
+  /** log10 of the yolk dose this cook was RUN at. Frozen with everything else,
+   *  so a slider left somewhere else afterwards cannot rewrite history. */
+  logNominalTarget: number;
+}
 
 /* --------------------------------------------------------------- physics */
 
@@ -156,23 +183,10 @@ function eggStart_C(): number {
   return START_TEMP_PRESETS_C[settings.startTempMode];
 }
 
-/** An egg at or above this has been sitting out, and so says what the room
- *  is. Below it the egg came from somewhere colder than any kitchen and says
- *  nothing about the room at all. */
-const ROOM_FROM_EGG_MIN_C = 15;
-
-/** The room, as far as the model is concerned.
- *
- *  There is no separate input for it, and there should not be: on the app's
- *  default path - eggs into boiling water, straight into an ice bath - the room
- *  is worth nothing at all, and on a cold start it is worth about two seconds
- *  per degree. It earns its keep in exactly two places, resting on the counter
- *  and standing with the heat off, and in both of those the user has usually
- *  already told us: an egg that has been sitting out IS at room temperature.
- *  A fridge egg says nothing about the room, so that case keeps the default. */
+/** The room, as far as the model is concerned. The rule - an egg that has been
+ *  sitting out IS the room, a fridge egg says nothing - is core policy. */
 function ambient_C(): number {
-  const egg = eggStart_C();
-  return egg >= ROOM_FROM_EGG_MIN_C ? egg : T_ROOM_C;
+  return ambientFor(eggStart_C());
 }
 
 function boilingPoint_C(): number {
@@ -225,143 +239,96 @@ function rampSeconds(): number {
   return settings.startMode === 'cold' ? timeToBoil_s() : 0;
 }
 
-/** Peak yolk temperature the slider is asking for, interpolated between the
- *  anchors. The dose scale is logarithmic precisely so that this is linear in
- *  temperature, so a straight interpolation is right - and it costs nothing,
- *  which lets the reading track the thumb while the real solve catches up. */
-function targetPeakYolk_C(level: number): number {
-  for (let i = 1; i < DONENESS_ANCHORS.length; i += 1) {
-    const hi = DONENESS_ANCHORS[i];
-    const lo = DONENESS_ANCHORS[i - 1];
-    if (level <= hi.level) {
-      const span = hi.level - lo.level;
-      const f = span <= 0 ? 0 : (level - lo.level) / span;
-      return lo.approxPeakYolk_C + f * (hi.approxPeakYolk_C - lo.approxPeakYolk_C);
-    }
+/* ------------------------------------------------------------------ copy */
+
+/** The refusal, in words.
+ *
+ * The DECISION - which refusal applies, where the slider must move to, and
+ * whether the gap is big enough to be worth a sentence at all - is
+ * `verdictFor` in the core, so that this app and the iOS app cannot refuse
+ * differently. What is left here is the sentence, which is this app's own: the
+ * point is to teach the constraint, not merely to block the control.
+ */
+function refusalText(v: Verdict): string {
+  if (!v.worthSaying) return '';
+  const wanted = v.wanted.label.toLowerCase();
+  const limit = v.limit.label.toLowerCase();
+
+  if (v.kind === 'whiteNeverSets') {
+    return 'With the heat off this pan never sets the white: the water falls below '
+      + 'what the white needs while the egg is still in it. Nothing on the slider is '
+      + 'reachable. More water, a slower boil, or keep it boiling.';
   }
-  return DONENESS_ANCHORS[DONENESS_ANCHORS.length - 1].approxPeakYolk_C;
-}
 
-function anchorNear(level: number): DonenessAnchor {
-  let best = DONENESS_ANCHORS[0];
-  let bestGap = Number.POSITIVE_INFINITY;
-  for (const anchor of DONENESS_ANCHORS) {
-    const gap = Math.abs(anchor.level - level);
-    if (gap < bestGap) {
-      bestGap = gap;
-      best = anchor;
-    }
+  if (v.kind === 'harderThanPanReaches') {
+    return 'With the heat off, the water runs out before the yolk gets there — '
+      + `${wanted} isn't reachable in ${formatLitres(settings.waterLitres)} L. `
+      + `Hardest here is ${limit}. More water, or keep it boiling.`;
   }
-  return best;
-}
 
-/** Why the requested doneness was refused, and what to do about it. The point
- *  is to teach the constraint, not merely to block the control. */
-function refusalText(wanted: number, softest: number, cooling: Cooling): string {
-  const wantedLabel = anchorNear(wanted).label.toLowerCase();
-  const softestLabel = anchorNear(softest).label.toLowerCase();
-  // A sliver of unreachable track at the runny end is normal and not worth a
-  // sentence; only explain a refusal the user can actually feel.
-  if (wantedLabel === softestLabel) return '';
-  if (cooling === 'counter') {
-    return `Resting on the counter keeps cooking the yolk — ${wantedLabel} isn't reachable. `
-      + `Softest here is ${softestLabel}. Use an ice bath.`;
+  if (settings.cooling === 'counter') {
+    return `Resting on the counter keeps cooking the yolk — ${wanted} isn't reachable. `
+      + `Softest here is ${limit}. Use an ice bath.`;
   }
-  if (cooling === 'tap') {
-    return `A cold tap doesn't pull the heat out fast enough — ${wantedLabel} isn't reachable. `
-      + `Softest here is ${softestLabel}. Ice water gets you further.`;
+  if (settings.cooling === 'tap') {
+    return `A cold tap doesn't pull the heat out fast enough — ${wanted} isn't reachable. `
+      + `Softest here is ${limit}. Ice water gets you further.`;
   }
-  return `Any shorter and the white is still raw — ${wantedLabel} isn't reachable for this egg. `
-    + `Softest here is ${softestLabel}.`;
+  return `Any shorter and the white is still raw — ${wanted} isn't reachable for this egg. `
+    + `Softest here is ${limit}.`;
 }
 
-/** The standing method's worst failure: the water falls past the temperature
- *  the white needs before the white has had it, so there is no cook here at
- *  all - not a soft one, not a hard one. */
-function whiteNeverSetsText(): string {
-  return `With the heat off this pan never sets the white: the water falls below `
-    + `what the white needs while the egg is still in it. Nothing on the slider is `
-    + `reachable. More water, a slower boil, or keep it boiling.`;
+/** Litres as someone would say them: "2", not "1.7500000000000002". */
+function formatLitres(litres: number): string {
+  return Number.isInteger(litres) ? String(litres) : litres.toFixed(1);
 }
 
-/** The standing method's own failure: the pan cools off before the yolk gets
- *  where it was asked to go, and no amount of waiting fixes it. */
-function standingRefusalText(wanted: number, hardest: number): string {
-  const wantedLabel = anchorNear(wanted).label.toLowerCase();
-  const hardestLabel = anchorNear(hardest).label.toLowerCase();
-  // Same rule as the soft end: a sliver off the top is not worth a sentence.
-  if (wantedLabel === hardestLabel) return '';
-  return `With the heat off, the water runs out before the yolk gets there — `
-    + `${wantedLabel} isn't reachable in ${settings.waterLitres} L. `
-    + `Hardest here is ${hardestLabel}. More water, or keep it boiling.`;
+/* --------------------------------------------------------------- solving */
+
+/** A solve and what it implies, with nothing done about it yet.
+ *
+ * Splitting this out is the point: `solve()` used to solve, write a
+ * module-level refusal string, move the slider, write the DOM and save to
+ * localStorage, all from one function that the ticker and the boil tap both
+ * called - so a slow hob could silently move the user's doneness mid-cook.
+ * Deciding and acting are now two steps, and only the idle path takes the
+ * second one. */
+interface Answer {
+  solution: Solution;
+  verdict: Verdict;
 }
 
-/** Positions per unit of slider travel. The input element's step is set from
- *  this, so a snapped level always lands where the thumb can sit. */
-const SLIDER_STEPS = 100;
-
-/** Round a level onto the slider's grid, away from the unreachable side. The
- *  nudge keeps a level already on the grid from being pushed a whole step by
- *  floating-point noise. */
-function snapUp(level: number): number {
-  return clampNumber(Math.ceil(level * SLIDER_STEPS - 1e-9) / SLIDER_STEPS, LIMITS.doneness, 1);
-}
-
-function snapDown(level: number): number {
-  return clampNumber(Math.floor(level * SLIDER_STEPS + 1e-9) / SLIDER_STEPS, LIMITS.doneness, 0);
-}
-
-/** Solve for the current inputs, clamping the slider to what is physically
- *  achievable. `reachable: false` means even the shortest cook that sets the
- *  white already overshoots the requested yolk. Sets `refusal` as a side
- *  effect, and may move the slider. */
-function solve(timeToBoil_s: number): Solution {
+/** Solve for the given inputs. Pure apart from reading `settings`: it moves
+ *  nothing and writes nothing. */
+function answerFor(timeToBoil_s: number, level: number): Answer {
   const egg = currentEgg();
   const setup = buildSetup(egg, timeToBoil_s);
   const params = calibrationParams(calib);
-  let result = solveCookTime(egg, setup, params, donenessFromSlider(settings.doneness));
+  const result = solveCookTime(egg, setup, params, donenessFromSlider(level));
+  const verdict = verdictFor(result, level);
 
-  if (result.reachable) {
-    refusal = '';
-    return result;
+  // Re-solve at the position the user is actually being offered, so the
+  // numbers on screen are the numbers for that cook rather than for one that
+  // was refused. Only worth it when the slider is going to move.
+  if (verdict.snapTo !== null) {
+    const retry = solveCookTime(egg, setup, params, donenessFromSlider(verdict.snapTo));
+    if (retry.reachable) return { solution: retry, verdict: verdict };
   }
+  return { solution: result, verdict: verdict };
+}
 
-  // Two ways to be unreachable, and they snap the slider in opposite
-  // directions: too soft for the white (snap up), or harder than a cooling pan
-  // can manage (snap down).
-  if (!result.whiteSets) {
-    // Nothing to snap to: the slider has no reachable position at all. The
-    // numbers shown are the furthest this pan goes, which is the only honest
-    // thing left to put on screen.
-    refusal = whiteNeverSetsText();
-    return result;
+/** Take the answer up: show the refusal, and move the slider if the answer
+ *  says it must. Only ever called while idle - once the egg is in the water
+ *  the controls are gone and there is nothing to snap. */
+function applyAnswer(answer: Answer): Solution {
+  refusal = refusalText(answer.verdict);
+  const snapTo = answer.verdict.snapTo;
+  if (snapTo !== null && snapTo !== settings.doneness) {
+    settings.doneness = snapTo;
+    dom.doneness.value = String(snapTo);
+    saveNow();
   }
-
-  if (settings.doneness > result.hardestLevel) {
-    // No re-solve: the solver already answered with the furthest this pan goes,
-    // so the numbers on screen are the numbers for the only cook on offer.
-    refusal = standingRefusalText(settings.doneness, result.hardestLevel);
-    const capped = snapDown(result.hardestLevel);
-    if (capped < settings.doneness) {
-      settings.doneness = capped;
-      dom.doneness.value = String(capped);
-      saveSettings(settings);
-    }
-    return result;
-  }
-
-  refusal = refusalText(settings.doneness, result.softestLevel, settings.cooling);
-  const snapped = snapUp(result.softestLevel);
-  if (snapped > settings.doneness) {
-    settings.doneness = snapped;
-    dom.doneness.value = String(snapped);
-    // Re-solve at the snapped position so the numbers on screen are the
-    // numbers for the cook the user is now being offered.
-    const retry = solveCookTime(egg, setup, params, donenessFromSlider(snapped));
-    if (retry.reachable) result = retry;
-    saveSettings(settings);
-  }
-  return result;
+  return answer.solution;
 }
 
 /* --------------------------------------------------------------- display */
@@ -381,15 +348,17 @@ function spokenClock(seconds: number): string {
   return `${m} minute${m === 1 ? '' : 's'} ${s} seconds`;
 }
 
-/** One line on what the model expects of this cook. */
+/** The texture note. Which band a temperature falls in is core policy; what
+ *  the band is called is this app's copy. */
 function textureNote(peakYolk_C: number, peakWhite_C: number): string {
-  const white = peakWhite_C < 71 ? 'white just set'
-    : peakWhite_C < 82 ? 'white set'
+  const t = textureFor(peakYolk_C, peakWhite_C);
+  const white = t.white === 'justSet' ? 'white just set'
+    : t.white === 'set' ? 'white set'
       : 'white firm';
-  const yolk = peakYolk_C < 58 ? 'yolk liquid'
-    : peakYolk_C < 63 ? 'yolk soft, barely thickened'
-      : peakYolk_C < 68 ? 'yolk jammy'
-        : peakYolk_C < 73 ? 'yolk fudgy'
+  const yolk = t.yolk === 'liquid' ? 'yolk liquid'
+    : t.yolk === 'soft' ? 'yolk soft, barely thickened'
+      : t.yolk === 'jammy' ? 'yolk jammy'
+        : t.yolk === 'fudgy' ? 'yolk fudgy'
           : 'yolk fully set';
   return `${white}, ${yolk}`;
 }
@@ -437,12 +406,28 @@ function onToggleMute(): void {
 function setPrimary(label: string, hint: string, visible: boolean): void {
   dom.primary.textContent = label;
   dom.primary.hidden = !visible;
+  // Enabled unless the caller says otherwise, so a disabled Start cannot leak
+  // into the next phase's button.
+  dom.primary.disabled = false;
   dom.primaryHint.textContent = hint;
 }
 
 function render(now_ms: number): void {
+  // Sous-vide is answered honestly and separately: no cook to run, no clock to
+  // start, and a start time that has already been and gone. It goes FIRST,
+  // before any of the pan readout is computed or painted - it used to run
+  // after a full hot-start solve and after the stats row had already been
+  // written, so it both paid for an answer it discarded and left half of that
+  // answer on screen beside its own.
+  if (isSousVide() && machine.phase === 'IDLE') {
+    renderSousVide(now_ms);
+    return;
+  }
+
   const sol = solution;
   if (sol === null) return;
+
+  dom.statYolkLabel.textContent = 'peak yolk';
 
   dom.body.dataset['phase'] = machine.phase;
   dom.body.dataset['start'] = settings.startMode;
@@ -460,8 +445,21 @@ function render(now_ms: number): void {
   dom.note.textContent = sol.whiteSets
     ? textureNote(sol.result.peakYolk_C, sol.result.peakWhite_C)
     : 'white stays runny';
-  dom.warn.textContent = refusal;
-  dom.warn.hidden = refusal === '';
+  // The warning line carries one of two things. A refusal is advice about the
+  // slider, so it is idle-only: popping "jammy isn't reachable" onto the screen
+  // while the egg is already in the water is advice about a control the user
+  // cannot reach. A restored cook is the opposite - it only exists mid-cook.
+  let warning = '';
+  // Only while the cook is still in flight. At DONE the egg is out and "keep
+  // this tab open" is advice about a deadline that has already passed.
+  if (restored && machine.phase !== 'IDLE' && machine.phase !== 'DONE') {
+    warning = 'Picked this cook back up after a reload. The deadlines are right, '
+      + 'but the alarm went with the old page — keep this tab open, or Cancel and start again.';
+  } else if (machine.phase === 'IDLE' && refusal !== '') {
+    warning = refusal;
+  }
+  dom.warn.textContent = warning;
+  dom.warn.hidden = warning === '';
   dom.donenessValue.textContent = donenessValueText(sol.result.peakYolk_C);
   renderDonenessScale(sol);
 
@@ -470,53 +468,33 @@ function render(now_ms: number): void {
   let subline = '';
   let spoken = '';
 
-  // Sous-vide is answered honestly and separately: no cook to run, no clock to
-  // start, and a start time that has already been and gone.
-  if (isSousVide() && machine.phase === 'IDLE') {
-    const egg = currentEgg();
-    const doneness = donenessFromSlider(settings.doneness);
-    const est = sousVideEstimate(
-      egg.radius_m, calibrationParams(calib).alpha_m2s, SOUS_VIDE_BATH_C,
-      doneness.yolkDose_min, doneness.whiteDose_min,
-    );
-    const copy = sousVideCopy(est, now_ms);
-
-    dom.phaseLabel.textContent = 'Start time';
-    dom.digits.textContent = copy.headline;
-    dom.subline.textContent = copy.subline;
-    dom.statYolk.textContent = `${est.bath_C.toFixed(0)}°C`;
-    dom.note.textContent = copy.note;
-    dom.warn.textContent = copy.warn;
-    dom.warn.hidden = false;
-    setPrimary('', copy.hint, false);
-    dom.secondary.hidden = true;
-    dom.feedback.hidden = true;
-
-    const key = `SOUS|${copy.headline}`;
-    if (key !== lastAnnounced) {
-      lastAnnounced = key;
-      dom.announce.textContent = `Sous-vide. You should have started ${copy.headline.toLowerCase()},`
-        + ` ${copy.subline}`;
-    }
-    return;
-  }
-
   if (machine.phase === 'IDLE') {
     label = 'Total time';
     digits = formatClock(cookTime_s);
     subline = settings.startMode === 'cold'
       ? `${hasBoilMemory(boilMemory) ? 'assumes' : 'guesses'} ${formatClock(boil_s)} to a rolling boil`
-      : 'from eggs in to eggs out';
+      : standing
+        // With the heat off, the time to boil is not on the clock but it IS
+        // the pan's loss time constant - the single most load-bearing number
+        // in a standing cook, and on a hot start it is never measured. Say so.
+        ? `${hasBoilMemory(boilMemory) ? 'assumes' : 'guesses'} this pan takes `
+          + `${formatClock(timeToBoil_s())} to boil, which is how fast it cools`
+        : 'from eggs in to eggs out';
     spoken = `Total ${spokenClock(cookTime_s)}`;
     setPrimary(
       settings.startMode === 'cold' ? 'Start heating' : 'Eggs in',
-      settings.startMode === 'cold'
-        ? 'eggs in the pan, lid on, then tap'
-        : standing
-          ? 'eggs into boiling water, then lid on and heat off'
-          : `water at a full rolling boil, and kept there for the whole ${formatClock(cookTime_s)}`,
+      sol.whiteSets
+        ? settings.startMode === 'cold'
+          ? 'eggs in the pan, lid on, then tap'
+          : standing
+            ? 'eggs into boiling water, then lid on and heat off'
+            : `water at a full rolling boil, and kept there for the whole ${formatClock(cookTime_s)}`
+        : 'nothing to start: this pan never sets the white',
       true,
     );
+    // There is no cook on offer at all, so there is nothing to start. iOS has
+    // always disabled this; the web offered a button that led nowhere.
+    dom.primary.disabled = !sol.whiteSets;
     dom.secondary.hidden = true;
   } else if (machine.phase === 'HEATING') {
     label = 'Heating';
@@ -567,7 +545,10 @@ function render(now_ms: number): void {
       `cooling starts on its own in ${Math.max(0, Math.ceil(PULL_GRACE_SECONDS - late))} s`,
       true,
     );
-    dom.secondary.hidden = true;
+    // Reachable here too: a reload can land in this phase, and a cook you have
+    // picked back up must always be one you can put down.
+    dom.secondary.hidden = false;
+    dom.secondary.textContent = 'Cancel';
   } else if (machine.phase === 'COOLING') {
     label = settings.cooling === 'ice' ? 'Cooling — leave in the ice' : 'Cooling — keep the water running';
     digits = formatClock(secondsToCool(machine, now_ms));
@@ -608,11 +589,89 @@ function render(now_ms: number): void {
   }
 }
 
+/** The sous-vide readout: hold times from the isothermal limit, and the plain
+ *  statement that you should have started yesterday. */
+function renderSousVide(now_ms: number): void {
+  dom.body.dataset['phase'] = machine.phase;
+  dom.body.dataset['start'] = settings.startMode;
+
+  const egg = currentEgg();
+  const doneness = donenessFromSlider(settings.doneness);
+  const est = sousVideEstimate(
+    egg.radius_m, calibrationParams(calib).alpha_m2s, SOUS_VIDE_BATH_C,
+    doneness.yolkDose_min, doneness.whiteDose_min,
+  );
+  const copy = sousVideCopy(est, now_ms);
+
+  dom.phaseLabel.textContent = 'Start time';
+  dom.digits.textContent = copy.headline;
+  dom.subline.textContent = copy.subline;
+  // The bath temperature is not a peak yolk temperature, and printing it under
+  // that label said something false about the egg. In a bath held at 63 °C the
+  // yolk ends up at 63 °C, which is the whole point, but the label has to say
+  // which number it is.
+  dom.statYolkLabel.textContent = 'bath';
+  dom.statYolk.textContent = `${est.bath_C.toFixed(0)}°C`;
+  dom.statBoil.textContent = `${boilingPoint_C().toFixed(1)}°C`;
+  // The slider reading is a pan number. There is no pan.
+  dom.donenessValue.textContent = `${anchorNear(settings.doneness).label} · in a ${est.bath_C.toFixed(0)}°C bath`;
+  dom.note.textContent = copy.note;
+  dom.warn.textContent = copy.warn;
+  dom.warn.hidden = false;
+  setPrimary('', copy.hint, false);
+  dom.secondary.hidden = true;
+  dom.feedback.hidden = true;
+
+  const key = `SOUS|${copy.headline}`;
+  if (key !== lastAnnounced) {
+    lastAnnounced = key;
+    dom.announce.textContent = `Sous-vide. You should have started ${copy.headline.toLowerCase()},`
+      + ` ${copy.subline}`;
+  }
+}
+
+/* ------------------------------------------------------------ the record */
+
+/** Assign the machine and write the cook down in one step, so there is no path
+ *  that advances a cook without persisting it. */
+function setMachine(next: Machine): void {
+  machine = next;
+  persistCook();
+}
+
+function persistCook(): void {
+  if (machine.phase === 'IDLE') {
+    clearCook();
+    return;
+  }
+  saveCook(machine, ticket, feedbackGiven);
+}
+
 /* -------------------------------------------------------------- recompute */
 
+/** Solve for what is on screen and take the answer up. Idle only in practice:
+ *  every mid-cook path goes through `resolveDuring` instead, which keeps the
+ *  target the cook was started at. */
 function recompute(): void {
-  solution = solve(timeToBoil_s());
+  // No pan, no solve. The sous-vide answer comes from src/core/sousvide.ts and
+  // needs none of this.
+  if (isSousVide() && machine.phase === 'IDLE') {
+    refusal = '';
+    renderSousVide(Date.now());
+    return;
+  }
+  solution = applyAnswer(answerFor(timeToBoil_s(), settings.doneness));
   render(Date.now());
+}
+
+/** Re-solve a cook already under way, for a corrected time to boil.
+ *
+ *  The doneness is whatever the cook was STARTED at, and it does not move: the
+ *  egg is in the water, the controls are gone, and a slider that snapped now
+ *  would describe a cook nobody is having. The refusal is left alone too - it
+ *  is advice about a control the user cannot reach. */
+function resolveDuring(timeToBoil_s: number): Solution {
+  return answerFor(timeToBoil_s, machine.targetLevel).solution;
 }
 
 /** Coalesce solves: a solve is tens of milliseconds, which is too long to run
@@ -625,16 +684,68 @@ function scheduleSolve(): void {
   }, 90);
 }
 
+/** Coalesce writes for the same reason. A drag fires `input` per pixel, and
+ *  every one of those was a JSON.stringify and a localStorage write for a
+ *  settings object nobody had finished changing. */
+function scheduleSave(): void {
+  if (saveHandle !== 0) return;
+  saveHandle = window.setTimeout(() => {
+    saveHandle = 0;
+    saveSettings(settings);
+  }, 250);
+}
+
+/** Write now, for the paths that must not lose the setting: starting a cook,
+ *  and the snap that moves the slider out from under the user. */
+function saveNow(): void {
+  if (saveHandle !== 0) {
+    window.clearTimeout(saveHandle);
+    saveHandle = 0;
+  }
+  saveSettings(settings);
+}
+
 /* ------------------------------------------------------------ calibration */
 
 function renderCalibNote(): void {
   if (calib.eggsLogged === 0) {
     dom.calibNote.textContent = 'Telling it tunes the model to your eggs and your pan.';
+  } else {
+    dom.calibNote.textContent =
+      `tuned on ${calib.eggsLogged} egg${calib.eggsLogged === 1 ? '' : 's'}`
+      + ` · ±${calibrationSpread(calib).toFixed(0)}%`;
+  }
+  renderLearned();
+}
+
+/** What this kitchen has taught the app, and the way to take it back. */
+function renderLearned(): void {
+  const eggs = calib.eggsLogged;
+  const pan = hasBoilMemory(boilMemory);
+  if (eggs === 0 && !pan) {
+    dom.learnedNote.textContent = 'Running on the literature values. '
+      + 'It learns your pan when you time a boil, and your taste when you say how an egg was.';
+    dom.forget.hidden = true;
     return;
   }
-  dom.calibNote.textContent =
-    `tuned on ${calib.eggsLogged} egg${calib.eggsLogged === 1 ? '' : 's'}`
-    + ` · ±${calibrationSpread(calib).toFixed(0)}%`;
+  const parts: string[] = [];
+  if (eggs > 0) {
+    parts.push(`tuned on ${eggs} egg${eggs === 1 ? '' : 's'} · ±${calibrationSpread(calib).toFixed(0)}%`);
+  }
+  if (pan) parts.push(`your pan takes ${formatClock(estimateTimeToBoil(boilMemory, settings.waterLitres))} to boil`);
+  dom.learnedNote.textContent = parts.join(' · ');
+  dom.forget.hidden = false;
+}
+
+/** Take it all back. A run of wrong answers to "How was it?" was otherwise
+ *  undone only by clearing the site's storage - README 11.5 has listed that as
+ *  a known gap since the iOS app got its own version of this button. */
+function onForget(): void {
+  calib = clearCalibration();
+  boilMemory = {};
+  clearBoilMemory();
+  renderCalibNote();
+  recompute();
 }
 
 /** Fold one outcome into the posterior. Rebuilding the dose surface takes a
@@ -645,18 +756,22 @@ function renderCalibNote(): void {
 function onFeedback(value: Feedback): void {
   if (feedbackGiven) return;
   feedbackGiven = true;
+  // Written down before the fold, not after: a reload between the two would
+  // otherwise re-ask, and a second answer folds the same egg in twice.
+  persistCook();
   const buttons = dom.feedback.querySelectorAll<HTMLButtonElement>('button.fb');
   for (let i = 0; i < buttons.length; i++) buttons[i].disabled = true;
   dom.calibNote.textContent = 'learning…';
 
-  const egg = currentEgg();
-  const setup = buildSetup(egg, timeToBoil_s());
-  const logTarget = Math.log10(donenessFromSlider(settings.doneness).yolkDose_min);
+  const cooked = ticket;
+  if (cooked === null) return;
 
   // Yield first so the disabled state and the "learning" note actually paint
   // before the synchronous grid build blocks the main thread.
   window.setTimeout(() => {
-    recordOutcome(calib, egg, setup, machine.cookTime_s, logTarget, value);
+    recordOutcome(
+      calib, cooked.egg, cooked.setup, machine.cookTime_s, cooked.logNominalTarget, value,
+    );
     saveCalibration(calib);
     for (let i = 0; i < buttons.length; i++) buttons[i].disabled = false;
     dom.feedback.hidden = true;
@@ -697,7 +812,7 @@ function readInputs(source: EventTarget | null): void {
 
   dom.customTempField.hidden = settings.startTempMode !== 'custom';
   syncMeasurements(source);
-  saveSettings(settings);
+  scheduleSave();
 }
 
 function onInput(event: Event): void {
@@ -729,13 +844,14 @@ function onTick(): void {
     // count down to an alarm for an egg that has not begun cooking.
     lastRevise_ms = now;
     const assumed = secondsHeating(machine, now) + REVISE_EXTRA_S;
-    solution = solve(assumed);
-    machine = reviseProvisional(machine, solution.result.cookTime_s, assumed);
+    solution = resolveDuring(assumed);
+    if (ticket !== null) ticket = { ...ticket, setup: buildSetup(ticket.egg, assumed) };
+    setMachine(reviseProvisional(machine, solution.result.cookTime_s, assumed));
   }
 
   const step = advance(machine, now);
   if (step.machine !== machine) {
-    machine = step.machine;
+    setMachine(step.machine);
     if (step.event === 'pull') ringAlarm(true);
     if (step.event === 'done') finishCook();
   }
@@ -765,7 +881,9 @@ function reset(): void {
   stopTicking();
   releaseScreen();
   feedbackGiven = false;
+  ticket = null;
   machine = idleMachine(settings.cooling);
+  clearCook();
   recompute();
 }
 
@@ -779,11 +897,20 @@ function onPrimary(): void {
     primeAudio();
     keepScreenAwake();
     const boil = timeToBoil_s();
-    solution = solve(boil);
+    // Take the answer up one last time while the controls are still live: the
+    // level this returns is the one the cook is run at, and it does not move
+    // again until the cook is over.
+    solution = applyAnswer(answerFor(boil, settings.doneness));
+    const target = settings.doneness;
     const cook = solution.result.cookTime_s;
-    machine = settings.startMode === 'cold'
-      ? startCold(now, cook, boil, settings.cooling)
-      : startHot(now, cook, settings.cooling);
+    ticket = {
+      egg: currentEgg(),
+      setup: buildSetup(currentEgg(), boil),
+      logNominalTarget: Math.log10(donenessFromSlider(target).yolkDose_min),
+    };
+    setMachine(settings.startMode === 'cold'
+      ? startCold(now, cook, boil, settings.cooling, target)
+      : startHot(now, cook, settings.cooling, target));
     lastRevise_ms = now;
     startTicking();
     blip();
@@ -794,16 +921,18 @@ function onPrimary(): void {
   if (machine.phase === 'HEATING') {
     const measured = secondsHeating(machine, now);
     boilMemory = rememberTimeToBoil(boilMemory, settings.waterLitres, measured);
-    solution = solve(measured);
-    machine = recordBoil(machine, now, solution.result.cookTime_s);
+    solution = resolveDuring(measured);
+    if (ticket !== null) ticket = { ...ticket, setup: buildSetup(ticket.egg, measured) };
+    setMachine(recordBoil(machine, now, solution.result.cookTime_s));
     blip();
     onTick();
     return;
   }
 
   if (machine.phase === 'PULL') {
-    machine = beginCooling(machine, now);
-    if (machine.phase === 'DONE') finishCook();
+    const next = beginCooling(machine, now);
+    setMachine(next);
+    if (next.phase === 'DONE') finishCook();
     render(now);
     return;
   }
@@ -889,6 +1018,7 @@ export function boot(): void {
   dom.primary.addEventListener('click', onPrimary);
   dom.secondary.addEventListener('click', reset);
   dom.mute.addEventListener('click', onToggleMute);
+  dom.forget.addEventListener('click', onForget);
   setMuted(settings.muted);
   renderMute();
 
@@ -900,7 +1030,61 @@ export function boot(): void {
     });
   }
 
-  // A reload mid-cook loses the deadlines; better to say so by starting clean
-  // than to resume a timer that may be minutes wrong.
+  renderCalibNote();
+  restoreCook();
   recompute();
+}
+
+/**
+ * Pick a cook back up after a reload.
+ *
+ * The deadlines are absolute, so the countdown resumes at the right number
+ * rather than restarting - which is the whole reason the machine was built this
+ * way. What does NOT come back is the alarm: it lives in this tab's audio
+ * context and died with the old page, so a restored cook says so rather than
+ * letting someone walk away trusting a noise that will not happen.
+ */
+function restoreCook(): void {
+  const stored = loadCook();
+  if (stored === null) return;
+
+  const now = Date.now();
+  const back = restoreMachine(stored.machine, now);
+  if (back === null) {
+    clearCook();
+    return;
+  }
+
+  machine = back;
+  ticket = restoreTicket(stored.ticket);
+  feedbackGiven = stored.feedbackGiven;
+  restored = true;
+
+  // Without a ticket there is nothing to learn from, so do not offer to learn.
+  if (ticket === null) feedbackGiven = true;
+
+  const step = advance(machine, now);
+  machine = step.machine;
+  persistCook();
+
+  if (machine.phase !== 'DONE') {
+    keepScreenAwake();
+    startTicking();
+  }
+}
+
+/** A stored ticket, or null if it cannot be trusted. Partial is not good
+ *  enough: this is what the posterior learns from. */
+function restoreTicket(raw: unknown): Ticket | null {
+  if (raw === null || typeof raw !== 'object') return null;
+  const r = raw as Record<string, unknown>;
+  const egg = r['egg'];
+  const setup = r['setup'];
+  const target = r['logNominalTarget'];
+  if (egg === null || typeof egg !== 'object') return null;
+  if (setup === null || typeof setup !== 'object') return null;
+  if (typeof target !== 'number' || !Number.isFinite(target)) return null;
+  if (!Number.isFinite((egg as Egg).radius_m) || !((egg as Egg).radius_m > 0)) return null;
+  if (!Number.isFinite((setup as CookSetup).boiling_C)) return null;
+  return { egg: egg as Egg, setup: setup as CookSetup, logNominalTarget: target };
 }

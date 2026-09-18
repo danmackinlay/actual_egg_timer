@@ -4,8 +4,10 @@
  *   IDLE -> HEATING -> COOKING -> PULL -> COOLING -> DONE
  *
  * Every state carries absolute epoch deadlines rather than durations, so the
- * whole thing is a pure function of `Date.now()` and survives the tab being
- * backgrounded, suspended, or reloaded.
+ * whole thing is a pure function of `Date.now()`. That is what lets a cook
+ * survive the tab being backgrounded, suspended or reloaded: `restoreMachine`
+ * at the bottom of this file reads one back, and the app writes it down on
+ * every transition.
  *
  * Cold start: t = 0 is the moment the egg goes into the cold pan, which is the
  * same t = 0 the physics core uses, so `cookEnd = startedAt + cookTime_s`
@@ -42,6 +44,15 @@ export interface Machine {
   coolEnd_ms: number;
   /** Cook time currently in force, s (from egg-in to egg-out). */
   cookTime_s: number;
+  /** The doneness this cook is being RUN at, decided once when it started.
+   *
+   *  Not the same thing as the slider, which the user can have left anywhere,
+   *  and not something a mid-cook re-solve may move. If a corrected time to
+   *  boil makes the requested doneness unreachable, the honest answer is that
+   *  the egg in the pan is still the egg that was started - the alternative is
+   *  timing a cook for one target while telling the calibration about another,
+   *  which is what the iOS app was doing. */
+  targetLevel: number;
   /** Time to a rolling boil currently assumed, s. Always 0 on a hot start,
    *  where no ramp is on the clock. */
   assumedBoil_s: number;
@@ -58,6 +69,7 @@ export function idleMachine(cooling: Cooling): Machine {
     pulledAt_ms: 0,
     coolEnd_ms: 0,
     cookTime_s: 0,
+    targetLevel: 0,
     assumedBoil_s: 0,
     provisional: false,
   };
@@ -67,6 +79,7 @@ export function idleMachine(cooling: Cooling): Machine {
  *  countdown shows a provisional total from the remembered time to boil. */
 export function startCold(
   now_ms: number, cookTime_s: number, assumedBoil_s: number, cooling: Cooling,
+  targetLevel: number,
 ): Machine {
   return {
     phase: 'HEATING',
@@ -76,13 +89,16 @@ export function startCold(
     pulledAt_ms: 0,
     coolEnd_ms: 0,
     cookTime_s: cookTime_s,
+    targetLevel: targetLevel,
     assumedBoil_s: assumedBoil_s,
     provisional: true,
   };
 }
 
 /** Hot start: water is already at a rolling boil, eggs go in now. */
-export function startHot(now_ms: number, cookTime_s: number, cooling: Cooling): Machine {
+export function startHot(
+  now_ms: number, cookTime_s: number, cooling: Cooling, targetLevel: number,
+): Machine {
   return {
     phase: 'COOKING',
     cooling: cooling,
@@ -91,6 +107,7 @@ export function startHot(now_ms: number, cookTime_s: number, cooling: Cooling): 
     pulledAt_ms: 0,
     coolEnd_ms: 0,
     cookTime_s: cookTime_s,
+    targetLevel: targetLevel,
     assumedBoil_s: 0,
     provisional: false,
   };
@@ -177,4 +194,59 @@ export function secondsHeating(m: Machine, now_ms: number): number {
  *  quotes, and the only part of a cold start that is comparable to one. */
 export function secondsAfterBoil(m: Machine): number {
   return m.cookTime_s - m.assumedBoil_s;
+}
+
+/** How long past the end of a cook it is still worth picking back up. An egg
+ *  an hour past its cooling step has been eaten or thrown out; restoring it
+ *  would be a timer for something that is no longer on the counter. Matches
+ *  the iOS app's bound. */
+export const RESTORE_WINDOW_MS = 60 * 60 * 1000;
+
+/** Read a stored machine back, or null if it is damaged, from another version,
+ *  or too old to mean anything.
+ *
+ *  A cook is its START, its DEADLINE and a phase, or it is nothing. Requiring
+ *  all of them makes a half-written record unrepresentable rather than merely
+ *  unlikely - the same guarantee the iOS app makes, and for the same reason: a
+ *  partial restore that reads as a running cook resurrects a timer the user
+ *  had already finished with. */
+export function restoreMachine(raw: unknown, now_ms: number): Machine | null {
+  if (raw === null || typeof raw !== 'object') return null;
+  const r = raw as Record<string, unknown>;
+
+  const phase = r['phase'];
+  const phases: Phase[] = ['IDLE', 'HEATING', 'COOKING', 'PULL', 'COOLING', 'DONE'];
+  if (typeof phase !== 'string' || !phases.includes(phase as Phase)) return null;
+  if (phase === 'IDLE') return null;
+
+  const coolings: Cooling[] = ['ice', 'tap', 'counter'];
+  const cooling = r['cooling'];
+  if (typeof cooling !== 'string' || !coolings.includes(cooling as Cooling)) return null;
+
+  const numbers: Record<string, number> = {};
+  for (const key of [
+    'startedAt_ms', 'cookEnd_ms', 'pulledAt_ms', 'coolEnd_ms',
+    'cookTime_s', 'targetLevel', 'assumedBoil_s',
+  ]) {
+    const value = r[key];
+    if (typeof value !== 'number' || !Number.isFinite(value)) return null;
+    numbers[key] = value;
+  }
+  if (!(numbers['startedAt_ms'] > 0) || !(numbers['cookEnd_ms'] > 0)) return null;
+
+  const ends = numbers['coolEnd_ms'] > 0 ? numbers['coolEnd_ms'] : numbers['cookEnd_ms'];
+  if (now_ms > ends + RESTORE_WINDOW_MS) return null;
+
+  return {
+    phase: phase as Phase,
+    cooling: cooling as Cooling,
+    startedAt_ms: numbers['startedAt_ms'],
+    cookEnd_ms: numbers['cookEnd_ms'],
+    pulledAt_ms: numbers['pulledAt_ms'],
+    coolEnd_ms: numbers['coolEnd_ms'],
+    cookTime_s: numbers['cookTime_s'],
+    targetLevel: numbers['targetLevel'],
+    assumedBoil_s: numbers['assumedBoil_s'],
+    provisional: r['provisional'] === true,
+  };
 }

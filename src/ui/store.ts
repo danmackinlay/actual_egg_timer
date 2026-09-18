@@ -1,26 +1,31 @@
 /**
- * Persistence, and the bounds on what can be typed.
+ * Persistence: localStorage in, localStorage out.
  *
  * Everything here must survive localStorage being absent, disabled, full, or
  * throwing (Safari private mode throws on setItem).
+ *
+ * The BOUNDS and the DEFAULTS used to live here too. They now live in
+ * `src/core/policy.ts`, because iOS had its own hand-copied set and the two
+ * drifted - different eggs in the pan, a different default egg, preset
+ * temperatures written out three times. This module still applies them; it no
+ * longer decides them.
  */
 
-import { T_ROOM_C } from '../core/constants.js';
-import { SIZE_CLASSES } from '../core/geometry.js';
 import { StartMode, Cooling, HeatAfterBoil } from '../core/protocol.js';
+import {
+  BoilMemory, DEFAULTS, LIMITS, Limit, clamp, isWithin, rememberBoil,
+} from '../core/policy.js';
+
+export {
+  BoilMemory, LIMITS, Limit, DEFAULT_TIME_TO_BOIL_S, START_TEMP_PRESETS_C,
+  estimateTimeToBoil, hasBoilMemory,
+} from '../core/policy.js';
 
 const SETTINGS_KEY = 'aet.settings.v1';
+const COOK_KEY = 'aet.cook.v1';
 const BOIL_KEY = 'aet.boil.v1';
 
 export type StartTempMode = 'fridge' | 'room' | 'custom';
-
-/** What the two named egg-temperature buttons mean, C. Their labels are
- *  rendered from this, so the button cannot say one thing and the model
- *  another. */
-export const START_TEMP_PRESETS_C: Record<'fridge' | 'room', number> = {
-  fridge: 4,
-  room: T_ROOM_C,
-};
 
 /** The Start control offers one more option than the solver understands.
  *  'sous' never reaches core: see buildSetup in app.ts. */
@@ -44,51 +49,23 @@ export interface Settings {
   muted: boolean;
 }
 
+/** The numbers a fresh install starts from come from core; the three settings
+ *  that are purely a web-UI state - which temperature button is selected, which
+ *  start mode, whether sound is off - are decided here. */
 export const DEFAULT_SETTINGS: Settings = {
-  sizeIndex: 2,
-  customMinor_mm: 44,
+  sizeIndex: DEFAULTS.sizeIndex,
+  customMinor_mm: DEFAULTS.customMinor_mm,
   startTempMode: 'fridge',
-  customStart_C: 12,
-  altitude_m: 0,
+  customStart_C: DEFAULTS.customStart_C,
+  altitude_m: DEFAULTS.altitude_m,
   startMode: 'cold',
   afterBoil: 'hold',
   cooling: 'ice',
-  waterLitres: 2,
-  eggCount: 2,
-  doneness: 0.41,
+  waterLitres: DEFAULTS.waterLitres,
+  eggCount: DEFAULTS.eggCount,
+  doneness: DEFAULTS.doneness,
   muted: false,
 };
-
-/** Inclusive bounds on a number. */
-export interface Limit {
-  lo: number;
-  hi: number;
-}
-
-/** Bounds on every number the user can type, in one place. They go onto the
- *  input elements, onto what is typed, and onto what comes back out of
- *  storage, so the three cannot drift apart. */
-export const LIMITS = {
-  mass_g: { lo: 25, hi: 120 },
-  girth_mm: { lo: 90, hi: 200 },
-  minor_mm: { lo: 30, hi: 60 },
-  eggTemp_C: { lo: -2, hi: 40 },
-  altitude_m: { lo: -400, hi: 5000 },
-  waterLitres: { lo: 0.25, hi: 12 },
-  eggCount: { lo: 1, hi: 24 },
-  doneness: { lo: 0, hi: 1 },
-  sizeIndex: { lo: -1, hi: SIZE_CLASSES.length - 1 },
-  /** A tap under half a minute is a double tap, not a boil; over two hours is
-   *  a tab left open. */
-  timeToBoil_s: { lo: 30, hi: 7200 },
-};
-
-/** Remembered time to a rolling boil, seconds, keyed by water volume in
- *  litres (one decimal place). Same pan, same hob, same answer next time. */
-export type BoilMemory = Record<string, number>;
-
-/** Fallback when nothing has ever been measured. */
-export const DEFAULT_TIME_TO_BOIL_S = 480;
 
 /* ------------------------------------------------------------- raw storage */
 
@@ -105,6 +82,14 @@ export function writeStorage(key: string, value: string): void {
     window.localStorage.setItem(key, value);
   } catch {
     /* private mode, quota, or no storage at all: carry on without memory. */
+  }
+}
+
+export function removeStorage(key: string): void {
+  try {
+    window.localStorage.removeItem(key);
+  } catch {
+    /* nothing stored means nothing to remove. */
   }
 }
 
@@ -131,13 +116,7 @@ export function clampNumber(value: unknown, limit: Limit, fallback: number): num
   if (typeof value === 'string' && value.trim() === '') return fallback;
   const n = typeof value === 'number' ? value : Number(value);
   if (!Number.isFinite(n)) return fallback;
-  if (n < limit.lo) return limit.lo;
-  if (n > limit.hi) return limit.hi;
-  return n;
-}
-
-function isWithin(value: number, limit: Limit): boolean {
-  return Number.isFinite(value) && value >= limit.lo && value <= limit.hi;
+  return clamp(n, limit);
 }
 
 function oneOf<T extends string>(value: unknown, allowed: readonly T[], fallback: T): T {
@@ -175,9 +154,9 @@ export function saveSettings(settings: Settings): void {
 
 /* ----------------------------------------------------------- boil memory */
 
-function volumeKey(litres: number): string {
-  return clampNumber(litres, LIMITS.waterLitres, DEFAULT_SETTINGS.waterLitres).toFixed(1);
-}
+/** How the numbers combine - the blend, the nearest-volume scaling, the key -
+ *  is core policy, re-exported above. What is left here is getting them in and
+ *  out of localStorage, and refusing to load a value that is not a boil. */
 
 export function loadBoilMemory(): BoilMemory {
   const raw = parseObject(readStorage(BOIL_KEY));
@@ -190,47 +169,66 @@ export function loadBoilMemory(): BoilMemory {
   return out;
 }
 
-/** Record a measured boil, blended with whatever was already known for this
- *  volume so one odd run (lid off, pan half empty) does not dominate. Returns
- *  the updated memory, which is also written through. */
+/** Record a measured boil and write it through. The blend itself - so that one
+ *  odd run (lid off, pan half empty) does not dominate - is `rememberBoil`. */
 export function rememberTimeToBoil(
   memory: BoilMemory, litres: number, seconds: number,
 ): BoilMemory {
-  if (!isWithin(seconds, LIMITS.timeToBoil_s)) return memory;
-  const key = volumeKey(litres);
-  const previous = memory[key];
-  const updated: BoilMemory = { ...memory };
-  updated[key] = previous === undefined ? seconds : 0.5 * previous + 0.5 * seconds;
+  const updated = rememberBoil(memory, clampLitres(litres), seconds);
+  if (updated === memory) return memory;
   writeStorage(BOIL_KEY, JSON.stringify(updated));
   return updated;
 }
 
-/** Best guess at the time to a rolling boil for this volume: the exact
- *  remembered value, else the nearest remembered volume scaled by litres
- *  (energy is roughly proportional to mass), else the default. */
-export function estimateTimeToBoil(memory: BoilMemory, litres: number): number {
-  const key = volumeKey(litres);
-  const exact = memory[key];
-  if (exact !== undefined) return exact;
-
-  let bestKey = '';
-  let bestDistance = Number.POSITIVE_INFINITY;
-  for (const candidate of Object.keys(memory)) {
-    const distance = Math.abs(Number(candidate) - litres);
-    if (Number.isFinite(distance) && distance < bestDistance) {
-      bestDistance = distance;
-      bestKey = candidate;
-    }
-  }
-  if (bestKey === '') return DEFAULT_TIME_TO_BOIL_S;
-
-  const nearLitres = Number(bestKey);
-  const nearSeconds = memory[bestKey];
-  if (nearSeconds === undefined || !(nearLitres > 0)) return DEFAULT_TIME_TO_BOIL_S;
-  return clampNumber(nearSeconds * (litres / nearLitres), LIMITS.timeToBoil_s, DEFAULT_TIME_TO_BOIL_S);
+/** Forget every measured pan. Paired with the calibration reset: someone
+ *  taking their learning back usually means the whole kitchen. */
+export function clearBoilMemory(): void {
+  removeStorage(BOIL_KEY);
 }
 
-/** True when the estimate is a real measurement rather than the default. */
-export function hasBoilMemory(memory: BoilMemory): boolean {
-  return Object.keys(memory).length > 0;
+function clampLitres(litres: number): number {
+  return clampNumber(litres, LIMITS.waterLitres, DEFAULT_SETTINGS.waterLitres);
+}
+
+/* ------------------------------------------------------------ the cook */
+
+/**
+ * A cook in progress, so a reload does not lose the egg.
+ *
+ * The machine is already built out of absolute epoch deadlines - that is what
+ * its own header means by surviving a reload - but nothing was writing it
+ * down, so boot() started clean every time. The comment there promised the app
+ * would "say so"; it said nothing at all.
+ *
+ * The alarm is a timer in this tab and dies with it, so unlike iOS there is no
+ * notification still counting down to contradict. What is restored is the
+ * state and the ticket; whether it is still worth restoring is
+ * `isStaleCook`'s business.
+ */
+export interface StoredCook {
+  machine: unknown;
+  ticket: unknown;
+  feedbackGiven: boolean;
+}
+
+export function saveCook(machine: unknown, ticket: unknown, feedbackGiven: boolean): void {
+  writeStorage(COOK_KEY, JSON.stringify({
+    machine: machine, ticket: ticket, feedbackGiven: feedbackGiven,
+  }));
+}
+
+export function loadCook(): StoredCook | null {
+  const raw = parseObject(readStorage(COOK_KEY));
+  if (raw === null) return null;
+  const machine = raw['machine'];
+  if (machine === null || typeof machine !== 'object') return null;
+  return {
+    machine: machine,
+    ticket: raw['ticket'] ?? null,
+    feedbackGiven: raw['feedbackGiven'] === true,
+  };
+}
+
+export function clearCook(): void {
+  removeStorage(COOK_KEY);
 }

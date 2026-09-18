@@ -427,3 +427,28 @@ button.fb {
 }
 button.fb[disabled] { opacity: 0.5; }
 #calibNote { text-align: center; margin: 8px 0 0; min-height: 1.1em; }
+
+/* ------------------------------------------------- what it has learned */
+
+/* The posterior and the pan, stated where someone can see them, with the way
+   to take them back. Hidden mid-cook along with the rest of the inputs: it is
+   about the next egg, not the one in the water. */
+#learned {
+  max-width: 32rem;
+  margin: 4px auto 0;
+  padding: 0 16px;
+  text-align: center;
+}
+
+#learned .hint { margin: 0 0 6px; }
+
+#learned button {
+  margin-top: 0;
+  min-height: 40px;
+  font-size: 0.875rem;
+  padding: 6px 14px;
+  width: auto;
+}
+
+body:not([data-phase="IDLE"]) #learned { display: none; }
+body[data-start="sous"] #learned { display: none; }
