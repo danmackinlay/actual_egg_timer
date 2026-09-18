@@ -42,6 +42,36 @@ enum Fixtures {
         return list
     }
 
+    /// A section of `policy.json`, as a list of cases.
+    static func policyCases(_ path: String) -> [[String: Any]] {
+        var node: Any = load("policy.json")
+        for key in path.split(separator: ".") {
+            guard let dictionary = node as? [String: Any], let next = dictionary[String(key)] else {
+                fatalError("fixtures/policy.json has no \(path)")
+            }
+            node = next
+        }
+        guard let list = node as? [[String: Any]] else {
+            fatalError("fixtures/policy.json \(path) is not a list")
+        }
+        return list
+    }
+
+    /// A dictionary node of `policy.json`.
+    static func policyObject(_ path: String) -> [String: Any] {
+        var node: Any = load("policy.json")
+        for key in path.split(separator: ".") {
+            guard let dictionary = node as? [String: Any], let next = dictionary[String(key)] else {
+                fatalError("fixtures/policy.json has no \(path)")
+            }
+            node = next
+        }
+        guard let dictionary = node as? [String: Any] else {
+            fatalError("fixtures/policy.json \(path) is not an object")
+        }
+        return dictionary
+    }
+
     static func constant(_ name: String) -> Double {
         guard let constants = load("core.json")["constants"] as? [String: Any],
               let value = constants[name] as? NSNumber else {
@@ -59,5 +89,30 @@ extension Dictionary where Key == String, Value == Any {
             fatalError("fixture case has no numeric \(key): \(self)")
         }
         return value.doubleValue
+    }
+
+    /// A string from a fixture case.
+    func str(_ key: String) -> String {
+        guard let value = self[key] as? String else {
+            fatalError("fixture case has no string \(key): \(self)")
+        }
+        return value
+    }
+
+    /// A bool from a fixture case.
+    func flag(_ key: String) -> Bool {
+        guard let value = self[key] as? Bool else {
+            fatalError("fixture case has no bool \(key): \(self)")
+        }
+        return value
+    }
+
+    /// A number that the generator may have written as null.
+    func optionalNum(_ key: String) -> Double? {
+        guard let value = self[key], !(value is NSNull) else { return nil }
+        guard let number = value as? NSNumber else {
+            fatalError("fixture case has a non-numeric \(key): \(self)")
+        }
+        return number.doubleValue
     }
 }

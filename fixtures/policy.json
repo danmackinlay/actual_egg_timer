@@ -1,0 +1,1656 @@
+{
+  "slider": {
+    "steps": 100,
+    "cases": [
+      {
+        "level": 0,
+        "snapUp": 0,
+        "snapDown": 0,
+        "anchor": "Runny",
+        "targetPeakYolk_C": 56
+      },
+      {
+        "level": 0.025,
+        "snapUp": 0.03,
+        "snapDown": 0.02,
+        "anchor": "Runny",
+        "targetPeakYolk_C": 56.56818181818182
+      },
+      {
+        "level": 0.05,
+        "snapUp": 0.05,
+        "snapDown": 0.05,
+        "anchor": "Runny",
+        "targetPeakYolk_C": 57.13636363636363
+      },
+      {
+        "level": 0.075,
+        "snapUp": 0.08,
+        "snapDown": 0.07,
+        "anchor": "Runny",
+        "targetPeakYolk_C": 57.70454545454545
+      },
+      {
+        "level": 0.1,
+        "snapUp": 0.1,
+        "snapDown": 0.1,
+        "anchor": "Runny",
+        "targetPeakYolk_C": 58.27272727272727
+      },
+      {
+        "level": 0.125,
+        "snapUp": 0.13,
+        "snapDown": 0.12,
+        "anchor": "Soft",
+        "targetPeakYolk_C": 58.84090909090909
+      },
+      {
+        "level": 0.15,
+        "snapUp": 0.15,
+        "snapDown": 0.15,
+        "anchor": "Soft",
+        "targetPeakYolk_C": 59.40909090909091
+      },
+      {
+        "level": 0.175,
+        "snapUp": 0.18,
+        "snapDown": 0.17,
+        "anchor": "Soft",
+        "targetPeakYolk_C": 59.97727272727273
+      },
+      {
+        "level": 0.2,
+        "snapUp": 0.2,
+        "snapDown": 0.2,
+        "anchor": "Soft",
+        "targetPeakYolk_C": 60.54545454545455
+      },
+      {
+        "level": 0.225,
+        "snapUp": 0.23,
+        "snapDown": 0.22,
+        "anchor": "Soft",
+        "targetPeakYolk_C": 61.10526315789474
+      },
+      {
+        "level": 0.25,
+        "snapUp": 0.25,
+        "snapDown": 0.25,
+        "anchor": "Soft",
+        "targetPeakYolk_C": 61.63157894736842
+      },
+      {
+        "level": 0.275,
+        "snapUp": 0.28,
+        "snapDown": 0.27,
+        "anchor": "Soft",
+        "targetPeakYolk_C": 62.1578947368421
+      },
+      {
+        "level": 0.3,
+        "snapUp": 0.3,
+        "snapDown": 0.3,
+        "anchor": "Soft",
+        "targetPeakYolk_C": 62.68421052631579
+      },
+      {
+        "level": 0.325,
+        "snapUp": 0.33,
+        "snapDown": 0.32,
+        "anchor": "Jammy",
+        "targetPeakYolk_C": 63.21052631578947
+      },
+      {
+        "level": 0.35,
+        "snapUp": 0.35,
+        "snapDown": 0.35,
+        "anchor": "Jammy",
+        "targetPeakYolk_C": 63.73684210526316
+      },
+      {
+        "level": 0.375,
+        "snapUp": 0.38,
+        "snapDown": 0.37,
+        "anchor": "Jammy",
+        "targetPeakYolk_C": 64.26315789473685
+      },
+      {
+        "level": 0.4,
+        "snapUp": 0.4,
+        "snapDown": 0.4,
+        "anchor": "Jammy",
+        "targetPeakYolk_C": 64.78947368421052
+      },
+      {
+        "level": 0.425,
+        "snapUp": 0.43,
+        "snapDown": 0.42,
+        "anchor": "Jammy",
+        "targetPeakYolk_C": 65.35714285714286
+      },
+      {
+        "level": 0.45,
+        "snapUp": 0.45,
+        "snapDown": 0.45,
+        "anchor": "Jammy",
+        "targetPeakYolk_C": 65.95238095238095
+      },
+      {
+        "level": 0.475,
+        "snapUp": 0.48,
+        "snapDown": 0.47,
+        "anchor": "Jammy",
+        "targetPeakYolk_C": 66.54761904761905
+      },
+      {
+        "level": 0.5,
+        "snapUp": 0.5,
+        "snapDown": 0.5,
+        "anchor": "Jammy",
+        "targetPeakYolk_C": 67.14285714285714
+      },
+      {
+        "level": 0.525,
+        "snapUp": 0.53,
+        "snapDown": 0.52,
+        "anchor": "Fudgy",
+        "targetPeakYolk_C": 67.73809523809524
+      },
+      {
+        "level": 0.55,
+        "snapUp": 0.55,
+        "snapDown": 0.55,
+        "anchor": "Fudgy",
+        "targetPeakYolk_C": 68.33333333333333
+      },
+      {
+        "level": 0.575,
+        "snapUp": 0.58,
+        "snapDown": 0.57,
+        "anchor": "Fudgy",
+        "targetPeakYolk_C": 68.92857142857143
+      },
+      {
+        "level": 0.6,
+        "snapUp": 0.6,
+        "snapDown": 0.6,
+        "anchor": "Fudgy",
+        "targetPeakYolk_C": 69.52380952380952
+      },
+      {
+        "level": 0.625,
+        "snapUp": 0.63,
+        "snapDown": 0.62,
+        "anchor": "Fudgy",
+        "targetPeakYolk_C": 70.09210526315789
+      },
+      {
+        "level": 0.65,
+        "snapUp": 0.65,
+        "snapDown": 0.65,
+        "anchor": "Fudgy",
+        "targetPeakYolk_C": 70.55263157894737
+      },
+      {
+        "level": 0.675,
+        "snapUp": 0.68,
+        "snapDown": 0.67,
+        "anchor": "Fudgy",
+        "targetPeakYolk_C": 71.01315789473685
+      },
+      {
+        "level": 0.7,
+        "snapUp": 0.7,
+        "snapDown": 0.7,
+        "anchor": "Fudgy",
+        "targetPeakYolk_C": 71.47368421052632
+      },
+      {
+        "level": 0.725,
+        "snapUp": 0.73,
+        "snapDown": 0.72,
+        "anchor": "Fudgy",
+        "targetPeakYolk_C": 71.9342105263158
+      },
+      {
+        "level": 0.75,
+        "snapUp": 0.75,
+        "snapDown": 0.75,
+        "anchor": "Fudgy",
+        "targetPeakYolk_C": 72.39473684210526
+      },
+      {
+        "level": 0.775,
+        "snapUp": 0.78,
+        "snapDown": 0.77,
+        "anchor": "Fudgy",
+        "targetPeakYolk_C": 72.85526315789474
+      },
+      {
+        "level": 0.8,
+        "snapUp": 0.8,
+        "snapDown": 0.8,
+        "anchor": "Fudgy",
+        "targetPeakYolk_C": 73.3157894736842
+      },
+      {
+        "level": 0.825,
+        "snapUp": 0.83,
+        "snapDown": 0.82,
+        "anchor": "Hard",
+        "targetPeakYolk_C": 73.77631578947368
+      },
+      {
+        "level": 0.85,
+        "snapUp": 0.85,
+        "snapDown": 0.85,
+        "anchor": "Hard",
+        "targetPeakYolk_C": 74.23684210526315
+      },
+      {
+        "level": 0.875,
+        "snapUp": 0.88,
+        "snapDown": 0.87,
+        "anchor": "Hard",
+        "targetPeakYolk_C": 74.69736842105263
+      },
+      {
+        "level": 0.9,
+        "snapUp": 0.9,
+        "snapDown": 0.9,
+        "anchor": "Hard",
+        "targetPeakYolk_C": 75.15789473684211
+      },
+      {
+        "level": 0.925,
+        "snapUp": 0.93,
+        "snapDown": 0.92,
+        "anchor": "Hard",
+        "targetPeakYolk_C": 75.61842105263158
+      },
+      {
+        "level": 0.95,
+        "snapUp": 0.95,
+        "snapDown": 0.95,
+        "anchor": "Hard",
+        "targetPeakYolk_C": 76.07894736842105
+      },
+      {
+        "level": 0.975,
+        "snapUp": 0.98,
+        "snapDown": 0.97,
+        "anchor": "Hard",
+        "targetPeakYolk_C": 76.53947368421052
+      },
+      {
+        "level": 1,
+        "snapUp": 1,
+        "snapDown": 1,
+        "anchor": "Hard",
+        "targetPeakYolk_C": 77
+      },
+      {
+        "level": 0.41,
+        "snapUp": 0.41,
+        "snapDown": 0.41,
+        "anchor": "Jammy",
+        "targetPeakYolk_C": 65
+      },
+      {
+        "level": 0.2199999,
+        "snapUp": 0.22,
+        "snapDown": 0.21,
+        "anchor": "Soft",
+        "targetPeakYolk_C": 60.99999772727273
+      },
+      {
+        "level": 0.615,
+        "snapUp": 0.62,
+        "snapDown": 0.61,
+        "anchor": "Fudgy",
+        "targetPeakYolk_C": 69.88095238095238
+      },
+      {
+        "level": 0.0001,
+        "snapUp": 0.01,
+        "snapDown": 0,
+        "anchor": "Runny",
+        "targetPeakYolk_C": 56.002272727272725
+      },
+      {
+        "level": 0.9999,
+        "snapUp": 1,
+        "snapDown": 0.99,
+        "anchor": "Hard",
+        "targetPeakYolk_C": 76.99815789473683
+      },
+      {
+        "level": 0.11,
+        "snapUp": 0.11,
+        "snapDown": 0.11,
+        "anchor": "Runny",
+        "targetPeakYolk_C": 58.5
+      },
+      {
+        "level": 0.3333333333333333,
+        "snapUp": 0.34,
+        "snapDown": 0.33,
+        "anchor": "Jammy",
+        "targetPeakYolk_C": 63.3859649122807
+      }
+    ]
+  },
+  "verdict": [
+    {
+      "reachable": true,
+      "whiteSets": true,
+      "softestLevel": 0,
+      "hardestLevel": 1,
+      "level": 0,
+      "kind": "none",
+      "wanted": "Runny",
+      "limit": "Runny",
+      "snapTo": null,
+      "worthSaying": false
+    },
+    {
+      "reachable": false,
+      "whiteSets": false,
+      "softestLevel": 1,
+      "hardestLevel": 0,
+      "level": 0,
+      "kind": "whiteNeverSets",
+      "wanted": "Runny",
+      "limit": "Runny",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "reachable": false,
+      "whiteSets": true,
+      "softestLevel": 0,
+      "hardestLevel": 1,
+      "level": 0,
+      "kind": "tooSoftForWhite",
+      "wanted": "Runny",
+      "limit": "Runny",
+      "snapTo": null,
+      "worthSaying": false
+    },
+    {
+      "reachable": false,
+      "whiteSets": true,
+      "softestLevel": 0.415,
+      "hardestLevel": 1,
+      "level": 0,
+      "kind": "tooSoftForWhite",
+      "wanted": "Runny",
+      "limit": "Jammy",
+      "snapTo": 0.42,
+      "worthSaying": true
+    },
+    {
+      "reachable": false,
+      "whiteSets": true,
+      "softestLevel": 0.608,
+      "hardestLevel": 1,
+      "level": 0,
+      "kind": "tooSoftForWhite",
+      "wanted": "Runny",
+      "limit": "Fudgy",
+      "snapTo": 0.61,
+      "worthSaying": true
+    },
+    {
+      "reachable": false,
+      "whiteSets": true,
+      "softestLevel": 0.73,
+      "hardestLevel": 1,
+      "level": 0,
+      "kind": "tooSoftForWhite",
+      "wanted": "Runny",
+      "limit": "Fudgy",
+      "snapTo": 0.73,
+      "worthSaying": true
+    },
+    {
+      "reachable": false,
+      "whiteSets": true,
+      "softestLevel": 0,
+      "hardestLevel": 0.735,
+      "level": 0,
+      "kind": "tooSoftForWhite",
+      "wanted": "Runny",
+      "limit": "Runny",
+      "snapTo": null,
+      "worthSaying": false
+    },
+    {
+      "reachable": false,
+      "whiteSets": true,
+      "softestLevel": 0,
+      "hardestLevel": 0.42,
+      "level": 0,
+      "kind": "tooSoftForWhite",
+      "wanted": "Runny",
+      "limit": "Runny",
+      "snapTo": null,
+      "worthSaying": false
+    },
+    {
+      "reachable": false,
+      "whiteSets": true,
+      "softestLevel": 0,
+      "hardestLevel": 0.405,
+      "level": 0,
+      "kind": "tooSoftForWhite",
+      "wanted": "Runny",
+      "limit": "Runny",
+      "snapTo": null,
+      "worthSaying": false
+    },
+    {
+      "reachable": true,
+      "whiteSets": true,
+      "softestLevel": 0,
+      "hardestLevel": 1,
+      "level": 0.22,
+      "kind": "none",
+      "wanted": "Soft",
+      "limit": "Soft",
+      "snapTo": null,
+      "worthSaying": false
+    },
+    {
+      "reachable": false,
+      "whiteSets": false,
+      "softestLevel": 1,
+      "hardestLevel": 0,
+      "level": 0.22,
+      "kind": "whiteNeverSets",
+      "wanted": "Soft",
+      "limit": "Soft",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "reachable": false,
+      "whiteSets": true,
+      "softestLevel": 0,
+      "hardestLevel": 1,
+      "level": 0.22,
+      "kind": "tooSoftForWhite",
+      "wanted": "Soft",
+      "limit": "Runny",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "reachable": false,
+      "whiteSets": true,
+      "softestLevel": 0.415,
+      "hardestLevel": 1,
+      "level": 0.22,
+      "kind": "tooSoftForWhite",
+      "wanted": "Soft",
+      "limit": "Jammy",
+      "snapTo": 0.42,
+      "worthSaying": true
+    },
+    {
+      "reachable": false,
+      "whiteSets": true,
+      "softestLevel": 0.608,
+      "hardestLevel": 1,
+      "level": 0.22,
+      "kind": "tooSoftForWhite",
+      "wanted": "Soft",
+      "limit": "Fudgy",
+      "snapTo": 0.61,
+      "worthSaying": true
+    },
+    {
+      "reachable": false,
+      "whiteSets": true,
+      "softestLevel": 0.73,
+      "hardestLevel": 1,
+      "level": 0.22,
+      "kind": "tooSoftForWhite",
+      "wanted": "Soft",
+      "limit": "Fudgy",
+      "snapTo": 0.73,
+      "worthSaying": true
+    },
+    {
+      "reachable": false,
+      "whiteSets": true,
+      "softestLevel": 0,
+      "hardestLevel": 0.735,
+      "level": 0.22,
+      "kind": "tooSoftForWhite",
+      "wanted": "Soft",
+      "limit": "Runny",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "reachable": false,
+      "whiteSets": true,
+      "softestLevel": 0,
+      "hardestLevel": 0.42,
+      "level": 0.22,
+      "kind": "tooSoftForWhite",
+      "wanted": "Soft",
+      "limit": "Runny",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "reachable": false,
+      "whiteSets": true,
+      "softestLevel": 0,
+      "hardestLevel": 0.405,
+      "level": 0.22,
+      "kind": "tooSoftForWhite",
+      "wanted": "Soft",
+      "limit": "Runny",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "reachable": true,
+      "whiteSets": true,
+      "softestLevel": 0,
+      "hardestLevel": 1,
+      "level": 0.41,
+      "kind": "none",
+      "wanted": "Jammy",
+      "limit": "Jammy",
+      "snapTo": null,
+      "worthSaying": false
+    },
+    {
+      "reachable": false,
+      "whiteSets": false,
+      "softestLevel": 1,
+      "hardestLevel": 0,
+      "level": 0.41,
+      "kind": "whiteNeverSets",
+      "wanted": "Jammy",
+      "limit": "Jammy",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "reachable": false,
+      "whiteSets": true,
+      "softestLevel": 0,
+      "hardestLevel": 1,
+      "level": 0.41,
+      "kind": "tooSoftForWhite",
+      "wanted": "Jammy",
+      "limit": "Runny",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "reachable": false,
+      "whiteSets": true,
+      "softestLevel": 0.415,
+      "hardestLevel": 1,
+      "level": 0.41,
+      "kind": "tooSoftForWhite",
+      "wanted": "Jammy",
+      "limit": "Jammy",
+      "snapTo": 0.42,
+      "worthSaying": false
+    },
+    {
+      "reachable": false,
+      "whiteSets": true,
+      "softestLevel": 0.608,
+      "hardestLevel": 1,
+      "level": 0.41,
+      "kind": "tooSoftForWhite",
+      "wanted": "Jammy",
+      "limit": "Fudgy",
+      "snapTo": 0.61,
+      "worthSaying": true
+    },
+    {
+      "reachable": false,
+      "whiteSets": true,
+      "softestLevel": 0.73,
+      "hardestLevel": 1,
+      "level": 0.41,
+      "kind": "tooSoftForWhite",
+      "wanted": "Jammy",
+      "limit": "Fudgy",
+      "snapTo": 0.73,
+      "worthSaying": true
+    },
+    {
+      "reachable": false,
+      "whiteSets": true,
+      "softestLevel": 0,
+      "hardestLevel": 0.735,
+      "level": 0.41,
+      "kind": "tooSoftForWhite",
+      "wanted": "Jammy",
+      "limit": "Runny",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "reachable": false,
+      "whiteSets": true,
+      "softestLevel": 0,
+      "hardestLevel": 0.42,
+      "level": 0.41,
+      "kind": "tooSoftForWhite",
+      "wanted": "Jammy",
+      "limit": "Runny",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "reachable": false,
+      "whiteSets": true,
+      "softestLevel": 0,
+      "hardestLevel": 0.405,
+      "level": 0.41,
+      "kind": "harderThanPanReaches",
+      "wanted": "Jammy",
+      "limit": "Jammy",
+      "snapTo": 0.4,
+      "worthSaying": false
+    },
+    {
+      "reachable": true,
+      "whiteSets": true,
+      "softestLevel": 0,
+      "hardestLevel": 1,
+      "level": 0.5,
+      "kind": "none",
+      "wanted": "Jammy",
+      "limit": "Jammy",
+      "snapTo": null,
+      "worthSaying": false
+    },
+    {
+      "reachable": false,
+      "whiteSets": false,
+      "softestLevel": 1,
+      "hardestLevel": 0,
+      "level": 0.5,
+      "kind": "whiteNeverSets",
+      "wanted": "Jammy",
+      "limit": "Jammy",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "reachable": false,
+      "whiteSets": true,
+      "softestLevel": 0,
+      "hardestLevel": 1,
+      "level": 0.5,
+      "kind": "tooSoftForWhite",
+      "wanted": "Jammy",
+      "limit": "Runny",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "reachable": false,
+      "whiteSets": true,
+      "softestLevel": 0.415,
+      "hardestLevel": 1,
+      "level": 0.5,
+      "kind": "tooSoftForWhite",
+      "wanted": "Jammy",
+      "limit": "Jammy",
+      "snapTo": null,
+      "worthSaying": false
+    },
+    {
+      "reachable": false,
+      "whiteSets": true,
+      "softestLevel": 0.608,
+      "hardestLevel": 1,
+      "level": 0.5,
+      "kind": "tooSoftForWhite",
+      "wanted": "Jammy",
+      "limit": "Fudgy",
+      "snapTo": 0.61,
+      "worthSaying": true
+    },
+    {
+      "reachable": false,
+      "whiteSets": true,
+      "softestLevel": 0.73,
+      "hardestLevel": 1,
+      "level": 0.5,
+      "kind": "tooSoftForWhite",
+      "wanted": "Jammy",
+      "limit": "Fudgy",
+      "snapTo": 0.73,
+      "worthSaying": true
+    },
+    {
+      "reachable": false,
+      "whiteSets": true,
+      "softestLevel": 0,
+      "hardestLevel": 0.735,
+      "level": 0.5,
+      "kind": "tooSoftForWhite",
+      "wanted": "Jammy",
+      "limit": "Runny",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "reachable": false,
+      "whiteSets": true,
+      "softestLevel": 0,
+      "hardestLevel": 0.42,
+      "level": 0.5,
+      "kind": "harderThanPanReaches",
+      "wanted": "Jammy",
+      "limit": "Jammy",
+      "snapTo": 0.42,
+      "worthSaying": false
+    },
+    {
+      "reachable": false,
+      "whiteSets": true,
+      "softestLevel": 0,
+      "hardestLevel": 0.405,
+      "level": 0.5,
+      "kind": "harderThanPanReaches",
+      "wanted": "Jammy",
+      "limit": "Jammy",
+      "snapTo": 0.4,
+      "worthSaying": false
+    },
+    {
+      "reachable": true,
+      "whiteSets": true,
+      "softestLevel": 0,
+      "hardestLevel": 1,
+      "level": 0.62,
+      "kind": "none",
+      "wanted": "Fudgy",
+      "limit": "Fudgy",
+      "snapTo": null,
+      "worthSaying": false
+    },
+    {
+      "reachable": false,
+      "whiteSets": false,
+      "softestLevel": 1,
+      "hardestLevel": 0,
+      "level": 0.62,
+      "kind": "whiteNeverSets",
+      "wanted": "Fudgy",
+      "limit": "Fudgy",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "reachable": false,
+      "whiteSets": true,
+      "softestLevel": 0,
+      "hardestLevel": 1,
+      "level": 0.62,
+      "kind": "tooSoftForWhite",
+      "wanted": "Fudgy",
+      "limit": "Runny",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "reachable": false,
+      "whiteSets": true,
+      "softestLevel": 0.415,
+      "hardestLevel": 1,
+      "level": 0.62,
+      "kind": "tooSoftForWhite",
+      "wanted": "Fudgy",
+      "limit": "Jammy",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "reachable": false,
+      "whiteSets": true,
+      "softestLevel": 0.608,
+      "hardestLevel": 1,
+      "level": 0.62,
+      "kind": "tooSoftForWhite",
+      "wanted": "Fudgy",
+      "limit": "Fudgy",
+      "snapTo": null,
+      "worthSaying": false
+    },
+    {
+      "reachable": false,
+      "whiteSets": true,
+      "softestLevel": 0.73,
+      "hardestLevel": 1,
+      "level": 0.62,
+      "kind": "tooSoftForWhite",
+      "wanted": "Fudgy",
+      "limit": "Fudgy",
+      "snapTo": 0.73,
+      "worthSaying": false
+    },
+    {
+      "reachable": false,
+      "whiteSets": true,
+      "softestLevel": 0,
+      "hardestLevel": 0.735,
+      "level": 0.62,
+      "kind": "tooSoftForWhite",
+      "wanted": "Fudgy",
+      "limit": "Runny",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "reachable": false,
+      "whiteSets": true,
+      "softestLevel": 0,
+      "hardestLevel": 0.42,
+      "level": 0.62,
+      "kind": "harderThanPanReaches",
+      "wanted": "Fudgy",
+      "limit": "Jammy",
+      "snapTo": 0.42,
+      "worthSaying": true
+    },
+    {
+      "reachable": false,
+      "whiteSets": true,
+      "softestLevel": 0,
+      "hardestLevel": 0.405,
+      "level": 0.62,
+      "kind": "harderThanPanReaches",
+      "wanted": "Fudgy",
+      "limit": "Jammy",
+      "snapTo": 0.4,
+      "worthSaying": true
+    },
+    {
+      "reachable": true,
+      "whiteSets": true,
+      "softestLevel": 0,
+      "hardestLevel": 1,
+      "level": 0.9,
+      "kind": "none",
+      "wanted": "Hard",
+      "limit": "Hard",
+      "snapTo": null,
+      "worthSaying": false
+    },
+    {
+      "reachable": false,
+      "whiteSets": false,
+      "softestLevel": 1,
+      "hardestLevel": 0,
+      "level": 0.9,
+      "kind": "whiteNeverSets",
+      "wanted": "Hard",
+      "limit": "Hard",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "reachable": false,
+      "whiteSets": true,
+      "softestLevel": 0,
+      "hardestLevel": 1,
+      "level": 0.9,
+      "kind": "tooSoftForWhite",
+      "wanted": "Hard",
+      "limit": "Runny",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "reachable": false,
+      "whiteSets": true,
+      "softestLevel": 0.415,
+      "hardestLevel": 1,
+      "level": 0.9,
+      "kind": "tooSoftForWhite",
+      "wanted": "Hard",
+      "limit": "Jammy",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "reachable": false,
+      "whiteSets": true,
+      "softestLevel": 0.608,
+      "hardestLevel": 1,
+      "level": 0.9,
+      "kind": "tooSoftForWhite",
+      "wanted": "Hard",
+      "limit": "Fudgy",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "reachable": false,
+      "whiteSets": true,
+      "softestLevel": 0.73,
+      "hardestLevel": 1,
+      "level": 0.9,
+      "kind": "tooSoftForWhite",
+      "wanted": "Hard",
+      "limit": "Fudgy",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "reachable": false,
+      "whiteSets": true,
+      "softestLevel": 0,
+      "hardestLevel": 0.735,
+      "level": 0.9,
+      "kind": "harderThanPanReaches",
+      "wanted": "Hard",
+      "limit": "Fudgy",
+      "snapTo": 0.73,
+      "worthSaying": true
+    },
+    {
+      "reachable": false,
+      "whiteSets": true,
+      "softestLevel": 0,
+      "hardestLevel": 0.42,
+      "level": 0.9,
+      "kind": "harderThanPanReaches",
+      "wanted": "Hard",
+      "limit": "Jammy",
+      "snapTo": 0.42,
+      "worthSaying": true
+    },
+    {
+      "reachable": false,
+      "whiteSets": true,
+      "softestLevel": 0,
+      "hardestLevel": 0.405,
+      "level": 0.9,
+      "kind": "harderThanPanReaches",
+      "wanted": "Hard",
+      "limit": "Jammy",
+      "snapTo": 0.4,
+      "worthSaying": true
+    },
+    {
+      "reachable": true,
+      "whiteSets": true,
+      "softestLevel": 0,
+      "hardestLevel": 1,
+      "level": 1,
+      "kind": "none",
+      "wanted": "Hard",
+      "limit": "Hard",
+      "snapTo": null,
+      "worthSaying": false
+    },
+    {
+      "reachable": false,
+      "whiteSets": false,
+      "softestLevel": 1,
+      "hardestLevel": 0,
+      "level": 1,
+      "kind": "whiteNeverSets",
+      "wanted": "Hard",
+      "limit": "Hard",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "reachable": false,
+      "whiteSets": true,
+      "softestLevel": 0,
+      "hardestLevel": 1,
+      "level": 1,
+      "kind": "tooSoftForWhite",
+      "wanted": "Hard",
+      "limit": "Runny",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "reachable": false,
+      "whiteSets": true,
+      "softestLevel": 0.415,
+      "hardestLevel": 1,
+      "level": 1,
+      "kind": "tooSoftForWhite",
+      "wanted": "Hard",
+      "limit": "Jammy",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "reachable": false,
+      "whiteSets": true,
+      "softestLevel": 0.608,
+      "hardestLevel": 1,
+      "level": 1,
+      "kind": "tooSoftForWhite",
+      "wanted": "Hard",
+      "limit": "Fudgy",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "reachable": false,
+      "whiteSets": true,
+      "softestLevel": 0.73,
+      "hardestLevel": 1,
+      "level": 1,
+      "kind": "tooSoftForWhite",
+      "wanted": "Hard",
+      "limit": "Fudgy",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "reachable": false,
+      "whiteSets": true,
+      "softestLevel": 0,
+      "hardestLevel": 0.735,
+      "level": 1,
+      "kind": "harderThanPanReaches",
+      "wanted": "Hard",
+      "limit": "Fudgy",
+      "snapTo": 0.73,
+      "worthSaying": true
+    },
+    {
+      "reachable": false,
+      "whiteSets": true,
+      "softestLevel": 0,
+      "hardestLevel": 0.42,
+      "level": 1,
+      "kind": "harderThanPanReaches",
+      "wanted": "Hard",
+      "limit": "Jammy",
+      "snapTo": 0.42,
+      "worthSaying": true
+    },
+    {
+      "reachable": false,
+      "whiteSets": true,
+      "softestLevel": 0,
+      "hardestLevel": 0.405,
+      "level": 1,
+      "kind": "harderThanPanReaches",
+      "wanted": "Hard",
+      "limit": "Jammy",
+      "snapTo": 0.4,
+      "worthSaying": true
+    }
+  ],
+  "texture": [
+    {
+      "peakYolk_C": 50,
+      "peakWhite_C": 60,
+      "white": "justSet",
+      "yolk": "liquid"
+    },
+    {
+      "peakYolk_C": 50,
+      "peakWhite_C": 70.9,
+      "white": "justSet",
+      "yolk": "liquid"
+    },
+    {
+      "peakYolk_C": 50,
+      "peakWhite_C": 71,
+      "white": "set",
+      "yolk": "liquid"
+    },
+    {
+      "peakYolk_C": 50,
+      "peakWhite_C": 81.9,
+      "white": "set",
+      "yolk": "liquid"
+    },
+    {
+      "peakYolk_C": 50,
+      "peakWhite_C": 82,
+      "white": "firm",
+      "yolk": "liquid"
+    },
+    {
+      "peakYolk_C": 50,
+      "peakWhite_C": 95,
+      "white": "firm",
+      "yolk": "liquid"
+    },
+    {
+      "peakYolk_C": 57.9,
+      "peakWhite_C": 60,
+      "white": "justSet",
+      "yolk": "liquid"
+    },
+    {
+      "peakYolk_C": 57.9,
+      "peakWhite_C": 70.9,
+      "white": "justSet",
+      "yolk": "liquid"
+    },
+    {
+      "peakYolk_C": 57.9,
+      "peakWhite_C": 71,
+      "white": "set",
+      "yolk": "liquid"
+    },
+    {
+      "peakYolk_C": 57.9,
+      "peakWhite_C": 81.9,
+      "white": "set",
+      "yolk": "liquid"
+    },
+    {
+      "peakYolk_C": 57.9,
+      "peakWhite_C": 82,
+      "white": "firm",
+      "yolk": "liquid"
+    },
+    {
+      "peakYolk_C": 57.9,
+      "peakWhite_C": 95,
+      "white": "firm",
+      "yolk": "liquid"
+    },
+    {
+      "peakYolk_C": 58,
+      "peakWhite_C": 60,
+      "white": "justSet",
+      "yolk": "soft"
+    },
+    {
+      "peakYolk_C": 58,
+      "peakWhite_C": 70.9,
+      "white": "justSet",
+      "yolk": "soft"
+    },
+    {
+      "peakYolk_C": 58,
+      "peakWhite_C": 71,
+      "white": "set",
+      "yolk": "soft"
+    },
+    {
+      "peakYolk_C": 58,
+      "peakWhite_C": 81.9,
+      "white": "set",
+      "yolk": "soft"
+    },
+    {
+      "peakYolk_C": 58,
+      "peakWhite_C": 82,
+      "white": "firm",
+      "yolk": "soft"
+    },
+    {
+      "peakYolk_C": 58,
+      "peakWhite_C": 95,
+      "white": "firm",
+      "yolk": "soft"
+    },
+    {
+      "peakYolk_C": 62.9,
+      "peakWhite_C": 60,
+      "white": "justSet",
+      "yolk": "soft"
+    },
+    {
+      "peakYolk_C": 62.9,
+      "peakWhite_C": 70.9,
+      "white": "justSet",
+      "yolk": "soft"
+    },
+    {
+      "peakYolk_C": 62.9,
+      "peakWhite_C": 71,
+      "white": "set",
+      "yolk": "soft"
+    },
+    {
+      "peakYolk_C": 62.9,
+      "peakWhite_C": 81.9,
+      "white": "set",
+      "yolk": "soft"
+    },
+    {
+      "peakYolk_C": 62.9,
+      "peakWhite_C": 82,
+      "white": "firm",
+      "yolk": "soft"
+    },
+    {
+      "peakYolk_C": 62.9,
+      "peakWhite_C": 95,
+      "white": "firm",
+      "yolk": "soft"
+    },
+    {
+      "peakYolk_C": 63,
+      "peakWhite_C": 60,
+      "white": "justSet",
+      "yolk": "jammy"
+    },
+    {
+      "peakYolk_C": 63,
+      "peakWhite_C": 70.9,
+      "white": "justSet",
+      "yolk": "jammy"
+    },
+    {
+      "peakYolk_C": 63,
+      "peakWhite_C": 71,
+      "white": "set",
+      "yolk": "jammy"
+    },
+    {
+      "peakYolk_C": 63,
+      "peakWhite_C": 81.9,
+      "white": "set",
+      "yolk": "jammy"
+    },
+    {
+      "peakYolk_C": 63,
+      "peakWhite_C": 82,
+      "white": "firm",
+      "yolk": "jammy"
+    },
+    {
+      "peakYolk_C": 63,
+      "peakWhite_C": 95,
+      "white": "firm",
+      "yolk": "jammy"
+    },
+    {
+      "peakYolk_C": 67.9,
+      "peakWhite_C": 60,
+      "white": "justSet",
+      "yolk": "jammy"
+    },
+    {
+      "peakYolk_C": 67.9,
+      "peakWhite_C": 70.9,
+      "white": "justSet",
+      "yolk": "jammy"
+    },
+    {
+      "peakYolk_C": 67.9,
+      "peakWhite_C": 71,
+      "white": "set",
+      "yolk": "jammy"
+    },
+    {
+      "peakYolk_C": 67.9,
+      "peakWhite_C": 81.9,
+      "white": "set",
+      "yolk": "jammy"
+    },
+    {
+      "peakYolk_C": 67.9,
+      "peakWhite_C": 82,
+      "white": "firm",
+      "yolk": "jammy"
+    },
+    {
+      "peakYolk_C": 67.9,
+      "peakWhite_C": 95,
+      "white": "firm",
+      "yolk": "jammy"
+    },
+    {
+      "peakYolk_C": 68,
+      "peakWhite_C": 60,
+      "white": "justSet",
+      "yolk": "fudgy"
+    },
+    {
+      "peakYolk_C": 68,
+      "peakWhite_C": 70.9,
+      "white": "justSet",
+      "yolk": "fudgy"
+    },
+    {
+      "peakYolk_C": 68,
+      "peakWhite_C": 71,
+      "white": "set",
+      "yolk": "fudgy"
+    },
+    {
+      "peakYolk_C": 68,
+      "peakWhite_C": 81.9,
+      "white": "set",
+      "yolk": "fudgy"
+    },
+    {
+      "peakYolk_C": 68,
+      "peakWhite_C": 82,
+      "white": "firm",
+      "yolk": "fudgy"
+    },
+    {
+      "peakYolk_C": 68,
+      "peakWhite_C": 95,
+      "white": "firm",
+      "yolk": "fudgy"
+    },
+    {
+      "peakYolk_C": 72.9,
+      "peakWhite_C": 60,
+      "white": "justSet",
+      "yolk": "fudgy"
+    },
+    {
+      "peakYolk_C": 72.9,
+      "peakWhite_C": 70.9,
+      "white": "justSet",
+      "yolk": "fudgy"
+    },
+    {
+      "peakYolk_C": 72.9,
+      "peakWhite_C": 71,
+      "white": "set",
+      "yolk": "fudgy"
+    },
+    {
+      "peakYolk_C": 72.9,
+      "peakWhite_C": 81.9,
+      "white": "set",
+      "yolk": "fudgy"
+    },
+    {
+      "peakYolk_C": 72.9,
+      "peakWhite_C": 82,
+      "white": "firm",
+      "yolk": "fudgy"
+    },
+    {
+      "peakYolk_C": 72.9,
+      "peakWhite_C": 95,
+      "white": "firm",
+      "yolk": "fudgy"
+    },
+    {
+      "peakYolk_C": 73,
+      "peakWhite_C": 60,
+      "white": "justSet",
+      "yolk": "set"
+    },
+    {
+      "peakYolk_C": 73,
+      "peakWhite_C": 70.9,
+      "white": "justSet",
+      "yolk": "set"
+    },
+    {
+      "peakYolk_C": 73,
+      "peakWhite_C": 71,
+      "white": "set",
+      "yolk": "set"
+    },
+    {
+      "peakYolk_C": 73,
+      "peakWhite_C": 81.9,
+      "white": "set",
+      "yolk": "set"
+    },
+    {
+      "peakYolk_C": 73,
+      "peakWhite_C": 82,
+      "white": "firm",
+      "yolk": "set"
+    },
+    {
+      "peakYolk_C": 73,
+      "peakWhite_C": 95,
+      "white": "firm",
+      "yolk": "set"
+    },
+    {
+      "peakYolk_C": 85,
+      "peakWhite_C": 60,
+      "white": "justSet",
+      "yolk": "set"
+    },
+    {
+      "peakYolk_C": 85,
+      "peakWhite_C": 70.9,
+      "white": "justSet",
+      "yolk": "set"
+    },
+    {
+      "peakYolk_C": 85,
+      "peakWhite_C": 71,
+      "white": "set",
+      "yolk": "set"
+    },
+    {
+      "peakYolk_C": 85,
+      "peakWhite_C": 81.9,
+      "white": "set",
+      "yolk": "set"
+    },
+    {
+      "peakYolk_C": 85,
+      "peakWhite_C": 82,
+      "white": "firm",
+      "yolk": "set"
+    },
+    {
+      "peakYolk_C": 85,
+      "peakWhite_C": 95,
+      "white": "firm",
+      "yolk": "set"
+    }
+  ],
+  "calibrationGrid": [
+    {
+      "alphaCentre": 1.4e-7,
+      "cookTime_s": 441,
+      "alphaMin": 7.700000000000001e-8,
+      "alphaMax": 2.5200000000000003e-7,
+      "alphaCount": 21,
+      "timeMin_s": 154.35,
+      "timeMax_s": 1058.3999999999999,
+      "timeCount": 32
+    },
+    {
+      "alphaCentre": 1.4e-7,
+      "cookTime_s": 60,
+      "alphaMin": 7.700000000000001e-8,
+      "alphaMax": 2.5200000000000003e-7,
+      "alphaCount": 21,
+      "timeMin_s": 60,
+      "timeMax_s": 144,
+      "timeCount": 32
+    },
+    {
+      "alphaCentre": 1.4e-7,
+      "cookTime_s": 120,
+      "alphaMin": 7.700000000000001e-8,
+      "alphaMax": 2.5200000000000003e-7,
+      "alphaCount": 21,
+      "timeMin_s": 60,
+      "timeMax_s": 288,
+      "timeCount": 32
+    },
+    {
+      "alphaCentre": 2e-7,
+      "cookTime_s": 800,
+      "alphaMin": 1.1e-7,
+      "alphaMax": 3.6e-7,
+      "alphaCount": 21,
+      "timeMin_s": 280,
+      "timeMax_s": 1920,
+      "timeCount": 32
+    }
+  ],
+  "boilMemory": {
+    "blend": [
+      {
+        "previous": null,
+        "measured": 480,
+        "result": 480
+      },
+      {
+        "previous": 480,
+        "measured": 600,
+        "result": 540
+      }
+    ],
+    "refused": [
+      {
+        "seconds": 3,
+        "remembered": false
+      },
+      {
+        "seconds": 99999,
+        "remembered": false
+      }
+    ],
+    "estimate": [
+      {
+        "litres": 0.5,
+        "forward": 150,
+        "backward": 150
+      },
+      {
+        "litres": 1,
+        "forward": 300,
+        "backward": 300
+      },
+      {
+        "litres": 1.5,
+        "forward": 450,
+        "backward": 450
+      },
+      {
+        "litres": 2,
+        "forward": 600,
+        "backward": 600
+      },
+      {
+        "litres": 2.5,
+        "forward": 750,
+        "backward": 750
+      },
+      {
+        "litres": 3,
+        "forward": 900,
+        "backward": 900
+      },
+      {
+        "litres": 4,
+        "forward": 1200,
+        "backward": 1200
+      },
+      {
+        "litres": 12,
+        "forward": 3600,
+        "backward": 3600
+      }
+    ],
+    "defaultSeconds": 480
+  },
+  "defaults": {
+    "sizeIndex": 2,
+    "customMinor_mm": 44,
+    "customStart_C": 12,
+    "altitude_m": 0,
+    "waterLitres": 2,
+    "eggCount": 2,
+    "doneness": 0.41,
+    "eggMass_kg": 0.068,
+    "fridge_C": 4,
+    "room_C": 20
+  },
+  "ambient": [
+    {
+      "eggStart_C": 0,
+      "ambient_C": 20
+    },
+    {
+      "eggStart_C": 4,
+      "ambient_C": 20
+    },
+    {
+      "eggStart_C": 14.9,
+      "ambient_C": 20
+    },
+    {
+      "eggStart_C": 15,
+      "ambient_C": 15
+    },
+    {
+      "eggStart_C": 20,
+      "ambient_C": 20
+    },
+    {
+      "eggStart_C": 26,
+      "ambient_C": 26
+    }
+  ],
+  "limits": {
+    "mass_g": {
+      "lo": 25,
+      "hi": 120
+    },
+    "girth_mm": {
+      "lo": 90,
+      "hi": 200
+    },
+    "minor_mm": {
+      "lo": 30,
+      "hi": 60
+    },
+    "eggTemp_C": {
+      "lo": -2,
+      "hi": 40
+    },
+    "altitude_m": {
+      "lo": -400,
+      "hi": 5000
+    },
+    "waterLitres": {
+      "lo": 0.25,
+      "hi": 12
+    },
+    "eggCount": {
+      "lo": 1,
+      "hi": 24
+    },
+    "doneness": {
+      "lo": 0,
+      "hi": 1
+    },
+    "sizeIndex": {
+      "lo": -1,
+      "hi": 3
+    },
+    "timeToBoil_s": {
+      "lo": 30,
+      "hi": 7200
+    }
+  },
+  "calibration": {
+    "particles": 1000,
+    "seed": 6221086
+  }
+}

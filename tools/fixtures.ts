@@ -15,6 +15,10 @@
  *   fixtures/scenarios.json whole cooks - the port covers these when the
  *                           solver lands, and they are generated now so the
  *                           target exists before the code does
+ *   fixtures/policy.json    the decisions above the physics - snapping, the
+ *                           refusal verdict, texture bands, the calibration
+ *                           grid's geometry, the bounds and the defaults. These
+ *                           used to be transliterated by hand in both apps
  */
 
 import { writeFileSync, mkdirSync } from 'node:fs';
@@ -46,8 +50,14 @@ import {
 } from '../src/core/sphere.js';
 import { CookSetup } from '../src/core/protocol.js';
 import {
-  simulate, solveCookTime, donenessFromSlider, DEFAULT_PARAMS,
+  simulate, solveCookTime, donenessFromSlider, DEFAULT_PARAMS, Solution,
 } from '../src/core/solve.js';
+import {
+  LIMITS, SLIDER_STEPS, PARTICLE_COUNT as POLICY_PARTICLES, CALIBRATION_SEED,
+  DEFAULTS, DEFAULT_EGG_MASS_KG, DEFAULT_TIME_TO_BOIL_S, START_TEMP_PRESETS_C,
+  BoilMemory, ambientFor, anchorNear, calibrationGrid, estimateTimeToBoil,
+  rememberBoil, snapDown, snapUp, targetPeakYolk_C, textureFor, verdictFor,
+} from '../src/core/policy.js';
 
 /* ------------------------------------------------------------------ cases */
 
@@ -405,12 +415,151 @@ const calibration = {
   updates: updates,
 };
 
+/* ------------------------------------------------------------ policy.json */
+
+/* The layer the review found unguarded. None of it is expensive, so the cases
+ * are dense rather than representative: an off-by-one in a port's loop or a
+ * flipped comparison should have nowhere to hide.
+ *
+ * The verdict cases are built from SYNTHETIC Solutions rather than from solved
+ * cooks. That is deliberate - the point is to pin the decision, not to re-test
+ * the solver, and a synthetic solution can sit exactly on the boundaries that
+ * a real one reaches only by accident. */
+
+const SNAP_LEVELS: number[] = [];
+for (let i = 0; i <= 40; i++) SNAP_LEVELS.push(i / 40);
+for (const awkward of [0.41, 0.2199999, 0.615, 0.0001, 0.9999, 0.11, 1 / 3]) {
+  SNAP_LEVELS.push(awkward);
+}
+
+/** A Solution with only the fields the verdict reads. */
+function verdictCase(
+  reachable: boolean, whiteSets: boolean, softestLevel: number, hardestLevel: number,
+): Solution {
+  return {
+    result: {
+      cookTime_s: 0, peakYolk_C: 0, peakYolkTime_s: 0, yolkAtPull_C: 0,
+      yolkDose_min: 0, whiteDose_min: 0, peakWhite_C: 0,
+    },
+    reachable: reachable,
+    minCookTime_s: 0,
+    softestLevel: softestLevel,
+    hardestLevel: hardestLevel,
+    whiteSets: whiteSets,
+  };
+}
+
+const VERDICT_CASES: { reachable: boolean; whiteSets: boolean; softest: number; hardest: number; level: number }[] = [];
+for (const level of [0.0, 0.22, 0.41, 0.5, 0.62, 0.9, 1.0]) {
+  VERDICT_CASES.push({ reachable: true, whiteSets: true, softest: 0, hardest: 1, level: level });
+  VERDICT_CASES.push({ reachable: false, whiteSets: false, softest: 1, hardest: 0, level: level });
+  for (const softest of [0.0, 0.415, 0.608, 0.73]) {
+    VERDICT_CASES.push({ reachable: false, whiteSets: true, softest: softest, hardest: 1, level: level });
+  }
+  for (const hardest of [0.735, 0.42, 0.405]) {
+    VERDICT_CASES.push({ reachable: false, whiteSets: true, softest: 0, hardest: hardest, level: level });
+  }
+}
+
+const TEXTURE_CASES: [number, number][] = [];
+for (const yolk of [50, 57.9, 58, 62.9, 63, 67.9, 68, 72.9, 73, 85]) {
+  for (const white of [60, 70.9, 71, 81.9, 82, 95]) TEXTURE_CASES.push([yolk, white]);
+}
+
+/* Two pans remembered in both orders, so a port that iterates an unordered map
+ * is caught rather than merely lucky. */
+const BOIL_MEMORY_FORWARD: BoilMemory = rememberBoil(rememberBoil({}, 1, 300), 3, 900);
+const BOIL_MEMORY_BACKWARD: BoilMemory = rememberBoil(rememberBoil({}, 3, 900), 1, 300);
+const BOIL_QUERY_LITRES = [0.5, 1, 1.5, 2, 2.5, 3, 4, 12];
+
+const policy = {
+  slider: {
+    steps: SLIDER_STEPS,
+    cases: SNAP_LEVELS.map((level) => ({
+      level: round(level),
+      snapUp: round(snapUp(level)),
+      snapDown: round(snapDown(level)),
+      anchor: anchorNear(level).label,
+      targetPeakYolk_C: round(targetPeakYolk_C(level)),
+    })),
+  },
+  verdict: VERDICT_CASES.map((c) => {
+    const v = verdictFor(verdictCase(c.reachable, c.whiteSets, c.softest, c.hardest), c.level);
+    return {
+      reachable: c.reachable,
+      whiteSets: c.whiteSets,
+      softestLevel: round(c.softest),
+      hardestLevel: round(c.hardest),
+      level: round(c.level),
+      kind: v.kind,
+      wanted: v.wanted.label,
+      limit: v.limit.label,
+      snapTo: v.snapTo === null ? null : round(v.snapTo),
+      worthSaying: v.worthSaying,
+    };
+  }),
+  texture: TEXTURE_CASES.map(([yolk, white]) => {
+    const t = textureFor(yolk, white);
+    return { peakYolk_C: yolk, peakWhite_C: white, white: t.white, yolk: t.yolk };
+  }),
+  calibrationGrid: [
+    { alphaCentre: 1.4e-7, cookTime_s: 441 },
+    { alphaCentre: 1.4e-7, cookTime_s: 60 },
+    { alphaCentre: 1.4e-7, cookTime_s: 120 },
+    { alphaCentre: 2.0e-7, cookTime_s: 800 },
+  ].map((c) => {
+    const g = calibrationGrid(c.alphaCentre, c.cookTime_s);
+    return {
+      alphaCentre: c.alphaCentre,
+      cookTime_s: c.cookTime_s,
+      alphaMin: round(g.alphaMin),
+      alphaMax: round(g.alphaMax),
+      alphaCount: g.alphaCount,
+      timeMin_s: round(g.timeMin_s),
+      timeMax_s: round(g.timeMax_s),
+      timeCount: g.timeCount,
+    };
+  }),
+  boilMemory: {
+    blend: [
+      { previous: null, measured: 480, result: round(estimateTimeToBoil(rememberBoil({}, 2, 480), 2)) },
+      {
+        previous: 480, measured: 600,
+        result: round(estimateTimeToBoil(rememberBoil(rememberBoil({}, 2, 480), 2, 600), 2)),
+      },
+    ],
+    refused: [3, 99999].map((seconds) => ({
+      seconds: seconds,
+      remembered: Object.keys(rememberBoil({}, 2, seconds)).length > 0,
+    })),
+    estimate: BOIL_QUERY_LITRES.map((litres) => ({
+      litres: litres,
+      forward: round(estimateTimeToBoil(BOIL_MEMORY_FORWARD, litres)),
+      backward: round(estimateTimeToBoil(BOIL_MEMORY_BACKWARD, litres)),
+    })),
+    defaultSeconds: DEFAULT_TIME_TO_BOIL_S,
+  },
+  defaults: {
+    ...DEFAULTS,
+    eggMass_kg: DEFAULT_EGG_MASS_KG,
+    fridge_C: START_TEMP_PRESETS_C.fridge,
+    room_C: START_TEMP_PRESETS_C.room,
+  },
+  ambient: [0, 4, 14.9, 15, 20, 26].map((eggStart_C) => ({
+    eggStart_C: eggStart_C,
+    ambient_C: round(ambientFor(eggStart_C)),
+  })),
+  limits: LIMITS,
+  calibration: { particles: POLICY_PARTICLES, seed: CALIBRATION_SEED },
+};
+
 /* ------------------------------------------------------------------ write */
 
 mkdirSync('fixtures', { recursive: true });
 writeFileSync('fixtures/core.json', `${JSON.stringify(core, null, 2)}\n`);
 writeFileSync('fixtures/scenarios.json', `${JSON.stringify(scenarios, null, 2)}\n`);
 writeFileSync('fixtures/calibration.json', `${JSON.stringify(calibration, null, 2)}\n`);
+writeFileSync('fixtures/policy.json', `${JSON.stringify(policy, null, 2)}\n`);
 
 const counts = [
   `${core.sphere.seriesTheta.length} seriesTheta`,
@@ -421,5 +570,8 @@ const counts = [
   `${scenarios.cases.length} scenarios`,
   `${calibration.grid.logYolk.length} grid cells`,
   `${calibration.updates.length} calibration updates`,
+  `${policy.slider.cases.length} snap`,
+  `${policy.verdict.length} verdicts`,
+  `${policy.texture.length} textures`,
 ];
 console.log(`fixtures/*.json written: ${counts.join(', ')}`);
