@@ -1038,16 +1038,28 @@ answers are recorded here rather than deleted, because each one was a plausible 
 
 ### 11.5 Known software gaps
 
-- **No way to reset calibration from the WEB app.** A run of wrong answers to "How was
-  it?" is undone only by clearing the site's storage. The posterior is honest about its
-  spread, so it recovers on its own after a few more eggs, but a button would be kinder.
-  The iOS app has one ("Forget what it learned"); the web app should copy it.
 - **`tauAirScale` is only identifiable if you vary the cooling method.** Cook every egg
   with an ice bath and it will sit at its prior forever — which is correct behaviour, not
   a bug, but it means the carryover model never improves unless you deliberately mix.
 - **`alpha` and the taste offset are confounded at a fixed protocol.** The *combination*
   is identified — the suggested time converges — but the individual parameters are not.
   Varying egg size or cooling method separates them.
+- **The cooling step is a flat three minutes** on both apps, regardless of egg size,
+  cooling medium or how long the cook was. It happens to match the model's own
+  `peakYolkTime_s` for an ice bath and a cold tap, which is why it has never looked
+  wrong, but the solver already reports that number and the countdown could be derived
+  from it rather than asserted.
+- **`predictCookTime` ships nowhere.** `src/core/infer.ts` computes the posterior
+  predictive cook time as a median and an 80% credible interval, and its own docstring
+  says the interval is what makes calibration legible without a settings screen. Both
+  apps show a single ±% spread instead. The function is fixtured and conformance-tested,
+  so it works; nothing calls it.
+- **Neither app has tests of its own above the shared layer.** What both apps decide —
+  snapping, refusals, texture bands, the calibration grid, the phase timeline — now lives
+  in `src/core/policy.ts` and is conformance-tested, which is where all three of the
+  real-egg bugs in `PLAN.md` would have been caught. What remains above it is view code:
+  DOM writes and SwiftUI bodies, tested by driving the apps.
+
 - **The Swift port is complete.** `ios/EggTimerCore` carries every module in `src/core/`
   except `sousvide.ts`, which is a joke, and is held to this implementation by a
   conformance suite over generated fixtures (`npm run conformance`). The pure functions
