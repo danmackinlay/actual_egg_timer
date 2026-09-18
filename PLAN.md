@@ -3,13 +3,13 @@
 Resumable working notes. Updated **in the same commit** as the work it describes.
 For the science, see `README.md`. This file is for whoever picks the build back up.
 
-**Status: web app v1 complete; the iOS app now carries the whole model too.**
-27/27 tests, 27/27 validation checks and 18 Swift conformance tests pass. The web
-app was driven end to end in Chromium, including the DONE screen and the feedback
-path; the iOS app was driven end to end in the simulator, including the Live
-Activity (see the verification records). Remaining work is calibration against
-real eggs (see "Calibrating against your own eggs" in README.md) and porting the
-calibration to Swift.
+**Status: both apps complete and learning. The PHYSICS is now the open part.**
+27/27 TypeScript tests, 27/27 validation checks and 24 Swift conformance tests
+pass. The web app and the iOS app carry the same model, the same refusals and
+the same particle filter; the Swift port is complete apart from the sous-vide
+joke. The iOS app runs signed on a real phone, with a time-sensitive alarm and a
+Live Activity, and has cooked a real egg. What is left is not code: it is the
+two measurements in README §11.3 and a run of real eggs to calibrate against.
 
 ---
 
@@ -54,7 +54,7 @@ That is the documented behaviour, not a defect.
 Also added: early termination in `simulate()` once the egg is past peak and the
 dose rate is 1e-6 of peak. Cut simulate 2.80 -> 1.87 ms with identical results.
 
-### Phase D — the iOS app (solo) — DONE except calibration
+### Phase D — the iOS app (solo) — DONE
 
 - [x] `ios/EggTimerCore` — the physics in Swift, held to generated fixtures
 - [x] `ios/App/Cook.swift` — the phase machine, absolute dates, survives relaunch
@@ -328,21 +328,32 @@ that is not obvious from the code.
 
 ### Next, in order
 
-1. **Calibrate against real eggs.** Both apps now learn, and neither has been
-   fed a single real egg. The standing thermocouple experiment in README §11.3
-   would settle `TAU_AIR` and `RAMP_R` in an afternoon each and beat every
-   published source found; failing that, cooking a dozen eggs and answering
-   honestly is the cheapest experiment available and the one the app was built
-   to make worthwhile.
-2. **Run it on a real phone.** Signing is done and verified: the Time Sensitive
-   Notifications capability is registered against the App ID, and a device build
-   signs with the entitlement present in the binary (see `ios/README.md`
-   §Signing for how to re-check). Nobody has yet cooked an actual egg with it.
-3. **A calibration reset in the WEB app.** iOS has one now; the web app is the
-   one still requiring you to clear site storage (README §11.5).
-4. **The web app could stop shipping its own dose grid build on the main
-   thread.** iOS runs it detached; the web version blocks for ~2 s behind a
-   `setTimeout(30)` so the "learning" note paints first.
+Nothing on this list is a missing feature. Both apps do everything the model can
+do; what is missing is contact with reality.
+
+1. **Cook real eggs and answer honestly.** The first real cook happened on
+   18 September and found three interface bugs and zero physics problems, which
+   is the expected ratio and the reason to keep going. The filter needs about
+   three eggs to stop moving, and it needs you to VARY something — egg size or
+   cooling method — or `alpha` and your taste stay confounded (README §11.5).
+2. **The two measurements nobody appears to have made** (README §11.3). A
+   thermocouple through the blunt end and a datalogger settles `TAU_AIR` in an
+   afternoon; a pot, a thermocouple and forty minutes settles `RAMP_R` and
+   `TAU_STANDING_SCALE` together. Both would beat every published source found,
+   and `TAU_AIR` drives the app's most opinionated behaviour — refusing soft
+   eggs to anyone resting them on the counter.
+3. **A calibration reset in the WEB app.** iOS has one; the web app still
+   requires clearing site storage (README §11.5).
+4. **The web app builds its dose grid on the main thread**, blocking ~2 s behind
+   a `setTimeout(30)` so the "learning" note paints first. iOS runs it detached.
+5. **One shared copy nit**: the web app's idle subline still says "from eggs in
+   to eggs out" on a hot start, the same ambiguity iOS fixed on 18 September.
+   The web app conveys the method in its button subtitle, so this is cosmetic.
+
+Checked on 18 September and NOT a problem, so nobody re-checks: the web app's
+`reset()` already re-solves, and its solve is synchronous, so neither of that
+day's iOS bugs has a twin there. The web app also already defaults to a cold
+start — iOS was the outlier, and now matches.
 
 Considered and NOT queued: a watchOS target. A paired watch already rings,
 because iOS forwards notifications to the wrist whenever the phone is locked —

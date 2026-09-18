@@ -1048,17 +1048,17 @@ answers are recorded here rather than deleted, because each one was a plausible 
 - **`alpha` and the taste offset are confounded at a fixed protocol.** The *combination*
   is identified — the suggested time converges — but the individual parameters are not.
   Varying egg size or cooling method separates them.
-- **The Swift port has a complete physics core.** `ios/EggTimerCore` carries every
-  module except the calibration, and is held to this implementation by a conformance
-  suite over generated fixtures (`npm run conformance`): the pure functions to 1e-12,
-  and 13 whole cooks — times, peak temperatures, doses and the reachability verdicts —
-  to the same, where the measured disagreement is 7e-15. The port is now COMPLETE:
-  `doseGrid.ts` and `infer.ts` came across too, held to fixtures that carry every
-  particle and every weight of a seven-observation run. The iOS app carries every input
+- **The Swift port is complete.** `ios/EggTimerCore` carries every module in `src/core/`
+  except `sousvide.ts`, which is a joke, and is held to this implementation by a
+  conformance suite over generated fixtures (`npm run conformance`). The pure functions
+  agree to 1e-12 and 13 whole cooks — times, peak temperatures, doses and the
+  reachability verdicts — to the same, where the measured disagreement is 7e-15. The
+  calibration is pinned harder still: the fixtures carry every particle and every weight
+  of a seven-observation run, because a wrong random number generator would otherwise
+  produce a different but entirely plausible posterior. The iOS app carries every input
   this document describes, schedules its alarm at absolute fire dates with a
   time-sensitive interruption level, shows the countdown on the Lock Screen and in the
-  Dynamic Island, and asks "How was it?" after each egg. Only `sousvide.ts` is unported,
-  and it is a joke. See `ios/README.md`.
+  Dynamic Island, and asks "How was it?" after each egg. See `ios/README.md`.
 
 ### 11.6 Sources that returned fabricated citations
 
