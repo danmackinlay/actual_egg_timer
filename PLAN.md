@@ -312,7 +312,11 @@ do; what is missing is contact with reality.
    is the expected ratio and the reason to keep going. The filter needs about
    three eggs to stop moving, and it needs you to VARY something — egg size or
    cooling method — or `alpha` and your taste stay confounded (README §11.5).
-2. **The two measurements nobody appears to have made** (README §11.3). A
+2. **The two measurements nobody appears to have made** (README §11.3). Now the
+   highest-value item on this list rather than the most interesting one:
+   `npm run identifiability` measures that `h` is 15x too weak to ever be learned
+   from feedback, so a thermocouple is not a nicer way to get this answer, it is
+   the only way. A road trip is packing one. A
    thermocouple through the blunt end and a datalogger settles `TAU_AIR` in an
    afternoon; a pot, a thermocouple and forty minutes settles `RAMP_R` and
    `TAU_STANDING_SCALE` together. Both would beat every published source found,
@@ -332,7 +336,7 @@ do; what is missing is contact with reality.
    against the yolk's 8, chosen to bound the `H_EFF` error it partly measures) and
    the 0.26-decade band around the threshold. Whether it actually breaks the
    `alpha`/taste confound is an empirical question, and answering it needs eggs.
-6. **Show `predictCookTime`'s interval** somewhere, or stop claiming in its
+7. **Show `predictCookTime`'s interval** somewhere, or stop claiming in its
    docstring that it is what makes calibration legible (README §11.5). The grid
    is already built and in hand immediately after a feedback fold, so the
    cheapest honest version costs nothing.

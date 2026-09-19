@@ -556,3 +556,105 @@ effective sample size sits just above the threshold. Written out in full so the
 port reads the same starting point rather than reproducing the sharpening. The
 alternative was shipping the branch in two languages and executing it in neither,
 which is the failure this file exists to catch.
+
+---
+
+## Two real eggs, and what they could not teach (19 September 2026)
+
+A second real egg came out with an underdone white, aimed at soft, same as the
+first. That is two for two, and it prompted the obvious question: update `H_EFF`,
+or instrument it so the eggs can.
+
+The answer to the first half is that **`H_EFF` is not in the simulation path.**
+`sphere.ts` imports `MODE_COUNT` and `K_EGG`; the surface is clamped to the water
+temperature and nothing consults a heat transfer coefficient. The constant lives
+in `biotNumber`, one test, one line of validation output, and the comments
+justifying the clamp. Changing 850 to 450 moves one printed Biot number and not
+one cook time.
+
+That deserved saying out loud. "`H_EFF` is known high" had been sitting in
+§11.2 for months reading like a miscalibration, when it is really a figure the
+model never reads.
+
+### The measurement
+
+`tools/identifiability.ts`, `npm run identifiability`. Robin eigenmodes — roots
+of `1 - mu*cot(mu) = Bi` — built fresh, because the repo's solver has only
+Dirichlet ones, and cross-checked against `seriesTheta` at `Bi = 1e7` before
+anything else was believed: worst difference 3.2e-7, roots landing on exactly
+`n*pi`. Then the Jacobian of (log yolk dose, log white dose) against
+(log alpha, log h).
+
+| ∂log₁₀(dose)/∂log(·) | yolk | white | white/yolk |
+|---|---|---|---|
+| `alpha` | 12.704 | 5.903 | 0.465 |
+| `h` | 0.665 | 0.642 | 0.965 |
+
+README §11.2 claimed changing `H_EFF` "would simply be re-absorbed by
+`ALPHA_DEFAULT`". With one observable that is exactly right. With two it is not:
+`alpha` hits the centre far harder than the near-surface, `h` delays both about
+equally, and the two directions sit **19 degrees apart**. So the white channel
+does break the confound — geometrically.
+
+It does not break it usefully. `h`'s signal is **15x weaker** than `alpha`'s, and
+ordinal feedback is worth 1-2 bits an egg. And the effect is nearly
+self-defeating:
+
+```
+   h   |   Bi  | angle | |h|/|alpha|
+  850  |  34.7 | 19.0d |   0.066   <- today
+  450  |  18.4 | 20.3d |   0.119   <- Denys, README 11.2
+  120  |   4.9 | 22.8d |   0.328
+```
+
+**`h` only becomes learnable in a regime the egg is not in.** At `Bi` between 18
+and 35 the surface really is nearly clamped — which is precisely why Dirichlet
+was a defensible choice. The lower the true `h`, the more it would matter, and
+the further it is from where the model actually sits.
+
+### What that changed
+
+- Instrumenting `h` as a fourth particle dimension is **off the list**. It would
+  add a parameter the data cannot move.
+- The Robin boundary condition **stays** on the list, reframed: a correctness fix
+  for a Dirichlet bias currently hiding inside `ALPHA_DEFAULT`, not an instrument
+  for fitting `h`. The eigenmode work is already done and cross-checked in
+  `tools/identifiability.ts`.
+- §11.3's thermocouple went from "would be nice" to **the only way this gets
+  answered**. An afternoon of it beats a hundred breakfasts, and now there is a
+  number saying why rather than an intuition.
+
+### A separate finding, from chasing the same egg
+
+The egg that prompted all this was cooked on a build that predated the white
+channel, so the app never asked — mystery solved, and not interesting.
+
+Chasing it was, though. The ask gate fires only when the model puts
+`P(runny)` between 0.1 and 0.9, justified on the grounds that a unanimous
+posterior cannot learn from either answer. That argument is exactly true at
+`P = 0` and `P = 1` and not before. Measured on a fresh prior, folding a "runny"
+report the gate would have suppressed:
+
+```
+level 0.22 | P(runny) 0.130 | alpha 1.7109e-7 -> 1.6819e-7 | -1.70%
+level 0.41 | P(runny) 0.023 | alpha 1.7109e-7 -> 1.7033e-7 | -0.45%
+```
+
+A suppressed answer at jammy still moves `alpha` a quarter as far as an asked one
+at soft. **The gate discards usable evidence, and it discards most of it exactly
+when the model is confidently wrong** — which is the case a cook notices and
+reports. `WHITE_ASK_MIN_P = 0.1` is recorded as a judgement, not a measurement;
+this is the measurement, and it says the threshold is too high. Left alone
+pending a decision, because it changes what the filter learns from every future
+egg and that is not a call to make in passing.
+
+### The lesson
+
+Two of the three things above were claims sitting in the README, phrased with
+enough confidence that nobody re-derived them. One was wrong in an interesting
+way and one was wrong in a way that had quietly foreclosed a design option. The
+cost of checking was an afternoon and a 170-line script that now runs from
+`package.json`.
+
+A constant with a comment explaining why it is wrong is not documentation. It is
+an unrun experiment.

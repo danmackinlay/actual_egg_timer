@@ -988,8 +988,36 @@ answers are recorded here rather than deleted, because each one was a plausible 
    (2003) measured 490 W/m²K at the shell surface; in series with their measured shell
    that is ~450 effective, giving `Bi ~ 18` rather than 34. Their conditions were gentler
    than a rolling boil, so the truth is somewhere between, but the Dirichlet error is
-   larger than §8 used to claim. Changing `H_EFF` alone would simply be re-absorbed by
-   `ALPHA_DEFAULT`; the honest fix is a Robin boundary condition (§11.4).
+   larger than §8 used to claim. The honest fix is a Robin boundary condition (§11.4).
+
+   Two things about this were assertions until September 2026 and are now measured
+   (`npm run identifiability`, `tools/identifiability.ts`):
+
+   - **`H_EFF` is not in the simulation path at all.** `sphere.ts` imports `MODE_COUNT`
+     and `K_EGG` and nothing else; the surface is clamped. The constant appears only in
+     `biotNumber`, one test, one validation diagnostic, and comments justifying that
+     clamp. **Changing the number moves no cook time.** That is worth stating plainly
+     because "H_EFF is known high" reads like a calibration that is merely wrong, rather
+     than a figure the model never consults.
+   - **"Simply re-absorbed by `ALPHA_DEFAULT`" is not quite true, and the correction
+     does not help.** With one observable it is exactly true. With two — the yolk
+     criterion at `r = 0` and the white at `0.693 R` — the parameters separate, because
+     `α` hits the centre much harder than the near-surface while `h` delays both about
+     equally:
+
+     | ∂log₁₀(dose)/∂log(·) | yolk | white | white/yolk |
+     |---|---|---|---|
+     | `α` | 12.704 | 5.903 | 0.465 |
+     | `h` | 0.665 | 0.642 | 0.965 |
+
+     The two directions sit **19° apart**, not 0. But `h`'s signal is **15× weaker**
+     (`\|h\| / \|α\| = 0.066`), and ordinal feedback carries 1–2 bits per egg, so this
+     is not learnable from "how was it?" in any realistic number of breakfasts. Worse,
+     the effect is self-defeating: lowering `h` toward the Denys value raises its
+     influence only to 0.119 and the angle to 20.3°. **`h` becomes learnable only in a
+     regime the egg is not in** — at `Bi` between 18 and 35 the surface really is nearly
+     clamped, which is exactly why Dirichlet was defensible. §11.3's thermocouple is
+     worth more here than a hundred eggs, and it is not close.
 
 3. **Yolk diffusivity varies by 1.7× across the literature.** Romanoff & Romanoff (via
    Denys) imply `α_yolk = 9.1e-8`; Vega quotes 1.22e-7; Abbasnezhad's correlation gives
@@ -1038,6 +1066,14 @@ answers are recorded here rather than deleted, because each one was a plausible 
   `1 - mu·cot(mu) = Bi`, instead of clamping the surface. At `Bi ~ 18` rather than 34
   this matters more than first thought. It requires re-projecting the modal state onto a
   new basis when the medium changes, which is why it was not attempted for v1.
+
+  Queued as a **correctness** fix and not as an instrument. §11.2(2) now measures what
+  it would buy: `h` is separable from `α` in principle but 15× too weak to learn from
+  feedback, so adding it as a fourth calibrated parameter would add a dimension the data
+  cannot move. The reason to do this is that Dirichlet under-predicts cook time and that
+  bias currently sits inside `ALPHA_DEFAULT` — not that anyone will ever fit `h` from
+  eating eggs. `tools/identifiability.ts` already carries working Robin eigenmodes,
+  cross-checked against `seriesTheta` to 3e-7, so the hard part of the maths is done.
 - **Convection in the liquid white during the ramp** (§8). Not tractable in this
   architecture; the practical mitigation is to keep `ALPHA_DEFAULT` calibrated against
   whole cooks rather than against steady-state property data.
