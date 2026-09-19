@@ -81,6 +81,19 @@ Automatic signing will create the identifiers for you on demand, but it will not
 invent the **capability**: that is a server-side setting, and it is why
 `ios/README.md`'s signing step 3 exists.
 
+**This is currently unfixed on this machine, and a trial archive proves it.**
+Running the step-3 archive today signs the two targets differently:
+
+```
+EggTimerWidget.appex   iOS Team Provisioning Profile: *
+Actual Egg Timer.app   iOS Team Provisioning Profile: name.danmackinlay.actualeggtimer
+```
+
+The app has an explicit profile; the widget fell back to the wildcard, because
+`name.danmackinlay.actualeggtimer.widget` has never been registered. Upload that
+and TestFlight takes the build and then refuses to distribute it. Register the
+widget identifier before the first upload and this goes away.
+
 ### 3. Create the app record
 
 App Store Connect → **Apps** → **+** → **New App**. Platform iOS, bundle ID
