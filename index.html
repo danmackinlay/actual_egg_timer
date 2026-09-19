@@ -186,13 +186,25 @@
     <button type="button" id="primary" class="primary">Start heating</button>
     <button type="button" id="secondary" class="secondary" hidden>Cancel</button>
     <div id="feedback" hidden>
-      <p id="feedbackAsk">How was it?</p>
+      <p id="feedbackAsk">How was the yolk?</p>
       <div class="seg">
         <button type="button" class="fb" data-fb="-1">Too soft</button>
         <button type="button" class="fb" data-fb="0">Just right</button>
         <button type="button" class="fb" data-fb="1">Too firm</button>
       </div>
       <p class="hint" id="calibNote"></p>
+    </div>
+    <!-- The second question, asked only when the model is genuinely unsure how
+         the white came out - which is a soft egg, and almost never a firm one.
+         The decision is in src/core/infer.ts; only the words are here. -->
+    <div id="whiteFeedback" hidden>
+      <p id="whiteAsk">And the white — was it runny?</p>
+      <div class="seg">
+        <button type="button" class="wb" data-white="runny">Still runny</button>
+        <button type="button" class="wb" data-white="set">Set right through</button>
+      </div>
+      <p class="hint" id="whiteNote">The white sets from the outside in, so this
+        says something about your eggs that the yolk cannot.</p>
     </div>
   </div>
 

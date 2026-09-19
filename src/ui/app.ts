@@ -22,10 +22,11 @@ import {
   SLIDER_STEPS, Verdict, ambientFor, anchorNear, targetPeakYolk_C, textureFor,
   verdictFor,
 } from '../core/policy.js';
-import { Feedback } from '../core/infer.js';
+import { Feedback, WhiteReport } from '../core/infer.js';
+import { DoseGrid } from '../core/doseGrid.js';
 import {
   Calibration, clearCalibration, loadCalibration, saveCalibration, calibrationParams,
-  calibrationSpread, recordOutcome,
+  calibrationSpread, recordOutcome, recordWhite,
 } from './calibration.js';
 import {
   LIMITS, Limit, START_TEMP_PRESETS_C, Settings, UiStartMode, clampNumber,
@@ -85,6 +86,8 @@ const dom = {
   secondary: el<HTMLButtonElement>('secondary'),
   feedback: el<HTMLDivElement>('feedback'),
   calibNote: el<HTMLParagraphElement>('calibNote'),
+  whiteFeedback: el<HTMLDivElement>('whiteFeedback'),
+  whiteNote: el<HTMLParagraphElement>('whiteNote'),
   learnedNote: el<HTMLParagraphElement>('learnedNote'),
   forget: el<HTMLButtonElement>('forget'),
 };
@@ -122,7 +125,7 @@ let refusal = '';
  *
  *  The calibration must learn from the egg that was actually cooked, not from
  *  whatever the controls happen to say when the user gets round to answering
- *  "How was it?" - which may be after a reload, and is certainly after the
+ *  how the egg was - which may be after a reload, and is certainly after the
  *  measured time to boil has replaced the guess. Everything the posterior
  *  update needs is captured here and nowhere else. */
 let ticket: Ticket | null = null;
@@ -138,6 +141,12 @@ let lastAnnounced = '';
 let restored = false;
 /** One report per egg: the feedback buttons go away once one is pressed. */
 let feedbackGiven = false;
+/** The dose surface the yolk answer was just scored against, kept only while the
+ *  white question is on screen - answering it needs the same surface, and
+ *  rebuilding it would cost another two seconds. Null whenever there is no white
+ *  question pending, which includes after a reload: the question is a moment in
+ *  a conversation, not a fact about the egg, so it is not persisted. */
+let whiteGrid: DoseGrid | null = null;
 
 /** The same cook, against a time to boil that is now known rather than
  *  guessed. Everything else about it is frozen. */
@@ -583,6 +592,9 @@ function render(now_ms: number): void {
   // The model is calibrated against the literature, not against this kitchen.
   // Asking once per egg is what closes that gap.
   dom.feedback.hidden = machine.phase !== 'DONE' || feedbackGiven;
+  // The white question is on screen exactly while one is pending, which is what
+  // holding the surface means - see `whiteGrid`.
+  dom.whiteFeedback.hidden = whiteGrid === null;
   if (!dom.feedback.hidden) renderCalibNote();
 
   dom.phaseLabel.textContent = label;
@@ -633,6 +645,7 @@ function renderSousVide(now_ms: number): void {
   setPrimary('', copy.hint, false);
   dom.secondary.hidden = true;
   dom.feedback.hidden = true;
+  dom.whiteFeedback.hidden = true;
 
   const key = `SOUS|${copy.headline}`;
   if (key !== lastAnnounced) {
@@ -751,9 +764,9 @@ function renderLearned(): void {
   dom.forget.hidden = false;
 }
 
-/** Take it all back. A run of wrong answers to "How was it?" was otherwise
- *  undone only by clearing the site's storage - README 11.5 has listed that as
- *  a known gap since the iOS app got its own version of this button. */
+/** Take it all back. A run of wrong answers about how the eggs were was otherwise
+ *  undone only by clearing the site's storage - README 11.5 listed that as a
+ *  known gap from the day the iOS app got its own version of this button. */
 function onForget(): void {
   calib = clearCalibration();
   boilMemory = {};
@@ -770,6 +783,7 @@ function onForget(): void {
 function onFeedback(value: Feedback): void {
   if (feedbackGiven) return;
   feedbackGiven = true;
+  whiteGrid = null;
   // Written down before the fold, not after: a reload between the two would
   // otherwise re-ask, and a second answer folds the same egg in twice.
   persistCook();
@@ -783,12 +797,44 @@ function onFeedback(value: Feedback): void {
   // Yield first so the disabled state and the "learning" note actually paint
   // before the synchronous grid build blocks the main thread.
   window.setTimeout(() => {
-    recordOutcome(
+    const outcome = recordOutcome(
       calib, cooked.egg, cooked.setup, machine.cookTime_s, cooked.logNominalTarget, value,
     );
     saveCalibration(calib);
     for (let i = 0; i < buttons.length; i++) buttons[i].disabled = false;
     dom.feedback.hidden = true;
+    // The second question, and only when the model cannot already guess the
+    // answer. On a jammy egg or anything firmer the white is far past setting and
+    // every particle agrees, so nothing is asked and the default path stays one
+    // tap; on a soft one the white is near its threshold and the answer moves
+    // alpha. The decision is `shouldAskAboutWhite` in src/core/infer.ts, so both
+    // apps ask on exactly the same eggs.
+    if (outcome.askWhite) {
+      whiteGrid = outcome.grid;
+      dom.whiteFeedback.hidden = false;
+    }
+    renderCalibNote();
+  }, 30);
+}
+
+/** Fold the answer about the white into the same egg. It is a second
+ *  observation, not a second egg, so the "tuned on N eggs" count does not move -
+ *  only the spread does. */
+function onWhiteFeedback(value: WhiteReport): void {
+  const grid = whiteGrid;
+  if (grid === null) return;
+  whiteGrid = null;
+  const buttons = dom.whiteFeedback.querySelectorAll<HTMLButtonElement>('button.wb');
+  for (let i = 0; i < buttons.length; i++) buttons[i].disabled = true;
+  dom.whiteNote.textContent = 'learning…';
+
+  // No grid to build this time, so this is milliseconds rather than seconds -
+  // but it still yields, so the disabled state paints before the arithmetic.
+  window.setTimeout(() => {
+    recordWhite(calib, grid, machine.cookTime_s, value);
+    saveCalibration(calib);
+    for (let i = 0; i < buttons.length; i++) buttons[i].disabled = false;
+    dom.whiteFeedback.hidden = true;
     renderCalibNote();
   }, 30);
 }
@@ -895,6 +941,7 @@ function reset(): void {
   stopTicking();
   releaseScreen();
   feedbackGiven = false;
+  whiteGrid = null;
   restored = false;
   ticket = null;
   machine = idleMachine(settings.cooling);
@@ -1047,6 +1094,13 @@ export function boot(): void {
     fbButtons[i].addEventListener('click', () => {
       const raw = Number(fbButtons[i].dataset['fb']);
       onFeedback((raw === -1 ? -1 : raw === 1 ? 1 : 0) as Feedback);
+    });
+  }
+
+  const whiteButtons = dom.whiteFeedback.querySelectorAll<HTMLButtonElement>('button.wb');
+  for (let i = 0; i < whiteButtons.length; i++) {
+    whiteButtons[i].addEventListener('click', () => {
+      onWhiteFeedback(whiteButtons[i].dataset['white'] === 'runny' ? 'runny' : 'set');
     });
   }
 

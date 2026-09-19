@@ -62,7 +62,7 @@ final class Cook {
         /// The egg and the pan this cook was run with.
         ///
         /// These used to be read off the kitchen at the moment the user
-        /// answered "How was it?" - so the time to boil came from the blended
+        /// answered how the egg was - so the time to boil came from the blended
         /// memory rather than from THIS cook's measured ramp, and the dose grid
         /// the posterior was updated against described a pan that had never
         /// cooked this egg. Frozen here, and updated only when the ramp is

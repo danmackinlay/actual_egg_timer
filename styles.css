@@ -412,21 +412,21 @@ body[data-phase="PULL"] #readout { animation: flash 1s steps(2, end) infinite; }
 }
 
 /* ---- calibration feedback, shown only when the egg is finished ---- */
-#feedback { margin-top: 10px; }
-#feedbackAsk {
+#feedback, #whiteFeedback { margin-top: 10px; }
+#feedbackAsk, #whiteAsk {
   margin: 0 0 8px;
   text-align: center;
   font-size: 0.9375rem;
   color: var(--dim);
 }
-#feedback .seg { display: flex; gap: 8px; }
-button.fb {
+#feedback .seg, #whiteFeedback .seg { display: flex; gap: 8px; }
+button.fb, button.wb {
   min-height: 52px;
   font-size: 1rem;
   border-radius: 12px;
 }
-button.fb[disabled] { opacity: 0.5; }
-#calibNote { text-align: center; margin: 8px 0 0; min-height: 1.1em; }
+button.fb[disabled], button.wb[disabled] { opacity: 0.5; }
+#calibNote, #whiteNote { text-align: center; margin: 8px 0 0; min-height: 1.1em; }
 
 /* ------------------------------------------------- what it has learned */
 

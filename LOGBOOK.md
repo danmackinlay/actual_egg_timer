@@ -456,3 +456,103 @@ split fell out: the estimate went to `EggTimerCore`, the sentences went to
 `ios/App/SousVide.swift`, and nothing had to be untangled to make that happen.
 The modules that were expensive to port were the ones that had not been written
 that way in the first place.
+---
+
+## The white gets a voice (19 September 2026, issue #1)
+
+Feedback used to be attributed entirely to the yolk. The white dose surface was
+computed for every grid cell, stored, and never read. The first real egg cooked
+on the phone is what made it urgent: aimed at soft, the WHITE came out runny, and
+"too soft" - the honest answer - moved `alpha` and the taste offset along the
+yolk axis, which is the wrong axis.
+
+### What the numbers say about the channel, measured rather than assumed
+
+The claim the change rests on is that the white is a second observable and not a
+restatement of the yolk. Measured on a 68 g egg, hot start, ice bath, soft:
+
+| | |
+|---|---|
+| d log(yolk dose) over ±10% alpha | 1.633 decades |
+| d log(white dose), same | 1.054 decades |
+| ratio | **0.65** |
+
+The white responds two thirds as strongly, at a different radius, so the two
+likelihood ridges are not parallel and the pair says something neither says
+alone. `test/infer.test.ts` holds that ratio under 0.85.
+
+Where the second question actually appears, over slider positions (68 g from the
+fridge, into boiling water, ice bath, against the prior):
+
+| level | 0.00 | 0.10 | 0.22 | 0.30 | 0.41 | 0.62 | 1.00 |
+|---|---|---|---|---|---|---|---|
+| P(white runny) | 0.45 | 0.28 | 0.13 | 0.07 | 0.02 | 0.00 | 0.00 |
+| asked? | yes | yes | yes | no | no | no | no |
+
+So the default path - jammy - stays one tap, and the question appears exactly in
+the regime where the owner's real egg went wrong. That is not a tuned threshold:
+when every particle predicts the same answer, every weight is multiplied by the
+same factor and normalising restores the posterior unchanged, so a unanimous
+model would learn nothing from either answer. The test executes that sentence
+rather than asserting it.
+
+### Verified by driving, not by reading
+
+- **Web**, with `Date.now` overridden to run fast: a soft cook (hot start, ice,
+  level 0.10, 6:33) driven COOKING → PULL → DONE; "Too soft" folded, the second
+  question appeared, "Still runny" moved the weighted mean alpha 1.56896e-7 →
+  1.54191e-7 - down, which is the correct direction for a white that had not set -
+  while `eggsLogged` stayed at 1, because the white is a second observation and
+  not a second egg. A second cook at the default jammy position was one tap: no
+  white question, spread 10% → 6%. No console errors.
+- **iOS**, a real cook driven end to end in the iPhone 17 simulator — 40 g, room
+  temperature, into boiling water, ice bath, runny — against numbers computed in
+  Node beforehand. It also survived being rebuilt and reinstalled mid-cook, which
+  is how the second question got fixed without restarting the egg.
+
+| | app | TypeScript |
+|---|---|---|
+| suggested | 3:42, 57 / 75 °C | 221.9 s, 57.30 / 75.05 °C |
+| was the white asked about? | yes | P(runny) = 0.792, ask = true |
+| mean alpha after "too soft" then "still runny" | 1.547846e-7 | 1.5478456e-7 |
+| reported spread | ±10% | 9.73% |
+| eggs logged | 1 | — |
+
+  Two answers, one egg: the count does not move for the white, and the stored
+  record is `calibration.v2` with 1000 particles.
+
+- **A stored v1 posterior is dropped, on both apps.** Seeded by hand into
+  localStorage and into the simulator's `UserDefaults`; both loaders removed it
+  and fell back to the literature values, which is what the fresh prior's mean is.
+
+### Two judgement calls, stated because nobody else settled them
+
+1. **The channel is deliberately weak**: 0.65 / 0.35 against the yolk's
+   0.8 / 0.1, a likelihood ratio of 1.9 against 8. The white sits nearer the
+   surface, so it is the more sensitive of the two to the `H_EFF` error README
+   §11.2 records as known-high, and a white answer partly measures that error and
+   blames `alpha`. The discount bounds how fast that can happen. It is a
+   judgement, not a measurement.
+2. **The band is 0.26 decades**, which is `FEEDBACK_BAND` converted from Z_YOLK
+   to Z_WHITE - the same 1.3 °C of peak temperature rather than the same number
+   of decades. "Runny or set" is a sharper distinction than a yolk gradation,
+   which argues narrower; `WHITE_DOSE_TARGET` is calibrated rather than measured,
+   which argues wider. They were left to cancel rather than tuned to a taste.
+
+Both numbers want real eggs, and until then they are the softest part of the
+change. Whether the channel actually breaks the `alpha`/taste confound is
+likewise unanswered: it is the reason for the channel, not a result.
+
+### One branch that could not be reached honestly
+
+`updateWhite` resamples when the particle set degenerates, like every other fold -
+but the channel is too weak to degenerate a healthy set on its own: the largest
+fall in effective sample size one binary 0.65 / 0.35 answer can cause is about 6%,
+and 64 particles never reach the n/2 threshold from a uniform start. No sequence
+of white answers would have executed that branch, so `fixtures/calibration.json`
+carries a `whiteResample` case whose INPUT posterior is synthetic - the real
+particles from the end of the replay, with their weights sharpened until the
+effective sample size sits just above the threshold. Written out in full so the
+port reads the same starting point rather than reproducing the sharpening. The
+alternative was shipping the branch in two languages and executing it in neither,
+which is the failure this file exists to catch.
