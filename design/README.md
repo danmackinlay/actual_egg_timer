@@ -10,6 +10,41 @@ Run `sh design/build-icons.sh` from the repository root to regenerate all of
 it. That needs ImageMagick (`brew install imagemagick`); the old `sips` recipe
 could not do the masking this artwork turns out to need.
 
+## Where the master came from
+
+Generated with Gemini, not drawn and not scanned. Recorded here because the
+whole appeal of the thing is that it looks like a plate from a 17th-century
+atlas, and a reader who assumes it *is* one would be wrong. The prompt:
+
+> A isotherm map of a hot egg, cold in the middle hot on the outside, in
+> section. Except it's drawn in the style of a 17th century map. The ovoid of
+> the egg is a continent, the isotherms look like elevation contours. the egg
+> fills most of the frame. It is square. Line density is not *too* high, as
+> this will become an app icon
+
+Two things about that are worth knowing before regenerating.
+
+**The last clause did not work.** Asking for restrained line density still
+produced hand-lettered contour labels and a "ZONA CALIDISSIMA" running across
+the warm band — which is why `build-icons.sh` has to strip them
+morphologically rather than simply resizing. If you re-roll this, expect to
+keep that step regardless of what the prompt asks for. Asking an image model
+for an app icon gets you a picture of one.
+
+**The first generation's isotherms were wrong.** They read 100, 80, 60, 40
+inward and then 20, 120, 120, 140, 140 below the centre: a 20 °C ring outside
+the 40 °C one, two values used twice, and 140 °C inside a boiled egg. The icons
+never showed it, because the lettering comes off — but `social.jpg` is the
+artwork whole, and it is the link preview for an app whose pitch is that it
+computes exactly these contours from conduction and denaturation kinetics.
+A second pass fixed it: 100, 90, 80, 70 inward to a 20 °C nucleus, symmetric,
+monotonic, nothing above the boiling water that is the outer boundary
+condition.
+
+The lesson generalises past this file. A generated image will happily put
+plausible-looking numbers on a diagram, and the more convincing the drawing the
+less anybody checks them. Read the labels.
+
 ## Why it is not just a downscale
 
 Two things in the master do not survive being made small, and the script exists
