@@ -17,7 +17,21 @@ struct Calibration: Sendable {
 }
 
 enum Calibrations {
-    private static let key = "calibration.v1"
+    private static let key = "calibration.v2"
+
+    /// The posterior this version replaces, deleted rather than read.
+    ///
+    /// The shape did not change when the white channel landed - no particle
+    /// gained a field - so a v1 record could have been loaded verbatim. It is
+    /// dropped anyway, because of what is IN it: every observation in a v1
+    /// posterior was folded under a likelihood that attributed the white's
+    /// behaviour to the yolk, and at least one real one is known to have been a
+    /// white complaint recorded on the yolk axis. Carrying that forward would
+    /// import a miscoded observation into a model that now has somewhere correct
+    /// to put it. A fresh prior is the literature values, which is a worse
+    /// starting point than a good posterior and a better one than a confidently
+    /// wrong posterior. The web app drops its own the same way.
+    private static let supersededKey = "calibration.v1"
 
     static func fresh() -> Calibration {
         Calibration(
@@ -39,6 +53,17 @@ enum Calibrations {
         c.eggsLogged == 0 ? 0 : 100 * posteriorAlphaRelSd(c.posterior)
     }
 
+    /// What folding one yolk answer leaves behind: the surface it was scored
+    /// against, and whether the white is worth a second question.
+    struct Outcome: Sendable {
+        var calibration: Calibration
+        /// Kept so the white answer can be folded without paying for the grid a
+        /// second time. Not persisted, so a relaunch drops a pending white
+        /// question rather than rebuilding a second of arithmetic to ask again.
+        var grid: DoseGrid
+        var askWhite: Bool
+    }
+
     /// Fold in one outcome. Builds the dose surface for the cook that was
     /// actually performed, then reweights.
     ///
@@ -48,7 +73,7 @@ enum Calibrations {
     nonisolated static func recordOutcome(
         _ c: Calibration, egg: Egg, setup: CookSetup,
         cookTimeS: Double, logNominalTarget: Double, feedback: Feedback
-    ) -> Calibration {
+    ) -> Outcome {
         let current = params(c)
         // The grid's extent decides what the filter can see, and therefore what
         // the posterior becomes. It is core policy precisely so that the web
@@ -64,7 +89,28 @@ enum Calibrations {
             &posterior, grid: grid,
             cookTimeS: cookTimeS, logNominalTarget: logNominalTarget, feedback: feedback
         )
-        return Calibration(posterior: posterior, eggsLogged: c.eggsLogged + 1)
+        // Asked AFTER the fold, because the yolk answer has just moved alpha and
+        // so moved the predicted white with it: the question should be decided
+        // against everything currently known. Which of the two it is asked
+        // against does not affect whether the selection is ignorable - both are
+        // functions of data already in hand - but the later one is better
+        // informed. The web app reads it at the same point.
+        return Outcome(
+            calibration: Calibration(posterior: posterior, eggsLogged: c.eggsLogged + 1),
+            grid: grid,
+            askWhite: shouldAskAboutWhite(posterior, grid, cookTimeS)
+        )
+    }
+
+    /// Fold in the answer about the white of the same egg, against the surface
+    /// the yolk answer was already scored on. The white is not a second egg, so
+    /// `eggsLogged` does not move.
+    nonisolated static func recordWhite(
+        _ c: Calibration, grid: DoseGrid, cookTimeS: Double, white: WhiteReport
+    ) -> Calibration {
+        var posterior = c.posterior
+        updateWhite(&posterior, grid: grid, cookTimeS: cookTimeS, white: white)
+        return Calibration(posterior: posterior, eggsLogged: c.eggsLogged)
     }
 
     // MARK: - Persistence
@@ -86,7 +132,7 @@ enum Calibrations {
     static func save(_ c: Calibration) {
         let p = c.posterior.particles
         var stored = Stored(
-            v: 1, n: c.eggsLogged, rng: c.posterior.rng,
+            v: 2, n: c.eggsLogged, rng: c.posterior.rng,
             a: [], o: [], t: [], w: []
         )
         stored.a.reserveCapacity(p.count)
@@ -105,10 +151,13 @@ enum Calibrations {
     /// version, or damaged. A half-valid posterior is worse than none: a single
     /// NaN weight would poison every solve from then on.
     static func load() -> Calibration {
+        // Whatever a previous version left behind goes now, rather than sitting
+        // in UserDefaults being neither read nor collected.
+        UserDefaults.standard.removeObject(forKey: supersededKey)
         guard
             let data = UserDefaults.standard.data(forKey: key),
             let s = try? JSONDecoder().decode(Stored.self, from: data),
-            s.v == 1, s.n >= 0, !s.a.isEmpty,
+            s.v == 2, s.n >= 0, !s.a.isEmpty,
             s.o.count == s.a.count, s.t.count == s.a.count, s.w.count == s.a.count,
             s.a.allSatisfy({ $0.isFinite && $0 > 0 }),
             s.o.allSatisfy(\.isFinite),
@@ -129,7 +178,7 @@ enum Calibrations {
         )
     }
 
-    /// Clear the posterior. A run of wrong answers to "How was it?" is
+    /// Clear the posterior. A run of wrong answers about how an egg was is
     /// otherwise undone only by deleting the app, and the honest thing is to
     /// let someone take it back.
     static func reset() {

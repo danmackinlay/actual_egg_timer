@@ -19,22 +19,64 @@
  * uncertainty lives in the parameters. The spread across particles is the
  * posterior over egg temperature.
  *
+ * TWO CHANNELS. The yolk answer ("too soft / just right / too hard") is scored
+ * against the yolk dose the user asked for; the white answer ("runny / set") is
+ * scored against the fixed WHITE_DOSE_TARGET. They are two observations of two
+ * different quantities, sampled at two different radii - the yolk at the centre,
+ * the white at YOLK_RADIUS_FRAC - so they respond differently to alpha and are
+ * not redundant. The white was computed for every grid cell and thrown away
+ * until September 2026; see the caveat below for what it costs to read it.
+ *
  * IDENTIFIABILITY - stated honestly:
  *  - Ordinal feedback is worth 1-2 bits per egg. The posterior on alpha
  *    plateaus around 3%: repeated "just right" answers are consistent with a
  *    range, so learning correctly stops rather than falsely converging.
- *  - alpha and the taste offset are confounded at a fixed protocol. Separating
- *    them needs variation - different egg sizes or cooling methods.
+ *  - alpha and the taste offset are confounded at a fixed protocol IN THE YOLK
+ *    CHANNEL: the offset is free to absorb any shift in alpha, so only the
+ *    combination is identified. Separating them needs variation - different egg
+ *    sizes or cooling methods - or an observable the offset cannot absorb.
+ *  - The white channel is meant to be that observable. `logDoseOffset` is
+ *    defined on the yolk axis only, so scoring the white against its fixed
+ *    target constrains alpha with no free parameter in the way. Whether this
+ *    breaks the confound in practice is an empirical question that wants real
+ *    eggs: it is the reason for the channel, not a measured result.
+ *  - CAVEAT, and it is not small. The white is sampled much nearer the surface
+ *    than the yolk centre, so it is the more sensitive of the two to error in
+ *    H_EFF - which README 11.2 records as about twice the only published
+ *    measurement. A white answer therefore partly measures that error and
+ *    attributes it to alpha. The channel is down-weighted for exactly this
+ *    reason (see P_WHITE_AGREE); down-weighting bounds the damage rather than
+ *    removing it.
  *  - tauAirScale is only identifiable if the user actually varies the cooling
  *    protocol. Otherwise it stays at its prior, which is the correct behaviour.
  */
 
 import { ALPHA_DEFAULT, ALPHA_REL_SD } from './constants.js';
-import { ModelParams } from './solve.js';
-import { DoseGrid, lookupLogYolkDose, cookTimeForLogYolkDose } from './doseGrid.js';
+import { ModelParams, WHITE_DOSE_TARGET } from './solve.js';
+import {
+  DoseGrid, lookupLogYolkDose, lookupLogWhiteDose, cookTimeForLogYolkDose,
+} from './doseGrid.js';
 
-/** What the user reports after eating the egg. */
+/** What the user reports about the YOLK after eating the egg. */
 export type Feedback = -1 | 0 | 1; // too soft | just right | too hard
+
+/**
+ * What the user reports about the WHITE, when asked.
+ *
+ * Two answers and not three, because the white's criterion is a THRESHOLD and
+ * not a band: WHITE_DOSE_TARGET is the dose at which the innermost white has
+ * set, and the model carries no ceiling above which a white is overdone. A third
+ * "rubbery" answer would need such a ceiling, and inventing one would put an
+ * unmeasured constant into the likelihood, so the question stops at the
+ * distinction the model can actually score.
+ *
+ * There is deliberately NO per-user offset on this channel, and that is the
+ * point of it. "Runny or set" is a statement about the egg rather than about
+ * anyone's taste, so the white is scored against the fixed target with no free
+ * parameter to absorb the discrepancy - which is what lets it say something
+ * about alpha that the yolk channel cannot.
+ */
+export type WhiteReport = 'runny' | 'set';
 
 export interface Particle {
   alpha_m2s: number;
@@ -61,6 +103,49 @@ export const FEEDBACK_BAND = 0.28;
  *  a single surprising report from killing an otherwise good particle. */
 const P_AGREE = 0.8;
 const P_DISAGREE = 0.1;
+
+/** Half-width of the zone around the white's threshold in which either answer
+ *  is plausible, log10 dose units.
+ *
+ *  This is the same 1.3 C of peak temperature as FEEDBACK_BAND, converted
+ *  through Z_WHITE instead of Z_YOLK: 0.28 * 4.65 / 4.97 = 0.262. Matched in
+ *  degrees rather than in decades, because degrees are what a person is judging.
+ *  Two effects argue in opposite directions about tuning it further - "runny or
+ *  set" is a sharper distinction than a yolk doneness gradation, which would
+ *  narrow it, while WHITE_DOSE_TARGET's own position is calibrated rather than
+ *  measured, which would widen it - so it is left at the temperature-matched
+ *  value rather than nudged to a preference. */
+export const WHITE_FEEDBACK_BAND = 0.26;
+
+/** log10 of the dose at which the innermost white is set. The white has one
+ *  target for everybody, unlike the yolk, whose target moves with the slider and
+ *  then again with the user's own taste. */
+const LOG_WHITE_TARGET = Math.log10(WHITE_DOSE_TARGET);
+
+/** The white answer is binary, so these are a proper pair over the two answers
+ *  rather than the yolk's three-way split.
+ *
+ *  The contrast is deliberately far weaker than the yolk's 0.8 / 0.1: a
+ *  likelihood ratio of 1.9 against the yolk's 8, so one white answer carries
+ *  about a third of the evidence of one yolk answer. That discount is the H_EFF
+ *  caveat in the header made arithmetic - the white is the channel more likely
+ *  to be measuring the wrong thing, so it is allowed to move the posterior more
+ *  slowly. The size of the discount is a judgement, not a measurement, and it is
+ *  the number in this file most likely to want revisiting once real eggs have
+ *  gone through both channels. */
+const P_WHITE_AGREE = 0.65;
+const P_WHITE_DISAGREE = 0.35;
+/** A particle whose predicted white sits inside the band predicts neither
+ *  answer, and scores the average of the two - exactly the likelihood of a
+ *  particle that calls the answer a coin flip. So hedging cannot beat being
+ *  right and cannot be beaten by being wrong. Scoring it as agreement instead
+ *  would make the filter quietly prefer particles sitting on the boundary, which
+ *  is a preference nobody has a reason to hold. */
+const P_WHITE_EITHER = 0.5;
+
+/** How much doubt is worth a second question. Below this the model is already
+ *  sure enough that the answer cannot move it; see `shouldAskAboutWhite`. */
+export const WHITE_ASK_MIN_P = 0.1;
 
 const PRIOR_OFFSET_SD = 0.22;
 /** Deliberately wide: this is the least-verified part of the model. */
@@ -112,7 +197,7 @@ export function createPrior(count: number, seed: number): Posterior {
 
 /* ---- update ---- */
 
-/** What this particle predicts the user would have said. */
+/** What this particle predicts the user would have said about the YOLK. */
 function predictedFeedback(
   grid: DoseGrid, p: Particle, cookTime_s: number, logNominalTarget: number,
 ): Feedback {
@@ -130,9 +215,13 @@ export function effectiveSampleSize(post: Posterior): number {
 }
 
 /**
- * Fold in one observation: the user cooked for `cookTime_s` aiming at a
+ * Fold in one YOLK observation: the user cooked for `cookTime_s` aiming at a
  * nominal yolk dose of 10^`logNominalTarget`, and reported `feedback`.
  * Reweights, then resamples with jitter if the particle set has degenerated.
+ *
+ * What the user said about the white, if they were asked, goes in separately
+ * through `updateWhite` - it is scored against a different target at a different
+ * radius, and it arrives at a different moment.
  */
 export function updatePosterior(
   post: Posterior, grid: DoseGrid,
@@ -153,6 +242,100 @@ export function updatePosterior(
   }
   for (let i = 0; i < n; i++) post.weights[i] /= total;
   if (effectiveSampleSize(post) < n / 2.0) resample(post);
+}
+
+/* ---- the white channel ---- */
+
+/** What this particle predicts the user would have said about the WHITE, or
+ *  `either` when its predicted dose sits close enough to the threshold that both
+ *  answers are consistent with it. */
+type WhitePrediction = 'runny' | 'set' | 'either';
+
+function predictedWhite(grid: DoseGrid, p: Particle, cookTime_s: number): WhitePrediction {
+  const delivered = lookupLogWhiteDose(grid, p.alpha_m2s, cookTime_s);
+  if (delivered < LOG_WHITE_TARGET - WHITE_FEEDBACK_BAND) return 'runny';
+  if (delivered > LOG_WHITE_TARGET + WHITE_FEEDBACK_BAND) return 'set';
+  return 'either';
+}
+
+/**
+ * Fold in one answer about the white of the egg cooked for `cookTime_s`.
+ *
+ * A second fold rather than a sixth argument to `updatePosterior`, because the
+ * two answers arrive at two different moments: the yolk answer is folded the
+ * instant it is given, and the white is only asked about afterwards, once the
+ * model has decided the answer would move something. Folding them jointly would
+ * mean holding the yolk answer unrecorded until the second tap, and then an egg
+ * abandoned between the two taps would teach nothing at all.
+ *
+ * Statistically they are one observation each of two different quantities, so
+ * folding them in sequence multiplies the same two likelihoods; the only
+ * difference is that a resample may fall between them, which is what this filter
+ * does between eggs in any case.
+ */
+export function updateWhite(
+  post: Posterior, grid: DoseGrid, cookTime_s: number, white: WhiteReport,
+): void {
+  const n = post.particles.length;
+  let total = 0.0;
+  for (let i = 0; i < n; i++) {
+    const pred = predictedWhite(grid, post.particles[i], cookTime_s);
+    const p = pred === 'either' ? P_WHITE_EITHER
+      : pred === white ? P_WHITE_AGREE : P_WHITE_DISAGREE;
+    post.weights[i] *= p;
+    total += post.weights[i];
+  }
+  if (total <= 0.0) {
+    // Cannot happen from this channel alone, since the smallest factor above is
+    // 0.35 - but the guard matches `updatePosterior`, because what must never
+    // happen here is a NaN weight reaching a solve.
+    for (let i = 0; i < n; i++) post.weights[i] = 1.0 / n;
+    return;
+  }
+  for (let i = 0; i < n; i++) post.weights[i] /= total;
+  if (effectiveSampleSize(post) < n / 2.0) resample(post);
+}
+
+/** Posterior predictive probability that this cook's white came out runny. A
+ *  particle inside the band counts a half, which is the same coin flip that
+ *  P_WHITE_EITHER scores it at. */
+export function whiteRunnyProbability(
+  post: Posterior, grid: DoseGrid, cookTime_s: number,
+): number {
+  let p = 0.0;
+  let total = 0.0;
+  for (let i = 0; i < post.particles.length; i++) {
+    const pred = predictedWhite(grid, post.particles[i], cookTime_s);
+    p += post.weights[i] * (pred === 'runny' ? 1.0 : pred === 'either' ? 0.5 : 0.0);
+    total += post.weights[i];
+  }
+  return total <= 0.0 ? 0.0 : p / total;
+}
+
+/**
+ * Whether asking about the white can teach anything about this egg.
+ *
+ * The question is worth asking exactly when the particles DISAGREE about the
+ * answer, and that is not a heuristic. If every particle predicts the same
+ * thing, then whichever answer comes back multiplies every weight by the same
+ * factor, and normalising restores the posterior unchanged: a unanimous model
+ * learns nothing from either answer, so asking would spend a tap for nothing.
+ * Two taps at breakfast is a real cost, so the second question appears only when
+ * there is something behind it.
+ *
+ * THIS DOES NOT BIAS THE POSTERIOR, which is the non-obvious part and the reason
+ * it is spelled out here. The decision reads only the posterior, the grid and the
+ * cook time - all of them known before the answer exists - so the probability of
+ * having asked is the same for every particle and cancels in the normalisation.
+ * Deciding from the answer itself, or from anything that depends on it, would
+ * not be safe: it would make the likelihood conditional on the selection, and
+ * the filter has no term for that.
+ */
+export function shouldAskAboutWhite(
+  post: Posterior, grid: DoseGrid, cookTime_s: number,
+): boolean {
+  const p = whiteRunnyProbability(post, grid, cookTime_s);
+  return p >= WHITE_ASK_MIN_P && p <= 1.0 - WHITE_ASK_MIN_P;
 }
 
 /** Systematic resampling - lower variance than multinomial and O(n) - followed

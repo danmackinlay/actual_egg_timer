@@ -5,7 +5,7 @@ For the science, see `README.md`. For what was verified and what it cost to find
 out, see `LOGBOOK.md`. This file is for whoever picks the build back up.
 
 **Status: both apps complete and learning. The PHYSICS is now the open part.**
-70 TypeScript tests, 27/27 validation checks and 39 Swift conformance tests pass.
+80 TypeScript tests, 27/27 validation checks and 41 Swift conformance tests pass.
 The web app and the iOS app carry the same model, the same refusals and the same
 particle filter; the Swift port is complete apart from the sous-vide joke. The
 iOS app runs signed on a real phone, with a time-sensitive alarm and a Live
@@ -157,8 +157,11 @@ sousVideEstimate(radius_m, alpha_m2s, bath_C, yolkDose_min, whiteDose_min): Sous
 
 // doseGrid.ts / infer.ts  (calibration; see Phase C)
 buildDoseGrid(...) / lookupLogYolkDose / lookupLogWhiteDose / cookTimeForLogYolkDose
-type Feedback = -1 | 0 | 1
+type Feedback = -1 | 0 | 1                 // the YOLK answer
+type WhiteReport = 'runny' | 'set'         // the WHITE answer, no per-user offset
 createPrior(count, seed) / updatePosterior(post, grid, cookTime_s, logTarget, feedback)
+updateWhite(post, grid, cookTime_s, white) // a second fold, same egg, second channel
+shouldAskAboutWhite(post, grid, cookTime_s) / whiteRunnyProbability(...)
 posteriorParams / posteriorMeanOffset / posteriorAlphaRelSd / predictCookTime
 
 // sphere.ts (mostly internal; exported for tests)
@@ -317,11 +320,15 @@ do; what is missing is contact with reality.
 4. **Derive the cooling countdown** from the solver's `peakYolkTime_s` instead of
    asserting three minutes (README §11.5). It changes times on screen, so it
    wants a real egg behind it rather than a refactor.
-5. **Decide whether the white gets its own question** (README §11.5, issue #1).
-   Not a refactor: it changes what the filter learns, and it may break the
-   `alpha`/taste confound from a single protocol. The white surface is already
-   built and discarded, so the modelling work is smaller than it looks; the open
-   part is the UX — always ask, or ask only when the white is near its boundary.
+5. **Judge the white channel against real eggs** (README §11.5, issue #1). The
+   channel is BUILT: the white now enters the likelihood, scored against the
+   fixed `WHITE_DOSE_TARGET` at `YOLK_RADIUS_FRAC`, and the second question is
+   asked only when the model cannot already guess the answer — which in practice
+   is a soft egg and never a jammy one. What is not settled is arithmetic nobody
+   has checked against a kitchen: the channel's weight (a likelihood ratio of 1.9
+   against the yolk's 8, chosen to bound the `H_EFF` error it partly measures) and
+   the 0.26-decade band around the threshold. Whether it actually breaks the
+   `alpha`/taste confound is an empirical question, and answering it needs eggs.
 6. **Show `predictCookTime`'s interval** somewhere, or stop claiming in its
    docstring that it is what makes calibration legible (README §11.5). The grid
    is already built and in hand immediately after a feedback fold, so the

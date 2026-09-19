@@ -363,14 +363,18 @@ struct ContentView: View {
             // disappears the moment it is used leaves no way to tell whether
             // anything was recorded.
             if cook.feedbackGiven {
-                Text(kitchen.learning ? "learning…" : "Thanks — it has adjusted.")
-                    .font(.subheadline)
-                Text(kitchen.learning ? " " : tunedLine)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .monospacedDigit()
+                if kitchen.whiteQuestion != nil {
+                    whiteFeedback
+                } else {
+                    Text(kitchen.learning ? "learning…" : "Thanks — it has adjusted.")
+                        .font(.subheadline)
+                    Text(kitchen.learning ? " " : tunedLine)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .monospacedDigit()
+                }
             } else {
-                Text("How was it?")
+                Text("How was the yolk?")
                     .font(.headline)
 
                 HStack(spacing: 10) {
@@ -389,6 +393,46 @@ struct ContentView: View {
         .padding(.horizontal, 12)
         .frame(maxWidth: .infinity)
         .background(.quaternary.opacity(0.25), in: RoundedRectangle(cornerRadius: 18))
+    }
+
+    /// The second question, asked only when the model is genuinely unsure how the
+    /// white came out - which is a soft egg, and almost never a firm one. The
+    /// decision lives in `EggTimerCore.shouldAskAboutWhite` so that this app and
+    /// the web app ask about the same eggs; only the words are here.
+    ///
+    /// It is worth asking because the white is the one thing the user can judge
+    /// that nobody's taste can explain away: the yolk answer is scored against
+    /// what THEY asked for, while "runny or set" is scored against a fixed target,
+    /// so it is the answer that says something about the egg rather than the eater.
+    @ViewBuilder
+    private var whiteFeedback: some View {
+        Text("And the white — was it runny?")
+            .font(.headline)
+            .multilineTextAlignment(.center)
+
+        HStack(spacing: 10) {
+            whiteButton("Still runny", .runny)
+            whiteButton("Set right through", .set)
+        }
+
+        Text(kitchen.learning
+            ? "learning…"
+            : "The white sets from the outside in, so this says something about your eggs that the yolk cannot.")
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .multilineTextAlignment(.center)
+    }
+
+    private func whiteButton(_ label: String, _ value: WhiteReport) -> some View {
+        Button {
+            Task { await kitchen.recordWhite(value) }
+        } label: {
+            Text(label)
+                .font(.subheadline)
+                .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(.bordered)
+        .disabled(kitchen.learning)
     }
 
     private func feedbackButton(_ label: String, _ value: Feedback) -> some View {

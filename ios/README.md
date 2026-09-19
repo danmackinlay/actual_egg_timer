@@ -82,8 +82,8 @@ does not crash or produce a NaN: it draws a different but entirely plausible
 prior, and the two implementations quietly stop being the same model. Summary
 statistics would not catch it either — any seed gives a sensible mean and
 spread. So `fixtures/calibration.json` carries **every particle and every
-weight**, before the first observation and after each of seven, and the Swift
-compares all of them.
+weight**, before the first observation and after each of eleven — and after each
+white answer folded in between them — and the Swift compares all of them.
 
 The RNG is xorshift32 written in terms of JavaScript's integer operators, where
 `<<` and `^` coerce to a SIGNED 32-bit int and `>>>` is the unsigned right
@@ -159,10 +159,20 @@ was already known, so one odd run — lid off, pan half empty — does not domin
 
 ### It asks how the egg was
 
-After the cook the app asks one question, with three answers: too soft, just
+After the cook the app asks how the YOLK was, with three answers: too soft, just
 right, too hard. That is not a poor interface for a rating — it is the whole
 measurement. Ordinal feedback is worth one to two bits per egg, and asking for a
 number out of ten would collect precision that is not there.
+
+Sometimes it then asks a second question — whether the white was still runny —
+and only when the model cannot already guess the answer, which in practice means
+a soft egg and never a jammy one. `shouldAskAboutWhite` decides, from the
+posterior and the surface alone, so the two apps ask about the same eggs and
+choosing to ask cannot bias what is learned. The white is scored against a fixed
+target with no per-user offset in front of it, which is why it says something
+about your eggs rather than your taste; root README §11.5 records what that costs,
+because the white sits nearer the surface and is the more exposed of the two to
+the `H_EFF` error.
 
 The answer goes into the particle filter. Building the dose surface for the cook
 that was actually performed costs about a second of arithmetic, so it runs in a
@@ -177,9 +187,9 @@ goes 4:07 to 4:29 on the first "too soft", and the posterior's spread on alpha
 is reported next to it. That spread plateaus near 3% rather than collapsing,
 which is the honest answer — repeated agreement is consistent with a range.
 
-There is a "Forget what it learned" button, which the web app still lacks
-(README §11.5). The posterior recovers on its own after a few more eggs, so this
-is for people who would rather not wait.
+There is a "Forget what it learned" button, and the web app has one too now. The
+posterior recovers on its own after a few more eggs, so this is for people who
+would rather not wait.
 
 The taste offset the filter learns is deliberately NOT applied to the solve. It
 is a nuisance parameter: it absorbs the difference between the user's palate and

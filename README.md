@@ -768,9 +768,16 @@ harder than you asked for. Ordinal feedback is enough — you do not need a ther
 and a judgement of "too soft" is far more reliable than a guess at a temperature. Vary
 one thing at a time, and include at least a few cooks with a *different* cooling step if
 you want `tauAirScale` to mean anything. The app does this for you: after every cook
-it asks "How was it?", and the answer goes into a particle filter (`src/core/infer.ts`)
-whose posterior mean is what the next solve uses. There is no reset button; clearing
-the site's storage starts the prior again. The manual equivalent, if you are working
+it asks how the yolk was, and the answer goes into a particle filter
+(`src/core/infer.ts`) whose posterior mean is what the next solve uses. On a soft egg it
+asks a second question — whether the white was still runny — and only then, because on
+anything firmer the model already knows the answer and would learn nothing from it. The
+white is the more informative of the two answers about *your eggs* rather than your
+taste, because it is scored against a fixed target with no personal offset in front of
+it; §11.5 records what that costs. Both apps have a button that forgets everything
+learned — and both discard a posterior learned under the old yolk-only model rather
+than carrying it forward, because every observation in one was folded under a
+likelihood that had nowhere to put the white. The manual equivalent, if you are working
 from the core directly, is to nudge `alpha_m2s` down if your eggs come out
 consistently underdone and up if they come out consistently overdone, by about 7% per
 half-minute of error.
@@ -1041,19 +1048,28 @@ answers are recorded here rather than deleted, because each one was a plausible 
 - **`tauAirScale` is only identifiable if you vary the cooling method.** Cook every egg
   with an ice bath and it will sit at its prior forever — which is correct behaviour, not
   a bug, but it means the carryover model never improves unless you deliberately mix.
-- **"How was it?" is attributed entirely to the yolk.** `predictedFeedback` compares
-  only the delivered *yolk* dose against the yolk target; the white never enters the
-  likelihood. An egg whose white came out runny, reported honestly as "too soft",
-  therefore shifts `alpha` and the taste offset along the wrong axis. The white dose
-  surface is already computed and stored for every grid cell and never read, and
-  because the white is sampled at a different radius — and has no per-user offset of
-  its own — a white channel would constrain `alpha` directly, which may break the
-  confound in the next bullet without asking anyone to vary their protocol. Caveat:
-  the white sits nearer the surface, so it is more sensitive to the `H_EFF` error in
-  §11.2. See [issue #1](https://github.com/danmackinlay/actual_egg_timer/issues/1).
-- **`alpha` and the taste offset are confounded at a fixed protocol.** The *combination*
-  is identified — the suggested time converges — but the individual parameters are not.
-  Varying egg size or cooling method separates them.
+- **The white channel is new, and its weight is a judgement rather than a measurement.**
+  Feedback used to be attributed entirely to the yolk: `predictedFeedback` compared only
+  the delivered *yolk* dose against the yolk target, so an egg whose **white** came out
+  runny, reported honestly as "too soft", shifted `alpha` and the taste offset along the
+  wrong axis. It now has two channels (`src/core/infer.ts`): the yolk answer against the
+  yolk target, and a "runny / set" answer about the white against the fixed
+  `WHITE_DOSE_TARGET`, sampled at `YOLK_RADIUS_FRAC` rather than at the centre. Because
+  the taste offset lives on the yolk axis only, the white has no free parameter to absorb
+  it and therefore constrains `alpha` directly — which is the hope for the confound in
+  the next bullet. **Caveat, and it is the reason the channel is deliberately weak:** the
+  white sits nearer the surface, so it is the more sensitive of the two to the `H_EFF`
+  error in §11.2, and a white answer partly measures that error and blames `alpha`. One
+  white answer is therefore worth a likelihood ratio of 1.9 against the yolk's 8 — about
+  a third of the evidence. That discount, and the 0.26-decade band around the white's
+  threshold, are the two numbers here most likely to want revisiting once real eggs have
+  gone through both channels. Whether the channel actually breaks the confound is an
+  empirical question that has not been answered yet.
+  See [issue #1](https://github.com/danmackinlay/actual_egg_timer/issues/1).
+- **`alpha` and the taste offset are confounded at a fixed protocol** in the yolk channel.
+  The *combination* is identified — the suggested time converges — but the individual
+  parameters are not. Varying egg size or cooling method separates them, and the white
+  channel above is an attempt to separate them without asking anyone to vary anything.
 - **The cooling step is a flat three minutes** on both apps, regardless of egg size,
   cooling medium or how long the cook was. It happens to match the model's own
   `peakYolkTime_s` for an ice bath and a cold tap, which is why it has never looked
@@ -1076,11 +1092,13 @@ answers are recorded here rather than deleted, because each one was a plausible 
   agree to 1e-12 and 13 whole cooks — times, peak temperatures, doses and the
   reachability verdicts — to the same, where the measured disagreement is 7e-15. The
   calibration is pinned harder still: the fixtures carry every particle and every weight
-  of a seven-observation run, because a wrong random number generator would otherwise
+  of an eleven-observation run — both channels, each white answer folded straight after the
+  yolk answer for the same egg — because a wrong random number generator would otherwise
   produce a different but entirely plausible posterior. The iOS app carries every input
   this document describes, schedules its alarm at absolute fire dates with a
   time-sensitive interruption level, shows the countdown on the Lock Screen and in the
-  Dynamic Island, and asks "How was it?" after each egg. See `ios/README.md`.
+  Dynamic Island, and asks how the yolk was after each egg — and how the white was when
+  that answer would move something. See `ios/README.md`.
 
 ### 11.6 Sources that returned fabricated citations
 

@@ -80,6 +80,37 @@ private func doubles(_ json: [String: Any], _ key: String) -> [Double] {
     return list.map(\.doubleValue)
 }
 
+/// A whole particle set read straight out of the fixture. Needed because one case
+/// starts from a posterior the reference constructed rather than from one this
+/// implementation could redraw - see `whiteResample` in tools/fixtures.ts.
+private func posterior(from json: [String: Any], _ label: String) -> Posterior {
+    guard let rows = json["particles"] as? [[String: Any]],
+          let rng = json["rng"] as? NSNumber else {
+        fatalError("\(label): no particle set in the fixture")
+    }
+    var particles = [Particle]()
+    particles.reserveCapacity(rows.count)
+    for row in rows {
+        particles.append(Particle(
+            alphaM2s: row.num("alpha_m2s"),
+            logDoseOffset: row.num("logDoseOffset"),
+            tauAirScale: row.num("tauAirScale")
+        ))
+    }
+    return Posterior(particles: particles, weights: doubles(json, "weights"), rng: Int32(truncating: rng))
+}
+
+/// The white answer a fixture row carries, or nil when that egg was not asked
+/// about. A row with an unknown string is a fixture the port cannot read, which
+/// must fail loudly rather than quietly skip a fold.
+private func whiteReport(_ json: [String: Any], _ label: String) -> WhiteReport? {
+    guard let raw = json["white"] as? String else { return nil }
+    guard let report = WhiteReport(rawValue: raw) else {
+        fatalError("\(label): unknown white report \(raw)")
+    }
+    return report
+}
+
 @Suite("Dose grid")
 struct DoseGridConformance {
     @Test("every cell of the cached surface")
@@ -203,11 +234,16 @@ struct InferenceConformance {
         expectPosterior(post, priorJSON, "prior", grid, target)
     }
 
-    /// Replays the whole sequence. Three of these updates drive the effective
+    /// Replays the whole sequence. Several of these updates drive the effective
     /// sample size below n/2 and resample, which is the only part of the filter
     /// that touches the RNG after the prior is drawn - and the only part where
     /// the order of the particles matters.
-    @Test("every update, including the resamples")
+    ///
+    /// The white answers are replayed in the same pass, each folded straight
+    /// after the yolk answer for the same egg, because that is the order the apps
+    /// fold them in and the posterior depends on it. The ask decision is checked
+    /// where the apps read it, between the two folds.
+    @Test("every update, including the resamples and the white answers")
     func updates() {
         let c = loadCalibration()
         let grid = buildFixtureGrid(c)
@@ -226,19 +262,97 @@ struct InferenceConformance {
                 fatalError("malformed update \(i)")
             }
             let target = step.num("logNominalTarget")
+            let cookTimeS = step.num("cookTime_s")
             updatePosterior(
                 &post, grid: grid,
-                cookTimeS: step.num("cookTime_s"),
+                cookTimeS: cookTimeS,
                 logNominalTarget: target,
                 feedback: feedback
             )
             expectPosterior(post, after, "update \(i) (feedback \(raw.intValue))", grid, target)
+
+            expectClose(
+                whiteRunnyProbability(post, grid, cookTimeS), step.num("whiteRunny"),
+                "update \(i): predicted probability the white was runny"
+            )
+            #expect(
+                shouldAskAboutWhite(post, grid, cookTimeS) == (step["askWhite"] as? Bool ?? false),
+                "update \(i): whether the white is worth asking about"
+            )
+
+            guard let white = whiteReport(step, "update \(i)") else { continue }
+            guard let afterWhite = step["afterWhite"] as? [String: Any] else {
+                fatalError("update \(i) has a white answer but no posterior after it")
+            }
+            updateWhite(&post, grid: grid, cookTimeS: cookTimeS, white: white)
+            expectPosterior(post, afterWhite, "update \(i) (white \(white.rawValue))", grid, target)
         }
     }
 
-    @Test("the feedback band matches the reference")
+    /// The white fold's own resample. The channel is too weak to degenerate a
+    /// healthy particle set on its own, so this case starts from a set the
+    /// reference already sharpened - otherwise the branch would be shipped in both
+    /// implementations and executed in neither.
+    @Test("a white answer that degenerates the set resamples identically")
+    func whiteResample() {
+        let c = loadCalibration()
+        let grid = buildFixtureGrid(c)
+        guard let step = c.file["whiteResample"] as? [String: Any],
+              let before = step["before"] as? [String: Any],
+              let after = step["after"] as? [String: Any],
+              let white = whiteReport(step, "whiteResample"),
+              let updates = c.file["updates"] as? [[String: Any]],
+              let first = updates.first else {
+            fatalError("fixtures/calibration.json has no whiteResample case")
+        }
+        // The readout's predicted cook time is against the same nominal target as
+        // the rest of the file; it is recorded once, on every update.
+        let target = first.num("logNominalTarget")
+        var post = posterior(from: before, "whiteResample")
+        expectClose(effectiveSampleSize(post), before.num("ess"), "whiteResample: starting ess")
+        #expect(
+            effectiveSampleSize(post) >= Double(post.particles.count) / 2.0,
+            "the fixture is meant to START above the resample threshold"
+        )
+        let cookTimeS = step.num("cookTime_s")
+        updateWhite(&post, grid: grid, cookTimeS: cookTimeS, white: white)
+        expectPosterior(post, after, "whiteResample", grid, target)
+    }
+
+    /// When the second question is asked at all, over a sweep of cook times. This
+    /// is the one number in the calibration a user can SEE: get it wrong and an
+    /// app either asks about the white after every egg or never mentions it, and
+    /// no comparison of posteriors would notice.
+    @Test("whether the white is worth asking about, across a range of cooks")
+    func whiteAsk() {
+        let c = loadCalibration()
+        let grid = buildFixtureGrid(c)
+        guard let priorJSON = c.file["prior"] as? [String: Any],
+              let cases = c.file["whiteAsk"] as? [[String: Any]] else {
+            fatalError("fixtures/calibration.json has no whiteAsk cases")
+        }
+        for row in cases {
+            let post = createPrior(
+                count: Int(priorJSON.num("count")),
+                seed: Int32(priorJSON.num("seed"))
+            )
+            let t = row.num("cookTime_s")
+            expectClose(
+                whiteRunnyProbability(post, grid, t), row.num("whiteRunny"),
+                "whiteRunnyProbability at t = \(t)"
+            )
+            #expect(
+                shouldAskAboutWhite(post, grid, t) == (row["askWhite"] as? Bool ?? false),
+                "shouldAskAboutWhite at t = \(t)"
+            )
+        }
+    }
+
+    @Test("both feedback bands and the ask threshold match the reference")
     func band() {
         let c = loadCalibration()
         expectClose(feedbackBand, c.file.num("feedbackBand"), "FEEDBACK_BAND")
+        expectClose(whiteFeedbackBand, c.file.num("whiteFeedbackBand"), "WHITE_FEEDBACK_BAND")
+        expectClose(whiteAskMinP, c.file.num("whiteAskMinP"), "WHITE_ASK_MIN_P")
     }
 }

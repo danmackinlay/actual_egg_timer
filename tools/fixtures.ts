@@ -41,8 +41,10 @@ import {
 } from '../src/core/kinetics.js';
 import { buildDoseGrid, lookupLogYolkDose, lookupLogWhiteDose, cookTimeForLogYolkDose } from '../src/core/doseGrid.js';
 import {
-  Feedback, FEEDBACK_BAND, createPrior, updatePosterior, posteriorParams,
+  Feedback, FEEDBACK_BAND, WhiteReport, WHITE_FEEDBACK_BAND, WHITE_ASK_MIN_P,
+  createPrior, updatePosterior, updateWhite, posteriorParams,
   posteriorMeanOffset, posteriorAlphaRelSd, predictCookTime, effectiveSampleSize,
+  whiteRunnyProbability, shouldAskAboutWhite,
 } from '../src/core/infer.js';
 import {
   createSphere, stepSphere, temperatureAt, centreTemperature, meanTemperature,
@@ -327,7 +329,23 @@ const NOMINAL_TARGET = Math.log10(6.0);
 /* A sequence with a repeat, a reversal and enough agreement to drive the
  * effective sample size below n/2 and trigger a resample - which is the only
  * part of the filter that consumes the RNG after the prior. */
-const FEEDBACK_SEQUENCE: Feedback[] = [-1, -1, 0, 1, 0, -1, -1];
+const FEEDBACK_SEQUENCE: Feedback[] = [-1, 0, -1, 1, 0, -1, -1, 0, -1, 1, 1];
+
+/* What the user said about the WHITE of the same egg, folded straight after the
+ * yolk answer, or null for an egg they were not asked about.
+ *
+ * Folded here whether or not `shouldAskAboutWhite` would have asked: the two
+ * implementations must agree on the arithmetic wherever it is performed, and the
+ * decision about when to ASK is pinned separately below.
+ *
+ * The cook times were chosen to straddle the white's threshold on this surface.
+ * Around 340-380 s the particles disagree about the white; 440-500 s puts it well
+ * past setting and they are unanimous. So the sequence exercises all three
+ * predictions a particle can make - runny, set, and the band where it predicts
+ * neither - and both answers against each. */
+const WHITE_SEQUENCE: (WhiteReport | null)[] = [
+  'runny', 'set', 'runny', null, 'set', null, 'runny', 'set', null, 'set', 'runny',
+];
 
 function particleRows(post: ReturnType<typeof createPrior>) {
   return post.particles.map((p) => ({
@@ -360,15 +378,90 @@ function readout(post: ReturnType<typeof createPrior>) {
 const posterior = createPrior(PARTICLE_COUNT, PRIOR_SEED);
 const prior = readout(posterior);
 
-const COOK_TIMES_S = [420, 450, 470, 500, 480, 460, 440];
+const COOK_TIMES_S = [360, 340, 380, 500, 355, 460, 345, 370, 440, 350, 365];
 const updates = FEEDBACK_SEQUENCE.map((feedback, i) => {
   const cookTime_s = COOK_TIMES_S[i];
   updatePosterior(posterior, CALIB_GRID, cookTime_s, NOMINAL_TARGET, feedback);
+  // The ask decision is read AFTER the yolk fold, which is where both apps read
+  // it: the yolk answer has just moved alpha, and so moved the predicted white.
+  const after = readout(posterior);
+  const askWhite = shouldAskAboutWhite(posterior, CALIB_GRID, cookTime_s);
+  const whiteRunny = round(whiteRunnyProbability(posterior, CALIB_GRID, cookTime_s));
+  const white = WHITE_SEQUENCE[i];
+  if (white !== null) updateWhite(posterior, CALIB_GRID, cookTime_s, white);
   return {
     cookTime_s: cookTime_s,
     logNominalTarget: round(NOMINAL_TARGET),
     feedback: feedback,
-    after: readout(posterior),
+    after: after,
+    askWhite: askWhite,
+    whiteRunny: whiteRunny,
+    white: white,
+    afterWhite: white === null ? null : readout(posterior),
+  };
+});
+
+/* One more fold, from a deliberately degenerate particle set, so that the
+ * resample inside `updateWhite` is EXECUTED rather than merely present.
+ *
+ * It cannot be reached any other way. The white channel is weak by design, and
+ * the largest fall in effective sample size one binary 0.65 / 0.35 answer can
+ * cause is about 6% - so no sequence of white answers alone will ever take a
+ * healthy set of 64 particles below the n/2 threshold. A set that is already
+ * close to it is the only route to that branch.
+ *
+ * The input posterior is therefore synthetic: the particles are the real ones
+ * from the end of the sequence above, with their weights sharpened by a power
+ * until the effective sample size sits just over the threshold. It is written out
+ * in full, so the port reads the same starting point rather than reproducing the
+ * sharpening - the same reason the policy verdicts are built from synthetic
+ * Solutions. What is being pinned is the branch, not the road to it. */
+const WHITE_RESAMPLE_CASE = (() => {
+  const n = posterior.particles.length;
+  const base = posterior.weights.slice();
+  let exponent = 1.0;
+  let weights = base.slice();
+  for (let step = 0; step < 400; step++) {
+    exponent += 0.05;
+    let total = 0.0;
+    for (let i = 0; i < n; i++) { weights[i] = Math.pow(base[i], exponent); total += weights[i]; }
+    for (let i = 0; i < n; i++) weights[i] /= total;
+    const probe = { particles: posterior.particles, weights: weights, rng: posterior.rng };
+    // Just above the threshold, so the white answer is what pushes it under.
+    if (effectiveSampleSize(probe) < n / 2.0 + 2.0) break;
+  }
+  const before = {
+    particles: particleRows(posterior),
+    weights: weights.map(round),
+    rng: posterior.rng,
+    ess: round(effectiveSampleSize({ particles: posterior.particles, weights: weights, rng: posterior.rng })),
+  };
+  const post = {
+    particles: posterior.particles.map((p) => ({ ...p })),
+    weights: weights.slice(),
+    rng: posterior.rng,
+  };
+  const cookTime_s = 365;
+  const white: WhiteReport = 'runny';
+  updateWhite(post, CALIB_GRID, cookTime_s, white);
+  return {
+    cookTime_s: cookTime_s,
+    white: white,
+    before: before,
+    after: readout(post),
+  };
+})();
+
+/* The second question's selection rule, over a sweep of cook times on the same
+ * surface and the same prior. Cheap - no state, no RNG - and dense, because this
+ * is what decides whether a user is asked at all: a port that got it wrong would
+ * ask on every egg or on none, and no posterior comparison would notice. */
+const WHITE_ASK_CASES = [240, 270, 300, 340, 380, 420, 500, 650, 900].map((cookTime_s) => {
+  const fresh = createPrior(PARTICLE_COUNT, PRIOR_SEED);
+  return {
+    cookTime_s: cookTime_s,
+    whiteRunny: round(whiteRunnyProbability(fresh, CALIB_GRID, cookTime_s)),
+    askWhite: shouldAskAboutWhite(fresh, CALIB_GRID, cookTime_s),
   };
 });
 
@@ -407,6 +500,10 @@ const calibration = {
     cookTime_s: round(cookTimeForLogYolkDose(CALIB_GRID, c.alpha_m2s, c.logDose)),
   })),
   feedbackBand: FEEDBACK_BAND,
+  whiteFeedbackBand: WHITE_FEEDBACK_BAND,
+  whiteAskMinP: WHITE_ASK_MIN_P,
+  whiteAsk: WHITE_ASK_CASES,
+  whiteResample: WHITE_RESAMPLE_CASE,
   prior: {
     count: PARTICLE_COUNT,
     seed: PRIOR_SEED,
@@ -598,6 +695,7 @@ const counts = [
   `${scenarios.cases.length} scenarios`,
   `${calibration.grid.logYolk.length} grid cells`,
   `${calibration.updates.length} calibration updates`,
+  `${calibration.updates.filter((u) => u.white !== null).length} white folds`,
   `${policy.slider.cases.length} snap`,
   `${policy.verdict.length} verdicts`,
   `${policy.texture.length} textures`,

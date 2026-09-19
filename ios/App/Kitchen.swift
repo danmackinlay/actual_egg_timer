@@ -57,9 +57,24 @@ final class Kitchen {
     private(set) var calibration = Calibrations.fresh()
     /// True while the dose surface is being rebuilt after an outcome.
     private(set) var learning = false
+    /// The second question, when there is one: the white of the egg just eaten,
+    /// asked only when the model cannot already guess the answer. Nil the rest of
+    /// the time, which is most of the time - see `shouldAskAboutWhite`.
+    ///
+    /// Deliberately not persisted. It is a moment in a conversation rather than a
+    /// fact about the egg, and rebuilding the surface it needs would cost a second
+    /// of arithmetic to re-ask a question nobody answered.
+    private(set) var whiteQuestion: WhiteQuestion?
     /// Why the requested doneness was refused, in words, or empty. The point is
     /// to teach the constraint rather than merely to block the control.
     private(set) var refusal = ""
+
+    /// The white question and what answering it needs: the surface the yolk
+    /// answer was scored against, and the cook it describes.
+    struct WhiteQuestion: Sendable {
+        let grid: DoseGrid
+        let cookTimeS: Double
+    }
 
     private var task: Task<Void, Never>?
     /// Set while the solver is moving the slider itself, so that snapping to a
@@ -280,18 +295,50 @@ final class Kitchen {
     ) async {
         guard !learning else { return }
         learning = true
+        whiteQuestion = nil
         let current = calibration
-        let updated = await Task.detached(priority: .userInitiated) {
+        let outcome = await Task.detached(priority: .userInitiated) {
             Calibrations.recordOutcome(
                 current, egg: egg, setup: setup,
                 cookTimeS: cookTimeS, logNominalTarget: logNominalTarget, feedback: feedback
             )
         }.value
-        calibration = updated
-        Calibrations.save(updated)
+        calibration = outcome.calibration
+        Calibrations.save(outcome.calibration)
+        // The second question, and only when the model cannot already guess the
+        // answer. On a jammy egg or anything firmer the white is far past setting
+        // and every particle agrees, so nothing is asked and the default path stays
+        // one tap; on a soft one the white is near its threshold and the answer
+        // moves alpha. The decision is `shouldAskAboutWhite` in EggTimerCore, so
+        // both apps ask on exactly the same eggs.
+        whiteQuestion = outcome.askWhite
+            ? WhiteQuestion(grid: outcome.grid, cookTimeS: cookTimeS)
+            : nil
         learning = false
         // The egg just eaten keeps the numbers it was cooked with; the new
         // ones show up on the next cook.
+        recompute()
+    }
+
+    /// Fold in the answer to the second question. Milliseconds rather than a
+    /// second, because the surface it needs was built by the yolk answer and kept -
+    /// but still off the main actor, because the arithmetic is the same shape.
+    func recordWhite(_ white: WhiteReport) async {
+        guard !learning, let question = whiteQuestion else { return }
+        learning = true
+        let current = calibration
+        let updated = await Task.detached(priority: .userInitiated) {
+            Calibrations.recordWhite(
+                current, grid: question.grid, cookTimeS: question.cookTimeS, white: white
+            )
+        }.value
+        calibration = updated
+        Calibrations.save(updated)
+        // Cleared only now, so the question stays on screen saying "learning…"
+        // while the fold runs rather than vanishing under the finger. `learning`
+        // is what stops a second tap in the meantime.
+        whiteQuestion = nil
+        learning = false
         recompute()
     }
 
@@ -311,6 +358,7 @@ final class Kitchen {
     func resetCalibration() {
         Calibrations.reset()
         calibration = Calibrations.fresh()
+        whiteQuestion = nil
         BoilMemories.reset()
         boilMemory = [:]
         recompute()

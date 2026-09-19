@@ -13,15 +13,28 @@
 import { Egg } from '../core/geometry.js';
 import { CookSetup } from '../core/protocol.js';
 import { ModelParams, DEFAULT_PARAMS } from '../core/solve.js';
-import { buildDoseGrid } from '../core/doseGrid.js';
+import { buildDoseGrid, DoseGrid } from '../core/doseGrid.js';
 import {
-  Particle, Posterior, Feedback, createPrior, updatePosterior,
-  posteriorParams, posteriorAlphaRelSd,
+  Particle, Posterior, Feedback, WhiteReport, createPrior, updatePosterior, updateWhite,
+  posteriorParams, posteriorAlphaRelSd, shouldAskAboutWhite,
 } from '../core/infer.js';
 import { PARTICLE_COUNT, CALIBRATION_SEED, calibrationGrid } from '../core/policy.js';
 import { readStorage, writeStorage, removeStorage } from './store.js';
 
-const KEY = 'aet.calibration.v1';
+const KEY = 'aet.calibration.v2';
+
+/** The posterior this version replaces, deleted rather than read.
+ *
+ *  The shape did not change when the white channel landed - no particle gained a
+ *  field - so a v1 record could have been loaded verbatim. It is dropped anyway,
+ *  because of what is IN it: every observation in a v1 posterior was folded under
+ *  a likelihood that attributed the white's behaviour to the yolk, and at least
+ *  one real one is known to have been a white complaint recorded on the yolk axis.
+ *  Carrying that forward would import a miscoded observation into a model that now
+ *  has somewhere correct to put it. A fresh prior is the literature values, which
+ *  is a worse starting point than a good posterior and a better one than a
+ *  confidently wrong posterior. */
+const SUPERSEDED_KEY = 'aet.calibration.v1';
 
 export interface Calibration {
   posterior: Posterior;
@@ -48,6 +61,16 @@ export function calibrationSpread(c: Calibration): number {
   return 100 * posteriorAlphaRelSd(c.posterior);
 }
 
+/** What folding one yolk answer leaves behind: the surface it was scored
+ *  against, and whether the white is worth a second question. */
+export interface Outcome {
+  /** Kept so the white answer can be folded without paying for the grid twice.
+   *  It is not persisted, so a reload drops a pending white question rather than
+   *  rebuilding two seconds of arithmetic to ask again. */
+  grid: DoseGrid;
+  askWhite: boolean;
+}
+
 /**
  * Fold in one outcome. Builds the dose surface for the cook that was actually
  * performed, then reweights. Synchronous and slow (~2 s) by design: it happens
@@ -56,7 +79,7 @@ export function calibrationSpread(c: Calibration): number {
 export function recordOutcome(
   c: Calibration, egg: Egg, setup: CookSetup,
   cookTime_s: number, logNominalTarget: number, feedback: Feedback,
-): void {
+): Outcome {
   const params = calibrationParams(c);
   // The grid's extent decides what the filter can see, and therefore what the
   // posterior becomes. It is core policy precisely so that the iOS app cannot
@@ -69,6 +92,21 @@ export function recordOutcome(
   );
   updatePosterior(c.posterior, grid, cookTime_s, logNominalTarget, feedback);
   c.eggsLogged += 1;
+  // Asked AFTER the fold, because the yolk answer has just moved alpha and so
+  // moved the predicted white with it: the question should be decided against
+  // everything currently known. Which of the two it is asked against does not
+  // affect whether the selection is ignorable - both are functions of data
+  // already in hand - but the later one is better informed.
+  return { grid: grid, askWhite: shouldAskAboutWhite(c.posterior, grid, cookTime_s) };
+}
+
+/** Fold in the answer about the white of the same egg, against the surface the
+ *  yolk answer was already scored on. The white is not a second egg, so
+ *  `eggsLogged` does not move. */
+export function recordWhite(
+  c: Calibration, grid: DoseGrid, cookTime_s: number, white: WhiteReport,
+): void {
+  updateWhite(c.posterior, grid, cookTime_s, white);
 }
 
 /* ------------------------------------------------------------- persistence */
@@ -76,7 +114,7 @@ export function recordOutcome(
 /** Column-wise and rounded: a thousand particles at full precision is ~90 KB
  *  of JSON, and nothing downstream can tell the difference at five figures. */
 interface StoredCalibration {
-  v: 1;
+  v: 2;
   n: number;
   a: number[];
   o: number[];
@@ -88,7 +126,7 @@ interface StoredCalibration {
 export function saveCalibration(c: Calibration): void {
   const p = c.posterior.particles;
   const stored: StoredCalibration = {
-    v: 1, n: c.eggsLogged, rng: c.posterior.rng,
+    v: 2, n: c.eggsLogged, rng: c.posterior.rng,
     a: [], o: [], t: [], w: [],
   };
   for (let i = 0; i < p.length; i++) {
@@ -123,6 +161,9 @@ function numberArray(
  *  version, or damaged. A half-valid posterior is worse than none: a single
  *  NaN weight would poison every solve. */
 export function loadCalibration(): Calibration {
+  // Whatever a previous version left behind goes now, rather than sitting in
+  // storage being neither read nor collected.
+  removeStorage(SUPERSEDED_KEY);
   const raw = readStorage(KEY);
   if (raw === null) return freshCalibration();
   let s: Partial<StoredCalibration> | null;
@@ -131,7 +172,7 @@ export function loadCalibration(): Calibration {
   } catch {
     return freshCalibration();
   }
-  if (s === null || typeof s !== 'object' || s.v !== 1) return freshCalibration();
+  if (s === null || typeof s !== 'object' || s.v !== 2) return freshCalibration();
   if (!Array.isArray(s.a) || s.a.length === 0) return freshCalibration();
   const n = s.a.length;
   // alpha and tauAirScale are strictly positive; a weight may be zero but
@@ -157,7 +198,7 @@ export function loadCalibration(): Calibration {
   };
 }
 
-/** Forget every egg. A run of wrong answers to "How was it?" is otherwise
+/** Forget every egg. A run of wrong answers about how an egg was is otherwise
  *  undone only by clearing the site's storage, and the honest thing is to let
  *  someone take it back. The iOS app has had this since it shipped; README
  *  11.5 has listed its absence here as a known gap. */
