@@ -2,7 +2,8 @@
 
 Resumable working notes. Updated **in the same commit** as the work it describes.
 For the science, see `README.md`. For what was verified and what it cost to find
-out, see `LOGBOOK.md`. This file is for whoever picks the build back up.
+out, see `LOGBOOK.md`. For getting the app onto other people's phones, see
+`ios/RELEASING.md`. This file is for whoever picks the build back up.
 
 **Status: both apps complete and learning. The PHYSICS is now the open part.**
 80 TypeScript tests, 27/27 validation checks and 45 Swift conformance tests pass.

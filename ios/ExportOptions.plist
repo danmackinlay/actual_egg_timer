@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Used by `xcodebuild -exportArchive` to send a build to App Store Connect.
+  See RELEASING.md, which explains each key and the order they go in.
+
+  manageAppVersionAndBuildNumber is the one worth knowing about: it DEFAULTS TO
+  YES, and that default silently rewrites the build number inside the archive.
+  In a project regenerated from project.yml there is nowhere for the rewritten
+  value to live, so the number this repo records and the number App Store
+  Connect saw disagree from that moment on. The build number is owned by
+  CURRENT_PROJECT_VERSION in project.yml and by nothing else.
+-->
+<plist version="1.0">
+<dict>
+    <key>method</key>
+    <string>app-store-connect</string>
+    <key>destination</key>
+    <string>upload</string>
+    <key>teamID</key>
+    <string>L4D3TWC3A4</string>
+    <key>manageAppVersionAndBuildNumber</key>
+    <false/>
+    <key>uploadSymbols</key>
+    <true/>
+</dict>
+</plist>

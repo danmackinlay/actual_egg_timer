@@ -377,6 +377,13 @@ entitlement, so being given a specific one is the portal agreeing.
 A different team means one line in `project.yml` and a new bundle identifier
 prefix.
 
+### Onto someone else's phone
+
+TestFlight, and it is a different job from this one: an App Store Connect record,
+two explicit App IDs, and a family who need no cable. **`RELEASING.md`** has the
+whole of it, including the two upload prerequisites already committed here and
+the three ways a first archive wastes a day.
+
 ### Onto the phone
 
 No Xcode needed once signing is set up. Find the device, build, install, launch:
