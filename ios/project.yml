@@ -66,6 +66,14 @@ targets:
         INFOPLIST_KEY_UIStatusBarStyle: UIStatusBarStyleDefault
         # Without this the system refuses to start a Live Activity at all.
         INFOPLIST_KEY_NSSupportsLiveActivities: YES
+        # Answered here rather than per build in App Store Connect. The app has
+        # no networking of any kind - no URLSession, no Network, no http - so it
+        # uses no encryption, exempt or otherwise, and NO is the honest answer
+        # rather than a convenient one. Without it every upload arrives as
+        # "Missing Compliance" and has to be answered by hand before testers can
+        # install it. If this app ever gains a network call, revisit: HTTPS via
+        # URLSession would still be exempt, but the answer stops being trivial.
+        INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO
         CODE_SIGN_ENTITLEMENTS: App/ActualEggTimer.entitlements
 
   # WidgetKit extension. It exists only to draw the Live Activity: the Lock

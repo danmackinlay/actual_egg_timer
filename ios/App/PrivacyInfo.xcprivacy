@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Apple's required-reason API declaration.
+
+  UserDefaults is a required-reason API, and this app uses it in Store.swift,
+  Calibration.swift and Cook.swift - the settings, the posterior and a cook in
+  progress. Without this file, uploads to App Store Connect are rejected or
+  warned about by ITMS-91053, which is a slow way to discover a fifteen-minute
+  fix.
+
+  CA92.1, not 1C8F.1: the app has no App Group and reads and writes only its own
+  container. If an App Group is ever added - for a widget that needs more than
+  the ActivityKit payload, say - this code has to change with it.
+
+  Everything else here is empty because it is true and not because nothing was
+  checked: the app has no networking of any kind (no URLSession, no Network, no
+  http), collects nothing, and tracks nobody.
+-->
+<plist version="1.0">
+<dict>
+    <key>NSPrivacyTracking</key>
+    <false/>
+    <key>NSPrivacyTrackingDomains</key>
+    <array/>
+    <key>NSPrivacyCollectedDataTypes</key>
+    <array/>
+    <key>NSPrivacyAccessedAPITypes</key>
+    <array>
+        <dict>
+            <key>NSPrivacyAccessedAPIType</key>
+            <string>NSPrivacyAccessedAPICategoryUserDefaults</string>
+            <key>NSPrivacyAccessedAPITypeReasons</key>
+            <array>
+                <string>CA92.1</string>
+            </array>
+        </dict>
+    </array>
+</dict>
+</plist>
