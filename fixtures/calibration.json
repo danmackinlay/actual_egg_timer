@@ -316,7 +316,7 @@
   ],
   "feedbackBand": 0.28,
   "whiteFeedbackBand": 0.26,
-  "whiteAskMinP": 0.1,
+  "whiteAskMinP": 0.02,
   "whiteAsk": [
     {
       "cookTime_s": 240,
@@ -331,7 +331,7 @@
     {
       "cookTime_s": 300,
       "whiteRunny": 0.9296875,
-      "askWhite": false
+      "askWhite": true
     },
     {
       "cookTime_s": 340,
@@ -346,7 +346,7 @@
     {
       "cookTime_s": 420,
       "whiteRunny": 0.03125,
-      "askWhite": false
+      "askWhite": true
     },
     {
       "cookTime_s": 500,
@@ -8060,7 +8060,7 @@
           }
         ]
       },
-      "askWhite": false,
+      "askWhite": true,
       "whiteRunny": 0.9038123935543037,
       "white": "set",
       "afterWhite": {

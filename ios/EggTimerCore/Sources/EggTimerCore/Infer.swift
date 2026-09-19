@@ -151,9 +151,24 @@ private let pWhiteDisagree = 0.35
 /// has a reason to hold.
 private let pWhiteEither = 0.5
 
-/// How much doubt is worth a second question. Below this the model is already
-/// sure enough that the answer cannot move it; see `shouldAskAboutWhite`.
-public let whiteAskMinP = 0.1
+/// How much doubt is worth a second question.
+///
+/// 0.1 was a judgement, and it was too high. The argument for it - that a model
+/// sure of the answer cannot learn from it - is exactly true at P = 0 and P = 1
+/// and not before. Folding a "runny" report the gate would have suppressed,
+/// against a fresh prior, 68 g, hot start, ice:
+///
+///     level  P(runny)   alpha if "runny"   if "set"
+///      0.22   0.12950            -1.699%    +1.081%
+///      0.41   0.02300            -0.446%    +0.247%
+///      0.50   0.00750            -0.163%    +0.089%
+///      0.62   0.00000            -0.000%    -0.000%
+///
+/// 0.02 keeps the question while an answer can still move alpha by about 0.4%,
+/// a fifth of the ~2% the posterior can resolve, and drops it below that. The
+/// cost: the default jammy position sits inside the gate, so the common path is
+/// two questions. See src/core/infer.ts for the full table.
+public let whiteAskMinP = 0.02
 
 private let priorOffsetSd = 0.22
 /// Deliberately wide: this is the least-verified part of the model.

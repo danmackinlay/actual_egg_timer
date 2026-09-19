@@ -151,20 +151,42 @@ test('3. a unanimous model learns nothing from either answer, which is what make
   }
 });
 
-test('3b. the second question is asked on a soft egg and not on a jammy one', () => {
-  // The whole UX claim in one test: the default path stays one tap. A jammy egg
-  // is far past the white's threshold at every plausible alpha, so there is
-  // nothing to ask; a soft one sits on it.
+test('3b. the second question is asked while the answer can still move anything', () => {
+  // The gate's boundary, stated as the thing it is for. It used to assert "not
+  // on a jammy one", which was the old 0.1 threshold's behaviour rather than an
+  // invariant - and it was wrong: a suppressed answer at jammy still moves alpha
+  // by 0.45%, a fifth of what the posterior can resolve. See WHITE_ASK_MIN_P.
   const prior = () => createPrior(400, 0x5eed1e);
-  const soft = cookAt(0.1);
-  const jammy = cookAt(0.41);
+  const asked = (level: number): boolean => {
+    const c = cookAt(level);
+    return shouldAskAboutWhite(prior(), c.grid, c.cookTime_s);
+  };
+  for (const level of [0.1, 0.41]) {
+    assert.ok(asked(level), `${level} is still close enough to the white's edge to be worth asking`);
+  }
+  // Far past the white's threshold at every plausible alpha: every particle
+  // agrees, so both answers multiply every weight by the same factor and the
+  // posterior comes back out unchanged. Nothing to ask.
+  for (const level of [0.75, 0.9]) {
+    assert.ok(!asked(level), `${level} is past the edge; the answer cannot move the posterior`);
+  }
+});
+
+test('3c. a question is never asked when it could teach nothing at all', () => {
+  // The floor under the threshold, whatever it is set to: if the model is
+  // unanimous the fold is a no-op, so asking is a tap for nothing.
+  const prior = () => createPrior(400, 0x5eed1e);
+  const hard = cookAt(0.9);
+  const p = whiteRunnyProbability(prior(), hard.grid, hard.cookTime_s);
+  assert.ok(p < WHITE_ASK_MIN_P, `unanimous is below any sane threshold: p = ${p}`);
+
+  const post = prior();
+  const before = posteriorParams(post).alpha_m2s;
+  updateWhite(post, hard.grid, hard.cookTime_s, 'runny');
+  const after = posteriorParams(post).alpha_m2s;
   assert.ok(
-    shouldAskAboutWhite(prior(), soft.grid, soft.cookTime_s),
-    `a soft egg should be asked about: p = ${whiteRunnyProbability(prior(), soft.grid, soft.cookTime_s)}`,
-  );
-  assert.ok(
-    !shouldAskAboutWhite(prior(), jammy.grid, jammy.cookTime_s),
-    `a jammy egg should not: p = ${whiteRunnyProbability(prior(), jammy.grid, jammy.cookTime_s)}`,
+    Math.abs(after - before) <= before * 1e-9,
+    `a unanimous posterior cannot be moved by either answer: ${before} -> ${after}`,
   );
 });
 

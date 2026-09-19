@@ -143,9 +143,34 @@ const P_WHITE_DISAGREE = 0.35;
  *  is a preference nobody has a reason to hold. */
 const P_WHITE_EITHER = 0.5;
 
-/** How much doubt is worth a second question. Below this the model is already
- *  sure enough that the answer cannot move it; see `shouldAskAboutWhite`. */
-export const WHITE_ASK_MIN_P = 0.1;
+/**
+ * How much doubt is worth a second question.
+ *
+ * 0.1 was a judgement, and it was too high. The argument for it - that a model
+ * sure of the answer cannot learn from it - is exactly true at P = 0 and P = 1
+ * and not before, and the measurement says so. Folding a "runny" report that
+ * the gate would have suppressed, against a fresh prior, 68 g, hot start, ice:
+ *
+ *     level  P(runny)   alpha if "runny"   if "set"
+ *      0.22   0.12950            -1.699%    +1.081%
+ *      0.30   0.06700            -1.071%    +0.629%
+ *      0.35   0.04150            -0.735%    +0.418%
+ *      0.41   0.02300            -0.446%    +0.247%
+ *      0.50   0.00750            -0.163%    +0.089%
+ *      0.62   0.00000            -0.000%    -0.000%
+ *
+ * The information decays smoothly and hits exactly zero only where every
+ * particle agrees. 0.02 keeps the question while an answer can still move alpha
+ * by about 0.4%, which is a fifth of the ~2% the posterior can resolve, and
+ * drops it below that, where the move is a twentieth and not worth a tap.
+ *
+ * The cost is real and worth stating: at 0.02 the default jammy slider position
+ * (P = 0.023) is inside the gate, so the common path is two questions rather
+ * than one. That is the trade - the old threshold bought a shorter path by
+ * discarding most of the evidence in exactly the case a cook notices and
+ * reports, which is a model that is confidently wrong about the white.
+ */
+export const WHITE_ASK_MIN_P = 0.02;
 
 const PRIOR_OFFSET_SD = 0.22;
 /** Deliberately wide: this is the least-verified part of the model. */
