@@ -384,6 +384,16 @@ body:not([data-phase="IDLE"]) #bigtime { font-size: clamp(5rem, 32vw, 9rem); }
 
 /* A cold start hides "after boiling" until the boil has actually been timed. */
 body[data-start="hot"] #afterBoilStat { display: none; }
+/* A control is shown when the answer depends on it.
+ *
+ * `sousVideEstimate` takes a radius, an alpha, a bath temperature and the two
+ * dose targets - so in sous-vide the only live inputs are the egg's size and
+ * the doneness slider. The boil, the cooling, the water, the eggs in the pan
+ * and the altitude are all pan arithmetic, and leaving them on screen implies
+ * they do something. One class, one rule: a new pan control inherits this by
+ * wearing `pan-only`, and a new input to `sousVideEstimate` is the signal to
+ * take the class off something. */
+body[data-start="sous"] .pan-only { display: none; }
 body[data-start="sous"] #afterBoilStat { display: none; }
 
 /* "Yesterday" is not a clock face, and will not fit like one. */

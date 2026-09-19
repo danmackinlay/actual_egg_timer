@@ -101,7 +101,7 @@
         caliper an egg. The other two boxes follow from whichever you fill in.</p>
     </div>
 
-    <fieldset class="field">
+    <fieldset class="field pan-only">
       <legend>Egg from</legend>
       <div class="seg">
         <input type="radio" name="startTemp" id="tempFridge" value="fridge">
@@ -114,7 +114,7 @@
       <p class="hint" id="startTempHint"></p>
     </fieldset>
 
-    <div class="field" id="customTempField" hidden>
+    <div class="field pan-only" id="customTempField" hidden>
       <label for="customTemp">Egg temperature</label>
       <span class="unit"><input type="number" id="customTemp" step="1" inputmode="decimal"><span>&deg;C</span></span>
     </div>
@@ -129,10 +129,10 @@
         <input type="radio" name="startMode" id="startSous" value="sous">
         <label for="startSous" id="startSousLabel">Sous-vide</label>
       </div>
-      <p class="hint">Hot start peels far better; cold start needs no timing of the drop-in.</p>
+      <p class="hint" id="startHint">Hot start peels far better; cold start needs no timing of the drop-in.</p>
     </fieldset>
 
-    <fieldset class="field" id="afterBoilField">
+    <fieldset class="field pan-only" id="afterBoilField">
       <legend>At the boil</legend>
       <div class="seg">
         <input type="radio" name="afterBoil" id="heatHold" value="hold">
@@ -144,7 +144,7 @@
         on the pan: the water has to carry the whole cook. More water holds more heat.</p>
     </fieldset>
 
-    <fieldset class="field">
+    <fieldset class="field pan-only">
       <legend>Then</legend>
       <div class="seg">
         <input type="radio" name="cooling" id="coolIce" value="ice">
@@ -156,7 +156,7 @@
       </div>
     </fieldset>
 
-    <div class="field field--pair">
+    <div class="field field--pair pan-only">
       <div>
         <label for="litres">Water</label>
         <span class="unit"><input type="number" id="litres" step="0.25" inputmode="decimal"><span>L</span></span>
@@ -167,7 +167,7 @@
       </div>
     </div>
 
-    <div class="field">
+    <div class="field pan-only">
       <label for="altitude">Altitude</label>
       <span class="unit"><input type="number" id="altitude" step="50" inputmode="numeric"><span>m</span></span>
     </div>

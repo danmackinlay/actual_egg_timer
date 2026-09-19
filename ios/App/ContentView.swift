@@ -600,11 +600,13 @@ struct ContentView: View {
 
             // Rendered from the constants, so a button cannot say one thing
             // and the model another. The web app learned this the hard way.
-            Picker("Egg from", selection: $kitchen.fromFridge) {
-                Text("Fridge \(Int(StartTempPresets.fridgeC))°").tag(true)
-                Text("Room \(Int(StartTempPresets.roomC))°").tag(false)
+            if !kitchen.isSousVide {
+                Picker("Egg from", selection: $kitchen.fromFridge) {
+                    Text("Fridge \(Int(StartTempPresets.fridgeC))°").tag(true)
+                    Text("Room \(Int(StartTempPresets.roomC))°").tag(false)
+                }
+                .pickerStyle(.segmented)
             }
-            .pickerStyle(.segmented)
 
             // Three positions, and the third one is rendered from the constant
             // like the egg-temperature presets above it, so the button cannot
@@ -616,14 +618,32 @@ struct ContentView: View {
             }
             .pickerStyle(.segmented)
 
-            Picker("Then", selection: $kitchen.cooling) {
-                Text("Ice bath").tag(Cooling.ice)
-                Text("Cold tap").tag(Cooling.tap)
-                Text("Counter").tag(Cooling.counter)
-            }
-            .pickerStyle(.segmented)
+            // A control is shown when the answer depends on it.
+            //
+            // `sousVideEstimate` takes a radius, an alpha, a bath temperature
+            // and the two dose targets - so in sous-vide the only live inputs
+            // are the egg's size and the doneness slider above. The cooling
+            // method, the boil, the water, the eggs in the pan and the altitude
+            // are all pan arithmetic, and leaving them on screen implies they
+            // do something. Same rule as the web app's `.pan-only` class: a new
+            // input to `sousVideEstimate` is the signal to bring one back.
+            if !kitchen.isSousVide {
+                Picker("Then", selection: $kitchen.cooling) {
+                    Text("Ice bath").tag(Cooling.ice)
+                    Text("Cold tap").tag(Cooling.tap)
+                    Text("Counter").tag(Cooling.counter)
+                }
+                .pickerStyle(.segmented)
 
-            pan
+                pan
+            } else {
+                // Said out loud, so a shorter form reads as deliberate rather
+                // than as lost settings.
+                Text("A bath needs no pan, so the pan controls are put away. Your "
+                     + "settings are kept and come back when you pick a pan again.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
         }
     }
 

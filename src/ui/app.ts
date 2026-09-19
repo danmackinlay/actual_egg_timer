@@ -60,6 +60,7 @@ const dom = {
   subline: el<HTMLParagraphElement>('subline'),
   statYolk: el<HTMLElement>('statYolk'),
   statYolkLabel: el<HTMLElement>('statYolkLabel'),
+  startHint: el<HTMLParagraphElement>('startHint'),
   statAfter: el<HTMLElement>('statAfter'),
   statBoil: el<HTMLElement>('statBoil'),
   note: el<HTMLParagraphElement>('note'),
@@ -257,6 +258,16 @@ function rampSeconds(): number {
   return settings.startMode === 'cold' ? timeToBoil_s() : 0;
 }
 
+/** Why the form is shorter in sous-vide. The controls are hidden because the
+ *  answer does not read them (see `.pan-only` in styles.css); saying so stops
+ *  that reading as a bug or as lost settings. */
+function renderStartHint(): void {
+  dom.startHint.textContent = isSousVide()
+    ? 'A bath needs no pan, so the pan controls are put away. Your settings are kept '
+      + 'and come back when you pick a pan again.'
+    : 'Hot start peels far better; cold start needs no timing of the drop-in.';
+}
+
 /* ------------------------------------------------------------------ copy */
 
 /** The refusal, in words.
@@ -440,6 +451,7 @@ function render(now_ms: number): void {
   // after a full hot-start solve and after the stats row had already been
   // written, so it both paid for an answer it discarded and left half of that
   // answer on screen beside its own.
+  renderStartHint();
   if (isSousVide() && machine.phase === 'IDLE') {
     renderSousVide(now_ms);
     return;
@@ -618,6 +630,7 @@ function render(now_ms: number): void {
 function renderSousVide(now_ms: number): void {
   dom.body.dataset['phase'] = machine.phase;
   dom.body.dataset['start'] = settings.startMode;
+  renderStartHint();
 
   const egg = currentEgg();
   const doneness = donenessFromSlider(settings.doneness);
