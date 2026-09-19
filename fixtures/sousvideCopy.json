@@ -1,0 +1,154 @@
+{
+  "duration": [
+    {
+      "seconds": 0,
+      "text": "0 min"
+    },
+    {
+      "seconds": 1,
+      "text": "0 min"
+    },
+    {
+      "seconds": 59,
+      "text": "1 min"
+    },
+    {
+      "seconds": 60,
+      "text": "1 min"
+    },
+    {
+      "seconds": 5340,
+      "text": "89 min"
+    },
+    {
+      "seconds": 5400,
+      "text": "1 h 30 min"
+    },
+    {
+      "seconds": 5460,
+      "text": "1 h 31 min"
+    },
+    {
+      "seconds": 7200,
+      "text": "2 h"
+    },
+    {
+      "seconds": 7200,
+      "text": "2 h"
+    },
+    {
+      "seconds": 9000,
+      "text": "2 h 30 min"
+    },
+    {
+      "seconds": 169200,
+      "text": "47 h"
+    },
+    {
+      "seconds": 171000,
+      "text": "47 h 30 min"
+    },
+    {
+      "seconds": 172800,
+      "text": "2 days"
+    },
+    {
+      "seconds": 176400,
+      "text": "2 days"
+    },
+    {
+      "seconds": 1123200,
+      "text": "13 days"
+    },
+    {
+      "seconds": 1209600,
+      "text": "2 weeks"
+    },
+    {
+      "seconds": 1728000,
+      "text": "3 weeks"
+    },
+    {
+      "seconds": 5184000,
+      "text": "9 weeks"
+    },
+    {
+      "seconds": 17280000,
+      "text": "29 weeks"
+    },
+    {
+      "seconds": 81760.26,
+      "text": "22 h 43 min"
+    },
+    {
+      "seconds": 1428737.1,
+      "text": "2 weeks"
+    }
+  ],
+  "startPhrase": [
+    {
+      "daysAgo": 0,
+      "text": "Today"
+    },
+    {
+      "daysAgo": 1,
+      "text": "Yesterday"
+    },
+    {
+      "daysAgo": 2,
+      "text": "Last Tuesday"
+    },
+    {
+      "daysAgo": 3,
+      "text": "Last Tuesday"
+    },
+    {
+      "daysAgo": 6,
+      "text": "Last Tuesday"
+    },
+    {
+      "daysAgo": 7,
+      "text": "Last week"
+    },
+    {
+      "daysAgo": 8,
+      "text": "Last week"
+    },
+    {
+      "daysAgo": 13,
+      "text": "Last week"
+    },
+    {
+      "daysAgo": 14,
+      "text": "2 weeks ago"
+    },
+    {
+      "daysAgo": 20,
+      "text": "3 weeks ago"
+    },
+    {
+      "daysAgo": 40,
+      "text": "6 weeks ago"
+    },
+    {
+      "daysAgo": 59,
+      "text": "8 weeks ago"
+    },
+    {
+      "daysAgo": 60,
+      "text": "2 months ago"
+    },
+    {
+      "daysAgo": 90,
+      "text": "3 months ago"
+    },
+    {
+      "daysAgo": 200,
+      "text": "7 months ago"
+    },
+    {
+      "daysAgo": 400,
+      "text": "13 months ago"
+    }
+  ]
+}

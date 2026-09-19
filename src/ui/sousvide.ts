@@ -9,7 +9,7 @@
  * in the past. All this module does is say so out loud.
  */
 
-import { SousVideEstimate } from '../core/sousvide.js';
+import { SousVideEstimate, formatLongDuration, startPhrase } from '../core/sousvide.js';
 
 export interface SousVideCopy {
   /** Big text, in place of the clock. */
@@ -20,41 +20,20 @@ export interface SousVideCopy {
   hint: string;
 }
 
-/** "22 h 41 min", "3 days", "5 weeks". Minutes and seconds stop being a useful
- *  unit somewhere around the point this app stops being useful. */
-export function formatLongDuration(seconds: number): string {
-  const minutes = Math.round(seconds / 60);
-  if (minutes < 90) return `${minutes} min`;
-  const hours = Math.floor(minutes / 60);
-  const rest = minutes % 60;
-  if (hours < 48) return rest === 0 ? `${hours} h` : `${hours} h ${rest} min`;
-  const days = Math.round(hours / 24);
-  if (days < 14) return `${days} days`;
-  return `${Math.round(days / 7)} weeks`;
-}
-
 const WEEKDAYS = [
   'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday',
 ];
 
 /** Whole days between two instants, by local midnight rather than by elapsed
- *  hours: 23:00 to 01:00 is yesterday, not "nearly today". */
+ *  hours: 23:00 to 01:00 is yesterday, not "nearly today". The bucketing of
+ *  that count into words is `startPhrase` in the core; this is the part only a
+ *  platform can answer. */
 function daysBefore(then_ms: number, now_ms: number): number {
   const then = new Date(then_ms);
   const now = new Date(now_ms);
   then.setHours(0, 0, 0, 0);
   now.setHours(0, 0, 0, 0);
   return Math.round((now.getTime() - then.getTime()) / 86400000);
-}
-
-function whenToStart(then_ms: number, now_ms: number): string {
-  const days = daysBefore(then_ms, now_ms);
-  if (days <= 0) return 'Today';
-  if (days === 1) return 'Yesterday';
-  if (days < 7) return `Last ${WEEKDAYS[new Date(then_ms).getDay()]}`;
-  if (days < 14) return 'Last week';
-  if (days < 60) return `${Math.round(days / 7)} weeks ago`;
-  return `${Math.round(days / 30)} months ago`;
 }
 
 function clockOf(ms: number): string {
@@ -70,7 +49,7 @@ export function sousVideCopy(est: SousVideEstimate, now_ms: number): SousVideCop
   const bath = est.bath_C.toFixed(0);
 
   return {
-    headline: whenToStart(start_ms, now_ms),
+    headline: startPhrase(daysBefore(start_ms, now_ms), WEEKDAYS[new Date(start_ms).getDay()]),
     subline: `at ${clockOf(start_ms)} — ${duration} at ${bath}°C, to eat now`,
     note: est.whiteBound ? 'white still not set, yolk creamy' : 'yolk set, white still not',
     warn: `A ${bath}°C bath is below the temperature at which egg white sets — `

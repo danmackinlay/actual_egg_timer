@@ -94,6 +94,14 @@ enum Fixtures {
         return value.doubleValue
     }
 
+    /// A list from `sousvideCopy.json`.
+    static func sousVideCopyCases(_ key: String) -> [[String: Any]] {
+        guard let list = load("sousvideCopy.json")[key] as? [[String: Any]] else {
+            fatalError("fixtures/sousvideCopy.json has no \(key)")
+        }
+        return list
+    }
+
     static func constant(_ name: String) -> Double {
         guard let constants = load("core.json")["constants"] as? [String: Any],
               let value = constants[name] as? NSNumber else {

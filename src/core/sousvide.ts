@@ -78,3 +78,57 @@ export function sousVideEstimate(
     whiteBound: whiteHold_s >= yolkHold_s,
   };
 }
+
+/* ------------------------------------------------------------ the units */
+
+/*
+ * Two formatters, here rather than in the apps, and the distinction is worth
+ * stating because this file is otherwise physics.
+ *
+ * These are not sentences. They are UNIT CHOICES - when minutes stop being a
+ * useful unit and become hours, when hours become days, when a date stops being
+ * a weekday and becomes "N weeks ago". Both apps have to bucket an estimate
+ * identically or the same number reads differently on each, which is precisely
+ * what happened: they were transliterated by hand and at a 58 C bath only two of
+ * the six branches below are ever reached, so four of them were ported and never
+ * once executed in either language.
+ *
+ * The words are here because a number and its unit are one thing. Splitting
+ * "22 h 43 min" across two languages is the mistake, not the fix.
+ */
+
+/** "45 min", "22 h 43 min", "3 days", "5 weeks". Minutes and seconds stop being
+ *  a useful unit somewhere around the point this app stops being useful. */
+export function formatLongDuration(seconds: number): string {
+  const minutes = Math.round(seconds / 60);
+  if (minutes < 90) return `${minutes} min`;
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  if (hours < 48) return rest === 0 ? `${hours} h` : `${hours} h ${rest} min`;
+  const days = Math.round(hours / 24);
+  if (days < 14) return `${days} days`;
+  return `${Math.round(days / 7)} weeks`;
+}
+
+/**
+ * How long ago the cook should have started, in words: "Today", "Yesterday",
+ * "Last Tuesday", "Last week", "3 weeks ago", "4 months ago".
+ *
+ * Takes the day count and the weekday NAME rather than a date, so it is pure and
+ * so the calendar arithmetic stays where it belongs. Counting whole days across
+ * a local midnight is a platform job - `Calendar` does it correctly on iOS, and
+ * the web normalises to midnight and divides - and neither should be reimplemented
+ * here. Passing the weekday in also makes the one real difference between the
+ * apps visible instead of hidden: iOS reads it from a locale-aware formatter and
+ * the web from an English table, so a non-English phone says "Last mardi". That
+ * is the better answer on iOS, and it is now a deliberate difference rather than
+ * an accident.
+ */
+export function startPhrase(daysAgo: number, weekday: string): string {
+  if (daysAgo <= 0) return 'Today';
+  if (daysAgo === 1) return 'Yesterday';
+  if (daysAgo < 7) return `Last ${weekday}`;
+  if (daysAgo < 14) return 'Last week';
+  if (daysAgo < 60) return `${Math.round(daysAgo / 7)} weeks ago`;
+  return `${Math.round(daysAgo / 30)} months ago`;
+}

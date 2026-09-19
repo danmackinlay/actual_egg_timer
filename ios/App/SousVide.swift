@@ -36,26 +36,13 @@ struct SousVideCopy {
     let hint: String
 }
 
-/// "22 h 41 min", "3 days", "5 weeks". Minutes and seconds stop being a useful
-/// unit somewhere around the point this app stops being useful.
-func formatLongDuration(_ seconds: Double) -> String {
-    let minutes = Int(Foundation.round(seconds / 60.0))
-    if minutes < 90 { return "\(minutes) min" }
-    let hours = minutes / 60
-    let rest = minutes % 60
-    if hours < 48 { return rest == 0 ? "\(hours) h" : "\(hours) h \(rest) min" }
-    let days = Int(Foundation.round(Double(hours) / 24.0))
-    if days < 14 { return "\(days) days" }
-    return "\(Int(Foundation.round(Double(days) / 7.0))) weeks"
-}
-
 /// Whole days between two instants, by local midnight rather than by elapsed
 /// hours: 23:00 to 01:00 is yesterday, not "nearly today".
 ///
-/// The TypeScript normalises both dates to midnight and then divides by a fixed
-/// 86 400 000 ms, rounding to absorb the day a clock change makes 23 or 25 hours
-/// long. `Calendar` answers the question directly, so there is no constant here
-/// to be wrong about.
+/// `Calendar` answers this directly, so there is no 86 400 000 constant here to
+/// be wrong about across a clock change. The bucketing of that count into words
+/// is `startPhrase` in EggTimerCore; this is the part only a platform can
+/// answer, which is why it stays.
 private func daysBefore(_ then: Date, _ now: Date) -> Int {
     let calendar = Calendar.current
     let from = calendar.startOfDay(for: then)
@@ -75,23 +62,16 @@ private let clockFormatter: DateFormatter = {
     return formatter
 }()
 
-private func whenToStart(_ then: Date, _ now: Date) -> String {
-    let days = daysBefore(then, now)
-    if days <= 0 { return "Today" }
-    if days == 1 { return "Yesterday" }
-    if days < 7 { return "Last \(weekdayFormatter.string(from: then))" }
-    if days < 14 { return "Last week" }
-    if days < 60 { return "\(Int(Foundation.round(Double(days) / 7.0))) weeks ago" }
-    return "\(Int(Foundation.round(Double(days) / 30.0))) months ago"
-}
-
 func sousVideCopy(_ est: SousVideEstimate, now: Date) -> SousVideCopy {
     let start = now.addingTimeInterval(-est.totalS)
     let duration = formatLongDuration(est.totalS)
     let bath = String(format: "%.0f", est.bathC)
 
     return SousVideCopy(
-        headline: whenToStart(start, now),
+        headline: startPhrase(
+            daysAgo: daysBefore(start, now),
+            weekday: weekdayFormatter.string(from: start)
+        ),
         subline: "at \(clockFormatter.string(from: start)) — \(duration) at \(bath)°C, to eat now",
         note: est.whiteBound ? "white still not set, yolk creamy" : "yolk set, white still not",
         warn: "A \(bath)°C bath is below the temperature at which egg white sets — "

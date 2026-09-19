@@ -54,6 +54,7 @@ import {
   seriesTheta, erfcTheta, oneTermTheta, biotNumber, erfc,
 } from '../src/core/sphere.js';
 import { CookSetup } from '../src/core/protocol.js';
+import { formatLongDuration, startPhrase } from '../src/core/sousvide.js';
 import {
   SOUS_VIDE_BATH_C, equilibrationTime, sousVideEstimate,
 } from '../src/core/sousvide.js';
@@ -799,6 +800,27 @@ writeFileSync('fixtures/core.json', `${JSON.stringify(core, null, 2)}\n`);
 writeFileSync('fixtures/scenarios.json', `${JSON.stringify(scenarios, null, 2)}\n`);
 writeFileSync('fixtures/calibration.json', `${JSON.stringify(calibration, null, 2)}\n`);
 writeFileSync('fixtures/policy.json', `${JSON.stringify(policy, null, 2)}\n`);
+/* The two formatters, which are unit choices rather than sentences, and which
+ * at a 58 C bath reach only two of their six branches in normal use. Every
+ * boundary, from both sides, because four of these were ported by hand and
+ * never once executed in either language. */
+const sousVideCopy = {
+  duration: [
+    0, 1, 59, 60, 89 * 60, 90 * 60, 91 * 60, 120 * 60,
+    2 * 3600, 2.5 * 3600, 47 * 3600, 47.5 * 3600, 48 * 3600, 49 * 3600,
+    13 * 86400, 14 * 86400, 20 * 86400, 60 * 86400, 200 * 86400,
+    81760.26, 1428737.1,
+  ].map((seconds) => ({ seconds: seconds, text: formatLongDuration(seconds) })),
+  startPhrase: [0, 1, 2, 3, 6, 7, 8, 13, 14, 20, 40, 59, 60, 90, 200, 400]
+    .map((daysAgo) => ({
+      daysAgo: daysAgo,
+      // A fixed weekday, so the branch is pinned without dragging a locale into
+      // the fixture. Which weekday each app supplies is its own business.
+      text: startPhrase(daysAgo, 'Tuesday'),
+    })),
+};
+
+writeFileSync('fixtures/sousvideCopy.json', `${JSON.stringify(sousVideCopy, null, 2)}\n`);
 writeFileSync('fixtures/sousvide.json', `${JSON.stringify(sousvide, null, 2)}\n`);
 
 const counts = [
@@ -815,5 +837,6 @@ const counts = [
   `${policy.verdict.length} verdicts`,
   `${policy.texture.length} textures`,
   `${sousvide.cases.length} sous-vide`,
+  `${sousVideCopy.duration.length + sousVideCopy.startPhrase.length} sous-vide copy`,
 ];
 console.log(`fixtures/*.json written: ${counts.join(', ')}`);
