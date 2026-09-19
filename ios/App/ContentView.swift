@@ -32,13 +32,25 @@ struct ContentView: View {
                     TimelineView(.periodic(from: .now, by: 1)) { context in
                         let phase = cook.phase(at: context.date)
                         VStack(spacing: 24) {
-                            readout(phase)
-                            action(phase)
-                            // Inside the TimelineView for the same reason as
-                            // the readout: reaching DONE changes no stored
-                            // property, so nothing outside would redraw and the
-                            // question would never appear.
-                            if phase == .done { feedback }
+                            // Sous-vide is answered honestly and separately: no
+                            // cook to run, no clock to start, and a start time
+                            // that has already been and gone. It branches FIRST,
+                            // before any of the pan readout - the web app used
+                            // to branch only at the point of painting, after a
+                            // full hot-start solve it discarded and after the
+                            // stats row had already been written, so it left
+                            // half of that answer on screen beside its own.
+                            if kitchen.isSousVide && phase == .idle {
+                                sousVideReadout(at: context.date)
+                            } else {
+                                readout(phase)
+                                action(phase)
+                                // Inside the TimelineView for the same reason as
+                                // the readout: reaching DONE changes no stored
+                                // property, so nothing outside would redraw and
+                                // the question would never appear.
+                                if phase == .done { feedback }
+                            }
                         }
                     }
                     if outerPhase == .idle {
@@ -234,6 +246,82 @@ struct ContentView: View {
         f.dateFormat = "HH:mm:ss"
         return f
     }()
+
+    // MARK: - Sous-vide
+
+    /// The sous-vide readout: hold times from the isothermal limit, and the plain
+    /// statement that you should have started yesterday.
+    ///
+    /// The one number on screen from the bath is the BATH temperature, and it is
+    /// labelled as such. The web app printed it under "peak yolk", which said
+    /// something false about the egg - in a bath held at 58 °C the yolk does end
+    /// up at 58 °C, which is the whole point, but the label still has to say
+    /// which number it is.
+    private func sousVideReadout(at now: Date) -> some View {
+        let est = kitchen.sousVide
+        let copy = sousVideCopy(est, now: now)
+        return VStack(spacing: 24) {
+            VStack(spacing: 6) {
+                Text("Start time")
+                    .font(.caption.smallCaps())
+                    .foregroundStyle(.secondary)
+
+                // Not the 76 pt clock face the other phases use: "Yesterday" is
+                // not a clock face and will not fit like one. The web app has a
+                // CSS rule that says the same thing.
+                Text(copy.headline)
+                    .font(.system(size: 40, weight: .semibold, design: .rounded))
+                    .minimumScaleFactor(0.6)
+                    .lineLimit(1)
+
+                Text(copy.subline)
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+
+                // One stat, where a cook gets three. `equilibrate_s` is the
+                // obvious candidate for the empty slots and is deliberately not
+                // there: it is the one number in the estimate the module's own
+                // caveat disowns - conduction only, and the white below 60 °C is
+                // liquid and convecting, so it is too long by an unknown amount.
+                // The holds are the numbers that make the answer what it is, and
+                // they are in the line above as the total.
+                stat("bath", "\(Int(est.bathC.rounded()))°C")
+                    .padding(.top, 10)
+
+                Text(copy.note)
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .padding(.top, 2)
+
+                Text(copy.warn)
+                    .font(.footnote)
+                    .foregroundStyle(.orange)
+                    .multilineTextAlignment(.center)
+                    .padding(.top, 8)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 22)
+            .padding(.horizontal, 12)
+            .background(.quaternary.opacity(0.4), in: RoundedRectangle(cornerRadius: 18))
+
+            VStack(spacing: 6) {
+                // Dead rather than absent. There is nothing to start, and a
+                // button that has gone missing looks like a layout accident
+                // where one that will not press is the answer.
+                Button {} label: {
+                    Text("Eggs in").frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
+                .disabled(true)
+
+                Text(copy.hint)
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
 
     // MARK: - Action
 
@@ -436,7 +524,13 @@ struct ContentView: View {
         VStack(alignment: .leading, spacing: 22) {
             VStack(alignment: .leading, spacing: 6) {
                 LabeledContent("Doneness") {
-                    Text(kitchen.label).foregroundStyle(.secondary)
+                    // The slider's plain reading is a PAN number - a peak yolk
+                    // temperature something in water gets to. In a bath there is
+                    // no peak, so the reading says which bath instead.
+                    Text(kitchen.isSousVide
+                         ? "\(kitchen.label) · in a \(Int(sousVideBathC))°C bath"
+                         : kitchen.label)
+                        .foregroundStyle(.secondary)
                 }
                 Slider(value: $kitchen.doneness, in: Limits.doneness, step: 0.01)
                 HStack {
@@ -468,9 +562,13 @@ struct ContentView: View {
             }
             .pickerStyle(.segmented)
 
-            Picker("Start", selection: $kitchen.coldStart) {
-                Text("Boiling water").tag(false)
-                Text("Cold start").tag(true)
+            // Three positions, and the third one is rendered from the constant
+            // like the egg-temperature presets above it, so the button cannot
+            // name a bath the model is not computing.
+            Picker("Start", selection: $kitchen.start) {
+                Text("Boiling water").tag(StartChoice.hot)
+                Text("Cold start").tag(StartChoice.cold)
+                Text("Sous-vide \(Int(sousVideBathC))°").tag(StartChoice.sousVide)
             }
             .pickerStyle(.segmented)
 
@@ -595,7 +693,11 @@ struct ContentView: View {
 
     @ViewBuilder
     private func idleCalibrationLine(_ phase: Cook.Phase) -> some View {
-        if phase == .idle && kitchen.eggsLogged > 0 {
+        // Not on the sous-vide screen. What the filter learned is a correction to
+        // alpha, and alpha only reaches the bath answer through the equilibration
+        // - the number that screen deliberately does not show. A "tuned on 3
+        // eggs" line under an answer nothing tuned would be claiming credit.
+        if phase == .idle && !kitchen.isSousVide && kitchen.eggsLogged > 0 {
             Text(tunedLine)
                 .font(.caption)
                 .foregroundStyle(.tertiary)

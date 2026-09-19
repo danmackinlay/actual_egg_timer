@@ -31,13 +31,24 @@ final class Kitchen {
     var eggMassG: Double = Defaults.eggMassKg * 1000 { didSet { changed() } }
     var fromFridge: Bool = true { didSet { changed() } }
     var cooling: Cooling = .ice { didSet { changed() } }
-    /// Cold start: egg into cold water, and the heating ramp is part of the
-    /// cook. Hot start: into water already at a rolling boil.
+    /// Where the egg starts. Cold start: into cold water, and the heating ramp
+    /// is part of the cook. Hot start: into water already at a rolling boil.
+    /// Sous-vide: into a bath already at the target temperature, which is not a
+    /// cook this solver can time at all - see `sousVide` below.
     ///
     /// Cold is the default because it is the better way to boil an egg: the
     /// shell is never thermally shocked, and the app can MEASURE the ramp
     /// instead of assuming it. The cost is that it needs you to tap the boil.
-    var coldStart: Bool = true { didSet { changed() } }
+    var start: StartChoice = .cold { didSet { changed() } }
+
+    /// A cold start, as the pan solver and the phase machine mean it. Sous-vide
+    /// is neither: it answers false here and is filtered out by `isSousVide`
+    /// before anything reads this.
+    var coldStart: Bool { start == .cold }
+
+    /// True when there is no pan at all. The readout, the action button and the
+    /// solve all branch on it.
+    var isSousVide: Bool { start == .sousVide }
     /// The standing method - heat off at the boil, lid on. The pan coasts down
     /// and the cook is whatever the stored heat can still do.
     var heatOff: Bool = false { didSet { changed() } }
@@ -50,6 +61,10 @@ final class Kitchen {
 
     // MARK: - Outputs
 
+    /// The cook the pan is being asked for, or nil while there is no answer -
+    /// which includes sous-vide, where there is no pan to solve for. A nil
+    /// solution is already what disables the start button, so the sous-vide
+    /// screen's dead action needs no second rule.
     private(set) var solution: Solution?
     /// What this kitchen has learned from its own eggs. Before any feedback it
     /// is the prior, whose mean IS the literature value - so calibration is
@@ -145,6 +160,23 @@ final class Kitchen {
     var eggsLogged: Int { calibration.eggsLogged }
     var calibrationSpread: Double { Calibrations.spread(calibration) }
 
+    /// The isothermal limit for the egg and the calibrated alpha as they stand.
+    ///
+    /// Computed, where `solution` is stored and solved on a task. This one needs
+    /// no integration at all - a bisection on the Fourier number and two closed
+    /// forms - so putting it through the coalesce machinery would buy latency
+    /// and a chance to be stale in exchange for nothing.
+    var sousVide: SousVideEstimate {
+        let doneness = donenessFromSlider(doneness)
+        return sousVideEstimate(
+            radiusM: egg.radiusM,
+            alphaM2s: Calibrations.params(calibration).alphaM2s,
+            bathC: sousVideBathC,
+            yolkDoseMin: doneness.yolkDoseMin,
+            whiteDoseMin: doneness.whiteDoseMin
+        )
+    }
+
     /// log10 of the yolk dose the slider is currently asking for. This is what
     /// the filter treats as the nominal target, and the user's taste offset is
     /// learned relative to it, so it carries across slider positions.
@@ -165,6 +197,17 @@ final class Kitchen {
 
     private func recompute() {
         task?.cancel()
+        // No pan, no solve. The sous-vide answer is `sousVide` above and needs
+        // none of this. It goes FIRST, before anything is solved for - the web
+        // app used to branch only at the point of PAINTING, so it paid for a
+        // full hot-start solve it then discarded and left half of it on screen.
+        // Clearing the solution is what also makes the start button dead, which
+        // is the truth here: there is nothing to start.
+        if isSousVide {
+            solution = nil
+            refusal = ""
+            return
+        }
         let level = doneness
         let setup = setup
         let egg = egg

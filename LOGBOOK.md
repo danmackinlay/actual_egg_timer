@@ -376,3 +376,83 @@ wrong cook — but a wrong comment is what the three items above are made of.
 **The rule this pass earned:** a comment that says what the code now does is a
 claim, and claims in this repo get a fixture or a test. Three of these four
 would have been caught by anything that executed the sentence.
+
+---
+
+## Sous-vide on iOS (19 September 2026)
+
+The feature existed only on the web. `grep -rin sous ios/` returned nothing and
+`ios/README.md` said "`sousvide.ts` is a joke and can wait forever", so the owner
+went looking for it on his phone and did not find it. Both halves of that line
+were wrong, and the conformance pass above had already said so in writing
+("Sous-vide is not 'a joke with a maintenance bill'") without anything in the
+port changing. A note in a record is not a fix either.
+
+### What the port is held to
+
+`fixtures/sousvide.json`, 34 cases generated from `src/core/sousvide.ts`, is the
+new file and `SousVideConformance` is the new suite. The Swift agreed at 1e-12 on
+the first run, which is what a transliteration with no state and no RNG should
+do — so the value of the fixtures here is the cases, not the tolerance:
+
+- **Baths either side of 60 °C**, which is the temperature the module's own
+  caveat is about. 50 °C at one end, where the white's target takes over a month,
+  and 85 °C at the other, where both holds fall to seconds.
+- **The slider swept at the shipped bath.** The white's hold does not move at all
+  — its target is fixed — so this sweep is the yolk's hold climbing past it, and
+  a hard yolk at 58 °C is the one case there where the YOLK binds. That flips
+  `whiteBound`, and with it the sentence the app prints.
+- **Five more yolk-bound cases in hot baths.** Without them every case in the
+  file agrees that the white binds, and a port that returned `true` unconditionally
+  would have passed.
+- **The Fourier number on its own**, as `equilibrationTime(1, 1)`, with the
+  R²/alpha scaling divided out. The bisection is the only iteration in the module,
+  and a bracket a port narrowed would otherwise hide inside an egg-sized answer.
+
+### Verified by driving the app, not by reading it
+
+In the iPhone 17 simulator, against the same inputs computed from `src/core/` in
+Node:
+
+| on screen | app | TypeScript |
+|---|---|---|
+| 68 g jammy, 58 °C bath | Yesterday, at 14:34, 22 h 43 min | 81760.26 s |
+| the same at Hard | 2 weeks ago, at 00:25, 2 weeks | 1428737.1 s |
+| back to Cold start, Hard | 14:13, 77 / 88 °C, after boil 6:13 | 852.94 s, 77.26 / 88.03, 372.9 s |
+| back to Cold start, Jammy | 11:17, 65 / 80 °C, after boil 3:17 | 677.27 s, 64.74 / 80.14, 197.3 s |
+
+The Hard case was reached by writing `doneness` into the app's own UserDefaults
+plist in the simulator container and relaunching, because SwiftUI's `Slider`
+ignores synthetic drags — the method recorded above, and the container's plist
+rather than `simctl spawn defaults`, which is a different domain entirely.
+
+That relaunch paid for itself twice: it also confirmed the new three-valued
+`start` key survives one, and that the app comes back to the bath rather than to
+the default. The last two rows are the regression check that matters as much as
+the feature — switching back to a pan leaves nothing of the bath behind, neither
+the "· in a 58 °C bath" suffix on the doneness reading nor a stale readout.
+
+### Two decisions worth writing down
+
+- **`equilibrate_s` is computed and deliberately not shown.** It is the one
+  output the module's own doc comment disowns: conduction only, and below 60 °C
+  the white is liquid and convecting, so it is too long by an unknown amount. It
+  was on screen as a second stat for about ten minutes during this work, which
+  would have made the least trustworthy number in the estimate the most prominent
+  one. The holds are what make the answer what it is, and they are in the subline
+  as the total.
+- **The bath estimate is computed, where the cook is solved on a task.** It needs
+  no integration at all — a bisection on the Fourier number and two closed forms —
+  so putting it through the 90 ms coalesce would have bought latency and a chance
+  to be stale in exchange for nothing.
+
+### The lesson
+
+This one is about where a line gets drawn rather than about a bug. The reason
+there was nothing to port badly is that `sousvide.ts` was already pure, already
+ignorant of the DOM, and already ignorant of the clock — the start time in the
+past is computed in `src/ui/sousvide.ts` from a `now_ms` the app hands it. So the
+split fell out: the estimate went to `EggTimerCore`, the sentences went to
+`ios/App/SousVide.swift`, and nothing had to be untangled to make that happen.
+The modules that were expensive to port were the ones that had not been written
+that way in the first place.

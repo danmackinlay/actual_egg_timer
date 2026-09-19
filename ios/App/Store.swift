@@ -42,7 +42,16 @@ enum Settings {
         kitchen.waterLitres = clamp(store.double(forKey: "waterLitres"), to: Limits.waterLitres)
         kitchen.eggCount = Int(clamp(store.double(forKey: "eggCount"), to: Limits.eggCount).rounded())
         kitchen.fromFridge = store.bool(forKey: "fromFridge")
-        kitchen.coldStart = store.bool(forKey: "coldStart")
+        // Three positions under a new key. The old `coldStart` bool is still
+        // read, so an install that predates the sous-vide option comes back to
+        // the start mode it was left on rather than to the default - and an
+        // unrecognised string does the same, which is what an older build
+        // reading a newer value would leave behind.
+        if let stored = store.string(forKey: "start"), let start = StartChoice(rawValue: stored) {
+            kitchen.start = start
+        } else {
+            kitchen.start = store.bool(forKey: "coldStart") ? .cold : .hot
+        }
         kitchen.heatOff = store.bool(forKey: "heatOff")
         kitchen.cooling = Cooling(rawValue: store.string(forKey: "cooling") ?? "") ?? .ice
     }
@@ -56,6 +65,10 @@ enum Settings {
         store.set(kitchen.waterLitres, forKey: "waterLitres")
         store.set(Double(kitchen.eggCount), forKey: "eggCount")
         store.set(kitchen.fromFridge, forKey: "fromFridge")
+        store.set(kitchen.start.rawValue, forKey: "start")
+        // Kept in step for the sake of a downgrade, which reads only this key.
+        // Sous-vide has no honest bool here; false is the hot start the pan
+        // solver is handed for it in the web app, and the closer of the two.
         store.set(kitchen.coldStart, forKey: "coldStart")
         store.set(kitchen.heatOff, forKey: "heatOff")
         store.set(kitchen.cooling.rawValue, forKey: "cooling")

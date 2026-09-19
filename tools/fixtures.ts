@@ -19,6 +19,9 @@
  *                           refusal verdict, texture bands, the calibration
  *                           grid's geometry, the bounds and the defaults. These
  *                           used to be transliterated by hand in both apps
+ *   fixtures/sousvide.json  the isothermal limit. Separate because it answers a
+ *                           question the solver never asks: no pan, no ramp, no
+ *                           cooling, and an answer in hours rather than minutes
  */
 
 import { writeFileSync, mkdirSync } from 'node:fs';
@@ -49,6 +52,9 @@ import {
   seriesTheta, erfcTheta, oneTermTheta, biotNumber, erfc,
 } from '../src/core/sphere.js';
 import { CookSetup } from '../src/core/protocol.js';
+import {
+  SOUS_VIDE_BATH_C, equilibrationTime, sousVideEstimate,
+} from '../src/core/sousvide.js';
 import {
   simulate, solveCookTime, donenessFromSlider, DEFAULT_PARAMS, Solution,
 } from '../src/core/solve.js';
@@ -581,6 +587,114 @@ const policy = {
   },
 };
 
+/* ---------------------------------------------------------- sousvide.json */
+
+/* The isothermal limit. Cheap - no integration at all - so the cases are dense
+ * enough that the three things a port could get wrong each have their own
+ * witness:
+ *
+ *   the BISECTION on the Fourier number, which is the only iteration here;
+ *   WHICH hold binds, which is what the app puts on screen; and
+ *   the hold times themselves, which span eight orders of magnitude and are
+ *   therefore where a z-value or a reference temperature swapped between the
+ *   yolk and the white shows up as an obviously different answer rather than a
+ *   subtly wrong one. */
+
+const SOUS_VIDE_EGGS_G = [48.3, 62, 68, 90];
+/* The calibration's own range on alpha, so a port is held across everything the
+ * particle filter can hand this function rather than at the literature value. */
+const SOUS_VIDE_ALPHAS = [1.2e-7, ALPHA_DEFAULT, 2.4e-7];
+const SOUS_VIDE_LEVELS = [0.0, 0.22, 0.41, 0.62, 1.0];
+
+interface SousVideCase {
+  mass_g: number;
+  alpha_m2s: number;
+  bath_C: number;
+  level: number;
+  /** Why this case is here, carried into the fixture so a failure says what it
+   *  was covering rather than only which numbers disagreed. */
+  what: string;
+}
+
+const SOUS_VIDE_CASES: SousVideCase[] = [];
+
+/* The shipped bath, across the slider. The white's hold does not move at all -
+ * its target is fixed - so this sweep is the yolk's hold climbing past it, and
+ * the hard end is the one case where the YOLK binds at 58 C. That flips
+ * `whiteBound`, and with it the sentence the app prints. */
+for (const level of SOUS_VIDE_LEVELS) {
+  SOUS_VIDE_CASES.push({
+    mass_g: 68, alpha_m2s: ALPHA_DEFAULT, bath_C: SOUS_VIDE_BATH_C, level: level,
+    what: 'shipped bath, slider sweep',
+  });
+}
+
+/* Either side of 60 C, which is the temperature this module's own caveat is
+ * about: below it the white never sets and the conduction model is out of its
+ * depth. 50 C is the absurd end - the white's target takes over a month - and
+ * 85 C is the other, where both holds fall to seconds and the equilibration is
+ * the whole answer. */
+for (const bath_C of [50, 55, 57.9, SOUS_VIDE_BATH_C, 59.9, 60, 60.1, 63, 65, 70, 75, 85]) {
+  SOUS_VIDE_CASES.push({
+    mass_g: 68, alpha_m2s: ALPHA_DEFAULT, bath_C: bath_C, level: 0.41,
+    what: 'bath sweep either side of 60 C',
+  });
+}
+
+/* A hard yolk in a hot bath, where the yolk's hold is the binding one. Without
+ * these every case in the file agrees that the white binds, and a port that
+ * simply returned `true` would pass. */
+for (const bath_C of [65, 70, 75, 80, 85]) {
+  SOUS_VIDE_CASES.push({
+    mass_g: 68, alpha_m2s: ALPHA_DEFAULT, bath_C: bath_C, level: 1.0,
+    what: 'hard yolk, yolk-bound',
+  });
+}
+
+/* Every egg and every alpha, at the bath the app actually offers. Only
+ * `equilibrate_s` moves across these, which is the point: it is the one output
+ * that depends on the egg at all. */
+for (const mass_g of SOUS_VIDE_EGGS_G) {
+  for (const alpha_m2s of SOUS_VIDE_ALPHAS) {
+    SOUS_VIDE_CASES.push({
+      mass_g: mass_g, alpha_m2s: alpha_m2s, bath_C: SOUS_VIDE_BATH_C, level: 0.41,
+      what: 'egg and alpha sweep',
+    });
+  }
+}
+
+const sousvide = {
+  bath_C: SOUS_VIDE_BATH_C,
+  /* The bisection's answer stripped of its scaling: at R = 1 m and
+   * alpha = 1 m^2/s the return value IS the Fourier number it converged on.
+   * Every other equilibration number in this file is that one times R^2/alpha,
+   * so a port with a narrower bracket or a flipped comparison is caught here
+   * rather than being absorbed into an egg-sized answer. */
+  fourierNumber: round(equilibrationTime(1.0, 1.0)),
+  cases: SOUS_VIDE_CASES.map((c) => {
+    const egg = eggFromMass(c.mass_g / 1000);
+    const doneness = donenessFromSlider(c.level);
+    const est = sousVideEstimate(
+      egg.radius_m, c.alpha_m2s, c.bath_C, doneness.yolkDose_min, doneness.whiteDose_min,
+    );
+    return {
+      what: c.what,
+      mass_g: c.mass_g,
+      radius_m: round(egg.radius_m),
+      alpha_m2s: c.alpha_m2s,
+      level: round(c.level),
+      yolkDose_min: round(doneness.yolkDose_min),
+      whiteDose_min: round(doneness.whiteDose_min),
+      bath_C: round(est.bath_C),
+      equilibrate_s: round(est.equilibrate_s),
+      yolkHold_s: round(est.yolkHold_s),
+      whiteHold_s: round(est.whiteHold_s),
+      total_s: round(est.total_s),
+      whiteBound: est.whiteBound,
+    };
+  }),
+};
+
 /* ------------------------------------------------------------------ write */
 
 mkdirSync('fixtures', { recursive: true });
@@ -588,6 +702,7 @@ writeFileSync('fixtures/core.json', `${JSON.stringify(core, null, 2)}\n`);
 writeFileSync('fixtures/scenarios.json', `${JSON.stringify(scenarios, null, 2)}\n`);
 writeFileSync('fixtures/calibration.json', `${JSON.stringify(calibration, null, 2)}\n`);
 writeFileSync('fixtures/policy.json', `${JSON.stringify(policy, null, 2)}\n`);
+writeFileSync('fixtures/sousvide.json', `${JSON.stringify(sousvide, null, 2)}\n`);
 
 const counts = [
   `${core.sphere.seriesTheta.length} seriesTheta`,
@@ -601,5 +716,6 @@ const counts = [
   `${policy.slider.cases.length} snap`,
   `${policy.verdict.length} verdicts`,
   `${policy.texture.length} textures`,
+  `${sousvide.cases.length} sous-vide`,
 ];
 console.log(`fixtures/*.json written: ${counts.join(', ')}`);

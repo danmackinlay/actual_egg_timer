@@ -42,34 +42,56 @@ enum Fixtures {
         return list
     }
 
-    /// A section of `policy.json`, as a list of cases.
-    static func policyCases(_ path: String) -> [[String: Any]] {
-        var node: Any = load("policy.json")
+    /// Walk a dotted path into one fixture file. The path-walking is shared
+    /// rather than written once per file: `policy.json` had its own copy, and a
+    /// second file would have made that two copies of a loop whose only job is
+    /// to say which key was missing.
+    private static func node(_ file: String, _ path: String) -> Any {
+        var node: Any = load(file)
         for key in path.split(separator: ".") {
             guard let dictionary = node as? [String: Any], let next = dictionary[String(key)] else {
-                fatalError("fixtures/policy.json has no \(path)")
+                fatalError("fixtures/\(file) has no \(path)")
             }
             node = next
         }
-        guard let list = node as? [[String: Any]] else {
-            fatalError("fixtures/policy.json \(path) is not a list")
+        return node
+    }
+
+    private static func list(_ file: String, _ path: String) -> [[String: Any]] {
+        guard let list = node(file, path) as? [[String: Any]] else {
+            fatalError("fixtures/\(file) \(path) is not a list")
         }
         return list
     }
 
-    /// A dictionary node of `policy.json`.
-    static func policyObject(_ path: String) -> [String: Any] {
-        var node: Any = load("policy.json")
-        for key in path.split(separator: ".") {
-            guard let dictionary = node as? [String: Any], let next = dictionary[String(key)] else {
-                fatalError("fixtures/policy.json has no \(path)")
-            }
-            node = next
-        }
-        guard let dictionary = node as? [String: Any] else {
-            fatalError("fixtures/policy.json \(path) is not an object")
+    private static func object(_ file: String, _ path: String) -> [String: Any] {
+        guard let dictionary = node(file, path) as? [String: Any] else {
+            fatalError("fixtures/\(file) \(path) is not an object")
         }
         return dictionary
+    }
+
+    /// A section of `policy.json`, as a list of cases.
+    static func policyCases(_ path: String) -> [[String: Any]] {
+        list("policy.json", path)
+    }
+
+    /// A dictionary node of `policy.json`.
+    static func policyObject(_ path: String) -> [String: Any] {
+        object("policy.json", path)
+    }
+
+    /// A section of `sousvide.json`, as a list of cases.
+    static func sousVideCases(_ path: String) -> [[String: Any]] {
+        list("sousvide.json", path)
+    }
+
+    /// A scalar at the top level of `sousvide.json`.
+    static func sousVideNumber(_ path: String) -> Double {
+        guard let value = node("sousvide.json", path) as? NSNumber else {
+            fatalError("fixtures/sousvide.json \(path) is not a number")
+        }
+        return value.doubleValue
     }
 
     static func constant(_ name: String) -> Double {

@@ -5,9 +5,9 @@ For the science, see `README.md`. For what was verified and what it cost to find
 out, see `LOGBOOK.md`. This file is for whoever picks the build back up.
 
 **Status: both apps complete and learning. The PHYSICS is now the open part.**
-70 TypeScript tests, 27/27 validation checks and 39 Swift conformance tests pass.
+70 TypeScript tests, 27/27 validation checks and 43 Swift conformance tests pass.
 The web app and the iOS app carry the same model, the same refusals and the same
-particle filter; the Swift port is complete apart from the sous-vide joke. The
+particle filter; the Swift port covers every module in `src/core/`. The
 iOS app runs signed on a real phone, with a time-sensitive alarm and a Live
 Activity, and has cooked a real egg. What is left is not code: it is the two
 measurements in README §11.3 and a run of real eggs to calibrate against.
@@ -78,6 +78,8 @@ dose rate is 1e-6 of peak. Cut simulate 2.80 -> 1.87 ms with identical results.
 - [x] `ios/Widget/` — the Live Activity: Lock Screen and Dynamic Island
 - [x] `ios/EggTimerCore/DoseGrid.swift`, `Infer.swift` — the calibration
 - [x] `ios/App/Calibration.swift` — "how was it?", and the app learns
+- [x] `ios/EggTimerCore/SousVide.swift`, `ios/App/SousVide.swift` — the third
+      start mode, and the sentence it gets answered with
 
 The SwiftUI layer takes the BEHAVIOUR of `src/ui/machine.ts` and leaves its
 mechanism. `clock.ts` in particular exists to fight the backgrounding problem

@@ -41,6 +41,7 @@ algebraic mistake is never that small.
 | `solve.ts` | `Solve.swift` | 13 whole cooks: times, peaks, doses, verdicts |
 | `doseGrid.ts` | `DoseGrid.swift` | every cell, interpolation, the clamp, the inverse |
 | `infer.ts` | `Infer.swift` | every particle and weight, prior and 7 updates |
+| `sousvide.ts` | `SousVide.swift` | 34 baths, eggs and slider positions |
 
 The integrator is covered against both a **held** surface and a **moving** one.
 The second matters: a step-only test cannot catch a sign error in the Duhamel
@@ -102,9 +103,18 @@ be: `predictCookTime` sorts particles by predicted time, and JavaScript's sort
 is required to be stable while Swift's is not. The Swift sorts by time with the
 original index as a tie-break, which is the same thing.
 
-## Not ported yet
+## Nothing is unported
 
-`sousvide.ts` is a joke and can wait forever.
+This section used to say "`sousvide.ts` is a joke and can wait forever", and
+that line is why the owner of this repo went looking for the feature on his
+phone and did not find it. Two things were wrong with it. The module is not a
+joke — it is the same dose machinery as every other answer here with the surface
+temperature held constant, and its caveats about convection below 60 °C are the
+careful part. And what made it look like one is the ANSWER it gives, which is a
+start time in the past: that is the model reporting a real conclusion about a
+58 °C bath, not the code declining to work.
+
+`src/core/` and `EggTimerCore` now carry the same modules.
 
 ## The app
 
@@ -124,7 +134,7 @@ by the build system instead).
 The screen carries the whole model now:
 
 - doneness, egg mass, fridge or room
-- cold start (the default) or straight into boiling water
+- cold start (the default), straight into boiling water, or a 58 °C bath
 - ice bath, cold tap, or resting on the counter
 - keep boiling, or the standing method — heat off at the boil, lid on
 - water volume, eggs in the pan, altitude
@@ -156,6 +166,44 @@ both are the model refusing to lie:
 
 The measured time to boil is remembered per water volume and blended with what
 was already known, so one odd run — lid off, pan half empty — does not dominate.
+
+### The third start mode answers, and then says not to
+
+The Start control has three positions and the solver has two. Sous-vide is not a
+cook this pan solver can time at all, so it is answered by `sousVideEstimate`
+instead — the isothermal limit, which needs no integration: the centre
+equilibrates on the sphere's own timescale and everything after that accumulates
+dose at one constant rate.
+
+The branch is taken FIRST, before anything is solved for. That ordering is the
+whole of the fix the review asked for on the web side, where the branch ran
+*after* a full hot-start solve and after the stats row had been painted, so the
+app paid for an answer it discarded and left half of it on screen. Here it means
+`Kitchen.recompute` returns without starting a task, `solution` goes nil, and the
+nil solution is already what disables the start button — so the dead action on
+that screen needs no second rule.
+
+What it says is the honest answer and nothing more:
+
+- **Start time: Yesterday**, at the wall-clock time you would have had to begin.
+  A 58 °C bath needs about 22 h 43 min for a 68 g egg, because the white's dose
+  target lives at 80 °C.
+- **A `bath` stat, labelled `bath`.** Not "peak yolk", which is what the web app
+  printed it under until recently. In a bath held at 58 °C the yolk does end up
+  at 58 °C, which is the point, but the label still has to say which number it
+  is.
+- **The warning.** A 58 °C bath is below the temperature at which egg white
+  sets, so the white stays loose however long you leave it. The screen says so.
+- **`equilibrate_s` is deliberately not on screen.** It is the one output the
+  module's own caveat disowns: the model is conduction-only, and below 60 °C the
+  white is liquid and convecting, so that number is too long by an unknown
+  amount. The hold times do not depend on any of that.
+
+The copy — `formatLongDuration`, "Yesterday", "Last Tuesday", "2 weeks ago" —
+lives in `ios/App/SousVide.swift`, not in `EggTimerCore`, for the same reason
+`refusalText` does: the core carries the decision and the app carries the
+sentence. `StartChoice` is an app type for the same reason, which is why
+`StartMode` in the core is still a pair.
 
 ### It asks how the egg was
 

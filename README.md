@@ -621,10 +621,15 @@ sound, which is why the model works. The exposure is **the ramp**: a cold-start 
 spends several minutes below 60 °C with a liquid, convecting white, so the effective
 diffusivity early in a cold start is higher than `ALPHA_DEFAULT`. That is also the
 phase §1 argues matters most. Do not use this model for sous-vide.
-`src/core/sousvide.ts` computes the isothermal limit regardless, for exactly one
-purpose: to answer the question in the model's own units, and let the answer speak
-for itself. The white's dose target lives at 80 °C, so a 58 °C bath needs about
-22 hours of it.
+`src/core/sousvide.ts` and `EggTimerCore/SousVide.swift` compute the isothermal limit
+regardless, for exactly one purpose: to answer the question in the model's own units,
+and let the answer speak for itself. The white's dose target lives at 80 °C, so a 58 °C
+bath needs 22 h 43 min of it for a 68 g egg — which both apps report as a start time
+yesterday, under a warning saying the white will not set at that temperature whatever
+the clock says. Note which part of that answer is load-bearing: the HOLD times depend
+only on the bath and the dose targets, so the convection above does not touch them,
+while `equilibrate_s` is conduction-only and is too long by an unknown amount. Neither
+app puts it on screen.
 
 **The cooling phase is different, and weaker.** In still air `Bi ~ 0.6` and Dirichlet
 would be badly wrong, so the cooling phase instead drives the surface along the egg's
@@ -1070,8 +1075,8 @@ answers are recorded here rather than deleted, because each one was a plausible 
   real-egg bugs in `PLAN.md` would have been caught. What remains above it is view code:
   DOM writes and SwiftUI bodies, tested by driving the apps.
 
-- **The Swift port is complete.** `ios/EggTimerCore` carries every module in `src/core/`
-  except `sousvide.ts`, which is a joke, and is held to this implementation by a
+- **The Swift port is complete.** `ios/EggTimerCore` carries every module in `src/core/`,
+  `sousvide.ts` included, and is held to this implementation by a
   conformance suite over generated fixtures (`npm run conformance`). The pure functions
   agree to 1e-12 and 13 whole cooks — times, peak temperatures, doses and the
   reachability verdicts — to the same, where the measured disagreement is 7e-15. The
