@@ -317,7 +317,12 @@ do; what is missing is contact with reality.
 4. **Derive the cooling countdown** from the solver's `peakYolkTime_s` instead of
    asserting three minutes (README §11.5). It changes times on screen, so it
    wants a real egg behind it rather than a refactor.
-5. **Show `predictCookTime`'s interval** somewhere, or stop claiming in its
+5. **Decide whether the white gets its own question** (README §11.5, issue #1).
+   Not a refactor: it changes what the filter learns, and it may break the
+   `alpha`/taste confound from a single protocol. The white surface is already
+   built and discarded, so the modelling work is smaller than it looks; the open
+   part is the UX — always ask, or ask only when the white is near its boundary.
+6. **Show `predictCookTime`'s interval** somewhere, or stop claiming in its
    docstring that it is what makes calibration legible (README §11.5). The grid
    is already built and in hand immediately after a feedback fold, so the
    cheapest honest version costs nothing.

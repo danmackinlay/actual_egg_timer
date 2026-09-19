@@ -1041,6 +1041,16 @@ answers are recorded here rather than deleted, because each one was a plausible 
 - **`tauAirScale` is only identifiable if you vary the cooling method.** Cook every egg
   with an ice bath and it will sit at its prior forever — which is correct behaviour, not
   a bug, but it means the carryover model never improves unless you deliberately mix.
+- **"How was it?" is attributed entirely to the yolk.** `predictedFeedback` compares
+  only the delivered *yolk* dose against the yolk target; the white never enters the
+  likelihood. An egg whose white came out runny, reported honestly as "too soft",
+  therefore shifts `alpha` and the taste offset along the wrong axis. The white dose
+  surface is already computed and stored for every grid cell and never read, and
+  because the white is sampled at a different radius — and has no per-user offset of
+  its own — a white channel would constrain `alpha` directly, which may break the
+  confound in the next bullet without asking anyone to vary their protocol. Caveat:
+  the white sits nearer the surface, so it is more sensitive to the `H_EFF` error in
+  §11.2. See [issue #1](https://github.com/danmackinlay/actual_egg_timer/issues/1).
 - **`alpha` and the taste offset are confounded at a fixed protocol.** The *combination*
   is identified — the suggested time converges — but the individual parameters are not.
   Varying egg size or cooling method separates them.
