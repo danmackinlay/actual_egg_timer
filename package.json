@@ -16,7 +16,7 @@
     "identifiability": "tsc && node dist/tools/identifiability.js",
     "conformance": "npm run fixtures && cd ios/EggTimerCore && swift test",
     "serve": "python3 -m http.server 8080",
-    "build:site": "tsc -p tsconfig.site.json && cp index.html styles.css site.webmanifest _site/ && cp -R assets _site/assets",
+    "build:site": "tsc -p tsconfig.site.json && cp index.html styles.css site.webmanifest _site/ && rm -rf _site/assets && cp -R assets _site/assets",
     "serve:site": "python3 -m http.server 8080 --directory _site"
   },
   "devDependencies": {
