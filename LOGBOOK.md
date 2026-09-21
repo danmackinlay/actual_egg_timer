@@ -658,3 +658,70 @@ cost of checking was an afternoon and a 170-line script that now runs from
 
 A constant with a comment explaining why it is wrong is not documentation. It is
 an unrun experiment.
+
+---
+
+## Two more unrun experiments, run (21 September 2026)
+
+A question about redesigning the app around pooled inference produced two claims
+in conversation, and the previous entry's lesson is that a claim is not a
+result. Both are now scripts.
+
+### How many parameters can "how was it?" move - `npm run rank`
+
+The proposal was ten global parameters; the objection was that most of them cash
+out in the same predictive. `tools/rank.ts` takes the Jacobian of the two log
+doses against ten candidates, each column scaled by its prior sd, over 174
+reachable cooks (4 sizes x 2 start temperatures x 3 coolings x hot/cold x 5
+levels, each at the time the app would recommend). `simulate` cannot move
+`Z_YOLK`, `Z_WHITE` or `YOLK_RADIUS_FRAC`, so `tools/perturbed.ts` restates its
+loop with them as arguments; it agrees with `simulate` to 2.0e-7 in log10 dose.
+The eigenvalues were first computed with numpy and the dependency-free Jacobi
+solver in the tool reproduces them to the digit.
+
+| direction | answers to halve the prior sd | loads on |
+|---|---|---|
+| 1 | 0.7 | `alpha` 0.92, boil bias 0.24, yolk offset 0.20 |
+| 2 | 5.1 | white threshold 0.75, white radius 0.59 |
+| 3 | 61 | `tauAir` 0.96 - and *never*, from water-cooled cooks alone |
+| 4 | 111 | size exponent 0.99 |
+| 5 | 269 | start-temperature bias 0.92 |
+| 6-10 | 508 to 248 928 | the z-values, and the leftovers of the above |
+
+The objection was right. Two directions, a tenfold gap, two more that exist only
+where the protocol reaches, and nothing else. What was not expected: the present
+three-number particle is nearly the right parametrisation already. What it lacks
+is direction 2, which it holds at `WHITE_DOSE_TARGET` - and direction 2 is where
+both real eggs went wrong.
+
+N is a Gaussian-latent count with 0.4 decades of noise per answer and a uniform
+scenario mix. It is an order of magnitude and should be quoted as one.
+
+### Is a probe thermometer worth an egg - `npm run probe`
+
+| reading at the centre | C per 1% time-scale | 3 mm off | 15 s late |
+|---|---|---|---|
+| at the pull | 0.601 | +1.33 | +2.21 |
+| ice bath, yolk's peak (+195 s) | 0.400 | -0.03 | -0.14 |
+| counter, yolk's peak (+548 s) | 0.296 | +0.00 | -0.01 |
+
+The obvious protocol is the bad one. At the pull every handling error reads hot,
+and hot shortens the next cook. At the peak the field is flat in space and time,
+the app already knows when that is, and +-1 C is +-2.5% of time-scale - the whole
+ordinal plateau, from one egg that can still be eaten, with no taste in it. At
+the white's radius the gradient is 3.5 C/mm and nothing handheld means anything.
+
+**A number said in conversation was wrong, and the script caught it.** The first
+pass put one prior sd of `tauAirScale` at 0.6 C on the rested reading, from a
+perturbation of x1.35 / x0.74 read at a fixed +480 s. At the actual prior sd
+(x1.42 / x0.70) and the actual peak it is **1.06 C**, against 3.53 C for one prior
+sd of `alpha`. The conclusion survives - a spot reading mostly re-measures the
+time-scale and the carryover constant still wants a logged curve - but "barely
+moves it" was overstated by nearly half, and PLAN.md's "the only way" needed
+qualifying in the other direction: for the time-scale, a probe is now a way.
+
+### What it changed
+
+`INFERENCE.md` is the design; Phase E in `PLAN.md` is the list. Nothing in `src/`
+moved.
+

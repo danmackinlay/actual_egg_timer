@@ -14,6 +14,8 @@
     "validate": "tsc && node dist/tools/validate.js",
     "fixtures": "tsc && node dist/tools/fixtures.js",
     "identifiability": "tsc && node dist/tools/identifiability.js",
+    "rank": "tsc && node dist/tools/rank.js",
+    "probe": "tsc && node dist/tools/probe.js",
     "conformance": "npm run fixtures && cd ios/EggTimerCore && swift test",
     "serve": "python3 -m http.server 8080",
     "build:site": "tsc -p tsconfig.site.json && cp index.html styles.css site.webmanifest _site/ && rm -rf _site/assets && cp -R assets _site/assets",

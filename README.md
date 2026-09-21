@@ -794,6 +794,9 @@ npm install
 npm run build      # tsc
 npm test           # node --test
 npm run validate   # regenerates the validation table in §7
+npm run identifiability  # is h separable from alpha? (§11.2)
+npm run rank       # how many parameters can feedback move? (§11.5)
+npm run probe      # is a probe thermometer worth an egg? (§11.3)
 npm run serve      # static server on :8080
 npm run build:site # the deployable tree, in _site/
 ```
@@ -1041,6 +1044,17 @@ answers are recorded here rather than deleted, because each one was a plausible 
    (2007) both model shell-egg cooling, the first cryogenically. A thermocouple through
    the blunt end and a datalogger would still settle it in an afternoon.
 
+   A kitchen probe thermometer is NOT a substitute for this one, and `npm run probe`
+   says why: at the rested yolk's peak, one prior sd of `tauAirScale` moves the centre
+   reading 1.1 °C, while one prior sd of `alpha` moves it 3.5 °C. A spot reading mostly
+   re-measures the time-scale. What a probe IS good for is exactly that - the centre, at
+   the moment the centre peaks, is flat in space and in time (3 mm off: 0.03 °C; 15 s
+   late: 0.14 °C), and ±1 °C there is ±2.5% of time-scale from one egg, with no taste
+   in it. The same probe at the pull is worth less than it looks: a miss, a delay and
+   the stem all read hot (+1.3 °C at 3 mm, +2.2 °C at 15 s), and hot means "cook it
+   shorter". At the white's radius the field falls 3.5 °C per millimetre and no
+   handheld reading means anything. `INFERENCE.md` §5 has the flow this implies.
+
 2. **Convective heat transfer coefficient at a rolling boil.** Denys et al. measured 490
    W/m²K under gentle forced circulation at 40-60 °C. Nobody appears to have measured it
    with bubble agitation at 100 °C, which is the only condition this app cares about.
@@ -1111,6 +1125,20 @@ answers are recorded here rather than deleted, because each one was a plausible 
   The *combination* is identified — the suggested time converges — but the individual
   parameters are not. Varying egg size or cooling method separates them, and the white
   channel above is an attempt to separate them without asking anyone to vary anything.
+- **Feedback can move two global parameters, and the model gives it one.**
+  `npm run rank` takes ten things one might hope to learn - `alpha`, `tauAirScale`,
+  both z-values, the white's threshold and the radius it is judged at, a size exponent,
+  a yolk offset, and errors in the start and boil temperatures - scales each by its
+  prior, and asks how many directions of the prediction they span over 174 reachable
+  cooks. Answers needed to halve the prior sd along each direction: **~1** for a
+  time-scale (`alpha`, with the two temperature errors folded into it), **~5** for a
+  *white lag* (threshold and radius, mixed 0.75 / 0.60 and inseparable), then a tenfold
+  gap: ~60 for carryover (and *never* without counter-rested cooks), ~110 for size
+  scaling, ~270 for start temperature, and 500 to 250 000 for the rest, with both
+  z-values at the bottom. The particle carries the first direction and holds the second
+  at `WHITE_DOSE_TARGET`. Both real eggs so far had a runny white at a soft target. The
+  counts are Gaussian-latent and good to an order of magnitude; the gaps are the
+  result. `INFERENCE.md` is the plan this leads to.
 - **The cooling step is a flat three minutes** on both apps, regardless of egg size,
   cooling medium or how long the cook was. It happens to match the model's own
   `peakYolkTime_s` for an ice bath and a cold tap, which is why it has never looked
