@@ -3,15 +3,19 @@
 Resumable working notes. Updated **in the same commit** as the work it describes.
 For the science, see `README.md`. For what was verified and what it cost to find
 out, see `LOGBOOK.md`. For getting the app onto other people's phones, see
-`ios/RELEASING.md`. This file is for whoever picks the build back up.
+`ios/RELEASING.md`. For the design of what comes next - the inference as the
+main part, and pooled across cooks - see `INFERENCE.md`. This file is for
+whoever picks the build back up.
 
 **Status: both apps complete and learning. The PHYSICS is now the open part.**
-80 TypeScript tests, 27/27 validation checks and 45 Swift conformance tests pass.
+81 TypeScript tests, 27/27 validation checks and 45 Swift conformance tests pass.
 The web app and the iOS app carry the same model, the same refusals and the same
 particle filter; the Swift port covers every module in `src/core/`. The
 iOS app runs signed on a real phone, with a time-sensitive alarm and a Live
 Activity, and has cooked a real egg. What is left is not code: it is the two
-measurements in README §11.3 and a run of real eggs to calibrate against.
+measurements in README §11.3 and a run of real eggs to calibrate against. As of
+21 September there is also a designed next phase - E, below - that makes the
+inference the main part; none of it is built.
 
 Counts in this paragraph are the only ones in the file. Three other lines used
 to restate them and all three had gone stale, which is how a status line ends up
@@ -85,6 +89,47 @@ dose rate is 1e-6 of peak. Cut simulate 2.80 -> 1.87 ms with identical results.
 The SwiftUI layer takes the BEHAVIOUR of `src/ui/machine.ts` and leaves its
 mechanism. `clock.ts` in particular exists to fight the backgrounding problem
 that a local notification solves properly, and has no counterpart here.
+
+### Phase E — the inference becomes the main part — NOT STARTED
+
+The design and the reasons are in `INFERENCE.md`; this is only the list. Every
+core change lands in TypeScript and Swift together, under new fixtures, like
+everything since Phase D. E1-E5 need no network and are worth doing for one
+cook. Nothing leaves a phone before E6.
+
+- [ ] **E1 the record.** Keep each egg as an observation (`INFERENCE.md` §4),
+      on the device, beside the posterior. Record the ACTUAL pull time and where
+      the mass came from. A model change becomes a replay of the log instead of
+      a discarded posterior. Done when: a v3 posterior can be rebuilt from the
+      log alone, bit-identically, on both apps.
+- [ ] **E2 ordered probit.** Replace the hard bands and the fixed 0.8 / 0.1 in
+      `infer.ts` with cutpoints and a learned noise scale, plus the small
+      "unrelated answer" component. White becomes three answers and is always
+      asked; `shouldAskAboutWhite` and `WHITE_ASK_MIN_P` go. Done when: the
+      Phase C recovery experiment is repeated and is no worse, and the predictive
+      P(answer) is calibrated on simulated cooks.
+- [ ] **E3 the white offset.** A fourth particle dimension: an additive shift on
+      the white log dose, prior sd 0.5 decades. On one phone it is lag and
+      cutpoint together (§2). Done when: two "runny" answers at soft move the
+      next soft recommendation later and leave a jammy one nearly alone.
+- [ ] **E4 the thermometer flow.** Optional. The app says when (the solver's
+      `peakYolkTime_s`), the cook reports the lowest reading at the centre,
+      Gaussian likelihood with a hot skew (§5). Done when: one simulated reading
+      at +-1 C takes the time-scale sd to about 2.5%.
+- [ ] **E5 decide under uncertainty.** Time by expected utility with a lopsided
+      loss; the odds of "white set, yolk in band" on screen; protocol advice
+      when soft is asked for. Ships `predictCookTime`'s successor, which closes
+      item 7 below.
+- [ ] **E6 opt-in collection.** Consent, random id, upload, delete-by-id; the
+      privacy manifest, both READMEs and `ios/RELEASING.md` stop claiming no
+      networking. Blocked on the owner's decisions in `INFERENCE.md` §11.
+- [ ] **E7 the population fit.** Offline, Python, outside `src/core/`. An
+      emulator for the likelihood, 2-4 global parameters, cook and kitchen
+      effects with reliability. Publishes `fixtures/population.json`, which both
+      apps read as their prior. Done when: held-out predictive calibration is
+      the reported headline.
+- [ ] **E8 the nudge.** +-10 s on the recommendation for consenting cooks. Last,
+      because it is worthless before E7 exists to use it.
 
 ---
 
@@ -312,8 +357,16 @@ do; what is missing is contact with reality.
    is the expected ratio and the reason to keep going. The filter needs about
    three eggs to stop moving, and it needs you to VARY something — egg size or
    cooling method — or `alpha` and your taste stay confounded (README §11.5).
-2. **The two measurements nobody appears to have made** (README §11.3). Now the
-   highest-value item on this list rather than the most interesting one:
+0. **Phase E, starting at E1** (above, and `INFERENCE.md`). Added 21 September.
+   It reorders this list rather than replacing it: items 1 and 5 are what E1-E3
+   make worth doing, item 7 is absorbed by E5, and item 2 is qualified below.
+2. **The two measurements nobody appears to have made** (README §11.3).
+   *Qualified 21 September by `npm run probe`:* a kitchen probe at the centre,
+   at the yolk's peak, pins the time-scale to ~2.5% from one egg, so for THAT
+   the thermocouple is no longer the only way. For `TAU_AIR` it still is - a
+   spot reading moves 1.1 C per prior sd of it against 3.5 C for `alpha` - and
+   a logged curve is what is wanted. The original entry follows.
+   Now the highest-value item on this list rather than the most interesting one:
    `npm run identifiability` measures that `h` is 15x too weak to ever be learned
    from feedback, so a thermocouple is not a nicer way to get this answer, it is
    the only way. A road trip is packing one. A
