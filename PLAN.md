@@ -104,8 +104,10 @@ cook. Nothing leaves a phone before E6.
       log alone, bit-identically, on both apps.
 - [ ] **E2 ordered probit.** Replace the hard bands and the fixed 0.8 / 0.1 in
       `infer.ts` with cutpoints and a learned noise scale, plus the small
-      "unrelated answer" component. White becomes three answers and is always
-      asked; `shouldAskAboutWhite` and `WHITE_ASK_MIN_P` go. Done when: the
+      "unrelated answer" component. White becomes three answers (runny /
+      tender / firm), always offered and never required; the yolk stays at
+      three. A skipped question is recorded as a skip. `shouldAskAboutWhite`
+      and `WHITE_ASK_MIN_P` go. Done when: the
       Phase C recovery experiment is repeated and is no worse, and the predictive
       P(answer) is calibrated on simulated cooks.
 - [ ] **E3 the white offset.** A fourth particle dimension: an additive shift on
@@ -122,7 +124,10 @@ cook. Nothing leaves a phone before E6.
       item 7 below.
 - [ ] **E6 opt-in collection.** Consent, random id, upload, delete-by-id; the
       privacy manifest, both READMEs and `ios/RELEASING.md` stop claiming no
-      networking. Blocked on the owner's decisions in `INFERENCE.md` §11.
+      networking. A Netlify function, append-only blobs, the web tier
+      down-weighted in the global fit. Unblocked 21 September (`INFERENCE.md`
+      §11); the one thing still to choose is the privacy page's contact address.
+      The app says it is still learning wherever it shows a time.
 - [ ] **E7 the population fit.** Offline, Python, outside `src/core/`. An
       emulator for the likelihood, 2-4 global parameters, cook and kitchen
       effects with reliability. Publishes `fixtures/population.json`, which both

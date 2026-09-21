@@ -99,12 +99,21 @@ particle just outside the band is then a little wrong rather than exactly as
 wrong as one a decade away, which is more information per answer and no
 discontinuities for the filter to fall over.
 
-**The white gets three answers, and is always asked.** Runny, tender, firm. The
+**Three answers for the yolk, three for the white, and neither is required.**
+Too soft / just right / too hard stays as it is: five levels were considered and
+are too many at breakfast (§11). The white gets runny / tender / firm. The
 comment in `infer.ts` declines a third level because it would need an unmeasured
-ceiling; pooled, the ceiling is a learned cutpoint like any other. Always asking
-costs one tap and removes the selection question entirely - and the September
-gate measurement already showed that suppressing the question discards most of
-the evidence exactly when the model is confidently wrong.
+ceiling; pooled, the ceiling is a learned cutpoint like any other.
+
+**The white is always OFFERED, and the model no longer decides whether to ask.**
+The September gate measurement showed that suppressing the question discards
+most of the evidence exactly when the model is confidently wrong. But offered is
+not required: a cook may answer one question, both, or neither, and the egg is
+still logged. That puts selection back on the table - now the cook's rather than
+the model's - so **a skip is recorded as a skip**, not as an absent record. Who
+skips, and after which eggs, is then something the fit can look at instead of
+something it has to assume. The nudge (§8) and the thermometer panel (§5) are
+the checks on it, since neither depends on who chose to answer.
 
 **A robustness component.** With small probability an answer is unrelated to the
 egg. This is what `P_DISAGREE` is already standing in for.
@@ -136,10 +145,14 @@ One record per egg, stored on the device; uploaded only under §7.
   },
   "level": 0.22,
   "recommended_s": 399, "nudge_s": -6, "pulled_s": 412, "cooled_s": 180,
-  "yolk": -1, "white": "runny",
+  "yolk": -1, "white": null,
   "probe": null
 }
 ```
+
+- `yolk` and `white` are each an answer or `null`. `null` means the question was
+  on screen and the cook moved on; a record with both `null` is still a record,
+  because the cook, the recommendation and the actual pull time are data too.
 
 - `massFrom` (scale / girth / width / class) sets the egg-level noise: a size
   class is a 10 g bucket, worth about +-24 s, which is twice the width of "just
@@ -198,8 +211,14 @@ What bounds the damage:
 
 - heavy-tailed (Student-t) cook and kitchen effects, so a biased cluster is
   absorbed as outlying cooks rather than moving the mean;
-- App Attest on iOS, which proves a genuine copy of the app without saying whose;
-  the web app has no equivalent and is fitted as a lower-trust tier;
+- App Attest on iOS, which proves a genuine copy of the app without saying whose.
+  The web app has no equivalent, and it contributes anyway, at a lower weight
+  (§11): its records enter the GLOBAL fit under a tempered likelihood (a power
+  below one, 0.5 to start), and the web tier's total effective sample size is
+  capped at the attested tier's, so no number of browser tabs can outvote the
+  phones. The discount applies only to what a web cook teaches everybody else.
+  What they teach their own browser is untouched, since nobody can poison their
+  own breakfast but themselves;
 - a cap on how far any global parameter may move per published prior;
 - the thermometer panel and the physics prior as anchors.
 
@@ -220,6 +239,12 @@ carelessness, which the first paragraph handles.
 - **Deletion by id.** The device holds the only copy of the key, so "delete what
   you have from me" works without accounts, and is a button.
 - **The consent covers the nudge** (§8), in plain words, or the nudge is off.
+- **One Netlify function, beside the site it already hosts.** `POST` a record,
+  `DELETE` by id, nothing else. Records are append-only blobs keyed
+  `records/<tier>/<uid>/<n>.json`, so deletion is removing a prefix and the fit
+  is a listing. No IP addresses or user agents are written, and the function
+  logs neither. The controller is the owner, personally; the privacy page needs
+  a contact address, which is the one thing here still to be chosen.
 - **What changes in the repo:** the privacy manifest gains collected-data
   entries ("not linked to you"); the README, `ios/README.md` and the App Store
   answers in `ios/RELEASING.md` all stop saying the app has no networking; the
@@ -230,9 +255,9 @@ carelessness, which the first paragraph handles.
 
 Draft of the ask, to be argued over: *"Help make this timer better? If you turn
 this on, the app sends how each egg was cooked and how you said it turned out.
-No name, no location, nothing about you - just the egg. Sometimes it will change
-the time by a few seconds to learn faster. You can turn it off, and delete what
-you sent, whenever you like."*
+No name, no location, nothing about you - just the egg. The timer is still
+learning, so sometimes it will try a time a few seconds either way to learn
+faster. You can turn it off, and delete what you sent, whenever you like."*
 
 ## 8. Deciding, not just estimating
 
@@ -253,6 +278,11 @@ you sent, whenever you like."*
   seen. Moving the recommendation by up to +-10 s - inside "just right" - fixes
   that at no cost to the cook, and gives an estimate free of selection. Consent
   in §7.
+- **Say that it is learning.** The nudge is acceptable on one condition (§11):
+  the app does not present itself as finished. A cook who has opted in sees, in
+  plain words and wherever the time is shown, that the timer is still learning
+  their kitchen - which is also simply true for anyone in their first few eggs,
+  nudge or no nudge, and sets the right expectation for the odds on screen.
 
 ## 9. The fit
 
@@ -284,12 +314,20 @@ you sent, whenever you like."*
 6. **The population fit and the published prior** (E7), then the nudge (E8),
    which is worthless before there is a fit to use it.
 
-## 11. Decisions that are the owner's, not the plan's
+## 11. Decided by the owner, 21 September 2026
 
-- Where the endpoint lives, and who is the data controller on paper.
-- Whether the web app may contribute at all, given it cannot attest.
-- Whether the nudge is acceptable in an app whose whole claim is the right time.
-- Three yolk answers or five. Five is more information per egg and a harder
-  question at breakfast.
-- Whether "tender" is a word a cook understands for a white. It probably needs a
-  picture.
+1. **The endpoint is a Netlify function, and the controller is the owner in his
+   own name.** §7 has the shape. Still open: the contact address on the privacy
+   page.
+2. **The web app contributes, at a lower weight.** §6 says how: a tempered
+   likelihood in the global fit and a cap on the tier's effective sample size,
+   with no discount on what a web cook's answers teach their own browser.
+3. **The nudge is fine, provided the app advertises that it is learning.** §8.
+   The point is to manage expectations, so the wording belongs on the screen
+   with the time, not only in the consent.
+4. **Three yolk answers, not five - and every answer is optional.** §3 and §4:
+   a skip is recorded as a skip. This is the decision with a statistical cost,
+   and the cost is accepted rather than engineered away.
+5. **"Tender" stands, for now.** Slightly odd, not pathological, and no picture
+   could do better. Revisit if real cooks stumble on it; the record will show
+   whether the middle answer is being used.
