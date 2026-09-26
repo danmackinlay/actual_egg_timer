@@ -441,4 +441,10 @@ faster. You can turn it off, and delete what you sent, whenever you like."*
     material become a per-cook scale, learned only from standing cooks.
     Nobody is asked to time an empty pan: the only timed boil left is a cold
     start's, where the eggs are already in.
+    **Done 27 September**, except the per-cook scale: `TAU_STANDING_REF_S =
+    480 / ln(1.5) = 1183.8 s` at 2 L, scaled as `V^(1/3)`, with
+    `TAU_STANDING_SCALE` still a global 1.0. The learned per-cook scale is
+    deferred (`PLAN.md`). Logged standing cooks replay under the new rule
+    without change to the record: it keeps the water volume, and
+    `timeToBoilFrom` still says which of them had leaned on a remembered pan.
 

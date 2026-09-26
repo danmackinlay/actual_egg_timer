@@ -855,3 +855,45 @@ what was checked.
    strings: `egg${n === 1 ? '' : 's'}`, `minute(s)`, a list joined by " · ",
    and "assumes"/"guesses" spliced into two sentences. Each is now a message,
    and the checks above are what show the output did not move.
+
+## The heat-off pan, from the water (27 September 2026, INFERENCE §11 item 11)
+
+The standing method's loss time constant was the time to boil over
+`ln(r/(r-1))`, which reads the hob as the pan. It is now
+`TAU_STANDING_REF_S * (V / 2 L)^(1/3)`, with `TAU_STANDING_REF_S = 480 / ln(1.5)
+= 1183.8 s`. What was checked:
+
+- **The anchor holds exactly.** Williams' case (cold start, 480 s boil, 2 L,
+  17 minutes standing, tap) gives peak yolk 75.6033 °C and yolk dose 2661.6534
+  min-eq under both rules. The standing fixture for an 8-minute boil did not
+  move; every other standing fixture did, and the E1 record fixture moved with
+  its one logged standing cook (1.5 L).
+- **The counts.** `npm test` 121/121 (120 before; 15b and 15d now vary the
+  water, 15e is new). `npm run validate` 28/28 (27 before: the 4-minute-boil
+  check became a 1 L check, and an anchor check was added). `npm run
+  conformance` 62 Swift tests in 21 suites, all passing, with three new
+  constants compared.
+- **The moves**, by running the same solve against the core at 83d60c3 and
+  after the change: README §7 has the table, PLAN.md the summary. The fast hob
+  (2 L in 4 minutes) is where the old rule was wrong - it refused a jammy
+  standing cook at 2 L that now takes 6:09.
+- **The web app**, built with `npm run build:site` and served from this
+  worktree's `_site`: hot start, heat off, at 1, 2, 4 and 6 L, and a cold
+  start at 1-4 L through HEATING and COOKING. The hot-start line reads "for
+  2 L of water with the lid on — measure the water, it changes the time" and
+  follows the water field; the cold start still says what boil it guesses. No
+  console errors.
+- **iOS** builds for the simulator. It was not driven: another agent may be
+  using the booted simulators, and installing this build would replace theirs.
+  The new heat-off explanation rests on the catalogue's tests.
+
+### Things that cost time
+
+1. **The copy knew the old physics too.** Driving the app found the
+   white-never-sets refusal advising "a slower boil", which only ever helped
+   because a slow boil was read as a big pan. No test could have caught that;
+   reading the screen did.
+2. **Hot-start standing with four fridge eggs never sets the white** at 1-4 L,
+   under either rule. That is not new, but it is now plainer, since the old
+   rule on a measured hob let 3 and 4 L through. It is the model's claim, not a
+   measurement, and worth one real cook before anyone trusts it either way.
