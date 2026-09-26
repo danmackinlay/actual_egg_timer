@@ -381,15 +381,15 @@
       "solution": {
         "reachable": true,
         "whiteSets": true,
-        "softestLevel": 0.12697766103926278,
+        "softestLevel": 0.12581882736056016,
         "hardestLevel": 1,
         "minCookTime_s": 652.8125,
-        "cookTime_s": 962.1875,
-        "peakYolk_C": 76.99463951905011,
-        "peakWhite_C": 82.17817721125677,
-        "yolkAtPull_C": 70.07719445144434,
-        "yolkDose_min": 2015.7363023394248,
-        "whiteDose_min": 9.030954249332547
+        "cookTime_s": 1001.5625,
+        "peakYolk_C": 76.72919621476215,
+        "peakWhite_C": 80.80515843125458,
+        "yolkAtPull_C": 70.86823257427011,
+        "yolkDose_min": 2009.1209655763937,
+        "whiteDose_min": 5.763739503520497
       },
       "atFixed444s": {
         "peakYolk_C": 36.98146900691123,
@@ -398,7 +398,7 @@
       }
     },
     {
-      "name": "standing, 4 min boil (white never sets)",
+      "name": "standing, 4 min boil: a fast hob is not a small pan",
       "level": 0.41,
       "setup": {
         "startMode": "cold",
@@ -412,22 +412,154 @@
         "afterBoil": "off"
       },
       "solution": {
-        "reachable": false,
-        "whiteSets": false,
-        "softestLevel": 0.3534861917939477,
-        "hardestLevel": 0.3534861917939477,
-        "minCookTime_s": 2030,
-        "cookTime_s": 1029.6875,
-        "peakYolk_C": 61.57715640408537,
-        "peakWhite_C": 66.53325136837043,
-        "yolkAtPull_C": 57.998076400008756,
-        "yolkDose_min": 2.09609700104035,
-        "whiteDose_min": 0.007216670822603807
+        "reachable": true,
+        "whiteSets": true,
+        "softestLevel": 0.23077949611228069,
+        "hardestLevel": 0.8090151722034631,
+        "minCookTime_s": 541.25,
+        "cookTime_s": 608.75,
+        "peakYolk_C": 64.62126293926971,
+        "peakWhite_C": 73.67271671606288,
+        "yolkAtPull_C": 53.607113354758205,
+        "yolkDose_min": 3.9326205738125575,
+        "whiteDose_min": 0.10729040346697125
       },
       "atFixed444s": {
-        "peakYolk_C": 51.302140784874496,
-        "yolkDose_min": 0.005298950404481051,
-        "whiteDose_min": 0.0017494150454968728
+        "peakYolk_C": 53.20594379921314,
+        "yolkDose_min": 0.01321015483827495,
+        "whiteDose_min": 0.007537864773150231
+      }
+    },
+    {
+      "name": "standing, 1 L, hard (out of reach)",
+      "level": 1,
+      "setup": {
+        "startMode": "cold",
+        "eggStart_C": 4,
+        "ambient_C": 20,
+        "boiling_C": 100,
+        "timeToBoil_s": 240,
+        "cooling": "ice",
+        "waterLitres": 1,
+        "eggCount": 4,
+        "afterBoil": "off"
+      },
+      "solution": {
+        "reachable": false,
+        "whiteSets": true,
+        "softestLevel": 0.38203822400901055,
+        "hardestLevel": 0.6587173802000098,
+        "minCookTime_s": 625.625,
+        "cookTime_s": 1179.6875,
+        "peakYolk_C": 67.79930230507314,
+        "peakWhite_C": 71.32687206621173,
+        "yolkAtPull_C": 63.44923827476304,
+        "yolkDose_min": 53.221779209942774,
+        "whiteDose_min": 0.08422831532315958
+      },
+      "atFixed444s": {
+        "peakYolk_C": 52.68792059209268,
+        "yolkDose_min": 0.010300810033076119,
+        "whiteDose_min": 0.005017885823116906
+      }
+    },
+    {
+      "name": "standing, 4 L, 16 min boil, hard",
+      "level": 1,
+      "setup": {
+        "startMode": "cold",
+        "eggStart_C": 4,
+        "ambient_C": 20,
+        "boiling_C": 100,
+        "timeToBoil_s": 960,
+        "cooling": "ice",
+        "waterLitres": 4,
+        "eggCount": 4,
+        "afterBoil": "off"
+      },
+      "solution": {
+        "reachable": true,
+        "whiteSets": true,
+        "softestLevel": 0.29431125095340166,
+        "hardestLevel": 1,
+        "minCookTime_s": 884.375,
+        "cookTime_s": 1114.0625,
+        "peakYolk_C": 77.25328785714876,
+        "peakWhite_C": 85.96861054520478,
+        "yolkAtPull_C": 66.26414958449138,
+        "yolkDose_min": 2005.9255769257422,
+        "whiteDose_min": 23.21883669608246
+      },
+      "atFixed444s": {
+        "peakYolk_C": 28.934560688485327,
+        "yolkDose_min": 1.1259948410104016e-7,
+        "whiteDose_min": 5.743403795466744e-9
+      }
+    },
+    {
+      "name": "standing, hot start, 1 L (white never sets)",
+      "level": 0.41,
+      "setup": {
+        "startMode": "hot",
+        "eggStart_C": 4,
+        "ambient_C": 20,
+        "boiling_C": 100,
+        "timeToBoil_s": 480,
+        "cooling": "ice",
+        "waterLitres": 1,
+        "eggCount": 4,
+        "afterBoil": "off"
+      },
+      "solution": {
+        "reachable": false,
+        "whiteSets": false,
+        "softestLevel": 0,
+        "hardestLevel": 0,
+        "minCookTime_s": 1790,
+        "cookTime_s": 1191.875,
+        "peakYolk_C": 52.877078958214696,
+        "peakWhite_C": 55.35546597052046,
+        "yolkAtPull_C": 48.70626729252655,
+        "yolkDose_min": 0.040066282101742096,
+        "whiteDose_min": 0.00006377270323097717
+      },
+      "atFixed444s": {
+        "peakYolk_C": 46.82196155443429,
+        "yolkDose_min": 0.0006637733148504082,
+        "whiteDose_min": 0.00001981503022955403
+      }
+    },
+    {
+      "name": "standing, hot start, 6 L, two eggs",
+      "level": 0.41,
+      "setup": {
+        "startMode": "hot",
+        "eggStart_C": 4,
+        "ambient_C": 20,
+        "boiling_C": 100,
+        "timeToBoil_s": 480,
+        "cooling": "ice",
+        "waterLitres": 6,
+        "eggCount": 2,
+        "afterBoil": "off"
+      },
+      "solution": {
+        "reachable": true,
+        "whiteSets": true,
+        "softestLevel": 0.40332568218301756,
+        "hardestLevel": 0.7961302033113877,
+        "minCookTime_s": 560,
+        "cookTime_s": 563.75,
+        "peakYolk_C": 64.48104642551864,
+        "peakWhite_C": 71.91492306168712,
+        "yolkAtPull_C": 55.61531038798471,
+        "yolkDose_min": 3.883864976232347,
+        "whiteDose_min": 0.05156436523445459
+      },
+      "atFixed444s": {
+        "peakYolk_C": 58.24664775304133,
+        "yolkDose_min": 0.1641143345560529,
+        "whiteDose_min": 0.013017041866697571
       }
     }
   ]

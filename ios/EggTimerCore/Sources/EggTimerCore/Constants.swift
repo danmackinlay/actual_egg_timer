@@ -5,6 +5,8 @@
 /// justification drift and one of them becomes a lie. What this file owes the
 /// original is the VALUES, and `ConformanceTests` checks that debt.
 
+import Foundation
+
 public enum Constants {
     /// Eigenmodes retained in the sphere series.
     public static let modeCount = 40
@@ -31,9 +33,17 @@ public enum Constants {
     public static let hEff = 850.0
     public static let kEgg = 0.60
 
-    /// Hob overshoot ratio, and the multiplier on the pan's loss time constant
-    /// once the heat is off.
+    /// Hob overshoot ratio. It shapes the cold-start ramp and nothing else.
     public static let rampR = 3.0
+
+    /// The heat-off, lid-on pan's loss time constant at 2 L, s: 480 / ln(1.5),
+    /// pinned so Williams' 17-minute method is unchanged. Scaled by water volume
+    /// to the power `standingVolumeExponent` (1/3, a judgement: surface over
+    /// volume for similar-shaped pans), and by `tauStandingScale`. constants.ts
+    /// has the reasoning.
+    public static let tauStandingRefS = 480.0 / log(1.5)
+    public static let standingRefLitres = 2.0
+    public static let standingVolumeExponent = 1.0 / 3.0
     public static let tauStandingScale = 1.0
 
     /// Lumped cooling time constant in still air, s.

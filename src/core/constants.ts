@@ -92,25 +92,59 @@ export const K_EGG = 0.60;
 
 /** Hob overshoot ratio r = P/(U*dT_boil). 1/r is the fraction of full burner
  *  power needed to hold a rolling boil; measured cooktop studies put that near
- *  1/3. r -> infinity is a linear ramp. */
+ *  1/3. r -> infinity is a linear ramp. It shapes the cold-start ramp and
+ *  nothing else: it describes the hob, so the heat-off pan no longer uses it
+ *  (see TAU_STANDING_REF_S). */
 export const RAMP_R = 3.0;
 
-/** Multiplier on the pan's Newtonian loss time constant once the heat is off
- *  and the lid is on.
+/** The pan's Newtonian loss time constant with the heat off and the lid on,
+ *  for 2 L of water (STANDING_REF_LITRES), s.
  *
- *  The ramp already identifies that time constant: tau = m*c/(U*A) is exactly
- *  what sets the shape of the approach to the boil, so a measured time to boil
- *  gives it for free (see panTimeConstant). Whether it is the SAME constant
- *  with the burner off is the question this multiplier holds open. Two effects
- *  push in opposite directions: a lid and no burner cut the loss (argues > 1),
- *  while the ramp's own tau is inflated by evaporation near the boil, which is
- *  not Newtonian at all (argues < 1).
+ *  ANCHORED, NOT MEASURED. It is pinned to what the old derivation gave for
+ *  Williams' folk method - bring to the boil, cover, off the heat, seventeen
+ *  minutes, and it is hard-boiled - with an 8-minute boil in 2 L:
+ *  480 / ln(r/(r-1)) at r = 3, i.e. 480 / ln(1.5) = 1183.8 s. So that one
+ *  validation case is unchanged by construction, and the Williams check in
+ *  tools/validate.ts still reads 75.6 C.
  *
- *  1.0 is a deliberate refusal to guess, and it reproduces Williams' folk
- *  method — bring to the boil, cover, off the heat, seventeen minutes, and it
- *  is hard-boiled — to within a few per cent for an 8-minute boil. That is one
- *  anchor with an unstated pan, not a measurement. It is the least-verified
- *  number in the standing path; see README section 11.3. */
+ *  It used to be derived from the time to boil, on the grounds that the ramp's
+ *  tau = m*c/(U*A) is the same quantity. It is, but the boil time identifies
+ *  it only through RAMP_R, and RAMP_R is a property of the HOB (burner power
+ *  over losses), not of the pan. A hob twice as strong as assumed (r = 6)
+ *  boils in tau*ln(1.2) and made the pan look 2.2 times quicker to cool; a
+ *  weak one (r = 1.5), 2.7 times slower. How fast a lidded pan cools with the
+ *  burner off depends on the water and the pan, so it now comes from the water
+ *  volume (see panTimeConstant), and the hob drops out. Decided by the owner
+ *  26 September 2026; INFERENCE.md section 11, item 11. */
+export const TAU_STANDING_REF_S = 480.0 / Math.log(1.5);
+
+/** The water volume TAU_STANDING_REF_S is quoted at, litres. Williams' pan is
+ *  unstated; 2 L is this app's default and what the anchor case assumes. */
+export const STANDING_REF_LITRES = 2.0;
+
+/** How the heat-off loss time constant scales with water volume:
+ *  tau ~ V^STANDING_VOLUME_EXPONENT.
+ *
+ *  A JUDGEMENT. tau = m*c/(U*A): the heat held goes as V, the area it leaks
+ *  through as V^(2/3) for pans of the same shape, so tau goes as V^(1/3).
+ *  Real kitchens break the "same shape" part - a litre in a wide frying-pan
+ *  loses faster than a litre in a narrow milk pan - and nothing in the app
+ *  knows the pan's shape. Confidence: the direction and the rough size are
+ *  physics; the exponent itself is unvalidated, and no standing cook has yet
+ *  been measured at any volume but the anchor's. tools/validate.ts prints tau
+ *  at 1-4 L beside what the old boil-time rule gave, so the disagreement is on
+ *  the page rather than hidden. */
+export const STANDING_VOLUME_EXPONENT = 1.0 / 3.0;
+
+/** Multiplier on TAU_STANDING_REF_S.
+ *
+ *  Held at 1.0 so the anchor stands. What it holds open is everything the
+ *  volume rule cannot see: the lid (a loose one, or none, cuts the constant),
+ *  the pan's material and shape, and evaporation, which is not Newtonian at
+ *  all near the boil. A per-cook scale learned from that cook's own standing
+ *  eggs is the planned replacement (PLAN.md), and is deliberately not built
+ *  yet. It is the least-verified number in the standing path; see README
+ *  section 11.3. */
 export const TAU_STANDING_SCALE = 1.0;
 
 /** Lumped cooling time constant of an egg in still air, s.

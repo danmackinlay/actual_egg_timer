@@ -177,32 +177,42 @@ surface temperature. A pan losing heat to the room is Newtonian:
 T(t) = Tamb + (Tboil - Tamb) * exp(-t/tau_pan)
 ```
 
-and `tau_pan = m*c/(U*A)` is **the same time constant that shapes the ramp**, so the
-user's one measurement already contains it:
+and `tau_pan = m*c/(U*A)`: the heat the water holds over the rate the pan leaks it. The
+heat held goes as the volume, and the surface it leaks through as `V^(2/3)` for pans of
+the same shape, so
 
 ```
-t_boil = tau_pan * ln(r/(r-1))   =>   tau_pan = t_boil / 0.405   (at r = 3)
+tau_pan(V) = TAU_STANDING_REF_S * (V / 2 L)^(1/3),   TAU_STANDING_REF_S = 480 / ln(1.5) = 1183.8 s
 ```
 
-An 8-minute boil implies `tau_pan = 19.7 min`. No new measurement is needed, and the
-dependence on water volume comes along for free: more water takes longer to boil, which
-*is* the statement that it holds more heat.
+That is 15.7 min at 1 L, 19.7 min at 2 L, 22.6 min at 3 L and 24.9 min at 4 L. The
+reference is pinned to Williams' seventeen-minute method (§7) with an 8-minute boil in
+2 L, so that one case is exactly what it was before; the exponent is a judgement (§6).
+
+It used to be read off the time to boil instead. The ramp's `tau` is the same quantity,
+and `t_boil = tau * ln(r/(r-1))`, so a timed boil seemed to give it for free. It does
+not, because `r` is the **hob** (burner power over losses), not the pan: a hob twice as
+strong as assumed boils in `tau * ln(1.2)`, and the app read that as a pan cooling 2.2
+times too fast; a weak one, 2.7 times too slow. A hot start never times the boil at all,
+so it cooled at the rate of whatever pan was remembered. How fast a lidded pan cools with
+the burner off depends on the water and the pan, so the hob is out of it now, and the
+time to boil shapes the cold-start ramp and nothing else.
 
 Two things fall out that are worth more than the feature itself:
 
 - **The dose saturates.** The water is falling, so past about 12 minutes of standing
   nothing further happens: 20 minutes and 30 minutes give a yolk within 0.01% of the same
   dose. That is why a folk method can say "about seventeen minutes" and be right.
-- **The pan decides, not the clock.** A 10-minute boil reaches hard in 6 minutes of
-  standing; a 6-minute boil cannot get past fudgy; and a 4-minute boil — a small pan on a
-  strong burner, storing almost nothing — never sets the white at all, at any doneness,
-  because the water falls past what the white needs while the egg is still in it. The app
-  refuses the settings it cannot deliver rather than printing a time that will not work
-  (§7). Both refusals are new failure modes: held at the boil, the dose only grows, so the
-  only way to miss was ever from the soft end.
+- **The pan decides, not the clock.** On a hob that boils 2 L in 8 minutes, 2 L reaches
+  hard in 10 minutes of standing and 4 L in two and a half, while 1 L cannot get past
+  fudgy. Four fridge eggs lowered into a litre at the boil, heat off, never set the white
+  at all, at any doneness, because the water falls past what the white needs while the
+  egg is still in it. The app refuses the settings it cannot deliver rather than printing
+  a time that will not work (§7). Both refusals are new failure modes: held at the boil,
+  the dose only grows, so the only way to miss was ever from the soft end.
 
-`TAU_STANDING_SCALE` holds open the one real question: whether the pan's loss constant is
-really the same with the burner off and a lid on. See §6 and §11.3.
+`TAU_STANDING_SCALE` (1.0) holds open what the volume cannot see: the lid, the pan's
+shape and material, and evaporation. See §6 and §11.3.
 
 **Boiling point.** ISA barometric formula for pressure against altitude, then the
 Antoine equation (Stull 1947) inverted for temperature. The engineering one-liner
@@ -448,8 +458,10 @@ distrust.
 | `ALPHA_REL_SD` | 0.119 | — | Prior width for calibration, chosen so `tau` has sd ~400 s at the reference radius. **Judgement.** |
 | `TAU_AIR` | 2030 | s | Lumped `m*c/(h*A)` with `h ~ 15 W/m²K` in still air. **Lowest confidence in the model** — no published carryover curve has been found (§11.3). Carries a wide calibration prior (`tauAirScale`). |
 | `H_EFF` | 850 | W/m²K | Natural convection on a sphere (~1100) in series with shell + membranes (~3200). Used for the Biot number. **Known high**: Denys et al. (2003) measured 490 W/m²K at the shell, ~450 effective with their measured shell in series — `Bi ~ 18`, not 34 (§11.2). It enters as a justification rather than a driver, which is the only reason it still stands. |
-| `RAMP_R` | 3.0 | — | Hob overshoot ratio; `1/r` is the fraction of full power needed to hold a boil, which measured cooktop studies put near 1/3. **Medium-low.** |
-| `TAU_STANDING_SCALE` | 1.0 | — | Multiplier on the pan's loss time constant once the heat is off and the lid is on. The ramp already identifies `tau = m*c/(U*A)`, so this only asks whether it is the *same* constant with the burner off: a lid argues for more than 1, evaporation inflating the ramp's own `tau` argues for less. 1.0 is a refusal to guess, and it reproduces Williams' seventeen-minute method (§7). **Lowest confidence in the standing path** — see §11.3. |
+| `RAMP_R` | 3.0 | — | Hob overshoot ratio; `1/r` is the fraction of full power needed to hold a boil, which measured cooktop studies put near 1/3. Shapes the cold-start ramp and nothing else: it describes the hob, which is why the heat-off pan no longer goes through it (§2.4). **Medium-low.** |
+| `TAU_STANDING_REF_S` | 1183.8 | s | The heat-off, lid-on pan's loss time constant at 2 L: `480 / ln(1.5)`, what the retired boil-time rule gave for an 8-minute boil. **Anchored, not measured** — pinned so Williams' seventeen-minute method (§7) is unchanged by construction. One folk recipe with an unstated pot. |
+| `STANDING_VOLUME_EXPONENT` | 1/3 | — | `tau_pan ~ V^(1/3)`: heat held goes as the volume, the leaking surface as `V^(2/3)` for pans of the same shape. **Judgement.** Physics for the direction and rough size; the exponent is unvalidated, and a wide pan breaks the "same shape" part. `npm run validate` prints it at 1-4 L beside the old rule so the disagreement is on the page. |
+| `TAU_STANDING_SCALE` | 1.0 | — | Multiplier on `TAU_STANDING_REF_S`, holding open what the volume cannot see: the lid, the pan's shape and material, and evaporation, which is not Newtonian near the boil. 1.0 keeps the Williams anchor. A per-cook scale learned from standing cooks is planned, not built. **Lowest confidence in the standing path** — see §11.3. |
 
 ### Physical properties
 
@@ -532,20 +544,47 @@ stale one, but it has not been chased down. Treat altitude predictions as carryi
 ### The standing method against Williams' own recipe
 
 Williams describes hard-boiling as: cold water, bring to the boil, remove the heat, lid
-on, stand about seventeen minutes, then cool. With `TAU_STANDING_SCALE = 1.0` and an
-8-minute boil the model puts that at a peak yolk of **75.6 °C** and a yolk dose just past
-this app's *Hard* — and flat: the dose at 20 minutes and at 30 minutes agree to 0.01%.
+on, stand about seventeen minutes, then cool. With an 8-minute boil in 2 L the model puts
+that at a peak yolk of **75.6 °C** and a yolk dose just past this app's *Hard* — and flat:
+the dose at 20 minutes and at 30 minutes agree to 0.01%. That case is the anchor for the
+pan's time constant, so it holds by construction; what the check guards is everything
+else in the path.
 
-| time to boil | pan time constant | hardest reachable | standing time for hard |
-|---|---|---|---|
-| 4 min | 9.9 min | nothing | never sets the white |
-| 6 min | 14.8 min | Fudgy | cannot reach hard |
-| 8 min | 19.7 min | Hard | 10.1 min |
-| 10 min | 24.7 min | Hard | 5.9 min |
+The pan's time constant comes from the water volume. The table sets it beside what the
+old rule, which read it off the time to boil, gave on a hob that boils 2 L in 8 minutes.
+For a fixed hob the boil time is proportional to the heat capacity, so the old rule grew
+linearly with the water, where a pan's losses grow with its surface:
+
+| water | pan time constant | typical hob boils it in | old rule gave | old / new | hardest reachable (cold start) | standing time for hard |
+|---|---|---|---|---|---|---|
+| 1 L | 15.7 min | 4 min | 9.9 min | 0.63x | Fudgy | cannot reach hard |
+| 2 L | 19.7 min | 8 min | 19.7 min | 1.00x | Hard | 10.1 min |
+| 3 L | 22.6 min | 12 min | 29.6 min | 1.31x | Hard | 4.6 min |
+| 4 L | 24.9 min | 16 min | 39.5 min | 1.59x | Hard | 2.5 min |
 
 Read that table before trusting the method: it is not forgiving in the pan, only in the
-clock. It is also a single folk anchor with an unstated pot, which is exactly why
-`TAU_STANDING_SCALE` exists.
+clock. It is also a single folk anchor with an unstated pot and a judged exponent, which
+is exactly why `TAU_STANDING_SCALE` exists.
+
+**What moved when the rule changed** (27 September 2026). Standing time after the boil,
+cold start, EU Large fridge egg, four eggs, ice bath; old → new:
+
+| hob | doneness | 1 L | 2 L | 3 L | 4 L |
+|---|---|---|---|---|---|
+| boils 2 L in 8 min | jammy | white never set → 6:42 | 3:13, unchanged | 1:04 → 1:05 | pulled 0:42 before the boil, unchanged |
+| boils 2 L in 8 min | hard | white never set → cannot reach (0.66) | 10:13, unchanged | 4:29 → 4:44 | 2:29 → 2:34 |
+| boils 2 L in 4 min | jammy | white never sets, unchanged | white never set → 6:09 | 4:52 → 4:27 | 3:13 → 3:09 |
+| boils 2 L in 4 min | hard | white never sets, unchanged | white never set → cannot reach (0.81) | cannot reach (0.76 → 0.999) | 10:13 → 7:52 |
+| 8 min at every volume (an unmeasured pan) | hard | 10:13 → cannot reach (0.91) | 10:13, unchanged | 10:13 → 8:26 | 10:13 → 7:52 |
+
+On a measured typical hob the move is small, because the two rules cross at the default
+pan and the ramp does most of the work in a big one. The fast hob is where the old rule
+was wrong: it read a strong burner as a small pan and refused cooks that work. The last
+row is the app before any boil has been timed, when every volume was guessed at the same
+8 minutes and the old rule therefore gave every pan the same cooling; now a bigger pan
+holds its heat longer. On a hot start with four fridge eggs the white never sets at 1-4 L
+under either rule, except that the old rule, on a measured typical hob, let 3 L and 4 L
+through (4 L jammy in 9:13); the new one does not.
 
 ### Against somebody else's measurements
 
@@ -694,8 +733,8 @@ one matters:
    base at maybe 85-95 °C; tapping there under-measures the ramp by 15-25% and the model
    will under-cook. This is the single most valuable thing you can tell the app, because
    the correct "minutes after boiling" varies by nearly a factor of five with hob power
-   alone (§1) — and with the heat off at the boil it is also the *only* measurement of
-   your pan's heat capacity (§2.4).
+   alone (§1). It is only ever the length of a cold start's ramp: with the heat off, how
+   fast the pan cools comes from the water volume, not from the boil (§2.4).
 2. **Commit to a cooling protocol and actually do it** — worth **11 °C of peak yolk**,
    which is the difference between jammy and set (§5). This is not a garnish on the
    recipe. "Ice bath" means ice *and* water, in enough volume that it stays cold.
@@ -716,14 +755,15 @@ one matters:
    the whole realistic range — 0.75 to 4 L, one to eight eggs — the cook time moves **22
    seconds**, and the worst corner (eight eggs into 0.75 L) costs 17 s against the
    reference. On a *cold* start there is no dip at all, since the eggs are in the pan
-   from the beginning; volume acts only by making the boil take longer, which the app
-   measures rather than computes.
+   from the beginning; held at the boil, volume acts only by making the boil take longer,
+   which the app measures rather than computes.
 
    Two caveats in the other direction. `TAU_DIP_RECOVERY = 60 s` is a guess (**Low**
    confidence, §6), and it is the constant that turns those degrees into seconds — on a
    weak hob with eight eggs, recovery could take minutes and the cost would be several
    times larger. And if you kill the heat at the boil, water volume stops being a
-   rounding error and becomes the whole cook (§2.4).
+   rounding error and becomes the whole cook: it is what sets how fast the pan cools
+   (§2.4), so measure it.
 
 ### What the app deliberately does not ask
 
@@ -1064,14 +1104,15 @@ answers are recorded here rather than deleted, because each one was a plausible 
 
 3. **A logged temperature-vs-time curve for a domestic pot of water**, heating *and*
    cooling. `RAMP_R = 3.0` comes from cooktop *efficiency* studies ("about a third of
-   full burner power holds a boil"), not from a measured heating curve, and
-   `TAU_STANDING_SCALE = 1.0` asserts without evidence that a covered pan with the burner
-   off loses heat on the same time constant as one being heated. The second is the
-   weaker claim of the two: evaporation dominates the loss at the boil and stops being
-   replenished once the lid is on, so the real standing constant is probably longer, and
-   the app probably refuses the standing method more often than it should. One
-   thermocouple, one pot, forty minutes — heat it, log the boil time, kill the heat, keep
-   logging — would settle both constants at once and beat every source found.
+   full burner power holds a boil"), not from a measured heating curve. The standing
+   path rests on less: `TAU_STANDING_REF_S` is pinned to one folk recipe with an unstated
+   pot, `STANDING_VOLUME_EXPONENT = 1/3` is geometry for pans of the same shape, and
+   `TAU_STANDING_SCALE = 1.0` assumes the lid does what Williams' lid did. Evaporation
+   dominates the loss at the boil and stops being replenished once the lid is on, so the
+   real standing constant may well be longer, and the app may refuse the standing method
+   more often than it should. One thermocouple, one pot, forty minutes — heat it, log the
+   boil time, kill the heat, keep logging — would settle `RAMP_R` and the 2 L constant at
+   once and beat every source found; the same at 1 L and 4 L would test the exponent.
 
 ### 11.4 Modelling work deliberately not done
 

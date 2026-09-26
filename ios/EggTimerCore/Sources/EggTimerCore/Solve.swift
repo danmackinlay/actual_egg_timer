@@ -328,8 +328,11 @@ private func firstCrossing(
 private func solveStanding(
     egg: Egg, setup: CookSetup, params: ModelParams, doneness: Doneness
 ) -> Solution {
+    // The heat goes off at the boil: after the ramp on a cold start, at once on
+    // a hot one, whose remembered time to boil has no business here.
+    let heatOffS = setup.startMode == .cold ? setup.timeToBoilS : 0.0
     let curve = scanStanding(
-        egg: egg, setup: setup, params: params, horizonS: setup.timeToBoilS + standingHorizonS
+        egg: egg, setup: setup, params: params, horizonS: heatOffS + standingHorizonS
     )
     let whiteCook = firstCrossing(
         egg: egg, setup: setup, params: params, curve: curve, values: curve.white,

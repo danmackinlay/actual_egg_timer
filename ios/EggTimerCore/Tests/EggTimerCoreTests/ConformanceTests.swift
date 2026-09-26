@@ -45,6 +45,12 @@ struct ConstantsConformance {
         expectClose(Constants.kEgg, Fixtures.constant("K_EGG"), "K_EGG")
         expectClose(Constants.rampR, Fixtures.constant("RAMP_R"), "RAMP_R")
         expectClose(Constants.tauStandingScale, Fixtures.constant("TAU_STANDING_SCALE"), "TAU_STANDING_SCALE")
+        expectClose(Constants.tauStandingRefS, Fixtures.constant("TAU_STANDING_REF_S"), "TAU_STANDING_REF_S")
+        expectClose(Constants.standingRefLitres, Fixtures.constant("STANDING_REF_LITRES"), "STANDING_REF_LITRES")
+        expectClose(
+            Constants.standingVolumeExponent, Fixtures.constant("STANDING_VOLUME_EXPONENT"),
+            "STANDING_VOLUME_EXPONENT"
+        )
         expectClose(Constants.tauAir, Fixtures.constant("TAU_AIR"), "TAU_AIR")
         expectClose(Constants.tIceBathC, Fixtures.constant("T_ICE_BATH_C"), "T_ICE_BATH_C")
         expectClose(Constants.tColdTapC, Fixtures.constant("T_COLD_TAP_C"), "T_COLD_TAP_C")

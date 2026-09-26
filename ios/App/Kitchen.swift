@@ -203,9 +203,10 @@ final class Kitchen {
 
     /// Time to a rolling boil, s - the pan's one measured number. Remembered
     /// per water volume, because the same pan on the same hob gives the same
-    /// answer next time. Note the solver wants it on a HOT start too: with the
-    /// heat off it is the pan's loss time constant, which is the only
-    /// measurement of the pan there is.
+    /// answer next time. It is the length of a cold start's ramp and nothing
+    /// more: with the heat off the pan's cooling comes from the water volume
+    /// (`Protocols.panTimeConstant`), so a hot start carries it only for the
+    /// record, which says which pan was assumed.
     var timeToBoilS: Double { estimateTimeToBoil(boilMemory, litres: waterLitres) }
 
     var hasBoilMemory: Bool { EggTimerCore.hasBoilMemory(boilMemory) }
