@@ -47,8 +47,7 @@
 
     "readout.sub.coldAssumes": { "surface": "body", "apps": ["web"], "text": "assumes {boil} to a rolling boil", "example": { "boil": "6:40" } },
     "readout.sub.coldGuesses": { "surface": "body", "apps": ["web"], "text": "guesses {boil} to a rolling boil", "example": { "boil": "8:00" } },
-    "readout.sub.standingAssumes": { "surface": "body", "apps": ["web"], "text": "assumes this pan takes {boil} to boil, which is how fast it cools", "example": { "boil": "6:40" } },
-    "readout.sub.standingGuesses": { "surface": "body", "apps": ["web"], "text": "guesses this pan takes {boil} to boil, which is how fast it cools", "example": { "boil": "8:00" } },
+    "readout.sub.standing": { "surface": "body", "apps": ["web"], "text": "for {litres} L of water with the lid on — measure the water, it changes the time", "example": { "litres": "2" } },
     "readout.sub.hot": { "surface": "body", "apps": ["web"], "text": "from eggs in to eggs out" },
     "readout.sub.idleCold": { "surface": "body", "apps": ["ios"], "text": "from eggs into COLD water, heat on, to eggs out" },
     "readout.sub.idleHot": { "surface": "body", "apps": ["ios"], "text": "from eggs into BOILING water to eggs out" },
@@ -87,7 +86,7 @@
     "texture.yolk.fudgy": { "surface": "fragment", "apps": ["web", "ios"], "text": "yolk fudgy" },
     "texture.yolk.set": { "surface": "fragment", "apps": ["web", "ios"], "text": "yolk fully set" },
 
-    "refusal.whiteNeverSets": { "surface": "body", "apps": ["web", "ios"], "text": "With the heat off this pan never sets the white: the water falls below what the white needs while the egg is still in it. Nothing on the slider is reachable. More water, a slower boil, or keep it boiling." },
+    "refusal.whiteNeverSets": { "surface": "body", "apps": ["web", "ios"], "text": "With the heat off this pan never sets the white: the water falls below what the white needs while the egg is still in it. Nothing on the slider is reachable. More water, or keep it boiling." },
     "refusal.harderThanPan": { "surface": "body", "apps": ["web", "ios"], "note": "{wanted} and {limit} are doneness words, lower-cased by the app.", "text": "With the heat off, the water runs out before the yolk gets there — {wanted} isn't reachable in {litres} L. Hardest here is {limit}. More water, or keep it boiling.", "example": { "wanted": "hard", "litres": "0.8", "limit": "fudgy" } },
     "refusal.counter": { "surface": "body", "apps": ["web", "ios"], "note": "{wanted} and {limit} are doneness words, lower-cased by the app.", "text": "Resting on the counter keeps cooking the yolk — {wanted} isn't reachable. Softest here is {limit}. Use an ice bath.", "example": { "wanted": "runny", "limit": "fudgy" } },
     "refusal.tap": { "surface": "body", "apps": ["web", "ios"], "note": "{wanted} and {limit} are doneness words, lower-cased by the app.", "text": "A cold tap doesn't pull the heat out fast enough — {wanted} isn't reachable. Softest here is {limit}. Ice water gets you further.", "example": { "wanted": "runny", "limit": "soft" } },
@@ -156,7 +155,7 @@
     "controls.afterBoil.keepBoiling": { "surface": "segment", "apps": ["ios"], "text": "Keep boiling" },
     "controls.afterBoil.heatOff": { "surface": "segment", "apps": ["web", "ios"], "text": "Heat off, lid on" },
     "controls.afterBoil.hint": { "surface": "body", "apps": ["web"], "text": "Standing in cooling water is a real method, but it lives or dies on the pan: the water has to carry the whole cook. More water holds more heat." },
-    "controls.afterBoil.explainHeatOff": { "surface": "body", "apps": ["ios"], "text": "The standing method: the pan coasts down from the boil and the cook is whatever the stored heat can still do. Water volume decides whether it can do it at all." },
+    "controls.afterBoil.explainHeatOff": { "surface": "body", "apps": ["ios"], "text": "Lid on and burner off: the water's own heat finishes the eggs. The time is worked out for the water below, so measure it — more or less water changes the time, or whether it works at all." },
     "controls.afterBoil.explainHold": { "surface": "body", "apps": ["ios"], "text": "The burner holds the water at a rolling boil for the whole cook." },
     "controls.then": { "surface": "label", "apps": ["web", "ios"], "text": "Then" },
     "controls.then.ice": { "surface": "segment", "apps": ["web", "ios"], "text": "Ice bath" },
