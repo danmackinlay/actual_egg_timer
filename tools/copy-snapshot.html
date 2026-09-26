@@ -117,6 +117,8 @@ const click = (sel) => ({ name: `click ${sel}`, run: async () => { doc().querySe
 const advance = (s) => ({ name: `+${s}s`, run: async () => { win().__now += s * 1000; await sleep(500); } });
 const wait = (ms) => ({ name: `wait ${ms}`, run: async () => { await sleep(ms); } });
 const toPull = { name: 'to pull', run: async () => { win().__now = storedMachine().cookEnd_ms + 3000; await sleep(500); } };
+/** F4: a countdown left at exactly `s` seconds, for the spoken forms. */
+const toLeft = (s) => ({ name: `${s}s left`, run: async () => { win().__now = storedMachine().cookEnd_ms - s * 1000; await sleep(500); } });
 const toCoolEnd = { name: 'to cool end', run: async () => { win().__now = storedMachine().coolEnd_ms + 1000; await sleep(500); } };
 const reopen = { name: 'reload', run: async () => { await openApp(win().__now); } };
 /** Before E2 the white question had its own block, shown only sometimes;
@@ -191,6 +193,15 @@ const SCENARIOS = [
   { name: 'sous-vide 0.8', settings: { startMode: 'sous', doneness: 0.8 }, steps: [] },
   { name: 'sous-vide 0.9', settings: { startMode: 'sous', doneness: 0.9 }, steps: [] },
   { name: 'sous-vide hard', settings: { startMode: 'sous', doneness: 1 }, steps: [] },
+  // F4: a time of day and numbers in a 12-hour, comma-grouped locale.
+  { name: 'sous-vide jammy, en-US', lang: 'en-US', settings: { startMode: 'sous' }, steps: [] },
+  { name: 'sous-vide hard, en-US', lang: 'en-US', settings: { startMode: 'sous', doneness: 1 }, steps: [] },
+  // F4: the spoken countdown at one of each, which read "1 seconds".
+  {
+    name: 'hot cook, spoken at 61 s and 1 s',
+    settings: { muted: true, startMode: 'hot' },
+    steps: [click('#primary'), toLeft(61), toLeft(60), toLeft(1)],
+  },
   {
     name: 'cold cook, twice, then forget',
     settings: { muted: true },
