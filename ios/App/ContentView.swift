@@ -235,15 +235,9 @@ struct ContentView: View {
             guard cook.pendingAlarms > 0 else {
                 return tr("readout.alarm.failed")
             }
-            return tr("readout.alarm.set", ["time": .text(Self.clock.string(from: cook.pullAt ?? .now))])
+            return tr("readout.alarm.set", ["time": .text(timeOfDay(cook.pullAt ?? .now, withSeconds: true))])
         }
     }
-
-    private static let clock: DateFormatter = {
-        let f = DateFormatter()
-        f.dateFormat = "HH:mm:ss"
-        return f
-    }()
 
     // MARK: - Sous-vide
 
@@ -346,7 +340,8 @@ struct ContentView: View {
                     massFrom: kitchen.massFrom,
                     sizeTable: kitchen.sizeTable,
                     boilRemembered: kitchen.hasBoilMemory,
-                    units: kitchen.units
+                    units: kitchen.units,
+                    lang: Copy.activeLocale
                 )
                 Task {
                     await cook.start(
@@ -759,7 +754,7 @@ struct ContentView: View {
     ) -> some View {
         Stepper(value: value, in: Int(range.lowerBound)...Int(range.upperBound)) {
             LabeledContent(label) {
-                Text("\(value.wrappedValue)")
+                Text(countText(Double(value.wrappedValue)))
                     .foregroundStyle(.secondary)
                     .monospacedDigit()
             }
@@ -800,7 +795,7 @@ struct ContentView: View {
     /// A size class's name and its mass, in the cook's units.
     private func sizeLabel(_ c: SizeClass) -> String {
         let label = sizeClassLabel(c, system: kitchen.units)
-        return tr(label.key, ["mass": .text(tr(label.mass.key, ["value": .text(label.mass.value)]))])
+        return tr(label.key, ["mass": .text(tr(label.mass.key, ["value": .fixed(label.mass.value)]))])
     }
 
     @ViewBuilder

@@ -20,6 +20,32 @@ enum Copy {
     /// sets this; everything renders through `tr`, so nothing else changes.
     static let activeLocale = "en"
 
+    /// The locale numbers and times are written in: the UI's language, in the
+    /// phone's region, with the phone's own 12/24-hour setting when it differs
+    /// from the region's - an Australian iPhone set to 24-hour time gets
+    /// `en-AU-u-hc-h23`, and "15:05" where en-AU alone would say "3:05 pm".
+    /// Derived by the same core function as the web's (`formattingLocale`); the
+    /// web has no hour-cycle setting to read, so there the region's stands.
+    ///
+    /// Read once, like the catalogue. A change of region or clock in Settings
+    /// relaunches the app on iOS anyway.
+    static let formatLocale: String = {
+        let region = Locale.current.region?.identifier
+        let regional = Locale(identifier: formattingLocale(uiLanguage: activeLocale, region: region, hourCycle: nil))
+        let own = Locale.current.hourCycle
+        guard own != regional.hourCycle else {
+            return formattingLocale(uiLanguage: activeLocale, region: region, hourCycle: nil)
+        }
+        let hourCycle: HourCycle? = switch own {
+        case .zeroToEleven: .h11
+        case .oneToTwelve: .h12
+        case .zeroToTwentyThree: .h23
+        case .oneToTwentyFour: .h24
+        @unknown default: nil
+        }
+        return formattingLocale(uiLanguage: activeLocale, region: region, hourCycle: hourCycle)
+    }()
+
     /// The active catalogue, with English beneath it for any key it lacks.
     static let catalogue: Catalogue = {
         let english = load("en", fallback: nil)
@@ -39,12 +65,26 @@ enum Copy {
     }
 }
 
-/// A message, rendered.
+/// A message, rendered, with its numbers in the formatting locale.
 func tr(_ key: String, _ args: CopyArgs = [:]) -> String {
-    Copy.catalogue.render(key, args)
+    Copy.catalogue.render(key, args, formatLocale: Copy.formatLocale)
 }
 
 /// What the core returned, rendered, with any arguments only the app can supply.
 func tr(_ ref: CopyRef, _ extra: CopyArgs = [:]) -> String {
-    Copy.catalogue.render(ref, extra)
+    Copy.catalogue.render(ref, extra, formatLocale: Copy.formatLocale)
+}
+
+/// A wall-clock time in the phone's time zone and the formatting locale's
+/// clock: "3:05 PM", "15:05". Not the countdown, which is a duration and is
+/// m:ss everywhere.
+func timeOfDay(_ date: Date, withSeconds: Bool = false) -> String {
+    let c = Calendar.current.dateComponents([.hour, .minute, .second], from: date)
+    let seconds = Double((c.hour ?? 0) * 3600 + (c.minute ?? 0) * 60 + (c.second ?? 0))
+    return formatTimeOfDay(seconds, withSeconds: withSeconds, locale: Copy.formatLocale)
+}
+
+/// A plain number in the formatting locale: a count on a control.
+func countText(_ value: Double, decimals: Int = 0) -> String {
+    formatNumber(value, decimals: decimals, locale: Copy.formatLocale)
 }

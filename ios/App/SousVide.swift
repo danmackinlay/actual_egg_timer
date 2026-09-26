@@ -51,17 +51,11 @@ private func daysBefore(_ then: Date, _ now: Date) -> Int {
     return calendar.dateComponents([.day], from: from, to: to).day ?? 0
 }
 
-private let weekdayFormatter: DateFormatter = {
-    let formatter = DateFormatter()
-    formatter.dateFormat = "EEEE"
-    return formatter
-}()
-
-private let clockFormatter: DateFormatter = {
-    let formatter = DateFormatter()
-    formatter.dateFormat = "HH:mm"
-    return formatter
-}()
+/// The weekday a date falls on, by `Date.getDay()` numbering (0 is Sunday),
+/// in the phone's calendar and time zone. `Calendar` counts from 1.
+private func dayOfWeek(_ date: Date) -> Int {
+    Calendar.current.component(.weekday, from: date) - 1
+}
 
 func sousVideCopy(_ est: SousVideEstimate, now: Date, units: UnitSystem) -> SousVideCopy {
     let start = now.addingTimeInterval(-est.totalS)
@@ -71,10 +65,10 @@ func sousVideCopy(_ est: SousVideEstimate, now: Date, units: UnitSystem) -> Sous
     return SousVideCopy(
         headline: tr(
             startPhrase(daysAgo: daysBefore(start, now)),
-            ["weekday": .text(weekdayFormatter.string(from: start))]
+            ["weekday": .text(tr(weekdayKey(dayOfWeek(start))))]
         ),
         subline: tr("sousvide.subline", [
-            "clock": .text(clockFormatter.string(from: start)), "duration": .text(duration), "bath": .text(bath),
+            "clock": .text(timeOfDay(start)), "duration": .text(duration), "bath": .text(bath),
         ]),
         note: tr(est.whiteBound ? "sousvide.note.whiteBound" : "sousvide.note.yolkBound"),
         warn: tr("sousvide.warn", [

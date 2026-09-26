@@ -648,7 +648,7 @@ func platformUnits() -> UnitSystem {
 /// system the egg was set up in.
 func showIn(_ units: UnitSystem, _ q: Quantity, _ si: Double) -> String {
     let text = quantityText(measureFor(q, system: units, region: deviceRegion), si)
-    return tr(text.key, ["value": .text(text.value)])
+    return tr(text.key, ["value": .fixed(text.value)])
 }
 
 extension Notification.Name {

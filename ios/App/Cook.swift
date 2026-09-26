@@ -82,6 +82,9 @@ final class Cook {
         /// Lock Screen. Everything above is SI whatever it says. Nil in a cook
         /// saved before there was a choice, which was metric.
         var units: UnitSystem?
+        /// The language the cook was reading at "Eggs in", for the record: the
+        /// catalogue's tag. Nil in a cook saved before F4, which was English.
+        var lang: String?
 
         /// The Lock Screen's description of this cook, in its own units.
         var activity: CookActivity {
@@ -257,6 +260,7 @@ final class Cook {
             pulledBy: .timeout,
             cooledS: ticket.cooling == .counter ? 0 : Self.coolingSeconds,
             yolk: yolk,
+            lang: ticket.lang ?? "en",
             units: ticket.units ?? .metric
         )
     }
