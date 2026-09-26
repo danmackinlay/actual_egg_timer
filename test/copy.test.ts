@@ -251,3 +251,72 @@ test('5b. English fits every budget, and every budget is drawn on', () => {
 test('5c. there are the plural categories CLDR has, and no others', () => {
   assert.deepEqual([...PLURAL_CATEGORIES], ['zero', 'one', 'two', 'few', 'many', 'other']);
 });
+
+// --------------------------------------------------------------------------
+// the catalogue and the code agree
+// --------------------------------------------------------------------------
+
+/** Every file that can name a key, by the app that ships it. A key in a core
+ *  counts for the app that core ships in. */
+function sourceFiles(dir: string, ext: string): string[] {
+  return readdirSync(dir, { recursive: true, encoding: 'utf8' })
+    .filter((f) => f.endsWith(ext))
+    .map((f) => `${dir}/${f}`);
+}
+
+const SOURCES: Record<'web' | 'ios', string[]> = {
+  web: [...sourceFiles('src/ui', '.ts'), ...sourceFiles('src/core', '.ts'), 'index.html'],
+  ios: [
+    ...sourceFiles('ios/App', '.swift'), ...sourceFiles('ios/Widget', '.swift'),
+    ...sourceFiles('ios/Shared', '.swift'), ...sourceFiles('ios/EggTimerCore/Sources', '.swift'),
+  ],
+};
+
+/** Quoted strings shaped like a key: 'group.name', "group.name.more". */
+const KEY_SHAPE = /['"`]([a-z][a-zA-Z]*(?:\.[a-zA-Z][a-zA-Z0-9]*)+)['"`]/g;
+
+/** Identifiers that are shaped like keys and are not: notification ids. */
+const NOT_KEYS = new Set(['cook.pull', 'cook.cool']);
+
+function keysIn(file: string): string[] {
+  const text = readFileSync(file, 'utf8');
+  return [...text.matchAll(KEY_SHAPE)].map((m) => m[1]);
+}
+
+const GROUPS = new Set([...EN.messages.keys()].map((k) => k.split('.')[0]));
+
+test('6a. every key the code names exists, and every key is used by the apps it says', () => {
+  const usedBy = new Map<string, Set<string>>();
+  for (const app of ['web', 'ios'] as const) {
+    for (const file of SOURCES[app]) {
+      for (const key of keysIn(file)) {
+        if (NOT_KEYS.has(key) || !GROUPS.has(key.split('.')[0])) continue;
+        assert.ok(EN.messages.has(key), `${file}: "${key}" is not in copy/en.json`);
+        if (!usedBy.has(key)) usedBy.set(key, new Set());
+        (usedBy.get(key) as Set<string>).add(app);
+      }
+    }
+  }
+  for (const [key, entry] of Object.entries(EN_JSON.messages)) {
+    const said = [...(entry['apps'] as string[])].sort();
+    const found = [...(usedBy.get(key) ?? [])].sort();
+    assert.deepEqual(found, said, `${key}: used by [${found.join(', ')}], says [${said.join(', ')}]`);
+  }
+});
+
+test('6b. index.html has no words of its own below <head>, and names only real keys', () => {
+  const html = readFileSync('index.html', 'utf8');
+  const body = html.slice(html.indexOf('<body'));
+  for (const m of body.matchAll(/<([a-z]+)[^>]*\sdata-copy="([^"]+)"[^>]*>([^<]*)</g)) {
+    assert.ok(EN.messages.has(m[2]), `data-copy="${m[2]}" is not a key`);
+    assert.equal(m[3], '', `<${m[1]} data-copy="${m[2]}"> has text of its own: "${m[3]}"`);
+  }
+  // What is left once comments, scripts and tags are gone: whitespace, and the
+  // two placeholders that stand in for numbers before the first solve.
+  const text = body
+    .replace(/<!--[\s\S]*?-->/g, '')
+    .replace(/<script[\s\S]*?<\/script>/g, '')
+    .replace(/<[^>]+>/g, '\n')
+    .split('\n').map((s) => s.trim()).filter((s) => s !== '');
+  assert.deepEqual(text.filter((s) => s !== '--:--' && s !== '--'), []);
+});
