@@ -8,7 +8,11 @@
 
   This is the proof that the move into copy/en.json (Phase F1) changed no
   wording: run it against the build before the move and the build after it, and
-  the two outputs must be identical. It drives the real app, unmodified, in an
+  the two outputs must be identical. Since F2 it is also the proof that a
+  rewrite changed ONLY the strings it meant to: `copySnapshot.js compare
+  --draft` holds the two outputs to tools/copyDraft.ts instead of to each
+  other. The steps below work on the build before E2 (one question, then maybe
+  a second) and after it (both questions, always). It drives the real app, unmodified, in an
   iframe - the only thing it touches is Date.now, which it freezes and then
   steps, because the cook machine is a pure function of it. That makes every
   state reproducible, including the countdowns and the sous-vide wall clock.
@@ -115,19 +119,34 @@ const wait = (ms) => ({ name: `wait ${ms}`, run: async () => { await sleep(ms); 
 const toPull = { name: 'to pull', run: async () => { win().__now = storedMachine().cookEnd_ms + 3000; await sleep(500); } };
 const toCoolEnd = { name: 'to cool end', run: async () => { win().__now = storedMachine().coolEnd_ms + 1000; await sleep(500); } };
 const reopen = { name: 'reload', run: async () => { await openApp(win().__now); } };
+/** Before E2 the white question had its own block, shown only sometimes;
+ *  since, it is always on screen beside the yolk's. */
 const ifWhite = (inner) => ({
   name: 'white question if asked',
   run: async () => {
-    if (!doc().getElementById('whiteFeedback').hidden) await inner.run();
+    const block = doc().getElementById('whiteFeedback');
+    if (block === null || !block.hidden) await inner.run();
   },
 });
-/** Wait until the feedback fold is done: the buttons are re-enabled. */
+/** The first of these that the build has: E1's "set" or E2's "firm". */
+const clickAny = (selectors) => ({
+  name: `click ${selectors[0]}`,
+  run: async () => {
+    for (const sel of selectors) {
+      const el = doc().querySelector(sel);
+      if (el !== null) { el.click(); break; }
+    }
+    await sleep(60);
+  },
+});
+/** Wait until the feedback fold is done: no note says "learning…". */
 const learned = {
   name: 'learned',
   run: async () => {
     for (let i = 0; i < 400; i++) {
       const note = doc().getElementById('calibNote').textContent;
-      const white = doc().getElementById('whiteNote').textContent;
+      const whiteNote = doc().getElementById('whiteNote');
+      const white = whiteNote === null ? '' : whiteNote.textContent;
       if (!note.includes('…') && !white.includes('…')) break;
       await sleep(50);
     }
@@ -178,6 +197,14 @@ const SCENARIOS = [
     steps: [...cookThrough, ...cookThrough, click('#forget')],
   },
   {
+    // Before E2 the note after an answer said how many eggs; since, it says
+    // thanks, and the count waits for the next egg's questions. A third egg
+    // is what puts "N eggs", plural, on screen again.
+    name: 'cold cook, three times',
+    settings: { muted: true },
+    steps: [...cookThrough, ...cookThrough, ...cookThrough],
+  },
+  {
     name: 'cold cook, reloaded mid-cook',
     settings: { muted: true },
     steps: [click('#primary'), advance(30), reopen, click('#primary'), advance(30), reopen, toPull, reopen, click('#primary'), reopen, toCoolEnd, reopen],
@@ -187,7 +214,21 @@ const SCENARIOS = [
     settings: { muted: true, startMode: 'hot', cooling: 'tap', doneness: 0.22 },
     steps: [click('#primary'), advance(30), toPull, click('#primary'), toCoolEnd,
       click('button.fb[data-fb="1"]'), learned,
-      ifWhite(click('button.wb[data-white="set"]')), learned, click('#primary')],
+      ifWhite(clickAny(['button.wb[data-white="set"]', 'button.wb[data-white="firm"]'])), learned, click('#primary')],
+  },
+  {
+    name: 'hot soft, the white alone, then a reload',
+    settings: { muted: true, startMode: 'hot', doneness: 0.22 },
+    steps: [click('#primary'), toPull, click('#primary'), toCoolEnd,
+      ifWhite(clickAny(['button.wb[data-white="tender"]', 'button.wb[data-white="runny"]'])), learned,
+      reopen, click('#primary')],
+  },
+  {
+    name: 'hot jammy, the white and then the yolk',
+    settings: { muted: true, startMode: 'hot' },
+    steps: [click('#primary'), toPull, click('#primary'), toCoolEnd,
+      ifWhite(clickAny(['button.wb[data-white="firm"]', 'button.wb[data-white="set"]'])), learned,
+      click('button.fb[data-fb="0"]'), learned, click('#primary')],
   },
   {
     name: 'hot runny, white question',
