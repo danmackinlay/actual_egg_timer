@@ -1397,7 +1397,6 @@ const pseudoCases: { key: string; args: CopyArgs }[] = [
   },
   { key: 'sousvide.start.lastWeekday', args: { weekday: render(pseudo, weekdayKey(3)) } },
   { key: 'spoken.minutesSeconds', args: { minutes: render(pseudo, 'spoken.minutes', { minutes: 1 }, 'cs-CZ'), seconds: render(pseudo, 'spoken.seconds', { seconds: 1 }, 'cs-CZ') } },
-  { key: 'readout.sub.cooling', args: { minutes: 3 } },
 ];
 
 const HOUR_CYCLES: (HourCycle | null)[] = [null, 'h23', 'h12'];

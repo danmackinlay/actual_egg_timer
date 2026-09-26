@@ -429,107 +429,15 @@
     },
     {
       "locale": "en",
-      "key": "readout.sub.cooling",
-      "args": {
-        "minutes": 3
-      },
-      "text": "3 minutes, or the yolk keeps cooking"
+      "key": "readout.sub.coolingPeak",
+      "args": {},
+      "text": "until the middle of the yolk stops warming"
     },
     {
       "locale": "en",
-      "key": "readout.sub.cooling",
-      "args": {
-        "minutes": 0
-      },
-      "text": "0 minutes, or the yolk keeps cooking"
-    },
-    {
-      "locale": "en",
-      "key": "readout.sub.cooling",
-      "args": {
-        "minutes": 1
-      },
-      "text": "1 minutes, or the yolk keeps cooking"
-    },
-    {
-      "locale": "en",
-      "key": "readout.sub.cooling",
-      "args": {
-        "minutes": 2
-      },
-      "text": "2 minutes, or the yolk keeps cooking"
-    },
-    {
-      "locale": "en",
-      "key": "readout.sub.cooling",
-      "args": {
-        "minutes": 3
-      },
-      "text": "3 minutes, or the yolk keeps cooking"
-    },
-    {
-      "locale": "en",
-      "key": "readout.sub.cooling",
-      "args": {
-        "minutes": 4
-      },
-      "text": "4 minutes, or the yolk keeps cooking"
-    },
-    {
-      "locale": "en",
-      "key": "readout.sub.cooling",
-      "args": {
-        "minutes": 5
-      },
-      "text": "5 minutes, or the yolk keeps cooking"
-    },
-    {
-      "locale": "en",
-      "key": "readout.sub.cooling",
-      "args": {
-        "minutes": 11
-      },
-      "text": "11 minutes, or the yolk keeps cooking"
-    },
-    {
-      "locale": "en",
-      "key": "readout.sub.cooling",
-      "args": {
-        "minutes": 21
-      },
-      "text": "21 minutes, or the yolk keeps cooking"
-    },
-    {
-      "locale": "en",
-      "key": "readout.sub.cooling",
-      "args": {
-        "minutes": 22
-      },
-      "text": "22 minutes, or the yolk keeps cooking"
-    },
-    {
-      "locale": "en",
-      "key": "readout.sub.cooling",
-      "args": {
-        "minutes": 1.5
-      },
-      "text": "1.5 minutes, or the yolk keeps cooking"
-    },
-    {
-      "locale": "en",
-      "key": "readout.sub.cooling",
-      "args": {
-        "minutes": 2.5
-      },
-      "text": "2.5 minutes, or the yolk keeps cooking"
-    },
-    {
-      "locale": "en",
-      "key": "readout.sub.cooling",
-      "args": {
-        "minutes": 0.5
-      },
-      "text": "0.5 minutes, or the yolk keeps cooking"
+      "key": "readout.sub.coolingProbe",
+      "args": {},
+      "text": "until the middle of the yolk stops warming — have the probe ready"
     },
     {
       "locale": "en",
@@ -1117,6 +1025,12 @@
     },
     {
       "locale": "en",
+      "key": "spoken.probe",
+      "args": {},
+      "text": "Now push the probe to the middle of the egg."
+    },
+    {
+      "locale": "en",
       "key": "spoken.announcement",
       "args": {
         "label": "Cooking — keep it boiling",
@@ -1434,6 +1348,18 @@
     },
     {
       "locale": "en",
+      "key": "controls.probe",
+      "args": {},
+      "text": "I have a probe thermometer"
+    },
+    {
+      "locale": "en",
+      "key": "controls.probe.hint",
+      "args": {},
+      "text": "When the cooling ends it asks for one reading from the middle of the egg. That tells it how fast your eggs heat, from a single egg."
+    },
+    {
+      "locale": "en",
       "key": "pan.waterBoilsAt",
       "args": {},
       "text": "Water boils at"
@@ -1698,6 +1624,57 @@
       "key": "feedback.white.firm",
       "args": {},
       "text": "Firm"
+    },
+    {
+      "locale": "en",
+      "key": "probe.offer",
+      "args": {},
+      "text": "Got a probe thermometer? When the timer says, push it to the middle of the egg and tell us the highest number you see."
+    },
+    {
+      "locale": "en",
+      "key": "probe.offer.yes",
+      "args": {},
+      "text": "I have one"
+    },
+    {
+      "locale": "en",
+      "key": "probe.offer.no",
+      "args": {},
+      "text": "No thanks"
+    },
+    {
+      "locale": "en",
+      "key": "probe.now",
+      "args": {},
+      "text": "Push the probe to the middle"
+    },
+    {
+      "locale": "en",
+      "key": "probe.hint",
+      "args": {},
+      "text": "Tell us the highest number you see."
+    },
+    {
+      "locale": "en",
+      "key": "probe.entry",
+      "args": {},
+      "text": "Highest reading"
+    },
+    {
+      "locale": "en",
+      "key": "probe.save",
+      "args": {},
+      "text": "Use this reading"
+    },
+    {
+      "locale": "en",
+      "key": "probe.refused",
+      "args": {
+        "low": "117.7 °F",
+        "high": "179.1 °F"
+      },
+      "text": "That doesn't look like the middle of this egg: expect 117.7 °F to 179.1 °F. Is the tip in the yolk?"
     },
     {
       "locale": "en",
@@ -2319,6 +2296,18 @@
       "key": "alarm.cooled.body",
       "args": {},
       "text": "The carryover is over. That is the egg you asked for."
+    },
+    {
+      "locale": "en",
+      "key": "alarm.probe.title",
+      "args": {},
+      "text": "Probe it now"
+    },
+    {
+      "locale": "en",
+      "key": "alarm.probe.body",
+      "args": {},
+      "text": "Middle of the egg: tell us the highest number."
     },
     {
       "locale": "en",
