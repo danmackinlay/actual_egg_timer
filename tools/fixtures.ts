@@ -23,9 +23,11 @@
  *   fixtures/sousvide.json  the isothermal limit. Separate because it answers a
  *                           question the solver never asks: no pan, no ramp, no
  *                           cooling, and an answer in hours rather than minutes
+ *   fixtures/copy.json      every key of every catalogue in copy/, rendered, and
+ *                           the plural rule of every language at its edges
  */
 
-import { writeFileSync, mkdirSync } from 'node:fs';
+import { writeFileSync, mkdirSync, readFileSync, readdirSync } from 'node:fs';
 
 import {
   MODE_COUNT, ALPHA_DEFAULT, ALPHA_REL_SD, YOLK_RADIUS_FRAC, Z_YOLK, TREF_YOLK_C, Z_WHITE,
@@ -56,6 +58,9 @@ import {
   seriesTheta, erfcTheta, oneTermTheta, biotNumber, erfc,
 } from '../src/core/sphere.js';
 import { CookSetup } from '../src/core/protocol.js';
+import {
+  Catalogue, CopyArgs, PLURAL_CATEGORIES, formatArg, parseCatalogue, pluralCategory, render,
+} from '../src/core/copy.js';
 import { formatLongDuration, startPhrase } from '../src/core/sousvide.js';
 import {
   SOUS_VIDE_BATH_C, equilibrationTime, sousVideEstimate,
@@ -844,6 +849,98 @@ const sousVideCopy = {
 writeFileSync('fixtures/sousvideCopy.json', `${JSON.stringify(sousVideCopy, null, 2)}\n`);
 writeFileSync('fixtures/sousvide.json', `${JSON.stringify(sousvide, null, 2)}\n`);
 
+/* ------------------------------------------------------------------ copy */
+
+/* Every key of every catalogue, rendered with the arguments its English entry
+ * gives as an example, and every plural message again at each count below, so
+ * that each form is reached. Then the plural rule of every language on its
+ * own, at every edge CLDR has: Czech's `many` is for fractions, and 21 and 22
+ * are `other`, not `one` and `few` as they would be in Russian or Polish.
+ *
+ * Then a probe: a small catalogue that exists only here, which the apps never
+ * ship. It is in Czech's plural rule with one form per category, so that each
+ * category is seen to pick its own template end to end, and it falls back to
+ * English, so that the fallback is seen to work, and it carries the malformed
+ * braces and the missing argument, so that both renderers fail the same way. */
+const COPY_COUNTS = [0, 1, 2, 3, 4, 5, 11, 21, 22, 1.5, 2.5, 0.5];
+const PLURAL_LOCALES = ['en', 'en-GB-x-1750', 'cs', 'cs-CZ', 'de'];
+const PLURAL_NUMBERS = [0, 1, 2, 3, 4, 5, 10, 11, 21, 22, 100, 101, 1.5, 2.5, 0.5, 1.25, -1, -2];
+
+interface CopyRow { locale: string; key: string; args: CopyArgs; text: string }
+
+type CatalogueJson = { locale: string; messages: Record<string, Record<string, unknown>> };
+
+const copyFiles = readdirSync('copy').filter((f) => /^[a-zA-Z-]+\.json$/.test(f)).sort();
+const catalogueJson = new Map<string, CatalogueJson>();
+for (const file of copyFiles) {
+  if (file === 'surfaces.json') continue;
+  catalogueJson.set(file.replace(/\.json$/, ''), JSON.parse(readFileSync(`copy/${file}`, 'utf8')) as CatalogueJson);
+}
+const englishJson = catalogueJson.get('en') as CatalogueJson;
+const english = parseCatalogue(englishJson);
+
+function copyRows(locale: string, catalogue: Catalogue): CopyRow[] {
+  const rows: CopyRow[] = [];
+  for (const key of Object.keys(englishJson.messages)) {
+    const entry = englishJson.messages[key];
+    const example = (entry['example'] ?? {}) as Record<string, string | number>;
+    rows.push({ locale: locale, key: key, args: example, text: render(catalogue, key, example) });
+    const count = entry['count'];
+    if (typeof count === 'string') {
+      for (const n of COPY_COUNTS) {
+        const args = { ...example, [count]: n };
+        rows.push({ locale: locale, key: key, args: args, text: render(catalogue, key, args) });
+      }
+    }
+  }
+  return rows;
+}
+
+const probeJson = {
+  locale: 'cs',
+  messages: {
+    'probe.eggs': {
+      count: 'n', one: '{n} one', few: '{n} few', many: '{n} many', other: '{n} other',
+    },
+    'probe.sparse': { count: 'n', one: 'just {n}', other: '{n} of them' },
+    'probe.braces': { text: '{} {1x} {x y} {{ok}} {ok} {ok_2} {Ok} { ok} {ok' },
+    'probe.unicode': { text: 'žluťoučký {ok} — ±{n}%' },
+  },
+};
+const probe = parseCatalogue(probeJson, english);
+const probeCases: { key: string; args: CopyArgs }[] = [
+  ...PLURAL_NUMBERS.map((n) => ({ key: 'probe.eggs', args: { n: n } })),
+  ...[0, 1, 2, 5, 1.5].map((n) => ({ key: 'probe.sparse', args: { n: n } })),
+  { key: 'probe.eggs', args: {} },
+  { key: 'probe.eggs', args: { n: '3' } },
+  { key: 'probe.braces', args: { ok: 'OK', ok_2: 2, Ok: 'capital' } },
+  { key: 'probe.braces', args: {} },
+  { key: 'probe.unicode', args: { ok: 'kůň', n: 4 } },
+  { key: 'learned.tuned', args: { eggs: 2, spread: '9' } },
+  { key: 'learned.tuned', args: { eggs: 1.5, spread: '9' } },
+  { key: 'no.such.key', args: { n: 1 } },
+];
+
+const copy = {
+  locales: [...catalogueJson.keys()],
+  render: [...catalogueJson.entries()].flatMap(([locale, json]) => copyRows(
+    locale, locale === 'en' ? english : parseCatalogue(json, english),
+  )),
+  plural: PLURAL_LOCALES.flatMap((locale) => PLURAL_NUMBERS.map((n) => ({
+    locale: locale, n: n, category: pluralCategory(locale, n),
+  }))),
+  categories: PLURAL_CATEGORIES,
+  formatArg: [0, 1, 3, -3, 21, 1234567, 1.5, 2.5, 0.25, -0.5, 1e15, 'text', '', '4,5'].map((value) => ({
+    value: value, text: formatArg(value),
+  })),
+  probe: {
+    catalogue: probeJson,
+    cases: probeCases.map((c) => ({ ...c, text: render(probe, c.key, c.args) })),
+  },
+};
+
+writeFileSync('fixtures/copy.json', `${JSON.stringify(copy, null, 2)}\n`);
+
 const counts = [
   `${core.sphere.seriesTheta.length} seriesTheta`,
   `${core.sphere.stepResponse.length} step samples`,
@@ -859,5 +956,8 @@ const counts = [
   `${policy.texture.length} textures`,
   `${sousvide.cases.length} sous-vide`,
   `${sousVideCopy.duration.length + sousVideCopy.startPhrase.length} sous-vide copy`,
+  `${copy.render.length} copy renders`,
+  `${copy.plural.length} plural rules`,
+  `${copy.probe.cases.length} copy probes`,
 ];
 console.log(`fixtures/*.json written: ${counts.join(', ')}`);

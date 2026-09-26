@@ -1,0 +1,253 @@
+/**
+ * The catalogue: the renderer, the plural rules, and the three things every
+ * language is held to - the shape of its entries, the same placeholders as the
+ * English, and the length budget of the surface each string is drawn on.
+ *
+ * Run from the repo root (npm test does), because the catalogue is read from
+ * copy/ as the apps read it, not copied into the test.
+ *
+ * Zero dependencies: node:test + node:assert/strict only.
+ */
+
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync, readdirSync } from 'node:fs';
+
+import {
+  Catalogue, PLURAL_CATEGORIES, parseCatalogue, placeholders, pluralCategory, render,
+  renderRef, templatesOf,
+} from '../src/core/copy.js';
+
+type Entry = Record<string, unknown>;
+interface CatalogueJson { locale: string; messages: Record<string, Entry> }
+interface Surface { budget: number; about: string }
+
+const SURFACES = JSON.parse(readFileSync('copy/surfaces.json', 'utf8')) as Record<string, Surface>;
+const LOCALES = readdirSync('copy')
+  .filter((f) => f.endsWith('.json') && f !== 'surfaces.json')
+  .map((f) => f.replace(/\.json$/, ''));
+const JSONS = new Map<string, CatalogueJson>(LOCALES.map((l) => [
+  l, JSON.parse(readFileSync(`copy/${l}.json`, 'utf8')) as CatalogueJson,
+]));
+const EN_JSON = JSONS.get('en') as CatalogueJson;
+const EN = parseCatalogue(EN_JSON);
+
+function catalogueFor(locale: string): Catalogue {
+  return locale === 'en' ? EN : parseCatalogue(JSONS.get(locale), EN);
+}
+
+/** Code points, not UTF-16 units: "ž" is one character on a screen. */
+function width(s: string): number {
+  return [...s].length;
+}
+
+/** The counts every plural message is rendered at, for the budget. */
+const COUNTS = [0, 1, 2, 3, 4, 5, 11, 21, 22, 1.5];
+
+// --------------------------------------------------------------------------
+// the renderer
+// --------------------------------------------------------------------------
+
+const TINY = parseCatalogue({
+  locale: 'cs',
+  messages: {
+    eggs: { count: 'n', one: '{n} vejce', few: '{n} vejce', many: '{n} vejce', other: '{n} vajec' },
+    greeting: { text: 'Hello, {name}. {name} again, and {missing}.' },
+  },
+}, EN);
+
+test('1a. placeholders are substituted, repeated ones every time, missing ones left showing', () => {
+  assert.equal(render(TINY, 'greeting', { name: 'Dan' }), 'Hello, Dan. Dan again, and {missing}.');
+});
+
+test('1b. the plural form is chosen by the count argument, in the catalogue\'s language', () => {
+  assert.equal(render(TINY, 'eggs', { n: 1 }), '1 vejce');
+  assert.equal(render(TINY, 'eggs', { n: 5 }), '5 vajec');
+  assert.equal(render(TINY, 'eggs', { n: 1.5 }), '1.5 vejce');
+});
+
+test('1c. a key the language lacks falls back to English, with the English plural rule', () => {
+  assert.equal(render(TINY, 'learned.tuned', { eggs: 1, spread: '4' }), 'tuned on 1 egg · ±4%');
+  assert.equal(render(TINY, 'learned.tuned', { eggs: 2, spread: '4' }), 'tuned on 2 eggs · ±4%');
+});
+
+test('1d. a key nobody has renders as itself, so it is seen rather than blank', () => {
+  assert.equal(render(EN, 'no.such.key'), 'no.such.key');
+});
+
+test('1e. a CopyRef from core renders with the app\'s extra arguments', () => {
+  assert.equal(renderRef(EN, { key: 'sousvide.start.lastWeekday', args: {} }, { weekday: 'Tuesday' }),
+    'Last Tuesday');
+  assert.equal(renderRef(EN, { key: 'duration.hoursMinutes', args: { hours: 22, minutes: 43 } }),
+    '22 h 43 min');
+});
+
+test('1f. a malformed catalogue is refused, naming the key', () => {
+  assert.throws(() => parseCatalogue({ locale: 'en', messages: { a: { count: 'n', one: 'x' } } }), /a:/);
+  assert.throws(() => parseCatalogue({ locale: 'en', messages: { b: {} } }), /b:/);
+  assert.throws(() => parseCatalogue({ locale: 'en', messages: { c: { text: 'x', one: 'y' } } }), /c:/);
+  assert.throws(() => parseCatalogue({ messages: {} }), /locale/);
+});
+
+// --------------------------------------------------------------------------
+// the plural rules
+// --------------------------------------------------------------------------
+
+/** Every rule this file has, checked against the platform's own CLDR data.
+ *  Node carries full ICU; Swift does not expose it, which is why the rules are
+ *  hand-written and fixtured at all. */
+test('2a. the hand-written rules agree with Intl.PluralRules', () => {
+  const numbers = [0, 1, 2, 3, 4, 5, 10, 11, 12, 21, 22, 25, 100, 101, 102, 0.5, 1.5, 2.5, 4.25, 5.5];
+  for (const locale of ['en', 'en-US', 'en-GB-x-1750', 'cs', 'cs-CZ']) {
+    const intl = new Intl.PluralRules(locale);
+    for (const n of numbers) {
+      assert.equal(pluralCategory(locale, n), intl.select(n), `${locale} ${n}`);
+    }
+  }
+});
+
+test('2b. Czech, spelled out: 0, 5, 21 and 22 are other; 1.5 is many', () => {
+  const expected: [number, string][] = [
+    [0, 'other'], [1, 'one'], [2, 'few'], [4, 'few'], [5, 'other'], [1.5, 'many'],
+    [21, 'other'], [22, 'other'],
+  ];
+  for (const [n, category] of expected) assert.equal(pluralCategory('cs', n), category, `cs ${n}`);
+});
+
+test('2c. a language with no rule gets other, the one form every message has', () => {
+  assert.equal(pluralCategory('de', 1), 'other');
+  assert.equal(pluralCategory('en', NaN), 'other');
+});
+
+// --------------------------------------------------------------------------
+// the catalogue's shape
+// --------------------------------------------------------------------------
+
+test('3a. every English entry names its surface, its apps, and an example for each placeholder', () => {
+  for (const [key, entry] of Object.entries(EN_JSON.messages)) {
+    const surface = entry['surface'];
+    assert.ok(typeof surface === 'string' && surface in SURFACES, `${key}: surface ${String(surface)}`);
+    const apps = entry['apps'];
+    assert.ok(Array.isArray(apps) && apps.length > 0, `${key}: apps`);
+    for (const app of apps as unknown[]) assert.ok(app === 'web' || app === 'ios', `${key}: app ${String(app)}`);
+
+    const message = EN.messages.get(key);
+    assert.ok(message !== undefined);
+    const used = new Set(templatesOf(message).flatMap(placeholders));
+    const example = (entry['example'] ?? {}) as Record<string, unknown>;
+    assert.deepEqual(new Set(Object.keys(example)), used, `${key}: example args`);
+    if (message.count !== null) {
+      assert.equal(typeof example[message.count], 'number', `${key}: the count is a number`);
+    }
+  }
+});
+
+test('3b. no template has a brace that is not a placeholder', () => {
+  for (const [key, message] of EN.messages) {
+    for (const template of templatesOf(message)) {
+      const stripped = placeholders(template).reduce((t, name) => t.split(`{${name}}`).join(''), template);
+      assert.ok(!/[{}]/.test(stripped), `${key}: stray brace in "${template}"`);
+    }
+  }
+});
+
+// --------------------------------------------------------------------------
+// placeholder parity
+// --------------------------------------------------------------------------
+
+/** Why each key of `locale` fails parity with English, if it does. A dropped
+ *  `{limit}` is a sentence that lies about the egg (LANGUAGE.md §2). */
+function parityFailures(json: CatalogueJson): string[] {
+  const failures: string[] = [];
+  const catalogue = parseCatalogue(json, EN);
+  for (const [key, message] of catalogue.messages) {
+    const english = EN.messages.get(key);
+    if (english === undefined) {
+      failures.push(`${key}: not an English key`);
+      continue;
+    }
+    const want = [...new Set(templatesOf(english).flatMap(placeholders))].sort();
+    for (const template of templatesOf(message)) {
+      // Each form may leave out the count (Czech "jedno vejce"), never anything else.
+      const got = new Set(placeholders(template));
+      for (const name of want) {
+        if (!got.has(name) && name !== english.count) failures.push(`${key}: "${template}" drops {${name}}`);
+      }
+      for (const name of got) {
+        if (!want.includes(name)) failures.push(`${key}: "${template}" invents {${name}}`);
+      }
+    }
+    if (english.count !== message.count) failures.push(`${key}: counts ${String(message.count)}, not ${String(english.count)}`);
+  }
+  return failures;
+}
+
+test('4a. every language uses exactly the English placeholders', () => {
+  for (const [locale, json] of JSONS) {
+    if (locale === 'en') continue;
+    assert.deepEqual(parityFailures(json), [], locale);
+  }
+});
+
+test('4b. the parity check catches a dropped, an invented and a miscounted placeholder', () => {
+  const broken: CatalogueJson = {
+    locale: 'cs',
+    messages: {
+      'refusal.counter': { text: 'Na lince se žloutek vaří dál — {wanted}.' },
+      'readout.alarm.set': { text: 'budík na {time} {when}' },
+      'learned.tuned': { text: 'naladěno na {eggs} vajec · ±{spread} %' },
+      'learned.pan': { text: 'hrnec {time}' },
+    },
+  };
+  const failures = parityFailures(broken);
+  assert.ok(failures.some((f) => f.startsWith('refusal.counter') && f.includes('{limit}')), 'dropped');
+  assert.ok(failures.some((f) => f.startsWith('readout.alarm.set') && f.includes('{when}')), 'invented');
+  assert.ok(failures.some((f) => f.startsWith('learned.tuned') && f.includes('counts')), 'miscounted');
+  assert.ok(!failures.some((f) => f.startsWith('learned.pan')), 'a faithful one passes');
+});
+
+// --------------------------------------------------------------------------
+// the length budget
+// --------------------------------------------------------------------------
+
+/** Each key's longest rendering in a language, at its example arguments and,
+ *  for a plural, at every count. */
+function longest(catalogue: Catalogue, key: string, entry: Entry): number {
+  const example = (entry['example'] ?? {}) as Record<string, string | number>;
+  const count = entry['count'];
+  const argSets = typeof count === 'string'
+    ? [example, ...COUNTS.map((n) => ({ ...example, [count]: n }))]
+    : [example];
+  return Math.max(...argSets.map((args) => width(render(catalogue, key, args))));
+}
+
+test('5a. every string in every language fits its surface\'s budget', () => {
+  for (const locale of LOCALES) {
+    const catalogue = catalogueFor(locale);
+    for (const [key, entry] of Object.entries(EN_JSON.messages)) {
+      const surface = SURFACES[entry['surface'] as string];
+      const w = longest(catalogue, key, entry);
+      assert.ok(w <= surface.budget,
+        `${locale} ${key}: ${w} characters on "${String(entry['surface'])}", budget ${surface.budget}`);
+    }
+  }
+});
+
+test('5b. English fits every budget, and every budget is drawn on', () => {
+  // A budget is set from what fits today. Raising one is a design decision
+  // about a screen, not a way to make a translation pass - so it is checked
+  // here, and moving it means editing this test and saying why.
+  const max = new Map<string, number>();
+  for (const [key, entry] of Object.entries(EN_JSON.messages)) {
+    const surface = entry['surface'] as string;
+    max.set(surface, Math.max(max.get(surface) ?? 0, longest(EN, key, entry)));
+  }
+  for (const [name, surface] of Object.entries(SURFACES)) {
+    assert.ok(max.has(name), `${name}: no key is drawn on it`);
+    assert.ok((max.get(name) as number) <= surface.budget, `${name}: English is over budget`);
+  }
+});
+
+test('5c. there are the plural categories CLDR has, and no others', () => {
+  assert.deepEqual([...PLURAL_CATEGORIES], ['zero', 'one', 'two', 'few', 'many', 'other']);
+});

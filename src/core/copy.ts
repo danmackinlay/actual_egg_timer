@@ -1,0 +1,258 @@
+/**
+ * The words, as data: one catalogue per language, and the few lines that turn
+ * a key and its arguments into a sentence.
+ *
+ * Both apps render every string through this, or through its Swift twin in
+ * `EggTimerCopy`, and `fixtures/copy.json` holds the two to the same bytes.
+ * Before this existed the same sentences were typed twice, once per app, and
+ * nothing but care kept them together - the failure `policy.ts` was created to
+ * end for numbers (LANGUAGE.md §1).
+ *
+ * The format is deliberately small. A message is a template with named
+ * placeholders, `{limit}`, and optionally one template per CLDR plural category
+ * of one named count argument. That is all the copy needs: there is no
+ * `select`, no nesting, and no ICU MessageFormat, because the repo carries no
+ * runtime dependencies and MessageFormat is a dependency's worth of grammar.
+ *
+ * Like everything else in `src/core/`, this does no I/O. The catalogue is data
+ * the app has already loaded and hands in.
+ */
+
+/** The CLDR plural categories. English uses two, Czech four. */
+export type PluralCategory = 'zero' | 'one' | 'two' | 'few' | 'many' | 'other';
+
+export const PLURAL_CATEGORIES: readonly PluralCategory[] = [
+  'zero', 'one', 'two', 'few', 'many', 'other',
+];
+
+/** Arguments to a message. A string goes in as it is - the app has already
+ *  formatted it - and a number goes in as its plain decimal digits. */
+export type CopyArgs = Readonly<Record<string, string | number>>;
+
+/** What core returns where it used to return English: a key, and the numbers
+ *  the sentence needs. The app renders it, and may add arguments of its own
+ *  (a weekday name, say) that only a platform can answer. */
+export interface CopyRef {
+  key: string;
+  args: Readonly<Record<string, number>>;
+}
+
+/** One message. Exactly one of `text` or `forms` is set. */
+export interface Message {
+  /** The template, when the message has no count in it. */
+  text: string | null;
+  /** The argument that picks the plural form, when it has. */
+  count: string | null;
+  /** One template per plural category. `other` is always present, and is what
+   *  a category with no template of its own falls back to. */
+  forms: Partial<Record<PluralCategory, string>> | null;
+}
+
+export interface Catalogue {
+  /** A BCP 47 tag. Its language subtag picks the plural rule. */
+  locale: string;
+  messages: ReadonlyMap<string, Message>;
+  /** Where a key missing here is looked up next. English, for every other
+   *  catalogue; null for English itself. */
+  fallback: Catalogue | null;
+}
+
+/* ------------------------------------------------------------ the rules */
+
+/**
+ * The CLDR plural category of a number, for a locale.
+ *
+ * Hand-written per language, because Swift has no public equivalent of
+ * `Intl.PluralRules` outside the string catalogues this repo does not use
+ * (LANGUAGE.md §2), and a rule each app answered differently would be exactly
+ * the drift the catalogue exists to end. A new language adds its rule here and
+ * in the Swift twin, and a row per boundary to `fixtures/copy.json`.
+ *
+ * The operands are CLDR's: `i`, the integer digits, and `v`, the count of
+ * visible fraction digits. A number is all this is given, so `v` is 0 exactly
+ * when the number is whole - "1.0 egg" cannot be asked for, and nothing here
+ * needs to.
+ */
+export function pluralCategory(locale: string, n: number): PluralCategory {
+  if (!Number.isFinite(n)) return 'other';
+  const abs = Math.abs(n);
+  const i = Math.floor(abs);
+  const whole = abs === i;
+  switch (languageOf(locale)) {
+    case 'en':
+      // one: i = 1 and v = 0
+      return i === 1 && whole ? 'one' : 'other';
+    case 'cs':
+      // one: i = 1 and v = 0; few: i = 2..4 and v = 0; many: v != 0
+      if (!whole) return 'many';
+      if (i === 1) return 'one';
+      if (i >= 2 && i <= 4) return 'few';
+      return 'other';
+    default:
+      // A language with no rule yet. `other` is the one form every message
+      // has, so this renders something rather than nothing - and the fixture
+      // rows are where a missing rule is supposed to be noticed.
+      return 'other';
+  }
+}
+
+/** The language subtag, lower-cased: 'en' for 'en-GB-x-1750'. */
+export function languageOf(locale: string): string {
+  const dash = locale.indexOf('-');
+  return (dash < 0 ? locale : locale.slice(0, dash)).toLowerCase();
+}
+
+/* ----------------------------------------------------------- rendering */
+
+/**
+ * Render a message.
+ *
+ * A key this catalogue lacks is looked up in its fallback, and the plural rule
+ * is the rule of the catalogue the message was FOUND in, since its forms are
+ * that language's. A key no catalogue has renders as the key itself, and a
+ * placeholder with no argument is left as written: both are bugs, and a bug
+ * that shows is one somebody reports. The tests make sure neither ships.
+ */
+export function render(catalogue: Catalogue, key: string, args: CopyArgs = {}): string {
+  let found: Catalogue | null = catalogue;
+  while (found !== null && !found.messages.has(key)) found = found.fallback;
+  if (found === null) return key;
+  const message = found.messages.get(key) as Message;
+  return substitute(templateFor(message, found.locale, args), args);
+}
+
+/** Render what core returned, with any arguments the app adds. */
+export function renderRef(catalogue: Catalogue, ref: CopyRef, extra: CopyArgs = {}): string {
+  return render(catalogue, ref.key, { ...ref.args, ...extra });
+}
+
+function templateFor(message: Message, locale: string, args: CopyArgs): string {
+  if (message.text !== null) return message.text;
+  const forms = message.forms as Partial<Record<PluralCategory, string>>;
+  // The count must be a number. A string is not parsed, because the two
+  // platforms parse strings differently, and a missing count is 'other'.
+  const raw = message.count === null ? undefined : args[message.count];
+  const n = typeof raw === 'number' ? raw : NaN;
+  return forms[pluralCategory(locale, n)] ?? (forms.other as string);
+}
+
+/** A number as an argument: its plain decimal digits, no grouping, a point for
+ *  a fraction. Locale-aware numbers are F4's job, and until then the apps
+ *  format anything that needs formatting and pass a string. */
+export function formatArg(value: string | number): string {
+  if (typeof value === 'string') return value;
+  if (Number.isInteger(value)) return value.toFixed(0);
+  return String(value);
+}
+
+/** Replace every `{name}` that has an argument. Written as a scan rather than a
+ *  regular expression so that the Swift twin can be the same loop, and agree
+ *  on every malformed brace as well as every good one. */
+function substitute(template: string, args: CopyArgs): string {
+  let out = '';
+  let i = 0;
+  while (i < template.length) {
+    const name = placeholderAt(template, i);
+    if (name !== null) {
+      const value = args[name];
+      out += value === undefined ? `{${name}}` : formatArg(value);
+      i += name.length + 2;
+    } else {
+      out += template[i];
+      i += 1;
+    }
+  }
+  return out;
+}
+
+/** The placeholder name starting at `i`, if `{` there opens one: a letter,
+ *  then letters, digits or underscores, then `}`. Anything else is a literal
+ *  brace. */
+function placeholderAt(template: string, i: number): string | null {
+  if (template[i] !== '{') return null;
+  let j = i + 1;
+  if (j >= template.length || !isLetter(template.charCodeAt(j))) return null;
+  while (j < template.length && isNameChar(template.charCodeAt(j))) j += 1;
+  if (template[j] !== '}') return null;
+  return template.slice(i + 1, j);
+}
+
+function isLetter(c: number): boolean {
+  return (c >= 65 && c <= 90) || (c >= 97 && c <= 122);
+}
+
+function isNameChar(c: number): boolean {
+  return isLetter(c) || (c >= 48 && c <= 57) || c === 95;
+}
+
+/** Every placeholder a template uses, in order of first use. */
+export function placeholders(template: string): string[] {
+  const names: string[] = [];
+  for (let i = 0; i < template.length; i++) {
+    const name = placeholderAt(template, i);
+    if (name !== null && !names.includes(name)) names.push(name);
+  }
+  return names;
+}
+
+/** Every template of a message: its text, or each of its plural forms. */
+export function templatesOf(message: Message): string[] {
+  if (message.text !== null) return [message.text];
+  const forms = message.forms as Partial<Record<PluralCategory, string>>;
+  return PLURAL_CATEGORIES.map((c) => forms[c]).filter((t): t is string => t !== undefined);
+}
+
+/* ------------------------------------------------------------- parsing */
+
+/**
+ * A catalogue from its parsed JSON, `copy/<locale>.json`:
+ *
+ *     { "locale": "en",
+ *       "messages": {
+ *         "feedback.ask": { "surface": "label", "text": "How was the yolk?" },
+ *         "learned.tuned": { "surface": "body", "count": "eggs",
+ *                            "one": "tuned on {eggs} egg · ±{spread}%",
+ *                            "other": "tuned on {eggs} eggs · ±{spread}%" } } }
+ *
+ * Fields the renderer does not read (`surface`, `example`, `note`) are the
+ * tests' business and are ignored here. Throws on anything malformed, naming
+ * the key: a catalogue that half-loads would put key names on a screen.
+ */
+export function parseCatalogue(json: unknown, fallback: Catalogue | null = null): Catalogue {
+  const root = asObject(json, 'catalogue');
+  const locale = root['locale'];
+  if (typeof locale !== 'string' || locale === '') throw new Error('catalogue: no locale');
+  const raw = asObject(root['messages'], 'catalogue.messages');
+  const messages = new Map<string, Message>();
+  for (const key of Object.keys(raw)) messages.set(key, parseMessage(key, raw[key]));
+  return { locale: locale, messages: messages, fallback: fallback };
+}
+
+function parseMessage(key: string, json: unknown): Message {
+  const m = asObject(json, key);
+  const text = m['text'];
+  if (typeof text === 'string') {
+    for (const c of PLURAL_CATEGORIES) {
+      if (m[c] !== undefined) throw new Error(`${key}: both text and a plural form`);
+    }
+    return { text: text, count: null, forms: null };
+  }
+  const count = m['count'];
+  if (typeof count !== 'string' || count === '') throw new Error(`${key}: neither text nor count`);
+  const forms: Partial<Record<PluralCategory, string>> = {};
+  for (const c of PLURAL_CATEGORIES) {
+    const form = m[c];
+    if (form === undefined) continue;
+    if (typeof form !== 'string') throw new Error(`${key}.${c}: not a string`);
+    forms[c] = form;
+  }
+  if (forms.other === undefined) throw new Error(`${key}: a plural with no "other"`);
+  return { text: null, count: count, forms: forms };
+}
+
+function asObject(json: unknown, what: string): Record<string, unknown> {
+  if (json === null || typeof json !== 'object' || Array.isArray(json)) {
+    throw new Error(`${what}: not an object`);
+  }
+  return json as Record<string, unknown>;
+}
