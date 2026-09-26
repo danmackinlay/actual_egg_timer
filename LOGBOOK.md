@@ -897,3 +897,74 @@ The standing method's loss time constant was the time to boil over
    under either rule. That is not new, but it is now plainer, since the old
    rule on a measured hob let 3 and 4 L through. It is the model's claim, not a
    measurement, and worth one real cook before anyone trusts it either way.
+
+## Metric and Imperial (27 September 2026, F3)
+
+`src/core/units.ts` and its Swift twin, the setting in both apps, and a unit
+on every temperature. `LANGUAGE.md` §4 has what settled differently from the
+design; this is what was checked.
+
+### Verified
+
+- **The counts.** `npm test` 138/138 (121 on `main` at a679075; 17 new in
+  `test/units.test.ts`). `npm run validate` 28/28. `npm run conformance` 69
+  Swift tests in 22 suites, all passing; the new suite has 7.
+  `fixtures/units.json`: every conversion both ways at 11 units, 18 measures
+  (each quantity in each system, water in and out of the US) with their
+  bounds, displays at grid points, between them, on exact halves, at and past
+  every limit and at NaN, and the round trip of **every grid value of every
+  input, 1,038 of them**, each typed, stored in SI and shown again. The
+  generator throws rather than write one that drifts. `test/units.test.ts`
+  also takes mass and girth through the one diameter the web stores them as.
+- **The web, built with `npm run build:site` and served from this worktree.**
+  The regional default was checked with two copies of the page that pin
+  `navigator.language` before the app loads: en-GB starts metric with EU
+  classes and nothing stored; en-US starts Imperial, quarts, US classes
+  ("Large — 2.1 oz"), and still nothing stored, because a default is not a
+  choice. Switched to Imperial under en-GB: every readout, the preset hint,
+  the sous-vide label, the size menu and all six inputs' units, steps and
+  bounds changed (mass 0.9-4.2 oz by 0.1, width 1.2-2.36 in by 0.02, water
+  0.5-21 pt, altitude -1300-16400 ft, egg 29-104 °F), and the flip event fired
+  once. Typed 2.3 oz, 4.25 pt, 1500 ft and 50 °F: after a reload all four read
+  back as typed. Moving the doneness slider left every stored SI value
+  bit-identical, which it did not do before (every input event used to
+  re-read every field). Metric and back again: 2.3 oz, 4.25 pt, 1500 ft,
+  50 °F. A stored Imperial choice made under en-US survived a visit as
+  en-GB, in pints and on the EU carton. Sous-vide, the heat-off subline and
+  refusal, and a hot cook's COOKING hint all read in °F and pints, and the
+  cook's ticket recorded `imperial`. No console errors.
+- **iOS** builds for the simulator. On a spare simulator (iPhone 17e, shut
+  down afterwards; the booted iPhone 17 Pro belonged to someone else and was
+  left alone) the app launched metric in the simulator's own locale; with
+  `-AppleLocale en_US` it took the US carton but stayed metric, because the
+  simulator's global `AppleTemperatureUnit` is Celsius and the temperature
+  preference wins, which is the rule; with `-AppleTemperatureUnit Fahrenheit`
+  as well it opened in Imperial ("149 °F", "Large — 2.1 oz", "Fridge 39 °F",
+  "Sous-vide 136 °F"); and with `unitsChosen = metric` stored it opened metric
+  under the same arguments.
+
+### Not verified
+
+- **Nothing on iOS was tapped.** The simulator control needed a permission
+  nobody was there to grant, so the Units menu row, the weight slider and
+  the two steppers in displayed units, the `.unitsFlipped` post and the
+  typed-value round trip on iOS rest on the conformance suite and on reading
+  the code, not on a screen.
+- **The Live Activity and the cook summary** were not seen in either system.
+- **A real phone's Temperature setting** was only imitated with a launch
+  argument; that `Locale.current` carries it on a device is Apple's
+  documented behaviour, not something seen here.
+
+### Things that cost time
+
+1. **Re-reading every field on every input event** was harmless while the
+   fields held SI. In another unit it is drift: a displayed 54 °F re-parsed
+   as 12.2 °C over a stored 12 °C every time the slider moved. The web now
+   reads a field with a unit only when it is the one being edited, as the
+   measurement boxes already did.
+2. **`Math.round` and Swift's `rounded()` disagree about -0.5**, and
+   `toFixed` prints -0 as "0" where `%.0f` prints "-0". Both are sidestepped
+   by writing `floor(x + 0.5)` out and normalising zero; a fixture row at a
+   negative half pins it.
+3. **The standing subline landed on `main` mid-task** quoting "{litres} L",
+   and was converted in the merge.
