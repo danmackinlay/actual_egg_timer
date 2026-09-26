@@ -11,7 +11,9 @@
  * derived from the same settings without reconciling them mid-cook.
  */
 
-import { Egg, eggFromMass, eggFromMinorDiameter, sizeClassesFor } from '../core/geometry.js';
+import {
+  Egg, eggFromMass, eggFromMinorDiameter, sizeClassLabel, sizeClassesFor,
+} from '../core/geometry.js';
 import { boilingPointAtAltitude } from '../core/thermo.js';
 import { Cooling, CookSetup, StartMode } from '../core/protocol.js';
 import { SOUS_VIDE_BATH_C, sousVideEstimate } from '../core/sousvide.js';
@@ -34,6 +36,7 @@ import {
   loadCook, loadSettings, rememberTimeToBoil, saveCook, saveSettings,
 } from './store.js';
 import { sousVideCopy } from './sousvide.js';
+import { t, tRef } from './copy.js';
 import {
   Machine, advance, beginCooling, idleMachine, recordBoil, restoreMachine,
   reviseProvisional, secondsAfterBoil, secondsHeating, secondsToCool, secondsToPull,
@@ -295,8 +298,8 @@ function renderStartHint(): void {
  */
 function refusalText(v: Verdict): string {
   if (!v.worthSaying) return '';
-  const wanted = v.wanted.label.toLowerCase();
-  const limit = v.limit.label.toLowerCase();
+  const wanted = t(v.wanted.key).toLowerCase();
+  const limit = t(v.limit.key).toLowerCase();
 
   if (v.kind === 'whiteNeverSets') {
     return 'With the heat off this pan never sets the white: the water falls below '
@@ -414,7 +417,7 @@ function textureNote(peakYolk_C: number, peakWhite_C: number): string {
  *  the solver's or the quick interpolation that tracks the thumb, so it does
  *  not flicker between two formats mid-drag. */
 function donenessValueText(peakYolk_C: number): string {
-  return `${anchorNear(settings.doneness).label} · peak yolk ${peakYolk_C.toFixed(0)}°C`;
+  return `${t(anchorNear(settings.doneness).key)} · peak yolk ${peakYolk_C.toFixed(0)}°C`;
 }
 
 /** Stripe out the parts of the track this setup cannot deliver: the soft end
@@ -426,7 +429,7 @@ function renderDonenessScale(sol: Solution): void {
   const hardest = sol.whiteSets ? sol.hardestLevel : 0;
   dom.donenessBlockedSoft.style.width = `${clampNumber(softest * 100, { lo: 0, hi: 100 }, 0)}%`;
   dom.donenessBlockedHard.style.width = `${clampNumber((1 - hardest) * 100, { lo: 0, hi: 100 }, 0)}%`;
-  dom.doneness.setAttribute('aria-valuetext', anchorNear(settings.doneness).label);
+  dom.doneness.setAttribute('aria-valuetext', t(anchorNear(settings.doneness).key));
   const ticks = dom.donenessTicks.children;
   for (let i = 0; i < ticks.length; i += 1) {
     const anchor = DONENESS_ANCHORS[i];
@@ -666,7 +669,7 @@ function renderSousVide(now_ms: number): void {
   dom.statYolk.textContent = `${est.bath_C.toFixed(0)}°C`;
   dom.statBoil.textContent = `${boilingPoint_C().toFixed(1)}°C`;
   // The slider reading is a pan number. There is no pan.
-  dom.donenessValue.textContent = `${anchorNear(settings.doneness).label} · in a ${est.bath_C.toFixed(0)}°C bath`;
+  dom.donenessValue.textContent = `${t(anchorNear(settings.doneness).key)} · in a ${est.bath_C.toFixed(0)}°C bath`;
   dom.note.textContent = copy.note;
   dom.warn.textContent = copy.warn;
   dom.warn.hidden = false;
@@ -1041,7 +1044,7 @@ function buildSizeOptions(): void {
   for (let i = 0; i < sizeClasses.length; i += 1) {
     const option = document.createElement('option');
     option.value = String(i);
-    option.textContent = sizeClasses[i].label;
+    option.textContent = tRef(sizeClassLabel(sizeClasses[i]));
     dom.size.append(option);
   }
   const custom = document.createElement('option');
@@ -1053,7 +1056,7 @@ function buildSizeOptions(): void {
 function buildTicks(): void {
   for (const anchor of DONENESS_ANCHORS) {
     const span = document.createElement('span');
-    span.textContent = anchor.label;
+    span.textContent = t(anchor.key);
     span.style.left = `${anchor.level * 100}%`;
     dom.donenessTicks.append(span);
   }

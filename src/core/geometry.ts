@@ -4,6 +4,7 @@
  */
 
 import { EGG_VOLUME_COEFF, EGG_LENGTH_RATIO, RHO_EGG } from './constants.js';
+import { CopyRef } from './copy.js';
 
 export interface Egg {
   /** Equal-volume sphere radius, m. This is what the conduction model uses. */
@@ -65,18 +66,28 @@ export function diffusionTime(egg: Egg, alpha_m2s: number): number {
  *  `sizeClassesFor`. Both tables put the same class at the same index for as
  *  far as the shorter one goes (Small, Medium, Large, Extra large), which is
  *  what lets a stored index keep its name when the table changes underneath it
- *  (`carrySizeIndex` in policy.ts). */
+ *  (`carrySizeIndex` in policy.ts).
+ *
+ *  The name is a catalogue key, one per class per table: an American Large and
+ *  an EU Large are different eggs, and a language may want to say so. The
+ *  grams on the label come from the mass - see `sizeClassLabel`. */
 export interface SizeClass {
-  label: string;
+  key: string;
   mass_kg: number;
+}
+
+/** What the size menu says for a class: its name, and its mass to the gram.
+ *  The label rounds; the model cooks the mass to a tenth. */
+export function sizeClassLabel(c: SizeClass): CopyRef {
+  return { key: c.key, args: { grams: Math.round(c.mass_kg * 1000) } };
 }
 
 /** EU Regulation 589/2008 Art. 4, at a representative mass inside each band. */
 export const SIZE_CLASSES: SizeClass[] = [
-  { label: 'Small — 48 g', mass_kg: 0.048 },
-  { label: 'Medium — 58 g', mass_kg: 0.058 },
-  { label: 'Large — 68 g', mass_kg: 0.068 },
-  { label: 'Extra large — 76 g', mass_kg: 0.076 },
+  { key: 'size.eu.small', mass_kg: 0.048 },
+  { key: 'size.eu.medium', mass_kg: 0.058 },
+  { key: 'size.eu.large', mass_kg: 0.068 },
+  { key: 'size.eu.extraLarge', mass_kg: 0.076 },
 ];
 
 /** The classes printed on an American carton. USDA defines each by a MINIMUM
@@ -89,11 +100,11 @@ export const SIZE_CLASSES: SizeClass[] = [
  *  the width of the class below it. Labels round to the gram; the model cooks
  *  the midpoint to a tenth. */
 export const US_SIZE_CLASSES: SizeClass[] = [
-  { label: 'Small — 46 g', mass_kg: 0.0461 },
-  { label: 'Medium — 53 g', mass_kg: 0.0532 },
-  { label: 'Large — 60 g', mass_kg: 0.0602 },
-  { label: 'Extra large — 67 g', mass_kg: 0.0673 },
-  { label: 'Jumbo — 74 g', mass_kg: 0.074 },
+  { key: 'size.us.small', mass_kg: 0.0461 },
+  { key: 'size.us.medium', mass_kg: 0.0532 },
+  { key: 'size.us.large', mass_kg: 0.0602 },
+  { key: 'size.us.extraLarge', mass_kg: 0.0673 },
+  { key: 'size.us.jumbo', mass_kg: 0.074 },
 ];
 
 /** The size classes for a region: the American carton in region `US`, the EU

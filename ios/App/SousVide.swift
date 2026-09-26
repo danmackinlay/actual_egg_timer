@@ -1,5 +1,6 @@
 import Foundation
 import EggTimerCore
+import EggTimerCopy
 
 /// What the app says when you ask it for a sous-vide egg.
 ///
@@ -64,13 +65,13 @@ private let clockFormatter: DateFormatter = {
 
 func sousVideCopy(_ est: SousVideEstimate, now: Date) -> SousVideCopy {
     let start = now.addingTimeInterval(-est.totalS)
-    let duration = formatLongDuration(est.totalS)
+    let duration = tr(longDuration(est.totalS))
     let bath = String(format: "%.0f", est.bathC)
 
     return SousVideCopy(
-        headline: startPhrase(
-            daysAgo: daysBefore(start, now),
-            weekday: weekdayFormatter.string(from: start)
+        headline: tr(
+            startPhrase(daysAgo: daysBefore(start, now)),
+            ["weekday": .text(weekdayFormatter.string(from: start))]
         ),
         subline: "at \(clockFormatter.string(from: start)) — \(duration) at \(bath)°C, to eat now",
         note: est.whiteBound ? "white still not set, yolk creamy" : "yolk set, white still not",

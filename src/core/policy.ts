@@ -249,7 +249,7 @@ export function verdictFor(sol: Solution, level: number): Verdict {
       wanted: wanted,
       limit: limit,
       snapTo: capped < level ? capped : null,
-      worthSaying: limit.label !== wanted.label,
+      worthSaying: limit.key !== wanted.key,
     };
   }
 
@@ -260,7 +260,7 @@ export function verdictFor(sol: Solution, level: number): Verdict {
     wanted: wanted,
     limit: limit,
     snapTo: snapped > level ? snapped : null,
-    worthSaying: limit.label !== wanted.label,
+    worthSaying: limit.key !== wanted.key,
   };
 }
 

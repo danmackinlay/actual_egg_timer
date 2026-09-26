@@ -204,7 +204,7 @@ final class Kitchen {
     }
 
     /// The label moves with the finger; the numbers follow when the solve lands.
-    var label: String { anchorNear(doneness).label }
+    var label: String { tr(anchorNear(doneness).key) }
 
     var eggsLogged: Int { calibration.eggsLogged }
     var calibrationSpread: Double { Calibrations.spread(calibration) }
@@ -464,8 +464,8 @@ final class Kitchen {
 /// point is to teach the constraint, not merely to block the control.
 private func refusalText(_ v: Verdict, setup: CookSetup) -> String {
     guard v.worthSaying else { return "" }
-    let wanted = v.wanted.label.lowercased()
-    let limit = v.limit.label.lowercased()
+    let wanted = tr(v.wanted.key).lowercased()
+    let limit = tr(v.limit.key).lowercased()
 
     switch v.kind {
     case .none:

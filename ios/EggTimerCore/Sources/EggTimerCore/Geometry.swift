@@ -1,4 +1,5 @@
 import Foundation
+import EggTimerCopy
 
 /// Egg geometry, transliterated from `src/core/geometry.ts`.
 public struct Egg: Sendable, Equatable, Codable {
@@ -52,17 +53,27 @@ public enum Geometry {
 /// Two tables, chosen by region in `sizeClassesFor(region:)`. Both put the same
 /// class at the same index as far as the shorter goes, which is what lets a
 /// stored index keep its name when the table changes (`carrySizeIndex`).
+///
+/// The name is a catalogue key, one per class per table: an American Large and
+/// an EU Large are different eggs, and a language may want to say so. The grams
+/// on the label come from the mass - see `sizeClassLabel`.
 public struct SizeClass: Sendable, Equatable {
-    public let label: String
+    public let key: String
     public let massKg: Double
+}
+
+/// What the size menu says for a class: its name, and its mass to the gram.
+/// The label rounds; the model cooks the mass to a tenth.
+public func sizeClassLabel(_ c: SizeClass) -> CopyRef {
+    CopyRef(c.key, ["grams": (c.massKg * 1000).rounded()])
 }
 
 /// EU Regulation 589/2008 Art. 4, at a representative mass inside each band.
 public let sizeClasses: [SizeClass] = [
-    SizeClass(label: "Small — 48 g", massKg: 0.048),
-    SizeClass(label: "Medium — 58 g", massKg: 0.058),
-    SizeClass(label: "Large — 68 g", massKg: 0.068),
-    SizeClass(label: "Extra large — 76 g", massKg: 0.076),
+    SizeClass(key: "size.eu.small", massKg: 0.048),
+    SizeClass(key: "size.eu.medium", massKg: 0.058),
+    SizeClass(key: "size.eu.large", massKg: 0.068),
+    SizeClass(key: "size.eu.extraLarge", massKg: 0.076),
 ]
 
 /// The classes printed on an American carton. USDA defines each by a MINIMUM
@@ -74,11 +85,11 @@ public let sizeClasses: [SizeClass] = [
 /// the width of the class below it. Labels round to the gram; the model cooks
 /// the midpoint to a tenth.
 public let usSizeClasses: [SizeClass] = [
-    SizeClass(label: "Small — 46 g", massKg: 0.0461),
-    SizeClass(label: "Medium — 53 g", massKg: 0.0532),
-    SizeClass(label: "Large — 60 g", massKg: 0.0602),
-    SizeClass(label: "Extra large — 67 g", massKg: 0.0673),
-    SizeClass(label: "Jumbo — 74 g", massKg: 0.074),
+    SizeClass(key: "size.us.small", massKg: 0.0461),
+    SizeClass(key: "size.us.medium", massKg: 0.0532),
+    SizeClass(key: "size.us.large", massKg: 0.0602),
+    SizeClass(key: "size.us.extraLarge", massKg: 0.0673),
+    SizeClass(key: "size.us.jumbo", massKg: 0.074),
 ]
 
 /// The size classes for a region: the American carton in region `US`, the EU

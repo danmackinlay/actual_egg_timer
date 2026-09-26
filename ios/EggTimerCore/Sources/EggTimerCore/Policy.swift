@@ -233,7 +233,7 @@ public func verdictFor(_ sol: Solution, level: Double) -> Verdict {
             wanted: wanted,
             limit: limit,
             snapTo: capped < level ? capped : nil,
-            worthSaying: limit.label != wanted.label
+            worthSaying: limit.key != wanted.key
         )
     }
 
@@ -244,7 +244,7 @@ public func verdictFor(_ sol: Solution, level: Double) -> Verdict {
         wanted: wanted,
         limit: limit,
         snapTo: snapped > level ? snapped : nil,
-        worthSaying: limit.label != wanted.label
+        worthSaying: limit.key != wanted.key
     )
 }
 

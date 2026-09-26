@@ -596,7 +596,7 @@ struct ContentView: View {
                         set: { kitchen.chooseSize($0) }
                     )) {
                         ForEach(kitchen.sizeClasses.indices, id: \.self) { i in
-                            Text(kitchen.sizeClasses[i].label).tag(i)
+                            Text(tr(sizeClassLabel(kitchen.sizeClasses[i]))).tag(i)
                         }
                         Text("Weighed · \(kitchen.weighedMassG, specifier: "%.1f") g").tag(-1)
                     }

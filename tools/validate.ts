@@ -11,7 +11,9 @@
  * bath afterwards, jammy = slider 0.41.
  */
 
+import { readFileSync } from 'node:fs';
 import { eggFromMinorDiameter, eggFromMass, Egg } from '../src/core/geometry.js';
+import { parseCatalogue, render } from '../src/core/copy.js';
 import { seriesTheta, biotNumber } from '../src/core/sphere.js';
 import { zFromActivationEnergy } from '../src/core/kinetics.js';
 import { ALPHA_DEFAULT, H_EFF, Z_YOLK, Z_WHITE, TREF_YOLK_C } from '../src/core/constants.js';
@@ -21,6 +23,9 @@ import {
   simulate, solveCookTime, donenessFromSlider, sliderFromYolkDose,
   DEFAULT_PARAMS, DONENESS_ANCHORS, YOLK_DOSE_HARD,
 } from '../src/core/solve.js';
+
+/** The report names the anchors in English, as the app does. */
+const EN = parseCatalogue(JSON.parse(readFileSync('copy/en.json', 'utf8')));
 
 // --------------------------------------------------------------------------
 // harness
@@ -92,7 +97,7 @@ function anchorNear(level: number): string {
       best = DONENESS_ANCHORS[i];
     }
   }
-  return best.label;
+  return render(EN, best.key);
 }
 
 /** Cook time in minutes for a target doneness. */
@@ -478,7 +483,7 @@ for (const level of [0, 0.22, 0.41, 0.62, 1.0]) {
   const solution = solveCookTime(EU_LARGE, setupOf({}), DEFAULT_PARAMS, donenessFromSlider(level));
   let label = '';
   for (let i = 0; i < DONENESS_ANCHORS.length; i++) {
-    if (Math.abs(DONENESS_ANCHORS[i].level - level) < 1e-9) label = DONENESS_ANCHORS[i].label;
+    if (Math.abs(DONENESS_ANCHORS[i].level - level) < 1e-9) label = render(EN, DONENESS_ANCHORS[i].key);
   }
   sliderRows.push([
     level.toFixed(2),

@@ -9,7 +9,8 @@
  * in the past. All this module does is say so out loud.
  */
 
-import { SousVideEstimate, formatLongDuration, startPhrase } from '../core/sousvide.js';
+import { SousVideEstimate, longDuration, startPhrase } from '../core/sousvide.js';
+import { t, tRef } from './copy.js';
 
 export interface SousVideCopy {
   /** Big text, in place of the clock. */
@@ -20,8 +21,11 @@ export interface SousVideCopy {
   hint: string;
 }
 
+/** Weekday names by `Date.getDay()`, as catalogue keys. iOS asks a locale-aware
+ *  formatter instead; the two are reconciled by F4 (locale formatting). */
 const WEEKDAYS = [
-  'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday',
+  'weekday.sunday', 'weekday.monday', 'weekday.tuesday', 'weekday.wednesday',
+  'weekday.thursday', 'weekday.friday', 'weekday.saturday',
 ];
 
 /** Whole days between two instants, by local midnight rather than by elapsed
@@ -45,17 +49,16 @@ function clockOf(ms: number): string {
 
 export function sousVideCopy(est: SousVideEstimate, now_ms: number): SousVideCopy {
   const start_ms = now_ms - est.total_s * 1000;
-  const duration = formatLongDuration(est.total_s);
+  const duration = tRef(longDuration(est.total_s));
   const bath = est.bath_C.toFixed(0);
 
   return {
-    headline: startPhrase(daysBefore(start_ms, now_ms), WEEKDAYS[new Date(start_ms).getDay()]),
-    subline: `at ${clockOf(start_ms)} — ${duration} at ${bath}°C, to eat now`,
-    note: est.whiteBound ? 'white still not set, yolk creamy' : 'yolk set, white still not',
-    warn: `A ${bath}°C bath is below the temperature at which egg white sets — `
-      + `only one of its proteins reacts down here — so the white stays loose `
-      + `however long you leave it. This app was built for boiling water and is `
-      + `out of its depth below 60°C anyway. Use the pan.`,
-    hint: `nothing to start — you are ${duration} late`,
+    headline: tRef(startPhrase(daysBefore(start_ms, now_ms)), {
+      weekday: t(WEEKDAYS[new Date(start_ms).getDay()]),
+    }),
+    subline: t('sousvide.subline', { clock: clockOf(start_ms), duration: duration, bath: bath }),
+    note: t(est.whiteBound ? 'sousvide.note.whiteBound' : 'sousvide.note.yolkBound'),
+    warn: t('sousvide.warn', { bath: bath }),
+    hint: t('sousvide.hint', { duration: duration }),
   };
 }

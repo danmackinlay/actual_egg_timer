@@ -37,7 +37,7 @@ import {
 } from '../src/core/constants.js';
 import {
   eggFromMass, eggFromMinorDiameter, diffusionTime, eggVolumeFromMinorDiameter,
-  SIZE_CLASSES, US_SIZE_CLASSES, sizeClassesFor,
+  SIZE_CLASSES, US_SIZE_CLASSES, SizeClass, sizeClassLabel, sizeClassesFor,
 } from '../src/core/geometry.js';
 import {
   pressureAtAltitude, boilingPointAtPressure, boilingPointAtAltitude,
@@ -60,8 +60,9 @@ import {
 import { CookSetup } from '../src/core/protocol.js';
 import {
   Catalogue, CopyArgs, PLURAL_CATEGORIES, formatArg, parseCatalogue, pluralCategory, render,
+  renderRef,
 } from '../src/core/copy.js';
-import { formatLongDuration, startPhrase } from '../src/core/sousvide.js';
+import { longDuration, startPhrase } from '../src/core/sousvide.js';
 import {
   SOUS_VIDE_BATH_C, equilibrationTime, sousVideEstimate,
 } from '../src/core/sousvide.js';
@@ -583,6 +584,12 @@ const BOIL_MEMORY_FORWARD: BoilMemory = rememberBoil(rememberBoil({}, 1, 300), 3
 const BOIL_MEMORY_BACKWARD: BoilMemory = rememberBoil(rememberBoil({}, 3, 900), 1, 300);
 const BOIL_QUERY_LITRES = [0.5, 1, 1.5, 2, 2.5, 3, 4, 12];
 
+/** A size class as the fixture states it: the key, the mass the model cooks,
+ *  and the grams its label shows. */
+function sizeClassRow(c: SizeClass): { key: string; mass_kg: number; grams: number } {
+  return { key: c.key, mass_kg: c.mass_kg, grams: sizeClassLabel(c).args['grams'] as number };
+}
+
 const policy = {
   slider: {
     steps: SLIDER_STEPS,
@@ -590,7 +597,7 @@ const policy = {
       level: round(level),
       snapUp: round(snapUp(level)),
       snapDown: round(snapDown(level)),
-      anchor: anchorNear(level).label,
+      anchor: anchorNear(level).key,
       targetPeakYolk_C: round(targetPeakYolk_C(level)),
     })),
   },
@@ -603,8 +610,8 @@ const policy = {
       hardestLevel: round(c.hardest),
       level: round(c.level),
       kind: v.kind,
-      wanted: v.wanted.label,
-      limit: v.limit.label,
+      wanted: v.wanted.key,
+      limit: v.limit.key,
       snapTo: v.snapTo === null ? null : round(v.snapTo),
       worthSaying: v.worthSaying,
     };
@@ -663,8 +670,8 @@ const policy = {
    * every edge: below -1, the -0.5 tie that the two languages round in
    * opposite directions, halves, and past the end of both tables. */
   sizeClasses: {
-    eu: SIZE_CLASSES,
-    us: US_SIZE_CLASSES,
+    eu: SIZE_CLASSES.map(sizeClassRow),
+    us: US_SIZE_CLASSES.map(sizeClassRow),
     regions: ['US', 'us', 'GB', 'CZ', 'CA', 'USA', '', null].map((region) => ({
       region: region,
       table: sizeClassesFor(region) === US_SIZE_CLASSES ? 'us' : 'eu',
@@ -819,6 +826,8 @@ const sousvide = {
   }),
 };
 
+type CatalogueJson = { locale: string; messages: Record<string, Record<string, unknown>> };
+
 /* ------------------------------------------------------------------ write */
 
 mkdirSync('fixtures', { recursive: true });
@@ -826,24 +835,37 @@ writeFileSync('fixtures/core.json', `${JSON.stringify(core, null, 2)}\n`);
 writeFileSync('fixtures/scenarios.json', `${JSON.stringify(scenarios, null, 2)}\n`);
 writeFileSync('fixtures/calibration.json', `${JSON.stringify(calibration, null, 2)}\n`);
 writeFileSync('fixtures/policy.json', `${JSON.stringify(policy, null, 2)}\n`);
-/* The two formatters, which are unit choices rather than sentences, and which
- * at a 58 C bath reach only two of their six branches in normal use. Every
- * boundary, from both sides, because four of these were ported by hand and
- * never once executed in either language. */
+/* The two unit choices, which at a 58 C bath reach only two of their six
+ * branches in normal use. Every boundary, from both sides, because four of
+ * these were ported by hand and never once executed in either language. Each
+ * row is the bucket core picks - a key and its numbers - and the English it
+ * renders to, which is what this file held before core stopped speaking
+ * English, and is unchanged. */
+const englishJson = JSON.parse(readFileSync('copy/en.json', 'utf8')) as CatalogueJson;
+const english = parseCatalogue(englishJson);
+
 const sousVideCopy = {
   duration: [
     0, 1, 59, 60, 89 * 60, 90 * 60, 91 * 60, 120 * 60,
     2 * 3600, 2.5 * 3600, 47 * 3600, 47.5 * 3600, 48 * 3600, 49 * 3600,
     13 * 86400, 14 * 86400, 20 * 86400, 60 * 86400, 200 * 86400,
     81760.26, 1428737.1,
-  ].map((seconds) => ({ seconds: seconds, text: formatLongDuration(seconds) })),
+  ].map((seconds) => {
+    const ref = longDuration(seconds);
+    return { seconds: seconds, key: ref.key, args: ref.args, text: renderRef(english, ref) };
+  }),
   startPhrase: [0, 1, 2, 3, 6, 7, 8, 13, 14, 20, 40, 59, 60, 90, 200, 400]
-    .map((daysAgo) => ({
-      daysAgo: daysAgo,
-      // A fixed weekday, so the branch is pinned without dragging a locale into
-      // the fixture. Which weekday each app supplies is its own business.
-      text: startPhrase(daysAgo, 'Tuesday'),
-    })),
+    .map((daysAgo) => {
+      const ref = startPhrase(daysAgo);
+      return {
+        daysAgo: daysAgo,
+        key: ref.key,
+        args: ref.args,
+        // A fixed weekday, so the branch is pinned without dragging a locale
+        // into the fixture. Which weekday each app supplies is its own business.
+        text: renderRef(english, ref, { weekday: 'Tuesday' }),
+      };
+    }),
 };
 
 writeFileSync('fixtures/sousvideCopy.json', `${JSON.stringify(sousVideCopy, null, 2)}\n`);
@@ -868,16 +890,12 @@ const PLURAL_NUMBERS = [0, 1, 2, 3, 4, 5, 10, 11, 21, 22, 100, 101, 1.5, 2.5, 0.
 
 interface CopyRow { locale: string; key: string; args: CopyArgs; text: string }
 
-type CatalogueJson = { locale: string; messages: Record<string, Record<string, unknown>> };
-
 const copyFiles = readdirSync('copy').filter((f) => /^[a-zA-Z-]+\.json$/.test(f)).sort();
 const catalogueJson = new Map<string, CatalogueJson>();
 for (const file of copyFiles) {
   if (file === 'surfaces.json') continue;
   catalogueJson.set(file.replace(/\.json$/, ''), JSON.parse(readFileSync(`copy/${file}`, 'utf8')) as CatalogueJson);
 }
-const englishJson = catalogueJson.get('en') as CatalogueJson;
-const english = parseCatalogue(englishJson);
 
 function copyRows(locale: string, catalogue: Catalogue): CopyRow[] {
   const rows: CopyRow[] = [];

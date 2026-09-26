@@ -48,8 +48,8 @@ struct SliderConformance {
                 targetPeakYolkC(level), c.num("targetPeakYolk_C"), "targetPeakYolkC(\(level))"
             )
             #expect(
-                anchorNear(level).label == c.str("anchor"),
-                "anchorNear(\(level)): expected \(c.str("anchor")), got \(anchorNear(level).label)"
+                anchorNear(level).key == c.str("anchor"),
+                "anchorNear(\(level)): expected \(c.str("anchor")), got \(anchorNear(level).key)"
             )
         }
     }
@@ -93,8 +93,8 @@ struct VerdictConformance {
                 + " hardest \(c.num("hardestLevel")))"
 
             #expect(v.kind.rawValue == c.str("kind"), "\(what) kind")
-            #expect(v.wanted.label == c.str("wanted"), "\(what) wanted")
-            #expect(v.limit.label == c.str("limit"), "\(what) limit")
+            #expect(v.wanted.key == c.str("wanted"), "\(what) wanted")
+            #expect(v.limit.key == c.str("limit"), "\(what) limit")
             #expect(v.worthSaying == c.flag("worthSaying"), "\(what) worthSaying")
 
             switch (v.snapTo, c.optionalNum("snapTo")) {
@@ -260,7 +260,7 @@ struct SizeClassConformance {
         Fixtures.policyCases("sizeClasses.\(name)")
     }
 
-    /// Every label and every mass, in order. A US Large 8 g lighter than an EU
+    /// Every key, every mass and the grams each label shows, in order. A US Large 8 g lighter than an EU
     /// one is half a minute of cooking, so a table that differs by a row is a
     /// different egg on the default path.
     @Test("both tables are the same tables")
@@ -269,8 +269,9 @@ struct SizeClassConformance {
             let expected = Self.table(name)
             #expect(classes.count == expected.count, "\(name) table has \(classes.count) classes")
             for (actual, c) in zip(classes, expected) {
-                #expect(actual.label == c.str("label"), "\(name): \(actual.label)")
-                expectClose(actual.massKg, c.num("mass_kg"), "\(name) \(actual.label)")
+                #expect(actual.key == c.str("key"), "\(name): \(actual.key)")
+                expectClose(actual.massKg, c.num("mass_kg"), "\(name) \(actual.key)")
+                #expect(sizeClassLabel(actual).args["grams"] == c.num("grams"), "\(name) \(actual.key) grams")
             }
         }
     }
