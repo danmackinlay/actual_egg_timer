@@ -108,7 +108,8 @@ cook. Nothing leaves a phone before E6.
       "unrelated answer" component. White becomes three answers (runny /
       tender / firm), always offered and never required; the yolk stays at
       three. A skipped question is recorded as a skip. `shouldAskAboutWhite`
-      and `WHITE_ASK_MIN_P` go. Done when: the
+      and `WHITE_ASK_MIN_P` go. The pre-E1 base posterior is DROPPED here, not
+      backfilled (owner, 26 September). The wording is drafted in LANGUAGE.md §3. Done when: the
       Phase C recovery experiment is repeated and is no worse, and the predictive
       P(answer) is calibrated on simulated cooks.
 - [ ] **E3 the white offset.** A fourth particle dimension: an additive shift on
@@ -119,7 +120,10 @@ cook. Nothing leaves a phone before E6.
       `peakYolkTime_s`), the cook reports the lowest reading at the centre,
       Gaussian likelihood with a hot skew (§5). Done when: one simulated reading
       at +-1 C takes the time-scale sd to about 2.5%.
-- [ ] **E5 decide under uncertainty.** Time by expected utility with a lopsided
+- [ ] **E5 decide under uncertainty.** Settled 26 September (`INFERENCE.md`
+      §11): loss ratio 3; odds always shown as "7/10 eggs hit the mark";
+      "still learning" until the 80% interval is under about +-15 s, falling
+      back to a fixed egg count if that is fiddly. Time by expected utility with a lopsided
       loss; the odds of "white set, yolk in band" on screen; protocol advice
       when soft is asked for. Ships `predictCookTime`'s successor, which closes
       item 7 below.

@@ -118,6 +118,33 @@ warning was cut down, written down here for the first time:
 | iOS, heat-off explanation | "The standing method: the pan coasts down…" | "standing method" is the README's name for it, not a cook's |
 | both, presets | "Fridge 4°", "Sous-vide 63°" | there is no unit, and °F is coming (§4) |
 
+**Draft for E2's feedback screens, for the owner to approve.** This is modern
+English only; 1750 and Czech shadow it once it is settled. Both apps get the
+same wording. That is new: today the web app says *Too firm* where iOS says
+*Too hard*.
+
+| where | now | draft | why |
+|---|---|---|---|
+| yolk question | How was the yolk? | How was the yolk? | unchanged |
+| yolk answers | Too soft · Just right · Too firm (web) / Too hard (iOS) | Too soft · Just right · Too firm | one word in both apps; *firm* matches the white's scale |
+| white question | And the white — was it runny? (asked only sometimes) | And the white? | always shown now (E2), so it no longer presumes the answer |
+| white answers | Still runny · Set right through | Runny · Tender · Firm | three levels, decided 21 September |
+| optional hint | The white sets from the outside in, so this says something about your eggs that the yolk cannot. | Answer either, both or neither. | the old line explains the mechanism; the cook needs to know they may skip |
+| after an answer | Thanks — it has adjusted. | Thanks. The next egg will use that. | says the consequence |
+| while updating | learning… | learning… | unchanged; it matches "still learning" (E5) |
+| before any egg | Telling it tunes the model to your eggs and your pan. | Your answers adjust the times to your eggs and your pan. | drops "the model" |
+| what it has learned | tuned on 3 eggs · ±4% | Learned from 3 eggs | the ±% is of nothing a cook knows; E5 replaces it with "still learning" and the odds |
+| nothing learned yet | Running on the literature values. It learns your pan when you time a boil, and your taste when you say how an egg was. | Nothing learned yet. It learns your pan when you time a boil, and your eggs when you say how one came out. | drops "literature values"; "your eggs", because the white answers are about the egg, not taste |
+| forget button | Forget what it learned | Forget what it learned | unchanged |
+| forget dialog, iOS | Forget the calibration? — The model goes back to the literature values it shipped with, and the time to boil goes back to a guess. | Forget what it learned? — Every egg and your pan's boil time are forgotten, and the times go back to where they started. | checked against both apps: the button clears the eggs AND the boil memory |
+| **E5, preview** | — | 7/10 eggs hit the mark | the owner's wording |
+| **E5, preview** | — | Still learning your kitchen | shown until the time is pinned to about ±15 s |
+
+There is **no Skip button.** Every answer folds the moment it is tapped, and an
+unanswered question is recorded as skipped when the next cook starts (E1's
+offered-or-skipped field). A button would be one more thing to press that
+teaches nothing.
+
 **Strings that are about to change anyway.** Phase E rewrites the feedback copy:
 three white answers, every answer optional, "still learning" beside the time, and
 a thermometer prompt. Those strings should go straight into the catalogue, which

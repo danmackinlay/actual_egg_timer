@@ -337,3 +337,22 @@ faster. You can turn it off, and delete what you sent, whenever you like."*
 5. **"Tender" stands, for now.** Slightly odd, not pathological, and no picture
    could do better. Revisit if real cooks stumble on it; the record will show
    whether the middle answer is being used.
+
+### Decided by the owner, 26 September 2026
+
+6. **Eggs from before E1 are dropped at E2, not backfilled.** E1 keeps the
+   pre-log posterior as a frozen base. The new likelihood cannot replay it, so
+   E2 starts from the prior plus E1's log, and the base goes.
+7. **The loss ratio is 3.** A runny white counts as three times as bad as a
+   yolk one step too firm (§8). It is a constant for now, and a per-cook
+   slider only if someone asks for one.
+8. **The odds are always on screen, and brief**: *"7/10 eggs hit the mark"*.
+   "Hit the mark" means the posterior predictive probability that the white is
+   not runny AND the yolk would be answered "just right". It is rounded to
+   tenths, because more precision than that is not there.
+9. **"Still learning" goes when the 80% interval on the cook time narrows
+   below about +-15 s**, which is about the width of "just right". If that
+   proves fiddly to compute or to make stable, fall back to a fixed number of
+   eggs. The owner's view is that cooks will barely notice the difference, so
+   the threshold is preferred but not worth a fight.
+
