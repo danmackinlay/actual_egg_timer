@@ -153,10 +153,15 @@ warning was cut down, written down here for the first time:
 | iOS, heat-off explanation | "The standing method: the pan coasts down…" | "standing method" is the README's name for it, not a cook's. Reworded 27 September, when the pan's cooling moved to the water volume: "Lid on and burner off: the water's own heat finishes the eggs…" |
 | both, presets | "Fridge 4°", "Sous-vide 63°" | there is no unit, and °F is coming (§4) |
 
-**Draft for E2's feedback screens, for the owner to approve.** This is modern
-English only; 1750 and Czech shadow it once it is settled. Both apps get the
-same wording. That is new: today the web app says *Too firm* where iOS says
-*Too hard*.
+**Draft for E2's feedback screens - IMPLEMENTED 27 September 2026**, in
+`copy/en.json` and both apps, except the two "E5, preview" rows, which belong to
+E5. The owner has not formally approved it; it went in on their behalf while
+they were away, and it lives in the catalogue so that revising it is an edit to
+one file. `tools/copyDraft.ts` lists every key it changed, and
+`copyLiterals.js --since cfe38e9` and `copySnapshot.js compare --draft` show
+that nothing else did. This is modern English only; 1750 and Czech shadow it
+once it is settled. Both apps get the same wording. That is new: until E2 the
+web app said *Too firm* where iOS said *Too hard*.
 
 | where | now | draft | why |
 |---|---|---|---|

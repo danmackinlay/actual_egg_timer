@@ -207,20 +207,14 @@ sentence. `StartChoice` is an app type for the same reason, which is why
 
 ### It asks how the egg was
 
-After the cook the app asks how the YOLK was, with three answers: too soft, just
-right, too hard. That is not a poor interface for a rating — it is the whole
-measurement. Ordinal feedback is worth one to two bits per egg, and asking for a
-number out of ten would collect precision that is not there.
-
-Sometimes it then asks a second question — whether the white was still runny —
-and only when the model cannot already guess the answer, which in practice means
-a soft egg and never a jammy one. `shouldAskAboutWhite` decides, from the
-posterior and the surface alone, so the two apps ask about the same eggs and
-choosing to ask cannot bias what is learned. The white is scored against a fixed
-target with no per-user offset in front of it, which is why it says something
-about your eggs rather than your taste; root README §11.5 records what that costs,
-because the white sits nearer the surface and is the more exposed of the two to
-the `H_EFF` error.
+At PULL the app asks the cook to say when the eggs came out - "They're in the ice
+bath", "They're under the tap", "They're out" - as the web app does, and the record
+calls that tap a measured pull; with no tap the grace runs out and the pull is only
+assumed. After the cook it asks how the YOLK was (too soft, just right, too firm) and
+how the WHITE was (runny, tender, firm), both every time and neither required. That is
+not a poor interface for a rating — it is the whole measurement. Ordinal feedback is
+worth one to two bits per egg, and asking for a number out of ten would collect
+precision that is not there. The likelihood is INFERENCE.md §3's ordered probit.
 
 The answer goes into the particle filter. Building the dose surface for the cook
 that was actually performed costs about a second of arithmetic, so it runs in a
