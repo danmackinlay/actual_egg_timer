@@ -26,8 +26,8 @@
  *   fixtures/copy.json      every key of every catalogue in copy/, rendered, and
  *                           the plural rule of every language at its edges
  *   fixtures/record.json    the record (INFERENCE.md section 4): which records a
- *                           loader trusts, and a replay of a six-egg log pinned
- *                           particle by particle
+ *                           loader trusts, and a replay of an eight-egg log
+ *                           pinned particle by particle
  *   fixtures/units.json     Metric and Imperial: conversions, steps, bounds,
  *                           display, and the round trip of every grid value of
  *                           every input (tools/unitsFixture.ts)
@@ -57,10 +57,11 @@ import {
 } from '../src/core/kinetics.js';
 import { buildDoseGrid, lookupLogYolkDose, lookupLogWhiteDose, cookTimeForLogYolkDose } from '../src/core/doseGrid.js';
 import {
-  Feedback, FEEDBACK_BAND, WhiteReport, WHITE_FEEDBACK_BAND, WHITE_ASK_MIN_P,
-  createPrior, updatePosterior, updateWhite, posteriorParams,
-  posteriorMeanOffset, posteriorAlphaRelSd, predictCookTime, effectiveSampleSize,
-  whiteRunnyProbability, shouldAskAboutWhite,
+  Feedback, FEEDBACK_BAND, NOISE_LOG_SD, NOISE_MEDIAN, UNRELATED, WHITE_FIRM_GAP_LOG_SD,
+  WHITE_FIRM_GAP_MEDIAN, WHITE_OFFSET_SD, WhiteReport, answerLikelihood, createPrior,
+  effectiveSampleSize, posteriorAlphaRelSd, posteriorMeanOffset, posteriorMeanWhiteOffset,
+  posteriorParams, predictCookTime, updatePosterior, whiteAnswerProbabilities,
+  yolkAnswerProbabilities,
 } from '../src/core/infer.js';
 import {
   createSphere, stepSphere, temperatureAt, centreTemperature, meanTemperature,
@@ -72,9 +73,9 @@ import {
   renderRef,
 } from '../src/core/copy.js';
 import {
-  Calibration, EggRecord, PRIOR_ID, RECORD_VERSION, buildRequestedGrid, copyCalibration,
-  foldWhite, foldYolk, freshCalibration, gridRequestFor, parseRecord, recordMass_g,
-  recordTeaches, replay,
+  Calibration, EggRecord, PRIOR_ID, RECORD_VERSION, buildRequestedGrid, calibrationDoneness,
+  copyCalibration, foldRecord, freshCalibration, gridRequestFor, parseRecord, recordCookTime_s,
+  recordMass_g, recordTeaches, replay,
 } from '../src/core/record.js';
 import { longDuration, startPhrase, weekdayKey } from '../src/core/sousvide.js';
 import {
@@ -365,25 +366,18 @@ const PARTICLE_COUNT = 64;
 const PRIOR_SEED = 20260917;
 const NOMINAL_TARGET = Math.log10(6.0);
 
-/* A sequence with a repeat, a reversal and enough agreement to drive the
- * effective sample size below n/2 and trigger a resample - which is the only
- * part of the filter that consumes the RNG after the prior. */
-const FEEDBACK_SEQUENCE: Feedback[] = [-1, 0, -1, 1, 0, -1, -1, 0, -1, 1, 1];
-
-/* What the user said about the WHITE of the same egg, folded straight after the
- * yolk answer, or null for an egg they were not asked about.
+/* What the cook said about each egg: the yolk and the white, either of which
+ * may be missing, folded jointly (E2). A sequence with a repeat, a reversal,
+ * both answers, each alone, E1's two-level "set", and enough agreement to drive
+ * the effective sample size below n/2 and trigger a resample - which is the only
+ * part of the filter that consumes the RNG after the prior.
  *
- * Folded here whether or not `shouldAskAboutWhite` would have asked: the two
- * implementations must agree on the arithmetic wherever it is performed, and the
- * decision about when to ASK is pinned separately below.
- *
- * The cook times were chosen to straddle the white's threshold on this surface.
- * Around 340-380 s the particles disagree about the white; 440-500 s puts it well
- * past setting and they are unanimous. So the sequence exercises all three
- * predictions a particle can make - runny, set, and the band where it predicts
- * neither - and both answers against each. */
+ * The cook times straddle the white's threshold on this surface: around
+ * 340-380 s the particles disagree about the white, and 440-500 s puts it past
+ * setting, so every answer is scored where it is likely and where it is not. */
+const FEEDBACK_SEQUENCE: (Feedback | null)[] = [-1, 0, -1, 1, 0, null, -1, 0, -1, 1, 1];
 const WHITE_SEQUENCE: (WhiteReport | null)[] = [
-  'runny', 'set', 'runny', null, 'set', null, 'runny', 'set', null, 'set', 'runny',
+  'runny', 'tender', 'runny', null, 'firm', 'runny', 'set', 'tender', null, 'firm', 'runny',
 ];
 
 function particleRows(post: ReturnType<typeof createPrior>) {
@@ -391,6 +385,9 @@ function particleRows(post: ReturnType<typeof createPrior>) {
     alpha_m2s: round(p.alpha_m2s),
     logDoseOffset: round(p.logDoseOffset),
     tauAirScale: round(p.tauAirScale),
+    noise: round(p.noise),
+    whiteOffset: round(p.whiteOffset),
+    whiteFirmGap: round(p.whiteFirmGap),
   }));
 }
 
@@ -403,6 +400,7 @@ function readout(post: ReturnType<typeof createPrior>) {
     alpha_m2s: round(params.alpha_m2s),
     tauAirScale: round(params.tauAirScale),
     meanOffset: round(posteriorMeanOffset(post)),
+    meanWhiteOffset: round(posteriorMeanWhiteOffset(post)),
     alphaRelSd: round(posteriorAlphaRelSd(post)),
     predict: {
       low_s: round(predicted.low_s),
@@ -420,34 +418,31 @@ const prior = readout(posterior);
 const COOK_TIMES_S = [360, 340, 380, 500, 355, 460, 345, 370, 440, 350, 365];
 const updates = FEEDBACK_SEQUENCE.map((feedback, i) => {
   const cookTime_s = COOK_TIMES_S[i];
-  updatePosterior(posterior, CALIB_GRID, cookTime_s, NOMINAL_TARGET, feedback);
-  // The ask decision is read AFTER the yolk fold, which is where both apps read
-  // it: the yolk answer has just moved alpha, and so moved the predicted white.
-  const after = readout(posterior);
-  const askWhite = shouldAskAboutWhite(posterior, CALIB_GRID, cookTime_s);
-  const whiteRunny = round(whiteRunnyProbability(posterior, CALIB_GRID, cookTime_s));
   const white = WHITE_SEQUENCE[i];
-  if (white !== null) updateWhite(posterior, CALIB_GRID, cookTime_s, white);
+  // The predictive BEFORE the answers, which is what a cook would be shown.
+  const yolkProbs = yolkAnswerProbabilities(posterior, CALIB_GRID, cookTime_s, NOMINAL_TARGET).map(round);
+  const whiteProbs = whiteAnswerProbabilities(posterior, CALIB_GRID, cookTime_s).map(round);
+  // One particle's likelihood, the first, so a port that gets the probit wrong
+  // is told where before it is told that the whole set moved.
+  const firstLikelihood = round(answerLikelihood(
+    CALIB_GRID, posterior.particles[0], cookTime_s, NOMINAL_TARGET, feedback, white,
+  ));
+  updatePosterior(posterior, CALIB_GRID, cookTime_s, NOMINAL_TARGET, feedback, white);
   return {
     cookTime_s: cookTime_s,
     logNominalTarget: round(NOMINAL_TARGET),
     feedback: feedback,
-    after: after,
-    askWhite: askWhite,
-    whiteRunny: whiteRunny,
     white: white,
-    afterWhite: white === null ? null : readout(posterior),
+    yolkProbs: yolkProbs,
+    whiteProbs: whiteProbs,
+    firstLikelihood: firstLikelihood,
+    after: readout(posterior),
   };
 });
 
 /* One more fold, from a deliberately degenerate particle set, so that the
- * resample inside `updateWhite` is EXECUTED rather than merely present.
- *
- * It cannot be reached any other way. The white channel is weak by design, and
- * the largest fall in effective sample size one binary 0.65 / 0.35 answer can
- * cause is about 6% - so no sequence of white answers alone will ever take a
- * healthy set of 64 particles below the n/2 threshold. A set that is already
- * close to it is the only route to that branch.
+ * resample after a WHITE-ONLY answer is executed from a known starting point,
+ * rather than only wherever the sequence above happens to cross the threshold.
  *
  * The input posterior is therefore synthetic: the particles are the real ones
  * from the end of the sequence above, with their weights sharpened by a power
@@ -482,7 +477,7 @@ const WHITE_RESAMPLE_CASE = (() => {
   };
   const cookTime_s = 365;
   const white: WhiteReport = 'runny';
-  updateWhite(post, CALIB_GRID, cookTime_s, white);
+  updatePosterior(post, CALIB_GRID, cookTime_s, NOMINAL_TARGET, null, white);
   return {
     cookTime_s: cookTime_s,
     white: white,
@@ -491,16 +486,15 @@ const WHITE_RESAMPLE_CASE = (() => {
   };
 })();
 
-/* The second question's selection rule, over a sweep of cook times on the same
- * surface and the same prior. Cheap - no state, no RNG - and dense, because this
- * is what decides whether a user is asked at all: a port that got it wrong would
- * ask on every egg or on none, and no posterior comparison would notice. */
-const WHITE_ASK_CASES = [240, 270, 300, 340, 380, 420, 500, 650, 900].map((cookTime_s) => {
+/* The predictive over a sweep of cook times on the same surface and the same
+ * prior: cheap - no state, no RNG - and dense, because it is what E5 will put
+ * on screen as the odds. */
+const PREDICTIVE_CASES = [240, 270, 300, 340, 380, 420, 500, 650, 900].map((cookTime_s) => {
   const fresh = createPrior(PARTICLE_COUNT, PRIOR_SEED);
   return {
     cookTime_s: cookTime_s,
-    whiteRunny: round(whiteRunnyProbability(fresh, CALIB_GRID, cookTime_s)),
-    askWhite: shouldAskAboutWhite(fresh, CALIB_GRID, cookTime_s),
+    yolkProbs: yolkAnswerProbabilities(fresh, CALIB_GRID, cookTime_s, NOMINAL_TARGET).map(round),
+    whiteProbs: whiteAnswerProbabilities(fresh, CALIB_GRID, cookTime_s).map(round),
   };
 });
 
@@ -538,10 +532,16 @@ const calibration = {
     logDose: c.logDose,
     cookTime_s: round(cookTimeForLogYolkDose(CALIB_GRID, c.alpha_m2s, c.logDose)),
   })),
-  feedbackBand: FEEDBACK_BAND,
-  whiteFeedbackBand: WHITE_FEEDBACK_BAND,
-  whiteAskMinP: WHITE_ASK_MIN_P,
-  whiteAsk: WHITE_ASK_CASES,
+  likelihood: {
+    feedbackBand: FEEDBACK_BAND,
+    unrelated: UNRELATED,
+    noiseMedian: NOISE_MEDIAN,
+    noiseLogSd: NOISE_LOG_SD,
+    whiteOffsetSd: WHITE_OFFSET_SD,
+    whiteFirmGapMedian: WHITE_FIRM_GAP_MEDIAN,
+    whiteFirmGapLogSd: WHITE_FIRM_GAP_LOG_SD,
+  },
+  predictive: PREDICTIVE_CASES,
   whiteResample: WHITE_RESAMPLE_CASE,
   prior: {
     count: PARTICLE_COUNT,
@@ -858,10 +858,11 @@ const sousvide = {
  * Two things are pinned. First, which records a loader TRUSTS: a canonical
  * record, the variations version skew allows, and one breakage per rule, so a
  * port that forgets a check - or adds one - disagrees on a named case. Second,
- * the replay: a log of six eggs from both apps, one of them unanswered, folded
- * from a fresh prior with every particle and weight written out after each egg,
- * and the tail of the same log folded again from the state after the second egg
- * - which is what a migrated phone does with its frozen base.
+ * the replay: a log of eight eggs from both apps - E1's, with their two-level
+ * white, and E2's, answered either way or not at all - folded from a fresh prior
+ * under E2's likelihood with every particle and weight written out after each
+ * egg, and the tail of the same log folded again from the state after the second
+ * egg, which is what a phone whose damaged log was dropped starts from.
  *
  * The grid is coarser than the app's: `calibrationGrid`'s BOUNDS, which are what
  * decide what the filter sees, at 7 x 9 instead of 21 x 32. The counts are
@@ -943,6 +944,7 @@ function recordOf(e: EggSpec): EggRecord {
 }
 
 const REPLAY_LOG: EggRecord[] = [
+  // E1's eggs, first: this is the log E2 replays.
   // Soft, too soft, and the white was runny: both channels, from the prior.
   recordOf({
     app: 'web', mass_g: 62, massFrom: 'class', eggFrom: 'fridge', over: {},
@@ -973,11 +975,22 @@ const REPLAY_LOG: EggRecord[] = [
     over: { eggStart_C: 20, cooling: 'counter' },
     level: 0.62, pulledBy: 'timeout', late_s: 0, yolk: 0, white: null, whiteOffered: false,
   }),
-  // The standing method, from a cold start, and a white that set.
+  // The standing method, from a cold start, and E1's two-level "set".
   recordOf({
     app: 'web', mass_g: 60.2, massFrom: 'width', eggFrom: 'fridge',
     over: { startMode: 'cold', timeToBoil_s: 430, afterBoil: 'off', waterLitres: 1.5, eggCount: 2 },
     level: 0.5, pulledBy: 'cook', late_s: 2, yolk: -1, white: 'set', whiteOffered: true,
+  }),
+  // E2's: the white alone, tender, pulled late by the cook's own tap - scored
+  // at the tap, 40 s after the alarm.
+  recordOf({
+    app: 'ios', mass_g: 68, massFrom: 'class', eggFrom: 'fridge', over: {},
+    level: 0.22, pulledBy: 'cook', late_s: 40, yolk: null, white: 'tender', whiteOffered: true,
+  }),
+  // Both, and a firm white at fudgy.
+  recordOf({
+    app: 'web', mass_g: 63, massFrom: 'scale', eggFrom: 'fridge', over: {},
+    level: 0.62, pulledBy: 'cook', late_s: 5, yolk: 1, white: 'firm', whiteOffered: true,
   }),
 ];
 
@@ -990,22 +1003,25 @@ function calibrationRows(c: Calibration) {
   };
 }
 
-/* Egg by egg, the way an app folds them: surface, yolk, ask, white. */
+/* Egg by egg, the way an app folds them: a surface, then both answers. After
+ * each, the white target the next soft cook would be solved for (E3). */
 const replayStart = freshCalibration(REPLAY_PARTICLES, REPLAY_SEED);
 const replayState = copyCalibration(replayStart);
 const replaySnapshots: Calibration[] = [];
 const replaySteps = REPLAY_LOG.map((r) => {
-  let askWhite: boolean | null = null;
   let spec: GridSpec | null = null;
   if (recordTeaches(r)) {
     const q = gridRequestFor(replayState, r, replayGrid);
     spec = q.spec;
-    const surface = buildRequestedGrid(q);
-    askWhite = foldYolk(replayState, r, surface);
-    foldWhite(replayState, r, surface);
+    foldRecord(replayState, r, buildRequestedGrid(q));
   }
   replaySnapshots.push(copyCalibration(replayState));
-  return { spec: spec, askWhite: askWhite, after: calibrationRows(replayState) };
+  return {
+    spec: spec,
+    cookTime_s: recordCookTime_s(r),
+    whiteDoseAtSoft: round(calibrationDoneness(replayState, 0.22).whiteDose_min),
+    after: calibrationRows(replayState),
+  };
 });
 const REPLAY_BASE_AFTER = 2;
 const replayBase = replaySnapshots[REPLAY_BASE_AFTER - 1];
@@ -1018,7 +1034,9 @@ for (let i = 0; i < replayState.posterior.weights.length; i++) {
     const b = other.posterior.particles[i];
     if (other.posterior.weights[i] !== replayState.posterior.weights[i]
       || b.alpha_m2s !== a.alpha_m2s || b.logDoseOffset !== a.logDoseOffset
-      || b.tauAirScale !== a.tauAirScale || other.posterior.rng !== replayState.posterior.rng) {
+      || b.tauAirScale !== a.tauAirScale || b.noise !== a.noise
+      || b.whiteOffset !== a.whiteOffset || b.whiteFirmGap !== a.whiteFirmGap
+      || other.posterior.rng !== replayState.posterior.rng) {
       throw new Error('replay disagrees with the egg-by-egg fold');
     }
   }
@@ -1050,6 +1068,10 @@ const RECORD_CASES: { why: string; mutate: Mutation }[] = [
   { why: 'a uid, once E6 mints one', mutate: (r) => { r['uid'] = '6f1c2a9e-2b1d-4c1e-9d6b-1a2b3c4d5e6f'; } },
   { why: 'an unanswered egg', mutate: (r) => { r['yolk'] = null; r['white'] = null; } },
   { why: 'the white offered and skipped', mutate: (r) => { r['white'] = null; } },
+  { why: 'a tender white (E2)', mutate: (r) => { r['white'] = 'tender'; } },
+  { why: 'a firm white (E2)', mutate: (r) => { r['white'] = 'firm'; } },
+  { why: 'the two-level white E1 logged', mutate: (r) => { r['white'] = 'set'; } },
+  { why: 'not asked about the white (E1)', mutate: (r) => { r['white'] = null; r['whiteOffered'] = false; } },
   {
     why: 'a weighed egg names no carton',
     mutate: (r) => { eggPart(r)['massFrom'] = 'scale'; eggPart(r)['sizeTable'] = null; },
@@ -1099,7 +1121,7 @@ const RECORD_CASES: { why: string; mutate: Mutation }[] = [
   { why: 'negative cooling', mutate: (r) => { r['cooled_s'] = -1; } },
   { why: 'a yolk answer out of range', mutate: (r) => { r['yolk'] = 2; } },
   { why: 'a yolk answer as a word', mutate: (r) => { r['yolk'] = 'soft'; } },
-  { why: 'a white answer nobody offers', mutate: (r) => { r['white'] = 'firm'; } },
+  { why: 'a white answer nobody offers', mutate: (r) => { r['white'] = 'rubbery'; } },
   { why: 'an answer to a question never asked', mutate: (r) => { r['whiteOffered'] = false; } },
   { why: 'offered as a number', mutate: (r) => { r['whiteOffered'] = 1; } },
   { why: 'offered missing', mutate: (r) => { delete r['whiteOffered']; } },
@@ -1268,8 +1290,8 @@ const probeCases: { key: string; args: CopyArgs }[] = [
   { key: 'probe.braces', args: { ok: 'OK', ok_2: 2, Ok: 'capital' } },
   { key: 'probe.braces', args: {} },
   { key: 'probe.unicode', args: { ok: 'kůň', n: 4 } },
-  { key: 'learned.tuned', args: { eggs: 2, spread: '9' } },
-  { key: 'learned.tuned', args: { eggs: 1.5, spread: '9' } },
+  { key: 'learned.tuned', args: { eggs: 2 } },
+  { key: 'learned.tuned', args: { eggs: 1.5 } },
   { key: 'no.such.key', args: { n: 1 } },
 ];
 
@@ -1340,7 +1362,7 @@ const pseudoCases: { key: string; args: CopyArgs }[] = [
   { key: 'format.inches', args: { value: fixed(1.72, 2) } },
   ...[1, 3, 6, 13, 1234].map((n) => ({ key: 'duration.days', args: { days: n } })),
   { key: 'duration.hoursMinutes', args: { hours: 22, minutes: 43 } },
-  ...[1, 2, 5, 1.5].map((n) => ({ key: 'learned.tuned', args: { eggs: n, spread: '9' } })),
+  ...[1, 2, 5, 1.5].map((n) => ({ key: 'learned.tuned', args: { eggs: n } })),
   {
     key: 'sousvide.subline',
     args: { clock: formatTimeOfDay('cs-CZ', 8 * 3600 + 47 * 60, false), duration: '22 h 43 min', bath: '58 °C' },
@@ -1410,7 +1432,7 @@ const counts = [
   `${scenarios.cases.length} scenarios`,
   `${calibration.grid.logYolk.length} grid cells`,
   `${calibration.updates.length} calibration updates`,
-  `${calibration.updates.filter((u) => u.white !== null).length} white folds`,
+  `${calibration.updates.filter((u) => u.white !== null).length} white answers`,
   `${policy.slider.cases.length} snap`,
   `${policy.verdict.length} verdicts`,
   `${policy.texture.length} textures`,

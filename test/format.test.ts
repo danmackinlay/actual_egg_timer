@@ -183,7 +183,7 @@ test('6a. forced to cs-CZ, the web renders the pseudo catalogue with Czech numbe
     assert.equal(spokenClock(1), '1 [s:one]');
     assert.equal(spokenClock(3 * 60 + 2), '3 [min:few] + 2 [s:few]');
     assert.equal(spokenClock(5 * 60 + 21), '5 [min:other] + 21 [s:other]');
-    assert.equal(t('learned.tuned', { eggs: 1.5, spread: '9' }), '[tuned] 1,5 [eggs:many] ±9%');
+    assert.equal(t('learned.tuned', { eggs: 1.5 }), '[tuned] 1,5 [eggs:many]');
 
     // Wednesday 1 October 2025, 15:05 UTC, and 81,760 s earlier is 16:22:20
     // the day before.

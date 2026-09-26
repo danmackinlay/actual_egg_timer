@@ -5,6 +5,17 @@
  *
  *   npm run build
  *   node dist/tools/copyLiterals.js <base-ref>
+ *   node dist/tools/copyLiterals.js --since <ref>
+ *
+ * The first form is F1's proof, and it held at F1 (40b9efa). It does not hold
+ * now, and is not meant to: F2 and F3 changed words on purpose since.
+ *
+ * The second form is the proof for every rewrite AFTER the move, once the words
+ * live in the catalogue: both apps, not only iOS. It diffs copy/en.json and the
+ * keys each app's source names between <ref> and the working tree, and refuses
+ * any difference that is not in tools/copyDraft.ts - so a reviewer reads the
+ * intended changes as a list, and nothing else changed. For F2's feedback
+ * screens the ref is `DRAFT_BASE`.
  *
  * `base-ref` is the last commit before the move (942623d). The web half is
  * tools/copy-snapshot.html, which renders the running app; nothing like that
@@ -40,6 +51,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { Message, parseCatalogue, placeholders, templatesOf } from '../src/core/copy.js';
+import { EXAMPLE_ONLY, FEEDBACK_DRAFT, Templates } from './copyDraft.js';
 
 const DIRS = ['ios/App', 'ios/Widget', 'ios/Shared', 'ios/EggTimerCore/Sources/EggTimerCore'];
 
@@ -113,6 +125,9 @@ const NOT_COPY: Record<string, string> = {
   pulled_s: 'record field name',
   cooled_s: 'record field name',
   'probe readings arrive in E4': 'decoding error, never shown',
+  // E2's store and prior (INFERENCE.md section 4): schema, never shown
+  'calibration.v4': 'UserDefaults key',
+  '2026-09-e2': 'record prior id, never shown',
 };
 
 /** Old literals that were grammar in code, what each became, and the strings
@@ -260,11 +275,149 @@ function matches(template: string, literal: string): boolean {
   return templatePattern(template).test(literal);
 }
 
+/* ------------------------------------------------- since: the catalogue */
+
+type Entry = Record<string, unknown>;
+
+function catalogueAt(ref: string | null): Record<string, Entry> {
+  const raw = ref === null
+    ? readFileSync('copy/en.json', 'utf8')
+    : execFileSync('git', ['show', `${ref}:copy/en.json`], { encoding: 'utf8' });
+  return (JSON.parse(raw) as { messages: Record<string, Entry> }).messages;
+}
+
+/** An entry's templates by category: `text`, or each plural form. */
+function templatesByCategory(e: Entry | undefined): Templates | null {
+  if (e === undefined) return null;
+  const out: Templates = {};
+  for (const k of ['text', 'zero', 'one', 'two', 'few', 'many', 'other']) {
+    if (typeof e[k] === 'string') out[k] = e[k] as string;
+  }
+  return out;
+}
+
+function sameTemplates(a: Templates | null, b: Templates | null): boolean {
+  return JSON.stringify(a) === JSON.stringify(b);
+}
+
+/** Every file that can name a key, by app, as test/copy.test.ts reads them. */
+const KEY_SOURCES: Record<string, string[]> = {
+  web: ['src/ui', 'src/core', 'index.html'],
+  ios: ['ios/App', 'ios/Widget', 'ios/Shared', 'ios/EggTimerCore/Sources'],
+};
+const KEY_SHAPE = /['"`]([a-z][a-zA-Z]*(?:\.[a-zA-Z][a-zA-Z0-9]*)+)['"`]/g;
+
+function filesAt(ref: string | null, root: string): Map<string, string> {
+  const out = new Map<string, string>();
+  const ext = (f: string): boolean => f.endsWith('.ts') || f.endsWith('.swift') || f.endsWith('.html');
+  if (ref === null) {
+    const names = root.endsWith('.html') ? [root]
+      : readdirSync(root, { recursive: true, encoding: 'utf8' }).filter(ext).map((f) => join(root, f));
+    for (const n of names) out.set(n, readFileSync(n, 'utf8'));
+    return out;
+  }
+  const names = execFileSync('git', ['ls-tree', '-r', '--name-only', ref, '--', root], { encoding: 'utf8' })
+    .split('\n').filter(ext);
+  for (const n of names) out.set(n, execFileSync('git', ['show', `${ref}:${n}`], { encoding: 'utf8' }));
+  return out;
+}
+
+function keysUsed(ref: string | null, app: string, catalogue: Record<string, Entry>): Set<string> {
+  const groups = new Set(Object.keys(catalogue).map((k) => k.split('.')[0]));
+  const used = new Set<string>();
+  for (const root of KEY_SOURCES[app]) {
+    for (const text of filesAt(ref, root).values()) {
+      for (const m of text.matchAll(KEY_SHAPE)) {
+        if (groups.has(m[1].split('.')[0]) && m[1] in catalogue) used.add(m[1]);
+      }
+    }
+  }
+  return used;
+}
+
+function since(ref: string): void {
+  const before = catalogueAt(ref);
+  const after = catalogueAt(null);
+  const drafted = new Map(FEEDBACK_DRAFT.map((d) => [d.key, d]));
+  const failures: string[] = [];
+  const changed: string[] = [];
+  let unchanged = 0;
+
+  for (const key of [...new Set([...Object.keys(before), ...Object.keys(after)])].sort()) {
+    const b = before[key];
+    const a = after[key];
+    const tb = templatesByCategory(b);
+    const ta = templatesByCategory(a);
+    const appsB = JSON.stringify(b?.['apps'] ?? []);
+    const appsA = JSON.stringify(a?.['apps'] ?? []);
+    const wordsSame = sameTemplates(tb, ta) && appsB === appsA
+      && JSON.stringify(b?.['surface']) === JSON.stringify(a?.['surface']);
+    if (wordsSame) {
+      if (JSON.stringify(b) !== JSON.stringify(a) && !(key in EXAMPLE_ONLY)) {
+        failures.push(`${key}: its entry changed outside the words, and no draft says why`);
+      }
+      unchanged += 1;
+      continue;
+    }
+    const d = drafted.get(key);
+    if (d === undefined) {
+      failures.push(`${key}: changed, and is not in the draft\n  before ${JSON.stringify(tb)} ${appsB}\n  after  ${JSON.stringify(ta)} ${appsA}`);
+      continue;
+    }
+    if (!sameTemplates(tb, d.before) || !sameTemplates(ta, d.after)) {
+      failures.push(`${key}: not the drafted wording\n  draft  ${JSON.stringify(d.before)} -> ${JSON.stringify(d.after)}\n  actual ${JSON.stringify(tb)} -> ${JSON.stringify(ta)}`);
+      continue;
+    }
+    if (appsB !== JSON.stringify(d.appsBefore) || appsA !== JSON.stringify(d.appsAfter)) {
+      failures.push(`${key}: apps ${appsB} -> ${appsA}, the draft says ${JSON.stringify(d.appsBefore)} -> ${JSON.stringify(d.appsAfter)}`);
+      continue;
+    }
+    changed.push(`  ${d.row.padEnd(22)} ${key}: ${JSON.stringify(d.before)} -> ${JSON.stringify(d.after)} `
+      + `${appsB === appsA ? '' : `(${appsB} -> ${appsA})`}`);
+  }
+  for (const d of FEEDBACK_DRAFT) {
+    if (!changed.some((c) => c.includes(` ${d.key}:`))) failures.push(`${d.key}: drafted, and not changed`);
+  }
+
+  // What each app's source names, against what the catalogue says it names.
+  for (const app of Object.keys(KEY_SOURCES)) {
+    const was = keysUsed(ref, app, before);
+    const is = keysUsed(null, app, after);
+    for (const key of [...new Set([...was, ...is])].sort()) {
+      if (was.has(key) === is.has(key)) continue;
+      const d = drafted.get(key);
+      const expectBefore = d !== undefined && d.appsBefore.includes(app);
+      const expectAfter = d !== undefined && d.appsAfter.includes(app);
+      if (d === undefined || expectBefore !== was.has(key) || expectAfter !== is.has(key)) {
+        failures.push(`${app}: ${was.has(key) ? 'stopped' : 'started'} naming ${key}, and the draft does not say so`);
+      }
+    }
+  }
+
+  console.log(`since ${ref}: ${unchanged} keys unchanged; ${changed.length} changed, each as drafted:`);
+  console.log(changed.join('\n'));
+  if (failures.length > 0) {
+    console.log(`\n${failures.length} failures:\n${failures.join('\n')}`);
+    process.exit(1);
+  }
+  console.log('only the drafted strings changed, in the catalogue and in what each app names.');
+}
+
 /* ------------------------------------------------------------------ main */
+
+if (process.argv[2] === '--since') {
+  const ref = process.argv[3];
+  if (ref === undefined) {
+    console.error('usage: copyLiterals.js --since <ref>');
+    process.exit(2);
+  }
+  since(ref);
+  process.exit(0);
+}
 
 const base = process.argv[2];
 if (base === undefined) {
-  console.error('usage: copyLiterals.js <base-ref>');
+  console.error('usage: copyLiterals.js <base-ref> | --since <ref>');
   process.exit(2);
 }
 

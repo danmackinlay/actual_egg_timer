@@ -425,7 +425,7 @@
       "locale": "en",
       "key": "readout.sub.pull",
       "args": {},
-      "text": "carryover is running"
+      "text": "the yolk is still cooking"
     },
     {
       "locale": "en",
@@ -1468,124 +1468,111 @@
       "locale": "en",
       "key": "learned.literature",
       "args": {},
-      "text": "Running on the literature values. It learns your pan when you time a boil, and your taste when you say how an egg was."
+      "text": "Nothing learned yet. It learns your pan when you time a boil, and your eggs when you say how one came out."
     },
     {
       "locale": "en",
       "key": "learned.tuned",
       "args": {
-        "eggs": 3,
-        "spread": "9"
+        "eggs": 3
       },
-      "text": "tuned on 3 eggs · ±9%"
+      "text": "Learned from 3 eggs"
     },
     {
       "locale": "en",
       "key": "learned.tuned",
       "args": {
-        "eggs": 0,
-        "spread": "9"
+        "eggs": 0
       },
-      "text": "tuned on 0 eggs · ±9%"
+      "text": "Learned from 0 eggs"
     },
     {
       "locale": "en",
       "key": "learned.tuned",
       "args": {
-        "eggs": 1,
-        "spread": "9"
+        "eggs": 1
       },
-      "text": "tuned on 1 egg · ±9%"
+      "text": "Learned from 1 egg"
     },
     {
       "locale": "en",
       "key": "learned.tuned",
       "args": {
-        "eggs": 2,
-        "spread": "9"
+        "eggs": 2
       },
-      "text": "tuned on 2 eggs · ±9%"
+      "text": "Learned from 2 eggs"
     },
     {
       "locale": "en",
       "key": "learned.tuned",
       "args": {
-        "eggs": 3,
-        "spread": "9"
+        "eggs": 3
       },
-      "text": "tuned on 3 eggs · ±9%"
+      "text": "Learned from 3 eggs"
     },
     {
       "locale": "en",
       "key": "learned.tuned",
       "args": {
-        "eggs": 4,
-        "spread": "9"
+        "eggs": 4
       },
-      "text": "tuned on 4 eggs · ±9%"
+      "text": "Learned from 4 eggs"
     },
     {
       "locale": "en",
       "key": "learned.tuned",
       "args": {
-        "eggs": 5,
-        "spread": "9"
+        "eggs": 5
       },
-      "text": "tuned on 5 eggs · ±9%"
+      "text": "Learned from 5 eggs"
     },
     {
       "locale": "en",
       "key": "learned.tuned",
       "args": {
-        "eggs": 11,
-        "spread": "9"
+        "eggs": 11
       },
-      "text": "tuned on 11 eggs · ±9%"
+      "text": "Learned from 11 eggs"
     },
     {
       "locale": "en",
       "key": "learned.tuned",
       "args": {
-        "eggs": 21,
-        "spread": "9"
+        "eggs": 21
       },
-      "text": "tuned on 21 eggs · ±9%"
+      "text": "Learned from 21 eggs"
     },
     {
       "locale": "en",
       "key": "learned.tuned",
       "args": {
-        "eggs": 22,
-        "spread": "9"
+        "eggs": 22
       },
-      "text": "tuned on 22 eggs · ±9%"
+      "text": "Learned from 22 eggs"
     },
     {
       "locale": "en",
       "key": "learned.tuned",
       "args": {
-        "eggs": 1.5,
-        "spread": "9"
+        "eggs": 1.5
       },
-      "text": "tuned on 1.5 eggs · ±9%"
+      "text": "Learned from 1.5 eggs"
     },
     {
       "locale": "en",
       "key": "learned.tuned",
       "args": {
-        "eggs": 2.5,
-        "spread": "9"
+        "eggs": 2.5
       },
-      "text": "tuned on 2.5 eggs · ±9%"
+      "text": "Learned from 2.5 eggs"
     },
     {
       "locale": "en",
       "key": "learned.tuned",
       "args": {
-        "eggs": 0.5,
-        "spread": "9"
+        "eggs": 0.5
       },
-      "text": "tuned on 0.5 eggs · ±9%"
+      "text": "Learned from 0.5 eggs"
     },
     {
       "locale": "en",
@@ -1599,10 +1586,10 @@
       "locale": "en",
       "key": "learned.both",
       "args": {
-        "tuned": "tuned on 3 eggs · ±9%",
+        "tuned": "Learned from 3 eggs",
         "pan": "your pan takes 6:40 to boil"
       },
-      "text": "tuned on 3 eggs · ±9% · your pan takes 6:40 to boil"
+      "text": "Learned from 3 eggs · your pan takes 6:40 to boil"
     },
     {
       "locale": "en",
@@ -1620,7 +1607,7 @@
       "locale": "en",
       "key": "learned.confirm.title",
       "args": {},
-      "text": "Forget the calibration?"
+      "text": "Forget what it learned?"
     },
     {
       "locale": "en",
@@ -1638,7 +1625,7 @@
       "locale": "en",
       "key": "learned.confirm.message",
       "args": {},
-      "text": "The model goes back to the literature values it shipped with, and the time to boil goes back to a guess."
+      "text": "Every egg and your pan's boil time are forgotten, and the times go back to where they started."
     },
     {
       "locale": "en",
@@ -1666,15 +1653,9 @@
     },
     {
       "locale": "en",
-      "key": "feedback.tooHard",
-      "args": {},
-      "text": "Too hard"
-    },
-    {
-      "locale": "en",
       "key": "feedback.invite",
       "args": {},
-      "text": "Telling it tunes the model to your eggs and your pan."
+      "text": "Your answers adjust the times to your eggs and your pan."
     },
     {
       "locale": "en",
@@ -1686,31 +1667,37 @@
       "locale": "en",
       "key": "feedback.thanks",
       "args": {},
-      "text": "Thanks — it has adjusted."
+      "text": "Thanks. The next egg will use that."
+    },
+    {
+      "locale": "en",
+      "key": "feedback.optional",
+      "args": {},
+      "text": "Answer either, both or neither."
     },
     {
       "locale": "en",
       "key": "feedback.white.ask",
       "args": {},
-      "text": "And the white — was it runny?"
+      "text": "And the white?"
     },
     {
       "locale": "en",
       "key": "feedback.white.runny",
       "args": {},
-      "text": "Still runny"
+      "text": "Runny"
     },
     {
       "locale": "en",
-      "key": "feedback.white.set",
+      "key": "feedback.white.tender",
       "args": {},
-      "text": "Set right through"
+      "text": "Tender"
     },
     {
       "locale": "en",
-      "key": "feedback.white.why",
+      "key": "feedback.white.firm",
       "args": {},
-      "text": "The white sets from the outside in, so this says something about your eggs that the yolk cannot."
+      "text": "Firm"
     },
     {
       "locale": "en",
@@ -3334,18 +3321,16 @@
       {
         "key": "learned.tuned",
         "args": {
-          "eggs": 2,
-          "spread": "9"
+          "eggs": 2
         },
-        "text": "tuned on 2 eggs · ±9%"
+        "text": "Learned from 2 eggs"
       },
       {
         "key": "learned.tuned",
         "args": {
-          "eggs": 1.5,
-          "spread": "9"
+          "eggs": 1.5
         },
-        "text": "tuned on 1,5 eggs · ±9%"
+        "text": "Learned from 1,5 eggs"
       },
       {
         "key": "no.such.key",

@@ -14,17 +14,18 @@
  *
  * WHAT A FOLD READS. The posterior is a function of the log and of nothing
  * else: both apps fold an egg FROM ITS RECORD, through `gridRequestFor` and
- * `foldYolk` / `foldWhite` below, and `replay` is those same calls in a loop.
+ * `foldRecord` below, and `replay` is those same calls in a loop.
  * That is what makes the posterior rebuilt from the log bit-identical to the
  * one built egg by egg - not a comparison that happens to pass, but one path
  * taken twice. The price is that the fold sees the egg the record describes
  * (a mass rounded to 0.01 g) rather than the one the solver timed, which is
  * 0.02% of an egg and a hundredth of a second of cook.
  *
- * WHAT E1 DOES NOT CHANGE. The likelihood is the one in `infer.ts`, untouched.
- * It is scored at the SCHEDULED cook time, `recommended_s + nudge_s`, exactly
- * as before; the measured pull time is recorded but not yet used, because using
- * it is a change to the model, and model changes are E2's, made once, by replay.
+ * WHERE IT IS SCORED (E2). At the moment the egg came out when the cook said
+ * so - `pulled_s`, when `pulledBy` is 'cook' - and at the scheduled time,
+ * `recommended_s + nudge_s`, when nobody did. E1 recorded the pull and scored
+ * the schedule; E2 changed the likelihood, once, by replay, and started using
+ * it.
  *
  * Pure, like the rest of `src/core/`: the day, the times and the version are
  * handed in; nothing here reads a clock.
@@ -32,11 +33,11 @@
 
 import { Egg, SizeTable, eggFromMass } from './geometry.js';
 import { CookSetup, Cooling, HeatAfterBoil, StartMode } from './protocol.js';
-import { DEFAULT_PARAMS, ModelParams, donenessFromSlider } from './solve.js';
+import { DEFAULT_PARAMS, Doneness, ModelParams, WHITE_DOSE_TARGET, donenessFromSlider } from './solve.js';
 import { DoseGrid, buildDoseGrid } from './doseGrid.js';
 import {
-  Feedback, Particle, Posterior, WhiteReport, createPrior, posteriorParams, shouldAskAboutWhite,
-  updatePosterior, updateWhite,
+  Feedback, Particle, Posterior, WhiteReport, createPrior, posteriorMeanWhiteOffset,
+  posteriorParams, updatePosterior,
 } from './infer.js';
 import { GridSpec, calibrationGrid } from './policy.js';
 
@@ -45,9 +46,11 @@ import { GridSpec, calibrationGrid } from './policy.js';
 export const RECORD_VERSION = 1;
 
 /** Which prior the record's cook was recommended under: the literature prior,
- *  `PARTICLE_COUNT` particles from `CALIBRATION_SEED`, as of September 2026.
- *  Recorded so a later fit knows what policy put the data where it lies. */
-export const PRIOR_ID = '2026-09';
+ *  `PARTICLE_COUNT` particles from `CALIBRATION_SEED`. Recorded so a later fit
+ *  knows what policy put the data where it lies. '2026-09' was E1's three-number
+ *  particle; '2026-09-e2' is E2's six, whose white offset also moves the
+ *  recommendation (`calibrationDoneness`). */
+export const PRIOR_ID = '2026-09-e2';
 
 /** Where the egg's mass came from. A size class is a 10 g bucket, worth about
  *  +-24 s; a scale is a gram. The fit reads this as egg-level noise. */
@@ -60,10 +63,11 @@ export type EggFrom = 'fridge' | 'room' | 'custom';
  *  tap, and every finished cold start has one, because neither app leaves
  *  HEATING without it. A hot start never times the pan, so it cooks on the
  *  `remembered` pan, or on the `default` guess when no pan has ever been
- *  measured. With the heat off that number is today the pan's whole cooling
- *  curve (`panTimeConstant`); when the standing method's pan constant is
- *  re-derived from the water volume instead, this is what says which logged
- *  cooks leaned on the old derivation, and how hard. */
+ *  measured. With the heat off that number used to be the pan's whole cooling
+ *  curve; since 27 September the standing method's pan constant comes from the
+ *  water volume instead (`panTimeConstant`), and this is what says which logged
+ *  cooks were recommended under the old derivation, and how hard they leaned
+ *  on it. */
 export type TimeToBoilFrom = 'measured' | 'remembered' | 'default';
 
 
@@ -134,13 +138,15 @@ export interface EggRecord {
   /** The yolk answer, or null when the question was on screen and the cook
    *  moved on without answering. */
   yolk: Feedback | null;
-  /** The white answer. Three states, not two, because today the white is only
-   *  sometimes asked about (`shouldAskAboutWhite`):
-   *    whiteOffered false, white null   - not asked
+  /** The white answer: runny, tender or firm, or null for a skip. `set` is the
+   *  two-level answer E1 logged, and means tender or firm (see `WhiteReport`).
+   *  With `whiteOffered`, three states:
+   *    whiteOffered false, white null   - not asked (E1 only)
    *    whiteOffered true,  white null   - asked, and skipped
    *    whiteOffered true,  white answer - answered
-   *  A null alone could not tell the first two apart, and they mean different
-   *  things: the first is the model's choice, the second the cook's. */
+   *  Until E2 the model decided whether to ask, so a null alone could not tell
+   *  the first two apart. Since E2 the white is always offered and every new
+   *  record says `true`; the field stays so that old records read the same. */
   white: WhiteReport | null;
   whiteOffered: boolean;
   /** A thermometer reading (E4). Null until then. */
@@ -258,7 +264,8 @@ export function parseRecord(raw: unknown): EggRecord | null {
   const yolk = raw['yolk'] ?? null;
   if (yolk !== null && yolk !== -1 && yolk !== 0 && yolk !== 1) return null;
   const white = raw['white'] ?? null;
-  if (white !== null && white !== 'runny' && white !== 'set') return null;
+  if (white !== null && white !== 'runny' && white !== 'tender' && white !== 'firm'
+    && white !== 'set') return null;
   const offered = raw['whiteOffered'];
   if (typeof offered !== 'boolean') return null;
   // An answer to a question that was never asked is not an observation.
@@ -341,7 +348,10 @@ export function copyCalibration(c: Calibration): Calibration {
   const weights: number[] = new Array<number>(n);
   for (let i = 0; i < n; i++) {
     const p = c.posterior.particles[i];
-    particles[i] = { alpha_m2s: p.alpha_m2s, logDoseOffset: p.logDoseOffset, tauAirScale: p.tauAirScale };
+    particles[i] = {
+      alpha_m2s: p.alpha_m2s, logDoseOffset: p.logDoseOffset, tauAirScale: p.tauAirScale,
+      noise: p.noise, whiteOffset: p.whiteOffset, whiteFirmGap: p.whiteFirmGap,
+    };
     weights[i] = c.posterior.weights[i];
   }
   return {
@@ -355,6 +365,27 @@ export function copyCalibration(c: Calibration): Calibration {
 export function calibrationParams(c: Calibration): ModelParams {
   if (c.eggsLogged === 0) return DEFAULT_PARAMS;
   return posteriorParams(c.posterior);
+}
+
+/**
+ * The doneness to solve for: the slider's yolk target, and the white's target
+ * moved by what the eggs have said about the white (E3).
+ *
+ * The solver's white constraint IS the runny | tender cutpoint, so a cook
+ * whose whites come out runny moves it up, and the shortest cook that sets the
+ * white moves later. Where that is still short of the yolk's own time - a jammy
+ * egg, usually - nothing changes; where it is not - a soft one - the soft time
+ * gets later, or the slider is refused and snapped up, as any unreachable
+ * doneness is. Before any egg it is the literature target exactly.
+ */
+export function calibrationDoneness(c: Calibration, level: number): Doneness {
+  const d = donenessFromSlider(level);
+  if (c.eggsLogged === 0) return d;
+  return {
+    level: d.level,
+    yolkDose_min: d.yolkDose_min,
+    whiteDose_min: WHITE_DOSE_TARGET * Math.pow(10.0, posteriorMeanWhiteOffset(c.posterior)),
+  };
 }
 
 /** Whether a record has anything to fold. An egg nobody answered about is still
@@ -383,9 +414,10 @@ export function recordSetupOf(r: EggRecord): CookSetup {
   };
 }
 
-/** The cook time the likelihood is scored at: the scheduled one. See the header. */
+/** The cook time the likelihood is scored at: when the cook said the egg came
+ *  out, if they said, and the schedule if they did not. See the header. */
 export function recordCookTime_s(r: EggRecord): number {
-  return r.recommended_s + r.nudge_s;
+  return r.pulledBy === 'cook' ? r.pulled_s : r.recommended_s + r.nudge_s;
 }
 
 /** log10 of the nominal yolk dose the cook was run at. */
@@ -428,40 +460,32 @@ export function buildRequestedGrid(q: GridRequest): DoseGrid {
 }
 
 /**
- * Fold the yolk answer of one record, against the surface `gridRequestFor`
- * described. Counts the egg if it teaches anything at all, and returns whether
- * the white is worth asking about - decided AFTER the fold, as both apps always
- * have, because the yolk answer has just moved alpha and the predicted white
- * with it.
+ * Fold one record - both of its answers, whichever it has - against the
+ * surface `gridRequestFor` described, and count the egg if it teaches anything.
+ *
+ * One fold per egg (see `updatePosterior`). An app that folds the first answer
+ * and then hears the second folds the egg AGAIN, from a copy of the calibration
+ * as it stood before the egg and against the same surface, so what it holds is
+ * exactly what a replay of the log will make.
  *
  * Mutates `c`, like `updatePosterior`.
  */
-export function foldYolk(c: Calibration, r: EggRecord, grid: DoseGrid): boolean {
-  const cookTime_s = recordCookTime_s(r);
-  if (r.yolk !== null) {
-    updatePosterior(c.posterior, grid, cookTime_s, recordLogTarget(r), r.yolk);
-  }
-  if (recordTeaches(r)) c.eggsLogged += 1;
-  return shouldAskAboutWhite(c.posterior, grid, cookTime_s);
-}
-
-/** Fold the white answer of the same record, against the same surface. Not a
- *  second egg, so the count does not move. */
-export function foldWhite(c: Calibration, r: EggRecord, grid: DoseGrid): void {
-  if (r.white === null) return;
-  updateWhite(c.posterior, grid, recordCookTime_s(r), r.white);
+export function foldRecord(c: Calibration, r: EggRecord, grid: DoseGrid): void {
+  if (!recordTeaches(r)) return;
+  updatePosterior(c.posterior, grid, recordCookTime_s(r), recordLogTarget(r), r.yolk, r.white);
+  c.eggsLogged += 1;
 }
 
 /**
  * Rebuild a posterior from a starting point and a log.
  *
  * The start is the prior (`freshCalibration(PARTICLE_COUNT, CALIBRATION_SEED)`)
- * or, for the one phone that learned before there was a log, the frozen base
- * that phone migrated with. It is copied, never moved.
+ * or, where a damaged log had to be dropped, the posterior that log had taught
+ * (the apps' `rebased` path). It is copied, never moved.
  *
  * Each egg is exactly what the app did when it was answered: a surface centred
- * on the posterior as it then stood, the yolk folded, then the white against the
- * same surface. An egg with no answer is skipped, and builds no surface.
+ * on the posterior as it then stood, and both answers folded against it. An egg
+ * with no answer is skipped, and builds no surface.
  */
 export function replay(
   start: Calibration, records: EggRecord[], grid: GridPolicy = calibrationGrid,
@@ -470,9 +494,7 @@ export function replay(
   for (let i = 0; i < records.length; i++) {
     const r = records[i];
     if (!recordTeaches(r)) continue;
-    const surface = buildRequestedGrid(gridRequestFor(c, r, grid));
-    foldYolk(c, r, surface);
-    foldWhite(c, r, surface);
+    foldRecord(c, r, buildRequestedGrid(gridRequestFor(c, r, grid)));
   }
   return c;
 }

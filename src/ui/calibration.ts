@@ -9,9 +9,11 @@
  * Since E1 the answer is not thrown away once folded. Each egg is kept as a
  * record (INFERENCE.md section 4) in a log beside the posterior, and the
  * posterior is what `replay` makes of that log - so a later change to the
- * likelihood replays the eggs instead of discarding what they taught. The
- * stored posterior is a cache of that replay: `folded` says how many records it
- * has absorbed, and anything past it is folded again on load.
+ * likelihood replays the eggs instead of discarding what they taught. E2 was
+ * the first such change: on first load it reads E1's log and folds it again,
+ * from the prior, under the new likelihood. The stored posterior is a cache of
+ * that replay: `folded` says how many records it has absorbed, and anything past
+ * it is folded again on load.
  *
  * The dose surface costs about two seconds to build and is built once per
  * logged egg, in a Web Worker (`gridWorker.ts`), so the page stays live while it
@@ -21,14 +23,15 @@
 
 import { Egg, SizeTable } from '../core/geometry.js';
 import { CookSetup } from '../core/protocol.js';
-import { ModelParams } from '../core/solve.js';
+import { Doneness, ModelParams } from '../core/solve.js';
 import { DoseGrid } from '../core/doseGrid.js';
-import { Feedback, Particle, WhiteReport, posteriorAlphaRelSd } from '../core/infer.js';
+import { Feedback, Particle, WhiteReport } from '../core/infer.js';
 import { CALIBRATION_SEED, PARTICLE_COUNT, calibrationGrid } from '../core/policy.js';
 import {
   Calibration, EggFrom, EggRecord, GridRequest, MassFrom, PRIOR_ID, RECORD_VERSION,
-  buildRequestedGrid, calibrationParams as paramsOf, copyCalibration, foldWhite, foldYolk,
-  freshCalibration as freshFrom, gridRequestFor, parseLog, recordMass_g, recordTeaches,
+  buildRequestedGrid, calibrationDoneness as donenessOf, calibrationParams as paramsOf,
+  copyCalibration, foldRecord, freshCalibration as freshFrom, gridRequestFor, parseLog,
+  recordMass_g, recordTeaches,
 } from '../core/record.js';
 import { UnitSystem } from '../core/units.js';
 import { COOLING_SECONDS, Machine } from './machine.js';
@@ -41,44 +44,36 @@ export type { Calibration } from '../core/record.js';
  *  push and the iOS app ships later, and the fit has to know which was which. */
 export const APP_VERSION = '0.2.0';
 
-/** The posterior, the frozen base under it, and the log. */
-const KEY = 'aet.calibration.v3';
+/** The posterior, the base under it, and the log. v4 since E2, whose particle
+ *  has six numbers where E1's had three. */
+const KEY = 'aet.calibration.v4';
 
-/** The posterior E1 replaces - read ONCE, and kept as the frozen base.
+/** E1's store: the log, a posterior folded under the first likelihood, and the
+ *  frozen v2 base under it. Read ONCE, for its log.
  *
- *  Unlike v1 below, this one is kept. It was learned from real eggs under the
- *  likelihood that is still in force, so it is as good as it was yesterday; what
- *  it lacks is the eggs themselves, which were never written down. So it becomes
- *  the BASE: the posterior replays start from instead of the prior, with the log
- *  folded on top of it.
+ *  The posterior and the base go. Both were folded under the likelihood E2
+ *  replaced, and a base cannot be replayed at all: it is what the owner's eggs
+ *  from before E1 taught, and those eggs were never written down. The owner
+ *  decided on 26 September to drop them here rather than carry a posterior
+ *  nothing can reproduce (INFERENCE.md section 11, item 6). The log is kept and
+ *  folded again, from the prior, under the new likelihood - which is what the
+ *  log was for.
  *
- *  A base cannot be replayed, and so it cannot survive a change to the
- *  likelihood. It is dropped at the next one (E2), which starts again from the
- *  prior and replays the log alone. That is the price of the eggs before E1 not
- *  having been kept, and it is paid once.
- *
- *  Removed once a v3 has been written. An old tab still open across the deploy
- *  can write this key again; a v3 already present wins, and the stray is
- *  deleted, which loses that one egg rather than inventing a merge. */
-const BASE_KEY = 'aet.calibration.v2';
+ *  Removed once a v4 has been written. */
+const E1_KEY = 'aet.calibration.v3';
 
-/** The posterior v2 replaced, deleted rather than read.
- *
- *  The shape did not change when the white channel landed - no particle gained a
- *  field - so a v1 record could have been loaded verbatim. It is dropped anyway,
- *  because of what is IN it: every observation in a v1 posterior was folded under
- *  a likelihood that attributed the white's behaviour to the yolk, and at least
- *  one real one is known to have been a white complaint recorded on the yolk axis.
- *  Carrying that forward would import a miscoded observation into a model that now
- *  has somewhere correct to put it. A fresh prior is the literature values, which
- *  is a worse starting point than a good posterior and a better one than a
- *  confidently wrong posterior. */
-const SUPERSEDED_KEY = 'aet.calibration.v1';
+/** Every store before the log: the v2 posterior E1 froze as a base, and the v1
+ *  one v2 replaced. Neither has a log behind it, so neither can be replayed
+ *  under E2's likelihood, and both are deleted rather than read. A phone that
+ *  still has a v2 and no v3 never ran E1, and starts from the prior. */
+const SUPERSEDED_KEYS = ['aet.calibration.v2', 'aet.calibration.v1'];
 
 /** Everything that is kept, and the one invariant that holds it together:
  *  `calibration` is `replay(base ?? prior, log.slice(0, folded))`. */
 export interface Kept {
-  /** The frozen v2 posterior this phone migrated with, or null. */
+  /** Where the replay starts when it is not the prior: only ever the posterior
+   *  of a log that was damaged and had to be dropped (`rebased`). Null on every
+   *  healthy phone since E2 dropped E1's frozen base. */
   base: Calibration | null;
   calibration: Calibration;
   /** How many records `calibration` has absorbed. Behind the log only between
@@ -106,12 +101,10 @@ export function calibrationParams(c: Calibration): ModelParams {
   return paramsOf(c);
 }
 
-/** Spread of the posterior on alpha, as a percentage. Plateaus near 3%: ordinal
- *  feedback carries 1-2 bits per egg, so learning correctly stops rather than
- *  falsely converging. */
-export function calibrationSpread(c: Calibration): number {
-  if (c.eggsLogged === 0) return 0;
-  return 100 * posteriorAlphaRelSd(c.posterior);
+/** The doneness to solve for at a slider level: the white's target moves with
+ *  what the eggs said about the white (E3). See `calibrationDoneness` in core. */
+export function calibrationDoneness(c: Calibration, level: number): Doneness {
+  return donenessOf(c, level);
 }
 
 /* ------------------------------------------------------------- the record */
@@ -147,14 +140,17 @@ export function localDay(ms: number): string {
 
 /**
  * The record of one egg, from the cook that was started and the machine that
- * ran it.
+ * ran it, with whichever answers have been given so far. The white is always
+ * offered since E2, so `whiteOffered` is always true.
  *
  * `pulled_s` is the cook's own tap out of PULL when there was one. When the
  * grace ran out instead, nobody said when the egg came out, and the record says
  * so: `pulledBy: 'timeout'`, with the scheduled time standing in as an
  * assumption.
  */
-export function eggRecordFor(c: Cooked, m: Machine, yolk: Feedback | null): EggRecord {
+export function eggRecordFor(
+  c: Cooked, m: Machine, yolk: Feedback | null, white: WhiteReport | null = null,
+): EggRecord {
   const measured = m.pulledBy === 'cook' && m.outAt_ms > m.startedAt_ms;
   return {
     v: RECORD_VERSION,
@@ -189,8 +185,8 @@ export function eggRecordFor(c: Cooked, m: Machine, yolk: Feedback | null): EggR
     pulledBy: measured ? 'cook' : 'timeout',
     cooled_s: m.cooling === 'counter' ? 0 : COOLING_SECONDS,
     yolk: yolk,
-    white: null,
-    whiteOffered: false,
+    white: white,
+    whiteOffered: true,
     probe: null,
     lang: c.lang,
     register: 'modern',
@@ -200,22 +196,26 @@ export function eggRecordFor(c: Cooked, m: Machine, yolk: Feedback | null): EggR
 
 /* ------------------------------------------------------------- persistence */
 
-/** Column-wise. The current posterior is written at full precision: it is a
- *  cache of a replay, and a cache that rounds is one a replay can never match.
- *  JSON.stringify writes the shortest string that reads back as the same
- *  double, so full precision is exact, and about 90 KB. A migrated base keeps
- *  the five figures it was stored at in v2. */
+/** Column-wise, one column per particle field. The current posterior is
+ *  written at full precision: it is a cache of a replay, and a cache that
+ *  rounds is one a replay can never match. JSON.stringify writes the shortest
+ *  string that reads back as the same double, so full precision is exact, and
+ *  about 180 KB. */
 interface StoredPosterior {
   n: number;
   a: number[];
   o: number[];
   t: number[];
+  /** The noise scale, the white offset and the tender | firm gap (E2, E3). */
+  sd: number[];
+  wo: number[];
+  wg: number[];
   w: number[];
   rng: number;
 }
 
-interface StoredV3 {
-  v: 3;
+interface StoredV4 {
+  v: 4;
   base: StoredPosterior | null;
   cal: StoredPosterior;
   folded: number;
@@ -224,11 +224,16 @@ interface StoredV3 {
 
 function storedPosterior(c: Calibration): StoredPosterior {
   const p = c.posterior.particles;
-  const s: StoredPosterior = { n: c.eggsLogged, rng: c.posterior.rng, a: [], o: [], t: [], w: [] };
+  const s: StoredPosterior = {
+    n: c.eggsLogged, rng: c.posterior.rng, a: [], o: [], t: [], sd: [], wo: [], wg: [], w: [],
+  };
   for (let i = 0; i < p.length; i++) {
     s.a.push(p[i].alpha_m2s);
     s.o.push(p[i].logDoseOffset);
     s.t.push(p[i].tauAirScale);
+    s.sd.push(p[i].noise);
+    s.wo.push(p[i].whiteOffset);
+    s.wg.push(p[i].whiteFirmGap);
     s.w.push(c.posterior.weights[i]);
   }
   return s;
@@ -255,18 +260,21 @@ function numberArray(
 
 /** A posterior in the stored column shape, or null if any part of it is
  *  damaged. A half-valid posterior is worse than none: a single NaN weight would
- *  poison every solve. The rules are the same for v2 and v3. */
+ *  poison every solve. */
 function readPosterior(raw: unknown): Calibration | null {
   if (raw === null || typeof raw !== 'object') return null;
   const s = raw as Partial<StoredPosterior>;
   if (!Array.isArray(s.a) || s.a.length === 0) return null;
   const n = s.a.length;
-  // alpha and tauAirScale are strictly positive; a weight may be zero but
-  // never negative; the taste offset is a log-dose shift and may be anything
+  // alpha, tauAirScale, the noise scale and the firm gap are strictly
+  // positive - a zero noise divides by zero in the probit; a weight may be zero
+  // but never negative; the two offsets are log-dose shifts and may be anything
   // finite. Same rules as ios/App/Calibration.swift.
   if (
     !numberArray(s.a, n, 0, true) || !numberArray(s.o, n, -Infinity, false)
-    || !numberArray(s.t, n, 0, true) || !numberArray(s.w, n, 0, false)
+    || !numberArray(s.t, n, 0, true) || !numberArray(s.sd, n, 0, true)
+    || !numberArray(s.wo, n, -Infinity, false) || !numberArray(s.wg, n, 0, true)
+    || !numberArray(s.w, n, 0, false)
   ) {
     return null;
   }
@@ -275,15 +283,18 @@ function readPosterior(raw: unknown): Calibration | null {
   const particles: Particle[] = new Array<Particle>(n);
   const weights: number[] = new Array<number>(n);
   for (let i = 0; i < n; i++) {
-    particles[i] = { alpha_m2s: s.a[i], logDoseOffset: s.o[i], tauAirScale: s.t[i] };
+    particles[i] = {
+      alpha_m2s: s.a[i], logDoseOffset: s.o[i], tauAirScale: s.t[i],
+      noise: s.sd[i], whiteOffset: s.wo[i], whiteFirmGap: s.wg[i],
+    };
     weights[i] = s.w[i];
   }
   return { posterior: { particles: particles, weights: weights, rng: s.rng }, eggsLogged: s.n };
 }
 
 export function encodeKept(k: Kept): string {
-  const stored: StoredV3 = {
-    v: 3,
+  const stored: StoredV4 = {
+    v: 4,
     base: k.base === null ? null : storedPosterior(k.base),
     cal: storedPosterior(k.calibration),
     folded: k.folded,
@@ -295,7 +306,7 @@ export function encodeKept(k: Kept): string {
 /** What loading found, for the caller that has to write it back and for the
  *  tests that check each path. */
 export type LoadPath =
-  | 'fresh' | 'loaded' | 'migrated' | 'rebased' | 'rebuild';
+  | 'fresh' | 'loaded' | 'replayed' | 'rebased' | 'rebuild';
 
 export interface Decoded {
   kept: Kept;
@@ -317,33 +328,36 @@ function parseJSON(raw: string | null): unknown {
  * Every damaged part is refused, never read around, and what is refused depends
  * on what can still be trusted:
  *
- *  - no v3, a good v2: `migrated`. The v2 posterior becomes the frozen base.
- *  - no v3, no usable v2: `fresh`, the prior.
+ *  - no v4, an E1 store (v3) with a good log: `replayed`. Its posterior and its
+ *    frozen base are dropped, and the log is folded again from the prior under
+ *    E2's likelihood. The records need no change: E2's schema is E1's, with
+ *    three more white answers a loader accepts.
+ *  - no v4, and no v3 log that can be read: `fresh`, the prior.
  *  - the posterior damaged, the log good: `rebuild`. The log is the truth, so
  *    the posterior is set back to its start and every record is folded again.
  *  - the log damaged: `rebased`. The records cannot be folded, but what they
- *    taught is in the posterior, which is sound - so it becomes the new frozen
- *    base, and the log starts again empty. What is lost is the ability to
- *    replay those eggs, not what they taught.
+ *    taught is in the posterior, which is sound - so it becomes the base, and
+ *    the log starts again empty. What is lost is the ability to replay those
+ *    eggs, not what they taught.
  *  - a posterior that has absorbed more records than the log holds: also
  *    `rebased`, for the same reason.
  *  - a base that is damaged: dropped, and the log replayed from the prior.
  *
  * Pure, so the tests can walk every path without a browser.
  */
-export function decodeKept(v3raw: string | null, v2raw: string | null): Decoded {
-  const obj = parseJSON(v3raw);
-  if (obj === null || typeof obj !== 'object' || (obj as { v?: unknown }).v !== 3) {
-    const v2 = parseJSON(v2raw);
-    const base = v2 !== null && typeof v2 === 'object' && (v2 as { v?: unknown }).v === 2
-      ? readPosterior(v2) : null;
-    if (base === null) return { kept: freshKept(), path: 'fresh' };
+export function decodeKept(v4raw: string | null, v3raw: string | null): Decoded {
+  const obj = parseJSON(v4raw);
+  if (obj === null || typeof obj !== 'object' || (obj as { v?: unknown }).v !== 4) {
+    const v3 = parseJSON(v3raw);
+    const log = v3 !== null && typeof v3 === 'object' && (v3 as { v?: unknown }).v === 3
+      ? parseLog((v3 as { log?: unknown }).log) : null;
+    if (log === null) return { kept: freshKept(), path: 'fresh' };
     return {
-      kept: { base: base, calibration: copyCalibration(base), folded: 0, log: [] },
-      path: 'migrated',
+      kept: { base: null, calibration: freshCalibration(), folded: 0, log: log },
+      path: 'replayed',
     };
   }
-  const s = obj as Partial<Record<keyof StoredV3, unknown>>;
+  const s = obj as Partial<Record<keyof StoredV4, unknown>>;
   let base: Calibration | null = null;
   let baseLost = false;
   if (s.base !== null) {
@@ -378,8 +392,8 @@ let kept: Kept = freshKept();
  *  when the button was pressed lands on nothing rather than on the fresh prior. */
 let generation = 0;
 let draining: Promise<void> | null = null;
-/** The record whose cook is on screen waiting to hear whether to ask about the
- *  white. Every other record is folded quietly. */
+/** The record whose cook is on screen, whose second answer may still come.
+ *  Every other record is folded quietly. */
 let live = -1;
 let last: Outcome | null = null;
 
@@ -392,15 +406,15 @@ function save(): void {
  *  eggs are learned, so the caller's reference stays current. If the posterior
  *  is behind the log, call `learn()` to catch it up. */
 export function loadCalibration(): Calibration {
-  // Whatever v1 left behind goes now, rather than sitting in storage being
-  // neither read nor collected.
-  removeStorage(SUPERSEDED_KEY);
-  const decoded = decodeKept(readStorage(KEY), readStorage(BASE_KEY));
+  // Whatever came before the log goes now, rather than sitting in storage
+  // being neither read nor collected.
+  for (const key of SUPERSEDED_KEYS) removeStorage(key);
+  const decoded = decodeKept(readStorage(KEY), readStorage(E1_KEY));
   kept = decoded.kept;
   if (decoded.path !== 'loaded') save();
-  // The v2 key is the only copy of a base until a v3 holding it is written, and
-  // storage can refuse the write.
-  if (readStorage(KEY) !== null) removeStorage(BASE_KEY);
+  // The v3 key is the only copy of E1's log until a v4 holding it is written,
+  // and storage can refuse the write.
+  if (readStorage(KEY) !== null) removeStorage(E1_KEY);
   return kept.calibration;
 }
 
@@ -423,16 +437,16 @@ export function logEgg(r: EggRecord): number {
   return kept.log.length - 1;
 }
 
-/** What folding one live egg leaves behind: the surface its yolk answer was
- *  scored against, and whether the white is worth a second question. */
+/** What folding the live egg leaves behind: the surface its answers were
+ *  scored against and the calibration as it stood before them, so that a
+ *  second answer can fold the egg again rather than on top of itself. */
 export interface Outcome {
   index: number;
   record: EggRecord;
-  /** Kept so the white answer can be folded without paying for the surface
-   *  twice. Not persisted: a reload drops a pending white question rather than
-   *  rebuilding two seconds of arithmetic to ask again. */
+  /** Not persisted: a reload drops the chance of a second answer rather than
+   *  rebuilding two seconds of arithmetic to offer it. */
   grid: DoseGrid;
-  askWhite: boolean;
+  before: Calibration;
 }
 
 /**
@@ -472,33 +486,66 @@ async function drainLog(): Promise<void> {
     // only thing that folds.
     const grid = await buildOffThread(gridRequestFor(k.calibration, r, calibrationGrid));
     if (gen !== generation) continue;
-    const ask = foldYolk(k.calibration, r, grid);
-    // A record that already carries a white answer - one caught up after a
-    // reload - folds it here, against the same surface, as a replay would.
-    foldWhite(k.calibration, r, grid);
+    const before = index === live ? copyCalibration(k.calibration) : null;
+    // Whatever answers the record holds NOW: one that arrived while the surface
+    // was being built is folded with the first, as a replay would fold them.
+    foldRecord(k.calibration, r, grid);
     k.folded += 1;
-    if (index === live) {
-      // Written down with the fold, in the same save: a reload after this
-      // point finds a question that was offered, which is the truth.
-      r.whiteOffered = ask;
+    if (before !== null) {
       live = -1;
-      last = { index: index, record: r, grid: grid, askWhite: ask };
+      last = { index: index, record: r, grid: grid, before: before };
     }
     save();
   }
 }
 
-/** Fold the answer about the white of the same egg, against the surface its
- *  yolk answer was scored on. Refused unless that egg is still the last one
- *  folded - folding it later, after another egg, would be a different posterior
- *  from the one the log replays to. Not a second egg, so the count does not
- *  move. */
-export function recordWhite(o: Outcome, white: WhiteReport): void {
-  if (kept.log[o.index] !== o.record || kept.folded !== o.index + 1) return;
-  if (!o.record.whiteOffered || o.record.white !== null) return;
-  o.record.white = white;
-  foldWhite(kept.calibration, o.record, o.grid);
+/** Copy one calibration into another IN PLACE, so every holder of the app's
+ *  reference sees it. */
+function assign(into: Calibration, from: Calibration): void {
+  into.posterior.particles = from.posterior.particles;
+  into.posterior.weights = from.posterior.weights;
+  into.posterior.rng = from.posterior.rng;
+  into.eggsLogged = from.eggsLogged;
+}
+
+/**
+ * The cook's second answer about an egg already written down - the yolk after
+ * the white, or the white after the yolk.
+ *
+ * If the egg has not been folded yet (its surface is still being built), the
+ * answer is simply written into its record, and the fold picks up both. If it
+ * has, the egg is folded AGAIN from the calibration as it stood before it,
+ * against the same surface - so the posterior is what a replay of the log will
+ * make, whichever order the answers came in. Refused, and nothing is written,
+ * when that is no longer possible: another egg has been logged since, or the
+ * page was reloaded and the surface is gone. Writing an answer the posterior
+ * does not hold would break the one invariant the log exists for.
+ *
+ * Returns whether the answer was taken.
+ */
+export async function recordSecondAnswer(
+  index: number, answer: { yolk?: Feedback; white?: WhiteReport },
+): Promise<boolean> {
+  const r = kept.log[index];
+  if (r === undefined || index !== kept.log.length - 1) return false;
+  if (answer.yolk !== undefined && r.yolk !== null) return false;
+  if (answer.white !== undefined && r.white !== null) return false;
+  if (kept.folded <= index) {
+    if (answer.yolk !== undefined) r.yolk = answer.yolk;
+    if (answer.white !== undefined) r.white = answer.white;
+    save();
+    await learn(index);
+    return true;
+  }
+  const o = last;
+  if (o === null || o.index !== index || o.record !== r || kept.folded !== index + 1) return false;
+  if (answer.yolk !== undefined) r.yolk = answer.yolk;
+  if (answer.white !== undefined) r.white = answer.white;
+  const again = copyCalibration(o.before);
+  foldRecord(again, r, o.grid);
+  assign(kept.calibration, again);
   save();
+  return true;
 }
 
 /** Forget every egg: the posterior, the base under it and the log. A run of
@@ -510,8 +557,8 @@ export function clearCalibration(): Calibration {
   live = -1;
   last = null;
   removeStorage(KEY);
-  removeStorage(BASE_KEY);
-  removeStorage(SUPERSEDED_KEY);
+  removeStorage(E1_KEY);
+  for (const key of SUPERSEDED_KEYS) removeStorage(key);
   kept = freshKept();
   return kept.calibration;
 }

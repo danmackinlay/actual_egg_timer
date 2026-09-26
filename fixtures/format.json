@@ -7284,10 +7284,10 @@
         },
         "learned.tuned": {
           "count": "eggs",
-          "one": "[tuned] {eggs} [eggs:one] ±{spread}%",
-          "few": "[tuned] {eggs} [eggs:few] ±{spread}%",
-          "many": "[tuned] {eggs} [eggs:many] ±{spread}%",
-          "other": "[tuned] {eggs} [eggs:other] ±{spread}%"
+          "one": "[tuned] {eggs} [eggs:one]",
+          "few": "[tuned] {eggs} [eggs:few]",
+          "many": "[tuned] {eggs} [eggs:many]",
+          "other": "[tuned] {eggs} [eggs:other]"
         },
         "sousvide.subline": {
           "text": "[subline] {clock} · {duration} · {bath}"
@@ -7623,34 +7623,30 @@
       {
         "key": "learned.tuned",
         "args": {
-          "eggs": 1,
-          "spread": "9"
+          "eggs": 1
         },
-        "text": "[tuned] 1 [eggs:one] ±9%"
+        "text": "[tuned] 1 [eggs:one]"
       },
       {
         "key": "learned.tuned",
         "args": {
-          "eggs": 2,
-          "spread": "9"
+          "eggs": 2
         },
-        "text": "[tuned] 2 [eggs:few] ±9%"
+        "text": "[tuned] 2 [eggs:few]"
       },
       {
         "key": "learned.tuned",
         "args": {
-          "eggs": 5,
-          "spread": "9"
+          "eggs": 5
         },
-        "text": "[tuned] 5 [eggs:other] ±9%"
+        "text": "[tuned] 5 [eggs:other]"
       },
       {
         "key": "learned.tuned",
         "args": {
-          "eggs": 1.5,
-          "spread": "9"
+          "eggs": 1.5
         },
-        "text": "[tuned] 1,5 [eggs:many] ±9%"
+        "text": "[tuned] 1,5 [eggs:many]"
       },
       {
         "key": "sousvide.subline",

@@ -815,12 +815,10 @@ and a judgement of "too soft" is far more reliable than a guess at a temperature
 one thing at a time, and include at least a few cooks with a *different* cooling step if
 you want `tauAirScale` to mean anything. The app does this for you: after every cook
 it asks how the yolk was, and the answer goes into a particle filter
-(`src/core/infer.ts`) whose posterior mean is what the next solve uses. On a soft egg it
-asks a second question — whether the white was still runny — and only then, because on
-anything firmer the model already knows the answer and would learn nothing from it. The
-white is the more informative of the two answers about *your eggs* rather than your
-taste, because it is scored against a fixed target with no personal offset in front of
-it; §11.5 records what that costs. Both apps have a button that forgets everything
+(`src/core/infer.ts`) whose posterior mean is what the next solve uses. It asks about
+the white too — runny, tender or firm — every time, and neither answer is required;
+the white has its own learned offset, which moves the shortest cook that sets it
+(INFERENCE.md §3). Both apps have a button that forgets everything
 learned — and both discard a posterior learned under the old yolk-only model rather
 than carrying it forward, because every observation in one was folded under a
 likelihood that had nowhere to put the white. The manual equivalent, if you are working
@@ -1147,23 +1145,14 @@ answers are recorded here rather than deleted, because each one was a plausible 
 - **`tauAirScale` is only identifiable if you vary the cooling method.** Cook every egg
   with an ice bath and it will sit at its prior forever — which is correct behaviour, not
   a bug, but it means the carryover model never improves unless you deliberately mix.
-- **The white channel is new, and its weight is a judgement rather than a measurement.**
-  Feedback used to be attributed entirely to the yolk: `predictedFeedback` compared only
-  the delivered *yolk* dose against the yolk target, so an egg whose **white** came out
-  runny, reported honestly as "too soft", shifted `alpha` and the taste offset along the
-  wrong axis. It now has two channels (`src/core/infer.ts`): the yolk answer against the
-  yolk target, and a "runny / set" answer about the white against the fixed
-  `WHITE_DOSE_TARGET`, sampled at `YOLK_RADIUS_FRAC` rather than at the centre. Because
-  the taste offset lives on the yolk axis only, the white has no free parameter to absorb
-  it and therefore constrains `alpha` directly — which is the hope for the confound in
-  the next bullet. **Caveat, and it is the reason the channel is deliberately weak:** the
-  white sits nearer the surface, so it is the more sensitive of the two to the `H_EFF`
-  error in §11.2, and a white answer partly measures that error and blames `alpha`. One
-  white answer is therefore worth a likelihood ratio of 1.9 against the yolk's 8 — about
-  a third of the evidence. That discount, and the 0.26-decade band around the white's
-  threshold, are the two numbers here most likely to want revisiting once real eggs have
-  gone through both channels. Whether the channel actually breaks the confound is an
-  empirical question that has not been answered yet.
+- **The white has its own offset, and a runny white still moves the time-scale.**
+  Since E2 and E3 (`src/core/infer.ts`, INFERENCE.md §3) every answer goes through an
+  ordered probit with a learned noise scale, and the white - runny, tender or firm,
+  judged at `YOLK_RADIUS_FRAC` - has a learned offset on its cutpoint, which is the
+  white's lag and the cook's idea of "runny" together. It replaced a fixed, deliberately
+  weak white channel. What it does not yet do: a runny white is as well explained by a
+  slow time-scale as by a late white, and `alpha`'s prior is the wider of the two, so two
+  runny whites at soft move a jammy time about as far as a soft one (PLAN.md, E3).
   See [issue #1](https://github.com/danmackinlay/actual_egg_timer/issues/1).
 - **`alpha` and the taste offset are confounded at a fixed protocol** in the yolk channel.
   The *combination* is identified — the suggested time converges — but the individual

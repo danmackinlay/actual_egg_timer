@@ -1,8 +1,9 @@
 # INFERENCE.md — making the inference the main part
 
-A design, not a record and not a state. One part is built: the record in §4
-(E1, 26 September 2026), whose schema below is now the one the code writes.
-Nothing else is. The checklist
+A design, not a record and not a state. Three parts are built: the record in
+§4 (E1, 26 September 2026), whose schema below is now the one the code writes,
+and the ordered probit and the white offset of §3 (E2 and E3, 27 September),
+whose numbers are in §3's "Built" paragraph. Nothing else is. The checklist
 that tracks it is Phase E in `PLAN.md`; the two measurements it rests on are in
 `LOGBOOK.md` (21 September 2026) and can be re-run with `npm run rank` and
 `npm run probe`.
@@ -126,6 +127,67 @@ the checks on it, since neither depends on who chose to answer.
 **A robustness component.** With small probability an answer is unrelated to the
 egg. This is what `P_DISAGREE` is already standing in for.
 
+**Built (E2 and E3, 27 September).** `src/core/infer.ts`, held to
+`EggTimerCore/Infer.swift` by `fixtures/calibration.json`. The particle has six
+numbers: the time-scale (`alpha`), the yolk taste offset, `tauAirScale`, and
+three new ones.
+
+- **The noise scale** is a particle dimension, lognormal, median **0.20
+  decades** of yolk dose, log sd 0.5. Chosen where the old likelihood described
+  a typical egg - a cook the model roughly knows, particles around the band:
+  the probit gives "just right" 0.813 at the centre of the band (old 0.8) and
+  0.093 one band-width out (old 0.1), a likelihood ratio of 8.7 against 8; 0.207
+  would match both exactly. Where they differ is far from the band: a particle a
+  decade off now scores 0.017, not 0.1, which is the point of the change. It
+  means the very first answer from a fresh prior carries more - 0.96 bits
+  against 0.63 on the default egg - and to match there instead the median would
+  have to be about 0.48, which would halve what every later egg carries. The
+  white's noise is the same scale in degrees: `noise * Z_YOLK / Z_WHITE`.
+- **The unrelated share** is 5%, uniform over the three answers: no likelihood
+  falls below 0.017.
+- **The yolk's cutpoints** sit at -+`FEEDBACK_BAND` (0.28 decades), so the probit
+  keeps the old band's meaning.
+- **The white offset** (E3) shifts the runny | tender cutpoint from
+  `WHITE_DOSE_TARGET`; prior sd 0.5 decades.
+- **The tender | firm cutpoint** is a gap above it, lognormal, median **1.08
+  decades**, log sd 0.4. From README §4's anchors for the reference egg (68 g,
+  fridge, boiling water, ice): the inner white's log dose is -0.51 at Soft (peak
+  77.9 C) and +0.06 at Jammy (80.6 C); the midpoint, -0.22, is 1.08 decades above
+  the runny cut at -1.30. So Soft whites sit in "tender" and Jammy and firmer in
+  "firm". Over a 58 g egg, a cold start, a tap and a counter-warm egg the same
+  midpoint lands 0.98 to 1.14 decades up.
+- **One fold per egg.** The two answers are multiplied and folded together, so
+  the order they were tapped in cannot matter; an app that hears the second
+  answer after folding the first folds the egg again from the posterior before
+  it, against the same surface. A replay is therefore still bit-identical.
+- **The white target moves the recommendation.** The solver's white constraint
+  is the runny | tender cutpoint, so the posterior mean white offset moves it
+  (`calibrationDoneness`). The taste offset still does not enter the
+  recommendation, as before E2; that is E5's to decide.
+- **E1's two-level "set"** still loads and is scored as tender-or-firm.
+
+Measured, in `test/infer.test.ts`:
+
+- **Recovery (Phase C, repeated).** Injected `alpha` 1.535e-7 with taste +0.20,
+  noise-free answers, 68 g at jammy: within 15 s of the true optimum from egg 2
+  (old likelihood: egg 3), settled 12.2 s short (old: 14.0 s long), `alpha` sd
+  about 3.3% (old 2.9%). No worse.
+- **Calibration.** 200 cooks drawn from the prior, five eggs each at assorted
+  levels, answers drawn from each cook's own probit: predicted P(answer) against
+  observed, in ten bins, expected calibration error 1.4% (yolk) and 1.8%
+  (white); 0.8% and 1.0% at 400 cooks.
+- **Two runny whites at soft: half met.** The next soft time moves later, by 85 s
+  with the white answered alone and by 21 s with the yolk also "just right", and
+  soft becomes bound by the white. But a jammy time moves about as far - 94 s and
+  23 s - so "leave jammy nearly alone" is NOT met. The reason is the prior, not
+  the code: a runny white is explained by a slow time-scale as well as by a late
+  white, and `alpha`'s prior sd (11.9%) is 0.70 decades of white dose against
+  the white offset's 0.5, so the posterior blames the time-scale about 2:1. A
+  wider white offset did not fix it either: at 0.8 and 1.2 decades the posterior
+  mean runs past the cutpoint and makes jammy white-bound too. What pins the
+  time-scale is other evidence - yolk answers, the thermometer (E4), other cooks
+  (E7) - and a recommendation made from the posterior rather than its mean (E5).
+
 **A thermometer reading**, for cooks who own a probe (§5): Gaussian on the centre
 temperature, sd about 1.5 C, with a small hot skew because every handling error
 reads hot.
@@ -166,26 +228,31 @@ held to `EggTimerCore/Record.swift` by `fixtures/record.json`.
   `null` is still a record, because the cook, the recommendation and the actual
   pull time are data too. An egg finished and never answered about is logged
   when the cook starts again.
-- **The white has three states, not two.** Until E2 the model decides whether to
-  ask (`shouldAskAboutWhite`), so `null` alone would not tell "not asked" from
-  "asked and skipped". `whiteOffered` says which: `false`/`null` is not asked,
-  `true`/`null` is skipped, `true` with an answer is answered. An answer with
-  `whiteOffered: false` is refused by the loader. In E2 the white is always
-  offered and `whiteOffered` becomes redundant; it stays, so old records read
-  the same.
+- **The white has three states, not two.** Until E2 the model decided whether
+  to ask (`shouldAskAboutWhite`), so `null` alone would not tell "not asked"
+  from "asked and skipped". `whiteOffered` says which: `false`/`null` is not
+  asked, `true`/`null` is skipped, `true` with an answer is answered. An answer
+  with `whiteOffered: false` is refused by the loader. Since E2 the white is
+  always offered and every new record says `true`; the field stays, so old
+  records read the same.
+- **The white's answers are `runny`, `tender` and `firm`** since E2. E1 logged a
+  two-level `set`; it still loads, and is scored as tender-or-firm. The change
+  was additive: the schema stays `v: 1`.
 - `pulled_s` is when the cook said the egg came out, not when the alarm went -
   the tap out of PULL ("they're in the ice bath", "they're out"). When nobody
   taps and the 20 s grace runs out, `pulledBy` is `timeout` and `pulled_s` is
-  the SCHEDULED time: an assumption, marked as one, not a measurement. The
-  iOS app has no action out of PULL - its phase is derived from the clock - so
-  every iOS record is `timeout` until it grows a button (which needs words, so
-  F1 first).
+  the SCHEDULED time: an assumption, marked as one, not a measurement. Since E2
+  the iOS app has the web's button too, so its pulls are measured as well.
 - `recommended_s` is what the solver said; `nudge_s` is what the app added on
-  purpose (E8; zero until then). **E1 scores the likelihood at
-  `recommended_s + nudge_s`, exactly as before**, and does not use `pulled_s`:
-  using it is a model change, and model changes are E2's, made once, by replay.
+  purpose (E8; zero until then). **Since E2 the likelihood is scored at
+  `pulled_s` when `pulledBy` is `cook`, and at `recommended_s + nudge_s` when it
+  is `timeout`** - at the measured pull where there is one, and at the schedule,
+  which is the best guess, where there is not. E1 scored every egg at the
+  schedule; the change was made once, by replay (`recordCookTime_s`).
   `recommended_s` and `prior` make the policy that produced the cook part of the
-  record, so a later fit knows why the data lies where it does.
+  record, so a later fit knows why the data lies where it does. `prior` is
+  `2026-09` for E1's cooks and `2026-09-e2` since, whose white offset also moved
+  the recommendation.
 - `massFrom` (`scale` / `girth` / `width` / `class`) sets the egg-level noise: a
   size class is a 10 g bucket, worth about +-24 s, which is twice the width of
   "just right". `sizeTable` (`eu` / `us`) says whose carton a class came off,
@@ -196,9 +263,9 @@ held to `EggTimerCore/Record.swift` by `fixtures/record.json`.
   where it came from: `measured` (this cook's own boil tap - every finished cold
   start, since neither app leaves HEATING without it), `remembered` (the pan on
   file) or `default` (no pan ever measured). A hot start never times its pan,
-  and with the heat off that number is today the pan's whole cooling curve; when
-  the standing method's pan constant is re-derived from the water volume, this
-  is what says which cooks leaned on the old derivation.
+  and with the heat off that number used to be the pan's whole cooling curve;
+  since the standing method's pan constant was re-derived from the water volume
+  (27 September), this is what says which cooks leaned on the old derivation.
 - `ambient_C` is recorded rather than re-derived from the egg's start
   temperature, so a change to that rule cannot quietly change a replay.
 - `lang`, `register` and `units` record what the cook READ, because an answer
@@ -223,11 +290,13 @@ built, so an app killed mid-fold folds it on the next launch instead of losing
 it.
 
 **The frozen base.** The owner's v2 posterior was learned from real eggs with no
-log behind it. It is kept, not discarded: on first load it becomes the BASE, and
-the posterior is `replay(base, log)`. A base cannot be replayed, so it cannot
-survive a change to the likelihood - **it is dropped at the next one (E2)**,
-which starts from the prior and replays the log alone. That is the price of the
-eggs before E1 not having been kept, and it is paid once.
+log behind it. E1 kept it as the BASE, with the posterior `replay(base, log)`. A
+base cannot be replayed, so it could not survive a change to the likelihood,
+and **E2 dropped it** (27 September): both apps read E1's log out of its v3
+store, drop the v3 posterior and the base, and replay the log from the prior
+under the new likelihood, into v4. That was the price of the eggs before E1 not
+having been kept, and it has been paid. A base survives only as what a damaged
+log leaves behind (the `rebased` path above).
 
 **Damage is refused, never read around.** A damaged posterior is rebuilt from
 the base and the log. A damaged log - one bad record refuses the lot, because a
@@ -417,7 +486,8 @@ faster. You can turn it off, and delete what you sent, whenever you like."*
 
 6. **Eggs from before E1 are dropped at E2, not backfilled.** E1 keeps the
    pre-log posterior as a frozen base. The new likelihood cannot replay it, so
-   E2 starts from the prior plus E1's log, and the base goes.
+   E2 starts from the prior plus E1's log, and the base goes. *Done 27
+   September.*
 7. **The loss ratio is 3.** A runny white counts as three times as bad as a
    yolk one step too firm (§8). It is a constant for now, and a per-cook
    slider only if someone asks for one.

@@ -9,15 +9,16 @@ and the wording itself, `LANGUAGE.md`. This file is for whoever picks the build
 back up.
 
 **Status: both apps complete and learning. The PHYSICS is now the open part.**
-102 TypeScript tests, 27/27 validation checks and 57 Swift conformance tests pass.
+142 TypeScript tests (141 pass, and one E3 check is reported as an open todo,
+not a pass), 28/28 validation checks and 69 Swift conformance tests.
 The web app and the iOS app carry the same model, the same refusals and the same
 particle filter; the Swift port covers every module in `src/core/`. The
 iOS app runs signed on a real phone, with a time-sensitive alarm and a Live
 Activity, and has cooked a real egg. What is left is not code: it is the two
 measurements in README §11.3 and a run of real eggs to calibrate against. As of
 21 September there is also a designed next phase - E, below - that makes the
-inference the main part. Its first step, E1 the record, is built (26 September);
-the rest is not.
+inference the main part. E1 the record is built (26 September), and E2 the
+ordered probit with E3's white offset (27 September); the rest is not.
 
 Counts in this paragraph are the only ones in the file. Three other lines used
 to restate them and all three had gone stale, which is how a status line ends up
@@ -92,7 +93,7 @@ The SwiftUI layer takes the BEHAVIOUR of `src/ui/machine.ts` and leaves its
 mechanism. `clock.ts` in particular exists to fight the backgrounding problem
 that a local notification solves properly, and has no counterpart here.
 
-### Phase E — the inference becomes the main part — E1 DONE
+### Phase E — the inference becomes the main part — E1, E2 DONE; E3 BUILT
 
 The design and the reasons are in `INFERENCE.md`; this is only the list. Every
 core change lands in TypeScript and Swift together, under new fixtures, like
@@ -117,7 +118,7 @@ cook. Nothing leaves a phone before E6.
       PULL, so every iOS pull is recorded as assumed until it grows a button.
       E1 does not change the likelihood: it is still scored at the scheduled
       time, and `pulled_s` waits for E2.
-- [ ] **E2 ordered probit.** Replace the hard bands and the fixed 0.8 / 0.1 in
+- [x] **E2 ordered probit.** Replace the hard bands and the fixed 0.8 / 0.1 in
       `infer.ts` with cutpoints and a learned noise scale, plus the small
       "unrelated answer" component. White becomes three answers (runny /
       tender / firm), always offered and never required; the yolk stays at
@@ -128,10 +129,42 @@ cook. Nothing leaves a phone before E6.
       are measured and not assumed, and E2 scores on `pulled_s`. Done when: the
       Phase C recovery experiment is repeated and is no worse, and the predictive
       P(answer) is calibrated on simulated cooks.
+
+      DONE 27 September. Noise scale lognormal, median 0.20 decades (the probit
+      gives "just right" 0.81 at the band's centre and 0.093 one band-width out,
+      where the old likelihood gave 0.8 and 0.1), 5% unrelated answers,
+      tender | firm 1.08 decades above runny | tender. Measured
+      (`test/infer.test.ts`): **recovery** within 15 s from egg 2, settled
+      12.2 s short, against the old likelihood's egg 3 and 14.0 s long;
+      **calibration** of P(answer) on 200 simulated cooks, expected
+      calibration error 1.4% on the yolk and 1.8% on the white. Both apps
+      replay E1's log from the prior into a v4 store and drop the v2 base; in
+      Chromium a posterior deleted and rebuilt from a five-egg log came back
+      string-identical, with the answers given yolk-only, white-only and white
+      then yolk, and on the iOS simulator E1's log replayed to the same white
+      offset as the TypeScript to 5e-16, across a kill mid-fold. Both
+      questions are always on screen and neither is required; the second
+      answer folds the egg again from the posterior before it. The wording is
+      LANGUAGE.md §3's draft, and `copyLiterals.js --since cfe38e9` and
+      `copySnapshot.js compare --draft` show that nothing else changed. NOT
+      verified: nothing on iOS was tapped (no simulator permission), so the
+      pull button and the two questions there rest on the build and the code.
 - [ ] **E3 the white offset.** A fourth particle dimension: an additive shift on
       the white log dose, prior sd 0.5 decades. On one phone it is lag and
       cutpoint together (§2). Done when: two "runny" answers at soft move the
       next soft recommendation later and leave a jammy one nearly alone.
+
+      BUILT 27 September, with E2, and the done-when is HALF met. Two runny
+      whites at soft move the next soft time later (+85 s with the white alone,
+      +21 s with the yolk also "just right", and soft becomes bound by the
+      white). But jammy moves as far (+94 s, +23 s). A runny white is also a
+      slow time-scale, and `alpha`'s prior (11.9%, 0.70 decades of white dose)
+      is wider than the white offset's 0.5, so the posterior blames the
+      time-scale about 2:1; wider white-offset priors (0.8, 1.2) overshoot
+      instead. `test/infer.test.ts` 5b holds the unmet half as a todo.
+      Deciding what to do is the owner's: the candidates are E4 or E7 pinning
+      the time-scale, E5 recommending from the posterior rather than its mean,
+      or a different prior - INFERENCE.md §3 has the numbers.
 - [ ] **E4 the thermometer flow.** Optional. The app says when (the solver's
       `peakYolkTime_s`), the cook reports the lowest reading at the centre,
       Gaussian likelihood with a hot skew (§5). Done when: one simulated reading
@@ -186,6 +219,12 @@ F1 goes before E2 so that Phase E's new feedback copy is born in the catalogue.
       and every bare "°". Every inserted word (a doneness name, a limit)
       moves out of running grammar into a label or after a colon, so Czech
       never has to decline it. Runs alongside E2 and E5.
+    - [x] **The feedback screens**, with E2, 27 September: LANGUAGE.md §3's
+          draft, in both apps, approved on the owner's behalf while they were
+          away. 19 keys changed, each listed in `tools/copyDraft.ts`; the
+          proofs show nothing else did. Left for the rest of F2: the iOS
+          alarm's and Live Activity's "carryover", `learned.forgetExplain`'s
+          "posterior", and the heat-off explanation.
 - [x] **F3 units.** DONE 27 September 2026. `src/core/units.ts` +
       `Units.swift` + `fixtures/units.json`: conversions, a step and decimals
       per quantity per system, input bounds rounded INWARD to the step, and
@@ -342,11 +381,13 @@ pluralCategory(locale, n): 'zero' | 'one' | 'two' | 'few' | 'many' | 'other'
 // doseGrid.ts / infer.ts  (calibration; see Phase C)
 buildDoseGrid(...) / lookupLogYolkDose / lookupLogWhiteDose / cookTimeForLogYolkDose
 type Feedback = -1 | 0 | 1                 // the YOLK answer
-type WhiteReport = 'runny' | 'set'         // the WHITE answer, no per-user offset
-createPrior(count, seed) / updatePosterior(post, grid, cookTime_s, logTarget, feedback)
-updateWhite(post, grid, cookTime_s, white) // a second fold, same egg, second channel
-shouldAskAboutWhite(post, grid, cookTime_s) / whiteRunnyProbability(...)
-posteriorParams / posteriorMeanOffset / posteriorAlphaRelSd / predictCookTime
+type WhiteReport = 'runny' | 'tender' | 'firm' | 'set'   // 'set' is E1's, = tender or firm
+createPrior(count, seed)                   // six numbers a particle (E2, E3)
+updatePosterior(post, grid, cookTime_s, logTarget, yolk | null, white | null)  // one fold per egg
+answerLikelihood(grid, particle, cookTime_s, logTarget, yolk, white)
+yolkAnswerProbabilities / whiteAnswerProbabilities   // the predictive
+posteriorParams / posteriorMeanOffset / posteriorMeanWhiteOffset / posteriorAlphaRelSd
+predictCookTime
 
 // record.ts  (E1 - the schema is INFERENCE.md §4)
 interface EggRecord { v: 1; ... }          // one egg; RECORD_VERSION, PRIOR_ID
@@ -354,7 +395,8 @@ parseRecord(raw): EggRecord | null / parseLog(raw): EggRecord[] | null
 interface Calibration { posterior; eggsLogged }
 freshCalibration(count, seed) / copyCalibration(c) / calibrationParams(c)
 gridRequestFor(c, record, gridPolicy) / buildRequestedGrid(request)
-foldYolk(c, record, grid): askWhite / foldWhite(c, record, grid)
+foldRecord(c, record, grid) / recordCookTime_s(record)   // the pull if measured
+calibrationDoneness(c, level)              // the white target moved by E3
 replay(start, records, gridPolicy = calibrationGrid): Calibration   // never moves start
 recordMass_g(mass_kg)
 
@@ -629,15 +671,10 @@ do; what is missing is contact with reality.
 4. **Derive the cooling countdown** from the solver's `peakYolkTime_s` instead of
    asserting three minutes (README §11.5). It changes times on screen, so it
    wants a real egg behind it rather than a refactor.
-5. **Judge the white channel against real eggs** (README §11.5, issue #1). The
-   channel is BUILT: the white now enters the likelihood, scored against the
-   fixed `WHITE_DOSE_TARGET` at `YOLK_RADIUS_FRAC`, and the second question is
-   asked only when the model cannot already guess the answer — which in practice
-   is a soft egg and never a jammy one. What is not settled is arithmetic nobody
-   has checked against a kitchen: the channel's weight (a likelihood ratio of 1.9
-   against the yolk's 8, chosen to bound the `H_EFF` error it partly measures) and
-   the 0.26-decade band around the threshold. Whether it actually breaks the
-   `alpha`/taste confound is an empirical question, and answering it needs eggs.
+5. **Judge the white channel against real eggs** (README §11.5, issue #1).
+   *Superseded by E2 and E3:* the white is now always asked, three answers, with
+   its own learned offset and noise; see the E3 entry above for what two runny
+   whites do and do not do. The empirical question stands - it needs eggs.
 7. **Show `predictCookTime`'s interval** somewhere, or stop claiming in its
    docstring that it is what makes calibration legible (README §11.5). The grid
    is already built and in hand immediately after a feedback fold, so the

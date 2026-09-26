@@ -4,90 +4,73 @@ import Foundation
 ///
 /// The model's constants are literature-derived, and the carryover term has no
 /// published measurement behind it at all. Rather than guess better, make the
-/// uncertainty explicit and let the user's own eggs resolve it: after each cook
-/// they say "too soft", "just right" or "too hard", and we update a posterior.
+/// uncertainty explicit and let the cook's own eggs resolve it: after each cook
+/// they may say how the yolk was ("too soft", "just right", "too firm") and how
+/// the white was ("runny", "tender", "firm"), and we update a posterior.
 ///
 /// METHOD: sequential Monte Carlo (a particle filter), NOT variational
-/// inference. VI buys scalability in high dimensions at the cost of gradients,
-/// an optimiser, and an approximation gap. There are three uncertain scalars
-/// here and a cached forward model, so particles give the exact posterior
-/// predictive with none of that machinery.
+/// inference. There are six uncertain scalars here and a cached forward model,
+/// so particles give the exact posterior predictive with none of the machinery.
 ///
-/// There is also a structural reason no approximation of the temperature FIELD
-/// is needed: the modal scheme represents it as mode amplitudes whose dynamics
-/// are linear, so conditional on the parameters the field is exact. All the
-/// uncertainty lives in the parameters. The spread across particles is the
-/// posterior over egg temperature.
+/// THE LIKELIHOOD (E2, INFERENCE.md section 3) is an ordered probit. For the
+/// yolk, the latent quantity is the delivered log10 dose minus the one the cook
+/// wanted; the answer says which side of two cutpoints, at -+`feedbackBand`, it
+/// fell, seen through a Gaussian whose sd is the cook's own `noise`. A small
+/// `unrelated` share of every answer is uniform over the answers - what the
+/// fixed 0.8 / 0.1 of the first filter was standing in for.
 ///
-/// TWO CHANNELS. The yolk answer ("too soft / just right / too hard") is scored
-/// against the yolk dose the user asked for; the white answer ("runny / set") is
-/// scored against the fixed `whiteDoseTarget`. They are two observations of two
-/// different quantities, sampled at two different radii - the yolk at the centre,
-/// the white at `yolkRadiusFrac` - so they respond differently to alpha and are
-/// not redundant. The white was computed for every grid cell and thrown away
-/// until September 2026; see the caveat below for what it costs to read it.
+/// TWO CHANNELS. The white is judged at `yolkRadiusFrac` against two cutpoints
+/// of its own: runny | tender at `whiteDoseTarget` shifted by the particle's
+/// `whiteOffset`, and tender | firm a learned `whiteFirmGap` above that. On one
+/// phone the white offset is the white's lag and the cook's idea of "runny"
+/// together (INFERENCE.md section 2).
 ///
-/// IDENTIFIABILITY - stated honestly:
-///  - Ordinal feedback is worth 1-2 bits per egg. The posterior on alpha
-///    plateaus around 3%: repeated "just right" answers are consistent with a
-///    range, so learning correctly stops rather than falsely converging.
-///  - alpha and the taste offset are confounded at a fixed protocol IN THE YOLK
-///    CHANNEL: the offset is free to absorb any shift in alpha, so only the
-///    combination is identified. Separating them needs variation - different egg
-///    sizes or cooling methods - or an observable the offset cannot absorb.
-///  - The white channel is meant to be that observable. `logDoseOffset` is
-///    defined on the yolk axis only, so scoring the white against its fixed
-///    target constrains alpha with no free parameter in the way. Whether this
-///    breaks the confound in practice is an empirical question that wants real
-///    eggs: it is the reason for the channel, not a measured result.
-///  - CAVEAT, and it is not small. The white is sampled much nearer the surface
-///    than the yolk centre, so it is the more sensitive of the two to error in
-///    H_EFF - which README 11.2 records as about twice the only published
-///    measurement. A white answer therefore partly measures that error and
-///    attributes it to alpha. The channel is down-weighted for exactly this
-///    reason (see `pWhiteAgree`); down-weighting bounds the damage rather than
-///    removing it.
-///  - tauAirScale is only identifiable if the user actually varies the cooling
-///    protocol. Otherwise it stays at its prior, which is correct behaviour.
+/// This file is a port of src/core/infer.ts, which is the reference and says
+/// more; fixtures/calibration.json and fixtures/record.json hold the two
+/// together particle by particle.
 
-/// What the user reports about the YOLK after eating the egg.
+/// What the cook reports about the YOLK after eating the egg.
 public enum Feedback: Int, Sendable, Codable {
     case tooSoft = -1
     case justRight = 0
     case tooHard = 1
 }
 
-/// What the user reports about the WHITE, when asked.
-///
-/// Two answers and not three, because the white's criterion is a THRESHOLD and
-/// not a band: `whiteDoseTarget` is the dose at which the innermost white has
-/// set, and the model carries no ceiling above which a white is overdone. A third
-/// "rubbery" answer would need such a ceiling, and inventing one would put an
-/// unmeasured constant into the likelihood, so the question stops at the
-/// distinction the model can actually score.
-///
-/// There is deliberately NO per-user offset on this channel, and that is the
-/// point of it. "Runny or set" is a statement about the egg rather than about
-/// anyone's taste, so the white is scored against the fixed target with no free
-/// parameter to absorb the discrepancy - which is what lets it say something
-/// about alpha that the yolk channel cannot.
+/// What the cook reports about the WHITE. Three answers since E2. `set` is the
+/// two-level answer E1 logged ("set right through"), kept so every egg logged
+/// then still loads: it means tender or firm, and is scored as exactly that. No
+/// app offers it any more.
 public enum WhiteReport: String, Sendable, Codable {
     case runny
+    case tender
+    case firm
     case set
 }
 
 public struct Particle: Sendable, Codable, Equatable {
     public var alphaM2s: Double
-    /// The user's taste relative to the nominal doneness scale, in log10 dose
+    /// The cook's taste relative to the nominal doneness scale, in log10 dose
     /// units. Stored as an OFFSET rather than an absolute target so it carries
     /// across different slider positions.
     public var logDoseOffset: Double
     public var tauAirScale: Double
+    /// The sd of the Gaussian every yolk answer is seen through, log10 yolk dose.
+    public var noise: Double
+    /// Additive shift on the white's runny | tender cutpoint, log10 white dose.
+    public var whiteOffset: Double
+    /// How far the tender | firm cutpoint sits above the runny | tender one.
+    public var whiteFirmGap: Double
 
-    public init(alphaM2s: Double, logDoseOffset: Double, tauAirScale: Double) {
+    public init(
+        alphaM2s: Double, logDoseOffset: Double, tauAirScale: Double,
+        noise: Double, whiteOffset: Double, whiteFirmGap: Double
+    ) {
         self.alphaM2s = alphaM2s
         self.logDoseOffset = logDoseOffset
         self.tauAirScale = tauAirScale
+        self.noise = noise
+        self.whiteOffset = whiteOffset
+        self.whiteFirmGap = whiteFirmGap
     }
 }
 
@@ -103,72 +86,36 @@ public struct Posterior: Sendable, Codable {
     }
 }
 
-/// Half-width of the "just right" band, log10 dose units. 0.28 decades is about
-/// 1.3 C of peak yolk temperature - roughly the finest distinction anyone can
-/// actually make by eating an egg.
+/// Half-width of the "just right" band, log10 dose units: the yolk's two
+/// cutpoints sit at -+ this.
 public let feedbackBand = 0.28
 
-/// Probability the user's report matches what the model predicts for a
-/// particle. The remainder is split between the two other answers, which keeps
-/// a single surprising report from killing an otherwise good particle.
-private let pAgree = 0.8
-private let pDisagree = 0.1
+/// The share of answers that have nothing to do with the egg, spread evenly
+/// over the answers. No likelihood falls below `unrelated / 3`.
+public let unrelated = 0.05
 
-/// Half-width of the zone around the white's threshold in which either answer is
-/// plausible, log10 dose units.
-///
-/// This is the same 1.3 C of peak temperature as `feedbackBand`, converted
-/// through Z_WHITE instead of Z_YOLK: 0.28 * 4.65 / 4.97 = 0.262. Matched in
-/// degrees rather than in decades, because degrees are what a person is judging.
-/// Two effects argue in opposite directions about tuning it further - "runny or
-/// set" is a sharper distinction than a yolk doneness gradation, which would
-/// narrow it, while `whiteDoseTarget`'s own position is calibrated rather than
-/// measured, which would widen it - so it is left at the temperature-matched
-/// value rather than nudged to a preference.
-public let whiteFeedbackBand = 0.26
+/// The noise scale's prior: lognormal, median `noiseMedian` decades of yolk
+/// dose. 0.20 gives "just right" 0.81 at the band's centre and 0.093 one
+/// band-width out, where the likelihood it replaces gave 0.8 and 0.1. See
+/// src/core/infer.ts for the arithmetic and what it costs.
+public let noiseMedian = 0.2
+public let noiseLogSd = 0.5
 
-/// log10 of the dose at which the innermost white is set. The white has one
-/// target for everybody, unlike the yolk, whose target moves with the slider and
-/// then again with the user's own taste.
+/// The white offset's prior sd, decades of white dose (PLAN.md E3).
+public let whiteOffsetSd = 0.5
+
+/// The tender | firm cutpoint's prior: lognormal, median 1.08 decades above the
+/// runny | tender one - midway between the reference egg's inner-white dose at
+/// Soft and at Jammy (README section 4). See src/core/infer.ts.
+public let whiteFirmGapMedian = 1.08
+public let whiteFirmGapLogSd = 0.4
+
+/// log10 of the dose at which the innermost white is set: the runny | tender
+/// cutpoint before any offset.
 private let logWhiteTarget = log10(whiteDoseTarget)
 
-/// The white answer is binary, so these are a proper pair over the two answers
-/// rather than the yolk's three-way split.
-///
-/// The contrast is deliberately far weaker than the yolk's 0.8 / 0.1: a likelihood
-/// ratio of 1.9 against the yolk's 8, so one white answer carries about a third of
-/// the evidence of one yolk answer. That discount is the H_EFF caveat in the
-/// header made arithmetic - the white is the channel more likely to be measuring
-/// the wrong thing, so it is allowed to move the posterior more slowly. The size
-/// of the discount is a judgement, not a measurement.
-private let pWhiteAgree = 0.65
-private let pWhiteDisagree = 0.35
-/// A particle whose predicted white sits inside the band predicts neither answer,
-/// and scores the average of the two - exactly the likelihood of a particle that
-/// calls the answer a coin flip. So hedging cannot beat being right and cannot be
-/// beaten by being wrong. Scoring it as agreement instead would make the filter
-/// quietly prefer particles sitting on the boundary, which is a preference nobody
-/// has a reason to hold.
-private let pWhiteEither = 0.5
-
-/// How much doubt is worth a second question.
-///
-/// 0.1 was a judgement, and it was too high. The argument for it - that a model
-/// sure of the answer cannot learn from it - is exactly true at P = 0 and P = 1
-/// and not before. Folding a "runny" report the gate would have suppressed,
-/// against a fresh prior, 68 g, hot start, ice:
-///
-///     level  P(runny)   alpha if "runny"   if "set"
-///      0.22   0.12950            -1.699%    +1.081%
-///      0.41   0.02300            -0.446%    +0.247%
-///      0.50   0.00750            -0.163%    +0.089%
-///      0.62   0.00000            -0.000%    -0.000%
-///
-/// 0.02 keeps the question while an answer can still move alpha by about 0.4%,
-/// a fifth of the ~2% the posterior can resolve, and drops it below that. The
-/// cost: the default jammy position sits inside the gate, so the common path is
-/// two questions. See src/core/infer.ts for the full table.
-public let whiteAskMinP = 0.02
+/// The white's noise from the yolk's: the same degrees of peak temperature.
+private let whiteNoisePerYolk = Constants.zYolk / Constants.zWhite
 
 private let priorOffsetSd = 0.22
 /// Deliberately wide: this is the least-verified part of the model.
@@ -208,6 +155,8 @@ private func gaussian(_ state: Int32) -> (value: Double, state: Int32) {
 
 // MARK: - Prior
 
+/// Six draws per particle, always in this order, in the prior and in every
+/// resample: alpha, taste offset, tauAirScale, noise, white offset, firm gap.
 public func createPrior(count: Int, seed: Int32) -> Posterior {
     var particles = [Particle]()
     particles.reserveCapacity(count)
@@ -218,26 +167,75 @@ public func createPrior(count: Int, seed: Int32) -> Posterior {
         let a = gaussian(state); state = a.state
         let b = gaussian(state); state = b.state
         let c = gaussian(state); state = c.state
+        let d = gaussian(state); state = d.state
+        let e = gaussian(state); state = e.state
+        let f = gaussian(state); state = f.state
         particles.append(Particle(
             alphaM2s: Constants.alphaDefault * exp(Constants.alphaRelSD * a.value),
             logDoseOffset: priorOffsetSd * b.value,
-            tauAirScale: exp(priorTauAirLogSd * c.value)
+            tauAirScale: exp(priorTauAirLogSd * c.value),
+            noise: noiseMedian * exp(noiseLogSd * d.value),
+            whiteOffset: whiteOffsetSd * e.value,
+            whiteFirmGap: whiteFirmGapMedian * exp(whiteFirmGapLogSd * f.value)
         ))
     }
     return Posterior(particles: particles, weights: weights, rng: state)
 }
 
-// MARK: - Update
+// MARK: - The likelihood
 
-/// What this particle predicts the user would have said about the YOLK.
-private func predictedFeedback(
+/// The standard normal CDF, from the core's own erfc - the one both languages
+/// already share - rather than the platform's.
+private func normalCdf(_ x: Double) -> Double {
+    0.5 * Sphere.complementaryError(-x / 2.0.squareRoot())
+}
+
+/// Too soft, just right, too firm, for one particle, before the unrelated share.
+private func yolkProbit(
     _ grid: DoseGrid, _ p: Particle, _ cookTimeS: Double, _ logNominalTarget: Double
-) -> Feedback {
-    let delivered = lookupLogYolkDose(grid, p.alphaM2s, cookTimeS)
-    let wanted = logNominalTarget + p.logDoseOffset
-    if delivered < wanted - feedbackBand { return .tooSoft }
-    if delivered > wanted + feedbackBand { return .tooHard }
-    return .justRight
+) -> [Double] {
+    let latent = lookupLogYolkDose(grid, p.alphaM2s, cookTimeS) - (logNominalTarget + p.logDoseOffset)
+    let soft = normalCdf((-feedbackBand - latent) / p.noise)
+    let firm = normalCdf((latent - feedbackBand) / p.noise)
+    let right = 1.0 - soft - firm
+    return [soft, right > 0.0 ? right : 0.0, firm]
+}
+
+/// Runny, tender, firm, for one particle, before the unrelated share.
+private func whiteProbit(_ grid: DoseGrid, _ p: Particle, _ cookTimeS: Double) -> [Double] {
+    let latent = lookupLogWhiteDose(grid, p.alphaM2s, cookTimeS) - (logWhiteTarget + p.whiteOffset)
+    let sd = p.noise * whiteNoisePerYolk
+    let runny = normalCdf(-latent / sd)
+    let firm = normalCdf((latent - p.whiteFirmGap) / sd)
+    let tender = 1.0 - runny - firm
+    return [runny, tender > 0.0 ? tender : 0.0, firm]
+}
+
+/// The likelihood of one egg's answers under one particle: the product of the
+/// yolk's and the white's, either of which may be missing.
+public func answerLikelihood(
+    _ grid: DoseGrid, _ p: Particle, _ cookTimeS: Double, _ logNominalTarget: Double,
+    yolk: Feedback?, white: WhiteReport?
+) -> Double {
+    var l = 1.0
+    if let yolk {
+        let probs = yolkProbit(grid, p, cookTimeS, logNominalTarget)
+        l *= (1.0 - unrelated) * probs[yolk.rawValue + 1] + unrelated / 3.0
+    }
+    if let white {
+        let probs = whiteProbit(grid, p, cookTimeS)
+        switch white {
+        case .set:
+            l *= (1.0 - unrelated) * (probs[1] + probs[2]) + 2.0 * unrelated / 3.0
+        case .runny:
+            l *= (1.0 - unrelated) * probs[0] + unrelated / 3.0
+        case .tender:
+            l *= (1.0 - unrelated) * probs[1] + unrelated / 3.0
+        case .firm:
+            l *= (1.0 - unrelated) * probs[2] + unrelated / 3.0
+        }
+    }
+    return l
 }
 
 public func effectiveSampleSize(_ post: Posterior) -> Double {
@@ -246,28 +244,25 @@ public func effectiveSampleSize(_ post: Posterior) -> Double {
     return s <= 0.0 ? 0.0 : 1.0 / s
 }
 
-/// Fold in one YOLK observation: the user cooked for `cookTimeS` aiming at a
-/// nominal yolk dose of 10^`logNominalTarget`, and reported `feedback`. Reweights,
-/// then resamples with jitter if the particle set has degenerated.
-///
-/// What the user said about the white, if they were asked, goes in separately
-/// through `updateWhite` - it is scored against a different target at a different
-/// radius, and it arrives at a different moment.
+/// Fold in one egg, both of its answers, either of which may be nil. ONE fold
+/// per egg: the posterior depends on what was said, not on the order it was
+/// tapped in. See src/core/infer.ts.
 public func updatePosterior(
     _ post: inout Posterior, grid: DoseGrid,
-    cookTimeS: Double, logNominalTarget: Double, feedback: Feedback
+    cookTimeS: Double, logNominalTarget: Double, yolk: Feedback?, white: WhiteReport?
 ) {
+    if yolk == nil && white == nil { return }
     let n = post.particles.count
     var total = 0.0
     for i in 0..<n {
-        let pred = predictedFeedback(grid, post.particles[i], cookTimeS, logNominalTarget)
-        post.weights[i] *= pred == feedback ? pAgree : pDisagree
+        post.weights[i] *= answerLikelihood(
+            grid, post.particles[i], cookTimeS, logNominalTarget, yolk: yolk, white: white
+        )
         total += post.weights[i]
     }
     if total <= 0.0 {
-        // Every particle was contradicted. Refuse to produce NaNs: fall back to
-        // a uniform reweight, which keeps the prior rather than inventing a
-        // posterior.
+        // Cannot happen - the unrelated share keeps every factor above zero -
+        // but a NaN weight must never reach a solve.
         for i in 0..<n { post.weights[i] = 1.0 / Double(n) }
         return
     }
@@ -275,108 +270,38 @@ public func updatePosterior(
     if effectiveSampleSize(post) < Double(n) / 2.0 { resample(&post) }
 }
 
-// MARK: - The white channel
+// MARK: - The predictive
 
-/// What this particle predicts the user would have said about the WHITE, or
-/// `either` when its predicted dose sits close enough to the threshold that both
-/// answers are consistent with it.
-private enum WhitePrediction {
-    case runny
-    case set
-    case either
-}
-
-private func predictedWhite(
-    _ grid: DoseGrid, _ p: Particle, _ cookTimeS: Double
-) -> WhitePrediction {
-    let delivered = lookupLogWhiteDose(grid, p.alphaM2s, cookTimeS)
-    if delivered < logWhiteTarget - whiteFeedbackBand { return .runny }
-    if delivered > logWhiteTarget + whiteFeedbackBand { return .set }
-    return .either
-}
-
-/// Fold in one answer about the white of the egg cooked for `cookTimeS`.
-///
-/// A second fold rather than a sixth argument to `updatePosterior`, because the
-/// two answers arrive at two different moments: the yolk answer is folded the
-/// instant it is given, and the white is only asked about afterwards, once the
-/// model has decided the answer would move something. Folding them jointly would
-/// mean holding the yolk answer unrecorded until the second tap, and then an egg
-/// abandoned between the two taps would teach nothing at all.
-///
-/// Statistically they are one observation each of two different quantities, so
-/// folding them in sequence multiplies the same two likelihoods; the only
-/// difference is that a resample may fall between them, which is what this filter
-/// does between eggs in any case.
-public func updateWhite(
-    _ post: inout Posterior, grid: DoseGrid, cookTimeS: Double, white: WhiteReport
-) {
-    let n = post.particles.count
-    var total = 0.0
-    for i in 0..<n {
-        let p: Double
-        switch predictedWhite(grid, post.particles[i], cookTimeS) {
-        case .either: p = pWhiteEither
-        case .runny: p = white == .runny ? pWhiteAgree : pWhiteDisagree
-        case .set: p = white == .set ? pWhiteAgree : pWhiteDisagree
-        }
-        post.weights[i] *= p
-        total += post.weights[i]
-    }
-    if total <= 0.0 {
-        // Cannot happen from this channel alone, since the smallest factor above
-        // is 0.35 - but the guard matches `updatePosterior`, because what must
-        // never happen here is a NaN weight reaching a solve.
-        for i in 0..<n { post.weights[i] = 1.0 / Double(n) }
-        return
-    }
-    for i in 0..<n { post.weights[i] /= total }
-    if effectiveSampleSize(post) < Double(n) / 2.0 { resample(&post) }
-}
-
-/// Posterior predictive probability that this cook's white came out runny. A
-/// particle inside the band counts a half, which is the same coin flip that
-/// `pWhiteEither` scores it at.
-public func whiteRunnyProbability(
-    _ post: Posterior, _ grid: DoseGrid, _ cookTimeS: Double
-) -> Double {
-    var p = 0.0
+/// Posterior predictive probabilities of too soft, just right and too firm.
+public func yolkAnswerProbabilities(
+    _ post: Posterior, _ grid: DoseGrid, _ cookTimeS: Double, _ logNominalTarget: Double
+) -> [Double] {
+    var out = [0.0, 0.0, 0.0]
     var total = 0.0
     for i in 0..<post.particles.count {
-        let share: Double
-        switch predictedWhite(grid, post.particles[i], cookTimeS) {
-        case .runny: share = 1.0
-        case .either: share = 0.5
-        case .set: share = 0.0
-        }
-        p += post.weights[i] * share
-        total += post.weights[i]
+        let probs = yolkProbit(grid, post.particles[i], cookTimeS, logNominalTarget)
+        let w = post.weights[i]
+        for k in 0..<3 { out[k] += w * ((1.0 - unrelated) * probs[k] + unrelated / 3.0) }
+        total += w
     }
-    return total <= 0.0 ? 0.0 : p / total
+    for k in 0..<3 { out[k] = total <= 0.0 ? 1.0 / 3.0 : out[k] / total }
+    return out
 }
 
-/// Whether asking about the white can teach anything about this egg.
-///
-/// The question is worth asking exactly when the particles DISAGREE about the
-/// answer, and that is not a heuristic. If every particle predicts the same thing,
-/// then whichever answer comes back multiplies every weight by the same factor,
-/// and normalising restores the posterior unchanged: a unanimous model learns
-/// nothing from either answer, so asking would spend a tap for nothing. Two taps
-/// at breakfast is a real cost, so the second question appears only when there is
-/// something behind it.
-///
-/// THIS DOES NOT BIAS THE POSTERIOR, which is the non-obvious part and the reason
-/// it is spelled out here. The decision reads only the posterior, the grid and the
-/// cook time - all of them known before the answer exists - so the probability of
-/// having asked is the same for every particle and cancels in the normalisation.
-/// Deciding from the answer itself, or from anything that depends on it, would not
-/// be safe: it would make the likelihood conditional on the selection, and the
-/// filter has no term for that.
-public func shouldAskAboutWhite(
+/// Posterior predictive probabilities of runny, tender and firm.
+public func whiteAnswerProbabilities(
     _ post: Posterior, _ grid: DoseGrid, _ cookTimeS: Double
-) -> Bool {
-    let p = whiteRunnyProbability(post, grid, cookTimeS)
-    return p >= whiteAskMinP && p <= 1.0 - whiteAskMinP
+) -> [Double] {
+    var out = [0.0, 0.0, 0.0]
+    var total = 0.0
+    for i in 0..<post.particles.count {
+        let probs = whiteProbit(grid, post.particles[i], cookTimeS)
+        let w = post.weights[i]
+        for k in 0..<3 { out[k] += w * ((1.0 - unrelated) * probs[k] + unrelated / 3.0) }
+        total += w
+    }
+    for k in 0..<3 { out[k] = total <= 0.0 ? 1.0 / 3.0 : out[k] / total }
+    return out
 }
 
 /// Systematic resampling - lower variance than multinomial and O(n) - followed
@@ -401,10 +326,17 @@ private func resample(_ post: inout Posterior) {
         let a = gaussian(state); state = a.state
         let b = gaussian(state); state = b.state
         let c = gaussian(state); state = c.state
+        let d = gaussian(state); state = d.state
+        let e = gaussian(state); state = e.state
+        let f = gaussian(state); state = f.state
+        let q = picked[i]
         post.particles[i] = Particle(
-            alphaM2s: picked[i].alphaM2s * exp(0.02 * a.value),
-            logDoseOffset: picked[i].logDoseOffset + 0.015 * b.value,
-            tauAirScale: picked[i].tauAirScale * exp(0.03 * c.value)
+            alphaM2s: q.alphaM2s * exp(0.02 * a.value),
+            logDoseOffset: q.logDoseOffset + 0.015 * b.value,
+            tauAirScale: q.tauAirScale * exp(0.03 * c.value),
+            noise: q.noise * exp(0.03 * d.value),
+            whiteOffset: q.whiteOffset + 0.015 * e.value,
+            whiteFirmGap: q.whiteFirmGap * exp(0.03 * f.value)
         )
         post.weights[i] = 1.0 / Double(n)
     }
@@ -431,8 +363,18 @@ public func posteriorMeanOffset(_ post: Posterior) -> Double {
     return v
 }
 
+/// The posterior mean of the white offset: where the runny | tender cutpoint
+/// now sits, in decades above `whiteDoseTarget`.
+public func posteriorMeanWhiteOffset(_ post: Posterior) -> Double {
+    var v = 0.0
+    for i in 0..<post.particles.count {
+        v += post.weights[i] * post.particles[i].whiteOffset
+    }
+    return v
+}
+
 /// Standard deviation of alpha, as a fraction of its mean - the honest measure
-/// of how much the user's eggs have actually taught us.
+/// of how much the cook's eggs have actually taught us.
 public func posteriorAlphaRelSd(_ post: Posterior) -> Double {
     let mean = posteriorParams(post).alphaM2s
     var v = 0.0
@@ -450,9 +392,7 @@ public struct CookTimePrediction: Sendable {
 }
 
 /// Posterior predictive cook time for a nominal doneness, as a median and an
-/// 80% credible interval. Reporting the interval rather than a point is the
-/// honest thing to do, and it makes calibration legible without a settings
-/// screen: the interval visibly narrows as the posterior tightens.
+/// 80% credible interval.
 public func predictCookTime(
     _ post: Posterior, _ grid: DoseGrid, _ logNominalTarget: Double
 ) -> CookTimePrediction {

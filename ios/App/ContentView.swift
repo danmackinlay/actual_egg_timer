@@ -383,6 +383,28 @@ struct ContentView: View {
                 .frame(maxWidth: .infinity)
             }
 
+        case .pull:
+            VStack(spacing: 10) {
+                // The web app's button, in its words: the cook's tap is the
+                // nearest thing to when the egg left the water that the app will
+                // ever know, and the record calls it a measured pull. Without it
+                // the grace runs out and the pull is only assumed.
+                Button {
+                    cook.pulledOut()
+                } label: {
+                    Text(tr(pulledKey)).frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
+
+                Button(tr("action.cancel"), role: .destructive) {
+                    cook.cancel()
+                    kitchen.refresh()
+                }
+                .buttonStyle(.bordered)
+                .frame(maxWidth: .infinity)
+            }
+
         case .done:
             Button(tr("action.startAgain")) {
                 // An egg nobody answered about is still logged; it folds nothing.
@@ -390,6 +412,7 @@ struct ContentView: View {
                     kitchen.logUnanswered(egg)
                 }
                 cook.cancel()
+                kitchen.endEgg()
                 kitchen.refresh()
             }
             .buttonStyle(.bordered)
@@ -444,39 +467,57 @@ struct ContentView: View {
         return tr("cook.method", ["start": .text(start), "after": .text(after)])
     }
 
+    /// What the pull button says, by where the eggs are going.
+    private var pulledKey: String {
+        switch cook.ticket?.cooling ?? kitchen.cooling {
+        case .ice: "action.pulled.ice"
+        case .tap: "action.pulled.tap"
+        case .counter: "action.pulled.counter"
+        }
+    }
+
     // MARK: - Learning from the egg
 
-    /// The one question the app asks. Three answers is not a poor interface for
-    /// a rating - it is the whole measurement. Ordinal feedback is worth one to
-    /// two bits per egg, and asking for a number out of ten would collect
-    /// precision that is not there.
+    /// The two questions, both always on screen and neither required
+    /// (INFERENCE.md section 3). Three answers each is not a poor interface for
+    /// a rating - it is the whole measurement: ordinal feedback is worth one to
+    /// two bits per egg, and a number out of ten would collect precision that is
+    /// not there. There is no Skip button: an unanswered question is recorded as
+    /// skipped when the next cook starts.
     private var feedback: some View {
         VStack(spacing: 12) {
-            // The block stays put and answers back rather than vanishing on
-            // tap. Learning takes about a second, and an interface that
-            // disappears the moment it is used leaves no way to tell whether
-            // anything was recorded.
-            if cook.feedbackGiven {
-                if kitchen.whiteQuestion != nil {
-                    whiteFeedback
-                } else {
-                    Text(tr(kitchen.learning ? "feedback.learning" : "feedback.thanks"))
-                        .font(.subheadline)
-                    Text(kitchen.learning ? " " : tunedLine)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .monospacedDigit()
-                }
+            // After a relaunch the second question is not offered again: the
+            // surface it would be folded against is gone, and the one left
+            // unanswered stays a skip in the record.
+            if cook.feedbackGiven && kitchen.answers == nil {
+                Text(tr(kitchen.learning ? "feedback.learning" : "feedback.thanks"))
+                    .font(.subheadline)
+                Text(kitchen.learning ? " " : tunedLine)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .monospacedDigit()
             } else {
                 Text(tr("feedback.ask"))
                     .font(.headline)
-
                 HStack(spacing: 10) {
-                    feedbackButton(tr("feedback.tooSoft"), .tooSoft)
-                    feedbackButton(tr("feedback.justRight"), .justRight)
-                    feedbackButton(tr("feedback.tooHard"), .tooHard)
+                    yolkButton(tr("feedback.tooSoft"), .tooSoft)
+                    yolkButton(tr("feedback.justRight"), .justRight)
+                    yolkButton(tr("feedback.tooFirm"), .tooHard)
                 }
 
+                Text(tr("feedback.white.ask"))
+                    .font(.headline)
+                    .padding(.top, 4)
+                HStack(spacing: 10) {
+                    whiteButton(tr("feedback.white.runny"), .runny)
+                    whiteButton(tr("feedback.white.tender"), .tender)
+                    whiteButton(tr("feedback.white.firm"), .firm)
+                }
+
+                Text(tr("feedback.optional"))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
                 Text(calibrationNote)
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -489,63 +530,55 @@ struct ContentView: View {
         .background(.quaternary.opacity(0.25), in: RoundedRectangle(cornerRadius: 18))
     }
 
-    /// The second question, asked only when the model is genuinely unsure how the
-    /// white came out - which is a soft egg, and almost never a firm one. The
-    /// decision lives in `EggTimerCore.shouldAskAboutWhite` so that this app and
-    /// the web app ask about the same eggs; only the words are here.
-    ///
-    /// It is worth asking because the white is the one thing the user can judge
-    /// that nobody's taste can explain away: the yolk answer is scored against
-    /// what THEY asked for, while "runny or set" is scored against a fixed target,
-    /// so it is the answer that says something about the egg rather than the eater.
-    @ViewBuilder
-    private var whiteFeedback: some View {
-        Text(tr("feedback.white.ask"))
-            .font(.headline)
-            .multilineTextAlignment(.center)
-
-        HStack(spacing: 10) {
-            whiteButton(tr("feedback.white.runny"), .runny)
-            whiteButton(tr("feedback.white.set"), .set)
+    /// One answer, about the yolk or the white, in whichever order they come.
+    /// The first writes the egg down, before anything is learned from it; the
+    /// second folds the same egg again from the posterior before it.
+    private func answer(yolk: Feedback?, white: WhiteReport?) {
+        if kitchen.answers != nil {
+            Task { await kitchen.secondAnswer(yolk: yolk, white: white) }
+            return
         }
+        // The cook owns the flag and persists it, so a relaunch neither asks
+        // again nor logs the egg a second time as unanswered.
+        guard !cook.feedbackGiven, let egg = cook.eggRecord(yolk: yolk, white: white) else { return }
+        cook.recordFeedbackGiven()
+        Task { await kitchen.record(egg) }
+    }
 
-        Text(tr(kitchen.learning ? "feedback.learning" : "feedback.white.why"))
-            .font(.caption)
-            .foregroundStyle(.secondary)
-            .multilineTextAlignment(.center)
+    private func yolkButton(_ label: String, _ value: Feedback) -> some View {
+        let given = kitchen.answers?.yolk
+        return answerButton(label, chosen: given == value, answered: given != nil) {
+            answer(yolk: value, white: nil)
+        }
     }
 
     private func whiteButton(_ label: String, _ value: WhiteReport) -> some View {
-        Button {
-            Task { await kitchen.recordWhite(value) }
-        } label: {
-            Text(label)
-                .font(.subheadline)
-                .frame(maxWidth: .infinity)
+        let given = kitchen.answers?.white
+        return answerButton(label, chosen: given == value, answered: given != nil) {
+            answer(yolk: nil, white: value)
         }
-        .buttonStyle(.bordered)
-        .disabled(kitchen.learning)
     }
 
-    private func feedbackButton(_ label: String, _ value: Feedback) -> some View {
-        Button {
-            // The cook owns this flag now, and persists it. As view state it
-            // did not survive a relaunch, so a restored DONE screen asked again
-            // and a second answer folded the same egg in twice.
-            guard let egg = cook.eggRecord(yolk: value), !cook.feedbackGiven else { return }
-            cook.recordFeedbackGiven()
-            Task { await kitchen.record(egg) }
-        } label: {
+    /// The answer given stays legible, filled; its row goes out of reach.
+    @ViewBuilder
+    private func answerButton(
+        _ label: String, chosen: Bool, answered: Bool, action: @escaping () -> Void
+    ) -> some View {
+        let button = Button(action: action) {
             Text(label)
                 .font(.subheadline)
                 .frame(maxWidth: .infinity)
         }
-        .buttonStyle(.bordered)
-        .disabled(kitchen.learning)
+        if chosen {
+            button.buttonStyle(.borderedProminent).allowsHitTesting(false)
+        } else {
+            button.buttonStyle(.bordered).disabled(answered)
+        }
     }
 
     private var calibrationNote: String {
         if kitchen.learning { return tr("feedback.learning") }
+        if kitchen.answers != nil { return tr("feedback.thanks") }
         if kitchen.eggsLogged == 0 {
             return tr("feedback.invite")
         }
@@ -553,10 +586,7 @@ struct ContentView: View {
     }
 
     private var tunedLine: String {
-        tr("learned.tuned", [
-            "eggs": .int(kitchen.eggsLogged),
-            "spread": .int(Int(kitchen.calibrationSpread.rounded())),
-        ])
+        tr("learned.tuned", ["eggs": .int(kitchen.eggsLogged)])
     }
 
     // MARK: - Controls

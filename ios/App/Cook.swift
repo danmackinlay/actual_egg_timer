@@ -108,6 +108,10 @@ final class Cook {
     private(set) var startedAt: Date?
     private(set) var pullAt: Date?
     private(set) var coolDoneAt: Date?
+    /// When the cook said the eggs came out - the tap out of PULL - or nil
+    /// while nobody has. The web app's `outAt_ms`, and a MEASURED pull in the
+    /// record where the grace running out is only an assumed one.
+    private(set) var outAt: Date?
     private(set) var ticket: Ticket?
 
     /// How much of the cook is currently believed to be the heating ramp, s.
@@ -204,7 +208,16 @@ final class Cook {
         case .idle: return .idle
         case .heating: return .heating
         case .cooking: return .cooking
-        case .pull: return .pull
+        case .pull:
+            // The cook has said the eggs are out, inside the grace: PULL is
+            // over, and the cooling runs from the tap - the web machine's
+            // `beginCooling`. The core rule keys off the deadlines alone, so
+            // the tap is applied here, on top of it.
+            if let outAt, now >= outAt {
+                guard let coolDoneAt else { return .done }
+                return now < coolDoneAt ? .cooling : .done
+            }
+            return .pull
         case .cooling: return .cooling
         case .done: return .done
         }
@@ -218,19 +231,16 @@ final class Cook {
         return pullAt.timeIntervalSince(startedAt)
     }
 
-    /// This egg as a record (INFERENCE.md section 4), with the yolk answer or
-    /// nil for one nobody answered, or nil when there is no cook.
+    /// This egg as a record (INFERENCE.md section 4), with whichever answers
+    /// have been given - nil for one nobody gave - or nil when there is no cook.
     ///
-    /// The pull is always recorded as ASSUMED here - `pulledBy: .timeout`, at
-    /// the scheduled time - and that is the truth rather than a shortcut. This
-    /// app has no action out of PULL: the phase is derived from the clock, the
-    /// grace simply runs out, and nothing on screen asks the cook to say when
-    /// the eggs came out. The web app has a button there and records the tap as
-    /// a measured pull. A button here needs words, and words wait for the
-    /// catalogue (F1); when it lands, its moment goes in `pulledS` with `.cook`.
-    func eggRecord(yolk: Feedback?) -> EggRecord? {
+    /// The pull is MEASURED when the cook tapped out of PULL (`pulledOut`) -
+    /// `pulledBy: .cook`, at the tap, as the web app records it - and ASSUMED
+    /// when the grace simply ran out: `.timeout`, at the scheduled time.
+    func eggRecord(yolk: Feedback?, white: WhiteReport? = nil) -> EggRecord? {
         guard let startedAt, pullAt != nil, let ticket else { return nil }
         let scheduled = cookSeconds
+        let measured = outAt.map { $0.timeIntervalSince(startedAt) }.flatMap { $0 > 0 ? $0 : nil }
         // A cook saved before the ticket carried these came from a build whose
         // only control was a slider opening on an EU Large. Left there, it was
         // the default class; moved, it was dialled in - the rule Store.swift
@@ -256,10 +266,12 @@ final class Cook {
             ),
             level: ticket.level,
             recommendedS: scheduled,
-            pulledS: scheduled,
-            pulledBy: .timeout,
+            pulledS: measured ?? scheduled,
+            pulledBy: measured == nil ? .timeout : .cook,
             cooledS: ticket.cooling == .counter ? 0 : Self.coolingSeconds,
             yolk: yolk,
+            white: white,
+            whiteOffered: true,
             lang: ticket.lang ?? "en",
             units: ticket.units ?? .metric
         )
@@ -347,6 +359,25 @@ final class Cook {
         return measured
     }
 
+    /// "They're in the ice bath", "they're under the tap", "they're out": the
+    /// cook's tap out of PULL, mirroring the web machine's `beginCooling`. The
+    /// cooling is timed from the tap rather than from the end of the grace, and
+    /// the tap is what the record calls a measured pull.
+    func pulledOut() {
+        let now = Date.now
+        guard phase(at: now) == .pull, let ticket else { return }
+        outAt = now
+        coolDoneAt = ticket.cooling == .counter ? nil : now.addingTimeInterval(Self.coolingSeconds)
+        persist()
+        // The pull alarm has been and gone; this puts the cooled one at the
+        // cooling's new end.
+        if alarmAuthorized == true { scheduleAlarms() }
+        Task {
+            pendingAlarms = await Alarm.shared.pendingCount()
+        }
+        pushActivity(force: true)
+    }
+
     func cancel() {
         generation &+= 1
         Alarm.shared.cancel()
@@ -356,6 +387,7 @@ final class Cook {
         startedAt = nil
         pullAt = nil
         coolDoneAt = nil
+        outAt = nil
         ticket = nil
         assumedBoilS = 0
         provisional = false
@@ -379,6 +411,7 @@ final class Cook {
     private func setDeadlines(from origin: Date, cookSeconds: Double, cooling: Cooling) {
         let pull = origin.addingTimeInterval(cookSeconds)
         pullAt = pull
+        outAt = nil
         // Resting on the counter has no cooling step to time: the egg is simply
         // out, and the carryover is the point rather than something to wait out.
         coolDoneAt = cooling == .counter
@@ -406,6 +439,9 @@ final class Cook {
         /// Defaulted, so a record written before this field existed restores as
         /// unanswered rather than failing to decode.
         var feedbackGiven: Bool = false
+        /// The cook's tap out of PULL. Optional, so a cook saved before the
+        /// button existed restores with its pull unmeasured.
+        var outAt: Date?
         var ticket: Ticket
     }
 
@@ -419,7 +455,7 @@ final class Cook {
         let saved = Saved(
             startedAt: startedAt, pullAt: pullAt, coolDoneAt: coolDoneAt,
             assumedBoilS: assumedBoilS, provisional: provisional,
-            feedbackGiven: feedbackGiven, ticket: ticket
+            feedbackGiven: feedbackGiven, outAt: outAt, ticket: ticket
         )
         if let data = try? JSONEncoder().encode(saved) {
             UserDefaults.standard.set(data, forKey: Self.savedKey)
@@ -454,6 +490,7 @@ final class Cook {
         assumedBoilS = saved.assumedBoilS
         provisional = saved.provisional
         feedbackGiven = saved.feedbackGiven
+        outAt = saved.outAt
         ticket = saved.ticket
         // The alarms were handed to the system at absolute dates and are still
         // pending; read the count back rather than assuming it.
@@ -531,7 +568,7 @@ final class Cook {
                 ends: pullAt.addingTimeInterval(Self.pullGraceSeconds), provisional: false
             )
         case .cooling:
-            let from = pullAt.addingTimeInterval(Self.pullGraceSeconds)
+            let from = outAt ?? pullAt.addingTimeInterval(Self.pullGraceSeconds)
             return .init(
                 stage: .cooling, began: from,
                 ends: coolDoneAt ?? from, provisional: false

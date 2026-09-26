@@ -968,3 +968,88 @@ design; this is what was checked.
    negative half pins it.
 3. **The standing subline landed on `main` mid-task** quoting "{litres} L",
    and was converted in the merge.
+
+---
+
+## The ordered probit, the white offset, and the feedback wording (27 September 2026, E2 + E3 + F2's first rewrite)
+
+One likelihood revision, replayed from E1's log, as PLAN's order of work asked:
+the hard bands and the fixed 0.8 / 0.1 became an ordered probit with a learned
+noise scale and a 5% unrelated share; the white gained a learned offset (E3), a
+third answer and a learned tender | firm cutpoint; every egg is scored at the
+cook's own pull when they tapped one. The numbers and why are INFERENCE.md §3.
+
+### Measured
+
+- **The noise prior.** Matching mutual information at a FRESH prior would have
+  needed a median of 0.48 decades: there the old likelihood carries 0.63 bits
+  per yolk answer and the probit at 0.20 carries 0.96, because most particles
+  are far from the band and the probit's floor (0.017) is lower than the old
+  0.1. Matching where the old likelihood described a known cook - P(just right)
+  0.80 at the band's centre, 0.10 one band-width out - needs 0.207. The median
+  is 0.20, and the recovery experiment below is the check that the sharper
+  first egg does no harm.
+- **Recovery (Phase C repeated), no worse.** Injected `alpha` 1.535e-7, taste
+  +0.20, noise-free answers, 68 g at jammy. Old likelihood, rebuilt from `main`
+  in a scratch copy: within 15 s of the optimum from egg 3, settled 14.0 s long,
+  sd 2.9% - the Phase C numbers again. New: from egg 2, settled 12.2 s short,
+  sd about 3.3%. With the white answered too: old 9.6 s long, new 11.4 s short;
+  at soft, 62 g, both settle within 2 s.
+- **Calibration.** 200 cooks from the prior, 5 eggs each: expected calibration
+  error 1.4% (yolk) and 1.8% (white); at 400 cooks 0.8% and 1.0%.
+- **Two runny whites at soft: half met.** Soft later by 85 s (white alone) or
+  21 s (yolk also "just right"); jammy later by 94 s and 23 s. `alpha`'s prior
+  is 0.70 decades of white dose against the white offset's 0.5, so the
+  posterior blames the time-scale about 2:1. Tried and rejected: a white-offset
+  sd of 0.8 (soft +73, jammy +60) and 1.2 (both white-bound at +107 and +62);
+  and white noise 2, 3 and 5 times the yolk's (the split does not change, only
+  the size). Even after three "just right, firm" eggs at jammy, two runny whites
+  at soft move soft +12 s and jammy +15 s. Not fixed; the owner's call.
+- **Web, driven in Chromium** on this branch's `_site` (port 8793, stopped
+  after): an E1 store with a two-egg log and a v2 key loaded as v4, both old
+  keys gone, the base dropped, the log replayed from the prior. Three cooks,
+  hot start at soft, time moved with an overridden `Date.now`: the pull button
+  recorded `pulledBy: cook`, 10.7 s after the alarm; the yolk alone; the white
+  alone; the white, then "Too soft" tapped while the first fold was still
+  building its surface. After each, the stored posterior was deleted and the
+  page reloaded: the posterior rebuilt from the log was string-identical every
+  time. After the runny white the soft slider snapped 0.22 -> 0.24 and the time
+  went 7:36 -> 7:49: the white offset moving the recommendation. No console
+  errors.
+- **iOS** builds for the simulator. On a spare simulator (iPhone 17e, booted
+  and shut down here; the booted iPhone 17 Pro was someone else's) an E1 store
+  written into the app's own preferences migrated to v4 with the base dropped,
+  was killed mid-fold, and on relaunch finished: posterior mean white offset
+  0.42625160931576(26), against the TypeScript's replay of the same log at
+  ...(31).
+- **The wording.** `copyLiterals.js --since cfe38e9`: 234 keys unchanged, 19
+  changed, each as `tools/copyDraft.ts` lists. `copySnapshot.js compare
+  --draft`: 181 rendered web strings before, 183 after; new as drafted
+  "Tender", "Firm", "Answer either, both or neither.", "Thanks. The next egg
+  will use that."; gone as retired "Set right through" and the old white hint;
+  nothing else.
+- `npm test` 142 (141 pass, 1 todo: E3's unmet half), `npm run validate`
+  28/28, `swift test` 69.
+
+### Not verified
+
+- **Nothing on iOS was tapped.** The simulator control needed a permission
+  nobody was there to grant. The pull button, the two questions, their
+  selected state and the second-answer refold on iOS rest on the build, on the
+  core's conformance tests and on reading the code.
+- **The Live Activity after a pull tap** (its cooling stage now starts at the
+  tap) was not seen.
+
+### Things that cost time
+
+1. **Consecutive seeds are not a sample.** The calibration test first drew
+   each simulated cook's truth as the first particle of `createPrior(1, seed)`
+   for seeds 9000, 9001, ... and the first egg came out miscalibrated (23%
+   predicted, 39% observed). xorshift's first outputs from nearby seeds are
+   correlated. Drawing the truths from one long prior fixed it.
+2. **`simctl spawn ... defaults write` does not reach the app.** It writes the
+   simulator's global domain, not the app container's preferences; the seed has
+   to go into `Library/Preferences/<bundle>.plist` in the data container.
+3. **The shared scratchpad is shared.** Another session was building its own
+   "old" copy of the core in the same directory at the same time; work moved to
+   a subdirectory of its own.

@@ -12,10 +12,11 @@ import EggTimerCore
 /// Since E1 the answer is not thrown away once folded. Each egg is kept as a
 /// record (INFERENCE.md section 4) in a log beside the posterior, and the
 /// posterior is what `replay` makes of that log - so a later change to the
-/// likelihood replays the eggs instead of discarding what they taught. The
-/// stored posterior is a cache of that replay; `folded` says how much of the log
-/// it has absorbed, and the rest is folded again on launch. The web app keeps
-/// its log the same way.
+/// likelihood replays the eggs instead of discarding what they taught. E2 was
+/// the first such change: on first launch it reads E1's log and folds it again,
+/// from the prior, under the new likelihood. The stored posterior is a cache of
+/// that replay; `folded` says how much of the log it has absorbed, and the rest
+/// is folded again on launch. The web app keeps its log the same way.
 ///
 /// `Calibration` itself - a posterior and the count of eggs that taught it -
 /// now lives in EggTimerCore, because a replay has to carry the count exactly.
@@ -23,7 +24,9 @@ import EggTimerCore
 /// Everything that is kept, and the invariant that holds it together:
 /// `calibration` is `replay(base ?? prior, log.prefix(folded))`.
 struct Kept: Sendable {
-    /// The frozen v2 posterior this phone migrated with, or nil. See `baseKey`.
+    /// Where the replay starts when it is not the prior: only ever the posterior
+    /// of a log that was damaged and had to be dropped. Nil on every healthy
+    /// phone since E2 dropped E1's frozen base.
     var base: Calibration?
     var calibration: Calibration
     var folded: Int
@@ -31,33 +34,21 @@ struct Kept: Sendable {
 }
 
 enum Calibrations {
-    /// The posterior, the frozen base under it, and the log.
-    private static let key = "calibration.v3"
+    /// The posterior, the base under it, and the log. v4 since E2, whose
+    /// particle has six numbers where E1's had three.
+    private static let key = "calibration.v4"
 
-    /// The posterior E1 replaces - read ONCE, and kept as the frozen base.
-    ///
-    /// It was learned from real eggs under the likelihood that is still in
-    /// force, so it is as good as it was yesterday; what it lacks is the eggs
-    /// themselves, which were never written down. So it becomes the BASE: the
-    /// posterior a replay starts from instead of the prior, with the log folded
-    /// on top. A base cannot be replayed, so it cannot survive a change to the
-    /// likelihood: it is dropped at the next one (E2), which starts from the
-    /// prior and replays the log alone. The web app does the same.
-    private static let baseKey = "calibration.v2"
+    /// E1's store: the log, a posterior folded under the first likelihood, and
+    /// the frozen v2 base under it. Read ONCE, for its log. The posterior and
+    /// the base go - both were folded under the likelihood E2 replaced, and a
+    /// base cannot be replayed at all (the owner decided on 26 September to drop
+    /// it). The log is folded again, from the prior. Removed once a v4 is
+    /// written. The web app does the same.
+    private static let e1Key = "calibration.v3"
 
-    /// The posterior v2 replaced, deleted rather than read.
-    ///
-    /// The shape did not change when the white channel landed - no particle
-    /// gained a field - so a v1 record could have been loaded verbatim. It is
-    /// dropped anyway, because of what is IN it: every observation in a v1
-    /// posterior was folded under a likelihood that attributed the white's
-    /// behaviour to the yolk, and at least one real one is known to have been a
-    /// white complaint recorded on the yolk axis. Carrying that forward would
-    /// import a miscoded observation into a model that now has somewhere correct
-    /// to put it. A fresh prior is the literature values, which is a worse
-    /// starting point than a good posterior and a better one than a confidently
-    /// wrong posterior. The web app drops its own the same way.
-    private static let supersededKey = "calibration.v1"
+    /// Every store before the log, deleted rather than read: neither has a log
+    /// behind it, so neither can be replayed under E2's likelihood.
+    private static let supersededKeys = ["calibration.v2", "calibration.v1"]
 
     /// Carried on every record: the web app deploys on push and this one ships
     /// when a build does, and the fit has to know which version said what.
@@ -84,38 +75,34 @@ enum Calibrations {
         calibrationParams(c)
     }
 
-    /// Spread of the posterior on alpha, as a percentage. Plateaus near 3%:
-    /// ordinal feedback carries 1-2 bits per egg, so learning correctly stops
-    /// rather than falsely converging.
-    static func spread(_ c: Calibration) -> Double {
-        c.eggsLogged == 0 ? 0 : 100 * posteriorAlphaRelSd(c.posterior)
-    }
-
     // MARK: - Persistence
 
-    /// Column-wise. The current posterior is written at full precision: it is a
-    /// cache of a replay, and a cache that rounds is one a replay can never
-    /// match. JSONEncoder writes a double so that it reads back as the same
-    /// double, which the core's tests check. A migrated base keeps the rounding
-    /// it was stored with in v2.
+    /// Column-wise, one column per particle field. The current posterior is
+    /// written at full precision: it is a cache of a replay, and a cache that
+    /// rounds is one a replay can never match. JSONEncoder writes a double so
+    /// that it reads back as the same double, which the core's tests check.
     private struct StoredPosterior: Codable {
         var n: Int
         var rng: Int32
         var a: [Double]
         var o: [Double]
         var t: [Double]
+        /// The noise scale, the white offset and the tender | firm gap (E2, E3).
+        var sd: [Double]
+        var wo: [Double]
+        var wg: [Double]
         var w: [Double]
     }
 
-    private struct StoredV3: Encodable {
-        var v = 3
+    private struct StoredV4: Encodable {
+        var v = 4
         var base: StoredPosterior?
         var cal: StoredPosterior
         var folded: Int
         var log: [EggRecord]
     }
 
-    /// The parts of a stored v3 read one at a time, so a damaged part is refused
+    /// The parts of a stored v4 read one at a time, so a damaged part is refused
     /// on its own instead of taking the rest down with it. The log is read by
     /// `StoredLog`, separately, for the same reason.
     private struct StoredParts: Decodable {
@@ -143,15 +130,10 @@ enum Calibrations {
         var log: [EggRecord]
     }
 
-    /// What v2 stored: the same columns, rounded, with a version.
-    private struct StoredV2: Decodable {
+    /// All E2 reads of E1's store: its version, and its log.
+    private struct StoredE1: Decodable {
         var v: Int
-        var n: Int
-        var rng: Int32
-        var a: [Double]
-        var o: [Double]
-        var t: [Double]
-        var w: [Double]
+        var log: [EggRecord]
     }
 
     private static func columns(_ c: Calibration) -> StoredPosterior {
@@ -159,6 +141,7 @@ enum Calibrations {
         return StoredPosterior(
             n: c.eggsLogged, rng: c.posterior.rng,
             a: p.map(\.alphaM2s), o: p.map(\.logDoseOffset), t: p.map(\.tauAirScale),
+            sd: p.map(\.noise), wo: p.map(\.whiteOffset), wg: p.map(\.whiteFirmGap),
             w: c.posterior.weights
         )
     }
@@ -166,31 +149,37 @@ enum Calibrations {
     /// A posterior, or nil if any part of it is damaged. A half-valid posterior
     /// is worse than none: a single NaN weight would poison every solve from
     /// then on. Same rules as the web app's.
-    private static func calibration(
-        n: Int, rng: Int32, a: [Double], o: [Double], t: [Double], w: [Double]
-    ) -> Calibration? {
+    /// A posterior, or nil if any part of it is damaged. Same rules as the web
+    /// app's: alpha, tauAirScale, the noise and the firm gap strictly positive
+    /// (a zero noise divides by zero in the probit), weights non-negative, the
+    /// two offsets anything finite.
+    private static func calibration(_ s: StoredPosterior?) -> Calibration? {
+        guard let s else { return nil }
+        let a = s.a
         guard
-            n >= 0, !a.isEmpty, o.count == a.count, t.count == a.count, w.count == a.count,
+            s.n >= 0, !a.isEmpty,
+            [s.o.count, s.t.count, s.sd.count, s.wo.count, s.wg.count, s.w.count].allSatisfy({ $0 == a.count }),
             a.allSatisfy({ $0.isFinite && $0 > 0 }),
-            o.allSatisfy(\.isFinite),
-            t.allSatisfy({ $0.isFinite && $0 > 0 }),
-            w.allSatisfy({ $0.isFinite && $0 >= 0 })
+            s.o.allSatisfy(\.isFinite),
+            s.t.allSatisfy({ $0.isFinite && $0 > 0 }),
+            s.sd.allSatisfy({ $0.isFinite && $0 > 0 }),
+            s.wo.allSatisfy(\.isFinite),
+            s.wg.allSatisfy({ $0.isFinite && $0 > 0 }),
+            s.w.allSatisfy({ $0.isFinite && $0 >= 0 })
         else { return nil }
         var particles = [Particle]()
         particles.reserveCapacity(a.count)
         for i in 0..<a.count {
-            particles.append(Particle(alphaM2s: a[i], logDoseOffset: o[i], tauAirScale: t[i]))
+            particles.append(Particle(
+                alphaM2s: a[i], logDoseOffset: s.o[i], tauAirScale: s.t[i],
+                noise: s.sd[i], whiteOffset: s.wo[i], whiteFirmGap: s.wg[i]
+            ))
         }
-        return Calibration(posterior: Posterior(particles: particles, weights: w, rng: rng), eggsLogged: n)
-    }
-
-    private static func calibration(_ s: StoredPosterior?) -> Calibration? {
-        guard let s else { return nil }
-        return calibration(n: s.n, rng: s.rng, a: s.a, o: s.o, t: s.t, w: s.w)
+        return Calibration(posterior: Posterior(particles: particles, weights: s.w, rng: s.rng), eggsLogged: s.n)
     }
 
     static func save(_ k: Kept) {
-        let stored = StoredV3(
+        let stored = StoredV4(
             base: k.base.map(columns), cal: columns(k.calibration), folded: k.folded, log: k.log
         )
         if let data = try? JSONEncoder().encode(stored) {
@@ -202,7 +191,8 @@ enum Calibrations {
     /// refused, never read around - the same paths as the web app's
     /// `decodeKept`:
     ///
-    ///  - no v3, a good v2: the v2 posterior becomes the frozen base.
+    ///  - no v4, E1's store with a good log: its posterior and frozen base are
+    ///    dropped, and the log is folded again from the prior under E2.
     ///  - the posterior damaged, the log good: the posterior goes back to its
     ///    start and the whole log is folded again.
     ///  - the log damaged: what it taught is in the posterior, which is sound, so
@@ -211,28 +201,28 @@ enum Calibrations {
     ///  - a damaged base: dropped, and the log replayed from the prior.
     static func load() -> Kept {
         let defaults = UserDefaults.standard
-        // Whatever v1 left behind goes now, rather than sitting in UserDefaults
-        // being neither read nor collected.
-        defaults.removeObject(forKey: supersededKey)
-        let (kept, loaded) = decode(defaults.data(forKey: key), defaults.data(forKey: baseKey))
+        // Whatever came before the log goes now, rather than sitting in
+        // UserDefaults being neither read nor collected.
+        for old in supersededKeys { defaults.removeObject(forKey: old) }
+        let (kept, loaded) = decode(defaults.data(forKey: key), defaults.data(forKey: e1Key))
         if !loaded { save(kept) }
-        // The v2 key is the only copy of a base until a v3 holding it is written.
-        if defaults.data(forKey: key) != nil { defaults.removeObject(forKey: baseKey) }
+        // The v3 key is the only copy of E1's log until a v4 holding it is written.
+        if defaults.data(forKey: key) != nil { defaults.removeObject(forKey: e1Key) }
         return kept
     }
 
-    private static func decode(_ v3: Data?, _ v2: Data?) -> (Kept, loaded: Bool) {
+    private static func decode(_ v4: Data?, _ v3: Data?) -> (Kept, loaded: Bool) {
         let decoder = JSONDecoder()
-        guard let v3, let parts = try? decoder.decode(StoredParts.self, from: v3), parts.v == 3 else {
-            guard let v2, let old = try? decoder.decode(StoredV2.self, from: v2), old.v == 2,
-                  let base = calibration(n: old.n, rng: old.rng, a: old.a, o: old.o, t: old.t, w: old.w)
+        guard let v4, let parts = try? decoder.decode(StoredParts.self, from: v4), parts.v == 4 else {
+            guard let v3, let e1 = try? decoder.decode(StoredE1.self, from: v3), e1.v == 3,
+                  e1.log.allSatisfy(validRecord)
             else { return (freshKept(), false) }
-            return (Kept(base: base, calibration: base, folded: 0, log: []), false)
+            return (Kept(base: nil, calibration: fresh(), folded: 0, log: e1.log), false)
         }
         let base = calibration(parts.base)
         let cal = calibration(parts.cal)
         let log: [EggRecord]? = {
-            guard let stored = try? decoder.decode(StoredLog.self, from: v3),
+            guard let stored = try? decoder.decode(StoredLog.self, from: v4),
                   stored.log.allSatisfy(validRecord) else { return nil }
             return stored.log
         }()
@@ -255,7 +245,7 @@ enum Calibrations {
     /// the app, and the honest thing is to let someone take it back.
     static func reset() {
         UserDefaults.standard.removeObject(forKey: key)
-        UserDefaults.standard.removeObject(forKey: baseKey)
-        UserDefaults.standard.removeObject(forKey: supersededKey)
+        UserDefaults.standard.removeObject(forKey: e1Key)
+        for old in supersededKeys { UserDefaults.standard.removeObject(forKey: old) }
     }
 }

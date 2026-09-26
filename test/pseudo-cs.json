@@ -8,7 +8,7 @@
     "format.litres": { "count": "value", "one": "{value} [l:one]", "few": "{value} [l:few]", "many": "{value} [l:many]", "other": "{value} [l:other]" },
     "format.metres": { "text": "{value} [m]" },
     "duration.days": { "count": "days", "one": "{days} [d:one]", "few": "{days} [d:few]", "many": "{days} [d:many]", "other": "{days} [d:other]" },
-    "learned.tuned": { "count": "eggs", "one": "[tuned] {eggs} [eggs:one] ±{spread}%", "few": "[tuned] {eggs} [eggs:few] ±{spread}%", "many": "[tuned] {eggs} [eggs:many] ±{spread}%", "other": "[tuned] {eggs} [eggs:other] ±{spread}%" },
+    "learned.tuned": { "count": "eggs", "one": "[tuned] {eggs} [eggs:one]", "few": "[tuned] {eggs} [eggs:few]", "many": "[tuned] {eggs} [eggs:many]", "other": "[tuned] {eggs} [eggs:other]" },
     "sousvide.subline": { "text": "[subline] {clock} · {duration} · {bath}" },
     "sousvide.start.lastWeekday": { "text": "[last] {weekday}" },
     "weekday.sunday": { "text": "[sunday]" },

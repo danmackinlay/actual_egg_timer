@@ -1,7 +1,7 @@
 {
-  "title": { "budget": 23, "about": "A navigation or dialog title. Recorded from \"Forget the calibration?\"." },
+  "title": { "budget": 23, "about": "A navigation or dialog title. Recorded from \"Forget the calibration?\", since reworded; the budget stands." },
   "label": { "budget": 36, "about": "A field, stat, phase or menu label: one line, a few words. Recorded from \"Or measure the egg — fill in any one\"." },
-  "segment": { "budget": 17, "about": "One option of a segmented control, two or three sharing a phone's width. Recorded from \"Set right through\"." },
+  "segment": { "budget": 17, "about": "One option of a segmented control, two or three sharing a phone's width. Recorded from \"Set right through\", since retired; the budget stands." },
   "tick": { "budget": 5, "about": "A doneness word under the slider, five sharing a phone's width. Recorded from \"Runny\", \"Jammy\" and \"Fudgy\"." },
   "button": { "budget": 23, "about": "A button. Recorded from \"They're in the ice bath\"." },
   "headline": { "budget": 14, "about": "The big readout, in place of the clock, on one line. Recorded from \"Last Wednesday\"." },

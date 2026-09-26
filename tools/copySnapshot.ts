@@ -5,6 +5,7 @@
  *   npm run build
  *   node dist/tools/copySnapshot.js capture <out.json>
  *   node dist/tools/copySnapshot.js compare <before.json> <after.json>
+ *   node dist/tools/copySnapshot.js compare <before.json> <after.json> --draft
  *
  * `capture` serves the repo root, opens the harness page in headless Chrome
  * over the DevTools protocol and waits for it to finish. It needs Chrome; set
@@ -15,12 +16,23 @@
  * touch the words.
  *
  * `compare` exits non-zero on the first difference and says where it is.
+ *
+ * `compare --draft` is the proof for a REWRITE (F2 onwards), where the words
+ * are meant to change and the screens may too - E2 put both questions on
+ * screen at once, and a new likelihood moves the times a second cook is shown.
+ * It pools every string of every state on each side, rewrites the old side
+ * through tools/copyDraft.ts, reads every digit as the same digit, and then
+ * requires the two pools to hold the same strings: nothing new unless it is a
+ * drafted string, and nothing gone unless it is a retired one. It says nothing
+ * about which state a string is in; the ordinary `compare` is for that.
  */
 
 import { spawn, ChildProcess } from 'node:child_process';
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+
+import { FEEDBACK_DRAFT, applyDraft, templateRegExp } from './copyDraft.js';
 
 interface Snapshot {
   name: string;
@@ -171,12 +183,72 @@ function compare(beforePath: string, afterPath: string): void {
     + `${distinct.size} distinct`);
 }
 
-const [mode, a, b] = process.argv.slice(2);
+/** Every string a snapshot holds, with every number read as one number and
+ *  the noun after it as singular: a time that moved because the likelihood
+ *  changed - "4 seconds" where it was "1 second" - is not a word that changed. */
+function pool(states: Snapshot[], rewrite: (s: string) => string): Map<string, string> {
+  const out = new Map<string, string>();
+  for (const s of states) {
+    for (const text of [...s.texts, ...s.attrs, s.title]) {
+      const t = rewrite(text);
+      out.set(t.replace(/[0-9]+/g, '0').replace(/\b0 ([A-Za-z]+?)s\b/g, '0 $1'), t);
+    }
+  }
+  return out;
+}
+
+function matchesAny(text: string, templates: string[]): boolean {
+  return templates.some((t) => templateRegExp(t, false).test(text));
+}
+
+function compareDraft(beforePath: string, afterPath: string): void {
+  const before = JSON.parse(readFileSync(beforePath, 'utf8')) as Snapshot[];
+  const after = JSON.parse(readFileSync(afterPath, 'utf8')) as Snapshot[];
+  const was = pool(before, applyDraft);
+  const is = pool(after, (s) => s);
+  const added = FEEDBACK_DRAFT.flatMap((d) => (d.after === null ? [] : Object.values(d.after)));
+  const retired = FEEDBACK_DRAFT.flatMap((d) => (d.before === null || d.after !== null ? [] : Object.values(d.before)));
+
+  const failures: string[] = [];
+  const appeared: string[] = [];
+  const vanished: string[] = [];
+  for (const [key, text] of is) {
+    if (was.has(key)) continue;
+    if (matchesAny(text, added)) appeared.push(text);
+    else failures.push(`new, and not drafted: "${text}"`);
+  }
+  for (const [key, text] of was) {
+    if (is.has(key)) continue;
+    if (matchesAny(text, retired)) vanished.push(text);
+    else failures.push(`gone, and not retired: "${text}"`);
+  }
+  // Every drafted rewrite the old build could show must have been shown by it,
+  // or this proves nothing about it.
+  const rewritten = FEEDBACK_DRAFT.filter((d) => d.before !== null && d.after !== null
+    && JSON.stringify(d.before) !== JSON.stringify(d.after));
+  const seen = rewritten.filter((d) => before.some((s) => [...s.texts, ...s.attrs]
+    .some((t) => matchesAny(t, Object.values(d.before ?? {})))));
+
+  console.log(`${before.length} states before, ${after.length} after; `
+    + `${was.size} distinct strings before (drafted rewrites applied), ${is.size} after.`);
+  console.log(`drafted rewrites exercised by the web app: ${seen.map((d) => d.key).join(', ')}`);
+  console.log(`new, as drafted: ${[...new Set(appeared)].map((s) => `"${s}"`).join(', ') || 'none'}`);
+  console.log(`gone, as retired: ${[...new Set(vanished)].map((s) => `"${s}"`).join(', ') || 'none'}`);
+  if (failures.length > 0) {
+    console.log(`\n${failures.length} failures:\n${failures.join('\n')}`);
+    process.exit(1);
+  }
+  console.log('only the drafted strings changed.');
+}
+
+const [mode, a, b, flag] = process.argv.slice(2);
 if (mode === 'capture' && a !== undefined) {
   await capture(a);
+} else if (mode === 'compare' && a !== undefined && b !== undefined && flag === '--draft') {
+  compareDraft(a, b);
 } else if (mode === 'compare' && a !== undefined && b !== undefined) {
   compare(a, b);
 } else {
-  console.error('usage: copySnapshot.js capture <out.json> | compare <before.json> <after.json>');
+  console.error('usage: copySnapshot.js capture <out.json> | compare <before.json> <after.json> [--draft]');
   process.exit(2);
 }

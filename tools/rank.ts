@@ -29,7 +29,8 @@
  *
  * What it treats as informative: every yolk row, and a white row only when the
  * white lands within WHITE_NEAR decades of its threshold. A white that is
- * obviously set teaches nothing, which `shouldAskAboutWhite` already knows.
+ * obviously set teaches next to nothing, which is what the gate before E2
+ * (`shouldAskAboutWhite`) assumed.
  */
 
 import { ALPHA_DEFAULT, ALPHA_REL_SD } from '../src/core/constants.js';
