@@ -811,7 +811,11 @@ here and what CI would run.
 
 There is nothing else to configure. `netlify.toml` and `vercel.json` each carry
 the two settings their host needs, and the build is `tsc` plus two `cp`s — no
-bundler, no runtime dependencies, no environment variables, no secrets.
+bundler, no runtime dependencies, no environment variables, no secrets. Because
+nothing is bundled, nothing is hashed: `dist/` and `copy/` keep their filenames
+from one deploy to the next, so they are served to be revalidated on every load
+rather than cached for a year, and a returning browser never runs last month's
+scripts against this month's page. `netlify.toml` says why.
 
 `src/core/` has zero dependencies, no DOM, no `Date`, no I/O and no `async`. It is plain
 interfaces and top-level functions with explicit loops, which is deliberate: it is meant

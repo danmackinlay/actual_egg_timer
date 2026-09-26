@@ -14,11 +14,34 @@
 # Netlify's own default is 24 as of July 2026; NODE_VERSION set here would
 # silently override the file, so it deliberately is not set.
 
-# Everything is immutable per deploy except the entry point.
+# The scripts and the words are revalidated on every load, not cached for a
+# year. They keep their names across deploys - dist/src/ui/main.js is
+# dist/src/ui/main.js in every build, because there is no bundler to hash them -
+# so "immutable" here would be a false promise: a returning browser would run
+# last month's modules against this month's index.html, or a mix of old and
+# new, since every import is its own cache entry. The page assumes the scripts,
+# the worker they start (gridWorker.js) and copy/*.json all came from one
+# build; the per-egg record and the catalogue keys both depend on it.
+#
+# The other fix is to version the paths per deploy (dist/<commit>/...) and
+# rewrite index.html's <script src> at build time. It would let these be
+# immutable, but it adds a rewriting step to a build that is otherwise tsc and
+# cp, for a couple of dozen small files. Revalidating costs one conditional
+# request per file, which Netlify's edge answers with a 304 from its own cache;
+# the edge copy is purged on every deploy, so only the browser's copy needed
+# fixing.
+#
+# This is also Netlify's default for a file with no rule; it is written out so
+# that nobody adds the year back.
 [[headers]]
   for = "/dist/*"
   [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/copy/*"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
 
 # Icons and the social card change only when the artwork does, but they keep
 # their filenames when they do - so a day, not a year, and no immutable.
@@ -27,7 +50,17 @@
   [headers.values]
     Cache-Control = "public, max-age=86400"
 
+# The page itself, under both the names it is asked for by.
+[[headers]]
+  for = "/"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
 [[headers]]
   for = "/index.html"
   [headers.values]
     Cache-Control = "public, max-age=0, must-revalidate"
+
+# vercel.json sets no headers, and needs none: Vercel sends this same
+# "public, max-age=0, must-revalidate" for static files by default, and purges
+# its edge per deploy. Do not add an immutable rule there either.
