@@ -130,6 +130,41 @@ public struct RecordSetup: Sendable, Codable, Equatable {
     }
 }
 
+/// A probe thermometer reading at the centre (E4), taken when the app said: at
+/// the end of the counted cooling, when the model has the centre peaking. In C
+/// whatever the cook typed it in. See src/core/record.ts.
+public struct ProbeReading: Sendable, Codable, Equatable {
+    /// The highest number the cook saw with the probe at the middle, C.
+    public var centreC: Double
+    /// When the app asked for it, s after the moment the record scores as the
+    /// pull. Nil when that is not known.
+    public var afterS: Double?
+
+    public init(centreC: Double, afterS: Double?) {
+        self.centreC = centreC
+        self.afterS = afterS
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case centreC = "centre_C"
+        case afterS = "after_s"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        centreC = try c.decode(Double.self, forKey: .centreC)
+        afterS = try c.decodeIfPresent(Double.self, forKey: .afterS)
+    }
+
+    /// `after_s` is written as null rather than omitted, as every nullable
+    /// field in the record is.
+    public func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(centreC, forKey: .centreC)
+        try c.encode(afterS, forKey: .afterS)
+    }
+}
+
 public struct EggRecord: Sendable, Codable, Equatable {
     public var v: Int
     /// The cook's random id. Nil until E6 mints one.
@@ -154,6 +189,8 @@ public struct EggRecord: Sendable, Codable, Equatable {
     /// is always offered; `.set` is E1's two-level answer.
     public var white: WhiteReport?
     public var whiteOffered: Bool
+    /// A reading at the centre's peak (E4), or nil: no probe, or not taken.
+    public var probe: ProbeReading?
     public var lang: String
     public var register: String
     public var units: Units
@@ -163,6 +200,7 @@ public struct EggRecord: Sendable, Codable, Equatable {
         prior: String = priorID, egg: RecordEgg, setup: RecordSetup, level: Double,
         recommendedS: Double, nudgeS: Double = 0, pulledS: Double, pulledBy: PulledBy,
         cooledS: Double, yolk: Feedback?, white: WhiteReport? = nil, whiteOffered: Bool = true,
+        probe: ProbeReading? = nil,
         lang: String = "en", register: String = "modern", units: Units = .metric
     ) {
         v = recordVersion
@@ -182,6 +220,7 @@ public struct EggRecord: Sendable, Codable, Equatable {
         self.yolk = yolk
         self.white = white
         self.whiteOffered = whiteOffered
+        self.probe = probe
         self.lang = lang
         self.register = register
         self.units = units
@@ -198,8 +237,7 @@ public struct EggRecord: Sendable, Codable, Equatable {
     }
 
     /// Nullable fields may be absent and read as nil, which is what the
-    /// TypeScript loader does too. `probe` must be null or absent until E4
-    /// says what a reading looks like.
+    /// TypeScript loader does too.
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         v = try c.decode(Int.self, forKey: .v)
@@ -219,11 +257,7 @@ public struct EggRecord: Sendable, Codable, Equatable {
         yolk = try c.decodeIfPresent(Feedback.self, forKey: .yolk)
         white = try c.decodeIfPresent(WhiteReport.self, forKey: .white)
         whiteOffered = try c.decode(Bool.self, forKey: .whiteOffered)
-        if c.contains(.probe), try !c.decodeNil(forKey: .probe) {
-            throw DecodingError.dataCorruptedError(
-                forKey: .probe, in: c, debugDescription: "probe readings arrive in E4"
-            )
-        }
+        probe = try c.decodeIfPresent(ProbeReading.self, forKey: .probe)
         lang = try c.decode(String.self, forKey: .lang)
         register = try c.decode(String.self, forKey: .register)
         units = try c.decode(Units.self, forKey: .units)
@@ -251,7 +285,7 @@ public struct EggRecord: Sendable, Codable, Equatable {
         try c.encode(yolk, forKey: .yolk)
         try c.encode(white, forKey: .white)
         try c.encode(whiteOffered, forKey: .whiteOffered)
-        try c.encodeNil(forKey: .probe)
+        try c.encode(probe, forKey: .probe)
         try c.encode(lang, forKey: .lang)
         try c.encode(register, forKey: .register)
         try c.encode(units, forKey: .units)
@@ -264,6 +298,25 @@ public func recordMassG(massKg: Double) -> Double {
 }
 
 // MARK: - Validation
+
+/// The coolest thing this cook's egg ever touched, C.
+private func coldestOf(_ s: RecordSetup) -> Double {
+    let bath: Double
+    switch s.cooling {
+    case .ice: bath = Constants.tIceBathC
+    case .tap: bath = Constants.tColdTapC
+    case .counter: bath = s.ambientC
+    }
+    return min(s.eggStartC, s.ambientC, bath)
+}
+
+/// Whether a centre reading is physically possible at all for this cook: no
+/// colder than the coldest thing the egg touched, no hotter than the boil. The
+/// loader's test, deliberately loose; the apps refuse more at entry
+/// (`plausibleProbeRangeC`).
+public func probePossible(_ s: RecordSetup, centreC: Double) -> Bool {
+    centreC.isFinite && centreC >= coldestOf(s) && centreC <= s.boilingC
+}
 
 /// YYYY-MM-DD, digits in the right places.
 private func isDay(_ s: String) -> Bool {
@@ -305,6 +358,10 @@ public func validRecord(_ r: EggRecord) -> Bool {
     guard r.cooledS.isFinite, r.cooledS >= 0 else { return false }
     // An answer to a question that was never asked is not an observation.
     if r.white != nil && !r.whiteOffered { return false }
+    if let probe = r.probe {
+        guard probePossible(s, centreC: probe.centreC) else { return false }
+        if let after = probe.afterS, !(after.isFinite && after >= 0) { return false }
+    }
     guard !r.lang.isEmpty, !r.register.isEmpty else { return false }
     return true
 }
@@ -347,10 +404,11 @@ public func calibrationDoneness(_ c: Calibration, level: Double) -> Doneness {
     )
 }
 
-/// Whether a record has anything to fold. An unanswered egg is still a record,
-/// but it moves no particle and is not an egg the model learned from.
+/// Whether a record has anything to fold: an answer, or a probe reading. An
+/// unanswered egg is still a record, but it moves no particle and is not an egg
+/// the model learned from.
 public func recordTeaches(_ r: EggRecord) -> Bool {
-    r.yolk != nil || r.white != nil
+    r.yolk != nil || r.white != nil || r.probe != nil
 }
 
 public func recordEgg(_ r: EggRecord) -> Egg {
@@ -411,7 +469,7 @@ public func buildRequestedGrid(_ q: GridRequest) -> DoseGrid {
     )
 }
 
-/// Fold one record - both of its answers, whichever it has - and count the egg
+/// Fold one record - its answers and its probe reading, whichever it has - and count the egg
 /// if it teaches anything. One fold per egg: an app that hears the second
 /// answer after folding the first folds the egg again from the calibration as
 /// it stood before it, against the same surface.
@@ -419,7 +477,8 @@ public func foldRecord(_ c: inout Calibration, _ r: EggRecord, grid: DoseGrid) {
     guard recordTeaches(r) else { return }
     updatePosterior(
         &c.posterior, grid: grid, cookTimeS: recordCookTimeS(r),
-        logNominalTarget: recordLogTarget(r), yolk: r.yolk, white: r.white
+        logNominalTarget: recordLogTarget(r), yolk: r.yolk, white: r.white,
+        probeC: r.probe?.centreC
     )
     c.eggsLogged += 1
 }
