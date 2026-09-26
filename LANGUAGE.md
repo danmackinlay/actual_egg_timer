@@ -679,4 +679,22 @@ Taken by the owner, 26 September 2026:
 
 - **The owner reviews the 1750**, against Johnson's *Preface* (§6).
 
-Nothing in this file is waiting on a decision.
+Waiting on the owner, from 27 September:
+
+- **The two drafts in §3.** The E2 feedback draft is implemented, since the call
+  was made while the owner slept, and remains open to revision. The draft for
+  the rest of F2 is not in the catalogue yet.
+- **Two platform disagreements F4 left open (§2), both to settle before Czech
+  ships:**
+  - An English UI in Czechia (`en-CZ`) writes a time of day "09:05" on the web
+    and "9:05" on iOS. Until there is a Czech catalogue, this is what the Czech
+    reviewer sees.
+  - A Czech UI outside Czechia (`cs-US`, `cs-GB`) takes its decimal separator
+    from the LANGUAGE on the web ("1 234,5") and from the REGION on iOS
+    ("1,234.5").
+
+    The simplest rule is to follow the language on both, since the words
+    around the number are Czech. Recommended.
+- **`Intl` inside `src/core/format.ts`.** F4 relaxed invariant 1 for this one
+  file. The web's output therefore depends on the browser's ICU, while the
+  fixtures are pinned against Node's. Safari has not been tried.
