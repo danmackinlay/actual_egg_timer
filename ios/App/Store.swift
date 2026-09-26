@@ -37,7 +37,9 @@ enum Settings {
         let store = UserDefaults.standard
         guard store.object(forKey: "doneness") != nil else { return }
         kitchen.doneness = clamp(store.double(forKey: "doneness"), to: Limits.doneness)
-        kitchen.eggMassG = clamp(store.double(forKey: "eggMassG"), to: Limits.massG)
+        let massG = clamp(store.double(forKey: "eggMassG"), to: Limits.massG)
+        kitchen.restoreSize(index: sizeIndex(in: store, massG: massG, classes: kitchen.sizeClasses),
+                            weighedMassG: massG)
         kitchen.altitudeM = clamp(store.double(forKey: "altitudeM"), to: Limits.altitudeM)
         kitchen.waterLitres = clamp(store.double(forKey: "waterLitres"), to: Limits.waterLitres)
         kitchen.eggCount = Int(clamp(store.double(forKey: "eggCount"), to: Limits.eggCount).rounded())
@@ -56,11 +58,30 @@ enum Settings {
         kitchen.cooling = Cooling(rawValue: store.string(forKey: "cooling") ?? "") ?? .ice
     }
 
+    /// The stored size class, read against the table in use now.
+    ///
+    /// A record from before there were size classes on this side has only a
+    /// mass. The slider opened on an EU Large, 68 g, and a cook who never moved
+    /// it never chose a mass at all - they took the default, which is a Large.
+    /// Reading that as a Large is what gets an American who never touched the
+    /// slider onto the American Large; reading it as 68 g weighed would leave
+    /// them half a minute over. Any other mass was moved to, so it was weighed.
+    private static func sizeIndex(in store: UserDefaults, massG: Double, classes: [SizeClass]) -> Int {
+        guard store.object(forKey: "sizeIndex") != nil else {
+            let untouched = massG == sizeClasses[Defaults.sizeIndex].massKg * 1000
+            return untouched ? carrySizeIndex(Double(Defaults.sizeIndex), classes: classes) : -1
+        }
+        return carrySizeIndex(clamp(store.double(forKey: "sizeIndex"), to: Limits.sizeIndex), classes: classes)
+    }
+
     @MainActor
     static func save(_ kitchen: Kitchen) {
         let store = UserDefaults.standard
         store.set(kitchen.doneness, forKey: "doneness")
+        // The mass being cooked, class or weighed, so a downgrade - which reads
+        // only this key - comes back to the same egg.
         store.set(kitchen.eggMassG, forKey: "eggMassG")
+        store.set(Double(kitchen.sizeIndex), forKey: "sizeIndex")
         store.set(kitchen.altitudeM, forKey: "altitudeM")
         store.set(kitchen.waterLitres, forKey: "waterLitres")
         store.set(Double(kitchen.eggCount), forKey: "eggCount")

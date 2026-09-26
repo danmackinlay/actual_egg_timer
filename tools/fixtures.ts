@@ -17,8 +17,9 @@
  *                           target exists before the code does
  *   fixtures/policy.json    the decisions above the physics - snapping, the
  *                           refusal verdict, texture bands, the calibration
- *                           grid's geometry, the bounds and the defaults. These
- *                           used to be transliterated by hand in both apps
+ *                           grid's geometry, the bounds and the defaults, and
+ *                           both size-class tables. These used to be
+ *                           transliterated by hand in both apps
  *   fixtures/sousvide.json  the isothermal limit. Separate because it answers a
  *                           question the solver never asks: no pan, no ramp, no
  *                           cooling, and an answer in hours rather than minutes
@@ -34,6 +35,7 @@ import {
 } from '../src/core/constants.js';
 import {
   eggFromMass, eggFromMinorDiameter, diffusionTime, eggVolumeFromMinorDiameter,
+  SIZE_CLASSES, US_SIZE_CLASSES, sizeClassesFor,
 } from '../src/core/geometry.js';
 import {
   pressureAtAltitude, boilingPointAtPressure, boilingPointAtAltitude,
@@ -65,7 +67,7 @@ import {
   LIMITS, SLIDER_STEPS, PARTICLE_COUNT as POLICY_PARTICLES, CALIBRATION_SEED,
   DEFAULTS, DEFAULT_EGG_MASS_KG, DEFAULT_TIME_TO_BOIL_S, START_TEMP_PRESETS_C,
   BoilMemory, COOLING_SECONDS, PULL_GRACE_SECONDS, ambientFor, anchorNear,
-  calibrationGrid, estimateTimeToBoil, phaseAt, rememberBoil, snapDown, snapUp,
+  calibrationGrid, carrySizeIndex, estimateTimeToBoil, phaseAt, rememberBoil, snapDown, snapUp,
   targetPeakYolk_C, textureFor, verdictFor,
 } from '../src/core/policy.js';
 
@@ -648,6 +650,25 @@ const policy = {
     eggMass_kg: DEFAULT_EGG_MASS_KG,
     fridge_C: START_TEMP_PRESETS_C.fridge,
     room_C: START_TEMP_PRESETS_C.room,
+  },
+  /* Both tables whole, which region gets which, and what a stored index
+   * becomes under each. The regions include the near misses a port might
+   * accept - lower case is the same region, `USA` is not a region code at all,
+   * and null is a language tag that names no region. The carry cases straddle
+   * every edge: below -1, the -0.5 tie that the two languages round in
+   * opposite directions, halves, and past the end of both tables. */
+  sizeClasses: {
+    eu: SIZE_CLASSES,
+    us: US_SIZE_CLASSES,
+    regions: ['US', 'us', 'GB', 'CZ', 'CA', 'USA', '', null].map((region) => ({
+      region: region,
+      table: sizeClassesFor(region) === US_SIZE_CLASSES ? 'us' : 'eu',
+    })),
+    carry: [-3, -1, -0.5, -0.4, 0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 7].map((stored) => ({
+      stored: stored,
+      eu: carrySizeIndex(stored, SIZE_CLASSES),
+      us: carrySizeIndex(stored, US_SIZE_CLASSES),
+    })),
   },
   ambient: [0, 4, 14.9, 15, 20, 26].map((eggStart_C) => ({
     eggStart_C: eggStart_C,

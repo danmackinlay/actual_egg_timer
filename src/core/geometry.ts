@@ -59,15 +59,52 @@ export function diffusionTime(egg: Egg, alpha_m2s: number): number {
 
 /** Egg size classes. Labelled by grams deliberately: EU/UK "Large" (63-73 g)
  *  is a US "Extra Large", and a US "Large" (57 g) is an EU "Medium". Using the
- *  names would systematically mis-time for one audience or the other. */
+ *  names would systematically mis-time for one audience or the other.
+ *
+ *  There are two tables, and which one a cook sees is decided by region - see
+ *  `sizeClassesFor`. Both tables put the same class at the same index for as
+ *  far as the shorter one goes (Small, Medium, Large, Extra large), which is
+ *  what lets a stored index keep its name when the table changes underneath it
+ *  (`carrySizeIndex` in policy.ts). */
 export interface SizeClass {
   label: string;
   mass_kg: number;
 }
 
+/** EU Regulation 589/2008 Art. 4, at a representative mass inside each band. */
 export const SIZE_CLASSES: SizeClass[] = [
   { label: 'Small — 48 g', mass_kg: 0.048 },
   { label: 'Medium — 58 g', mass_kg: 0.058 },
   { label: 'Large — 68 g', mass_kg: 0.068 },
   { label: 'Extra large — 76 g', mass_kg: 0.076 },
 ];
+
+/** The classes printed on an American carton. USDA defines each by a MINIMUM
+ *  net weight per dozen - Small 18 oz, Medium 21, Large 24, Extra large 27,
+ *  Jumbo 30 - so a class runs from its own minimum up to the next class's, and
+ *  the mass here is the midpoint of that run, per egg. The minimum would be the
+ *  lightest egg the carton may legally hold, which is not the egg in it.
+ *
+ *  Jumbo has no upper bound, so its 74 g is a guess: the 70.9 g floor plus half
+ *  the width of the class below it. Labels round to the gram; the model cooks
+ *  the midpoint to a tenth. */
+export const US_SIZE_CLASSES: SizeClass[] = [
+  { label: 'Small — 46 g', mass_kg: 0.0461 },
+  { label: 'Medium — 53 g', mass_kg: 0.0532 },
+  { label: 'Large — 60 g', mass_kg: 0.0602 },
+  { label: 'Extra large — 67 g', mass_kg: 0.0673 },
+  { label: 'Jumbo — 74 g', mass_kg: 0.074 },
+];
+
+/** The size classes for a region: the American carton in region `US`, the EU
+ *  classes everywhere else, including when the region is unknown.
+ *
+ *  Takes a region CODE - the `US` in `en-US`, or `Locale.Region.identifier` on
+ *  iOS - rather than a locale, so that core stays free of I/O and the apps do
+ *  the asking. Region only: an American who reads the app in Czech, or in
+ *  metric, still buys American eggs. */
+export function sizeClassesFor(region: string | null | undefined): SizeClass[] {
+  return typeof region === 'string' && region.toUpperCase() === 'US'
+    ? US_SIZE_CLASSES
+    : SIZE_CLASSES;
+}

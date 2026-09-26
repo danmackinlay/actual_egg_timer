@@ -11,9 +11,10 @@
  * longer decides them.
  */
 
+import { SizeClass } from '../core/geometry.js';
 import { StartMode, Cooling, HeatAfterBoil } from '../core/protocol.js';
 import {
-  BoilMemory, DEFAULTS, LIMITS, Limit, clamp, isWithin, rememberBoil,
+  BoilMemory, DEFAULTS, LIMITS, Limit, carrySizeIndex, clamp, isWithin, rememberBoil,
 } from '../core/policy.js';
 
 export {
@@ -32,7 +33,8 @@ export type StartTempMode = 'fridge' | 'room' | 'custom';
 export type UiStartMode = StartMode | 'sous';
 
 export interface Settings {
-  /** Index into SIZE_CLASSES, or -1 for a custom measured diameter. */
+  /** Index into the region's size classes, or -1 for a custom measured
+   *  diameter. Stored without the region: see `carrySizeIndex`. */
   sizeIndex: number;
   customMinor_mm: number;
   startTempMode: StartTempMode;
@@ -128,12 +130,14 @@ function oneOf<T extends string>(value: unknown, allowed: readonly T[], fallback
 
 /* -------------------------------------------------------------- settings */
 
-export function loadSettings(): Settings {
+/** `classes` is the table the app is showing now, which need not be the one
+ *  the record was saved against. */
+export function loadSettings(classes: SizeClass[]): Settings {
   const raw = parseObject(readStorage(SETTINGS_KEY));
   if (raw === null) return { ...DEFAULT_SETTINGS };
   const d = DEFAULT_SETTINGS;
   return {
-    sizeIndex: Math.round(clampNumber(raw['sizeIndex'], LIMITS.sizeIndex, d.sizeIndex)),
+    sizeIndex: carrySizeIndex(clampNumber(raw['sizeIndex'], LIMITS.sizeIndex, d.sizeIndex), classes),
     customMinor_mm: clampNumber(raw['customMinor_mm'], LIMITS.minor_mm, d.customMinor_mm),
     startTempMode: oneOf(raw['startTempMode'], ['fridge', 'room', 'custom'] as const, d.startTempMode),
     customStart_C: clampNumber(raw['customStart_C'], LIMITS.eggTemp_C, d.customStart_C),

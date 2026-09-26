@@ -18,7 +18,7 @@
  * Pure, like the rest of `src/core/`: no storage, no DOM, no clock.
  */
 
-import { SIZE_CLASSES } from './geometry.js';
+import { SIZE_CLASSES, SizeClass, US_SIZE_CLASSES } from './geometry.js';
 
 import { DonenessAnchor, DONENESS_ANCHORS, Solution } from './solve.js';
 import { T_ROOM_C } from './constants.js';
@@ -44,7 +44,9 @@ export const LIMITS = {
   waterLitres: { lo: 0.25, hi: 12 },
   eggCount: { lo: 1, hi: 24 },
   doneness: { lo: 0, hi: 1 },
-  sizeIndex: { lo: -1, hi: SIZE_CLASSES.length - 1 },
+  /** Across every table. The table in use is shorter than this outside the
+   *  US, so a stored index also goes through `carrySizeIndex`. */
+  sizeIndex: { lo: -1, hi: Math.max(SIZE_CLASSES.length, US_SIZE_CLASSES.length) - 1 },
   /** A tap under half a minute is a double tap, not a boil; over two hours is
    *  an app left open. */
   timeToBoil_s: { lo: 30, hi: 7200 },
@@ -94,7 +96,8 @@ export const DEFAULT_TIME_TO_BOIL_S = 480;
  *  apps that answer differently out of the box are two different answers to
  *  the same question. */
 export const DEFAULTS = {
-  /** Index into SIZE_CLASSES - 'Large', 68 g. */
+  /** Index into the region's size classes - 'Large' in both tables, 68 g in
+   *  the EU one and 60.2 g on an American carton. */
   sizeIndex: 2,
   customMinor_mm: 44,
   customStart_C: 12,
@@ -104,9 +107,37 @@ export const DEFAULTS = {
   doneness: 0.41,
 };
 
-/** The mass a fresh install cooks, kg. Derived rather than restated, so the
- *  size class and the number can never disagree. */
+/** The reference egg, kg: an EU Large. It is what the tools model and what a
+ *  fresh install cooks outside the US; the apps take theirs from the region's
+ *  table, `sizeClassesFor(region)[DEFAULTS.sizeIndex]`. Derived rather than
+ *  restated, so the size class and the number can never disagree. */
 export const DEFAULT_EGG_MASS_KG = SIZE_CLASSES[DEFAULTS.sizeIndex].mass_kg;
+
+/**
+ * A stored size index, read against the table in use now.
+ *
+ * An index means something only inside one table, and the table can change
+ * underneath a stored record: the phone's region is changed, the browser's
+ * language is, or - the case that matters - a record saved before there were
+ * two tables is read by an American. The rule is that the index keeps its
+ * NAME. A cook who picked Large picked the word on their carton, and the
+ * region says whose carton it is, so a Large stays a Large and cooks at the
+ * new table's mass. Keeping the mass instead would leave every American who
+ * never touched the control on the EU Large this table exists to replace.
+ *
+ * Both tables hold the same names at the same indices as far as the shorter
+ * goes, so keeping the name is keeping the index. A Jumbo read outside the US
+ * becomes the largest class there is, Extra large. A measured egg (-1) is
+ * measured in any region. Nothing is stored about the region, so there is no
+ * second record to disagree with the first.
+ */
+export function carrySizeIndex(stored: number, classes: SizeClass[]): number {
+  if (!Number.isFinite(stored)) return DEFAULTS.sizeIndex;
+  // Negatives first, so rounding never has to settle -0.5: the two languages
+  // break that tie in different directions.
+  if (stored < 0) return -1;
+  return Math.min(Math.round(stored), classes.length - 1);
+}
 
 /* -------------------------------------------------------------- the slider */
 

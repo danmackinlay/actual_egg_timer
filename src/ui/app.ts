@@ -11,7 +11,7 @@
  * derived from the same settings without reconciling them mid-cook.
  */
 
-import { Egg, eggFromMass, eggFromMinorDiameter, SIZE_CLASSES } from '../core/geometry.js';
+import { Egg, eggFromMass, eggFromMinorDiameter, sizeClassesFor } from '../core/geometry.js';
 import { boilingPointAtAltitude } from '../core/thermo.js';
 import { Cooling, CookSetup, StartMode } from '../core/protocol.js';
 import { SOUS_VIDE_BATH_C, sousVideEstimate } from '../core/sousvide.js';
@@ -19,7 +19,7 @@ import {
   DONENESS_ANCHORS, Solution, donenessFromSlider, solveCookTime,
 } from '../core/solve.js';
 import {
-  SLIDER_STEPS, Verdict, ambientFor, anchorNear, targetPeakYolk_C, textureFor,
+  DEFAULTS, SLIDER_STEPS, Verdict, ambientFor, anchorNear, targetPeakYolk_C, textureFor,
   verdictFor,
 } from '../core/policy.js';
 import { Feedback, WhiteReport } from '../core/infer.js';
@@ -112,7 +112,22 @@ function radioValue(name: string, fallback: string): string {
 
 /* ----------------------------------------------------------------- state */
 
-let settings: Settings = loadSettings();
+/** The region in the browser's language tag - the `US` in `en-US` - or null
+ *  when the tag names none. It decides one thing, which carton's size classes
+ *  to offer, and it is the region alone: not the language, not the units. */
+function browserRegion(): string | null {
+  try {
+    return new Intl.Locale(navigator.language).region ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/** Fixed for the life of the page. A stored index is read against it, and
+ *  keeps its name if the region has changed since it was saved. */
+const sizeClasses = sizeClassesFor(browserRegion());
+
+let settings: Settings = loadSettings(sizeClasses);
 let boilMemory = loadBoilMemory();
 /** Posterior over the model's uncertain constants, learned from how the user's
  *  own eggs actually turn out. Before any feedback this is the prior mean,
@@ -168,10 +183,10 @@ interface Ticket {
 /* --------------------------------------------------------------- physics */
 
 function currentEgg(): Egg {
-  if (settings.sizeIndex < 0 || settings.sizeIndex >= SIZE_CLASSES.length) {
+  if (settings.sizeIndex < 0 || settings.sizeIndex >= sizeClasses.length) {
     return eggFromMinorDiameter(settings.customMinor_mm / 1000);
   }
-  return eggFromMass(SIZE_CLASSES[settings.sizeIndex].mass_kg);
+  return eggFromMass(sizeClasses[settings.sizeIndex].mass_kg);
 }
 
 /** The three ways a person can measure an egg are one number in three units.
@@ -856,7 +871,7 @@ function onWhiteFeedback(value: WhiteReport): void {
 
 function readInputs(source: EventTarget | null): void {
   const sizeIndex = Number(dom.size.value);
-  settings.sizeIndex = Number.isFinite(sizeIndex) ? sizeIndex : 2;
+  settings.sizeIndex = Number.isFinite(sizeIndex) ? sizeIndex : DEFAULTS.sizeIndex;
 
   // Measuring the egg any of the three ways overrides the size class, because
   // a measured egg is better information than a box label.
@@ -1023,10 +1038,10 @@ function onPrimary(): void {
 /* ------------------------------------------------------------------ boot */
 
 function buildSizeOptions(): void {
-  for (let i = 0; i < SIZE_CLASSES.length; i += 1) {
+  for (let i = 0; i < sizeClasses.length; i += 1) {
     const option = document.createElement('option');
     option.value = String(i);
-    option.textContent = SIZE_CLASSES[i].label;
+    option.textContent = sizeClasses[i].label;
     dom.size.append(option);
   }
   const custom = document.createElement('option');
