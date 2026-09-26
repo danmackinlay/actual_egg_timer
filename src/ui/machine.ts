@@ -20,6 +20,7 @@
  */
 
 import { Cooling } from '../core/protocol.js';
+import { PulledBy } from '../core/record.js';
 import { COOLING_SECONDS, PULL_GRACE_SECONDS } from '../core/policy.js';
 
 /** The lengths of the two untimed stages, from the core. They were a pair of
@@ -37,8 +38,20 @@ export interface Machine {
   startedAt_ms: number;
   /** Epoch ms the egg must come out of the water. */
   cookEnd_ms: number;
-  /** Epoch ms the egg left the water. */
+  /** Epoch ms the pull was DUE - when the alarm went and PULL began. Not when
+   *  the egg came out: that is `outAt_ms`, and the two differ by however long
+   *  the alarm rang before anyone moved. */
   pulledAt_ms: number;
+  /** Epoch ms the machine left PULL, 0 until it has. When `pulledBy` is 'cook'
+   *  this is the cook's own tap - "they're in the ice bath", "they're out" -
+   *  and the nearest thing to when the egg came out of the water that the app
+   *  will ever know. When it is 'timeout', nobody said, and this is only the
+   *  moment the grace ran out. */
+  outAt_ms: number;
+  /** Who ended PULL, or null while it has not ended. Recorded with every egg
+   *  (`pulledBy` in the record), so the fit can tell a measured pull from an
+   *  assumed one. */
+  pulledBy: PulledBy | null;
   /** Epoch ms cooling finishes. 0 unless cooling. */
   coolEnd_ms: number;
   /** Cook time currently in force, s (from egg-in to egg-out). */
@@ -66,6 +79,8 @@ export function idleMachine(cooling: Cooling): Machine {
     startedAt_ms: 0,
     cookEnd_ms: 0,
     pulledAt_ms: 0,
+    outAt_ms: 0,
+    pulledBy: null,
     coolEnd_ms: 0,
     cookTime_s: 0,
     targetLevel: 0,
@@ -86,6 +101,8 @@ export function startCold(
     startedAt_ms: now_ms,
     cookEnd_ms: now_ms + cookTime_s * 1000,
     pulledAt_ms: 0,
+    outAt_ms: 0,
+    pulledBy: null,
     coolEnd_ms: 0,
     cookTime_s: cookTime_s,
     targetLevel: targetLevel,
@@ -104,6 +121,8 @@ export function startHot(
     startedAt_ms: now_ms,
     cookEnd_ms: now_ms + cookTime_s * 1000,
     pulledAt_ms: 0,
+    outAt_ms: 0,
+    pulledBy: null,
     coolEnd_ms: 0,
     cookTime_s: cookTime_s,
     targetLevel: targetLevel,
@@ -141,11 +160,16 @@ export function reviseProvisional(m: Machine, cookTime_s: number, assumedBoil_s:
 }
 
 /** Egg is out of the water: start the counted cooling, or finish if it is
- *  being left on the counter (where "cooling" is just carryover). */
-export function beginCooling(m: Machine, now_ms: number): Machine {
+ *  being left on the counter (where "cooling" is just carryover).
+ *
+ *  `by` is who said so. The cook's tap is the default because it is the only
+ *  caller outside this file; `advance` passes 'timeout' when the grace runs out
+ *  unanswered. */
+export function beginCooling(m: Machine, now_ms: number, by: PulledBy = 'cook'): Machine {
   if (m.phase !== 'PULL') return m;
-  if (m.cooling === 'counter') return { ...m, phase: 'DONE' };
-  return { ...m, phase: 'COOLING', coolEnd_ms: now_ms + COOLING_SECONDS * 1000 };
+  const out = { ...m, outAt_ms: now_ms, pulledBy: by };
+  if (m.cooling === 'counter') return { ...out, phase: 'DONE' };
+  return { ...out, phase: 'COOLING', coolEnd_ms: now_ms + COOLING_SECONDS * 1000 };
 }
 
 /** Something that should make a noise. */
@@ -165,7 +189,7 @@ export function advance(m: Machine, now_ms: number): Advance {
     };
   }
   if (m.phase === 'PULL' && now_ms >= m.pulledAt_ms + PULL_GRACE_SECONDS * 1000) {
-    const next = beginCooling(m, m.pulledAt_ms + PULL_GRACE_SECONDS * 1000);
+    const next = beginCooling(m, m.pulledAt_ms + PULL_GRACE_SECONDS * 1000, 'timeout');
     return { machine: next, event: next.phase === 'DONE' ? 'done' : 'none' };
   }
   if (m.phase === 'COOLING' && now_ms >= m.coolEnd_ms) {
@@ -236,12 +260,22 @@ export function restoreMachine(raw: unknown, now_ms: number): Machine | null {
   const ends = numbers['coolEnd_ms'] > 0 ? numbers['coolEnd_ms'] : numbers['cookEnd_ms'];
   if (now_ms > ends + RESTORE_WINDOW_MS) return null;
 
+  // Who ended PULL, which a cook stored before E1 does not say. Such a cook is
+  // not refused - it is still a timer somebody is relying on - it just records
+  // its pull as unmeasured, which is all that can honestly be said of it.
+  const by = r['pulledBy'];
+  const out = r['outAt_ms'];
+  const measured = by === 'cook' && typeof out === 'number' && Number.isFinite(out) && out > 0;
+  const ended = phase === 'COOLING' || phase === 'DONE';
+
   return {
     phase: phase as Phase,
     cooling: cooling as Cooling,
     startedAt_ms: numbers['startedAt_ms'],
     cookEnd_ms: numbers['cookEnd_ms'],
     pulledAt_ms: numbers['pulledAt_ms'],
+    outAt_ms: measured ? out : 0,
+    pulledBy: measured ? 'cook' : ended ? 'timeout' : null,
     coolEnd_ms: numbers['coolEnd_ms'],
     cookTime_s: numbers['cookTime_s'],
     targetLevel: numbers['targetLevel'],

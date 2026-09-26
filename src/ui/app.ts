@@ -23,10 +23,10 @@ import {
   verdictFor,
 } from '../core/policy.js';
 import { Feedback, WhiteReport } from '../core/infer.js';
-import { DoseGrid } from '../core/doseGrid.js';
+import { EggFrom, MassFrom } from '../core/record.js';
 import {
-  Calibration, clearCalibration, loadCalibration, saveCalibration, calibrationParams,
-  calibrationSpread, recordOutcome, recordWhite,
+  Calibration, Outcome, clearCalibration, loadCalibration, calibrationParams,
+  calibrationSpread, eggRecordFor, eggsBehind, learn, logEgg, recordWhite,
 } from './calibration.js';
 import {
   LIMITS, Limit, START_TEMP_PRESETS_C, Settings, UiStartMode, clampNumber,
@@ -142,12 +142,13 @@ let lastAnnounced = '';
 let restored = false;
 /** One report per egg: the feedback buttons go away once one is pressed. */
 let feedbackGiven = false;
-/** The dose surface the yolk answer was just scored against, kept only while the
- *  white question is on screen - answering it needs the same surface, and
- *  rebuilding it would cost another two seconds. Null whenever there is no white
- *  question pending, which includes after a reload: the question is a moment in
- *  a conversation, not a fact about the egg, so it is not persisted. */
-let whiteGrid: DoseGrid | null = null;
+/** The egg the yolk answer was just folded from and the surface it was scored
+ *  against, kept only while the white question is on screen - answering it needs
+ *  the same surface, and rebuilding it would cost another two seconds. Null
+ *  whenever there is no white question pending, which includes after a reload:
+ *  the question is a moment in a conversation, not a fact about the egg, so it
+ *  is not persisted. (The record does persist that it was OFFERED.) */
+let whiteGrid: Outcome | null = null;
 
 /** The same cook, against a time to boil that is now known rather than
  *  guessed. Everything else about it is frozen. */
@@ -159,6 +160,9 @@ function withTimeToBoil(t: Ticket, timeToBoil_s: number): Ticket {
  *  learn from. */
 interface Ticket {
   egg: Egg;
+  /** Which input the egg came from, and where its temperature did. */
+  massFrom: MassFrom;
+  eggFrom: EggFrom;
   setup: CookSetup;
   /** log10 of the yolk dose this cook was RUN at. Frozen with everything else,
    *  so a slider left somewhere else afterwards cannot rewrite history. */
@@ -172,6 +176,15 @@ function currentEgg(): Egg {
     return eggFromMinorDiameter(settings.customMinor_mm / 1000);
   }
   return eggFromMass(SIZE_CLASSES[settings.sizeIndex].mass_kg);
+}
+
+/** Which input the egg on screen came from: the size class, or whichever of the
+ *  three measurements was typed in last. They all end up as one diameter, so
+ *  this is the only place the difference survives - and it is the egg-level
+ *  noise the fit needs (a class is a 10 g bucket; a scale is a gram). */
+function massFrom(): MassFrom {
+  if (settings.sizeIndex >= 0 && settings.sizeIndex < SIZE_CLASSES.length) return 'class';
+  return settings.measuredBy;
 }
 
 /** The three ways a person can measure an egg are one number in three units.
@@ -806,14 +819,14 @@ function onFeedback(value: Feedback): void {
 
   const cooked = ticket;
   if (cooked === null) return;
+  // The egg is written down with its answer before anything is learned from
+  // it: a reload during the fold then refolds it on load, rather than losing it.
+  const index = logEgg(eggRecordFor(cooked, machine, value));
+  const cookStarted = machine.startedAt_ms;
 
-  // Yield first so the disabled state and the "learning" note actually paint
-  // before the synchronous grid build blocks the main thread.
-  window.setTimeout(() => {
-    const outcome = recordOutcome(
-      calib, cooked.egg, cooked.setup, machine.cookTime_s, cooked.logNominalTarget, value,
-    );
-    saveCalibration(calib);
+  // The surface is built in a worker now, so the page stays live while it is -
+  // which means the cook can have moved on by the time it lands.
+  void learn(index).then((outcome) => {
     for (let i = 0; i < buttons.length; i++) buttons[i].disabled = false;
     dom.feedback.hidden = true;
     // The second question, and only when the model cannot already guess the
@@ -822,20 +835,21 @@ function onFeedback(value: Feedback): void {
     // tap; on a soft one the white is near its threshold and the answer moves
     // alpha. The decision is `shouldAskAboutWhite` in src/core/infer.ts, so both
     // apps ask on exactly the same eggs.
-    if (outcome.askWhite) {
-      whiteGrid = outcome.grid;
+    const stillHere = machine.phase === 'DONE' && machine.startedAt_ms === cookStarted;
+    if (outcome !== null && outcome.askWhite && stillHere) {
+      whiteGrid = outcome;
       dom.whiteFeedback.hidden = false;
     }
     renderCalibNote();
-  }, 30);
+  });
 }
 
 /** Fold the answer about the white into the same egg. It is a second
  *  observation, not a second egg, so the "tuned on N eggs" count does not move -
  *  only the spread does. */
 function onWhiteFeedback(value: WhiteReport): void {
-  const grid = whiteGrid;
-  if (grid === null) return;
+  const pending = whiteGrid;
+  if (pending === null) return;
   whiteGrid = null;
   const buttons = dom.whiteFeedback.querySelectorAll<HTMLButtonElement>('button.wb');
   for (let i = 0; i < buttons.length; i++) buttons[i].disabled = true;
@@ -844,8 +858,7 @@ function onWhiteFeedback(value: WhiteReport): void {
   // No grid to build this time, so this is milliseconds rather than seconds -
   // but it still yields, so the disabled state paints before the arithmetic.
   window.setTimeout(() => {
-    recordWhite(calib, grid, machine.cookTime_s, value);
-    saveCalibration(calib);
+    recordWhite(pending, value);
     for (let i = 0; i < buttons.length; i++) buttons[i].disabled = false;
     dom.whiteFeedback.hidden = true;
     renderCalibNote();
@@ -869,6 +882,8 @@ function readInputs(source: EventTarget | null): void {
     measured_mm = clampNumber(dom.measureMinor.value, LIMITS.minor_mm, settings.customMinor_mm);
   }
   if (measured_mm > 0) {
+    settings.measuredBy = source === dom.measureMass ? 'scale'
+      : source === dom.measureGirth ? 'girth' : 'width';
     settings.customMinor_mm = clampNumber(measured_mm, LIMITS.minor_mm, settings.customMinor_mm);
     settings.sizeIndex = -1;
     dom.size.value = '-1';
@@ -953,6 +968,12 @@ function reset(): void {
   stopAlarm();
   stopTicking();
   releaseScreen();
+  // An egg finished and never answered about is still an egg: the cook, the
+  // recommendation and the pull are data for the fit. It folds nothing.
+  if (machine.phase === 'DONE' && !feedbackGiven && ticket !== null) {
+    logEgg(eggRecordFor(ticket, machine, null));
+    void learn();
+  }
   feedbackGiven = false;
   whiteGrid = null;
   restored = false;
@@ -982,6 +1003,8 @@ function onPrimary(): void {
     restored = false;
     ticket = {
       egg: currentEgg(),
+      massFrom: massFrom(),
+      eggFrom: settings.startTempMode,
       setup: buildSetup(boil),
       logNominalTarget: Math.log10(donenessFromSlider(target).yolkDose_min),
     };
@@ -1120,6 +1143,15 @@ export function boot(): void {
   renderCalibNote();
   restoreCook();
   recompute();
+  // Eggs written down but not yet folded - a reload mid-fold, or a posterior
+  // that had to be rebuilt from the log - are folded now, off the main thread.
+  // The app runs on what it had until they land.
+  if (eggsBehind() > 0) {
+    void learn().then(() => {
+      renderCalibNote();
+      if (machine.phase === 'IDLE') recompute();
+    });
+  }
 }
 
 /**
@@ -1188,7 +1220,18 @@ function restoreTicket(raw: unknown): Ticket | null {
     return null;
   }
 
-  return { egg: egg as Egg, setup: setup as CookSetup, logNominalTarget: target };
+  // A ticket written before E1 does not say where the egg came from. The
+  // controls cannot change while a cook is on screen, so the settings still
+  // say what they said at "Eggs in".
+  const mf = r['massFrom'];
+  const ef = r['eggFrom'];
+  return {
+    egg: egg as Egg,
+    massFrom: mf === 'scale' || mf === 'girth' || mf === 'width' || mf === 'class' ? mf : massFrom(),
+    eggFrom: ef === 'fridge' || ef === 'room' || ef === 'custom' ? ef : settings.startTempMode,
+    setup: setup as CookSetup,
+    logNominalTarget: target,
+  };
 }
 
 /** The object, if every named field on it is a finite number above zero.
