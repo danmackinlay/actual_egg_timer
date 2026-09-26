@@ -137,6 +137,8 @@ same wording. That is new: today the web app says *Too firm* where iOS says
 | nothing learned yet | Running on the literature values. It learns your pan when you time a boil, and your taste when you say how an egg was. | Nothing learned yet. It learns your pan when you time a boil, and your eggs when you say how one came out. | drops "literature values"; "your eggs", because the white answers are about the egg, not taste |
 | forget button | Forget what it learned | Forget what it learned | unchanged |
 | forget dialog, iOS | Forget the calibration? — The model goes back to the literature values it shipped with, and the time to boil goes back to a guess. | Forget what it learned? — Every egg and your pan's boil time are forgotten, and the times go back to where they started. | checked against both apps: the button clears the eggs AND the boil memory |
+| pull screen, web | Out of the water — now · carryover is running | Out of the water — now · the yolk is still cooking | "carryover" is a README word; this says what is happening |
+| pull button, iOS | (none: iOS has no action out of the pull) | They're in the ice bath · They're under the tap · They're out | the web's existing button, so iOS records a MEASURED pull as the web does (E1 records every iOS pull as assumed today) |
 | **E5, preview** | — | 7/10 eggs hit the mark | the owner's wording |
 | **E5, preview** | — | Still learning your kitchen | shown until the time is pinned to about ±15 s |
 

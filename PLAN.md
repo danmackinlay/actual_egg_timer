@@ -123,7 +123,9 @@ cook. Nothing leaves a phone before E6.
       tender / firm), always offered and never required; the yolk stays at
       three. A skipped question is recorded as a skip. `shouldAskAboutWhite`
       and `WHITE_ASK_MIN_P` go. The pre-E1 base posterior is DROPPED here, not
-      backfilled (owner, 26 September). The wording is drafted in LANGUAGE.md §3. Done when: the
+      backfilled (owner, 26 September). The wording is drafted in LANGUAGE.md §3.
+      iOS gains the web's pull button ("They're in the ice bath"), so its pulls
+      are measured and not assumed, and E2 scores on `pulled_s`. Done when: the
       Phase C recovery experiment is repeated and is no worse, and the predictive
       P(answer) is calibrated on simulated cooks.
 - [ ] **E3 the white offset.** A fourth particle dimension: an additive shift on
