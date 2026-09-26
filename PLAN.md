@@ -144,7 +144,8 @@ F1 goes before E2 so that Phase E's new feedback copy is born in the catalogue.
 
 - [ ] **F1 the catalogue.** `copy/<locale>.json`, one template per key with
       plural variants and a hand-written CLDR rule per language, rendered by the
-      same few lines in both cores. Every existing string extracted with NO
+      same few lines in both cores, behind an in-app language picker in both
+      apps. Every existing string extracted with NO
       wording change - proved by byte-identical rendered output. Core returns
       keys, never English (`DONENESS_ANCHORS`, size classes, `startPhrase`).
       `fixtures/copy.json` with placeholder-parity and per-surface length tests.
@@ -161,13 +162,16 @@ F1 goes before E2 so that Phase E's new feedback copy is born in the catalogue.
       names through `Intl` / `FormatStyle`, pinned per locale by the fixture.
 - [ ] **F5 German**, drafted however, shipped only after a native speaker who
       cooks has read it on screen. Doneness words matched, not translated.
-- [ ] **F6 the English of 1750.** `en-x-1750`, switched on when an English UI
-      is explicitly switched to Imperial. Style guide and four rules in
-      `LANGUAGE.md` §6: substance not exempt, length budget binds, feedback
-      answers recorded with their register, and a way out that keeps °F.
+- [ ] **F6 the English of 1750.** A language code, `<region>-x-1750`: strings
+      from `copy/en-x-1750.json`, formats from the region (Intl and Foundation
+      both already strip the subtag - `LANGUAGE.md` §6). *English (1750)* in the
+      in-app picker; switching an English UI to Imperial selects it, back to
+      Metric restores the prior English, and picking English leaves it with °F
+      kept. One line under the Imperial option so Americans can find it. Style
+      guide and rules in §6.
 
-Owner decisions pending, `LANGUAGE.md` §8: the trigger, the way out, the first
-language, the reviewers, US carton classes.
+Owner decisions pending, `LANGUAGE.md` §8: the first language, the reviewers,
+US carton classes.
 
 ---
 

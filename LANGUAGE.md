@@ -201,21 +201,47 @@ When an English-language UI is switched to Imperial, every string also switches
 to the pompous prose of the eighteenth century. Fahrenheit published his scale
 in 1724, so the period is justified.
 
-**Mechanically it is a locale.** Its tag is `en-x-1750`, a private-use subtag
-of the kind BCP 47 provides for this. It is a full catalogue, under the same
-placeholder, length and conformance tests as any other language.
+**It is a language, with a language code of its own.** Decided 26 September.
+The tag is the cook's own English locale with a private-use subtag, as BCP 47
+provides: `en-US-x-1750`, `en-GB-x-1750`, `en-AU-x-1750`. Everything
+maintainable about the joke follows from that:
 
-**Trigger: the act of switching, not the default.** Units default from the
-region (§4), so an American opening the app for the first time sees °F in plain
-English. The register switches on when a cook whose UI language is English
-flips the setting to Imperial themselves. It goes away when they flip back. An
-explicit choice of units is stored separately from the regional default. That is
-what makes the switching detectable, and it is also correct behaviour for units
-in its own right.
+- **Strings come from the subtag, formats from the rest.** The catalogue is
+  `copy/en-x-1750.json`, and a missing key falls back to `en`. Numbers, clocks
+  and the measurement system come from the region, and **both platforms already
+  do this with no special-casing**. Measured on 26 September, `Intl` in Node and
+  `Locale` in Foundation give the same answers for every tag: `en-US-x-1750`
+  formats as en-US ("3:00 PM", US system) and `en-GB-x-1750` as en-GB ("15:00",
+  UK system). An American in 1750 English keeps their clock, and a Briton keeps
+  theirs.
+- **It is one row in the language picker.** Both apps get an in-app picker in
+  F1 in any case, because the catalogue is ours and not Apple's. iOS's own
+  per-app language setting would not list a private-use tag anyway. The picker
+  shows it as *English (1750)*, which is the discoverable way in, and choosing
+  *English* is the way out. That replaces the escape hatch this section used to
+  need: a cook who wants °F in modern English picks English and keeps
+  Fahrenheit.
+- **It is under the same tests as any other language**: placeholder parity, the
+  length budget, and the conformance fixture.
 
-This is a recommendation, and the owner decides it (§8). The alternative is to
-default everyone to metric. Then every American who wants °F gets 1750 on the way
-there, which is funnier once and a support burden permanently.
+**Two ways in.**
+
+1. **The picker**, for anyone.
+2. **The switch.** When a cook whose UI is in English flips units from Metric to
+   Imperial, the app also sets the language to 1750. Flipping back to Metric
+   restores the English they had before. Changing the language never touches the
+   units, so this runs in one direction only.
+
+**Discoverable for Americans, reluctantly.** Units default from the region
+(§4), so an American starts in °F and modern English and never makes the switch.
+Two small things find them:
+
+- the picker row above;
+- in an English UI, a single line under the Imperial option: *"Imperial units
+  are also available in the English of their period."*
+
+Nothing is pushed, and there is no first-run prompt. The joke is better found
+than delivered.
 
 **Style guide**, so it reads as 1750 and not as a Renaissance fair:
 
@@ -246,11 +272,11 @@ there, which is funnier once and a support burden permanently.
    then tell whether "Unset" in 1750 is answered differently from "Runny" in
    2026. It probably is. That would be the funniest result this project could
    produce.
-4. **There is a way out that keeps °F.** It sits quietly at the bottom of
-   settings and is written in the register: *"Should the Reader find this Style
-   tiresome, the Modern Tongue may be restored without surrendering Fahrenheit's
-   Scale."* A non-native English reader, or anyone who reads with difficulty,
-   should not have to give up their units to understand their timer.
+4. **Leaving is one tap and keeps °F.** Choosing *English* in the picker is
+   enough, so that a non-native reader, or anyone who reads with difficulty,
+   never has to give up their units to understand their timer. In the register,
+   the picker's footnote may say: *"Should the Reader find this Style tiresome,
+   the Modern Tongue may be restored without surrendering Fahrenheit's Scale."*
 
 ## 7. Order, and how it fits with Phase E
 
@@ -273,11 +299,20 @@ E1's record gains `lang`, `register` and `units`. That is three short strings
 with no privacy cost beyond what `app` already reveals. They should be added
 while the schema is still unwritten.
 
-## 8. Decisions that are the owner's
+## 8. Decisions
 
-- **The trigger (§6).** The recommendation is the act of switching, with the
-  default following the region. The alternative is metric for everyone.
-- **The way out that keeps °F (§6, rule 4).** Recommended.
+Taken by the owner, 26 September 2026:
+
+- **1750 is a language code**, `<region>-x-1750`, reached by the picker or by
+  switching an English UI to Imperial, and left by picking English (§6).
+- **Americans should be able to find it**: a picker row and one line under the
+  Imperial option, and nothing more insistent.
+- **Support burden is not a design constraint.** The app is free. Feature
+  requests come as pull requests. No choice in this file is made or unmade on
+  the grounds that it will generate questions.
+
+Still open:
+
 - **The first language after English.** German is recommended as the stress
   test. Choose differently if reach matters more than rigour.
 - **Who reviews the German**, and who reviews the 1750. The second is a question
