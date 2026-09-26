@@ -182,6 +182,48 @@ unanswered question is recorded as skipped when the next cook starts (E1's
 offered-or-skipped field). A button would be one more thing to press that
 teaches nothing.
 
+**Draft for the rest of F2 (everything but the feedback screens), for the
+owner to approve.** Drafted on 27 September while the owner slept, from F1's
+list of strings that fail the criteria above. It is not in the catalogue yet.
+The E2 draft above covers the feedback screens, the pull line and the forget
+dialog. F3 and F4 already fixed the bare "°" and "1 seconds".
+
+The refusals drop `{wanted}` altogether. The slider already shows it right
+above them, and removing an inserted word is simpler than making it stand
+alone. `{limit}` moves after a colon, so no language has to decline it.
+
+| key | now | draft |
+|---|---|---|
+| `refusal.counter` | Resting on the counter keeps cooking the yolk — {wanted} isn't reachable. Softest here is {limit}. Use an ice bath. | Resting on the counter keeps cooking the yolk. Softest possible: {limit}. An ice bath gets you softer. |
+| `refusal.tap` | A cold tap doesn't pull the heat out fast enough — {wanted} isn't reachable. Softest here is {limit}. Ice water gets you further. | A cold tap doesn't cool the egg fast enough to stop the yolk. Softest possible: {limit}. An ice bath gets you softer. |
+| `refusal.ice` | Any shorter and the white is still raw — {wanted} isn't reachable for this egg. Softest here is {limit}. | Any shorter and the white is still raw. Softest possible for this egg: {limit}. |
+| `refusal.harderThanPan` | With the heat off, the water runs out before the yolk gets there — {wanted} isn't reachable with this much water ({water}). Hardest here is {limit}. More water, or keep it boiling. | With the heat off, this much water ({water}) cools before the yolk gets there. Firmest possible: {limit}. More water, or keep it boiling. |
+| `refusal.whiteNeverSets` | With the heat off this pan never sets the white: the water falls below what the white needs while the egg is still in it. Nothing on the slider is reachable. More water, or keep it boiling. | With the heat off, this water cools before the white sets, so no setting works. More water, or keep it boiling. |
+| `alarm.cooled.body` | The carryover is over. That is the egg you asked for. | The yolk has stopped cooking. That's the egg you asked for. |
+| `activity.note.cooling` | carryover still running | yolk still cooking |
+| `colophon.ios` | Times computed from heat conduction and denaturation kinetics, not from a recipe. The cooling step is part of the recipe: carryover is what ruins a soft egg. | Times are worked out from how heat moves through an egg and how its proteins set, not from a recipe. The cooling matters as much as the boil: an egg left warm keeps cooking. |
+| `readout.sub.idleCold` | from eggs into COLD water, heat on, to eggs out | from eggs into cold water, heat on, to eggs out |
+| `readout.sub.idleHot` | from eggs into BOILING water to eggs out | from eggs into boiling water to eggs out |
+| `readout.sub.coldAssumes` | assumes {boil} to a rolling boil | your pan took {boil} to boil last time |
+| `readout.sub.coldGuesses` | guesses {boil} to a rolling boil | a guess of {boil} to boil — tap when it does |
+| `readout.sub.heating` | {elapsed} heating · provisional, assumes {boil} to boil | {elapsed} heating · expects {boil}, corrected when you tap |
+| `readout.sub.heatingEstimate`, `activity.note.estimate` | estimate — the clock corrects itself when you tap the boil / estimate until the boil is tapped | a guess until you tap the boil (both) |
+| `controls.start.coldPan` (web), `controls.start.cold` (iOS), `cook.method.cold` | Cold pan / Cold start / Cold start | Cold water (all three) |
+| `cook.method.hot` | Into boiling water | Boiling water (matches `controls.start.hot`) |
+| `controls.start.hint` | Hot start peels far better; cold start needs no timing of the drop-in. | Eggs into boiling water peel far better. Eggs into cold water need no timing until the boil. |
+| `controls.afterBoil.keepItBoiling` (web), `keepBoiling` (iOS) | Keep it boiling / Keep boiling | Keep boiling (both) |
+| `readout.stat.afterBoiling` (web), `afterBoil` (iOS) | after boiling / after boil | after the boil (both) |
+| `controls.afterBoil.hint` | Standing in cooling water is a real method, but it lives or dies on the pan: the water has to carry the whole cook. More water holds more heat. | Heat off, lid on: the water's own heat cooks the eggs, so the amount of water decides whether it works. More water holds more heat. |
+| `action.hint.cookingStanding` | lid on, burner off — the timing assumes the water cools on its own from the boil ({boiling}) | lid on, burner off — the time assumes you leave it that way |
+| `action.hint.cookingBoiling` | keep it boiling — the timing assumes a full boil ({boiling}) right up to the pull | keep it at a full boil ({boiling}) until the eggs come out |
+| `pan.measured` | Measured on this pan at this volume. It is re-measured every cold start. | Timed on this pan with this much water. Re-timed every cold-water start. |
+| `pan.unmeasured` | Never measured. Run one cold start and tap the boil, and this becomes your pan rather than a guess. | Not timed yet. Tap the boil on a cold-water start, and this becomes your pan's time instead of a guess. |
+| `learned.forgetExplain` | Clears both what it learned from your eggs and the time it measured for your pan. The posterior is honest about its own spread, so a few wrong answers wash out after a few more eggs anyway - this is for when you would rather not wait. | Clears what it learned from your eggs and your pan's boil time. A few wrong answers wash out after a few more eggs anyway; this is for when you'd rather not wait. |
+
+**Deliberately left alone:** `sousvide.warn`. The owner has already edited that
+warning once, cutting two phrases and keeping "Use the pan". What survived that
+edit is theirs.
+
 **Strings that are about to change anyway.** Phase E rewrites the feedback copy:
 three white answers, every answer optional, "still learning" beside the time, and
 a thermometer prompt. Those strings should go straight into the catalogue, which
