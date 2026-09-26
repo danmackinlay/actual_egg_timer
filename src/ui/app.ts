@@ -30,8 +30,12 @@ import {
 import { Feedback, WhiteReport } from '../core/infer.js';
 import { EggFrom, MassFrom } from '../core/record.js';
 import {
-  Calibration, calibrationDoneness, calibrationParams, clearCalibration, eggRecordFor, eggsBehind,
-  learn, loadCalibration, logEgg, recordSecondAnswer,
+  Decision, DecisionInputs, carriedSolution, decide, decidedSolution, decisionInputs,
+} from '../core/decide.js';
+import {
+  Calibration, cachedDecisionGrid, calibrationDoneness, calibrationParams, clearCalibration,
+  decisionGrid, decisionKey, eggRecordFor, eggsBehind, learn, loadCalibration, logEgg,
+  recordSecondAnswer,
 } from './calibration.js';
 import {
   LIMITS, Limit, START_TEMP_PRESETS_C, Settings, UiStartMode, clampNumber,
@@ -68,6 +72,9 @@ const dom = {
   digits: el<HTMLSpanElement>('digits'),
   announce: el<HTMLSpanElement>('announce'),
   subline: el<HTMLParagraphElement>('subline'),
+  odds: el<HTMLParagraphElement>('odds'),
+  oddsHit: el<HTMLSpanElement>('oddsHit'),
+  oddsLearning: el<HTMLSpanElement>('oddsLearning'),
   statYolk: el<HTMLElement>('statYolk'),
   statYolkLabel: el<HTMLElement>('statYolkLabel'),
   startHint: el<HTMLParagraphElement>('startHint'),
@@ -145,6 +152,12 @@ let boilMemory = loadBoilMemory();
 let calib: Calibration = loadCalibration();
 let machine: Machine = idleMachine(settings.cooling);
 let solution: Solution | null = null;
+/** The choice behind the time on screen while idle (E5): the odds, "still
+ *  learning", and how far it leaned from the mean solve. Null until the
+ *  setup's decision surface has been built, and on the sous-vide screen. */
+let decision: Decision | null = null;
+/** A decision surface waiting for the inputs to settle before it is asked for. */
+let decisionHandle = 0;
 /** Set when the requested doneness had to be clamped; empty otherwise. */
 let refusal = '';
 /** What the running cook is, frozen at the moment it started.
@@ -201,6 +214,14 @@ interface Ticket {
   /** The system the cook was reading when they set this egg up, for the
    *  record. Everything above is SI whatever it says. */
   units: UnitSystem;
+  /** How far the choice leaned from the mean solve at "Eggs in", s (E5),
+   *  carried onto a mid-cook re-solve (`carriedSolution`). Zero when the time
+   *  was not chosen. */
+  lean_s: number;
+  /** The odds and "still learning" as they were at "Eggs in", shown for the
+   *  whole cook. Null when the time was started before they were known. */
+  oddsTenths: number | null;
+  stillLearning: boolean | null;
   /** The language they were reading it in, for the record. */
   lang: string;
 }
@@ -400,6 +421,8 @@ function refusalText(v: Verdict): string {
 interface Answer {
   solution: Solution;
   verdict: Verdict;
+  /** The level the solution is for: the one asked, or the one it snapped to. */
+  level: number;
 }
 
 /** Solve for the given inputs. Pure apart from reading `settings`: it moves
@@ -419,9 +442,55 @@ function answerFor(timeToBoil_s: number, level: number, snapRetry = true): Answe
   // was refused. Only worth it when the slider is going to move.
   if (snapRetry && verdict.snapTo !== null) {
     const retry = solveCookTime(egg, setup, params, calibrationDoneness(calib, verdict.snapTo));
-    if (retry.reachable) return { solution: retry, verdict: verdict };
+    if (retry.reachable) return { solution: retry, verdict: verdict, level: verdict.snapTo };
   }
-  return { solution: result, verdict: verdict };
+  return { solution: result, verdict: verdict, level: level };
+}
+
+/**
+ * The time chosen for an answer (E5, src/core/decide.ts), if this pot's
+ * decision surface has been built - and if it has not, the mean solve's time,
+ * with the surface asked for once the inputs settle.
+ *
+ * The surface does not depend on the slider, so a drag is answered from the one
+ * already built, and the time never jumps between the mean solve's and the
+ * chosen one mid-drag. It changes once, when a new pot's surface lands.
+ */
+function decided(answer: Answer, timeToBoil_s: number): { solution: Solution; decision: Decision | null } {
+  const egg = currentEgg();
+  const setup = buildSetup(timeToBoil_s);
+  const inputs = decisionInputs(calib, egg, setup);
+  const grid = cachedDecisionGrid(inputs);
+  if (grid === null) {
+    askForDecision(inputs);
+    return { solution: answer.solution, decision: null };
+  }
+  const logTarget = Math.log10(donenessFromSlider(answer.level).yolkDose_min);
+  const d = decide(calib, grid, answer.solution, logTarget);
+  return {
+    solution: decidedSolution(egg, setup, calibrationParams(calib), answer.solution, d),
+    decision: d,
+  };
+}
+
+/** How long the inputs must sit still before a decision surface is asked for,
+ *  ms, on top of the solve's own coalescing. A surface is a second of the
+ *  worker's time; a pot typed digit by digit should not queue one per digit. */
+const DECISION_SETTLE_MS = 300;
+
+/** Ask the worker for this pot's surface once the inputs have settled, and
+ *  re-solve when it lands if the pot on screen is still the one it was for. */
+function askForDecision(inputs: DecisionInputs): void {
+  if (decisionHandle !== 0) window.clearTimeout(decisionHandle);
+  decisionHandle = window.setTimeout(() => {
+    decisionHandle = 0;
+    const key = decisionKey(inputs);
+    void decisionGrid(inputs).then(() => {
+      if (machine.phase !== 'IDLE' || isSousVide()) return;
+      const now = decisionKey(decisionInputs(calib, currentEgg(), buildSetup(timeToBoil_s())));
+      if (now === key) recompute();
+    });
+  }, DECISION_SETTLE_MS);
 }
 
 /** Take the answer up: show the refusal, and move the slider if the answer
@@ -670,6 +739,7 @@ function render(now_ms: number): void {
   dom.phaseLabel.textContent = label;
   dom.digits.textContent = digits;
   dom.subline.textContent = subline;
+  renderOdds();
 
   // The live region carries a coarse announcement, not a per-second one: the
   // ticking digits are aria-hidden, so a screen reader hears the phase and the
@@ -683,9 +753,34 @@ function render(now_ms: number): void {
   }
 }
 
+/** The odds and "still learning", beside the time (E5). While idle they are
+ *  the choice on screen's, and blank until this pot's surface lands - the line
+ *  keeps its height, so nothing moves when they arrive. Once a cook is running
+ *  they are what they were at "Eggs in". Never where the white never sets:
+ *  there is no cook to give odds on. */
+function renderOdds(): void {
+  let tenths: number | null = null;
+  let learning: boolean | null = null;
+  if (machine.phase === 'IDLE') {
+    if (decision !== null && solution !== null && solution.whiteSets) {
+      tenths = decision.oddsTenths;
+      learning = decision.stillLearning;
+    }
+  } else if (ticket !== null) {
+    tenths = ticket.oddsTenths;
+    learning = ticket.stillLearning;
+  }
+  dom.oddsHit.textContent = tenths === null ? '' : t('odds.hitTheMark', { hits: tenths, of: 10 });
+  dom.oddsLearning.textContent = learning === true ? t('odds.stillLearning') : '';
+}
+
 /** The sous-vide readout: hold times from the isothermal limit, and the plain
  *  statement that you should have started yesterday. */
 function renderSousVide(now_ms: number): void {
+  // No pan, no choice, and no odds: the bath's answer is not a guess about a
+  // pan (E5 chooses pan times).
+  dom.oddsHit.textContent = '';
+  dom.oddsLearning.textContent = '';
   dom.body.dataset['phase'] = machine.phase;
   dom.body.dataset['start'] = settings.startMode;
   renderStartHint();
@@ -755,10 +850,16 @@ function recompute(): void {
   // needs none of this.
   if (isSousVide() && machine.phase === 'IDLE') {
     refusal = '';
+    decision = null;
     renderSousVide(Date.now());
     return;
   }
-  solution = applyAnswer(answerFor(timeToBoil_s(), settings.doneness));
+  const boil = timeToBoil_s();
+  const answer = answerFor(boil, settings.doneness);
+  applyAnswer(answer);
+  const chosen = decided(answer, boil);
+  solution = chosen.solution;
+  decision = chosen.decision;
   render(Date.now());
 }
 
@@ -771,7 +872,12 @@ function recompute(): void {
  *  is the only cook on offer. The refusal is left alone for the same reason:
  *  it is advice about a control the user cannot reach. */
 function resolveDuring(timeToBoil_s: number): Solution {
-  return answerFor(timeToBoil_s, machine.targetLevel, false).solution;
+  const mean = answerFor(timeToBoil_s, machine.targetLevel, false).solution;
+  // Leaned as far as the choice leaned at "Eggs in": the new ramp is a new pot,
+  // whose surface is a second away with the egg already in (`carriedSolution`).
+  return carriedSolution(
+    currentEgg(), buildSetup(timeToBoil_s), calibrationParams(calib), mean, ticket?.lean_s ?? 0,
+  );
 }
 
 /** Coalesce solves: a solve is tens of milliseconds, which is too long to run
@@ -1053,7 +1159,13 @@ function onPrimary(): void {
     // Take the answer up one last time while the controls are still live: the
     // level this returns is the one the cook is run at, and it does not move
     // again until the cook is over.
-    solution = applyAnswer(answerFor(boil, settings.doneness));
+    const answer = answerFor(boil, settings.doneness);
+    applyAnswer(answer);
+    // The time on screen is the one started: the chosen one if this pot's
+    // surface is in, and the mean solve's if the cook was quicker than it.
+    const chosen = decided(answer, boil);
+    solution = chosen.solution;
+    decision = chosen.decision;
     const target = settings.doneness;
     const cook = solution.result.cookTime_s;
     // A cook started here is this tab's own, whatever happened before it.
@@ -1068,6 +1180,9 @@ function onPrimary(): void {
       logNominalTarget: Math.log10(donenessFromSlider(target).yolkDose_min),
       units: unitSystem(),
       lang: activeLocale(),
+      lean_s: decision === null ? 0 : decision.cookTime_s - decision.meanCookTime_s,
+      oddsTenths: decision === null ? null : decision.oddsTenths,
+      stillLearning: decision === null ? null : decision.stillLearning,
     };
     setMachine(settings.startMode === 'cold'
       ? startCold(now, cook, boil, settings.cooling, target)
@@ -1323,6 +1438,11 @@ function restoreTicket(raw: unknown): Ticket | null {
     units: r['units'] === 'imperial' ? 'imperial' : 'metric',
     // And one written before F4 by an app that spoke only English.
     lang: typeof r['lang'] === 'string' && r['lang'] !== '' ? r['lang'] : 'en',
+    // And one written before E5 by an app that did not choose, and had no odds.
+    lean_s: typeof r['lean_s'] === 'number' && Number.isFinite(r['lean_s']) ? r['lean_s'] : 0,
+    oddsTenths: Number.isInteger(r['oddsTenths']) && (r['oddsTenths'] as number) >= 0
+      && (r['oddsTenths'] as number) <= 10 ? r['oddsTenths'] as number : null,
+    stillLearning: typeof r['stillLearning'] === 'boolean' ? r['stillLearning'] : null,
   };
 }
 

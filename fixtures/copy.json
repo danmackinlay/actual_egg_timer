@@ -1466,6 +1466,21 @@
     },
     {
       "locale": "en",
+      "key": "odds.hitTheMark",
+      "args": {
+        "hits": 7,
+        "of": 10
+      },
+      "text": "7/10 eggs hit the mark"
+    },
+    {
+      "locale": "en",
+      "key": "odds.stillLearning",
+      "args": {},
+      "text": "Still learning your kitchen"
+    },
+    {
+      "locale": "en",
       "key": "learned.literature",
       "args": {},
       "text": "Nothing learned yet. It learns your pan when you time a boil, and your eggs when you say how one came out."

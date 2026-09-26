@@ -85,6 +85,15 @@ struct CookLiveActivity: Widget {
                     .font(.caption2)
                     .foregroundStyle(.tertiary)
                     .lineLimit(2)
+
+                // E5's odds, as they stood at "Eggs in". The Lock Screen is
+                // where they are within the budget; the Dynamic Island is not.
+                if let odds = context.attributes.odds {
+                    Text(odds)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
             }
 
             Spacer(minLength: 8)

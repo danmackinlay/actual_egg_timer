@@ -165,6 +165,10 @@ final class Kitchen {
     /// Why the requested doneness was refused, in words, or empty. The point is
     /// to teach the constraint rather than merely to block the control.
     private(set) var refusal = ""
+    /// The choice behind the time on screen (E5): the odds, "still learning",
+    /// and how far it leaned from the mean solve. Nil until this pot's decision
+    /// surface has been built, and on the sous-vide screen.
+    private(set) var decision: Decision?
 
     struct Answers: Sendable {
         var yolk: Feedback?
@@ -313,6 +317,10 @@ final class Kitchen {
     /// scan of about a second. 90 ms, the same window the web app uses.
     private static let coalesceNanos: UInt64 = 90_000_000
 
+    /// How long the inputs must sit still, on top of the coalesce, before a new
+    /// pot's decision surface is built. The web app's `DECISION_SETTLE_MS`.
+    private static let settleNanos: UInt64 = 300_000_000
+
     private func recompute() {
         task?.cancel()
         // No pan, no solve. The sous-vide answer is `sousVide` above and needs
@@ -324,6 +332,7 @@ final class Kitchen {
         if isSousVide {
             solution = nil
             refusal = ""
+            decision = nil
             return
         }
         let level = doneness
@@ -335,8 +344,44 @@ final class Kitchen {
             guard !Task.isCancelled else { return }
             let answer = await Self.solve(egg: egg, setup: setup, level: level, calibration: calibration)
             guard !Task.isCancelled else { return }
+            // E5: the time is chosen on this pot's decision surface. The surface
+            // does not depend on the slider, so a drag is answered from the one
+            // already built and the time never jumps mid-drag; a new pot shows
+            // the mean solve's time first, and the chosen one when its surface
+            // lands, once the inputs have settled.
+            let inputs = decisionInputs(calibration, egg: egg, setup: setup)
+            if let grid = await DecisionGrids.shared.cached(inputs) {
+                let chosen = await Self.decided(answer, grid: grid, egg: egg, calibration: calibration)
+                guard !Task.isCancelled else { return }
+                self?.apply(chosen)
+                return
+            }
             self?.apply(answer)
+            try? await Task.sleep(nanoseconds: Self.settleNanos)
+            guard !Task.isCancelled else { return }
+            let grid = await DecisionGrids.shared.grid(inputs)
+            guard !Task.isCancelled else { return }
+            let chosen = await Self.decided(answer, grid: grid, egg: egg, calibration: calibration)
+            guard !Task.isCancelled else { return }
+            self?.apply(chosen)
         }
+    }
+
+    /// The answer, with its time chosen from the whole posterior (E5, Decide.swift)
+    /// rather than solved at its mean. Off the main actor, like the solve: a
+    /// decision is a few thousand probits.
+    private nonisolated static func decided(
+        _ answer: Answer, grid: DoseGrid, egg: Egg, calibration: Calibration
+    ) async -> Answer {
+        let target = log10(donenessFromSlider(answer.level).yolkDoseMin)
+        let d = decide(calibration, grid: grid, solution: answer.solution, logNominalTarget: target)
+        var chosen = answer
+        chosen.solution = decidedSolution(
+            egg: egg, setup: answer.setup, params: Calibrations.params(calibration),
+            solution: answer.solution, decision: d
+        )
+        chosen.decision = d
+        return chosen
     }
 
     /// Solve, and read the result as a decision about the slider.
@@ -371,13 +416,17 @@ final class Kitchen {
         // numbers on screen are the numbers for that cook rather than for one
         // that was refused. Only worth it when the slider is going to move, and
         // only if nobody has asked a newer question in the meantime.
+        var solvedAt = level
         if snapRetry, let snapTo = verdict.snapTo, !Task.isCancelled {
             let retry = solveCookTime(
                 egg: egg, setup: setup, params: params, doneness: calibrationDoneness(calibration, level: snapTo)
             )
-            if retry.reachable { result = retry }
+            if retry.reachable {
+                result = retry
+                solvedAt = snapTo
+            }
         }
-        return Answer(solution: result, verdict: verdict, setup: setup)
+        return Answer(solution: result, verdict: verdict, setup: setup, level: solvedAt)
     }
 
     /// Re-solve a cook already under way, for a corrected time to boil.
@@ -393,19 +442,29 @@ final class Kitchen {
     /// an unreachable target now answers with the furthest this pan goes, which
     /// is the only cook on offer, instead of with a cook at a target nobody
     /// chose.
-    func cookTime(timeToBoilS: Double, level: Double) async -> Double? {
+    ///
+    /// `leanS` is how far the choice leaned from the mean solve at "Eggs in"
+    /// (E5). A new ramp is a new pot, whose decision surface is a second or more
+    /// away with the egg already in the water, so the lean is carried instead
+    /// (`carriedSolution`); test/decide.test.ts measures what that costs.
+    func cookTime(timeToBoilS: Double, level: Double, leanS: Double) async -> Double? {
+        let setup = setup(timeToBoilS: timeToBoilS)
         let answer = await Self.solve(
-            egg: egg, setup: setup(timeToBoilS: timeToBoilS), level: level,
-            calibration: calibration, snapRetry: false
+            egg: egg, setup: setup, level: level, calibration: calibration, snapRetry: false
+        )
+        let carried = carriedSolution(
+            egg: egg, setup: setup, params: Calibrations.params(calibration),
+            solution: answer.solution, leanS: leanS
         )
         // The numbers on screen follow the cook; the refusal does not. A
         // refusal is advice about a control that is no longer on screen.
-        solution = answer.solution
-        return answer.solution.result.cookTimeS
+        solution = carried
+        return carried.result.cookTimeS
     }
 
     private func apply(_ answer: Answer) {
         solution = answer.solution
+        decision = answer.decision
         refusal = refusalText(answer.verdict, setup: answer.setup, water: show(.water, answer.setup.waterLitres))
         if let snapTo = answer.verdict.snapTo, snapTo != doneness {
             applying = true
@@ -422,6 +481,10 @@ final class Kitchen {
         /// The setup this answer is about, so the refusal can quote the pan
         /// the answer was computed for rather than whatever is current.
         var setup: CookSetup
+        /// The level the solution is for: the one asked, or the one it snapped to.
+        var level: Double
+        /// The choice made on it (E5), once this pot's surface is in.
+        var decision: Decision? = nil
     }
 
     // MARK: - Learning from an egg
@@ -586,6 +649,51 @@ final class Kitchen {
         BoilMemories.save(boilMemory)
     }
 
+}
+
+// MARK: - Decision surfaces
+
+/// This app's decision surfaces (E5), one per pot and posterior, built off the
+/// main actor and kept. The slider is not part of the key, so dragging it never
+/// waits for one. Two asks for the same pot share one build, and the build is
+/// not cancelled with the solve that asked for it: a pot that comes back should
+/// not be built twice. The web app keeps the same cache (`decisionGrid`).
+actor DecisionGrids {
+    static let shared = DecisionGrids()
+
+    /// The pot on screen, the one before, and a cold start's measured ramp.
+    private static let kept = 6
+
+    private var done: [String: DoseGrid] = [:]
+    private var order: [String] = []
+    private var building: [String: Task<DoseGrid, Never>] = [:]
+
+    private static func key(_ inputs: DecisionInputs) -> String {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = .sortedKeys
+        guard let data = try? encoder.encode(inputs) else { return "" }
+        return String(decoding: data, as: UTF8.self)
+    }
+
+    func cached(_ inputs: DecisionInputs) -> DoseGrid? {
+        done[Self.key(inputs)]
+    }
+
+    func grid(_ inputs: DecisionInputs) async -> DoseGrid {
+        let key = Self.key(inputs)
+        if let grid = done[key] { return grid }
+        if let running = building[key] { return await running.value }
+        let build = Task.detached(priority: .userInitiated) { buildDecisionGrid(inputs) }
+        building[key] = build
+        let grid = await build.value
+        building[key] = nil
+        if done[key] == nil { order.append(key) }
+        done[key] = grid
+        while order.count > Self.kept {
+            done[order.removeFirst()] = nil
+        }
+        return grid
+    }
 }
 
 // MARK: - Refusals, in words

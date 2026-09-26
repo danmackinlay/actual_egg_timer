@@ -31,6 +31,9 @@ struct CookActivity: ActivityAttributes {
     /// physics and no units table, so it is handed the words, not the numbers.
     var peakYolk: String
     var eggMass: String
+    /// "7/10 eggs hit the mark" (E5), already in words, or nil when the cook
+    /// was started before the odds were known.
+    var odds: String?
 
     enum Stage: String, Codable, Hashable {
         case heating

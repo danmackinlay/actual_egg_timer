@@ -26,6 +26,7 @@ import { CookSetup } from '../core/protocol.js';
 import { Doneness, ModelParams } from '../core/solve.js';
 import { DoseGrid } from '../core/doseGrid.js';
 import { Feedback, Particle, WhiteReport } from '../core/infer.js';
+import { DecisionInputs, decisionGridRequest } from '../core/decide.js';
 import { CALIBRATION_SEED, PARTICLE_COUNT, calibrationGrid } from '../core/policy.js';
 import {
   Calibration, EggFrom, EggRecord, GridRequest, MassFrom, PRIOR_ID, RECORD_VERSION,
@@ -565,9 +566,22 @@ export function clearCalibration(): Calibration {
 
 /* ------------------------------------------------------ the dose surface */
 
+/** One surface to build: a fold's, described in full, or a decision's,
+ *  described by the pot and the posterior (E5, `decisionGridRequest`). */
+interface Job {
+  request?: GridRequest;
+  decision?: DecisionInputs;
+}
+
 interface Waiting {
-  request: GridRequest;
+  job: Job;
   resolve: (grid: DoseGrid) => void;
+}
+
+function buildHere(job: Job): DoseGrid {
+  if (job.request !== undefined) return buildRequestedGrid(job.request);
+  if (job.decision !== undefined) return buildRequestedGrid(decisionGridRequest(job.decision));
+  throw new Error('nothing to build');
 }
 
 let worker: Worker | null = null;
@@ -578,9 +592,9 @@ const waiting = new Map<number, Waiting>();
 /** Build on this thread, after yielding once so whatever the caller just put on
  *  screen paints before the build blocks it. The fallback, and the path the
  *  tests take, since Node has no Web Worker. */
-function onThisThread(request: GridRequest): Promise<DoseGrid> {
+function onThisThread(job: Job): Promise<DoseGrid> {
   return new Promise((resolve) => {
-    setTimeout(() => resolve(buildRequestedGrid(request)), 30);
+    setTimeout(() => resolve(buildHere(job)), 30);
   });
 }
 
@@ -591,7 +605,7 @@ function abandonWorker(): void {
   worker = null;
   const held = Array.from(waiting.values());
   waiting.clear();
-  for (const w of held) void onThisThread(w.request).then(w.resolve);
+  for (const w of held) void onThisThread(w.job).then(w.resolve);
 }
 
 function gridWorker(): Worker | null {
@@ -608,7 +622,7 @@ function gridWorker(): Worker | null {
     if (w === undefined) return;
     waiting.delete(event.data.id);
     if (event.data.grid !== undefined) w.resolve(event.data.grid);
-    else void onThisThread(w.request).then(w.resolve);
+    else void onThisThread(w.job).then(w.resolve);
   };
   // A browser without module workers, or a worker file that did not ship,
   // lands here. The fold still happens; it just blocks the page as it used to.
@@ -616,12 +630,57 @@ function gridWorker(): Worker | null {
   return worker;
 }
 
-function buildOffThread(request: GridRequest): Promise<DoseGrid> {
+function offThread(job: Job): Promise<DoseGrid> {
   const w = gridWorker();
-  if (w === null) return onThisThread(request);
+  if (w === null) return onThisThread(job);
   return new Promise((resolve) => {
     const id = nextId++;
-    waiting.set(id, { request: request, resolve: resolve });
-    w.postMessage({ id: id, request: request });
+    waiting.set(id, { job: job, resolve: resolve });
+    w.postMessage({ id: id, ...job });
   });
+}
+
+function buildOffThread(request: GridRequest): Promise<DoseGrid> {
+  return offThread({ request: request });
+}
+
+/* ---------------------------------------------------- the decision's surface */
+
+/** Decision surfaces by what they were built from (E5). One per setup: the
+ *  slider is not part of the key, so dragging it never waits for one. A handful
+ *  is plenty - the pot on screen, the one before, and a cold start's measured
+ *  ramp - and the oldest goes first. */
+const decisionGrids = new Map<string, DoseGrid>();
+const decisionBuilds = new Map<string, Promise<DoseGrid>>();
+const DECISION_GRIDS_KEPT = 6;
+
+export function decisionKey(inputs: DecisionInputs): string {
+  return JSON.stringify(inputs);
+}
+
+/** The surface for these inputs if it has been built, or null. */
+export function cachedDecisionGrid(inputs: DecisionInputs): DoseGrid | null {
+  return decisionGrids.get(decisionKey(inputs)) ?? null;
+}
+
+/** The surface for these inputs, built in the worker if it has not been. Two
+ *  asks for the same inputs share one build. */
+export function decisionGrid(inputs: DecisionInputs): Promise<DoseGrid> {
+  const key = decisionKey(inputs);
+  const done = decisionGrids.get(key);
+  if (done !== undefined) return Promise.resolve(done);
+  const running = decisionBuilds.get(key);
+  if (running !== undefined) return running;
+  const build = offThread({ decision: inputs }).then((grid) => {
+    decisionBuilds.delete(key);
+    decisionGrids.set(key, grid);
+    while (decisionGrids.size > DECISION_GRIDS_KEPT) {
+      const oldest = decisionGrids.keys().next().value;
+      if (oldest === undefined) break;
+      decisionGrids.delete(oldest);
+    }
+    return grid;
+  });
+  decisionBuilds.set(key, build);
+  return build;
 }

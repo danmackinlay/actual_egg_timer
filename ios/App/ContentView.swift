@@ -81,8 +81,8 @@ struct ContentView: View {
             // The machine cannot solve for itself. A cold start needs a fresh
             // answer twice: when the boil is tapped, and whenever a slow hob
             // forces the estimate out.
-            cook.resolveCookTime = { [kitchen] seconds, level in
-                await kitchen.cookTime(timeToBoilS: seconds, level: level)
+            cook.resolveCookTime = { [kitchen] seconds, level, lean in
+                await kitchen.cookTime(timeToBoilS: seconds, level: level, leanS: lean)
             }
             // The kitchen's own stored state, read here rather than in its
             // init: @State evaluates its initial value on every construction of
@@ -114,6 +114,21 @@ struct ContentView: View {
                 .font(.footnote)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
+
+            // E5: the odds of the time on screen, and "still learning" for a
+            // cook's first few eggs. The line keeps its height while the
+            // choice is being made, so nothing below it moves when it lands.
+            let odds = oddsLine(phase)
+            HStack(spacing: 10) {
+                Text(odds.hit ?? " ")
+                    .font(.footnote.weight(.semibold))
+                if odds.learning {
+                    Text(tr("odds.stillLearning"))
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .multilineTextAlignment(.center)
 
             // The COOK's own record once one is running, not the live inputs:
             // what is in the pan cannot change after "Eggs in", and answering
@@ -147,6 +162,19 @@ struct ContentView: View {
         .padding(.vertical, 22)
         .padding(.horizontal, 12)
         .background(.quaternary.opacity(0.4), in: RoundedRectangle(cornerRadius: 18))
+    }
+
+    /// The odds and "still learning" (E5). While idle they are the choice on
+    /// screen's, and absent until this pot's surface lands; once a cook is
+    /// running, what they were at "Eggs in". Never where the white never sets:
+    /// there is no cook to give odds on.
+    private func oddsLine(_ phase: Cook.Phase) -> (hit: String?, learning: Bool) {
+        if phase == .idle {
+            guard let d = kitchen.decision, kitchen.solution?.whiteSets == true else { return (nil, false) }
+            return (tr("odds.hitTheMark", ["hits": .int(d.oddsTenths), "of": .int(10)]), d.stillLearning)
+        }
+        guard let ticket = cook.ticket else { return (nil, false) }
+        return (ticket.oddsLine, ticket.stillLearning == true)
     }
 
     /// The peak temperatures to display: the cook's own, if one is running or
@@ -341,7 +369,13 @@ struct ContentView: View {
                     sizeTable: kitchen.sizeTable,
                     boilRemembered: kitchen.hasBoilMemory,
                     units: kitchen.units,
-                    lang: Copy.activeLocale
+                    lang: Copy.activeLocale,
+                    // The choice on screen, if it has been made: the time
+                    // started IS the chosen one, and a mid-cook re-solve
+                    // carries its lean.
+                    leanS: kitchen.decision?.leanS ?? 0,
+                    oddsTenths: kitchen.decision?.oddsTenths,
+                    stillLearning: kitchen.decision?.stillLearning
                 )
                 Task {
                     await cook.start(

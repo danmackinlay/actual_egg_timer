@@ -190,6 +190,8 @@
     "pan.measured": { "surface": "body", "apps": ["ios"], "text": "Measured on this pan at this volume. It is re-measured every cold start." },
     "pan.unmeasured": { "surface": "body", "apps": ["ios"], "text": "Never measured. Run one cold start and tap the boil, and this becomes your pan rather than a guess." },
 
+    "odds.hitTheMark": { "surface": "lockscreen", "apps": ["web", "ios"], "note": "E5: the posterior predictive chance that the white is not runny and the yolk is just right, in tenths. Also drawn beside the time in both apps.", "text": "{hits}/{of} eggs hit the mark", "example": { "hits": 7, "of": 10 } },
+    "odds.stillLearning": { "surface": "label", "apps": ["web", "ios"], "note": "E5: beside the time, for a cook's first few eggs.", "text": "Still learning your kitchen" },
     "learned.literature": { "surface": "body", "apps": ["web"], "text": "Nothing learned yet. It learns your pan when you time a boil, and your eggs when you say how one came out." },
     "learned.tuned": { "surface": "body", "apps": ["web", "ios"], "count": "eggs", "one": "Learned from {eggs} egg", "other": "Learned from {eggs} eggs", "example": { "eggs": 3 } },
     "learned.pan": { "surface": "body", "apps": ["web"], "text": "your pan takes {time} to boil", "example": { "time": "6:40" } },

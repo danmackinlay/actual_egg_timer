@@ -85,6 +85,20 @@ final class Cook {
         /// The language the cook was reading at "Eggs in", for the record: the
         /// catalogue's tag. Nil in a cook saved before F4, which was English.
         var lang: String?
+        /// How far E5's choice leaned from the mean solve at "Eggs in", s,
+        /// carried onto a mid-cook re-solve. Nil in a cook saved before E5,
+        /// and zero when the time was not chosen.
+        var leanS: Double?
+        /// The odds and "still learning" as they were at "Eggs in", shown for
+        /// the whole cook. Nil when the cook was started before they were
+        /// known, or saved before E5.
+        var oddsTenths: Int?
+        var stillLearning: Bool?
+
+        /// "7/10 eggs hit the mark", or nil.
+        var oddsLine: String? {
+            oddsTenths.map { tr("odds.hitTheMark", ["hits": .int($0), "of": .int(10)]) }
+        }
 
         /// The Lock Screen's description of this cook, in its own units.
         var activity: CookActivity {
@@ -92,7 +106,8 @@ final class Cook {
             return CookActivity(
                 doneness: doneness,
                 peakYolk: showIn(system, .temperature, peakYolkC),
-                eggMass: showIn(system, .mass, eggGrams)
+                eggMass: showIn(system, .mass, eggGrams),
+                odds: oddsLine
             )
         }
 
@@ -144,8 +159,9 @@ final class Cook {
     /// view, which owns the inputs. Returning nil leaves the deadline alone.
     ///
     /// Takes the level the cook is being RUN at, so a corrected ramp re-times
-    /// the egg in the pan instead of whatever the slider now says.
-    var resolveCookTime: ((Double, Double) async -> Double?)?
+    /// the egg in the pan instead of whatever the slider now says, and the lean
+    /// E5's choice made at "Eggs in", which the re-solve carries.
+    var resolveCookTime: ((Double, Double, Double) async -> Double?)?
 
     private var ticker: Task<Void, Never>?
     private var lastRevise: Date?
@@ -343,7 +359,7 @@ final class Cook {
         guard phase == .heating, let startedAt, let ticket else { return nil }
         let gen = generation
         let measured = Date.now.timeIntervalSince(startedAt)
-        guard let total = await resolveCookTime?(measured, ticket.level) else { return nil }
+        guard let total = await resolveCookTime?(measured, ticket.level, ticket.leanS ?? 0) else { return nil }
         // Cancelled while the solve was running: there is no cook to correct.
         guard gen == generation else { return nil }
         assumedBoilS = measured
@@ -540,7 +556,7 @@ final class Cook {
 
         let gen = generation
         let assumed = now.timeIntervalSince(startedAt) + Self.reviseExtraS
-        guard let total = await resolveCookTime?(assumed, ticket.level) else { return }
+        guard let total = await resolveCookTime?(assumed, ticket.level, ticket.leanS ?? 0) else { return }
         guard gen == generation else { return }
         assumedBoilS = assumed
         self.ticket = ticket.withTimeToBoil(assumed)

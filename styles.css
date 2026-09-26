@@ -100,6 +100,21 @@ main {
   color: var(--dim);
 }
 
+/* The odds and "still learning", under the time. The line keeps its height
+   while the choice is still being made, so the stats do not jump when it lands. */
+#odds {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  column-gap: 12px;
+  margin: 6px 0 0;
+  min-height: 1.3em;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+#oddsLearning { font-weight: 400; color: var(--dim); }
+#oddsHit:empty, #oddsLearning:empty { display: none; }
+
 #stats {
   display: flex;
   justify-content: center;
