@@ -297,6 +297,12 @@ public func recordMassG(massKg: Double) -> Double {
     (massKg * 100000).rounded() / 100
 }
 
+/// A probe reading as a record carries it: to a hundredth of a degree. See
+/// src/core/record.ts.
+public func recordProbeC(_ centreC: Double) -> Double {
+    (centreC * 100).rounded() / 100
+}
+
 // MARK: - Validation
 
 /// The coolest thing this cook's egg ever touched, C.

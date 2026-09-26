@@ -34,7 +34,7 @@ import {
 } from '../src/core/policy.js';
 import {
   EggRecord, PRIOR_ID, buildRequestedGrid, calibrationDoneness, calibrationParams, copyCalibration,
-  foldRecord, freshCalibration, gridRequestFor, parseRecord, recordTeaches, replay,
+  foldRecord, freshCalibration, gridRequestFor, parseRecord, recordProbe_C, recordTeaches, replay,
 } from '../src/core/record.js';
 import {
   advance, beginCooling, recordBoil, restoreMachine, startCold, startHot, PULL_GRACE_SECONDS,
@@ -285,6 +285,9 @@ test('3c. the loader takes a reading the egg could have been, and refuses one it
   assert.ok(!ok({ centre_C: Number.NaN }));
   assert.ok(!ok({ centre_C: 64, after_s: -1 }));
   assert.ok(!ok({ centre_C: 64, after_s: '183' }));
+  // Typed in F, carried in C to a hundredth: 147.2 F is 64 C, not 63.99999999999999.
+  assert.equal(recordProbe_C((147.2 - 32) * 5 / 9), 64);
+  assert.equal(recordProbe_C((147.3 - 32) * 5 / 9), 64.06);
   // Absent reads as null, as every record before E4 has it.
   const raw = { ...recordWith(null) } as Record<string, unknown>;
   delete raw['probe'];

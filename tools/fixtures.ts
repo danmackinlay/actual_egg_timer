@@ -75,7 +75,7 @@ import {
 import {
   Calibration, EggRecord, PRIOR_ID, RECORD_VERSION, buildRequestedGrid, calibrationDoneness,
   copyCalibration, foldRecord, freshCalibration, gridRequestFor, parseRecord, recordCookTime_s,
-  recordMass_g, recordTeaches, replay,
+  recordMass_g, recordProbe_C, recordTeaches, replay,
 } from '../src/core/record.js';
 import { longDuration, startPhrase, weekdayKey } from '../src/core/sousvide.js';
 import {
@@ -1188,6 +1188,9 @@ const recordFixture = {
   massRounding: [0.048, 0.058, 0.068, 0.076, 0.0553017, 0.06849999, 0.0624449999].map((kg) => ({
     mass_kg: kg, mass_g: recordMass_g(kg),
   })),
+  // A probe reading, typed in F and carried in C (E4).
+  probeRounding: [147.2, 147.3, 150.1, 139.9, 180.5, 212].map((f) => (f - 32) * 5 / 9)
+    .concat([64.005, 58.8849999, 61.3]).map((c) => ({ centre_C: c, record_C: recordProbe_C(c) })),
   replay: {
     grid: { alphaCount: REPLAY_GRID_ALPHA, timeCount: REPLAY_GRID_TIME },
     start: { count: REPLAY_PARTICLES, seed: REPLAY_SEED },

@@ -3272,6 +3272,44 @@
       "mass_g": 62.44
     }
   ],
+  "probeRounding": [
+    {
+      "centre_C": 64,
+      "record_C": 64
+    },
+    {
+      "centre_C": 64.05555555555556,
+      "record_C": 64.06
+    },
+    {
+      "centre_C": 65.61111111111111,
+      "record_C": 65.61
+    },
+    {
+      "centre_C": 59.94444444444444,
+      "record_C": 59.94
+    },
+    {
+      "centre_C": 82.5,
+      "record_C": 82.5
+    },
+    {
+      "centre_C": 100,
+      "record_C": 100
+    },
+    {
+      "centre_C": 64.005,
+      "record_C": 64.01
+    },
+    {
+      "centre_C": 58.8849999,
+      "record_C": 58.88
+    },
+    {
+      "centre_C": 61.3,
+      "record_C": 61.3
+    }
+  ],
   "replay": {
     "grid": {
       "alphaCount": 7,

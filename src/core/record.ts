@@ -181,6 +181,13 @@ export function recordMass_g(mass_kg: number): number {
   return Math.round(mass_kg * 100000) / 100;
 }
 
+/** A probe reading as a record carries it: to a hundredth of a degree, so a
+ *  typed 147.2 F reads as 64 C rather than as 63.99999999999999. A probe
+ *  shows tenths; a hundredth keeps a Fahrenheit tenth distinct. */
+export function recordProbe_C(centre_C: number): number {
+  return Math.round(centre_C * 100) / 100;
+}
+
 /* ------------------------------------------------------------- validation */
 
 function isFiniteNumber(v: unknown): v is number {

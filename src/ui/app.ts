@@ -28,7 +28,7 @@ import {
   plausibleProbeRange_C, probeMomentFor, targetPeakYolk_C, textureFor, verdictFor,
 } from '../core/policy.js';
 import { Feedback, WhiteReport } from '../core/infer.js';
-import { EggFrom, MassFrom, ProbeReading, recordCookTime_s } from '../core/record.js';
+import { EggFrom, MassFrom, ProbeReading, recordCookTime_s, recordProbe_C } from '../core/record.js';
 import {
   Calibration, calibrationDoneness, calibrationParams, clearCalibration, eggRecordFor, eggsBehind,
   learn, loadCalibration, logEgg, recordSecondAnswer,
@@ -994,7 +994,7 @@ function onProbeSave(): void {
   // the record scores as the pull.
   const asked_s = (machine.coolEnd_ms - machine.startedAt_ms) / 1000 - scoredAt_s;
   const probe: ProbeReading = {
-    centre_C: reading_C,
+    centre_C: recordProbe_C(reading_C),
     after_s: machine.coolEnd_ms > 0 && asked_s >= 0 ? asked_s : null,
   };
   dom.probeReading.disabled = true;

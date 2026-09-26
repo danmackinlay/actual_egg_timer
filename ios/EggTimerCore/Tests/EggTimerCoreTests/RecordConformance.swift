@@ -201,6 +201,14 @@ struct RecordConformance {
         }
     }
 
+    @Test("probe readings round to a hundredth of a degree")
+    func probeRounding() {
+        guard let cases = file()["probeRounding"] as? [[String: Any]] else { fatalError("no probe cases") }
+        for c in cases {
+            #expect(recordProbeC(c.num("centre_C")) == c.num("record_C"), "reading \(c.num("centre_C"))")
+        }
+    }
+
     /// Written with explicit nulls, and read back as the same record.
     @Test("a record survives its own JSON, nulls and all")
     func roundTrip() throws {

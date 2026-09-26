@@ -313,7 +313,7 @@ final class Cook {
     func probeReading(centreC: Double) -> ProbeReading? {
         guard let startedAt, let record = eggRecord(yolk: nil) else { return nil }
         let asked = coolDoneAt.map { $0.timeIntervalSince(startedAt) - recordCookTimeS(record) }
-        return ProbeReading(centreC: centreC, afterS: asked.flatMap { $0 >= 0 ? $0 : nil })
+        return ProbeReading(centreC: recordProbeC(centreC), afterS: asked.flatMap { $0 >= 0 ? $0 : nil })
     }
 
     /// Where the solve's time to boil came from. A cold start cannot finish
