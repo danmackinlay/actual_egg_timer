@@ -476,6 +476,19 @@ Some work is on one side only:
 11. **E7, the population fit**, once enough cooks have opted in.
 12. **E8, the nudge**, which is worthless before E7.
 
+**Soon after E1 and F1 merge: the standing method's pan constant from the
+water volume** (`INFERENCE.md` §11, item 11). `panTimeConstant` today is the
+boil time over `ln(r/(r-1))` with `RAMP_R = 3` fixed, so it measures the hob,
+not the pan: a strong hob is read as a pan that cools about 2.2 times too fast.
+The replacement is `tau_ref * (V / 2 L)^(1/3)`, with `tau_ref` pinned so the
+Williams check in `tools/validate.ts` is unchanged by construction, plus a
+per-cook scale learned from standing cooks. The exponent assumes similar-shaped
+pans, and is a judgement that wants a validation check of its own. It changes
+cook times for standing-method users, so it is fixtured and conformance-tested
+like any solver change, and replayed through E1's log rather than reset. After
+this, the remembered boil time is used for nothing but a cold start's first
+guess.
+
 **Anywhere:** derive the cooling countdown from `peakYolkTime_s` (old item 4).
 **Throughout:** cook real eggs (old item 1). After E1 each one counts
 retroactively.

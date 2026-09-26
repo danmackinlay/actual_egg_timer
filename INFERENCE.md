@@ -63,8 +63,14 @@ Where the data does not reach, they sit at the physics.
 and boil temperatures as entered. They keep their place in README §6 as the
 prior's documentation.
 
-**Per kitchen (1).** A multiplier on the time-scale. Every kitchen-level
-nuisance loads on direction 1, so one number is all a kitchen gets.
+**Per cook, for the place (1).** A multiplier on the time-scale. Every
+kitchen-level nuisance loads on direction 1, so one number is all a kitchen
+would get. It belongs to the COOK, and in practice to the phone, rather than to
+a kitchen, because "kitchen" is not a unit anyone can maintain: pans and hobs
+vary within one kitchen, and cooks move between them. Whatever varies from cook
+to cook for one person shows up as that person's noise, which the reliability
+term already models (§6). The owner ruled kitchens out on 26 September, and
+nothing in the record or the UI names one.
 
 **Per cook (2, plus a reliability).** A yolk *taste* offset, and a white
 *cutpoint* - what this person means by "runny". And a noise scale, §6.
@@ -79,12 +85,12 @@ looks like.
 single cook cannot distinguish "whites set later than the model thinks" from "I
 call a tender white runny". The phone therefore carries one white offset, and
 the population fit is what splits it into a global mean (the lag) and a personal
-deviation (the cutpoint). Likewise a kitchen's time-scale and the global one.
+deviation (the cutpoint). Likewise a cook's time-scale and the global one.
 That split is the whole statistical content of making this collective.
 
 **Pooling also does the job the white channel was built for.** `alpha` and taste
 are confounded for one cook. They are not confounded across cooks: the
-time-scale is shared and taste is personal. And a kitchen effect moves yolk and
+time-scale is shared and taste is personal. And a time-scale effect moves yolk and
 white in the physics ratio (0.465, `npm run identifiability`) where a perception
 effect moves one of them - the same geometry as the 19 degrees between `alpha`
 and `h`, but with `alpha`-sized sensitivities behind it instead of a signal 15x
@@ -213,7 +219,7 @@ that fail the schema, are physically absurd, or arrive faster than eggs cook.
 it: ids are free, so many plausible, consistently biased cooks can be minted.
 What bounds the damage:
 
-- heavy-tailed (Student-t) cook and kitchen effects, so a biased cluster is
+- heavy-tailed (Student-t) cook effects, so a biased cluster is
   absorbed as outlying cooks rather than moving the mean;
 - App Attest on iOS, which proves a genuine copy of the app without saying whose.
   The web app has no equivalent, and it contributes anyway, at a lower weight
@@ -294,13 +300,13 @@ faster. You can turn it off, and delete what you sent, whenever you like."*
 
 - **Offline, in Python** (NumPyro or Stan), outside `src/core/` and its
   no-dependency rule. HMC over the 2-4 global parameters and the hyperpriors,
-  cook and kitchen effects marginalised or fitted by Laplace once there are too
+  cook effects marginalised or fitted by Laplace once there are too
   many to sample.
 - **An emulator, not the solver**, in the likelihood: the dose grid is already
   one, in two dimensions. It needs the time-scale, size, start temperature,
   cooling and start mode, and gradients.
 - **It publishes one small file**, `fixtures/population.json`: global posterior
-  means and covariance, and the hyperpriors for cook and kitchen effects. Both
+  means and covariance, and the hyperpriors for cook effects. Both
   apps read it as the prior, under the conformance suite like every other
   fixture.
 - **Validation is predictive calibration on held-out cooks**: when the model says
@@ -355,4 +361,15 @@ faster. You can turn it off, and delete what you sent, whenever you like."*
    proves fiddly to compute or to make stable, fall back to a fixed number of
    eggs. The owner's view is that cooks will barely notice the difference, so
    the threshold is preferred but not worth a fight.
+10. **No kitchens.** Pans and hobs vary within a kitchen, and nobody maintains
+    profiles, so the kitchen level folds into the cook (§2).
+11. **The standing method's pan constant comes from the water volume, not
+    the boil time.** Deriving it from the boil time, with `RAMP_R` fixed, reads
+    the HOB as the pan. A hob twice as strong as assumed makes the app believe
+    the pan cools about 2.2 times faster than it does, and a weak one about 2.7
+    times slower. The replacement is anchored so that Williams' 17-minute
+    method (a 480 s boil, 2 L) is unchanged, and scaled by volume. Lid and pan
+    material become a per-cook scale, learned only from standing cooks.
+    Nobody is asked to time an empty pan: the only timed boil left is a cold
+    start's, where the eggs are already in.
 
