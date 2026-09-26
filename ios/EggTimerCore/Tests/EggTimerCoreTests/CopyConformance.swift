@@ -26,16 +26,23 @@ struct CopyConformance {
         }
     }
 
-    private static func args(_ json: Any?) -> CopyArgs {
+    /// One argument as the fixture writes it: a string, a number, or a
+    /// measurement as `{ "value": 2, "decimals": 2 }`.
+    static func arg(_ value: Any) -> CopyArg? {
+        if let string = value as? String { return .text(string) }
+        if let number = value as? NSNumber { return .number(number.doubleValue) }
+        if let fixed = value as? [String: Any], let v = fixed["value"] as? NSNumber,
+           let d = fixed["decimals"] as? NSNumber {
+            return .fixed(Fixed(v.doubleValue, decimals: d.intValue))
+        }
+        return nil
+    }
+
+    static func args(_ json: Any?) -> CopyArgs {
         var out: CopyArgs = [:]
         for (name, value) in (json as? [String: Any]) ?? [:] {
-            if let string = value as? String {
-                out[name] = .text(string)
-            } else if let number = value as? NSNumber {
-                out[name] = .number(number.doubleValue)
-            } else {
-                fatalError("argument \(name) is neither a string nor a number")
-            }
+            guard let arg = arg(value) else { fatalError("argument \(name) is not a string, number or measurement") }
+            out[name] = arg
         }
         return out
     }
@@ -72,11 +79,13 @@ struct CopyConformance {
         }
     }
 
-    @Test("numbers as arguments")
+    @Test("arguments as text, in English and in Czech formatting")
     func numbers() {
         for c in Self.section("formatArg") {
-            let arg: CopyArg = (c["value"] as? String).map { .text($0) } ?? .number(c.num("value"))
-            #expect(formatArg(arg) == c.str("text"), "\(arg): expected \(c.str("text")), got \(formatArg(arg))")
+            guard let value = c["value"], let arg = Self.arg(value) else { fatalError("formatArg \(c)") }
+            let locale = c.str("locale")
+            let actual = formatArg(arg, formatLocale: locale)
+            #expect(actual == c.str("text"), "\(locale) \(arg): expected \(c.str("text")), got \(actual)")
         }
     }
 

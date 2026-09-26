@@ -574,9 +574,9 @@
       "locale": "en",
       "key": "readout.alarm.set",
       "args": {
-        "time": "07:41:12"
+        "time": "7:41:12 AM"
       },
-      "text": "alarm set for 07:41:12"
+      "text": "alarm set for 7:41:12 AM"
     },
     {
       "locale": "en",
@@ -876,7 +876,7 @@
       "args": {
         "seconds": 1
       },
-      "text": "1 seconds"
+      "text": "1 second"
     },
     {
       "locale": "en",
@@ -960,120 +960,116 @@
     },
     {
       "locale": "en",
+      "key": "spoken.minutes",
+      "args": {
+        "minutes": 11
+      },
+      "text": "11 minutes"
+    },
+    {
+      "locale": "en",
+      "key": "spoken.minutes",
+      "args": {
+        "minutes": 0
+      },
+      "text": "0 minutes"
+    },
+    {
+      "locale": "en",
+      "key": "spoken.minutes",
+      "args": {
+        "minutes": 1
+      },
+      "text": "1 minute"
+    },
+    {
+      "locale": "en",
+      "key": "spoken.minutes",
+      "args": {
+        "minutes": 2
+      },
+      "text": "2 minutes"
+    },
+    {
+      "locale": "en",
+      "key": "spoken.minutes",
+      "args": {
+        "minutes": 3
+      },
+      "text": "3 minutes"
+    },
+    {
+      "locale": "en",
+      "key": "spoken.minutes",
+      "args": {
+        "minutes": 4
+      },
+      "text": "4 minutes"
+    },
+    {
+      "locale": "en",
+      "key": "spoken.minutes",
+      "args": {
+        "minutes": 5
+      },
+      "text": "5 minutes"
+    },
+    {
+      "locale": "en",
+      "key": "spoken.minutes",
+      "args": {
+        "minutes": 11
+      },
+      "text": "11 minutes"
+    },
+    {
+      "locale": "en",
+      "key": "spoken.minutes",
+      "args": {
+        "minutes": 21
+      },
+      "text": "21 minutes"
+    },
+    {
+      "locale": "en",
+      "key": "spoken.minutes",
+      "args": {
+        "minutes": 22
+      },
+      "text": "22 minutes"
+    },
+    {
+      "locale": "en",
+      "key": "spoken.minutes",
+      "args": {
+        "minutes": 1.5
+      },
+      "text": "1.5 minutes"
+    },
+    {
+      "locale": "en",
+      "key": "spoken.minutes",
+      "args": {
+        "minutes": 2.5
+      },
+      "text": "2.5 minutes"
+    },
+    {
+      "locale": "en",
+      "key": "spoken.minutes",
+      "args": {
+        "minutes": 0.5
+      },
+      "text": "0.5 minutes"
+    },
+    {
+      "locale": "en",
       "key": "spoken.minutesSeconds",
       "args": {
-        "minutes": 11,
-        "seconds": 17
+        "minutes": "11 minutes",
+        "seconds": "17 seconds"
       },
       "text": "11 minutes 17 seconds"
-    },
-    {
-      "locale": "en",
-      "key": "spoken.minutesSeconds",
-      "args": {
-        "minutes": 0,
-        "seconds": 17
-      },
-      "text": "0 minutes 17 seconds"
-    },
-    {
-      "locale": "en",
-      "key": "spoken.minutesSeconds",
-      "args": {
-        "minutes": 1,
-        "seconds": 17
-      },
-      "text": "1 minute 17 seconds"
-    },
-    {
-      "locale": "en",
-      "key": "spoken.minutesSeconds",
-      "args": {
-        "minutes": 2,
-        "seconds": 17
-      },
-      "text": "2 minutes 17 seconds"
-    },
-    {
-      "locale": "en",
-      "key": "spoken.minutesSeconds",
-      "args": {
-        "minutes": 3,
-        "seconds": 17
-      },
-      "text": "3 minutes 17 seconds"
-    },
-    {
-      "locale": "en",
-      "key": "spoken.minutesSeconds",
-      "args": {
-        "minutes": 4,
-        "seconds": 17
-      },
-      "text": "4 minutes 17 seconds"
-    },
-    {
-      "locale": "en",
-      "key": "spoken.minutesSeconds",
-      "args": {
-        "minutes": 5,
-        "seconds": 17
-      },
-      "text": "5 minutes 17 seconds"
-    },
-    {
-      "locale": "en",
-      "key": "spoken.minutesSeconds",
-      "args": {
-        "minutes": 11,
-        "seconds": 17
-      },
-      "text": "11 minutes 17 seconds"
-    },
-    {
-      "locale": "en",
-      "key": "spoken.minutesSeconds",
-      "args": {
-        "minutes": 21,
-        "seconds": 17
-      },
-      "text": "21 minutes 17 seconds"
-    },
-    {
-      "locale": "en",
-      "key": "spoken.minutesSeconds",
-      "args": {
-        "minutes": 22,
-        "seconds": 17
-      },
-      "text": "22 minutes 17 seconds"
-    },
-    {
-      "locale": "en",
-      "key": "spoken.minutesSeconds",
-      "args": {
-        "minutes": 1.5,
-        "seconds": 17
-      },
-      "text": "1.5 minutes 17 seconds"
-    },
-    {
-      "locale": "en",
-      "key": "spoken.minutesSeconds",
-      "args": {
-        "minutes": 2.5,
-        "seconds": 17
-      },
-      "text": "2.5 minutes 17 seconds"
-    },
-    {
-      "locale": "en",
-      "key": "spoken.minutesSeconds",
-      "args": {
-        "minutes": 0.5,
-        "seconds": 17
-      },
-      "text": "0.5 minutes 17 seconds"
     },
     {
       "locale": "en",
@@ -1769,11 +1765,11 @@
       "locale": "en",
       "key": "sousvide.subline",
       "args": {
-        "clock": "08:47",
+        "clock": "8:47 AM",
         "duration": "22 h 43 min",
         "bath": "136 °F"
       },
-      "text": "at 08:47 — 22 h 43 min in the bath (136 °F), to eat now"
+      "text": "at 8:47 AM — 22 h 43 min in the bath (136 °F), to eat now"
     },
     {
       "locale": "en",
@@ -2927,60 +2923,192 @@
   ],
   "formatArg": [
     {
+      "locale": "en",
       "value": 0,
       "text": "0"
     },
     {
+      "locale": "en",
       "value": 1,
       "text": "1"
     },
     {
+      "locale": "en",
       "value": 3,
       "text": "3"
     },
     {
+      "locale": "en",
       "value": -3,
       "text": "-3"
     },
     {
+      "locale": "en",
       "value": 21,
       "text": "21"
     },
     {
+      "locale": "en",
       "value": 1234567,
-      "text": "1234567"
+      "text": "1,234,567"
     },
     {
+      "locale": "en",
       "value": 1.5,
       "text": "1.5"
     },
     {
+      "locale": "en",
       "value": 2.5,
       "text": "2.5"
     },
     {
+      "locale": "en",
       "value": 0.25,
       "text": "0.25"
     },
     {
+      "locale": "en",
       "value": -0.5,
       "text": "-0.5"
     },
     {
+      "locale": "en",
       "value": 1000000000000000,
-      "text": "1000000000000000"
+      "text": "1,000,000,000,000,000"
     },
     {
+      "locale": "en",
       "value": "text",
       "text": "text"
     },
     {
+      "locale": "en",
       "value": "",
       "text": ""
     },
     {
+      "locale": "en",
       "value": "4,5",
       "text": "4,5"
+    },
+    {
+      "locale": "en",
+      "value": {
+        "value": 2,
+        "decimals": 2
+      },
+      "text": "2.00"
+    },
+    {
+      "locale": "en",
+      "value": {
+        "value": 1234.5,
+        "decimals": 1
+      },
+      "text": "1,234.5"
+    },
+    {
+      "locale": "en",
+      "value": {
+        "value": -0.001,
+        "decimals": 2
+      },
+      "text": "0.00"
+    },
+    {
+      "locale": "cs-CZ",
+      "value": 0,
+      "text": "0"
+    },
+    {
+      "locale": "cs-CZ",
+      "value": 1,
+      "text": "1"
+    },
+    {
+      "locale": "cs-CZ",
+      "value": 3,
+      "text": "3"
+    },
+    {
+      "locale": "cs-CZ",
+      "value": -3,
+      "text": "-3"
+    },
+    {
+      "locale": "cs-CZ",
+      "value": 21,
+      "text": "21"
+    },
+    {
+      "locale": "cs-CZ",
+      "value": 1234567,
+      "text": "1 234 567"
+    },
+    {
+      "locale": "cs-CZ",
+      "value": 1.5,
+      "text": "1,5"
+    },
+    {
+      "locale": "cs-CZ",
+      "value": 2.5,
+      "text": "2,5"
+    },
+    {
+      "locale": "cs-CZ",
+      "value": 0.25,
+      "text": "0,25"
+    },
+    {
+      "locale": "cs-CZ",
+      "value": -0.5,
+      "text": "-0,5"
+    },
+    {
+      "locale": "cs-CZ",
+      "value": 1000000000000000,
+      "text": "1 000 000 000 000 000"
+    },
+    {
+      "locale": "cs-CZ",
+      "value": "text",
+      "text": "text"
+    },
+    {
+      "locale": "cs-CZ",
+      "value": "",
+      "text": ""
+    },
+    {
+      "locale": "cs-CZ",
+      "value": "4,5",
+      "text": "4,5"
+    },
+    {
+      "locale": "cs-CZ",
+      "value": {
+        "value": 2,
+        "decimals": 2
+      },
+      "text": "2,00"
+    },
+    {
+      "locale": "cs-CZ",
+      "value": {
+        "value": 1234.5,
+        "decimals": 1
+      },
+      "text": "1 234,5"
+    },
+    {
+      "locale": "cs-CZ",
+      "value": {
+        "value": -0.001,
+        "decimals": 2
+      },
+      "text": "0,00"
     }
   ],
   "probe": {
@@ -3097,28 +3225,28 @@
         "args": {
           "n": 1.5
         },
-        "text": "1.5 many"
+        "text": "1,5 many"
       },
       {
         "key": "probe.eggs",
         "args": {
           "n": 2.5
         },
-        "text": "2.5 many"
+        "text": "2,5 many"
       },
       {
         "key": "probe.eggs",
         "args": {
           "n": 0.5
         },
-        "text": "0.5 many"
+        "text": "0,5 many"
       },
       {
         "key": "probe.eggs",
         "args": {
           "n": 1.25
         },
-        "text": "1.25 many"
+        "text": "1,25 many"
       },
       {
         "key": "probe.eggs",
@@ -3167,7 +3295,7 @@
         "args": {
           "n": 1.5
         },
-        "text": "1.5 of them"
+        "text": "1,5 of them"
       },
       {
         "key": "probe.eggs",
@@ -3217,7 +3345,7 @@
           "eggs": 1.5,
           "spread": "9"
         },
-        "text": "tuned on 1.5 eggs · ±9%"
+        "text": "tuned on 1,5 eggs · ±9%"
       },
       {
         "key": "no.such.key",

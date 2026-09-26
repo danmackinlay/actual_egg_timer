@@ -125,9 +125,8 @@ public func longDuration(_ seconds: Double) -> CopyRef {
 /// arithmetic stays where it belongs: `Calendar` counts whole days across a
 /// local midnight correctly, and this package should not reimplement it. For
 /// the same reason `sousvide.start.lastWeekday` wants a `{weekday}` this does
-/// not supply. The app adds it from a locale-aware formatter, where the web
-/// takes it from the catalogue, so a non-English phone says "Last mardi" - a
-/// deliberate difference that F4 (locale formatting) settles.
+/// not supply. The app adds it, from the catalogue through `weekdayKey`, as the
+/// web does (F4).
 public func startPhrase(daysAgo: Int) -> CopyRef {
     if daysAgo <= 0 { return CopyRef("sousvide.start.today") }
     if daysAgo == 1 { return CopyRef("sousvide.start.yesterday") }
@@ -135,4 +134,17 @@ public func startPhrase(daysAgo: Int) -> CopyRef {
     if daysAgo < 14 { return CopyRef("sousvide.start.lastWeek") }
     if daysAgo < 60 { return CopyRef("sousvide.start.weeksAgo", ["weeks": (Double(daysAgo) / 7.0).rounded()]) }
     return CopyRef("sousvide.start.monthsAgo", ["months": (Double(daysAgo) / 30.0).rounded()])
+}
+
+/// The catalogue key of a weekday's name, numbered as JavaScript's
+/// `Date.getDay()` numbers them: 0 is Sunday. `Calendar`'s `.weekday` counts
+/// from 1, so the app subtracts one. Both apps name weekdays from the
+/// catalogue, not the platform (F4, LANGUAGE.md §2).
+public let weekdayKeys: [String] = [
+    "weekday.sunday", "weekday.monday", "weekday.tuesday", "weekday.wednesday",
+    "weekday.thursday", "weekday.friday", "weekday.saturday",
+]
+
+public func weekdayKey(_ dayOfWeek: Int) -> String {
+    weekdayKeys[((dayOfWeek % 7) + 7) % 7]
 }

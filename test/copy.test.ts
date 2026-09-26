@@ -63,7 +63,9 @@ test('1a. placeholders are substituted, repeated ones every time, missing ones l
 test('1b. the plural form is chosen by the count argument, in the catalogue\'s language', () => {
   assert.equal(render(TINY, 'eggs', { n: 1 }), '1 vejce');
   assert.equal(render(TINY, 'eggs', { n: 5 }), '5 vajec');
-  assert.equal(render(TINY, 'eggs', { n: 1.5 }), '1.5 vejce');
+  // Written in the catalogue's own locale when no other is given: Czech,
+  // with its decimal comma.
+  assert.equal(render(TINY, 'eggs', { n: 1.5 }), '1,5 vejce');
 });
 
 test('1c. a key the language lacks falls back to English, with the English plural rule', () => {

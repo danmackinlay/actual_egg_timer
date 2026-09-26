@@ -47,9 +47,8 @@ struct SousVideCopyConformance {
     }
 
     /// The weekday is supplied by the caller, so this pins the BUCKETING without
-    /// dragging a locale into the fixture. Which weekday name each app passes in
-    /// is deliberately its own business - this side reads a locale-aware
-    /// formatter, the web the catalogue.
+    /// dragging a locale into the fixture. Which name goes in is `weekday` below:
+    /// both apps take it from the catalogue.
     @Test("how long ago the cook should have started")
     func phrase() {
         for c in Fixtures.sousVideCopyCases("startPhrase") {
@@ -58,6 +57,15 @@ struct SousVideCopyConformance {
             #expect(actual == CopyRef(c.str("key"), Self.args(c["args"])), "startPhrase(\(days)): \(actual)")
             let text = Self.english.render(actual, ["weekday": .text("Tuesday")])
             #expect(text == c.str("text"), "startPhrase(\(days)): expected \(c.str("text")), got \(text)")
+        }
+    }
+
+    @Test("the weekday's name comes from the catalogue, by the web's day numbering")
+    func weekday() {
+        for c in Fixtures.sousVideCopyCases("weekday") {
+            let day = Int(c.num("day"))
+            #expect(weekdayKey(day) == c.str("key"), "weekdayKey(\(day)): \(weekdayKey(day))")
+            #expect(Self.english.render(weekdayKey(day)) == c.str("text"), "weekday \(day)")
         }
     }
 }

@@ -1,0 +1,22 @@
+{
+  "locale": "cs",
+  "about": "A pseudo-locale for tests: Czech's plural rule and Czech formatting, and no Czech words. Each template says which form it is, so a test can see the form picked and the number written. Never shipped: it lives under test/, not copy/. Keys it lacks fall back to English, as a real translation's would.",
+  "messages": {
+    "spoken.seconds": { "count": "seconds", "one": "{seconds} [s:one]", "few": "{seconds} [s:few]", "many": "{seconds} [s:many]", "other": "{seconds} [s:other]" },
+    "spoken.minutes": { "count": "minutes", "one": "{minutes} [min:one]", "few": "{minutes} [min:few]", "many": "{minutes} [min:many]", "other": "{minutes} [min:other]" },
+    "spoken.minutesSeconds": { "text": "{minutes} + {seconds}" },
+    "format.litres": { "count": "value", "one": "{value} [l:one]", "few": "{value} [l:few]", "many": "{value} [l:many]", "other": "{value} [l:other]" },
+    "format.metres": { "text": "{value} [m]" },
+    "duration.days": { "count": "days", "one": "{days} [d:one]", "few": "{days} [d:few]", "many": "{days} [d:many]", "other": "{days} [d:other]" },
+    "learned.tuned": { "count": "eggs", "one": "[tuned] {eggs} [eggs:one] ±{spread}%", "few": "[tuned] {eggs} [eggs:few] ±{spread}%", "many": "[tuned] {eggs} [eggs:many] ±{spread}%", "other": "[tuned] {eggs} [eggs:other] ±{spread}%" },
+    "sousvide.subline": { "text": "[subline] {clock} · {duration} · {bath}" },
+    "sousvide.start.lastWeekday": { "text": "[last] {weekday}" },
+    "weekday.sunday": { "text": "[sunday]" },
+    "weekday.monday": { "text": "[monday]" },
+    "weekday.tuesday": { "text": "[tuesday]" },
+    "weekday.wednesday": { "text": "[wednesday]" },
+    "weekday.thursday": { "text": "[thursday]" },
+    "weekday.friday": { "text": "[friday]" },
+    "weekday.saturday": { "text": "[saturday]" }
+  }
+}

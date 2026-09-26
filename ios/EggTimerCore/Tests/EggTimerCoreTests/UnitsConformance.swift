@@ -106,7 +106,7 @@ struct UnitsConformance {
                 expectClose(EggTimerCore.display(m, si), p.num("value"), what)
                 #expect(displayText(m, si) == p.str("text"), "\(what): \(displayText(m, si))")
                 let text = quantityText(m, si)
-                #expect(en.render(text.key, ["value": .text(text.value)]) == p.str("rendered"), "\(what) rendered")
+                #expect(en.render(text.key, ["value": .fixed(text.value)]) == p.str("rendered"), "\(what) rendered")
             }
             expectClose(EggTimerCore.display(m, .nan), nan.num("value"), "\(q.rawValue) NaN")
             #expect(displayText(m, .nan) == nan.str("text"), "\(q.rawValue) NaN text")
@@ -183,8 +183,9 @@ struct UnitsConformance {
             guard let cls = table.first(where: { $0.key == c.str("key") }),
                   let mass = c["mass"] as? [String: Any] else { fatalError("size label \(c)") }
             let label = sizeClassLabel(cls, system: system(c["system"]))
-            #expect(label.mass == QuantityText(key: mass.str("key"), value: mass.str("value")), "\(c)")
-            let text = en.render(label.key, ["mass": .text(en.render(label.mass.key, ["value": .text(label.mass.value)]))])
+            #expect(label.mass.key == mass.str("key"), "\(c)")
+            #expect(CopyConformance.arg(mass["value"] ?? "") == .fixed(label.mass.value), "\(c)")
+            let text = en.render(label.key, ["mass": .text(en.render(label.mass.key, ["value": .fixed(label.mass.value)]))])
             #expect(text == c.str("text"), "\(text)")
         }
     }

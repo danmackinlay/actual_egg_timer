@@ -1,4 +1,5 @@
 import Foundation
+import EggTimerCopy
 
 /// Metric and Imperial, transliterated from `src/core/units.ts` and held to it
 /// by `fixtures/units.json`.
@@ -205,7 +206,9 @@ public func display(_ m: Measure, _ si: Double) -> Double {
     return clamp(v, to: bounds)
 }
 
-/// `display`, as the digits the catalogue's `{value}` is given.
+/// `display`, as plain decimal digits with a point and no grouping: machine
+/// text, as a web input holds it. What the cook reads goes through
+/// `quantityText` and the formatting locale instead.
 public func displayText(_ m: Measure, _ si: Double) -> String {
     String(format: "%.\(m.decimals)f", display(m, si))
 }
@@ -219,14 +222,16 @@ public func parse(_ m: Measure, _ typed: Double) -> Double? {
     return clamp(si, to: limit)
 }
 
-/// A number and its unit, as a catalogue key and the value to put in it.
+/// A number and its unit, as a catalogue key and the value to put in it. The
+/// renderer writes the value in the formatting locale, to the measure's
+/// decimals - "2.4 oz", "2,4 oz", "1,500 m".
 public struct QuantityText: Sendable, Equatable {
     public let key: String
-    public let value: String
+    public let value: Fixed
 }
 
 public func quantityText(_ m: Measure, _ si: Double) -> QuantityText {
-    QuantityText(key: m.formatKey, value: displayText(m, si))
+    QuantityText(key: m.formatKey, value: Fixed(display(m, si), decimals: m.decimals))
 }
 
 /// What the size menu says for a class: its name and its mass in the cook's

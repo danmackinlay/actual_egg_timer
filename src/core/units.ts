@@ -44,6 +44,7 @@
 
 import { LIMITS, Limit, clamp } from './policy.js';
 import { SizeClass } from './geometry.js';
+import { Fixed } from './format.js';
 
 /** The one setting. The record's `Units` is the same pair. */
 export type UnitSystem = 'metric' | 'imperial';
@@ -274,8 +275,10 @@ export function display(m: Measure, si: number): number {
   return m.bounds === null ? v : clamp(v, m.bounds);
 }
 
-/** `display`, as the digits the catalogue's `{value}` is given. Plain decimal
- *  digits with a point: locale-aware numbers are F4's. */
+/** `display`, as plain decimal digits with a point and no grouping: what a
+ *  web `<input type="number">` holds, which is machine text in every locale.
+ *  What the cook READS goes through `quantityText` and the formatting locale
+ *  instead ("2,4 oz" in Czech). */
 export function displayText(m: Measure, si: number): string {
   return display(m, si).toFixed(m.decimals);
 }
@@ -291,14 +294,16 @@ export function parse(m: Measure, typed: number): number | null {
 }
 
 /** A number and its unit, as the catalogue key and the value to put in it.
- *  The app renders `t(key, { value })`: core does not speak English. */
+ *  The app renders `t(key, { value })`: core does not speak English, and the
+ *  renderer writes the value in the formatting locale, to the measure's
+ *  decimals - "2.4 oz", "2,4 oz", "1,500 m". */
 export interface QuantityText {
   key: string;
-  value: string;
+  value: Fixed;
 }
 
 export function quantityText(m: Measure, si: number): QuantityText {
-  return { key: m.formatKey, value: displayText(m, si) };
+  return { key: m.formatKey, value: { value: display(m, si), decimals: m.decimals } };
 }
 
 /** What the size menu says for a class: its name, which is its catalogue key,

@@ -16,7 +16,14 @@
  *
  * Like everything else in `src/core/`, this does no I/O. The catalogue is data
  * the app has already loaded and hands in.
+ *
+ * A number that goes in as a number comes out in the formatting locale -
+ * "1,234" or "1 234" - through `src/core/format.ts`, so no app formats a count by hand.
  */
+
+import { Fixed, countDecimals, formatCount, formatNumber, isFixed, languageOf, roundTo } from './format.js';
+
+export { languageOf } from './format.js';
 
 /** The CLDR plural categories. English uses two, Czech four. */
 export type PluralCategory = 'zero' | 'one' | 'two' | 'few' | 'many' | 'other';
@@ -25,9 +32,13 @@ export const PLURAL_CATEGORIES: readonly PluralCategory[] = [
   'zero', 'one', 'two', 'few', 'many', 'other',
 ];
 
-/** Arguments to a message. A string goes in as it is - the app has already
- *  formatted it - and a number goes in as its plain decimal digits. */
-export type CopyArgs = Readonly<Record<string, string | number>>;
+/** An argument to a message. A string goes in as it is: a name, or text the
+ *  app has already rendered. A number is a count, and is written in the
+ *  formatting locale with the decimals it has. A `Fixed` is a measurement,
+ *  written with exactly its decimals ("2.00"), which its plural form sees. */
+export type CopyArg = string | number | Fixed;
+
+export type CopyArgs = Readonly<Record<string, CopyArg>>;
 
 /** What core returns where it used to return English: a key, and the numbers
  *  the sentence needs. The app renders it, and may add arguments of its own
@@ -69,15 +80,15 @@ export interface Catalogue {
  * in the Swift twin, and a row per boundary to `fixtures/copy.json`.
  *
  * The operands are CLDR's: `i`, the integer digits, and `v`, the count of
- * visible fraction digits. A number is all this is given, so `v` is 0 exactly
- * when the number is whole - "1.0 egg" cannot be asked for, and nothing here
- * needs to.
+ * visible fraction digits. `v` is the decimals the number is SHOWN with when
+ * the caller knows them - "2.00" litres has v = 2, and is Czech `many` - and
+ * otherwise 0 exactly when the number is whole.
  */
-export function pluralCategory(locale: string, n: number): PluralCategory {
+export function pluralCategory(locale: string, n: number, fractionDigits: number | null = null): PluralCategory {
   if (!Number.isFinite(n)) return 'other';
   const abs = Math.abs(n);
   const i = Math.floor(abs);
-  const whole = abs === i;
+  const whole = fractionDigits === null ? abs === i : fractionDigits === 0 && abs === i;
   switch (languageOf(locale)) {
     case 'en':
       // one: i = 1 and v = 0
@@ -96,12 +107,6 @@ export function pluralCategory(locale: string, n: number): PluralCategory {
   }
 }
 
-/** The language subtag, lower-cased: 'en' for 'en-GB-x-1750'. */
-export function languageOf(locale: string): string {
-  const dash = locale.indexOf('-');
-  return (dash < 0 ? locale : locale.slice(0, dash)).toLowerCase();
-}
-
 /* ----------------------------------------------------------- rendering */
 
 /**
@@ -112,50 +117,64 @@ export function languageOf(locale: string): string {
  * that language's. A key no catalogue has renders as the key itself, and a
  * placeholder with no argument is left as written: both are bugs, and a bug
  * that shows is one somebody reports. The tests make sure neither ships.
+ *
+ * Numbers are written in `formatLocale`: the language the app speaks and the
+ * region it is in (`formattingLocale` in `src/core/format.ts`). It defaults to the
+ * catalogue's own tag, which is what a test or a fixture wants.
  */
-export function render(catalogue: Catalogue, key: string, args: CopyArgs = {}): string {
+export function render(
+  catalogue: Catalogue, key: string, args: CopyArgs = {}, formatLocale: string = catalogue.locale,
+): string {
   let found: Catalogue | null = catalogue;
   while (found !== null && !found.messages.has(key)) found = found.fallback;
   if (found === null) return key;
   const message = found.messages.get(key) as Message;
-  return substitute(templateFor(message, found.locale, args), args);
+  return substitute(templateFor(message, found.locale, args), args, formatLocale);
 }
 
 /** Render what core returned, with any arguments the app adds. */
-export function renderRef(catalogue: Catalogue, ref: CopyRef, extra: CopyArgs = {}): string {
-  return render(catalogue, ref.key, { ...ref.args, ...extra });
+export function renderRef(
+  catalogue: Catalogue, ref: CopyRef, extra: CopyArgs = {}, formatLocale: string = catalogue.locale,
+): string {
+  return render(catalogue, ref.key, { ...ref.args, ...extra }, formatLocale);
 }
 
 function templateFor(message: Message, locale: string, args: CopyArgs): string {
   if (message.text !== null) return message.text;
   const forms = message.forms as Partial<Record<PluralCategory, string>>;
   // The count must be a number. A string is not parsed, because the two
-  // platforms parse strings differently, and a missing count is 'other'.
+  // platforms parse strings differently, and a missing count is 'other'. The
+  // form is chosen for the number as it is SHOWN: rounded as `formatArg`
+  // rounds it, with the decimals it is shown with.
   const raw = message.count === null ? undefined : args[message.count];
-  const n = typeof raw === 'number' ? raw : NaN;
-  return forms[pluralCategory(locale, n)] ?? (forms.other as string);
+  let category: PluralCategory = 'other';
+  if (typeof raw === 'number') {
+    category = pluralCategory(locale, roundTo(raw, countDecimals(raw)), countDecimals(raw));
+  } else if (isFixed(raw)) {
+    category = pluralCategory(locale, roundTo(raw.value, raw.decimals), raw.decimals);
+  }
+  return forms[category] ?? (forms.other as string);
 }
 
-/** A number as an argument: its plain decimal digits, no grouping, a point for
- *  a fraction. Locale-aware numbers are F4's job, and until then the apps
- *  format anything that needs formatting and pass a string. */
-export function formatArg(value: string | number): string {
+/** An argument as text. A string as it is; a count in the locale, with its
+ *  own decimals; a measurement in the locale, to its decimals. */
+export function formatArg(value: CopyArg, formatLocale: string = 'en'): string {
   if (typeof value === 'string') return value;
-  if (Number.isInteger(value)) return value.toFixed(0);
-  return String(value);
+  if (typeof value === 'number') return formatCount(formatLocale, value);
+  return formatNumber(formatLocale, value.value, value.decimals);
 }
 
 /** Replace every `{name}` that has an argument. Written as a scan rather than a
  *  regular expression so that the Swift twin can be the same loop, and agree
  *  on every malformed brace as well as every good one. */
-function substitute(template: string, args: CopyArgs): string {
+function substitute(template: string, args: CopyArgs, formatLocale: string): string {
   let out = '';
   let i = 0;
   while (i < template.length) {
     const name = placeholderAt(template, i);
     if (name !== null) {
       const value = args[name];
-      out += value === undefined ? `{${name}}` : formatArg(value);
+      out += value === undefined ? `{${name}}` : formatArg(value, formatLocale);
       i += name.length + 2;
     } else {
       out += template[i];

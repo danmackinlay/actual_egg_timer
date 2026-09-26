@@ -18,17 +18,24 @@ import Foundation
 ///
 /// Like the rest of the core it does no I/O. The app reads the JSON out of its
 /// bundle and hands the bytes in.
+///
+/// A number that goes in as a number comes out in the formatting locale -
+/// "1,234" or "1 234" - through `Format.swift`, so no app formats a count by
+/// hand.
 
 /// The CLDR plural categories. English uses two, Czech four.
 public enum PluralCategory: String, CaseIterable, Sendable {
     case zero, one, two, few, many, other
 }
 
-/// An argument to a message. A string goes in as it is - the app has already
-/// formatted it - and a number goes in as its plain decimal digits.
+/// An argument to a message. A string goes in as it is: a name, or text the
+/// app has already rendered. A number is a count, and is written in the
+/// formatting locale with the decimals it has. A `Fixed` is a measurement,
+/// written with exactly its decimals ("2.00"), which its plural form sees.
 public enum CopyArg: Sendable, Equatable {
     case text(String)
     case number(Double)
+    case fixed(Fixed)
 
     public static func int(_ value: Int) -> CopyArg { .number(Double(value)) }
 }
@@ -141,28 +148,46 @@ public final class Catalogue: Sendable {
     /// forms are that language's. A key no catalogue has renders as the key
     /// itself, and a placeholder with no argument is left as written: both are
     /// bugs, and a bug that shows is one somebody reports.
-    public func render(_ key: String, _ args: CopyArgs = [:]) -> String {
+    ///
+    /// Numbers are written in `formatLocale`: the language the app speaks and
+    /// the region it is in (`formattingLocale`). It defaults to the catalogue's
+    /// own tag, which is what a test or a fixture wants.
+    public func render(_ key: String, _ args: CopyArgs = [:], formatLocale: String? = nil) -> String {
         var found: Catalogue? = self
         while let catalogue = found, catalogue.messages[key] == nil { found = catalogue.fallback }
         guard let catalogue = found, let message = catalogue.messages[key] else { return key }
-        return substitute(template(for: message, locale: catalogue.locale, args: args), args)
+        return substitute(
+            template(for: message, locale: catalogue.locale, args: args), args, formatLocale ?? locale
+        )
     }
 
     /// Render what the core returned, with any arguments the app adds.
-    public func render(_ ref: CopyRef, _ extra: CopyArgs = [:]) -> String {
+    public func render(_ ref: CopyRef, _ extra: CopyArgs = [:], formatLocale: String? = nil) -> String {
         var args: CopyArgs = [:]
         for (name, value) in ref.args { args[name] = .number(value) }
         for (name, value) in extra { args[name] = value }
-        return render(ref.key, args)
+        return render(ref.key, args, formatLocale: formatLocale)
     }
 
     private func template(for message: Message, locale: String, args: CopyArgs) -> String {
         if let text = message.text { return text }
         // The count must be a number. A string is not parsed, because the two
         // platforms parse strings differently, and a missing count is `other`.
-        let n: Double
-        if case .number(let value) = message.count.flatMap({ args[$0] }) { n = value } else { n = .nan }
-        return message.forms[pluralCategory(locale: locale, n)] ?? message.forms[.other] ?? ""
+        // The form is chosen for the number as it is SHOWN: rounded as
+        // `formatArg` rounds it, with the decimals it is shown with.
+        var category = PluralCategory.other
+        switch message.count.flatMap({ args[$0] }) {
+        case .number(let value):
+            let d = countDecimals(value)
+            category = pluralCategory(locale: locale, roundTo(value, d), fractionDigits: d)
+        case .fixed(let value):
+            category = pluralCategory(
+                locale: locale, roundTo(value.value, value.decimals), fractionDigits: value.decimals
+            )
+        default:
+            break
+        }
+        return message.forms[category] ?? message.forms[.other] ?? ""
     }
 }
 
@@ -173,12 +198,13 @@ public final class Catalogue: Sendable {
 /// Hand-written per language, because Swift has no public equivalent of
 /// `Intl.PluralRules` outside the string catalogues this repo does not use. The
 /// operands are CLDR's: `i`, the integer digits, and `v`, the count of visible
-/// fraction digits, which is 0 exactly when the number is whole.
-public func pluralCategory(locale: String, _ n: Double) -> PluralCategory {
+/// fraction digits - the decimals the number is SHOWN with when the caller knows
+/// them ("2.00" litres has v = 2), and otherwise 0 exactly when it is whole.
+public func pluralCategory(locale: String, _ n: Double, fractionDigits: Int? = nil) -> PluralCategory {
     guard n.isFinite else { return .other }
     let abs = n.magnitude
     let i = abs.rounded(.down)
-    let whole = abs == i
+    let whole = fractionDigits.map { $0 == 0 && abs == i } ?? (abs == i)
     switch languageOf(locale) {
     case "en":
         // one: i = 1 and v = 0
@@ -203,33 +229,29 @@ public func languageOf(_ locale: String) -> String {
 
 // MARK: - Substitution
 
-/// A number as an argument: its plain decimal digits, no grouping, a point for
-/// a fraction. Whole numbers are exact at any size, as `toFixed(0)` is on the
-/// web; a fraction is Swift's shortest round-trip form, which agrees with
-/// JavaScript's for every plain decimal and differs only in exponent notation
-/// (1e-07 against 1e-7) - F4's formatters replace this before that could
-/// matter.
-public func formatArg(_ value: CopyArg) -> String {
+/// An argument as text. A string as it is; a count in the locale, with its
+/// own decimals; a measurement in the locale, to its decimals.
+public func formatArg(_ value: CopyArg, formatLocale: String = "en") -> String {
     switch value {
     case .text(let text):
         return text
     case .number(let n):
-        if n == 0 { return "0" }
-        if n.isFinite && n == n.rounded(.towardZero) { return String(format: "%.0f", n) }
-        return "\(n)"
+        return formatCount(n, locale: formatLocale)
+    case .fixed(let f):
+        return formatNumber(f.value, decimals: f.decimals, locale: formatLocale)
     }
 }
 
 /// Replace every `{name}` that has an argument. The same scan as the web's, so
 /// the two agree on every malformed brace as well as every good one.
-private func substitute(_ template: String, _ args: CopyArgs) -> String {
+private func substitute(_ template: String, _ args: CopyArgs, _ formatLocale: String) -> String {
     let scalars = Array(template.unicodeScalars)
     var out = String.UnicodeScalarView()
     var i = 0
     while i < scalars.count {
         if let name = placeholder(at: i, in: scalars) {
             if let value = args[name] {
-                out.append(contentsOf: formatArg(value).unicodeScalars)
+                out.append(contentsOf: formatArg(value, formatLocale: formatLocale).unicodeScalars)
             } else {
                 out.append(contentsOf: "{\(name)}".unicodeScalars)
             }

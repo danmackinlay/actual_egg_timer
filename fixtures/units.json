@@ -5308,55 +5308,55 @@
           "si": 1609,
           "value": 1600,
           "text": "1600",
-          "rendered": "1600 m"
+          "rendered": "1,600 m"
         },
         {
           "si": 5000,
           "value": 5000,
           "text": "5000",
-          "rendered": "5000 m"
+          "rendered": "5,000 m"
         },
         {
           "si": 2250,
           "value": 2250,
           "text": "2250",
-          "rendered": "2250 m"
+          "rendered": "2,250 m"
         },
         {
           "si": 2300,
           "value": 2300,
           "text": "2300",
-          "rendered": "2300 m"
+          "rendered": "2,300 m"
         },
         {
           "si": 2312.5,
           "value": 2300,
           "text": "2300",
-          "rendered": "2300 m"
+          "rendered": "2,300 m"
         },
         {
           "si": 2325,
           "value": 2350,
           "text": "2350",
-          "rendered": "2350 m"
+          "rendered": "2,350 m"
         },
         {
           "si": 2337.5,
           "value": 2350,
           "text": "2350",
-          "rendered": "2350 m"
+          "rendered": "2,350 m"
         },
         {
           "si": 2350,
           "value": 2350,
           "text": "2350",
-          "rendered": "2350 m"
+          "rendered": "2,350 m"
         },
         {
           "si": 2375,
           "value": 2400,
           "text": "2400",
-          "rendered": "2400 m"
+          "rendered": "2,400 m"
         },
         {
           "si": -400.000000001,
@@ -5374,13 +5374,13 @@
           "si": 4999.999999999,
           "value": 5000,
           "text": "5000",
-          "rendered": "5000 m"
+          "rendered": "5,000 m"
         },
         {
           "si": 5000.000000001,
           "value": 5000,
           "text": "5000",
-          "rendered": "5000 m"
+          "rendered": "5,000 m"
         },
         {
           "si": -1400,
@@ -5392,7 +5392,7 @@
           "si": 6000,
           "value": 5000,
           "text": "5000",
-          "rendered": "5000 m"
+          "rendered": "5,000 m"
         }
       ],
       "notANumber": {
@@ -6003,7 +6003,7 @@
           "si": -400,
           "value": -1300,
           "text": "-1300",
-          "rendered": "-1300 ft"
+          "rendered": "-1,300 ft"
         },
         {
           "si": 0,
@@ -6015,97 +6015,97 @@
           "si": 304.8,
           "value": 1000,
           "text": "1000",
-          "rendered": "1000 ft"
+          "rendered": "1,000 ft"
         },
         {
           "si": 1609,
           "value": 5300,
           "text": "5300",
-          "rendered": "5300 ft"
+          "rendered": "5,300 ft"
         },
         {
           "si": 5000,
           "value": 16400,
           "text": "16400",
-          "rendered": "16400 ft"
+          "rendered": "16,400 ft"
         },
         {
           "si": 2286,
           "value": 7500,
           "text": "7500",
-          "rendered": "7500 ft"
+          "rendered": "7,500 ft"
         },
         {
           "si": 2316.48,
           "value": 7600,
           "text": "7600",
-          "rendered": "7600 ft"
+          "rendered": "7,600 ft"
         },
         {
           "si": 2324.1,
           "value": 7600,
           "text": "7600",
-          "rendered": "7600 ft"
+          "rendered": "7,600 ft"
         },
         {
           "si": 2331.7200000000003,
           "value": 7700,
           "text": "7700",
-          "rendered": "7700 ft"
+          "rendered": "7,700 ft"
         },
         {
           "si": 2339.34,
           "value": 7700,
           "text": "7700",
-          "rendered": "7700 ft"
+          "rendered": "7,700 ft"
         },
         {
           "si": 2346.96,
           "value": 7700,
           "text": "7700",
-          "rendered": "7700 ft"
+          "rendered": "7,700 ft"
         },
         {
           "si": 2362.2000000000003,
           "value": 7800,
           "text": "7800",
-          "rendered": "7800 ft"
+          "rendered": "7,800 ft"
         },
         {
           "si": -400.000000001,
           "value": -1300,
           "text": "-1300",
-          "rendered": "-1300 ft"
+          "rendered": "-1,300 ft"
         },
         {
           "si": -399.999999999,
           "value": -1300,
           "text": "-1300",
-          "rendered": "-1300 ft"
+          "rendered": "-1,300 ft"
         },
         {
           "si": 4999.999999999,
           "value": 16400,
           "text": "16400",
-          "rendered": "16400 ft"
+          "rendered": "16,400 ft"
         },
         {
           "si": 5000.000000001,
           "value": 16400,
           "text": "16400",
-          "rendered": "16400 ft"
+          "rendered": "16,400 ft"
         },
         {
           "si": -1400,
           "value": -1300,
           "text": "-1300",
-          "rendered": "-1300 ft"
+          "rendered": "-1,300 ft"
         },
         {
           "si": 6000,
           "value": 16400,
           "text": "16400",
-          "rendered": "16400 ft"
+          "rendered": "16,400 ft"
         }
       ],
       "notANumber": {
@@ -9105,7 +9105,10 @@
       "system": "metric",
       "mass": {
         "key": "format.grams",
-        "value": "48"
+        "value": {
+          "value": 48,
+          "decimals": 0
+        }
       },
       "text": "Small — 48 g"
     },
@@ -9115,7 +9118,10 @@
       "system": "imperial",
       "mass": {
         "key": "format.ounces",
-        "value": "1.7"
+        "value": {
+          "value": 1.7,
+          "decimals": 1
+        }
       },
       "text": "Small — 1.7 oz"
     },
@@ -9125,7 +9131,10 @@
       "system": "metric",
       "mass": {
         "key": "format.grams",
-        "value": "58"
+        "value": {
+          "value": 58,
+          "decimals": 0
+        }
       },
       "text": "Medium — 58 g"
     },
@@ -9135,7 +9144,10 @@
       "system": "imperial",
       "mass": {
         "key": "format.ounces",
-        "value": "2.0"
+        "value": {
+          "value": 2,
+          "decimals": 1
+        }
       },
       "text": "Medium — 2.0 oz"
     },
@@ -9145,7 +9157,10 @@
       "system": "metric",
       "mass": {
         "key": "format.grams",
-        "value": "68"
+        "value": {
+          "value": 68,
+          "decimals": 0
+        }
       },
       "text": "Large — 68 g"
     },
@@ -9155,7 +9170,10 @@
       "system": "imperial",
       "mass": {
         "key": "format.ounces",
-        "value": "2.4"
+        "value": {
+          "value": 2.4,
+          "decimals": 1
+        }
       },
       "text": "Large — 2.4 oz"
     },
@@ -9165,7 +9183,10 @@
       "system": "metric",
       "mass": {
         "key": "format.grams",
-        "value": "76"
+        "value": {
+          "value": 76,
+          "decimals": 0
+        }
       },
       "text": "Extra large — 76 g"
     },
@@ -9175,7 +9196,10 @@
       "system": "imperial",
       "mass": {
         "key": "format.ounces",
-        "value": "2.7"
+        "value": {
+          "value": 2.7,
+          "decimals": 1
+        }
       },
       "text": "Extra large — 2.7 oz"
     },
@@ -9185,7 +9209,10 @@
       "system": "metric",
       "mass": {
         "key": "format.grams",
-        "value": "46"
+        "value": {
+          "value": 46,
+          "decimals": 0
+        }
       },
       "text": "Small — 46 g"
     },
@@ -9195,7 +9222,10 @@
       "system": "imperial",
       "mass": {
         "key": "format.ounces",
-        "value": "1.6"
+        "value": {
+          "value": 1.6,
+          "decimals": 1
+        }
       },
       "text": "Small — 1.6 oz"
     },
@@ -9205,7 +9235,10 @@
       "system": "metric",
       "mass": {
         "key": "format.grams",
-        "value": "53"
+        "value": {
+          "value": 53,
+          "decimals": 0
+        }
       },
       "text": "Medium — 53 g"
     },
@@ -9215,7 +9248,10 @@
       "system": "imperial",
       "mass": {
         "key": "format.ounces",
-        "value": "1.9"
+        "value": {
+          "value": 1.9,
+          "decimals": 1
+        }
       },
       "text": "Medium — 1.9 oz"
     },
@@ -9225,7 +9261,10 @@
       "system": "metric",
       "mass": {
         "key": "format.grams",
-        "value": "60"
+        "value": {
+          "value": 60,
+          "decimals": 0
+        }
       },
       "text": "Large — 60 g"
     },
@@ -9235,7 +9274,10 @@
       "system": "imperial",
       "mass": {
         "key": "format.ounces",
-        "value": "2.1"
+        "value": {
+          "value": 2.1,
+          "decimals": 1
+        }
       },
       "text": "Large — 2.1 oz"
     },
@@ -9245,7 +9287,10 @@
       "system": "metric",
       "mass": {
         "key": "format.grams",
-        "value": "67"
+        "value": {
+          "value": 67,
+          "decimals": 0
+        }
       },
       "text": "Extra large — 67 g"
     },
@@ -9255,7 +9300,10 @@
       "system": "imperial",
       "mass": {
         "key": "format.ounces",
-        "value": "2.4"
+        "value": {
+          "value": 2.4,
+          "decimals": 1
+        }
       },
       "text": "Extra large — 2.4 oz"
     },
@@ -9265,7 +9313,10 @@
       "system": "metric",
       "mass": {
         "key": "format.grams",
-        "value": "74"
+        "value": {
+          "value": 74,
+          "decimals": 0
+        }
       },
       "text": "Jumbo — 74 g"
     },
@@ -9275,7 +9326,10 @@
       "system": "imperial",
       "mass": {
         "key": "format.ounces",
-        "value": "2.6"
+        "value": {
+          "value": 2.6,
+          "decimals": 1
+        }
       },
       "text": "Jumbo — 2.6 oz"
     }

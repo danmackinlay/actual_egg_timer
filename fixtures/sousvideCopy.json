@@ -287,5 +287,62 @@
       },
       "text": "13 months ago"
     }
+  ],
+  "weekday": [
+    {
+      "day": -8,
+      "key": "weekday.saturday",
+      "text": "Saturday"
+    },
+    {
+      "day": -1,
+      "key": "weekday.saturday",
+      "text": "Saturday"
+    },
+    {
+      "day": 0,
+      "key": "weekday.sunday",
+      "text": "Sunday"
+    },
+    {
+      "day": 1,
+      "key": "weekday.monday",
+      "text": "Monday"
+    },
+    {
+      "day": 2,
+      "key": "weekday.tuesday",
+      "text": "Tuesday"
+    },
+    {
+      "day": 3,
+      "key": "weekday.wednesday",
+      "text": "Wednesday"
+    },
+    {
+      "day": 4,
+      "key": "weekday.thursday",
+      "text": "Thursday"
+    },
+    {
+      "day": 5,
+      "key": "weekday.friday",
+      "text": "Friday"
+    },
+    {
+      "day": 6,
+      "key": "weekday.saturday",
+      "text": "Saturday"
+    },
+    {
+      "day": 7,
+      "key": "weekday.sunday",
+      "text": "Sunday"
+    },
+    {
+      "day": 13,
+      "key": "weekday.saturday",
+      "text": "Saturday"
+    }
   ]
 }

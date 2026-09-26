@@ -131,10 +131,10 @@ export function longDuration(seconds: number): CopyRef {
  * midnight is a platform job - `Calendar` does it correctly on iOS, and the web
  * normalises to midnight and divides - and neither should be reimplemented
  * here. For the same reason `sousvide.start.lastWeekday` wants a `{weekday}`
- * that this does not supply: the app adds the name. The web takes it from the
- * catalogue and iOS from a locale-aware formatter, so a non-English phone says
- * "Last mardi" - the better answer on iOS, and a deliberate difference that F4
- * (locale formatting) settles.
+ * that this does not supply: the app adds the name, from `weekdayKey`. Both
+ * apps take it from the catalogue, not from a platform formatter (F4,
+ * LANGUAGE.md §2): the translator sees the names, and can give the form the
+ * sentence needs, which in Czech is not the dictionary one.
  */
 export function startPhrase(daysAgo: number): CopyRef {
   if (daysAgo <= 0) return { key: 'sousvide.start.today', args: {} };
@@ -143,4 +143,15 @@ export function startPhrase(daysAgo: number): CopyRef {
   if (daysAgo < 14) return { key: 'sousvide.start.lastWeek', args: {} };
   if (daysAgo < 60) return { key: 'sousvide.start.weeksAgo', args: { weeks: Math.round(daysAgo / 7) } };
   return { key: 'sousvide.start.monthsAgo', args: { months: Math.round(daysAgo / 30) } };
+}
+
+/** The catalogue key of a weekday's name, by `Date.getDay()` numbering:
+ *  0 is Sunday. Swift's `Calendar` counts from 1, and subtracts it. */
+export const WEEKDAY_KEYS: readonly string[] = [
+  'weekday.sunday', 'weekday.monday', 'weekday.tuesday', 'weekday.wednesday',
+  'weekday.thursday', 'weekday.friday', 'weekday.saturday',
+];
+
+export function weekdayKey(dayOfWeek: number): string {
+  return WEEKDAY_KEYS[((Math.floor(dayOfWeek) % 7) + 7) % 7];
 }
