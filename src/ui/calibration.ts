@@ -122,6 +122,9 @@ export interface Cooked {
   massFrom: MassFrom;
   sizeTable: SizeTable | null;
   setup: CookSetup;
+  /** Whether a measured pan was on file at "Eggs in". Read only on a hot start,
+   *  which never times its own pan; a finished cold start always has. */
+  boilRemembered: boolean;
   eggFrom: EggFrom;
 }
 
@@ -165,6 +168,8 @@ export function eggRecordFor(c: Cooked, m: Machine, yolk: Feedback | null): EggR
       ambient_C: c.setup.ambient_C,
       boiling_C: c.setup.boiling_C,
       timeToBoil_s: c.setup.timeToBoil_s,
+      timeToBoilFrom: c.setup.startMode === 'cold' ? 'measured'
+        : c.boilRemembered ? 'remembered' : 'default',
       cooling: c.setup.cooling,
       afterBoil: c.setup.afterBoil ?? 'hold',
       waterLitres: c.setup.waterLitres,

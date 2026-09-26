@@ -185,6 +185,9 @@ interface Ticket {
   massFrom: MassFrom;
   sizeTable: SizeTable | null;
   eggFrom: EggFrom;
+  /** Whether the pan's time to boil was on file at "Eggs in": what a hot start,
+   *  which never times its own pan, cooked on. */
+  boilRemembered: boolean;
   setup: CookSetup;
   /** log10 of the yolk dose this cook was RUN at. Frozen with everything else,
    *  so a slider left somewhere else afterwards cannot rewrite history. */
@@ -1027,6 +1030,7 @@ function onPrimary(): void {
       egg: currentEgg(),
       massFrom: massFrom(),
       sizeTable: massFrom() === 'class' ? sizeTable : null,
+      boilRemembered: hasBoilMemory(boilMemory),
       eggFrom: settings.startTempMode,
       setup: buildSetup(boil),
       logNominalTarget: Math.log10(donenessFromSlider(target).yolkDose_min),
@@ -1253,6 +1257,8 @@ function restoreTicket(raw: unknown): Ticket | null {
     egg: egg as Egg,
     massFrom: from,
     sizeTable: from === 'class' ? sizeTable : null,
+    boilRemembered: r['boilRemembered'] === true
+      || (r['boilRemembered'] === undefined && hasBoilMemory(boilMemory)),
     eggFrom: ef === 'fridge' || ef === 'room' || ef === 'custom' ? ef : settings.startTempMode,
     setup: setup as CookSetup,
     logNominalTarget: target,

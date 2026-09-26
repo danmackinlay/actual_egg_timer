@@ -74,6 +74,10 @@ final class Cook {
         /// write them still restores; `eggRecord` says what it assumes then.
         var massFrom: MassFrom?
         var sizeTable: SizeTable?
+        /// Whether a measured pan was on file at "Eggs in" - what a hot start,
+        /// which never times its own pan, cooked on. Optional for the same
+        /// reason as the two above.
+        var boilRemembered: Bool?
 
         /// The same cook, against a time to boil that is now known rather than
         /// guessed.
@@ -230,7 +234,8 @@ final class Cook {
             // temperature says which was picked.
             setup: RecordSetup(
                 setup: ticket.setup,
-                eggFrom: ticket.setup.eggStartC == StartTempPresets.fridgeC ? .fridge : .room
+                eggFrom: ticket.setup.eggStartC == StartTempPresets.fridgeC ? .fridge : .room,
+                timeToBoilFrom: Self.timeToBoilFrom(ticket)
             ),
             level: ticket.level,
             recommendedS: scheduled,
@@ -239,6 +244,16 @@ final class Cook {
             cooledS: ticket.cooling == .counter ? 0 : Self.coolingSeconds,
             yolk: yolk
         )
+    }
+
+    /// Where the solve's time to boil came from. A cold start cannot finish
+    /// without the boil being tapped, so it is always measured. A hot start
+    /// cooked on the remembered pan or the default guess; a ticket saved before
+    /// it said which is read by whether the number IS the default guess.
+    private static func timeToBoilFrom(_ ticket: Ticket) -> TimeToBoilFrom {
+        if ticket.setup.startMode == .cold { return .measured }
+        let remembered = ticket.boilRemembered ?? (ticket.setup.timeToBoilS != defaultTimeToBoilS)
+        return remembered ? .remembered : .default
     }
 
     /// The local calendar day a cook started on, YYYY-MM-DD. A day, not a

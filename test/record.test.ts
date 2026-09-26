@@ -75,6 +75,7 @@ function recordAt(
     setup: {
       startMode: setup.startMode, eggStart_C: setup.eggStart_C, eggFrom: 'fridge',
       ambient_C: setup.ambient_C, boiling_C: setup.boiling_C, timeToBoil_s: setup.timeToBoil_s,
+      timeToBoilFrom: 'remembered',
       cooling: setup.cooling, afterBoil: 'hold', waterLitres: setup.waterLitres,
       eggCount: setup.eggCount,
     },
@@ -310,6 +311,7 @@ test('3c. forget everything clears the log, the base and the posterior', () => {
 const T0 = 1_750_000_000_000;
 const COOKED: Cooked = {
   egg: eggFromMass(0.062), massFrom: 'scale', sizeTable: null, setup: setupOf(), eggFrom: 'fridge',
+  boilRemembered: false,
 };
 
 function pulled(m: Machine): Machine {
@@ -350,6 +352,16 @@ test('4b2. a class names its carton, and a weighed egg names none', () => {
   const weighed = eggRecordFor({ ...COOKED, sizeTable: 'us' }, m, 0);
   assert.equal(weighed.egg.sizeTable, null, 'a scale has no carton, whatever the region');
   assert.equal(parseRecord({ ...us, egg: { ...us.egg, sizeTable: null } }), null);
+});
+
+test('4b3. the time to boil says whether this cook measured it', () => {
+  const m = beginCooling(pulled(startHot(T0, 400, 'ice', 0.4)), T0 + 402_000);
+  assert.equal(eggRecordFor(COOKED, m, 0).setup.timeToBoilFrom, 'default');
+  assert.equal(eggRecordFor({ ...COOKED, boilRemembered: true }, m, 0).setup.timeToBoilFrom, 'remembered');
+  const cold = { ...COOKED, setup: setupOf({ startMode: 'cold', timeToBoil_s: 431.5 }) };
+  const r = eggRecordFor(cold, m, 0);
+  assert.equal(r.setup.timeToBoilFrom, 'measured');
+  assert.equal(r.setup.timeToBoil_s, 431.5);
 });
 
 test('4c. a cook stored before E1 restores, with its pull unmeasured', () => {

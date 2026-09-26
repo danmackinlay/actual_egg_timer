@@ -37,6 +37,13 @@ public enum EggFrom: String, Sendable, Codable {
     case fridge, room, custom
 }
 
+/// Where the solve's time to boil came from: this cook's own boil tap (every
+/// finished cold start has one), the remembered pan, or the default guess when
+/// no pan was ever measured. A hot start never times the pan.
+public enum TimeToBoilFrom: String, Sendable, Codable {
+    case measured, remembered, `default`
+}
+
 /// How the egg came out: `cook` when the cook said so, `timeout` when the
 /// grace ran out and `pulledS` is the scheduled time - an assumption, not a
 /// measurement.
@@ -88,20 +95,24 @@ public struct RecordSetup: Sendable, Codable, Equatable {
     public var eggStartC: Double
     public var eggFrom: EggFrom
     public var ambientC: Double
+    /// One-to-one with the altitude setting; the altitude is not recorded.
     public var boilingC: Double
+    /// The time to boil the solve used, and where it came from.
     public var timeToBoilS: Double
+    public var timeToBoilFrom: TimeToBoilFrom
     public var cooling: Cooling
     public var afterBoil: HeatAfterBoil
     public var waterLitres: Double
     public var eggCount: Double
 
-    public init(setup: CookSetup, eggFrom: EggFrom) {
+    public init(setup: CookSetup, eggFrom: EggFrom, timeToBoilFrom: TimeToBoilFrom) {
         startMode = setup.startMode
         eggStartC = setup.eggStartC
         self.eggFrom = eggFrom
         ambientC = setup.ambientC
         boilingC = setup.boilingC
         timeToBoilS = setup.timeToBoilS
+        self.timeToBoilFrom = timeToBoilFrom
         cooling = setup.cooling
         afterBoil = setup.afterBoil
         waterLitres = setup.waterLitres
@@ -115,7 +126,7 @@ public struct RecordSetup: Sendable, Codable, Equatable {
         case ambientC = "ambient_C"
         case boilingC = "boiling_C"
         case timeToBoilS = "timeToBoil_s"
-        case cooling, afterBoil, waterLitres, eggCount
+        case timeToBoilFrom, cooling, afterBoil, waterLitres, eggCount
     }
 }
 

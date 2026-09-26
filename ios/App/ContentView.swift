@@ -346,7 +346,8 @@ struct ContentView: View {
                     egg: kitchen.egg,
                     setup: kitchen.setup,
                     massFrom: kitchen.massFrom,
-                    sizeTable: kitchen.sizeTable
+                    sizeTable: kitchen.sizeTable,
+                    boilRemembered: kitchen.hasBoilMemory
                 )
                 Task {
                     await cook.start(

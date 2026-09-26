@@ -56,6 +56,17 @@ export type MassFrom = 'scale' | 'girth' | 'width' | 'class';
 /** Where the egg's starting temperature came from: a preset or a typed value. */
 export type EggFrom = 'fridge' | 'room' | 'custom';
 
+/** Where the solve's time to boil came from. `measured` is this cook's own boil
+ *  tap, and every finished cold start has one, because neither app leaves
+ *  HEATING without it. A hot start never times the pan, so it cooks on the
+ *  `remembered` pan, or on the `default` guess when no pan has ever been
+ *  measured. With the heat off that number is today the pan's whole cooling
+ *  curve (`panTimeConstant`); when the standing method's pan constant is
+ *  re-derived from the water volume instead, this is what says which logged
+ *  cooks leaned on the old derivation, and how hard. */
+export type TimeToBoilFrom = 'measured' | 'remembered' | 'default';
+
+
 /** How the egg came out. `cook` when the cook said so - the tap out of PULL -
  *  and `timeout` when nobody did and the grace ran out, in which case
  *  `pulled_s` is the scheduled time, an assumption and not a measurement. */
@@ -85,8 +96,13 @@ export interface RecordSetup {
   eggStart_C: number;
   eggFrom: EggFrom;
   ambient_C: number;
+  /** The boiling point the solve used. A one-to-one function of the altitude
+   *  setting (`boilingPointAtAltitude`), so it carries everything the altitude
+   *  would; the altitude itself is deliberately not recorded. */
   boiling_C: number;
+  /** The time to boil the solve actually used, and where it came from. */
   timeToBoil_s: number;
+  timeToBoilFrom: TimeToBoilFrom;
   cooling: Cooling;
   afterBoil: HeatAfterBoil;
   waterLitres: number;
@@ -225,6 +241,7 @@ export function parseRecord(raw: unknown): EggRecord | null {
   if (!isFiniteNumber(s['eggStart_C']) || !isFiniteNumber(s['ambient_C'])) return null;
   if (!isFiniteNumber(s['boiling_C']) || !(s['boiling_C'] > 0)) return null;
   if (!isFiniteNumber(s['timeToBoil_s']) || !(s['timeToBoil_s'] >= 0)) return null;
+  if (!oneOf(s['timeToBoilFrom'], ['measured', 'remembered', 'default'] as const)) return null;
   if (!isFiniteNumber(s['waterLitres']) || !(s['waterLitres'] > 0)) return null;
   if (!isFiniteNumber(s['eggCount']) || !(s['eggCount'] >= 1)) return null;
 
@@ -266,6 +283,7 @@ export function parseRecord(raw: unknown): EggRecord | null {
       ambient_C: s['ambient_C'],
       boiling_C: s['boiling_C'],
       timeToBoil_s: s['timeToBoil_s'],
+      timeToBoilFrom: s['timeToBoilFrom'],
       cooling: s['cooling'],
       afterBoil: s['afterBoil'],
       waterLitres: s['waterLitres'],

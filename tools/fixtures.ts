@@ -854,6 +854,7 @@ interface EggSpec {
   mass_g: number;
   massFrom: EggRecord['egg']['massFrom'];
   sizeTable?: EggRecord['egg']['sizeTable'];
+  boilFrom?: EggRecord['setup']['timeToBoilFrom'];
   eggFrom: EggRecord['setup']['eggFrom'];
   over: Partial<CookSetup>;
   level: number;
@@ -890,6 +891,7 @@ function recordOf(e: EggSpec): EggRecord {
       ambient_C: setup.ambient_C,
       boiling_C: setup.boiling_C,
       timeToBoil_s: setup.timeToBoil_s,
+      timeToBoilFrom: setup.startMode === 'cold' ? 'measured' : e.boilFrom ?? 'remembered',
       cooling: setup.cooling,
       afterBoil: setup.afterBoil ?? 'hold',
       waterLitres: setup.waterLitres,
@@ -924,8 +926,10 @@ const REPLAY_LOG: EggRecord[] = [
     level: 0.45, pulledBy: 'timeout', late_s: 0, yolk: 0, white: null, whiteOffered: false,
   }),
   // Nobody answered. Still a record; it folds nothing and builds no surface.
+  // Nor had anybody ever timed the pan.
   recordOf({
     app: 'web', mass_g: 58, massFrom: 'class', eggFrom: 'room', over: { eggStart_C: 20 },
+    boilFrom: 'default',
     level: 0.5, pulledBy: 'timeout', late_s: 0, yolk: null, white: null, whiteOffered: false,
   }),
   // Asked about the white, and skipped it.
@@ -1028,6 +1032,9 @@ const RECORD_CASES: { why: string; mutate: Mutation }[] = [
   { why: 'an empty uid', mutate: (r) => { r['uid'] = ''; } },
   { why: 'a day that is not YYYY-MM-DD', mutate: (r) => { r['day'] = '2026-9-26'; } },
   { why: 'a timestamp, not a day', mutate: (r) => { r['day'] = '2026-09-26T07:30'; } },
+  { why: 'a pan nobody timed', mutate: (r) => { setupPart(r)['timeToBoilFrom'] = 'default'; } },
+  { why: 'an unknown boil source', mutate: (r) => { setupPart(r)['timeToBoilFrom'] = 'guessed'; } },
+  { why: 'no boil source', mutate: (r) => { delete setupPart(r)['timeToBoilFrom']; } },
   { why: 'an unknown app', mutate: (r) => { r['app'] = 'android'; } },
   { why: 'an empty app version', mutate: (r) => { r['appVersion'] = ''; } },
   { why: 'no prior', mutate: (r) => { delete r['prior']; } },
