@@ -9,14 +9,15 @@ and the wording itself, `LANGUAGE.md`. This file is for whoever picks the build
 back up.
 
 **Status: both apps complete and learning. The PHYSICS is now the open part.**
-85 TypeScript tests, 27/27 validation checks and 50 Swift conformance tests pass.
+102 TypeScript tests, 27/27 validation checks and 57 Swift conformance tests pass.
 The web app and the iOS app carry the same model, the same refusals and the same
 particle filter; the Swift port covers every module in `src/core/`. The
 iOS app runs signed on a real phone, with a time-sensitive alarm and a Live
 Activity, and has cooked a real egg. What is left is not code: it is the two
 measurements in README §11.3 and a run of real eggs to calibrate against. As of
 21 September there is also a designed next phase - E, below - that makes the
-inference the main part; none of it is built.
+inference the main part. Its first step, E1 the record, is built (26 September);
+the rest is not.
 
 Counts in this paragraph are the only ones in the file. Three other lines used
 to restate them and all three had gone stale, which is how a status line ends up
@@ -91,18 +92,31 @@ The SwiftUI layer takes the BEHAVIOUR of `src/ui/machine.ts` and leaves its
 mechanism. `clock.ts` in particular exists to fight the backgrounding problem
 that a local notification solves properly, and has no counterpart here.
 
-### Phase E — the inference becomes the main part — NOT STARTED
+### Phase E — the inference becomes the main part — E1 DONE
 
 The design and the reasons are in `INFERENCE.md`; this is only the list. Every
 core change lands in TypeScript and Swift together, under new fixtures, like
 everything since Phase D. E1-E5 need no network and are worth doing for one
 cook. Nothing leaves a phone before E6.
 
-- [ ] **E1 the record.** Keep each egg as an observation (`INFERENCE.md` §4),
+- [x] **E1 the record.** Keep each egg as an observation (`INFERENCE.md` §4),
       on the device, beside the posterior. Record the ACTUAL pull time, where
       the mass came from, and the language, register and units the cook read. A model change becomes a replay of the log instead of
       a discarded posterior. Done when: a v3 posterior can be rebuilt from the
       log alone, bit-identically, on both apps.
+
+      Measured: rebuilt from base + log, **0 of 4000 numbers differ** from the
+      posterior built egg by egg - in `npm test` through the web app's own
+      storage with a reload between every egg, in `swift test` through
+      JSONEncoder, in Chromium, and in the iOS simulator after deleting the
+      stored posterior. A web fold now builds its surface in a Web Worker: the
+      page's longest stall during one was 11 ms, against 579 ms for the same
+      build on the main thread, and a twelve-egg replay (eight surfaces, 24 s)
+      never stalled it past 33 ms. The owner's v2 posterior migrates as a frozen
+      base and is dropped at E2 (§4 says why). The iOS app has no action out of
+      PULL, so every iOS pull is recorded as assumed until it grows a button.
+      E1 does not change the likelihood: it is still scored at the scheduled
+      time, and `pulled_s` waits for E2.
 - [ ] **E2 ordered probit.** Replace the hard bands and the fixed 0.8 / 0.1 in
       `infer.ts` with cutpoints and a learned noise scale, plus the small
       "unrelated answer" component. White becomes three answers (runny /
@@ -220,6 +234,7 @@ diffusionTime(egg: Egg, alpha_m2s: number): number
 SIZE_CLASSES: { label: string; mass_kg: number }[]     // EU, and the default table
 US_SIZE_CLASSES: { label: string; mass_kg: number }[]  // region US
 sizeClassesFor(region: string | null | undefined): SizeClass[]
+sizeTableFor(region): 'eu' | 'us'                         // the same choice, by name, for the record
 
 // thermo.ts
 pressureAtAltitude(altitude_m): number          // Pa
@@ -279,6 +294,16 @@ createPrior(count, seed) / updatePosterior(post, grid, cookTime_s, logTarget, fe
 updateWhite(post, grid, cookTime_s, white) // a second fold, same egg, second channel
 shouldAskAboutWhite(post, grid, cookTime_s) / whiteRunnyProbability(...)
 posteriorParams / posteriorMeanOffset / posteriorAlphaRelSd / predictCookTime
+
+// record.ts  (E1 - the schema is INFERENCE.md §4)
+interface EggRecord { v: 1; ... }          // one egg; RECORD_VERSION, PRIOR_ID
+parseRecord(raw): EggRecord | null / parseLog(raw): EggRecord[] | null
+interface Calibration { posterior; eggsLogged }
+freshCalibration(count, seed) / copyCalibration(c) / calibrationParams(c)
+gridRequestFor(c, record, gridPolicy) / buildRequestedGrid(request)
+foldYolk(c, record, grid): askWhite / foldWhite(c, record, grid)
+replay(start, records, gridPolicy = calibrationGrid): Calibration   // never moves start
+recordMass_g(mass_kg)
 
 // sphere.ts (mostly internal; exported for tests)
 createSphere / stepSphere / temperatureAt / centreTemperature / meanTemperature
@@ -440,9 +465,9 @@ Some work is on one side only:
 **Now, in parallel**
 1. **US carton size classes** (the correctness half of F3). An American on the
    default egg is overcooked by about 34 s today.
-2. **E1, the record.** From here on every egg survives model changes. E1
-   includes moving the web app's dose grid off the main thread (old item 3),
-   because replaying a log builds one grid per egg, at about 2 s each.
+2. ~~**E1, the record.**~~ Done 26 September. From here on every egg survives
+   model changes. It moved the web app's dose grid off the main thread (old
+   item 3), because replaying a log builds one grid per egg, at about 2 s each.
 3. **F1, the catalogue, with the wording unchanged.** It has to land before any
    new feedback copy exists.
 
@@ -506,8 +531,9 @@ do; what is missing is contact with reality.
    `TAU_STANDING_SCALE` together. Both would beat every published source found,
    and `TAU_AIR` drives the app's most opinionated behaviour — refusing soft
    eggs to anyone resting them on the counter.
-3. **The web app builds its dose grid on the main thread**, blocking ~2 s behind
+3. ~~**The web app builds its dose grid on the main thread**~~, blocking ~2 s behind
    a `setTimeout(30)` so the "learning" note paints first. iOS runs it detached.
+   *Done with E1:* a module Web Worker, with this thread as the fallback.
 4. **Derive the cooling countdown** from the solver's `peakYolkTime_s` instead of
    asserting three minutes (README §11.5). It changes times on screen, so it
    wants a real egg behind it rather than a refactor.

@@ -1,6 +1,8 @@
 # INFERENCE.md — making the inference the main part
 
-A design, not a record and not a state. Nothing in here is built. The checklist
+A design, not a record and not a state. One part is built: the record in §4
+(E1, 26 September 2026), whose schema below is now the one the code writes.
+Nothing else is. The checklist
 that tracks it is Phase E in `PLAN.md`; the two measurements it rests on are in
 `LOGBOOK.md` (21 September 2026) and can be re-run with `npm run rank` and
 `npm run probe`.
@@ -129,44 +131,111 @@ server exists. Today an answer is folded into the particles and thrown away, so
 when the likelihood changed in September the v1 posterior had to be discarded
 rather than repaired. With the observations kept, a model change is a replay.
 
-One record per egg, stored on the device; uploaded only under §7.
+**Built (E1, 26 September).** One record per egg, stored on the device beside
+the posterior; uploaded only under §7. The reference is `src/core/record.ts`,
+held to `EggTimerCore/Record.swift` by `fixtures/record.json`.
 
 ```json
 {
   "v": 1,
-  "uid": "random-uuid",
+  "uid": null,
   "day": "2026-09-21",
   "app": "ios", "appVersion": "0.3.0", "prior": "2026-09",
-  "egg": { "mass_g": 68, "massFrom": "scale" },
+  "egg": { "mass_g": 68, "massFrom": "class", "sizeTable": "eu" },
   "setup": {
-    "startMode": "hot", "eggStart_C": 4, "eggFrom": "fridge", "boiling_C": 100,
-    "timeToBoil_s": 480, "cooling": "ice", "afterBoil": "hold",
-    "waterLitres": 1.5, "eggCount": 2
+    "startMode": "hot", "eggStart_C": 4, "eggFrom": "fridge", "ambient_C": 20,
+    "boiling_C": 100, "timeToBoil_s": 480, "timeToBoilFrom": "remembered",
+    "cooling": "ice", "afterBoil": "hold", "waterLitres": 1.5, "eggCount": 2
   },
   "level": 0.22,
-  "recommended_s": 399, "nudge_s": -6, "pulled_s": 412, "cooled_s": 180,
-  "yolk": -1, "white": null,
+  "recommended_s": 399, "nudge_s": 0, "pulled_s": 412, "pulledBy": "cook",
+  "cooled_s": 180,
+  "yolk": -1, "white": null, "whiteOffered": true,
   "probe": null,
   "lang": "en", "register": "modern", "units": "metric"
 }
 ```
 
-- `yolk` and `white` are each an answer or `null`. `null` means the question was
-  on screen and the cook moved on; a record with both `null` is still a record,
-  because the cook, the recommendation and the actual pull time are data too.
+- `yolk` and `white` are each an answer or `null`, and a record with both
+  `null` is still a record, because the cook, the recommendation and the actual
+  pull time are data too. An egg finished and never answered about is logged
+  when the cook starts again.
+- **The white has three states, not two.** Until E2 the model decides whether to
+  ask (`shouldAskAboutWhite`), so `null` alone would not tell "not asked" from
+  "asked and skipped". `whiteOffered` says which: `false`/`null` is not asked,
+  `true`/`null` is skipped, `true` with an answer is answered. An answer with
+  `whiteOffered: false` is refused by the loader. In E2 the white is always
+  offered and `whiteOffered` becomes redundant; it stays, so old records read
+  the same.
+- `pulled_s` is when the cook said the egg came out, not when the alarm went -
+  the tap out of PULL ("they're in the ice bath", "they're out"). When nobody
+  taps and the 20 s grace runs out, `pulledBy` is `timeout` and `pulled_s` is
+  the SCHEDULED time: an assumption, marked as one, not a measurement. The
+  iOS app has no action out of PULL - its phase is derived from the clock - so
+  every iOS record is `timeout` until it grows a button (which needs words, so
+  F1 first).
+- `recommended_s` is what the solver said; `nudge_s` is what the app added on
+  purpose (E8; zero until then). **E1 scores the likelihood at
+  `recommended_s + nudge_s`, exactly as before**, and does not use `pulled_s`:
+  using it is a model change, and model changes are E2's, made once, by replay.
+  `recommended_s` and `prior` make the policy that produced the cook part of the
+  record, so a later fit knows why the data lies where it does.
+- `massFrom` (`scale` / `girth` / `width` / `class`) sets the egg-level noise: a
+  size class is a 10 g bucket, worth about +-24 s, which is twice the width of
+  "just right". `sizeTable` (`eu` / `us`) says whose carton a class came off,
+  because the same class is 68 g in one table and 60.2 g in the other; it is
+  `null` for anything measured. On iOS the slider is a scale and the menu is a
+  class.
+- `timeToBoil_s` is the time to boil the solve used, and `timeToBoilFrom` says
+  where it came from: `measured` (this cook's own boil tap - every finished cold
+  start, since neither app leaves HEATING without it), `remembered` (the pan on
+  file) or `default` (no pan ever measured). A hot start never times its pan,
+  and with the heat off that number is today the pan's whole cooling curve; when
+  the standing method's pan constant is re-derived from the water volume, this
+  is what says which cooks leaned on the old derivation.
+- `ambient_C` is recorded rather than re-derived from the egg's start
+  temperature, so a change to that rule cannot quietly change a replay.
 - `lang`, `register` and `units` record what the cook READ, because an answer
   is a word and words differ: "soft" may not sit where *weich* does, and "Unset"
   in the English of 1750 may not be answered like "Runny". `LANGUAGE.md` §5-6.
+  Constant (`en`, `modern`, `metric`) until F1 and F3 give them values.
+- A day, not a timestamp. A boiling point, not an altitude or a place:
+  `boiling_C` is a one-to-one function of the altitude setting, so it carries
+  everything the altitude would, and the altitude itself is not recorded.
+- `uid` is `null` until E6 mints one. `mass_g` is rounded to 0.01 g.
 
-- `massFrom` (scale / girth / width / class) sets the egg-level noise: a size
-  class is a 10 g bucket, worth about +-24 s, which is twice the width of "just
-  right".
-- `pulled_s` is when the cook actually said the egg came out, not when the alarm
-  went. The alarm being ignored for forty seconds is the commonest way a cook
-  differs from the recommendation, and the app already knows both times.
-- `recommended_s` and `prior` make the policy that produced the cook part of the
-  record, so a later fit knows why the data lies where it does.
-- A day, not a timestamp. A boiling point, not an altitude or a place.
+**The posterior is a function of the log.** Both apps fold an egg FROM ITS
+RECORD - the egg rebuilt from `mass_g`, the pan from `setup`, the target from
+`level` - through the same two calls `replay` makes, so a posterior rebuilt from
+the log is bit-identical to the one built egg by egg, by construction. Each egg's
+dose surface is centred on the posterior as it stood before that egg, on the
+literature values while no egg has taught anything, exactly as `recordOutcome`
+did. The stored posterior is a cache of that replay, written at full precision
+(a cache that rounds is one a replay can never match) with a count of how many
+records it has absorbed; an answer is written to the log BEFORE its surface is
+built, so an app killed mid-fold folds it on the next launch instead of losing
+it.
+
+**The frozen base.** The owner's v2 posterior was learned from real eggs with no
+log behind it. It is kept, not discarded: on first load it becomes the BASE, and
+the posterior is `replay(base, log)`. A base cannot be replayed, so it cannot
+survive a change to the likelihood - **it is dropped at the next one (E2)**,
+which starts from the prior and replays the log alone. That is the price of the
+eggs before E1 not having been kept, and it is paid once.
+
+**Damage is refused, never read around.** A damaged posterior is rebuilt from
+the base and the log. A damaged log - one bad record refuses the lot, because a
+hole would change what every later egg is scored against - cannot be folded, but
+what it taught is in the posterior, which is sound, so the posterior becomes the
+new base and the log starts again empty. "Forget everything" clears the log, the
+base and the posterior together.
+
+**Version skew.** The web app deploys on push and the iOS app ships when a build
+does, so every record carries `appVersion` and a loader accepts any of them under
+`v: 1`. Within v1, fields may be ADDED but never removed or reinterpreted: a
+loader ignores fields it does not know, and the nullable fields (`uid`,
+`egg.sizeTable`, `yolk`, `white`, `probe`) may be absent and read as `null`. A
+new field must say what its absence means. A different `v` is refused.
 
 ## 5. The thermometer
 
