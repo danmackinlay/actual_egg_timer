@@ -247,8 +247,10 @@ carelessness, which the first paragraph handles.
   `DELETE` by id, nothing else. Records are append-only blobs keyed
   `records/<tier>/<uid>/<n>.json`, so deletion is removing a prefix and the fit
   is a listing. No IP addresses or user agents are written, and the function
-  logs neither. The controller is the owner, personally; the privacy page needs
-  a contact address, which is the one thing here still to be chosen.
+  logs neither. The controller is the owner, personally, and the privacy
+  page's contact is **forgetmyeggs@danmackinlay.name** (created 26 September).
+  It is named for the one thing it is for, deletion. It is data rather than
+  copy, so it is never translated: it appears as-is in Czech and in 1750.
 - **What changes in the repo:** the privacy manifest gains collected-data
   entries ("not linked to you"); the README, `ios/README.md` and the App Store
   answers in `ios/RELEASING.md` all stop saying the app has no networking; the
@@ -321,8 +323,8 @@ faster. You can turn it off, and delete what you sent, whenever you like."*
 ## 11. Decided by the owner, 21 September 2026
 
 1. **The endpoint is a Netlify function, and the controller is the owner, in their
-   own name.** §7 has the shape. Still open: the contact address on the privacy
-   page.
+   own name.** §7 has the shape. The contact address is
+   forgetmyeggs@danmackinlay.name, chosen and created 26 September.
 2. **The web app contributes, at a lower weight.** §6 says how: a tempered
    likelihood in the global fit and a cap on the tier's effective sample size,
    with no discount on what a web cook's answers teach their own browser.

@@ -127,7 +127,7 @@ cook. Nothing leaves a phone before E6.
       privacy manifest, both READMEs and `ios/RELEASING.md` stop claiming no
       networking. A Netlify function, append-only blobs, the web tier
       down-weighted in the global fit. Unblocked 21 September (`INFERENCE.md`
-      §11); the one thing still to choose is the privacy page's contact address.
+      §11). Privacy contact: forgetmyeggs@danmackinlay.name, which exists.
       The app says it is still learning wherever it shows a time.
 - [ ] **E7 the population fit.** Offline, Python, outside `src/core/`. An
       emulator for the likelihood, 2-4 global parameters, cook and kitchen
@@ -453,7 +453,7 @@ Some work is on one side only:
 **Last, the collective part**
 
 10. **E6, opt-in upload.** It needs a settled schema (E1, E2), "still learning"
-    (E5), and the privacy page's contact address. The consent text has to exist
+    (E5). The privacy contact exists: forgetmyeggs@danmackinlay.name. The consent text has to exist
     in every language that has shipped.
 11. **E7, the population fit**, once enough cooks have opted in.
 12. **E8, the nudge**, which is worthless before E7.
