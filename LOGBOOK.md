@@ -1138,3 +1138,83 @@ checked.
    overwritten by a new file of the same name, and was restored before
    anything was committed; the spoken countdown lives in `countdown.ts`.
 
+## The thermometer (27 September 2026, E4)
+
+A probe reading at the middle of the egg, taken when the model has the centre
+peaking, folded as a third observation beside the yolk and the white; and the
+cooling countdown, which now ends at that peak.
+
+### Measured
+
+- **Where the centre is at its peak** (`npm run probe`, 68 g, 400 s, ice,
+  +195 s): 58.8 C at r = 0, 58.6 at 0.2 R, 57.8 at 0.3 R, 55.7 at 0.4 R; in
+  time 56.3 / 58.2 / 58.7 / 58.85 / 58.7 / 58.3 / 56.8 C at -60 / -30 / -15 /
+  0 / +15 / +30 / +60 s. The centre is the maximum both ways, so handling
+  errors read cold there, and the likelihood's tail and the offer's wording
+  ("highest") follow from that. The spec said hot, and "lowest".
+- **One reading** (`test/probe.test.ts`, 1000 particles, production grid):
+  time-scale sd 12.5% -> 2.74% (reading at truth -1 C), 2.74% (at truth),
+  2.79% (+1 C) in the weights; 3.28 / 3.33 / 3.52% after the resample. A
+  prototype outside the filter, with each particle's peak simulated exactly
+  rather than read off the grid, gave 2.43% for a 1.0 C Gaussian with no
+  unrelated share, 2.55-2.63% with the handling tail, 3.63% for 1.5 C. The
+  2% unrelated share costs about 0.15 points; 5% over 40 C cost 0.45.
+- **Direction**: +1 C: next jammy cook 464.0 -> 449.1 s; -1 C: 469.2 s.
+- **The countdown**: 183 s for the default egg at jammy in ice (180 before);
+  -46 to +56 s across 53-78 g, soft to hard, ice and tap. PLAN.md has the
+  table.
+- **Suites**: `npm test` 169 tests, 168 pass, 1 todo (E3's 5b, unchanged);
+  `npm run validate` 28/28; `npm run conformance` 85 Swift tests pass, with
+  `fixtures/probe.json` new and `calibration.json` untouched.
+
+### Verified in Chromium
+
+The built site on its own port, own tab, 430 px wide, `Date.now` overridden
+to skip the waits. A hot-start jammy cook: the offer appeared in COOKING under
+Cancel, "I have one" stored `probe` and `probeAsked` and put the offer away;
+COOLING counted 3:03 with "have the probe ready"; DONE announced "Now push the
+probe to the middle of the egg" and showed the field in C. 46.7 C was refused
+("expect 48.4 °C to 82.5 °C") and nothing was logged; 65.7 C was logged
+(`after_s` 183, `pulledBy` cook) and folded in the worker; "Just right" then
+refolded the same egg, and `replay` of the log matched the stored posterior
+string for string. The next cook read 7:42. Switched to Imperial: no offer,
+the field in F, a stray "1147247.2" refused with the range in F, 147.2 F
+logged as 63.99999999999999 C - which is why the record now rounds to 0.01 C -
+with `after_s` 203 (the grace ran out: 20 s + 183). The replay matched again;
+two readings left the time-scale sd at 2.0%.
+
+### iOS
+
+Built for the simulator. On a simulator of its own (created, used and
+deleted; the two already booted were not touched), launched without taps: the
+toggle renders under the cooling picker, off. With a cook written into its
+UserDefaults, DONE shows the reading field in C at the top of the feedback
+(the placeholder was truncated at 110 pt; widened), and COOLING shows the
+countdown with "have the probe ready". The system's notification prompt sat
+over both and was left alone.
+
+### Not verified
+
+- **Nothing on iOS was tapped**: the offer's buttons, typing a reading, the
+  refusal, the fold, and the probe notification ("Probe it now") firing at the
+  end of the cooling rest on the build, the shared core and reading the code.
+- **No real egg has been probed.** The 1.0 C instrument sd and the 0.4 C
+  handling mean are the model's numbers, not a kitchen's.
+- **The counter is not offered the probe**, and a heat-off pan that runs out
+  before the pull is not either; neither was needed for the criterion.
+- Safari was not tried.
+
+### Things that cost time
+
+1. **"Every handling error reads hot" is true at the pull and false at the
+   peak.** The probe table already had the signs (-0.03 for 3 mm, -0.14 for
+   15 s); nobody had read them as a direction.
+2. **The filter's jitter is the floor.** A reading that leaves 2.7% in the
+   weights leaves 3.3% in the posterior, because every resample widens alpha
+   by 2% whatever the posterior.
+3. **The robust floor matters more than it looks.** A 5% share over 40 C cost
+   half a point of sd: prior particles 5 C away carry little weight each, but
+   variance is weighted by distance squared.
+4. **`.field { display: flex }` beats `[hidden]`.** The new blocks carry no
+   display of their own, so `hidden` works; `#customTempField`, on main, is
+   shown when it should not be (a separate fix).

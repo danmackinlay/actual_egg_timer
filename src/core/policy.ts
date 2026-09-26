@@ -18,10 +18,13 @@
  * Pure, like the rest of `src/core/`: no storage, no DOM, no clock.
  */
 
-import { SIZE_CLASSES, SizeClass, US_SIZE_CLASSES } from './geometry.js';
+import { Egg, SIZE_CLASSES, SizeClass, US_SIZE_CLASSES } from './geometry.js';
 
-import { DonenessAnchor, DONENESS_ANCHORS, Solution } from './solve.js';
-import { T_ROOM_C } from './constants.js';
+import {
+  CookResult, DonenessAnchor, DONENESS_ANCHORS, ModelParams, Solution, simulate,
+} from './solve.js';
+import { CookSetup, Cooling } from './protocol.js';
+import { ALPHA_REL_SD, T_COLD_TAP_C, T_ICE_BATH_C, T_ROOM_C } from './constants.js';
 
 /* ------------------------------------------------------------------ bounds */
 
@@ -402,8 +405,84 @@ export function hasBoilMemory(memory: BoilMemory): boolean {
 export type Phase = 'IDLE' | 'HEATING' | 'COOKING' | 'PULL' | 'COOLING' | 'DONE';
 
 /** Counted-down cooling. Carryover is what ruins a soft egg, so this is a
- *  stage of the cook, not a suggestion appended to the end of it. */
+ *  stage of the cook, not a suggestion appended to the end of it.
+ *
+ *  Since E4 this is the FALLBACK: the countdown runs to the moment the yolk's
+ *  centre peaks (`coolingSecondsFor`), and this flat three minutes is only
+ *  what a cook gets when there is no peak after the pull to run to - a
+ *  heat-off pan that ran out while the egg was still in it - or when a cook
+ *  stored before E4 is picked back up. */
 export const COOLING_SECONDS = 180;
+
+/** The shortest counted cooling, s. The model's peak never comes sooner than
+ *  about a minute and a half after the pull for any egg the app will time
+ *  (88 s, a 53 g egg at hard with the heat off); this is a floor under a
+ *  rounding, not a rule anyone should meet. */
+export const COOLING_MIN_SECONDS = 60;
+
+/**
+ * How long to count the cooling down, s from the pull: to the moment the
+ * yolk's centre peaks, for this cook as the solver ran it (PLAN.md, old item
+ * 4). Until E4 it was a flat three minutes, which for the default egg in ice
+ * ended 3 s before the peak and for a small one 25 s after it; the thermometer
+ * is read at the peak, so the countdown and the reading now end together.
+ *
+ * `result` is the solve the cook is running on, for its own cooling method -
+ * the peak comes about 20 s later under a tap than in ice. On the counter
+ * nothing is counted (`beginCooling`), and this is not asked.
+ */
+export function coolingSecondsFor(result: CookResult): number {
+  const toPeak = result.peakYolkTime_s - result.cookTime_s;
+  if (!(toPeak > 0.0)) return COOLING_SECONDS;
+  const whole = Math.round(toPeak);
+  return whole < COOLING_MIN_SECONDS ? COOLING_MIN_SECONDS : whole;
+}
+
+/**
+ * Whether this cook has a moment to take a probe reading at (E4): a counted
+ * cooling that ends when the yolk's centre peaks. Not on the counter, where
+ * nothing is counted and the peak is nine minutes off with the carryover
+ * constant in it (INFERENCE.md section 5), and not when the centre peaked
+ * before the egg came out, where there is no peak after the pull to read.
+ */
+export function probeMomentFor(result: CookResult, cooling: Cooling): boolean {
+  if (cooling === 'counter') return false;
+  return result.peakYolkTime_s - result.cookTime_s >= COOLING_MIN_SECONDS;
+}
+
+/** How far past the peaks of the fastest and slowest kitchens believed in a
+ *  reading may land and still be taken, C: three instrument sds. */
+export const PROBE_MARGIN_C = 3.0;
+
+/** How many prior sds of the time-scale either side of where the posterior
+ *  stands a kitchen may be and still have its reading taken. Three is wider
+ *  than any kitchen the prior believes in, and narrow enough that a reading
+ *  with its digits swapped - 46 for 64 - lands outside. */
+export const PROBE_ALPHA_SDS = 3.0;
+
+/**
+ * The centre readings the app will take for this cook, C, as [low, high].
+ *
+ * The peak for a time-scale PROBE_ALPHA_SDS prior sds either side of the
+ * posterior mean, widened by PROBE_MARGIN_C, and never outside what is
+ * possible at all: colder than the coldest thing the egg touched, or hotter
+ * than the water boiled. A reading outside is refused at entry rather than
+ * folded: it is a typo, the white, or another egg. For the default egg at
+ * jammy in ice that is 47.6 to 81.7 C around a peak of 64.7. Two
+ * simulations, so cheap enough to run on every keystroke.
+ */
+export function plausibleProbeRange_C(
+  egg: Egg, setup: CookSetup, params: ModelParams, cookTime_s: number,
+): [number, number] {
+  const spread = Math.exp(PROBE_ALPHA_SDS * ALPHA_REL_SD);
+  const slow = simulate(egg, setup, { alpha_m2s: params.alpha_m2s / spread, tauAirScale: params.tauAirScale }, cookTime_s);
+  const fast = simulate(egg, setup, { alpha_m2s: params.alpha_m2s * spread, tauAirScale: params.tauAirScale }, cookTime_s);
+  const bath = setup.cooling === 'ice' ? T_ICE_BATH_C : setup.cooling === 'tap' ? T_COLD_TAP_C : setup.ambient_C;
+  const floor = Math.min(setup.eggStart_C, setup.ambient_C, bath);
+  const lo = Math.min(slow.peakYolk_C, fast.peakYolk_C) - PROBE_MARGIN_C;
+  const hi = Math.max(slow.peakYolk_C, fast.peakYolk_C) + PROBE_MARGIN_C;
+  return [lo < floor ? floor : lo, hi > setup.boiling_C ? setup.boiling_C : hi];
+}
 
 /** If nobody confirms the transfer, assume it happened. A stalled timer at the
  *  hob is worse than a slightly optimistic one. */

@@ -160,6 +160,12 @@
       </div>
     </fieldset>
 
+    <!-- E4. Off by default; offered once during a cook, and changed here. -->
+    <div class="field field--check pan-only">
+      <label class="check" for="probeSetting"><input type="checkbox" id="probeSetting"><span data-copy="controls.probe"></span></label>
+      <p class="hint" data-copy="controls.probe.hint"></p>
+    </div>
+
     <div class="field field--pair pan-only">
       <div>
         <label for="litres" data-copy="controls.water"></label>
@@ -201,10 +207,29 @@
     <p id="primaryHint"></p>
     <button type="button" id="primary" class="primary" data-copy="action.startHeating"></button>
     <button type="button" id="secondary" class="secondary" hidden data-copy="action.cancel"></button>
+    <!-- The thermometer, offered once, after "Eggs in" (E4). -->
+    <div id="probeOffer" hidden>
+      <p class="hint" data-copy="probe.offer"></p>
+      <div class="seg">
+        <button type="button" class="secondary" id="probeOfferYes" data-copy="probe.offer.yes"></button>
+        <button type="button" class="secondary" id="probeOfferNo" data-copy="probe.offer.no"></button>
+      </div>
+    </div>
     <!-- Two questions, always both, neither required (INFERENCE.md section 3).
          Each answer is folded the moment it is tapped; one left unanswered is
          recorded as skipped when the next cook starts. -->
     <div id="feedback" hidden>
+      <!-- A reading at the middle, when the cooling ends (E4). -->
+      <div id="probeEntry" hidden>
+        <p id="probeNow" data-copy="probe.now"></p>
+        <p class="hint" id="probeHint" data-copy="probe.hint"></p>
+        <div class="probe__row">
+          <label class="sr-only" for="probeReading" data-copy="probe.entry"></label>
+          <span class="unit"><input type="number" id="probeReading" inputmode="decimal"><span id="unitProbe"></span></span>
+          <button type="button" class="secondary" id="probeSave" data-copy="probe.save"></button>
+        </div>
+        <p class="hint" id="probeNote" aria-live="polite"></p>
+      </div>
       <p id="feedbackAsk" data-copy="feedback.ask"></p>
       <div class="seg">
         <button type="button" class="fb" data-fb="-1" data-copy="feedback.tooSoft"></button>

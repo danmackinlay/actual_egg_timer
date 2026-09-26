@@ -24,11 +24,11 @@ import {
   DONENESS_ANCHORS, Solution, donenessFromSlider, solveCookTime,
 } from '../core/solve.js';
 import {
-  DEFAULTS, SLIDER_STEPS, Verdict, ambientFor, anchorNear, targetPeakYolk_C, textureFor,
-  verdictFor,
+  DEFAULTS, SLIDER_STEPS, Verdict, ambientFor, anchorNear, coolingSecondsFor,
+  plausibleProbeRange_C, probeMomentFor, targetPeakYolk_C, textureFor, verdictFor,
 } from '../core/policy.js';
 import { Feedback, WhiteReport } from '../core/infer.js';
-import { EggFrom, MassFrom } from '../core/record.js';
+import { EggFrom, MassFrom, ProbeReading, recordCookTime_s, recordProbe_C } from '../core/record.js';
 import {
   Calibration, calibrationDoneness, calibrationParams, clearCalibration, eggRecordFor, eggsBehind,
   learn, loadCalibration, logEgg, recordSecondAnswer,
@@ -47,7 +47,7 @@ import {
 import {
   Machine, advance, beginCooling, idleMachine, recordBoil, restoreMachine,
   reviseProvisional, secondsAfterBoil, secondsHeating, secondsToCool, secondsToPull,
-  startCold, startHot, COOLING_SECONDS, PULL_GRACE_SECONDS,
+  startCold, startHot, PULL_GRACE_SECONDS,
 } from './machine.js';
 import {
   Ticker, blip, keepScreenAwake, primeAudio, releaseScreen, ringAlarm, setMuted, startTicker,
@@ -105,6 +105,15 @@ const dom = {
   calibNote: el<HTMLParagraphElement>('calibNote'),
   learnedNote: el<HTMLParagraphElement>('learnedNote'),
   forget: el<HTMLButtonElement>('forget'),
+  probeSetting: el<HTMLInputElement>('probeSetting'),
+  probeOffer: el<HTMLDivElement>('probeOffer'),
+  probeOfferYes: el<HTMLButtonElement>('probeOfferYes'),
+  probeOfferNo: el<HTMLButtonElement>('probeOfferNo'),
+  probeEntry: el<HTMLDivElement>('probeEntry'),
+  probeReading: el<HTMLInputElement>('probeReading'),
+  unitProbe: el<HTMLSpanElement>('unitProbe'),
+  probeSave: el<HTMLButtonElement>('probeSave'),
+  probeNote: el<HTMLParagraphElement>('probeNote'),
 };
 
 function radios(name: string): HTMLInputElement[] {
@@ -169,12 +178,15 @@ let restored = false;
  *  cook, so a reload neither asks again nor logs the egg a second time as
  *  unanswered. */
 let feedbackGiven = false;
-/** Which of the two questions have been answered on screen, and the egg's
- *  place in the log once the first answer has written it down. Not persisted:
- *  after a reload the second question is not offered again, because the
- *  surface its answer would be folded against is gone (see
- *  `recordSecondAnswer`). The unanswered one stays a skip in the record. */
-let answered: { yolk: Feedback | null; white: WhiteReport | null; index: number } | null = null;
+/** Which of the two questions have been answered on screen, whether a probe
+ *  reading has been taken (E4), and the egg's place in the log once the first
+ *  of them has written it down. Not persisted: after a reload the rest are not
+ *  offered again, because the surface their answers would be folded against is
+ *  gone (see `recordSecondAnswer`). An unanswered question stays a skip in the
+ *  record. */
+let answered: {
+  yolk: Feedback | null; white: WhiteReport | null; probe: ProbeReading | null; index: number;
+} | null = null;
 
 /** The same cook, against a time to boil that is now known rather than
  *  guessed. Everything else about it is frozen. */
@@ -203,6 +215,10 @@ interface Ticket {
   units: UnitSystem;
   /** The language they were reading it in, for the record. */
   lang: string;
+  /** Whether this cook has a moment to probe at (E4): a counted cooling that
+   *  ends when the yolk's centre peaks. Frozen with the cook, and moved only
+   *  by the re-solve at the boil. */
+  probeMoment: boolean;
 }
 
 /* --------------------------------------------------------------- physics */
@@ -644,7 +660,9 @@ function render(now_ms: number): void {
   } else if (machine.phase === 'COOLING') {
     label = t(settings.cooling === 'ice' ? 'readout.phase.coolingIce' : 'readout.phase.coolingTap');
     digits = formatClock(secondsToCool(machine, now_ms));
-    subline = t('readout.sub.cooling', { minutes: COOLING_SECONDS / 60 });
+    // The countdown ends when the middle of the yolk peaks (E4), which is
+    // also when a probe reading is asked for.
+    subline = t(probeWanted() ? 'readout.sub.coolingProbe' : 'readout.sub.coolingPeak');
     spoken = t('spoken.cooling', { time: spokenClock(secondsToCool(machine, now_ms)) });
     setPrimary('', '', false);
     dom.secondary.hidden = false;
@@ -655,7 +673,7 @@ function render(now_ms: number): void {
     subline = settings.startMode === 'cold'
       ? t('readout.sub.doneCold', { boil: formatClock(boil_s), cooking: formatClock(cookTime_s - boil_s) })
       : t('readout.sub.doneHot');
-    spoken = t('spoken.done');
+    spoken = t(probePending() ? 'spoken.probe' : 'spoken.done');
     setPrimary(t('action.startAgain'), '', true);
     dom.secondary.hidden = true;
   }
@@ -666,6 +684,7 @@ function render(now_ms: number): void {
   // them away, since the second could no longer be folded.
   dom.feedback.hidden = machine.phase !== 'DONE' || (feedbackGiven && answered === null);
   if (!dom.feedback.hidden && answered === null) renderCalibNote();
+  renderProbe();
 
   dom.phaseLabel.textContent = label;
   dom.digits.textContent = digits;
@@ -877,9 +896,16 @@ function resetRows(): void {
 function onAnswer(yolk: Feedback | null, white: WhiteReport | null, pressed: HTMLButtonElement): void {
   if (answered !== null && ((yolk !== null && answered.yolk !== null)
     || (white !== null && answered.white !== null))) return;
+  if (ticket === null) return;
+  settleRow(yolk !== null ? 'button.fb' : 'button.wb', pressed);
+  foldAnswer(yolk, white, null);
+}
+
+/** Write the egg down with its first answer, or fold a later one into it -
+ *  a yolk, a white or a probe reading, whichever came. */
+function foldAnswer(yolk: Feedback | null, white: WhiteReport | null, probe: ProbeReading | null): void {
   const cooked = ticket;
   if (cooked === null) return;
-  settleRow(yolk !== null ? 'button.fb' : 'button.wb', pressed);
   dom.calibNote.textContent = t('feedback.learning');
   const cookStarted = machine.startedAt_ms;
   const stillHere = (): boolean => machine.phase === 'DONE' && machine.startedAt_ms === cookStarted;
@@ -889,8 +915,8 @@ function onAnswer(yolk: Feedback | null, white: WhiteReport | null, pressed: HTM
   };
 
   if (answered === null) {
-    const index = logEgg(eggRecordFor(cooked, machine, yolk, white));
-    answered = { yolk: yolk, white: white, index: index };
+    const index = logEgg(eggRecordFor(cooked, machine, yolk, white, probe));
+    answered = { yolk: yolk, white: white, probe: probe, index: index };
     feedbackGiven = true;
     // Written down with the log, not after the fold: a reload between the two
     // would otherwise offer the questions again, and log the egg twice.
@@ -902,8 +928,87 @@ function onAnswer(yolk: Feedback | null, white: WhiteReport | null, pressed: HTM
   }
   if (yolk !== null) answered.yolk = yolk;
   if (white !== null) answered.white = white;
-  const second = yolk !== null ? { yolk: yolk } : white !== null ? { white: white } : {};
+  if (probe !== null) answered.probe = probe;
+  const second = yolk !== null ? { yolk: yolk } : white !== null ? { white: white }
+    : probe !== null ? { probe: probe } : {};
   void recordSecondAnswer(answered.index, second).then(thanks);
+}
+
+/* ------------------------------------------------------------ thermometer */
+
+/** Whether this cook will ask for a probe reading when its cooling ends. */
+function probeWanted(): boolean {
+  return settings.probe && ticket !== null && ticket.probeMoment;
+}
+
+/** Whether the probe is asked for NOW: the egg is done, and no reading yet. */
+function probePending(): boolean {
+  return machine.phase === 'DONE' && probeWanted() && !(feedbackGiven && answered === null)
+    && (answered === null || answered.probe === null);
+}
+
+/** The once-only offer during a cook, and the reading at DONE. */
+function renderProbe(): void {
+  const running = machine.phase === 'HEATING' || machine.phase === 'COOKING'
+    || machine.phase === 'PULL' || machine.phase === 'COOLING';
+  dom.probeOffer.hidden = !(running && !settings.probeAsked && ticket !== null && ticket.probeMoment);
+  // Asked for until it is given, and left showing what was given.
+  const visible = probePending() || (machine.phase === 'DONE' && dom.probeReading.disabled);
+  dom.probeEntry.hidden = !visible;
+}
+
+/** The cook's answer to the offer. Either way it is not made again; the
+ *  setting stays in the controls. */
+function onProbeOffer(yes: boolean): void {
+  settings.probeAsked = true;
+  if (yes) settings.probe = true;
+  dom.probeSetting.checked = settings.probe;
+  saveNow();
+  render(Date.now());
+}
+
+/**
+ * A reading typed at DONE, in the cook's units. Refused, with the range it
+ * should be in, when no believable kitchen could have made it for this cook
+ * (`plausibleProbeRange_C`); otherwise folded into the egg with whatever else
+ * has been said about it, one fold per egg.
+ */
+function onProbeSave(): void {
+  const cooked = ticket;
+  if (cooked === null || dom.probeReading.disabled) return;
+  if (answered !== null && answered.probe !== null) return;
+  const typed = dom.probeReading.value.trim();
+  if (typed === '') return;
+  const reading_C = parse(measure('probeTemp'), Number(typed));
+  const scoredAt_s = recordCookTime_s(eggRecordFor(cooked, machine, null));
+  const [low, high] = plausibleProbeRange_C(
+    cooked.egg, cooked.setup, calibrationParams(calib), scoredAt_s,
+  );
+  if (reading_C === null || reading_C < low || reading_C > high) {
+    dom.probeNote.textContent = t('probe.refused', {
+      low: show('probeTemp', low), high: show('probeTemp', high),
+    });
+    return;
+  }
+  // When it was asked for: the end of the counted cooling, from the moment
+  // the record scores as the pull.
+  const asked_s = (machine.coolEnd_ms - machine.startedAt_ms) / 1000 - scoredAt_s;
+  const probe: ProbeReading = {
+    centre_C: recordProbe_C(reading_C),
+    after_s: machine.coolEnd_ms > 0 && asked_s >= 0 ? asked_s : null,
+  };
+  dom.probeReading.disabled = true;
+  dom.probeSave.disabled = true;
+  dom.probeNote.textContent = show('probeTemp', reading_C);
+  foldAnswer(null, null, probe);
+}
+
+/** Back to empty, for the next egg. */
+function resetProbe(): void {
+  dom.probeReading.value = '';
+  dom.probeReading.disabled = false;
+  dom.probeSave.disabled = false;
+  dom.probeNote.textContent = '';
 }
 
 /* ------------------------------------------------------------------ input */
@@ -946,6 +1051,9 @@ function readInputs(source: EventTarget | null): void {
   }
   settings.eggCount = Math.round(clampNumber(dom.eggCount.value, LIMITS.eggCount, settings.eggCount));
   settings.doneness = clampNumber(dom.doneness.value, LIMITS.doneness, settings.doneness);
+  // Ticking the box is saying so: the offer has its answer.
+  if (dom.probeSetting.checked !== settings.probe) settings.probeAsked = true;
+  settings.probe = dom.probeSetting.checked;
 
   dom.customTempField.hidden = settings.startTempMode !== 'custom';
   syncMeasurements(source);
@@ -990,7 +1098,10 @@ function onTick(): void {
     const assumed = secondsHeating(machine, now) + REVISE_EXTRA_S;
     solution = resolveDuring(assumed);
     if (ticket !== null) ticket = withTimeToBoil(ticket, assumed);
-    setMachine(reviseProvisional(machine, solution.result.cookTime_s, assumed));
+    if (ticket !== null) ticket = { ...ticket, probeMoment: probeMomentFor(solution.result, ticket.setup.cooling) };
+    setMachine(reviseProvisional(
+      machine, solution.result.cookTime_s, assumed, coolingSecondsFor(solution.result),
+    ));
   }
 
   const step = advance(machine, now);
@@ -1033,6 +1144,7 @@ function reset(): void {
   feedbackGiven = false;
   answered = null;
   resetRows();
+  resetProbe();
   restored = false;
   ticket = null;
   machine = idleMachine(settings.cooling);
@@ -1068,10 +1180,13 @@ function onPrimary(): void {
       logNominalTarget: Math.log10(donenessFromSlider(target).yolkDose_min),
       units: unitSystem(),
       lang: activeLocale(),
+      probeMoment: probeMomentFor(solution.result, settings.cooling),
     };
+    // The cooling counts to the yolk's peak for this cook (E4).
+    const cool = coolingSecondsFor(solution.result);
     setMachine(settings.startMode === 'cold'
-      ? startCold(now, cook, boil, settings.cooling, target)
-      : startHot(now, cook, settings.cooling, target));
+      ? startCold(now, cook, boil, settings.cooling, target, cool)
+      : startHot(now, cook, settings.cooling, target, cool));
     lastRevise_ms = now;
     startTicking();
     blip();
@@ -1087,7 +1202,10 @@ function onPrimary(): void {
     // from the live controls. They cannot change mid-cook today, which is what
     // made rebuilding harmless rather than correct.
     if (ticket !== null) ticket = withTimeToBoil(ticket, measured);
-    setMachine(recordBoil(machine, now, solution.result.cookTime_s));
+    if (ticket !== null) ticket = { ...ticket, probeMoment: probeMomentFor(solution.result, ticket.setup.cooling) };
+    setMachine(recordBoil(
+      machine, now, solution.result.cookTime_s, coolingSecondsFor(solution.result),
+    ));
     blip();
     onTick();
     return;
@@ -1159,6 +1277,7 @@ function applyUnitsToDom(): void {
   applyMeasure(dom.customTemp, dom.unitTemp, measure('eggTemp'));
   applyMeasure(dom.altitude, dom.unitAltitude, measure('altitude'));
   applyMeasure(dom.litres, dom.unitLitres, measure('water'));
+  applyMeasure(dom.probeReading, dom.unitProbe, measure('probeTemp'));
   syncMeasurements(null);
   dom.customTemp.value = inputText('eggTemp', settings.customStart_C);
   dom.litres.value = inputText('water', settings.waterLitres);
@@ -1187,6 +1306,7 @@ function applySettingsToDom(): void {
   dom.eggCount.value = String(settings.eggCount);
   dom.doneness.value = String(settings.doneness);
   dom.customTempField.hidden = settings.startTempMode !== 'custom';
+  dom.probeSetting.checked = settings.probe;
 }
 
 export function boot(): void {
@@ -1204,6 +1324,12 @@ export function boot(): void {
   dom.secondary.addEventListener('click', reset);
   dom.mute.addEventListener('click', onToggleMute);
   dom.forget.addEventListener('click', onForget);
+  dom.probeOfferYes.addEventListener('click', () => onProbeOffer(true));
+  dom.probeOfferNo.addEventListener('click', () => onProbeOffer(false));
+  dom.probeSave.addEventListener('click', onProbeSave);
+  dom.probeReading.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') onProbeSave();
+  });
   setMuted(settings.muted);
   renderMute();
 
@@ -1323,6 +1449,8 @@ function restoreTicket(raw: unknown): Ticket | null {
     units: r['units'] === 'imperial' ? 'imperial' : 'metric',
     // And one written before F4 by an app that spoke only English.
     lang: typeof r['lang'] === 'string' && r['lang'] !== '' ? r['lang'] : 'en',
+    // And one written before E4 counted a flat three minutes, not to a peak.
+    probeMoment: r['probeMoment'] === true,
   };
 }
 

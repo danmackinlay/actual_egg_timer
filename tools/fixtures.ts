@@ -75,7 +75,7 @@ import {
 import {
   Calibration, EggRecord, PRIOR_ID, RECORD_VERSION, buildRequestedGrid, calibrationDoneness,
   copyCalibration, foldRecord, freshCalibration, gridRequestFor, parseRecord, recordCookTime_s,
-  recordMass_g, recordTeaches, replay,
+  recordMass_g, recordProbe_C, recordTeaches, replay,
 } from '../src/core/record.js';
 import { longDuration, startPhrase, weekdayKey } from '../src/core/sousvide.js';
 import {
@@ -84,6 +84,7 @@ import {
 } from '../src/core/format.js';
 import { QUANTITIES, UNIT_SYSTEMS, measureFor, quantityText } from '../src/core/units.js';
 import { unitsFixture } from './unitsFixture.js';
+import { probeFixture } from './probeFixture.js';
 import {
   SOUS_VIDE_BATH_C, SOUS_VIDE_MODEL_FLOOR_C, equilibrationTime, sousVideEstimate,
 } from '../src/core/sousvide.js';
@@ -93,7 +94,7 @@ import {
 import {
   LIMITS, SLIDER_STEPS, PARTICLE_COUNT as POLICY_PARTICLES, CALIBRATION_SEED,
   DEFAULTS, DEFAULT_EGG_MASS_KG, DEFAULT_TIME_TO_BOIL_S, START_TEMP_PRESETS_C,
-  BoilMemory, COOLING_SECONDS, GridSpec, PULL_GRACE_SECONDS, ambientFor, anchorNear,
+  BoilMemory, COOLING_SECONDS, GridSpec, PULL_GRACE_SECONDS, ambientFor, anchorNear, coolingSecondsFor,
   calibrationGrid, carrySizeIndex, estimateTimeToBoil, phaseAt, rememberBoil, snapDown, snapUp,
   targetPeakYolk_C, textureFor, verdictFor,
 } from '../src/core/policy.js';
@@ -893,6 +894,9 @@ interface EggSpec {
   yolk: EggRecord['yolk'];
   white: EggRecord['white'];
   whiteOffered: boolean;
+  /** A probe reading (E4), as degrees off the peak the literature values
+   *  predict for this cook, so the fixture reads where a real one would. */
+  probeOff_C?: number;
 }
 
 /* Realistic cooks: each recommended time is what the solver says for that egg
@@ -900,9 +904,12 @@ interface EggSpec {
 function recordOf(e: EggSpec): EggRecord {
   const egg = eggFromMass(e.mass_g / 1000);
   const setup = setupOf(e.over);
-  const recommended = solveCookTime(
-    egg, setup, DEFAULT_PARAMS, donenessFromSlider(e.level),
-  ).result.cookTime_s;
+  const solved = solveCookTime(egg, setup, DEFAULT_PARAMS, donenessFromSlider(e.level)).result;
+  const recommended = solved.cookTime_s;
+  const probe = e.probeOff_C === undefined ? null : {
+    centre_C: simulate(egg, setup, DEFAULT_PARAMS, recommended + e.late_s).peakYolk_C + e.probeOff_C,
+    after_s: coolingSecondsFor(solved),
+  };
   return {
     v: 1,
     uid: null,
@@ -932,11 +939,11 @@ function recordOf(e: EggSpec): EggRecord {
     nudge_s: 0,
     pulled_s: recommended + e.late_s,
     pulledBy: e.pulledBy,
-    cooled_s: setup.cooling === 'counter' ? 0 : COOLING_SECONDS,
+    cooled_s: setup.cooling === 'counter' ? 0 : probe !== null ? coolingSecondsFor(solved) : COOLING_SECONDS,
     yolk: e.yolk,
     white: e.white,
     whiteOffered: e.whiteOffered,
-    probe: null,
+    probe: probe,
     lang: 'en',
     register: 'modern',
     units: 'metric',
@@ -991,6 +998,16 @@ const REPLAY_LOG: EggRecord[] = [
   recordOf({
     app: 'web', mass_g: 63, massFrom: 'scale', eggFrom: 'fridge', over: {},
     level: 0.62, pulledBy: 'cook', late_s: 5, yolk: 1, white: 'firm', whiteOffered: true,
+  }),
+  // E4's: a probe reading a degree hot, with the yolk "just right".
+  recordOf({
+    app: 'ios', mass_g: 68, massFrom: 'scale', eggFrom: 'fridge', over: {},
+    level: 0.41, pulledBy: 'cook', late_s: 3, yolk: 0, white: null, whiteOffered: true, probeOff_C: 1.0,
+  }),
+  // And a reading alone, under a tap, cold - nothing else answered.
+  recordOf({
+    app: 'web', mass_g: 58, massFrom: 'class', eggFrom: 'fridge', over: { cooling: 'tap' },
+    level: 0.3, pulledBy: 'timeout', late_s: 0, yolk: null, white: null, whiteOffered: true, probeOff_C: -1.5,
   }),
 ];
 
@@ -1125,8 +1142,17 @@ const RECORD_CASES: { why: string; mutate: Mutation }[] = [
   { why: 'an answer to a question never asked', mutate: (r) => { r['whiteOffered'] = false; } },
   { why: 'offered as a number', mutate: (r) => { r['whiteOffered'] = 1; } },
   { why: 'offered missing', mutate: (r) => { delete r['whiteOffered']; } },
-  { why: 'a probe reading before E4', mutate: (r) => { r['probe'] = 64.5; } },
-  { why: 'a probe object before E4', mutate: (r) => { r['probe'] = {}; } },
+  { why: 'a probe reading (E4)', mutate: (r) => { r['probe'] = { centre_C: 61.3, after_s: 187 }; } },
+  { why: 'a probe reading, when unknown', mutate: (r) => { r['probe'] = { centre_C: 61.3, after_s: null }; } },
+  { why: 'a probe reading, when absent', mutate: (r) => { r['probe'] = { centre_C: 61.3 }; } },
+  { why: 'a probe reading as cold as the ice', mutate: (r) => { r['probe'] = { centre_C: 2 }; } },
+  { why: 'a probe reading at the boil', mutate: (r) => { r['probe'] = { centre_C: 100 }; } },
+  { why: 'a probe reading colder than the ice', mutate: (r) => { r['probe'] = { centre_C: 1.9 }; } },
+  { why: 'a probe reading past the boil', mutate: (r) => { r['probe'] = { centre_C: 100.01 }; } },
+  { why: 'a bare number for a probe', mutate: (r) => { r['probe'] = 64.5; } },
+  { why: 'a probe with no reading', mutate: (r) => { r['probe'] = {}; } },
+  { why: 'a probe reading as a string', mutate: (r) => { r['probe'] = { centre_C: '61.3' }; } },
+  { why: 'a probe asked for before the pull', mutate: (r) => { r['probe'] = { centre_C: 61.3, after_s: -1 }; } },
   { why: 'no language', mutate: (r) => { r['lang'] = ''; } },
   { why: 'an unknown unit system', mutate: (r) => { r['units'] = 'kelvin'; } },
 ];
@@ -1140,6 +1166,7 @@ const recordCases = RECORD_CASES.map((c) => {
     valid: parsed !== null,
     yolk: parsed === null ? null : parsed.yolk,
     white: parsed === null ? null : parsed.white,
+    probe: parsed === null ? null : parsed.probe,
   };
 });
 // A log is all or nothing: one bad record refuses the lot.
@@ -1149,6 +1176,7 @@ recordCases.push({
   valid: parseRecord([CANONICAL]) !== null,
   yolk: null,
   white: null,
+  probe: null,
 });
 
 const recordFixture = {
@@ -1160,6 +1188,9 @@ const recordFixture = {
   massRounding: [0.048, 0.058, 0.068, 0.076, 0.0553017, 0.06849999, 0.0624449999].map((kg) => ({
     mass_kg: kg, mass_g: recordMass_g(kg),
   })),
+  // A probe reading, typed in F and carried in C (E4).
+  probeRounding: [147.2, 147.3, 150.1, 139.9, 180.5, 212].map((f) => (f - 32) * 5 / 9)
+    .concat([64.005, 58.8849999, 61.3]).map((c) => ({ centre_C: c, record_C: recordProbe_C(c) })),
   replay: {
     grid: { alphaCount: REPLAY_GRID_ALPHA, timeCount: REPLAY_GRID_TIME },
     start: { count: REPLAY_PARTICLES, seed: REPLAY_SEED },
@@ -1369,7 +1400,6 @@ const pseudoCases: { key: string; args: CopyArgs }[] = [
   },
   { key: 'sousvide.start.lastWeekday', args: { weekday: render(pseudo, weekdayKey(3)) } },
   { key: 'spoken.minutesSeconds', args: { minutes: render(pseudo, 'spoken.minutes', { minutes: 1 }, 'cs-CZ'), seconds: render(pseudo, 'spoken.seconds', { seconds: 1 }, 'cs-CZ') } },
-  { key: 'readout.sub.cooling', args: { minutes: 3 } },
 ];
 
 const HOUR_CYCLES: (HourCycle | null)[] = [null, 'h23', 'h12'];
@@ -1423,6 +1453,11 @@ writeFileSync('fixtures/format.json', `${JSON.stringify(format, null, 2)}\n`);
 const units = unitsFixture(english);
 writeFileSync('fixtures/units.json', `${JSON.stringify(units, null, 2)}\n`);
 
+/* ------------------------------------------------------------------ probe */
+
+const thermometer = probeFixture();
+writeFileSync('fixtures/probe.json', `${JSON.stringify(thermometer, null, 2)}\n`);
+
 const counts = [
   `${core.sphere.seriesTheta.length} seriesTheta`,
   `${core.sphere.stepResponse.length} step samples`,
@@ -1446,5 +1481,7 @@ const counts = [
   `${(units['measures'] as { roundTrip: unknown[] }[]).reduce((n, m) => n + m.roundTrip.length, 0)} unit round trips`,
   `${recordFixture.cases.length} records`,
   `${recordFixture.replay.log.length} replayed eggs`,
+  `${(thermometer['updates'] as unknown[]).length} probe folds`,
+  `${(thermometer['solved'] as unknown[]).length} probe cooks`,
 ];
 console.log(`fixtures/*.json written: ${counts.join(', ')}`);

@@ -54,6 +54,12 @@ export interface Machine {
   pulledBy: PulledBy | null;
   /** Epoch ms cooling finishes. 0 unless cooling. */
   coolEnd_ms: number;
+  /** How long the counted cooling runs once the egg is out, s: to the moment
+   *  the yolk's centre peaks, for this cook (`coolingSecondsFor`, E4), which
+   *  is also when a probe reading is asked for. Set when the cook starts and
+   *  again whenever it is re-solved. COOLING_SECONDS for a cook stored
+   *  before E4. */
+  cool_s: number;
   /** Cook time currently in force, s (from egg-in to egg-out). */
   cookTime_s: number;
   /** The doneness this cook is being RUN at, decided once when it started.
@@ -82,6 +88,7 @@ export function idleMachine(cooling: Cooling): Machine {
     outAt_ms: 0,
     pulledBy: null,
     coolEnd_ms: 0,
+    cool_s: COOLING_SECONDS,
     cookTime_s: 0,
     targetLevel: 0,
     assumedBoil_s: 0,
@@ -93,7 +100,7 @@ export function idleMachine(cooling: Cooling): Machine {
  *  countdown shows a provisional total from the remembered time to boil. */
 export function startCold(
   now_ms: number, cookTime_s: number, assumedBoil_s: number, cooling: Cooling,
-  targetLevel: number,
+  targetLevel: number, cool_s: number = COOLING_SECONDS,
 ): Machine {
   return {
     phase: 'HEATING',
@@ -104,6 +111,7 @@ export function startCold(
     outAt_ms: 0,
     pulledBy: null,
     coolEnd_ms: 0,
+    cool_s: cool_s,
     cookTime_s: cookTime_s,
     targetLevel: targetLevel,
     assumedBoil_s: assumedBoil_s,
@@ -114,6 +122,7 @@ export function startCold(
 /** Hot start: water is already at a rolling boil, eggs go in now. */
 export function startHot(
   now_ms: number, cookTime_s: number, cooling: Cooling, targetLevel: number,
+  cool_s: number = COOLING_SECONDS,
 ): Machine {
   return {
     phase: 'COOKING',
@@ -124,6 +133,7 @@ export function startHot(
     outAt_ms: 0,
     pulledBy: null,
     coolEnd_ms: 0,
+    cool_s: cool_s,
     cookTime_s: cookTime_s,
     targetLevel: targetLevel,
     assumedBoil_s: 0,
@@ -132,14 +142,18 @@ export function startHot(
 }
 
 /** The rolling-boil tap: the time to boil stops being a guess. `cookTime_s` is
- *  the re-solved total, so the countdown snaps to the corrected remainder. */
-export function recordBoil(m: Machine, now_ms: number, cookTime_s: number): Machine {
+ *  the re-solved total, so the countdown snaps to the corrected remainder, and
+ *  `cool_s` the re-solved cooling, whose peak moved with it. */
+export function recordBoil(
+  m: Machine, now_ms: number, cookTime_s: number, cool_s: number = m.cool_s,
+): Machine {
   if (m.phase !== 'HEATING') return m;
   return {
     ...m,
     phase: 'COOKING',
     cookEnd_ms: m.startedAt_ms + cookTime_s * 1000,
     cookTime_s: cookTime_s,
+    cool_s: cool_s,
     assumedBoil_s: secondsHeating(m, now_ms),
     provisional: false,
   };
@@ -149,12 +163,15 @@ export function recordBoil(m: Machine, now_ms: number, cookTime_s: number): Mach
  *  reach zero while the pan is still heating, the guess is revised upward and
  *  the cook re-solved. The displayed number stays honest instead of alarming
  *  at an egg that has not started cooking. */
-export function reviseProvisional(m: Machine, cookTime_s: number, assumedBoil_s: number): Machine {
+export function reviseProvisional(
+  m: Machine, cookTime_s: number, assumedBoil_s: number, cool_s: number = m.cool_s,
+): Machine {
   if (m.phase !== 'HEATING') return m;
   return {
     ...m,
     cookEnd_ms: m.startedAt_ms + cookTime_s * 1000,
     cookTime_s: cookTime_s,
+    cool_s: cool_s,
     assumedBoil_s: assumedBoil_s,
   };
 }
@@ -169,7 +186,7 @@ export function beginCooling(m: Machine, now_ms: number, by: PulledBy = 'cook'):
   if (m.phase !== 'PULL') return m;
   const out = { ...m, outAt_ms: now_ms, pulledBy: by };
   if (m.cooling === 'counter') return { ...out, phase: 'DONE' };
-  return { ...out, phase: 'COOLING', coolEnd_ms: now_ms + COOLING_SECONDS * 1000 };
+  return { ...out, phase: 'COOLING', coolEnd_ms: now_ms + m.cool_s * 1000 };
 }
 
 /** Something that should make a noise. */
@@ -266,6 +283,11 @@ export function restoreMachine(raw: unknown, now_ms: number): Machine | null {
   const by = r['pulledBy'];
   const out = r['outAt_ms'];
   const measured = by === 'cook' && typeof out === 'number' && Number.isFinite(out) && out > 0;
+  // How long this cook counts its cooling (E4). A cook stored before E4 has
+  // no length of its own, and its countdown was the flat one.
+  const coolFor = r['cool_s'];
+  const cool = typeof coolFor === 'number' && Number.isFinite(coolFor) && coolFor > 0
+    ? coolFor : COOLING_SECONDS;
   const ended = phase === 'COOLING' || phase === 'DONE';
 
   return {
@@ -277,6 +299,7 @@ export function restoreMachine(raw: unknown, now_ms: number): Machine | null {
     outAt_ms: measured ? out : 0,
     pulledBy: measured ? 'cook' : ended ? 'timeout' : null,
     coolEnd_ms: numbers['coolEnd_ms'],
+    cool_s: cool,
     cookTime_s: numbers['cookTime_s'],
     targetLevel: numbers['targetLevel'],
     assumedBoil_s: numbers['assumedBoil_s'],

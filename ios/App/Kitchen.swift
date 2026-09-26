@@ -132,6 +132,43 @@ final class Kitchen {
         unitsChosen = chosen
     }
 
+    // MARK: - The thermometer (E4)
+
+    /// "I have a probe thermometer": when the cooling ends, ask for one reading
+    /// from the middle of the egg. Off until the cook says so.
+    private(set) var probe = false
+    /// Whether the once-only offer during a cook has been answered, either
+    /// way. The setting stays in the controls; the offer does not come back.
+    private(set) var probeAsked = false
+
+    /// The setting, from the controls. Changing it is saying so.
+    func setProbe(_ on: Bool) {
+        probe = on
+        probeAsked = true
+        Settings.save(self)
+    }
+
+    /// The answer to the offer made during a cook.
+    func answerProbeOffer(_ yes: Bool) {
+        probeAsked = true
+        if yes { probe = true }
+        Settings.save(self)
+    }
+
+    /// Restore from storage without saving it straight back.
+    func restoreProbe(on: Bool, asked: Bool) {
+        probe = on
+        probeAsked = asked
+    }
+
+    /// The readings the app takes for this cook, C: outside them it is a typo,
+    /// the white or another egg, and is refused rather than folded.
+    func probeRange(egg: Egg, setup: CookSetup, cookTimeS: Double) -> (low: Double, high: Double) {
+        plausibleProbeRangeC(
+            egg: egg, setup: setup, params: calibrationParams(calibration), cookTimeS: cookTimeS
+        )
+    }
+
     /// One quantity in the system on screen.
     func measure(_ q: Quantity) -> Measure { measureFor(q, system: units, region: deviceRegion) }
 
@@ -169,6 +206,8 @@ final class Kitchen {
     struct Answers: Sendable {
         var yolk: Feedback?
         var white: WhiteReport?
+        /// A probe reading at the middle, when the cooling ended (E4).
+        var probe: ProbeReading?
     }
 
     /// The live egg once folded: its place in the log, the surface it was
@@ -394,6 +433,12 @@ final class Kitchen {
     /// is the only cook on offer, instead of with a cook at a target nobody
     /// chose.
     func cookTime(timeToBoilS: Double, level: Double) async -> Double? {
+        await cookResult(timeToBoilS: timeToBoilS, level: level)?.cookTimeS
+    }
+
+    /// The same re-solve, as the whole cook: its time, and the peak the
+    /// cooling counts to (E4).
+    func cookResult(timeToBoilS: Double, level: Double) async -> CookResult? {
         let answer = await Self.solve(
             egg: egg, setup: setup(timeToBoilS: timeToBoilS), level: level,
             calibration: calibration, snapRetry: false
@@ -401,7 +446,7 @@ final class Kitchen {
         // The numbers on screen follow the cook; the refusal does not. A
         // refusal is advice about a control that is no longer on screen.
         solution = answer.solution
-        return answer.solution.result.cookTimeS
+        return answer.solution.result
     }
 
     private func apply(_ answer: Answer) {
@@ -433,7 +478,7 @@ final class Kitchen {
     /// then folds it again on the next launch, rather than losing it. The
     /// record carries the egg and pan the cook was RUN with, off the ticket.
     func record(_ egg: EggRecord) async {
-        answers = Answers(yolk: egg.yolk, white: egg.white)
+        answers = Answers(yolk: egg.yolk, white: egg.white, probe: egg.probe)
         folded = nil
         liveIndex = kept.log.count
         kept.log.append(egg)
@@ -451,14 +496,16 @@ final class Kitchen {
     /// replay of the log makes whichever order the taps came in. Refused, and
     /// nothing written, when that is no longer possible - which is what keeps
     /// the log and the posterior one thing. The web app's `recordSecondAnswer`.
-    func secondAnswer(yolk: Feedback?, white: WhiteReport?) async {
+    func secondAnswer(yolk: Feedback?, white: WhiteReport?, probe: ProbeReading? = nil) async {
         guard var given = answers, let index = liveIndex ?? folded?.index,
               index == kept.log.count - 1 else { return }
         if yolk != nil, given.yolk != nil { return }
         if white != nil, given.white != nil { return }
+        if probe != nil, given.probe != nil { return }
         var egg = kept.log[index]
         if let yolk { egg.yolk = yolk; given.yolk = yolk }
         if let white { egg.white = white; given.white = white }
+        if let probe { egg.probe = probe; given.probe = probe }
         if kept.folded <= index {
             answers = given
             kept.log[index] = egg
