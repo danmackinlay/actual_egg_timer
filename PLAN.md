@@ -122,7 +122,8 @@ cook. Nothing leaves a phone before E6.
       "unrelated answer" component. White becomes three answers (runny /
       tender / firm), always offered and never required; the yolk stays at
       three. A skipped question is recorded as a skip. `shouldAskAboutWhite`
-      and `WHITE_ASK_MIN_P` go. Done when: the
+      and `WHITE_ASK_MIN_P` go. The pre-E1 base posterior is DROPPED here, not
+      backfilled (owner, 26 September). The wording is drafted in LANGUAGE.md §3. Done when: the
       Phase C recovery experiment is repeated and is no worse, and the predictive
       P(answer) is calibrated on simulated cooks.
 - [ ] **E3 the white offset.** A fourth particle dimension: an additive shift on
@@ -133,7 +134,10 @@ cook. Nothing leaves a phone before E6.
       `peakYolkTime_s`), the cook reports the lowest reading at the centre,
       Gaussian likelihood with a hot skew (§5). Done when: one simulated reading
       at +-1 C takes the time-scale sd to about 2.5%.
-- [ ] **E5 decide under uncertainty.** Time by expected utility with a lopsided
+- [ ] **E5 decide under uncertainty.** Settled 26 September (`INFERENCE.md`
+      §11): loss ratio 3; odds always shown as "7/10 eggs hit the mark";
+      "still learning" until the 80% interval is under about +-15 s, falling
+      back to a fixed egg count if that is fiddly. Time by expected utility with a lopsided
       loss; the odds of "white set, yolk in band" on screen; protocol advice
       when soft is asked for. Ships `predictCookTime`'s successor, which closes
       item 7 below.
@@ -496,6 +500,19 @@ Some work is on one side only:
     in every language that has shipped.
 11. **E7, the population fit**, once enough cooks have opted in.
 12. **E8, the nudge**, which is worthless before E7.
+
+**Soon after E1 and F1 merge: the standing method's pan constant from the
+water volume** (`INFERENCE.md` §11, item 11). `panTimeConstant` today is the
+boil time over `ln(r/(r-1))` with `RAMP_R = 3` fixed, so it measures the hob,
+not the pan: a strong hob is read as a pan that cools about 2.2 times too fast.
+The replacement is `tau_ref * (V / 2 L)^(1/3)`, with `tau_ref` pinned so the
+Williams check in `tools/validate.ts` is unchanged by construction, plus a
+per-cook scale learned from standing cooks. The exponent assumes similar-shaped
+pans, and is a judgement that wants a validation check of its own. It changes
+cook times for standing-method users, so it is fixtured and conformance-tested
+like any solver change, and replayed through E1's log rather than reset. After
+this, the remembered boil time is used for nothing but a cold start's first
+guess.
 
 **Anywhere:** derive the cooling countdown from `peakYolkTime_s` (old item 4).
 **Throughout:** cook real eggs (old item 1). After E1 each one counts

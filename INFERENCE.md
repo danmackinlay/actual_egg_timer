@@ -65,8 +65,14 @@ Where the data does not reach, they sit at the physics.
 and boil temperatures as entered. They keep their place in README §6 as the
 prior's documentation.
 
-**Per kitchen (1).** A multiplier on the time-scale. Every kitchen-level
-nuisance loads on direction 1, so one number is all a kitchen gets.
+**Per cook, for the place (1).** A multiplier on the time-scale. Every
+kitchen-level nuisance loads on direction 1, so one number is all a kitchen
+would get. It belongs to the COOK, and in practice to the phone, rather than to
+a kitchen, because "kitchen" is not a unit anyone can maintain: pans and hobs
+vary within one kitchen, and cooks move between them. Whatever varies from cook
+to cook for one person shows up as that person's noise, which the reliability
+term already models (§6). The owner ruled kitchens out on 26 September, and
+nothing in the record or the UI names one.
 
 **Per cook (2, plus a reliability).** A yolk *taste* offset, and a white
 *cutpoint* - what this person means by "runny". And a noise scale, §6.
@@ -81,12 +87,12 @@ looks like.
 single cook cannot distinguish "whites set later than the model thinks" from "I
 call a tender white runny". The phone therefore carries one white offset, and
 the population fit is what splits it into a global mean (the lag) and a personal
-deviation (the cutpoint). Likewise a kitchen's time-scale and the global one.
+deviation (the cutpoint). Likewise a cook's time-scale and the global one.
 That split is the whole statistical content of making this collective.
 
 **Pooling also does the job the white channel was built for.** `alpha` and taste
 are confounded for one cook. They are not confounded across cooks: the
-time-scale is shared and taste is personal. And a kitchen effect moves yolk and
+time-scale is shared and taste is personal. And a time-scale effect moves yolk and
 white in the physics ratio (0.465, `npm run identifiability`) where a perception
 effect moves one of them - the same geometry as the 19 degrees between `alpha`
 and `h`, but with `alpha`-sized sensitivities behind it instead of a signal 15x
@@ -282,7 +288,7 @@ that fail the schema, are physically absurd, or arrive faster than eggs cook.
 it: ids are free, so many plausible, consistently biased cooks can be minted.
 What bounds the damage:
 
-- heavy-tailed (Student-t) cook and kitchen effects, so a biased cluster is
+- heavy-tailed (Student-t) cook effects, so a biased cluster is
   absorbed as outlying cooks rather than moving the mean;
 - App Attest on iOS, which proves a genuine copy of the app without saying whose.
   The web app has no equivalent, and it contributes anyway, at a lower weight
@@ -363,13 +369,13 @@ faster. You can turn it off, and delete what you sent, whenever you like."*
 
 - **Offline, in Python** (NumPyro or Stan), outside `src/core/` and its
   no-dependency rule. HMC over the 2-4 global parameters and the hyperpriors,
-  cook and kitchen effects marginalised or fitted by Laplace once there are too
+  cook effects marginalised or fitted by Laplace once there are too
   many to sample.
 - **An emulator, not the solver**, in the likelihood: the dose grid is already
   one, in two dimensions. It needs the time-scale, size, start temperature,
   cooling and start mode, and gradients.
 - **It publishes one small file**, `fixtures/population.json`: global posterior
-  means and covariance, and the hyperpriors for cook and kitchen effects. Both
+  means and covariance, and the hyperpriors for cook effects. Both
   apps read it as the prior, under the conformance suite like every other
   fixture.
 - **Validation is predictive calibration on held-out cooks**: when the model says
@@ -406,3 +412,33 @@ faster. You can turn it off, and delete what you sent, whenever you like."*
 5. **"Tender" stands, for now.** Slightly odd, not pathological, and no picture
    could do better. Revisit if real cooks stumble on it; the record will show
    whether the middle answer is being used.
+
+### Decided by the owner, 26 September 2026
+
+6. **Eggs from before E1 are dropped at E2, not backfilled.** E1 keeps the
+   pre-log posterior as a frozen base. The new likelihood cannot replay it, so
+   E2 starts from the prior plus E1's log, and the base goes.
+7. **The loss ratio is 3.** A runny white counts as three times as bad as a
+   yolk one step too firm (§8). It is a constant for now, and a per-cook
+   slider only if someone asks for one.
+8. **The odds are always on screen, and brief**: *"7/10 eggs hit the mark"*.
+   "Hit the mark" means the posterior predictive probability that the white is
+   not runny AND the yolk would be answered "just right". It is rounded to
+   tenths, because more precision than that is not there.
+9. **"Still learning" goes when the 80% interval on the cook time narrows
+   below about +-15 s**, which is about the width of "just right". If that
+   proves fiddly to compute or to make stable, fall back to a fixed number of
+   eggs. The owner's view is that cooks will barely notice the difference, so
+   the threshold is preferred but not worth a fight.
+10. **No kitchens.** Pans and hobs vary within a kitchen, and nobody maintains
+    profiles, so the kitchen level folds into the cook (§2).
+11. **The standing method's pan constant comes from the water volume, not
+    the boil time.** Deriving it from the boil time, with `RAMP_R` fixed, reads
+    the HOB as the pan. A hob twice as strong as assumed makes the app believe
+    the pan cools about 2.2 times faster than it does, and a weak one about 2.7
+    times slower. The replacement is anchored so that Williams' 17-minute
+    method (a 480 s boil, 2 L) is unchanged, and scaled by volume. Lid and pan
+    material become a per-cook scale, learned only from standing cooks.
+    Nobody is asked to time an empty pan: the only timed boil left is a cold
+    start's, where the eggs are already in.
+
