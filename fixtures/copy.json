@@ -367,19 +367,11 @@
     },
     {
       "locale": "en",
-      "key": "readout.sub.standingAssumes",
+      "key": "readout.sub.standing",
       "args": {
-        "boil": "6:40"
+        "water": "12.50 qt"
       },
-      "text": "assumes this pan takes 6:40 to boil, which is how fast it cools"
-    },
-    {
-      "locale": "en",
-      "key": "readout.sub.standingGuesses",
-      "args": {
-        "boil": "8:00"
-      },
-      "text": "guesses this pan takes 8:00 to boil, which is how fast it cools"
+      "text": "for this much water with the lid on (12.50 qt) — measure the water, it changes the time"
     },
     {
       "locale": "en",
@@ -707,7 +699,7 @@
       "locale": "en",
       "key": "refusal.whiteNeverSets",
       "args": {},
-      "text": "With the heat off this pan never sets the white: the water falls below what the white needs while the egg is still in it. Nothing on the slider is reachable. More water, a slower boil, or keep it boiling."
+      "text": "With the heat off this pan never sets the white: the water falls below what the white needs while the egg is still in it. Nothing on the slider is reachable. More water, or keep it boiling."
     },
     {
       "locale": "en",
@@ -1364,7 +1356,7 @@
       "locale": "en",
       "key": "controls.afterBoil.explainHeatOff",
       "args": {},
-      "text": "The standing method: the pan coasts down from the boil and the cook is whatever the stored heat can still do. Water volume decides whether it can do it at all."
+      "text": "Lid on and burner off: the water's own heat finishes the eggs. The time is worked out for the water below, so measure it — more or less water changes the time, or whether it works at all."
     },
     {
       "locale": "en",

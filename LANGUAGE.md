@@ -150,7 +150,7 @@ warning was cut down, written down here for the first time:
 | iOS, reset dialog | "Forget the calibration?" … "goes back to the literature values it shipped with" | "calibration", "literature values" |
 | iOS, after feedback | "Telling it tunes the model to your eggs and your pan." | "the model" |
 | web, learned note | "tuned on 3 eggs · ±4%" | ±4% of what? The honest answer is a range of times, which is E5's job (`INFERENCE.md` §8) |
-| iOS, heat-off explanation | "The standing method: the pan coasts down…" | "standing method" is the README's name for it, not a cook's |
+| iOS, heat-off explanation | "The standing method: the pan coasts down…" | "standing method" is the README's name for it, not a cook's. Reworded 27 September, when the pan's cooling moved to the water volume: "Lid on and burner off: the water's own heat finishes the eggs…" |
 | both, presets | "Fridge 4°", "Sous-vide 63°" | there is no unit, and °F is coming (§4) |
 
 **Draft for E2's feedback screens, for the owner to approve.** This is modern

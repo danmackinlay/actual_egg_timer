@@ -320,7 +320,7 @@ function scanStanding(
 }
 
 /** Index of the largest sample. The curve is never empty: the horizon is at
- *  least STANDING_HORIZON_S past a non-negative time to boil. */
+ *  least STANDING_HORIZON_S. */
 function indexOfMax(values: number[]): number {
   let best = 0;
   for (let i = 1; i < values.length; i++) {
@@ -371,7 +371,11 @@ function firstCrossing(
 function solveStanding(
   egg: Egg, setup: CookSetup, params: ModelParams, doneness: Doneness,
 ): Solution {
-  const curve = scanStanding(egg, setup, params, setup.timeToBoil_s + STANDING_HORIZON_S);
+  // The heat goes off at the boil: after the ramp on a cold start, at once on a
+  // hot one. A hot start's remembered time to boil describes some other cook's
+  // ramp and has no business moving this horizon.
+  const heatOff_s = setup.startMode === 'cold' ? setup.timeToBoil_s : 0.0;
+  const curve = scanStanding(egg, setup, params, heatOff_s + STANDING_HORIZON_S);
   const whiteCook = firstCrossing(
     egg, setup, params, curve, curve.white, doneness.whiteDose_min, whiteOf,
   );

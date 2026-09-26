@@ -16,7 +16,9 @@ import { eggFromMinorDiameter, eggFromMass, Egg } from '../src/core/geometry.js'
 import { parseCatalogue, render } from '../src/core/copy.js';
 import { seriesTheta, biotNumber } from '../src/core/sphere.js';
 import { zFromActivationEnergy } from '../src/core/kinetics.js';
-import { ALPHA_DEFAULT, H_EFF, Z_YOLK, Z_WHITE, TREF_YOLK_C } from '../src/core/constants.js';
+import {
+  ALPHA_DEFAULT, H_EFF, Z_YOLK, Z_WHITE, TREF_YOLK_C, RAMP_R, TAU_STANDING_SCALE, TAU_STANDING_REF_S,
+} from '../src/core/constants.js';
 import { boilingPointAtAltitude, boilingPointApprox, pressureAtAltitude } from '../src/core/thermo.js';
 import { CookSetup, panTimeConstant } from '../src/core/protocol.js';
 import {
@@ -279,21 +281,46 @@ check(
   100 * (standing30.yolkDose_min / standing20.yolkDose_min - 1), 0.0, 1.0, '%',
 );
 
-// The pan is the whole story. A fast boil means a pan that could not hold much
-// heat in the first place, and it runs out before the yolk is done.
-for (const boil of [240, 360, 480, 600]) {
-  const sol = solveCookTime(EU_LARGE, standingSetup(boil, 2), DEFAULT_PARAMS, donenessFromSlider(1.0));
+// The pan's time constant now comes from the water volume. The old rule read
+// it off the time to boil, which for a fixed hob grows LINEARLY with volume
+// (the boil time is proportional to the heat capacity), while a pan's losses
+// grow with its surface, so the new rule goes as the cube root. The two agree
+// at the anchor - 2 L on a hob that boils it in 8 minutes - and nowhere else.
+// Printed side by side so the disagreement is visible rather than hidden: the
+// exponent is a judgement, and this is the table that would show it wrong.
+
+/** The retired rule, kept here and nowhere else: tau from the boil time
+ *  through the hob's assumed overshoot ratio. */
+function oldRuleTau(boil_s: number): number {
+  return TAU_STANDING_SCALE * boil_s / Math.log(RAMP_R / (RAMP_R - 1.0));
+}
+
+/** A typical hob: 2 L to a rolling boil in 8 minutes, and in proportion. */
+const TYPICAL_HOB_S_PER_L = 240;
+
+for (const litres of [1, 2, 3, 4]) {
+  const boil = TYPICAL_HOB_S_PER_L * litres;
+  const tau = panTimeConstant(litres);
+  const old = oldRuleTau(boil);
+  const sol = solveCookTime(EU_LARGE, standingSetup(boil, litres), DEFAULT_PARAMS, donenessFromSlider(1.0));
   standingRows.push([
+    `${litres} L`,
+    `${(tau / 60).toFixed(1)} min`,
     `${boil / 60} min`,
-    `${(panTimeConstant(boil) / 60).toFixed(1)} min`,
+    `${(old / 60).toFixed(1)} min`,
+    `${(old / tau).toFixed(2)}x`,
     sol.whiteSets ? anchorNear(sol.hardestLevel) : 'nothing',
     sol.reachable ? `${((sol.result.cookTime_s - boil) / 60).toFixed(1)} min`
       : sol.whiteSets ? 'cannot reach hard' : 'never sets the white',
   ]);
 }
 check(
-  'a 4-minute boil cannot stand its way to hard',
-  solveCookTime(EU_LARGE, standingSetup(240, 2), DEFAULT_PARAMS, donenessFromSlider(1.0))
+  `pan time constant at 2 L (${TAU_STANDING_REF_S.toFixed(1)} s) is the old rule's at an 8-minute boil`,
+  panTimeConstant(2), oldRuleTau(480), 1e-9, 's',
+);
+check(
+  'a 1 L pan cannot stand its way to hard',
+  solveCookTime(EU_LARGE, standingSetup(240, 1), DEFAULT_PARAMS, donenessFromSlider(1.0))
     .hardestLevel < 1 ? 1 : 0,
   1, 0, '',
 );
@@ -508,8 +535,9 @@ printTable(
 );
 
 printTable(
-  'Heat off at the boil - what the pan can still do',
-  ['time to boil', 'pan time constant', 'hardest reachable', 'standing time for hard'],
+  'Heat off at the boil - the pan time constant by water volume, against the old boil-time rule',
+  ['water', 'pan time constant', 'typical hob boils it in', 'old rule gave', 'old / new',
+    'hardest reachable (cold start)', 'standing time for hard'],
   standingRows,
 );
 

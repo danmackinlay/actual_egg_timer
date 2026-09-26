@@ -334,10 +334,11 @@ function buildSetup(timeToBoil_s: number): CookSetup {
  *
  *  Before a cook it is remembered or guessed. Once a cold start is under way
  *  the machine carries it: the guess, then the revision if the hob is slow,
- *  then the measurement when the boil is tapped. A hot start never times it,
- *  but the solver still wants it - with the heat off it is the pan's loss time
- *  constant (see panTimeConstant), on either start - so a hot start keeps
- *  using the remembered value throughout. */
+ *  then the measurement when the boil is tapped. It is the length of a cold
+ *  start's ramp and nothing more. A hot start never times it and the physics
+ *  never reads it there - with the heat off the pan's cooling comes from the
+ *  water volume (see panTimeConstant) - but the setup still carries the
+ *  remembered value, so the record can say which pan was assumed. */
 function timeToBoil_s(): number {
   if (machine.phase !== 'IDLE' && settings.startMode === 'cold') return machine.assumedBoil_s;
   return estimateTimeToBoil(boilMemory, settings.waterLitres);
@@ -581,11 +582,10 @@ function render(now_ms: number): void {
       ? t(hasBoilMemory(boilMemory) ? 'readout.sub.coldAssumes' : 'readout.sub.coldGuesses',
         { boil: formatClock(boil_s) })
       : standing
-        // With the heat off, the time to boil is not on the clock but it IS
-        // the pan's loss time constant - the single most load-bearing number
-        // in a standing cook, and on a hot start it is never measured. Say so.
-        ? t(hasBoilMemory(boilMemory) ? 'readout.sub.standingAssumes' : 'readout.sub.standingGuesses',
-          { boil: formatClock(timeToBoil_s()) })
+        // With the heat off, how fast the pan cools is set by the water in it,
+        // and that is the most load-bearing number in the cook. The time to
+        // boil plays no part on a hot start, so it is not mentioned.
+        ? t('readout.sub.standing', { water: show('water', settings.waterLitres) })
         : t('readout.sub.hot');
     spoken = t('spoken.total', { time: spokenClock(cookTime_s) });
     setPrimary(

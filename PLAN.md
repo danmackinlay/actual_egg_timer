@@ -269,14 +269,14 @@ type Cooling      = 'ice' | 'tap' | 'counter'
 type HeatAfterBoil = 'hold' | 'off'
 interface CookSetup {
   startMode: StartMode; eggStart_C; ambient_C; boiling_C;
-  timeToBoil_s;            // ramp length on a cold start; pan time constant with the heat off, on either start
+  timeToBoil_s;            // ramp length on a cold start, and nothing else; a hot start carries it for the record
   cooling: Cooling; waterLitres; eggCount;     // the POT. The egg's mass is on the Egg.
   afterBoil?: HeatAfterBoil;   // omitted means 'hold'
 }
 rampTemperature(t_s, timeToBoil_s, ambient_C, boiling_C): number
 dipMagnitude(egg, setup): number                // C the water drops when eggs go in
-panTimeConstant(timeToBoil_s): number           // s, from the ramp shape
-standingTemperature(elapsedSinceOff_s, from_C, ambient_C, timeToBoil_s): number
+panTimeConstant(waterLitres): number            // s, heat off and lid on: TAU_STANDING_REF_S * (V / 2 L)^(1/3)
+standingTemperature(elapsedSinceOff_s, from_C, ambient_C, waterLitres): number
 bathTemperature(egg, setup, t_s): number        // the in-water schedule, t = 0 at egg-in
 coolingTemperature(setup, elapsedSincePull_s, waterAtPull_C, meanAtPull_C, tauAirScale): number
 initialSurfaceTemperature(egg, setup): number
@@ -525,18 +525,44 @@ Some work is on one side only:
 11. **E7, the population fit**, once enough cooks have opted in.
 12. **E8, the nudge**, which is worthless before E7.
 
-**Soon after E1 and F1 merge: the standing method's pan constant from the
-water volume** (`INFERENCE.md` §11, item 11). `panTimeConstant` today is the
-boil time over `ln(r/(r-1))` with `RAMP_R = 3` fixed, so it measures the hob,
-not the pan: a strong hob is read as a pan that cools about 2.2 times too fast.
-The replacement is `tau_ref * (V / 2 L)^(1/3)`, with `tau_ref` pinned so the
-Williams check in `tools/validate.ts` is unchanged by construction, plus a
-per-cook scale learned from standing cooks. The exponent assumes similar-shaped
-pans, and is a judgement that wants a validation check of its own. It changes
-cook times for standing-method users, so it is fixtured and conformance-tested
-like any solver change, and replayed through E1's log rather than reset. After
-this, the remembered boil time is used for nothing but a cold start's first
-guess.
+~~**Soon after E1 and F1 merge: the standing method's pan constant from the
+water volume**~~ (`INFERENCE.md` §11, item 11). **Done 27 September**, except
+the per-cook scale, which is deferred (below). `panTimeConstant` was the boil
+time over `ln(r/(r-1))` with `RAMP_R = 3` fixed, so it measured the hob, not
+the pan: a strong hob was read as a pan that cools about 2.2 times too fast. It
+is now `TAU_STANDING_SCALE * TAU_STANDING_REF_S * (V / 2 L)^(1/3)`, with
+`TAU_STANDING_REF_S = 480 / ln(1.5) = 1183.8 s`, so the Williams check still
+reads 75.6 °C (75.6033 before and after). `STANDING_VOLUME_EXPONENT = 1/3` is
+named as a judgement in `constants.ts`, and `tools/validate.ts` prints tau at
+1-4 L beside what the old rule gave on a hob that boils 2 L in 8 minutes:
+15.7 / 19.7 / 22.6 / 24.9 min against 9.9 / 19.7 / 29.6 / 39.5 (0.63x to
+1.59x). Both cores take litres in `standingTemperature`, and the standing
+scan's horizon no longer counts a hot start's remembered boil, so the
+remembered boil time is now used for nothing but a cold start's first guess
+(a hot start's setup still carries it, for E1's record).
+
+Measured moves, standing time after the boil, cold start, four fridge eggs,
+ice bath, at 1 / 2 / 3 / 4 L (README §7 has the full table):
+
+- a hob that boils 2 L in 8 minutes, hard: white never set → cannot reach
+  (0.66) / 10:13 unchanged / 4:29 → 4:44 / 2:29 → 2:34. Jammy: white never
+  set → 6:42 / unchanged / +1 s / unchanged.
+- a fast hob, 2 L in 4 minutes, jammy: never sets either way / white never
+  set → 6:09 / 4:52 → 4:27 / 3:13 → 3:09. Hard: never sets / never set →
+  cannot reach (0.81) / cannot reach (0.76 → 0.999) / 10:13 → 7:52.
+- an unmeasured pan (8 minutes guessed at every volume), hard: 10:13 →
+  cannot reach (0.91) / unchanged / 10:13 → 8:26 / 10:13 → 7:52.
+
+The copy that said the boil time is how fast the pan cools is gone
+(`readout.sub.standing`: "for 2 L of water with the lid on — measure the
+water, it changes the time"), the white-never-sets refusal no longer advises
+"a slower boil", and the iOS heat-off explanation drops "standing method".
+
+**Deferred: a per-cook standing scale.** `TAU_STANDING_SCALE` stays 1.0, a
+global multiplier. The lid, the pan's shape and material belong in a per-cook
+scale learned only from that cook's standing eggs (`INFERENCE.md` §11, item 11),
+which wants E2's likelihood and enough standing cooks to identify it apart from
+`alpha`. Not built.
 
 **Anywhere:** derive the cooling countdown from `peakYolkTime_s` (old item 4).
 **Throughout:** cook real eggs (old item 1). After E1 each one counts

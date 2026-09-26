@@ -37,8 +37,8 @@ import { writeFileSync, mkdirSync, readFileSync, readdirSync } from 'node:fs';
 
 import {
   MODE_COUNT, ALPHA_DEFAULT, ALPHA_REL_SD, YOLK_RADIUS_FRAC, Z_YOLK, TREF_YOLK_C, Z_WHITE,
-  TREF_WHITE_C, H_EFF, K_EGG, RAMP_R, TAU_STANDING_SCALE, TAU_AIR, T_ICE_BATH_C,
-  T_COLD_TAP_C, T_ROOM_C, TAU_PLUNGE, TAU_DIP_RECOVERY, C_WATER, C_EGG, RHO_EGG,
+  TREF_WHITE_C, H_EFF, K_EGG, RAMP_R, TAU_STANDING_SCALE, TAU_STANDING_REF_S,
+  STANDING_REF_LITRES, STANDING_VOLUME_EXPONENT, TAU_AIR, T_ICE_BATH_C, T_COLD_TAP_C, T_ROOM_C, TAU_PLUNGE, TAU_DIP_RECOVERY, C_WATER, C_EGG, RHO_EGG,
   EGG_VOLUME_COEFF, EGG_LENGTH_RATIO, DT_SIM, CARRYOVER_WINDOW,
 } from '../src/core/constants.js';
 import {
@@ -158,8 +158,8 @@ const core = {
   generator: 'npm run fixtures',
   constants: {
     MODE_COUNT, ALPHA_DEFAULT, ALPHA_REL_SD, YOLK_RADIUS_FRAC, Z_YOLK, TREF_YOLK_C, Z_WHITE,
-    TREF_WHITE_C, H_EFF, K_EGG, RAMP_R, TAU_STANDING_SCALE, TAU_AIR,
-    T_ICE_BATH_C, T_COLD_TAP_C, T_ROOM_C, TAU_PLUNGE, TAU_DIP_RECOVERY,
+    TREF_WHITE_C, H_EFF, K_EGG, RAMP_R, TAU_STANDING_SCALE, TAU_STANDING_REF_S,
+    STANDING_REF_LITRES, STANDING_VOLUME_EXPONENT, TAU_AIR, T_ICE_BATH_C, T_COLD_TAP_C, T_ROOM_C, TAU_PLUNGE, TAU_DIP_RECOVERY,
     C_WATER, C_EGG, RHO_EGG, EGG_VOLUME_COEFF, EGG_LENGTH_RATIO, DT_SIM,
     CARRYOVER_WINDOW,
   },
@@ -262,7 +262,11 @@ const SCENARIOS: Scenario[] = [
   { name: 'eight eggs in 0.75 L', setup: setupOf({ eggCount: 8, waterLitres: 0.75 }), level: 0.41 },
   { name: 'standing, 8 min boil', setup: setupOf({ startMode: 'cold', afterBoil: 'off', timeToBoil_s: 480 }), level: 0.41 },
   { name: 'standing, 10 min boil, hard', setup: setupOf({ startMode: 'cold', afterBoil: 'off', timeToBoil_s: 600 }), level: 1.0 },
-  { name: 'standing, 4 min boil (white never sets)', setup: setupOf({ startMode: 'cold', afterBoil: 'off', timeToBoil_s: 240 }), level: 0.41 },
+  { name: 'standing, 4 min boil: a fast hob is not a small pan', setup: setupOf({ startMode: 'cold', afterBoil: 'off', timeToBoil_s: 240 }), level: 0.41 },
+  { name: 'standing, 1 L, hard (out of reach)', setup: setupOf({ startMode: 'cold', afterBoil: 'off', timeToBoil_s: 240, waterLitres: 1 }), level: 1.0 },
+  { name: 'standing, 4 L, 16 min boil, hard', setup: setupOf({ startMode: 'cold', afterBoil: 'off', timeToBoil_s: 960, waterLitres: 4 }), level: 1.0 },
+  { name: 'standing, hot start, 1 L (white never sets)', setup: setupOf({ afterBoil: 'off', timeToBoil_s: 480, waterLitres: 1 }), level: 0.41 },
+  { name: 'standing, hot start, 6 L, two eggs', setup: setupOf({ afterBoil: 'off', timeToBoil_s: 480, waterLitres: 6, eggCount: 2 }), level: 0.41 },
 ];
 
 const scenarios = {
