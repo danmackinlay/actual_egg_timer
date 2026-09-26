@@ -130,6 +130,9 @@ export interface Cooked {
   /** The system the cook was reading at "Eggs in". The record stays SI; this
    *  says only what was on screen, so the fit can look for rounding at input. */
   units: UnitSystem;
+  /** The language the cook was reading at "Eggs in": the UI's, a catalogue
+   *  tag such as `en`. */
+  lang: string;
 }
 
 function pad2(n: number): string {
@@ -189,7 +192,7 @@ export function eggRecordFor(c: Cooked, m: Machine, yolk: Feedback | null): EggR
     white: null,
     whiteOffered: false,
     probe: null,
-    lang: 'en',
+    lang: c.lang,
     register: 'modern',
     units: c.units,
   };

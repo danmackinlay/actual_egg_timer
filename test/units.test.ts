@@ -281,7 +281,7 @@ test('5a. a size class shows its own mass in either system, and keeps its region
 test('5b. the record says which system the cook was reading, and stays SI', () => {
   const cooked: Cooked = {
     egg: eggFromMass(0.068), massFrom: 'class', sizeTable: 'us', eggFrom: 'fridge',
-    boilRemembered: false, units: 'imperial',
+    boilRemembered: false, units: 'imperial', lang: 'en',
     setup: {
       startMode: 'hot', afterBoil: 'hold', eggStart_C: 4, ambient_C: 20, boiling_C: 100,
       timeToBoil_s: 480, cooling: 'ice', waterLitres: 2, eggCount: 2,

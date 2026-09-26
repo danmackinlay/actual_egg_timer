@@ -39,7 +39,8 @@ import {
   loadCook, loadSettings, rememberTimeToBoil, saveCook, saveSettings,
 } from './store.js';
 import { sousVideCopy } from './sousvide.js';
-import { t } from './copy.js';
+import { activeLocale, t } from './copy.js';
+import { formatClock, spokenClock } from './countdown.js';
 import {
   REGION, REGIONAL_UNITS, announceFlip, measure, show, unitSystem, useUnits,
 } from './units.js';
@@ -201,6 +202,8 @@ interface Ticket {
   /** The system the cook was reading when they set this egg up, for the
    *  record. Everything above is SI whatever it says. */
   units: UnitSystem;
+  /** The language they were reading it in, for the record. */
+  lang: string;
 }
 
 /* --------------------------------------------------------------- physics */
@@ -437,21 +440,6 @@ function applyAnswer(answer: Answer): Solution {
 }
 
 /* --------------------------------------------------------------- display */
-
-function formatClock(seconds: number): string {
-  const total = Math.max(0, Math.round(seconds));
-  const m = Math.floor(total / 60);
-  const s = total % 60;
-  return `${m}:${s < 10 ? '0' : ''}${s}`;
-}
-
-function spokenClock(seconds: number): string {
-  const total = Math.max(0, Math.round(seconds));
-  const m = Math.floor(total / 60);
-  const s = total % 60;
-  if (m === 0) return t('spoken.seconds', { seconds: s });
-  return t('spoken.minutesSeconds', { minutes: m, seconds: s });
-}
 
 /** The texture note. Which band a temperature falls in is core policy; what
  *  the band is called is this app's copy. */
@@ -1089,6 +1077,7 @@ function onPrimary(): void {
       setup: buildSetup(boil),
       logNominalTarget: Math.log10(donenessFromSlider(target).yolkDose_min),
       units: unitSystem(),
+      lang: activeLocale(),
     };
     setMachine(settings.startMode === 'cold'
       ? startCold(now, cook, boil, settings.cooling, target)
@@ -1340,6 +1329,8 @@ function restoreTicket(raw: unknown): Ticket | null {
     logNominalTarget: target,
     // A ticket written before F3 was written by a metric-only app.
     units: r['units'] === 'imperial' ? 'imperial' : 'metric',
+    // And one written before F4 by an app that spoke only English.
+    lang: typeof r['lang'] === 'string' && r['lang'] !== '' ? r['lang'] : 'en',
   };
 }
 

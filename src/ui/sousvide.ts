@@ -10,9 +10,9 @@
  */
 
 import {
-  SOUS_VIDE_MODEL_FLOOR_C, SousVideEstimate, longDuration, startPhrase,
+  SOUS_VIDE_MODEL_FLOOR_C, SousVideEstimate, longDuration, startPhrase, weekdayKey,
 } from '../core/sousvide.js';
-import { t, tRef } from './copy.js';
+import { t, tRef, timeOfDay } from './copy.js';
 import { show } from './units.js';
 
 export interface SousVideCopy {
@@ -23,13 +23,6 @@ export interface SousVideCopy {
   warn: string;
   hint: string;
 }
-
-/** Weekday names by `Date.getDay()`, as catalogue keys. iOS asks a locale-aware
- *  formatter instead; the two are reconciled by F4 (locale formatting). */
-const WEEKDAYS = [
-  'weekday.sunday', 'weekday.monday', 'weekday.tuesday', 'weekday.wednesday',
-  'weekday.thursday', 'weekday.friday', 'weekday.saturday',
-];
 
 /** Whole days between two instants, by local midnight rather than by elapsed
  *  hours: 23:00 to 01:00 is yesterday, not "nearly today". The bucketing of
@@ -43,13 +36,6 @@ function daysBefore(then_ms: number, now_ms: number): number {
   return Math.round((now.getTime() - then.getTime()) / 86400000);
 }
 
-function clockOf(ms: number): string {
-  const d = new Date(ms);
-  const h = d.getHours();
-  const m = d.getMinutes();
-  return `${h < 10 ? '0' : ''}${h}:${m < 10 ? '0' : ''}${m}`;
-}
-
 export function sousVideCopy(est: SousVideEstimate, now_ms: number): SousVideCopy {
   const start_ms = now_ms - est.total_s * 1000;
   const duration = tRef(longDuration(est.total_s));
@@ -57,9 +43,9 @@ export function sousVideCopy(est: SousVideEstimate, now_ms: number): SousVideCop
 
   return {
     headline: tRef(startPhrase(daysBefore(start_ms, now_ms)), {
-      weekday: t(WEEKDAYS[new Date(start_ms).getDay()]),
+      weekday: t(weekdayKey(new Date(start_ms).getDay())),
     }),
-    subline: t('sousvide.subline', { clock: clockOf(start_ms), duration: duration, bath: bath }),
+    subline: t('sousvide.subline', { clock: timeOfDay(start_ms), duration: duration, bath: bath }),
     note: t(est.whiteBound ? 'sousvide.note.whiteBound' : 'sousvide.note.yolkBound'),
     warn: t('sousvide.warn', { bath: bath, floor: show('temperature', SOUS_VIDE_MODEL_FLOOR_C) }),
     hint: t('sousvide.hint', { duration: duration }),

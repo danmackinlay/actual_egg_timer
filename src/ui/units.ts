@@ -14,21 +14,12 @@ import {
   Measure, Quantity, UnitSystem, UnitsFlip, effectiveUnits, measureFor, quantityText,
   regionalUnits,
 } from '../core/units.js';
-import { t } from './copy.js';
+import { REGION, t } from './copy.js';
 
-/** The region in the browser's language tag - the `US` in `en-US` - or null
- *  when the tag names none. It decides which carton's size classes to offer,
- *  which system a cook starts in, and which Imperial unit water is in. */
-function browserRegion(): string | null {
-  try {
-    return new Intl.Locale(navigator.language).region ?? null;
-  } catch {
-    return null;
-  }
-}
-
-/** Fixed for the life of the page. */
-export const REGION = browserRegion();
+/** The browser's region, from `copy.ts`, where it also picks how numbers and
+ *  times are written. It decides which carton's size classes to offer, which
+ *  system a cook starts in, and which Imperial unit water is in. */
+export { REGION };
 
 /** The system this region starts in: Imperial in the US, metric everywhere
  *  else. A browser reports no measurement system and no temperature
