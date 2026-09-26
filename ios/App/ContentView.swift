@@ -532,7 +532,7 @@ struct ContentView: View {
                         .keyboardType(.decimalPad)
                         .textFieldStyle(.roundedBorder)
                         .multilineTextAlignment(.trailing)
-                        .frame(maxWidth: 110)
+                        .frame(maxWidth: 150)
                         .disabled(given != nil)
                     Text(tr(kitchen.measure(.probeTemp).unitKey))
                         .foregroundStyle(.secondary)
