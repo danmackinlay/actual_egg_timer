@@ -401,7 +401,70 @@ that is not obvious from the code.
   not merely requested in a plist.
 - **The Live Activity works** on the Lock Screen and in the Dynamic Island.
 
-### Next, in order
+### Order of work, from 26 September
+
+This is the order for Phases E and F together, with the old list below folded
+into it. Dependencies come first. After that, whatever makes each breakfast
+count for more.
+
+**Both apps, every time.** Anything the apps must agree on lands in TypeScript
+first, as the reference. It is fixtured from TypeScript, and the Swift core is
+held to it by `npm run conformance`. That is one phase for both apps, not one
+moment: the web app deploys on push and iOS ships when a build does. So the
+record schema and the stored posterior must tolerate the two running different
+versions for a while. Above core, each app's screens are separate work, checked
+by driving them.
+
+Some work is on one side only:
+- **Web only:** the dose grid off the main thread (E1), and the first network
+  request (E6).
+- **iOS only:** App Attest and the privacy manifest (E6), `Info.plist`
+  localisations and the system temperature preference (F), and the small-surface
+  length budgets (F6).
+- **Neither app:** the Netlify function (E6) and the Python fit (E7).
+
+**Now, in parallel**
+1. **US carton size classes** (the correctness half of F3). An American on the
+   default egg is overcooked by about 34 s today.
+2. **E1, the record.** From here on every egg survives model changes. E1
+   includes moving the web app's dose grid off the main thread (old item 3),
+   because replaying a log builds one grid per egg, at about 2 s each.
+3. **F1, the catalogue, with the wording unchanged.** It has to land before any
+   new feedback copy exists.
+
+**Then the filter, once**
+
+4. **E2 and E3 together.** They are one likelihood revision, replayed from E1's
+   log, not two resets.
+5. **F2 for the feedback screens**, in the same pass, because E2 rewrites them
+   anyway. It is one diff for the owner.
+6. **E5**: choosing the time by expected utility, the odds on screen, "still
+   learning", and the interval (old item 7).
+7. **E4, the thermometer.** Its only prerequisite is E2, so pull it forward if
+   a probe is to hand.
+
+**Then the words**
+
+8. **The rest of F2**, then **F3 (units)** and **F4 (formatting)**.
+9. **F6 (1750)** and **F5 (Czech)**, in whichever order the reviewers are free.
+   Both need F2's settled wording; F6 also needs F3. Hand the Czech reviewer
+   wording that will not move again.
+
+**Last, the collective part**
+
+10. **E6, opt-in upload.** It needs a settled schema (E1, E2), "still learning"
+    (E5), and the privacy page's contact address. The consent text has to exist
+    in every language that has shipped.
+11. **E7, the population fit**, once enough cooks have opted in.
+12. **E8, the nudge**, which is worthless before E7.
+
+**Anywhere:** derive the cooling countdown from `peakYolkTime_s` (old item 4).
+**Throughout:** cook real eggs (old item 1). After E1 each one counts
+retroactively.
+
+### Next, in order (superseded as an ORDER by the section above)
+
+The entries below are kept for what they say, not for where they sit.
 
 Nothing on this list is a missing feature. Both apps do everything the model can
 do; what is missing is contact with reality.
