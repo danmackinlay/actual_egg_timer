@@ -11,6 +11,11 @@
  * minutes of cooking (z ~ 4.65 K makes the kinetics very sharp), so linear
  * interpolation of the raw value would be hopeless. In log space the surface is
  * close to linear, because log10(dose) is roughly T/z and T is smooth.
+ *
+ * The yolk's PEAK temperature is kept beside the doses (E4), in degrees rather
+ * than logs: it is what a probe thermometer at the centre reads when the
+ * centre peaks, and it is smooth in both alpha and cook time, so it is
+ * interpolated exactly as the doses are.
  */
 
 import { Egg } from './geometry.js';
@@ -27,6 +32,9 @@ export interface DoseGrid {
   /** log10 equivalent-minutes, row-major [alphaIndex * timeCount + timeIndex]. */
   logYolk: number[];
   logWhite: number[];
+  /** The yolk centre's peak temperature, C, same layout (E4): what a probe at
+   *  the centre reads at `peakYolkTime_s`. */
+  peakYolk_C: number[];
 }
 
 const LOG_FLOOR = -12.0;
@@ -48,6 +56,7 @@ export function buildDoseGrid(
   const timeStep = (timeMax_s - timeMin_s) / (timeCount - 1);
   const logYolk: number[] = new Array<number>(alphaCount * timeCount);
   const logWhite: number[] = new Array<number>(alphaCount * timeCount);
+  const peakYolk: number[] = new Array<number>(alphaCount * timeCount);
 
   for (let ai = 0; ai < alphaCount; ai++) {
     const alpha = Math.exp(logAlphaMin + logAlphaStep * ai);
@@ -56,12 +65,13 @@ export function buildDoseGrid(
       const r = simulate(egg, setup, { alpha_m2s: alpha, tauAirScale: tauAirScale }, cook);
       logYolk[ai * timeCount + ti] = safeLog10(r.yolkDose_min);
       logWhite[ai * timeCount + ti] = safeLog10(r.whiteDose_min);
+      peakYolk[ai * timeCount + ti] = r.peakYolk_C;
     }
   }
   return {
     logAlphaMin: logAlphaMin, logAlphaStep: logAlphaStep, alphaCount: alphaCount,
     timeMin_s: timeMin_s, timeStep_s: timeStep, timeCount: timeCount,
-    logYolk: logYolk, logWhite: logWhite,
+    logYolk: logYolk, logWhite: logWhite, peakYolk_C: peakYolk,
   };
 }
 
@@ -96,6 +106,12 @@ export function lookupLogYolkDose(g: DoseGrid, alpha_m2s: number, cookTime_s: nu
 /** log10 of the white dose delivered, equivalent minutes at 80 C. */
 export function lookupLogWhiteDose(g: DoseGrid, alpha_m2s: number, cookTime_s: number): number {
   return interpolate(g.logWhite, g, alpha_m2s, cookTime_s);
+}
+
+/** The yolk centre's peak temperature, C: what a probe at the centre reads
+ *  when the centre peaks (E4). */
+export function lookupPeakYolk_C(g: DoseGrid, alpha_m2s: number, cookTime_s: number): number {
+  return interpolate(g.peakYolk_C, g, alpha_m2s, cookTime_s);
 }
 
 /** Invert the surface: the cook time delivering a given log10 yolk dose.
