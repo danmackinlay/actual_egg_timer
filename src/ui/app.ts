@@ -12,12 +12,14 @@
  */
 
 import {
-  Egg, SizeTable, eggFromMass, eggFromMinorDiameter, sizeClassLabel, sizeClassesFor,
-  sizeTableFor,
+  Egg, SizeTable, eggFromMass, eggFromMinorDiameter, sizeClassesFor, sizeTableFor,
 } from '../core/geometry.js';
 import { boilingPointAtAltitude } from '../core/thermo.js';
 import { Cooling, CookSetup, StartMode } from '../core/protocol.js';
 import { SOUS_VIDE_BATH_C, sousVideEstimate } from '../core/sousvide.js';
+import {
+  Measure, Quantity, UnitSystem, chooseUnits, displayText, parse, sizeClassLabel,
+} from '../core/units.js';
 import {
   DONENESS_ANCHORS, Solution, donenessFromSlider, solveCookTime,
 } from '../core/solve.js';
@@ -37,7 +39,10 @@ import {
   loadCook, loadSettings, rememberTimeToBoil, saveCook, saveSettings,
 } from './store.js';
 import { sousVideCopy } from './sousvide.js';
-import { t, tRef } from './copy.js';
+import { t } from './copy.js';
+import {
+  REGION, REGIONAL_UNITS, announceFlip, measure, show, unitSystem, useUnits,
+} from './units.js';
 import {
   Machine, advance, beginCooling, idleMachine, recordBoil, restoreMachine,
   reviseProvisional, secondsAfterBoil, secondsHeating, secondsToCool, secondsToPull,
@@ -79,6 +84,12 @@ const dom = {
   measureMass: el<HTMLInputElement>('measureMass'),
   measureGirth: el<HTMLInputElement>('measureGirth'),
   measureMinor: el<HTMLInputElement>('measureMinor'),
+  unitMass: el<HTMLSpanElement>('unitMass'),
+  unitGirth: el<HTMLSpanElement>('unitGirth'),
+  unitMinor: el<HTMLSpanElement>('unitMinor'),
+  unitTemp: el<HTMLSpanElement>('unitTemp'),
+  unitLitres: el<HTMLSpanElement>('unitLitres'),
+  unitAltitude: el<HTMLSpanElement>('unitAltitude'),
   startTempHint: el<HTMLParagraphElement>('startTempHint'),
   startSousLabel: el<HTMLLabelElement>('startSousLabel'),
   customTempField: el<HTMLDivElement>('customTempField'),
@@ -116,25 +127,18 @@ function radioValue(name: string, fallback: string): string {
 
 /* ----------------------------------------------------------------- state */
 
-/** The region in the browser's language tag - the `US` in `en-US` - or null
- *  when the tag names none. It decides one thing, which carton's size classes
- *  to offer, and it is the region alone: not the language, not the units. */
-function browserRegion(): string | null {
-  try {
-    return new Intl.Locale(navigator.language).region ?? null;
-  } catch {
-    return null;
-  }
-}
-
-/** Fixed for the life of the page. A stored index is read against it, and
- *  keeps its name if the region has changed since it was saved. */
-const sizeClasses = sizeClassesFor(browserRegion());
+/** The carton's size classes, by the browser's region (`REGION`, in units.ts)
+ *  alone: not the language, and not the units - an American carton is an
+ *  American carton in grams too. Fixed for the life of the page. A stored
+ *  index is read against it, and keeps its name if the region has changed
+ *  since it was saved. */
+const sizeClasses = sizeClassesFor(REGION);
 /** The same table by name, for the record: a Large is 68 g in one and 60.2 g in
  *  the other. */
-const sizeTable = sizeTableFor(browserRegion());
+const sizeTable = sizeTableFor(REGION);
 
 let settings: Settings = loadSettings(sizeClasses);
+useUnits(settings.unitsChosen);
 let boilMemory = loadBoilMemory();
 /** Posterior over the model's uncertain constants, learned from how the user's
  *  own eggs actually turn out. Before any feedback this is the prior mean,
@@ -194,6 +198,9 @@ interface Ticket {
   /** log10 of the yolk dose this cook was RUN at. Frozen with everything else,
    *  so a slider left somewhere else afterwards cannot rewrite history. */
   logNominalTarget: number;
+  /** The system the cook was reading when they set this egg up, for the
+   *  record. Everything above is SI whatever it says. */
+  units: UnitSystem;
 }
 
 /* --------------------------------------------------------------- physics */
@@ -227,13 +234,57 @@ function minorFromMass_mm(mass_g: number): number {
 }
 
 /** Rewrite whichever measurement boxes the user is not currently typing in, so
- *  filling in one fills in the rest without the field fighting the cursor. */
+ *  filling in one fills in the rest without the field fighting the cursor.
+ *  That exception is half of the round trip: the box being typed in keeps what
+ *  was typed, and the others show the stored egg rounded to their step. */
 function syncMeasurements(except: EventTarget | null): void {
   const egg = currentEgg();
   const minor_mm = egg.minorDiameter_m * 1000;
-  if (except !== dom.measureMass) dom.measureMass.value = (egg.mass_kg * 1000).toFixed(0);
-  if (except !== dom.measureGirth) dom.measureGirth.value = (Math.PI * minor_mm).toFixed(0);
-  if (except !== dom.measureMinor) dom.measureMinor.value = minor_mm.toFixed(1);
+  if (except !== dom.measureMass) dom.measureMass.value = inputText('mass', egg.mass_kg * 1000);
+  if (except !== dom.measureGirth) dom.measureGirth.value = inputText('girth', Math.PI * minor_mm);
+  if (except !== dom.measureMinor) dom.measureMinor.value = inputText('width', minor_mm);
+}
+
+/* ------------------------------------------------------------------ units */
+
+/** A stored SI value as an input's contents: the displayed number, without
+ *  the trailing zeros a readout keeps ("2", not "2.00"). */
+function inputText(q: Quantity, si: number): string {
+  const text = displayText(measure(q), si);
+  return text.includes('.') ? text.replace(/\.?0+$/, '') : text;
+}
+
+/** What a field says, in SI and clamped, or `fallback` while it holds no
+ *  number. Only ever called for the field the cook is editing: re-reading a
+ *  field nobody touched would re-parse a rounded display back over the stored
+ *  value, and that is the drift the round trip exists to prevent. */
+function readField(input: HTMLInputElement, q: Quantity, fallback: number): number {
+  if (input.value.trim() === '') return fallback;
+  return parse(measure(q), Number(input.value)) ?? fallback;
+}
+
+/** An input's step and bounds, in the units on screen. The bounds are the SI
+ *  limits rounded inward to the step, so every value the input allows is one
+ *  the model does too. */
+function applyMeasure(input: HTMLInputElement, label: HTMLElement, m: Measure): void {
+  input.step = String(m.step);
+  if (m.bounds !== null) {
+    input.min = String(m.bounds.lo);
+    input.max = String(m.bounds.hi);
+  }
+  label.textContent = t(m.unitKey);
+}
+
+/** The cook picks a system. Stored as their choice, and announced if it
+ *  changes what is on screen - see `UNITS_FLIP_EVENT`. */
+function onUnits(next: UnitSystem): void {
+  const choice = chooseUnits(settings.unitsChosen, REGIONAL_UNITS, next);
+  settings.unitsChosen = choice.chosen;
+  useUnits(settings.unitsChosen);
+  saveNow();
+  applyUnitsToDom();
+  recompute();
+  if (choice.flip !== null) announceFlip(choice.flip);
 }
 
 function eggStart_C(): number {
@@ -324,18 +375,13 @@ function refusalText(v: Verdict): string {
 
   if (v.kind === 'harderThanPanReaches') {
     return t('refusal.harderThanPan', {
-      wanted: wanted, litres: formatLitres(settings.waterLitres), limit: limit,
+      wanted: wanted, water: show('water', settings.waterLitres), limit: limit,
     });
   }
 
   if (settings.cooling === 'counter') return t('refusal.counter', { wanted: wanted, limit: limit });
   if (settings.cooling === 'tap') return t('refusal.tap', { wanted: wanted, limit: limit });
   return t('refusal.ice', { wanted: wanted, limit: limit });
-}
-
-/** Litres as someone would say them: "2", not "1.7500000000000002". */
-function formatLitres(litres: number): string {
-  return Number.isInteger(litres) ? String(litres) : litres.toFixed(1);
 }
 
 /* --------------------------------------------------------------- solving */
@@ -426,7 +472,7 @@ function textureNote(peakYolk_C: number, peakWhite_C: number): string {
  *  not flicker between two formats mid-drag. */
 function donenessValueText(peakYolk_C: number): string {
   return t('controls.doneness.value', {
-    doneness: t(anchorNear(settings.doneness).key), yolk: peakYolk_C.toFixed(0),
+    doneness: t(anchorNear(settings.doneness).key), yolk: show('temperature', peakYolk_C),
   });
 }
 
@@ -497,9 +543,9 @@ function render(now_ms: number): void {
   const boil_s = rampSeconds();
   const standing = settings.afterBoil === 'off';
 
-  dom.statYolk.textContent = t('format.celsius', { value: sol.result.peakYolk_C.toFixed(0) });
+  dom.statYolk.textContent = show('temperature', sol.result.peakYolk_C);
   dom.statAfter.textContent = formatClock(cookTime_s - boil_s);
-  dom.statBoil.textContent = t('format.celsius', { value: boilingPoint_C().toFixed(1) });
+  dom.statBoil.textContent = show('boilingPoint', boilingPoint_C());
   // The texture note reads peak temperatures; the white's own criterion is a
   // dose. They disagree only when the pan never gets the white there at all,
   // and then the dose is the one telling the truth.
@@ -586,7 +632,7 @@ function render(now_ms: number): void {
       : t('readout.sub.cookingHot');
     spoken = t('spoken.cooking', { time: spokenClock(secondsToPull(machine, now_ms)) });
     setPrimary('', t(standing ? 'action.hint.cookingStanding' : 'action.hint.cookingBoiling', {
-      boiling: boilingPoint_C().toFixed(0),
+      boiling: show('temperature', boilingPoint_C()),
     }), false);
     dom.secondary.hidden = false;
     dom.secondary.textContent = t('action.cancel');
@@ -674,11 +720,11 @@ function renderSousVide(now_ms: number): void {
   // yolk ends up at 63 °C, which is the whole point, but the label has to say
   // which number it is.
   dom.statYolkLabel.textContent = t('readout.stat.bath');
-  dom.statYolk.textContent = t('format.celsius', { value: est.bath_C.toFixed(0) });
-  dom.statBoil.textContent = t('format.celsius', { value: boilingPoint_C().toFixed(1) });
+  dom.statYolk.textContent = show('temperature', est.bath_C);
+  dom.statBoil.textContent = show('boilingPoint', boilingPoint_C());
   // The slider reading is a pan number. There is no pan.
   dom.donenessValue.textContent = t('controls.doneness.valueBath', {
-    doneness: t(anchorNear(settings.doneness).key), bath: est.bath_C.toFixed(0),
+    doneness: t(anchorNear(settings.doneness).key), bath: show('temperature', est.bath_C),
   });
   dom.note.textContent = copy.note;
   dom.warn.textContent = copy.warn;
@@ -893,11 +939,11 @@ function readInputs(source: EventTarget | null): void {
   // a measured egg is better information than a box label.
   let measured_mm = -1;
   if (source === dom.measureMass) {
-    measured_mm = minorFromMass_mm(clampNumber(dom.measureMass.value, LIMITS.mass_g, 62));
+    measured_mm = minorFromMass_mm(readField(dom.measureMass, 'mass', 62));
   } else if (source === dom.measureGirth) {
-    measured_mm = minorFromGirth_mm(clampNumber(dom.measureGirth.value, LIMITS.girth_mm, 137));
+    measured_mm = minorFromGirth_mm(readField(dom.measureGirth, 'girth', 137));
   } else if (source === dom.measureMinor) {
-    measured_mm = clampNumber(dom.measureMinor.value, LIMITS.minor_mm, settings.customMinor_mm);
+    measured_mm = readField(dom.measureMinor, 'width', settings.customMinor_mm);
   }
   if (measured_mm > 0) {
     settings.measuredBy = source === dom.measureMass ? 'scale'
@@ -907,12 +953,20 @@ function readInputs(source: EventTarget | null): void {
     dom.size.value = '-1';
   }
   settings.startTempMode = radioValue('startTemp', 'fridge') as Settings['startTempMode'];
-  settings.customStart_C = clampNumber(dom.customTemp.value, LIMITS.eggTemp_C, settings.customStart_C);
-  settings.altitude_m = clampNumber(dom.altitude.value, LIMITS.altitude_m, settings.altitude_m);
+  // The three fields with a unit are read only when they are the one being
+  // edited, like the measurements above: see `readField`.
+  if (source === dom.customTemp) {
+    settings.customStart_C = readField(dom.customTemp, 'eggTemp', settings.customStart_C);
+  }
+  if (source === dom.altitude) {
+    settings.altitude_m = readField(dom.altitude, 'altitude', settings.altitude_m);
+  }
   settings.startMode = radioValue('startMode', 'cold') as UiStartMode;
   settings.afterBoil = radioValue('afterBoil', 'hold') as Settings['afterBoil'];
   settings.cooling = radioValue('cooling', 'ice') as Cooling;
-  settings.waterLitres = clampNumber(dom.litres.value, LIMITS.waterLitres, settings.waterLitres);
+  if (source === dom.litres) {
+    settings.waterLitres = readField(dom.litres, 'water', settings.waterLitres);
+  }
   settings.eggCount = Math.round(clampNumber(dom.eggCount.value, LIMITS.eggCount, settings.eggCount));
   settings.doneness = clampNumber(dom.doneness.value, LIMITS.doneness, settings.doneness);
 
@@ -922,12 +976,19 @@ function readInputs(source: EventTarget | null): void {
 }
 
 function onInput(event: Event): void {
-  readInputs(event.target);
+  // The units are a setting about the screen, not about the egg, and have
+  // their own path.
+  const target = event.target;
+  if (target instanceof HTMLInputElement && target.name === 'units') {
+    if (event.type === 'change') onUnits(target.value === 'imperial' ? 'imperial' : 'metric');
+    return;
+  }
+  readInputs(target);
   // Instant feedback on the two readings the eye is on while dragging; the
   // full solve (tens of milliseconds) follows and corrects them.
   dom.donenessValue.textContent = donenessValueText(targetPeakYolk_C(settings.doneness));
-  dom.statYolk.textContent = t('format.celsius', { value: targetPeakYolk_C(settings.doneness).toFixed(0) });
-  dom.statBoil.textContent = t('format.celsius', { value: boilingPoint_C().toFixed(1) });
+  dom.statYolk.textContent = show('temperature', targetPeakYolk_C(settings.doneness));
+  dom.statBoil.textContent = show('boilingPoint', boilingPoint_C());
   dom.body.dataset['start'] = settings.startMode;
   scheduleSolve();
 }
@@ -1027,6 +1088,7 @@ function onPrimary(): void {
       eggFrom: settings.startTempMode,
       setup: buildSetup(boil),
       logNominalTarget: Math.log10(donenessFromSlider(target).yolkDose_min),
+      units: unitSystem(),
     };
     setMachine(settings.startMode === 'cold'
       ? startCold(now, cook, boil, settings.cooling, target)
@@ -1069,13 +1131,20 @@ function buildSizeOptions(): void {
   for (let i = 0; i < sizeClasses.length; i += 1) {
     const option = document.createElement('option');
     option.value = String(i);
-    option.textContent = tRef(sizeClassLabel(sizeClasses[i]));
     dom.size.append(option);
   }
   const custom = document.createElement('option');
   custom.value = '-1';
   custom.textContent = t('controls.size.measured');
   dom.size.append(custom);
+}
+
+/** The classes' names, with their masses in the units on screen. */
+function labelSizeOptions(): void {
+  for (let i = 0; i < sizeClasses.length; i += 1) {
+    const label = sizeClassLabel(sizeClasses[i], unitSystem());
+    dom.size.options[i].textContent = t(label.key, { mass: t(label.mass.key, { value: label.mass.value }) });
+  }
 }
 
 function buildTicks(): void {
@@ -1095,35 +1164,48 @@ function applyLimit(input: HTMLInputElement, limit: Limit): void {
 /** Everything the markup says about numbers comes from the same tables the
  *  model reads, so a bound or a preset changed in one place changes here too. */
 function applyConstantsToDom(): void {
-  applyLimit(dom.measureMass, LIMITS.mass_g);
-  applyLimit(dom.measureGirth, LIMITS.girth_mm);
-  applyLimit(dom.measureMinor, LIMITS.minor_mm);
-  applyLimit(dom.customTemp, LIMITS.eggTemp_C);
-  applyLimit(dom.altitude, LIMITS.altitude_m);
-  applyLimit(dom.litres, LIMITS.waterLitres);
   applyLimit(dom.eggCount, LIMITS.eggCount);
   applyLimit(dom.doneness, LIMITS.doneness);
   dom.doneness.step = String(1 / SLIDER_STEPS);
+}
+
+/** Everything on the form that has a unit: each input's step, bounds, unit
+ *  and contents, the preset labels, and the size menu. Run at boot and again
+ *  whenever the cook changes system, from the stored SI values - so switching
+ *  back and forth never moves the egg. */
+function applyUnitsToDom(): void {
+  applyMeasure(dom.measureMass, dom.unitMass, measure('mass'));
+  applyMeasure(dom.measureGirth, dom.unitGirth, measure('girth'));
+  applyMeasure(dom.measureMinor, dom.unitMinor, measure('width'));
+  applyMeasure(dom.customTemp, dom.unitTemp, measure('eggTemp'));
+  applyMeasure(dom.altitude, dom.unitAltitude, measure('altitude'));
+  applyMeasure(dom.litres, dom.unitLitres, measure('water'));
+  syncMeasurements(null);
+  dom.customTemp.value = inputText('eggTemp', settings.customStart_C);
+  dom.litres.value = inputText('water', settings.waterLitres);
+  dom.altitude.value = inputText('altitude', settings.altitude_m);
+  selectRadio('units', unitSystem());
+  labelSizeOptions();
   // The presets are assumptions, and are labelled as such rather than baked
   // into the buttons: a room is not necessarily 20 C, and Custom is there for
   // anyone who knows better.
   dom.startTempHint.textContent = t('controls.eggFrom.hint', {
-    fridge: START_TEMP_PRESETS_C.fridge, room: START_TEMP_PRESETS_C.room,
+    fridge: show('temperature', START_TEMP_PRESETS_C.fridge),
+    room: show('temperature', START_TEMP_PRESETS_C.room),
   });
-  dom.startSousLabel.textContent = t('controls.start.sousVide', { bath: SOUS_VIDE_BATH_C });
+  dom.startSousLabel.textContent = t('controls.start.sousVide', {
+    bath: show('temperature', SOUS_VIDE_BATH_C),
+  });
 }
 
 function applySettingsToDom(): void {
   dom.size.value = String(settings.sizeIndex);
-  syncMeasurements(null);
+  applyUnitsToDom();
   selectRadio('startTemp', settings.startTempMode);
-  dom.customTemp.value = String(settings.customStart_C);
   selectRadio('startMode', settings.startMode);
   selectRadio('afterBoil', settings.afterBoil);
   selectRadio('cooling', settings.cooling);
-  dom.litres.value = String(settings.waterLitres);
   dom.eggCount.value = String(settings.eggCount);
-  dom.altitude.value = String(settings.altitude_m);
   dom.doneness.value = String(settings.doneness);
   dom.customTempField.hidden = settings.startTempMode !== 'custom';
 }
@@ -1256,6 +1338,8 @@ function restoreTicket(raw: unknown): Ticket | null {
     eggFrom: ef === 'fridge' || ef === 'room' || ef === 'custom' ? ef : settings.startTempMode,
     setup: setup as CookSetup,
     logNominalTarget: target,
+    // A ticket written before F3 was written by a metric-only app.
+    units: r['units'] === 'imperial' ? 'imperial' : 'metric',
   };
 }
 

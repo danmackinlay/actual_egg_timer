@@ -28,6 +28,9 @@
  *   fixtures/record.json    the record (INFERENCE.md section 4): which records a
  *                           loader trusts, and a replay of a six-egg log pinned
  *                           particle by particle
+ *   fixtures/units.json     Metric and Imperial: conversions, steps, bounds,
+ *                           display, and the round trip of every grid value of
+ *                           every input (tools/unitsFixture.ts)
  */
 
 import { writeFileSync, mkdirSync, readFileSync, readdirSync } from 'node:fs';
@@ -40,7 +43,7 @@ import {
 } from '../src/core/constants.js';
 import {
   eggFromMass, eggFromMinorDiameter, diffusionTime, eggVolumeFromMinorDiameter,
-  SIZE_CLASSES, US_SIZE_CLASSES, SizeClass, sizeClassLabel, sizeTableFor,
+  SIZE_CLASSES, US_SIZE_CLASSES, SizeClass, sizeTableFor,
 } from '../src/core/geometry.js';
 import {
   pressureAtAltitude, boilingPointAtPressure, boilingPointAtAltitude,
@@ -71,8 +74,9 @@ import {
   recordTeaches, replay,
 } from '../src/core/record.js';
 import { longDuration, startPhrase } from '../src/core/sousvide.js';
+import { unitsFixture } from './unitsFixture.js';
 import {
-  SOUS_VIDE_BATH_C, equilibrationTime, sousVideEstimate,
+  SOUS_VIDE_BATH_C, SOUS_VIDE_MODEL_FLOOR_C, equilibrationTime, sousVideEstimate,
 } from '../src/core/sousvide.js';
 import {
   simulate, solveCookTime, donenessFromSlider, DEFAULT_PARAMS, Solution,
@@ -592,10 +596,10 @@ const BOIL_MEMORY_FORWARD: BoilMemory = rememberBoil(rememberBoil({}, 1, 300), 3
 const BOIL_MEMORY_BACKWARD: BoilMemory = rememberBoil(rememberBoil({}, 3, 900), 1, 300);
 const BOIL_QUERY_LITRES = [0.5, 1, 1.5, 2, 2.5, 3, 4, 12];
 
-/** A size class as the fixture states it: the key, the mass the model cooks,
- *  and the grams its label shows. */
-function sizeClassRow(c: SizeClass): { key: string; mass_kg: number; grams: number } {
-  return { key: c.key, mass_kg: c.mass_kg, grams: sizeClassLabel(c).args['grams'] as number };
+/** A size class as the fixture states it: the key and the mass the model
+ *  cooks. What its label shows, in either system, is in units.json. */
+function sizeClassRow(c: SizeClass): { key: string; mass_kg: number } {
+  return { key: c.key, mass_kg: c.mass_kg };
 }
 
 const policy = {
@@ -804,6 +808,7 @@ for (const mass_g of SOUS_VIDE_EGGS_G) {
 
 const sousvide = {
   bath_C: SOUS_VIDE_BATH_C,
+  modelFloor_C: SOUS_VIDE_MODEL_FLOOR_C,
   /* The bisection's answer stripped of its scaling: at R = 1 m and
    * alpha = 1 m^2/s the return value IS the Fourier number it converged on.
    * Every other equilibration number in this file is that one times R^2/alpha,
@@ -1271,6 +1276,11 @@ const copy = {
 
 writeFileSync('fixtures/copy.json', `${JSON.stringify(copy, null, 2)}\n`);
 
+/* ------------------------------------------------------------------ units */
+
+const units = unitsFixture(english);
+writeFileSync('fixtures/units.json', `${JSON.stringify(units, null, 2)}\n`);
+
 const counts = [
   `${core.sphere.seriesTheta.length} seriesTheta`,
   `${core.sphere.stepResponse.length} step samples`,
@@ -1289,6 +1299,7 @@ const counts = [
   `${copy.render.length} copy renders`,
   `${copy.plural.length} plural rules`,
   `${copy.probe.cases.length} copy probes`,
+  `${(units['measures'] as { roundTrip: unknown[] }[]).reduce((n, m) => n + m.roundTrip.length, 0)} unit round trips`,
   `${recordFixture.cases.length} records`,
   `${recordFixture.replay.log.length} replayed eggs`,
 ];

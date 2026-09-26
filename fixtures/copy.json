@@ -43,85 +43,73 @@
       "locale": "en",
       "key": "size.eu.small",
       "args": {
-        "grams": 48
+        "mass": "1.7 oz"
       },
-      "text": "Small — 48 g"
+      "text": "Small — 1.7 oz"
     },
     {
       "locale": "en",
       "key": "size.eu.medium",
       "args": {
-        "grams": 58
+        "mass": "2.0 oz"
       },
-      "text": "Medium — 58 g"
+      "text": "Medium — 2.0 oz"
     },
     {
       "locale": "en",
       "key": "size.eu.large",
       "args": {
-        "grams": 68
+        "mass": "2.4 oz"
       },
-      "text": "Large — 68 g"
+      "text": "Large — 2.4 oz"
     },
     {
       "locale": "en",
       "key": "size.eu.extraLarge",
       "args": {
-        "grams": 76
+        "mass": "2.7 oz"
       },
-      "text": "Extra large — 76 g"
+      "text": "Extra large — 2.7 oz"
     },
     {
       "locale": "en",
       "key": "size.us.small",
       "args": {
-        "grams": 46
+        "mass": "1.6 oz"
       },
-      "text": "Small — 46 g"
+      "text": "Small — 1.6 oz"
     },
     {
       "locale": "en",
       "key": "size.us.medium",
       "args": {
-        "grams": 53
+        "mass": "1.9 oz"
       },
-      "text": "Medium — 53 g"
+      "text": "Medium — 1.9 oz"
     },
     {
       "locale": "en",
       "key": "size.us.large",
       "args": {
-        "grams": 60
+        "mass": "2.1 oz"
       },
-      "text": "Large — 60 g"
+      "text": "Large — 2.1 oz"
     },
     {
       "locale": "en",
       "key": "size.us.extraLarge",
       "args": {
-        "grams": 67
+        "mass": "2.4 oz"
       },
-      "text": "Extra large — 67 g"
+      "text": "Extra large — 2.4 oz"
     },
     {
       "locale": "en",
       "key": "size.us.jumbo",
       "args": {
-        "grams": 74
+        "mass": "2.6 oz"
       },
-      "text": "Jumbo — 74 g"
-    },
-    {
-      "locale": "en",
-      "key": "unit.grams",
-      "args": {},
-      "text": "g"
-    },
-    {
-      "locale": "en",
-      "key": "unit.millimetres",
-      "args": {},
-      "text": "mm"
+      "text": "Jumbo — 2.6 oz"
     },
     {
       "locale": "en",
@@ -131,9 +119,33 @@
     },
     {
       "locale": "en",
-      "key": "unit.litres",
+      "key": "unit.fahrenheit",
       "args": {},
-      "text": "L"
+      "text": "°F"
+    },
+    {
+      "locale": "en",
+      "key": "unit.grams",
+      "args": {},
+      "text": "g"
+    },
+    {
+      "locale": "en",
+      "key": "unit.ounces",
+      "args": {},
+      "text": "oz"
+    },
+    {
+      "locale": "en",
+      "key": "unit.millimetres",
+      "args": {},
+      "text": "mm"
+    },
+    {
+      "locale": "en",
+      "key": "unit.inches",
+      "args": {},
+      "text": "in"
     },
     {
       "locale": "en",
@@ -143,19 +155,91 @@
     },
     {
       "locale": "en",
-      "key": "format.celsius",
-      "args": {
-        "value": "65"
-      },
-      "text": "65°C"
+      "key": "unit.feet",
+      "args": {},
+      "text": "ft"
     },
     {
       "locale": "en",
-      "key": "format.celsiusSpaced",
+      "key": "unit.litres",
+      "args": {},
+      "text": "L"
+    },
+    {
+      "locale": "en",
+      "key": "unit.quarts",
+      "args": {},
+      "text": "qt"
+    },
+    {
+      "locale": "en",
+      "key": "unit.pints",
+      "args": {},
+      "text": "pt"
+    },
+    {
+      "locale": "en",
+      "key": "format.celsius",
       "args": {
         "value": "100.0"
       },
       "text": "100.0 °C"
+    },
+    {
+      "locale": "en",
+      "key": "format.fahrenheit",
+      "args": {
+        "value": "212.0"
+      },
+      "text": "212.0 °F"
+    },
+    {
+      "locale": "en",
+      "key": "format.grams",
+      "args": {
+        "value": "68"
+      },
+      "text": "68 g"
+    },
+    {
+      "locale": "en",
+      "key": "format.ounces",
+      "args": {
+        "value": "2.4"
+      },
+      "text": "2.4 oz"
+    },
+    {
+      "locale": "en",
+      "key": "format.millimetres",
+      "args": {
+        "value": "43.5"
+      },
+      "text": "43.5 mm"
+    },
+    {
+      "locale": "en",
+      "key": "format.inches",
+      "args": {
+        "value": "1.72"
+      },
+      "text": "1.72 in"
+    },
+    {
+      "locale": "en",
+      "key": "format.metres",
+      "args": {
+        "value": "1500"
+      },
+      "text": "1500 m"
+    },
+    {
+      "locale": "en",
+      "key": "format.feet",
+      "args": {
+        "value": "16400"
+      },
+      "text": "16400 ft"
     },
     {
       "locale": "en",
@@ -167,11 +251,19 @@
     },
     {
       "locale": "en",
-      "key": "format.metres",
+      "key": "format.quarts",
       "args": {
-        "value": "1500"
+        "value": "12.50"
       },
-      "text": "1500 m"
+      "text": "12.50 qt"
+    },
+    {
+      "locale": "en",
+      "key": "format.pints",
+      "args": {
+        "value": "21.00"
+      },
+      "text": "21.00 pt"
     },
     {
       "locale": "en",
@@ -622,10 +714,10 @@
       "key": "refusal.harderThanPan",
       "args": {
         "wanted": "hard",
-        "litres": "0.8",
+        "water": "12.50 qt",
         "limit": "fudgy"
       },
-      "text": "With the heat off, the water runs out before the yolk gets there — hard isn't reachable in 0.8 L. Hardest here is fudgy. More water, or keep it boiling."
+      "text": "With the heat off, the water runs out before the yolk gets there — hard isn't reachable with this much water (12.50 qt). Hardest here is fudgy. More water, or keep it boiling."
     },
     {
       "locale": "en",
@@ -750,17 +842,17 @@
       "locale": "en",
       "key": "action.hint.cookingStanding",
       "args": {
-        "boiling": "100"
+        "boiling": "212 °F"
       },
-      "text": "lid on, burner off — the timing assumes the water cools on its own from 100°C"
+      "text": "lid on, burner off — the timing assumes the water cools on its own from the boil (212 °F)"
     },
     {
       "locale": "en",
       "key": "action.hint.cookingBoiling",
       "args": {
-        "boiling": "100"
+        "boiling": "212 °F"
       },
-      "text": "keep it boiling — the timing assumes 100°C right up to the pull"
+      "text": "keep it boiling — the timing assumes a full boil (212 °F) right up to the pull"
     },
     {
       "locale": "en",
@@ -1049,9 +1141,9 @@
       "key": "spoken.sousVide",
       "args": {
         "when": "yesterday",
-        "subline": "at 08:47 — 22 h 43 min at 58°C, to eat now"
+        "subline": "at 08:47 — 22 h 43 min in the bath (136 °F), to eat now"
       },
-      "text": "Sous-vide. You should have started yesterday, at 08:47 — 22 h 43 min at 58°C, to eat now"
+      "text": "Sous-vide. You should have started yesterday, at 08:47 — 22 h 43 min in the bath (136 °F), to eat now"
     },
     {
       "locale": "en",
@@ -1064,18 +1156,18 @@
       "key": "controls.doneness.value",
       "args": {
         "doneness": "Jammy",
-        "yolk": "65"
+        "yolk": "149 °F"
       },
-      "text": "Jammy · peak yolk 65°C"
+      "text": "Jammy · peak yolk 149 °F"
     },
     {
       "locale": "en",
       "key": "controls.doneness.valueBath",
       "args": {
         "doneness": "Jammy",
-        "bath": "58"
+        "bath": "136 °F"
       },
-      "text": "Jammy · in a 58°C bath"
+      "text": "Jammy · bath 136 °F"
     },
     {
       "locale": "en",
@@ -1093,9 +1185,9 @@
       "locale": "en",
       "key": "controls.size.weighed",
       "args": {
-        "grams": "63.5"
+        "mass": "2.4 oz"
       },
-      "text": "Weighed · 63.5 g"
+      "text": "Weighed · 2.4 oz"
     },
     {
       "locale": "en",
@@ -1161,26 +1253,26 @@
       "locale": "en",
       "key": "controls.eggFrom.fridgeAt",
       "args": {
-        "temp": 4
+        "temp": "39 °F"
       },
-      "text": "Fridge 4°"
+      "text": "Fridge 39 °F"
     },
     {
       "locale": "en",
       "key": "controls.eggFrom.roomAt",
       "args": {
-        "temp": 20
+        "temp": "68 °F"
       },
-      "text": "Room 20°"
+      "text": "Room 68 °F"
     },
     {
       "locale": "en",
       "key": "controls.eggFrom.hint",
       "args": {
-        "fridge": 4,
-        "room": 20
+        "fridge": "39 °F",
+        "room": "68 °F"
       },
-      "text": "Fridge is taken as 4°C and room as 20°C. Pick Custom if yours differ."
+      "text": "Assumed temperatures — fridge: 39 °F, room: 68 °F. Pick Custom if yours differ."
     },
     {
       "locale": "en",
@@ -1216,9 +1308,9 @@
       "locale": "en",
       "key": "controls.start.sousVide",
       "args": {
-        "bath": 58
+        "bath": "136 °F"
       },
-      "text": "Sous-vide 58°"
+      "text": "Sous-vide 136 °F"
     },
     {
       "locale": "en",
@@ -1333,6 +1425,24 @@
       "key": "controls.pan",
       "args": {},
       "text": "Pan, hob and altitude"
+    },
+    {
+      "locale": "en",
+      "key": "controls.units",
+      "args": {},
+      "text": "Units"
+    },
+    {
+      "locale": "en",
+      "key": "controls.units.metric",
+      "args": {},
+      "text": "Metric"
+    },
+    {
+      "locale": "en",
+      "key": "controls.units.imperial",
+      "args": {},
+      "text": "Imperial"
     },
     {
       "locale": "en",
@@ -1618,11 +1728,11 @@
       "locale": "en",
       "key": "cook.summary",
       "args": {
-        "grams": 68,
+        "mass": "2.4 oz",
         "doneness": "jammy",
-        "yolk": 65
+        "yolk": "149 °F"
       },
-      "text": "68 g · jammy · peak yolk 65°C"
+      "text": "2.4 oz · jammy · peak yolk 149 °F"
     },
     {
       "locale": "en",
@@ -1669,9 +1779,9 @@
       "args": {
         "clock": "08:47",
         "duration": "22 h 43 min",
-        "bath": "58"
+        "bath": "136 °F"
       },
-      "text": "at 08:47 — 22 h 43 min at 58°C, to eat now"
+      "text": "at 08:47 — 22 h 43 min in the bath (136 °F), to eat now"
     },
     {
       "locale": "en",
@@ -1689,9 +1799,10 @@
       "locale": "en",
       "key": "sousvide.warn",
       "args": {
-        "bath": "58"
+        "bath": "136 °F",
+        "floor": "140 °F"
       },
-      "text": "A 58°C bath is below the temperature at which egg white sets — only one of its proteins reacts down here — so the white stays loose however long you leave it. This app was built for boiling water and is out of its depth below 60°C anyway. Use the pan."
+      "text": "This bath (136 °F) is below the temperature at which egg white sets — only one of its proteins reacts down here — so the white stays loose however long you leave it. This app was built for boiling water and is out of its depth below 140 °F anyway. Use the pan."
     },
     {
       "locale": "en",
@@ -2281,19 +2392,19 @@
       "key": "activity.target",
       "args": {
         "doneness": "jammy",
-        "yolk": 65
+        "yolk": "149 °F"
       },
-      "text": "jammy · 65°C yolk"
+      "text": "jammy · yolk 149 °F"
     },
     {
       "locale": "en",
       "key": "activity.summary",
       "args": {
-        "grams": 68,
+        "mass": "2.4 oz",
         "doneness": "jammy",
-        "yolk": 65
+        "yolk": "149 °F"
       },
-      "text": "68 g · jammy · peak yolk 65°C"
+      "text": "2.4 oz · jammy · peak yolk 149 °F"
     },
     {
       "locale": "en",

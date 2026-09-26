@@ -5,12 +5,12 @@
   "tick": { "budget": 5, "about": "A doneness word under the slider, five sharing a phone's width. Recorded from \"Runny\", \"Jammy\" and \"Fudgy\"." },
   "button": { "budget": 23, "about": "A button. Recorded from \"They're in the ice bath\"." },
   "headline": { "budget": 14, "about": "The big readout, in place of the clock, on one line. Recorded from \"Last Wednesday\"." },
-  "body": { "budget": 251, "about": "A sentence or a few, wrapping freely. Recorded from the sous-vide warning." },
+  "body": { "budget": 260, "about": "A sentence or a few, wrapping freely. Recorded from the sous-vide warning (251); raised in F3, when both of its temperatures gained a unit and °F runs a digit longer." },
   "fragment": { "budget": 27, "about": "A piece inserted into another message: a texture, a duration, a weekday, a method. Recorded from \"yolk soft, barely thickened\"." },
-  "a11y": { "budget": 88, "about": "Read by a screen reader, never drawn. Recorded from the sous-vide announcement." },
+  "a11y": { "budget": 101, "about": "Read by a screen reader, never drawn. Recorded from the sous-vide announcement (88); raised in F3, when its subline's bath temperature gained a unit and a parenthesis: \"… 22 h 43 min in the bath (136 °F), to eat now\"." },
   "notification.title": { "budget": 14, "about": "The alarm's title on the Lock Screen. Recorded from \"Eggs out — now\"." },
   "notification.body": { "budget": 53, "about": "The alarm's body. Recorded from \"Straight into the cooling, or the yolk keeps cooking.\"." },
-  "lockscreen": { "budget": 29, "about": "The Live Activity's line on the Lock Screen, beside the countdown. Recorded from \"68 g · jammy · peak yolk 65°C\"." },
+  "lockscreen": { "budget": 33, "about": "The Live Activity's line on the Lock Screen, beside the countdown. Recorded from \"68 g · jammy · peak yolk 65°C\" (29); raised in F3 for the unit, from \"2.4 oz · jammy · peak yolk 149 °F\". It may wrap to a second line." },
   "island.expanded": { "budget": 41, "about": "The expanded Dynamic Island, and the Lock Screen's stage and note. Recorded from \"into the cooling, or the yolk keeps going\"." },
   "island.compact": { "budget": 3, "about": "The compact Dynamic Island, in place of the countdown. Recorded from \"NOW\" and \"Eat\"." }
 }

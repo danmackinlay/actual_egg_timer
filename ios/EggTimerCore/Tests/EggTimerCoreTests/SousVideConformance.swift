@@ -36,6 +36,7 @@ struct SousVideConformance {
     @Test("the bath the app offers is the same bath")
     func bath() {
         expectClose(sousVideBathC, Fixtures.sousVideNumber("bath_C"), "sousVideBathC")
+        expectClose(sousVideModelFloorC, Fixtures.sousVideNumber("modelFloor_C"), "sousVideModelFloorC")
     }
 
     /// The bisection is the only iteration in this module, and the fixture
