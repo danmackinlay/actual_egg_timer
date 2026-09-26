@@ -188,6 +188,9 @@
     <p id="primaryHint"></p>
     <button type="button" id="primary" class="primary" data-copy="action.startHeating"></button>
     <button type="button" id="secondary" class="secondary" hidden data-copy="action.cancel"></button>
+    <!-- Two questions, always both, neither required (INFERENCE.md section 3).
+         Each answer is folded the moment it is tapped; one left unanswered is
+         recorded as skipped when the next cook starts. -->
     <div id="feedback" hidden>
       <p id="feedbackAsk" data-copy="feedback.ask"></p>
       <div class="seg">
@@ -195,18 +198,14 @@
         <button type="button" class="fb" data-fb="0" data-copy="feedback.justRight"></button>
         <button type="button" class="fb" data-fb="1" data-copy="feedback.tooFirm"></button>
       </div>
-      <p class="hint" id="calibNote"></p>
-    </div>
-    <!-- The second question, asked only when the model is genuinely unsure how
-         the white came out - which is a soft egg, and almost never a firm one.
-         The decision is in src/core/infer.ts; only the words are here. -->
-    <div id="whiteFeedback" hidden>
       <p id="whiteAsk" data-copy="feedback.white.ask"></p>
       <div class="seg">
         <button type="button" class="wb" data-white="runny" data-copy="feedback.white.runny"></button>
-        <button type="button" class="wb" data-white="set" data-copy="feedback.white.set"></button>
+        <button type="button" class="wb" data-white="tender" data-copy="feedback.white.tender"></button>
+        <button type="button" class="wb" data-white="firm" data-copy="feedback.white.firm"></button>
       </div>
-      <p class="hint" id="whiteNote" data-copy="feedback.white.why"></p>
+      <p class="hint" id="feedbackOptional" data-copy="feedback.optional"></p>
+      <p class="hint" id="calibNote"></p>
     </div>
   </div>
 

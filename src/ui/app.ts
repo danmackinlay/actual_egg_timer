@@ -28,8 +28,8 @@ import {
 import { Feedback, WhiteReport } from '../core/infer.js';
 import { EggFrom, MassFrom } from '../core/record.js';
 import {
-  Calibration, Outcome, clearCalibration, loadCalibration, calibrationParams,
-  calibrationSpread, eggRecordFor, eggsBehind, learn, logEgg, recordWhite,
+  Calibration, calibrationDoneness, calibrationParams, clearCalibration, eggRecordFor, eggsBehind,
+  learn, loadCalibration, logEgg, recordSecondAnswer,
 } from './calibration.js';
 import {
   LIMITS, Limit, START_TEMP_PRESETS_C, Settings, UiStartMode, clampNumber,
@@ -91,8 +91,6 @@ const dom = {
   secondary: el<HTMLButtonElement>('secondary'),
   feedback: el<HTMLDivElement>('feedback'),
   calibNote: el<HTMLParagraphElement>('calibNote'),
-  whiteFeedback: el<HTMLDivElement>('whiteFeedback'),
-  whiteNote: el<HTMLParagraphElement>('whiteNote'),
   learnedNote: el<HTMLParagraphElement>('learnedNote'),
   forget: el<HTMLButtonElement>('forget'),
 };
@@ -162,15 +160,16 @@ let lastAnnounced = '';
  *  cook, not about the tab, and left set it would caption every later cook with
  *  a reload that had nothing to do with it. */
 let restored = false;
-/** One report per egg: the feedback buttons go away once one is pressed. */
+/** Whether this egg has been written down with an answer. Persisted with the
+ *  cook, so a reload neither asks again nor logs the egg a second time as
+ *  unanswered. */
 let feedbackGiven = false;
-/** The egg the yolk answer was just folded from and the surface it was scored
- *  against, kept only while the white question is on screen - answering it needs
- *  the same surface, and rebuilding it would cost another two seconds. Null
- *  whenever there is no white question pending, which includes after a reload:
- *  the question is a moment in a conversation, not a fact about the egg, so it
- *  is not persisted. (The record does persist that it was OFFERED.) */
-let whiteGrid: Outcome | null = null;
+/** Which of the two questions have been answered on screen, and the egg's
+ *  place in the log once the first answer has written it down. Not persisted:
+ *  after a reload the second question is not offered again, because the
+ *  surface its answer would be folded against is gone (see
+ *  `recordSecondAnswer`). The unanswered one stays a skip in the record. */
+let answered: { yolk: Feedback | null; white: WhiteReport | null; index: number } | null = null;
 
 /** The same cook, against a time to boil that is now known rather than
  *  guessed. Everything else about it is frozen. */
@@ -363,14 +362,14 @@ function answerFor(timeToBoil_s: number, level: number, snapRetry = true): Answe
   const egg = currentEgg();
   const setup = buildSetup(timeToBoil_s);
   const params = calibrationParams(calib);
-  const result = solveCookTime(egg, setup, params, donenessFromSlider(level));
+  const result = solveCookTime(egg, setup, params, calibrationDoneness(calib, level));
   const verdict = verdictFor(result, level);
 
   // Re-solve at the position the user is actually being offered, so the
   // numbers on screen are the numbers for that cook rather than for one that
   // was refused. Only worth it when the slider is going to move.
   if (snapRetry && verdict.snapTo !== null) {
-    const retry = solveCookTime(egg, setup, params, donenessFromSlider(verdict.snapTo));
+    const retry = solveCookTime(egg, setup, params, calibrationDoneness(calib, verdict.snapTo));
     if (retry.reachable) return { solution: retry, verdict: verdict };
   }
   return { solution: result, verdict: verdict };
@@ -628,12 +627,11 @@ function render(now_ms: number): void {
   }
 
   // The model is calibrated against the literature, not against this kitchen.
-  // Asking once per egg is what closes that gap.
-  dom.feedback.hidden = machine.phase !== 'DONE' || feedbackGiven;
-  // The white question is on screen exactly while one is pending, which is what
-  // holding the surface means - see `whiteGrid`.
-  dom.whiteFeedback.hidden = whiteGrid === null;
-  if (!dom.feedback.hidden) renderCalibNote();
+  // Asking once per egg is what closes that gap. Both questions stay on screen
+  // until the cook moves on, answered or not; a reload after an answer puts
+  // them away, since the second could no longer be folded.
+  dom.feedback.hidden = machine.phase !== 'DONE' || (feedbackGiven && answered === null);
+  if (!dom.feedback.hidden && answered === null) renderCalibNote();
 
   dom.phaseLabel.textContent = label;
   dom.digits.textContent = digits;
@@ -659,7 +657,7 @@ function renderSousVide(now_ms: number): void {
   renderStartHint();
 
   const egg = currentEgg();
-  const doneness = donenessFromSlider(settings.doneness);
+  const doneness = calibrationDoneness(calib, settings.doneness);
   const est = sousVideEstimate(
     egg.radius_m, calibrationParams(calib).alpha_m2s, SOUS_VIDE_BATH_C,
     doneness.yolkDose_min, doneness.whiteDose_min,
@@ -686,7 +684,6 @@ function renderSousVide(now_ms: number): void {
   setPrimary('', copy.hint, false);
   dom.secondary.hidden = true;
   dom.feedback.hidden = true;
-  dom.whiteFeedback.hidden = true;
 
   const key = `SOUS|${copy.headline}`;
   if (key !== lastAnnounced) {
@@ -777,13 +774,9 @@ function saveNow(): void {
 /* ------------------------------------------------------------ calibration */
 
 function renderCalibNote(): void {
-  if (calib.eggsLogged === 0) {
-    dom.calibNote.textContent = t('feedback.invite');
-  } else {
-    dom.calibNote.textContent = t('learned.tuned', {
-      eggs: calib.eggsLogged, spread: calibrationSpread(calib).toFixed(0),
-    });
-  }
+  dom.calibNote.textContent = calib.eggsLogged === 0
+    ? t('feedback.invite')
+    : t('learned.tuned', { eggs: calib.eggsLogged });
   renderLearned();
 }
 
@@ -796,9 +789,7 @@ function renderLearned(): void {
     dom.forget.hidden = true;
     return;
   }
-  const tuned = eggs > 0
-    ? t('learned.tuned', { eggs: eggs, spread: calibrationSpread(calib).toFixed(0) })
-    : '';
+  const tuned = eggs > 0 ? t('learned.tuned', { eggs: eggs }) : '';
   const measured = pan
     ? t('learned.pan', { time: formatClock(estimateTimeToBoil(boilMemory, settings.waterLitres)) })
     : '';
@@ -819,68 +810,66 @@ function onForget(): void {
   recompute();
 }
 
-/** Fold one outcome into the posterior. Rebuilding the dose surface takes a
- *  couple of seconds, so the buttons are disabled while it runs - it happens
- *  once, after the egg is eaten, never in the render path. The readout is left
- *  describing the egg that was eaten; the recalibrated model shows up on the
- *  next "Start again". */
-function onFeedback(value: Feedback): void {
-  if (feedbackGiven) return;
-  feedbackGiven = true;
-  whiteGrid = null;
-  // Written down before the fold, not after: a reload between the two would
-  // otherwise re-ask, and a second answer folds the same egg in twice.
-  persistCook();
-  const buttons = dom.feedback.querySelectorAll<HTMLButtonElement>('button.fb');
-  for (let i = 0; i < buttons.length; i++) buttons[i].disabled = true;
-  dom.calibNote.textContent = t('feedback.learning');
-
-  const cooked = ticket;
-  if (cooked === null) return;
-  // The egg is written down with its answer before anything is learned from
-  // it: a reload during the fold then refolds it on load, rather than losing it.
-  const index = logEgg(eggRecordFor(cooked, machine, value));
-  const cookStarted = machine.startedAt_ms;
-
-  // The surface is built in a worker now, so the page stays live while it is -
-  // which means the cook can have moved on by the time it lands.
-  void learn(index).then((outcome) => {
-    for (let i = 0; i < buttons.length; i++) buttons[i].disabled = false;
-    dom.feedback.hidden = true;
-    // The second question, and only when the model cannot already guess the
-    // answer. On a jammy egg or anything firmer the white is far past setting and
-    // every particle agrees, so nothing is asked and the default path stays one
-    // tap; on a soft one the white is near its threshold and the answer moves
-    // alpha. The decision is `shouldAskAboutWhite` in src/core/infer.ts, so both
-    // apps ask on exactly the same eggs.
-    const stillHere = machine.phase === 'DONE' && machine.startedAt_ms === cookStarted;
-    if (outcome !== null && outcome.askWhite && stillHere) {
-      whiteGrid = outcome;
-      dom.whiteFeedback.hidden = false;
-    }
-    renderCalibNote();
-  });
+/** Mark which answer of a row was given, and put the row out of reach. The
+ *  pressed button stays legible - it is the record of what was said. */
+function settleRow(selector: string, pressed: HTMLButtonElement): void {
+  const buttons = dom.feedback.querySelectorAll<HTMLButtonElement>(selector);
+  for (let i = 0; i < buttons.length; i++) {
+    buttons[i].disabled = true;
+    buttons[i].setAttribute('aria-pressed', buttons[i] === pressed ? 'true' : 'false');
+  }
 }
 
-/** Fold the answer about the white into the same egg. It is a second
- *  observation, not a second egg, so the "tuned on N eggs" count does not move -
- *  only the spread does. */
-function onWhiteFeedback(value: WhiteReport): void {
-  const pending = whiteGrid;
-  if (pending === null) return;
-  whiteGrid = null;
-  const buttons = dom.whiteFeedback.querySelectorAll<HTMLButtonElement>('button.wb');
-  for (let i = 0; i < buttons.length; i++) buttons[i].disabled = true;
-  dom.whiteNote.textContent = t('feedback.learning');
+/** Both rows back to unanswered, for the next egg. */
+function resetRows(): void {
+  const buttons = dom.feedback.querySelectorAll<HTMLButtonElement>('button.fb, button.wb');
+  for (let i = 0; i < buttons.length; i++) {
+    buttons[i].disabled = false;
+    buttons[i].removeAttribute('aria-pressed');
+  }
+}
 
-  // No grid to build this time, so this is milliseconds rather than seconds -
-  // but it still yields, so the disabled state paints before the arithmetic.
-  window.setTimeout(() => {
-    recordWhite(pending, value);
-    for (let i = 0; i < buttons.length; i++) buttons[i].disabled = false;
-    dom.whiteFeedback.hidden = true;
-    renderCalibNote();
-  }, 30);
+/**
+ * One answer, about the yolk or the white, in whichever order they come.
+ *
+ * The first answer writes the egg down - before anything is learned from it,
+ * so a reload during the fold refolds it on load rather than losing it - and
+ * folds it: a couple of seconds, for the dose surface, built in a worker. The
+ * second is folded into the SAME egg, from the posterior as it stood before it
+ * (`recordSecondAnswer`), so the order they were tapped in changes nothing.
+ * The readout is left describing the egg that was eaten; the recalibrated model
+ * shows up on the next "Start again".
+ */
+function onAnswer(yolk: Feedback | null, white: WhiteReport | null, pressed: HTMLButtonElement): void {
+  if (answered !== null && ((yolk !== null && answered.yolk !== null)
+    || (white !== null && answered.white !== null))) return;
+  const cooked = ticket;
+  if (cooked === null) return;
+  settleRow(yolk !== null ? 'button.fb' : 'button.wb', pressed);
+  dom.calibNote.textContent = t('feedback.learning');
+  const cookStarted = machine.startedAt_ms;
+  const stillHere = (): boolean => machine.phase === 'DONE' && machine.startedAt_ms === cookStarted;
+  const thanks = (): void => {
+    if (stillHere()) dom.calibNote.textContent = t('feedback.thanks');
+    renderLearned();
+  };
+
+  if (answered === null) {
+    const index = logEgg(eggRecordFor(cooked, machine, yolk, white));
+    answered = { yolk: yolk, white: white, index: index };
+    feedbackGiven = true;
+    // Written down with the log, not after the fold: a reload between the two
+    // would otherwise offer the questions again, and log the egg twice.
+    persistCook();
+    // The surface is built in a worker, so the page stays live while it is -
+    // which means the cook can have moved on by the time it lands.
+    void learn(index).then(thanks);
+    return;
+  }
+  if (yolk !== null) answered.yolk = yolk;
+  if (white !== null) answered.white = white;
+  const second = yolk !== null ? { yolk: yolk } : white !== null ? { white: white } : {};
+  void recordSecondAnswer(answered.index, second).then(thanks);
 }
 
 /* ------------------------------------------------------------------ input */
@@ -993,7 +982,8 @@ function reset(): void {
     void learn();
   }
   feedbackGiven = false;
-  whiteGrid = null;
+  answered = null;
+  resetRows();
   restored = false;
   ticket = null;
   machine = idleMachine(settings.cooling);
@@ -1150,14 +1140,16 @@ export function boot(): void {
   for (let i = 0; i < fbButtons.length; i++) {
     fbButtons[i].addEventListener('click', () => {
       const raw = Number(fbButtons[i].dataset['fb']);
-      onFeedback((raw === -1 ? -1 : raw === 1 ? 1 : 0) as Feedback);
+      onAnswer((raw === -1 ? -1 : raw === 1 ? 1 : 0) as Feedback, null, fbButtons[i]);
     });
   }
 
-  const whiteButtons = dom.whiteFeedback.querySelectorAll<HTMLButtonElement>('button.wb');
+  const whiteButtons = dom.feedback.querySelectorAll<HTMLButtonElement>('button.wb');
   for (let i = 0; i < whiteButtons.length; i++) {
     whiteButtons[i].addEventListener('click', () => {
-      onWhiteFeedback(whiteButtons[i].dataset['white'] === 'runny' ? 'runny' : 'set');
+      const raw = whiteButtons[i].dataset['white'];
+      const white: WhiteReport = raw === 'runny' ? 'runny' : raw === 'tender' ? 'tender' : 'firm';
+      onAnswer(null, white, whiteButtons[i]);
     });
   }
 
