@@ -15,10 +15,10 @@ import {
   LIMITS, clamp, isWithin, SLIDER_STEPS, snapUp, snapDown, anchorNear,
   targetPeakYolk_C, verdictFor, textureFor, calibrationGrid, DEFAULTS,
   DEFAULT_EGG_MASS_KG, DEFAULT_TIME_TO_BOIL_S, START_TEMP_PRESETS_C, ambientFor,
-  rememberBoil, estimateTimeToBoil, hasBoilMemory, volumeKey, BoilMemory,
+  rememberBoil, estimateTimeToBoil, hasBoilMemory, volumeKey, BoilMemory, carrySizeIndex,
 } from '../src/core/policy.js';
 import { DONENESS_ANCHORS, Solution, CookResult } from '../src/core/solve.js';
-import { SIZE_CLASSES } from '../src/core/geometry.js';
+import { SIZE_CLASSES, SizeClass, US_SIZE_CLASSES, sizeClassesFor } from '../src/core/geometry.js';
 import { T_ROOM_C } from '../src/core/constants.js';
 
 // --------------------------------------------------------------------------
@@ -257,6 +257,65 @@ test('6. every limit is non-empty and every default sits inside its limit', () =
 test('6b. the default mass is the default size class, not a second opinion', () => {
   assert.equal(DEFAULT_EGG_MASS_KG, SIZE_CLASSES[DEFAULTS.sizeIndex].mass_kg);
   assert.ok(isWithin(DEFAULT_EGG_MASS_KG * 1000, LIMITS.mass_g));
+});
+
+/** 'Large — 60 g' -> 'Large'. */
+function className(c: SizeClass): string {
+  return c.label.split(' — ')[0];
+}
+
+test('6e. the default size is Large in both tables, and a shared index is a shared name', () => {
+  assert.equal(className(SIZE_CLASSES[DEFAULTS.sizeIndex]), 'Large');
+  assert.equal(className(US_SIZE_CLASSES[DEFAULTS.sizeIndex]), 'Large');
+  const shared = Math.min(SIZE_CLASSES.length, US_SIZE_CLASSES.length);
+  for (let i = 0; i < shared; i++) {
+    assert.equal(className(SIZE_CLASSES[i]), className(US_SIZE_CLASSES[i]), `index ${i}`);
+  }
+  for (const table of [SIZE_CLASSES, US_SIZE_CLASSES]) {
+    assert.ok(isWithin(table.length - 1, LIMITS.sizeIndex), 'every index is inside the stored bound');
+    for (let i = 0; i < table.length; i++) {
+      assert.ok(isWithin(table[i].mass_kg * 1000, LIMITS.mass_g), table[i].label);
+      if (i > 0) assert.ok(table[i].mass_kg > table[i - 1].mass_kg, 'classes ascend');
+      const grams = Number(table[i].label.match(/(\d+) g$/)?.[1]);
+      assert.equal(grams, Math.round(table[i].mass_kg * 1000), `${table[i].label} says its mass`);
+    }
+  }
+});
+
+test('6f. an American class is the midpoint of its USDA range, per egg', () => {
+  // USDA minimum net weight per dozen, oz: Small, Medium, Large, Extra large, Jumbo.
+  const perDozen_oz = [18, 21, 24, 27, 30];
+  const perEgg_g = (oz: number) => oz * 28.349523125 / 12;
+  for (let i = 0; i < 4; i++) {
+    const midpoint = 0.5 * (perEgg_g(perDozen_oz[i]) + perEgg_g(perDozen_oz[i + 1]));
+    assert.ok(Math.abs(US_SIZE_CLASSES[i].mass_kg * 1000 - midpoint) < 0.05, US_SIZE_CLASSES[i].label);
+  }
+  // Jumbo has no ceiling; all that is checkable is that the guess is above its floor.
+  assert.ok(US_SIZE_CLASSES[4].mass_kg * 1000 > perEgg_g(perDozen_oz[4]));
+});
+
+test('6g. region US, and only region US, gets the American carton', () => {
+  assert.equal(sizeClassesFor('US'), US_SIZE_CLASSES);
+  assert.equal(sizeClassesFor('us'), US_SIZE_CLASSES);
+  for (const region of ['GB', 'CZ', 'CA', 'AU', '', 'USA', null, undefined]) {
+    assert.equal(sizeClassesFor(region), SIZE_CLASSES, String(region));
+  }
+});
+
+test('6h. a stored size keeps its name when the table changes, and a Jumbo shrinks to fit', () => {
+  for (const table of [SIZE_CLASSES, US_SIZE_CLASSES]) {
+    for (let i = 0; i < table.length; i++) assert.equal(carrySizeIndex(i, table), i);
+    assert.equal(carrySizeIndex(-1, table), -1, 'a measured egg stays measured');
+    assert.equal(carrySizeIndex(-0.4, table), -1);
+    assert.equal(carrySizeIndex(NaN, table), DEFAULTS.sizeIndex);
+    assert.equal(carrySizeIndex(1.5, table), 2);
+  }
+  assert.equal(carrySizeIndex(4, SIZE_CLASSES), 3, 'Jumbo outside the US is Extra large');
+  assert.equal(carrySizeIndex(4, US_SIZE_CLASSES), 4);
+  // The case the second table exists for: a record saved before it, on the
+  // default egg, read in the US. It must cook the American Large.
+  const carried = carrySizeIndex(DEFAULTS.sizeIndex, US_SIZE_CLASSES);
+  assert.equal(US_SIZE_CLASSES[carried].mass_kg, 0.0602);
 });
 
 test('6c. clamp pins to the bounds and refuses to pass a non-number through', () => {

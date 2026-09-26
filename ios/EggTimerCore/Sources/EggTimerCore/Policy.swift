@@ -32,6 +32,9 @@ public enum Limits {
     public static let waterLitres = 0.25...12.0
     public static let eggCount = 1.0...24.0
     public static let doneness = 0.0...1.0
+    /// Across every table. The table in use is shorter than this outside the
+    /// US, so a stored index also goes through `carrySizeIndex`.
+    public static let sizeIndex = -1.0...Double(max(sizeClasses.count, usSizeClasses.count) - 1)
     /// A tap under half a minute is a double tap, not a boil; over two hours is
     /// an app left open.
     public static let timeToBoilS = 30.0...7200.0
@@ -79,7 +82,8 @@ public let defaultTimeToBoilS = 480.0
 /// same question - which is exactly what 4 eggs of 62.3 g here against 2 eggs of
 /// 68 g on the web amounted to.
 public enum Defaults {
-    /// Index into `sizeClasses` - 'Large', 68 g.
+    /// Index into the region's size classes - 'Large' in both tables, 68 g in
+    /// the EU one and 60.2 g on an American carton.
     public static let sizeIndex = 2
     public static let customMinorMM = 44.0
     public static let customStartC = 12.0
@@ -87,9 +91,31 @@ public enum Defaults {
     public static let waterLitres = 2.0
     public static let eggCount = 2
     public static let doneness = 0.41
-    /// Derived rather than restated, so the size class and the mass can never
-    /// disagree.
+    /// The reference egg, an EU Large. The app takes its default from the
+    /// region's table, `sizeClassesFor(region:)[sizeIndex]`. Derived rather
+    /// than restated, so the size class and the mass can never disagree.
     public static let eggMassKg = sizeClasses[sizeIndex].massKg
+}
+
+/// A stored size index, read against the table in use now.
+///
+/// An index means something only inside one table, and the table can change
+/// underneath a stored record: the phone's region changes, or - the case that
+/// matters - a record saved before there were two tables is read by an
+/// American. The index keeps its NAME. A cook who picked Large picked the word
+/// on their carton, and the region says whose carton it is, so a Large stays a
+/// Large and cooks at the new table's mass. Keeping the mass instead would leave
+/// every American who never touched the control on the EU Large.
+///
+/// Both tables hold the same names at the same indices as far as the shorter
+/// goes, so keeping the name is keeping the index. A Jumbo read outside the US
+/// becomes Extra large. A weighed egg (-1) is weighed in any region.
+public func carrySizeIndex(_ stored: Double, classes: [SizeClass]) -> Int {
+    guard stored.isFinite else { return Defaults.sizeIndex }
+    // Negatives first, so rounding never has to settle -0.5: Swift rounds that
+    // tie away from zero and JavaScript towards +infinity.
+    if stored < 0 { return -1 }
+    return min(Int(stored.rounded()), classes.count - 1)
 }
 
 // MARK: - The slider

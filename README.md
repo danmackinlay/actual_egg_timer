@@ -467,7 +467,8 @@ distrust.
 | `EGG_VOLUME_COEFF` | 0.51 | — | `V = k_v * L * B^2` (Hoyt 1979). The ovoid taper removes ~2.5% from a prolate spheroid's `pi/6 = 0.5236`. **High.** |
 | `EGG_LENGTH_RATIO` | 1.35 | — | `L/B`; shape index `100*B/L ~ 74`. **Medium** — varies by breed and bird age. |
 | `YOLK_RADIUS_FRAC` | 0.693 | — | Yolk = 33% of egg volume, `(1/3)^(1/3)`. **High** — four independent routes agree (§3), including Abbasnezhad's meshed 1.6 cm yolk sphere. |
-| `SIZE_CLASSES` | 48/58/68/76 | g | EU Regulation 589/2008 Art. 4. Labelled in grams deliberately: EU/UK "Large" (63-73 g) is a US "Extra Large", and a US "Large" (57 g) is an EU "Medium". Using names would systematically mis-time for one audience. |
+| `SIZE_CLASSES` | 48/58/68/76 | g | EU Regulation 589/2008 Art. 4. Every region except `US`. Labelled in grams deliberately: EU/UK "Large" (63-73 g) is a US "Extra Large", and a US "Large" (56.7-63.8 g) is mostly an EU "Medium". Using names would systematically mis-time for one audience. |
+| `US_SIZE_CLASSES` | 46.1/53.2/60.2/67.3/74 | g | USDA carton classes, region `US` only. USDA sets a minimum net weight per dozen (18/21/24/27/30 oz), so a class runs from its own minimum to the next one's; the value is the midpoint, per egg. Jammy, from the fridge into boiling water, an EU Large cooks 34 s longer than a US Large, so this is not cosmetic. **High** for Small to Extra large; **low** for Jumbo, which has no ceiling. The table follows the region (`sizeClassesFor`), not the language or the units, and a stored class keeps its name when the region changes (`carrySizeIndex`). |
 
 ### Kinetics
 
@@ -939,6 +940,8 @@ model recorded these as unreachable; they are not.
 - USDA FSIS, High Altitude Cooking.
   <https://www.fsis.usda.gov/food-safety/safe-food-handling-and-preparation/food-safety-basics/high-altitude-cooking>
 - EU Regulation 589/2008 Art. 4 — egg size classes.
+- USDA AMS 56, United States Standards, Grades, and Weight Classes for Shell Eggs —
+  the US carton classes, as minimum net weight per dozen.
 
 ---
 
