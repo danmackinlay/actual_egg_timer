@@ -118,31 +118,39 @@ final class Kitchen {
     var calibration: Calibration { kept.calibration }
     /// True while the dose surface is being rebuilt after an outcome.
     private(set) var learning = false
-    /// The second question, when there is one: the white of the egg just eaten,
-    /// asked only when the model cannot already guess the answer. Nil the rest of
-    /// the time, which is most of the time - see `shouldAskAboutWhite`.
+    /// What the cook on screen has said so far - the yolk, the white, or both -
+    /// or nil before the first answer. Both questions stay on screen until the
+    /// cook moves on; this is what marks each one answered.
     ///
-    /// Deliberately not persisted. It is a moment in a conversation rather than a
-    /// fact about the egg, and rebuilding the surface it needs would cost a second
-    /// of arithmetic to re-ask a question nobody answered.
-    private(set) var whiteQuestion: WhiteQuestion?
+    /// Deliberately not persisted, with the surface a second answer is folded
+    /// against: after a relaunch the questions are not offered again, and the
+    /// one left unanswered stays a skip in the record.
+    private(set) var answers: Answers?
     /// Why the requested doneness was refused, in words, or empty. The point is
     /// to teach the constraint rather than merely to block the control.
     private(set) var refusal = ""
 
-    /// The white question and what answering it needs: the surface the yolk
-    /// answer was scored against, and the egg in the log it is about.
-    struct WhiteQuestion: Sendable {
-        let grid: DoseGrid
-        let index: Int
+    struct Answers: Sendable {
+        var yolk: Feedback?
+        var white: WhiteReport?
     }
+
+    /// The live egg once folded: its place in the log, the surface it was
+    /// scored against, and the calibration as it stood before it - so that a
+    /// second answer folds the egg again rather than on top of itself.
+    private struct Folded: Sendable {
+        let index: Int
+        let grid: DoseGrid
+        let before: Calibration
+    }
+    private var folded: Folded?
 
     private var task: Task<Void, Never>?
     /// Bumped by "forget what it learned", so a fold still running when the
     /// button is pressed lands on nothing rather than on the fresh prior.
     private var generation = 0
-    /// The egg on screen waiting to hear whether to ask about the white. Every
-    /// other egg in the log is folded quietly.
+    /// The egg on screen, whose second answer may still come. Every other egg in
+    /// the log is folded quietly.
     private var liveIndex: Int?
     private var draining = false
     /// Set while the solver is moving the slider itself, so that snapping to a
@@ -233,7 +241,6 @@ final class Kitchen {
     var label: String { tr(anchorNear(doneness).key) }
 
     var eggsLogged: Int { calibration.eggsLogged }
-    var calibrationSpread: Double { Calibrations.spread(calibration) }
 
     /// The isothermal limit for the egg and the calibrated alpha as they stand.
     ///
@@ -242,7 +249,7 @@ final class Kitchen {
     /// forms - so putting it through the coalesce machinery would buy latency
     /// and a chance to be stale in exchange for nothing.
     var sousVide: SousVideEstimate {
-        let doneness = donenessFromSlider(doneness)
+        let doneness = calibrationDoneness(calibration, level: doneness)
         return sousVideEstimate(
             radiusM: egg.radiusM,
             alphaM2s: Calibrations.params(calibration).alphaM2s,
@@ -286,11 +293,11 @@ final class Kitchen {
         let level = doneness
         let setup = setup
         let egg = egg
-        let params = Calibrations.params(calibration)
+        let calibration = calibration
         task = Task { [weak self] in
             try? await Task.sleep(nanoseconds: Self.coalesceNanos)
             guard !Task.isCancelled else { return }
-            let answer = await Self.solve(egg: egg, setup: setup, level: level, params: params)
+            let answer = await Self.solve(egg: egg, setup: setup, level: level, calibration: calibration)
             guard !Task.isCancelled else { return }
             self?.apply(answer)
         }
@@ -314,10 +321,13 @@ final class Kitchen {
     /// so re-solving at a snapped position would answer for an egg nobody is
     /// cooking.
     private nonisolated static func solve(
-        egg: Egg, setup: CookSetup, level: Double, params: ModelParams, snapRetry: Bool = true
+        egg: Egg, setup: CookSetup, level: Double, calibration: Calibration, snapRetry: Bool = true
     ) async -> Answer {
+        // The white's target moves with what the eggs said about the white (E3),
+        // so the doneness comes from the calibration as well as the parameters.
+        let params = Calibrations.params(calibration)
         var result = solveCookTime(
-            egg: egg, setup: setup, params: params, doneness: donenessFromSlider(level)
+            egg: egg, setup: setup, params: params, doneness: calibrationDoneness(calibration, level: level)
         )
         let verdict = verdictFor(result, level: level)
 
@@ -327,7 +337,7 @@ final class Kitchen {
         // only if nobody has asked a newer question in the meantime.
         if snapRetry, let snapTo = verdict.snapTo, !Task.isCancelled {
             let retry = solveCookTime(
-                egg: egg, setup: setup, params: params, doneness: donenessFromSlider(snapTo)
+                egg: egg, setup: setup, params: params, doneness: calibrationDoneness(calibration, level: snapTo)
             )
             if retry.reachable { result = retry }
         }
@@ -350,7 +360,7 @@ final class Kitchen {
     func cookTime(timeToBoilS: Double, level: Double) async -> Double? {
         let answer = await Self.solve(
             egg: egg, setup: setup(timeToBoilS: timeToBoilS), level: level,
-            params: Calibrations.params(calibration), snapRetry: false
+            calibration: calibration, snapRetry: false
         )
         // The numbers on screen follow the cook; the refusal does not. A
         // refusal is advice about a control that is no longer on screen.
@@ -380,19 +390,69 @@ final class Kitchen {
 
     // MARK: - Learning from an egg
 
-    /// Write one egg down with its answer, then learn from it.
+    /// Write one egg down with its first answer - the yolk or the white - then
+    /// learn from it.
     ///
     /// Written down FIRST, before any arithmetic: an app killed during the fold
     /// then folds it again on the next launch, rather than losing it. The
-    /// record carries the egg and pan the cook was RUN with, off the ticket -
-    /// they used to be read off the kitchen as it stood when the user got round
-    /// to answering, which described a pan that had never cooked this egg.
+    /// record carries the egg and pan the cook was RUN with, off the ticket.
     func record(_ egg: EggRecord) async {
-        whiteQuestion = nil
+        answers = Answers(yolk: egg.yolk, white: egg.white)
+        folded = nil
         liveIndex = kept.log.count
         kept.log.append(egg)
         Calibrations.save(kept)
         await drain()
+    }
+
+    /// The second answer about the egg on screen - the white after the yolk, or
+    /// the yolk after the white.
+    ///
+    /// If the egg is still being folded, the answer is written into its record
+    /// and the fold, which reads the record when its surface lands, takes both.
+    /// If it has been folded, it is folded AGAIN from the calibration as it
+    /// stood before it, against the same surface, so the posterior is what a
+    /// replay of the log makes whichever order the taps came in. Refused, and
+    /// nothing written, when that is no longer possible - which is what keeps
+    /// the log and the posterior one thing. The web app's `recordSecondAnswer`.
+    func secondAnswer(yolk: Feedback?, white: WhiteReport?) async {
+        guard var given = answers, let index = liveIndex ?? folded?.index,
+              index == kept.log.count - 1 else { return }
+        if yolk != nil, given.yolk != nil { return }
+        if white != nil, given.white != nil { return }
+        var egg = kept.log[index]
+        if let yolk { egg.yolk = yolk; given.yolk = yolk }
+        if let white { egg.white = white; given.white = white }
+        if kept.folded <= index {
+            answers = given
+            kept.log[index] = egg
+            Calibrations.save(kept)
+            await drain()
+            return
+        }
+        guard let done = folded, done.index == index, kept.folded == index + 1 else { return }
+        answers = given
+        learning = true
+        let gen = generation
+        let again = await Task.detached(priority: .userInitiated) {
+            var c = done.before
+            foldRecord(&c, egg, grid: done.grid)
+            return c
+        }.value
+        if gen == generation {
+            kept.log[index] = egg
+            kept.calibration = again
+            Calibrations.save(kept)
+        }
+        learning = false
+        recompute()
+    }
+
+    /// The cook has moved on: the next answers are about the next egg.
+    func endEgg() {
+        answers = nil
+        folded = nil
+        liveIndex = nil
     }
 
     /// An egg finished and never answered about. Still a record - the cook, the
@@ -407,9 +467,10 @@ final class Kitchen {
     ///
     /// The grid build is a second or two of arithmetic, so it goes to a
     /// detached task, as it always has; a catch-up after a relaunch is several
-    /// of them, and takes the same path. It happens after an egg has been
-    /// eaten, never while anything is being adjusted - which is the whole
-    /// reason the surface is cached rather than simulated per particle.
+    /// of them, and takes the same path. The fold itself is milliseconds, and
+    /// happens back here, reading the record AFTER the surface lands: an answer
+    /// that arrived while it was being built is folded with the first, as a
+    /// replay folds them.
     ///
     /// One drain at a time: a call made while one runs returns at once, and the
     /// running one picks up whatever was appended, because it reads the log
@@ -427,33 +488,22 @@ final class Kitchen {
                 Calibrations.save(kept)
                 continue
             }
-            let current = kept.calibration
-            let (next, grid, ask) = await Task.detached(priority: .userInitiated) {
-                var c = current
-                // Centred where the posterior stood BEFORE this egg, exactly as
-                // `replay` does it; nothing else folds while this runs.
-                let grid = buildRequestedGrid(gridRequest(c, egg))
-                let ask = foldYolk(&c, egg, grid: grid)
-                // An egg caught up after a relaunch may already carry its white.
-                foldWhite(&c, egg, grid: grid)
-                return (c, grid, ask)
+            // Centred where the posterior stood BEFORE this egg, exactly as
+            // `replay` does it; nothing else folds while this runs.
+            let request = gridRequest(kept.calibration, egg)
+            let grid = await Task.detached(priority: .userInitiated) {
+                buildRequestedGrid(request)
             }.value
             // Forgotten while the surface was being built.
             guard gen == generation else { continue }
+            let before = kept.calibration
+            var next = before
+            foldRecord(&next, kept.log[index], grid: grid)
             kept.calibration = next
             kept.folded += 1
             if index == liveIndex {
-                // The second question, and only when the model cannot already
-                // guess the answer. On a jammy egg or anything firmer the white
-                // is far past setting and every particle agrees, so nothing is
-                // asked and the default path stays one tap; on a soft one the
-                // white is near its threshold and the answer moves alpha. The
-                // decision is `shouldAskAboutWhite` in EggTimerCore, so both
-                // apps ask on exactly the same eggs - and the record says it
-                // was offered, in the same save as the fold.
-                kept.log[index].whiteOffered = ask
                 liveIndex = nil
-                whiteQuestion = ask ? WhiteQuestion(grid: grid, index: index) : nil
+                folded = Folded(index: index, grid: grid, before: before)
             }
             Calibrations.save(kept)
         }
@@ -461,43 +511,6 @@ final class Kitchen {
         learning = false
         // The egg just eaten keeps the numbers it was cooked with; the new
         // ones show up on the next cook.
-        recompute()
-    }
-
-    /// Fold in the answer to the second question. Milliseconds rather than a
-    /// second, because the surface it needs was built by the yolk answer and kept -
-    /// but still off the main actor, because the arithmetic is the same shape.
-    ///
-    /// Refused unless that egg is still the last one folded: folding it after
-    /// another egg would be a different posterior from the one the log replays to.
-    func recordWhite(_ white: WhiteReport) async {
-        guard !learning, let question = whiteQuestion else { return }
-        let index = question.index
-        guard index < kept.log.count, kept.folded == index + 1,
-              kept.log[index].whiteOffered, kept.log[index].white == nil else {
-            whiteQuestion = nil
-            return
-        }
-        learning = true
-        let gen = generation
-        var egg = kept.log[index]
-        egg.white = white
-        let current = kept.calibration
-        let updated = await Task.detached(priority: .userInitiated) {
-            var c = current
-            foldWhite(&c, egg, grid: question.grid)
-            return c
-        }.value
-        if gen == generation {
-            kept.log[index] = egg
-            kept.calibration = updated
-            Calibrations.save(kept)
-        }
-        // Cleared only now, so the question stays on screen saying "learning…"
-        // while the fold runs rather than vanishing under the finger. `learning`
-        // is what stops a second tap in the meantime.
-        whiteQuestion = nil
-        learning = false
         recompute()
     }
 
@@ -518,9 +531,10 @@ final class Kitchen {
     func resetCalibration() {
         generation &+= 1
         liveIndex = nil
+        folded = nil
+        answers = nil
         Calibrations.reset()
         kept = Calibrations.freshKept()
-        whiteQuestion = nil
         BoilMemories.reset()
         boilMemory = [:]
         recompute()
