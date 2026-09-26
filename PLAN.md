@@ -4,8 +4,9 @@ Resumable working notes. Updated **in the same commit** as the work it describes
 For the science, see `README.md`. For what was verified and what it cost to find
 out, see `LOGBOOK.md`. For getting the app onto other people's phones, see
 `ios/RELEASING.md`. For the design of what comes next - the inference as the
-main part, and pooled across cooks - see `INFERENCE.md`. This file is for
-whoever picks the build back up.
+main part, and pooled across cooks - see `INFERENCE.md`; for languages, units
+and the wording itself, `LANGUAGE.md`. This file is for whoever picks the build
+back up.
 
 **Status: both apps complete and learning. The PHYSICS is now the open part.**
 81 TypeScript tests, 27/27 validation checks and 45 Swift conformance tests pass.
@@ -98,8 +99,8 @@ everything since Phase D. E1-E5 need no network and are worth doing for one
 cook. Nothing leaves a phone before E6.
 
 - [ ] **E1 the record.** Keep each egg as an observation (`INFERENCE.md` §4),
-      on the device, beside the posterior. Record the ACTUAL pull time and where
-      the mass came from. A model change becomes a replay of the log instead of
+      on the device, beside the posterior. Record the ACTUAL pull time, where
+      the mass came from, and the language, register and units the cook read. A model change becomes a replay of the log instead of
       a discarded posterior. Done when: a v3 posterior can be rebuilt from the
       log alone, bit-identically, on both apps.
 - [ ] **E2 ordered probit.** Replace the hard bands and the fixed 0.8 / 0.1 in
@@ -135,6 +136,38 @@ cook. Nothing leaves a phone before E6.
       the reported headline.
 - [ ] **E8 the nudge.** +-10 s on the recommendation for consenting cooks. Last,
       because it is worthless before E7 exists to use it.
+
+### Phase F — words, units and languages — NOT STARTED
+
+Design and reasons in `LANGUAGE.md`. Both apps, under conformance, as always.
+F1 goes before E2 so that Phase E's new feedback copy is born in the catalogue.
+
+- [ ] **F1 the catalogue.** `copy/<locale>.json`, one template per key with
+      plural variants and a hand-written CLDR rule per language, rendered by the
+      same few lines in both cores. Every existing string extracted with NO
+      wording change - proved by byte-identical rendered output. Core returns
+      keys, never English (`DONENESS_ANCHORS`, size classes, `startPhrase`).
+      `fixtures/copy.json` with placeholder-parity and per-surface length tests.
+- [ ] **F2 the rewrite.** Inside the catalogue, one diff for the owner. Known
+      offenders listed in `LANGUAGE.md` §3: "carryover", "calibration",
+      "literature values", "the model", "standing method", a ±% of nothing,
+      and every bare "°". Runs alongside E2 and E5.
+- [ ] **F3 units.** `src/core/units.ts` + Swift twin + fixtures: conversions,
+      display precision, input steps, and a round trip that never shows 2.39 oz
+      for a typed 2.4. Metric / Imperial setting defaulting from the region;
+      an EXPLICIT choice stored apart from the default. Size classes by region
+      (US carton classes in the US). A unit on every temperature.
+- [ ] **F4 locale formatting.** Numbers, plurals, 12/24-hour clock, weekday
+      names through `Intl` / `FormatStyle`, pinned per locale by the fixture.
+- [ ] **F5 German**, drafted however, shipped only after a native speaker who
+      cooks has read it on screen. Doneness words matched, not translated.
+- [ ] **F6 the English of 1750.** `en-x-1750`, switched on when an English UI
+      is explicitly switched to Imperial. Style guide and four rules in
+      `LANGUAGE.md` §6: substance not exempt, length budget binds, feedback
+      answers recorded with their register, and a way out that keeps °F.
+
+Owner decisions pending, `LANGUAGE.md` §8: the trigger, the way out, the first
+language, the reviewers, US carton classes.
 
 ---
 

@@ -146,13 +146,17 @@ One record per egg, stored on the device; uploaded only under §7.
   "level": 0.22,
   "recommended_s": 399, "nudge_s": -6, "pulled_s": 412, "cooled_s": 180,
   "yolk": -1, "white": null,
-  "probe": null
+  "probe": null,
+  "lang": "en", "register": "modern", "units": "metric"
 }
 ```
 
 - `yolk` and `white` are each an answer or `null`. `null` means the question was
   on screen and the cook moved on; a record with both `null` is still a record,
   because the cook, the recommendation and the actual pull time are data too.
+- `lang`, `register` and `units` record what the cook READ, because an answer
+  is a word and words differ: "soft" may not sit where *weich* does, and "Unset"
+  in the English of 1750 may not be answered like "Runny". `LANGUAGE.md` §5-6.
 
 - `massFrom` (scale / girth / width / class) sets the egg-level noise: a size
   class is a 10 g bucket, worth about +-24 s, which is twice the width of "just
