@@ -58,7 +58,7 @@ export function diffusionTime(egg: Egg, alpha_m2s: number): number {
 }
 
 /** Egg size classes. Labelled by grams deliberately: EU/UK "Large" (63-73 g)
- *  is a US "Extra Large", and a US "Large" (57 g) is an EU "Medium". Using the
+ *  is a US "Extra Large", and a US "Large" (about 60 g, the middle of its USDA range) is an EU "Medium". Using the
  *  names would systematically mis-time for one audience or the other.
  *
  *  There are two tables, and which one a cook sees is decided by region - see
