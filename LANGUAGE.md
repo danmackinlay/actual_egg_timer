@@ -284,29 +284,55 @@ Nothing is pushed, and there is no first-run prompt. The joke is better found
 than delivered.
 
 **The style guide is Samuel Johnson**, specifically the *Preface to a
-Dictionary of the English Language* (1755). The owner chose it on 26 September,
-and it is on Project Gutenberg as ebook 5430. The owner reviews the catalogue
-against it. The rules below come from reading the whole text: 9,648 words,
-counted by script, not recalled. **Two of them contradict the guide this
-section used to give, and the text wins.**
+Dictionary of the English Language* **as first printed in 1755**. The owner chose
+it on 26 September and reviews the catalogue against it. There are three
+texts, and which one is used matters:
 
-- **No capitalised common nouns.** The text prints nouns in lower case and
-  capitalises only proper names and deliberate personifications ("Learning and
-  Genius"). The older habit of capitalising every noun had gone from Johnson's
-  printed prose. A capital therefore marks a personification, and the
-  personifications are few: Time, perhaps, or Heat.
+- **The authority is the 1755 folio**, volume 1, scanned at archive.org as
+  `bub_gb_nCJWAAAAcAAJ`. Its OCR cannot be used as text: it reads every long s
+  as *f* (*thofe*, *difmifs*), and Google's OCR also nudges archaic spellings
+  toward modern ones.
+- **The working text is Jack Lynch's transcription** (jacklynch.net/Texts/
+  preface.html). It is taken from the first edition, keeps the spelling, and
+  drops the long s, which is exactly the form this catalogue wants. Link to it;
+  do not vendor it, because the notes and paragraph numbers are his.
+- **Not Project Gutenberg ebook 5430**, which this section first used. It
+  follows Johnson's revised Preface of 1773 (*explanation* for *explication*,
+  *surely* for *freely*, "the paths through which" for "the paths of"). It
+  modernises some spellings (*recompense*, *registered*), misreads *fewel*
+  (fuel) as *jewel*, and inserts editorial translations and a footnote.
+
+The rules below come from Lynch's text, counted by script (9,335 words). The
+page images were spot-checked where it mattered. The capitals and archaisms
+findings are the same in both editions.
+
+- **No capitalised common nouns.** The text prints nouns in lower case. It
+  capitalises proper names, deliberate personifications ("Learning and Genius"),
+  and now and then the subject under discussion (*Orthography*, *Etymology*).
+  A capital therefore marks a personification or a topic, and there are few of
+  either: Time, perhaps, or Heat.
 - **No stage-play archaisms.** *'tis*, *pray*, *forthwith*, *whilst*, *thee*,
-  *thou*, *hath* and *doth* occur **zero** times in the Preface. They make an
-  imitation of the period, not the period. Johnson's own connectives are
-  *hitherto* (7), *likewise* (8), *therefore* (17) and *perhaps* (17). A test
-  fails the catalogue if any of the eight appears.
-- **His spellings, used as a fixed table.** The text has *publick*,
-  *domestick*, *academick* (and ten other *-ick* words); *authour*,
-  *superiour*, *labour*, *honour*; *enquire*, *enterprize*, *surprize*;
-  *chace*, *persue*; *shew* beside *show*. `copy/en-x-1750.spelling.json` maps
-  modern to period form, and a test fails if the catalogue uses the modern one.
-  That is the maintainable part: a contributor does not need to know that
-  *public* wants a *k*.
+  *thou*, *hath* and *doth* occur **zero** times. They make an imitation of the
+  period, not the period itself. Johnson's own connectives are *hitherto* (7),
+  *likewise* (8), *therefore* (17) and *perhaps* (17). A test fails the
+  catalogue if any of the eight appears.
+- **His spellings, as a fixed table, and not completist.**
+  `copy/en-x-1750.spelling.json` maps the modern form, American or British, to
+  the 1755 one, and a test fails if the catalogue uses a modern form. The table
+  starts with what the 1755 text attests and grows when a string needs a word
+  it lacks:
+
+  | pattern | 1755, as printed |
+  |---|---|
+  | *-our* where modern English has *-or*, even in British spelling | *errour*, *authour*, *superiour*, *tenour*, *translatour* |
+  | *-our* where American English has *-or* | *labour*, *honour*, *favourite*, *colouring*, *endeavour*, *rigour*, *ardour* |
+  | *-ick* for *-ic* | *publick*, *criticks*, *domestick*, *academick*, *exotick*, *fabrick*, *characteristicks* |
+  | *-ce* for *-se* | *expence*, *recompence*, *licence* |
+  | *-ize* for *-ise* | *surprize*, *enterprize* |
+  | single words | *shew*, *shewn*; *enquire*, *enquiry*; *croud*; *stile*; *chace*; *persue*; *recal*; *registred*; *intire* beside *entire*; *oeconomy*; *fewel* |
+
+  *Errour* is the one the cook will meet most often. *Fewel* is the one an egg
+  timer could actually use: it is what the fire burns.
 - **The figures that carry the voice.**
   - Antithesis in balanced pairs: "to search was not always to find, and to find
     was not always to be informed".
@@ -315,9 +341,9 @@ section used to give, and the text wins.**
   - The general maxim drawn from a particular case.
   - A melancholy, self-deprecating first person, the lexicographer as "the
     slave of science".
-  - Semicolon chains: 0.9 semicolons per sentence.
-- **Two lengths, because the text has two.** Its median sentence is 39 words
-  and its 90th percentile is 77. That suits a hint or an explanation, and it is
+  - Semicolon chains: 0.93 semicolons per sentence.
+- **Two lengths, because the text has two.** Its median sentence is 43 words
+  and its 90th percentile is 79. That suits a hint or an explanation, and it is
   impossible on a Lock Screen. On the small surfaces the voice comes from the
   aphorism rather than the period, which is a mode Johnson also writes in: "To
   have attempted much is always laudable." Antithesis survives compression.
@@ -343,7 +369,7 @@ modern column shows the proposed rewrite, which is what the 1750 shadows.
 | surface | modern | 1750 draft |
 |---|---|---|
 | alarm title | Eggs out — now | Out with them; delay is ruin |
-| alarm body | Straight into the cooling, or the yolk keeps cooking. | Commit them at once to the cold; for heat, though withdrawn from the fire, is not yet withdrawn from the egg. |
+| alarm body | Straight into the cooling, or the yolk keeps cooking. | Commit them at once to the cold; for heat, though withdrawn from the fire, is not yet withdrawn from the egg. **Approved by the owner, 26 September.** |
 | second alarm | Cooling done | The cooling is ended |
 | refusal, counter rest | Resting on the counter keeps cooking the yolk. Softest possible: {limit} | An egg left upon the table does not cease to cook because it has ceased to boil. Softest attainable: {limit} |
 | still learning | (new, E2) | It is yet learning your kitchen; to search is not always to find. |

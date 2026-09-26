@@ -176,10 +176,12 @@ F1 goes before E2 so that Phase E's new feedback copy is born in the catalogue.
       in-app picker; switching an English UI to Imperial selects it, back to
       Metric restores the prior English, and picking English leaves it with °F
       kept. One line under the Imperial option so Americans can find it. The
-      style guide is Johnson's *Preface* (1755), reviewed by the owner: no
-      capitalised common nouns, none of eight stage-play archaisms (tested),
-      his spellings as a modern->period table (tested), *rear* at the soft end
-      of the scale. Details and drafts in §6.
+      style guide is Johnson's *Preface* as first printed in 1755 (Lynch's
+      transcription; not Gutenberg 5430, which is the 1773 revision),
+      reviewed by the owner: no capitalised common nouns, none of eight
+      stage-play archaisms (tested), 1755 spellings as a modern->period table
+      (tested; *errour*, *publick*, *shew*), *rear* at the soft end of the
+      scale. Details and drafts in §6.
 
 No owner decisions pending on Phase F.
 
