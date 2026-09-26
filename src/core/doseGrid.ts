@@ -112,3 +112,18 @@ export function cookTimeForLogYolkDose(
   }
   return 0.5 * (lo + hi);
 }
+
+/** The same for the white: the cook time delivering a given log10 white dose.
+ *  Monotonic while the water is held at the boil, as the yolk's is. */
+export function cookTimeForLogWhiteDose(
+  g: DoseGrid, alpha_m2s: number, logDose: number,
+): number {
+  let lo = g.timeMin_s;
+  let hi = g.timeMin_s + g.timeStep_s * (g.timeCount - 1);
+  for (let i = 0; i < 40; i++) {
+    const mid = 0.5 * (lo + hi);
+    if (lookupLogWhiteDose(g, alpha_m2s, mid) < logDose) lo = mid;
+    else hi = mid;
+  }
+  return 0.5 * (lo + hi);
+}

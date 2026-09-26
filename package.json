@@ -16,6 +16,7 @@
     "identifiability": "tsc && node dist/tools/identifiability.js",
     "rank": "tsc && node dist/tools/rank.js",
     "probe": "tsc && node dist/tools/probe.js",
+    "decide": "tsc && node dist/tools/decide.js",
     "conformance": "npm run fixtures && cd ios/EggTimerCore && swift test",
     "serve": "python3 -m http.server 8080",
     "build:site": "tsc -p tsconfig.site.json && cp index.html styles.css site.webmanifest _site/ && rm -rf _site/assets _site/copy && cp -R assets _site/assets && cp -R copy _site/copy",

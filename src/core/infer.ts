@@ -63,7 +63,7 @@ import { ALPHA_DEFAULT, ALPHA_REL_SD, Z_WHITE, Z_YOLK } from './constants.js';
 import { ModelParams, WHITE_DOSE_TARGET } from './solve.js';
 import { erfc } from './sphere.js';
 import {
-  DoseGrid, lookupLogYolkDose, lookupLogWhiteDose, cookTimeForLogYolkDose,
+  DoseGrid, lookupLogYolkDose, lookupLogWhiteDose, cookTimeForLogYolkDose, cookTimeForLogWhiteDose,
 } from './doseGrid.js';
 
 /** What the cook reports about the YOLK after eating the egg. */
@@ -181,7 +181,7 @@ export const WHITE_FIRM_GAP_LOG_SD = 0.4;
 
 /** log10 of the dose at which the innermost white is set: the runny | tender
  *  cutpoint before any offset. */
-const LOG_WHITE_TARGET = Math.log10(WHITE_DOSE_TARGET);
+export const LOG_WHITE_TARGET = Math.log10(WHITE_DOSE_TARGET);
 
 /** The white's noise, from the yolk's: the same degrees of peak temperature,
  *  converted through Z_WHITE instead of Z_YOLK. Degrees are what a person is
@@ -253,8 +253,10 @@ function normalCdf(x: number): number {
 }
 
 /** Probabilities of the three yolk answers, in the order too soft, just right,
- *  too firm, for one particle - before the unrelated share. */
-function yolkProbit(
+ *  too firm, for one particle - before the unrelated share. Exported for the
+ *  decision (decide.ts), which scores candidate times with the same arithmetic
+ *  the filter learns with. */
+export function yolkProbit(
   grid: DoseGrid, p: Particle, cookTime_s: number, logNominalTarget: number,
 ): [number, number, number] {
   const latent = lookupLogYolkDose(grid, p.alpha_m2s, cookTime_s)
@@ -267,7 +269,7 @@ function yolkProbit(
 
 /** Probabilities of runny, tender and firm for one particle, before the
  *  unrelated share. */
-function whiteProbit(grid: DoseGrid, p: Particle, cookTime_s: number): [number, number, number] {
+export function whiteProbit(grid: DoseGrid, p: Particle, cookTime_s: number): [number, number, number] {
   const latent = lookupLogWhiteDose(grid, p.alpha_m2s, cookTime_s)
     - (LOG_WHITE_TARGET + p.whiteOffset);
   const sd = p.noise * WHITE_NOISE_PER_YOLK;
@@ -477,10 +479,23 @@ export interface CookTimePrediction {
 }
 
 /**
- * Posterior predictive cook time for a nominal doneness, as a median and an
- * 80% credible interval. Reporting the interval rather than a point is the
- * honest thing to do, and it makes calibration legible without a settings
- * screen: the interval visibly narrows as the posterior tightens.
+ * The posterior over the right cook time for a nominal doneness, as a median
+ * and an 80% credible interval: for each particle, the time it would call
+ * right, weighted.
+ *
+ * Under E2's likelihood a particle's right time is the LATER of two: the time
+ * its yolk reaches the middle of "just right" - the nominal target moved by its
+ * taste offset, where the probit's two cutpoints are equidistant - and the time
+ * its white reaches its own runny | tender cutpoint, which is where the white
+ * stops being more likely runny than not. On most cooks the yolk's is later,
+ * and this is the yolk's interval, as it was before E2; where the white binds,
+ * as it does at the soft end once a cook has reported runny whites, the white's
+ * uncertainty is what widens it.
+ *
+ * The spread comes from the posterior alone: the noise scale, which no number
+ * of eggs narrows, plays no part. That makes the width the measure of what is
+ * still being learned, which is what E5's "still learning" reads
+ * (decide.ts). Times are found on the grid, so they are clamped to its span.
  */
 export function predictCookTime(
   post: Posterior, grid: DoseGrid, logNominalTarget: number,
@@ -489,10 +504,9 @@ export function predictCookTime(
   const rows: { t: number; w: number }[] = new Array<{ t: number; w: number }>(n);
   for (let i = 0; i < n; i++) {
     const p = post.particles[i];
-    rows[i] = {
-      t: cookTimeForLogYolkDose(grid, p.alpha_m2s, logNominalTarget + p.logDoseOffset),
-      w: post.weights[i],
-    };
+    const yolk = cookTimeForLogYolkDose(grid, p.alpha_m2s, logNominalTarget + p.logDoseOffset);
+    const white = cookTimeForLogWhiteDose(grid, p.alpha_m2s, LOG_WHITE_TARGET + p.whiteOffset);
+    rows[i] = { t: yolk > white ? yolk : white, w: post.weights[i] };
   }
   rows.sort((a, b) => a.t - b.t);
   return {

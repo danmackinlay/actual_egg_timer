@@ -49,8 +49,10 @@ export const RECORD_VERSION = 1;
  *  `PARTICLE_COUNT` particles from `CALIBRATION_SEED`. Recorded so a later fit
  *  knows what policy put the data where it lies. '2026-09' was E1's three-number
  *  particle; '2026-09-e2' is E2's six, whose white offset also moves the
- *  recommendation (`calibrationDoneness`). */
-export const PRIOR_ID = '2026-09-e2';
+ *  recommendation (`calibrationDoneness`); '2026-09-e5' is the same prior
+ *  under E5's policy, which CHOOSES the time from the whole posterior
+ *  (decide.ts) from the first egg that taught anything. */
+export const PRIOR_ID = '2026-09-e5';
 
 /** Where the egg's mass came from. A size class is a 10 g bucket, worth about
  *  +-24 s; a scale is a gram. The fit reads this as egg-level noise. */
