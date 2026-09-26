@@ -175,10 +175,13 @@ F1 goes before E2 so that Phase E's new feedback copy is born in the catalogue.
       both already strip the subtag - `LANGUAGE.md` §6). *English (1750)* in the
       in-app picker; switching an English UI to Imperial selects it, back to
       Metric restores the prior English, and picking English leaves it with °F
-      kept. One line under the Imperial option so Americans can find it. Style
-      guide and rules in §6.
+      kept. One line under the Imperial option so Americans can find it. The
+      style guide is Johnson's *Preface* (1755), reviewed by the owner: no
+      capitalised common nouns, none of eight stage-play archaisms (tested),
+      his spellings as a modern->period table (tested), *rear* at the soft end
+      of the scale. Details and drafts in §6.
 
-Owner decision pending, `LANGUAGE.md` §8: who reviews the 1750.
+No owner decisions pending on Phase F.
 
 ---
 

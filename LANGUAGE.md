@@ -283,20 +283,77 @@ Two small things find them:
 Nothing is pushed, and there is no first-run prompt. The joke is better found
 than delivered.
 
-**Style guide**, so it reads as 1750 and not as a Renaissance fair:
+**The style guide is Samuel Johnson**, specifically the *Preface to a
+Dictionary of the English Language* (1755). The owner chose it on 26 September,
+and it is on Project Gutenberg as ebook 5430. The owner reviews the catalogue
+against it. The rules below come from reading the whole text: 9,648 words,
+counted by script, not recalled. **Two of them contradict the guide this
+section used to give, and the text wins.**
 
-- Capitalised Nouns, as in the period.
-- *whilst*, *'tis*, *pray*, *forthwith*, *heretofore*.
-- A *Receipt*, not a recipe. The *Fire*, not the hob. *Physick*, where the
-  science is invoked.
-- Sentences with subordinate clauses, and semicolons in them; the Reader
-  addressed as *the Reader* (no thee and thou, which is a century too early).
-- **No long s (ſ) in body text.** Screen readers announce it as "long s" and
-  search does not match it. It may appear once, in the title, behind an
-  accessibility label.
+- **No capitalised common nouns.** The text prints nouns in lower case and
+  capitalises only proper names and deliberate personifications ("Learning and
+  Genius"). The older habit of capitalising every noun had gone from Johnson's
+  printed prose. A capital therefore marks a personification, and the
+  personifications are few: Time, perhaps, or Heat.
+- **No stage-play archaisms.** *'tis*, *pray*, *forthwith*, *whilst*, *thee*,
+  *thou*, *hath* and *doth* occur **zero** times in the Preface. They make an
+  imitation of the period, not the period. Johnson's own connectives are
+  *hitherto* (7), *likewise* (8), *therefore* (17) and *perhaps* (17). A test
+  fails the catalogue if any of the eight appears.
+- **His spellings, used as a fixed table.** The text has *publick*,
+  *domestick*, *academick* (and ten other *-ick* words); *authour*,
+  *superiour*, *labour*, *honour*; *enquire*, *enterprize*, *surprize*;
+  *chace*, *persue*; *shew* beside *show*. `copy/en-x-1750.spelling.json` maps
+  modern to period form, and a test fails if the catalogue uses the modern one.
+  That is the maintainable part: a contributor does not need to know that
+  *public* wants a *k*.
+- **The figures that carry the voice.**
+  - Antithesis in balanced pairs: "to search was not always to find, and to find
+    was not always to be informed".
+  - Triads.
+  - Latinate abstraction.
+  - The general maxim drawn from a particular case.
+  - A melancholy, self-deprecating first person, the lexicographer as "the
+    slave of science".
+  - Semicolon chains: 0.9 semicolons per sentence.
+- **Two lengths, because the text has two.** Its median sentence is 39 words
+  and its 90th percentile is 77. That suits a hint or an explanation, and it is
+  impossible on a Lock Screen. On the small surfaces the voice comes from the
+  aphorism rather than the period, which is a mode Johnson also writes in: "To
+  have attempted much is always laudable." Antithesis survives compression.
+  Length does not.
+- **The lexicon is his Dictionary.** When a word's period sense is in doubt,
+  check the Dictionary, which is searchable at johnsonsdictionaryonline.com. One
+  word already earns its place: **rear**, adjective, "Raw; half roasted; half
+  sodden". That is exactly the soft end of the doneness scale, and it is the
+  word the 1750 catalogue should use there. *Jammy* and *fudgy* are anachronisms
+  and are matched the same way as for Czech (§5), not translated.
+- **No long s (ſ) in body text.** Screen readers announce it and search does not
+  match it. It appears once, on the title, echoing the Dictionary's own title
+  page ("in which the words are deduced from their originals"), behind an
+  accessibility label that reads without it:
 
-  > *The Actual Egg-Timer; or, a Philoſophical Enquiry into the Boiling of
-  > Eggs*
+  > *The Actual Egg-Timer: in which the times of boiling are deduced from their
+  > cauſes, and illuſtrated in their different degrees of hardneſs.*
+
+**Drafts, for the owner to strike through.** They are here to show what the
+rules produce, not to be shipped. Where F2 will rewrite the modern string, the
+modern column shows the proposed rewrite, which is what the 1750 shadows.
+
+| surface | modern | 1750 draft |
+|---|---|---|
+| alarm title | Eggs out — now | Out with them; delay is ruin |
+| alarm body | Straight into the cooling, or the yolk keeps cooking. | Commit them at once to the cold; for heat, though withdrawn from the fire, is not yet withdrawn from the egg. |
+| second alarm | Cooling done | The cooling is ended |
+| refusal, counter rest | Resting on the counter keeps cooking the yolk. Softest possible: {limit} | An egg left upon the table does not cease to cook because it has ceased to boil. Softest attainable: {limit} |
+| still learning | (new, E2) | It is yet learning your kitchen; to search is not always to find. |
+| reset dialog | Forget everything it has learned? | Shall all that has hitherto been learned be forgotten? |
+| yolk question | How was the yolk? | In what condition was the yolk? |
+| yolk answers | Too soft · Just right · Too hard | Too rear · As was desired · Too hard |
+
+The answer buttons change least, on purpose. They are data (rule 3 below), and
+every word of flourish on a button is a way for the fit to read taste where
+there is only style.
 
 **Four rules keep the joke from costing anyone a breakfast:**
 
@@ -356,7 +413,6 @@ Taken by the owner, 26 September 2026:
 - **US carton classes in region `US`** (§4). Measured, the gap is 34 s at
   Large, so this is a correctness fix for Americans in either unit system.
 
-Still open:
+- **The owner reviews the 1750**, against Johnson's *Preface* (§6).
 
-- **Who reviews the 1750.** It is a question of taste, and presumably the
-  owner's.
+Nothing in this file is waiting on a decision.

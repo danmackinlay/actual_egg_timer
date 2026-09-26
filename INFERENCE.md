@@ -320,7 +320,7 @@ faster. You can turn it off, and delete what you sent, whenever you like."*
 
 ## 11. Decided by the owner, 21 September 2026
 
-1. **The endpoint is a Netlify function, and the controller is the owner in his
+1. **The endpoint is a Netlify function, and the controller is the owner, in their
    own name.** §7 has the shape. Still open: the contact address on the privacy
    page.
 2. **The web app contributes, at a lower weight.** §6 says how: a tempered
