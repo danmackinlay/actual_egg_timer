@@ -78,6 +78,20 @@ final class Cook {
         /// which never times its own pan, cooked on. Optional for the same
         /// reason as the two above.
         var boilRemembered: Bool?
+        /// The system the cook was reading at "Eggs in", for the record and the
+        /// Lock Screen. Everything above is SI whatever it says. Nil in a cook
+        /// saved before there was a choice, which was metric.
+        var units: UnitSystem?
+
+        /// The Lock Screen's description of this cook, in its own units.
+        var activity: CookActivity {
+            let system = units ?? .metric
+            return CookActivity(
+                doneness: doneness,
+                peakYolk: showIn(system, .temperature, peakYolkC),
+                eggMass: showIn(system, .mass, eggGrams)
+            )
+        }
 
         /// The same cook, against a time to boil that is now known rather than
         /// guessed.
@@ -242,7 +256,8 @@ final class Cook {
             pulledS: scheduled,
             pulledBy: .timeout,
             cooledS: ticket.cooling == .counter ? 0 : Self.coolingSeconds,
-            yolk: yolk
+            yolk: yolk,
+            units: ticket.units ?? .metric
         )
     }
 
@@ -296,14 +311,7 @@ final class Cook {
         guard gen == generation else { return }
 
         if let state = activityState {
-            await LiveActivity.start(
-                CookActivity(
-                    doneness: ticket.doneness,
-                    peakYolkC: Int(ticket.peakYolkC.rounded()),
-                    eggGrams: ticket.eggGrams
-                ),
-                state: state
-            )
+            await LiveActivity.start(ticket.activity, state: state)
             guard gen == generation else { return }
             pushedStage = state.stage
         }
@@ -455,14 +463,7 @@ final class Cook {
             // the other direction. A cook that is already finished gets none:
             // there is nothing left to count down to.
             if phase != .done, let state = activityState {
-                await LiveActivity.start(
-                    CookActivity(
-                        doneness: saved.ticket.doneness,
-                        peakYolkC: Int(saved.ticket.peakYolkC.rounded()),
-                        eggGrams: saved.ticket.eggGrams
-                    ),
-                    state: state
-                )
+                await LiveActivity.start(saved.ticket.activity, state: state)
                 pushedStage = state.stage
             }
         }

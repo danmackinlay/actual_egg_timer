@@ -63,10 +63,10 @@ private let clockFormatter: DateFormatter = {
     return formatter
 }()
 
-func sousVideCopy(_ est: SousVideEstimate, now: Date) -> SousVideCopy {
+func sousVideCopy(_ est: SousVideEstimate, now: Date, units: UnitSystem) -> SousVideCopy {
     let start = now.addingTimeInterval(-est.totalS)
     let duration = tr(longDuration(est.totalS))
-    let bath = String(format: "%.0f", est.bathC)
+    let bath = showIn(units, .temperature, est.bathC)
 
     return SousVideCopy(
         headline: tr(
@@ -77,7 +77,9 @@ func sousVideCopy(_ est: SousVideEstimate, now: Date) -> SousVideCopy {
             "clock": .text(clockFormatter.string(from: start)), "duration": .text(duration), "bath": .text(bath),
         ]),
         note: tr(est.whiteBound ? "sousvide.note.whiteBound" : "sousvide.note.yolkBound"),
-        warn: tr("sousvide.warn", ["bath": .text(bath)]),
+        warn: tr("sousvide.warn", [
+            "bath": .text(bath), "floor": .text(showIn(units, .temperature, sousVideModelFloorC)),
+        ]),
         hint: tr("sousvide.hint", ["duration": .text(duration)])
     )
 }
