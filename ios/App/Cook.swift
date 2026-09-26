@@ -192,6 +192,58 @@ final class Cook {
         return pullAt.timeIntervalSince(startedAt)
     }
 
+    /// This egg as a record (INFERENCE.md section 4), with the yolk answer or
+    /// nil for one nobody answered, or nil when there is no cook.
+    ///
+    /// The pull is always recorded as ASSUMED here - `pulledBy: .timeout`, at
+    /// the scheduled time - and that is the truth rather than a shortcut. This
+    /// app has no action out of PULL: the phase is derived from the clock, the
+    /// grace simply runs out, and nothing on screen asks the cook to say when
+    /// the eggs came out. The web app has a button there and records the tap as
+    /// a measured pull. A button here needs words, and words wait for the
+    /// catalogue (F1); when it lands, its moment goes in `pulledS` with `.cook`.
+    func eggRecord(yolk: Feedback?) -> EggRecord? {
+        guard let startedAt, pullAt != nil, let ticket else { return nil }
+        let scheduled = cookSeconds
+        return EggRecord(
+            day: Self.day(startedAt),
+            app: .ios,
+            appVersion: Calibrations.appVersion,
+            egg: RecordEgg(
+                massG: recordMassG(massKg: ticket.egg.massKg),
+                massFrom: Self.massFrom(grams: ticket.eggGrams)
+            ),
+            // Fridge or room are the only two this app offers, so the start
+            // temperature says which was picked.
+            setup: RecordSetup(
+                setup: ticket.setup,
+                eggFrom: ticket.setup.eggStartC == StartTempPresets.fridgeC ? .fridge : .room
+            ),
+            level: ticket.level,
+            recommendedS: scheduled,
+            pulledS: scheduled,
+            pulledBy: .timeout,
+            cooledS: ticket.cooling == .counter ? 0 : Self.coolingSeconds,
+            yolk: yolk
+        )
+    }
+
+    /// Where the egg's mass came from. The only control is a slider in grams,
+    /// so this cannot KNOW whether a scale was involved. What it can say: a
+    /// mass sitting exactly on a carton class - which is where the default egg
+    /// sits - was read off the box, and anything else was dialled in to match
+    /// something, which on a half-gram slider means a scale.
+    private static func massFrom(grams: Double) -> MassFrom {
+        sizeClasses.contains { abs($0.massKg * 1000 - grams) < 0.25 } ? .sizeClass : .scale
+    }
+
+    /// The local calendar day a cook started on, YYYY-MM-DD. A day, not a
+    /// timestamp.
+    private static func day(_ date: Date) -> String {
+        let c = Calendar(identifier: .gregorian).dateComponents([.year, .month, .day], from: date)
+        return String(format: "%04d-%02d-%02d", c.year ?? 0, c.month ?? 0, c.day ?? 0)
+    }
+
     var secondsToPull: TimeInterval { max(0, (pullAt ?? .now).timeIntervalSinceNow) }
     var secondsToCoolDone: TimeInterval { max(0, (coolDoneAt ?? .now).timeIntervalSinceNow) }
     /// Seconds of cooking after the boil is reached - the number every recipe

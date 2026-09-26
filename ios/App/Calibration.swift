@@ -1,25 +1,51 @@
 import Foundation
 import EggTimerCore
 
-/// Bridges the particle filter in `EggTimerCore` to the app.
+/// Bridges the particle filter in `EggTimerCore` to the app, and keeps the
+/// record.
 ///
 /// The model's constants come from the literature, and the carryover term has
 /// no published measurement behind it at all. Rather than pretend otherwise,
 /// the app asks how each egg turned out and folds the answer into a posterior.
 /// After about three eggs the suggested time stops moving.
 ///
-/// Building the dose surface costs roughly a second, which is far too slow to
-/// sit anywhere near a slider - so it happens once per logged outcome, after
-/// the egg has been eaten, and never while anything is being adjusted.
-struct Calibration: Sendable {
-    var posterior: Posterior
-    var eggsLogged: Int
+/// Since E1 the answer is not thrown away once folded. Each egg is kept as a
+/// record (INFERENCE.md section 4) in a log beside the posterior, and the
+/// posterior is what `replay` makes of that log - so a later change to the
+/// likelihood replays the eggs instead of discarding what they taught. The
+/// stored posterior is a cache of that replay; `folded` says how much of the log
+/// it has absorbed, and the rest is folded again on launch. The web app keeps
+/// its log the same way.
+///
+/// `Calibration` itself - a posterior and the count of eggs that taught it -
+/// now lives in EggTimerCore, because a replay has to carry the count exactly.
+
+/// Everything that is kept, and the invariant that holds it together:
+/// `calibration` is `replay(base ?? prior, log.prefix(folded))`.
+struct Kept: Sendable {
+    /// The frozen v2 posterior this phone migrated with, or nil. See `baseKey`.
+    var base: Calibration?
+    var calibration: Calibration
+    var folded: Int
+    var log: [EggRecord]
 }
 
 enum Calibrations {
-    private static let key = "calibration.v2"
+    /// The posterior, the frozen base under it, and the log.
+    private static let key = "calibration.v3"
 
-    /// The posterior this version replaces, deleted rather than read.
+    /// The posterior E1 replaces - read ONCE, and kept as the frozen base.
+    ///
+    /// It was learned from real eggs under the likelihood that is still in
+    /// force, so it is as good as it was yesterday; what it lacks is the eggs
+    /// themselves, which were never written down. So it becomes the BASE: the
+    /// posterior a replay starts from instead of the prior, with the log folded
+    /// on top. A base cannot be replayed, so it cannot survive a change to the
+    /// likelihood: it is dropped at the next one (E2), which starts from the
+    /// prior and replays the log alone. The web app does the same.
+    private static let baseKey = "calibration.v2"
+
+    /// The posterior v2 replaced, deleted rather than read.
     ///
     /// The shape did not change when the white channel landed - no particle
     /// gained a field - so a v1 record could have been loaded verbatim. It is
@@ -33,17 +59,29 @@ enum Calibrations {
     /// wrong posterior. The web app drops its own the same way.
     private static let supersededKey = "calibration.v1"
 
+    /// Carried on every record: the web app deploys on push and this one ships
+    /// when a build does, and the fit has to know which version said what.
+    static let appVersion: String =
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "unknown"
+
     static func fresh() -> Calibration {
-        Calibration(
-            posterior: createPrior(count: particleCount, seed: calibrationSeed), eggsLogged: 0
-        )
+        freshCalibration(count: particleCount, seed: calibrationSeed)
     }
 
-    /// Parameters to solve with. Before any feedback this is the prior mean,
-    /// which is identical to shipping the literature values - so the app is
-    /// fully useful on day one and calibration is purely additive.
+    static func freshKept() -> Kept {
+        Kept(base: nil, calibration: fresh(), folded: 0, log: [])
+    }
+
+    /// Where a replay starts: the base if there is one, the prior if not.
+    private static func start(_ base: Calibration?) -> Calibration {
+        base ?? fresh()
+    }
+
+    /// Parameters to solve with. Before any feedback this is the literature
+    /// values, so the app is fully useful on day one and calibration is purely
+    /// additive.
     static func params(_ c: Calibration) -> ModelParams {
-        c.eggsLogged == 0 ? .default : posteriorParams(c.posterior)
+        calibrationParams(c)
     }
 
     /// Spread of the posterior on alpha, as a percentage. Plateaus near 3%:
@@ -53,73 +91,60 @@ enum Calibrations {
         c.eggsLogged == 0 ? 0 : 100 * posteriorAlphaRelSd(c.posterior)
     }
 
-    /// What folding one yolk answer leaves behind: the surface it was scored
-    /// against, and whether the white is worth a second question.
-    struct Outcome: Sendable {
-        var calibration: Calibration
-        /// Kept so the white answer can be folded without paying for the grid a
-        /// second time. Not persisted, so a relaunch drops a pending white
-        /// question rather than rebuilding a second of arithmetic to ask again.
-        var grid: DoseGrid
-        var askWhite: Bool
-    }
-
-    /// Fold in one outcome. Builds the dose surface for the cook that was
-    /// actually performed, then reweights.
-    ///
-    /// `nonisolated` and pure - takes a calibration and returns the new one -
-    /// so the caller can run the whole thing off the main actor without any of
-    /// it being shared while it runs.
-    nonisolated static func recordOutcome(
-        _ c: Calibration, egg: Egg, setup: CookSetup,
-        cookTimeS: Double, logNominalTarget: Double, feedback: Feedback
-    ) -> Outcome {
-        let current = params(c)
-        // The grid's extent decides what the filter can see, and therefore what
-        // the posterior becomes. It is core policy precisely so that the web
-        // app cannot learn something different from the same egg.
-        let g = calibrationGrid(alphaCentre: current.alphaM2s, cookTimeS: cookTimeS)
-        let grid = buildDoseGrid(
-            egg: egg, setup: setup, tauAirScale: current.tauAirScale,
-            alphaMin: g.alphaMin, alphaMax: g.alphaMax, alphaCount: g.alphaCount,
-            timeMinS: g.timeMinS, timeMaxS: g.timeMaxS, timeCount: g.timeCount
-        )
-        var posterior = c.posterior
-        updatePosterior(
-            &posterior, grid: grid,
-            cookTimeS: cookTimeS, logNominalTarget: logNominalTarget, feedback: feedback
-        )
-        // Asked AFTER the fold, because the yolk answer has just moved alpha and
-        // so moved the predicted white with it: the question should be decided
-        // against everything currently known. Which of the two it is asked
-        // against does not affect whether the selection is ignorable - both are
-        // functions of data already in hand - but the later one is better
-        // informed. The web app reads it at the same point.
-        return Outcome(
-            calibration: Calibration(posterior: posterior, eggsLogged: c.eggsLogged + 1),
-            grid: grid,
-            askWhite: shouldAskAboutWhite(posterior, grid, cookTimeS)
-        )
-    }
-
-    /// Fold in the answer about the white of the same egg, against the surface
-    /// the yolk answer was already scored on. The white is not a second egg, so
-    /// `eggsLogged` does not move.
-    nonisolated static func recordWhite(
-        _ c: Calibration, grid: DoseGrid, cookTimeS: Double, white: WhiteReport
-    ) -> Calibration {
-        var posterior = c.posterior
-        updateWhite(&posterior, grid: grid, cookTimeS: cookTimeS, white: white)
-        return Calibration(posterior: posterior, eggsLogged: c.eggsLogged)
-    }
-
     // MARK: - Persistence
 
-    /// Column-wise and rounded. A thousand particles at full precision is well
-    /// over 100 kB of JSON, and nothing downstream can tell the difference at
-    /// five figures - the posterior's own spread is three orders of magnitude
-    /// wider than the rounding.
-    private struct Stored: Codable {
+    /// Column-wise. The current posterior is written at full precision: it is a
+    /// cache of a replay, and a cache that rounds is one a replay can never
+    /// match. JSONEncoder writes a double so that it reads back as the same
+    /// double, which the core's tests check. A migrated base keeps the rounding
+    /// it was stored with in v2.
+    private struct StoredPosterior: Codable {
+        var n: Int
+        var rng: Int32
+        var a: [Double]
+        var o: [Double]
+        var t: [Double]
+        var w: [Double]
+    }
+
+    private struct StoredV3: Encodable {
+        var v = 3
+        var base: StoredPosterior?
+        var cal: StoredPosterior
+        var folded: Int
+        var log: [EggRecord]
+    }
+
+    /// The parts of a stored v3 read one at a time, so a damaged part is refused
+    /// on its own instead of taking the rest down with it. The log is read by
+    /// `StoredLog`, separately, for the same reason.
+    private struct StoredParts: Decodable {
+        var v: Int?
+        var base: StoredPosterior?
+        var baseDamaged = false
+        var cal: StoredPosterior?
+        var folded: Int?
+
+        enum CodingKeys: String, CodingKey { case v, base, cal, folded }
+
+        init(from decoder: Decoder) throws {
+            let c = try decoder.container(keyedBy: CodingKeys.self)
+            v = try? c.decode(Int.self, forKey: .v)
+            if c.contains(.base), (try? c.decodeNil(forKey: .base)) == false {
+                base = try? c.decode(StoredPosterior.self, forKey: .base)
+                baseDamaged = base == nil
+            }
+            cal = try? c.decode(StoredPosterior.self, forKey: .cal)
+            folded = try? c.decode(Int.self, forKey: .folded)
+        }
+    }
+
+    private struct StoredLog: Decodable {
+        var log: [EggRecord]
+    }
+
+    /// What v2 stored: the same columns, rounded, with a version.
+    private struct StoredV2: Decodable {
         var v: Int
         var n: Int
         var rng: Int32
@@ -129,65 +154,108 @@ enum Calibrations {
         var w: [Double]
     }
 
-    static func save(_ c: Calibration) {
+    private static func columns(_ c: Calibration) -> StoredPosterior {
         let p = c.posterior.particles
-        var stored = Stored(
-            v: 2, n: c.eggsLogged, rng: c.posterior.rng,
-            a: [], o: [], t: [], w: []
+        return StoredPosterior(
+            n: c.eggsLogged, rng: c.posterior.rng,
+            a: p.map(\.alphaM2s), o: p.map(\.logDoseOffset), t: p.map(\.tauAirScale),
+            w: c.posterior.weights
         )
-        stored.a.reserveCapacity(p.count)
-        for i in 0..<p.count {
-            stored.a.append(significant(p[i].alphaM2s, 7))
-            stored.o.append(significant(p[i].logDoseOffset, 5))
-            stored.t.append(significant(p[i].tauAirScale, 5))
-            stored.w.append(significant(c.posterior.weights[i], 5))
+    }
+
+    /// A posterior, or nil if any part of it is damaged. A half-valid posterior
+    /// is worse than none: a single NaN weight would poison every solve from
+    /// then on. Same rules as the web app's.
+    private static func calibration(
+        n: Int, rng: Int32, a: [Double], o: [Double], t: [Double], w: [Double]
+    ) -> Calibration? {
+        guard
+            n >= 0, !a.isEmpty, o.count == a.count, t.count == a.count, w.count == a.count,
+            a.allSatisfy({ $0.isFinite && $0 > 0 }),
+            o.allSatisfy(\.isFinite),
+            t.allSatisfy({ $0.isFinite && $0 > 0 }),
+            w.allSatisfy({ $0.isFinite && $0 >= 0 })
+        else { return nil }
+        var particles = [Particle]()
+        particles.reserveCapacity(a.count)
+        for i in 0..<a.count {
+            particles.append(Particle(alphaM2s: a[i], logDoseOffset: o[i], tauAirScale: t[i]))
         }
+        return Calibration(posterior: Posterior(particles: particles, weights: w, rng: rng), eggsLogged: n)
+    }
+
+    private static func calibration(_ s: StoredPosterior?) -> Calibration? {
+        guard let s else { return nil }
+        return calibration(n: s.n, rng: s.rng, a: s.a, o: s.o, t: s.t, w: s.w)
+    }
+
+    static func save(_ k: Kept) {
+        let stored = StoredV3(
+            base: k.base.map(columns), cal: columns(k.calibration), folded: k.folded, log: k.log
+        )
         if let data = try? JSONEncoder().encode(stored) {
             UserDefaults.standard.set(data, forKey: key)
         }
     }
 
-    /// Whatever is in storage, or a fresh prior if it is missing, from another
-    /// version, or damaged. A half-valid posterior is worse than none: a single
-    /// NaN weight would poison every solve from then on.
-    static func load() -> Calibration {
-        // Whatever a previous version left behind goes now, rather than sitting
-        // in UserDefaults being neither read nor collected.
-        UserDefaults.standard.removeObject(forKey: supersededKey)
-        guard
-            let data = UserDefaults.standard.data(forKey: key),
-            let s = try? JSONDecoder().decode(Stored.self, from: data),
-            s.v == 2, s.n >= 0, !s.a.isEmpty,
-            s.o.count == s.a.count, s.t.count == s.a.count, s.w.count == s.a.count,
-            s.a.allSatisfy({ $0.isFinite && $0 > 0 }),
-            s.o.allSatisfy(\.isFinite),
-            s.t.allSatisfy({ $0.isFinite && $0 > 0 }),
-            s.w.allSatisfy({ $0.isFinite && $0 >= 0 })
-        else { return fresh() }
-
-        var particles = [Particle]()
-        particles.reserveCapacity(s.a.count)
-        for i in 0..<s.a.count {
-            particles.append(Particle(
-                alphaM2s: s.a[i], logDoseOffset: s.o[i], tauAirScale: s.t[i]
-            ))
-        }
-        return Calibration(
-            posterior: Posterior(particles: particles, weights: s.w, rng: s.rng),
-            eggsLogged: s.n
-        )
+    /// What is in storage, made safe to fold on top of. Every damaged part is
+    /// refused, never read around - the same paths as the web app's
+    /// `decodeKept`:
+    ///
+    ///  - no v3, a good v2: the v2 posterior becomes the frozen base.
+    ///  - the posterior damaged, the log good: the posterior goes back to its
+    ///    start and the whole log is folded again.
+    ///  - the log damaged: what it taught is in the posterior, which is sound, so
+    ///    that becomes the new base and the log starts again empty.
+    ///  - a posterior ahead of its log: the same.
+    ///  - a damaged base: dropped, and the log replayed from the prior.
+    static func load() -> Kept {
+        let defaults = UserDefaults.standard
+        // Whatever v1 left behind goes now, rather than sitting in UserDefaults
+        // being neither read nor collected.
+        defaults.removeObject(forKey: supersededKey)
+        let (kept, loaded) = decode(defaults.data(forKey: key), defaults.data(forKey: baseKey))
+        if !loaded { save(kept) }
+        // The v2 key is the only copy of a base until a v3 holding it is written.
+        if defaults.data(forKey: key) != nil { defaults.removeObject(forKey: baseKey) }
+        return kept
     }
 
-    /// Clear the posterior. A run of wrong answers about how an egg was is
-    /// otherwise undone only by deleting the app, and the honest thing is to
-    /// let someone take it back.
+    private static func decode(_ v3: Data?, _ v2: Data?) -> (Kept, loaded: Bool) {
+        let decoder = JSONDecoder()
+        guard let v3, let parts = try? decoder.decode(StoredParts.self, from: v3), parts.v == 3 else {
+            guard let v2, let old = try? decoder.decode(StoredV2.self, from: v2), old.v == 2,
+                  let base = calibration(n: old.n, rng: old.rng, a: old.a, o: old.o, t: old.t, w: old.w)
+            else { return (freshKept(), false) }
+            return (Kept(base: base, calibration: base, folded: 0, log: []), false)
+        }
+        let base = calibration(parts.base)
+        let cal = calibration(parts.cal)
+        let log: [EggRecord]? = {
+            guard let stored = try? decoder.decode(StoredLog.self, from: v3),
+                  stored.log.allSatisfy(validRecord) else { return nil }
+            return stored.log
+        }()
+        guard let log else {
+            let sound = cal ?? base
+            return (Kept(base: sound, calibration: start(sound), folded: 0, log: []), false)
+        }
+        guard !parts.baseDamaged, parts.base == nil || base != nil,
+              let cal, let folded = parts.folded, folded >= 0 else {
+            return (Kept(base: base, calibration: start(base), folded: 0, log: log), false)
+        }
+        if folded > log.count {
+            return (Kept(base: cal, calibration: cal, folded: 0, log: []), false)
+        }
+        return (Kept(base: base, calibration: cal, folded: folded, log: log), true)
+    }
+
+    /// Forget every egg: the posterior, the base under it and the log. A run of
+    /// wrong answers about how an egg was is otherwise undone only by deleting
+    /// the app, and the honest thing is to let someone take it back.
     static func reset() {
         UserDefaults.standard.removeObject(forKey: key)
-    }
-
-    private static func significant(_ v: Double, _ digits: Int) -> Double {
-        guard v.isFinite, v != 0 else { return v }
-        let scale = pow(10.0, Double(digits) - 1 - (log10(abs(v))).rounded(.down))
-        return (v * scale).rounded() / scale
+        UserDefaults.standard.removeObject(forKey: baseKey)
+        UserDefaults.standard.removeObject(forKey: supersededKey)
     }
 }

@@ -388,6 +388,10 @@ struct ContentView: View {
 
         case .done:
             Button("Start again") {
+                // An egg nobody answered about is still logged; it folds nothing.
+                if !cook.feedbackGiven, let egg = cook.eggRecord(yolk: nil) {
+                    kitchen.logUnanswered(egg)
+                }
                 cook.cancel()
                 kitchen.refresh()
             }
@@ -528,17 +532,9 @@ struct ContentView: View {
             // The cook owns this flag now, and persists it. As view state it
             // did not survive a relaunch, so a restored DONE screen asked again
             // and a second answer folded the same egg in twice.
-            guard let ticket = cook.ticket, !cook.feedbackGiven else { return }
+            guard let egg = cook.eggRecord(yolk: value), !cook.feedbackGiven else { return }
             cook.recordFeedbackGiven()
-            Task {
-                await kitchen.record(
-                    feedback: value,
-                    egg: ticket.egg,
-                    setup: ticket.setup,
-                    cookTimeS: cook.cookSeconds,
-                    logNominalTarget: ticket.logNominalTarget
-                )
-            }
+            Task { await kitchen.record(egg) }
         } label: {
             Text(label)
                 .font(.subheadline)
