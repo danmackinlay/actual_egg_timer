@@ -160,13 +160,24 @@ cook. Nothing leaves a phone before E6.
 Design and reasons in `LANGUAGE.md`. Both apps, under conformance, as always.
 F1 goes before E2 so that Phase E's new feedback copy is born in the catalogue.
 
-- [ ] **F1 the catalogue.** `copy/<locale>.json`, one template per key with
-      plural variants and a hand-written CLDR rule per language, rendered by the
-      same few lines in both cores, behind an in-app language picker in both
-      apps. Every existing string extracted with NO
-      wording change - proved by byte-identical rendered output. Core returns
-      keys, never English (`DONENESS_ANCHORS`, size classes, `startPhrase`).
-      `fixtures/copy.json` with placeholder-parity and per-surface length tests.
+- [x] **F1 the catalogue.** DONE 27 September 2026. `copy/en.json` holds all
+      235 strings of both apps, one entry per key (`group.name`, grouped by
+      screen), each with its surface, the apps that use it and example
+      arguments; `copy/surfaces.json` holds a length budget per surface,
+      recorded from today's English maxima. Rendered by `src/core/copy.ts` and
+      its Swift twin, the `EggTimerCopy` library (separate so the widget links
+      it without the physics), held together by `fixtures/copy.json` (331
+      renders, 90 plural-rule rows including Czech at 0, 1, 2, 4, 5, 1.5, 21
+      and 22, 31 probes). Core returns keys: the doneness anchors, both size
+      tables, `longDuration` and `startPhrase`. Measured: no wording moved -
+      108 web states, 8,275 strings, identical to `main` before the move
+      (`tools/copySnapshot.ts`), and every one of the 168 Swift literals that
+      were words is a catalogue template, placeholders only where there were
+      interpolations (`tools/copyLiterals.ts`). **The language picker is NOT
+      built**: a picker with one language in it is a control that does
+      nothing. The active locale is plumbing (`ACTIVE_LOCALE` in
+      `src/ui/copy.ts`, `Copy.activeLocale` in `ios/Shared/Copy.swift`),
+      fixed at `en`; the picker arrives with F5, and sets those.
 - [ ] **F2 the rewrite.** Inside the catalogue, one diff for the owner. Known
       offenders listed in `LANGUAGE.md` §3: "carryover", "calibration",
       "literature values", "the model", "standing method", a ±% of nothing,
@@ -195,7 +206,9 @@ F1 goes before E2 so that Phase E's new feedback copy is born in the catalogue.
           gain ounces with the rest of F3.
 - [ ] **F4 locale formatting.** Numbers, plurals, 12/24-hour clock, weekday
       names through `Intl` / `FormatStyle`, pinned per locale by the fixture.
-- [ ] **F5 Czech**, reviewed by the owner's friend before it ships. It tests
+- [ ] **F5 Czech**, reviewed by the owner's friend before it ships. Brings
+      the in-app language picker in both apps (deferred from F1), and adds
+      `cs` to `CFBundleLocalizations` in `ios/project.yml`. It tests
       all four CLDR plural categories (`many` is for fractions: 1,5 vejce),
       the decimal comma and seven cases. The case problem is why every
       inserted word stands alone in its dictionary form (`LANGUAGE.md` §5).
@@ -235,8 +248,9 @@ interface Egg { radius_m; minorDiameter_m; mass_kg; volume_m3 }
 eggFromMinorDiameter(minorDiameter_m: number): Egg
 eggFromMass(mass_kg: number): Egg
 diffusionTime(egg: Egg, alpha_m2s: number): number
-SIZE_CLASSES: { label: string; mass_kg: number }[]     // EU, and the default table
-US_SIZE_CLASSES: { label: string; mass_kg: number }[]  // region US
+SIZE_CLASSES: { key: string; mass_kg: number }[]     // EU, and the default table
+US_SIZE_CLASSES: { key: string; mass_kg: number }[]  // region US
+sizeClassLabel(c: SizeClass): CopyRef                // the key, and grams from the mass
 sizeClassesFor(region: string | null | undefined): SizeClass[]
 sizeTableFor(region): 'eu' | 'us'                         // the same choice, by name, for the record
 
@@ -271,7 +285,7 @@ DEFAULT_PARAMS: ModelParams
 interface Doneness { level; yolkDose_min; whiteDose_min }
 donenessFromSlider(level: number): Doneness     // level in [0,1]
 sliderFromYolkDose(dose: number): number
-DONENESS_ANCHORS: { label; level; approxPeakYolk_C }[]
+DONENESS_ANCHORS: { key; level; approxPeakYolk_C }[]   // key into copy/en.json
 interface CookResult {
   cookTime_s; peakYolk_C; peakYolkTime_s; yolkAtPull_C;
   yolkDose_min; whiteDose_min; peakWhite_C;
@@ -289,6 +303,14 @@ solveCookTime(egg, setup, params, doneness): Solution
 SOUS_VIDE_BATH_C
 equilibrationTime(radius_m, alpha_m2s): number
 sousVideEstimate(radius_m, alpha_m2s, bath_C, yolkDose_min, whiteDose_min): SousVideEstimate
+longDuration(seconds): CopyRef             // the unit choice, as a key and its numbers
+startPhrase(daysAgo): CopyRef              // the app adds {weekday}
+
+// copy.ts  (the words; LANGUAGE.md §2)
+interface CopyRef { key; args: Record<string, number> }
+parseCatalogue(json, fallback?): Catalogue
+render(catalogue, key, args?): string / renderRef(catalogue, ref, extra?): string
+pluralCategory(locale, n): 'zero' | 'one' | 'two' | 'few' | 'many' | 'other'
 
 // doseGrid.ts / infer.ts  (calibration; see Phase C)
 buildDoseGrid(...) / lookupLogYolkDose / lookupLogWhiteDose / cookTimeForLogYolkDose

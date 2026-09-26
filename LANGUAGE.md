@@ -71,6 +71,41 @@ languages.
 - `startPhrase` returns a bucket and a weekday index.
 - The size classes return a mass, plus a region-dependent key (§4).
 
+**As built, in F1 (27 September).** Where the format settled differently:
+
+- **One file per language, plus one for the surfaces.** `copy/en.json` is the
+  schema as well as the English: each entry carries `surface`, `apps` (`web`,
+  `ios` or both) and `example` arguments, which translations do not repeat.
+  `copy/surfaces.json` holds one budget per surface, not per key: a per-key
+  budget set from the English would fail every language that runs longer than
+  English, which is all of them.
+- **A message is `text`, or a `count` and plural forms.** The `count` names
+  the argument that picks the form. A missing form falls back to `other`, so
+  English writes `one` only where it can be reached. A key missing from a
+  language falls back to English, with English's plural rule.
+- **Core returns a `CopyRef`, `{ key, args }`.** `startPhrase` returns the key
+  alone for the weekday bucket, and each app supplies `{weekday}`: the web from
+  `weekday.*` in the catalogue, iOS from a locale-aware formatter, as before.
+  F4 makes them agree.
+- **The size classes' grams come from the mass**, as an argument, so a label
+  cannot disagree with the egg it cooks.
+- **Numbers are still formatted by the apps** and passed as strings, so F1
+  changed no digit. Only a plural count goes in as a number. F4 moves the rest
+  to the platform formatters above.
+- **The Swift renderer is its own library, `EggTimerCopy`**, beside
+  `EggTimerCore` in the same package, so that the widget extension can link
+  the words without the physics.
+- **The web's `index.html` holds no words below `<head>`.** Each element names
+  its key with `data-copy`. The `<head>` keeps its English, because crawlers
+  and link previews do not run scripts; localising it needs a page per
+  language, which is F5's problem.
+- **The language picker waits for Czech.** F1 built the active locale as
+  plumbing, fixed at `en`; a picker with one row in it is a control that does
+  nothing.
+- **Inserted doneness words are still lower-cased in code** (`toLowerCase`,
+  `lowercased()`), because the F1 wording inserts them mid-sentence. F2's
+  rewrite, which stands every inserted word alone (§5), removes the need.
+
 `src/core/` keeps its invariants: no I/O and no dependencies. The catalogue is
 data that the UI layer passes in.
 
@@ -281,8 +316,8 @@ maintainable about the joke follows from that:
   formats as en-US ("3:00 PM", US system) and `en-GB-x-1750` as en-GB ("15:00",
   UK system). An American in 1750 English keeps their clock, and a Briton keeps
   theirs.
-- **It is one row in the language picker.** Both apps get an in-app picker in
-  F1 in any case, because the catalogue is ours and not Apple's. iOS's own
+- **It is one row in the language picker.** Both apps get an in-app picker
+  (with F5, not F1: see §2) in any case, because the catalogue is ours and not Apple's. iOS's own
   per-app language setting would not list a private-use tag anyway. The picker
   shows it as *English (1750)*, which is the discoverable way in, and choosing
   *English* is the way out. That replaces the escape hatch this section used to

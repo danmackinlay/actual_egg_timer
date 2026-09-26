@@ -797,3 +797,61 @@ schema and the rules; this is what was checked.
    with the previous cold start's time: the 90 ms coalesce and the solve had not
    landed, and the button reads `kitchen.solution` as it stands. Seen once,
    while tapping faster than a person would. Not changed here.
+
+## The catalogue, with no word moved (27 September 2026, F1)
+
+Every string both apps show now comes from `copy/en.json` - 235 keys - through
+one renderer in each core. `LANGUAGE.md` §2 has the format as built; this is
+what was checked.
+
+### Verified
+
+- `npm test` 120 pass, `npm run validate` 27/27 with a report byte-identical to
+  the one before the move, `npm run conformance` 62 Swift tests pass.
+  `fixtures/copy.json`: 331 renders of every key at its example arguments and
+  every plural message at twelve counts, 90 plural-rule rows (English, 1750,
+  Czech at 0, 1, 2, 4, 5, 1.5, 21 and 22, and a language with no rule), and 31
+  probes of a catalogue that exists only in the fixture: one form per Czech
+  category, the fallback to English, a missing argument, and nine malformed
+  braces. The hand-written rules are also checked against `Intl.PluralRules`.
+- **The web, rendered, before and after.** `tools/copy-snapshot.html` drives
+  the unmodified app through 108 states with `Date.now` frozen and stepped:
+  every phase on each start and cooling, every refusal kind, sous-vide at four
+  donenesses (Yesterday, Last Thursday, Last Sunday, 2 weeks ago), both
+  cartons, the feedback and white questions, reloads mid-cook, Forget.
+  `node dist/tools/copySnapshot.js` runs it in headless Chrome. Against `main`
+  at dc2ec28 (E1 merged, catalogue not): innerText, 8,275 text nodes and
+  attributes (331 distinct), `<html lang>` and the title all identical. It was
+  identical against 942623d before the E1 merge too. No state shows a key name
+  or a `{placeholder}`.
+- **iOS, on the source.** `node dist/tools/copyLiterals.js 942623d` lexes every
+  Swift string literal in the app, widget, shared code and core. All 168 that
+  were words are a template of a key the iOS side now uses, with placeholders
+  only where the literal had an interpolation or a number; each of the 157
+  templates matches something said before; no word is left as a literal. It
+  fails on a doubled space in one entry, which was tried.
+- **The fixtures are the old words.** `sousvideCopy.json` renders its new keys
+  back to the same 37 strings, and `policy.json`'s 192 anchor and size labels
+  render back to the old ones with every other field unchanged.
+- **The builds.** `npm run build:site` ships `_site/copy/`; served from there
+  in the Browser pane the page renders with no console errors. The iOS app
+  builds for the simulator under Swift 6, bundles `copy/` in the app and in the
+  widget extension, and its Info.plist has `CFBundleLocalizations = [en]`.
+  Driven in the simulator (iPhone 17 Pro): idle, sous-vide and a hot cook's
+  COOKING screen read as before. The Live Activity and the notifications were
+  not seen - the simulator had no notification permission and the Lock Screen
+  showed no card - so those strings rest on the literal check alone.
+
+### Things that cost time
+
+1. **Headless Chrome's `--virtual-time-budget` never finished** the harness
+   (the app's 200 ms ticker keeps virtual time busy). Driving it over the
+   DevTools protocol with real time takes two minutes and works.
+2. **E1 landed mid-move**, and its grid worker changed when "learning…" shows,
+   so the snapshot against 942623d no longer matches `main` after the merge -
+   the comparison that means something is against `main` at the merge base,
+   and that one is identical.
+3. **Words that were grammar.** Four things were English written as code, not
+   strings: `egg${n === 1 ? '' : 's'}`, `minute(s)`, a list joined by " · ",
+   and "assumes"/"guesses" spliced into two sentences. Each is now a message,
+   and the checks above are what show the output did not move.
