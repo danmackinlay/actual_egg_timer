@@ -28,7 +28,41 @@ final class Kitchen {
     // MARK: - Inputs
 
     var doneness: Double = Defaults.doneness { didSet { changed() } }
-    var eggMassG: Double = Defaults.eggMassKg * 1000 { didSet { changed() } }
+    /// The size classes on this cook's carton: American in region US, EU
+    /// everywhere else. Region only - not the language, not the units. Read
+    /// once, like the web app's, and a stored index is carried into it by
+    /// `carrySizeIndex` if the region has changed since.
+    let sizeClasses = sizeClassesFor(region: Locale.current.region?.identifier)
+    /// Index into `sizeClasses`, or -1 for an egg that was weighed.
+    private(set) var sizeIndex: Int = Defaults.sizeIndex { didSet { changed() } }
+    /// What the slider says when the egg was weighed. Ignored while a class is
+    /// chosen, and kept, so that choosing Weighed again goes back to it.
+    private(set) var weighedMassG: Double = Defaults.eggMassKg * 1000 { didSet { changed() } }
+
+    /// The mass the solver is given: the class's, or the weighed one.
+    var eggMassG: Double {
+        sizeClasses.indices.contains(sizeIndex) ? sizeClasses[sizeIndex].massKg * 1000 : weighedMassG
+    }
+
+    /// A class from the menu. Weighed starts from the egg on screen rather than
+    /// from whatever was last weighed, so choosing it moves nothing.
+    func chooseSize(_ index: Int) {
+        if index < 0, sizeIndex >= 0 { weighedMassG = eggMassG }
+        sizeIndex = index
+    }
+
+    /// The slider. A weighed egg is better information than a carton, so moving
+    /// it overrides the class - the same rule as measuring on the web.
+    func weigh(_ grams: Double) {
+        weighedMassG = grams
+        sizeIndex = -1
+    }
+
+    /// Restore from storage without going through the rules above.
+    func restoreSize(index: Int, weighedMassG grams: Double) {
+        weighedMassG = grams
+        sizeIndex = index
+    }
     var fromFridge: Bool = true { didSet { changed() } }
     var cooling: Cooling = .ice { didSet { changed() } }
     /// Where the egg starts. Cold start: into cold water, and the heating ramp

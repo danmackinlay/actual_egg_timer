@@ -240,6 +240,7 @@ struct DefaultsConformance {
             ("waterLitres", Limits.waterLitres),
             ("eggCount", Limits.eggCount),
             ("doneness", Limits.doneness),
+            ("sizeIndex", Limits.sizeIndex),
             ("timeToBoil_s", Limits.timeToBoilS),
         ]
         for (name, range) in pairs {
@@ -249,6 +250,57 @@ struct DefaultsConformance {
             }
             expectClose(range.lowerBound, bounds.num("lo"), "\(name) lower bound")
             expectClose(range.upperBound, bounds.num("hi"), "\(name) upper bound")
+        }
+    }
+}
+
+@Suite("Size classes by region match the reference implementation")
+struct SizeClassConformance {
+    private static func table(_ name: String) -> [[String: Any]] {
+        Fixtures.policyCases("sizeClasses.\(name)")
+    }
+
+    /// Every label and every mass, in order. A US Large 8 g lighter than an EU
+    /// one is half a minute of cooking, so a table that differs by a row is a
+    /// different egg on the default path.
+    @Test("both tables are the same tables")
+    func tables() {
+        for (name, classes) in [("eu", sizeClasses), ("us", usSizeClasses)] {
+            let expected = Self.table(name)
+            #expect(classes.count == expected.count, "\(name) table has \(classes.count) classes")
+            for (actual, c) in zip(classes, expected) {
+                #expect(actual.label == c.str("label"), "\(name): \(actual.label)")
+                expectClose(actual.massKg, c.num("mass_kg"), "\(name) \(actual.label)")
+            }
+        }
+    }
+
+    @Test("the same regions get the American carton")
+    func regions() {
+        for c in Fixtures.policyCases("sizeClasses.regions") {
+            let region = c["region"] as? String
+            let expected = c.str("table") == "us" ? usSizeClasses : sizeClasses
+            #expect(
+                sizeClassesFor(region: region) == expected,
+                "region \(region ?? "nil") should get the \(c.str("table")) table"
+            )
+        }
+    }
+
+    /// The rule for a stored record meeting a changed region. The two apps
+    /// store the same index, so they must read it back the same way.
+    @Test("a stored size is carried into either table the same way")
+    func carry() {
+        for c in Fixtures.policyCases("sizeClasses.carry") {
+            let stored = c.num("stored")
+            #expect(
+                carrySizeIndex(stored, classes: sizeClasses) == Int(c.num("eu")),
+                "stored \(stored) read against the EU table"
+            )
+            #expect(
+                carrySizeIndex(stored, classes: usSizeClasses) == Int(c.num("us")),
+                "stored \(stored) read against the US table"
+            )
         }
     }
 }

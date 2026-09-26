@@ -583,15 +583,33 @@ struct ContentView: View {
             }
 
             VStack(alignment: .leading, spacing: 6) {
+                // The carton's classes for this region, as on the web. The
+                // slider below is the scale: moving it makes the egg Weighed,
+                // and choosing a class moves it to that class's mass.
                 LabeledContent("Egg") {
-                    Text("\(kitchen.eggMassG, specifier: "%.1f") g").foregroundStyle(.secondary)
+                    Picker("Egg", selection: Binding(
+                        get: { kitchen.sizeIndex },
+                        set: { kitchen.chooseSize($0) }
+                    )) {
+                        ForEach(kitchen.sizeClasses.indices, id: \.self) { i in
+                            Text(kitchen.sizeClasses[i].label).tag(i)
+                        }
+                        Text("Weighed · \(kitchen.weighedMassG, specifier: "%.1f") g").tag(-1)
+                    }
+                    .pickerStyle(.menu)
+                    .labelsHidden()
+                    // "Extra large — 76 g" otherwise wraps onto two lines.
+                    .fixedSize()
                 }
                 // The table, not a narrower guess at it. This said 42...80,
                 // so a stored mass that Settings.load had faithfully clamped to
                 // Limits could not be represented by the control that set it -
                 // in a file whose own comment promises every control reads the
                 // same numbers.
-                Slider(value: $kitchen.eggMassG, in: Limits.massG, step: 0.5)
+                Slider(value: Binding(
+                    get: { kitchen.eggMassG },
+                    set: { kitchen.weigh($0) }
+                ), in: Limits.massG, step: 0.5)
             }
 
             // Rendered from the constants, so a button cannot say one thing

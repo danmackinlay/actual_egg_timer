@@ -9,7 +9,7 @@ and the wording itself, `LANGUAGE.md`. This file is for whoever picks the build
 back up.
 
 **Status: both apps complete and learning. The PHYSICS is now the open part.**
-81 TypeScript tests, 27/27 validation checks and 45 Swift conformance tests pass.
+85 TypeScript tests, 27/27 validation checks and 50 Swift conformance tests pass.
 The web app and the iOS app carry the same model, the same refusals and the same
 particle filter; the Swift port covers every module in `src/core/`. The
 iOS app runs signed on a real phone, with a time-sensitive alarm and a Live
@@ -26,7 +26,7 @@ run `npm test`.
 **The conformance line sits above the physics.** `src/core/policy.ts` and
 `EggTimerCore/Policy.swift` carry what the apps DECIDE - snapping, the refusal
 verdict, texture bands, the calibration grid's geometry, the phase timeline, the
-bounds and the defaults - held together by `fixtures/policy.json`. Anything both
+bounds, the defaults and the size classes by region - held together by `fixtures/policy.json`. Anything both
 apps have to agree on goes there, or it drifts: everything in it was
 hand-duplicated until September 2026, and by then the two apps had different
 defaults, different preset temperatures and a boil-memory lookup that could
@@ -127,7 +127,7 @@ cook. Nothing leaves a phone before E6.
       privacy manifest, both READMEs and `ios/RELEASING.md` stop claiming no
       networking. A Netlify function, append-only blobs, the web tier
       down-weighted in the global fit. Unblocked 21 September (`INFERENCE.md`
-      §11); the one thing still to choose is the privacy page's contact address.
+      §11). Privacy contact: forgetmyeggs@danmackinlay.name, which exists.
       The app says it is still learning wherever it shows a time.
 - [ ] **E7 the population fit.** Offline, Python, outside `src/core/`. An
       emulator for the likelihood, 2-4 global parameters, cook and kitchen
@@ -137,7 +137,7 @@ cook. Nothing leaves a phone before E6.
 - [ ] **E8 the nudge.** +-10 s on the recommendation for consenting cooks. Last,
       because it is worthless before E7 exists to use it.
 
-### Phase F — words, units and languages — NOT STARTED
+### Phase F — words, units and languages — STARTED
 
 Design and reasons in `LANGUAGE.md`. Both apps, under conformance, as always.
 F1 goes before E2 so that Phase E's new feedback copy is born in the catalogue.
@@ -158,11 +158,23 @@ F1 goes before E2 so that Phase E's new feedback copy is born in the catalogue.
 - [ ] **F3 units.** `src/core/units.ts` + Swift twin + fixtures: conversions,
       display precision, input steps, and a round trip that never shows 2.39 oz
       for a typed 2.4. Metric / Imperial setting defaulting from the region;
-      an EXPLICIT choice stored apart from the default. Size classes by region
-      (US carton classes in region US, at the MIDPOINT of each USDA range: an
-      EU Large overcooks an American Large by ~34 s, which every American on
-      the default egg gets today - do this first within F3). A unit on every
+      an EXPLICIT choice stored apart from the default. A unit on every
       temperature.
+    - [x] **Size classes by region**, done first, 26 September 2026. US carton
+          classes in region US, at the MIDPOINT of each USDA range (an EU
+          Large had been overcooking an American Large by ~34 s).
+          `US_SIZE_CLASSES` and `sizeClassesFor(region)` in `geometry.ts`,
+          `carrySizeIndex` in `policy.ts`, both twinned and both tables in
+          `fixtures/policy.json`. The web reads the region from
+          `navigator.language`, iOS from `Locale.current.region`; region only.
+          A stored index keeps its NAME across a region change (Large stays
+          Large, at the new table's mass; Jumbo outside the US becomes Extra
+          large), because the class is the word on the cook's carton. iOS
+          gained the class menu the web already had, with the slider as the
+          scale: an install from before it, still on the untouched 68 g, is
+          read as a Large, so Americans on the default move to 60.2 g. Labels
+          are still grams in English; they move into the catalogue with F1 and
+          gain ounces with the rest of F3.
 - [ ] **F4 locale formatting.** Numbers, plurals, 12/24-hour clock, weekday
       names through `Intl` / `FormatStyle`, pinned per locale by the fixture.
 - [ ] **F5 Czech**, reviewed by the owner's friend before it ships. It tests
@@ -205,7 +217,9 @@ interface Egg { radius_m; minorDiameter_m; mass_kg; volume_m3 }
 eggFromMinorDiameter(minorDiameter_m: number): Egg
 eggFromMass(mass_kg: number): Egg
 diffusionTime(egg: Egg, alpha_m2s: number): number
-SIZE_CLASSES: { label: string; mass_kg: number }[]
+SIZE_CLASSES: { label: string; mass_kg: number }[]     // EU, and the default table
+US_SIZE_CLASSES: { label: string; mass_kg: number }[]  // region US
+sizeClassesFor(region: string | null | undefined): SizeClass[]
 
 // thermo.ts
 pressureAtAltitude(altitude_m): number          // Pa
@@ -453,7 +467,7 @@ Some work is on one side only:
 **Last, the collective part**
 
 10. **E6, opt-in upload.** It needs a settled schema (E1, E2), "still learning"
-    (E5), and the privacy page's contact address. The consent text has to exist
+    (E5). The privacy contact exists: forgetmyeggs@danmackinlay.name. The consent text has to exist
     in every language that has shipped.
 11. **E7, the population fit**, once enough cooks have opted in.
 12. **E8, the nudge**, which is worthless before E7.
