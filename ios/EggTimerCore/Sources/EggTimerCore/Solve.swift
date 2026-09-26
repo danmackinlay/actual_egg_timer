@@ -4,7 +4,7 @@ import Foundation
 /// a doneness target. Transliterated from `src/core/solve.ts`.
 
 /// The calibratable parameters. Everything else is fixed physics.
-public struct ModelParams: Sendable {
+public struct ModelParams: Sendable, Codable, Equatable {
     /// Thermal diffusivity, m^2/s. Absorbs all geometry and property error,
     /// since only tau = R^2/alpha is identifiable.
     public var alphaM2s: Double

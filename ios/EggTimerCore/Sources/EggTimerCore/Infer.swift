@@ -112,7 +112,7 @@ public let whiteFirmGapLogSd = 0.4
 
 /// log10 of the dose at which the innermost white is set: the runny | tender
 /// cutpoint before any offset.
-private let logWhiteTarget = log10(whiteDoseTarget)
+let logWhiteTarget = log10(whiteDoseTarget)
 
 /// The white's noise from the yolk's: the same degrees of peak temperature.
 private let whiteNoisePerYolk = Constants.zYolk / Constants.zWhite
@@ -191,7 +191,9 @@ private func normalCdf(_ x: Double) -> Double {
 }
 
 /// Too soft, just right, too firm, for one particle, before the unrelated share.
-private func yolkProbit(
+/// Internal rather than private: the decision (Decide.swift) scores candidate
+/// times with the same arithmetic the filter learns with.
+func yolkProbit(
     _ grid: DoseGrid, _ p: Particle, _ cookTimeS: Double, _ logNominalTarget: Double
 ) -> [Double] {
     let latent = lookupLogYolkDose(grid, p.alphaM2s, cookTimeS) - (logNominalTarget + p.logDoseOffset)
@@ -202,7 +204,7 @@ private func yolkProbit(
 }
 
 /// Runny, tender, firm, for one particle, before the unrelated share.
-private func whiteProbit(_ grid: DoseGrid, _ p: Particle, _ cookTimeS: Double) -> [Double] {
+func whiteProbit(_ grid: DoseGrid, _ p: Particle, _ cookTimeS: Double) -> [Double] {
     let latent = lookupLogWhiteDose(grid, p.alphaM2s, cookTimeS) - (logWhiteTarget + p.whiteOffset)
     let sd = p.noise * whiteNoisePerYolk
     let runny = normalCdf(-latent / sd)
@@ -391,8 +393,10 @@ public struct CookTimePrediction: Sendable {
     public let highS: Double
 }
 
-/// Posterior predictive cook time for a nominal doneness, as a median and an
-/// 80% credible interval.
+/// The posterior over the right cook time for a nominal doneness, as a median
+/// and an 80% credible interval: for each particle, the LATER of the time its
+/// yolk reaches the middle of "just right" and the time its white reaches its
+/// own runny | tender cutpoint. See src/core/infer.ts.
 public func predictCookTime(
     _ post: Posterior, _ grid: DoseGrid, _ logNominalTarget: Double
 ) -> CookTimePrediction {
@@ -400,7 +404,9 @@ public func predictCookTime(
     var times = [Double](repeating: 0.0, count: n)
     for i in 0..<n {
         let p = post.particles[i]
-        times[i] = cookTimeForLogYolkDose(grid, p.alphaM2s, logNominalTarget + p.logDoseOffset)
+        let yolk = cookTimeForLogYolkDose(grid, p.alphaM2s, logNominalTarget + p.logDoseOffset)
+        let white = cookTimeForLogWhiteDose(grid, p.alphaM2s, logWhiteTarget + p.whiteOffset)
+        times[i] = yolk > white ? yolk : white
     }
     // Sorted by time, ties broken by original position. JavaScript's sort is
     // required to be stable and Swift's is not, so without the tie-break two

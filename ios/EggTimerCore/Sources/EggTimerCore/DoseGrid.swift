@@ -125,3 +125,16 @@ public func cookTimeForLogYolkDose(
     }
     return 0.5 * (lo + hi)
 }
+
+/// The same for the white: the cook time delivering a given log10 white dose.
+public func cookTimeForLogWhiteDose(
+    _ g: DoseGrid, _ alphaM2s: Double, _ logDose: Double
+) -> Double {
+    var lo = g.timeMinS
+    var hi = g.timeMinS + g.timeStepS * Double(g.timeCount - 1)
+    for _ in 0..<40 {
+        let mid = 0.5 * (lo + hi)
+        if lookupLogWhiteDose(g, alphaM2s, mid) < logDose { lo = mid } else { hi = mid }
+    }
+    return 0.5 * (lo + hi)
+}

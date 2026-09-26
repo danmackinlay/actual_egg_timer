@@ -22,8 +22,10 @@ import Foundation
 public let recordVersion = 1
 
 /// Which prior the record's cook was recommended under: '2026-09' was E1's
-/// three-number particle, '2026-09-e2' is E2's six.
-public let priorID = "2026-09-e2"
+/// three-number particle, '2026-09-e2' is E2's six, and '2026-09-e5' is the
+/// same prior under E5's policy, which chooses the time from the whole
+/// posterior (Decide.swift).
+public let priorID = "2026-09-e5"
 
 /// Where the egg's mass came from. A size class is a 10 g bucket, worth about
 /// +-24 s; a scale is a gram.
