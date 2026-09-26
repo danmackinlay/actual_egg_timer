@@ -11,7 +11,9 @@
  * derived from the same settings without reconciling them mid-cook.
  */
 
-import { Egg, eggFromMass, eggFromMinorDiameter, sizeClassesFor } from '../core/geometry.js';
+import {
+  Egg, SizeTable, eggFromMass, eggFromMinorDiameter, sizeClassesFor, sizeTableFor,
+} from '../core/geometry.js';
 import { boilingPointAtAltitude } from '../core/thermo.js';
 import { Cooling, CookSetup, StartMode } from '../core/protocol.js';
 import { SOUS_VIDE_BATH_C, sousVideEstimate } from '../core/sousvide.js';
@@ -126,6 +128,9 @@ function browserRegion(): string | null {
 /** Fixed for the life of the page. A stored index is read against it, and
  *  keeps its name if the region has changed since it was saved. */
 const sizeClasses = sizeClassesFor(browserRegion());
+/** The same table by name, for the record: a Large is 68 g in one and 60.2 g in
+ *  the other. */
+const sizeTable = sizeTableFor(browserRegion());
 
 let settings: Settings = loadSettings(sizeClasses);
 let boilMemory = loadBoilMemory();
@@ -175,8 +180,10 @@ function withTimeToBoil(t: Ticket, timeToBoil_s: number): Ticket {
  *  learn from. */
 interface Ticket {
   egg: Egg;
-  /** Which input the egg came from, and where its temperature did. */
+  /** Which input the egg came from, whose carton if it was a class, and where
+   *  its temperature came from. */
   massFrom: MassFrom;
+  sizeTable: SizeTable | null;
   eggFrom: EggFrom;
   setup: CookSetup;
   /** log10 of the yolk dose this cook was RUN at. Frozen with everything else,
@@ -1019,6 +1026,7 @@ function onPrimary(): void {
     ticket = {
       egg: currentEgg(),
       massFrom: massFrom(),
+      sizeTable: massFrom() === 'class' ? sizeTable : null,
       eggFrom: settings.startTempMode,
       setup: buildSetup(boil),
       logNominalTarget: Math.log10(donenessFromSlider(target).yolkDose_min),
@@ -1240,9 +1248,11 @@ function restoreTicket(raw: unknown): Ticket | null {
   // say what they said at "Eggs in".
   const mf = r['massFrom'];
   const ef = r['eggFrom'];
+  const from = mf === 'scale' || mf === 'girth' || mf === 'width' || mf === 'class' ? mf : massFrom();
   return {
     egg: egg as Egg,
-    massFrom: mf === 'scale' || mf === 'girth' || mf === 'width' || mf === 'class' ? mf : massFrom(),
+    massFrom: from,
+    sizeTable: from === 'class' ? sizeTable : null,
     eggFrom: ef === 'fridge' || ef === 'room' || ef === 'custom' ? ef : settings.startTempMode,
     setup: setup as CookSetup,
     logNominalTarget: target,

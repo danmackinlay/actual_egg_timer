@@ -38,7 +38,7 @@ import {
 } from '../src/core/constants.js';
 import {
   eggFromMass, eggFromMinorDiameter, diffusionTime, eggVolumeFromMinorDiameter,
-  SIZE_CLASSES, US_SIZE_CLASSES, sizeClassesFor,
+  SIZE_CLASSES, US_SIZE_CLASSES, sizeTableFor,
 } from '../src/core/geometry.js';
 import {
   pressureAtAltitude, boilingPointAtPressure, boilingPointAtAltitude,
@@ -670,7 +670,7 @@ const policy = {
     us: US_SIZE_CLASSES,
     regions: ['US', 'us', 'GB', 'CZ', 'CA', 'USA', '', null].map((region) => ({
       region: region,
-      table: sizeClassesFor(region) === US_SIZE_CLASSES ? 'us' : 'eu',
+      table: sizeTableFor(region),
     })),
     carry: [-3, -1, -0.5, -0.4, 0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 7].map((stored) => ({
       stored: stored,
@@ -853,6 +853,7 @@ interface EggSpec {
   app: 'web' | 'ios';
   mass_g: number;
   massFrom: EggRecord['egg']['massFrom'];
+  sizeTable?: EggRecord['egg']['sizeTable'];
   eggFrom: EggRecord['setup']['eggFrom'];
   over: Partial<CookSetup>;
   level: number;
@@ -878,7 +879,10 @@ function recordOf(e: EggSpec): EggRecord {
     app: e.app,
     appVersion: '0.2.0',
     prior: PRIOR_ID,
-    egg: { mass_g: recordMass_g(egg.mass_kg), massFrom: e.massFrom },
+    egg: {
+      mass_g: recordMass_g(egg.mass_kg), massFrom: e.massFrom,
+      sizeTable: e.massFrom === 'class' ? e.sizeTable ?? 'eu' : null,
+    },
     setup: {
       startMode: setup.startMode,
       eggStart_C: setup.eggStart_C,
@@ -932,7 +936,7 @@ const REPLAY_LOG: EggRecord[] = [
   }),
   // Rested on the counter, the only cook that reaches tauAirScale.
   recordOf({
-    app: 'ios', mass_g: 72, massFrom: 'class', eggFrom: 'room',
+    app: 'ios', mass_g: 67.3, massFrom: 'class', sizeTable: 'us', eggFrom: 'room',
     over: { eggStart_C: 20, cooling: 'counter' },
     level: 0.62, pulledBy: 'timeout', late_s: 0, yolk: 0, white: null, whiteOffered: false,
   }),
@@ -1013,6 +1017,11 @@ const RECORD_CASES: { why: string; mutate: Mutation }[] = [
   { why: 'a uid, once E6 mints one', mutate: (r) => { r['uid'] = '6f1c2a9e-2b1d-4c1e-9d6b-1a2b3c4d5e6f'; } },
   { why: 'an unanswered egg', mutate: (r) => { r['yolk'] = null; r['white'] = null; } },
   { why: 'the white offered and skipped', mutate: (r) => { r['white'] = null; } },
+  {
+    why: 'a weighed egg names no carton',
+    mutate: (r) => { eggPart(r)['massFrom'] = 'scale'; eggPart(r)['sizeTable'] = null; },
+  },
+  { why: 'an American Large', mutate: (r) => { eggPart(r)['mass_g'] = 60.2; eggPart(r)['sizeTable'] = 'us'; } },
   { why: 'a nudge that leaves a cook', mutate: (r) => { r['nudge_s'] = -10; } },
   { why: 'another schema version', mutate: (r) => { r['v'] = 2; } },
   { why: 'no schema version', mutate: (r) => { delete r['v']; } },
@@ -1026,6 +1035,12 @@ const RECORD_CASES: { why: string; mutate: Mutation }[] = [
   { why: 'a mass as a string', mutate: (r) => { eggPart(r)['mass_g'] = '62'; } },
   { why: 'a mass as null', mutate: (r) => { eggPart(r)['mass_g'] = null; } },
   { why: 'an unknown mass source', mutate: (r) => { eggPart(r)['massFrom'] = 'guess'; } },
+  { why: 'a class with no carton', mutate: (r) => { delete eggPart(r)['sizeTable']; } },
+  { why: 'a carton nobody has', mutate: (r) => { eggPart(r)['sizeTable'] = 'uk'; } },
+  {
+    why: 'a carton on a weighed egg',
+    mutate: (r) => { eggPart(r)['massFrom'] = 'scale'; eggPart(r)['sizeTable'] = 'eu'; },
+  },
   { why: 'no setup', mutate: (r) => { delete r['setup']; } },
   { why: 'an unknown start', mutate: (r) => { setupPart(r)['startMode'] = 'warm'; } },
   { why: 'an unknown egg source', mutate: (r) => { setupPart(r)['eggFrom'] = 'freezer'; } },

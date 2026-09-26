@@ -69,6 +69,11 @@ final class Cook {
         /// actually measured.
         var egg: Egg
         var setup: CookSetup
+        /// Where the egg's mass came from, and whose carton if it was a class -
+        /// for the record. Optional, so a cook saved by a build that did not
+        /// write them still restores; `eggRecord` says what it assumes then.
+        var massFrom: MassFrom?
+        var sizeTable: SizeTable?
 
         /// The same cook, against a time to boil that is now known rather than
         /// guessed.
@@ -205,13 +210,21 @@ final class Cook {
     func eggRecord(yolk: Feedback?) -> EggRecord? {
         guard let startedAt, pullAt != nil, let ticket else { return nil }
         let scheduled = cookSeconds
+        // A cook saved before the ticket carried these came from a build whose
+        // only control was a slider opening on an EU Large. Left there, it was
+        // the default class; moved, it was dialled in - the rule Store.swift
+        // applies to the same stored mass.
+        let untouched = ticket.eggGrams == sizeClasses[Defaults.sizeIndex].massKg * 1000
+        let massFrom = ticket.massFrom ?? (untouched ? .sizeClass : .scale)
+        let sizeTable = ticket.massFrom == nil ? (untouched ? .eu : nil) : ticket.sizeTable
         return EggRecord(
             day: Self.day(startedAt),
             app: .ios,
             appVersion: Calibrations.appVersion,
             egg: RecordEgg(
                 massG: recordMassG(massKg: ticket.egg.massKg),
-                massFrom: Self.massFrom(grams: ticket.eggGrams)
+                massFrom: massFrom,
+                sizeTable: massFrom == .sizeClass ? sizeTable ?? .eu : nil
             ),
             // Fridge or room are the only two this app offers, so the start
             // temperature says which was picked.
@@ -226,15 +239,6 @@ final class Cook {
             cooledS: ticket.cooling == .counter ? 0 : Self.coolingSeconds,
             yolk: yolk
         )
-    }
-
-    /// Where the egg's mass came from. The only control is a slider in grams,
-    /// so this cannot KNOW whether a scale was involved. What it can say: a
-    /// mass sitting exactly on a carton class - which is where the default egg
-    /// sits - was read off the box, and anything else was dialled in to match
-    /// something, which on a half-gram slider means a scale.
-    private static func massFrom(grams: Double) -> MassFrom {
-        sizeClasses.contains { abs($0.massKg * 1000 - grams) < 0.25 } ? .sizeClass : .scale
     }
 
     /// The local calendar day a cook started on, YYYY-MM-DD. A day, not a

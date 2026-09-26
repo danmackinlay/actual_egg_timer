@@ -71,7 +71,7 @@ function recordAt(
   const t = solveCookTime(egg, setup, DEFAULT_PARAMS, donenessFromSlider(level)).result.cookTime_s;
   return {
     v: 1, uid: null, day: '2026-09-26', app: 'web', appVersion: APP_VERSION, prior: PRIOR_ID,
-    egg: { mass_g: recordMass_g(egg.mass_kg), massFrom: 'class' },
+    egg: { mass_g: recordMass_g(egg.mass_kg), massFrom: 'class', sizeTable: 'eu' },
     setup: {
       startMode: setup.startMode, eggStart_C: setup.eggStart_C, eggFrom: 'fridge',
       ambient_C: setup.ambient_C, boiling_C: setup.boiling_C, timeToBoil_s: setup.timeToBoil_s,
@@ -309,7 +309,7 @@ test('3c. forget everything clears the log, the base and the posterior', () => {
 
 const T0 = 1_750_000_000_000;
 const COOKED: Cooked = {
-  egg: eggFromMass(0.062), massFrom: 'scale', setup: setupOf(), eggFrom: 'fridge',
+  egg: eggFromMass(0.062), massFrom: 'scale', sizeTable: null, setup: setupOf(), eggFrom: 'fridge',
 };
 
 function pulled(m: Machine): Machine {
@@ -339,6 +339,17 @@ test('4b. a pull nobody confirmed is recorded as assumed, at the scheduled time'
   assert.equal(r.pulledBy, 'timeout');
   assert.equal(r.pulled_s, 400);
   assert.equal(r.cooled_s, 0);
+});
+
+test('4b2. a class names its carton, and a weighed egg names none', () => {
+  const m = beginCooling(pulled(startHot(T0, 400, 'ice', 0.4)), T0 + 402_000);
+  const us = eggRecordFor({ ...COOKED, egg: eggFromMass(0.0602), massFrom: 'class', sizeTable: 'us' }, m, 0);
+  assert.equal(us.egg.sizeTable, 'us');
+  assert.equal(us.egg.mass_g, 60.2);
+  assert.notEqual(parseRecord(us), null);
+  const weighed = eggRecordFor({ ...COOKED, sizeTable: 'us' }, m, 0);
+  assert.equal(weighed.egg.sizeTable, null, 'a scale has no carton, whatever the region');
+  assert.equal(parseRecord({ ...us, egg: { ...us.egg, sizeTable: null } }), null);
 });
 
 test('4c. a cook stored before E1 restores, with its pull unmeasured', () => {

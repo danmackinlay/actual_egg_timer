@@ -56,15 +56,27 @@ public struct RecordEgg: Sendable, Codable, Equatable {
     /// Whole-egg mass, grams, to 0.01 g (`recordMassG`).
     public var massG: Double
     public var massFrom: MassFrom
+    /// Whose carton, when `massFrom` is a class, and nil otherwise: the same
+    /// class is 68 g in one table and 60.2 g in the other.
+    public var sizeTable: SizeTable?
 
-    public init(massG: Double, massFrom: MassFrom) {
+    public init(massG: Double, massFrom: MassFrom, sizeTable: SizeTable?) {
         self.massG = massG
         self.massFrom = massFrom
+        self.sizeTable = sizeTable
     }
 
     enum CodingKeys: String, CodingKey {
         case massG = "mass_g"
-        case massFrom
+        case massFrom, sizeTable
+    }
+
+    /// Written as null rather than omitted, like the record's own nullables.
+    public func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(massG, forKey: .massG)
+        try c.encode(massFrom, forKey: .massFrom)
+        try c.encode(sizeTable, forKey: .sizeTable)
     }
 }
 
@@ -266,6 +278,8 @@ public func validRecord(_ r: EggRecord) -> Bool {
     if let uid = r.uid, uid.isEmpty { return false }
     guard isDay(r.day), !r.appVersion.isEmpty, !r.prior.isEmpty else { return false }
     guard r.egg.massG.isFinite, r.egg.massG > 0 else { return false }
+    // A class names its carton; nothing else has one.
+    guard (r.egg.massFrom == .sizeClass) == (r.egg.sizeTable != nil) else { return false }
     let s = r.setup
     guard s.eggStartC.isFinite, s.ambientC.isFinite else { return false }
     guard s.boilingC.isFinite, s.boilingC > 0 else { return false }

@@ -344,7 +344,9 @@ struct ContentView: View {
                     logNominalTarget: kitchen.logNominalTarget,
                     level: kitchen.doneness,
                     egg: kitchen.egg,
-                    setup: kitchen.setup
+                    setup: kitchen.setup,
+                    massFrom: kitchen.massFrom,
+                    sizeTable: kitchen.sizeTable
                 )
                 Task {
                     await cook.start(

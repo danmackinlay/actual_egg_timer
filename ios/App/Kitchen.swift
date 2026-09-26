@@ -44,6 +44,14 @@ final class Kitchen {
         sizeClasses.indices.contains(sizeIndex) ? sizeClasses[sizeIndex].massKg * 1000 : weighedMassG
     }
 
+    /// `sizeClasses` by name, read with it, for the record.
+    private let sizeTableInUse = sizeTableFor(region: Locale.current.region?.identifier)
+    /// Where the egg's mass came from, for the record: the carton's class, or the
+    /// slider - which is a scale as far as this screen is concerned.
+    var massFrom: MassFrom { sizeClasses.indices.contains(sizeIndex) ? .sizeClass : .scale }
+    /// Whose carton, for a class; nil for a weighed egg.
+    var sizeTable: SizeTable? { massFrom == .sizeClass ? sizeTableInUse : nil }
+
     /// A class from the menu. Weighed starts from the egg on screen rather than
     /// from whatever was last weighed, so choosing it moves nothing.
     func chooseSize(_ index: Int) {

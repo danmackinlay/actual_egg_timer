@@ -30,7 +30,7 @@
  * handed in; nothing here reads a clock.
  */
 
-import { Egg, eggFromMass } from './geometry.js';
+import { Egg, SizeTable, eggFromMass } from './geometry.js';
 import { CookSetup, Cooling, HeatAfterBoil, StartMode } from './protocol.js';
 import { DEFAULT_PARAMS, ModelParams, donenessFromSlider } from './solve.js';
 import { DoseGrid, buildDoseGrid } from './doseGrid.js';
@@ -68,6 +68,11 @@ export interface RecordEgg {
   /** Whole-egg mass, grams, rounded to 0.01 g by `recordMass_g`. */
   mass_g: number;
   massFrom: MassFrom;
+  /** Whose carton, when `massFrom` is 'class', and null otherwise. The same
+   *  class is 68 g in one table and 60.2 g in the other, and a class's width -
+   *  the noise the fit reads off `massFrom` - differs with the table. The fold
+   *  itself reads only `mass_g`. */
+  sizeTable: SizeTable | null;
 }
 
 /** The pot, as the solver was told it. Every field `CookSetup` has, plus where
@@ -186,7 +191,8 @@ function isObject(v: unknown): v is Record<string, unknown> {
  * does, so records from different app versions coexist. Any `appVersion` is
  * accepted under `v: 1`. Fields may be ADDED within v1 but never removed or
  * reinterpreted, so unknown fields are ignored here, and the nullable fields
- * (`uid`, `yolk`, `white`, `probe`) may be absent and read as null - which is
+ * (`uid`, `egg.sizeTable`, `yolk`, `white`, `probe`) may be absent and read as
+ * null - which is
  * also what Swift's Codable does, and the fixtures hold the two to it.
  *
  * Returns a fresh object with exactly the known fields, so what is folded is
@@ -206,6 +212,9 @@ export function parseRecord(raw: unknown): EggRecord | null {
   if (!isObject(egg)) return null;
   if (!isFiniteNumber(egg['mass_g']) || !(egg['mass_g'] > 0)) return null;
   if (!oneOf(egg['massFrom'], ['scale', 'girth', 'width', 'class'] as const)) return null;
+  // A class names its carton; nothing else has one.
+  const table = egg['sizeTable'] ?? null;
+  if (egg['massFrom'] === 'class' ? !oneOf(table, ['eu', 'us'] as const) : table !== null) return null;
 
   const s = raw['setup'];
   if (!isObject(s)) return null;
@@ -249,7 +258,7 @@ export function parseRecord(raw: unknown): EggRecord | null {
     app: raw['app'],
     appVersion: raw['appVersion'],
     prior: raw['prior'],
-    egg: { mass_g: egg['mass_g'], massFrom: egg['massFrom'] },
+    egg: { mass_g: egg['mass_g'], massFrom: egg['massFrom'], sizeTable: table as SizeTable | null },
     setup: {
       startMode: s['startMode'],
       eggStart_C: s['eggStart_C'],

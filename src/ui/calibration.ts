@@ -19,7 +19,7 @@
  * yield so the "learning" note paints first - which is what it always did.
  */
 
-import { Egg } from '../core/geometry.js';
+import { Egg, SizeTable } from '../core/geometry.js';
 import { CookSetup } from '../core/protocol.js';
 import { ModelParams } from '../core/solve.js';
 import { DoseGrid } from '../core/doseGrid.js';
@@ -120,6 +120,7 @@ export function calibrationSpread(c: Calibration): number {
 export interface Cooked {
   egg: Egg;
   massFrom: MassFrom;
+  sizeTable: SizeTable | null;
   setup: CookSetup;
   eggFrom: EggFrom;
 }
@@ -152,7 +153,11 @@ export function eggRecordFor(c: Cooked, m: Machine, yolk: Feedback | null): EggR
     app: 'web',
     appVersion: APP_VERSION,
     prior: PRIOR_ID,
-    egg: { mass_g: recordMass_g(c.egg.mass_kg), massFrom: c.massFrom },
+    egg: {
+      mass_g: recordMass_g(c.egg.mass_kg),
+      massFrom: c.massFrom,
+      sizeTable: c.massFrom === 'class' ? c.sizeTable ?? 'eu' : null,
+    },
     setup: {
       startMode: c.setup.startMode,
       eggStart_C: c.setup.eggStart_C,

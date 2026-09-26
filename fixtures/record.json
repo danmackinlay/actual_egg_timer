@@ -15,7 +15,8 @@
         "prior": "2026-09",
         "egg": {
           "mass_g": 62,
-          "massFrom": "class"
+          "massFrom": "class",
+          "sizeTable": "eu"
         },
         "setup": {
           "startMode": "hot",
@@ -58,7 +59,8 @@
         "prior": "2026-09",
         "egg": {
           "mass_g": 62,
-          "massFrom": "class"
+          "massFrom": "class",
+          "sizeTable": "eu"
         },
         "setup": {
           "startMode": "hot",
@@ -101,7 +103,8 @@
         "prior": "2026-09",
         "egg": {
           "mass_g": 62,
-          "massFrom": "class"
+          "massFrom": "class",
+          "sizeTable": "eu"
         },
         "setup": {
           "startMode": "hot",
@@ -145,6 +148,7 @@
         "egg": {
           "mass_g": 62,
           "massFrom": "class",
+          "sizeTable": "eu",
           "shell": "brown"
         },
         "setup": {
@@ -188,7 +192,8 @@
         "prior": "2026-09",
         "egg": {
           "mass_g": 62,
-          "massFrom": "class"
+          "massFrom": "class",
+          "sizeTable": "eu"
         },
         "setup": {
           "startMode": "hot",
@@ -228,7 +233,8 @@
         "prior": "2026-09",
         "egg": {
           "mass_g": 62,
-          "massFrom": "class"
+          "massFrom": "class",
+          "sizeTable": "eu"
         },
         "setup": {
           "startMode": "hot",
@@ -271,7 +277,8 @@
         "prior": "2026-09",
         "egg": {
           "mass_g": 62,
-          "massFrom": "class"
+          "massFrom": "class",
+          "sizeTable": "eu"
         },
         "setup": {
           "startMode": "hot",
@@ -314,7 +321,8 @@
         "prior": "2026-09",
         "egg": {
           "mass_g": 62,
-          "massFrom": "class"
+          "massFrom": "class",
+          "sizeTable": "eu"
         },
         "setup": {
           "startMode": "hot",
@@ -347,6 +355,94 @@
       "white": null
     },
     {
+      "why": "a weighed egg names no carton",
+      "record": {
+        "v": 1,
+        "uid": null,
+        "day": "2026-09-26",
+        "app": "web",
+        "appVersion": "0.2.0",
+        "prior": "2026-09",
+        "egg": {
+          "mass_g": 62,
+          "massFrom": "scale",
+          "sizeTable": null
+        },
+        "setup": {
+          "startMode": "hot",
+          "eggStart_C": 4,
+          "eggFrom": "fridge",
+          "ambient_C": 20,
+          "boiling_C": 100,
+          "timeToBoil_s": 0,
+          "cooling": "ice",
+          "afterBoil": "hold",
+          "waterLitres": 2,
+          "eggCount": 4
+        },
+        "level": 0.3,
+        "recommended_s": 415.05859375,
+        "nudge_s": 0,
+        "pulled_s": 422.30859375,
+        "pulledBy": "cook",
+        "cooled_s": 180,
+        "yolk": -1,
+        "white": "runny",
+        "whiteOffered": true,
+        "probe": null,
+        "lang": "en",
+        "register": "modern",
+        "units": "metric"
+      },
+      "valid": true,
+      "yolk": -1,
+      "white": "runny"
+    },
+    {
+      "why": "an American Large",
+      "record": {
+        "v": 1,
+        "uid": null,
+        "day": "2026-09-26",
+        "app": "web",
+        "appVersion": "0.2.0",
+        "prior": "2026-09",
+        "egg": {
+          "mass_g": 60.2,
+          "massFrom": "class",
+          "sizeTable": "us"
+        },
+        "setup": {
+          "startMode": "hot",
+          "eggStart_C": 4,
+          "eggFrom": "fridge",
+          "ambient_C": 20,
+          "boiling_C": 100,
+          "timeToBoil_s": 0,
+          "cooling": "ice",
+          "afterBoil": "hold",
+          "waterLitres": 2,
+          "eggCount": 4
+        },
+        "level": 0.3,
+        "recommended_s": 415.05859375,
+        "nudge_s": 0,
+        "pulled_s": 422.30859375,
+        "pulledBy": "cook",
+        "cooled_s": 180,
+        "yolk": -1,
+        "white": "runny",
+        "whiteOffered": true,
+        "probe": null,
+        "lang": "en",
+        "register": "modern",
+        "units": "metric"
+      },
+      "valid": true,
+      "yolk": -1,
+      "white": "runny"
+    },
+    {
       "why": "a nudge that leaves a cook",
       "record": {
         "v": 1,
@@ -357,7 +453,8 @@
         "prior": "2026-09",
         "egg": {
           "mass_g": 62,
-          "massFrom": "class"
+          "massFrom": "class",
+          "sizeTable": "eu"
         },
         "setup": {
           "startMode": "hot",
@@ -400,7 +497,8 @@
         "prior": "2026-09",
         "egg": {
           "mass_g": 62,
-          "massFrom": "class"
+          "massFrom": "class",
+          "sizeTable": "eu"
         },
         "setup": {
           "startMode": "hot",
@@ -442,7 +540,8 @@
         "prior": "2026-09",
         "egg": {
           "mass_g": 62,
-          "massFrom": "class"
+          "massFrom": "class",
+          "sizeTable": "eu"
         },
         "setup": {
           "startMode": "hot",
@@ -485,7 +584,8 @@
         "prior": "2026-09",
         "egg": {
           "mass_g": 62,
-          "massFrom": "class"
+          "massFrom": "class",
+          "sizeTable": "eu"
         },
         "setup": {
           "startMode": "hot",
@@ -528,7 +628,8 @@
         "prior": "2026-09",
         "egg": {
           "mass_g": 62,
-          "massFrom": "class"
+          "massFrom": "class",
+          "sizeTable": "eu"
         },
         "setup": {
           "startMode": "hot",
@@ -571,7 +672,8 @@
         "prior": "2026-09",
         "egg": {
           "mass_g": 62,
-          "massFrom": "class"
+          "massFrom": "class",
+          "sizeTable": "eu"
         },
         "setup": {
           "startMode": "hot",
@@ -614,7 +716,8 @@
         "prior": "2026-09",
         "egg": {
           "mass_g": 62,
-          "massFrom": "class"
+          "massFrom": "class",
+          "sizeTable": "eu"
         },
         "setup": {
           "startMode": "hot",
@@ -657,7 +760,8 @@
         "prior": "2026-09",
         "egg": {
           "mass_g": 62,
-          "massFrom": "class"
+          "massFrom": "class",
+          "sizeTable": "eu"
         },
         "setup": {
           "startMode": "hot",
@@ -699,7 +803,8 @@
         "appVersion": "0.2.0",
         "egg": {
           "mass_g": 62,
-          "massFrom": "class"
+          "massFrom": "class",
+          "sizeTable": "eu"
         },
         "setup": {
           "startMode": "hot",
@@ -742,7 +847,8 @@
         "prior": "2026-09",
         "egg": {
           "mass_g": 0,
-          "massFrom": "class"
+          "massFrom": "class",
+          "sizeTable": "eu"
         },
         "setup": {
           "startMode": "hot",
@@ -785,7 +891,8 @@
         "prior": "2026-09",
         "egg": {
           "mass_g": "62",
-          "massFrom": "class"
+          "massFrom": "class",
+          "sizeTable": "eu"
         },
         "setup": {
           "startMode": "hot",
@@ -828,7 +935,8 @@
         "prior": "2026-09",
         "egg": {
           "mass_g": null,
-          "massFrom": "class"
+          "massFrom": "class",
+          "sizeTable": "eu"
         },
         "setup": {
           "startMode": "hot",
@@ -871,7 +979,139 @@
         "prior": "2026-09",
         "egg": {
           "mass_g": 62,
-          "massFrom": "guess"
+          "massFrom": "guess",
+          "sizeTable": "eu"
+        },
+        "setup": {
+          "startMode": "hot",
+          "eggStart_C": 4,
+          "eggFrom": "fridge",
+          "ambient_C": 20,
+          "boiling_C": 100,
+          "timeToBoil_s": 0,
+          "cooling": "ice",
+          "afterBoil": "hold",
+          "waterLitres": 2,
+          "eggCount": 4
+        },
+        "level": 0.3,
+        "recommended_s": 415.05859375,
+        "nudge_s": 0,
+        "pulled_s": 422.30859375,
+        "pulledBy": "cook",
+        "cooled_s": 180,
+        "yolk": -1,
+        "white": "runny",
+        "whiteOffered": true,
+        "probe": null,
+        "lang": "en",
+        "register": "modern",
+        "units": "metric"
+      },
+      "valid": false,
+      "yolk": null,
+      "white": null
+    },
+    {
+      "why": "a class with no carton",
+      "record": {
+        "v": 1,
+        "uid": null,
+        "day": "2026-09-26",
+        "app": "web",
+        "appVersion": "0.2.0",
+        "prior": "2026-09",
+        "egg": {
+          "mass_g": 62,
+          "massFrom": "class"
+        },
+        "setup": {
+          "startMode": "hot",
+          "eggStart_C": 4,
+          "eggFrom": "fridge",
+          "ambient_C": 20,
+          "boiling_C": 100,
+          "timeToBoil_s": 0,
+          "cooling": "ice",
+          "afterBoil": "hold",
+          "waterLitres": 2,
+          "eggCount": 4
+        },
+        "level": 0.3,
+        "recommended_s": 415.05859375,
+        "nudge_s": 0,
+        "pulled_s": 422.30859375,
+        "pulledBy": "cook",
+        "cooled_s": 180,
+        "yolk": -1,
+        "white": "runny",
+        "whiteOffered": true,
+        "probe": null,
+        "lang": "en",
+        "register": "modern",
+        "units": "metric"
+      },
+      "valid": false,
+      "yolk": null,
+      "white": null
+    },
+    {
+      "why": "a carton nobody has",
+      "record": {
+        "v": 1,
+        "uid": null,
+        "day": "2026-09-26",
+        "app": "web",
+        "appVersion": "0.2.0",
+        "prior": "2026-09",
+        "egg": {
+          "mass_g": 62,
+          "massFrom": "class",
+          "sizeTable": "uk"
+        },
+        "setup": {
+          "startMode": "hot",
+          "eggStart_C": 4,
+          "eggFrom": "fridge",
+          "ambient_C": 20,
+          "boiling_C": 100,
+          "timeToBoil_s": 0,
+          "cooling": "ice",
+          "afterBoil": "hold",
+          "waterLitres": 2,
+          "eggCount": 4
+        },
+        "level": 0.3,
+        "recommended_s": 415.05859375,
+        "nudge_s": 0,
+        "pulled_s": 422.30859375,
+        "pulledBy": "cook",
+        "cooled_s": 180,
+        "yolk": -1,
+        "white": "runny",
+        "whiteOffered": true,
+        "probe": null,
+        "lang": "en",
+        "register": "modern",
+        "units": "metric"
+      },
+      "valid": false,
+      "yolk": null,
+      "white": null
+    },
+    {
+      "why": "a carton on a weighed egg",
+      "record": {
+        "v": 1,
+        "uid": null,
+        "day": "2026-09-26",
+        "app": "web",
+        "appVersion": "0.2.0",
+        "prior": "2026-09",
+        "egg": {
+          "mass_g": 62,
+          "massFrom": "scale",
+          "sizeTable": "eu"
         },
         "setup": {
           "startMode": "hot",
@@ -914,7 +1154,8 @@
         "prior": "2026-09",
         "egg": {
           "mass_g": 62,
-          "massFrom": "class"
+          "massFrom": "class",
+          "sizeTable": "eu"
         },
         "level": 0.3,
         "recommended_s": 415.05859375,
@@ -945,7 +1186,8 @@
         "prior": "2026-09",
         "egg": {
           "mass_g": 62,
-          "massFrom": "class"
+          "massFrom": "class",
+          "sizeTable": "eu"
         },
         "setup": {
           "startMode": "warm",
@@ -988,7 +1230,8 @@
         "prior": "2026-09",
         "egg": {
           "mass_g": 62,
-          "massFrom": "class"
+          "massFrom": "class",
+          "sizeTable": "eu"
         },
         "setup": {
           "startMode": "hot",
@@ -1031,7 +1274,8 @@
         "prior": "2026-09",
         "egg": {
           "mass_g": 62,
-          "massFrom": "class"
+          "massFrom": "class",
+          "sizeTable": "eu"
         },
         "setup": {
           "startMode": "hot",
@@ -1073,7 +1317,8 @@
         "prior": "2026-09",
         "egg": {
           "mass_g": 62,
-          "massFrom": "class"
+          "massFrom": "class",
+          "sizeTable": "eu"
         },
         "setup": {
           "startMode": "hot",
@@ -1116,7 +1361,8 @@
         "prior": "2026-09",
         "egg": {
           "mass_g": 62,
-          "massFrom": "class"
+          "massFrom": "class",
+          "sizeTable": "eu"
         },
         "setup": {
           "startMode": "hot",
@@ -1159,7 +1405,8 @@
         "prior": "2026-09",
         "egg": {
           "mass_g": 62,
-          "massFrom": "class"
+          "massFrom": "class",
+          "sizeTable": "eu"
         },
         "setup": {
           "startMode": "hot",
@@ -1202,7 +1449,8 @@
         "prior": "2026-09",
         "egg": {
           "mass_g": 62,
-          "massFrom": "class"
+          "massFrom": "class",
+          "sizeTable": "eu"
         },
         "setup": {
           "startMode": "hot",
@@ -1245,7 +1493,8 @@
         "prior": "2026-09",
         "egg": {
           "mass_g": 62,
-          "massFrom": "class"
+          "massFrom": "class",
+          "sizeTable": "eu"
         },
         "setup": {
           "startMode": "hot",
@@ -1288,7 +1537,8 @@
         "prior": "2026-09",
         "egg": {
           "mass_g": 62,
-          "massFrom": "class"
+          "massFrom": "class",
+          "sizeTable": "eu"
         },
         "setup": {
           "startMode": "hot",
@@ -1331,7 +1581,8 @@
         "prior": "2026-09",
         "egg": {
           "mass_g": 62,
-          "massFrom": "class"
+          "massFrom": "class",
+          "sizeTable": "eu"
         },
         "setup": {
           "startMode": "hot",
@@ -1374,7 +1625,8 @@
         "prior": "2026-09",
         "egg": {
           "mass_g": 62,
-          "massFrom": "class"
+          "massFrom": "class",
+          "sizeTable": "eu"
         },
         "setup": {
           "startMode": "hot",
@@ -1417,7 +1669,8 @@
         "prior": "2026-09",
         "egg": {
           "mass_g": 62,
-          "massFrom": "class"
+          "massFrom": "class",
+          "sizeTable": "eu"
         },
         "setup": {
           "startMode": "hot",
@@ -1460,7 +1713,8 @@
         "prior": "2026-09",
         "egg": {
           "mass_g": 62,
-          "massFrom": "class"
+          "massFrom": "class",
+          "sizeTable": "eu"
         },
         "setup": {
           "startMode": "hot",
@@ -1503,7 +1757,8 @@
         "prior": "2026-09",
         "egg": {
           "mass_g": 62,
-          "massFrom": "class"
+          "massFrom": "class",
+          "sizeTable": "eu"
         },
         "setup": {
           "startMode": "hot",
@@ -1546,7 +1801,8 @@
         "prior": "2026-09",
         "egg": {
           "mass_g": 62,
-          "massFrom": "class"
+          "massFrom": "class",
+          "sizeTable": "eu"
         },
         "setup": {
           "startMode": "hot",
@@ -1589,7 +1845,8 @@
         "prior": "2026-09",
         "egg": {
           "mass_g": 62,
-          "massFrom": "class"
+          "massFrom": "class",
+          "sizeTable": "eu"
         },
         "setup": {
           "startMode": "hot",
@@ -1632,7 +1889,8 @@
         "prior": "2026-09",
         "egg": {
           "mass_g": 62,
-          "massFrom": "class"
+          "massFrom": "class",
+          "sizeTable": "eu"
         },
         "setup": {
           "startMode": "hot",
@@ -1675,7 +1933,8 @@
         "prior": "2026-09",
         "egg": {
           "mass_g": 62,
-          "massFrom": "class"
+          "massFrom": "class",
+          "sizeTable": "eu"
         },
         "setup": {
           "startMode": "hot",
@@ -1718,7 +1977,8 @@
         "prior": "2026-09",
         "egg": {
           "mass_g": 62,
-          "massFrom": "class"
+          "massFrom": "class",
+          "sizeTable": "eu"
         },
         "setup": {
           "startMode": "hot",
@@ -1761,7 +2021,8 @@
         "prior": "2026-09",
         "egg": {
           "mass_g": 62,
-          "massFrom": "class"
+          "massFrom": "class",
+          "sizeTable": "eu"
         },
         "setup": {
           "startMode": "hot",
@@ -1804,7 +2065,8 @@
         "prior": "2026-09",
         "egg": {
           "mass_g": 62,
-          "massFrom": "class"
+          "massFrom": "class",
+          "sizeTable": "eu"
         },
         "setup": {
           "startMode": "hot",
@@ -1847,7 +2109,8 @@
         "prior": "2026-09",
         "egg": {
           "mass_g": 62,
-          "massFrom": "class"
+          "massFrom": "class",
+          "sizeTable": "eu"
         },
         "setup": {
           "startMode": "hot",
@@ -1889,7 +2152,8 @@
         "prior": "2026-09",
         "egg": {
           "mass_g": 62,
-          "massFrom": "class"
+          "massFrom": "class",
+          "sizeTable": "eu"
         },
         "setup": {
           "startMode": "hot",
@@ -1932,7 +2196,8 @@
         "prior": "2026-09",
         "egg": {
           "mass_g": 62,
-          "massFrom": "class"
+          "massFrom": "class",
+          "sizeTable": "eu"
         },
         "setup": {
           "startMode": "hot",
@@ -1975,7 +2240,8 @@
         "prior": "2026-09",
         "egg": {
           "mass_g": 62,
-          "massFrom": "class"
+          "massFrom": "class",
+          "sizeTable": "eu"
         },
         "setup": {
           "startMode": "hot",
@@ -2018,7 +2284,8 @@
         "prior": "2026-09",
         "egg": {
           "mass_g": 62,
-          "massFrom": "class"
+          "massFrom": "class",
+          "sizeTable": "eu"
         },
         "setup": {
           "startMode": "hot",
@@ -2062,7 +2329,8 @@
           "prior": "2026-09",
           "egg": {
             "mass_g": 62,
-            "massFrom": "class"
+            "massFrom": "class",
+            "sizeTable": "eu"
           },
           "setup": {
             "startMode": "hot",
@@ -2145,7 +2413,8 @@
         "prior": "2026-09",
         "egg": {
           "mass_g": 62,
-          "massFrom": "class"
+          "massFrom": "class",
+          "sizeTable": "eu"
         },
         "setup": {
           "startMode": "hot",
@@ -2182,7 +2451,8 @@
         "prior": "2026-09",
         "egg": {
           "mass_g": 68.5,
-          "massFrom": "scale"
+          "massFrom": "scale",
+          "sizeTable": null
         },
         "setup": {
           "startMode": "cold",
@@ -2219,7 +2489,8 @@
         "prior": "2026-09",
         "egg": {
           "mass_g": 58,
-          "massFrom": "class"
+          "massFrom": "class",
+          "sizeTable": "eu"
         },
         "setup": {
           "startMode": "hot",
@@ -2256,7 +2527,8 @@
         "prior": "2026-09",
         "egg": {
           "mass_g": 55.3,
-          "massFrom": "girth"
+          "massFrom": "girth",
+          "sizeTable": null
         },
         "setup": {
           "startMode": "hot",
@@ -2292,8 +2564,9 @@
         "appVersion": "0.2.0",
         "prior": "2026-09",
         "egg": {
-          "mass_g": 72,
-          "massFrom": "class"
+          "mass_g": 67.3,
+          "massFrom": "class",
+          "sizeTable": "us"
         },
         "setup": {
           "startMode": "hot",
@@ -2308,9 +2581,9 @@
           "eggCount": 4
         },
         "level": 0.62,
-        "recommended_s": 276.0888671875,
+        "recommended_s": 262.1044921875,
         "nudge_s": 0,
-        "pulled_s": 276.0888671875,
+        "pulled_s": 262.1044921875,
         "pulledBy": "timeout",
         "cooled_s": 0,
         "yolk": 0,
@@ -2330,7 +2603,8 @@
         "prior": "2026-09",
         "egg": {
           "mass_g": 60.2,
-          "massFrom": "width"
+          "massFrom": "width",
+          "sizeTable": null
         },
         "setup": {
           "startMode": "cold",
@@ -3970,8 +4244,8 @@
           "alphaMin": 9.504775662149405e-8,
           "alphaMax": 3.110653853067078e-7,
           "alphaCount": 7,
-          "timeMin_s": 96.631103515625,
-          "timeMax_s": 662.61328125,
+          "timeMin_s": 91.736572265625,
+          "timeMax_s": 629.05078125,
           "timeCount": 9
         },
         "askWhite": true,
@@ -4081,9 +4355,9 @@
               "tauAirScale": 0.874892161068907
             },
             {
-              "alpha_m2s": 1.5662160043068122e-7,
-              "logDoseOffset": 0.1538380102514736,
-              "tauAirScale": 1.41361537259813
+              "alpha_m2s": 1.5843844425458896e-7,
+              "logDoseOffset": -0.06575450135842488,
+              "tauAirScale": 1.3264782457275446
             },
             {
               "alpha_m2s": 1.5308864623671362e-7,
@@ -4091,14 +4365,14 @@
               "tauAirScale": 1.3658624841017746
             },
             {
-              "alpha_m2s": 1.593886151100211e-7,
-              "logDoseOffset": -0.017783103396262025,
-              "tauAirScale": 1.4177704833431493
+              "alpha_m2s": 1.3808193333077235e-7,
+              "logDoseOffset": 0.002947452655753198,
+              "tauAirScale": 1.9912186626631896
             },
             {
-              "alpha_m2s": 2.1155397717496144e-7,
-              "logDoseOffset": -0.028599617618311646,
-              "tauAirScale": 1.097907166451332
+              "alpha_m2s": 1.6434437371269234e-7,
+              "logDoseOffset": -0.23752541127541496,
+              "tauAirScale": 0.6583148719042691
             },
             {
               "alpha_m2s": 1.5711345674226672e-7,
@@ -4126,14 +4400,14 @@
               "tauAirScale": 1.1290886500191137
             },
             {
-              "alpha_m2s": 1.461335817365458e-7,
-              "logDoseOffset": 0.4201918704597567,
-              "tauAirScale": 0.962614221573206
+              "alpha_m2s": 1.773685250183016e-7,
+              "logDoseOffset": 0.6006283360351198,
+              "tauAirScale": 1.1050744283141403
             },
             {
-              "alpha_m2s": 1.5549493285062622e-7,
-              "logDoseOffset": -0.3057511669103716,
-              "tauAirScale": 1.4645893907398029
+              "alpha_m2s": 1.7842473182925297e-7,
+              "logDoseOffset": -0.22060459486429468,
+              "tauAirScale": 0.5894788564938538
             },
             {
               "alpha_m2s": 1.5277002869662113e-7,
@@ -4141,14 +4415,14 @@
               "tauAirScale": 1.348554412073446
             },
             {
-              "alpha_m2s": 1.6863351546394383e-7,
-              "logDoseOffset": -0.17963969401081106,
-              "tauAirScale": 1.0155046618446135
+              "alpha_m2s": 1.5174316194118626e-7,
+              "logDoseOffset": -0.2982587923455009,
+              "tauAirScale": 1.4095256047398472
             },
             {
-              "alpha_m2s": 1.7326625689753132e-7,
-              "logDoseOffset": 0.1237608155098438,
-              "tauAirScale": 0.8412232804256077
+              "alpha_m2s": 1.9222851325414644e-7,
+              "logDoseOffset": -0.18317832740074283,
+              "tauAirScale": 1.1939417757589732
             },
             {
               "alpha_m2s": 1.7178006601904937e-7,
@@ -4156,19 +4430,19 @@
               "tauAirScale": 0.8389936345481267
             },
             {
-              "alpha_m2s": 1.666303720357463e-7,
-              "logDoseOffset": 0.42217631530840505,
-              "tauAirScale": 1.2816417154686215
+              "alpha_m2s": 1.7687376697178237e-7,
+              "logDoseOffset": 0.12130553864865934,
+              "tauAirScale": 0.8302490342665095
             },
             {
-              "alpha_m2s": 1.4689156926730932e-7,
-              "logDoseOffset": -0.09006930756768058,
-              "tauAirScale": 0.5060619088734685
+              "alpha_m2s": 1.794524578586706e-7,
+              "logDoseOffset": 0.09901884449665949,
+              "tauAirScale": 0.8503208307722783
             },
             {
-              "alpha_m2s": 1.853312303127499e-7,
-              "logDoseOffset": 0.3094109397730101,
-              "tauAirScale": 0.9491565135875201
+              "alpha_m2s": 1.427193276548179e-7,
+              "logDoseOffset": -0.06899092409710936,
+              "tauAirScale": 0.5066644844022653
             },
             {
               "alpha_m2s": 1.877096842505488e-7,
@@ -4251,14 +4525,14 @@
               "tauAirScale": 0.9429793844094884
             },
             {
-              "alpha_m2s": 2.0079708744964659e-7,
-              "logDoseOffset": -0.0902865795064319,
-              "tauAirScale": 0.8910840518964094
+              "alpha_m2s": 1.8783575126486298e-7,
+              "logDoseOffset": 0.322352732139704,
+              "tauAirScale": 0.8805784555686851
             },
             {
-              "alpha_m2s": 1.7922835184046873e-7,
-              "logDoseOffset": -0.6944665563101919,
-              "tauAirScale": 1.357926952431006
+              "alpha_m2s": 1.9067028573061804e-7,
+              "logDoseOffset": -0.28637326488999365,
+              "tauAirScale": 1.0230911269446041
             },
             {
               "alpha_m2s": 1.8324302202492645e-7,
@@ -4271,9 +4545,9 @@
               "tauAirScale": 1.5800549822520946
             },
             {
-              "alpha_m2s": 1.283479513042676e-7,
-              "logDoseOffset": -0.12826547559034146,
-              "tauAirScale": 1.047357793772287
+              "alpha_m2s": 2.0854028782216863e-7,
+              "logDoseOffset": 0.28597741908294133,
+              "tauAirScale": 1.4871674546149192
             },
             {
               "alpha_m2s": 1.7484306013149377e-7,
@@ -4306,9 +4580,9 @@
               "tauAirScale": 1.0580402239504851
             },
             {
-              "alpha_m2s": 1.994366867490144e-7,
-              "logDoseOffset": -0.002712429152456371,
-              "tauAirScale": 1.1765240100357937
+              "alpha_m2s": 1.4827895011291373e-7,
+              "logDoseOffset": 0.062451451052917994,
+              "tauAirScale": 0.3839383755948612
             },
             {
               "alpha_m2s": 1.6399653778708067e-7,
@@ -4321,14 +4595,14 @@
               "tauAirScale": 1.445998720366125
             },
             {
-              "alpha_m2s": 2.0486278281962773e-7,
-              "logDoseOffset": -0.2036071420872835,
-              "tauAirScale": 1.2889262548719491
+              "alpha_m2s": 1.6061907964707188e-7,
+              "logDoseOffset": -0.3122641139682777,
+              "tauAirScale": 1.5373439896281025
             },
             {
-              "alpha_m2s": 1.4808174037286043e-7,
-              "logDoseOffset": 0.2655549201493709,
-              "tauAirScale": 2.017691071414349
+              "alpha_m2s": 1.5637417400078564e-7,
+              "logDoseOffset": -0.03808420614923432,
+              "tauAirScale": 0.87958743092041
             },
             {
               "alpha_m2s": 1.7498825920330105e-7,
@@ -4341,9 +4615,9 @@
               "tauAirScale": 0.936731781495846
             },
             {
-              "alpha_m2s": 1.7851412648456517e-7,
-              "logDoseOffset": -0.1817542564761804,
-              "tauAirScale": 1.243446482865693
+              "alpha_m2s": 1.7743107864863106e-7,
+              "logDoseOffset": 0.17756972519795888,
+              "tauAirScale": 0.9219268974189118
             },
             {
               "alpha_m2s": 1.7206849206263045e-7,
@@ -4370,8 +4644,8 @@
       },
       {
         "spec": {
-          "alphaMin": 9.575268497528118e-8,
-          "alphaMax": 3.1337242355546563e-7,
+          "alphaMin": 9.558261865674968e-8,
+          "alphaMax": 3.128158428766353e-7,
           "alphaCount": 7,
           "timeMin_s": 237.01562499999997,
           "timeMax_s": 1625.25,
@@ -4382,70 +4656,70 @@
           "eggsLogged": 5,
           "rng": 1371971581,
           "weights": [
-            0.016709511568123406,
-            0.012853470437018004,
-            0.016709511568123406,
-            0.016709511568123406,
-            0.016709511568123406,
-            0.016709511568123406,
-            0.016709511568123406,
-            0.016709511568123406,
-            0.016709511568123406,
-            0.016709511568123406,
-            0.016709511568123406,
-            0.016709511568123406,
-            0.016709511568123406,
-            0.016709511568123406,
-            0.016709511568123406,
-            0.016709511568123406,
-            0.016709511568123406,
-            0.016709511568123406,
-            0.016709511568123406,
-            0.012853470437018004,
-            0.016709511568123406,
-            0.016709511568123406,
-            0.016709511568123406,
-            0.016709511568123406,
-            0.016709511568123406,
-            0.016709511568123406,
-            0.016709511568123406,
-            0.016709511568123406,
-            0.016709511568123406,
-            0.016709511568123406,
-            0.016709511568123406,
-            0.012853470437018004,
-            0.012853470437018004,
-            0.012853470437018004,
-            0.012853470437018004,
-            0.016709511568123406,
-            0.016709511568123406,
-            0.016709511568123406,
-            0.016709511568123406,
-            0.016709511568123406,
-            0.016709511568123406,
-            0.016709511568123406,
-            0.012853470437018004,
-            0.012853470437018004,
-            0.012853470437018004,
-            0.016709511568123406,
-            0.016709511568123406,
-            0.016709511568123406,
-            0.016709511568123406,
-            0.016709511568123406,
-            0.016709511568123406,
-            0.008997429305912602,
-            0.008997429305912602,
-            0.008997429305912602,
-            0.016709511568123406,
-            0.016709511568123406,
-            0.016709511568123406,
-            0.016709511568123406,
-            0.016709511568123406,
-            0.012853470437018004,
-            0.012853470437018004,
-            0.012853470437018004,
-            0.016709511568123406,
-            0.016709511568123406
+            0.0163316582914573,
+            0.012562814070351772,
+            0.0163316582914573,
+            0.0163316582914573,
+            0.0163316582914573,
+            0.0163316582914573,
+            0.0163316582914573,
+            0.0163316582914573,
+            0.0163316582914573,
+            0.0163316582914573,
+            0.0163316582914573,
+            0.0163316582914573,
+            0.0163316582914573,
+            0.0163316582914573,
+            0.0163316582914573,
+            0.0163316582914573,
+            0.0163316582914573,
+            0.0163316582914573,
+            0.0163316582914573,
+            0.012562814070351772,
+            0.012562814070351772,
+            0.00879396984924624,
+            0.012562814070351772,
+            0.0163316582914573,
+            0.0163316582914573,
+            0.0163316582914573,
+            0.0163316582914573,
+            0.0163316582914573,
+            0.0163316582914573,
+            0.0163316582914573,
+            0.0163316582914573,
+            0.0163316582914573,
+            0.0163316582914573,
+            0.0163316582914573,
+            0.012562814070351772,
+            0.0163316582914573,
+            0.0163316582914573,
+            0.0163316582914573,
+            0.0163316582914573,
+            0.0163316582914573,
+            0.012562814070351772,
+            0.012562814070351772,
+            0.012562814070351772,
+            0.0163316582914573,
+            0.0163316582914573,
+            0.0163316582914573,
+            0.0163316582914573,
+            0.0163316582914573,
+            0.0163316582914573,
+            0.0163316582914573,
+            0.0163316582914573,
+            0.0163316582914573,
+            0.0163316582914573,
+            0.012562814070351772,
+            0.012562814070351772,
+            0.0163316582914573,
+            0.0163316582914573,
+            0.0163316582914573,
+            0.0163316582914573,
+            0.0163316582914573,
+            0.0163316582914573,
+            0.0163316582914573,
+            0.0163316582914573,
+            0.0163316582914573
           ],
           "particles": [
             {
@@ -4524,19 +4798,19 @@
               "tauAirScale": 0.8813673430838816
             },
             {
-              "alpha_m2s": 1.584430330889867e-7,
-              "logDoseOffset": 0.16894127394335431,
-              "tauAirScale": 1.4251780753873262
+              "alpha_m2s": 1.602810059185157e-7,
+              "logDoseOffset": -0.050651237666544155,
+              "tauAirScale": 1.3373282081777211
             },
             {
-              "alpha_m2s": 1.6094486432915271e-7,
-              "logDoseOffset": 0.14609077456509503,
-              "tauAirScale": 1.4176524960564065
+              "alpha_m2s": 1.628118589323365e-7,
+              "logDoseOffset": -0.07350173704480344,
+              "tauAirScale": 1.330266515540201
             },
             {
-              "alpha_m2s": 1.519181126530468e-7,
-              "logDoseOffset": 0.14824557025210455,
-              "tauAirScale": 1.326554246616663
+              "alpha_m2s": 1.5368039501993888e-7,
+              "logDoseOffset": -0.0713469413577939,
+              "tauAirScale": 1.2447836830469563
             },
             {
               "alpha_m2s": 1.5692790588716922e-7,
@@ -4549,19 +4823,19 @@
               "tauAirScale": 1.422259776899749
             },
             {
-              "alpha_m2s": 1.5904393621351137e-7,
-              "logDoseOffset": 0.00045792217975614696,
-              "tauAirScale": 1.4336771229068819
+              "alpha_m2s": 1.3778333026947135e-7,
+              "logDoseOffset": 0.02118847823177137,
+              "tauAirScale": 2.0135590893624915
             },
             {
-              "alpha_m2s": 1.5420352560659734e-7,
-              "logDoseOffset": -0.027257406881233032,
-              "tauAirScale": 1.4263562330964084
+              "alpha_m2s": 1.3358997396070294e-7,
+              "logDoseOffset": -0.00652685082921781,
+              "tauAirScale": 2.0032771060731074
             },
             {
-              "alpha_m2s": 1.611446626564447e-7,
-              "logDoseOffset": -0.013349166597191087,
-              "tauAirScale": 1.3825378966413278
+              "alpha_m2s": 1.396032367191201e-7,
+              "logDoseOffset": 0.007381389454824136,
+              "tauAirScale": 1.9417354882010327
             },
             {
               "alpha_m2s": 1.569890849595313e-7,
@@ -4604,44 +4878,44 @@
               "tauAirScale": 1.0776935286365692
             },
             {
-              "alpha_m2s": 1.4120912375372327e-7,
-              "logDoseOffset": 0.412976183492335,
-              "tauAirScale": 0.9483293752398927
+              "alpha_m2s": 1.7139150154054614e-7,
+              "logDoseOffset": 0.5934126490676981,
+              "tauAirScale": 1.0886755241201604
             },
             {
-              "alpha_m2s": 1.4822764751616876e-7,
-              "logDoseOffset": 0.4063633018979002,
-              "tauAirScale": 0.9812511731364332
+              "alpha_m2s": 1.7991018145489422e-7,
+              "logDoseOffset": 0.5867997674732633,
+              "tauAirScale": 1.1264695190292895
             },
             {
-              "alpha_m2s": 1.4633532914381565e-7,
-              "logDoseOffset": 0.425961435506144,
-              "tauAirScale": 0.9797283813562407
+              "alpha_m2s": 1.7761339440170063e-7,
+              "logDoseOffset": 0.606397901081507,
+              "tauAirScale": 1.1247213646615022
             },
             {
-              "alpha_m2s": 1.4952531045830234e-7,
-              "logDoseOffset": -0.30735267028772295,
-              "tauAirScale": 1.4603740027407996
+              "alpha_m2s": 1.46905018387511e-7,
+              "logDoseOffset": -0.3173969942319692,
+              "tauAirScale": 1.3446729964899384
             },
             {
-              "alpha_m2s": 1.6241088314240277e-7,
-              "logDoseOffset": -0.32614566942279777,
-              "tauAirScale": 1.3918116504721445
+              "alpha_m2s": 1.595647833884288e-7,
+              "logDoseOffset": -0.336189993367044,
+              "tauAirScale": 1.281542631598162
             },
             {
-              "alpha_m2s": 1.52907269569506e-7,
-              "logDoseOffset": -0.3058248788251684,
-              "tauAirScale": 1.350229973309575
+              "alpha_m2s": 1.518794803288752e-7,
+              "logDoseOffset": -0.28828818031605147,
+              "tauAirScale": 1.4112769218861847
             },
             {
-              "alpha_m2s": 1.5547709940411227e-7,
-              "logDoseOffset": -0.3162905846819461,
-              "tauAirScale": 1.383475340143533
+              "alpha_m2s": 1.5443203666522533e-7,
+              "logDoseOffset": -0.29875388617282916,
+              "tauAirScale": 1.4460253868883373
             },
             {
-              "alpha_m2s": 1.5814586982104086e-7,
-              "logDoseOffset": -0.29255067309254784,
-              "tauAirScale": 1.3399319745962082
+              "alpha_m2s": 1.57082868539873e-7,
+              "logDoseOffset": -0.2750139745834309,
+              "tauAirScale": 1.4005133273777877
             },
             {
               "alpha_m2s": 1.739767745457016e-7,
@@ -4649,119 +4923,119 @@
               "tauAirScale": 0.7989731756678857
             },
             {
-              "alpha_m2s": 1.6708406090109757e-7,
-              "logDoseOffset": 0.42620150673062274,
-              "tauAirScale": 1.2611446744598773
+              "alpha_m2s": 1.4310791329521675e-7,
+              "logDoseOffset": -0.06496573267489167,
+              "tauAirScale": 0.49856150008993727
             },
             {
-              "alpha_m2s": 1.6739506847476393e-7,
-              "logDoseOffset": 0.43676773903123756,
-              "tauAirScale": 1.340665109902497
+              "alpha_m2s": 1.4337429205478463e-7,
+              "logDoseOffset": -0.054399500374276835,
+              "tauAirScale": 0.5299978835477328
             },
             {
-              "alpha_m2s": 1.4596588028769753e-7,
-              "logDoseOffset": -0.08718516956157202,
-              "tauAirScale": 0.528769570346377
+              "alpha_m2s": 1.4181993152577762e-7,
+              "logDoseOffset": -0.06610678609100079,
+              "tauAirScale": 0.5293991842293353
             },
             {
-              "alpha_m2s": 1.4839965788011157e-7,
-              "logDoseOffset": -0.07360003937054752,
-              "tauAirScale": 0.4845939173939456
+              "alpha_m2s": 1.8783977610150292e-7,
+              "logDoseOffset": 0.3237956940637716,
+              "tauAirScale": 0.9019687823809781
             },
             {
-              "alpha_m2s": 1.4279280641394372e-7,
-              "logDoseOffset": -0.09831668597793493,
-              "tauAirScale": 0.5186863087416208
+              "alpha_m2s": 1.8082375892997034e-7,
+              "logDoseOffset": 0.2902732654492745,
+              "tauAirScale": 0.9894970964797632
             },
             {
-              "alpha_m2s": 1.856127653949289e-7,
-              "logDoseOffset": 0.306883369785682,
-              "tauAirScale": 0.9498149400146775
+              "alpha_m2s": 1.7780392024664466e-7,
+              "logDoseOffset": 0.3199535387678379,
+              "tauAirScale": 0.9099115068344179
             },
             {
-              "alpha_m2s": 1.838998869781168e-7,
-              "logDoseOffset": 0.3009281387738167,
-              "tauAirScale": 0.927022059539353
+              "alpha_m2s": 1.8143928064408554e-7,
+              "logDoseOffset": 0.32408234968508043,
+              "tauAirScale": 0.9744604322838807
             },
             {
-              "alpha_m2s": 1.781582536186366e-7,
-              "logDoseOffset": 0.3002868704129996,
-              "tauAirScale": 0.9005226208631282
+              "alpha_m2s": 1.8383859288592215e-7,
+              "logDoseOffset": 0.3065087224827868,
+              "tauAirScale": 0.9261424673616461
             },
             {
-              "alpha_m2s": 1.858514291645599e-7,
-              "logDoseOffset": 0.31768406968563906,
-              "tauAirScale": 0.9426793942401839
+              "alpha_m2s": 1.8387317279327318e-7,
+              "logDoseOffset": 0.15605066402957823,
+              "tauAirScale": 1.5223842561251146
             },
             {
-              "alpha_m2s": 1.788544822607983e-7,
-              "logDoseOffset": 0.29754322156164265,
-              "tauAirScale": 0.8804342071271788
+              "alpha_m2s": 1.7503538920411328e-7,
+              "logDoseOffset": 0.0015914911096805097,
+              "tauAirScale": 2.115698507945545
             },
             {
-              "alpha_m2s": 1.7769161172731378e-7,
-              "logDoseOffset": -0.669904953419953,
-              "tauAirScale": 1.3216548637196492
+              "alpha_m2s": 1.7035790922448616e-7,
+              "logDoseOffset": 0.051141141985977336,
+              "tauAirScale": 0.885319515273061
             },
             {
-              "alpha_m2s": 1.298284222020344e-7,
-              "logDoseOffset": -0.16923339232902931,
-              "tauAirScale": 1.0451022335622522
+              "alpha_m2s": 1.6907145586681956e-7,
+              "logDoseOffset": 0.08479844767889622,
+              "tauAirScale": 1.0316552439672084
             },
             {
-              "alpha_m2s": 1.2594785753944664e-7,
-              "logDoseOffset": -0.13070935125861816,
-              "tauAirScale": 1.0159810408351015
+              "alpha_m2s": 1.6401791900670078e-7,
+              "logDoseOffset": 0.12332248874930736,
+              "tauAirScale": 1.002908744129444
             },
             {
-              "alpha_m2s": 1.2381106620120772e-7,
-              "logDoseOffset": -0.13619601680262275,
-              "tauAirScale": 1.050959980138558
+              "alpha_m2s": 1.4303753758526192e-7,
+              "logDoseOffset": 0.05452090984063669,
+              "tauAirScale": 0.3852588580415281
             },
             {
-              "alpha_m2s": 1.7490146622271734e-7,
-              "logDoseOffset": 0.04294701978364298,
-              "tauAirScale": 0.9100202703453617
+              "alpha_m2s": 1.4967828324297518e-7,
+              "logDoseOffset": 0.0699050823443114,
+              "tauAirScale": 0.39121725361540477
             },
             {
-              "alpha_m2s": 1.709158502216116e-7,
-              "logDoseOffset": 0.1451176757418062,
-              "tauAirScale": 1.044374470884249
+              "alpha_m2s": 1.5162554960019983e-7,
+              "logDoseOffset": 0.08180276237714014,
+              "tauAirScale": 0.3878349000869851
             },
             {
-              "alpha_m2s": 1.660681186301847e-7,
-              "logDoseOffset": 0.12042448442544344,
-              "tauAirScale": 1.0198301323864694
+              "alpha_m2s": 1.6092181077554934e-7,
+              "logDoseOffset": -0.33378246087641417,
+              "tauAirScale": 1.426345923888069
             },
             {
-              "alpha_m2s": 1.7437754307638317e-7,
-              "logDoseOffset": 0.13077605117309196,
-              "tauAirScale": 1.0376283514059927
+              "alpha_m2s": 1.6757075767052767e-7,
+              "logDoseOffset": -0.3072544272127698,
+              "tauAirScale": 1.5429149989081357
             },
             {
-              "alpha_m2s": 1.6378941018149707e-7,
-              "logDoseOffset": -0.29125524362334737,
-              "tauAirScale": 1.4271358364279427
+              "alpha_m2s": 1.6242947955984655e-7,
+              "logDoseOffset": -0.27507877670735154,
+              "tauAirScale": 1.5172895173516163
             },
             {
-              "alpha_m2s": 1.4834372724125143e-7,
-              "logDoseOffset": 0.2874318215158003,
-              "tauAirScale": 2.061513444120813
+              "alpha_m2s": 1.5665083187933665e-7,
+              "logDoseOffset": -0.016207304782804886,
+              "tauAirScale": 0.8986912515061334
             },
             {
-              "alpha_m2s": 1.4363781326613263e-7,
-              "logDoseOffset": 0.289920541459473,
-              "tauAirScale": 2.117011594457346
+              "alpha_m2s": 1.516813912925023e-7,
+              "logDoseOffset": -0.0137185848391322,
+              "tauAirScale": 0.9228849827303726
             },
             {
-              "alpha_m2s": 1.466222885946546e-7,
-              "logDoseOffset": 0.26755010102195576,
-              "tauAirScale": 2.005840590056563
+              "alpha_m2s": 1.5483299434057723e-7,
+              "logDoseOffset": -0.03608902527664943,
+              "tauAirScale": 0.8744213603557232
             },
             {
-              "alpha_m2s": 1.8367601915420616e-7,
-              "logDoseOffset": -0.17089228152329838,
-              "tauAirScale": 1.1953386917713027
+              "alpha_m2s": 1.825616540393806e-7,
+              "logDoseOffset": 0.1884317001508409,
+              "tauAirScale": 0.886258400868008
             },
             {
               "alpha_m2s": 1.831967200519262e-7,
@@ -5170,70 +5444,70 @@
         "eggsLogged": 5,
         "rng": 1371971581,
         "weights": [
-          0.016709511568123406,
-          0.012853470437018004,
-          0.016709511568123406,
-          0.016709511568123406,
-          0.016709511568123406,
-          0.016709511568123406,
-          0.016709511568123406,
-          0.016709511568123406,
-          0.016709511568123406,
-          0.016709511568123406,
-          0.016709511568123406,
-          0.016709511568123406,
-          0.016709511568123406,
-          0.016709511568123406,
-          0.016709511568123406,
-          0.016709511568123406,
-          0.016709511568123406,
-          0.016709511568123406,
-          0.016709511568123406,
-          0.012853470437018004,
-          0.016709511568123406,
-          0.016709511568123406,
-          0.016709511568123406,
-          0.016709511568123406,
-          0.016709511568123406,
-          0.016709511568123406,
-          0.016709511568123406,
-          0.016709511568123406,
-          0.016709511568123406,
-          0.016709511568123406,
-          0.016709511568123406,
-          0.012853470437018004,
-          0.012853470437018004,
-          0.012853470437018004,
-          0.012853470437018004,
-          0.016709511568123406,
-          0.016709511568123406,
-          0.016709511568123406,
-          0.016709511568123406,
-          0.016709511568123406,
-          0.016709511568123406,
-          0.016709511568123406,
-          0.012853470437018004,
-          0.012853470437018004,
-          0.012853470437018004,
-          0.016709511568123406,
-          0.016709511568123406,
-          0.016709511568123406,
-          0.016709511568123406,
-          0.016709511568123406,
-          0.016709511568123406,
-          0.008997429305912602,
-          0.008997429305912602,
-          0.008997429305912602,
-          0.016709511568123406,
-          0.016709511568123406,
-          0.016709511568123406,
-          0.016709511568123406,
-          0.016709511568123406,
-          0.012853470437018004,
-          0.012853470437018004,
-          0.012853470437018004,
-          0.016709511568123406,
-          0.016709511568123406
+          0.0163316582914573,
+          0.012562814070351772,
+          0.0163316582914573,
+          0.0163316582914573,
+          0.0163316582914573,
+          0.0163316582914573,
+          0.0163316582914573,
+          0.0163316582914573,
+          0.0163316582914573,
+          0.0163316582914573,
+          0.0163316582914573,
+          0.0163316582914573,
+          0.0163316582914573,
+          0.0163316582914573,
+          0.0163316582914573,
+          0.0163316582914573,
+          0.0163316582914573,
+          0.0163316582914573,
+          0.0163316582914573,
+          0.012562814070351772,
+          0.012562814070351772,
+          0.00879396984924624,
+          0.012562814070351772,
+          0.0163316582914573,
+          0.0163316582914573,
+          0.0163316582914573,
+          0.0163316582914573,
+          0.0163316582914573,
+          0.0163316582914573,
+          0.0163316582914573,
+          0.0163316582914573,
+          0.0163316582914573,
+          0.0163316582914573,
+          0.0163316582914573,
+          0.012562814070351772,
+          0.0163316582914573,
+          0.0163316582914573,
+          0.0163316582914573,
+          0.0163316582914573,
+          0.0163316582914573,
+          0.012562814070351772,
+          0.012562814070351772,
+          0.012562814070351772,
+          0.0163316582914573,
+          0.0163316582914573,
+          0.0163316582914573,
+          0.0163316582914573,
+          0.0163316582914573,
+          0.0163316582914573,
+          0.0163316582914573,
+          0.0163316582914573,
+          0.0163316582914573,
+          0.0163316582914573,
+          0.012562814070351772,
+          0.012562814070351772,
+          0.0163316582914573,
+          0.0163316582914573,
+          0.0163316582914573,
+          0.0163316582914573,
+          0.0163316582914573,
+          0.0163316582914573,
+          0.0163316582914573,
+          0.0163316582914573,
+          0.0163316582914573
         ],
         "particles": [
           {
@@ -5312,19 +5586,19 @@
             "tauAirScale": 0.8813673430838816
           },
           {
-            "alpha_m2s": 1.584430330889867e-7,
-            "logDoseOffset": 0.16894127394335431,
-            "tauAirScale": 1.4251780753873262
+            "alpha_m2s": 1.602810059185157e-7,
+            "logDoseOffset": -0.050651237666544155,
+            "tauAirScale": 1.3373282081777211
           },
           {
-            "alpha_m2s": 1.6094486432915271e-7,
-            "logDoseOffset": 0.14609077456509503,
-            "tauAirScale": 1.4176524960564065
+            "alpha_m2s": 1.628118589323365e-7,
+            "logDoseOffset": -0.07350173704480344,
+            "tauAirScale": 1.330266515540201
           },
           {
-            "alpha_m2s": 1.519181126530468e-7,
-            "logDoseOffset": 0.14824557025210455,
-            "tauAirScale": 1.326554246616663
+            "alpha_m2s": 1.5368039501993888e-7,
+            "logDoseOffset": -0.0713469413577939,
+            "tauAirScale": 1.2447836830469563
           },
           {
             "alpha_m2s": 1.5692790588716922e-7,
@@ -5337,19 +5611,19 @@
             "tauAirScale": 1.422259776899749
           },
           {
-            "alpha_m2s": 1.5904393621351137e-7,
-            "logDoseOffset": 0.00045792217975614696,
-            "tauAirScale": 1.4336771229068819
+            "alpha_m2s": 1.3778333026947135e-7,
+            "logDoseOffset": 0.02118847823177137,
+            "tauAirScale": 2.0135590893624915
           },
           {
-            "alpha_m2s": 1.5420352560659734e-7,
-            "logDoseOffset": -0.027257406881233032,
-            "tauAirScale": 1.4263562330964084
+            "alpha_m2s": 1.3358997396070294e-7,
+            "logDoseOffset": -0.00652685082921781,
+            "tauAirScale": 2.0032771060731074
           },
           {
-            "alpha_m2s": 1.611446626564447e-7,
-            "logDoseOffset": -0.013349166597191087,
-            "tauAirScale": 1.3825378966413278
+            "alpha_m2s": 1.396032367191201e-7,
+            "logDoseOffset": 0.007381389454824136,
+            "tauAirScale": 1.9417354882010327
           },
           {
             "alpha_m2s": 1.569890849595313e-7,
@@ -5392,44 +5666,44 @@
             "tauAirScale": 1.0776935286365692
           },
           {
-            "alpha_m2s": 1.4120912375372327e-7,
-            "logDoseOffset": 0.412976183492335,
-            "tauAirScale": 0.9483293752398927
+            "alpha_m2s": 1.7139150154054614e-7,
+            "logDoseOffset": 0.5934126490676981,
+            "tauAirScale": 1.0886755241201604
           },
           {
-            "alpha_m2s": 1.4822764751616876e-7,
-            "logDoseOffset": 0.4063633018979002,
-            "tauAirScale": 0.9812511731364332
+            "alpha_m2s": 1.7991018145489422e-7,
+            "logDoseOffset": 0.5867997674732633,
+            "tauAirScale": 1.1264695190292895
           },
           {
-            "alpha_m2s": 1.4633532914381565e-7,
-            "logDoseOffset": 0.425961435506144,
-            "tauAirScale": 0.9797283813562407
+            "alpha_m2s": 1.7761339440170063e-7,
+            "logDoseOffset": 0.606397901081507,
+            "tauAirScale": 1.1247213646615022
           },
           {
-            "alpha_m2s": 1.4952531045830234e-7,
-            "logDoseOffset": -0.30735267028772295,
-            "tauAirScale": 1.4603740027407996
+            "alpha_m2s": 1.46905018387511e-7,
+            "logDoseOffset": -0.3173969942319692,
+            "tauAirScale": 1.3446729964899384
           },
           {
-            "alpha_m2s": 1.6241088314240277e-7,
-            "logDoseOffset": -0.32614566942279777,
-            "tauAirScale": 1.3918116504721445
+            "alpha_m2s": 1.595647833884288e-7,
+            "logDoseOffset": -0.336189993367044,
+            "tauAirScale": 1.281542631598162
           },
           {
-            "alpha_m2s": 1.52907269569506e-7,
-            "logDoseOffset": -0.3058248788251684,
-            "tauAirScale": 1.350229973309575
+            "alpha_m2s": 1.518794803288752e-7,
+            "logDoseOffset": -0.28828818031605147,
+            "tauAirScale": 1.4112769218861847
           },
           {
-            "alpha_m2s": 1.5547709940411227e-7,
-            "logDoseOffset": -0.3162905846819461,
-            "tauAirScale": 1.383475340143533
+            "alpha_m2s": 1.5443203666522533e-7,
+            "logDoseOffset": -0.29875388617282916,
+            "tauAirScale": 1.4460253868883373
           },
           {
-            "alpha_m2s": 1.5814586982104086e-7,
-            "logDoseOffset": -0.29255067309254784,
-            "tauAirScale": 1.3399319745962082
+            "alpha_m2s": 1.57082868539873e-7,
+            "logDoseOffset": -0.2750139745834309,
+            "tauAirScale": 1.4005133273777877
           },
           {
             "alpha_m2s": 1.739767745457016e-7,
@@ -5437,119 +5711,119 @@
             "tauAirScale": 0.7989731756678857
           },
           {
-            "alpha_m2s": 1.6708406090109757e-7,
-            "logDoseOffset": 0.42620150673062274,
-            "tauAirScale": 1.2611446744598773
+            "alpha_m2s": 1.4310791329521675e-7,
+            "logDoseOffset": -0.06496573267489167,
+            "tauAirScale": 0.49856150008993727
           },
           {
-            "alpha_m2s": 1.6739506847476393e-7,
-            "logDoseOffset": 0.43676773903123756,
-            "tauAirScale": 1.340665109902497
+            "alpha_m2s": 1.4337429205478463e-7,
+            "logDoseOffset": -0.054399500374276835,
+            "tauAirScale": 0.5299978835477328
           },
           {
-            "alpha_m2s": 1.4596588028769753e-7,
-            "logDoseOffset": -0.08718516956157202,
-            "tauAirScale": 0.528769570346377
+            "alpha_m2s": 1.4181993152577762e-7,
+            "logDoseOffset": -0.06610678609100079,
+            "tauAirScale": 0.5293991842293353
           },
           {
-            "alpha_m2s": 1.4839965788011157e-7,
-            "logDoseOffset": -0.07360003937054752,
-            "tauAirScale": 0.4845939173939456
+            "alpha_m2s": 1.8783977610150292e-7,
+            "logDoseOffset": 0.3237956940637716,
+            "tauAirScale": 0.9019687823809781
           },
           {
-            "alpha_m2s": 1.4279280641394372e-7,
-            "logDoseOffset": -0.09831668597793493,
-            "tauAirScale": 0.5186863087416208
+            "alpha_m2s": 1.8082375892997034e-7,
+            "logDoseOffset": 0.2902732654492745,
+            "tauAirScale": 0.9894970964797632
           },
           {
-            "alpha_m2s": 1.856127653949289e-7,
-            "logDoseOffset": 0.306883369785682,
-            "tauAirScale": 0.9498149400146775
+            "alpha_m2s": 1.7780392024664466e-7,
+            "logDoseOffset": 0.3199535387678379,
+            "tauAirScale": 0.9099115068344179
           },
           {
-            "alpha_m2s": 1.838998869781168e-7,
-            "logDoseOffset": 0.3009281387738167,
-            "tauAirScale": 0.927022059539353
+            "alpha_m2s": 1.8143928064408554e-7,
+            "logDoseOffset": 0.32408234968508043,
+            "tauAirScale": 0.9744604322838807
           },
           {
-            "alpha_m2s": 1.781582536186366e-7,
-            "logDoseOffset": 0.3002868704129996,
-            "tauAirScale": 0.9005226208631282
+            "alpha_m2s": 1.8383859288592215e-7,
+            "logDoseOffset": 0.3065087224827868,
+            "tauAirScale": 0.9261424673616461
           },
           {
-            "alpha_m2s": 1.858514291645599e-7,
-            "logDoseOffset": 0.31768406968563906,
-            "tauAirScale": 0.9426793942401839
+            "alpha_m2s": 1.8387317279327318e-7,
+            "logDoseOffset": 0.15605066402957823,
+            "tauAirScale": 1.5223842561251146
           },
           {
-            "alpha_m2s": 1.788544822607983e-7,
-            "logDoseOffset": 0.29754322156164265,
-            "tauAirScale": 0.8804342071271788
+            "alpha_m2s": 1.7503538920411328e-7,
+            "logDoseOffset": 0.0015914911096805097,
+            "tauAirScale": 2.115698507945545
           },
           {
-            "alpha_m2s": 1.7769161172731378e-7,
-            "logDoseOffset": -0.669904953419953,
-            "tauAirScale": 1.3216548637196492
+            "alpha_m2s": 1.7035790922448616e-7,
+            "logDoseOffset": 0.051141141985977336,
+            "tauAirScale": 0.885319515273061
           },
           {
-            "alpha_m2s": 1.298284222020344e-7,
-            "logDoseOffset": -0.16923339232902931,
-            "tauAirScale": 1.0451022335622522
+            "alpha_m2s": 1.6907145586681956e-7,
+            "logDoseOffset": 0.08479844767889622,
+            "tauAirScale": 1.0316552439672084
           },
           {
-            "alpha_m2s": 1.2594785753944664e-7,
-            "logDoseOffset": -0.13070935125861816,
-            "tauAirScale": 1.0159810408351015
+            "alpha_m2s": 1.6401791900670078e-7,
+            "logDoseOffset": 0.12332248874930736,
+            "tauAirScale": 1.002908744129444
           },
           {
-            "alpha_m2s": 1.2381106620120772e-7,
-            "logDoseOffset": -0.13619601680262275,
-            "tauAirScale": 1.050959980138558
+            "alpha_m2s": 1.4303753758526192e-7,
+            "logDoseOffset": 0.05452090984063669,
+            "tauAirScale": 0.3852588580415281
           },
           {
-            "alpha_m2s": 1.7490146622271734e-7,
-            "logDoseOffset": 0.04294701978364298,
-            "tauAirScale": 0.9100202703453617
+            "alpha_m2s": 1.4967828324297518e-7,
+            "logDoseOffset": 0.0699050823443114,
+            "tauAirScale": 0.39121725361540477
           },
           {
-            "alpha_m2s": 1.709158502216116e-7,
-            "logDoseOffset": 0.1451176757418062,
-            "tauAirScale": 1.044374470884249
+            "alpha_m2s": 1.5162554960019983e-7,
+            "logDoseOffset": 0.08180276237714014,
+            "tauAirScale": 0.3878349000869851
           },
           {
-            "alpha_m2s": 1.660681186301847e-7,
-            "logDoseOffset": 0.12042448442544344,
-            "tauAirScale": 1.0198301323864694
+            "alpha_m2s": 1.6092181077554934e-7,
+            "logDoseOffset": -0.33378246087641417,
+            "tauAirScale": 1.426345923888069
           },
           {
-            "alpha_m2s": 1.7437754307638317e-7,
-            "logDoseOffset": 0.13077605117309196,
-            "tauAirScale": 1.0376283514059927
+            "alpha_m2s": 1.6757075767052767e-7,
+            "logDoseOffset": -0.3072544272127698,
+            "tauAirScale": 1.5429149989081357
           },
           {
-            "alpha_m2s": 1.6378941018149707e-7,
-            "logDoseOffset": -0.29125524362334737,
-            "tauAirScale": 1.4271358364279427
+            "alpha_m2s": 1.6242947955984655e-7,
+            "logDoseOffset": -0.27507877670735154,
+            "tauAirScale": 1.5172895173516163
           },
           {
-            "alpha_m2s": 1.4834372724125143e-7,
-            "logDoseOffset": 0.2874318215158003,
-            "tauAirScale": 2.061513444120813
+            "alpha_m2s": 1.5665083187933665e-7,
+            "logDoseOffset": -0.016207304782804886,
+            "tauAirScale": 0.8986912515061334
           },
           {
-            "alpha_m2s": 1.4363781326613263e-7,
-            "logDoseOffset": 0.289920541459473,
-            "tauAirScale": 2.117011594457346
+            "alpha_m2s": 1.516813912925023e-7,
+            "logDoseOffset": -0.0137185848391322,
+            "tauAirScale": 0.9228849827303726
           },
           {
-            "alpha_m2s": 1.466222885946546e-7,
-            "logDoseOffset": 0.26755010102195576,
-            "tauAirScale": 2.005840590056563
+            "alpha_m2s": 1.5483299434057723e-7,
+            "logDoseOffset": -0.03608902527664943,
+            "tauAirScale": 0.8744213603557232
           },
           {
-            "alpha_m2s": 1.8367601915420616e-7,
-            "logDoseOffset": -0.17089228152329838,
-            "tauAirScale": 1.1953386917713027
+            "alpha_m2s": 1.825616540393806e-7,
+            "logDoseOffset": 0.1884317001508409,
+            "tauAirScale": 0.886258400868008
           },
           {
             "alpha_m2s": 1.831967200519262e-7,
