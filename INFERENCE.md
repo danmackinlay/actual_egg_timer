@@ -2,8 +2,9 @@
 
 A design, not a record and not a state. Three parts are built: the record in
 §4 (E1, 26 September 2026), whose schema below is now the one the code writes,
-and the ordered probit and the white offset of §3 (E2 and E3, 27 September),
-whose numbers are in §3's "Built" paragraph. Nothing else is. The checklist
+the ordered probit and the white offset of §3 (E2 and E3, 27 September),
+whose numbers are in §3's "Built" paragraph, and the thermometer of §5 (E4,
+27 September), whose numbers are in §5's. Nothing else is. The checklist
 that tracks it is Phase E in `PLAN.md`; the two measurements it rests on are in
 `LOGBOOK.md` (21 September 2026) and can be re-run with `npm run rank` and
 `npm run probe`.
@@ -188,9 +189,10 @@ Measured, in `test/infer.test.ts`:
   time-scale is other evidence - yolk answers, the thermometer (E4), other cooks
   (E7) - and a recommendation made from the posterior rather than its mean (E5).
 
-**A thermometer reading**, for cooks who own a probe (§5): Gaussian on the centre
-temperature, sd about 1.5 C, with a small hot skew because every handling error
-reads hot.
+**A thermometer reading**, for cooks who own a probe (§5). Sketched here as a
+Gaussian, sd about 1.5 C, with a small hot skew; built (E4) as a Gaussian of
+1.0 C with a COLD one-sided tail, because at the moment it is read every
+handling error reads low. §5 has why and the numbers.
 
 ## 4. The record: keep the observation, not only the posterior
 
@@ -276,6 +278,14 @@ held to `EggTimerCore/Record.swift` by `fixtures/record.json`.
   `boiling_C` is a one-to-one function of the altitude setting, so it carries
   everything the altitude would, and the altitude itself is not recorded.
 - `uid` is `null` until E6 mints one. `mass_g` is rounded to 0.01 g.
+- `probe` (E4) is `null`, or `{ "centre_C": 64.2, "after_s": 183 }`: the
+  highest number the cook saw with the probe at the middle, in C to 0.01
+  whatever they typed it in, and when the app asked for it - the end of the
+  counted cooling - in seconds after the moment the record scores as the pull
+  (`null` if not known). The loader refuses a reading colder than the coldest
+  thing the egg touched (the fridge, the room or the cooling water) or hotter
+  than `boiling_C`. A record with only a reading still teaches. `cooled_s` is
+  now the cook's own countdown to its peak, not a flat 180.
 
 **The posterior is a function of the log.** Both apps fold an egg FROM ITS
 RECORD - the egg rebuilt from `mass_g`, the pan from `setup`, the target from
@@ -343,6 +353,54 @@ The flow, in the words a cook would see: *"Got a probe thermometer? When the
 timer says, push it to the middle of the egg and tell us the lowest number you
 see."* Seeking the minimum is self-centring, since the centre is the coldest
 point.
+
+**Built (E4, 27 September), and what settled.** `src/core/infer.ts`
+(`probeLikelihood`), held to `Infer.swift` by `fixtures/probe.json`.
+
+- **"Lowest" became "highest", and the skew went cold.** The centre is the
+  coldest point while the egg COOKS. At the moment it peaks, after the pull,
+  it is the warmest: `npm run probe` now prints the ice bath's field there -
+  58.8 C at the centre, 58.6 at 0.2 R, 55.7 at 0.4 R; 56.3 C a minute early,
+  56.8 C a minute late. So a probe off-centre, a reading late or early, a probe
+  still climbing from room temperature, and a stem drawing heat out through a
+  cold white all read LOW, and nothing reads high. Seeking the maximum is what
+  is self-centring there, and self-settling. The offer now says *"...tell us
+  the highest number you see."* - one word from the draft; the owner may want
+  it back, and it is one catalogue entry (`probe.offer`).
+- **The likelihood** is the density of `reading = peak + e - h`: `e` the
+  thermometer, Gaussian, sd 1.0 C; `h` the handling, exponential, mean 0.4 C
+  (the table above: a few millimetres and a quarter to half a minute). Total sd
+  1.08 C, not 1.5: at the peak the handling error is measured and small, so
+  the thermometer is what is left. 2% of readings are unrelated, uniform over
+  60 C, so none scores a particle below 3.3e-4 per degree; the apps also refuse
+  at entry anything outside three prior sds of the time-scale, +-3 C
+  (47.6-81.7 C for the default egg at jammy).
+- **The peak comes off the dose grid**, as the doses do: `peakYolk_C` per
+  (alpha, cook time) cell, interpolated bilinearly, within 0.1 C of a direct
+  simulation. The grid is built at the posterior's mean `tauAirScale`, so on
+  the counter a reading would load everything onto alpha; the counter is not
+  offered the probe (below).
+- **One fold per egg**: the reading is a third optional input beside the two
+  answers, multiplied in, and an app that hears it before or after an answer
+  folds the egg again from the posterior before it. In Chromium the stored
+  posterior after a reading and then an answer was string-identical to a
+  replay of the log.
+- **Measured** (`test/probe.test.ts`, default egg, jammy, ice, the app's
+  grid): one reading at -1 / 0 / +1 C of the truth takes the time-scale sd
+  from 12.5% to 2.74 / 2.74 / 2.79% in the weights - the ~2.5% above, less a
+  little for the tail - and to 3.28 / 3.33 / 3.52% once the filter has
+  resampled, because its jitter is a fixed 2% on alpha. A kitchen 10% fast is
+  found at x1.10 from one reading. +1 C shortens the next jammy cook by 15 s,
+  -1 C lengthens it by 5 s (the asymmetry is the cold tail: a reading at the
+  peak already looks slightly hot).
+- **When**: the counted cooling now ends at `peakYolkTime_s` for the cook as
+  solved (old item 4), so the countdown's end, its alarm and the reading are
+  one moment. The probe is offered only where that moment exists: an ice bath
+  or a tap, with the peak after the pull. Not on the counter, where nothing is
+  counted, the peak is nine minutes out and `tauAirScale` is in it; not with
+  the heat off when the pan ran out before the pull.
+- **Not settled**: whether real cooks' readings sit where this says. No egg
+  has been probed.
 
 ## 6. Unreliable answers, and hostile ones
 
