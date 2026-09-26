@@ -13,6 +13,10 @@ struct ContentView: View {
     @State private var cook = Cook()
     @State private var showPan = false
     @State private var confirmReset = false
+    /// The probe reading as typed, in the cook's units, and what was said
+    /// back about it (E4).
+    @State private var probeText = ""
+    @State private var probeNote = ""
 
     var body: some View {
         // One clock read for everything outside the timeline. `cook.phase(at:)`
@@ -46,6 +50,7 @@ struct ContentView: View {
                             } else {
                                 readout(phase)
                                 action(phase)
+                                if phase != .idle && phase != .done { probeOffer }
                                 // Inside the TimelineView for the same reason as
                                 // the readout: reaching DONE changes no stored
                                 // property, so nothing outside would redraw and
@@ -82,8 +87,10 @@ struct ContentView: View {
             // answer twice: when the boil is tapped, and whenever a slow hob
             // forces the estimate out.
             cook.resolveCookTime = { [kitchen] seconds, level in
-                await kitchen.cookTime(timeToBoilS: seconds, level: level)
+                await kitchen.cookResult(timeToBoilS: seconds, level: level)
             }
+            // Whether the cooling's alarm asks for a probe reading (E4).
+            cook.probeWanted = { [kitchen] in kitchen.probe }
             // The kitchen's own stored state, read here rather than in its
             // init: @State evaluates its initial value on every construction of
             // this struct and keeps only the first, so init was doing the I/O
@@ -212,7 +219,9 @@ struct ContentView: View {
         case .pull:
             tr("readout.sub.pull")
         case .cooling:
-            tr("readout.sub.cooling", ["minutes": .int(Int(Cook.coolingSeconds / 60))])
+            // The countdown ends when the middle of the yolk peaks (E4), which
+            // is also when a probe reading is asked for.
+            tr(cook.asksForProbe ? "readout.sub.coolingProbe" : "readout.sub.coolingPeak")
         case .done:
             tr("readout.sub.done")
         }
@@ -341,7 +350,10 @@ struct ContentView: View {
                     sizeTable: kitchen.sizeTable,
                     boilRemembered: kitchen.hasBoilMemory,
                     units: kitchen.units,
-                    lang: Copy.activeLocale
+                    lang: Copy.activeLocale,
+                    // The cooling counts to the yolk's peak for this cook (E4).
+                    coolS: coolingSecondsFor(solution.result),
+                    probeMoment: probeMomentFor(solution.result, cooling: kitchen.cooling)
                 )
                 Task {
                     await cook.start(
@@ -411,6 +423,8 @@ struct ContentView: View {
                 if !cook.feedbackGiven, let egg = cook.eggRecord(yolk: nil) {
                     kitchen.logUnanswered(egg)
                 }
+                probeText = ""
+                probeNote = ""
                 cook.cancel()
                 kitchen.endEgg()
                 kitchen.refresh()
@@ -467,6 +481,96 @@ struct ContentView: View {
         return tr("cook.method", ["start": .text(start), "after": .text(after)])
     }
 
+    // MARK: - The thermometer (E4)
+
+    /// Offered once, while a cook is running, to a cook whose cooling ends at
+    /// the yolk's peak. Either answer puts it away for good; the setting stays
+    /// in the controls.
+    @ViewBuilder
+    private var probeOffer: some View {
+        if !kitchen.probeAsked, cook.ticket?.probeMoment == true {
+            VStack(spacing: 10) {
+                Text(tr("probe.offer"))
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                HStack(spacing: 10) {
+                    Button {
+                        kitchen.answerProbeOffer(true)
+                        cook.probeSettingChanged()
+                    } label: {
+                        Text(tr("probe.offer.yes")).frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.bordered)
+                    Button {
+                        kitchen.answerProbeOffer(false)
+                    } label: {
+                        Text(tr("probe.offer.no")).frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.bordered)
+                }
+            }
+            .frame(maxWidth: .infinity)
+        }
+    }
+
+    /// The reading, at DONE: typed in the cook's units, refused with the range
+    /// it should be in when no believable kitchen could have made it, and
+    /// otherwise folded into the egg with whatever else has been said.
+    @ViewBuilder
+    private var probeEntry: some View {
+        if cook.asksForProbe {
+            let given = kitchen.answers?.probe
+            VStack(spacing: 8) {
+                Text(tr("probe.now"))
+                    .font(.headline)
+                Text(tr("probe.hint"))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                HStack(spacing: 10) {
+                    TextField(tr("probe.entry"), text: $probeText)
+                        .keyboardType(.decimalPad)
+                        .textFieldStyle(.roundedBorder)
+                        .multilineTextAlignment(.trailing)
+                        .frame(maxWidth: 110)
+                        .disabled(given != nil)
+                    Text(tr(kitchen.measure(.probeTemp).unitKey))
+                        .foregroundStyle(.secondary)
+                    Button(tr("probe.save")) { saveProbe() }
+                        .buttonStyle(.bordered)
+                        .disabled(given != nil || probeText.isEmpty)
+                }
+                if !probeNote.isEmpty {
+                    Text(probeNote)
+                        .font(.caption)
+                        .foregroundStyle(given == nil ? .orange : .secondary)
+                        .multilineTextAlignment(.center)
+                }
+            }
+            .padding(.bottom, 6)
+        }
+    }
+
+    private func saveProbe() {
+        guard let ticket = cook.ticket, kitchen.answers?.probe == nil else { return }
+        // A comma is the decimal point in half the world's keyboards.
+        let typed = Double(probeText.replacingOccurrences(of: ",", with: ".")
+            .trimmingCharacters(in: .whitespaces))
+        let reading = typed.flatMap { parse(kitchen.measure(.probeTemp), $0) }
+        guard let scored = cook.eggRecord(yolk: nil).map(recordCookTimeS) else { return }
+        let range = kitchen.probeRange(egg: ticket.egg, setup: ticket.setup, cookTimeS: scored)
+        guard let reading, reading >= range.low, reading <= range.high else {
+            probeNote = tr("probe.refused", [
+                "low": .text(kitchen.show(.probeTemp, range.low)),
+                "high": .text(kitchen.show(.probeTemp, range.high)),
+            ])
+            return
+        }
+        guard let probe = cook.probeReading(centreC: reading) else { return }
+        probeNote = kitchen.show(.probeTemp, reading)
+        answer(yolk: nil, white: nil, probe: probe)
+    }
+
     /// What the pull button says, by where the eggs are going.
     private var pulledKey: String {
         switch cook.ticket?.cooling ?? kitchen.cooling {
@@ -497,6 +601,7 @@ struct ContentView: View {
                     .foregroundStyle(.secondary)
                     .monospacedDigit()
             } else {
+                probeEntry
                 Text(tr("feedback.ask"))
                     .font(.headline)
                 HStack(spacing: 10) {
@@ -533,14 +638,15 @@ struct ContentView: View {
     /// One answer, about the yolk or the white, in whichever order they come.
     /// The first writes the egg down, before anything is learned from it; the
     /// second folds the same egg again from the posterior before it.
-    private func answer(yolk: Feedback?, white: WhiteReport?) {
+    private func answer(yolk: Feedback?, white: WhiteReport?, probe: ProbeReading? = nil) {
         if kitchen.answers != nil {
-            Task { await kitchen.secondAnswer(yolk: yolk, white: white) }
+            Task { await kitchen.secondAnswer(yolk: yolk, white: white, probe: probe) }
             return
         }
         // The cook owns the flag and persists it, so a relaunch neither asks
         // again nor logs the egg a second time as unanswered.
-        guard !cook.feedbackGiven, let egg = cook.eggRecord(yolk: yolk, white: white) else { return }
+        guard !cook.feedbackGiven,
+              let egg = cook.eggRecord(yolk: yolk, white: white, probe: probe) else { return }
         cook.recordFeedbackGiven()
         Task { await kitchen.record(egg) }
     }
@@ -683,6 +789,18 @@ struct ContentView: View {
                     Text(tr("controls.then.counter")).tag(Cooling.counter)
                 }
                 .pickerStyle(.segmented)
+
+                // E4. Off by default; offered once during a cook, and changed here.
+                VStack(alignment: .leading, spacing: 4) {
+                    Toggle(tr("controls.probe"), isOn: Binding(
+                        get: { kitchen.probe },
+                        set: { kitchen.setProbe($0) }
+                    ))
+                    .font(.subheadline)
+                    Text(tr("controls.probe.hint"))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
 
                 pan
             } else {

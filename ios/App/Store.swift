@@ -38,6 +38,9 @@ enum Settings {
         // The cook's choice of units, or none. Read before the early return,
         // because it is its own key and a choice can predate the rest.
         kitchen.restoreUnits(readChosenUnits(store.string(forKey: "unitsChosen")))
+        // The probe thermometer (E4), the same way: its own keys, and off when
+        // they are absent.
+        kitchen.restoreProbe(on: store.bool(forKey: "probe"), asked: store.bool(forKey: "probeAsked"))
         guard store.object(forKey: "doneness") != nil else { return }
         kitchen.doneness = clamp(store.double(forKey: "doneness"), to: Limits.doneness)
         let massG = clamp(store.double(forKey: "eggMassG"), to: Limits.massG)
@@ -98,6 +101,8 @@ enum Settings {
         store.set(kitchen.cooling.rawValue, forKey: "cooling")
         // The cook's choice, not the system on screen: absent until they make
         // one, so a default can still follow the phone.
+        store.set(kitchen.probe, forKey: "probe")
+        store.set(kitchen.probeAsked, forKey: "probeAsked")
         if let chosen = kitchen.unitsChosen {
             store.set(chosen.rawValue, forKey: "unitsChosen")
         } else {
