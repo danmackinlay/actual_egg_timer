@@ -23,7 +23,7 @@
  * decision 7), a constant, and a per-cook slider only if someone asks.
  *
  * NOT BEFORE THE FIRST EGG. Under the prior alone the choice runs far from the
- * literature: 43 s later at jammy and 88 s at soft, on the reference egg, and
+ * literature: 42 s later at jammy and 86 s at soft, on the reference egg, and
  * the first egg comes out a step too firm. The reason is the prior's width,
  * not the loss. A time-scale sd of 11.9% is about +-70 s of cook time, so the
  * yolk's part of the loss is nearly flat - no time gets the yolk right more
@@ -65,12 +65,14 @@
  * cooks SAY, which is all anyone can check them against.
  *
  * STILL LEARNING. For the first STILL_LEARNING_EGGS eggs that taught anything.
- * The owner's rule was the 80% interval on the cook time, with a fixed count if
- * that proved fiddly, and it did: the interval (`predictCookTime`) plateaus at
- * about the width of "just right", so on simulated cooks the line came back
- * after going away for about half of them. The count is where the interval
- * rule first went quiet for the median simulated cook. The interval is still
- * computed, and carried in the decision, for anyone who wants to look.
+ * The owner's rule was the 80% interval on the cook time under about +-15 s,
+ * with a fixed count if that proved fiddly, and it did: the interval
+ * (`predictCookTime`) plateaus at about the width of "just right", so on
+ * simulated cooks it wandered back over the line after first going under it
+ * for 44% of them (`npm run decide -- learning`). The count is the egg at which
+ * the interval rule first went quiet for the median simulated cook. The
+ * interval is still computed, and carried in the decision, for anyone who
+ * wants to look.
  *
  * Pure, like the rest of `src/core/`.
  */

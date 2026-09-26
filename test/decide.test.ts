@@ -271,8 +271,8 @@ test('3a. before any egg the time is the literature\'s, exactly, on every pot', 
 
 test('3b. ...because under the prior alone the choice would run far from it (measured, not shipped)', () => {
   // The prior's time-scale sd is about +-70 s of cook time, so the yolk's part
-  // of the loss is nearly flat and the white's tail steers. Measured on 27
-  // September: jammy +43 s, soft +88 s, hard +7 s.
+  // of the loss is nearly flat and the white's tail steers. Measured on 28
+  // September: jammy +42 s, soft +86 s, hard +2 s (`npm run decide -- lean`).
   const lean = (level: number): number => {
     const m = meanSolve(PRIOR, level);
     return chooseCookTime(PRIOR.posterior, PRIOR_GRID, logTarget(m.level), m.sol.result.cookTime_s) - m.sol.result.cookTime_s;
@@ -349,24 +349,27 @@ test('6a. the refusals still decide what the slider may ask for; the choice is m
   assert.equal(none.cookTime_s, sol.result.cookTime_s);
 });
 
-test('6b. a cold start re-solved for its measured boil keeps its lean, to within a second of choosing again', () => {
+test('6b. a cold start re-solved for its measured boil keeps its lean, to within a few seconds of choosing again', () => {
   // The boil is tapped with the egg in the water; a new surface is a second
   // away, so the lean chosen at "Eggs in" is carried (`carriedSolution`).
   const assumed = setupOf({ startMode: 'cold', timeToBoil_s: 480 });
   const measured = setupOf({ startMode: 'cold', timeToBoil_s: 600 });
   const c = knowing(0.15, 0.2, 1.05);
   const params = calibrationParams(c);
+  const rows: string[] = [];
   for (const level of [0.22, 0.41, 0.62]) {
     const atStart = decideFor(c, gridFor(c, assumed), level, assumed);
     const lean = atStart.cookTime_s - atStart.meanCookTime_s;
     const m = meanSolve(c, level, measured);
     const carried = carriedSolution(EGG, measured, params, m.sol, lean).result.cookTime_s;
     const again = decide(c, gridFor(c, measured), m.sol, logTarget(m.level)).cookTime_s;
+    rows.push(`L${level}: lean ${lean.toFixed(1)} s, carried ${carried.toFixed(1)}, chosen again ${again.toFixed(1)}`);
     assert.ok(Math.abs(lean) > 3, `L${level}: a lean worth carrying (${lean.toFixed(1)} s)`);
-    // Measured 28 September: 3.2 s at soft, where the white binds and the lean
+    // Measured 28 September: 3.1 s at soft, where the white binds and the lean
     // depends on the ramp most; under a second at jammy and fudgy.
-    assert.ok(Math.abs(carried - again) < 4, `L${level}: carried ${carried.toFixed(1)}, chosen again ${again.toFixed(1)}`);
+    assert.ok(Math.abs(carried - again) < 4, rows.join('; '));
   }
+  console.log(`# carried lean, 480 s ramp assumed, 600 s measured: ${rows.join('; ')}`);
 });
 
 test('6c. one surface serves every level: the slider never waits for a grid', () => {
