@@ -64,8 +64,9 @@
   </section>
 
   <!-- ----------------------------------------------------------- controls -->
-  <!-- Numeric bounds and the preset temperatures are filled in at boot from
-       src/ui/store.ts, so the markup cannot disagree with the model. -->
+  <!-- Numeric bounds, steps, units and the preset temperatures are filled in
+       at boot from src/core/policy.ts and src/core/units.ts, in the cook's
+       units, so the markup cannot disagree with the model. -->
   <form id="controls" autocomplete="off">
 
     <div class="field field--slider">
@@ -91,15 +92,15 @@
       <div class="measure" role="group" aria-labelledby="measureLegend">
         <div>
           <label for="measureMass" data-copy="controls.measure.weight"></label>
-          <span class="unit"><input type="number" id="measureMass" step="0.5" inputmode="decimal"><span data-copy="unit.grams"></span></span>
+          <span class="unit"><input type="number" id="measureMass" inputmode="decimal"><span id="unitMass"></span></span>
         </div>
         <div>
           <label for="measureGirth" data-copy="controls.measure.girth"></label>
-          <span class="unit"><input type="number" id="measureGirth" step="1" inputmode="decimal"><span data-copy="unit.millimetres"></span></span>
+          <span class="unit"><input type="number" id="measureGirth" inputmode="decimal"><span id="unitGirth"></span></span>
         </div>
         <div>
           <label for="measureMinor" data-copy="controls.measure.minor"></label>
-          <span class="unit"><input type="number" id="measureMinor" step="0.5" inputmode="decimal"><span data-copy="unit.millimetres"></span></span>
+          <span class="unit"><input type="number" id="measureMinor" inputmode="decimal"><span id="unitMinor"></span></span>
         </div>
       </div>
       <p class="hint" data-copy="controls.measure.hint"></p>
@@ -120,7 +121,7 @@
 
     <div class="field pan-only" id="customTempField" hidden>
       <label for="customTemp" data-copy="controls.eggTemp"></label>
-      <span class="unit"><input type="number" id="customTemp" step="1" inputmode="decimal"><span data-copy="unit.celsius"></span></span>
+      <span class="unit"><input type="number" id="customTemp" inputmode="decimal"><span id="unitTemp"></span></span>
     </div>
 
     <fieldset class="field">
@@ -162,7 +163,7 @@
     <div class="field field--pair pan-only">
       <div>
         <label for="litres" data-copy="controls.water"></label>
-        <span class="unit"><input type="number" id="litres" step="0.25" inputmode="decimal"><span data-copy="unit.litres"></span></span>
+        <span class="unit"><input type="number" id="litres" inputmode="decimal"><span id="unitLitres"></span></span>
       </div>
       <div>
         <label for="eggCount" data-copy="controls.eggs"></label>
@@ -172,8 +173,20 @@
 
     <div class="field pan-only">
       <label for="altitude" data-copy="controls.altitude"></label>
-      <span class="unit"><input type="number" id="altitude" step="50" inputmode="numeric"><span data-copy="unit.metres"></span></span>
+      <span class="unit"><input type="number" id="altitude" inputmode="numeric"><span id="unitAltitude"></span></span>
     </div>
+
+    <!-- Not pan-only: a bath has a temperature too. Its default comes from the
+         browser's region; a choice made here is stored as the cook's. -->
+    <fieldset class="field" id="unitsField">
+      <legend data-copy="controls.units"></legend>
+      <div class="seg">
+        <input type="radio" name="units" id="unitsMetric" value="metric">
+        <label for="unitsMetric" data-copy="controls.units.metric"></label>
+        <input type="radio" name="units" id="unitsImperial" value="imperial">
+        <label for="unitsImperial" data-copy="controls.units.imperial"></label>
+      </div>
+    </fieldset>
 
   </form>
 

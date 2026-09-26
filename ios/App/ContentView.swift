@@ -121,8 +121,8 @@ struct ContentView: View {
             // the numbers describing the one just eaten.
             if let peaks = peaks {
                 HStack(spacing: 24) {
-                    stat(tr("readout.stat.peakYolk"), tr("format.celsius", ["value": .int(Int(peaks.yolk.rounded()))]))
-                    stat(tr("readout.stat.peakWhite"), tr("format.celsius", ["value": .int(Int(peaks.white.rounded()))]))
+                    stat(tr("readout.stat.peakYolk"), kitchen.show(.temperature, peaks.yolk))
+                    stat(tr("readout.stat.peakWhite"), kitchen.show(.temperature, peaks.white))
                     if cook.ticket?.coldStart ?? kitchen.coldStart {
                         stat(tr("readout.stat.afterBoil"), clockString(afterBoilSeconds(phase)))
                     }
@@ -257,7 +257,7 @@ struct ContentView: View {
     /// which number it is.
     private func sousVideReadout(at now: Date) -> some View {
         let est = kitchen.sousVide
-        let copy = sousVideCopy(est, now: now)
+        let copy = sousVideCopy(est, now: now, units: kitchen.units)
         return VStack(spacing: 24) {
             VStack(spacing: 6) {
                 Text(tr("readout.phase.startTime"))
@@ -284,7 +284,7 @@ struct ContentView: View {
                 // liquid and convecting, so it is too long by an unknown amount.
                 // The holds are the numbers that make the answer what it is, and
                 // they are in the line above as the total.
-                stat(tr("readout.stat.bath"), tr("format.celsius", ["value": .int(Int(est.bathC.rounded()))]))
+                stat(tr("readout.stat.bath"), kitchen.show(.temperature, est.bathC))
                     .padding(.top, 10)
 
                 Text(copy.note)
@@ -345,7 +345,8 @@ struct ContentView: View {
                     setup: kitchen.setup,
                     massFrom: kitchen.massFrom,
                     sizeTable: kitchen.sizeTable,
-                    boilRemembered: kitchen.hasBoilMemory
+                    boilRemembered: kitchen.hasBoilMemory,
+                    units: kitchen.units
                 )
                 Task {
                     await cook.start(
@@ -422,10 +423,12 @@ struct ContentView: View {
                 // you cannot check once the controls are gone.
                 Text(methodLine(ticket))
                     .font(.footnote.weight(.medium))
+                // In the system the egg was set up in, which the controls
+                // cannot have changed since.
                 Text(tr("cook.summary", [
-                    "grams": .int(Int(ticket.eggGrams.rounded())),
+                    "mass": .text(showIn(ticket.units ?? kitchen.units, .mass, ticket.eggGrams)),
                     "doneness": .text(ticket.doneness.lowercased()),
-                    "yolk": .int(Int(ticket.peakYolkC.rounded())),
+                    "yolk": .text(showIn(ticket.units ?? kitchen.units, .temperature, ticket.peakYolkC)),
                 ]))
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -572,7 +575,7 @@ struct ContentView: View {
                     // no peak, so the reading says which bath instead.
                     Text(kitchen.isSousVide
                          ? tr("controls.doneness.valueBath", [
-                            "doneness": .text(kitchen.label), "bath": .int(Int(sousVideBathC)),
+                            "doneness": .text(kitchen.label), "bath": .text(kitchen.show(.temperature, sousVideBathC)),
                          ])
                          : kitchen.label)
                         .foregroundStyle(.secondary)
@@ -597,11 +600,10 @@ struct ContentView: View {
                         set: { kitchen.chooseSize($0) }
                     )) {
                         ForEach(kitchen.sizeClasses.indices, id: \.self) { i in
-                            Text(tr(sizeClassLabel(kitchen.sizeClasses[i]))).tag(i)
+                            Text(sizeLabel(kitchen.sizeClasses[i])).tag(i)
                         }
-                        // In the device's locale, as the specifier in a Text did.
                         Text(tr("controls.size.weighed", [
-                            "grams": .text(String(format: "%.1f", locale: .current, kitchen.weighedMassG)),
+                            "mass": .text(kitchen.show(.mass, kitchen.weighedMassG)),
                         ])).tag(-1)
                     }
                     .pickerStyle(.menu)
@@ -613,19 +615,19 @@ struct ContentView: View {
                 // so a stored mass that Settings.load had faithfully clamped to
                 // Limits could not be represented by the control that set it -
                 // in a file whose own comment promises every control reads the
-                // same numbers.
-                Slider(value: Binding(
-                    get: { kitchen.eggMassG },
-                    set: { kitchen.weigh($0) }
-                ), in: Limits.massG, step: 0.5)
+                // same numbers. In the cook's units now: the bounds are the
+                // limits rounded inward to the step, so every position is a
+                // mass the model allows, and it reads the stored mass rounded
+                // to the step - see `measuredSlider`.
+                measuredSlider(kitchen.measure(.mass), get: { kitchen.eggMassG }, set: { kitchen.weigh($0) })
             }
 
             // Rendered from the constants, so a button cannot say one thing
             // and the model another. The web app learned this the hard way.
             if !kitchen.isSousVide {
                 Picker(tr("controls.eggFrom"), selection: $kitchen.fromFridge) {
-                    Text(tr("controls.eggFrom.fridgeAt", ["temp": .int(Int(StartTempPresets.fridgeC))])).tag(true)
-                    Text(tr("controls.eggFrom.roomAt", ["temp": .int(Int(StartTempPresets.roomC))])).tag(false)
+                    Text(tr("controls.eggFrom.fridgeAt", ["temp": .text(kitchen.show(.temperature, StartTempPresets.fridgeC))])).tag(true)
+                    Text(tr("controls.eggFrom.roomAt", ["temp": .text(kitchen.show(.temperature, StartTempPresets.roomC))])).tag(false)
                 }
                 .pickerStyle(.segmented)
             }
@@ -636,7 +638,7 @@ struct ContentView: View {
             Picker(tr("controls.start"), selection: $kitchen.start) {
                 Text(tr("controls.start.hot")).tag(StartChoice.hot)
                 Text(tr("controls.start.cold")).tag(StartChoice.cold)
-                Text(tr("controls.start.sousVide", ["bath": .int(Int(sousVideBathC))])).tag(StartChoice.sousVide)
+                Text(tr("controls.start.sousVide", ["bath": .text(kitchen.show(.temperature, sousVideBathC))])).tag(StartChoice.sousVide)
             }
             .pickerStyle(.segmented)
 
@@ -665,6 +667,23 @@ struct ContentView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
+
+            // Last, and outside the pan's fold, because a bath has a
+            // temperature too. One row, like the egg's size: the default
+            // follows the phone, and most people never touch it.
+            LabeledContent(tr("controls.units")) {
+                Picker(tr("controls.units"), selection: Binding(
+                    get: { kitchen.units },
+                    set: { kitchen.chooseUnits($0) }
+                )) {
+                    Text(tr("controls.units.metric")).tag(UnitSystem.metric)
+                    Text(tr("controls.units.imperial")).tag(UnitSystem.imperial)
+                }
+                .pickerStyle(.menu)
+                .labelsHidden()
+                .fixedSize()
+            }
+            .font(.subheadline)
         }
     }
 
@@ -684,21 +703,12 @@ struct ContentView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
 
-                stepperRow(
-                    tr("controls.water"), value: $kitchen.waterLitres, range: Limits.waterLitres,
-                    step: 0.25, format: "%.2f", unit: "format.litres"
-                )
+                stepperRow(tr("controls.water"), kitchen.measure(.water), value: $kitchen.waterLitres)
                 countRow(tr("controls.eggsInPan"), value: $kitchen.eggCount, range: Limits.eggCount)
-                stepperRow(
-                    tr("controls.altitude"), value: $kitchen.altitudeM, range: Limits.altitudeM,
-                    step: 100, format: "%.0f", unit: "format.metres"
-                )
+                stepperRow(tr("controls.altitude"), kitchen.measure(.altitude), value: $kitchen.altitudeM)
 
                 LabeledContent(tr("pan.waterBoilsAt")) {
-                    // In the device's locale, as the specifier in a Text did.
-                    Text(tr("format.celsiusSpaced", [
-                        "value": .text(String(format: "%.1f", locale: .current, kitchen.boilingC)),
-                    ]))
+                    Text(kitchen.show(.boilingPoint, kitchen.boilingC))
                         .foregroundStyle(.secondary)
                         .monospacedDigit()
                 }
@@ -756,18 +766,41 @@ struct ContentView: View {
         }
     }
 
-    /// `format` is the number's, `unit` the catalogue key that places it.
-    private func stepperRow(
-        _ label: String, value: Binding<Double>, range: ClosedRange<Double>,
-        step: Double, format: String, unit: String
-    ) -> some View {
-        Stepper(value: value, in: range, step: step) {
+    /// A stored SI value on a stepper, in the cook's units. The stepper steps
+    /// the DISPLAYED value, from inside bounds that are the limits rounded
+    /// inward to the step, and writes back only when tapped - the round trip
+    /// in `Units.swift`, so a quart stays a quart and never becomes 1.99.
+    private func stepperRow(_ label: String, _ m: Measure, value: Binding<Double>) -> some View {
+        Stepper(value: measured(m, value), in: m.bounds ?? 0...0, step: m.step) {
             LabeledContent(label) {
-                Text(tr(unit, ["value": .text(String(format: format, value.wrappedValue))]))
+                Text(kitchen.show(m.quantity, value.wrappedValue))
                     .foregroundStyle(.secondary)
                     .monospacedDigit()
             }
         }
+    }
+
+    /// A slider over a stored SI value, in the cook's units, on the same terms
+    /// as `stepperRow`.
+    private func measuredSlider(
+        _ m: Measure, get: @escaping () -> Double, set: @escaping (Double) -> Void
+    ) -> some View {
+        Slider(value: measured(m, Binding(get: get, set: set)), in: m.bounds ?? 0...0, step: m.step)
+    }
+
+    /// An SI binding seen through a measure: it reads the stored value as
+    /// displayed, and a control's value as SI, clamped by the limit.
+    private func measured(_ m: Measure, _ si: Binding<Double>) -> Binding<Double> {
+        Binding(
+            get: { display(m, si.wrappedValue) },
+            set: { if let stored = parse(m, $0) { si.wrappedValue = stored } }
+        )
+    }
+
+    /// A size class's name and its mass, in the cook's units.
+    private func sizeLabel(_ c: SizeClass) -> String {
+        let label = sizeClassLabel(c, system: kitchen.units)
+        return tr(label.key, ["mass": .text(tr(label.mass.key, ["value": .text(label.mass.value)]))])
     }
 
     @ViewBuilder

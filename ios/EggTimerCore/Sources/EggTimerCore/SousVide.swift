@@ -24,6 +24,10 @@ import EggTimerCopy
 /// low-temperature literature argues about, which is the point.
 public let sousVideBathC = 58.0
 
+/// Below this the albumen stays liquid and convects, and the conduction model
+/// here is out of its depth. The warning quotes it, in the cook's units.
+public let sousVideModelFloorC = 60.0
+
 /// How close the centre must come to the bath before it counts as "at
 /// temperature": within 2% of the original gap.
 private let equilibrationGap = 0.02

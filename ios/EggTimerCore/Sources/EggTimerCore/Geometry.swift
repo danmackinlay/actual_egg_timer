@@ -1,5 +1,4 @@
 import Foundation
-import EggTimerCopy
 
 /// Egg geometry, transliterated from `src/core/geometry.ts`.
 public struct Egg: Sendable, Equatable, Codable {
@@ -55,17 +54,12 @@ public enum Geometry {
 /// stored index keep its name when the table changes (`carrySizeIndex`).
 ///
 /// The name is a catalogue key, one per class per table: an American Large and
-/// an EU Large are different eggs, and a language may want to say so. The grams
-/// on the label come from the mass - see `sizeClassLabel`.
+/// an EU Large are different eggs, and a language may want to say so. The mass
+/// on the label comes from the mass, in grams or ounces - see `sizeClassLabel`
+/// in Units.swift.
 public struct SizeClass: Sendable, Equatable {
     public let key: String
     public let massKg: Double
-}
-
-/// What the size menu says for a class: its name, and its mass to the gram.
-/// The label rounds; the model cooks the mass to a tenth.
-public func sizeClassLabel(_ c: SizeClass) -> CopyRef {
-    CopyRef(c.key, ["grams": (c.massKg * 1000).rounded()])
 }
 
 /// EU Regulation 589/2008 Art. 4, at a representative mass inside each band.

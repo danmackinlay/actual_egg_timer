@@ -19,9 +19,10 @@ import {
 } from '../src/core/policy.js';
 import { DONENESS_ANCHORS, Solution, CookResult } from '../src/core/solve.js';
 import {
-  SIZE_CLASSES, SizeClass, US_SIZE_CLASSES, sizeClassLabel, sizeClassesFor,
+  SIZE_CLASSES, SizeClass, US_SIZE_CLASSES, sizeClassesFor,
 } from '../src/core/geometry.js';
-import { parseCatalogue, renderRef } from '../src/core/copy.js';
+import { parseCatalogue, render } from '../src/core/copy.js';
+import { sizeClassLabel } from '../src/core/units.js';
 import { T_ROOM_C } from '../src/core/constants.js';
 import { readFileSync } from 'node:fs';
 
@@ -270,9 +271,10 @@ function className(c: SizeClass): string {
   return c.key.split('.')[2];
 }
 
-/** What the menu shows for a class, in English. */
+/** What the menu shows for a class, in English, in metric. */
 function labelOf(c: SizeClass): string {
-  return renderRef(EN, sizeClassLabel(c));
+  const label = sizeClassLabel(c, 'metric');
+  return render(EN, label.key, { mass: render(EN, label.mass.key, { value: label.mass.value }) });
 }
 
 test('6e. the default size is Large in both tables, and a shared index is a shared name', () => {

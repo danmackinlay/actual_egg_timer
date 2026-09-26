@@ -9,8 +9,11 @@
  * in the past. All this module does is say so out loud.
  */
 
-import { SousVideEstimate, longDuration, startPhrase } from '../core/sousvide.js';
+import {
+  SOUS_VIDE_MODEL_FLOOR_C, SousVideEstimate, longDuration, startPhrase,
+} from '../core/sousvide.js';
 import { t, tRef } from './copy.js';
+import { show } from './units.js';
 
 export interface SousVideCopy {
   /** Big text, in place of the clock. */
@@ -50,7 +53,7 @@ function clockOf(ms: number): string {
 export function sousVideCopy(est: SousVideEstimate, now_ms: number): SousVideCopy {
   const start_ms = now_ms - est.total_s * 1000;
   const duration = tRef(longDuration(est.total_s));
-  const bath = est.bath_C.toFixed(0);
+  const bath = show('temperature', est.bath_C);
 
   return {
     headline: tRef(startPhrase(daysBefore(start_ms, now_ms)), {
@@ -58,7 +61,7 @@ export function sousVideCopy(est: SousVideEstimate, now_ms: number): SousVideCop
     }),
     subline: t('sousvide.subline', { clock: clockOf(start_ms), duration: duration, bath: bath }),
     note: t(est.whiteBound ? 'sousvide.note.whiteBound' : 'sousvide.note.yolkBound'),
-    warn: t('sousvide.warn', { bath: bath }),
+    warn: t('sousvide.warn', { bath: bath, floor: show('temperature', SOUS_VIDE_MODEL_FLOOR_C) }),
     hint: t('sousvide.hint', { duration: duration }),
   };
 }

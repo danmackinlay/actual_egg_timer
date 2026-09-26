@@ -26,8 +26,11 @@ struct CookActivity: ActivityAttributes {
 
     /// Fixed for the life of the cook: what was asked for, not what is left.
     var doneness: String
-    var peakYolkC: Int
-    var eggGrams: Double
+    /// The peak yolk temperature and the egg's mass, already in the cook's
+    /// units with the unit attached ("65 °C", "2.4 oz"). The widget has no
+    /// physics and no units table, so it is handed the words, not the numbers.
+    var peakYolk: String
+    var eggMass: String
 
     enum Stage: String, Codable, Hashable {
         case heating

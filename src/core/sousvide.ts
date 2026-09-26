@@ -28,6 +28,10 @@ import { CopyRef } from './copy.js';
  *  low-temperature literature argues about, which is the point. */
 export const SOUS_VIDE_BATH_C = 58.0;
 
+/** Below this the albumen stays liquid and convects, and the conduction model
+ *  above is out of its depth. The warning quotes it, in the cook's units. */
+export const SOUS_VIDE_MODEL_FLOOR_C = 60.0;
+
 /** How close the centre must come to the bath before it counts as "at
  *  temperature": within 2% of the original gap. */
 const EQUILIBRATION_GAP = 0.02;

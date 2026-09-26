@@ -260,7 +260,8 @@ struct SizeClassConformance {
         Fixtures.policyCases("sizeClasses.\(name)")
     }
 
-    /// Every key, every mass and the grams each label shows, in order. A US Large 8 g lighter than an EU
+    /// Every key and every mass, in order (what each label shows, in either
+    /// system, is UnitsConformance's). A US Large 8 g lighter than an EU
     /// one is half a minute of cooking, so a table that differs by a row is a
     /// different egg on the default path.
     @Test("both tables are the same tables")
@@ -271,7 +272,6 @@ struct SizeClassConformance {
             for (actual, c) in zip(classes, expected) {
                 #expect(actual.key == c.str("key"), "\(name): \(actual.key)")
                 expectClose(actual.massKg, c.num("mass_kg"), "\(name) \(actual.key)")
-                #expect(sizeClassLabel(actual).args["grams"] == c.num("grams"), "\(name) \(actual.key) grams")
             }
         }
     }

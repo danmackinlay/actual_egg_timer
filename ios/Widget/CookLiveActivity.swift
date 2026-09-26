@@ -30,7 +30,7 @@ struct CookLiveActivity: Widget {
                 DynamicIslandExpandedRegion(.trailing) {
                     Text(tr("activity.target", [
                         "doneness": .text(context.attributes.doneness.lowercased()),
-                        "yolk": .int(context.attributes.peakYolkC),
+                        "yolk": .text(context.attributes.peakYolk),
                     ]))
                         .font(.caption2)
                         .foregroundStyle(.secondary)
@@ -78,9 +78,9 @@ struct CookLiveActivity: Widget {
                     .lineLimit(2)
 
                 Text(tr("activity.summary", [
-                    "grams": .int(Int(context.attributes.eggGrams.rounded())),
+                    "mass": .text(context.attributes.eggMass),
                     "doneness": .text(context.attributes.doneness.lowercased()),
-                    "yolk": .int(context.attributes.peakYolkC),
+                    "yolk": .text(context.attributes.peakYolk),
                 ]))
                     .font(.caption2)
                     .foregroundStyle(.tertiary)

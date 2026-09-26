@@ -357,7 +357,7 @@ test('3c. forget everything clears the log, the base and the posterior', () => {
 const T0 = 1_750_000_000_000;
 const COOKED: Cooked = {
   egg: eggFromMass(0.062), massFrom: 'scale', sizeTable: null, setup: setupOf(), eggFrom: 'fridge',
-  boilRemembered: false,
+  boilRemembered: false, units: 'metric',
 };
 
 function pulled(m: Machine): Machine {

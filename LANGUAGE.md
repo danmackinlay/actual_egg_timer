@@ -255,6 +255,43 @@ the cook edits it, which is the trick the web's measurement fields already use.
   the cook saw. It gains `units` only so that the fit can check whether
   rounding at input shows up in the residuals.
 
+**As built, in F3 (27 September).** Where it settled differently, or more
+precisely than the table above:
+
+- **Metric steps are the web's old inputs**, rounded to what they showed:
+  1 °C, boiling point 0.1 °C, 1 g, girth 1 mm, width 0.5 mm, 50 m, 0.25 L. Two
+  iOS controls moved to the table: the weight slider from half grams to 1 g,
+  and the altitude stepper from 100 m to 50 m.
+- **Water under Imperial is the US quart in region US and the imperial pint
+  elsewhere**, from the region alone, like the size classes.
+- **Bounds round inward, and the display stays inside them.** A value clamped
+  to the SI floor can round to a point just outside the input's bounds (25 g is
+  0.88 oz, the input's floor is 0.9); it shows as the bound, so an input never
+  holds a value it calls invalid.
+- **A typed number is not snapped.** The model cooks what was typed; the
+  display rounds it. 2.43 oz cooks as 2.43 and reads 2.4 after a reload.
+- **The iOS default reads three signals** and core decides between them: the
+  temperature preference first (it reaches `Locale` as the `mu` keyword, so
+  `UnitTemperature(forLocale:)` sees it), then the measurement system, where
+  only `us` is Imperial - the UK system is miles on the road and grams in the
+  kitchen - then the region. An American who set Celsius starts in metric; an
+  Australian who set Fahrenheit starts in Imperial.
+- **The explicit choice is stored as a choice**, `null` until the cook makes
+  one, and stays a choice when it equals the default. A cook's own change of
+  system raises `aet:unitsflip` on the web and posts `.unitsFlipped` on iOS,
+  with `metricToImperial` or `imperialToMetric`. That is all F6 gets from F3.
+- **Numbers are plain digits with a point in both apps**, from core's
+  `displayText`. iOS used the device locale for two readouts (the boiling
+  point and the weighed mass); those now print the same digits as the web
+  until F4 moves every number to the platform formatters.
+- **Every inserted value stands alone** where a sentence was touched: "peak
+  yolk 65 °C", "bath 58 °C", "Assumed temperatures — fridge: 4 °C, room:
+  20 °C", "a full boil (100 °C)", "This bath (58 °C)", "with this much water
+  (2.00 L)". The sous-vide warning's 60 °C is a constant now, so it converts.
+- **Three length budgets rose for the unit**, because °F is a digit longer
+  and "65 °C" a space longer than "65°C": the Lock Screen line 29 -> 33, body
+  251 -> 260 (the sous-vide warning), and a11y 88 -> 101 (its announcement).
+
 ## 5. Languages
 
 **The first one is Czech**, decided on 26 September. A friend of the owner will

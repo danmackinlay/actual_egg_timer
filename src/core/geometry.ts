@@ -4,7 +4,6 @@
  */
 
 import { EGG_VOLUME_COEFF, EGG_LENGTH_RATIO, RHO_EGG } from './constants.js';
-import { CopyRef } from './copy.js';
 
 export interface Egg {
   /** Equal-volume sphere radius, m. This is what the conduction model uses. */
@@ -70,16 +69,11 @@ export function diffusionTime(egg: Egg, alpha_m2s: number): number {
  *
  *  The name is a catalogue key, one per class per table: an American Large and
  *  an EU Large are different eggs, and a language may want to say so. The
- *  grams on the label come from the mass - see `sizeClassLabel`. */
+ *  mass on the label comes from the mass, in grams or ounces - see
+ *  `sizeClassLabel` in units.ts. */
 export interface SizeClass {
   key: string;
   mass_kg: number;
-}
-
-/** What the size menu says for a class: its name, and its mass to the gram.
- *  The label rounds; the model cooks the mass to a tenth. */
-export function sizeClassLabel(c: SizeClass): CopyRef {
-  return { key: c.key, args: { grams: Math.round(c.mass_kg * 1000) } };
 }
 
 /** EU Regulation 589/2008 Art. 4, at a representative mass inside each band. */

@@ -12,6 +12,7 @@
  */
 
 import { SizeClass } from '../core/geometry.js';
+import { UnitSystem, readChosenUnits } from '../core/units.js';
 import { StartMode, Cooling, HeatAfterBoil } from '../core/protocol.js';
 import {
   BoilMemory, DEFAULTS, LIMITS, Limit, carrySizeIndex, clamp, isWithin, rememberBoil,
@@ -53,6 +54,11 @@ export interface Settings {
   doneness: number;
   /** No alarm, no blips. The countdown still runs. */
   muted: boolean;
+  /** Metric or Imperial, as the COOK chose it, or null if they never have.
+   *  Not the system on screen: that is this or, failing it, the region's
+   *  default (`effectiveUnits`), and storing the result instead would turn a
+   *  default into a choice the cook never made. */
+  unitsChosen: UnitSystem | null;
 }
 
 /** The numbers a fresh install starts from come from core; the three settings
@@ -74,6 +80,7 @@ export const DEFAULT_SETTINGS: Settings = {
   eggCount: DEFAULTS.eggCount,
   doneness: DEFAULTS.doneness,
   muted: false,
+  unitsChosen: null,
 };
 
 /* ------------------------------------------------------------- raw storage */
@@ -157,6 +164,7 @@ export function loadSettings(classes: SizeClass[]): Settings {
     eggCount: Math.round(clampNumber(raw['eggCount'], LIMITS.eggCount, d.eggCount)),
     doneness: clampNumber(raw['doneness'], LIMITS.doneness, d.doneness),
     muted: raw['muted'] === true,
+    unitsChosen: readChosenUnits(raw['unitsChosen']),
   };
 }
 

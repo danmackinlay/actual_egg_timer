@@ -33,6 +33,7 @@ import {
   copyCalibration, foldRecord, freshCalibration as freshFrom, gridRequestFor, parseLog,
   recordMass_g, recordTeaches,
 } from '../core/record.js';
+import { UnitSystem } from '../core/units.js';
 import { COOLING_SECONDS, Machine } from './machine.js';
 import { readStorage, writeStorage, removeStorage } from './store.js';
 
@@ -119,6 +120,9 @@ export interface Cooked {
    *  which never times its own pan; a finished cold start always has. */
   boilRemembered: boolean;
   eggFrom: EggFrom;
+  /** The system the cook was reading at "Eggs in". The record stays SI; this
+   *  says only what was on screen, so the fit can look for rounding at input. */
+  units: UnitSystem;
 }
 
 function pad2(n: number): string {
@@ -183,7 +187,7 @@ export function eggRecordFor(
     probe: null,
     lang: 'en',
     register: 'modern',
-    units: 'metric',
+    units: c.units,
   };
 }
 

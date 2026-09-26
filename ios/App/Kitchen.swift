@@ -33,7 +33,7 @@ final class Kitchen {
     /// everywhere else. Region only - not the language, not the units. Read
     /// once, like the web app's, and a stored index is carried into it by
     /// `carrySizeIndex` if the region has changed since.
-    let sizeClasses = sizeClassesFor(region: Locale.current.region?.identifier)
+    let sizeClasses = sizeClassesFor(region: deviceRegion)
     /// Index into `sizeClasses`, or -1 for an egg that was weighed.
     private(set) var sizeIndex: Int = Defaults.sizeIndex { didSet { changed() } }
     /// What the slider says when the egg was weighed. Ignored while a class is
@@ -46,7 +46,7 @@ final class Kitchen {
     }
 
     /// `sizeClasses` by name, read with it, for the record.
-    private let sizeTableInUse = sizeTableFor(region: Locale.current.region?.identifier)
+    private let sizeTableInUse = sizeTableFor(region: deviceRegion)
     /// Where the egg's mass came from, for the record: the carton's class, or the
     /// slider - which is a scale as far as this screen is concerned.
     var massFrom: MassFrom { sizeClasses.indices.contains(sizeIndex) ? .sizeClass : .scale }
@@ -101,6 +101,42 @@ final class Kitchen {
     /// a TypeScript `number`, and that is the core's business rather than the
     /// app's - the conversion belongs at the boundary, not in the control.
     var eggCount: Int = Defaults.eggCount { didSet { changed() } }
+
+    // MARK: - Units
+
+    /// The system this phone starts in: its temperature preference, then its
+    /// measurement system, then its region (`regionalUnits`). Read once, like
+    /// the size classes.
+    let regionalUnits = platformUnits()
+    /// Metric or Imperial as the COOK chose it, or nil if they never have. Not
+    /// the system on screen, which falls back to `regionalUnits`: storing that
+    /// instead would turn a default into a choice nobody made. Saved, but no
+    /// re-solve: the egg does not change when its numbers change clothes.
+    private(set) var unitsChosen: UnitSystem? { didSet { if !applying { Settings.save(self) } } }
+
+    /// The system on screen.
+    var units: UnitSystem { effectiveUnits(chosen: unitsChosen, regional: regionalUnits) }
+
+    /// The cook picks a system. A change of system is posted as
+    /// `.unitsFlipped`, the hook F6 needs; a default never is.
+    func chooseUnits(_ next: UnitSystem) {
+        let choice = EggTimerCore.chooseUnits(chosen: unitsChosen, regional: regionalUnits, next: next)
+        unitsChosen = choice.chosen
+        if let flip = choice.flip {
+            NotificationCenter.default.post(name: .unitsFlipped, object: self, userInfo: ["flip": flip.rawValue])
+        }
+    }
+
+    /// Restore from storage without saving it straight back.
+    func restoreUnits(_ chosen: UnitSystem?) {
+        unitsChosen = chosen
+    }
+
+    /// One quantity in the system on screen.
+    func measure(_ q: Quantity) -> Measure { measureFor(q, system: units, region: deviceRegion) }
+
+    /// A value stored in SI, as the cook reads it: "4 °C", "39 °F", "2.4 oz".
+    func show(_ q: Quantity, _ si: Double) -> String { showIn(units, q, si) }
 
     // MARK: - Outputs
 
@@ -370,7 +406,7 @@ final class Kitchen {
 
     private func apply(_ answer: Answer) {
         solution = answer.solution
-        refusal = refusalText(answer.verdict, setup: answer.setup)
+        refusal = refusalText(answer.verdict, setup: answer.setup, water: show(.water, answer.setup.waterLitres))
         if let snapTo = answer.verdict.snapTo, snapTo != doneness {
             applying = true
             doneness = snapTo
@@ -561,7 +597,7 @@ final class Kitchen {
 /// `verdictFor` in EggTimerCore, so that this app and the web app cannot refuse
 /// differently. What is left here is the sentence, which is this app's own: the
 /// point is to teach the constraint, not merely to block the control.
-private func refusalText(_ v: Verdict, setup: CookSetup) -> String {
+private func refusalText(_ v: Verdict, setup: CookSetup, water: String) -> String {
     guard v.worthSaying else { return "" }
     let wanted = tr(v.wanted.key).lowercased()
     let limit = tr(v.limit.key).lowercased()
@@ -580,7 +616,7 @@ private func refusalText(_ v: Verdict, setup: CookSetup) -> String {
         // The standing method's own failure: the pan cools off before the yolk
         // gets where it was asked to go, and no amount of waiting fixes it.
         return tr("refusal.harderThanPan", [
-            "wanted": .text(wanted), "litres": .text(litresText(setup.waterLitres)), "limit": .text(limit),
+            "wanted": .text(wanted), "water": .text(water), "limit": .text(limit),
         ])
 
     case .tooSoftForWhite:
@@ -595,9 +631,46 @@ private func refusalText(_ v: Verdict, setup: CookSetup) -> String {
     }
 }
 
-/// Litres as someone would say them: "2", not "1.7500000000000002".
-private func litresText(_ litres: Double) -> String {
-    litres == litres.rounded() ? String(Int(litres)) : String(format: "%.1f", litres)
+// MARK: - Units
+
+/// The phone's region: which carton's size classes, and which Imperial unit
+/// water is in. Region only, as `Locale` reports it.
+let deviceRegion: String? = Locale.current.region?.identifier
+
+/// The system this phone starts in, before the cook chooses.
+///
+/// iOS knows more than a browser does: the measurement system, and since iOS
+/// 16 the temperature unit a cook can set in Settings, which reaches `Locale`
+/// as its `mu` keyword and so `UnitTemperature(forLocale:)`. Which of them
+/// wins is core policy (`regionalUnits`); this only reads them.
+func platformUnits() -> UnitSystem {
+    let locale = Locale.current
+    let system: MeasurementSystemName = switch locale.measurementSystem {
+    case .us: .us
+    case .uk: .uk
+    default: .metric
+    }
+    let fahrenheit = UnitTemperature(forLocale: locale).symbol == UnitTemperature.fahrenheit.symbol
+    return regionalUnits(
+        region: locale.region?.identifier, measurementSystem: system,
+        temperature: fahrenheit ? .fahrenheit : .celsius
+    )
+}
+
+/// A value stored in SI, as the cook reads it in a given system. Outside the
+/// Kitchen for the cook, which renders the Live Activity's numbers in the
+/// system the egg was set up in.
+func showIn(_ units: UnitSystem, _ q: Quantity, _ si: Double) -> String {
+    let text = quantityText(measureFor(q, system: units, region: deviceRegion), si)
+    return tr(text.key, ["value": .text(text.value)])
+}
+
+extension Notification.Name {
+    /// Posted by `Kitchen.chooseUnits` when the cook's own choice changes the
+    /// system on screen, with the `UnitsFlip` raw value under "flip". Nothing
+    /// observes it yet: it is the hook F6 needs - an English UI switched from
+    /// metric to Imperial goes into the English of 1750 (LANGUAGE.md §6).
+    static let unitsFlipped = Notification.Name("unitsFlipped")
 }
 
 // MARK: - Presentation helpers

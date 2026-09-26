@@ -186,11 +186,26 @@ F1 goes before E2 so that Phase E's new feedback copy is born in the catalogue.
       and every bare "°". Every inserted word (a doneness name, a limit)
       moves out of running grammar into a label or after a colon, so Czech
       never has to decline it. Runs alongside E2 and E5.
-- [ ] **F3 units.** `src/core/units.ts` + Swift twin + fixtures: conversions,
-      display precision, input steps, and a round trip that never shows 2.39 oz
-      for a typed 2.4. Metric / Imperial setting defaulting from the region;
-      an EXPLICIT choice stored apart from the default. A unit on every
-      temperature.
+- [x] **F3 units.** DONE 27 September 2026. `src/core/units.ts` +
+      `Units.swift` + `fixtures/units.json`: conversions, a step and decimals
+      per quantity per system, input bounds rounded INWARD to the step, and
+      the round trip - store SI, show it rounded to the step and held inside
+      the bounds, re-read a field only when the cook edits it. Measured: all
+      1,038 grid values of every input, in both systems and both water units,
+      come back as typed (the generator refuses a fixture where one does not),
+      and mass and girth also survive the trip through the one diameter the
+      web stores them as. The setting is stored as the cook's CHOICE (`null` /
+      absent until made), apart from the regional default: Imperial only in
+      region US on the web; on iOS the temperature preference, then the
+      measurement system, then the region (`regionalUnits`). A change of
+      system by the cook raises `aet:unitsflip` on the web and posts
+      `.unitsFlipped` on iOS, the hook F6 needs; nothing listens yet. Every
+      temperature carries its unit through `format.*` keys, the size menu
+      shows ounces from the same mass, the Live Activity is handed its numbers
+      rendered, and the record's `units` is the system the cook read at "Eggs
+      in". Budgets raised for the unit: lockscreen 29 -> 33, body 251 -> 260,
+      a11y 88 -> 101. Web driven in both systems under en-GB and en-US; iOS
+      built and seen in both systems, but not tapped (see LOGBOOK).
     - [x] **Size classes by region**, done first, 26 September 2026. US carton
           classes in region US, at the MIDPOINT of each USDA range (an EU
           Large had been overcooking an American Large by ~34 s).
@@ -204,8 +219,8 @@ F1 goes before E2 so that Phase E's new feedback copy is born in the catalogue.
           gained the class menu the web already had, with the slider as the
           scale: an install from before it, still on the untouched 68 g, is
           read as a Large, so Americans on the default move to 60.2 g. Labels
-          are still grams in English; they move into the catalogue with F1 and
-          gain ounces with the rest of F3.
+          moved into the catalogue with F1 and show ounces under Imperial
+          (`sizeClassLabel` in units.ts).
 - [ ] **F4 locale formatting.** Numbers, plurals, 12/24-hour clock, weekday
       names through `Intl` / `FormatStyle`, pinned per locale by the fixture.
 - [ ] **F5 Czech**, reviewed by the owner's friend before it ships. Brings
@@ -252,7 +267,6 @@ eggFromMass(mass_kg: number): Egg
 diffusionTime(egg: Egg, alpha_m2s: number): number
 SIZE_CLASSES: { key: string; mass_kg: number }[]     // EU, and the default table
 US_SIZE_CLASSES: { key: string; mass_kg: number }[]  // region US
-sizeClassLabel(c: SizeClass): CopyRef                // the key, and grams from the mass
 sizeClassesFor(region: string | null | undefined): SizeClass[]
 sizeTableFor(region): 'eu' | 'us'                         // the same choice, by name, for the record
 
@@ -307,6 +321,17 @@ equilibrationTime(radius_m, alpha_m2s): number
 sousVideEstimate(radius_m, alpha_m2s, bath_C, yolkDose_min, whiteDose_min): SousVideEstimate
 longDuration(seconds): CopyRef             // the unit choice, as a key and its numbers
 startPhrase(daysAgo): CopyRef              // the app adds {weekday}
+
+// units.ts  (Metric and Imperial; LANGUAGE.md §4. Core stays SI.)
+type UnitSystem = 'metric' | 'imperial'
+type Quantity = 'temperature' | 'eggTemp' | 'boilingPoint' | 'mass' | 'girth' | 'width' | 'altitude' | 'water'
+measureFor(q, system, region): Measure      // unit, step, decimals, unitKey, formatKey, limit, bounds
+display(m, si) / displayText(m, si)         // rounded to the step, held inside the bounds
+parse(m, typed): number | null              // to SI, clamped by LIMITS in SI; null for no number
+quantityText(m, si): { key; value }         // render as t(key, { value })
+sizeClassLabel(c, system): { key; mass: QuantityText }
+regionalUnits({ region, measurementSystem?, temperature? }): UnitSystem
+effectiveUnits(chosen, regional) / chooseUnits(chosen, regional, next): { chosen; flip }
 
 // copy.ts  (the words; LANGUAGE.md §2)
 interface CopyRef { key; args: Record<string, number> }
