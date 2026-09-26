@@ -9,21 +9,21 @@ import Foundation
 /// observations kept, a model change is a replay of the log.
 ///
 /// The posterior is a function of the log and of nothing else: both apps fold
-/// an egg FROM ITS RECORD, through `gridRequest` and `foldYolk` / `foldWhite`,
-/// and `replay` is those same calls in a loop. That is what makes a posterior
-/// rebuilt from the log bit-identical to the one built egg by egg.
+/// an egg FROM ITS RECORD, through `gridRequest` and `foldRecord`, and `replay`
+/// is those same calls in a loop. That is what makes a posterior rebuilt from
+/// the log bit-identical to the one built egg by egg.
 ///
-/// E1 does not change the likelihood. It is scored at the SCHEDULED cook time,
-/// `recommendedS + nudgeS`, exactly as before; the measured pull is recorded
-/// for E2, which changes the model once and replays.
+/// Since E2 an egg is scored at the cook's own pull when they tapped one
+/// (`pulledBy == .cook`), and at the scheduled time when nobody did.
 ///
 /// Codable lives here so the two apps' storage and the fixtures agree on one
 /// shape; the JSON coder itself is the caller's, since this package does no I/O.
 
 public let recordVersion = 1
 
-/// Which prior the record's cook was recommended under.
-public let priorID = "2026-09"
+/// Which prior the record's cook was recommended under: '2026-09' was E1's
+/// three-number particle, '2026-09-e2' is E2's six.
+public let priorID = "2026-09-e2"
 
 /// Where the egg's mass came from. A size class is a 10 g bucket, worth about
 /// +-24 s; a scale is a gram.
@@ -149,8 +149,9 @@ public struct EggRecord: Sendable, Codable, Equatable {
     public var cooledS: Double
     /// Nil when the question was on screen and the cook moved on.
     public var yolk: Feedback?
-    /// Three states with `whiteOffered`: not asked (false, nil), asked and
-    /// skipped (true, nil), answered (true, an answer).
+    /// Three states with `whiteOffered`: not asked (false, nil - E1 only), asked
+    /// and skipped (true, nil), answered (true, an answer). Since E2 the white
+    /// is always offered; `.set` is E1's two-level answer.
     public var white: WhiteReport?
     public var whiteOffered: Bool
     public var lang: String
@@ -161,7 +162,7 @@ public struct EggRecord: Sendable, Codable, Equatable {
         uid: String? = nil, day: String, app: AppName, appVersion: String,
         prior: String = priorID, egg: RecordEgg, setup: RecordSetup, level: Double,
         recommendedS: Double, nudgeS: Double = 0, pulledS: Double, pulledBy: PulledBy,
-        cooledS: Double, yolk: Feedback?, white: WhiteReport? = nil, whiteOffered: Bool = false,
+        cooledS: Double, yolk: Feedback?, white: WhiteReport? = nil, whiteOffered: Bool = true,
         lang: String = "en", register: String = "modern", units: Units = .metric
     ) {
         v = recordVersion
@@ -333,6 +334,19 @@ public func calibrationParams(_ c: Calibration) -> ModelParams {
     c.eggsLogged == 0 ? .default : posteriorParams(c.posterior)
 }
 
+/// The doneness to solve for: the slider's yolk target, and the white's target
+/// moved by what the eggs have said about the white (E3). The literature target
+/// exactly before any egg. See src/core/record.ts.
+public func calibrationDoneness(_ c: Calibration, level: Double) -> Doneness {
+    let d = donenessFromSlider(level)
+    if c.eggsLogged == 0 { return d }
+    return Doneness(
+        level: d.level,
+        yolkDoseMin: d.yolkDoseMin,
+        whiteDoseMin: whiteDoseTarget * pow(10.0, posteriorMeanWhiteOffset(c.posterior))
+    )
+}
+
 /// Whether a record has anything to fold. An unanswered egg is still a record,
 /// but it moves no particle and is not an egg the model learned from.
 public func recordTeaches(_ r: EggRecord) -> Bool {
@@ -353,9 +367,10 @@ public func recordCookSetup(_ r: EggRecord) -> CookSetup {
     )
 }
 
-/// The cook time the likelihood is scored at: the scheduled one.
+/// The cook time the likelihood is scored at: when the cook said the egg came
+/// out, if they said, and the schedule if they did not.
 public func recordCookTimeS(_ r: EggRecord) -> Double {
-    r.recommendedS + r.nudgeS
+    r.pulledBy == .cook ? r.pulledS : r.recommendedS + r.nudgeS
 }
 
 public func recordLogTarget(_ r: EggRecord) -> Double {
@@ -396,29 +411,21 @@ public func buildRequestedGrid(_ q: GridRequest) -> DoseGrid {
     )
 }
 
-/// Fold the yolk answer, count the egg if it teaches anything, and say whether
-/// the white is worth asking about - decided after the fold.
-@discardableResult
-public func foldYolk(_ c: inout Calibration, _ r: EggRecord, grid: DoseGrid) -> Bool {
-    let cookTimeS = recordCookTimeS(r)
-    if let yolk = r.yolk {
-        updatePosterior(
-            &c.posterior, grid: grid,
-            cookTimeS: cookTimeS, logNominalTarget: recordLogTarget(r), feedback: yolk
-        )
-    }
-    if recordTeaches(r) { c.eggsLogged += 1 }
-    return shouldAskAboutWhite(c.posterior, grid, cookTimeS)
+/// Fold one record - both of its answers, whichever it has - and count the egg
+/// if it teaches anything. One fold per egg: an app that hears the second
+/// answer after folding the first folds the egg again from the calibration as
+/// it stood before it, against the same surface.
+public func foldRecord(_ c: inout Calibration, _ r: EggRecord, grid: DoseGrid) {
+    guard recordTeaches(r) else { return }
+    updatePosterior(
+        &c.posterior, grid: grid, cookTimeS: recordCookTimeS(r),
+        logNominalTarget: recordLogTarget(r), yolk: r.yolk, white: r.white
+    )
+    c.eggsLogged += 1
 }
 
-/// Fold the white answer of the same record, against the same surface.
-public func foldWhite(_ c: inout Calibration, _ r: EggRecord, grid: DoseGrid) {
-    guard let white = r.white else { return }
-    updateWhite(&c.posterior, grid: grid, cookTimeS: recordCookTimeS(r), white: white)
-}
-
-/// Rebuild a posterior from a starting point - the prior, or a migrated base -
-/// and a log. Each egg is what the app did when it was answered; an egg with no
+/// Rebuild a posterior from a starting point - the prior, or the posterior of a
+/// damaged log that had to be dropped - and a log. Each egg is what the app did when it was answered; an egg with no
 /// answer is skipped and builds no surface. `start` is a value, so it is never
 /// moved.
 public func replay(
@@ -426,9 +433,7 @@ public func replay(
 ) -> Calibration {
     var c = start
     for r in records where recordTeaches(r) {
-        let surface = buildRequestedGrid(gridRequest(c, r, grid: grid))
-        foldYolk(&c, r, grid: surface)
-        foldWhite(&c, r, grid: surface)
+        foldRecord(&c, r, grid: buildRequestedGrid(gridRequest(c, r, grid: grid)))
     }
     return c
 }

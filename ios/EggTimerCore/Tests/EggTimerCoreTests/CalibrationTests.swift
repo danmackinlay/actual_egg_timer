@@ -94,14 +94,16 @@ private func posterior(from json: [String: Any], _ label: String) -> Posterior {
         particles.append(Particle(
             alphaM2s: row.num("alpha_m2s"),
             logDoseOffset: row.num("logDoseOffset"),
-            tauAirScale: row.num("tauAirScale")
+            tauAirScale: row.num("tauAirScale"),
+            noise: row.num("noise"),
+            whiteOffset: row.num("whiteOffset"),
+            whiteFirmGap: row.num("whiteFirmGap")
         ))
     }
     return Posterior(particles: particles, weights: doubles(json, "weights"), rng: Int32(truncating: rng))
 }
 
-/// The white answer a fixture row carries, or nil when that egg was not asked
-/// about. A row with an unknown string is a fixture the port cannot read, which
+/// The white answer a fixture row carries, or nil for a skip. A row with an unknown string is a fixture the port cannot read, which
 /// must fail loudly rather than quietly skip a fold.
 private func whiteReport(_ json: [String: Any], _ label: String) -> WhiteReport? {
     guard let raw = json["white"] as? String else { return nil }
@@ -192,6 +194,9 @@ struct InferenceConformance {
             expectClose(post.particles[i].alphaM2s, particles[i].num("alpha_m2s"), "\(label) particle \(i) alpha")
             expectClose(post.particles[i].logDoseOffset, particles[i].num("logDoseOffset"), "\(label) particle \(i) offset")
             expectClose(post.particles[i].tauAirScale, particles[i].num("tauAirScale"), "\(label) particle \(i) tauAirScale")
+            expectClose(post.particles[i].noise, particles[i].num("noise"), "\(label) particle \(i) noise")
+            expectClose(post.particles[i].whiteOffset, particles[i].num("whiteOffset"), "\(label) particle \(i) white offset")
+            expectClose(post.particles[i].whiteFirmGap, particles[i].num("whiteFirmGap"), "\(label) particle \(i) firm gap")
             expectClose(post.weights[i], weights[i], "\(label) weight \(i)")
         }
 
@@ -206,6 +211,7 @@ struct InferenceConformance {
         expectClose(params.alphaM2s, expected.num("alpha_m2s"), "\(label) mean alpha")
         expectClose(params.tauAirScale, expected.num("tauAirScale"), "\(label) mean tauAirScale")
         expectClose(posteriorMeanOffset(post), expected.num("meanOffset"), "\(label) mean offset")
+        expectClose(posteriorMeanWhiteOffset(post), expected.num("meanWhiteOffset"), "\(label) mean white offset")
         expectClose(posteriorAlphaRelSd(post), expected.num("alphaRelSd"), "\(label) alpha rel sd")
 
         guard let predictJSON = expected["predict"] as? [String: Any] else {
@@ -234,16 +240,12 @@ struct InferenceConformance {
         expectPosterior(post, priorJSON, "prior", grid, target)
     }
 
-    /// Replays the whole sequence. Several of these updates drive the effective
+    /// Replays the whole sequence: each egg's two answers folded jointly, either
+    /// of them possibly missing, with the predictive checked BEFORE each fold -
+    /// it is what a cook would be shown. Several updates drive the effective
     /// sample size below n/2 and resample, which is the only part of the filter
-    /// that touches the RNG after the prior is drawn - and the only part where
-    /// the order of the particles matters.
-    ///
-    /// The white answers are replayed in the same pass, each folded straight
-    /// after the yolk answer for the same egg, because that is the order the apps
-    /// fold them in and the posterior depends on it. The ask decision is checked
-    /// where the apps read it, between the two folds.
-    @Test("every update, including the resamples and the white answers")
+    /// that touches the RNG after the prior is drawn.
+    @Test("every update: the predictive, one particle's likelihood, and the whole set")
     func updates() {
         let c = loadCalibration()
         let grid = buildFixtureGrid(c)
@@ -256,43 +258,38 @@ struct InferenceConformance {
             seed: Int32(priorJSON.num("seed"))
         )
         for (i, step) in updates.enumerated() {
-            guard let raw = step["feedback"] as? NSNumber,
-                  let feedback = Feedback(rawValue: raw.intValue),
-                  let after = step["after"] as? [String: Any] else {
-                fatalError("malformed update \(i)")
-            }
+            guard let after = step["after"] as? [String: Any] else { fatalError("malformed update \(i)") }
+            let feedback = (step["feedback"] as? NSNumber).flatMap { Feedback(rawValue: $0.intValue) }
+            let white = whiteReport(step, "update \(i)")
             let target = step.num("logNominalTarget")
             let cookTimeS = step.num("cookTime_s")
-            updatePosterior(
-                &post, grid: grid,
-                cookTimeS: cookTimeS,
-                logNominalTarget: target,
-                feedback: feedback
-            )
-            expectPosterior(post, after, "update \(i) (feedback \(raw.intValue))", grid, target)
 
-            expectClose(
-                whiteRunnyProbability(post, grid, cookTimeS), step.num("whiteRunny"),
-                "update \(i): predicted probability the white was runny"
-            )
-            #expect(
-                shouldAskAboutWhite(post, grid, cookTimeS) == (step["askWhite"] as? Bool ?? false),
-                "update \(i): whether the white is worth asking about"
-            )
-
-            guard let white = whiteReport(step, "update \(i)") else { continue }
-            guard let afterWhite = step["afterWhite"] as? [String: Any] else {
-                fatalError("update \(i) has a white answer but no posterior after it")
+            let yolkProbs = yolkAnswerProbabilities(post, grid, cookTimeS, target)
+            let whiteProbs = whiteAnswerProbabilities(post, grid, cookTimeS)
+            let expectedYolk = doubles(step, "yolkProbs")
+            let expectedWhite = doubles(step, "whiteProbs")
+            for k in 0..<3 {
+                expectClose(yolkProbs[k], expectedYolk[k], "update \(i): P(yolk answer \(k))")
+                expectClose(whiteProbs[k], expectedWhite[k], "update \(i): P(white answer \(k))")
             }
-            updateWhite(&post, grid: grid, cookTimeS: cookTimeS, white: white)
-            expectPosterior(post, afterWhite, "update \(i) (white \(white.rawValue))", grid, target)
+            expectClose(
+                answerLikelihood(grid, post.particles[0], cookTimeS, target, yolk: feedback, white: white),
+                step.num("firstLikelihood"), "update \(i): the first particle's likelihood"
+            )
+
+            updatePosterior(
+                &post, grid: grid, cookTimeS: cookTimeS, logNominalTarget: target,
+                yolk: feedback, white: white
+            )
+            expectPosterior(
+                post, after, "update \(i) (\(feedback.map { "\($0.rawValue)" } ?? "-") / \(white?.rawValue ?? "-"))",
+                grid, target
+            )
         }
     }
 
-    /// The white fold's own resample. The channel is too weak to degenerate a
-    /// healthy particle set on its own, so this case starts from a set the
-    /// reference already sharpened - otherwise the branch would be shipped in both
-    /// implementations and executed in neither.
+    /// A white-only answer resampling from a known starting point: a set the
+    /// reference sharpened until it sat just above the threshold.
     @Test("a white answer that degenerates the set resamples identically")
     func whiteResample() {
         let c = loadCalibration()
@@ -305,8 +302,6 @@ struct InferenceConformance {
               let first = updates.first else {
             fatalError("fixtures/calibration.json has no whiteResample case")
         }
-        // The readout's predicted cook time is against the same nominal target as
-        // the rest of the file; it is recorded once, on every update.
         let target = first.num("logNominalTarget")
         var post = posterior(from: before, "whiteResample")
         expectClose(effectiveSampleSize(post), before.num("ess"), "whiteResample: starting ess")
@@ -315,44 +310,47 @@ struct InferenceConformance {
             "the fixture is meant to START above the resample threshold"
         )
         let cookTimeS = step.num("cookTime_s")
-        updateWhite(&post, grid: grid, cookTimeS: cookTimeS, white: white)
+        updatePosterior(&post, grid: grid, cookTimeS: cookTimeS, logNominalTarget: target, yolk: nil, white: white)
         expectPosterior(post, after, "whiteResample", grid, target)
     }
 
-    /// When the second question is asked at all, over a sweep of cook times. This
-    /// is the one number in the calibration a user can SEE: get it wrong and an
-    /// app either asks about the white after every egg or never mentions it, and
-    /// no comparison of posteriors would notice.
-    @Test("whether the white is worth asking about, across a range of cooks")
-    func whiteAsk() {
+    /// The predictive over a sweep of cook times on a fresh prior: what E5 will
+    /// put on screen as the odds.
+    @Test("the predictive, across a range of cooks")
+    func predictive() {
         let c = loadCalibration()
         let grid = buildFixtureGrid(c)
         guard let priorJSON = c.file["prior"] as? [String: Any],
-              let cases = c.file["whiteAsk"] as? [[String: Any]] else {
-            fatalError("fixtures/calibration.json has no whiteAsk cases")
+              let cases = c.file["predictive"] as? [[String: Any]],
+              let updates = c.file["updates"] as? [[String: Any]],
+              let first = updates.first else {
+            fatalError("fixtures/calibration.json has no predictive cases")
         }
+        let target = first.num("logNominalTarget")
         for row in cases {
-            let post = createPrior(
-                count: Int(priorJSON.num("count")),
-                seed: Int32(priorJSON.num("seed"))
-            )
+            let post = createPrior(count: Int(priorJSON.num("count")), seed: Int32(priorJSON.num("seed")))
             let t = row.num("cookTime_s")
-            expectClose(
-                whiteRunnyProbability(post, grid, t), row.num("whiteRunny"),
-                "whiteRunnyProbability at t = \(t)"
-            )
-            #expect(
-                shouldAskAboutWhite(post, grid, t) == (row["askWhite"] as? Bool ?? false),
-                "shouldAskAboutWhite at t = \(t)"
-            )
+            let yolk = yolkAnswerProbabilities(post, grid, t, target)
+            let white = whiteAnswerProbabilities(post, grid, t)
+            let expectedYolk = doubles(row, "yolkProbs")
+            let expectedWhite = doubles(row, "whiteProbs")
+            for k in 0..<3 {
+                expectClose(yolk[k], expectedYolk[k], "P(yolk answer \(k)) at t = \(t)")
+                expectClose(white[k], expectedWhite[k], "P(white answer \(k)) at t = \(t)")
+            }
         }
     }
 
-    @Test("both feedback bands and the ask threshold match the reference")
-    func band() {
+    @Test("the likelihood's constants and priors match the reference")
+    func constants() {
         let c = loadCalibration()
-        expectClose(feedbackBand, c.file.num("feedbackBand"), "FEEDBACK_BAND")
-        expectClose(whiteFeedbackBand, c.file.num("whiteFeedbackBand"), "WHITE_FEEDBACK_BAND")
-        expectClose(whiteAskMinP, c.file.num("whiteAskMinP"), "WHITE_ASK_MIN_P")
+        guard let l = c.file["likelihood"] as? [String: Any] else { fatalError("no likelihood block") }
+        expectClose(feedbackBand, l.num("feedbackBand"), "FEEDBACK_BAND")
+        expectClose(unrelated, l.num("unrelated"), "UNRELATED")
+        expectClose(noiseMedian, l.num("noiseMedian"), "NOISE_MEDIAN")
+        expectClose(noiseLogSd, l.num("noiseLogSd"), "NOISE_LOG_SD")
+        expectClose(whiteOffsetSd, l.num("whiteOffsetSd"), "WHITE_OFFSET_SD")
+        expectClose(whiteFirmGapMedian, l.num("whiteFirmGapMedian"), "WHITE_FIRM_GAP_MEDIAN")
+        expectClose(whiteFirmGapLogSd, l.num("whiteFirmGapLogSd"), "WHITE_FIRM_GAP_LOG_SD")
     }
 }

@@ -83,7 +83,8 @@ private func calibration(from json: [String: Any]) -> Calibration {
     let particles = rows.map {
         Particle(
             alphaM2s: $0.num("alpha_m2s"), logDoseOffset: $0.num("logDoseOffset"),
-            tauAirScale: $0.num("tauAirScale")
+            tauAirScale: $0.num("tauAirScale"), noise: $0.num("noise"),
+            whiteOffset: $0.num("whiteOffset"), whiteFirmGap: $0.num("whiteFirmGap")
         )
     }
     return Calibration(
@@ -105,6 +106,9 @@ private func expectCalibration(_ c: Calibration, _ expected: [String: Any], _ la
         expectClose(a.alphaM2s, b.alphaM2s, "\(label) particle \(i) alpha")
         expectClose(a.logDoseOffset, b.logDoseOffset, "\(label) particle \(i) offset")
         expectClose(a.tauAirScale, b.tauAirScale, "\(label) particle \(i) tauAirScale")
+        expectClose(a.noise, b.noise, "\(label) particle \(i) noise")
+        expectClose(a.whiteOffset, b.whiteOffset, "\(label) particle \(i) white offset")
+        expectClose(a.whiteFirmGap, b.whiteFirmGap, "\(label) particle \(i) firm gap")
         expectClose(c.posterior.weights[i], want.posterior.weights[i], "\(label) weight \(i)")
     }
 }
@@ -119,6 +123,9 @@ private func identical(_ a: Calibration, _ b: Calibration) -> Bool {
         if p.alphaM2s.bitPattern != q.alphaM2s.bitPattern
             || p.logDoseOffset.bitPattern != q.logDoseOffset.bitPattern
             || p.tauAirScale.bitPattern != q.tauAirScale.bitPattern
+            || p.noise.bitPattern != q.noise.bitPattern
+            || p.whiteOffset.bitPattern != q.whiteOffset.bitPattern
+            || p.whiteFirmGap.bitPattern != q.whiteFirmGap.bitPattern
             || a.posterior.weights[i].bitPattern != b.posterior.weights[i].bitPattern {
             return false
         }
@@ -135,6 +142,9 @@ private struct Columns: Codable {
     var a: [Double]
     var o: [Double]
     var t: [Double]
+    var sd: [Double]
+    var wo: [Double]
+    var wg: [Double]
     var w: [Double]
 }
 
@@ -143,12 +153,16 @@ private func throughJSON(_ c: Calibration) throws -> Calibration {
     let columns = Columns(
         n: c.eggsLogged, rng: p.rng,
         a: p.particles.map(\.alphaM2s), o: p.particles.map(\.logDoseOffset),
-        t: p.particles.map(\.tauAirScale), w: p.weights
+        t: p.particles.map(\.tauAirScale), sd: p.particles.map(\.noise),
+        wo: p.particles.map(\.whiteOffset), wg: p.particles.map(\.whiteFirmGap), w: p.weights
     )
     let back = try JSONDecoder().decode(Columns.self, from: JSONEncoder().encode(columns))
     var particles = [Particle]()
     for i in 0..<back.a.count {
-        particles.append(Particle(alphaM2s: back.a[i], logDoseOffset: back.o[i], tauAirScale: back.t[i]))
+        particles.append(Particle(
+            alphaM2s: back.a[i], logDoseOffset: back.o[i], tauAirScale: back.t[i],
+            noise: back.sd[i], whiteOffset: back.wo[i], whiteFirmGap: back.wg[i]
+        ))
     }
     return Calibration(
         posterior: Posterior(particles: particles, weights: back.w, rng: back.rng),
@@ -197,7 +211,7 @@ struct RecordConformance {
 
 @Suite("Replay")
 struct ReplayConformance {
-    @Test("a six-egg log, egg by egg, every particle")
+    @Test("an eight-egg log, egg by egg, every particle")
     func stepByStep() {
         guard let steps = replayJSON()["steps"] as? [[String: Any]] else { fatalError("no steps") }
         let log = fixtureLog()
@@ -211,15 +225,17 @@ struct ReplayConformance {
                 guard let spec = step["spec"] as? [String: Any] else { fatalError("step \(i): no spec") }
                 expectClose(q.spec.alphaMin, spec.num("alphaMin"), "step \(i) alphaMin")
                 expectClose(q.spec.timeMaxS, spec.num("timeMax_s"), "step \(i) timeMax")
-                let surface = buildRequestedGrid(q)
-                let ask = foldYolk(&c, r, grid: surface)
-                #expect(ask == step.flag("askWhite"), "step \(i): ask about the white")
-                foldWhite(&c, r, grid: surface)
+                expectClose(recordCookTimeS(r), step.num("cookTime_s"), "step \(i) scored at")
+                foldRecord(&c, r, grid: buildRequestedGrid(q))
             } else {
                 #expect(step["spec"] is NSNull, "step \(i): an unanswered egg builds no surface")
             }
             guard let after = step["after"] as? [String: Any] else { fatalError("step \(i): no state") }
             expectCalibration(c, after, "step \(i)")
+            expectClose(
+                calibrationDoneness(c, level: 0.22).whiteDoseMin, step.num("whiteDoseAtSoft"),
+                "step \(i): the white target the next soft egg is solved for"
+            )
         }
     }
 
@@ -233,9 +249,10 @@ struct ReplayConformance {
         expectCalibration(rebuilt, final, "from base")
     }
 
-    /// The claim E1 is done on, in this language. The app folds each egg as it
-    /// is answered and stores the posterior between eggs; a replay folds the log
-    /// in one go. They must not merely agree to twelve figures - they must be
+    /// The claim E1 is done on, in this language, with E2's second answer: the
+    /// app folds each egg when its first answer comes, stores the posterior,
+    /// and on the second answer folds the egg AGAIN from the posterior before
+    /// it; a replay folds the log in one go. They must not merely agree to twelve figures - they must be
     /// the same bits, or "a model change is a replay" quietly means "a model
     /// change moves your posterior a little for no reason".
     @Test("egg by egg, stored between eggs, is bit-identical to a replay")
@@ -247,12 +264,20 @@ struct ReplayConformance {
         var c = try throughJSON(base)
         for r in log.dropFirst() {
             guard recordTeaches(r) else { continue }
+            let before = c
             let surface = buildRequestedGrid(gridRequest(c, r, grid: grid))
-            foldYolk(&c, r, grid: surface)
+            // The first answer alone - whichever it was - folded and stored.
+            var first = r
+            if r.yolk != nil { first.white = nil }
+            foldRecord(&c, first, grid: surface)
             c = try throughJSON(c)
-            // The white arrives later, against the kept surface.
-            foldWhite(&c, r, grid: surface)
-            c = try throughJSON(c)
+            // The second answer arrives later: the egg is folded again from
+            // before it, against the kept surface.
+            if first != r {
+                c = before
+                foldRecord(&c, r, grid: surface)
+                c = try throughJSON(c)
+            }
         }
         let rebuilt = replay(try throughJSON(base), Array(log.dropFirst()), grid: grid)
         #expect(identical(c, rebuilt))
