@@ -1053,3 +1053,88 @@ cook's own pull when they tapped one. The numbers and why are INFERENCE.md §3.
 3. **The shared scratchpad is shared.** Another session was building its own
    "old" copy of the core in the same directory at the same time; work moved to
    a subdirectory of its own.
+
+## Numbers, clocks and plurals by locale (27 September 2026, F4)
+
+Every number and time of day either app writes now goes through the
+platform's formatter in one formatting locale - the UI's language in the
+device's region - and the two platforms are held to the same bytes by
+`fixtures/format.json`. `LANGUAGE.md` §2 has the choices; this is what was
+checked.
+
+### Verified
+
+- **The counts**, after merging `main` at c466b93 (E2 and E3). `npm test`
+  154 pass, 0 fail, 1 todo (main's `5b`, a known NOT MET), of 155; 13 are new
+  in `test/format.test.ts`. `npm run validate` 28/28. `npm run conformance`
+  77 Swift tests in 23 suites, all passing; `FormatConformance` is new with
+  7, and the sous-vide copy suite gained the weekday.
+- **`fixtures/format.json`**: numbers at 24 values and counts at 14, and times
+  at 13 instants with and without seconds, in en-US, en-GB and cs-CZ and in
+  en, en-AU, en-DE, cs, en-US-u-hc-h23 and en-GB-u-hc-h12 (459 rows); the
+  rounding and the decimals a count shows; the time-space normalisation; the
+  formatting locale for 7 languages x 9 regions x 3 hour cycles; the plural
+  rule with visible decimals; every quantity a cook reads, in both systems,
+  in the three supported locales; and a pseudo-Czech catalogue rendered in
+  cs-CZ (43 cases: every form of each plural, "1,50 l" as `many`, "1 250 m"
+  with U+00A0, a count of 1,234 days, fallback keys with Czech numbers).
+  `test/format.test.ts` checks the rules against `Intl.PluralRules` with
+  `minimumFractionDigits`, and forces cs-CZ through the web's own `show`,
+  `spokenClock` and `sousVideCopy` with that catalogue.
+- **English, rendered, before and after.** `tools/copy-snapshot.html` gained
+  seven states that reach what F4 changes (an en-US sous-vide, twice, and the
+  spoken countdown at 61, 60 and 1 s). With that harness, `main` at c466b93
+  and this branch each captured 171 states: 166 identical, and the five that
+  differ show exactly the intended changes and nothing else:
+  - en-US sous-vide "at 08:49" -> "at 8:49 AM", and "at 18:39" -> "at
+    6:39 PM" (U+202F before the AM/PM);
+  - "Cooking. 1 minute 1 seconds left" -> "1 minute 1 second left", twice;
+  - "Cooking. 1 seconds left" -> "1 second left".
+  en-GB, which is most of the harness, did not move: its clock was already
+  24-hour with a leading zero, which is what the en-GB time style prints.
+- **Intended English changes the harness cannot reach**, from the fixtures:
+  iOS "alarm set for 07:41:12" -> "7:41:12 AM" under en-US; numbers of four
+  digits or more are grouped ("1,500 m", "16,400 ft", seen only on iOS's
+  altitude stepper, since the web shows altitude in an input, which stays
+  plain); an iPhone whose 24-hour setting differs from its region's gets that
+  setting.
+- **The web, built with `npm run build:site` and served from this worktree**,
+  with pages that pin `navigator.language`: en-US sous-vide "at 2:23 AM"
+  (U+202F checked), "212.0 °F"; en-GB "at 02:21", "95.0 °C" at 1500 m, the
+  altitude input still "1500"; en-CZ (an English page in Czechia)
+  "95,0 °C" and "02:22".
+- **iOS** builds for the simulator. On a spare iPhone Air, booted for this
+  and shut down afterwards (the two booted simulators were left alone), with
+  launch arguments for the settings: `-AppleLocale en_US` took the US carton
+  and printed the sous-vide start as "at 02:33", because the simulator's
+  global `AppleICUForce24HourTime` is on and the phone's own setting wins;
+  with that forced off, "at 2:34 AM". Under en_GB with a hot start: "65 °C",
+  "Large — 68 g", "Fridge 4 °C", unchanged.
+
+### Not verified
+
+- **Nothing on iOS was tapped**, again: the altitude stepper's grouping, the
+  alarm line (it needs a cook and notification permission), the egg-count
+  stepper and a "Last {weekday}" headline on iOS rest on the conformance
+  suite and on reading the code.
+- **Safari was not tried.** It uses Apple's ICU rather than V8's; the one
+  difference known in advance (the space before PM) is normalised.
+- **en-CZ, en-CA, en-IN/NZ/SG and a Czech UI outside Czechia differ between
+  the apps** (`LANGUAGE.md` §2). They are measured and written down, not
+  fixed.
+
+### Things that cost time
+
+1. **Skeletons are not styles.** Asking both platforms for "hour and minute"
+   gives en-GB "9:05" from `Intl` and "09:05" from Foundation. The locale's
+   own time style gives "09:05" from both.
+2. **V8 is not CLDR about AM and PM.** Chrome prints U+0020 before "PM"
+   where CLDR and Foundation print U+202F, so the web normalises.
+3. **The harness never showed what F4 changes.** Before the seven states
+   above were added, all 164 states were identical to main: the harness runs
+   in en-GB, whose clock did not move, and never stopped the countdown at a
+   1.
+4. **`src/ui/clock.ts` already existed** (the ticker and the alarm), was
+   overwritten by a new file of the same name, and was restored before
+   anything was committed; the spoken countdown lives in `countdown.ts`.
+

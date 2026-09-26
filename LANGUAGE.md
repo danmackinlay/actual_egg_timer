@@ -86,12 +86,12 @@ languages.
 - **Core returns a `CopyRef`, `{ key, args }`.** `startPhrase` returns the key
   alone for the weekday bucket, and each app supplies `{weekday}`: the web from
   `weekday.*` in the catalogue, iOS from a locale-aware formatter, as before.
-  F4 makes them agree.
+  F4 makes them agree. (It did: both from the catalogue, below.)
 - **The size classes' grams come from the mass**, as an argument, so a label
   cannot disagree with the egg it cooks.
 - **Numbers are still formatted by the apps** and passed as strings, so F1
   changed no digit. Only a plural count goes in as a number. F4 moves the rest
-  to the platform formatters above.
+  to the platform formatters above. (It did, below.)
 - **The Swift renderer is its own library, `EggTimerCopy`**, beside
   `EggTimerCore` in the same package, so that the widget extension can link
   the words without the physics.
@@ -123,6 +123,94 @@ Numbers, times and dates go through the platform's formatters:
 `Intl.NumberFormat` and `Intl.DateTimeFormat` on the web, `FormatStyle` on iOS.
 The fixture pins the result for each locale, so a formatter disagreement shows
 up as a failing test and not as a surprise in a Czech kitchen.
+
+**As built, in F4 (27 September).** `src/core/format.ts` and its Swift twin
+`EggTimerCopy/Format.swift`, pinned by `fixtures/format.json`.
+
+- **The formatting locale is the UI's language in the device's region**:
+  `formattingLocale(uiLanguage, region, hourCycle)`, one function in both
+  cores. An English UI in Britain formats as `en-GB`; in Germany as `en-DE`,
+  which is a real CLDR locale with English words and "2,4". A private-use
+  subtag (`x-1750`) is dropped, since it is a register and not a format. iOS
+  adds the phone's own 12/24-hour setting as `-u-hc-h23` (or `h12`) when it
+  differs from the region's, so an Australian iPhone set to 24-hour time
+  reads "15:05" and not "3:05 pm"; a browser does not expose that setting,
+  so the web uses the region's. The web reads the region from
+  `navigator.language`, iOS from `Locale.current`. There is no picker yet
+  (F5), so the language is `en`, and `forceFormatLocale` pins the whole tag
+  for a test.
+- **Numbers go through `Intl.NumberFormat` and `NumberFormatter`**, with an
+  explicit locale. **The rounding is ours**, done first by the units'
+  `floor(x + 0.5)`: `Intl` rounds halves away from zero and `NumberFormatter`
+  to even, both on the shortest decimal of the double, and a number already
+  on its grid gives them nothing to decide. **Zero has no sign**: both print
+  -0 as "-0". A measurement goes to the renderer as a `Fixed`, its value and
+  F3's decimals for that quantity, and is written to exactly those decimals;
+  a count goes as a number, and is written with the decimals it has, up to
+  three. Grouping is the locale's, so English now groups from four digits:
+  "1,500 m", "16,400 ft". `displayText` stays plain digits with a point,
+  because a web `<input type="number">` holds machine text in every locale.
+- **Times of day use the locale's time STYLES** (`timeStyle: 'short'` and
+  `'medium'`; `DateFormatter.timeStyle` `.short` and `.medium`), given
+  seconds after midnight and formatted in UTC, so core reads no clock and no
+  zone. Not skeletons of hour and minute fields: the skeleton `jmm` gives
+  "9:05" in `Intl` and "09:05" in Foundation for en-GB, where the style is
+  CLDR's own pattern and both print "09:05". The countdown's m:ss is a
+  duration, not a time of day, and is built by hand as before.
+- **Every space in a time of day is U+202F**, the narrow no-break space.
+  Foundation prints it before "PM", as CLDR says; V8 prints U+0020 instead,
+  a patch for web pages that parse their own output. The web normalises to
+  Foundation's. It also stops a line breaking between "3:05" and "PM".
+- **Weekday names come from the catalogue in both apps** (`weekdayKey`, 0 is
+  Sunday), not from a platform formatter. The translator sees them, and a
+  platform's name is the nominative: Czech "Last {weekday}" wants the
+  accusative (*minulou středu*, not *středa*), and a name from the catalogue
+  can be the form the sentence needs, or the sentence can be rewritten around
+  it, which is F5's call. Before F4, iOS used `DateFormatter`'s "EEEE", so a
+  French phone said "Last mardi".
+- **Every spelled-out count is a plural message.** "{seconds} seconds" had
+  no `one`, so a screen reader heard "1 seconds"; it has one now, and
+  "{minutes} minute(s) {seconds} seconds" is two plural messages joined
+  (`spoken.minutes`, `spoken.seconds`, `spoken.minutesSeconds`), because a
+  message has one count and the seconds were stuck in the minutes' form.
+  Unit SYMBOLS - s, min, h, °C, g, L, oz - are not plural messages: they do
+  not inflect in English or Czech. A translator who wants a word can make any
+  `format.*` key a plural message on `{value}`, and the renderer will choose
+  its form.
+- **The plural rule sees the decimals a number is shown with**, as CLDR's `v`
+  operand does: "2,00 l" is Czech `many`, not `few`, and "1.0" is English
+  `other`. A count is rounded as it is written before its form is chosen.
+- **The record's `lang`** is the catalogue the cook read at "Eggs in",
+  carried on the ticket like `units`, and `en` for a cook saved before F4.
+
+**Where `Intl` and Foundation disagree**, measured on 27 September with Node
+26.8.1 (ICU 78.3, CLDR 48) against Foundation on macOS 26.6.2, after the
+normalisation above:
+
+| formatting locale | `Intl` | Foundation | what F4 did |
+|---|---|---|---|
+| en-US, en-AU, en, any 12-hour English | "3:05 PM" with U+0020 | "3:05 PM" with U+202F | normalised to U+202F, pinned |
+| en-CZ (an English UI in Czechia) | "09:05" | "9:05" | **not normalised, not pinned** |
+| en-CA | "3:05 p.m." | "3:05 PM" | not pinned |
+| en-IN, en-NZ, en-SG | "3:05 pm" | "3:05 PM" | not pinned |
+| cs-US, cs-GB (a Czech UI abroad) | "1 234,5" (by language) | "1,234.5" (by region); cs-US also a 12-hour clock | not pinned: **F5 must choose** |
+| cs-CZ-u-hc-h12 | "3:05 odp." | "15:05" (`DateFormatter` ignores `hc` for cs) | not pinned |
+
+Pinned, and agreeing: en-US, en-GB and cs-CZ, which are the supported set,
+and en, en-AU, en-DE, cs, en-US-u-hc-h23 and en-GB-u-hc-h12. Measured to
+agree but not pinned: en-150, en-CH ("1'234.5"), en-ES, en-FR ("1 234,5" with
+U+202F), en-IE, en-IT, en-JP, en-NL, en-PL, en-SE, en-ZA and cs-SK. Czech
+groups with U+00A0 on both platforms, so no choice was needed there.
+
+Two of those matter before F5 ships. **en-CZ is the owner's friend** until
+there is a Czech catalogue: the web will print "09:05" and iOS "9:05". And a
+Czech UI outside Czechia gets a different decimal separator from each app,
+because `Intl` has no cs-US data and falls back to the language, where Apple
+lets the region win. Both are formatting-locale questions, and F5, which
+brings the picker, is where they get decided; the tag could be restricted to
+the pinned set, or built with the `rg` extension, or left to each platform.
+Safari was not measured: it runs Apple's ICU, not V8's, and the U+202F
+normalisation covers the one difference known in advance.
 
 ## 3. The wording, reviewed
 
@@ -330,7 +418,9 @@ precisely than the table above:
 - **Numbers are plain digits with a point in both apps**, from core's
   `displayText`. iOS used the device locale for two readouts (the boiling
   point and the weighed mass); those now print the same digits as the web
-  until F4 moves every number to the platform formatters.
+  until F4 moves every number to the platform formatters. (F4 did: §2.
+  `displayText` stays plain for the web's inputs; what a cook reads is
+  `quantityText`, in the formatting locale.)
 - **Every inserted value stands alone** where a sentence was touched: "peak
   yolk 65 °C", "bath 58 °C", "Assumed temperatures — fridge: 4 °C, room:
   20 °C", "a full boil (100 °C)", "This bath (58 °C)", "with this much water

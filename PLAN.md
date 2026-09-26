@@ -260,8 +260,25 @@ F1 goes before E2 so that Phase E's new feedback copy is born in the catalogue.
           read as a Large, so Americans on the default move to 60.2 g. Labels
           moved into the catalogue with F1 and show ounces under Imperial
           (`sizeClassLabel` in units.ts).
-- [ ] **F4 locale formatting.** Numbers, plurals, 12/24-hour clock, weekday
-      names through `Intl` / `FormatStyle`, pinned per locale by the fixture.
+- [x] **F4 locale formatting.** DONE 27 September 2026. `src/core/format.ts`
+      + `EggTimerCopy/Format.swift` + `fixtures/format.json`: numbers through
+      `Intl.NumberFormat` / `NumberFormatter`, times of day through each
+      locale's short and medium time style, rounded first by the units'
+      `floor(x + 0.5)`, no signed zero, every space in a time U+202F. The
+      formatting locale is the UI language in the device's region
+      (`formattingLocale`), plus iOS's own 12/24-hour setting as `-u-hc-`.
+      Pinned: en-US, en-GB, cs-CZ and six more measured to agree - 459 numbers
+      and times, 43 pseudo-Czech renders (`test/pseudo-cs.json`: Czech's
+      plural rule, no Czech words), the plural rule with visible decimals
+      ("2,00 l" is `many`). Weekday names from the catalogue in both apps.
+      "1 seconds" is "1 second". The record's `lang` is the ticket's language.
+      Measured: against `main` at c466b93, 166 of 171 web states identical and
+      the other five differ only as intended (the en-US sous-vide clock, the
+      spoken "1 second"). Found and NOT settled: en-CZ prints "09:05" on the
+      web and "9:05" on iOS, and a Czech UI outside Czechia gets its decimal
+      separator from the language on the web and the region on iOS - both
+      F5's to decide (`LANGUAGE.md` §2). iOS built and seen in a spare
+      simulator; nothing tapped.
 - [ ] **F5 Czech**, reviewed by the owner's friend before it ships. Brings
       the in-app language picker in both apps (deferred from F1), and adds
       `cs` to `CFBundleLocalizations` in `ios/project.yml`. It tests
@@ -360,6 +377,7 @@ equilibrationTime(radius_m, alpha_m2s): number
 sousVideEstimate(radius_m, alpha_m2s, bath_C, yolkDose_min, whiteDose_min): SousVideEstimate
 longDuration(seconds): CopyRef             // the unit choice, as a key and its numbers
 startPhrase(daysAgo): CopyRef              // the app adds {weekday}
+weekdayKey(dayOfWeek): string              // 0 = Sunday; both apps name days from the catalogue
 
 // units.ts  (Metric and Imperial; LANGUAGE.md §4. Core stays SI.)
 type UnitSystem = 'metric' | 'imperial'
@@ -367,16 +385,23 @@ type Quantity = 'temperature' | 'eggTemp' | 'boilingPoint' | 'mass' | 'girth' | 
 measureFor(q, system, region): Measure      // unit, step, decimals, unitKey, formatKey, limit, bounds
 display(m, si) / displayText(m, si)         // rounded to the step, held inside the bounds
 parse(m, typed): number | null              // to SI, clamped by LIMITS in SI; null for no number
-quantityText(m, si): { key; value }         // render as t(key, { value })
+quantityText(m, si): { key; value: Fixed }  // render as t(key, { value }); grouped by locale
 sizeClassLabel(c, system): { key; mass: QuantityText }
 regionalUnits({ region, measurementSystem?, temperature? }): UnitSystem
 effectiveUnits(chosen, regional) / chooseUnits(chosen, regional, next): { chosen; flip }
 
 // copy.ts  (the words; LANGUAGE.md §2)
 interface CopyRef { key; args: Record<string, number> }
+type CopyArg = string | number | Fixed     // text as is; a count; a measurement to its decimals
 parseCatalogue(json, fallback?): Catalogue
-render(catalogue, key, args?): string / renderRef(catalogue, ref, extra?): string
-pluralCategory(locale, n): 'zero' | 'one' | 'two' | 'few' | 'many' | 'other'
+render(catalogue, key, args?, formatLocale?): string / renderRef(catalogue, ref, extra?, formatLocale?): string
+pluralCategory(locale, n, fractionDigits?): 'zero' | 'one' | 'two' | 'few' | 'many' | 'other'
+
+// format.ts  (numbers and times of day, F4; LANGUAGE.md §2)
+interface Fixed { value; decimals }
+formatNumber(locale, value, decimals) / formatCount(locale, value): string   // Intl, rounded first
+formatTimeOfDay(locale, secondsOfDay, withSeconds): string                    // the locale's time style
+formattingLocale(uiLanguage, region, hourCycle): string                       // 'en-GB', 'en-AU-u-hc-h23'
 
 // doseGrid.ts / infer.ts  (calibration; see Phase C)
 buildDoseGrid(...) / lookupLogYolkDose / lookupLogWhiteDose / cookTimeForLogYolkDose
@@ -492,6 +517,9 @@ decisive (jammy vs fully set) but smaller than first computed.
 ## Invariants — do not break these
 
 1. **`src/core/` has zero dependencies** and no DOM, `Date`, I/O or `async`. Pure numerics.
+   `Intl` is allowed in `format.ts` only, given an explicit locale and UTC: it
+   reads no clock, no time zone and no device locale, so it is a pure function
+   of its arguments, and `fixtures/format.json` pins what it returns.
 2. **Swift-portable subset**: plain interfaces + top-level functions; explicit `for` loops;
    no classes, closures over mutable state, `null`/`undefined`, or `map`/`reduce` in hot paths.
 3. **SI units internally.** Convert only at the UI boundary.
