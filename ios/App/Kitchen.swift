@@ -1,6 +1,7 @@
 import Foundation
 import Observation
 import EggTimerCore
+import EggTimerCopy
 
 /// Every input the solver has, and the answer it last gave.
 ///
@@ -228,7 +229,7 @@ final class Kitchen {
     }
 
     /// The label moves with the finger; the numbers follow when the solve lands.
-    var label: String { anchorNear(doneness).label }
+    var label: String { tr(anchorNear(doneness).key) }
 
     var eggsLogged: Int { calibration.eggsLogged }
     var calibrationSpread: Double { Calibrations.spread(calibration) }
@@ -547,8 +548,8 @@ final class Kitchen {
 /// point is to teach the constraint, not merely to block the control.
 private func refusalText(_ v: Verdict, setup: CookSetup) -> String {
     guard v.worthSaying else { return "" }
-    let wanted = v.wanted.label.lowercased()
-    let limit = v.limit.label.lowercased()
+    let wanted = tr(v.wanted.key).lowercased()
+    let limit = tr(v.limit.key).lowercased()
 
     switch v.kind {
     case .none:
@@ -558,28 +559,23 @@ private func refusalText(_ v: Verdict, setup: CookSetup) -> String {
         // The standing method's worst failure: the water falls past the
         // temperature the white needs before the white has had it, so there is
         // no cook here at all - not a soft one, not a hard one.
-        return "With the heat off this pan never sets the white: the water falls below what the "
-            + "white needs while the egg is still in it. Nothing on the slider is reachable. "
-            + "More water, a slower boil, or keep it boiling."
+        return tr("refusal.whiteNeverSets")
 
     case .harderThanPanReaches:
         // The standing method's own failure: the pan cools off before the yolk
         // gets where it was asked to go, and no amount of waiting fixes it.
-        return "With the heat off, the water runs out before the yolk gets there — "
-            + "\(wanted) isn't reachable in \(litresText(setup.waterLitres)) L. "
-            + "Hardest here is \(limit). More water, or keep it boiling."
+        return tr("refusal.harderThanPan", [
+            "wanted": .text(wanted), "litres": .text(litresText(setup.waterLitres)), "limit": .text(limit),
+        ])
 
     case .tooSoftForWhite:
         switch setup.cooling {
         case .counter:
-            return "Resting on the counter keeps cooking the yolk — \(wanted) isn't reachable. "
-                + "Softest here is \(limit). Use an ice bath."
+            return tr("refusal.counter", ["wanted": .text(wanted), "limit": .text(limit)])
         case .tap:
-            return "A cold tap doesn't pull the heat out fast enough — \(wanted) isn't reachable. "
-                + "Softest here is \(limit). Ice water gets you further."
+            return tr("refusal.tap", ["wanted": .text(wanted), "limit": .text(limit)])
         case .ice:
-            return "Any shorter and the white is still raw — \(wanted) isn't reachable for this egg. "
-                + "Softest here is \(limit)."
+            return tr("refusal.ice", ["wanted": .text(wanted), "limit": .text(limit)])
         }
     }
 }
@@ -597,19 +593,19 @@ func textureNote(peakYolkC: Double, peakWhiteC: Double) -> String {
     let t = textureFor(peakYolkC: peakYolkC, peakWhiteC: peakWhiteC)
     let white: String
     switch t.white {
-    case .justSet: white = "white just set"
-    case .set: white = "white set"
-    case .firm: white = "white firm"
+    case .justSet: white = "texture.white.justSet"
+    case .set: white = "texture.white.set"
+    case .firm: white = "texture.white.firm"
     }
     let yolk: String
     switch t.yolk {
-    case .liquid: yolk = "yolk liquid"
-    case .soft: yolk = "yolk soft, barely thickened"
-    case .jammy: yolk = "yolk jammy"
-    case .fudgy: yolk = "yolk fudgy"
-    case .set: yolk = "yolk fully set"
+    case .liquid: yolk = "texture.yolk.liquid"
+    case .soft: yolk = "texture.yolk.soft"
+    case .jammy: yolk = "texture.yolk.jammy"
+    case .fudgy: yolk = "texture.yolk.fudgy"
+    case .set: yolk = "texture.yolk.set"
     }
-    return "\(white), \(yolk)"
+    return tr("texture.note", ["white": .text(tr(white)), "yolk": .text(tr(yolk))])
 }
 
 func clockString(_ seconds: Double) -> String {

@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>copy snapshot</title>
+<!--
+  Every word the web app puts on screen, in every state worth reaching.
+
+  This is the proof that the move into copy/en.json (Phase F1) changed no
+  wording: run it against the build before the move and the build after it, and
+  the two outputs must be identical. It drives the real app, unmodified, in an
+  iframe - the only thing it touches is Date.now, which it freezes and then
+  steps, because the cook machine is a pure function of it. That makes every
+  state reproducible, including the countdowns and the sous-vide wall clock.
+
+  It captures, for each state:
+    - body.innerText, which is what is rendered and visible;
+    - every text node in the body, whitespace collapsed, visible or not, so a
+      string sitting in a hidden element is compared too;
+    - aria-valuetext, aria-label, title, placeholder and alt attributes;
+    - <html lang> and document.title.
+
+  Run it:
+    npm run build
+    python3 -m http.server 8391            # from the repo root
+    open http://localhost:8391/tools/copy-snapshot.html
+  or headless, which is what `node dist/tools/copySnapshot.js` does.
+  The result is in <pre id="out">, URI-encoded JSON, when <title> says "done".
+-->
+<style>body { font: 13px system-ui; } iframe { width: 390px; height: 844px; border: 1px solid #888; }</style>
+</head>
+<body>
+<p id="status">running…</p>
+<pre id="out"></pre>
+<script>
+'use strict';
+
+/** A fixed instant, so the sous-vide wall clock and every countdown are the
+ *  same on every run. A Saturday morning. */
+const T0 = new Date(2026, 8, 26, 7, 30, 0).getTime();
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+let frame = null;
+let html = null;
+/** navigator.language for the app in the frame. It picks the carton's size
+ *  classes (region US gets the American ones), so it is pinned rather than
+ *  left to whatever browser runs this. */
+let language = 'en-GB';
+
+async function openApp(now) {
+  if (html === null) {
+    html = await (await fetch('../index.html', { cache: 'no-store' })).text();
+  }
+  if (frame !== null) frame.remove();
+  const base = new URL('../', location.href).href;
+  const inject = `<base href="${base}"><script>window.__now=${now};`
+    + 'Date.now=function(){return window.__now;};'
+    + `Object.defineProperty(navigator,'language',{value:'${language}'});<\/script>`;
+  frame = document.createElement('iframe');
+  document.body.append(frame);
+  const doc = frame.contentDocument;
+  doc.open();
+  doc.write(html.replace('<head>', `<head>${inject}`));
+  doc.close();
+  // Booted means the phase label and the doneness reading are both painted,
+  // whether that happened synchronously or after the catalogue was fetched.
+  for (let i = 0; i < 200; i++) {
+    const d = frame.contentDocument;
+    const label = d && d.getElementById('phaseLabel');
+    const value = d && d.getElementById('donenessValue');
+    if (label && label.textContent !== '' && value && value.textContent !== '') break;
+    await sleep(25);
+  }
+  await sleep(400);
+}
+
+function win() { return frame.contentWindow; }
+function doc() { return frame.contentDocument; }
+
+function snap(name) {
+  const d = doc();
+  const texts = [];
+  const walker = d.createTreeWalker(d.body, NodeFilter.SHOW_TEXT);
+  for (let n = walker.nextNode(); n !== null; n = walker.nextNode()) {
+    if (n.parentElement && n.parentElement.tagName === 'SCRIPT') continue;
+    const s = n.nodeValue.replace(/\s+/g, ' ').trim();
+    if (s !== '') texts.push(s);
+  }
+  const attrs = [];
+  for (const el of d.querySelectorAll('*')) {
+    for (const a of ['aria-valuetext', 'aria-label', 'title', 'placeholder', 'alt']) {
+      if (el.hasAttribute(a)) attrs.push(`${el.id || el.tagName.toLowerCase()} ${a}=${el.getAttribute(a)}`);
+    }
+  }
+  return {
+    name: name,
+    lang: d.documentElement.lang,
+    title: d.title,
+    innerText: d.body.innerText,
+    texts: texts,
+    attrs: attrs,
+  };
+}
+
+function storedMachine() {
+  return JSON.parse(localStorage.getItem('aet.cook.v1')).machine;
+}
+
+/* ------------------------------------------------------------------ steps */
+
+const click = (sel) => ({ name: `click ${sel}`, run: async () => { doc().querySelector(sel).click(); await sleep(60); } });
+const advance = (s) => ({ name: `+${s}s`, run: async () => { win().__now += s * 1000; await sleep(500); } });
+const wait = (ms) => ({ name: `wait ${ms}`, run: async () => { await sleep(ms); } });
+const toPull = { name: 'to pull', run: async () => { win().__now = storedMachine().cookEnd_ms + 3000; await sleep(500); } };
+const toCoolEnd = { name: 'to cool end', run: async () => { win().__now = storedMachine().coolEnd_ms + 1000; await sleep(500); } };
+const reopen = { name: 'reload', run: async () => { await openApp(win().__now); } };
+const ifWhite = (inner) => ({
+  name: 'white question if asked',
+  run: async () => {
+    if (!doc().getElementById('whiteFeedback').hidden) await inner.run();
+  },
+});
+/** Wait until the feedback fold is done: the buttons are re-enabled. */
+const learned = {
+  name: 'learned',
+  run: async () => {
+    for (let i = 0; i < 400; i++) {
+      const note = doc().getElementById('calibNote').textContent;
+      const white = doc().getElementById('whiteNote').textContent;
+      if (!note.includes('…') && !white.includes('…')) break;
+      await sleep(50);
+    }
+    await sleep(300);
+  },
+};
+
+/* -------------------------------------------------------------- scenarios */
+
+const cookThrough = [
+  click('#primary'), advance(400), click('#primary'), advance(60), toPull,
+  click('#primary'), toCoolEnd,
+  click('button.fb[data-fb="-1"]'), learned,
+  ifWhite(click('button.wb[data-white="runny"]')), learned,
+  click('#primary'),
+];
+
+const SCENARIOS = [
+  { name: 'idle default', settings: {}, steps: [click('#mute')] },
+  { name: 'idle hot', settings: { startMode: 'hot' }, steps: [] },
+  { name: 'US carton', lang: 'en-US', settings: {}, steps: [] },
+  { name: 'US carton, Jumbo', lang: 'en-US', settings: { sizeIndex: 4 }, steps: [] },
+  { name: 'EU carton, stored Jumbo', settings: { sizeIndex: 4 }, steps: [] },
+  { name: 'idle hot standing', settings: { startMode: 'hot', afterBoil: 'off' }, steps: [] },
+  { name: 'idle cold standing', settings: { afterBoil: 'off' }, steps: [] },
+  { name: 'idle soft', settings: { startMode: 'hot', doneness: 0.22 }, steps: [] },
+  { name: 'idle fudgy', settings: { startMode: 'hot', doneness: 0.62 }, steps: [] },
+  { name: 'idle hard', settings: { startMode: 'hot', doneness: 1 }, steps: [] },
+  { name: 'idle runny hot', settings: { startMode: 'hot', doneness: 0 }, steps: [] },
+  { name: 'refusal ice', settings: { sizeIndex: 0, startTempMode: 'room', waterLitres: 0.5, eggCount: 1, doneness: 0 }, steps: [] },
+  { name: 'refusal tap', settings: { sizeIndex: 0, cooling: 'tap', waterLitres: 0.5, eggCount: 1, doneness: 0 }, steps: [] },
+  { name: 'refusal counter', settings: { sizeIndex: 0, cooling: 'counter', waterLitres: 0.5, eggCount: 1, doneness: 0 }, steps: [] },
+  { name: 'refusal hardest', settings: { sizeIndex: 3, afterBoil: 'off', waterLitres: 0.5, eggCount: 1, doneness: 1 }, steps: [] },
+  { name: 'refusal hardest 0.75 L', settings: { sizeIndex: 0, afterBoil: 'off', waterLitres: 0.75, eggCount: 2, doneness: 1 }, boil: { '0.8': 300 }, steps: [] },
+  { name: 'refusal hardest 1 L', settings: { sizeIndex: 0, afterBoil: 'off', waterLitres: 1, eggCount: 1, doneness: 1 }, boil: { '1.0': 300 }, steps: [] },
+  { name: 'white never sets', settings: { sizeIndex: 0, startMode: 'hot', afterBoil: 'off', waterLitres: 0.5, eggCount: 1, doneness: 0 }, steps: [] },
+  { name: 'custom temp, measured egg', settings: { startTempMode: 'custom', customStart_C: 15, sizeIndex: -1, customMinor_mm: 45 }, steps: [] },
+  { name: 'room temp', settings: { startTempMode: 'room' }, steps: [] },
+  { name: 'pan remembered', settings: {}, boil: { '2.0': 480 }, steps: [] },
+  { name: 'pan remembered, hot standing', settings: { startMode: 'hot', afterBoil: 'off' }, boil: { '2.0': 480 }, steps: [] },
+  { name: 'sous-vide jammy', settings: { startMode: 'sous' }, steps: [] },
+  { name: 'sous-vide 0.8', settings: { startMode: 'sous', doneness: 0.8 }, steps: [] },
+  { name: 'sous-vide 0.9', settings: { startMode: 'sous', doneness: 0.9 }, steps: [] },
+  { name: 'sous-vide hard', settings: { startMode: 'sous', doneness: 1 }, steps: [] },
+  {
+    name: 'cold cook, twice, then forget',
+    settings: { muted: true },
+    steps: [...cookThrough, ...cookThrough, click('#forget')],
+  },
+  {
+    name: 'cold cook, reloaded mid-cook',
+    settings: { muted: true },
+    steps: [click('#primary'), advance(30), reopen, click('#primary'), advance(30), reopen, toPull, reopen, click('#primary'), reopen, toCoolEnd, reopen],
+  },
+  {
+    name: 'hot soft, tap, white question',
+    settings: { muted: true, startMode: 'hot', cooling: 'tap', doneness: 0.22 },
+    steps: [click('#primary'), advance(30), toPull, click('#primary'), toCoolEnd,
+      click('button.fb[data-fb="1"]'), learned,
+      ifWhite(click('button.wb[data-white="set"]')), learned, click('#primary')],
+  },
+  {
+    name: 'hot runny, white question',
+    settings: { muted: true, startMode: 'hot', doneness: 0 },
+    steps: [click('#primary'), toPull, click('#primary'), toCoolEnd,
+      click('button.fb[data-fb="0"]'), learned,
+      ifWhite(click('button.wb[data-white="runny"]')), learned],
+  },
+  {
+    name: 'hot counter',
+    settings: { muted: true, startMode: 'hot', cooling: 'counter', doneness: 0.62 },
+    steps: [click('#primary'), advance(30), toPull, click('#primary'),
+      click('button.fb[data-fb="0"]'), learned, click('#primary')],
+  },
+  {
+    name: 'cold standing, through',
+    settings: { muted: true, afterBoil: 'off', cooling: 'tap' },
+    steps: [click('#primary'), advance(400), click('#primary'), advance(30), toPull, click('#primary'), toCoolEnd],
+  },
+  {
+    name: 'cold standing, cancel',
+    settings: { muted: true, afterBoil: 'off' },
+    steps: [click('#primary'), advance(30), click('#primary'), advance(30), click('#secondary')],
+  },
+];
+
+async function run() {
+  const out = [];
+  // ?only=<substring> runs the matching scenarios alone, for debugging.
+  const only = new URLSearchParams(location.search).get('only');
+  for (const sc of SCENARIOS.filter((x) => only === null || x.name.includes(only))) {
+    localStorage.clear();
+    language = sc.lang === undefined ? 'en-GB' : sc.lang;
+    if (sc.settings !== undefined) localStorage.setItem('aet.settings.v1', JSON.stringify(sc.settings));
+    if (sc.boil !== undefined) localStorage.setItem('aet.boil.v1', JSON.stringify(sc.boil));
+    await openApp(T0);
+    out.push(snap(`${sc.name} / start`));
+    let i = 0;
+    for (const step of sc.steps) {
+      document.getElementById('status').textContent = `${sc.name}: step ${i + 1} ${step.name}`;
+      await step.run();
+      i += 1;
+      out.push(snap(`${sc.name} / ${i} ${step.name}`));
+    }
+  }
+  localStorage.clear();
+  document.getElementById('out').textContent = encodeURIComponent(JSON.stringify(out));
+  document.getElementById('status').textContent = `${out.length} states`;
+  document.title = 'done';
+}
+
+run().catch((e) => {
+  document.getElementById('status').textContent += ` failed: ${e && e.stack || e}`;
+  document.title = 'failed';
+});
+</script>
+</body>
+</html>

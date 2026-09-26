@@ -1,5 +1,6 @@
 import SwiftUI
 import EggTimerCore
+import EggTimerCopy
 
 /// The whole app: every input the solver has, the cook time the ported physics
 /// says they need, and the phase machine that runs it.
@@ -63,16 +64,15 @@ struct ContentView: View {
                 }
                 .padding(20)
             }
-            .navigationTitle("Actual Egg Timer")
+            .navigationTitle(tr("app.name"))
             .navigationBarTitleDisplayMode(.inline)
             .confirmationDialog(
-                "Forget the calibration?", isPresented: $confirmReset, titleVisibility: .visible
+                tr("learned.confirm.title"), isPresented: $confirmReset, titleVisibility: .visible
             ) {
-                Button("Forget it", role: .destructive) { kitchen.resetCalibration() }
-                Button("Keep it", role: .cancel) {}
+                Button(tr("learned.confirm.forget"), role: .destructive) { kitchen.resetCalibration() }
+                Button(tr("learned.confirm.keep"), role: .cancel) {}
             } message: {
-                Text("The model goes back to the literature values it shipped with, and "
-                     + "the time to boil goes back to a guess.")
+                Text(tr("learned.confirm.message"))
             }
         }
         .onAppear {
@@ -121,10 +121,10 @@ struct ContentView: View {
             // the numbers describing the one just eaten.
             if let peaks = peaks {
                 HStack(spacing: 24) {
-                    stat("peak yolk", "\(Int(peaks.yolk.rounded()))°C")
-                    stat("peak white", "\(Int(peaks.white.rounded()))°C")
+                    stat(tr("readout.stat.peakYolk"), tr("format.celsius", ["value": .int(Int(peaks.yolk.rounded()))]))
+                    stat(tr("readout.stat.peakWhite"), tr("format.celsius", ["value": .int(Int(peaks.white.rounded()))]))
                     if cook.ticket?.coldStart ?? kitchen.coldStart {
-                        stat("after boil", clockString(afterBoilSeconds(phase)))
+                        stat(tr("readout.stat.afterBoil"), clockString(afterBoilSeconds(phase)))
                     }
                 }
                 .padding(.top, 10)
@@ -177,17 +177,17 @@ struct ContentView: View {
 
     private func phaseLabel(_ phase: Cook.Phase) -> String {
         switch phase {
-        case .idle: kitchen.coldStart ? "Total time, lid on" : "Total time"
-        case .heating: "Heating — tap when it boils"
-        case .cooking: kitchen.heatOff ? "Cooking — heat off, lid on" : "Cooking — keep it boiling"
-        case .pull: "Out of the water — now"
+        case .idle: tr(kitchen.coldStart ? "readout.phase.totalLidOn" : "readout.phase.total")
+        case .heating: tr("readout.phase.heatingTap")
+        case .cooking: tr(kitchen.heatOff ? "readout.phase.cookingHeatOff" : "readout.phase.cookingBoiling")
+        case .pull: tr("readout.phase.pull")
         case .cooling:
             switch kitchen.cooling {
-            case .ice: "Cooling — leave in the ice"
-            case .tap: "Cooling — keep the water running"
-            case .counter: "Cooling"
+            case .ice: tr("readout.phase.coolingIce")
+            case .tap: tr("readout.phase.coolingTap")
+            case .counter: tr("readout.phase.cooling")
             }
-        case .done: "Done"
+        case .done: tr("readout.phase.done")
         }
     }
 
@@ -195,28 +195,26 @@ struct ContentView: View {
         switch phase {
         case .idle: kitchen.solution.map { clockString($0.result.cookTimeS) } ?? "--:--"
         case .heating, .cooking: clockString(cook.secondsToPull)
-        case .pull: "NOW"
+        case .pull: tr("readout.big.now")
         case .cooling: clockString(cook.secondsToCoolDone)
-        case .done: "Eat"
+        case .done: tr("readout.big.eat")
         }
     }
 
     private func subline(_ phase: Cook.Phase) -> String {
         switch phase {
         case .idle:
-            kitchen.coldStart
-                ? "from eggs into COLD water, heat on, to eggs out"
-                : "from eggs into BOILING water to eggs out"
+            tr(kitchen.coldStart ? "readout.sub.idleCold" : "readout.sub.idleHot")
         case .heating:
-            "estimate — the clock corrects itself when you tap the boil"
+            tr("readout.sub.heatingEstimate")
         case .cooking:
             alarmLine
         case .pull:
-            "carryover is running"
+            tr("readout.sub.pull")
         case .cooling:
-            "\(Int(Cook.coolingSeconds / 60)) minutes, or the yolk keeps cooking"
+            tr("readout.sub.cooling", ["minutes": .int(Int(Cook.coolingSeconds / 60))])
         case .done:
-            "that is the egg you asked for"
+            tr("readout.sub.done")
         }
     }
 
@@ -230,14 +228,14 @@ struct ContentView: View {
     private var alarmLine: String {
         switch cook.alarmAuthorized {
         case .none:
-            return "setting the alarm…"
+            return tr("readout.alarm.setting")
         case .some(false):
-            return "no notification permission — keep the app open"
+            return tr("readout.alarm.denied")
         case .some(true):
             guard cook.pendingAlarms > 0 else {
-                return "the alarm did not take — keep the app open"
+                return tr("readout.alarm.failed")
             }
-            return "alarm set for \(Self.clock.string(from: cook.pullAt ?? .now))"
+            return tr("readout.alarm.set", ["time": .text(Self.clock.string(from: cook.pullAt ?? .now))])
         }
     }
 
@@ -262,7 +260,7 @@ struct ContentView: View {
         let copy = sousVideCopy(est, now: now)
         return VStack(spacing: 24) {
             VStack(spacing: 6) {
-                Text("Start time")
+                Text(tr("readout.phase.startTime"))
                     .font(.caption.smallCaps())
                     .foregroundStyle(.secondary)
 
@@ -286,7 +284,7 @@ struct ContentView: View {
                 // liquid and convecting, so it is too long by an unknown amount.
                 // The holds are the numbers that make the answer what it is, and
                 // they are in the line above as the total.
-                stat("bath", "\(Int(est.bathC.rounded()))°C")
+                stat(tr("readout.stat.bath"), tr("format.celsius", ["value": .int(Int(est.bathC.rounded()))]))
                     .padding(.top, 10)
 
                 Text(copy.note)
@@ -310,7 +308,7 @@ struct ContentView: View {
                 // button that has gone missing looks like a layout accident
                 // where one that will not press is the answer.
                 Button {} label: {
-                    Text("Eggs in").frame(maxWidth: .infinity)
+                    Text(tr("action.eggsIn")).frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
@@ -358,7 +356,7 @@ struct ContentView: View {
                     )
                 }
             } label: {
-                Text(kitchen.coldStart ? "Eggs in, heat on" : "Eggs in")
+                Text(tr(kitchen.coldStart ? "action.eggsInHeatOn" : "action.eggsIn"))
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
@@ -376,12 +374,12 @@ struct ContentView: View {
                         }
                     }
                 } label: {
-                    Text("Full rolling boil").frame(maxWidth: .infinity)
+                    Text(tr("action.fullBoil")).frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
 
-                Button("Cancel", role: .destructive) {
+                Button(tr("action.cancel"), role: .destructive) {
                     cook.cancel()
                     kitchen.refresh()
                 }
@@ -390,7 +388,7 @@ struct ContentView: View {
             }
 
         case .done:
-            Button("Start again") {
+            Button(tr("action.startAgain")) {
                 // An egg nobody answered about is still logged; it folds nothing.
                 if !cook.feedbackGiven, let egg = cook.eggRecord(yolk: nil) {
                     kitchen.logUnanswered(egg)
@@ -403,7 +401,7 @@ struct ContentView: View {
             .frame(maxWidth: .infinity)
 
         default:
-            Button("Cancel", role: .destructive) {
+            Button(tr("action.cancel"), role: .destructive) {
                 cook.cancel()
                 kitchen.refresh()
             }
@@ -424,8 +422,11 @@ struct ContentView: View {
                 // you cannot check once the controls are gone.
                 Text(methodLine(ticket))
                     .font(.footnote.weight(.medium))
-                Text("\(Int(ticket.eggGrams.rounded())) g · \(ticket.doneness.lowercased()) · "
-                     + "peak yolk \(Int(ticket.peakYolkC.rounded()))°C")
+                Text(tr("cook.summary", [
+                    "grams": .int(Int(ticket.eggGrams.rounded())),
+                    "doneness": .text(ticket.doneness.lowercased()),
+                    "yolk": .int(Int(ticket.peakYolkC.rounded())),
+                ]))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -435,14 +436,14 @@ struct ContentView: View {
     }
 
     private func methodLine(_ ticket: Cook.Ticket) -> String {
-        let start = ticket.coldStart ? "Cold start" : "Into boiling water"
+        let start = tr(ticket.coldStart ? "cook.method.cold" : "cook.method.hot")
         let after: String
         switch ticket.cooling {
-        case .ice: after = "ice bath"
-        case .tap: after = "cold tap"
-        case .counter: after = "rest on the counter"
+        case .ice: after = tr("cook.method.ice")
+        case .tap: after = tr("cook.method.tap")
+        case .counter: after = tr("cook.method.counter")
         }
-        return "\(start) · then \(after)"
+        return tr("cook.method", ["start": .text(start), "after": .text(after)])
     }
 
     // MARK: - Learning from the egg
@@ -461,7 +462,7 @@ struct ContentView: View {
                 if kitchen.whiteQuestion != nil {
                     whiteFeedback
                 } else {
-                    Text(kitchen.learning ? "learning…" : "Thanks — it has adjusted.")
+                    Text(tr(kitchen.learning ? "feedback.learning" : "feedback.thanks"))
                         .font(.subheadline)
                     Text(kitchen.learning ? " " : tunedLine)
                         .font(.caption)
@@ -469,13 +470,13 @@ struct ContentView: View {
                         .monospacedDigit()
                 }
             } else {
-                Text("How was the yolk?")
+                Text(tr("feedback.ask"))
                     .font(.headline)
 
                 HStack(spacing: 10) {
-                    feedbackButton("Too soft", .tooSoft)
-                    feedbackButton("Just right", .justRight)
-                    feedbackButton("Too hard", .tooHard)
+                    feedbackButton(tr("feedback.tooSoft"), .tooSoft)
+                    feedbackButton(tr("feedback.justRight"), .justRight)
+                    feedbackButton(tr("feedback.tooHard"), .tooHard)
                 }
 
                 Text(calibrationNote)
@@ -501,18 +502,16 @@ struct ContentView: View {
     /// so it is the answer that says something about the egg rather than the eater.
     @ViewBuilder
     private var whiteFeedback: some View {
-        Text("And the white — was it runny?")
+        Text(tr("feedback.white.ask"))
             .font(.headline)
             .multilineTextAlignment(.center)
 
         HStack(spacing: 10) {
-            whiteButton("Still runny", .runny)
-            whiteButton("Set right through", .set)
+            whiteButton(tr("feedback.white.runny"), .runny)
+            whiteButton(tr("feedback.white.set"), .set)
         }
 
-        Text(kitchen.learning
-            ? "learning…"
-            : "The white sets from the outside in, so this says something about your eggs that the yolk cannot.")
+        Text(tr(kitchen.learning ? "feedback.learning" : "feedback.white.why"))
             .font(.caption)
             .foregroundStyle(.secondary)
             .multilineTextAlignment(.center)
@@ -548,17 +547,18 @@ struct ContentView: View {
     }
 
     private var calibrationNote: String {
-        if kitchen.learning { return "learning…" }
+        if kitchen.learning { return tr("feedback.learning") }
         if kitchen.eggsLogged == 0 {
-            return "Telling it tunes the model to your eggs and your pan."
+            return tr("feedback.invite")
         }
         return tunedLine
     }
 
     private var tunedLine: String {
-        let eggs = kitchen.eggsLogged
-        let plural = eggs == 1 ? "egg" : "eggs"
-        return "tuned on \(eggs) \(plural) · ±\(Int(kitchen.calibrationSpread.rounded()))%"
+        tr("learned.tuned", [
+            "eggs": .int(kitchen.eggsLogged),
+            "spread": .int(Int(kitchen.calibrationSpread.rounded())),
+        ])
     }
 
     // MARK: - Controls
@@ -566,20 +566,22 @@ struct ContentView: View {
     private var controls: some View {
         VStack(alignment: .leading, spacing: 22) {
             VStack(alignment: .leading, spacing: 6) {
-                LabeledContent("Doneness") {
+                LabeledContent(tr("controls.doneness")) {
                     // The slider's plain reading is a PAN number - a peak yolk
                     // temperature something in water gets to. In a bath there is
                     // no peak, so the reading says which bath instead.
                     Text(kitchen.isSousVide
-                         ? "\(kitchen.label) · in a \(Int(sousVideBathC))°C bath"
+                         ? tr("controls.doneness.valueBath", [
+                            "doneness": .text(kitchen.label), "bath": .int(Int(sousVideBathC)),
+                         ])
                          : kitchen.label)
                         .foregroundStyle(.secondary)
                 }
                 Slider(value: $kitchen.doneness, in: Limits.doneness, step: 0.01)
                 HStack {
-                    Text("Runny")
+                    Text(tr("doneness.runny"))
                     Spacer()
-                    Text("Hard")
+                    Text(tr("doneness.hard"))
                 }
                 .font(.caption2)
                 .foregroundStyle(.tertiary)
@@ -589,15 +591,18 @@ struct ContentView: View {
                 // The carton's classes for this region, as on the web. The
                 // slider below is the scale: moving it makes the egg Weighed,
                 // and choosing a class moves it to that class's mass.
-                LabeledContent("Egg") {
-                    Picker("Egg", selection: Binding(
+                LabeledContent(tr("controls.egg")) {
+                    Picker(tr("controls.egg"), selection: Binding(
                         get: { kitchen.sizeIndex },
                         set: { kitchen.chooseSize($0) }
                     )) {
                         ForEach(kitchen.sizeClasses.indices, id: \.self) { i in
-                            Text(kitchen.sizeClasses[i].label).tag(i)
+                            Text(tr(sizeClassLabel(kitchen.sizeClasses[i]))).tag(i)
                         }
-                        Text("Weighed · \(kitchen.weighedMassG, specifier: "%.1f") g").tag(-1)
+                        // In the device's locale, as the specifier in a Text did.
+                        Text(tr("controls.size.weighed", [
+                            "grams": .text(String(format: "%.1f", locale: .current, kitchen.weighedMassG)),
+                        ])).tag(-1)
                     }
                     .pickerStyle(.menu)
                     .labelsHidden()
@@ -618,9 +623,9 @@ struct ContentView: View {
             // Rendered from the constants, so a button cannot say one thing
             // and the model another. The web app learned this the hard way.
             if !kitchen.isSousVide {
-                Picker("Egg from", selection: $kitchen.fromFridge) {
-                    Text("Fridge \(Int(StartTempPresets.fridgeC))°").tag(true)
-                    Text("Room \(Int(StartTempPresets.roomC))°").tag(false)
+                Picker(tr("controls.eggFrom"), selection: $kitchen.fromFridge) {
+                    Text(tr("controls.eggFrom.fridgeAt", ["temp": .int(Int(StartTempPresets.fridgeC))])).tag(true)
+                    Text(tr("controls.eggFrom.roomAt", ["temp": .int(Int(StartTempPresets.roomC))])).tag(false)
                 }
                 .pickerStyle(.segmented)
             }
@@ -628,10 +633,10 @@ struct ContentView: View {
             // Three positions, and the third one is rendered from the constant
             // like the egg-temperature presets above it, so the button cannot
             // name a bath the model is not computing.
-            Picker("Start", selection: $kitchen.start) {
-                Text("Boiling water").tag(StartChoice.hot)
-                Text("Cold start").tag(StartChoice.cold)
-                Text("Sous-vide \(Int(sousVideBathC))°").tag(StartChoice.sousVide)
+            Picker(tr("controls.start"), selection: $kitchen.start) {
+                Text(tr("controls.start.hot")).tag(StartChoice.hot)
+                Text(tr("controls.start.cold")).tag(StartChoice.cold)
+                Text(tr("controls.start.sousVide", ["bath": .int(Int(sousVideBathC))])).tag(StartChoice.sousVide)
             }
             .pickerStyle(.segmented)
 
@@ -645,10 +650,10 @@ struct ContentView: View {
             // do something. Same rule as the web app's `.pan-only` class: a new
             // input to `sousVideEstimate` is the signal to bring one back.
             if !kitchen.isSousVide {
-                Picker("Then", selection: $kitchen.cooling) {
-                    Text("Ice bath").tag(Cooling.ice)
-                    Text("Cold tap").tag(Cooling.tap)
-                    Text("Counter").tag(Cooling.counter)
+                Picker(tr("controls.then"), selection: $kitchen.cooling) {
+                    Text(tr("controls.then.ice")).tag(Cooling.ice)
+                    Text(tr("controls.then.tap")).tag(Cooling.tap)
+                    Text(tr("controls.then.counter")).tag(Cooling.counter)
                 }
                 .pickerStyle(.segmented)
 
@@ -656,8 +661,7 @@ struct ContentView: View {
             } else {
                 // Said out loud, so a shorter form reads as deliberate rather
                 // than as lost settings.
-                Text("A bath needs no pan, so the pan controls are put away. Your "
-                     + "settings are kept and come back when you pick a pan again.")
+                Text(tr("controls.start.hintSousVide"))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -668,52 +672,48 @@ struct ContentView: View {
     /// right for most people most mornings, and a first-time user should not
     /// have to answer six questions to boil an egg.
     private var pan: some View {
-        DisclosureGroup("Pan, hob and altitude", isExpanded: $showPan) {
+        DisclosureGroup(tr("controls.pan"), isExpanded: $showPan) {
             VStack(alignment: .leading, spacing: 20) {
-                Picker("After the boil", selection: $kitchen.heatOff) {
-                    Text("Keep boiling").tag(false)
-                    Text("Heat off, lid on").tag(true)
+                Picker(tr("controls.afterTheBoil"), selection: $kitchen.heatOff) {
+                    Text(tr("controls.afterBoil.keepBoiling")).tag(false)
+                    Text(tr("controls.afterBoil.heatOff")).tag(true)
                 }
                 .pickerStyle(.segmented)
 
-                Text(kitchen.heatOff
-                     ? "The standing method: the pan coasts down from the boil and the "
-                       + "cook is whatever the stored heat can still do. Water volume "
-                       + "decides whether it can do it at all."
-                     : "The burner holds the water at a rolling boil for the whole cook.")
+                Text(tr(kitchen.heatOff ? "controls.afterBoil.explainHeatOff" : "controls.afterBoil.explainHold"))
                     .font(.caption)
                     .foregroundStyle(.secondary)
 
                 stepperRow(
-                    "Water", value: $kitchen.waterLitres, range: Limits.waterLitres,
-                    step: 0.25, format: "%.2f L"
+                    tr("controls.water"), value: $kitchen.waterLitres, range: Limits.waterLitres,
+                    step: 0.25, format: "%.2f", unit: "format.litres"
                 )
-                countRow("Eggs in the pan", value: $kitchen.eggCount, range: Limits.eggCount)
+                countRow(tr("controls.eggsInPan"), value: $kitchen.eggCount, range: Limits.eggCount)
                 stepperRow(
-                    "Altitude", value: $kitchen.altitudeM, range: Limits.altitudeM,
-                    step: 100, format: "%.0f m"
+                    tr("controls.altitude"), value: $kitchen.altitudeM, range: Limits.altitudeM,
+                    step: 100, format: "%.0f", unit: "format.metres"
                 )
 
-                LabeledContent("Water boils at") {
-                    Text("\(kitchen.boilingC, specifier: "%.1f") °C")
+                LabeledContent(tr("pan.waterBoilsAt")) {
+                    // In the device's locale, as the specifier in a Text did.
+                    Text(tr("format.celsiusSpaced", [
+                        "value": .text(String(format: "%.1f", locale: .current, kitchen.boilingC)),
+                    ]))
                         .foregroundStyle(.secondary)
                         .monospacedDigit()
                 }
                 .font(.footnote)
 
-                LabeledContent("Time to boil") {
-                    Text(clockString(kitchen.timeToBoilS)
-                         + (kitchen.hasBoilMemory ? "" : " (assumed)"))
+                LabeledContent(tr("pan.timeToBoil")) {
+                    Text(kitchen.hasBoilMemory
+                         ? clockString(kitchen.timeToBoilS)
+                         : tr("pan.timeToBoil.assumed", ["time": .text(clockString(kitchen.timeToBoilS))]))
                         .foregroundStyle(.secondary)
                         .monospacedDigit()
                 }
                 .font(.footnote)
 
-                Text(kitchen.hasBoilMemory
-                     ? "Measured on this pan at this volume. It is re-measured every "
-                       + "cold start."
-                     : "Never measured. Run one cold start and tap the boil, and this "
-                       + "becomes your pan rather than a guess.")
+                Text(tr(kitchen.hasBoilMemory ? "pan.measured" : "pan.unmeasured"))
                     .font(.caption)
                     .foregroundStyle(.secondary)
 
@@ -726,15 +726,12 @@ struct ContentView: View {
                     // No "tuned on N eggs" here: that line sits under the
                     // controls, where it is visible without opening anything.
                     // This section only carries the thing you came here for.
-                    Button("Forget what it learned", role: .destructive) {
+                    Button(tr("learned.forget"), role: .destructive) {
                         confirmReset = true
                     }
                     .font(.footnote)
 
-                    Text("Clears both what it learned from your eggs and the time it "
-                         + "measured for your pan. The posterior is honest about its own "
-                         + "spread, so a few wrong answers wash out after a few more eggs "
-                         + "anyway - this is for when you would rather not wait.")
+                    Text(tr("learned.forgetExplain"))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -759,13 +756,14 @@ struct ContentView: View {
         }
     }
 
+    /// `format` is the number's, `unit` the catalogue key that places it.
     private func stepperRow(
         _ label: String, value: Binding<Double>, range: ClosedRange<Double>,
-        step: Double, format: String
+        step: Double, format: String, unit: String
     ) -> some View {
         Stepper(value: value, in: range, step: step) {
             LabeledContent(label) {
-                Text(String(format: format, value.wrappedValue))
+                Text(tr(unit, ["value": .text(String(format: format, value.wrappedValue))]))
                     .foregroundStyle(.secondary)
                     .monospacedDigit()
             }
@@ -786,9 +784,7 @@ struct ContentView: View {
     }
 
     private var colophon: some View {
-        Text("Times computed from heat conduction and denaturation kinetics, "
-             + "not from a recipe. The cooling step is part of the recipe: "
-             + "carryover is what ruins a soft egg.")
+        Text(tr("colophon.ios"))
             .font(.caption)
             .foregroundStyle(.secondary)
             .frame(maxWidth: .infinity, alignment: .leading)

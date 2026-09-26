@@ -12,7 +12,8 @@
  */
 
 import {
-  Egg, SizeTable, eggFromMass, eggFromMinorDiameter, sizeClassesFor, sizeTableFor,
+  Egg, SizeTable, eggFromMass, eggFromMinorDiameter, sizeClassLabel, sizeClassesFor,
+  sizeTableFor,
 } from '../core/geometry.js';
 import { boilingPointAtAltitude } from '../core/thermo.js';
 import { Cooling, CookSetup, StartMode } from '../core/protocol.js';
@@ -36,6 +37,7 @@ import {
   loadCook, loadSettings, rememberTimeToBoil, saveCook, saveSettings,
 } from './store.js';
 import { sousVideCopy } from './sousvide.js';
+import { t, tRef } from './copy.js';
 import {
   Machine, advance, beginCooling, idleMachine, recordBoil, restoreMachine,
   reviseProvisional, secondsAfterBoil, secondsHeating, secondsToCool, secondsToPull,
@@ -300,10 +302,7 @@ function rampSeconds(): number {
  *  answer does not read them (see `.pan-only` in styles.css); saying so stops
  *  that reading as a bug or as lost settings. */
 function renderStartHint(): void {
-  dom.startHint.textContent = isSousVide()
-    ? 'A bath needs no pan, so the pan controls are put away. Your settings are kept '
-      + 'and come back when you pick a pan again.'
-    : 'Hot start peels far better; cold start needs no timing of the drop-in.';
+  dom.startHint.textContent = t(isSousVide() ? 'controls.start.hintSousVide' : 'controls.start.hint');
 }
 
 /* ------------------------------------------------------------------ copy */
@@ -318,31 +317,20 @@ function renderStartHint(): void {
  */
 function refusalText(v: Verdict): string {
   if (!v.worthSaying) return '';
-  const wanted = v.wanted.label.toLowerCase();
-  const limit = v.limit.label.toLowerCase();
+  const wanted = t(v.wanted.key).toLowerCase();
+  const limit = t(v.limit.key).toLowerCase();
 
-  if (v.kind === 'whiteNeverSets') {
-    return 'With the heat off this pan never sets the white: the water falls below '
-      + 'what the white needs while the egg is still in it. Nothing on the slider is '
-      + 'reachable. More water, a slower boil, or keep it boiling.';
-  }
+  if (v.kind === 'whiteNeverSets') return t('refusal.whiteNeverSets');
 
   if (v.kind === 'harderThanPanReaches') {
-    return 'With the heat off, the water runs out before the yolk gets there — '
-      + `${wanted} isn't reachable in ${formatLitres(settings.waterLitres)} L. `
-      + `Hardest here is ${limit}. More water, or keep it boiling.`;
+    return t('refusal.harderThanPan', {
+      wanted: wanted, litres: formatLitres(settings.waterLitres), limit: limit,
+    });
   }
 
-  if (settings.cooling === 'counter') {
-    return `Resting on the counter keeps cooking the yolk — ${wanted} isn't reachable. `
-      + `Softest here is ${limit}. Use an ice bath.`;
-  }
-  if (settings.cooling === 'tap') {
-    return `A cold tap doesn't pull the heat out fast enough — ${wanted} isn't reachable. `
-      + `Softest here is ${limit}. Ice water gets you further.`;
-  }
-  return `Any shorter and the white is still raw — ${wanted} isn't reachable for this egg. `
-    + `Softest here is ${limit}.`;
+  if (settings.cooling === 'counter') return t('refusal.counter', { wanted: wanted, limit: limit });
+  if (settings.cooling === 'tap') return t('refusal.tap', { wanted: wanted, limit: limit });
+  return t('refusal.ice', { wanted: wanted, limit: limit });
 }
 
 /** Litres as someone would say them: "2", not "1.7500000000000002". */
@@ -414,30 +402,32 @@ function spokenClock(seconds: number): string {
   const total = Math.max(0, Math.round(seconds));
   const m = Math.floor(total / 60);
   const s = total % 60;
-  if (m === 0) return `${s} seconds`;
-  return `${m} minute${m === 1 ? '' : 's'} ${s} seconds`;
+  if (m === 0) return t('spoken.seconds', { seconds: s });
+  return t('spoken.minutesSeconds', { minutes: m, seconds: s });
 }
 
 /** The texture note. Which band a temperature falls in is core policy; what
  *  the band is called is this app's copy. */
 function textureNote(peakYolk_C: number, peakWhite_C: number): string {
-  const t = textureFor(peakYolk_C, peakWhite_C);
-  const white = t.white === 'justSet' ? 'white just set'
-    : t.white === 'set' ? 'white set'
-      : 'white firm';
-  const yolk = t.yolk === 'liquid' ? 'yolk liquid'
-    : t.yolk === 'soft' ? 'yolk soft, barely thickened'
-      : t.yolk === 'jammy' ? 'yolk jammy'
-        : t.yolk === 'fudgy' ? 'yolk fudgy'
-          : 'yolk fully set';
-  return `${white}, ${yolk}`;
+  const band = textureFor(peakYolk_C, peakWhite_C);
+  const white = band.white === 'justSet' ? 'texture.white.justSet'
+    : band.white === 'set' ? 'texture.white.set'
+      : 'texture.white.firm';
+  const yolk = band.yolk === 'liquid' ? 'texture.yolk.liquid'
+    : band.yolk === 'soft' ? 'texture.yolk.soft'
+      : band.yolk === 'jammy' ? 'texture.yolk.jammy'
+        : band.yolk === 'fudgy' ? 'texture.yolk.fudgy'
+          : 'texture.yolk.set';
+  return t('texture.note', { white: t(white), yolk: t(yolk) });
 }
 
 /** The reading under the slider. The same shape whether the temperature is
  *  the solver's or the quick interpolation that tracks the thumb, so it does
  *  not flicker between two formats mid-drag. */
 function donenessValueText(peakYolk_C: number): string {
-  return `${anchorNear(settings.doneness).label} · peak yolk ${peakYolk_C.toFixed(0)}°C`;
+  return t('controls.doneness.value', {
+    doneness: t(anchorNear(settings.doneness).key), yolk: peakYolk_C.toFixed(0),
+  });
 }
 
 /** Stripe out the parts of the track this setup cannot deliver: the soft end
@@ -449,7 +439,7 @@ function renderDonenessScale(sol: Solution): void {
   const hardest = sol.whiteSets ? sol.hardestLevel : 0;
   dom.donenessBlockedSoft.style.width = `${clampNumber(softest * 100, { lo: 0, hi: 100 }, 0)}%`;
   dom.donenessBlockedHard.style.width = `${clampNumber((1 - hardest) * 100, { lo: 0, hi: 100 }, 0)}%`;
-  dom.doneness.setAttribute('aria-valuetext', anchorNear(settings.doneness).label);
+  dom.doneness.setAttribute('aria-valuetext', t(anchorNear(settings.doneness).key));
   const ticks = dom.donenessTicks.children;
   for (let i = 0; i < ticks.length; i += 1) {
     const anchor = DONENESS_ANCHORS[i];
@@ -460,7 +450,7 @@ function renderDonenessScale(sol: Solution): void {
 }
 
 function renderMute(): void {
-  dom.mute.textContent = settings.muted ? 'Muted' : 'Sound on';
+  dom.mute.textContent = t(settings.muted ? 'readout.mute.off' : 'readout.mute.on');
   dom.mute.setAttribute('aria-pressed', settings.muted ? 'true' : 'false');
 }
 
@@ -498,7 +488,7 @@ function render(now_ms: number): void {
   const sol = solution;
   if (sol === null) return;
 
-  dom.statYolkLabel.textContent = 'peak yolk';
+  dom.statYolkLabel.textContent = t('readout.stat.peakYolk');
 
   dom.body.dataset['phase'] = machine.phase;
   dom.body.dataset['start'] = settings.startMode;
@@ -507,15 +497,15 @@ function render(now_ms: number): void {
   const boil_s = rampSeconds();
   const standing = settings.afterBoil === 'off';
 
-  dom.statYolk.textContent = `${sol.result.peakYolk_C.toFixed(0)}°C`;
+  dom.statYolk.textContent = t('format.celsius', { value: sol.result.peakYolk_C.toFixed(0) });
   dom.statAfter.textContent = formatClock(cookTime_s - boil_s);
-  dom.statBoil.textContent = `${boilingPoint_C().toFixed(1)}°C`;
+  dom.statBoil.textContent = t('format.celsius', { value: boilingPoint_C().toFixed(1) });
   // The texture note reads peak temperatures; the white's own criterion is a
   // dose. They disagree only when the pan never gets the white there at all,
   // and then the dose is the one telling the truth.
   dom.note.textContent = sol.whiteSets
     ? textureNote(sol.result.peakYolk_C, sol.result.peakWhite_C)
-    : 'white stays runny';
+    : t('texture.white.runny');
   // The warning line carries one of two things. A refusal is advice about the
   // slider, so it is idle-only: popping "jammy isn't reachable" onto the screen
   // while the egg is already in the water is advice about a control the user
@@ -524,8 +514,7 @@ function render(now_ms: number): void {
   // Only while the cook is still in flight. At DONE the egg is out and "keep
   // this tab open" is advice about a deadline that has already passed.
   if (restored && machine.phase !== 'IDLE' && machine.phase !== 'DONE') {
-    warning = 'Picked this cook back up after a reload. The deadlines are right, '
-      + 'but the alarm went with the old page — keep this tab open, or Cancel and start again.';
+    warning = t('readout.restored');
   } else if (machine.phase === 'IDLE' && refusal !== '') {
     warning = refusal;
   }
@@ -540,27 +529,28 @@ function render(now_ms: number): void {
   let spoken = '';
 
   if (machine.phase === 'IDLE') {
-    label = 'Total time';
+    label = t('readout.phase.total');
     digits = formatClock(cookTime_s);
     subline = settings.startMode === 'cold'
-      ? `${hasBoilMemory(boilMemory) ? 'assumes' : 'guesses'} ${formatClock(boil_s)} to a rolling boil`
+      ? t(hasBoilMemory(boilMemory) ? 'readout.sub.coldAssumes' : 'readout.sub.coldGuesses',
+        { boil: formatClock(boil_s) })
       : standing
         // With the heat off, the time to boil is not on the clock but it IS
         // the pan's loss time constant - the single most load-bearing number
         // in a standing cook, and on a hot start it is never measured. Say so.
-        ? `${hasBoilMemory(boilMemory) ? 'assumes' : 'guesses'} this pan takes `
-          + `${formatClock(timeToBoil_s())} to boil, which is how fast it cools`
-        : 'from eggs in to eggs out';
-    spoken = `Total ${spokenClock(cookTime_s)}`;
+        ? t(hasBoilMemory(boilMemory) ? 'readout.sub.standingAssumes' : 'readout.sub.standingGuesses',
+          { boil: formatClock(timeToBoil_s()) })
+        : t('readout.sub.hot');
+    spoken = t('spoken.total', { time: spokenClock(cookTime_s) });
     setPrimary(
-      settings.startMode === 'cold' ? 'Start heating' : 'Eggs in',
+      t(settings.startMode === 'cold' ? 'action.startHeating' : 'action.eggsIn'),
       sol.whiteSets
         ? settings.startMode === 'cold'
-          ? 'eggs in the pan, lid on, then tap'
+          ? t('action.hint.cold')
           : standing
-            ? 'eggs into boiling water, then lid on and heat off'
-            : `water at a full rolling boil, and kept there for the whole ${formatClock(cookTime_s)}`
-        : 'nothing to start: this pan never sets the white',
+            ? t('action.hint.hotStanding')
+            : t('action.hint.hotBoiling', { time: formatClock(cookTime_s) })
+        : t('action.hint.whiteNeverSets'),
       true,
     );
     // There is no cook on offer at all, so there is nothing to start. iOS has
@@ -568,74 +558,72 @@ function render(now_ms: number): void {
     dom.primary.disabled = !sol.whiteSets;
     dom.secondary.hidden = true;
   } else if (machine.phase === 'HEATING') {
-    label = 'Heating';
+    label = t('readout.phase.heating');
     digits = formatClock(secondsToPull(machine, now_ms));
-    subline = `${formatClock(secondsHeating(machine, now_ms))} heating · `
-      + `provisional, assumes ${formatClock(machine.assumedBoil_s)} to boil`;
-    spoken = `Heating. ${spokenClock(secondsToPull(machine, now_ms))} left in total`;
+    subline = t('readout.sub.heating', {
+      elapsed: formatClock(secondsHeating(machine, now_ms)), boil: formatClock(machine.assumedBoil_s),
+    });
+    spoken = t('spoken.heating', { time: spokenClock(secondsToPull(machine, now_ms)) });
     setPrimary(
-      'Full rolling boil',
-      standing
-        ? 'wait for the whole surface to roll, then lid on and heat off'
-        : 'wait for the whole surface to roll',
+      t('action.fullBoil'),
+      t(standing ? 'action.hint.heatingStanding' : 'action.hint.heating'),
       true,
     );
     dom.secondary.hidden = false;
-    dom.secondary.textContent = 'Cancel';
+    dom.secondary.textContent = t('action.cancel');
   } else if (machine.phase === 'COOKING') {
     // The one instruction the user has to act on goes in the phase label, where
     // it sits next to the clock. The model holds the water at its boiling point
     // for the whole cook - or, with the heat off, assumes it cools on its own -
     // so this is not a style note: a pan taken off the heat when the model
     // expected a boil under-cooks by minutes, and vice versa.
-    label = standing ? 'Cooking — heat off, lid on' : 'Cooking — keep it boiling';
+    label = t(standing ? 'readout.phase.cookingHeatOff' : 'readout.phase.cookingBoiling');
     digits = formatClock(secondsToPull(machine, now_ms));
     subline = settings.startMode === 'cold'
-      ? `boil took ${formatClock(machine.assumedBoil_s)} · `
-        + `${formatClock(secondsAfterBoil(machine))} after the boil`
-      : 'in the water';
-    spoken = `Cooking. ${spokenClock(secondsToPull(machine, now_ms))} left`;
-    setPrimary('', standing
-      ? `lid on, burner off — the timing assumes the water cools on its own from `
-        + `${boilingPoint_C().toFixed(0)}°C`
-      : `keep it boiling — the timing assumes ${boilingPoint_C().toFixed(0)}°C right up to the pull`,
-    false);
+      ? t('readout.sub.cookingCold', {
+        boil: formatClock(machine.assumedBoil_s), after: formatClock(secondsAfterBoil(machine)),
+      })
+      : t('readout.sub.cookingHot');
+    spoken = t('spoken.cooking', { time: spokenClock(secondsToPull(machine, now_ms)) });
+    setPrimary('', t(standing ? 'action.hint.cookingStanding' : 'action.hint.cookingBoiling', {
+      boiling: boilingPoint_C().toFixed(0),
+    }), false);
     dom.secondary.hidden = false;
-    dom.secondary.textContent = 'Cancel';
+    dom.secondary.textContent = t('action.cancel');
   } else if (machine.phase === 'PULL') {
     const late = (now_ms - machine.pulledAt_ms) / 1000;
-    label = 'Out of the water — now';
+    label = t('readout.phase.pull');
     digits = `+${formatClock(late)}`;
-    subline = 'carryover is running';
-    spoken = 'Take the eggs out now';
-    const into = settings.cooling === 'ice' ? "They're in the ice bath"
-      : settings.cooling === 'tap' ? "They're under the tap"
-        : "They're out";
+    subline = t('readout.sub.pull');
+    spoken = t('spoken.pull');
+    const into = settings.cooling === 'ice' ? 'action.pulled.ice'
+      : settings.cooling === 'tap' ? 'action.pulled.tap'
+        : 'action.pulled.counter';
     setPrimary(
-      into,
-      `cooling starts on its own in ${Math.max(0, Math.ceil(PULL_GRACE_SECONDS - late))} s`,
+      t(into),
+      t('action.hint.pull', { seconds: Math.max(0, Math.ceil(PULL_GRACE_SECONDS - late)) }),
       true,
     );
     // Reachable here too: a reload can land in this phase, and a cook you have
     // picked back up must always be one you can put down.
     dom.secondary.hidden = false;
-    dom.secondary.textContent = 'Cancel';
+    dom.secondary.textContent = t('action.cancel');
   } else if (machine.phase === 'COOLING') {
-    label = settings.cooling === 'ice' ? 'Cooling — leave in the ice' : 'Cooling — keep the water running';
+    label = t(settings.cooling === 'ice' ? 'readout.phase.coolingIce' : 'readout.phase.coolingTap');
     digits = formatClock(secondsToCool(machine, now_ms));
-    subline = `${COOLING_SECONDS / 60} minutes, or the yolk keeps cooking`;
-    spoken = `Cooling. ${spokenClock(secondsToCool(machine, now_ms))} left`;
+    subline = t('readout.sub.cooling', { minutes: COOLING_SECONDS / 60 });
+    spoken = t('spoken.cooling', { time: spokenClock(secondsToCool(machine, now_ms)) });
     setPrimary('', '', false);
     dom.secondary.hidden = false;
-    dom.secondary.textContent = 'Cancel';
+    dom.secondary.textContent = t('action.cancel');
   } else {
-    label = 'Done';
+    label = t('readout.phase.done');
     digits = formatClock(cookTime_s);
     subline = settings.startMode === 'cold'
-      ? `${formatClock(boil_s)} to boil + ${formatClock(cookTime_s - boil_s)} cooking`
-      : 'total in the water';
-    spoken = 'Eat.';
-    setPrimary('Start again', '', true);
+      ? t('readout.sub.doneCold', { boil: formatClock(boil_s), cooking: formatClock(cookTime_s - boil_s) })
+      : t('readout.sub.doneHot');
+    spoken = t('spoken.done');
+    setPrimary(t('action.startAgain'), '', true);
     dom.secondary.hidden = true;
   }
 
@@ -654,7 +642,7 @@ function render(now_ms: number): void {
   // The live region carries a coarse announcement, not a per-second one: the
   // ticking digits are aria-hidden, so a screen reader hears the phase and the
   // minute rather than being flooded once a second.
-  const announcement = `${label}. ${spoken}`;
+  const announcement = t('spoken.announcement', { label: label, spoken: spoken });
   const minute = digits.split(':')[0];
   const key = `${machine.phase}|${minute}`;
   if (key !== lastAnnounced) {
@@ -678,18 +666,20 @@ function renderSousVide(now_ms: number): void {
   );
   const copy = sousVideCopy(est, now_ms);
 
-  dom.phaseLabel.textContent = 'Start time';
+  dom.phaseLabel.textContent = t('readout.phase.startTime');
   dom.digits.textContent = copy.headline;
   dom.subline.textContent = copy.subline;
   // The bath temperature is not a peak yolk temperature, and printing it under
   // that label said something false about the egg. In a bath held at 63 °C the
   // yolk ends up at 63 °C, which is the whole point, but the label has to say
   // which number it is.
-  dom.statYolkLabel.textContent = 'bath';
-  dom.statYolk.textContent = `${est.bath_C.toFixed(0)}°C`;
-  dom.statBoil.textContent = `${boilingPoint_C().toFixed(1)}°C`;
+  dom.statYolkLabel.textContent = t('readout.stat.bath');
+  dom.statYolk.textContent = t('format.celsius', { value: est.bath_C.toFixed(0) });
+  dom.statBoil.textContent = t('format.celsius', { value: boilingPoint_C().toFixed(1) });
   // The slider reading is a pan number. There is no pan.
-  dom.donenessValue.textContent = `${anchorNear(settings.doneness).label} · in a ${est.bath_C.toFixed(0)}°C bath`;
+  dom.donenessValue.textContent = t('controls.doneness.valueBath', {
+    doneness: t(anchorNear(settings.doneness).key), bath: est.bath_C.toFixed(0),
+  });
   dom.note.textContent = copy.note;
   dom.warn.textContent = copy.warn;
   dom.warn.hidden = false;
@@ -701,8 +691,9 @@ function renderSousVide(now_ms: number): void {
   const key = `SOUS|${copy.headline}`;
   if (key !== lastAnnounced) {
     lastAnnounced = key;
-    dom.announce.textContent = `Sous-vide. You should have started ${copy.headline.toLowerCase()},`
-      + ` ${copy.subline}`;
+    dom.announce.textContent = t('spoken.sousVide', {
+      when: copy.headline.toLowerCase(), subline: copy.subline,
+    });
   }
 }
 
@@ -787,11 +778,11 @@ function saveNow(): void {
 
 function renderCalibNote(): void {
   if (calib.eggsLogged === 0) {
-    dom.calibNote.textContent = 'Telling it tunes the model to your eggs and your pan.';
+    dom.calibNote.textContent = t('feedback.invite');
   } else {
-    dom.calibNote.textContent =
-      `tuned on ${calib.eggsLogged} egg${calib.eggsLogged === 1 ? '' : 's'}`
-      + ` · ±${calibrationSpread(calib).toFixed(0)}%`;
+    dom.calibNote.textContent = t('learned.tuned', {
+      eggs: calib.eggsLogged, spread: calibrationSpread(calib).toFixed(0),
+    });
   }
   renderLearned();
 }
@@ -801,17 +792,19 @@ function renderLearned(): void {
   const eggs = calib.eggsLogged;
   const pan = hasBoilMemory(boilMemory);
   if (eggs === 0 && !pan) {
-    dom.learnedNote.textContent = 'Running on the literature values. '
-      + 'It learns your pan when you time a boil, and your taste when you say how an egg was.';
+    dom.learnedNote.textContent = t('learned.literature');
     dom.forget.hidden = true;
     return;
   }
-  const parts: string[] = [];
-  if (eggs > 0) {
-    parts.push(`tuned on ${eggs} egg${eggs === 1 ? '' : 's'} · ±${calibrationSpread(calib).toFixed(0)}%`);
-  }
-  if (pan) parts.push(`your pan takes ${formatClock(estimateTimeToBoil(boilMemory, settings.waterLitres))} to boil`);
-  dom.learnedNote.textContent = parts.join(' · ');
+  const tuned = eggs > 0
+    ? t('learned.tuned', { eggs: eggs, spread: calibrationSpread(calib).toFixed(0) })
+    : '';
+  const measured = pan
+    ? t('learned.pan', { time: formatClock(estimateTimeToBoil(boilMemory, settings.waterLitres)) })
+    : '';
+  dom.learnedNote.textContent = tuned !== '' && measured !== ''
+    ? t('learned.both', { tuned: tuned, pan: measured })
+    : tuned + measured;
   dom.forget.hidden = false;
 }
 
@@ -840,7 +833,7 @@ function onFeedback(value: Feedback): void {
   persistCook();
   const buttons = dom.feedback.querySelectorAll<HTMLButtonElement>('button.fb');
   for (let i = 0; i < buttons.length; i++) buttons[i].disabled = true;
-  dom.calibNote.textContent = 'learning…';
+  dom.calibNote.textContent = t('feedback.learning');
 
   const cooked = ticket;
   if (cooked === null) return;
@@ -878,7 +871,7 @@ function onWhiteFeedback(value: WhiteReport): void {
   whiteGrid = null;
   const buttons = dom.whiteFeedback.querySelectorAll<HTMLButtonElement>('button.wb');
   for (let i = 0; i < buttons.length; i++) buttons[i].disabled = true;
-  dom.whiteNote.textContent = 'learning…';
+  dom.whiteNote.textContent = t('feedback.learning');
 
   // No grid to build this time, so this is milliseconds rather than seconds -
   // but it still yields, so the disabled state paints before the arithmetic.
@@ -933,8 +926,8 @@ function onInput(event: Event): void {
   // Instant feedback on the two readings the eye is on while dragging; the
   // full solve (tens of milliseconds) follows and corrects them.
   dom.donenessValue.textContent = donenessValueText(targetPeakYolk_C(settings.doneness));
-  dom.statYolk.textContent = `${targetPeakYolk_C(settings.doneness).toFixed(0)}°C`;
-  dom.statBoil.textContent = `${boilingPoint_C().toFixed(1)}°C`;
+  dom.statYolk.textContent = t('format.celsius', { value: targetPeakYolk_C(settings.doneness).toFixed(0) });
+  dom.statBoil.textContent = t('format.celsius', { value: boilingPoint_C().toFixed(1) });
   dom.body.dataset['start'] = settings.startMode;
   scheduleSolve();
 }
@@ -1076,19 +1069,19 @@ function buildSizeOptions(): void {
   for (let i = 0; i < sizeClasses.length; i += 1) {
     const option = document.createElement('option');
     option.value = String(i);
-    option.textContent = sizeClasses[i].label;
+    option.textContent = tRef(sizeClassLabel(sizeClasses[i]));
     dom.size.append(option);
   }
   const custom = document.createElement('option');
   custom.value = '-1';
-  custom.textContent = 'Measured below…';
+  custom.textContent = t('controls.size.measured');
   dom.size.append(custom);
 }
 
 function buildTicks(): void {
   for (const anchor of DONENESS_ANCHORS) {
     const span = document.createElement('span');
-    span.textContent = anchor.label;
+    span.textContent = t(anchor.key);
     span.style.left = `${anchor.level * 100}%`;
     dom.donenessTicks.append(span);
   }
@@ -1114,9 +1107,10 @@ function applyConstantsToDom(): void {
   // The presets are assumptions, and are labelled as such rather than baked
   // into the buttons: a room is not necessarily 20 C, and Custom is there for
   // anyone who knows better.
-  dom.startTempHint.textContent = `Fridge is taken as ${START_TEMP_PRESETS_C.fridge}°C and `
-    + `room as ${START_TEMP_PRESETS_C.room}°C. Pick Custom if yours differ.`;
-  dom.startSousLabel.textContent = `Sous-vide ${SOUS_VIDE_BATH_C}°`;
+  dom.startTempHint.textContent = t('controls.eggFrom.hint', {
+    fridge: START_TEMP_PRESETS_C.fridge, room: START_TEMP_PRESETS_C.room,
+  });
+  dom.startSousLabel.textContent = t('controls.start.sousVide', { bath: SOUS_VIDE_BATH_C });
 }
 
 function applySettingsToDom(): void {

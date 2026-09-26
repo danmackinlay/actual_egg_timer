@@ -1,0 +1,3128 @@
+{
+  "locales": [
+    "en"
+  ],
+  "render": [
+    {
+      "locale": "en",
+      "key": "app.name",
+      "args": {},
+      "text": "Actual Egg Timer"
+    },
+    {
+      "locale": "en",
+      "key": "doneness.runny",
+      "args": {},
+      "text": "Runny"
+    },
+    {
+      "locale": "en",
+      "key": "doneness.soft",
+      "args": {},
+      "text": "Soft"
+    },
+    {
+      "locale": "en",
+      "key": "doneness.jammy",
+      "args": {},
+      "text": "Jammy"
+    },
+    {
+      "locale": "en",
+      "key": "doneness.fudgy",
+      "args": {},
+      "text": "Fudgy"
+    },
+    {
+      "locale": "en",
+      "key": "doneness.hard",
+      "args": {},
+      "text": "Hard"
+    },
+    {
+      "locale": "en",
+      "key": "size.eu.small",
+      "args": {
+        "grams": 48
+      },
+      "text": "Small — 48 g"
+    },
+    {
+      "locale": "en",
+      "key": "size.eu.medium",
+      "args": {
+        "grams": 58
+      },
+      "text": "Medium — 58 g"
+    },
+    {
+      "locale": "en",
+      "key": "size.eu.large",
+      "args": {
+        "grams": 68
+      },
+      "text": "Large — 68 g"
+    },
+    {
+      "locale": "en",
+      "key": "size.eu.extraLarge",
+      "args": {
+        "grams": 76
+      },
+      "text": "Extra large — 76 g"
+    },
+    {
+      "locale": "en",
+      "key": "size.us.small",
+      "args": {
+        "grams": 46
+      },
+      "text": "Small — 46 g"
+    },
+    {
+      "locale": "en",
+      "key": "size.us.medium",
+      "args": {
+        "grams": 53
+      },
+      "text": "Medium — 53 g"
+    },
+    {
+      "locale": "en",
+      "key": "size.us.large",
+      "args": {
+        "grams": 60
+      },
+      "text": "Large — 60 g"
+    },
+    {
+      "locale": "en",
+      "key": "size.us.extraLarge",
+      "args": {
+        "grams": 67
+      },
+      "text": "Extra large — 67 g"
+    },
+    {
+      "locale": "en",
+      "key": "size.us.jumbo",
+      "args": {
+        "grams": 74
+      },
+      "text": "Jumbo — 74 g"
+    },
+    {
+      "locale": "en",
+      "key": "unit.grams",
+      "args": {},
+      "text": "g"
+    },
+    {
+      "locale": "en",
+      "key": "unit.millimetres",
+      "args": {},
+      "text": "mm"
+    },
+    {
+      "locale": "en",
+      "key": "unit.celsius",
+      "args": {},
+      "text": "°C"
+    },
+    {
+      "locale": "en",
+      "key": "unit.litres",
+      "args": {},
+      "text": "L"
+    },
+    {
+      "locale": "en",
+      "key": "unit.metres",
+      "args": {},
+      "text": "m"
+    },
+    {
+      "locale": "en",
+      "key": "format.celsius",
+      "args": {
+        "value": "65"
+      },
+      "text": "65°C"
+    },
+    {
+      "locale": "en",
+      "key": "format.celsiusSpaced",
+      "args": {
+        "value": "100.0"
+      },
+      "text": "100.0 °C"
+    },
+    {
+      "locale": "en",
+      "key": "format.litres",
+      "args": {
+        "value": "2.00"
+      },
+      "text": "2.00 L"
+    },
+    {
+      "locale": "en",
+      "key": "format.metres",
+      "args": {
+        "value": "1500"
+      },
+      "text": "1500 m"
+    },
+    {
+      "locale": "en",
+      "key": "readout.phase.total",
+      "args": {},
+      "text": "Total time"
+    },
+    {
+      "locale": "en",
+      "key": "readout.phase.totalLidOn",
+      "args": {},
+      "text": "Total time, lid on"
+    },
+    {
+      "locale": "en",
+      "key": "readout.phase.heating",
+      "args": {},
+      "text": "Heating"
+    },
+    {
+      "locale": "en",
+      "key": "readout.phase.heatingTap",
+      "args": {},
+      "text": "Heating — tap when it boils"
+    },
+    {
+      "locale": "en",
+      "key": "readout.phase.cookingBoiling",
+      "args": {},
+      "text": "Cooking — keep it boiling"
+    },
+    {
+      "locale": "en",
+      "key": "readout.phase.cookingHeatOff",
+      "args": {},
+      "text": "Cooking — heat off, lid on"
+    },
+    {
+      "locale": "en",
+      "key": "readout.phase.pull",
+      "args": {},
+      "text": "Out of the water — now"
+    },
+    {
+      "locale": "en",
+      "key": "readout.phase.coolingIce",
+      "args": {},
+      "text": "Cooling — leave in the ice"
+    },
+    {
+      "locale": "en",
+      "key": "readout.phase.coolingTap",
+      "args": {},
+      "text": "Cooling — keep the water running"
+    },
+    {
+      "locale": "en",
+      "key": "readout.phase.cooling",
+      "args": {},
+      "text": "Cooling"
+    },
+    {
+      "locale": "en",
+      "key": "readout.phase.done",
+      "args": {},
+      "text": "Done"
+    },
+    {
+      "locale": "en",
+      "key": "readout.phase.startTime",
+      "args": {},
+      "text": "Start time"
+    },
+    {
+      "locale": "en",
+      "key": "readout.big.now",
+      "args": {},
+      "text": "NOW"
+    },
+    {
+      "locale": "en",
+      "key": "readout.big.eat",
+      "args": {},
+      "text": "Eat"
+    },
+    {
+      "locale": "en",
+      "key": "readout.sub.coldAssumes",
+      "args": {
+        "boil": "6:40"
+      },
+      "text": "assumes 6:40 to a rolling boil"
+    },
+    {
+      "locale": "en",
+      "key": "readout.sub.coldGuesses",
+      "args": {
+        "boil": "8:00"
+      },
+      "text": "guesses 8:00 to a rolling boil"
+    },
+    {
+      "locale": "en",
+      "key": "readout.sub.standingAssumes",
+      "args": {
+        "boil": "6:40"
+      },
+      "text": "assumes this pan takes 6:40 to boil, which is how fast it cools"
+    },
+    {
+      "locale": "en",
+      "key": "readout.sub.standingGuesses",
+      "args": {
+        "boil": "8:00"
+      },
+      "text": "guesses this pan takes 8:00 to boil, which is how fast it cools"
+    },
+    {
+      "locale": "en",
+      "key": "readout.sub.hot",
+      "args": {},
+      "text": "from eggs in to eggs out"
+    },
+    {
+      "locale": "en",
+      "key": "readout.sub.idleCold",
+      "args": {},
+      "text": "from eggs into COLD water, heat on, to eggs out"
+    },
+    {
+      "locale": "en",
+      "key": "readout.sub.idleHot",
+      "args": {},
+      "text": "from eggs into BOILING water to eggs out"
+    },
+    {
+      "locale": "en",
+      "key": "readout.sub.heating",
+      "args": {
+        "elapsed": "2:15",
+        "boil": "8:00"
+      },
+      "text": "2:15 heating · provisional, assumes 8:00 to boil"
+    },
+    {
+      "locale": "en",
+      "key": "readout.sub.heatingEstimate",
+      "args": {},
+      "text": "estimate — the clock corrects itself when you tap the boil"
+    },
+    {
+      "locale": "en",
+      "key": "readout.sub.cookingCold",
+      "args": {
+        "boil": "6:40",
+        "after": "3:57"
+      },
+      "text": "boil took 6:40 · 3:57 after the boil"
+    },
+    {
+      "locale": "en",
+      "key": "readout.sub.cookingHot",
+      "args": {},
+      "text": "in the water"
+    },
+    {
+      "locale": "en",
+      "key": "readout.sub.pull",
+      "args": {},
+      "text": "carryover is running"
+    },
+    {
+      "locale": "en",
+      "key": "readout.sub.cooling",
+      "args": {
+        "minutes": 3
+      },
+      "text": "3 minutes, or the yolk keeps cooking"
+    },
+    {
+      "locale": "en",
+      "key": "readout.sub.cooling",
+      "args": {
+        "minutes": 0
+      },
+      "text": "0 minutes, or the yolk keeps cooking"
+    },
+    {
+      "locale": "en",
+      "key": "readout.sub.cooling",
+      "args": {
+        "minutes": 1
+      },
+      "text": "1 minutes, or the yolk keeps cooking"
+    },
+    {
+      "locale": "en",
+      "key": "readout.sub.cooling",
+      "args": {
+        "minutes": 2
+      },
+      "text": "2 minutes, or the yolk keeps cooking"
+    },
+    {
+      "locale": "en",
+      "key": "readout.sub.cooling",
+      "args": {
+        "minutes": 3
+      },
+      "text": "3 minutes, or the yolk keeps cooking"
+    },
+    {
+      "locale": "en",
+      "key": "readout.sub.cooling",
+      "args": {
+        "minutes": 4
+      },
+      "text": "4 minutes, or the yolk keeps cooking"
+    },
+    {
+      "locale": "en",
+      "key": "readout.sub.cooling",
+      "args": {
+        "minutes": 5
+      },
+      "text": "5 minutes, or the yolk keeps cooking"
+    },
+    {
+      "locale": "en",
+      "key": "readout.sub.cooling",
+      "args": {
+        "minutes": 11
+      },
+      "text": "11 minutes, or the yolk keeps cooking"
+    },
+    {
+      "locale": "en",
+      "key": "readout.sub.cooling",
+      "args": {
+        "minutes": 21
+      },
+      "text": "21 minutes, or the yolk keeps cooking"
+    },
+    {
+      "locale": "en",
+      "key": "readout.sub.cooling",
+      "args": {
+        "minutes": 22
+      },
+      "text": "22 minutes, or the yolk keeps cooking"
+    },
+    {
+      "locale": "en",
+      "key": "readout.sub.cooling",
+      "args": {
+        "minutes": 1.5
+      },
+      "text": "1.5 minutes, or the yolk keeps cooking"
+    },
+    {
+      "locale": "en",
+      "key": "readout.sub.cooling",
+      "args": {
+        "minutes": 2.5
+      },
+      "text": "2.5 minutes, or the yolk keeps cooking"
+    },
+    {
+      "locale": "en",
+      "key": "readout.sub.cooling",
+      "args": {
+        "minutes": 0.5
+      },
+      "text": "0.5 minutes, or the yolk keeps cooking"
+    },
+    {
+      "locale": "en",
+      "key": "readout.sub.doneCold",
+      "args": {
+        "boil": "6:40",
+        "cooking": "4:36"
+      },
+      "text": "6:40 to boil + 4:36 cooking"
+    },
+    {
+      "locale": "en",
+      "key": "readout.sub.doneHot",
+      "args": {},
+      "text": "total in the water"
+    },
+    {
+      "locale": "en",
+      "key": "readout.sub.done",
+      "args": {},
+      "text": "that is the egg you asked for"
+    },
+    {
+      "locale": "en",
+      "key": "readout.alarm.setting",
+      "args": {},
+      "text": "setting the alarm…"
+    },
+    {
+      "locale": "en",
+      "key": "readout.alarm.denied",
+      "args": {},
+      "text": "no notification permission — keep the app open"
+    },
+    {
+      "locale": "en",
+      "key": "readout.alarm.failed",
+      "args": {},
+      "text": "the alarm did not take — keep the app open"
+    },
+    {
+      "locale": "en",
+      "key": "readout.alarm.set",
+      "args": {
+        "time": "07:41:12"
+      },
+      "text": "alarm set for 07:41:12"
+    },
+    {
+      "locale": "en",
+      "key": "readout.stat.peakYolk",
+      "args": {},
+      "text": "peak yolk"
+    },
+    {
+      "locale": "en",
+      "key": "readout.stat.peakWhite",
+      "args": {},
+      "text": "peak white"
+    },
+    {
+      "locale": "en",
+      "key": "readout.stat.afterBoiling",
+      "args": {},
+      "text": "after boiling"
+    },
+    {
+      "locale": "en",
+      "key": "readout.stat.afterBoil",
+      "args": {},
+      "text": "after boil"
+    },
+    {
+      "locale": "en",
+      "key": "readout.stat.waterBoilsAt",
+      "args": {},
+      "text": "water boils at"
+    },
+    {
+      "locale": "en",
+      "key": "readout.stat.bath",
+      "args": {},
+      "text": "bath"
+    },
+    {
+      "locale": "en",
+      "key": "readout.mute.on",
+      "args": {},
+      "text": "Sound on"
+    },
+    {
+      "locale": "en",
+      "key": "readout.mute.off",
+      "args": {},
+      "text": "Muted"
+    },
+    {
+      "locale": "en",
+      "key": "readout.restored",
+      "args": {},
+      "text": "Picked this cook back up after a reload. The deadlines are right, but the alarm went with the old page — keep this tab open, or Cancel and start again."
+    },
+    {
+      "locale": "en",
+      "key": "texture.note",
+      "args": {
+        "white": "white set",
+        "yolk": "yolk jammy"
+      },
+      "text": "white set, yolk jammy"
+    },
+    {
+      "locale": "en",
+      "key": "texture.white.justSet",
+      "args": {},
+      "text": "white just set"
+    },
+    {
+      "locale": "en",
+      "key": "texture.white.set",
+      "args": {},
+      "text": "white set"
+    },
+    {
+      "locale": "en",
+      "key": "texture.white.firm",
+      "args": {},
+      "text": "white firm"
+    },
+    {
+      "locale": "en",
+      "key": "texture.white.runny",
+      "args": {},
+      "text": "white stays runny"
+    },
+    {
+      "locale": "en",
+      "key": "texture.yolk.liquid",
+      "args": {},
+      "text": "yolk liquid"
+    },
+    {
+      "locale": "en",
+      "key": "texture.yolk.soft",
+      "args": {},
+      "text": "yolk soft, barely thickened"
+    },
+    {
+      "locale": "en",
+      "key": "texture.yolk.jammy",
+      "args": {},
+      "text": "yolk jammy"
+    },
+    {
+      "locale": "en",
+      "key": "texture.yolk.fudgy",
+      "args": {},
+      "text": "yolk fudgy"
+    },
+    {
+      "locale": "en",
+      "key": "texture.yolk.set",
+      "args": {},
+      "text": "yolk fully set"
+    },
+    {
+      "locale": "en",
+      "key": "refusal.whiteNeverSets",
+      "args": {},
+      "text": "With the heat off this pan never sets the white: the water falls below what the white needs while the egg is still in it. Nothing on the slider is reachable. More water, a slower boil, or keep it boiling."
+    },
+    {
+      "locale": "en",
+      "key": "refusal.harderThanPan",
+      "args": {
+        "wanted": "hard",
+        "litres": "0.8",
+        "limit": "fudgy"
+      },
+      "text": "With the heat off, the water runs out before the yolk gets there — hard isn't reachable in 0.8 L. Hardest here is fudgy. More water, or keep it boiling."
+    },
+    {
+      "locale": "en",
+      "key": "refusal.counter",
+      "args": {
+        "wanted": "runny",
+        "limit": "fudgy"
+      },
+      "text": "Resting on the counter keeps cooking the yolk — runny isn't reachable. Softest here is fudgy. Use an ice bath."
+    },
+    {
+      "locale": "en",
+      "key": "refusal.tap",
+      "args": {
+        "wanted": "runny",
+        "limit": "soft"
+      },
+      "text": "A cold tap doesn't pull the heat out fast enough — runny isn't reachable. Softest here is soft. Ice water gets you further."
+    },
+    {
+      "locale": "en",
+      "key": "refusal.ice",
+      "args": {
+        "wanted": "runny",
+        "limit": "soft"
+      },
+      "text": "Any shorter and the white is still raw — runny isn't reachable for this egg. Softest here is soft."
+    },
+    {
+      "locale": "en",
+      "key": "action.startHeating",
+      "args": {},
+      "text": "Start heating"
+    },
+    {
+      "locale": "en",
+      "key": "action.eggsIn",
+      "args": {},
+      "text": "Eggs in"
+    },
+    {
+      "locale": "en",
+      "key": "action.eggsInHeatOn",
+      "args": {},
+      "text": "Eggs in, heat on"
+    },
+    {
+      "locale": "en",
+      "key": "action.fullBoil",
+      "args": {},
+      "text": "Full rolling boil"
+    },
+    {
+      "locale": "en",
+      "key": "action.cancel",
+      "args": {},
+      "text": "Cancel"
+    },
+    {
+      "locale": "en",
+      "key": "action.startAgain",
+      "args": {},
+      "text": "Start again"
+    },
+    {
+      "locale": "en",
+      "key": "action.pulled.ice",
+      "args": {},
+      "text": "They're in the ice bath"
+    },
+    {
+      "locale": "en",
+      "key": "action.pulled.tap",
+      "args": {},
+      "text": "They're under the tap"
+    },
+    {
+      "locale": "en",
+      "key": "action.pulled.counter",
+      "args": {},
+      "text": "They're out"
+    },
+    {
+      "locale": "en",
+      "key": "action.hint.cold",
+      "args": {},
+      "text": "eggs in the pan, lid on, then tap"
+    },
+    {
+      "locale": "en",
+      "key": "action.hint.hotStanding",
+      "args": {},
+      "text": "eggs into boiling water, then lid on and heat off"
+    },
+    {
+      "locale": "en",
+      "key": "action.hint.hotBoiling",
+      "args": {
+        "time": "7:44"
+      },
+      "text": "water at a full rolling boil, and kept there for the whole 7:44"
+    },
+    {
+      "locale": "en",
+      "key": "action.hint.whiteNeverSets",
+      "args": {},
+      "text": "nothing to start: this pan never sets the white"
+    },
+    {
+      "locale": "en",
+      "key": "action.hint.heating",
+      "args": {},
+      "text": "wait for the whole surface to roll"
+    },
+    {
+      "locale": "en",
+      "key": "action.hint.heatingStanding",
+      "args": {},
+      "text": "wait for the whole surface to roll, then lid on and heat off"
+    },
+    {
+      "locale": "en",
+      "key": "action.hint.cookingStanding",
+      "args": {
+        "boiling": "100"
+      },
+      "text": "lid on, burner off — the timing assumes the water cools on its own from 100°C"
+    },
+    {
+      "locale": "en",
+      "key": "action.hint.cookingBoiling",
+      "args": {
+        "boiling": "100"
+      },
+      "text": "keep it boiling — the timing assumes 100°C right up to the pull"
+    },
+    {
+      "locale": "en",
+      "key": "action.hint.pull",
+      "args": {
+        "seconds": 17
+      },
+      "text": "cooling starts on its own in 17 s"
+    },
+    {
+      "locale": "en",
+      "key": "spoken.seconds",
+      "args": {
+        "seconds": 45
+      },
+      "text": "45 seconds"
+    },
+    {
+      "locale": "en",
+      "key": "spoken.seconds",
+      "args": {
+        "seconds": 0
+      },
+      "text": "0 seconds"
+    },
+    {
+      "locale": "en",
+      "key": "spoken.seconds",
+      "args": {
+        "seconds": 1
+      },
+      "text": "1 seconds"
+    },
+    {
+      "locale": "en",
+      "key": "spoken.seconds",
+      "args": {
+        "seconds": 2
+      },
+      "text": "2 seconds"
+    },
+    {
+      "locale": "en",
+      "key": "spoken.seconds",
+      "args": {
+        "seconds": 3
+      },
+      "text": "3 seconds"
+    },
+    {
+      "locale": "en",
+      "key": "spoken.seconds",
+      "args": {
+        "seconds": 4
+      },
+      "text": "4 seconds"
+    },
+    {
+      "locale": "en",
+      "key": "spoken.seconds",
+      "args": {
+        "seconds": 5
+      },
+      "text": "5 seconds"
+    },
+    {
+      "locale": "en",
+      "key": "spoken.seconds",
+      "args": {
+        "seconds": 11
+      },
+      "text": "11 seconds"
+    },
+    {
+      "locale": "en",
+      "key": "spoken.seconds",
+      "args": {
+        "seconds": 21
+      },
+      "text": "21 seconds"
+    },
+    {
+      "locale": "en",
+      "key": "spoken.seconds",
+      "args": {
+        "seconds": 22
+      },
+      "text": "22 seconds"
+    },
+    {
+      "locale": "en",
+      "key": "spoken.seconds",
+      "args": {
+        "seconds": 1.5
+      },
+      "text": "1.5 seconds"
+    },
+    {
+      "locale": "en",
+      "key": "spoken.seconds",
+      "args": {
+        "seconds": 2.5
+      },
+      "text": "2.5 seconds"
+    },
+    {
+      "locale": "en",
+      "key": "spoken.seconds",
+      "args": {
+        "seconds": 0.5
+      },
+      "text": "0.5 seconds"
+    },
+    {
+      "locale": "en",
+      "key": "spoken.minutesSeconds",
+      "args": {
+        "minutes": 11,
+        "seconds": 17
+      },
+      "text": "11 minutes 17 seconds"
+    },
+    {
+      "locale": "en",
+      "key": "spoken.minutesSeconds",
+      "args": {
+        "minutes": 0,
+        "seconds": 17
+      },
+      "text": "0 minutes 17 seconds"
+    },
+    {
+      "locale": "en",
+      "key": "spoken.minutesSeconds",
+      "args": {
+        "minutes": 1,
+        "seconds": 17
+      },
+      "text": "1 minute 17 seconds"
+    },
+    {
+      "locale": "en",
+      "key": "spoken.minutesSeconds",
+      "args": {
+        "minutes": 2,
+        "seconds": 17
+      },
+      "text": "2 minutes 17 seconds"
+    },
+    {
+      "locale": "en",
+      "key": "spoken.minutesSeconds",
+      "args": {
+        "minutes": 3,
+        "seconds": 17
+      },
+      "text": "3 minutes 17 seconds"
+    },
+    {
+      "locale": "en",
+      "key": "spoken.minutesSeconds",
+      "args": {
+        "minutes": 4,
+        "seconds": 17
+      },
+      "text": "4 minutes 17 seconds"
+    },
+    {
+      "locale": "en",
+      "key": "spoken.minutesSeconds",
+      "args": {
+        "minutes": 5,
+        "seconds": 17
+      },
+      "text": "5 minutes 17 seconds"
+    },
+    {
+      "locale": "en",
+      "key": "spoken.minutesSeconds",
+      "args": {
+        "minutes": 11,
+        "seconds": 17
+      },
+      "text": "11 minutes 17 seconds"
+    },
+    {
+      "locale": "en",
+      "key": "spoken.minutesSeconds",
+      "args": {
+        "minutes": 21,
+        "seconds": 17
+      },
+      "text": "21 minutes 17 seconds"
+    },
+    {
+      "locale": "en",
+      "key": "spoken.minutesSeconds",
+      "args": {
+        "minutes": 22,
+        "seconds": 17
+      },
+      "text": "22 minutes 17 seconds"
+    },
+    {
+      "locale": "en",
+      "key": "spoken.minutesSeconds",
+      "args": {
+        "minutes": 1.5,
+        "seconds": 17
+      },
+      "text": "1.5 minutes 17 seconds"
+    },
+    {
+      "locale": "en",
+      "key": "spoken.minutesSeconds",
+      "args": {
+        "minutes": 2.5,
+        "seconds": 17
+      },
+      "text": "2.5 minutes 17 seconds"
+    },
+    {
+      "locale": "en",
+      "key": "spoken.minutesSeconds",
+      "args": {
+        "minutes": 0.5,
+        "seconds": 17
+      },
+      "text": "0.5 minutes 17 seconds"
+    },
+    {
+      "locale": "en",
+      "key": "spoken.total",
+      "args": {
+        "time": "11 minutes 17 seconds"
+      },
+      "text": "Total 11 minutes 17 seconds"
+    },
+    {
+      "locale": "en",
+      "key": "spoken.heating",
+      "args": {
+        "time": "11 minutes 17 seconds"
+      },
+      "text": "Heating. 11 minutes 17 seconds left in total"
+    },
+    {
+      "locale": "en",
+      "key": "spoken.cooking",
+      "args": {
+        "time": "3 minutes 57 seconds"
+      },
+      "text": "Cooking. 3 minutes 57 seconds left"
+    },
+    {
+      "locale": "en",
+      "key": "spoken.pull",
+      "args": {},
+      "text": "Take the eggs out now"
+    },
+    {
+      "locale": "en",
+      "key": "spoken.cooling",
+      "args": {
+        "time": "3 minutes 0 seconds"
+      },
+      "text": "Cooling. 3 minutes 0 seconds left"
+    },
+    {
+      "locale": "en",
+      "key": "spoken.done",
+      "args": {},
+      "text": "Eat."
+    },
+    {
+      "locale": "en",
+      "key": "spoken.announcement",
+      "args": {
+        "label": "Cooking — keep it boiling",
+        "spoken": "Cooking. 3 minutes 57 seconds left"
+      },
+      "text": "Cooking — keep it boiling. Cooking. 3 minutes 57 seconds left"
+    },
+    {
+      "locale": "en",
+      "key": "spoken.sousVide",
+      "args": {
+        "when": "yesterday",
+        "subline": "at 08:47 — 22 h 43 min at 58°C, to eat now"
+      },
+      "text": "Sous-vide. You should have started yesterday, at 08:47 — 22 h 43 min at 58°C, to eat now"
+    },
+    {
+      "locale": "en",
+      "key": "controls.doneness",
+      "args": {},
+      "text": "Doneness"
+    },
+    {
+      "locale": "en",
+      "key": "controls.doneness.value",
+      "args": {
+        "doneness": "Jammy",
+        "yolk": "65"
+      },
+      "text": "Jammy · peak yolk 65°C"
+    },
+    {
+      "locale": "en",
+      "key": "controls.doneness.valueBath",
+      "args": {
+        "doneness": "Jammy",
+        "bath": "58"
+      },
+      "text": "Jammy · in a 58°C bath"
+    },
+    {
+      "locale": "en",
+      "key": "controls.size",
+      "args": {},
+      "text": "Egg size"
+    },
+    {
+      "locale": "en",
+      "key": "controls.size.measured",
+      "args": {},
+      "text": "Measured below…"
+    },
+    {
+      "locale": "en",
+      "key": "controls.size.weighed",
+      "args": {
+        "grams": "63.5"
+      },
+      "text": "Weighed · 63.5 g"
+    },
+    {
+      "locale": "en",
+      "key": "controls.egg",
+      "args": {},
+      "text": "Egg"
+    },
+    {
+      "locale": "en",
+      "key": "controls.measure.legend",
+      "args": {},
+      "text": "Or measure the egg — fill in any one"
+    },
+    {
+      "locale": "en",
+      "key": "controls.measure.weight",
+      "args": {},
+      "text": "Weight"
+    },
+    {
+      "locale": "en",
+      "key": "controls.measure.girth",
+      "args": {},
+      "text": "Around the middle"
+    },
+    {
+      "locale": "en",
+      "key": "controls.measure.minor",
+      "args": {},
+      "text": "Across the middle"
+    },
+    {
+      "locale": "en",
+      "key": "controls.measure.hint",
+      "args": {},
+      "text": "A kitchen scale is the accurate one. Otherwise wrap a strip of paper round the fattest part and measure the strip — easier than trying to caliper an egg. The other two boxes follow from whichever you fill in."
+    },
+    {
+      "locale": "en",
+      "key": "controls.eggFrom",
+      "args": {},
+      "text": "Egg from"
+    },
+    {
+      "locale": "en",
+      "key": "controls.eggFrom.fridge",
+      "args": {},
+      "text": "Fridge"
+    },
+    {
+      "locale": "en",
+      "key": "controls.eggFrom.room",
+      "args": {},
+      "text": "Room"
+    },
+    {
+      "locale": "en",
+      "key": "controls.eggFrom.custom",
+      "args": {},
+      "text": "Custom"
+    },
+    {
+      "locale": "en",
+      "key": "controls.eggFrom.fridgeAt",
+      "args": {
+        "temp": 4
+      },
+      "text": "Fridge 4°"
+    },
+    {
+      "locale": "en",
+      "key": "controls.eggFrom.roomAt",
+      "args": {
+        "temp": 20
+      },
+      "text": "Room 20°"
+    },
+    {
+      "locale": "en",
+      "key": "controls.eggFrom.hint",
+      "args": {
+        "fridge": 4,
+        "room": 20
+      },
+      "text": "Fridge is taken as 4°C and room as 20°C. Pick Custom if yours differ."
+    },
+    {
+      "locale": "en",
+      "key": "controls.eggTemp",
+      "args": {},
+      "text": "Egg temperature"
+    },
+    {
+      "locale": "en",
+      "key": "controls.start",
+      "args": {},
+      "text": "Start"
+    },
+    {
+      "locale": "en",
+      "key": "controls.start.coldPan",
+      "args": {},
+      "text": "Cold pan"
+    },
+    {
+      "locale": "en",
+      "key": "controls.start.cold",
+      "args": {},
+      "text": "Cold start"
+    },
+    {
+      "locale": "en",
+      "key": "controls.start.hot",
+      "args": {},
+      "text": "Boiling water"
+    },
+    {
+      "locale": "en",
+      "key": "controls.start.sousVide",
+      "args": {
+        "bath": 58
+      },
+      "text": "Sous-vide 58°"
+    },
+    {
+      "locale": "en",
+      "key": "controls.start.hint",
+      "args": {},
+      "text": "Hot start peels far better; cold start needs no timing of the drop-in."
+    },
+    {
+      "locale": "en",
+      "key": "controls.start.hintSousVide",
+      "args": {},
+      "text": "A bath needs no pan, so the pan controls are put away. Your settings are kept and come back when you pick a pan again."
+    },
+    {
+      "locale": "en",
+      "key": "controls.atTheBoil",
+      "args": {},
+      "text": "At the boil"
+    },
+    {
+      "locale": "en",
+      "key": "controls.afterTheBoil",
+      "args": {},
+      "text": "After the boil"
+    },
+    {
+      "locale": "en",
+      "key": "controls.afterBoil.keepItBoiling",
+      "args": {},
+      "text": "Keep it boiling"
+    },
+    {
+      "locale": "en",
+      "key": "controls.afterBoil.keepBoiling",
+      "args": {},
+      "text": "Keep boiling"
+    },
+    {
+      "locale": "en",
+      "key": "controls.afterBoil.heatOff",
+      "args": {},
+      "text": "Heat off, lid on"
+    },
+    {
+      "locale": "en",
+      "key": "controls.afterBoil.hint",
+      "args": {},
+      "text": "Standing in cooling water is a real method, but it lives or dies on the pan: the water has to carry the whole cook. More water holds more heat."
+    },
+    {
+      "locale": "en",
+      "key": "controls.afterBoil.explainHeatOff",
+      "args": {},
+      "text": "The standing method: the pan coasts down from the boil and the cook is whatever the stored heat can still do. Water volume decides whether it can do it at all."
+    },
+    {
+      "locale": "en",
+      "key": "controls.afterBoil.explainHold",
+      "args": {},
+      "text": "The burner holds the water at a rolling boil for the whole cook."
+    },
+    {
+      "locale": "en",
+      "key": "controls.then",
+      "args": {},
+      "text": "Then"
+    },
+    {
+      "locale": "en",
+      "key": "controls.then.ice",
+      "args": {},
+      "text": "Ice bath"
+    },
+    {
+      "locale": "en",
+      "key": "controls.then.tap",
+      "args": {},
+      "text": "Cold tap"
+    },
+    {
+      "locale": "en",
+      "key": "controls.then.counter",
+      "args": {},
+      "text": "Counter"
+    },
+    {
+      "locale": "en",
+      "key": "controls.water",
+      "args": {},
+      "text": "Water"
+    },
+    {
+      "locale": "en",
+      "key": "controls.eggs",
+      "args": {},
+      "text": "Eggs"
+    },
+    {
+      "locale": "en",
+      "key": "controls.eggsInPan",
+      "args": {},
+      "text": "Eggs in the pan"
+    },
+    {
+      "locale": "en",
+      "key": "controls.altitude",
+      "args": {},
+      "text": "Altitude"
+    },
+    {
+      "locale": "en",
+      "key": "controls.pan",
+      "args": {},
+      "text": "Pan, hob and altitude"
+    },
+    {
+      "locale": "en",
+      "key": "pan.waterBoilsAt",
+      "args": {},
+      "text": "Water boils at"
+    },
+    {
+      "locale": "en",
+      "key": "pan.timeToBoil",
+      "args": {},
+      "text": "Time to boil"
+    },
+    {
+      "locale": "en",
+      "key": "pan.timeToBoil.assumed",
+      "args": {
+        "time": "8:00"
+      },
+      "text": "8:00 (assumed)"
+    },
+    {
+      "locale": "en",
+      "key": "pan.measured",
+      "args": {},
+      "text": "Measured on this pan at this volume. It is re-measured every cold start."
+    },
+    {
+      "locale": "en",
+      "key": "pan.unmeasured",
+      "args": {},
+      "text": "Never measured. Run one cold start and tap the boil, and this becomes your pan rather than a guess."
+    },
+    {
+      "locale": "en",
+      "key": "learned.literature",
+      "args": {},
+      "text": "Running on the literature values. It learns your pan when you time a boil, and your taste when you say how an egg was."
+    },
+    {
+      "locale": "en",
+      "key": "learned.tuned",
+      "args": {
+        "eggs": 3,
+        "spread": "9"
+      },
+      "text": "tuned on 3 eggs · ±9%"
+    },
+    {
+      "locale": "en",
+      "key": "learned.tuned",
+      "args": {
+        "eggs": 0,
+        "spread": "9"
+      },
+      "text": "tuned on 0 eggs · ±9%"
+    },
+    {
+      "locale": "en",
+      "key": "learned.tuned",
+      "args": {
+        "eggs": 1,
+        "spread": "9"
+      },
+      "text": "tuned on 1 egg · ±9%"
+    },
+    {
+      "locale": "en",
+      "key": "learned.tuned",
+      "args": {
+        "eggs": 2,
+        "spread": "9"
+      },
+      "text": "tuned on 2 eggs · ±9%"
+    },
+    {
+      "locale": "en",
+      "key": "learned.tuned",
+      "args": {
+        "eggs": 3,
+        "spread": "9"
+      },
+      "text": "tuned on 3 eggs · ±9%"
+    },
+    {
+      "locale": "en",
+      "key": "learned.tuned",
+      "args": {
+        "eggs": 4,
+        "spread": "9"
+      },
+      "text": "tuned on 4 eggs · ±9%"
+    },
+    {
+      "locale": "en",
+      "key": "learned.tuned",
+      "args": {
+        "eggs": 5,
+        "spread": "9"
+      },
+      "text": "tuned on 5 eggs · ±9%"
+    },
+    {
+      "locale": "en",
+      "key": "learned.tuned",
+      "args": {
+        "eggs": 11,
+        "spread": "9"
+      },
+      "text": "tuned on 11 eggs · ±9%"
+    },
+    {
+      "locale": "en",
+      "key": "learned.tuned",
+      "args": {
+        "eggs": 21,
+        "spread": "9"
+      },
+      "text": "tuned on 21 eggs · ±9%"
+    },
+    {
+      "locale": "en",
+      "key": "learned.tuned",
+      "args": {
+        "eggs": 22,
+        "spread": "9"
+      },
+      "text": "tuned on 22 eggs · ±9%"
+    },
+    {
+      "locale": "en",
+      "key": "learned.tuned",
+      "args": {
+        "eggs": 1.5,
+        "spread": "9"
+      },
+      "text": "tuned on 1.5 eggs · ±9%"
+    },
+    {
+      "locale": "en",
+      "key": "learned.tuned",
+      "args": {
+        "eggs": 2.5,
+        "spread": "9"
+      },
+      "text": "tuned on 2.5 eggs · ±9%"
+    },
+    {
+      "locale": "en",
+      "key": "learned.tuned",
+      "args": {
+        "eggs": 0.5,
+        "spread": "9"
+      },
+      "text": "tuned on 0.5 eggs · ±9%"
+    },
+    {
+      "locale": "en",
+      "key": "learned.pan",
+      "args": {
+        "time": "6:40"
+      },
+      "text": "your pan takes 6:40 to boil"
+    },
+    {
+      "locale": "en",
+      "key": "learned.both",
+      "args": {
+        "tuned": "tuned on 3 eggs · ±9%",
+        "pan": "your pan takes 6:40 to boil"
+      },
+      "text": "tuned on 3 eggs · ±9% · your pan takes 6:40 to boil"
+    },
+    {
+      "locale": "en",
+      "key": "learned.forget",
+      "args": {},
+      "text": "Forget what it learned"
+    },
+    {
+      "locale": "en",
+      "key": "learned.forgetExplain",
+      "args": {},
+      "text": "Clears both what it learned from your eggs and the time it measured for your pan. The posterior is honest about its own spread, so a few wrong answers wash out after a few more eggs anyway - this is for when you would rather not wait."
+    },
+    {
+      "locale": "en",
+      "key": "learned.confirm.title",
+      "args": {},
+      "text": "Forget the calibration?"
+    },
+    {
+      "locale": "en",
+      "key": "learned.confirm.forget",
+      "args": {},
+      "text": "Forget it"
+    },
+    {
+      "locale": "en",
+      "key": "learned.confirm.keep",
+      "args": {},
+      "text": "Keep it"
+    },
+    {
+      "locale": "en",
+      "key": "learned.confirm.message",
+      "args": {},
+      "text": "The model goes back to the literature values it shipped with, and the time to boil goes back to a guess."
+    },
+    {
+      "locale": "en",
+      "key": "feedback.ask",
+      "args": {},
+      "text": "How was the yolk?"
+    },
+    {
+      "locale": "en",
+      "key": "feedback.tooSoft",
+      "args": {},
+      "text": "Too soft"
+    },
+    {
+      "locale": "en",
+      "key": "feedback.justRight",
+      "args": {},
+      "text": "Just right"
+    },
+    {
+      "locale": "en",
+      "key": "feedback.tooFirm",
+      "args": {},
+      "text": "Too firm"
+    },
+    {
+      "locale": "en",
+      "key": "feedback.tooHard",
+      "args": {},
+      "text": "Too hard"
+    },
+    {
+      "locale": "en",
+      "key": "feedback.invite",
+      "args": {},
+      "text": "Telling it tunes the model to your eggs and your pan."
+    },
+    {
+      "locale": "en",
+      "key": "feedback.learning",
+      "args": {},
+      "text": "learning…"
+    },
+    {
+      "locale": "en",
+      "key": "feedback.thanks",
+      "args": {},
+      "text": "Thanks — it has adjusted."
+    },
+    {
+      "locale": "en",
+      "key": "feedback.white.ask",
+      "args": {},
+      "text": "And the white — was it runny?"
+    },
+    {
+      "locale": "en",
+      "key": "feedback.white.runny",
+      "args": {},
+      "text": "Still runny"
+    },
+    {
+      "locale": "en",
+      "key": "feedback.white.set",
+      "args": {},
+      "text": "Set right through"
+    },
+    {
+      "locale": "en",
+      "key": "feedback.white.why",
+      "args": {},
+      "text": "The white sets from the outside in, so this says something about your eggs that the yolk cannot."
+    },
+    {
+      "locale": "en",
+      "key": "cook.summary",
+      "args": {
+        "grams": 68,
+        "doneness": "jammy",
+        "yolk": 65
+      },
+      "text": "68 g · jammy · peak yolk 65°C"
+    },
+    {
+      "locale": "en",
+      "key": "cook.method",
+      "args": {
+        "start": "Cold start",
+        "after": "ice bath"
+      },
+      "text": "Cold start · then ice bath"
+    },
+    {
+      "locale": "en",
+      "key": "cook.method.cold",
+      "args": {},
+      "text": "Cold start"
+    },
+    {
+      "locale": "en",
+      "key": "cook.method.hot",
+      "args": {},
+      "text": "Into boiling water"
+    },
+    {
+      "locale": "en",
+      "key": "cook.method.ice",
+      "args": {},
+      "text": "ice bath"
+    },
+    {
+      "locale": "en",
+      "key": "cook.method.tap",
+      "args": {},
+      "text": "cold tap"
+    },
+    {
+      "locale": "en",
+      "key": "cook.method.counter",
+      "args": {},
+      "text": "rest on the counter"
+    },
+    {
+      "locale": "en",
+      "key": "sousvide.subline",
+      "args": {
+        "clock": "08:47",
+        "duration": "22 h 43 min",
+        "bath": "58"
+      },
+      "text": "at 08:47 — 22 h 43 min at 58°C, to eat now"
+    },
+    {
+      "locale": "en",
+      "key": "sousvide.note.whiteBound",
+      "args": {},
+      "text": "white still not set, yolk creamy"
+    },
+    {
+      "locale": "en",
+      "key": "sousvide.note.yolkBound",
+      "args": {},
+      "text": "yolk set, white still not"
+    },
+    {
+      "locale": "en",
+      "key": "sousvide.warn",
+      "args": {
+        "bath": "58"
+      },
+      "text": "A 58°C bath is below the temperature at which egg white sets — only one of its proteins reacts down here — so the white stays loose however long you leave it. This app was built for boiling water and is out of its depth below 60°C anyway. Use the pan."
+    },
+    {
+      "locale": "en",
+      "key": "sousvide.hint",
+      "args": {
+        "duration": "22 h 43 min"
+      },
+      "text": "nothing to start — you are 22 h 43 min late"
+    },
+    {
+      "locale": "en",
+      "key": "sousvide.start.today",
+      "args": {},
+      "text": "Today"
+    },
+    {
+      "locale": "en",
+      "key": "sousvide.start.yesterday",
+      "args": {},
+      "text": "Yesterday"
+    },
+    {
+      "locale": "en",
+      "key": "sousvide.start.lastWeekday",
+      "args": {
+        "weekday": "Wednesday"
+      },
+      "text": "Last Wednesday"
+    },
+    {
+      "locale": "en",
+      "key": "sousvide.start.lastWeek",
+      "args": {},
+      "text": "Last week"
+    },
+    {
+      "locale": "en",
+      "key": "sousvide.start.weeksAgo",
+      "args": {
+        "weeks": 3
+      },
+      "text": "3 weeks ago"
+    },
+    {
+      "locale": "en",
+      "key": "sousvide.start.weeksAgo",
+      "args": {
+        "weeks": 0
+      },
+      "text": "0 weeks ago"
+    },
+    {
+      "locale": "en",
+      "key": "sousvide.start.weeksAgo",
+      "args": {
+        "weeks": 1
+      },
+      "text": "1 weeks ago"
+    },
+    {
+      "locale": "en",
+      "key": "sousvide.start.weeksAgo",
+      "args": {
+        "weeks": 2
+      },
+      "text": "2 weeks ago"
+    },
+    {
+      "locale": "en",
+      "key": "sousvide.start.weeksAgo",
+      "args": {
+        "weeks": 3
+      },
+      "text": "3 weeks ago"
+    },
+    {
+      "locale": "en",
+      "key": "sousvide.start.weeksAgo",
+      "args": {
+        "weeks": 4
+      },
+      "text": "4 weeks ago"
+    },
+    {
+      "locale": "en",
+      "key": "sousvide.start.weeksAgo",
+      "args": {
+        "weeks": 5
+      },
+      "text": "5 weeks ago"
+    },
+    {
+      "locale": "en",
+      "key": "sousvide.start.weeksAgo",
+      "args": {
+        "weeks": 11
+      },
+      "text": "11 weeks ago"
+    },
+    {
+      "locale": "en",
+      "key": "sousvide.start.weeksAgo",
+      "args": {
+        "weeks": 21
+      },
+      "text": "21 weeks ago"
+    },
+    {
+      "locale": "en",
+      "key": "sousvide.start.weeksAgo",
+      "args": {
+        "weeks": 22
+      },
+      "text": "22 weeks ago"
+    },
+    {
+      "locale": "en",
+      "key": "sousvide.start.weeksAgo",
+      "args": {
+        "weeks": 1.5
+      },
+      "text": "1.5 weeks ago"
+    },
+    {
+      "locale": "en",
+      "key": "sousvide.start.weeksAgo",
+      "args": {
+        "weeks": 2.5
+      },
+      "text": "2.5 weeks ago"
+    },
+    {
+      "locale": "en",
+      "key": "sousvide.start.weeksAgo",
+      "args": {
+        "weeks": 0.5
+      },
+      "text": "0.5 weeks ago"
+    },
+    {
+      "locale": "en",
+      "key": "sousvide.start.monthsAgo",
+      "args": {
+        "months": 4
+      },
+      "text": "4 months ago"
+    },
+    {
+      "locale": "en",
+      "key": "sousvide.start.monthsAgo",
+      "args": {
+        "months": 0
+      },
+      "text": "0 months ago"
+    },
+    {
+      "locale": "en",
+      "key": "sousvide.start.monthsAgo",
+      "args": {
+        "months": 1
+      },
+      "text": "1 months ago"
+    },
+    {
+      "locale": "en",
+      "key": "sousvide.start.monthsAgo",
+      "args": {
+        "months": 2
+      },
+      "text": "2 months ago"
+    },
+    {
+      "locale": "en",
+      "key": "sousvide.start.monthsAgo",
+      "args": {
+        "months": 3
+      },
+      "text": "3 months ago"
+    },
+    {
+      "locale": "en",
+      "key": "sousvide.start.monthsAgo",
+      "args": {
+        "months": 4
+      },
+      "text": "4 months ago"
+    },
+    {
+      "locale": "en",
+      "key": "sousvide.start.monthsAgo",
+      "args": {
+        "months": 5
+      },
+      "text": "5 months ago"
+    },
+    {
+      "locale": "en",
+      "key": "sousvide.start.monthsAgo",
+      "args": {
+        "months": 11
+      },
+      "text": "11 months ago"
+    },
+    {
+      "locale": "en",
+      "key": "sousvide.start.monthsAgo",
+      "args": {
+        "months": 21
+      },
+      "text": "21 months ago"
+    },
+    {
+      "locale": "en",
+      "key": "sousvide.start.monthsAgo",
+      "args": {
+        "months": 22
+      },
+      "text": "22 months ago"
+    },
+    {
+      "locale": "en",
+      "key": "sousvide.start.monthsAgo",
+      "args": {
+        "months": 1.5
+      },
+      "text": "1.5 months ago"
+    },
+    {
+      "locale": "en",
+      "key": "sousvide.start.monthsAgo",
+      "args": {
+        "months": 2.5
+      },
+      "text": "2.5 months ago"
+    },
+    {
+      "locale": "en",
+      "key": "sousvide.start.monthsAgo",
+      "args": {
+        "months": 0.5
+      },
+      "text": "0.5 months ago"
+    },
+    {
+      "locale": "en",
+      "key": "duration.minutes",
+      "args": {
+        "minutes": 45
+      },
+      "text": "45 min"
+    },
+    {
+      "locale": "en",
+      "key": "duration.hours",
+      "args": {
+        "hours": 22
+      },
+      "text": "22 h"
+    },
+    {
+      "locale": "en",
+      "key": "duration.hoursMinutes",
+      "args": {
+        "hours": 22,
+        "minutes": 43
+      },
+      "text": "22 h 43 min"
+    },
+    {
+      "locale": "en",
+      "key": "duration.days",
+      "args": {
+        "days": 6
+      },
+      "text": "6 days"
+    },
+    {
+      "locale": "en",
+      "key": "duration.days",
+      "args": {
+        "days": 0
+      },
+      "text": "0 days"
+    },
+    {
+      "locale": "en",
+      "key": "duration.days",
+      "args": {
+        "days": 1
+      },
+      "text": "1 days"
+    },
+    {
+      "locale": "en",
+      "key": "duration.days",
+      "args": {
+        "days": 2
+      },
+      "text": "2 days"
+    },
+    {
+      "locale": "en",
+      "key": "duration.days",
+      "args": {
+        "days": 3
+      },
+      "text": "3 days"
+    },
+    {
+      "locale": "en",
+      "key": "duration.days",
+      "args": {
+        "days": 4
+      },
+      "text": "4 days"
+    },
+    {
+      "locale": "en",
+      "key": "duration.days",
+      "args": {
+        "days": 5
+      },
+      "text": "5 days"
+    },
+    {
+      "locale": "en",
+      "key": "duration.days",
+      "args": {
+        "days": 11
+      },
+      "text": "11 days"
+    },
+    {
+      "locale": "en",
+      "key": "duration.days",
+      "args": {
+        "days": 21
+      },
+      "text": "21 days"
+    },
+    {
+      "locale": "en",
+      "key": "duration.days",
+      "args": {
+        "days": 22
+      },
+      "text": "22 days"
+    },
+    {
+      "locale": "en",
+      "key": "duration.days",
+      "args": {
+        "days": 1.5
+      },
+      "text": "1.5 days"
+    },
+    {
+      "locale": "en",
+      "key": "duration.days",
+      "args": {
+        "days": 2.5
+      },
+      "text": "2.5 days"
+    },
+    {
+      "locale": "en",
+      "key": "duration.days",
+      "args": {
+        "days": 0.5
+      },
+      "text": "0.5 days"
+    },
+    {
+      "locale": "en",
+      "key": "duration.weeks",
+      "args": {
+        "weeks": 2
+      },
+      "text": "2 weeks"
+    },
+    {
+      "locale": "en",
+      "key": "duration.weeks",
+      "args": {
+        "weeks": 0
+      },
+      "text": "0 weeks"
+    },
+    {
+      "locale": "en",
+      "key": "duration.weeks",
+      "args": {
+        "weeks": 1
+      },
+      "text": "1 weeks"
+    },
+    {
+      "locale": "en",
+      "key": "duration.weeks",
+      "args": {
+        "weeks": 2
+      },
+      "text": "2 weeks"
+    },
+    {
+      "locale": "en",
+      "key": "duration.weeks",
+      "args": {
+        "weeks": 3
+      },
+      "text": "3 weeks"
+    },
+    {
+      "locale": "en",
+      "key": "duration.weeks",
+      "args": {
+        "weeks": 4
+      },
+      "text": "4 weeks"
+    },
+    {
+      "locale": "en",
+      "key": "duration.weeks",
+      "args": {
+        "weeks": 5
+      },
+      "text": "5 weeks"
+    },
+    {
+      "locale": "en",
+      "key": "duration.weeks",
+      "args": {
+        "weeks": 11
+      },
+      "text": "11 weeks"
+    },
+    {
+      "locale": "en",
+      "key": "duration.weeks",
+      "args": {
+        "weeks": 21
+      },
+      "text": "21 weeks"
+    },
+    {
+      "locale": "en",
+      "key": "duration.weeks",
+      "args": {
+        "weeks": 22
+      },
+      "text": "22 weeks"
+    },
+    {
+      "locale": "en",
+      "key": "duration.weeks",
+      "args": {
+        "weeks": 1.5
+      },
+      "text": "1.5 weeks"
+    },
+    {
+      "locale": "en",
+      "key": "duration.weeks",
+      "args": {
+        "weeks": 2.5
+      },
+      "text": "2.5 weeks"
+    },
+    {
+      "locale": "en",
+      "key": "duration.weeks",
+      "args": {
+        "weeks": 0.5
+      },
+      "text": "0.5 weeks"
+    },
+    {
+      "locale": "en",
+      "key": "weekday.sunday",
+      "args": {},
+      "text": "Sunday"
+    },
+    {
+      "locale": "en",
+      "key": "weekday.monday",
+      "args": {},
+      "text": "Monday"
+    },
+    {
+      "locale": "en",
+      "key": "weekday.tuesday",
+      "args": {},
+      "text": "Tuesday"
+    },
+    {
+      "locale": "en",
+      "key": "weekday.wednesday",
+      "args": {},
+      "text": "Wednesday"
+    },
+    {
+      "locale": "en",
+      "key": "weekday.thursday",
+      "args": {},
+      "text": "Thursday"
+    },
+    {
+      "locale": "en",
+      "key": "weekday.friday",
+      "args": {},
+      "text": "Friday"
+    },
+    {
+      "locale": "en",
+      "key": "weekday.saturday",
+      "args": {},
+      "text": "Saturday"
+    },
+    {
+      "locale": "en",
+      "key": "alarm.pull.title",
+      "args": {},
+      "text": "Eggs out — now"
+    },
+    {
+      "locale": "en",
+      "key": "alarm.pull.body",
+      "args": {},
+      "text": "Straight into the cooling, or the yolk keeps cooking."
+    },
+    {
+      "locale": "en",
+      "key": "alarm.cooled.title",
+      "args": {},
+      "text": "Cooling done"
+    },
+    {
+      "locale": "en",
+      "key": "alarm.cooled.body",
+      "args": {},
+      "text": "The carryover is over. That is the egg you asked for."
+    },
+    {
+      "locale": "en",
+      "key": "activity.stage.heating",
+      "args": {},
+      "text": "Heating"
+    },
+    {
+      "locale": "en",
+      "key": "activity.stage.cooking",
+      "args": {},
+      "text": "Cooking"
+    },
+    {
+      "locale": "en",
+      "key": "activity.stage.pull",
+      "args": {},
+      "text": "Eggs out — now"
+    },
+    {
+      "locale": "en",
+      "key": "activity.stage.cooling",
+      "args": {},
+      "text": "Cooling"
+    },
+    {
+      "locale": "en",
+      "key": "activity.stage.done",
+      "args": {},
+      "text": "Done"
+    },
+    {
+      "locale": "en",
+      "key": "activity.now",
+      "args": {},
+      "text": "NOW"
+    },
+    {
+      "locale": "en",
+      "key": "activity.eat",
+      "args": {},
+      "text": "Eat"
+    },
+    {
+      "locale": "en",
+      "key": "activity.target",
+      "args": {
+        "doneness": "jammy",
+        "yolk": 65
+      },
+      "text": "jammy · 65°C yolk"
+    },
+    {
+      "locale": "en",
+      "key": "activity.summary",
+      "args": {
+        "grams": 68,
+        "doneness": "jammy",
+        "yolk": 65
+      },
+      "text": "68 g · jammy · peak yolk 65°C"
+    },
+    {
+      "locale": "en",
+      "key": "activity.note.estimate",
+      "args": {},
+      "text": "estimate until the boil is tapped"
+    },
+    {
+      "locale": "en",
+      "key": "activity.note.heating",
+      "args": {},
+      "text": "heating"
+    },
+    {
+      "locale": "en",
+      "key": "activity.note.cooking",
+      "args": {},
+      "text": "until the eggs come out"
+    },
+    {
+      "locale": "en",
+      "key": "activity.note.pull",
+      "args": {},
+      "text": "into the cooling, or the yolk keeps going"
+    },
+    {
+      "locale": "en",
+      "key": "activity.note.cooling",
+      "args": {},
+      "text": "carryover still running"
+    },
+    {
+      "locale": "en",
+      "key": "activity.note.done",
+      "args": {},
+      "text": "that is the egg you asked for"
+    },
+    {
+      "locale": "en",
+      "key": "colophon.name",
+      "args": {},
+      "text": "Actual Egg Timer."
+    },
+    {
+      "locale": "en",
+      "key": "colophon.lede",
+      "args": {},
+      "text": "Times computed from heat conduction and denaturation kinetics, not from a recipe."
+    },
+    {
+      "locale": "en",
+      "key": "colophon.link",
+      "args": {},
+      "text": "Source, and the physics it rests on"
+    },
+    {
+      "locale": "en",
+      "key": "colophon.tail",
+      "args": {},
+      "text": "— including what it gets wrong."
+    },
+    {
+      "locale": "en",
+      "key": "colophon.ios",
+      "args": {},
+      "text": "Times computed from heat conduction and denaturation kinetics, not from a recipe. The cooling step is part of the recipe: carryover is what ruins a soft egg."
+    }
+  ],
+  "plural": [
+    {
+      "locale": "en",
+      "n": 0,
+      "category": "other"
+    },
+    {
+      "locale": "en",
+      "n": 1,
+      "category": "one"
+    },
+    {
+      "locale": "en",
+      "n": 2,
+      "category": "other"
+    },
+    {
+      "locale": "en",
+      "n": 3,
+      "category": "other"
+    },
+    {
+      "locale": "en",
+      "n": 4,
+      "category": "other"
+    },
+    {
+      "locale": "en",
+      "n": 5,
+      "category": "other"
+    },
+    {
+      "locale": "en",
+      "n": 10,
+      "category": "other"
+    },
+    {
+      "locale": "en",
+      "n": 11,
+      "category": "other"
+    },
+    {
+      "locale": "en",
+      "n": 21,
+      "category": "other"
+    },
+    {
+      "locale": "en",
+      "n": 22,
+      "category": "other"
+    },
+    {
+      "locale": "en",
+      "n": 100,
+      "category": "other"
+    },
+    {
+      "locale": "en",
+      "n": 101,
+      "category": "other"
+    },
+    {
+      "locale": "en",
+      "n": 1.5,
+      "category": "other"
+    },
+    {
+      "locale": "en",
+      "n": 2.5,
+      "category": "other"
+    },
+    {
+      "locale": "en",
+      "n": 0.5,
+      "category": "other"
+    },
+    {
+      "locale": "en",
+      "n": 1.25,
+      "category": "other"
+    },
+    {
+      "locale": "en",
+      "n": -1,
+      "category": "one"
+    },
+    {
+      "locale": "en",
+      "n": -2,
+      "category": "other"
+    },
+    {
+      "locale": "en-GB-x-1750",
+      "n": 0,
+      "category": "other"
+    },
+    {
+      "locale": "en-GB-x-1750",
+      "n": 1,
+      "category": "one"
+    },
+    {
+      "locale": "en-GB-x-1750",
+      "n": 2,
+      "category": "other"
+    },
+    {
+      "locale": "en-GB-x-1750",
+      "n": 3,
+      "category": "other"
+    },
+    {
+      "locale": "en-GB-x-1750",
+      "n": 4,
+      "category": "other"
+    },
+    {
+      "locale": "en-GB-x-1750",
+      "n": 5,
+      "category": "other"
+    },
+    {
+      "locale": "en-GB-x-1750",
+      "n": 10,
+      "category": "other"
+    },
+    {
+      "locale": "en-GB-x-1750",
+      "n": 11,
+      "category": "other"
+    },
+    {
+      "locale": "en-GB-x-1750",
+      "n": 21,
+      "category": "other"
+    },
+    {
+      "locale": "en-GB-x-1750",
+      "n": 22,
+      "category": "other"
+    },
+    {
+      "locale": "en-GB-x-1750",
+      "n": 100,
+      "category": "other"
+    },
+    {
+      "locale": "en-GB-x-1750",
+      "n": 101,
+      "category": "other"
+    },
+    {
+      "locale": "en-GB-x-1750",
+      "n": 1.5,
+      "category": "other"
+    },
+    {
+      "locale": "en-GB-x-1750",
+      "n": 2.5,
+      "category": "other"
+    },
+    {
+      "locale": "en-GB-x-1750",
+      "n": 0.5,
+      "category": "other"
+    },
+    {
+      "locale": "en-GB-x-1750",
+      "n": 1.25,
+      "category": "other"
+    },
+    {
+      "locale": "en-GB-x-1750",
+      "n": -1,
+      "category": "one"
+    },
+    {
+      "locale": "en-GB-x-1750",
+      "n": -2,
+      "category": "other"
+    },
+    {
+      "locale": "cs",
+      "n": 0,
+      "category": "other"
+    },
+    {
+      "locale": "cs",
+      "n": 1,
+      "category": "one"
+    },
+    {
+      "locale": "cs",
+      "n": 2,
+      "category": "few"
+    },
+    {
+      "locale": "cs",
+      "n": 3,
+      "category": "few"
+    },
+    {
+      "locale": "cs",
+      "n": 4,
+      "category": "few"
+    },
+    {
+      "locale": "cs",
+      "n": 5,
+      "category": "other"
+    },
+    {
+      "locale": "cs",
+      "n": 10,
+      "category": "other"
+    },
+    {
+      "locale": "cs",
+      "n": 11,
+      "category": "other"
+    },
+    {
+      "locale": "cs",
+      "n": 21,
+      "category": "other"
+    },
+    {
+      "locale": "cs",
+      "n": 22,
+      "category": "other"
+    },
+    {
+      "locale": "cs",
+      "n": 100,
+      "category": "other"
+    },
+    {
+      "locale": "cs",
+      "n": 101,
+      "category": "other"
+    },
+    {
+      "locale": "cs",
+      "n": 1.5,
+      "category": "many"
+    },
+    {
+      "locale": "cs",
+      "n": 2.5,
+      "category": "many"
+    },
+    {
+      "locale": "cs",
+      "n": 0.5,
+      "category": "many"
+    },
+    {
+      "locale": "cs",
+      "n": 1.25,
+      "category": "many"
+    },
+    {
+      "locale": "cs",
+      "n": -1,
+      "category": "one"
+    },
+    {
+      "locale": "cs",
+      "n": -2,
+      "category": "few"
+    },
+    {
+      "locale": "cs-CZ",
+      "n": 0,
+      "category": "other"
+    },
+    {
+      "locale": "cs-CZ",
+      "n": 1,
+      "category": "one"
+    },
+    {
+      "locale": "cs-CZ",
+      "n": 2,
+      "category": "few"
+    },
+    {
+      "locale": "cs-CZ",
+      "n": 3,
+      "category": "few"
+    },
+    {
+      "locale": "cs-CZ",
+      "n": 4,
+      "category": "few"
+    },
+    {
+      "locale": "cs-CZ",
+      "n": 5,
+      "category": "other"
+    },
+    {
+      "locale": "cs-CZ",
+      "n": 10,
+      "category": "other"
+    },
+    {
+      "locale": "cs-CZ",
+      "n": 11,
+      "category": "other"
+    },
+    {
+      "locale": "cs-CZ",
+      "n": 21,
+      "category": "other"
+    },
+    {
+      "locale": "cs-CZ",
+      "n": 22,
+      "category": "other"
+    },
+    {
+      "locale": "cs-CZ",
+      "n": 100,
+      "category": "other"
+    },
+    {
+      "locale": "cs-CZ",
+      "n": 101,
+      "category": "other"
+    },
+    {
+      "locale": "cs-CZ",
+      "n": 1.5,
+      "category": "many"
+    },
+    {
+      "locale": "cs-CZ",
+      "n": 2.5,
+      "category": "many"
+    },
+    {
+      "locale": "cs-CZ",
+      "n": 0.5,
+      "category": "many"
+    },
+    {
+      "locale": "cs-CZ",
+      "n": 1.25,
+      "category": "many"
+    },
+    {
+      "locale": "cs-CZ",
+      "n": -1,
+      "category": "one"
+    },
+    {
+      "locale": "cs-CZ",
+      "n": -2,
+      "category": "few"
+    },
+    {
+      "locale": "de",
+      "n": 0,
+      "category": "other"
+    },
+    {
+      "locale": "de",
+      "n": 1,
+      "category": "other"
+    },
+    {
+      "locale": "de",
+      "n": 2,
+      "category": "other"
+    },
+    {
+      "locale": "de",
+      "n": 3,
+      "category": "other"
+    },
+    {
+      "locale": "de",
+      "n": 4,
+      "category": "other"
+    },
+    {
+      "locale": "de",
+      "n": 5,
+      "category": "other"
+    },
+    {
+      "locale": "de",
+      "n": 10,
+      "category": "other"
+    },
+    {
+      "locale": "de",
+      "n": 11,
+      "category": "other"
+    },
+    {
+      "locale": "de",
+      "n": 21,
+      "category": "other"
+    },
+    {
+      "locale": "de",
+      "n": 22,
+      "category": "other"
+    },
+    {
+      "locale": "de",
+      "n": 100,
+      "category": "other"
+    },
+    {
+      "locale": "de",
+      "n": 101,
+      "category": "other"
+    },
+    {
+      "locale": "de",
+      "n": 1.5,
+      "category": "other"
+    },
+    {
+      "locale": "de",
+      "n": 2.5,
+      "category": "other"
+    },
+    {
+      "locale": "de",
+      "n": 0.5,
+      "category": "other"
+    },
+    {
+      "locale": "de",
+      "n": 1.25,
+      "category": "other"
+    },
+    {
+      "locale": "de",
+      "n": -1,
+      "category": "other"
+    },
+    {
+      "locale": "de",
+      "n": -2,
+      "category": "other"
+    }
+  ],
+  "categories": [
+    "zero",
+    "one",
+    "two",
+    "few",
+    "many",
+    "other"
+  ],
+  "formatArg": [
+    {
+      "value": 0,
+      "text": "0"
+    },
+    {
+      "value": 1,
+      "text": "1"
+    },
+    {
+      "value": 3,
+      "text": "3"
+    },
+    {
+      "value": -3,
+      "text": "-3"
+    },
+    {
+      "value": 21,
+      "text": "21"
+    },
+    {
+      "value": 1234567,
+      "text": "1234567"
+    },
+    {
+      "value": 1.5,
+      "text": "1.5"
+    },
+    {
+      "value": 2.5,
+      "text": "2.5"
+    },
+    {
+      "value": 0.25,
+      "text": "0.25"
+    },
+    {
+      "value": -0.5,
+      "text": "-0.5"
+    },
+    {
+      "value": 1000000000000000,
+      "text": "1000000000000000"
+    },
+    {
+      "value": "text",
+      "text": "text"
+    },
+    {
+      "value": "",
+      "text": ""
+    },
+    {
+      "value": "4,5",
+      "text": "4,5"
+    }
+  ],
+  "probe": {
+    "catalogue": {
+      "locale": "cs",
+      "messages": {
+        "probe.eggs": {
+          "count": "n",
+          "one": "{n} one",
+          "few": "{n} few",
+          "many": "{n} many",
+          "other": "{n} other"
+        },
+        "probe.sparse": {
+          "count": "n",
+          "one": "just {n}",
+          "other": "{n} of them"
+        },
+        "probe.braces": {
+          "text": "{} {1x} {x y} {{ok}} {ok} {ok_2} {Ok} { ok} {ok"
+        },
+        "probe.unicode": {
+          "text": "žluťoučký {ok} — ±{n}%"
+        }
+      }
+    },
+    "cases": [
+      {
+        "key": "probe.eggs",
+        "args": {
+          "n": 0
+        },
+        "text": "0 other"
+      },
+      {
+        "key": "probe.eggs",
+        "args": {
+          "n": 1
+        },
+        "text": "1 one"
+      },
+      {
+        "key": "probe.eggs",
+        "args": {
+          "n": 2
+        },
+        "text": "2 few"
+      },
+      {
+        "key": "probe.eggs",
+        "args": {
+          "n": 3
+        },
+        "text": "3 few"
+      },
+      {
+        "key": "probe.eggs",
+        "args": {
+          "n": 4
+        },
+        "text": "4 few"
+      },
+      {
+        "key": "probe.eggs",
+        "args": {
+          "n": 5
+        },
+        "text": "5 other"
+      },
+      {
+        "key": "probe.eggs",
+        "args": {
+          "n": 10
+        },
+        "text": "10 other"
+      },
+      {
+        "key": "probe.eggs",
+        "args": {
+          "n": 11
+        },
+        "text": "11 other"
+      },
+      {
+        "key": "probe.eggs",
+        "args": {
+          "n": 21
+        },
+        "text": "21 other"
+      },
+      {
+        "key": "probe.eggs",
+        "args": {
+          "n": 22
+        },
+        "text": "22 other"
+      },
+      {
+        "key": "probe.eggs",
+        "args": {
+          "n": 100
+        },
+        "text": "100 other"
+      },
+      {
+        "key": "probe.eggs",
+        "args": {
+          "n": 101
+        },
+        "text": "101 other"
+      },
+      {
+        "key": "probe.eggs",
+        "args": {
+          "n": 1.5
+        },
+        "text": "1.5 many"
+      },
+      {
+        "key": "probe.eggs",
+        "args": {
+          "n": 2.5
+        },
+        "text": "2.5 many"
+      },
+      {
+        "key": "probe.eggs",
+        "args": {
+          "n": 0.5
+        },
+        "text": "0.5 many"
+      },
+      {
+        "key": "probe.eggs",
+        "args": {
+          "n": 1.25
+        },
+        "text": "1.25 many"
+      },
+      {
+        "key": "probe.eggs",
+        "args": {
+          "n": -1
+        },
+        "text": "-1 one"
+      },
+      {
+        "key": "probe.eggs",
+        "args": {
+          "n": -2
+        },
+        "text": "-2 few"
+      },
+      {
+        "key": "probe.sparse",
+        "args": {
+          "n": 0
+        },
+        "text": "0 of them"
+      },
+      {
+        "key": "probe.sparse",
+        "args": {
+          "n": 1
+        },
+        "text": "just 1"
+      },
+      {
+        "key": "probe.sparse",
+        "args": {
+          "n": 2
+        },
+        "text": "2 of them"
+      },
+      {
+        "key": "probe.sparse",
+        "args": {
+          "n": 5
+        },
+        "text": "5 of them"
+      },
+      {
+        "key": "probe.sparse",
+        "args": {
+          "n": 1.5
+        },
+        "text": "1.5 of them"
+      },
+      {
+        "key": "probe.eggs",
+        "args": {},
+        "text": "{n} other"
+      },
+      {
+        "key": "probe.eggs",
+        "args": {
+          "n": "3"
+        },
+        "text": "3 other"
+      },
+      {
+        "key": "probe.braces",
+        "args": {
+          "ok": "OK",
+          "ok_2": 2,
+          "Ok": "capital"
+        },
+        "text": "{} {1x} {x y} {OK} OK 2 capital { ok} {ok"
+      },
+      {
+        "key": "probe.braces",
+        "args": {},
+        "text": "{} {1x} {x y} {{ok}} {ok} {ok_2} {Ok} { ok} {ok"
+      },
+      {
+        "key": "probe.unicode",
+        "args": {
+          "ok": "kůň",
+          "n": 4
+        },
+        "text": "žluťoučký kůň — ±4%"
+      },
+      {
+        "key": "learned.tuned",
+        "args": {
+          "eggs": 2,
+          "spread": "9"
+        },
+        "text": "tuned on 2 eggs · ±9%"
+      },
+      {
+        "key": "learned.tuned",
+        "args": {
+          "eggs": 1.5,
+          "spread": "9"
+        },
+        "text": "tuned on 1.5 eggs · ±9%"
+      },
+      {
+        "key": "no.such.key",
+        "args": {
+          "n": 1
+        },
+        "text": "no.such.key"
+      }
+    ]
+  }
+}

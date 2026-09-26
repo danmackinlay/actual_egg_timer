@@ -1,7 +1,9 @@
 # The app is static: TypeScript compiled to ES modules, no bundler, no runtime
-# dependencies. `npm run build:site` compiles src/ and copies the two static
-# files next to it, so that index.html's <script src="dist/src/ui/main.js">
-# resolves identically whether you are serving _site/ or the repo root.
+# dependencies. `npm run build:site` compiles src/ and copies the static files
+# next to it - the page, the styles, the artwork and the words in copy/ - so
+# that index.html's <script src="dist/src/ui/main.js"> and the scripts' fetch
+# of copy/en.json resolve identically whether you are serving _site/ or the
+# repo root.
 
 [build]
   command = "npm run build:site"

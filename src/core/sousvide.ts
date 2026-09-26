@@ -22,6 +22,7 @@
 import { Z_YOLK, TREF_YOLK_C, Z_WHITE, TREF_WHITE_C } from './constants.js';
 import { createDose, holdTimeForDose } from './kinetics.js';
 import { seriesTheta } from './sphere.js';
+import { CopyRef } from './copy.js';
 
 /** The bath temperature the app offers. 58 C is squarely inside the range the
  *  low-temperature literature argues about, which is the point. */
@@ -82,7 +83,7 @@ export function sousVideEstimate(
 /* ------------------------------------------------------------ the units */
 
 /*
- * Two formatters, here rather than in the apps, and the distinction is worth
+ * Two unit choices, here rather than in the apps, and the distinction is worth
  * stating because this file is otherwise physics.
  *
  * These are not sentences. They are UNIT CHOICES - when minutes stop being a
@@ -93,42 +94,49 @@ export function sousVideEstimate(
  * the six branches below are ever reached, so four of them were ported and never
  * once executed in either language.
  *
- * The words are here because a number and its unit are one thing. Splitting
- * "22 h 43 min" across two languages is the mistake, not the fix.
+ * They used to return the English as well, on the grounds that a number and
+ * its unit are one thing. They still are - but the thing is a catalogue key and
+ * its numbers, because "22 h 43 min" is English, and so is the order of the
+ * words in "3 weeks ago". Core picks the bucket; the catalogue says it.
  */
 
-/** "45 min", "22 h 43 min", "3 days", "5 weeks". Minutes and seconds stop being
- *  a useful unit somewhere around the point this app stops being useful. */
-export function formatLongDuration(seconds: number): string {
+/** 45 min, 22 h 43 min, 3 days, 5 weeks - as a key into the catalogue and the
+ *  numbers it needs. Minutes and seconds stop being a useful unit somewhere
+ *  around the point this app stops being useful. */
+export function longDuration(seconds: number): CopyRef {
   const minutes = Math.round(seconds / 60);
-  if (minutes < 90) return `${minutes} min`;
+  if (minutes < 90) return { key: 'duration.minutes', args: { minutes: minutes } };
   const hours = Math.floor(minutes / 60);
   const rest = minutes % 60;
-  if (hours < 48) return rest === 0 ? `${hours} h` : `${hours} h ${rest} min`;
+  if (hours < 48) {
+    return rest === 0
+      ? { key: 'duration.hours', args: { hours: hours } }
+      : { key: 'duration.hoursMinutes', args: { hours: hours, minutes: rest } };
+  }
   const days = Math.round(hours / 24);
-  if (days < 14) return `${days} days`;
-  return `${Math.round(days / 7)} weeks`;
+  if (days < 14) return { key: 'duration.days', args: { days: days } };
+  return { key: 'duration.weeks', args: { weeks: Math.round(days / 7) } };
 }
 
 /**
- * How long ago the cook should have started, in words: "Today", "Yesterday",
- * "Last Tuesday", "Last week", "3 weeks ago", "4 months ago".
+ * How long ago the cook should have started: today, yesterday, last Tuesday,
+ * last week, 3 weeks ago, 4 months ago - as a key and its numbers.
  *
- * Takes the day count and the weekday NAME rather than a date, so it is pure and
- * so the calendar arithmetic stays where it belongs. Counting whole days across
- * a local midnight is a platform job - `Calendar` does it correctly on iOS, and
- * the web normalises to midnight and divides - and neither should be reimplemented
- * here. Passing the weekday in also makes the one real difference between the
- * apps visible instead of hidden: iOS reads it from a locale-aware formatter and
- * the web from an English table, so a non-English phone says "Last mardi". That
- * is the better answer on iOS, and it is now a deliberate difference rather than
- * an accident.
+ * Takes the day count rather than a date, so it is pure and so the calendar
+ * arithmetic stays where it belongs. Counting whole days across a local
+ * midnight is a platform job - `Calendar` does it correctly on iOS, and the web
+ * normalises to midnight and divides - and neither should be reimplemented
+ * here. For the same reason `sousvide.start.lastWeekday` wants a `{weekday}`
+ * that this does not supply: the app adds the name. The web takes it from the
+ * catalogue and iOS from a locale-aware formatter, so a non-English phone says
+ * "Last mardi" - the better answer on iOS, and a deliberate difference that F4
+ * (locale formatting) settles.
  */
-export function startPhrase(daysAgo: number, weekday: string): string {
-  if (daysAgo <= 0) return 'Today';
-  if (daysAgo === 1) return 'Yesterday';
-  if (daysAgo < 7) return `Last ${weekday}`;
-  if (daysAgo < 14) return 'Last week';
-  if (daysAgo < 60) return `${Math.round(daysAgo / 7)} weeks ago`;
-  return `${Math.round(daysAgo / 30)} months ago`;
+export function startPhrase(daysAgo: number): CopyRef {
+  if (daysAgo <= 0) return { key: 'sousvide.start.today', args: {} };
+  if (daysAgo === 1) return { key: 'sousvide.start.yesterday', args: {} };
+  if (daysAgo < 7) return { key: 'sousvide.start.lastWeekday', args: {} };
+  if (daysAgo < 14) return { key: 'sousvide.start.lastWeek', args: {} };
+  if (daysAgo < 60) return { key: 'sousvide.start.weeksAgo', args: { weeks: Math.round(daysAgo / 7) } };
+  return { key: 'sousvide.start.monthsAgo', args: { months: Math.round(daysAgo / 30) } };
 }

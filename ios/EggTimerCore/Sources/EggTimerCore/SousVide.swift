@@ -1,4 +1,5 @@
 import Foundation
+import EggTimerCopy
 
 /// The isothermal limit: put the egg into a bath already at the target
 /// temperature and wait. Transliterated from `src/core/sousvide.ts`.
@@ -80,7 +81,7 @@ public func sousVideEstimate(
 // MARK: - The units
 
 /*
- * Two formatters, here rather than in the app, and the distinction is worth
+ * Two unit choices, here rather than in the app, and the distinction is worth
  * stating because this file is otherwise physics.
  *
  * These are not sentences. They are UNIT CHOICES - when minutes stop being a
@@ -91,40 +92,43 @@ public func sousVideEstimate(
  * the six branches below are ever reached, so four of them were ported and never
  * once executed in either language.
  *
- * The words are here because a number and its unit are one thing. Splitting
- * "22 h 43 min" across two languages is the mistake, not the fix.
+ * They used to return the English as well. They return a catalogue key and its
+ * numbers now, because "22 h 43 min" is English, and so is the order of the
+ * words in "3 weeks ago". Core picks the bucket; the catalogue says it.
  */
 
-/// "45 min", "22 h 43 min", "3 days", "5 weeks". Minutes and seconds stop being
-/// a useful unit somewhere around the point this app stops being useful.
-public func formatLongDuration(_ seconds: Double) -> String {
+/// 45 min, 22 h 43 min, 3 days, 5 weeks - as a key into the catalogue and the
+/// numbers it needs.
+public func longDuration(_ seconds: Double) -> CopyRef {
     let minutes = Int((seconds / 60.0).rounded())
-    if minutes < 90 { return "\(minutes) min" }
+    if minutes < 90 { return CopyRef("duration.minutes", ["minutes": Double(minutes)]) }
     let hours = minutes / 60
     let rest = minutes % 60
-    if hours < 48 { return rest == 0 ? "\(hours) h" : "\(hours) h \(rest) min" }
+    if hours < 48 {
+        return rest == 0
+            ? CopyRef("duration.hours", ["hours": Double(hours)])
+            : CopyRef("duration.hoursMinutes", ["hours": Double(hours), "minutes": Double(rest)])
+    }
     let days = Int((Double(hours) / 24.0).rounded())
-    if days < 14 { return "\(days) days" }
-    return "\(Int((Double(days) / 7.0).rounded())) weeks"
+    if days < 14 { return CopyRef("duration.days", ["days": Double(days)]) }
+    return CopyRef("duration.weeks", ["weeks": (Double(days) / 7.0).rounded()])
 }
 
-/// How long ago the cook should have started, in words: "Today", "Yesterday",
-/// "Last Tuesday", "Last week", "3 weeks ago", "4 months ago".
+/// How long ago the cook should have started: today, yesterday, last Tuesday,
+/// last week, 3 weeks ago, 4 months ago - as a key and its numbers.
 ///
-/// Takes the day count and the weekday NAME rather than a date, so it is pure
-/// and so the calendar arithmetic stays where it belongs. Counting whole days
-/// across a local midnight is a platform job - `Calendar` does it correctly
-/// here, and the web normalises to midnight and divides - and neither should be
-/// reimplemented in this package. Passing the weekday in also makes the one real
-/// difference between the apps visible instead of hidden: this side reads it
-/// from a locale-aware formatter and the web from an English table, so a
-/// non-English phone says "Last mardi". That is the better answer here, and it
-/// is now a deliberate difference rather than an accident.
-public func startPhrase(daysAgo: Int, weekday: String) -> String {
-    if daysAgo <= 0 { return "Today" }
-    if daysAgo == 1 { return "Yesterday" }
-    if daysAgo < 7 { return "Last \(weekday)" }
-    if daysAgo < 14 { return "Last week" }
-    if daysAgo < 60 { return "\(Int((Double(daysAgo) / 7.0).rounded())) weeks ago" }
-    return "\(Int((Double(daysAgo) / 30.0).rounded())) months ago"
+/// Takes the day count rather than a date, so it is pure and so the calendar
+/// arithmetic stays where it belongs: `Calendar` counts whole days across a
+/// local midnight correctly, and this package should not reimplement it. For
+/// the same reason `sousvide.start.lastWeekday` wants a `{weekday}` this does
+/// not supply. The app adds it from a locale-aware formatter, where the web
+/// takes it from the catalogue, so a non-English phone says "Last mardi" - a
+/// deliberate difference that F4 (locale formatting) settles.
+public func startPhrase(daysAgo: Int) -> CopyRef {
+    if daysAgo <= 0 { return CopyRef("sousvide.start.today") }
+    if daysAgo == 1 { return CopyRef("sousvide.start.yesterday") }
+    if daysAgo < 7 { return CopyRef("sousvide.start.lastWeekday") }
+    if daysAgo < 14 { return CopyRef("sousvide.start.lastWeek") }
+    if daysAgo < 60 { return CopyRef("sousvide.start.weeksAgo", ["weeks": (Double(daysAgo) / 7.0).rounded()]) }
+    return CopyRef("sousvide.start.monthsAgo", ["months": (Double(daysAgo) / 30.0).rounded()])
 }

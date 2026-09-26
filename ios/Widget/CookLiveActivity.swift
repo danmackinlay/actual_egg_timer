@@ -1,6 +1,7 @@
 import ActivityKit
 import SwiftUI
 import WidgetKit
+import EggTimerCopy
 
 /// The Lock Screen and Dynamic Island countdown.
 ///
@@ -27,7 +28,10 @@ struct CookLiveActivity: Widget {
                         .padding(.leading, 4)
                 }
                 DynamicIslandExpandedRegion(.trailing) {
-                    Text("\(context.attributes.doneness.lowercased()) · \(context.attributes.peakYolkC)°C yolk")
+                    Text(tr("activity.target", [
+                        "doneness": .text(context.attributes.doneness.lowercased()),
+                        "yolk": .int(context.attributes.peakYolkC),
+                    ]))
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                         .padding(.trailing, 4)
@@ -73,7 +77,11 @@ struct CookLiveActivity: Widget {
                     .foregroundStyle(.secondary)
                     .lineLimit(2)
 
-                Text("\(Int(context.attributes.eggGrams.rounded())) g · \(context.attributes.doneness.lowercased()) · peak yolk \(context.attributes.peakYolkC)°C")
+                Text(tr("activity.summary", [
+                    "grams": .int(Int(context.attributes.eggGrams.rounded())),
+                    "doneness": .text(context.attributes.doneness.lowercased()),
+                    "yolk": .int(context.attributes.peakYolkC),
+                ]))
                     .font(.caption2)
                     .foregroundStyle(.tertiary)
                     .lineLimit(2)
@@ -103,22 +111,22 @@ struct CookLiveActivity: Widget {
             Text(timerInterval: state.began...state.ends, countsDown: true)
                 .multilineTextAlignment(.trailing)
         } else {
-            Text(state.stage == .pull ? "NOW" : "Eat")
+            Text(tr(state.stage == .pull ? "activity.now" : "activity.eat"))
         }
     }
 
     private func note(_ state: CookActivity.ContentState) -> String {
         switch state.stage {
         case .heating:
-            state.provisional ? "estimate until the boil is tapped" : "heating"
+            tr(state.provisional ? "activity.note.estimate" : "activity.note.heating")
         case .cooking:
-            state.provisional ? "estimate until the boil is tapped" : "until the eggs come out"
+            tr(state.provisional ? "activity.note.estimate" : "activity.note.cooking")
         case .pull:
-            "into the cooling, or the yolk keeps going"
+            tr("activity.note.pull")
         case .cooling:
-            "carryover still running"
+            tr("activity.note.cooling")
         case .done:
-            "that is the egg you asked for"
+            tr("activity.note.done")
         }
     }
 

@@ -18,8 +18,14 @@ import {
   rememberBoil, estimateTimeToBoil, hasBoilMemory, volumeKey, BoilMemory, carrySizeIndex,
 } from '../src/core/policy.js';
 import { DONENESS_ANCHORS, Solution, CookResult } from '../src/core/solve.js';
-import { SIZE_CLASSES, SizeClass, US_SIZE_CLASSES, sizeClassesFor } from '../src/core/geometry.js';
+import {
+  SIZE_CLASSES, SizeClass, US_SIZE_CLASSES, sizeClassLabel, sizeClassesFor,
+} from '../src/core/geometry.js';
+import { parseCatalogue, renderRef } from '../src/core/copy.js';
 import { T_ROOM_C } from '../src/core/constants.js';
+import { readFileSync } from 'node:fs';
+
+const EN = parseCatalogue(JSON.parse(readFileSync('copy/en.json', 'utf8')));
 
 // --------------------------------------------------------------------------
 // shared fixtures
@@ -86,7 +92,7 @@ test('1c. a level already on the grid is left alone by both', () => {
 
 test('2. every anchor is its own nearest anchor', () => {
   for (const anchor of DONENESS_ANCHORS) {
-    assert.equal(anchorNear(anchor.level).label, anchor.label);
+    assert.equal(anchorNear(anchor.level).key, anchor.key);
   }
 });
 
@@ -95,7 +101,7 @@ test('2b. anchorNear breaks an exact tie toward the softer anchor', () => {
   // few midpoints that is a true tie in binary floating point rather than a
   // near-miss. The rule is "first in the table wins", and it is pinned here
   // because the Swift port has to make the same choice.
-  assert.equal(anchorNear(0.11).label, 'Runny');
+  assert.equal(anchorNear(0.11).key, 'doneness.runny');
 });
 
 test('2c. anchorNear really is the nearest anchor, everywhere', () => {
@@ -107,7 +113,7 @@ test('2c. anchorNear really is the nearest anchor, everywhere', () => {
     for (const anchor of DONENESS_ANCHORS) {
       if (Math.abs(anchor.level - level) < Math.abs(expected.level - level)) expected = anchor;
     }
-    assert.equal(anchorNear(level).label, expected.label, `nearest anchor at ${level}`);
+    assert.equal(anchorNear(level).key, expected.key, `nearest anchor at ${level}`);
   }
 });
 
@@ -115,7 +121,7 @@ test('2d. the target temperature is monotonic and hits the anchors exactly', () 
   for (const anchor of DONENESS_ANCHORS) {
     close(
       targetPeakYolk_C(anchor.level), anchor.approxPeakYolk_C, 1e-12,
-      `target at ${anchor.label}`,
+      `target at ${anchor.key}`,
     );
   }
   let previous = -Infinity;
@@ -143,7 +149,7 @@ test('3b. too soft for the white snaps UP, past the softest reachable level', ()
   );
   assert.equal(v.kind, 'tooSoftForWhite');
   assert.ok(v.snapTo !== null && v.snapTo >= 0.608, 'snapped short of the softest cook');
-  assert.equal(v.limit.label, 'Fudgy');
+  assert.equal(v.limit.key, 'doneness.fudgy');
   assert.equal(v.worthSaying, true);
 });
 
@@ -205,7 +211,7 @@ test('4. texture bands are ordered and half-open at the stated thresholds', () =
 test('4b. the jammy band contains the default slider position', () => {
   // DEFAULTS.doneness is meant to be Jammy; if the anchors or the bands move,
   // this is what notices.
-  assert.equal(anchorNear(DEFAULTS.doneness).label, 'Jammy');
+  assert.equal(anchorNear(DEFAULTS.doneness).key, 'doneness.jammy');
   assert.equal(textureFor(targetPeakYolk_C(DEFAULTS.doneness), 85).yolk, 'jammy');
 });
 
@@ -259,14 +265,19 @@ test('6b. the default mass is the default size class, not a second opinion', () 
   assert.ok(isWithin(DEFAULT_EGG_MASS_KG * 1000, LIMITS.mass_g));
 });
 
-/** 'Large — 60 g' -> 'Large'. */
+/** 'size.us.large' -> 'large'. */
 function className(c: SizeClass): string {
-  return c.label.split(' — ')[0];
+  return c.key.split('.')[2];
+}
+
+/** What the menu shows for a class, in English. */
+function labelOf(c: SizeClass): string {
+  return renderRef(EN, sizeClassLabel(c));
 }
 
 test('6e. the default size is Large in both tables, and a shared index is a shared name', () => {
-  assert.equal(className(SIZE_CLASSES[DEFAULTS.sizeIndex]), 'Large');
-  assert.equal(className(US_SIZE_CLASSES[DEFAULTS.sizeIndex]), 'Large');
+  assert.equal(className(SIZE_CLASSES[DEFAULTS.sizeIndex]), 'large');
+  assert.equal(className(US_SIZE_CLASSES[DEFAULTS.sizeIndex]), 'large');
   const shared = Math.min(SIZE_CLASSES.length, US_SIZE_CLASSES.length);
   for (let i = 0; i < shared; i++) {
     assert.equal(className(SIZE_CLASSES[i]), className(US_SIZE_CLASSES[i]), `index ${i}`);
@@ -274,10 +285,10 @@ test('6e. the default size is Large in both tables, and a shared index is a shar
   for (const table of [SIZE_CLASSES, US_SIZE_CLASSES]) {
     assert.ok(isWithin(table.length - 1, LIMITS.sizeIndex), 'every index is inside the stored bound');
     for (let i = 0; i < table.length; i++) {
-      assert.ok(isWithin(table[i].mass_kg * 1000, LIMITS.mass_g), table[i].label);
+      assert.ok(isWithin(table[i].mass_kg * 1000, LIMITS.mass_g), table[i].key);
       if (i > 0) assert.ok(table[i].mass_kg > table[i - 1].mass_kg, 'classes ascend');
-      const grams = Number(table[i].label.match(/(\d+) g$/)?.[1]);
-      assert.equal(grams, Math.round(table[i].mass_kg * 1000), `${table[i].label} says its mass`);
+      const grams = Number(labelOf(table[i]).match(/(\d+) g$/)?.[1]);
+      assert.equal(grams, Math.round(table[i].mass_kg * 1000), `${labelOf(table[i])} says its mass`);
     }
   }
 });
@@ -288,7 +299,7 @@ test('6f. an American class is the midpoint of its USDA range, per egg', () => {
   const perEgg_g = (oz: number) => oz * 28.349523125 / 12;
   for (let i = 0; i < 4; i++) {
     const midpoint = 0.5 * (perEgg_g(perDozen_oz[i]) + perEgg_g(perDozen_oz[i + 1]));
-    assert.ok(Math.abs(US_SIZE_CLASSES[i].mass_kg * 1000 - midpoint) < 0.05, US_SIZE_CLASSES[i].label);
+    assert.ok(Math.abs(US_SIZE_CLASSES[i].mass_kg * 1000 - midpoint) < 0.05, US_SIZE_CLASSES[i].key);
   }
   // Jumbo has no ceiling; all that is checkable is that the guess is above its floor.
   assert.ok(US_SIZE_CLASSES[4].mass_kg * 1000 > perEgg_g(perDozen_oz[4]));

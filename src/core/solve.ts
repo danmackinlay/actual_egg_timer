@@ -78,19 +78,22 @@ export function sliderFromYolkDose(yolkDose_min: number): number {
 }
 
 /** Slider positions worth labelling, for the UI. Positions follow from the
- *  dose scale above; the temperatures are what the model actually predicts. */
+ *  dose scale above; the temperatures are what the model actually predicts.
+ *  The name is a key into the catalogue (copy/en.json), not English: which
+ *  word a language uses for each anchor is that language's choice, and the
+ *  anchor stays at the same dose whatever it is called (LANGUAGE.md §5). */
 export interface DonenessAnchor {
-  label: string;
+  key: string;
   level: number;
   approxPeakYolk_C: number;
 }
 
 export const DONENESS_ANCHORS: DonenessAnchor[] = [
-  { label: 'Runny', level: 0.00, approxPeakYolk_C: 56 },
-  { label: 'Soft', level: 0.22, approxPeakYolk_C: 61 },
-  { label: 'Jammy', level: 0.41, approxPeakYolk_C: 65 },
-  { label: 'Fudgy', level: 0.62, approxPeakYolk_C: 70 },
-  { label: 'Hard', level: 1.00, approxPeakYolk_C: 77 },
+  { key: 'doneness.runny', level: 0.00, approxPeakYolk_C: 56 },
+  { key: 'doneness.soft', level: 0.22, approxPeakYolk_C: 61 },
+  { key: 'doneness.jammy', level: 0.41, approxPeakYolk_C: 65 },
+  { key: 'doneness.fudgy', level: 0.62, approxPeakYolk_C: 70 },
+  { key: 'doneness.hard', level: 1.00, approxPeakYolk_C: 77 },
 ];
 
 export interface CookResult {

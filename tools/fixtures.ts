@@ -23,12 +23,14 @@
  *   fixtures/sousvide.json  the isothermal limit. Separate because it answers a
  *                           question the solver never asks: no pan, no ramp, no
  *                           cooling, and an answer in hours rather than minutes
+ *   fixtures/copy.json      every key of every catalogue in copy/, rendered, and
+ *                           the plural rule of every language at its edges
  *   fixtures/record.json    the record (INFERENCE.md section 4): which records a
  *                           loader trusts, and a replay of a six-egg log pinned
  *                           particle by particle
  */
 
-import { writeFileSync, mkdirSync } from 'node:fs';
+import { writeFileSync, mkdirSync, readFileSync, readdirSync } from 'node:fs';
 
 import {
   MODE_COUNT, ALPHA_DEFAULT, ALPHA_REL_SD, YOLK_RADIUS_FRAC, Z_YOLK, TREF_YOLK_C, Z_WHITE,
@@ -38,7 +40,7 @@ import {
 } from '../src/core/constants.js';
 import {
   eggFromMass, eggFromMinorDiameter, diffusionTime, eggVolumeFromMinorDiameter,
-  SIZE_CLASSES, US_SIZE_CLASSES, sizeTableFor,
+  SIZE_CLASSES, US_SIZE_CLASSES, SizeClass, sizeClassLabel, sizeTableFor,
 } from '../src/core/geometry.js';
 import {
   pressureAtAltitude, boilingPointAtPressure, boilingPointAtAltitude,
@@ -60,11 +62,15 @@ import {
 } from '../src/core/sphere.js';
 import { CookSetup } from '../src/core/protocol.js';
 import {
+  Catalogue, CopyArgs, PLURAL_CATEGORIES, formatArg, parseCatalogue, pluralCategory, render,
+  renderRef,
+} from '../src/core/copy.js';
+import {
   Calibration, EggRecord, PRIOR_ID, RECORD_VERSION, buildRequestedGrid, copyCalibration,
   foldWhite, foldYolk, freshCalibration, gridRequestFor, parseRecord, recordMass_g,
   recordTeaches, replay,
 } from '../src/core/record.js';
-import { formatLongDuration, startPhrase } from '../src/core/sousvide.js';
+import { longDuration, startPhrase } from '../src/core/sousvide.js';
 import {
   SOUS_VIDE_BATH_C, equilibrationTime, sousVideEstimate,
 } from '../src/core/sousvide.js';
@@ -586,6 +592,12 @@ const BOIL_MEMORY_FORWARD: BoilMemory = rememberBoil(rememberBoil({}, 1, 300), 3
 const BOIL_MEMORY_BACKWARD: BoilMemory = rememberBoil(rememberBoil({}, 3, 900), 1, 300);
 const BOIL_QUERY_LITRES = [0.5, 1, 1.5, 2, 2.5, 3, 4, 12];
 
+/** A size class as the fixture states it: the key, the mass the model cooks,
+ *  and the grams its label shows. */
+function sizeClassRow(c: SizeClass): { key: string; mass_kg: number; grams: number } {
+  return { key: c.key, mass_kg: c.mass_kg, grams: sizeClassLabel(c).args['grams'] as number };
+}
+
 const policy = {
   slider: {
     steps: SLIDER_STEPS,
@@ -593,7 +605,7 @@ const policy = {
       level: round(level),
       snapUp: round(snapUp(level)),
       snapDown: round(snapDown(level)),
-      anchor: anchorNear(level).label,
+      anchor: anchorNear(level).key,
       targetPeakYolk_C: round(targetPeakYolk_C(level)),
     })),
   },
@@ -606,8 +618,8 @@ const policy = {
       hardestLevel: round(c.hardest),
       level: round(c.level),
       kind: v.kind,
-      wanted: v.wanted.label,
-      limit: v.limit.label,
+      wanted: v.wanted.key,
+      limit: v.limit.key,
       snapTo: v.snapTo === null ? null : round(v.snapTo),
       worthSaying: v.worthSaying,
     };
@@ -666,8 +678,8 @@ const policy = {
    * every edge: below -1, the -0.5 tie that the two languages round in
    * opposite directions, halves, and past the end of both tables. */
   sizeClasses: {
-    eu: SIZE_CLASSES,
-    us: US_SIZE_CLASSES,
+    eu: SIZE_CLASSES.map(sizeClassRow),
+    us: US_SIZE_CLASSES.map(sizeClassRow),
     regions: ['US', 'us', 'GB', 'CZ', 'CA', 'USA', '', null].map((region) => ({
       region: region,
       table: sizeTableFor(region),
@@ -1126,6 +1138,8 @@ const recordFixture = {
 
 writeFileSync('fixtures/record.json', `${JSON.stringify(recordFixture, null, 2)}\n`);
 
+type CatalogueJson = { locale: string; messages: Record<string, Record<string, unknown>> };
+
 /* ------------------------------------------------------------------ write */
 
 mkdirSync('fixtures', { recursive: true });
@@ -1133,28 +1147,129 @@ writeFileSync('fixtures/core.json', `${JSON.stringify(core, null, 2)}\n`);
 writeFileSync('fixtures/scenarios.json', `${JSON.stringify(scenarios, null, 2)}\n`);
 writeFileSync('fixtures/calibration.json', `${JSON.stringify(calibration, null, 2)}\n`);
 writeFileSync('fixtures/policy.json', `${JSON.stringify(policy, null, 2)}\n`);
-/* The two formatters, which are unit choices rather than sentences, and which
- * at a 58 C bath reach only two of their six branches in normal use. Every
- * boundary, from both sides, because four of these were ported by hand and
- * never once executed in either language. */
+/* The two unit choices, which at a 58 C bath reach only two of their six
+ * branches in normal use. Every boundary, from both sides, because four of
+ * these were ported by hand and never once executed in either language. Each
+ * row is the bucket core picks - a key and its numbers - and the English it
+ * renders to, which is what this file held before core stopped speaking
+ * English, and is unchanged. */
+const englishJson = JSON.parse(readFileSync('copy/en.json', 'utf8')) as CatalogueJson;
+const english = parseCatalogue(englishJson);
+
 const sousVideCopy = {
   duration: [
     0, 1, 59, 60, 89 * 60, 90 * 60, 91 * 60, 120 * 60,
     2 * 3600, 2.5 * 3600, 47 * 3600, 47.5 * 3600, 48 * 3600, 49 * 3600,
     13 * 86400, 14 * 86400, 20 * 86400, 60 * 86400, 200 * 86400,
     81760.26, 1428737.1,
-  ].map((seconds) => ({ seconds: seconds, text: formatLongDuration(seconds) })),
+  ].map((seconds) => {
+    const ref = longDuration(seconds);
+    return { seconds: seconds, key: ref.key, args: ref.args, text: renderRef(english, ref) };
+  }),
   startPhrase: [0, 1, 2, 3, 6, 7, 8, 13, 14, 20, 40, 59, 60, 90, 200, 400]
-    .map((daysAgo) => ({
-      daysAgo: daysAgo,
-      // A fixed weekday, so the branch is pinned without dragging a locale into
-      // the fixture. Which weekday each app supplies is its own business.
-      text: startPhrase(daysAgo, 'Tuesday'),
-    })),
+    .map((daysAgo) => {
+      const ref = startPhrase(daysAgo);
+      return {
+        daysAgo: daysAgo,
+        key: ref.key,
+        args: ref.args,
+        // A fixed weekday, so the branch is pinned without dragging a locale
+        // into the fixture. Which weekday each app supplies is its own business.
+        text: renderRef(english, ref, { weekday: 'Tuesday' }),
+      };
+    }),
 };
 
 writeFileSync('fixtures/sousvideCopy.json', `${JSON.stringify(sousVideCopy, null, 2)}\n`);
 writeFileSync('fixtures/sousvide.json', `${JSON.stringify(sousvide, null, 2)}\n`);
+
+/* ------------------------------------------------------------------ copy */
+
+/* Every key of every catalogue, rendered with the arguments its English entry
+ * gives as an example, and every plural message again at each count below, so
+ * that each form is reached. Then the plural rule of every language on its
+ * own, at every edge CLDR has: Czech's `many` is for fractions, and 21 and 22
+ * are `other`, not `one` and `few` as they would be in Russian or Polish.
+ *
+ * Then a probe: a small catalogue that exists only here, which the apps never
+ * ship. It is in Czech's plural rule with one form per category, so that each
+ * category is seen to pick its own template end to end, and it falls back to
+ * English, so that the fallback is seen to work, and it carries the malformed
+ * braces and the missing argument, so that both renderers fail the same way. */
+const COPY_COUNTS = [0, 1, 2, 3, 4, 5, 11, 21, 22, 1.5, 2.5, 0.5];
+const PLURAL_LOCALES = ['en', 'en-GB-x-1750', 'cs', 'cs-CZ', 'de'];
+const PLURAL_NUMBERS = [0, 1, 2, 3, 4, 5, 10, 11, 21, 22, 100, 101, 1.5, 2.5, 0.5, 1.25, -1, -2];
+
+interface CopyRow { locale: string; key: string; args: CopyArgs; text: string }
+
+const copyFiles = readdirSync('copy').filter((f) => /^[a-zA-Z-]+\.json$/.test(f)).sort();
+const catalogueJson = new Map<string, CatalogueJson>();
+for (const file of copyFiles) {
+  if (file === 'surfaces.json') continue;
+  catalogueJson.set(file.replace(/\.json$/, ''), JSON.parse(readFileSync(`copy/${file}`, 'utf8')) as CatalogueJson);
+}
+
+function copyRows(locale: string, catalogue: Catalogue): CopyRow[] {
+  const rows: CopyRow[] = [];
+  for (const key of Object.keys(englishJson.messages)) {
+    const entry = englishJson.messages[key];
+    const example = (entry['example'] ?? {}) as Record<string, string | number>;
+    rows.push({ locale: locale, key: key, args: example, text: render(catalogue, key, example) });
+    const count = entry['count'];
+    if (typeof count === 'string') {
+      for (const n of COPY_COUNTS) {
+        const args = { ...example, [count]: n };
+        rows.push({ locale: locale, key: key, args: args, text: render(catalogue, key, args) });
+      }
+    }
+  }
+  return rows;
+}
+
+const probeJson = {
+  locale: 'cs',
+  messages: {
+    'probe.eggs': {
+      count: 'n', one: '{n} one', few: '{n} few', many: '{n} many', other: '{n} other',
+    },
+    'probe.sparse': { count: 'n', one: 'just {n}', other: '{n} of them' },
+    'probe.braces': { text: '{} {1x} {x y} {{ok}} {ok} {ok_2} {Ok} { ok} {ok' },
+    'probe.unicode': { text: 'žluťoučký {ok} — ±{n}%' },
+  },
+};
+const probe = parseCatalogue(probeJson, english);
+const probeCases: { key: string; args: CopyArgs }[] = [
+  ...PLURAL_NUMBERS.map((n) => ({ key: 'probe.eggs', args: { n: n } })),
+  ...[0, 1, 2, 5, 1.5].map((n) => ({ key: 'probe.sparse', args: { n: n } })),
+  { key: 'probe.eggs', args: {} },
+  { key: 'probe.eggs', args: { n: '3' } },
+  { key: 'probe.braces', args: { ok: 'OK', ok_2: 2, Ok: 'capital' } },
+  { key: 'probe.braces', args: {} },
+  { key: 'probe.unicode', args: { ok: 'kůň', n: 4 } },
+  { key: 'learned.tuned', args: { eggs: 2, spread: '9' } },
+  { key: 'learned.tuned', args: { eggs: 1.5, spread: '9' } },
+  { key: 'no.such.key', args: { n: 1 } },
+];
+
+const copy = {
+  locales: [...catalogueJson.keys()],
+  render: [...catalogueJson.entries()].flatMap(([locale, json]) => copyRows(
+    locale, locale === 'en' ? english : parseCatalogue(json, english),
+  )),
+  plural: PLURAL_LOCALES.flatMap((locale) => PLURAL_NUMBERS.map((n) => ({
+    locale: locale, n: n, category: pluralCategory(locale, n),
+  }))),
+  categories: PLURAL_CATEGORIES,
+  formatArg: [0, 1, 3, -3, 21, 1234567, 1.5, 2.5, 0.25, -0.5, 1e15, 'text', '', '4,5'].map((value) => ({
+    value: value, text: formatArg(value),
+  })),
+  probe: {
+    catalogue: probeJson,
+    cases: probeCases.map((c) => ({ ...c, text: render(probe, c.key, c.args) })),
+  },
+};
+
+writeFileSync('fixtures/copy.json', `${JSON.stringify(copy, null, 2)}\n`);
 
 const counts = [
   `${core.sphere.seriesTheta.length} seriesTheta`,
@@ -1171,6 +1286,9 @@ const counts = [
   `${policy.texture.length} textures`,
   `${sousvide.cases.length} sous-vide`,
   `${sousVideCopy.duration.length + sousVideCopy.startPhrase.length} sous-vide copy`,
+  `${copy.render.length} copy renders`,
+  `${copy.plural.length} plural rules`,
+  `${copy.probe.cases.length} copy probes`,
   `${recordFixture.cases.length} records`,
   `${recordFixture.replay.log.length} replayed eggs`,
 ];

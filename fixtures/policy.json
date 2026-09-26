@@ -6,336 +6,336 @@
         "level": 0,
         "snapUp": 0,
         "snapDown": 0,
-        "anchor": "Runny",
+        "anchor": "doneness.runny",
         "targetPeakYolk_C": 56
       },
       {
         "level": 0.025,
         "snapUp": 0.03,
         "snapDown": 0.02,
-        "anchor": "Runny",
+        "anchor": "doneness.runny",
         "targetPeakYolk_C": 56.56818181818182
       },
       {
         "level": 0.05,
         "snapUp": 0.05,
         "snapDown": 0.05,
-        "anchor": "Runny",
+        "anchor": "doneness.runny",
         "targetPeakYolk_C": 57.13636363636363
       },
       {
         "level": 0.075,
         "snapUp": 0.08,
         "snapDown": 0.07,
-        "anchor": "Runny",
+        "anchor": "doneness.runny",
         "targetPeakYolk_C": 57.70454545454545
       },
       {
         "level": 0.1,
         "snapUp": 0.1,
         "snapDown": 0.1,
-        "anchor": "Runny",
+        "anchor": "doneness.runny",
         "targetPeakYolk_C": 58.27272727272727
       },
       {
         "level": 0.125,
         "snapUp": 0.13,
         "snapDown": 0.12,
-        "anchor": "Soft",
+        "anchor": "doneness.soft",
         "targetPeakYolk_C": 58.84090909090909
       },
       {
         "level": 0.15,
         "snapUp": 0.15,
         "snapDown": 0.15,
-        "anchor": "Soft",
+        "anchor": "doneness.soft",
         "targetPeakYolk_C": 59.40909090909091
       },
       {
         "level": 0.175,
         "snapUp": 0.18,
         "snapDown": 0.17,
-        "anchor": "Soft",
+        "anchor": "doneness.soft",
         "targetPeakYolk_C": 59.97727272727273
       },
       {
         "level": 0.2,
         "snapUp": 0.2,
         "snapDown": 0.2,
-        "anchor": "Soft",
+        "anchor": "doneness.soft",
         "targetPeakYolk_C": 60.54545454545455
       },
       {
         "level": 0.225,
         "snapUp": 0.23,
         "snapDown": 0.22,
-        "anchor": "Soft",
+        "anchor": "doneness.soft",
         "targetPeakYolk_C": 61.10526315789474
       },
       {
         "level": 0.25,
         "snapUp": 0.25,
         "snapDown": 0.25,
-        "anchor": "Soft",
+        "anchor": "doneness.soft",
         "targetPeakYolk_C": 61.63157894736842
       },
       {
         "level": 0.275,
         "snapUp": 0.28,
         "snapDown": 0.27,
-        "anchor": "Soft",
+        "anchor": "doneness.soft",
         "targetPeakYolk_C": 62.1578947368421
       },
       {
         "level": 0.3,
         "snapUp": 0.3,
         "snapDown": 0.3,
-        "anchor": "Soft",
+        "anchor": "doneness.soft",
         "targetPeakYolk_C": 62.68421052631579
       },
       {
         "level": 0.325,
         "snapUp": 0.33,
         "snapDown": 0.32,
-        "anchor": "Jammy",
+        "anchor": "doneness.jammy",
         "targetPeakYolk_C": 63.21052631578947
       },
       {
         "level": 0.35,
         "snapUp": 0.35,
         "snapDown": 0.35,
-        "anchor": "Jammy",
+        "anchor": "doneness.jammy",
         "targetPeakYolk_C": 63.73684210526316
       },
       {
         "level": 0.375,
         "snapUp": 0.38,
         "snapDown": 0.37,
-        "anchor": "Jammy",
+        "anchor": "doneness.jammy",
         "targetPeakYolk_C": 64.26315789473685
       },
       {
         "level": 0.4,
         "snapUp": 0.4,
         "snapDown": 0.4,
-        "anchor": "Jammy",
+        "anchor": "doneness.jammy",
         "targetPeakYolk_C": 64.78947368421052
       },
       {
         "level": 0.425,
         "snapUp": 0.43,
         "snapDown": 0.42,
-        "anchor": "Jammy",
+        "anchor": "doneness.jammy",
         "targetPeakYolk_C": 65.35714285714286
       },
       {
         "level": 0.45,
         "snapUp": 0.45,
         "snapDown": 0.45,
-        "anchor": "Jammy",
+        "anchor": "doneness.jammy",
         "targetPeakYolk_C": 65.95238095238095
       },
       {
         "level": 0.475,
         "snapUp": 0.48,
         "snapDown": 0.47,
-        "anchor": "Jammy",
+        "anchor": "doneness.jammy",
         "targetPeakYolk_C": 66.54761904761905
       },
       {
         "level": 0.5,
         "snapUp": 0.5,
         "snapDown": 0.5,
-        "anchor": "Jammy",
+        "anchor": "doneness.jammy",
         "targetPeakYolk_C": 67.14285714285714
       },
       {
         "level": 0.525,
         "snapUp": 0.53,
         "snapDown": 0.52,
-        "anchor": "Fudgy",
+        "anchor": "doneness.fudgy",
         "targetPeakYolk_C": 67.73809523809524
       },
       {
         "level": 0.55,
         "snapUp": 0.55,
         "snapDown": 0.55,
-        "anchor": "Fudgy",
+        "anchor": "doneness.fudgy",
         "targetPeakYolk_C": 68.33333333333333
       },
       {
         "level": 0.575,
         "snapUp": 0.58,
         "snapDown": 0.57,
-        "anchor": "Fudgy",
+        "anchor": "doneness.fudgy",
         "targetPeakYolk_C": 68.92857142857143
       },
       {
         "level": 0.6,
         "snapUp": 0.6,
         "snapDown": 0.6,
-        "anchor": "Fudgy",
+        "anchor": "doneness.fudgy",
         "targetPeakYolk_C": 69.52380952380952
       },
       {
         "level": 0.625,
         "snapUp": 0.63,
         "snapDown": 0.62,
-        "anchor": "Fudgy",
+        "anchor": "doneness.fudgy",
         "targetPeakYolk_C": 70.09210526315789
       },
       {
         "level": 0.65,
         "snapUp": 0.65,
         "snapDown": 0.65,
-        "anchor": "Fudgy",
+        "anchor": "doneness.fudgy",
         "targetPeakYolk_C": 70.55263157894737
       },
       {
         "level": 0.675,
         "snapUp": 0.68,
         "snapDown": 0.67,
-        "anchor": "Fudgy",
+        "anchor": "doneness.fudgy",
         "targetPeakYolk_C": 71.01315789473685
       },
       {
         "level": 0.7,
         "snapUp": 0.7,
         "snapDown": 0.7,
-        "anchor": "Fudgy",
+        "anchor": "doneness.fudgy",
         "targetPeakYolk_C": 71.47368421052632
       },
       {
         "level": 0.725,
         "snapUp": 0.73,
         "snapDown": 0.72,
-        "anchor": "Fudgy",
+        "anchor": "doneness.fudgy",
         "targetPeakYolk_C": 71.9342105263158
       },
       {
         "level": 0.75,
         "snapUp": 0.75,
         "snapDown": 0.75,
-        "anchor": "Fudgy",
+        "anchor": "doneness.fudgy",
         "targetPeakYolk_C": 72.39473684210526
       },
       {
         "level": 0.775,
         "snapUp": 0.78,
         "snapDown": 0.77,
-        "anchor": "Fudgy",
+        "anchor": "doneness.fudgy",
         "targetPeakYolk_C": 72.85526315789474
       },
       {
         "level": 0.8,
         "snapUp": 0.8,
         "snapDown": 0.8,
-        "anchor": "Fudgy",
+        "anchor": "doneness.fudgy",
         "targetPeakYolk_C": 73.3157894736842
       },
       {
         "level": 0.825,
         "snapUp": 0.83,
         "snapDown": 0.82,
-        "anchor": "Hard",
+        "anchor": "doneness.hard",
         "targetPeakYolk_C": 73.77631578947368
       },
       {
         "level": 0.85,
         "snapUp": 0.85,
         "snapDown": 0.85,
-        "anchor": "Hard",
+        "anchor": "doneness.hard",
         "targetPeakYolk_C": 74.23684210526315
       },
       {
         "level": 0.875,
         "snapUp": 0.88,
         "snapDown": 0.87,
-        "anchor": "Hard",
+        "anchor": "doneness.hard",
         "targetPeakYolk_C": 74.69736842105263
       },
       {
         "level": 0.9,
         "snapUp": 0.9,
         "snapDown": 0.9,
-        "anchor": "Hard",
+        "anchor": "doneness.hard",
         "targetPeakYolk_C": 75.15789473684211
       },
       {
         "level": 0.925,
         "snapUp": 0.93,
         "snapDown": 0.92,
-        "anchor": "Hard",
+        "anchor": "doneness.hard",
         "targetPeakYolk_C": 75.61842105263158
       },
       {
         "level": 0.95,
         "snapUp": 0.95,
         "snapDown": 0.95,
-        "anchor": "Hard",
+        "anchor": "doneness.hard",
         "targetPeakYolk_C": 76.07894736842105
       },
       {
         "level": 0.975,
         "snapUp": 0.98,
         "snapDown": 0.97,
-        "anchor": "Hard",
+        "anchor": "doneness.hard",
         "targetPeakYolk_C": 76.53947368421052
       },
       {
         "level": 1,
         "snapUp": 1,
         "snapDown": 1,
-        "anchor": "Hard",
+        "anchor": "doneness.hard",
         "targetPeakYolk_C": 77
       },
       {
         "level": 0.41,
         "snapUp": 0.41,
         "snapDown": 0.41,
-        "anchor": "Jammy",
+        "anchor": "doneness.jammy",
         "targetPeakYolk_C": 65
       },
       {
         "level": 0.2199999,
         "snapUp": 0.22,
         "snapDown": 0.21,
-        "anchor": "Soft",
+        "anchor": "doneness.soft",
         "targetPeakYolk_C": 60.99999772727273
       },
       {
         "level": 0.615,
         "snapUp": 0.62,
         "snapDown": 0.61,
-        "anchor": "Fudgy",
+        "anchor": "doneness.fudgy",
         "targetPeakYolk_C": 69.88095238095238
       },
       {
         "level": 0.0001,
         "snapUp": 0.01,
         "snapDown": 0,
-        "anchor": "Runny",
+        "anchor": "doneness.runny",
         "targetPeakYolk_C": 56.002272727272725
       },
       {
         "level": 0.9999,
         "snapUp": 1,
         "snapDown": 0.99,
-        "anchor": "Hard",
+        "anchor": "doneness.hard",
         "targetPeakYolk_C": 76.99815789473683
       },
       {
         "level": 0.11,
         "snapUp": 0.11,
         "snapDown": 0.11,
-        "anchor": "Runny",
+        "anchor": "doneness.runny",
         "targetPeakYolk_C": 58.5
       },
       {
         "level": 0.3333333333333333,
         "snapUp": 0.34,
         "snapDown": 0.33,
-        "anchor": "Jammy",
+        "anchor": "doneness.jammy",
         "targetPeakYolk_C": 63.3859649122807
       }
     ]
@@ -348,8 +348,8 @@
       "hardestLevel": 1,
       "level": 0,
       "kind": "none",
-      "wanted": "Runny",
-      "limit": "Runny",
+      "wanted": "doneness.runny",
+      "limit": "doneness.runny",
       "snapTo": null,
       "worthSaying": false
     },
@@ -360,8 +360,8 @@
       "hardestLevel": 0,
       "level": 0,
       "kind": "whiteNeverSets",
-      "wanted": "Runny",
-      "limit": "Runny",
+      "wanted": "doneness.runny",
+      "limit": "doneness.runny",
       "snapTo": null,
       "worthSaying": true
     },
@@ -372,8 +372,8 @@
       "hardestLevel": 1,
       "level": 0,
       "kind": "tooSoftForWhite",
-      "wanted": "Runny",
-      "limit": "Runny",
+      "wanted": "doneness.runny",
+      "limit": "doneness.runny",
       "snapTo": null,
       "worthSaying": false
     },
@@ -384,8 +384,8 @@
       "hardestLevel": 1,
       "level": 0,
       "kind": "tooSoftForWhite",
-      "wanted": "Runny",
-      "limit": "Jammy",
+      "wanted": "doneness.runny",
+      "limit": "doneness.jammy",
       "snapTo": 0.42,
       "worthSaying": true
     },
@@ -396,8 +396,8 @@
       "hardestLevel": 1,
       "level": 0,
       "kind": "tooSoftForWhite",
-      "wanted": "Runny",
-      "limit": "Fudgy",
+      "wanted": "doneness.runny",
+      "limit": "doneness.fudgy",
       "snapTo": 0.61,
       "worthSaying": true
     },
@@ -408,8 +408,8 @@
       "hardestLevel": 1,
       "level": 0,
       "kind": "tooSoftForWhite",
-      "wanted": "Runny",
-      "limit": "Fudgy",
+      "wanted": "doneness.runny",
+      "limit": "doneness.fudgy",
       "snapTo": 0.73,
       "worthSaying": true
     },
@@ -420,8 +420,8 @@
       "hardestLevel": 0.735,
       "level": 0,
       "kind": "tooSoftForWhite",
-      "wanted": "Runny",
-      "limit": "Runny",
+      "wanted": "doneness.runny",
+      "limit": "doneness.runny",
       "snapTo": null,
       "worthSaying": false
     },
@@ -432,8 +432,8 @@
       "hardestLevel": 0.42,
       "level": 0,
       "kind": "tooSoftForWhite",
-      "wanted": "Runny",
-      "limit": "Runny",
+      "wanted": "doneness.runny",
+      "limit": "doneness.runny",
       "snapTo": null,
       "worthSaying": false
     },
@@ -444,8 +444,8 @@
       "hardestLevel": 0.405,
       "level": 0,
       "kind": "tooSoftForWhite",
-      "wanted": "Runny",
-      "limit": "Runny",
+      "wanted": "doneness.runny",
+      "limit": "doneness.runny",
       "snapTo": null,
       "worthSaying": false
     },
@@ -456,8 +456,8 @@
       "hardestLevel": 1,
       "level": 0.22,
       "kind": "none",
-      "wanted": "Soft",
-      "limit": "Soft",
+      "wanted": "doneness.soft",
+      "limit": "doneness.soft",
       "snapTo": null,
       "worthSaying": false
     },
@@ -468,8 +468,8 @@
       "hardestLevel": 0,
       "level": 0.22,
       "kind": "whiteNeverSets",
-      "wanted": "Soft",
-      "limit": "Soft",
+      "wanted": "doneness.soft",
+      "limit": "doneness.soft",
       "snapTo": null,
       "worthSaying": true
     },
@@ -480,8 +480,8 @@
       "hardestLevel": 1,
       "level": 0.22,
       "kind": "tooSoftForWhite",
-      "wanted": "Soft",
-      "limit": "Runny",
+      "wanted": "doneness.soft",
+      "limit": "doneness.runny",
       "snapTo": null,
       "worthSaying": true
     },
@@ -492,8 +492,8 @@
       "hardestLevel": 1,
       "level": 0.22,
       "kind": "tooSoftForWhite",
-      "wanted": "Soft",
-      "limit": "Jammy",
+      "wanted": "doneness.soft",
+      "limit": "doneness.jammy",
       "snapTo": 0.42,
       "worthSaying": true
     },
@@ -504,8 +504,8 @@
       "hardestLevel": 1,
       "level": 0.22,
       "kind": "tooSoftForWhite",
-      "wanted": "Soft",
-      "limit": "Fudgy",
+      "wanted": "doneness.soft",
+      "limit": "doneness.fudgy",
       "snapTo": 0.61,
       "worthSaying": true
     },
@@ -516,8 +516,8 @@
       "hardestLevel": 1,
       "level": 0.22,
       "kind": "tooSoftForWhite",
-      "wanted": "Soft",
-      "limit": "Fudgy",
+      "wanted": "doneness.soft",
+      "limit": "doneness.fudgy",
       "snapTo": 0.73,
       "worthSaying": true
     },
@@ -528,8 +528,8 @@
       "hardestLevel": 0.735,
       "level": 0.22,
       "kind": "tooSoftForWhite",
-      "wanted": "Soft",
-      "limit": "Runny",
+      "wanted": "doneness.soft",
+      "limit": "doneness.runny",
       "snapTo": null,
       "worthSaying": true
     },
@@ -540,8 +540,8 @@
       "hardestLevel": 0.42,
       "level": 0.22,
       "kind": "tooSoftForWhite",
-      "wanted": "Soft",
-      "limit": "Runny",
+      "wanted": "doneness.soft",
+      "limit": "doneness.runny",
       "snapTo": null,
       "worthSaying": true
     },
@@ -552,8 +552,8 @@
       "hardestLevel": 0.405,
       "level": 0.22,
       "kind": "tooSoftForWhite",
-      "wanted": "Soft",
-      "limit": "Runny",
+      "wanted": "doneness.soft",
+      "limit": "doneness.runny",
       "snapTo": null,
       "worthSaying": true
     },
@@ -564,8 +564,8 @@
       "hardestLevel": 1,
       "level": 0.41,
       "kind": "none",
-      "wanted": "Jammy",
-      "limit": "Jammy",
+      "wanted": "doneness.jammy",
+      "limit": "doneness.jammy",
       "snapTo": null,
       "worthSaying": false
     },
@@ -576,8 +576,8 @@
       "hardestLevel": 0,
       "level": 0.41,
       "kind": "whiteNeverSets",
-      "wanted": "Jammy",
-      "limit": "Jammy",
+      "wanted": "doneness.jammy",
+      "limit": "doneness.jammy",
       "snapTo": null,
       "worthSaying": true
     },
@@ -588,8 +588,8 @@
       "hardestLevel": 1,
       "level": 0.41,
       "kind": "tooSoftForWhite",
-      "wanted": "Jammy",
-      "limit": "Runny",
+      "wanted": "doneness.jammy",
+      "limit": "doneness.runny",
       "snapTo": null,
       "worthSaying": true
     },
@@ -600,8 +600,8 @@
       "hardestLevel": 1,
       "level": 0.41,
       "kind": "tooSoftForWhite",
-      "wanted": "Jammy",
-      "limit": "Jammy",
+      "wanted": "doneness.jammy",
+      "limit": "doneness.jammy",
       "snapTo": 0.42,
       "worthSaying": false
     },
@@ -612,8 +612,8 @@
       "hardestLevel": 1,
       "level": 0.41,
       "kind": "tooSoftForWhite",
-      "wanted": "Jammy",
-      "limit": "Fudgy",
+      "wanted": "doneness.jammy",
+      "limit": "doneness.fudgy",
       "snapTo": 0.61,
       "worthSaying": true
     },
@@ -624,8 +624,8 @@
       "hardestLevel": 1,
       "level": 0.41,
       "kind": "tooSoftForWhite",
-      "wanted": "Jammy",
-      "limit": "Fudgy",
+      "wanted": "doneness.jammy",
+      "limit": "doneness.fudgy",
       "snapTo": 0.73,
       "worthSaying": true
     },
@@ -636,8 +636,8 @@
       "hardestLevel": 0.735,
       "level": 0.41,
       "kind": "tooSoftForWhite",
-      "wanted": "Jammy",
-      "limit": "Runny",
+      "wanted": "doneness.jammy",
+      "limit": "doneness.runny",
       "snapTo": null,
       "worthSaying": true
     },
@@ -648,8 +648,8 @@
       "hardestLevel": 0.42,
       "level": 0.41,
       "kind": "tooSoftForWhite",
-      "wanted": "Jammy",
-      "limit": "Runny",
+      "wanted": "doneness.jammy",
+      "limit": "doneness.runny",
       "snapTo": null,
       "worthSaying": true
     },
@@ -660,8 +660,8 @@
       "hardestLevel": 0.405,
       "level": 0.41,
       "kind": "harderThanPanReaches",
-      "wanted": "Jammy",
-      "limit": "Jammy",
+      "wanted": "doneness.jammy",
+      "limit": "doneness.jammy",
       "snapTo": 0.4,
       "worthSaying": false
     },
@@ -672,8 +672,8 @@
       "hardestLevel": 1,
       "level": 0.5,
       "kind": "none",
-      "wanted": "Jammy",
-      "limit": "Jammy",
+      "wanted": "doneness.jammy",
+      "limit": "doneness.jammy",
       "snapTo": null,
       "worthSaying": false
     },
@@ -684,8 +684,8 @@
       "hardestLevel": 0,
       "level": 0.5,
       "kind": "whiteNeverSets",
-      "wanted": "Jammy",
-      "limit": "Jammy",
+      "wanted": "doneness.jammy",
+      "limit": "doneness.jammy",
       "snapTo": null,
       "worthSaying": true
     },
@@ -696,8 +696,8 @@
       "hardestLevel": 1,
       "level": 0.5,
       "kind": "tooSoftForWhite",
-      "wanted": "Jammy",
-      "limit": "Runny",
+      "wanted": "doneness.jammy",
+      "limit": "doneness.runny",
       "snapTo": null,
       "worthSaying": true
     },
@@ -708,8 +708,8 @@
       "hardestLevel": 1,
       "level": 0.5,
       "kind": "tooSoftForWhite",
-      "wanted": "Jammy",
-      "limit": "Jammy",
+      "wanted": "doneness.jammy",
+      "limit": "doneness.jammy",
       "snapTo": null,
       "worthSaying": false
     },
@@ -720,8 +720,8 @@
       "hardestLevel": 1,
       "level": 0.5,
       "kind": "tooSoftForWhite",
-      "wanted": "Jammy",
-      "limit": "Fudgy",
+      "wanted": "doneness.jammy",
+      "limit": "doneness.fudgy",
       "snapTo": 0.61,
       "worthSaying": true
     },
@@ -732,8 +732,8 @@
       "hardestLevel": 1,
       "level": 0.5,
       "kind": "tooSoftForWhite",
-      "wanted": "Jammy",
-      "limit": "Fudgy",
+      "wanted": "doneness.jammy",
+      "limit": "doneness.fudgy",
       "snapTo": 0.73,
       "worthSaying": true
     },
@@ -744,8 +744,8 @@
       "hardestLevel": 0.735,
       "level": 0.5,
       "kind": "tooSoftForWhite",
-      "wanted": "Jammy",
-      "limit": "Runny",
+      "wanted": "doneness.jammy",
+      "limit": "doneness.runny",
       "snapTo": null,
       "worthSaying": true
     },
@@ -756,8 +756,8 @@
       "hardestLevel": 0.42,
       "level": 0.5,
       "kind": "harderThanPanReaches",
-      "wanted": "Jammy",
-      "limit": "Jammy",
+      "wanted": "doneness.jammy",
+      "limit": "doneness.jammy",
       "snapTo": 0.42,
       "worthSaying": false
     },
@@ -768,8 +768,8 @@
       "hardestLevel": 0.405,
       "level": 0.5,
       "kind": "harderThanPanReaches",
-      "wanted": "Jammy",
-      "limit": "Jammy",
+      "wanted": "doneness.jammy",
+      "limit": "doneness.jammy",
       "snapTo": 0.4,
       "worthSaying": false
     },
@@ -780,8 +780,8 @@
       "hardestLevel": 1,
       "level": 0.62,
       "kind": "none",
-      "wanted": "Fudgy",
-      "limit": "Fudgy",
+      "wanted": "doneness.fudgy",
+      "limit": "doneness.fudgy",
       "snapTo": null,
       "worthSaying": false
     },
@@ -792,8 +792,8 @@
       "hardestLevel": 0,
       "level": 0.62,
       "kind": "whiteNeverSets",
-      "wanted": "Fudgy",
-      "limit": "Fudgy",
+      "wanted": "doneness.fudgy",
+      "limit": "doneness.fudgy",
       "snapTo": null,
       "worthSaying": true
     },
@@ -804,8 +804,8 @@
       "hardestLevel": 1,
       "level": 0.62,
       "kind": "tooSoftForWhite",
-      "wanted": "Fudgy",
-      "limit": "Runny",
+      "wanted": "doneness.fudgy",
+      "limit": "doneness.runny",
       "snapTo": null,
       "worthSaying": true
     },
@@ -816,8 +816,8 @@
       "hardestLevel": 1,
       "level": 0.62,
       "kind": "tooSoftForWhite",
-      "wanted": "Fudgy",
-      "limit": "Jammy",
+      "wanted": "doneness.fudgy",
+      "limit": "doneness.jammy",
       "snapTo": null,
       "worthSaying": true
     },
@@ -828,8 +828,8 @@
       "hardestLevel": 1,
       "level": 0.62,
       "kind": "tooSoftForWhite",
-      "wanted": "Fudgy",
-      "limit": "Fudgy",
+      "wanted": "doneness.fudgy",
+      "limit": "doneness.fudgy",
       "snapTo": null,
       "worthSaying": false
     },
@@ -840,8 +840,8 @@
       "hardestLevel": 1,
       "level": 0.62,
       "kind": "tooSoftForWhite",
-      "wanted": "Fudgy",
-      "limit": "Fudgy",
+      "wanted": "doneness.fudgy",
+      "limit": "doneness.fudgy",
       "snapTo": 0.73,
       "worthSaying": false
     },
@@ -852,8 +852,8 @@
       "hardestLevel": 0.735,
       "level": 0.62,
       "kind": "tooSoftForWhite",
-      "wanted": "Fudgy",
-      "limit": "Runny",
+      "wanted": "doneness.fudgy",
+      "limit": "doneness.runny",
       "snapTo": null,
       "worthSaying": true
     },
@@ -864,8 +864,8 @@
       "hardestLevel": 0.42,
       "level": 0.62,
       "kind": "harderThanPanReaches",
-      "wanted": "Fudgy",
-      "limit": "Jammy",
+      "wanted": "doneness.fudgy",
+      "limit": "doneness.jammy",
       "snapTo": 0.42,
       "worthSaying": true
     },
@@ -876,8 +876,8 @@
       "hardestLevel": 0.405,
       "level": 0.62,
       "kind": "harderThanPanReaches",
-      "wanted": "Fudgy",
-      "limit": "Jammy",
+      "wanted": "doneness.fudgy",
+      "limit": "doneness.jammy",
       "snapTo": 0.4,
       "worthSaying": true
     },
@@ -888,8 +888,8 @@
       "hardestLevel": 1,
       "level": 0.9,
       "kind": "none",
-      "wanted": "Hard",
-      "limit": "Hard",
+      "wanted": "doneness.hard",
+      "limit": "doneness.hard",
       "snapTo": null,
       "worthSaying": false
     },
@@ -900,8 +900,8 @@
       "hardestLevel": 0,
       "level": 0.9,
       "kind": "whiteNeverSets",
-      "wanted": "Hard",
-      "limit": "Hard",
+      "wanted": "doneness.hard",
+      "limit": "doneness.hard",
       "snapTo": null,
       "worthSaying": true
     },
@@ -912,8 +912,8 @@
       "hardestLevel": 1,
       "level": 0.9,
       "kind": "tooSoftForWhite",
-      "wanted": "Hard",
-      "limit": "Runny",
+      "wanted": "doneness.hard",
+      "limit": "doneness.runny",
       "snapTo": null,
       "worthSaying": true
     },
@@ -924,8 +924,8 @@
       "hardestLevel": 1,
       "level": 0.9,
       "kind": "tooSoftForWhite",
-      "wanted": "Hard",
-      "limit": "Jammy",
+      "wanted": "doneness.hard",
+      "limit": "doneness.jammy",
       "snapTo": null,
       "worthSaying": true
     },
@@ -936,8 +936,8 @@
       "hardestLevel": 1,
       "level": 0.9,
       "kind": "tooSoftForWhite",
-      "wanted": "Hard",
-      "limit": "Fudgy",
+      "wanted": "doneness.hard",
+      "limit": "doneness.fudgy",
       "snapTo": null,
       "worthSaying": true
     },
@@ -948,8 +948,8 @@
       "hardestLevel": 1,
       "level": 0.9,
       "kind": "tooSoftForWhite",
-      "wanted": "Hard",
-      "limit": "Fudgy",
+      "wanted": "doneness.hard",
+      "limit": "doneness.fudgy",
       "snapTo": null,
       "worthSaying": true
     },
@@ -960,8 +960,8 @@
       "hardestLevel": 0.735,
       "level": 0.9,
       "kind": "harderThanPanReaches",
-      "wanted": "Hard",
-      "limit": "Fudgy",
+      "wanted": "doneness.hard",
+      "limit": "doneness.fudgy",
       "snapTo": 0.73,
       "worthSaying": true
     },
@@ -972,8 +972,8 @@
       "hardestLevel": 0.42,
       "level": 0.9,
       "kind": "harderThanPanReaches",
-      "wanted": "Hard",
-      "limit": "Jammy",
+      "wanted": "doneness.hard",
+      "limit": "doneness.jammy",
       "snapTo": 0.42,
       "worthSaying": true
     },
@@ -984,8 +984,8 @@
       "hardestLevel": 0.405,
       "level": 0.9,
       "kind": "harderThanPanReaches",
-      "wanted": "Hard",
-      "limit": "Jammy",
+      "wanted": "doneness.hard",
+      "limit": "doneness.jammy",
       "snapTo": 0.4,
       "worthSaying": true
     },
@@ -996,8 +996,8 @@
       "hardestLevel": 1,
       "level": 1,
       "kind": "none",
-      "wanted": "Hard",
-      "limit": "Hard",
+      "wanted": "doneness.hard",
+      "limit": "doneness.hard",
       "snapTo": null,
       "worthSaying": false
     },
@@ -1008,8 +1008,8 @@
       "hardestLevel": 0,
       "level": 1,
       "kind": "whiteNeverSets",
-      "wanted": "Hard",
-      "limit": "Hard",
+      "wanted": "doneness.hard",
+      "limit": "doneness.hard",
       "snapTo": null,
       "worthSaying": true
     },
@@ -1020,8 +1020,8 @@
       "hardestLevel": 1,
       "level": 1,
       "kind": "tooSoftForWhite",
-      "wanted": "Hard",
-      "limit": "Runny",
+      "wanted": "doneness.hard",
+      "limit": "doneness.runny",
       "snapTo": null,
       "worthSaying": true
     },
@@ -1032,8 +1032,8 @@
       "hardestLevel": 1,
       "level": 1,
       "kind": "tooSoftForWhite",
-      "wanted": "Hard",
-      "limit": "Jammy",
+      "wanted": "doneness.hard",
+      "limit": "doneness.jammy",
       "snapTo": null,
       "worthSaying": true
     },
@@ -1044,8 +1044,8 @@
       "hardestLevel": 1,
       "level": 1,
       "kind": "tooSoftForWhite",
-      "wanted": "Hard",
-      "limit": "Fudgy",
+      "wanted": "doneness.hard",
+      "limit": "doneness.fudgy",
       "snapTo": null,
       "worthSaying": true
     },
@@ -1056,8 +1056,8 @@
       "hardestLevel": 1,
       "level": 1,
       "kind": "tooSoftForWhite",
-      "wanted": "Hard",
-      "limit": "Fudgy",
+      "wanted": "doneness.hard",
+      "limit": "doneness.fudgy",
       "snapTo": null,
       "worthSaying": true
     },
@@ -1068,8 +1068,8 @@
       "hardestLevel": 0.735,
       "level": 1,
       "kind": "harderThanPanReaches",
-      "wanted": "Hard",
-      "limit": "Fudgy",
+      "wanted": "doneness.hard",
+      "limit": "doneness.fudgy",
       "snapTo": 0.73,
       "worthSaying": true
     },
@@ -1080,8 +1080,8 @@
       "hardestLevel": 0.42,
       "level": 1,
       "kind": "harderThanPanReaches",
-      "wanted": "Hard",
-      "limit": "Jammy",
+      "wanted": "doneness.hard",
+      "limit": "doneness.jammy",
       "snapTo": 0.42,
       "worthSaying": true
     },
@@ -1092,8 +1092,8 @@
       "hardestLevel": 0.405,
       "level": 1,
       "kind": "harderThanPanReaches",
-      "wanted": "Hard",
-      "limit": "Jammy",
+      "wanted": "doneness.hard",
+      "limit": "doneness.jammy",
       "snapTo": 0.4,
       "worthSaying": true
     }
@@ -1584,42 +1584,51 @@
   "sizeClasses": {
     "eu": [
       {
-        "label": "Small — 48 g",
-        "mass_kg": 0.048
+        "key": "size.eu.small",
+        "mass_kg": 0.048,
+        "grams": 48
       },
       {
-        "label": "Medium — 58 g",
-        "mass_kg": 0.058
+        "key": "size.eu.medium",
+        "mass_kg": 0.058,
+        "grams": 58
       },
       {
-        "label": "Large — 68 g",
-        "mass_kg": 0.068
+        "key": "size.eu.large",
+        "mass_kg": 0.068,
+        "grams": 68
       },
       {
-        "label": "Extra large — 76 g",
-        "mass_kg": 0.076
+        "key": "size.eu.extraLarge",
+        "mass_kg": 0.076,
+        "grams": 76
       }
     ],
     "us": [
       {
-        "label": "Small — 46 g",
-        "mass_kg": 0.0461
+        "key": "size.us.small",
+        "mass_kg": 0.0461,
+        "grams": 46
       },
       {
-        "label": "Medium — 53 g",
-        "mass_kg": 0.0532
+        "key": "size.us.medium",
+        "mass_kg": 0.0532,
+        "grams": 53
       },
       {
-        "label": "Large — 60 g",
-        "mass_kg": 0.0602
+        "key": "size.us.large",
+        "mass_kg": 0.0602,
+        "grams": 60
       },
       {
-        "label": "Extra large — 67 g",
-        "mass_kg": 0.0673
+        "key": "size.us.extraLarge",
+        "mass_kg": 0.0673,
+        "grams": 67
       },
       {
-        "label": "Jumbo — 74 g",
-        "mass_kg": 0.074
+        "key": "size.us.jumbo",
+        "mass_kg": 0.074,
+        "grams": 74
       }
     ],
     "regions": [

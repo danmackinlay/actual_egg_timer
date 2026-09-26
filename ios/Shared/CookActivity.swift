@@ -38,11 +38,11 @@ struct CookActivity: ActivityAttributes {
 
         var title: String {
             switch self {
-            case .heating: "Heating"
-            case .cooking: "Cooking"
-            case .pull: "Eggs out — now"
-            case .cooling: "Cooling"
-            case .done: "Done"
+            case .heating: tr("activity.stage.heating")
+            case .cooking: tr("activity.stage.cooking")
+            case .pull: tr("activity.stage.pull")
+            case .cooling: tr("activity.stage.cooling")
+            case .done: tr("activity.stage.done")
             }
         }
 
