@@ -285,6 +285,10 @@ struct SizeClassConformance {
                 sizeClassesFor(region: region) == expected,
                 "region \(region ?? "nil") should get the \(c.str("table")) table"
             )
+            #expect(
+                sizeTableFor(region: region).rawValue == c.str("table"),
+                "region \(region ?? "nil") names the \(c.str("table")) table"
+            )
         }
     }
 

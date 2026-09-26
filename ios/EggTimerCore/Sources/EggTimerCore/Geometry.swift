@@ -99,5 +99,16 @@ public let usSizeClasses: [SizeClass] = [
 /// `Locale`, so that the package stays free of I/O and the app does the asking.
 /// Region only: an American reading the app in Czech still buys American eggs.
 public func sizeClassesFor(region: String?) -> [SizeClass] {
-    region?.uppercased() == "US" ? usSizeClasses : sizeClasses
+    sizeTableFor(region: region) == .us ? usSizeClasses : sizeClasses
+}
+
+/// Which of the two tables that is, by name. A record of an egg cooked by size
+/// class carries it, because the same class is 68 g in one table and 60.2 g in
+/// the other.
+public enum SizeTable: String, Sendable, Codable {
+    case eu, us
+}
+
+public func sizeTableFor(region: String?) -> SizeTable {
+    region?.uppercased() == "US" ? .us : .eu
 }

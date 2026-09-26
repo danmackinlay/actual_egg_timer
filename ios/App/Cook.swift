@@ -69,6 +69,15 @@ final class Cook {
         /// actually measured.
         var egg: Egg
         var setup: CookSetup
+        /// Where the egg's mass came from, and whose carton if it was a class -
+        /// for the record. Optional, so a cook saved by a build that did not
+        /// write them still restores; `eggRecord` says what it assumes then.
+        var massFrom: MassFrom?
+        var sizeTable: SizeTable?
+        /// Whether a measured pan was on file at "Eggs in" - what a hot start,
+        /// which never times its own pan, cooked on. Optional for the same
+        /// reason as the two above.
+        var boilRemembered: Bool?
 
         /// The same cook, against a time to boil that is now known rather than
         /// guessed.
@@ -190,6 +199,68 @@ final class Cook {
     var cookSeconds: TimeInterval {
         guard let startedAt, let pullAt else { return 0 }
         return pullAt.timeIntervalSince(startedAt)
+    }
+
+    /// This egg as a record (INFERENCE.md section 4), with the yolk answer or
+    /// nil for one nobody answered, or nil when there is no cook.
+    ///
+    /// The pull is always recorded as ASSUMED here - `pulledBy: .timeout`, at
+    /// the scheduled time - and that is the truth rather than a shortcut. This
+    /// app has no action out of PULL: the phase is derived from the clock, the
+    /// grace simply runs out, and nothing on screen asks the cook to say when
+    /// the eggs came out. The web app has a button there and records the tap as
+    /// a measured pull. A button here needs words, and words wait for the
+    /// catalogue (F1); when it lands, its moment goes in `pulledS` with `.cook`.
+    func eggRecord(yolk: Feedback?) -> EggRecord? {
+        guard let startedAt, pullAt != nil, let ticket else { return nil }
+        let scheduled = cookSeconds
+        // A cook saved before the ticket carried these came from a build whose
+        // only control was a slider opening on an EU Large. Left there, it was
+        // the default class; moved, it was dialled in - the rule Store.swift
+        // applies to the same stored mass.
+        let untouched = ticket.eggGrams == sizeClasses[Defaults.sizeIndex].massKg * 1000
+        let massFrom = ticket.massFrom ?? (untouched ? .sizeClass : .scale)
+        let sizeTable = ticket.massFrom == nil ? (untouched ? .eu : nil) : ticket.sizeTable
+        return EggRecord(
+            day: Self.day(startedAt),
+            app: .ios,
+            appVersion: Calibrations.appVersion,
+            egg: RecordEgg(
+                massG: recordMassG(massKg: ticket.egg.massKg),
+                massFrom: massFrom,
+                sizeTable: massFrom == .sizeClass ? sizeTable ?? .eu : nil
+            ),
+            // Fridge or room are the only two this app offers, so the start
+            // temperature says which was picked.
+            setup: RecordSetup(
+                setup: ticket.setup,
+                eggFrom: ticket.setup.eggStartC == StartTempPresets.fridgeC ? .fridge : .room,
+                timeToBoilFrom: Self.timeToBoilFrom(ticket)
+            ),
+            level: ticket.level,
+            recommendedS: scheduled,
+            pulledS: scheduled,
+            pulledBy: .timeout,
+            cooledS: ticket.cooling == .counter ? 0 : Self.coolingSeconds,
+            yolk: yolk
+        )
+    }
+
+    /// Where the solve's time to boil came from. A cold start cannot finish
+    /// without the boil being tapped, so it is always measured. A hot start
+    /// cooked on the remembered pan or the default guess; a ticket saved before
+    /// it said which is read by whether the number IS the default guess.
+    private static func timeToBoilFrom(_ ticket: Ticket) -> TimeToBoilFrom {
+        if ticket.setup.startMode == .cold { return .measured }
+        let remembered = ticket.boilRemembered ?? (ticket.setup.timeToBoilS != defaultTimeToBoilS)
+        return remembered ? .remembered : .default
+    }
+
+    /// The local calendar day a cook started on, YYYY-MM-DD. A day, not a
+    /// timestamp.
+    private static func day(_ date: Date) -> String {
+        let c = Calendar(identifier: .gregorian).dateComponents([.year, .month, .day], from: date)
+        return String(format: "%04d-%02d-%02d", c.year ?? 0, c.month ?? 0, c.day ?? 0)
     }
 
     var secondsToPull: TimeInterval { max(0, (pullAt ?? .now).timeIntervalSinceNow) }

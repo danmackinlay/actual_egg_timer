@@ -115,7 +115,15 @@ export const US_SIZE_CLASSES: SizeClass[] = [
  *  the asking. Region only: an American who reads the app in Czech, or in
  *  metric, still buys American eggs. */
 export function sizeClassesFor(region: string | null | undefined): SizeClass[] {
-  return typeof region === 'string' && region.toUpperCase() === 'US'
-    ? US_SIZE_CLASSES
-    : SIZE_CLASSES;
+  return sizeTableFor(region) === 'us' ? US_SIZE_CLASSES : SIZE_CLASSES;
+}
+
+/** Which of the two tables that is, by name. A record of an egg cooked by size
+ *  class carries it, because the same class is 68 g in one table and 60.2 g in
+ *  the other, and the width of the class - the egg-level noise the fit reads -
+ *  differs with it. */
+export type SizeTable = 'eu' | 'us';
+
+export function sizeTableFor(region: string | null | undefined): SizeTable {
+  return typeof region === 'string' && region.toUpperCase() === 'US' ? 'us' : 'eu';
 }

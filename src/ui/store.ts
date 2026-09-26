@@ -37,6 +37,10 @@ export interface Settings {
    *  diameter. Stored without the region: see `carrySizeIndex`. */
   sizeIndex: number;
   customMinor_mm: number;
+  /** Which of the three measurement boxes `customMinor_mm` came from. They are
+   *  one number in three units, so nothing else remembers - and a weighed egg
+   *  and a ruler-measured one are not equally sure (the record's `massFrom`). */
+  measuredBy: 'scale' | 'girth' | 'width';
   startTempMode: StartTempMode;
   customStart_C: number;
   altitude_m: number;
@@ -57,6 +61,9 @@ export interface Settings {
 export const DEFAULT_SETTINGS: Settings = {
   sizeIndex: DEFAULTS.sizeIndex,
   customMinor_mm: DEFAULTS.customMinor_mm,
+  // A stored diameter from before the field existed was typed into SOMETHING;
+  // width is the one it literally is.
+  measuredBy: 'width',
   startTempMode: 'fridge',
   customStart_C: DEFAULTS.customStart_C,
   altitude_m: DEFAULTS.altitude_m,
@@ -139,6 +146,7 @@ export function loadSettings(classes: SizeClass[]): Settings {
   return {
     sizeIndex: carrySizeIndex(clampNumber(raw['sizeIndex'], LIMITS.sizeIndex, d.sizeIndex), classes),
     customMinor_mm: clampNumber(raw['customMinor_mm'], LIMITS.minor_mm, d.customMinor_mm),
+    measuredBy: oneOf(raw['measuredBy'], ['scale', 'girth', 'width'] as const, d.measuredBy),
     startTempMode: oneOf(raw['startTempMode'], ['fridge', 'room', 'custom'] as const, d.startTempMode),
     customStart_C: clampNumber(raw['customStart_C'], LIMITS.eggTemp_C, d.customStart_C),
     altitude_m: clampNumber(raw['altitude_m'], LIMITS.altitude_m, d.altitude_m),

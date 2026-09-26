@@ -95,6 +95,24 @@ const NOT_COPY: Record<string, string> = {
   PULL: 'phase name, never shown',
   COOLING: 'phase name, never shown',
   DONE: 'phase name, never shown',
+  // E1's record (INFERENCE.md §4), merged after the move: schema, never shown
+  'calibration.v3': 'UserDefaults key',
+  CFBundleShortVersionString: 'Info.plist key',
+  unknown: 'record field value, never shown',
+  '%04d-%02d-%02d': 'record day format, never shown',
+  '2026-09': 'record date prefix, never shown',
+  class: 'record field value, never shown',
+  mass_g: 'record field name',
+  eggStart_C: 'record field name',
+  ambient_C: 'record field name',
+  boiling_C: 'record field name',
+  timeToBoil_s: 'record field name',
+  modern: 'record field value (register), never shown',
+  recommended_s: 'record field name',
+  nudge_s: 'record field name',
+  pulled_s: 'record field name',
+  cooled_s: 'record field name',
+  'probe readings arrive in E4': 'decoding error, never shown',
 };
 
 /** Old literals that were grammar in code, what each became, and the strings

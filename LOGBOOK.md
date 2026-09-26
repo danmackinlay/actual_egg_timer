@@ -725,3 +725,75 @@ qualifying in the other direction: for the time-scale, a probe is now a way.
 `INFERENCE.md` is the design; Phase E in `PLAN.md` is the list. Nothing in `src/`
 moved.
 
+
+## The record, and a replay that has to be exact (26 September 2026, E1)
+
+Each egg is now kept as a record beside the posterior, in both apps, and the
+posterior is what a replay of the log makes of it. `INFERENCE.md` §4 has the
+schema and the rules; this is what was checked.
+
+### Verified
+
+- `npm test` 102 pass, `npm run validate` 27/27, `npm run conformance` 57 Swift
+  tests pass. `fixtures/record.json` pins 57 loader cases and a six-egg replay
+  from both apps, one egg unanswered, particle by particle after every egg, and
+  the tail of the same log again from a non-prior start.
+- **Bit-identical, four ways.** A posterior rebuilt from base + log against the
+  one built egg by egg, compared with `Object.is` / `bitPattern`, not a
+  tolerance: in `npm test`, through the web app's own storage with a reload
+  between every egg and a real 21 x 32 surface; in `swift test`, through
+  JSONEncoder between every egg; in Chromium, 0 of 4000 numbers differ after
+  three eggs; in the iOS simulator, 0 of 4000 after deleting the stored
+  posterior and letting the app refold the log on launch. The last two are the
+  apps' own replay paths, not the test's.
+- **Chromium (the pane), web app built from this tree.** A seeded v2 posterior
+  migrates on load: the v2 key is gone, v3 holds it as the base, the label says
+  "tuned on 3 eggs" and the jammy time moves 11:17 -> 11:32. Driven with
+  `Date.now` run fast: a tap 11 s after the alarm is recorded as
+  `pulledBy: cook`, `pulled_s` 491.7 against 480.6 scheduled; a cook left to
+  the grace is `timeout` at the scheduled time; an egg nobody answered is
+  logged with `yolk: null` and folds nothing; the white question, when shown, is
+  written as offered in the same save as the fold, and the answer lands on the
+  same record. A posterior damaged in storage is rebuilt from the log on the next
+  load. "Forget everything" leaves only the settings key.
+- **The worker.** One fold's surface built in the worker left the page's
+  longest timer gap at 11 ms; the same build on the main thread takes 579 ms. A
+  twelve-egg log (eight surfaces) replayed through the app's own path in 24.4 s
+  with the longest gap 33 ms. `gridWorker.js` ships in `_site/` with no change to
+  the build: `tsc` already compiles everything under `src/`.
+- **iOS simulator (iPhone 17 Pro, iOS 27), debug build.** Builds clean under
+  Swift 6 with no new warnings. The seeded v2 posterior migrates the same way
+  (11:32, "tuned on 3 eggs"). A restored cook answered "too soft" writes a
+  record with `pulledBy: timeout`, `massFrom: class`, `sizeTable: eu`,
+  `timeToBoilFrom: default` (no pan on file) and folds to "tuned on 4 eggs"; a
+  finished cook left unanswered through Start again logs `yolk: null`; the
+  refold after deleting the posterior is bit-identical; Forget removes the
+  calibration key and leaves the settings. Not run on a device.
+
+### Things that cost time
+
+1. **The preview configuration serves the main checkout**, not a worktree:
+   `.claude/launch.json` runs `http.server --directory _site` from wherever the
+   tool starts it, which was the other tree. The worker 404'd, which is how it
+   showed. Served the worktree's `_site` on another port instead.
+2. **The long-task API reported nothing** in the pane's Chromium, not even for a
+   deliberate 120 ms busy loop, so "no long tasks" from it proves nothing.
+   Responsiveness was measured with a 10 ms interval and its longest gap.
+3. **A surface's cost depends on the posterior.** 0.58 s centred on the
+   literature alpha, 2-2.5 s centred on a posterior leaning slow, because every
+   simulation in it runs longer. "About two seconds each" is the slow end.
+4. **A rounded cache can never be matched.** Both apps stored the posterior to
+   five or seven figures, each rounding differently. A replay reproduces the
+   unrounded arithmetic, so the v3 posterior is stored at full precision - about
+   120 KB on the web with three eggs of log - and the v2 base keeps the rounding
+   it came with, which is harmless because it is where replays START.
+5. **Swift's synthesized `Decodable` ignores property defaults.**
+   `var feedbackGiven: Bool = false` still throws `keyNotFound` on a record
+   without the key, contrary to the comment on `Cook.Saved`, which says a cook
+   saved before the field existed restores as unanswered. Checked with a
+   six-line script. The fields E1 adds to `Cook.Ticket` are optionals for this
+   reason.
+6. **iOS: "Eggs in" straight after changing the start mode** started a hot cook
+   with the previous cold start's time: the 90 ms coalesce and the solve had not
+   landed, and the button reads `kitchen.solution` as it stands. Seen once,
+   while tapping faster than a person would. Not changed here.

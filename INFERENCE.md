@@ -1,6 +1,8 @@
 # INFERENCE.md — making the inference the main part
 
-A design, not a record and not a state. Nothing in here is built. The checklist
+A design, not a record and not a state. One part is built: the record in §4
+(E1, 26 September 2026), whose schema below is now the one the code writes.
+Nothing else is. The checklist
 that tracks it is Phase E in `PLAN.md`; the two measurements it rests on are in
 `LOGBOOK.md` (21 September 2026) and can be re-run with `npm run rank` and
 `npm run probe`.
@@ -63,8 +65,14 @@ Where the data does not reach, they sit at the physics.
 and boil temperatures as entered. They keep their place in README §6 as the
 prior's documentation.
 
-**Per kitchen (1).** A multiplier on the time-scale. Every kitchen-level
-nuisance loads on direction 1, so one number is all a kitchen gets.
+**Per cook, for the place (1).** A multiplier on the time-scale. Every
+kitchen-level nuisance loads on direction 1, so one number is all a kitchen
+would get. It belongs to the COOK, and in practice to the phone, rather than to
+a kitchen, because "kitchen" is not a unit anyone can maintain: pans and hobs
+vary within one kitchen, and cooks move between them. Whatever varies from cook
+to cook for one person shows up as that person's noise, which the reliability
+term already models (§6). The owner ruled kitchens out on 26 September, and
+nothing in the record or the UI names one.
 
 **Per cook (2, plus a reliability).** A yolk *taste* offset, and a white
 *cutpoint* - what this person means by "runny". And a noise scale, §6.
@@ -79,12 +87,12 @@ looks like.
 single cook cannot distinguish "whites set later than the model thinks" from "I
 call a tender white runny". The phone therefore carries one white offset, and
 the population fit is what splits it into a global mean (the lag) and a personal
-deviation (the cutpoint). Likewise a kitchen's time-scale and the global one.
+deviation (the cutpoint). Likewise a cook's time-scale and the global one.
 That split is the whole statistical content of making this collective.
 
 **Pooling also does the job the white channel was built for.** `alpha` and taste
 are confounded for one cook. They are not confounded across cooks: the
-time-scale is shared and taste is personal. And a kitchen effect moves yolk and
+time-scale is shared and taste is personal. And a time-scale effect moves yolk and
 white in the physics ratio (0.465, `npm run identifiability`) where a perception
 effect moves one of them - the same geometry as the 19 degrees between `alpha`
 and `h`, but with `alpha`-sized sensitivities behind it instead of a signal 15x
@@ -129,44 +137,111 @@ server exists. Today an answer is folded into the particles and thrown away, so
 when the likelihood changed in September the v1 posterior had to be discarded
 rather than repaired. With the observations kept, a model change is a replay.
 
-One record per egg, stored on the device; uploaded only under §7.
+**Built (E1, 26 September).** One record per egg, stored on the device beside
+the posterior; uploaded only under §7. The reference is `src/core/record.ts`,
+held to `EggTimerCore/Record.swift` by `fixtures/record.json`.
 
 ```json
 {
   "v": 1,
-  "uid": "random-uuid",
+  "uid": null,
   "day": "2026-09-21",
   "app": "ios", "appVersion": "0.3.0", "prior": "2026-09",
-  "egg": { "mass_g": 68, "massFrom": "scale" },
+  "egg": { "mass_g": 68, "massFrom": "class", "sizeTable": "eu" },
   "setup": {
-    "startMode": "hot", "eggStart_C": 4, "eggFrom": "fridge", "boiling_C": 100,
-    "timeToBoil_s": 480, "cooling": "ice", "afterBoil": "hold",
-    "waterLitres": 1.5, "eggCount": 2
+    "startMode": "hot", "eggStart_C": 4, "eggFrom": "fridge", "ambient_C": 20,
+    "boiling_C": 100, "timeToBoil_s": 480, "timeToBoilFrom": "remembered",
+    "cooling": "ice", "afterBoil": "hold", "waterLitres": 1.5, "eggCount": 2
   },
   "level": 0.22,
-  "recommended_s": 399, "nudge_s": -6, "pulled_s": 412, "cooled_s": 180,
-  "yolk": -1, "white": null,
+  "recommended_s": 399, "nudge_s": 0, "pulled_s": 412, "pulledBy": "cook",
+  "cooled_s": 180,
+  "yolk": -1, "white": null, "whiteOffered": true,
   "probe": null,
   "lang": "en", "register": "modern", "units": "metric"
 }
 ```
 
-- `yolk` and `white` are each an answer or `null`. `null` means the question was
-  on screen and the cook moved on; a record with both `null` is still a record,
-  because the cook, the recommendation and the actual pull time are data too.
+- `yolk` and `white` are each an answer or `null`, and a record with both
+  `null` is still a record, because the cook, the recommendation and the actual
+  pull time are data too. An egg finished and never answered about is logged
+  when the cook starts again.
+- **The white has three states, not two.** Until E2 the model decides whether to
+  ask (`shouldAskAboutWhite`), so `null` alone would not tell "not asked" from
+  "asked and skipped". `whiteOffered` says which: `false`/`null` is not asked,
+  `true`/`null` is skipped, `true` with an answer is answered. An answer with
+  `whiteOffered: false` is refused by the loader. In E2 the white is always
+  offered and `whiteOffered` becomes redundant; it stays, so old records read
+  the same.
+- `pulled_s` is when the cook said the egg came out, not when the alarm went -
+  the tap out of PULL ("they're in the ice bath", "they're out"). When nobody
+  taps and the 20 s grace runs out, `pulledBy` is `timeout` and `pulled_s` is
+  the SCHEDULED time: an assumption, marked as one, not a measurement. The
+  iOS app has no action out of PULL - its phase is derived from the clock - so
+  every iOS record is `timeout` until it grows a button (which needs words, so
+  F1 first).
+- `recommended_s` is what the solver said; `nudge_s` is what the app added on
+  purpose (E8; zero until then). **E1 scores the likelihood at
+  `recommended_s + nudge_s`, exactly as before**, and does not use `pulled_s`:
+  using it is a model change, and model changes are E2's, made once, by replay.
+  `recommended_s` and `prior` make the policy that produced the cook part of the
+  record, so a later fit knows why the data lies where it does.
+- `massFrom` (`scale` / `girth` / `width` / `class`) sets the egg-level noise: a
+  size class is a 10 g bucket, worth about +-24 s, which is twice the width of
+  "just right". `sizeTable` (`eu` / `us`) says whose carton a class came off,
+  because the same class is 68 g in one table and 60.2 g in the other; it is
+  `null` for anything measured. On iOS the slider is a scale and the menu is a
+  class.
+- `timeToBoil_s` is the time to boil the solve used, and `timeToBoilFrom` says
+  where it came from: `measured` (this cook's own boil tap - every finished cold
+  start, since neither app leaves HEATING without it), `remembered` (the pan on
+  file) or `default` (no pan ever measured). A hot start never times its pan,
+  and with the heat off that number is today the pan's whole cooling curve; when
+  the standing method's pan constant is re-derived from the water volume, this
+  is what says which cooks leaned on the old derivation.
+- `ambient_C` is recorded rather than re-derived from the egg's start
+  temperature, so a change to that rule cannot quietly change a replay.
 - `lang`, `register` and `units` record what the cook READ, because an answer
   is a word and words differ: "soft" may not sit where *weich* does, and "Unset"
   in the English of 1750 may not be answered like "Runny". `LANGUAGE.md` §5-6.
+  Constant (`en`, `modern`, `metric`) until F1 and F3 give them values.
+- A day, not a timestamp. A boiling point, not an altitude or a place:
+  `boiling_C` is a one-to-one function of the altitude setting, so it carries
+  everything the altitude would, and the altitude itself is not recorded.
+- `uid` is `null` until E6 mints one. `mass_g` is rounded to 0.01 g.
 
-- `massFrom` (scale / girth / width / class) sets the egg-level noise: a size
-  class is a 10 g bucket, worth about +-24 s, which is twice the width of "just
-  right".
-- `pulled_s` is when the cook actually said the egg came out, not when the alarm
-  went. The alarm being ignored for forty seconds is the commonest way a cook
-  differs from the recommendation, and the app already knows both times.
-- `recommended_s` and `prior` make the policy that produced the cook part of the
-  record, so a later fit knows why the data lies where it does.
-- A day, not a timestamp. A boiling point, not an altitude or a place.
+**The posterior is a function of the log.** Both apps fold an egg FROM ITS
+RECORD - the egg rebuilt from `mass_g`, the pan from `setup`, the target from
+`level` - through the same two calls `replay` makes, so a posterior rebuilt from
+the log is bit-identical to the one built egg by egg, by construction. Each egg's
+dose surface is centred on the posterior as it stood before that egg, on the
+literature values while no egg has taught anything, exactly as `recordOutcome`
+did. The stored posterior is a cache of that replay, written at full precision
+(a cache that rounds is one a replay can never match) with a count of how many
+records it has absorbed; an answer is written to the log BEFORE its surface is
+built, so an app killed mid-fold folds it on the next launch instead of losing
+it.
+
+**The frozen base.** The owner's v2 posterior was learned from real eggs with no
+log behind it. It is kept, not discarded: on first load it becomes the BASE, and
+the posterior is `replay(base, log)`. A base cannot be replayed, so it cannot
+survive a change to the likelihood - **it is dropped at the next one (E2)**,
+which starts from the prior and replays the log alone. That is the price of the
+eggs before E1 not having been kept, and it is paid once.
+
+**Damage is refused, never read around.** A damaged posterior is rebuilt from
+the base and the log. A damaged log - one bad record refuses the lot, because a
+hole would change what every later egg is scored against - cannot be folded, but
+what it taught is in the posterior, which is sound, so the posterior becomes the
+new base and the log starts again empty. "Forget everything" clears the log, the
+base and the posterior together.
+
+**Version skew.** The web app deploys on push and the iOS app ships when a build
+does, so every record carries `appVersion` and a loader accepts any of them under
+`v: 1`. Within v1, fields may be ADDED but never removed or reinterpreted: a
+loader ignores fields it does not know, and the nullable fields (`uid`,
+`egg.sizeTable`, `yolk`, `white`, `probe`) may be absent and read as `null`. A
+new field must say what its absence means. A different `v` is refused.
 
 ## 5. The thermometer
 
@@ -213,7 +288,7 @@ that fail the schema, are physically absurd, or arrive faster than eggs cook.
 it: ids are free, so many plausible, consistently biased cooks can be minted.
 What bounds the damage:
 
-- heavy-tailed (Student-t) cook and kitchen effects, so a biased cluster is
+- heavy-tailed (Student-t) cook effects, so a biased cluster is
   absorbed as outlying cooks rather than moving the mean;
 - App Attest on iOS, which proves a genuine copy of the app without saying whose.
   The web app has no equivalent, and it contributes anyway, at a lower weight
@@ -294,13 +369,13 @@ faster. You can turn it off, and delete what you sent, whenever you like."*
 
 - **Offline, in Python** (NumPyro or Stan), outside `src/core/` and its
   no-dependency rule. HMC over the 2-4 global parameters and the hyperpriors,
-  cook and kitchen effects marginalised or fitted by Laplace once there are too
+  cook effects marginalised or fitted by Laplace once there are too
   many to sample.
 - **An emulator, not the solver**, in the likelihood: the dose grid is already
   one, in two dimensions. It needs the time-scale, size, start temperature,
   cooling and start mode, and gradients.
 - **It publishes one small file**, `fixtures/population.json`: global posterior
-  means and covariance, and the hyperpriors for cook and kitchen effects. Both
+  means and covariance, and the hyperpriors for cook effects. Both
   apps read it as the prior, under the conformance suite like every other
   fixture.
 - **Validation is predictive calibration on held-out cooks**: when the model says
@@ -337,3 +412,33 @@ faster. You can turn it off, and delete what you sent, whenever you like."*
 5. **"Tender" stands, for now.** Slightly odd, not pathological, and no picture
    could do better. Revisit if real cooks stumble on it; the record will show
    whether the middle answer is being used.
+
+### Decided by the owner, 26 September 2026
+
+6. **Eggs from before E1 are dropped at E2, not backfilled.** E1 keeps the
+   pre-log posterior as a frozen base. The new likelihood cannot replay it, so
+   E2 starts from the prior plus E1's log, and the base goes.
+7. **The loss ratio is 3.** A runny white counts as three times as bad as a
+   yolk one step too firm (§8). It is a constant for now, and a per-cook
+   slider only if someone asks for one.
+8. **The odds are always on screen, and brief**: *"7/10 eggs hit the mark"*.
+   "Hit the mark" means the posterior predictive probability that the white is
+   not runny AND the yolk would be answered "just right". It is rounded to
+   tenths, because more precision than that is not there.
+9. **"Still learning" goes when the 80% interval on the cook time narrows
+   below about +-15 s**, which is about the width of "just right". If that
+   proves fiddly to compute or to make stable, fall back to a fixed number of
+   eggs. The owner's view is that cooks will barely notice the difference, so
+   the threshold is preferred but not worth a fight.
+10. **No kitchens.** Pans and hobs vary within a kitchen, and nobody maintains
+    profiles, so the kitchen level folds into the cook (§2).
+11. **The standing method's pan constant comes from the water volume, not
+    the boil time.** Deriving it from the boil time, with `RAMP_R` fixed, reads
+    the HOB as the pan. A hob twice as strong as assumed makes the app believe
+    the pan cools about 2.2 times faster than it does, and a weak one about 2.7
+    times slower. The replacement is anchored so that Williams' 17-minute
+    method (a 480 s boil, 2 L) is unchanged, and scaled by volume. Lid and pan
+    material become a per-cook scale, learned only from standing cooks.
+    Nobody is asked to time an empty pan: the only timed boil left is a cold
+    start's, where the eggs are already in.
+
