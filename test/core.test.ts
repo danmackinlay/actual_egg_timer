@@ -23,11 +23,13 @@ import { eggFromMass, eggFromMinorDiameter, diffusionTime } from '../src/core/ge
 import {
   createDose, accumulateDose, holdTimeForDose, zFromActivationEnergy,
 } from '../src/core/kinetics.js';
-import { CookSetup } from '../src/core/protocol.js';
+import { CookSetup, bathTemperature, panTimeConstant } from '../src/core/protocol.js';
 import {
   simulate, solveCookTime, donenessFromSlider, sliderFromYolkDose, DEFAULT_PARAMS,
 } from '../src/core/solve.js';
-import { H_EFF, Z_YOLK, TREF_YOLK_C, YOLK_RADIUS_FRAC } from '../src/core/constants.js';
+import {
+  H_EFF, Z_YOLK, TREF_YOLK_C, YOLK_RADIUS_FRAC, TAU_STANDING_REF_S,
+} from '../src/core/constants.js';
 
 // --------------------------------------------------------------------------
 // shared fixtures
@@ -437,25 +439,25 @@ test('15a. with the heat off the water falls, and the dose saturates', () => {
   );
 });
 
-test('15b. a pan that boiled fast cannot stand its way to hard', () => {
+test('15b. a small pan cannot stand its way to hard', () => {
   const hard = donenessFromSlider(1.0);
-  // Time to boil is the only measurement of the pan's heat capacity there is:
-  // a four-minute boil is a pan that was never holding much heat.
-  const fast = solveCookTime(
+  // Same hob, same eight-minute ramp: only the water differs. A litre holds
+  // too little heat to finish the yolk once the burner is off; three do.
+  const small = solveCookTime(
     EU_LARGE,
-    setupOf({ startMode: 'cold', afterBoil: 'off', timeToBoil_s: 240, cooling: 'ice' }),
+    setupOf({ startMode: 'cold', afterBoil: 'off', timeToBoil_s: 480, waterLitres: 1, cooling: 'ice' }),
     DEFAULT_PARAMS, hard,
   );
-  assert.equal(fast.reachable, false, 'hard should be out of reach after a fast boil');
-  assert.ok(fast.hardestLevel < 1, `hardestLevel should be capped, got ${fast.hardestLevel}`);
+  assert.equal(small.reachable, false, 'hard should be out of reach in a litre');
+  assert.ok(small.hardestLevel < 1, `hardestLevel should be capped, got ${small.hardestLevel}`);
 
-  const slow = solveCookTime(
+  const big = solveCookTime(
     EU_LARGE,
-    setupOf({ startMode: 'cold', afterBoil: 'off', timeToBoil_s: 600, cooling: 'ice' }),
+    setupOf({ startMode: 'cold', afterBoil: 'off', timeToBoil_s: 480, waterLitres: 3, cooling: 'ice' }),
     DEFAULT_PARAMS, hard,
   );
-  assert.equal(slow.reachable, true, 'a ten-minute boil has heat to spare');
-  close(slow.hardestLevel, 1, 1e-9, 'nothing is capped when the target is reachable');
+  assert.equal(big.reachable, true, 'three litres have heat to spare');
+  close(big.hardestLevel, 1, 1e-9, 'nothing is capped when the target is reachable');
 });
 
 test('15c. holding the boil is never capped at the hard end', () => {
@@ -466,12 +468,13 @@ test('15c. holding the boil is never capped at the hard end', () => {
 });
 
 test('15d. a pan with too little heat never sets the white at all', () => {
-  // Four minutes to the boil is a small pan on a strong burner: almost no heat
-  // stored, and with the burner off the water is past the white's own target
-  // within minutes. There is no cook time to offer here, at any doneness.
+  // Four fridge-cold eggs into a litre at the boil, then the burner off: the
+  // eggs take a bite out of the only heat there is, and the water is past the
+  // white's own target within minutes. There is no cook time to offer here, at
+  // any doneness.
   const sol = solveCookTime(
     EU_LARGE,
-    setupOf({ startMode: 'cold', afterBoil: 'off', timeToBoil_s: 240, waterLitres: 2, eggCount: 2 }),
+    setupOf({ startMode: 'hot', afterBoil: 'off', waterLitres: 1, eggCount: 4 }),
     DEFAULT_PARAMS, donenessFromSlider(0.41),
   );
   assert.equal(sol.whiteSets, false, 'the white should never set');
@@ -485,10 +488,40 @@ test('15d. a pan with too little heat never sets the white at all', () => {
 
   const generous = solveCookTime(
     EU_LARGE,
-    setupOf({ startMode: 'cold', afterBoil: 'off', timeToBoil_s: 600, waterLitres: 2, eggCount: 2 }),
+    setupOf({ startMode: 'hot', afterBoil: 'off', waterLitres: 6, eggCount: 2 }),
     DEFAULT_PARAMS, donenessFromSlider(0.41),
   );
-  assert.equal(generous.whiteSets, true, 'a ten-minute boil has heat to spare');
+  assert.equal(generous.whiteSets, true, 'six litres and two eggs have heat to spare');
+});
+
+test('15e. with the heat off the pan cools at a rate set by the water, not the hob', () => {
+  // Anchored so Williams' 8-minute boil in 2 L is exactly what the old
+  // boil-time rule gave, and scaled as the cube root of the volume.
+  close(panTimeConstant(2), 480 / Math.log(1.5), 1e-9, 'the 2 L anchor');
+  close(panTimeConstant(2), TAU_STANDING_REF_S, 1e-9, 'the anchor is the constant');
+  close(panTimeConstant(16), 2 * panTimeConstant(2), 1e-9, 'eight times the water, twice the tau');
+
+  // Cold start: once the heat is off, a fast hob and a slow one leave the same
+  // pan cooling at the same rate. Ten minutes after the boil, same water.
+  const fast = setupOf({ startMode: 'cold', afterBoil: 'off', timeToBoil_s: 240 });
+  const slow = setupOf({ startMode: 'cold', afterBoil: 'off', timeToBoil_s: 720 });
+  close(
+    bathTemperature(EU_LARGE, fast, 240 + 600), bathTemperature(EU_LARGE, slow, 720 + 600),
+    1e-9, 'the hob has dropped out of the cooling',
+  );
+
+  // Hot start: the boil is never timed, so a remembered one - possibly another
+  // pan's - must not move the answer at all.
+  const level = donenessFromSlider(0.41);
+  const remembered = (boil_s: number) => solveCookTime(
+    EU_LARGE,
+    setupOf({ startMode: 'hot', afterBoil: 'off', timeToBoil_s: boil_s, waterLitres: 6, eggCount: 2 }),
+    DEFAULT_PARAMS, level,
+  );
+  const a = remembered(240);
+  const b = remembered(1440);
+  assert.equal(a.result.cookTime_s, b.result.cookTime_s, 'a hot start ignores the remembered boil');
+  assert.equal(a.hardestLevel, b.hardestLevel);
 });
 
 // --------------------------------------------------------------------------

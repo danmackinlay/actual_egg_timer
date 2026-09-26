@@ -5,7 +5,8 @@
 
 import {
   RAMP_R, TAU_AIR, T_ICE_BATH_C, T_COLD_TAP_C,
-  TAU_DIP_RECOVERY, TAU_STANDING_SCALE, C_WATER, C_EGG, TAU_PLUNGE,
+  TAU_DIP_RECOVERY, TAU_STANDING_SCALE, TAU_STANDING_REF_S, STANDING_REF_LITRES,
+  STANDING_VOLUME_EXPONENT, C_WATER, C_EGG, TAU_PLUNGE,
 } from './constants.js';
 import { Egg } from './geometry.js';
 
@@ -35,13 +36,16 @@ export interface CookSetup {
   /** Boiling point at the user's altitude, C. */
   boiling_C: number;
   /** Measured time for the pan to reach a full rolling boil, s. On a cold
-   *  start it is how long the ramp lasts. With the heat off it also sets the
-   *  pan's loss time constant (see panTimeConstant), on either start - it is
-   *  the only measurement of the pan there is. */
+   *  start it is how long the ramp lasts, and that is all it is used for. A hot
+   *  start carries the remembered value (the record says where it came from)
+   *  but nothing in the physics reads it. It used to set the heat-off pan's
+   *  loss time constant too; that measured the hob, not the pan, and now comes
+   *  from the water volume (see panTimeConstant). */
   timeToBoil_s: number;
   cooling: Cooling;
   /** Water volume, litres. Sets how far the water dips when eggs go in, and -
-   *  with the heat off - how long the pan holds its temperature. */
+   *  with the heat off - how long the pan holds its temperature
+   *  (see panTimeConstant). */
   waterLitres: number;
   /** Burner after the boil. Omitted means 'hold', which is what every recipe
    *  assumes without saying so. */
@@ -96,21 +100,26 @@ export function dipMagnitude(egg: Egg, setup: CookSetup): number {
 }
 
 /**
- * The pan's Newtonian loss time constant, seconds.
+ * The pan's Newtonian loss time constant with the heat off and the lid on,
+ * seconds, from the water volume alone:
  *
- * tau = m*c/(U*A) is the same quantity that shapes the ramp, so the user's one
- * measurement - time to a rolling boil - already contains it:
+ *   tau(V) = TAU_STANDING_SCALE * TAU_STANDING_REF_S * (V / 2 L)^(1/3)
  *
- *   T(t) = Tamb + r*(Tboil - Tamb)*(1 - exp(-t/tau))  reaches Tboil at
- *   t_boil = tau * ln(r/(r-1))
+ * tau = m*c/(U*A): the heat held goes as the volume, the surface it leaks
+ * through as V^(2/3) for similar-shaped pans. The reference is pinned so that
+ * Williams' 17-minute method in 2 L is exactly what it was.
  *
- * It therefore scales with water volume without being told to, which is the
- * whole reason the standing method works in a stockpot and not in a milk pan.
- * TAU_STANDING_SCALE holds open the question of whether the constant is really
- * the same with the burner off and a lid on; see constants.ts.
+ * It used to be the time to boil over ln(r/(r-1)). That is the same tau only
+ * if the hob's overshoot ratio r is known, and r is the HOB, not the pan: a
+ * strong hob read as a pan that cooled about 2.2 times too fast. It also meant
+ * a hot start, which never times the boil, cooled at the rate of whatever pan
+ * was remembered. Neither is true of this one; the time to boil now shapes the
+ * cold-start ramp and nothing else. See constants.ts for what is judgement.
  */
-export function panTimeConstant(timeToBoil_s: number): number {
-  return TAU_STANDING_SCALE * timeToBoil_s / Math.log(RAMP_R / (RAMP_R - 1.0));
+export function panTimeConstant(waterLitres: number): number {
+  if (!(waterLitres > 0.0)) return 0.0;
+  return TAU_STANDING_SCALE * TAU_STANDING_REF_S
+    * Math.pow(waterLitres / STANDING_REF_LITRES, STANDING_VOLUME_EXPONENT);
 }
 
 /**
@@ -123,9 +132,9 @@ export function panTimeConstant(timeToBoil_s: number): number {
  * heat instead of one that does not.
  */
 export function standingTemperature(
-  elapsedSinceOff_s: number, from_C: number, ambient_C: number, timeToBoil_s: number,
+  elapsedSinceOff_s: number, from_C: number, ambient_C: number, waterLitres: number,
 ): number {
-  const tau = panTimeConstant(timeToBoil_s);
+  const tau = panTimeConstant(waterLitres);
   if (!(tau > 0.0)) return from_C;
   return ambient_C + (from_C - ambient_C) * Math.exp(-elapsedSinceOff_s / tau);
 }
@@ -183,7 +192,7 @@ export function bathTemperature(egg: Egg, setup: CookSetup, t_s: number): number
     }
     if (!standing) return setup.boiling_C;
     return standingTemperature(
-      t_s - setup.timeToBoil_s, setup.boiling_C, setup.ambient_C, setup.timeToBoil_s,
+      t_s - setup.timeToBoil_s, setup.boiling_C, setup.ambient_C, setup.waterLitres,
     );
   }
   // Hot start: the water is already boiling but dips when the eggs go in.
@@ -194,7 +203,7 @@ export function bathTemperature(egg: Egg, setup: CookSetup, t_s: number): number
   // pan size than a boiling one - the same eggs take a bite out of the only
   // heat left in the room.
   if (!standing) return setup.boiling_C - dip * Math.exp(-t_s / TAU_DIP_RECOVERY);
-  return standingTemperature(t_s, setup.boiling_C - dip, setup.ambient_C, setup.timeToBoil_s);
+  return standingTemperature(t_s, setup.boiling_C - dip, setup.ambient_C, setup.waterLitres);
 }
 
 /** Water temperature at the moment the egg goes in - the sphere's initial

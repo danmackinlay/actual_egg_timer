@@ -32,11 +32,12 @@ public struct CookSetup: Sendable, Codable, Equatable {
     /// Boiling point at the user's altitude, C.
     public var boilingC: Double
     /// Measured time to a full rolling boil, s. On a cold start it is how long
-    /// the ramp lasts. With the heat off it also sets the pan's loss time
-    /// constant - it is the only measurement of the pan there is.
+    /// the ramp lasts, and that is all it is used for. A hot start carries the
+    /// remembered value, but nothing in the physics reads it.
     public var timeToBoilS: Double
     public var cooling: Cooling
-    /// Water volume, litres.
+    /// Water volume, litres. Sets the dip when eggs go in and, with the heat
+    /// off, how long the pan holds its temperature (see panTimeConstant).
     public var waterLitres: Double
     /// Burner after the boil. The TypeScript leaves this optional and treats
     /// absent as `hold`; here the default does the same job.
@@ -88,18 +89,22 @@ public enum Protocols {
         return eggCapacity * (setup.boilingC - setup.eggStartC) / total
     }
 
-    /// The pan's Newtonian loss time constant, s - the same quantity that
-    /// shapes the ramp, so the measured time to boil already contains it.
-    public static func panTimeConstant(_ timeToBoilS: Double) -> Double {
-        Constants.tauStandingScale * timeToBoilS / log(Constants.rampR / (Constants.rampR - 1.0))
+    /// The pan's Newtonian loss time constant with the heat off and the lid
+    /// on, s, from the water volume alone:
+    /// tau(V) = scale * tauRef * (V / 2 L)^(1/3). It used to come from the
+    /// time to boil, which measures the hob, not the pan.
+    public static func panTimeConstant(_ waterLitres: Double) -> Double {
+        if !(waterLitres > 0.0) { return 0.0 }
+        return Constants.tauStandingScale * Constants.tauStandingRefS
+            * pow(waterLitres / Constants.standingRefLitres, Constants.standingVolumeExponent)
     }
 
     /// Water temperature once the heat is off: Newtonian cooling of the pan
     /// toward the room, starting from `fromC`.
     public static func standingTemperature(
-        elapsedSinceOffS: Double, fromC: Double, ambientC: Double, timeToBoilS: Double
+        elapsedSinceOffS: Double, fromC: Double, ambientC: Double, waterLitres: Double
     ) -> Double {
-        let tau = panTimeConstant(timeToBoilS)
+        let tau = panTimeConstant(waterLitres)
         if !(tau > 0.0) { return fromC }
         return ambientC + (fromC - ambientC) * exp(-elapsedSinceOffS / tau)
     }
@@ -143,7 +148,7 @@ public enum Protocols {
             if !standing { return setup.boilingC }
             return standingTemperature(
                 elapsedSinceOffS: tS - setup.timeToBoilS, fromC: setup.boilingC,
-                ambientC: setup.ambientC, timeToBoilS: setup.timeToBoilS
+                ambientC: setup.ambientC, waterLitres: setup.waterLitres
             )
         }
         // Hot start: already boiling, but it dips when the eggs go in.
@@ -155,7 +160,7 @@ public enum Protocols {
         }
         return standingTemperature(
             elapsedSinceOffS: tS, fromC: setup.boilingC - dip,
-            ambientC: setup.ambientC, timeToBoilS: setup.timeToBoilS
+            ambientC: setup.ambientC, waterLitres: setup.waterLitres
         )
     }
 
