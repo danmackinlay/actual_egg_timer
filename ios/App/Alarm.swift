@@ -68,15 +68,15 @@ final class Alarm: NSObject, UNUserNotificationCenterDelegate {
 
         request(
             id: pullID, at: pullAt,
-            title: "Eggs out — now",
-            body: "Straight into the cooling, or the yolk keeps cooking."
+            title: tr("alarm.pull.title"),
+            body: tr("alarm.pull.body")
         )
 
         if let coolDoneAt {
             request(
                 id: coolID, at: coolDoneAt,
-                title: "Cooling done",
-                body: "The carryover is over. That is the egg you asked for."
+                title: tr("alarm.cooled.title"),
+                body: tr("alarm.cooled.body")
             )
         }
     }

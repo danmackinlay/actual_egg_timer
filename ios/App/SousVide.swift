@@ -73,12 +73,11 @@ func sousVideCopy(_ est: SousVideEstimate, now: Date) -> SousVideCopy {
             startPhrase(daysAgo: daysBefore(start, now)),
             ["weekday": .text(weekdayFormatter.string(from: start))]
         ),
-        subline: "at \(clockFormatter.string(from: start)) — \(duration) at \(bath)°C, to eat now",
-        note: est.whiteBound ? "white still not set, yolk creamy" : "yolk set, white still not",
-        warn: "A \(bath)°C bath is below the temperature at which egg white sets — "
-            + "only one of its proteins reacts down here — so the white stays loose "
-            + "however long you leave it. This app was built for boiling water and is "
-            + "out of its depth below 60°C anyway. Use the pan.",
-        hint: "nothing to start — you are \(duration) late"
+        subline: tr("sousvide.subline", [
+            "clock": .text(clockFormatter.string(from: start)), "duration": .text(duration), "bath": .text(bath),
+        ]),
+        note: tr(est.whiteBound ? "sousvide.note.whiteBound" : "sousvide.note.yolkBound"),
+        warn: tr("sousvide.warn", ["bath": .text(bath)]),
+        hint: tr("sousvide.hint", ["duration": .text(duration)])
     )
 }
