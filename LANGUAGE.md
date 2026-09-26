@@ -87,7 +87,7 @@ Two tests run against that fixture:
 Numbers, times and dates go through the platform's formatters:
 `Intl.NumberFormat` and `Intl.DateTimeFormat` on the web, `FormatStyle` on iOS.
 The fixture pins the result for each locale, so a formatter disagreement shows
-up as a failing test and not as a surprise in a German kitchen.
+up as a failing test and not as a surprise in a Czech kitchen.
 
 ## 3. The wording, reviewed
 
@@ -158,30 +158,70 @@ the cook edits it, which is the trick the web's measurement fields already use.
 
 - **Every temperature on screen carries its unit.** A bare "°" goes, including
   in the preset labels.
-- **Size classes follow the region, not the unit.** "Large — 68 g" is an EU
-  Large. An American Large is about 57 g, so relabelling it "Large — 2.4 oz"
-  would put the wrong name on the wrong egg for exactly the cook who switched.
-  In the US the classes become the ones printed on the carton (Medium 49.6 g,
-  Large 56.7 g, Extra large 63.8 g, Jumbo 70.9 g, from the per-dozen minimums),
-  and the rest of the world keeps the EU ones. README §6 already warns about
-  this confusion. The app should take its own advice.
+- **Size classes follow the region, not the unit or the language.** Decided 26
+  September: region `US` gets the classes printed on an American carton, and
+  everywhere else keeps the EU ones. The difference is large. USDA defines each
+  class by a minimum weight per dozen (Small 18 oz, Medium 21, Large 24, Extra
+  large 27, Jumbo 30), and a class runs from its own minimum up to the next one.
+  The app should use the midpoint of that range, not the minimum. Cook times
+  below are for jammy, fridge-cold, into boiling water, then an ice bath:
+
+  | class | US range, g per egg | US midpoint | EU mass in the app | jammy, US | jammy, EU | gap |
+  |---|---|---|---|---|---|---|
+  | Small | 42.5-49.6 | 46.1 | 48 | 6:02 | 6:12 | 10 s |
+  | Medium | 49.6-56.7 | 53.2 | 58 | 6:38 | 7:01 | 23 s |
+  | Large | 56.7-63.8 | 60.2 | 68 | 7:11 | 7:45 | 34 s |
+  | Extra large | 63.8-70.9 | 67.3 | 76 | 7:42 | 8:19 | 37 s |
+  | Jumbo | 70.9 and up | ~74 | - | 8:13 | - | - |
+
+  Near 60 g, a gram is worth 4.4 s. An American Large is therefore half a
+  minute from an EU Large, which is three times the width of "just right". The
+  app's default egg is an EU Large, so **every American who has not weighed an
+  egg is being overcooked by about 34 s today**, in metric or Imperial alike.
+  That makes this a correctness fix that happens to sit in the localisation
+  phase. It is not a nicety.
+
+  Two details:
+
+  - Jumbo has no upper limit, so its 74 g is a guess. The US has no class
+    between Extra large and Jumbo that the EU would call XL.
+  - README §6 already warns about exactly this confusion, and the app should
+    take its own advice.
 - **The record stays SI.** The record in `INFERENCE.md` §4 does not care what
   the cook saw. It gains `units` only so that the fit can check whether
   rounding at input shows up in the residuals.
 
 ## 5. Languages
 
-**The first one.** Build the machinery with English. Then add one language
-chosen to stress the machinery before any language is chosen for reach. German
-is the recommendation:
+**The first one is Czech**, decided on 26 September. A friend of the owner will
+review it. Czech is a harder test of the machinery than German would have been,
+in three ways:
 
-- long compounds, which will test the length budget
-- the decimal comma
-- its own egg vocabulary: *wachsweich* is a word for jammy that English does not
-  have
+- **It has four plural categories, one of them for fractions.** `Intl` gives
+  `one` for 1, `few` for 2-4, `other` for 0, 5, 21 and 22, and `many` for 1.5.
+  So "1 vejce", "3 vejce", "5 vajec", and a fourth form for a fractional count.
+  A catalogue that only knows *one* and *other* fails on the first egg count.
+  The fixture should include 1.5 litres and 2.5 minutes.
+- **It has seven cases, and this matters most.** A message of the form
+  "{wanted} isn't reachable … Softest here is {limit}" inserts a doneness word
+  into the middle of a sentence. In Czech that word would need declining to fit
+  its slot, and a placeholder cannot do that. Declension tables per placeholder
+  would work, but they would be a machine built for one language. So there is a
+  **rule for every language**: **an inserted word always stands alone, in its
+  dictionary form**, after a colon or as a label, never inside running grammar.
+  "Nejměkčí možné: {limit}" works in every language. F2 rewrites the five
+  refusal messages to that shape, in English too.
+- **It uses the decimal comma, a space as the thousands separator, and a
+  24-hour clock.** `Intl` gives "1 234,5" and "15:05", and Foundation must
+  agree, which the fixture pins.
 
-**Doneness words are not translated. They are matched.** *Weich*, *mollet*,
-*jammy* and *soft* are culturally placed, not synonyms. Each language picks its
+**Its egg vocabulary is its own.** *Na měkko*, *na hniličku* and *natvrdo* are
+phrases, not adjectives, and *na hniličku* ("slightly soft-set") is a Czech place
+on the scale that English has no word for. The reviewer places them. Neither
+the machine drafting the Czech nor this file does.
+
+**Doneness words are not translated. They are matched.** *Na hniličku*,
+*mollet*, *jammy* and *soft* are culturally placed, not synonyms. Each language picks its
 own words for the five anchors, and the anchors stay at the same dose. The
 per-cook taste offset absorbs the remaining difference for each cook. Pooled
 data can then show whether "soft" in one language sits somewhere else on the
@@ -291,7 +331,7 @@ than delivered.
    by region, and a unit on every temperature.
 4. **F4, locale formatting.** Numbers, plurals, the 12- or 24-hour clock, and
    weekday names.
-5. **F5, German**, reviewed by a native speaker.
+5. **F5, Czech**, reviewed by the owner's friend.
 6. **F6, 1750.** It comes last because it needs F1's catalogue, F3's setting and
    F2's settled modern wording to shadow.
 
@@ -311,11 +351,12 @@ Taken by the owner, 26 September 2026:
   requests come as pull requests. No choice in this file is made or unmade on
   the grounds that it will generate questions.
 
+- **Czech is the first language after English**, and a friend of the owner
+  reviews it (§5).
+- **US carton classes in region `US`** (§4). Measured, the gap is 34 s at
+  Large, so this is a correctness fix for Americans in either unit system.
+
 Still open:
 
-- **The first language after English.** German is recommended as the stress
-  test. Choose differently if reach matters more than rigour.
-- **Who reviews the German**, and who reviews the 1750. The second is a question
-  of taste, and it is the owner's.
-- **US carton size classes in the US (§4).** Recommended, because otherwise the
-  unit switch mislabels the egg.
+- **Who reviews the 1750.** It is a question of taste, and presumably the
+  owner's.

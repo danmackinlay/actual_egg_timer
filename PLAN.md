@@ -152,16 +152,24 @@ F1 goes before E2 so that Phase E's new feedback copy is born in the catalogue.
 - [ ] **F2 the rewrite.** Inside the catalogue, one diff for the owner. Known
       offenders listed in `LANGUAGE.md` §3: "carryover", "calibration",
       "literature values", "the model", "standing method", a ±% of nothing,
-      and every bare "°". Runs alongside E2 and E5.
+      and every bare "°". Every inserted word (a doneness name, a limit)
+      moves out of running grammar into a label or after a colon, so Czech
+      never has to decline it. Runs alongside E2 and E5.
 - [ ] **F3 units.** `src/core/units.ts` + Swift twin + fixtures: conversions,
       display precision, input steps, and a round trip that never shows 2.39 oz
       for a typed 2.4. Metric / Imperial setting defaulting from the region;
       an EXPLICIT choice stored apart from the default. Size classes by region
-      (US carton classes in the US). A unit on every temperature.
+      (US carton classes in region US, at the MIDPOINT of each USDA range: an
+      EU Large overcooks an American Large by ~34 s, which every American on
+      the default egg gets today - do this first within F3). A unit on every
+      temperature.
 - [ ] **F4 locale formatting.** Numbers, plurals, 12/24-hour clock, weekday
       names through `Intl` / `FormatStyle`, pinned per locale by the fixture.
-- [ ] **F5 German**, drafted however, shipped only after a native speaker who
-      cooks has read it on screen. Doneness words matched, not translated.
+- [ ] **F5 Czech**, reviewed by the owner's friend before it ships. It tests
+      all four CLDR plural categories (`many` is for fractions: 1,5 vejce),
+      the decimal comma and seven cases. The case problem is why every
+      inserted word stands alone in its dictionary form (`LANGUAGE.md` §5).
+      Doneness words are matched by the reviewer, not translated.
 - [ ] **F6 the English of 1750.** A language code, `<region>-x-1750`: strings
       from `copy/en-x-1750.json`, formats from the region (Intl and Foundation
       both already strip the subtag - `LANGUAGE.md` §6). *English (1750)* in the
@@ -170,8 +178,7 @@ F1 goes before E2 so that Phase E's new feedback copy is born in the catalogue.
       kept. One line under the Imperial option so Americans can find it. Style
       guide and rules in §6.
 
-Owner decisions pending, `LANGUAGE.md` §8: the first language, the reviewers,
-US carton classes.
+Owner decision pending, `LANGUAGE.md` §8: who reviews the 1750.
 
 ---
 
