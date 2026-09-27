@@ -1367,3 +1367,57 @@ checked.
   The owner decided the decimal separator, not the clock.
 - **Safari** was not tried, and neither was any locale with non-ASCII
   digits, which `unpadHour` leaves as the platform wrote them.
+
+## The rest of F2, and the app as "I" (27 September 2026, F2 finished)
+
+Both of `LANGUAGE.md` §3's owner-approved tables, the rest-of-F2 draft and
+the first-person pass, moved into `copy/en.json` and both apps' call sites.
+§3's "As built" has the merges and the five rows held back; this is what was
+checked.
+
+### Verified
+
+- **The rows, against the tables.** A script read each row's key and final
+  column out of `LANGUAGE.md` and compared it to the catalogue: every row
+  matches, except the three keys merged away and the five held back.
+- **Only those strings changed.** `copyLiterals.js --since e1f7068`: 230 keys
+  unchanged, 37 changed, each as `tools/copyDraft.ts` lists (before, after,
+  and which apps name it), and neither app names a key the draft does not
+  say it should. `copySnapshot.js compare --draft`, the web app captured at
+  `e1f7068` and after, 171 states each: 202 distinct strings each side once
+  the draft is applied to the old one; all 18 web-side rewrites were on
+  screen in some state; "Cold pan", "Keep it boiling" and "after boiling"
+  gone as retired, "Cold water", "Keep boiling" and "after the boil" new as
+  drafted; nothing else.
+- **The counts.** `npm test` 188 tests, 187 pass, 0 fail, 1 todo (the known
+  NOT MET in `infer.test.ts` 5b), budgets included. `npm run validate` 28/28.
+  `npm run conformance` 91 Swift tests in 25 suites, all passing, on
+  regenerated fixtures (`fixtures/copy.json` changes only in the strings).
+- **Both apps build.** iOS for the simulator (`xcodegen`, then `xcodebuild`,
+  generic destination, no install; no simulator was booted or touched). The
+  web with `npm run build:site`, and the snapshot harness drove the built app
+  in its own headless Chrome on its own port.
+
+### Things that cost time
+
+- **Four rows do not fit their surfaces.** The budgets in
+  `copy/surfaces.json` were recorded from the old English, and "I've" and
+  "I'll" are longer than "it": "Forget what I've learned" is one character
+  over a button. They stay at their live wording for the owner, with the
+  lengths in §3.
+- **"your pan took {boil} to boil last time" is not what `{boil}` is.** The
+  boil memory blends each new boil half-and-half into the old, and a volume
+  with no memory borrows the nearest one's time, scaled by litres, so the
+  number on screen is often a time the pan never took. Held back.
+- **"after boil" matched inside "after boiling"** when the snapshot proof
+  rewrote the old build's strings, because an unanchored template matched
+  anywhere. It now matches only at word boundaries.
+
+### Not verified
+
+- **Nothing on iOS was run or tapped.** The refusals, the Live Activity's
+  estimate and cooling notes, and the pan lines rest on the build, the
+  catalogue proof and `swift test`'s render fixture, not on a screen.
+- **Whether the new lines fit on a phone** beyond the character budgets:
+  "my guess until you tap Full rolling boil" is 40 against the Dynamic
+  Island's 41, and was not seen in one.

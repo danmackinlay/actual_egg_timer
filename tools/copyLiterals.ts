@@ -5,7 +5,7 @@
  *
  *   npm run build
  *   node dist/tools/copyLiterals.js <base-ref>
- *   node dist/tools/copyLiterals.js --since <ref>
+ *   node dist/tools/copyLiterals.js --since <ref> [draft]
  *
  * The first form is F1's proof, and it held at F1 (40b9efa). It does not hold
  * now, and is not meant to: F2 and F3 changed words on purpose since.
@@ -14,8 +14,9 @@
  * live in the catalogue: both apps, not only iOS. It diffs copy/en.json and the
  * keys each app's source names between <ref> and the working tree, and refuses
  * any difference that is not in tools/copyDraft.ts - so a reviewer reads the
- * intended changes as a list, and nothing else changed. For F2's feedback
- * screens the ref is `DRAFT_BASE`.
+ * intended changes as a list, and nothing else changed. The draft is the one
+ * named, or else the one applied to <ref>, or else the latest: for F2's
+ * feedback screens the ref is cfe38e9, and for the rest of F2 e1f7068.
  *
  * `base-ref` is the last commit before the move (942623d). The web half is
  * tools/copy-snapshot.html, which renders the running app; nothing like that
@@ -51,7 +52,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { Message, parseCatalogue, placeholders, templatesOf } from '../src/core/copy.js';
-import { EXAMPLE_ONLY, FEEDBACK_DRAFT, Templates } from './copyDraft.js';
+import { Templates, draftFor } from './copyDraft.js';
 
 const DIRS = ['ios/App', 'ios/Widget', 'ios/Shared', 'ios/EggTimerCore/Sources/EggTimerCore'];
 
@@ -335,10 +336,11 @@ function keysUsed(ref: string | null, app: string, catalogue: Record<string, Ent
   return used;
 }
 
-function since(ref: string): void {
+function since(ref: string, draftName: string | undefined): void {
+  const draft = draftFor(draftName ?? ref);
   const before = catalogueAt(ref);
   const after = catalogueAt(null);
-  const drafted = new Map(FEEDBACK_DRAFT.map((d) => [d.key, d]));
+  const drafted = new Map(draft.rows.map((d) => [d.key, d]));
   const failures: string[] = [];
   const changed: string[] = [];
   let unchanged = 0;
@@ -353,7 +355,7 @@ function since(ref: string): void {
     const wordsSame = sameTemplates(tb, ta) && appsB === appsA
       && JSON.stringify(b?.['surface']) === JSON.stringify(a?.['surface']);
     if (wordsSame) {
-      if (JSON.stringify(b) !== JSON.stringify(a) && !(key in EXAMPLE_ONLY)) {
+      if (JSON.stringify(b) !== JSON.stringify(a) && !(key in draft.exampleOnly)) {
         failures.push(`${key}: its entry changed outside the words, and no draft says why`);
       }
       unchanged += 1;
@@ -375,7 +377,7 @@ function since(ref: string): void {
     changed.push(`  ${d.row.padEnd(22)} ${key}: ${JSON.stringify(d.before)} -> ${JSON.stringify(d.after)} `
       + `${appsB === appsA ? '' : `(${appsB} -> ${appsA})`}`);
   }
-  for (const d of FEEDBACK_DRAFT) {
+  for (const d of draft.rows) {
     if (!changed.some((c) => c.includes(` ${d.key}:`))) failures.push(`${d.key}: drafted, and not changed`);
   }
 
@@ -394,7 +396,7 @@ function since(ref: string): void {
     }
   }
 
-  console.log(`since ${ref}: ${unchanged} keys unchanged; ${changed.length} changed, each as drafted:`);
+  console.log(`since ${ref}, draft on ${draft.base}: ${unchanged} keys unchanged; ${changed.length} changed, each as drafted:`);
   console.log(changed.join('\n'));
   if (failures.length > 0) {
     console.log(`\n${failures.length} failures:\n${failures.join('\n')}`);
@@ -408,16 +410,16 @@ function since(ref: string): void {
 if (process.argv[2] === '--since') {
   const ref = process.argv[3];
   if (ref === undefined) {
-    console.error('usage: copyLiterals.js --since <ref>');
+    console.error('usage: copyLiterals.js --since <ref> [draft]');
     process.exit(2);
   }
-  since(ref);
+  since(ref, process.argv[4]);
   process.exit(0);
 }
 
 const base = process.argv[2];
 if (base === undefined) {
-  console.error('usage: copyLiterals.js <base-ref> | --since <ref>');
+  console.error('usage: copyLiterals.js <base-ref> | --since <ref> [draft]');
   process.exit(2);
 }
 

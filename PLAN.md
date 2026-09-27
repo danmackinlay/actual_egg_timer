@@ -347,7 +347,8 @@ F1 goes before E2 so that Phase E's new feedback copy is born in the catalogue.
       nothing. The active locale is plumbing (`ACTIVE_LOCALE` in
       `src/ui/copy.ts`, `Copy.activeLocale` in `ios/Shared/Copy.swift`),
       fixed at `en`; the picker arrives with F5, and sets those.
-- [ ] **F2 the rewrite.** Inside the catalogue, one diff for the owner. Known
+- [x] **F2 the rewrite.** DONE 27 September 2026, but for five rows held
+      back (below). Inside the catalogue, one diff for the owner. Known
       offenders listed in `LANGUAGE.md` §3: "carryover", "calibration",
       "literature values", "the model", "standing method", a ±% of nothing,
       and every bare "°". Every inserted word (a doneness name, a limit)
@@ -359,6 +360,20 @@ F1 goes before E2 so that Phase E's new feedback copy is born in the catalogue.
           proofs show nothing else did. Left for the rest of F2: the iOS
           alarm's and Live Activity's "carryover", `learned.forgetExplain`'s
           "posterior", and the heat-off explanation.
+    - [x] **The rest of F2, and the first-person pass**, 27 September: both
+          of LANGUAGE.md §3's owner-approved tables, in both apps. 37 keys
+          changed, each listed in `tools/copyDraft.ts` against `e1f7068`;
+          `copyLiterals.js --since e1f7068` and `copySnapshot.js compare
+          --draft` show nothing else did. Three pairs are now one key each
+          (`controls.start.cold`, `controls.afterBoil.keepBoiling`,
+          `readout.stat.afterBoil`); the refusals no longer take `{wanted}`.
+          **Held back, for the owner:** `alarm.cooled.body` (59 characters,
+          notification body budget 53), `feedback.thanks` (39, label 36),
+          `learned.forget` (24, button 23) and `learned.confirm.title` (25,
+          title 23) are over budget; and `readout.sub.coldAssumes` ("your pan
+          took {boil} to boil last time") would be false, because `{boil}` is
+          a blend of every boil at that volume, or another volume's scaled.
+          Each needs a shorter wording or a raised budget, and a true line.
 - [x] **F3 units.** DONE 27 September 2026. `src/core/units.ts` +
       `Units.swift` + `fixtures/units.json`: conversions, a step and decimals
       per quantity per system, input bounds rounded INWARD to the step, and
@@ -743,7 +758,8 @@ needing a decision:
 4. **Wording:**
    - The E2 feedback draft is live, since that call was made overnight, and
      can still be revised.
-   - The rest-of-F2 draft (LANGUAGE §3) is waiting to go into the catalogue.
+   - The rest-of-F2 draft (LANGUAGE §3) went in on 27 September, but for five
+     rows held back: four over their surfaces' budgets, one untrue. See F2.
    - E4 changed the probe wording from "lowest" to "highest" number, because
      at the moment the centre peaks it is the warmest point. That was a
      physics correction, and it stands unless the owner objects.

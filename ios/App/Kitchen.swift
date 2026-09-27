@@ -968,7 +968,6 @@ actor DecisionGrids {
 /// point is to teach the constraint, not merely to block the control.
 private func refusalText(_ v: Verdict, setup: CookSetup, water: String) -> String {
     guard v.worthSaying else { return "" }
-    let wanted = tr(v.wanted.key).lowercased()
     let limit = tr(v.limit.key).lowercased()
 
     switch v.kind {
@@ -985,17 +984,17 @@ private func refusalText(_ v: Verdict, setup: CookSetup, water: String) -> Strin
         // The standing method's own failure: the pan cools off before the yolk
         // gets where it was asked to go, and no amount of waiting fixes it.
         return tr("refusal.harderThanPan", [
-            "wanted": .text(wanted), "water": .text(water), "limit": .text(limit),
+            "water": .text(water), "limit": .text(limit),
         ])
 
     case .tooSoftForWhite:
         switch setup.cooling {
         case .counter:
-            return tr("refusal.counter", ["wanted": .text(wanted), "limit": .text(limit)])
+            return tr("refusal.counter", ["limit": .text(limit)])
         case .tap:
-            return tr("refusal.tap", ["wanted": .text(wanted), "limit": .text(limit)])
+            return tr("refusal.tap", ["limit": .text(limit)])
         case .ice:
-            return tr("refusal.ice", ["wanted": .text(wanted), "limit": .text(limit)])
+            return tr("refusal.ice", ["limit": .text(limit)])
         }
 
     case .unlikelySoft, .unlikelyHard:

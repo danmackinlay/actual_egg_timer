@@ -321,11 +321,12 @@ tenth of a degree in C or F, and never clamped - a reading the egg could not
 have made is refused with the range it should be in, not silently moved to
 the edge of it (§4).
 
-**Draft for the rest of F2 (everything but the feedback screens), for the
-owner to approve.** Drafted on 27 September while the owner slept, from F1's
-list of strings that fail the criteria above. It is not in the catalogue yet.
-The E2 draft above covers the feedback screens, the pull line and the forget
-dialog. F3 and F4 already fixed the bare "°" and "1 seconds".
+**Draft for the rest of F2 (everything but the feedback screens) -
+IMPLEMENTED 27 September 2026**, in `copy/en.json` and both apps, but for the
+rows held back below. Approved by the owner on 27 September. Drafted on 27
+September while the owner slept, from F1's list of strings that fail the
+criteria above. The E2 draft above covers the feedback screens, the pull line
+and the forget dialog. F3 and F4 already fixed the bare "°" and "1 seconds".
 
 The refusals drop `{wanted}` altogether. The slider already shows it right
 above them, and removing an inserted word is simpler than making it stand
@@ -375,7 +376,8 @@ doing something. Instructions stay imperative. This also matches the 1750
 register, since Johnson's *Preface* is written in the first person (§6), and
 it has a cost in Czech (§5).
 
-These strings are already live and need the same pass:
+These strings are already live and need the same pass. **IMPLEMENTED 27
+September 2026**, with the table above, but for the rows held back below:
 
 | key | live | first person |
 |---|---|---|
@@ -394,6 +396,46 @@ These strings are already live and need the same pass:
 Left as they are: "Still learning your kitchen" (the "I" is implied), "keep
 the app open" (the app is the object there, not the speaker), and "Learned
 from N eggs".
+
+**As built, 27 September.** `tools/copyDraft.ts` lists the 37 keys the two
+tables changed, against `e1f7068`; `copyLiterals.js --since e1f7068` and
+`copySnapshot.js compare --draft` show that nothing else did.
+
+- **One key where two apps now say the same thing.** `controls.start.coldPan`
+  (web) went into `controls.start.cold`, `controls.afterBoil.keepItBoiling`
+  (web) into `controls.afterBoil.keepBoiling`, and `readout.stat.afterBoiling`
+  (web) into `readout.stat.afterBoil`; each survivor now names both apps.
+  `cook.method.cold` and `.hot` say "Cold water" and "Boiling water" too, but
+  stay keys of their own: they are fragments inside "{start} · then
+  {after}", on another surface, where a translation may need another form.
+  The two iOS estimate lines (`readout.sub.heatingEstimate`,
+  `activity.note.estimate`) are likewise one wording on two surfaces.
+- **The refusals take `{limit}` alone**, and `action.hint.cookingStanding`
+  takes nothing; both apps' call sites changed to match. `{limit}` is still
+  lower-cased by the app, which reads correctly after a colon.
+- **Held back: five rows, at their live wording.** Four are longer than their
+  surface's budget in `copy/surfaces.json`, which is not raised for a small
+  surface without the owner; each needs a shorter wording or a raised budget.
+
+  | key | draft | length | budget |
+  |---|---|---|---|
+  | `alarm.cooled.body` | The yolk has stopped cooking. That's the egg you asked for. | 59 | notification body, 53 |
+  | `feedback.thanks` | Thanks. I'll use that for the next egg. | 39 | label, 36 |
+  | `learned.forget` | Forget what I've learned | 24 | button, 23 |
+  | `learned.confirm.title` | Forget what I've learned? | 25 | title, 23 |
+
+  The fifth would be false. `readout.sub.coldAssumes`, "your pan took {boil}
+  to boil last time", is shown whenever any boil is remembered, and `{boil}`
+  is `estimateTimeToBoil`: the remembered time for this volume, which is
+  every boil there blended half-and-half and not the last one, or, when this
+  volume has none, the nearest remembered volume's time scaled by litres,
+  which the pan never took. The live "assumes {boil} to a rolling boil"
+  stays until the owner rewords it.
+- **`pan.measured` is not quite true either, but no less than before.** "From
+  your earlier boils with this much water" is shown whenever any boil is
+  remembered, including when the time on screen was scaled from another
+  volume. The line it replaced ("Measured on this pan at this volume") had
+  the same fault, so it went in, and the case is noted here.
 
 **Strings that are about to change anyway.** Phase E rewrites the feedback copy:
 three white answers, every answer optional, "still learning" beside the time, and
