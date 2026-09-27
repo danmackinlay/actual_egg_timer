@@ -1617,3 +1617,42 @@ foreground `willPresent` already plays its sound. Both strings are unchanged.
   the same for all three and the tests cover each.
 - **Touch to stop** was not tapped. Neither was the authorised path, where
   the app should ring nothing.
+
+## The web redesign (27 September 2026)
+
+UI.md's layout, web only: two controls and a sentence, a Kitchen page, a Help
+page, one (i) component, and the owner's wording rules of the same day.
+UI.md section 8 is the as-built; LANGUAGE.md section 3 lists the strings.
+Core is unchanged.
+
+### Verified
+
+- `npm test` (200 tests: 199 pass, the known todo), `npm run validate`
+  (28/28), `npm run conformance` (96 Swift tests, with `fixtures/copy.json`
+  regenerated for the new keys; no other fixture moved).
+- `copyLiterals.js --since 80799d0 redesign`: every key that changed is in
+  the draft, and each app names what the draft says. `copySnapshot.js compare
+  --draft redesign` against a capture of `80799d0` (171 states before, 172
+  after): only the drafted strings changed.
+- Driven in headless Chrome at 390 x 844 over DevTools, `Date.now` frozen and
+  stepped: a fresh install; each clause of the sentence, including a weighed
+  egg, a custom temperature, sous-vide and back; the Kitchen and back, by its
+  own Back and by the browser's; Help, from its link, from the low-odds link
+  (landing on its reliability section with the advice for the setup on
+  top), and from its address; a cold-start cook through heating, the boil,
+  the pull and the cooling to Done, with the probe offered, taken and read,
+  and both questions answered; "based on history" and its (i) on the next
+  egg; Forget, kept and then confirmed; light and dark; and a 1280 px desktop.
+  No console errors or warnings, except Chrome's refusal to start the alarm's
+  AudioContext for a scripted click, which is not a user gesture.
+
+### Not verified
+
+- **A phone.** The 390 px checks are an emulated viewport in desktop Chrome;
+  Safari on iOS was not run, and nor was a real thumb on the sentence's
+  buttons.
+- **A screen reader.** The names and states were read from the DOM ("Egg:
+  68 g, change", "About Water", `aria-expanded`), not heard.
+- **The alarm's sound**, for the reason above.
+- **The owner's review of every new text**, which is the point of the deploy
+  preview.
