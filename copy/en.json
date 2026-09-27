@@ -250,7 +250,7 @@
     "setup.cooling.counter": { "surface": "clause", "apps": ["web"], "text": "then onto the counter" },
     "setup.clause": { "surface": "a11y", "apps": ["web"], "note": "The name of a clause of the setup sentence to a screen reader. {label} is the choice's heading, {value} the option chosen, both as shown.", "text": "{label}: {value}, change", "example": { "label": "Egg from", "value": "Sous-vide 136 °F" } },
     "setup.close": { "surface": "button", "apps": ["web"], "note": "Closes a choice opened from the setup sentence.", "text": "Done" },
-    "idle.welcome": { "surface": "body", "apps": ["web"], "note": "Under the setup sentence before any egg or boil has been learned from, when there is no refusal or advice to show.", "text": "Our first egg together. Until you tell me how one comes out, I go by what's true of eggs in general, not yours. Afterwards, answer the two questions and I'll start learning your eggs and your kitchen." },
+    "idle.welcome": { "surface": "body", "apps": ["web"], "note": "Under the setup sentence before any egg or boil has been learned from, when there is no refusal or advice to show.", "text": "Our first egg together. I start off guessing from a generic egg, but as you give me feedback, I learn to specialise on you." },
     "controls.units": { "surface": "label", "apps": ["web", "ios"], "text": "Units" },
     "controls.units.metric": { "surface": "segment", "apps": ["web", "ios"], "text": "Metric" },
     "controls.units.imperial": { "surface": "segment", "apps": ["web", "ios"], "text": "Imperial" },
