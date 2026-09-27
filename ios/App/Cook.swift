@@ -492,13 +492,42 @@ final class Cook {
         var coolDoneAt: Date?
         var assumedBoilS: Double
         var provisional: Bool
-        /// Defaulted, so a record written before this field existed restores as
-        /// unanswered rather than failing to decode.
-        var feedbackGiven: Bool = false
+        /// Absent from a record written before this field existed, which
+        /// restores as unanswered. That takes the decoder below: a synthesized
+        /// `Decodable` ignores a property's default and THROWS on a missing
+        /// key, so `= false` alone lost every cook in progress across the
+        /// update that added it.
+        var feedbackGiven: Bool
         /// The cook's tap out of PULL. Optional, so a cook saved before the
         /// button existed restores with its pull unmeasured.
         var outAt: Date?
         var ticket: Ticket
+
+        init(
+            startedAt: Date, pullAt: Date, coolDoneAt: Date?, assumedBoilS: Double,
+            provisional: Bool, feedbackGiven: Bool, outAt: Date?, ticket: Ticket
+        ) {
+            self.startedAt = startedAt
+            self.pullAt = pullAt
+            self.coolDoneAt = coolDoneAt
+            self.assumedBoilS = assumedBoilS
+            self.provisional = provisional
+            self.feedbackGiven = feedbackGiven
+            self.outAt = outAt
+            self.ticket = ticket
+        }
+
+        init(from decoder: Decoder) throws {
+            let c = try decoder.container(keyedBy: CodingKeys.self)
+            startedAt = try c.decode(Date.self, forKey: .startedAt)
+            pullAt = try c.decode(Date.self, forKey: .pullAt)
+            coolDoneAt = try c.decodeIfPresent(Date.self, forKey: .coolDoneAt)
+            assumedBoilS = try c.decode(Double.self, forKey: .assumedBoilS)
+            provisional = try c.decode(Bool.self, forKey: .provisional)
+            feedbackGiven = try c.decodeIfPresent(Bool.self, forKey: .feedbackGiven) ?? false
+            outAt = try c.decodeIfPresent(Date.self, forKey: .outAt)
+            ticket = try c.decode(Ticket.self, forKey: .ticket)
+        }
     }
 
     private static let savedKey = "cookInProgress"

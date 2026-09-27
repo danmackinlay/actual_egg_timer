@@ -225,6 +225,13 @@ final class Kitchen {
     private var folded: Folded?
 
     private var task: Task<Void, Never>?
+    /// Bumped by every `recompute()`: which question the inputs are asking.
+    private var asked = 0
+    /// Which question `solution` answers, or nil when it answers none of them -
+    /// a mid-cook re-solve, or nothing yet. `solution` is current only when
+    /// this equals `asked`; between an input change and the coalesced solve
+    /// landing, it is the answer to the PREVIOUS inputs.
+    private var answered: Int?
     /// Bumped by "forget what it learned", so a fold still running when the
     /// button is pressed lands on nothing rather than on the fresh prior.
     private var generation = 0
@@ -362,6 +369,8 @@ final class Kitchen {
 
     private func recompute() {
         task?.cancel()
+        task = nil
+        asked &+= 1
         // No pan, no solve. The sous-vide answer is `sousVide` above and needs
         // none of this. It goes FIRST, before anything is solved for - the web
         // app used to branch only at the point of PAINTING, so it paid for a
@@ -378,6 +387,10 @@ final class Kitchen {
         let setup = setup
         let egg = egg
         let calibration = calibration
+        // Tagged with the question it answers, so neither step below can land
+        // on inputs that have moved since, and "Eggs in" can tell whether the
+        // time on screen is theirs (`currentSolution`).
+        let question = asked
         task = Task { [weak self] in
             try? await Task.sleep(nanoseconds: Self.coalesceNanos)
             guard !Task.isCancelled else { return }
@@ -391,18 +404,21 @@ final class Kitchen {
             let inputs = decisionInputs(calibration, egg: egg, setup: setup)
             if let grid = await DecisionGrids.shared.cached(inputs) {
                 let chosen = await Self.decided(answer, grid: grid, egg: egg, calibration: calibration)
-                guard !Task.isCancelled else { return }
-                self?.apply(chosen)
+                guard !Task.isCancelled, question == self?.asked else { return }
+                self?.task = nil
+                self?.apply(chosen, question: question)
                 return
             }
-            self?.apply(answer)
+            guard question == self?.asked else { return }
+            self?.apply(answer, question: question)
             try? await Task.sleep(nanoseconds: Self.settleNanos)
             guard !Task.isCancelled else { return }
             let grid = await DecisionGrids.shared.grid(inputs)
             guard !Task.isCancelled else { return }
             let chosen = await Self.decided(answer, grid: grid, egg: egg, calibration: calibration)
-            guard !Task.isCancelled else { return }
-            self?.apply(chosen)
+            guard !Task.isCancelled, question == self?.asked else { return }
+            self?.task = nil
+            self?.apply(chosen, question: question)
         }
     }
 
@@ -504,11 +520,54 @@ final class Kitchen {
         // The numbers on screen follow the cook; the refusal does not. A
         // refusal is advice about a control that is no longer on screen.
         solution = carried
+        // A pan with a measured or pushed-out ramp is not the idle question.
+        answered = nil
         return carried.result
     }
 
-    private func apply(_ answer: Answer) {
+    /// The solution for the inputs as they stand NOW, solving for them first
+    /// if the one on screen is not yet theirs. Nil for sous-vide, where there
+    /// is no pan to solve for.
+    ///
+    /// "Eggs in" reads this rather than `solution`. The solve for an input
+    /// change waits out the coalesce and then runs off the main actor, and for
+    /// that whole time `solution` is still the answer to the previous inputs -
+    /// so a start mode changed and "Eggs in" tapped straight after started a
+    /// cold start's heating phase on the hot start's time. The web app solves
+    /// synchronously at start;
+    /// this solves the same question, off the main actor, and only when the
+    /// answer on screen is stale.
+    ///
+    /// Applied like any other answer, so a snap moves the slider before the
+    /// caller reads the level for its ticket. Loops only if the inputs move
+    /// again while it solves.
+    func currentSolution() async -> Solution? {
+        while true {
+            if isSousVide { return nil }
+            if let solution, answered == asked { return solution }
+            task?.cancel()
+            task = nil
+            let question = asked
+            let calibration = calibration
+            let egg = egg
+            let setup = setup
+            var answer = await Self.solve(egg: egg, setup: setup, level: doneness, calibration: calibration)
+            // The time on screen is the chosen one whenever this pot's surface
+            // is already built (E5), so "Eggs in" starts on that one too. A
+            // surface still to build is not waited for: the mean is what the
+            // screen would show, and the egg is going in now.
+            let inputs = decisionInputs(calibration, egg: egg, setup: setup)
+            if let grid = await DecisionGrids.shared.cached(inputs) {
+                answer = await Self.decided(answer, grid: grid, egg: egg, calibration: calibration)
+            }
+            guard question == asked else { continue }
+            apply(answer, question: question)
+        }
+    }
+
+    private func apply(_ answer: Answer, question: Int) {
         solution = answer.solution
+        answered = question
         decision = answer.decision
         refusal = refusalText(answer.verdict, setup: answer.setup, water: show(.water, answer.setup.waterLitres))
         if let snapTo = answer.verdict.snapTo, snapTo != doneness {

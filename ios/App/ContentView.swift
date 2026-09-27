@@ -17,6 +17,9 @@ struct ContentView: View {
     /// back about it (E4).
     @State private var probeText = ""
     @State private var probeNote = ""
+    /// True while "Eggs in" waits on a solve for the inputs as they now stand,
+    /// so a second tap cannot start a second cook.
+    @State private var starting = false
 
     var body: some View {
         // One clock read for everything outside the timeline. `cook.phase(at:)`
@@ -352,6 +355,58 @@ struct ContentView: View {
         }
     }
 
+    /// "Eggs in": start a cook on the answer to the inputs as they stand.
+    ///
+    /// `kitchen.solution` is what is on screen, and for the coalesce and the
+    /// solve after any change it still answers the previous inputs - so this
+    /// asks for the current one, which is the same answer unless an input has
+    /// just moved. Nothing awaits between that answer landing and `cook.start`
+    /// taking it, so the ticket and the start are read off the inputs it was
+    /// solved for, including a slider the answer has just snapped. They used
+    /// to be read at two different moments - the ticket in the tap, the start
+    /// mode in a task after it - and a picker change landing between the two
+    /// ran a cold start's heating phase under a ticket that said hot.
+    private func startCook() async {
+        let current = await kitchen.currentSolution()
+        starting = false
+        guard cook.phase == .idle, let solution = current, solution.whiteSets else { return }
+        // Everything the cook is, frozen here. The calibration learns
+        // from this and from nothing else, so a slider left somewhere
+        // different afterwards cannot rewrite what was cooked.
+        let ticket = Cook.Ticket(
+            doneness: kitchen.label,
+            peakYolkC: solution.result.peakYolkC,
+            peakWhiteC: solution.result.peakWhiteC,
+            eggGrams: kitchen.eggMassG,
+            cooling: kitchen.cooling,
+            coldStart: kitchen.coldStart,
+            logNominalTarget: kitchen.logNominalTarget,
+            level: kitchen.doneness,
+            egg: kitchen.egg,
+            setup: kitchen.setup,
+            massFrom: kitchen.massFrom,
+            sizeTable: kitchen.sizeTable,
+            boilRemembered: kitchen.hasBoilMemory,
+            units: kitchen.units,
+            lang: Copy.activeLocale,
+            // The choice on screen, if it has been made: the time
+            // started IS the chosen one, and a mid-cook re-solve
+            // carries its lean.
+            leanS: kitchen.decision?.leanS ?? 0,
+            oddsTenths: kitchen.decision?.oddsTenths,
+            stillLearning: kitchen.decision?.stillLearning,
+            // The cooling counts to the yolk's peak for this cook (E4).
+            coolS: coolingSecondsFor(solution.result),
+            probeMoment: probeMomentFor(solution.result, cooling: kitchen.cooling)
+        )
+        await cook.start(
+            cookSeconds: solution.result.cookTimeS,
+            assumedBoilS: kitchen.timeToBoilS,
+            coldStart: kitchen.coldStart,
+            ticket: ticket
+        )
+    }
+
     // MARK: - Action
 
     @ViewBuilder
@@ -359,51 +414,16 @@ struct ContentView: View {
         switch phase {
         case .idle:
             Button {
-                guard let solution = kitchen.solution else { return }
-                // Everything the cook is, frozen here. The calibration learns
-                // from this and from nothing else, so a slider left somewhere
-                // different afterwards cannot rewrite what was cooked.
-                let ticket = Cook.Ticket(
-                    doneness: kitchen.label,
-                    peakYolkC: solution.result.peakYolkC,
-                    peakWhiteC: solution.result.peakWhiteC,
-                    eggGrams: kitchen.eggMassG,
-                    cooling: kitchen.cooling,
-                    coldStart: kitchen.coldStart,
-                    logNominalTarget: kitchen.logNominalTarget,
-                    level: kitchen.doneness,
-                    egg: kitchen.egg,
-                    setup: kitchen.setup,
-                    massFrom: kitchen.massFrom,
-                    sizeTable: kitchen.sizeTable,
-                    boilRemembered: kitchen.hasBoilMemory,
-                    units: kitchen.units,
-                    lang: Copy.activeLocale,
-                    // The choice on screen, if it has been made: the time
-                    // started IS the chosen one, and a mid-cook re-solve
-                    // carries its lean.
-                    leanS: kitchen.decision?.leanS ?? 0,
-                    oddsTenths: kitchen.decision?.oddsTenths,
-                    stillLearning: kitchen.decision?.stillLearning,
-                    // The cooling counts to the yolk's peak for this cook (E4).
-                    coolS: coolingSecondsFor(solution.result),
-                    probeMoment: probeMomentFor(solution.result, cooling: kitchen.cooling)
-                )
-                Task {
-                    await cook.start(
-                        cookSeconds: solution.result.cookTimeS,
-                        assumedBoilS: kitchen.timeToBoilS,
-                        coldStart: kitchen.coldStart,
-                        ticket: ticket
-                    )
-                }
+                guard !starting else { return }
+                starting = true
+                Task { await startCook() }
             } label: {
                 Text(tr(kitchen.coldStart ? "action.eggsInHeatOn" : "action.eggsIn"))
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
             .controlSize(.large)
-            .disabled(kitchen.solution == nil || kitchen.solution?.whiteSets == false)
+            .disabled(starting || kitchen.solution == nil || kitchen.solution?.whiteSets == false)
 
         case .heating:
             VStack(spacing: 10) {
