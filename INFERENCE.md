@@ -662,7 +662,9 @@ would rather err one way. For the level T on the slider, on this pot:
   at L's decided time, `levelLow` (the 10% point of delivered doneness) is
   at least T. At L, nine yolks in ten are at least as firm as T.
 - **`softerLevel`** is the mirror: the firmest offered L ≤ T whose
-  `levelHigh` (the 90% point) is at most T.
+  `levelHigh` (the 90% point) is at most T, and whose P(runny white) at L's
+  decided time is under `WHITE_RISK` (0.2, in `outcome.ts`, the same
+  constant that shows the web's line for the white).
 - **Null** when T already does it (no move is needed), or when no offered
   level does.
 - **"Offered"** is the slider's own rule: the physical limits, narrowed by
@@ -702,12 +704,28 @@ soft) 0.37-0.38, P(too firm) 0.41):
 
 | from jammy (0.41) | firmer | softer |
 |---|---|---|
-| fresh install | 0.69 | 0.10-0.13 |
+| fresh install | 0.67-0.69 | none |
 | after one egg just right | 0.52 | 0.26 |
 | after three eggs just right | 0.49 | 0.31 |
 
 After three eggs neither risk reaches one in five, and the web shows
 nothing.
+
+**Softer must not raise the white's risk (28 September).** As first built,
+a fresh install at jammy was offered Soft (0.13), because P(too firm) 0.41
+edges P(too soft) 0.37. But at 0.13 P(runny) is 0.34, and the white's line
+shows. That trades a yolk a little too firm for a runny white, which the
+loss counts three times as bad. So a softer level must now also keep
+P(runny) under `WHITE_RISK`. Softer is a shorter time, and P(runny) falls
+as the level rises, so the white's test is read only at the firmest level
+that passes the yolk's. If the white is a risk there, it is a risk at every
+softer level, and the answer is null. That level has been read already, so
+the test costs nothing. On the fresh install the white clears 0.2 only from
+0.24, and 0.24's 90% point is past jammy, so there is no softer level. The
+web now offers the firm-safe one instead: "Rather not risk it soft? Try:
+Fudgy", to 0.67. Firmer is a longer time and never raises the white's risk,
+so it has no such test. `test/safer.test.ts` (test 7) checks that on three
+pots, and `fixtures/safer.json` has the web's own fresh install at jammy.
 
 Not built: the nudge (E8), and any per-cook loss.
 

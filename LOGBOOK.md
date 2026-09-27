@@ -1932,3 +1932,29 @@ INFERENCE.md §8 has the definition, UI.md §8 the behaviour, and LANGUAGE.md
 - **Slow first answer.** On first load the suggestion arrives after the
   surface, the profile and the search. That took several seconds in the
   headless runs, and the readout grows by a line when it lands.
+
+---
+
+## Playing safe never costs the white (28 September 2026)
+
+The open question above is settled: a softer play-safe level must now keep
+P(runny) under `WHITE_RISK` (0.2), which moved to `src/core/outcome.ts` and
+is shared with the web's white line (`whiteRisk` in Swift). This is in
+`saferLevels` in both languages; firmer is unchanged. A fresh install at
+jammy no longer offers Soft (0.13, runny 0.34). It offers "Rather not risk
+it soft? Try: Fudgy", to 0.67. See INFERENCE.md §8.
+
+- **Tests:** `npm test` runs 219: 218 pass, 0 fail and 1 todo (5b, as
+  before). Test 7 is new: firmer never raises P(runny).
+- **Validation:** `npm run validate` passes 28/28.
+- **Conformance:** `npm run conformance` passes 101 Swift tests in 28
+  suites and 10 ring tests. `fixtures/safer.json` has a sixth case, the
+  web's fresh install at jammy, and its prior case at jammy moved from
+  softer 0.15 to null. No other fixture moved.
+- **Copy proof:** `copyLiterals.js --since fd11498` finds 369 keys
+  unchanged and 0 changed. Its 15 "failures" are the `safe` draft's keys,
+  already applied at fd11498.
+- **Driven** in the Browser pane on this worktree's `_site`, port 8413,
+  fresh storage: the suggestion as above, pointing to 0.67. Tapped, the
+  slider goes to 0.67, with no second suggestion and no white line. No
+  console errors.
