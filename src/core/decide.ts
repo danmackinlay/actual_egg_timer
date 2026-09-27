@@ -64,15 +64,17 @@
  * the answers', unrelated share included, so they are calibrated against what
  * cooks SAY, which is all anyone can check them against.
  *
- * STILL LEARNING. For the first STILL_LEARNING_EGGS eggs that taught anything.
- * The owner's rule was the 80% interval on the cook time under about +-15 s,
- * with a fixed count if that proved fiddly, and it did: the interval
- * (`predictCookTime`) plateaus at about the width of "just right", so on
- * simulated cooks it wandered back over the line after first going under it
- * for 44% of them (`npm run decide -- learning`). The count is the egg at which
- * the interval rule first went quiet for the median simulated cook. The
- * interval is still computed, and carried in the decision, for anyone who
- * wants to look.
+ * STILL LEARNING. While the 80% interval of the right cook time
+ * (`predictCookTime`) is wider than +-STILL_LEARNING_HALF_WIDTH_S, which is
+ * about the width of "just right": the owner's rule. It was nearly not: under
+ * the filter's old fixed resample jitter the interval rose again after every
+ * second or third egg, and on simulated cooks the line came back after going
+ * for 44% of them, so the fallback - a fixed count of eggs - was built first.
+ * The resample now keeps the posterior's shape (Liu and West's kernel,
+ * infer.ts), the interval narrows egg by egg, and the line comes back for 7%
+ * - cooks whose answers really do disagree (`npm run decide -- learning`).
+ * It is read at the level on screen, so a cook who has only ever had jammy
+ * eggs may see it beside hard for an egg or two longer.
  *
  * Pure, like the rest of `src/core/`.
  */
@@ -93,9 +95,10 @@ import { Calibration, GridRequest, calibrationDoneness, calibrationParams } from
  *  September). */
 export const RUNNY_WHITE_LOSS = 3;
 
-/** The app says it is still learning until this many eggs have taught it
- *  something. See the header for why a count and not the interval. */
-export const STILL_LEARNING_EGGS = 4;
+/** Half-width of the 80% interval on the cook time, s, above which the app
+ *  says it is still learning this kitchen: about the width of "just right"
+ *  (INFERENCE.md section 11, decision 9). */
+export const STILL_LEARNING_HALF_WIDTH_S = 15;
 
 /* ------------------------------------------------------------ the surface */
 
@@ -321,7 +324,8 @@ export interface Decision {
   /** P(hit the mark) at `cookTime_s`, and the same in tenths, as shown. */
   odds: number;
   oddsTenths: number;
-  /** The 80% interval of the time each particle would call right. */
+  /** The 80% interval of the time each particle would call right, and
+   *  whether it is still wider than +-STILL_LEARNING_HALF_WIDTH_S. */
   interval: CookTimePrediction;
   stillLearning: boolean;
 }
@@ -340,8 +344,8 @@ export function oddsInTenths(odds: number): number {
   return Math.round(odds * 10);
 }
 
-export function stillLearning(eggsLogged: number): boolean {
-  return eggsLogged < STILL_LEARNING_EGGS;
+export function stillLearning(interval: CookTimePrediction): boolean {
+  return 0.5 * (interval.high_s - interval.low_s) > STILL_LEARNING_HALF_WIDTH_S;
 }
 
 /**
@@ -359,6 +363,7 @@ export function decideAt(
   const chosen = applies && eggsLogged > 0;
   const t = chosen ? chooseCookTime(post, grid, logNominalTarget, meanCookTime_s) : meanCookTime_s;
   const odds = hitOdds(post, grid, t, logNominalTarget);
+  const interval = predictCookTime(post, grid, logNominalTarget);
   return {
     cookTime_s: t,
     meanCookTime_s: meanCookTime_s,
@@ -366,8 +371,8 @@ export function decideAt(
     loss: expectedLoss(post, grid, t, logNominalTarget),
     odds: odds,
     oddsTenths: oddsInTenths(odds),
-    interval: predictCookTime(post, grid, logNominalTarget),
-    stillLearning: stillLearning(eggsLogged),
+    interval: interval,
+    stillLearning: stillLearning(interval),
   };
 }
 

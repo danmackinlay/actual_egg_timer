@@ -80,7 +80,7 @@ import {
 import { longDuration, startPhrase, weekdayKey } from '../src/core/sousvide.js';
 import {
   DECISION_ALPHA_COUNT, DECISION_ALPHA_HI, DECISION_ALPHA_LO, DECISION_TIME_STEP_S,
-  DECISION_WINDOW_S, DecisionInputs, LEAN_COST_PER_S, RUNNY_WHITE_LOSS, STILL_LEARNING_EGGS,
+  DECISION_WINDOW_S, DecisionInputs, LEAN_COST_PER_S, RUNNY_WHITE_LOSS, STILL_LEARNING_HALF_WIDTH_S,
   chooseCookTime,
   decideAt, decisionApplies, decisionGridSpec, expectedLoss, hitOdds, oddsInTenths,
 } from '../src/core/decide.js';
@@ -1314,7 +1314,7 @@ const decideFixture = {
   constants: {
     runnyWhiteLoss: RUNNY_WHITE_LOSS,
     leanCostPerS: LEAN_COST_PER_S,
-    stillLearningEggs: STILL_LEARNING_EGGS,
+    stillLearningHalfWidth_s: STILL_LEARNING_HALF_WIDTH_S,
     decisionAlphaLo: DECISION_ALPHA_LO,
     decisionAlphaHi: DECISION_ALPHA_HI,
     decisionAlphaCount: DECISION_ALPHA_COUNT,

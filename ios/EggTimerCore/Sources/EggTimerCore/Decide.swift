@@ -10,7 +10,8 @@ import Foundation
 ///
 /// is the recommendation - from the first egg that taught anything; before it,
 /// the literature's time stands. The odds on screen are P(not runny AND just
-/// right) there. The reasons, and the measurements behind every constant, are
+/// right) there, and the app is still learning while the 80% interval of the
+/// right time is wider than +-15 s. The reasons, and the measurements behind every constant, are
 /// in src/core/decide.ts, which this is held to by fixtures/decide.json: two
 /// apps given the same posterior and the same pot must choose the same time.
 
@@ -18,9 +19,9 @@ import Foundation
 /// September).
 public let runnyWhiteLoss = 3.0
 
-/// The app says it is still learning until this many eggs have taught it
-/// something.
-public let stillLearningEggs = 4
+/// Half-width of the 80% interval on the cook time, s, above which the app
+/// says it is still learning this kitchen: about the width of "just right".
+public let stillLearningHalfWidthS = 15.0
 
 // MARK: - The surface
 
@@ -224,8 +225,8 @@ public func oddsInTenths(_ odds: Double) -> Int {
     Int((odds * 10.0).rounded())
 }
 
-public func stillLearning(eggsLogged: Int) -> Bool {
-    eggsLogged < stillLearningEggs
+public func stillLearning(_ interval: CookTimePrediction) -> Bool {
+    0.5 * (interval.highS - interval.lowS) > stillLearningHalfWidthS
 }
 
 /// Decide, from the parts. The time is chosen when `applies` and at least one
@@ -239,6 +240,7 @@ public func decideAt(
         ? chooseCookTime(post, grid, logNominalTarget, aroundS: meanCookTimeS)
         : meanCookTimeS
     let odds = hitOdds(post, grid, t, logNominalTarget)
+    let interval = predictCookTime(post, grid, logNominalTarget)
     return Decision(
         cookTimeS: t,
         meanCookTimeS: meanCookTimeS,
@@ -246,8 +248,8 @@ public func decideAt(
         loss: expectedLoss(post, grid, t, logNominalTarget),
         odds: odds,
         oddsTenths: oddsInTenths(odds),
-        interval: predictCookTime(post, grid, logNominalTarget),
-        stillLearning: stillLearning(eggsLogged: eggsLogged)
+        interval: interval,
+        stillLearning: stillLearning(interval)
     )
 }
 

@@ -81,7 +81,7 @@ struct DecideConformance {
         let c = object(Fixtures.load("decide.json"), "constants")
         #expect(runnyWhiteLoss == c.num("runnyWhiteLoss"))
         #expect(leanCostPerS == c.num("leanCostPerS"))
-        #expect(stillLearningEggs == Int(c.num("stillLearningEggs")))
+        #expect(stillLearningHalfWidthS == c.num("stillLearningHalfWidth_s"))
         #expect(decisionAlphaLo == c.num("decisionAlphaLo"))
         #expect(decisionAlphaHi == c.num("decisionAlphaHi"))
         #expect(decisionAlphaCount == Int(c.num("decisionAlphaCount")))

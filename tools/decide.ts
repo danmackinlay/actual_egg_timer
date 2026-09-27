@@ -14,7 +14,7 @@
 
 import {
   Decision, DecisionInputs, chooseCookTime, decide, decideAt, decisionGridRequest,
-  decisionGridSpec, decisionInputs, STILL_LEARNING_EGGS,
+  decisionGridSpec, decisionInputs, STILL_LEARNING_HALF_WIDTH_S,
 } from '../src/core/decide.js';
 import { DoseGrid, buildDoseGrid, cookTimeForLogYolkDose } from '../src/core/doseGrid.js';
 import {
@@ -265,7 +265,7 @@ if (run('learning')) {
     const o = posteriorMeanOffset(c.posterior);
     const band = 0.5 * (cookTimeForLogYolkDose(grid, a, target + o + FEEDBACK_BAND)
       - cookTimeForLogYolkDose(grid, a, target + o - FEEDBACK_BAND));
-    current.push({ interval: half > 15, band: half > band, count: d.stillLearning });
+    current.push({ interval: d.stillLearning, band: half > band, count: c.eggsLogged < 4 });
   });
   for (const rule of ['interval', 'band', 'count'] as const) {
     const firstOff: number[] = [];
@@ -284,7 +284,7 @@ if (run('learning')) {
     console.log(`${rule}: first off after ${firstOff[Math.floor(firstOff.length / 2)]} eggs (median), never off in 8: ${never}, `
       + `came back after going: ${back} of ${flags.length}; on after each egg: ${share.map((s) => (s / flags.length).toFixed(2)).join(' ')}`);
   }
-  console.log(`(count is STILL_LEARNING_EGGS = ${STILL_LEARNING_EGGS}; interval is +-15 s; band is +-the width of "just right" at that cook)`);
+  console.log(`(interval is the app's rule, +-${STILL_LEARNING_HALF_WIDTH_S} s; band is +-the width of "just right" at that cook; count is the first four eggs, the fallback)`);
 }
 
 /* ---------------------------------------------------------- runny whites */
