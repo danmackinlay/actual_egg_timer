@@ -1974,7 +1974,7 @@ slot, under the time, still holds the iOS odds line. Egg from gained
 Custom, as on the web, stored under `startTemp` and `customStartC`, with
 `fromFridge` kept in step for a downgrade. The egg's weight is now typed,
 where it was a slider. The copy is the `iosA` draft: 132 rows and no
-change of wording. Of those rows, 110 web keys gained `"ios"`, 24 iOS keys
+change of wording. Of those rows, 104 web keys gained `"ios"`, 25 iOS keys
 were retired, and 3 iOS keys are new.
 
 ### Verified
