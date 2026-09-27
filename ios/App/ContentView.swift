@@ -140,6 +140,7 @@ struct ContentView: View {
         case "help": path = [.help(nil)]
         case "help-reliable": path = [.help(.reliable)]
         case "direction-info": directionInfoOpen = true
+        case "take-safe": kitchen.takeFirstPlaySafe = true
         case "heating":
             guard cook.phase == .idle else { return }
             starting = true

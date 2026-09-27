@@ -17,6 +17,7 @@ import EggTimerCore
 ///   setup on screen and answered `right`, `soft` or `firm` about the yolk,
 ///   and fold them (`Kitchen.seed`). A learned state without cooking.
 /// - `-uiScreen direction-info`: open the direction's (i).
+/// - `-uiScreen take-safe`: tap the first play-safe suggestion that lands.
 enum Screenshots {
     static var scene: String? { UserDefaults.standard.string(forKey: "uiScreen") }
     static var noAlarmPrompt: Bool { UserDefaults.standard.bool(forKey: "noAlarmPrompt") }

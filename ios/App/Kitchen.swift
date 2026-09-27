@@ -800,7 +800,19 @@ final class Kitchen {
         safer = levels
         saferFor = key
         playSafeWasShown = playSafe.suggestion != nil
+        #if DEBUG
+        if takeFirstPlaySafe, let s = playSafe.suggestion {
+            takeFirstPlaySafe = false
+            takePlaySafe(s)
+        }
+        #endif
     }
+
+    #if DEBUG
+    /// Debug builds only (`-uiScreen take-safe`): tap the first suggestion
+    /// that lands, as a cook would.
+    var takeFirstPlaySafe = false
+    #endif
 
     /// The play-safe suggestion for the level on screen, and whether it is
     /// still on its way. None where neither way of missing is risk enough, and
