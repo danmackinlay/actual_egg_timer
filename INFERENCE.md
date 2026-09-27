@@ -652,6 +652,63 @@ least one in ten is at or past the hardest, which at hard is half the eggs.
 It costs about 2 ms in node beside a decision's 13-16 ms, and is computed
 once, at the time on screen.
 
+**Playing safe (27 September).** The range says where the yolk will
+probably land, and the lean which way a miss goes. Neither says what to do
+about it. `saferLevels` in `src/core/reach.ts`, held to
+`EggTimerCore/Reach.swift` by `fixtures/safer.json`, answers the cook who
+would rather err one way. For the level T on the slider, on this pot:
+
+- **`firmerLevel`** is the softest level L ≥ T the slider offers at which,
+  at L's decided time, `levelLow` (the 10% point of delivered doneness) is
+  at least T. At L, nine yolks in ten are at least as firm as T.
+- **`softerLevel`** is the mirror: the firmest offered L ≤ T whose
+  `levelHigh` (the 90% point) is at most T.
+- **Null** when T already does it (no move is needed), or when no offered
+  level does.
+- **"Offered"** is the slider's own rule: the physical limits, narrowed by
+  the odds' reach at 3/10 once it applies (the profile's `softest` /
+  `hardest`). So a suggestion is never a level the slider would refuse.
+- **The level excludes the taste offset**, as the outcome's does. A cook
+  whose taste is firmer than the slider's is served a later time, so T may
+  already be firm enough for them.
+
+**How it is read.** Each level L is read exactly as the app reads it when
+the slider sits there: the mean solve at L, the decision on the pot's
+surface, and `predictOutcome` at the decided time (`outcomeAtLevel`). This
+is the profile's machinery, reading the outcome where the profile reads the
+odds. The levels are the slider's 0.01 grid, walked as integer positions,
+and searched by bisection.
+
+**The bisection needs the range to rise with L.** Across seven pots and
+four posteriors, reading every offered level (`npm run decide -- safer`),
+both `levelLow` and `levelHigh` rise with the level everywhere but one
+place. At the counter's softest offered level the white binds the choice,
+and the next level up is delivered 0.001-0.004 softer, for a single step.
+This happens in 3 of the 28 pots and posteriors. Where it happens, the
+bisection still returns a level that passes, next to one that fails, so at
+worst the suggestion is one step firmer than the softest safe level. At
+every level tried, the bisection agreed with a full scan
+(`test/safer.test.ts` holds it to one on three pots).
+
+**What it costs.** One reading costs about 40 ms in node: a solve (20 ms),
+a decision (18 ms) and an outcome (2 ms). A search takes up to about 16
+readings, so 0.1-0.9 s, with a median of 0.5 s. That is the profile's cost
+again. The web never runs it on the drag. It runs in the worker once the
+slider has sat still for 300 ms, and only when either way of missing is at
+least one egg in five.
+
+**What it says.** On the reference pot, a fresh install at jammy (P(too
+soft) 0.37-0.38, P(too firm) 0.41):
+
+| from jammy (0.41) | firmer | softer |
+|---|---|---|
+| fresh install | 0.69 | 0.10-0.13 |
+| after one egg just right | 0.52 | 0.26 |
+| after three eggs just right | 0.49 | 0.31 |
+
+After three eggs neither risk reaches one in five, and the web shows
+nothing.
+
 Not built: the nudge (E8), and any per-cook loss.
 
 ## 9. The fit

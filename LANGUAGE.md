@@ -570,6 +570,49 @@ thresholds are where they are.
   still both apps'. The first person: "I can't call it yet" is the app
   speaking; the other sentences have no subject to put in the first person.
 
+**Playing safe's strings - IMPLEMENTED 27 September 2026**, web only,
+drafted and not approved but for `idle.welcome`, which is the owner's. The
+owner found that the direction and the bracket still did not tell a cook how
+to err on the side of caution. So a one-tap suggestion goes under the
+direction, and the direction's (i) explains the bracket and how to act on it
+instead of saying the number. The owner also dropped "I'm still learning"
+as a line of its own on the web: beside "I can't call it yet" it said the
+same thing twice. What its (i) opened is now the last paragraph of the one
+(i). The `safe` draft in `tools/copyDraft.ts`, on `ff6c6e9`;
+`copyLiterals.js --since ff6c6e9 safe` and `copySnapshot.js compare --draft
+safe` show that nothing else changed. UI.md section 8 has when each shows.
+
+| key | where | text |
+|---|---|---|
+| `outcome.safe.firm` | a button under the direction: one yolk in five too soft, and a firmer level plays safe | Rather not risk it soft? Try: {level} |
+| `outcome.safe.soft` | its mirror: one in five too firm | Rather not risk it firm? Try: {level} |
+| `outcome.safe.firmer` / `.softer` | `{level}` when the level suggested reads as the word already on the slider | A little firmer · A little softer |
+| `outcome.info` | the name of the direction's one (i) | How sure I am |
+| `outcome.bracket` | first in what it opens | The bracket under the doneness slider is where I expect your yolk to land. If a soft yolk would bother you more than a firm one, slide right until the bracket's left end is somewhere you'd still be happy; if a firm one would, slide left until its right end is. Or tap the level I suggest, when I suggest one. |
+| `outcome.why` | second: the web's `odds.why`, without the number | Before your first egg I don't know your taste, your eggs or your kitchen, so the bracket starts wide. Each egg you tell me about narrows it. |
+| `outcome.learning` | last: what `odds.stillLearning.more` said, less its first sentence | I learn your taste in yolks from how you say they came out, … give me a reading: that is the quickest teacher. |
+| `idle.welcome` | the first-egg welcome (the owner's words) | Our first egg together. I start off guessing from a generic egg, but as you give me feedback, I learn to specialise on you. |
+
+- **`{level}` stands alone after the colon** (§5): the slider's own
+  doneness word, capitalised as the ticks are, or a two-word phrase that is
+  a whole label in itself. It is never inside running grammar. "Try Fudgy
+  instead" would need a case in Czech.
+- **The arrow is drawn, not written.** The brief's "Try: {level} →" puts
+  the arrow in CSS, as the low-odds link does, so a screen reader reads the
+  button as its words and not "right arrow". The button's name is its
+  text, and the text includes the level.
+- **"A little firmer / softer"** exists because after a few eggs the move is
+  a few hundredths. "Try: Jammy" at jammy would offer the word already on
+  screen.
+- **Retired on the web:** `outcome.odds` (the number is gone from the (i),
+  and it is still in Help's "How sure I am"), `odds.stillLearning.info` and
+  `odds.stillLearning.more` (web-only, so gone). `odds.info`, `odds.why` and
+  `odds.stillLearning` are iOS's alone, unchanged, until iOS follows. The
+  record still keeps `stillLearning` with every egg.
+- **Help is untouched.** Its "How sure I am" was to cover the direction,
+  the range, playing safe and then the number; the owner has Help's
+  rewrite in hand separately, so that waits for it.
+
 ### Proposed: one wording per meaning (for the owner)
 
 **A proposal, 27 September 2026. Nothing here is implemented**: `copy/en.json`

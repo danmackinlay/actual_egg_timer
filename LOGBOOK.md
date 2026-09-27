@@ -1806,3 +1806,97 @@ and the thresholds; LANGUAGE.md section 3 the strings.
 - **The median mark** sits under the thumb for a cook whose taste is the
   slider's; it shows only when the level and the slider part (a cook who
   likes a firmer yolk). No seeded case showed that on screen.
+
+---
+
+## Playing safe (27 September 2026)
+
+The owner wanted the uncertainty to be something a cook can act on. Under
+the direction there is now a one-tap suggestion that moves the slider to a
+level that plays safe. The direction's one (i) now explains the bracket and
+how to act on it. "I'm still learning" is gone from the web as a line of its
+own, and its (i) is folded into the direction's.
+
+The change touches:
+
+- **Core:** `saferLevels`, `outcomeAtLevel` and `offeredPositions` in
+  `src/core/reach.ts` and `Reach.swift`, and `fixtures/safer.json`.
+- **Web:** the worker job, `src/ui/outcome.ts` (`playSafe`),
+  `src/ui/app.ts`, `index.html` and `styles.css`.
+- **Copy:** the `safe` draft, and `idle.welcome` in the owner's words.
+
+INFERENCE.md §8 has the definition, UI.md §8 the behaviour, and LANGUAGE.md
+§3 the strings. iOS UI is unchanged.
+
+### Verified
+
+- **Tests:** `npm test` runs 218 tests: 217 pass, 0 fail and 1 todo (5b,
+  as before). The new ones are `test/safer.test.ts` (6) and two in
+  `test/outcomeCopy.test.ts`.
+- **Validation:** `npm run validate` passes 28/28.
+- **Conformance:** `npm run conformance` passes 100 Swift tests in 28
+  suites and 10 ring tests. The new suite is `Safer`, with 5 cases, 15
+  play-safe levels and 15 outcomes, matched to 1e-12. `fixtures/copy.json`
+  was regenerated for the new keys. No other fixture moved.
+- **Copy proof, catalogue:** `copyLiterals.js --since ff6c6e9 safe` finds
+  357 keys unchanged and 15 changed, each as drafted.
+- **Copy proof, rendered web:** `copySnapshot.js compare --draft safe`
+  against a capture of `ff6c6e9` (172 states each side) finds only the
+  drafted strings changed.
+- **Monotonicity:** `npm run decide -- safer` reads every offered level on
+  seven pots under four posteriors. `levelLow` and `levelHigh` rise with the
+  level except for one step up from the counter's softest offered level
+  (0.001-0.004, in 3 of 28). At every level tried, the bisection agrees with
+  a full scan.
+- **Cost:** 0.1-0.9 s per call in node, with a median of 0.5 s. That is
+  about 40 ms per level read, and up to 16 reads.
+- **Driven** in headless Chrome at 390 x 844 over DevTools, in dark and
+  light, on this worktree's `_site` served on port 8397. Screenshots are in
+  the session scratchpad's `safe/`.
+  - **Fresh install at jammy:** "Could come out softer or firmer than you
+    like — I can't call it yet.", then "Rather not risk it firm? Try:
+    Soft", pointing to 0.13. Tapped, the slider goes to 0.13, the bracket
+    runs Runny to Jammy, no second suggestion shows, and focus goes to the
+    slider.
+  - **Three consistent jammy eggs:** "Probably just right.", no suggestion,
+    and "Likely yolk: Jammy".
+  - **One egg answered too soft:** "Rather not risk it soft? Try: Fudgy",
+    pointing to 0.56. Tapped, the bracket runs Jammy to Fudgy.
+  - **A drag from jammy to fudgy** on a fresh install holds the readout at
+    271 px throughout. The answer is then "Rather not risk it firm? Try:
+    Jammy", pointing to 0.33.
+  - **The (i)** opens its three paragraphs.
+  - **Console:** no errors.
+
+### Things that cost time
+
+- **The ratchet.** At the level a tap reaches, the same rule measures the
+  same risk against the new level. On a fresh install, jammy suggests
+  fudgy, then fudgy suggests hard. A level reached by tapping now offers
+  nothing until something changes.
+- **The same word twice.** After a few eggs the move is a few hundredths,
+  and the nearest word is the one on the slider already. "A little firmer"
+  and "A little softer" fill that case.
+- **The arrow.** Written into the string, a screen reader would say "right
+  arrow". It is drawn in CSS, as the low-odds link's is.
+
+### Not verified, and open
+
+- **Is the soft-safe suggestion on a fresh install right?** On the prior,
+  P(too firm) (0.41) edges P(too soft) (0.38), because the choice leans
+  late for the white. So a new cook at jammy is offered Soft, at 0.13. At
+  0.13 the white's line shows: "The white might still be runny." Playing
+  safe on the yolk moves the risk to the white.
+  - One fix: only offer a softer level whose P(runny) is under 0.2.
+  - That is a rule for the owner to make. It is not built.
+- **Help's "How sure I am"** was to be rewritten to cover the direction,
+  the range, playing safe and then the number. It was left alone, because
+  the owner has Help's rewrite in hand separately.
+- **Not tried on a real device:** a phone, a screen reader, and the
+  owner's eye. The accessible name was read from the DOM, not heard.
+- **The copy snapshot harness** never waits long enough for the worker's
+  play-safe answer, so the proof does not exercise the suggestion's two
+  lines. They were checked in the driven runs above instead.
+- **Slow first answer.** On first load the suggestion arrives after the
+  surface, the profile and the search. That took several seconds in the
+  headless runs, and the readout grows by a line when it lands.

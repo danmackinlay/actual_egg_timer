@@ -184,8 +184,8 @@ Kitchen and Help are links at the top of the egg; Help is also at the top of
 the Kitchen. Mute sits top right in every phase.
 
 **The egg.** The time with its line under it, which way the egg is likely
-to miss and "I'm still learning", each with its (i) (the outcome summary,
-below); the doneness slider; the setup sentence; one slot; Start at the
+to miss with its (i), and when a miss is a real risk a one-tap way to play
+safe (the outcome summary and playing safe, below); the doneness slider; the setup sentence; one slot; Start at the
 bottom. The slot holds a refusal, or the sous-vide
 warning, or a reloaded cook's warning; failing those, before anything is
 learned, a first-egg welcome. The low-odds link to Help goes under whichever
@@ -227,7 +227,8 @@ the two questions, mute, a reloaded cook.
 the `outcome` draft in `tools/copyDraft.ts`). Under the time, in place of
 "7/10 eggs hit the mark", a sentence says which way the egg is likely to
 miss, with the odds' (i) at its end; under it, a line when a runny white is
-a real risk; then "I'm still learning" and its (i), as before. The numbers
+a real risk; then "I'm still learning" and its (i), as before (since gone:
+see playing safe, below). The numbers
 are `predictOutcome` (INFERENCE.md §8), read at the decided time on the
 decision's own surface, on the main thread beside the decision: about 2 ms
 beside its 13-16, so it does not need the worker. `src/ui/outcome.ts` picks
@@ -276,13 +277,77 @@ of its sentences takes at 390 px, and centres a one-line sentence in them,
 so a drag that changes the sentence does not move the slider. While a new
 pot's surface is on its way the readout keeps the height it last had, so
 the choice open in the sentence does not move under the thumb that just
-changed it. The white's line and "I'm still learning" can still appear
-mid-drag near the soft end, which moves the slider down a line; a range
+changed it. The white's line can still appear mid-drag near the soft end, which moves the slider down a line; a range
 input takes its value from where the pointer is across the track, so the
 drag should hold, but that is not checked on a phone.
 
 Help's "How sure I am" was already written for a direction plus a range;
 its second paragraph now says "7 in 10" and "2 in 10", as the (i) does.
+
+**Playing safe** (built the same day; the `safe` draft in
+`tools/copyDraft.ts`, on `ff6c6e9`). The owner said the direction and the
+bracket still did not tell a cook how to err on the side of caution.
+
+**The suggestion.** Under the direction, a button:
+
+- "Rather not risk it soft? Try: Fudgy" when P(too soft) is at least 0.2
+  and core's `firmerLevel` exists (INFERENCE.md §8, playing safe);
+- "Rather not risk it firm? Try: Soft" for P(too firm) and `softerLevel`.
+
+It shows at most one, for the larger risk. On a tie it shows the firm-safe
+one, because an underdone egg is the worse failure for most cooks.
+
+- **The threshold** is 0.2, one egg in five, the white's line's threshold.
+- **The word** is the doneness word nearest the suggested level, standing
+  alone after the colon. When that word is already the slider's, the
+  button says "A little firmer" or "A little softer".
+- **The arrow** is drawn in CSS, as the low-odds link's is. The button's
+  accessible name is its text, level included, without "right arrow".
+- **Tapping** sets the slider to the level, as a drag there would. If the
+  line then goes, focus goes to the slider.
+- **No ratchet.** A level reached by tapping offers no second suggestion
+  until the level, the pot or the posterior changes. Without this, a tap
+  would ratchet: at the new level the same risk is measured against the new
+  level, and on a fresh install fudgy would suggest hard.
+
+**Where it is computed.** `saferLevels` runs in the worker once the slider
+has sat still for 300 ms and the pot's odds profile is in. It runs only when
+either risk reaches 0.2, and the result is cached per pot, posterior and
+level. The drag never waits for it. While it is on its way, the readout
+keeps the height it last had, as it does while a surface is on its way.
+Measured in headless Chrome, a drag from jammy to fudgy on a fresh install
+held the readout at 271 px throughout.
+
+**What the cook sees.**
+
+- A fresh install at jammy (P(too soft) 0.38, P(too firm) 0.41): "Rather
+  not risk it firm? Try: Soft", to 0.13.
+- After three jammy eggs just right: nothing. Both risks are near 0.12.
+- After one egg answered too soft: "Rather not risk it soft? Try: Fudgy",
+  to 0.56.
+
+**The direction's one (i)**, named "How sure I am", now opens three
+paragraphs:
+
+- what the bracket is, and how to play safe with it: slide right until its
+  left end is somewhere you'd still be happy, or left for the mirror, or
+  tap the suggestion;
+- why it starts wide (`outcome.why`, the web's `odds.why` without the
+  number);
+- what I learn from, and what speeds it up (`outcome.learning`).
+
+The number is gone from the (i), and it is still in Help's "How sure I am".
+The (i) shows only while idle, because it is about the slider. Mid-cook, the
+direction and the white's line still stay as they were at "Eggs in".
+
+**"I'm still learning" is gone from the web** (owner). Beside "I can't call
+it yet" it said the same thing twice. Its (i)'s content is the last of the
+three paragraphs. The E5 computation stands, and the record still keeps
+`stillLearning` with every egg. iOS still shows the line (`odds.stillLearning`
+is now iOS's alone), and so do `odds.info` and `odds.why`, until iOS
+follows.
+
+**Help is untouched** by this: its rewrite is the owner's, separately.
 
 **Departures from sections 3 and 4.**
 - **Heat after the boil stayed on the Kitchen page**, not in the sentence. It
@@ -296,8 +361,9 @@ its second paragraph now says "7 in 10" and "2 in 10", as the (i) does.
 - **The Kitchen's title reuses `controls.pan`**, reworded "Kitchen" for both
   apps: iOS's group title "Pan, hob and altitude" named the pan as a
   stand-in for the stove, which the owner ruled out.
-- **Two more (i)s than listed**, for "about 6:40 to boil, based on history"
-  (what history) and "I'm still learning" (what, and what speeds it up).
+- **One more (i) than listed**, for "about 6:40 to boil, based on history"
+  (what history). "I'm still learning" had one too, until playing safe
+  folded it into the direction's.
 - **An (i)'s name is "About {label}"** where the label reads inside it, and a
   name of its own where it does not (`*.info` keys: "About this boil time").
 - **The language picker** is not there, as §3 foresaw, because there is one
