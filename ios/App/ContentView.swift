@@ -360,7 +360,7 @@ struct ContentView: View {
     /// `kitchen.solution` is what is on screen, and for the coalesce and the
     /// solve after any change it still answers the previous inputs - so this
     /// asks for the current one, which is the same answer unless an input has
-    /// just moved. Nothing awaits between that answer landing and `cook.start`
+    /// just moved. Nothing awaits between that answer landing and `cook.start(...)`
     /// taking it, so the ticket and the start are read off the inputs it was
     /// solved for, including a slider the answer has just snapped. They used
     /// to be read at two different moments - the ticket in the tap, the start
