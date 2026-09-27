@@ -323,6 +323,13 @@
     "colophon.link": { "text": "The source, and the natural philosophy on which it rests" },
     "colophon.tail": { "text": "— my errours not excepted." },
 
+    "controls.language": { "text": "Language" },
+    "controls.language.more": { "text": "Should the reader find this stile tiresome, the modern tongue may be restored without surrendering Fahrenheit's scale: choose English, and your measures stay as they are." },
+    "language.en": { "text": "English" },
+    "language.en1750": { "text": "English (1750)" },
+    "controls.units.period": { "text": "The imperial measures may likewise be read in the English of their period." },
+    "app.titlePage": { "text": "The Actual Egg-Timer: in which the times of boiling are deduced from their cauſes, and illuſtrated in their different degrees of hardneſs." },
+
     "alarm.pull.title": { "text": "Out with them" },
     "alarm.pull.body": { "text": "Commit them at once to the cold; for heat, though withdrawn from the fire, is not yet withdrawn from the egg." },
     "alarm.cooled.title": { "text": "Cooling ended" }

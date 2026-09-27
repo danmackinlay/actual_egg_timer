@@ -1,0 +1,242 @@
+/**
+ * The English of 1750 (LANGUAGE.md section 6): the rules its catalogue is held
+ * to beyond any other language's, the switch that goes into it and out, and
+ * the record that says it was read.
+ *
+ * Placeholder parity and the length budgets are copy.test.ts's, which reads
+ * every catalogue in copy/ and so this one too; 1a checks that it does.
+ *
+ * Run from the repo root (npm test does). Zero dependencies.
+ */
+
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync, readdirSync } from 'node:fs';
+
+import { parseCatalogue, render, templatesOf } from '../src/core/copy.js';
+import { formattingLocale } from '../src/core/format.js';
+import {
+  DEFAULT_LANGUAGE, FRESH_LANGUAGE, LanguageState, PERIOD_LANGUAGE, effectiveLanguage, isModernEnglish,
+  isPeriod, languageAfterFlip, languageAfterPick, readLanguageState, registerOf,
+} from '../src/core/language.js';
+import { eggFromMass } from '../src/core/geometry.js';
+import { parseRecord } from '../src/core/record.js';
+import { Cooked, eggRecordFor } from '../src/ui/calibration.js';
+import { advance, startHot } from '../src/ui/machine.js';
+
+type Entry = Record<string, unknown>;
+interface CatalogueJson { locale: string; messages: Record<string, Entry> }
+
+const EN_JSON = JSON.parse(readFileSync('copy/en.json', 'utf8')) as CatalogueJson;
+const P_JSON = JSON.parse(readFileSync('copy/en-x-1750.json', 'utf8')) as CatalogueJson;
+const SPELLING = (JSON.parse(readFileSync('copy/en-x-1750.spelling.json', 'utf8')) as {
+  spellings: Record<string, string>;
+}).spellings;
+const EN = parseCatalogue(EN_JSON);
+const PERIOD = parseCatalogue(P_JSON, EN);
+
+/** The one key allowed the long s: the title, after the Dictionary's own. */
+const TITLE_KEY = 'app.titlePage';
+
+/** Every template of the 1750 catalogue, by key. */
+function templates(): [string, string][] {
+  return [...PERIOD.messages].flatMap(([key, m]) => templatesOf(m).map((t): [string, string] => [key, t]));
+}
+
+/** A whole word, case-insensitive: not inside another word, and an
+ *  apostrophe, straight or curly, counts as part of the word. */
+function wordPattern(word: string): RegExp {
+  const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/'/g, "['’]");
+  return new RegExp(`(?<![A-Za-z'’])${escaped}(?![A-Za-z])`, 'i');
+}
+
+// --------------------------------------------------------------------------
+// the catalogue
+// --------------------------------------------------------------------------
+
+test('1a. the 1750 catalogue is a catalogue: copy.test.ts and the fixture read it', () => {
+  // The same rule as test/copy.test.ts and tools/fixtures.ts.
+  const catalogues = readdirSync('copy').filter((f) => /^[a-zA-Z0-9-]+\.json$/.test(f) && f !== 'surfaces.json');
+  assert.ok(catalogues.includes('en-x-1750.json'));
+  assert.ok(!catalogues.includes('en-x-1750.spelling.json'), 'the spelling table is not a language');
+  assert.equal(P_JSON.locale, PERIOD_LANGUAGE);
+});
+
+test('1b. every key the web uses has its 1750 twin, and every twin is an English key', () => {
+  for (const [key, entry] of Object.entries(EN_JSON.messages)) {
+    if ((entry['apps'] as string[]).includes('web')) assert.ok(PERIOD.messages.has(key), `${key}: no 1750 twin`);
+  }
+  for (const key of PERIOD.messages.keys()) assert.ok(EN.messages.has(key), `${key}: not an English key`);
+});
+
+test('1c. a key 1750 lacks falls back to English, with English\'s plural rule', () => {
+  // app.name is iOS's, and 1750 leaves it to English.
+  assert.ok(!PERIOD.messages.has('app.name'));
+  assert.equal(render(PERIOD, 'app.name'), 'Actual Egg Timer');
+  assert.equal(render(PERIOD, 'learned.tuned', { eggs: 1 }), 'Instructed by 1 egg');
+  assert.equal(render(PERIOD, 'learned.tuned', { eggs: 3 }), 'Instructed by 3 eggs');
+});
+
+test('1d. none of the eight stage-play archaisms', () => {
+  // LANGUAGE.md section 6: zero times each in the 1755 Preface.
+  const banned = ["'tis", 'pray', 'forthwith', 'whilst', 'thee', 'thou', 'hath', 'doth'];
+  const failures: string[] = [];
+  for (const [key, t] of templates()) {
+    for (const word of banned) if (wordPattern(word).test(t)) failures.push(`${key}: "${word}" in "${t}"`);
+  }
+  assert.deepEqual(failures, []);
+  // And the check would catch one.
+  assert.ok(wordPattern("'tis").test('’Tis done.'));
+  assert.ok(wordPattern('hath').test('it Hath boiled'));
+  assert.ok(!wordPattern('thou').test('though'));
+});
+
+test('1e. no modern spelling the table lists: the 1755 form, as a whole word', () => {
+  const failures: string[] = [];
+  for (const [key, t] of templates()) {
+    for (const [modern, old] of Object.entries(SPELLING)) {
+      if (wordPattern(modern).test(t)) failures.push(`${key}: "${modern}" should be "${old}" in "${t}"`);
+    }
+  }
+  assert.deepEqual(failures, []);
+  // Whole words only: "shew" is not "show", and "showers" would not be.
+  assert.ok(wordPattern('show').test('Show me'));
+  assert.ok(!wordPattern('show').test('showers'));
+});
+
+test('1f. the spelling table is modern to 1755, lower case, and never maps a word to itself', () => {
+  for (const [modern, old] of Object.entries(SPELLING)) {
+    assert.equal(modern, modern.toLowerCase(), modern);
+    assert.notEqual(modern, old, modern);
+  }
+  // The table seeds from LANGUAGE.md section 6.
+  for (const [modern, old] of [['error', 'errour'], ['public', 'publick'], ['show', 'shew'], ['fuel', 'fewel']]) {
+    assert.equal(SPELLING[modern], old);
+  }
+});
+
+test('1g. the long s only in the title, and the title reads without it', () => {
+  for (const [key, t] of templates()) {
+    if (key !== TITLE_KEY) assert.ok(!t.includes('ſ'), `${key}: a long s`);
+  }
+  const title = render(PERIOD, TITLE_KEY);
+  assert.ok(title.includes('ſ'));
+  // The label a screen reader hears is the title with every long s an s.
+  assert.equal(title.replace(/ſ/g, 's'), render(EN, TITLE_KEY));
+});
+
+test('1h. the answers keep their meaning: three, distinct, and the soft one says rear', () => {
+  const yolk = ['feedback.tooSoft', 'feedback.justRight', 'feedback.tooFirm'].map((k) => render(PERIOD, k));
+  assert.deepEqual(yolk, ['Too rear', 'As was desired', 'Too hard']);
+  const white = ['feedback.white.runny', 'feedback.white.tender', 'feedback.white.firm'].map((k) => render(PERIOD, k));
+  assert.equal(new Set(white).size, 3);
+});
+
+test('1i. the owner\'s alarm, word for word', () => {
+  assert.equal(render(PERIOD, 'alarm.pull.body'),
+    'Commit them at once to the cold; for heat, though withdrawn from the fire, is not yet withdrawn from the egg.');
+});
+
+test('1j. Help\'s links are the English links: the same URLs, in the same markdown', () => {
+  const links = (s: string): string[] => [...s.matchAll(/\]\((https:\/\/[^\s)]+)\)/g)].map((m) => m[1]);
+  for (const [key, entry] of Object.entries(EN_JSON.messages)) {
+    const english = typeof entry['text'] === 'string' ? entry['text'] : '';
+    if (!english.includes('](https://')) continue;
+    assert.deepEqual(links(render(PERIOD, key)), links(english), key);
+  }
+});
+
+test('1k. formats come from the region: the register is not a format', () => {
+  assert.equal(formattingLocale(PERIOD_LANGUAGE, 'US', null), 'en-US');
+  assert.equal(formattingLocale(PERIOD_LANGUAGE, 'GB', null), 'en-GB');
+  assert.equal(render(PERIOD, 'format.fahrenheit', { value: { value: 1234.5, decimals: 1 } }, 'en-US'), '1,234.5 °F');
+});
+
+// --------------------------------------------------------------------------
+// the switch
+// --------------------------------------------------------------------------
+
+function flip(state: LanguageState, ...flips: ('metricToImperial' | 'imperialToMetric')[]): LanguageState {
+  return flips.reduce((s, f) => languageAfterFlip(s, f), state);
+}
+
+test('2a. tags: 1750 in any region, and modern English is English without it', () => {
+  for (const tag of ['en-x-1750', 'en-US-x-1750', 'EN-GB-X-1750']) assert.ok(isPeriod(tag), tag);
+  for (const tag of ['en', 'en-US', 'cs', 'cs-x-1750', 'en-x-17500']) assert.ok(!isPeriod(tag), tag);
+  assert.ok(isModernEnglish('en') && isModernEnglish('en-GB'));
+  assert.ok(!isModernEnglish('en-x-1750') && !isModernEnglish('cs'));
+  assert.equal(effectiveLanguage(FRESH_LANGUAGE), DEFAULT_LANGUAGE);
+});
+
+test('2b. metric to Imperial in English goes into 1750, and back comes out to the default', () => {
+  const imperial = flip(FRESH_LANGUAGE, 'metricToImperial');
+  assert.equal(effectiveLanguage(imperial), PERIOD_LANGUAGE);
+  const back = flip(imperial, 'imperialToMetric');
+  assert.deepEqual(back, FRESH_LANGUAGE, 'a default comes back a default, not a choice');
+});
+
+test('2c. back to metric restores the English chosen before, not merely the default', () => {
+  const chosen = languageAfterPick(FRESH_LANGUAGE, 'en');
+  const back = flip(chosen, 'metricToImperial', 'imperialToMetric');
+  assert.deepEqual(back, chosen);
+});
+
+test('2d. choosing English in the picker leaves 1750, and a later switch to metric does not undo it', () => {
+  const picked = languageAfterPick(flip(FRESH_LANGUAGE, 'metricToImperial'), 'en');
+  assert.equal(effectiveLanguage(picked), 'en');
+  assert.equal(effectiveLanguage(flip(picked, 'imperialToMetric')), 'en');
+});
+
+test('2e. 1750 chosen in the picker is not left by the units', () => {
+  const picked = languageAfterPick(FRESH_LANGUAGE, PERIOD_LANGUAGE);
+  assert.equal(effectiveLanguage(flip(picked, 'imperialToMetric')), PERIOD_LANGUAGE);
+  assert.equal(effectiveLanguage(flip(picked, 'metricToImperial', 'imperialToMetric')), PERIOD_LANGUAGE);
+});
+
+test('2f. a language that is not English is never moved', () => {
+  const czech: LanguageState = { chosen: 'cs', flippedFrom: null };
+  assert.deepEqual(flip(czech, 'metricToImperial'), czech);
+  assert.deepEqual(flip(czech, 'imperialToMetric'), czech);
+});
+
+test('2g. a stored state is read defensively', () => {
+  const known = ['en', PERIOD_LANGUAGE];
+  assert.deepEqual(readLanguageState(null, known), FRESH_LANGUAGE);
+  assert.deepEqual(readLanguageState('en', known), FRESH_LANGUAGE);
+  assert.deepEqual(readLanguageState({ chosen: 'xx' }, known), FRESH_LANGUAGE);
+  const stored = flip(FRESH_LANGUAGE, 'metricToImperial');
+  assert.deepEqual(readLanguageState(JSON.parse(JSON.stringify(stored)), known), stored);
+  // A remembered switch with no 1750 on screen is dropped.
+  assert.deepEqual(readLanguageState({ chosen: 'en', flippedFrom: { chosen: null } }, known),
+    { chosen: 'en', flippedFrom: null });
+});
+
+// --------------------------------------------------------------------------
+// the record
+// --------------------------------------------------------------------------
+
+test('3a. the record\'s register follows the language', () => {
+  assert.equal(registerOf('en'), 'modern');
+  assert.equal(registerOf('cs'), 'modern');
+  assert.equal(registerOf(PERIOD_LANGUAGE), '1750');
+  assert.equal(registerOf('en-US-x-1750'), '1750');
+});
+
+test('3b. a cook read in 1750 is recorded as 1750: lang and register both', () => {
+  const cooked = (lang: string): Cooked => ({
+    egg: eggFromMass(0.068), massFrom: 'class', sizeTable: 'eu', eggFrom: 'fridge',
+    boilRemembered: false, units: 'imperial', lang: lang,
+    setup: {
+      startMode: 'hot', afterBoil: 'hold', eggStart_C: 4, ambient_C: 20, boiling_C: 100,
+      timeToBoil_s: 480, cooling: 'ice', waterLitres: 2, eggCount: 2,
+    },
+  });
+  const m = advance(startHot(1_750_000_000_000, 400, 'ice', 0.4), 1_750_000_500_000).machine;
+  const period = eggRecordFor(cooked(PERIOD_LANGUAGE), m, -1);
+  assert.equal(period.lang, PERIOD_LANGUAGE);
+  assert.equal(period.register, '1750');
+  assert.notEqual(parseRecord(period), null);
+  const modern = eggRecordFor(cooked('en'), m, -1);
+  assert.equal(modern.lang, 'en');
+  assert.equal(modern.register, 'modern');
+});

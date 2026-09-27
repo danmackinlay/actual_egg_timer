@@ -13,6 +13,7 @@
 
 import { SizeClass } from '../core/geometry.js';
 import { UnitSystem, readChosenUnits } from '../core/units.js';
+import { FRESH_LANGUAGE, LANGUAGES, LanguageState, readLanguageState } from '../core/language.js';
 import { StartMode, Cooling, HeatAfterBoil } from '../core/protocol.js';
 import {
   BoilMemory, DEFAULTS, LIMITS, Limit, carrySizeIndex, clamp, isWithin, rememberBoil,
@@ -59,6 +60,10 @@ export interface Settings {
    *  default (`effectiveUnits`), and storing the result instead would turn a
    *  default into a choice the cook never made. */
   unitsChosen: UnitSystem | null;
+  /** The language the cook chose, or null for the default, and what the
+   *  units switch replaced when it went into 1750 (`src/core/language.ts`).
+   *  Like the units, a choice is kept apart from the default it overrides. */
+  language: LanguageState;
   /** "I have a probe thermometer" (E4): ask for a reading at the middle of
    *  the egg when the cooling ends. Off until the cook says so. */
   probe: boolean;
@@ -87,6 +92,7 @@ export const DEFAULT_SETTINGS: Settings = {
   doneness: DEFAULTS.doneness,
   muted: false,
   unitsChosen: null,
+  language: FRESH_LANGUAGE,
   probe: false,
   probeAsked: false,
 };
@@ -173,9 +179,17 @@ export function loadSettings(classes: SizeClass[]): Settings {
     doneness: clampNumber(raw['doneness'], LIMITS.doneness, d.doneness),
     muted: raw['muted'] === true,
     unitsChosen: readChosenUnits(raw['unitsChosen']),
+    language: readLanguageState(raw['language'], LANGUAGES),
     probe: raw['probe'] === true,
     probeAsked: raw['probeAsked'] === true,
   };
+}
+
+/** Only the language, for choosing a catalogue before anything else is read:
+ *  the page paints nothing until its words are in. */
+export function loadLanguage(): LanguageState {
+  const raw = parseObject(readStorage(SETTINGS_KEY));
+  return raw === null ? FRESH_LANGUAGE : readLanguageState(raw['language'], LANGUAGES);
 }
 
 export function saveSettings(settings: Settings): void {

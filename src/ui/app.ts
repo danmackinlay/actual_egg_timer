@@ -50,11 +50,16 @@ import { sousVideCopy } from './sousvide.js';
 import {
   PlaySafe, directionKey, playSafe, playSafeWanted, rangeWords, restoreOutcome, whiteAtRisk,
 } from './outcome.js';
-import { activeLocale, t } from './copy.js';
+import { activeLocale, applyCopy, switchCopy, t } from './copy.js';
 import { formatClock, spokenClock } from './countdown.js';
 import {
-  REGION, REGIONAL_UNITS, announceFlip, measure, show, unitSystem, useUnits,
+  REGION, REGIONAL_UNITS, UNITS_FLIP_EVENT, UnitsFlipDetail, announceFlip, measure, show, unitSystem,
+  useUnits,
 } from './units.js';
+import { languageOf } from '../core/format.js';
+import {
+  LANGUAGES, LanguageState, effectiveLanguage, languageAfterFlip, languageAfterPick,
+} from '../core/language.js';
 import {
   Machine, advance, beginCooling, coolingStartsIn_s, idleMachine, recordBoil, restoreMachine,
   reviseProvisional, secondsAfterBoil, secondsHeating, secondsToCool, secondsToPull,
@@ -152,6 +157,7 @@ const dom = {
   unitProbe: el<HTMLSpanElement>('unitProbe'),
   probeSave: el<HTMLButtonElement>('probeSave'),
   probeNote: el<HTMLParagraphElement>('probeNote'),
+  unitsPeriod: el<HTMLParagraphElement>('unitsPeriod'),
 };
 
 function radios(name: string): HTMLInputElement[] {
@@ -869,12 +875,19 @@ function showInfo(button: HTMLButtonElement, visible: boolean): void {
  * `data-copy` on the element it controls.
  */
 function wireInfoButtons(): void {
+  labelInfoButtons();
+  for (const button of Array.from(document.querySelectorAll<HTMLButtonElement>('button.info'))) {
+    button.addEventListener('click', () => toggleDisclosure(button));
+  }
+}
+
+/** Each (i)'s name, in the language on screen. Again whenever it changes. */
+function labelInfoButtons(): void {
   for (const button of Array.from(document.querySelectorAll<HTMLButtonElement>('button.info'))) {
     const name = button.dataset['name'];
     const label = button.dataset['label'];
     if (name !== undefined) button.setAttribute('aria-label', t(name));
     else if (label !== undefined) button.setAttribute('aria-label', t('more.about', { label: t(label) }));
-    button.addEventListener('click', () => toggleDisclosure(button));
   }
 }
 
@@ -1700,6 +1713,54 @@ function resetProbe(): void {
   dom.probeNote.textContent = '';
 }
 
+/* -------------------------------------------------------------- language */
+
+/** The picker, and the line under the Imperial option that says the English
+ *  of 1750 is there, which only an English page shows. */
+function applyLanguageToDom(): void {
+  selectRadio('language', activeLocale());
+  dom.unitsPeriod.hidden = languageOf(activeLocale()) !== 'en';
+}
+
+/** Which language changes went in last, so two quick changes land in order. */
+let languageAsked = 0;
+
+/**
+ * Take up a new language state: store it, and if the catalogue on screen
+ * changes, fetch the new one and redraw every word in place. Nothing about the
+ * egg changes, and the units are never touched from here: that rule runs one
+ * way (LANGUAGE.md section 6). Only reachable while idle, since Settings is.
+ */
+function setLanguage(next: LanguageState): void {
+  const before = effectiveLanguage(settings.language);
+  settings.language = next;
+  saveNow();
+  const tag = effectiveLanguage(next);
+  if (tag === before && tag === activeLocale()) {
+    applyLanguageToDom();
+    return;
+  }
+  const asked = ++languageAsked;
+  void switchCopy(tag).then(() => {
+    if (asked === languageAsked) relabel();
+  });
+}
+
+/** Every word on the page again, in the catalogue now active: the marked-up
+ *  ones (`applyCopy`), and each one the code drew. */
+function relabel(): void {
+  applyCopy(document);
+  labelInfoButtons();
+  labelTicks();
+  renderMute();
+  applyUnitsToDom();
+  applyLanguageToDom();
+  adviceShown = '';
+  renderCalibNote();
+  if (machine.phase === 'IDLE') recompute();
+  else render(Date.now());
+}
+
 /* ------------------------------------------------------------------ input */
 
 function readInputs(source: EventTarget | null): void {
@@ -1755,6 +1816,13 @@ function onInput(event: Event): void {
   const target = event.target;
   if (target instanceof HTMLInputElement && target.name === 'units') {
     if (event.type === 'change') onUnits(target.value === 'imperial' ? 'imperial' : 'metric');
+    return;
+  }
+  // So is the language, which changes every word and no number.
+  if (target instanceof HTMLInputElement && target.name === 'language') {
+    if (event.type === 'change' && LANGUAGES.includes(target.value)) {
+      setLanguage(languageAfterPick(settings.language, target.value));
+    }
     return;
   }
   readInputs(target);
@@ -1934,25 +2002,33 @@ function buildSizeOptions(): void {
   }
   const custom = document.createElement('option');
   custom.value = '-1';
-  custom.textContent = t('controls.size.measured');
   dom.size.append(custom);
 }
 
-/** The classes' names, with their masses in the units on screen. */
+/** The classes' names, with their masses in the units on screen, and the
+ *  measured egg's. */
 function labelSizeOptions(): void {
   for (let i = 0; i < sizeClasses.length; i += 1) {
     const label = sizeClassLabel(sizeClasses[i], unitSystem());
     dom.size.options[i].textContent = t(label.key, { mass: t(label.mass.key, { value: label.mass.value }) });
   }
+  dom.size.options[sizeClasses.length].textContent = t('controls.size.measured');
 }
 
 function buildTicks(): void {
   for (const anchor of DONENESS_ANCHORS) {
     const span = document.createElement('span');
-    span.textContent = t(anchor.key);
     span.style.left = `${anchor.level * 100}%`;
     dom.donenessTicks.append(span);
   }
+  labelTicks();
+}
+
+function labelTicks(): void {
+  const spans = dom.donenessTicks.querySelectorAll<HTMLSpanElement>('span');
+  DONENESS_ANCHORS.forEach((anchor, i) => {
+    if (spans[i] !== undefined) spans[i].textContent = t(anchor.key);
+  });
 }
 
 function applyLimit(input: HTMLInputElement, limit: Limit): void {
@@ -2015,6 +2091,7 @@ function applySettingsToDom(): void {
   dom.doneness.value = String(settings.doneness);
   dom.customTempField.hidden = settings.startTempMode !== 'custom';
   dom.probeSetting.checked = settings.probe;
+  applyLanguageToDom();
 }
 
 export function boot(): void {
@@ -2043,6 +2120,12 @@ export function boot(): void {
   // works them, and aria-expanded says which way they stand.
   wireInfoButtons();
   wireViews();
+  // F6: a cook's own switch from metric to Imperial, in modern English, is
+  // also a switch into the English of 1750, and back (LANGUAGE.md section 6).
+  document.addEventListener(UNITS_FLIP_EVENT, (event) => {
+    const detail = (event as CustomEvent<UnitsFlipDetail>).detail;
+    setLanguage(languageAfterFlip(settings.language, detail.flip));
+  });
   dom.probeOfferYes.addEventListener('click', () => onProbeOffer(true));
   dom.probeOfferNo.addEventListener('click', () => onProbeOffer(false));
   dom.probeSave.addEventListener('click', onProbeSave);

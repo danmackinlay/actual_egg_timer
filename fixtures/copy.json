@@ -1,8 +1,3138 @@
 {
   "locales": [
+    "en-x-1750",
     "en"
   ],
   "render": [
+    {
+      "locale": "en-x-1750",
+      "key": "app.name",
+      "args": {},
+      "text": "Actual Egg Timer"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "doneness.runny",
+      "args": {},
+      "text": "Rear"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "doneness.soft",
+      "args": {},
+      "text": "Soft"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "doneness.jammy",
+      "args": {},
+      "text": "Thick"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "doneness.fudgy",
+      "args": {},
+      "text": "Firm"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "doneness.hard",
+      "args": {},
+      "text": "Hard"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "size.eu.small",
+      "args": {
+        "mass": "1.7 oz"
+      },
+      "text": "Small — 1.7 oz"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "size.eu.medium",
+      "args": {
+        "mass": "2.0 oz"
+      },
+      "text": "Middling — 2.0 oz"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "size.eu.large",
+      "args": {
+        "mass": "2.4 oz"
+      },
+      "text": "Large — 2.4 oz"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "size.eu.extraLarge",
+      "args": {
+        "mass": "2.7 oz"
+      },
+      "text": "Very large — 2.7 oz"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "size.us.small",
+      "args": {
+        "mass": "1.6 oz"
+      },
+      "text": "Small — 1.6 oz"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "size.us.medium",
+      "args": {
+        "mass": "1.9 oz"
+      },
+      "text": "Middling — 1.9 oz"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "size.us.large",
+      "args": {
+        "mass": "2.1 oz"
+      },
+      "text": "Large — 2.1 oz"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "size.us.extraLarge",
+      "args": {
+        "mass": "2.4 oz"
+      },
+      "text": "Very large — 2.4 oz"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "size.us.jumbo",
+      "args": {
+        "mass": "2.6 oz"
+      },
+      "text": "Largest — 2.6 oz"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "unit.celsius",
+      "args": {},
+      "text": "°C"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "unit.fahrenheit",
+      "args": {},
+      "text": "°F"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "unit.grams",
+      "args": {},
+      "text": "g"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "unit.ounces",
+      "args": {},
+      "text": "oz"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "unit.millimetres",
+      "args": {},
+      "text": "mm"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "unit.inches",
+      "args": {},
+      "text": "in"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "unit.metres",
+      "args": {},
+      "text": "m"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "unit.feet",
+      "args": {},
+      "text": "ft"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "unit.litres",
+      "args": {},
+      "text": "L"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "unit.quarts",
+      "args": {},
+      "text": "qt"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "unit.pints",
+      "args": {},
+      "text": "pt"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "format.celsius",
+      "args": {
+        "value": "100.0"
+      },
+      "text": "100.0 °C"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "format.fahrenheit",
+      "args": {
+        "value": "212.0"
+      },
+      "text": "212.0 °F"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "format.grams",
+      "args": {
+        "value": "68"
+      },
+      "text": "68 g"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "format.ounces",
+      "args": {
+        "value": "2.4"
+      },
+      "text": "2.4 oz"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "format.millimetres",
+      "args": {
+        "value": "43.5"
+      },
+      "text": "43.5 mm"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "format.inches",
+      "args": {
+        "value": "1.72"
+      },
+      "text": "1.72 in"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "format.metres",
+      "args": {
+        "value": "1500"
+      },
+      "text": "1500 m"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "format.feet",
+      "args": {
+        "value": "16400"
+      },
+      "text": "16400 ft"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "format.litres",
+      "args": {
+        "value": "2.00"
+      },
+      "text": "2.00 L"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "format.quarts",
+      "args": {
+        "value": "12.50"
+      },
+      "text": "12.50 qt"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "format.pints",
+      "args": {
+        "value": "21.00"
+      },
+      "text": "21.00 pt"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "readout.phase.total",
+      "args": {},
+      "text": "The whole time"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "readout.phase.totalLidOn",
+      "args": {},
+      "text": "Total time, lid on"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "readout.phase.heating",
+      "args": {},
+      "text": "Upon the fire"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "readout.phase.heatingTap",
+      "args": {},
+      "text": "Heating — tap when it boils"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "readout.phase.cookingBoiling",
+      "args": {},
+      "text": "Cooking; let the boil not abate"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "readout.phase.cookingHeatOff",
+      "args": {},
+      "text": "Cooking; fire out, lid on"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "readout.phase.pull",
+      "args": {},
+      "text": "Out of the water, at once"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "readout.phase.coolingIce",
+      "args": {},
+      "text": "Cooling; leave them in the ice"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "readout.phase.coolingTap",
+      "args": {},
+      "text": "Cooling; let the water run on"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "readout.phase.cooling",
+      "args": {},
+      "text": "Cooling"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "readout.phase.done",
+      "args": {},
+      "text": "It is done"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "readout.phase.startTime",
+      "args": {},
+      "text": "Time of beginning"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "readout.big.now",
+      "args": {},
+      "text": "NOW"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "readout.big.eat",
+      "args": {},
+      "text": "Eat"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "readout.sub.coldAssumes",
+      "args": {
+        "boil": "6:40"
+      },
+      "text": "about 6:40 to boil, as experience has shewn"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "readout.sub.coldAssumes.info",
+      "args": {},
+      "text": "Of this time to boil"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "readout.sub.coldAssumes.more",
+      "args": {},
+      "text": "As often as you tap It boils in earnest, having begun from cold water, I note how long the water was in coming to the boil, and mix that equally with what I had before for the same quantity. Your pots I cannot tell apart; I know only how much water is in them. Where I have never timed so much, I reckon from the nearest quantity I have. Tap the boil to-day, and I shall correct the time while the eggs are cooking."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "readout.sub.coldGuesses",
+      "args": {
+        "boil": "8:00"
+      },
+      "text": "I conjecture 8:00 to the boil; tap when it comes"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "readout.sub.standing",
+      "args": {
+        "water": "12.50 qt"
+      },
+      "text": "for this quantity of water, the lid on (12.50 qt); measure it, for the quantity alters the time"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "readout.sub.hot",
+      "args": {},
+      "text": "from the eggs going in to their coming out"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "readout.sub.idleCold",
+      "args": {},
+      "text": "from eggs into cold water, heat on, to eggs out"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "readout.sub.idleHot",
+      "args": {},
+      "text": "from eggs into boiling water to eggs out"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "readout.sub.heating",
+      "args": {
+        "elapsed": "2:15",
+        "boil": "8:00"
+      },
+      "text": "2:15 upon the fire · I expect 8:00 before you tap"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "readout.sub.heatingEstimate",
+      "args": {},
+      "text": "my guess until you tap Full rolling boil"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "readout.sub.cookingCold",
+      "args": {
+        "boil": "6:40",
+        "after": "3:57"
+      },
+      "text": "the boil came in 6:40 · 3:57 after it"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "readout.sub.cookingHot",
+      "args": {},
+      "text": "immersed in the water"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "readout.sub.pull",
+      "args": {},
+      "text": "the yolk is cooking still"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "readout.sub.coolingPeak",
+      "args": {},
+      "text": "until the middle of the yolk ceases to grow warmer"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "readout.sub.coolingProbe",
+      "args": {},
+      "text": "until the middle of the yolk ceases to grow warmer; have the probe in readiness"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "readout.sub.doneCold",
+      "args": {
+        "boil": "6:40",
+        "cooking": "4:36"
+      },
+      "text": "6:40 to the boil, and 4:36 of cooking"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "readout.sub.doneHot",
+      "args": {},
+      "text": "the whole time in the water"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "readout.sub.done",
+      "args": {},
+      "text": "that is the egg you asked for"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "readout.alarm.setting",
+      "args": {},
+      "text": "setting the alarm…"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "readout.alarm.denied",
+      "args": {},
+      "text": "no notification permission — keep the app open"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "readout.alarm.failed",
+      "args": {},
+      "text": "the alarm did not take — keep the app open"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "readout.alarm.set",
+      "args": {
+        "time": "7:41:12 AM"
+      },
+      "text": "alarm set for 7:41:12 AM"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "readout.stat.peakYolk",
+      "args": {},
+      "text": "peak yolk"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "readout.stat.peakWhite",
+      "args": {},
+      "text": "peak white"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "readout.stat.afterBoil",
+      "args": {},
+      "text": "after the boil"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "readout.stat.waterBoilsAt",
+      "args": {},
+      "text": "water here boils at"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "readout.stat.bath",
+      "args": {},
+      "text": "sous-vide at"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "readout.mute.on",
+      "args": {},
+      "text": "Bell on"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "readout.mute.off",
+      "args": {},
+      "text": "Bell muffled"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "readout.restored",
+      "args": {},
+      "text": "I have taken up this cook again after the page was reloaded. The times are true, but the alarm perished with the old page; keep this tab open, or tap Leave off and begin again."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "texture.note",
+      "args": {
+        "white": "white set",
+        "yolk": "yolk jammy"
+      },
+      "text": "white set, yolk jammy"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "texture.white.justSet",
+      "args": {},
+      "text": "white newly set"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "texture.white.set",
+      "args": {},
+      "text": "white set"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "texture.white.firm",
+      "args": {},
+      "text": "white firm"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "texture.white.runny",
+      "args": {},
+      "text": "the white continues unset"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "texture.yolk.liquid",
+      "args": {},
+      "text": "yolk yet liquid"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "texture.yolk.soft",
+      "args": {},
+      "text": "yolk soft, scarce thickened"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "texture.yolk.jammy",
+      "args": {},
+      "text": "yolk thick"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "texture.yolk.fudgy",
+      "args": {},
+      "text": "yolk firm"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "texture.yolk.set",
+      "args": {},
+      "text": "yolk wholly set"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "refusal.whiteNeverSets",
+      "args": {},
+      "text": "With the heat withdrawn, the water cools before the white is set, and no setting can succeed. Add more water, or keep it boiling."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "refusal.harderThanPan",
+      "args": {
+        "water": "12.50 qt",
+        "limit": "fudgy"
+      },
+      "text": "With the heat withdrawn, this quantity of water (12.50 qt) grows cool before the yolk arrives there. Firmest attainable: fudgy. Add more water, or keep it boiling."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "refusal.counter",
+      "args": {
+        "limit": "fudgy"
+      },
+      "text": "An egg left upon the table does not cease to cook because it has ceased to boil. Softest attainable: fudgy. In iced water it might be left softer."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "refusal.tap",
+      "args": {
+        "limit": "soft"
+      },
+      "text": "A cold tap cools the egg too slowly to arrest the yolk. Softest attainable: soft. In iced water it might be left a little softer."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "refusal.unlikelySoft",
+      "args": {
+        "hits": 3,
+        "of": 10,
+        "limit": "jammy"
+      },
+      "text": "The softest in which I hitherto succeed at least 3 times in 10: jammy."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "refusal.unlikelyHard",
+      "args": {
+        "hits": 3,
+        "of": 10,
+        "limit": "fudgy"
+      },
+      "text": "The firmest in which I hitherto succeed at least 3 times in 10: fudgy."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "refusal.ice",
+      "args": {
+        "limit": "soft"
+      },
+      "text": "Any shorter, and the white is yet raw. Softest attainable for this egg: soft."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "action.startHeating",
+      "args": {},
+      "text": "Set it on the fire"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "action.eggsIn",
+      "args": {},
+      "text": "In with the eggs"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "action.eggsInHeatOn",
+      "args": {},
+      "text": "Eggs in, heat on"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "action.fullBoil",
+      "args": {},
+      "text": "It boils in earnest"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "action.cancel",
+      "args": {},
+      "text": "Leave off"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "action.startAgain",
+      "args": {},
+      "text": "Begin anew"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "action.pulled.ice",
+      "args": {},
+      "text": "They are in the ice"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "action.pulled.tap",
+      "args": {},
+      "text": "They are under the tap"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "action.pulled.counter",
+      "args": {},
+      "text": "They are out"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "action.hint.cold",
+      "args": {},
+      "text": "the eggs in the pan, the lid on; then tap"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "action.hint.hotStanding",
+      "args": {},
+      "text": "the eggs into boiling water; then the lid on, and the fire out"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "action.hint.hotBoiling",
+      "args": {
+        "time": "7:44"
+      },
+      "text": "the water at a full boil, and kept so for the whole 7:44"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "action.hint.whiteNeverSets",
+      "args": {},
+      "text": "nothing to begin: with this quantity of water the white will never set"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "action.hint.heating",
+      "args": {},
+      "text": "wait until the whole surface rolls"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "action.hint.heating.info",
+      "args": {},
+      "text": "Of the rolling boil"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "action.hint.heating.more",
+      "args": {},
+      "text": "A full boil is not the first bubbles at the edge, but the whole surface heaving, and not to be calmed by stirring. The rest of the cook is timed from your tap, which teaches me likewise how fast your stove brings water to the boil; a few seconds either way are of no moment, but a minute early is an errour. Until you tap, the countdown is but my conjecture."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "action.hint.heatingStanding",
+      "args": {},
+      "text": "wait until the whole surface rolls; then the lid on, and the fire out"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "action.hint.cookingStanding",
+      "args": {},
+      "text": "the lid on, the fire out"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "action.hint.cookingBoiling",
+      "args": {
+        "boiling": "212 °F"
+      },
+      "text": "keep it at a full boil (212 °F) till the eggs come out"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "action.hint.pull",
+      "args": {
+        "seconds": 17
+      },
+      "text": "the cooling begins of itself in 17 s"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "spoken.seconds",
+      "args": {
+        "seconds": 45
+      },
+      "text": "45 seconds"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "spoken.seconds",
+      "args": {
+        "seconds": 0
+      },
+      "text": "0 seconds"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "spoken.seconds",
+      "args": {
+        "seconds": 1
+      },
+      "text": "1 second"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "spoken.seconds",
+      "args": {
+        "seconds": 2
+      },
+      "text": "2 seconds"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "spoken.seconds",
+      "args": {
+        "seconds": 3
+      },
+      "text": "3 seconds"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "spoken.seconds",
+      "args": {
+        "seconds": 4
+      },
+      "text": "4 seconds"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "spoken.seconds",
+      "args": {
+        "seconds": 5
+      },
+      "text": "5 seconds"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "spoken.seconds",
+      "args": {
+        "seconds": 11
+      },
+      "text": "11 seconds"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "spoken.seconds",
+      "args": {
+        "seconds": 21
+      },
+      "text": "21 seconds"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "spoken.seconds",
+      "args": {
+        "seconds": 22
+      },
+      "text": "22 seconds"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "spoken.seconds",
+      "args": {
+        "seconds": 1.5
+      },
+      "text": "1.5 seconds"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "spoken.seconds",
+      "args": {
+        "seconds": 2.5
+      },
+      "text": "2.5 seconds"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "spoken.seconds",
+      "args": {
+        "seconds": 0.5
+      },
+      "text": "0.5 seconds"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "spoken.minutes",
+      "args": {
+        "minutes": 11
+      },
+      "text": "11 minutes"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "spoken.minutes",
+      "args": {
+        "minutes": 0
+      },
+      "text": "0 minutes"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "spoken.minutes",
+      "args": {
+        "minutes": 1
+      },
+      "text": "1 minute"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "spoken.minutes",
+      "args": {
+        "minutes": 2
+      },
+      "text": "2 minutes"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "spoken.minutes",
+      "args": {
+        "minutes": 3
+      },
+      "text": "3 minutes"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "spoken.minutes",
+      "args": {
+        "minutes": 4
+      },
+      "text": "4 minutes"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "spoken.minutes",
+      "args": {
+        "minutes": 5
+      },
+      "text": "5 minutes"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "spoken.minutes",
+      "args": {
+        "minutes": 11
+      },
+      "text": "11 minutes"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "spoken.minutes",
+      "args": {
+        "minutes": 21
+      },
+      "text": "21 minutes"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "spoken.minutes",
+      "args": {
+        "minutes": 22
+      },
+      "text": "22 minutes"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "spoken.minutes",
+      "args": {
+        "minutes": 1.5
+      },
+      "text": "1.5 minutes"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "spoken.minutes",
+      "args": {
+        "minutes": 2.5
+      },
+      "text": "2.5 minutes"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "spoken.minutes",
+      "args": {
+        "minutes": 0.5
+      },
+      "text": "0.5 minutes"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "spoken.minutesSeconds",
+      "args": {
+        "minutes": "11 minutes",
+        "seconds": "17 seconds"
+      },
+      "text": "11 minutes 17 seconds"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "spoken.total",
+      "args": {
+        "time": "11 minutes 17 seconds"
+      },
+      "text": "In all, 11 minutes 17 seconds"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "spoken.heating",
+      "args": {
+        "time": "11 minutes 17 seconds"
+      },
+      "text": "Upon the fire. 11 minutes 17 seconds remaining in all"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "spoken.cooking",
+      "args": {
+        "time": "3 minutes 57 seconds"
+      },
+      "text": "Cooking. 3 minutes 57 seconds remaining"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "spoken.pull",
+      "args": {},
+      "text": "Take out the eggs at once"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "spoken.cooling",
+      "args": {
+        "time": "3 minutes 0 seconds"
+      },
+      "text": "Cooling. 3 minutes 0 seconds remaining"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "spoken.done",
+      "args": {},
+      "text": "Now eat."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "spoken.probe",
+      "args": {},
+      "text": "Now thrust the probe into the middle of the egg."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "spoken.announcement",
+      "args": {
+        "label": "Cooking — keep it boiling",
+        "spoken": "Cooking. 3 minutes 57 seconds left"
+      },
+      "text": "Cooking — keep it boiling. Cooking. 3 minutes 57 seconds left"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "spoken.sousVide",
+      "args": {
+        "when": "yesterday",
+        "subline": "at 8:47 AM — 22 h 43 min at 136 °F, to eat now"
+      },
+      "text": "Sous-vide. You ought to have begun yesterday, at 8:47 AM — 22 h 43 min at 136 °F, to eat now"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "controls.doneness",
+      "args": {},
+      "text": "Degree of hardness"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "controls.doneness.value",
+      "args": {
+        "doneness": "Jammy",
+        "yolk": "149 °F"
+      },
+      "text": "Jammy · the yolk at most 149 °F"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "controls.doneness.valueBath",
+      "args": {
+        "doneness": "Jammy",
+        "bath": "136 °F"
+      },
+      "text": "Jammy · the water at 136 °F"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "controls.size",
+      "args": {},
+      "text": "Bigness of the egg"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "controls.size.measured",
+      "args": {},
+      "text": "As measured below…"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "controls.size.weighed",
+      "args": {
+        "mass": "2.4 oz"
+      },
+      "text": "Weighed · 2.4 oz"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "controls.egg",
+      "args": {},
+      "text": "The egg"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "controls.egg.more",
+      "args": {},
+      "text": "The heat must reach the middle of the egg, and the middle of a bigger egg lies further from the water. A size printed upon the box comprehends eggs of very different weights; if therefore you have scales, weigh one and enter its weight, and I shall trust the scales before the box."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "controls.measure.legend",
+      "args": {},
+      "text": "Or measure it; any one suffices"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "controls.measure.weight",
+      "args": {},
+      "text": "Weight"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "controls.measure.girth",
+      "args": {},
+      "text": "Round the middle"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "controls.measure.minor",
+      "args": {},
+      "text": "Athwart the middle"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "controls.measure.hint",
+      "args": {},
+      "text": "Scales are the most exact. Otherwise wrap a slip of paper round the fattest part, and measure the slip, which is easier than to caliper an egg. The other two boxes follow from whichever you fill."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "controls.eggFrom",
+      "args": {},
+      "text": "The egg from"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "controls.eggFrom.more",
+      "args": {},
+      "text": "A fridge keeps its eggs at much the same warmth from day to day, so that I know where a fridge egg begins. A room may be some degrees warmer or cooler than I suppose, and every degree moves the time a little; if you know better, choose Your own, and tell me. An egg that has stood out is as warm as the room, and therefore tells me likewise the warmth of your kitchen, which signifies when the eggs rest upon the table, or the fire is put out."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "controls.eggFrom.fridge",
+      "args": {},
+      "text": "Fridge"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "controls.eggFrom.room",
+      "args": {},
+      "text": "Room"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "controls.eggFrom.custom",
+      "args": {},
+      "text": "Your own"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "controls.eggFrom.fridgeAt",
+      "args": {
+        "temp": "39 °F"
+      },
+      "text": "Fridge 39 °F"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "controls.eggFrom.roomAt",
+      "args": {
+        "temp": "68 °F"
+      },
+      "text": "Room 68 °F"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "controls.eggFrom.hint",
+      "args": {
+        "fridge": "39 °F",
+        "room": "68 °F"
+      },
+      "text": "Supposed temperatures: fridge, 39 °F; room, 68 °F. Choose Your own if yours differ."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "controls.eggTemp",
+      "args": {},
+      "text": "Warmth of the egg"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "controls.start",
+      "args": {},
+      "text": "To begin"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "controls.start.more",
+      "args": {},
+      "text": "Boiling water: lower the eggs into water already at a full boil, and the clock begins as they go in; they peel more easily. Cold water: the eggs in a cold pan, the fire lit, and you tap when it boils, which teaches me how fast your stove boils water; they are done sooner, the waiting for the boil included. Sous-vide: I shall tell you when you ought to have begun, which is commonly some while ago."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "controls.start.cold",
+      "args": {},
+      "text": "Cold water"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "controls.start.hot",
+      "args": {},
+      "text": "Boiling water"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "controls.start.sousVide",
+      "args": {
+        "bath": "136 °F"
+      },
+      "text": "Sous-vide 136 °F"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "controls.start.hintSousVide",
+      "args": {},
+      "text": "A bath needs no pan, so the pan controls are put away. Your settings are kept and come back when you pick a pan again."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "controls.afterTheBoil",
+      "args": {},
+      "text": "After the boil"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "controls.afterTheBoil.more",
+      "args": {},
+      "text": "Keep it boiling: the fire holds the water at a full boil till the eggs come out, and the quantity of water is of little moment. Fire out, lid on: the eggs once in boiling water, put out the fire and put on the lid, and the hot water finishes the eggs as it cools. This spares fewel; but the water does all the labour, so that its quantity decides the time, and too little cannot finish the work. If you choose this, measure it."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "controls.afterBoil.keepBoiling",
+      "args": {},
+      "text": "Keep it boiling"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "controls.afterBoil.heatOff",
+      "args": {},
+      "text": "Fire out, lid on"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "controls.afterBoil.explainHeatOff",
+      "args": {},
+      "text": "Lid on and burner off: the water's own heat finishes the eggs. I work out the time from the water below, so measure it — more or less water changes the time, or whether it works at all."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "controls.afterBoil.explainHold",
+      "args": {},
+      "text": "The burner holds the water at a rolling boil for the whole cook."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "controls.then",
+      "args": {},
+      "text": "Then"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "controls.then.ice",
+      "args": {},
+      "text": "Iced water"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "controls.then.tap",
+      "args": {},
+      "text": "Cold tap"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "controls.then.counter",
+      "args": {},
+      "text": "Table"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "controls.cooling",
+      "args": {},
+      "text": "Cooling"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "controls.cooling.more",
+      "args": {},
+      "text": "When the eggs come out, the heat in the white continues its progress inward, and the yolk cooks on for some minutes. Iced water carries the heat away fastest, and therefore arrests it soonest, and permits me to offer the softest yolks; a cold tap is nearly as good. Still air takes away scarcely any heat: to a hot egg upon the table it is less a means of cooling than a lid. For this I make allowance; but it forbids the softest yolks, and how much more the yolk will cook is not easily foretold."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "controls.water",
+      "args": {},
+      "text": "Water"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "controls.water.more",
+      "args": {},
+      "text": "The quantity of water in the pan, the eggs not reckoned. It signifies most with the fire out, when the water's own heat does the cooking: more water holds its heat longer. It signifies a little with the fire lit, because cold eggs entering boiling water cool a little water more than a great deal. And I remember how long each quantity you use takes to boil; it is therefore worth measuring."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "controls.eggsInPan",
+      "args": {},
+      "text": "Number of eggs"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "controls.eggsInPan.more",
+      "args": {},
+      "text": "How many eggs go in together. Cold eggs take heat from boiling water as they enter, and more eggs take more; so the water is longer in recovering, or, with the fire out, never recovers. For eggs begun in cold water it makes no difference to my computation: you tap when the water boils, and that already reckons them."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "controls.altitude",
+      "args": {},
+      "text": "Height above the sea"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "controls.altitude.more",
+      "args": {},
+      "text": "The higher you are, the less the air presses down, and the cooler water boils; and cooler water cooks more slowly. The difference accumulates: a kitchen upon a mountain needs sensibly longer than one by the sea. Tell me nearly how high you are, and I shall cook at the boiling point here shewn."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "controls.settings",
+      "args": {},
+      "text": "Particulars"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "help.link",
+      "args": {},
+      "text": "Preface"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "help.title",
+      "args": {},
+      "text": "The Preface"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "help.how.title",
+      "args": {},
+      "text": "Of my method"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "help.how.p1",
+      "args": {},
+      "text": "I do not proceed by rule of thumb, which is only the experience of others imperfectly remembered. I compute how heat passes from the water into your egg, and how far the yolk and the white are set in its passage; and then I choose the time that leaves the yolk where you desired it."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "help.how.aside",
+      "args": {},
+      "text": "In the language of the learned: [heat conduction](https://en.wikipedia.org/wiki/Heat_equation) through a sphere of the bigness of your egg, and the setting of white and yolk as a dose of heat accumulated over time, by the [Arrhenius equation](https://en.wikipedia.org/wiki/Arrhenius_equation). Every constant, with its authority, is in the [README](https://github.com/danmackinlay/actual_egg_timer#2-the-physical-model)."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "help.how.p2",
+      "args": {},
+      "text": "The cooling is likewise to be counted. An egg taken from the water continues some minutes to cook from within; iced water stops it soonest, and the table scarcely retards it. To leave the fire is not to leave the heat."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "help.how.aside2",
+      "args": {},
+      "text": "Upon the table, still air draws off heat so slowly, that the yolk ends within a fraction of a degree of where it would, had the egg never cooled at all. [README §5](https://github.com/danmackinlay/actual_egg_timer#5-carryover-the-cooling-step-is-part-of-the-recipe)."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "help.learn.title",
+      "args": {},
+      "text": "What I learn, and whence"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "help.learn.p1",
+      "args": {},
+      "text": "Your answers teach me three things: how you like your yolk, how the whites of your eggs behave, and how fast your stove boils water. A reading of the probe teaches me at a stroke how fast heat enters your eggs. No question is compulsory; but every answer is instruction."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "help.learn.aside",
+      "args": {},
+      "text": "I keep a cloud of conjectures about your eggs and your taste, and every answer alters their weight: [sequential Monte Carlo](https://en.wikipedia.org/wiki/Particle_filter), with an [ordered probit](https://en.wikipedia.org/wiki/Ordered_probit) for too rear, as was desired, or too hard. I keep every egg; so that when I am improved, I learn again from all of them. [The design](https://github.com/danmackinlay/actual_egg_timer/blob/main/INFERENCE.md)."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "help.reliable.title",
+      "args": {},
+      "text": "Of eggs to be relied upon"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "help.reliable.intro",
+      "args": {},
+      "text": "The greatest help is to tell me how each egg came out; after that, all depends upon your manner of cooking."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "help.reliable.forYou",
+      "args": {},
+      "text": "For the eggs as now set out"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "help.reliable.every.title",
+      "args": {},
+      "text": "In whatever manner you cook"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "help.reliable.every",
+      "args": {},
+      "text": "Weigh the egg if you can: one size upon the box comprehends eggs that need very different times. Eggs straight from the fridge are more certain than eggs at the warmth of the room."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "help.reliable.hot.title",
+      "args": {},
+      "text": "Into boiling water"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "help.reliable.hot",
+      "args": {},
+      "text": "Of all methods the easiest to perform rightly. Keep the water at a full boil the whole time."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "help.reliable.cold.title",
+      "args": {},
+      "text": "Into cold water"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "help.reliable.cold",
+      "args": {},
+      "text": "Tap It boils in earnest when the whole surface rolls, not at the first bubbles. That tap corrects my time while the eggs are cooking."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "help.reliable.heatOff.title",
+      "args": {},
+      "text": "Fire out, lid on"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "help.reliable.heatOff",
+      "args": {},
+      "text": "The water does all the cooking; measure it therefore, and be liberal. With too little, the white will never set."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "help.reliable.cooling.title",
+      "args": {},
+      "text": "Ice, tap or table"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "help.reliable.cooling",
+      "args": {},
+      "text": "Iced water is the most certain, a cold tap nearly as good, and the table suffers the yolk to cook on. For soft eggs, use ice."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "help.odds.title",
+      "args": {},
+      "text": "Of my certainty"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "help.odds.p1",
+      "args": {},
+      "text": "Under the time, I say which way an egg is likely to miss. The bracket under the slider shews where the yolk will probably fall. When a miss is likely enough to signify, I propose a degree that plays safe, one tap away, and never one where the white may be unset. All of it grows narrower as I learn; for knowledge is, in great part, only errour diminished."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "help.odds.aside",
+      "args": {},
+      "text": "The bracket comprehends eight eggs in ten. When I choose the time, a white left unset is reckoned three times worse than a yolk a little too firm; I therefore incline somewhat to the longer side. I propose to play safe when either way of missing is at least one egg in five: firmer means nine yolks in ten at least as firm as you asked, and softer the reverse of that, with the danger to the white under one in five. The shading of the slider shews how often each degree comes out right for you."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "help.unsure.title",
+      "args": {},
+      "text": "Where I am in doubt"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "help.unsure.counter",
+      "args": {},
+      "text": "The table. No one appears to have made publick how fast an egg cools in still air, and that is therefore the weakest of my numbers."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "help.unsure.heatOff",
+      "args": {},
+      "text": "The fire out. I suppose an ordinary pan with its lid on; a heavy pot or a loose lid will alter the time."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "help.unsure.white",
+      "args": {},
+      "text": "Whites. I cannot distinguish a white that sets late from a cook who calls a tender white unset."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "help.unsure.sousVide",
+      "args": {
+        "floor": "140 °F"
+      },
+      "text": "Sous-vide. Below 140 °F the white remains liquid and moves within the shell, which I leave out of my account; there I am not to be trusted. The very long times are real, however: so cool, the white takes the better part of a day to set."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "help.sources.title",
+      "args": {},
+      "text": "Authorities"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "help.sources.intro",
+      "args": {},
+      "text": "The chief authorities behind my numbers. The [README](https://github.com/danmackinlay/actual_egg_timer#10-references) lists them all, with what each has settled."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "help.source.williams",
+      "args": {},
+      "text": "C. D. H. Williams, \"The Science of Boiling an Egg\", University of Exeter (1998). newton.ex.ac.uk/teaching/CDHW/egg (the host is gone; the page is in the Internet Archive)"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "help.source.buay",
+      "args": {},
+      "text": "D. Buay, S. K. Foong, D. Kiang, L. Kuppan and V. H. Liew, \"How long does it take to boil an egg? Revisited\", European Journal of Physics 27, 119-131 (2006). doi:10.1088/0143-0807/27/1/013"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "help.source.abbasnezhad",
+      "args": {},
+      "text": "B. Abbasnezhad, N. Hamdami, J.-Y. Monteau and H. Vatankhah, \"Numerical modeling of heat transfer and pasteurizing value during thermal processing of intact egg\", Food Science & Nutrition 4, 42-49 (2016). doi:10.1002/fsn3.257"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "help.source.denys",
+      "args": {},
+      "text": "S. Denys, J. G. Pieters and K. Dewettinck, \"Computational fluid dynamics analysis of combined conductive and convective heat transfer in model eggs\", Journal of Food Engineering 63, 281-290 (2004). doi:10.1016/j.jfoodeng.2003.06.002"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "help.source.vega",
+      "args": {},
+      "text": "C. Vega and R. Mercadé-Prieto, \"Culinary Biophysics: on the Nature of the 6X °C Egg\", Food Biophysics 6, 152-159 (2011). doi:10.1007/s11483-010-9200-1"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "help.source.weijers",
+      "args": {},
+      "text": "M. Weijers, P. A. Barneveld, M. A. Cohen Stuart and R. W. Visschers, \"Heat-induced denaturation and aggregation of ovalbumin at neutral pH described by irreversible first-order kinetics\", Protein Science 12, 2693-2703 (2003). doi:10.1110/ps.03242803"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "help.source.hoyt",
+      "args": {},
+      "text": "D. F. Hoyt, \"Practical methods of estimating volume and fresh weight of bird eggs\", The Auk 96, 73-77 (1979)."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "help.source.usda",
+      "args": {},
+      "text": "USDA Food Safety and Inspection Service, \"High Altitude Cooking\"."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "nav.back",
+      "args": {},
+      "text": "Return"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "learned.title",
+      "args": {},
+      "text": "What I have learned"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "more.about",
+      "args": {
+        "label": "Eggs in the pan"
+      },
+      "text": "Of Eggs in the pan"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "setup.sentence",
+      "args": {
+        "egg": "2.4 oz eggs",
+        "from": "at room temperature",
+        "start": "into boiling water",
+        "cooling": "then onto the counter"
+      },
+      "text": "2.4 oz eggs at room temperature, into boiling water, then onto the counter."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "setup.sentenceSousVide",
+      "args": {
+        "egg": "2.4 oz eggs",
+        "start": "sous-vide at 136 °F"
+      },
+      "text": "2.4 oz eggs, sous-vide at 136 °F."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "setup.egg",
+      "args": {
+        "mass": "2.4 oz"
+      },
+      "text": "Eggs of 2.4 oz"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "setup.from.fridge",
+      "args": {},
+      "text": "from the fridge"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "setup.from.room",
+      "args": {},
+      "text": "at the warmth of the room"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "setup.from.custom",
+      "args": {
+        "temp": "54 °F"
+      },
+      "text": "at 54 °F"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "setup.start.cold",
+      "args": {},
+      "text": "set in cold water and boiled"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "setup.start.coldStanding",
+      "args": {},
+      "text": "set in cold water, brought to the boil, and left to stand"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "setup.start.hot",
+      "args": {},
+      "text": "put into boiling water"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "setup.start.hotStanding",
+      "args": {},
+      "text": "put into boiling water and left to stand"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "setup.start.sous",
+      "args": {
+        "bath": "136 °F"
+      },
+      "text": "sous-vide at 136 °F"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "setup.cooling.ice",
+      "args": {},
+      "text": "then plunged in iced water"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "setup.cooling.tap",
+      "args": {},
+      "text": "then held under a cold tap"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "setup.cooling.counter",
+      "args": {},
+      "text": "then laid upon the table"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "setup.clause",
+      "args": {
+        "label": "Egg from",
+        "value": "Sous-vide 136 °F"
+      },
+      "text": "Egg from: Sous-vide 136 °F, to be altered"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "setup.close",
+      "args": {},
+      "text": "Enough"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "idle.welcome",
+      "args": {},
+      "text": "This is our first egg together. I begin by reasoning from eggs in general; but as you tell me how each one came out, I learn to reason from yours."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "controls.units",
+      "args": {},
+      "text": "Measures"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "controls.units.metric",
+      "args": {},
+      "text": "Metrick"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "controls.units.imperial",
+      "args": {},
+      "text": "Imperial"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "controls.units.more",
+      "args": {},
+      "text": "Metrick or imperial, for every number I shew and every number you enter. I begin with what is customary where your browser says you are. To change them alters the manner of writing the numbers, and, from the imperial, the stile of my English; the egg and the times remain exactly the same, and the eggs are indifferent to either."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "controls.probe",
+      "args": {},
+      "text": "Ask for a probe reading"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "controls.probe.hint",
+      "args": {},
+      "text": "When the cooling ends, I'll ask for one reading from the middle of the egg. From a single egg, that tells me how fast your eggs heat."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "controls.thermometer",
+      "args": {},
+      "text": "A probe thermometer"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "controls.thermometer.more",
+      "args": {},
+      "text": "If you have a probe thermometer, I shall ask for one reading when the counting-down of the cooling ends. That is the moment at which the middle of the yolk is warmest; thrust the point therefore to the very middle, and tell me the highest number you see: anywhere else, or any later, reads lower. From that single egg I learn how fast heat enters your eggs. When the eggs rest upon the table I do not ask, because nothing is counted down."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "pan.waterBoilsAt",
+      "args": {},
+      "text": "Water boils at"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "pan.timeToBoil",
+      "args": {},
+      "text": "Time to boil"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "pan.timeToBoil.assumed",
+      "args": {
+        "time": "8:00"
+      },
+      "text": "8:00 (assumed)"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "pan.measured",
+      "args": {},
+      "text": "Based on history with this much water. I update it each time you tap the boil on a cold-water start."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "pan.unmeasured",
+      "args": {},
+      "text": "Tap the boil on a cold-water start and I'll remember for next time."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "odds.hitTheMark",
+      "args": {
+        "hits": 7,
+        "of": 10
+      },
+      "text": "7/10 eggs hit the mark"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "odds.info",
+      "args": {},
+      "text": "About these odds"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "odds.why",
+      "args": {},
+      "text": "Before your first egg I don't know your taste, your eggs or your kitchen, so I can't be sure, and this number starts low. Each egg you tell me about makes me surer, and the number goes up."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "odds.shown",
+      "args": {},
+      "text": "Showing"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "odds.hidden",
+      "args": {},
+      "text": "Hidden"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "outcome.likely",
+      "args": {},
+      "text": "Probably as you desire."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "outcome.likely.firm",
+      "args": {},
+      "text": "Probably as you desire; if not, more likely a little firm."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "outcome.likely.soft",
+      "args": {},
+      "text": "Probably as you desire; if not, more likely a little soft."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "outcome.unsure",
+      "args": {},
+      "text": "It may come out softer or firmer than you like; which, I cannot yet foretell."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "outcome.miss.firm",
+      "args": {},
+      "text": "It may miss; and if it misses, more likely firmer than you like."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "outcome.miss.soft",
+      "args": {},
+      "text": "It may miss; and if it misses, more likely softer than you like."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "outcome.whiteRunny",
+      "args": {},
+      "text": "The white may yet be unset."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "outcome.range",
+      "args": {
+        "low": "Soft",
+        "high": "Fudgy"
+      },
+      "text": "The yolk, probably: Soft to Fudgy"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "outcome.range.one",
+      "args": {
+        "level": "Jammy"
+      },
+      "text": "The yolk, probably: Jammy"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "outcome.info",
+      "args": {},
+      "text": "Of my certainty"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "outcome.bracket",
+      "args": {},
+      "text": "The bracket under the slider is where I expect your yolk to fall. If a soft yolk would vex you more than a firm one, slide to the right, till the left end of the bracket rests where you would still be content; if a firm one would, slide to the left, till its right end does. Or tap the degree I propose, when I propose one."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "outcome.why",
+      "args": {},
+      "text": "Before your first egg I know neither your taste, nor your eggs, nor your kitchen, and the bracket therefore begins wide. Every egg you tell me of makes it narrower."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "outcome.learning",
+      "args": {},
+      "text": "I learn your taste in yolks from what you say of them, the setting of your whites from the second question, how fast heat enters your eggs from both, and how long your water takes to boil when you tap the boil. Answer both questions after every egg; and if you have a probe thermometer, give me a reading, for that is the quickest of teachers."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "outcome.safe.firm",
+      "args": {
+        "level": "Fudgy"
+      },
+      "text": "Would you not hazard it soft? Try: Fudgy"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "outcome.safe.soft",
+      "args": {
+        "level": "Soft"
+      },
+      "text": "Would you not hazard it firm? Try: Soft"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "outcome.safe.firmer",
+      "args": {},
+      "text": "Somewhat firmer"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "outcome.safe.softer",
+      "args": {},
+      "text": "Somewhat softer"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "advice.toggle",
+      "args": {},
+      "text": "How this may be made more certain"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "advice.fridge",
+      "args": {},
+      "text": "Use eggs straight from the fridge. How cold a fridge is I know; a room may vary some degrees either way, and that moves the time."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "advice.weigh",
+      "args": {},
+      "text": "Weigh the egg, rather than choose a size. One size upon the box comprehends eggs that need very different times."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "advice.ice",
+      "args": {},
+      "text": "Put the eggs straight into iced water when they come out. Upon the table the yolk cooks on, by a quantity not easily foretold."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "advice.moreWater",
+      "args": {},
+      "text": "Use more water. With the fire out, more water holds its heat longer, and small differences in its cooling signify less."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "odds.stillLearning",
+      "args": {},
+      "text": "I'm still learning"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "learned.literature",
+      "args": {},
+      "text": "I have hitherto learned nothing. I learn how fast your stove boils water when you tap the boil, and your eggs when you tell me how one came out."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "learned.tuned",
+      "args": {
+        "eggs": 3
+      },
+      "text": "Instructed by 3 eggs"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "learned.tuned",
+      "args": {
+        "eggs": 0
+      },
+      "text": "Instructed by 0 eggs"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "learned.tuned",
+      "args": {
+        "eggs": 1
+      },
+      "text": "Instructed by 1 egg"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "learned.tuned",
+      "args": {
+        "eggs": 2
+      },
+      "text": "Instructed by 2 eggs"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "learned.tuned",
+      "args": {
+        "eggs": 3
+      },
+      "text": "Instructed by 3 eggs"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "learned.tuned",
+      "args": {
+        "eggs": 4
+      },
+      "text": "Instructed by 4 eggs"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "learned.tuned",
+      "args": {
+        "eggs": 5
+      },
+      "text": "Instructed by 5 eggs"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "learned.tuned",
+      "args": {
+        "eggs": 11
+      },
+      "text": "Instructed by 11 eggs"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "learned.tuned",
+      "args": {
+        "eggs": 21
+      },
+      "text": "Instructed by 21 eggs"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "learned.tuned",
+      "args": {
+        "eggs": 22
+      },
+      "text": "Instructed by 22 eggs"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "learned.tuned",
+      "args": {
+        "eggs": 1.5
+      },
+      "text": "Instructed by 1.5 eggs"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "learned.tuned",
+      "args": {
+        "eggs": 2.5
+      },
+      "text": "Instructed by 2.5 eggs"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "learned.tuned",
+      "args": {
+        "eggs": 0.5
+      },
+      "text": "Instructed by 0.5 eggs"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "learned.pan",
+      "args": {
+        "water": "12.50 qt",
+        "time": "6:40"
+      },
+      "text": "12.50 qt of water is about 6:40 in boiling, as experience shews"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "learned.both",
+      "args": {
+        "tuned": "Learned from 3 eggs",
+        "pan": "12.50 qt of water takes about 6:40 to boil, based on history"
+      },
+      "text": "Learned from 3 eggs · 12.50 qt of water takes about 6:40 to boil, based on history"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "learned.forget",
+      "args": {},
+      "text": "Forget what is learned"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "learned.forget.more",
+      "args": {},
+      "text": "This forgets every egg you have told me of and every boil you have timed, and I return to what is true of eggs in general. It is not needed to undo a wrong answer or two, which a few eggs more will wash out. It is for a new stove, a new kitchen, or a new beginning."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "learned.forgetExplain",
+      "args": {},
+      "text": "Clears what I've learned from your answers and your boil times. A few wrong answers wash out after a few more eggs anyway; this is for when you'd rather not wait."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "learned.confirm.title",
+      "args": {},
+      "text": "Shall it all be forgot?"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "learned.confirm.forget",
+      "args": {},
+      "text": "Let it be forgot"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "learned.confirm.keep",
+      "args": {},
+      "text": "Let it stand"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "learned.confirm.message",
+      "args": {},
+      "text": "I shall forget every egg, and how long your water is in boiling; and the times return to where they began."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "feedback.ask",
+      "args": {},
+      "text": "In what condition was the yolk?"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "feedback.tooSoft",
+      "args": {},
+      "text": "Too rear"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "feedback.justRight",
+      "args": {},
+      "text": "As was desired"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "feedback.tooFirm",
+      "args": {},
+      "text": "Too hard"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "feedback.invite",
+      "args": {},
+      "text": "Your answers instruct me in your eggs and your kitchen."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "feedback.learning",
+      "args": {},
+      "text": "learning…"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "feedback.thanks",
+      "args": {},
+      "text": "Thanks; the next egg will profit."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "feedback.optional",
+      "args": {},
+      "text": "Answer either, or both, or neither."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "feedback.white.ask",
+      "args": {},
+      "text": "And of the white?"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "feedback.white.runny",
+      "args": {},
+      "text": "Unset"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "feedback.white.tender",
+      "args": {},
+      "text": "Tender"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "feedback.white.firm",
+      "args": {},
+      "text": "Firm"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "probe.offer",
+      "args": {},
+      "text": "Have you a probe thermometer? When I bid you, thrust it to the middle of the egg, and tell me the highest number you see."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "probe.offer.yes",
+      "args": {},
+      "text": "Yes"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "controls.thermometer.ask",
+      "args": {},
+      "text": "Ask a reading after every egg"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "probe.offer.no",
+      "args": {},
+      "text": "No, thank you"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "probe.now",
+      "args": {},
+      "text": "Thrust the probe to the middle"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "probe.hint",
+      "args": {},
+      "text": "Tell me the highest number you see."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "probe.entry",
+      "args": {},
+      "text": "The highest reading"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "probe.save",
+      "args": {},
+      "text": "Take this reading"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "probe.refused",
+      "args": {
+        "low": "117.7 °F",
+        "high": "179.1 °F"
+      },
+      "text": "That does not appear to be the middle of this egg; expect 117.7 °F to 179.1 °F. Is the point in the yolk?"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "cook.summary",
+      "args": {
+        "mass": "2.4 oz",
+        "doneness": "jammy",
+        "yolk": "149 °F"
+      },
+      "text": "2.4 oz · jammy · peak yolk 149 °F"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "cook.method",
+      "args": {
+        "start": "Cold water",
+        "after": "ice bath"
+      },
+      "text": "Cold water · then ice bath"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "cook.method.cold",
+      "args": {},
+      "text": "Cold water"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "cook.method.hot",
+      "args": {},
+      "text": "Boiling water"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "cook.method.ice",
+      "args": {},
+      "text": "ice bath"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "cook.method.tap",
+      "args": {},
+      "text": "cold tap"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "cook.method.counter",
+      "args": {},
+      "text": "rest on the counter"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "sousvide.subline",
+      "args": {
+        "clock": "8:47 AM",
+        "duration": "22 h 43 min",
+        "bath": "136 °F"
+      },
+      "text": "at 8:47 AM; 22 h 43 min at 136 °F, to be eaten now"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "sousvide.note.whiteBound",
+      "args": {},
+      "text": "the white not yet set, the yolk creamy"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "sousvide.note.yolkBound",
+      "args": {},
+      "text": "the yolk set, the white not yet"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "sousvide.warn",
+      "args": {
+        "bath": "136 °F",
+        "floor": "140 °F"
+      },
+      "text": "At 136 °F the white will not set, however long you leave it. I was made for boiling water, and below 140 °F I am not to be trusted. Use the pan."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "sousvide.hint",
+      "args": {
+        "duration": "22 h 43 min"
+      },
+      "text": "nothing to begin; you are 22 h 43 min too late"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "sousvide.start.today",
+      "args": {},
+      "text": "To-day"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "sousvide.start.yesterday",
+      "args": {},
+      "text": "Yesterday"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "sousvide.start.lastWeekday",
+      "args": {
+        "weekday": "Wednesday"
+      },
+      "text": "Last Wednesday"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "sousvide.start.lastWeek",
+      "args": {},
+      "text": "Last week"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "sousvide.start.weeksAgo",
+      "args": {
+        "weeks": 3
+      },
+      "text": "3 weeks ago"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "sousvide.start.weeksAgo",
+      "args": {
+        "weeks": 0
+      },
+      "text": "0 weeks ago"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "sousvide.start.weeksAgo",
+      "args": {
+        "weeks": 1
+      },
+      "text": "1 weeks ago"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "sousvide.start.weeksAgo",
+      "args": {
+        "weeks": 2
+      },
+      "text": "2 weeks ago"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "sousvide.start.weeksAgo",
+      "args": {
+        "weeks": 3
+      },
+      "text": "3 weeks ago"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "sousvide.start.weeksAgo",
+      "args": {
+        "weeks": 4
+      },
+      "text": "4 weeks ago"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "sousvide.start.weeksAgo",
+      "args": {
+        "weeks": 5
+      },
+      "text": "5 weeks ago"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "sousvide.start.weeksAgo",
+      "args": {
+        "weeks": 11
+      },
+      "text": "11 weeks ago"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "sousvide.start.weeksAgo",
+      "args": {
+        "weeks": 21
+      },
+      "text": "21 weeks ago"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "sousvide.start.weeksAgo",
+      "args": {
+        "weeks": 22
+      },
+      "text": "22 weeks ago"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "sousvide.start.weeksAgo",
+      "args": {
+        "weeks": 1.5
+      },
+      "text": "1.5 weeks ago"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "sousvide.start.weeksAgo",
+      "args": {
+        "weeks": 2.5
+      },
+      "text": "2.5 weeks ago"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "sousvide.start.weeksAgo",
+      "args": {
+        "weeks": 0.5
+      },
+      "text": "0.5 weeks ago"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "sousvide.start.monthsAgo",
+      "args": {
+        "months": 4
+      },
+      "text": "4 months ago"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "sousvide.start.monthsAgo",
+      "args": {
+        "months": 0
+      },
+      "text": "0 months ago"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "sousvide.start.monthsAgo",
+      "args": {
+        "months": 1
+      },
+      "text": "1 months ago"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "sousvide.start.monthsAgo",
+      "args": {
+        "months": 2
+      },
+      "text": "2 months ago"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "sousvide.start.monthsAgo",
+      "args": {
+        "months": 3
+      },
+      "text": "3 months ago"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "sousvide.start.monthsAgo",
+      "args": {
+        "months": 4
+      },
+      "text": "4 months ago"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "sousvide.start.monthsAgo",
+      "args": {
+        "months": 5
+      },
+      "text": "5 months ago"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "sousvide.start.monthsAgo",
+      "args": {
+        "months": 11
+      },
+      "text": "11 months ago"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "sousvide.start.monthsAgo",
+      "args": {
+        "months": 21
+      },
+      "text": "21 months ago"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "sousvide.start.monthsAgo",
+      "args": {
+        "months": 22
+      },
+      "text": "22 months ago"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "sousvide.start.monthsAgo",
+      "args": {
+        "months": 1.5
+      },
+      "text": "1.5 months ago"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "sousvide.start.monthsAgo",
+      "args": {
+        "months": 2.5
+      },
+      "text": "2.5 months ago"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "sousvide.start.monthsAgo",
+      "args": {
+        "months": 0.5
+      },
+      "text": "0.5 months ago"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "duration.minutes",
+      "args": {
+        "minutes": 45
+      },
+      "text": "45 min"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "duration.hours",
+      "args": {
+        "hours": 22
+      },
+      "text": "22 h"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "duration.hoursMinutes",
+      "args": {
+        "hours": 22,
+        "minutes": 43
+      },
+      "text": "22 h 43 min"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "duration.days",
+      "args": {
+        "days": 6
+      },
+      "text": "6 days"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "duration.days",
+      "args": {
+        "days": 0
+      },
+      "text": "0 days"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "duration.days",
+      "args": {
+        "days": 1
+      },
+      "text": "1 days"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "duration.days",
+      "args": {
+        "days": 2
+      },
+      "text": "2 days"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "duration.days",
+      "args": {
+        "days": 3
+      },
+      "text": "3 days"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "duration.days",
+      "args": {
+        "days": 4
+      },
+      "text": "4 days"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "duration.days",
+      "args": {
+        "days": 5
+      },
+      "text": "5 days"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "duration.days",
+      "args": {
+        "days": 11
+      },
+      "text": "11 days"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "duration.days",
+      "args": {
+        "days": 21
+      },
+      "text": "21 days"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "duration.days",
+      "args": {
+        "days": 22
+      },
+      "text": "22 days"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "duration.days",
+      "args": {
+        "days": 1.5
+      },
+      "text": "1.5 days"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "duration.days",
+      "args": {
+        "days": 2.5
+      },
+      "text": "2.5 days"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "duration.days",
+      "args": {
+        "days": 0.5
+      },
+      "text": "0.5 days"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "duration.weeks",
+      "args": {
+        "weeks": 2
+      },
+      "text": "2 weeks"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "duration.weeks",
+      "args": {
+        "weeks": 0
+      },
+      "text": "0 weeks"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "duration.weeks",
+      "args": {
+        "weeks": 1
+      },
+      "text": "1 weeks"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "duration.weeks",
+      "args": {
+        "weeks": 2
+      },
+      "text": "2 weeks"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "duration.weeks",
+      "args": {
+        "weeks": 3
+      },
+      "text": "3 weeks"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "duration.weeks",
+      "args": {
+        "weeks": 4
+      },
+      "text": "4 weeks"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "duration.weeks",
+      "args": {
+        "weeks": 5
+      },
+      "text": "5 weeks"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "duration.weeks",
+      "args": {
+        "weeks": 11
+      },
+      "text": "11 weeks"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "duration.weeks",
+      "args": {
+        "weeks": 21
+      },
+      "text": "21 weeks"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "duration.weeks",
+      "args": {
+        "weeks": 22
+      },
+      "text": "22 weeks"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "duration.weeks",
+      "args": {
+        "weeks": 1.5
+      },
+      "text": "1.5 weeks"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "duration.weeks",
+      "args": {
+        "weeks": 2.5
+      },
+      "text": "2.5 weeks"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "duration.weeks",
+      "args": {
+        "weeks": 0.5
+      },
+      "text": "0.5 weeks"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "weekday.sunday",
+      "args": {},
+      "text": "Sunday"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "weekday.monday",
+      "args": {},
+      "text": "Monday"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "weekday.tuesday",
+      "args": {},
+      "text": "Tuesday"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "weekday.wednesday",
+      "args": {},
+      "text": "Wednesday"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "weekday.thursday",
+      "args": {},
+      "text": "Thursday"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "weekday.friday",
+      "args": {},
+      "text": "Friday"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "weekday.saturday",
+      "args": {},
+      "text": "Saturday"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "controls.language",
+      "args": {},
+      "text": "Language"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "controls.language.more",
+      "args": {},
+      "text": "Should the reader find this stile tiresome, the modern tongue may be restored without surrendering Fahrenheit's scale: choose English, and your measures stay as they are."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "language.en",
+      "args": {},
+      "text": "English"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "language.en1750",
+      "args": {},
+      "text": "English (1750)"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "controls.units.period",
+      "args": {},
+      "text": "The imperial measures may likewise be read in the English of their period."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "app.titlePage",
+      "args": {},
+      "text": "The Actual Egg-Timer: in which the times of boiling are deduced from their cauſes, and illuſtrated in their different degrees of hardneſs."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "alarm.pull.title",
+      "args": {},
+      "text": "Out with them"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "alarm.pull.body",
+      "args": {},
+      "text": "Commit them at once to the cold; for heat, though withdrawn from the fire, is not yet withdrawn from the egg."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "alarm.pull.bodyCounter",
+      "args": {},
+      "text": "Out of the water and onto the counter."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "alarm.cooled.title",
+      "args": {},
+      "text": "Cooling ended"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "alarm.cooled.body",
+      "args": {},
+      "text": "The carryover is over. That is the egg you asked for."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "alarm.probe.title",
+      "args": {},
+      "text": "Probe it now"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "alarm.probe.body",
+      "args": {},
+      "text": "Middle of the egg: tell me the highest number."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "activity.stage.heating",
+      "args": {},
+      "text": "Heating"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "activity.stage.cooking",
+      "args": {},
+      "text": "Cooking"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "activity.stage.pull",
+      "args": {},
+      "text": "Eggs out — now"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "activity.stage.cooling",
+      "args": {},
+      "text": "Cooling"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "activity.stage.done",
+      "args": {},
+      "text": "Done"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "activity.now",
+      "args": {},
+      "text": "NOW"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "activity.eat",
+      "args": {},
+      "text": "Eat"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "activity.target",
+      "args": {
+        "doneness": "jammy",
+        "yolk": "149 °F"
+      },
+      "text": "jammy · yolk 149 °F"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "activity.summary",
+      "args": {
+        "mass": "2.4 oz",
+        "doneness": "jammy",
+        "yolk": "149 °F"
+      },
+      "text": "2.4 oz · jammy · peak yolk 149 °F"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "activity.note.estimate",
+      "args": {},
+      "text": "my guess until you tap Full rolling boil"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "activity.note.heating",
+      "args": {},
+      "text": "heating"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "activity.note.cooking",
+      "args": {},
+      "text": "until the eggs come out"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "activity.note.pull",
+      "args": {},
+      "text": "into the cooling, or the yolk keeps going"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "activity.note.pullCounter",
+      "args": {},
+      "text": "resting on the counter"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "activity.note.cooling",
+      "args": {},
+      "text": "yolk still cooking"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "activity.note.done",
+      "args": {},
+      "text": "that is the egg you asked for"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "colophon.name",
+      "args": {},
+      "text": "The Actual Egg-Timer."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "colophon.lede",
+      "args": {},
+      "text": "Times computed from the conduction of heat and the kinetics of denaturation, not from a receipt."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "colophon.link",
+      "args": {},
+      "text": "The source, and the natural philosophy on which it rests"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "colophon.tail",
+      "args": {},
+      "text": "— my errours not excepted."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "colophon.ios",
+      "args": {},
+      "text": "I work out times from the physics and chemistry of eggs. Both heating and cooling matter for cooking the middle."
+    },
     {
       "locale": "en",
       "key": "app.name",
@@ -2920,6 +6050,42 @@
       "key": "weekday.saturday",
       "args": {},
       "text": "Saturday"
+    },
+    {
+      "locale": "en",
+      "key": "controls.language",
+      "args": {},
+      "text": "Language"
+    },
+    {
+      "locale": "en",
+      "key": "controls.language.more",
+      "args": {},
+      "text": "English (1750) is English as Samuel Johnson wrote it in the preface to his Dictionary. I switch to it when you change from Metric to Imperial, and back when you change back. Pick English to leave it and keep your units."
+    },
+    {
+      "locale": "en",
+      "key": "language.en",
+      "args": {},
+      "text": "English"
+    },
+    {
+      "locale": "en",
+      "key": "language.en1750",
+      "args": {},
+      "text": "English (1750)"
+    },
+    {
+      "locale": "en",
+      "key": "controls.units.period",
+      "args": {},
+      "text": "Imperial units are also available in the English of their period."
+    },
+    {
+      "locale": "en",
+      "key": "app.titlePage",
+      "args": {},
+      "text": "The Actual Egg-Timer: in which the times of boiling are deduced from their causes, and illustrated in their different degrees of hardness."
     },
     {
       "locale": "en",
