@@ -748,6 +748,25 @@ needing a decision:
 7. **Protocol advice when soft is asked for** (INFERENCE §8) was not built.
    Nobody decided whether it should be.
 
+### Answered by the owner, 27 September
+
+- **Odds-shaded slider: yes, in both apps, threshold 3/10.** Reachability
+  ("Softest possible") comes from the odds, not from the mean solve. Shading is
+  relative to the best level, so a fresh install still shows where the pan
+  works.
+- **Fresh-install odds stay on screen, with an inline info disclosure (ⓘ)**
+  explaining why they start low. It is a short-term problem that pooling (E7)
+  shrinks.
+- **Protocol advice: discoverable, not intrusive.** An inline expanding line
+  under the odds when the chosen level's odds are low. No modal, no popover.
+- **E3's attribution is left as it is** until a probe or pooling pins the
+  time-scale.
+- **Times of day never zero-pad the hour** ("9:05"), in either app. A Czech UI
+  takes its decimal separator from the language, on both apps.
+- **Wording:** the owner will hand-edit the rest-of-F2 table in LANGUAGE §3.
+- **Push `main` after the owner has previewed the web app.** No real eggs for
+  now; the owner is travelling.
+
 ### Order of work, from 26 September
 
 This is the order for Phases E and F together, with the old list below folded
