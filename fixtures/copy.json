@@ -1526,13 +1526,13 @@
       "locale": "en",
       "key": "help.odds.p1",
       "args": {},
-      "text": "I tell you which way an egg is likely to miss, and the bracket under the slider shows how firm the yolk will probably be. Both narrow as I learn."
+      "text": "Under the time, I say which way an egg is likely to miss. The bracket under the slider shows where the yolk will probably land. When a miss is likely enough to matter, I suggest a level that plays safe, one tap away, and never one where the white might be runny. All of it narrows as I learn."
     },
     {
       "locale": "en",
       "key": "help.odds.aside",
       "args": {},
-      "text": "The bracket covers eight eggs in ten. When I choose the time, a runny white counts three times as bad as a yolk a little too firm, so I lean slightly long. The slider's shading shows how often each doneness comes out right for you."
+      "text": "The bracket covers eight eggs in ten. When I choose the time, a runny white counts three times as bad as a yolk a little too firm, so I lean slightly long. I suggest playing safe when either way of missing is at least one egg in five: firmer means nine yolks in ten at least as firm as you asked, and softer the mirror of that, with the white's risk under one in five. The slider's shading shows how often each doneness comes out right for you."
     },
     {
       "locale": "en",
