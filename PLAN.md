@@ -216,6 +216,48 @@ cook. Nothing leaves a phone before E6.
       +2); a tap adds 8-13 s over ice for the same egg. Over sizes 53-78 g,
       both coolings, hot and cold starts, -46 to +56 s. The
       cooking time and the peak are unchanged; only when "Done" rings moves.
+- [x] **The odds-shaded slider, reachability from the odds, and two inline
+      disclosures** (the owner's answers of 27 September, below). DONE 27
+      September, in both apps. `src/core/reach.ts`, held to
+      `EggTimerCore/Reach.swift` by `fixtures/reach.json`.
+      - *The odds per level* are exactly the odds the app shows when the
+        slider sits there: the mean solve at that level, decided on the pot's
+        decision surface. Points at the two physical edges and every 0.05
+        between (21 across a full track), plus a bisection on the slider's
+        own 0.01 grid at each end of the range that reaches 3/10, so the end
+        the slider snaps to was computed, not interpolated: 20-24 points on a
+        boiling pot. Cost in node (`npm run decide -- reach`): 0.45-1.0 s a
+        profile against a 0.4-0.8 s surface; 0.1-0.6 s with the heat off or
+        on the counter. The web app computes it in the grid worker after the
+        surface (in the desktop app's browser pane both ran about 4x slower,
+        3.1 s and 4.0 s, still off the page); iOS in a detached task. Kept per
+        pot AND posterior, a handful at a time.
+      - *Shading*: each level's odds over the best level's, as the opacity of
+        a green band, so a fresh install at 2/10 everywhere is still shaded.
+        Dots over levels the pan delivers but the odds do not offer; the old
+        diagonal stripes over what the pan cannot deliver. Web: layers in the
+        existing track. iOS: a strip under the SwiftUI slider (`OddsTrack`).
+      - *Reachability*: the softest and firmest levels at 3/10 or better.
+        A physically impossible level keeps its physical sentence but snaps
+        to the odds' end; a deliverable one outside the range is refused as
+        `unlikelySoft` / `unlikelyHard`. **When no level reaches 3/10, and
+        before the first egg, the physical limits stand** with no refusal
+        from the odds, so a fresh install is never refused for being new.
+        Measured: after one egg the soft end moves by 0.01-0.07 on boiling
+        pots and 0.05 on the counter; after four eggs with one runny white,
+        0.14 -> 0.19.
+      - *The (i)* beside the odds opens, in place, why they start low.
+      - *Protocol advice*: under 5/10, or 3 tenths or more under the best
+        level, "How to make this more reliable" opens in place. The model
+        prices two changes from their own pots' profiles and shows them only
+        where they raise this level's odds by half a tenth: the counter to
+        ice (after one egg, soft/jammy/fudgy/hard 0/0/3/6 -> 5/6/6/6), and
+        twice the water with the heat off (0 -> 3-4/10 at 2 -> 4 L). Two it
+        cannot price, because it takes their inputs as exact, are shown by
+        rule: straight from the fridge when the egg is the room preset (17
+        against 23 C is 28 s at jammy), and weighing when the egg is a size
+        class (63 against 73 g is 39-49 s). A cold tap is never advised
+        against: on the model it is ice, to the tenth.
 - [x] **E5 decide under uncertainty.** Settled 26 September (`INFERENCE.md`
       §11): loss ratio 3; odds always shown as "7/10 eggs hit the mark";
       "still learning" until the 80% interval is under about +-15 s, falling
@@ -581,6 +623,14 @@ decide(c, grid, meanSolution, logTarget) / decideAt(post, eggsLogged, grid, mean
 decisionApplies(sol) / decidedSolution(...) / carriedSolution(egg, setup, params, sol, lean_s)
 stillLearning(interval) / oddsInTenths(odds)
 
+// reach.ts  (the odds-shaded slider - INFERENCE.md §8)
+REACH_ODDS = 0.3 / PROFILE_STEP = 5 / ADVICE_BELOW_TENTHS = 5 / ADVICE_MARGIN_TENTHS = 3 / ADVICE_GAIN = 0.05
+interface OddsProfile { points: {level, odds}[]; best; physicalSoftest; physicalHardest; softest | null; hardest | null }
+oddsProfile(c, egg, setup, grid) / oddsAtLevel(c, egg, setup, grid, level) / oddsNear(profile, level)
+verdictWithOdds(sol, level, profile | null)   // adds 'unlikelySoft' | 'unlikelyHard'
+shadingOf(profile) / adviceWanted(tenths, profile) / pricedChanges(setup) / unpricedAdvice(setup, facts)
+protocolAdvice(setup, facts, level, odds, priced)
+
 // record.ts  (E1 - the schema is INFERENCE.md §4)
 interface EggRecord { v: 1; ... }          // one egg; RECORD_VERSION, PRIOR_ID
 parseRecord(raw): EggRecord | null / parseLog(raw): EggRecord[] | null
@@ -736,14 +786,16 @@ Merged overnight into local `main` and not pushed: E1, F1, the carton classes,
 the standing-method pan constant, F3, E2+E3, F4, E4 and E5. What came back
 needing a decision:
 
-1. **The E5 odds on a fresh install read "2/10 eggs hit the mark".** Before any
+1. ~~**The E5 odds on a fresh install read "2/10 eggs hit the mark".**~~
+   *Answered: they stay, with an (i). Built 27 September.* Before any
    egg, the model is honestly unsure of the cook's taste and eggs, so that
    figure is calibrated. It is also the first thing a new cook sees, and it
    reads as "this timer mostly fails". Options:
    - show the odds only after the first egg;
    - word the first-egg case differently;
    - keep it.
-2. **White-bound levels lean long and read 0/10.** At the softest level a pan
+2. ~~**White-bound levels lean long and read 0/10.**~~ *Answered:
+   reachability from the odds at 3/10. Built 27 September.* At the softest level a pan
    can reach, the white is the constraint. There the loss (a runny white costs
    3) leans the time 80-120 s long and reports 0/10, while the "Softest
    possible" refusal still comes from the mean solve. The app offers a level,
@@ -768,8 +820,9 @@ needing a decision:
    cook would settle it.
 6. ~~**F4's two platform splits** (LANGUAGE §8), before Czech ships.~~
    Answered and built 27 September; see F4.
-7. **Protocol advice when soft is asked for** (INFERENCE §8) was not built.
-   Nobody decided whether it should be.
+7. ~~**Protocol advice when soft is asked for** (INFERENCE §8) was not built.
+   Nobody decided whether it should be.~~ Answered and built 27 September,
+   with items 1 and 2: see the odds-shaded slider under Phase E.
 
 ### Answered by the owner, 27 September
 

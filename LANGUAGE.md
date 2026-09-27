@@ -437,6 +437,31 @@ tables changed, against `e1f7068`; `copyLiterals.js --since e1f7068` and
   volume. The line it replaced ("Measured on this pan at this volume") had
   the same fault, so it went in, and the case is noted here.
 
+**The odds-shaded slider's strings - IMPLEMENTED 27 September 2026**, in
+`copy/en.json` and both apps, drafted for the owner's answers of the same day
+and not yet approved. All new: the `reach` draft in `tools/copyDraft.ts`, on
+`1667dcf`, and `copyLiterals.js --since 1667dcf` shows these eleven keys
+added and nothing else changed. First person, per the rule above; the
+refusals put `{limit}` after a colon, as F2's do.
+
+| key | where | text |
+|---|---|---|
+| `odds.info` | the (i) beside the odds: its name to a screen reader (both) | About these odds |
+| `odds.why` | what the (i) opens, in place (both) | Before your first egg I don't know your taste, your eggs or your pan, so I can't be sure, and this number starts low. Each egg you tell me about makes me surer, and the number goes up. |
+| `odds.shown` / `odds.hidden` | the (i)'s state to VoiceOver (iOS; the web says it with `aria-expanded`) | Showing · Hidden |
+| `advice.toggle` | the line under low odds that opens the advice (both) | How to make this more reliable |
+| `advice.fridge` | when the egg is the room preset | Use eggs straight from the fridge. I know how cold a fridge is; a room can be a few degrees either way, and that moves the time. |
+| `advice.weigh` | when the egg is a size class | Weigh the egg instead of picking a size. One size on the box covers eggs that need quite different times. |
+| `advice.ice` | on the counter, where ice raises this level's odds | Put the eggs straight into ice water when they come out. On the counter the yolk keeps cooking, by an amount that is hard to predict. |
+| `advice.moreWater` | heat off, where twice the water raises this level's odds | Use more water. With the heat off, more water holds its heat for longer, so the time depends less on your pan. |
+| `refusal.unlikelySoft` | a level the pan delivers, under 3/10 | The softest I get right at least {hits} times in {of}, so far: {limit}. |
+| `refusal.unlikelyHard` | the same at the firm end | The firmest I get right at least {hits} times in {of}, so far: {limit}. |
+
+No numbers with units in the advice: "10 g apart" would need `{mass}` and a
+unit, and the consequence ("quite different times", "moves the time") is
+what the cook needs. "So far" in the refusals says the range moves as eggs
+are told about. "Odds" is the owner's word from E5's line.
+
 **Strings that are about to change anyway.** Phase E rewrites the feedback copy:
 three white answers, every answer optional, "still learning" beside the time, and
 a thermometer prompt. Those strings should go straight into the catalogue, which

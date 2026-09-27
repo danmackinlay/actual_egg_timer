@@ -1421,3 +1421,77 @@ checked.
 - **Whether the new lines fit on a phone** beyond the character budgets:
   "my guess until you tap Full rolling boil" is 40 against the Dynamic
   Island's 41, and was not seen in one.
+
+## The odds at every level, and the slider they shade (27 September 2026)
+
+The owner's answers of 27 September: an odds-shaded slider in both apps,
+reachability from the odds at 3/10, an (i) on the odds line, and protocol
+advice inline. `src/core/reach.ts` and `EggTimerCore/Reach.swift`.
+
+- **A profile point is the odds the app shows at that level**, by
+  construction: the mean solve there, decided on the pot's surface. Test 1 in
+  `test/reach.test.ts` checks every point against the app's own path,
+  exactly. Levels: the physical edges, every 0.05 between, and a bisection
+  on the 0.01 grid at each end of the 3/10 range - 20-24 points on a boiling
+  pot, 9-13 on the counter.
+- **Cost** (`npm run decide -- reach`, node): 0.45-0.6 s a profile before the
+  first egg, 0.75-1.0 s after (the choice is what costs, about 18 ms a
+  level), against 0.4-0.8 s for the surface; 0.1-0.6 s on the counter or
+  with the heat off. In the desktop app's browser pane both ran about 4x
+  slower (surface 3.1 s, profile 4.0 s, cold start, four eggs), in the worker,
+  so the page never waited: the odds came 3.8 s after load and the shading
+  8.8 s. iOS builds it in a detached task after the surface.
+- **Fresh install**: every level 0.12-0.26 across seven pots, so nothing
+  reaches 3/10 and nothing is refused. The rule "no odds refusal before the
+  first egg that taught something" stands beside it for any pot whose prior
+  crosses 3/10 somewhere.
+- **After eggs**: one egg moves the soft end 0.01-0.07 on boiling pots and
+  0.57 -> 0.62 on the counter. In the browser, four constructed eggs (three
+  jammy just right, one runny white at soft) on a cold start with ice: 7/10
+  at jammy, stripes to 0.14, dots 0.14-0.19, soft asked for lands on 0.19 at
+  3/10 with the white's sentence.
+- **Counter rest, soft asked for** (browser, same four eggs): refused with
+  "Resting on the counter keeps cooking the yolk", snapped past the physical
+  0.69 to the odds' 0.73, 4/10; the advice listed weighing and ice.
+- **The advice, measured on the model** (`npm run decide -- advice`): the
+  counter to ice raises soft/jammy/fudgy from 0/0/3 to 5/6/6 after one egg
+  and does nothing at hard; 2 -> 4 L with the heat off raises 0 to 3-4/10.
+  A cold tap and a room egg change nothing, to the tenth. So the tap is never
+  advised against, and the fridge and the scale are advised by rule, for
+  what the model cannot see: a room at 17 against 23 C is 28 s at jammy; a
+  size class spanning 63-73 g is 39-49 s.
+- **Both disclosures** were opened and closed by click and by keyboard
+  (Enter on the (i), Tab to the advice line, Space on it), with
+  `aria-expanded` following; light and dark; no console messages.
+- **Counts**: `npm test` 197 tests, 196 pass, 0 fail, 1 todo (the known 5b).
+  `npm run validate` 28/28. `npm run conformance` 95 Swift tests in 26
+  suites, all pass; the three profiles run as one parameterised test, about
+  20 s in a debug build, beside the replay's 34 s.
+
+### Things that cost time
+
+- **A profile is slow in a Swift debug build**: 48 s for three in one test,
+  a solve being several hundred ms unoptimised. Split into three arguments
+  of one test, they run side by side.
+- **A JSON key made in a console had its fields in another order**, and so
+  never matched the app's cached profile: `decisionKey` is
+  `JSON.stringify` of the inputs, order and all. The app always builds them
+  the same way; a console must too.
+- **The browser pane's background tab stopped painting** after a scroll. The
+  page itself was fine; hiding the readout brought the slider into the first
+  screen instead.
+
+### Not verified
+
+- **Nothing on iOS was tapped.** The build ran in a simulator of its own
+  (created, used, deleted), which showed the fresh install's strip, the (i)
+  and the advice line in light and dark. Neither disclosure was opened, no
+  egg was fed back, the counter was not tried, and VoiceOver was not run:
+  the (i)'s "Showing"/"Hidden" value and the DisclosureGroup's own state are
+  as written, not as heard.
+- **The unlikelySoft/Hard sentences were not seen on a screen** in either
+  app: in every state tried, the level asked for and the odds' end had the
+  same doneness word, where no sentence is due. They are rendered by the
+  copy fixture and chosen by the verdict tests.
+- **The strip's inset on iOS** is 14 pt a side, the old thumb's radius;
+  iOS 27's wider thumb makes levels under it a few points off.

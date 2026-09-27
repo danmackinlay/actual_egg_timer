@@ -565,8 +565,52 @@ and the same pot, the two apps choose the same time to 1e-12. What settled:
   white costs three. Whether that is the right trade, or the white offset's
   prior is too wide, is the owner's.
 
-Not built: the protocol advice when soft is asked for, the nudge (E8), and any
-per-cook loss.
+**Reachability from the odds (27 September).** The owner's answer to the
+white-bound 0/10 above: the slider offers the levels whose odds are at least
+3/10, not whatever the mean solve reaches. `src/core/reach.ts`, held to
+`EggTimerCore/Reach.swift` by `fixtures/reach.json`:
+
+- **The odds at every level** are the odds the app would show there - the
+  mean solve at that level, decided on the pot's decision surface - so the
+  profile and the line under the time are one computation and cannot
+  disagree. Points at the physical edges and every 0.05 between, and a
+  bisection on the slider's 0.01 grid at each end of the range, so the level
+  the slider snaps to has computed odds of 3/10 or better. 0.45-1.0 s in node
+  for a boiling pot, off the page in both apps.
+- **Physical impossibility still wins.** The profile has points only where
+  the pan delivers, so the odds narrow the range and never widen it. A level
+  the pan cannot deliver keeps its physical sentence ("any shorter and the
+  white is still raw") and snaps to the odds' end; a level it can deliver but
+  the odds do not allow is refused as `unlikelySoft` / `unlikelyHard`. Dips
+  under 3/10 inside the range are not refused; only the ends move.
+- **When no level reaches 3/10, the physical limits stand**, with no refusal
+  from the odds. That is the fresh install: under the prior every level reads
+  about 2/10 (0.12-0.26 across the pots in `npm run decide -- reach`), and
+  refusing on that would refuse a cook for being new. It is also a rule of
+  its own - no odds-based refusal before the first egg that taught something -
+  so no pot whose prior odds happen to cross 3/10 can refuse a new cook.
+  There is a cliff in this: a best level at 0.29 refuses nothing, one at 0.31
+  refuses everything under 0.3. After one egg the best is 6/10 on every
+  boiling pot measured, so in practice the rule trims the softest few
+  hundredths (0.01-0.07 after one egg; 0.05 on the counter).
+- **The shading** is each level's odds over the best level's, so a fresh
+  install at 2/10 everywhere still shows where the pan works best.
+
+**Protocol advice (27 September).** Offered, closed, under odds below 5/10 or
+3 tenths or more under the best level's. What it lists is the changes that
+would help this setup. Two the model can price, from the changed pot's own
+profile, and they are listed only where they raise this level's odds by half
+a tenth: the counter to ice (after one egg, soft/jammy/fudgy/hard 0/0/3/6 to
+5/6/6/6; no help at hard), and twice the water with the heat off (0 to 3-4/10
+from 2 to 4 L). Two it cannot, because it takes their inputs as exact: a room
+egg's temperature (17 against 23 C is 28 s at jammy) and a size class's mass
+(63 against 73 g, 39-49 s). Those are listed by rule. A cold tap is not
+advised against at all: on the model it is ice, to the tenth, at every level
+(`npm run decide -- advice`). The honest statement of that: the model's odds
+see the physics of a protocol, not the spread of its inputs; the per-cook
+noise absorbs the latter, egg by egg.
+
+Not built: the nudge (E8), and any per-cook loss.
 
 ## 9. The fit
 
