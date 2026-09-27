@@ -205,7 +205,9 @@ const SCENARIOS = [
   {
     name: 'cold cook, twice, then forget',
     settings: { muted: true },
-    steps: [...cookThrough, ...cookThrough, click('#forget')],
+    // Since the redesign, Forget asks first; before it, there is nothing to
+    // confirm and the second step does nothing.
+    steps: [...cookThrough, ...cookThrough, click('#forget'), clickAny(['#forgetYes'])],
   },
   {
     // Before E2 the note after an answer said how many eggs; since, it says

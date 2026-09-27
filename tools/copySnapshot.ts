@@ -202,8 +202,28 @@ function matchesAny(text: string, templates: string[]): boolean {
   return templates.some((t) => templateRegExp(t, false).test(text));
 }
 
+/** Whether `text` is the words between two placeholders of a template, as a
+ *  text node of their own. The redesign's setup sentence draws each
+ *  placeholder as a button, so what is left between them - ", " and "." in
+ *  English - is a text node that belongs to the drafted template without
+ *  matching it whole. */
+function isPieceOfAny(text: string, templates: string[]): boolean {
+  return templates.some((t) => t.split(/\{[A-Za-z][A-Za-z0-9_]*\}/)
+    .some((piece) => piece.trim() !== '' && piece.trim() === text));
+}
+
 function compareDraft(beforePath: string, afterPath: string, draftName: string | undefined): void {
-  const rows = draftFor(draftName).rows;
+  // These are the web app's snapshots, so each row is read as the web sees
+  // it: a key the web stops naming is retired here, whatever iOS still says
+  // with it, and a key the web starts naming is new here. Rewriting the old
+  // side with a key the web no longer shows would only corrupt it: the
+  // redesign's "bath" -> "sous-vide at" (iOS only now) would rewrite every
+  // "ice bath" on the old web screens.
+  const rows = draftFor(draftName).rows.map((d) => ({
+    ...d,
+    before: d.appsBefore.includes('web') ? d.before : null,
+    after: d.appsAfter.includes('web') ? d.after : null,
+  }));
   const before = JSON.parse(readFileSync(beforePath, 'utf8')) as Snapshot[];
   const after = JSON.parse(readFileSync(afterPath, 'utf8')) as Snapshot[];
   const was = pool(before, (s) => applyDraft(s, rows));
@@ -216,11 +236,23 @@ function compareDraft(beforePath: string, afterPath: string, draftName: string |
   const vanished: string[] = [];
   for (const [key, text] of is) {
     if (was.has(key)) continue;
-    if (matchesAny(text, added)) appeared.push(text);
+    if (matchesAny(text, added) || isPieceOfAny(text, added)) appeared.push(text);
     else failures.push(`new, and not drafted: "${text}"`);
   }
   for (const [key, text] of was) {
     if (is.has(key)) continue;
+    // A value, not a word: a stat's number, or the "--" before the first
+    // solve. The redesign moved or dropped stats, and a number is not copy.
+    if (!/[A-Za-z]{3,}/.test(text)) {
+      vanished.push(text);
+      continue;
+    }
+    // A rewrite that gained a placeholder the old screen had no value for
+    // ("{water} of water takes ..."), so the rewritten old side still shows it.
+    if (/\{[A-Za-z]+\}/.test(text) && matchesAny(text.replace(/\{[A-Za-z]+\}/g, 'x'), added)) {
+      vanished.push(text);
+      continue;
+    }
     if (matchesAny(text, retired)) vanished.push(text);
     else failures.push(`gone, and not retired: "${text}"`);
   }
