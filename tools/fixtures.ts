@@ -85,7 +85,7 @@ import {
   chooseCookTime,
   decideAt, decisionApplies, decisionGridSpec, decisionInputs, expectedLoss, hitOdds, oddsInTenths,
 } from '../src/core/decide.js';
-import { LEAN_RATIO, LEVEL_HIGH_Q, LEVEL_LOW_Q, leanOf, predictOutcome } from '../src/core/outcome.js';
+import { LEAN_RATIO, LEVEL_HIGH_Q, LEVEL_LOW_Q, WHITE_RISK, leanOf, predictOutcome } from '../src/core/outcome.js';
 import {
   ADVICE_BELOW_TENTHS, ADVICE_GAIN, ADVICE_MARGIN_TENTHS, OddsProfile, PROFILE_STEP, REACH_ODDS,
   adviceWanted, oddsNear, oddsProfile, offeredPositions, outcomeAtLevel, pricedChanges, protocolAdvice,
@@ -1571,8 +1571,14 @@ writeFileSync('fixtures/reach.json', `${JSON.stringify(reachFixture, null, 2)}\n
  * point stays under it. A bisection over solves and decisions, so both apps
  * must read the same levels in the same order. Each case carries its profile,
  * which reach.json already holds the profile computation to, so the Swift side
- * only searches. The last case narrows the offered range by hand, as the odds'
- * reach does, to show a suggestion held inside it. */
+ * only searches. The fifth case narrows the offered range by hand, as the odds'
+ * reach does, to show a suggestion held inside it.
+ *
+ * The last is the web's own fresh install at jammy: the prior the app starts
+ * from (PARTICLE_COUNT particles, CALIBRATION_SEED), its default pot and its
+ * production surface. The yolk alone points softer to 0.13, where the white
+ * is a risk; the white clears WHITE_RISK only at 0.24, past jammy's 90%
+ * point. So there is no softer level, and the outcomes it carries show why. */
 
 const SAFER_CASES: { posterior: string; setup: CookSetup; levels: number[]; range?: { softest: number; hardest: number } }[] = [
   { posterior: 'prior', setup: DECIDE_SETUP, levels: [0.1, 0.41, 0.8, 1] },
@@ -1582,6 +1588,23 @@ const SAFER_CASES: { posterior: string; setup: CookSetup; levels: number[]; rang
   { posterior: 'learned', setup: DECIDE_SETUP, levels: [0.41, 0.5], range: { softest: 0.35, hardest: 0.55 } },
 ];
 
+function saferCase(
+  name: string, c: Calibration, setup: CookSetup, g: ReturnType<typeof coarseDecisionGrid>,
+  profile: OddsProfile, levels: number[], readAt: number[],
+) {
+  return {
+    posterior: name,
+    eggsLogged: c.eggsLogged,
+    egg: { mass_kg: DECIDE_EGG.mass_kg },
+    setup: setup,
+    grid: { tauAirScale: g.tauAirScale, ...g.spec },
+    profile: profile,
+    offered: offeredPositions(profile),
+    outcomes: readAt.map((level) => ({ level: level, outcome: outcomeAtLevel(c, DECIDE_EGG, setup, g.grid, level) })),
+    safer: levels.map((level) => ({ level: level, ...saferLevels(c, DECIDE_EGG, setup, g.grid, profile, level) })),
+  };
+}
+
 const saferCases = SAFER_CASES.map((sc) => {
   const pz = decidePosteriors.find((x) => x.name === sc.posterior);
   if (pz === undefined) throw new Error(sc.posterior);
@@ -1589,22 +1612,36 @@ const saferCases = SAFER_CASES.map((sc) => {
   const g = coarseDecisionGrid(c, DECIDE_EGG, sc.setup);
   const computed = oddsProfile(c, DECIDE_EGG, sc.setup, g.grid);
   const profile: OddsProfile = sc.range === undefined ? computed : { ...computed, ...sc.range };
-  const range = offeredPositions(profile);
-  return {
-    posterior: sc.posterior,
-    eggsLogged: pz.eggsLogged,
-    egg: { mass_kg: DECIDE_EGG.mass_kg },
-    setup: sc.setup,
-    grid: { tauAirScale: g.tauAirScale, ...g.spec },
-    profile: profile,
-    offered: range,
-    outcomes: sc.levels.map((level) => ({ level: level, outcome: outcomeAtLevel(c, DECIDE_EGG, sc.setup, g.grid, level) })),
-    safer: sc.levels.map((level) => ({ level: level, ...saferLevels(c, DECIDE_EGG, sc.setup, g.grid, profile, level) })),
-  };
+  return saferCase(sc.posterior, c, sc.setup, g, profile, sc.levels, sc.levels);
 });
 
+const SAFER_FRESH = (() => {
+  const c = freshCalibration(POLICY_PARTICLES, CALIBRATION_SEED);
+  const start = START_TEMP_PRESETS_C.fridge;
+  const setup: CookSetup = {
+    startMode: 'cold', afterBoil: 'hold', eggStart_C: start, ambient_C: ambientFor(start),
+    boiling_C: boilingPointAtAltitude(DEFAULTS.altitude_m), timeToBoil_s: estimateTimeToBoil({}, DEFAULTS.waterLitres),
+    cooling: 'ice', waterLitres: DEFAULTS.waterLitres, eggCount: DEFAULTS.eggCount,
+  };
+  if (DECIDE_EGG.mass_kg !== DEFAULT_EGG_MASS_KG) throw new Error('the fresh install cooks the reference egg');
+  const spec = decisionGridSpec(decisionInputs(c, DECIDE_EGG, setup));
+  const tauAirScale = calibrationParams(c).tauAirScale;
+  const grid = buildDoseGrid(
+    DECIDE_EGG, setup, tauAirScale, spec.alphaMin, spec.alphaMax, spec.alphaCount,
+    spec.timeMin_s, spec.timeMax_s, spec.timeCount,
+  );
+  const g = { spec: spec, tauAirScale: tauAirScale, grid: grid };
+  const profile = oddsProfile(c, DECIDE_EGG, setup, grid);
+  return {
+    ...saferCase('fresh install', c, setup, g, profile, [DEFAULTS.doneness], [0.13, 0.24, DEFAULTS.doneness]),
+    prior: { count: POLICY_PARTICLES, seed: CALIBRATION_SEED },
+  };
+})();
+saferCases.push(SAFER_FRESH);
+
 const saferFixture = {
-  about: 'The play-safe levels: for a slider level, the softest offered level whose 10% point reaches it and the firmest whose 90% point stays under it. src/core/reach.ts. Posteriors are decide.json\'s; surfaces are coarse, as reach.json\'s.',
+  about: 'The play-safe levels: for a slider level, the softest offered level whose 10% point reaches it and the firmest whose 90% point stays under it with P(runny white) under whiteRisk. src/core/reach.ts. Posteriors are decide.json\'s, but for the fresh install, which is the prior from its count and seed; surfaces are coarse, as reach.json\'s, but for the fresh install, which is the production one.',
+  constants: { whiteRisk: WHITE_RISK },
   cases: saferCases,
 };
 

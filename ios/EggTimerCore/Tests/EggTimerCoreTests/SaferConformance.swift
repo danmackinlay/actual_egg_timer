@@ -4,13 +4,16 @@ import Foundation
 
 /// The play-safe levels, against `fixtures/safer.json`: the outcome read at a
 /// level as the app reads it, and the softest offered level whose 10% point
-/// reaches the cook's level and the firmest whose 90% point stays under it.
+/// reaches the cook's level and the firmest whose 90% point stays under it
+/// with a white that is not a risk (P(runny) under `whiteRisk`).
 ///
 /// The search is a bisection over solves and decisions, so both apps must read
 /// the same levels in the same order and land on the same ones, or they
 /// suggest different eggs. Each case carries its odds profile, which
 /// `fixtures/reach.json` already holds the computation of; the posteriors are
-/// decide.json's.
+/// decide.json's, but for the last case: the web's fresh install at jammy, on
+/// the prior built from its count and seed and the production surface, where
+/// the yolk alone would point softer to where the white is a risk.
 private let tolerance = 1e-12
 
 private func expectClose(
@@ -82,13 +85,24 @@ private func profileOf(_ json: [String: Any]) -> OddsProfile {
 struct SaferConformance {
     /// One test per case, so they run side by side: a search is a dozen or so
     /// solves and decisions, slow in a debug build.
-    @Test("the outcome at a level, and the play-safe levels", arguments: [0, 1, 2, 3, 4])
+    @Test("the white's threshold")
+    func constants() {
+        #expect(whiteRisk == object(Fixtures.load("safer.json"), "constants").num("whiteRisk"))
+    }
+
+    @Test("the outcome at a level, and the play-safe levels", arguments: [0, 1, 2, 3, 4, 5])
     func safer(_ i: Int) {
-        let byName = posteriors()
         let all = rows(Fixtures.load("safer.json"), "cases")
-        #expect(all.count == 5)
+        #expect(all.count == 6)
         let row = all[i]
-        guard let post = byName[row.str("posterior")] else { fatalError("case \(i): no posterior") }
+        let post: Posterior
+        if let prior = row["prior"] as? [String: Any] {
+            post = createPrior(count: Int(prior.num("count")), seed: Int32(prior.num("seed")))
+        } else if let named = posteriors()[row.str("posterior")] {
+            post = named
+        } else {
+            fatalError("case \(i): no posterior")
+        }
         let c = Calibration(posterior: post, eggsLogged: Int(row.num("eggsLogged")))
         let egg = Geometry.eggFromMass(object(row, "egg").num("mass_kg"))
         let setup = setupOf(object(row, "setup"))
@@ -124,6 +138,11 @@ struct SaferConformance {
             let s = saferLevels(c, egg: egg, setup: setup, grid: grid, profile: profile, level: level)
             #expect(s.firmerLevel == optional(at, "firmerLevel"), "case \(i) at \(level): firmer")
             #expect(s.softerLevel == optional(at, "softerLevel"), "case \(i) at \(level): softer")
+            // Softer never buys the yolk with a runny white.
+            if let softer = s.softerLevel {
+                let o = outcomeAtLevel(c, egg: egg, setup: setup, grid: grid, level: softer)
+                #expect(o.pWhiteRunny < whiteRisk, "case \(i) at \(level): softer's white \(o.pWhiteRunny)")
+            }
         }
     }
 }
