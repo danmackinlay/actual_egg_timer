@@ -14,7 +14,7 @@
 
 import {
   Decision, DecisionInputs, chooseCookTime, decide, decideAt, decisionGridRequest,
-  decisionGridSpec, decisionInputs, STILL_LEARNING_HALF_WIDTH_S,
+  decisionGridSpec, decisionInputs, oddsInTenths, STILL_LEARNING_HALF_WIDTH_S,
 } from '../src/core/decide.js';
 import { DoseGrid, buildDoseGrid, cookTimeForLogYolkDose } from '../src/core/doseGrid.js';
 import {
@@ -25,6 +25,7 @@ import { ALPHA_DEFAULT } from '../src/core/constants.js';
 import { eggFromMass, Egg } from '../src/core/geometry.js';
 import { CookSetup } from '../src/core/protocol.js';
 import { Solution, donenessFromSlider, solveCookTime } from '../src/core/solve.js';
+import { LevelOdds, OddsProfile, oddsProfile } from '../src/core/reach.js';
 import { CALIBRATION_SEED, PARTICLE_COUNT, verdictFor } from '../src/core/policy.js';
 import {
   Calibration, EggRecord, PRIOR_ID, buildRequestedGrid, calibrationDoneness, calibrationParams,
@@ -315,6 +316,70 @@ if (run('runny')) {
         + `soft ${before[0].cookTime_s.toFixed(0)} -> mean ${after[0].meanCookTime_s.toFixed(0)}, chosen ${after[0].cookTime_s.toFixed(0)} (${after[0].oddsTenths}/10); `
         + `jammy ${before[1].cookTime_s.toFixed(0)} -> mean ${after[1].meanCookTime_s.toFixed(0)}, chosen ${after[1].cookTime_s.toFixed(0)} (${after[1].oddsTenths}/10)`);
     }
+  }
+}
+
+/* ---------------------------------------------------- odds at every level */
+
+function tenthsAt(profile: OddsProfile, level: number): string {
+  let best: LevelOdds | null = null;
+  for (const p of profile.points) {
+    if (best === null || Math.abs(p.level - level) < Math.abs(best.level - level)) best = p;
+  }
+  return best === null ? '-' : String(oddsInTenths(best.odds));
+}
+
+if (run('reach')) {
+  console.log('\n== reach: the odds at every level, what they cost, and the range they allow (node, this machine)');
+  const many = replay(PRIOR, [
+    recordAt(0.41, lit464, 0, 'firm'), recordAt(0.41, lit464, 0, 'tender'), recordAt(0.41, lit464, 0, 'firm'),
+    recordAt(0.62, lit464 + 70, 0, 'firm'), recordAt(0.41, lit464, 0, 'firm'),
+  ]);
+  const cals: [string, Calibration][] = [...Object.entries(LEARNED), ['five eggs, jammy right', many]];
+  for (const pot of POTS) {
+    console.log(`${pot.name}:`);
+    for (const [name, c] of cals) {
+      const inputs = decisionInputs(c, pot.egg, pot.setup);
+      let grid: DoseGrid | null = null;
+      const build = ms(() => { grid = buildRequestedGrid(decisionGridRequest(inputs)); });
+      let profile: OddsProfile | null = null;
+      const cost = ms(() => { profile = oddsProfile(c, pot.egg, pot.setup, grid as unknown as DoseGrid); });
+      const p = profile as unknown as OddsProfile;
+      const range = p.softest === null ? 'physical' : `${p.softest}-${p.hardest}`;
+      const cols = [0, 0.22, 0.41, 0.62, 0.8, 1].map((l) => `${l}:${tenthsAt(p, l)}`).join(' ');
+      console.log(`  ${name}: ${p.points.length} points in ${cost.toFixed(0)} ms (surface ${build.toFixed(0)} ms); `
+        + `physical ${p.physicalSoftest}-${p.physicalHardest}, offered ${range}, best ${oddsInTenths(p.best)}/10; ${cols}`);
+    }
+  }
+}
+
+/* ------------------------------------------------------------- the advice */
+
+if (run('advice')) {
+  console.log('\n== advice: what each change of protocol does to the odds, on the model (tenths)');
+  const cals: [string, Calibration][] = Object.entries(LEARNED);
+  const changes: { name: string; from: Partial<CookSetup>; to: Partial<CookSetup> }[] = [
+    { name: 'counter -> ice', from: { cooling: 'counter' }, to: { cooling: 'ice' } },
+    { name: 'tap -> ice', from: { cooling: 'tap' }, to: { cooling: 'ice' } },
+    { name: 'room egg -> fridge egg', from: { eggStart_C: 20 }, to: { eggStart_C: 4 } },
+    { name: 'heat off, 2 L -> 4 L', from: { afterBoil: 'off', waterLitres: 2 }, to: { afterBoil: 'off', waterLitres: 4 } },
+  ];
+  for (const change of changes) {
+    const cells: string[] = [];
+    for (const [name, c] of cals) {
+      const row: string[] = [];
+      for (const which of [change.from, change.to]) {
+        const setup = setupOf(which);
+        const grid = buildRequestedGrid(decisionGridRequest(decisionInputs(c, REF_EGG, setup)));
+        row.push([0.22, 0.41, 0.62, 1].map((level) => {
+          const m = meanSolve(c, REF_EGG, setup, level);
+          const d = decide(c, grid, m.sol, logTarget(m.level));
+          return `${m.level === level ? '' : '*'}${d.oddsTenths}`;
+        }).join('/'));
+      }
+      cells.push(`${name} ${row[0]} -> ${row[1]}`);
+    }
+    console.log(`${change.name} (soft/jammy/fudgy/hard; * snapped by the white): ${cells.join('; ')}`);
   }
 }
 

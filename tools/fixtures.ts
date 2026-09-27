@@ -73,7 +73,7 @@ import {
   renderRef,
 } from '../src/core/copy.js';
 import {
-  Calibration, EggRecord, PRIOR_ID, RECORD_VERSION, buildRequestedGrid, calibrationDoneness,
+  Calibration, EggRecord, PRIOR_ID, RECORD_VERSION, buildRequestedGrid, calibrationDoneness, calibrationParams,
   copyCalibration, foldRecord, freshCalibration, gridRequestFor, parseRecord, recordCookTime_s,
   recordMass_g, recordProbe_C, recordTeaches, replay,
 } from '../src/core/record.js';
@@ -82,8 +82,13 @@ import {
   DECISION_ALPHA_COUNT, DECISION_ALPHA_HI, DECISION_ALPHA_LO, DECISION_TIME_STEP_S,
   DECISION_WINDOW_S, DecisionInputs, LEAN_COST_PER_S, RUNNY_WHITE_LOSS, STILL_LEARNING_HALF_WIDTH_S,
   chooseCookTime,
-  decideAt, decisionApplies, decisionGridSpec, expectedLoss, hitOdds, oddsInTenths,
+  decideAt, decisionApplies, decisionGridSpec, decisionInputs, expectedLoss, hitOdds, oddsInTenths,
 } from '../src/core/decide.js';
+import {
+  ADVICE_BELOW_TENTHS, ADVICE_GAIN, ADVICE_MARGIN_TENTHS, OddsProfile, PROFILE_STEP, REACH_ODDS,
+  adviceWanted, oddsNear, oddsProfile, pricedChanges, protocolAdvice, shadingOf, unpricedAdvice,
+  verdictWithOdds,
+} from '../src/core/reach.js';
 import {
   Fixed, HourCycle, countDecimals, formatCount, formatNumber, formatTimeOfDay, formattingLocale,
   normaliseTime, roundTo,
@@ -1360,6 +1365,130 @@ const decideFixture = {
 
 writeFileSync('fixtures/decide.json', `${JSON.stringify(decideFixture, null, 2)}\n`);
 
+/* -------------------------------------------------------------- reach.json */
+
+/* The odds at every level, the range they allow, the verdict with that range,
+ * the shading and the advice (src/core/reach.ts). A profile is a solve and a
+ * decision per level, so both apps must walk the same levels in the same
+ * order and land on the same ends. The surfaces are coarse, as decide.json's
+ * is, and built per pot from the production spec; the posteriors are
+ * decide.json's. */
+
+function coarseDecisionGrid(c: Calibration, egg: ReturnType<typeof eggFromMass>, setup: CookSetup) {
+  const full = decisionGridSpec(decisionInputs(c, egg, setup));
+  const count = Math.ceil((full.timeMax_s - full.timeMin_s) / 20) + 1;
+  const spec: GridSpec = { ...full, alphaCount: 7, timeMax_s: full.timeMin_s + 20 * (count - 1), timeCount: count };
+  const tauAirScale = calibrationParams(c).tauAirScale;
+  const grid = buildDoseGrid(
+    egg, setup, tauAirScale, spec.alphaMin, spec.alphaMax, spec.alphaCount,
+    spec.timeMin_s, spec.timeMax_s, spec.timeCount,
+  );
+  return { spec: spec, tauAirScale: tauAirScale, grid: grid };
+}
+
+const REACH_CASES: { posterior: string; setup: CookSetup }[] = [
+  { posterior: 'prior', setup: DECIDE_SETUP },
+  { posterior: 'learned', setup: DECIDE_SETUP },
+  { posterior: 'learned', setup: setupOf({ timeToBoil_s: 480, eggCount: 2, cooling: 'counter' }) },
+];
+
+const reachProfiles = REACH_CASES.map((rc) => {
+  const pz = decidePosteriors.find((x) => x.name === rc.posterior);
+  if (pz === undefined) throw new Error(rc.posterior);
+  const c: Calibration = { posterior: pz.post, eggsLogged: pz.eggsLogged };
+  const g = coarseDecisionGrid(c, DECIDE_EGG, rc.setup);
+  const profile = oddsProfile(c, DECIDE_EGG, rc.setup, g.grid);
+  return {
+    posterior: rc.posterior,
+    eggsLogged: pz.eggsLogged,
+    egg: { mass_kg: DECIDE_EGG.mass_kg },
+    setup: rc.setup,
+    grid: { tauAirScale: g.tauAirScale, ...g.spec },
+    profile: profile,
+    shading: shadingOf(profile),
+    near: [0, 0.13, 0.41, 0.625, 0.99, 1].map((level) => ({ level: level, odds: oddsNear(profile, level) })),
+  };
+});
+
+const REACH_VERDICT_SOLUTIONS: { name: string; sol: Solution }[] = (() => {
+  const result = {
+    cookTime_s: 400, peakYolk_C: 65, peakYolkTime_s: 500, yolkAtPull_C: 60, yolkDose_min: 1,
+    whiteDose_min: 1, peakWhite_C: 80,
+  };
+  const base = { result: result, minCookTime_s: 300, softestLevel: 0.1, hardestLevel: 0.9 };
+  return [
+    { name: 'reachable', sol: { ...base, reachable: true, whiteSets: true } },
+    { name: 'tooSoft', sol: { ...base, reachable: false, whiteSets: true } },
+    { name: 'never', sol: { ...base, reachable: false, whiteSets: false } },
+  ];
+})();
+const REACH_RANGES: ({ softest: number | null; hardest: number | null } | null)[] = [
+  null, { softest: null, hardest: null }, { softest: 0.3, hardest: 0.8 }, { softest: 0.1, hardest: 0.9 },
+  { softest: 0.23, hardest: 0.63 },
+];
+const reachVerdicts: unknown[] = [];
+for (const s of REACH_VERDICT_SOLUTIONS) {
+  for (const range of REACH_RANGES) {
+    for (const level of [0, 0.05, 0.2, 0.3, 0.5, 0.8, 0.85, 0.95, 1]) {
+      const profile: OddsProfile | null = range === null ? null : {
+        points: [], best: 0.6, physicalSoftest: 0.1, physicalHardest: 0.9,
+        softest: range.softest, hardest: range.hardest,
+      };
+      const v = verdictWithOdds(s.sol, level, profile);
+      reachVerdicts.push({
+        solution: s.name, range: range, level: level,
+        kind: v.kind, wanted: v.wanted.key, limit: v.limit.key, snapTo: v.snapTo, worthSaying: v.worthSaying,
+      });
+    }
+  }
+}
+
+const ADVICE_SETUPS: { setup: CookSetup; eggFromClass: boolean; startAssumed: boolean }[] = [
+  { setup: DECIDE_SETUP, eggFromClass: false, startAssumed: false },
+  { setup: DECIDE_SETUP, eggFromClass: true, startAssumed: false },
+  { setup: setupOf({ eggStart_C: 20, cooling: 'counter', afterBoil: 'off', waterLitres: 3 }), eggFromClass: true, startAssumed: true },
+  { setup: setupOf({ eggStart_C: 20, cooling: 'tap' }), eggFromClass: false, startAssumed: false },
+  { setup: setupOf({ eggStart_C: 5, afterBoil: 'off', waterLitres: 8 }), eggFromClass: false, startAssumed: true },
+  { setup: setupOf({ afterBoil: 'off', waterLitres: 12 }), eggFromClass: false, startAssumed: true },
+];
+const ADVICE_PROFILE: OddsProfile = {
+  points: [{ level: 0, odds: 0.5 }, { level: 0.5, odds: 0.7 }, { level: 1, odds: 0.3 }],
+  best: 0.7, physicalSoftest: 0, physicalHardest: 1, softest: 0, hardest: 1,
+};
+
+const reachFixture = {
+  about: 'The odds at every level, the range they allow, the verdict with it, the shading and the advice. src/core/reach.ts.',
+  constants: {
+    reachOdds: REACH_ODDS,
+    profileStep: PROFILE_STEP,
+    adviceBelowTenths: ADVICE_BELOW_TENTHS,
+    adviceMarginTenths: ADVICE_MARGIN_TENTHS,
+    adviceGain: ADVICE_GAIN,
+  },
+  profiles: reachProfiles,
+  verdicts: reachVerdicts,
+  adviceWanted: [0, 3, 4, 5, 6, 7, 8].flatMap((tenths) => [null, 0.62, 0.8, 0.84].map((best) => ({
+    tenths: tenths, best: best,
+    wanted: adviceWanted(tenths, best === null ? null : { ...ADVICE_PROFILE, best: best }),
+  }))),
+  advice: ADVICE_SETUPS.map((a) => {
+    const facts = { eggFromClass: a.eggFromClass, startAssumed: a.startAssumed };
+    const priced = pricedChanges(a.setup);
+    return {
+      setup: a.setup, ...facts,
+      unpriced: unpricedAdvice(a.setup, facts),
+      priced: priced,
+      shown: [0.25, 0.9].map((level) => [0.2, 0.62].map((odds) => ({
+        level: level, odds: odds,
+        keys: protocolAdvice(a.setup, facts, level, odds, priced.map((c) => ({ key: c.key, profile: ADVICE_PROFILE }))),
+      }))).flat(),
+    };
+  }),
+  adviceProfile: ADVICE_PROFILE,
+};
+
+writeFileSync('fixtures/reach.json', `${JSON.stringify(reachFixture, null, 2)}\n`);
+
 type CatalogueJson = { locale: string; messages: Record<string, Record<string, unknown>> };
 
 /* ------------------------------------------------------------------ write */
@@ -1634,6 +1763,7 @@ const counts = [
   `${recordFixture.cases.length} records`,
   `${recordFixture.replay.log.length} replayed eggs`,
   `${decideFixture.specs.length} decision surfaces and ${decideFixture.cases.length} decisions`,
+  `${reachFixture.profiles.length} odds profiles, ${reachFixture.verdicts.length} verdicts with odds and ${reachFixture.advice.length} advice setups`,
   `${(thermometer['updates'] as unknown[]).length} probe folds`,
   `${(thermometer['solved'] as unknown[]).length} probe cooks`,
 ];

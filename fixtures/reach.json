@@ -1,0 +1,2798 @@
+{
+  "about": "The odds at every level, the range they allow, the verdict with it, the shading and the advice. src/core/reach.ts.",
+  "constants": {
+    "reachOdds": 0.3,
+    "profileStep": 5,
+    "adviceBelowTenths": 5,
+    "adviceMarginTenths": 3,
+    "adviceGain": 0.05
+  },
+  "profiles": [
+    {
+      "posterior": "prior",
+      "eggsLogged": 0,
+      "egg": {
+        "mass_kg": 0.068
+      },
+      "setup": {
+        "startMode": "hot",
+        "eggStart_C": 4,
+        "ambient_C": 20,
+        "boiling_C": 100,
+        "timeToBoil_s": 480,
+        "cooling": "ice",
+        "waterLitres": 2,
+        "eggCount": 2
+      },
+      "grid": {
+        "tauAirScale": 1,
+        "alphaMin": 1.0199999999999999e-7,
+        "alphaMax": 2.8049999999999995e-7,
+        "alphaCount": 7,
+        "timeMin_s": 246.11328125,
+        "timeMax_s": 766.11328125,
+        "timeCount": 27
+      },
+      "profile": {
+        "points": [
+          {
+            "level": 0,
+            "odds": 0.15437802873421827
+          },
+          {
+            "level": 0.05,
+            "odds": 0.1807128951317099
+          },
+          {
+            "level": 0.1,
+            "odds": 0.2009611802192114
+          },
+          {
+            "level": 0.15,
+            "odds": 0.2170361467608303
+          },
+          {
+            "level": 0.2,
+            "odds": 0.2289699527013196
+          },
+          {
+            "level": 0.25,
+            "odds": 0.23688325082428116
+          },
+          {
+            "level": 0.3,
+            "odds": 0.2410003782506944
+          },
+          {
+            "level": 0.35,
+            "odds": 0.24366671712889684
+          },
+          {
+            "level": 0.4,
+            "odds": 0.2478035666379107
+          },
+          {
+            "level": 0.45,
+            "odds": 0.25006192886136397
+          },
+          {
+            "level": 0.5,
+            "odds": 0.2519880389277583
+          },
+          {
+            "level": 0.55,
+            "odds": 0.252477013900422
+          },
+          {
+            "level": 0.6,
+            "odds": 0.2523586546710201
+          },
+          {
+            "level": 0.65,
+            "odds": 0.2534615572813534
+          },
+          {
+            "level": 0.7,
+            "odds": 0.25355630636771886
+          },
+          {
+            "level": 0.75,
+            "odds": 0.25464558423571476
+          },
+          {
+            "level": 0.8,
+            "odds": 0.25661667135581917
+          },
+          {
+            "level": 0.85,
+            "odds": 0.2578256417308472
+          },
+          {
+            "level": 0.9,
+            "odds": 0.2595878608204093
+          },
+          {
+            "level": 0.95,
+            "odds": 0.26052360535474445
+          },
+          {
+            "level": 1,
+            "odds": 0.2620513046568222
+          }
+        ],
+        "best": 0.2620513046568222,
+        "physicalSoftest": 0,
+        "physicalHardest": 1,
+        "softest": null,
+        "hardest": null
+      },
+      "shading": [
+        {
+          "level": 0,
+          "strength": 0.5891137574620704
+        },
+        {
+          "level": 0.05,
+          "strength": 0.6896088358284205
+        },
+        {
+          "level": 0.1,
+          "strength": 0.7668772360526372
+        },
+        {
+          "level": 0.15,
+          "strength": 0.8282200580724337
+        },
+        {
+          "level": 0.2,
+          "strength": 0.8737600181047549
+        },
+        {
+          "level": 0.25,
+          "strength": 0.9039575327987751
+        },
+        {
+          "level": 0.3,
+          "strength": 0.9196686830706845
+        },
+        {
+          "level": 0.35,
+          "strength": 0.9298435565814049
+        },
+        {
+          "level": 0.4,
+          "strength": 0.9456299672403078
+        },
+        {
+          "level": 0.45,
+          "strength": 0.9542479828094758
+        },
+        {
+          "level": 0.5,
+          "strength": 0.9615981086518818
+        },
+        {
+          "level": 0.55,
+          "strength": 0.9634640599521589
+        },
+        {
+          "level": 0.6,
+          "strength": 0.9630123956127773
+        },
+        {
+          "level": 0.65,
+          "strength": 0.9672211234104795
+        },
+        {
+          "level": 0.7,
+          "strength": 0.967582690342915
+        },
+        {
+          "level": 0.75,
+          "strength": 0.9717394254884332
+        },
+        {
+          "level": 0.8,
+          "strength": 0.9792611858654162
+        },
+        {
+          "level": 0.85,
+          "strength": 0.9838746731999337
+        },
+        {
+          "level": 0.9,
+          "strength": 0.9905993834312751
+        },
+        {
+          "level": 0.95,
+          "strength": 0.994170228215126
+        },
+        {
+          "level": 1,
+          "strength": 1
+        }
+      ],
+      "near": [
+        {
+          "level": 0,
+          "odds": 0.15437802873421827
+        },
+        {
+          "level": 0.13,
+          "odds": 0.21060616014418274
+        },
+        {
+          "level": 0.41,
+          "odds": 0.24825523908260136
+        },
+        {
+          "level": 0.625,
+          "odds": 0.25291010597618674
+        },
+        {
+          "level": 0.99,
+          "odds": 0.26174576479640665
+        },
+        {
+          "level": 1,
+          "odds": 0.2620513046568222
+        }
+      ]
+    },
+    {
+      "posterior": "learned",
+      "eggsLogged": 3,
+      "egg": {
+        "mass_kg": 0.068
+      },
+      "setup": {
+        "startMode": "hot",
+        "eggStart_C": 4,
+        "ambient_C": 20,
+        "boiling_C": 100,
+        "timeToBoil_s": 480,
+        "cooling": "ice",
+        "waterLitres": 2,
+        "eggCount": 2
+      },
+      "grid": {
+        "tauAirScale": 1.0712137755716802,
+        "alphaMin": 1.0021738770127244e-7,
+        "alphaMax": 2.755978161784992e-7,
+        "alphaCount": 7,
+        "timeMin_s": 248.7353515625,
+        "timeMax_s": 788.7353515625,
+        "timeCount": 28
+      },
+      "profile": {
+        "points": [
+          {
+            "level": 0,
+            "odds": 0.01652102756100457
+          },
+          {
+            "level": 0.05,
+            "odds": 0.016567218095839525
+          },
+          {
+            "level": 0.07,
+            "odds": 0.016585762051224757
+          },
+          {
+            "level": 0.08,
+            "odds": 0.4311176920720206
+          },
+          {
+            "level": 0.1,
+            "odds": 0.4835336211603388
+          },
+          {
+            "level": 0.15,
+            "odds": 0.573081573182709
+          },
+          {
+            "level": 0.2,
+            "odds": 0.6223195004082785
+          },
+          {
+            "level": 0.25,
+            "odds": 0.6457831746508358
+          },
+          {
+            "level": 0.3,
+            "odds": 0.6544877733663913
+          },
+          {
+            "level": 0.35,
+            "odds": 0.6582077216066893
+          },
+          {
+            "level": 0.4,
+            "odds": 0.6602452438194959
+          },
+          {
+            "level": 0.45,
+            "odds": 0.6615680445079091
+          },
+          {
+            "level": 0.5,
+            "odds": 0.6624520359073374
+          },
+          {
+            "level": 0.55,
+            "odds": 0.6632029211553347
+          },
+          {
+            "level": 0.6,
+            "odds": 0.663923153588256
+          },
+          {
+            "level": 0.65,
+            "odds": 0.6646616035156856
+          },
+          {
+            "level": 0.7,
+            "odds": 0.6655026002210352
+          },
+          {
+            "level": 0.75,
+            "odds": 0.6664785553563288
+          },
+          {
+            "level": 0.8,
+            "odds": 0.6675547150412315
+          },
+          {
+            "level": 0.85,
+            "odds": 0.6687397382825159
+          },
+          {
+            "level": 0.9,
+            "odds": 0.6700348378731434
+          },
+          {
+            "level": 0.95,
+            "odds": 0.6714540922454907
+          },
+          {
+            "level": 1,
+            "odds": 0.672964085566609
+          }
+        ],
+        "best": 0.672964085566609,
+        "physicalSoftest": 0,
+        "physicalHardest": 1,
+        "softest": 0.08,
+        "hardest": 1
+      },
+      "shading": [
+        {
+          "level": 0,
+          "strength": 0.024549642269682967
+        },
+        {
+          "level": 0.05,
+          "strength": 0.024618279713828392
+        },
+        {
+          "level": 0.07,
+          "strength": 0.024645835352803715
+        },
+        {
+          "level": 0.08,
+          "strength": 0.6406251110845487
+        },
+        {
+          "level": 0.1,
+          "strength": 0.7185132632348764
+        },
+        {
+          "level": 0.15,
+          "strength": 0.8515782423963935
+        },
+        {
+          "level": 0.2,
+          "strength": 0.924744000096692
+        },
+        {
+          "level": 0.25,
+          "strength": 0.9596101612274183
+        },
+        {
+          "level": 0.3,
+          "strength": 0.9725448763218004
+        },
+        {
+          "level": 0.35,
+          "strength": 0.9780725832530937
+        },
+        {
+          "level": 0.4,
+          "strength": 0.9811002666859936
+        },
+        {
+          "level": 0.45,
+          "strength": 0.9830659000931603
+        },
+        {
+          "level": 0.5,
+          "strength": 0.9843794789577501
+        },
+        {
+          "level": 0.55,
+          "strength": 0.9854952669531305
+        },
+        {
+          "level": 0.6,
+          "strength": 0.9865655059872313
+        },
+        {
+          "level": 0.65,
+          "strength": 0.9876628155513929
+        },
+        {
+          "level": 0.7,
+          "strength": 0.9889125058742303
+        },
+        {
+          "level": 0.75,
+          "strength": 0.990362739484352
+        },
+        {
+          "level": 0.8,
+          "strength": 0.9919618733876073
+        },
+        {
+          "level": 0.85,
+          "strength": 0.9937227745511317
+        },
+        {
+          "level": 0.9,
+          "strength": 0.9956472451408767
+        },
+        {
+          "level": 0.95,
+          "strength": 0.9977562051920691
+        },
+        {
+          "level": 1,
+          "strength": 1
+        }
+      ],
+      "near": [
+        {
+          "level": 0,
+          "odds": 0.01652102756100457
+        },
+        {
+          "level": 0.13,
+          "odds": 0.5372623923737609
+        },
+        {
+          "level": 0.41,
+          "odds": 0.6605098039571785
+        },
+        {
+          "level": 0.625,
+          "odds": 0.6642923785519708
+        },
+        {
+          "level": 0.99,
+          "odds": 0.6726620869023854
+        },
+        {
+          "level": 1,
+          "odds": 0.672964085566609
+        }
+      ]
+    },
+    {
+      "posterior": "learned",
+      "eggsLogged": 3,
+      "egg": {
+        "mass_kg": 0.068
+      },
+      "setup": {
+        "startMode": "hot",
+        "eggStart_C": 4,
+        "ambient_C": 20,
+        "boiling_C": 100,
+        "timeToBoil_s": 480,
+        "cooling": "counter",
+        "waterLitres": 2,
+        "eggCount": 2
+      },
+      "grid": {
+        "tauAirScale": 1.0712137755716802,
+        "alphaMin": 1.0021738770127244e-7,
+        "alphaMax": 2.755978161784992e-7,
+        "alphaCount": 7,
+        "timeMin_s": 198.916015625,
+        "timeMax_s": 578.916015625,
+        "timeCount": 20
+      },
+      "profile": {
+        "points": [
+          {
+            "level": 0.59,
+            "odds": 0.01717864981470531
+          },
+          {
+            "level": 0.6,
+            "odds": 0.017218029783873882
+          },
+          {
+            "level": 0.65,
+            "odds": 0.0174288789169578
+          },
+          {
+            "level": 0.66,
+            "odds": 0.3739638669014679
+          },
+          {
+            "level": 0.67,
+            "odds": 0.4183230777439504
+          },
+          {
+            "level": 0.7,
+            "odds": 0.5185969585209897
+          },
+          {
+            "level": 0.75,
+            "odds": 0.6227542792690502
+          },
+          {
+            "level": 0.8,
+            "odds": 0.6656628210742404
+          },
+          {
+            "level": 0.85,
+            "odds": 0.6782321457593707
+          },
+          {
+            "level": 0.9,
+            "odds": 0.6827416735974566
+          },
+          {
+            "level": 0.95,
+            "odds": 0.6848828429071369
+          },
+          {
+            "level": 1,
+            "odds": 0.6859490178126407
+          }
+        ],
+        "best": 0.6859490178126407,
+        "physicalSoftest": 0.59,
+        "physicalHardest": 1,
+        "softest": 0.66,
+        "hardest": 1
+      },
+      "shading": [
+        {
+          "level": 0.59,
+          "strength": 0.025043624771830298
+        },
+        {
+          "level": 0.6,
+          "strength": 0.025101034241260176
+        },
+        {
+          "level": 0.65,
+          "strength": 0.025408417337683693
+        },
+        {
+          "level": 0.66,
+          "strength": 0.5451773487393664
+        },
+        {
+          "level": 0.67,
+          "strength": 0.6098457274243239
+        },
+        {
+          "level": 0.7,
+          "strength": 0.7560284293061539
+        },
+        {
+          "level": 0.75,
+          "strength": 0.9078725431445236
+        },
+        {
+          "level": 0.8,
+          "strength": 0.9704260867621195
+        },
+        {
+          "level": 0.85,
+          "strength": 0.9887500793019901
+        },
+        {
+          "level": 0.9,
+          "strength": 0.9953242236202747
+        },
+        {
+          "level": 0.95,
+          "strength": 0.9984456936626228
+        },
+        {
+          "level": 1,
+          "strength": 1
+        }
+      ],
+      "near": [
+        {
+          "level": 0,
+          "odds": 0
+        },
+        {
+          "level": 0.13,
+          "odds": 0
+        },
+        {
+          "level": 0.41,
+          "odds": 0
+        },
+        {
+          "level": 0.625,
+          "odds": 0.01732345435041584
+        },
+        {
+          "level": 0.99,
+          "odds": 0.6857357828315399
+        },
+        {
+          "level": 1,
+          "odds": 0.6859490178126407
+        }
+      ]
+    }
+  ],
+  "verdicts": [
+    {
+      "solution": "reachable",
+      "range": null,
+      "level": 0,
+      "kind": "none",
+      "wanted": "doneness.runny",
+      "limit": "doneness.runny",
+      "snapTo": null,
+      "worthSaying": false
+    },
+    {
+      "solution": "reachable",
+      "range": null,
+      "level": 0.05,
+      "kind": "none",
+      "wanted": "doneness.runny",
+      "limit": "doneness.runny",
+      "snapTo": null,
+      "worthSaying": false
+    },
+    {
+      "solution": "reachable",
+      "range": null,
+      "level": 0.2,
+      "kind": "none",
+      "wanted": "doneness.soft",
+      "limit": "doneness.soft",
+      "snapTo": null,
+      "worthSaying": false
+    },
+    {
+      "solution": "reachable",
+      "range": null,
+      "level": 0.3,
+      "kind": "none",
+      "wanted": "doneness.soft",
+      "limit": "doneness.soft",
+      "snapTo": null,
+      "worthSaying": false
+    },
+    {
+      "solution": "reachable",
+      "range": null,
+      "level": 0.5,
+      "kind": "none",
+      "wanted": "doneness.jammy",
+      "limit": "doneness.jammy",
+      "snapTo": null,
+      "worthSaying": false
+    },
+    {
+      "solution": "reachable",
+      "range": null,
+      "level": 0.8,
+      "kind": "none",
+      "wanted": "doneness.fudgy",
+      "limit": "doneness.fudgy",
+      "snapTo": null,
+      "worthSaying": false
+    },
+    {
+      "solution": "reachable",
+      "range": null,
+      "level": 0.85,
+      "kind": "none",
+      "wanted": "doneness.hard",
+      "limit": "doneness.hard",
+      "snapTo": null,
+      "worthSaying": false
+    },
+    {
+      "solution": "reachable",
+      "range": null,
+      "level": 0.95,
+      "kind": "none",
+      "wanted": "doneness.hard",
+      "limit": "doneness.hard",
+      "snapTo": null,
+      "worthSaying": false
+    },
+    {
+      "solution": "reachable",
+      "range": null,
+      "level": 1,
+      "kind": "none",
+      "wanted": "doneness.hard",
+      "limit": "doneness.hard",
+      "snapTo": null,
+      "worthSaying": false
+    },
+    {
+      "solution": "reachable",
+      "range": {
+        "softest": null,
+        "hardest": null
+      },
+      "level": 0,
+      "kind": "none",
+      "wanted": "doneness.runny",
+      "limit": "doneness.runny",
+      "snapTo": null,
+      "worthSaying": false
+    },
+    {
+      "solution": "reachable",
+      "range": {
+        "softest": null,
+        "hardest": null
+      },
+      "level": 0.05,
+      "kind": "none",
+      "wanted": "doneness.runny",
+      "limit": "doneness.runny",
+      "snapTo": null,
+      "worthSaying": false
+    },
+    {
+      "solution": "reachable",
+      "range": {
+        "softest": null,
+        "hardest": null
+      },
+      "level": 0.2,
+      "kind": "none",
+      "wanted": "doneness.soft",
+      "limit": "doneness.soft",
+      "snapTo": null,
+      "worthSaying": false
+    },
+    {
+      "solution": "reachable",
+      "range": {
+        "softest": null,
+        "hardest": null
+      },
+      "level": 0.3,
+      "kind": "none",
+      "wanted": "doneness.soft",
+      "limit": "doneness.soft",
+      "snapTo": null,
+      "worthSaying": false
+    },
+    {
+      "solution": "reachable",
+      "range": {
+        "softest": null,
+        "hardest": null
+      },
+      "level": 0.5,
+      "kind": "none",
+      "wanted": "doneness.jammy",
+      "limit": "doneness.jammy",
+      "snapTo": null,
+      "worthSaying": false
+    },
+    {
+      "solution": "reachable",
+      "range": {
+        "softest": null,
+        "hardest": null
+      },
+      "level": 0.8,
+      "kind": "none",
+      "wanted": "doneness.fudgy",
+      "limit": "doneness.fudgy",
+      "snapTo": null,
+      "worthSaying": false
+    },
+    {
+      "solution": "reachable",
+      "range": {
+        "softest": null,
+        "hardest": null
+      },
+      "level": 0.85,
+      "kind": "none",
+      "wanted": "doneness.hard",
+      "limit": "doneness.hard",
+      "snapTo": null,
+      "worthSaying": false
+    },
+    {
+      "solution": "reachable",
+      "range": {
+        "softest": null,
+        "hardest": null
+      },
+      "level": 0.95,
+      "kind": "none",
+      "wanted": "doneness.hard",
+      "limit": "doneness.hard",
+      "snapTo": null,
+      "worthSaying": false
+    },
+    {
+      "solution": "reachable",
+      "range": {
+        "softest": null,
+        "hardest": null
+      },
+      "level": 1,
+      "kind": "none",
+      "wanted": "doneness.hard",
+      "limit": "doneness.hard",
+      "snapTo": null,
+      "worthSaying": false
+    },
+    {
+      "solution": "reachable",
+      "range": {
+        "softest": 0.3,
+        "hardest": 0.8
+      },
+      "level": 0,
+      "kind": "unlikelySoft",
+      "wanted": "doneness.runny",
+      "limit": "doneness.soft",
+      "snapTo": 0.3,
+      "worthSaying": true
+    },
+    {
+      "solution": "reachable",
+      "range": {
+        "softest": 0.3,
+        "hardest": 0.8
+      },
+      "level": 0.05,
+      "kind": "unlikelySoft",
+      "wanted": "doneness.runny",
+      "limit": "doneness.soft",
+      "snapTo": 0.3,
+      "worthSaying": true
+    },
+    {
+      "solution": "reachable",
+      "range": {
+        "softest": 0.3,
+        "hardest": 0.8
+      },
+      "level": 0.2,
+      "kind": "unlikelySoft",
+      "wanted": "doneness.soft",
+      "limit": "doneness.soft",
+      "snapTo": 0.3,
+      "worthSaying": false
+    },
+    {
+      "solution": "reachable",
+      "range": {
+        "softest": 0.3,
+        "hardest": 0.8
+      },
+      "level": 0.3,
+      "kind": "none",
+      "wanted": "doneness.soft",
+      "limit": "doneness.soft",
+      "snapTo": null,
+      "worthSaying": false
+    },
+    {
+      "solution": "reachable",
+      "range": {
+        "softest": 0.3,
+        "hardest": 0.8
+      },
+      "level": 0.5,
+      "kind": "none",
+      "wanted": "doneness.jammy",
+      "limit": "doneness.jammy",
+      "snapTo": null,
+      "worthSaying": false
+    },
+    {
+      "solution": "reachable",
+      "range": {
+        "softest": 0.3,
+        "hardest": 0.8
+      },
+      "level": 0.8,
+      "kind": "none",
+      "wanted": "doneness.fudgy",
+      "limit": "doneness.fudgy",
+      "snapTo": null,
+      "worthSaying": false
+    },
+    {
+      "solution": "reachable",
+      "range": {
+        "softest": 0.3,
+        "hardest": 0.8
+      },
+      "level": 0.85,
+      "kind": "unlikelyHard",
+      "wanted": "doneness.hard",
+      "limit": "doneness.fudgy",
+      "snapTo": 0.8,
+      "worthSaying": true
+    },
+    {
+      "solution": "reachable",
+      "range": {
+        "softest": 0.3,
+        "hardest": 0.8
+      },
+      "level": 0.95,
+      "kind": "unlikelyHard",
+      "wanted": "doneness.hard",
+      "limit": "doneness.fudgy",
+      "snapTo": 0.8,
+      "worthSaying": true
+    },
+    {
+      "solution": "reachable",
+      "range": {
+        "softest": 0.3,
+        "hardest": 0.8
+      },
+      "level": 1,
+      "kind": "unlikelyHard",
+      "wanted": "doneness.hard",
+      "limit": "doneness.fudgy",
+      "snapTo": 0.8,
+      "worthSaying": true
+    },
+    {
+      "solution": "reachable",
+      "range": {
+        "softest": 0.1,
+        "hardest": 0.9
+      },
+      "level": 0,
+      "kind": "unlikelySoft",
+      "wanted": "doneness.runny",
+      "limit": "doneness.runny",
+      "snapTo": 0.1,
+      "worthSaying": false
+    },
+    {
+      "solution": "reachable",
+      "range": {
+        "softest": 0.1,
+        "hardest": 0.9
+      },
+      "level": 0.05,
+      "kind": "unlikelySoft",
+      "wanted": "doneness.runny",
+      "limit": "doneness.runny",
+      "snapTo": 0.1,
+      "worthSaying": false
+    },
+    {
+      "solution": "reachable",
+      "range": {
+        "softest": 0.1,
+        "hardest": 0.9
+      },
+      "level": 0.2,
+      "kind": "none",
+      "wanted": "doneness.soft",
+      "limit": "doneness.soft",
+      "snapTo": null,
+      "worthSaying": false
+    },
+    {
+      "solution": "reachable",
+      "range": {
+        "softest": 0.1,
+        "hardest": 0.9
+      },
+      "level": 0.3,
+      "kind": "none",
+      "wanted": "doneness.soft",
+      "limit": "doneness.soft",
+      "snapTo": null,
+      "worthSaying": false
+    },
+    {
+      "solution": "reachable",
+      "range": {
+        "softest": 0.1,
+        "hardest": 0.9
+      },
+      "level": 0.5,
+      "kind": "none",
+      "wanted": "doneness.jammy",
+      "limit": "doneness.jammy",
+      "snapTo": null,
+      "worthSaying": false
+    },
+    {
+      "solution": "reachable",
+      "range": {
+        "softest": 0.1,
+        "hardest": 0.9
+      },
+      "level": 0.8,
+      "kind": "none",
+      "wanted": "doneness.fudgy",
+      "limit": "doneness.fudgy",
+      "snapTo": null,
+      "worthSaying": false
+    },
+    {
+      "solution": "reachable",
+      "range": {
+        "softest": 0.1,
+        "hardest": 0.9
+      },
+      "level": 0.85,
+      "kind": "none",
+      "wanted": "doneness.hard",
+      "limit": "doneness.hard",
+      "snapTo": null,
+      "worthSaying": false
+    },
+    {
+      "solution": "reachable",
+      "range": {
+        "softest": 0.1,
+        "hardest": 0.9
+      },
+      "level": 0.95,
+      "kind": "unlikelyHard",
+      "wanted": "doneness.hard",
+      "limit": "doneness.hard",
+      "snapTo": 0.9,
+      "worthSaying": false
+    },
+    {
+      "solution": "reachable",
+      "range": {
+        "softest": 0.1,
+        "hardest": 0.9
+      },
+      "level": 1,
+      "kind": "unlikelyHard",
+      "wanted": "doneness.hard",
+      "limit": "doneness.hard",
+      "snapTo": 0.9,
+      "worthSaying": false
+    },
+    {
+      "solution": "reachable",
+      "range": {
+        "softest": 0.23,
+        "hardest": 0.63
+      },
+      "level": 0,
+      "kind": "unlikelySoft",
+      "wanted": "doneness.runny",
+      "limit": "doneness.soft",
+      "snapTo": 0.23,
+      "worthSaying": true
+    },
+    {
+      "solution": "reachable",
+      "range": {
+        "softest": 0.23,
+        "hardest": 0.63
+      },
+      "level": 0.05,
+      "kind": "unlikelySoft",
+      "wanted": "doneness.runny",
+      "limit": "doneness.soft",
+      "snapTo": 0.23,
+      "worthSaying": true
+    },
+    {
+      "solution": "reachable",
+      "range": {
+        "softest": 0.23,
+        "hardest": 0.63
+      },
+      "level": 0.2,
+      "kind": "unlikelySoft",
+      "wanted": "doneness.soft",
+      "limit": "doneness.soft",
+      "snapTo": 0.23,
+      "worthSaying": false
+    },
+    {
+      "solution": "reachable",
+      "range": {
+        "softest": 0.23,
+        "hardest": 0.63
+      },
+      "level": 0.3,
+      "kind": "none",
+      "wanted": "doneness.soft",
+      "limit": "doneness.soft",
+      "snapTo": null,
+      "worthSaying": false
+    },
+    {
+      "solution": "reachable",
+      "range": {
+        "softest": 0.23,
+        "hardest": 0.63
+      },
+      "level": 0.5,
+      "kind": "none",
+      "wanted": "doneness.jammy",
+      "limit": "doneness.jammy",
+      "snapTo": null,
+      "worthSaying": false
+    },
+    {
+      "solution": "reachable",
+      "range": {
+        "softest": 0.23,
+        "hardest": 0.63
+      },
+      "level": 0.8,
+      "kind": "unlikelyHard",
+      "wanted": "doneness.fudgy",
+      "limit": "doneness.fudgy",
+      "snapTo": 0.63,
+      "worthSaying": false
+    },
+    {
+      "solution": "reachable",
+      "range": {
+        "softest": 0.23,
+        "hardest": 0.63
+      },
+      "level": 0.85,
+      "kind": "unlikelyHard",
+      "wanted": "doneness.hard",
+      "limit": "doneness.fudgy",
+      "snapTo": 0.63,
+      "worthSaying": true
+    },
+    {
+      "solution": "reachable",
+      "range": {
+        "softest": 0.23,
+        "hardest": 0.63
+      },
+      "level": 0.95,
+      "kind": "unlikelyHard",
+      "wanted": "doneness.hard",
+      "limit": "doneness.fudgy",
+      "snapTo": 0.63,
+      "worthSaying": true
+    },
+    {
+      "solution": "reachable",
+      "range": {
+        "softest": 0.23,
+        "hardest": 0.63
+      },
+      "level": 1,
+      "kind": "unlikelyHard",
+      "wanted": "doneness.hard",
+      "limit": "doneness.fudgy",
+      "snapTo": 0.63,
+      "worthSaying": true
+    },
+    {
+      "solution": "tooSoft",
+      "range": null,
+      "level": 0,
+      "kind": "tooSoftForWhite",
+      "wanted": "doneness.runny",
+      "limit": "doneness.runny",
+      "snapTo": 0.1,
+      "worthSaying": false
+    },
+    {
+      "solution": "tooSoft",
+      "range": null,
+      "level": 0.05,
+      "kind": "tooSoftForWhite",
+      "wanted": "doneness.runny",
+      "limit": "doneness.runny",
+      "snapTo": 0.1,
+      "worthSaying": false
+    },
+    {
+      "solution": "tooSoft",
+      "range": null,
+      "level": 0.2,
+      "kind": "tooSoftForWhite",
+      "wanted": "doneness.soft",
+      "limit": "doneness.runny",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "solution": "tooSoft",
+      "range": null,
+      "level": 0.3,
+      "kind": "tooSoftForWhite",
+      "wanted": "doneness.soft",
+      "limit": "doneness.runny",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "solution": "tooSoft",
+      "range": null,
+      "level": 0.5,
+      "kind": "tooSoftForWhite",
+      "wanted": "doneness.jammy",
+      "limit": "doneness.runny",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "solution": "tooSoft",
+      "range": null,
+      "level": 0.8,
+      "kind": "tooSoftForWhite",
+      "wanted": "doneness.fudgy",
+      "limit": "doneness.runny",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "solution": "tooSoft",
+      "range": null,
+      "level": 0.85,
+      "kind": "tooSoftForWhite",
+      "wanted": "doneness.hard",
+      "limit": "doneness.runny",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "solution": "tooSoft",
+      "range": null,
+      "level": 0.95,
+      "kind": "harderThanPanReaches",
+      "wanted": "doneness.hard",
+      "limit": "doneness.hard",
+      "snapTo": 0.9,
+      "worthSaying": false
+    },
+    {
+      "solution": "tooSoft",
+      "range": null,
+      "level": 1,
+      "kind": "harderThanPanReaches",
+      "wanted": "doneness.hard",
+      "limit": "doneness.hard",
+      "snapTo": 0.9,
+      "worthSaying": false
+    },
+    {
+      "solution": "tooSoft",
+      "range": {
+        "softest": null,
+        "hardest": null
+      },
+      "level": 0,
+      "kind": "tooSoftForWhite",
+      "wanted": "doneness.runny",
+      "limit": "doneness.runny",
+      "snapTo": 0.1,
+      "worthSaying": false
+    },
+    {
+      "solution": "tooSoft",
+      "range": {
+        "softest": null,
+        "hardest": null
+      },
+      "level": 0.05,
+      "kind": "tooSoftForWhite",
+      "wanted": "doneness.runny",
+      "limit": "doneness.runny",
+      "snapTo": 0.1,
+      "worthSaying": false
+    },
+    {
+      "solution": "tooSoft",
+      "range": {
+        "softest": null,
+        "hardest": null
+      },
+      "level": 0.2,
+      "kind": "tooSoftForWhite",
+      "wanted": "doneness.soft",
+      "limit": "doneness.runny",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "solution": "tooSoft",
+      "range": {
+        "softest": null,
+        "hardest": null
+      },
+      "level": 0.3,
+      "kind": "tooSoftForWhite",
+      "wanted": "doneness.soft",
+      "limit": "doneness.runny",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "solution": "tooSoft",
+      "range": {
+        "softest": null,
+        "hardest": null
+      },
+      "level": 0.5,
+      "kind": "tooSoftForWhite",
+      "wanted": "doneness.jammy",
+      "limit": "doneness.runny",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "solution": "tooSoft",
+      "range": {
+        "softest": null,
+        "hardest": null
+      },
+      "level": 0.8,
+      "kind": "tooSoftForWhite",
+      "wanted": "doneness.fudgy",
+      "limit": "doneness.runny",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "solution": "tooSoft",
+      "range": {
+        "softest": null,
+        "hardest": null
+      },
+      "level": 0.85,
+      "kind": "tooSoftForWhite",
+      "wanted": "doneness.hard",
+      "limit": "doneness.runny",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "solution": "tooSoft",
+      "range": {
+        "softest": null,
+        "hardest": null
+      },
+      "level": 0.95,
+      "kind": "harderThanPanReaches",
+      "wanted": "doneness.hard",
+      "limit": "doneness.hard",
+      "snapTo": 0.9,
+      "worthSaying": false
+    },
+    {
+      "solution": "tooSoft",
+      "range": {
+        "softest": null,
+        "hardest": null
+      },
+      "level": 1,
+      "kind": "harderThanPanReaches",
+      "wanted": "doneness.hard",
+      "limit": "doneness.hard",
+      "snapTo": 0.9,
+      "worthSaying": false
+    },
+    {
+      "solution": "tooSoft",
+      "range": {
+        "softest": 0.3,
+        "hardest": 0.8
+      },
+      "level": 0,
+      "kind": "tooSoftForWhite",
+      "wanted": "doneness.runny",
+      "limit": "doneness.soft",
+      "snapTo": 0.3,
+      "worthSaying": true
+    },
+    {
+      "solution": "tooSoft",
+      "range": {
+        "softest": 0.3,
+        "hardest": 0.8
+      },
+      "level": 0.05,
+      "kind": "tooSoftForWhite",
+      "wanted": "doneness.runny",
+      "limit": "doneness.soft",
+      "snapTo": 0.3,
+      "worthSaying": true
+    },
+    {
+      "solution": "tooSoft",
+      "range": {
+        "softest": 0.3,
+        "hardest": 0.8
+      },
+      "level": 0.2,
+      "kind": "tooSoftForWhite",
+      "wanted": "doneness.soft",
+      "limit": "doneness.soft",
+      "snapTo": 0.3,
+      "worthSaying": false
+    },
+    {
+      "solution": "tooSoft",
+      "range": {
+        "softest": 0.3,
+        "hardest": 0.8
+      },
+      "level": 0.3,
+      "kind": "tooSoftForWhite",
+      "wanted": "doneness.soft",
+      "limit": "doneness.soft",
+      "snapTo": null,
+      "worthSaying": false
+    },
+    {
+      "solution": "tooSoft",
+      "range": {
+        "softest": 0.3,
+        "hardest": 0.8
+      },
+      "level": 0.5,
+      "kind": "tooSoftForWhite",
+      "wanted": "doneness.jammy",
+      "limit": "doneness.jammy",
+      "snapTo": null,
+      "worthSaying": false
+    },
+    {
+      "solution": "tooSoft",
+      "range": {
+        "softest": 0.3,
+        "hardest": 0.8
+      },
+      "level": 0.8,
+      "kind": "tooSoftForWhite",
+      "wanted": "doneness.fudgy",
+      "limit": "doneness.fudgy",
+      "snapTo": null,
+      "worthSaying": false
+    },
+    {
+      "solution": "tooSoft",
+      "range": {
+        "softest": 0.3,
+        "hardest": 0.8
+      },
+      "level": 0.85,
+      "kind": "tooSoftForWhite",
+      "wanted": "doneness.hard",
+      "limit": "doneness.hard",
+      "snapTo": null,
+      "worthSaying": false
+    },
+    {
+      "solution": "tooSoft",
+      "range": {
+        "softest": 0.3,
+        "hardest": 0.8
+      },
+      "level": 0.95,
+      "kind": "harderThanPanReaches",
+      "wanted": "doneness.hard",
+      "limit": "doneness.fudgy",
+      "snapTo": 0.8,
+      "worthSaying": true
+    },
+    {
+      "solution": "tooSoft",
+      "range": {
+        "softest": 0.3,
+        "hardest": 0.8
+      },
+      "level": 1,
+      "kind": "harderThanPanReaches",
+      "wanted": "doneness.hard",
+      "limit": "doneness.fudgy",
+      "snapTo": 0.8,
+      "worthSaying": true
+    },
+    {
+      "solution": "tooSoft",
+      "range": {
+        "softest": 0.1,
+        "hardest": 0.9
+      },
+      "level": 0,
+      "kind": "tooSoftForWhite",
+      "wanted": "doneness.runny",
+      "limit": "doneness.runny",
+      "snapTo": 0.1,
+      "worthSaying": false
+    },
+    {
+      "solution": "tooSoft",
+      "range": {
+        "softest": 0.1,
+        "hardest": 0.9
+      },
+      "level": 0.05,
+      "kind": "tooSoftForWhite",
+      "wanted": "doneness.runny",
+      "limit": "doneness.runny",
+      "snapTo": 0.1,
+      "worthSaying": false
+    },
+    {
+      "solution": "tooSoft",
+      "range": {
+        "softest": 0.1,
+        "hardest": 0.9
+      },
+      "level": 0.2,
+      "kind": "tooSoftForWhite",
+      "wanted": "doneness.soft",
+      "limit": "doneness.soft",
+      "snapTo": null,
+      "worthSaying": false
+    },
+    {
+      "solution": "tooSoft",
+      "range": {
+        "softest": 0.1,
+        "hardest": 0.9
+      },
+      "level": 0.3,
+      "kind": "tooSoftForWhite",
+      "wanted": "doneness.soft",
+      "limit": "doneness.soft",
+      "snapTo": null,
+      "worthSaying": false
+    },
+    {
+      "solution": "tooSoft",
+      "range": {
+        "softest": 0.1,
+        "hardest": 0.9
+      },
+      "level": 0.5,
+      "kind": "tooSoftForWhite",
+      "wanted": "doneness.jammy",
+      "limit": "doneness.jammy",
+      "snapTo": null,
+      "worthSaying": false
+    },
+    {
+      "solution": "tooSoft",
+      "range": {
+        "softest": 0.1,
+        "hardest": 0.9
+      },
+      "level": 0.8,
+      "kind": "tooSoftForWhite",
+      "wanted": "doneness.fudgy",
+      "limit": "doneness.fudgy",
+      "snapTo": null,
+      "worthSaying": false
+    },
+    {
+      "solution": "tooSoft",
+      "range": {
+        "softest": 0.1,
+        "hardest": 0.9
+      },
+      "level": 0.85,
+      "kind": "tooSoftForWhite",
+      "wanted": "doneness.hard",
+      "limit": "doneness.hard",
+      "snapTo": null,
+      "worthSaying": false
+    },
+    {
+      "solution": "tooSoft",
+      "range": {
+        "softest": 0.1,
+        "hardest": 0.9
+      },
+      "level": 0.95,
+      "kind": "harderThanPanReaches",
+      "wanted": "doneness.hard",
+      "limit": "doneness.hard",
+      "snapTo": 0.9,
+      "worthSaying": false
+    },
+    {
+      "solution": "tooSoft",
+      "range": {
+        "softest": 0.1,
+        "hardest": 0.9
+      },
+      "level": 1,
+      "kind": "harderThanPanReaches",
+      "wanted": "doneness.hard",
+      "limit": "doneness.hard",
+      "snapTo": 0.9,
+      "worthSaying": false
+    },
+    {
+      "solution": "tooSoft",
+      "range": {
+        "softest": 0.23,
+        "hardest": 0.63
+      },
+      "level": 0,
+      "kind": "tooSoftForWhite",
+      "wanted": "doneness.runny",
+      "limit": "doneness.soft",
+      "snapTo": 0.23,
+      "worthSaying": true
+    },
+    {
+      "solution": "tooSoft",
+      "range": {
+        "softest": 0.23,
+        "hardest": 0.63
+      },
+      "level": 0.05,
+      "kind": "tooSoftForWhite",
+      "wanted": "doneness.runny",
+      "limit": "doneness.soft",
+      "snapTo": 0.23,
+      "worthSaying": true
+    },
+    {
+      "solution": "tooSoft",
+      "range": {
+        "softest": 0.23,
+        "hardest": 0.63
+      },
+      "level": 0.2,
+      "kind": "tooSoftForWhite",
+      "wanted": "doneness.soft",
+      "limit": "doneness.soft",
+      "snapTo": 0.23,
+      "worthSaying": false
+    },
+    {
+      "solution": "tooSoft",
+      "range": {
+        "softest": 0.23,
+        "hardest": 0.63
+      },
+      "level": 0.3,
+      "kind": "tooSoftForWhite",
+      "wanted": "doneness.soft",
+      "limit": "doneness.soft",
+      "snapTo": null,
+      "worthSaying": false
+    },
+    {
+      "solution": "tooSoft",
+      "range": {
+        "softest": 0.23,
+        "hardest": 0.63
+      },
+      "level": 0.5,
+      "kind": "tooSoftForWhite",
+      "wanted": "doneness.jammy",
+      "limit": "doneness.jammy",
+      "snapTo": null,
+      "worthSaying": false
+    },
+    {
+      "solution": "tooSoft",
+      "range": {
+        "softest": 0.23,
+        "hardest": 0.63
+      },
+      "level": 0.8,
+      "kind": "tooSoftForWhite",
+      "wanted": "doneness.fudgy",
+      "limit": "doneness.fudgy",
+      "snapTo": null,
+      "worthSaying": false
+    },
+    {
+      "solution": "tooSoft",
+      "range": {
+        "softest": 0.23,
+        "hardest": 0.63
+      },
+      "level": 0.85,
+      "kind": "tooSoftForWhite",
+      "wanted": "doneness.hard",
+      "limit": "doneness.hard",
+      "snapTo": null,
+      "worthSaying": false
+    },
+    {
+      "solution": "tooSoft",
+      "range": {
+        "softest": 0.23,
+        "hardest": 0.63
+      },
+      "level": 0.95,
+      "kind": "harderThanPanReaches",
+      "wanted": "doneness.hard",
+      "limit": "doneness.fudgy",
+      "snapTo": 0.63,
+      "worthSaying": true
+    },
+    {
+      "solution": "tooSoft",
+      "range": {
+        "softest": 0.23,
+        "hardest": 0.63
+      },
+      "level": 1,
+      "kind": "harderThanPanReaches",
+      "wanted": "doneness.hard",
+      "limit": "doneness.fudgy",
+      "snapTo": 0.63,
+      "worthSaying": true
+    },
+    {
+      "solution": "never",
+      "range": null,
+      "level": 0,
+      "kind": "whiteNeverSets",
+      "wanted": "doneness.runny",
+      "limit": "doneness.runny",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "solution": "never",
+      "range": null,
+      "level": 0.05,
+      "kind": "whiteNeverSets",
+      "wanted": "doneness.runny",
+      "limit": "doneness.runny",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "solution": "never",
+      "range": null,
+      "level": 0.2,
+      "kind": "whiteNeverSets",
+      "wanted": "doneness.soft",
+      "limit": "doneness.soft",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "solution": "never",
+      "range": null,
+      "level": 0.3,
+      "kind": "whiteNeverSets",
+      "wanted": "doneness.soft",
+      "limit": "doneness.soft",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "solution": "never",
+      "range": null,
+      "level": 0.5,
+      "kind": "whiteNeverSets",
+      "wanted": "doneness.jammy",
+      "limit": "doneness.jammy",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "solution": "never",
+      "range": null,
+      "level": 0.8,
+      "kind": "whiteNeverSets",
+      "wanted": "doneness.fudgy",
+      "limit": "doneness.fudgy",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "solution": "never",
+      "range": null,
+      "level": 0.85,
+      "kind": "whiteNeverSets",
+      "wanted": "doneness.hard",
+      "limit": "doneness.hard",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "solution": "never",
+      "range": null,
+      "level": 0.95,
+      "kind": "whiteNeverSets",
+      "wanted": "doneness.hard",
+      "limit": "doneness.hard",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "solution": "never",
+      "range": null,
+      "level": 1,
+      "kind": "whiteNeverSets",
+      "wanted": "doneness.hard",
+      "limit": "doneness.hard",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "solution": "never",
+      "range": {
+        "softest": null,
+        "hardest": null
+      },
+      "level": 0,
+      "kind": "whiteNeverSets",
+      "wanted": "doneness.runny",
+      "limit": "doneness.runny",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "solution": "never",
+      "range": {
+        "softest": null,
+        "hardest": null
+      },
+      "level": 0.05,
+      "kind": "whiteNeverSets",
+      "wanted": "doneness.runny",
+      "limit": "doneness.runny",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "solution": "never",
+      "range": {
+        "softest": null,
+        "hardest": null
+      },
+      "level": 0.2,
+      "kind": "whiteNeverSets",
+      "wanted": "doneness.soft",
+      "limit": "doneness.soft",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "solution": "never",
+      "range": {
+        "softest": null,
+        "hardest": null
+      },
+      "level": 0.3,
+      "kind": "whiteNeverSets",
+      "wanted": "doneness.soft",
+      "limit": "doneness.soft",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "solution": "never",
+      "range": {
+        "softest": null,
+        "hardest": null
+      },
+      "level": 0.5,
+      "kind": "whiteNeverSets",
+      "wanted": "doneness.jammy",
+      "limit": "doneness.jammy",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "solution": "never",
+      "range": {
+        "softest": null,
+        "hardest": null
+      },
+      "level": 0.8,
+      "kind": "whiteNeverSets",
+      "wanted": "doneness.fudgy",
+      "limit": "doneness.fudgy",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "solution": "never",
+      "range": {
+        "softest": null,
+        "hardest": null
+      },
+      "level": 0.85,
+      "kind": "whiteNeverSets",
+      "wanted": "doneness.hard",
+      "limit": "doneness.hard",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "solution": "never",
+      "range": {
+        "softest": null,
+        "hardest": null
+      },
+      "level": 0.95,
+      "kind": "whiteNeverSets",
+      "wanted": "doneness.hard",
+      "limit": "doneness.hard",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "solution": "never",
+      "range": {
+        "softest": null,
+        "hardest": null
+      },
+      "level": 1,
+      "kind": "whiteNeverSets",
+      "wanted": "doneness.hard",
+      "limit": "doneness.hard",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "solution": "never",
+      "range": {
+        "softest": 0.3,
+        "hardest": 0.8
+      },
+      "level": 0,
+      "kind": "whiteNeverSets",
+      "wanted": "doneness.runny",
+      "limit": "doneness.runny",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "solution": "never",
+      "range": {
+        "softest": 0.3,
+        "hardest": 0.8
+      },
+      "level": 0.05,
+      "kind": "whiteNeverSets",
+      "wanted": "doneness.runny",
+      "limit": "doneness.runny",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "solution": "never",
+      "range": {
+        "softest": 0.3,
+        "hardest": 0.8
+      },
+      "level": 0.2,
+      "kind": "whiteNeverSets",
+      "wanted": "doneness.soft",
+      "limit": "doneness.soft",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "solution": "never",
+      "range": {
+        "softest": 0.3,
+        "hardest": 0.8
+      },
+      "level": 0.3,
+      "kind": "whiteNeverSets",
+      "wanted": "doneness.soft",
+      "limit": "doneness.soft",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "solution": "never",
+      "range": {
+        "softest": 0.3,
+        "hardest": 0.8
+      },
+      "level": 0.5,
+      "kind": "whiteNeverSets",
+      "wanted": "doneness.jammy",
+      "limit": "doneness.jammy",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "solution": "never",
+      "range": {
+        "softest": 0.3,
+        "hardest": 0.8
+      },
+      "level": 0.8,
+      "kind": "whiteNeverSets",
+      "wanted": "doneness.fudgy",
+      "limit": "doneness.fudgy",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "solution": "never",
+      "range": {
+        "softest": 0.3,
+        "hardest": 0.8
+      },
+      "level": 0.85,
+      "kind": "whiteNeverSets",
+      "wanted": "doneness.hard",
+      "limit": "doneness.hard",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "solution": "never",
+      "range": {
+        "softest": 0.3,
+        "hardest": 0.8
+      },
+      "level": 0.95,
+      "kind": "whiteNeverSets",
+      "wanted": "doneness.hard",
+      "limit": "doneness.hard",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "solution": "never",
+      "range": {
+        "softest": 0.3,
+        "hardest": 0.8
+      },
+      "level": 1,
+      "kind": "whiteNeverSets",
+      "wanted": "doneness.hard",
+      "limit": "doneness.hard",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "solution": "never",
+      "range": {
+        "softest": 0.1,
+        "hardest": 0.9
+      },
+      "level": 0,
+      "kind": "whiteNeverSets",
+      "wanted": "doneness.runny",
+      "limit": "doneness.runny",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "solution": "never",
+      "range": {
+        "softest": 0.1,
+        "hardest": 0.9
+      },
+      "level": 0.05,
+      "kind": "whiteNeverSets",
+      "wanted": "doneness.runny",
+      "limit": "doneness.runny",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "solution": "never",
+      "range": {
+        "softest": 0.1,
+        "hardest": 0.9
+      },
+      "level": 0.2,
+      "kind": "whiteNeverSets",
+      "wanted": "doneness.soft",
+      "limit": "doneness.soft",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "solution": "never",
+      "range": {
+        "softest": 0.1,
+        "hardest": 0.9
+      },
+      "level": 0.3,
+      "kind": "whiteNeverSets",
+      "wanted": "doneness.soft",
+      "limit": "doneness.soft",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "solution": "never",
+      "range": {
+        "softest": 0.1,
+        "hardest": 0.9
+      },
+      "level": 0.5,
+      "kind": "whiteNeverSets",
+      "wanted": "doneness.jammy",
+      "limit": "doneness.jammy",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "solution": "never",
+      "range": {
+        "softest": 0.1,
+        "hardest": 0.9
+      },
+      "level": 0.8,
+      "kind": "whiteNeverSets",
+      "wanted": "doneness.fudgy",
+      "limit": "doneness.fudgy",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "solution": "never",
+      "range": {
+        "softest": 0.1,
+        "hardest": 0.9
+      },
+      "level": 0.85,
+      "kind": "whiteNeverSets",
+      "wanted": "doneness.hard",
+      "limit": "doneness.hard",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "solution": "never",
+      "range": {
+        "softest": 0.1,
+        "hardest": 0.9
+      },
+      "level": 0.95,
+      "kind": "whiteNeverSets",
+      "wanted": "doneness.hard",
+      "limit": "doneness.hard",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "solution": "never",
+      "range": {
+        "softest": 0.1,
+        "hardest": 0.9
+      },
+      "level": 1,
+      "kind": "whiteNeverSets",
+      "wanted": "doneness.hard",
+      "limit": "doneness.hard",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "solution": "never",
+      "range": {
+        "softest": 0.23,
+        "hardest": 0.63
+      },
+      "level": 0,
+      "kind": "whiteNeverSets",
+      "wanted": "doneness.runny",
+      "limit": "doneness.runny",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "solution": "never",
+      "range": {
+        "softest": 0.23,
+        "hardest": 0.63
+      },
+      "level": 0.05,
+      "kind": "whiteNeverSets",
+      "wanted": "doneness.runny",
+      "limit": "doneness.runny",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "solution": "never",
+      "range": {
+        "softest": 0.23,
+        "hardest": 0.63
+      },
+      "level": 0.2,
+      "kind": "whiteNeverSets",
+      "wanted": "doneness.soft",
+      "limit": "doneness.soft",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "solution": "never",
+      "range": {
+        "softest": 0.23,
+        "hardest": 0.63
+      },
+      "level": 0.3,
+      "kind": "whiteNeverSets",
+      "wanted": "doneness.soft",
+      "limit": "doneness.soft",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "solution": "never",
+      "range": {
+        "softest": 0.23,
+        "hardest": 0.63
+      },
+      "level": 0.5,
+      "kind": "whiteNeverSets",
+      "wanted": "doneness.jammy",
+      "limit": "doneness.jammy",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "solution": "never",
+      "range": {
+        "softest": 0.23,
+        "hardest": 0.63
+      },
+      "level": 0.8,
+      "kind": "whiteNeverSets",
+      "wanted": "doneness.fudgy",
+      "limit": "doneness.fudgy",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "solution": "never",
+      "range": {
+        "softest": 0.23,
+        "hardest": 0.63
+      },
+      "level": 0.85,
+      "kind": "whiteNeverSets",
+      "wanted": "doneness.hard",
+      "limit": "doneness.hard",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "solution": "never",
+      "range": {
+        "softest": 0.23,
+        "hardest": 0.63
+      },
+      "level": 0.95,
+      "kind": "whiteNeverSets",
+      "wanted": "doneness.hard",
+      "limit": "doneness.hard",
+      "snapTo": null,
+      "worthSaying": true
+    },
+    {
+      "solution": "never",
+      "range": {
+        "softest": 0.23,
+        "hardest": 0.63
+      },
+      "level": 1,
+      "kind": "whiteNeverSets",
+      "wanted": "doneness.hard",
+      "limit": "doneness.hard",
+      "snapTo": null,
+      "worthSaying": true
+    }
+  ],
+  "adviceWanted": [
+    {
+      "tenths": 0,
+      "best": null,
+      "wanted": true
+    },
+    {
+      "tenths": 0,
+      "best": 0.62,
+      "wanted": true
+    },
+    {
+      "tenths": 0,
+      "best": 0.8,
+      "wanted": true
+    },
+    {
+      "tenths": 0,
+      "best": 0.84,
+      "wanted": true
+    },
+    {
+      "tenths": 3,
+      "best": null,
+      "wanted": true
+    },
+    {
+      "tenths": 3,
+      "best": 0.62,
+      "wanted": true
+    },
+    {
+      "tenths": 3,
+      "best": 0.8,
+      "wanted": true
+    },
+    {
+      "tenths": 3,
+      "best": 0.84,
+      "wanted": true
+    },
+    {
+      "tenths": 4,
+      "best": null,
+      "wanted": true
+    },
+    {
+      "tenths": 4,
+      "best": 0.62,
+      "wanted": true
+    },
+    {
+      "tenths": 4,
+      "best": 0.8,
+      "wanted": true
+    },
+    {
+      "tenths": 4,
+      "best": 0.84,
+      "wanted": true
+    },
+    {
+      "tenths": 5,
+      "best": null,
+      "wanted": false
+    },
+    {
+      "tenths": 5,
+      "best": 0.62,
+      "wanted": false
+    },
+    {
+      "tenths": 5,
+      "best": 0.8,
+      "wanted": true
+    },
+    {
+      "tenths": 5,
+      "best": 0.84,
+      "wanted": true
+    },
+    {
+      "tenths": 6,
+      "best": null,
+      "wanted": false
+    },
+    {
+      "tenths": 6,
+      "best": 0.62,
+      "wanted": false
+    },
+    {
+      "tenths": 6,
+      "best": 0.8,
+      "wanted": false
+    },
+    {
+      "tenths": 6,
+      "best": 0.84,
+      "wanted": false
+    },
+    {
+      "tenths": 7,
+      "best": null,
+      "wanted": false
+    },
+    {
+      "tenths": 7,
+      "best": 0.62,
+      "wanted": false
+    },
+    {
+      "tenths": 7,
+      "best": 0.8,
+      "wanted": false
+    },
+    {
+      "tenths": 7,
+      "best": 0.84,
+      "wanted": false
+    },
+    {
+      "tenths": 8,
+      "best": null,
+      "wanted": false
+    },
+    {
+      "tenths": 8,
+      "best": 0.62,
+      "wanted": false
+    },
+    {
+      "tenths": 8,
+      "best": 0.8,
+      "wanted": false
+    },
+    {
+      "tenths": 8,
+      "best": 0.84,
+      "wanted": false
+    }
+  ],
+  "advice": [
+    {
+      "setup": {
+        "startMode": "hot",
+        "eggStart_C": 4,
+        "ambient_C": 20,
+        "boiling_C": 100,
+        "timeToBoil_s": 480,
+        "cooling": "ice",
+        "waterLitres": 2,
+        "eggCount": 2
+      },
+      "eggFromClass": false,
+      "startAssumed": false,
+      "unpriced": [],
+      "priced": [],
+      "shown": [
+        {
+          "level": 0.25,
+          "odds": 0.2,
+          "keys": []
+        },
+        {
+          "level": 0.25,
+          "odds": 0.62,
+          "keys": []
+        },
+        {
+          "level": 0.9,
+          "odds": 0.2,
+          "keys": []
+        },
+        {
+          "level": 0.9,
+          "odds": 0.62,
+          "keys": []
+        }
+      ]
+    },
+    {
+      "setup": {
+        "startMode": "hot",
+        "eggStart_C": 4,
+        "ambient_C": 20,
+        "boiling_C": 100,
+        "timeToBoil_s": 480,
+        "cooling": "ice",
+        "waterLitres": 2,
+        "eggCount": 2
+      },
+      "eggFromClass": true,
+      "startAssumed": false,
+      "unpriced": [
+        "advice.weigh"
+      ],
+      "priced": [],
+      "shown": [
+        {
+          "level": 0.25,
+          "odds": 0.2,
+          "keys": [
+            "advice.weigh"
+          ]
+        },
+        {
+          "level": 0.25,
+          "odds": 0.62,
+          "keys": [
+            "advice.weigh"
+          ]
+        },
+        {
+          "level": 0.9,
+          "odds": 0.2,
+          "keys": [
+            "advice.weigh"
+          ]
+        },
+        {
+          "level": 0.9,
+          "odds": 0.62,
+          "keys": [
+            "advice.weigh"
+          ]
+        }
+      ]
+    },
+    {
+      "setup": {
+        "startMode": "hot",
+        "eggStart_C": 20,
+        "ambient_C": 20,
+        "boiling_C": 100,
+        "timeToBoil_s": 0,
+        "cooling": "counter",
+        "waterLitres": 3,
+        "eggCount": 4,
+        "afterBoil": "off"
+      },
+      "eggFromClass": true,
+      "startAssumed": true,
+      "unpriced": [
+        "advice.fridge",
+        "advice.weigh"
+      ],
+      "priced": [
+        {
+          "key": "advice.ice",
+          "setup": {
+            "startMode": "hot",
+            "eggStart_C": 20,
+            "ambient_C": 20,
+            "boiling_C": 100,
+            "timeToBoil_s": 0,
+            "cooling": "ice",
+            "waterLitres": 3,
+            "eggCount": 4,
+            "afterBoil": "off"
+          }
+        },
+        {
+          "key": "advice.moreWater",
+          "setup": {
+            "startMode": "hot",
+            "eggStart_C": 20,
+            "ambient_C": 20,
+            "boiling_C": 100,
+            "timeToBoil_s": 0,
+            "cooling": "counter",
+            "waterLitres": 6,
+            "eggCount": 4,
+            "afterBoil": "off"
+          }
+        }
+      ],
+      "shown": [
+        {
+          "level": 0.25,
+          "odds": 0.2,
+          "keys": [
+            "advice.fridge",
+            "advice.weigh",
+            "advice.ice",
+            "advice.moreWater"
+          ]
+        },
+        {
+          "level": 0.25,
+          "odds": 0.62,
+          "keys": [
+            "advice.fridge",
+            "advice.weigh"
+          ]
+        },
+        {
+          "level": 0.9,
+          "odds": 0.2,
+          "keys": [
+            "advice.fridge",
+            "advice.weigh",
+            "advice.ice",
+            "advice.moreWater"
+          ]
+        },
+        {
+          "level": 0.9,
+          "odds": 0.62,
+          "keys": [
+            "advice.fridge",
+            "advice.weigh"
+          ]
+        }
+      ]
+    },
+    {
+      "setup": {
+        "startMode": "hot",
+        "eggStart_C": 20,
+        "ambient_C": 20,
+        "boiling_C": 100,
+        "timeToBoil_s": 0,
+        "cooling": "tap",
+        "waterLitres": 2,
+        "eggCount": 4
+      },
+      "eggFromClass": false,
+      "startAssumed": false,
+      "unpriced": [],
+      "priced": [],
+      "shown": [
+        {
+          "level": 0.25,
+          "odds": 0.2,
+          "keys": []
+        },
+        {
+          "level": 0.25,
+          "odds": 0.62,
+          "keys": []
+        },
+        {
+          "level": 0.9,
+          "odds": 0.2,
+          "keys": []
+        },
+        {
+          "level": 0.9,
+          "odds": 0.62,
+          "keys": []
+        }
+      ]
+    },
+    {
+      "setup": {
+        "startMode": "hot",
+        "eggStart_C": 5,
+        "ambient_C": 20,
+        "boiling_C": 100,
+        "timeToBoil_s": 0,
+        "cooling": "ice",
+        "waterLitres": 8,
+        "eggCount": 4,
+        "afterBoil": "off"
+      },
+      "eggFromClass": false,
+      "startAssumed": true,
+      "unpriced": [],
+      "priced": [
+        {
+          "key": "advice.moreWater",
+          "setup": {
+            "startMode": "hot",
+            "eggStart_C": 5,
+            "ambient_C": 20,
+            "boiling_C": 100,
+            "timeToBoil_s": 0,
+            "cooling": "ice",
+            "waterLitres": 12,
+            "eggCount": 4,
+            "afterBoil": "off"
+          }
+        }
+      ],
+      "shown": [
+        {
+          "level": 0.25,
+          "odds": 0.2,
+          "keys": [
+            "advice.moreWater"
+          ]
+        },
+        {
+          "level": 0.25,
+          "odds": 0.62,
+          "keys": []
+        },
+        {
+          "level": 0.9,
+          "odds": 0.2,
+          "keys": [
+            "advice.moreWater"
+          ]
+        },
+        {
+          "level": 0.9,
+          "odds": 0.62,
+          "keys": []
+        }
+      ]
+    },
+    {
+      "setup": {
+        "startMode": "hot",
+        "eggStart_C": 4,
+        "ambient_C": 20,
+        "boiling_C": 100,
+        "timeToBoil_s": 0,
+        "cooling": "ice",
+        "waterLitres": 12,
+        "eggCount": 4,
+        "afterBoil": "off"
+      },
+      "eggFromClass": false,
+      "startAssumed": true,
+      "unpriced": [],
+      "priced": [],
+      "shown": [
+        {
+          "level": 0.25,
+          "odds": 0.2,
+          "keys": []
+        },
+        {
+          "level": 0.25,
+          "odds": 0.62,
+          "keys": []
+        },
+        {
+          "level": 0.9,
+          "odds": 0.2,
+          "keys": []
+        },
+        {
+          "level": 0.9,
+          "odds": 0.62,
+          "keys": []
+        }
+      ]
+    }
+  ],
+  "adviceProfile": {
+    "points": [
+      {
+        "level": 0,
+        "odds": 0.5
+      },
+      {
+        "level": 0.5,
+        "odds": 0.7
+      },
+      {
+        "level": 1,
+        "odds": 0.3
+      }
+    ],
+    "best": 0.7,
+    "physicalSoftest": 0,
+    "physicalHardest": 1,
+    "softest": 0,
+    "hardest": 1
+  }
+}
