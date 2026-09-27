@@ -1242,7 +1242,7 @@
       "locale": "en",
       "key": "controls.afterBoil.explainHeatOff",
       "args": {},
-      "text": "Lid on and burner off: the water's own heat finishes the eggs. The time is worked out for the water below, so measure it — more or less water changes the time, or whether it works at all."
+      "text": "Lid on and burner off: the water's own heat finishes the eggs. I work out the time from the water below, so measure it — more or less water changes the time, or whether it works at all."
     },
     {
       "locale": "en",
@@ -1332,7 +1332,7 @@
       "locale": "en",
       "key": "controls.probe.hint",
       "args": {},
-      "text": "When the cooling ends it asks for one reading from the middle of the egg. That tells it how fast your eggs heat, from a single egg."
+      "text": "When the cooling ends, I'll ask for one reading from the middle of the egg. From a single egg, that tells me how fast your eggs heat."
     },
     {
       "locale": "en",
@@ -1385,7 +1385,7 @@
       "locale": "en",
       "key": "learned.literature",
       "args": {},
-      "text": "Nothing learned yet. It learns your pan when you time a boil, and your eggs when you say how one came out."
+      "text": "I haven't learned anything yet. I learn your pan when you time a boil, and your eggs when you tell me how one came out."
     },
     {
       "locale": "en",
@@ -1572,7 +1572,7 @@
       "locale": "en",
       "key": "feedback.invite",
       "args": {},
-      "text": "Your answers adjust the times to your eggs and your pan."
+      "text": "Your answers teach me your eggs and your pan."
     },
     {
       "locale": "en",
@@ -1620,7 +1620,7 @@
       "locale": "en",
       "key": "probe.offer",
       "args": {},
-      "text": "Got a probe thermometer? When the timer says, push it to the middle of the egg and tell us the highest number you see."
+      "text": "Got a probe thermometer? When I say, push it to the middle of the egg and tell me the highest number you see."
     },
     {
       "locale": "en",
@@ -1644,7 +1644,7 @@
       "locale": "en",
       "key": "probe.hint",
       "args": {},
-      "text": "Tell us the highest number you see."
+      "text": "Tell me the highest number you see."
     },
     {
       "locale": "en",
@@ -2298,7 +2298,7 @@
       "locale": "en",
       "key": "alarm.probe.body",
       "args": {},
-      "text": "Middle of the egg: tell us the highest number."
+      "text": "Middle of the egg: tell me the highest number."
     },
     {
       "locale": "en",
@@ -2419,7 +2419,7 @@
       "locale": "en",
       "key": "colophon.tail",
       "args": {},
-      "text": "— including what it gets wrong."
+      "text": "— including what I get wrong."
     },
     {
       "locale": "en",

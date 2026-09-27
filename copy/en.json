@@ -168,7 +168,7 @@
     "controls.afterBoil.keepBoiling": { "surface": "segment", "apps": ["web", "ios"], "text": "Keep boiling" },
     "controls.afterBoil.heatOff": { "surface": "segment", "apps": ["web", "ios"], "text": "Heat off, lid on" },
     "controls.afterBoil.hint": { "surface": "body", "apps": ["web"], "text": "Heat off, lid on: the hot water continues to cook the eggs. More water holds more heat." },
-    "controls.afterBoil.explainHeatOff": { "surface": "body", "apps": ["ios"], "text": "Lid on and burner off: the water's own heat finishes the eggs. The time is worked out for the water below, so measure it — more or less water changes the time, or whether it works at all." },
+    "controls.afterBoil.explainHeatOff": { "surface": "body", "apps": ["ios"], "text": "Lid on and burner off: the water's own heat finishes the eggs. I work out the time from the water below, so measure it — more or less water changes the time, or whether it works at all." },
     "controls.afterBoil.explainHold": { "surface": "body", "apps": ["ios"], "text": "The burner holds the water at a rolling boil for the whole cook." },
     "controls.then": { "surface": "label", "apps": ["web", "ios"], "text": "Then" },
     "controls.then.ice": { "surface": "segment", "apps": ["web", "ios"], "text": "Ice bath" },
@@ -183,7 +183,7 @@
     "controls.units.metric": { "surface": "segment", "apps": ["web", "ios"], "text": "Metric" },
     "controls.units.imperial": { "surface": "segment", "apps": ["web", "ios"], "text": "Imperial" },
     "controls.probe": { "surface": "label", "apps": ["web", "ios"], "text": "I have a probe thermometer" },
-    "controls.probe.hint": { "surface": "body", "apps": ["web", "ios"], "text": "When the cooling ends it asks for one reading from the middle of the egg. That tells it how fast your eggs heat, from a single egg." },
+    "controls.probe.hint": { "surface": "body", "apps": ["web", "ios"], "text": "When the cooling ends, I'll ask for one reading from the middle of the egg. From a single egg, that tells me how fast your eggs heat." },
 
     "pan.waterBoilsAt": { "surface": "label", "apps": ["ios"], "text": "Water boils at" },
     "pan.timeToBoil": { "surface": "label", "apps": ["ios"], "text": "Time to boil" },
@@ -193,7 +193,7 @@
 
     "odds.hitTheMark": { "surface": "lockscreen", "apps": ["web", "ios"], "note": "E5: the posterior predictive chance that the white is not runny and the yolk is just right, in tenths. Also drawn beside the time in both apps.", "text": "{hits}/{of} eggs hit the mark", "example": { "hits": 7, "of": 10 } },
     "odds.stillLearning": { "surface": "label", "apps": ["web", "ios"], "note": "E5: beside the time, for a cook's first few eggs.", "text": "Still learning your kitchen" },
-    "learned.literature": { "surface": "body", "apps": ["web"], "text": "Nothing learned yet. It learns your pan when you time a boil, and your eggs when you say how one came out." },
+    "learned.literature": { "surface": "body", "apps": ["web"], "text": "I haven't learned anything yet. I learn your pan when you time a boil, and your eggs when you tell me how one came out." },
     "learned.tuned": { "surface": "body", "apps": ["web", "ios"], "count": "eggs", "one": "Learned from {eggs} egg", "other": "Learned from {eggs} eggs", "example": { "eggs": 3 } },
     "learned.pan": { "surface": "body", "apps": ["web"], "text": "your pan takes {time} to boil", "example": { "time": "6:40" } },
     "learned.both": { "surface": "body", "apps": ["web"], "text": "{tuned} · {pan}", "example": { "tuned": "Learned from 3 eggs", "pan": "your pan takes 6:40 to boil" } },
@@ -208,7 +208,7 @@
     "feedback.tooSoft": { "surface": "segment", "apps": ["web", "ios"], "text": "Too soft" },
     "feedback.justRight": { "surface": "segment", "apps": ["web", "ios"], "text": "Just right" },
     "feedback.tooFirm": { "surface": "segment", "apps": ["web", "ios"], "text": "Too firm" },
-    "feedback.invite": { "surface": "body", "apps": ["web", "ios"], "text": "Your answers adjust the times to your eggs and your pan." },
+    "feedback.invite": { "surface": "body", "apps": ["web", "ios"], "text": "Your answers teach me your eggs and your pan." },
     "feedback.learning": { "surface": "body", "apps": ["web", "ios"], "text": "learning…" },
     "feedback.thanks": { "surface": "label", "apps": ["web", "ios"], "text": "Thanks. The next egg will use that." },
     "feedback.optional": { "surface": "body", "apps": ["web", "ios"], "text": "Answer either, both or neither." },
@@ -217,11 +217,11 @@
     "feedback.white.tender": { "surface": "segment", "apps": ["web", "ios"], "text": "Tender" },
     "feedback.white.firm": { "surface": "segment", "apps": ["web", "ios"], "text": "Firm" },
 
-    "probe.offer": { "surface": "body", "apps": ["web", "ios"], "note": "E4, the draft in INFERENCE.md section 5 with lowest made highest: when it is read, the middle is the warmest point, so the highest number is the middle and every mistake reads lower.", "text": "Got a probe thermometer? When the timer says, push it to the middle of the egg and tell us the highest number you see." },
+    "probe.offer": { "surface": "body", "apps": ["web", "ios"], "note": "E4, the draft in INFERENCE.md section 5 with lowest made highest: when it is read, the middle is the warmest point, so the highest number is the middle and every mistake reads lower.", "text": "Got a probe thermometer? When I say, push it to the middle of the egg and tell me the highest number you see." },
     "probe.offer.yes": { "surface": "button", "apps": ["web", "ios"], "text": "I have one" },
     "probe.offer.no": { "surface": "button", "apps": ["web", "ios"], "text": "No thanks" },
     "probe.now": { "surface": "label", "apps": ["web", "ios"], "text": "Push the probe to the middle" },
-    "probe.hint": { "surface": "body", "apps": ["web", "ios"], "text": "Tell us the highest number you see." },
+    "probe.hint": { "surface": "body", "apps": ["web", "ios"], "text": "Tell me the highest number you see." },
     "probe.entry": { "surface": "label", "apps": ["web", "ios"], "text": "Highest reading" },
     "probe.save": { "surface": "button", "apps": ["web", "ios"], "text": "Use this reading" },
     "probe.refused": { "surface": "body", "apps": ["web", "ios"], "text": "That doesn't look like the middle of this egg: expect {low} to {high}. Is the tip in the yolk?", "example": { "low": "117.7 °F", "high": "179.1 °F" } },
@@ -265,7 +265,7 @@
     "alarm.cooled.title": { "surface": "notification.title", "apps": ["ios"], "text": "Cooling done" },
     "alarm.cooled.body": { "surface": "notification.body", "apps": ["ios"], "text": "The carryover is over. That is the egg you asked for." },
     "alarm.probe.title": { "surface": "notification.title", "apps": ["ios"], "text": "Probe it now" },
-    "alarm.probe.body": { "surface": "notification.body", "apps": ["ios"], "text": "Middle of the egg: tell us the highest number." },
+    "alarm.probe.body": { "surface": "notification.body", "apps": ["ios"], "text": "Middle of the egg: tell me the highest number." },
 
     "activity.stage.heating": { "surface": "island.expanded", "apps": ["ios"], "text": "Heating" },
     "activity.stage.cooking": { "surface": "island.expanded", "apps": ["ios"], "text": "Cooking" },
@@ -286,7 +286,7 @@
     "colophon.name": { "surface": "label", "apps": ["web"], "text": "Actual Egg Timer." },
     "colophon.lede": { "surface": "body", "apps": ["web"], "text": "Times computed from heat conduction and denaturation kinetics, not from a recipe." },
     "colophon.link": { "surface": "body", "apps": ["web"], "text": "Source, and the physics it rests on" },
-    "colophon.tail": { "surface": "body", "apps": ["web"], "text": "— including what it gets wrong." },
+    "colophon.tail": { "surface": "body", "apps": ["web"], "text": "— including what I get wrong." },
     "colophon.ios": { "surface": "body", "apps": ["ios"], "text": "I work out times from the physics and chemistry of eggs. Both heating and cooling matter for cooking the middle." }
   }
 }
