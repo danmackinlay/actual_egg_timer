@@ -2068,3 +2068,7 @@ place it departs from the guide, is in LANGUAGE.md §6.
   cased in a book face, wrapped at 390 px and were shortened.
 - **Not verified:** VoiceOver reading the title's `aria-label`; Safari;
   the 110-character alarm body on a Lock Screen; the owner's ear.
+
+## The web's action bar hides what scrolls under it (28 September 2026)
+
+- 28 September 2026: headless Chrome at 390x844 on port 8391, English and 1750, light and dark: the 1750 welcome no longer reads through the hint, and scrolled to the end the slot's last line sits clear above the bar; of about 930 boxes in `main` outside the bar (idle, heating, cooking, Kitchen, Help), none moved; `npm test` 238 pass, 1 todo. Not verified: Safari, and a phone's keyboard over the probe field now that the bar is sticky rather than fixed.

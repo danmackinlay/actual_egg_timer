@@ -224,6 +224,8 @@ rolling boil looks like and why the tap matters. Everything else is as it
 was: the phases, the alarm, the pull button, the probe offer and reading,
 the two questions, mute, a reloaded cook.
 
+**The action bar** (28 September) is opaque, fading in over its top 20 px, and stuck to the bottom of the page's column rather than fixed over it, so what scrolls under it is hidden, not read through the hint, and the last line always scrolls clear of it, however tall the bar.
+
 **The outcome summary** (built the same day, on the hooks the redesign left;
 the `outcome` draft in `tools/copyDraft.ts`). Under the time, in place of
 "7/10 eggs hit the mark", a sentence says which way the egg is likely to
