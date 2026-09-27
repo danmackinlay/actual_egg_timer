@@ -321,9 +321,13 @@ public func protocolAdvice(
 /// `firmerLevel` is the softest level at least T that the slider offers whose
 /// 10% point of delivered doneness, at its decided time, is at least T: nine
 /// eggs in ten at least as firm as T. `softerLevel` is the mirror: the firmest
-/// offered level at most T whose 90% point is at most T. Each is nil when T
-/// already does it, or when no offered level does. Levels are the slider's
-/// grid, walked as integer positions, and searched by bisection.
+/// offered level at most T whose 90% point is at most T, and only if its
+/// P(runny white) is under `whiteRisk`: softer is a shorter time, and a runny
+/// white for a firm-enough yolk is never playing safe. P(runny) falls as the
+/// level rises, so that one level is the only one the white's test need read.
+/// Firmer never raises the white's risk. Each is nil when T already does it,
+/// or when no offered level does. Levels are the slider's grid, walked as
+/// integer positions, and searched by bisection.
 public struct SaferLevels: Sendable, Equatable {
     public let firmerLevel: Double?
     public let softerLevel: Double?
@@ -392,12 +396,12 @@ public func saferLevels(
         }
     }
 
-    var softerLevel: Double?
+    var softer: Int?
     let to = min(positionDown(level), range.hi)
     func soft(_ position: Int) -> Bool { at(position).levelHigh <= level }
     if to >= range.lo {
         if soft(to) {
-            if !(onGrid && to == own) { softerLevel = levelOf(to) }
+            if !(onGrid && to == own) { softer = to }
         } else if soft(range.lo) {
             var under = range.lo
             var over = to
@@ -405,8 +409,10 @@ public func saferLevels(
                 let mid = (under + over) / 2
                 if soft(mid) { under = mid } else { over = mid }
             }
-            softerLevel = levelOf(under)
+            softer = under
         }
     }
+    var softerLevel: Double?
+    if let softer, at(softer).pWhiteRunny < whiteRisk { softerLevel = levelOf(softer) }
     return SaferLevels(firmerLevel: firmerLevel, softerLevel: softerLevel)
 }
