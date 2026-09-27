@@ -363,7 +363,7 @@
       "args": {
         "boil": "8:00"
       },
-      "text": "guesses 8:00 to a rolling boil"
+      "text": "I'm guessing 8:00 to boil — tap when it does"
     },
     {
       "locale": "en",
@@ -383,13 +383,13 @@
       "locale": "en",
       "key": "readout.sub.idleCold",
       "args": {},
-      "text": "from eggs into COLD water, heat on, to eggs out"
+      "text": "from eggs into cold water, heat on, to eggs out"
     },
     {
       "locale": "en",
       "key": "readout.sub.idleHot",
       "args": {},
-      "text": "from eggs into BOILING water to eggs out"
+      "text": "from eggs into boiling water to eggs out"
     },
     {
       "locale": "en",
@@ -398,13 +398,13 @@
         "elapsed": "2:15",
         "boil": "8:00"
       },
-      "text": "2:15 heating · provisional, assumes 8:00 to boil"
+      "text": "2:15 heating · I expect 8:00 until you tap"
     },
     {
       "locale": "en",
       "key": "readout.sub.heatingEstimate",
       "args": {},
-      "text": "estimate — the clock corrects itself when you tap the boil"
+      "text": "my guess until you tap Full rolling boil"
     },
     {
       "locale": "en",
@@ -500,15 +500,9 @@
     },
     {
       "locale": "en",
-      "key": "readout.stat.afterBoiling",
-      "args": {},
-      "text": "after boiling"
-    },
-    {
-      "locale": "en",
       "key": "readout.stat.afterBoil",
       "args": {},
-      "text": "after boil"
+      "text": "after the boil"
     },
     {
       "locale": "en",
@@ -607,44 +601,40 @@
       "locale": "en",
       "key": "refusal.whiteNeverSets",
       "args": {},
-      "text": "With the heat off this pan never sets the white: the water falls below what the white needs while the egg is still in it. Nothing on the slider is reachable. More water, or keep it boiling."
+      "text": "With the heat off, the water cools before the white sets, so no setting works. Add more water, or keep it boiling."
     },
     {
       "locale": "en",
       "key": "refusal.harderThanPan",
       "args": {
-        "wanted": "hard",
         "water": "12.50 qt",
         "limit": "fudgy"
       },
-      "text": "With the heat off, the water runs out before the yolk gets there — hard isn't reachable with this much water (12.50 qt). Hardest here is fudgy. More water, or keep it boiling."
+      "text": "With the heat off, this much water (12.50 qt) cools before the yolk gets there. Firmest possible: fudgy. Add more water, or keep it boiling."
     },
     {
       "locale": "en",
       "key": "refusal.counter",
       "args": {
-        "wanted": "runny",
         "limit": "fudgy"
       },
-      "text": "Resting on the counter keeps cooking the yolk — runny isn't reachable. Softest here is fudgy. Use an ice bath."
+      "text": "Resting on the counter keeps cooking the yolk. Softest possible: fudgy. An ice bath would leave the egg softer."
     },
     {
       "locale": "en",
       "key": "refusal.tap",
       "args": {
-        "wanted": "runny",
         "limit": "soft"
       },
-      "text": "A cold tap doesn't pull the heat out fast enough — runny isn't reachable. Softest here is soft. Ice water gets you further."
+      "text": "A cold tap doesn't cool the egg fast enough to stop the yolk. Softest possible: soft. An ice bath would leave the egg a little softer."
     },
     {
       "locale": "en",
       "key": "refusal.ice",
       "args": {
-        "wanted": "runny",
         "limit": "soft"
       },
-      "text": "Any shorter and the white is still raw — runny isn't reachable for this egg. Softest here is soft."
+      "text": "Any shorter and the white is still raw. Softest possible for this egg: soft."
     },
     {
       "locale": "en",
@@ -741,10 +731,8 @@
     {
       "locale": "en",
       "key": "action.hint.cookingStanding",
-      "args": {
-        "boiling": "212 °F"
-      },
-      "text": "lid on, burner off — the timing assumes the water cools on its own from the boil (212 °F)"
+      "args": {},
+      "text": "lid on, burner off"
     },
     {
       "locale": "en",
@@ -752,7 +740,7 @@
       "args": {
         "boiling": "212 °F"
       },
-      "text": "keep it boiling — the timing assumes a full boil (212 °F) right up to the pull"
+      "text": "keep it at a full boil (212 °F) until the eggs come out"
     },
     {
       "locale": "en",
@@ -1190,15 +1178,9 @@
     },
     {
       "locale": "en",
-      "key": "controls.start.coldPan",
-      "args": {},
-      "text": "Cold pan"
-    },
-    {
-      "locale": "en",
       "key": "controls.start.cold",
       "args": {},
-      "text": "Cold start"
+      "text": "Cold water"
     },
     {
       "locale": "en",
@@ -1218,7 +1200,7 @@
       "locale": "en",
       "key": "controls.start.hint",
       "args": {},
-      "text": "Hot start peels far better; cold start needs no timing of the drop-in."
+      "text": "Eggs into boiling water peel better. Eggs into cold water are done sooner, counting the wait for the water to boil."
     },
     {
       "locale": "en",
@@ -1240,12 +1222,6 @@
     },
     {
       "locale": "en",
-      "key": "controls.afterBoil.keepItBoiling",
-      "args": {},
-      "text": "Keep it boiling"
-    },
-    {
-      "locale": "en",
       "key": "controls.afterBoil.keepBoiling",
       "args": {},
       "text": "Keep boiling"
@@ -1260,7 +1236,7 @@
       "locale": "en",
       "key": "controls.afterBoil.hint",
       "args": {},
-      "text": "Standing in cooling water is a real method, but it lives or dies on the pan: the water has to carry the whole cook. More water holds more heat."
+      "text": "Heat off, lid on: the hot water continues to cook the eggs. More water holds more heat."
     },
     {
       "locale": "en",
@@ -1382,13 +1358,13 @@
       "locale": "en",
       "key": "pan.measured",
       "args": {},
-      "text": "Measured on this pan at this volume. It is re-measured every cold start."
+      "text": "From your earlier boils with this much water. I update it each time you tap the boil on a cold-water start."
     },
     {
       "locale": "en",
       "key": "pan.unmeasured",
       "args": {},
-      "text": "Never measured. Run one cold start and tap the boil, and this becomes your pan rather than a guess."
+      "text": "Tap the boil on a cold-water start and I'll remember for next time."
     },
     {
       "locale": "en",
@@ -1542,7 +1518,7 @@
       "locale": "en",
       "key": "learned.forgetExplain",
       "args": {},
-      "text": "Clears both what it learned from your eggs and the time it measured for your pan. The posterior is honest about its own spread, so a few wrong answers wash out after a few more eggs anyway - this is for when you would rather not wait."
+      "text": "Clears what I've learned from your answers and your boil times. A few wrong answers wash out after a few more eggs anyway; this is for when you'd rather not wait."
     },
     {
       "locale": "en",
@@ -1705,22 +1681,22 @@
       "locale": "en",
       "key": "cook.method",
       "args": {
-        "start": "Cold start",
+        "start": "Cold water",
         "after": "ice bath"
       },
-      "text": "Cold start · then ice bath"
+      "text": "Cold water · then ice bath"
     },
     {
       "locale": "en",
       "key": "cook.method.cold",
       "args": {},
-      "text": "Cold start"
+      "text": "Cold water"
     },
     {
       "locale": "en",
       "key": "cook.method.hot",
       "args": {},
-      "text": "Into boiling water"
+      "text": "Boiling water"
     },
     {
       "locale": "en",
@@ -1769,7 +1745,7 @@
         "bath": "136 °F",
         "floor": "140 °F"
       },
-      "text": "This bath (136 °F) is below the temperature at which egg white sets — only one of its proteins reacts down here — so the white stays loose however long you leave it. This app was built for boiling water and is out of its depth below 140 °F anyway. Use the pan."
+      "text": "This bath (136 °F) is too cool to set the white, however long you leave it. I'm built for boiling water, and I'm not reliable below 140 °F. Use the pan."
     },
     {
       "locale": "en",
@@ -2389,7 +2365,7 @@
       "locale": "en",
       "key": "activity.note.estimate",
       "args": {},
-      "text": "estimate until the boil is tapped"
+      "text": "my guess until you tap Full rolling boil"
     },
     {
       "locale": "en",
@@ -2413,7 +2389,7 @@
       "locale": "en",
       "key": "activity.note.cooling",
       "args": {},
-      "text": "carryover still running"
+      "text": "yolk still cooking"
     },
     {
       "locale": "en",
@@ -2449,7 +2425,7 @@
       "locale": "en",
       "key": "colophon.ios",
       "args": {},
-      "text": "Times computed from heat conduction and denaturation kinetics, not from a recipe. The cooling step is part of the recipe: carryover is what ruins a soft egg."
+      "text": "I work out times from the physics and chemistry of eggs. Both heating and cooling matter for cooking the middle."
     }
   ],
   "plural": [

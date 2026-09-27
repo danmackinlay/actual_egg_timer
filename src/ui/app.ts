@@ -408,20 +408,19 @@ function renderStartHint(): void {
  */
 function refusalText(v: Verdict): string {
   if (!v.worthSaying) return '';
-  const wanted = t(v.wanted.key).toLowerCase();
   const limit = t(v.limit.key).toLowerCase();
 
   if (v.kind === 'whiteNeverSets') return t('refusal.whiteNeverSets');
 
   if (v.kind === 'harderThanPanReaches') {
     return t('refusal.harderThanPan', {
-      wanted: wanted, water: show('water', settings.waterLitres), limit: limit,
+      water: show('water', settings.waterLitres), limit: limit,
     });
   }
 
-  if (settings.cooling === 'counter') return t('refusal.counter', { wanted: wanted, limit: limit });
-  if (settings.cooling === 'tap') return t('refusal.tap', { wanted: wanted, limit: limit });
-  return t('refusal.ice', { wanted: wanted, limit: limit });
+  if (settings.cooling === 'counter') return t('refusal.counter', { limit: limit });
+  if (settings.cooling === 'tap') return t('refusal.tap', { limit: limit });
+  return t('refusal.ice', { limit: limit });
 }
 
 /* --------------------------------------------------------------- solving */
@@ -703,9 +702,9 @@ function render(now_ms: number): void {
       })
       : t('readout.sub.cookingHot');
     spoken = t('spoken.cooking', { time: spokenClock(secondsToPull(machine, now_ms)) });
-    setPrimary('', t(standing ? 'action.hint.cookingStanding' : 'action.hint.cookingBoiling', {
-      boiling: show('temperature', boilingPoint_C()),
-    }), false);
+    setPrimary('', standing
+      ? t('action.hint.cookingStanding')
+      : t('action.hint.cookingBoiling', { boiling: show('temperature', boilingPoint_C()) }), false);
     dom.secondary.hidden = false;
     dom.secondary.textContent = t('action.cancel');
   } else if (machine.phase === 'PULL') {
