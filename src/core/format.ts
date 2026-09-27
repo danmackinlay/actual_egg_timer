@@ -19,6 +19,10 @@
  *    there instead (a web-compatibility patch, not CLDR), so "3:05 PM" would
  *    otherwise differ by one byte between the apps, and could break a line
  *    between the digits and the "PM".
+ *  - A time of day never zero-pads its hour: "9:05", not "09:05", in every
+ *    locale (the owner, 27 September). CLDR's en-GB pads and its cs-CZ does
+ *    not, and for en-CZ `Intl` pads where Foundation does not; one rule in
+ *    both cores, `unpadHour`, makes all of them agree.
  *
  * `fixtures/format.json` pins the result for every supported formatting
  * locale, and LANGUAGE.md §2 records where the platforms were found to
@@ -110,7 +114,9 @@ function numberFormat(locale: string, decimals: number): Intl.NumberFormat {
  * The locale's short and medium TIME STYLES, and not a skeleton of hour and
  * minute fields: a skeleton lets `Intl` and Foundation pick different hour
  * widths ("9:05" against "09:05" in en-GB), where the style is the locale's
- * own pattern and both platforms print it as CLDR has it.
+ * own pattern and both platforms print it as CLDR has it. Then the hour loses
+ * any leading zero (`unpadHour`), so en-GB writes "9:05" and "0:05", as Czech
+ * does. The minutes and seconds keep their two digits.
  *
  * Not the countdown. "7:44" on the timer is a duration, the same in every
  * language, and stays as the apps build it.
@@ -126,7 +132,28 @@ export function formatTimeOfDay(locale: string, secondsOfDay: number, withSecond
   } catch {
     format = new Intl.DateTimeFormat('en', options);
   }
-  return normaliseTime(format.format(s * 1000));
+  return unpadHour(normaliseTime(format.format(s * 1000)));
+}
+
+/**
+ * A time of day with no leading zero on its hour: "09:05" -> "9:05", "00:05"
+ * -> "0:05". The hour is the first run of digits: in every CLDR time style it
+ * comes before the minutes, whether or not a day period comes first ("a h:mm"
+ * in some locales). Only a two-digit run starting with 0 changes, so "0:05"
+ * (a Czech midnight) and "12:05" are left alone, and so is any text whose
+ * digits are not ASCII. Transliterated in `Format.swift`, and pinned.
+ */
+export function unpadHour(text: string): string {
+  let i = 0;
+  while (i < text.length && !isAsciiDigit(text.charCodeAt(i))) i++;
+  if (i + 1 < text.length && text.charCodeAt(i) === 48 && isAsciiDigit(text.charCodeAt(i + 1))) {
+    return text.slice(0, i) + text.slice(i + 1);
+  }
+  return text;
+}
+
+function isAsciiDigit(c: number): boolean {
+  return c >= 48 && c <= 57;
 }
 
 /** Every space in a time of day as U+202F. */

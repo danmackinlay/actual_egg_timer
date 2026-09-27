@@ -15,6 +15,9 @@ import Foundation
 ///  - A time of day spells every space as U+202F, which is what Foundation
 ///    prints before "PM" and what CLDR says. V8 prints a plain space there, and
 ///    the web side normalises to this.
+///  - A time of day never zero-pads its hour: "9:05", not "09:05", in every
+///    locale (the owner, 27 September). `unpadHour` does it, here and on the
+///    web, after the platform has formatted.
 ///
 /// Every formatter is given an explicit locale and UTC, and a time of day is
 /// seconds after midnight, so the answer depends on nothing but the arguments:
@@ -84,7 +87,8 @@ public func formatCount(_ value: Double, locale: String) -> String {
 ///
 /// The locale's short and medium time STYLES, not a template of fields: a
 /// template lets `Intl` and Foundation pick different hour widths, where a
-/// style is the locale's own pattern.
+/// style is the locale's own pattern. Then the hour loses any leading zero
+/// (`unpadHour`), so en-GB writes "9:05" and "0:05", as Czech does.
 ///
 /// Not the countdown. "7:44" on the timer is a duration, and stays as the apps
 /// build it.
@@ -92,7 +96,26 @@ public func formatTimeOfDay(_ secondsOfDay: Double, withSeconds: Bool, locale: S
     let whole = Int(secondsOfDay.rounded(.down))
     let s = ((whole % 86400) + 86400) % 86400
     let formatter = Formatters.shared.time(locale: locale, withSeconds: withSeconds)
-    return normaliseTime(formatter.string(from: Date(timeIntervalSince1970: Double(s))))
+    return unpadHour(normaliseTime(formatter.string(from: Date(timeIntervalSince1970: Double(s)))))
+}
+
+/// A time of day with no leading zero on its hour: "09:05" -> "9:05", "00:05"
+/// -> "0:05". The hour is the first run of digits, which in every CLDR time
+/// style comes before the minutes. Only a two-digit run starting with 0
+/// changes, and only ASCII digits count. Transliterated from the web's.
+public func unpadHour(_ text: String) -> String {
+    let scalars = Array(text.unicodeScalars)
+    var i = 0
+    while i < scalars.count, !isAsciiDigit(scalars[i]) { i += 1 }
+    guard i + 1 < scalars.count, scalars[i] == "0", isAsciiDigit(scalars[i + 1]) else { return text }
+    var out = String.UnicodeScalarView()
+    out.append(contentsOf: scalars[..<i])
+    out.append(contentsOf: scalars[(i + 1)...])
+    return String(out)
+}
+
+private func isAsciiDigit(_ c: Unicode.Scalar) -> Bool {
+    c.value >= 48 && c.value <= 57
 }
 
 /// Every space in a time of day as U+202F.

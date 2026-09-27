@@ -32,8 +32,9 @@
  *                           display, and the round trip of every grid value of
  *                           every input (tools/unitsFixture.ts)
  *   fixtures/format.json    numbers and times of day in every supported
- *                           formatting locale, the locale each app derives, and
- *                           a pseudo-Czech catalogue rendered in cs-CZ
+ *                           formatting locale, the locale each app derives and
+ *                           what it writes, and a pseudo-Czech catalogue
+ *                           rendered in cs-CZ
  */
 
 import { writeFileSync, mkdirSync, readFileSync, readdirSync } from 'node:fs';
@@ -86,7 +87,7 @@ import {
 } from '../src/core/decide.js';
 import {
   Fixed, HourCycle, countDecimals, formatCount, formatNumber, formatTimeOfDay, formattingLocale,
-  normaliseTime, roundTo,
+  normaliseTime, roundTo, unpadHour,
 } from '../src/core/format.js';
 import { QUANTITIES, UNIT_SYSTEMS, measureFor, quantityText } from '../src/core/units.js';
 import { unitsFixture } from './unitsFixture.js';
@@ -1513,7 +1514,7 @@ writeFileSync('fixtures/copy.json', `${JSON.stringify(copy, null, 2)}\n`);
  * and no Czech words - rendered in cs-CZ, which is the machinery F5 will use,
  * end to end, before there is a word of Czech to use it with. */
 const FORMAT_SUPPORTED = ['en-US', 'en-GB', 'cs-CZ'];
-const FORMAT_ALSO = ['en', 'en-AU', 'en-DE', 'cs', 'en-US-u-hc-h23', 'en-GB-u-hc-h12'];
+const FORMAT_ALSO = ['en', 'en-AU', 'en-DE', 'en-CZ', 'cs', 'en-US-u-hc-h23', 'en-GB-u-hc-h12'];
 const FORMAT_LOCALES = [...FORMAT_SUPPORTED, ...FORMAT_ALSO];
 
 const FORMAT_NUMBERS: [number, number][] = [
@@ -1572,6 +1573,26 @@ const format = {
   normaliseTime: ['3:05 PM', '3:05\u00a0PM', '3:05\u202fPM', '15:05', 'a b\u00a0c'].map((text) => ({
     text: text, normalised: normaliseTime(text),
   })),
+  unpadHour: [
+    '09:05', '00:05', '0:05', '9:05', '12:05', '15:05', '09:05:09', 'a\u202f09:05', '09:05\u202fPM', '0', '09', '',
+    'PM', '10:05', '\u0660\u0669:\u0660\u0665',
+  ].map((text) => ({ text: text, unpadded: unpadHour(text) })),
+  // The whole path, from what each app knows - the UI's language, the
+  // device's region, the device's own clock setting - to the bytes a cook
+  // reads: the owner's rules of 27 September, end to end.
+  derived: ([
+    ['en', 'GB', null], ['en', 'US', null], ['cs', 'CZ', null], ['en', 'CZ', null], ['en', 'DE', null], ['en', 'US', 'h23'],
+    ['en', 'GB', 'h12'], ['en', 'AU', 'h23'],
+  ] as [string, string | null, HourCycle | null][]).map(([ui, region, hc]) => {
+    const tag = formattingLocale(ui, region, hc);
+    return {
+      uiLanguage: ui, region: region, hourCycle: hc, tag: tag,
+      number: formatNumber(tag, 1234.5, 1), decimal: formatNumber(tag, 2.4, 1),
+      morning: formatTimeOfDay(tag, 9 * 3600 + 5 * 60, false), midnight: formatTimeOfDay(tag, 5 * 60, false),
+      afternoon: formatTimeOfDay(tag, 15 * 3600 + 5 * 60, false),
+      withSeconds: formatTimeOfDay(tag, 9 * 3600 + 5 * 60 + 9, true),
+    };
+  }),
   formattingLocale: ['en', 'cs', 'en-x-1750', 'en-GB-x-1750', 'CS', '', 'english'].flatMap((ui) =>
     ['US', 'GB', 'CZ', 'DE', 'gb', '150', null, 'GBR', 'U1'].flatMap((region) =>
       HOUR_CYCLES.map((hc) => ({
