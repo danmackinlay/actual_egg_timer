@@ -52,7 +52,7 @@ import { CookSetup } from './protocol.js';
 import { donenessFromSlider, solveCookTime, Solution } from './solve.js';
 import { DoseGrid } from './doseGrid.js';
 import { decide, oddsInTenths } from './decide.js';
-import { Outcome, predictOutcome } from './outcome.js';
+import { Outcome, WHITE_RISK, predictOutcome } from './outcome.js';
 import { Calibration, calibrationDoneness, calibrationParams } from './record.js';
 import {
   LIMITS, SLIDER_STEPS, START_TEMP_PRESETS_C, Verdict, anchorNear, snapDown, snapUp, verdictFor,
@@ -392,10 +392,24 @@ export function protocolAdvice(
  *    L's decided time, the 10% point of the delivered doneness (`levelLow`)
  *    is at least T: nine eggs in ten at least as firm as T.
  *  - `softerLevel` is the firmest level L <= T the slider offers whose 90%
- *    point (`levelHigh`) is at most T: nine in ten at most as firm as T.
+ *    point (`levelHigh`) is at most T - nine in ten at most as firm as T -
+ *    AND whose P(runny white) at L's decided time is under WHITE_RISK
+ *    (outcome.ts), the web's line for the white.
+ *
+ * THE WHITE. Softer is a shorter time, so a softer level can trade a yolk a
+ * little too firm for a runny white, which the decision weighs three times a
+ * yolk miss: that is never playing safe. On a fresh install at jammy the yolk
+ * alone pointed to 0.13, where P(runny) is 0.34 and the white's line shows;
+ * the white clears one in five only from 0.24, and 0.24's 90% point is past
+ * jammy, so there is no softer level. Firmer is a longer time, so a firmer
+ * level never raises the white's risk, and needs no such test. P(runny)
+ * falls as the level rises, the mirror of the range, so the firmest level
+ * that passes the yolk's test is the only one the white's test need read: if
+ * the white is a risk there, it is a risk at every softer level too. It
+ * costs nothing - that level has been read already.
  *
  * Each is null when T itself already does it - no move is needed - or when
- * no level the slider offers does. "Offers" is the slider's own rule: the
+ * no level the slider offers does (for `softerLevel`, both tests). "Offers" is the slider's own rule: the
  * physical limits, narrowed by the odds' reach once it applies
  * (`oddsProfile`'s `softest`/`hardest`), so a suggestion is never a level the
  * slider would refuse. The level is on the slider's scale without the taste
@@ -433,7 +447,8 @@ export interface SaferLevels {
    *  firm as T nine times in ten, or null: see above. */
   firmerLevel: number | null;
   /** The firmest level at most as firm as T that gives an egg at most as firm
-   *  as T nine times in ten, or null. */
+   *  as T nine times in ten, with a white that is not a risk (P(runny) under
+   *  WHITE_RISK), or null. */
   softerLevel: number | null;
 }
 
@@ -503,13 +518,15 @@ export function saferLevels(
   }
 
   // Softer: the firmest position in [lo, to] whose 90% point stays at or
-  // under the level, the same way from the other side.
-  let softerLevel: number | null = null;
+  // under the level, the same way from the other side - and then only if its
+  // white is not a risk. P(runny) falls as the level rises, so where the
+  // white is a risk at that position it is at every softer one: none passes.
+  let softer: number | null = null;
   const to = Math.min(positionDown(level), range.hi);
   const soft = (position: number): boolean => at(position).levelHigh <= level;
   if (to >= range.lo) {
     if (soft(to)) {
-      if (!(onGrid && to === own)) softerLevel = levelOf(to);
+      if (!(onGrid && to === own)) softer = to;
     } else if (soft(range.lo)) {
       let under = range.lo;
       let over = to;
@@ -518,8 +535,9 @@ export function saferLevels(
         if (soft(mid)) under = mid;
         else over = mid;
       }
-      softerLevel = levelOf(under);
+      softer = under;
     }
   }
+  const softerLevel = softer !== null && at(softer).pWhiteRunny < WHITE_RISK ? levelOf(softer) : null;
   return { firmerLevel: firmerLevel, softerLevel: softerLevel };
 }

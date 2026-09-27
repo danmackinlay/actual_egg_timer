@@ -32,15 +32,17 @@
  * direction.
  */
 
-import { Lean, Outcome } from '../core/outcome.js';
+import { Lean, Outcome, WHITE_RISK } from '../core/outcome.js';
 import { anchorNear } from '../core/policy.js';
 import { SaferLevels } from '../core/reach.js';
 
 /** P(just right) at or above which the yolk is "probably just right". */
 export const DIRECTION_LIKELY = 0.5;
 
-/** P(runny) at or above which the white gets a line of its own. */
-export const WHITE_RISK = 0.2;
+/** P(runny) at or above which the white gets a line of its own: core's, so
+ *  the line and a softer play-safe level (`saferLevels`) can never disagree
+ *  about what a risky white is. */
+export { WHITE_RISK };
 
 /** The catalogue key of the direction sentence. */
 export function directionKey(o: Outcome): string {
