@@ -1656,3 +1656,70 @@ Core is unchanged.
 - **The alarm's sound**, for the reason above.
 - **The owner's review of every new text**, which is the point of the deploy
   preview.
+
+---
+
+## Which way a miss goes: the outcome summary (27 September 2026)
+
+"7/10 eggs hit the mark" did not say whether the other three were too soft
+or too firm. `predictOutcome` (`src/core/outcome.ts`,
+`EggTimerCore/Outcome.swift`, `fixtures/outcome.json`) reads the decision's
+own inputs at the chosen time and returns the three yolk answers, a runny
+white, the 10/50/90% points of the delivered yolk doneness on the slider's
+scale (noise in, taste offset out, clamped to [0, 1]), and a lean at a ratio
+of 1.5. Core only: the web and iOS screens do not show it yet.
+
+- **Calibration** (`npm run decide -- outcome`: 400 simulated cooks x 6
+  eggs, 1000 particles, eggs at the time the app would choose). The
+  delivered level is inside the 80% range for 81.1% of 2400 eggs, 8.2% under
+  and 10.7% over; by egg 83.0, 79.5, 82.0, 83.3, 81.5 and 77.5%, as the
+  range narrows from 0.54 of the slider to 0.20. Expected calibration error:
+  too soft 1.3%, just right 1.5%, too firm 1.6%, runny 0.2%. The smaller run
+  in `test/outcome.test.ts` (150 cooks, 250 particles): 79.9% inside, 12.0%
+  under, 8.1% over, errors 1.2-4.4%.
+- **The lean**, on a second egg 30 s either side of each chosen time, not
+  folded: at every ratio from 1 to 3 a stated lean is right about as often
+  as its probabilities say (1.5: given for 85% of misses, right 83.3%,
+  predicted 84.0%; 3: given for 59%, right 92.2%, predicted 91.2%). So 1.5
+  is a choice of when to say it: a miss one way three times in five at the
+  least. At the chosen time 73% of eggs are balanced, 24% lean firm and 3%
+  soft. The choice leans late because a runny white costs three.
+- **Examples**, production surface and particle count, 68 g, boiling, ice.
+  A fresh install at jammy: 464 s, 2/10; too soft 0.38, just right 0.21,
+  too firm 0.41; range 0.14-0.72 with a median of 0.42; balanced. After
+  three jammy eggs just right with a firm white: 463 s, 0.77 just right,
+  0.11 soft, 0.12 firm; range 0.35-0.51, median 0.43; balanced. On
+  `decide.json`'s posteriors, the cook who likes a firmer yolk has a jammy
+  median at 0.45, above the slider's 0.41, and the white-bound soft level
+  (a runny white at soft) leans firm, 0.21 against 0.13.
+- **Cost**: about 2 ms in node (0.8 ms at hard, where the range clamps and
+  needs no bisection), against 13-16 ms for a decision after an egg and 2
+  ms before one. One pass over the particles for the answers, then 20
+  bisections on the mixture's CDF for each of the three points.
+- **Counts**, after merging main at 1a6fada: `npm test` 206 tests, 205 pass,
+  0 fail, 1 todo (5b, as before). `npm run validate` 28/28. `npm run
+  conformance` 99 Swift tests in 27 suites and 10 ring tests, all pass;
+  Outcome's three agree to 1e-12. Every fixture other than outcome.json is
+  byte for byte what it was.
+
+### Things that cost time
+
+- **`weightedQuantile` alone gives the wrong range.** It returns the
+  particles' own delivered levels, which is the spread of what is not yet
+  known, without the egg-to-egg noise. On the test's three-egg posterior
+  (400 particles, jammy, 464 s) that is 0.36-0.49 against the mixture's
+  0.35-0.51. The points are found by inverting the
+  mixture's CDF instead; the test checks that with the noise taken to zero
+  they fall back onto the particles' weighted quantiles.
+- **0.3 / 0.2 is 1.4999999999999998** in floating point, so a fixture edge
+  case written that way pinned 'balanced' by accident. The edge cases now
+  use 0.375 and 0.25, which are exact.
+
+### Not verified
+
+- **The noise is two things.** The likelihood cannot separate the egg's
+  scatter from the cook's judging, so the range is as wide as the answers
+  make the egg look. The simulation draws eggs from the same model, so it
+  cannot test that split. Only a thermometer can test it (§5).
+- **Nothing is on a screen.** The UI agent wires `#direction`,
+  `#whiteRisk` and `#donenessBracket` to these fields.
