@@ -21,6 +21,11 @@
  *    the iOS ones they replace, on `91d5fff`. Three new keys, all iOS's:
  *    the (i)'s expanded and collapsed, and the units' (i) with "phone" for
  *    "browser".
+ *  - `oddsHelp`: Help's "How sure I am" rewritten for what the idle screen
+ *    now shows - the direction, the bracket, and the play-safe suggestion
+ *    that never points at a runny white - on `91d5fff`.
+ *  - `period`: F6's new English on the web - the language picker, the line
+ *    under Imperial, and the 1750 title's modern twin - on `05d466b`.
  *
  * This is the list the proofs hold the catalogue to. `copyLiterals.ts --since`
  * diffs copy/en.json and the keys each app's source names against a base
@@ -2262,6 +2267,59 @@ export const IOS_A_DRAFT: Drafted[] = [
   },
 ];
 
+/** Help's "How sure I am", brought up to what the idle screen shows since
+ *  playing safe and the runny-white guard (INFERENCE.md section 8). */
+export const ODDS_HELP_DRAFT: Drafted[] = [
+  {
+    key: 'help.odds.p1', row: "Help: how sure I am",
+    before: { text: "I tell you which way an egg is likely to miss, and the bracket under the slider shows how firm the yolk will probably be. Both narrow as I learn." },
+    after: { text: "Under the time, I say which way an egg is likely to miss. The bracket under the slider shows where the yolk will probably land. When a miss is likely enough to matter, I suggest a level that plays safe, one tap away, and never one where the white might be runny. All of it narrows as I learn." },
+    appsBefore: ["web"], appsAfter: ["web"],
+  },
+  {
+    key: 'help.odds.aside', row: "Help: how sure I am",
+    before: { text: "The bracket covers eight eggs in ten. When I choose the time, a runny white counts three times as bad as a yolk a little too firm, so I lean slightly long. The slider's shading shows how often each doneness comes out right for you." },
+    after: { text: "The bracket covers eight eggs in ten. When I choose the time, a runny white counts three times as bad as a yolk a little too firm, so I lean slightly long. I suggest playing safe when either way of missing is at least one egg in five: firmer means nine yolks in ten at least as firm as you asked, and softer the mirror of that, with the white's risk under one in five. The slider's shading shows how often each doneness comes out right for you." },
+    appsBefore: ["web"], appsAfter: ["web"],
+  },
+];
+
+/** F6's new English, web only: the language picker, the line under Imperial
+ *  that finds the English of 1750, and the 1750 title's modern twin, which
+ *  is never shown (LANGUAGE.md section 6). The 1750 itself is its own
+ *  catalogue, copy/en-x-1750.json, and not a draft of this one. */
+export const PERIOD_DRAFT: Drafted[] = [
+  {
+    key: 'controls.language', row: 'F6: the picker',
+    before: null, after: { text: 'Language' }, appsBefore: [], appsAfter: ['web'],
+  },
+  {
+    key: 'controls.language.more', row: 'F6: the picker',
+    before: null,
+    after: { text: 'English (1750) is English as Samuel Johnson wrote it in the preface to his Dictionary. I switch to it when you change from Metric to Imperial, and back when you change back. Pick English to leave it and keep your units.' },
+    appsBefore: [], appsAfter: ['web'],
+  },
+  {
+    key: 'language.en', row: 'F6: the picker',
+    before: null, after: { text: 'English' }, appsBefore: [], appsAfter: ['web'],
+  },
+  {
+    key: 'language.en1750', row: 'F6: the picker',
+    before: null, after: { text: 'English (1750)' }, appsBefore: [], appsAfter: ['web'],
+  },
+  {
+    key: 'controls.units.period', row: 'F6: under Imperial',
+    before: null, after: { text: 'Imperial units are also available in the English of their period.' },
+    appsBefore: [], appsAfter: ['web'],
+  },
+  {
+    key: 'app.titlePage', row: 'F6: the title',
+    before: null,
+    after: { text: 'The Actual Egg-Timer: in which the times of boiling are deduced from their causes, and illustrated in their different degrees of hardness.' },
+    appsBefore: [], appsAfter: ['web'],
+  },
+];
+
 export const DRAFTS: Record<string, Draft> = {
   feedback: {
     base: 'cfe38e9',
@@ -2326,10 +2384,22 @@ export const DRAFTS: Record<string, Draft> = {
     rows: IOS_A_DRAFT,
     exampleOnly: {},
   },
+  // iosA and oddsHelp were applied on the same commit by two branches at
+  // once, so a proof since 91d5fff sees both; the help.odds rows overlap.
+  oddsHelp: {
+    base: '91d5fff',
+    rows: ODDS_HELP_DRAFT,
+    exampleOnly: {},
+  },
+  period: {
+    base: '05d466b',
+    rows: PERIOD_DRAFT,
+    exampleOnly: {},
+  },
 };
 
 /** The draft most recently applied: what a proof checks when it is not told. */
-export const LATEST_DRAFT = 'iosA';
+export const LATEST_DRAFT = 'period';
 
 /** A draft by its name, or by the commit it was applied to; the latest when
  *  neither is given or neither matches. */

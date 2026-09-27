@@ -1716,7 +1716,9 @@ const PLURAL_NUMBERS = [0, 1, 2, 3, 4, 5, 10, 11, 21, 22, 100, 101, 1.5, 2.5, 0.
 
 interface CopyRow { locale: string; key: string; args: CopyArgs; text: string }
 
-const copyFiles = readdirSync('copy').filter((f) => /^[a-zA-Z-]+\.json$/.test(f)).sort();
+// A catalogue's tag may carry digits (`en-x-1750`); a file with a second dot
+// (`en-x-1750.spelling.json`) is a test's data, not a catalogue.
+const copyFiles = readdirSync('copy').filter((f) => /^[a-zA-Z0-9-]+\.json$/.test(f)).sort();
 const catalogueJson = new Map<string, CatalogueJson>();
 for (const file of copyFiles) {
   if (file === 'surfaces.json') continue;

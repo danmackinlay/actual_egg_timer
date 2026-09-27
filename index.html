@@ -62,6 +62,11 @@
     <button type="button" id="mute" class="mute" aria-pressed="false" data-copy="readout.mute.on"></button>
   </header>
 
+  <!-- F6: the title page, after the Dictionary's, heading the egg's page in
+       the English of 1750 only (styles.css). Its long s is drawn, and the
+       aria-label that applyCopy gives it reads without. -->
+  <h1 id="titlePage" class="titlepage" data-copy="app.titlePage"></h1>
+
   <!-- ------------------------------------------------------------ readout -->
   <section id="readout">
     <p id="phaseLabel" data-copy="readout.phase.total"></p>
@@ -241,6 +246,26 @@
           <label for="unitsMetric" data-copy="controls.units.metric"></label>
           <input type="radio" name="units" id="unitsImperial" value="imperial">
           <label for="unitsImperial" data-copy="controls.units.imperial"></label>
+        </div>
+        <!-- F6: the one line that finds the English of 1750 for a cook who
+             starts in Imperial (LANGUAGE.md section 6). English UIs only. -->
+        <p id="unitsPeriod" class="krow__sub" data-copy="controls.units.period"></p>
+      </fieldset>
+
+      <!-- F6: English, or the English of 1750. Changing it never changes
+           the units; switching the units to Imperial in modern English
+           changes it (src/core/language.ts). -->
+      <fieldset class="krow" id="languageField" aria-labelledby="lblLanguage">
+        <div class="krow__head">
+          <span id="lblLanguage" data-copy="controls.language"></span>
+          <button type="button" class="info" aria-expanded="false" aria-controls="moreLanguage" data-label="controls.language"></button>
+        </div>
+        <p id="moreLanguage" class="disclosed" hidden data-copy="controls.language.more"></p>
+        <div class="seg">
+          <input type="radio" name="language" id="languageEn" value="en">
+          <label for="languageEn" data-copy="language.en"></label>
+          <input type="radio" name="language" id="language1750" value="en-x-1750">
+          <label for="language1750" data-copy="language.en1750"></label>
         </div>
       </fieldset>
 

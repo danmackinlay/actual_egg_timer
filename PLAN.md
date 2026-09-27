@@ -495,6 +495,13 @@ F1 goes before E2 so that Phase E's new feedback copy is born in the catalogue.
       stage-play archaisms (tested), 1755 spellings as a modern->period table
       (tested; *errour*, *publick*, *shew*), *rear* at the soft end of the
       scale. Details and drafts in §6.
+  - [x] **The web half**, 28 September, not yet reviewed by the owner:
+        `copy/en-x-1750.json` (307 keys), the picker, the switch
+        (`src/core/language.ts`), the title, the record's `register`, and
+        `test/en1750.test.ts`. As built in `LANGUAGE.md` §6.
+  - [ ] **The iOS half**: port `src/core/language.ts`, add the picker, and
+        listen to `.unitsFlipped`. The catalogue and fixture are shared.
+  - [ ] **The owner's review** of the 1750 wording.
 
 No owner decisions pending on Phase F.
 

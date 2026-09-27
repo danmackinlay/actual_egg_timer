@@ -15,16 +15,21 @@ import {
   Catalogue, CopyArgs, CopyRef, parseCatalogue, render, renderRef,
 } from '../core/copy.js';
 import { formatTimeOfDay, formattingLocale } from '../core/format.js';
+import { DEFAULT_LANGUAGE } from '../core/language.js';
 
 /**
- * The language the app speaks. Plumbing only, for now: English is the only
- * catalogue, and a language picker with one row in it would be a control that
- * does nothing. The picker arrives with Czech (PLAN.md, F1 and F5), and it sets
- * this. Everything that renders reads it through `t`, so nothing else changes.
+ * The language a fresh install speaks. The cook can pick another in Settings,
+ * and the units switch can move an English cook into the English of 1750
+ * (`src/core/language.ts`, LANGUAGE.md section 6); `main.ts` loads the one
+ * they last had, and `switchCopy` changes it in place.
  */
-export const ACTIVE_LOCALE = 'en';
+export const ACTIVE_LOCALE = DEFAULT_LANGUAGE;
 
 let active: Catalogue | null = null;
+
+/** Every catalogue fetched so far, by tag, so a language picked twice is
+ *  fetched once. English is the fallback beneath every other. */
+const fetched = new Map<string, Promise<Catalogue>>();
 
 async function fetchCatalogue(locale: string, fallback: Catalogue | null): Promise<Catalogue> {
   const response = await fetch(`copy/${locale}.json`);
@@ -32,11 +37,35 @@ async function fetchCatalogue(locale: string, fallback: Catalogue | null): Promi
   return parseCatalogue(await response.json(), fallback);
 }
 
-/** Fetch the active catalogue, and English beneath it for any key it lacks. */
+function catalogueFor(locale: string): Promise<Catalogue> {
+  let promise = fetched.get(locale);
+  if (promise === undefined) {
+    promise = locale === 'en'
+      ? fetchCatalogue('en', null)
+      : catalogueFor('en').then((english) => fetchCatalogue(locale, english));
+    // A failed fetch is not remembered: the next ask tries again.
+    promise.catch(() => fetched.delete(locale));
+    fetched.set(locale, promise);
+  }
+  return promise;
+}
+
+/** Fetch the active catalogue, and English beneath it for any key it lacks:
+ *  `en-x-1750` falls back to `en`. A catalogue that cannot be fetched falls
+ *  back to English whole, rather than leave the page without words. */
 export async function loadCopy(locale: string = ACTIVE_LOCALE): Promise<Catalogue> {
-  const english = await fetchCatalogue('en', null);
-  active = locale === 'en' ? english : await fetchCatalogue(locale, english);
+  try {
+    active = await catalogueFor(locale);
+  } catch (error) {
+    if (locale === 'en') throw error;
+    active = await catalogueFor('en');
+  }
   return active;
+}
+
+/** Change language in place. The caller re-renders what it drew. */
+export async function switchCopy(locale: string): Promise<Catalogue> {
+  return loadCopy(locale);
 }
 
 /** Install a catalogue already in hand - for a test, or a second language. */
@@ -107,15 +136,35 @@ export function timeOfDay(ms: number, withSeconds: boolean = false): string {
 }
 
 /** Fill every `data-copy` element in the document, and say which language the
- *  document is in. */
+ *  document is in: `en`, or `en-x-1750` for the English of 1750, whose
+ *  private-use subtag BCP 47 allows in `lang`.
+ *
+ *  A text with a long s (the 1750 title, and only that: LANGUAGE.md section
+ *  6) is drawn with it and named without it, because a screen reader
+ *  announces the letter and search does not match it. */
 export function applyCopy(doc: Document): void {
   doc.documentElement.lang = activeLocale();
   for (const node of Array.from(doc.querySelectorAll<HTMLElement>('[data-copy]'))) {
     const key = node.dataset['copy'];
     if (key === undefined) continue;
-    if (node.hasAttribute('data-copy-links')) fillWithLinks(node, t(key));
-    else node.textContent = t(key);
+    const text = t(key);
+    if (node.hasAttribute('data-copy-links')) fillWithLinks(node, text);
+    else node.textContent = text;
+    if (text.includes(LONG_S)) {
+      node.setAttribute('aria-label', withoutLongS(text));
+      node.dataset['copyLabel'] = '';
+    } else if (node.dataset['copyLabel'] !== undefined) {
+      node.removeAttribute('aria-label');
+      delete node.dataset['copyLabel'];
+    }
   }
+}
+
+const LONG_S = '\u017f';
+
+/** A text as it is read aloud: every long s an s. */
+export function withoutLongS(text: string): string {
+  return text.split(LONG_S).join('s');
 }
 
 /** A catalogue text whose `[label](https://…)` pieces become links, and

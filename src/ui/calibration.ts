@@ -36,6 +36,7 @@ import {
   recordMass_g, recordTeaches,
 } from '../core/record.js';
 import { UnitSystem } from '../core/units.js';
+import { registerOf } from '../core/language.js';
 import { Machine } from './machine.js';
 import { readStorage, writeStorage, removeStorage } from './store.js';
 
@@ -126,7 +127,8 @@ export interface Cooked {
    *  says only what was on screen, so the fit can look for rounding at input. */
   units: UnitSystem;
   /** The language the cook was reading at "Eggs in": the UI's, a catalogue
-   *  tag such as `en`. */
+   *  tag such as `en`, or `en-x-1750` for the English of 1750, whose
+   *  record also says `register: '1750'` (`registerOf`). */
   lang: string;
 }
 
@@ -193,7 +195,7 @@ export function eggRecordFor(
     whiteOffered: true,
     probe: probe,
     lang: c.lang,
-    register: 'modern',
+    register: registerOf(c.lang),
     units: c.units,
   };
 }
