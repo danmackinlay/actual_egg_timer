@@ -50,6 +50,11 @@ final class Alarm: NSObject, UNUserNotificationCenterDelegate {
     /// Ask once. Returns false if the user has said no, in which case the cook
     /// still runs - it just cannot shout.
     func authorize() async -> Bool {
+        #if DEBUG
+        // Screenshots of a phase (Screenshots.swift) run on a fresh simulator,
+        // where the system would ask, and its alert would be in the picture.
+        if Screenshots.noAlarmPrompt { return false }
+        #endif
         let settings = await centre.notificationSettings()
         switch settings.authorizationStatus {
         case .authorized, .provisional, .ephemeral:

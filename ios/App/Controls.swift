@@ -13,10 +13,30 @@ func measured(_ m: Measure, _ si: Binding<Double>) -> Binding<Double> {
     )
 }
 
-/// A stored SI value on a stepper, in the cook's units. The stepper steps the
-/// DISPLAYED value, from inside bounds that are the limits rounded inward to
-/// the step, and writes back only when tapped - the round trip in
-/// `Units.swift`, so a quart stays a quart and never becomes 1.99.
+/// A stored SI value on a stepper, in the cook's units: its value and the
+/// stepper's buttons, for the end of a line. The stepper steps the DISPLAYED
+/// value, from inside bounds that are the limits rounded inward to the step,
+/// and writes back only when tapped - the round trip in `Units.swift`, so a
+/// quart stays a quart and never becomes 1.99.
+struct StepperValue: View {
+    let label: String
+    let measure: Measure
+    @Binding var value: Double
+    let show: (Double) -> String
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Text(show(value))
+                .foregroundStyle(.secondary)
+                .monospacedDigit()
+            Stepper(label, value: measured(measure, $value), in: measure.bounds ?? 0...0, step: measure.step)
+                .labelsHidden()
+                .accessibilityValue(show(value))
+        }
+    }
+}
+
+/// `StepperValue` with its label, for a line of its own.
 struct StepperRow: View {
     let label: String
     let measure: Measure
@@ -24,30 +44,30 @@ struct StepperRow: View {
     let show: (Double) -> String
 
     var body: some View {
-        Stepper(value: measured(measure, $value), in: measure.bounds ?? 0...0, step: measure.step) {
-            LabeledContent(label) {
-                Text(show(value))
-                    .foregroundStyle(.secondary)
-                    .monospacedDigit()
-            }
+        HStack {
+            Text(label)
+            Spacer(minLength: 8)
+            StepperValue(label: label, measure: measure, value: $value, show: show)
         }
     }
 }
 
-/// A whole number of eggs. The core counts them as a Double because it mirrors
-/// a TypeScript `number`; that stops here rather than reaching the control.
-struct CountRow: View {
+/// A whole number of eggs, for the end of a line. The core counts them as a
+/// Double because it mirrors a TypeScript `number`; that stops here rather
+/// than reaching the control.
+struct CountValue: View {
     let label: String
     @Binding var value: Int
     let range: ClosedRange<Double>
 
     var body: some View {
-        Stepper(value: $value, in: Int(range.lowerBound)...Int(range.upperBound)) {
-            LabeledContent(label) {
-                Text(countText(Double(value)))
-                    .foregroundStyle(.secondary)
-                    .monospacedDigit()
-            }
+        HStack(spacing: 10) {
+            Text(countText(Double(value)))
+                .foregroundStyle(.secondary)
+                .monospacedDigit()
+            Stepper(label, value: $value, in: Int(range.lowerBound)...Int(range.upperBound))
+                .labelsHidden()
+                .accessibilityValue(countText(Double(value)))
         }
     }
 }

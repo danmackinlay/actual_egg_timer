@@ -35,11 +35,12 @@ struct SettingsView: View {
 
             if !kitchen.isSousVide {
                 Section {
-                    InfoRow("controls.altitude", more: [tr("controls.altitude.more")])
-                    StepperRow(
-                        label: tr("controls.altitude"), measure: kitchen.measure(.altitude),
-                        value: $kitchen.altitudeM, show: { kitchen.show(.altitude, $0) }
-                    )
+                    InfoRow("controls.altitude", more: [tr("controls.altitude.more")]) {
+                        StepperValue(
+                            label: tr("controls.altitude"), measure: kitchen.measure(.altitude),
+                            value: $kitchen.altitudeM, show: { kitchen.show(.altitude, $0) }
+                        )
+                    }
                     LabeledContent(tr("readout.stat.waterBoilsAt")) {
                         Text(kitchen.show(.boilingPoint, kitchen.boilingC))
                             .monospacedDigit()
@@ -49,16 +50,15 @@ struct SettingsView: View {
                 }
 
                 Section {
-                    InfoRow("controls.water", more: [tr("controls.water.more")])
-                    StepperRow(
-                        label: tr("controls.water"), measure: kitchen.measure(.water),
-                        value: $kitchen.waterLitres, show: { kitchen.show(.water, $0) }
-                    )
-                }
-
-                Section {
-                    InfoRow("controls.eggsInPan", more: [tr("controls.eggsInPan.more")])
-                    CountRow(label: tr("controls.eggsInPan"), value: $kitchen.eggCount, range: Limits.eggCount)
+                    InfoRow("controls.water", more: [tr("controls.water.more")]) {
+                        StepperValue(
+                            label: tr("controls.water"), measure: kitchen.measure(.water),
+                            value: $kitchen.waterLitres, show: { kitchen.show(.water, $0) }
+                        )
+                    }
+                    InfoRow("controls.eggsInPan", more: [tr("controls.eggsInPan.more")]) {
+                        CountValue(label: tr("controls.eggsInPan"), value: $kitchen.eggCount, range: Limits.eggCount)
+                    }
                 }
 
                 Section {

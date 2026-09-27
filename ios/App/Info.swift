@@ -8,21 +8,39 @@ import SwiftUI
 /// `InfoButton` and `MoreText` are its two halves, for the one place the
 /// paragraph has to go somewhere other than straight under the line (the
 /// setup panels, where the title row also holds Done).
-struct InfoRow<Label: View>: View {
+struct InfoRow<Label: View, Trailing: View>: View {
     /// What VoiceOver calls the (i): "About {label}", or a name of its own.
     let name: String
     /// What it opens, one paragraph per entry.
     let more: [String]
     /// Where the line sits: leading in a list, centred under the time.
     var alignment: HorizontalAlignment = .leading
-    @ViewBuilder let label: () -> Label
+    let label: () -> Label
+    /// The control, at the end of the line, when the line has one: a
+    /// stepper's value and its buttons.
+    let trailing: () -> Trailing
     @State private var expanded = false
+
+    init(
+        name: String, more: [String], alignment: HorizontalAlignment = .leading,
+        @ViewBuilder label: @escaping () -> Label, @ViewBuilder trailing: @escaping () -> Trailing
+    ) {
+        self.name = name
+        self.more = more
+        self.alignment = alignment
+        self.label = label
+        self.trailing = trailing
+    }
 
     var body: some View {
         VStack(alignment: alignment, spacing: 0) {
             HStack(alignment: .center, spacing: 2) {
                 label()
                 InfoButton(expanded: $expanded, name: name)
+                if Trailing.self != EmptyView.self {
+                    Spacer(minLength: 8)
+                    trailing()
+                }
             }
             if expanded {
                 MoreText(more)
@@ -33,12 +51,28 @@ struct InfoRow<Label: View>: View {
     }
 }
 
-extension InfoRow where Label == Text {
+extension InfoRow where Trailing == EmptyView {
+    init(
+        name: String, more: [String], alignment: HorizontalAlignment = .leading,
+        @ViewBuilder label: @escaping () -> Label
+    ) {
+        self.init(name: name, more: more, alignment: alignment, label: label, trailing: { EmptyView() })
+    }
+}
+
+extension InfoRow where Label == Text, Trailing == EmptyView {
     /// The common case: a label from the catalogue, named "About {label}".
     init(_ labelKey: String, more: [String]) {
         self.init(name: about(labelKey), more: more) {
             Text(tr(labelKey))
         }
+    }
+}
+
+extension InfoRow where Label == Text {
+    /// A catalogue label with its control at the end of the line.
+    init(_ labelKey: String, more: [String], @ViewBuilder trailing: @escaping () -> Trailing) {
+        self.init(name: about(labelKey), more: more, label: { Text(tr(labelKey)) }, trailing: trailing)
     }
 }
 

@@ -114,8 +114,31 @@ struct ContentView: View {
             // After the solver is wired, so a restored cold start can revise
             // straight away rather than waiting for the next attempt.
             cook.restoreIfNeeded()
+            #if DEBUG
+            showScreenshotScene()
+            #endif
         }
     }
+
+    #if DEBUG
+    /// The screen a debug build was launched onto (Screenshots.swift).
+    private func showScreenshotScene() {
+        guard let scene = Screenshots.scene else { return }
+        switch scene {
+        case "settings": path = [.settings]
+        case "help": path = [.help(nil)]
+        case "help-reliable": path = [.help(.reliable)]
+        case "heating":
+            guard cook.phase == .idle else { return }
+            starting = true
+            Task { await startCook() }
+        default:
+            if scene.hasPrefix("clause-"), let clause = Clause(rawValue: String(scene.dropFirst(7))) {
+                openClause = clause
+            }
+        }
+    }
+    #endif
 
     // MARK: - Readout
 
