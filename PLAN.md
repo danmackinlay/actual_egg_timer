@@ -824,6 +824,14 @@ needing a decision:
    Nobody decided whether it should be.~~ Answered and built 27 September,
    with items 1 and 2: see the odds-shaded slider under Phase E.
 
+### The UI redesign, from 27 September (UI.md)
+
+The owner's steer: brief controls get a longer (i) disclosure; there are few
+enough controls on screen that longer strings fit, for clarity or comedy; and
+wording is judged in place on a phone, not approved row by row in tables. The
+plan is UI.md. The web app is built first, the owner reviews it on a deploy
+preview, and iOS follows the web layout.
+
 ### Answered by the owner, 27 September
 
 - **Odds-shaded slider: yes, in both apps, threshold 3/10.** Reachability
