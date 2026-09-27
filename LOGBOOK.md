@@ -1495,3 +1495,16 @@ advice inline. `src/core/reach.ts` and `EggTimerCore/Reach.swift`.
   copy fixture and chosen by the verdict tests.
 - **The strip's inset on iOS** is 14 pt a side, the old thumb's radius;
   iOS 27's wider thumb makes levels under it a few points off.
+
+---
+
+## One wording per meaning: a proposal (27 September 2026)
+
+`LANGUAGE.md` §3, "Proposed: one wording per meaning", is a proposal for the
+owner. Nothing in the catalogue or either app changed. It sorts all 125
+single-app keys, each read at its call site: 15 pairs (29 keys, one NEW
+wording), 40 platform-only, 46 in layouts that differ, and 10 orphaned, one
+of them dead (`readout.phase.cooling`). It also describes a guard test
+without building it. Found on the way, and not yet fixed: iOS says "white
+just set" for a white the pan never sets. This was read in the code; no
+screen was run.

@@ -467,6 +467,157 @@ three white answers, every answer optional, "still learning" beside the time, an
 a thermometer prompt. Those strings should go straight into the catalogue, which
 is why F1 comes before E2 (§7).
 
+### Proposed: one wording per meaning (for the owner)
+
+**A proposal, 27 September 2026. Nothing here is implemented**: `copy/en.json`
+and both apps are unchanged. The principle is the owner's: one short string
+per meaning, everywhere. A key used by one app is allowed only where the
+surface exists on one platform, or where the two apps' layouts differ in
+structure, not just in wording.
+
+At `1667dcf` the catalogue has 139 shared keys and 125 used by one app (61 web,
+64 iOS). Every one of the 125 was read at its call site, with the other app's
+screen at the same moment, and sorted like this:
+
+| | keys |
+|---|---|
+| paired: the other app says the same thing at the same moment (15 pairs) | 29 |
+| platform-only: the surface, or the feature, exists on one platform | 40 |
+| different layout: the screens are built differently | 46 |
+| orphaned: nothing in the other app answers to it (1 dead, 9 live) | 10 |
+
+**The pairs.** In screen order. The proposed wording is one of the two
+existing strings, the shorter one where it works in both apps. Only one row
+needed a new wording, and it is marked **NEW**. Each proposal was checked
+against what both apps do, and fits the tighter of the two surfaces' budgets.
+Merging a pair means one key, and both apps' call sites changing to it.
+
+| key(s) | web now | iOS now | proposed | why |
+|---|---|---|---|---|
+| `readout.phase.totalLidOn` (iOS), against the shared `readout.phase.total` | Total time | Total time, lid on | Total time | The lid is for the heating, not a property of the total. The web says it under the button: "eggs in the pan, lid on, then tap". Cost: on a cold start with Keep boiling, iOS then says "lid on" nowhere. |
+| `readout.sub.hot`, `readout.sub.idleHot`, `readout.sub.idleCold` | from eggs in to eggs out (hot start, Keep boiling) | from eggs into boiling water to eggs out · from eggs into cold water, heat on, to eggs out | from eggs in to eggs out | Shortest, and true for both starts, since a cold start's eggs go in before the heat. The Start choice just below says which water. |
+| `action.startHeating`, `action.eggsInHeatOn` | Start heating | Eggs in, heat on | Eggs in, heat on | Says what to do, and pairs with "Eggs in" on a hot start. iOS has no line under the button to say "eggs in the pan". |
+| `readout.phase.heating`, `readout.phase.heatingTap` | Heating | Heating — tap when it boils | Heating | The button right below names the moment (Full rolling boil), and the next row says to tap it. "When it boils" invites a tap at the first bubbles, which under-measures the boil (PLAN.md, invariant 6). The Dynamic Island already says "Heating". |
+| `readout.sub.heating`, `readout.sub.heatingEstimate` | {elapsed} heating · I expect {boil} until you tap | my guess until you tap Full rolling boil | my guess until you tap Full rolling boil | This is already the Live Activity's wording (`activity.note.estimate`). It is shorter, and "I expect {boil} until you tap" does not parse. Cost: the web stops showing the heating time so far and the boil time it expects. |
+| `readout.stat.waterBoilsAt`, `pan.waterBoilsAt` | water boils at | Water boils at | Water boils at | The same words. The web's stats are upper-cased by CSS, so the capital never shows there. |
+| `texture.white.runny` (web), against iOS's texture note | white stays runny | white just set, {yolk} | white stays runny | **iOS is wrong today.** When the pan never sets the white, iOS still names the white from its peak temperature, on a scale whose lowest word is "white just set". The web switches to this line when the white's dose falls short, and iOS should do the same. |
+| `controls.size`, `controls.egg` | Egg size | Egg | Egg size | Names the choice. If the Eggs row below goes in, iOS would otherwise have "Egg" and "Eggs" on one screen. |
+| `controls.size.measured`, `controls.size.weighed` | Measured below… | Weighed · {mass} | **NEW:** Measured — {mass} | iOS's mass slider shows no number, so the menu has to carry the mass. "Weighed" is false on the web when the girth was typed in instead of the weight. The dash matches "Large — {mass}". The web would render the mass it measured. |
+| `controls.eggFrom.fridge`, `controls.eggFrom.fridgeAt` | Fridge (the temperature is in the hint below) | Fridge {temp} | Fridge {temp} | Puts the assumption where the choice is made. iOS has no hint line to carry it. "Fridge 39 °F" is 12 of a segment's 17. |
+| `controls.eggFrom.room`, `controls.eggFrom.roomAt` | Room | Room {temp} | Room {temp} | As above. |
+| `controls.atTheBoil`, `controls.afterTheBoil` | At the boil | After the boil | At the boil | Shorter, and "after the boil" already names a duration, the stat `readout.stat.afterBoil`. |
+| `controls.afterBoil.hint`, `controls.afterBoil.explainHeatOff` | Heat off, lid on: the hot water continues to cook the eggs. More water holds more heat. | Lid on and burner off: the water's own heat finishes the eggs. I work out the time from the water below, so measure it — more or less water changes the time, or whether it works at all. | the web's | Half the length, and it is the owner's own F2 edit. Cost: iOS stops telling the cook to measure the water. The web says so in `readout.sub.standing`, but iOS says it nowhere else. |
+| `controls.eggs`, `controls.eggsInPan` | Eggs | Eggs in the pan | Eggs | Shorter. It sits beside Water on the web and inside the pan's fold on iOS, so "in the pan" goes without saying. |
+| `colophon.lede`, `colophon.ios` | Times computed from heat conduction and denaturation kinetics, not from a recipe. | I work out times from the physics and chemistry of eggs. Both heating and cooling matter for cooking the middle. | iOS's | The web's is the wording F2 retired from iOS: "denaturation kinetics" is jargon, and the sentence has no speaker. iOS's runs on into the web's link: "…the middle. Source, and the physics it rests on — including what I get wrong." |
+
+**Leftovers: platform-only (40).** The first 33 need nothing, because their
+surface exists on one platform:
+
+- iOS notification (6): `alarm.pull.*`, `alarm.cooled.*`, `alarm.probe.*`.
+- iOS Dynamic Island (14): `activity.stage.*` (5), `activity.now`,
+  `activity.eat`, `activity.target`, `activity.note.*` (6).
+- iOS Lock Screen (1): `activity.summary`.
+- Web screen reader (12): `spoken.*`.
+
+The other 7 are on surfaces both apps have, but the feature exists on one
+platform:
+
+- `readout.alarm.setting`, `.denied`, `.failed`, `.set` (iOS): the web
+  schedules no alarm, so it has none to report.
+- `readout.mute.on`, `.off` (web): the web plays its own sound. The iOS alarm
+  is a notification, and the phone decides its sound.
+- `readout.restored` (web): only the web's alarm is lost on a reload.
+
+**Leftovers: different layout (46).** The first line of each group says how
+the two screens differ:
+
+- *The big readout at the pull and at Done holds a word on iOS (NOW, Eat) and
+  digits on the web (the overrun, then the total), so the lines under it say
+  different things.* `readout.big.now`, `readout.big.eat` and
+  `readout.sub.done` (iOS); `readout.sub.doneCold` and `readout.sub.doneHot` (web).
+- *The web gives the boil it assumes under the total. iOS gives it as a row
+  in the pan's fold.* `readout.sub.coldAssumes` and `readout.sub.coldGuesses` (web);
+  `pan.timeToBoil` and `pan.timeToBoil.assumed` (iOS).
+- *The web says what it has learned about the pan in one sentence under the
+  controls. iOS says it in a note under that row.* `learned.literature`, `learned.pan`
+  and `learned.both` (web); `pan.measured` and `pan.unmeasured` (iOS).
+- *Only iOS folds the pan's controls away.* `controls.pan` (iOS).
+- *The web gives the water for a heat-off hot start under the total. iOS gives
+  it beside the Water stepper.* `readout.sub.standing` (web).
+- *While cooking, iOS's subline reports the alarm.* `readout.sub.cookingCold` and
+  `readout.sub.cookingHot` (web).
+- *The stats differ. iOS shows peak yolk, peak white and after the boil; the
+  web shows peak yolk, after the boil and water boils at, and iOS shows the
+  last of those in its fold.* `readout.stat.peakWhite` (iOS).
+- *iOS has no line under its main button.* `action.hint.cold`,
+  `.hotStanding`, `.hotBoiling`, `.whiteNeverSets`, `.heating`,
+  `.heatingStanding`, `.cookingStanding`, `.cookingBoiling` and `.pull` (web).
+- *The web's reading under the doneness slider follows the thumb with a
+  temperature. iOS shows the bare word in the label's row.*
+  `controls.doneness.value` (web).
+- *The web measures the egg in three fields. iOS uses a mass slider.*
+  `controls.measure.legend`, `.weight`, `.girth`, `.minor` and `.hint` (web).
+- *Only the web offers a custom egg temperature.* `controls.eggFrom.custom`,
+  `controls.eggTemp` and `controls.eggFrom.hint` (web). If the Fridge and Room rows
+  go in, the hint no longer needs the temperatures, and can be cut to "Pick
+  Custom if yours differ." That also drops "Assumed temperatures", which has
+  no speaker.
+- *iOS changes the line under the after-boil choice with the choice. The web
+  shows one line for both.* `controls.afterBoil.explainHold` (iOS).
+- *iOS asks before it forgets. The web forgets on one tap.*
+  `learned.confirm.title`, `.forget`, `.keep` and `.message` (iOS). **For the
+  owner:** should the web ask too? If it should, these become shared.
+- *iOS shows the name as the navigation title. On the web it is a run-in
+  bold heading, so it ends in a full stop.* `app.name` (iOS), `colophon.name`
+  (web).
+- *Only the web's colophon links to the source.* `colophon.link` and
+  `colophon.tail` (web).
+
+**Leftovers: orphaned (10).** Nothing in the other app answers to these keys.
+
+- `readout.phase.cooling` (iOS), "Cooling", is **dead**. It is drawn only
+  while a counter rest is cooling, but a counter cook never cools. `Cook.swift`
+  sets no cooling deadline for it, so it goes from the pull straight to Done,
+  as the web's machine does. Delete it.
+- `controls.start.hint` (web) is live. iOS shows a line under Start only in
+  sous-vide (`controls.start.hintSousVide`). It could show this one in the
+  same place, and the key would then be shared.
+- `learned.forgetExplain` (iOS) is live. The web's Forget button has no
+  explanation beside it, and it could carry this one.
+- `cook.summary`, `cook.method`, `cook.method.cold`, `.hot`, `.ice`, `.tap`
+  and `.counter` (iOS) are live. Mid-cook, iOS replaces its hidden controls
+  with what is in the pan. The web hides its controls too (`styles.css`)
+  and puts nothing in their place, so it has the gap that iOS closed.
+
+**Also not quite true, found on the way.** These are not pairs, but they are
+worth a line each:
+
+- `readout.alarm.denied` and `.failed` (iOS) end "— keep the app open". The
+  app makes no sound of its own and does not keep the screen awake, so
+  keeping it open helps only if the cook is watching it.
+- `learned.pan` (web), "your pan takes {time} to boil", has the same fault as
+  the held-back `readout.sub.coldAssumes`. `{time}` is `estimateTimeToBoil`:
+  a blend of past boils, or the nearest volume's time scaled by litres.
+- `action.hint.pull` (web), "cooling starts on its own in {seconds} s", is
+  also shown for a counter rest. There nothing starts: the cook goes to Done.
+
+**A guard, described only.** A new test in `test/copy.test.ts`, beside 6a,
+which already checks that each key's `apps` matches the code:
+
+- `copy/surfaces.json` gains `"platform": "ios"` on `notification.title`,
+  `notification.body`, `lockscreen`, `island.expanded` and `island.compact`,
+  and `"platform": "web"` on `a11y`.
+- An entry whose `apps` names one app passes if its surface's `platform` is
+  that app. Otherwise it must carry a `why`: a non-empty string that says
+  what the other app does instead. The test fails on anything else, and also
+  on a key whose surface belongs to one platform but which names the other
+  app.
+- Keys that would need a `why` once the pairs above are merged: the 7
+  platform-only features, the 46 layout keys and the 9 live orphans, 62 in
+  all. The first line of each group above is a draft of its `why`.
+  `readout.phase.cooling` is deleted, not excused. Any pair the owner
+  declines adds both its keys to the list.
+
 ## 4. Units
 
 **One setting: Metric or Imperial.** Its default comes from the platform:
