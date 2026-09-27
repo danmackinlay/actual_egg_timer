@@ -534,6 +534,42 @@ both apps where a key is shared:
   learning": I learn a cook's taste, their eggs' whites and how fast their
   water boils, not a kitchen. Its (i) says what, and what speeds it up.
 
+**The outcome summary's strings - IMPLEMENTED 27 September 2026**, web
+only, drafted and not approved: for review in place, like the redesign's.
+The owner found "7/10 eggs hit the mark" unnatural, because it does not say
+which way the misses go. So the web leads with a direction, and the number
+moves into the odds' (i). The `outcome` draft in `tools/copyDraft.ts`, on
+`7a40373`; `copyLiterals.js --since 7a40373 outcome` and
+`copySnapshot.js compare --draft outcome` show that nothing else changed.
+UI.md section 8 has which sentence each outcome gets, and why the
+thresholds are where they are.
+
+| key | where | text |
+|---|---|---|
+| `outcome.likely` | under the time: just right at least half the time, a miss either way | Probably just right. |
+| `outcome.likely.firm` / `.soft` | the same, leaning | Probably just right. If not, more likely a little firm. · …a little soft. |
+| `outcome.unsure` | under half, a miss either way (a fresh install) | Could come out softer or firmer than you like — I can't call it yet. |
+| `outcome.miss.firm` / `.soft` | under half, leaning | It could miss, and if it does, more likely firmer than you like. · …softer than you like. |
+| `outcome.whiteRunny` | under it, from one runny white in five | The white might still be runny. |
+| `outcome.odds` | first in what the odds' (i) opens, before `odds.why` | About {hits} in {of} eggs like this come out just as you like them, with the white set. |
+| `outcome.range` / `.range.one` | the bracket under the slider, to a screen reader | Likely yolk: {low} to {high} · Likely yolk: {level} |
+
+- **Each sentence is one message**, lean included, so a translation can
+  reorder the two halves; nothing is glued together in code. The number
+  and `odds.why` are two messages side by side, each whole sentences.
+- **The bracket's words stand alone** after a colon (§5): `{low}` and
+  `{high}` are the slider's own doneness words, in their dictionary form,
+  capitalised as the ticks are. "Likely anywhere from soft to fudgy" was
+  the first idea; it puts the words inside running grammar, which Czech
+  would have to decline.
+- **"7 in 10", not "7/10"**, in `outcome.odds` and now in `help.odds.p2`,
+  whose two numbers matched the old line: the (i) is a sentence, and the
+  refusals already say "{hits} times in {of}".
+- **`odds.hitTheMark` is iOS's alone** until iOS follows; the web does not
+  draw it. `odds.info` ("About these odds") and `odds.why` are unchanged and
+  still both apps'. The first person: "I can't call it yet" is the app
+  speaking; the other sentences have no subject to put in the first person.
+
 ### Proposed: one wording per meaning (for the owner)
 
 **A proposal, 27 September 2026. Nothing here is implemented**: `copy/en.json`

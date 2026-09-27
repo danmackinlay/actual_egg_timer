@@ -183,9 +183,10 @@ its address. A running cook is always the egg, whatever the address says.
 Kitchen and Help are links at the top of the egg; Help is also at the top of
 the Kitchen. Mute sits top right in every phase.
 
-**The egg.** The time with its line under it, the odds and "I'm still
-learning", each with its (i); the doneness slider; the setup sentence; one
-slot; Start at the bottom. The slot holds a refusal, or the sous-vide
+**The egg.** The time with its line under it, which way the egg is likely
+to miss and "I'm still learning", each with its (i) (the outcome summary,
+below); the doneness slider; the setup sentence; one slot; Start at the
+bottom. The slot holds a refusal, or the sous-vide
 warning, or a reloaded cook's warning; failing those, before anything is
 learned, a first-egg welcome. The low-odds link to Help goes under whichever
 is there: it is one short line, not a longer one.
@@ -213,25 +214,75 @@ before.
 
 **Phase screens**: the phase label (the instruction), the time, one line
 under it, the slot, and the action bar. The stats row (peak yolk, after the
-boil, water boils at) and the texture note are gone from the phases; the
-odds are no longer shown mid-cook. The boiling point moved to the Kitchen,
-beside the altitude; the peak yolk is in the slider's reading. Heating's
+boil, water boils at) and the texture note are gone from the phases. What
+was said under the time at "Eggs in" stays under it for the whole cook, as
+it always has: the odds until the outcome summary, the direction since. The
+boiling point moved to the Kitchen, beside the altitude; the peak yolk is in the slider's reading. Heating's
 "wait for the whole surface to roll" has an (i) that says what a full
 rolling boil looks like and why the tap matters. Everything else is as it
 was: the phases, the alarm, the pull button, the probe offer and reading,
 the two questions, mute, a reloaded cook.
 
-**Hooks for the direction line.** `#direction` and `#whiteRisk`, under the
-odds in the readout, are empty and hidden: they are the slot for the
-sentence about which way an egg is likely to miss, and for a runny-white
-warning, once core gives `pTooSoft`, `pJustRight`, `pTooFirm` and
-`pWhiteRunny`. The odds line stands in until then. `#donenessBracket`, in
-`.slider__range` just under the track, is the likely range of the yolk: set
-its left and width from `levelLow` and `levelHigh` (`placeBand` in `app.ts`
-does exactly this for the odds bands) and unhide it. It sits in the thumb's
-column below the track, so it never covers the odds shading. Help's "How
-sure I am" is already written for a direction plus a range, with the number
-as detail.
+**The outcome summary** (built the same day, on the hooks the redesign left;
+the `outcome` draft in `tools/copyDraft.ts`). Under the time, in place of
+"7/10 eggs hit the mark", a sentence says which way the egg is likely to
+miss, with the odds' (i) at its end; under it, a line when a runny white is
+a real risk; then "I'm still learning" and its (i), as before. The numbers
+are `predictOutcome` (INFERENCE.md §8), read at the decided time on the
+decision's own surface, on the main thread beside the decision: about 2 ms
+beside its 13-16, so it does not need the worker. `src/ui/outcome.ts` picks
+the words:
+
+| P(just right) | lean | sentence |
+|---|---|---|
+| ≥ 0.5 | balanced | Probably just right. |
+| ≥ 0.5 | firm / soft | Probably just right. If not, more likely a little firm / soft. |
+| < 0.5 | balanced | Could come out softer or firmer than you like — I can't call it yet. |
+| < 0.5 | firm / soft | It could miss, and if it does, more likely firmer / softer than you like. |
+
+"Probably" is more likely than not, so 0.5; the lean is core's, a miss one
+way at least three times in five. On the reference pot a fresh install
+reads 0.21-0.30 and balanced at every level ("I can't call it yet"), and one
+egg just right gives 0.56-0.58 ("Probably just right"). "The white might
+still be runny." shows from P(runny) 0.2, one egg in five, not the 0.15
+first drafted: a fresh install at soft reads 0.17 on the reference pot, and
+that is the prior's width, which is wide so the filter can learn and not
+because anyone believes it. At 0.2 it speaks at the white-bound ends: the
+softest levels on a fresh install (0.36 at runny), the counter's softest
+(0.42-0.45), a cold start's soft on a fresh install (0.22), and 0.21 at
+runny after three eggs just right.
+
+The number is in what the odds' (i) opens: "About 8 in 10 eggs like this
+come out just as you like them, with the white set.", then `odds.why`. The
+(i) keeps its name, "About these odds". `oddsTenths` is still recorded with
+every egg. The direction, the white's line and the number ride with the
+cook, as the odds did, and come back after a reload.
+
+`#donenessBracket` runs from `levelLow` to `levelHigh` under the track, with
+a short mark at `levelMedian`, in the foreground colour at 70%: not the
+accent, not the odds' green, and below the track, so it never covers the
+shading; it reads in both schemes. After three consistent eggs it is about
+the thumb's width and peeks out either side; on a fresh install it runs
+from soft to fudgy. The slider is described by it as well
+(`aria-describedby="donenessValue donenessRange"`): "Likely yolk: Soft to
+Fudgy", each end the nearest doneness word, or "Likely yolk: Jammy" when
+both ends are nearest the same one. The words stand alone after a colon, as
+LANGUAGE.md §5 asks. The bracket is not drawn before the pot's surface
+lands, where the white never sets, in sous-vide, or once a cook is running
+(the slider is put away).
+
+**Nothing jumps.** While idle the direction holds two lines, the most any
+of its sentences takes at 390 px, and centres a one-line sentence in them,
+so a drag that changes the sentence does not move the slider. While a new
+pot's surface is on its way the readout keeps the height it last had, so
+the choice open in the sentence does not move under the thumb that just
+changed it. The white's line and "I'm still learning" can still appear
+mid-drag near the soft end, which moves the slider down a line; a range
+input takes its value from where the pointer is across the track, so the
+drag should hold, but that is not checked on a phone.
+
+Help's "How sure I am" was already written for a direction plus a range;
+its second paragraph now says "7 in 10" and "2 in 10", as the (i) does.
 
 **Departures from sections 3 and 4.**
 - **Heat after the boil stayed on the Kitchen page**, not in the sentence. It

@@ -1723,3 +1723,86 @@ of 1.5. Core only: the web and iOS screens do not show it yet.
   cannot test that split. Only a thermometer can test it (§5).
 - **Nothing is on a screen.** The UI agent wires `#direction`,
   `#whiteRisk` and `#donenessBracket` to these fields.
+
+---
+
+## The outcome summary on the web (27 September 2026)
+
+The web's headline under the time is now which way the egg is likely to
+miss, with the yolk's likely range drawn under the slider and the number
+moved into the odds' (i). Web only: `src/ui/outcome.ts` (the words),
+`src/ui/app.ts` (the outcome computed beside the decision and carried with
+the cook), `index.html`, `styles.css`, the `outcome.*` keys and the
+`outcome` draft. Core and iOS are unchanged. UI.md section 8 has the rules
+and the thresholds; LANGUAGE.md section 3 the strings.
+
+### Verified
+
+- `npm test`: 210 tests, 209 pass, 0 fail, 1 todo (5b, as before); four
+  are new, in `test/outcomeCopy.test.ts`: each sentence at its thresholds'
+  edges, the white's line at one in five and not at 0.17, the range's words
+  at the clamps, and an outcome read back after a reload whole or not at
+  all. `npm run validate` 28/28. `npm run conformance`: 99 Swift tests in 27
+  suites and 10 ring tests pass, with `fixtures/copy.json` regenerated for
+  the new keys; no other fixture moved.
+- `copyLiterals.js --since 7a40373 outcome`: 349 keys unchanged, 12 changed,
+  each as drafted (ten new, `odds.hitTheMark` now iOS's alone,
+  `help.odds.p2` saying "7 in 10"). `copySnapshot.js compare --draft
+  outcome` against a capture of `7a40373` (172 states each side): new as
+  drafted, "2/10 eggs hit the mark" gone as retired, nothing else.
+- **Where the thresholds land**, on the production surface and particle
+  count, at the decided time, across five pots, five posteriors and six
+  levels (a scratch script over `decide`/`predictOutcome`). A fresh install
+  reads P(just right) 0.21-0.30 and balanced everywhere; one jammy egg just
+  right, 0.56-0.58; three, 0.77-0.79. P(runny) is 0.07 at jammy and 0.17 at
+  soft on a fresh install, 0.36 at runny, 0.42-0.45 at the counter's
+  softest; after three eggs just right it is 0.02 except at runny (0.11 hot,
+  0.21 cold start) and the counter's softest (0.13-0.15). Hence 0.2 for the
+  white's line rather than 0.15: at 0.15 a fresh install at soft would warn
+  on the width of the prior alone.
+- **Driven** in headless Chrome at 390 x 844 over DevTools, dark and light,
+  on this worktree's `_site` served on its own port: a fresh install (cold
+  start and boiling water at jammy: "Could come out softer or firmer than
+  you like — I can't call it yet.", 2 in 10, the bracket 0.14-0.72, "Likely
+  yolk: Soft to Fudgy"); three consistent jammy eggs seeded into the log
+  ("Probably just right.", 8 in 10, the bracket 0.35-0.51 and "Likely yolk:
+  Jammy", no "still learning"); the odds' (i) opened; the white a risk on a
+  fresh install at runny and on the counter at its softest (the line shows;
+  "Runny to Soft", "Jammy to Hard"); one egg at the soft end, snapped to
+  0.02 ("It could miss, and if it does, more likely firmer than you
+  like.", 3 in 10); sous-vide (no direction, no bracket, no reserved space);
+  a cook under way, and the same cook after a reload (the direction and the
+  number carried, the bracket gone with the slider); Help's "How sure I am".
+  In the Browser pane: a pot change mid-idle holds the readout at its height
+  (280 px before, during and after). No console errors; the only warnings
+  are Chrome's refusal to start the alarm's AudioContext for a scripted
+  click, as before.
+
+### Things that cost time
+
+- **The readout jumped twice.** Once when the surface landed, because the
+  old reserved line held one short line and the direction is two; and again
+  on every change to the sentence, because a new pot blanks the lines until
+  its surface lands, which moved the open choice under the thumb. The
+  direction now reserves its two lines while idle, and the readout keeps its
+  last height while a surface is on its way.
+- **"Probably just right" is about the yolk alone.** P(just right) is the
+  yolk's answer; the odds in the (i) also need the white set, so they can
+  read well under it, and do so when the white is the risk. The white's own
+  line is what says that on screen, rather than the sentence's threshold
+  quietly folding the white in.
+
+### Not verified
+
+- **A phone, a screen reader, and the owner's eye**, as for the redesign.
+  "Likely yolk: Soft to Fudgy" was read from the DOM, not heard.
+- **"It could miss" when a miss is nearly certain.** Where the yolk is just
+  right one time in fifty and firm the rest (the white-bound levels after
+  runny whites), the sentence understates. Those levels read 0 in 10, so
+  the odds' reach should keep them off the slider once any level reaches 3
+  in 10; the sweep read the mean solve's verdict without the reach, and no
+  driven case showed one. A pot where no level reaches 3 in 10 and a lean
+  is strong would. Not seen, not ruled out.
+- **The median mark** sits under the thumb for a cook whose taste is the
+  slider's; it shows only when the level and the slider part (a cook who
+  likes a firmer yolk). No seeded case showed that on screen.
