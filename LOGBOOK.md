@@ -1508,3 +1508,54 @@ of them dead (`readout.phase.cooling`). It also describes a guard test
 without building it. Found on the way, and not yet fixed: iOS says "white
 just set" for a white the pan never sets. This was read in the code; no
 screen was run.
+
+---
+
+## Two lines that said something false (27 September 2026)
+
+Both were found by the one-wording-per-meaning proposal above, read in the
+code. No wording changed.
+
+- **iOS said "white just set" for a white the pan never sets** (heat off, too
+  little water: `whiteSets == false`, `refusal.whiteNeverSets`). It named the
+  white from its peak temperature, and that scale has no word below "just
+  set". The web switched to `texture.white.runny`, in `app.ts`. The decision
+  is now core: `textureFor(peakYolk, peakWhite, whiteSets)` has a `runny`
+  band, and `textureNoteKeys` says which keys the note is in, in both
+  languages, so neither app decides anything. iOS's ticket carries no
+  `whiteSets`; a cook starts only when the white sets, so its note passes
+  `true`.
+- **The web said "cooling starts on its own in {seconds} s" on a counter
+  rest**, where the grace runs out into Done. `coolingStartsIn_s` in
+  `machine.ts` answers it (null on a counter rest), and the hint is empty
+  there. No line replaces it: the subline above already says "the yolk is
+  still cooking", which is the true thing, and a second wording of it is
+  what section 3 of LANGUAGE.md is trying to remove.
+
+### Verified
+
+- `npm test`: 200 tests, 199 pass, 0 fail, 1 todo (5b, as before).
+  New: policy 4c and 4d (4d on a real solve: 68 g, 0.5 L, heat off, two
+  eggs, peak white 51 C, whose peak alone reads "just set"), machine 2e.
+- `npm run validate`: 28/28. `npm run conformance`: 96 Swift tests in 26
+  suites; the texture fixture is 64 cases, four with a white that never
+  sets, and the Swift suite fails if it has none.
+- `copyLiterals --since cc0dc47 truths`: 274 keys unchanged, one changed as
+  drafted (`texture.white.runny`, apps web -> web, ios).
+- `xcodebuild` for a generic iOS Simulator destination: BUILD SUCCEEDED.
+- The web, served from this worktree on its own port in its own tab: heat
+  off with 0.5 L says "white stays runny"; a cook moved to PULL through
+  localStorage shows no hint on the counter and "cooling starts on its own
+  in 13 s" on ice.
+
+### Not verified
+
+- **Nothing on iOS was run.** The texture note is held by the core's
+  conformance and the build; no screen showed "white stays runny".
+- **iOS at the pull was read, not run.** It makes no "starts on its own"
+  promise: no line under its button, "the yolk is still cooking" under the
+  readout. But on a counter rest its Live Activity (`activity.note.pull`,
+  "into the cooling, or the yolk keeps going") and pull notification
+  (`alarm.pull.body`, "Straight into the cooling, or the yolk keeps
+  cooking.") still speak of a cooling the cook did not choose. Not the same
+  fault, and fixing it needs a wording, so it is left for the owner.
