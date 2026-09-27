@@ -1763,7 +1763,7 @@
       "locale": "en",
       "key": "idle.welcome",
       "args": {},
-      "text": "Our first egg together. Until you tell me how one comes out, I go by what's true of eggs in general, not yours. Afterwards, answer the two questions and I'll start learning your eggs and your kitchen."
+      "text": "Our first egg together. I start off guessing from a generic egg, but as you give me feedback, I learn to specialise on you."
     },
     {
       "locale": "en",
@@ -1922,15 +1922,6 @@
     },
     {
       "locale": "en",
-      "key": "outcome.odds",
-      "args": {
-        "hits": 7,
-        "of": 10
-      },
-      "text": "About 7 in 10 eggs like this come out just as you like them, with the white set."
-    },
-    {
-      "locale": "en",
       "key": "outcome.range",
       "args": {
         "low": "Soft",
@@ -1945,6 +1936,58 @@
         "level": "Jammy"
       },
       "text": "Likely yolk: Jammy"
+    },
+    {
+      "locale": "en",
+      "key": "outcome.info",
+      "args": {},
+      "text": "How sure I am"
+    },
+    {
+      "locale": "en",
+      "key": "outcome.bracket",
+      "args": {},
+      "text": "The bracket under the doneness slider is where I expect your yolk to land. If a soft yolk would bother you more than a firm one, slide right until the bracket's left end is somewhere you'd still be happy; if a firm one would, slide left until its right end is. Or tap the level I suggest, when I suggest one."
+    },
+    {
+      "locale": "en",
+      "key": "outcome.why",
+      "args": {},
+      "text": "Before your first egg I don't know your taste, your eggs or your kitchen, so the bracket starts wide. Each egg you tell me about narrows it."
+    },
+    {
+      "locale": "en",
+      "key": "outcome.learning",
+      "args": {},
+      "text": "I learn your taste in yolks from how you say they came out, how your whites set from the second question, how fast heat gets into your eggs from both, and how long your water takes to boil when you tap the boil. Answer both questions after each egg, and if you have a probe thermometer, give me a reading: that is the quickest teacher."
+    },
+    {
+      "locale": "en",
+      "key": "outcome.safe.firm",
+      "args": {
+        "level": "Fudgy"
+      },
+      "text": "Rather not risk it soft? Try: Fudgy"
+    },
+    {
+      "locale": "en",
+      "key": "outcome.safe.soft",
+      "args": {
+        "level": "Soft"
+      },
+      "text": "Rather not risk it firm? Try: Soft"
+    },
+    {
+      "locale": "en",
+      "key": "outcome.safe.firmer",
+      "args": {},
+      "text": "A little firmer"
+    },
+    {
+      "locale": "en",
+      "key": "outcome.safe.softer",
+      "args": {},
+      "text": "A little softer"
     },
     {
       "locale": "en",
@@ -1981,18 +2024,6 @@
       "key": "odds.stillLearning",
       "args": {},
       "text": "I'm still learning"
-    },
-    {
-      "locale": "en",
-      "key": "odds.stillLearning.info",
-      "args": {},
-      "text": "About what I'm learning"
-    },
-    {
-      "locale": "en",
-      "key": "odds.stillLearning.more",
-      "args": {},
-      "text": "My time for this egg could still be out by more than I'd like. I learn your taste in yolks from how you say they came out, how your whites set from the second question, how fast heat gets into your eggs from both, and how long your water takes to boil when you tap the boil. Answer both questions after each egg, and if you have a probe thermometer, give me a reading: that is the quickest teacher."
     },
     {
       "locale": "en",
