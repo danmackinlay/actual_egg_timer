@@ -197,12 +197,12 @@ body[data-phase="IDLE"]:not([data-start="sous"]) #direction {
    screen reader hears the words and not "right arrow"; a thumb's height. */
 #playSafeLine { margin: 0; }
 button.playsafe {
-  display: inline-flex;
-  align-items: center;
+  display: inline-block;
   width: auto;
   min-height: 44px;
   margin: 0;
-  padding: 4px 6px;
+  padding: 11px 6px;
+  line-height: 1.4;
   border: 0;
   border-radius: 8px;
   background: transparent;
