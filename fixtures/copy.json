@@ -1352,7 +1352,7 @@
       "locale": "en",
       "key": "controls.eggsInPan",
       "args": {},
-      "text": "Eggs in the pan"
+      "text": "Number of eggs"
     },
     {
       "locale": "en",
@@ -1374,9 +1374,9 @@
     },
     {
       "locale": "en",
-      "key": "controls.pan",
+      "key": "controls.settings",
       "args": {},
-      "text": "Kitchen"
+      "text": "Settings"
     },
     {
       "locale": "en",
@@ -1710,13 +1710,25 @@
       "locale": "en",
       "key": "setup.start.cold",
       "args": {},
-      "text": "into cold water"
+      "text": "into cold water and boiled"
+    },
+    {
+      "locale": "en",
+      "key": "setup.start.coldStanding",
+      "args": {},
+      "text": "into cold water, brought to the boil and left to stand"
     },
     {
       "locale": "en",
       "key": "setup.start.hot",
       "args": {},
       "text": "into boiling water"
+    },
+    {
+      "locale": "en",
+      "key": "setup.start.hotStanding",
+      "args": {},
+      "text": "into boiling water and left to stand"
     },
     {
       "locale": "en",
@@ -1793,7 +1805,7 @@
       "locale": "en",
       "key": "controls.probe",
       "args": {},
-      "text": "I have a probe thermometer"
+      "text": "Ask for a probe reading"
     },
     {
       "locale": "en",
@@ -2246,7 +2258,13 @@
       "locale": "en",
       "key": "probe.offer.yes",
       "args": {},
-      "text": "I have one"
+      "text": "Yes"
+    },
+    {
+      "locale": "en",
+      "key": "controls.thermometer.ask",
+      "args": {},
+      "text": "Ask for a reading after each egg"
     },
     {
       "locale": "en",
@@ -2898,6 +2916,12 @@
     },
     {
       "locale": "en",
+      "key": "alarm.pull.bodyCounter",
+      "args": {},
+      "text": "Out of the water and onto the counter."
+    },
+    {
+      "locale": "en",
       "key": "alarm.cooled.title",
       "args": {},
       "text": "Cooling done"
@@ -3004,6 +3028,12 @@
       "key": "activity.note.pull",
       "args": {},
       "text": "into the cooling, or the yolk keeps going"
+    },
+    {
+      "locale": "en",
+      "key": "activity.note.pullCounter",
+      "args": {},
+      "text": "resting on the counter"
     },
     {
       "locale": "en",

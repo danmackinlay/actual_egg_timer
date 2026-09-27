@@ -115,7 +115,8 @@ final class Cook {
                 doneness: doneness,
                 peakYolk: showIn(system, .temperature, peakYolkC),
                 eggMass: showIn(system, .mass, eggGrams),
-                odds: oddsLine
+                odds: oddsLine,
+                restsOnCounter: cooling == .counter
             )
         }
 
@@ -611,7 +612,10 @@ final class Cook {
 
     private func scheduleAlarms() {
         guard let pullAt else { return }
-        Alarm.shared.schedule(pullAt: pullAt, coolDoneAt: coolDoneAt, probe: asksForProbe)
+        Alarm.shared.schedule(
+            pullAt: pullAt, coolDoneAt: coolDoneAt, probe: asksForProbe,
+            restsOnCounter: ticket?.cooling == .counter
+        )
     }
 
     /// Ask the system what it is holding, rather than assuming.

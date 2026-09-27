@@ -1109,6 +1109,122 @@ export const OUTCOME_DRAFT: Drafted[] = [
   },
 ];
 
+/** 27 September: on a counter rest there is no cooling step, so iOS's pull
+ *  alarm and pull note get their own lines instead of "into the cooling". */
+export const COUNTER_DRAFT: Drafted[] = [
+  {
+    key: 'alarm.pull.bodyCounter', row: 'counter rest: the pull alarm',
+    before: null, after: { text: "Out of the water and onto the counter." },
+    appsBefore: [], appsAfter: ['ios'],
+  },
+  {
+    key: 'activity.note.pullCounter', row: 'counter rest: the pull note',
+    before: null, after: { text: "resting on the counter" },
+    appsBefore: [], appsAfter: ['ios'],
+  },
+];
+
+/** 27 September, the owner: the setup sentence "into cold water, then an ice
+ *  bath" reads as if the eggs never boil. The start clause carries the boil,
+ *  and the standing when the heat goes off. */
+export const BOIL_DRAFT: Drafted[] = [
+  {
+    key: 'setup.start.cold', row: 'setup sentence: the boil',
+    before: { text: "into cold water" }, after: { text: "into cold water and boiled" },
+    appsBefore: ['web'], appsAfter: ['web'],
+  },
+  {
+    key: 'setup.start.coldStanding', row: 'setup sentence: cold start, heat off',
+    before: null, after: { text: "into cold water, brought to the boil and left to stand" },
+    appsBefore: [], appsAfter: ['web'],
+  },
+  {
+    key: 'setup.start.hotStanding', row: 'setup sentence: boiling start, heat off',
+    before: null, after: { text: "into boiling water and left to stand" },
+    appsBefore: [], appsAfter: ['web'],
+  },
+  // The owner, from a phone: "Kitchen" is a settings page, so call it that;
+  // "Number of eggs"; and the app is "I" everywhere, so nothing the cook taps
+  // may speak as "I" ("I have one").
+  {
+    key: 'controls.pan', row: 'Kitchen -> Settings (retired key)',
+    before: { text: "Kitchen" }, after: null,
+    appsBefore: ['web', 'ios'], appsAfter: [],
+  },
+  {
+    key: 'controls.settings', row: 'Kitchen -> Settings',
+    before: null, after: { text: "Settings" },
+    appsBefore: [], appsAfter: ['web', 'ios'],
+  },
+  {
+    key: 'controls.eggsInPan', row: 'Number of eggs',
+    before: { text: "Eggs in the pan" }, after: { text: "Number of eggs" },
+    appsBefore: ['web', 'ios'], appsAfter: ['web', 'ios'],
+  },
+  {
+    key: 'controls.probe', row: 'no "I" for the cook: iOS toggle',
+    before: { text: "I have a probe thermometer" }, after: { text: "Ask for a probe reading" },
+    appsBefore: ['ios'], appsAfter: ['ios'],
+  },
+  {
+    key: 'probe.offer.yes', row: 'no "I" for the cook: the offer',
+    before: { text: "I have one" }, after: { text: "Yes" },
+    appsBefore: ['web', 'ios'], appsAfter: ['web', 'ios'],
+  },
+  {
+    key: 'controls.thermometer.ask', row: 'no "I" for the cook: web checkbox',
+    before: null, after: { text: "Ask for a reading after each egg" },
+    appsBefore: [], appsAfter: ['web'],
+  },
+  // The setup clauses moved from the 27-character "fragment" surface (spliced
+  // into iOS's one-line summary) to their own "clause" surface.
+  {
+    key: 'setup.egg', row: 'setup clause: surface fragment -> clause, words unchanged',
+    before: { text: "{mass} eggs" }, after: { text: "{mass} eggs" },
+    appsBefore: ['web'], appsAfter: ['web'],
+  },
+  {
+    key: 'setup.from.fridge', row: 'setup clause: surface fragment -> clause, words unchanged',
+    before: { text: "from the fridge" }, after: { text: "from the fridge" },
+    appsBefore: ['web'], appsAfter: ['web'],
+  },
+  {
+    key: 'setup.from.room', row: 'setup clause: surface fragment -> clause, words unchanged',
+    before: { text: "at room temperature" }, after: { text: "at room temperature" },
+    appsBefore: ['web'], appsAfter: ['web'],
+  },
+  {
+    key: 'setup.from.custom', row: 'setup clause: surface fragment -> clause, words unchanged',
+    before: { text: "at {temp}" }, after: { text: "at {temp}" },
+    appsBefore: ['web'], appsAfter: ['web'],
+  },
+  {
+    key: 'setup.start.hot', row: 'setup clause: surface fragment -> clause, words unchanged',
+    before: { text: "into boiling water" }, after: { text: "into boiling water" },
+    appsBefore: ['web'], appsAfter: ['web'],
+  },
+  {
+    key: 'setup.start.sous', row: 'setup clause: surface fragment -> clause, words unchanged',
+    before: { text: "sous-vide at {bath}" }, after: { text: "sous-vide at {bath}" },
+    appsBefore: ['web'], appsAfter: ['web'],
+  },
+  {
+    key: 'setup.cooling.ice', row: 'setup clause: surface fragment -> clause, words unchanged',
+    before: { text: "then an ice bath" }, after: { text: "then an ice bath" },
+    appsBefore: ['web'], appsAfter: ['web'],
+  },
+  {
+    key: 'setup.cooling.tap', row: 'setup clause: surface fragment -> clause, words unchanged',
+    before: { text: "then under a cold tap" }, after: { text: "then under a cold tap" },
+    appsBefore: ['web'], appsAfter: ['web'],
+  },
+  {
+    key: 'setup.cooling.counter', row: 'setup clause: surface fragment -> clause, words unchanged',
+    before: { text: "then onto the counter" }, after: { text: "then onto the counter" },
+    appsBefore: ['web'], appsAfter: ['web'],
+  },
+];
+
 export const DRAFTS: Record<string, Draft> = {
   feedback: {
     base: 'cfe38e9',
@@ -1148,10 +1264,20 @@ export const DRAFTS: Record<string, Draft> = {
       'help.odds.p1': 'its note: the direction line and the bracket it was written for are built',
     },
   },
+  counter: {
+    base: '4817303',
+    rows: COUNTER_DRAFT,
+    exampleOnly: {},
+  },
+  boil: {
+    base: 'e29887c',
+    rows: BOIL_DRAFT,
+    exampleOnly: {},
+  },
 };
 
 /** The draft most recently applied: what a proof checks when it is not told. */
-export const LATEST_DRAFT = 'outcome';
+export const LATEST_DRAFT = 'boil';
 
 /** A draft by its name, or by the commit it was applied to; the latest when
  *  neither is given or neither matches. */

@@ -34,6 +34,10 @@ struct CookActivity: ActivityAttributes {
     /// "7/10 eggs hit the mark" (E5), already in words, or nil when the cook
     /// was started before the odds were known.
     var odds: String?
+    /// True when the eggs rest on the counter after the pull. There is then no
+    /// cooling step to send them into, so the pull note says so. Optional, so
+    /// an activity begun by an older build decodes as not resting.
+    var restsOnCounter: Bool? = nil
 
     enum Stage: String, Codable, Hashable {
         case heating
