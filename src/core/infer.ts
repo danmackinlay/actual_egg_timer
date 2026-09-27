@@ -209,9 +209,11 @@ export const WHITE_FIRM_GAP_LOG_SD = 0.4;
  * is what is left. What one reading teaches, measured in test/probe.test.ts
  * on the default egg at jammy in ice: the time-scale's sd goes from the
  * prior's 12.5% to 2.7-2.8% in the weights (a 1.0 C Gaussian alone would give
- * 2.45%; the handling tail costs the rest), and to 3.3-3.5% once the filter
- * has resampled, because the resample's jitter is 2% on alpha whatever the
- * posterior. A 1.5 C Gaussian would give about 3.7% in the weights.
+ * 2.45%; the handling tail costs the rest), and the filter keeps 2.6-2.8%
+ * once it has resampled. Until E5 it kept 3.3-3.5%, because the resample's
+ * jitter was a fixed 2% on alpha whatever the posterior; the kernel that
+ * replaced it keeps the posterior's spread (`resample`). A 1.5 C Gaussian
+ * would give about 3.7% in the weights.
  *
  * A PROBE_UNRELATED share of readings has nothing to do with the egg - a probe
  * in the white, the wrong egg - and is uniform over PROBE_UNRELATED_SPAN_C, so
@@ -399,7 +401,7 @@ export function effectiveSampleSize(post: Posterior): number {
  * 10^`logNominalTarget`, with whatever the cook said about the yolk and the
  * white, and a probe reading at the centre's peak if they took one (E4) - any
  * of them may be null. Reweights by the joint likelihood, then resamples
- * with jitter if the particle set has degenerated.
+ * through Liu and West's kernel if the particle set has degenerated.
  *
  * ONE fold per egg, not one per answer. The two answers can arrive in either
  * order, or minutes apart; folding them jointly means the posterior depends on
@@ -469,39 +471,135 @@ export function whiteAnswerProbabilities(
   return out;
 }
 
-/** Systematic resampling - lower variance than multinomial and O(n) - followed
- *  by a small jitter so the set does not collapse to duplicates. */
+/**
+ * The resample's kernel: Liu and West's shrinkage (2001), with discount
+ * KERNEL_DISCOUNT.
+ *
+ * Until E5 each resampled particle was jittered by a FIXED amount - 2% on
+ * alpha, 0.015 decades on the offsets, 3% on the rest - whatever the posterior
+ * looked like. Every resample therefore added the same spread, in every
+ * direction independently, and three things followed. The time-scale could not
+ * be held tighter than about 3% (E4 measured 3.3% after one probe reading whose
+ * weights said 2.7%). The one combination a cook's answers DO pin - the
+ * time-scale and the taste together, which move a yolk in opposite directions
+ * - was pulled apart at every resample, so the spread of the right cook time
+ * climbed back after every second or third egg (a sawtooth: +-8 s at jammy,
+ * then +-15 s, then +-8 s again, on a cook who never changed). And the odds on
+ * screen, read off that inflated posterior, under-stated the hits by 4-6 points
+ * from the fourth egg (INFERENCE.md section 8).
+ *
+ * Liu and West's kernel keeps the posterior's mean and covariance through the
+ * resample. In coordinates where every dimension is additive - log alpha, the
+ * taste offset, log tauAirScale, log noise, the white offset, log firm gap -
+ * each resampled particle is shrunk toward the weighted mean by KERNEL_SHRINK
+ * and moved by a draw from the weighted covariance, scaled by KERNEL_SPREAD, so
+ * that a^2 + h^2 = 1 and nothing is added or lost. The draw is correlated as
+ * the posterior is, through its Cholesky factor, so the combination the answers
+ * pinned stays pinned. The same six normal draws per particle as before, in the
+ * same order, so the random stream advances exactly as it did.
+ */
+export const KERNEL_DISCOUNT = 0.98;
+const KERNEL_SHRINK = (3.0 * KERNEL_DISCOUNT - 1.0) / (2.0 * KERNEL_DISCOUNT);
+const KERNEL_SPREAD = Math.sqrt(1.0 - KERNEL_SHRINK * KERNEL_SHRINK);
+
+const KERNEL_DIMS = 6;
+
+/** A particle in the kernel's coordinates: every dimension additive. */
+function kernelCoords(p: Particle): number[] {
+  return [
+    Math.log(p.alpha_m2s), p.logDoseOffset, Math.log(p.tauAirScale),
+    Math.log(p.noise), p.whiteOffset, Math.log(p.whiteFirmGap),
+  ];
+}
+
+/** Lower-triangular Cholesky factor of a symmetric matrix, row-major. A pivot
+ *  that is not positive - a direction the posterior has no spread in - gets a
+ *  zero column: the kernel adds nothing there, rather than a NaN. */
+function cholesky(cov: number[][]): number[][] {
+  const L: number[][] = [];
+  for (let k = 0; k < KERNEL_DIMS; k++) L.push(new Array<number>(KERNEL_DIMS).fill(0.0));
+  for (let k = 0; k < KERNEL_DIMS; k++) {
+    for (let l = 0; l <= k; l++) {
+      let s = cov[k][l];
+      for (let m = 0; m < l; m++) s -= L[k][m] * L[l][m];
+      if (k === l) {
+        L[k][k] = s > 0.0 ? Math.sqrt(s) : 0.0;
+      } else {
+        L[k][l] = L[l][l] > 0.0 ? s / L[l][l] : 0.0;
+      }
+    }
+  }
+  return L;
+}
+
+/** Systematic resampling - lower variance than multinomial and O(n) - then
+ *  Liu and West's kernel (above), so the set does not collapse to duplicates
+ *  and the posterior keeps its shape. */
 function resample(post: Posterior): void {
   const n = post.particles.length;
   const cumulative: number[] = new Array<number>(n);
   let acc = 0.0;
   for (let i = 0; i < n; i++) { acc += post.weights[i]; cumulative[i] = acc; }
 
+  // The weighted mean and covariance, before anything moves.
+  const x: number[][] = new Array<number[]>(n);
+  for (let i = 0; i < n; i++) x[i] = kernelCoords(post.particles[i]);
+  const mean: number[] = new Array<number>(KERNEL_DIMS).fill(0.0);
+  for (let i = 0; i < n; i++) {
+    for (let k = 0; k < KERNEL_DIMS; k++) mean[k] += post.weights[i] * x[i][k];
+  }
+  for (let k = 0; k < KERNEL_DIMS; k++) mean[k] /= acc;
+  const cov: number[][] = [];
+  for (let k = 0; k < KERNEL_DIMS; k++) cov.push(new Array<number>(KERNEL_DIMS).fill(0.0));
+  for (let i = 0; i < n; i++) {
+    for (let k = 0; k < KERNEL_DIMS; k++) {
+      const dk = x[i][k] - mean[k];
+      for (let l = 0; l <= k; l++) cov[k][l] += post.weights[i] * dk * (x[i][l] - mean[l]);
+    }
+  }
+  for (let k = 0; k < KERNEL_DIMS; k++) {
+    for (let l = 0; l <= k; l++) {
+      cov[k][l] /= acc;
+      cov[l][k] = cov[k][l];
+    }
+  }
+  const L = cholesky(cov);
+
   let state = nextUniform(post.rng);
   const start = toUnit(state) / n;
-  const picked: Particle[] = new Array<Particle>(n);
+  const picked: number[] = new Array<number>(n);
   let j = 0;
   for (let i = 0; i < n; i++) {
     const u = start + i / n;
     while (j < n - 1 && cumulative[j] < u) j++;
-    picked[i] = post.particles[j];
+    picked[i] = j;
+  }
+  const z: number[] = new Array<number>(KERNEL_DIMS);
+  const y: number[] = new Array<number>(KERNEL_DIMS);
+  const next: Particle[] = new Array<Particle>(n);
+  for (let i = 0; i < n; i++) {
+    for (let k = 0; k < KERNEL_DIMS; k++) {
+      const g = gaussian(state);
+      state = g.state;
+      z[k] = g.value;
+    }
+    const q = x[picked[i]];
+    for (let k = 0; k < KERNEL_DIMS; k++) {
+      let noise = 0.0;
+      for (let l = 0; l <= k; l++) noise += L[k][l] * z[l];
+      y[k] = KERNEL_SHRINK * q[k] + (1.0 - KERNEL_SHRINK) * mean[k] + KERNEL_SPREAD * noise;
+    }
+    next[i] = {
+      alpha_m2s: Math.exp(y[0]),
+      logDoseOffset: y[1],
+      tauAirScale: Math.exp(y[2]),
+      noise: Math.exp(y[3]),
+      whiteOffset: y[4],
+      whiteFirmGap: Math.exp(y[5]),
+    };
   }
   for (let i = 0; i < n; i++) {
-    const a = gaussian(state); state = a.state;
-    const b = gaussian(state); state = b.state;
-    const c = gaussian(state); state = c.state;
-    const d = gaussian(state); state = d.state;
-    const e = gaussian(state); state = e.state;
-    const f = gaussian(state); state = f.state;
-    const q = picked[i];
-    post.particles[i] = {
-      alpha_m2s: q.alpha_m2s * Math.exp(0.02 * a.value),
-      logDoseOffset: q.logDoseOffset + 0.015 * b.value,
-      tauAirScale: q.tauAirScale * Math.exp(0.03 * c.value),
-      noise: q.noise * Math.exp(0.03 * d.value),
-      whiteOffset: q.whiteOffset + 0.015 * e.value,
-      whiteFirmGap: q.whiteFirmGap * Math.exp(0.03 * f.value),
-    };
+    post.particles[i] = next[i];
     post.weights[i] = 1.0 / n;
   }
   post.rng = state;

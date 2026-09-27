@@ -161,7 +161,7 @@ test('1d. the grid carries the peak, and interpolates it to within a tenth of a 
 
 /** One probe-only egg folded from the prior on the app's own grid, and what the
  *  reading taught BEFORE the filter resampled - the weights - beside what the
- *  filter keeps after its resample and jitter. */
+ *  filter keeps after its resample. */
 function oneReading(reading_C: number): {
   weighted: number; kept: number; meanFactor: number; next_s: number;
 } {
@@ -199,10 +199,12 @@ test('2a. one reading at +-1 C takes the time-scale sd from 11.9% to about 2.5%'
     // 1.0 C Gaussian at 0.40 C per 1% is 2.45%; the handling tail costs a
     // little of it.
     assert.ok(r.weighted < 0.030, `weights: ${(100 * r.weighted).toFixed(2)}%`);
-    // What the filter keeps: the resample's jitter is 2% on alpha whatever the
-    // posterior, so the stored sd sits above the weights' by about that in
-    // quadrature. It is the filter's floor on any one fold, not the reading's.
-    assert.ok(r.kept < 0.036, `kept: ${(100 * r.kept).toFixed(2)}%`);
+    // What the filter keeps. Until E5 the resample's jitter was a fixed 2% on
+    // alpha, and the stored sd sat above the weights' by about that in
+    // quadrature (3.28 / 3.33 / 3.52%). Liu and West's kernel keeps the
+    // posterior's spread through the resample: 2.60 / 2.61 / 2.81% on 28
+    // September, within resampling noise of the weights.
+    assert.ok(r.kept < 0.031, `kept: ${(100 * r.kept).toFixed(2)}%`);
     assert.ok(r.kept < prior / 3, 'at least a third of the prior');
   }
 });

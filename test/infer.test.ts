@@ -270,7 +270,7 @@ test('2d. one fold per egg: the answers together are the product, whichever arri
 // 3. Phase C's recovery experiment, repeated under the new likelihood
 // --------------------------------------------------------------------------
 
-test('3. Phase C recovery: an injected alpha and taste are found in no more eggs, to no worse an error', () => {
+test('3. Phase C recovery: an injected alpha and taste are found in no more eggs, to no worse an error', (t) => {
   // PLAN.md Phase C: alpha = 1.535e-7 with a taste offset of +0.20 decades,
   // answers generated without noise from the truth. Each egg is cooked at the
   // model's own best guess of what this cook wants - the posterior mean alpha,
@@ -279,7 +279,7 @@ test('3. Phase C recovery: an injected alpha and taste are found in no more eggs
   // likelihood on 27 September for the same egg (68 g, fridge, boiling water,
   // ice, jammy): within 15 s of the true optimum from egg 3, settled 14.0 s
   // long, alpha sd 2.9%. Under E2: within 15 s from egg 2, settled 12.2 s
-  // short, sd about 3.3%.
+  // short, sd about 3.3%; since E5's resample kernel the same, with sd 3.0%.
   const truth: ModelParams = { alpha_m2s: 1.535e-7, tauAirScale: 1 };
   const TASTE = 0.2;
   const setup = setupOf();
@@ -303,6 +303,7 @@ test('3. Phase C recovery: an injected alpha and taste are found in no more eggs
     sd = posteriorAlphaRelSd(post);
   }
   const firstClose = errors.findIndex((_e, i) => errors.slice(i).every((x) => Math.abs(x) < 15));
+  t.diagnostic(`errors ${errors.map((e) => e.toFixed(1)).join(', ')} s; alpha sd ${(100 * sd).toFixed(2)}%`);
   assert.ok(firstClose >= 0 && firstClose <= 2, `within 15 s from egg ${firstClose + 1}: ${errors.map((e) => e.toFixed(1))}`);
   assert.ok(Math.abs(errors[errors.length - 1]) <= 14.0, `settled ${errors[errors.length - 1].toFixed(1)} s off`);
   assert.ok(sd > 0.015 && sd < 0.05, `alpha sd ${sd}: plateaus, neither collapsing nor wandering`);
@@ -312,7 +313,7 @@ test('3. Phase C recovery: an injected alpha and taste are found in no more eggs
 // 4. The predictive is calibrated on simulated cooks
 // --------------------------------------------------------------------------
 
-test('4. P(answer) is calibrated: simulated cooks answer as often as the model says they will', () => {
+test('4. P(answer) is calibrated: simulated cooks answer as often as the model says they will', (t) => {
   // Draw each cook's truth from the prior, cook them a few eggs at assorted
   // levels, and before each egg ask the model how likely each answer is. Then
   // draw the answers from the truth - the probit, the unrelated share and all -
@@ -377,6 +378,7 @@ test('4. P(answer) is calibrated: simulated cooks answer as often as the model s
     assert.ok(Math.abs(p - o) <= 3 * se + 0.01, `bin ${b}: predicted ${p.toFixed(3)}, observed ${o.toFixed(3)}, n ${counts[b]}`);
   }
   ece /= total;
+  t.diagnostic(`expected calibration error ${(100 * ece).toFixed(2)}%: ${rows.join('; ')}`);
   assert.ok(ece < 0.03, `expected calibration error ${ece.toFixed(4)}: ${rows.join('; ')}`);
 });
 
@@ -424,9 +426,10 @@ const twoRunny = (() => {
   return out;
 })();
 
-test('5a. two runny whites at soft move the next soft recommendation later', () => {
+test('5a. two runny whites at soft move the next soft recommendation later', (t) => {
   for (const kind of ['whiteOnly', 'withYolk'] as const) {
     const r = twoRunny[kind];
+    t.diagnostic(`${kind}: soft ${r.before.soft.toFixed(1)} -> ${r.after.soft.toFixed(1)}, jammy ${r.before.jammy.toFixed(1)} -> ${r.after.jammy.toFixed(1)}`);
     assert.ok(r.after.soft > r.before.soft + 15, `${kind}: soft ${r.before.soft.toFixed(1)} -> ${r.after.soft.toFixed(1)}`);
     assert.ok(posteriorMeanWhiteOffset(r.cal.posterior) > 0.4, `${kind}: the white offset took its share`);
   }

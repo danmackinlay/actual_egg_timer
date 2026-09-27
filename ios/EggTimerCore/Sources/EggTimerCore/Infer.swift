@@ -282,8 +282,9 @@ public func effectiveSampleSize(_ post: Posterior) -> Double {
 }
 
 /// Fold in one egg, both of its answers and a probe reading, any of which may
-/// be nil. ONE fold per egg: the posterior depends on what was said, not on the
-/// order it was tapped in. See src/core/infer.ts.
+/// be nil, and resample through Liu and West's kernel if the set has
+/// degenerated. ONE fold per egg: the posterior depends on what was said, not
+/// on the order it was tapped in. See src/core/infer.ts.
 public func updatePosterior(
     _ post: inout Posterior, grid: DoseGrid,
     cookTimeS: Double, logNominalTarget: Double, yolk: Feedback?, white: WhiteReport?,
@@ -343,40 +344,100 @@ public func whiteAnswerProbabilities(
     return out
 }
 
-/// Systematic resampling - lower variance than multinomial and O(n) - followed
-/// by a small jitter so the set does not collapse to duplicates.
+/// The resample's kernel: Liu and West's shrinkage, with discount
+/// `kernelDiscount`. Each resampled particle is shrunk toward the weighted mean
+/// and moved by a draw from the weighted covariance, in coordinates where every
+/// dimension is additive, so the posterior's mean and covariance survive the
+/// resample. It replaced a fixed jitter (2% on alpha) that widened the
+/// posterior at every resample; see src/core/infer.ts for what that cost.
+public let kernelDiscount = 0.98
+private let kernelShrink = (3.0 * kernelDiscount - 1.0) / (2.0 * kernelDiscount)
+private let kernelSpread = (1.0 - kernelShrink * kernelShrink).squareRoot()
+private let kernelDims = 6
+
+private func kernelCoords(_ p: Particle) -> [Double] {
+    [log(p.alphaM2s), p.logDoseOffset, log(p.tauAirScale), log(p.noise), p.whiteOffset, log(p.whiteFirmGap)]
+}
+
+/// Lower-triangular Cholesky factor; a pivot that is not positive gets a zero
+/// column, as in the TypeScript.
+private func cholesky(_ cov: [[Double]]) -> [[Double]] {
+    var L = [[Double]](repeating: [Double](repeating: 0.0, count: kernelDims), count: kernelDims)
+    for k in 0..<kernelDims {
+        for l in 0...k {
+            var s = cov[k][l]
+            for m in 0..<l { s -= L[k][m] * L[l][m] }
+            if k == l {
+                L[k][k] = s > 0.0 ? s.squareRoot() : 0.0
+            } else {
+                L[k][l] = L[l][l] > 0.0 ? s / L[l][l] : 0.0
+            }
+        }
+    }
+    return L
+}
+
+/// Systematic resampling, then Liu and West's kernel. The same six normal draws
+/// per particle, in the same order, as the TypeScript.
 private func resample(_ post: inout Posterior) {
     let n = post.particles.count
     var cumulative = [Double](repeating: 0.0, count: n)
     var acc = 0.0
     for i in 0..<n { acc += post.weights[i]; cumulative[i] = acc }
 
+    let x = post.particles.map(kernelCoords)
+    var mean = [Double](repeating: 0.0, count: kernelDims)
+    for i in 0..<n {
+        for k in 0..<kernelDims { mean[k] += post.weights[i] * x[i][k] }
+    }
+    for k in 0..<kernelDims { mean[k] /= acc }
+    var cov = [[Double]](repeating: [Double](repeating: 0.0, count: kernelDims), count: kernelDims)
+    for i in 0..<n {
+        for k in 0..<kernelDims {
+            let dk = x[i][k] - mean[k]
+            for l in 0...k { cov[k][l] += post.weights[i] * dk * (x[i][l] - mean[l]) }
+        }
+    }
+    for k in 0..<kernelDims {
+        for l in 0...k {
+            cov[k][l] /= acc
+            cov[l][k] = cov[k][l]
+        }
+    }
+    let L = cholesky(cov)
+
     var state = nextUniform(post.rng)
     let start = toUnit(state) / Double(n)
-    var picked = [Particle]()
-    picked.reserveCapacity(n)
+    var picked = [Int](repeating: 0, count: n)
     var j = 0
     for i in 0..<n {
         let u = start + Double(i) / Double(n)
         while j < n - 1 && cumulative[j] < u { j += 1 }
-        picked.append(post.particles[j])
+        picked[i] = j
+    }
+    var z = [Double](repeating: 0.0, count: kernelDims)
+    var y = [Double](repeating: 0.0, count: kernelDims)
+    var next = [Particle]()
+    next.reserveCapacity(n)
+    for i in 0..<n {
+        for k in 0..<kernelDims {
+            let g = gaussian(state)
+            state = g.state
+            z[k] = g.value
+        }
+        let q = x[picked[i]]
+        for k in 0..<kernelDims {
+            var noise = 0.0
+            for l in 0...k { noise += L[k][l] * z[l] }
+            y[k] = kernelShrink * q[k] + (1.0 - kernelShrink) * mean[k] + kernelSpread * noise
+        }
+        next.append(Particle(
+            alphaM2s: exp(y[0]), logDoseOffset: y[1], tauAirScale: exp(y[2]),
+            noise: exp(y[3]), whiteOffset: y[4], whiteFirmGap: exp(y[5])
+        ))
     }
     for i in 0..<n {
-        let a = gaussian(state); state = a.state
-        let b = gaussian(state); state = b.state
-        let c = gaussian(state); state = c.state
-        let d = gaussian(state); state = d.state
-        let e = gaussian(state); state = e.state
-        let f = gaussian(state); state = f.state
-        let q = picked[i]
-        post.particles[i] = Particle(
-            alphaM2s: q.alphaM2s * exp(0.02 * a.value),
-            logDoseOffset: q.logDoseOffset + 0.015 * b.value,
-            tauAirScale: q.tauAirScale * exp(0.03 * c.value),
-            noise: q.noise * exp(0.03 * d.value),
-            whiteOffset: q.whiteOffset + 0.015 * e.value,
-            whiteFirmGap: q.whiteFirmGap * exp(0.03 * f.value)
-        )
+        post.particles[i] = next[i]
         post.weights[i] = 1.0 / Double(n)
     }
     post.rng = state
