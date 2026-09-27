@@ -610,6 +610,48 @@ advised against at all: on the model it is ice, to the tenth, at every level
 see the physics of a protocol, not the spread of its inputs; the per-cook
 noise absorbs the latter, egg by egg.
 
+**The outcome (27 September).** "7/10 eggs hit the mark" does not say which
+way the other three miss, so the cook cannot act on it. `predictOutcome` in
+`src/core/outcome.ts`, held to `EggTimerCore/Outcome.swift` by
+`fixtures/outcome.json`, takes what the decision takes - the posterior, the
+surface, the chosen time and the nominal target - and returns:
+
+- **The answers**: P(too soft), P(just right), P(too firm) and P(runny), the
+  posterior predictive the loss and the odds are already made of, unrelated
+  share included, so they are about what the cook will say. On 400 simulated
+  cooks x 6 eggs they are calibrated to 1.3-1.6% (yolk) and 0.2% (white).
+- **The level**: the 10%, 50% and 90% points of the delivered yolk doneness
+  on the slider's scale. Each particle delivers its time-scale's log dose,
+  read off the surface, with a Gaussian of its own noise around it; the
+  points are the weighted mixture's, found by bisection on its CDF. The
+  delivered level falls inside the 80% range for 81.1% of simulated eggs
+  (8.2% under, 10.7% over), 78-83% at every egg from the first. The range is
+  0.14-0.72 on a fresh install at jammy and 0.35-0.51 after three jammy eggs
+  just right.
+- **The lean**: 'soft' or 'firm' when one way of missing is more than 1.5
+  times as likely as the other, 'balanced' between - a miss one way three
+  times in five, the least that makes "if not, more likely a little firm"
+  right clearly more often than wrong. The probabilities are calibrated at
+  every ratio from 1 to 3, so this is when to speak, not a correction.
+
+**The level leaves the taste offset out.** The taste offset is where this
+cook's "just right" sits, not how hard the egg is. Leaving it out makes the
+level a physical scale the cook can compare with the slider: a cook who likes
+a firmer yolk is served a later time, and the range's median lands above the
+slider's own position (0.45 at jammy on `decide.json`'s firmer posterior).
+With the offset in, the level would be the egg as this cook's taste reads it,
+which is what the three answers already say. The noise stays in: it is the
+egg-to-egg scatter the likelihood sees every answer through. On one phone
+that scatter and the cook's own judging are one number, so the range is as
+wide as the answers make the egg look.
+
+**Clamped to [0, 1].** A low end of 0 means at least one egg in ten is
+softer than the runniest level the slider offers; a high end of 1 means at
+least one in ten is at or past the hardest, which at hard is half the eggs.
+
+It costs about 2 ms in node beside a decision's 13-16 ms, and is computed
+once, at the time on screen.
+
 Not built: the nudge (E8), and any per-cook loss.
 
 ## 9. The fit
