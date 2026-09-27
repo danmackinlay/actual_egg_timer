@@ -1,5 +1,8 @@
 /* Ultra-functionalist: read at arm's length, hit with a wet thumb.
-   Dark by default; the light scheme is an override, not the base. */
+   Dark by default; the light scheme is an override, not the base.
+
+   Three views share this page (UI.md): the egg, the Kitchen and Help. The
+   egg is two controls and a sentence; everything else is a rarer visit. */
 
 :root {
   --bg: #0c0d0f;
@@ -49,7 +52,7 @@ body {
 main {
   max-width: 32rem;
   margin: 0 auto;
-  padding: 12px 16px 148px;
+  padding: 6px 16px 164px;
 }
 
 .sr-only {
@@ -67,13 +70,76 @@ main {
   outline-offset: 2px;
 }
 
+[hidden] { display: none !important; }
+
+button {
+  font: inherit;
+  display: block;
+  width: 100%;
+  border-radius: 12px;
+  cursor: pointer;
+  min-height: 64px;
+}
+button:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* ------------------------------------------------------------ the top bar */
+
+#topbar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 48px;
+  margin: 0 -8px 6px;
+}
+.navlink {
+  display: inline-flex;
+  align-items: center;
+  width: auto;
+  min-height: 44px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--fg);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+.navlink:hover { background: color-mix(in srgb, var(--fg) 7%, transparent); }
+.navlink--back::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  margin-right: 8px;
+  border-left: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(45deg);
+}
+
+/* Mute: a pill, not a bar. It has to be reachable from every phase. */
+button.mute {
+  width: auto;
+  min-height: 36px;
+  margin-left: auto;
+  padding: 6px 14px;
+  font-size: 0.8125rem;
+  color: var(--dim);
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+}
+button.mute[aria-pressed="true"] {
+  color: var(--warn);
+  border-color: color-mix(in srgb, var(--warn) 55%, transparent);
+}
+
 /* ---------------------------------------------------------------- readout */
 
 #readout {
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 12px;
-  padding: 14px 16px 16px;
+  padding: 14px 16px 14px;
   text-align: center;
 }
 
@@ -94,43 +160,55 @@ main {
 }
 
 #subline {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
   margin: 4px 0 0;
   min-height: 1.2em;
   font-size: 0.875rem;
   color: var(--dim);
 }
 
-/* The odds and "still learning", under the time. The line keeps its height
-   while the choice is still being made, so the stats do not jump when it lands. */
+/* The odds and "I'm still learning", under the time, each with its (i). The
+   line keeps its height while the choice is still being made, so nothing
+   jumps when it lands. */
 #odds {
   display: flex;
   justify-content: center;
+  align-items: center;
   flex-wrap: wrap;
-  column-gap: 12px;
+  column-gap: 14px;
   margin: 6px 0 0;
-  min-height: 1.3em;
+  min-height: 1.75em;
   font-size: 0.875rem;
-  font-weight: 600;
 }
-#oddsLearning { font-weight: 400; color: var(--dim); }
-#oddsHit:empty, #oddsLearning:empty { display: none; }
-#odds { align-items: center; }
+.odds__item { display: inline-flex; align-items: center; }
+#oddsHit { font-weight: 600; }
+#direction, #whiteRisk { margin: 6px 0 0; font-size: 0.9375rem; }
+#oddsLearning { color: var(--dim); }
+.odds__item:has(> span:empty) { display: none; }
 
-/* The (i) beside the odds. The glyph is drawn here, so the markup holds no
-   words of its own; the hit area is a thumb's, the circle is small. */
+/* ------------------------------------------------------------------- (i) */
+
+/* One affordance for "tell me more about this", everywhere (UI.md section 4).
+   The glyph is drawn here, so the markup holds no words of its own; the hit
+   area is a thumb's, the circle is small. */
 button.info {
   display: inline-flex;
+  flex: none;
   align-items: center;
   justify-content: center;
   width: 36px;
-  height: 28px;
+  height: 32px;
   min-height: 0;
-  margin: 0 -10px 0 -8px;
+  margin: 0 -6px 0 0;
   padding: 0;
   border: 0;
   border-radius: 999px;
   background: transparent;
   color: var(--dim);
+  vertical-align: middle;
 }
 button.info::before {
   content: "i";
@@ -143,196 +221,36 @@ button.info::before {
   border-radius: 50%;
   font: italic 700 0.8125rem/1 Georgia, "Times New Roman", serif;
 }
+button.info:hover { color: var(--fg); }
 button.info[aria-expanded="true"] { color: var(--fg); }
 button.info[aria-expanded="true"]::before { background: var(--fg); color: var(--panel); border-color: var(--fg); }
 
-/* What the (i) and the advice line open, in place: no modal, no popover. */
+/* What an (i) opens, in place: no modal, no popover. */
 .disclosed {
-  margin: 8px auto 0;
-  max-width: 28rem;
+  margin: 8px 0 4px;
+  padding: 10px 12px;
   text-align: left;
   font-size: 0.875rem;
-  color: var(--dim);
-}
-.disclosed[hidden], #advice[hidden] { display: none; }
-ul.disclosed { padding-left: 1.2em; }
-ul.disclosed li + li { margin-top: 6px; }
-
-/* The advice line: a quiet link-like button with a chevron that turns. */
-#advice { text-align: center; }
-button.disclose {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  width: auto;
-  min-height: 36px;
-  margin: 4px auto 0;
-  padding: 4px 8px;
-  border: 0;
-  background: transparent;
+  line-height: 1.45;
   color: var(--fg);
-  font-size: 0.875rem;
-  text-decoration: underline;
-  text-decoration-color: var(--line);
-  text-underline-offset: 3px;
+  background: color-mix(in srgb, var(--fg) 5%, transparent);
+  border-left: 3px solid var(--line);
+  border-radius: 0 8px 8px 0;
 }
-button.disclose::after {
-  content: "";
-  width: 7px;
-  height: 7px;
-  border-right: 2px solid currentColor;
-  border-bottom: 2px solid currentColor;
-  transform: translateY(-2px) rotate(45deg);
-  transition: transform 120ms;
-}
-button.disclose[aria-expanded="true"]::after { transform: translateY(2px) rotate(-135deg); }
+#readout .disclosed { margin-left: auto; margin-right: auto; max-width: 28rem; }
 
-#stats {
-  display: flex;
-  justify-content: center;
-  gap: 18px;
-  flex-wrap: wrap;
-  margin: 12px 0 0;
-  padding: 12px 0 0;
-  border-top: 1px solid var(--line);
-}
-#stats div { text-align: center; }
-#stats dt {
-  font-size: 0.6875rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--dim);
-}
-#stats dd { margin: 1px 0 0; font-size: 1.125rem; font-weight: 600; }
+/* --------------------------------------------------------------- the egg */
 
-#note {
-  margin: 10px 0 0;
+#controls { margin: 18px 0 0; }
+
+.field--slider > label {
+  display: block;
+  margin-bottom: 2px;
   font-size: 0.9375rem;
   color: var(--dim);
 }
 
-#warn {
-  margin: 10px 0 0;
-  padding: 9px 11px;
-  text-align: left;
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--warn) 16%, transparent);
-  border: 1px solid color-mix(in srgb, var(--warn) 45%, transparent);
-  color: var(--fg);
-  font-size: 0.875rem;
-}
-#warn[hidden] { display: none; }
-
-/* Mute: a pill, not a bar. It has to be reachable from every phase, so it lives
-   in the readout rather than with the hidden controls. */
-button.mute {
-  width: auto;
-  min-height: 36px;
-  margin: 12px auto 0;
-  padding: 6px 14px;
-  font-size: 0.8125rem;
-  color: var(--dim);
-  background: transparent;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-}
-button.mute[aria-pressed="true"] {
-  color: var(--warn);
-  border-color: color-mix(in srgb, var(--warn) 55%, transparent);
-}
-
-/* --------------------------------------------------------------- controls */
-
-#controls { margin: 14px 0 0; }
-
-.field {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 9px 0;
-  border: 0;
-  border-bottom: 1px solid var(--line);
-  margin: 0;
-}
-.field > label, .field legend {
-  font-size: 0.9375rem;
-  color: var(--dim);
-  padding: 0;
-}
-.field--slider, .field--measure, fieldset.field { display: block; }
-.field[hidden] { display: none; }
-fieldset.field legend { margin-bottom: 7px; }
-
-.field .hint {
-  margin: 7px 0 0;
-  font-size: 0.8125rem;
-  color: var(--dim);
-}
-
-.field--pair { display: flex; gap: 16px; }
-
-/* Three ways of saying the same size. They stay in step, so they read as one
-   control rather than three competing ones. */
-.measure { display: flex; flex-direction: column; gap: 10px; }
-.measure > div { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.measure__legend { margin: 0 0 10px; color: var(--dim); }
-.field--measure input[type="number"] { max-width: 40vw; }
-.field--pair > div { flex: 1; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-
-select, input[type="number"] {
-  font: inherit;
-  font-variant-numeric: tabular-nums;
-  color: var(--fg);
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 10px 10px;
-  min-height: 46px;
-  max-width: 62vw;
-}
-input[type="number"] { width: 5.5rem; text-align: right; }
-select { max-width: 60vw; }
-
-.unit { display: inline-flex; align-items: center; gap: 6px; color: var(--dim); }
-
-/* segmented radio group: big targets, no decoration */
-.seg { display: flex; gap: 6px; position: relative; }
-.seg input[type="radio"] {
-  position: absolute;
-  opacity: 0;
-  width: 1px; height: 1px;
-}
-.seg label {
-  flex: 1;
-  min-height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 6px 4px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--panel);
-  font-size: 0.9375rem;
-  cursor: pointer;
-}
-.seg input[type="radio"]:checked + label {
-  background: var(--accent);
-  color: var(--accent-fg);
-  border-color: var(--accent);
-  font-weight: 600;
-}
-.seg input[type="radio"]:focus-visible + label {
-  outline: 3px solid var(--focus);
-  outline-offset: 2px;
-}
-
-/* ----------------------------------------------------------------- slider */
-
-.field--slider > label { display: block; margin-bottom: 2px; }
-
-.slider { position: relative; height: 68px; }
+.slider { position: relative; height: 72px; }
 
 .slider__track {
   position: absolute;
@@ -344,7 +262,7 @@ select { max-width: 60vw; }
   overflow: hidden;
 }
 /* The unreachable regions: at the soft end the white would still be raw; at
-   the hard end (heat off only) the pan runs out of heat first. */
+   the hard end (heat off only) the water runs out of heat first. */
 .slider__blocked {
   position: absolute;
   left: 0; top: 0; bottom: 0;
@@ -355,16 +273,15 @@ select { max-width: 60vw; }
 .slider__blocked--hard { left: auto; right: 0; }
 /* The odds at each level, relative to the best level's (src/core/reach.ts).
    The band's strength is its opacity, so it reads in grey as well as in
-   colour: strong where this pan hits the mark most often, faint where it
-   rarely does. */
+   colour. */
 .slider__odds {
   position: absolute;
   inset: 0;
   background: transparent;
 }
-/* Levels the pan can deliver but that hit the mark less than 3 times in 10,
-   once an egg has taught something: dotted, so they read apart from the
-   striped levels the pan cannot deliver at all, without leaning on colour. */
+/* Levels the water can deliver but that hit the mark less than 3 times in
+   10, once an egg has taught something: dotted, so they read apart from the
+   striped levels that cannot be delivered at all, without leaning on colour. */
 .slider__unlikely {
   position: absolute;
   top: 0;
@@ -397,18 +314,33 @@ select { max-width: 60vw; }
   margin-top: 7px;
   border-radius: 50%;
   background: var(--accent);
-  border: 3px solid var(--panel);
+  border: 3px solid var(--bg);
   cursor: pointer;
 }
 .slider input[type="range"]::-moz-range-thumb {
   width: 28px; height: 28px;
   border-radius: 50%;
   background: var(--accent);
-  border: 3px solid var(--panel);
+  border: 3px solid var(--bg);
   cursor: pointer;
 }
 
-.slider__ticks { position: absolute; left: 17px; right: 17px; top: 46px; height: 20px; }
+/* The likely range of the yolk (not yet built, see index.html): a bracket
+   just under the track, in the thumb's column, so it reads with the thumb
+   and never over the odds shading. Its ends are ticks, so a narrow range
+   still reads as a range. */
+.slider__range { position: absolute; left: 17px; right: 17px; top: 38px; height: 7px; pointer-events: none; }
+.slider__bracket {
+  position: absolute;
+  top: 0;
+  height: 7px;
+  border: 2px solid var(--fg);
+  border-top: 0;
+  border-radius: 0 0 3px 3px;
+  opacity: 0.7;
+  pointer-events: none;
+}
+.slider__ticks { position: absolute; left: 17px; right: 17px; top: 50px; height: 20px; }
 .slider__ticks span {
   position: absolute;
   transform: translateX(-50%);
@@ -419,33 +351,332 @@ select { max-width: 60vw; }
 .slider__ticks span.blocked { text-decoration: line-through; opacity: 0.5; }
 
 .value { margin: 0; font-size: 0.875rem; color: var(--dim); }
+.value--note { margin-top: 2px; }
+
+/* The setup sentence: prose whose clauses are buttons. Underlined like a
+   link a thumb can find, tinted while its choice is open. The line height
+   gives each clause a target taller than the text. */
+#setup {
+  margin: 18px 0 0;
+  padding: 14px 0 0;
+  border-top: 1px solid var(--line);
+}
+#sentence {
+  margin: 0;
+  font-size: 1.1875rem;
+  line-height: 1.9;
+}
+button.clause {
+  display: inline;
+  width: auto;
+  min-height: 0;
+  margin: 0 -3px;
+  padding: 3px 3px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--fg);
+  font: inherit;
+  font-weight: 650;
+  line-height: inherit;
+  text-align: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--accent);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 5px;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+button.clause:hover { background: color-mix(in srgb, var(--accent) 12%, transparent); }
+button.clause[aria-expanded="true"] {
+  background: var(--accent);
+  color: var(--accent-fg);
+  text-decoration-color: transparent;
+}
+
+/* A clause's choice, opened in place under the sentence. */
+.panel {
+  margin: 10px 0 0;
+  padding: 10px 12px 12px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+.panel__head {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-height: 36px;
+  margin-bottom: 8px;
+}
+.panel__title {
+  font-size: 0.8125rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+button.panel__close {
+  width: auto;
+  min-height: 36px;
+  margin-left: auto;
+  padding: 4px 12px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--accent);
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+.panel .hint, .krow .hint {
+  margin: 8px 0 0;
+  font-size: 0.8125rem;
+  color: var(--dim);
+}
+.prow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 10px 0 0;
+  color: var(--dim);
+  font-size: 0.9375rem;
+}
+.prow:first-child { margin-top: 0; }
+
+/* Three ways of saying the same size. They stay in step, so they read as one
+   control rather than three competing ones. */
+.measure__legend { margin: 14px 0 8px; color: var(--dim); font-size: 0.9375rem; }
+.measure { display: flex; flex-direction: column; gap: 8px; }
+.measure > div {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  color: var(--dim); font-size: 0.9375rem;
+}
+
+select, input[type="number"] {
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px 10px;
+  min-height: 46px;
+}
+input[type="number"] { width: 5.5rem; text-align: right; }
+select { max-width: 60vw; }
+
+.unit { display: inline-flex; align-items: center; gap: 6px; color: var(--dim); }
+
+/* segmented radio group: big targets, no decoration */
+.seg { display: flex; gap: 6px; position: relative; }
+.seg input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  width: 1px; height: 1px;
+}
+.seg label {
+  flex: 1;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 6px 4px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--bg);
+  font-size: 0.9375rem;
+  cursor: pointer;
+}
+.seg input[type="radio"]:checked + label {
+  background: var(--accent);
+  color: var(--accent-fg);
+  border-color: var(--accent);
+  font-weight: 600;
+}
+.seg input[type="radio"]:focus-visible + label {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* ------------------------------------------------------------------ slot */
+
+/* One longer line, in every phase. */
+#slot { margin: 16px 0 0; }
+#slot p { margin: 0; font-size: 0.9375rem; line-height: 1.45; }
+#warn {
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--warn) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--warn) 45%, transparent);
+  color: var(--fg);
+}
+#slot p + p { margin-top: 6px; }
+#welcome { color: var(--dim); }
+
+/* A way to Help: a link with an arrow, not a disclosure. */
+a.morelink {
+  display: inline-block;
+  padding: 10px 0;
+  color: var(--fg);
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-color: var(--accent);
+  text-underline-offset: 4px;
+}
+a.morelink::after { content: "\2192"; display: inline-block; margin-left: 6px; }
+
+/* --------------------------------------------------------- Kitchen, Help */
+
+.page h1 {
+  margin: 4px 0 10px;
+  font-size: 1.75rem;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+}
+.page h1:focus { outline: none; }
+
+.krow {
+  margin: 0;
+  padding: 12px 0;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  min-width: 0;
+}
+.krow__line { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.krow__head {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-height: 36px;
+  font-size: 1rem;
+  font-weight: 600;
+}
+fieldset.krow .krow__head { margin-bottom: 8px; }
+.krow__sub { margin: 6px 0 0; font-size: 0.875rem; color: var(--dim); }
+.krow__sub strong { color: var(--fg); font-weight: 600; }
+
+.check { display: flex; align-items: center; gap: 10px; min-height: 44px; cursor: pointer; }
+.check input[type="checkbox"] { width: 22px; height: 22px; margin: 0; accent-color: var(--accent); }
+
+#learned { border-bottom: 0; }
+#learned .hint { margin: 2px 0 10px; font-size: 0.875rem; }
+#learned .hint:focus { outline: none; }
+.forget__row { display: flex; align-items: center; gap: 6px; }
+.forget__row button.secondary, .confirm__row button {
+  width: auto;
+  min-height: 44px;
+  margin: 0;
+  padding: 8px 16px;
+  font-size: 0.9375rem;
+}
+#forgetConfirm {
+  margin-top: 10px;
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--warn) 45%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--warn) 8%, transparent);
+}
+#forgetTitle { margin: 0 0 4px; font-weight: 650; }
+#forgetConfirm .hint { margin: 0 0 12px; }
+.confirm__row { display: flex; gap: 8px; }
+button.danger { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 55%, transparent); font-weight: 600; }
+
+#colophon {
+  margin: 22px 0 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--dim);
+}
+#colophon p { margin: 0; }
+#colophon strong { color: var(--fg); font-weight: 600; }
+#colophon a { color: inherit; text-underline-offset: 2px; }
+#colophon a:hover, #colophon a:focus-visible { color: var(--fg); }
+
+/* Help: a page to read. */
+#help { line-height: 1.5; }
+#help h2 {
+  margin: 28px 0 8px;
+  font-size: 1.25rem;
+  line-height: 1.25;
+  scroll-margin-top: 12px;
+}
+#help h3 { margin: 18px 0 4px; font-size: 1rem; }
+#help p { margin: 0 0 10px; }
+#help section { scroll-margin-top: 12px; }
+.toc {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 6px;
+}
+.toc a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 4px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--fg);
+  font-size: 0.875rem;
+  text-decoration: none;
+}
+.foryou {
+  margin: 12px 0;
+  padding: 10px 12px;
+  border-left: 3px solid var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  border-radius: 0 8px 8px 0;
+}
+.foryou h3 { margin-top: 0 !important; }
+.foryou ul { margin: 0; padding-left: 1.2em; }
+.foryou li + li { margin-top: 6px; }
+.sources { padding-left: 1.2em; font-size: 0.875rem; }
+.sources li + li { margin-top: 8px; }
+.sources a { color: var(--fg); text-underline-offset: 2px; overflow-wrap: anywhere; }
+
+/* ---------------------------------------------------------------- views */
+
+/* The Kitchen and Help are pages of their own; the egg's parts, and the
+   button at the bottom, step aside while one is open. A running cook is
+   always the egg: the app never leaves the clock for a settings page. */
+.page { display: none; }
+body[data-phase="IDLE"][data-view="kitchen"] #kitchen,
+body[data-phase="IDLE"][data-view="help"] #help { display: block; }
+body[data-phase="IDLE"]:not([data-view="egg"]) :is(#readout, #controls, #slot, #actions) { display: none; }
+body[data-phase="IDLE"]:not([data-view="egg"]) main { padding-bottom: 32px; }
+
+#navBack { display: none; }
+body[data-phase="IDLE"]:not([data-view="egg"]) #navBack { display: inline-flex; }
+body[data-phase="IDLE"]:not([data-view="egg"]) #kitchenLink,
+body[data-view="help"] #helpLink,
+body:not([data-phase="IDLE"]) :is(#kitchenLink, #helpLink) { display: none; }
 
 /* ---------------------------------------------------------------- actions */
 
 #actions {
   position: fixed;
   left: 0; right: 0; bottom: 0;
-  background: linear-gradient(to top, var(--bg) 62%, transparent);
+  background: linear-gradient(to top, var(--bg) 70%, transparent);
   padding: 20px 16px calc(14px + env(safe-area-inset-bottom));
 }
 #actions > * { max-width: 32rem; margin-left: auto; margin-right: auto; }
 
 #primaryHint {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
   margin: 0 auto 6px;
   text-align: center;
   font-size: 0.8125rem;
   color: var(--dim);
   min-height: 1.1em;
 }
+#actions .disclosed { margin-bottom: 10px; background: var(--panel); }
 
-button {
-  font: inherit;
-  display: block;
-  width: 100%;
-  border-radius: 12px;
-  cursor: pointer;
-  min-height: 64px;
-}
 button.primary {
   background: var(--accent);
   color: var(--accent-fg);
@@ -463,36 +694,17 @@ button.secondary {
   font-size: 1rem;
   padding: 10px;
 }
-button[hidden] { display: none; }
-button:disabled { opacity: 0.45; cursor: not-allowed; }
 
 /* ----------------------------------------------------------- running view */
 
 /* While a cook is under way the inputs are locked and out of the way: the
-   screen is a clock and one button. */
-#colophon {
-  margin: 22px 0 0;
-  padding-top: 14px;
-  border-top: 1px solid var(--line);
-  font-size: 0.8125rem;
-  line-height: 1.5;
-  color: var(--dim);
-}
-#colophon p { margin: 0; }
-#colophon strong { color: var(--fg); font-weight: 600; }
-#colophon a { color: inherit; text-underline-offset: 2px; }
-#colophon a:hover, #colophon a:focus-visible { color: var(--fg); }
-
-/* Opening the source mid-cook must not take the timer with it: the link opens
-   in a new tab, and the colophon steps out of the way while a cook is running
-   so there is nothing to tap by accident. */
-body:not([data-phase="IDLE"]) #colophon { display: none; }
+   screen is a clock, one line, and one button. */
 body:not([data-phase="IDLE"]) #controls { display: none; }
-body:not([data-phase="IDLE"]) main { padding-top: 6vh; }
+body:not([data-phase="IDLE"]) main { padding-top: 2vh; }
+body:not([data-phase="IDLE"]) #readout { margin-top: 4vh; padding: 22px 16px 20px; }
 body:not([data-phase="IDLE"]) #bigtime { font-size: clamp(5rem, 32vw, 9rem); }
+body:not([data-phase="IDLE"]) #phaseLabel { font-size: 0.9375rem; color: var(--fg); font-weight: 600; }
 
-/* A cold start hides "after boiling" until the boil has actually been timed. */
-body[data-start="hot"] #afterBoilStat { display: none; }
 /* A control is shown when the answer depends on it.
  *
  * `sousVideEstimate` takes a radius, an alpha, a bath temperature and the two
@@ -503,7 +715,6 @@ body[data-start="hot"] #afterBoilStat { display: none; }
  * wearing `pan-only`, and a new input to `sousVideEstimate` is the signal to
  * take the class off something. */
 body[data-start="sous"] .pan-only { display: none; }
-body[data-start="sous"] #afterBoilStat { display: none; }
 
 /* "Yesterday" is not a clock face, and will not fit like one. */
 body[data-start="sous"][data-phase="IDLE"] #bigtime {
@@ -536,14 +747,18 @@ body[data-phase="PULL"] #readout { animation: flash 1s steps(2, end) infinite; }
   margin: 0 0 8px;
   text-align: center;
   font-size: 0.9375rem;
-  color: var(--dim);
+  color: var(--fg);
+  font-weight: 600;
 }
 #whiteAsk { margin-top: 14px; }
-#feedback .seg { display: flex; gap: 8px; }
+.pair { display: flex; gap: 8px; }
 button.fb, button.wb {
   min-height: 52px;
   font-size: 1rem;
   border-radius: 12px;
+  color: var(--fg);
+  background: var(--panel);
+  border: 1px solid var(--line);
 }
 button.fb[disabled], button.wb[disabled] { opacity: 0.5; }
 /* The answer given stays legible: it is the record of what was said. */
@@ -554,15 +769,13 @@ button.fb[aria-pressed="true"], button.wb[aria-pressed="true"] {
   border-color: var(--accent);
   font-weight: 600;
 }
-#feedbackOptional, #calibNote { text-align: center; margin: 8px 0 0; min-height: 1.1em; }
+#feedbackOptional, #calibNote {
+  text-align: center; margin: 8px 0 0; min-height: 1.1em; font-size: 0.8125rem; color: var(--dim);
+}
 
 /* ---- the thermometer (E4) ---- */
-.field--check .check { display: flex; align-items: center; gap: 10px; color: var(--fg); cursor: pointer; }
-.field--check input[type="checkbox"] { width: 22px; height: 22px; margin: 0; accent-color: var(--accent); }
-.field--check { display: block; }
 #probeOffer { margin-top: 10px; text-align: center; }
 #probeOffer .hint { margin: 0 0 8px; font-size: 0.875rem; color: var(--dim); }
-#probeOffer .seg { display: flex; gap: 8px; }
 #probeOffer button { margin-top: 0; }
 #probeEntry { margin-bottom: 14px; text-align: center; }
 #probeNow { margin: 0 0 4px; font-size: 0.9375rem; color: var(--fg); font-weight: 600; }
@@ -570,27 +783,9 @@ button.fb[aria-pressed="true"], button.wb[aria-pressed="true"] {
 .probe__row { display: flex; align-items: center; justify-content: center; gap: 10px; }
 .probe__row button { width: auto; margin-top: 0; padding: 10px 16px; }
 
-/* ------------------------------------------------- what it has learned */
-
-/* The posterior and the pan, stated where someone can see them, with the way
-   to take them back. Hidden mid-cook along with the rest of the inputs: it is
-   about the next egg, not the one in the water. */
-#learned {
-  max-width: 32rem;
-  margin: 4px auto 0;
-  padding: 0 16px;
-  text-align: center;
+/* ---- wider screens: the same column, with room to breathe ---- */
+@media (min-width: 720px) {
+  main { padding-top: 20px; }
+  #readout { padding: 22px 24px 20px; }
+  #sentence { font-size: 1.3125rem; }
 }
-
-#learned .hint { margin: 0 0 6px; }
-
-#learned button {
-  margin-top: 0;
-  min-height: 40px;
-  font-size: 0.875rem;
-  padding: 6px 14px;
-  width: auto;
-}
-
-body:not([data-phase="IDLE"]) #learned { display: none; }
-body[data-start="sous"] #learned { display: none; }

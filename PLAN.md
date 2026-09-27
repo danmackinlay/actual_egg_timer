@@ -832,6 +832,16 @@ wording is judged in place on a phone, not approved row by row in tables. The
 plan is UI.md. The web app is built first, the owner reviews it on a deploy
 preview, and iOS follows the web layout.
 
+**The web half is built (27 September), unreviewed.** UI.md section 8 says
+what was built and where it departs; LANGUAGE.md section 3 lists its strings,
+with the owner's wording rules of the same day (no narrating the interface,
+no "bath" for sous-vide, "pan" only for the pot, "I'm still learning"), a
+Kitchen page, a Help page, and one (i) everywhere. Next: the owner on a
+deploy preview, which needs the branch pushed (the owner's call); then the
+direction line and the slider's range bracket, whose hooks are in place and
+whose numbers are being built in core separately; then iOS, which drops the
+web-retired keys UI.md section 8 lists.
+
 ### Answered by the owner, 27 September
 
 - **Odds-shaded slider: yes, in both apps, threshold 3/10.** Reachability

@@ -16,7 +16,7 @@ import {
 } from '../core/geometry.js';
 import { boilingPointAtAltitude } from '../core/thermo.js';
 import { Cooling, CookSetup, StartMode } from '../core/protocol.js';
-import { SOUS_VIDE_BATH_C, sousVideEstimate } from '../core/sousvide.js';
+import { SOUS_VIDE_BATH_C, SOUS_VIDE_MODEL_FLOOR_C, sousVideEstimate } from '../core/sousvide.js';
 import {
   Measure, Quantity, UnitSystem, chooseUnits, displayText, parse, sizeClassLabel,
 } from '../core/units.js';
@@ -74,19 +74,25 @@ const dom = {
   phaseLabel: el<HTMLParagraphElement>('phaseLabel'),
   digits: el<HTMLSpanElement>('digits'),
   announce: el<HTMLSpanElement>('announce'),
-  subline: el<HTMLParagraphElement>('subline'),
+  sublineText: el<HTMLSpanElement>('sublineText'),
+  sublineInfo: el<HTMLButtonElement>('sublineInfo'),
+  sublineMore: el<HTMLParagraphElement>('sublineMore'),
   odds: el<HTMLParagraphElement>('odds'),
   oddsHit: el<HTMLSpanElement>('oddsHit'),
   oddsLearning: el<HTMLSpanElement>('oddsLearning'),
   oddsInfo: el<HTMLButtonElement>('oddsInfo'),
   oddsWhy: el<HTMLParagraphElement>('oddsWhy'),
-  advice: el<HTMLDivElement>('advice'),
-  adviceToggle: el<HTMLButtonElement>('adviceToggle'),
+  learningInfo: el<HTMLButtonElement>('learningInfo'),
+  learningMore: el<HTMLParagraphElement>('learningMore'),
+  advice: el<HTMLParagraphElement>('advice'),
   adviceList: el<HTMLUListElement>('adviceList'),
-  statYolk: el<HTMLElement>('statYolk'),
-  statYolkLabel: el<HTMLElement>('statYolkLabel'),
-  startHint: el<HTMLParagraphElement>('startHint'),
-  statAfter: el<HTMLElement>('statAfter'),
+  forYou: el<HTMLDivElement>('forYou'),
+  welcome: el<HTMLParagraphElement>('welcome'),
+  helpSousVide: el<HTMLParagraphElement>('helpSousVide'),
+  sentence: el<HTMLParagraphElement>('sentence'),
+  navBack: el<HTMLButtonElement>('navBack'),
+  kitchenTitle: el<HTMLElement>('kitchenTitle'),
+  helpTitle: el<HTMLElement>('helpTitle'),
   statBoil: el<HTMLElement>('statBoil'),
   note: el<HTMLParagraphElement>('note'),
   warn: el<HTMLParagraphElement>('warn'),
@@ -117,12 +123,18 @@ const dom = {
   eggCount: el<HTMLInputElement>('eggCount'),
   altitude: el<HTMLInputElement>('altitude'),
   primary: el<HTMLButtonElement>('primary'),
-  primaryHint: el<HTMLParagraphElement>('primaryHint'),
+  primaryHintText: el<HTMLSpanElement>('primaryHintText'),
+  hintInfo: el<HTMLButtonElement>('hintInfo'),
+  hintMore: el<HTMLParagraphElement>('hintMore'),
   secondary: el<HTMLButtonElement>('secondary'),
   feedback: el<HTMLDivElement>('feedback'),
   calibNote: el<HTMLParagraphElement>('calibNote'),
   learnedNote: el<HTMLParagraphElement>('learnedNote'),
   forget: el<HTMLButtonElement>('forget'),
+  forgetInfo: el<HTMLButtonElement>('forgetInfo'),
+  forgetConfirm: el<HTMLDivElement>('forgetConfirm'),
+  forgetYes: el<HTMLButtonElement>('forgetYes'),
+  forgetNo: el<HTMLButtonElement>('forgetNo'),
   probeSetting: el<HTMLInputElement>('probeSetting'),
   probeOffer: el<HTMLDivElement>('probeOffer'),
   probeOfferYes: el<HTMLButtonElement>('probeOfferYes'),
@@ -407,13 +419,6 @@ function rampSeconds(): number {
   return settings.startMode === 'cold' ? timeToBoil_s() : 0;
 }
 
-/** Why the form is shorter in sous-vide. The controls are hidden because the
- *  answer does not read them (see `.pan-only` in styles.css); saying so stops
- *  that reading as a bug or as lost settings. */
-function renderStartHint(): void {
-  dom.startHint.textContent = t(isSousVide() ? 'controls.start.hintSousVide' : 'controls.start.hint');
-}
-
 /* ------------------------------------------------------------------ copy */
 
 /** The refusal, in words.
@@ -667,16 +672,18 @@ function renderOddsBand(odds: OddsProfile | null): void {
     + `${stops.join(', ')}, transparent ${last.toFixed(2)}%)`;
 }
 
-/** The advice line under low odds (reach.ts): shown while idle when the odds
- *  at the level on screen are under 5/10 or 3/10 short of the best level's,
- *  and only with the changes that would help this setup. The model prices a
- *  counter rest and the heat off from their own pots' profiles, asked for
- *  here and shown when they land; the fridge and the scale it cannot price. */
+/** The way to Help under low odds (reach.ts): a link, shown while idle when
+ *  the odds at the level on screen are under 5/10 or 3/10 short of the best
+ *  level's. It opens Help at its reliability section, whose top lists the
+ *  changes that would help this setup: the model prices a counter rest and
+ *  the heat off from their own pots' profiles, asked for here and shown when
+ *  they land; the fridge and the scale it cannot price. */
 let adviceShown = '';
 function renderAdvice(): void {
   let keys: string[] = [];
-  if (machine.phase === 'IDLE' && !isSousVide() && decision !== null && solution !== null
-    && solution.whiteSets && adviceWanted(decision.oddsTenths, profile)) {
+  const wanted = machine.phase === 'IDLE' && !isSousVide() && decision !== null && solution !== null
+    && solution.whiteSets && adviceWanted(decision.oddsTenths, profile);
+  if (wanted && decision !== null) {
     const inputs = currentInputs(timeToBoil_s());
     const priced: { key: string; profile: OddsProfile }[] = [];
     for (const change of pricedChanges(inputs.setup)) {
@@ -690,7 +697,8 @@ function renderAdvice(): void {
       settings.doneness, decision.odds, priced,
     );
   }
-  dom.advice.hidden = keys.length === 0;
+  dom.advice.hidden = !wanted;
+  dom.forYou.hidden = keys.length === 0;
   const shown = keys.join(' ');
   if (shown === adviceShown) return;
   adviceShown = shown;
@@ -701,11 +709,242 @@ function renderAdvice(): void {
   }));
 }
 
-/** Open or close one of the two disclosures in place. */
-function toggleDisclosure(button: HTMLButtonElement, panel: HTMLElement): void {
+/* ------------------------------------------------------------------- (i) */
+
+/** The paragraph an (i) opens: the element its aria-controls names. */
+function infoPanel(button: HTMLButtonElement): HTMLElement | null {
+  const id = button.getAttribute('aria-controls');
+  return id === null ? null : document.getElementById(id);
+}
+
+/** Open or close an (i)'s paragraph in place. */
+function toggleDisclosure(button: HTMLButtonElement): void {
+  const panel = infoPanel(button);
+  if (panel === null) return;
   const open = button.getAttribute('aria-expanded') !== 'true';
   button.setAttribute('aria-expanded', open ? 'true' : 'false');
   panel.hidden = !open;
+}
+
+/** Show or hide an (i) with what it describes. Its paragraph follows it:
+ *  hidden with it, and shown again only if it was left open. */
+function showInfo(button: HTMLButtonElement, visible: boolean): void {
+  button.hidden = !visible;
+  const panel = infoPanel(button);
+  if (panel !== null) panel.hidden = !visible || button.getAttribute('aria-expanded') !== 'true';
+}
+
+/**
+ * Every (i) on the page, one component (UI.md section 4). Its name to a
+ * screen reader is "About {label}", with the label its control shows
+ * (`data-label`), or a whole name of its own (`data-name`) where a label will
+ * not read inside that. Its paragraph is filled by `applyCopy` from the
+ * `data-copy` on the element it controls.
+ */
+function wireInfoButtons(): void {
+  for (const button of Array.from(document.querySelectorAll<HTMLButtonElement>('button.info'))) {
+    const name = button.dataset['name'];
+    const label = button.dataset['label'];
+    if (name !== undefined) button.setAttribute('aria-label', t(name));
+    else if (label !== undefined) button.setAttribute('aria-label', t('more.about', { label: t(label) }));
+    button.addEventListener('click', () => toggleDisclosure(button));
+  }
+}
+
+/* ------------------------------------------------------------ the sentence */
+
+type Clause = 'egg' | 'from' | 'start' | 'cooling';
+
+const CLAUSE_PANELS: Record<Clause, string> = {
+  egg: 'panelEgg', from: 'panelFrom', start: 'panelStart', cooling: 'panelCooling',
+};
+
+/** The four clause buttons, made once and kept, so re-rendering the sentence
+ *  around a new answer never takes the focus off the one being used. */
+const clauses = {} as Record<Clause, HTMLButtonElement>;
+let sentenceShown = '';
+let openClause: Clause | null = null;
+
+function panelFor(clause: Clause): HTMLElement {
+  return el<HTMLElement>(CLAUSE_PANELS[clause]);
+}
+
+/** What each clause says, and what a screen reader hears for it: its heading
+ *  and the option chosen, as the choice itself shows them ("Egg: 68 g"). */
+function clauseTexts(): Record<Clause, { text: string; label: string; value: string }> {
+  let mass: string;
+  if (settings.sizeIndex >= 0 && settings.sizeIndex < sizeClasses.length) {
+    const label = sizeClassLabel(sizeClasses[settings.sizeIndex], unitSystem());
+    mass = t(label.mass.key, { value: label.mass.value });
+  } else {
+    mass = show('mass', currentEgg().mass_kg * 1000);
+  }
+  const custom = show('eggTemp', settings.customStart_C);
+  const bath = show('temperature', SOUS_VIDE_BATH_C);
+  const from = settings.startTempMode === 'fridge'
+    ? { text: t('setup.from.fridge'), value: t('controls.eggFrom.fridge') }
+    : settings.startTempMode === 'room'
+      ? { text: t('setup.from.room'), value: t('controls.eggFrom.room') }
+      : { text: t('setup.from.custom', { temp: custom }), value: custom };
+  const start = settings.startMode === 'cold'
+    ? { text: t('setup.start.cold'), value: t('controls.start.cold') }
+    : settings.startMode === 'hot'
+      ? { text: t('setup.start.hot'), value: t('controls.start.hot') }
+      : { text: t('setup.start.sous', { bath: bath }), value: t('controls.start.sousVide', { bath: bath }) };
+  const cooling = settings.cooling === 'ice'
+    ? { text: t('setup.cooling.ice'), value: t('controls.then.ice') }
+    : settings.cooling === 'tap'
+      ? { text: t('setup.cooling.tap'), value: t('controls.then.tap') }
+      : { text: t('setup.cooling.counter'), value: t('controls.then.counter') };
+  return {
+    egg: { text: t('setup.egg', { mass: mass }), label: t('controls.egg'), value: mass },
+    from: { ...from, label: t('controls.eggFrom') },
+    start: { ...start, label: t('controls.start') },
+    cooling: { ...cooling, label: t('controls.cooling') },
+  };
+}
+
+/** Marks a placeholder's place in a rendered template: a character no
+ *  catalogue will contain. */
+const SLOT = '\u0001';
+
+/**
+ * The setup as one line of prose, rebuilt around the answers whenever they
+ * change. The template is the catalogue's, so a language may order the
+ * clauses as it likes; each placeholder becomes its clause's button, and
+ * everything between them stays text. Sous-vide says less, because where the
+ * egg comes from and how it cools change nothing there.
+ */
+function renderSentence(): void {
+  const texts = clauseTexts();
+  const key = isSousVide() ? 'setup.sentenceSousVide' : 'setup.sentence';
+  const marked = t(key, {
+    egg: `${SLOT}egg${SLOT}`, from: `${SLOT}from${SLOT}`,
+    start: `${SLOT}start${SLOT}`, cooling: `${SLOT}cooling${SLOT}`,
+  });
+  const signature = [marked, ...Object.values(texts).map((c) => `${c.text}|${c.label}|${c.value}`)].join('\n');
+  if (signature === sentenceShown) return;
+  sentenceShown = signature;
+
+  const focused = document.activeElement;
+  const nodes: Node[] = [];
+  marked.split(SLOT).forEach((part, i) => {
+    if (i % 2 === 0) {
+      if (part !== '') nodes.push(document.createTextNode(part));
+      return;
+    }
+    const clause = part as Clause;
+    const button = clauses[clause];
+    button.textContent = texts[clause].text;
+    button.setAttribute('aria-label', t('setup.clause', { label: texts[clause].label, value: texts[clause].value }));
+    nodes.push(button);
+  });
+  dom.sentence.replaceChildren(...nodes);
+  if (focused instanceof HTMLElement && focused.isConnected && focused !== document.activeElement) focused.focus();
+  // A choice whose clause the sentence no longer has - sous-vide drops two -
+  // closes with it.
+  if (openClause !== null && !clauses[openClause].isConnected) setOpenClause(null);
+}
+
+/** Open one clause's choice under the sentence, or none. One at a time. */
+function setOpenClause(next: Clause | null): void {
+  openClause = next;
+  for (const clause of Object.keys(CLAUSE_PANELS) as Clause[]) {
+    const open = clause === next;
+    clauses[clause].setAttribute('aria-expanded', open ? 'true' : 'false');
+    panelFor(clause).hidden = !open;
+  }
+}
+
+function buildClauses(): void {
+  for (const clause of Object.keys(CLAUSE_PANELS) as Clause[]) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'clause';
+    button.setAttribute('aria-controls', CLAUSE_PANELS[clause]);
+    button.setAttribute('aria-expanded', 'false');
+    button.addEventListener('click', () => setOpenClause(openClause === clause ? null : clause));
+    clauses[clause] = button;
+    // The panel's own Done puts the focus back where the cook came from.
+    const close = panelFor(clause).querySelector<HTMLButtonElement>('button.panel__close');
+    close?.addEventListener('click', () => {
+      setOpenClause(null);
+      button.focus();
+    });
+  }
+}
+
+/* ----------------------------------------------------------------- views */
+
+type View = 'egg' | 'kitchen' | 'help';
+
+/** Which view the address asks for, and which element to scroll to in it. */
+function viewFromHash(): { view: View; target: string | null } {
+  const hash = location.hash.replace(/^#/, '');
+  if (hash === 'kitchen') return { view: 'kitchen', target: null };
+  if (hash === 'help' || hash.startsWith('help-')) return { view: 'help', target: hash === 'help' ? null : hash };
+  return { view: 'egg', target: null };
+}
+
+/**
+ * Show the view the address names. The Kitchen and Help are hash routes, so
+ * the phone's back button leaves them the way it came; a running cook is
+ * always shown as the egg whatever the address says (styles.css).
+ */
+function route(focus: boolean): void {
+  const before = dom.body.dataset['view'];
+  const { view, target } = viewFromHash();
+  dom.body.dataset['view'] = view;
+  const section = target === null ? null : document.getElementById(target);
+  if (section !== null) {
+    section.scrollIntoView();
+  } else if (before !== view) {
+    window.scrollTo(0, 0);
+  }
+  if (!focus || before === view) return;
+  if (view === 'kitchen') dom.kitchenTitle.focus();
+  else if (view === 'help' && section === null) dom.helpTitle.focus();
+}
+
+/** A link to another view goes into the history as ours, so Back can return
+ *  along it rather than leave the site. */
+function navigate(hash: string): void {
+  history.pushState({ aet: true }, '', hash);
+  route(true);
+}
+
+/** Back: along our own history when there is some, and otherwise - a view
+ *  opened straight from its address - to the egg, without leaving a step
+ *  behind. */
+function goBack(): void {
+  const state = history.state as { aet?: boolean } | null;
+  if (state !== null && state.aet === true) {
+    history.back();
+    return;
+  }
+  history.replaceState(null, '', location.pathname + location.search);
+  route(true);
+}
+
+function wireViews(): void {
+  for (const link of Array.from(document.querySelectorAll<HTMLAnchorElement>('a[href^="#"]'))) {
+    link.addEventListener('click', (event) => {
+      const hash = link.getAttribute('href') ?? '#';
+      event.preventDefault();
+      // Within Help, a contents link only scrolls: it is not somewhere Back
+      // should stop.
+      if (dom.body.dataset['view'] === 'help' && hash.startsWith('#help-')) {
+        history.replaceState(history.state, '', hash);
+        route(false);
+        return;
+      }
+      navigate(hash);
+    });
+  }
+  dom.navBack.addEventListener('click', goBack);
+  window.addEventListener('popstate', () => route(true));
+  window.addEventListener('hashchange', () => route(true));
+  route(false);
 }
 
 function renderMute(): void {
@@ -728,7 +967,16 @@ function setPrimary(label: string, hint: string, visible: boolean): void {
   // Enabled unless the caller says otherwise, so a disabled Start cannot leak
   // into the next phase's button.
   dom.primary.disabled = false;
-  dom.primaryHint.textContent = hint;
+  dom.primaryHintText.textContent = hint;
+}
+
+/** The one longer line under the egg while idle (UI.md section 3): a refusal
+ *  if there is one, and otherwise, before anything has been learned, a
+ *  welcome. The way to Help under low odds is a short link, and goes under
+ *  either. */
+function renderWelcome(warning: string): void {
+  dom.welcome.hidden = !(machine.phase === 'IDLE' && !isSousVide() && warning === ''
+    && calib.eggsLogged === 0 && !hasBoilMemory(boilMemory));
 }
 
 function render(now_ms: number): void {
@@ -738,7 +986,7 @@ function render(now_ms: number): void {
   // after a full hot-start solve and after the stats row had already been
   // written, so it both paid for an answer it discarded and left half of that
   // answer on screen beside its own.
-  renderStartHint();
+  renderSentence();
   if (isSousVide() && machine.phase === 'IDLE') {
     renderSousVide(now_ms);
     return;
@@ -747,8 +995,6 @@ function render(now_ms: number): void {
   const sol = solution;
   if (sol === null) return;
 
-  dom.statYolkLabel.textContent = t('readout.stat.peakYolk');
-
   dom.body.dataset['phase'] = machine.phase;
   dom.body.dataset['start'] = settings.startMode;
 
@@ -756,8 +1002,6 @@ function render(now_ms: number): void {
   const boil_s = rampSeconds();
   const standing = settings.afterBoil === 'off';
 
-  dom.statYolk.textContent = show('temperature', sol.result.peakYolk_C);
-  dom.statAfter.textContent = formatClock(cookTime_s - boil_s);
   dom.statBoil.textContent = show('boilingPoint', boilingPoint_C());
   dom.note.textContent = textureNote(sol);
   // The warning line carries one of two things. A refusal is advice about the
@@ -892,9 +1136,14 @@ function render(now_ms: number): void {
 
   dom.phaseLabel.textContent = label;
   dom.digits.textContent = digits;
-  dom.subline.textContent = subline;
+  dom.sublineText.textContent = subline;
+  // "Based on history" has an (i) that says what history; the full rolling
+  // boil has one that says what it looks like.
+  showInfo(dom.sublineInfo, machine.phase === 'IDLE' && settings.startMode === 'cold' && hasBoilMemory(boilMemory));
+  showInfo(dom.hintInfo, machine.phase === 'HEATING');
   renderOdds();
   renderAdvice();
+  renderWelcome(warning);
 
   // The live region carries a coarse announcement, not a per-second one: the
   // ticking digits are aria-hidden, so a screen reader hears the phase and the
@@ -927,9 +1176,9 @@ function renderOdds(): void {
   }
   dom.oddsHit.textContent = tenths === null ? '' : t('odds.hitTheMark', { hits: tenths, of: 10 });
   dom.oddsLearning.textContent = learning === true ? t('odds.stillLearning') : '';
-  // The (i) goes with the odds, and what it opens goes with it.
-  dom.oddsInfo.hidden = tenths === null;
-  dom.oddsWhy.hidden = tenths === null || dom.oddsInfo.getAttribute('aria-expanded') !== 'true';
+  // Each (i) goes with its words, and what it opens goes with it.
+  showInfo(dom.oddsInfo, tenths !== null);
+  showInfo(dom.learningInfo, learning === true);
 }
 
 /** The sous-vide readout: hold times from the isothermal limit, and the plain
@@ -939,12 +1188,14 @@ function renderSousVide(now_ms: number): void {
   // pan (E5 chooses pan times).
   dom.oddsHit.textContent = '';
   dom.oddsLearning.textContent = '';
-  dom.oddsInfo.hidden = true;
-  dom.oddsWhy.hidden = true;
+  showInfo(dom.oddsInfo, false);
+  showInfo(dom.learningInfo, false);
+  showInfo(dom.sublineInfo, false);
+  showInfo(dom.hintInfo, false);
   renderAdvice();
   dom.body.dataset['phase'] = machine.phase;
   dom.body.dataset['start'] = settings.startMode;
-  renderStartHint();
+  renderSentence();
 
   const egg = currentEgg();
   const doneness = calibrationDoneness(calib, settings.doneness);
@@ -956,21 +1207,18 @@ function renderSousVide(now_ms: number): void {
 
   dom.phaseLabel.textContent = t('readout.phase.startTime');
   dom.digits.textContent = copy.headline;
-  dom.subline.textContent = copy.subline;
-  // The bath temperature is not a peak yolk temperature, and printing it under
-  // that label said something false about the egg. In a bath held at 63 °C the
-  // yolk ends up at 63 °C, which is the whole point, but the label has to say
-  // which number it is.
-  dom.statYolkLabel.textContent = t('readout.stat.bath');
-  dom.statYolk.textContent = show('temperature', est.bath_C);
+  dom.sublineText.textContent = copy.subline;
   dom.statBoil.textContent = show('boilingPoint', boilingPoint_C());
-  // The slider reading is a pan number. There is no pan.
+  // The slider reading is a pan number. There is no pan: the water's
+  // temperature is not a peak yolk temperature, and the reading says which
+  // number it is.
   dom.donenessValue.textContent = t('controls.doneness.valueBath', {
     doneness: t(anchorNear(settings.doneness).key), bath: show('temperature', est.bath_C),
   });
   dom.note.textContent = copy.note;
   dom.warn.textContent = copy.warn;
   dom.warn.hidden = false;
+  dom.welcome.hidden = true;
   setPrimary('', copy.hint, false);
   dom.secondary.hidden = true;
   dom.feedback.hidden = true;
@@ -1089,28 +1337,56 @@ function renderLearned(): void {
   const pan = hasBoilMemory(boilMemory);
   if (eggs === 0 && !pan) {
     dom.learnedNote.textContent = t('learned.literature');
-    dom.forget.hidden = true;
+    showForget(false);
     return;
   }
   const tuned = eggs > 0 ? t('learned.tuned', { eggs: eggs }) : '';
   const measured = pan
-    ? t('learned.pan', { time: formatClock(estimateTimeToBoil(boilMemory, settings.waterLitres)) })
+    ? t('learned.pan', {
+      water: show('water', settings.waterLitres),
+      time: formatClock(estimateTimeToBoil(boilMemory, settings.waterLitres)),
+    })
     : '';
   dom.learnedNote.textContent = tuned !== '' && measured !== ''
     ? t('learned.both', { tuned: tuned, pan: measured })
     : tuned + measured;
-  dom.forget.hidden = false;
+  // Not while the confirmation is up: it stands in the button's place.
+  if (dom.forgetConfirm.hidden) showForget(true);
+}
+
+/** Forget and its (i) come and go together. */
+function showForget(visible: boolean): void {
+  dom.forget.hidden = !visible;
+  showInfo(dom.forgetInfo, visible);
+}
+
+/** Forget asks first, in place, as iOS does: the button gives way to the
+ *  question and its two answers, and the focus goes to the safe one. */
+function onForgetAsked(): void {
+  showForget(false);
+  dom.forgetConfirm.hidden = false;
+  dom.forgetNo.focus();
+}
+
+function onForgetKept(): void {
+  dom.forgetConfirm.hidden = true;
+  showForget(true);
+  dom.forget.focus();
 }
 
 /** Take it all back. A run of wrong answers about how the eggs were was otherwise
  *  undone only by clearing the site's storage - README 11.5 listed that as a
  *  known gap from the day the iOS app got its own version of this button. */
 function onForget(): void {
+  dom.forgetConfirm.hidden = true;
   calib = clearCalibration();
   boilMemory = {};
   clearBoilMemory();
   renderCalibNote();
   recompute();
+  // The button has gone with what it forgot; the note that says so now has
+  // the focus.
+  dom.learnedNote.focus();
 }
 
 /** Mark which answer of a row was given, and put the row out of reach. The
@@ -1319,12 +1595,13 @@ function onInput(event: Event): void {
     return;
   }
   readInputs(target);
-  // Instant feedback on the two readings the eye is on while dragging; the
-  // full solve (tens of milliseconds) follows and corrects them.
+  // Instant feedback on what the eye is on while dragging or choosing - the
+  // reading under the slider, the sentence, the boiling point beside the
+  // altitude; the full solve (tens of milliseconds) follows and corrects them.
   dom.donenessValue.textContent = donenessValueText(targetPeakYolk_C(settings.doneness));
-  dom.statYolk.textContent = show('temperature', targetPeakYolk_C(settings.doneness));
   dom.statBoil.textContent = show('boilingPoint', boilingPoint_C());
   dom.body.dataset['start'] = settings.startMode;
+  renderSentence();
   scheduleSolve();
 }
 
@@ -1554,6 +1831,12 @@ function applyUnitsToDom(): void {
   dom.startSousLabel.textContent = t('controls.start.sousVide', {
     bath: show('temperature', SOUS_VIDE_BATH_C),
   });
+  dom.helpSousVide.textContent = t('help.unsure.sousVide', {
+    floor: show('temperature', SOUS_VIDE_MODEL_FLOOR_C),
+  });
+  // The sentence's masses and temperatures are in the units too.
+  sentenceShown = '';
+  renderSentence();
 }
 
 function applySettingsToDom(): void {
@@ -1572,23 +1855,29 @@ function applySettingsToDom(): void {
 export function boot(): void {
   buildSizeOptions();
   buildTicks();
+  buildClauses();
   applyConstantsToDom();
   applySettingsToDom();
 
-  const form = el<HTMLFormElement>('controls');
-  form.addEventListener('input', onInput);
-  form.addEventListener('change', onInput);
-  form.addEventListener('submit', (event) => event.preventDefault());
+  // The egg's two controls and its sentence, and the Kitchen's settings, are
+  // read the same way: every input goes through readInputs.
+  for (const id of ['controls', 'kitchenForm']) {
+    const form = el<HTMLFormElement>(id);
+    form.addEventListener('input', onInput);
+    form.addEventListener('change', onInput);
+    form.addEventListener('submit', (event) => event.preventDefault());
+  }
 
   dom.primary.addEventListener('click', onPrimary);
   dom.secondary.addEventListener('click', reset);
   dom.mute.addEventListener('click', onToggleMute);
-  dom.forget.addEventListener('click', onForget);
-  // The two disclosures open in place. They are buttons, so the keyboard
-  // reaches and works them, and aria-expanded says which way they stand.
-  dom.oddsInfo.setAttribute('aria-label', t('odds.info'));
-  dom.oddsInfo.addEventListener('click', () => toggleDisclosure(dom.oddsInfo, dom.oddsWhy));
-  dom.adviceToggle.addEventListener('click', () => toggleDisclosure(dom.adviceToggle, dom.adviceList));
+  dom.forget.addEventListener('click', onForgetAsked);
+  dom.forgetYes.addEventListener('click', onForget);
+  dom.forgetNo.addEventListener('click', onForgetKept);
+  // Every (i) opens in place. They are buttons, so the keyboard reaches and
+  // works them, and aria-expanded says which way they stand.
+  wireInfoButtons();
+  wireViews();
   dom.probeOfferYes.addEventListener('click', () => onProbeOffer(true));
   dom.probeOfferNo.addEventListener('click', () => onProbeOffer(false));
   dom.probeSave.addEventListener('click', onProbeSave);

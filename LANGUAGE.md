@@ -467,6 +467,73 @@ three white answers, every answer optional, "still learning" beside the time, an
 a thermometer prompt. Those strings should go straight into the catalogue, which
 is why F1 comes before E2 (§7).
 
+**The web redesign's strings - IMPLEMENTED 27 September 2026**, web only,
+drafted and not approved. The owner reviews them in place on a deploy
+preview (UI.md section 6), so they are listed here by key, not tabled for
+approval; the words are in `copy/en.json`, and `tools/copyDraft.ts` (the
+`redesign` draft, on `80799d0`) holds every one, with what it was.
+`copyLiterals.js --since 80799d0 redesign` and `copySnapshot.js compare
+--draft redesign` show that nothing else changed. Two new surfaces: `more`
+(560), for what an (i) opens, and `help` (640), for the Help page.
+
+- **The setup sentence:** `setup.sentence`, `setup.sentenceSousVide`,
+  `setup.egg`, `setup.from.fridge`, `.room`, `.custom`, `setup.start.cold`,
+  `.hot`, `.sous`, `setup.cooling.ice`, `.tap`, `.counter`, `setup.clause`
+  (a clause's name to a screen reader), `setup.close`. Each fragment carries
+  its own preposition and article, so the template is punctuation and a
+  translation may reorder it; the egg is plural so that English needs no
+  "a"/"an" before a number. `controls.cooling` heads the cooling choice.
+- **The (i):** `more.about` ("About {label}"), and a paragraph for
+  `controls.egg`, `.eggFrom`, `.start`, `.cooling`, `.units`, `.altitude`,
+  `.water`, `.eggsInPan`, `.afterTheBoil`, `.thermometer`, `learned.forget`,
+  `readout.sub.coldAssumes`, `action.hint.heating` and `odds.stillLearning`,
+  each as `K.more`; the last three also have a `K.info`, the (i)'s whole name.
+  `controls.thermometer` heads the probe row.
+- **The Kitchen and the slot:** `controls.pan` is now "Kitchen", the page's
+  title, in both apps; `nav.back`, `learned.title`, `idle.welcome`.
+- **Help:** `help.link`, `help.title`, and `help.how.*`, `help.learn.*`,
+  `help.reliable.*`, `help.odds.*`, `help.unsure.*`, `help.sources.*` and
+  eight `help.source.*`, each a source as README.md section 10 gives it and
+  nothing else.
+- **Retired from the web**, the web now saying the same with a shared key or
+  a `.more`: `controls.atTheBoil` (now `controls.afterTheBoil`),
+  `controls.eggs` (now `controls.eggsInPan`), `controls.start.hint` and
+  `controls.afterBoil.hint` (deleted, now `.more`s). Still iOS's, until iOS
+  follows: `controls.then`, `controls.probe`, `controls.probe.hint`,
+  `controls.start.hintSousVide`, `readout.stat.peakYolk`, `.afterBoil` and
+  `.bath`. `learned.confirm.*` are now both apps': the web asks before
+  forgetting.
+
+**The owner's wording rules, 27 September**, applied in the same draft, to
+both apps where a key is shared:
+
+- **Never narrate what the interface visibly did.** `controls.start.hintSousVide`
+  ("A bath needs no pan, so the pan controls are put away…") is cut from the
+  web; iOS still shows it until it follows.
+- **Sous-vide is not "a bath".** `readout.stat.bath` "bath" → "sous-vide at"
+  (iOS only now); `controls.doneness.valueBath` "{doneness} · bath {bath}" →
+  "{doneness} · water at {bath}"; `sousvide.subline` "…{duration} in the bath
+  ({bath}), to eat now" → "…{duration} at {bath}, to eat now";
+  `sousvide.warn` "This bath ({bath}) is too cool to set the white…" → "At
+  {bath} the white won't set, however long you leave it…". "Ice bath" stays.
+- **"Pan" only where it means the pot.** `controls.pan` "Pan, hob and
+  altitude" → "Kitchen"; `learned.pan` "your pan: about {time} to boil, based
+  on history" → "{water} of water takes about {time} to boil, based on
+  history" (true: the memory is keyed by water volume, not by pan);
+  `learned.literature` "I learn your pan when you time a boil" → "I learn how
+  fast your stove boils water when you tap the boil"; `learned.confirm.message`
+  → "I forget every egg and how long your water takes to boil, and the times
+  go back to where they started."; `odds.why` "your pan" → "your kitchen";
+  `feedback.invite` → "Your answers teach me your eggs and your kitchen.";
+  `advice.moreWater` "so the time depends less on your pan" → "so small
+  differences in how fast it cools matter less"; `action.hint.whiteNeverSets`
+  "this pan never sets the white" → "with this much water the white never
+  sets". Kept, because they mean the pot: "eggs in the pan, lid on",
+  "Eggs in the pan", "Use the pan."
+- **`odds.stillLearning`** "Still learning your kitchen" → "I'm still
+  learning": I learn a cook's taste, their eggs' whites and how fast their
+  water boils, not a kitchen. Its (i) says what, and what speeds it up.
+
 ### Proposed: one wording per meaning (for the owner)
 
 **A proposal, 27 September 2026. Nothing here is implemented**: `copy/en.json`
