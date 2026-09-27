@@ -52,6 +52,7 @@ import { CookSetup } from './protocol.js';
 import { donenessFromSlider, solveCookTime, Solution } from './solve.js';
 import { DoseGrid } from './doseGrid.js';
 import { decide, oddsInTenths } from './decide.js';
+import { Outcome, predictOutcome } from './outcome.js';
 import { Calibration, calibrationDoneness, calibrationParams } from './record.js';
 import {
   LIMITS, SLIDER_STEPS, START_TEMP_PRESETS_C, Verdict, anchorNear, snapDown, snapUp, verdictFor,
@@ -374,4 +375,151 @@ export function protocolAdvice(
     if (oddsNear(change.profile, level) - odds >= ADVICE_GAIN) keys.push(change.key);
   }
   return keys;
+}
+
+/* ------------------------------------------------------------ playing safe */
+
+/**
+ * PLAYING SAFE (INFERENCE.md section 8, "Playing safe"). The outcome's range
+ * says where the yolk will probably land, and the direction which way a miss
+ * leans, but neither says what to do about it. A cook who would rather not
+ * risk a soft yolk wants the level to ask for so that the egg is at least as
+ * firm as the one they pictured nearly every time; and the mirror of that.
+ *
+ * For the cook's level T, on this pot:
+ *
+ *  - `firmerLevel` is the softest level L >= T the slider offers at which, at
+ *    L's decided time, the 10% point of the delivered doneness (`levelLow`)
+ *    is at least T: nine eggs in ten at least as firm as T.
+ *  - `softerLevel` is the firmest level L <= T the slider offers whose 90%
+ *    point (`levelHigh`) is at most T: nine in ten at most as firm as T.
+ *
+ * Each is null when T itself already does it - no move is needed - or when
+ * no level the slider offers does. "Offers" is the slider's own rule: the
+ * physical limits, narrowed by the odds' reach once it applies
+ * (`oddsProfile`'s `softest`/`hardest`), so a suggestion is never a level the
+ * slider would refuse. The level is on the slider's scale without the taste
+ * offset (outcome.ts), so a cook whose taste is firmer than the slider's may
+ * find T already firm enough.
+ *
+ * THE SEARCH. Each level L is read exactly as the app reads it when the
+ * slider sits there: the mean solve at L, the decision on the pot's surface,
+ * and the outcome at the decided time (`outcomeAtLevel`) - the profile's
+ * machinery, with the outcome read where the profile reads the odds. The
+ * levels are the slider's 0.01 grid, walked as integer positions so both
+ * languages walk the same ones, and searched by bisection: that needs
+ * `levelLow` (and `levelHigh`) to rise with L. They do, because the decided
+ * time rises with the level and the delivered dose with the time - except at
+ * the counter's softest offered level, where the white binds the choice and
+ * the next level up is delivered a hair softer: 0.001-0.004 of the slider,
+ * one step, in 3 of 28 pots and posteriors (`npm run decide -- safer`, which
+ * reads every offered level). Where that happens the bisection still returns
+ * a level that passes next to one that fails - a safe level, at worst a step
+ * firmer than the softest safe one. Against a full scan it agreed at every
+ * level tried; test/safer.test.ts holds it to one.
+ *
+ * WHAT IT COSTS. A reading is a solve (about 20 ms in node), a decision (18
+ * ms once the time is chosen) and an outcome (2 ms). Two readings per side
+ * settle whether a move is needed and possible, and a bisection over the
+ * rest of the range takes about log2 of it: up to about 16 in all, and
+ * 0.1-0.9 s in node, a median of half a second, across seven pots and four
+ * posteriors (`npm run decide -- safer`). That is a profile's cost again, so
+ * it is never on the drag: the web computes it in the worker once the
+ * slider has settled, and keeps the answer per pot, posterior and level.
+ */
+
+export interface SaferLevels {
+  /** The softest level at least as firm as T that gives an egg at least as
+   *  firm as T nine times in ten, or null: see above. */
+  firmerLevel: number | null;
+  /** The firmest level at most as firm as T that gives an egg at most as firm
+   *  as T nine times in ten, or null. */
+  softerLevel: number | null;
+}
+
+/** The outcome the app shows when the slider sits at `level`, a level the pan
+ *  can deliver: the mean solve there, decided on `grid`, and read at the
+ *  decided time. */
+export function outcomeAtLevel(
+  c: Calibration, egg: Egg, setup: CookSetup, grid: DoseGrid, level: number,
+): Outcome {
+  const sol = solveCookTime(egg, setup, calibrationParams(c), calibrationDoneness(c, level));
+  const logTarget = Math.log10(donenessFromSlider(level).yolkDose_min);
+  const d = decide(c, grid, sol, logTarget);
+  return predictOutcome(c.posterior, grid, d.cookTime_s, logTarget);
+}
+
+/** The levels the slider offers on this pot, as positions on its grid: the
+ *  odds' range where it applies, the physical one where it does not. Null
+ *  when it offers none. */
+export function offeredPositions(profile: OddsProfile): { lo: number; hi: number } | null {
+  if (profile.points.length === 0) return null;
+  const lo = Math.round((profile.softest ?? profile.physicalSoftest) * SLIDER_STEPS);
+  const hi = Math.round((profile.hardest ?? profile.physicalHardest) * SLIDER_STEPS);
+  return hi >= lo ? { lo: lo, hi: hi } : null;
+}
+
+/**
+ * The play-safe levels for the cook's level `level` on this pot. `grid` is the
+ * pot's decision surface and `profile` its odds profile, both for the same
+ * calibration, egg and setup.
+ */
+export function saferLevels(
+  c: Calibration, egg: Egg, setup: CookSetup, grid: DoseGrid, profile: OddsProfile, level: number,
+): SaferLevels {
+  const range = offeredPositions(profile);
+  if (range === null) return { firmerLevel: null, softerLevel: null };
+  const seen = new Map<number, Outcome>();
+  const at = (position: number): Outcome => {
+    const known = seen.get(position);
+    if (known !== undefined) return known;
+    const o = outcomeAtLevel(c, egg, setup, grid, levelOf(position));
+    seen.set(position, o);
+    return o;
+  };
+  // The cook's own position, when the level is on the grid; a level off it
+  // (no slider gives one) is never "no move needed".
+  const own = Math.round(level * SLIDER_STEPS);
+  const onGrid = Math.abs(own - level * SLIDER_STEPS) < 1e-6;
+
+  // Firmer: the softest position in [from, hi] whose 10% point reaches the
+  // level, by bisection between one that does not and one that does.
+  let firmerLevel: number | null = null;
+  const from = Math.max(positionUp(level), range.lo);
+  const firm = (position: number): boolean => at(position).levelLow >= level;
+  if (from <= range.hi) {
+    if (firm(from)) {
+      if (!(onGrid && from === own)) firmerLevel = levelOf(from);
+    } else if (firm(range.hi)) {
+      let under = from;
+      let over = range.hi;
+      while (over - under > 1) {
+        const mid = Math.floor((under + over) / 2);
+        if (firm(mid)) over = mid;
+        else under = mid;
+      }
+      firmerLevel = levelOf(over);
+    }
+  }
+
+  // Softer: the firmest position in [lo, to] whose 90% point stays at or
+  // under the level, the same way from the other side.
+  let softerLevel: number | null = null;
+  const to = Math.min(positionDown(level), range.hi);
+  const soft = (position: number): boolean => at(position).levelHigh <= level;
+  if (to >= range.lo) {
+    if (soft(to)) {
+      if (!(onGrid && to === own)) softerLevel = levelOf(to);
+    } else if (soft(range.lo)) {
+      let under = range.lo;
+      let over = to;
+      while (over - under > 1) {
+        const mid = Math.floor((under + over) / 2);
+        if (soft(mid)) under = mid;
+        else over = mid;
+      }
+      softerLevel = levelOf(under);
+    }
+  }
+  return { firmerLevel: firmerLevel, softerLevel: softerLevel };
 }

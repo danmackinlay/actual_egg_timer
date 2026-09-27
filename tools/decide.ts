@@ -5,7 +5,8 @@
  *
  * Run: npm run decide            (all of it, several minutes)
  *      npm run decide -- cost    (one section: cost, accuracy, lean, odds,
- *                                 learning, runny, reach, advice, outcome)
+ *                                 learning, runny, reach, advice, outcome,
+ *                                 safer)
  *
  * Read-only. Nothing in src/ is touched. The numbers it prints are the ones in
  * PLAN.md (E5), INFERENCE.md section 8 and LOGBOOK.md, 28 September 2026; the
@@ -25,7 +26,9 @@ import { ALPHA_DEFAULT } from '../src/core/constants.js';
 import { eggFromMass, Egg } from '../src/core/geometry.js';
 import { CookSetup } from '../src/core/protocol.js';
 import { Solution, donenessFromSlider, solveCookTime } from '../src/core/solve.js';
-import { LevelOdds, OddsProfile, oddsProfile } from '../src/core/reach.js';
+import {
+  LevelOdds, OddsProfile, SaferLevels, offeredPositions, oddsProfile, outcomeAtLevel, saferLevels,
+} from '../src/core/reach.js';
 import { predictOutcome } from '../src/core/outcome.js';
 import { cookTimeForLogWhiteDose, lookupLogYolkDose } from '../src/core/doseGrid.js';
 import { UNRELATED } from '../src/core/infer.js';
@@ -519,6 +522,77 @@ if (run('outcome')) {
         + `decision ${dm.toFixed(1)} ms, outcome ${om.toFixed(1)} ms`);
     }
   }
+}
+
+/* ------------------------------------------------------------ playing safe */
+
+if (run('safer')) {
+  console.log('\n== safer: the play-safe levels, whether the range rises with the level, and what they cost (node, this machine)');
+  // Every offered level read in full, to check that levelLow and levelHigh
+  // never fall as the level rises (the bisection's premise), and that the
+  // bisection lands where a full scan does. Then saferLevels timed alone.
+  const many = replay(PRIOR, [
+    recordAt(0.41, lit464, 0, 'firm'), recordAt(0.41, lit464, 0, 'tender'), recordAt(0.41, lit464, 0, 'firm'),
+  ]);
+  const cals: [string, Calibration][] = [...Object.entries(LEARNED), ['three eggs, jammy right', many]];
+  let dips = 0;
+  let worst = 0;
+  let mismatches = 0;
+  const costs: number[] = [];
+  const fmt = (x: number | null): string => (x === null ? '-' : x.toFixed(2));
+  for (const pot of POTS) {
+    console.log(`${pot.name}:`);
+    for (const [name, c] of cals) {
+      const grid = buildRequestedGrid(decisionGridRequest(decisionInputs(c, pot.egg, pot.setup)));
+      const profile = oddsProfile(c, pot.egg, pot.setup, grid);
+      const range = offeredPositions(profile);
+      if (range === null) { console.log(`  ${name}: nothing offered`); continue; }
+      const low: number[] = [];
+      const high: number[] = [];
+      for (let k = range.lo; k <= range.hi; k++) {
+        const o = outcomeAtLevel(c, pot.egg, pot.setup, grid, k / 100);
+        low.push(o.levelLow);
+        high.push(o.levelHigh);
+      }
+      for (let i = 1; i < low.length; i++) {
+        for (const series of [low, high]) {
+          const drop = series[i - 1] - series[i];
+          if (drop > 1e-12) {
+            dips += 1;
+            worst = Math.max(worst, drop);
+            console.log(`  dip: ${name}, ${series === low ? '10%' : '90%'} point falls ${drop.toExponential(2)} from ${(range.lo + i - 1) / 100} to ${(range.lo + i) / 100}`);
+          }
+        }
+      }
+      const cells: string[] = [];
+      for (const level of [0.22, 0.41, 0.62, 0.8]) {
+        const k = Math.round(level * 100);
+        if (k < range.lo || k > range.hi) continue;
+        // The scan's answer: the softest firmer and the firmest softer.
+        let firm: number | null = null;
+        for (let j = k; j <= range.hi; j++) if (low[j - range.lo] >= level) { firm = j; break; }
+        if (firm === k) firm = null;
+        let soft: number | null = null;
+        for (let j = k; j >= range.lo; j--) if (high[j - range.lo] <= level) { soft = j; break; }
+        if (soft === k) soft = null;
+        let s: SaferLevels | null = null;
+        const cost = ms(() => { s = saferLevels(c, pot.egg, pot.setup, grid, profile, level); });
+        costs.push(cost);
+        const got = s as unknown as SaferLevels;
+        const scanFirm = firm === null ? null : firm / 100;
+        const scanSoft = soft === null ? null : soft / 100;
+        if (got.firmerLevel !== scanFirm || got.softerLevel !== scanSoft) mismatches += 1;
+        const o = outcomeAtLevel(c, pot.egg, pot.setup, grid, level);
+        cells.push(`${level}: ${o.levelLow.toFixed(2)}-${o.levelHigh.toFixed(2)} soft/firm ${o.pTooSoft.toFixed(2)}/${o.pTooFirm.toFixed(2)}`
+          + ` -> firmer ${fmt(got.firmerLevel)} softer ${fmt(got.softerLevel)} (${cost.toFixed(0)} ms)`);
+      }
+      console.log(`  ${name} [${range.lo / 100}-${range.hi / 100}]: ${cells.join('; ')}`);
+    }
+  }
+  costs.sort((a, b) => a - b);
+  console.log(`rises with the level: ${dips === 0 ? 'everywhere' : `${dips} dips, the largest ${worst.toExponential(2)}`}; `
+    + `bisection against the scan: ${mismatches} differ; `
+    + `saferLevels ${costs[0].toFixed(0)}-${costs[costs.length - 1].toFixed(0)} ms, median ${costs[Math.floor(costs.length / 2)].toFixed(0)} ms`);
 }
 
 export type { DecisionInputs };
