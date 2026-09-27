@@ -40,7 +40,7 @@ struct CookLiveActivity: Widget {
                     VStack(spacing: 2) {
                         countdown(context.state)
                             .font(.system(size: 40, weight: .semibold, design: .rounded))
-                        Text(note(context.state))
+                        Text(note(context.state, restsOnCounter: context.attributes.restsOnCounter == true))
                             .font(.caption2)
                             .foregroundStyle(.secondary)
                     }
@@ -72,7 +72,7 @@ struct CookLiveActivity: Widget {
                     .font(.caption.smallCaps())
                     .foregroundStyle(tint(context.state.stage))
 
-                Text(note(context.state))
+                Text(note(context.state, restsOnCounter: context.attributes.restsOnCounter == true))
                     .font(.caption2)
                     .foregroundStyle(.secondary)
                     .lineLimit(2)
@@ -124,14 +124,14 @@ struct CookLiveActivity: Widget {
         }
     }
 
-    private func note(_ state: CookActivity.ContentState) -> String {
+    private func note(_ state: CookActivity.ContentState, restsOnCounter: Bool) -> String {
         switch state.stage {
         case .heating:
             tr(state.provisional ? "activity.note.estimate" : "activity.note.heating")
         case .cooking:
             tr(state.provisional ? "activity.note.estimate" : "activity.note.cooking")
         case .pull:
-            tr("activity.note.pull")
+            tr(restsOnCounter ? "activity.note.pullCounter" : "activity.note.pull")
         case .cooling:
             tr("activity.note.cooling")
         case .done:

@@ -68,13 +68,16 @@ final class Alarm: NSObject, UNUserNotificationCenterDelegate {
     /// The cooling ends when the yolk's centre peaks (E4). For a cook with a
     /// probe thermometer that is the moment to take the reading, so the second
     /// alarm asks for it instead of announcing the end.
-    func schedule(pullAt: Date, coolDoneAt: Date?, probe: Bool = false) {
+    ///
+    /// A cook resting the eggs on the counter has no cooling step, so the pull
+    /// alarm does not send them "into the cooling".
+    func schedule(pullAt: Date, coolDoneAt: Date?, probe: Bool = false, restsOnCounter: Bool = false) {
         cancel()
 
         request(
             id: pullID, at: pullAt,
             title: tr("alarm.pull.title"),
-            body: tr("alarm.pull.body")
+            body: tr(restsOnCounter ? "alarm.pull.bodyCounter" : "alarm.pull.body")
         )
 
         if let coolDoneAt {

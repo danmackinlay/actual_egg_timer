@@ -1109,6 +1109,21 @@ export const OUTCOME_DRAFT: Drafted[] = [
   },
 ];
 
+/** 27 September: on a counter rest there is no cooling step, so iOS's pull
+ *  alarm and pull note get their own lines instead of "into the cooling". */
+export const COUNTER_DRAFT: Drafted[] = [
+  {
+    key: 'alarm.pull.bodyCounter', row: 'counter rest: the pull alarm',
+    before: null, after: { text: "Out of the water and onto the counter." },
+    appsBefore: [], appsAfter: ['ios'],
+  },
+  {
+    key: 'activity.note.pullCounter', row: 'counter rest: the pull note',
+    before: null, after: { text: "resting on the counter" },
+    appsBefore: [], appsAfter: ['ios'],
+  },
+];
+
 export const DRAFTS: Record<string, Draft> = {
   feedback: {
     base: 'cfe38e9',
@@ -1148,10 +1163,15 @@ export const DRAFTS: Record<string, Draft> = {
       'help.odds.p1': 'its note: the direction line and the bracket it was written for are built',
     },
   },
+  counter: {
+    base: '4817303',
+    rows: COUNTER_DRAFT,
+    exampleOnly: {},
+  },
 };
 
 /** The draft most recently applied: what a proof checks when it is not told. */
-export const LATEST_DRAFT = 'outcome';
+export const LATEST_DRAFT = 'counter';
 
 /** A draft by its name, or by the commit it was applied to; the latest when
  *  neither is given or neither matches. */

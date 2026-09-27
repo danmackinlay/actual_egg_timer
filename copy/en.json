@@ -359,6 +359,7 @@
 
     "alarm.pull.title": { "surface": "notification.title", "apps": ["ios"], "text": "Eggs out — now" },
     "alarm.pull.body": { "surface": "notification.body", "apps": ["ios"], "text": "Straight into the cooling, or the yolk keeps cooking." },
+    "alarm.pull.bodyCounter": { "surface": "notification.body", "apps": ["ios"], "text": "Out of the water and onto the counter." },
     "alarm.cooled.title": { "surface": "notification.title", "apps": ["ios"], "text": "Cooling done" },
     "alarm.cooled.body": { "surface": "notification.body", "apps": ["ios"], "text": "The carryover is over. That is the egg you asked for." },
     "alarm.probe.title": { "surface": "notification.title", "apps": ["ios"], "text": "Probe it now" },
@@ -377,6 +378,7 @@
     "activity.note.heating": { "surface": "island.expanded", "apps": ["ios"], "text": "heating" },
     "activity.note.cooking": { "surface": "island.expanded", "apps": ["ios"], "text": "until the eggs come out" },
     "activity.note.pull": { "surface": "island.expanded", "apps": ["ios"], "text": "into the cooling, or the yolk keeps going" },
+    "activity.note.pullCounter": { "surface": "island.expanded", "apps": ["ios"], "text": "resting on the counter" },
     "activity.note.cooling": { "surface": "island.expanded", "apps": ["ios"], "text": "yolk still cooking" },
     "activity.note.done": { "surface": "island.expanded", "apps": ["ios"], "text": "that is the egg you asked for" },
 

@@ -2898,6 +2898,12 @@
     },
     {
       "locale": "en",
+      "key": "alarm.pull.bodyCounter",
+      "args": {},
+      "text": "Out of the water and onto the counter."
+    },
+    {
+      "locale": "en",
       "key": "alarm.cooled.title",
       "args": {},
       "text": "Cooling done"
@@ -3004,6 +3010,12 @@
       "key": "activity.note.pull",
       "args": {},
       "text": "into the cooling, or the yolk keeps going"
+    },
+    {
+      "locale": "en",
+      "key": "activity.note.pullCounter",
+      "args": {},
+      "text": "resting on the counter"
     },
     {
       "locale": "en",
