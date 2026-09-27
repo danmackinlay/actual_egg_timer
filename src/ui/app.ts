@@ -779,22 +779,24 @@ function placeBand(band: HTMLElement, from: number, to: number): void {
   band.style.width = `${to > from ? percent(to) - percent(from) : 0}%`;
 }
 
-/** Shade the track by the odds (`shadingOf`): the accent colour at an opacity
- *  that is the level's odds over the best level's, stop by stop between the
- *  profile's points, and clear outside them, where the stripes are. */
+/** Shade the track by the odds (`shadingOf`): the band's hue is the yolk's,
+ *  runny to hard (styles.css), and this masks it to an opacity that is the
+ *  level's odds over the best level's, stop by stop between the profile's
+ *  points, and clear outside them, where the stripes are. */
 function renderOddsBand(odds: OddsProfile | null): void {
   const shades = odds === null ? [] : shadingOf(odds);
-  if (shades.length === 0) {
-    dom.donenessOdds.style.background = 'transparent';
-    return;
+  let mask = 'linear-gradient(transparent, transparent)';
+  if (shades.length > 0) {
+    const first = shades[0].level * 100;
+    const last = shades[shades.length - 1].level * 100;
+    const stops = shades.map((s) => (
+      `rgb(0 0 0 / ${s.strength.toFixed(3)}) ${(s.level * 100).toFixed(2)}%`
+    ));
+    mask = `linear-gradient(to right, transparent ${first.toFixed(2)}%, `
+      + `${stops.join(', ')}, transparent ${last.toFixed(2)}%)`;
   }
-  const first = shades[0].level * 100;
-  const last = shades[shades.length - 1].level * 100;
-  const stops = shades.map((s) => (
-    `color-mix(in srgb, var(--ok) ${(s.strength * 100).toFixed(1)}%, transparent) ${(s.level * 100).toFixed(2)}%`
-  ));
-  dom.donenessOdds.style.background = `linear-gradient(to right, transparent ${first.toFixed(2)}%, `
-    + `${stops.join(', ')}, transparent ${last.toFixed(2)}%)`;
+  dom.donenessOdds.style.setProperty('-webkit-mask-image', mask);
+  dom.donenessOdds.style.setProperty('mask-image', mask);
 }
 
 /** The way to Help under low odds (reach.ts): a link, shown while idle when

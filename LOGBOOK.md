@@ -1807,6 +1807,38 @@ and the thresholds; LANGUAGE.md section 3 the strings.
   slider's; it shows only when the level and the slider part (a cook who
   likes a firmer yolk). No seeded case showed that on screen.
 
+## The doneness track is a yolk (27 September 2026)
+
+The owner, from a phone: the green slider was jarring; sweep it as a yolk
+does, orange runny to yellow hard. The band under the thumb now has the
+yolk's hue at each level (`--yolk-runny` / `--yolk-jammy` / `--yolk-hard`,
+golden at jammy's anchor, 0.41), and `renderOddsBand` lays the odds on as a
+mask of opacity rather than mixing `--ok` into each stop. Dark: `#ff7417`,
+`#ffb31f`, `#ffe680`. Light: `#d9530a`, `#e89400`, `#e8c410`, deeper
+because a pale yellow vanishes on the light track. Thumb, bracket, dots,
+stripes and ticks unchanged. `--ok` still colours the DONE screen's time
+and border, which is not the odds; iOS's `OddsTrack.swift` is still green.
+
+### Verified
+
+- `npm test`: 210 tests, 209 pass, 0 fail, 1 todo (5b, as before).
+- Headless Chrome at 390 x 844, dark and light, on this worktree's `_site`
+  on its own port, eggs seeded by cooking three jammy eggs through the app
+  with `Date.now` stepped, as `tools/copy-snapshot.html` does: a fresh
+  install (the band strong from soft up, stripes at the runny end, the
+  bracket soft to fudgy); three just-right eggs (dots from 0.09 to 0.16 over
+  a faded orange, the bracket 0.31-0.47); the counter rest asked for runny
+  (refused to fudgy, stripes to 0.65, the dots at 0.66-0.70 under the
+  thumb) and the same pot with the thumb moved to hard, so the dots show.
+  The thumb reads against the band in both schemes by its ring in the
+  background colour, even where the dark scheme's golden is its own amber.
+
+### Not verified
+
+- **A phone and the owner's eye.** The light scheme's hard end is a
+  mustard, not a pale yellow, chosen because a pale yellow would sit at
+  about the grey track's lightness; no paler stop was tried on screen.
+
 ---
 
 ## Playing safe (27 September 2026)
