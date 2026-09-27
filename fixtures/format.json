@@ -3256,6 +3256,54 @@
       "withSeconds": "9:05:09"
     },
     {
+      "uiLanguage": "cs",
+      "region": "US",
+      "hourCycle": null,
+      "tag": "cs-CZ",
+      "number": "1 234,5",
+      "decimal": "2,4",
+      "morning": "9:05",
+      "midnight": "0:05",
+      "afternoon": "15:05",
+      "withSeconds": "9:05:09"
+    },
+    {
+      "uiLanguage": "cs",
+      "region": "GB",
+      "hourCycle": null,
+      "tag": "cs-CZ",
+      "number": "1 234,5",
+      "decimal": "2,4",
+      "morning": "9:05",
+      "midnight": "0:05",
+      "afternoon": "15:05",
+      "withSeconds": "9:05:09"
+    },
+    {
+      "uiLanguage": "cs",
+      "region": "DE",
+      "hourCycle": null,
+      "tag": "cs-CZ",
+      "number": "1 234,5",
+      "decimal": "2,4",
+      "morning": "9:05",
+      "midnight": "0:05",
+      "afternoon": "15:05",
+      "withSeconds": "9:05:09"
+    },
+    {
+      "uiLanguage": "cs",
+      "region": null,
+      "hourCycle": null,
+      "tag": "cs-CZ",
+      "number": "1 234,5",
+      "decimal": "2,4",
+      "morning": "9:05",
+      "midnight": "0:05",
+      "afternoon": "15:05",
+      "withSeconds": "9:05:09"
+    },
+    {
       "uiLanguage": "en",
       "region": "DE",
       "hourCycle": null,
@@ -3471,37 +3519,37 @@
       "uiLanguage": "cs",
       "region": "US",
       "hourCycle": null,
-      "tag": "cs-US"
+      "tag": "cs-CZ"
     },
     {
       "uiLanguage": "cs",
       "region": "US",
       "hourCycle": "h23",
-      "tag": "cs-US-u-hc-h23"
+      "tag": "cs-CZ-u-hc-h23"
     },
     {
       "uiLanguage": "cs",
       "region": "US",
       "hourCycle": "h12",
-      "tag": "cs-US-u-hc-h12"
+      "tag": "cs-CZ-u-hc-h12"
     },
     {
       "uiLanguage": "cs",
       "region": "GB",
       "hourCycle": null,
-      "tag": "cs-GB"
+      "tag": "cs-CZ"
     },
     {
       "uiLanguage": "cs",
       "region": "GB",
       "hourCycle": "h23",
-      "tag": "cs-GB-u-hc-h23"
+      "tag": "cs-CZ-u-hc-h23"
     },
     {
       "uiLanguage": "cs",
       "region": "GB",
       "hourCycle": "h12",
-      "tag": "cs-GB-u-hc-h12"
+      "tag": "cs-CZ-u-hc-h12"
     },
     {
       "uiLanguage": "cs",
@@ -3525,109 +3573,109 @@
       "uiLanguage": "cs",
       "region": "DE",
       "hourCycle": null,
-      "tag": "cs-DE"
+      "tag": "cs-CZ"
     },
     {
       "uiLanguage": "cs",
       "region": "DE",
       "hourCycle": "h23",
-      "tag": "cs-DE-u-hc-h23"
+      "tag": "cs-CZ-u-hc-h23"
     },
     {
       "uiLanguage": "cs",
       "region": "DE",
       "hourCycle": "h12",
-      "tag": "cs-DE-u-hc-h12"
+      "tag": "cs-CZ-u-hc-h12"
     },
     {
       "uiLanguage": "cs",
       "region": "gb",
       "hourCycle": null,
-      "tag": "cs-GB"
+      "tag": "cs-CZ"
     },
     {
       "uiLanguage": "cs",
       "region": "gb",
       "hourCycle": "h23",
-      "tag": "cs-GB-u-hc-h23"
+      "tag": "cs-CZ-u-hc-h23"
     },
     {
       "uiLanguage": "cs",
       "region": "gb",
       "hourCycle": "h12",
-      "tag": "cs-GB-u-hc-h12"
+      "tag": "cs-CZ-u-hc-h12"
     },
     {
       "uiLanguage": "cs",
       "region": "150",
       "hourCycle": null,
-      "tag": "cs-150"
+      "tag": "cs-CZ"
     },
     {
       "uiLanguage": "cs",
       "region": "150",
       "hourCycle": "h23",
-      "tag": "cs-150-u-hc-h23"
+      "tag": "cs-CZ-u-hc-h23"
     },
     {
       "uiLanguage": "cs",
       "region": "150",
       "hourCycle": "h12",
-      "tag": "cs-150-u-hc-h12"
+      "tag": "cs-CZ-u-hc-h12"
     },
     {
       "uiLanguage": "cs",
       "region": null,
       "hourCycle": null,
-      "tag": "cs"
+      "tag": "cs-CZ"
     },
     {
       "uiLanguage": "cs",
       "region": null,
       "hourCycle": "h23",
-      "tag": "cs-u-hc-h23"
+      "tag": "cs-CZ-u-hc-h23"
     },
     {
       "uiLanguage": "cs",
       "region": null,
       "hourCycle": "h12",
-      "tag": "cs-u-hc-h12"
+      "tag": "cs-CZ-u-hc-h12"
     },
     {
       "uiLanguage": "cs",
       "region": "GBR",
       "hourCycle": null,
-      "tag": "cs"
+      "tag": "cs-CZ"
     },
     {
       "uiLanguage": "cs",
       "region": "GBR",
       "hourCycle": "h23",
-      "tag": "cs-u-hc-h23"
+      "tag": "cs-CZ-u-hc-h23"
     },
     {
       "uiLanguage": "cs",
       "region": "GBR",
       "hourCycle": "h12",
-      "tag": "cs-u-hc-h12"
+      "tag": "cs-CZ-u-hc-h12"
     },
     {
       "uiLanguage": "cs",
       "region": "U1",
       "hourCycle": null,
-      "tag": "cs"
+      "tag": "cs-CZ"
     },
     {
       "uiLanguage": "cs",
       "region": "U1",
       "hourCycle": "h23",
-      "tag": "cs-u-hc-h23"
+      "tag": "cs-CZ-u-hc-h23"
     },
     {
       "uiLanguage": "cs",
       "region": "U1",
       "hourCycle": "h12",
-      "tag": "cs-u-hc-h12"
+      "tag": "cs-CZ-u-hc-h12"
     },
     {
       "uiLanguage": "en-x-1750",
@@ -3957,37 +4005,37 @@
       "uiLanguage": "CS",
       "region": "US",
       "hourCycle": null,
-      "tag": "cs-US"
+      "tag": "cs-CZ"
     },
     {
       "uiLanguage": "CS",
       "region": "US",
       "hourCycle": "h23",
-      "tag": "cs-US-u-hc-h23"
+      "tag": "cs-CZ-u-hc-h23"
     },
     {
       "uiLanguage": "CS",
       "region": "US",
       "hourCycle": "h12",
-      "tag": "cs-US-u-hc-h12"
+      "tag": "cs-CZ-u-hc-h12"
     },
     {
       "uiLanguage": "CS",
       "region": "GB",
       "hourCycle": null,
-      "tag": "cs-GB"
+      "tag": "cs-CZ"
     },
     {
       "uiLanguage": "CS",
       "region": "GB",
       "hourCycle": "h23",
-      "tag": "cs-GB-u-hc-h23"
+      "tag": "cs-CZ-u-hc-h23"
     },
     {
       "uiLanguage": "CS",
       "region": "GB",
       "hourCycle": "h12",
-      "tag": "cs-GB-u-hc-h12"
+      "tag": "cs-CZ-u-hc-h12"
     },
     {
       "uiLanguage": "CS",
@@ -4011,109 +4059,109 @@
       "uiLanguage": "CS",
       "region": "DE",
       "hourCycle": null,
-      "tag": "cs-DE"
+      "tag": "cs-CZ"
     },
     {
       "uiLanguage": "CS",
       "region": "DE",
       "hourCycle": "h23",
-      "tag": "cs-DE-u-hc-h23"
+      "tag": "cs-CZ-u-hc-h23"
     },
     {
       "uiLanguage": "CS",
       "region": "DE",
       "hourCycle": "h12",
-      "tag": "cs-DE-u-hc-h12"
+      "tag": "cs-CZ-u-hc-h12"
     },
     {
       "uiLanguage": "CS",
       "region": "gb",
       "hourCycle": null,
-      "tag": "cs-GB"
+      "tag": "cs-CZ"
     },
     {
       "uiLanguage": "CS",
       "region": "gb",
       "hourCycle": "h23",
-      "tag": "cs-GB-u-hc-h23"
+      "tag": "cs-CZ-u-hc-h23"
     },
     {
       "uiLanguage": "CS",
       "region": "gb",
       "hourCycle": "h12",
-      "tag": "cs-GB-u-hc-h12"
+      "tag": "cs-CZ-u-hc-h12"
     },
     {
       "uiLanguage": "CS",
       "region": "150",
       "hourCycle": null,
-      "tag": "cs-150"
+      "tag": "cs-CZ"
     },
     {
       "uiLanguage": "CS",
       "region": "150",
       "hourCycle": "h23",
-      "tag": "cs-150-u-hc-h23"
+      "tag": "cs-CZ-u-hc-h23"
     },
     {
       "uiLanguage": "CS",
       "region": "150",
       "hourCycle": "h12",
-      "tag": "cs-150-u-hc-h12"
+      "tag": "cs-CZ-u-hc-h12"
     },
     {
       "uiLanguage": "CS",
       "region": null,
       "hourCycle": null,
-      "tag": "cs"
+      "tag": "cs-CZ"
     },
     {
       "uiLanguage": "CS",
       "region": null,
       "hourCycle": "h23",
-      "tag": "cs-u-hc-h23"
+      "tag": "cs-CZ-u-hc-h23"
     },
     {
       "uiLanguage": "CS",
       "region": null,
       "hourCycle": "h12",
-      "tag": "cs-u-hc-h12"
+      "tag": "cs-CZ-u-hc-h12"
     },
     {
       "uiLanguage": "CS",
       "region": "GBR",
       "hourCycle": null,
-      "tag": "cs"
+      "tag": "cs-CZ"
     },
     {
       "uiLanguage": "CS",
       "region": "GBR",
       "hourCycle": "h23",
-      "tag": "cs-u-hc-h23"
+      "tag": "cs-CZ-u-hc-h23"
     },
     {
       "uiLanguage": "CS",
       "region": "GBR",
       "hourCycle": "h12",
-      "tag": "cs-u-hc-h12"
+      "tag": "cs-CZ-u-hc-h12"
     },
     {
       "uiLanguage": "CS",
       "region": "U1",
       "hourCycle": null,
-      "tag": "cs"
+      "tag": "cs-CZ"
     },
     {
       "uiLanguage": "CS",
       "region": "U1",
       "hourCycle": "h23",
-      "tag": "cs-u-hc-h23"
+      "tag": "cs-CZ-u-hc-h23"
     },
     {
       "uiLanguage": "CS",
       "region": "U1",
       "hourCycle": "h12",
-      "tag": "cs-u-hc-h12"
+      "tag": "cs-CZ-u-hc-h12"
     },
     {
       "uiLanguage": "",

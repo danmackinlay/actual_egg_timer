@@ -135,14 +135,25 @@ public enum HourCycle: String, Sendable, CaseIterable {
     case h11, h12, h23, h24
 }
 
+/// Languages that write numbers one way wherever they are read, and the region
+/// whose conventions those are: a Czech UI formats as `cs-CZ` in any region.
+/// A language not listed takes the device's region, as English does (`en-DE`
+/// writes "2,4"). The same list as the web's `OWN_CONVENTION`.
+public let ownConvention: [String: String] = ["cs": "CZ"]
+
 /// The locale numbers and times are formatted in: the language the app speaks,
-/// in the region the device is in, with the device's own 12/24-hour setting
-/// where it differs from the region's. The same function as the web's, so the
-/// two apps derive the same tag from the same facts.
+/// in the region the device is in unless the language has a convention of its
+/// own (`ownConvention`), with the device's own 12/24-hour setting where it
+/// differs from the region's. The same function as the web's, so the two apps
+/// derive the same tag from the same facts.
 public func formattingLocale(uiLanguage: String, region: String?, hourCycle: HourCycle?) -> String {
     var tag = languageOf(uiLanguage)
     if tag.isEmpty || !isLanguage(tag) { tag = "en" }
-    if let region, isRegion(region) { tag += "-" + region.uppercased() }
+    if let home = ownConvention[tag] {
+        tag += "-" + home
+    } else if let region, isRegion(region) {
+        tag += "-" + region.uppercased()
+    }
     if let hourCycle { tag += "-u-hc-" + hourCycle.rawValue }
     return tag
 }

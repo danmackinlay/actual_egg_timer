@@ -1581,7 +1581,8 @@ const format = {
   // device's region, the device's own clock setting - to the bytes a cook
   // reads: the owner's rules of 27 September, end to end.
   derived: ([
-    ['en', 'GB', null], ['en', 'US', null], ['cs', 'CZ', null], ['en', 'CZ', null], ['en', 'DE', null], ['en', 'US', 'h23'],
+    ['en', 'GB', null], ['en', 'US', null], ['cs', 'CZ', null], ['en', 'CZ', null], ['cs', 'US', null],
+    ['cs', 'GB', null], ['cs', 'DE', null], ['cs', null, null], ['en', 'DE', null], ['en', 'US', 'h23'],
     ['en', 'GB', 'h12'], ['en', 'AU', 'h23'],
   ] as [string, string | null, HourCycle | null][]).map(([ui, region, hc]) => {
     const tag = formattingLocale(ui, region, hc);

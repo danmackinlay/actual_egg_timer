@@ -155,6 +155,20 @@ test('4a. the formatting locale is the UI language in the device\'s region', () 
   assert.equal(formattingLocale('en', 'GBR', null), 'en', 'not a region');
 });
 
+test('4b. a Czech UI formats as Czech wherever the device is; an English one follows the region', () => {
+  assert.equal(formattingLocale('cs', 'US', null), 'cs-CZ', 'Czech has one convention of its own');
+  assert.equal(formattingLocale('cs', 'GB', null), 'cs-CZ');
+  assert.equal(formattingLocale('cs', null, null), 'cs-CZ');
+  assert.equal(formattingLocale('cs', 'US', 'h12'), 'cs-CZ-u-hc-h12', 'the device\'s own clock setting still rides along');
+  assert.equal(formattingLocale('en', 'CZ', null), 'en-CZ', 'English has many, so the region decides');
+  assert.equal(formatNumber(formattingLocale('cs', 'US', null), 1234.5, 1), `1${NBSP}234,5`);
+  assert.equal(formatNumber(formattingLocale('cs', 'GB', null), 2.4, 1), '2,4');
+  assert.equal(formatNumber(formattingLocale('en', 'DE', null), 2.4, 1), '2,4', 'F4\'s en-DE stands');
+  assert.equal(formatNumber(formattingLocale('en', 'CZ', null), 1234.5, 1), `1${NBSP}234,5`);
+  assert.equal(formatTimeOfDay(formattingLocale('en', 'CZ', null), 9 * 3600 + 5 * 60, false), '9:05',
+    'en-CZ: the web printed 09:05 and iOS 9:05; both print 9:05');
+});
+
 // --------------------------------------------------------------------------
 // 5. English, through the web's renderer
 // --------------------------------------------------------------------------
