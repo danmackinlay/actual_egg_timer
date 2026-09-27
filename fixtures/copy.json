@@ -294,7 +294,7 @@
       "locale": "en-x-1750",
       "key": "readout.phase.cookingBoiling",
       "args": {},
-      "text": "Cooking; let the boil not abate"
+      "text": "Boiling; let it not abate"
     },
     {
       "locale": "en-x-1750",
@@ -312,13 +312,13 @@
       "locale": "en-x-1750",
       "key": "readout.phase.coolingIce",
       "args": {},
-      "text": "Cooling; leave them in the ice"
+      "text": "Cooling; leave in the ice"
     },
     {
       "locale": "en-x-1750",
       "key": "readout.phase.coolingTap",
       "args": {},
-      "text": "Cooling; let the water run on"
+      "text": "Cooling; keep the tap on"
     },
     {
       "locale": "en-x-1750",
