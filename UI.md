@@ -260,8 +260,13 @@ cook, as the odds did, and come back after a reload.
 
 `#donenessBracket` runs from `levelLow` to `levelHigh` under the track, with
 a short mark at `levelMedian`, in the foreground colour at 70%: not the
-accent, not the odds' green, and below the track, so it never covers the
-shading; it reads in both schemes. After three consistent eggs it is about
+accent, not the odds' yolk, and below the track, so it never covers the
+shading; it reads in both schemes.
+
+**The track is a yolk** (the owner's steer, 27 September): its hue runs
+deep orange at runny, golden at jammy, pale yellow at hard (`--yolk-runny`,
+`--yolk-jammy`, `--yolk-hard`, deeper in the light scheme), and the odds
+stay its opacity, a mask over that hue, where they were a green. After three consistent eggs it is about
 the thumb's width and peeks out either side; on a fresh install it runs
 from soft to fudgy. The slider is described by it as well
 (`aria-describedby="donenessValue donenessRange"`): "Likely yolk: Soft to
