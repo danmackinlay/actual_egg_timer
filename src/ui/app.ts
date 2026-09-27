@@ -52,9 +52,9 @@ import {
   REGION, REGIONAL_UNITS, announceFlip, measure, show, unitSystem, useUnits,
 } from './units.js';
 import {
-  Machine, advance, beginCooling, idleMachine, recordBoil, restoreMachine,
+  Machine, advance, beginCooling, coolingStartsIn_s, idleMachine, recordBoil, restoreMachine,
   reviseProvisional, secondsAfterBoil, secondsHeating, secondsToCool, secondsToPull,
-  startCold, startHot, PULL_GRACE_SECONDS,
+  startCold, startHot,
 } from './machine.js';
 import {
   Ticker, blip, keepScreenAwake, primeAudio, releaseScreen, ringAlarm, setMuted, startTicker,
@@ -852,11 +852,11 @@ function render(now_ms: number): void {
     const into = settings.cooling === 'ice' ? 'action.pulled.ice'
       : settings.cooling === 'tap' ? 'action.pulled.tap'
         : 'action.pulled.counter';
-    setPrimary(
-      t(into),
-      t('action.hint.pull', { seconds: Math.max(0, Math.ceil(PULL_GRACE_SECONDS - late)) }),
-      true,
-    );
+    // On a counter rest nothing starts on its own: the grace runs out into
+    // Done. The line above already says the yolk is still cooking, so there
+    // is nothing true left to add, and the hint is empty.
+    const startsIn = coolingStartsIn_s(machine, now_ms);
+    setPrimary(t(into), startsIn === null ? '' : t('action.hint.pull', { seconds: startsIn }), true);
     // Reachable here too: a reload can land in this phase, and a cook you have
     // picked back up must always be one you can put down.
     dom.secondary.hidden = false;
