@@ -632,6 +632,9 @@ button.danger { color: var(--warn); border-color: color-mix(in srgb, var(--warn)
 }
 #help h3 { margin: 18px 0 4px; font-size: 1rem; }
 #help p { margin: 0 0 10px; }
+/* The technical aside under a gist: smaller and quieter, with its links. */
+#help p.aside { font-size: 0.9rem; color: var(--dim); margin-top: -4px; }
+#help p.aside a, #help p[data-copy-links] a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
 #help section { scroll-margin-top: 12px; }
 .toc {
   display: flex;

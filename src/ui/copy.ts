@@ -112,6 +112,30 @@ export function applyCopy(doc: Document): void {
   doc.documentElement.lang = activeLocale();
   for (const node of Array.from(doc.querySelectorAll<HTMLElement>('[data-copy]'))) {
     const key = node.dataset['copy'];
-    if (key !== undefined) node.textContent = t(key);
+    if (key === undefined) continue;
+    if (node.hasAttribute('data-copy-links')) fillWithLinks(node, t(key));
+    else node.textContent = t(key);
   }
+}
+
+/** A catalogue text whose `[label](https://…)` pieces become links, and
+ *  everything else plain text. Only https links are made, and every one opens
+ *  in a new tab without the opener; anything else stays as the literal text.
+ *  No HTML from the catalogue is ever parsed. */
+function fillWithLinks(node: HTMLElement, text: string): void {
+  node.textContent = '';
+  const link = /\[([^\]]+)\]\((https:\/\/[^\s)]+)\)/g;
+  let at = 0;
+  for (const m of text.matchAll(link)) {
+    const start = m.index ?? 0;
+    if (start > at) node.append(text.slice(at, start));
+    const a = node.ownerDocument.createElement('a');
+    a.href = m[2];
+    a.textContent = m[1];
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    node.append(a);
+    at = start + m[0].length;
+  }
+  if (at < text.length) node.append(text.slice(at));
 }
