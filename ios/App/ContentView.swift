@@ -20,6 +20,10 @@ struct ContentView: View {
     /// True while "Eggs in" waits on a solve for the inputs as they now stand,
     /// so a second tap cannot start a second cook.
     @State private var starting = false
+    /// The two disclosures under the odds: why they start low, and how to make
+    /// this cook more reliable. Both open in place.
+    @State private var showWhy = false
+    @State private var showAdvice = false
 
     var body: some View {
         // One clock read for everything outside the timeline. `cook.phase(at:)`
@@ -132,6 +136,21 @@ struct ContentView: View {
             HStack(spacing: 10) {
                 Text(odds.hit ?? " ")
                     .font(.footnote.weight(.semibold))
+                if odds.hit != nil {
+                    // Why the odds start low, opened in place under this line.
+                    Button {
+                        withAnimation(.snappy) { showWhy.toggle() }
+                    } label: {
+                        Image(systemName: showWhy ? "info.circle.fill" : "info.circle")
+                            .font(.footnote)
+                            .frame(minWidth: 28, minHeight: 28)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(.secondary)
+                    .accessibilityLabel(tr("odds.info"))
+                    .accessibilityValue(tr(showWhy ? "odds.shown" : "odds.hidden"))
+                }
                 if odds.learning {
                     Text(tr("odds.stillLearning"))
                         .font(.footnote)
@@ -139,6 +158,40 @@ struct ContentView: View {
                 }
             }
             .multilineTextAlignment(.center)
+
+            if showWhy && odds.hit != nil {
+                Text(tr("odds.why"))
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.leading)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.top, 2)
+            }
+
+            // Under low odds, the changes that would help this setup. Inline
+            // and closed until asked for: discoverable, not intrusive.
+            if phase == .idle && !kitchen.advice.isEmpty {
+                DisclosureGroup(isExpanded: $showAdvice) {
+                    VStack(alignment: .leading, spacing: 6) {
+                        ForEach(kitchen.advice, id: \.self) { key in
+                            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                                Circle()
+                                    .frame(width: 4, height: 4)
+                                    .alignmentGuide(.firstTextBaseline) { $0[.bottom] + 4 }
+                                Text(tr(key))
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                            }
+                        }
+                    }
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .padding(.top, 4)
+                } label: {
+                    Text(tr("advice.toggle"))
+                        .font(.footnote)
+                }
+                .padding(.top, 2)
+            }
 
             // The COOK's own record once one is running, not the live inputs:
             // what is in the pan cannot change after "Eggs in", and answering
@@ -766,6 +819,14 @@ struct ContentView: View {
                         .foregroundStyle(.secondary)
                 }
                 Slider(value: $kitchen.doneness, in: Limits.doneness, step: 0.01)
+                // Where this pan works: the odds at each level, and what it
+                // cannot deliver (OddsTrack). Inset by half a thumb each side,
+                // so a level sits under the thumb that asks for it.
+                if !kitchen.isSousVide, let solution = kitchen.solution {
+                    OddsTrack(solution: solution, profile: kitchen.oddsProfile)
+                        .frame(height: 8)
+                        .padding(.horizontal, 14)
+                }
                 HStack {
                     Text(tr("doneness.runny"))
                     Spacer()

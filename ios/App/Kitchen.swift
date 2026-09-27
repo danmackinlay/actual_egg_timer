@@ -206,6 +206,16 @@ final class Kitchen {
     /// and how far it leaned from the mean solve. Nil until this pot's decision
     /// surface has been built, and on the sous-vide screen.
     private(set) var decision: Decision?
+    /// The odds at every level for the pot on screen and the posterior as it
+    /// stands (Reach.swift): the track's shading, and the range the slider
+    /// offers. Nil until it has been worked out, after this pot's surface;
+    /// until then the physical limits are the whole rule, as before.
+    private(set) var oddsProfile: OddsProfile?
+    /// Under low odds, what would make this cook more reliable, as catalogue
+    /// keys in the order shown; empty when there is nothing to say.
+    private(set) var advice: [String] = []
+    /// Profiles asked for and not yet in, so each lands once.
+    private var profilesAsked = Set<String>()
 
     struct Answers: Sendable {
         var yolk: Feedback?
@@ -381,12 +391,15 @@ final class Kitchen {
             solution = nil
             refusal = ""
             decision = nil
+            oddsProfile = nil
+            advice = []
             return
         }
         let level = doneness
         let setup = setup
         let egg = egg
         let calibration = calibration
+        let facts = adviceFacts
         // Tagged with the question it answers, so neither step below can land
         // on inputs that have moved since, and "Eggs in" can tell whether the
         // time on screen is theirs (`currentSolution`).
@@ -394,19 +407,27 @@ final class Kitchen {
         task = Task { [weak self] in
             try? await Task.sleep(nanoseconds: Self.coalesceNanos)
             guard !Task.isCancelled else { return }
-            let answer = await Self.solve(egg: egg, setup: setup, level: level, calibration: calibration)
+            // The odds at every level, if this pot's are in, set the slider's
+            // ends (Reach.swift); if not, the physical limits do.
+            let inputs = decisionInputs(calibration, egg: egg, setup: setup)
+            let profile = await DecisionGrids.shared.cachedProfile(inputs, calibration)
+            let answer = await Self.solve(
+                egg: egg, setup: setup, level: level, calibration: calibration, profile: profile
+            )
             guard !Task.isCancelled else { return }
             // E5: the time is chosen on this pot's decision surface. The surface
             // does not depend on the slider, so a drag is answered from the one
             // already built and the time never jumps mid-drag; a new pot shows
             // the mean solve's time first, and the chosen one when its surface
             // lands, once the inputs have settled.
-            let inputs = decisionInputs(calibration, egg: egg, setup: setup)
             if let grid = await DecisionGrids.shared.cached(inputs) {
-                let chosen = await Self.decided(answer, grid: grid, egg: egg, calibration: calibration)
+                let chosen = await Self.decided(
+                    answer, grid: grid, egg: egg, calibration: calibration, facts: facts
+                )
                 guard !Task.isCancelled, question == self?.asked else { return }
                 self?.task = nil
                 self?.apply(chosen, question: question)
+                self?.askForProfiles(chosen.missing, calibration: calibration)
                 return
             }
             guard question == self?.asked else { return }
@@ -415,18 +436,30 @@ final class Kitchen {
             guard !Task.isCancelled else { return }
             let grid = await DecisionGrids.shared.grid(inputs)
             guard !Task.isCancelled else { return }
-            let chosen = await Self.decided(answer, grid: grid, egg: egg, calibration: calibration)
+            let chosen = await Self.decided(
+                answer, grid: grid, egg: egg, calibration: calibration, facts: facts
+            )
             guard !Task.isCancelled, question == self?.asked else { return }
             self?.task = nil
             self?.apply(chosen, question: question)
+            self?.askForProfiles(chosen.missing, calibration: calibration)
         }
     }
 
+    /// What the advice needs to know that the setup does not say: whether the
+    /// egg is a size off the carton, and whether its start is the room preset's
+    /// assumption rather than the fridge.
+    private var adviceFacts: AdviceFacts {
+        AdviceFacts(eggFromClass: massFrom == .sizeClass, startAssumed: !fromFridge)
+    }
+
     /// The answer, with its time chosen from the whole posterior (E5, Decide.swift)
-    /// rather than solved at its mean. Off the main actor, like the solve: a
-    /// decision is a few thousand probits.
+    /// rather than solved at its mean, and what to say if the odds there are
+    /// low. Off the main actor, like the solve: a decision is a few thousand
+    /// probits. Profiles not yet worked out - this pot's, and those of the
+    /// changes the advice would price - are listed in `missing`.
     private nonisolated static func decided(
-        _ answer: Answer, grid: DoseGrid, egg: Egg, calibration: Calibration
+        _ answer: Answer, grid: DoseGrid, egg: Egg, calibration: Calibration, facts: AdviceFacts
     ) async -> Answer {
         let target = log10(donenessFromSlider(answer.level).yolkDoseMin)
         let d = decide(calibration, grid: grid, solution: answer.solution, logNominalTarget: target)
@@ -436,7 +469,55 @@ final class Kitchen {
             solution: answer.solution, decision: d
         )
         chosen.decision = d
+        if answer.profile == nil {
+            chosen.missing.append(decisionInputs(calibration, egg: egg, setup: answer.setup))
+        }
+        guard answer.solution.whiteSets, adviceWanted(d.oddsTenths, profile: answer.profile) else {
+            return chosen
+        }
+        var priced: [(key: String, profile: OddsProfile)] = []
+        for change in pricedChanges(answer.setup) {
+            let changed = decisionInputs(calibration, egg: egg, setup: change.setup)
+            if let p = await DecisionGrids.shared.cachedProfile(changed, calibration) {
+                priced.append((key: change.key, profile: p))
+            } else {
+                chosen.missing.append(changed)
+            }
+        }
+        chosen.advice = protocolAdvice(
+            answer.setup, facts: facts, level: answer.level, odds: d.odds, priced: priced
+        )
         return chosen
+    }
+
+    /// Ask for the profiles an answer found missing, off the main actor, and
+    /// solve again when one lands if the screen still wants it: this pot's, or
+    /// a priced change of it. Each is asked for once.
+    private func askForProfiles(_ missing: [DecisionInputs], calibration: Calibration) {
+        for inputs in missing {
+            let key = DecisionGrids.profileKey(inputs, calibration)
+            guard !profilesAsked.contains(key) else { continue }
+            profilesAsked.insert(key)
+            Task { [weak self] in
+                _ = await DecisionGrids.shared.profile(inputs, calibration)
+                guard let self else { return }
+                self.profilesAsked.remove(key)
+                guard !self.isSousVide, self.wantedProfileKeys.contains(key) else { return }
+                self.recompute()
+            }
+        }
+    }
+
+    /// The profiles the screen wants now: this pot's, and its priced changes'.
+    private var wantedProfileKeys: Set<String> {
+        let inputs = decisionInputs(calibration, egg: egg, setup: setup)
+        var keys: Set<String> = [DecisionGrids.profileKey(inputs, calibration)]
+        for change in pricedChanges(setup) {
+            keys.insert(DecisionGrids.profileKey(
+                decisionInputs(calibration, egg: egg, setup: change.setup), calibration
+            ))
+        }
+        return keys
     }
 
     /// Solve, and read the result as a decision about the slider.
@@ -457,7 +538,8 @@ final class Kitchen {
     /// so re-solving at a snapped position would answer for an egg nobody is
     /// cooking.
     private nonisolated static func solve(
-        egg: Egg, setup: CookSetup, level: Double, calibration: Calibration, snapRetry: Bool = true
+        egg: Egg, setup: CookSetup, level: Double, calibration: Calibration, snapRetry: Bool = true,
+        profile: OddsProfile? = nil
     ) async -> Answer {
         // The white's target moves with what the eggs said about the white (E3),
         // so the doneness comes from the calibration as well as the parameters.
@@ -465,7 +547,10 @@ final class Kitchen {
         var result = solveCookTime(
             egg: egg, setup: setup, params: params, doneness: calibrationDoneness(calibration, level: level)
         )
-        let verdict = verdictFor(result, level: level)
+        // With this pot's odds in, the slider's ends are where they reach 3/10
+        // (Reach.swift); without them, or with none that high, where the pan
+        // reaches.
+        let verdict = verdictWithOdds(result, level: level, profile: profile)
 
         // Re-solve at the position the user is actually being offered, so the
         // numbers on screen are the numbers for that cook rather than for one
@@ -481,7 +566,7 @@ final class Kitchen {
                 solvedAt = snapTo
             }
         }
-        return Answer(solution: result, verdict: verdict, setup: setup, level: solvedAt)
+        return Answer(solution: result, verdict: verdict, setup: setup, level: solvedAt, profile: profile)
     }
 
     /// Re-solve a cook already under way, for a corrected time to boil.
@@ -551,14 +636,18 @@ final class Kitchen {
             let calibration = calibration
             let egg = egg
             let setup = setup
-            var answer = await Self.solve(egg: egg, setup: setup, level: doneness, calibration: calibration)
+            let facts = adviceFacts
+            let inputs = decisionInputs(calibration, egg: egg, setup: setup)
+            let profile = await DecisionGrids.shared.cachedProfile(inputs, calibration)
+            var answer = await Self.solve(
+                egg: egg, setup: setup, level: doneness, calibration: calibration, profile: profile
+            )
             // The time on screen is the chosen one whenever this pot's surface
             // is already built (E5), so "Eggs in" starts on that one too. A
             // surface still to build is not waited for: the mean is what the
             // screen would show, and the egg is going in now.
-            let inputs = decisionInputs(calibration, egg: egg, setup: setup)
             if let grid = await DecisionGrids.shared.cached(inputs) {
-                answer = await Self.decided(answer, grid: grid, egg: egg, calibration: calibration)
+                answer = await Self.decided(answer, grid: grid, egg: egg, calibration: calibration, facts: facts)
             }
             guard question == asked else { continue }
             apply(answer, question: question)
@@ -569,6 +658,8 @@ final class Kitchen {
         solution = answer.solution
         answered = question
         decision = answer.decision
+        oddsProfile = answer.profile
+        advice = answer.advice
         refusal = refusalText(answer.verdict, setup: answer.setup, water: show(.water, answer.setup.waterLitres))
         if let snapTo = answer.verdict.snapTo, snapTo != doneness {
             applying = true
@@ -589,6 +680,15 @@ final class Kitchen {
         var level: Double
         /// The choice made on it (E5), once this pot's surface is in.
         var decision: Decision? = nil
+        /// The odds at every level for this pot and posterior (Reach.swift),
+        /// once worked out: the verdict read its range, and the track is
+        /// shaded by it.
+        var profile: OddsProfile? = nil
+        /// What to say under low odds, as catalogue keys; empty for nothing.
+        var advice: [String] = []
+        /// Profiles this answer would have used and that are not worked out
+        /// yet: asked for once it is applied.
+        var missing: [DecisionInputs] = []
     }
 
     // MARK: - Learning from an egg
@@ -800,6 +900,61 @@ actor DecisionGrids {
         }
         return grid
     }
+
+    // MARK: The odds at every level
+
+    /// Profiles by pot AND posterior: unlike the surface, a profile reads every
+    /// particle, so a fold - or a second answer refolded, which keeps the
+    /// count - makes a new one. A few more than the surfaces, for the priced
+    /// changes the advice asks about.
+    private static let profilesKept = 8
+
+    private var profiles: [String: OddsProfile] = [:]
+    private var profileOrder: [String] = []
+    private var profileBuilds: [String: Task<OddsProfile, Never>] = [:]
+
+    /// A cheap summary of where the posterior stands: the count and the
+    /// weighted sums of every dimension. Any fold moves at least one of them.
+    /// The web app's `posteriorPrint`.
+    nonisolated static func profileKey(_ inputs: DecisionInputs, _ c: Calibration) -> String {
+        var a = 0.0, b = 0.0, d = 0.0, e = 0.0
+        let post = c.posterior
+        for (p, w) in zip(post.particles, post.weights) {
+            a += w * p.alphaM2s
+            b += w * p.logDoseOffset
+            d += w * (p.noise + p.tauAirScale)
+            e += w * (p.whiteOffset + p.whiteFirmGap)
+        }
+        return "\(key(inputs))#\(c.eggsLogged)|\(post.rng)|\(post.particles.count)|\(a)|\(b)|\(d)|\(e)"
+    }
+
+    func cachedProfile(_ inputs: DecisionInputs, _ c: Calibration) -> OddsProfile? {
+        profiles[Self.profileKey(inputs, c)]
+    }
+
+    /// The odds at every level for this pot and posterior, on the pot's
+    /// surface (built first if need be), off the main actor: a couple of dozen
+    /// solves and decisions. Two asks share one build.
+    func profile(_ inputs: DecisionInputs, _ c: Calibration) async -> OddsProfile {
+        let key = Self.profileKey(inputs, c)
+        if let p = profiles[key] { return p }
+        if let running = profileBuilds[key] { return await running.value }
+        let surface = await grid(inputs)
+        if let p = profiles[key] { return p }
+        if let running = profileBuilds[key] { return await running.value }
+        let build = Task.detached(priority: .userInitiated) {
+            oddsProfile(c, egg: inputs.egg, setup: inputs.setup, grid: surface)
+        }
+        profileBuilds[key] = build
+        let p = await build.value
+        profileBuilds[key] = nil
+        if profiles[key] == nil { profileOrder.append(key) }
+        profiles[key] = p
+        while profileOrder.count > Self.profilesKept {
+            profiles[profileOrder.removeFirst()] = nil
+        }
+        return p
+    }
 }
 
 // MARK: - Refusals, in words
@@ -842,6 +997,13 @@ private func refusalText(_ v: Verdict, setup: CookSetup, water: String) -> Strin
         case .ice:
             return tr("refusal.ice", ["wanted": .text(wanted), "limit": .text(limit)])
         }
+
+    case .unlikelySoft, .unlikelyHard:
+        // The pan could, but the odds say it would rarely come out right
+        // (Reach.swift): the slider's end is the last level at 3/10.
+        return tr(v.kind == .unlikelySoft ? "refusal.unlikelySoft" : "refusal.unlikelyHard", [
+            "hits": .int(Int((reachOdds * 10).rounded())), "of": .int(10), "limit": .text(limit),
+        ])
     }
 }
 
