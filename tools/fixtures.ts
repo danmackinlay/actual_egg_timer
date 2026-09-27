@@ -88,8 +88,8 @@ import {
 import { LEAN_RATIO, LEVEL_HIGH_Q, LEVEL_LOW_Q, leanOf, predictOutcome } from '../src/core/outcome.js';
 import {
   ADVICE_BELOW_TENTHS, ADVICE_GAIN, ADVICE_MARGIN_TENTHS, OddsProfile, PROFILE_STEP, REACH_ODDS,
-  adviceWanted, oddsNear, oddsProfile, pricedChanges, protocolAdvice, shadingOf, unpricedAdvice,
-  verdictWithOdds,
+  adviceWanted, oddsNear, oddsProfile, offeredPositions, outcomeAtLevel, pricedChanges, protocolAdvice,
+  saferLevels, shadingOf, unpricedAdvice, verdictWithOdds,
 } from '../src/core/reach.js';
 import {
   Fixed, HourCycle, countDecimals, formatCount, formatNumber, formatTimeOfDay, formattingLocale,
@@ -1564,6 +1564,52 @@ const reachFixture = {
 
 writeFileSync('fixtures/reach.json', `${JSON.stringify(reachFixture, null, 2)}\n`);
 
+/* -------------------------------------------------------------- safer.json */
+
+/* The play-safe levels (src/core/reach.ts, "playing safe"): for a level T, the
+ * softest offered level whose 10% point reaches T, and the firmest whose 90%
+ * point stays under it. A bisection over solves and decisions, so both apps
+ * must read the same levels in the same order. Each case carries its profile,
+ * which reach.json already holds the profile computation to, so the Swift side
+ * only searches. The last case narrows the offered range by hand, as the odds'
+ * reach does, to show a suggestion held inside it. */
+
+const SAFER_CASES: { posterior: string; setup: CookSetup; levels: number[]; range?: { softest: number; hardest: number } }[] = [
+  { posterior: 'prior', setup: DECIDE_SETUP, levels: [0.1, 0.41, 0.8, 1] },
+  { posterior: 'learned', setup: DECIDE_SETUP, levels: [0, 0.22, 0.41, 0.62] },
+  { posterior: 'firmer', setup: DECIDE_SETUP, levels: [0.22, 0.41, 0.9] },
+  { posterior: 'learned', setup: setupOf({ timeToBoil_s: 480, eggCount: 2, cooling: 'counter' }), levels: [0.62, 0.8] },
+  { posterior: 'learned', setup: DECIDE_SETUP, levels: [0.41, 0.5], range: { softest: 0.35, hardest: 0.55 } },
+];
+
+const saferCases = SAFER_CASES.map((sc) => {
+  const pz = decidePosteriors.find((x) => x.name === sc.posterior);
+  if (pz === undefined) throw new Error(sc.posterior);
+  const c: Calibration = { posterior: pz.post, eggsLogged: pz.eggsLogged };
+  const g = coarseDecisionGrid(c, DECIDE_EGG, sc.setup);
+  const computed = oddsProfile(c, DECIDE_EGG, sc.setup, g.grid);
+  const profile: OddsProfile = sc.range === undefined ? computed : { ...computed, ...sc.range };
+  const range = offeredPositions(profile);
+  return {
+    posterior: sc.posterior,
+    eggsLogged: pz.eggsLogged,
+    egg: { mass_kg: DECIDE_EGG.mass_kg },
+    setup: sc.setup,
+    grid: { tauAirScale: g.tauAirScale, ...g.spec },
+    profile: profile,
+    offered: range,
+    outcomes: sc.levels.map((level) => ({ level: level, outcome: outcomeAtLevel(c, DECIDE_EGG, sc.setup, g.grid, level) })),
+    safer: sc.levels.map((level) => ({ level: level, ...saferLevels(c, DECIDE_EGG, sc.setup, g.grid, profile, level) })),
+  };
+});
+
+const saferFixture = {
+  about: 'The play-safe levels: for a slider level, the softest offered level whose 10% point reaches it and the firmest whose 90% point stays under it. src/core/reach.ts. Posteriors are decide.json\'s; surfaces are coarse, as reach.json\'s.',
+  cases: saferCases,
+};
+
+writeFileSync('fixtures/safer.json', `${JSON.stringify(saferFixture, null, 2)}\n`);
+
 type CatalogueJson = { locale: string; messages: Record<string, Record<string, unknown>> };
 
 /* ------------------------------------------------------------------ write */
@@ -1861,6 +1907,7 @@ const counts = [
   `${decideFixture.specs.length} decision surfaces and ${decideFixture.cases.length} decisions`,
   `${outcomeFixture.cases.reduce((n, c) => n + c.at.length, 0)} outcomes`,
   `${reachFixture.profiles.length} odds profiles, ${reachFixture.verdicts.length} verdicts with odds and ${reachFixture.advice.length} advice setups`,
+  `${saferFixture.cases.reduce((n, c) => n + c.safer.length, 0)} play-safe levels`,
   `${(thermometer['updates'] as unknown[]).length} probe folds`,
   `${(thermometer['solved'] as unknown[]).length} probe cooks`,
 ];

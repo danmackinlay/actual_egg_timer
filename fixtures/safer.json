@@ -1,0 +1,890 @@
+{
+  "about": "The play-safe levels: for a slider level, the softest offered level whose 10% point reaches it and the firmest whose 90% point stays under it. src/core/reach.ts. Posteriors are decide.json's; surfaces are coarse, as reach.json's.",
+  "cases": [
+    {
+      "posterior": "prior",
+      "eggsLogged": 0,
+      "egg": {
+        "mass_kg": 0.068
+      },
+      "setup": {
+        "startMode": "hot",
+        "eggStart_C": 4,
+        "ambient_C": 20,
+        "boiling_C": 100,
+        "timeToBoil_s": 480,
+        "cooling": "ice",
+        "waterLitres": 2,
+        "eggCount": 2
+      },
+      "grid": {
+        "tauAirScale": 1,
+        "alphaMin": 1.0199999999999999e-7,
+        "alphaMax": 2.8049999999999995e-7,
+        "alphaCount": 7,
+        "timeMin_s": 246.11328125,
+        "timeMax_s": 766.11328125,
+        "timeCount": 27
+      },
+      "profile": {
+        "points": [
+          {
+            "level": 0,
+            "odds": 0.15437802873421827
+          },
+          {
+            "level": 0.05,
+            "odds": 0.1807128951317099
+          },
+          {
+            "level": 0.1,
+            "odds": 0.2009611802192114
+          },
+          {
+            "level": 0.15,
+            "odds": 0.2170361467608303
+          },
+          {
+            "level": 0.2,
+            "odds": 0.2289699527013196
+          },
+          {
+            "level": 0.25,
+            "odds": 0.23688325082428116
+          },
+          {
+            "level": 0.3,
+            "odds": 0.2410003782506944
+          },
+          {
+            "level": 0.35,
+            "odds": 0.24366671712889684
+          },
+          {
+            "level": 0.4,
+            "odds": 0.2478035666379107
+          },
+          {
+            "level": 0.45,
+            "odds": 0.25006192886136397
+          },
+          {
+            "level": 0.5,
+            "odds": 0.2519880389277583
+          },
+          {
+            "level": 0.55,
+            "odds": 0.252477013900422
+          },
+          {
+            "level": 0.6,
+            "odds": 0.2523586546710201
+          },
+          {
+            "level": 0.65,
+            "odds": 0.2534615572813534
+          },
+          {
+            "level": 0.7,
+            "odds": 0.25355630636771886
+          },
+          {
+            "level": 0.75,
+            "odds": 0.25464558423571476
+          },
+          {
+            "level": 0.8,
+            "odds": 0.25661667135581917
+          },
+          {
+            "level": 0.85,
+            "odds": 0.2578256417308472
+          },
+          {
+            "level": 0.9,
+            "odds": 0.2595878608204093
+          },
+          {
+            "level": 0.95,
+            "odds": 0.26052360535474445
+          },
+          {
+            "level": 1,
+            "odds": 0.2620513046568222
+          }
+        ],
+        "best": 0.2620513046568222,
+        "physicalSoftest": 0,
+        "physicalHardest": 1,
+        "softest": null,
+        "hardest": null
+      },
+      "offered": {
+        "lo": 0,
+        "hi": 100
+      },
+      "outcomes": [
+        {
+          "level": 0.1,
+          "outcome": {
+            "pTooSoft": 0.3997919379354426,
+            "pJustRight": 0.2609187743218178,
+            "pTooFirm": 0.3392892877427387,
+            "pWhiteRunny": 0.3257538915194116,
+            "levelLow": 0,
+            "levelMedian": 0.0774779319763184,
+            "levelHigh": 0.35566186904907227,
+            "lean": "balanced"
+          }
+        },
+        {
+          "level": 0.41,
+          "outcome": {
+            "pTooSoft": 0.4039029685039772,
+            "pJustRight": 0.2571830889134085,
+            "pTooFirm": 0.3389139425826129,
+            "pWhiteRunny": 0.07620658495694846,
+            "levelLow": 0.13877344131469724,
+            "levelMedian": 0.38620805740356445,
+            "levelHigh": 0.6663727760314941,
+            "lean": "balanced"
+          }
+        },
+        {
+          "level": 0.8,
+          "outcome": {
+            "pTooSoft": 0.40424324640024195,
+            "pJustRight": 0.260983828681205,
+            "pTooFirm": 0.3347729249185519,
+            "pWhiteRunny": 0.0173408796103651,
+            "levelLow": 0.5288825035095215,
+            "levelMedian": 0.7760004997253418,
+            "levelHigh": 1,
+            "lean": "balanced"
+          }
+        },
+        {
+          "level": 1,
+          "outcome": {
+            "pTooSoft": 0.40534416290673186,
+            "pJustRight": 0.266493329420174,
+            "pTooFirm": 0.3281625076730933,
+            "pWhiteRunny": 0.016668964256735457,
+            "levelLow": 0.7340559959411621,
+            "levelMedian": 0.9749093055725098,
+            "levelHigh": 1,
+            "lean": "balanced"
+          }
+        }
+      ],
+      "safer": [
+        {
+          "level": 0.1,
+          "firmerLevel": 0.38,
+          "softerLevel": null
+        },
+        {
+          "level": 0.41,
+          "firmerLevel": 0.69,
+          "softerLevel": 0.15
+        },
+        {
+          "level": 0.8,
+          "firmerLevel": null,
+          "softerLevel": 0.54
+        },
+        {
+          "level": 1,
+          "firmerLevel": null,
+          "softerLevel": null
+        }
+      ]
+    },
+    {
+      "posterior": "learned",
+      "eggsLogged": 3,
+      "egg": {
+        "mass_kg": 0.068
+      },
+      "setup": {
+        "startMode": "hot",
+        "eggStart_C": 4,
+        "ambient_C": 20,
+        "boiling_C": 100,
+        "timeToBoil_s": 480,
+        "cooling": "ice",
+        "waterLitres": 2,
+        "eggCount": 2
+      },
+      "grid": {
+        "tauAirScale": 1.0712137755716802,
+        "alphaMin": 1.0021738770127244e-7,
+        "alphaMax": 2.755978161784992e-7,
+        "alphaCount": 7,
+        "timeMin_s": 248.7353515625,
+        "timeMax_s": 788.7353515625,
+        "timeCount": 28
+      },
+      "profile": {
+        "points": [
+          {
+            "level": 0,
+            "odds": 0.01652102756100457
+          },
+          {
+            "level": 0.05,
+            "odds": 0.016567218095839525
+          },
+          {
+            "level": 0.07,
+            "odds": 0.016585762051224757
+          },
+          {
+            "level": 0.08,
+            "odds": 0.4311176920720206
+          },
+          {
+            "level": 0.1,
+            "odds": 0.4835336211603388
+          },
+          {
+            "level": 0.15,
+            "odds": 0.573081573182709
+          },
+          {
+            "level": 0.2,
+            "odds": 0.6223195004082785
+          },
+          {
+            "level": 0.25,
+            "odds": 0.6457831746508358
+          },
+          {
+            "level": 0.3,
+            "odds": 0.6544877733663913
+          },
+          {
+            "level": 0.35,
+            "odds": 0.6582077216066893
+          },
+          {
+            "level": 0.4,
+            "odds": 0.6602452438194959
+          },
+          {
+            "level": 0.45,
+            "odds": 0.6615680445079091
+          },
+          {
+            "level": 0.5,
+            "odds": 0.6624520359073374
+          },
+          {
+            "level": 0.55,
+            "odds": 0.6632029211553347
+          },
+          {
+            "level": 0.6,
+            "odds": 0.663923153588256
+          },
+          {
+            "level": 0.65,
+            "odds": 0.6646616035156856
+          },
+          {
+            "level": 0.7,
+            "odds": 0.6655026002210352
+          },
+          {
+            "level": 0.75,
+            "odds": 0.6664785553563288
+          },
+          {
+            "level": 0.8,
+            "odds": 0.6675547150412315
+          },
+          {
+            "level": 0.85,
+            "odds": 0.6687397382825159
+          },
+          {
+            "level": 0.9,
+            "odds": 0.6700348378731434
+          },
+          {
+            "level": 0.95,
+            "odds": 0.6714540922454907
+          },
+          {
+            "level": 1,
+            "odds": 0.672964085566609
+          }
+        ],
+        "best": 0.672964085566609,
+        "physicalSoftest": 0,
+        "physicalHardest": 1,
+        "softest": 0.08,
+        "hardest": 1
+      },
+      "offered": {
+        "lo": 8,
+        "hi": 100
+      },
+      "outcomes": [
+        {
+          "level": 0,
+          "outcome": {
+            "pTooSoft": 0.01669048456323447,
+            "pJustRight": 0.01684853691950716,
+            "pTooFirm": 0.9664609785172579,
+            "pWhiteRunny": 0.01888549872400274,
+            "levelLow": 0.41011667251586914,
+            "levelMedian": 0.5133872032165527,
+            "levelHigh": 0.6217474937438965,
+            "lean": "firm"
+          }
+        },
+        {
+          "level": 0.22,
+          "outcome": {
+            "pTooSoft": 0.12769759736961572,
+            "pJustRight": 0.6660376647918878,
+            "pTooFirm": 0.20626473783849625,
+            "pWhiteRunny": 0.0617847896311869,
+            "levelLow": 0.11503362655639648,
+            "levelMedian": 0.21729803085327146,
+            "levelHigh": 0.3260493278503418,
+            "lean": "firm"
+          }
+        },
+        {
+          "level": 0.41,
+          "outcome": {
+            "pTooSoft": 0.1551074215957694,
+            "pJustRight": 0.6742492635726282,
+            "pTooFirm": 0.17064331483160233,
+            "pWhiteRunny": 0.023886946259718614,
+            "levelLow": 0.294644832611084,
+            "levelMedian": 0.39774370193481445,
+            "levelHigh": 0.5066256523132325,
+            "lean": "balanced"
+          }
+        },
+        {
+          "level": 0.62,
+          "outcome": {
+            "pTooSoft": 0.15836328200025995,
+            "pJustRight": 0.6757114858252832,
+            "pTooFirm": 0.16592523217445676,
+            "pWhiteRunny": 0.017505050710363897,
+            "levelLow": 0.5036396980285645,
+            "levelMedian": 0.6068549156188966,
+            "levelHigh": 0.7144827842712403,
+            "lean": "balanced"
+          }
+        }
+      ],
+      "safer": [
+        {
+          "level": 0,
+          "firmerLevel": 0.08,
+          "softerLevel": null
+        },
+        {
+          "level": 0.22,
+          "firmerLevel": 0.34,
+          "softerLevel": null
+        },
+        {
+          "level": 0.41,
+          "firmerLevel": 0.53,
+          "softerLevel": 0.31
+        },
+        {
+          "level": 0.62,
+          "firmerLevel": 0.74,
+          "softerLevel": 0.52
+        }
+      ]
+    },
+    {
+      "posterior": "firmer",
+      "eggsLogged": 6,
+      "egg": {
+        "mass_kg": 0.068
+      },
+      "setup": {
+        "startMode": "hot",
+        "eggStart_C": 4,
+        "ambient_C": 20,
+        "boiling_C": 100,
+        "timeToBoil_s": 480,
+        "cooling": "ice",
+        "waterLitres": 2,
+        "eggCount": 2
+      },
+      "grid": {
+        "tauAirScale": 1.083605296945674,
+        "alphaMin": 1.01877214973149e-7,
+        "alphaMax": 2.8016234117615973e-7,
+        "alphaCount": 7,
+        "timeMin_s": 246.9873046875,
+        "timeMax_s": 766.9873046875,
+        "timeCount": 27
+      },
+      "profile": {
+        "points": [
+          {
+            "level": 0,
+            "odds": 0.5694008725646525
+          },
+          {
+            "level": 0.05,
+            "odds": 0.6472011018736955
+          },
+          {
+            "level": 0.1,
+            "odds": 0.6746242327334254
+          },
+          {
+            "level": 0.15,
+            "odds": 0.6826198667357241
+          },
+          {
+            "level": 0.2,
+            "odds": 0.6847268344510249
+          },
+          {
+            "level": 0.25,
+            "odds": 0.6852508292861879
+          },
+          {
+            "level": 0.3,
+            "odds": 0.6852742293689578
+          },
+          {
+            "level": 0.35,
+            "odds": 0.6853115423431876
+          },
+          {
+            "level": 0.4,
+            "odds": 0.6853859006564728
+          },
+          {
+            "level": 0.45,
+            "odds": 0.6855609831295687
+          },
+          {
+            "level": 0.5,
+            "odds": 0.6859285585913889
+          },
+          {
+            "level": 0.55,
+            "odds": 0.6864023550494792
+          },
+          {
+            "level": 0.6,
+            "odds": 0.6870181446580106
+          },
+          {
+            "level": 0.65,
+            "odds": 0.6878356016723286
+          },
+          {
+            "level": 0.7,
+            "odds": 0.6887859829337394
+          },
+          {
+            "level": 0.75,
+            "odds": 0.689879369932333
+          },
+          {
+            "level": 0.8,
+            "odds": 0.691137898449395
+          },
+          {
+            "level": 0.85,
+            "odds": 0.6925860727534818
+          },
+          {
+            "level": 0.9,
+            "odds": 0.6941859950475351
+          },
+          {
+            "level": 0.95,
+            "odds": 0.6959420664314563
+          },
+          {
+            "level": 1,
+            "odds": 0.6978573050242045
+          }
+        ],
+        "best": 0.6978573050242045,
+        "physicalSoftest": 0,
+        "physicalHardest": 1,
+        "softest": 0,
+        "hardest": 1
+      },
+      "offered": {
+        "lo": 0,
+        "hi": 100
+      },
+      "outcomes": [
+        {
+          "level": 0.22,
+          "outcome": {
+            "pTooSoft": 0.14661632777354847,
+            "pJustRight": 0.6975894755001303,
+            "pTooFirm": 0.15579419672632006,
+            "pWhiteRunny": 0.018924570434197503,
+            "levelLow": 0.19047307968139648,
+            "levelMedian": 0.26422548294067383,
+            "levelHigh": 0.3404078483581543,
+            "lean": "balanced"
+          }
+        },
+        {
+          "level": 0.41,
+          "outcome": {
+            "pTooSoft": 0.14956164899532137,
+            "pJustRight": 0.6970889844472864,
+            "pTooFirm": 0.15334936655739165,
+            "pWhiteRunny": 0.016828967874957444,
+            "levelLow": 0.37953424453735346,
+            "levelMedian": 0.4535412788391114,
+            "levelHigh": 0.5296502113342285,
+            "lean": "balanced"
+          }
+        },
+        {
+          "level": 0.9,
+          "outcome": {
+            "pTooSoft": 0.1458524300831326,
+            "pJustRight": 0.7059519839827246,
+            "pTooFirm": 0.1481955859341422,
+            "pWhiteRunny": 0.01666711235682836,
+            "levelLow": 0.8707509040832518,
+            "levelMedian": 0.9437432289123534,
+            "levelHigh": 1,
+            "lean": "balanced"
+          }
+        }
+      ],
+      "safer": [
+        {
+          "level": 0.22,
+          "firmerLevel": 0.25,
+          "softerLevel": 0.09
+        },
+        {
+          "level": 0.41,
+          "firmerLevel": 0.45,
+          "softerLevel": 0.29
+        },
+        {
+          "level": 0.9,
+          "firmerLevel": 0.93,
+          "softerLevel": 0.78
+        }
+      ]
+    },
+    {
+      "posterior": "learned",
+      "eggsLogged": 3,
+      "egg": {
+        "mass_kg": 0.068
+      },
+      "setup": {
+        "startMode": "hot",
+        "eggStart_C": 4,
+        "ambient_C": 20,
+        "boiling_C": 100,
+        "timeToBoil_s": 480,
+        "cooling": "counter",
+        "waterLitres": 2,
+        "eggCount": 2
+      },
+      "grid": {
+        "tauAirScale": 1.0712137755716802,
+        "alphaMin": 1.0021738770127244e-7,
+        "alphaMax": 2.755978161784992e-7,
+        "alphaCount": 7,
+        "timeMin_s": 198.916015625,
+        "timeMax_s": 578.916015625,
+        "timeCount": 20
+      },
+      "profile": {
+        "points": [
+          {
+            "level": 0.59,
+            "odds": 0.01717864981470531
+          },
+          {
+            "level": 0.6,
+            "odds": 0.017218029783873882
+          },
+          {
+            "level": 0.65,
+            "odds": 0.0174288789169578
+          },
+          {
+            "level": 0.66,
+            "odds": 0.3739638669014679
+          },
+          {
+            "level": 0.67,
+            "odds": 0.4183230777439504
+          },
+          {
+            "level": 0.7,
+            "odds": 0.5185969585209897
+          },
+          {
+            "level": 0.75,
+            "odds": 0.6227542792690502
+          },
+          {
+            "level": 0.8,
+            "odds": 0.6656628210742404
+          },
+          {
+            "level": 0.85,
+            "odds": 0.6782321457593707
+          },
+          {
+            "level": 0.9,
+            "odds": 0.6827416735974566
+          },
+          {
+            "level": 0.95,
+            "odds": 0.6848828429071369
+          },
+          {
+            "level": 1,
+            "odds": 0.6859490178126407
+          }
+        ],
+        "best": 0.6859490178126407,
+        "physicalSoftest": 0.59,
+        "physicalHardest": 1,
+        "softest": 0.66,
+        "hardest": 1
+      },
+      "offered": {
+        "lo": 66,
+        "hi": 100
+      },
+      "outcomes": [
+        {
+          "level": 0.62,
+          "outcome": {
+            "pTooSoft": 0.016848508229747535,
+            "pJustRight": 0.01765521907198239,
+            "pTooFirm": 0.9654962726982698,
+            "pWhiteRunny": 0.018241598311205986,
+            "levelLow": 0.9147181510925291,
+            "levelMedian": 1,
+            "levelHigh": 1,
+            "lean": "firm"
+          }
+        },
+        {
+          "level": 0.8,
+          "outcome": {
+            "pTooSoft": 0.11743455640523151,
+            "pJustRight": 0.6903930604678998,
+            "pTooFirm": 0.1921723831268678,
+            "pWhiteRunny": 0.048065615803632215,
+            "levelLow": 0.7067160606384278,
+            "levelMedian": 0.7987046241760254,
+            "levelHigh": 0.8887867927551271,
+            "lean": "firm"
+          }
+        }
+      ],
+      "safer": [
+        {
+          "level": 0.62,
+          "firmerLevel": 0.66,
+          "softerLevel": null
+        },
+        {
+          "level": 0.8,
+          "firmerLevel": 0.9,
+          "softerLevel": null
+        }
+      ]
+    },
+    {
+      "posterior": "learned",
+      "eggsLogged": 3,
+      "egg": {
+        "mass_kg": 0.068
+      },
+      "setup": {
+        "startMode": "hot",
+        "eggStart_C": 4,
+        "ambient_C": 20,
+        "boiling_C": 100,
+        "timeToBoil_s": 480,
+        "cooling": "ice",
+        "waterLitres": 2,
+        "eggCount": 2
+      },
+      "grid": {
+        "tauAirScale": 1.0712137755716802,
+        "alphaMin": 1.0021738770127244e-7,
+        "alphaMax": 2.755978161784992e-7,
+        "alphaCount": 7,
+        "timeMin_s": 248.7353515625,
+        "timeMax_s": 788.7353515625,
+        "timeCount": 28
+      },
+      "profile": {
+        "points": [
+          {
+            "level": 0,
+            "odds": 0.01652102756100457
+          },
+          {
+            "level": 0.05,
+            "odds": 0.016567218095839525
+          },
+          {
+            "level": 0.07,
+            "odds": 0.016585762051224757
+          },
+          {
+            "level": 0.08,
+            "odds": 0.4311176920720206
+          },
+          {
+            "level": 0.1,
+            "odds": 0.4835336211603388
+          },
+          {
+            "level": 0.15,
+            "odds": 0.573081573182709
+          },
+          {
+            "level": 0.2,
+            "odds": 0.6223195004082785
+          },
+          {
+            "level": 0.25,
+            "odds": 0.6457831746508358
+          },
+          {
+            "level": 0.3,
+            "odds": 0.6544877733663913
+          },
+          {
+            "level": 0.35,
+            "odds": 0.6582077216066893
+          },
+          {
+            "level": 0.4,
+            "odds": 0.6602452438194959
+          },
+          {
+            "level": 0.45,
+            "odds": 0.6615680445079091
+          },
+          {
+            "level": 0.5,
+            "odds": 0.6624520359073374
+          },
+          {
+            "level": 0.55,
+            "odds": 0.6632029211553347
+          },
+          {
+            "level": 0.6,
+            "odds": 0.663923153588256
+          },
+          {
+            "level": 0.65,
+            "odds": 0.6646616035156856
+          },
+          {
+            "level": 0.7,
+            "odds": 0.6655026002210352
+          },
+          {
+            "level": 0.75,
+            "odds": 0.6664785553563288
+          },
+          {
+            "level": 0.8,
+            "odds": 0.6675547150412315
+          },
+          {
+            "level": 0.85,
+            "odds": 0.6687397382825159
+          },
+          {
+            "level": 0.9,
+            "odds": 0.6700348378731434
+          },
+          {
+            "level": 0.95,
+            "odds": 0.6714540922454907
+          },
+          {
+            "level": 1,
+            "odds": 0.672964085566609
+          }
+        ],
+        "best": 0.672964085566609,
+        "physicalSoftest": 0,
+        "physicalHardest": 1,
+        "softest": 0.35,
+        "hardest": 0.55
+      },
+      "offered": {
+        "lo": 35,
+        "hi": 55
+      },
+      "outcomes": [
+        {
+          "level": 0.41,
+          "outcome": {
+            "pTooSoft": 0.1551074215957694,
+            "pJustRight": 0.6742492635726282,
+            "pTooFirm": 0.17064331483160233,
+            "pWhiteRunny": 0.023886946259718614,
+            "levelLow": 0.294644832611084,
+            "levelMedian": 0.39774370193481445,
+            "levelHigh": 0.5066256523132325,
+            "lean": "balanced"
+          }
+        },
+        {
+          "level": 0.5,
+          "outcome": {
+            "pTooSoft": 0.1575265630739007,
+            "pJustRight": 0.6746161823356581,
+            "pTooFirm": 0.1678572545904412,
+            "pWhiteRunny": 0.019577902267242802,
+            "levelLow": 0.38380956649780273,
+            "levelMedian": 0.4870715141296387,
+            "levelHigh": 0.5955986976623535,
+            "lean": "balanced"
+          }
+        }
+      ],
+      "safer": [
+        {
+          "level": 0.41,
+          "firmerLevel": 0.53,
+          "softerLevel": null
+        },
+        {
+          "level": 0.5,
+          "firmerLevel": null,
+          "softerLevel": 0.4
+        }
+      ]
+    }
+  ]
+}
