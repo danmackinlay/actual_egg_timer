@@ -198,7 +198,7 @@ test('4b. the parity check catches a dropped, an invented and a miscounted place
       'refusal.counter': { text: 'Na lince se žloutek vaří dál — {wanted}.' },
       'readout.alarm.set': { text: 'budík na {time} {when}' },
       'learned.tuned': { text: 'naladěno na {eggs} vajec · ±{spread} %' },
-      'learned.pan': { text: 'hrnec {time}' },
+      'learned.pan': { text: 'hrnec {water}: {time}' },
     },
   };
   const failures = parityFailures(broken);

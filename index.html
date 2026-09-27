@@ -33,13 +33,34 @@
 <meta name="twitter:description" content="A boiled-egg timer that computes the time from heat conduction and denaturation kinetics, not from a recipe.">
 <meta name="twitter:image" content="https://actualeggtimer.netlify.app/assets/social.jpg">
 </head>
-<body data-phase="IDLE" data-start="cold">
+<body data-phase="IDLE" data-start="cold" data-view="egg">
 
 <!-- The words are not in this file. Each element that shows one names its key
      in copy/<locale>.json with data-copy, and src/ui/copy.ts fills it in at
      boot, so the page and the iOS app read the same catalogue. The <head> is
-     the exception: crawlers and link previews do not run scripts. -->
+     the exception: crawlers and link previews do not run scripts.
+
+     Three views, one page (UI.md): the egg, the Kitchen and Help. The hash
+     picks one (#kitchen, #help, #help-<section>), so the phone's back button
+     works; src/ui/app.ts sets data-view from it. While a cook is running only
+     the egg is shown, whatever the hash says.
+
+     Every (i) is a button.info with aria-controls naming the paragraph it
+     opens, which sits right after the line the (i) is on. data-label names
+     the key of the control's own label, for "About {label}"; data-name, where
+     a label will not read inside that, the key of the whole name. -->
 <main>
+
+  <!-- ------------------------------------------------------------ top bar -->
+  <!-- The ways out to the other views, and sound, which works in every
+       phase. Kitchen and Help are rare visits, so they sit at the top, out of
+       the thumb's way; Start is at the bottom, in it. -->
+  <header id="topbar">
+    <button type="button" id="navBack" class="navlink navlink--back" data-copy="nav.back"></button>
+    <a href="#kitchen" id="kitchenLink" class="navlink" data-copy="controls.pan"></a>
+    <a href="#help" id="helpLink" class="navlink" data-copy="help.link"></a>
+    <button type="button" id="mute" class="mute" aria-pressed="false" data-copy="readout.mute.on"></button>
+  </header>
 
   <!-- ------------------------------------------------------------ readout -->
   <section id="readout">
@@ -50,34 +71,29 @@
       <span class="sr-only" id="announce"></span>
     </div>
 
-    <p id="subline"></p>
-    <!-- E5: the odds of the time on screen, and "still learning" for a cook's
-         first few eggs. Filled by the app once the choice is made. -->
-    <p id="odds"><span id="oddsHit"></span><button type="button" id="oddsInfo" class="info" aria-expanded="false" aria-controls="oddsWhy" hidden></button><span id="oddsLearning"></span></p>
-    <!-- Why the odds start low, opened in place by the (i) beside them. -->
+    <p id="subline"><span id="sublineText"></span><button type="button" id="sublineInfo" class="info" aria-expanded="false" aria-controls="sublineMore" data-name="readout.sub.coldAssumes.info" hidden></button></p>
+    <p id="sublineMore" class="disclosed" hidden data-copy="readout.sub.coldAssumes.more"></p>
+    <!-- E5: the odds of the time on screen, and "I'm still learning" for a
+         cook's first few eggs, each with its (i). Filled once the choice is
+         made. -->
+    <p id="odds"><span class="odds__item"><span id="oddsHit"></span><button type="button" id="oddsInfo" class="info" aria-expanded="false" aria-controls="oddsWhy" data-name="odds.info" hidden></button></span><span class="odds__item" id="oddsLearningItem"><span id="oddsLearning"></span><button type="button" id="learningInfo" class="info" aria-expanded="false" aria-controls="learningMore" data-name="odds.stillLearning.info" hidden></button></span></p>
     <p id="oddsWhy" class="disclosed" hidden data-copy="odds.why"></p>
-    <!-- Under low odds: what would make this cook more reliable, opened in
-         place. Only the changes that would help this setup are listed. -->
-    <div id="advice" hidden>
-      <button type="button" id="adviceToggle" class="disclose" aria-expanded="false" aria-controls="adviceList" data-copy="advice.toggle"></button>
-      <ul id="adviceList" class="disclosed" hidden></ul>
-    </div>
-
-    <dl id="stats">
-      <div><dt id="statYolkLabel" data-copy="readout.stat.peakYolk"></dt><dd id="statYolk">--</dd></div>
-      <div id="afterBoilStat"><dt data-copy="readout.stat.afterBoil"></dt><dd id="statAfter">--</dd></div>
-      <div><dt data-copy="readout.stat.waterBoilsAt"></dt><dd id="statBoil">--</dd></div>
-    </dl>
-
-    <p id="note"></p>
-    <p id="warn" hidden></p>
-    <button type="button" id="mute" class="mute" aria-pressed="false" data-copy="readout.mute.on"></button>
+    <p id="learningMore" class="disclosed" hidden data-copy="odds.stillLearning.more"></p>
+    <!-- HOOK (direction, not yet built): the sentence about which way an egg
+         is likely to miss ("Probably just right. If not, more likely a little
+         firm.") goes in #direction, and #whiteRisk carries a line only when a
+         runny white is a real risk. Both wait for core's pTooSoft, pJustRight,
+         pTooFirm and pWhiteRunny; until then the odds line above stands in,
+         and these stay hidden. -->
+    <p id="direction" hidden></p>
+    <p id="whiteRisk" hidden></p>
   </section>
 
-  <!-- ----------------------------------------------------------- controls -->
-  <!-- Numeric bounds, steps, units and the preset temperatures are filled in
-       at boot from src/core/policy.ts and src/core/units.ts, in the cook's
-       units, so the markup cannot disagree with the model. -->
+  <!-- ----------------------------------------------------------- the egg -->
+  <!-- Two controls and a sentence (UI.md section 3). Numeric bounds, steps,
+       units and the preset temperatures are filled in at boot from
+       src/core/policy.ts and src/core/units.ts, in the cook's units, so the
+       markup cannot disagree with the model. -->
   <form id="controls" autocomplete="off">
 
     <div class="field field--slider">
@@ -93,141 +109,325 @@
           <div class="slider__blocked" id="donenessBlockedSoft"></div>
           <div class="slider__blocked slider__blocked--hard" id="donenessBlockedHard"></div>
         </div>
+        <!-- HOOK (bracket, not yet built): the likely range of the yolk, its
+             10-90% delivered doneness on the slider's scale, under the thumb
+             and clear of the odds shading on the track above. Place it with
+             placeBand(dom.donenessBracket, levelLow, levelHigh) in app.ts and
+             unhide it once core's levelLow and levelHigh land. -->
+        <div class="slider__range" aria-hidden="true"><div class="slider__bracket" id="donenessBracket" hidden></div></div>
         <input type="range" id="doneness" value="0.41" aria-describedby="donenessValue">
         <div class="slider__ticks" id="donenessTicks" aria-hidden="true"></div>
       </div>
       <p class="value" id="donenessValue"></p>
+      <p class="value value--note" id="note"></p>
     </div>
 
-    <div class="field">
-      <label for="size" data-copy="controls.size"></label>
-      <select id="size"></select>
-    </div>
+    <!-- The setup sentence. Its clauses are buttons, built by the app from
+         setup.* in the catalogue; each opens its choice below, in place. -->
+    <div id="setup">
+      <p id="sentence"></p>
 
-    <div class="field field--measure">
-      <p class="measure__legend" id="measureLegend" data-copy="controls.measure.legend"></p>
-      <div class="measure" role="group" aria-labelledby="measureLegend">
-        <div>
-          <label for="measureMass" data-copy="controls.measure.weight"></label>
-          <span class="unit"><input type="number" id="measureMass" inputmode="decimal"><span id="unitMass"></span></span>
+      <div class="panel" id="panelEgg" role="group" aria-labelledby="lblEgg" hidden>
+        <div class="panel__head">
+          <span class="panel__title" id="lblEgg" data-copy="controls.egg"></span>
+          <button type="button" class="info" aria-expanded="false" aria-controls="moreEgg" data-label="controls.egg"></button>
+          <button type="button" class="panel__close" data-copy="setup.close"></button>
         </div>
-        <div>
-          <label for="measureGirth" data-copy="controls.measure.girth"></label>
-          <span class="unit"><input type="number" id="measureGirth" inputmode="decimal"><span id="unitGirth"></span></span>
+        <p id="moreEgg" class="disclosed" hidden data-copy="controls.egg.more"></p>
+        <div class="prow">
+          <label for="size" data-copy="controls.size"></label>
+          <select id="size"></select>
         </div>
-        <div>
-          <label for="measureMinor" data-copy="controls.measure.minor"></label>
-          <span class="unit"><input type="number" id="measureMinor" inputmode="decimal"><span id="unitMinor"></span></span>
+        <p class="measure__legend" id="measureLegend" data-copy="controls.measure.legend"></p>
+        <div class="measure" role="group" aria-labelledby="measureLegend">
+          <div>
+            <label for="measureMass" data-copy="controls.measure.weight"></label>
+            <span class="unit"><input type="number" id="measureMass" inputmode="decimal"><span id="unitMass"></span></span>
+          </div>
+          <div>
+            <label for="measureGirth" data-copy="controls.measure.girth"></label>
+            <span class="unit"><input type="number" id="measureGirth" inputmode="decimal"><span id="unitGirth"></span></span>
+          </div>
+          <div>
+            <label for="measureMinor" data-copy="controls.measure.minor"></label>
+            <span class="unit"><input type="number" id="measureMinor" inputmode="decimal"><span id="unitMinor"></span></span>
+          </div>
+        </div>
+        <p class="hint" data-copy="controls.measure.hint"></p>
+      </div>
+
+      <div class="panel pan-only" id="panelFrom" role="group" aria-labelledby="lblFrom" hidden>
+        <div class="panel__head">
+          <span class="panel__title" id="lblFrom" data-copy="controls.eggFrom"></span>
+          <button type="button" class="info" aria-expanded="false" aria-controls="moreFrom" data-label="controls.eggFrom"></button>
+          <button type="button" class="panel__close" data-copy="setup.close"></button>
+        </div>
+        <p id="moreFrom" class="disclosed" hidden data-copy="controls.eggFrom.more"></p>
+        <div class="seg">
+          <input type="radio" name="startTemp" id="tempFridge" value="fridge">
+          <label for="tempFridge" data-copy="controls.eggFrom.fridge"></label>
+          <input type="radio" name="startTemp" id="tempRoom" value="room">
+          <label for="tempRoom" data-copy="controls.eggFrom.room"></label>
+          <input type="radio" name="startTemp" id="tempCustom" value="custom">
+          <label for="tempCustom" data-copy="controls.eggFrom.custom"></label>
+        </div>
+        <div class="prow" id="customTempField" hidden>
+          <label for="customTemp" data-copy="controls.eggTemp"></label>
+          <span class="unit"><input type="number" id="customTemp" inputmode="decimal"><span id="unitTemp"></span></span>
+        </div>
+        <p class="hint" id="startTempHint"></p>
+      </div>
+
+      <div class="panel" id="panelStart" role="group" aria-labelledby="lblStart" hidden>
+        <div class="panel__head">
+          <span class="panel__title" id="lblStart" data-copy="controls.start"></span>
+          <button type="button" class="info" aria-expanded="false" aria-controls="moreStart" data-label="controls.start"></button>
+          <button type="button" class="panel__close" data-copy="setup.close"></button>
+        </div>
+        <p id="moreStart" class="disclosed" hidden data-copy="controls.start.more"></p>
+        <div class="seg">
+          <input type="radio" name="startMode" id="startCold" value="cold">
+          <label for="startCold" data-copy="controls.start.cold"></label>
+          <input type="radio" name="startMode" id="startHot" value="hot">
+          <label for="startHot" data-copy="controls.start.hot"></label>
+          <input type="radio" name="startMode" id="startSous" value="sous">
+          <label for="startSous" id="startSousLabel"></label>
         </div>
       </div>
-      <p class="hint" data-copy="controls.measure.hint"></p>
-    </div>
 
-    <fieldset class="field pan-only">
-      <legend data-copy="controls.eggFrom"></legend>
-      <div class="seg">
-        <input type="radio" name="startTemp" id="tempFridge" value="fridge">
-        <label for="tempFridge" data-copy="controls.eggFrom.fridge"></label>
-        <input type="radio" name="startTemp" id="tempRoom" value="room">
-        <label for="tempRoom" data-copy="controls.eggFrom.room"></label>
-        <input type="radio" name="startTemp" id="tempCustom" value="custom">
-        <label for="tempCustom" data-copy="controls.eggFrom.custom"></label>
-      </div>
-      <p class="hint" id="startTempHint"></p>
-    </fieldset>
-
-    <div class="field pan-only" id="customTempField" hidden>
-      <label for="customTemp" data-copy="controls.eggTemp"></label>
-      <span class="unit"><input type="number" id="customTemp" inputmode="decimal"><span id="unitTemp"></span></span>
-    </div>
-
-    <fieldset class="field">
-      <legend data-copy="controls.start"></legend>
-      <div class="seg">
-        <input type="radio" name="startMode" id="startCold" value="cold">
-        <label for="startCold" data-copy="controls.start.cold"></label>
-        <input type="radio" name="startMode" id="startHot" value="hot">
-        <label for="startHot" data-copy="controls.start.hot"></label>
-        <input type="radio" name="startMode" id="startSous" value="sous">
-        <label for="startSous" id="startSousLabel"></label>
-      </div>
-      <p class="hint" id="startHint" data-copy="controls.start.hint"></p>
-    </fieldset>
-
-    <fieldset class="field pan-only" id="afterBoilField">
-      <legend data-copy="controls.atTheBoil"></legend>
-      <div class="seg">
-        <input type="radio" name="afterBoil" id="heatHold" value="hold">
-        <label for="heatHold" data-copy="controls.afterBoil.keepBoiling"></label>
-        <input type="radio" name="afterBoil" id="heatOff" value="off">
-        <label for="heatOff" data-copy="controls.afterBoil.heatOff"></label>
-      </div>
-      <p class="hint" data-copy="controls.afterBoil.hint"></p>
-    </fieldset>
-
-    <fieldset class="field pan-only">
-      <legend data-copy="controls.then"></legend>
-      <div class="seg">
-        <input type="radio" name="cooling" id="coolIce" value="ice">
-        <label for="coolIce" data-copy="controls.then.ice"></label>
-        <input type="radio" name="cooling" id="coolTap" value="tap">
-        <label for="coolTap" data-copy="controls.then.tap"></label>
-        <input type="radio" name="cooling" id="coolCounter" value="counter">
-        <label for="coolCounter" data-copy="controls.then.counter"></label>
-      </div>
-    </fieldset>
-
-    <!-- E4. Off by default; offered once during a cook, and changed here. -->
-    <div class="field field--check pan-only">
-      <label class="check" for="probeSetting"><input type="checkbox" id="probeSetting"><span data-copy="controls.probe"></span></label>
-      <p class="hint" data-copy="controls.probe.hint"></p>
-    </div>
-
-    <div class="field field--pair pan-only">
-      <div>
-        <label for="litres" data-copy="controls.water"></label>
-        <span class="unit"><input type="number" id="litres" inputmode="decimal"><span id="unitLitres"></span></span>
-      </div>
-      <div>
-        <label for="eggCount" data-copy="controls.eggs"></label>
-        <span class="unit"><input type="number" id="eggCount" step="1" inputmode="numeric"><span></span></span>
+      <div class="panel pan-only" id="panelCooling" role="group" aria-labelledby="lblCooling" hidden>
+        <div class="panel__head">
+          <span class="panel__title" id="lblCooling" data-copy="controls.cooling"></span>
+          <button type="button" class="info" aria-expanded="false" aria-controls="moreCooling" data-label="controls.cooling"></button>
+          <button type="button" class="panel__close" data-copy="setup.close"></button>
+        </div>
+        <p id="moreCooling" class="disclosed" hidden data-copy="controls.cooling.more"></p>
+        <div class="seg">
+          <input type="radio" name="cooling" id="coolIce" value="ice">
+          <label for="coolIce" data-copy="controls.then.ice"></label>
+          <input type="radio" name="cooling" id="coolTap" value="tap">
+          <label for="coolTap" data-copy="controls.then.tap"></label>
+          <input type="radio" name="cooling" id="coolCounter" value="counter">
+          <label for="coolCounter" data-copy="controls.then.counter"></label>
+        </div>
       </div>
     </div>
-
-    <div class="field pan-only">
-      <label for="altitude" data-copy="controls.altitude"></label>
-      <span class="unit"><input type="number" id="altitude" inputmode="numeric"><span id="unitAltitude"></span></span>
-    </div>
-
-    <!-- Not pan-only: a bath has a temperature too. Its default comes from the
-         browser's region; a choice made here is stored as the cook's. -->
-    <fieldset class="field" id="unitsField">
-      <legend data-copy="controls.units"></legend>
-      <div class="seg">
-        <input type="radio" name="units" id="unitsMetric" value="metric">
-        <label for="unitsMetric" data-copy="controls.units.metric"></label>
-        <input type="radio" name="units" id="unitsImperial" value="imperial">
-        <label for="unitsImperial" data-copy="controls.units.imperial"></label>
-      </div>
-    </fieldset>
-
   </form>
 
-  <!-- What the app has learned from this kitchen, and the way to take it back. -->
-  <div id="learned">
-    <p class="hint" id="learnedNote"></p>
-    <button type="button" id="forget" class="secondary" hidden data-copy="learned.forget"></button>
+  <!-- -------------------------------------------------------------- slot -->
+  <!-- The one place for a longer line, in every phase: a refusal, a
+       reloaded cook, the sous-vide warning, or a first-egg welcome; and
+       under low odds, the way to Help. -->
+  <div id="slot">
+    <p id="warn" hidden></p>
+    <p id="welcome" hidden data-copy="idle.welcome"></p>
+    <p id="advice" hidden><a href="#help-reliable" id="adviceLink" class="morelink" data-copy="advice.toggle"></a></p>
   </div>
+
+  <!-- ----------------------------------------------------------- kitchen -->
+  <!-- Set once, cook many: what belongs to the kitchen rather than the egg. -->
+  <section id="kitchen" class="page" aria-labelledby="kitchenTitle">
+    <h1 id="kitchenTitle" tabindex="-1" data-copy="controls.pan"></h1>
+    <form id="kitchenForm" autocomplete="off">
+
+      <!-- Not pan-only: a sous-vide egg has a temperature too. Its default
+           comes from the browser's region; a choice made here is stored as
+           the cook's. -->
+      <fieldset class="krow" id="unitsField" aria-labelledby="lblUnits">
+        <div class="krow__head">
+          <span id="lblUnits" data-copy="controls.units"></span>
+          <button type="button" class="info" aria-expanded="false" aria-controls="moreUnits" data-label="controls.units"></button>
+        </div>
+        <p id="moreUnits" class="disclosed" hidden data-copy="controls.units.more"></p>
+        <div class="seg">
+          <input type="radio" name="units" id="unitsMetric" value="metric">
+          <label for="unitsMetric" data-copy="controls.units.metric"></label>
+          <input type="radio" name="units" id="unitsImperial" value="imperial">
+          <label for="unitsImperial" data-copy="controls.units.imperial"></label>
+        </div>
+      </fieldset>
+
+      <div class="krow pan-only">
+        <div class="krow__line">
+          <span class="krow__head">
+            <label for="altitude" data-copy="controls.altitude"></label>
+            <button type="button" class="info" aria-expanded="false" aria-controls="moreAltitude" data-label="controls.altitude"></button>
+          </span>
+          <span class="unit"><input type="number" id="altitude" inputmode="numeric"><span id="unitAltitude"></span></span>
+        </div>
+        <p id="moreAltitude" class="disclosed" hidden data-copy="controls.altitude.more"></p>
+        <p class="krow__sub"><span data-copy="readout.stat.waterBoilsAt"></span> <strong id="statBoil">--</strong></p>
+      </div>
+
+      <div class="krow pan-only">
+        <div class="krow__line">
+          <span class="krow__head">
+            <label for="litres" data-copy="controls.water"></label>
+            <button type="button" class="info" aria-expanded="false" aria-controls="moreWater" data-label="controls.water"></button>
+          </span>
+          <span class="unit"><input type="number" id="litres" inputmode="decimal"><span id="unitLitres"></span></span>
+        </div>
+        <p id="moreWater" class="disclosed" hidden data-copy="controls.water.more"></p>
+      </div>
+
+      <div class="krow pan-only">
+        <div class="krow__line">
+          <span class="krow__head">
+            <label for="eggCount" data-copy="controls.eggsInPan"></label>
+            <button type="button" class="info" aria-expanded="false" aria-controls="moreEggs" data-label="controls.eggsInPan"></button>
+          </span>
+          <span class="unit"><input type="number" id="eggCount" step="1" inputmode="numeric"></span>
+        </div>
+        <p id="moreEggs" class="disclosed" hidden data-copy="controls.eggsInPan.more"></p>
+      </div>
+
+      <fieldset class="krow pan-only" id="afterBoilField" aria-labelledby="lblAfterBoil">
+        <div class="krow__head">
+          <span id="lblAfterBoil" data-copy="controls.afterTheBoil"></span>
+          <button type="button" class="info" aria-expanded="false" aria-controls="moreAfterBoil" data-label="controls.afterTheBoil"></button>
+        </div>
+        <p id="moreAfterBoil" class="disclosed" hidden data-copy="controls.afterTheBoil.more"></p>
+        <div class="seg">
+          <input type="radio" name="afterBoil" id="heatHold" value="hold">
+          <label for="heatHold" data-copy="controls.afterBoil.keepBoiling"></label>
+          <input type="radio" name="afterBoil" id="heatOff" value="off">
+          <label for="heatOff" data-copy="controls.afterBoil.heatOff"></label>
+        </div>
+      </fieldset>
+
+      <!-- E4. Off by default; offered once during a cook, and changed here. -->
+      <fieldset class="krow pan-only" aria-labelledby="lblProbe">
+        <div class="krow__head">
+          <span id="lblProbe" data-copy="controls.thermometer"></span>
+          <button type="button" class="info" aria-expanded="false" aria-controls="moreProbe" data-label="controls.thermometer"></button>
+        </div>
+        <p id="moreProbe" class="disclosed" hidden data-copy="controls.thermometer.more"></p>
+        <label class="check" for="probeSetting"><input type="checkbox" id="probeSetting"><span data-copy="probe.offer.yes"></span></label>
+      </fieldset>
+    </form>
+
+    <!-- What the app has learned from this kitchen, and the way to take it
+         back, confirmed first. -->
+    <section id="learned" class="krow" aria-labelledby="lblLearned">
+      <div class="krow__head">
+        <span id="lblLearned" data-copy="learned.title"></span>
+      </div>
+      <p class="hint" id="learnedNote" tabindex="-1"></p>
+      <div class="forget__row">
+        <button type="button" id="forget" class="secondary" hidden data-copy="learned.forget"></button>
+        <button type="button" id="forgetInfo" class="info" aria-expanded="false" aria-controls="moreForget" data-label="learned.forget" hidden></button>
+      </div>
+      <p id="moreForget" class="disclosed" hidden data-copy="learned.forget.more"></p>
+      <div id="forgetConfirm" role="group" aria-labelledby="forgetTitle" aria-describedby="forgetMessage" hidden>
+        <p id="forgetTitle" data-copy="learned.confirm.title"></p>
+        <p id="forgetMessage" class="hint" data-copy="learned.confirm.message"></p>
+        <div class="confirm__row">
+          <button type="button" id="forgetYes" class="secondary danger" data-copy="learned.confirm.forget"></button>
+          <button type="button" id="forgetNo" class="secondary" data-copy="learned.confirm.keep"></button>
+        </div>
+      </div>
+    </section>
+
+    <footer id="colophon">
+      <p><strong data-copy="colophon.name"></strong> <span data-copy="colophon.lede"></span>
+        <a href="https://github.com/danmackinlay/actual_egg_timer"
+        target="_blank" rel="noopener noreferrer" data-copy="colophon.link"></a>
+        <span data-copy="colophon.tail"></span></p>
+    </footer>
+  </section>
+
+  <!-- -------------------------------------------------------------- help -->
+  <!-- The second tier: the whole story, opened on purpose. One control's
+       meaning is its (i); this is everything around it. -->
+  <section id="help" class="page" aria-labelledby="helpTitle">
+    <h1 id="helpTitle" tabindex="-1" data-copy="help.title"></h1>
+    <nav class="toc">
+      <a href="#help-how" data-copy="help.how.title"></a>
+      <a href="#help-learn" data-copy="help.learn.title"></a>
+      <a href="#help-reliable" data-copy="help.reliable.title"></a>
+      <a href="#help-odds" data-copy="help.odds.title"></a>
+      <a href="#help-unsure" data-copy="help.unsure.title"></a>
+      <a href="#help-sources" data-copy="help.sources.title"></a>
+    </nav>
+
+    <section id="help-how" aria-labelledby="helpHowTitle">
+      <h2 id="helpHowTitle" data-copy="help.how.title"></h2>
+      <p data-copy="help.how.p1"></p>
+      <p data-copy="help.how.p2"></p>
+      <p data-copy="help.how.p3"></p>
+    </section>
+
+    <section id="help-learn" aria-labelledby="helpLearnTitle">
+      <h2 id="helpLearnTitle" data-copy="help.learn.title"></h2>
+      <p data-copy="help.learn.p1"></p>
+      <p data-copy="help.learn.p2"></p>
+      <p data-copy="help.learn.p3"></p>
+      <p data-copy="help.learn.p4"></p>
+    </section>
+
+    <section id="help-reliable" aria-labelledby="helpReliableTitle">
+      <h2 id="helpReliableTitle" data-copy="help.reliable.title"></h2>
+      <p data-copy="help.reliable.intro"></p>
+      <!-- Under low odds: the changes that would help the setup on screen,
+           from protocolAdvice in src/core/reach.ts. -->
+      <div id="forYou" class="foryou" hidden>
+        <h3 data-copy="help.reliable.forYou"></h3>
+        <ul id="adviceList"></ul>
+      </div>
+      <h3 data-copy="help.reliable.every.title"></h3>
+      <p data-copy="help.reliable.every"></p>
+      <h3 data-copy="help.reliable.hot.title"></h3>
+      <p data-copy="help.reliable.hot"></p>
+      <h3 data-copy="help.reliable.cold.title"></h3>
+      <p data-copy="help.reliable.cold"></p>
+      <h3 data-copy="help.reliable.heatOff.title"></h3>
+      <p data-copy="help.reliable.heatOff"></p>
+      <h3 data-copy="help.reliable.cooling.title"></h3>
+      <p data-copy="help.reliable.cooling"></p>
+    </section>
+
+    <section id="help-odds" aria-labelledby="helpOddsTitle">
+      <h2 id="helpOddsTitle" data-copy="help.odds.title"></h2>
+      <p data-copy="help.odds.p1"></p>
+      <p data-copy="help.odds.p2"></p>
+      <p data-copy="help.odds.p3"></p>
+    </section>
+
+    <section id="help-unsure" aria-labelledby="helpUnsureTitle">
+      <h2 id="helpUnsureTitle" data-copy="help.unsure.title"></h2>
+      <p data-copy="help.unsure.counter"></p>
+      <p data-copy="help.unsure.heatOff"></p>
+      <p data-copy="help.unsure.white"></p>
+      <p id="helpSousVide"></p>
+    </section>
+
+    <section id="help-sources" aria-labelledby="helpSourcesTitle">
+      <h2 id="helpSourcesTitle" data-copy="help.sources.title"></h2>
+      <p data-copy="help.sources.intro"></p>
+      <!-- As README.md section 10 and references.bib give them; nothing else. -->
+      <ul class="sources">
+        <li><a href="https://newton.ex.ac.uk/teaching/CDHW/egg/" target="_blank" rel="noopener noreferrer" data-copy="help.source.williams"></a></li>
+        <li><a href="https://doi.org/10.1088/0143-0807/27/1/013" target="_blank" rel="noopener noreferrer" data-copy="help.source.buay"></a></li>
+        <li><a href="https://doi.org/10.1002/fsn3.257" target="_blank" rel="noopener noreferrer" data-copy="help.source.abbasnezhad"></a></li>
+        <li><a href="https://doi.org/10.1016/j.jfoodeng.2003.06.002" target="_blank" rel="noopener noreferrer" data-copy="help.source.denys"></a></li>
+        <li><a href="https://doi.org/10.1007/s11483-010-9200-1" target="_blank" rel="noopener noreferrer" data-copy="help.source.vega"></a></li>
+        <li><a href="https://doi.org/10.1110/ps.03242803" target="_blank" rel="noopener noreferrer" data-copy="help.source.weijers"></a></li>
+        <li><a href="https://academic.oup.com/auk/article-pdf/96/1/73/32910692/auk0073.pdf" target="_blank" rel="noopener noreferrer" data-copy="help.source.hoyt"></a></li>
+        <li><a href="https://www.fsis.usda.gov/food-safety/safe-food-handling-and-preparation/food-safety-basics/high-altitude-cooking" target="_blank" rel="noopener noreferrer" data-copy="help.source.usda"></a></li>
+      </ul>
+    </section>
+  </section>
 
   <!-- ------------------------------------------------------------ actions -->
   <div id="actions">
-    <p id="primaryHint"></p>
+    <p id="primaryHint"><span id="primaryHintText"></span><button type="button" id="hintInfo" class="info" aria-expanded="false" aria-controls="hintMore" data-name="action.hint.heating.info" hidden></button></p>
+    <p id="hintMore" class="disclosed" hidden data-copy="action.hint.heating.more"></p>
     <button type="button" id="primary" class="primary" data-copy="action.startHeating"></button>
     <button type="button" id="secondary" class="secondary" hidden data-copy="action.cancel"></button>
     <!-- The thermometer, offered once, after "Eggs in" (E4). -->
     <div id="probeOffer" hidden>
       <p class="hint" data-copy="probe.offer"></p>
-      <div class="seg">
+      <div class="pair">
         <button type="button" class="secondary" id="probeOfferYes" data-copy="probe.offer.yes"></button>
         <button type="button" class="secondary" id="probeOfferNo" data-copy="probe.offer.no"></button>
       </div>
@@ -248,13 +448,13 @@
         <p class="hint" id="probeNote" aria-live="polite"></p>
       </div>
       <p id="feedbackAsk" data-copy="feedback.ask"></p>
-      <div class="seg">
+      <div class="pair">
         <button type="button" class="fb" data-fb="-1" data-copy="feedback.tooSoft"></button>
         <button type="button" class="fb" data-fb="0" data-copy="feedback.justRight"></button>
         <button type="button" class="fb" data-fb="1" data-copy="feedback.tooFirm"></button>
       </div>
       <p id="whiteAsk" data-copy="feedback.white.ask"></p>
-      <div class="seg">
+      <div class="pair">
         <button type="button" class="wb" data-white="runny" data-copy="feedback.white.runny"></button>
         <button type="button" class="wb" data-white="tender" data-copy="feedback.white.tender"></button>
         <button type="button" class="wb" data-white="firm" data-copy="feedback.white.firm"></button>
@@ -263,14 +463,6 @@
       <p class="hint" id="calibNote"></p>
     </div>
   </div>
-
-  <!-- --------------------------------------------------------- colophon -->
-  <footer id="colophon">
-    <p><strong data-copy="colophon.name"></strong> <span data-copy="colophon.lede"></span>
-      <a href="https://github.com/danmackinlay/actual_egg_timer"
-      target="_blank" rel="noopener noreferrer" data-copy="colophon.link"></a>
-      <span data-copy="colophon.tail"></span></p>
-  </footer>
 
 </main>
 
