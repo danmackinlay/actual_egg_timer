@@ -23,6 +23,12 @@ import EggTimerCopy
 /// the physics - snapping, which refusal applies, the texture bands, the
 /// calibration grid, the bounds and the defaults - live in EggTimerCore's
 /// Policy, so this app and the web app cannot answer differently.
+/// Where the egg comes from. A room is an assumption and Custom is the cook's
+/// own number; a fridge is the one the model knows.
+enum StartTemp: String {
+    case fridge, room, custom
+}
+
 @Observable
 @MainActor
 final class Kitchen {
@@ -72,7 +78,12 @@ final class Kitchen {
         weighedMassG = grams
         sizeIndex = index
     }
-    var fromFridge: Bool = true { didSet { changed() } }
+    /// Where the egg comes from: the fridge, the room, or a temperature the
+    /// cook knows better (the web's `startTempMode`).
+    var startTemp: StartTemp = .fridge { didSet { changed() } }
+    /// The egg's temperature when it is Custom. Kept while another choice is
+    /// made, so choosing Custom again goes back to it.
+    var customStartC: Double = Defaults.customStartC { didSet { changed() } }
     var cooling: Cooling = .ice { didSet { changed() } }
     /// Where the egg starts. Cold start: into cold water, and the heating ramp
     /// is part of the cook. Hot start: into water already at a rolling boil.
@@ -290,7 +301,13 @@ final class Kitchen {
 
     var egg: Egg { Geometry.eggFromMass(eggMassG / 1000.0) }
 
-    var eggStartC: Double { fromFridge ? StartTempPresets.fridgeC : StartTempPresets.roomC }
+    var eggStartC: Double {
+        switch startTemp {
+        case .fridge: StartTempPresets.fridgeC
+        case .room: StartTempPresets.roomC
+        case .custom: customStartC
+        }
+    }
 
     /// The room, as far as the model is concerned.
     ///
@@ -450,7 +467,7 @@ final class Kitchen {
     /// egg is a size off the carton, and whether its start is the room preset's
     /// assumption rather than the fridge.
     private var adviceFacts: AdviceFacts {
-        AdviceFacts(eggFromClass: massFrom == .sizeClass, startAssumed: !fromFridge)
+        AdviceFacts(eggFromClass: massFrom == .sizeClass, startAssumed: startTemp == .room)
     }
 
     /// The answer, with its time chosen from the whole posterior (E5, Decide.swift)

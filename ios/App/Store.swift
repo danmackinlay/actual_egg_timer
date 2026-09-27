@@ -49,7 +49,16 @@ enum Settings {
         kitchen.altitudeM = clamp(store.double(forKey: "altitudeM"), to: Limits.altitudeM)
         kitchen.waterLitres = clamp(store.double(forKey: "waterLitres"), to: Limits.waterLitres)
         kitchen.eggCount = Int(clamp(store.double(forKey: "eggCount"), to: Limits.eggCount).rounded())
-        kitchen.fromFridge = store.bool(forKey: "fromFridge")
+        // Three positions under a new key, as the start has; an install from
+        // before Custom comes back to the fridge or the room it was left on.
+        if let stored = store.string(forKey: "startTemp"), let from = StartTemp(rawValue: stored) {
+            kitchen.startTemp = from
+        } else {
+            kitchen.startTemp = store.bool(forKey: "fromFridge") ? .fridge : .room
+        }
+        if store.object(forKey: "customStartC") != nil {
+            kitchen.customStartC = clamp(store.double(forKey: "customStartC"), to: Limits.eggTempC)
+        }
         // Three positions under a new key. The old `coldStart` bool is still
         // read, so an install that predates the sous-vide option comes back to
         // the start mode it was left on rather than to the default - and an
@@ -91,7 +100,10 @@ enum Settings {
         store.set(kitchen.altitudeM, forKey: "altitudeM")
         store.set(kitchen.waterLitres, forKey: "waterLitres")
         store.set(Double(kitchen.eggCount), forKey: "eggCount")
-        store.set(kitchen.fromFridge, forKey: "fromFridge")
+        store.set(kitchen.startTemp.rawValue, forKey: "startTemp")
+        store.set(kitchen.customStartC, forKey: "customStartC")
+        // Kept in step for the sake of a downgrade, which reads only this key.
+        store.set(kitchen.startTemp == .fridge, forKey: "fromFridge")
         store.set(kitchen.start.rawValue, forKey: "start")
         // Kept in step for the sake of a downgrade, which reads only this key.
         // Sous-vide has no honest bool here; false is the hot start the pan

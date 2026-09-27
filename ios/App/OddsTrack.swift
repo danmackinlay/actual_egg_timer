@@ -5,9 +5,10 @@ import EggTimerCore
 ///
 /// Three things, the web app's track in the same order:
 ///  - the odds at each level, relative to the best level's (`shadingOf`), as
-///    the opacity of a green band - strong where this pan hits the mark most
-///    often, faint where it rarely does - so it reads in grey as well as in
-///    colour;
+///    the opacity of a band whose hue is the yolk's at that level - deep
+///    orange runny, golden jammy, pale yellow hard (`Palette`, the web's
+///    `--yolk-*`) - strong where this pan hits the mark most often, faint
+///    where it rarely does, so it reads in grey as well as in colour;
 ///  - dots over the levels the pan can deliver but the odds do not offer yet
 ///    (under 3/10, once an egg has taught something);
 ///  - diagonal stripes over the levels the pan cannot deliver at all, as the
@@ -19,6 +20,7 @@ import EggTimerCore
 struct OddsTrack: View {
     let solution: Solution
     let profile: OddsProfile?
+    @Environment(\.colorScheme) private var scheme
 
     var body: some View {
         Canvas { context, size in
@@ -39,7 +41,7 @@ struct OddsTrack: View {
                     let span = last.level - first.level
                     let stops = shades.map {
                         Gradient.Stop(
-                            color: Color.green.opacity($0.strength),
+                            color: Palette.yolk(at: $0.level, in: scheme).opacity($0.strength),
                             location: CGFloat(($0.level - first.level) / span)
                         )
                     }
