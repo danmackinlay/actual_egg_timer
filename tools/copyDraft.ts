@@ -8,6 +8,7 @@
  *    `e1f7068`.
  *  - `reach`: the odds-shaded slider's new strings - two refusals, the (i)
  *    and what it opens, and the advice - on `1667dcf`.
+ *  - `truths`: no new words; iOS gains the web's runny-white line, on `cc0dc47`.
  *
  * This is the list the proofs hold the catalogue to. `copyLiterals.ts --since`
  * diffs copy/en.json and the keys each app's source names against a base
@@ -442,6 +443,20 @@ export const REACH_DRAFT: Drafted[] = [
   },
 ];
 
+/** Two lines that said something false, fixed on `cc0dc47` (LANGUAGE.md
+ *  section 3, "one wording per meaning"). No wording changes. iOS gains the
+ *  web's line for a white the pan never sets, where it used to say "white just
+ *  set"; the decision now lives in core, which both apps ship. The web's
+ *  "cooling starts on its own" hint is no longer shown on a counter rest, which
+ *  is a change of state, not of words, and needs no row. */
+export const TRUTHS_DRAFT: Drafted[] = [
+  {
+    key: 'texture.white.runny', row: 'texture.white.runny, against iOS\'s texture note',
+    before: { text: 'white stays runny' }, after: { text: 'white stays runny' },
+    appsBefore: ['web'], appsAfter: ['web', 'ios'],
+  },
+];
+
 export const DRAFTS: Record<string, Draft> = {
   feedback: {
     base: 'cfe38e9',
@@ -458,10 +473,15 @@ export const DRAFTS: Record<string, Draft> = {
     rows: REACH_DRAFT,
     exampleOnly: {},
   },
+  truths: {
+    base: 'cc0dc47',
+    rows: TRUTHS_DRAFT,
+    exampleOnly: {},
+  },
 };
 
 /** The draft most recently applied: what a proof checks when it is not told. */
-export const LATEST_DRAFT = 'reach';
+export const LATEST_DRAFT = 'truths';
 
 /** A draft by its name, or by the commit it was applied to; the latest when
  *  neither is given or neither matches. */

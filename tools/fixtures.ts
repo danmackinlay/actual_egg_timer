@@ -108,7 +108,7 @@ import {
   DEFAULTS, DEFAULT_EGG_MASS_KG, DEFAULT_TIME_TO_BOIL_S, START_TEMP_PRESETS_C,
   BoilMemory, COOLING_SECONDS, GridSpec, PULL_GRACE_SECONDS, ambientFor, anchorNear, coolingSecondsFor,
   calibrationGrid, carrySizeIndex, estimateTimeToBoil, phaseAt, rememberBoil, snapDown, snapUp,
-  targetPeakYolk_C, textureFor, verdictFor,
+  targetPeakYolk_C, textureFor, textureNoteKeys, verdictFor,
 } from '../src/core/policy.js';
 
 /* ------------------------------------------------------------------ cases */
@@ -610,9 +610,14 @@ for (const level of [0.0, 0.22, 0.41, 0.5, 0.62, 0.9, 1.0]) {
   }
 }
 
-const TEXTURE_CASES: [number, number][] = [];
+/* Every boundary with the white setting, and a few without: a white the pan
+ * never sets is runny whatever its peak, even one hot enough to read "firm". */
+const TEXTURE_CASES: [number, number, boolean][] = [];
 for (const yolk of [50, 57.9, 58, 62.9, 63, 67.9, 68, 72.9, 73, 85]) {
-  for (const white of [60, 70.9, 71, 81.9, 82, 95]) TEXTURE_CASES.push([yolk, white]);
+  for (const white of [60, 70.9, 71, 81.9, 82, 95]) TEXTURE_CASES.push([yolk, white, true]);
+}
+for (const [yolk, white] of [[50, 60], [57.9, 70.9], [65, 71], [73, 95]]) {
+  TEXTURE_CASES.push([yolk, white, false]);
 }
 
 /* Two pans remembered in both orders, so a port that iterates an unordered map
@@ -653,9 +658,13 @@ const policy = {
       worthSaying: v.worthSaying,
     };
   }),
-  texture: TEXTURE_CASES.map(([yolk, white]) => {
-    const t = textureFor(yolk, white);
-    return { peakYolk_C: yolk, peakWhite_C: white, white: t.white, yolk: t.yolk };
+  texture: TEXTURE_CASES.map(([yolk, white, whiteSets]) => {
+    const t = textureFor(yolk, white, whiteSets);
+    const note = textureNoteKeys(t);
+    return {
+      peakYolk_C: yolk, peakWhite_C: white, whiteSets: whiteSets, white: t.white, yolk: t.yolk,
+      noteKey: note.key, noteWhite: note.parts['white'] ?? null, noteYolk: note.parts['yolk'] ?? null,
+    };
   }),
   calibrationGrid: [
     { alphaCentre: 1.4e-7, cookTime_s: 441 },

@@ -1050,25 +1050,13 @@ extension Notification.Name {
 
 // MARK: - Presentation helpers
 
-/// One line on what the model expects of this cook. Which band a temperature
-/// falls in is core policy; what the band is called is this app's copy.
-func textureNote(peakYolkC: Double, peakWhiteC: Double) -> String {
-    let t = textureFor(peakYolkC: peakYolkC, peakWhiteC: peakWhiteC)
-    let white: String
-    switch t.white {
-    case .justSet: white = "texture.white.justSet"
-    case .set: white = "texture.white.set"
-    case .firm: white = "texture.white.firm"
-    }
-    let yolk: String
-    switch t.yolk {
-    case .liquid: yolk = "texture.yolk.liquid"
-    case .soft: yolk = "texture.yolk.soft"
-    case .jammy: yolk = "texture.yolk.jammy"
-    case .fudgy: yolk = "texture.yolk.fudgy"
-    case .set: yolk = "texture.yolk.set"
-    }
-    return tr("texture.note", ["white": .text(tr(white)), "yolk": .text(tr(yolk))])
+/// One line on what the model expects of this cook. Which band the egg falls
+/// in, and which keys say it, are core policy - including that a white the pan
+/// never sets is runny, which this app used to miss: it named such a white
+/// from its peak, "white just set".
+func textureNote(peakYolkC: Double, peakWhiteC: Double, whiteSets: Bool) -> String {
+    let note = textureNoteKeys(textureFor(peakYolkC: peakYolkC, peakWhiteC: peakWhiteC, whiteSets: whiteSets))
+    return tr(note.key, note.parts.mapValues { .text(tr($0)) })
 }
 
 func clockString(_ seconds: Double) -> String {

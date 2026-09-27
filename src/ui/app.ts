@@ -25,7 +25,7 @@ import {
 } from '../core/solve.js';
 import {
   DEFAULTS, SLIDER_STEPS, Verdict, ambientFor, anchorNear, coolingSecondsFor,
-  plausibleProbeRange_C, probeMomentFor, targetPeakYolk_C, textureFor,
+  plausibleProbeRange_C, probeMomentFor, targetPeakYolk_C, textureFor, textureNoteKeys,
 } from '../core/policy.js';
 import { Feedback, WhiteReport } from '../core/infer.js';
 import { EggFrom, MassFrom, ProbeReading, recordCookTime_s, recordProbe_C } from '../core/record.js';
@@ -586,19 +586,14 @@ function applyAnswer(answer: Answer): Solution {
 
 /* --------------------------------------------------------------- display */
 
-/** The texture note. Which band a temperature falls in is core policy; what
- *  the band is called is this app's copy. */
-function textureNote(peakYolk_C: number, peakWhite_C: number): string {
-  const band = textureFor(peakYolk_C, peakWhite_C);
-  const white = band.white === 'justSet' ? 'texture.white.justSet'
-    : band.white === 'set' ? 'texture.white.set'
-      : 'texture.white.firm';
-  const yolk = band.yolk === 'liquid' ? 'texture.yolk.liquid'
-    : band.yolk === 'soft' ? 'texture.yolk.soft'
-      : band.yolk === 'jammy' ? 'texture.yolk.jammy'
-        : band.yolk === 'fudgy' ? 'texture.yolk.fudgy'
-          : 'texture.yolk.set';
-  return t('texture.note', { white: t(white), yolk: t(yolk) });
+/** The texture note. Which band the egg falls in, and which keys say it, are
+ *  core policy - including that a white the pan never sets is runny, which
+ *  this app used to decide here, and iOS did not decide at all. */
+function textureNote(sol: Solution): string {
+  const note = textureNoteKeys(textureFor(sol.result.peakYolk_C, sol.result.peakWhite_C, sol.whiteSets));
+  const parts: Record<string, string> = {};
+  for (const [name, key] of Object.entries(note.parts)) parts[name] = t(key);
+  return t(note.key, parts);
 }
 
 /** The reading under the slider. The same shape whether the temperature is
@@ -764,12 +759,7 @@ function render(now_ms: number): void {
   dom.statYolk.textContent = show('temperature', sol.result.peakYolk_C);
   dom.statAfter.textContent = formatClock(cookTime_s - boil_s);
   dom.statBoil.textContent = show('boilingPoint', boilingPoint_C());
-  // The texture note reads peak temperatures; the white's own criterion is a
-  // dose. They disagree only when the pan never gets the white there at all,
-  // and then the dose is the one telling the truth.
-  dom.note.textContent = sol.whiteSets
-    ? textureNote(sol.result.peakYolk_C, sol.result.peakWhite_C)
-    : t('texture.white.runny');
+  dom.note.textContent = textureNote(sol);
   // The warning line carries one of two things. A refusal is advice about the
   // slider, so it is idle-only: popping "jammy isn't reachable" onto the screen
   // while the egg is already in the water is advice about a control the user
