@@ -1958,3 +1958,40 @@ it soft? Try: Fudgy", to 0.67. See INFERENCE.md §8.
   fresh storage: the suggestion as above, pointing to 0.67. Tapped, the
   slider goes to 0.67, with no second suggestion and no white line. No
   console errors.
+
+---
+
+## The English of 1750, on the web (28 September 2026)
+
+F6's web half, built overnight for the owner's review in the morning. An
+English page switched from Metric to Imperial now reads in the manner of
+Johnson's *Preface* of 1755. Switching back restores modern English, and
+picking *English* in Settings leaves 1750 and keeps °F. As built, and every
+place it departs from the guide, is in LANGUAGE.md §6.
+
+- **The catalogue:** `copy/en-x-1750.json`, 307 keys: every key the web
+  uses, plus the owner's approved alarm body, for iOS when it follows.
+  The spelling table is `copy/en-x-1750.spelling.json`, 47 forms.
+- **The rule:** `src/core/language.ts`, pure, for iOS to port. The web
+  listens for F3's `aet:unitsflip` and redraws in place, with no reload.
+- **The record:** `lang: "en-x-1750"`, `register: "1750"`.
+- **Before the 1750, modern English:** Help's "How sure I am" was brought
+  up to playing safe (the draft `oddsHelp`), at the coordinator's request,
+  and then shadowed.
+- **Tests:** `npm test` runs 239: 238 pass, 0 fail and 1 todo (5b, as
+  before). `test/en1750.test.ts` is new, with 20 tests.
+- **Validation:** `npm run validate` passes 28/28.
+- **Conformance:** `npm run conformance` passes 101 Swift tests in 28
+  suites, and 10 ring tests. `fixtures/copy.json` now renders the 1750
+  catalogue too (918 rows, from 453), and the Swift renderer agrees.
+- **Copy proof:** `copyLiterals.js --since 05d466b` finds the six new keys
+  (the draft `period`) and nothing else.
+- **Driven** in headless Chrome at 390 px, on port 8177 with fresh storage:
+  a fresh install in English; Imperial, giving 1750 on the idle screen,
+  Settings, Help and a cooking phase; then *English*, giving modern
+  English with °F kept. A page switched in place matched the same page
+  loaded fresh in 1750, word for word and label for label, once the
+  screen reader's line was made to redraw. The 1750 phase labels, upper-
+  cased in a book face, wrapped at 390 px and were shortened.
+- **Not verified:** VoiceOver reading the title's `aria-label`; Safari;
+  the 110-character alarm body on a Lock Screen; the owner's ear.

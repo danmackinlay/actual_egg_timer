@@ -1089,6 +1089,95 @@ there is only style.
    the picker's footnote may say: *"Should the Reader find this Style tiresome,
    the Modern Tongue may be restored without surrendering Fahrenheit's Scale."*
 
+**As built (web), 28 September 2026.** Built while the owner slept; the
+whole catalogue is for their review. iOS is untouched and follows.
+
+- **The catalogue** is `copy/en-x-1750.json`: 307 keys, every one the web
+  uses, the six new F6 keys, and three of iOS's alarm keys (below). It falls
+  back to `en` for the rest. Placeholder parity and the budgets come from
+  `test/copy.test.ts`, which reads every catalogue; the conformance fixture
+  (`fixtures/copy.json`) now renders it too, so the Swift renderer is held
+  to it byte for byte. Both needed their file filter to take a digit in a
+  tag and skip a file with a second dot, which is the spelling table.
+- **Its rules are `test/en1750.test.ts`**: the eight archaisms as whole
+  words, straight or curly apostrophe; `copy/en-x-1750.spelling.json` (47
+  modern forms, seeded from the table above) as whole words, ignoring case;
+  the long s only in `app.titlePage`; the owner's alarm word for word; Help's
+  links the same URLs in the same markdown; the switch; the record.
+- **The switch is `src/core/language.ts`**, pure and tested, for iOS to
+  port. The state is `chosen` (null for the default) and `flippedFrom`, what
+  the units switch replaced, boxed so that "never chose" comes back as a
+  default and not as a choice. Metric to Imperial in modern English goes in;
+  Imperial to metric restores what was there, if the switch put the cook
+  in 1750; a pick in the picker is always the cook's own and forgets the
+  switch, so choosing English keeps °F and a later switch to metric does
+  not undo it. The web listens for F3's `aet:unitsflip`. Nothing here
+  touches the units.
+- **The web** stores the state in its settings, loads the catalogue the
+  cook last read before painting, and redraws every word in place when it
+  changes (`relabel` in `app.ts`); a page switched in place and the same
+  page loaded fresh were compared word for word and label for label.
+  `<html lang>` is `en-x-1750`. The record's `lang` is the catalogue tag,
+  `en-x-1750`, and its `register` is `1750` (`registerOf`).
+- **The picker** is a Language row under Units in Settings: *English* and
+  *English (1750)*, named alike in both catalogues so either can be found
+  from the other, with an (i). The 1750 (i) is the footnote above, in lower
+  case and with *stile*. The line under Imperial shows on any English page,
+  1750 included, in its own twin.
+- **The title** heads the egg's page while idle, in 1750 only, as an `h1`
+  whose `aria-label` is the same text with every long s an s (`applyCopy`
+  does this for any text with a long s, and the test allows only one).
+  The colophon's name is *The Actual Egg-Timer.* The `<head>` keeps the
+  modern name, as for every language (§2).
+- **A book face.** In 1750 the page is set in Iowan Old Style (Palatino,
+  Georgia as fallbacks); the clock keeps the system face, whose figures
+  line up. Not asked for.
+
+**Where it departs from the guide, or chose where the guide was silent.**
+
+- **The alarm's budget.** The approved body is 109 characters, and
+  `notification.body` allowed 53. The budget is now 110, on the grounds
+  that the owner approved that line for that surface; not yet seen on a
+  device. `alarm.pull.title` is *Out with them*, not the draft's *Out with
+  them; delay is ruin* (28, against 14). The draft's second alarm, *The
+  cooling is ended*, is *Cooling ended*, for the same reason. iOS reads
+  none of these until it follows.
+- **The reset dialog** is *Shall it all be forgot?*, not the draft's *Shall
+  all that has hitherto been learned be forgotten?* (54, against the title
+  budget of 23). **The yolk question** is the draft's, *In what condition
+  was the yolk?*
+- **The yolk answers** are the draft's, *Too rear · As was desired · Too
+  hard*, although modern English has since settled on *Too firm*: *hard*
+  is Johnson's word and means the same. The white's are *Unset · Tender ·
+  Firm*, *Unset* after rule 3's own example.
+- **The doneness words** are *Rear · Soft · Thick · Firm · Hard*, five
+  letters at most for the ticks. *Thick* and *Firm* stand where *jammy* and
+  *fudgy* do, matched and not translated; the texture lines say *yolk
+  thick*, *yolk firm*. *Firm* is also the white's third answer and the play
+  safe word, as *firm* is in modern English.
+- **Names that change**, for the owner to strike: Settings is
+  *Particulars*; Help is *Preface* (its page *The Preface*); Sources are
+  *Authorities*, as in the Dictionary; Units are *Measures*, and Metric is
+  *Metrick* (the metre is forty years off, and Johnson's *metrick* is of
+  verse, which is the joke); the counter is *the table*; *Cancel* is *Leave
+  off*; *Full rolling boil* is *It boils in earnest*; *Heat off, lid on* is
+  *Fire out, lid on*; *Custom* is *Your own*; a recipe is a *receipt*; the
+  sizes are Small, *Middling*, Large, *Very large*, *Largest*. Words with
+  no period form stay: fridge, sous-vide, probe thermometer, tap.
+- **Words the period lacks**, kept for substance (rule 1): *protein* is
+  gone ("the setting of white and yolk"), *energy* became *fewel*, *physics*
+  *natural philosophy*; *denaturation* and *kinetics* stay in the colophon,
+  as does every citation in Help, printed as published.
+- **One maxim per page, at most**: "To leave the fire is not to leave the
+  heat" (Help, the cooling); "knowledge is, in great part, only errour
+  diminished" (Help, certainty); "rule of thumb, which is only the
+  experience of others imperfectly remembered". The draft's *still
+  learning* line is not used: the web dropped that key.
+- **`controls.units.more` in modern English** still says switching
+  "changes only how I write the numbers", which on the web is no longer
+  the whole truth. It was left alone because iOS is being ported onto
+  `copy/en.json` at the same time; its 1750 twin says what happens.
+
 ## 7. Order, and how it fits with Phase E
 
 1. **F1, the catalogue.** Extract every string with the wording unchanged, and
