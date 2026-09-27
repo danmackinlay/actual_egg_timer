@@ -1538,7 +1538,7 @@
       "locale": "en",
       "key": "help.odds.p2",
       "args": {},
-      "text": "Behind that is a number, such as 7/10: how often I expect an egg cooked this way to come out as you asked, with the white set and the yolk just right by your own answer. It starts low, around 2/10, because before your first egg I don't know your taste, your eggs or how hard your water really boils. The time I give is the one with the best odds, which isn't always my average guess."
+      "text": "Behind that is a number, such as 7 in 10: how often I expect an egg cooked this way to come out as you asked, with the white set and the yolk just right by your own answer. It starts low, around 2 in 10, because before your first egg I don't know your taste, your eggs or how hard your water really boils. The time I give is the one with the best odds, which isn't always my average guess."
     },
     {
       "locale": "en",
@@ -1877,6 +1877,74 @@
       "key": "odds.hidden",
       "args": {},
       "text": "Hidden"
+    },
+    {
+      "locale": "en",
+      "key": "outcome.likely",
+      "args": {},
+      "text": "Probably just right."
+    },
+    {
+      "locale": "en",
+      "key": "outcome.likely.firm",
+      "args": {},
+      "text": "Probably just right. If not, more likely a little firm."
+    },
+    {
+      "locale": "en",
+      "key": "outcome.likely.soft",
+      "args": {},
+      "text": "Probably just right. If not, more likely a little soft."
+    },
+    {
+      "locale": "en",
+      "key": "outcome.unsure",
+      "args": {},
+      "text": "Could come out softer or firmer than you like — I can't call it yet."
+    },
+    {
+      "locale": "en",
+      "key": "outcome.miss.firm",
+      "args": {},
+      "text": "It could miss, and if it does, more likely firmer than you like."
+    },
+    {
+      "locale": "en",
+      "key": "outcome.miss.soft",
+      "args": {},
+      "text": "It could miss, and if it does, more likely softer than you like."
+    },
+    {
+      "locale": "en",
+      "key": "outcome.whiteRunny",
+      "args": {},
+      "text": "The white might still be runny."
+    },
+    {
+      "locale": "en",
+      "key": "outcome.odds",
+      "args": {
+        "hits": 7,
+        "of": 10
+      },
+      "text": "About 7 in 10 eggs like this come out just as you like them, with the white set."
+    },
+    {
+      "locale": "en",
+      "key": "outcome.range",
+      "args": {
+        "low": "Soft",
+        "high": "Fudgy"
+      },
+      "text": "Likely yolk: Soft to Fudgy"
+    },
+    {
+      "locale": "en",
+      "key": "outcome.range.one",
+      "args": {
+        "level": "Jammy"
+      },
+      "text": "Likely yolk: Jammy"
     },
     {
       "locale": "en",
