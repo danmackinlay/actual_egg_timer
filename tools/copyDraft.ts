@@ -442,6 +442,29 @@ export const REACH_DRAFT: Drafted[] = [
   },
 ];
 
+/** 27 September, the owner: "no one pluralises boils except for
+ *  dermatologists. 'based on history'". The remembered boil time is a blend
+ *  of past boils, or another volume's scaled, so none of these may say it
+ *  is a time this pan took. */
+export const HISTORY_DRAFT: Drafted[] = [
+  {
+    key: 'readout.sub.coldAssumes', row: 'held back from rest: coldAssumes',
+    before: { text: "assumes {boil} to a rolling boil" }, after: { text: "about {boil} to boil, based on history" },
+    appsBefore: ['web'], appsAfter: ['web'],
+  },
+  {
+    key: 'learned.pan', row: 'misleading, from the unification proposal',
+    before: { text: "your pan takes {time} to boil" }, after: { text: "your pan: about {time} to boil, based on history" },
+    appsBefore: ['web'], appsAfter: ['web'],
+  },
+  {
+    key: 'pan.measured', row: 'rest: pan.measured, "boils" removed',
+    before: { text: "From your earlier boils with this much water. I update it each time you tap the boil on a cold-water start." },
+    after: { text: "Based on history with this much water. I update it each time you tap the boil on a cold-water start." },
+    appsBefore: ['ios'], appsAfter: ['ios'],
+  },
+];
+
 export const DRAFTS: Record<string, Draft> = {
   feedback: {
     base: 'cfe38e9',
@@ -458,10 +481,15 @@ export const DRAFTS: Record<string, Draft> = {
     rows: REACH_DRAFT,
     exampleOnly: {},
   },
+  history: {
+    base: 'cc0dc47',
+    rows: HISTORY_DRAFT,
+    exampleOnly: {},
+  },
 };
 
 /** The draft most recently applied: what a proof checks when it is not told. */
-export const LATEST_DRAFT = 'reach';
+export const LATEST_DRAFT = 'history';
 
 /** A draft by its name, or by the commit it was applied to; the latest when
  *  neither is given or neither matches. */

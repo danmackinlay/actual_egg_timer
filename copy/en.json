@@ -58,7 +58,7 @@
     "readout.big.now": { "surface": "headline", "apps": ["ios"], "text": "NOW" },
     "readout.big.eat": { "surface": "headline", "apps": ["ios"], "text": "Eat" },
 
-    "readout.sub.coldAssumes": { "surface": "body", "apps": ["web"], "text": "assumes {boil} to a rolling boil", "example": { "boil": "6:40" } },
+    "readout.sub.coldAssumes": { "surface": "body", "apps": ["web"], "text": "about {boil} to boil, based on history", "example": { "boil": "6:40" } },
     "readout.sub.coldGuesses": { "surface": "body", "apps": ["web"], "text": "I'm guessing {boil} to boil — tap when it does", "example": { "boil": "8:00" } },
     "readout.sub.standing": { "surface": "body", "apps": ["web"], "text": "for this much water with the lid on ({water}) — measure the water, it changes the time", "example": { "water": "12.50 qt" } },
     "readout.sub.hot": { "surface": "body", "apps": ["web"], "text": "from eggs in to eggs out" },
@@ -190,7 +190,7 @@
     "pan.waterBoilsAt": { "surface": "label", "apps": ["ios"], "text": "Water boils at" },
     "pan.timeToBoil": { "surface": "label", "apps": ["ios"], "text": "Time to boil" },
     "pan.timeToBoil.assumed": { "surface": "label", "apps": ["ios"], "text": "{time} (assumed)", "example": { "time": "8:00" } },
-    "pan.measured": { "surface": "body", "apps": ["ios"], "text": "From your earlier boils with this much water. I update it each time you tap the boil on a cold-water start." },
+    "pan.measured": { "surface": "body", "apps": ["ios"], "text": "Based on history with this much water. I update it each time you tap the boil on a cold-water start." },
     "pan.unmeasured": { "surface": "body", "apps": ["ios"], "text": "Tap the boil on a cold-water start and I'll remember for next time." },
 
     "odds.hitTheMark": { "surface": "lockscreen", "apps": ["web", "ios"], "note": "E5: the posterior predictive chance that the white is not runny and the yolk is just right, in tenths. Also drawn beside the time in both apps.", "text": "{hits}/{of} eggs hit the mark", "example": { "hits": 7, "of": 10 } },
@@ -206,7 +206,7 @@
     "odds.stillLearning": { "surface": "label", "apps": ["web", "ios"], "note": "E5: beside the time, for a cook's first few eggs.", "text": "Still learning your kitchen" },
     "learned.literature": { "surface": "body", "apps": ["web"], "text": "I haven't learned anything yet. I learn your pan when you time a boil, and your eggs when you tell me how one came out." },
     "learned.tuned": { "surface": "body", "apps": ["web", "ios"], "count": "eggs", "one": "Learned from {eggs} egg", "other": "Learned from {eggs} eggs", "example": { "eggs": 3 } },
-    "learned.pan": { "surface": "body", "apps": ["web"], "text": "your pan takes {time} to boil", "example": { "time": "6:40" } },
+    "learned.pan": { "surface": "body", "apps": ["web"], "text": "your pan: about {time} to boil, based on history", "example": { "time": "6:40" } },
     "learned.both": { "surface": "body", "apps": ["web"], "text": "{tuned} · {pan}", "example": { "tuned": "Learned from 3 eggs", "pan": "your pan takes 6:40 to boil" } },
     "learned.forget": { "surface": "button", "apps": ["web", "ios"], "text": "Forget what it learned" },
     "learned.forgetExplain": { "surface": "body", "apps": ["ios"], "text": "Clears what I've learned from your answers and your boil times. A few wrong answers wash out after a few more eggs anyway; this is for when you'd rather not wait." },
