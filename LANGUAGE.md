@@ -242,8 +242,8 @@ warning was cut down, written down here for the first time:
 | both, presets | "Fridge 4°", "Sous-vide 63°" | there is no unit, and °F is coming (§4) |
 
 **Draft for E2's feedback screens - IMPLEMENTED 27 September 2026**, in
-`copy/en.json` and both apps, except the two "E5, preview" rows, which belong to
-E5. The owner has not formally approved it; it went in on their behalf while
+`copy/en.json` and both apps, except the two "E5, preview" rows, which belonged
+to E5 and went in with it on 28 September. The owner has not formally approved it; it went in on their behalf while
 they were away, and it lives in the catalogue so that revising it is an edit to
 one file. `tools/copyDraft.ts` lists every key it changed, and
 `copyLiterals.js --since cfe38e9` and `copySnapshot.js compare --draft` show
@@ -267,8 +267,8 @@ web app said *Too firm* where iOS said *Too hard*.
 | forget dialog, iOS | Forget the calibration? — The model goes back to the literature values it shipped with, and the time to boil goes back to a guess. | Forget what it learned? — Every egg and your pan's boil time are forgotten, and the times go back to where they started. | checked against both apps: the button clears the eggs AND the boil memory |
 | pull screen, web | Out of the water — now · carryover is running | Out of the water — now · the yolk is still cooking | "carryover" is a README word; this says what is happening |
 | pull button, iOS | (none: iOS has no action out of the pull) | They're in the ice bath · They're under the tap · They're out | the web's existing button, so iOS records a MEASURED pull as the web does (E1 records every iOS pull as assumed today) |
-| **E5, preview** | — | 7/10 eggs hit the mark | the owner's wording |
-| **E5, preview** | — | Still learning your kitchen | shown until the time is pinned to about ±15 s |
+| **E5 — IMPLEMENTED 28 September** | — | 7/10 eggs hit the mark | the owner's wording. `odds.hitTheMark`, `{hits}/{of}`, both numbers through the renderer (F4 formats them); under the time in both apps, and on the Lock Screen |
+| **E5 — IMPLEMENTED 28 September** | — | Still learning your kitchen | `odds.stillLearning`, beside the odds while the 80% interval on the cook time is wider than ±15 s; "Learned from N eggs" stays where it was |
 
 There is **no Skip button.** Every answer folds the moment it is tapped, and an
 unanswered question is recorded as skipped when the next cook starts (E1's

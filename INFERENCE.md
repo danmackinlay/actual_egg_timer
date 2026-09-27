@@ -3,8 +3,9 @@
 A design, not a record and not a state. Three parts are built: the record in
 §4 (E1, 26 September 2026), whose schema below is now the one the code writes,
 the ordered probit and the white offset of §3 (E2 and E3, 27 September),
-whose numbers are in §3's "Built" paragraph, and the thermometer of §5 (E4,
-27 September), whose numbers are in §5's. Nothing else is. The checklist
+whose numbers are in §3's "Built" paragraph, the thermometer of §5 (E4,
+27 September), whose numbers are in §5's, and deciding under uncertainty, §8
+(E5, 28 September). Nothing else is. The checklist
 that tracks it is Phase E in `PLAN.md`; the two measurements it rests on are in
 `LOGBOOK.md` (21 September 2026) and can be re-run with `npm run rank` and
 `npm run probe`.
@@ -163,8 +164,9 @@ three new ones.
   it, against the same surface. A replay is therefore still bit-identical.
 - **The white target moves the recommendation.** The solver's white constraint
   is the runny | tender cutpoint, so the posterior mean white offset moves it
-  (`calibrationDoneness`). The taste offset still does not enter the
-  recommendation, as before E2; that is E5's to decide.
+  (`calibrationDoneness`). The taste offset did not enter the
+  recommendation, as before E2; since E5 it does, because the time is chosen
+  from every particle (§8).
 - **E1's two-level "set"** still loads and is scored as tender-or-firm.
 
 Measured, in `test/infer.test.ts`:
@@ -253,8 +255,9 @@ held to `EggTimerCore/Record.swift` by `fixtures/record.json`.
   schedule; the change was made once, by replay (`recordCookTime_s`).
   `recommended_s` and `prior` make the policy that produced the cook part of the
   record, so a later fit knows why the data lies where it does. `prior` is
-  `2026-09` for E1's cooks and `2026-09-e2` since, whose white offset also moved
-  the recommendation.
+  `2026-09` for E1's cooks, `2026-09-e2` for E2's, whose white offset also
+  moved the recommendation, and `2026-09-e5` since, whose time is chosen from
+  the whole posterior (§8).
 - `massFrom` (`scale` / `girth` / `width` / `class`) sets the egg-level noise: a
   size class is a 10 g bucket, worth about +-24 s, which is twice the width of
   "just right". `sizeTable` (`eu` / `us`) says whose carton a class came off,
@@ -389,7 +392,8 @@ point.
   grid): one reading at -1 / 0 / +1 C of the truth takes the time-scale sd
   from 12.5% to 2.74 / 2.74 / 2.79% in the weights - the ~2.5% above, less a
   little for the tail - and to 3.28 / 3.33 / 3.52% once the filter has
-  resampled, because its jitter is a fixed 2% on alpha. A kitchen 10% fast is
+  resampled, because its jitter was a fixed 2% on alpha. Since E5's resample
+  kernel (§8) the filter keeps 2.60 / 2.61 / 2.81%. A kitchen 10% fast is
   found at x1.10 from one reading. +1 C shortens the next jammy cook by 15 s,
   -1 C lengthens it by 5 s (the asymmetry is the cold tail: a reading at the
   peak already looks slightly hot).
@@ -492,6 +496,78 @@ faster. You can turn it off, and delete what you sent, whenever you like."*
   their kitchen - which is also simply true for anyone in their first few eggs,
   nudge or no nudge, and sets the right expectation for the odds on screen.
 
+**Built (E5, 28 September).** `src/core/decide.ts`, held to
+`EggTimerCore/Decide.swift` by `fixtures/decide.json`: given the same posterior
+and the same pot, the two apps choose the same time to 1e-12. What settled:
+
+- **The loss** is P(too soft) + P(too firm) + 3 P(runny), over every particle,
+  each through the probit the filter learns with - time-scale, taste, noise,
+  white offset and firm gap together. The 3 is the owner's (§11, 7), a constant.
+  The unrelated share is left out of the loss, where it adds a constant, and
+  kept in the odds, which are about what a cook will say.
+- **Where it looks.** Within 120 s of the mean solve's time, at the level the
+  refusals leave: `verdictFor` still reads the mean solve, snaps a doneness the
+  white forbids, and says why, and the choice leans from there. A cost of
+  1e-4 egg per second of lean makes the choice defined where the loss is flat -
+  on the counter's softest level, or after runny whites, every time past a
+  point loses the same whole egg - and moves it a quarter of a second where
+  the loss has a real minimum. Where there is no cook to choose for (the white
+  never sets; an unreachable doneness that could not be snapped) the solver's
+  answer stands.
+- **Not before the first egg.** Under the prior alone the choice runs 86 s late
+  at soft and 42 s at jammy on the reference egg, and the first egg comes out a
+  step firm. The prior's time-scale sd is about +-70 s of cook time, so no time
+  gets the yolk right more than one egg in five and the white's tail steers.
+  The prior is wide so the filter can learn, not because anyone believes one
+  kitchen in twenty makes a jammy white runny. So the time is the literature's
+  until an egg has taught something - as `calibrationParams` has always had it -
+  and after one egg the choice leans 4-9 s. This is the one place the design
+  above is not followed to the letter.
+- **The taste offset reaches the time**, for the first time since Phase C: a
+  posterior that knows its cook likes a yolk a fifth of a decade firmer gets a
+  later time at every level, where the mean solve gave the same one.
+- **The odds** are P(white not runny AND yolk just right) at the chosen time,
+  independent within a particle and correlated across particles, in tenths. On
+  400 simulated cooks x 6 eggs the expected calibration error is 2.2%, every egg
+  within 1-3 points. A fresh install says 2/10; one egg, 5-6/10; three, 7/10.
+- **The surface.** Only the time-scale needs the physics - the offsets and the
+  noise are additive in log dose - so a decision needs one dose grid per pot,
+  with `tauAirScale` at its posterior mean, spanning every level the pot can
+  deliver and 120 s beyond: 13 rows x 10 s, 0.4-0.7 s to build in node (1.3 s
+  with the heat off), within 0.2 s of a fine grid's choice on boiling pots. The
+  slider is not part of what it is built from, so a drag never waits for one.
+  The apps show the mean solve's time at once and switch when the surface lands.
+- **The resample.** Calibrating the odds found them 4-6 points low from the
+  fourth egg, and plain reweighting did not, so it was the filter: E2's
+  resample moved every particle a fixed 2% on alpha (and 0.015 decades, 3%)
+  whatever the posterior, independently in every direction. That held alpha
+  over ~3%, pulled apart the time-scale-and-taste combination that the answers
+  pin, and made the right time's spread climb back at every resample. It is
+  now Liu and West's kernel: each resampled particle shrunk toward the weighted
+  mean and moved by a draw from the weighted covariance, in coordinates where
+  every dimension is additive, discount 0.98, so the mean and the covariance
+  survive. Replayed, Phase C's recovery is unchanged and one probe reading is
+  kept at 2.6-2.8%, not 3.3-3.5%.
+- **"Still learning"** shows while the 80% interval of the right cook time is
+  wider than +-15 s (§11, 9), read at the level on screen. Per particle the
+  right time is the later of the yolk's centre and the white's cutpoint
+  (`predictCookTime`). Under the old resample the rule came back after going
+  for 44% of simulated cooks, and a fixed count of four eggs was built as the
+  fallback; with the kernel it comes back for 7%, and the owner's rule stands.
+- **A cook under way** carries the lean chosen at "Eggs in" onto the boil tap's
+  re-solve rather than waiting a second for the new pot's surface: 3 s from
+  choosing again at soft, under 0.5 s at jammy.
+- **Two runny whites at soft** (LOGBOOK.md, 28 September). With the yolk also
+  "just right", the choice moves soft 146 s and jammy 17 s: the shape §3's E3
+  asked for, which the mean solve alone did not give. With the white alone
+  both move. And where the white binds the lean is long, up to the window: the
+  mean solve times a white at its median, a coin flip on runny, and a runny
+  white costs three. Whether that is the right trade, or the white offset's
+  prior is too wide, is the owner's.
+
+Not built: the protocol advice when soft is asked for, the nudge (E8), and any
+per-cook loss.
+
 ## 9. The fit
 
 - **Offline, in Python** (NumPyro or Stan), outside `src/core/` and its
@@ -548,16 +624,19 @@ faster. You can turn it off, and delete what you sent, whenever you like."*
    September.*
 7. **The loss ratio is 3.** A runny white counts as three times as bad as a
    yolk one step too firm (§8). It is a constant for now, and a per-cook
-   slider only if someone asks for one.
+   slider only if someone asks for one. *Built 28 September* (`RUNNY_WHITE_LOSS`).
 8. **The odds are always on screen, and brief**: *"7/10 eggs hit the mark"*.
    "Hit the mark" means the posterior predictive probability that the white is
    not runny AND the yolk would be answered "just right". It is rounded to
-   tenths, because more precision than that is not there.
+   tenths, because more precision than that is not there. *Built 28
+   September*, under the time in both apps and on the Lock Screen.
 9. **"Still learning" goes when the 80% interval on the cook time narrows
    below about +-15 s**, which is about the width of "just right". If that
    proves fiddly to compute or to make stable, fall back to a fixed number of
    eggs. The owner's view is that cooks will barely notice the difference, so
-   the threshold is preferred but not worth a fight.
+   the threshold is preferred but not worth a fight. *Built 28 September as
+   the threshold*, after the resample was fixed; the fallback was built and
+   measured first (§8).
 10. **No kitchens.** Pans and hobs vary within a kitchen, and nobody maintains
     profiles, so the kitchen level folds into the cook (§2).
 11. **The standing method's pan constant comes from the water volume, not

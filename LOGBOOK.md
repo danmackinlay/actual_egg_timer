@@ -1218,3 +1218,97 @@ over both and was left alone.
 4. **`.field { display: flex }` beats `[hidden]`.** The new blocks carry no
    display of their own, so `hidden` works; `#customTempField`, on main, is
    shown when it should not be (a separate fix).
+
+## Choosing the time, the odds, and "still learning" (28 September 2026, E5)
+
+Design and reasons in `INFERENCE.md` §8, measurements in `PLAN.md` (E5). What
+follows is the record: what was checked, against what, and what it cost. Every
+number here can be re-run with `npm run decide` (sections `cost`, `accuracy`,
+`lean`, `odds`, `learning`, `runny`).
+
+### What was run
+
+- `npm test`: 186 tests, 185 pass, 1 todo (E3's 5b, which E5 does not claim to
+  fix). `npm run validate`: 28/28. `npm run conformance`: fixtures regenerated,
+  `swift test` 90 tests in 25 suites. `fixtures/decide.json` pins five pots'
+  decision surfaces, a surface, and fourteen decisions from three posteriors;
+  Swift chooses the same time as the TypeScript to 1e-12, including the scan and
+  the golden section's comparisons.
+- Chromium, driven through the app's own buttons with `Date.now` run fast. A
+  fresh install: 2/10 and "Still learning your kitchen" under the time. Four
+  cold starts, each answered "just right" and "firm": 5/10 and still learning after one,
+  7/10 and not after two, 8/10 after three and four. A reload mid-cook kept
+  the odds from "Eggs in"; heat off with 2 L (the white never sets) and the
+  sous-vide screen showed none; "Forget what it learned" brought back 2/10 and
+  still learning; at 375 px the line wraps to two.
+- Responsiveness, in the same tab: a new egg size put the mean solve's time on
+  screen in 138 ms and the chosen one with its odds at 1.08 s, the page's
+  longest stall 42 ms; a one-second drag across the slider, 66 input events,
+  never blanked the odds and stalled the page 45 ms at most.
+- iOS: built for the simulator, after the merge with E4 and again at the end.
+
+### Two runny whites at soft
+
+INFERENCE §3's E3 test, as the choice sees it. The reference egg (68 g, fridge,
+boiling water, ice), two eggs at soft with the white runny, on the app's own
+surfaces. "E3" cooks each egg at the time the mean solve recommended then, as
+`test/infer.test.ts` 5 does; "E5" cooks the second at the time E5 chose after
+the first. Before any egg, soft is 419 s and jammy 464 s.
+
+| eggs | cooked at | soft: mean solve, chosen | jammy: mean solve, chosen |
+|---|---|---|---|
+| E3, white only | 419, 469 s | 503, **559** (2/10) | 558, **595** (2/10) |
+| E3, yolk just right too | 419, 434 s | 445, **565** (0/10) | 484, **481** (5/10) |
+| E5, white only | 419, 538 s | 507, **627** (0/10) | 555, **675** (0/10) |
+| E5, yolk just right too | 419, 552 s | 548, **668** (0/10) | 569, **689** (0/10) |
+
+- With the yolk also just right, the choice does what E3's done-when asked:
+  soft +146 s, jammy +17 s. The mean solve alone had soft +26 and jammy +20.
+- With the white alone both move, 131-140 s: the time-scale is still blamed
+  about 2:1 (INFERENCE §3). E5 does not fix that and does not try.
+- At E5's own times the second runny white comes two minutes later than E3's,
+  so the posterior concludes the whites are very late, and both levels lean to
+  the edge of the 120 s window with odds of 0/10: the model's way of saying a
+  soft yolk with a set white is not on offer to this cook. The refusal does not
+  say so, because it reads the mean solve, which times the white at its median.
+
+### Things that cost time
+
+1. **The expected-utility time before the first egg was not close to the
+   literature.** The brief expected a small shift; the prior gives 86 s at soft
+   and 42 s at jammy, because its time-scale sd (11.9%, about +-70 s) makes the
+   yolk's 0-1 loss nearly flat and leaves the white's tail to steer. One answer
+   of any kind fixes it. So the time before any egg is the literature's, by
+   rule, and that is written down as a departure from INFERENCE §8.
+2. **The odds found a bug in E2's filter.** Calibrated for three eggs, then 4-6
+   points low. Folding by plain reweighting (4000 particles) was calibrated at
+   every egg, which pointed at the resample: a FIXED 2% jitter on alpha, in
+   every direction independently, whatever the posterior. It is also why E4's
+   reading left 3.3% where its weights said 2.7%, and why "still learning" came
+   back after going for 44% of simulated cooks: the right time's spread was a
+   sawtooth, +-8 s at jammy, +-15 s after the next resample, on a cook who never
+   changed. Liu and West's kernel keeps the posterior's mean and covariance
+   through the resample; after it, the odds are within 1-3 points at every egg
+   (ECE 2.2%), E4's reading is kept at 2.6%, and "still learning" comes back for
+   7%, so the owner's threshold replaced the four-egg fallback that had been
+   built first. The floor E4 measured had been expected to hold the interval
+   above +-15 s for good; that was true at the hard end (+-15-22 s) and not at
+   jammy, where the combination the answers pin is narrower than alpha alone.
+   The damage was the sawtooth, not the floor.
+3. **Where the loss is flat, the minimum is noise.** On the counter's softest
+   level every time past a point loses the same whole egg, and two surfaces
+   that agree to 0.2 s everywhere else chose times 17 s apart, both near the
+   window's edge. A cost of 1e-4 egg per second of lean makes the choice the
+   earliest time that is as good as any.
+
+### Not verified
+
+- **Nothing on iOS was run or tapped.** Two simulators were already booted and
+  in use, and driving one would have needed a permission prompt. The screens,
+  the Live Activity's odds line and the cache rest on the build, `swift test`
+  and reading the code.
+- **The protocol advice** (INFERENCE §8, "recommend the protocol") was not
+  built.
+- **No real egg** has been cooked at a chosen time. The odds are calibrated
+  against cooks drawn from the prior, which is the model's own idea of cooks.
+- Safari was not tried.

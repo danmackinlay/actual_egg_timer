@@ -93,7 +93,7 @@ The SwiftUI layer takes the BEHAVIOUR of `src/ui/machine.ts` and leaves its
 mechanism. `clock.ts` in particular exists to fight the backgrounding problem
 that a local notification solves properly, and has no counterpart here.
 
-### Phase E — the inference becomes the main part — E1, E2 DONE; E3 BUILT
+### Phase E — the inference becomes the main part — E1, E2, E4, E5 DONE; E3 BUILT
 
 The design and the reasons are in `INFERENCE.md`; this is only the list. Every
 core change lands in TypeScript and Swift together, under new fixtures, like
@@ -185,7 +185,8 @@ cook. Nothing leaves a phone before E6.
       in the weights, which meets the criterion; the filter then resamples,
       and its fixed 2% jitter on alpha leaves 3.28 / 3.33 / 3.52% in the
       stored posterior. That jitter is the floor on any one fold and is not
-      E4's to change. With the sketched 1.5 C Gaussian the weights would hold
+      E4's to change. (E5 changed it: the resample now keeps the
+      posterior's spread, and the stored sd is 2.60 / 2.61 / 2.81%.) With the sketched 1.5 C Gaussian the weights would hold
       about 3.7%. **Direction**: +1 C shortens the next jammy cook 464.0 ->
       449.1 s, -1 C lengthens it to 469.2 s, and a kitchen 10% fast is found
       at x1.10 (+-0.04) from one reading. The grid carries `peakYolk_C` per
@@ -215,13 +216,100 @@ cook. Nothing leaves a phone before E6.
       +2); a tap adds 8-13 s over ice for the same egg. Over sizes 53-78 g,
       both coolings, hot and cold starts, -46 to +56 s. The
       cooking time and the peak are unchanged; only when "Done" rings moves.
-- [ ] **E5 decide under uncertainty.** Settled 26 September (`INFERENCE.md`
+- [x] **E5 decide under uncertainty.** Settled 26 September (`INFERENCE.md`
       §11): loss ratio 3; odds always shown as "7/10 eggs hit the mark";
       "still learning" until the 80% interval is under about +-15 s, falling
       back to a fixed egg count if that is fiddly. Time by expected utility with a lopsided
       loss; the odds of "white set, yolk in band" on screen; protocol advice
       when soft is asked for. Ships `predictCookTime`'s successor, which closes
       item 7 below.
+
+      DONE 28 September, except the protocol advice, which was not in this
+      pass. `src/core/decide.ts`, held to `EggTimerCore/Decide.swift` by
+      `fixtures/decide.json` (Swift chooses the same time as the TypeScript to
+      1e-12); the reasoning is INFERENCE.md §8. The time minimises P(too soft)
+      + P(too firm) + 3 P(runny) over every particle, within 120 s of the mean
+      solve, plus a cost of 1e-4 egg per second of lean that only matters
+      where the loss is flat. The taste offset reaches the time for the first
+      time since Phase C. The refusals are the mean solve's, as before; the
+      choice is made at the level they leave. It also replaced E2's resample
+      jitter with Liu and West's kernel, in both cores (below). Measured
+      (`npm run decide`, `test/decide.test.ts`, `test/decideOdds.test.ts`):
+
+      - **Not before the first egg.** Under the prior alone the choice would
+        move the reference egg 86 s later at soft, 42 s at jammy, 9 s at
+        fudgy and 2 s at hard (74-106 s at soft and 37-46 s at jammy on a
+        cold start, a tap, 50 g and 80 g; to the window's edge on the
+        counter), and the first egg would come out a step firm: the prior's
+        time-scale sd is about +-70 s of cook time, so no time gets the yolk
+        right more than one egg in five and the white's tail steers. So
+        before any egg the time is the literature's, exactly (a shift of
+        0 s), and only the odds and "still learning" come from the prior.
+        After ONE egg - jammy, just right, white firm - the choice leans +4
+        to +9 s at every level on every boiling pot, and under 10 s with the
+        white skipped.
+      - **The odds** on the reference egg: 2/10 on a fresh install at every
+        level, 5-6/10 after one egg, 7/10 after three. **Calibration**, 400
+        simulated cooks x 6 eggs, 1000 particles: expected calibration error
+        2.2%, every egg within 1-3 points (21% -> 21%, 39% -> 37%, 51% ->
+        51%, 58% -> 59%, 62% -> 64%, 65% -> 68%).
+      - **The resample.** Measuring the odds found them under-stating the
+        hits by 4-6 points from the fourth egg (ECE 3.8%), and folding by
+        plain reweighting closed the gap, so it was the filter: E2's resample
+        moved every particle by a fixed 2% on alpha (0.015 decades, 3%)
+        whatever the posterior, in every direction independently. That also
+        held alpha above ~3% (E4's 3.3% after one reading) and pulled apart
+        the time-scale-and-taste combination the answers pin, so the right
+        cook time's spread climbed back after every resample: on a cook who
+        never changed, +-8 s at jammy, then +-15 s, then +-8 s. It is now Liu
+        and West's kernel (discount 0.98): shrink toward the weighted mean,
+        move by a draw from the weighted covariance, in additive coordinates,
+        so mean and covariance survive. Replayed through the log: Phase C's
+        recovery is unchanged (egg 2, 12.2 s short, sd 3.0%), E2's answer
+        calibration 1.3%, one probe reading kept at 2.60-2.81%, and E3's
+        two-runny-whites numbers within 3 s.
+      - **Still learning: the owner's rule, the interval over +-15 s.** Under
+        the old resample it came back after first going quiet for 66 of 150
+        simulated cooks (44%), so the fallback - the first four eggs - was
+        built first. With the kernel: quiet after a median of four eggs,
+        back again for 10 of 150 (7%), never quiet in eight eggs for 8; on a
+        consistent cook at jammy +-72, 22, 13, 11, 9, 8 s over the first
+        five eggs. It is read at the level on screen.
+      - **Performance.** Only the time-scale needs the physics, so a decision
+        needs one dose surface per pot over every slider level: 13 rows x
+        10 s columns, 38-80 columns. In node on this machine it builds in
+        0.44-0.72 s on boiling pots and 1.27 s with the heat off; a decision
+        on it is 16-20 ms, beside a mean solve of 20-40 ms (150 ms with the
+        heat off). Against a fine
+        surface (29 rows, 4 s) the chosen time is within 0.18 s on boiling
+        pots, 0.63 s on the counter and 3.3 s with the heat off, and the odds
+        within 0.002; 21 rows x 5 s was three times the cost, 9 x 10 s less
+        accurate. The web app shows the mean solve's time at once and asks
+        the worker for the surface once the inputs have sat still for 300 ms,
+        keeping six by pot; the slider is not in the key. In Chromium: a new
+        pot's mean time was on screen in 138 ms and the chosen time and odds
+        at 1.08 s, the page's longest stall 42 ms; after an egg, "Start
+        again" moved 7:00 to 7:05 at 0.85 s; a one-second drag across the
+        slider never blanked the odds and stalled the page 45 ms at most.
+        iOS does the same off the main actor, with an actor for the cache. A
+        cold start's boil tap carries the lean chosen at "Eggs in": 3.1 s
+        from choosing again at soft on a 480 -> 600 s ramp, under 0.5 s at
+        jammy and fudgy.
+      - **Two runny whites at soft** (LOGBOOK.md, 28 September): with the
+        yolk also just right, the choice moves soft 146 s and jammy 17 s
+        (the mean solve had moved it 20) - the shape E3's done-when asked
+        for. With the white alone both move, 131-140 s. And
+        cooked at E5's own times the second runny white comes two minutes
+        later, so both levels run to the edge of the window at 0/10. Where
+        the white binds, the choice leans a long way: the mean solve times a
+        white at its median, a coin flip on runny, and a runny white costs
+        three. The counter's softest level leans 81-99 s for the same reason.
+
+      Both apps show "7/10 eggs hit the mark" and "Still learning your
+      kitchen" under the time, frozen at "Eggs in" for the cook in flight,
+      and the Live Activity carries the odds on the Lock Screen. `PRIOR_ID`
+      is `2026-09-e5`. NOT verified: nothing on iOS was run or tapped - it
+      builds for the simulator, and the core is held by `swift test`.
 - [ ] **E6 opt-in collection.** Consent, random id, upload, delete-by-id; the
       privacy manifest, both READMEs and `ios/RELEASING.md` stop claiming no
       networking. A Netlify function, append-only blobs, the web tier
@@ -454,11 +542,23 @@ buildDoseGrid(...) / lookupLogYolkDose / lookupLogWhiteDose / cookTimeForLogYolk
 type Feedback = -1 | 0 | 1                 // the YOLK answer
 type WhiteReport = 'runny' | 'tender' | 'firm' | 'set'   // 'set' is E1's, = tender or firm
 createPrior(count, seed)                   // six numbers a particle (E2, E3)
-updatePosterior(post, grid, cookTime_s, logTarget, yolk | null, white | null)  // one fold per egg
+updatePosterior(post, grid, cookTime_s, logTarget, yolk | null, white | null, probe_C?)  // one fold per egg; resamples through Liu and West's kernel (E5)
 answerLikelihood(grid, particle, cookTime_s, logTarget, yolk, white)
 yolkAnswerProbabilities / whiteAnswerProbabilities   // the predictive
 posteriorParams / posteriorMeanOffset / posteriorMeanWhiteOffset / posteriorAlphaRelSd
-predictCookTime
+predictCookTime                            // since E5 the later of the yolk's and the white's time
+cookTimeForLogWhiteDose(grid, alpha, logDose)
+
+// decide.ts  (E5 - INFERENCE.md §8)
+RUNNY_WHITE_LOSS = 3 / STILL_LEARNING_HALF_WIDTH_S = 15 / LEAN_COST_PER_S / DECISION_WINDOW_S
+interface DecisionInputs { egg; setup; params; whiteDose_min }   // one surface per pot; no level
+decisionInputs(c, egg, setup) / decisionGridSpec(inputs) / decisionGridRequest(inputs)
+expectedLoss(post, grid, t, logTarget) / hitOdds(post, grid, t, logTarget)
+chooseCookTime(post, grid, logTarget, around_s)
+interface Decision { cookTime_s; meanCookTime_s; chosen; loss; odds; oddsTenths; interval; stillLearning }
+decide(c, grid, meanSolution, logTarget) / decideAt(post, eggsLogged, grid, mean_s, applies, logTarget)
+decisionApplies(sol) / decidedSolution(...) / carriedSolution(egg, setup, params, sol, lean_s)
+stillLearning(interval) / oddsInTenths(odds)
 
 // record.ts  (E1 - the schema is INFERENCE.md §4)
 interface EggRecord { v: 1; ... }          // one egg; RECORD_VERSION, PRIOR_ID
@@ -646,8 +746,9 @@ Some work is on one side only:
    log, not two resets.
 5. **F2 for the feedback screens**, in the same pass, because E2 rewrites them
    anyway. It is one diff for the owner.
-6. **E5**: choosing the time by expected utility, the odds on screen, "still
-   learning", and the interval (old item 7).
+6. ~~**E5**: choosing the time by expected utility, the odds on screen, "still
+   learning", and the interval (old item 7).~~ Done 28 September, but for the
+   protocol advice; see the E5 entry.
 7. **E4, the thermometer.** Its only prerequisite is E2, so pull it forward if
    a probe is to hand.
 
@@ -751,10 +852,11 @@ do; what is missing is contact with reality.
    *Superseded by E2 and E3:* the white is now always asked, three answers, with
    its own learned offset and noise; see the E3 entry above for what two runny
    whites do and do not do. The empirical question stands - it needs eggs.
-7. **Show `predictCookTime`'s interval** somewhere, or stop claiming in its
-   docstring that it is what makes calibration legible (README §11.5). The grid
-   is already built and in hand immediately after a feedback fold, so the
-   cheapest honest version costs nothing.
+7. ~~**Show `predictCookTime`'s interval** somewhere, or stop claiming in its
+   docstring that it is what makes calibration legible (README §11.5).~~
+   *Absorbed by E5:* the interval now takes the white as well, is computed with
+   every decision, and is what "Still learning your kitchen" reads: it shows
+   while the interval is wider than ±15 s. The number itself is not shown.
 
 Checked on 18 September and NOT a problem, so nobody re-checks: the web app's
 `reset()` already re-solves, and its solve is synchronous, so neither of that
