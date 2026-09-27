@@ -130,7 +130,13 @@ up as a failing test and not as a surprise in a Czech kitchen.
 - **The formatting locale is the UI's language in the device's region**:
   `formattingLocale(uiLanguage, region, hourCycle)`, one function in both
   cores. An English UI in Britain formats as `en-GB`; in Germany as `en-DE`,
-  which is a real CLDR locale with English words and "2,4". A private-use
+  which is a real CLDR locale with English words and "2,4". **A language
+  with one convention of its own ignores the region** (the owner, 27
+  September): a Czech UI formats as `cs-CZ` everywhere, so cs in the US
+  writes "1 234,5", because the words around the number are Czech. The list
+  is `OWN_CONVENTION` (`ownConvention` in Swift), today only `cs` → `CZ`;
+  English is not on it, because CLDR has English writing numbers a dozen
+  ways by region, and a language joins it when its catalogue ships. A private-use
   subtag (`x-1750`) is dropped, since it is a register and not a format. iOS
   adds the phone's own 12/24-hour setting as `-u-hc-h23` (or `h12`) when it
   differs from the region's, so an Australian iPhone set to 24-hour time
@@ -157,6 +163,12 @@ up as a failing test and not as a surprise in a Czech kitchen.
   "9:05" in `Intl` and "09:05" in Foundation for en-GB, where the style is
   CLDR's own pattern and both print "09:05". The countdown's m:ss is a
   duration, not a time of day, and is built by hand as before.
+- **No time of day zero-pads its hour** (the owner, 27 September): "9:05"
+  and "0:05", never "09:05", in every locale, and the minutes and seconds
+  keep two digits. `unpadHour` in both cores drops the leading zero from the
+  first run of digits after the platform has formatted. It changes en-GB
+  ("09:05" was CLDR's pattern), 24-hour English anywhere, and the `-u-hc-h23`
+  override; Czech and 12-hour clocks never padded.
 - **Every space in a time of day is U+202F**, the narrow no-break space.
   Foundation prints it before "PM", as CLDR says; V8 prints U+0020 instead,
   a patch for web pages that parse their own output. The web normalises to
@@ -190,25 +202,30 @@ normalisation above:
 | formatting locale | `Intl` | Foundation | what F4 did |
 |---|---|---|---|
 | en-US, en-AU, en, any 12-hour English | "3:05 PM" with U+0020 | "3:05 PM" with U+202F | normalised to U+202F, pinned |
-| en-CZ (an English UI in Czechia) | "09:05" | "9:05" | **not normalised, not pinned** |
+| en-CZ (an English UI in Czechia) | "09:05" | "9:05" | **resolved 27 September**: no hour is zero-padded, both "9:05"; pinned |
 | en-CA | "3:05 p.m." | "3:05 PM" | not pinned |
 | en-IN, en-NZ, en-SG | "3:05 pm" | "3:05 PM" | not pinned |
-| cs-US, cs-GB (a Czech UI abroad) | "1 234,5" (by language) | "1,234.5" (by region); cs-US also a 12-hour clock | not pinned: **F5 must choose** |
+| cs-US, cs-GB (a Czech UI abroad) | "1 234,5" (by language) | "1,234.5" (by region); cs-US also a 12-hour clock | **resolved 27 September**: never formatted in; a Czech UI's tag is `cs-CZ` in any region, "1 234,5" and "15:05" on both; pinned |
 | cs-CZ-u-hc-h12 | "3:05 odp." | "15:05" (`DateFormatter` ignores `hc` for cs) | not pinned |
 
 Pinned, and agreeing: en-US, en-GB and cs-CZ, which are the supported set,
-and en, en-AU, en-DE, cs, en-US-u-hc-h23 and en-GB-u-hc-h12. Measured to
+and en, en-AU, en-DE, en-CZ, cs, en-US-u-hc-h23 and en-GB-u-hc-h12, with the
+tag each app derives from a language, a region and an hour cycle followed
+through to the text (`derived`). Measured to
 agree but not pinned: en-150, en-CH ("1'234.5"), en-ES, en-FR ("1 234,5" with
 U+202F), en-IE, en-IT, en-JP, en-NL, en-PL, en-SE, en-ZA and cs-SK. Czech
 groups with U+00A0 on both platforms, so no choice was needed there.
 
-Two of those matter before F5 ships. **en-CZ is the owner's friend** until
-there is a Czech catalogue: the web will print "09:05" and iOS "9:05". And a
-Czech UI outside Czechia gets a different decimal separator from each app,
-because `Intl` has no cs-US data and falls back to the language, where Apple
-lets the region win. Both are formatting-locale questions, and F5, which
-brings the picker, is where they get decided; the tag could be restricted to
-the pinned set, or built with the `rg` extension, or left to each platform.
+Two of those mattered before F5 ships, and the owner settled both on 27
+September. **en-CZ is the owner's friend** until there is a Czech catalogue:
+the web printed "09:05" and iOS "9:05", and now both print "9:05", because no
+time of day pads its hour. And a Czech UI outside Czechia got a different
+decimal separator from each app, because `Intl` has no cs-US data and falls
+back to the language, where Apple lets the region win; now the tag is
+`cs-CZ` wherever the phone is, so neither platform is asked. Its clock is
+Czech too, 24-hour, even in the US; on iOS the phone's own 12-hour setting
+still rides along as `-u-hc-h12`, which `DateFormatter` ignores for Czech,
+as in the last row of the table, so both apps print "15:05".
 Safari was not measured: it runs Apple's ICU, not V8's, and the U+202F
 normalisation covers the one difference known in advance.
 
@@ -316,35 +333,67 @@ alone. `{limit}` moves after a colon, so no language has to decline it.
 
 | key | now | draft |
 |---|---|---|
-| `refusal.counter` | Resting on the counter keeps cooking the yolk — {wanted} isn't reachable. Softest here is {limit}. Use an ice bath. | Resting on the counter keeps cooking the yolk. Softest possible: {limit}. An ice bath gets you softer. |
-| `refusal.tap` | A cold tap doesn't pull the heat out fast enough — {wanted} isn't reachable. Softest here is {limit}. Ice water gets you further. | A cold tap doesn't cool the egg fast enough to stop the yolk. Softest possible: {limit}. An ice bath gets you softer. |
+| `refusal.counter` | Resting on the counter keeps cooking the yolk — {wanted} isn't reachable. Softest here is {limit}. Use an ice bath. | Resting on the counter keeps cooking the yolk. Softest possible: {limit}. An ice bath would leave the egg softer. |
+| `refusal.tap` | A cold tap doesn't pull the heat out fast enough — {wanted} isn't reachable. Softest here is {limit}. Ice water gets you further. | A cold tap doesn't cool the egg fast enough to stop the yolk. Softest possible: {limit}. An ice bath would leave the egg a little softer. |
 | `refusal.ice` | Any shorter and the white is still raw — {wanted} isn't reachable for this egg. Softest here is {limit}. | Any shorter and the white is still raw. Softest possible for this egg: {limit}. |
-| `refusal.harderThanPan` | With the heat off, the water runs out before the yolk gets there — {wanted} isn't reachable with this much water ({water}). Hardest here is {limit}. More water, or keep it boiling. | With the heat off, this much water ({water}) cools before the yolk gets there. Firmest possible: {limit}. More water, or keep it boiling. |
-| `refusal.whiteNeverSets` | With the heat off this pan never sets the white: the water falls below what the white needs while the egg is still in it. Nothing on the slider is reachable. More water, or keep it boiling. | With the heat off, this water cools before the white sets, so no setting works. More water, or keep it boiling. |
+| `refusal.harderThanPan` | With the heat off, the water runs out before the yolk gets there — {wanted} isn't reachable with this much water ({water}). Hardest here is {limit}. More water, or keep it boiling. | With the heat off, this much water ({water}) cools before the yolk gets there. Firmest possible: {limit}. Add more water, or keep it boiling. |
+| `refusal.whiteNeverSets` | With the heat off this pan never sets the white: the water falls below what the white needs while the egg is still in it. Nothing on the slider is reachable. More water, or keep it boiling. | With the heat off, the water cools before the white sets, so no setting works. Add more water, or keep it boiling. |
 | `alarm.cooled.body` | The carryover is over. That is the egg you asked for. | The yolk has stopped cooking. That's the egg you asked for. |
 | `activity.note.cooling` | carryover still running | yolk still cooking |
-| `colophon.ios` | Times computed from heat conduction and denaturation kinetics, not from a recipe. The cooling step is part of the recipe: carryover is what ruins a soft egg. | Times are worked out from how heat moves through an egg and how its proteins set, not from a recipe. The cooling matters as much as the boil: an egg left warm keeps cooking. |
+| `colophon.ios` | Times computed from heat conduction and denaturation kinetics, not from a recipe. The cooling step is part of the recipe: carryover is what ruins a soft egg. | I work out times from the physics and chemistry of eggs. Both heating and cooling matter for cooking the middle. |
 | `readout.sub.idleCold` | from eggs into COLD water, heat on, to eggs out | from eggs into cold water, heat on, to eggs out |
 | `readout.sub.idleHot` | from eggs into BOILING water to eggs out | from eggs into boiling water to eggs out |
 | `readout.sub.coldAssumes` | assumes {boil} to a rolling boil | your pan took {boil} to boil last time |
-| `readout.sub.coldGuesses` | guesses {boil} to a rolling boil | a guess of {boil} to boil — tap when it does |
-| `readout.sub.heating` | {elapsed} heating · provisional, assumes {boil} to boil | {elapsed} heating · expects {boil}, corrected when you tap |
-| `readout.sub.heatingEstimate`, `activity.note.estimate` | estimate — the clock corrects itself when you tap the boil / estimate until the boil is tapped | a guess until you tap the boil (both) |
+| `readout.sub.coldGuesses` | guesses {boil} to a rolling boil | I'm guessing {boil} to boil — tap when it does |
+| `readout.sub.heating` | {elapsed} heating · provisional, assumes {boil} to boil | {elapsed} heating · I expect {boil} until you tap |
+| `readout.sub.heatingEstimate`, `activity.note.estimate` | estimate — the clock corrects itself when you tap the boil / estimate until the boil is tapped | my guess until you tap Full rolling boil |
 | `controls.start.coldPan` (web), `controls.start.cold` (iOS), `cook.method.cold` | Cold pan / Cold start / Cold start | Cold water (all three) |
 | `cook.method.hot` | Into boiling water | Boiling water (matches `controls.start.hot`) |
-| `controls.start.hint` | Hot start peels far better; cold start needs no timing of the drop-in. | Eggs into boiling water peel far better. Eggs into cold water need no timing until the boil. |
+| `controls.start.hint` | Hot start peels far better; cold start needs no timing of the drop-in. | Eggs into boiling water peel better. Eggs into cold water are done sooner, counting the wait for the water to boil. |
 | `controls.afterBoil.keepItBoiling` (web), `keepBoiling` (iOS) | Keep it boiling / Keep boiling | Keep boiling (both) |
 | `readout.stat.afterBoiling` (web), `afterBoil` (iOS) | after boiling / after boil | after the boil (both) |
-| `controls.afterBoil.hint` | Standing in cooling water is a real method, but it lives or dies on the pan: the water has to carry the whole cook. More water holds more heat. | Heat off, lid on: the water's own heat cooks the eggs, so the amount of water decides whether it works. More water holds more heat. |
-| `action.hint.cookingStanding` | lid on, burner off — the timing assumes the water cools on its own from the boil ({boiling}) | lid on, burner off — the time assumes you leave it that way |
+| `controls.afterBoil.hint` | Standing in cooling water is a real method, but it lives or dies on the pan: the water has to carry the whole cook. More water holds more heat. | Heat off, lid on: the hot water continues to cook the eggs. More water holds more heat. |
+| `action.hint.cookingStanding` | lid on, burner off — the timing assumes the water cools on its own from the boil ({boiling}) | lid on, burner off |
 | `action.hint.cookingBoiling` | keep it boiling — the timing assumes a full boil ({boiling}) right up to the pull | keep it at a full boil ({boiling}) until the eggs come out |
-| `pan.measured` | Measured on this pan at this volume. It is re-measured every cold start. | Timed on this pan with this much water. Re-timed every cold-water start. |
-| `pan.unmeasured` | Never measured. Run one cold start and tap the boil, and this becomes your pan rather than a guess. | Not timed yet. Tap the boil on a cold-water start, and this becomes your pan's time instead of a guess. |
-| `learned.forgetExplain` | Clears both what it learned from your eggs and the time it measured for your pan. The posterior is honest about its own spread, so a few wrong answers wash out after a few more eggs anyway - this is for when you would rather not wait. | Clears what it learned from your eggs and your pan's boil time. A few wrong answers wash out after a few more eggs anyway; this is for when you'd rather not wait. |
+| `pan.measured` | Measured on this pan at this volume. It is re-measured every cold start. | From your earlier boils with this much water. I update it each time you tap the boil on a cold-water start. |
+| `pan.unmeasured` | Never measured. Run one cold start and tap the boil, and this becomes your pan rather than a guess. | Tap the boil on a cold-water start and I'll remember for next time. |
+| `learned.forgetExplain` | Clears both what it learned from your eggs and the time it measured for your pan. The posterior is honest about its own spread, so a few wrong answers wash out after a few more eggs anyway - this is for when you would rather not wait. | Clears what I've learned from your answers and your boil times. A few wrong answers wash out after a few more eggs anyway; this is for when you'd rather not wait. |
+| `sousvide.warn` | This bath ({bath}) is below the temperature at which egg white sets — only one of its proteins reacts down here — so the white stays loose however long you leave it. This app was built for boiling water and is out of its depth below {floor} anyway. Use the pan. | This bath ({bath}) is too cool to set the white, however long you leave it. I'm built for boiling water, and I'm not reliable below {floor}. Use the pan. |
 
-**Deliberately left alone:** `sousvide.warn`. The owner has already edited that
-warning once, cutting two phrases and keeping "Use the pan". What survived that
-edit is theirs.
+Owner-edited on 27 September, then proof-read against what the app does. The
+proof-read corrected the verb missing from `refusal.whiteNeverSets`, the
+"log" in the estimate line (the button says *Full rolling boil*), and a
+"sooner" that read as false beside the two totals on screen. It also made
+`pan.measured` truthful: the memory is keyed by water volume, not by pan, and
+it blends each boil in rather than re-timing. The sous-vide warning was never
+owner-edited; an earlier line here said it was, and that was wrong.
+
+**The app speaks in the first person singular, in the active voice.** Owner,
+27 September: "Tap the boil … and I'll remember for next time", not "it's
+remembered". The app is "I", the cook is "you", and a sentence has someone
+doing something. Instructions stay imperative. This also matches the 1750
+register, since Johnson's *Preface* is written in the first person (§6), and
+it has a cost in Czech (§5).
+
+These strings are already live and need the same pass:
+
+| key | live | first person |
+|---|---|---|
+| `feedback.invite` | Your answers adjust the times to your eggs and your pan. | Your answers teach me your eggs and your pan. |
+| `feedback.thanks` | Thanks. The next egg will use that. | Thanks. I'll use that for the next egg. |
+| `learned.literature` | Nothing learned yet. It learns your pan when you time a boil, and your eggs when you say how one came out. | I haven't learned anything yet. I learn your pan when you time a boil, and your eggs when you tell me how one came out. |
+| `learned.forget` | Forget what it learned | Forget what I've learned |
+| `learned.confirm.title` | Forget what it learned? | Forget what I've learned? |
+| `controls.probe.hint` | When the cooling ends it asks for one reading from the middle of the egg. That tells it how fast your eggs heat, from a single egg. | When the cooling ends, I'll ask for one reading from the middle of the egg. From a single egg, that tells me how fast your eggs heat. |
+| `controls.afterBoil.explainHeatOff` | Lid on and burner off: the water's own heat finishes the eggs. The time is worked out for the water below, so measure it — more or less water changes the time, or whether it works at all. | Lid on and burner off: the water's own heat finishes the eggs. I work out the time from the water below, so measure it — more or less water changes the time, or whether it works at all. |
+| `probe.offer` | Got a probe thermometer? When the timer says, push it to the middle of the egg and tell us the highest number you see. | Got a probe thermometer? When I say, push it to the middle of the egg and tell me the highest number you see. |
+| `probe.hint` | Tell us the highest number you see. | Tell me the highest number you see. |
+| `alarm.probe.body` | Middle of the egg: tell us the highest number. | Middle of the egg: tell me the highest number. |
+| `colophon.tail` | — including what it gets wrong. | — including what I get wrong. |
+
+Left as they are: "Still learning your kitchen" (the "I" is implied), "keep
+the app open" (the app is the object there, not the speaker), and "Learned
+from N eggs".
 
 **Strings that are about to change anyway.** Phase E rewrites the feedback copy:
 three white answers, every answer optional, "still learning" beside the time, and
@@ -481,6 +530,13 @@ in three ways:
 - **It uses the decimal comma, a space as the thousands separator, and a
   24-hour clock.** `Intl` gives "1 234,5" and "15:05", and Foundation must
   agree, which the fixture pins.
+
+**The app's "I" has a gender in the Czech past tense.** "I remembered" is
+*zapamatoval jsem* (masculine) or *zapamatovala jsem* (feminine). Because the
+app speaks in the first person (§3), a Czech translation must either pick a
+gender for it or avoid first-person past forms. The present and future,
+*zapamatuji si*, carry no gender. This is the reviewer's call; the
+recommendation is to avoid the past.
 
 **Its egg vocabulary is its own.** *Na měkko*, *na hniličku* and *natvrdo* are
 phrases, not adjectives, and *na hniličku* ("slightly soft-set") is a Czech place
@@ -708,22 +764,21 @@ Taken by the owner, 26 September 2026:
 
 - **The owner reviews the 1750**, against Johnson's *Preface* (§6).
 
+Taken by the owner, 27 September 2026, and built the same day (§2):
+
+- **No time of day zero-pads its hour**, in either app, in any locale:
+  "9:05", never "09:05". The countdown is not a time of day. This settled
+  en-CZ, where the web wrote "09:05" and iOS "9:05".
+- **Numbers follow the UI's language**, and the region only where the
+  language has no convention of its own: a Czech UI writes "1 234,5" in the
+  US as in Czechia, on both apps. English keeps following the region, so
+  `en-DE` still writes "2,4".
+
 Waiting on the owner, from 27 September:
 
 - **The two drafts in §3.** The E2 feedback draft is implemented, since the call
   was made while the owner slept, and remains open to revision. The draft for
   the rest of F2 is not in the catalogue yet.
-- **Two platform disagreements F4 left open (§2), both to settle before Czech
-  ships:**
-  - An English UI in Czechia (`en-CZ`) writes a time of day "09:05" on the web
-    and "9:05" on iOS. Until there is a Czech catalogue, this is what the Czech
-    reviewer sees.
-  - A Czech UI outside Czechia (`cs-US`, `cs-GB`) takes its decimal separator
-    from the LANGUAGE on the web ("1 234,5") and from the REGION on iOS
-    ("1,234.5").
-
-    The simplest rule is to follow the language on both, since the words
-    around the number are Czech. Recommended.
 - **`Intl` inside `src/core/format.ts`.** F4 relaxed invariant 1 for this one
   file. The web's output therefore depends on the browser's ICU, while the
   fixtures are pinned against Node's. Safari has not been tried.

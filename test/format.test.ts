@@ -19,7 +19,7 @@ import { readFileSync } from 'node:fs';
 
 import { parseCatalogue, pluralCategory, render } from '../src/core/copy.js';
 import {
-  countDecimals, formatCount, formatNumber, formatTimeOfDay, formattingLocale, roundTo,
+  countDecimals, formatCount, formatNumber, formatTimeOfDay, formattingLocale, roundTo, unpadHour,
 } from '../src/core/format.js';
 import { SousVideEstimate } from '../src/core/sousvide.js';
 import { forceFormatLocale, formatLocale, t, useCatalogue } from '../src/ui/copy.js';
@@ -82,10 +82,10 @@ test('2a. a time of day follows the locale\'s clock', () => {
   assert.equal(formatTimeOfDay('en-US', at(15, 5), false), `3:05${NNBSP}PM`);
   assert.equal(formatTimeOfDay('en-GB', at(15, 5), false), '15:05');
   assert.equal(formatTimeOfDay('cs-CZ', at(15, 5), false), '15:05');
-  assert.equal(formatTimeOfDay('en-GB', at(8, 47), false), '08:47', 'en-GB keeps the leading zero it always had');
-  assert.equal(formatTimeOfDay('cs-CZ', at(8, 47), false), '8:47', 'Czech writes none');
+  assert.equal(formatTimeOfDay('en-GB', at(8, 47), false), '8:47', 'the hour is never zero-padded, even in en-GB');
+  assert.equal(formatTimeOfDay('cs-CZ', at(8, 47), false), '8:47');
   assert.equal(formatTimeOfDay('en-US', at(7, 41) + 12, true), `7:41:12${NNBSP}AM`);
-  assert.equal(formatTimeOfDay('en-GB', at(7, 41) + 12, true), '07:41:12');
+  assert.equal(formatTimeOfDay('en-GB', at(7, 41) + 12, true), '7:41:12');
 });
 
 test('2b. the space before AM and PM is U+202F in both apps, whatever V8 prints', () => {
@@ -97,6 +97,23 @@ test('2b. the space before AM and PM is U+202F in both apps, whatever V8 prints'
 test('2c. a device\'s own 12/24-hour setting rides along as -u-hc-', () => {
   assert.equal(formatTimeOfDay('en-US-u-hc-h23', 15 * 3600 + 5 * 60, false), '15:05');
   assert.equal(formatTimeOfDay('en-GB-u-hc-h12', 15 * 3600 + 5 * 60, false), `3:05${NNBSP}pm`);
+});
+
+test('2d. no time of day zero-pads its hour, in any locale; minutes and seconds keep two digits', () => {
+  const at = (h: number, m: number): number => h * 3600 + m * 60;
+  for (const locale of ['en-GB', 'en-CZ', 'en-DE', 'cs-CZ', 'cs', 'en-US-u-hc-h23']) {
+    assert.equal(formatTimeOfDay(locale, at(9, 5), false), '9:05', locale);
+    assert.equal(formatTimeOfDay(locale, at(0, 5), false), '0:05', `${locale} midnight`);
+    assert.equal(formatTimeOfDay(locale, at(15, 5), false), '15:05', locale);
+    assert.equal(formatTimeOfDay(locale, at(9, 5) + 9, true), '9:05:09', locale);
+  }
+  assert.equal(formatTimeOfDay('en-US', at(9, 5), false), `9:05${NNBSP}AM`, '12-hour English was never padded');
+  assert.equal(formatTimeOfDay('en-GB-u-hc-h12', at(9, 5), false), `9:05${NNBSP}am`);
+  assert.equal(unpadHour('09:05'), '9:05');
+  assert.equal(unpadHour('00:05'), '0:05');
+  assert.equal(unpadHour('0:05'), '0:05', 'one digit is left alone');
+  assert.equal(unpadHour('10:05'), '10:05');
+  assert.equal(unpadHour(`a${NNBSP}09:05`), `a${NNBSP}9:05`, 'a day period before the hour');
 });
 
 // --------------------------------------------------------------------------
@@ -136,6 +153,20 @@ test('4a. the formatting locale is the UI language in the device\'s region', () 
   assert.equal(formattingLocale('en-x-1750', 'US', null), 'en-US', 'a register is not a format');
   assert.equal(formattingLocale('en', 'au', 'h23'), 'en-AU-u-hc-h23');
   assert.equal(formattingLocale('en', 'GBR', null), 'en', 'not a region');
+});
+
+test('4b. a Czech UI formats as Czech wherever the device is; an English one follows the region', () => {
+  assert.equal(formattingLocale('cs', 'US', null), 'cs-CZ', 'Czech has one convention of its own');
+  assert.equal(formattingLocale('cs', 'GB', null), 'cs-CZ');
+  assert.equal(formattingLocale('cs', null, null), 'cs-CZ');
+  assert.equal(formattingLocale('cs', 'US', 'h12'), 'cs-CZ-u-hc-h12', 'the device\'s own clock setting still rides along');
+  assert.equal(formattingLocale('en', 'CZ', null), 'en-CZ', 'English has many, so the region decides');
+  assert.equal(formatNumber(formattingLocale('cs', 'US', null), 1234.5, 1), `1${NBSP}234,5`);
+  assert.equal(formatNumber(formattingLocale('cs', 'GB', null), 2.4, 1), '2,4');
+  assert.equal(formatNumber(formattingLocale('en', 'DE', null), 2.4, 1), '2,4', 'F4\'s en-DE stands');
+  assert.equal(formatNumber(formattingLocale('en', 'CZ', null), 1234.5, 1), `1${NBSP}234,5`);
+  assert.equal(formatTimeOfDay(formattingLocale('en', 'CZ', null), 9 * 3600 + 5 * 60, false), '9:05',
+    'en-CZ: the web printed 09:05 and iOS 9:05; both print 9:05');
 });
 
 // --------------------------------------------------------------------------
