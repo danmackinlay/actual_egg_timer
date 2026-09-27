@@ -23,8 +23,10 @@
  * both what is not yet known about this kitchen and what no number of eggs
  * narrows. Its points are found by inverting the mixture's CDF, not by
  * `weightedQuantile` over the particles: that would give the spread of the
- * particles' MEANS only, and once a cook has taught the time-scale the noise
- * is most of the width.
+ * particles' MEANS only, and leave out the part no number of eggs narrows.
+ * After three consistent eggs the noise makes the range about 1.3 times as
+ * wide as the particles alone (test/outcome.test.ts), and it is all that is
+ * left once the time-scale is pinned.
  *
  * NOT THE TASTE OFFSET. The taste offset says where this cook's "just right"
  * sits, not how hard the egg is. A cook who likes a firmer yolk is served a
