@@ -55,13 +55,20 @@ body {
   color: var(--fg);
   font: 16px/1.35 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   font-variant-numeric: tabular-nums;
-  padding-bottom: env(safe-area-inset-bottom);
 }
 
+/* A column at least a screen tall, so the action bar, last in it, sits at the
+   bottom of a short page and stays there over a long one (#actions). In a
+   column the margins between its parts add up rather than overlap; the
+   Kitchen and Help, which have no bar, stay a plain block (views). */
 main {
   max-width: 32rem;
   margin: 0 auto;
-  padding: 6px 16px 164px;
+  padding: 6px 16px 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
 }
 
 .sr-only {
@@ -568,7 +575,8 @@ select { max-width: 60vw; }
   border: 1px solid color-mix(in srgb, var(--warn) 45%, transparent);
   color: var(--fg);
 }
-#slot p + p { margin-top: 6px; }
+/* Between two lines that show: a hidden one's neighbour starts flush. */
+#slot p:not([hidden]) ~ p { margin-top: 6px; }
 #welcome { color: var(--dim); }
 
 /* A way to Help: a link with an arrow, not a disclosure. */
@@ -706,7 +714,11 @@ button.danger { color: var(--warn); border-color: color-mix(in srgb, var(--warn)
 body[data-phase="IDLE"][data-view="kitchen"] #kitchen,
 body[data-phase="IDLE"][data-view="help"] #help { display: block; }
 body[data-phase="IDLE"]:not([data-view="egg"]) :is(#readout, #controls, #slot, #actions) { display: none; }
-body[data-phase="IDLE"]:not([data-view="egg"]) main { padding-bottom: 32px; }
+body[data-phase="IDLE"]:not([data-view="egg"]) main {
+  display: block;
+  min-height: 0;
+  padding-bottom: calc(32px + env(safe-area-inset-bottom));
+}
 
 #navBack { display: none; }
 body[data-phase="IDLE"]:not([data-view="egg"]) #navBack { display: inline-flex; }
@@ -723,7 +735,7 @@ body:not([data-phase="IDLE"]) :is(#kitchenLink, #helpLink) { display: none; }
 .titlepage { display: none; }
 html[lang$="-x-1750"] body[data-phase="IDLE"][data-view="egg"] .titlepage { display: block; }
 .titlepage {
-  margin: 2px 8px 14px;
+  margin: 0 8px 14px;
   font: italic 400 1rem/1.4 "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
   text-align: center;
   text-wrap: balance;
@@ -736,10 +748,16 @@ html[lang$="-x-1750"] #bigtime { font-family: system-ui, -apple-system, "Segoe U
 
 /* ---------------------------------------------------------------- actions */
 
+/* Stuck to the bottom of the screen, and opaque, so what scrolls beneath it
+   is hidden rather than read through the hint; only its top 20 px fade in.
+   It is in the page's flow, not fixed over it, so the page ends where it
+   begins: the last line scrolls clear of it at any height, in any phase. */
 #actions {
-  position: fixed;
-  left: 0; right: 0; bottom: 0;
-  background: linear-gradient(to top, var(--bg) 70%, transparent);
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  margin: auto -16px 0;
+  background: linear-gradient(transparent, var(--bg) 20px);
   padding: 20px 16px calc(14px + env(safe-area-inset-bottom));
 }
 #actions > * { max-width: 32rem; margin-left: auto; margin-right: auto; }
@@ -781,7 +799,8 @@ button.secondary {
    screen is a clock, one line, and one button. */
 body:not([data-phase="IDLE"]) #controls { display: none; }
 body:not([data-phase="IDLE"]) main { padding-top: 2vh; }
-body:not([data-phase="IDLE"]) #readout { margin-top: 4vh; padding: 22px 16px 20px; }
+/* Less the top bar's 6 px, which a column (main) adds rather than overlaps. */
+body:not([data-phase="IDLE"]) #readout { margin-top: calc(4vh - 6px); padding: 22px 16px 20px; }
 body:not([data-phase="IDLE"]) #bigtime { font-size: clamp(5rem, 32vw, 9rem); }
 body:not([data-phase="IDLE"]) #phaseLabel { font-size: 0.9375rem; color: var(--fg); font-weight: 600; }
 
