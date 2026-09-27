@@ -1,6 +1,7 @@
 import Foundation
 import Observation
 import EggTimerCore
+import EggTimerRing
 
 /// A cook in progress.
 ///
@@ -161,6 +162,12 @@ final class Cook {
     /// one with no alarm at all - which is what ios/README.md has always said,
     /// and what the subline did not do.
     private(set) var pendingAlarms = 0
+    /// The deadlines a notification holds, from the same read-back. One that
+    /// has been delivered is no longer pending but did its job, so it stays.
+    /// Whatever is not in here, the app rings itself (`ringIfDue`).
+    private var alarmCovers: Set<RingDeadline> = []
+    /// The deadlines the app has rung for this cook: each rings once.
+    private var rung: Set<RingDeadline> = []
     /// One report per egg, and it has to outlive the view.
     ///
     /// This was `@State` on ContentView, so a relaunch inside the hour that
@@ -372,13 +379,15 @@ final class Cook {
         provisional = coldStart
         lastRevise = nil
         pushedStage = nil
+        alarmCovers = []
+        rung = []
         setDeadlines(from: now, cookSeconds: cookSeconds, cooling: ticket.cooling)
 
         let authorized = await Alarm.shared.authorize()
         guard gen == generation else { return }
         alarmAuthorized = authorized
         if authorized { scheduleAlarms() }
-        pendingAlarms = await Alarm.shared.pendingCount()
+        await readBackAlarms()
         guard gen == generation else { return }
 
         if let state = activityState {
@@ -409,7 +418,7 @@ final class Cook {
         self.ticket = ticket.withTimeToBoil(measured).withResolved(result)
         setDeadlines(from: startedAt, cookSeconds: result.cookTimeS, cooling: ticket.cooling)
         if alarmAuthorized == true { scheduleAlarms() }
-        pendingAlarms = await Alarm.shared.pendingCount()
+        await readBackAlarms()
         guard gen == generation else { return nil }
         pushActivity(force: true)
         return measured
@@ -422,6 +431,7 @@ final class Cook {
     func pulledOut() {
         let now = Date.now
         guard phase(at: now) == .pull, let ticket else { return }
+        Ringer.shared.stop()
         outAt = now
         coolDoneAt = ticket.cooling == .counter ? nil : now.addingTimeInterval(coolFor)
         persist()
@@ -429,7 +439,7 @@ final class Cook {
         // cooling's new end.
         if alarmAuthorized == true { scheduleAlarms() }
         Task {
-            pendingAlarms = await Alarm.shared.pendingCount()
+            await readBackAlarms()
         }
         pushActivity(force: true)
     }
@@ -437,6 +447,7 @@ final class Cook {
     func cancel() {
         generation &+= 1
         Alarm.shared.cancel()
+        Ringer.shared.stop()
         Task { await LiveActivity.endAll() }
         ticker?.cancel()
         ticker = nil
@@ -448,6 +459,8 @@ final class Cook {
         assumedBoilS = 0
         provisional = false
         pendingAlarms = 0
+        alarmCovers = []
+        rung = []
         alarmAuthorized = nil
         feedbackGiven = false
         pushedStage = nil
@@ -581,7 +594,7 @@ final class Cook {
         // pending; read the count back rather than assuming it.
         Task {
             alarmAuthorized = await Alarm.shared.authorize()
-            pendingAlarms = await Alarm.shared.pendingCount()
+            await readBackAlarms()
             // Re-establish the Lock Screen card. A cook can come back from a
             // force-quit, but it can also come back from a reinstall, which
             // takes the activity with it - and an app that has restored a cook
@@ -601,6 +614,44 @@ final class Cook {
         Alarm.shared.schedule(pullAt: pullAt, coolDoneAt: coolDoneAt, probe: asksForProbe)
     }
 
+    /// Ask the system what it is holding, rather than assuming.
+    private func readBackAlarms() async {
+        let held = await Alarm.shared.pendingDeadlines()
+        pendingAlarms = held.count
+        let now = Date.now
+        let delivered = alarmCovers.filter { deadline in
+            (deadline == .pull ? pullAt : coolDoneAt).map { $0 <= now } ?? false
+        }
+        alarmCovers = held.union(delivered)
+    }
+
+    /// Ring for a deadline no notification holds, while the app is on screen:
+    /// what makes "keep the app open" true. See `deadlineToRing`.
+    private func ringIfDue() {
+        guard let pullAt else { return }
+        let now = Date.now
+        let core: EggTimerCore.Phase = switch phase(at: now) {
+        case .idle: .idle
+        case .heating: .heating
+        case .cooking: .cooking
+        case .pull: .pull
+        case .cooling: .cooling
+        case .done: .done
+        }
+        guard let due = deadlineToRing(
+            phase: core,
+            nowS: now.timeIntervalSince1970,
+            pullS: pullAt.timeIntervalSince1970,
+            cooledS: coolDoneAt?.timeIntervalSince1970,
+            authorized: alarmAuthorized,
+            scheduled: alarmCovers,
+            rung: rung,
+            onScreenSinceS: Ringer.shared.onScreenSince?.timeIntervalSince1970
+        ) else { return }
+        rung.insert(due)
+        Ringer.shared.ring(due)
+    }
+
     /// The cook has just said they have a probe (E4): the cooling's alarm, if
     /// it is still to come, now asks for the reading.
     func probeSettingChanged() {
@@ -611,6 +662,7 @@ final class Cook {
     // MARK: - The ticker
 
     private func startTicking() {
+        Ringer.shared.activate()
         ticker?.cancel()
         ticker = Task { [weak self] in
             while !Task.isCancelled {
@@ -618,6 +670,7 @@ final class Cook {
                 guard let self else { return }
                 await self.reviseIfHobIsSlow()
                 self.pushActivity(force: false)
+                self.ringIfDue()
                 if self.phase == .done { return }
             }
         }

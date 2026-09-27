@@ -1,3 +1,4 @@
+import EggTimerRing
 import Foundation
 import UserNotifications
 
@@ -89,17 +90,16 @@ final class Alarm: NSObject, UNUserNotificationCenterDelegate {
         centre.removePendingNotificationRequests(withIdentifiers: [pullID, coolID])
     }
 
-    /// What the system says it is holding FOR THIS COOK, for the UI to show.
+    /// What the system says it is holding FOR THIS COOK: for the UI to show,
+    /// and for the app to know which deadlines it must ring itself (Ringer).
     /// Claiming an alarm is set without asking is how an egg timer loses trust.
     ///
-    /// Counts our two identifiers rather than every pending request on the
+    /// Reads our two identifiers rather than every pending request on the
     /// device. The unfiltered count was a weak check that any other app's
     /// notification could satisfy - and nothing read it anyway.
-    func pendingCount() async -> Int {
-        let ours: Set<String> = [pullID, coolID]
-        return await centre.pendingNotificationRequests()
-            .filter { ours.contains($0.identifier) }
-            .count
+    func pendingDeadlines() async -> Set<RingDeadline> {
+        let ours: [String: RingDeadline] = [pullID: .pull, coolID: .cooled]
+        return Set(await centre.pendingNotificationRequests().compactMap { ours[$0.identifier] })
     }
 
     private func request(id: String, at date: Date, title: String, body: String) {
