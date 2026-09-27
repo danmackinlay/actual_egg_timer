@@ -123,10 +123,11 @@ if (run('cost')) {
 
 if (run('accuracy')) {
   console.log('\n== accuracy: the production surface against a fine one (29 rows, 4 s)');
-  let worst = { t: 0, odds: 0, where: '' };
-  for (const [name, c] of Object.entries(LEARNED)) {
-    if (c.eggsLogged === 0) continue;
-    for (const pot of POTS) {
+  const rows: string[] = [];
+  for (const pot of POTS) {
+    let worst = { t: 0, odds: 0, where: '' };
+    for (const [name, c] of Object.entries(LEARNED)) {
+      if (c.eggsLogged === 0) continue;
       const inputs = decisionInputs(c, pot.egg, pot.setup);
       const spec = decisionGridSpec(inputs);
       const grid = buildRequestedGrid(decisionGridRequest(inputs));
@@ -139,12 +140,13 @@ if (run('accuracy')) {
         const a = decide(c, grid, m.sol, logTarget(m.level));
         const b = decide(c, fine, m.sol, logTarget(m.level));
         const e = Math.abs(a.cookTime_s - b.cookTime_s);
-        if (e > worst.t) worst = { ...worst, t: e, where: `${name}, ${pot.name}, level ${m.level}` };
+        if (e > worst.t) worst = { ...worst, t: e, where: `${name}, level ${m.level}` };
         worst.odds = Math.max(worst.odds, Math.abs(a.odds - b.odds));
       }
     }
+    rows.push(`${pot.name}: worst time ${worst.t.toFixed(2)} s (${worst.where}); worst odds ${worst.odds.toFixed(4)}`);
   }
-  console.log(`worst time ${worst.t.toFixed(2)} s (${worst.where}); worst odds ${worst.odds.toFixed(4)}`);
+  console.log(rows.join('\n'));
 }
 
 /* ------------------------------------------------------------------ lean */
