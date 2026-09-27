@@ -23,8 +23,12 @@ interface CatalogueJson { locale: string; messages: Record<string, Entry> }
 interface Surface { budget: number; about: string }
 
 const SURFACES = JSON.parse(readFileSync('copy/surfaces.json', 'utf8')) as Record<string, Surface>;
+/** Every catalogue: `copy/<tag>.json`. Not the surfaces, and not a file with
+ *  a second dot in its name, such as the 1750 spelling table
+ *  (`en-x-1750.spelling.json`), which is a test's data, not a language. The
+ *  same rule as `tools/fixtures.ts`. */
 const LOCALES = readdirSync('copy')
-  .filter((f) => f.endsWith('.json') && f !== 'surfaces.json')
+  .filter((f) => /^[a-zA-Z0-9-]+\.json$/.test(f) && f !== 'surfaces.json')
   .map((f) => f.replace(/\.json$/, ''));
 const JSONS = new Map<string, CatalogueJson>(LOCALES.map((l) => [
   l, JSON.parse(readFileSync(`copy/${l}.json`, 'utf8')) as CatalogueJson,
