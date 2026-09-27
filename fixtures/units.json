@@ -1839,6 +1839,328 @@
       ]
     },
     {
+      "quantity": "probeTemp",
+      "system": "metric",
+      "region": null,
+      "unit": "C",
+      "step": 0.1,
+      "stepNum": 1,
+      "stepDen": 10,
+      "decimals": 1,
+      "unitKey": "unit.celsius",
+      "formatKey": "format.celsius",
+      "limit": null,
+      "bounds": null,
+      "display": [
+        {
+          "si": -40,
+          "value": -40,
+          "text": "-40.0",
+          "rendered": "-40.0 °C"
+        },
+        {
+          "si": -2,
+          "value": -2,
+          "text": "-2.0",
+          "rendered": "-2.0 °C"
+        },
+        {
+          "si": 0,
+          "value": 0,
+          "text": "0.0",
+          "rendered": "0.0 °C"
+        },
+        {
+          "si": 4,
+          "value": 4,
+          "text": "4.0",
+          "rendered": "4.0 °C"
+        },
+        {
+          "si": 20,
+          "value": 20,
+          "text": "20.0",
+          "rendered": "20.0 °C"
+        },
+        {
+          "si": 37,
+          "value": 37,
+          "text": "37.0",
+          "rendered": "37.0 °C"
+        },
+        {
+          "si": 40,
+          "value": 40,
+          "text": "40.0",
+          "rendered": "40.0 °C"
+        },
+        {
+          "si": 58,
+          "value": 58,
+          "text": "58.0",
+          "rendered": "58.0 °C"
+        },
+        {
+          "si": 60,
+          "value": 60,
+          "text": "60.0",
+          "rendered": "60.0 °C"
+        },
+        {
+          "si": 63,
+          "value": 63,
+          "text": "63.0",
+          "rendered": "63.0 °C"
+        },
+        {
+          "si": 65,
+          "value": 65,
+          "text": "65.0",
+          "rendered": "65.0 °C"
+        },
+        {
+          "si": 82.4,
+          "value": 82.4,
+          "text": "82.4",
+          "rendered": "82.4 °C"
+        },
+        {
+          "si": 100,
+          "value": 100,
+          "text": "100.0",
+          "rendered": "100.0 °C"
+        },
+        {
+          "si": 101.3,
+          "value": 101.3,
+          "text": "101.3",
+          "rendered": "101.3 °C"
+        },
+        {
+          "si": 3.9,
+          "value": 3.9,
+          "text": "3.9",
+          "rendered": "3.9 °C"
+        },
+        {
+          "si": 4.025,
+          "value": 4,
+          "text": "4.0",
+          "rendered": "4.0 °C"
+        },
+        {
+          "si": 4.05,
+          "value": 4.1,
+          "text": "4.1",
+          "rendered": "4.1 °C"
+        },
+        {
+          "si": 4.075,
+          "value": 4.1,
+          "text": "4.1",
+          "rendered": "4.1 °C"
+        },
+        {
+          "si": 4.1,
+          "value": 4.1,
+          "text": "4.1",
+          "rendered": "4.1 °C"
+        },
+        {
+          "si": 4.15,
+          "value": 4.2,
+          "text": "4.2",
+          "rendered": "4.2 °C"
+        }
+      ],
+      "notANumber": {
+        "value": 0,
+        "text": "0.0"
+      },
+      "roundTrip": [],
+      "typed": [
+        {
+          "typed": 0,
+          "si": 0,
+          "text": "0.0"
+        },
+        {
+          "typed": 1.23456,
+          "si": 1.23456,
+          "text": "1.2"
+        },
+        {
+          "typed": null,
+          "si": null,
+          "text": null
+        }
+      ]
+    },
+    {
+      "quantity": "probeTemp",
+      "system": "imperial",
+      "region": null,
+      "unit": "F",
+      "step": 0.1,
+      "stepNum": 1,
+      "stepDen": 10,
+      "decimals": 1,
+      "unitKey": "unit.fahrenheit",
+      "formatKey": "format.fahrenheit",
+      "limit": null,
+      "bounds": null,
+      "display": [
+        {
+          "si": -40,
+          "value": -40,
+          "text": "-40.0",
+          "rendered": "-40.0 °F"
+        },
+        {
+          "si": -2,
+          "value": 28.4,
+          "text": "28.4",
+          "rendered": "28.4 °F"
+        },
+        {
+          "si": 0,
+          "value": 32,
+          "text": "32.0",
+          "rendered": "32.0 °F"
+        },
+        {
+          "si": 4,
+          "value": 39.2,
+          "text": "39.2",
+          "rendered": "39.2 °F"
+        },
+        {
+          "si": 20,
+          "value": 68,
+          "text": "68.0",
+          "rendered": "68.0 °F"
+        },
+        {
+          "si": 37,
+          "value": 98.6,
+          "text": "98.6",
+          "rendered": "98.6 °F"
+        },
+        {
+          "si": 40,
+          "value": 104,
+          "text": "104.0",
+          "rendered": "104.0 °F"
+        },
+        {
+          "si": 58,
+          "value": 136.4,
+          "text": "136.4",
+          "rendered": "136.4 °F"
+        },
+        {
+          "si": 60,
+          "value": 140,
+          "text": "140.0",
+          "rendered": "140.0 °F"
+        },
+        {
+          "si": 63,
+          "value": 145.4,
+          "text": "145.4",
+          "rendered": "145.4 °F"
+        },
+        {
+          "si": 65,
+          "value": 149,
+          "text": "149.0",
+          "rendered": "149.0 °F"
+        },
+        {
+          "si": 82.4,
+          "value": 180.3,
+          "text": "180.3",
+          "rendered": "180.3 °F"
+        },
+        {
+          "si": 100,
+          "value": 212,
+          "text": "212.0",
+          "rendered": "212.0 °F"
+        },
+        {
+          "si": 101.3,
+          "value": 214.3,
+          "text": "214.3",
+          "rendered": "214.3 °F"
+        },
+        {
+          "si": 3.944444444444445,
+          "value": 39.1,
+          "text": "39.1",
+          "rendered": "39.1 °F"
+        },
+        {
+          "si": 4.000000000000002,
+          "value": 39.2,
+          "text": "39.2",
+          "rendered": "39.2 °F"
+        },
+        {
+          "si": 4.013888888888889,
+          "value": 39.2,
+          "text": "39.2",
+          "rendered": "39.2 °F"
+        },
+        {
+          "si": 4.027777777777778,
+          "value": 39.3,
+          "text": "39.3",
+          "rendered": "39.3 °F"
+        },
+        {
+          "si": 4.04166666666667,
+          "value": 39.3,
+          "text": "39.3",
+          "rendered": "39.3 °F"
+        },
+        {
+          "si": 4.055555555555558,
+          "value": 39.3,
+          "text": "39.3",
+          "rendered": "39.3 °F"
+        },
+        {
+          "si": 4.083333333333334,
+          "value": 39.4,
+          "text": "39.4",
+          "rendered": "39.4 °F"
+        }
+      ],
+      "notANumber": {
+        "value": 0,
+        "text": "0.0"
+      },
+      "roundTrip": [],
+      "typed": [
+        {
+          "typed": 0,
+          "si": -17.77777777777778,
+          "text": "0.0"
+        },
+        {
+          "typed": 1.23456,
+          "si": -17.09191111111111,
+          "text": "1.2"
+        },
+        {
+          "typed": null,
+          "si": null,
+          "text": null
+        }
+      ]
+    },
+    {
       "quantity": "boilingPoint",
       "system": "metric",
       "region": null,

@@ -93,10 +93,11 @@ private func unitKeys(_ unit: UnitId) -> (unit: String, format: String) {
 // MARK: - The quantities
 
 /// Every number with a unit that either app shows or takes. `temperature` is
-/// a readout (peak yolk, the bath, the presets); `eggTemp` is the one
-/// temperature a cook can type (on the web).
+/// a readout (peak yolk, the bath, the presets); `eggTemp` is the egg's
+/// temperature a cook can type (on the web); `probeTemp` is a probe
+/// thermometer's reading at the centre (E4), to a tenth and never clamped.
 public enum Quantity: String, Sendable, CaseIterable {
-    case temperature, eggTemp, boilingPoint, mass, girth, width, altitude, water
+    case temperature, eggTemp, probeTemp, boilingPoint, mass, girth, width, altitude, water
 }
 
 /// A step as a ratio of integers, and the digits shown.
@@ -116,6 +117,9 @@ private func spec(_ q: Quantity) -> (limit: ClosedRange<Double>?, metric: Step, 
     case .eggTemp:
         (Limits.eggTempC, Step(unit: .celsius, num: 1, den: 1, decimals: 0),
          Step(unit: .fahrenheit, num: 1, den: 1, decimals: 0))
+    case .probeTemp:
+        (nil, Step(unit: .celsius, num: 1, den: 10, decimals: 1),
+         Step(unit: .fahrenheit, num: 1, den: 10, decimals: 1))
     case .boilingPoint:
         (nil, Step(unit: .celsius, num: 1, den: 10, decimals: 1),
          Step(unit: .fahrenheit, num: 1, den: 10, decimals: 1))

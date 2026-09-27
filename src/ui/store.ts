@@ -59,6 +59,12 @@ export interface Settings {
    *  default (`effectiveUnits`), and storing the result instead would turn a
    *  default into a choice the cook never made. */
   unitsChosen: UnitSystem | null;
+  /** "I have a probe thermometer" (E4): ask for a reading at the middle of
+   *  the egg when the cooling ends. Off until the cook says so. */
+  probe: boolean;
+  /** Whether the once-only offer has been answered, either way. The setting
+   *  itself stays in the controls; the offer does not come back. */
+  probeAsked: boolean;
 }
 
 /** The numbers a fresh install starts from come from core; the three settings
@@ -81,6 +87,8 @@ export const DEFAULT_SETTINGS: Settings = {
   doneness: DEFAULTS.doneness,
   muted: false,
   unitsChosen: null,
+  probe: false,
+  probeAsked: false,
 };
 
 /* ------------------------------------------------------------- raw storage */
@@ -165,6 +173,8 @@ export function loadSettings(classes: SizeClass[]): Settings {
     doneness: clampNumber(raw['doneness'], LIMITS.doneness, d.doneness),
     muted: raw['muted'] === true,
     unitsChosen: readChosenUnits(raw['unitsChosen']),
+    probe: raw['probe'] === true,
+    probeAsked: raw['probeAsked'] === true,
   };
 }
 

@@ -275,6 +275,35 @@ unanswered question is recorded as skipped when the next cook starts (E1's
 offered-or-skipped field). A button would be one more thing to press that
 teaches nothing.
 
+**E4's strings - IMPLEMENTED 27 September 2026**, in `copy/en.json` and both
+apps, not yet approved by the owner. One is INFERENCE.md §5's draft with one
+word changed; the rest are new. `readout.sub.cooling` ("3 minutes, or the yolk
+keeps cooking") is retired, because the countdown is no longer three minutes.
+
+| key | where | text |
+|---|---|---|
+| `probe.offer` | once, during a cook (both) | Got a probe thermometer? When the timer says, push it to the middle of the egg and tell us the **highest** number you see. |
+| `probe.offer.yes` / `.no` | its buttons | I have one · No thanks |
+| `controls.probe` | the setting | I have a probe thermometer |
+| `controls.probe.hint` | under it | When the cooling ends it asks for one reading from the middle of the egg. That tells it how fast your eggs heat, from a single egg. |
+| `readout.sub.coolingPeak` | cooling subline | until the middle of the yolk stops warming |
+| `readout.sub.coolingProbe` | the same, probe on | until the middle of the yolk stops warming — have the probe ready |
+| `probe.now` / `probe.hint` | at Done | Push the probe to the middle · Tell us the highest number you see. |
+| `probe.entry` / `probe.save` | the field, the button | Highest reading · Use this reading |
+| `probe.refused` | a reading refused | That doesn't look like the middle of this egg: expect {low} to {high}. Is the tip in the yolk? |
+| `alarm.probe.title` / `.body` | iOS notification | Probe it now · Middle of the egg: tell us the highest number. (12 and 46 of 14 and 53) |
+| `spoken.probe` | web, screen reader at Done | Now push the probe to the middle of the egg. |
+
+**"Lowest" became "highest"** because at the moment the reading is taken the
+middle of the egg is its warmest point, not its coldest (INFERENCE.md §5): the
+highest number is the middle, and a probe that is off-centre, late, or not yet
+settled reads lower. It is the one departure from the owner's draft.
+
+The reading is typed in the cook's units: a new quantity, `probeTemp`, to a
+tenth of a degree in C or F, and never clamped - a reading the egg could not
+have made is refused with the range it should be in, not silently moved to
+the edge of it (§4).
+
 **Draft for the rest of F2 (everything but the feedback screens), for the
 owner to approve.** Drafted on 27 September while the owner slept, from F1's
 list of strings that fail the criteria above. It is not in the catalogue yet.
@@ -679,4 +708,22 @@ Taken by the owner, 26 September 2026:
 
 - **The owner reviews the 1750**, against Johnson's *Preface* (§6).
 
-Nothing in this file is waiting on a decision.
+Waiting on the owner, from 27 September:
+
+- **The two drafts in §3.** The E2 feedback draft is implemented, since the call
+  was made while the owner slept, and remains open to revision. The draft for
+  the rest of F2 is not in the catalogue yet.
+- **Two platform disagreements F4 left open (§2), both to settle before Czech
+  ships:**
+  - An English UI in Czechia (`en-CZ`) writes a time of day "09:05" on the web
+    and "9:05" on iOS. Until there is a Czech catalogue, this is what the Czech
+    reviewer sees.
+  - A Czech UI outside Czechia (`cs-US`, `cs-GB`) takes its decimal separator
+    from the LANGUAGE on the web ("1 234,5") and from the REGION on iOS
+    ("1,234.5").
+
+    The simplest rule is to follow the language on both, since the words
+    around the number are Czech. Recommended.
+- **`Intl` inside `src/core/format.ts`.** F4 relaxed invariant 1 for this one
+  file. The web's output therefore depends on the browser's ICU, while the
+  fixtures are pinned against Node's. Safari has not been tried.

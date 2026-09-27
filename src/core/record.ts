@@ -40,6 +40,7 @@ import {
   posteriorParams, updatePosterior,
 } from './infer.js';
 import { GridSpec, calibrationGrid } from './policy.js';
+import { T_COLD_TAP_C, T_ICE_BATH_C } from './constants.js';
 
 /** The schema version. A loader refuses any other: a record from a later
  *  schema means something this code does not know how to fold. */
@@ -77,6 +78,22 @@ export type TimeToBoilFrom = 'measured' | 'remembered' | 'default';
  *  and `timeout` when nobody did and the grace ran out, in which case
  *  `pulled_s` is the scheduled time, an assumption and not a measurement. */
 export type PulledBy = 'cook' | 'timeout';
+
+/**
+ * A probe thermometer reading at the centre of the egg (E4, INFERENCE.md
+ * section 5), taken when the app said: at the moment the model has the yolk's
+ * centre peaking, which is when the cooling countdown ends. In degrees C
+ * whatever the cook typed it in; the record is SI.
+ */
+export interface ProbeReading {
+  /** The highest number the cook saw with the probe at the middle, C. */
+  centre_C: number;
+  /** When the app asked for it, s after the moment the record scores as the
+   *  pull (`recordCookTime_s`): the end of the counted cooling. Null when that
+   *  is not known. The likelihood reads the reading as the peak; this is kept
+   *  so that a later fit can check that it was. */
+  after_s: number | null;
+}
 
 export type AppName = 'web' | 'ios';
 export type Units = 'metric' | 'imperial';
@@ -151,8 +168,9 @@ export interface EggRecord {
    *  record says `true`; the field stays so that old records read the same. */
   white: WhiteReport | null;
   whiteOffered: boolean;
-  /** A thermometer reading (E4). Null until then. */
-  probe: null;
+  /** A thermometer reading at the centre's peak (E4), or null: no probe, or
+   *  not taken. Null in every record before E4. */
+  probe: ProbeReading | null;
   /** What the cook READ: an answer is a word, and words differ. */
   lang: string;
   register: string;
@@ -163,6 +181,13 @@ export interface EggRecord {
  *  the cook weighed rather than as 68.00000000000001. */
 export function recordMass_g(mass_kg: number): number {
   return Math.round(mass_kg * 100000) / 100;
+}
+
+/** A probe reading as a record carries it: to a hundredth of a degree, so a
+ *  typed 147.2 F reads as 64 C rather than as 63.99999999999999. A probe
+ *  shows tenths; a hundredth keeps a Fahrenheit tenth distinct. */
+export function recordProbe_C(centre_C: number): number {
+  return Math.round(centre_C * 100) / 100;
 }
 
 /* ------------------------------------------------------------- validation */
@@ -200,6 +225,24 @@ function isDay(v: unknown): v is string {
 
 function isObject(v: unknown): v is Record<string, unknown> {
   return v !== null && typeof v === 'object' && !Array.isArray(v);
+}
+
+/** The coolest thing this cook's egg ever touched, C: the fridge, the room or
+ *  the cooling water, whichever is lowest. */
+function coldestOf(s: RecordSetup): number {
+  const bath = s.cooling === 'ice' ? T_ICE_BATH_C : s.cooling === 'tap' ? T_COLD_TAP_C : s.ambient_C;
+  return Math.min(s.eggStart_C, s.ambient_C, bath);
+}
+
+/**
+ * Whether a centre reading is physically possible at all for this cook: no
+ * colder than the coldest thing the egg touched and no hotter than the water
+ * boiled. The loader's test, so it is deliberately loose - a bound that
+ * narrows later must not make an older record unreadable. The apps refuse far
+ * more at entry, against the physics of the cook (`plausibleProbeRange_C`).
+ */
+export function probePossible(s: RecordSetup, centre_C: number): boolean {
+  return Number.isFinite(centre_C) && centre_C >= coldestOf(s) && centre_C <= s.boiling_C;
 }
 
 /**
@@ -272,10 +315,36 @@ export function parseRecord(raw: unknown): EggRecord | null {
   if (typeof offered !== 'boolean') return null;
   // An answer to a question that was never asked is not an observation.
   if (white !== null && !offered) return null;
-  if ((raw['probe'] ?? null) !== null) return null;
 
   if (!nonEmptyString(raw['lang']) || !nonEmptyString(raw['register'])) return null;
   if (!oneOf(raw['units'], ['metric', 'imperial'] as const)) return null;
+
+  const setup: RecordSetup = {
+    startMode: s['startMode'],
+    eggStart_C: s['eggStart_C'],
+    eggFrom: s['eggFrom'],
+    ambient_C: s['ambient_C'],
+    boiling_C: s['boiling_C'],
+    timeToBoil_s: s['timeToBoil_s'],
+    timeToBoilFrom: s['timeToBoilFrom'],
+    cooling: s['cooling'],
+    afterBoil: s['afterBoil'],
+    waterLitres: s['waterLitres'],
+    eggCount: s['eggCount'],
+  };
+
+  // A reading at the centre (E4): a number the egg could have been, and when
+  // it was asked for, if that is known.
+  const rawProbe = raw['probe'] ?? null;
+  let probe: ProbeReading | null = null;
+  if (rawProbe !== null) {
+    if (!isObject(rawProbe)) return null;
+    const centre = rawProbe['centre_C'];
+    const after = rawProbe['after_s'] ?? null;
+    if (!isFiniteNumber(centre) || !probePossible(setup, centre)) return null;
+    if (after !== null && !(isFiniteNumber(after) && after >= 0)) return null;
+    probe = { centre_C: centre, after_s: after };
+  }
 
   return {
     v: RECORD_VERSION,
@@ -285,19 +354,7 @@ export function parseRecord(raw: unknown): EggRecord | null {
     appVersion: raw['appVersion'],
     prior: raw['prior'],
     egg: { mass_g: egg['mass_g'], massFrom: egg['massFrom'], sizeTable: table as SizeTable | null },
-    setup: {
-      startMode: s['startMode'],
-      eggStart_C: s['eggStart_C'],
-      eggFrom: s['eggFrom'],
-      ambient_C: s['ambient_C'],
-      boiling_C: s['boiling_C'],
-      timeToBoil_s: s['timeToBoil_s'],
-      timeToBoilFrom: s['timeToBoilFrom'],
-      cooling: s['cooling'],
-      afterBoil: s['afterBoil'],
-      waterLitres: s['waterLitres'],
-      eggCount: s['eggCount'],
-    },
+    setup: setup,
     level: level,
     recommended_s: recommended,
     nudge_s: nudge,
@@ -307,7 +364,7 @@ export function parseRecord(raw: unknown): EggRecord | null {
     yolk: yolk as Feedback | null,
     white: white as WhiteReport | null,
     whiteOffered: offered,
-    probe: null,
+    probe: probe,
     lang: raw['lang'],
     register: raw['register'],
     units: raw['units'],
@@ -390,11 +447,12 @@ export function calibrationDoneness(c: Calibration, level: number): Doneness {
   };
 }
 
-/** Whether a record has anything to fold. An egg nobody answered about is still
+/** Whether a record has anything to fold: an answer, or a probe reading. An
+ *  egg nobody answered about is still
  *  a record - the cook, the recommendation and the pull are data for the fit -
  *  but it moves no particle and does not count as an egg the model learned from. */
 export function recordTeaches(r: EggRecord): boolean {
-  return r.yolk !== null || r.white !== null;
+  return r.yolk !== null || r.white !== null || r.probe !== null;
 }
 
 /** The egg the fold sees. */
@@ -462,7 +520,8 @@ export function buildRequestedGrid(q: GridRequest): DoseGrid {
 }
 
 /**
- * Fold one record - both of its answers, whichever it has - against the
+ * Fold one record - its answers and its probe reading, whichever it has -
+ * against the
  * surface `gridRequestFor` described, and count the egg if it teaches anything.
  *
  * One fold per egg (see `updatePosterior`). An app that folds the first answer
@@ -474,7 +533,10 @@ export function buildRequestedGrid(q: GridRequest): DoseGrid {
  */
 export function foldRecord(c: Calibration, r: EggRecord, grid: DoseGrid): void {
   if (!recordTeaches(r)) return;
-  updatePosterior(c.posterior, grid, recordCookTime_s(r), recordLogTarget(r), r.yolk, r.white);
+  updatePosterior(
+    c.posterior, grid, recordCookTime_s(r), recordLogTarget(r), r.yolk, r.white,
+    r.probe === null ? null : r.probe.centre_C,
+  );
   c.eggsLogged += 1;
 }
 

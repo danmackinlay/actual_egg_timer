@@ -63,7 +63,11 @@ final class Alarm: NSObject, UNUserNotificationCenterDelegate {
     /// Schedule the two moments that matter. Both are absolute: the system owns
     /// the waiting, so a locked phone, a backgrounded app or a force-quit
     /// changes nothing.
-    func schedule(pullAt: Date, coolDoneAt: Date?) {
+    ///
+    /// The cooling ends when the yolk's centre peaks (E4). For a cook with a
+    /// probe thermometer that is the moment to take the reading, so the second
+    /// alarm asks for it instead of announcing the end.
+    func schedule(pullAt: Date, coolDoneAt: Date?, probe: Bool = false) {
         cancel()
 
         request(
@@ -75,8 +79,8 @@ final class Alarm: NSObject, UNUserNotificationCenterDelegate {
         if let coolDoneAt {
             request(
                 id: coolID, at: coolDoneAt,
-                title: tr("alarm.cooled.title"),
-                body: tr("alarm.cooled.body")
+                title: tr(probe ? "alarm.probe.title" : "alarm.cooled.title"),
+                body: tr(probe ? "alarm.probe.body" : "alarm.cooled.body")
             )
         }
     }

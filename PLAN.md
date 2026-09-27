@@ -165,10 +165,56 @@ cook. Nothing leaves a phone before E6.
       Deciding what to do is the owner's: the candidates are E4 or E7 pinning
       the time-scale, E5 recommending from the posterior rather than its mean,
       or a different prior - INFERENCE.md §3 has the numbers.
-- [ ] **E4 the thermometer flow.** Optional. The app says when (the solver's
+- [x] **E4 the thermometer flow.** Optional. The app says when (the solver's
       `peakYolkTime_s`), the cook reports the lowest reading at the centre,
       Gaussian likelihood with a hot skew (§5). Done when: one simulated reading
       at +-1 C takes the time-scale sd to about 2.5%.
+
+      DONE 27 September, with two departures from the spec, both on the
+      physics. **The skew is COLD and the cook is asked for the HIGHEST
+      number.** At the moment the centre peaks it is the warmest point in the
+      egg, in space and in time (`npm run probe` now prints the field there:
+      58.8 C at the centre, 55.7 at 0.4 R; 58.2 C 30 s early, 58.3 C 30 s
+      late), so a probe off-centre, late, or still climbing reads LOW; "hot"
+      was true only at the pull. The likelihood is an exponentially modified
+      Gaussian: thermometer sd 1.0 C plus a one-sided handling error, mean
+      0.4 C, total sd 1.08 C, with 2% of readings unrelated (uniform over
+      60 C). **Measured** (`test/probe.test.ts`, default egg, jammy, ice,
+      1000 particles, the app's own grid): one reading at -1 / 0 / +1 C
+      takes the time-scale sd from the prior's 12.5% to 2.74 / 2.74 / 2.79%
+      in the weights, which meets the criterion; the filter then resamples,
+      and its fixed 2% jitter on alpha leaves 3.28 / 3.33 / 3.52% in the
+      stored posterior. That jitter is the floor on any one fold and is not
+      E4's to change. With the sketched 1.5 C Gaussian the weights would hold
+      about 3.7%. **Direction**: +1 C shortens the next jammy cook 464.0 ->
+      449.1 s, -1 C lengthens it to 469.2 s, and a kitchen 10% fast is found
+      at x1.10 (+-0.04) from one reading. The grid carries `peakYolk_C` per
+      cell in both cores (interpolated to 0.1 C); the record's `probe` is
+      `{ centre_C, after_s }`, rounded to 0.01 C; a reading colder than the
+      coldest thing the egg touched or hotter than the boil is refused by the
+      loader, and one outside three prior sds of the time-scale +-3 C
+      (`plausibleProbeRange_C`, 47.6-81.7 C for that egg) is refused at
+      entry. `fixtures/probe.json` holds Swift to it. **The flow**: "I have a
+      probe thermometer", off by default, offered once while a cook runs,
+      then a setting; the cooling alarm (iOS: its notification) asks for the
+      reading; entry in the cook's units. In Chromium, a cook was driven with
+      the setting taken from the offer, a reading of 46.7 C refused, 65.7 C
+      folded, then a yolk answer folded into the same egg, and a second cook
+      in Imperial with 147.2 F folded as 64 C; both times the stored
+      posterior was string-identical to `replay` of the log. NOT verified:
+      nothing on iOS was tapped (the screens were seeded and screenshotted),
+      and no real egg has been probed.
+- [x] **Old item 4, the cooling countdown from `peakYolkTime_s`.** DONE
+      27 September with E4: the countdown runs from the pull to the yolk's
+      peak for the cook as solved, re-solved at the boil
+      (`coolingSecondsFor`), floor 60 s, and the old flat 180 s where the
+      centre peaked before the pull (a heat-off pan that ran out). Measured
+      moves against 180 s, hot start, 1.5 L, two eggs: 68 g in ice 191 / 183 /
+      158 s at soft / jammy / hard (+11 / +3 / -22); 53 g in ice 162 / 155 /
+      134 (-18 / -25 / -46); 78 g under a tap 224 / 213 / 182 (+44 / +33 /
+      +2); a tap adds 8-13 s over ice for the same egg. Over sizes 53-78 g,
+      both coolings, hot and cold starts, -46 to +56 s. The
+      cooking time and the peak are unchanged; only when "Done" rings moves.
 - [ ] **E5 decide under uncertainty.** Settled 26 September (`INFERENCE.md`
       §11): loss ratio 3; odds always shown as "7/10 eggs hit the mark";
       "still learning" until the 80% interval is under about +-15 s, falling
@@ -659,7 +705,8 @@ scale learned only from that cook's standing eggs (`INFERENCE.md` §11, item 11)
 which wants E2's likelihood and enough standing cooks to identify it apart from
 `alpha`. Not built.
 
-**Anywhere:** derive the cooling countdown from `peakYolkTime_s` (old item 4).
+~~**Anywhere:** derive the cooling countdown from `peakYolkTime_s` (old item 4).~~
+Done with E4, 27 September.
 **Throughout:** cook real eggs (old item 1). After E1 each one counts
 retroactively.
 
@@ -696,9 +743,10 @@ do; what is missing is contact with reality.
 3. ~~**The web app builds its dose grid on the main thread**~~, blocking ~2 s behind
    a `setTimeout(30)` so the "learning" note paints first. iOS runs it detached.
    *Done with E1:* a module Web Worker, with this thread as the fallback.
-4. **Derive the cooling countdown** from the solver's `peakYolkTime_s` instead of
-   asserting three minutes (README §11.5). It changes times on screen, so it
-   wants a real egg behind it rather than a refactor.
+4. ~~**Derive the cooling countdown** from the solver's `peakYolkTime_s` instead of
+   asserting three minutes (README §11.5).~~ *Done with E4, 27 September*: -46
+   to +56 s against the flat 180 s (the E4 entry has the table). It still
+   wants a real egg behind it.
 5. **Judge the white channel against real eggs** (README §11.5, issue #1).
    *Superseded by E2 and E3:* the white is now always asked, three answers, with
    its own learned offset and noise; see the E3 entry above for what two runny

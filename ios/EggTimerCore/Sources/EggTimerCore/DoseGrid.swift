@@ -12,6 +12,9 @@ import Foundation
 /// minutes of cooking (z ~ 4.65 K makes the kinetics very sharp), so linear
 /// interpolation of the raw value would be hopeless. In log space the surface is
 /// close to linear, because log10(dose) is roughly T/z and T is smooth.
+///
+/// The yolk's peak temperature is kept beside the doses (E4), in degrees: what
+/// a probe at the centre reads when the centre peaks. See src/core/doseGrid.ts.
 public struct DoseGrid: Sendable {
     public let logAlphaMin: Double
     public let logAlphaStep: Double
@@ -22,11 +25,13 @@ public struct DoseGrid: Sendable {
     /// log10 equivalent-minutes, row-major [alphaIndex * timeCount + timeIndex].
     public let logYolk: [Double]
     public let logWhite: [Double]
+    /// The yolk centre's peak temperature, C, same layout (E4).
+    public let peakYolkC: [Double]
 
     public init(
         logAlphaMin: Double, logAlphaStep: Double, alphaCount: Int,
         timeMinS: Double, timeStepS: Double, timeCount: Int,
-        logYolk: [Double], logWhite: [Double]
+        logYolk: [Double], logWhite: [Double], peakYolkC: [Double]
     ) {
         self.logAlphaMin = logAlphaMin
         self.logAlphaStep = logAlphaStep
@@ -36,6 +41,7 @@ public struct DoseGrid: Sendable {
         self.timeCount = timeCount
         self.logYolk = logYolk
         self.logWhite = logWhite
+        self.peakYolkC = peakYolkC
     }
 }
 
@@ -58,6 +64,7 @@ public func buildDoseGrid(
     let timeStep = (timeMaxS - timeMinS) / Double(timeCount - 1)
     var logYolk = [Double](repeating: 0.0, count: alphaCount * timeCount)
     var logWhite = [Double](repeating: 0.0, count: alphaCount * timeCount)
+    var peakYolk = [Double](repeating: 0.0, count: alphaCount * timeCount)
 
     for ai in 0..<alphaCount {
         let alpha = exp(logAlphaMin + logAlphaStep * Double(ai))
@@ -70,12 +77,13 @@ public func buildDoseGrid(
             )
             logYolk[ai * timeCount + ti] = safeLog10(r.yolkDoseMin)
             logWhite[ai * timeCount + ti] = safeLog10(r.whiteDoseMin)
+            peakYolk[ai * timeCount + ti] = r.peakYolkC
         }
     }
     return DoseGrid(
         logAlphaMin: logAlphaMin, logAlphaStep: logAlphaStep, alphaCount: alphaCount,
         timeMinS: timeMinS, timeStepS: timeStep, timeCount: timeCount,
-        logYolk: logYolk, logWhite: logWhite
+        logYolk: logYolk, logWhite: logWhite, peakYolkC: peakYolk
     )
 }
 
@@ -110,6 +118,11 @@ public func lookupLogYolkDose(_ g: DoseGrid, _ alphaM2s: Double, _ cookTimeS: Do
 /// log10 of the white dose delivered, equivalent minutes at 80 C.
 public func lookupLogWhiteDose(_ g: DoseGrid, _ alphaM2s: Double, _ cookTimeS: Double) -> Double {
     interpolate(g.logWhite, g, alphaM2s, cookTimeS)
+}
+
+/// The yolk centre's peak temperature, C (E4).
+public func lookupPeakYolkC(_ g: DoseGrid, _ alphaM2s: Double, _ cookTimeS: Double) -> Double {
+    interpolate(g.peakYolkC, g, alphaM2s, cookTimeS)
 }
 
 /// Invert the surface: the cook time delivering a given log10 yolk dose.

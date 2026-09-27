@@ -114,16 +114,20 @@ const UNIT_KEYS: Record<UnitId, { unit: string; format: string }> = {
  * Every number with a unit that either app shows or takes.
  *
  *  - `temperature`   a readout: peak yolk, the bath, the presets, a hint. 1 degree.
- *  - `eggTemp`       the typed egg temperature, the one temperature input.
+ *  - `eggTemp`       the typed egg temperature.
+ *  - `probeTemp`     a probe thermometer's reading at the centre (E4), typed
+ *                    to a tenth, as a probe shows it. Not clamped: a reading
+ *                    the egg could not have made is refused, not moved.
  *  - `boilingPoint`  the water's boiling point, to a tenth of a degree.
  *  - `mass`, `girth`, `width`   the egg, weighed or measured.
  *  - `altitude`, `water`        the kitchen and the pan.
  */
 export type Quantity =
-  | 'temperature' | 'eggTemp' | 'boilingPoint' | 'mass' | 'girth' | 'width' | 'altitude' | 'water';
+  | 'temperature' | 'eggTemp' | 'probeTemp' | 'boilingPoint' | 'mass' | 'girth' | 'width'
+  | 'altitude' | 'water';
 
 export const QUANTITIES: readonly Quantity[] = [
-  'temperature', 'eggTemp', 'boilingPoint', 'mass', 'girth', 'width', 'altitude', 'water',
+  'temperature', 'eggTemp', 'probeTemp', 'boilingPoint', 'mass', 'girth', 'width', 'altitude', 'water',
 ];
 
 /** A step, as a ratio of integers: 1/10 for 0.1, 1/50 for 0.02, 100/1. */
@@ -154,6 +158,11 @@ const SPECS: Record<Quantity, QuantitySpec> = {
     limit: LIMITS.eggTemp_C,
     metric: { unit: 'C', num: 1, den: 1, decimals: 0 },
     imperial: { unit: 'F', num: 1, den: 1, decimals: 0 },
+  },
+  probeTemp: {
+    limit: null,
+    metric: { unit: 'C', num: 1, den: 10, decimals: 1 },
+    imperial: { unit: 'F', num: 1, den: 10, decimals: 1 },
   },
   boilingPoint: {
     limit: null,

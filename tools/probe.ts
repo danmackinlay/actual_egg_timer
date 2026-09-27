@@ -100,6 +100,21 @@ for (const p of protocols) {
 }
 console.log();
 
+/* --------------------------------- which way the errors go, at the peak */
+
+// At the pull the centre is the COLDEST point and every error reads hot. At the
+// centre's peak it is the WARMEST, in space and in time, so every error reads
+// cold - which is the direction the likelihood's skew has to go (infer.ts,
+// E4), and why the cook is asked for the HIGHEST number, not the lowest.
+const iceAfter = peakIce.peakYolkTime_s - COOK_S;
+const radial = [0, 0.1, 0.2, 0.3, 0.4, 0.5].map((x) => reading('ice', THETA0, x, iceAfter).toFixed(1));
+const timely = [-60, -30, -15, 0, 15, 30, 60].map((d) => reading('ice', THETA0, 0, iceAfter + d).toFixed(2));
+console.log('the ice bath at its peak:');
+console.log(`  r/R 0, 0.1 ... 0.5:        ${radial.join('  ')} C`);
+console.log(`  centre, -60 s ... +60 s:   ${timely.join('  ')} C`);
+console.log('  Off-centre, early or late all read low: the centre is the maximum.');
+console.log();
+
 /* ------------------------------------ what it cannot see: the carryover */
 
 const peakAfter = peakCounter.peakYolkTime_s - COOK_S;

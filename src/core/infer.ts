@@ -63,7 +63,8 @@ import { ALPHA_DEFAULT, ALPHA_REL_SD, Z_WHITE, Z_YOLK } from './constants.js';
 import { ModelParams, WHITE_DOSE_TARGET } from './solve.js';
 import { erfc } from './sphere.js';
 import {
-  DoseGrid, lookupLogYolkDose, lookupLogWhiteDose, cookTimeForLogYolkDose, cookTimeForLogWhiteDose,
+  DoseGrid, lookupLogYolkDose, lookupLogWhiteDose, lookupPeakYolk_C, cookTimeForLogYolkDose,
+  cookTimeForLogWhiteDose,
 } from './doseGrid.js';
 
 /** What the cook reports about the YOLK after eating the egg. */
@@ -179,6 +180,77 @@ export const WHITE_OFFSET_SD = 0.5;
 export const WHITE_FIRM_GAP_MEDIAN = 1.08;
 export const WHITE_FIRM_GAP_LOG_SD = 0.4;
 
+/* ---- the thermometer (E4, INFERENCE.md section 5) ---- */
+
+/**
+ * A probe reading at the centre, taken when the centre peaks, is the peak yolk
+ * temperature plus two errors, and the likelihood is the density of their sum:
+ *
+ *   reading = peakYolk + e - h,   e ~ N(0, PROBE_INSTRUMENT_SD_C^2),
+ *                                 h ~ Exponential(mean PROBE_HANDLING_MEAN_C)
+ *
+ * `e` is the thermometer: symmetric, about a degree for anything worth owning
+ * (tools/probe.ts). `h` is the handling, and it is ONE-SIDED, and COLD. At the
+ * moment the centre peaks it is the warmest point in the egg, in space and in
+ * time: `npm run probe` has a probe 3 mm off reading 0.03 C low, 15 s late
+ * 0.14 C low, 30 s late 0.6 C low, and a probe that has not finished
+ * climbing from room temperature reads low by however far it has to go. The
+ * stem, running out through a cold white into a cold room, draws heat off the
+ * tip. There is no handling error that reads hot there. (At the PULL every
+ * error reads hot, which is what INFERENCE.md section 3 first had in mind, and
+ * why the reading is not taken at the pull.) So the sum is an exponentially
+ * modified Gaussian with its tail on the cold side: a reading well under a
+ * particle's peak costs it less than one the same distance over.
+ *
+ * The handling mean is 0.4 C: a probe a few millimetres off and a reading a
+ * quarter to half a minute late cost 0.2 to 0.8 C together. The total sd is
+ * sqrt(1.0^2 + 0.4^2) = 1.08 C, where INFERENCE.md sketched "about 1.5": the
+ * handling error at the peak is measured, and it is small, so the thermometer
+ * is what is left. What one reading teaches, measured in test/probe.test.ts
+ * on the default egg at jammy in ice: the time-scale's sd goes from the
+ * prior's 12.5% to 2.7-2.8% in the weights (a 1.0 C Gaussian alone would give
+ * 2.45%; the handling tail costs the rest), and to 3.3-3.5% once the filter
+ * has resampled, because the resample's jitter is 2% on alpha whatever the
+ * posterior. A 1.5 C Gaussian would give about 3.7% in the weights.
+ *
+ * A PROBE_UNRELATED share of readings has nothing to do with the egg - a probe
+ * in the white, the wrong egg - and is uniform over PROBE_UNRELATED_SPAN_C, so
+ * no particle scores below PROBE_UNRELATED / PROBE_UNRELATED_SPAN_C per degree.
+ * It is smaller than the answers' UNRELATED because the apps refuse, before it
+ * is ever folded, a reading no believable kitchen could make
+ * (`plausibleProbeRange_C` in policy.ts), and because every per cent of it is
+ * a fat tail that one reading has to fight: at 5% over 40 C the same reading
+ * would leave about 3.1% in the weights rather than 2.8%.
+ */
+export const PROBE_INSTRUMENT_SD_C = 1.0;
+export const PROBE_HANDLING_MEAN_C = 0.4;
+export const PROBE_UNRELATED = 0.02;
+export const PROBE_UNRELATED_SPAN_C = 60.0;
+
+/** The density of `predicted - reading`: how far the reading fell short of
+ *  the peak, C. An exponentially modified Gaussian; see above. Computed with
+ *  the erfc inside the exponent so that a reading far over the peak - huge
+ *  exp, vanishing erfc - comes out as a small number rather than as
+ *  Infinity * 0. */
+export function probeShortfallDensity(shortfall_C: number): number {
+  const sigma = PROBE_INSTRUMENT_SD_C;
+  const rate = 1.0 / PROBE_HANDLING_MEAN_C;
+  const tail = erfc((rate * sigma * sigma - shortfall_C) / (Math.SQRT2 * sigma));
+  if (!(tail > 0.0)) return 0.0;
+  return 0.5 * rate
+    * Math.exp(0.5 * rate * rate * sigma * sigma - rate * shortfall_C + Math.log(tail));
+}
+
+/** The likelihood of a probe reading under one particle: the reading against
+ *  the particle's own peak yolk temperature for this cook, off the grid. */
+export function probeLikelihood(
+  grid: DoseGrid, p: Particle, cookTime_s: number, reading_C: number,
+): number {
+  const predicted = lookupPeakYolk_C(grid, p.alpha_m2s, cookTime_s);
+  return (1.0 - PROBE_UNRELATED) * probeShortfallDensity(predicted - reading_C)
+    + PROBE_UNRELATED / PROBE_UNRELATED_SPAN_C;
+}
+
 /** log10 of the dose at which the innermost white is set: the runny | tender
  *  cutpoint before any offset. */
 export const LOG_WHITE_TARGET = Math.log10(WHITE_DOSE_TARGET);
@@ -285,15 +357,19 @@ function yolkIndex(f: Feedback): number {
 
 /**
  * The likelihood of one egg's answers under one particle: the product of the
- * yolk's and the white's, either of which may be missing. A missing answer
- * contributes 1 - it says nothing - and a skip is not scored as anything else
- * (INFERENCE.md section 3 says why a skip is still RECORDED).
+ * yolk's, the white's and the thermometer's, any of which may be missing. A
+ * missing answer contributes 1 - it says nothing - and a skip is not scored as
+ * anything else (INFERENCE.md section 3 says why a skip is still RECORDED).
+ * The yolk and white are probabilities and the reading is a density, per
+ * degree; each particle is scored on the same reading, so the units cancel in
+ * the normalisation.
  */
 export function answerLikelihood(
   grid: DoseGrid, p: Particle, cookTime_s: number, logNominalTarget: number,
-  yolk: Feedback | null, white: WhiteReport | null,
+  yolk: Feedback | null, white: WhiteReport | null, probe_C: number | null = null,
 ): number {
   let l = 1.0;
+  if (probe_C !== null) l *= probeLikelihood(grid, p, cookTime_s, probe_C);
   if (yolk !== null) {
     const probs = yolkProbit(grid, p, cookTime_s, logNominalTarget);
     l *= (1.0 - UNRELATED) * probs[yolkIndex(yolk)] + UNRELATED / 3.0;
@@ -321,7 +397,8 @@ export function effectiveSampleSize(post: Posterior): number {
 /**
  * Fold in one egg: cooked for `cookTime_s`, aiming at a nominal yolk dose of
  * 10^`logNominalTarget`, with whatever the cook said about the yolk and the
- * white - either may be null. Reweights by the joint likelihood, then resamples
+ * white, and a probe reading at the centre's peak if they took one (E4) - any
+ * of them may be null. Reweights by the joint likelihood, then resamples
  * with jitter if the particle set has degenerated.
  *
  * ONE fold per egg, not one per answer. The two answers can arrive in either
@@ -333,19 +410,19 @@ export function effectiveSampleSize(post: Posterior): number {
  */
 export function updatePosterior(
   post: Posterior, grid: DoseGrid, cookTime_s: number, logNominalTarget: number,
-  yolk: Feedback | null, white: WhiteReport | null,
+  yolk: Feedback | null, white: WhiteReport | null, probe_C: number | null = null,
 ): void {
-  if (yolk === null && white === null) return;
+  if (yolk === null && white === null && probe_C === null) return;
   const n = post.particles.length;
   let total = 0.0;
   for (let i = 0; i < n; i++) {
     post.weights[i] *= answerLikelihood(
-      grid, post.particles[i], cookTime_s, logNominalTarget, yolk, white,
+      grid, post.particles[i], cookTime_s, logNominalTarget, yolk, white, probe_C,
     );
     total += post.weights[i];
   }
   if (total <= 0.0) {
-    // Cannot happen - the unrelated share keeps every factor above zero - but
+    // Cannot happen - the unrelated shares keep every factor above zero - but
     // what must never happen is a NaN weight reaching a solve, so the guard
     // stays: a uniform reweight keeps the prior rather than inventing one.
     for (let i = 0; i < n; i++) post.weights[i] = 1.0 / n;

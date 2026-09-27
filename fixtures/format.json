@@ -4384,6 +4384,136 @@
     },
     {
       "locale": "en-US",
+      "quantity": "probeTemp",
+      "system": "metric",
+      "region": "US",
+      "si": 0.5,
+      "key": "format.celsius",
+      "value": {
+        "value": 0.5,
+        "decimals": 1
+      },
+      "text": "0.5 °C"
+    },
+    {
+      "locale": "en-US",
+      "quantity": "probeTemp",
+      "system": "metric",
+      "region": "US",
+      "si": 2.4,
+      "key": "format.celsius",
+      "value": {
+        "value": 2.4,
+        "decimals": 1
+      },
+      "text": "2.4 °C"
+    },
+    {
+      "locale": "en-US",
+      "quantity": "probeTemp",
+      "system": "metric",
+      "region": "US",
+      "si": 63.5,
+      "key": "format.celsius",
+      "value": {
+        "value": 63.5,
+        "decimals": 1
+      },
+      "text": "63.5 °C"
+    },
+    {
+      "locale": "en-US",
+      "quantity": "probeTemp",
+      "system": "metric",
+      "region": "US",
+      "si": 1500,
+      "key": "format.celsius",
+      "value": {
+        "value": 1500,
+        "decimals": 1
+      },
+      "text": "1,500.0 °C"
+    },
+    {
+      "locale": "en-US",
+      "quantity": "probeTemp",
+      "system": "metric",
+      "region": "US",
+      "si": 16400,
+      "key": "format.celsius",
+      "value": {
+        "value": 16400,
+        "decimals": 1
+      },
+      "text": "16,400.0 °C"
+    },
+    {
+      "locale": "en-US",
+      "quantity": "probeTemp",
+      "system": "imperial",
+      "region": "US",
+      "si": 0.5,
+      "key": "format.fahrenheit",
+      "value": {
+        "value": 32.9,
+        "decimals": 1
+      },
+      "text": "32.9 °F"
+    },
+    {
+      "locale": "en-US",
+      "quantity": "probeTemp",
+      "system": "imperial",
+      "region": "US",
+      "si": 2.4,
+      "key": "format.fahrenheit",
+      "value": {
+        "value": 36.3,
+        "decimals": 1
+      },
+      "text": "36.3 °F"
+    },
+    {
+      "locale": "en-US",
+      "quantity": "probeTemp",
+      "system": "imperial",
+      "region": "US",
+      "si": 63.5,
+      "key": "format.fahrenheit",
+      "value": {
+        "value": 146.3,
+        "decimals": 1
+      },
+      "text": "146.3 °F"
+    },
+    {
+      "locale": "en-US",
+      "quantity": "probeTemp",
+      "system": "imperial",
+      "region": "US",
+      "si": 1500,
+      "key": "format.fahrenheit",
+      "value": {
+        "value": 2732,
+        "decimals": 1
+      },
+      "text": "2,732.0 °F"
+    },
+    {
+      "locale": "en-US",
+      "quantity": "probeTemp",
+      "system": "imperial",
+      "region": "US",
+      "si": 16400,
+      "key": "format.fahrenheit",
+      "value": {
+        "value": 29552,
+        "decimals": 1
+      },
+      "text": "29,552.0 °F"
+    },
+    {
+      "locale": "en-US",
       "quantity": "boilingPoint",
       "system": "metric",
       "region": "US",
@@ -5424,6 +5554,136 @@
     },
     {
       "locale": "en-GB",
+      "quantity": "probeTemp",
+      "system": "metric",
+      "region": "GB",
+      "si": 0.5,
+      "key": "format.celsius",
+      "value": {
+        "value": 0.5,
+        "decimals": 1
+      },
+      "text": "0.5 °C"
+    },
+    {
+      "locale": "en-GB",
+      "quantity": "probeTemp",
+      "system": "metric",
+      "region": "GB",
+      "si": 2.4,
+      "key": "format.celsius",
+      "value": {
+        "value": 2.4,
+        "decimals": 1
+      },
+      "text": "2.4 °C"
+    },
+    {
+      "locale": "en-GB",
+      "quantity": "probeTemp",
+      "system": "metric",
+      "region": "GB",
+      "si": 63.5,
+      "key": "format.celsius",
+      "value": {
+        "value": 63.5,
+        "decimals": 1
+      },
+      "text": "63.5 °C"
+    },
+    {
+      "locale": "en-GB",
+      "quantity": "probeTemp",
+      "system": "metric",
+      "region": "GB",
+      "si": 1500,
+      "key": "format.celsius",
+      "value": {
+        "value": 1500,
+        "decimals": 1
+      },
+      "text": "1,500.0 °C"
+    },
+    {
+      "locale": "en-GB",
+      "quantity": "probeTemp",
+      "system": "metric",
+      "region": "GB",
+      "si": 16400,
+      "key": "format.celsius",
+      "value": {
+        "value": 16400,
+        "decimals": 1
+      },
+      "text": "16,400.0 °C"
+    },
+    {
+      "locale": "en-GB",
+      "quantity": "probeTemp",
+      "system": "imperial",
+      "region": "GB",
+      "si": 0.5,
+      "key": "format.fahrenheit",
+      "value": {
+        "value": 32.9,
+        "decimals": 1
+      },
+      "text": "32.9 °F"
+    },
+    {
+      "locale": "en-GB",
+      "quantity": "probeTemp",
+      "system": "imperial",
+      "region": "GB",
+      "si": 2.4,
+      "key": "format.fahrenheit",
+      "value": {
+        "value": 36.3,
+        "decimals": 1
+      },
+      "text": "36.3 °F"
+    },
+    {
+      "locale": "en-GB",
+      "quantity": "probeTemp",
+      "system": "imperial",
+      "region": "GB",
+      "si": 63.5,
+      "key": "format.fahrenheit",
+      "value": {
+        "value": 146.3,
+        "decimals": 1
+      },
+      "text": "146.3 °F"
+    },
+    {
+      "locale": "en-GB",
+      "quantity": "probeTemp",
+      "system": "imperial",
+      "region": "GB",
+      "si": 1500,
+      "key": "format.fahrenheit",
+      "value": {
+        "value": 2732,
+        "decimals": 1
+      },
+      "text": "2,732.0 °F"
+    },
+    {
+      "locale": "en-GB",
+      "quantity": "probeTemp",
+      "system": "imperial",
+      "region": "GB",
+      "si": 16400,
+      "key": "format.fahrenheit",
+      "value": {
+        "value": 29552,
+        "decimals": 1
+      },
+      "text": "29,552.0 °F"
+    },
+    {
+      "locale": "en-GB",
       "quantity": "boilingPoint",
       "system": "metric",
       "region": "GB",
@@ -6461,6 +6721,136 @@
         "decimals": 0
       },
       "text": "104 °F"
+    },
+    {
+      "locale": "cs-CZ",
+      "quantity": "probeTemp",
+      "system": "metric",
+      "region": "CZ",
+      "si": 0.5,
+      "key": "format.celsius",
+      "value": {
+        "value": 0.5,
+        "decimals": 1
+      },
+      "text": "0,5 °C"
+    },
+    {
+      "locale": "cs-CZ",
+      "quantity": "probeTemp",
+      "system": "metric",
+      "region": "CZ",
+      "si": 2.4,
+      "key": "format.celsius",
+      "value": {
+        "value": 2.4,
+        "decimals": 1
+      },
+      "text": "2,4 °C"
+    },
+    {
+      "locale": "cs-CZ",
+      "quantity": "probeTemp",
+      "system": "metric",
+      "region": "CZ",
+      "si": 63.5,
+      "key": "format.celsius",
+      "value": {
+        "value": 63.5,
+        "decimals": 1
+      },
+      "text": "63,5 °C"
+    },
+    {
+      "locale": "cs-CZ",
+      "quantity": "probeTemp",
+      "system": "metric",
+      "region": "CZ",
+      "si": 1500,
+      "key": "format.celsius",
+      "value": {
+        "value": 1500,
+        "decimals": 1
+      },
+      "text": "1 500,0 °C"
+    },
+    {
+      "locale": "cs-CZ",
+      "quantity": "probeTemp",
+      "system": "metric",
+      "region": "CZ",
+      "si": 16400,
+      "key": "format.celsius",
+      "value": {
+        "value": 16400,
+        "decimals": 1
+      },
+      "text": "16 400,0 °C"
+    },
+    {
+      "locale": "cs-CZ",
+      "quantity": "probeTemp",
+      "system": "imperial",
+      "region": "CZ",
+      "si": 0.5,
+      "key": "format.fahrenheit",
+      "value": {
+        "value": 32.9,
+        "decimals": 1
+      },
+      "text": "32,9 °F"
+    },
+    {
+      "locale": "cs-CZ",
+      "quantity": "probeTemp",
+      "system": "imperial",
+      "region": "CZ",
+      "si": 2.4,
+      "key": "format.fahrenheit",
+      "value": {
+        "value": 36.3,
+        "decimals": 1
+      },
+      "text": "36,3 °F"
+    },
+    {
+      "locale": "cs-CZ",
+      "quantity": "probeTemp",
+      "system": "imperial",
+      "region": "CZ",
+      "si": 63.5,
+      "key": "format.fahrenheit",
+      "value": {
+        "value": 146.3,
+        "decimals": 1
+      },
+      "text": "146,3 °F"
+    },
+    {
+      "locale": "cs-CZ",
+      "quantity": "probeTemp",
+      "system": "imperial",
+      "region": "CZ",
+      "si": 1500,
+      "key": "format.fahrenheit",
+      "value": {
+        "value": 2732,
+        "decimals": 1
+      },
+      "text": "2 732,0 °F"
+    },
+    {
+      "locale": "cs-CZ",
+      "quantity": "probeTemp",
+      "system": "imperial",
+      "region": "CZ",
+      "si": 16400,
+      "key": "format.fahrenheit",
+      "value": {
+        "value": 29552,
+        "decimals": 1
+      },
+      "text": "29 552,0 °F"
     },
     {
       "locale": "cs-CZ",
@@ -7671,13 +8061,6 @@
           "seconds": "1 [s:one]"
         },
         "text": "1 [min:one] + 1 [s:one]"
-      },
-      {
-        "key": "readout.sub.cooling",
-        "args": {
-          "minutes": 3
-        },
-        "text": "3 minutes, or the yolk keeps cooking"
       }
     ]
   }

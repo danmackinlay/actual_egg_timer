@@ -99,6 +99,13 @@ final class Cook {
         var oddsLine: String? {
             oddsTenths.map { tr("odds.hitTheMark", ["hits": .int($0), "of": .int(10)]) }
         }
+        /// How long the counted cooling runs from the pull, s: to the moment the
+        /// yolk's centre peaks, for this cook (`coolingSecondsFor`, E4). Nil in
+        /// a cook saved before E4, whose cooling was the flat three minutes.
+        var coolS: Double?
+        /// Whether this cook has a moment to probe at: a counted cooling that
+        /// ends at the peak (`probeMomentFor`, E4). Nil before E4.
+        var probeMoment: Bool?
 
         /// The Lock Screen's description of this cook, in its own units.
         var activity: CookActivity {
@@ -116,6 +123,15 @@ final class Cook {
         func withTimeToBoil(_ seconds: Double) -> Ticket {
             var next = self
             next.setup.timeToBoilS = seconds
+            return next
+        }
+
+        /// The same cook, re-solved: the cooling counts to the peak the new
+        /// solve puts after the pull.
+        func withResolved(_ result: CookResult) -> Ticket {
+            var next = self
+            next.coolS = coolingSecondsFor(result)
+            next.probeMoment = probeMomentFor(result, cooling: cooling)
             return next
         }
     }
@@ -154,14 +170,20 @@ final class Cook {
     /// thought they were answering once.
     private(set) var feedbackGiven = false
 
-    /// Re-solve for a time to boil, answering with the total cook time. The
-    /// machine cannot solve for itself and should not try: this is set by the
-    /// view, which owns the inputs. Returning nil leaves the deadline alone.
+    /// Re-solve for a time to boil, answering with the cook it now is - its
+    /// total time, and the peak the cooling counts to. The machine cannot solve
+    /// for itself and should not try: this is set by the view, which owns the
+    /// inputs. Returning nil leaves the deadline alone.
     ///
     /// Takes the level the cook is being RUN at, so a corrected ramp re-times
     /// the egg in the pan instead of whatever the slider now says, and the lean
     /// E5's choice made at "Eggs in", which the re-solve carries.
-    var resolveCookTime: ((Double, Double, Double) async -> Double?)?
+    var resolveCookTime: ((Double, Double, Double) async -> CookResult?)?
+
+    /// Whether the cook has said they have a probe thermometer (E4), read when
+    /// the alarms are scheduled: the cooling's alarm then asks for the reading.
+    /// Set by the view, which owns the setting.
+    var probeWanted: (() -> Bool)?
 
     private var ticker: Task<Void, Never>?
     private var lastRevise: Date?
@@ -193,6 +215,13 @@ final class Cook {
     private static let reviseEverySSeconds: TimeInterval = 10
 
     var phase: Phase { phase(at: .now) }
+
+    /// How long the cooling counts once the eggs are out, s: to the yolk's
+    /// peak for this cook (E4), or the flat fallback for a cook from before.
+    var coolFor: TimeInterval { ticket?.coolS ?? Self.coolingSeconds }
+
+    /// Whether this cook will ask for a probe reading when its cooling ends.
+    var asksForProbe: Bool { ticket?.probeMoment == true && probeWanted?() == true }
 
     /// The phase at a given instant.
     ///
@@ -253,7 +282,7 @@ final class Cook {
     /// The pull is MEASURED when the cook tapped out of PULL (`pulledOut`) -
     /// `pulledBy: .cook`, at the tap, as the web app records it - and ASSUMED
     /// when the grace simply ran out: `.timeout`, at the scheduled time.
-    func eggRecord(yolk: Feedback?, white: WhiteReport? = nil) -> EggRecord? {
+    func eggRecord(yolk: Feedback?, white: WhiteReport? = nil, probe: ProbeReading? = nil) -> EggRecord? {
         guard let startedAt, pullAt != nil, let ticket else { return nil }
         let scheduled = cookSeconds
         let measured = outAt.map { $0.timeIntervalSince(startedAt) }.flatMap { $0 > 0 ? $0 : nil }
@@ -284,13 +313,23 @@ final class Cook {
             recommendedS: scheduled,
             pulledS: measured ?? scheduled,
             pulledBy: measured == nil ? .timeout : .cook,
-            cooledS: ticket.cooling == .counter ? 0 : Self.coolingSeconds,
+            cooledS: ticket.cooling == .counter ? 0 : coolFor,
             yolk: yolk,
             white: white,
             whiteOffered: true,
+            probe: probe,
             lang: ticket.lang ?? "en",
             units: ticket.units ?? .metric
         )
+    }
+
+    /// A probe reading typed at DONE, as the record carries it: in C, and when
+    /// it was asked for - the end of the counted cooling - from the moment the
+    /// record scores as the pull. Nil when there is no cook.
+    func probeReading(centreC: Double) -> ProbeReading? {
+        guard let startedAt, let record = eggRecord(yolk: nil) else { return nil }
+        let asked = coolDoneAt.map { $0.timeIntervalSince(startedAt) - recordCookTimeS(record) }
+        return ProbeReading(centreC: recordProbeC(centreC), afterS: asked.flatMap { $0 >= 0 ? $0 : nil })
     }
 
     /// Where the solve's time to boil came from. A cold start cannot finish
@@ -359,15 +398,16 @@ final class Cook {
         guard phase == .heating, let startedAt, let ticket else { return nil }
         let gen = generation
         let measured = Date.now.timeIntervalSince(startedAt)
-        guard let total = await resolveCookTime?(measured, ticket.level, ticket.leanS ?? 0) else { return nil }
+        guard let result = await resolveCookTime?(measured, ticket.level, ticket.leanS ?? 0) else { return nil }
         // Cancelled while the solve was running: there is no cook to correct.
         guard gen == generation else { return nil }
         assumedBoilS = measured
         provisional = false
         // The pan that actually cooked this egg. The calibration is told about
-        // the measured ramp, not the blend that was guessed at "Eggs in".
-        self.ticket = ticket.withTimeToBoil(measured)
-        setDeadlines(from: startedAt, cookSeconds: total, cooling: ticket.cooling)
+        // the measured ramp, not the blend that was guessed at "Eggs in"; and
+        // the cooling counts to the peak this solve puts after the pull.
+        self.ticket = ticket.withTimeToBoil(measured).withResolved(result)
+        setDeadlines(from: startedAt, cookSeconds: result.cookTimeS, cooling: ticket.cooling)
         if alarmAuthorized == true { scheduleAlarms() }
         pendingAlarms = await Alarm.shared.pendingCount()
         guard gen == generation else { return nil }
@@ -383,7 +423,7 @@ final class Cook {
         let now = Date.now
         guard phase(at: now) == .pull, let ticket else { return }
         outAt = now
-        coolDoneAt = ticket.cooling == .counter ? nil : now.addingTimeInterval(Self.coolingSeconds)
+        coolDoneAt = ticket.cooling == .counter ? nil : now.addingTimeInterval(coolFor)
         persist()
         // The pull alarm has been and gone; this puts the cooled one at the
         // cooling's new end.
@@ -432,7 +472,7 @@ final class Cook {
         // out, and the carryover is the point rather than something to wait out.
         coolDoneAt = cooling == .counter
             ? nil
-            : pull.addingTimeInterval(Self.pullGraceSeconds + Self.coolingSeconds)
+            : pull.addingTimeInterval(Self.pullGraceSeconds + coolFor)
         persist()
     }
 
@@ -529,7 +569,14 @@ final class Cook {
 
     private func scheduleAlarms() {
         guard let pullAt else { return }
-        Alarm.shared.schedule(pullAt: pullAt, coolDoneAt: coolDoneAt)
+        Alarm.shared.schedule(pullAt: pullAt, coolDoneAt: coolDoneAt, probe: asksForProbe)
+    }
+
+    /// The cook has just said they have a probe (E4): the cooling's alarm, if
+    /// it is still to come, now asks for the reading.
+    func probeSettingChanged() {
+        guard alarmAuthorized == true, phase != .done else { return }
+        scheduleAlarms()
     }
 
     // MARK: - The ticker
@@ -556,11 +603,11 @@ final class Cook {
 
         let gen = generation
         let assumed = now.timeIntervalSince(startedAt) + Self.reviseExtraS
-        guard let total = await resolveCookTime?(assumed, ticket.level, ticket.leanS ?? 0) else { return }
+        guard let result = await resolveCookTime?(assumed, ticket.level, ticket.leanS ?? 0) else { return }
         guard gen == generation else { return }
         assumedBoilS = assumed
-        self.ticket = ticket.withTimeToBoil(assumed)
-        setDeadlines(from: startedAt, cookSeconds: total, cooling: ticket.cooling)
+        self.ticket = ticket.withTimeToBoil(assumed).withResolved(result)
+        setDeadlines(from: startedAt, cookSeconds: result.cookTimeS, cooling: ticket.cooling)
         if alarmAuthorized == true { scheduleAlarms() }
         pushActivity(force: true)
     }

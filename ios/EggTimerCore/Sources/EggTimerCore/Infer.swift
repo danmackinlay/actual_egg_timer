@@ -213,13 +213,48 @@ func whiteProbit(_ grid: DoseGrid, _ p: Particle, _ cookTimeS: Double) -> [Doubl
     return [runny, tender > 0.0 ? tender : 0.0, firm]
 }
 
+// MARK: - The thermometer (E4)
+
+/// A reading at the centre's peak is the peak plus the thermometer's error
+/// (Gaussian) minus a handling error (exponential) that reads COLD, because at
+/// the peak the centre is the warmest point in space and time. See
+/// src/core/infer.ts for the argument and the numbers.
+public let probeInstrumentSdC = 1.0
+public let probeHandlingMeanC = 0.4
+public let probeUnrelated = 0.02
+public let probeUnrelatedSpanC = 60.0
+
+/// The density of `predicted - reading`: an exponentially modified Gaussian,
+/// with the erfc inside the exponent so a reading far over the peak is a small
+/// number rather than infinity times zero.
+public func probeShortfallDensity(_ shortfallC: Double) -> Double {
+    let sigma = probeInstrumentSdC
+    let rate = 1.0 / probeHandlingMeanC
+    let tail = Sphere.complementaryError(
+        (rate * sigma * sigma - shortfallC) / (2.0.squareRoot() * sigma)
+    )
+    if !(tail > 0.0) { return 0.0 }
+    return 0.5 * rate
+        * exp(0.5 * rate * rate * sigma * sigma - rate * shortfallC + log(tail))
+}
+
+/// The likelihood of a probe reading under one particle, against its own peak.
+public func probeLikelihood(
+    _ grid: DoseGrid, _ p: Particle, _ cookTimeS: Double, _ readingC: Double
+) -> Double {
+    let predicted = lookupPeakYolkC(grid, p.alphaM2s, cookTimeS)
+    return (1.0 - probeUnrelated) * probeShortfallDensity(predicted - readingC)
+        + probeUnrelated / probeUnrelatedSpanC
+}
+
 /// The likelihood of one egg's answers under one particle: the product of the
-/// yolk's and the white's, either of which may be missing.
+/// yolk's, the white's and the thermometer's, any of which may be missing.
 public func answerLikelihood(
     _ grid: DoseGrid, _ p: Particle, _ cookTimeS: Double, _ logNominalTarget: Double,
-    yolk: Feedback?, white: WhiteReport?
+    yolk: Feedback?, white: WhiteReport?, probeC: Double? = nil
 ) -> Double {
     var l = 1.0
+    if let probeC { l *= probeLikelihood(grid, p, cookTimeS, probeC) }
     if let yolk {
         let probs = yolkProbit(grid, p, cookTimeS, logNominalTarget)
         l *= (1.0 - unrelated) * probs[yolk.rawValue + 1] + unrelated / 3.0
@@ -246,19 +281,21 @@ public func effectiveSampleSize(_ post: Posterior) -> Double {
     return s <= 0.0 ? 0.0 : 1.0 / s
 }
 
-/// Fold in one egg, both of its answers, either of which may be nil. ONE fold
-/// per egg: the posterior depends on what was said, not on the order it was
-/// tapped in. See src/core/infer.ts.
+/// Fold in one egg, both of its answers and a probe reading, any of which may
+/// be nil. ONE fold per egg: the posterior depends on what was said, not on the
+/// order it was tapped in. See src/core/infer.ts.
 public func updatePosterior(
     _ post: inout Posterior, grid: DoseGrid,
-    cookTimeS: Double, logNominalTarget: Double, yolk: Feedback?, white: WhiteReport?
+    cookTimeS: Double, logNominalTarget: Double, yolk: Feedback?, white: WhiteReport?,
+    probeC: Double? = nil
 ) {
-    if yolk == nil && white == nil { return }
+    if yolk == nil && white == nil && probeC == nil { return }
     let n = post.particles.count
     var total = 0.0
     for i in 0..<n {
         post.weights[i] *= answerLikelihood(
-            grid, post.particles[i], cookTimeS, logNominalTarget, yolk: yolk, white: white
+            grid, post.particles[i], cookTimeS, logNominalTarget, yolk: yolk, white: white,
+            probeC: probeC
         )
         total += post.weights[i]
     }

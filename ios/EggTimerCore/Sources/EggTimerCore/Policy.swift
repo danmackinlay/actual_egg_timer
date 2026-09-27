@@ -399,7 +399,66 @@ public enum Phase: String, Sendable {
 
 /// Counted-down cooling. Carryover is what ruins a soft egg, so this is a stage
 /// of the cook, not a suggestion appended to the end of it.
+///
+/// Since E4 this is the FALLBACK: the countdown runs to the moment the yolk's
+/// centre peaks (`coolingSecondsFor`). See src/core/policy.ts.
 public let coolingSeconds = 180.0
+
+/// The shortest counted cooling, s: a floor under a rounding.
+public let coolingMinSeconds = 60.0
+
+/// How long to count the cooling down, s from the pull: to the moment the
+/// yolk's centre peaks, for this cook as the solver ran it (E4, old item 4).
+public func coolingSecondsFor(_ result: CookResult) -> Double {
+    let toPeak = result.peakYolkTimeS - result.cookTimeS
+    if !(toPeak > 0.0) { return coolingSeconds }
+    let whole = toPeak.rounded()
+    return whole < coolingMinSeconds ? coolingMinSeconds : whole
+}
+
+/// Whether this cook has a moment to take a probe reading at (E4): a counted
+/// cooling that ends when the yolk's centre peaks. Not on the counter, and not
+/// when the centre peaked before the egg came out.
+public func probeMomentFor(_ result: CookResult, cooling: Cooling) -> Bool {
+    if cooling == .counter { return false }
+    return result.peakYolkTimeS - result.cookTimeS >= coolingMinSeconds
+}
+
+/// How many prior sds of the time-scale either side of the posterior mean a
+/// kitchen may be and still have its reading taken.
+public let probeAlphaSds = 3.0
+
+/// How far past those kitchens' peaks a reading may land and still be taken, C.
+public let probeMarginC = 3.0
+
+/// The centre readings the app will take for this cook, C, as (low, high): a
+/// reading outside is refused at entry rather than folded. See
+/// src/core/policy.ts.
+public func plausibleProbeRangeC(
+    egg: Egg, setup: CookSetup, params: ModelParams, cookTimeS: Double
+) -> (low: Double, high: Double) {
+    let spread = exp(probeAlphaSds * Constants.alphaRelSD)
+    let slow = simulate(
+        egg: egg, setup: setup,
+        params: ModelParams(alphaM2s: params.alphaM2s / spread, tauAirScale: params.tauAirScale),
+        cookTimeS: cookTimeS
+    )
+    let fast = simulate(
+        egg: egg, setup: setup,
+        params: ModelParams(alphaM2s: params.alphaM2s * spread, tauAirScale: params.tauAirScale),
+        cookTimeS: cookTimeS
+    )
+    let bath: Double
+    switch setup.cooling {
+    case .ice: bath = Constants.tIceBathC
+    case .tap: bath = Constants.tColdTapC
+    case .counter: bath = setup.ambientC
+    }
+    let floor = min(setup.eggStartC, setup.ambientC, bath)
+    let lo = min(slow.peakYolkC, fast.peakYolkC) - probeMarginC
+    let hi = max(slow.peakYolkC, fast.peakYolkC) + probeMarginC
+    return (lo < floor ? floor : lo, hi > setup.boilingC ? setup.boilingC : hi)
+}
 
 /// If nobody confirms the transfer, assume it happened. A stalled timer at the
 /// hob is worse than a slightly optimistic one.

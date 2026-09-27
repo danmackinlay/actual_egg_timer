@@ -183,6 +183,13 @@ struct RecordConformance {
             let yolk = c.optionalNum("yolk")
             #expect(record.yolk.map { Double($0.rawValue) } == yolk, "\(why): yolk")
             #expect(record.white?.rawValue == c["white"] as? String, "\(why): white")
+            // The probe reading (E4): the same number, and the same "when".
+            let probe = c["probe"] as? [String: Any]
+            #expect((record.probe == nil) == (probe == nil), "\(why): probe")
+            if let probe, let read = record.probe {
+                #expect(read.centreC == probe.num("centre_C"), "\(why): probe reading")
+                #expect(read.afterS == probe.optionalNum("after_s"), "\(why): probe asked at")
+            }
         }
     }
 
@@ -191,6 +198,14 @@ struct RecordConformance {
         guard let cases = file()["massRounding"] as? [[String: Any]] else { fatalError("no mass cases") }
         for c in cases {
             #expect(recordMassG(massKg: c.num("mass_kg")) == c.num("mass_g"), "mass \(c.num("mass_kg"))")
+        }
+    }
+
+    @Test("probe readings round to a hundredth of a degree")
+    func probeRounding() {
+        guard let cases = file()["probeRounding"] as? [[String: Any]] else { fatalError("no probe cases") }
+        for c in cases {
+            #expect(recordProbeC(c.num("centre_C")) == c.num("record_C"), "reading \(c.num("centre_C"))")
         }
     }
 
@@ -203,7 +218,10 @@ struct RecordConformance {
             #expect(back == record)
             let object = try JSONSerialization.jsonObject(with: data) as? [String: Any]
             #expect(object?["white"] is NSNull || object?["white"] is String, "white written")
-            #expect(object?["probe"] is NSNull, "probe written as null")
+            #expect(
+                record.probe == nil ? object?["probe"] is NSNull : object?["probe"] is [String: Any],
+                "probe written, as null when there is none"
+            )
             #expect(object?["yolk"] != nil, "yolk written")
         }
     }
@@ -211,7 +229,7 @@ struct RecordConformance {
 
 @Suite("Replay")
 struct ReplayConformance {
-    @Test("an eight-egg log, egg by egg, every particle")
+    @Test("a ten-egg log, egg by egg, every particle")
     func stepByStep() {
         guard let steps = replayJSON()["steps"] as? [[String: Any]] else { fatalError("no steps") }
         let log = fixtureLog()

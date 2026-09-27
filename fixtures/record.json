@@ -47,7 +47,8 @@
       },
       "valid": true,
       "yolk": -1,
-      "white": "runny"
+      "white": "runny",
+      "probe": null
     },
     {
       "why": "an older app version, same schema",
@@ -92,7 +93,8 @@
       },
       "valid": true,
       "yolk": -1,
-      "white": "runny"
+      "white": "runny",
+      "probe": null
     },
     {
       "why": "from iOS, read in imperial",
@@ -137,7 +139,8 @@
       },
       "valid": true,
       "yolk": -1,
-      "white": "runny"
+      "white": "runny",
+      "probe": null
     },
     {
       "why": "fields from a later v1 are ignored",
@@ -184,7 +187,8 @@
       },
       "valid": true,
       "yolk": -1,
-      "white": "runny"
+      "white": "runny",
+      "probe": null
     },
     {
       "why": "nullable fields may be absent",
@@ -225,7 +229,8 @@
       },
       "valid": true,
       "yolk": null,
-      "white": null
+      "white": null,
+      "probe": null
     },
     {
       "why": "a uid, once E6 mints one",
@@ -270,7 +275,8 @@
       },
       "valid": true,
       "yolk": -1,
-      "white": "runny"
+      "white": "runny",
+      "probe": null
     },
     {
       "why": "an unanswered egg",
@@ -315,7 +321,8 @@
       },
       "valid": true,
       "yolk": null,
-      "white": null
+      "white": null,
+      "probe": null
     },
     {
       "why": "the white offered and skipped",
@@ -360,7 +367,8 @@
       },
       "valid": true,
       "yolk": -1,
-      "white": null
+      "white": null,
+      "probe": null
     },
     {
       "why": "a tender white (E2)",
@@ -405,7 +413,8 @@
       },
       "valid": true,
       "yolk": -1,
-      "white": "tender"
+      "white": "tender",
+      "probe": null
     },
     {
       "why": "a firm white (E2)",
@@ -450,7 +459,8 @@
       },
       "valid": true,
       "yolk": -1,
-      "white": "firm"
+      "white": "firm",
+      "probe": null
     },
     {
       "why": "the two-level white E1 logged",
@@ -495,7 +505,8 @@
       },
       "valid": true,
       "yolk": -1,
-      "white": "set"
+      "white": "set",
+      "probe": null
     },
     {
       "why": "not asked about the white (E1)",
@@ -540,7 +551,8 @@
       },
       "valid": true,
       "yolk": -1,
-      "white": null
+      "white": null,
+      "probe": null
     },
     {
       "why": "a weighed egg names no carton",
@@ -585,7 +597,8 @@
       },
       "valid": true,
       "yolk": -1,
-      "white": "runny"
+      "white": "runny",
+      "probe": null
     },
     {
       "why": "an American Large",
@@ -630,7 +643,8 @@
       },
       "valid": true,
       "yolk": -1,
-      "white": "runny"
+      "white": "runny",
+      "probe": null
     },
     {
       "why": "a nudge that leaves a cook",
@@ -675,7 +689,8 @@
       },
       "valid": true,
       "yolk": -1,
-      "white": "runny"
+      "white": "runny",
+      "probe": null
     },
     {
       "why": "another schema version",
@@ -720,7 +735,8 @@
       },
       "valid": false,
       "yolk": null,
-      "white": null
+      "white": null,
+      "probe": null
     },
     {
       "why": "no schema version",
@@ -764,7 +780,8 @@
       },
       "valid": false,
       "yolk": null,
-      "white": null
+      "white": null,
+      "probe": null
     },
     {
       "why": "an empty uid",
@@ -809,7 +826,8 @@
       },
       "valid": false,
       "yolk": null,
-      "white": null
+      "white": null,
+      "probe": null
     },
     {
       "why": "a day that is not YYYY-MM-DD",
@@ -854,7 +872,8 @@
       },
       "valid": false,
       "yolk": null,
-      "white": null
+      "white": null,
+      "probe": null
     },
     {
       "why": "a timestamp, not a day",
@@ -899,7 +918,8 @@
       },
       "valid": false,
       "yolk": null,
-      "white": null
+      "white": null,
+      "probe": null
     },
     {
       "why": "a pan nobody timed",
@@ -944,7 +964,8 @@
       },
       "valid": true,
       "yolk": -1,
-      "white": "runny"
+      "white": "runny",
+      "probe": null
     },
     {
       "why": "an unknown boil source",
@@ -989,7 +1010,8 @@
       },
       "valid": false,
       "yolk": null,
-      "white": null
+      "white": null,
+      "probe": null
     },
     {
       "why": "no boil source",
@@ -1033,7 +1055,8 @@
       },
       "valid": false,
       "yolk": null,
-      "white": null
+      "white": null,
+      "probe": null
     },
     {
       "why": "an unknown app",
@@ -1078,7 +1101,8 @@
       },
       "valid": false,
       "yolk": null,
-      "white": null
+      "white": null,
+      "probe": null
     },
     {
       "why": "an empty app version",
@@ -1123,7 +1147,8 @@
       },
       "valid": false,
       "yolk": null,
-      "white": null
+      "white": null,
+      "probe": null
     },
     {
       "why": "no prior",
@@ -1167,7 +1192,8 @@
       },
       "valid": false,
       "yolk": null,
-      "white": null
+      "white": null,
+      "probe": null
     },
     {
       "why": "a massless egg",
@@ -1212,7 +1238,8 @@
       },
       "valid": false,
       "yolk": null,
-      "white": null
+      "white": null,
+      "probe": null
     },
     {
       "why": "a mass as a string",
@@ -1257,7 +1284,8 @@
       },
       "valid": false,
       "yolk": null,
-      "white": null
+      "white": null,
+      "probe": null
     },
     {
       "why": "a mass as null",
@@ -1302,7 +1330,8 @@
       },
       "valid": false,
       "yolk": null,
-      "white": null
+      "white": null,
+      "probe": null
     },
     {
       "why": "an unknown mass source",
@@ -1347,7 +1376,8 @@
       },
       "valid": false,
       "yolk": null,
-      "white": null
+      "white": null,
+      "probe": null
     },
     {
       "why": "a class with no carton",
@@ -1391,7 +1421,8 @@
       },
       "valid": false,
       "yolk": null,
-      "white": null
+      "white": null,
+      "probe": null
     },
     {
       "why": "a carton nobody has",
@@ -1436,7 +1467,8 @@
       },
       "valid": false,
       "yolk": null,
-      "white": null
+      "white": null,
+      "probe": null
     },
     {
       "why": "a carton on a weighed egg",
@@ -1481,7 +1513,8 @@
       },
       "valid": false,
       "yolk": null,
-      "white": null
+      "white": null,
+      "probe": null
     },
     {
       "why": "no setup",
@@ -1513,7 +1546,8 @@
       },
       "valid": false,
       "yolk": null,
-      "white": null
+      "white": null,
+      "probe": null
     },
     {
       "why": "an unknown start",
@@ -1558,7 +1592,8 @@
       },
       "valid": false,
       "yolk": null,
-      "white": null
+      "white": null,
+      "probe": null
     },
     {
       "why": "an unknown egg source",
@@ -1603,7 +1638,8 @@
       },
       "valid": false,
       "yolk": null,
-      "white": null
+      "white": null,
+      "probe": null
     },
     {
       "why": "no ambient",
@@ -1647,7 +1683,8 @@
       },
       "valid": false,
       "yolk": null,
-      "white": null
+      "white": null,
+      "probe": null
     },
     {
       "why": "a boiling point of zero",
@@ -1692,7 +1729,8 @@
       },
       "valid": false,
       "yolk": null,
-      "white": null
+      "white": null,
+      "probe": null
     },
     {
       "why": "a negative time to boil",
@@ -1737,7 +1775,8 @@
       },
       "valid": false,
       "yolk": null,
-      "white": null
+      "white": null,
+      "probe": null
     },
     {
       "why": "no water",
@@ -1782,7 +1821,8 @@
       },
       "valid": false,
       "yolk": null,
-      "white": null
+      "white": null,
+      "probe": null
     },
     {
       "why": "no eggs in the pan",
@@ -1827,7 +1867,8 @@
       },
       "valid": false,
       "yolk": null,
-      "white": null
+      "white": null,
+      "probe": null
     },
     {
       "why": "an unknown cooling",
@@ -1872,7 +1913,8 @@
       },
       "valid": false,
       "yolk": null,
-      "white": null
+      "white": null,
+      "probe": null
     },
     {
       "why": "an unknown burner",
@@ -1917,7 +1959,8 @@
       },
       "valid": false,
       "yolk": null,
-      "white": null
+      "white": null,
+      "probe": null
     },
     {
       "why": "a level past hard",
@@ -1962,7 +2005,8 @@
       },
       "valid": false,
       "yolk": null,
-      "white": null
+      "white": null,
+      "probe": null
     },
     {
       "why": "a level as a boolean",
@@ -2007,7 +2051,8 @@
       },
       "valid": false,
       "yolk": null,
-      "white": null
+      "white": null,
+      "probe": null
     },
     {
       "why": "no recommendation",
@@ -2052,7 +2097,8 @@
       },
       "valid": false,
       "yolk": null,
-      "white": null
+      "white": null,
+      "probe": null
     },
     {
       "why": "a nudge that cancels the cook",
@@ -2097,7 +2143,8 @@
       },
       "valid": false,
       "yolk": null,
-      "white": null
+      "white": null,
+      "probe": null
     },
     {
       "why": "a pull at zero",
@@ -2142,7 +2189,8 @@
       },
       "valid": false,
       "yolk": null,
-      "white": null
+      "white": null,
+      "probe": null
     },
     {
       "why": "an unknown puller",
@@ -2187,7 +2235,8 @@
       },
       "valid": false,
       "yolk": null,
-      "white": null
+      "white": null,
+      "probe": null
     },
     {
       "why": "negative cooling",
@@ -2232,7 +2281,8 @@
       },
       "valid": false,
       "yolk": null,
-      "white": null
+      "white": null,
+      "probe": null
     },
     {
       "why": "a yolk answer out of range",
@@ -2277,7 +2327,8 @@
       },
       "valid": false,
       "yolk": null,
-      "white": null
+      "white": null,
+      "probe": null
     },
     {
       "why": "a yolk answer as a word",
@@ -2322,7 +2373,8 @@
       },
       "valid": false,
       "yolk": null,
-      "white": null
+      "white": null,
+      "probe": null
     },
     {
       "why": "a white answer nobody offers",
@@ -2367,7 +2419,8 @@
       },
       "valid": false,
       "yolk": null,
-      "white": null
+      "white": null,
+      "probe": null
     },
     {
       "why": "an answer to a question never asked",
@@ -2412,7 +2465,8 @@
       },
       "valid": false,
       "yolk": null,
-      "white": null
+      "white": null,
+      "probe": null
     },
     {
       "why": "offered as a number",
@@ -2457,7 +2511,8 @@
       },
       "valid": false,
       "yolk": null,
-      "white": null
+      "white": null,
+      "probe": null
     },
     {
       "why": "offered missing",
@@ -2501,10 +2556,364 @@
       },
       "valid": false,
       "yolk": null,
-      "white": null
+      "white": null,
+      "probe": null
     },
     {
-      "why": "a probe reading before E4",
+      "why": "a probe reading (E4)",
+      "record": {
+        "v": 1,
+        "uid": null,
+        "day": "2026-09-26",
+        "app": "web",
+        "appVersion": "0.2.0",
+        "prior": "2026-09-e5",
+        "egg": {
+          "mass_g": 62,
+          "massFrom": "class",
+          "sizeTable": "eu"
+        },
+        "setup": {
+          "startMode": "hot",
+          "eggStart_C": 4,
+          "eggFrom": "fridge",
+          "ambient_C": 20,
+          "boiling_C": 100,
+          "timeToBoil_s": 0,
+          "timeToBoilFrom": "remembered",
+          "cooling": "ice",
+          "afterBoil": "hold",
+          "waterLitres": 2,
+          "eggCount": 4
+        },
+        "level": 0.3,
+        "recommended_s": 415.05859375,
+        "nudge_s": 0,
+        "pulled_s": 422.30859375,
+        "pulledBy": "cook",
+        "cooled_s": 180,
+        "yolk": -1,
+        "white": "runny",
+        "whiteOffered": true,
+        "probe": {
+          "centre_C": 61.3,
+          "after_s": 187
+        },
+        "lang": "en",
+        "register": "modern",
+        "units": "metric"
+      },
+      "valid": true,
+      "yolk": -1,
+      "white": "runny",
+      "probe": {
+        "centre_C": 61.3,
+        "after_s": 187
+      }
+    },
+    {
+      "why": "a probe reading, when unknown",
+      "record": {
+        "v": 1,
+        "uid": null,
+        "day": "2026-09-26",
+        "app": "web",
+        "appVersion": "0.2.0",
+        "prior": "2026-09-e5",
+        "egg": {
+          "mass_g": 62,
+          "massFrom": "class",
+          "sizeTable": "eu"
+        },
+        "setup": {
+          "startMode": "hot",
+          "eggStart_C": 4,
+          "eggFrom": "fridge",
+          "ambient_C": 20,
+          "boiling_C": 100,
+          "timeToBoil_s": 0,
+          "timeToBoilFrom": "remembered",
+          "cooling": "ice",
+          "afterBoil": "hold",
+          "waterLitres": 2,
+          "eggCount": 4
+        },
+        "level": 0.3,
+        "recommended_s": 415.05859375,
+        "nudge_s": 0,
+        "pulled_s": 422.30859375,
+        "pulledBy": "cook",
+        "cooled_s": 180,
+        "yolk": -1,
+        "white": "runny",
+        "whiteOffered": true,
+        "probe": {
+          "centre_C": 61.3,
+          "after_s": null
+        },
+        "lang": "en",
+        "register": "modern",
+        "units": "metric"
+      },
+      "valid": true,
+      "yolk": -1,
+      "white": "runny",
+      "probe": {
+        "centre_C": 61.3,
+        "after_s": null
+      }
+    },
+    {
+      "why": "a probe reading, when absent",
+      "record": {
+        "v": 1,
+        "uid": null,
+        "day": "2026-09-26",
+        "app": "web",
+        "appVersion": "0.2.0",
+        "prior": "2026-09-e5",
+        "egg": {
+          "mass_g": 62,
+          "massFrom": "class",
+          "sizeTable": "eu"
+        },
+        "setup": {
+          "startMode": "hot",
+          "eggStart_C": 4,
+          "eggFrom": "fridge",
+          "ambient_C": 20,
+          "boiling_C": 100,
+          "timeToBoil_s": 0,
+          "timeToBoilFrom": "remembered",
+          "cooling": "ice",
+          "afterBoil": "hold",
+          "waterLitres": 2,
+          "eggCount": 4
+        },
+        "level": 0.3,
+        "recommended_s": 415.05859375,
+        "nudge_s": 0,
+        "pulled_s": 422.30859375,
+        "pulledBy": "cook",
+        "cooled_s": 180,
+        "yolk": -1,
+        "white": "runny",
+        "whiteOffered": true,
+        "probe": {
+          "centre_C": 61.3
+        },
+        "lang": "en",
+        "register": "modern",
+        "units": "metric"
+      },
+      "valid": true,
+      "yolk": -1,
+      "white": "runny",
+      "probe": {
+        "centre_C": 61.3,
+        "after_s": null
+      }
+    },
+    {
+      "why": "a probe reading as cold as the ice",
+      "record": {
+        "v": 1,
+        "uid": null,
+        "day": "2026-09-26",
+        "app": "web",
+        "appVersion": "0.2.0",
+        "prior": "2026-09-e5",
+        "egg": {
+          "mass_g": 62,
+          "massFrom": "class",
+          "sizeTable": "eu"
+        },
+        "setup": {
+          "startMode": "hot",
+          "eggStart_C": 4,
+          "eggFrom": "fridge",
+          "ambient_C": 20,
+          "boiling_C": 100,
+          "timeToBoil_s": 0,
+          "timeToBoilFrom": "remembered",
+          "cooling": "ice",
+          "afterBoil": "hold",
+          "waterLitres": 2,
+          "eggCount": 4
+        },
+        "level": 0.3,
+        "recommended_s": 415.05859375,
+        "nudge_s": 0,
+        "pulled_s": 422.30859375,
+        "pulledBy": "cook",
+        "cooled_s": 180,
+        "yolk": -1,
+        "white": "runny",
+        "whiteOffered": true,
+        "probe": {
+          "centre_C": 2
+        },
+        "lang": "en",
+        "register": "modern",
+        "units": "metric"
+      },
+      "valid": true,
+      "yolk": -1,
+      "white": "runny",
+      "probe": {
+        "centre_C": 2,
+        "after_s": null
+      }
+    },
+    {
+      "why": "a probe reading at the boil",
+      "record": {
+        "v": 1,
+        "uid": null,
+        "day": "2026-09-26",
+        "app": "web",
+        "appVersion": "0.2.0",
+        "prior": "2026-09-e5",
+        "egg": {
+          "mass_g": 62,
+          "massFrom": "class",
+          "sizeTable": "eu"
+        },
+        "setup": {
+          "startMode": "hot",
+          "eggStart_C": 4,
+          "eggFrom": "fridge",
+          "ambient_C": 20,
+          "boiling_C": 100,
+          "timeToBoil_s": 0,
+          "timeToBoilFrom": "remembered",
+          "cooling": "ice",
+          "afterBoil": "hold",
+          "waterLitres": 2,
+          "eggCount": 4
+        },
+        "level": 0.3,
+        "recommended_s": 415.05859375,
+        "nudge_s": 0,
+        "pulled_s": 422.30859375,
+        "pulledBy": "cook",
+        "cooled_s": 180,
+        "yolk": -1,
+        "white": "runny",
+        "whiteOffered": true,
+        "probe": {
+          "centre_C": 100
+        },
+        "lang": "en",
+        "register": "modern",
+        "units": "metric"
+      },
+      "valid": true,
+      "yolk": -1,
+      "white": "runny",
+      "probe": {
+        "centre_C": 100,
+        "after_s": null
+      }
+    },
+    {
+      "why": "a probe reading colder than the ice",
+      "record": {
+        "v": 1,
+        "uid": null,
+        "day": "2026-09-26",
+        "app": "web",
+        "appVersion": "0.2.0",
+        "prior": "2026-09-e5",
+        "egg": {
+          "mass_g": 62,
+          "massFrom": "class",
+          "sizeTable": "eu"
+        },
+        "setup": {
+          "startMode": "hot",
+          "eggStart_C": 4,
+          "eggFrom": "fridge",
+          "ambient_C": 20,
+          "boiling_C": 100,
+          "timeToBoil_s": 0,
+          "timeToBoilFrom": "remembered",
+          "cooling": "ice",
+          "afterBoil": "hold",
+          "waterLitres": 2,
+          "eggCount": 4
+        },
+        "level": 0.3,
+        "recommended_s": 415.05859375,
+        "nudge_s": 0,
+        "pulled_s": 422.30859375,
+        "pulledBy": "cook",
+        "cooled_s": 180,
+        "yolk": -1,
+        "white": "runny",
+        "whiteOffered": true,
+        "probe": {
+          "centre_C": 1.9
+        },
+        "lang": "en",
+        "register": "modern",
+        "units": "metric"
+      },
+      "valid": false,
+      "yolk": null,
+      "white": null,
+      "probe": null
+    },
+    {
+      "why": "a probe reading past the boil",
+      "record": {
+        "v": 1,
+        "uid": null,
+        "day": "2026-09-26",
+        "app": "web",
+        "appVersion": "0.2.0",
+        "prior": "2026-09-e5",
+        "egg": {
+          "mass_g": 62,
+          "massFrom": "class",
+          "sizeTable": "eu"
+        },
+        "setup": {
+          "startMode": "hot",
+          "eggStart_C": 4,
+          "eggFrom": "fridge",
+          "ambient_C": 20,
+          "boiling_C": 100,
+          "timeToBoil_s": 0,
+          "timeToBoilFrom": "remembered",
+          "cooling": "ice",
+          "afterBoil": "hold",
+          "waterLitres": 2,
+          "eggCount": 4
+        },
+        "level": 0.3,
+        "recommended_s": 415.05859375,
+        "nudge_s": 0,
+        "pulled_s": 422.30859375,
+        "pulledBy": "cook",
+        "cooled_s": 180,
+        "yolk": -1,
+        "white": "runny",
+        "whiteOffered": true,
+        "probe": {
+          "centre_C": 100.01
+        },
+        "lang": "en",
+        "register": "modern",
+        "units": "metric"
+      },
+      "valid": false,
+      "yolk": null,
+      "white": null,
+      "probe": null
+    },
+    {
+      "why": "a bare number for a probe",
       "record": {
         "v": 1,
         "uid": null,
@@ -2546,10 +2955,11 @@
       },
       "valid": false,
       "yolk": null,
-      "white": null
+      "white": null,
+      "probe": null
     },
     {
-      "why": "a probe object before E4",
+      "why": "a probe with no reading",
       "record": {
         "v": 1,
         "uid": null,
@@ -2591,7 +3001,105 @@
       },
       "valid": false,
       "yolk": null,
-      "white": null
+      "white": null,
+      "probe": null
+    },
+    {
+      "why": "a probe reading as a string",
+      "record": {
+        "v": 1,
+        "uid": null,
+        "day": "2026-09-26",
+        "app": "web",
+        "appVersion": "0.2.0",
+        "prior": "2026-09-e5",
+        "egg": {
+          "mass_g": 62,
+          "massFrom": "class",
+          "sizeTable": "eu"
+        },
+        "setup": {
+          "startMode": "hot",
+          "eggStart_C": 4,
+          "eggFrom": "fridge",
+          "ambient_C": 20,
+          "boiling_C": 100,
+          "timeToBoil_s": 0,
+          "timeToBoilFrom": "remembered",
+          "cooling": "ice",
+          "afterBoil": "hold",
+          "waterLitres": 2,
+          "eggCount": 4
+        },
+        "level": 0.3,
+        "recommended_s": 415.05859375,
+        "nudge_s": 0,
+        "pulled_s": 422.30859375,
+        "pulledBy": "cook",
+        "cooled_s": 180,
+        "yolk": -1,
+        "white": "runny",
+        "whiteOffered": true,
+        "probe": {
+          "centre_C": "61.3"
+        },
+        "lang": "en",
+        "register": "modern",
+        "units": "metric"
+      },
+      "valid": false,
+      "yolk": null,
+      "white": null,
+      "probe": null
+    },
+    {
+      "why": "a probe asked for before the pull",
+      "record": {
+        "v": 1,
+        "uid": null,
+        "day": "2026-09-26",
+        "app": "web",
+        "appVersion": "0.2.0",
+        "prior": "2026-09-e5",
+        "egg": {
+          "mass_g": 62,
+          "massFrom": "class",
+          "sizeTable": "eu"
+        },
+        "setup": {
+          "startMode": "hot",
+          "eggStart_C": 4,
+          "eggFrom": "fridge",
+          "ambient_C": 20,
+          "boiling_C": 100,
+          "timeToBoil_s": 0,
+          "timeToBoilFrom": "remembered",
+          "cooling": "ice",
+          "afterBoil": "hold",
+          "waterLitres": 2,
+          "eggCount": 4
+        },
+        "level": 0.3,
+        "recommended_s": 415.05859375,
+        "nudge_s": 0,
+        "pulled_s": 422.30859375,
+        "pulledBy": "cook",
+        "cooled_s": 180,
+        "yolk": -1,
+        "white": "runny",
+        "whiteOffered": true,
+        "probe": {
+          "centre_C": 61.3,
+          "after_s": -1
+        },
+        "lang": "en",
+        "register": "modern",
+        "units": "metric"
+      },
+      "valid": false,
+      "yolk": null,
+      "white": null,
+      "probe": null
     },
     {
       "why": "no language",
@@ -2636,7 +3144,8 @@
       },
       "valid": false,
       "yolk": null,
-      "white": null
+      "white": null,
+      "probe": null
     },
     {
       "why": "an unknown unit system",
@@ -2681,7 +3190,8 @@
       },
       "valid": false,
       "yolk": null,
-      "white": null
+      "white": null,
+      "probe": null
     },
     {
       "why": "not an object",
@@ -2728,7 +3238,8 @@
       ],
       "valid": false,
       "yolk": null,
-      "white": null
+      "white": null,
+      "probe": null
     }
   ],
   "massRounding": [
@@ -2759,6 +3270,44 @@
     {
       "mass_kg": 0.0624449999,
       "mass_g": 62.44
+    }
+  ],
+  "probeRounding": [
+    {
+      "centre_C": 64,
+      "record_C": 64
+    },
+    {
+      "centre_C": 64.05555555555556,
+      "record_C": 64.06
+    },
+    {
+      "centre_C": 65.61111111111111,
+      "record_C": 65.61
+    },
+    {
+      "centre_C": 59.94444444444444,
+      "record_C": 59.94
+    },
+    {
+      "centre_C": 82.5,
+      "record_C": 82.5
+    },
+    {
+      "centre_C": 100,
+      "record_C": 100
+    },
+    {
+      "centre_C": 64.005,
+      "record_C": 64.01
+    },
+    {
+      "centre_C": 58.8849999,
+      "record_C": 58.88
+    },
+    {
+      "centre_C": 61.3,
+      "record_C": 61.3
     }
   ],
   "replay": {
@@ -3079,6 +3628,90 @@
         "white": "firm",
         "whiteOffered": true,
         "probe": null,
+        "lang": "en",
+        "register": "modern",
+        "units": "metric"
+      },
+      {
+        "v": 1,
+        "uid": null,
+        "day": "2026-09-26",
+        "app": "ios",
+        "appVersion": "0.2.0",
+        "prior": "2026-09-e5",
+        "egg": {
+          "mass_g": 68,
+          "massFrom": "scale",
+          "sizeTable": null
+        },
+        "setup": {
+          "startMode": "hot",
+          "eggStart_C": 4,
+          "eggFrom": "fridge",
+          "ambient_C": 20,
+          "boiling_C": 100,
+          "timeToBoil_s": 0,
+          "timeToBoilFrom": "remembered",
+          "cooling": "ice",
+          "afterBoil": "hold",
+          "waterLitres": 2,
+          "eggCount": 4
+        },
+        "level": 0.41,
+        "recommended_s": 467.5,
+        "nudge_s": 0,
+        "pulled_s": 470.5,
+        "pulledBy": "cook",
+        "cooled_s": 183,
+        "yolk": 0,
+        "white": null,
+        "whiteOffered": true,
+        "probe": {
+          "centre_C": 66.01692180620901,
+          "after_s": 183
+        },
+        "lang": "en",
+        "register": "modern",
+        "units": "metric"
+      },
+      {
+        "v": 1,
+        "uid": null,
+        "day": "2026-09-26",
+        "app": "web",
+        "appVersion": "0.2.0",
+        "prior": "2026-09-e5",
+        "egg": {
+          "mass_g": 58,
+          "massFrom": "class",
+          "sizeTable": "eu"
+        },
+        "setup": {
+          "startMode": "hot",
+          "eggStart_C": 4,
+          "eggFrom": "fridge",
+          "ambient_C": 20,
+          "boiling_C": 100,
+          "timeToBoil_s": 0,
+          "timeToBoilFrom": "remembered",
+          "cooling": "tap",
+          "afterBoil": "hold",
+          "waterLitres": 2,
+          "eggCount": 4
+        },
+        "level": 0.3,
+        "recommended_s": 390.5859375,
+        "nudge_s": 0,
+        "pulled_s": 390.5859375,
+        "pulledBy": "timeout",
+        "cooled_s": 180,
+        "yolk": null,
+        "white": null,
+        "whiteOffered": true,
+        "probe": {
+          "centre_C": 60.91178347370178,
+          "after_s": 180
+        },
         "lang": "en",
         "register": "modern",
         "units": "metric"
@@ -7845,6 +8478,1198 @@
             }
           ]
         }
+      },
+      {
+        "spec": {
+          "alphaMin": 8.668727630951249e-8,
+          "alphaMax": 2.8370381337658634e-7,
+          "alphaCount": 7,
+          "timeMin_s": 164.67499999999998,
+          "timeMax_s": 1129.2,
+          "timeCount": 9
+        },
+        "cookTime_s": 470.5,
+        "whiteDoseAtSoft": 0.4165199508307746,
+        "after": {
+          "eggsLogged": 8,
+          "rng": 1415748495,
+          "weights": [
+            0.015625,
+            0.015625,
+            0.015625,
+            0.015625,
+            0.015625,
+            0.015625,
+            0.015625,
+            0.015625,
+            0.015625,
+            0.015625,
+            0.015625,
+            0.015625,
+            0.015625,
+            0.015625,
+            0.015625,
+            0.015625,
+            0.015625,
+            0.015625,
+            0.015625,
+            0.015625,
+            0.015625,
+            0.015625,
+            0.015625,
+            0.015625,
+            0.015625,
+            0.015625,
+            0.015625,
+            0.015625,
+            0.015625,
+            0.015625,
+            0.015625,
+            0.015625,
+            0.015625,
+            0.015625,
+            0.015625,
+            0.015625,
+            0.015625,
+            0.015625,
+            0.015625,
+            0.015625,
+            0.015625,
+            0.015625,
+            0.015625,
+            0.015625,
+            0.015625,
+            0.015625,
+            0.015625,
+            0.015625,
+            0.015625,
+            0.015625,
+            0.015625,
+            0.015625,
+            0.015625,
+            0.015625,
+            0.015625,
+            0.015625,
+            0.015625,
+            0.015625,
+            0.015625,
+            0.015625,
+            0.015625,
+            0.015625,
+            0.015625,
+            0.015625
+          ],
+          "particles": [
+            {
+              "alpha_m2s": 1.6952319887083521e-7,
+              "logDoseOffset": -0.16286183213893562,
+              "tauAirScale": 0.9714639149161272,
+              "noise": 0.5267286571473346,
+              "whiteOffset": 0.006173123329296239,
+              "whiteFirmGap": 1.0992523815792832
+            },
+            {
+              "alpha_m2s": 1.657148876784574e-7,
+              "logDoseOffset": 0.17516244229380912,
+              "tauAirScale": 1.4851422119724447,
+              "noise": 0.2867292810060437,
+              "whiteOffset": 0.682124684107712,
+              "whiteFirmGap": 0.9757809029501474
+            },
+            {
+              "alpha_m2s": 1.6470040215166796e-7,
+              "logDoseOffset": 0.17567735963638506,
+              "tauAirScale": 1.5106830940575897,
+              "noise": 0.2865800014182958,
+              "whiteOffset": 0.6885334138521874,
+              "whiteFirmGap": 0.9872614684827244
+            },
+            {
+              "alpha_m2s": 1.6471893622008983e-7,
+              "logDoseOffset": 0.30490677812414496,
+              "tauAirScale": 1.5412173335950532,
+              "noise": 0.3236077592655664,
+              "whiteOffset": 0.1832546149586967,
+              "whiteFirmGap": 1.332592020970053
+            },
+            {
+              "alpha_m2s": 1.648699539951043e-7,
+              "logDoseOffset": 0.3366726394955039,
+              "tauAirScale": 1.454289184687517,
+              "noise": 0.3143462909691483,
+              "whiteOffset": 0.19083144603996433,
+              "whiteFirmGap": 1.389196990815768
+            },
+            {
+              "alpha_m2s": 1.7402430686740975e-7,
+              "logDoseOffset": 0.28411804200092966,
+              "tauAirScale": 1.594068364541033,
+              "noise": 0.32045940582436366,
+              "whiteOffset": 0.19009447644017366,
+              "whiteFirmGap": 1.4757163616617013
+            },
+            {
+              "alpha_m2s": 1.6953376735781598e-7,
+              "logDoseOffset": 0.2998275102154537,
+              "tauAirScale": 1.454343215783702,
+              "noise": 0.30470192231584925,
+              "whiteOffset": 0.17743414160041696,
+              "whiteFirmGap": 1.312847686052603
+            },
+            {
+              "alpha_m2s": 1.650556955801898e-7,
+              "logDoseOffset": 0.28693294534900055,
+              "tauAirScale": 1.5199160943512824,
+              "noise": 0.33347624384730207,
+              "whiteOffset": 0.21439415971657433,
+              "whiteFirmGap": 1.3671884398854244
+            },
+            {
+              "alpha_m2s": 1.7111110298767681e-7,
+              "logDoseOffset": 0.2949765456245287,
+              "tauAirScale": 1.5331508141159882,
+              "noise": 0.33850499757599206,
+              "whiteOffset": 0.18043740165301095,
+              "whiteFirmGap": 1.234292673607832
+            },
+            {
+              "alpha_m2s": 1.639448128361668e-7,
+              "logDoseOffset": 0.2858568463925109,
+              "tauAirScale": 1.477623708565905,
+              "noise": 0.32893372571553287,
+              "whiteOffset": 0.18990559282085084,
+              "whiteFirmGap": 1.3123801793515233
+            },
+            {
+              "alpha_m2s": 1.8024520722720803e-7,
+              "logDoseOffset": 0.01640342459647791,
+              "tauAirScale": 0.9881321469042069,
+              "noise": 0.3857424267293586,
+              "whiteOffset": 1.0734777797895025,
+              "whiteFirmGap": 1.4730366595176092
+            },
+            {
+              "alpha_m2s": 1.7033138681132756e-7,
+              "logDoseOffset": 0.05063152907152539,
+              "tauAirScale": 1.020316426241571,
+              "noise": 0.3849108555093336,
+              "whiteOffset": 1.0486936348657612,
+              "whiteFirmGap": 1.4692645620629412
+            },
+            {
+              "alpha_m2s": 1.7778552697357933e-7,
+              "logDoseOffset": 0.04577853842070649,
+              "tauAirScale": 1.0069201624914839,
+              "noise": 0.357065197354247,
+              "whiteOffset": 1.0682123574831595,
+              "whiteFirmGap": 1.583954280581434
+            },
+            {
+              "alpha_m2s": 1.7448032564395508e-7,
+              "logDoseOffset": 0.01288800694444435,
+              "tauAirScale": 0.9938469634202891,
+              "noise": 0.37078764606670855,
+              "whiteOffset": 1.0479759278487046,
+              "whiteFirmGap": 1.4424509411194608
+            },
+            {
+              "alpha_m2s": 1.777481363968187e-7,
+              "logDoseOffset": 0.08113431841233579,
+              "tauAirScale": 1.0211700388614293,
+              "noise": 0.39848991138508477,
+              "whiteOffset": 1.0592974967727433,
+              "whiteFirmGap": 1.4539966474294828
+            },
+            {
+              "alpha_m2s": 1.7248988767899e-7,
+              "logDoseOffset": 0.04998880748765884,
+              "tauAirScale": 1.0309714366706002,
+              "noise": 0.3764154071337005,
+              "whiteOffset": 1.0475890287246807,
+              "whiteFirmGap": 1.3734462912777083
+            },
+            {
+              "alpha_m2s": 1.6773867238131818e-7,
+              "logDoseOffset": 0.03271027107901554,
+              "tauAirScale": 1.0550914911853397,
+              "noise": 0.3804815529306711,
+              "whiteOffset": 1.0184306619113603,
+              "whiteFirmGap": 1.4224807001813229
+            },
+            {
+              "alpha_m2s": 1.641995938084954e-7,
+              "logDoseOffset": 0.03396378688466071,
+              "tauAirScale": 1.0251003659286508,
+              "noise": 0.350589269027055,
+              "whiteOffset": 1.0539701884380965,
+              "whiteFirmGap": 1.4915807592039392
+            },
+            {
+              "alpha_m2s": 1.6849023309471869e-7,
+              "logDoseOffset": 0.02146180270928434,
+              "tauAirScale": 0.9280658688263804,
+              "noise": 0.3702666239216146,
+              "whiteOffset": 1.0748621472229472,
+              "whiteFirmGap": 1.4772717039875396
+            },
+            {
+              "alpha_m2s": 1.6762704329150752e-7,
+              "logDoseOffset": 0.027737358303065528,
+              "tauAirScale": 0.999054285568659,
+              "noise": 0.37260147398013604,
+              "whiteOffset": 1.0325211479273064,
+              "whiteFirmGap": 1.4267986776567905
+            },
+            {
+              "alpha_m2s": 1.691031004687529e-7,
+              "logDoseOffset": 0.036892044749354355,
+              "tauAirScale": 1.008722465885949,
+              "noise": 0.3578086023571256,
+              "whiteOffset": 1.0962657255688113,
+              "whiteFirmGap": 1.434721740533048
+            },
+            {
+              "alpha_m2s": 1.763458571768724e-7,
+              "logDoseOffset": 0.04393672428059971,
+              "tauAirScale": 1.0101323963369337,
+              "noise": 0.3575518343360537,
+              "whiteOffset": 1.066614356447382,
+              "whiteFirmGap": 1.4411777820970655
+            },
+            {
+              "alpha_m2s": 1.758967305754424e-7,
+              "logDoseOffset": 0.045679542446918964,
+              "tauAirScale": 0.9874604437443052,
+              "noise": 0.38628479636365654,
+              "whiteOffset": 1.0470736383960613,
+              "whiteFirmGap": 1.4557412481289533
+            },
+            {
+              "alpha_m2s": 1.7637729261779933e-7,
+              "logDoseOffset": 0.02530387549320643,
+              "tauAirScale": 1.0378855555219837,
+              "noise": 0.36746381382974613,
+              "whiteOffset": 1.048126361436473,
+              "whiteFirmGap": 1.4887505757789832
+            },
+            {
+              "alpha_m2s": 1.6976446188691342e-7,
+              "logDoseOffset": 0.03117545321772319,
+              "tauAirScale": 1.0016868024484742,
+              "noise": 0.3793205919203195,
+              "whiteOffset": 1.0388262729580693,
+              "whiteFirmGap": 1.4880331349110927
+            },
+            {
+              "alpha_m2s": 1.7290512499312665e-7,
+              "logDoseOffset": 0.052194542825225884,
+              "tauAirScale": 0.9920344186872496,
+              "noise": 0.3776144553976004,
+              "whiteOffset": 1.0791003102149774,
+              "whiteFirmGap": 1.5107833244851456
+            },
+            {
+              "alpha_m2s": 1.7076123916119526e-7,
+              "logDoseOffset": 0.014090507485119922,
+              "tauAirScale": 0.9585524046737901,
+              "noise": 0.3895206705062314,
+              "whiteOffset": 1.0453247016704674,
+              "whiteFirmGap": 1.4334352503064112
+            },
+            {
+              "alpha_m2s": 1.7230814765610803e-7,
+              "logDoseOffset": 0.046824542712685,
+              "tauAirScale": 0.9736957719886387,
+              "noise": 0.3672952282560694,
+              "whiteOffset": 1.0654808559749172,
+              "whiteFirmGap": 1.4561730214451896
+            },
+            {
+              "alpha_m2s": 1.6809265333371722e-7,
+              "logDoseOffset": 0.03767457375655803,
+              "tauAirScale": 1.0096481764251755,
+              "noise": 0.36051037510979805,
+              "whiteOffset": 1.0577038564715184,
+              "whiteFirmGap": 1.5013276738709505
+            },
+            {
+              "alpha_m2s": 1.6961565144542766e-7,
+              "logDoseOffset": 0.055392602297823744,
+              "tauAirScale": 1.023604755854484,
+              "noise": 0.35755236395195533,
+              "whiteOffset": 1.0475744445697737,
+              "whiteFirmGap": 1.4578022236255712
+            },
+            {
+              "alpha_m2s": 1.744453706188995e-7,
+              "logDoseOffset": 0.032502483148076744,
+              "tauAirScale": 0.953973974529498,
+              "noise": 0.3408423417093109,
+              "whiteOffset": 1.0253169070175812,
+              "whiteFirmGap": 1.5936090783198984
+            },
+            {
+              "alpha_m2s": 1.7681651783651117e-7,
+              "logDoseOffset": 0.001895666505952933,
+              "tauAirScale": 0.9434324653005023,
+              "noise": 0.34321220195753316,
+              "whiteOffset": 1.0264713153742282,
+              "whiteFirmGap": 1.6569161639932652
+            },
+            {
+              "alpha_m2s": 1.709816832626968e-7,
+              "logDoseOffset": 0.028710959111893815,
+              "tauAirScale": 0.964023346555072,
+              "noise": 0.3434880495277812,
+              "whiteOffset": 1.0095044371847168,
+              "whiteFirmGap": 1.6637235824346837
+            },
+            {
+              "alpha_m2s": 1.6686394521349163e-7,
+              "logDoseOffset": 0.004103087827106056,
+              "tauAirScale": 0.9217822897227599,
+              "noise": 0.3625488743203548,
+              "whiteOffset": 1.0253301569681181,
+              "whiteFirmGap": 1.581533151749151
+            },
+            {
+              "alpha_m2s": 1.7376011643489317e-7,
+              "logDoseOffset": -0.00019998124880024268,
+              "tauAirScale": 0.8805744549157086,
+              "noise": 0.3493118944722009,
+              "whiteOffset": 0.9955132340757692,
+              "whiteFirmGap": 1.6740618767148039
+            },
+            {
+              "alpha_m2s": 1.7281549471201274e-7,
+              "logDoseOffset": 0.042334815845002316,
+              "tauAirScale": 0.9152683303160521,
+              "noise": 0.36372086034922524,
+              "whiteOffset": 1.0531946666774092,
+              "whiteFirmGap": 1.7340208254677165
+            },
+            {
+              "alpha_m2s": 1.784989076004498e-7,
+              "logDoseOffset": 0.025601797701463473,
+              "tauAirScale": 0.9423639785827642,
+              "noise": 0.31920863898173213,
+              "whiteOffset": 1.0274257935606712,
+              "whiteFirmGap": 1.5980071194288883
+            },
+            {
+              "alpha_m2s": 1.6992964778343968e-7,
+              "logDoseOffset": 0.03298899964933061,
+              "tauAirScale": 0.881990419374398,
+              "noise": 0.3503853036844205,
+              "whiteOffset": 1.0212657892189096,
+              "whiteFirmGap": 1.574580531369204
+            },
+            {
+              "alpha_m2s": 1.631617973180205e-7,
+              "logDoseOffset": 0.019553627930004477,
+              "tauAirScale": 0.8992424804062139,
+              "noise": 0.354040692714377,
+              "whiteOffset": 1.023033416559302,
+              "whiteFirmGap": 1.6727513093458817
+            },
+            {
+              "alpha_m2s": 1.729115605232899e-7,
+              "logDoseOffset": 0.001263386778114571,
+              "tauAirScale": 0.8792680238774068,
+              "noise": 0.3608616940521852,
+              "whiteOffset": 1.0177342399952423,
+              "whiteFirmGap": 1.6167661229452286
+            },
+            {
+              "alpha_m2s": 1.6348999749306572e-7,
+              "logDoseOffset": 0.0010454065069392567,
+              "tauAirScale": 0.8986612511942953,
+              "noise": 0.33800383156294117,
+              "whiteOffset": 1.0173488047436194,
+              "whiteFirmGap": 1.6073057225222358
+            },
+            {
+              "alpha_m2s": 1.694254828690281e-7,
+              "logDoseOffset": 0.02530814502195656,
+              "tauAirScale": 0.9465629686743088,
+              "noise": 0.33277192896067376,
+              "whiteOffset": 1.0397562506370435,
+              "whiteFirmGap": 1.7140891856954952
+            },
+            {
+              "alpha_m2s": 1.7469480675757944e-7,
+              "logDoseOffset": 0.025658651126070908,
+              "tauAirScale": 0.9407000030984973,
+              "noise": 0.3290924927397586,
+              "whiteOffset": 1.0004771487983715,
+              "whiteFirmGap": 1.6212668177786045
+            },
+            {
+              "alpha_m2s": 1.6623214674508126e-7,
+              "logDoseOffset": -0.007676011553655715,
+              "tauAirScale": 0.944102454839628,
+              "noise": 0.33737353534450315,
+              "whiteOffset": 1.019191979504745,
+              "whiteFirmGap": 1.6725904297120275
+            },
+            {
+              "alpha_m2s": 1.7456545191138016e-7,
+              "logDoseOffset": 0.056888815759789324,
+              "tauAirScale": 0.9341417096230218,
+              "noise": 0.3511196147394208,
+              "whiteOffset": 1.0245717816530757,
+              "whiteFirmGap": 1.668864423056705
+            },
+            {
+              "alpha_m2s": 1.7235488741359147e-7,
+              "logDoseOffset": 0.03916881533803587,
+              "tauAirScale": 0.958076376641428,
+              "noise": 0.3507246172921932,
+              "whiteOffset": 1.0084892812708006,
+              "whiteFirmGap": 1.5525698080758785
+            },
+            {
+              "alpha_m2s": 1.7518653883281186e-7,
+              "logDoseOffset": 0.022474993439704927,
+              "tauAirScale": 0.9170465553476269,
+              "noise": 0.3520361467092755,
+              "whiteOffset": 1.0090303993697523,
+              "whiteFirmGap": 1.701980840518524
+            },
+            {
+              "alpha_m2s": 1.7105588928050053e-7,
+              "logDoseOffset": 0.05710955736023331,
+              "tauAirScale": 0.9051541917716366,
+              "noise": 0.3395649268914213,
+              "whiteOffset": 1.0239965355013547,
+              "whiteFirmGap": 1.58695128188232
+            },
+            {
+              "alpha_m2s": 1.7457288676105036e-7,
+              "logDoseOffset": 0.026924953285065077,
+              "tauAirScale": 0.8733183568116573,
+              "noise": 0.3508475158949241,
+              "whiteOffset": 1.0372042787433058,
+              "whiteFirmGap": 1.7832548052624195
+            },
+            {
+              "alpha_m2s": 1.7825810799666838e-7,
+              "logDoseOffset": 0.03867014842988807,
+              "tauAirScale": 0.9186797733416736,
+              "noise": 0.33731782052933634,
+              "whiteOffset": 1.008045787191173,
+              "whiteFirmGap": 1.7013974231284152
+            },
+            {
+              "alpha_m2s": 1.7452019105285876e-7,
+              "logDoseOffset": 0.02076782345109963,
+              "tauAirScale": 0.8960190864797077,
+              "noise": 0.3348079681530081,
+              "whiteOffset": 1.0117009558645877,
+              "whiteFirmGap": 1.5296439950706568
+            },
+            {
+              "alpha_m2s": 1.7514039104903318e-7,
+              "logDoseOffset": 0.05755590031154298,
+              "tauAirScale": 0.8874591240946642,
+              "noise": 0.3384520286955216,
+              "whiteOffset": 1.0218831406545024,
+              "whiteFirmGap": 1.6812348912994075
+            },
+            {
+              "alpha_m2s": 1.7537834870897385e-7,
+              "logDoseOffset": 0.036265241920669634,
+              "tauAirScale": 0.9867531951428391,
+              "noise": 0.35246165071406804,
+              "whiteOffset": 1.0317120185732434,
+              "whiteFirmGap": 1.6152854762384332
+            },
+            {
+              "alpha_m2s": 1.7450999346870845e-7,
+              "logDoseOffset": 0.010884041639026776,
+              "tauAirScale": 0.9514190134813199,
+              "noise": 0.3423654003867668,
+              "whiteOffset": 1.0337301871911753,
+              "whiteFirmGap": 1.7414766079406239
+            },
+            {
+              "alpha_m2s": 1.679484592814558e-7,
+              "logDoseOffset": 0.06785642940492742,
+              "tauAirScale": 0.8849576730559887,
+              "noise": 0.3967428799011303,
+              "whiteOffset": 1.0578054610070386,
+              "whiteFirmGap": 1.2825346886440163
+            },
+            {
+              "alpha_m2s": 1.783570556832964e-7,
+              "logDoseOffset": 0.054077977165476104,
+              "tauAirScale": 0.9141312080415173,
+              "noise": 0.39571676318678195,
+              "whiteOffset": 1.037652412144423,
+              "whiteFirmGap": 1.3191063649927786
+            },
+            {
+              "alpha_m2s": 1.7685598219100746e-7,
+              "logDoseOffset": 0.0634311479226515,
+              "tauAirScale": 0.9335345103430523,
+              "noise": 0.4039535872997005,
+              "whiteOffset": 1.0519501616373181,
+              "whiteFirmGap": 1.310084671636266
+            },
+            {
+              "alpha_m2s": 1.7003275270661174e-7,
+              "logDoseOffset": 0.0449120025827695,
+              "tauAirScale": 0.8934526388709073,
+              "noise": 0.4117248002413601,
+              "whiteOffset": 1.0754422702222508,
+              "whiteFirmGap": 1.3631620762291456
+            },
+            {
+              "alpha_m2s": 1.6926463761892992e-7,
+              "logDoseOffset": 0.07806893380245714,
+              "tauAirScale": 0.9706063188473456,
+              "noise": 0.4122781680276546,
+              "whiteOffset": 1.0611923063457582,
+              "whiteFirmGap": 1.2770612082720671
+            },
+            {
+              "alpha_m2s": 1.6533705665965095e-7,
+              "logDoseOffset": 0.03355393270808402,
+              "tauAirScale": 0.9047948701622197,
+              "noise": 0.409673024835377,
+              "whiteOffset": 1.0531760630398115,
+              "whiteFirmGap": 1.2944256588533825
+            },
+            {
+              "alpha_m2s": 1.672293613479372e-7,
+              "logDoseOffset": 0.049443289055895526,
+              "tauAirScale": 0.9364265565799051,
+              "noise": 0.40316977356751194,
+              "whiteOffset": 1.0547157969583836,
+              "whiteFirmGap": 1.3803269082017549
+            },
+            {
+              "alpha_m2s": 1.6741873772444388e-7,
+              "logDoseOffset": 0.01904974001093876,
+              "tauAirScale": 0.944918442203513,
+              "noise": 0.4101043838859229,
+              "whiteOffset": 1.034840757744202,
+              "whiteFirmGap": 1.4482063205322393
+            },
+            {
+              "alpha_m2s": 1.7311285654864408e-7,
+              "logDoseOffset": 0.057415682917836795,
+              "tauAirScale": 0.8414488531995001,
+              "noise": 0.37193613510829104,
+              "whiteOffset": 1.0926347589486114,
+              "whiteFirmGap": 1.4034846838063773
+            },
+            {
+              "alpha_m2s": 1.6764022236886445e-7,
+              "logDoseOffset": 0.03507992370586525,
+              "tauAirScale": 0.9143719978695993,
+              "noise": 0.4083769726346749,
+              "whiteOffset": 1.0709690198073127,
+              "whiteFirmGap": 1.279967831696233
+            }
+          ]
+        }
+      },
+      {
+        "spec": {
+          "alphaMin": 9.417263814873376e-8,
+          "alphaMax": 3.0820136121403774e-7,
+          "alphaCount": 7,
+          "timeMin_s": 136.705078125,
+          "timeMax_s": 937.40625,
+          "timeCount": 9
+        },
+        "cookTime_s": 390.5859375,
+        "whiteDoseAtSoft": 0.37026832128207765,
+        "after": {
+          "eggsLogged": 9,
+          "rng": 1415748495,
+          "weights": [
+            0.02221675698114941,
+            0.028286781576912,
+            0.02694768249713688,
+            0.026983650506631443,
+            0.027261436671740153,
+            0.007610993960298859,
+            0.022182351748774018,
+            0.027564955904926053,
+            0.016682675476902865,
+            0.025155712177906527,
+            0.0006250283653070107,
+            0.01947490597836611,
+            0.0018517884109780064,
+            0.006552321551751285,
+            0.0018812411093548813,
+            0.01196240367734495,
+            0.026964020870961877,
+            0.02582782562924788,
+            0.02527111734889163,
+            0.027167159240938973,
+            0.02353951042953006,
+            0.0033253872477655836,
+            0.0039506211386983806,
+            0.0032848786062476586,
+            0.021419833492203916,
+            0.010671743068862568,
+            0.01793798295306031,
+            0.012550348001933694,
+            0.02623383802480725,
+            0.021914147266087543,
+            0.006629548228129278,
+            0.0027607143326608477,
+            0.017146294881693443,
+            0.028171297650615035,
+            0.00827504582585603,
+            0.010943793912472832,
+            0.0013635099371897966,
+            0.020861970203533062,
+            0.022728301303794524,
+            0.010652353510812724,
+            0.023805635593792805,
+            0.022532456927591194,
+            0.006092632882499569,
+            0.028451155422160156,
+            0.006366963070062465,
+            0.012397887487769923,
+            0.005129295367929,
+            0.016880298677889205,
+            0.006350956306598439,
+            0.001513466503423854,
+            0.006465038202475252,
+            0.005214432734849067,
+            0.0047868553521819195,
+            0.006487285053725014,
+            0.026546584384825177,
+            0.001450121187923871,
+            0.0027173015994018355,
+            0.020509588687177026,
+            0.02304194168750509,
+            0.02794205219808993,
+            0.027777082055130967,
+            0.02750933081111459,
+            0.010055826220012535,
+            0.027143881884395628
+          ],
+          "particles": [
+            {
+              "alpha_m2s": 1.6952319887083521e-7,
+              "logDoseOffset": -0.16286183213893562,
+              "tauAirScale": 0.9714639149161272,
+              "noise": 0.5267286571473346,
+              "whiteOffset": 0.006173123329296239,
+              "whiteFirmGap": 1.0992523815792832
+            },
+            {
+              "alpha_m2s": 1.657148876784574e-7,
+              "logDoseOffset": 0.17516244229380912,
+              "tauAirScale": 1.4851422119724447,
+              "noise": 0.2867292810060437,
+              "whiteOffset": 0.682124684107712,
+              "whiteFirmGap": 0.9757809029501474
+            },
+            {
+              "alpha_m2s": 1.6470040215166796e-7,
+              "logDoseOffset": 0.17567735963638506,
+              "tauAirScale": 1.5106830940575897,
+              "noise": 0.2865800014182958,
+              "whiteOffset": 0.6885334138521874,
+              "whiteFirmGap": 0.9872614684827244
+            },
+            {
+              "alpha_m2s": 1.6471893622008983e-7,
+              "logDoseOffset": 0.30490677812414496,
+              "tauAirScale": 1.5412173335950532,
+              "noise": 0.3236077592655664,
+              "whiteOffset": 0.1832546149586967,
+              "whiteFirmGap": 1.332592020970053
+            },
+            {
+              "alpha_m2s": 1.648699539951043e-7,
+              "logDoseOffset": 0.3366726394955039,
+              "tauAirScale": 1.454289184687517,
+              "noise": 0.3143462909691483,
+              "whiteOffset": 0.19083144603996433,
+              "whiteFirmGap": 1.389196990815768
+            },
+            {
+              "alpha_m2s": 1.7402430686740975e-7,
+              "logDoseOffset": 0.28411804200092966,
+              "tauAirScale": 1.594068364541033,
+              "noise": 0.32045940582436366,
+              "whiteOffset": 0.19009447644017366,
+              "whiteFirmGap": 1.4757163616617013
+            },
+            {
+              "alpha_m2s": 1.6953376735781598e-7,
+              "logDoseOffset": 0.2998275102154537,
+              "tauAirScale": 1.454343215783702,
+              "noise": 0.30470192231584925,
+              "whiteOffset": 0.17743414160041696,
+              "whiteFirmGap": 1.312847686052603
+            },
+            {
+              "alpha_m2s": 1.650556955801898e-7,
+              "logDoseOffset": 0.28693294534900055,
+              "tauAirScale": 1.5199160943512824,
+              "noise": 0.33347624384730207,
+              "whiteOffset": 0.21439415971657433,
+              "whiteFirmGap": 1.3671884398854244
+            },
+            {
+              "alpha_m2s": 1.7111110298767681e-7,
+              "logDoseOffset": 0.2949765456245287,
+              "tauAirScale": 1.5331508141159882,
+              "noise": 0.33850499757599206,
+              "whiteOffset": 0.18043740165301095,
+              "whiteFirmGap": 1.234292673607832
+            },
+            {
+              "alpha_m2s": 1.639448128361668e-7,
+              "logDoseOffset": 0.2858568463925109,
+              "tauAirScale": 1.477623708565905,
+              "noise": 0.32893372571553287,
+              "whiteOffset": 0.18990559282085084,
+              "whiteFirmGap": 1.3123801793515233
+            },
+            {
+              "alpha_m2s": 1.8024520722720803e-7,
+              "logDoseOffset": 0.01640342459647791,
+              "tauAirScale": 0.9881321469042069,
+              "noise": 0.3857424267293586,
+              "whiteOffset": 1.0734777797895025,
+              "whiteFirmGap": 1.4730366595176092
+            },
+            {
+              "alpha_m2s": 1.7033138681132756e-7,
+              "logDoseOffset": 0.05063152907152539,
+              "tauAirScale": 1.020316426241571,
+              "noise": 0.3849108555093336,
+              "whiteOffset": 1.0486936348657612,
+              "whiteFirmGap": 1.4692645620629412
+            },
+            {
+              "alpha_m2s": 1.7778552697357933e-7,
+              "logDoseOffset": 0.04577853842070649,
+              "tauAirScale": 1.0069201624914839,
+              "noise": 0.357065197354247,
+              "whiteOffset": 1.0682123574831595,
+              "whiteFirmGap": 1.583954280581434
+            },
+            {
+              "alpha_m2s": 1.7448032564395508e-7,
+              "logDoseOffset": 0.01288800694444435,
+              "tauAirScale": 0.9938469634202891,
+              "noise": 0.37078764606670855,
+              "whiteOffset": 1.0479759278487046,
+              "whiteFirmGap": 1.4424509411194608
+            },
+            {
+              "alpha_m2s": 1.777481363968187e-7,
+              "logDoseOffset": 0.08113431841233579,
+              "tauAirScale": 1.0211700388614293,
+              "noise": 0.39848991138508477,
+              "whiteOffset": 1.0592974967727433,
+              "whiteFirmGap": 1.4539966474294828
+            },
+            {
+              "alpha_m2s": 1.7248988767899e-7,
+              "logDoseOffset": 0.04998880748765884,
+              "tauAirScale": 1.0309714366706002,
+              "noise": 0.3764154071337005,
+              "whiteOffset": 1.0475890287246807,
+              "whiteFirmGap": 1.3734462912777083
+            },
+            {
+              "alpha_m2s": 1.6773867238131818e-7,
+              "logDoseOffset": 0.03271027107901554,
+              "tauAirScale": 1.0550914911853397,
+              "noise": 0.3804815529306711,
+              "whiteOffset": 1.0184306619113603,
+              "whiteFirmGap": 1.4224807001813229
+            },
+            {
+              "alpha_m2s": 1.641995938084954e-7,
+              "logDoseOffset": 0.03396378688466071,
+              "tauAirScale": 1.0251003659286508,
+              "noise": 0.350589269027055,
+              "whiteOffset": 1.0539701884380965,
+              "whiteFirmGap": 1.4915807592039392
+            },
+            {
+              "alpha_m2s": 1.6849023309471869e-7,
+              "logDoseOffset": 0.02146180270928434,
+              "tauAirScale": 0.9280658688263804,
+              "noise": 0.3702666239216146,
+              "whiteOffset": 1.0748621472229472,
+              "whiteFirmGap": 1.4772717039875396
+            },
+            {
+              "alpha_m2s": 1.6762704329150752e-7,
+              "logDoseOffset": 0.027737358303065528,
+              "tauAirScale": 0.999054285568659,
+              "noise": 0.37260147398013604,
+              "whiteOffset": 1.0325211479273064,
+              "whiteFirmGap": 1.4267986776567905
+            },
+            {
+              "alpha_m2s": 1.691031004687529e-7,
+              "logDoseOffset": 0.036892044749354355,
+              "tauAirScale": 1.008722465885949,
+              "noise": 0.3578086023571256,
+              "whiteOffset": 1.0962657255688113,
+              "whiteFirmGap": 1.434721740533048
+            },
+            {
+              "alpha_m2s": 1.763458571768724e-7,
+              "logDoseOffset": 0.04393672428059971,
+              "tauAirScale": 1.0101323963369337,
+              "noise": 0.3575518343360537,
+              "whiteOffset": 1.066614356447382,
+              "whiteFirmGap": 1.4411777820970655
+            },
+            {
+              "alpha_m2s": 1.758967305754424e-7,
+              "logDoseOffset": 0.045679542446918964,
+              "tauAirScale": 0.9874604437443052,
+              "noise": 0.38628479636365654,
+              "whiteOffset": 1.0470736383960613,
+              "whiteFirmGap": 1.4557412481289533
+            },
+            {
+              "alpha_m2s": 1.7637729261779933e-7,
+              "logDoseOffset": 0.02530387549320643,
+              "tauAirScale": 1.0378855555219837,
+              "noise": 0.36746381382974613,
+              "whiteOffset": 1.048126361436473,
+              "whiteFirmGap": 1.4887505757789832
+            },
+            {
+              "alpha_m2s": 1.6976446188691342e-7,
+              "logDoseOffset": 0.03117545321772319,
+              "tauAirScale": 1.0016868024484742,
+              "noise": 0.3793205919203195,
+              "whiteOffset": 1.0388262729580693,
+              "whiteFirmGap": 1.4880331349110927
+            },
+            {
+              "alpha_m2s": 1.7290512499312665e-7,
+              "logDoseOffset": 0.052194542825225884,
+              "tauAirScale": 0.9920344186872496,
+              "noise": 0.3776144553976004,
+              "whiteOffset": 1.0791003102149774,
+              "whiteFirmGap": 1.5107833244851456
+            },
+            {
+              "alpha_m2s": 1.7076123916119526e-7,
+              "logDoseOffset": 0.014090507485119922,
+              "tauAirScale": 0.9585524046737901,
+              "noise": 0.3895206705062314,
+              "whiteOffset": 1.0453247016704674,
+              "whiteFirmGap": 1.4334352503064112
+            },
+            {
+              "alpha_m2s": 1.7230814765610803e-7,
+              "logDoseOffset": 0.046824542712685,
+              "tauAirScale": 0.9736957719886387,
+              "noise": 0.3672952282560694,
+              "whiteOffset": 1.0654808559749172,
+              "whiteFirmGap": 1.4561730214451896
+            },
+            {
+              "alpha_m2s": 1.6809265333371722e-7,
+              "logDoseOffset": 0.03767457375655803,
+              "tauAirScale": 1.0096481764251755,
+              "noise": 0.36051037510979805,
+              "whiteOffset": 1.0577038564715184,
+              "whiteFirmGap": 1.5013276738709505
+            },
+            {
+              "alpha_m2s": 1.6961565144542766e-7,
+              "logDoseOffset": 0.055392602297823744,
+              "tauAirScale": 1.023604755854484,
+              "noise": 0.35755236395195533,
+              "whiteOffset": 1.0475744445697737,
+              "whiteFirmGap": 1.4578022236255712
+            },
+            {
+              "alpha_m2s": 1.744453706188995e-7,
+              "logDoseOffset": 0.032502483148076744,
+              "tauAirScale": 0.953973974529498,
+              "noise": 0.3408423417093109,
+              "whiteOffset": 1.0253169070175812,
+              "whiteFirmGap": 1.5936090783198984
+            },
+            {
+              "alpha_m2s": 1.7681651783651117e-7,
+              "logDoseOffset": 0.001895666505952933,
+              "tauAirScale": 0.9434324653005023,
+              "noise": 0.34321220195753316,
+              "whiteOffset": 1.0264713153742282,
+              "whiteFirmGap": 1.6569161639932652
+            },
+            {
+              "alpha_m2s": 1.709816832626968e-7,
+              "logDoseOffset": 0.028710959111893815,
+              "tauAirScale": 0.964023346555072,
+              "noise": 0.3434880495277812,
+              "whiteOffset": 1.0095044371847168,
+              "whiteFirmGap": 1.6637235824346837
+            },
+            {
+              "alpha_m2s": 1.6686394521349163e-7,
+              "logDoseOffset": 0.004103087827106056,
+              "tauAirScale": 0.9217822897227599,
+              "noise": 0.3625488743203548,
+              "whiteOffset": 1.0253301569681181,
+              "whiteFirmGap": 1.581533151749151
+            },
+            {
+              "alpha_m2s": 1.7376011643489317e-7,
+              "logDoseOffset": -0.00019998124880024268,
+              "tauAirScale": 0.8805744549157086,
+              "noise": 0.3493118944722009,
+              "whiteOffset": 0.9955132340757692,
+              "whiteFirmGap": 1.6740618767148039
+            },
+            {
+              "alpha_m2s": 1.7281549471201274e-7,
+              "logDoseOffset": 0.042334815845002316,
+              "tauAirScale": 0.9152683303160521,
+              "noise": 0.36372086034922524,
+              "whiteOffset": 1.0531946666774092,
+              "whiteFirmGap": 1.7340208254677165
+            },
+            {
+              "alpha_m2s": 1.784989076004498e-7,
+              "logDoseOffset": 0.025601797701463473,
+              "tauAirScale": 0.9423639785827642,
+              "noise": 0.31920863898173213,
+              "whiteOffset": 1.0274257935606712,
+              "whiteFirmGap": 1.5980071194288883
+            },
+            {
+              "alpha_m2s": 1.6992964778343968e-7,
+              "logDoseOffset": 0.03298899964933061,
+              "tauAirScale": 0.881990419374398,
+              "noise": 0.3503853036844205,
+              "whiteOffset": 1.0212657892189096,
+              "whiteFirmGap": 1.574580531369204
+            },
+            {
+              "alpha_m2s": 1.631617973180205e-7,
+              "logDoseOffset": 0.019553627930004477,
+              "tauAirScale": 0.8992424804062139,
+              "noise": 0.354040692714377,
+              "whiteOffset": 1.023033416559302,
+              "whiteFirmGap": 1.6727513093458817
+            },
+            {
+              "alpha_m2s": 1.729115605232899e-7,
+              "logDoseOffset": 0.001263386778114571,
+              "tauAirScale": 0.8792680238774068,
+              "noise": 0.3608616940521852,
+              "whiteOffset": 1.0177342399952423,
+              "whiteFirmGap": 1.6167661229452286
+            },
+            {
+              "alpha_m2s": 1.6348999749306572e-7,
+              "logDoseOffset": 0.0010454065069392567,
+              "tauAirScale": 0.8986612511942953,
+              "noise": 0.33800383156294117,
+              "whiteOffset": 1.0173488047436194,
+              "whiteFirmGap": 1.6073057225222358
+            },
+            {
+              "alpha_m2s": 1.694254828690281e-7,
+              "logDoseOffset": 0.02530814502195656,
+              "tauAirScale": 0.9465629686743088,
+              "noise": 0.33277192896067376,
+              "whiteOffset": 1.0397562506370435,
+              "whiteFirmGap": 1.7140891856954952
+            },
+            {
+              "alpha_m2s": 1.7469480675757944e-7,
+              "logDoseOffset": 0.025658651126070908,
+              "tauAirScale": 0.9407000030984973,
+              "noise": 0.3290924927397586,
+              "whiteOffset": 1.0004771487983715,
+              "whiteFirmGap": 1.6212668177786045
+            },
+            {
+              "alpha_m2s": 1.6623214674508126e-7,
+              "logDoseOffset": -0.007676011553655715,
+              "tauAirScale": 0.944102454839628,
+              "noise": 0.33737353534450315,
+              "whiteOffset": 1.019191979504745,
+              "whiteFirmGap": 1.6725904297120275
+            },
+            {
+              "alpha_m2s": 1.7456545191138016e-7,
+              "logDoseOffset": 0.056888815759789324,
+              "tauAirScale": 0.9341417096230218,
+              "noise": 0.3511196147394208,
+              "whiteOffset": 1.0245717816530757,
+              "whiteFirmGap": 1.668864423056705
+            },
+            {
+              "alpha_m2s": 1.7235488741359147e-7,
+              "logDoseOffset": 0.03916881533803587,
+              "tauAirScale": 0.958076376641428,
+              "noise": 0.3507246172921932,
+              "whiteOffset": 1.0084892812708006,
+              "whiteFirmGap": 1.5525698080758785
+            },
+            {
+              "alpha_m2s": 1.7518653883281186e-7,
+              "logDoseOffset": 0.022474993439704927,
+              "tauAirScale": 0.9170465553476269,
+              "noise": 0.3520361467092755,
+              "whiteOffset": 1.0090303993697523,
+              "whiteFirmGap": 1.701980840518524
+            },
+            {
+              "alpha_m2s": 1.7105588928050053e-7,
+              "logDoseOffset": 0.05710955736023331,
+              "tauAirScale": 0.9051541917716366,
+              "noise": 0.3395649268914213,
+              "whiteOffset": 1.0239965355013547,
+              "whiteFirmGap": 1.58695128188232
+            },
+            {
+              "alpha_m2s": 1.7457288676105036e-7,
+              "logDoseOffset": 0.026924953285065077,
+              "tauAirScale": 0.8733183568116573,
+              "noise": 0.3508475158949241,
+              "whiteOffset": 1.0372042787433058,
+              "whiteFirmGap": 1.7832548052624195
+            },
+            {
+              "alpha_m2s": 1.7825810799666838e-7,
+              "logDoseOffset": 0.03867014842988807,
+              "tauAirScale": 0.9186797733416736,
+              "noise": 0.33731782052933634,
+              "whiteOffset": 1.008045787191173,
+              "whiteFirmGap": 1.7013974231284152
+            },
+            {
+              "alpha_m2s": 1.7452019105285876e-7,
+              "logDoseOffset": 0.02076782345109963,
+              "tauAirScale": 0.8960190864797077,
+              "noise": 0.3348079681530081,
+              "whiteOffset": 1.0117009558645877,
+              "whiteFirmGap": 1.5296439950706568
+            },
+            {
+              "alpha_m2s": 1.7514039104903318e-7,
+              "logDoseOffset": 0.05755590031154298,
+              "tauAirScale": 0.8874591240946642,
+              "noise": 0.3384520286955216,
+              "whiteOffset": 1.0218831406545024,
+              "whiteFirmGap": 1.6812348912994075
+            },
+            {
+              "alpha_m2s": 1.7537834870897385e-7,
+              "logDoseOffset": 0.036265241920669634,
+              "tauAirScale": 0.9867531951428391,
+              "noise": 0.35246165071406804,
+              "whiteOffset": 1.0317120185732434,
+              "whiteFirmGap": 1.6152854762384332
+            },
+            {
+              "alpha_m2s": 1.7450999346870845e-7,
+              "logDoseOffset": 0.010884041639026776,
+              "tauAirScale": 0.9514190134813199,
+              "noise": 0.3423654003867668,
+              "whiteOffset": 1.0337301871911753,
+              "whiteFirmGap": 1.7414766079406239
+            },
+            {
+              "alpha_m2s": 1.679484592814558e-7,
+              "logDoseOffset": 0.06785642940492742,
+              "tauAirScale": 0.8849576730559887,
+              "noise": 0.3967428799011303,
+              "whiteOffset": 1.0578054610070386,
+              "whiteFirmGap": 1.2825346886440163
+            },
+            {
+              "alpha_m2s": 1.783570556832964e-7,
+              "logDoseOffset": 0.054077977165476104,
+              "tauAirScale": 0.9141312080415173,
+              "noise": 0.39571676318678195,
+              "whiteOffset": 1.037652412144423,
+              "whiteFirmGap": 1.3191063649927786
+            },
+            {
+              "alpha_m2s": 1.7685598219100746e-7,
+              "logDoseOffset": 0.0634311479226515,
+              "tauAirScale": 0.9335345103430523,
+              "noise": 0.4039535872997005,
+              "whiteOffset": 1.0519501616373181,
+              "whiteFirmGap": 1.310084671636266
+            },
+            {
+              "alpha_m2s": 1.7003275270661174e-7,
+              "logDoseOffset": 0.0449120025827695,
+              "tauAirScale": 0.8934526388709073,
+              "noise": 0.4117248002413601,
+              "whiteOffset": 1.0754422702222508,
+              "whiteFirmGap": 1.3631620762291456
+            },
+            {
+              "alpha_m2s": 1.6926463761892992e-7,
+              "logDoseOffset": 0.07806893380245714,
+              "tauAirScale": 0.9706063188473456,
+              "noise": 0.4122781680276546,
+              "whiteOffset": 1.0611923063457582,
+              "whiteFirmGap": 1.2770612082720671
+            },
+            {
+              "alpha_m2s": 1.6533705665965095e-7,
+              "logDoseOffset": 0.03355393270808402,
+              "tauAirScale": 0.9047948701622197,
+              "noise": 0.409673024835377,
+              "whiteOffset": 1.0531760630398115,
+              "whiteFirmGap": 1.2944256588533825
+            },
+            {
+              "alpha_m2s": 1.672293613479372e-7,
+              "logDoseOffset": 0.049443289055895526,
+              "tauAirScale": 0.9364265565799051,
+              "noise": 0.40316977356751194,
+              "whiteOffset": 1.0547157969583836,
+              "whiteFirmGap": 1.3803269082017549
+            },
+            {
+              "alpha_m2s": 1.6741873772444388e-7,
+              "logDoseOffset": 0.01904974001093876,
+              "tauAirScale": 0.944918442203513,
+              "noise": 0.4101043838859229,
+              "whiteOffset": 1.034840757744202,
+              "whiteFirmGap": 1.4482063205322393
+            },
+            {
+              "alpha_m2s": 1.7311285654864408e-7,
+              "logDoseOffset": 0.057415682917836795,
+              "tauAirScale": 0.8414488531995001,
+              "noise": 0.37193613510829104,
+              "whiteOffset": 1.0926347589486114,
+              "whiteFirmGap": 1.4034846838063773
+            },
+            {
+              "alpha_m2s": 1.6764022236886445e-7,
+              "logDoseOffset": 0.03507992370586525,
+              "tauAirScale": 0.9143719978695993,
+              "noise": 0.4083769726346749,
+              "whiteOffset": 1.0709690198073127,
+              "whiteFirmGap": 1.279967831696233
+            }
+          ]
+        }
       }
     ],
     "fromBase": {
@@ -8434,586 +10259,586 @@
         ]
       },
       "final": {
-        "eggsLogged": 7,
-        "rng": 309399783,
+        "eggsLogged": 9,
+        "rng": 1415748495,
         "weights": [
-          0.015625,
-          0.015625,
-          0.015625,
-          0.015625,
-          0.015625,
-          0.015625,
-          0.015625,
-          0.015625,
-          0.015625,
-          0.015625,
-          0.015625,
-          0.015625,
-          0.015625,
-          0.015625,
-          0.015625,
-          0.015625,
-          0.015625,
-          0.015625,
-          0.015625,
-          0.015625,
-          0.015625,
-          0.015625,
-          0.015625,
-          0.015625,
-          0.015625,
-          0.015625,
-          0.015625,
-          0.015625,
-          0.015625,
-          0.015625,
-          0.015625,
-          0.015625,
-          0.015625,
-          0.015625,
-          0.015625,
-          0.015625,
-          0.015625,
-          0.015625,
-          0.015625,
-          0.015625,
-          0.015625,
-          0.015625,
-          0.015625,
-          0.015625,
-          0.015625,
-          0.015625,
-          0.015625,
-          0.015625,
-          0.015625,
-          0.015625,
-          0.015625,
-          0.015625,
-          0.015625,
-          0.015625,
-          0.015625,
-          0.015625,
-          0.015625,
-          0.015625,
-          0.015625,
-          0.015625,
-          0.015625,
-          0.015625,
-          0.015625,
-          0.015625
+          0.02221675698114941,
+          0.028286781576912,
+          0.02694768249713688,
+          0.026983650506631443,
+          0.027261436671740153,
+          0.007610993960298859,
+          0.022182351748774018,
+          0.027564955904926053,
+          0.016682675476902865,
+          0.025155712177906527,
+          0.0006250283653070107,
+          0.01947490597836611,
+          0.0018517884109780064,
+          0.006552321551751285,
+          0.0018812411093548813,
+          0.01196240367734495,
+          0.026964020870961877,
+          0.02582782562924788,
+          0.02527111734889163,
+          0.027167159240938973,
+          0.02353951042953006,
+          0.0033253872477655836,
+          0.0039506211386983806,
+          0.0032848786062476586,
+          0.021419833492203916,
+          0.010671743068862568,
+          0.01793798295306031,
+          0.012550348001933694,
+          0.02623383802480725,
+          0.021914147266087543,
+          0.006629548228129278,
+          0.0027607143326608477,
+          0.017146294881693443,
+          0.028171297650615035,
+          0.00827504582585603,
+          0.010943793912472832,
+          0.0013635099371897966,
+          0.020861970203533062,
+          0.022728301303794524,
+          0.010652353510812724,
+          0.023805635593792805,
+          0.022532456927591194,
+          0.006092632882499569,
+          0.028451155422160156,
+          0.006366963070062465,
+          0.012397887487769923,
+          0.005129295367929,
+          0.016880298677889205,
+          0.006350956306598439,
+          0.001513466503423854,
+          0.006465038202475252,
+          0.005214432734849067,
+          0.0047868553521819195,
+          0.006487285053725014,
+          0.026546584384825177,
+          0.001450121187923871,
+          0.0027173015994018355,
+          0.020509588687177026,
+          0.02304194168750509,
+          0.02794205219808993,
+          0.027777082055130967,
+          0.02750933081111459,
+          0.010055826220012535,
+          0.027143881884395628
         ],
         "particles": [
           {
-            "alpha_m2s": 1.600279087967061e-7,
-            "logDoseOffset": -0.144106236010785,
-            "tauAirScale": 1.001355751079827,
-            "noise": 0.5219734366723746,
-            "whiteOffset": -0.06313505006760314,
-            "whiteFirmGap": 1.2344981348299031
+            "alpha_m2s": 1.6952319887083521e-7,
+            "logDoseOffset": -0.16286183213893562,
+            "tauAirScale": 0.9714639149161272,
+            "noise": 0.5267286571473346,
+            "whiteOffset": 0.006173123329296239,
+            "whiteFirmGap": 1.0992523815792832
           },
           {
-            "alpha_m2s": 1.5709937654111309e-7,
-            "logDoseOffset": -0.1636420147621317,
-            "tauAirScale": 1.0145723351331115,
-            "noise": 0.49379558458007194,
-            "whiteOffset": -0.04555931143358843,
-            "whiteFirmGap": 1.2276573257222465
+            "alpha_m2s": 1.657148876784574e-7,
+            "logDoseOffset": 0.17516244229380912,
+            "tauAirScale": 1.4851422119724447,
+            "noise": 0.2867292810060437,
+            "whiteOffset": 0.682124684107712,
+            "whiteFirmGap": 0.9757809029501474
           },
           {
-            "alpha_m2s": 1.4994282144089393e-7,
-            "logDoseOffset": -0.17651851554622464,
-            "tauAirScale": 1.0553345300977415,
-            "noise": 0.5172035717276499,
-            "whiteOffset": -0.04932372798725502,
-            "whiteFirmGap": 1.1557284184400525
+            "alpha_m2s": 1.6470040215166796e-7,
+            "logDoseOffset": 0.17567735963638506,
+            "tauAirScale": 1.5106830940575897,
+            "noise": 0.2865800014182958,
+            "whiteOffset": 0.6885334138521874,
+            "whiteFirmGap": 0.9872614684827244
           },
           {
-            "alpha_m2s": 1.6053011953131894e-7,
-            "logDoseOffset": -0.17260233994154567,
-            "tauAirScale": 1.0700462419931787,
-            "noise": 0.49249966824020075,
-            "whiteOffset": -0.059489730577770066,
-            "whiteFirmGap": 1.1808127245549076
+            "alpha_m2s": 1.6471893622008983e-7,
+            "logDoseOffset": 0.30490677812414496,
+            "tauAirScale": 1.5412173335950532,
+            "noise": 0.3236077592655664,
+            "whiteOffset": 0.1832546149586967,
+            "whiteFirmGap": 1.332592020970053
           },
           {
-            "alpha_m2s": 1.5509712273150435e-7,
-            "logDoseOffset": -0.1631161249222949,
-            "tauAirScale": 0.9741107769070274,
-            "noise": 0.5154273694710598,
-            "whiteOffset": -0.07929744234555668,
-            "whiteFirmGap": 1.216298075110603
+            "alpha_m2s": 1.648699539951043e-7,
+            "logDoseOffset": 0.3366726394955039,
+            "tauAirScale": 1.454289184687517,
+            "noise": 0.3143462909691483,
+            "whiteOffset": 0.19083144603996433,
+            "whiteFirmGap": 1.389196990815768
           },
           {
-            "alpha_m2s": 1.541003638449133e-7,
-            "logDoseOffset": -0.173083705652443,
-            "tauAirScale": 1.02209946432285,
-            "noise": 0.48445478153770555,
-            "whiteOffset": -0.06177932707153579,
-            "whiteFirmGap": 1.205724846515717
+            "alpha_m2s": 1.7402430686740975e-7,
+            "logDoseOffset": 0.28411804200092966,
+            "tauAirScale": 1.594068364541033,
+            "noise": 0.32045940582436366,
+            "whiteOffset": 0.19009447644017366,
+            "whiteFirmGap": 1.4757163616617013
           },
           {
-            "alpha_m2s": 1.537130147499329e-7,
-            "logDoseOffset": -0.1820294096687738,
-            "tauAirScale": 1.0065270924845862,
-            "noise": 0.5159045141000789,
-            "whiteOffset": -0.05037009810527655,
-            "whiteFirmGap": 1.238730939010217
+            "alpha_m2s": 1.6953376735781598e-7,
+            "logDoseOffset": 0.2998275102154537,
+            "tauAirScale": 1.454343215783702,
+            "noise": 0.30470192231584925,
+            "whiteOffset": 0.17743414160041696,
+            "whiteFirmGap": 1.312847686052603
           },
           {
-            "alpha_m2s": 1.5278127606615718e-7,
-            "logDoseOffset": -0.17328044133048412,
-            "tauAirScale": 1.0272958094003526,
-            "noise": 0.5099183524623954,
-            "whiteOffset": -0.04463712867881961,
-            "whiteFirmGap": 1.1886925076717179
+            "alpha_m2s": 1.650556955801898e-7,
+            "logDoseOffset": 0.28693294534900055,
+            "tauAirScale": 1.5199160943512824,
+            "noise": 0.33347624384730207,
+            "whiteOffset": 0.21439415971657433,
+            "whiteFirmGap": 1.3671884398854244
           },
           {
-            "alpha_m2s": 1.5806740606727877e-7,
-            "logDoseOffset": -0.203876799396421,
-            "tauAirScale": 1.0197126508781031,
-            "noise": 0.4980089089156839,
-            "whiteOffset": -0.07803941734575714,
-            "whiteFirmGap": 1.2239985729679643
+            "alpha_m2s": 1.7111110298767681e-7,
+            "logDoseOffset": 0.2949765456245287,
+            "tauAirScale": 1.5331508141159882,
+            "noise": 0.33850499757599206,
+            "whiteOffset": 0.18043740165301095,
+            "whiteFirmGap": 1.234292673607832
           },
           {
-            "alpha_m2s": 1.4926646282031236e-7,
-            "logDoseOffset": -0.16020954504406182,
-            "tauAirScale": 1.1129221645895204,
-            "noise": 0.49031944897095514,
-            "whiteOffset": -0.042876191620138455,
-            "whiteFirmGap": 1.2126686565243023
+            "alpha_m2s": 1.639448128361668e-7,
+            "logDoseOffset": 0.2858568463925109,
+            "tauAirScale": 1.477623708565905,
+            "noise": 0.32893372571553287,
+            "whiteOffset": 0.18990559282085084,
+            "whiteFirmGap": 1.3123801793515233
           },
           {
-            "alpha_m2s": 1.4854631986912667e-7,
-            "logDoseOffset": -0.17843628066475736,
-            "tauAirScale": 1.029920401956913,
-            "noise": 0.4630073599501786,
-            "whiteOffset": -0.05837944222508453,
-            "whiteFirmGap": 1.2200728245657895
+            "alpha_m2s": 1.8024520722720803e-7,
+            "logDoseOffset": 0.01640342459647791,
+            "tauAirScale": 0.9881321469042069,
+            "noise": 0.3857424267293586,
+            "whiteOffset": 1.0734777797895025,
+            "whiteFirmGap": 1.4730366595176092
           },
           {
-            "alpha_m2s": 1.4525008257465485e-7,
-            "logDoseOffset": -0.11973061513714021,
-            "tauAirScale": 1.0466850498010816,
-            "noise": 0.46373251991309694,
-            "whiteOffset": 0.0012927829897328054,
-            "whiteFirmGap": 1.1765255104824826
+            "alpha_m2s": 1.7033138681132756e-7,
+            "logDoseOffset": 0.05063152907152539,
+            "tauAirScale": 1.020316426241571,
+            "noise": 0.3849108555093336,
+            "whiteOffset": 1.0486936348657612,
+            "whiteFirmGap": 1.4692645620629412
           },
           {
-            "alpha_m2s": 1.5144902371100276e-7,
-            "logDoseOffset": -0.14104018489940137,
-            "tauAirScale": 1.0692658909023873,
-            "noise": 0.4632061394709233,
-            "whiteOffset": -0.022001964350138757,
-            "whiteFirmGap": 1.1155598595567309
+            "alpha_m2s": 1.7778552697357933e-7,
+            "logDoseOffset": 0.04577853842070649,
+            "tauAirScale": 1.0069201624914839,
+            "noise": 0.357065197354247,
+            "whiteOffset": 1.0682123574831595,
+            "whiteFirmGap": 1.583954280581434
           },
           {
-            "alpha_m2s": 1.5808737803607135e-7,
-            "logDoseOffset": -0.1288371548514661,
-            "tauAirScale": 1.0627726336345036,
-            "noise": 0.4460530627434246,
-            "whiteOffset": -0.03022582817312366,
-            "whiteFirmGap": 1.1379914211402702
+            "alpha_m2s": 1.7448032564395508e-7,
+            "logDoseOffset": 0.01288800694444435,
+            "tauAirScale": 0.9938469634202891,
+            "noise": 0.37078764606670855,
+            "whiteOffset": 1.0479759278487046,
+            "whiteFirmGap": 1.4424509411194608
           },
           {
-            "alpha_m2s": 1.545096283746613e-7,
-            "logDoseOffset": -0.12230990499139718,
-            "tauAirScale": 1.0663543392628239,
-            "noise": 0.42897659252995995,
-            "whiteOffset": -0.033212690916370025,
-            "whiteFirmGap": 1.1761291072116078
+            "alpha_m2s": 1.777481363968187e-7,
+            "logDoseOffset": 0.08113431841233579,
+            "tauAirScale": 1.0211700388614293,
+            "noise": 0.39848991138508477,
+            "whiteOffset": 1.0592974967727433,
+            "whiteFirmGap": 1.4539966474294828
           },
           {
-            "alpha_m2s": 1.5026946000220716e-7,
-            "logDoseOffset": -0.13780749751663385,
-            "tauAirScale": 1.0210860460030973,
-            "noise": 0.45577926334315144,
-            "whiteOffset": -0.06299459855679657,
-            "whiteFirmGap": 1.2534644491414404
+            "alpha_m2s": 1.7248988767899e-7,
+            "logDoseOffset": 0.04998880748765884,
+            "tauAirScale": 1.0309714366706002,
+            "noise": 0.3764154071337005,
+            "whiteOffset": 1.0475890287246807,
+            "whiteFirmGap": 1.3734462912777083
           },
           {
-            "alpha_m2s": 1.4847244567141216e-7,
-            "logDoseOffset": -0.13899632642294585,
-            "tauAirScale": 1.0308086627498358,
-            "noise": 0.45549444617202556,
-            "whiteOffset": -0.046370691935513665,
-            "whiteFirmGap": 1.2095370572512196
+            "alpha_m2s": 1.6773867238131818e-7,
+            "logDoseOffset": 0.03271027107901554,
+            "tauAirScale": 1.0550914911853397,
+            "noise": 0.3804815529306711,
+            "whiteOffset": 1.0184306619113603,
+            "whiteFirmGap": 1.4224807001813229
           },
           {
-            "alpha_m2s": 1.5297809979397038e-7,
-            "logDoseOffset": -0.16972958539218597,
-            "tauAirScale": 1.058143008535226,
-            "noise": 0.4915249965991138,
-            "whiteOffset": -0.03370243732116061,
-            "whiteFirmGap": 1.1146811713378877
+            "alpha_m2s": 1.641995938084954e-7,
+            "logDoseOffset": 0.03396378688466071,
+            "tauAirScale": 1.0251003659286508,
+            "noise": 0.350589269027055,
+            "whiteOffset": 1.0539701884380965,
+            "whiteFirmGap": 1.4915807592039392
           },
           {
-            "alpha_m2s": 1.4741281287568755e-7,
-            "logDoseOffset": -0.1834728907925782,
-            "tauAirScale": 1.0656684672741699,
-            "noise": 0.4971276396258352,
-            "whiteOffset": -0.02558843420469473,
-            "whiteFirmGap": 1.209132534375387
+            "alpha_m2s": 1.6849023309471869e-7,
+            "logDoseOffset": 0.02146180270928434,
+            "tauAirScale": 0.9280658688263804,
+            "noise": 0.3702666239216146,
+            "whiteOffset": 1.0748621472229472,
+            "whiteFirmGap": 1.4772717039875396
           },
           {
-            "alpha_m2s": 1.5960809148441107e-7,
-            "logDoseOffset": -0.19576818615192143,
-            "tauAirScale": 1.077271910248218,
-            "noise": 0.5306838166078836,
-            "whiteOffset": -0.022991013366134634,
-            "whiteFirmGap": 1.168746167007581
+            "alpha_m2s": 1.6762704329150752e-7,
+            "logDoseOffset": 0.027737358303065528,
+            "tauAirScale": 0.999054285568659,
+            "noise": 0.37260147398013604,
+            "whiteOffset": 1.0325211479273064,
+            "whiteFirmGap": 1.4267986776567905
           },
           {
-            "alpha_m2s": 1.588428111881796e-7,
-            "logDoseOffset": -0.16504174052397058,
-            "tauAirScale": 1.0612116727561662,
-            "noise": 0.5181165318498505,
-            "whiteOffset": -0.025629809277767708,
-            "whiteFirmGap": 1.116077335992454
+            "alpha_m2s": 1.691031004687529e-7,
+            "logDoseOffset": 0.036892044749354355,
+            "tauAirScale": 1.008722465885949,
+            "noise": 0.3578086023571256,
+            "whiteOffset": 1.0962657255688113,
+            "whiteFirmGap": 1.434721740533048
           },
           {
-            "alpha_m2s": 1.544162633672131e-7,
-            "logDoseOffset": -0.1957247279732503,
-            "tauAirScale": 1.0644778195910929,
-            "noise": 0.5351164354842172,
-            "whiteOffset": -0.04138876463636656,
-            "whiteFirmGap": 1.145687123141931
+            "alpha_m2s": 1.763458571768724e-7,
+            "logDoseOffset": 0.04393672428059971,
+            "tauAirScale": 1.0101323963369337,
+            "noise": 0.3575518343360537,
+            "whiteOffset": 1.066614356447382,
+            "whiteFirmGap": 1.4411777820970655
           },
           {
-            "alpha_m2s": 1.5739363315444802e-7,
-            "logDoseOffset": -0.19354414784759943,
-            "tauAirScale": 1.0170955120767686,
-            "noise": 0.49680884091429167,
-            "whiteOffset": -0.03781171456057328,
-            "whiteFirmGap": 1.1658256378272587
+            "alpha_m2s": 1.758967305754424e-7,
+            "logDoseOffset": 0.045679542446918964,
+            "tauAirScale": 0.9874604437443052,
+            "noise": 0.38628479636365654,
+            "whiteOffset": 1.0470736383960613,
+            "whiteFirmGap": 1.4557412481289533
           },
           {
-            "alpha_m2s": 1.5723502788354283e-7,
-            "logDoseOffset": -0.16149166541033097,
-            "tauAirScale": 1.027178288150613,
-            "noise": 0.5192829599193846,
-            "whiteOffset": -0.04000705258550881,
-            "whiteFirmGap": 1.1615224132056958
+            "alpha_m2s": 1.7637729261779933e-7,
+            "logDoseOffset": 0.02530387549320643,
+            "tauAirScale": 1.0378855555219837,
+            "noise": 0.36746381382974613,
+            "whiteOffset": 1.048126361436473,
+            "whiteFirmGap": 1.4887505757789832
           },
           {
-            "alpha_m2s": 1.5920596087597113e-7,
-            "logDoseOffset": -0.17165028468652838,
-            "tauAirScale": 1.059670054374146,
-            "noise": 0.5517522971736823,
-            "whiteOffset": -0.05611212670044108,
-            "whiteFirmGap": 1.0918402064442316
+            "alpha_m2s": 1.6976446188691342e-7,
+            "logDoseOffset": 0.03117545321772319,
+            "tauAirScale": 1.0016868024484742,
+            "noise": 0.3793205919203195,
+            "whiteOffset": 1.0388262729580693,
+            "whiteFirmGap": 1.4880331349110927
           },
           {
-            "alpha_m2s": 1.6070072926629747e-7,
-            "logDoseOffset": -0.17177655482444795,
-            "tauAirScale": 1.0305934085395665,
-            "noise": 0.5085220115881844,
-            "whiteOffset": 0.006602629400157191,
-            "whiteFirmGap": 1.17754719243557
+            "alpha_m2s": 1.7290512499312665e-7,
+            "logDoseOffset": 0.052194542825225884,
+            "tauAirScale": 0.9920344186872496,
+            "noise": 0.3776144553976004,
+            "whiteOffset": 1.0791003102149774,
+            "whiteFirmGap": 1.5107833244851456
           },
           {
-            "alpha_m2s": 1.6003699491671737e-7,
-            "logDoseOffset": -0.1915702489774206,
-            "tauAirScale": 1.0637221387667017,
-            "noise": 0.5191696953793007,
-            "whiteOffset": -0.032879308914782183,
-            "whiteFirmGap": 1.1465264418704446
+            "alpha_m2s": 1.7076123916119526e-7,
+            "logDoseOffset": 0.014090507485119922,
+            "tauAirScale": 0.9585524046737901,
+            "noise": 0.3895206705062314,
+            "whiteOffset": 1.0453247016704674,
+            "whiteFirmGap": 1.4334352503064112
           },
           {
-            "alpha_m2s": 1.5829922747579435e-7,
-            "logDoseOffset": -0.18671255400684972,
-            "tauAirScale": 1.0571119309450727,
-            "noise": 0.5092710485016404,
-            "whiteOffset": -0.023475432694891434,
-            "whiteFirmGap": 1.0963235332285424
+            "alpha_m2s": 1.7230814765610803e-7,
+            "logDoseOffset": 0.046824542712685,
+            "tauAirScale": 0.9736957719886387,
+            "noise": 0.3672952282560694,
+            "whiteOffset": 1.0654808559749172,
+            "whiteFirmGap": 1.4561730214451896
           },
           {
-            "alpha_m2s": 1.6512551311664882e-7,
-            "logDoseOffset": -0.17310276796147084,
-            "tauAirScale": 1.0440353547766248,
-            "noise": 0.5183784684267163,
-            "whiteOffset": -0.018078524738099573,
-            "whiteFirmGap": 1.11328134457044
+            "alpha_m2s": 1.6809265333371722e-7,
+            "logDoseOffset": 0.03767457375655803,
+            "tauAirScale": 1.0096481764251755,
+            "noise": 0.36051037510979805,
+            "whiteOffset": 1.0577038564715184,
+            "whiteFirmGap": 1.5013276738709505
           },
           {
-            "alpha_m2s": 1.571495746283632e-7,
-            "logDoseOffset": -0.16985168268552522,
-            "tauAirScale": 1.0937689217825457,
-            "noise": 0.5355025826338439,
-            "whiteOffset": -0.022826986699627905,
-            "whiteFirmGap": 1.1848765379703612
+            "alpha_m2s": 1.6961565144542766e-7,
+            "logDoseOffset": 0.055392602297823744,
+            "tauAirScale": 1.023604755854484,
+            "noise": 0.35755236395195533,
+            "whiteOffset": 1.0475744445697737,
+            "whiteFirmGap": 1.4578022236255712
           },
           {
-            "alpha_m2s": 1.5451094082057851e-7,
-            "logDoseOffset": -0.17519605419227385,
-            "tauAirScale": 1.082591053312498,
-            "noise": 0.5068823452067478,
-            "whiteOffset": -0.04215758994319902,
-            "whiteFirmGap": 1.188871197255548
+            "alpha_m2s": 1.744453706188995e-7,
+            "logDoseOffset": 0.032502483148076744,
+            "tauAirScale": 0.953973974529498,
+            "noise": 0.3408423417093109,
+            "whiteOffset": 1.0253169070175812,
+            "whiteFirmGap": 1.5936090783198984
           },
           {
-            "alpha_m2s": 1.6155700289639996e-7,
-            "logDoseOffset": -0.15772300895657795,
-            "tauAirScale": 1.0286547808729214,
-            "noise": 0.5267453663987861,
-            "whiteOffset": -0.043712584855016064,
-            "whiteFirmGap": 1.205407134680154
+            "alpha_m2s": 1.7681651783651117e-7,
+            "logDoseOffset": 0.001895666505952933,
+            "tauAirScale": 0.9434324653005023,
+            "noise": 0.34321220195753316,
+            "whiteOffset": 1.0264713153742282,
+            "whiteFirmGap": 1.6569161639932652
           },
           {
-            "alpha_m2s": 1.592908466753337e-7,
-            "logDoseOffset": -0.1829172130992864,
-            "tauAirScale": 1.0561841571356612,
-            "noise": 0.5143207182462759,
-            "whiteOffset": -0.04004836211377612,
-            "whiteFirmGap": 1.1937453186155473
+            "alpha_m2s": 1.709816832626968e-7,
+            "logDoseOffset": 0.028710959111893815,
+            "tauAirScale": 0.964023346555072,
+            "noise": 0.3434880495277812,
+            "whiteOffset": 1.0095044371847168,
+            "whiteFirmGap": 1.6637235824346837
           },
           {
-            "alpha_m2s": 1.5829567317876861e-7,
-            "logDoseOffset": -0.17011916442736247,
-            "tauAirScale": 1.0198012710717843,
-            "noise": 0.4915285563337315,
-            "whiteOffset": -0.0369461546530144,
-            "whiteFirmGap": 1.176017664388703
+            "alpha_m2s": 1.6686394521349163e-7,
+            "logDoseOffset": 0.004103087827106056,
+            "tauAirScale": 0.9217822897227599,
+            "noise": 0.3625488743203548,
+            "whiteOffset": 1.0253301569681181,
+            "whiteFirmGap": 1.581533151749151
           },
           {
-            "alpha_m2s": 1.598875883968882e-7,
-            "logDoseOffset": -0.16817154451280183,
-            "tauAirScale": 1.0057416246099256,
-            "noise": 0.49472054956400296,
-            "whiteOffset": -0.04101951196357613,
-            "whiteFirmGap": 1.2321995900136091
+            "alpha_m2s": 1.7376011643489317e-7,
+            "logDoseOffset": -0.00019998124880024268,
+            "tauAirScale": 0.8805744549157086,
+            "noise": 0.3493118944722009,
+            "whiteOffset": 0.9955132340757692,
+            "whiteFirmGap": 1.6740618767148039
           },
           {
-            "alpha_m2s": 1.5790499089570746e-7,
-            "logDoseOffset": -0.20910450691813598,
-            "tauAirScale": 1.044783543228429,
-            "noise": 0.5179630716117491,
-            "whiteOffset": -0.04080518780144192,
-            "whiteFirmGap": 1.2397545580292955
+            "alpha_m2s": 1.7281549471201274e-7,
+            "logDoseOffset": 0.042334815845002316,
+            "tauAirScale": 0.9152683303160521,
+            "noise": 0.36372086034922524,
+            "whiteOffset": 1.0531946666774092,
+            "whiteFirmGap": 1.7340208254677165
           },
           {
-            "alpha_m2s": 1.5269806913145128e-7,
-            "logDoseOffset": -0.19856160886272486,
-            "tauAirScale": 1.008612782798447,
-            "noise": 0.5096585123564306,
-            "whiteOffset": -0.06365556107490992,
-            "whiteFirmGap": 1.2082733453397536
+            "alpha_m2s": 1.784989076004498e-7,
+            "logDoseOffset": 0.025601797701463473,
+            "tauAirScale": 0.9423639785827642,
+            "noise": 0.31920863898173213,
+            "whiteOffset": 1.0274257935606712,
+            "whiteFirmGap": 1.5980071194288883
           },
           {
-            "alpha_m2s": 1.6116392367325181e-7,
-            "logDoseOffset": -0.1855974440578125,
-            "tauAirScale": 1.0766301790690251,
-            "noise": 0.49391699339006323,
-            "whiteOffset": -0.060816063664343493,
-            "whiteFirmGap": 1.2326266672292359
+            "alpha_m2s": 1.6992964778343968e-7,
+            "logDoseOffset": 0.03298899964933061,
+            "tauAirScale": 0.881990419374398,
+            "noise": 0.3503853036844205,
+            "whiteOffset": 1.0212657892189096,
+            "whiteFirmGap": 1.574580531369204
           },
           {
-            "alpha_m2s": 1.5482055377038528e-7,
-            "logDoseOffset": -0.18221056582866993,
-            "tauAirScale": 1.0875677820719845,
-            "noise": 0.540914926327923,
-            "whiteOffset": -0.05450442969414771,
-            "whiteFirmGap": 1.2182353177647924
+            "alpha_m2s": 1.631617973180205e-7,
+            "logDoseOffset": 0.019553627930004477,
+            "tauAirScale": 0.8992424804062139,
+            "noise": 0.354040692714377,
+            "whiteOffset": 1.023033416559302,
+            "whiteFirmGap": 1.6727513093458817
           },
           {
-            "alpha_m2s": 1.6028028322007766e-7,
-            "logDoseOffset": -0.16607076107951305,
-            "tauAirScale": 1.0752048618063181,
-            "noise": 0.48335822852269816,
-            "whiteOffset": -0.053711882155776935,
-            "whiteFirmGap": 1.2633150123297727
+            "alpha_m2s": 1.729115605232899e-7,
+            "logDoseOffset": 0.001263386778114571,
+            "tauAirScale": 0.8792680238774068,
+            "noise": 0.3608616940521852,
+            "whiteOffset": 1.0177342399952423,
+            "whiteFirmGap": 1.6167661229452286
           },
           {
-            "alpha_m2s": 1.5864877047640618e-7,
-            "logDoseOffset": -0.18839499263169002,
-            "tauAirScale": 1.0618543433600958,
-            "noise": 0.502858446441403,
-            "whiteOffset": -0.04157346246170953,
-            "whiteFirmGap": 1.1257168172017198
+            "alpha_m2s": 1.6348999749306572e-7,
+            "logDoseOffset": 0.0010454065069392567,
+            "tauAirScale": 0.8986612511942953,
+            "noise": 0.33800383156294117,
+            "whiteOffset": 1.0173488047436194,
+            "whiteFirmGap": 1.6073057225222358
           },
           {
-            "alpha_m2s": 1.4785800147521214e-7,
-            "logDoseOffset": -0.11954584058598133,
-            "tauAirScale": 1.0681886785974937,
-            "noise": 0.48849126115935043,
-            "whiteOffset": -0.009662526571778466,
-            "whiteFirmGap": 1.2117836200680474
+            "alpha_m2s": 1.694254828690281e-7,
+            "logDoseOffset": 0.02530814502195656,
+            "tauAirScale": 0.9465629686743088,
+            "noise": 0.33277192896067376,
+            "whiteOffset": 1.0397562506370435,
+            "whiteFirmGap": 1.7140891856954952
           },
           {
-            "alpha_m2s": 1.46666985087731e-7,
-            "logDoseOffset": -0.1401565124139399,
-            "tauAirScale": 1.0198340377795743,
-            "noise": 0.46305183462472493,
-            "whiteOffset": -0.028058666881378702,
-            "whiteFirmGap": 1.1810366714526348
+            "alpha_m2s": 1.7469480675757944e-7,
+            "logDoseOffset": 0.025658651126070908,
+            "tauAirScale": 0.9407000030984973,
+            "noise": 0.3290924927397586,
+            "whiteOffset": 1.0004771487983715,
+            "whiteFirmGap": 1.6212668177786045
           },
           {
-            "alpha_m2s": 1.5093860834264956e-7,
-            "logDoseOffset": -0.15601399872989205,
-            "tauAirScale": 1.00202598098035,
-            "noise": 0.465770807351303,
-            "whiteOffset": -0.05269578749993711,
-            "whiteFirmGap": 1.156049635171863
+            "alpha_m2s": 1.6623214674508126e-7,
+            "logDoseOffset": -0.007676011553655715,
+            "tauAirScale": 0.944102454839628,
+            "noise": 0.33737353534450315,
+            "whiteOffset": 1.019191979504745,
+            "whiteFirmGap": 1.6725904297120275
           },
           {
-            "alpha_m2s": 1.5249300707794663e-7,
-            "logDoseOffset": -0.0675727617860577,
-            "tauAirScale": 1.0213603534693059,
-            "noise": 0.2530877818367237,
-            "whiteOffset": 0.28608795982555796,
-            "whiteFirmGap": 0.9396184851373245
+            "alpha_m2s": 1.7456545191138016e-7,
+            "logDoseOffset": 0.056888815759789324,
+            "tauAirScale": 0.9341417096230218,
+            "noise": 0.3511196147394208,
+            "whiteOffset": 1.0245717816530757,
+            "whiteFirmGap": 1.668864423056705
           },
           {
-            "alpha_m2s": 1.4670208641696037e-7,
-            "logDoseOffset": -0.07757603791177106,
-            "tauAirScale": 1.0547519984590366,
-            "noise": 0.21602789957115065,
-            "whiteOffset": 0.26214429492889946,
-            "whiteFirmGap": 0.8785246446242035
+            "alpha_m2s": 1.7235488741359147e-7,
+            "logDoseOffset": 0.03916881533803587,
+            "tauAirScale": 0.958076376641428,
+            "noise": 0.3507246172921932,
+            "whiteOffset": 1.0084892812708006,
+            "whiteFirmGap": 1.5525698080758785
           },
           {
-            "alpha_m2s": 1.6691613587171586e-7,
-            "logDoseOffset": 0.1590541399635846,
-            "tauAirScale": 1.5130338333051154,
-            "noise": 0.27955968596716485,
-            "whiteOffset": 0.6970611722167893,
-            "whiteFirmGap": 0.9567043700826269
+            "alpha_m2s": 1.7518653883281186e-7,
+            "logDoseOffset": 0.022474993439704927,
+            "tauAirScale": 0.9170465553476269,
+            "noise": 0.3520361467092755,
+            "whiteOffset": 1.0090303993697523,
+            "whiteFirmGap": 1.701980840518524
           },
           {
-            "alpha_m2s": 1.637865281128074e-7,
-            "logDoseOffset": 0.160998326206765,
-            "tauAirScale": 1.4191802191133283,
-            "noise": 0.2723672640237635,
-            "whiteOffset": 0.6876602517873777,
-            "whiteFirmGap": 0.9891353589423684
+            "alpha_m2s": 1.7105588928050053e-7,
+            "logDoseOffset": 0.05710955736023331,
+            "tauAirScale": 0.9051541917716366,
+            "noise": 0.3395649268914213,
+            "whiteOffset": 1.0239965355013547,
+            "whiteFirmGap": 1.58695128188232
           },
           {
-            "alpha_m2s": 1.605300112224806e-7,
-            "logDoseOffset": 0.1886707358085587,
-            "tauAirScale": 1.4077566273643058,
-            "noise": 0.2800658178421573,
-            "whiteOffset": 0.6785538126300772,
-            "whiteFirmGap": 0.9742553199119331
+            "alpha_m2s": 1.7457288676105036e-7,
+            "logDoseOffset": 0.026924953285065077,
+            "tauAirScale": 0.8733183568116573,
+            "noise": 0.3508475158949241,
+            "whiteOffset": 1.0372042787433058,
+            "whiteFirmGap": 1.7832548052624195
           },
           {
-            "alpha_m2s": 1.5893019229236953e-7,
-            "logDoseOffset": 0.18867258821090552,
-            "tauAirScale": 1.368512158924976,
-            "noise": 0.27937352443776386,
-            "whiteOffset": 0.6764572092548088,
-            "whiteFirmGap": 0.9408572381475006
+            "alpha_m2s": 1.7825810799666838e-7,
+            "logDoseOffset": 0.03867014842988807,
+            "tauAirScale": 0.9186797733416736,
+            "noise": 0.33731782052933634,
+            "whiteOffset": 1.008045787191173,
+            "whiteFirmGap": 1.7013974231284152
           },
           {
-            "alpha_m2s": 1.4777328770381303e-7,
-            "logDoseOffset": 0.051546872209672426,
-            "tauAirScale": 0.37406785741107584,
-            "noise": 0.36893036147055547,
-            "whiteOffset": -0.05105147335060105,
-            "whiteFirmGap": 1.3873173864775696
+            "alpha_m2s": 1.7452019105285876e-7,
+            "logDoseOffset": 0.02076782345109963,
+            "tauAirScale": 0.8960190864797077,
+            "noise": 0.3348079681530081,
+            "whiteOffset": 1.0117009558645877,
+            "whiteFirmGap": 1.5296439950706568
           },
           {
-            "alpha_m2s": 1.579021727863071e-7,
-            "logDoseOffset": -0.0344886872076678,
-            "tauAirScale": 1.4464804707045484,
-            "noise": 0.5535195680724128,
-            "whiteOffset": 0.06472328310663217,
-            "whiteFirmGap": 2.95024526305743
+            "alpha_m2s": 1.7514039104903318e-7,
+            "logDoseOffset": 0.05755590031154298,
+            "tauAirScale": 0.8874591240946642,
+            "noise": 0.3384520286955216,
+            "whiteOffset": 1.0218831406545024,
+            "whiteFirmGap": 1.6812348912994075
           },
           {
-            "alpha_m2s": 1.6467878868851768e-7,
-            "logDoseOffset": 0.3004145177686292,
-            "tauAirScale": 1.489730903186511,
-            "noise": 0.31761431163820014,
-            "whiteOffset": 0.18332757034151287,
-            "whiteFirmGap": 1.3648378655904456
+            "alpha_m2s": 1.7537834870897385e-7,
+            "logDoseOffset": 0.036265241920669634,
+            "tauAirScale": 0.9867531951428391,
+            "noise": 0.35246165071406804,
+            "whiteOffset": 1.0317120185732434,
+            "whiteFirmGap": 1.6152854762384332
           },
           {
-            "alpha_m2s": 1.6250934117710713e-7,
-            "logDoseOffset": 0.3211111768586398,
-            "tauAirScale": 1.5381595919246493,
-            "noise": 0.32248596587530703,
-            "whiteOffset": 0.19415791776486171,
-            "whiteFirmGap": 1.4093433227949286
+            "alpha_m2s": 1.7450999346870845e-7,
+            "logDoseOffset": 0.010884041639026776,
+            "tauAirScale": 0.9514190134813199,
+            "noise": 0.3423654003867668,
+            "whiteOffset": 1.0337301871911753,
+            "whiteFirmGap": 1.7414766079406239
           },
           {
-            "alpha_m2s": 1.6717510869115197e-7,
-            "logDoseOffset": 0.2949578277314495,
-            "tauAirScale": 1.529100513066977,
-            "noise": 0.3088325444823625,
-            "whiteOffset": 0.21255053794946568,
-            "whiteFirmGap": 1.3933866623675522
+            "alpha_m2s": 1.679484592814558e-7,
+            "logDoseOffset": 0.06785642940492742,
+            "tauAirScale": 0.8849576730559887,
+            "noise": 0.3967428799011303,
+            "whiteOffset": 1.0578054610070386,
+            "whiteFirmGap": 1.2825346886440163
           },
           {
-            "alpha_m2s": 1.6042438776509337e-7,
-            "logDoseOffset": 0.2574170124027233,
-            "tauAirScale": 1.4885387699426043,
-            "noise": 0.2976607314072375,
-            "whiteOffset": 0.18070374225127978,
-            "whiteFirmGap": 1.474505713142598
+            "alpha_m2s": 1.783570556832964e-7,
+            "logDoseOffset": 0.054077977165476104,
+            "tauAirScale": 0.9141312080415173,
+            "noise": 0.39571676318678195,
+            "whiteOffset": 1.037652412144423,
+            "whiteFirmGap": 1.3191063649927786
           },
           {
-            "alpha_m2s": 1.6152987466471857e-7,
-            "logDoseOffset": 0.2752031596022599,
-            "tauAirScale": 1.5515552523124418,
-            "noise": 0.32526752655995234,
-            "whiteOffset": 0.19048744947991428,
-            "whiteFirmGap": 1.359795078057425
+            "alpha_m2s": 1.7685598219100746e-7,
+            "logDoseOffset": 0.0634311479226515,
+            "tauAirScale": 0.9335345103430523,
+            "noise": 0.4039535872997005,
+            "whiteOffset": 1.0519501616373181,
+            "whiteFirmGap": 1.310084671636266
           },
           {
-            "alpha_m2s": 1.629423677150637e-7,
-            "logDoseOffset": 0.3091835250386251,
-            "tauAirScale": 1.4719412069518298,
-            "noise": 0.31993174949999276,
-            "whiteOffset": 0.18534330266223714,
-            "whiteFirmGap": 1.3733224283862002
+            "alpha_m2s": 1.7003275270661174e-7,
+            "logDoseOffset": 0.0449120025827695,
+            "tauAirScale": 0.8934526388709073,
+            "noise": 0.4117248002413601,
+            "whiteOffset": 1.0754422702222508,
+            "whiteFirmGap": 1.3631620762291456
           },
           {
-            "alpha_m2s": 1.6498012027226257e-7,
-            "logDoseOffset": 0.2611509032386527,
-            "tauAirScale": 1.5656121253385522,
-            "noise": 0.3244820199677726,
-            "whiteOffset": 0.19279949961947912,
-            "whiteFirmGap": 1.4066480701335022
+            "alpha_m2s": 1.6926463761892992e-7,
+            "logDoseOffset": 0.07806893380245714,
+            "tauAirScale": 0.9706063188473456,
+            "noise": 0.4122781680276546,
+            "whiteOffset": 1.0611923063457582,
+            "whiteFirmGap": 1.2770612082720671
           },
           {
-            "alpha_m2s": 1.6858410440338208e-7,
-            "logDoseOffset": 0.2880397780854662,
-            "tauAirScale": 1.5164659823534496,
-            "noise": 0.33029042988196045,
-            "whiteOffset": 0.18096119551197914,
-            "whiteFirmGap": 1.3285008057542833
+            "alpha_m2s": 1.6533705665965095e-7,
+            "logDoseOffset": 0.03355393270808402,
+            "tauAirScale": 0.9047948701622197,
+            "noise": 0.409673024835377,
+            "whiteOffset": 1.0531760630398115,
+            "whiteFirmGap": 1.2944256588533825
           },
           {
-            "alpha_m2s": 1.640219878868982e-7,
-            "logDoseOffset": 0.0388930100799017,
-            "tauAirScale": 0.9184869420460989,
-            "noise": 0.3564618415447812,
-            "whiteOffset": 1.0088236129217267,
-            "whiteFirmGap": 1.4781900547033937
+            "alpha_m2s": 1.672293613479372e-7,
+            "logDoseOffset": 0.049443289055895526,
+            "tauAirScale": 0.9364265565799051,
+            "noise": 0.40316977356751194,
+            "whiteOffset": 1.0547157969583836,
+            "whiteFirmGap": 1.3803269082017549
           },
           {
-            "alpha_m2s": 1.7236032222226533e-7,
-            "logDoseOffset": 0.034572892847027796,
-            "tauAirScale": 0.9913328110498142,
-            "noise": 0.374180747665521,
-            "whiteOffset": 1.0538240649428186,
-            "whiteFirmGap": 1.4632551762865353
+            "alpha_m2s": 1.6741873772444388e-7,
+            "logDoseOffset": 0.01904974001093876,
+            "tauAirScale": 0.944918442203513,
+            "noise": 0.4101043838859229,
+            "whiteOffset": 1.034840757744202,
+            "whiteFirmGap": 1.4482063205322393
           },
           {
-            "alpha_m2s": 1.7284103433901495e-7,
-            "logDoseOffset": 0.021630221557420126,
-            "tauAirScale": 0.9244934796773756,
-            "noise": 0.3449035055715237,
-            "whiteOffset": 1.0178067477535924,
-            "whiteFirmGap": 1.6480415538303324
+            "alpha_m2s": 1.7311285654864408e-7,
+            "logDoseOffset": 0.057415682917836795,
+            "tauAirScale": 0.8414488531995001,
+            "noise": 0.37193613510829104,
+            "whiteOffset": 1.0926347589486114,
+            "whiteFirmGap": 1.4034846838063773
           },
           {
-            "alpha_m2s": 1.7002864962695025e-7,
-            "logDoseOffset": 0.05060904116126538,
-            "tauAirScale": 0.9097867603007427,
-            "noise": 0.39831011836141367,
-            "whiteOffset": 1.0526012403639848,
-            "whiteFirmGap": 1.332809301368395
+            "alpha_m2s": 1.6764022236886445e-7,
+            "logDoseOffset": 0.03507992370586525,
+            "tauAirScale": 0.9143719978695993,
+            "noise": 0.4083769726346749,
+            "whiteOffset": 1.0709690198073127,
+            "whiteFirmGap": 1.279967831696233
           }
         ]
       }

@@ -29,13 +29,13 @@ import { Feedback, Particle, WhiteReport } from '../core/infer.js';
 import { DecisionInputs, decisionGridRequest } from '../core/decide.js';
 import { CALIBRATION_SEED, PARTICLE_COUNT, calibrationGrid } from '../core/policy.js';
 import {
-  Calibration, EggFrom, EggRecord, GridRequest, MassFrom, PRIOR_ID, RECORD_VERSION,
+  Calibration, EggFrom, EggRecord, GridRequest, MassFrom, PRIOR_ID, ProbeReading, RECORD_VERSION,
   buildRequestedGrid, calibrationDoneness as donenessOf, calibrationParams as paramsOf,
   copyCalibration, foldRecord, freshCalibration as freshFrom, gridRequestFor, parseLog,
   recordMass_g, recordTeaches,
 } from '../core/record.js';
 import { UnitSystem } from '../core/units.js';
-import { COOLING_SECONDS, Machine } from './machine.js';
+import { Machine } from './machine.js';
 import { readStorage, writeStorage, removeStorage } from './store.js';
 
 export type { Calibration } from '../core/record.js';
@@ -141,8 +141,9 @@ export function localDay(ms: number): string {
 
 /**
  * The record of one egg, from the cook that was started and the machine that
- * ran it, with whichever answers have been given so far. The white is always
- * offered since E2, so `whiteOffered` is always true.
+ * ran it, with whichever answers have been given so far, and the probe reading
+ * if there is one (E4). The white is always offered since E2, so
+ * `whiteOffered` is always true.
  *
  * `pulled_s` is the cook's own tap out of PULL when there was one. When the
  * grace ran out instead, nobody said when the egg came out, and the record says
@@ -151,6 +152,7 @@ export function localDay(ms: number): string {
  */
 export function eggRecordFor(
   c: Cooked, m: Machine, yolk: Feedback | null, white: WhiteReport | null = null,
+  probe: ProbeReading | null = null,
 ): EggRecord {
   const measured = m.pulledBy === 'cook' && m.outAt_ms > m.startedAt_ms;
   return {
@@ -184,11 +186,11 @@ export function eggRecordFor(
     nudge_s: 0,
     pulled_s: measured ? (m.outAt_ms - m.startedAt_ms) / 1000 : m.cookTime_s,
     pulledBy: measured ? 'cook' : 'timeout',
-    cooled_s: m.cooling === 'counter' ? 0 : COOLING_SECONDS,
+    cooled_s: m.cooling === 'counter' ? 0 : m.cool_s,
     yolk: yolk,
     white: white,
     whiteOffered: true,
-    probe: null,
+    probe: probe,
     lang: c.lang,
     register: 'modern',
     units: c.units,
@@ -511,7 +513,9 @@ function assign(into: Calibration, from: Calibration): void {
 
 /**
  * The cook's second answer about an egg already written down - the yolk after
- * the white, or the white after the yolk.
+ * the white, the white after the yolk, or a probe reading before or after
+ * either (E4). "Second" means any answer after the first: each one refolds
+ * the egg with everything it now holds.
  *
  * If the egg has not been folded yet (its surface is still being built), the
  * answer is simply written into its record, and the fold picks up both. If it
@@ -525,15 +529,17 @@ function assign(into: Calibration, from: Calibration): void {
  * Returns whether the answer was taken.
  */
 export async function recordSecondAnswer(
-  index: number, answer: { yolk?: Feedback; white?: WhiteReport },
+  index: number, answer: { yolk?: Feedback; white?: WhiteReport; probe?: ProbeReading },
 ): Promise<boolean> {
   const r = kept.log[index];
   if (r === undefined || index !== kept.log.length - 1) return false;
   if (answer.yolk !== undefined && r.yolk !== null) return false;
   if (answer.white !== undefined && r.white !== null) return false;
+  if (answer.probe !== undefined && r.probe !== null) return false;
   if (kept.folded <= index) {
     if (answer.yolk !== undefined) r.yolk = answer.yolk;
     if (answer.white !== undefined) r.white = answer.white;
+    if (answer.probe !== undefined) r.probe = answer.probe;
     save();
     await learn(index);
     return true;
@@ -542,6 +548,7 @@ export async function recordSecondAnswer(
   if (o === null || o.index !== index || o.record !== r || kept.folded !== index + 1) return false;
   if (answer.yolk !== undefined) r.yolk = answer.yolk;
   if (answer.white !== undefined) r.white = answer.white;
+  if (answer.probe !== undefined) r.probe = answer.probe;
   const again = copyCalibration(o.before);
   foldRecord(again, r, o.grid);
   assign(kept.calibration, again);

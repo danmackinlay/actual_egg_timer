@@ -462,6 +462,20 @@ button.fb[aria-pressed="true"], button.wb[aria-pressed="true"] {
 }
 #feedbackOptional, #calibNote { text-align: center; margin: 8px 0 0; min-height: 1.1em; }
 
+/* ---- the thermometer (E4) ---- */
+.field--check .check { display: flex; align-items: center; gap: 10px; color: var(--fg); cursor: pointer; }
+.field--check input[type="checkbox"] { width: 22px; height: 22px; margin: 0; accent-color: var(--accent); }
+.field--check { display: block; }
+#probeOffer { margin-top: 10px; text-align: center; }
+#probeOffer .hint { margin: 0 0 8px; font-size: 0.875rem; color: var(--dim); }
+#probeOffer .seg { display: flex; gap: 8px; }
+#probeOffer button { margin-top: 0; }
+#probeEntry { margin-bottom: 14px; text-align: center; }
+#probeNow { margin: 0 0 4px; font-size: 0.9375rem; color: var(--fg); font-weight: 600; }
+#probeHint, #probeNote { margin: 0 0 8px; font-size: 0.875rem; color: var(--dim); min-height: 1.1em; }
+.probe__row { display: flex; align-items: center; justify-content: center; gap: 10px; }
+.probe__row button { width: auto; margin-top: 0; padding: 10px 16px; }
+
 /* ------------------------------------------------- what it has learned */
 
 /* The posterior and the pan, stated where someone can see them, with the way

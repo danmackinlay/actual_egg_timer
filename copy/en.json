@@ -69,7 +69,8 @@
     "readout.sub.cookingCold": { "surface": "body", "apps": ["web"], "text": "boil took {boil} · {after} after the boil", "example": { "boil": "6:40", "after": "3:57" } },
     "readout.sub.cookingHot": { "surface": "body", "apps": ["web"], "text": "in the water" },
     "readout.sub.pull": { "surface": "body", "apps": ["web", "ios"], "text": "the yolk is still cooking" },
-    "readout.sub.cooling": { "surface": "body", "apps": ["web", "ios"], "count": "minutes", "other": "{minutes} minutes, or the yolk keeps cooking", "example": { "minutes": 3 } },
+    "readout.sub.coolingPeak": { "surface": "body", "apps": ["web", "ios"], "note": "E4: the countdown ends when the model has the yolk's centre at its hottest.", "text": "until the middle of the yolk stops warming" },
+    "readout.sub.coolingProbe": { "surface": "body", "apps": ["web", "ios"], "note": "E4: as coolingPeak, for a cook who said they have a probe thermometer.", "text": "until the middle of the yolk stops warming — have the probe ready" },
     "readout.sub.doneCold": { "surface": "body", "apps": ["web"], "text": "{boil} to boil + {cooking} cooking", "example": { "boil": "6:40", "cooking": "4:36" } },
     "readout.sub.doneHot": { "surface": "body", "apps": ["web"], "text": "total in the water" },
     "readout.sub.done": { "surface": "body", "apps": ["ios"], "text": "that is the egg you asked for" },
@@ -133,6 +134,7 @@
     "spoken.pull": { "surface": "a11y", "apps": ["web"], "text": "Take the eggs out now" },
     "spoken.cooling": { "surface": "a11y", "apps": ["web"], "text": "Cooling. {time} left", "example": { "time": "3 minutes 0 seconds" } },
     "spoken.done": { "surface": "a11y", "apps": ["web"], "text": "Eat." },
+    "spoken.probe": { "surface": "a11y", "apps": ["web"], "text": "Now push the probe to the middle of the egg." },
     "spoken.announcement": { "surface": "a11y", "apps": ["web"], "text": "{label}. {spoken}", "example": { "label": "Cooking — keep it boiling", "spoken": "Cooking. 3 minutes 57 seconds left" } },
     "spoken.sousVide": { "surface": "a11y", "apps": ["web"], "note": "{when} is the start phrase, lower-cased by the app.", "text": "Sous-vide. You should have started {when}, {subline}", "example": { "when": "yesterday", "subline": "at 08:47 — 22 h 43 min in the bath (136 °F), to eat now" } },
 
@@ -183,6 +185,8 @@
     "controls.units": { "surface": "label", "apps": ["web", "ios"], "text": "Units" },
     "controls.units.metric": { "surface": "segment", "apps": ["web", "ios"], "text": "Metric" },
     "controls.units.imperial": { "surface": "segment", "apps": ["web", "ios"], "text": "Imperial" },
+    "controls.probe": { "surface": "label", "apps": ["web", "ios"], "text": "I have a probe thermometer" },
+    "controls.probe.hint": { "surface": "body", "apps": ["web", "ios"], "text": "When the cooling ends it asks for one reading from the middle of the egg. That tells it how fast your eggs heat, from a single egg." },
 
     "pan.waterBoilsAt": { "surface": "label", "apps": ["ios"], "text": "Water boils at" },
     "pan.timeToBoil": { "surface": "label", "apps": ["ios"], "text": "Time to boil" },
@@ -215,6 +219,15 @@
     "feedback.white.runny": { "surface": "segment", "apps": ["web", "ios"], "text": "Runny" },
     "feedback.white.tender": { "surface": "segment", "apps": ["web", "ios"], "text": "Tender" },
     "feedback.white.firm": { "surface": "segment", "apps": ["web", "ios"], "text": "Firm" },
+
+    "probe.offer": { "surface": "body", "apps": ["web", "ios"], "note": "E4, the draft in INFERENCE.md section 5 with lowest made highest: when it is read, the middle is the warmest point, so the highest number is the middle and every mistake reads lower.", "text": "Got a probe thermometer? When the timer says, push it to the middle of the egg and tell us the highest number you see." },
+    "probe.offer.yes": { "surface": "button", "apps": ["web", "ios"], "text": "I have one" },
+    "probe.offer.no": { "surface": "button", "apps": ["web", "ios"], "text": "No thanks" },
+    "probe.now": { "surface": "label", "apps": ["web", "ios"], "text": "Push the probe to the middle" },
+    "probe.hint": { "surface": "body", "apps": ["web", "ios"], "text": "Tell us the highest number you see." },
+    "probe.entry": { "surface": "label", "apps": ["web", "ios"], "text": "Highest reading" },
+    "probe.save": { "surface": "button", "apps": ["web", "ios"], "text": "Use this reading" },
+    "probe.refused": { "surface": "body", "apps": ["web", "ios"], "text": "That doesn't look like the middle of this egg: expect {low} to {high}. Is the tip in the yolk?", "example": { "low": "117.7 °F", "high": "179.1 °F" } },
 
     "cook.summary": { "surface": "body", "apps": ["ios"], "note": "{doneness} is a doneness word, lower-cased by the app.", "text": "{mass} · {doneness} · peak yolk {yolk}", "example": { "mass": "2.4 oz", "doneness": "jammy", "yolk": "149 °F" } },
     "cook.method": { "surface": "body", "apps": ["ios"], "text": "{start} · then {after}", "example": { "start": "Cold start", "after": "ice bath" } },
@@ -254,6 +267,8 @@
     "alarm.pull.body": { "surface": "notification.body", "apps": ["ios"], "text": "Straight into the cooling, or the yolk keeps cooking." },
     "alarm.cooled.title": { "surface": "notification.title", "apps": ["ios"], "text": "Cooling done" },
     "alarm.cooled.body": { "surface": "notification.body", "apps": ["ios"], "text": "The carryover is over. That is the egg you asked for." },
+    "alarm.probe.title": { "surface": "notification.title", "apps": ["ios"], "text": "Probe it now" },
+    "alarm.probe.body": { "surface": "notification.body", "apps": ["ios"], "text": "Middle of the egg: tell us the highest number." },
 
     "activity.stage.heating": { "surface": "island.expanded", "apps": ["ios"], "text": "Heating" },
     "activity.stage.cooking": { "surface": "island.expanded", "apps": ["ios"], "text": "Cooking" },
