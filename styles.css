@@ -170,12 +170,12 @@ button.mute[aria-pressed="true"] {
   color: var(--dim);
 }
 
-/* Which way the egg is likely to miss, with the odds' (i), under the time;
-   then the white's line, then "I'm still learning" with its own (i). While
-   idle the direction holds two lines, the most any of its sentences takes at
-   390 px, and sits in their middle: so a drag that changes the sentence does
-   not move the slider under the thumb. Its (i) rides at the end of the
-   sentence, wherever it wraps. */
+/* Which way the egg is likely to miss, with its (i), under the time; then
+   the play-safe suggestion, then the white's line. While idle the direction
+   holds two lines, the most any of its sentences takes at 390 px, and sits in
+   their middle: so a drag that changes the sentence does not move the slider
+   under the thumb. Its (i) rides at the end of the sentence, wherever it
+   wraps. */
 #direction {
   margin: 6px auto 0;
   max-width: 24rem;
@@ -192,18 +192,31 @@ body[data-phase="IDLE"]:not([data-start="sous"]) #direction {
 }
 #directionText:empty { display: none; }
 #whiteRisk { margin: 2px 0 0; font-size: 0.875rem; color: var(--warn); }
-#odds {
-  display: flex;
-  justify-content: center;
+/* The play-safe suggestion: one tap that moves the slider. Drawn as the
+   low-odds link is, underlined in the accent, with the arrow drawn here so a
+   screen reader hears the words and not "right arrow"; a thumb's height. */
+#playSafeLine { margin: 0; }
+button.playsafe {
+  display: inline-flex;
   align-items: center;
-  flex-wrap: wrap;
-  column-gap: 14px;
+  width: auto;
+  min-height: 44px;
   margin: 0;
-  font-size: 0.875rem;
+  padding: 4px 6px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--fg);
+  font: inherit;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-color: var(--accent);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
 }
-.odds__item { display: inline-flex; align-items: center; }
-#oddsLearning { color: var(--dim); }
-.odds__item:has(> span:empty) { display: none; }
+button.playsafe::after { content: "\2192" / ""; display: inline-block; margin-left: 6px; text-decoration: none; }
+button.playsafe:hover { background: color-mix(in srgb, var(--accent) 12%, transparent); }
 
 /* ------------------------------------------------------------------- (i) */
 
@@ -254,6 +267,8 @@ button.info[aria-expanded="true"]::before { background: var(--fg); color: var(--
   border-radius: 0 8px 8px 0;
 }
 #readout .disclosed { margin-left: auto; margin-right: auto; max-width: 28rem; }
+#oddsWhy p { margin: 0; }
+#oddsWhy p + p { margin-top: 8px; }
 
 /* --------------------------------------------------------------- the egg */
 

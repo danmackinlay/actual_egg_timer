@@ -27,7 +27,7 @@ import { Doneness, ModelParams } from '../core/solve.js';
 import { DoseGrid } from '../core/doseGrid.js';
 import { Feedback, Particle, WhiteReport } from '../core/infer.js';
 import { DecisionInputs, decisionGridRequest } from '../core/decide.js';
-import { OddsProfile, oddsProfile } from '../core/reach.js';
+import { OddsProfile, SaferLevels, oddsProfile, saferLevels } from '../core/reach.js';
 import { CALIBRATION_SEED, PARTICLE_COUNT, calibrationGrid } from '../core/policy.js';
 import {
   Calibration, EggFrom, EggRecord, GridRequest, MassFrom, PRIOR_ID, ProbeReading, RECORD_VERSION,
@@ -575,12 +575,14 @@ export function clearCalibration(): Calibration {
 /* ------------------------------------------------------ the dose surface */
 
 /** One job for the worker: a fold's surface, described in full; a decision's,
- *  described by the pot and the posterior (E5, `decisionGridRequest`); or the
- *  odds at every level on a decision's surface (`oddsProfile`). */
+ *  described by the pot and the posterior (E5, `decisionGridRequest`); the
+ *  odds at every level on a decision's surface (`oddsProfile`); or the
+ *  play-safe levels for one level on it (`saferLevels`). */
 interface Job {
   request?: GridRequest;
   decision?: DecisionInputs;
   profile?: ProfileJob;
+  safer?: SaferJob;
 }
 
 /** What a profile is computed from. Plain data: it crosses to the worker by
@@ -592,17 +594,28 @@ export interface ProfileJob {
   grid: DoseGrid;
 }
 
+/** What the play-safe levels are computed from: a profile's inputs, the
+ *  profile, and the cook's level. */
+export interface SaferJob extends ProfileJob {
+  profile: OddsProfile;
+  level: number;
+}
+
 interface Waiting {
   job: Job;
   resolve: (result: unknown) => void;
 }
 
-function buildHere(job: Job): DoseGrid | OddsProfile {
+function buildHere(job: Job): DoseGrid | OddsProfile | SaferLevels {
   if (job.request !== undefined) return buildRequestedGrid(job.request);
   if (job.decision !== undefined) return buildRequestedGrid(decisionGridRequest(job.decision));
   if (job.profile !== undefined) {
     const p = job.profile;
     return oddsProfile(p.calibration, p.egg, p.setup, p.grid);
+  }
+  if (job.safer !== undefined) {
+    const q = job.safer;
+    return saferLevels(q.calibration, q.egg, q.setup, q.grid, q.profile, q.level);
   }
   throw new Error('nothing to build');
 }
@@ -640,11 +653,13 @@ function gridWorker(): Worker | null {
     workerFailed = true;
     return null;
   }
-  worker.onmessage = (event: MessageEvent<{ id: number; grid?: DoseGrid; profile?: OddsProfile }>) => {
+  worker.onmessage = (event: MessageEvent<{
+    id: number; grid?: DoseGrid; profile?: OddsProfile; safer?: SaferLevels;
+  }>) => {
     const w = waiting.get(event.data.id);
     if (w === undefined) return;
     waiting.delete(event.data.id);
-    const result = event.data.grid ?? event.data.profile;
+    const result = event.data.grid ?? event.data.profile ?? event.data.safer;
     if (result !== undefined) w.resolve(result);
     else void onThisThread(w.job).then(w.resolve);
   };
@@ -776,5 +791,59 @@ export function oddsProfileFor(inputs: DecisionInputs, c: Calibration): Promise<
       return profile;
     });
   profileBuilds.set(key, build);
+  return build;
+}
+
+/* ------------------------------------------------------- playing safe */
+
+/** Play-safe levels, by pot, posterior and level (`saferLevels`, reach.ts).
+ *  A dozen or so solves and decisions, 0.1-0.9 s, so the worker computes
+ *  them, and only for a level the slider has settled on. Kept a few dozen at a
+ *  time: a cook dragging back and forth revisits levels. */
+const safer = new Map<string, SaferLevels>();
+const saferBuilds = new Map<string, Promise<SaferLevels>>();
+const SAFER_KEPT = 32;
+
+export function saferKey(inputs: DecisionInputs, c: Calibration, level: number): string {
+  return `${profileKey(inputs, c)}@${level}`;
+}
+
+/** The play-safe levels for this pot, posterior and level if they have been
+ *  computed, or null. */
+export function cachedSaferLevels(inputs: DecisionInputs, c: Calibration, level: number): SaferLevels | null {
+  return safer.get(saferKey(inputs, c, level)) ?? null;
+}
+
+/**
+ * The play-safe levels for this pot, posterior and level, computed in the
+ * worker on the pot's surface and against its odds profile, which the caller
+ * already has: the levels offered are the ones the profile allows.
+ */
+export function saferLevelsFor(
+  inputs: DecisionInputs, c: Calibration, profile: OddsProfile, level: number,
+): Promise<SaferLevels> {
+  const key = saferKey(inputs, c, level);
+  const done = safer.get(key);
+  if (done !== undefined) return Promise.resolve(done);
+  const running = saferBuilds.get(key);
+  if (running !== undefined) return running;
+  const snapshot = copyCalibration(c);
+  const build = decisionGrid(inputs)
+    .then((grid) => offThread({
+      safer: {
+        calibration: snapshot, egg: inputs.egg, setup: inputs.setup, grid: grid, profile: profile, level: level,
+      },
+    }) as Promise<SaferLevels>)
+    .then((levels) => {
+      saferBuilds.delete(key);
+      safer.set(key, levels);
+      while (safer.size > SAFER_KEPT) {
+        const oldest = safer.keys().next().value;
+        if (oldest === undefined) break;
+        safer.delete(oldest);
+      }
+      return levels;
+    });
+  saferBuilds.set(key, build);
   return build;
 }

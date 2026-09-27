@@ -39,7 +39,7 @@ import { Outcome, predictOutcome } from '../core/outcome.js';
 import {
   Calibration, cachedDecisionGrid, cachedOddsProfile, calibrationDoneness, calibrationParams,
   clearCalibration, decisionGrid, decisionKey, eggRecordFor, eggsBehind, learn, loadCalibration,
-  logEgg, oddsProfileFor, profileKey, recordSecondAnswer,
+  logEgg, oddsProfileFor, profileKey, recordSecondAnswer, cachedSaferLevels, saferKey, saferLevelsFor,
 } from './calibration.js';
 import {
   LIMITS, Limit, START_TEMP_PRESETS_C, Settings, UiStartMode, clampNumber,
@@ -47,7 +47,9 @@ import {
   loadCook, loadSettings, rememberTimeToBoil, saveCook, saveSettings,
 } from './store.js';
 import { sousVideCopy } from './sousvide.js';
-import { directionKey, rangeWords, restoreOutcome, whiteAtRisk } from './outcome.js';
+import {
+  PlaySafe, directionKey, playSafe, playSafeWanted, rangeWords, restoreOutcome, whiteAtRisk,
+} from './outcome.js';
 import { activeLocale, t } from './copy.js';
 import { formatClock, spokenClock } from './countdown.js';
 import {
@@ -83,13 +85,10 @@ const dom = {
   direction: el<HTMLParagraphElement>('direction'),
   directionText: el<HTMLSpanElement>('directionText'),
   whiteRisk: el<HTMLParagraphElement>('whiteRisk'),
-  odds: el<HTMLParagraphElement>('odds'),
-  oddsLearning: el<HTMLSpanElement>('oddsLearning'),
   oddsInfo: el<HTMLButtonElement>('oddsInfo'),
-  oddsWhy: el<HTMLParagraphElement>('oddsWhy'),
-  oddsNumber: el<HTMLSpanElement>('oddsNumber'),
-  learningInfo: el<HTMLButtonElement>('learningInfo'),
-  learningMore: el<HTMLParagraphElement>('learningMore'),
+  oddsWhy: el<HTMLDivElement>('oddsWhy'),
+  playSafeLine: el<HTMLParagraphElement>('playSafeLine'),
+  playSafe: el<HTMLButtonElement>('playSafe'),
   advice: el<HTMLParagraphElement>('advice'),
   adviceList: el<HTMLUListElement>('adviceList'),
   forYou: el<HTMLDivElement>('forYou'),
@@ -214,6 +213,18 @@ let decisionHandle = 0;
 let profile: OddsProfile | null = null;
 /** Profiles asked for and not yet in, by key, so each lands once. */
 const profilesAsked = new Set<string>();
+/** Play-safe levels waiting for the slider to settle before they are asked
+ *  for (`askForSafer`). */
+let saferHandle = 0;
+/** The play-safe levels last asked for, by key, so a slider left still asks
+ *  once. */
+let saferAsked = '';
+/** The key (pot, posterior, level) the cook last reached by tapping the
+ *  play-safe suggestion. No new suggestion is offered there: the level was
+ *  chosen to play safe, and a second tap would ratchet it on - at the new
+ *  level the same risk is measured against the new level. Any other level,
+ *  pot or posterior offers one again. */
+let playedSafeKey = '';
 /** Set when the requested doneness had to be clamped; empty otherwise. */
 let refusal = '';
 /** What the running cook is, frozen at the moment it started.
@@ -277,8 +288,9 @@ interface Ticket {
    *  carried onto a mid-cook re-solve (`carriedSolution`). Zero when the time
    *  was not chosen. */
   lean_s: number;
-  /** The odds and "still learning" as they were at "Eggs in", shown for the
-   *  whole cook. Null when the time was started before they were known. */
+  /** The odds and "still learning" as they were at "Eggs in", for the
+   *  record. Null when the time was started before they were known. The web
+   *  no longer shows either: the direction says both. */
   oddsTenths: number | null;
   stillLearning: boolean | null;
   /** What the egg was likely to be like at "Eggs in", shown for the whole
@@ -598,6 +610,73 @@ function askForProfile(inputs: DecisionInputs): void {
     if (machine.phase !== 'IDLE' || isSousVide()) return;
     if (wantedProfileKeys().has(key)) recompute();
   });
+}
+
+/** How long the slider must sit still before its play-safe levels are asked
+ *  for, ms. They are a dozen or so solves and decisions in the worker
+ *  (reach.ts, "playing safe"), so a drag asks once, where it stops, and never
+ *  waits for them. */
+const SAFER_SETTLE_MS = 300;
+
+/** The key the play-safe levels on screen are for: this pot, this posterior
+ *  and the level the slider sits at. */
+function currentSaferKey(): string {
+  return saferKey(currentInputs(timeToBoil_s()), calib, settings.doneness);
+}
+
+/** Ask the worker for the play-safe levels at the level on screen, once the
+ *  slider has settled and this pot's profile is in, and only when either way
+ *  of missing is risk enough to show one. Redraw when they land, if the
+ *  screen still wants them. */
+function askForSafer(): void {
+  if (machine.phase !== 'IDLE' || isSousVide() || outcome === null || profile === null) return;
+  if (!playSafeWanted(outcome)) return;
+  const inputs = currentInputs(timeToBoil_s());
+  const level = settings.doneness;
+  if (cachedSaferLevels(inputs, calib, level) !== null) return;
+  const key = saferKey(inputs, calib, level);
+  if (key === saferAsked) return;
+  if (saferHandle !== 0) window.clearTimeout(saferHandle);
+  const odds = profile;
+  saferHandle = window.setTimeout(() => {
+    saferHandle = 0;
+    if (currentSaferKey() !== key) return;
+    saferAsked = key;
+    void saferLevelsFor(inputs, calib, odds, level).then(() => {
+      if (saferAsked === key) saferAsked = '';
+      if (machine.phase !== 'IDLE' || isSousVide()) return;
+      if (currentSaferKey() === key) render(Date.now());
+    });
+  }, SAFER_SETTLE_MS);
+}
+
+/** The play-safe suggestion for the level on screen, and whether it is still
+ *  on its way. Only while idle, with an outcome: none where neither way of
+ *  missing is risk enough, and none at a level reached by tapping one. */
+function playSafeNow(): { suggestion: PlaySafe | null; pending: boolean } {
+  if (machine.phase !== 'IDLE' || isSousVide() || decision === null || outcome === null
+      || solution === null || !solution.whiteSets) {
+    return { suggestion: null, pending: false };
+  }
+  if (!playSafeWanted(outcome)) return { suggestion: null, pending: false };
+  if (profile === null) return { suggestion: null, pending: true };
+  if (currentSaferKey() === playedSafeKey) return { suggestion: null, pending: false };
+  const levels = cachedSaferLevels(currentInputs(timeToBoil_s()), calib, settings.doneness);
+  if (levels === null) return { suggestion: null, pending: true };
+  return { suggestion: playSafe(outcome, levels, settings.doneness), pending: false };
+}
+
+/** Tapping the suggestion moves the slider to its level, as dragging there
+ *  would. If the line then goes, the focus goes to the slider it moved. */
+function onPlaySafe(): void {
+  const to = Number(dom.playSafe.dataset['level']);
+  if (machine.phase !== 'IDLE' || !Number.isFinite(to)) return;
+  settings.doneness = to;
+  dom.doneness.value = String(to);
+  playedSafeKey = currentSaferKey();
+  saveNow();
+  recompute();
+  if (dom.playSafeLine.hidden) dom.doneness.focus();
 }
 
 /** Take the answer up: show the refusal, and move the slider if the answer
@@ -991,6 +1070,7 @@ function wireViews(): void {
     });
   }
   dom.navBack.addEventListener('click', goBack);
+  dom.playSafe.addEventListener('click', onPlaySafe);
   window.addEventListener('popstate', () => route(true));
   window.addEventListener('hashchange', () => route(true));
   route(false);
@@ -1206,42 +1286,49 @@ function render(now_ms: number): void {
   }
 }
 
-/** Which way the egg is likely to miss, the white's line, and "still
- *  learning", under the time; the odds themselves in what the (i) opens (E5,
- *  and src/ui/outcome.ts). While idle they are the choice on screen's, and
- *  blank until this pot's surface lands - the direction's line keeps its
- *  height, so nothing moves when they arrive. Once a cook is running they are
- *  what they were at "Eggs in". Never where the white never sets: there is no
- *  cook to give odds on. */
+/** Which way the egg is likely to miss, and the white's line, under the
+ *  time, with one (i) that explains the bracket, playing safe and what I
+ *  learn from; and, while idle, the play-safe suggestion (src/ui/outcome.ts).
+ *  While idle they are the choice on screen's, and blank until this pot's
+ *  surface lands - the direction's line keeps its height, so nothing moves
+ *  when they arrive. Once a cook is running the direction and the white's
+ *  line are what they were at "Eggs in"; the (i), which is about the slider,
+ *  and the suggestion, which moves it, go with the slider. Never where the
+ *  white never sets: there is no cook to say anything about.
+ *
+ *  "I'm still learning" is no longer a line of its own on the web (owner, 27
+ *  September): beside "I can't call it yet" it said the same thing twice.
+ *  What it opened, what I learn from and what speeds it up, is the last
+ *  paragraph of the (i). The decision still works it out, and the record
+ *  still keeps it with every egg. */
 function renderOdds(): void {
-  let tenths: number | null = null;
-  let learning: boolean | null = null;
   let o: Outcome | null = null;
   if (machine.phase === 'IDLE') {
-    if (decision !== null && solution !== null && solution.whiteSets) {
-      tenths = decision.oddsTenths;
-      learning = decision.stillLearning;
-      o = outcome;
-    }
+    if (decision !== null && solution !== null && solution.whiteSets) o = outcome;
   } else if (ticket !== null) {
-    tenths = ticket.oddsTenths;
-    learning = ticket.stillLearning;
     o = ticket.outcome;
   }
   dom.directionText.textContent = o === null ? '' : t(directionKey(o));
   dom.whiteRisk.hidden = o === null || !whiteAtRisk(o);
-  dom.oddsNumber.textContent = tenths === null ? '' : t('outcome.odds', { hits: tenths, of: 10 });
-  dom.oddsLearning.textContent = learning === true ? t('odds.stillLearning') : '';
-  // Each (i) goes with its words, and what it opens goes with it. The odds'
-  // (i) goes with the direction, which is what the number stands behind.
-  showInfo(dom.oddsInfo, o !== null && tenths !== null);
-  showInfo(dom.learningInfo, learning === true);
+  showInfo(dom.oddsInfo, machine.phase === 'IDLE' && o !== null);
+
+  const safe = playSafeNow();
+  const s = safe.suggestion;
+  dom.playSafeLine.hidden = s === null;
+  if (s !== null) {
+    dom.playSafe.textContent = t(s.key, { level: t(s.word) });
+    dom.playSafe.dataset['level'] = String(s.level);
+  } else {
+    delete dom.playSafe.dataset['level'];
+  }
 
   // While a new pot's surface is on its way the lines above are blank, and
   // the readout would shrink and grow back a second later, moving the
-  // sentence's open choice under the thumb that just tapped it. So it keeps
-  // the height it had when the lines were last there.
-  if (machine.phase === 'IDLE' && decision === null) {
+  // sentence's open choice under the thumb that just tapped it; and while
+  // the play-safe levels for a level just reached are on their way, the
+  // suggestion's line would go and come back under the thumb on the slider.
+  // So it keeps the height it had when the lines were last all there.
+  if (machine.phase === 'IDLE' && (decision === null || safe.pending)) {
     dom.readout.style.minHeight = settledReadout_px > 0 ? `${settledReadout_px}px` : '';
   } else {
     dom.readout.style.minHeight = '';
@@ -1257,12 +1344,10 @@ function renderSousVide(now_ms: number): void {
   // pan (E5 chooses pan times). So no direction, and no bracket either.
   dom.directionText.textContent = '';
   dom.whiteRisk.hidden = true;
-  dom.oddsNumber.textContent = '';
-  dom.oddsLearning.textContent = '';
+  dom.playSafeLine.hidden = true;
   dom.readout.style.minHeight = '';
   renderBracket(null);
   showInfo(dom.oddsInfo, false);
-  showInfo(dom.learningInfo, false);
   showInfo(dom.sublineInfo, false);
   showInfo(dom.hintInfo, false);
   renderAdvice();
@@ -1346,6 +1431,7 @@ function recompute(): void {
   solution = chosen.solution;
   decision = chosen.decision;
   outcome = chosen.outcome;
+  askForSafer();
   render(Date.now());
 }
 

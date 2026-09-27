@@ -73,17 +73,17 @@
 
     <p id="subline"><span id="sublineText"></span><button type="button" id="sublineInfo" class="info" aria-expanded="false" aria-controls="sublineMore" data-name="readout.sub.coldAssumes.info" hidden></button></p>
     <p id="sublineMore" class="disclosed" hidden data-copy="readout.sub.coldAssumes.more"></p>
-    <!-- Which way the egg is likely to miss (src/ui/outcome.ts), with the
-         odds' (i): what it opens says the number, then why it starts low.
-         Then a line when a runny white is a real risk, and "I'm still
-         learning" for a cook's first few eggs, with its own (i). Filled once
-         the choice is made; the direction keeps its line's height until then,
-         so nothing jumps when it lands. -->
-    <p id="direction"><span class="direction__line"><span id="directionText"></span><button type="button" id="oddsInfo" class="info" aria-expanded="false" aria-controls="oddsWhy" data-name="odds.info" hidden></button></span></p>
-    <p id="oddsWhy" class="disclosed" hidden><span id="oddsNumber"></span> <span data-copy="odds.why"></span></p>
+    <!-- Which way the egg is likely to miss (src/ui/outcome.ts), with one
+         (i) at its end: what the bracket under the slider means and how to
+         play safe with it, why it starts wide, and what I learn from.
+         Then, when one way of missing is a real risk, a button that moves
+         the slider to the level that plays safe, and a line when a runny
+         white is a real risk. Filled once the choice is made; the direction
+         keeps its line's height until then, so nothing jumps when it lands. -->
+    <p id="direction"><span class="direction__line"><span id="directionText"></span><button type="button" id="oddsInfo" class="info" aria-expanded="false" aria-controls="oddsWhy" data-name="outcome.info" hidden></button></span></p>
+    <p id="playSafeLine" hidden><button type="button" id="playSafe" class="playsafe"></button></p>
+    <div id="oddsWhy" class="disclosed" hidden><p data-copy="outcome.bracket"></p><p data-copy="outcome.why"></p><p data-copy="outcome.learning"></p></div>
     <p id="whiteRisk" data-copy="outcome.whiteRunny" hidden></p>
-    <p id="odds"><span class="odds__item" id="oddsLearningItem"><span id="oddsLearning"></span><button type="button" id="learningInfo" class="info" aria-expanded="false" aria-controls="learningMore" data-name="odds.stillLearning.info" hidden></button></span></p>
-    <p id="learningMore" class="disclosed" hidden data-copy="odds.stillLearning.more"></p>
   </section>
 
   <!-- ----------------------------------------------------------- the egg -->
