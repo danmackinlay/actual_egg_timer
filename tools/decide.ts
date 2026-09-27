@@ -5,7 +5,7 @@
  *
  * Run: npm run decide            (all of it, several minutes)
  *      npm run decide -- cost    (one section: cost, accuracy, lean, odds,
- *                                 learning, runny)
+ *                                 learning, runny, reach, advice, outcome)
  *
  * Read-only. Nothing in src/ is touched. The numbers it prints are the ones in
  * PLAN.md (E5), INFERENCE.md section 8 and LOGBOOK.md, 28 September 2026; the
@@ -26,6 +26,10 @@ import { eggFromMass, Egg } from '../src/core/geometry.js';
 import { CookSetup } from '../src/core/protocol.js';
 import { Solution, donenessFromSlider, solveCookTime } from '../src/core/solve.js';
 import { LevelOdds, OddsProfile, oddsProfile } from '../src/core/reach.js';
+import { predictOutcome } from '../src/core/outcome.js';
+import { cookTimeForLogWhiteDose, lookupLogYolkDose } from '../src/core/doseGrid.js';
+import { UNRELATED } from '../src/core/infer.js';
+import { sliderFromYolkDose } from '../src/core/solve.js';
 import { CALIBRATION_SEED, PARTICLE_COUNT, verdictFor } from '../src/core/policy.js';
 import {
   Calibration, EggRecord, PRIOR_ID, buildRequestedGrid, calibrationDoneness, calibrationParams,
@@ -380,6 +384,140 @@ if (run('advice')) {
       cells.push(`${name} ${row[0]} -> ${row[1]}`);
     }
     console.log(`${change.name} (soft/jammy/fudgy/hard; * snapped by the white): ${cells.join('; ')}`);
+  }
+}
+
+/* ------------------------------------------------------------ the outcome */
+
+if (run('outcome')) {
+  console.log('\n== outcome: the level range, the answers and the lean against simulated cooks (400 cooks x 6 eggs, 1000 particles)');
+  // As test/outcome.test.ts, larger: every egg drawn from the truth - its
+  // time-scale's dose plus a draw of its noise - and the yolk answer read off
+  // that egg. A second egg at the chosen time +-30 s, not folded, checks the
+  // lean where it has something to say: at the chosen time it is nearly
+  // always balanced.
+  const grid = buildDoseGrid(REF_EGG, SETUP, 1, ALPHA_DEFAULT * 0.55, ALPHA_DEFAULT * 1.8, 17, 200, 900, 71);
+  const random = rng(20260927);
+  const normal = (): number => Math.sqrt(-2 * Math.log(Math.max(random(), 1e-12))) * Math.cos(2 * Math.PI * random());
+  const eggOf = (truth: Particle, t: number, target: number): { level: number; yolk: number } => {
+    const dose = lookupLogYolkDose(grid, truth.alpha_m2s, t) + truth.noise * normal();
+    const latent = dose - (target + truth.logDoseOffset);
+    const yolk = random() < UNRELATED
+      ? Math.min(2, Math.floor(3 * random()))
+      : latent < -FEEDBACK_BAND ? 0 : latent > FEEDBACK_BAND ? 2 : 1;
+    return { level: sliderFromYolkDose(10 ** dose), yolk: yolk };
+  };
+  const truths = createPrior(400, 20260927 ^ 0x2545f49).particles;
+  const levels = [0.22, 0.41, 0.62];
+  const byEgg: { n: number; inside: number; under: number; over: number; width: number }[] = [];
+  const BINS = 10;
+  const bins = [0, 1, 2, 3].map(() => ({
+    p: new Array<number>(BINS).fill(0), o: new Array<number>(BINS).fill(0), n: new Array<number>(BINS).fill(0),
+  }));
+  const tally = (k: number, p: number, hit: boolean): void => {
+    const b = Math.min(BINS - 1, Math.floor(p * BINS));
+    bins[k].p[b] += p; bins[k].o[b] += hit ? 1 : 0; bins[k].n[b] += 1;
+  };
+  const leansAtChoice: Record<string, number> = { soft: 0, firm: 0, balanced: 0 };
+  // For the lean: every jittered egg that missed, with its two probabilities.
+  const misses: { soft: number; firm: number; wasFirm: boolean }[] = [];
+  let decideMs = 0;
+  let outcomeMs = 0;
+  for (let c = 0; c < truths.length; c++) {
+    const truth = truths[c];
+    const cal: Calibration = { posterior: createPrior(1000, 1 + Math.floor(random() * 2147483646)), eggsLogged: 0 };
+    const level = levels[c % levels.length];
+    const target = logTarget(level);
+    for (let k = 0; k < 6; k++) {
+      const params = calibrationParams(cal);
+      const whiteTarget = Math.log10(calibrationDoneness(cal, level).whiteDose_min);
+      const mean = Math.max(
+        cookTimeForLogYolkDose(grid, params.alpha_m2s, target),
+        cookTimeForLogWhiteDose(grid, params.alpha_m2s, whiteTarget),
+      );
+      let t0 = performance.now();
+      const t = decideAt(cal.posterior, cal.eggsLogged, grid, mean, true, target).cookTime_s;
+      decideMs += performance.now() - t0;
+      t0 = performance.now();
+      const o = predictOutcome(cal.posterior, grid, t, target);
+      outcomeMs += performance.now() - t0;
+      leansAtChoice[o.lean] += 1;
+      const e = eggOf(truth, t, target);
+      const w = draw((['runny', 'tender', 'firm'] as WhiteReport[]).map((a) => answerLikelihood(grid, truth, t, target, null, a)), random());
+      byEgg[k] ??= { n: 0, inside: 0, under: 0, over: 0, width: 0 };
+      const row = byEgg[k];
+      row.n += 1;
+      row.width += o.levelHigh - o.levelLow;
+      if (e.level < o.levelLow) row.under += 1;
+      else if (e.level > o.levelHigh) row.over += 1;
+      else row.inside += 1;
+      tally(0, o.pTooSoft, e.yolk === 0);
+      tally(1, o.pJustRight, e.yolk === 1);
+      tally(2, o.pTooFirm, e.yolk === 2);
+      tally(3, o.pWhiteRunny, w === 0);
+      const tj = t + 60 * (random() - 0.5);
+      const oj = predictOutcome(cal.posterior, grid, tj, target);
+      const ej = eggOf(truth, tj, target);
+      if (ej.yolk !== 1) misses.push({ soft: oj.pTooSoft, firm: oj.pTooFirm, wasFirm: ej.yolk === 2 });
+      updatePosterior(cal.posterior, grid, t, target, (e.yolk - 1) as Feedback, (['runny', 'tender', 'firm'] as WhiteReport[])[w]);
+      cal.eggsLogged += 1;
+    }
+  }
+  const all = byEgg.reduce((a, r) => ({ n: a.n + r.n, inside: a.inside + r.inside, under: a.under + r.under, over: a.over + r.over, width: a.width + r.width }),
+    { n: 0, inside: 0, under: 0, over: 0, width: 0 });
+  const pc = (x: number, n: number): string => `${(100 * x / n).toFixed(1)}%`;
+  console.log(`inside the range ${pc(all.inside, all.n)}, under ${pc(all.under, all.n)}, over ${pc(all.over, all.n)} of ${all.n} eggs`);
+  console.log(`by egg (inside, mean width on the slider): ${byEgg.map((r, i) => `${i}: ${pc(r.inside, r.n)} ${(r.width / r.n).toFixed(3)}`).join('; ')}`);
+  const names = ['too soft', 'just right', 'too firm', 'runny'];
+  for (let k = 0; k < 4; k++) {
+    let ece = 0;
+    let total = 0;
+    const cells: string[] = [];
+    for (let b = 0; b < BINS; b++) {
+      if (bins[k].n[b] === 0) continue;
+      const p = bins[k].p[b] / bins[k].n[b];
+      const ob = bins[k].o[b] / bins[k].n[b];
+      cells.push(`${(100 * p).toFixed(0)}->${(100 * ob).toFixed(0)} (${bins[k].n[b]})`);
+      ece += Math.abs(bins[k].p[b] - bins[k].o[b]);
+      total += bins[k].n[b];
+    }
+    console.log(`${names[k]}: ECE ${(ece / total).toFixed(4)}; ${cells.join('; ')}`);
+  }
+  console.log(`lean at the chosen time: ${Object.entries(leansAtChoice).map(([k, v]) => `${k} ${v}`).join(', ')}`);
+  // The threshold: for each ratio, how often a lean is stated among the misses
+  // and how often the miss went the way it said.
+  for (const ratio of [1.0, 1.25, 1.5, 2.0, 3.0]) {
+    let stated = 0;
+    let right = 0;
+    let expected = 0;
+    for (const m of misses) {
+      const firm = m.firm > ratio * m.soft;
+      const soft = m.soft > ratio * m.firm;
+      if (!firm && !soft) continue;
+      stated += 1;
+      right += (firm && m.wasFirm) || (soft && !m.wasFirm) ? 1 : 0;
+      expected += Math.max(m.soft, m.firm) / (m.soft + m.firm);
+    }
+    console.log(`ratio ${ratio}: a lean for ${pc(stated, misses.length)} of ${misses.length} misses 30 s either side; `
+      + `the miss went that way ${pc(right, stated)} (predicted ${pc(expected, stated)})`);
+  }
+  console.log(`cost, mean per egg: a decision ${(decideMs / all.n).toFixed(2)} ms, the outcome ${(outcomeMs / all.n).toFixed(2)} ms`);
+
+  // And on the production surface and particle count, as the apps run it.
+  const g = buildRequestedGrid(decisionGridRequest(decisionInputs(PRIOR, REF_EGG, SETUP)));
+  for (const name of ['prior', 'one egg'] as const) {
+    const cal = LEARNED[name];
+    for (const level of [0.22, 0.41, 0.62, 1.0]) {
+      const m = meanSolve(cal, REF_EGG, SETUP, level);
+      let d: Decision | null = null;
+      const dm = ms(() => { for (let i = 0; i < 10; i++) d = decide(cal, g, m.sol, logTarget(m.level)); }) / 10;
+      const dd = d as unknown as Decision;
+      let o = predictOutcome(cal.posterior, g, dd.cookTime_s, logTarget(m.level));
+      const om = ms(() => { for (let i = 0; i < 10; i++) o = predictOutcome(cal.posterior, g, dd.cookTime_s, logTarget(m.level)); }) / 10;
+      console.log(`${name}, level ${level}: ${dd.cookTime_s.toFixed(0)} s, ${dd.oddsTenths}/10; soft/right/firm ${o.pTooSoft.toFixed(2)}/${o.pJustRight.toFixed(2)}/${o.pTooFirm.toFixed(2)}, `
+        + `runny ${o.pWhiteRunny.toFixed(2)}; level ${o.levelLow.toFixed(2)}-${o.levelHigh.toFixed(2)} (median ${o.levelMedian.toFixed(2)}), ${o.lean}; `
+        + `decision ${dm.toFixed(1)} ms, outcome ${om.toFixed(1)} ms`);
+    }
   }
 }
 

@@ -51,10 +51,13 @@
  * between. 1.5 is a miss that goes one way three times in five: the least
  * that makes "if not, more likely a little firm" right clearly more often
  * than it is wrong. Nearer 1 the sentence is a coin toss dressed as advice,
- * and flips from egg to egg for no reason the cook can see. The measured
- * version (test/outcome.test.ts): on simulated cooks, a lean the other side
- * of 1.5 is right about the direction of the misses about as often as it
- * says it will be.
+ * and flips from egg to egg for no reason the cook can see. Measured (`npm
+ * run decide -- outcome`, 400 simulated cooks): the two probabilities are
+ * calibrated at every ratio tried, 1 to 3, so the ratio is a choice of when
+ * to speak, not a correction. At 1.5 a lean is given for 85% of misses and
+ * the miss goes that way 83% of the time (predicted 84%). At the time the app
+ * chooses, 73% of eggs are balanced, 24% lean firm - the choice leans late,
+ * because a runny white costs three - and 3% soft.
  *
  * Pure, like the rest of `src/core/`, and cheap: one pass over the particles
  * for the answers, and one per bisection step for the level, on a surface and
