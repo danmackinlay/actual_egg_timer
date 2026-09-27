@@ -382,3 +382,136 @@ checkbox `probe.offer.yes`, its (i) `controls.thermometer.more`),
 (`controls.cooling`), `controls.afterBoil.explainHeatOff` and
 `.explainHold` (`controls.afterTheBoil.more`), and the stat labels
 `readout.stat.peakYolk`, `.afterBoil` and `.bath`.
+
+## 9. As built (iOS, pass A), 28 September 2026
+
+Layout only: the web's egg, Settings and Help on iOS, and the one (i).
+`ios/App`: `ContentView.swift` (the egg), `SetupSentence.swift`,
+`SettingsView.swift`, `HelpView.swift`, `Info.swift` (the (i)),
+`Controls.swift`, `Palette.swift`; core unchanged. The copy is the `iosA`
+draft in `tools/copyDraft.ts`, on `91d5fff`: 132 rows and no change of
+wording. The web's keys gain `"ios"`, the iOS keys they replace are
+retired, and there are three new iOS keys.
+
+**Two pages, pushed.** The egg is the root of a `NavigationStack`. While
+idle, Settings (`controls.settings`) sits at the top left of the bar and
+Help (`help.link`) at the top right; both go while a cook runs, as on the
+web. The system's Back button replaces `nav.back`.
+
+**The egg**, top to bottom:
+- The readout: "Total time", the time, and the web's line under it
+  (`readout.sub.coldAssumes` with its (i), `coldGuesses`, `standing` or
+  `hot`).
+- **The direction's slot.** It still holds the iOS odds line, "7/10 eggs hit
+  the mark", with its (i) and "I'm still learning". Pass B replaces it with
+  the direction sentence. `direction(_:)` in `ContentView.swift` is that
+  slot.
+- The doneness slider. Its label is above it and the odds track under it,
+  with the five doneness words at their levels. Then the reading
+  (`controls.doneness.value`, "Jammy · peak yolk 65 °C", or `valueBath`),
+  and the texture note (in sous-vide, the bath's note).
+- The sentence, then the open clause's panel.
+- The slot: the refusal, the sous-vide warning, or the first-egg welcome.
+  Under low odds, "How to make this more reliable →" goes under any of
+  them and pushes Help at its reliability section.
+- The web's hint above the button, then Start. The button reads "Start
+  heating" on a cold start and "Eggs in" otherwise. In sous-vide it is
+  dead, with the bath's hint above it.
+
+The stats row (peak yolk, peak white, after the boil, sous-vide at) is gone
+from every phase, as on the web. So are the idle "Learned from N eggs" line
+and the colophon, which now live in Settings.
+
+**The sentence** is one `Text`, so it wraps as prose. Each clause is a link
+to the `eggtimer-clause` scheme, and an `openURL` action on the sentence
+catches it before the system does. Clauses are semibold and underlined in
+the web's accent. An open clause has an accent wash behind it, not the
+web's solid fill, because SwiftUI draws a link's text in the tint. The
+template and the fragments are the web's (`clauseTexts`, word for word).
+To VoiceOver, `accessibilityRepresentation` gives the sentence as text,
+then one button per clause: "Egg: 68 g, change", expanded or collapsed.
+
+**The panels** open one at a time under the sentence. Each has its title,
+its (i) (`controls.egg.more`, `eggFrom.more`, `start.more`,
+`cooling.more`) and Done. Their contents:
+- **Egg:** the size menu, and the weight typed in the cook's units.
+- **From:** Fridge, Room or Custom, and the web's hint with the presets'
+  temperatures. Custom adds a stepper for the egg's temperature.
+- **Start:** cold, boiling or sous-vide, in the web's order.
+- **Cooling:** ice, tap or counter.
+
+In sous-vide the sentence drops the "from" and "cooling" clauses, and an
+open panel for either one closes with it.
+
+**Settings** is a `Form` with these rows:
+- **Units:** its (i) and a segmented control.
+- **Altitude:** a stepper, then "water boils at".
+- **Water**, then **Number of eggs:** one line each, the label, the (i),
+  the value and a stepper.
+- **After the boil:** its (i) and a segmented control.
+- **Probe thermometer:** its (i), and the toggle "Ask for a reading after
+  each egg".
+- **What I've learned:** `learned.literature`, `.tuned`, `.pan` or
+  `.both`, as on the web. Forget has its (i). It asks first, in place, with
+  `learned.confirm.*`, where it was a confirmation dialog.
+- **The colophon:** the web's, with its link.
+
+In sous-vide only the units, what I've learned and the colophon stay.
+
+**The (i)** is `InfoRow` in `Info.swift`. It holds a line, its circled *i*
+(`info.circle`, filled while open), an optional control at the line's
+end, and the paragraph it opens under the line. The paragraph has a rule
+down its left, the web's `.disclosed`. VoiceOver reads "About {label}"
+(`more.about`) or a name of its own (`odds.info`,
+`readout.sub.coldAssumes.info`, `action.hint.heating.info`), and its
+value is Expanded or Collapsed (`more.expanded`, `more.collapsed`, both
+new). No `DisclosureGroup` is left in the app. Heating gained the web's
+"wait for the whole surface to roll" line and its (i).
+
+**Help** has the web's sections, keys and eight sources, with a contents
+list that scrolls to each section.
+- `[label](https://…)` in the copy becomes a link through `linked()`,
+  the web's rule: only https is linked, and nothing else is parsed.
+- Asides are footnote-sized and secondary.
+- The top of "Getting reliable eggs" lists `Kitchen.advice`: the same
+  `protocolAdvice` the web uses, which the Swift core already had.
+
+**The track is a yolk.** It uses the web's stops for each scheme
+(`Palette.yolkRunny`, `yolkJammy` and `yolkHard`, golden at 0.41), with
+the odds' strength as the opacity.
+
+**Departures from the web.**
+- **The egg is weighed, not measured.** The web's girth and width fields
+  (`controls.measure.girth`, `.minor`, `.legend`, `.hint`,
+  `controls.size.measured`) stay web-only. Porting them would change what
+  the record says the mass came from. The size menu keeps iOS's
+  "Weighed · {mass}".
+- **Units' (i) says "phone".** It is `controls.units.more.ios`, because
+  the web's says "where your browser says you are".
+- **No mute, and no reloaded-cook warning.** iOS has neither. Its alarm is
+  the system's.
+- **Phase screens keep the iOS words** (`readout.phase.heatingTap`,
+  `readout.sub.heatingEstimate`, the alarm line, `cook.method`,
+  `cook.summary`). Only the stats row went.
+
+**Retired from iOS**:
+- `readout.phase.totalLidOn`, `readout.sub.idleCold`, `.idleHot`
+- `readout.stat.peakYolk`, `.peakWhite`, `.afterBoil`, `.bath`
+- `action.eggsInHeatOn`
+- `controls.eggFrom.fridgeAt`, `.roomAt`
+- `controls.start.hintSousVide`, `controls.then`
+- `controls.afterBoil.explainHeatOff`, `.explainHold`
+- `controls.probe`, `controls.probe.hint`
+- `pan.waterBoilsAt`, `pan.timeToBoil`, `.assumed`, `pan.measured`,
+  `pan.unmeasured`
+- `odds.shown`, `odds.hidden`
+- `learned.forgetExplain`, `colophon.ios`
+
+Each was iOS's alone, so each is deleted from the catalogue.
+`odds.hitTheMark`, `odds.info`, `odds.why` and `odds.stillLearning` stay
+until pass B.
+
+**Debug screens.** A debug build takes these launch arguments
+(`Screenshots.swift`), so screenshots need no taps:
+- `-uiScreen settings|help|help-reliable|clause-egg|clause-from|clause-start|clause-cooling|heating`;
+- `-noAlarmPrompt YES`.
