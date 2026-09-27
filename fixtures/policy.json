@@ -1102,362 +1102,642 @@
     {
       "peakYolk_C": 50,
       "peakWhite_C": 60,
+      "whiteSets": true,
       "white": "justSet",
-      "yolk": "liquid"
+      "yolk": "liquid",
+      "noteKey": "texture.note",
+      "noteWhite": "texture.white.justSet",
+      "noteYolk": "texture.yolk.liquid"
     },
     {
       "peakYolk_C": 50,
       "peakWhite_C": 70.9,
+      "whiteSets": true,
       "white": "justSet",
-      "yolk": "liquid"
+      "yolk": "liquid",
+      "noteKey": "texture.note",
+      "noteWhite": "texture.white.justSet",
+      "noteYolk": "texture.yolk.liquid"
     },
     {
       "peakYolk_C": 50,
       "peakWhite_C": 71,
+      "whiteSets": true,
       "white": "set",
-      "yolk": "liquid"
+      "yolk": "liquid",
+      "noteKey": "texture.note",
+      "noteWhite": "texture.white.set",
+      "noteYolk": "texture.yolk.liquid"
     },
     {
       "peakYolk_C": 50,
       "peakWhite_C": 81.9,
+      "whiteSets": true,
       "white": "set",
-      "yolk": "liquid"
+      "yolk": "liquid",
+      "noteKey": "texture.note",
+      "noteWhite": "texture.white.set",
+      "noteYolk": "texture.yolk.liquid"
     },
     {
       "peakYolk_C": 50,
       "peakWhite_C": 82,
+      "whiteSets": true,
       "white": "firm",
-      "yolk": "liquid"
+      "yolk": "liquid",
+      "noteKey": "texture.note",
+      "noteWhite": "texture.white.firm",
+      "noteYolk": "texture.yolk.liquid"
     },
     {
       "peakYolk_C": 50,
       "peakWhite_C": 95,
+      "whiteSets": true,
       "white": "firm",
-      "yolk": "liquid"
+      "yolk": "liquid",
+      "noteKey": "texture.note",
+      "noteWhite": "texture.white.firm",
+      "noteYolk": "texture.yolk.liquid"
     },
     {
       "peakYolk_C": 57.9,
       "peakWhite_C": 60,
+      "whiteSets": true,
       "white": "justSet",
-      "yolk": "liquid"
+      "yolk": "liquid",
+      "noteKey": "texture.note",
+      "noteWhite": "texture.white.justSet",
+      "noteYolk": "texture.yolk.liquid"
     },
     {
       "peakYolk_C": 57.9,
       "peakWhite_C": 70.9,
+      "whiteSets": true,
       "white": "justSet",
-      "yolk": "liquid"
+      "yolk": "liquid",
+      "noteKey": "texture.note",
+      "noteWhite": "texture.white.justSet",
+      "noteYolk": "texture.yolk.liquid"
     },
     {
       "peakYolk_C": 57.9,
       "peakWhite_C": 71,
+      "whiteSets": true,
       "white": "set",
-      "yolk": "liquid"
+      "yolk": "liquid",
+      "noteKey": "texture.note",
+      "noteWhite": "texture.white.set",
+      "noteYolk": "texture.yolk.liquid"
     },
     {
       "peakYolk_C": 57.9,
       "peakWhite_C": 81.9,
+      "whiteSets": true,
       "white": "set",
-      "yolk": "liquid"
+      "yolk": "liquid",
+      "noteKey": "texture.note",
+      "noteWhite": "texture.white.set",
+      "noteYolk": "texture.yolk.liquid"
     },
     {
       "peakYolk_C": 57.9,
       "peakWhite_C": 82,
+      "whiteSets": true,
       "white": "firm",
-      "yolk": "liquid"
+      "yolk": "liquid",
+      "noteKey": "texture.note",
+      "noteWhite": "texture.white.firm",
+      "noteYolk": "texture.yolk.liquid"
     },
     {
       "peakYolk_C": 57.9,
       "peakWhite_C": 95,
+      "whiteSets": true,
       "white": "firm",
-      "yolk": "liquid"
+      "yolk": "liquid",
+      "noteKey": "texture.note",
+      "noteWhite": "texture.white.firm",
+      "noteYolk": "texture.yolk.liquid"
     },
     {
       "peakYolk_C": 58,
       "peakWhite_C": 60,
+      "whiteSets": true,
       "white": "justSet",
-      "yolk": "soft"
+      "yolk": "soft",
+      "noteKey": "texture.note",
+      "noteWhite": "texture.white.justSet",
+      "noteYolk": "texture.yolk.soft"
     },
     {
       "peakYolk_C": 58,
       "peakWhite_C": 70.9,
+      "whiteSets": true,
       "white": "justSet",
-      "yolk": "soft"
+      "yolk": "soft",
+      "noteKey": "texture.note",
+      "noteWhite": "texture.white.justSet",
+      "noteYolk": "texture.yolk.soft"
     },
     {
       "peakYolk_C": 58,
       "peakWhite_C": 71,
+      "whiteSets": true,
       "white": "set",
-      "yolk": "soft"
+      "yolk": "soft",
+      "noteKey": "texture.note",
+      "noteWhite": "texture.white.set",
+      "noteYolk": "texture.yolk.soft"
     },
     {
       "peakYolk_C": 58,
       "peakWhite_C": 81.9,
+      "whiteSets": true,
       "white": "set",
-      "yolk": "soft"
+      "yolk": "soft",
+      "noteKey": "texture.note",
+      "noteWhite": "texture.white.set",
+      "noteYolk": "texture.yolk.soft"
     },
     {
       "peakYolk_C": 58,
       "peakWhite_C": 82,
+      "whiteSets": true,
       "white": "firm",
-      "yolk": "soft"
+      "yolk": "soft",
+      "noteKey": "texture.note",
+      "noteWhite": "texture.white.firm",
+      "noteYolk": "texture.yolk.soft"
     },
     {
       "peakYolk_C": 58,
       "peakWhite_C": 95,
+      "whiteSets": true,
       "white": "firm",
-      "yolk": "soft"
+      "yolk": "soft",
+      "noteKey": "texture.note",
+      "noteWhite": "texture.white.firm",
+      "noteYolk": "texture.yolk.soft"
     },
     {
       "peakYolk_C": 62.9,
       "peakWhite_C": 60,
+      "whiteSets": true,
       "white": "justSet",
-      "yolk": "soft"
+      "yolk": "soft",
+      "noteKey": "texture.note",
+      "noteWhite": "texture.white.justSet",
+      "noteYolk": "texture.yolk.soft"
     },
     {
       "peakYolk_C": 62.9,
       "peakWhite_C": 70.9,
+      "whiteSets": true,
       "white": "justSet",
-      "yolk": "soft"
+      "yolk": "soft",
+      "noteKey": "texture.note",
+      "noteWhite": "texture.white.justSet",
+      "noteYolk": "texture.yolk.soft"
     },
     {
       "peakYolk_C": 62.9,
       "peakWhite_C": 71,
+      "whiteSets": true,
       "white": "set",
-      "yolk": "soft"
+      "yolk": "soft",
+      "noteKey": "texture.note",
+      "noteWhite": "texture.white.set",
+      "noteYolk": "texture.yolk.soft"
     },
     {
       "peakYolk_C": 62.9,
       "peakWhite_C": 81.9,
+      "whiteSets": true,
       "white": "set",
-      "yolk": "soft"
+      "yolk": "soft",
+      "noteKey": "texture.note",
+      "noteWhite": "texture.white.set",
+      "noteYolk": "texture.yolk.soft"
     },
     {
       "peakYolk_C": 62.9,
       "peakWhite_C": 82,
+      "whiteSets": true,
       "white": "firm",
-      "yolk": "soft"
+      "yolk": "soft",
+      "noteKey": "texture.note",
+      "noteWhite": "texture.white.firm",
+      "noteYolk": "texture.yolk.soft"
     },
     {
       "peakYolk_C": 62.9,
       "peakWhite_C": 95,
+      "whiteSets": true,
       "white": "firm",
-      "yolk": "soft"
+      "yolk": "soft",
+      "noteKey": "texture.note",
+      "noteWhite": "texture.white.firm",
+      "noteYolk": "texture.yolk.soft"
     },
     {
       "peakYolk_C": 63,
       "peakWhite_C": 60,
+      "whiteSets": true,
       "white": "justSet",
-      "yolk": "jammy"
+      "yolk": "jammy",
+      "noteKey": "texture.note",
+      "noteWhite": "texture.white.justSet",
+      "noteYolk": "texture.yolk.jammy"
     },
     {
       "peakYolk_C": 63,
       "peakWhite_C": 70.9,
+      "whiteSets": true,
       "white": "justSet",
-      "yolk": "jammy"
+      "yolk": "jammy",
+      "noteKey": "texture.note",
+      "noteWhite": "texture.white.justSet",
+      "noteYolk": "texture.yolk.jammy"
     },
     {
       "peakYolk_C": 63,
       "peakWhite_C": 71,
+      "whiteSets": true,
       "white": "set",
-      "yolk": "jammy"
+      "yolk": "jammy",
+      "noteKey": "texture.note",
+      "noteWhite": "texture.white.set",
+      "noteYolk": "texture.yolk.jammy"
     },
     {
       "peakYolk_C": 63,
       "peakWhite_C": 81.9,
+      "whiteSets": true,
       "white": "set",
-      "yolk": "jammy"
+      "yolk": "jammy",
+      "noteKey": "texture.note",
+      "noteWhite": "texture.white.set",
+      "noteYolk": "texture.yolk.jammy"
     },
     {
       "peakYolk_C": 63,
       "peakWhite_C": 82,
+      "whiteSets": true,
       "white": "firm",
-      "yolk": "jammy"
+      "yolk": "jammy",
+      "noteKey": "texture.note",
+      "noteWhite": "texture.white.firm",
+      "noteYolk": "texture.yolk.jammy"
     },
     {
       "peakYolk_C": 63,
       "peakWhite_C": 95,
+      "whiteSets": true,
       "white": "firm",
-      "yolk": "jammy"
+      "yolk": "jammy",
+      "noteKey": "texture.note",
+      "noteWhite": "texture.white.firm",
+      "noteYolk": "texture.yolk.jammy"
     },
     {
       "peakYolk_C": 67.9,
       "peakWhite_C": 60,
+      "whiteSets": true,
       "white": "justSet",
-      "yolk": "jammy"
+      "yolk": "jammy",
+      "noteKey": "texture.note",
+      "noteWhite": "texture.white.justSet",
+      "noteYolk": "texture.yolk.jammy"
     },
     {
       "peakYolk_C": 67.9,
       "peakWhite_C": 70.9,
+      "whiteSets": true,
       "white": "justSet",
-      "yolk": "jammy"
+      "yolk": "jammy",
+      "noteKey": "texture.note",
+      "noteWhite": "texture.white.justSet",
+      "noteYolk": "texture.yolk.jammy"
     },
     {
       "peakYolk_C": 67.9,
       "peakWhite_C": 71,
+      "whiteSets": true,
       "white": "set",
-      "yolk": "jammy"
+      "yolk": "jammy",
+      "noteKey": "texture.note",
+      "noteWhite": "texture.white.set",
+      "noteYolk": "texture.yolk.jammy"
     },
     {
       "peakYolk_C": 67.9,
       "peakWhite_C": 81.9,
+      "whiteSets": true,
       "white": "set",
-      "yolk": "jammy"
+      "yolk": "jammy",
+      "noteKey": "texture.note",
+      "noteWhite": "texture.white.set",
+      "noteYolk": "texture.yolk.jammy"
     },
     {
       "peakYolk_C": 67.9,
       "peakWhite_C": 82,
+      "whiteSets": true,
       "white": "firm",
-      "yolk": "jammy"
+      "yolk": "jammy",
+      "noteKey": "texture.note",
+      "noteWhite": "texture.white.firm",
+      "noteYolk": "texture.yolk.jammy"
     },
     {
       "peakYolk_C": 67.9,
       "peakWhite_C": 95,
+      "whiteSets": true,
       "white": "firm",
-      "yolk": "jammy"
+      "yolk": "jammy",
+      "noteKey": "texture.note",
+      "noteWhite": "texture.white.firm",
+      "noteYolk": "texture.yolk.jammy"
     },
     {
       "peakYolk_C": 68,
       "peakWhite_C": 60,
+      "whiteSets": true,
       "white": "justSet",
-      "yolk": "fudgy"
+      "yolk": "fudgy",
+      "noteKey": "texture.note",
+      "noteWhite": "texture.white.justSet",
+      "noteYolk": "texture.yolk.fudgy"
     },
     {
       "peakYolk_C": 68,
       "peakWhite_C": 70.9,
+      "whiteSets": true,
       "white": "justSet",
-      "yolk": "fudgy"
+      "yolk": "fudgy",
+      "noteKey": "texture.note",
+      "noteWhite": "texture.white.justSet",
+      "noteYolk": "texture.yolk.fudgy"
     },
     {
       "peakYolk_C": 68,
       "peakWhite_C": 71,
+      "whiteSets": true,
       "white": "set",
-      "yolk": "fudgy"
+      "yolk": "fudgy",
+      "noteKey": "texture.note",
+      "noteWhite": "texture.white.set",
+      "noteYolk": "texture.yolk.fudgy"
     },
     {
       "peakYolk_C": 68,
       "peakWhite_C": 81.9,
+      "whiteSets": true,
       "white": "set",
-      "yolk": "fudgy"
+      "yolk": "fudgy",
+      "noteKey": "texture.note",
+      "noteWhite": "texture.white.set",
+      "noteYolk": "texture.yolk.fudgy"
     },
     {
       "peakYolk_C": 68,
       "peakWhite_C": 82,
+      "whiteSets": true,
       "white": "firm",
-      "yolk": "fudgy"
+      "yolk": "fudgy",
+      "noteKey": "texture.note",
+      "noteWhite": "texture.white.firm",
+      "noteYolk": "texture.yolk.fudgy"
     },
     {
       "peakYolk_C": 68,
       "peakWhite_C": 95,
+      "whiteSets": true,
       "white": "firm",
-      "yolk": "fudgy"
+      "yolk": "fudgy",
+      "noteKey": "texture.note",
+      "noteWhite": "texture.white.firm",
+      "noteYolk": "texture.yolk.fudgy"
     },
     {
       "peakYolk_C": 72.9,
       "peakWhite_C": 60,
+      "whiteSets": true,
       "white": "justSet",
-      "yolk": "fudgy"
+      "yolk": "fudgy",
+      "noteKey": "texture.note",
+      "noteWhite": "texture.white.justSet",
+      "noteYolk": "texture.yolk.fudgy"
     },
     {
       "peakYolk_C": 72.9,
       "peakWhite_C": 70.9,
+      "whiteSets": true,
       "white": "justSet",
-      "yolk": "fudgy"
+      "yolk": "fudgy",
+      "noteKey": "texture.note",
+      "noteWhite": "texture.white.justSet",
+      "noteYolk": "texture.yolk.fudgy"
     },
     {
       "peakYolk_C": 72.9,
       "peakWhite_C": 71,
+      "whiteSets": true,
       "white": "set",
-      "yolk": "fudgy"
+      "yolk": "fudgy",
+      "noteKey": "texture.note",
+      "noteWhite": "texture.white.set",
+      "noteYolk": "texture.yolk.fudgy"
     },
     {
       "peakYolk_C": 72.9,
       "peakWhite_C": 81.9,
+      "whiteSets": true,
       "white": "set",
-      "yolk": "fudgy"
+      "yolk": "fudgy",
+      "noteKey": "texture.note",
+      "noteWhite": "texture.white.set",
+      "noteYolk": "texture.yolk.fudgy"
     },
     {
       "peakYolk_C": 72.9,
       "peakWhite_C": 82,
+      "whiteSets": true,
       "white": "firm",
-      "yolk": "fudgy"
+      "yolk": "fudgy",
+      "noteKey": "texture.note",
+      "noteWhite": "texture.white.firm",
+      "noteYolk": "texture.yolk.fudgy"
     },
     {
       "peakYolk_C": 72.9,
       "peakWhite_C": 95,
+      "whiteSets": true,
       "white": "firm",
-      "yolk": "fudgy"
+      "yolk": "fudgy",
+      "noteKey": "texture.note",
+      "noteWhite": "texture.white.firm",
+      "noteYolk": "texture.yolk.fudgy"
     },
     {
       "peakYolk_C": 73,
       "peakWhite_C": 60,
+      "whiteSets": true,
       "white": "justSet",
-      "yolk": "set"
+      "yolk": "set",
+      "noteKey": "texture.note",
+      "noteWhite": "texture.white.justSet",
+      "noteYolk": "texture.yolk.set"
     },
     {
       "peakYolk_C": 73,
       "peakWhite_C": 70.9,
+      "whiteSets": true,
       "white": "justSet",
-      "yolk": "set"
+      "yolk": "set",
+      "noteKey": "texture.note",
+      "noteWhite": "texture.white.justSet",
+      "noteYolk": "texture.yolk.set"
     },
     {
       "peakYolk_C": 73,
       "peakWhite_C": 71,
+      "whiteSets": true,
       "white": "set",
-      "yolk": "set"
+      "yolk": "set",
+      "noteKey": "texture.note",
+      "noteWhite": "texture.white.set",
+      "noteYolk": "texture.yolk.set"
     },
     {
       "peakYolk_C": 73,
       "peakWhite_C": 81.9,
+      "whiteSets": true,
       "white": "set",
-      "yolk": "set"
+      "yolk": "set",
+      "noteKey": "texture.note",
+      "noteWhite": "texture.white.set",
+      "noteYolk": "texture.yolk.set"
     },
     {
       "peakYolk_C": 73,
       "peakWhite_C": 82,
+      "whiteSets": true,
       "white": "firm",
-      "yolk": "set"
+      "yolk": "set",
+      "noteKey": "texture.note",
+      "noteWhite": "texture.white.firm",
+      "noteYolk": "texture.yolk.set"
     },
     {
       "peakYolk_C": 73,
       "peakWhite_C": 95,
+      "whiteSets": true,
       "white": "firm",
-      "yolk": "set"
+      "yolk": "set",
+      "noteKey": "texture.note",
+      "noteWhite": "texture.white.firm",
+      "noteYolk": "texture.yolk.set"
     },
     {
       "peakYolk_C": 85,
       "peakWhite_C": 60,
+      "whiteSets": true,
       "white": "justSet",
-      "yolk": "set"
+      "yolk": "set",
+      "noteKey": "texture.note",
+      "noteWhite": "texture.white.justSet",
+      "noteYolk": "texture.yolk.set"
     },
     {
       "peakYolk_C": 85,
       "peakWhite_C": 70.9,
+      "whiteSets": true,
       "white": "justSet",
-      "yolk": "set"
+      "yolk": "set",
+      "noteKey": "texture.note",
+      "noteWhite": "texture.white.justSet",
+      "noteYolk": "texture.yolk.set"
     },
     {
       "peakYolk_C": 85,
       "peakWhite_C": 71,
+      "whiteSets": true,
       "white": "set",
-      "yolk": "set"
+      "yolk": "set",
+      "noteKey": "texture.note",
+      "noteWhite": "texture.white.set",
+      "noteYolk": "texture.yolk.set"
     },
     {
       "peakYolk_C": 85,
       "peakWhite_C": 81.9,
+      "whiteSets": true,
       "white": "set",
-      "yolk": "set"
+      "yolk": "set",
+      "noteKey": "texture.note",
+      "noteWhite": "texture.white.set",
+      "noteYolk": "texture.yolk.set"
     },
     {
       "peakYolk_C": 85,
       "peakWhite_C": 82,
+      "whiteSets": true,
       "white": "firm",
-      "yolk": "set"
+      "yolk": "set",
+      "noteKey": "texture.note",
+      "noteWhite": "texture.white.firm",
+      "noteYolk": "texture.yolk.set"
     },
     {
       "peakYolk_C": 85,
       "peakWhite_C": 95,
+      "whiteSets": true,
       "white": "firm",
-      "yolk": "set"
+      "yolk": "set",
+      "noteKey": "texture.note",
+      "noteWhite": "texture.white.firm",
+      "noteYolk": "texture.yolk.set"
+    },
+    {
+      "peakYolk_C": 50,
+      "peakWhite_C": 60,
+      "whiteSets": false,
+      "white": "runny",
+      "yolk": "liquid",
+      "noteKey": "texture.white.runny",
+      "noteWhite": null,
+      "noteYolk": null
+    },
+    {
+      "peakYolk_C": 57.9,
+      "peakWhite_C": 70.9,
+      "whiteSets": false,
+      "white": "runny",
+      "yolk": "liquid",
+      "noteKey": "texture.white.runny",
+      "noteWhite": null,
+      "noteYolk": null
+    },
+    {
+      "peakYolk_C": 65,
+      "peakWhite_C": 71,
+      "whiteSets": false,
+      "white": "runny",
+      "yolk": "jammy",
+      "noteKey": "texture.white.runny",
+      "noteWhite": null,
+      "noteYolk": null
+    },
+    {
+      "peakYolk_C": 73,
+      "peakWhite_C": 95,
+      "whiteSets": false,
+      "white": "runny",
+      "yolk": "set",
+      "noteKey": "texture.white.runny",
+      "noteWhite": null,
+      "noteYolk": null
     }
   ],
   "calibrationGrid": [

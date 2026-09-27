@@ -275,8 +275,9 @@ export function verdictFor(sol: Solution, level: number): Verdict {
 
 /* --------------------------------------------------------------- the texture */
 
-/** What the white's peak temperature makes of it. */
-export type WhiteBand = 'justSet' | 'set' | 'firm';
+/** What the pan makes of the white: `runny` when it never gets the white the
+ *  dose that sets it, and otherwise what its peak temperature makes of it. */
+export type WhiteBand = 'runny' | 'justSet' | 'set' | 'firm';
 /** What the yolk's peak temperature makes of it. */
 export type YolkBand = 'liquid' | 'soft' | 'jammy' | 'fudgy' | 'set';
 
@@ -286,18 +287,48 @@ export interface Texture {
 }
 
 /** The texture note's thresholds, which are a reading of the model rather than
- *  a turn of phrase - so they are decided here and worded in the apps. Note
- *  these read PEAK TEMPERATURES, while the white's own criterion is a dose:
- *  the two disagree only when the pan never gets the white there at all, and
- *  then the dose is the one telling the truth. */
-export function textureFor(peakYolk_C: number, peakWhite_C: number): Texture {
-  const white: WhiteBand = peakWhite_C < 71 ? 'justSet' : peakWhite_C < 82 ? 'set' : 'firm';
+ *  a turn of phrase - so they are decided here and worded in the apps.
+ *
+ *  The bands read PEAK TEMPERATURES, while the white's own criterion is a dose
+ *  (`Solution.whiteSets`). The two disagree only when the pan never gets the
+ *  white there at all, and then the dose is the one telling the truth: the
+ *  white is runny, whatever its peak. That used to be decided in each app, and
+ *  only the web decided it: iOS named a white that never sets from its peak,
+ *  on a scale whose softest word is "white just set". */
+export function textureFor(peakYolk_C: number, peakWhite_C: number, whiteSets: boolean): Texture {
+  const white: WhiteBand = !whiteSets ? 'runny'
+    : peakWhite_C < 71 ? 'justSet' : peakWhite_C < 82 ? 'set' : 'firm';
   const yolk: YolkBand = peakYolk_C < 58 ? 'liquid'
     : peakYolk_C < 63 ? 'soft'
       : peakYolk_C < 68 ? 'jammy'
         : peakYolk_C < 73 ? 'fudgy'
           : 'set';
   return { white: white, yolk: yolk };
+}
+
+/** The texture note as the catalogue's keys: the line's own key, and the key
+ *  of the fragment that fills each of its placeholders. The app renders the
+ *  fragments and hands them in; it chooses nothing. */
+export interface TextureNote {
+  key: string;
+  parts: Readonly<Record<string, string>>;
+}
+
+/** Which words a texture is said in. A white that never sets is the whole
+ *  note, "white stays runny" with no yolk after it, as the web has always said
+ *  it; every other white is named with its yolk. The keys are written out
+ *  whole so that the copy tests can find each one. */
+export function textureNoteKeys(t: Texture): TextureNote {
+  if (t.white === 'runny') return { key: 'texture.white.runny', parts: {} };
+  const white = t.white === 'justSet' ? 'texture.white.justSet'
+    : t.white === 'set' ? 'texture.white.set'
+      : 'texture.white.firm';
+  const yolk = t.yolk === 'liquid' ? 'texture.yolk.liquid'
+    : t.yolk === 'soft' ? 'texture.yolk.soft'
+      : t.yolk === 'jammy' ? 'texture.yolk.jammy'
+        : t.yolk === 'fudgy' ? 'texture.yolk.fudgy'
+          : 'texture.yolk.set';
+  return { key: 'texture.note', parts: { white: white, yolk: yolk } };
 }
 
 /* ----------------------------------------------------------- the calibration */

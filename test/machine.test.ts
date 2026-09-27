@@ -20,7 +20,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
-  Machine, Phase, advance, beginCooling, idleMachine, recordBoil, restoreMachine,
+  Machine, Phase, advance, beginCooling, coolingStartsIn_s, idleMachine, recordBoil, restoreMachine,
   reviseProvisional, secondsAfterBoil, secondsToPull, startCold, startHot,
   COOLING_SECONDS, PULL_GRACE_SECONDS, RESTORE_WINDOW_MS,
 } from '../src/ui/machine.js';
@@ -106,6 +106,27 @@ test('2c. a counter rest finishes at the pull; the others cool first', () => {
   assert.equal(afterGrace('counter'), 'DONE', 'there is no cooling step to time on the counter');
   assert.equal(afterGrace('ice'), 'COOLING');
   assert.equal(afterGrace('tap'), 'COOLING');
+});
+
+test('2e. "cooling starts on its own" is promised only where the grace runs out into COOLING', () => {
+  // The web's PULL hint reads this. It used to count down on a counter rest
+  // too, where the grace runs out into DONE and nothing starts.
+  for (const cooling of ['ice', 'tap', 'counter'] as Cooling[]) {
+    const pull = walk(startHot(T0, COOK_S, cooling, 0.41), T0 + COOK_S * 1000);
+    assert.equal(pull.phase, 'PULL');
+    const promised = coolingStartsIn_s(pull, T0 + (COOK_S + 5.5) * 1000);
+    const atGrace = walk(pull, T0 + (COOK_S + PULL_GRACE_SECONDS) * 1000).phase;
+    if (cooling === 'counter') {
+      assert.equal(promised, null, 'a counter rest has no cooling to start');
+      assert.equal(atGrace, 'DONE');
+    } else {
+      assert.equal(promised, Math.ceil(PULL_GRACE_SECONDS - 5.5), `${cooling}: whole seconds left`);
+      assert.equal(atGrace, 'COOLING', `${cooling}: the cooling does start on its own`);
+    }
+    assert.equal(coolingStartsIn_s(pull, T0 + (COOK_S + PULL_GRACE_SECONDS + 3) * 1000),
+      cooling === 'counter' ? null : 0, `${cooling}: never negative`);
+  }
+  assert.equal(coolingStartsIn_s(startHot(T0, COOK_S, 'ice', 0.41), T0), null, 'only in PULL');
 });
 
 test('2d. the pull and the done events each fire exactly once', () => {
