@@ -273,12 +273,6 @@
     },
     {
       "locale": "en",
-      "key": "readout.phase.totalLidOn",
-      "args": {},
-      "text": "Total time, lid on"
-    },
-    {
-      "locale": "en",
       "key": "readout.phase.heating",
       "args": {},
       "text": "Heating"
@@ -393,18 +387,6 @@
     },
     {
       "locale": "en",
-      "key": "readout.sub.idleCold",
-      "args": {},
-      "text": "from eggs into cold water, heat on, to eggs out"
-    },
-    {
-      "locale": "en",
-      "key": "readout.sub.idleHot",
-      "args": {},
-      "text": "from eggs into boiling water to eggs out"
-    },
-    {
-      "locale": "en",
       "key": "readout.sub.heating",
       "args": {
         "elapsed": "2:15",
@@ -500,33 +482,9 @@
     },
     {
       "locale": "en",
-      "key": "readout.stat.peakYolk",
-      "args": {},
-      "text": "peak yolk"
-    },
-    {
-      "locale": "en",
-      "key": "readout.stat.peakWhite",
-      "args": {},
-      "text": "peak white"
-    },
-    {
-      "locale": "en",
-      "key": "readout.stat.afterBoil",
-      "args": {},
-      "text": "after the boil"
-    },
-    {
-      "locale": "en",
       "key": "readout.stat.waterBoilsAt",
       "args": {},
       "text": "water boils at"
-    },
-    {
-      "locale": "en",
-      "key": "readout.stat.bath",
-      "args": {},
-      "text": "sous-vide at"
     },
     {
       "locale": "en",
@@ -679,12 +637,6 @@
       "key": "action.eggsIn",
       "args": {},
       "text": "Eggs in"
-    },
-    {
-      "locale": "en",
-      "key": "action.eggsInHeatOn",
-      "args": {},
-      "text": "Eggs in, heat on"
     },
     {
       "locale": "en",
@@ -1197,22 +1149,6 @@
     },
     {
       "locale": "en",
-      "key": "controls.eggFrom.fridgeAt",
-      "args": {
-        "temp": "39 °F"
-      },
-      "text": "Fridge 39 °F"
-    },
-    {
-      "locale": "en",
-      "key": "controls.eggFrom.roomAt",
-      "args": {
-        "temp": "68 °F"
-      },
-      "text": "Room 68 °F"
-    },
-    {
-      "locale": "en",
       "key": "controls.eggFrom.hint",
       "args": {
         "fridge": "39 °F",
@@ -1260,12 +1196,6 @@
     },
     {
       "locale": "en",
-      "key": "controls.start.hintSousVide",
-      "args": {},
-      "text": "A bath needs no pan, so the pan controls are put away. Your settings are kept and come back when you pick a pan again."
-    },
-    {
-      "locale": "en",
       "key": "controls.afterTheBoil",
       "args": {},
       "text": "After the boil"
@@ -1287,24 +1217,6 @@
       "key": "controls.afterBoil.heatOff",
       "args": {},
       "text": "Heat off, lid on"
-    },
-    {
-      "locale": "en",
-      "key": "controls.afterBoil.explainHeatOff",
-      "args": {},
-      "text": "Lid on and burner off: the water's own heat finishes the eggs. I work out the time from the water below, so measure it — more or less water changes the time, or whether it works at all."
-    },
-    {
-      "locale": "en",
-      "key": "controls.afterBoil.explainHold",
-      "args": {},
-      "text": "The burner holds the water at a rolling boil for the whole cook."
-    },
-    {
-      "locale": "en",
-      "key": "controls.then",
-      "args": {},
-      "text": "Then"
     },
     {
       "locale": "en",
@@ -1648,6 +1560,18 @@
     },
     {
       "locale": "en",
+      "key": "more.expanded",
+      "args": {},
+      "text": "Expanded"
+    },
+    {
+      "locale": "en",
+      "key": "more.collapsed",
+      "args": {},
+      "text": "Collapsed"
+    },
+    {
+      "locale": "en",
       "key": "setup.sentence",
       "args": {
         "egg": "2.4 oz eggs",
@@ -1791,15 +1715,9 @@
     },
     {
       "locale": "en",
-      "key": "controls.probe",
+      "key": "controls.units.more.ios",
       "args": {},
-      "text": "Ask for a probe reading"
-    },
-    {
-      "locale": "en",
-      "key": "controls.probe.hint",
-      "args": {},
-      "text": "When the cooling ends, I'll ask for one reading from the middle of the egg. From a single egg, that tells me how fast your eggs heat."
+      "text": "Metric or Imperial, for every number I show and every number you set. I start with what's usual where your phone says you are. Switching changes only how I write the numbers: the egg and the times stay exactly the same, and the eggs don't mind which."
     },
     {
       "locale": "en",
@@ -1812,38 +1730,6 @@
       "key": "controls.thermometer.more",
       "args": {},
       "text": "If you have a probe thermometer, I'll ask for one reading when the cooling countdown ends. That's the moment the middle of the yolk is at its warmest, so push the tip to the very middle and tell me the highest number you see: anywhere else, or any later, reads lower. From that single egg I learn how fast heat gets into your eggs. I don't ask when the eggs rest on the counter, because nothing is counted down."
-    },
-    {
-      "locale": "en",
-      "key": "pan.waterBoilsAt",
-      "args": {},
-      "text": "Water boils at"
-    },
-    {
-      "locale": "en",
-      "key": "pan.timeToBoil",
-      "args": {},
-      "text": "Time to boil"
-    },
-    {
-      "locale": "en",
-      "key": "pan.timeToBoil.assumed",
-      "args": {
-        "time": "8:00"
-      },
-      "text": "8:00 (assumed)"
-    },
-    {
-      "locale": "en",
-      "key": "pan.measured",
-      "args": {},
-      "text": "Based on history with this much water. I update it each time you tap the boil on a cold-water start."
-    },
-    {
-      "locale": "en",
-      "key": "pan.unmeasured",
-      "args": {},
-      "text": "Tap the boil on a cold-water start and I'll remember for next time."
     },
     {
       "locale": "en",
@@ -1865,18 +1751,6 @@
       "key": "odds.why",
       "args": {},
       "text": "Before your first egg I don't know your taste, your eggs or your kitchen, so I can't be sure, and this number starts low. Each egg you tell me about makes me surer, and the number goes up."
-    },
-    {
-      "locale": "en",
-      "key": "odds.shown",
-      "args": {},
-      "text": "Showing"
-    },
-    {
-      "locale": "en",
-      "key": "odds.hidden",
-      "args": {},
-      "text": "Hidden"
     },
     {
       "locale": "en",
@@ -2164,12 +2038,6 @@
       "key": "learned.forget.more",
       "args": {},
       "text": "This forgets every egg you've told me about and every boil you've timed, and I go back to what's true of eggs in general. You don't need it to undo a wrong answer or two: they wash out after a few more eggs. It's for a new stove, a new kitchen, or a fresh start."
-    },
-    {
-      "locale": "en",
-      "key": "learned.forgetExplain",
-      "args": {},
-      "text": "Clears what I've learned from your answers and your boil times. A few wrong answers wash out after a few more eggs anyway; this is for when you'd rather not wait."
     },
     {
       "locale": "en",
@@ -3089,12 +2957,6 @@
       "key": "colophon.tail",
       "args": {},
       "text": "— including what I get wrong."
-    },
-    {
-      "locale": "en",
-      "key": "colophon.ios",
-      "args": {},
-      "text": "I work out times from the physics and chemistry of eggs. Both heating and cooling matter for cooking the middle."
     }
   ],
   "plural": [
