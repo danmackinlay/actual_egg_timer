@@ -17,6 +17,11 @@
   --warn: #ff7a4d;
   --ok: #5ad17f;
   --focus: #6fb5ff;
+  /* The doneness track's hue, a yolk's: deep orange runny, golden jammy,
+     pale yellow hard. Bright, to stand off the dark track. */
+  --yolk-runny: #ff7417;
+  --yolk-jammy: #ffb31f;
+  --yolk-hard: #ffe680;
 }
 
 @media (prefers-color-scheme: light) {
@@ -33,6 +38,10 @@
     --warn: #a33000;
     --ok: #17703a;
     --focus: #0b5fd0;
+    /* Deeper than a yolk, since a pale yellow vanishes on a light track. */
+    --yolk-runny: #d9530a;
+    --yolk-jammy: #e89400;
+    --yolk-hard: #e8c410;
   }
 }
 
@@ -288,12 +297,18 @@ button.info[aria-expanded="true"]::before { background: var(--fg); color: var(--
 }
 .slider__blocked--hard { left: auto; right: 0; }
 /* The odds at each level, relative to the best level's (src/core/reach.ts).
-   The band's strength is its opacity, so it reads in grey as well as in
-   colour. */
+   The hue is the yolk's at that level, runny to hard, golden at jammy's
+   anchor (0.41). The odds are the band's strength: a mask of opacity that
+   renderOddsBand lays on, so a level that rarely comes out right is a faded
+   yolk, and the odds read in grey as well as in colour. Masked out entirely
+   until there is a profile. */
 .slider__odds {
   position: absolute;
   inset: 0;
-  background: transparent;
+  background: linear-gradient(to right,
+    var(--yolk-runny) 0%, var(--yolk-jammy) 41%, var(--yolk-hard) 100%);
+  -webkit-mask-image: linear-gradient(transparent, transparent);
+  mask-image: linear-gradient(transparent, transparent);
 }
 /* Levels the water can deliver but that hit the mark less than 3 times in
    10, once an egg has taught something: dotted, so they read apart from the
@@ -345,7 +360,7 @@ button.info[aria-expanded="true"]::before { background: var(--fg); color: var(--
    the track, in the thumb's column, so it reads with the thumb and never
    over the odds shading. Its ends are ticks, so a narrow range still reads
    as a range, and a short mark stands at its middle. The foreground colour,
-   not the accent or the odds' green, so it reads as a different thing from
+   not the accent or the odds' yolk, so it reads as a different thing from
    both, in either scheme. */
 .slider__range { position: absolute; left: 17px; right: 17px; top: 38px; height: 7px; pointer-events: none; }
 .slider__bracket {
