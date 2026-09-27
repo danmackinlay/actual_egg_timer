@@ -130,7 +130,13 @@ up as a failing test and not as a surprise in a Czech kitchen.
 - **The formatting locale is the UI's language in the device's region**:
   `formattingLocale(uiLanguage, region, hourCycle)`, one function in both
   cores. An English UI in Britain formats as `en-GB`; in Germany as `en-DE`,
-  which is a real CLDR locale with English words and "2,4". A private-use
+  which is a real CLDR locale with English words and "2,4". **A language
+  with one convention of its own ignores the region** (the owner, 27
+  September): a Czech UI formats as `cs-CZ` everywhere, so cs in the US
+  writes "1 234,5", because the words around the number are Czech. The list
+  is `OWN_CONVENTION` (`ownConvention` in Swift), today only `cs` → `CZ`;
+  English is not on it, because CLDR has English writing numbers a dozen
+  ways by region, and a language joins it when its catalogue ships. A private-use
   subtag (`x-1750`) is dropped, since it is a register and not a format. iOS
   adds the phone's own 12/24-hour setting as `-u-hc-h23` (or `h12`) when it
   differs from the region's, so an Australian iPhone set to 24-hour time
@@ -157,6 +163,12 @@ up as a failing test and not as a surprise in a Czech kitchen.
   "9:05" in `Intl` and "09:05" in Foundation for en-GB, where the style is
   CLDR's own pattern and both print "09:05". The countdown's m:ss is a
   duration, not a time of day, and is built by hand as before.
+- **No time of day zero-pads its hour** (the owner, 27 September): "9:05"
+  and "0:05", never "09:05", in every locale, and the minutes and seconds
+  keep two digits. `unpadHour` in both cores drops the leading zero from the
+  first run of digits after the platform has formatted. It changes en-GB
+  ("09:05" was CLDR's pattern), 24-hour English anywhere, and the `-u-hc-h23`
+  override; Czech and 12-hour clocks never padded.
 - **Every space in a time of day is U+202F**, the narrow no-break space.
   Foundation prints it before "PM", as CLDR says; V8 prints U+0020 instead,
   a patch for web pages that parse their own output. The web normalises to
@@ -190,25 +202,30 @@ normalisation above:
 | formatting locale | `Intl` | Foundation | what F4 did |
 |---|---|---|---|
 | en-US, en-AU, en, any 12-hour English | "3:05 PM" with U+0020 | "3:05 PM" with U+202F | normalised to U+202F, pinned |
-| en-CZ (an English UI in Czechia) | "09:05" | "9:05" | **not normalised, not pinned** |
+| en-CZ (an English UI in Czechia) | "09:05" | "9:05" | **resolved 27 September**: no hour is zero-padded, both "9:05"; pinned |
 | en-CA | "3:05 p.m." | "3:05 PM" | not pinned |
 | en-IN, en-NZ, en-SG | "3:05 pm" | "3:05 PM" | not pinned |
-| cs-US, cs-GB (a Czech UI abroad) | "1 234,5" (by language) | "1,234.5" (by region); cs-US also a 12-hour clock | not pinned: **F5 must choose** |
+| cs-US, cs-GB (a Czech UI abroad) | "1 234,5" (by language) | "1,234.5" (by region); cs-US also a 12-hour clock | **resolved 27 September**: never formatted in; a Czech UI's tag is `cs-CZ` in any region, "1 234,5" and "15:05" on both; pinned |
 | cs-CZ-u-hc-h12 | "3:05 odp." | "15:05" (`DateFormatter` ignores `hc` for cs) | not pinned |
 
 Pinned, and agreeing: en-US, en-GB and cs-CZ, which are the supported set,
-and en, en-AU, en-DE, cs, en-US-u-hc-h23 and en-GB-u-hc-h12. Measured to
+and en, en-AU, en-DE, en-CZ, cs, en-US-u-hc-h23 and en-GB-u-hc-h12, with the
+tag each app derives from a language, a region and an hour cycle followed
+through to the text (`derived`). Measured to
 agree but not pinned: en-150, en-CH ("1'234.5"), en-ES, en-FR ("1 234,5" with
 U+202F), en-IE, en-IT, en-JP, en-NL, en-PL, en-SE, en-ZA and cs-SK. Czech
 groups with U+00A0 on both platforms, so no choice was needed there.
 
-Two of those matter before F5 ships. **en-CZ is the owner's friend** until
-there is a Czech catalogue: the web will print "09:05" and iOS "9:05". And a
-Czech UI outside Czechia gets a different decimal separator from each app,
-because `Intl` has no cs-US data and falls back to the language, where Apple
-lets the region win. Both are formatting-locale questions, and F5, which
-brings the picker, is where they get decided; the tag could be restricted to
-the pinned set, or built with the `rg` extension, or left to each platform.
+Two of those mattered before F5 ships, and the owner settled both on 27
+September. **en-CZ is the owner's friend** until there is a Czech catalogue:
+the web printed "09:05" and iOS "9:05", and now both print "9:05", because no
+time of day pads its hour. And a Czech UI outside Czechia got a different
+decimal separator from each app, because `Intl` has no cs-US data and falls
+back to the language, where Apple lets the region win; now the tag is
+`cs-CZ` wherever the phone is, so neither platform is asked. Its clock is
+Czech too, 24-hour, even in the US; on iOS the phone's own 12-hour setting
+still rides along as `-u-hc-h12`, which `DateFormatter` ignores for Czech,
+as in the last row of the table, so both apps print "15:05".
 Safari was not measured: it runs Apple's ICU, not V8's, and the U+202F
 normalisation covers the one difference known in advance.
 
@@ -747,22 +764,21 @@ Taken by the owner, 26 September 2026:
 
 - **The owner reviews the 1750**, against Johnson's *Preface* (§6).
 
+Taken by the owner, 27 September 2026, and built the same day (§2):
+
+- **No time of day zero-pads its hour**, in either app, in any locale:
+  "9:05", never "09:05". The countdown is not a time of day. This settled
+  en-CZ, where the web wrote "09:05" and iOS "9:05".
+- **Numbers follow the UI's language**, and the region only where the
+  language has no convention of its own: a Czech UI writes "1 234,5" in the
+  US as in Czechia, on both apps. English keeps following the region, so
+  `en-DE` still writes "2,4".
+
 Waiting on the owner, from 27 September:
 
 - **The two drafts in §3.** The E2 feedback draft is implemented, since the call
   was made while the owner slept, and remains open to revision. The draft for
   the rest of F2 is not in the catalogue yet.
-- **Two platform disagreements F4 left open (§2), both to settle before Czech
-  ships:**
-  - An English UI in Czechia (`en-CZ`) writes a time of day "09:05" on the web
-    and "9:05" on iOS. Until there is a Czech catalogue, this is what the Czech
-    reviewer sees.
-  - A Czech UI outside Czechia (`cs-US`, `cs-GB`) takes its decimal separator
-    from the LANGUAGE on the web ("1 234,5") and from the REGION on iOS
-    ("1,234.5").
-
-    The simplest rule is to follow the language on both, since the words
-    around the number are Czech. Recommended.
 - **`Intl` inside `src/core/format.ts`.** F4 relaxed invariant 1 for this one
   file. The web's output therefore depends on the browser's ICU, while the
   fixtures are pinned against Node's. Safari has not been tried.

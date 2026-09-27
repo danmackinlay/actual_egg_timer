@@ -66,6 +66,9 @@ struct FormatConformance {
         for c in Self.section("normaliseTime") {
             #expect(normaliseTime(c.str("text")) == c.str("normalised"), "normaliseTime(\(Self.show(c.str("text"))))")
         }
+        for c in Self.section("unpadHour") {
+            #expect(unpadHour(c.str("text")) == c.str("unpadded"), "unpadHour(\(Self.show(c.str("text"))))")
+        }
     }
 
     @Test("the formatting locale each app derives")
@@ -74,6 +77,28 @@ struct FormatConformance {
             let hc = (c["hourCycle"] as? String).flatMap(HourCycle.init(rawValue:))
             let actual = formattingLocale(uiLanguage: c.str("uiLanguage"), region: c["region"] as? String, hourCycle: hc)
             #expect(actual == c.str("tag"), "\(c): \(actual)")
+        }
+    }
+
+    @Test("from the UI's language, the region and the clock setting to what a cook reads")
+    func derived() {
+        let cases = Self.section("derived")
+        #expect(!cases.isEmpty)
+        for c in cases {
+            let hc = (c["hourCycle"] as? String).flatMap(HourCycle.init(rawValue:))
+            let tag = formattingLocale(uiLanguage: c.str("uiLanguage"), region: c["region"] as? String, hourCycle: hc)
+            #expect(tag == c.str("tag"), "\(c): \(tag)")
+            let actual: [(String, String)] = [
+                ("number", formatNumber(1234.5, decimals: 1, locale: tag)),
+                ("decimal", formatNumber(2.4, decimals: 1, locale: tag)),
+                ("morning", formatTimeOfDay(9 * 3600 + 5 * 60, withSeconds: false, locale: tag)),
+                ("midnight", formatTimeOfDay(5 * 60, withSeconds: false, locale: tag)),
+                ("afternoon", formatTimeOfDay(15 * 3600 + 5 * 60, withSeconds: false, locale: tag)),
+                ("withSeconds", formatTimeOfDay(9 * 3600 + 5 * 60 + 9, withSeconds: true, locale: tag)),
+            ]
+            for (field, text) in actual {
+                #expect(text == c.str(field), "\(tag) \(field): expected \(Self.show(c.str(field))), got \(Self.show(text))")
+            }
         }
     }
 

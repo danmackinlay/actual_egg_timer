@@ -19,6 +19,10 @@
  *    there instead (a web-compatibility patch, not CLDR), so "3:05 PM" would
  *    otherwise differ by one byte between the apps, and could break a line
  *    between the digits and the "PM".
+ *  - A time of day never zero-pads its hour: "9:05", not "09:05", in every
+ *    locale (the owner, 27 September). CLDR's en-GB pads and its cs-CZ does
+ *    not, and for en-CZ `Intl` pads where Foundation does not; one rule in
+ *    both cores, `unpadHour`, makes all of them agree.
  *
  * `fixtures/format.json` pins the result for every supported formatting
  * locale, and LANGUAGE.md §2 records where the platforms were found to
@@ -110,7 +114,9 @@ function numberFormat(locale: string, decimals: number): Intl.NumberFormat {
  * The locale's short and medium TIME STYLES, and not a skeleton of hour and
  * minute fields: a skeleton lets `Intl` and Foundation pick different hour
  * widths ("9:05" against "09:05" in en-GB), where the style is the locale's
- * own pattern and both platforms print it as CLDR has it.
+ * own pattern and both platforms print it as CLDR has it. Then the hour loses
+ * any leading zero (`unpadHour`), so en-GB writes "9:05" and "0:05", as Czech
+ * does. The minutes and seconds keep their two digits.
  *
  * Not the countdown. "7:44" on the timer is a duration, the same in every
  * language, and stays as the apps build it.
@@ -126,7 +132,28 @@ export function formatTimeOfDay(locale: string, secondsOfDay: number, withSecond
   } catch {
     format = new Intl.DateTimeFormat('en', options);
   }
-  return normaliseTime(format.format(s * 1000));
+  return unpadHour(normaliseTime(format.format(s * 1000)));
+}
+
+/**
+ * A time of day with no leading zero on its hour: "09:05" -> "9:05", "00:05"
+ * -> "0:05". The hour is the first run of digits: in every CLDR time style it
+ * comes before the minutes, whether or not a day period comes first ("a h:mm"
+ * in some locales). Only a two-digit run starting with 0 changes, so "0:05"
+ * (a Czech midnight) and "12:05" are left alone, and so is any text whose
+ * digits are not ASCII. Transliterated in `Format.swift`, and pinned.
+ */
+export function unpadHour(text: string): string {
+  let i = 0;
+  while (i < text.length && !isAsciiDigit(text.charCodeAt(i))) i++;
+  if (i + 1 < text.length && text.charCodeAt(i) === 48 && isAsciiDigit(text.charCodeAt(i + 1))) {
+    return text.slice(0, i) + text.slice(i + 1);
+  }
+  return text;
+}
+
+function isAsciiDigit(c: number): boolean {
+  return c >= 48 && c <= 57;
 }
 
 /** Every space in a time of day as U+202F. */
@@ -150,15 +177,31 @@ export function languageOf(locale: string): string {
 export type HourCycle = 'h11' | 'h12' | 'h23' | 'h24';
 
 /**
+ * Languages that write numbers one way wherever they are read, and the region
+ * whose conventions those are. A UI in one of these formats in that locale,
+ * whatever region the device is in: a Czech UI in the US writes "1 234,5",
+ * because the words around the number are Czech (the owner, 27 September).
+ *
+ * A language not listed has no convention of its own and takes the device's
+ * region, as English does: CLDR has English in Britain, India, Germany and
+ * Switzerland, each writing numbers its own way, so `en-DE` writes "2,4" and
+ * `en-IN` "1,23,456". A language joins this list when its catalogue ships
+ * (F5), and the Swift twin holds the same list.
+ */
+export const OWN_CONVENTION: Readonly<Record<string, string>> = { cs: 'CZ' };
+
+/**
  * The locale numbers and times are formatted in: the language the app speaks,
- * and the region the device is in.
+ * and - where that language has no convention of its own - the region the
+ * device is in.
  *
  * The language comes from the UI, not the device, so that a Czech UI writes
- * "2,4" even on a phone set to English, and an English UI in Germany reads
- * "2,4" as well, because the region says so: `en-DE` is a real CLDR locale,
- * with English words and German numbers. A private-use subtag (the `x-1750` of
- * LANGUAGE.md §6) is a register, not a format, and is dropped. A region that
- * is not two letters or three digits is ignored.
+ * "2,4" even on a phone set to English. Czech has one convention, so a Czech
+ * UI formats as `cs-CZ` in any region (`OWN_CONVENTION`); English has many,
+ * so an English UI in Germany reads "2,4" because the region says so: `en-DE`
+ * is a real CLDR locale, with English words and German numbers. A private-use
+ * subtag (the `x-1750` of LANGUAGE.md §6) is a register, not a format, and is
+ * dropped. A region that is not two letters or three digits is ignored.
  *
  * `hourCycle`, when given, is the device's own 12/24-hour setting where it
  * differs from the region's (an iPhone in Australia set to 24-hour time), and
@@ -169,7 +212,9 @@ export function formattingLocale(
 ): string {
   let tag = languageOf(uiLanguage);
   if (tag === '' || !isLanguage(tag)) tag = 'en';
-  if (typeof region === 'string' && isRegion(region)) tag += `-${region.toUpperCase()}`;
+  const home = Object.prototype.hasOwnProperty.call(OWN_CONVENTION, tag) ? OWN_CONVENTION[tag] : undefined;
+  if (home !== undefined) tag += `-${home}`;
+  else if (typeof region === 'string' && isRegion(region)) tag += `-${region.toUpperCase()}`;
   if (hourCycle !== null && hourCycle !== undefined) tag += `-u-hc-${hourCycle}`;
   return tag;
 }

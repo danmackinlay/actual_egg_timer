@@ -413,6 +413,12 @@ F1 goes before E2 so that Phase E's new feedback copy is born in the catalogue.
       separator from the language on the web and the region on iOS - both
       F5's to decide (`LANGUAGE.md` §2). iOS built and seen in a spare
       simulator; nothing tapped.
+      Both settled by the owner and built, 27 September: no time of day
+      zero-pads its hour, in either app (`unpadHour`: en-GB and en-CZ now
+      "9:05"), and numbers follow the UI's language, with the region only
+      where the language has no convention of its own (`OWN_CONVENTION`,
+      today `cs` -> `CZ`: a Czech UI in the US writes "1 234,5" on both;
+      en-DE still "2,4"). Pinned in `fixtures/format.json`, en-CZ included.
 - [ ] **F5 Czech**, reviewed by the owner's friend before it ships. Brings
       the in-app language picker in both apps (deferred from F1), and adds
       `cs` to `CFBundleLocalizations` in `ios/project.yml`. It tests
@@ -744,7 +750,8 @@ needing a decision:
 5. **Hot-start heat-off cooks never set the white** at 1-4 L with four fridge
    eggs. `TAU_STANDING_SCALE = 1.0` may be pessimistic with a lid on. One real
    cook would settle it.
-6. **F4's two platform splits** (LANGUAGE §8), before Czech ships.
+6. ~~**F4's two platform splits** (LANGUAGE §8), before Czech ships.~~
+   Answered and built 27 September; see F4.
 7. **Protocol advice when soft is asked for** (INFERENCE §8) was not built.
    Nobody decided whether it should be.
 

@@ -1312,3 +1312,58 @@ the first. Before any egg, soft is 419 s and jammy 464 s.
 - **No real egg** has been cooked at a chosen time. The odds are calibrated
   against cooks drawn from the prior, which is the model's own idea of cooks.
 - Safari was not tried.
+
+## Unpadded hours, and Czech numbers anywhere (27 September 2026, F4 follow-up)
+
+The owner's two answers of 27 September, built in both cores and pinned in
+`fixtures/format.json`. `LANGUAGE.md` §2 has the rules; this is what was
+checked.
+
+- **No time of day zero-pads its hour.** `unpadHour`, in `format.ts` and
+  `Format.swift`, drops a leading zero from the first run of digits after the
+  platform has formatted: en-GB "09:05" -> "9:05", "00:05" -> "0:05", and
+  en-CZ, where `Intl` wrote "09:05" and Foundation "9:05", now agrees. The
+  countdown's m:ss is not touched.
+- **Numbers follow the UI's language, the region only where the language has
+  no convention of its own.** `OWN_CONVENTION` (`ownConvention` in Swift) is
+  `cs` -> `CZ`: a Czech UI formats as `cs-CZ` in any region, so cs in the US
+  writes "1 234,5" on both apps where iOS wrote "1,234.5". English is not on
+  the list, so en-DE still writes "2,4".
+
+### Verified
+
+- **The counts.** `npm test` 188 tests, 187 pass, 0 fail, 1 todo (the known
+  NOT MET in `infer.test.ts` 5b); `test/format.test.ts` gained 2d and 4b.
+  `npm run validate` 28/28. `npm run conformance` 91 Swift tests in 25
+  suites, all passing; `FormatConformance` gained `derived`.
+- **`fixtures/format.json`**: times in ten locales now (en-CZ added), 130
+  rows, none with a padded hour; the unpadding itself on 15 strings (a
+  day period before the hour, "0:05" left alone, Arabic-Indic digits left
+  alone); the formatting-locale grid, where every Czech row is now `cs-CZ`;
+  and `derived`, 12 cases from a UI language, a region and an hour cycle
+  through to "1 234,5", "2,4", "9:05", "0:05", "15:05" and "9:05:09". 510
+  formatted numbers and times in all.
+- **Foundation, measured** on macOS 26.6.2 before the change: en-GB `HH:mm`
+  "09:05", en-CZ `H:mm` "9:05", cs-US `h:mm a` "9:05 dop." with "1,234.5",
+  cs-GB "1,234.5"; `Intl` (Node 26.8.1, ICU 78.3) en-GB and en-CZ "09:05",
+  cs-US and cs-GB "1 234,5" and 24-hour.
+- **The web**, built with `npm run build:site` and served from this worktree
+  on its own port, with a page pinning `navigator.language` to en-GB, in
+  Chrome 152: `timeOfDay` "9:05", "9:05:09" and "0:05", and in that browser
+  `formattingLocale('cs', 'US')` is `cs-CZ` and writes "1 234,5". The
+  sous-vide line read "at 11:06", which could not show the change at that
+  hour of the morning.
+- **iOS** builds for the simulator (`xcodebuild`, generic destination, no
+  install; the booted simulators were left alone).
+
+### Not verified
+
+- **Nothing on iOS was run or tapped.** The alarm line and the sous-vide
+  start rest on `swift test` and the build.
+- **A Czech UI's clock abroad.** Its tag is `cs-CZ`, so it is 24-hour on the
+  web. On iOS a US phone adds `-u-hc-h12`, which `DateFormatter` ignores for
+  Czech, so it is 24-hour there too and the apps agree; but that rests on a
+  Foundation quirk (the last row of LANGUAGE §2's table), not on a choice.
+  The owner decided the decimal separator, not the clock.
+- **Safari** was not tried, and neither was any locale with non-ASCII
+  digits, which `unpadHour` leaves as the platform wrote them.
