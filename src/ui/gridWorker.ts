@@ -10,7 +10,9 @@
  * Two kinds are built. A fold's surface (`request`) is described in full by the
  * page. A decision's surface (`decision`, E5) is described by the pot, the egg
  * and where the posterior stands, and its extent takes two solves to find, so
- * those run here too rather than on the page (`decisionGridRequest`).
+ * those run here too rather than on the page (`decisionGridRequest`). And the
+ * odds at every level on a decision's surface (`oddsProfile`, reach.ts), a
+ * solve and a decision per level: most of a second, and never on the page.
  *
  * Zero dependencies and no bundler: this is compiled by the same `tsc` as
  * everything else, lands beside `calibration.js` in `dist/src/ui/`, and is
@@ -22,11 +24,16 @@
 
 import { GridRequest, buildRequestedGrid } from '../core/record.js';
 import { DecisionInputs, decisionGridRequest } from '../core/decide.js';
+import { oddsProfile } from '../core/reach.js';
+import type { ProfileJob } from './calibration.js';
 
 interface Request {
   id: number;
   request?: GridRequest;
   decision?: DecisionInputs;
+  /** The odds at every level (reach.ts): a solve and a decision per level, on
+   *  a decision surface the page already has. */
+  profile?: ProfileJob;
 }
 
 /** The worker's global, typed as what it is. The project compiles against the
@@ -38,8 +45,14 @@ const scope = self as unknown as {
 };
 
 scope.onmessage = (event: MessageEvent<Request>): void => {
-  const { id, request, decision } = event.data;
+  const { id, request, decision, profile } = event.data;
   try {
+    if (profile !== undefined) {
+      scope.postMessage({
+        id: id, profile: oddsProfile(profile.calibration, profile.egg, profile.setup, profile.grid),
+      });
+      return;
+    }
     const q = request ?? (decision !== undefined ? decisionGridRequest(decision) : undefined);
     if (q === undefined) throw new Error('nothing to build');
     scope.postMessage({ id: id, grid: buildRequestedGrid(q) });

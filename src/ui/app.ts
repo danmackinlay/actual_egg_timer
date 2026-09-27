@@ -25,7 +25,7 @@ import {
 } from '../core/solve.js';
 import {
   DEFAULTS, SLIDER_STEPS, Verdict, ambientFor, anchorNear, coolingSecondsFor,
-  plausibleProbeRange_C, probeMomentFor, targetPeakYolk_C, textureFor, verdictFor,
+  plausibleProbeRange_C, probeMomentFor, targetPeakYolk_C, textureFor,
 } from '../core/policy.js';
 import { Feedback, WhiteReport } from '../core/infer.js';
 import { EggFrom, MassFrom, ProbeReading, recordCookTime_s, recordProbe_C } from '../core/record.js';
@@ -33,9 +33,12 @@ import {
   Decision, DecisionInputs, carriedSolution, decide, decidedSolution, decisionInputs,
 } from '../core/decide.js';
 import {
-  Calibration, cachedDecisionGrid, calibrationDoneness, calibrationParams, clearCalibration,
-  decisionGrid, decisionKey, eggRecordFor, eggsBehind, learn, loadCalibration, logEgg,
-  recordSecondAnswer,
+  OddsProfile, REACH_ODDS, adviceWanted, pricedChanges, protocolAdvice, shadingOf, verdictWithOdds,
+} from '../core/reach.js';
+import {
+  Calibration, cachedDecisionGrid, cachedOddsProfile, calibrationDoneness, calibrationParams,
+  clearCalibration, decisionGrid, decisionKey, eggRecordFor, eggsBehind, learn, loadCalibration,
+  logEgg, oddsProfileFor, profileKey, recordSecondAnswer,
 } from './calibration.js';
 import {
   LIMITS, Limit, START_TEMP_PRESETS_C, Settings, UiStartMode, clampNumber,
@@ -75,6 +78,11 @@ const dom = {
   odds: el<HTMLParagraphElement>('odds'),
   oddsHit: el<HTMLSpanElement>('oddsHit'),
   oddsLearning: el<HTMLSpanElement>('oddsLearning'),
+  oddsInfo: el<HTMLButtonElement>('oddsInfo'),
+  oddsWhy: el<HTMLParagraphElement>('oddsWhy'),
+  advice: el<HTMLDivElement>('advice'),
+  adviceToggle: el<HTMLButtonElement>('adviceToggle'),
+  adviceList: el<HTMLUListElement>('adviceList'),
   statYolk: el<HTMLElement>('statYolk'),
   statYolkLabel: el<HTMLElement>('statYolkLabel'),
   startHint: el<HTMLParagraphElement>('startHint'),
@@ -84,6 +92,9 @@ const dom = {
   warn: el<HTMLParagraphElement>('warn'),
   mute: el<HTMLButtonElement>('mute'),
   doneness: el<HTMLInputElement>('doneness'),
+  donenessOdds: el<HTMLDivElement>('donenessOdds'),
+  donenessUnlikelySoft: el<HTMLDivElement>('donenessUnlikelySoft'),
+  donenessUnlikelyHard: el<HTMLDivElement>('donenessUnlikelyHard'),
   donenessBlockedSoft: el<HTMLDivElement>('donenessBlockedSoft'),
   donenessBlockedHard: el<HTMLDivElement>('donenessBlockedHard'),
   donenessTicks: el<HTMLDivElement>('donenessTicks'),
@@ -167,6 +178,13 @@ let solution: Solution | null = null;
 let decision: Decision | null = null;
 /** A decision surface waiting for the inputs to settle before it is asked for. */
 let decisionHandle = 0;
+/** The odds at every level for the pot on screen and the posterior as it
+ *  stands (reach.ts): the track's shading, and the range the slider offers.
+ *  Null until it has been worked out, which follows the pot's surface; until
+ *  then the physical limits are the whole rule, as they were before. */
+let profile: OddsProfile | null = null;
+/** Profiles asked for and not yet in, by key, so each lands once. */
+const profilesAsked = new Set<string>();
 /** Set when the requested doneness had to be clamped; empty otherwise. */
 let refusal = '';
 /** What the running cook is, frozen at the moment it started.
@@ -413,6 +431,13 @@ function refusalText(v: Verdict): string {
 
   if (v.kind === 'whiteNeverSets') return t('refusal.whiteNeverSets');
 
+  // The pan could, but the odds say it would rarely come out right (reach.ts).
+  if (v.kind === 'unlikelySoft' || v.kind === 'unlikelyHard') {
+    return t(v.kind === 'unlikelySoft' ? 'refusal.unlikelySoft' : 'refusal.unlikelyHard', {
+      hits: Math.round(REACH_ODDS * 10), of: 10, limit: limit,
+    });
+  }
+
   if (v.kind === 'harderThanPanReaches') {
     return t('refusal.harderThanPan', {
       wanted: wanted, water: show('water', settings.waterLitres), limit: limit,
@@ -446,12 +471,16 @@ interface Answer {
  *
  *  `snapRetry` is false for a cook already under way: the target is frozen, so
  *  re-solving at a snapped position would answer for an egg nobody is cooking. */
-function answerFor(timeToBoil_s: number, level: number, snapRetry = true): Answer {
+function answerFor(
+  timeToBoil_s: number, level: number, snapRetry = true, odds: OddsProfile | null = null,
+): Answer {
   const egg = currentEgg();
   const setup = buildSetup(timeToBoil_s);
   const params = calibrationParams(calib);
   const result = solveCookTime(egg, setup, params, calibrationDoneness(calib, level));
-  const verdict = verdictFor(result, level);
+  // With this pot's odds in, the slider's ends are where they reach 3/10
+  // (reach.ts); without them, or with none that high, where the pan reaches.
+  const verdict = verdictWithOdds(result, level, odds);
 
   // Re-solve at the position the user is actually being offered, so the
   // numbers on screen are the numbers for that cook rather than for one that
@@ -481,6 +510,8 @@ function decided(answer: Answer, timeToBoil_s: number): { solution: Solution; de
     askForDecision(inputs);
     return { solution: answer.solution, decision: null };
   }
+  // The odds at every level follow the surface, in the worker.
+  if (cachedOddsProfile(inputs, calib) === null) askForProfile(inputs);
   const logTarget = Math.log10(donenessFromSlider(answer.level).yolkDose_min);
   const d = decide(calib, grid, answer.solution, logTarget);
   return {
@@ -507,6 +538,37 @@ function askForDecision(inputs: DecisionInputs): void {
       if (now === key) recompute();
     });
   }, DECISION_SETTLE_MS);
+}
+
+/** The pot on screen as a decision's inputs: what its surface and its odds
+ *  profile are keyed by. */
+function currentInputs(timeToBoil_s: number): DecisionInputs {
+  return decisionInputs(calib, currentEgg(), buildSetup(timeToBoil_s));
+}
+
+/** The profiles the screen wants now: this pot's, and those of the changes
+ *  the advice would price (`pricedChanges`). */
+function wantedProfileKeys(): Set<string> {
+  const inputs = currentInputs(timeToBoil_s());
+  const keys = new Set<string>([profileKey(inputs, calib)]);
+  for (const change of pricedChanges(inputs.setup)) {
+    keys.add(profileKey(decisionInputs(calib, inputs.egg, change.setup), calib));
+  }
+  return keys;
+}
+
+/** Ask the worker for the odds at every level for these inputs - after their
+ *  surface, which it builds first if need be - and take them up when they land,
+ *  if the screen still wants them. */
+function askForProfile(inputs: DecisionInputs): void {
+  const key = profileKey(inputs, calib);
+  if (profilesAsked.has(key)) return;
+  profilesAsked.add(key);
+  void oddsProfileFor(inputs, calib).then(() => {
+    profilesAsked.delete(key);
+    if (machine.phase !== 'IDLE' || isSousVide()) return;
+    if (wantedProfileKeys().has(key)) recompute();
+  });
 }
 
 /** Take the answer up: show the refusal, and move the slider if the answer
@@ -556,16 +618,100 @@ function donenessValueText(peakYolk_C: number): string {
 function renderDonenessScale(sol: Solution): void {
   const softest = sol.whiteSets ? sol.softestLevel : 1;
   const hardest = sol.whiteSets ? sol.hardestLevel : 0;
-  dom.donenessBlockedSoft.style.width = `${clampNumber(softest * 100, { lo: 0, hi: 100 }, 0)}%`;
-  dom.donenessBlockedHard.style.width = `${clampNumber((1 - hardest) * 100, { lo: 0, hi: 100 }, 0)}%`;
+  dom.donenessBlockedSoft.style.width = `${percent(softest)}%`;
+  dom.donenessBlockedHard.style.width = `${percent(1 - hardest)}%`;
   dom.doneness.setAttribute('aria-valuetext', t(anchorNear(settings.doneness).key));
+
+  // The odds at each level, relative to the best level's, and the levels the
+  // pan can deliver but the odds do not offer yet (reach.ts). Only while
+  // idle: once a cook is running the slider is put away.
+  const odds = machine.phase === 'IDLE' && sol.whiteSets ? profile : null;
+  renderOddsBand(odds);
+  const offeredSoft = odds !== null && odds.softest !== null ? odds.softest : softest;
+  const offeredHard = odds !== null && odds.hardest !== null ? odds.hardest : hardest;
+  const refusing = odds !== null && odds.softest !== null && odds.hardest !== null;
+  placeBand(dom.donenessUnlikelySoft, refusing ? odds.physicalSoftest : 0, refusing ? offeredSoft : 0);
+  placeBand(dom.donenessUnlikelyHard, refusing ? offeredHard : 0, refusing ? odds.physicalHardest : 0);
+
   const ticks = dom.donenessTicks.children;
   for (let i = 0; i < ticks.length; i += 1) {
     const anchor = DONENESS_ANCHORS[i];
     if (anchor === undefined) continue;
-    const blocked = anchor.level < softest - 0.005 || anchor.level > hardest + 0.005;
+    const blocked = anchor.level < Math.max(softest, offeredSoft) - 0.005
+      || anchor.level > Math.min(hardest, offeredHard) + 0.005;
     ticks[i].classList.toggle('blocked', blocked);
   }
+}
+
+/** A level as a percentage of the track, clamped. */
+function percent(level: number): number {
+  return clampNumber(level * 100, { lo: 0, hi: 100 }, 0);
+}
+
+/** Lay a band over the track from one level to another; nothing when the
+ *  second is not past the first. */
+function placeBand(band: HTMLElement, from: number, to: number): void {
+  band.style.left = `${percent(from)}%`;
+  band.style.width = `${to > from ? percent(to) - percent(from) : 0}%`;
+}
+
+/** Shade the track by the odds (`shadingOf`): the accent colour at an opacity
+ *  that is the level's odds over the best level's, stop by stop between the
+ *  profile's points, and clear outside them, where the stripes are. */
+function renderOddsBand(odds: OddsProfile | null): void {
+  const shades = odds === null ? [] : shadingOf(odds);
+  if (shades.length === 0) {
+    dom.donenessOdds.style.background = 'transparent';
+    return;
+  }
+  const first = shades[0].level * 100;
+  const last = shades[shades.length - 1].level * 100;
+  const stops = shades.map((s) => (
+    `color-mix(in srgb, var(--ok) ${(s.strength * 100).toFixed(1)}%, transparent) ${(s.level * 100).toFixed(2)}%`
+  ));
+  dom.donenessOdds.style.background = `linear-gradient(to right, transparent ${first.toFixed(2)}%, `
+    + `${stops.join(', ')}, transparent ${last.toFixed(2)}%)`;
+}
+
+/** The advice line under low odds (reach.ts): shown while idle when the odds
+ *  at the level on screen are under 5/10 or 3/10 short of the best level's,
+ *  and only with the changes that would help this setup. The model prices a
+ *  counter rest and the heat off from their own pots' profiles, asked for
+ *  here and shown when they land; the fridge and the scale it cannot price. */
+let adviceShown = '';
+function renderAdvice(): void {
+  let keys: string[] = [];
+  if (machine.phase === 'IDLE' && !isSousVide() && decision !== null && solution !== null
+    && solution.whiteSets && adviceWanted(decision.oddsTenths, profile)) {
+    const inputs = currentInputs(timeToBoil_s());
+    const priced: { key: string; profile: OddsProfile }[] = [];
+    for (const change of pricedChanges(inputs.setup)) {
+      const changed = decisionInputs(calib, inputs.egg, change.setup);
+      const p = cachedOddsProfile(changed, calib);
+      if (p === null) askForProfile(changed);
+      else priced.push({ key: change.key, profile: p });
+    }
+    keys = protocolAdvice(
+      inputs.setup, { eggFromClass: massFrom() === 'class', startAssumed: settings.startTempMode === 'room' },
+      settings.doneness, decision.odds, priced,
+    );
+  }
+  dom.advice.hidden = keys.length === 0;
+  const shown = keys.join(' ');
+  if (shown === adviceShown) return;
+  adviceShown = shown;
+  dom.adviceList.replaceChildren(...keys.map((key) => {
+    const li = document.createElement('li');
+    li.textContent = t(key);
+    return li;
+  }));
+}
+
+/** Open or close one of the two disclosures in place. */
+function toggleDisclosure(button: HTMLButtonElement, panel: HTMLElement): void {
+  const open = button.getAttribute('aria-expanded') !== 'true';
+  button.setAttribute('aria-expanded', open ? 'true' : 'false');
+  panel.hidden = !open;
 }
 
 function renderMute(): void {
@@ -759,6 +905,7 @@ function render(now_ms: number): void {
   dom.digits.textContent = digits;
   dom.subline.textContent = subline;
   renderOdds();
+  renderAdvice();
 
   // The live region carries a coarse announcement, not a per-second one: the
   // ticking digits are aria-hidden, so a screen reader hears the phase and the
@@ -791,6 +938,9 @@ function renderOdds(): void {
   }
   dom.oddsHit.textContent = tenths === null ? '' : t('odds.hitTheMark', { hits: tenths, of: 10 });
   dom.oddsLearning.textContent = learning === true ? t('odds.stillLearning') : '';
+  // The (i) goes with the odds, and what it opens goes with it.
+  dom.oddsInfo.hidden = tenths === null;
+  dom.oddsWhy.hidden = tenths === null || dom.oddsInfo.getAttribute('aria-expanded') !== 'true';
 }
 
 /** The sous-vide readout: hold times from the isothermal limit, and the plain
@@ -800,6 +950,9 @@ function renderSousVide(now_ms: number): void {
   // pan (E5 chooses pan times).
   dom.oddsHit.textContent = '';
   dom.oddsLearning.textContent = '';
+  dom.oddsInfo.hidden = true;
+  dom.oddsWhy.hidden = true;
+  renderAdvice();
   dom.body.dataset['phase'] = machine.phase;
   dom.body.dataset['start'] = settings.startMode;
   renderStartHint();
@@ -870,11 +1023,13 @@ function recompute(): void {
   if (isSousVide() && machine.phase === 'IDLE') {
     refusal = '';
     decision = null;
+    profile = null;
     renderSousVide(Date.now());
     return;
   }
   const boil = timeToBoil_s();
-  const answer = answerFor(boil, settings.doneness);
+  profile = cachedOddsProfile(currentInputs(boil), calib);
+  const answer = answerFor(boil, settings.doneness, true, profile);
   applyAnswer(answer);
   const chosen = decided(answer, boil);
   solution = chosen.solution;
@@ -1271,7 +1426,8 @@ function onPrimary(): void {
     // Take the answer up one last time while the controls are still live: the
     // level this returns is the one the cook is run at, and it does not move
     // again until the cook is over.
-    const answer = answerFor(boil, settings.doneness);
+    profile = cachedOddsProfile(currentInputs(boil), calib);
+    const answer = answerFor(boil, settings.doneness, true, profile);
     applyAnswer(answer);
     // The time on screen is the one started: the chosen one if this pot's
     // surface is in, and the mean solve's if the cook was quicker than it.
@@ -1439,6 +1595,11 @@ export function boot(): void {
   dom.secondary.addEventListener('click', reset);
   dom.mute.addEventListener('click', onToggleMute);
   dom.forget.addEventListener('click', onForget);
+  // The two disclosures open in place. They are buttons, so the keyboard
+  // reaches and works them, and aria-expanded says which way they stand.
+  dom.oddsInfo.setAttribute('aria-label', t('odds.info'));
+  dom.oddsInfo.addEventListener('click', () => toggleDisclosure(dom.oddsInfo, dom.oddsWhy));
+  dom.adviceToggle.addEventListener('click', () => toggleDisclosure(dom.adviceToggle, dom.adviceList));
   dom.probeOfferYes.addEventListener('click', () => onProbeOffer(true));
   dom.probeOfferNo.addEventListener('click', () => onProbeOffer(false));
   dom.probeSave.addEventListener('click', onProbeSave);

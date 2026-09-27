@@ -53,7 +53,15 @@
     <p id="subline"></p>
     <!-- E5: the odds of the time on screen, and "still learning" for a cook's
          first few eggs. Filled by the app once the choice is made. -->
-    <p id="odds"><span id="oddsHit"></span><span id="oddsLearning"></span></p>
+    <p id="odds"><span id="oddsHit"></span><button type="button" id="oddsInfo" class="info" aria-expanded="false" aria-controls="oddsWhy" hidden></button><span id="oddsLearning"></span></p>
+    <!-- Why the odds start low, opened in place by the (i) beside them. -->
+    <p id="oddsWhy" class="disclosed" hidden data-copy="odds.why"></p>
+    <!-- Under low odds: what would make this cook more reliable, opened in
+         place. Only the changes that would help this setup are listed. -->
+    <div id="advice" hidden>
+      <button type="button" id="adviceToggle" class="disclose" aria-expanded="false" aria-controls="adviceList" data-copy="advice.toggle"></button>
+      <ul id="adviceList" class="disclosed" hidden></ul>
+    </div>
 
     <dl id="stats">
       <div><dt id="statYolkLabel" data-copy="readout.stat.peakYolk"></dt><dd id="statYolk">--</dd></div>
@@ -76,6 +84,12 @@
       <label for="doneness" id="donenessLabel" data-copy="controls.doneness"></label>
       <div class="slider">
         <div class="slider__track" aria-hidden="true">
+          <!-- The odds at each level, relative to the best level's: the
+               stronger the band, the more often it hits the mark. -->
+          <div class="slider__odds" id="donenessOdds"></div>
+          <!-- Levels the pan can deliver but the odds do not yet offer. -->
+          <div class="slider__unlikely" id="donenessUnlikelySoft"></div>
+          <div class="slider__unlikely" id="donenessUnlikelyHard"></div>
           <div class="slider__blocked" id="donenessBlockedSoft"></div>
           <div class="slider__blocked slider__blocked--hard" id="donenessBlockedHard"></div>
         </div>

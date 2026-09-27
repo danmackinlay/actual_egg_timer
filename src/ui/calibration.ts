@@ -27,6 +27,7 @@ import { Doneness, ModelParams } from '../core/solve.js';
 import { DoseGrid } from '../core/doseGrid.js';
 import { Feedback, Particle, WhiteReport } from '../core/infer.js';
 import { DecisionInputs, decisionGridRequest } from '../core/decide.js';
+import { OddsProfile, oddsProfile } from '../core/reach.js';
 import { CALIBRATION_SEED, PARTICLE_COUNT, calibrationGrid } from '../core/policy.js';
 import {
   Calibration, EggFrom, EggRecord, GridRequest, MassFrom, PRIOR_ID, ProbeReading, RECORD_VERSION,
@@ -573,21 +574,36 @@ export function clearCalibration(): Calibration {
 
 /* ------------------------------------------------------ the dose surface */
 
-/** One surface to build: a fold's, described in full, or a decision's,
- *  described by the pot and the posterior (E5, `decisionGridRequest`). */
+/** One job for the worker: a fold's surface, described in full; a decision's,
+ *  described by the pot and the posterior (E5, `decisionGridRequest`); or the
+ *  odds at every level on a decision's surface (`oddsProfile`). */
 interface Job {
   request?: GridRequest;
   decision?: DecisionInputs;
+  profile?: ProfileJob;
+}
+
+/** What a profile is computed from. Plain data: it crosses to the worker by
+ *  structured clone, which copies doubles bit for bit. */
+export interface ProfileJob {
+  calibration: Calibration;
+  egg: Egg;
+  setup: CookSetup;
+  grid: DoseGrid;
 }
 
 interface Waiting {
   job: Job;
-  resolve: (grid: DoseGrid) => void;
+  resolve: (result: unknown) => void;
 }
 
-function buildHere(job: Job): DoseGrid {
+function buildHere(job: Job): DoseGrid | OddsProfile {
   if (job.request !== undefined) return buildRequestedGrid(job.request);
   if (job.decision !== undefined) return buildRequestedGrid(decisionGridRequest(job.decision));
+  if (job.profile !== undefined) {
+    const p = job.profile;
+    return oddsProfile(p.calibration, p.egg, p.setup, p.grid);
+  }
   throw new Error('nothing to build');
 }
 
@@ -599,7 +615,7 @@ const waiting = new Map<number, Waiting>();
 /** Build on this thread, after yielding once so whatever the caller just put on
  *  screen paints before the build blocks it. The fallback, and the path the
  *  tests take, since Node has no Web Worker. */
-function onThisThread(job: Job): Promise<DoseGrid> {
+function onThisThread(job: Job): Promise<unknown> {
   return new Promise((resolve) => {
     setTimeout(() => resolve(buildHere(job)), 30);
   });
@@ -624,11 +640,12 @@ function gridWorker(): Worker | null {
     workerFailed = true;
     return null;
   }
-  worker.onmessage = (event: MessageEvent<{ id: number; grid?: DoseGrid }>) => {
+  worker.onmessage = (event: MessageEvent<{ id: number; grid?: DoseGrid; profile?: OddsProfile }>) => {
     const w = waiting.get(event.data.id);
     if (w === undefined) return;
     waiting.delete(event.data.id);
-    if (event.data.grid !== undefined) w.resolve(event.data.grid);
+    const result = event.data.grid ?? event.data.profile;
+    if (result !== undefined) w.resolve(result);
     else void onThisThread(w.job).then(w.resolve);
   };
   // A browser without module workers, or a worker file that did not ship,
@@ -637,7 +654,7 @@ function gridWorker(): Worker | null {
   return worker;
 }
 
-function offThread(job: Job): Promise<DoseGrid> {
+function offThread(job: Job): Promise<unknown> {
   const w = gridWorker();
   if (w === null) return onThisThread(job);
   return new Promise((resolve) => {
@@ -648,7 +665,7 @@ function offThread(job: Job): Promise<DoseGrid> {
 }
 
 function buildOffThread(request: GridRequest): Promise<DoseGrid> {
-  return offThread({ request: request });
+  return offThread({ request: request }) as Promise<DoseGrid>;
 }
 
 /* ---------------------------------------------------- the decision's surface */
@@ -678,7 +695,7 @@ export function decisionGrid(inputs: DecisionInputs): Promise<DoseGrid> {
   if (done !== undefined) return Promise.resolve(done);
   const running = decisionBuilds.get(key);
   if (running !== undefined) return running;
-  const build = offThread({ decision: inputs }).then((grid) => {
+  const build = (offThread({ decision: inputs }) as Promise<DoseGrid>).then((grid) => {
     decisionBuilds.delete(key);
     decisionGrids.set(key, grid);
     while (decisionGrids.size > DECISION_GRIDS_KEPT) {
@@ -689,5 +706,75 @@ export function decisionGrid(inputs: DecisionInputs): Promise<DoseGrid> {
     return grid;
   });
   decisionBuilds.set(key, build);
+  return build;
+}
+
+/* ------------------------------------------------- the odds at every level */
+
+/** Odds profiles, by pot AND posterior: unlike the surface, a profile reads
+ *  every particle, so an egg folded - or a second answer refolded, which keeps
+ *  the count - makes a new one. Kept like the surfaces, a handful at a time. */
+const profiles = new Map<string, OddsProfile>();
+const profileBuilds = new Map<string, Promise<OddsProfile>>();
+const PROFILES_KEPT = 8;
+
+/** A cheap summary of where the posterior stands: the count, the resampler's
+ *  state and the weighted sums of every dimension. Any fold moves at least
+ *  one of them. */
+function posteriorPrint(c: Calibration): string {
+  const post = c.posterior;
+  let a = 0;
+  let b = 0;
+  let d = 0;
+  let e = 0;
+  for (let i = 0; i < post.particles.length; i++) {
+    const p = post.particles[i];
+    const w = post.weights[i];
+    a += w * p.alpha_m2s;
+    b += w * p.logDoseOffset;
+    d += w * (p.noise + p.tauAirScale);
+    e += w * (p.whiteOffset + p.whiteFirmGap);
+  }
+  return `${c.eggsLogged}|${post.rng}|${post.particles.length}|${a}|${b}|${d}|${e}`;
+}
+
+export function profileKey(inputs: DecisionInputs, c: Calibration): string {
+  return `${decisionKey(inputs)}#${posteriorPrint(c)}`;
+}
+
+/** The profile for this pot and posterior if it has been computed, or null. */
+export function cachedOddsProfile(inputs: DecisionInputs, c: Calibration): OddsProfile | null {
+  return profiles.get(profileKey(inputs, c)) ?? null;
+}
+
+/**
+ * The odds at every level for this pot and posterior, computed in the worker
+ * on the pot's decision surface, which is built first if it has not been. A
+ * profile is a couple of dozen solves and decisions, 0.3-1 s in the worker
+ * (`npm run decide -- reach`). The posterior is copied as it stands now, so a
+ * fold landing meanwhile cannot change what the profile is of.
+ */
+export function oddsProfileFor(inputs: DecisionInputs, c: Calibration): Promise<OddsProfile> {
+  const key = profileKey(inputs, c);
+  const done = profiles.get(key);
+  if (done !== undefined) return Promise.resolve(done);
+  const running = profileBuilds.get(key);
+  if (running !== undefined) return running;
+  const snapshot = copyCalibration(c);
+  const build = decisionGrid(inputs)
+    .then((grid) => offThread({
+      profile: { calibration: snapshot, egg: inputs.egg, setup: inputs.setup, grid: grid },
+    }) as Promise<OddsProfile>)
+    .then((profile) => {
+      profileBuilds.delete(key);
+      profiles.set(key, profile);
+      while (profiles.size > PROFILES_KEPT) {
+        const oldest = profiles.keys().next().value;
+        if (oldest === undefined) break;
+        profiles.delete(oldest);
+      }
+      return profile;
+    });
+  profileBuilds.set(key, build);
   return build;
 }

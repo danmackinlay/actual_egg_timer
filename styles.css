@@ -114,6 +114,78 @@ main {
 }
 #oddsLearning { font-weight: 400; color: var(--dim); }
 #oddsHit:empty, #oddsLearning:empty { display: none; }
+#odds { align-items: center; }
+
+/* The (i) beside the odds. The glyph is drawn here, so the markup holds no
+   words of its own; the hit area is a thumb's, the circle is small. */
+button.info {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 28px;
+  min-height: 0;
+  margin: 0 -10px 0 -8px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--dim);
+}
+button.info::before {
+  content: "i";
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: 1.5px solid currentColor;
+  border-radius: 50%;
+  font: italic 700 0.8125rem/1 Georgia, "Times New Roman", serif;
+}
+button.info[aria-expanded="true"] { color: var(--fg); }
+button.info[aria-expanded="true"]::before { background: var(--fg); color: var(--panel); border-color: var(--fg); }
+
+/* What the (i) and the advice line open, in place: no modal, no popover. */
+.disclosed {
+  margin: 8px auto 0;
+  max-width: 28rem;
+  text-align: left;
+  font-size: 0.875rem;
+  color: var(--dim);
+}
+.disclosed[hidden], #advice[hidden] { display: none; }
+ul.disclosed { padding-left: 1.2em; }
+ul.disclosed li + li { margin-top: 6px; }
+
+/* The advice line: a quiet link-like button with a chevron that turns. */
+#advice { text-align: center; }
+button.disclose {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: auto;
+  min-height: 36px;
+  margin: 4px auto 0;
+  padding: 4px 8px;
+  border: 0;
+  background: transparent;
+  color: var(--fg);
+  font-size: 0.875rem;
+  text-decoration: underline;
+  text-decoration-color: var(--line);
+  text-underline-offset: 3px;
+}
+button.disclose::after {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: translateY(-2px) rotate(45deg);
+  transition: transform 120ms;
+}
+button.disclose[aria-expanded="true"]::after { transform: translateY(2px) rotate(-135deg); }
 
 #stats {
   display: flex;
@@ -281,6 +353,27 @@ select { max-width: 60vw; }
     -45deg, var(--blocked) 0 5px, var(--line) 5px 10px);
 }
 .slider__blocked--hard { left: auto; right: 0; }
+/* The odds at each level, relative to the best level's (src/core/reach.ts).
+   The band's strength is its opacity, so it reads in grey as well as in
+   colour: strong where this pan hits the mark most often, faint where it
+   rarely does. */
+.slider__odds {
+  position: absolute;
+  inset: 0;
+  background: transparent;
+}
+/* Levels the pan can deliver but that hit the mark less than 3 times in 10,
+   once an egg has taught something: dotted, so they read apart from the
+   striped levels the pan cannot deliver at all, without leaning on colour. */
+.slider__unlikely {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  background: radial-gradient(circle, var(--fg) 1.1px, transparent 1.6px) 0 0 / 5px 5px;
+  opacity: 0.55;
+}
 
 .slider input[type="range"] {
   -webkit-appearance: none;
