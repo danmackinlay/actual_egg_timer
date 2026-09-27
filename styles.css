@@ -170,22 +170,38 @@ button.mute[aria-pressed="true"] {
   color: var(--dim);
 }
 
-/* The odds and "I'm still learning", under the time, each with its (i). The
-   line keeps its height while the choice is still being made, so nothing
-   jumps when it lands. */
+/* Which way the egg is likely to miss, with the odds' (i), under the time;
+   then the white's line, then "I'm still learning" with its own (i). While
+   idle the direction holds two lines, the most any of its sentences takes at
+   390 px, and sits in their middle: so a drag that changes the sentence does
+   not move the slider under the thumb. Its (i) rides at the end of the
+   sentence, wherever it wraps. */
+#direction {
+  margin: 6px auto 0;
+  max-width: 24rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.35;
+  text-wrap: balance;
+}
+body[data-phase="IDLE"]:not([data-start="sous"]) #direction {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 3.25rem;
+}
+#directionText:empty { display: none; }
+#whiteRisk { margin: 2px 0 0; font-size: 0.875rem; color: var(--warn); }
 #odds {
   display: flex;
   justify-content: center;
   align-items: center;
   flex-wrap: wrap;
   column-gap: 14px;
-  margin: 6px 0 0;
-  min-height: 1.75em;
+  margin: 0;
   font-size: 0.875rem;
 }
 .odds__item { display: inline-flex; align-items: center; }
-#oddsHit { font-weight: 600; }
-#direction, #whiteRisk { margin: 6px 0 0; font-size: 0.9375rem; }
 #oddsLearning { color: var(--dim); }
 .odds__item:has(> span:empty) { display: none; }
 
@@ -325,10 +341,12 @@ button.info[aria-expanded="true"]::before { background: var(--fg); color: var(--
   cursor: pointer;
 }
 
-/* The likely range of the yolk (not yet built, see index.html): a bracket
-   just under the track, in the thumb's column, so it reads with the thumb
-   and never over the odds shading. Its ends are ticks, so a narrow range
-   still reads as a range. */
+/* The likely range of the yolk (src/core/outcome.ts): a bracket just under
+   the track, in the thumb's column, so it reads with the thumb and never
+   over the odds shading. Its ends are ticks, so a narrow range still reads
+   as a range, and a short mark stands at its middle. The foreground colour,
+   not the accent or the odds' green, so it reads as a different thing from
+   both, in either scheme. */
 .slider__range { position: absolute; left: 17px; right: 17px; top: 38px; height: 7px; pointer-events: none; }
 .slider__bracket {
   position: absolute;
@@ -339,6 +357,15 @@ button.info[aria-expanded="true"]::before { background: var(--fg); color: var(--
   border-radius: 0 0 3px 3px;
   opacity: 0.7;
   pointer-events: none;
+}
+.slider__bracket[hidden] { display: none; }
+.slider__median {
+  position: absolute;
+  bottom: -2px;
+  width: 2px;
+  height: 11px;
+  margin-left: -1px;
+  background: var(--fg);
 }
 .slider__ticks { position: absolute; left: 17px; right: 17px; top: 50px; height: 20px; }
 .slider__ticks span {

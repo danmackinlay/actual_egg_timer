@@ -35,6 +35,7 @@ import {
 import {
   OddsProfile, REACH_ODDS, adviceWanted, pricedChanges, protocolAdvice, shadingOf, verdictWithOdds,
 } from '../core/reach.js';
+import { Outcome, predictOutcome } from '../core/outcome.js';
 import {
   Calibration, cachedDecisionGrid, cachedOddsProfile, calibrationDoneness, calibrationParams,
   clearCalibration, decisionGrid, decisionKey, eggRecordFor, eggsBehind, learn, loadCalibration,
@@ -46,6 +47,7 @@ import {
   loadCook, loadSettings, rememberTimeToBoil, saveCook, saveSettings,
 } from './store.js';
 import { sousVideCopy } from './sousvide.js';
+import { directionKey, rangeWords, restoreOutcome, whiteAtRisk } from './outcome.js';
 import { activeLocale, t } from './copy.js';
 import { formatClock, spokenClock } from './countdown.js';
 import {
@@ -71,17 +73,21 @@ function el<T extends HTMLElement>(id: string): T {
 
 const dom = {
   body: document.body,
+  readout: el<HTMLElement>('readout'),
   phaseLabel: el<HTMLParagraphElement>('phaseLabel'),
   digits: el<HTMLSpanElement>('digits'),
   announce: el<HTMLSpanElement>('announce'),
   sublineText: el<HTMLSpanElement>('sublineText'),
   sublineInfo: el<HTMLButtonElement>('sublineInfo'),
   sublineMore: el<HTMLParagraphElement>('sublineMore'),
+  direction: el<HTMLParagraphElement>('direction'),
+  directionText: el<HTMLSpanElement>('directionText'),
+  whiteRisk: el<HTMLParagraphElement>('whiteRisk'),
   odds: el<HTMLParagraphElement>('odds'),
-  oddsHit: el<HTMLSpanElement>('oddsHit'),
   oddsLearning: el<HTMLSpanElement>('oddsLearning'),
   oddsInfo: el<HTMLButtonElement>('oddsInfo'),
   oddsWhy: el<HTMLParagraphElement>('oddsWhy'),
+  oddsNumber: el<HTMLSpanElement>('oddsNumber'),
   learningInfo: el<HTMLButtonElement>('learningInfo'),
   learningMore: el<HTMLParagraphElement>('learningMore'),
   advice: el<HTMLParagraphElement>('advice'),
@@ -104,6 +110,9 @@ const dom = {
   donenessBlockedSoft: el<HTMLDivElement>('donenessBlockedSoft'),
   donenessBlockedHard: el<HTMLDivElement>('donenessBlockedHard'),
   donenessTicks: el<HTMLDivElement>('donenessTicks'),
+  donenessBracket: el<HTMLDivElement>('donenessBracket'),
+  donenessMedian: el<HTMLDivElement>('donenessMedian'),
+  donenessRange: el<HTMLSpanElement>('donenessRange'),
   donenessValue: el<HTMLParagraphElement>('donenessValue'),
   size: el<HTMLSelectElement>('size'),
   measureMass: el<HTMLInputElement>('measureMass'),
@@ -188,6 +197,14 @@ let solution: Solution | null = null;
  *  learning", and how far it leaned from the mean solve. Null until the
  *  setup's decision surface has been built, and on the sous-vide screen. */
 let decision: Decision | null = null;
+/** What the egg at the chosen time will be like (src/core/outcome.ts): the
+ *  direction sentence, the white's line and the bracket under the slider.
+ *  Read at the decided time on the same surface, whenever `decision` is, and
+ *  null whenever it is. */
+let outcome: Outcome | null = null;
+/** The readout's height, px, the last time it was drawn idle with a decision
+ *  in: what it holds while the next one is on its way (`renderOdds`). */
+let settledReadout_px = 0;
 /** A decision surface waiting for the inputs to settle before it is asked for. */
 let decisionHandle = 0;
 /** The odds at every level for the pot on screen and the posterior as it
@@ -264,6 +281,9 @@ interface Ticket {
    *  whole cook. Null when the time was started before they were known. */
   oddsTenths: number | null;
   stillLearning: boolean | null;
+  /** What the egg was likely to be like at "Eggs in", shown for the whole
+   *  cook as the odds are. Null when they are. */
+  outcome: Outcome | null;
   /** The language they were reading it in, for the record. */
   lang: string;
   /** Whether this cook has a moment to probe at (E4): a counted cooling that
@@ -505,14 +525,16 @@ function answerFor(
  * already built, and the time never jumps between the mean solve's and the
  * chosen one mid-drag. It changes once, when a new pot's surface lands.
  */
-function decided(answer: Answer, timeToBoil_s: number): { solution: Solution; decision: Decision | null } {
+function decided(
+  answer: Answer, timeToBoil_s: number,
+): { solution: Solution; decision: Decision | null; outcome: Outcome | null } {
   const egg = currentEgg();
   const setup = buildSetup(timeToBoil_s);
   const inputs = decisionInputs(calib, egg, setup);
   const grid = cachedDecisionGrid(inputs);
   if (grid === null) {
     askForDecision(inputs);
-    return { solution: answer.solution, decision: null };
+    return { solution: answer.solution, decision: null, outcome: null };
   }
   // The odds at every level follow the surface, in the worker.
   if (cachedOddsProfile(inputs, calib) === null) askForProfile(inputs);
@@ -521,6 +543,9 @@ function decided(answer: Answer, timeToBoil_s: number): { solution: Solution; de
   return {
     solution: decidedSolution(egg, setup, calibrationParams(calib), answer.solution, d),
     decision: d,
+    // What that time will give, on the same surface: about 2 ms beside the
+    // decision's 13-16, so it runs here with it rather than in the worker.
+    outcome: predictOutcome(calib.posterior, grid, d.cookTime_s, logTarget),
   };
 }
 
@@ -631,6 +656,7 @@ function renderDonenessScale(sol: Solution): void {
   const refusing = odds !== null && odds.softest !== null && odds.hardest !== null;
   placeBand(dom.donenessUnlikelySoft, refusing ? odds.physicalSoftest : 0, refusing ? offeredSoft : 0);
   placeBand(dom.donenessUnlikelyHard, refusing ? offeredHard : 0, refusing ? odds.physicalHardest : 0);
+  renderBracket(machine.phase === 'IDLE' && sol.whiteSets ? outcome : null);
 
   const ticks = dom.donenessTicks.children;
   for (let i = 0; i < ticks.length; i += 1) {
@@ -640,6 +666,26 @@ function renderDonenessScale(sol: Solution): void {
       || anchor.level > Math.min(hardest, offeredHard) + 0.005;
     ticks[i].classList.toggle('blocked', blocked);
   }
+}
+
+/** The likely range of the yolk under the track, from the outcome's 10% to
+ *  its 90% point, with a mark at its middle; and the same in words for a
+ *  screen reader, each end as the nearest doneness word. Nothing without an
+ *  outcome: no decision yet, no white, sous-vide, or a cook under way. */
+function renderBracket(o: Outcome | null): void {
+  dom.donenessBracket.hidden = o === null;
+  if (o === null) {
+    dom.donenessRange.textContent = '';
+    return;
+  }
+  placeBand(dom.donenessBracket, o.levelLow, o.levelHigh);
+  const span = o.levelHigh - o.levelLow;
+  const middle = span > 0 ? (o.levelMedian - o.levelLow) / span : 0.5;
+  dom.donenessMedian.style.left = `${clampNumber(middle * 100, { lo: 0, hi: 100 }, 50)}%`;
+  const words = rangeWords(o);
+  const args: Record<string, string> = {};
+  for (const [name, key] of Object.entries(words.args)) args[name] = t(key);
+  dom.donenessRange.textContent = t(words.key, args);
 }
 
 /** A level as a percentage of the track, clamped. */
@@ -1157,37 +1203,61 @@ function render(now_ms: number): void {
   }
 }
 
-/** The odds and "still learning", beside the time (E5). While idle they are
- *  the choice on screen's, and blank until this pot's surface lands - the line
- *  keeps its height, so nothing moves when they arrive. Once a cook is running
- *  they are what they were at "Eggs in". Never where the white never sets:
- *  there is no cook to give odds on. */
+/** Which way the egg is likely to miss, the white's line, and "still
+ *  learning", under the time; the odds themselves in what the (i) opens (E5,
+ *  and src/ui/outcome.ts). While idle they are the choice on screen's, and
+ *  blank until this pot's surface lands - the direction's line keeps its
+ *  height, so nothing moves when they arrive. Once a cook is running they are
+ *  what they were at "Eggs in". Never where the white never sets: there is no
+ *  cook to give odds on. */
 function renderOdds(): void {
   let tenths: number | null = null;
   let learning: boolean | null = null;
+  let o: Outcome | null = null;
   if (machine.phase === 'IDLE') {
     if (decision !== null && solution !== null && solution.whiteSets) {
       tenths = decision.oddsTenths;
       learning = decision.stillLearning;
+      o = outcome;
     }
   } else if (ticket !== null) {
     tenths = ticket.oddsTenths;
     learning = ticket.stillLearning;
+    o = ticket.outcome;
   }
-  dom.oddsHit.textContent = tenths === null ? '' : t('odds.hitTheMark', { hits: tenths, of: 10 });
+  dom.directionText.textContent = o === null ? '' : t(directionKey(o));
+  dom.whiteRisk.hidden = o === null || !whiteAtRisk(o);
+  dom.oddsNumber.textContent = tenths === null ? '' : t('outcome.odds', { hits: tenths, of: 10 });
   dom.oddsLearning.textContent = learning === true ? t('odds.stillLearning') : '';
-  // Each (i) goes with its words, and what it opens goes with it.
-  showInfo(dom.oddsInfo, tenths !== null);
+  // Each (i) goes with its words, and what it opens goes with it. The odds'
+  // (i) goes with the direction, which is what the number stands behind.
+  showInfo(dom.oddsInfo, o !== null && tenths !== null);
   showInfo(dom.learningInfo, learning === true);
+
+  // While a new pot's surface is on its way the lines above are blank, and
+  // the readout would shrink and grow back a second later, moving the
+  // sentence's open choice under the thumb that just tapped it. So it keeps
+  // the height it had when the lines were last there.
+  if (machine.phase === 'IDLE' && decision === null) {
+    dom.readout.style.minHeight = settledReadout_px > 0 ? `${settledReadout_px}px` : '';
+  } else {
+    dom.readout.style.minHeight = '';
+    const height = dom.readout.offsetHeight;
+    if (machine.phase === 'IDLE' && height > 0) settledReadout_px = height;
+  }
 }
 
 /** The sous-vide readout: hold times from the isothermal limit, and the plain
  *  statement that you should have started yesterday. */
 function renderSousVide(now_ms: number): void {
   // No pan, no choice, and no odds: the bath's answer is not a guess about a
-  // pan (E5 chooses pan times).
-  dom.oddsHit.textContent = '';
+  // pan (E5 chooses pan times). So no direction, and no bracket either.
+  dom.directionText.textContent = '';
+  dom.whiteRisk.hidden = true;
+  dom.oddsNumber.textContent = '';
   dom.oddsLearning.textContent = '';
+  dom.readout.style.minHeight = '';
+  renderBracket(null);
   showInfo(dom.oddsInfo, false);
   showInfo(dom.learningInfo, false);
   showInfo(dom.sublineInfo, false);
@@ -1260,6 +1330,7 @@ function recompute(): void {
   if (isSousVide() && machine.phase === 'IDLE') {
     refusal = '';
     decision = null;
+    outcome = null;
     profile = null;
     renderSousVide(Date.now());
     return;
@@ -1271,6 +1342,7 @@ function recompute(): void {
   const chosen = decided(answer, boil);
   solution = chosen.solution;
   decision = chosen.decision;
+  outcome = chosen.outcome;
   render(Date.now());
 }
 
@@ -1700,6 +1772,7 @@ function onPrimary(): void {
     const chosen = decided(answer, boil);
     solution = chosen.solution;
     decision = chosen.decision;
+    outcome = chosen.outcome;
     const target = settings.doneness;
     const cook = solution.result.cookTime_s;
     // A cook started here is this tab's own, whatever happened before it.
@@ -1717,6 +1790,7 @@ function onPrimary(): void {
       lean_s: decision === null ? 0 : decision.cookTime_s - decision.meanCookTime_s,
       oddsTenths: decision === null ? null : decision.oddsTenths,
       stillLearning: decision === null ? null : decision.stillLearning,
+      outcome: decision === null ? null : outcome,
       probeMoment: probeMomentFor(solution.result, settings.cooling),
     };
     // The cooling counts to the yolk's peak for this cook (E4).
@@ -2008,6 +2082,8 @@ function restoreTicket(raw: unknown): Ticket | null {
     oddsTenths: Number.isInteger(r['oddsTenths']) && (r['oddsTenths'] as number) >= 0
       && (r['oddsTenths'] as number) <= 10 ? r['oddsTenths'] as number : null,
     stillLearning: typeof r['stillLearning'] === 'boolean' ? r['stillLearning'] : null,
+    // And one written before the outcome summary, which carried only the odds.
+    outcome: restoreOutcome(r['outcome']),
     // And one written before E4 counted a flat three minutes, not to a peak.
     probeMoment: r['probeMoment'] === true,
   };

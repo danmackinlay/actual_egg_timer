@@ -73,20 +73,17 @@
 
     <p id="subline"><span id="sublineText"></span><button type="button" id="sublineInfo" class="info" aria-expanded="false" aria-controls="sublineMore" data-name="readout.sub.coldAssumes.info" hidden></button></p>
     <p id="sublineMore" class="disclosed" hidden data-copy="readout.sub.coldAssumes.more"></p>
-    <!-- E5: the odds of the time on screen, and "I'm still learning" for a
-         cook's first few eggs, each with its (i). Filled once the choice is
-         made. -->
-    <p id="odds"><span class="odds__item"><span id="oddsHit"></span><button type="button" id="oddsInfo" class="info" aria-expanded="false" aria-controls="oddsWhy" data-name="odds.info" hidden></button></span><span class="odds__item" id="oddsLearningItem"><span id="oddsLearning"></span><button type="button" id="learningInfo" class="info" aria-expanded="false" aria-controls="learningMore" data-name="odds.stillLearning.info" hidden></button></span></p>
-    <p id="oddsWhy" class="disclosed" hidden data-copy="odds.why"></p>
+    <!-- Which way the egg is likely to miss (src/ui/outcome.ts), with the
+         odds' (i): what it opens says the number, then why it starts low.
+         Then a line when a runny white is a real risk, and "I'm still
+         learning" for a cook's first few eggs, with its own (i). Filled once
+         the choice is made; the direction keeps its line's height until then,
+         so nothing jumps when it lands. -->
+    <p id="direction"><span class="direction__line"><span id="directionText"></span><button type="button" id="oddsInfo" class="info" aria-expanded="false" aria-controls="oddsWhy" data-name="odds.info" hidden></button></span></p>
+    <p id="oddsWhy" class="disclosed" hidden><span id="oddsNumber"></span> <span data-copy="odds.why"></span></p>
+    <p id="whiteRisk" data-copy="outcome.whiteRunny" hidden></p>
+    <p id="odds"><span class="odds__item" id="oddsLearningItem"><span id="oddsLearning"></span><button type="button" id="learningInfo" class="info" aria-expanded="false" aria-controls="learningMore" data-name="odds.stillLearning.info" hidden></button></span></p>
     <p id="learningMore" class="disclosed" hidden data-copy="odds.stillLearning.more"></p>
-    <!-- HOOK (direction, not yet built): the sentence about which way an egg
-         is likely to miss ("Probably just right. If not, more likely a little
-         firm.") goes in #direction, and #whiteRisk carries a line only when a
-         runny white is a real risk. Both wait for core's pTooSoft, pJustRight,
-         pTooFirm and pWhiteRunny; until then the odds line above stands in,
-         and these stay hidden. -->
-    <p id="direction" hidden></p>
-    <p id="whiteRisk" hidden></p>
   </section>
 
   <!-- ----------------------------------------------------------- the egg -->
@@ -109,16 +106,16 @@
           <div class="slider__blocked" id="donenessBlockedSoft"></div>
           <div class="slider__blocked slider__blocked--hard" id="donenessBlockedHard"></div>
         </div>
-        <!-- HOOK (bracket, not yet built): the likely range of the yolk, its
-             10-90% delivered doneness on the slider's scale, under the thumb
-             and clear of the odds shading on the track above. Place it with
-             placeBand(dom.donenessBracket, levelLow, levelHigh) in app.ts and
-             unhide it once core's levelLow and levelHigh land. -->
-        <div class="slider__range" aria-hidden="true"><div class="slider__bracket" id="donenessBracket" hidden></div></div>
-        <input type="range" id="doneness" value="0.41" aria-describedby="donenessValue">
+        <!-- The likely range of the yolk (src/core/outcome.ts): its 10-90%
+             delivered doneness on the slider's scale, with a mark at the
+             middle, under the thumb and clear of the odds shading on the
+             track above. Drawn for the eye; #donenessRange says it in words. -->
+        <div class="slider__range" aria-hidden="true"><div class="slider__bracket" id="donenessBracket" hidden><div class="slider__median" id="donenessMedian"></div></div></div>
+        <input type="range" id="doneness" value="0.41" aria-describedby="donenessValue donenessRange">
         <div class="slider__ticks" id="donenessTicks" aria-hidden="true"></div>
       </div>
       <p class="value" id="donenessValue"></p>
+      <span class="sr-only" id="donenessRange"></span>
       <p class="value value--note" id="note"></p>
     </div>
 
