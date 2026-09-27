@@ -709,6 +709,45 @@ that is not obvious from the code.
   not merely requested in a plist.
 - **The Live Activity works** on the Lock Screen and in the Dynamic Island.
 
+### Waiting on the owner, from the night of 26-27 September
+
+Merged overnight into local `main` and not pushed: E1, F1, the carton classes,
+the standing-method pan constant, F3, E2+E3, F4, E4 and E5. What came back
+needing a decision:
+
+1. **The E5 odds on a fresh install read "2/10 eggs hit the mark".** Before any
+   egg, the model is honestly unsure of the cook's taste and eggs, so that
+   figure is calibrated. It is also the first thing a new cook sees, and it
+   reads as "this timer mostly fails". Options:
+   - show the odds only after the first egg;
+   - word the first-egg case differently;
+   - keep it.
+2. **White-bound levels lean long and read 0/10.** At the softest level a pan
+   can reach, the white is the constraint. There the loss (a runny white costs
+   3) leans the time 80-120 s long and reports 0/10, while the "Softest
+   possible" refusal still comes from the mean solve. The app offers a level,
+   then says it will almost never hit it. The fix is probably to take
+   reachability from the odds rather than from the mean, which is a design
+   call. See INFERENCE §8.
+3. **E3's attribution.** A runny white alone is blamed about 2:1 on the
+   time-scale rather than the white offset, so it moves jammy as much as soft.
+   A yolk answer beside it fixes the split (soft +146 s, jammy +17 s). Pooling
+   (E7) or a probe (E4) pins it properly, or the priors could change.
+   INFERENCE §3 has the numbers, and test 5b is held as a todo.
+4. **Wording:**
+   - The E2 feedback draft is live, since that call was made overnight, and
+     can still be revised.
+   - The rest-of-F2 draft (LANGUAGE §3) is waiting to go into the catalogue.
+   - E4 changed the probe wording from "lowest" to "highest" number, because
+     at the moment the centre peaks it is the warmest point. That was a
+     physics correction, and it stands unless the owner objects.
+5. **Hot-start heat-off cooks never set the white** at 1-4 L with four fridge
+   eggs. `TAU_STANDING_SCALE = 1.0` may be pessimistic with a lid on. One real
+   cook would settle it.
+6. **F4's two platform splits** (LANGUAGE §8), before Czech ships.
+7. **Protocol advice when soft is asked for** (INFERENCE §8) was not built.
+   Nobody decided whether it should be.
+
 ### Order of work, from 26 September
 
 This is the order for Phases E and F together, with the old list below folded
