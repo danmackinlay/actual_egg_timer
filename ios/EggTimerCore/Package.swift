@@ -8,16 +8,24 @@ import PackageDescription
 // The words are a second, smaller library in the same package. EggTimerCopy is
 // the catalogue renderer (src/core/copy.ts on the web), and it is separate only
 // so that the widget extension can link it without linking the physics.
+//
+// EggTimerRing is the app's one decision that is not a transliteration: when it
+// must sound an alarm itself because no notification will. It is here, and not
+// in the app, so `swift test` covers it; it is its own target so the physics
+// stays only the physics.
 let package = Package(
     name: "EggTimerCore",
     platforms: [.iOS(.v17), .macOS(.v14)],
     products: [
         .library(name: "EggTimerCore", targets: ["EggTimerCore"]),
-        .library(name: "EggTimerCopy", targets: ["EggTimerCopy"])
+        .library(name: "EggTimerCopy", targets: ["EggTimerCopy"]),
+        .library(name: "EggTimerRing", targets: ["EggTimerRing"])
     ],
     targets: [
         .target(name: "EggTimerCore", dependencies: ["EggTimerCopy"]),
         .target(name: "EggTimerCopy"),
-        .testTarget(name: "EggTimerCoreTests", dependencies: ["EggTimerCore", "EggTimerCopy"])
+        .target(name: "EggTimerRing", dependencies: ["EggTimerCore"]),
+        .testTarget(name: "EggTimerCoreTests", dependencies: ["EggTimerCore", "EggTimerCopy"]),
+        .testTarget(name: "EggTimerRingTests", dependencies: ["EggTimerRing", "EggTimerCore"])
     ]
 )
