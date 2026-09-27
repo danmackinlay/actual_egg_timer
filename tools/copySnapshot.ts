@@ -5,7 +5,7 @@
  *   npm run build
  *   node dist/tools/copySnapshot.js capture <out.json>
  *   node dist/tools/copySnapshot.js compare <before.json> <after.json>
- *   node dist/tools/copySnapshot.js compare <before.json> <after.json> --draft
+ *   node dist/tools/copySnapshot.js compare <before.json> <after.json> --draft [name]
  *
  * `capture` serves the repo root, opens the harness page in headless Chrome
  * over the DevTools protocol and waits for it to finish. It needs Chrome; set
@@ -24,7 +24,8 @@
  * through tools/copyDraft.ts, reads every digit as the same digit, and then
  * requires the two pools to hold the same strings: nothing new unless it is a
  * drafted string, and nothing gone unless it is a retired one. It says nothing
- * about which state a string is in; the ordinary `compare` is for that.
+ * about which state a string is in; the ordinary `compare` is for that. The
+ * draft is the latest in tools/copyDraft.ts unless one is named.
  */
 
 import { spawn, ChildProcess } from 'node:child_process';
@@ -32,7 +33,7 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { FEEDBACK_DRAFT, applyDraft, templateRegExp } from './copyDraft.js';
+import { applyDraft, draftFor, templateRegExp } from './copyDraft.js';
 
 interface Snapshot {
   name: string;
@@ -201,13 +202,14 @@ function matchesAny(text: string, templates: string[]): boolean {
   return templates.some((t) => templateRegExp(t, false).test(text));
 }
 
-function compareDraft(beforePath: string, afterPath: string): void {
+function compareDraft(beforePath: string, afterPath: string, draftName: string | undefined): void {
+  const rows = draftFor(draftName).rows;
   const before = JSON.parse(readFileSync(beforePath, 'utf8')) as Snapshot[];
   const after = JSON.parse(readFileSync(afterPath, 'utf8')) as Snapshot[];
-  const was = pool(before, applyDraft);
+  const was = pool(before, (s) => applyDraft(s, rows));
   const is = pool(after, (s) => s);
-  const added = FEEDBACK_DRAFT.flatMap((d) => (d.after === null ? [] : Object.values(d.after)));
-  const retired = FEEDBACK_DRAFT.flatMap((d) => (d.before === null || d.after !== null ? [] : Object.values(d.before)));
+  const added = rows.flatMap((d) => (d.after === null ? [] : Object.values(d.after)));
+  const retired = rows.flatMap((d) => (d.before === null || d.after !== null ? [] : Object.values(d.before)));
 
   const failures: string[] = [];
   const appeared: string[] = [];
@@ -224,7 +226,7 @@ function compareDraft(beforePath: string, afterPath: string): void {
   }
   // Every drafted rewrite the old build could show must have been shown by it,
   // or this proves nothing about it.
-  const rewritten = FEEDBACK_DRAFT.filter((d) => d.before !== null && d.after !== null
+  const rewritten = rows.filter((d) => d.before !== null && d.after !== null
     && JSON.stringify(d.before) !== JSON.stringify(d.after));
   const seen = rewritten.filter((d) => before.some((s) => [...s.texts, ...s.attrs]
     .some((t) => matchesAny(t, Object.values(d.before ?? {})))));
@@ -241,14 +243,14 @@ function compareDraft(beforePath: string, afterPath: string): void {
   console.log('only the drafted strings changed.');
 }
 
-const [mode, a, b, flag] = process.argv.slice(2);
+const [mode, a, b, flag, draftName] = process.argv.slice(2);
 if (mode === 'capture' && a !== undefined) {
   await capture(a);
 } else if (mode === 'compare' && a !== undefined && b !== undefined && flag === '--draft') {
-  compareDraft(a, b);
+  compareDraft(a, b, draftName);
 } else if (mode === 'compare' && a !== undefined && b !== undefined) {
   compare(a, b);
 } else {
-  console.error('usage: copySnapshot.js capture <out.json> | compare <before.json> <after.json> [--draft]');
+  console.error('usage: copySnapshot.js capture <out.json> | compare <before.json> <after.json> [--draft [name]]');
   process.exit(2);
 }
