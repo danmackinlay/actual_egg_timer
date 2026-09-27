@@ -952,7 +952,7 @@ struct ContentView: View {
     /// right for most people most mornings, and a first-time user should not
     /// have to answer six questions to boil an egg.
     private var pan: some View {
-        DisclosureGroup(tr("controls.pan"), isExpanded: $showPan) {
+        DisclosureGroup(tr("controls.settings"), isExpanded: $showPan) {
             VStack(alignment: .leading, spacing: 20) {
                 Picker(tr("controls.afterTheBoil"), selection: $kitchen.heatOff) {
                     Text(tr("controls.afterBoil.keepBoiling")).tag(false)

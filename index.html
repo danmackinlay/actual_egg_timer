@@ -57,7 +57,7 @@
        the thumb's way; Start is at the bottom, in it. -->
   <header id="topbar">
     <button type="button" id="navBack" class="navlink navlink--back" data-copy="nav.back"></button>
-    <a href="#kitchen" id="kitchenLink" class="navlink" data-copy="controls.pan"></a>
+    <a href="#kitchen" id="kitchenLink" class="navlink" data-copy="controls.settings"></a>
     <a href="#help" id="helpLink" class="navlink" data-copy="help.link"></a>
     <button type="button" id="mute" class="mute" aria-pressed="false" data-copy="readout.mute.on"></button>
   </header>
@@ -224,7 +224,7 @@
   <!-- ----------------------------------------------------------- kitchen -->
   <!-- Set once, cook many: what belongs to the kitchen rather than the egg. -->
   <section id="kitchen" class="page" aria-labelledby="kitchenTitle">
-    <h1 id="kitchenTitle" tabindex="-1" data-copy="controls.pan"></h1>
+    <h1 id="kitchenTitle" tabindex="-1" data-copy="controls.settings"></h1>
     <form id="kitchenForm" autocomplete="off">
 
       <!-- Not pan-only: a sous-vide egg has a temperature too. Its default
@@ -299,7 +299,7 @@
           <button type="button" class="info" aria-expanded="false" aria-controls="moreProbe" data-label="controls.thermometer"></button>
         </div>
         <p id="moreProbe" class="disclosed" hidden data-copy="controls.thermometer.more"></p>
-        <label class="check" for="probeSetting"><input type="checkbox" id="probeSetting"><span data-copy="probe.offer.yes"></span></label>
+        <label class="check" for="probeSetting"><input type="checkbox" id="probeSetting"><span data-copy="controls.thermometer.ask"></span></label>
       </fieldset>
     </form>
 

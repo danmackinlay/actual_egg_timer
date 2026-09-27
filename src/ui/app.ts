@@ -832,10 +832,13 @@ function clauseTexts(): Record<Clause, { text: string; label: string; value: str
     : settings.startTempMode === 'room'
       ? { text: t('setup.from.room'), value: t('controls.eggFrom.room') }
       : { text: t('setup.from.custom', { temp: custom }), value: custom };
+  // The start clause carries the boil, and the standing when the heat goes
+  // off: "into cold water" alone reads as if the eggs never boil.
+  const standing = settings.afterBoil === 'off';
   const start = settings.startMode === 'cold'
-    ? { text: t('setup.start.cold'), value: t('controls.start.cold') }
+    ? { text: t(standing ? 'setup.start.coldStanding' : 'setup.start.cold'), value: t('controls.start.cold') }
     : settings.startMode === 'hot'
-      ? { text: t('setup.start.hot'), value: t('controls.start.hot') }
+      ? { text: t(standing ? 'setup.start.hotStanding' : 'setup.start.hot'), value: t('controls.start.hot') }
       : { text: t('setup.start.sous', { bath: bath }), value: t('controls.start.sousVide', { bath: bath }) };
   const cooling = settings.cooling === 'ice'
     ? { text: t('setup.cooling.ice'), value: t('controls.then.ice') }
