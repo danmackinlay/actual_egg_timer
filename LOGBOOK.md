@@ -1958,3 +1958,76 @@ it soft? Try: Fudgy", to 0.67. See INFERENCE.md §8.
   fresh storage: the suggestion as above, pointing to 0.67. Tapped, the
   slider goes to 0.67, with no second suggestion and no white line. No
   console errors.
+
+---
+
+## iOS follows the web's layout, pass A (28 September 2026)
+
+The iOS app now has the web redesign's layout (UI.md section 9):
+- the egg: the time, the slider, the setup sentence, one slot and Start;
+- Settings and Help, each a pushed page;
+- one (i) component everywhere;
+- the yolk-coloured doneness track.
+
+The direction sentence, the bracket and playing safe are pass B. Their
+slot, under the time, still holds the iOS odds line. Egg from gained
+Custom, as on the web, stored under `startTemp` and `customStartC`, with
+`fromFridge` kept in step for a downgrade. The egg's weight is now typed,
+where it was a slider. The copy is the `iosA` draft: 132 rows and no
+change of wording. Of those rows, 110 web keys gained `"ios"`, 24 iOS keys
+were retired, and 3 iOS keys are new.
+
+### Verified
+
+- **Tests:** `npm test` runs 219: 218 pass, 0 fail and 1 todo (5b, as
+  before). Test 6a (every key used by exactly the apps it lists) holds.
+- **Validation:** `npm run validate` passes 28/28.
+- **Conformance:** `npm run conformance` passes 101 Swift tests in 28
+  suites. Only `fixtures/copy.json` moved, for the keys.
+- **Copy proof:** `copyLiterals.js --since 91d5fff iosA` reports that only
+  the drafted strings changed.
+- **Build:** `xcodebuild` for `generic/platform=iOS Simulator` succeeds,
+  with no warnings in `ios/App`.
+- **Screenshots:** taken on a simulator made for this and deleted after
+  (iPhone 17 Pro, iOS 26.5), light and dark, using the debug launch
+  arguments. They show:
+  - the idle screen of a fresh install: the welcome, "2/10 eggs hit the
+    mark", the low-odds link, and the yolk track in the dark scheme once
+    the pot's profile landed (about 30 s on a fresh install);
+  - the Start clause and the Egg clause open;
+  - Settings and Help;
+  - Heating, with the new rolling-boil line and its (i).
+
+### Things that cost time
+
+- **An agent running under worktree isolation cannot run a shell script by
+  a variable path.** The same goes for a `sed` whose range is computed.
+  Each has to be a literal command, or a script file run by its literal
+  path.
+- **A fresh simulator needs about 30 s** before the odds profile lands and
+  the track is coloured. The screenshot scripts wait 40 s.
+- **Starting a cook on a fresh simulator asks for notifications.** The
+  alert would be in the picture, so `-noAlarmPrompt YES` answers no without
+  asking, in debug builds only.
+
+### Not verified
+
+- **Nothing was tapped.** Every screen was reached by a launch argument,
+  not a tap. So these are unseen on a device:
+  - the clause links' tap targets;
+  - Done;
+  - the (i)s opening;
+  - the Forget confirmation;
+  - the advice link opening Help at its reliability section;
+  - typing a weight.
+- **VoiceOver** was not run. The sentence's representation, the clause
+  buttons' values and the (i)'s Expanded/Collapsed are as coded, not
+  heard.
+- **Focus does not go back to the clause after Done**, as it does on the
+  web. SwiftUI has no simple way to put VoiceOver focus inside a Text's
+  link.
+- **The lower half of Settings, and Help's reliability section with
+  advice in it,** were not photographed. Neither can be reached without a
+  scroll.
+- **The open clause's wash** stands in for the web's solid accent fill,
+  because a link's text takes the tint. The owner has not seen it.

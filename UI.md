@@ -1,7 +1,8 @@
 # UI.md — fewer controls, room for sentences
 
-A design, and since 27 September a record of the web half (section 8). It comes from the owner's steer
-of 27 September 2026:
+A design, and a record of what was built from it: the web half since 27
+September (section 8), and the iOS half's first pass since 28 September
+(section 9). It comes from the owner's steer of 27 September 2026:
 
 1. Decorate brief controls and buttons with a longer (i) disclosure.
 2. Keep few enough controls on screen that longer strings fit where they help,
