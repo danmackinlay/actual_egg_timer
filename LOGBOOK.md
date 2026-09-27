@@ -1559,3 +1559,61 @@ code. No wording changed.
   (`alarm.pull.body`, "Straight into the cooling, or the yolk keeps
   cooking.") still speak of a cooling the cook did not choose. Not the same
   fault, and fixing it needs a wording, so it is left for the owner.
+
+---
+
+## iOS rings when notifications cannot (27 September 2026)
+
+With notifications refused, unanswered or not taken, the iOS readout said
+"keep the app open", and nothing then sounded. The owner's decision: make it
+true. While the app is on screen it now rings each deadline no notification
+holds - the pull, and the end of the counted cooling (the probe moment is the
+same deadline). When a notification does hold it, the app adds nothing: the
+foreground `willPresent` already plays its sound. Both strings are unchanged.
+
+- **The decision** is `deadlineToRing` in a new package target,
+  `EggTimerRing`: pure, clock passed in, like `phaseAt`. Its own target so
+  `swift test` covers it and `EggTimerCore` stays a transliteration; the web
+  has no notifications and rings at every deadline, so it has no counterpart.
+  Ten tests drive a whole cook at quarter-second ticks: refused, unanswered
+  and failed each ring the pull and the cooling once; a full schedule rings
+  nothing; a partial one rings only the gap; a counter rest rings only the
+  pull; the background rings nothing; a deadline that passed before the app
+  came on screen is not rung.
+- **Coverage is per deadline**, read back from the pending identifiers. A
+  delivered notification is no longer pending but did its job, so a past
+  deadline keeps its coverage; otherwise a re-read after the pull would have
+  made the app ring for a notification that had already rung.
+- **The sound** is the web's, generated in `AVAudioEngine` rather than shipped
+  as a file: 880 Hz pairs every 1.6 s, a 1175 Hz third at the pull, triangle
+  waves with ramped edges, and `kSystemSoundID_Vibrate` each burst. Up to
+  40 s as on the web; any touch, the pull button, Cancel or leaving the app
+  stops it sooner. `.playback` with `.duckOthers`, so it sounds through the
+  silent switch, as the Clock app's timer does. The notification path is
+  silenced by the switch, so the fallback is the louder one; that is the
+  cost, and the reasoning is in `Ringer.swift`.
+
+### Verified
+
+- `npm test` (199 pass, the known todo), `npm run validate`,
+  `npm run conformance` (96 Swift tests, fixtures regenerated after merging
+  main at 4eeadd2 and unchanged), and a generic-simulator build.
+- On a simulator of its own (created, used, deleted), with a cook seeded into
+  `UserDefaults` 25 s from its pull and the permission prompt left
+  unanswered: the log said `ringing for pull` 41 ms after the deadline,
+  `ringing for cooled` 0.25 s after the cooling ended, and `ring stopped`
+  40.5 s later. A second run sent the app to the background across the
+  pull and brought it back: no ring for the pull, and the cooling rang.
+
+### Not verified
+
+- **Nothing was heard or felt.** The evidence is log lines; the tone was not
+  listened to, and the simulator has no vibration motor.
+- **The silent switch, media volume and a real speaker**: only a device can
+  say whether `.playback` gets through the switch as intended, and a media
+  volume at zero would still silence it.
+- **Refused and failed** were not produced on the simulator (`simctl
+  privacy` has no notifications service); only unanswered was. The rule is
+  the same for all three and the tests cover each.
+- **Touch to stop** was not tapped. Neither was the authorised path, where
+  the app should ring nothing.
