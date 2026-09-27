@@ -22,7 +22,7 @@ import { createPrior } from '../src/core/infer.js';
 import { ALPHA_DEFAULT, ALPHA_REL_SD } from '../src/core/constants.js';
 import { eggFromMass } from '../src/core/geometry.js';
 import { CookSetup } from '../src/core/protocol.js';
-import { predictOutcome } from '../src/core/outcome.js';
+import { WHITE_RISK, predictOutcome } from '../src/core/outcome.js';
 import { donenessFromSlider, solveCookTime } from '../src/core/solve.js';
 import { CALIBRATION_SEED, SLIDER_STEPS } from '../src/core/policy.js';
 import {
@@ -81,11 +81,13 @@ interface Pot {
   setup: CookSetup;
   grid: DoseGrid;
   profile: OddsProfile;
-  /** levelLow and levelHigh at every offered position, from `lo`. */
+  /** levelLow, levelHigh and P(runny white) at every offered position,
+   *  from `lo`. */
   lo: number;
   hi: number;
   low: number[];
   high: number[];
+  white: number[];
 }
 
 function scanned(name: string, c: Calibration, setup: CookSetup): Pot {
@@ -95,12 +97,14 @@ function scanned(name: string, c: Calibration, setup: CookSetup): Pot {
   if (range === null) throw new Error(`${name}: nothing offered`);
   const low: number[] = [];
   const high: number[] = [];
+  const white: number[] = [];
   for (let k = range.lo; k <= range.hi; k++) {
     const o = outcomeAtLevel(c, EGG, setup, grid, k / SLIDER_STEPS);
     low.push(o.levelLow);
     high.push(o.levelHigh);
+    white.push(o.pWhiteRunny);
   }
-  return { name, c, setup, grid, profile, lo: range.lo, hi: range.hi, low, high };
+  return { name, c, setup, grid, profile, lo: range.lo, hi: range.hi, low, high, white };
 }
 
 const POTS: Pot[] = [
@@ -146,14 +150,22 @@ test('3. the bisection lands where a full scan does, and each answer meets its d
       const at = (level: number): number => Math.round(level * SLIDER_STEPS) - pot.lo;
 
       // The scan: the softest position at or over k whose 10% point reaches
-      // the level, and the firmest at or under whose 90% point stays under.
+      // the level; the firmest at or under whose 90% point stays under, which
+      // when it is k means no move is needed; and the firmest at or under
+      // that passes both the yolk's test and the white's.
       let firm: number | null = null;
       for (let j = k; j <= pot.hi; j++) if (pot.low[j - pot.lo] >= level) { firm = j; break; }
       let soft: number | null = null;
       for (let j = k; j >= pot.lo; j--) if (pot.high[j - pot.lo] <= level) { soft = j; break; }
+      let both: number | null = null;
+      for (let j = k; j >= pot.lo; j--) {
+        if (pot.high[j - pot.lo] <= level && pot.white[j - pot.lo] < WHITE_RISK) { both = j; break; }
+      }
       const where = `${pot.name} at ${level}`;
       assert.equal(s.firmerLevel, firm === null || firm === k ? null : firm / SLIDER_STEPS, `${where}: firmer`);
-      assert.equal(s.softerLevel, soft === null || soft === k ? null : soft / SLIDER_STEPS, `${where}: softer`);
+      assert.equal(
+        s.softerLevel, soft === null || soft === k || both === null ? null : both / SLIDER_STEPS, `${where}: softer`,
+      );
 
       // Null means the level already does it, or nothing offered does.
       if (s.firmerLevel === null) {
@@ -164,23 +176,31 @@ test('3. the bisection lands where a full scan does, and each answer meets its d
         assert.ok(s.firmerLevel > level && s.firmerLevel <= pot.hi / SLIDER_STEPS);
       }
       if (s.softerLevel === null) {
-        assert.ok(pot.high[k - pot.lo] <= level || pot.high[0] > level, `${where}: softer null`);
+        assert.ok(pot.high[k - pot.lo] <= level || both === null, `${where}: softer null`);
       } else {
         assert.ok(pot.high[at(s.softerLevel)] <= level);
         assert.ok(pot.high[at(s.softerLevel) + 1] > level);
+        assert.ok(pot.white[at(s.softerLevel)] < WHITE_RISK, `${where}: softer's white`);
         assert.ok(s.softerLevel < level && s.softerLevel >= pot.lo / SLIDER_STEPS);
       }
     }
   }
 });
 
-test('4. on a fresh install at jammy it points a long way each side; for a cook it knows, a short way', () => {
-  const fresh = saferLevels(FRESH, EGG, SETUP, POTS[0].grid, POTS[0].profile, 0.41);
+test('4. on a fresh install at jammy it points a long way firmer and not softer; for a cook it knows, a short way each side', () => {
+  const pot = POTS[0];
+  const fresh = saferLevels(FRESH, EGG, SETUP, pot.grid, pot.profile, 0.41);
   const known = saferLevels(KNOWN, EGG, SETUP, POTS[1].grid, POTS[1].profile, 0.41);
   assert.ok(fresh.firmerLevel !== null && fresh.firmerLevel >= 0.6, `fresh firmer ${fresh.firmerLevel}`);
-  assert.ok(fresh.softerLevel !== null && fresh.softerLevel <= 0.2, `fresh softer ${fresh.softerLevel}`);
+  // The yolk alone would point a long way softer, to where the white is a
+  // risk; every level where it is not is too firm to be softer.
+  let yolk = 41;
+  while (yolk >= pot.lo && pot.high[yolk - pot.lo] > 0.41) yolk -= 1;
+  assert.ok(yolk >= pot.lo && yolk <= 20, `fresh yolk-only softer ${yolk}`);
+  assert.ok(pot.white[yolk - pot.lo] >= WHITE_RISK, `fresh white at ${yolk}: ${pot.white[yolk - pot.lo]}`);
+  assert.equal(fresh.softerLevel, null);
   assert.ok(known.firmerLevel !== null && known.firmerLevel - 0.41 < fresh.firmerLevel - 0.41);
-  assert.ok(known.softerLevel !== null && 0.41 - known.softerLevel < 0.41 - fresh.softerLevel);
+  assert.ok(known.softerLevel !== null && known.softerLevel > 0.3, `known softer ${known.softerLevel}`);
 });
 
 test('5. never a level the slider would refuse', () => {
@@ -208,4 +228,20 @@ test('6. the ends: nothing firmer than hard, nothing softer than the softest off
   const pot = POTS[1];
   assert.equal(saferLevels(pot.c, EGG, pot.setup, pot.grid, pot.profile, 1).firmerLevel, null);
   assert.equal(saferLevels(pot.c, EGG, pot.setup, pot.grid, pot.profile, pot.lo / SLIDER_STEPS).softerLevel, null);
+});
+
+test('7. a firmer level never raises the white\'s risk, so it needs no test of its own', () => {
+  for (const pot of POTS) {
+    for (let k = pot.lo; k <= pot.hi; k += 7) {
+      const level = k / SLIDER_STEPS;
+      const s = saferLevels(pot.c, EGG, pot.setup, pot.grid, pot.profile, level);
+      if (s.firmerLevel === null) continue;
+      const to = Math.round(s.firmerLevel * SLIDER_STEPS) - pot.lo;
+      assert.ok(pot.white[to] <= pot.white[k - pot.lo], `${pot.name} at ${level}: white ${pot.white[to]}`);
+    }
+    // Nor anywhere on the slider: P(runny) never rises with the level.
+    for (let i = 1; i < pot.white.length; i++) {
+      assert.ok(pot.white[i] <= pot.white[i - 1] + 1e-12, `${pot.name}: white rises at ${(pot.lo + i) / 100}`);
+    }
+  }
 });
