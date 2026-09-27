@@ -1421,3 +1421,14 @@ checked.
 - **Whether the new lines fit on a phone** beyond the character budgets:
   "my guess until you tap Full rolling boil" is 40 against the Dynamic
   Island's 41, and was not seen in one.
+
+## One wording per meaning: a proposal (27 September 2026)
+
+`LANGUAGE.md` §3, "Proposed: one wording per meaning", is a proposal for the
+owner. Nothing in the catalogue or either app changed. It sorts all 125
+single-app keys, each read at its call site: 15 pairs (29 keys, one NEW
+wording), 40 platform-only, 46 in layouts that differ, and 10 orphaned, one
+of them dead (`readout.phase.cooling`). It also describes a guard test
+without building it. Found on the way, and not yet fixed: iOS says "white
+just set" for a white the pan never sets. This was read in the code; no
+screen was run.
