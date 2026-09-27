@@ -1755,7 +1755,9 @@ function relabel(): void {
   renderMute();
   applyUnitsToDom();
   applyLanguageToDom();
+  // Drawn only when what they say changes, so they are told it has.
   adviceShown = '';
+  lastAnnounced = '';
   renderCalibNote();
   if (machine.phase === 'IDLE') recompute();
   else render(Date.now());
