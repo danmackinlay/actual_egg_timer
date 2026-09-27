@@ -119,6 +119,9 @@ struct ContentView: View {
             // this struct and keeps only the first, so init was doing the I/O
             // and starting a solve for Kitchens that were then thrown away.
             kitchen.load()
+            #if DEBUG
+            kitchen.seed(Screenshots.seedEggs)
+            #endif
             // After the solver is wired, so a restored cold start can revise
             // straight away rather than waiting for the next attempt.
             cook.restoreIfNeeded()
@@ -136,6 +139,7 @@ struct ContentView: View {
         case "settings": path = [.settings]
         case "help": path = [.help(nil)]
         case "help-reliable": path = [.help(.reliable)]
+        case "direction-info": directionInfoOpen = true
         case "heating":
             guard cook.phase == .idle else { return }
             starting = true
