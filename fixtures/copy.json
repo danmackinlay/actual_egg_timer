@@ -355,7 +355,7 @@
       "args": {
         "boil": "6:40"
       },
-      "text": "assumes 6:40 to a rolling boil"
+      "text": "about 6:40 to boil, based on history"
     },
     {
       "locale": "en",
@@ -1378,7 +1378,7 @@
       "locale": "en",
       "key": "pan.measured",
       "args": {},
-      "text": "From your earlier boils with this much water. I update it each time you tap the boil on a cold-water start."
+      "text": "Based on history with this much water. I update it each time you tap the boil on a cold-water start."
     },
     {
       "locale": "en",
@@ -1571,7 +1571,7 @@
       "args": {
         "time": "6:40"
       },
-      "text": "your pan takes 6:40 to boil"
+      "text": "your pan: about 6:40 to boil, based on history"
     },
     {
       "locale": "en",

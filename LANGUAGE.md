@@ -500,7 +500,7 @@ Merging a pair means one key, and both apps' call sites changing to it.
 | `readout.phase.heating`, `readout.phase.heatingTap` | Heating | Heating — tap when it boils | Heating | The button right below names the moment (Full rolling boil), and the next row says to tap it. "When it boils" invites a tap at the first bubbles, which under-measures the boil (PLAN.md, invariant 6). The Dynamic Island already says "Heating". |
 | `readout.sub.heating`, `readout.sub.heatingEstimate` | {elapsed} heating · I expect {boil} until you tap | my guess until you tap Full rolling boil | my guess until you tap Full rolling boil | This is already the Live Activity's wording (`activity.note.estimate`). It is shorter, and "I expect {boil} until you tap" does not parse. Cost: the web stops showing the heating time so far and the boil time it expects. |
 | `readout.stat.waterBoilsAt`, `pan.waterBoilsAt` | water boils at | Water boils at | Water boils at | The same words. The web's stats are upper-cased by CSS, so the capital never shows there. |
-| `texture.white.runny` (web), against iOS's texture note | white stays runny | white just set, {yolk} | white stays runny | **iOS is wrong today.** When the pan never sets the white, iOS still names the white from its peak temperature, on a scale whose lowest word is "white just set". The web switches to this line when the white's dose falls short, and iOS should do the same. |
+| `texture.white.runny` (web), against iOS's texture note | white stays runny | white just set, {yolk} | white stays runny | **iOS is wrong today.** When the pan never sets the white, iOS still names the white from its peak temperature, on a scale whose lowest word is "white just set". The web switches to this line when the white's dose falls short, and iOS should do the same. *Fixed on 27 September (3da5d47): the decision is in core, and iOS says this line too.* |
 | `controls.size`, `controls.egg` | Egg size | Egg | Egg size | Names the choice. If the Eggs row below goes in, iOS would otherwise have "Egg" and "Eggs" on one screen. |
 | `controls.size.measured`, `controls.size.weighed` | Measured below… | Weighed · {mass} | **NEW:** Measured — {mass} | iOS's mass slider shows no number, so the menu has to carry the mass. "Weighed" is false on the web when the girth was typed in instead of the weight. The dash matches "Large — {mass}". The web would render the mass it measured. |
 | `controls.eggFrom.fridge`, `controls.eggFrom.fridgeAt` | Fridge (the temperature is in the hint below) | Fridge {temp} | Fridge {temp} | Puts the assumption where the choice is made. iOS has no hint line to carry it. "Fridge 39 °F" is 12 of a segment's 17. |
@@ -600,6 +600,7 @@ worth a line each:
   a blend of past boils, or the nearest volume's time scaled by litres.
 - `action.hint.pull` (web), "cooling starts on its own in {seconds} s", is
   also shown for a counter rest. There nothing starts: the cook goes to Done.
+  *Fixed on 27 September (06ea694): no hint on a counter rest.*
 
 **A guard, described only.** A new test in `test/copy.test.ts`, beside 6a,
 which already checks that each key's `apps` matches the code:

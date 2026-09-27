@@ -255,8 +255,10 @@ public func verdictFor(_ sol: Solution, level: Double) -> Verdict {
 
 // MARK: - The texture
 
-/// What the white's peak temperature makes of it.
+/// What the pan makes of the white: `runny` when it never gets the white the
+/// dose that sets it, and otherwise what its peak temperature makes of it.
 public enum WhiteBand: String, Sendable {
+    case runny
     case justSet
     case set
     case firm
@@ -271,18 +273,24 @@ public enum YolkBand: String, Sendable {
     case set
 }
 
-public struct Texture: Sendable {
+public struct Texture: Sendable, Equatable {
     public let white: WhiteBand
     public let yolk: YolkBand
 }
 
 /// The texture note's thresholds, which are a reading of the model rather than
-/// a turn of phrase - so they are decided here and worded in the app. Note
-/// these read PEAK TEMPERATURES, while the white's own criterion is a dose: the
-/// two disagree only when the pan never gets the white there at all, and then
-/// the dose is the one telling the truth.
-public func textureFor(peakYolkC: Double, peakWhiteC: Double) -> Texture {
-    let white: WhiteBand = peakWhiteC < 71 ? .justSet : (peakWhiteC < 82 ? .set : .firm)
+/// a turn of phrase - so they are decided here and worded in the app.
+///
+/// The bands read PEAK TEMPERATURES, while the white's own criterion is a dose
+/// (`Solution.whiteSets`). The two disagree only when the pan never gets the
+/// white there at all, and then the dose is the one telling the truth: the
+/// white is runny, whatever its peak. That used to be decided in each app, and
+/// only the web decided it: this app named a white that never sets from its
+/// peak, on a scale whose softest word is "white just set". See
+/// src/core/policy.ts.
+public func textureFor(peakYolkC: Double, peakWhiteC: Double, whiteSets: Bool) -> Texture {
+    let white: WhiteBand = !whiteSets ? .runny
+        : (peakWhiteC < 71 ? .justSet : (peakWhiteC < 82 ? .set : .firm))
     let yolk: YolkBand
     switch peakYolkC {
     case ..<58: yolk = .liquid
@@ -292,6 +300,37 @@ public func textureFor(peakYolkC: Double, peakWhiteC: Double) -> Texture {
     default: yolk = .set
     }
     return Texture(white: white, yolk: yolk)
+}
+
+/// The texture note as the catalogue's keys: the line's own key, and the key
+/// of the fragment that fills each of its placeholders. The app renders the
+/// fragments and hands them in; it chooses nothing.
+public struct TextureNote: Sendable, Equatable {
+    public let key: String
+    public let parts: [String: String]
+}
+
+/// Which words a texture is said in. A white that never sets is the whole
+/// note, "white stays runny" with no yolk after it, as the web has always said
+/// it; every other white is named with its yolk. The keys are written out
+/// whole so that the copy tests can find each one.
+public func textureNoteKeys(_ t: Texture) -> TextureNote {
+    let white: String
+    switch t.white {
+    case .runny: return TextureNote(key: "texture.white.runny", parts: [:])
+    case .justSet: white = "texture.white.justSet"
+    case .set: white = "texture.white.set"
+    case .firm: white = "texture.white.firm"
+    }
+    let yolk: String
+    switch t.yolk {
+    case .liquid: yolk = "texture.yolk.liquid"
+    case .soft: yolk = "texture.yolk.soft"
+    case .jammy: yolk = "texture.yolk.jammy"
+    case .fudgy: yolk = "texture.yolk.fudgy"
+    case .set: yolk = "texture.yolk.set"
+    }
+    return TextureNote(key: "texture.note", parts: ["white": white, "yolk": yolk])
 }
 
 // MARK: - The calibration

@@ -92,7 +92,7 @@
     "texture.white.justSet": { "surface": "fragment", "apps": ["web", "ios"], "text": "white just set" },
     "texture.white.set": { "surface": "fragment", "apps": ["web", "ios"], "text": "white set" },
     "texture.white.firm": { "surface": "fragment", "apps": ["web", "ios"], "text": "white firm" },
-    "texture.white.runny": { "surface": "body", "apps": ["web"], "text": "white stays runny" },
+    "texture.white.runny": { "surface": "body", "apps": ["web", "ios"], "text": "white stays runny" },
     "texture.yolk.liquid": { "surface": "fragment", "apps": ["web", "ios"], "text": "yolk liquid" },
     "texture.yolk.soft": { "surface": "fragment", "apps": ["web", "ios"], "text": "yolk soft, barely thickened" },
     "texture.yolk.jammy": { "surface": "fragment", "apps": ["web", "ios"], "text": "yolk jammy" },

@@ -207,7 +207,7 @@ struct ContentView: View {
                 }
                 .padding(.top, 10)
 
-                Text(textureNote(peakYolkC: peaks.yolk, peakWhiteC: peaks.white))
+                Text(textureNote(peakYolkC: peaks.yolk, peakWhiteC: peaks.white, whiteSets: peaks.whiteSets))
                     .font(.footnote)
                     .foregroundStyle(.secondary)
                     .padding(.top, 2)
@@ -241,11 +241,14 @@ struct ContentView: View {
     }
 
     /// The peak temperatures to display: the cook's own, if one is running or
-    /// has just finished, otherwise the current solve.
-    private var peaks: (yolk: Double, white: Double)? {
-        if let ticket = cook.ticket { return (ticket.peakYolkC, ticket.peakWhiteC) }
-        guard let result = kitchen.solution?.result else { return nil }
-        return (result.peakYolkC, result.peakWhiteC)
+    /// has just finished, otherwise the current solve. With whether the white
+    /// sets at all, which the peaks alone cannot say: a cook only starts when
+    /// it does (`startCook` and the Eggs in button both guard on it), so a ticket's
+    /// white always sets.
+    private var peaks: (yolk: Double, white: Double, whiteSets: Bool)? {
+        if let ticket = cook.ticket { return (ticket.peakYolkC, ticket.peakWhiteC, true) }
+        guard let solution = kitchen.solution else { return nil }
+        return (solution.result.peakYolkC, solution.result.peakWhiteC, solution.whiteSets)
     }
 
     private func stat(_ label: String, _ value: String) -> some View {
