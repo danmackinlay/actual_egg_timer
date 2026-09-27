@@ -34,6 +34,14 @@ struct ContentView: View {
     /// True while "Eggs in" waits on a solve for the inputs as they now stand,
     /// so a second tap cannot start a second cook.
     @State private var starting = false
+    /// Half the slider's thumb, pt, as the slider reports it: where the track,
+    /// the bracket and the doneness words are inset to.
+    @State private var thumbInset: CGFloat = 14
+    /// VoiceOver's focus on the slider, where a tap on the play-safe
+    /// suggestion sends it once the suggestion has gone.
+    @AccessibilityFocusState private var sliderFocused: Bool
+    /// Whether the direction's (i) is open.
+    @State private var directionInfoOpen = false
 
     var body: some View {
         // One clock read for everything outside the timelines. `cook.phase(at:)`
@@ -210,49 +218,105 @@ struct ContentView: View {
         }
     }
 
-    /// The direction's slot, beneath the time: PASS B puts the web's direction
-    /// sentence here (which way the egg is likely to miss, src/ui/outcome.ts),
-    /// with its one (i), the play-safe suggestion and the white's line; and
-    /// the hardness bracket under the slider. Until then it holds the odds
-    /// (E5) and "I'm still learning", as iOS has had them.
+    /// The direction's slot, beneath the time (UI.md section 8, the web's
+    /// `renderOdds`): which way the egg is likely to miss, with one (i), "How
+    /// sure I am", at its end; while idle, when a miss one way is a real risk,
+    /// a one-tap way to play safe; what the (i) opens; and a line when a runny
+    /// white is a real risk.
     ///
-    /// The line keeps its height while the choice is being made, so nothing
-    /// below it moves when it lands.
+    /// While idle it is the choice on screen's, and blank until this pot's
+    /// surface lands. The sentence holds two lines, the most any of them
+    /// takes, so a drag that changes it does not move the slider, and the
+    /// suggestion's line keeps its height while the next one is on its way.
+    /// Once a cook is running the direction and the white's line are what
+    /// they were at "Eggs in"; the (i), which is about the slider, and the
+    /// suggestion, which moves it, go with the slider. Never where the white
+    /// never sets: there is no cook to say anything about.
+    ///
+    /// "I'm still learning" is not a line of its own, as on the web: beside
+    /// "I can't call it yet" it said the same thing twice. What it opened is
+    /// the last paragraph of the (i). The decision still works it out, and the
+    /// record keeps it with every egg.
     @ViewBuilder
     private func direction(_ phase: Cook.Phase) -> some View {
-        let odds = oddsLine(phase)
+        let idle = phase == .idle
+        let o = forecast(phase)
         VStack(spacing: 2) {
-            if let hit = odds.hit {
-                // Why the odds start low, opened in place under this line.
-                InfoRow(name: tr("odds.info"), more: [tr("odds.why")], alignment: .center) {
-                    Text(hit)
-                        .font(.footnote.weight(.semibold))
+            HStack(alignment: .center, spacing: 2) {
+                ZStack {
+                    // Two lines' room while idle, one sentence centred in it.
+                    if idle { Text(verbatim: " \n ").hidden().accessibilityHidden(true) }
+                    Text(o.map { tr(Direction.key($0)) } ?? "")
+                        .fixedSize(horizontal: false, vertical: true)
                 }
-            } else {
-                Text(verbatim: " ")
-                    .font(.footnote.weight(.semibold))
-                    .frame(minHeight: 32)
+                .font(.subheadline.weight(.semibold))
+                if idle && o != nil {
+                    InfoButton(expanded: $directionInfoOpen, name: tr("outcome.info"))
+                }
             }
-            if odds.learning {
-                Text(tr("odds.stillLearning"))
+            if idle { playSafeLine }
+            if idle && o != nil && directionInfoOpen {
+                MoreText([tr("outcome.bracket"), tr("outcome.why"), tr("outcome.learning")])
+                    .padding(.top, 4)
+                    .transition(.opacity)
+            }
+            if let o, Direction.whiteAtRisk(o) {
+                Text(tr("outcome.whiteRunny"))
                     .font(.footnote)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.orange)
+                    .padding(.top, 2)
             }
         }
         .multilineTextAlignment(.center)
     }
 
-    /// The odds and "still learning" (E5). While idle they are the choice on
-    /// screen's, and absent until this pot's surface lands; once a cook is
-    /// running, what they were at "Eggs in". Never where the white never sets:
-    /// there is no cook to give odds on.
-    private func oddsLine(_ phase: Cook.Phase) -> (hit: String?, learning: Bool) {
+    /// What the direction is about. While idle, the choice on screen's, once
+    /// this pot's surface has landed; once a cook is running, what it was at
+    /// "Eggs in".
+    private func forecast(_ phase: Cook.Phase) -> Forecast? {
         if phase == .idle {
-            guard let d = kitchen.decision, kitchen.solution?.whiteSets == true else { return (nil, false) }
-            return (tr("odds.hitTheMark", ["hits": .int(d.oddsTenths), "of": .int(10)]), d.stillLearning)
+            guard kitchen.decision != nil, kitchen.solution?.whiteSets == true else { return nil }
+            return kitchen.outcome
         }
-        guard let ticket = cook.ticket else { return (nil, false) }
-        return (ticket.oddsLine, ticket.stillLearning == true)
+        return cook.ticket?.forecast
+    }
+
+    /// The play-safe suggestion (the web's `outcome.safe.*`): a button drawn
+    /// as the low-odds link is, underlined in the accent, the arrow drawn so
+    /// VoiceOver hears the words and not "right arrow". A tap moves the slider
+    /// to its level, as a drag there would; the line then goes, so VoiceOver
+    /// goes to the slider it moved. While the next one is on its way, its
+    /// room is kept if it was there.
+    @ViewBuilder
+    private var playSafeLine: some View {
+        let safe = kitchen.playSafe
+        if let s = safe.suggestion {
+            playSafeButton(s)
+        } else if (kitchen.decision == nil || safe.pending) && kitchen.playSafeWasShown {
+            playSafeButton(PlaySafe(key: "outcome.safe.firm", level: 0, word: "outcome.safe.firmer"))
+                .hidden()
+                .accessibilityHidden(true)
+        }
+    }
+
+    private func playSafeButton(_ s: PlaySafe) -> some View {
+        Button {
+            kitchen.takePlaySafe(s)
+            sliderFocused = true
+        } label: {
+            HStack(spacing: 6) {
+                Text(s.text)
+                    .underline(true, color: Palette.accent)
+                Image(systemName: "arrow.right")
+                    .accessibilityHidden(true)
+            }
+            .font(.subheadline.weight(.semibold))
+            .foregroundStyle(.primary)
+            .frame(minHeight: 44)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(s.text)
     }
 
     private func phaseLabel(_ phase: Cook.Phase) -> String {
@@ -372,6 +436,7 @@ struct ContentView: View {
             leanS: kitchen.decision?.leanS ?? 0,
             oddsTenths: kitchen.decision?.oddsTenths,
             stillLearning: kitchen.decision?.stillLearning,
+            forecast: kitchen.decision == nil ? nil : kitchen.outcome,
             // The cooling counts to the yolk's peak for this cook (E4).
             coolS: coolingSecondsFor(solution.result),
             probeMoment: probeMomentFor(solution.result, cooling: kitchen.cooling)
@@ -771,17 +836,32 @@ struct ContentView: View {
             Text(tr("controls.doneness"))
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
-            Slider(value: $kitchen.doneness, in: Limits.doneness, step: 0.01)
-                .accessibilityLabel(tr("controls.doneness"))
-                .accessibilityValue(kitchen.label)
-            // Where this pan works: the odds at each level, in the yolk's
-            // colour, and what it cannot deliver (OddsTrack). Inset by half a
-            // thumb each side, so a level sits under the thumb that asks for it.
-            if !kitchen.isSousVide, let solution = kitchen.solution {
-                OddsTrack(solution: solution, profile: kitchen.oddsProfile)
-                    .frame(height: 8)
-                    .padding(.horizontal, 14)
+            // One track, the yolk's: the system's thumb on no track of its
+            // own, over the odds in the yolk's colour and what this pan cannot
+            // deliver (OddsTrack), inset by half a thumb so a level sits under
+            // the thumb that asks for it.
+            ZStack {
+                OddsTrack(solution: kitchen.isSousVide ? nil : kitchen.solution, profile: kitchen.oddsProfile)
+                    .frame(height: 10)
+                    .padding(.horizontal, thumbInset)
+                YolkSlider(
+                    value: $kitchen.doneness, range: Limits.doneness, step: 0.01,
+                    label: tr("controls.doneness"), valueText: kitchen.label, inset: $thumbInset
+                )
+                .accessibilityFocused($sliderFocused)
             }
+            // Where the yolk will probably land, under the track.
+            // Its room is kept while it is away, so the words under it do not
+            // move when it lands.
+            Group {
+                if let bracket = bracketForecast {
+                    YolkBracket(forecast: bracket)
+                } else {
+                    Color.clear.frame(height: 9).accessibilityHidden(true)
+                }
+            }
+            .padding(.horizontal, thumbInset)
+            .padding(.top, -4)
             ticks
             Text(donenessValue)
                 .font(.subheadline.weight(.semibold))
@@ -799,7 +879,7 @@ struct ContentView: View {
     /// ticks are. The ends are held inside the track.
     private var ticks: some View {
         GeometryReader { geo in
-            let inset: CGFloat = 14
+            let inset = thumbInset
             let span = geo.size.width - 2 * inset
             ZStack(alignment: .topLeading) {
                 ForEach(donenessAnchors.indices, id: \.self) { i in
@@ -820,6 +900,14 @@ struct ContentView: View {
         .font(.caption2)
         .foregroundStyle(.secondary)
         .accessibilityHidden(true)
+    }
+
+    /// The outcome the bracket draws: only while idle with a decision in, and
+    /// never where the white never sets, or in sous-vide, as on the web. The
+    /// control is only on screen while idle.
+    private var bracketForecast: Forecast? {
+        guard !kitchen.isSousVide, kitchen.decision != nil, kitchen.solution?.whiteSets == true else { return nil }
+        return kitchen.outcome
     }
 
     private var donenessValue: String {

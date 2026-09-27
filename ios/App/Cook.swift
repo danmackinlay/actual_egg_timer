@@ -95,8 +95,14 @@ final class Cook {
         /// known, or saved before E5.
         var oddsTenths: Int?
         var stillLearning: Bool?
+        /// What the egg was expected to be like at "Eggs in": the direction
+        /// and the white's line, shown for the whole cook as the web shows
+        /// them. Nil when the cook was started before they were known, or
+        /// saved before iOS pass B.
+        var forecast: Forecast?
 
-        /// "7/10 eggs hit the mark", or nil.
+        /// "7/10 eggs hit the mark", or nil: the Lock Screen's, which has room
+        /// for this and not for the direction.
         var oddsLine: String? {
             oddsTenths.map { tr("odds.hitTheMark", ["hits": .int($0), "of": .int(10)]) }
         }
