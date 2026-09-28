@@ -93,9 +93,8 @@ test('1b2. the small surfaces keep to a few words of period flavour', () => {
       assert.ok(words <= 8, `${key}: ${words} words in "${t}"`);
     }
   }
-  // The Dynamic Island's compact words have no room for any flavour at all.
+  // The Dynamic Island's compact word has no room for any flavour at all.
   assert.equal(render(PERIOD, 'activity.now'), 'NOW');
-  assert.equal(render(PERIOD, 'activity.eat'), 'Eat');
 });
 
 test('1c. a key 1750 lacks falls back to English, with English\'s plural rule', () => {

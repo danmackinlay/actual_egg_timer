@@ -232,7 +232,7 @@
     "controls.units": { "text": "Measures" },
     "controls.units.metric": { "text": "Metrick" },
     "controls.units.imperial": { "text": "Imperial" },
-    "controls.units.more": { "text": "Metrick or imperial, for every number I shew and every number you enter. I begin with what is customary where your browser says you are. To change them alters the manner of writing the numbers, and, from the imperial, the stile of my English; the egg and the times remain exactly the same, and the eggs are indifferent to either." },
+    "controls.units.more": { "text": "Metrick or imperial, for every number I shew and every number you enter. I begin with what is customary where your browser says you are. To change them alters the manner of writing the numbers, and may alter my words besides; the egg and the times remain exactly the same, and the eggs are indifferent to either." },
     "controls.thermometer": { "text": "A probe thermometer" },
     "controls.thermometer.more": { "text": "If you have a probe thermometer, I shall ask for one reading when the counting-down of the cooling ends. That is the moment at which the middle of the yolk is warmest; thrust the point therefore to the very middle, and tell me the highest number you see: anywhere else, or any later, reads lower. From that single egg I learn how fast heat enters your eggs. When the eggs rest upon the table I do not ask, because nothing is counted down." },
     "controls.thermometer.ask": { "text": "Ask a reading after every egg" },
@@ -337,7 +337,6 @@
     "alarm.probe.title": { "text": "Now the probe" },
     "alarm.probe.body": { "text": "Thrust it to the middle of the egg, and tell me the highest number." },
 
-    "readout.phase.cooling": { "text": "Cooling; let them lie" },
     "readout.alarm.setting": { "text": "preparing the alarm…" },
     "readout.alarm.denied": { "text": "I have no leave to send notices; keep the app open" },
     "readout.alarm.failed": { "text": "the alarm would not be set; keep the app open" },
@@ -345,22 +344,19 @@
     "controls.size.weighed": { "text": "As weighed · {mass}" },
     "more.expanded": { "text": "Opened" },
     "more.collapsed": { "text": "Closed" },
-    "controls.units.more.ios": { "text": "Metrick or imperial, for every number I shew and every number you enter. I begin with what is customary where your phone says you are. To change them alters the manner of writing the numbers, and, from the imperial, the stile of my English; the egg and the times remain exactly the same, and the eggs are indifferent to either." },
+    "controls.units.more.ios": { "text": "Metrick or imperial, for every number I shew and every number you enter. I begin with what is customary where your phone says you are. To change them alters the manner of writing the numbers, and may alter my words besides; the egg and the times remain exactly the same, and the eggs are indifferent to either." },
     "cook.summary": { "text": "{doneness} · the yolk rising to {yolk}" },
 
     "activity.stage.heating": { "text": "Upon the fire" },
     "activity.stage.cooking": { "text": "In the water" },
     "activity.stage.pull": { "text": "Out with them" },
     "activity.stage.cooling": { "text": "In the cold" },
-    "activity.stage.done": { "text": "It is done" },
     "activity.now": { "text": "NOW" },
-    "activity.eat": { "text": "Eat" },
     "activity.target": { "text": "{doneness} · the yolk {yolk}" },
     "activity.summary": { "text": "{mass} · {doneness} · yolk to {yolk}" },
     "activity.note.estimate": { "text": "my conjecture, till you tap the boil" },
     "activity.note.heating": { "text": "upon the fire" },
     "activity.note.cooking": { "text": "until the eggs are taken out" },
-    "activity.note.cooling": { "text": "the yolk cooks still" },
-    "activity.note.done": { "text": "the egg is such as you desired" }
+    "activity.note.cooling": { "text": "the yolk cooks still" }
   }
 }

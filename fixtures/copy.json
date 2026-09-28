@@ -310,12 +310,6 @@
     },
     {
       "locale": "en-x-1750",
-      "key": "readout.phase.cooling",
-      "args": {},
-      "text": "Cooling; let them lie"
-    },
-    {
-      "locale": "en-x-1750",
       "key": "readout.phase.done",
       "args": {},
       "text": "It is done"
@@ -1698,13 +1692,13 @@
       "locale": "en-x-1750",
       "key": "controls.units.more",
       "args": {},
-      "text": "Metrick or imperial, for every number I shew and every number you enter. I begin with what is customary where your browser says you are. To change them alters the manner of writing the numbers, and, from the imperial, the stile of my English; the egg and the times remain exactly the same, and the eggs are indifferent to either."
+      "text": "Metrick or imperial, for every number I shew and every number you enter. I begin with what is customary where your browser says you are. To change them alters the manner of writing the numbers, and may alter my words besides; the egg and the times remain exactly the same, and the eggs are indifferent to either."
     },
     {
       "locale": "en-x-1750",
       "key": "controls.units.more.ios",
       "args": {},
-      "text": "Metrick or imperial, for every number I shew and every number you enter. I begin with what is customary where your phone says you are. To change them alters the manner of writing the numbers, and, from the imperial, the stile of my English; the egg and the times remain exactly the same, and the eggs are indifferent to either."
+      "text": "Metrick or imperial, for every number I shew and every number you enter. I begin with what is customary where your phone says you are. To change them alters the manner of writing the numbers, and may alter my words besides; the egg and the times remain exactly the same, and the eggs are indifferent to either."
     },
     {
       "locale": "en-x-1750",
@@ -2791,21 +2785,9 @@
     },
     {
       "locale": "en-x-1750",
-      "key": "activity.stage.done",
-      "args": {},
-      "text": "It is done"
-    },
-    {
-      "locale": "en-x-1750",
       "key": "activity.now",
       "args": {},
       "text": "NOW"
-    },
-    {
-      "locale": "en-x-1750",
-      "key": "activity.eat",
-      "args": {},
-      "text": "Eat"
     },
     {
       "locale": "en-x-1750",
@@ -2849,12 +2831,6 @@
       "key": "activity.note.cooling",
       "args": {},
       "text": "the yolk cooks still"
-    },
-    {
-      "locale": "en-x-1750",
-      "key": "activity.note.done",
-      "args": {},
-      "text": "the egg is such as you desired"
     },
     {
       "locale": "en-x-1750",
@@ -3183,12 +3159,6 @@
       "key": "readout.phase.coolingTap",
       "args": {},
       "text": "Cooling — keep the water running"
-    },
-    {
-      "locale": "en",
-      "key": "readout.phase.cooling",
-      "args": {},
-      "text": "Cooling"
     },
     {
       "locale": "en",
@@ -4574,13 +4544,13 @@
       "locale": "en",
       "key": "controls.units.more",
       "args": {},
-      "text": "Metric or Imperial, for every number I show and every number you type. I start with what's usual where your browser says you are. Switching changes only how I write the numbers: the egg and the times stay exactly the same, and the eggs don't mind which."
+      "text": "Metric or Imperial, for every number I show and every number you type. I start with what's usual where your browser says you are. Switching changes how I write the numbers, and may change my words too: the egg and the times stay exactly the same, and the eggs don't mind which."
     },
     {
       "locale": "en",
       "key": "controls.units.more.ios",
       "args": {},
-      "text": "Metric or Imperial, for every number I show and every number you set. I start with what's usual where your phone says you are. Switching changes only how I write the numbers: the egg and the times stay exactly the same, and the eggs don't mind which."
+      "text": "Metric or Imperial, for every number I show and every number you set. I start with what's usual where your phone says you are. Switching changes how I write the numbers, and may change my words too: the egg and the times stay exactly the same, and the eggs don't mind which."
     },
     {
       "locale": "en",
@@ -5667,21 +5637,9 @@
     },
     {
       "locale": "en",
-      "key": "activity.stage.done",
-      "args": {},
-      "text": "Done"
-    },
-    {
-      "locale": "en",
       "key": "activity.now",
       "args": {},
       "text": "NOW"
-    },
-    {
-      "locale": "en",
-      "key": "activity.eat",
-      "args": {},
-      "text": "Eat"
     },
     {
       "locale": "en",
@@ -5725,12 +5683,6 @@
       "key": "activity.note.cooling",
       "args": {},
       "text": "yolk still cooking"
-    },
-    {
-      "locale": "en",
-      "key": "activity.note.done",
-      "args": {},
-      "text": "that is the egg you asked for"
     },
     {
       "locale": "en",

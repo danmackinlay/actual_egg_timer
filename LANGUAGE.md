@@ -648,6 +648,27 @@ which the setup sentence replaces).
 - **The running sentence is `setup.sentence`**, with the same fragments as
   the idle one, so there is nothing new to translate.
 
+**Loose ends - IMPLEMENTED 28 September 2026**, both apps: the `loose` draft
+in `tools/copyDraft.ts`, on `5d71a3c`; `copyLiterals.js --since 5d71a3c
+loose` shows these six keys and nothing else. The units' (i) said a switch
+"changes only how I write the numbers", which is false on an English page,
+where Imperial also switches to the English of 1750 (§6). It now says the
+words may change too, and no more: the joke is still better found than
+delivered.
+
+| key | now | 1750 |
+|---|---|---|
+| `controls.units.more` (web) | … Switching changes how I write the numbers, and may change my words too: the egg and the times stay exactly the same, and the eggs don't mind which. (was "changes only how I write the numbers:") | … To change them alters the manner of writing the numbers, and may alter my words besides; the egg and the times remain exactly the same, and the eggs are indifferent to either. (was "and, from the imperial, the stile of my English;", which also said too much: a 1750 chosen in the picker stays when the units go back) |
+| `controls.units.more.ios` | the same, with "set" and "phone" as before | the same, with "phone" as before |
+
+**Retired**, because nothing can draw them: `readout.phase.cooling` (iOS;
+a counter rest never cools, see *Leftovers: orphaned* below), and the Lock
+Screen card's done state, `activity.stage.done`, `activity.note.done` and
+`activity.eat` - the card ends at once on the stage before done, so its
+final content is never drawn. `CookActivity.Stage.done` stays, so a card an
+older build ended as done still decodes; it draws with the app's own
+`readout.phase.done`.
+
 ### Proposed: one wording per meaning (for the owner)
 
 **Overtaken, 27-28 September, by the redesign (UI.md).** As the two apps took
@@ -765,7 +786,8 @@ the two screens differ:
 - `readout.phase.cooling` (iOS), "Cooling", is **dead**. It is drawn only
   while a counter rest is cooling, but a counter cook never cools. `Cook.swift`
   sets no cooling deadline for it, so it goes from the pull straight to Done,
-  as the web's machine does. Delete it.
+  as the web's machine does. Delete it. *Deleted 28 September (the `loose`
+  draft).*
 - `controls.start.hint` (web) is live. iOS shows a line under Start only in
   sous-vide (`controls.start.hintSousVide`). It could show this one in the
   same place, and the key would then be shared.
