@@ -312,7 +312,7 @@
       "locale": "en-x-1750",
       "key": "readout.phase.cooling",
       "args": {},
-      "text": "Cooling"
+      "text": "Cooling; let them lie"
     },
     {
       "locale": "en-x-1750",
@@ -429,19 +429,19 @@
       "locale": "en-x-1750",
       "key": "readout.alarm.setting",
       "args": {},
-      "text": "setting the alarm…"
+      "text": "preparing the alarm…"
     },
     {
       "locale": "en-x-1750",
       "key": "readout.alarm.denied",
       "args": {},
-      "text": "no notification permission — keep the app open"
+      "text": "I have no leave to send notices; keep the app open"
     },
     {
       "locale": "en-x-1750",
       "key": "readout.alarm.failed",
       "args": {},
-      "text": "the alarm did not take — keep the app open"
+      "text": "the alarm would not be set; keep the app open"
     },
     {
       "locale": "en-x-1750",
@@ -449,7 +449,7 @@
       "args": {
         "time": "7:41:12 AM"
       },
-      "text": "alarm set for 7:41:12 AM"
+      "text": "the alarm is set for 7:41:12 AM"
     },
     {
       "locale": "en-x-1750",
@@ -1044,7 +1044,7 @@
       "args": {
         "mass": "2.4 oz"
       },
-      "text": "Weighed · 2.4 oz"
+      "text": "As weighed · 2.4 oz"
     },
     {
       "locale": "en-x-1750",
@@ -1533,13 +1533,13 @@
       "locale": "en-x-1750",
       "key": "more.expanded",
       "args": {},
-      "text": "Expanded"
+      "text": "Opened"
     },
     {
       "locale": "en-x-1750",
       "key": "more.collapsed",
       "args": {},
-      "text": "Collapsed"
+      "text": "Closed"
     },
     {
       "locale": "en-x-1750",
@@ -1688,7 +1688,7 @@
       "locale": "en-x-1750",
       "key": "controls.units.more.ios",
       "args": {},
-      "text": "Metric or Imperial, for every number I show and every number you set. I start with what's usual where your phone says you are. Switching changes only how I write the numbers: the egg and the times stay exactly the same, and the eggs don't mind which."
+      "text": "Metrick or imperial, for every number I shew and every number you enter. I begin with what is customary where your phone says you are. To change them alters the manner of writing the numbers, and, from the imperial, the stile of my English; the egg and the times remain exactly the same, and the eggs are indifferent to either."
     },
     {
       "locale": "en-x-1750",
@@ -1701,15 +1701,6 @@
       "key": "controls.thermometer.more",
       "args": {},
       "text": "If you have a probe thermometer, I shall ask for one reading when the counting-down of the cooling ends. That is the moment at which the middle of the yolk is warmest; thrust the point therefore to the very middle, and tell me the highest number you see: anywhere else, or any later, reads lower. From that single egg I learn how fast heat enters your eggs. When the eggs rest upon the table I do not ask, because nothing is counted down."
-    },
-    {
-      "locale": "en-x-1750",
-      "key": "odds.hitTheMark",
-      "args": {
-        "hits": 7,
-        "of": 10
-      },
-      "text": "7/10 eggs hit the mark"
     },
     {
       "locale": "en-x-1750",
@@ -2153,7 +2144,7 @@
         "doneness": "jammy",
         "yolk": "149 °F"
       },
-      "text": "2.4 oz · jammy · peak yolk 149 °F"
+      "text": "2.4 oz · jammy · the yolk rising to 149 °F"
     },
     {
       "locale": "en-x-1750",
@@ -2162,37 +2153,37 @@
         "start": "Cold water",
         "after": "ice bath"
       },
-      "text": "Cold water · then ice bath"
+      "text": "Cold water · and then ice bath"
     },
     {
       "locale": "en-x-1750",
       "key": "cook.method.cold",
       "args": {},
-      "text": "Cold water"
+      "text": "Set in cold water"
     },
     {
       "locale": "en-x-1750",
       "key": "cook.method.hot",
       "args": {},
-      "text": "Boiling water"
+      "text": "Put into boiling water"
     },
     {
       "locale": "en-x-1750",
       "key": "cook.method.ice",
       "args": {},
-      "text": "ice bath"
+      "text": "iced water"
     },
     {
       "locale": "en-x-1750",
       "key": "cook.method.tap",
       "args": {},
-      "text": "cold tap"
+      "text": "a cold tap"
     },
     {
       "locale": "en-x-1750",
       "key": "cook.method.counter",
       "args": {},
-      "text": "rest on the counter"
+      "text": "laid upon the table"
     },
     {
       "locale": "en-x-1750",
@@ -2794,7 +2785,7 @@
       "locale": "en-x-1750",
       "key": "alarm.pull.bodyCounter",
       "args": {},
-      "text": "Out of the water and onto the counter."
+      "text": "Take them from the water, and lay them upon the table."
     },
     {
       "locale": "en-x-1750",
@@ -2806,49 +2797,49 @@
       "locale": "en-x-1750",
       "key": "alarm.cooled.body",
       "args": {},
-      "text": "The carryover is over. That is the egg you asked for."
+      "text": "The heat has run its course; the egg is such as you desired."
     },
     {
       "locale": "en-x-1750",
       "key": "alarm.probe.title",
       "args": {},
-      "text": "Probe it now"
+      "text": "Now the probe"
     },
     {
       "locale": "en-x-1750",
       "key": "alarm.probe.body",
       "args": {},
-      "text": "Middle of the egg: tell me the highest number."
+      "text": "Thrust it to the middle of the egg, and tell me the highest number."
     },
     {
       "locale": "en-x-1750",
       "key": "activity.stage.heating",
       "args": {},
-      "text": "Heating"
+      "text": "Upon the fire"
     },
     {
       "locale": "en-x-1750",
       "key": "activity.stage.cooking",
       "args": {},
-      "text": "Cooking"
+      "text": "In the water"
     },
     {
       "locale": "en-x-1750",
       "key": "activity.stage.pull",
       "args": {},
-      "text": "Eggs out — now"
+      "text": "Out with them"
     },
     {
       "locale": "en-x-1750",
       "key": "activity.stage.cooling",
       "args": {},
-      "text": "Cooling"
+      "text": "In the cold"
     },
     {
       "locale": "en-x-1750",
       "key": "activity.stage.done",
       "args": {},
-      "text": "Done"
+      "text": "It is done"
     },
     {
       "locale": "en-x-1750",
@@ -2869,7 +2860,7 @@
         "doneness": "jammy",
         "yolk": "149 °F"
       },
-      "text": "jammy · yolk 149 °F"
+      "text": "jammy · the yolk 149 °F"
     },
     {
       "locale": "en-x-1750",
@@ -2879,49 +2870,49 @@
         "doneness": "jammy",
         "yolk": "149 °F"
       },
-      "text": "2.4 oz · jammy · peak yolk 149 °F"
+      "text": "2.4 oz · jammy · yolk to 149 °F"
     },
     {
       "locale": "en-x-1750",
       "key": "activity.note.estimate",
       "args": {},
-      "text": "my guess until you tap Full rolling boil"
+      "text": "my conjecture, till you tap the boil"
     },
     {
       "locale": "en-x-1750",
       "key": "activity.note.heating",
       "args": {},
-      "text": "heating"
+      "text": "upon the fire"
     },
     {
       "locale": "en-x-1750",
       "key": "activity.note.cooking",
       "args": {},
-      "text": "until the eggs come out"
+      "text": "until the eggs are taken out"
     },
     {
       "locale": "en-x-1750",
       "key": "activity.note.pull",
       "args": {},
-      "text": "into the cooling, or the yolk keeps going"
+      "text": "to the cold, or the yolk cooks on"
     },
     {
       "locale": "en-x-1750",
       "key": "activity.note.pullCounter",
       "args": {},
-      "text": "resting on the counter"
+      "text": "laid upon the table"
     },
     {
       "locale": "en-x-1750",
       "key": "activity.note.cooling",
       "args": {},
-      "text": "yolk still cooking"
+      "text": "the yolk cooks still"
     },
     {
       "locale": "en-x-1750",
       "key": "activity.note.done",
       "args": {},
-      "text": "that is the egg you asked for"
+      "text": "the egg is such as you desired"
     },
     {
       "locale": "en-x-1750",
@@ -4644,15 +4635,6 @@
       "key": "controls.thermometer.more",
       "args": {},
       "text": "If you have a probe thermometer, I'll ask for one reading when the cooling countdown ends. That's the moment the middle of the yolk is at its warmest, so push the tip to the very middle and tell me the highest number you see: anywhere else, or any later, reads lower. From that single egg I learn how fast heat gets into your eggs. I don't ask when the eggs rest on the counter, because nothing is counted down."
-    },
-    {
-      "locale": "en",
-      "key": "odds.hitTheMark",
-      "args": {
-        "hits": 7,
-        "of": 10
-      },
-      "text": "7/10 eggs hit the mark"
     },
     {
       "locale": "en",

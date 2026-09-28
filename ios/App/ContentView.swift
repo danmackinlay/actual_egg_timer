@@ -49,10 +49,14 @@ struct ContentView: View {
         // boundary cannot land between two reads and leave the label describing
         // one phase while the button below it describes the next.
         let outerPhase = cook.phase(at: .now)
+        // The English of 1750 (F6): read here, so this body depends on it and
+        // a change of language redraws the page in place.
+        let period = isPeriod(Copy.activeLocale)
 
         return NavigationStack(path: $path) {
             ScrollView {
                 VStack(spacing: 22) {
+                    if outerPhase == .idle && period { titlePage }
                     // The readout and the action are functions of the CLOCK,
                     // not of any stored property, so nothing the observation
                     // system watches ever changes while a cook counts down.
@@ -103,6 +107,11 @@ struct ContentView: View {
                 }
             }
         }
+        // 1750 is set in a book face, as on the web (which uses Iowan Old
+        // Style; this is New York, the system's serif, which follows Dynamic
+        // Type). The clock keeps its own face: every clock face here names
+        // its design, which a font design in the environment does not touch.
+        .fontDesign(period ? .serif : nil)
         .onAppear {
             // Install the notification delegate before anything can fire.
             Alarm.shared.activate()
@@ -152,6 +161,24 @@ struct ContentView: View {
         }
     }
     #endif
+
+    // MARK: - The title page
+
+    /// The egg's page in 1750 is headed by a title page after the
+    /// Dictionary's, while idle (LANGUAGE.md section 6). The one place the
+    /// long s is drawn; VoiceOver reads it without, since a screen reader
+    /// would announce every one.
+    private var titlePage: some View {
+        let title = tr("app.titlePage")
+        return Text(title)
+            .font(.body.italic())
+            .foregroundStyle(.secondary)
+            .multilineTextAlignment(.center)
+            .frame(maxWidth: .infinity)
+            .padding(.horizontal, 8)
+            .accessibilityLabel(withoutLongS(title))
+            .accessibilityAddTraits(.isHeader)
+    }
 
     // MARK: - Readout
 
@@ -489,7 +516,7 @@ struct ContentView: View {
                 // button that has gone missing looks like a layout accident
                 // where one that will not press is the answer.
                 Button {} label: {
-                    Text(tr("action.eggsIn")).frame(maxWidth: .infinity)
+                    Text(tr("action.eggsIn")).frame(maxWidth: .infinity).onAccent()
                 }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
@@ -509,6 +536,7 @@ struct ContentView: View {
                 } label: {
                     Text(tr(kitchen.coldStart ? "action.startHeating" : "action.eggsIn"))
                         .frame(maxWidth: .infinity)
+                        .onAccent()
                 }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
@@ -538,7 +566,7 @@ struct ContentView: View {
                         }
                     }
                 } label: {
-                    Text(tr("action.fullBoil")).frame(maxWidth: .infinity)
+                    Text(tr("action.fullBoil")).frame(maxWidth: .infinity).onAccent()
                 }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
@@ -570,7 +598,7 @@ struct ContentView: View {
                 Button {
                     cook.pulledOut()
                 } label: {
-                    Text(tr(pulledKey)).frame(maxWidth: .infinity)
+                    Text(tr(pulledKey)).frame(maxWidth: .infinity).onAccent()
                 }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
@@ -854,15 +882,15 @@ struct ContentView: View {
     private func answerButton(
         _ label: String, chosen: Bool, answered: Bool, action: @escaping () -> Void
     ) -> some View {
-        let button = Button(action: action) {
-            Text(label)
-                .font(.subheadline)
-                .frame(maxWidth: .infinity)
-        }
+        let text = Text(label)
+            .font(.subheadline)
+            .frame(maxWidth: .infinity)
         if chosen {
-            button.buttonStyle(.borderedProminent).allowsHitTesting(false)
+            Button(action: action) { text.onAccent() }
+                .buttonStyle(.borderedProminent).allowsHitTesting(false)
         } else {
-            button.buttonStyle(.bordered).disabled(answered)
+            Button(action: action) { text }
+                .buttonStyle(.bordered).disabled(answered)
         }
     }
 

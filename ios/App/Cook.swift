@@ -90,9 +90,11 @@ final class Cook {
         /// carried onto a mid-cook re-solve. Nil in a cook saved before E5,
         /// and zero when the time was not chosen.
         var leanS: Double?
-        /// The odds and "still learning" as they were at "Eggs in", shown for
-        /// the whole cook. Nil when the cook was started before they were
-        /// known, or saved before E5.
+        /// The odds and "still learning" as they were at "Eggs in", for the
+        /// record. Data, not display: nothing mid-cook shows them, the Lock
+        /// Screen included, since nothing there could change what the cook
+        /// does. Nil when the cook was started before they were known, or
+        /// saved before E5.
         var oddsTenths: Int?
         var stillLearning: Bool?
         /// What the egg was expected to be like at "Eggs in": the direction
@@ -101,11 +103,6 @@ final class Cook {
         /// saved before iOS pass B.
         var forecast: Forecast?
 
-        /// "7/10 eggs hit the mark", or nil: the Lock Screen's, which has room
-        /// for this and not for the direction.
-        var oddsLine: String? {
-            oddsTenths.map { tr("odds.hitTheMark", ["hits": .int($0), "of": .int(10)]) }
-        }
         /// How long the counted cooling runs from the pull, s: to the moment the
         /// yolk's centre peaks, for this cook (`coolingSecondsFor`, E4). Nil in
         /// a cook saved before E4, whose cooling was the flat three minutes.
@@ -114,15 +111,16 @@ final class Cook {
         /// ends at the peak (`probeMomentFor`, E4). Nil before E4.
         var probeMoment: Bool?
 
-        /// The Lock Screen's description of this cook, in its own units.
+        /// The Lock Screen's description of this cook, in its own units and
+        /// its own language.
         var activity: CookActivity {
             let system = units ?? .metric
             return CookActivity(
                 doneness: doneness,
                 peakYolk: showIn(system, .temperature, peakYolkC),
                 eggMass: showIn(system, .mass, eggGrams),
-                odds: oddsLine,
-                restsOnCounter: cooling == .counter
+                restsOnCounter: cooling == .counter,
+                lang: lang
             )
         }
 
@@ -333,6 +331,9 @@ final class Cook {
             whiteOffered: true,
             probe: probe,
             lang: ticket.lang ?? "en",
+            // What kind of English the answers were given in (F6): the fit
+            // can then tell a 1750 "Too rear" from a modern "Too soft".
+            register: registerOf(ticket.lang ?? "en"),
             units: ticket.units ?? .metric
         )
     }

@@ -12,7 +12,9 @@ enum Palette {
         })
     }
 
-    /// The accent: a clause's underline, and an open clause's fill.
+    /// The accent: a clause's underline, and an open clause's fill. The same
+    /// two values are the app's tint, the asset catalog's AccentColor, which
+    /// is what Start, the links and the controls are drawn in.
     static let accent = scheme(dark: 0xFFB020, light: 0x8A4B00)
     /// Text on the accent.
     static let accentText = scheme(dark: 0x1A1200, light: 0xFFFFFF)
@@ -45,6 +47,27 @@ enum Palette {
         let mix = { (x: CGFloat, y: CGFloat) in x + (y - x) * CGFloat(t) }
         return Color(red: Double(mix(a.0, b.0)), green: Double(mix(a.1, b.1)), blue: Double(mix(a.2, b.2)))
     }
+}
+
+/// A prominent button's label on the accent, in `--accent-fg`: near-black on
+/// the dark scheme's amber, white on the light scheme's brown, where the
+/// system's white on amber would be unreadable. Disabled, it is left to the
+/// system, whose grey fill wants its own grey text.
+struct OnAccent: ViewModifier {
+    @Environment(\.isEnabled) private var enabled
+
+    func body(content: Content) -> some View {
+        if enabled {
+            content.foregroundStyle(Palette.accentText)
+        } else {
+            content
+        }
+    }
+}
+
+extension View {
+    /// See `OnAccent`.
+    func onAccent() -> some View { modifier(OnAccent()) }
 }
 
 private extension UIColor {

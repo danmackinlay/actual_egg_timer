@@ -31,13 +31,21 @@ struct CookActivity: ActivityAttributes {
     /// physics and no units table, so it is handed the words, not the numbers.
     var peakYolk: String
     var eggMass: String
-    /// "7/10 eggs hit the mark" (E5), already in words, or nil when the cook
-    /// was started before the odds were known.
-    var odds: String?
+    // E5's odds used to ride here, as "7/10 eggs hit the mark" on the Lock
+    // Screen. Gone, on the owner's word of 28 September: mid-cook nothing
+    // there can change what the cook does, so it says nothing rather than
+    // spend the room on odds. An activity begun by an older build still
+    // decodes, since a key nobody asks for is ignored.
+
     /// True when the eggs rest on the counter after the pull. There is then no
     /// cooling step to send them into, so the pull note says so. Optional, so
     /// an activity begun by an older build decodes as not resting.
     var restsOnCounter: Bool? = nil
+    /// The catalogue the cook was started in, `en` or `en-x-1750` (F6). The
+    /// widget cannot read the app's settings, so the activity carries its
+    /// language as it carries its units. Optional, so an activity begun by
+    /// an older build decodes, as English.
+    var lang: String? = nil
 
     enum Stage: String, Codable, Hashable {
         case heating
@@ -46,13 +54,14 @@ struct CookActivity: ActivityAttributes {
         case cooling
         case done
 
-        var title: String {
+        /// The stage's name, in the activity's language.
+        func title(in lang: String?) -> String {
             switch self {
-            case .heating: tr("activity.stage.heating")
-            case .cooking: tr("activity.stage.cooking")
-            case .pull: tr("activity.stage.pull")
-            case .cooling: tr("activity.stage.cooling")
-            case .done: tr("activity.stage.done")
+            case .heating: tr("activity.stage.heating", in: lang)
+            case .cooking: tr("activity.stage.cooking", in: lang)
+            case .pull: tr("activity.stage.pull", in: lang)
+            case .cooling: tr("activity.stage.cooling", in: lang)
+            case .done: tr("activity.stage.done", in: lang)
             }
         }
 

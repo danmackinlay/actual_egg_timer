@@ -81,6 +81,10 @@ targets:
         PRODUCT_NAME: Actual Egg Timer
         GENERATE_INFOPLIST_FILE: YES
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        # The web's --accent (styles.css), light and dark, as the app's tint:
+        # Start, links, the clause underlines. App/Assets.xcassets/AccentColor;
+        # the widget has its own copy, since an extension has its own bundle.
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         INFOPLIST_KEY_CFBundleDisplayName: Actual Egg Timer
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
@@ -136,4 +140,5 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: name.danmackinlay.actualeggtimer.widget
         PRODUCT_NAME: EggTimerWidget
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         SKIP_INSTALL: YES

@@ -29,6 +29,9 @@
  *  - `iosB`: iOS pass B - the direction, the bracket's words and playing
  *    safe on iOS, sharing the web's keys and retiring the odds line's, and
  *    the phase screens in the web's words - on `44b0cb1`.
+ *  - `period_ios`: F6 on iOS - the web's picker, its (i), the line under
+ *    Imperial and the title gain iOS; and the Lock Screen's odds line is
+ *    retired, on the owner's word - on `394f74d`.
  *
  * This is the list the proofs hold the catalogue to. `copyLiterals.ts --since`
  * diffs copy/en.json and the keys each app's source names against a base
@@ -2536,6 +2539,33 @@ export const IOS_B_DRAFT: Drafted[] = [
   },
 ];
 
+/** F6 on iOS (LANGUAGE.md section 6, "As built (iOS)"): the language picker,
+ *  its (i), the line under Imperial and the 1750 title, sharing the web's
+ *  keys with no change of wording; and the Lock Screen's odds line retired
+ *  on the owner's word of 28 September - mid-cook nothing there can change
+ *  what the cook does. The 1750 entries for iOS's own keys are in
+ *  copy/en-x-1750.json, which no draft covers: the web's were not drafted
+ *  either, and the owner reviews that catalogue whole. */
+export const PERIOD_IOS_DRAFT: Drafted[] = [
+  ...[
+    ['controls.language', 'Language'],
+    ['controls.language.more', 'English (1750) is English as Samuel Johnson wrote it in the preface to his Dictionary. I switch to it when you change from Metric to Imperial, and back when you change back. Pick English to leave it and keep your units.'],
+    ['language.en', 'English'],
+    ['language.en1750', 'English (1750)'],
+    ['controls.units.period', 'Imperial units are also available in the English of their period.'],
+    ['app.titlePage', 'The Actual Egg-Timer: in which the times of boiling are deduced from their causes, and illustrated in their different degrees of hardness.'],
+  ].map(([key, text]): Drafted => ({
+    key, row: 'F6 on iOS: the picker and the title, shared with the web',
+    before: { text }, after: { text }, appsBefore: ['web'], appsAfter: ['web', 'ios'],
+  })),
+  {
+    key: 'odds.hitTheMark', row: 'Lock Screen: no odds mid-cook',
+    before: { text: '{hits}/{of} eggs hit the mark' },
+    after: null,
+    appsBefore: ['ios'], appsAfter: [],
+  },
+];
+
 export const DRAFTS: Record<string, Draft> = {
   feedback: {
     base: 'cfe38e9',
@@ -2619,10 +2649,15 @@ export const DRAFTS: Record<string, Draft> = {
       'odds.hitTheMark': 'its note: iOS now draws it on the Lock Screen only, and the direction under the time',
     },
   },
+  period_ios: {
+    base: '394f74d',
+    rows: PERIOD_IOS_DRAFT,
+    exampleOnly: {},
+  },
 };
 
 /** The draft most recently applied: what a proof checks when it is not told. */
-export const LATEST_DRAFT = 'iosB';
+export const LATEST_DRAFT = 'period_ios';
 
 /** A draft by its name, or by the commit it was applied to; the latest when
  *  neither is given or neither matches. */

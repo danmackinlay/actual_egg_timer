@@ -18,8 +18,11 @@ import EggTimerCore
 ///   and fold them (`Kitchen.seed`). A learned state without cooking.
 /// - `-uiScreen direction-info`: open the direction's (i).
 /// - `-uiScreen take-safe`: tap the first play-safe suggestion that lands.
+/// - `-uiLanguage en-x-1750`: read in that catalogue, as a pick in the
+///   picker would, before the first frame (`LanguageChoice.start`).
 enum Screenshots {
     static var scene: String? { UserDefaults.standard.string(forKey: "uiScreen") }
+    static var language: String? { UserDefaults.standard.string(forKey: "uiLanguage") }
     static var noAlarmPrompt: Bool { UserDefaults.standard.bool(forKey: "noAlarmPrompt") }
     static var seedEggs: [Feedback] {
         guard let list = UserDefaults.standard.string(forKey: "seedEggs") else { return [] }

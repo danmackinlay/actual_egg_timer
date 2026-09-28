@@ -1,5 +1,6 @@
 import SwiftUI
 import EggTimerCore
+import EggTimerCopy
 
 /// Settings: what belongs to the kitchen rather than the egg (UI.md sections
 /// 2 and 3, the web's `#kitchen`). Set once, cook many, so it is a page of its
@@ -28,6 +29,31 @@ struct SettingsView: View {
                 )) {
                     Text(tr("controls.units.metric")).tag(UnitSystem.metric)
                     Text(tr("controls.units.imperial")).tag(UnitSystem.imperial)
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+                // The way into 1750 for a cook who starts in Imperial and so
+                // never makes the switch (LANGUAGE.md section 6): on any
+                // English page, 1750 included, in its own twin.
+                if languageOf(Copy.activeLocale) == "en" {
+                    Text(tr("controls.units.period"))
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            // F6: English, or the English of 1750. Named alike in both
+            // catalogues, so either can be found from the other.
+            Section {
+                InfoRow(name: about("controls.language"), more: [tr("controls.language.more")]) {
+                    Text(tr("controls.language"))
+                }
+                Picker(tr("controls.language"), selection: Binding(
+                    get: { Copy.activeLocale },
+                    set: { LanguageChoice.shared.pick($0) }
+                )) {
+                    Text(tr("language.en")).tag(defaultLanguage)
+                    Text(tr("language.en1750")).tag(periodLanguage)
                 }
                 .pickerStyle(.segmented)
                 .labelsHidden()
