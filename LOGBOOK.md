@@ -2068,3 +2068,87 @@ place it departs from the guide, is in LANGUAGE.md §6.
   cased in a book face, wrapped at 390 px and were shortened.
 - **Not verified:** VoiceOver reading the title's `aria-label`; Safari;
   the 110-character alarm body on a Lock Screen; the owner's ear.
+
+---
+
+## iOS follows the web's prediction, pass B (28 September 2026)
+
+Built overnight for the owner's review. The iOS egg now says what the web
+says under the time: the direction sentence, its one (i), the white's line,
+the bracket under the slider, and the play-safe suggestion. The phase
+screens use the web's words wherever the moment is the same, and the
+doneness slider has one track, the yolk's, where it had two. As built, and
+what was kept and why, is in UI.md §10.
+
+- **The copy:** the draft `iosB` in `tools/copyDraft.ts`, on `44b0cb1`,
+  with 34 rows and no change of wording. iOS now shares 26 web keys: 17
+  `outcome.*`, and 9 for the phases and hints. It retires 8 iOS keys:
+  `odds.info`, `odds.why`, `odds.stillLearning`,
+  `readout.phase.heatingTap`, `readout.sub.heatingEstimate`,
+  `readout.sub.done`, `readout.big.now` and `readout.big.eat`.
+  `odds.hitTheMark` stays, on the Lock Screen only, where the direction
+  does not fit in 33 characters.
+- **Copy proof:** `copyLiterals.js --since 44b0cb1 iosB` finds the 34 rows
+  and nothing else. 319 keys are unchanged.
+- **Tests:** `npm test` runs 239: 238 pass, 0 fail and 1 todo (5b, as
+  before). No test is new: the logic iOS gained is the web's
+  `src/ui/outcome.ts`, which is tested, ported line by line into
+  `ios/App/Direction.swift`.
+- **Validation:** `npm run validate` passes 28/28.
+- **Conformance:** `npm run conformance` passes 101 Swift tests in 28
+  suites, and 10 ring tests.
+- **Build:** the app builds for the simulator (Debug) with no errors.
+
+### Verified, in a simulator of my own
+
+`iosB-shots`, an iPhone 17 Pro on iOS 26.5, was created and deleted for
+this. Each shot was taken on a fresh install; the learned states come from
+the new `-seedEggs` hook, which writes records through the app's own store
+and folds them.
+- **A fresh install** at jammy reads "Could come out softer or firmer than
+  you like — I can't call it yet." It shows the bracket from Soft to Fudgy
+  and "Rather not risk it soft? Try: Fudgy". The suggestion lands about 30
+  s after launch, once the surface, the profile and the play-safe levels
+  are built.
+- **After three eggs just right** it reads "Probably just right.", with a
+  bracket about the thumb's width and no suggestion.
+- **After one egg too soft** it reads "I can't call it yet", the time rises
+  to 12:09, and it offers "Try: Fudgy". Tapped (by the `take-safe` hook,
+  which calls the same method as the button), the slider moves to Fudgy,
+  the time reads 12:59, and no second suggestion follows.
+- **The direction's (i)** opens its three paragraphs.
+- **Heating** reads "HEATING" and "0:59 heating · I expect 8:00 until you
+  tap".
+- **Both schemes:** the bracket reads in light and dark, and the track is
+  one yolk in both.
+
+### Things that cost time
+
+- **The worktree guard** refuses compound shell commands that it cannot
+  prove stay inside the worktree, and a variable holding a simulator id
+  counts as one. The fix was plain, separate commands and edit scripts in
+  the scratchpad.
+- **A network outage** cut the session off after the take-safe shot. The
+  commits made before it were intact.
+
+### Not verified
+
+- **VoiceOver on a device:** the slider's adjustable swipe (a tenth of the
+  range), the bracket's "Likely yolk: Soft to Fudgy", and focus moving to
+  the slider after a tap.
+- **The haptic tick** at each doneness word. The simulator has no Taptic
+  Engine.
+- **A real drag** on `YolkSlider`: the thumb, the grid snapping, and that
+  the white's line appearing mid-drag does not lose the drag. Nothing drove
+  a drag; the screenshots are at rest.
+- **The cooking, pull and done screens** in their new words. They were
+  built, and read in the diff, but not screenshotted: reaching them needs a
+  cook of ten minutes or more.
+- **The direction mid-cook.** It needs a cook started after the decision
+  landed, and the `heating` hook starts one before.
+- **The pending state:** that the suggestion's line holds its height while
+  the next one is worked out.
+- **Dynamic Type** at large sizes. The two-line room for the direction is
+  measured in the text's own lines, so it should scale, but that was not
+  checked.
+- **The Live Activity**, unchanged, and not looked at.
