@@ -353,6 +353,23 @@
     "cook.method.hot": { "text": "Put into boiling water" },
     "cook.method.ice": { "text": "iced water" },
     "cook.method.tap": { "text": "a cold tap" },
-    "cook.method.counter": { "text": "laid upon the table" }
+    "cook.method.counter": { "text": "laid upon the table" },
+
+    "activity.stage.heating": { "text": "Upon the fire" },
+    "activity.stage.cooking": { "text": "In the water" },
+    "activity.stage.pull": { "text": "Out with them" },
+    "activity.stage.cooling": { "text": "In the cold" },
+    "activity.stage.done": { "text": "It is done" },
+    "activity.now": { "text": "NOW" },
+    "activity.eat": { "text": "Eat" },
+    "activity.target": { "text": "{doneness} · the yolk {yolk}" },
+    "activity.summary": { "text": "{mass} · {doneness} · yolk to {yolk}" },
+    "activity.note.estimate": { "text": "my conjecture, till you tap the boil" },
+    "activity.note.heating": { "text": "upon the fire" },
+    "activity.note.cooking": { "text": "until the eggs are taken out" },
+    "activity.note.pull": { "text": "to the cold, or the yolk cooks on" },
+    "activity.note.pullCounter": { "text": "laid upon the table" },
+    "activity.note.cooling": { "text": "the yolk cooks still" },
+    "activity.note.done": { "text": "the egg is such as you desired" }
   }
 }
