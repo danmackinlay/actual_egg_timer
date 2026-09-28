@@ -12,6 +12,9 @@ struct PhaseActions: View {
     let model: AppModel
     let phase: Phase
     let now: Date
+    /// What the sous-vide screen says at `now`, or nil for a pan and while a
+    /// cook runs.
+    let sousVide: SousVideCopy?
 
     private var planner: Planner { model.planner }
     private var cook: Cook { model.cook }
@@ -34,8 +37,8 @@ struct PhaseActions: View {
     private var slot: some View {
         if phase == .idle {
             VStack(spacing: 10) {
-                if planner.isSousVide {
-                    Text(sousVideCopy(planner.sousVide, now: now, units: planner.units).warn)
+                if let sousVide {
+                    Text(sousVide.warn)
                         .foregroundStyle(.orange)
                 } else if !planner.refusal.isEmpty {
                     Text(planner.refusal)
@@ -67,9 +70,9 @@ struct PhaseActions: View {
     @ViewBuilder
     private var action: some View {
         switch phase {
-        case .idle where planner.isSousVide:
+        case .idle where sousVide != nil:
             VStack(spacing: 8) {
-                Text(sousVideCopy(planner.sousVide, now: now, units: planner.units).hint)
+                Text(sousVide?.hint ?? "")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)

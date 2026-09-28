@@ -45,6 +45,18 @@ struct ContentView: View {
         // The English of 1750 (F6): read here, so this body depends on it and
         // a change of language redraws the page in place.
         let period = isPeriod(Copy.activeLocale)
+        // The sous-vide estimate, once for the inputs as they stand: it is a
+        // bisection, and nothing in it reads the clock. Nil for a pan.
+        let sousVide = planner.isSousVide ? planner.sousVide : nil
+        // How often the timelines redraw. Every second while a cook runs, and
+        // in sous-vide, whose start time is read off the clock. The pan's idle
+        // screen reads nothing off the clock at all - what it shows changes
+        // only when an input or an answer does, and observation redraws it
+        // then - so its once a minute is only a backstop, where it used to be
+        // every second for nothing. The period is also the timelines'
+        // identity, so a change of it starts them afresh on the new schedule
+        // with a fresh date, rather than on a date up to a minute old.
+        let tick: TimeInterval = outerPhase == .idle && sousVide == nil ? 60 : 1
 
         return NavigationStack(path: $path) {
             ScrollView {
@@ -54,14 +66,17 @@ struct ContentView: View {
                     // not of any stored property, so nothing the observation
                     // system watches ever changes while a cook counts down.
                     // TimelineView is what redraws them: it asks for a new body
-                    // once a second, and hands over the date it drew for -
+                    // once a `tick`, and hands over the date it drew for -
                     // which is the date the phase is computed from.
-                    TimelineView(.periodic(from: .now, by: 1)) { context in
+                    TimelineView(.periodic(from: .now, by: tick)) { context in
+                        let phase = cook.phase(at: context.date)
                         ReadoutView(
-                            model: model, phase: cook.phase(at: context.date), now: context.date,
+                            model: model, phase: phase, now: context.date,
+                            sousVide: sousVideAt(context.date, sousVide, phase: phase),
                             directionInfoOpen: $directionInfoOpen
                         )
                     }
+                    .id(tick)
                     if outerPhase == .idle {
                         DonenessControl(planner: planner, thumbInset: $thumbInset)
                         setup
@@ -71,10 +86,13 @@ struct ContentView: View {
                         // by the probe offer or the two questions at Done.
                         CookSentence(ticket: ticket, planner: planner)
                     }
-                    TimelineView(.periodic(from: .now, by: 1)) { context in
+                    TimelineView(.periodic(from: .now, by: tick)) { context in
                         let phase = cook.phase(at: context.date)
                         VStack(spacing: 18) {
-                            PhaseActions(model: model, phase: phase, now: context.date)
+                            PhaseActions(
+                                model: model, phase: phase, now: context.date,
+                                sousVide: sousVideAt(context.date, sousVide, phase: phase)
+                            )
                             // Inside the TimelineView for the same reason as
                             // the readout: reaching DONE changes no stored
                             // property, so nothing outside would redraw and
@@ -82,6 +100,7 @@ struct ContentView: View {
                             if phase == .done { FeedbackPanel(model: model) }
                         }
                     }
+                    .id(tick)
                 }
                 .padding(20)
             }
@@ -117,6 +136,13 @@ struct ContentView: View {
             showScreenshotScene()
             #endif
         }
+    }
+
+    /// What the sous-vide screen says at one tick of a timeline, once for
+    /// everything in it: nil for a pan, and while a cook runs.
+    private func sousVideAt(_ now: Date, _ estimate: SousVideEstimate?, phase: Phase) -> SousVideCopy? {
+        guard phase == .idle, let estimate else { return nil }
+        return sousVideCopy(estimate, now: now, units: planner.units)
     }
 
     #if DEBUG

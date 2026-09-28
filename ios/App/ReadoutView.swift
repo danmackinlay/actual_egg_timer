@@ -14,6 +14,9 @@ struct ReadoutView: View {
     let model: AppModel
     let phase: Phase
     let now: Date
+    /// What the sous-vide screen says at `now`, or nil for a pan and while a
+    /// cook runs.
+    let sousVide: SousVideCopy?
     /// Whether the direction's (i) is open.
     @Binding var directionInfoOpen: Bool
 
@@ -22,8 +25,7 @@ struct ReadoutView: View {
 
     var body: some View {
         VStack(spacing: 6) {
-            if planner.isSousVide && phase == .idle {
-                let copy = sousVideCopy(planner.sousVide, now: now, units: planner.units)
+            if let copy = sousVide {
                 Text(tr("readout.phase.startTime"))
                     .font(.caption.smallCaps())
                     .foregroundStyle(.secondary)
