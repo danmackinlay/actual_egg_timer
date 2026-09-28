@@ -17,13 +17,13 @@ struct ReadoutView: View {
     /// Whether the direction's (i) is open.
     @Binding var directionInfoOpen: Bool
 
-    private var kitchen: Kitchen { model.kitchen }
+    private var planner: Planner { model.planner }
     private var cook: Cook { model.cook }
 
     var body: some View {
         VStack(spacing: 6) {
-            if kitchen.isSousVide && phase == .idle {
-                let copy = sousVideCopy(kitchen.sousVide, now: now, units: kitchen.units)
+            if planner.isSousVide && phase == .idle {
+                let copy = sousVideCopy(planner.sousVide, now: now, units: planner.units)
                 Text(tr("readout.phase.startTime"))
                     .font(.caption.smallCaps())
                     .foregroundStyle(.secondary)
@@ -66,7 +66,7 @@ struct ReadoutView: View {
     /// history, as on the web.
     @ViewBuilder
     private var sublineLine: some View {
-        if phase == .idle && kitchen.coldStart && kitchen.hasBoilMemory {
+        if phase == .idle && planner.coldStart && planner.hasBoilMemory {
             InfoRow(
                 name: tr("readout.sub.coldAssumes.info"),
                 more: [tr("readout.sub.coldAssumes.more")],
@@ -111,7 +111,7 @@ struct ReadoutView: View {
         let idle = phase == .idle
         // While idle, the choice on screen's; once a cook is running, what it
         // was at "Eggs in".
-        let o = idle ? kitchen.shownForecast : cook.ticket?.forecast
+        let o = idle ? planner.shownForecast : cook.ticket?.forecast
         VStack(spacing: 2) {
             HStack(alignment: .center, spacing: 2) {
                 ZStack {
@@ -145,7 +145,7 @@ struct ReadoutView: View {
     /// the egg was in the water.
     private var bigTime: String {
         switch phase {
-        case .idle: kitchen.solution.map { clockString($0.result.cookTimeS) } ?? "--:--"
+        case .idle: planner.solution.map { clockString($0.result.cookTimeS) } ?? "--:--"
         case .heating, .cooking: clockString(cook.secondsToPull)
         case .pull: "+" + clockString(now.timeIntervalSince(cook.pullAt ?? now))
         case .cooling: clockString(cook.secondsToCoolDone)
@@ -159,8 +159,8 @@ struct ReadoutView: View {
         return switch phase {
         case .idle:
             tr(key, [
-                "boil": .text(clockString(kitchen.timeToBoilS)),
-                "water": .text(kitchen.show(.water, kitchen.waterLitres)),
+                "boil": .text(clockString(planner.timeToBoilS)),
+                "water": .text(planner.show(.water, planner.waterLitres)),
             ])
         case .heating:
             tr(key, [

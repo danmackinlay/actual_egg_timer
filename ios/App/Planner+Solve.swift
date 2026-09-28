@@ -1,7 +1,7 @@
 import Foundation
 import EggTimerCore
 
-extension Kitchen {
+extension Planner {
     // MARK: - Solving
 
     func changed() {
@@ -47,7 +47,7 @@ extension Kitchen {
         task?.cancel()
         task = nil
         asked &+= 1
-        // No pan, no solve. The sous-vide answer is `sousVide` (Kitchen.swift)
+        // No pan, no solve. The sous-vide answer is `sousVide` (Planner.swift)
         // and needs none of this. It goes FIRST, before anything is solved for -
         // the web app used to branch only at the point of PAINTING, so it paid
         // for a full hot-start solve it then discarded and left half of it on

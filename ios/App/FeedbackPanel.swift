@@ -17,7 +17,7 @@ struct FeedbackPanel: View {
     @State private var probeText = ""
     @State private var probeNote = ""
 
-    private var kitchen: Kitchen { model.kitchen }
+    private var planner: Planner { model.planner }
     private var cook: Cook { model.cook }
 
     var body: some View {
@@ -25,10 +25,10 @@ struct FeedbackPanel: View {
             // After a relaunch the second question is not offered again: the
             // surface it would be folded against is gone, and the one left
             // unanswered stays a skip in the record.
-            if cook.feedbackGiven && kitchen.answers == nil {
-                Text(tr(kitchen.learning ? "feedback.learning" : "feedback.thanks"))
+            if cook.feedbackGiven && planner.answers == nil {
+                Text(tr(planner.learning ? "feedback.learning" : "feedback.thanks"))
                     .font(.subheadline)
-                Text(kitchen.learning ? " " : tunedLine)
+                Text(planner.learning ? " " : tunedLine)
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .monospacedDigit()
@@ -75,7 +75,7 @@ struct FeedbackPanel: View {
     @ViewBuilder
     private var probeEntry: some View {
         if cook.asksForProbe {
-            let given = kitchen.answers?.probe
+            let given = planner.answers?.probe
             VStack(spacing: 8) {
                 Text(tr("probe.now"))
                     .font(.headline)
@@ -89,7 +89,7 @@ struct FeedbackPanel: View {
                         .multilineTextAlignment(.trailing)
                         .frame(maxWidth: 150)
                         .disabled(given != nil)
-                    Text(tr(kitchen.measure(.probeTemp).unitKey))
+                    Text(tr(planner.measure(.probeTemp).unitKey))
                         .foregroundStyle(.secondary)
                     Button(tr("probe.save")) { saveProbe() }
                         .buttonStyle(.bordered)
@@ -107,36 +107,36 @@ struct FeedbackPanel: View {
     }
 
     private func saveProbe() {
-        guard let ticket = cook.ticket, kitchen.answers?.probe == nil else { return }
+        guard let ticket = cook.ticket, planner.answers?.probe == nil else { return }
         // A comma is the decimal point in half the world's keyboards.
         let typed = Double(probeText.replacingOccurrences(of: ",", with: ".")
             .trimmingCharacters(in: .whitespaces))
-        let reading = typed.flatMap { parse(kitchen.measure(.probeTemp), $0) }
+        let reading = typed.flatMap { parse(planner.measure(.probeTemp), $0) }
         guard let scored = cook.eggRecord(yolk: nil).map(recordCookTimeS) else { return }
-        let range = kitchen.probeRange(egg: ticket.egg, setup: ticket.setup, cookTimeS: scored)
+        let range = planner.probeRange(egg: ticket.egg, setup: ticket.setup, cookTimeS: scored)
         guard let reading, reading >= range.low, reading <= range.high else {
             probeNote = tr("probe.refused", [
-                "low": .text(kitchen.show(.probeTemp, range.low)),
-                "high": .text(kitchen.show(.probeTemp, range.high)),
+                "low": .text(planner.show(.probeTemp, range.low)),
+                "high": .text(planner.show(.probeTemp, range.high)),
             ])
             return
         }
         guard let probe = cook.probeReading(centreC: reading) else { return }
-        probeNote = kitchen.show(.probeTemp, reading)
+        probeNote = planner.show(.probeTemp, reading)
         model.answer(yolk: nil, white: nil, probe: probe)
     }
 
     // MARK: - The two questions
 
     private func yolkButton(_ label: String, _ value: Feedback) -> some View {
-        let given = kitchen.answers?.yolk
+        let given = planner.answers?.yolk
         return answerButton(label, chosen: given == value, answered: given != nil) {
             model.answer(yolk: value, white: nil)
         }
     }
 
     private func whiteButton(_ label: String, _ value: WhiteReport) -> some View {
-        let given = kitchen.answers?.white
+        let given = planner.answers?.white
         return answerButton(label, chosen: given == value, answered: given != nil) {
             model.answer(yolk: nil, white: value)
         }
@@ -160,15 +160,15 @@ struct FeedbackPanel: View {
     }
 
     private var calibrationNote: String {
-        if kitchen.learning { return tr("feedback.learning") }
-        if kitchen.answers != nil { return tr("feedback.thanks") }
-        if kitchen.eggsLogged == 0 {
+        if planner.learning { return tr("feedback.learning") }
+        if planner.answers != nil { return tr("feedback.thanks") }
+        if planner.eggsLogged == 0 {
             return tr("feedback.invite")
         }
         return tunedLine
     }
 
     private var tunedLine: String {
-        tr("learned.tuned", ["eggs": .int(kitchen.eggsLogged)])
+        tr("learned.tuned", ["eggs": .int(planner.eggsLogged)])
     }
 }

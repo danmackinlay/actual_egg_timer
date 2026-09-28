@@ -8,7 +8,7 @@ import EggTimerCopy
 /// The doneness word is on the ticks, so it is not drawn again; VoiceOver
 /// hears it with the temperature as the slider's value.
 struct DonenessControl: View {
-    @Bindable var kitchen: Kitchen
+    @Bindable var planner: Planner
     /// Half the slider's thumb, pt, as the slider reports it: where the track,
     /// the bracket and the doneness words are inset to.
     @Binding var thumbInset: CGFloat
@@ -32,11 +32,11 @@ struct DonenessControl: View {
             // deliver (OddsTrack), inset by half a thumb so a level sits under
             // the thumb that asks for it.
             ZStack {
-                OddsTrack(solution: kitchen.isSousVide ? nil : kitchen.solution, profile: kitchen.oddsProfile)
+                OddsTrack(solution: planner.isSousVide ? nil : planner.solution, profile: planner.oddsProfile)
                     .frame(height: 10)
                     .padding(.horizontal, thumbInset)
                 YolkSlider(
-                    value: $kitchen.doneness, range: Limits.doneness, step: 0.01,
+                    value: $planner.doneness, range: Limits.doneness, step: 0.01,
                     label: tr("controls.doneness"), valueText: donenessValue, inset: $thumbInset
                 )
             }
@@ -45,7 +45,7 @@ struct DonenessControl: View {
             // Its room is kept while it is away, so the words under it do not
             // move when it lands.
             Group {
-                if let bracket = kitchen.shownForecast {
+                if let bracket = planner.shownForecast {
                     YolkBracket(forecast: bracket)
                 } else {
                     Color.clear.frame(height: 9).accessibilityHidden(true)
@@ -93,33 +93,33 @@ struct DonenessControl: View {
     /// At the end of the slider's heading: the peak yolk the level asks for,
     /// or in sous-vide the water's temperature.
     private var donenessPeak: String {
-        if kitchen.isSousVide {
-            return tr("controls.doneness.bath", ["bath": .text(kitchen.show(.temperature, sousVideBathC))])
+        if planner.isSousVide {
+            return tr("controls.doneness.bath", ["bath": .text(planner.show(.temperature, sousVideBathC))])
         }
-        let yolk = kitchen.solution?.result.peakYolkC ?? targetPeakYolkC(kitchen.doneness)
-        return tr("controls.doneness.peak", ["yolk": .text(kitchen.show(.temperature, yolk))])
+        let yolk = planner.solution?.result.peakYolkC ?? targetPeakYolkC(planner.doneness)
+        return tr("controls.doneness.peak", ["yolk": .text(planner.show(.temperature, yolk))])
     }
 
     /// The slider's value to VoiceOver: the doneness word and the temperature.
     private var donenessValue: String {
-        if kitchen.isSousVide {
+        if planner.isSousVide {
             return tr("controls.doneness.valueBath", [
-                "doneness": .text(kitchen.label), "bath": .text(kitchen.show(.temperature, sousVideBathC)),
+                "doneness": .text(planner.label), "bath": .text(planner.show(.temperature, sousVideBathC)),
             ])
         }
-        let yolk = kitchen.solution?.result.peakYolkC ?? targetPeakYolkC(kitchen.doneness)
+        let yolk = planner.solution?.result.peakYolkC ?? targetPeakYolkC(planner.doneness)
         return tr("controls.doneness.value", [
-            "doneness": .text(kitchen.label), "yolk": .text(kitchen.show(.temperature, yolk)),
+            "doneness": .text(planner.label), "yolk": .text(planner.show(.temperature, yolk)),
         ])
     }
 
     /// What the yolk and white will be like, or, in a bath, the bath's own
     /// note.
     private var donenessNote: String {
-        if kitchen.isSousVide {
-            return sousVideCopy(kitchen.sousVide, now: .now, units: kitchen.units).note
+        if planner.isSousVide {
+            return sousVideCopy(planner.sousVide, now: .now, units: planner.units).note
         }
-        guard let s = kitchen.solution else { return "" }
+        guard let s = planner.solution else { return "" }
         return textureNote(peakYolkC: s.result.peakYolkC, peakWhiteC: s.result.peakWhiteC, whiteSets: s.whiteSets)
     }
 }

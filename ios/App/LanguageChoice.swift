@@ -9,7 +9,7 @@ import EggTimerCore
 /// only stores the state, as the JSON the web stores, and puts the catalogue
 /// it names on screen (`Copy.use`), which redraws every word in place.
 ///
-/// The switch listens for `.unitsFlipped`, which `Kitchen.chooseUnits` posts
+/// The switch listens for `.unitsFlipped`, which `Planner.chooseUnits` posts
 /// when the cook changes the system on screen and never for a default.
 /// Nothing here touches the units: a change of language never changes them.
 @MainActor

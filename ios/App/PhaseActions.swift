@@ -13,7 +13,7 @@ struct PhaseActions: View {
     let phase: Phase
     let now: Date
 
-    private var kitchen: Kitchen { model.kitchen }
+    private var planner: Planner { model.planner }
     private var cook: Cook { model.cook }
 
     var body: some View {
@@ -34,18 +34,18 @@ struct PhaseActions: View {
     private var slot: some View {
         if phase == .idle {
             VStack(spacing: 10) {
-                if kitchen.isSousVide {
-                    Text(sousVideCopy(kitchen.sousVide, now: now, units: kitchen.units).warn)
+                if planner.isSousVide {
+                    Text(sousVideCopy(planner.sousVide, now: now, units: planner.units).warn)
                         .foregroundStyle(.orange)
-                } else if !kitchen.refusal.isEmpty {
-                    Text(kitchen.refusal)
+                } else if !planner.refusal.isEmpty {
+                    Text(planner.refusal)
                         .foregroundStyle(.orange)
-                } else if kitchen.eggsLogged == 0 && !kitchen.hasBoilMemory {
+                } else if planner.eggsLogged == 0 && !planner.hasBoilMemory {
                     Text(tr("idle.welcome"))
                         .foregroundStyle(.secondary)
                 }
                 // The low-odds link (reach.ts).
-                if kitchen.adviceWanted {
+                if planner.adviceWanted {
                     NavigationLink(value: Route.help(.reliable)) {
                         HStack(spacing: 4) {
                             Text(tr("advice.toggle"))
@@ -67,9 +67,9 @@ struct PhaseActions: View {
     @ViewBuilder
     private var action: some View {
         switch phase {
-        case .idle where kitchen.isSousVide:
+        case .idle where planner.isSousVide:
             VStack(spacing: 8) {
-                Text(sousVideCopy(kitchen.sousVide, now: now, units: kitchen.units).hint)
+                Text(sousVideCopy(planner.sousVide, now: now, units: planner.units).hint)
                     .font(.footnote)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
@@ -99,7 +99,7 @@ struct PhaseActions: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
-                .disabled(model.starting || kitchen.solution == nil || kitchen.solution?.whiteSets == false)
+                .disabled(model.starting || planner.solution == nil || planner.solution?.whiteSets == false)
             }
 
         case .heating:
@@ -121,7 +121,7 @@ struct PhaseActions: View {
                 Button {
                     Task {
                         if let measured = await cook.recordBoil() {
-                            kitchen.rememberBoil(seconds: measured)
+                            planner.rememberBoil(seconds: measured)
                         }
                     }
                 } label: {
@@ -182,8 +182,8 @@ struct PhaseActions: View {
                     VStack(spacing: 4) {
                         // The web's hint: what the hob must do until the pull.
                         Text(model.keys(.cooking).hint.map {
-                            tr($0, ["boiling": .text(kitchen.show(
-                                .temperature, cook.ticket?.setup.boilingC ?? kitchen.boilingC
+                            tr($0, ["boiling": .text(planner.show(
+                                .temperature, cook.ticket?.setup.boilingC ?? planner.boilingC
                             ))])
                         } ?? "")
                         // Whether the alarm is really set: iOS's own line,
@@ -206,7 +206,7 @@ struct PhaseActions: View {
 
     /// What Start is about to ask of the cook, above the button.
     private var idleHint: String {
-        guard let solution = kitchen.solution else { return " " }
+        guard let solution = planner.solution else { return " " }
         return model.keys(.idle).hint.map { tr($0, ["time": .text(clockString(solution.result.cookTimeS))]) } ?? " "
     }
 
@@ -238,7 +238,7 @@ struct PhaseActions: View {
     /// in the controls.
     @ViewBuilder
     private var probeOffer: some View {
-        if !kitchen.probeAsked, cook.ticket?.probeMoment == true {
+        if !planner.probeAsked, cook.ticket?.probeMoment == true {
             VStack(spacing: 10) {
                 Text(tr("probe.offer"))
                     .font(.footnote)
@@ -246,14 +246,14 @@ struct PhaseActions: View {
                     .multilineTextAlignment(.center)
                 HStack(spacing: 10) {
                     Button {
-                        kitchen.answerProbeOffer(true)
+                        planner.answerProbeOffer(true)
                         cook.probeSettingChanged()
                     } label: {
                         Text(tr("probe.offer.yes")).frame(maxWidth: .infinity)
                     }
                     .buttonStyle(.bordered)
                     Button {
-                        kitchen.answerProbeOffer(false)
+                        planner.answerProbeOffer(false)
                     } label: {
                         Text(tr("probe.offer.no")).frame(maxWidth: .infinity)
                     }

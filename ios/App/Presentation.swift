@@ -41,7 +41,7 @@ func platformUnits() -> UnitSystem {
 }
 
 /// A value stored in SI, as the cook reads it in a given system. Outside the
-/// Kitchen for the cook, which renders the Live Activity's numbers in the
+/// Planner for the cook, which renders the Live Activity's numbers in the
 /// system the egg was set up in.
 func showIn(_ units: UnitSystem, _ q: Quantity, _ si: Double) -> String {
     let text = quantityText(measureFor(q, system: units, region: deviceRegion), si)
@@ -49,7 +49,7 @@ func showIn(_ units: UnitSystem, _ q: Quantity, _ si: Double) -> String {
 }
 
 extension Notification.Name {
-    /// Posted by `Kitchen.chooseUnits` when the cook's own choice changes the
+    /// Posted by `Planner.chooseUnits` when the cook's own choice changes the
     /// system on screen, with the `UnitsFlip` raw value under "flip".
     /// `LanguageChoice` observes it: an English UI switched from metric to
     /// Imperial goes into the English of 1750 (LANGUAGE.md §6).

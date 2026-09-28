@@ -1,7 +1,7 @@
 import Foundation
 import EggTimerCore
 
-extension Kitchen {
+extension Planner {
     // MARK: - Learning from an egg
 
     /// Write one egg down with its first answer - the yolk or the white - then

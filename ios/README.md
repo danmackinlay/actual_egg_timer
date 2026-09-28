@@ -191,7 +191,7 @@ The branch is taken FIRST, before anything is solved for. That ordering is the
 whole of the fix the review asked for on the web side, where the branch ran
 *after* a full hot-start solve and after the stats row had been painted, so the
 app paid for an answer it discarded and left half of it on screen. Here it means
-`Kitchen.recompute` returns without starting a task, `solution` goes nil, and the
+`Planner.recompute` returns without starting a task, `solution` goes nil, and the
 nil solution is already what disables the start button — so the dead action on
 that screen needs no second rule.
 

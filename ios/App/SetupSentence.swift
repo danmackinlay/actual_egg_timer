@@ -19,14 +19,14 @@ import EggTimerCopy
 /// the app's own, caught by `openURL` before the system sees it. To VoiceOver
 /// it is the sentence and then one button per clause, "Egg: 68 g, change".
 struct SetupSentence: View {
-    let kitchen: Kitchen
+    let planner: Planner
     @Binding var open: Clause?
 
     /// The scheme a clause's link uses. Never leaves the app.
     private static let scheme = "eggtimer-clause"
 
     var body: some View {
-        let texts = clauseTexts(kitchen)
+        let texts = clauseTexts(planner)
         let shown = clauses
         Text(attributed(texts, shown: shown))
             .font(.title3)
@@ -75,7 +75,7 @@ struct SetupSentence: View {
             "egg": .text(mark(.egg)), "from": .text(mark(.from)),
             "start": .text(mark(.start)), "cooling": .text(mark(.cooling)),
         ]
-        return kitchen.isSousVide ? tr("setup.sentenceSousVide", args) : tr("setup.sentence", args)
+        return planner.isSousVide ? tr("setup.sentenceSousVide", args) : tr("setup.sentence", args)
     }
 
     private func attributed(_ texts: [Clause: ClauseText], shown: [Clause]) -> AttributedString {
@@ -132,16 +132,16 @@ struct SetupFacts {
     var units: UnitSystem
 
     /// The setup on the controls.
-    @MainActor init(_ kitchen: Kitchen) {
-        units = kitchen.units
-        mass = kitchen.sizeClasses.indices.contains(kitchen.sizeIndex)
-            ? classMass(kitchen.sizeClasses[kitchen.sizeIndex], units: units)
-            : showIn(units, .mass, kitchen.eggMassG)
-        from = kitchen.startTemp
-        customC = kitchen.customStartC
-        start = kitchen.start
-        heatOff = kitchen.heatOff
-        cooling = kitchen.cooling
+    @MainActor init(_ planner: Planner) {
+        units = planner.units
+        mass = planner.sizeClasses.indices.contains(planner.sizeIndex)
+            ? classMass(planner.sizeClasses[planner.sizeIndex], units: units)
+            : showIn(units, .mass, planner.eggMassG)
+        from = planner.startTemp
+        customC = planner.customStartC
+        start = planner.start
+        heatOff = planner.heatOff
+        cooling = planner.cooling
     }
 
     /// The setup a cook was started with, from its ticket and not the
@@ -149,11 +149,11 @@ struct SetupFacts {
     /// class egg is named as its class's mass, as the size menu names it,
     /// when the carton still has a class of that mass; otherwise it is the
     /// egg's own.
-    @MainActor init(_ ticket: Cook.Ticket, kitchen: Kitchen) {
+    @MainActor init(_ ticket: Cook.Ticket, planner: Planner) {
         let system = ticket.units
         units = system
         let byClass = ticket.massFrom == .sizeClass
-            ? kitchen.sizeClasses.first { abs($0.massKg * 1000 - ticket.eggGrams) < 1e-9 }
+            ? planner.sizeClasses.first { abs($0.massKg * 1000 - ticket.eggGrams) < 1e-9 }
             : nil
         mass = byClass.map { classMass($0, units: system) } ?? showIn(system, .mass, ticket.eggGrams)
         from = ticket.startTemp
@@ -171,8 +171,8 @@ private func classMass(_ c: SizeClass, units: UnitSystem) -> String {
 }
 
 @MainActor
-func clauseTexts(_ kitchen: Kitchen) -> [Clause: ClauseText] {
-    clauseTexts(SetupFacts(kitchen))
+func clauseTexts(_ planner: Planner) -> [Clause: ClauseText] {
+    clauseTexts(SetupFacts(planner))
 }
 
 /// The clauses' words: core's `clauseKeys`, with this app's arguments. The
@@ -209,10 +209,10 @@ func clauseTexts(_ f: SetupFacts) -> [Clause: ClauseText] {
 /// runs a cook, so it never shows this.
 struct CookSentence: View {
     let ticket: Cook.Ticket
-    let kitchen: Kitchen
+    let planner: Planner
 
     var body: some View {
-        let facts = SetupFacts(ticket, kitchen: kitchen)
+        let facts = SetupFacts(ticket, planner: planner)
         let texts = clauseTexts(facts)
         VStack(alignment: .leading, spacing: 6) {
             Text(tr("setup.sentence", [
@@ -241,7 +241,7 @@ struct CookSentence: View {
 /// A clause's choice, opened in place under the sentence: its heading and
 /// (i), a Done that closes it, and the control. One at a time.
 struct ClausePanel: View {
-    @Bindable var kitchen: Kitchen
+    @Bindable var planner: Planner
     let clause: Clause
     let done: () -> Void
     @State private var more = false
@@ -291,15 +291,15 @@ struct ClausePanel: View {
         case .start:
             // Rendered from the constant, so the button cannot name a bath
             // the model is not computing.
-            Picker(tr("controls.start"), selection: $kitchen.start) {
+            Picker(tr("controls.start"), selection: $planner.start) {
                 Text(tr("controls.start.cold")).tag(StartChoice.cold)
                 Text(tr("controls.start.hot")).tag(StartChoice.hot)
-                Text(tr("controls.start.sousVide", ["bath": .text(kitchen.show(.temperature, sousVideBathC))]))
+                Text(tr("controls.start.sousVide", ["bath": .text(planner.show(.temperature, sousVideBathC))]))
                     .tag(StartChoice.sousVide)
             }
             .pickerStyle(.segmented)
         case .cooling:
-            Picker(tr("controls.cooling"), selection: $kitchen.cooling) {
+            Picker(tr("controls.cooling"), selection: $planner.cooling) {
                 Text(tr("controls.then.ice")).tag(Cooling.ice)
                 Text(tr("controls.then.tap")).tag(Cooling.tap)
                 Text(tr("controls.then.counter")).tag(Cooling.counter)
@@ -315,14 +315,14 @@ struct ClausePanel: View {
         VStack(alignment: .leading, spacing: 10) {
             LabeledContent(tr("controls.size")) {
                 Picker(tr("controls.size"), selection: Binding(
-                    get: { kitchen.sizeIndex },
-                    set: { kitchen.chooseSize($0) }
+                    get: { planner.sizeIndex },
+                    set: { planner.chooseSize($0) }
                 )) {
-                    ForEach(kitchen.sizeClasses.indices, id: \.self) { i in
-                        Text(sizeLabel(kitchen.sizeClasses[i])).tag(i)
+                    ForEach(planner.sizeClasses.indices, id: \.self) { i in
+                        Text(sizeLabel(planner.sizeClasses[i])).tag(i)
                     }
                     Text(tr("controls.size.weighed", [
-                        "mass": .text(kitchen.show(.mass, kitchen.weighedMassG)),
+                        "mass": .text(planner.show(.mass, planner.weighedMassG)),
                     ])).tag(-1)
                 }
                 .pickerStyle(.menu)
@@ -331,8 +331,8 @@ struct ClausePanel: View {
                 .fixedSize()
             }
             MeasureField(
-                label: tr("controls.measure.weight"), measure: kitchen.measure(.mass),
-                value: kitchen.eggMassG, set: { kitchen.weigh($0) }
+                label: tr("controls.measure.weight"), measure: planner.measure(.mass),
+                value: planner.eggMassG, set: { planner.weigh($0) }
             )
         }
         .font(.subheadline)
@@ -344,22 +344,22 @@ struct ClausePanel: View {
     /// there for anyone who knows better.
     private var from: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Picker(tr("controls.eggFrom"), selection: $kitchen.startTemp) {
+            Picker(tr("controls.eggFrom"), selection: $planner.startTemp) {
                 Text(tr("controls.eggFrom.fridge")).tag(EggFrom.fridge)
                 Text(tr("controls.eggFrom.room")).tag(EggFrom.room)
                 Text(tr("controls.eggFrom.custom")).tag(EggFrom.custom)
             }
             .pickerStyle(.segmented)
-            if kitchen.startTemp == .custom {
+            if planner.startTemp == .custom {
                 StepperRow(
-                    label: tr("controls.eggTemp"), measure: kitchen.measure(.eggTemp),
-                    value: $kitchen.customStartC, show: { kitchen.show(.eggTemp, $0) }
+                    label: tr("controls.eggTemp"), measure: planner.measure(.eggTemp),
+                    value: $planner.customStartC, show: { planner.show(.eggTemp, $0) }
                 )
                 .font(.subheadline)
             }
             Text(tr("controls.eggFrom.hint", [
-                "fridge": .text(kitchen.show(.temperature, StartTempPresets.fridgeC)),
-                "room": .text(kitchen.show(.temperature, StartTempPresets.roomC)),
+                "fridge": .text(planner.show(.temperature, StartTempPresets.fridgeC)),
+                "room": .text(planner.show(.temperature, StartTempPresets.roomC)),
             ]))
             .font(.caption)
             .foregroundStyle(.secondary)
@@ -368,7 +368,7 @@ struct ClausePanel: View {
 
     /// A size class's name and its mass, in the cook's units.
     private func sizeLabel(_ c: SizeClass) -> String {
-        let label = sizeClassLabel(c, system: kitchen.units)
+        let label = sizeClassLabel(c, system: planner.units)
         return tr(label.key, ["mass": .text(tr(label.mass.key, ["value": .fixed(label.mass.value)]))])
     }
 }

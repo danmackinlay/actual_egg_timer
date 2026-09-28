@@ -20,8 +20,11 @@ import EggTimerCopy
 /// and the ones that do start inherit cancellation and check it between solves.
 ///
 /// This file holds the inputs and what is derived from them. The solve is in
-/// Kitchen+Solve.swift, the learning from each egg in Kitchen+Learning.swift,
+/// Planner+Solve.swift, the learning from each egg in Planner+Learning.swift,
 /// and the decision surfaces both of them share in DecisionGrids.swift.
+///
+/// It was called Kitchen, which it is not: it is the app's model, and the
+/// kitchen - the pan, the hob, the altitude - is the Settings page.
 ///
 /// What this class decides is only what a KITCHEN knows. The decisions above
 /// the physics - snapping, which refusal applies, the texture bands, the
@@ -29,7 +32,7 @@ import EggTimerCopy
 /// Policy, so this app and the web app cannot answer differently.
 @Observable
 @MainActor
-final class Kitchen {
+final class Planner {
     // MARK: - Inputs
 
     var doneness: Double = Defaults.doneness { didSet { changed() } }
@@ -186,9 +189,9 @@ final class Kitchen {
 
     // MARK: - Outputs
     //
-    // Written only by the Kitchen and its extensions (Kitchen+Solve.swift,
-    // Kitchen+Learning.swift). Internal rather than `private(set)` because
-    // Swift's `private` stops at the file; nothing outside the Kitchen writes
+    // Written only by the Planner and its extensions (Planner+Solve.swift,
+    // Planner+Learning.swift). Internal rather than `private(set)` because
+    // Swift's `private` stops at the file; nothing outside the Planner writes
     // them.
 
     /// The cook the pan is being asked for, or nil while there is no answer -
@@ -296,12 +299,12 @@ final class Kitchen {
 
     /// Read what was stored and solve for it.
     ///
-    /// NOT `init`. `@State private var kitchen = Kitchen()` evaluates its
-    /// initial value on every construction of the view struct, and SwiftUI
-    /// keeps only the first instance - so I/O and a solve in `init` ran for
-    /// every discarded Kitchen as well, and those solves ran to completion.
-    /// `Cook` already avoids exactly this by doing its restore from
-    /// `onAppear`; this does the same, and is idempotent so a second
+    /// NOT `init`. `@State private var model = AppModel()`, which makes the
+    /// Planner, evaluates its initial value on every construction of the view
+    /// struct, and SwiftUI keeps only the first instance - so I/O and a solve
+    /// in `init` ran for every discarded Planner as well, and those solves ran
+    /// to completion. `Cook` already avoids exactly this by doing its restore
+    /// from `onAppear`; this does the same, and is idempotent so a second
     /// `onAppear` costs nothing.
     func load() {
         guard !loaded else { return }

@@ -33,7 +33,7 @@ struct ContentView: View {
     /// Whether the direction's (i) is open.
     @State private var directionInfoOpen = false
 
-    private var kitchen: Kitchen { model.kitchen }
+    private var planner: Planner { model.planner }
     private var cook: Cook { model.cook }
 
     var body: some View {
@@ -63,13 +63,13 @@ struct ContentView: View {
                         )
                     }
                     if outerPhase == .idle {
-                        DonenessControl(kitchen: kitchen, thumbInset: $thumbInset)
+                        DonenessControl(planner: planner, thumbInset: $thumbInset)
                         setup
                     } else if let ticket = cook.ticket {
                         // The cook in the pan, where the controls were: the
                         // first thing under the time, and never pushed down
                         // by the probe offer or the two questions at Done.
-                        CookSentence(ticket: ticket, kitchen: kitchen)
+                        CookSentence(ticket: ticket, planner: planner)
                     }
                     TimelineView(.periodic(from: .now, by: 1)) { context in
                         let phase = cook.phase(at: context.date)
@@ -100,8 +100,8 @@ struct ContentView: View {
             }
             .navigationDestination(for: Route.self) { route in
                 switch route {
-                case .settings: SettingsView(kitchen: kitchen)
-                case .help(let section): HelpView(kitchen: kitchen, start: section)
+                case .settings: SettingsView(planner: planner)
+                case .help(let section): HelpView(planner: planner, start: section)
                 }
             }
         }
@@ -164,9 +164,9 @@ struct ContentView: View {
     /// it.
     private var setup: some View {
         VStack(alignment: .leading, spacing: 10) {
-            SetupSentence(kitchen: kitchen, open: $openClause)
-            if let clause = openClause, !(kitchen.isSousVide && (clause == .from || clause == .cooling)) {
-                ClausePanel(kitchen: kitchen, clause: clause) {
+            SetupSentence(planner: planner, open: $openClause)
+            if let clause = openClause, !(planner.isSousVide && (clause == .from || clause == .cooling)) {
+                ClausePanel(planner: planner, clause: clause) {
                     withAnimation(.snappy) { openClause = nil }
                 }
                 .id(clause)

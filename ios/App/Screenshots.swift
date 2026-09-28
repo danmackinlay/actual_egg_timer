@@ -15,7 +15,7 @@ import EggTimerCore
 /// - `-seedEggs right,right,right`: on a fresh install, write that many eggs
 ///   into the log through the app's own store, each cooked at the level and
 ///   setup on screen and answered `right`, `soft` or `firm` about the yolk,
-///   and fold them (`Kitchen.seed`). A learned state without cooking.
+///   and fold them (`Planner.seed`). A learned state without cooking.
 /// - `-uiScreen direction-info`: open the direction's (i).
 /// - `-uiLanguage en-x-1750`: read in that catalogue, as a pick in the
 ///   picker would, before the first frame (`LanguageChoice.start`).
