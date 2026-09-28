@@ -2158,3 +2158,27 @@ and folds them.
   measured in the text's own lines, so it should scale, but that was not
   checked.
 - **The Live Activity**, unchanged, and not looked at.
+
+## Sous-vide is never remembered (28 September 2026)
+
+The owner opened the app on sous-vide, left there by the last session, and
+was told he was 22 hours late: "a bad first choice". Both apps now refuse to
+save sous-vide as the start method. It still works for as long as the page or
+the app is open; what is written down in its place is the pan saved before
+it, so a reload or a relaunch comes back to cold or boiling water, or to cold
+if there never was a pan. Everything else in the setup saves as before.
+
+- **Web** (`saveSettings` in `src/ui/store.ts`): a save made in sous-vide
+  writes the start mode already stored, read as cold or hot, and cold for
+  anything else. `loadSettings` reads only cold or hot, so a stored `sous`
+  from an older build loads as cold. `test/store.test.ts` holds the four
+  cases: a pan round-trips, sous-vide after a pan comes back as that pan
+  (with the rest of the same save kept), sous-vide with no pan before it
+  comes back cold, and a stored `sous` loads cold.
+- **iOS** (`Settings` in `ios/App/Store.swift`): a save in sous-vide skips
+  the `start` and `coldStart` keys and writes the rest, so they keep the last
+  pan. A stored `sousVide` loads as cold, not as the `coldStart = false`
+  written beside it, which was a placeholder and not a hot start anyone
+  chose; and with no `start` and no `coldStart` at all it opens cold. The app
+  has no test target, so this is not under test; it is the web's rule, and
+  the build passes.

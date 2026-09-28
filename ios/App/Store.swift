@@ -64,10 +64,17 @@ enum Settings {
         // the start mode it was left on rather than to the default - and an
         // unrecognised string does the same, which is what an older build
         // reading a newer value would leave behind.
+        //
+        // Only a pan comes back (see `save`). A stored sous-vide, from before it
+        // stopped being saved, opens on cold: the `coldStart` written beside it
+        // was false for want of anything better, not a hot start the cook chose.
         if let stored = store.string(forKey: "start"), let start = StartChoice(rawValue: stored) {
-            kitchen.start = start
-        } else {
+            kitchen.start = start == .sousVide ? .cold : start
+        } else if store.object(forKey: "coldStart") != nil {
             kitchen.start = store.bool(forKey: "coldStart") ? .cold : .hot
+        } else {
+            // Saved only ever in sous-vide: no pan was chosen, so the default.
+            kitchen.start = .cold
         }
         kitchen.heatOff = store.bool(forKey: "heatOff")
         kitchen.cooling = Cooling(rawValue: store.string(forKey: "cooling") ?? "") ?? .ice
@@ -104,11 +111,17 @@ enum Settings {
         store.set(kitchen.customStartC, forKey: "customStartC")
         // Kept in step for the sake of a downgrade, which reads only this key.
         store.set(kitchen.startTemp == .fridge, forKey: "fromFridge")
-        store.set(kitchen.start.rawValue, forKey: "start")
-        // Kept in step for the sake of a downgrade, which reads only this key.
-        // Sous-vide has no honest bool here; false is the hot start the pan
-        // solver is handed for it in the web app, and the closer of the two.
-        store.set(kitchen.coldStart, forKey: "coldStart")
+        // Sous-vide is never remembered. Its answer is a start time most of a
+        // day in the past, and an app that reopened on it would greet the cook
+        // by telling them they are 22 hours late. So while it is chosen, the
+        // pan saved before it stays saved, and a relaunch comes back to that
+        // pan - or to cold, the default, if there never was one. The web app
+        // does the same (`saveSettings` in src/ui/store.ts).
+        if kitchen.start != .sousVide {
+            store.set(kitchen.start.rawValue, forKey: "start")
+            // Kept in step for the sake of a downgrade, which reads only this key.
+            store.set(kitchen.coldStart, forKey: "coldStart")
+        }
         store.set(kitchen.heatOff, forKey: "heatOff")
         store.set(kitchen.cooling.rawValue, forKey: "cooling")
         // The cook's choice, not the system on screen: absent until they make

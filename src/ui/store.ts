@@ -171,7 +171,9 @@ export function loadSettings(classes: SizeClass[]): Settings {
     startTempMode: oneOf(raw['startTempMode'], ['fridge', 'room', 'custom'] as const, d.startTempMode),
     customStart_C: clampNumber(raw['customStart_C'], LIMITS.eggTemp_C, d.customStart_C),
     altitude_m: clampNumber(raw['altitude_m'], LIMITS.altitude_m, d.altitude_m),
-    startMode: oneOf(raw['startMode'], ['cold', 'hot', 'sous'] as const, d.startMode),
+    // Only a pan comes back. A stored 'sous', from before it stopped being
+    // saved, is read as the default, because nothing recorded the pan before it.
+    startMode: storedPanStart(raw),
     afterBoil: oneOf(raw['afterBoil'], ['hold', 'off'] as const, d.afterBoil),
     cooling: oneOf(raw['cooling'], ['ice', 'tap', 'counter'] as const, d.cooling),
     waterLitres: clampNumber(raw['waterLitres'], LIMITS.waterLitres, d.waterLitres),
@@ -192,8 +194,23 @@ export function loadLanguage(): LanguageState {
   return raw === null ? FRESH_LANGUAGE : readLanguageState(raw['language'], LANGUAGES);
 }
 
+/** Sous-vide is never remembered. Its answer is a start time in the past - a
+ *  58 °C bath wants most of a day - so an app that reopened on it would greet
+ *  the cook by telling them they are 22 hours late, which is a bad first
+ *  choice. It is still a choice for as long as the page is open; what is saved
+ *  in its place is whatever pan was saved before it, cold or hot, so a reload
+ *  comes back to the last pan the cook used. */
 export function saveSettings(settings: Settings): void {
-  writeStorage(SETTINGS_KEY, JSON.stringify(settings));
+  const startMode = settings.startMode === 'sous'
+    ? storedPanStart(parseObject(readStorage(SETTINGS_KEY)))
+    : settings.startMode;
+  writeStorage(SETTINGS_KEY, JSON.stringify({ ...settings, startMode: startMode }));
+}
+
+/** The pan method in a stored record: cold or hot, and cold for anything else,
+ *  including a 'sous' and no record at all. */
+function storedPanStart(raw: Record<string, unknown> | null): StartMode {
+  return oneOf(raw === null ? undefined : raw['startMode'], ['cold', 'hot'] as const, 'cold');
 }
 
 /* ----------------------------------------------------------- boil memory */
