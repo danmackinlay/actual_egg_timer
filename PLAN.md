@@ -706,7 +706,7 @@ effectiveLanguage / isPeriod / isModernEnglish / registerOf
 languageAfterFlip / languageAfterPick / readLanguageState
 
 // reach.ts  (the odds-shaded slider - INFERENCE.md §8)
-REACH_ODDS = 0.3 / PROFILE_STEP = 5 / ADVICE_BELOW_TENTHS = 5 / ADVICE_MARGIN_TENTHS = 3 / ADVICE_GAIN = 0.05
+REACH_ODDS = 0.3 / PROFILE_STEP = 5 / ADVICE_BELOW_TENTHS = 5 / ADVICE_MARGIN_TENTHS = 3 / ADVICE_GAIN = 0.05 / SHADE_BEST_MIN = 0.05
 interface OddsProfile { points: {level, odds}[]; best; physicalSoftest; physicalHardest; softest | null; hardest | null }
 oddsProfile(c, egg, setup, grid) / oddsAtLevel(c, egg, setup, grid, level) / oddsNear(profile, level)
 verdictWithOdds(sol, level, profile | null)   // adds 'unlikelySoft' | 'unlikelyHard'

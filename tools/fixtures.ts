@@ -83,7 +83,7 @@ import {
 } from '../src/core/decide.js';
 import { LEAN_RATIO, LEVEL_HIGH_Q, LEVEL_LOW_Q, leanOf, predictOutcome } from '../src/core/outcome.js';
 import {
-  ADVICE_BELOW_TENTHS, ADVICE_GAIN, ADVICE_MARGIN_TENTHS, OddsProfile, PROFILE_STEP, REACH_ODDS,
+  ADVICE_BELOW_TENTHS, ADVICE_GAIN, ADVICE_MARGIN_TENTHS, OddsProfile, PROFILE_STEP, REACH_ODDS, SHADE_BEST_MIN,
   adviceWanted, answerAt, oddsNear, oddsProfile, pricedChanges, protocolAdvice, shadingOf, unpricedAdvice,
   verdictWithOdds,
 } from '../src/core/reach.js';
@@ -1551,8 +1551,17 @@ const reachFixture = {
     adviceBelowTenths: ADVICE_BELOW_TENTHS,
     adviceMarginTenths: ADVICE_MARGIN_TENTHS,
     adviceGain: ADVICE_GAIN,
+    shadeBestMin: SHADE_BEST_MIN,
   },
   profiles: reachProfiles,
+  // The shading either side of SHADE_BEST_MIN: none below it.
+  shading: [SHADE_BEST_MIN - 0.001, SHADE_BEST_MIN, 0.3].map((best) => {
+    const profile: OddsProfile = {
+      points: [{ level: 0, odds: best / 2 }, { level: 0.5, odds: best }, { level: 1, odds: 0 }],
+      best: best, physicalSoftest: 0, physicalHardest: 1, softest: null, hardest: null,
+    };
+    return { profile: profile, shading: shadingOf(profile) };
+  }),
   answers: reachAnswers,
   verdicts: reachVerdicts,
   adviceWanted: [0, 3, 4, 5, 6, 7, 8].flatMap((tenths) => [null, 0.62, 0.8, 0.84].map((best) => ({

@@ -244,9 +244,13 @@ public struct Shade: Sendable, Equatable {
     public let strength: Double
 }
 
+/// The best odds below which the track is not shaded at all: odds nowhere
+/// worth a tenth, so there is no "where it works best" to show.
+public let shadeBestMin = 0.05
+
 /// The shading's stops, one per profile point; empty with nothing to shade.
 public func shadingOf(_ profile: OddsProfile) -> [Shade] {
-    guard profile.best >= 0.05 else { return [] }
+    guard profile.best >= shadeBestMin else { return [] }
     return profile.points.map {
         Shade(level: $0.level, strength: min(1, max(0, $0.odds / profile.best)))
     }

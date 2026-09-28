@@ -283,10 +283,15 @@ export interface Shade {
   strength: number;
 }
 
+/** The best odds below which the track is not shaded at all: odds nowhere
+ *  worth a tenth (they round to 0/10), so there is no "where it works best" to
+ *  show. */
+export const SHADE_BEST_MIN = 0.05;
+
 /** The shading's stops, one per profile point. Empty when there is nothing to
- *  shade: no points, or no odds anywhere worth a tenth. */
+ *  shade: no points, or best odds under SHADE_BEST_MIN. */
 export function shadingOf(profile: OddsProfile): Shade[] {
-  if (!(profile.best >= 0.05)) return [];
+  if (!(profile.best >= SHADE_BEST_MIN)) return [];
   return profile.points.map((p) => ({
     level: p.level,
     strength: Math.min(1, Math.max(0, p.odds / profile.best)),

@@ -138,7 +138,7 @@ DONE: **3.7 App-used Swift paths that no fixture covers.** (`decide.json` `cases
 - `decidedSolution` and `carriedSolution` (`Decide.swift:281,289`) are not fixtured, and `decidedSolution` has no TS test either.
 - Fix: add a `decided` row per `decide.json` case, plus one `carriedSolution` row with `lean_s ≠ 0`.
 
-**3.8 The `shadingOf` threshold `0.05` is unnamed and never exercised.**
+DONE: **3.8 The `shadingOf` threshold `0.05` is unnamed and never exercised.** (`SHADE_BEST_MIN` / `shadeBestMin`; `reach.json` `shading` straddles it.)
 - Where: `reach.ts:258`, `Reach.swift:216`. No fixture profile has a best below 0.05.
 - Fix: name the constant, put it in `reach.json`, and add a case below it.
 

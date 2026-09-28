@@ -5,7 +5,8 @@
     "profileStep": 5,
     "adviceBelowTenths": 5,
     "adviceMarginTenths": 3,
-    "adviceGain": 0.05
+    "adviceGain": 0.05,
+    "shadeBestMin": 0.05
   },
   "profiles": [
     {
@@ -642,6 +643,106 @@
         {
           "level": 1,
           "odds": 0.6859490178126407
+        }
+      ]
+    }
+  ],
+  "shading": [
+    {
+      "profile": {
+        "points": [
+          {
+            "level": 0,
+            "odds": 0.0245
+          },
+          {
+            "level": 0.5,
+            "odds": 0.049
+          },
+          {
+            "level": 1,
+            "odds": 0
+          }
+        ],
+        "best": 0.049,
+        "physicalSoftest": 0,
+        "physicalHardest": 1,
+        "softest": null,
+        "hardest": null
+      },
+      "shading": []
+    },
+    {
+      "profile": {
+        "points": [
+          {
+            "level": 0,
+            "odds": 0.025
+          },
+          {
+            "level": 0.5,
+            "odds": 0.05
+          },
+          {
+            "level": 1,
+            "odds": 0
+          }
+        ],
+        "best": 0.05,
+        "physicalSoftest": 0,
+        "physicalHardest": 1,
+        "softest": null,
+        "hardest": null
+      },
+      "shading": [
+        {
+          "level": 0,
+          "strength": 0.5
+        },
+        {
+          "level": 0.5,
+          "strength": 1
+        },
+        {
+          "level": 1,
+          "strength": 0
+        }
+      ]
+    },
+    {
+      "profile": {
+        "points": [
+          {
+            "level": 0,
+            "odds": 0.15
+          },
+          {
+            "level": 0.5,
+            "odds": 0.3
+          },
+          {
+            "level": 1,
+            "odds": 0
+          }
+        ],
+        "best": 0.3,
+        "physicalSoftest": 0,
+        "physicalHardest": 1,
+        "softest": null,
+        "hardest": null
+      },
+      "shading": [
+        {
+          "level": 0,
+          "strength": 0.5
+        },
+        {
+          "level": 0.5,
+          "strength": 1
+        },
+        {
+          "level": 1,
+          "strength": 0
         }
       ]
     }

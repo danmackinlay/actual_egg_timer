@@ -85,6 +85,23 @@ struct ReachConformance {
         #expect(adviceBelowTenths == Int(c.num("adviceBelowTenths")))
         #expect(adviceMarginTenths == Int(c.num("adviceMarginTenths")))
         #expect(adviceGain == c.num("adviceGain"))
+        #expect(shadeBestMin == c.num("shadeBestMin"))
+    }
+
+    @Test("no shading when the best odds are under a tenth")
+    func shadingThreshold() {
+        let cases = rows(Fixtures.load("reach.json"), "shading")
+        #expect(!cases.isEmpty)
+        for row in cases {
+            let profile = profileOf(object(row, "profile"))
+            let shades = shadingOf(profile)
+            let expected = rows(row, "shading")
+            #expect(shades.count == expected.count, "best \(profile.best)")
+            for (a, b) in zip(shades, expected) {
+                expectClose(a.level, b.num("level"), "best \(profile.best) level")
+                expectClose(a.strength, b.num("strength"), "best \(profile.best) strength")
+            }
+        }
     }
 
     /// One test per profile, so the three run side by side: a profile is a
