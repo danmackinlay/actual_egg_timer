@@ -54,7 +54,6 @@ struct CookActivity: ActivityAttributes {
         case cooking
         case pull
         case cooling
-        case done
 
         /// The stage's name, in the activity's language.
         func title(in lang: String?) -> String {
@@ -63,11 +62,6 @@ struct CookActivity: ActivityAttributes {
             case .cooking: tr("activity.stage.cooking", in: lang)
             case .pull: tr("activity.stage.pull", in: lang)
             case .cooling: tr("activity.stage.cooling", in: lang)
-            // Never sent by this build: the card ends at once on the stage
-            // before (`LiveActivity.finish`). Kept so that a card an older
-            // build ended as done still decodes and draws; the app's own
-            // word for the phase will do.
-            case .done: tr("readout.phase.done", in: lang)
             }
         }
 
@@ -77,12 +71,12 @@ struct CookActivity: ActivityAttributes {
             case .cooking: "timer"
             case .pull: "bell.fill"
             case .cooling: "snowflake"
-            case .done: "checkmark.circle.fill"
             }
         }
 
-        /// Three stages are counted down. `pull` is a moment, and `done` is
-        /// an end state; a timer on either would count toward nothing.
+        /// Three stages are counted down. `pull` is a moment; a timer on it
+        /// would count toward nothing. There is no done stage: the card ends
+        /// at once when the cooling does (`LiveActivity.finish`).
         var countsDown: Bool {
             self == .heating || self == .cooking || self == .cooling
         }

@@ -151,23 +151,19 @@ struct CookLiveActivity: Widget {
             Text(timerInterval: state.began...state.ends, countsDown: true)
                 .multilineTextAlignment(.trailing)
         } else {
-            // `done` reaches the card only from an older build's activity
-            // (`LiveActivity.finish`), and the stage's title says it.
-            Text(state.stage == .pull ? tr("activity.now", in: lang) : "")
+            Text(tr("activity.now", in: lang))
         }
     }
 
     /// The line under the stage.
     private func note(_ state: CookActivity.ContentState, _ attributes: CookActivity) -> String {
-        let key: String? = switch state.stage {
+        let key: String = switch state.stage {
         case .heating: state.provisional ? "activity.note.estimate" : "activity.note.heating"
         case .cooking: state.provisional ? "activity.note.estimate" : "activity.note.cooking"
         case .pull: pullLineKey(cooling: attributes.cooling)
         case .cooling: "activity.note.cooling"
-        // Only an older build's activity is ever drawn done (see `countdown`).
-        case .done: nil
         }
-        return key.map { tr($0, in: attributes.lang) } ?? ""
+        return tr(key, in: attributes.lang)
     }
 
     private func tint(_ stage: CookActivity.Stage) -> Color {
@@ -176,7 +172,6 @@ struct CookLiveActivity: Widget {
         case .cooking: .accentColor
         case .pull: .orange
         case .cooling: .cyan
-        case .done: .green
         }
     }
 }

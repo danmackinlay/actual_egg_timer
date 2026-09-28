@@ -178,7 +178,7 @@ Put one LOGBOOK line on the decision: "owner, 28 Sep: no post-19-Sep build shipp
   - DONE: The optional ticket fields and their "saved before…" fallbacks: `Cook.swift:73-113,302-308,357`, the hand-written `Saved.init(from:)` (`Cook.swift:517-552`), and `SetupSentence.swift:164-170`.
   - DONE: Settings downgrade writes and migrations: `Store.swift:54-58,68-78,84-97,112-113,122-123`.
   - DONE: Calibration v1–v3 migrations: `Calibration.swift:41-51,133-137,206-210,217-220,248-249`.
-- `CookActivity.Stage.done`:
+- DONE: `CookActivity.Stage.done`:
   - It is never sent: `Cook.swift:733-734` builds it only to branch on it.
   - Have `activityState` return nil at done, and have `pushActivity` check `phase(at:) == .done`.
   - Delete the case and its branches: `CookActivity.swift:57,66-70,80,84-85` and `CookLiveActivity.swift:154-156,167-168,179`.

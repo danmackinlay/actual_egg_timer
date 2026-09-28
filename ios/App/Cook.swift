@@ -191,6 +191,9 @@ final class Cook {
     private var ticker: Task<Void, Never>?
     private var lastRevise: Date?
     private var pushedStage: CookActivity.Stage?
+    /// Whether the card has been ended for this cook, which happens once, at
+    /// done: there is no done stage to push.
+    private var activityFinished = false
 
     /// Bumped whenever the cook this object represents changes identity - a
     /// start, or a cancel.
@@ -384,6 +387,7 @@ final class Cook {
         provisional = coldStart
         lastRevise = nil
         pushedStage = nil
+        activityFinished = false
         alarmCovers = []
         rung = []
         setDeadlines(from: now, cookSeconds: cookSeconds, cooling: ticket.cooling)
@@ -468,6 +472,7 @@ final class Cook {
         alarmAuthorized = nil
         feedbackGiven = false
         pushedStage = nil
+        activityFinished = false
         lastRevise = nil
         persist()
     }
@@ -693,7 +698,7 @@ final class Cook {
     private var activityState: CookActivity.ContentState? {
         guard let startedAt, let pullAt else { return nil }
         switch phase {
-        case .idle:
+        case .idle, .done:
             return nil
         case .heating:
             return .init(stage: .heating, began: startedAt, ends: pullAt, provisional: true)
@@ -710,23 +715,25 @@ final class Cook {
                 stage: .cooling, began: from,
                 ends: coolDoneAt ?? from, provisional: false
             )
-        case .done:
-            return .init(stage: .done, began: pullAt, ends: pullAt, provisional: false)
         }
     }
 
     /// Push only when the stage changes, or when a deadline has actually moved.
     /// The countdown itself needs no help: the system draws it from the dates.
+    ///
+    /// At done the card ends at once (`LiveActivity.finish`), once per cook -
+    /// including a card left from before a relaunch that restored a cook
+    /// already done.
     private func pushActivity(force: Bool) {
+        if phase == .done {
+            guard force || !activityFinished else { return }
+            activityFinished = true
+            activity { await LiveActivity.finish() }
+            return
+        }
         guard let state = activityState else { return }
         guard force || state.stage != pushedStage else { return }
         pushedStage = state.stage
-        activity {
-            if state.stage == .done {
-                await LiveActivity.finish()
-            } else {
-                await LiveActivity.update(state)
-            }
-        }
+        activity { await LiveActivity.update(state) }
     }
 }

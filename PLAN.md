@@ -1054,8 +1054,8 @@ what is left.
   comment is on `cookResult`); `readout.phase.cooling` retired; the Live
   Activity's done words (`activity.stage.done`, `activity.note.done`,
   `activity.eat`) retired, and the card now ends on the content it last
-  showed. `CookActivity.Stage.done` stays: an older build's card may still
-  be done, and draws with `readout.phase.done`.
+  showed. `CookActivity.Stage.done` went too, on 28 September (D1: no
+  older build's card is out there to draw).
 - [x] **Stale comments** fixed: `Package.swift`, `CookActivity.swift`'s stage
   count, the "7/10 … as shown" comments in `decide.ts`, `outcome.ts`,
   `reach.ts` and `Decide.swift`, and the privacy manifest's list.
