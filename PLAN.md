@@ -853,8 +853,9 @@ from the code.
   against the TypeScript: pure functions to 1e-12, 17 whole cooks to the same,
   measured disagreement 7e-15. `npm run conformance`, which now also fails
   when the committed fixtures differ from a fresh `npm run fixtures`.
-- **One gate: `npm run verify`** - the type check, `npm test`, fresh fixtures
-  and `swift test`. `.github/workflows/verify.yml` runs it on macOS; nothing
+- **One gate: `npm run verify`** - the type check, `npm test`, the Swift
+  copy lint (`npm run copy:literals`: no literal on an iOS screen is words),
+  fresh fixtures and `swift test`. `.github/workflows/verify.yml` runs it on macOS; nothing
   is pushed, so it has not yet run there.
 - **The iOS app carries the whole model.** Every input the solver has, the
   reachability refusals, the cold start with its boil-timing step, and the

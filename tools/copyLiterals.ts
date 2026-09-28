@@ -1,57 +1,38 @@
 /**
- * The iOS half of the proof that Phase F1 moved the words without changing
- * one: every string literal the Swift app, widget and core used to put on
- * screen, set against the catalogue entry that replaced it.
+ * Two checks on the words, one standing and one per rewrite.
  *
- *   npm run build
- *   node dist/tools/copyLiterals.js <base-ref>
+ *   npm run copy:literals
  *   node dist/tools/copyLiterals.js --since <ref> [draft]
  *
- * The first form is F1's proof, and it held at F1 (40b9efa). It does not hold
- * now, and is not meant to: F2 and F3 changed words on purpose since.
+ * The first is a standing lint on the Swift sources (ios/App, ios/Widget,
+ * ios/Shared and the core): every string literal, with `+` concatenations
+ * joined and each `\(...)` interpolation reduced to `{}`, must be a catalogue
+ * key, an argument's name in key position, or on the NOT_COPY list below with
+ * the reason it is not words. So no word reaches an iOS screen without going
+ * through copy/. It began as step 4 of F1's proof that the move into the
+ * catalogue changed no word (base 942623d, held at 40b9efa); steps 2 and 3,
+ * which compared against the base, went on 28 September, since F2 and F3 have
+ * changed words on purpose since.
  *
- * The second form is the proof for every rewrite AFTER the move, once the words
- * live in the catalogue: both apps, not only iOS. It diffs copy/en.json and the
- * keys each app's source names between <ref> and the working tree, and refuses
- * any difference that is not in tools/copyDraft.ts - so a reviewer reads the
+ * The second is the proof for every rewrite once the words live in the
+ * catalogue: both apps, not only iOS. It diffs copy/en.json and the keys each
+ * app's source names between <ref> and the working tree, and refuses any
+ * difference that is not in tools/copyDraft.ts - so a reviewer reads the
  * intended changes as a list, and nothing else changed. The draft is the one
- * named, or else the one applied to <ref>, or else the latest: for F2's
- * feedback screens the ref is cfe38e9, and for the rest of F2 e1f7068.
+ * named, or else the one applied to <ref>, or else the latest.
  *
- * `base-ref` is the last commit before the move (942623d). The web half is
- * tools/copy-snapshot.html, which renders the running app; nothing like that
- * exists for SwiftUI short of screenshots, so this side is proved on the
- * source instead, mechanically:
- *
- *  1. Every Swift string literal in ios/App, ios/Widget, ios/Shared and the
- *     core's sources is extracted, at the base ref and now, with `+`
- *     concatenations joined and each `\(...)` interpolation reduced to `{}`.
- *  2. At the base, every literal that is not on the NOT_COPY list below must
- *     be matched by a template of a key the iOS side now uses. A template
- *     matches when it is the literal with each placeholder standing where the
- *     literal had an interpolation or a number - "Small — {grams} g" matches
- *     "Small — 48 g", and "{hours} h" matches "\(hours) h". Nothing else may
- *     differ, not a space.
- *  3. Now, every template of every key the iOS side uses must match some
- *     literal from the base in the same way - so no key renders words that
- *     were not on screen before.
- *  4. Now, no literal is left that is not a key or on the NOT_COPY list.
- *
- * Four old literals were not moved whole, because they were English grammar
- * written as code; RESTRUCTURED says what each became and the expansion that
- * is checked in its place.
- *
- * What this does not prove: that each key is rendered with the right argument
- * in the right slot, or on the right branch. Those are one-line call sites,
- * reviewed in the diff and built by xcodebuild; the renderer itself is held to
- * the web's by fixtures/copy.json.
+ * The web half of the words is tools/copy-snapshot.html, which renders the
+ * running app. What neither proves: that each key is rendered with the right
+ * argument in the right slot, or on the right branch. Those are one-line call
+ * sites, reviewed in the diff and built by xcodebuild; the renderer itself is
+ * held to the web's by fixtures/copy.json.
  */
 
 import { execFileSync } from 'node:child_process';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { Message, parseCatalogue, placeholders, templatesOf } from '../src/core/copy.js';
+import { parseCatalogue, placeholders, templatesOf } from '../src/core/copy.js';
 import { Templates, draftFor } from './copyDraft.js';
 
 const DIRS = ['ios/App', 'ios/Widget', 'ios/Shared', 'ios/EggTimerCore/Sources/EggTimerCore'];
@@ -59,19 +40,14 @@ const DIRS = ['ios/App', 'ios/Widget', 'ios/Shared', 'ios/EggTimerCore/Sources/E
 /** Literals that are not words on a screen, and why. Exact raw text. */
 const NOT_COPY: Record<string, string> = {
   // storage keys and identifiers
-  'calibration.v2': 'UserDefaults key',
-  'calibration.v1': 'UserDefaults key',
   boilMemory: 'UserDefaults key',
   cookInProgress: 'UserDefaults key',
   doneness: 'UserDefaults key',
-  eggMassG: 'UserDefaults key',
   sizeIndex: 'UserDefaults key',
   altitudeM: 'UserDefaults key',
   waterLitres: 'UserDefaults key',
   eggCount: 'UserDefaults key',
-  fromFridge: 'UserDefaults key',
   start: 'UserDefaults key',
-  coldStart: 'UserDefaults key',
   heatOff: 'UserDefaults key',
   cooling: 'UserDefaults key',
   'cook.pull': 'notification identifier',
@@ -109,7 +85,6 @@ const NOT_COPY: Record<string, string> = {
   COOLING: 'phase name, never shown',
   DONE: 'phase name, never shown',
   // E1's record (INFERENCE.md §4), merged after the move: schema, never shown
-  'calibration.v3': 'UserDefaults key',
   CFBundleShortVersionString: 'Info.plist key',
   unknown: 'record field value, never shown',
   '%04d-%02d-%02d': 'record day format, never shown',
@@ -129,31 +104,91 @@ const NOT_COPY: Record<string, string> = {
   // E2's store and prior (INFERENCE.md section 4): schema, never shown
   'calibration.v4': 'UserDefaults key',
   '2026-09-e2': 'record prior id, never shown',
+  // Added 28 September, when this became a standing lint: literals that were
+  // never words, which the base-ref proof never had to classify.
+  weighedMassG: 'UserDefaults key',
+  startTemp: 'UserDefaults key',
+  customStartC: 'UserDefaults key',
+  probe: 'UserDefaults key',
+  probeAsked: 'UserDefaults key',
+  unitsChosen: 'UserDefaults key',
+  languageState: 'UserDefaults key',
+  flip: 'notification userInfo key',
+  unitsFlipped: 'notification name',
+  s: 'string format suffix, never shown',
+  'init(coder:) is not used': 'developer error, never shown',
+  noAlarmPrompt: 'debug launch argument',
+  seedEggs: 'debug launch argument',
+  uiLanguage: 'debug launch argument',
+  uiScreen: 'debug launch argument',
+  soft: 'debug launch argument value',
+  right: 'debug launch argument value',
+  firm: 'debug launch argument value',
+  '2026-09-28': 'debug seed record date, never shown',
+  '{}#{}|{}|{}|{}|{}|{}|{}': 'cache key, never shown',
+  'https://github.com/danmackinlay/actual_egg_timer': 'URL',
+  'https://academic.oup.com/auk/article-pdf/96/1/73/32910692/auk0073.pdf': 'URL',
+  'https://doi.org/10.1002/fsn3.257': 'URL',
+  'https://doi.org/10.1007/s11483-010-9200-1': 'URL',
+  'https://doi.org/10.1016/j.jfoodeng.2003.06.002': 'URL',
+  'https://doi.org/10.1088/0143-0807/27/1/013': 'URL',
+  'https://doi.org/10.1110/ps.03242803': 'URL',
+  'https://newton.ex.ac.uk/teaching/CDHW/egg/': 'URL',
+  'https://www.fsis.usda.gov/food-safety/safe-food-handling-and-preparation/food-safety-basics/high-altitude-cooking': 'URL',
+  https: 'URL scheme',
+  '{}://{}': 'URL built from parts',
+  'eggtimer-clause': 'URL scheme, never shown',
+  'clause-': 'view identifier prefix',
+  'direction-info': 'view identifier',
+  heating: 'view identifier',
+  help: 'view identifier',
+  'help-reliable': 'view identifier',
+  settings: 'view identifier',
+  'u{1}': 'separator character, never shown',
+  'u{1}{}u{1}': 'separator-wrapped placeholder, never shown',
+  '•': 'list bullet',
+  '+': 'sign before a late pull, as the web draws it',
+  ',': 'separator',
+  '.': 'decimal point, parsed not shown',
+  '0': 'digit, parsed not shown',
+  ' \n ': 'two hidden lines holding a height, never shown',
+  '00:00': 'digits sizing the countdown, never shown',
+  '0:00': 'digits sizing the countdown, never shown',
+  '0:00:00': 'digits sizing the countdown, never shown',
+  'arrow.right': 'SF Symbol',
+  'info.circle': 'SF Symbol',
+  'info.circle.fill': 'SF Symbol',
+  'name.danmackinlay.actualeggtimer': 'log subsystem',
+  ring: 'log category',
+  'ring stopped': 'log message, never shown',
+  'audio engine: {}': 'log message, never shown',
+  'audio session: {}': 'log message, never shown',
+  'ringing for {}: no notification holds it': 'log message, never shown',
+  '2026-09-e5': 'record prior id, never shown',
+  centre_C: 'record field name',
+  after_s: 'record field name',
+  '-': 'language tag separator',
+  '1750': 'language tag subtag',
+  'x-1750': 'language tag subtag',
+  'en-x-1750': 'locale tag',
+  chosen: 'stored language state field',
+  flippedFrom: 'stored language state field',
+  C: 'unit id, never shown (the catalogue draws units)',
+  F: 'unit id, never shown',
+  g: 'unit id, never shown',
+  oz: 'unit id, never shown',
+  mm: 'unit id, never shown',
+  in: 'unit id, never shown',
+  m: 'unit id, never shown',
+  ft: 'unit id, never shown',
+  L: 'unit id, never shown',
+  qt: 'unit id, never shown',
+  pt: 'unit id, never shown',
+  '%.{}f': 'number format, never shown',
 };
 
 /** Old literals that were grammar in code, what each became, and the strings
  *  checked in their place. */
-const RESTRUCTURED: Record<string, { became: string; expansions: string[] }> = {
-  'tuned on {} {} · ±{}%': {
-    became: 'learned.tuned, a plural message: the second slot was "egg" or "eggs"',
-    expansions: ['tuned on {} egg · ±{}%', 'tuned on {} eggs · ±{}%'],
-  },
-  egg: { became: 'the singular form of learned.tuned', expansions: [] },
-  eggs: { became: 'the plural form of learned.tuned', expansions: [] },
-  ' (assumed)': {
-    became: 'pan.timeToBoil.assumed, "{time} (assumed)": it was appended to the clock',
-    expansions: ['{} (assumed)'],
-  },
-  '%.2f L': {
-    became: 'the number format "%.2f" kept in code, and format.litres "{value} L"',
-    expansions: ['{} L'],
-  },
-  '%.0f m': {
-    became: 'the number format "%.0f" kept in code, and format.metres "{value} m"',
-    expansions: ['{} m'],
-  },
-};
-
 /* ------------------------------------------------------------- the lexer */
 
 /** A literal, and whether it is a dictionary key - `"grams": .int(68)` - which
@@ -260,20 +295,6 @@ function sourcesAt(ref: string | null): Map<string, string> {
     }
   }
   return files;
-}
-
-/* -------------------------------------------------------------- matching */
-
-/** "Small — {grams} g" -> a pattern that matches "Small — 48 g" and
- *  "Small — {} g", and nothing else. */
-function templatePattern(template: string): RegExp {
-  const parts = template.split(/\{[A-Za-z][A-Za-z0-9_]*\}/);
-  const escaped = parts.map((p) => p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
-  return new RegExp(`^${escaped.join('(?:\\{\\}|-?\\d+(?:\\.\\d+)?)')}$`);
-}
-
-function matches(template: string, literal: string): boolean {
-  return templatePattern(template).test(literal);
 }
 
 /* ------------------------------------------------- since: the catalogue */
@@ -417,70 +438,29 @@ if (process.argv[2] === '--since') {
   process.exit(0);
 }
 
-const base = process.argv[2];
-if (base === undefined) {
-  console.error('usage: copyLiterals.js <base-ref> | --since <ref> [draft]');
-  process.exit(2);
-}
-
+// No arguments: the standing lint. No literal in the Swift sources is words:
+// each is a catalogue key, an argument's name in key position, or on the
+// NOT_COPY list with the reason it is not copy.
 const en = parseCatalogue(JSON.parse(readFileSync('copy/en.json', 'utf8')));
-const before = [...sourcesAt(base).entries()].flatMap(([f, s]) => literals(s).map((l) => ({ file: f, ...l })));
-const after = [...sourcesAt(null).entries()].flatMap(([f, s]) => literals(s).map((l) => ({ file: f, ...l })));
+const now = [...sourcesAt(null).entries()].flatMap(([f, s]) => literals(s).map((l) => ({ file: f, ...l })));
 
 /** The names of arguments the catalogue takes: `"grams": .int(68)` in a call
  *  is not a word, as long as it is one of these and in key position. */
 const argumentNames = new Set([...en.messages.values()]
   .flatMap((m) => templatesOf(m).flatMap(placeholders).concat(m.count === null ? [] : [m.count])));
 
-const usedKeys = new Set(after.map((l) => l.text).filter((t) => en.messages.has(t)));
-const usedTemplates = [...usedKeys].flatMap((key) => templatesOf(en.messages.get(key) as Message)
-  .map((template) => ({ key: key, template: template })));
-
 const failures: string[] = [];
-const oldCopy = before.filter((l) => !(l.text in NOT_COPY));
-let direct = 0;
-let restructured = 0;
-
-// 2. every old word is in a key the app now uses
-for (const l of oldCopy) {
-  const r = RESTRUCTURED[l.text];
-  if (r !== undefined) {
-    for (const expansion of r.expansions) {
-      if (!usedTemplates.some((u) => matches(u.template, expansion))) {
-        failures.push(`${l.file}: restructured "${l.text}" expands to "${expansion}", which no key renders`);
-      }
-    }
-    restructured += 1;
-    continue;
-  }
-  const hits = usedTemplates.filter((u) => matches(u.template, l.text));
-  if (hits.length === 0) failures.push(`${l.file}: "${l.text}" is in no key the app uses`);
-  else direct += 1;
-}
-
-// 3. every key the app uses says only what was said before
-const oldTexts = oldCopy.map((l) => l.text)
-  .concat(Object.values(RESTRUCTURED).flatMap((r) => r.expansions));
-for (const u of usedTemplates) {
-  if (!oldTexts.some((t) => matches(u.template, t))) {
-    failures.push(`${u.key}: "${u.template}" matches nothing the app said before`);
-  }
-}
-
-// 4. nothing is left in the code that is words
-for (const l of after) {
-  if (en.messages.has(l.text) || l.text in NOT_COPY) continue;
+let keys = 0;
+for (const l of now) {
+  if (en.messages.has(l.text)) { keys += 1; continue; }
+  if (l.text in NOT_COPY) continue;
   if (l.argument && argumentNames.has(l.text)) continue;
   failures.push(`${l.file}: "${l.text}" is still a literal`);
 }
 
-console.log(`base ${base}: ${before.length} literals, ${oldCopy.length} of them words `
-  + `(${direct} matched a key's template, ${restructured} restructured), `
-  + `${before.length - oldCopy.length} not words.`);
-console.log(`now: ${after.length} literals, ${usedKeys.size} of them catalogue keys, `
-  + `${usedTemplates.length} templates checked against the old words.`);
+console.log(`${now.length} Swift literals: ${keys} catalogue keys, the rest arguments or on NOT_COPY.`);
 if (failures.length > 0) {
   console.log(`\n${failures.length} failures:\n${failures.join('\n')}`);
   process.exit(1);
 }
-console.log('every old word is in the catalogue unchanged, and the catalogue says nothing new.');
+console.log('no Swift literal is words.');

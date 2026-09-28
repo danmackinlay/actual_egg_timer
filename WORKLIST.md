@@ -264,7 +264,7 @@ The candidates:
   - `probePossible`, `recordEgg`, `recordCookSetup`, `recordLogTarget`
   - `countMaxDecimals`, `timeSpace`, `ownConvention`, `weekdayKeys`
 
-**4.8 `tools/copyLiterals.ts` base-ref mode.**
+**DONE: 4.8 `tools/copyLiterals.ts` base-ref mode.** (`copy:literals` runs the lint and joins `verify`; its NOT_COPY list gained the ~100 literals the base-ref proof never had to classify. §7.6 still owns `copy:snapshot`.)
 - Steps 2–3 (lines 420-486, `RESTRUCTURED`) are dead by the header's own account (lines 10-11).
 - Remove them. Keep step 4 ("no Swift literal is copy") as a standing lint, with an npm script (see §7.6).
 
