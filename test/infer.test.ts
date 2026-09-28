@@ -260,7 +260,7 @@ test('2d. one fold per egg: the answers together are the product, whichever arri
 // 3. Phase C's recovery experiment, repeated under the new likelihood
 // --------------------------------------------------------------------------
 
-test('3. Phase C recovery: an injected alpha and taste are found in no more eggs, to no worse an error', (t) => {
+test('3. an injected alpha and taste are recovered in no more eggs, to no worse an error', (t) => {
   // PLAN.md Phase C: alpha = 1.535e-7 with a taste offset of +0.20 decades,
   // answers generated without noise from the truth. Each egg is cooked at the
   // model's own best guess of what this cook wants - the posterior mean alpha,

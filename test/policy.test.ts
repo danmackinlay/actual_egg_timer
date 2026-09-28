@@ -315,7 +315,7 @@ function labelOf(c: SizeClass): string {
   return render(EN, label.key, { mass: render(EN, label.mass.key, { value: label.mass.value }) });
 }
 
-test('6e. the default size is Large in both tables, and a shared index is a shared name', () => {
+test('6c. the default size is Large in both tables, and a shared index is a shared name', () => {
   assert.equal(className(SIZE_CLASSES[DEFAULTS.sizeIndex]), 'large');
   assert.equal(className(US_SIZE_CLASSES[DEFAULTS.sizeIndex]), 'large');
   const shared = Math.min(SIZE_CLASSES.length, US_SIZE_CLASSES.length);
@@ -333,7 +333,7 @@ test('6e. the default size is Large in both tables, and a shared index is a shar
   }
 });
 
-test('6f. an American class is the midpoint of its USDA range, per egg', () => {
+test('6d. an American class is the midpoint of its USDA range, per egg', () => {
   // USDA minimum net weight per dozen, oz: Small, Medium, Large, Extra large, Jumbo.
   const perDozen_oz = [18, 21, 24, 27, 30];
   const perEgg_g = (oz: number) => oz * 28.349523125 / 12;
@@ -345,7 +345,7 @@ test('6f. an American class is the midpoint of its USDA range, per egg', () => {
   assert.ok(US_SIZE_CLASSES[4].mass_kg * 1000 > perEgg_g(perDozen_oz[4]));
 });
 
-test('6g. region US, and only region US, gets the American carton', () => {
+test('6e. region US, and only region US, gets the American carton', () => {
   assert.equal(sizeClassesFor('US'), US_SIZE_CLASSES);
   assert.equal(sizeClassesFor('us'), US_SIZE_CLASSES);
   for (const region of ['GB', 'CZ', 'CA', 'AU', '', 'USA', null, undefined]) {
@@ -353,7 +353,7 @@ test('6g. region US, and only region US, gets the American carton', () => {
   }
 });
 
-test('6h. a stored size keeps its name when the table changes, and a Jumbo shrinks to fit', () => {
+test('6f. a stored size keeps its name when the table changes, and a Jumbo shrinks to fit', () => {
   for (const table of [SIZE_CLASSES, US_SIZE_CLASSES]) {
     for (let i = 0; i < table.length; i++) assert.equal(carrySizeIndex(i, table), i);
     assert.equal(carrySizeIndex(-1, table), -1, 'a measured egg stays measured');
@@ -369,7 +369,7 @@ test('6h. a stored size keeps its name when the table changes, and a Jumbo shrin
   assert.equal(US_SIZE_CLASSES[carried].mass_kg, 0.0602);
 });
 
-test('6c. clamp pins to the bounds and refuses to pass a non-number through', () => {
+test('6g. clamp pins to the bounds and refuses to pass a non-number through', () => {
   assert.equal(clamp(5, LIMITS.eggCount), 5);
   assert.equal(clamp(0, LIMITS.eggCount), LIMITS.eggCount.lo);
   assert.equal(clamp(99, LIMITS.eggCount), LIMITS.eggCount.hi);
@@ -377,7 +377,7 @@ test('6c. clamp pins to the bounds and refuses to pass a non-number through', ()
   assert.equal(clamp(Infinity, LIMITS.eggCount), LIMITS.eggCount.lo);
 });
 
-test('6d. the room follows the egg only once the egg says something about it', () => {
+test('6h. the room follows the egg only once the egg says something about it', () => {
   assert.equal(ambientFor(START_TEMP_PRESETS_C.fridge), T_ROOM_C, 'a fridge egg says nothing');
   assert.equal(ambientFor(START_TEMP_PRESETS_C.room), T_ROOM_C);
   assert.equal(ambientFor(26), 26, 'an egg left out in a hot kitchen IS the kitchen');

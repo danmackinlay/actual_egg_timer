@@ -400,7 +400,7 @@ DONE: **6.2 Replace the permanent todo `infer.test.ts:442` (5b).** (jammy moves 
   - a posterior parser (5 copies)
   - `profileOf` (2 copies)
 
-**6.4 Tests named after phases.**
+DONE: **6.4 Tests named after phases.** (Only one title still named a phase, infer's "Phase C recovery"; comments that tell history are §8.1's.)
 - Rename by behaviour: "E1's 'set'", "Phase C recovery", "stored before E4", and so on.
 - Renumber `policy.test.ts`, where 6c and 6d come after 6h.
 
