@@ -332,6 +332,27 @@
 
     "alarm.pull.title": { "text": "Out with them" },
     "alarm.pull.body": { "text": "Commit them at once to the cold; for heat, though withdrawn from the fire, is not yet withdrawn from the egg." },
-    "alarm.cooled.title": { "text": "Cooling ended" }
+    "alarm.cooled.title": { "text": "Cooling ended" },
+    "alarm.pull.bodyCounter": { "text": "Take them from the water, and lay them upon the table." },
+    "alarm.cooled.body": { "text": "The heat has run its course; the egg is such as you desired." },
+    "alarm.probe.title": { "text": "Now the probe" },
+    "alarm.probe.body": { "text": "Thrust it to the middle of the egg, and tell me the highest number." },
+
+    "readout.phase.cooling": { "text": "Cooling; let them lie" },
+    "readout.alarm.setting": { "text": "preparing the alarm…" },
+    "readout.alarm.denied": { "text": "I have no leave to send notices; keep the app open" },
+    "readout.alarm.failed": { "text": "the alarm would not be set; keep the app open" },
+    "readout.alarm.set": { "text": "the alarm is set for {time}" },
+    "controls.size.weighed": { "text": "As weighed · {mass}" },
+    "more.expanded": { "text": "Opened" },
+    "more.collapsed": { "text": "Closed" },
+    "controls.units.more.ios": { "text": "Metrick or imperial, for every number I shew and every number you enter. I begin with what is customary where your phone says you are. To change them alters the manner of writing the numbers, and, from the imperial, the stile of my English; the egg and the times remain exactly the same, and the eggs are indifferent to either." },
+    "cook.summary": { "text": "{mass} · {doneness} · the yolk rising to {yolk}" },
+    "cook.method": { "text": "{start} · and then {after}" },
+    "cook.method.cold": { "text": "Set in cold water" },
+    "cook.method.hot": { "text": "Put into boiling water" },
+    "cook.method.ice": { "text": "iced water" },
+    "cook.method.tap": { "text": "a cold tap" },
+    "cook.method.counter": { "text": "laid upon the table" }
   }
 }
