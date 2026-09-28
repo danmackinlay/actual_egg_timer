@@ -280,12 +280,6 @@
     },
     {
       "locale": "en-x-1750",
-      "key": "readout.phase.heatingTap",
-      "args": {},
-      "text": "Heating — tap when it boils"
-    },
-    {
-      "locale": "en-x-1750",
       "key": "readout.phase.cookingBoiling",
       "args": {},
       "text": "Boiling; let it not abate"
@@ -331,18 +325,6 @@
       "key": "readout.phase.startTime",
       "args": {},
       "text": "Time of beginning"
-    },
-    {
-      "locale": "en-x-1750",
-      "key": "readout.big.now",
-      "args": {},
-      "text": "NOW"
-    },
-    {
-      "locale": "en-x-1750",
-      "key": "readout.big.eat",
-      "args": {},
-      "text": "Eat"
     },
     {
       "locale": "en-x-1750",
@@ -397,12 +379,6 @@
     },
     {
       "locale": "en-x-1750",
-      "key": "readout.sub.heatingEstimate",
-      "args": {},
-      "text": "my guess until you tap Full rolling boil"
-    },
-    {
-      "locale": "en-x-1750",
       "key": "readout.sub.cookingCold",
       "args": {
         "boil": "6:40",
@@ -448,12 +424,6 @@
       "key": "readout.sub.doneHot",
       "args": {},
       "text": "the whole time in the water"
-    },
-    {
-      "locale": "en-x-1750",
-      "key": "readout.sub.done",
-      "args": {},
-      "text": "that is the egg you asked for"
     },
     {
       "locale": "en-x-1750",
@@ -1743,18 +1713,6 @@
     },
     {
       "locale": "en-x-1750",
-      "key": "odds.info",
-      "args": {},
-      "text": "About these odds"
-    },
-    {
-      "locale": "en-x-1750",
-      "key": "odds.why",
-      "args": {},
-      "text": "Before your first egg I don't know your taste, your eggs or your kitchen, so I can't be sure, and this number starts low. Each egg you tell me about makes me surer, and the number goes up."
-    },
-    {
-      "locale": "en-x-1750",
       "key": "outcome.likely",
       "args": {},
       "text": "Probably as you desire."
@@ -1893,12 +1851,6 @@
       "key": "advice.moreWater",
       "args": {},
       "text": "Use more water. With the fire out, more water holds its heat longer, and small differences in its cooling signify less."
-    },
-    {
-      "locale": "en-x-1750",
-      "key": "odds.stillLearning",
-      "args": {},
-      "text": "I'm still learning"
     },
     {
       "locale": "en-x-1750",
@@ -3271,12 +3223,6 @@
     },
     {
       "locale": "en",
-      "key": "readout.phase.heatingTap",
-      "args": {},
-      "text": "Heating — tap when it boils"
-    },
-    {
-      "locale": "en",
       "key": "readout.phase.cookingBoiling",
       "args": {},
       "text": "Cooking — keep it boiling"
@@ -3322,18 +3268,6 @@
       "key": "readout.phase.startTime",
       "args": {},
       "text": "Start time"
-    },
-    {
-      "locale": "en",
-      "key": "readout.big.now",
-      "args": {},
-      "text": "NOW"
-    },
-    {
-      "locale": "en",
-      "key": "readout.big.eat",
-      "args": {},
-      "text": "Eat"
     },
     {
       "locale": "en",
@@ -3388,12 +3322,6 @@
     },
     {
       "locale": "en",
-      "key": "readout.sub.heatingEstimate",
-      "args": {},
-      "text": "my guess until you tap Full rolling boil"
-    },
-    {
-      "locale": "en",
       "key": "readout.sub.cookingCold",
       "args": {
         "boil": "6:40",
@@ -3439,12 +3367,6 @@
       "key": "readout.sub.doneHot",
       "args": {},
       "text": "total in the water"
-    },
-    {
-      "locale": "en",
-      "key": "readout.sub.done",
-      "args": {},
-      "text": "that is the egg you asked for"
     },
     {
       "locale": "en",
@@ -4734,18 +4656,6 @@
     },
     {
       "locale": "en",
-      "key": "odds.info",
-      "args": {},
-      "text": "About these odds"
-    },
-    {
-      "locale": "en",
-      "key": "odds.why",
-      "args": {},
-      "text": "Before your first egg I don't know your taste, your eggs or your kitchen, so I can't be sure, and this number starts low. Each egg you tell me about makes me surer, and the number goes up."
-    },
-    {
-      "locale": "en",
       "key": "outcome.likely",
       "args": {},
       "text": "Probably just right."
@@ -4884,12 +4794,6 @@
       "key": "advice.moreWater",
       "args": {},
       "text": "Use more water. With the heat off, more water holds its heat for longer, so small differences in how fast it cools matter less."
-    },
-    {
-      "locale": "en",
-      "key": "odds.stillLearning",
-      "args": {},
-      "text": "I'm still learning"
     },
     {
       "locale": "en",

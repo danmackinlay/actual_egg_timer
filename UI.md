@@ -518,3 +518,122 @@ until pass B.
 (`Screenshots.swift`), so screenshots need no taps:
 - `-uiScreen settings|help|help-reliable|clause-egg|clause-from|clause-start|clause-cooling|heating`;
 - `-noAlarmPrompt YES`.
+
+## 10. As built (iOS, pass B), 28 September 2026
+
+Prediction: the web's outcome summary and playing safe on iOS, the phase
+screens in the web's words, and one track. `ios/App`: `Direction.swift`
+(new, the web's `src/ui/outcome.ts`), `YolkSlider.swift` (new),
+`ContentView.swift`, `Kitchen.swift`, `OddsTrack.swift`, `Cook.swift`;
+core unchanged. The copy is the `iosB` draft in `tools/copyDraft.ts`, on
+`44b0cb1`: 34 rows, no change of wording. The web's keys gain `"ios"`, and
+the iOS keys they replace are retired.
+
+**The direction** sits under the time, in the slot pass A left
+(`direction(_:)`). It is the web's sentence, chosen by the web's rules
+(`Direction.key`: "probably" from P(just right) 0.5, the lean from core),
+with one (i), "How sure I am" (`outcome.info`). The (i) opens
+`outcome.bracket`, `outcome.why` and `outcome.learning`, and shows only while
+idle. Under it, from P(runny) 0.2 (core's `whiteRisk`), "The white might
+still be runny." in the warning colour. While idle the sentence keeps two
+lines' room and centres in it, so a drag that changes it does not move the
+slider. "I'm still learning" and the odds line are gone, as on the web.
+`oddsTenths` and `stillLearning` are still on the ticket and in the record.
+
+The outcome is `predictOutcome`, read in `Kitchen.decided` at the decided
+time on the decision's own surface, off the main actor beside the decision.
+It rides on the ticket (`Forecast`, Codable), so mid-cook the direction and
+the white's line are what they were at "Eggs in", and they survive a
+relaunch. A cook started before the decision landed carries none, as on
+the web.
+
+**The bracket** is `YolkBracket` (in `OddsTrack.swift`), under the track:
+`levelLow` to `levelHigh`, cupping the track, with a mark at `levelMedian`.
+It is drawn in the foreground at 70%, as on the web, and inset by the
+thumb's half-width like the track. VoiceOver reads it as `outcome.range` /
+`outcome.range.one`. It is hidden before the pot's decision lands, where
+the white never sets, in sous-vide, and once a cook runs. Its room is kept
+while it is hidden, so the words under it do not jump.
+
+**Playing safe** follows the web's rules. `Kitchen.askForSafer` runs after
+every decided answer:
+- **The threshold.** It asks only when a risk is at least 0.2
+  (`Direction.safeRisk`) and this pot's odds profile is in.
+- **When it runs.** It waits 300 ms for the slider to settle, then runs
+  `saferLevels` in the `DecisionGrids` actor, on a detached task.
+- **The cache.** Results are cached by pot, posterior and level
+  (`profileKey@level`, 64 kept). A level the slider comes back to is
+  answered at once. A drag cancels the wait, not a build already running.
+- **Which one shows.** `Direction.playSafe` picks at most one suggestion:
+  the larger risk wins, and a tie goes firm-safe. When the nearest word is
+  the slider's own, it says "A little firmer" or "A little softer".
+- **The tap.** Tapping sets the slider to the suggested level and records
+  `playedSafeKey`, so no second suggestion follows until the level, the pot
+  or the posterior changes. VoiceOver focus moves to the slider.
+- **Holding its room.** While the next suggestion is on its way, the line
+  keeps its room if a suggestion was showing.
+- **Its look.** It is drawn as the low-odds link is: underlined in the
+  accent, with an arrow that VoiceOver does not read.
+
+**One track.** `YolkSlider` wraps a `UISlider` with clear minimum and
+maximum track images, laid over `OddsTrack`, so the yolk strip is the only
+track:
+- **Inset.** The slider reports its thumb's half-width after layout, and
+  the strip, the bracket and the doneness words are inset by it. A level
+  therefore sits exactly under the thumb that asks for it.
+- **Kept from the system slider.** The system thumb stays, and so does
+  VoiceOver's adjustable behaviour. Its label is `controls.doneness`, its
+  value is the doneness word, and a swipe moves it a tenth of the range,
+  on the 0.01 grid.
+- **Haptics.** There is a selection tick each time a drag crosses into
+  another doneness word. The system `Slider` had none, so this is new.
+- **When there are no odds.** The strip is drawn bare before the first
+  answer and in sous-vide.
+
+**Phase screens in the web's words**:
+
+| Phase | Label | Big number | Line under it | Over the buttons |
+|---|---|---|---|---|
+| Heating | `readout.phase.heating` | countdown | `readout.sub.heating` (elapsed, expected boil) | as before |
+| Cooking | as before | countdown | `readout.sub.cookingCold` / `cookingHot` | `action.hint.cookingBoiling` / `cookingStanding`, then iOS's alarm line |
+| Pull | as before | "+0:12", how late it runs | as before | `action.hint.pull`, except on the counter |
+| Done | as before | the time in the water | `readout.sub.doneCold` / `doneHot` | as before |
+
+The alarm line (`readout.alarm.*`) stays iOS's own, since the web's alarm
+is the open tab. Its place moved from under the time to above Cancel.
+
+**Retired from iOS**:
+- `odds.info`, `odds.why`, `odds.stillLearning`
+- `readout.phase.heatingTap`, `readout.sub.heatingEstimate`,
+  `readout.sub.done`
+- `readout.big.now`, `readout.big.eat`
+
+**Kept, and why.**
+- `odds.hitTheMark` stays, on the Lock Screen only (the Live Activity).
+  Its surface budget is 33 characters, and no direction sentence fits. Its
+  note says so now. That is a departure from the brief, which listed it for
+  retirement. The owner may prefer to drop the odds from the Lock Screen
+  altogether, which is a one-line change in `Cook.Ticket.activity`.
+- `readout.phase.cooling` ("Cooling") stays for a counter rest. The web has
+  no cooling phase there, and iOS never reaches one either, so it is
+  effectively dead. It is left for the owner rather than deleted.
+- `cook.method` and `cook.summary`, the note under a running cook, stay.
+  The web has no such line.
+
+**Debug screens** (`Screenshots.swift`), added to pass A's:
+- `-seedEggs right,right,right`: on a fresh install, eggs written through
+  the app's own store at the level and setup on screen, answered `right`,
+  `soft` or `firm`, then folded (`Kitchen.seed`). This gives a learned
+  state without cooking.
+- `-uiScreen direction-info`: open the direction's (i).
+- `-uiScreen take-safe`: tap the first suggestion that lands.
+
+**What the cook sees** on the reference setup (68 g, fridge, cold start,
+ice, jammy), in the simulator:
+
+| Log | Direction | Bracket | Suggestion |
+|---|---|---|---|
+| Fresh install | "I can't call it yet" | Soft to Fudgy | "Rather not risk it soft? Try: Fudgy", as the web offers since the runny-white guard |
+| After three eggs just right | "Probably just right." | about the thumb's width | none |
+| After one egg too soft | "I can't call it yet" (the time rises to 12:09) | as shown | "Try: Fudgy" |
+| That one tapped | the slider moves to Fudgy (12:59) | as shown | none |

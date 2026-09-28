@@ -14,11 +14,17 @@ import EggTimerCore
 ///  - diagonal stripes over the levels the pan cannot deliver at all, as the
 ///    web app has always drawn them.
 ///
+/// It is the slider's only track (`YolkSlider` draws none of its own), so it
+/// is drawn bare before there is a solution and in sous-vide, where there are
+/// no odds to shade it with.
+///
 /// Levels map to the thumb's centre, which travels the slider's width less a
-/// thumb at each end; the caller insets the strip to match. Decorative: the
-/// odds line and the refusal say the same in words.
+/// thumb at each end; the caller insets the strip to match, as the web's
+/// track is inset by half a thumb. Decorative: the direction and the refusal
+/// say the same in words.
 struct OddsTrack: View {
-    let solution: Solution
+    /// Nil before the first answer, and in sous-vide: the bare track.
+    let solution: Solution?
     let profile: OddsProfile?
     @Environment(\.colorScheme) private var scheme
 
@@ -29,6 +35,7 @@ struct OddsTrack: View {
             let track = Path(roundedRect: CGRect(x: 0, y: 0, width: w, height: h), cornerRadius: h / 2)
             context.fill(track, with: .color(.secondary.opacity(0.18)))
             context.clip(to: track)
+            guard let solution else { return }
 
             let softest = solution.whiteSets ? solution.softestLevel : 1
             let hardest = solution.whiteSets ? solution.hardestLevel : 0
@@ -96,5 +103,40 @@ struct OddsTrack: View {
             x += 5
         }
         context.fill(dots, with: .color(.primary.opacity(0.55)))
+    }
+}
+
+/// The bracket under the track (UI.md section 8): the yolk's likely range,
+/// from the outcome's 10% point to its 90%, open at the top so it cups the
+/// track, with a short mark at its median. The foreground at 70%, not the
+/// accent and not the yolk, so it reads in both schemes and never covers the
+/// shading. Inset as the track is. VoiceOver reads it as `outcome.range`.
+struct YolkBracket: View {
+    let forecast: Forecast
+
+    var body: some View {
+        Canvas { context, size in
+            let w = size.width
+            func x(_ level: Double) -> CGFloat { CGFloat(min(1, max(0, level))) * w }
+            let low = x(forecast.levelLow)
+            let high = max(x(forecast.levelHigh), low + 2)
+            let depth: CGFloat = 7
+            var cup = Path()
+            cup.move(to: CGPoint(x: low + 1, y: 0))
+            cup.addLine(to: CGPoint(x: low + 1, y: depth - 3))
+            cup.addQuadCurve(to: CGPoint(x: low + 4, y: depth - 1), control: CGPoint(x: low + 1, y: depth - 1))
+            cup.addLine(to: CGPoint(x: high - 4, y: depth - 1))
+            cup.addQuadCurve(to: CGPoint(x: high - 1, y: depth - 3), control: CGPoint(x: high - 1, y: depth - 1))
+            cup.addLine(to: CGPoint(x: high - 1, y: 0))
+            let ink = Color.primary.opacity(0.7)
+            context.stroke(cup, with: .color(ink), style: StrokeStyle(lineWidth: 2, lineCap: .butt, lineJoin: .round))
+            let span = forecast.levelHigh - forecast.levelLow
+            let middle = span > 0 ? (forecast.levelMedian - forecast.levelLow) / span : 0.5
+            let mid = low + (high - low) * CGFloat(min(1, max(0, middle)))
+            context.fill(Path(CGRect(x: mid - 1, y: 0, width: 2, height: depth + 2)), with: .color(ink))
+        }
+        .frame(height: 9)
+        .accessibilityElement()
+        .accessibilityLabel(Direction.range(forecast))
     }
 }

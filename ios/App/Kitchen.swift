@@ -222,6 +222,27 @@ final class Kitchen {
     /// offers. Nil until it has been worked out, after this pot's surface;
     /// until then the physical limits are the whole rule, as before.
     private(set) var oddsProfile: OddsProfile?
+    /// What the egg at the chosen time will be like (`predictOutcome`, read at
+    /// the decided time on the decision's own surface): the direction, the
+    /// white's line and the bracket. Nil whenever `decision` is.
+    private(set) var outcome: Forecast?
+    /// The play-safe levels (`saferLevels`) for `saferKey`, once worked out.
+    private var safer: SaferLevels?
+    /// The pot, posterior and level `safer` is for.
+    private var saferFor: String?
+    /// The pot, posterior and level on screen: what the play-safe levels must
+    /// be for. Set with every decided answer; nil without one.
+    private var saferKey: String?
+    /// The key the cook last reached by tapping the suggestion. No suggestion
+    /// is offered there, or it would ratchet: at the new level the same risk
+    /// is measured against the new level. The web's `playedSafeKey`.
+    private var playedSafeKey: String?
+    /// Waiting for the slider to settle before the play-safe levels are asked
+    /// for. Cancelled by the next answer; the build it starts is not.
+    private var saferTask: Task<Void, Never>?
+    /// Whether the suggestion was on screen when it was last settled, so its
+    /// line can keep its height while the next one is on its way.
+    private(set) var playSafeWasShown = false
     /// Under low odds, what would make this cook more reliable, as catalogue
     /// keys in the order shown; empty when there is nothing to say.
     private(set) var advice: [String] = []
@@ -408,6 +429,8 @@ final class Kitchen {
             solution = nil
             refusal = ""
             decision = nil
+            outcome = nil
+            saferKey = nil
             oddsProfile = nil
             advice = []
             return
@@ -486,6 +509,9 @@ final class Kitchen {
             solution: answer.solution, decision: d
         )
         chosen.decision = d
+        // What the egg at that time will be like: about 2 ms beside the
+        // decision's 13-16, so it goes with it (INFERENCE.md section 8).
+        chosen.outcome = Forecast(predictOutcome(calibration.posterior, grid, d.cookTimeS, target))
         if answer.profile == nil {
             chosen.missing.append(decisionInputs(calibration, egg: egg, setup: answer.setup))
         }
@@ -675,6 +701,7 @@ final class Kitchen {
         solution = answer.solution
         answered = question
         decision = answer.decision
+        outcome = answer.decision == nil ? nil : answer.outcome
         oddsProfile = answer.profile
         advice = answer.advice
         refusal = refusalText(answer.verdict, setup: answer.setup, water: show(.water, answer.setup.waterLitres))
@@ -684,6 +711,7 @@ final class Kitchen {
             applying = false
             Settings.save(self)
         }
+        askForSafer(answer)
     }
 
     private struct Answer: Sendable {
@@ -697,6 +725,8 @@ final class Kitchen {
         var level: Double
         /// The choice made on it (E5), once this pot's surface is in.
         var decision: Decision? = nil
+        /// What the egg at the chosen time will be like, with the decision.
+        var outcome: Forecast? = nil
         /// The odds at every level for this pot and posterior (Reach.swift),
         /// once worked out: the verdict read its range, and the track is
         /// shaded by it.
@@ -706,6 +736,104 @@ final class Kitchen {
         /// Profiles this answer would have used and that are not worked out
         /// yet: asked for once it is applied.
         var missing: [DecisionInputs] = []
+    }
+
+    // MARK: - Playing safe
+
+    /// How long the slider must sit still before its play-safe levels are
+    /// asked for, on top of the coalesce. They are a dozen or so solves and
+    /// decisions (INFERENCE.md section 8, "what it costs"), so a drag asks
+    /// once, where it stops, and never waits for them. The web's
+    /// `SAFER_SETTLE_MS`.
+    private static let saferSettleNanos: UInt64 = 300_000_000
+
+    /// The key the play-safe levels are cached by: this pot, this posterior
+    /// and the level. The web's `saferKey`.
+    private func saferKey(setup: CookSetup, level: Double) -> String {
+        "\(DecisionGrids.profileKey(decisionInputs(calibration, egg: egg, setup: setup), calibration))@\(level)"
+    }
+
+    /// After an answer: note which pot, posterior and level the play-safe
+    /// levels must now be for, and ask for them once the slider has settled,
+    /// if this pot's profile is in and either way of missing is risk enough
+    /// to show one. Off the main actor, and cached per key, so a level come
+    /// back to is answered at once.
+    private func askForSafer(_ answer: Answer) {
+        saferTask?.cancel()
+        saferTask = nil
+        guard !isSousVide, answer.decision != nil, let o = answer.outcome, answer.solution.whiteSets else {
+            // A new pot's surface on its way: the suggestion is pending, and
+            // its line keeps the height it had.
+            if answer.decision == nil && !isSousVide { return }
+            saferKey = nil
+            playSafeWasShown = false
+            return
+        }
+        let key = saferKey(setup: answer.setup, level: answer.level)
+        saferKey = key
+        guard Direction.playSafeWanted(o) else {
+            playSafeWasShown = false
+            return
+        }
+        guard let profile = answer.profile else { return }
+        if saferFor == key {
+            playSafeWasShown = playSafe.suggestion != nil
+            return
+        }
+        let inputs = decisionInputs(calibration, egg: egg, setup: answer.setup)
+        let calibration = calibration
+        let level = answer.level
+        saferTask = Task { [weak self] in
+            if let known = await DecisionGrids.shared.cachedSafer(key) {
+                self?.landSafer(known, key: key)
+                return
+            }
+            try? await Task.sleep(nanoseconds: Self.saferSettleNanos)
+            guard !Task.isCancelled, self?.saferKey == key else { return }
+            let levels = await DecisionGrids.shared.safer(key, inputs, calibration, profile: profile, level: level)
+            self?.landSafer(levels, key: key)
+        }
+    }
+
+    private func landSafer(_ levels: SaferLevels, key: String) {
+        guard saferKey == key else { return }
+        safer = levels
+        saferFor = key
+        playSafeWasShown = playSafe.suggestion != nil
+        #if DEBUG
+        if takeFirstPlaySafe, let s = playSafe.suggestion {
+            takeFirstPlaySafe = false
+            takePlaySafe(s)
+        }
+        #endif
+    }
+
+    #if DEBUG
+    /// Debug builds only (`-uiScreen take-safe`): tap the first suggestion
+    /// that lands, as a cook would.
+    var takeFirstPlaySafe = false
+    #endif
+
+    /// The play-safe suggestion for the level on screen, and whether it is
+    /// still on its way. None where neither way of missing is risk enough, and
+    /// none at a level reached by tapping one. The web's `playSafeNow`; the
+    /// caller shows it only while idle.
+    var playSafe: (suggestion: PlaySafe?, pending: Bool) {
+        guard !isSousVide, decision != nil, let o = outcome, solution?.whiteSets == true,
+              let key = saferKey else { return (nil, false) }
+        guard Direction.playSafeWanted(o) else { return (nil, false) }
+        if oddsProfile == nil { return (nil, true) }
+        if key == playedSafeKey { return (nil, false) }
+        guard let safer, saferFor == key else { return (nil, true) }
+        return (Direction.playSafe(o, safer, level: doneness), false)
+    }
+
+    /// Tapping the suggestion moves the slider to its level, as dragging there
+    /// would, and marks that level as one reached by playing safe.
+    func takePlaySafe(_ suggestion: PlaySafe) {
+        playedSafeKey = saferKey(setup: setup, level: suggestion.level)
+        playSafeWasShown = false
+        doneness = suggestion.level
     }
 
     // MARK: - Learning from an egg
@@ -862,6 +990,37 @@ final class Kitchen {
         recompute()
     }
 
+    #if DEBUG
+    /// Debug builds only (Screenshots.swift, `-seedEggs`): write eggs into
+    /// the log through the app's own store, as if each had been cooked at the
+    /// level and setup on screen, at its mean time, and answered as given
+    /// about the yolk; then fold them, as a relaunch folds eggs it finds
+    /// unfolded. Only into an empty log, so a relaunch does not seed twice.
+    func seed(_ answers: [Feedback]) {
+        guard kept.log.isEmpty, !answers.isEmpty, !isSousVide else { return }
+        let solved = solveCookTime(
+            egg: egg, setup: setup, params: Calibrations.params(calibration),
+            doneness: calibrationDoneness(calibration, level: doneness)
+        )
+        let seconds = solved.result.cookTimeS
+        for answer in answers {
+            kept.log.append(EggRecord(
+                day: "2026-09-28", app: .ios, appVersion: Calibrations.appVersion,
+                egg: RecordEgg(massG: recordMassG(massKg: egg.massKg), massFrom: massFrom, sizeTable: sizeTable),
+                setup: RecordSetup(
+                    setup: setup, eggFrom: startTemp == .fridge ? .fridge : .room,
+                    timeToBoilFrom: coldStart ? .measured : .default
+                ),
+                level: doneness, recommendedS: seconds, pulledS: seconds, pulledBy: .cook,
+                cooledS: cooling == .counter ? 0 : coolingSecondsFor(solved.result),
+                yolk: answer, lang: "en", units: .metric
+            ))
+        }
+        Calibrations.save(kept)
+        Task { await drain() }
+    }
+    #endif
+
     // MARK: - Measuring the boil
 
     /// Record a measured time to a rolling boil and remember it for this
@@ -943,6 +1102,47 @@ actor DecisionGrids {
             e += w * (p.whiteOffset + p.whiteFirmGap)
         }
         return "\(key(inputs))#\(c.eggsLogged)|\(post.rng)|\(post.particles.count)|\(a)|\(b)|\(d)|\(e)"
+    }
+
+    // MARK: Playing safe
+
+    /// Play-safe levels by pot, posterior and level (`Kitchen.saferKey`).
+    /// Small: each is two numbers.
+    private static let saferKept = 64
+
+    private var safers: [String: SaferLevels] = [:]
+    private var saferOrder: [String] = []
+    private var saferBuilds: [String: Task<SaferLevels, Never>] = [:]
+
+    func cachedSafer(_ key: String) -> SaferLevels? {
+        safers[key]
+    }
+
+    /// The play-safe levels for this pot, posterior and level, on the pot's
+    /// surface and against its odds profile, off the main actor: up to about
+    /// sixteen solves and decisions. Two asks share one build, and the build
+    /// is not cancelled with the ask: a level come back to should not be
+    /// worked out twice.
+    func safer(
+        _ key: String, _ inputs: DecisionInputs, _ c: Calibration, profile: OddsProfile, level: Double
+    ) async -> SaferLevels {
+        if let s = safers[key] { return s }
+        if let running = saferBuilds[key] { return await running.value }
+        let surface = await grid(inputs)
+        if let s = safers[key] { return s }
+        if let running = saferBuilds[key] { return await running.value }
+        let build = Task.detached(priority: .userInitiated) {
+            saferLevels(c, egg: inputs.egg, setup: inputs.setup, grid: surface, profile: profile, level: level)
+        }
+        saferBuilds[key] = build
+        let s = await build.value
+        saferBuilds[key] = nil
+        if safers[key] == nil { saferOrder.append(key) }
+        safers[key] = s
+        while saferOrder.count > Self.saferKept {
+            safers[saferOrder.removeFirst()] = nil
+        }
+        return s
     }
 
     func cachedProfile(_ inputs: DecisionInputs, _ c: Calibration) -> OddsProfile? {
