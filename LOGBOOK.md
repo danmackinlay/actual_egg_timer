@@ -2231,3 +2231,51 @@ cook started.
 So the Live Activity has still not been seen with its words in it, in either
 English. It needs a device, or a simulator a person locks by hand (Device >
 Lock).
+
+## The blank Live Activity is not the catalogue (28 September 2026)
+
+The Lock Screen card from the last entry drew its flame and no words, and
+the island looked empty. The suspect was the widget failing to find
+`copy/*.json`, so that `tr()` handed it empty strings. It does not. Checked in
+a simulator of my own (`aet-la-probe`, iPhone 17 Pro, iOS 26.5, created for
+this and deleted afterwards), with the debug build started by
+`-uiScreen heating -noAlarmPrompt YES`:
+
+- **The catalogue is in the extension.** `EggTimerWidget.appex/copy/` holds
+  `en.json` and `en-x-1750.json`, from the `../copy` folder that
+  `project.yml` gives the widget target.
+- **The widget reads it from its own bundle.** A throwaway debug log in the
+  widget reported `…/EggTimerWidget.appex/copy/en.json keys=344
+  stage=Heating`, and in 1750 `en-x-1750.json keys=343 stage=Upon the fire`.
+  `Bundle.main` in an extension is the `.appex`, which is where the files are.
+- **`tr()` cannot return an empty string.** A catalogue missing from the
+  bundle is a `fatalError` in `Copy.load`, and a key missing from every
+  catalogue renders as the key. Neither is blank.
+- **The words reach the system.** The widget hands the system a snapshot of
+  its views, which the simulator keeps under
+  `data/Containers/Data/PluginKitPlugin/*/SystemData/com.apple.chrono/activities/*.activity-archive`.
+  `strings` on it shows "Heating", "… yolk 65 °C" and "my guess until you tap
+  Full rolling boil", and in 1750 "Upon the fire", "the yolk 65 °C" and "my
+  conjecture, till you tap the boil". The words are there, and so is the
+  cook's yolk temperature, which decoded without the removed odds.
+- **The island draws text.** Five seconds after leaving the app,
+  `simctl io screenshot --mask black` shows the flame and a ticking "11:10"
+  in the compact island, in both Englishes. A throwaway widget with only
+  literal text ("CL", "CT") showed the same. The earlier "empty island" was a
+  capture one second after leaving the app, halfway through the animation.
+  The default mask also leaves the island's black shape out of the picture.
+
+So the blank card was never our words going missing. The countdown on the
+card is `Text(timerInterval:)`, which the system draws and which never goes
+through the catalogue, and it was blank too. Whatever emptied that card
+happened after our process had done its part: in the system's renderer, or
+in the moment the picture was taken. Nothing in the code was changed.
+
+**Not seen:** the Lock Screen card and the expanded island. `simctl` cannot
+lock a device or long-press, and the simulator control tool was not granted
+this device. The archive shows what they are given to draw. They still need
+a person to lock the simulator (Device > Lock) or a phone.
+
+**In passing:** with `-noAlarmPrompt YES` the system still asked "Would Like
+to Send You Notifications" as the cook started. `Alarm.authorize` returns
+before asking in that case, so something else asks. Not looked into here.
