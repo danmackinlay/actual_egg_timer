@@ -61,6 +61,22 @@
   [headers.values]
     Cache-Control = "public, max-age=0, must-revalidate"
 
-# vercel.json sets no headers, and needs none: Vercel sends this same
+# Security headers, on everything. The page has no inline script, style or
+# event handler: one module script, one same-origin worker (gridWorker.js),
+# same-origin fetches of copy/*.json, styles.css, and images from assets/. The
+# slider's shading is set through element.style from script, which a CSP does
+# not govern. So a strict policy costs nothing, and anything it blocks is a
+# regression worth hearing about. The wake lock (the screen stays on while a
+# cook runs) is the one powerful feature the page uses.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Content-Security-Policy = "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; worker-src 'self'; manifest-src 'self'; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "screen-wake-lock=(self), camera=(), microphone=(), geolocation=(), payment=(), usb=()"
+
+# vercel.json sets no cache headers, and needs none: Vercel sends this same
 # "public, max-age=0, must-revalidate" for static files by default, and purges
-# its edge per deploy. Do not add an immutable rule there either.
+# its edge per deploy. Do not add an immutable rule there either. It does
+# carry the security headers above, in its own format; keep the two alike.

@@ -434,7 +434,7 @@ The candidates:
 - Drop `declaration: true`.
 - Leave `noUncheckedIndexedAccess` off: 711 hits, mostly false positives.
 
-**7.4 Add `netlify.toml` security headers.**
+DONE: **7.4 Add `netlify.toml` security headers.** (Checked by serving `_site` with the same headers: the page, its styles, the worker and the shading all run, with no console errors.)
 - Headers: a strict CSP (`default-src 'self'` …, `frame-ancestors 'none'`, `object-src 'none'`), `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`.
 - The page has no inline script or style, so a strict CSP costs nothing. Verified: one module script, one same-origin worker, same-origin `copy/` fetches.
 - Mirror them in `vercel.json`, or note there that it has none.
