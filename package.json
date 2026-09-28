@@ -18,6 +18,7 @@
     "probe": "tsc && node dist/tools/probe.js",
     "decide": "tsc && node dist/tools/decide.js",
     "copy:literals": "tsc && node dist/tools/copyLiterals.js",
+    "copy:snapshot": "tsc && node dist/tools/copySnapshot.js",
     "fixtures:check": "npm run fixtures && git diff --exit-code -- fixtures/",
     "conformance": "npm run fixtures:check && cd ios/EggTimerCore && swift test",
     "verify": "npm run check && npm test && npm run copy:literals && npm run fixtures:check && cd ios/EggTimerCore && swift test",

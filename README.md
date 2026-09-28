@@ -841,14 +841,22 @@ half-minute of error.
 ```
 npm install
 npm run build      # tsc
+npm run check      # type checks: the app, core without DOM or Node, the site build
 npm test           # node --test
-npm run verify     # the gate: check, test, fixtures:check and swift test
-npm run validate   # regenerates the validation table in §7
+npm run verify     # the gate: check, test, copy:literals, fixtures:check and swift test
+npm run validate   # prints the validation table in §7
+npm run fixtures   # regenerates fixtures/ from the TypeScript core
+npm run conformance      # fixtures unchanged, then the Swift core against them
+npm run decide     # measures the choice of cook time (tools/decide.ts)
 npm run identifiability  # is h separable from alpha? (§11.2)
 npm run rank       # how many parameters can feedback move? (§11.5)
 npm run probe      # is a probe thermometer worth an egg? (§11.3)
-npm run serve      # static server on :8080
+npm run copy:literals    # no Swift literal is words; with --since <ref> [draft], the copy proof
+npm run copy:snapshot -- capture <out.json>   # the web app's strings, rendered (headless Chrome)
+npm run copy:snapshot -- compare <before.json> <after.json> --draft [name]
+npm run serve      # static server on :8080, the repo root
 npm run build:site # the deployable tree, in _site/
+npm run serve:site # static server on :8080, _site/
 ```
 
 Node version is pinned in `.node-version`, which nvm, fnm and Netlify all read,

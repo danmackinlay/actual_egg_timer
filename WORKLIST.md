@@ -444,7 +444,7 @@ DONE: **7.5 Clean builds.**
 - `test` should start with `rm -rf dist`; otherwise a deleted test keeps running from `dist/`.
 - `.claude/launch.json` should build before serving `_site`.
 
-**7.6 Missing npm scripts.**
+DONE: **7.6 Missing npm scripts.** (`copy:literals` came with §4.8.)
 - Add `copy:literals` and `copy:snapshot`. They are cited about 30 times in the docs and currently depend on a prior `tsc`.
 - Complete README "Running it", which is missing `check`, `fixtures`, `conformance`, `decide`, `serve:site` and the copy proofs.
 
