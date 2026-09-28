@@ -612,12 +612,9 @@ final class Kitchen {
     /// (E5). A new ramp is a new pot, whose decision surface is a second or more
     /// away with the egg already in the water, so the lean is carried instead
     /// (`carriedSolution`); test/decide.test.ts measures what that costs.
-    func cookTime(timeToBoilS: Double, level: Double, leanS: Double) async -> Double? {
-        await cookResult(timeToBoilS: timeToBoilS, level: level, leanS: leanS)?.cookTimeS
-    }
-
-    /// The same re-solve, as the whole cook: its time, and the peak the
-    /// cooling counts to (E4).
+    ///
+    /// The answer is the whole cook: its time, and the peak the cooling
+    /// counts to (E4).
     func cookResult(timeToBoilS: Double, level: Double, leanS: Double) async -> CookResult? {
         let setup = setup(timeToBoilS: timeToBoilS)
         let answer = await Self.solve(

@@ -41,10 +41,13 @@ enum LiveActivity {
     /// message twice (28 September). The alarm stays in Notification Centre
     /// for anyone who missed it; with notifications off, the app is on
     /// screen ringing.
-    static func finish(_ state: CookActivity.ContentState) async {
-        let payload = content(state)
+    ///
+    /// It ends on the content it last showed, not on a done state: a card
+    /// dismissed at once never draws its final content, so the done stage's
+    /// words were retired from the widget.
+    static func finish() async {
         for activity in Activity<CookActivity>.activities {
-            await activity.end(payload, dismissalPolicy: .immediate)
+            await activity.end(nil, dismissalPolicy: .immediate)
         }
     }
 

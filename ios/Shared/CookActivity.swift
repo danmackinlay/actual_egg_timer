@@ -38,21 +38,11 @@ struct CookActivity: ActivityAttributes {
     // decodes, since a key nobody asks for is ignored.
 
     /// The cooling the cook chose, `Cooling`'s raw value: `ice`, `tap` or
-    /// `counter`. The pull line names it (`pullLineKey`). A String, since this
-    /// file cannot see EggTimerCore; optional, so an activity begun by an
+    /// `counter`. The pull line names it (`pullLineKey`, in EggTimerCopy). A
+    /// String, since this file cannot see EggTimerCore; optional, so an activity begun by an
     /// older build decodes, as the ice bath.
     var cooling: String? = nil
 
-    /// The pull's line, in the alarm and on the card alike: into the ice bath,
-    /// under the cold tap, or onto the counter, as the cook chose - never "the
-    /// cooling", which is this app's word and not the cook's.
-    static func pullLineKey(cooling: String?) -> String {
-        switch cooling {
-        case "tap": "alarm.pull.bodyTap"
-        case "counter": "alarm.pull.bodyCounter"
-        default: "alarm.pull.bodyIce"
-        }
-    }
     /// The catalogue the cook was started in, `en` or `en-x-1750` (F6). The
     /// widget cannot read the app's settings, so the activity carries its
     /// language as it carries its units. Optional, so an activity begun by
@@ -73,7 +63,11 @@ struct CookActivity: ActivityAttributes {
             case .cooking: tr("activity.stage.cooking", in: lang)
             case .pull: tr("activity.stage.pull", in: lang)
             case .cooling: tr("activity.stage.cooling", in: lang)
-            case .done: tr("activity.stage.done", in: lang)
+            // Never sent by this build: the card ends at once on the stage
+            // before (`LiveActivity.finish`). Kept so that a card an older
+            // build ended as done still decodes and draws; the app's own
+            // word for the phase will do.
+            case .done: tr("readout.phase.done", in: lang)
             }
         }
 
@@ -87,7 +81,7 @@ struct CookActivity: ActivityAttributes {
             }
         }
 
-        /// Only two stages are counted down. `pull` is a moment, and `done` is
+        /// Three stages are counted down. `pull` is a moment, and `done` is
         /// an end state; a timer on either would count toward nothing.
         var countsDown: Bool {
             self == .heating || self == .cooking || self == .cooling

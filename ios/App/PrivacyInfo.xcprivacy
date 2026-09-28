@@ -4,8 +4,9 @@
   Apple's required-reason API declaration.
 
   UserDefaults is a required-reason API, and this app uses it in Store.swift,
-  Calibration.swift and Cook.swift - the settings, the posterior and a cook in
-  progress. Without this file, uploads to App Store Connect are rejected or
+  Calibration.swift, Cook.swift and LanguageChoice.swift - the settings, the
+  posterior, a cook in progress and the language chosen (Screenshots.swift
+  reads launch arguments through it too, in debug builds only). Without this file, uploads to App Store Connect are rejected or
   warned about by ITMS-91053, which is a slow way to discover a fifteen-minute
   fix.
 

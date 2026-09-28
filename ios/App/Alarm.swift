@@ -1,3 +1,4 @@
+import EggTimerCopy
 import EggTimerRing
 import Foundation
 import UserNotifications
@@ -81,7 +82,7 @@ final class Alarm: NSObject, UNUserNotificationCenterDelegate {
         request(
             id: pullID, at: pullAt,
             title: tr("alarm.pull.title"),
-            body: tr(CookActivity.pullLineKey(cooling: cooling))
+            body: tr(pullLineKey(cooling: cooling))
         )
 
         if let coolDoneAt {

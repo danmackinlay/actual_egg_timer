@@ -743,7 +743,7 @@ final class Cook {
         pushedStage = state.stage
         Task {
             if state.stage == .done {
-                await LiveActivity.finish(state)
+                await LiveActivity.finish()
             } else {
                 await LiveActivity.update(state)
             }

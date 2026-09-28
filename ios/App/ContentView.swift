@@ -324,11 +324,10 @@ struct ContentView: View {
         case .cooking: tr(kitchen.heatOff ? "readout.phase.cookingHeatOff" : "readout.phase.cookingBoiling")
         case .pull: tr("readout.phase.pull")
         case .cooling:
-            switch kitchen.cooling {
-            case .ice: tr("readout.phase.coolingIce")
-            case .tap: tr("readout.phase.coolingTap")
-            case .counter: tr("readout.phase.cooling")
-            }
+            // Only a counted cooling gets here: a counter rest has no cooling
+            // deadline (`Cook.setDeadlines`), so it goes from the pull to done.
+            // As on the web, anything not the ice bath is the tap.
+            tr(kitchen.cooling == .ice ? "readout.phase.coolingIce" : "readout.phase.coolingTap")
         case .done: tr("readout.phase.done")
         }
     }
