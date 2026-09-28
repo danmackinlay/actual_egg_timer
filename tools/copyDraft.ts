@@ -2450,6 +2450,90 @@ export const IOS_B_DRAFT: Drafted[] = [
     after: null,
     appsBefore: ["ios"], appsAfter: [],
   },
+  {
+    key: 'readout.phase.heating', row: "phase screens, shared with iOS",
+    before: { text: "Heating" },
+    after: { text: "Heating" },
+    appsBefore: ["web"], appsAfter: ["web", "ios"],
+  },
+  {
+    key: 'readout.sub.heating', row: "phase screens, shared with iOS",
+    before: { text: "{elapsed} heating · I expect {boil} until you tap" },
+    after: { text: "{elapsed} heating · I expect {boil} until you tap" },
+    appsBefore: ["web"], appsAfter: ["web", "ios"],
+  },
+  {
+    key: 'readout.sub.cookingCold', row: "phase screens, shared with iOS",
+    before: { text: "boil took {boil} · {after} after the boil" },
+    after: { text: "boil took {boil} · {after} after the boil" },
+    appsBefore: ["web"], appsAfter: ["web", "ios"],
+  },
+  {
+    key: 'readout.sub.cookingHot', row: "phase screens, shared with iOS",
+    before: { text: "in the water" },
+    after: { text: "in the water" },
+    appsBefore: ["web"], appsAfter: ["web", "ios"],
+  },
+  {
+    key: 'readout.sub.doneCold', row: "phase screens, shared with iOS",
+    before: { text: "{boil} to boil + {cooking} cooking" },
+    after: { text: "{boil} to boil + {cooking} cooking" },
+    appsBefore: ["web"], appsAfter: ["web", "ios"],
+  },
+  {
+    key: 'readout.sub.doneHot', row: "phase screens, shared with iOS",
+    before: { text: "total in the water" },
+    after: { text: "total in the water" },
+    appsBefore: ["web"], appsAfter: ["web", "ios"],
+  },
+  {
+    key: 'action.hint.cookingStanding', row: "phase screens, shared with iOS",
+    before: { text: "lid on, burner off" },
+    after: { text: "lid on, burner off" },
+    appsBefore: ["web"], appsAfter: ["web", "ios"],
+  },
+  {
+    key: 'action.hint.cookingBoiling', row: "phase screens, shared with iOS",
+    before: { text: "keep it at a full boil ({boiling}) until the eggs come out" },
+    after: { text: "keep it at a full boil ({boiling}) until the eggs come out" },
+    appsBefore: ["web"], appsAfter: ["web", "ios"],
+  },
+  {
+    key: 'action.hint.pull', row: "phase screens, shared with iOS",
+    before: { text: "cooling starts on its own in {seconds} s" },
+    after: { text: "cooling starts on its own in {seconds} s" },
+    appsBefore: ["web"], appsAfter: ["web", "ios"],
+  },
+  {
+    key: 'readout.phase.heatingTap', row: "retired on iOS",
+    before: { text: "Heating — tap when it boils" },
+    after: null,
+    appsBefore: ["ios"], appsAfter: [],
+  },
+  {
+    key: 'readout.sub.heatingEstimate', row: "retired on iOS",
+    before: { text: "my guess until you tap Full rolling boil" },
+    after: null,
+    appsBefore: ["ios"], appsAfter: [],
+  },
+  {
+    key: 'readout.sub.done', row: "retired on iOS",
+    before: { text: "that is the egg you asked for" },
+    after: null,
+    appsBefore: ["ios"], appsAfter: [],
+  },
+  {
+    key: 'readout.big.now', row: "retired on iOS",
+    before: { text: "NOW" },
+    after: null,
+    appsBefore: ["ios"], appsAfter: [],
+  },
+  {
+    key: 'readout.big.eat', row: "retired on iOS",
+    before: { text: "Eat" },
+    after: null,
+    appsBefore: ["ios"], appsAfter: [],
+  },
 ];
 
 export const DRAFTS: Record<string, Draft> = {

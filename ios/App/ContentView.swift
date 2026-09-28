@@ -184,13 +184,13 @@ struct ContentView: View {
                     .foregroundStyle(phase == .pull ? .orange : .secondary)
                     .multilineTextAlignment(.center)
 
-                Text(bigTime(phase))
+                Text(bigTime(phase, at: now))
                     .font(.system(size: 76, weight: .semibold, design: .rounded))
                     .monospacedDigit()
                     .contentTransition(.numericText())
-                    .animation(.snappy, value: bigTime(phase))
+                    .animation(.snappy, value: bigTime(phase, at: now))
 
-                sublineLine(phase)
+                sublineLine(phase, at: now)
                 direction(phase)
             }
         }
@@ -203,20 +203,20 @@ struct ContentView: View {
     /// The line under the time. "Based on history" has an (i) that says what
     /// history, as on the web.
     @ViewBuilder
-    private func sublineLine(_ phase: Cook.Phase) -> some View {
+    private func sublineLine(_ phase: Cook.Phase, at now: Date) -> some View {
         if phase == .idle && kitchen.coldStart && kitchen.hasBoilMemory {
             InfoRow(
                 name: tr("readout.sub.coldAssumes.info"),
                 more: [tr("readout.sub.coldAssumes.more")],
                 alignment: .center
             ) {
-                Text(subline(phase))
+                Text(subline(phase, at: now))
                     .font(.footnote)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
             }
         } else {
-            Text(subline(phase))
+            Text(subline(phase, at: now))
                 .font(.footnote)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
@@ -327,7 +327,7 @@ struct ContentView: View {
     private func phaseLabel(_ phase: Cook.Phase) -> String {
         switch phase {
         case .idle: tr("readout.phase.total")
-        case .heating: tr("readout.phase.heatingTap")
+        case .heating: tr("readout.phase.heating")
         case .cooking: tr(kitchen.heatOff ? "readout.phase.cookingHeatOff" : "readout.phase.cookingBoiling")
         case .pull: tr("readout.phase.pull")
         case .cooling:
@@ -340,17 +340,20 @@ struct ContentView: View {
         }
     }
 
-    private func bigTime(_ phase: Cook.Phase) -> String {
+    /// The web's clock face in every phase: the countdown, how late the pull
+    /// is running while the eggs wait to come out, and at the end the time
+    /// the egg was in the water.
+    private func bigTime(_ phase: Cook.Phase, at now: Date) -> String {
         switch phase {
         case .idle: kitchen.solution.map { clockString($0.result.cookTimeS) } ?? "--:--"
         case .heating, .cooking: clockString(cook.secondsToPull)
-        case .pull: tr("readout.big.now")
+        case .pull: "+" + clockString(now.timeIntervalSince(cook.pullAt ?? now))
         case .cooling: clockString(cook.secondsToCoolDone)
-        case .done: tr("readout.big.eat")
+        case .done: clockString(cook.cookSeconds)
         }
     }
 
-    private func subline(_ phase: Cook.Phase) -> String {
+    private func subline(_ phase: Cook.Phase, at now: Date) -> String {
         switch phase {
         case .idle:
             // The web's: on a cold start, the boil it assumes, and whether
@@ -366,9 +369,20 @@ struct ContentView: View {
                 tr("readout.sub.hot")
             }
         case .heating:
-            tr("readout.sub.heatingEstimate")
+            // The web's: how long it has been heating, and the boil I expect.
+            tr("readout.sub.heating", [
+                "elapsed": .text(clockString(now.timeIntervalSince(cook.startedAt ?? now))),
+                "boil": .text(clockString(cook.assumedBoilS)),
+            ])
         case .cooking:
-            alarmLine
+            // The web's: on a cold start, what the boil took and how long the
+            // egg has cooked since; on a hot start, only that it is in.
+            cook.ticket?.coldStart == true
+                ? tr("readout.sub.cookingCold", [
+                    "boil": .text(clockString(cook.assumedBoilS)),
+                    "after": .text(clockString(cook.secondsAfterBoil)),
+                ])
+                : tr("readout.sub.cookingHot")
         case .pull:
             tr("readout.sub.pull")
         case .cooling:
@@ -376,7 +390,13 @@ struct ContentView: View {
             // is also when a probe reading is asked for.
             tr(cook.asksForProbe ? "readout.sub.coolingProbe" : "readout.sub.coolingPeak")
         case .done:
-            tr("readout.sub.done")
+            // The web's: what the clock face above is made of.
+            cook.ticket?.coldStart == true
+                ? tr("readout.sub.doneCold", [
+                    "boil": .text(clockString(cook.assumedBoilS)),
+                    "cooking": .text(clockString(cook.cookSeconds - cook.assumedBoilS)),
+                ])
+                : tr("readout.sub.doneHot")
         }
     }
 
@@ -533,6 +553,16 @@ struct ContentView: View {
 
         case .pull:
             VStack(spacing: 10) {
+                // The web's hint: when the cooling starts on its own. Not on
+                // the counter, where the grace runs out into Done and the line
+                // under the time already says the yolk is still cooking.
+                if (cook.ticket?.cooling ?? kitchen.cooling) != .counter, let pullAt = cook.pullAt {
+                    let left = max(0, (Cook.pullGraceSeconds - now.timeIntervalSince(pullAt)).rounded(.up))
+                    Text(tr("action.hint.pull", ["seconds": .int(Int(left))]))
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                }
                 // The web app's button, in its words: the cook's tap is the
                 // nearest thing to when the egg left the water that the app will
                 // ever know, and the record calls it a measured pull. Without it
@@ -570,13 +600,31 @@ struct ContentView: View {
             .frame(maxWidth: .infinity)
 
         default:
-            Button(tr("action.cancel"), role: .destructive) {
-                cook.cancel()
-                kitchen.refresh()
+            VStack(spacing: 10) {
+                if phase == .cooking {
+                    VStack(spacing: 4) {
+                        // The web's hint: what the hob must do until the pull.
+                        Text(kitchen.heatOff
+                             ? tr("action.hint.cookingStanding")
+                             : tr("action.hint.cookingBoiling", [
+                                "boiling": .text(kitchen.show(.temperature, kitchen.boilingC)),
+                             ]))
+                        // Whether the alarm is really set: iOS's own line,
+                        // since the web's alarm is the open tab.
+                        Text(alarmLine)
+                    }
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                }
+                Button(tr("action.cancel"), role: .destructive) {
+                    cook.cancel()
+                    kitchen.refresh()
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.large)
+                .frame(maxWidth: .infinity)
             }
-            .buttonStyle(.bordered)
-            .controlSize(.large)
-            .frame(maxWidth: .infinity)
         }
     }
 

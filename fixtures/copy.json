@@ -280,12 +280,6 @@
     },
     {
       "locale": "en-x-1750",
-      "key": "readout.phase.heatingTap",
-      "args": {},
-      "text": "Heating — tap when it boils"
-    },
-    {
-      "locale": "en-x-1750",
       "key": "readout.phase.cookingBoiling",
       "args": {},
       "text": "Boiling; let it not abate"
@@ -331,18 +325,6 @@
       "key": "readout.phase.startTime",
       "args": {},
       "text": "Time of beginning"
-    },
-    {
-      "locale": "en-x-1750",
-      "key": "readout.big.now",
-      "args": {},
-      "text": "NOW"
-    },
-    {
-      "locale": "en-x-1750",
-      "key": "readout.big.eat",
-      "args": {},
-      "text": "Eat"
     },
     {
       "locale": "en-x-1750",
@@ -397,12 +379,6 @@
     },
     {
       "locale": "en-x-1750",
-      "key": "readout.sub.heatingEstimate",
-      "args": {},
-      "text": "my guess until you tap Full rolling boil"
-    },
-    {
-      "locale": "en-x-1750",
       "key": "readout.sub.cookingCold",
       "args": {
         "boil": "6:40",
@@ -448,12 +424,6 @@
       "key": "readout.sub.doneHot",
       "args": {},
       "text": "the whole time in the water"
-    },
-    {
-      "locale": "en-x-1750",
-      "key": "readout.sub.done",
-      "args": {},
-      "text": "that is the egg you asked for"
     },
     {
       "locale": "en-x-1750",
@@ -3253,12 +3223,6 @@
     },
     {
       "locale": "en",
-      "key": "readout.phase.heatingTap",
-      "args": {},
-      "text": "Heating — tap when it boils"
-    },
-    {
-      "locale": "en",
       "key": "readout.phase.cookingBoiling",
       "args": {},
       "text": "Cooking — keep it boiling"
@@ -3304,18 +3268,6 @@
       "key": "readout.phase.startTime",
       "args": {},
       "text": "Start time"
-    },
-    {
-      "locale": "en",
-      "key": "readout.big.now",
-      "args": {},
-      "text": "NOW"
-    },
-    {
-      "locale": "en",
-      "key": "readout.big.eat",
-      "args": {},
-      "text": "Eat"
     },
     {
       "locale": "en",
@@ -3370,12 +3322,6 @@
     },
     {
       "locale": "en",
-      "key": "readout.sub.heatingEstimate",
-      "args": {},
-      "text": "my guess until you tap Full rolling boil"
-    },
-    {
-      "locale": "en",
       "key": "readout.sub.cookingCold",
       "args": {
         "boil": "6:40",
@@ -3421,12 +3367,6 @@
       "key": "readout.sub.doneHot",
       "args": {},
       "text": "total in the water"
-    },
-    {
-      "locale": "en",
-      "key": "readout.sub.done",
-      "args": {},
-      "text": "that is the egg you asked for"
     },
     {
       "locale": "en",
