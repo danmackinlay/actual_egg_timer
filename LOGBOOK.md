@@ -2208,3 +2208,26 @@ What the docs rest on, checked against the code and not the commit messages:
   The web section's note that *denaturation* and *kinetics* stay in the
   colophon is no longer true. The iOS section says so rather than rewriting
   the web's dated record.
+
+### The Lock Screen, tried and not seen
+
+The owner asked to see the Live Activity mid-cook, in English and in 1750.
+It was tried in a simulator of my own (`aet-lock-shots`, an iPhone 17 Pro on
+iOS 26.5), which was created for this and then deleted. The debug build was
+started with `-uiScreen heating -noAlarmPrompt YES -uiLanguage en`, and the
+cook started.
+- **Locking.** `xcrun simctl` has no way to lock a device (its `ui`
+  subcommand sets appearance and contrast only). The simulator control tool's
+  Lock and Home buttons were not granted, so the Home screen was tried
+  instead.
+- **The Home screen**, reached by terminating the app: the Dynamic Island
+  widened for the activity, but it drew nothing inside. An earlier probe of
+  the Lock Screen, in another simulator, found the same thing: the card was
+  there, with the stage's icon, and empty. The widget's log shows its batches
+  succeeding.
+- **Two retakes** a few seconds later, the second after relaunching and
+  backgrounding the app, showed no island at all.
+
+So the Live Activity has still not been seen with its words in it, in either
+English. It needs a device, or a simulator a person locks by hand (Device >
+Lock).
