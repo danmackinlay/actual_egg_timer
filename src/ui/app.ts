@@ -498,7 +498,17 @@ function renderWelcome(warning: string): void {
     && calib.eggsLogged === 0 && !hasBoilMemory(boilMemory));
 }
 
+/** Draw the screen: the controls and the answer they give while idle, and
+ *  the cook under way otherwise. The 200 ms ticker only ever draws a cook
+ *  under way, so it never repaints the controls, which are put away beneath
+ *  it (styles.css) and drawn again when the cook ends. */
 function render(now_ms: number): void {
+  if (machine.phase === 'IDLE') renderIdle(now_ms);
+  else renderRunning(now_ms);
+}
+
+/** The controls, and the answer they give. */
+function renderIdle(now_ms: number): void {
   // Sous-vide is answered honestly and separately: no cook to run, no clock to
   // start, and a start time that has already been and gone. It goes FIRST,
   // before any of the pan readout is computed or painted - it used to run
@@ -506,8 +516,8 @@ function render(now_ms: number): void {
   // written, so it both paid for an answer it discarded and left half of that
   // answer on screen beside its own.
   renderSentence(liveSetupFacts(settings, sizeClasses, currentEgg()));
-  renderCookSetup(machine.phase !== 'IDLE' ? ticket : null, machine.targetLevel, sizeClasses);
-  if (isSousVide() && machine.phase === 'IDLE') {
+  renderCookSetup(null, machine.targetLevel, sizeClasses);
+  if (isSousVide()) {
     renderSousVide(now_ms);
     return;
   }
@@ -515,35 +525,48 @@ function render(now_ms: number): void {
   const sol = solution;
   if (sol === null) return;
 
-  // While a cook runs, everything below describes the ticket's pot and the
-  // machine's cooling, not the controls: a second tab may have changed those.
-  const running = runningSetup();
-  const startMode = startModeNow();
-  const boiling_C = running?.boiling_C ?? boilingPoint_C();
-  dom.body.dataset['phase'] = machine.phase;
-  dom.body.dataset['start'] = startMode;
-
-  dom.statBoil.textContent = show('boilingPoint', boiling_C);
+  dom.statBoil.textContent = show('boilingPoint', boilingPoint_C());
   dom.note.textContent = textureNote(sol);
-  // The warning line carries one of two things. A refusal is advice about the
-  // slider, so it is idle-only: popping "jammy isn't reachable" onto the screen
-  // while the egg is already in the water is advice about a control the user
-  // cannot reach. A restored cook is the opposite - it only exists mid-cook.
-  let warning = '';
-  // Only while the cook is still in flight. At DONE the egg is out and "keep
-  // this tab open" is advice about a deadline that has already passed.
-  if (restored && machine.phase !== 'IDLE' && machine.phase !== 'DONE') {
-    warning = t('readout.restored');
-  } else if (machine.phase === 'IDLE' && refusal !== '') {
-    warning = refusal;
-  }
+  // The warning line carries a refusal while idle. It is advice about the
+  // slider: popping "jammy isn't reachable" onto the screen while the egg is
+  // already in the water would be advice about a control the user cannot
+  // reach.
+  const warning = refusal;
+  renderDonenessReading(settings.doneness, { peakYolk_C: sol.result.peakYolk_C });
+  renderDonenessScale(sol, sol.whiteSets ? profile : null, sol.whiteSets ? outcome : null);
+  renderReadout(now_ms, sol, warning);
+  // "Based on history" has an (i) that says what history.
+  showInfo(dom.sublineInfo, settings.startMode === 'cold' && hasBoilMemory(boilMemory));
+  renderOdds();
+  renderAdvice();
+  renderWelcome(warning);
+}
+
+/** The cook under way, five times a second: the readout, and nothing of the
+ *  controls. */
+function renderRunning(now_ms: number): void {
+  renderCookSetup(ticket, machine.targetLevel, sizeClasses);
+  const sol = solution;
+  if (sol === null) return;
+  // The warning line carries a restored cook's warning while it runs - the
+  // opposite of a refusal, it only exists mid-cook. Only while the cook is
+  // still in flight: at DONE the egg is out and "keep this tab open" is
+  // advice about a deadline that has already passed.
+  const warning = restored && machine.phase !== 'DONE' ? t('readout.restored') : '';
+  renderReadout(now_ms, sol, warning);
+  showInfo(dom.sublineInfo, false);
+  renderOdds();
+  renderAdvice();
+  dom.welcome.hidden = true;
+}
+
+/** The readout, the buttons under it and the questions at DONE, idle or not,
+ *  and the warning line with `warning` in it. */
+function renderReadout(now_ms: number, sol: Solution, warning: string): void {
+  dom.body.dataset['phase'] = machine.phase;
+  dom.body.dataset['start'] = startModeNow();
   dom.warn.textContent = warning;
   dom.warn.hidden = warning === '';
-  renderDonenessReading(settings.doneness, { peakYolk_C: sol.result.peakYolk_C });
-  // The odds and the bracket only while idle: once a cook is running the
-  // slider is put away.
-  const shaded = machine.phase === 'IDLE' && sol.whiteSets;
-  renderDonenessScale(sol, shaded ? profile : null, shaded ? outcome : null);
 
   const wanted = probeWanted(settings.probe, ticket);
   const pending = probePending(machine, wanted);
@@ -575,13 +598,8 @@ function render(now_ms: number): void {
   dom.phaseLabel.textContent = view.label;
   dom.digits.textContent = view.digits;
   dom.sublineText.textContent = view.subline;
-  // "Based on history" has an (i) that says what history; the full rolling
-  // boil has one that says what it looks like.
-  showInfo(dom.sublineInfo, machine.phase === 'IDLE' && startMode === 'cold' && hasBoilMemory(boilMemory));
+  // The full rolling boil has an (i) that says what it looks like.
   showInfo(dom.hintInfo, machine.phase === 'HEATING');
-  renderOdds();
-  renderAdvice();
-  renderWelcome(warning);
 
   // The live region carries a coarse announcement, not a per-second one: the
   // ticking digits are aria-hidden, so a screen reader hears the phase and the
@@ -626,18 +644,23 @@ function renderOdds(): void {
   // While a new pot's surface is on its way the lines above are blank, and
   // the readout would shrink and grow back a second later, moving the
   // sentence's open choice under the thumb that just tapped it. So it keeps
-  // the height it had when the lines were last all there.
-  if (machine.phase === 'IDLE' && decision === null) {
+  // the height it had when the lines were last all there. Measured only
+  // while idle: reading the height forces a layout, and a running cook, drawn
+  // five times a second, has no choice to keep still.
+  if (machine.phase !== 'IDLE') {
+    dom.readout.style.minHeight = '';
+  } else if (decision === null) {
     dom.readout.style.minHeight = settledReadout_px > 0 ? `${settledReadout_px}px` : '';
   } else {
     dom.readout.style.minHeight = '';
     const height = dom.readout.offsetHeight;
-    if (machine.phase === 'IDLE' && height > 0) settledReadout_px = height;
+    if (height > 0) settledReadout_px = height;
   }
 }
 
 /** The sous-vide readout: hold times from the isothermal limit, and the plain
- *  statement that you should have started yesterday. */
+ *  statement that you should have started yesterday. Idle only, after the
+ *  sentence (`renderIdle`). */
 function renderSousVide(now_ms: number): void {
   // No pan, no choice, and no odds: the bath's answer is not a guess about a
   // pan (E5 chooses pan times). So no direction, and no bracket either.
@@ -651,7 +674,6 @@ function renderSousVide(now_ms: number): void {
   renderAdvice();
   dom.body.dataset['phase'] = machine.phase;
   dom.body.dataset['start'] = settings.startMode;
-  renderSentence(liveSetupFacts(settings, sizeClasses, currentEgg()));
 
   const egg = currentEgg();
   const doneness = calibrationDoneness(calib, settings.doneness);
@@ -716,7 +738,7 @@ function recompute(): void {
     decision = null;
     outcome = null;
     profile = null;
-    renderSousVide(Date.now());
+    render(Date.now());
     return;
   }
   const boil = timeToBoil_s();
