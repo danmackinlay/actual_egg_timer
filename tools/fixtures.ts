@@ -700,22 +700,27 @@ const policy = {
      * deadline, the iOS app used to fall from COOKING straight to DONE and
      * never show the pull at all. Sampled either side of every boundary. */
     timelines: [
-      { name: 'ice bath', cookEnd_s: 600, coolEnd_s: 600 + PULL_GRACE_SECONDS + COOLING_SECONDS },
-      { name: 'counter rest', cookEnd_s: 600, coolEnd_s: null },
+      { name: 'ice bath', cookEnd_s: 600, coolEnd_s: 600 + PULL_GRACE_SECONDS + COOLING_SECONDS, outAt_s: null },
+      { name: 'counter rest', cookEnd_s: 600, coolEnd_s: null, outAt_s: null },
+      // The cook tapped the eggs out 5 s into the grace: the cooling is timed
+      // from the tap.
+      { name: 'ice bath, out at the tap', cookEnd_s: 600, coolEnd_s: 605 + COOLING_SECONDS, outAt_s: 605 },
+      { name: 'counter rest, out at the tap', cookEnd_s: 600, coolEnd_s: null, outAt_s: 605 },
     ].map((t) => ({
       name: t.name,
       cookEnd_s: t.cookEnd_s,
       coolEnd_s: t.coolEnd_s,
+      outAt_s: t.outAt_s,
       samples: [
-        0, 1, 599, 599.999, 600, 600.001, 619, 619.999, 620, 620.001,
-        700, 799, 799.999, 800, 800.001, 10000,
+        0, 1, 599, 599.999, 600, 600.001, 604.999, 605, 605.001, 619, 619.999, 620, 620.001,
+        700, 784.999, 785, 799, 799.999, 800, 800.001, 10000,
       ].map((now_s) => ({
         now_s: now_s,
         provisional: phaseAt(
-          { cookEnd_s: t.cookEnd_s, coolEnd_s: t.coolEnd_s, provisional: true }, now_s,
+          { cookEnd_s: t.cookEnd_s, coolEnd_s: t.coolEnd_s, provisional: true, outAt_s: t.outAt_s }, now_s,
         ),
         phase: phaseAt(
-          { cookEnd_s: t.cookEnd_s, coolEnd_s: t.coolEnd_s, provisional: false }, now_s,
+          { cookEnd_s: t.cookEnd_s, coolEnd_s: t.coolEnd_s, provisional: false, outAt_s: t.outAt_s }, now_s,
         ),
       })),
     })),

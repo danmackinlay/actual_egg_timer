@@ -122,7 +122,7 @@ DONE: **3.1 The solve → refusal → snap-and-retry rule is written three times
 - Where: `app.ts:1832-1834` and `Cook.swift:226-228` (45 s, 60 s, 10 s).
 - Fix: move them to `policy.ts`, its Swift twin and `policy.json`.
 
-**3.4 `Cook.Phase` duplicates core `Phase`.**
+DONE: **3.4 `Cook.Phase` duplicates core `Phase`.** (`Deadlines.outAt_s`/`outAtS`, pinned by two tapped-out timelines in `policy.json`.)
 - Where: `Cook.swift:32-43`, with two hand mappings at `:265-281` and `:645-652`. The tap-out override also lives outside core.
 - Fix: use `EggTimerCore.Phase`, add `outAtS` to `Deadlines` / `phaseAt`, and fixture it in `policy.json`.
 

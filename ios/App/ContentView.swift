@@ -188,7 +188,7 @@ struct ContentView: View {
     /// Sous-vide is answered honestly and separately: no cook to run, no clock
     /// to start, and a start time that has already been and gone. It branches
     /// FIRST, before any of the pan readout.
-    private func readout(_ phase: Cook.Phase, at now: Date) -> some View {
+    private func readout(_ phase: Phase, at now: Date) -> some View {
         VStack(spacing: 6) {
             if kitchen.isSousVide && phase == .idle {
                 let copy = sousVideCopy(kitchen.sousVide, now: now, units: kitchen.units)
@@ -233,7 +233,7 @@ struct ContentView: View {
     /// The line under the time. "Based on history" has an (i) that says what
     /// history, as on the web.
     @ViewBuilder
-    private func sublineLine(_ phase: Cook.Phase, at now: Date) -> some View {
+    private func sublineLine(_ phase: Phase, at now: Date) -> some View {
         if phase == .idle && kitchen.coldStart && kitchen.hasBoilMemory {
             InfoRow(
                 name: tr("readout.sub.coldAssumes.info"),
@@ -275,7 +275,7 @@ struct ContentView: View {
     /// the last paragraph of the (i). The decision still works it out; nothing
     /// keeps it with the egg.
     @ViewBuilder
-    private func direction(_ phase: Cook.Phase) -> some View {
+    private func direction(_ phase: Phase) -> some View {
         let idle = phase == .idle
         let o = forecast(phase)
         VStack(spacing: 2) {
@@ -309,7 +309,7 @@ struct ContentView: View {
     /// What the direction is about. While idle, the choice on screen's, once
     /// this pot's surface has landed; once a cook is running, what it was at
     /// "Eggs in".
-    private func forecast(_ phase: Cook.Phase) -> Outcome? {
+    private func forecast(_ phase: Phase) -> Outcome? {
         if phase == .idle {
             guard kitchen.decision != nil, kitchen.solution?.whiteSets == true else { return nil }
             return kitchen.outcome
@@ -317,7 +317,7 @@ struct ContentView: View {
         return cook.ticket?.forecast
     }
 
-    private func phaseLabel(_ phase: Cook.Phase) -> String {
+    private func phaseLabel(_ phase: Phase) -> String {
         switch phase {
         case .idle: tr("readout.phase.total")
         case .heating: tr("readout.phase.heating")
@@ -335,7 +335,7 @@ struct ContentView: View {
     /// The web's clock face in every phase: the countdown, how late the pull
     /// is running while the eggs wait to come out, and at the end the time
     /// the egg was in the water.
-    private func bigTime(_ phase: Cook.Phase, at now: Date) -> String {
+    private func bigTime(_ phase: Phase, at now: Date) -> String {
         switch phase {
         case .idle: kitchen.solution.map { clockString($0.result.cookTimeS) } ?? "--:--"
         case .heating, .cooking: clockString(cook.secondsToPull)
@@ -345,7 +345,7 @@ struct ContentView: View {
         }
     }
 
-    private func subline(_ phase: Cook.Phase, at now: Date) -> String {
+    private func subline(_ phase: Phase, at now: Date) -> String {
         switch phase {
         case .idle:
             // The web's: on a cold start, the boil it assumes, and whether
@@ -463,7 +463,7 @@ struct ContentView: View {
     // MARK: - Action
 
     @ViewBuilder
-    private func action(_ phase: Cook.Phase, at now: Date) -> some View {
+    private func action(_ phase: Phase, at now: Date) -> some View {
         switch phase {
         case .idle where kitchen.isSousVide:
             VStack(spacing: 8) {
@@ -974,7 +974,7 @@ struct ContentView: View {
     /// first-egg welcome; and under low odds, the way to Help, which is one
     /// short line and goes under whichever is there.
     @ViewBuilder
-    private func slot(_ phase: Cook.Phase, at now: Date) -> some View {
+    private func slot(_ phase: Phase, at now: Date) -> some View {
         if phase == .idle {
             VStack(spacing: 10) {
                 if kitchen.isSousVide {

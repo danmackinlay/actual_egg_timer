@@ -50,7 +50,7 @@ function corePhase(m: Machine, now_ms: number): Phase {
     ? null
     : (m.cookEnd_ms / 1000) + PULL_GRACE_SECONDS + COOLING_SECONDS;
   return phaseAt(
-    { cookEnd_s: m.cookEnd_ms / 1000, coolEnd_s: coolEnd_s, provisional: m.provisional },
+    { cookEnd_s: m.cookEnd_ms / 1000, coolEnd_s: coolEnd_s, provisional: m.provisional, outAt_s: null },
     now_ms / 1000,
   ) as Phase;
 }

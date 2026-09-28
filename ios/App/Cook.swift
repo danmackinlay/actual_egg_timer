@@ -29,19 +29,6 @@ import EggTimerRing
 @Observable
 @MainActor
 final class Cook {
-    enum Phase: Equatable {
-        case idle
-        /// Cold start, in the pan, water not yet at a rolling boil.
-        case heating
-        /// In the water, counting down to the pull.
-        case cooking
-        /// Out now. The one moment the app is allowed to be loud.
-        case pull
-        /// In the ice or under the tap, carryover still running.
-        case cooling
-        case done
-    }
-
     /// What is being cooked, captured at "Eggs in". The inputs disappear off
     /// screen once a cook starts, and the Lock Screen has no access to them at
     /// all, so the description travels with the cook rather than being read
@@ -259,32 +246,17 @@ final class Cook {
         // merely unlikely, which is the right guarantee for a Cancel button.
         guard let pullAt, startedAt != nil, ticket != nil else { return .idle }
         // The ORDER of the remaining tests is core policy, and it is core
-        // policy because the two apps disagreed about it. See `phaseAt`.
-        let core = EggTimerCore.phaseAt(
+        // policy because the two apps disagreed about it. See `phaseAt`. The
+        // cook's tap out of PULL (`outAt`) is core's too.
+        return phaseAt(
             Deadlines(
                 cookEndS: pullAt.timeIntervalSince1970,
                 coolEndS: coolDoneAt?.timeIntervalSince1970,
-                provisional: provisional
+                provisional: provisional,
+                outAtS: outAt?.timeIntervalSince1970
             ),
             nowS: now.timeIntervalSince1970
         )
-        switch core {
-        case .idle: return .idle
-        case .heating: return .heating
-        case .cooking: return .cooking
-        case .pull:
-            // The cook has said the eggs are out, inside the grace: PULL is
-            // over, and the cooling runs from the tap - the web machine's
-            // `beginCooling`. The core rule keys off the deadlines alone, so
-            // the tap is applied here, on top of it.
-            if let outAt, now >= outAt {
-                guard let coolDoneAt else { return .done }
-                return now < coolDoneAt ? .cooling : .done
-            }
-            return .pull
-        case .cooling: return .cooling
-        case .done: return .done
-        }
     }
 
     /// The cook time actually used, egg-in to egg-out. This is what the
@@ -622,16 +594,8 @@ final class Cook {
     private func ringIfDue() {
         guard let pullAt else { return }
         let now = Date.now
-        let core: EggTimerCore.Phase = switch phase(at: now) {
-        case .idle: .idle
-        case .heating: .heating
-        case .cooking: .cooking
-        case .pull: .pull
-        case .cooling: .cooling
-        case .done: .done
-        }
         guard let due = deadlineToRing(
-            phase: core,
+            phase: phase(at: now),
             nowS: now.timeIntervalSince1970,
             pullS: pullAt.timeIntervalSince1970,
             cooledS: coolDoneAt?.timeIntervalSince1970,

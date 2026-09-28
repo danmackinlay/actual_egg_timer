@@ -339,6 +339,7 @@ struct PhaseConformance {
             let name = timeline.str("name")
             let cookEndS = timeline.num("cookEnd_s")
             let coolEndS = timeline.optionalNum("coolEnd_s")
+            let outAtS = timeline.optionalNum("outAt_s")
             guard let samples = timeline["samples"] as? [[String: Any]] else {
                 Issue.record("timeline \(name) has no samples")
                 continue
@@ -346,7 +347,7 @@ struct PhaseConformance {
             for sample in samples {
                 let nowS = sample.num("now_s")
                 let running = phaseAt(
-                    Deadlines(cookEndS: cookEndS, coolEndS: coolEndS, provisional: false),
+                    Deadlines(cookEndS: cookEndS, coolEndS: coolEndS, provisional: false, outAtS: outAtS),
                     nowS: nowS
                 )
                 #expect(
@@ -354,7 +355,7 @@ struct PhaseConformance {
                     "\(name) at \(nowS) s: expected \(sample.str("phase")), got \(running.rawValue)"
                 )
                 let guessing = phaseAt(
-                    Deadlines(cookEndS: cookEndS, coolEndS: coolEndS, provisional: true),
+                    Deadlines(cookEndS: cookEndS, coolEndS: coolEndS, provisional: true, outAtS: outAtS),
                     nowS: nowS
                 )
                 let what = "\(name) at \(nowS) s, boil not yet tapped:"

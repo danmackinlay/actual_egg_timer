@@ -515,11 +515,16 @@ public struct Deadlines: Sendable {
     public let coolEndS: Double?
     /// True on a cold start until the boil is tapped: the deadline is a guess.
     public let provisional: Bool
+    /// When the cook said the eggs were out, inside the pull's grace; nil until
+    /// they do. The tap ends the pull, and the cooling (whose deadline the app
+    /// then times from the tap) starts there.
+    public let outAtS: Double?
 
-    public init(cookEndS: Double, coolEndS: Double?, provisional: Bool) {
+    public init(cookEndS: Double, coolEndS: Double?, provisional: Bool, outAtS: Double? = nil) {
         self.cookEndS = cookEndS
         self.coolEndS = coolEndS
         self.provisional = provisional
+        self.outAtS = outAtS
     }
 }
 
@@ -534,11 +539,13 @@ public struct Deadlines: Sendable {
 /// a screen that already said Done. The web app always passed through PULL.
 ///
 /// PULL is therefore unconditional: every cook has a moment where the egg has
-/// to come out, whatever happens to it next.
+/// to come out, whatever happens to it next. It ends early only when the cook
+/// says the eggs are out (`outAtS`).
 public func phaseAt(_ d: Deadlines, nowS: Double) -> Phase {
     if d.provisional { return .heating }
     if nowS < d.cookEndS { return .cooking }
-    if nowS < d.cookEndS + pullGraceSeconds { return .pull }
+    let out = d.outAtS.map { nowS >= $0 } ?? false
+    if nowS < d.cookEndS + pullGraceSeconds && !out { return .pull }
     guard let coolEndS = d.coolEndS else { return .done }
     return nowS < coolEndS ? .cooling : .done
 }

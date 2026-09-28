@@ -535,6 +535,10 @@ export interface Deadlines {
   coolEnd_s: number | null;
   /** True on a cold start until the boil is tapped: the deadline is a guess. */
   provisional: boolean;
+  /** When the cook said the eggs were out, inside the pull's grace; null
+   *  until they do. The tap ends the pull, and the cooling (whose deadline
+   *  the app then times from the tap) starts there. */
+  outAt_s: number | null;
 }
 
 /**
@@ -549,12 +553,14 @@ export interface Deadlines {
  * a screen that already said Done. The web app always passed through PULL.
  *
  * PULL is therefore unconditional: every cook has a moment where the egg has
- * to come out, whatever happens to it next.
+ * to come out, whatever happens to it next. It ends early only when the cook
+ * says the eggs are out (`outAt_s`).
  */
 export function phaseAt(d: Deadlines, now_s: number): Phase {
   if (d.provisional) return 'HEATING';
   if (now_s < d.cookEnd_s) return 'COOKING';
-  if (now_s < d.cookEnd_s + PULL_GRACE_SECONDS) return 'PULL';
+  const out = d.outAt_s !== null && now_s >= d.outAt_s;
+  if (now_s < d.cookEnd_s + PULL_GRACE_SECONDS && !out) return 'PULL';
   if (d.coolEnd_s === null) return 'DONE';
   return now_s < d.coolEnd_s ? 'COOLING' : 'DONE';
 }
