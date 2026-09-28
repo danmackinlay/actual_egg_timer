@@ -458,7 +458,7 @@ DONE (but the descriptions, which are §9.6's wording): **7.8 Head and manifest.
 - Add a manifest `id` and a maskable icon.
 - Unify the three descriptions (wording in §9.6).
 
-**7.9 Version drift.**
+DONE: **7.9 Version drift.** (`test/version.test.ts` holds the version and the team ID; `@types/node` is ^26.6.3.)
 - `package-lock.json` says `0.1.0` while `package.json` says `0.2.0`. Run `npm install --package-lock-only`.
 - Add a test asserting `project.yml` `MARKETING_VERSION === pkg.version`.
 - Cross-reference the team ID between `ExportOptions.plist:21` and `project.yml:28`.
