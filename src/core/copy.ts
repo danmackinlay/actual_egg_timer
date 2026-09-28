@@ -57,16 +57,15 @@ export interface CopyRef {
   args: Readonly<Record<string, number>>;
 }
 
-/** One message. Exactly one of `text` or `forms` is set. */
-export interface Message {
-  /** The template, when the message has no count in it. */
-  text: string | null;
-  /** The argument that picks the plural form, when it has. */
-  count: string | null;
-  /** One template per plural category. `other` is always present, and is what
-   *  a category with no template of its own falls back to. */
-  forms: Partial<Record<PluralCategory, string>> | null;
-}
+/** One template per plural category. `other` is always present, and is what
+ *  a category with no template of its own falls back to. */
+export type PluralForms = Partial<Record<PluralCategory, string>> & { other: string };
+
+/** One message: a template, or, when it has a count in it, one template per
+ *  plural category and the argument that picks among them. */
+export type Message =
+  | { kind: 'text'; text: string }
+  | { kind: 'plural'; count: string; forms: PluralForms };
 
 export interface Catalogue {
   /** A BCP 47 tag. Its language subtag picks the plural rule. */
@@ -149,20 +148,20 @@ export function renderRef(
 }
 
 function templateFor(message: Message, locale: string, args: CopyArgs): string {
-  if (message.text !== null) return message.text;
-  const forms = message.forms as Partial<Record<PluralCategory, string>>;
+  if (message.kind === 'text') return message.text;
+  const forms = message.forms;
   // The count must be a number. A string is not parsed, because the two
   // platforms parse strings differently, and a missing count is 'other'. The
   // form is chosen for the number as it is SHOWN: rounded as `formatArg`
   // rounds it, with the decimals it is shown with.
-  const raw = message.count === null ? undefined : args[message.count];
+  const raw = args[message.count];
   let category: PluralCategory = 'other';
   if (typeof raw === 'number') {
     category = pluralCategory(locale, roundTo(raw, countDecimals(raw)), countDecimals(raw));
   } else if (isFixed(raw)) {
     category = pluralCategory(locale, roundTo(raw.value, raw.decimals), raw.decimals);
   }
-  return forms[category] ?? (forms.other as string);
+  return forms[category] ?? forms.other;
 }
 
 /** An argument as text. A string as it is; a count in the locale, with its
@@ -225,8 +224,8 @@ export function placeholders(template: string): string[] {
 
 /** Every template of a message: its text, or each of its plural forms. */
 export function templatesOf(message: Message): string[] {
-  if (message.text !== null) return [message.text];
-  const forms = message.forms as Partial<Record<PluralCategory, string>>;
+  if (message.kind === 'text') return [message.text];
+  const forms = message.forms;
   return PLURAL_CATEGORIES.map((c) => forms[c]).filter((t): t is string => t !== undefined);
 }
 
@@ -263,7 +262,7 @@ function parseMessage(key: string, json: unknown): Message {
     for (const c of PLURAL_CATEGORIES) {
       if (m[c] !== undefined) throw new Error(`${key}: both text and a plural form`);
     }
-    return { text: text, count: null, forms: null };
+    return { kind: 'text', text: text };
   }
   const count = m['count'];
   if (typeof count !== 'string' || count === '') throw new Error(`${key}: neither text nor count`);
@@ -274,8 +273,9 @@ function parseMessage(key: string, json: unknown): Message {
     if (typeof form !== 'string') throw new Error(`${key}.${c}: not a string`);
     forms[c] = form;
   }
-  if (forms.other === undefined) throw new Error(`${key}: a plural with no "other"`);
-  return { text: null, count: count, forms: forms };
+  const other = forms.other;
+  if (other === undefined) throw new Error(`${key}: a plural with no "other"`);
+  return { kind: 'plural', count: count, forms: { ...forms, other: other } };
 }
 
 function asObject(json: unknown, what: string): Record<string, unknown> {

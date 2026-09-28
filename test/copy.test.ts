@@ -14,9 +14,14 @@ import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 
 import {
-  Catalogue, PLURAL_CATEGORIES, midSentence, parseCatalogue, placeholders, pluralCategory, render,
+  Catalogue, Message, PLURAL_CATEGORIES, midSentence, parseCatalogue, placeholders, pluralCategory, render,
   renderRef, templatesOf,
 } from '../src/core/copy.js';
+
+/** The argument that picks a message's plural form, or null for plain text. */
+function countOf(m: Message): string | null {
+  return m.kind === 'plural' ? m.count : null;
+}
 
 type Entry = Record<string, unknown>;
 interface CatalogueJson { locale: string; messages: Record<string, Entry> }
@@ -150,7 +155,7 @@ test('3a. every English entry names its surface, its apps, and an example for ea
     const used = new Set(templatesOf(message).flatMap(placeholders));
     const example = (entry['example'] ?? {}) as Record<string, unknown>;
     assert.deepEqual(new Set(Object.keys(example)), used, `${key}: example args`);
-    if (message.count !== null) {
+    if (message.kind === 'plural') {
       assert.equal(typeof example[message.count], 'number', `${key}: the count is a number`);
     }
   }
@@ -185,13 +190,15 @@ function parityFailures(json: CatalogueJson): string[] {
       // Each form may leave out the count (Czech "jedno vejce"), never anything else.
       const got = new Set(placeholders(template));
       for (const name of want) {
-        if (!got.has(name) && name !== english.count) failures.push(`${key}: "${template}" drops {${name}}`);
+        if (!got.has(name) && name !== countOf(english)) failures.push(`${key}: "${template}" drops {${name}}`);
       }
       for (const name of got) {
         if (!want.includes(name)) failures.push(`${key}: "${template}" invents {${name}}`);
       }
     }
-    if (english.count !== message.count) failures.push(`${key}: counts ${String(message.count)}, not ${String(english.count)}`);
+    if (countOf(english) !== countOf(message)) {
+      failures.push(`${key}: counts ${String(countOf(message))}, not ${String(countOf(english))}`);
+    }
   }
   return failures;
 }

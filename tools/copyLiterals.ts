@@ -447,7 +447,7 @@ const now = [...sourcesAt(null).entries()].flatMap(([f, s]) => literals(s).map((
 /** The names of arguments the catalogue takes: `"grams": .int(68)` in a call
  *  is not a word, as long as it is one of these and in key position. */
 const argumentNames = new Set([...en.messages.values()]
-  .flatMap((m) => templatesOf(m).flatMap(placeholders).concat(m.count === null ? [] : [m.count])));
+  .flatMap((m) => templatesOf(m).flatMap(placeholders).concat(m.kind === 'plural' ? [m.count] : [])));
 
 const failures: string[] = [];
 let keys = 0;
