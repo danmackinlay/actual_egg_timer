@@ -464,7 +464,7 @@ DONE: **7.9 Version drift.** (`test/version.test.ts` holds the version and the t
 - Cross-reference the team ID between `ExportOptions.plist:21` and `project.yml:28`.
 - Bump `@types/node` (22 vs runtime 26).
 
-**7.10 `.gitignore`.**
+DONE: **7.10 `.gitignore`.**
 - Replace lines 1-62, GitHub's Xcode template (CocoaPods, Carthage, fastlane).
 - Add `.DS_Store` and `.swiftpm/`, which are currently ignored only by the owner's global ignore.
 - Remove the duplicate `.build/`.
