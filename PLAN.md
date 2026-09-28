@@ -386,12 +386,16 @@ cook. Nothing leaves a phone before E6.
       learning wherever it shows a time. The "still learning" line has since
       left both screens; the direction's "I can't call it yet" is what says
       it now. Whether that meets the condition is the owner's to settle
-      before E8 (INFERENCE.md §8). Not started.
+      before E8 (INFERENCE.md §8). Each egg is to carry its full forecast at
+      "Eggs in" (yolk and white answer probabilities) and a model version
+      (INFERENCE.md §7, §11.12). Not started.
 - [ ] **E7 the population fit.** Offline, Python, outside `src/core/`. An
       emulator for the likelihood, 2-4 global parameters, cook and kitchen
       effects with reliability. Publishes `fixtures/population.json`, which both
       apps read as their prior. Done when: held-out predictive calibration is
-      the reported headline. Not started.
+      the reported headline, by proper scoring rules - log score first, RPS
+      reported, reliability and PIT displays (INFERENCE.md §9, §11.12). Not
+      started.
 - [ ] **E8 the nudge.** +-10 s on the recommendation for consenting cooks. Last,
       because it is worthless before E7 exists to use it. Not started.
 

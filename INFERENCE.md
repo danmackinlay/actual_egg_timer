@@ -289,6 +289,8 @@ held to `EggTimerCore/Record.swift` by `fixtures/record.json`.
   `boiling_C` is a one-to-one function of the altitude setting, so it carries
   everything the altitude would, and the altitude itself is not recorded.
 - `uid` is `null` until E6 mints one. `mass_g` is rounded to 0.01 g.
+- `forecast` and `model` are not written yet: E6 adds them, so that what the
+  app actually said at "Eggs in" is kept beside the answer (§7, §11.12).
 - `probe` (E4) is `null`, or `{ "centre_C": 64.2, "after_s": 183 }`: the
   highest number the cook saw with the probe at the middle, in C to 0.01
   whatever they typed it in, and when the app asked for it - the end of the
@@ -440,6 +442,13 @@ What bounds the damage:
 - a cap on how far any global parameter may move per published prior;
 - the thermometer panel and the physics prior as anchors.
 
+**The screen for an unreliable or hostile contributor is a score, not a
+threshold on answers** (§11.12): each cook's prequential log score - the log
+predictive of each of their answers given their earlier ones, summed over their
+eggs - taken relative to what the population model alone would have scored.
+A cook the model predicts worse than the population does, egg after egg, is
+the one to look at; a cook with unusual eggs that the model learns is not.
+
 The worst case is modest: the prior's width limits a poisoned time-scale to
 roughly half a minute, and each cook's own offsets correct for it within a few
 eggs. An egg timer is not a high-value target. The realistic failure is
@@ -469,6 +478,15 @@ carelessness, which the first paragraph handles.
   entries ("not linked to you"); the README, `ios/README.md` and the App Store
   answers in `ios/RELEASING.md` all stop saying the app has no networking; the
   web app gains its first request.
+- **Each egg carries what the app said** (owner, 28 September; §11.12). Every
+  uploaded record - and, once E6 lands, every record kept on the device - holds
+  the full forecast at "Eggs in": the yolk's three answer probabilities (too
+  soft, just right, too firm) and the white's (runny, tender, firm), as
+  `yolkAnswerProbabilities` and `whiteAnswerProbabilities` give them at the
+  time started, unrelated share included - not the odds in tenths - and a
+  model version. The model as shipped can then be scored after the code has
+  changed. Replay (E1, §4) regenerates what the CURRENT code would have
+  forecast; only the stored forecast says what the app actually said.
 - **A selection effect to remember.** The people who opt in are the people who
   weigh their eggs. Kitchen and cook effects adapt, but the published egg-to-egg
   noise will flatter everyone else.
@@ -756,8 +774,25 @@ Not built: the nudge (E8), and any per-cook loss.
   means and covariance, and the hyperpriors for cook effects. Both
   apps read it as the prior, under the conformance suite like every other
   fixture.
-- **Validation is predictive calibration on held-out cooks**: when the model says
-  a white will be runny one time in five, it is. That becomes the headline check;
+- **Validation is by proper scoring rules** (owner, 28 September; §11.12), on
+  held-out cooks and one step ahead, not by home-made quantile checks:
+  - **The log score is primary.** For an answer it is the ordered-probit log
+    likelihood of that answer one step ahead; summed over a cook's eggs it is
+    the prequential log marginal likelihood, which the particle filter's
+    incremental weights already compute. The unrelated share (epsilon = 0.05,
+    §3) is a floor under every answer's probability, so the score stays finite.
+  - **The ranked probability score** is the reported ordinal-aware, bounded
+    score for the three-answer scales.
+  - **Probe readings** (§5) are scored by CRPS or by their log predictive
+    density.
+  - **Calibration is displayed**, not tested by hand, as reliability diagrams
+    and randomised PIT histograms: when the model says a white will be runny
+    one time in five, it is.
+  - The stored forecast (§7) scores the model as shipped; a replay under the
+    current code scores the model as it now is. Both are worth having.
+  - The on-screen direction sentence, the bracket under the slider and the
+    "still learning" interval are display and decision heuristics. None is
+    used for evaluation.
   README §7's table remains as the check on the prior.
 
 ## 10. Order, and why
@@ -839,3 +874,23 @@ started.
     without change to the record: it keeps the water volume, and
     `timeToBoilFrom` still says which of them had leaned on a remembered pan.
 
+### Decided by the owner, 28 September 2026
+
+12. **Calibration is checked with proper scoring rules, not home-made quantile
+    checks.** E6 stores, with each uploaded egg (and each egg recorded on the
+    device, once E6 lands), the full forecast at "Eggs in" - the yolk's
+    categorical distribution over too soft / just right / too firm and the
+    white's over runny / tender / firm, not the tenths - and a model version,
+    so the model as shipped can be scored after the code changes; replay
+    regenerates only what the current code would have said. E7 evaluates by
+    the log score first (the ordered-probit log likelihood one step ahead,
+    whose sum over a cook's eggs is the prequential log marginal likelihood
+    the filter's incremental weights already compute; the 0.05 unrelated
+    share keeps it finite), reports the ranked probability score as the
+    ordinal-aware bounded score, scores probe readings by CRPS or log
+    predictive density, and shows calibration as reliability diagrams and
+    randomised PIT histograms. The same per-cook prequential log score,
+    relative to the population model, is the screen for unreliable or
+    hostile contributors (§6). The direction sentence, the bracket and the
+    "still learning" interval are display and decision heuristics, not
+    evaluation. §7 and §9 have the detail. Not built.
