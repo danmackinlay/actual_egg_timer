@@ -51,7 +51,7 @@ enum Settings {
         kitchen.eggCount = Int(clamp(store.double(forKey: "eggCount"), to: Limits.eggCount).rounded())
         // Three positions under a new key, as the start has; an install from
         // before Custom comes back to the fridge or the room it was left on.
-        if let stored = store.string(forKey: "startTemp"), let from = StartTemp(rawValue: stored) {
+        if let stored = store.string(forKey: "startTemp"), let from = EggFrom(rawValue: stored) {
             kitchen.startTemp = from
         } else {
             kitchen.startTemp = store.bool(forKey: "fromFridge") ? .fridge : .room

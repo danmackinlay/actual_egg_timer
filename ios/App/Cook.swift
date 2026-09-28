@@ -78,7 +78,7 @@ final class Cook {
         /// Where the egg came from - the fridge, the room or the cook's own
         /// number - for the sentence shown while the cook runs. Optional for
         /// the same reason; `SetupFacts` reads it off the temperature then.
-        var startTemp: StartTemp?
+        var startTemp: EggFrom?
         /// Whether a measured pan was on file at "Eggs in" - what a hot start,
         /// which never times its own pan, cooked on. Optional for the same
         /// reason as the two above.
@@ -315,11 +315,9 @@ final class Cook {
                 massFrom: massFrom,
                 sizeTable: massFrom == .sizeClass ? sizeTable ?? .eu : nil
             ),
-            // Fridge or room are the only two this app offers, so the start
-            // temperature says which was picked.
             setup: RecordSetup(
                 setup: ticket.setup,
-                eggFrom: ticket.setup.eggStartC == StartTempPresets.fridgeC ? .fridge : .room,
+                eggFrom: ticket.startTemp ?? (ticket.setup.eggStartC == StartTempPresets.fridgeC ? .fridge : .room),
                 timeToBoilFrom: Self.timeToBoilFrom(ticket)
             ),
             level: ticket.level,

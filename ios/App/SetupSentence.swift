@@ -128,7 +128,7 @@ struct ClauseText {
 struct SetupFacts {
     /// The egg's mass as the size menu or the scale says it, with its unit.
     var mass: String
-    var from: StartTemp
+    var from: EggFrom
     /// The egg's temperature when it is the cook's own number, C.
     var customC: Double
     var start: StartChoice
@@ -367,9 +367,9 @@ struct ClausePanel: View {
     private var from: some View {
         VStack(alignment: .leading, spacing: 10) {
             Picker(tr("controls.eggFrom"), selection: $kitchen.startTemp) {
-                Text(tr("controls.eggFrom.fridge")).tag(StartTemp.fridge)
-                Text(tr("controls.eggFrom.room")).tag(StartTemp.room)
-                Text(tr("controls.eggFrom.custom")).tag(StartTemp.custom)
+                Text(tr("controls.eggFrom.fridge")).tag(EggFrom.fridge)
+                Text(tr("controls.eggFrom.room")).tag(EggFrom.room)
+                Text(tr("controls.eggFrom.custom")).tag(EggFrom.custom)
             }
             .pickerStyle(.segmented)
             if kitchen.startTemp == .custom {

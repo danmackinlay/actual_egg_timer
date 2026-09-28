@@ -48,7 +48,7 @@ Baseline, all green:
 
 ## 2. P0 — bugs
 
-**2.1 ✔ iOS records a Custom egg temperature as "room".**
+**DONE: 2.1 ✔ iOS records a Custom egg temperature as "room".**
 - Where: `ios/App/Cook.swift:318-323`, `eggFrom: ticket.setup.eggStartC == StartTempPresets.fridgeC ? .fridge : .room`. The comment ("Fridge or room are the only two") went stale when Custom was added. `Kitchen.swift:891` (debug seed) repeats it.
 - Fix: use `ticket.startTemp`. Then delete the app's `StartTemp` enum (`Kitchen.swift:28-30`), which duplicates core `EggFrom`, and use `EggFrom` throughout.
 - Done when: a Custom cook's record says `custom`, and the web (`app.ts:869`) and iOS agree.

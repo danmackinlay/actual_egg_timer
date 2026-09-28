@@ -23,12 +23,6 @@ import EggTimerCopy
 /// the physics - snapping, which refusal applies, the texture bands, the
 /// calibration grid, the bounds and the defaults - live in EggTimerCore's
 /// Policy, so this app and the web app cannot answer differently.
-/// Where the egg comes from. A room is an assumption and Custom is the cook's
-/// own number; a fridge is the one the model knows.
-enum StartTemp: String, Codable {
-    case fridge, room, custom
-}
-
 @Observable
 @MainActor
 final class Kitchen {
@@ -80,7 +74,7 @@ final class Kitchen {
     }
     /// Where the egg comes from: the fridge, the room, or a temperature the
     /// cook knows better (the web's `startTempMode`).
-    var startTemp: StartTemp = .fridge { didSet { changed() } }
+    var startTemp: EggFrom = .fridge { didSet { changed() } }
     /// The egg's temperature when it is Custom. Kept while another choice is
     /// made, so choosing Custom again goes back to it.
     var customStartC: Double = Defaults.customStartC { didSet { changed() } }
@@ -888,7 +882,7 @@ final class Kitchen {
                 day: "2026-09-28", app: .ios, appVersion: Calibrations.appVersion,
                 egg: RecordEgg(massG: recordMassG(massKg: egg.massKg), massFrom: massFrom, sizeTable: sizeTable),
                 setup: RecordSetup(
-                    setup: setup, eggFrom: startTemp == .fridge ? .fridge : .room,
+                    setup: setup, eggFrom: startTemp,
                     timeToBoilFrom: coldStart ? .measured : .default
                 ),
                 level: doneness, recommendedS: seconds, pulledS: seconds, pulledBy: .cook,
