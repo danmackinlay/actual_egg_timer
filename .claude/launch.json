@@ -4,7 +4,7 @@
     {
       "name": "egg-timer",
       "runtimeExecutable": "sh",
-      "runtimeArgs": ["-c", "python3 -m http.server \"${PORT:-8080}\" --directory _site"],
+      "runtimeArgs": ["-c", "npm run build:site && python3 -m http.server \"${PORT:-8080}\" --directory _site"],
       "port": 8080,
       "autoPort": true
     }

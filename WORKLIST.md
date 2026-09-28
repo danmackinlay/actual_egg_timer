@@ -439,7 +439,7 @@ DONE: **7.4 Add `netlify.toml` security headers.** (Checked by serving `_site` w
 - The page has no inline script or style, so a strict CSP costs nothing. Verified: one module script, one same-origin worker, same-origin `copy/` fetches.
 - Mirror them in `vercel.json`, or note there that it has none.
 
-**7.5 Clean builds.**
+DONE: **7.5 Clean builds.**
 - `build:site` should start with `rm -rf _site`.
 - `test` should start with `rm -rf dist`; otherwise a deleted test keeps running from `dist/`.
 - `.claude/launch.json` should build before serving `_site`.
