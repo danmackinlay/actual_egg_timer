@@ -3,7 +3,8 @@
   "compilerOptions": {
     "outDir": "_site/dist",
     "sourceMap": false,
-    "declaration": false
+    "declaration": false,
+    "types": []
   },
   "include": ["src/**/*.ts"]
 }

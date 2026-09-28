@@ -804,6 +804,9 @@ decisive (jammy vs fully set) but smaller than first computed.
    `Intl` is allowed in `format.ts` only, given an explicit locale and UTC: it
    reads no clock, no time zone and no device locale, so it is a pure function
    of its arguments, and `fixtures/format.json` pins what it returns.
+   `tsconfig.core.json` (run by `npm run check`) compiles core with neither the
+   DOM library nor Node's types, so a DOM or Node global there does not build;
+   `tsconfig.site.json` keeps Node's types out of the browser build the same way.
 2. **Swift-portable subset**: plain interfaces + top-level functions; explicit `for` loops;
    no classes, closures over mutable state, `null`/`undefined`, or `map`/`reduce` in hot paths.
 3. **SI units internally.** Convert only at the UI boundary.

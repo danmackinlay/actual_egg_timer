@@ -9,7 +9,7 @@
   "type": "module",
   "scripts": {
     "build": "tsc",
-    "check": "tsc --noEmit",
+    "check": "tsc --noEmit && tsc -p tsconfig.core.json && tsc -p tsconfig.site.json --noEmit",
     "test": "tsc && node --test dist/test/*.test.js",
     "validate": "tsc && node dist/tools/validate.js",
     "fixtures": "tsc && node dist/tools/fixtures.js",

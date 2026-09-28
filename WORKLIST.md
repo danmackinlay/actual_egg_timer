@@ -423,7 +423,7 @@ The candidates:
 - Add a macOS GitHub Actions workflow (`npm ci && npm run verify`, Node from `.node-version`), or a pre-push hook until pushing resumes.
 - Fix README.md:849's "what CI would run".
 
-**7.2 Enforce purity with tsconfig.**
+**DONE: 7.2 Enforce purity with tsconfig.**
 - Add `tsconfig.core.json` (`src/core/**`, `lib: ["ES2022"]`, `types: []`, `noEmit`) and run it in `check`. Today `DOM` is visible to core.
 - Add `"types": []` to `tsconfig.site.json` so Node globals can't reach the browser build. Both are checked to pass with 0 errors today.
 
