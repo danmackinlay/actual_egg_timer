@@ -124,11 +124,9 @@ enum Calibrations {
 
     /// A posterior, or nil if any part of it is damaged. A half-valid posterior
     /// is worse than none: a single NaN weight would poison every solve from
-    /// then on. Same rules as the web app's.
-    /// A posterior, or nil if any part of it is damaged. Same rules as the web
-    /// app's: alpha, tauAirScale, the noise and the firm gap strictly positive
-    /// (a zero noise divides by zero in the probit), weights non-negative, the
-    /// two offsets anything finite.
+    /// then on. Same rules as the web app's: alpha, tauAirScale, the noise and
+    /// the firm gap strictly positive (a zero noise divides by zero in the
+    /// probit), weights non-negative, the two offsets anything finite.
     private static func calibration(_ s: StoredPosterior?) -> Calibration? {
         guard let s else { return nil }
         let a = s.a

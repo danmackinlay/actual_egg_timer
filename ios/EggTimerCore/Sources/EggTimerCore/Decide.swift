@@ -134,7 +134,7 @@ public func hitOdds(
 /// where the loss is flat - see src/core/decide.ts.
 public let leanCostPerS = 1e-4
 
-private let scanStepS = 4.0
+private let choiceScanStepS = 4.0
 private let refineTolS = 0.02
 private let invPhi = (5.0.squareRoot() - 1.0) / 2.0
 
@@ -152,7 +152,7 @@ public func chooseCookTime(
     func f(_ t: Double) -> Double {
         expectedLoss(post, grid, t, logNominalTarget) + leanCostPerS * abs(t - aroundS)
     }
-    let steps = Int(((hi - lo) / scanStepS).rounded(.up))
+    let steps = Int(((hi - lo) / choiceScanStepS).rounded(.up))
     let step = (hi - lo) / Double(steps)
     var best = 0
     var bestValue = Double.infinity

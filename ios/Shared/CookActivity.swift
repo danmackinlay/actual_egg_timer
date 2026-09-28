@@ -3,9 +3,10 @@ import Foundation
 
 /// The contract between the app and the Live Activity.
 ///
-/// This file is compiled into BOTH targets, which is why it imports nothing but
-/// ActivityKit: the widget extension has no physics and needs none. Everything
-/// here has already been solved by the time the app hands it over.
+/// This file is compiled into BOTH targets, which is why it imports only
+/// ActivityKit and Foundation: the widget extension has no physics and needs
+/// none. Everything here has already been solved by the time the app hands it
+/// over.
 ///
 /// The countdown is expressed as a pair of absolute dates rather than a
 /// remaining duration, for the same reason `Cook` holds absolute dates: the

@@ -54,7 +54,7 @@ export function isFixed(value: unknown): value is Fixed {
 const COUNT_MAX_DECIMALS = 3;
 
 /** The space every time of day uses between its parts: U+202F. */
-const TIME_SPACE = ' ';
+const TIME_SPACE = '\u202F';
 
 /* -------------------------------------------------------------- numbers */
 
@@ -159,7 +159,7 @@ function isAsciiDigit(c: number): boolean {
 /** Every space in a time of day as U+202F. */
 export function normaliseTime(text: string): string {
   let out = '';
-  for (const c of text) out += c === ' ' || c === ' ' || c === TIME_SPACE ? TIME_SPACE : c;
+  for (const c of text) out += c === ' ' || c === '\u00A0' ? TIME_SPACE : c;
   return out;
 }
 

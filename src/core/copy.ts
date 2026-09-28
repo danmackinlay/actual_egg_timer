@@ -239,8 +239,8 @@ export function templatesOf(message: Message): string[] {
  *       "messages": {
  *         "feedback.ask": { "surface": "label", "text": "How was the yolk?" },
  *         "learned.tuned": { "surface": "body", "count": "eggs",
- *                            "one": "tuned on {eggs} egg · ±{spread}%",
- *                            "other": "tuned on {eggs} eggs · ±{spread}%" } } }
+ *                            "one": "Learned from {eggs} egg",
+ *                            "other": "Learned from {eggs} eggs" } } }
  *
  * Fields the renderer does not read (`surface`, `example`, `note`) are the
  * tests' business and are ignored here. Throws on anything malformed, naming

@@ -231,7 +231,7 @@ export function hitOdds(
 export const LEAN_COST_PER_S = 1e-4;
 
 /** Coarse step of the search, s. */
-const SCAN_STEP_S = 4;
+const CHOICE_SCAN_STEP_S = 4;
 /** The golden-section refinement stops when the bracket is this narrow, s. */
 const REFINE_TOL_S = 0.02;
 const INV_PHI = (Math.sqrt(5.0) - 1.0) / 2.0;
@@ -248,7 +248,7 @@ function objective(
  * second away from `around_s`, within DECISION_WINDOW_S of it and inside the
  * grid.
  *
- * A scan at SCAN_STEP_S finds the lowest sample - the first, on a tie - and a
+ * A scan at CHOICE_SCAN_STEP_S finds the lowest sample - the first, on a tie - and a
  * golden-section search inside the two steps around it finds the minimum to
  * REFINE_TOL_S. The scan is what makes it safe: the loss is not guaranteed to
  * have one minimum over the whole window, and a golden section alone could
@@ -263,7 +263,7 @@ export function chooseCookTime(
   const hi = Math.min(gridHi, around_s + DECISION_WINDOW_S);
   if (!(hi > lo)) return around_s;
   const f = (t: number): number => objective(post, grid, t, logNominalTarget, around_s);
-  const steps = Math.ceil((hi - lo) / SCAN_STEP_S);
+  const steps = Math.ceil((hi - lo) / CHOICE_SCAN_STEP_S);
   const step = (hi - lo) / steps;
   let best = 0;
   let bestValue = Number.POSITIVE_INFINITY;

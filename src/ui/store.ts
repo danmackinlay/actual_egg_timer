@@ -265,7 +265,7 @@ function clampLitres(litres: number): number {
  * The alarm is a timer in this tab and dies with it, so unlike iOS there is no
  * notification still counting down to contradict. What is restored is the
  * state and the ticket; whether it is still worth restoring is
- * `isStaleCook`'s business.
+ * `restoreMachine`'s business (machine.ts).
  */
 interface StoredCook {
   machine: unknown;

@@ -508,7 +508,7 @@ The candidates:
   - gridWorker.ts 4-8
 - Do this after §4, since many of these comments die with the code they describe.
 
-**8.2 Comments that are now false (fix now).**
+DONE: **8.2 Comments that are now false (fix now).** (`EU_LARGE` is `REFERENCE_EGG`; decide's `SCAN_STEP_S` is `CHOICE_SCAN_STEP_S`, Swift `choiceScanStepS`; `isStaleCook` now names `restoreMachine`; the copyDraft list gains `history` (listed as `truths`), `counter`, `boil`, `help` and `units`.)
 
 | Where | What's wrong |
 |---|---|

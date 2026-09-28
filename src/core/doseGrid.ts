@@ -44,7 +44,7 @@ function safeLog10(v: number): number {
 }
 
 /** Build the surface. Cost is alphaCount * timeCount simulations, so ~1.5 s at
- *  the default 21 x 36. Rebuild only when the egg, setup or tauAirScale change,
+ *  the default 21 x 32. Rebuild only when the egg, setup or tauAirScale change,
  *  never on every keystroke. */
 export function buildDoseGrid(
   egg: Egg, setup: CookSetup, tauAirScale: number,

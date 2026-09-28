@@ -1022,9 +1022,9 @@ func showIn(_ units: UnitSystem, _ q: Quantity, _ si: Double) -> String {
 
 extension Notification.Name {
     /// Posted by `Kitchen.chooseUnits` when the cook's own choice changes the
-    /// system on screen, with the `UnitsFlip` raw value under "flip". Nothing
-    /// observes it yet: it is the hook F6 needs - an English UI switched from
-    /// metric to Imperial goes into the English of 1750 (LANGUAGE.md §6).
+    /// system on screen, with the `UnitsFlip` raw value under "flip".
+    /// `LanguageChoice` observes it: an English UI switched from metric to
+    /// Imperial goes into the English of 1750 (LANGUAGE.md §6).
     static let unitsFlipped = Notification.Name("unitsFlipped")
 }
 

@@ -11,11 +11,10 @@ import EggTimerCopy
 /// part of a day to accumulate, so the honest answer to "when do I start?" is a
 /// time in the past. All this file does is say so out loud.
 ///
-/// It lives in the app rather than in the core, for the same reason
-/// `refusalText` does: the core carries the DECISION and the app carries the
-/// sentence. A sous-vide readout on a phone is not the same shape as one in a
-/// browser, and a shared string would have to be wrong for one of them.
-/// Transliterated from `src/ui/sousvide.ts`, which does this job for the web.
+/// Which words say it are core's (`longDuration`, `startPhrase`,
+/// `weekdayKey`, against `fixtures/sousvideCopy.json`); this file supplies what
+/// only a platform can answer - the calendar's days and weekday - and renders
+/// the keys. The web's `src/ui/sousvide.ts` does the same job.
 
 /// Which of the three positions the Start control is in.
 ///

@@ -6,8 +6,8 @@
  * Run: npx tsc && node dist/tools/validate.js
  * Exits non-zero if any check fails, so it can gate a commit.
  *
- * Reference setup unless a row says otherwise: EU Large egg (43.5 mm minor
- * diameter, ~62 g), fridge-cold at 4 C, hot start into boiling water, ice
+ * Reference setup unless a row says otherwise: the reference egg (43.5 mm
+ * minor diameter, ~62 g; not the app's 68 g EU Large), fridge-cold at 4 C, hot start into boiling water, ice
  * bath afterwards, jammy = slider 0.41.
  */
 
@@ -74,7 +74,7 @@ function printTable(title: string, header: string[], body: string[][]): void {
 // fixtures
 // --------------------------------------------------------------------------
 
-const EU_LARGE: Egg = eggFromMinorDiameter(0.0435);
+const REFERENCE_EGG: Egg = eggFromMinorDiameter(0.0435);
 const JAMMY = donenessFromSlider(0.41);
 
 function setupOf(over: Partial<CookSetup>): CookSetup {
@@ -111,17 +111,17 @@ function cookMinutes(egg: Egg, setup: CookSetup, level: number): number {
 // headline scenarios
 // --------------------------------------------------------------------------
 
-check('jammy, fridge 4 C, sea level', cookMinutes(EU_LARGE, setupOf({}), 0.41), 7.36, TOL_MIN, 'min');
+check('jammy, fridge 4 C, sea level', cookMinutes(REFERENCE_EGG, setupOf({}), 0.41), 7.36, TOL_MIN, 'min');
 
 check(
   'jammy, room temp 21 C',
-  cookMinutes(EU_LARGE, setupOf({ eggStart_C: 21, ambient_C: 21 }), 0.41),
+  cookMinutes(REFERENCE_EGG, setupOf({ eggStart_C: 21, ambient_C: 21 }), 0.41),
   6.23, TOL_MIN, 'min',
 );
 
 check(
   'jammy, fridge, 2000 m',
-  cookMinutes(EU_LARGE, setupOf({ boiling_C: boilingPointAtAltitude(2000) }), 0.41),
+  cookMinutes(REFERENCE_EGG, setupOf({ boiling_C: boilingPointAtAltitude(2000) }), 0.41),
   8.21, TOL_MIN, 'min',
 );
 
@@ -145,7 +145,7 @@ const RAMP_AFTER_EXPECTED = [4.9, 2.9, 1.0];
 const coldRows: string[][] = [];
 for (let i = 0; i < RAMP_MIN.length; i++) {
   const setup = setupOf({ startMode: 'cold', timeToBoil_s: RAMP_MIN[i] * 60 });
-  const total = cookMinutes(EU_LARGE, setup, 0.41);
+  const total = cookMinutes(REFERENCE_EGG, setup, 0.41);
   const after = total - RAMP_MIN[i];
   check(`cold start, ${RAMP_MIN[i]} min ramp: after boiling`, after, RAMP_AFTER_EXPECTED[i], TOL_MIN, 'min');
   coldRows.push([
@@ -155,8 +155,8 @@ for (let i = 0; i < RAMP_MIN.length; i++) {
 
 // Altitude penalty at Denver (1609 m), hard-boiled.
 const denverSetup = setupOf({ boiling_C: boilingPointAtAltitude(1609) });
-const hardSea = cookMinutes(EU_LARGE, setupOf({}), 1.0);
-const hardDenver = cookMinutes(EU_LARGE, denverSetup, 1.0);
+const hardSea = cookMinutes(REFERENCE_EGG, setupOf({}), 1.0);
+const hardDenver = cookMinutes(REFERENCE_EGG, denverSetup, 1.0);
 check(
   'Denver 1609 m hard-boiled vs sea level',
   100 * (hardDenver / hardSea - 1), 12.0, 3.0, '%',
@@ -167,7 +167,7 @@ const CARRY_COOLING: CookSetup['cooling'][] = ['ice', 'tap', 'counter'];
 const CARRY_EXPECTED = [65.0, 65.6, 76.3];
 const carryRows: string[][] = [];
 for (let i = 0; i < CARRY_COOLING.length; i++) {
-  const r = simulate(EU_LARGE, setupOf({ cooling: CARRY_COOLING[i] }), DEFAULT_PARAMS, 7.4 * 60);
+  const r = simulate(REFERENCE_EGG, setupOf({ cooling: CARRY_COOLING[i] }), DEFAULT_PARAMS, 7.4 * 60);
   check(`carryover peak yolk, 7.4 min cook, ${CARRY_COOLING[i]}`, r.peakYolk_C, CARRY_EXPECTED[i], 0.5, 'C');
   carryRows.push([
     CARRY_COOLING[i],
@@ -181,7 +181,7 @@ for (let i = 0; i < CARRY_COOLING.length; i++) {
 /** Sea-level jammy cook time, computed once and reused by the altitude table. */
 let jammySeaLevelCache = -1;
 function jammySeaLevel(): number {
-  if (jammySeaLevelCache < 0) jammySeaLevelCache = cookMinutes(EU_LARGE, setupOf({}), 0.41);
+  if (jammySeaLevelCache < 0) jammySeaLevelCache = cookMinutes(REFERENCE_EGG, setupOf({}), 0.41);
   return jammySeaLevelCache;
 }
 
@@ -194,7 +194,7 @@ for (let h = 0; h <= 5000; h += 500) {
   const approx = boilingPointApprox(h);
   const error = Math.abs(boiling - approx);
   if (error > worstApproxError) worstApproxError = error;
-  const minutes = cookMinutes(EU_LARGE, setupOf({ boiling_C: boiling }), 0.41);
+  const minutes = cookMinutes(REFERENCE_EGG, setupOf({ boiling_C: boiling }), 0.41);
   altitudeRows.push([
     String(h),
     (pressureAtAltitude(h) / 1000).toFixed(2),
@@ -216,17 +216,17 @@ check('T_b(h) vs 100 - h/300, 0-5000 m (worst case)', worstApproxError, 0.0, 0.0
 
 const roomRows: string[][] = [];
 for (const room of [10, 20, 30]) {
-  const hot = cookMinutes(EU_LARGE, setupOf({ ambient_C: room }), 0.41);
+  const hot = cookMinutes(REFERENCE_EGG, setupOf({ ambient_C: room }), 0.41);
   const cold = cookMinutes(
-    EU_LARGE, setupOf({ ambient_C: room, startMode: 'cold', timeToBoil_s: 480 }), 0.41,
+    REFERENCE_EGG, setupOf({ ambient_C: room, startMode: 'cold', timeToBoil_s: 480 }), 0.41,
   );
   const standing = solveCookTime(
-    EU_LARGE,
+    REFERENCE_EGG,
     setupOf({ ambient_C: room, startMode: 'cold', afterBoil: 'off', timeToBoil_s: 480 }),
     DEFAULT_PARAMS, donenessFromSlider(0.41),
   );
   const counter = simulate(
-    EU_LARGE, setupOf({ ambient_C: room, cooling: 'counter' }), DEFAULT_PARAMS, 7.4 * 60,
+    REFERENCE_EGG, setupOf({ ambient_C: room, cooling: 'counter' }), DEFAULT_PARAMS, 7.4 * 60,
   );
   roomRows.push([
     `${room} °C`,
@@ -241,8 +241,8 @@ for (const room of [10, 20, 30]) {
 // bath does not care what the room is doing.
 check(
   'room temperature is inert on a hot start into an ice bath',
-  cookMinutes(EU_LARGE, setupOf({ ambient_C: 30 }), 0.41)
-  - cookMinutes(EU_LARGE, setupOf({ ambient_C: 10 }), 0.41),
+  cookMinutes(REFERENCE_EGG, setupOf({ ambient_C: 30 }), 0.41)
+  - cookMinutes(REFERENCE_EGG, setupOf({ ambient_C: 10 }), 0.41),
   0.0, 0.001, 'min',
 );
 
@@ -267,15 +267,15 @@ function standingSetup(boil_s: number, litres: number): CookSetup {
 // Hard - and the interesting part is that it does not matter much: the water is
 // falling, so the dose saturates and 12 minutes of standing gives the same egg
 // as 30. That is why a folk method can get away with "about".
-const williams = simulate(EU_LARGE, standingSetup(480, 2), DEFAULT_PARAMS, 480 + 17 * 60);
+const williams = simulate(REFERENCE_EGG, standingSetup(480, 2), DEFAULT_PARAMS, 480 + 17 * 60);
 check("Williams' standing method: 17 min, peak yolk", williams.peakYolk_C, 75.6, 1.0, 'C');
 check(
   "Williams' standing method: 17 min reaches hard",
   williams.yolkDose_min >= YOLK_DOSE_HARD ? 1 : 0, 1, 0, '',
 );
 
-const standing20 = simulate(EU_LARGE, standingSetup(480, 2), DEFAULT_PARAMS, 480 + 20 * 60);
-const standing30 = simulate(EU_LARGE, standingSetup(480, 2), DEFAULT_PARAMS, 480 + 30 * 60);
+const standing20 = simulate(REFERENCE_EGG, standingSetup(480, 2), DEFAULT_PARAMS, 480 + 20 * 60);
+const standing30 = simulate(REFERENCE_EGG, standingSetup(480, 2), DEFAULT_PARAMS, 480 + 30 * 60);
 check(
   'standing dose saturates: 20 min vs 30 min',
   100 * (standing30.yolkDose_min / standing20.yolkDose_min - 1), 0.0, 1.0, '%',
@@ -302,7 +302,7 @@ for (const litres of [1, 2, 3, 4]) {
   const boil = TYPICAL_HOB_S_PER_L * litres;
   const tau = panTimeConstant(litres);
   const old = oldRuleTau(boil);
-  const sol = solveCookTime(EU_LARGE, standingSetup(boil, litres), DEFAULT_PARAMS, donenessFromSlider(1.0));
+  const sol = solveCookTime(REFERENCE_EGG, standingSetup(boil, litres), DEFAULT_PARAMS, donenessFromSlider(1.0));
   standingRows.push([
     `${litres} L`,
     `${(tau / 60).toFixed(1)} min`,
@@ -320,7 +320,7 @@ check(
 );
 check(
   'a 1 L pan cannot stand its way to hard',
-  solveCookTime(EU_LARGE, standingSetup(240, 1), DEFAULT_PARAMS, donenessFromSlider(1.0))
+  solveCookTime(REFERENCE_EGG, standingSetup(240, 1), DEFAULT_PARAMS, donenessFromSlider(1.0))
     .hardestLevel < 1 ? 1 : 0,
   1, 0, '',
 );
@@ -468,8 +468,8 @@ const denysEffective = 1 / (1 / DENYS_H + DENYS_SHELL_M / DENYS_SHELL_K);
 externalRows.push([
   'Denys et al. 2003', 'h at the shell, + shell in series',
   denysEffective.toFixed(0) + ' W/m^2K', H_EFF.toFixed(0) + ' W/m^2K',
-  'Bi ' + biotNumber(denysEffective, EU_LARGE.radius_m).toFixed(0) +
-  ' vs ' + biotNumber(H_EFF, EU_LARGE.radius_m).toFixed(0) + ' - see README 11.2',
+  'Bi ' + biotNumber(denysEffective, REFERENCE_EGG.radius_m).toFixed(0) +
+  ' vs ' + biotNumber(H_EFF, REFERENCE_EGG.radius_m).toFixed(0) + ' - see README 11.2',
 ]);
 
 
@@ -479,9 +479,9 @@ externalRows.push([
 
 console.log('# Actual Egg Timer — validation report');
 console.log(
-  '\nReference egg: EU Large, 43.5 mm minor diameter, ' +
-  `${(1000 * EU_LARGE.mass_kg).toFixed(1)} g, equal-volume radius ` +
-  `${(1000 * EU_LARGE.radius_m).toFixed(2)} mm.` +
+  '\nReference egg: 43.5 mm minor diameter, ' +
+  `${(1000 * REFERENCE_EGG.mass_kg).toFixed(1)} g, equal-volume radius ` +
+  `${(1000 * REFERENCE_EGG.radius_m).toFixed(2)} mm.` +
   '\nFridge-cold 4 C, hot start, ice bath, jammy = slider 0.41 ' +
   `(yolk dose target ${JAMMY.yolkDose_min.toFixed(2)} min-eq @63 C) unless a row says otherwise.`,
 );
@@ -507,7 +507,7 @@ printTable(
 // Doneness slider sweep.
 const sliderRows: string[][] = [];
 for (const level of [0, 0.22, 0.41, 0.62, 1.0]) {
-  const solution = solveCookTime(EU_LARGE, setupOf({}), DEFAULT_PARAMS, donenessFromSlider(level));
+  const solution = solveCookTime(REFERENCE_EGG, setupOf({}), DEFAULT_PARAMS, donenessFromSlider(level));
   let label = '';
   for (let i = 0; i < DONENESS_ANCHORS.length; i++) {
     if (Math.abs(DONENESS_ANCHORS[i].level - level) < 1e-9) label = render(EN, DONENESS_ANCHORS[i].key);

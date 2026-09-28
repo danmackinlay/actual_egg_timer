@@ -9,35 +9,34 @@
  *
  * Run: npm run fixtures
  *
- * Two files, because they have different lifetimes:
+ * One file per part of the core, each held by a Swift suite of the same name:
  *
- *   fixtures/core.json      pure functions - the port covers these today
- *   fixtures/scenarios.json whole cooks - the port covers these when the
- *                           solver lands, and they are generated now so the
- *                           target exists before the code does
- *   fixtures/policy.json    the decisions above the physics - snapping, the
- *                           refusal verdict, texture bands, the calibration
- *                           grid's geometry, the bounds and the defaults, and
- *                           both size-class tables. These used to be
- *                           transliterated by hand in both apps
- *   fixtures/sousvide.json  the isothermal limit. Separate because it answers a
- *                           question the solver never asks: no pan, no ramp, no
- *                           cooling, and an answer in hours rather than minutes
- *   fixtures/copy.json      every key of every catalogue in copy/, rendered, and
- *                           the plural rule of every language at its edges
- *   fixtures/record.json    the record (INFERENCE.md section 4): which records a
- *                           loader trusts, and a replay of an eight-egg log
- *                           pinned particle by particle
- *   fixtures/units.json     Metric and Imperial: conversions, steps, bounds,
- *                           display, and the round trip of every grid value of
- *                           every input (tools/unitsFixture.ts)
- *   fixtures/format.json    numbers and times of day in every supported
- *                           formatting locale, the locale each app derives and
- *                           what it writes, and a pseudo-Czech catalogue
- *                           rendered in cs-CZ
- *   fixtures/language.json  the switch into the English of 1750 and out, and
- *                           a stored state read defensively
- *                           (tools/languageFixture.ts)
+ *   fixtures/core.json         pure functions: the sphere, geometry, boiling
+ *   fixtures/scenarios.json    whole cooks, solved end to end
+ *   fixtures/policy.json       the decisions above the physics - snapping, the
+ *                              refusal verdict, texture bands, the calibration
+ *                              grid's geometry, the bounds and defaults, both
+ *                              size-class tables, the phase rule
+ *   fixtures/sousvide.json     the isothermal limit: no pan, no ramp, no
+ *                              cooling, and an answer in hours
+ *   fixtures/sousvideCopy.json which words say the sous-vide answer
+ *   fixtures/calibration.json  the particle filter, particle by particle
+ *   fixtures/record.json       the record (INFERENCE.md section 4): which records
+ *                              a loader trusts, and a replayed log
+ *   fixtures/decide.json       decision surfaces and the time chosen on one
+ *   fixtures/outcome.json      the predicted outcome at the chosen time
+ *   fixtures/reach.json        the odds at every level, the verdict with them,
+ *                              the answer at a level, the shading, the advice
+ *   fixtures/wording.json      which key each part of the screen says
+ *                              (tools/wordingFixture.ts)
+ *   fixtures/copy.json         the catalogues rendered, and the plural rule of
+ *                              every language at its edges
+ *   fixtures/units.json        Metric and Imperial (tools/unitsFixture.ts)
+ *   fixtures/format.json       numbers and times of day in every formatting
+ *                              locale, and a pseudo-Czech catalogue in cs-CZ
+ *   fixtures/probe.json        the probe reading (tools/probeFixture.ts)
+ *   fixtures/language.json     the switch into the English of 1750 and out
+ *                              (tools/languageFixture.ts)
  */
 
 import { writeFileSync, mkdirSync, readFileSync, readdirSync } from 'node:fs';
@@ -228,9 +227,10 @@ const core = {
 
 /* --------------------------------------------------------- scenarios.json */
 
-/** The EU Large of the first scenarios, 43.5 mm across, built from its mass:
- *  the iOS core, which only weighs eggs, builds it the same way (D4). */
-const EU_LARGE = eggFromMass(eggFromMinorDiameter(0.0435).mass_kg);
+/** The reference egg of the validation and the scenarios: 43.5 mm across,
+ *  about 62.3 g - not the app's 68 g EU Large. Built from its mass: the iOS
+ *  core, which only weighs eggs, builds it the same way (D4). */
+const REFERENCE_EGG = eggFromMass(eggFromMinorDiameter(0.0435).mass_kg);
 
 function setupOf(over: Partial<CookSetup>): CookSetup {
   const base: CookSetup = {
@@ -273,16 +273,16 @@ const SCENARIOS: Scenario[] = [
 ];
 
 const scenarios = {
-  $comment: 'Generated by tools/fixtures.ts. The port covers these once solve.ts is ported.',
+  $comment: 'Generated by tools/fixtures.ts. Whole cooks, solved end to end.',
   generator: 'npm run fixtures',
   egg: {
-    mass_kg: EU_LARGE.mass_kg,
-    radius_m: EU_LARGE.radius_m,
+    mass_kg: REFERENCE_EGG.mass_kg,
+    radius_m: REFERENCE_EGG.radius_m,
   },
   params: DEFAULT_PARAMS,
   cases: SCENARIOS.map((s) => {
-    const sol = solveCookTime(EU_LARGE, s.setup, DEFAULT_PARAMS, donenessFromSlider(s.level));
-    const fixed = simulate(EU_LARGE, s.setup, DEFAULT_PARAMS, 7.4 * 60);
+    const sol = solveCookTime(REFERENCE_EGG, s.setup, DEFAULT_PARAMS, donenessFromSlider(s.level));
+    const fixed = simulate(REFERENCE_EGG, s.setup, DEFAULT_PARAMS, 7.4 * 60);
     return {
       name: s.name,
       level: s.level,
@@ -317,7 +317,7 @@ const scenarios = {
  * statistic would flag. Every particle is therefore written out, before and
  * after every update.
  *
- * The grid here is deliberately smaller than the app's 21 x 36 - it costs one
+ * The grid here is deliberately smaller than the app's 21 x 32 - it costs one
  * simulation per cell in both implementations, and 9 x 12 exercises every path
  * through the interpolation while keeping `swift test` quick. */
 

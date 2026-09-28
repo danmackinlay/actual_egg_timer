@@ -35,8 +35,9 @@ import {
 // shared fixtures
 // --------------------------------------------------------------------------
 
-/** EU Large, ~62 g. The reference egg for every behavioural test below. */
-const EU_LARGE = eggFromMinorDiameter(0.0435);
+/** The reference egg, 43.5 mm across and about 62.3 g (not the app's 68 g EU
+ *  Large). The egg for every behavioural test below. */
+const REFERENCE_EGG = eggFromMinorDiameter(0.0435);
 
 function setupOf(over: Partial<CookSetup>): CookSetup {
   const base: CookSetup = {
@@ -317,7 +318,7 @@ test('10. both doses increase monotonically with cook time', () => {
   let previousYolk = -1;
   let previousWhite = -1;
   for (let minutes = 1; minutes <= 15; minutes += 0.5) {
-    const r = simulate(EU_LARGE, setup, DEFAULT_PARAMS, minutes * 60);
+    const r = simulate(REFERENCE_EGG, setup, DEFAULT_PARAMS, minutes * 60);
     assert.ok(
       r.yolkDose_min > previousYolk,
       `yolk dose must increase with cook time (at ${minutes} min)`,
@@ -352,7 +353,7 @@ test('11. slider -> dose -> slider round-trips', () => {
 
 test('12. a soft yolk is unreachable on the counter but reachable from an ice bath', () => {
   const soft = donenessFromSlider(0.1);
-  const counter = solveCookTime(EU_LARGE, setupOf({ cooling: 'counter' }), DEFAULT_PARAMS, soft);
+  const counter = solveCookTime(REFERENCE_EGG, setupOf({ cooling: 'counter' }), DEFAULT_PARAMS, soft);
   assert.equal(counter.reachable, false, 'soft yolk must be unreachable with counter resting');
   assert.ok(
     counter.softestLevel > 0.4,
@@ -360,7 +361,7 @@ test('12. a soft yolk is unreachable on the counter but reachable from an ice ba
   );
   assert.ok(counter.softestLevel <= 1.0, 'softestLevel is a slider position');
 
-  const ice = solveCookTime(EU_LARGE, setupOf({ cooling: 'ice' }), DEFAULT_PARAMS, soft);
+  const ice = solveCookTime(REFERENCE_EGG, setupOf({ cooling: 'ice' }), DEFAULT_PARAMS, soft);
   assert.equal(ice.reachable, true, 'the same target must be reachable with an ice bath');
   assert.ok(
     ice.softestLevel <= soft.level,
@@ -374,9 +375,9 @@ test('12. a soft yolk is unreachable on the counter but reachable from an ice ba
 
 test('13. identical cook, different cooling: same pull state, ordered peaks', () => {
   const cookTime = 7.4 * 60;
-  const ice = simulate(EU_LARGE, setupOf({ cooling: 'ice' }), DEFAULT_PARAMS, cookTime);
-  const tap = simulate(EU_LARGE, setupOf({ cooling: 'tap' }), DEFAULT_PARAMS, cookTime);
-  const counter = simulate(EU_LARGE, setupOf({ cooling: 'counter' }), DEFAULT_PARAMS, cookTime);
+  const ice = simulate(REFERENCE_EGG, setupOf({ cooling: 'ice' }), DEFAULT_PARAMS, cookTime);
+  const tap = simulate(REFERENCE_EGG, setupOf({ cooling: 'tap' }), DEFAULT_PARAMS, cookTime);
+  const counter = simulate(REFERENCE_EGG, setupOf({ cooling: 'counter' }), DEFAULT_PARAMS, cookTime);
 
   // Same cook => same state at the moment of pulling, whatever happens next.
   close(tap.yolkAtPull_C, ice.yolkAtPull_C, 0.1, 'yolk at pull: tap vs ice');
@@ -402,11 +403,11 @@ test('13. identical cook, different cooling: same pull state, ordered peaks', ()
 // --------------------------------------------------------------------------
 
 test('14. the Biot number in water justifies the Dirichlet treatment', () => {
-  const bi = biotNumber(H_EFF, EU_LARGE.radius_m);
+  const bi = biotNumber(H_EFF, REFERENCE_EGG.radius_m);
   assert.ok(bi > 20, `Bi in water should exceed 20, got ${bi}`);
   // Sanity: Bi scales linearly in both arguments.
-  close(biotNumber(2 * H_EFF, EU_LARGE.radius_m), 2 * bi, 1e-9, 'Bi linear in h');
-  close(biotNumber(H_EFF, 2 * EU_LARGE.radius_m), 2 * bi, 1e-9, 'Bi linear in R');
+  close(biotNumber(2 * H_EFF, REFERENCE_EGG.radius_m), 2 * bi, 1e-9, 'Bi linear in h');
+  close(biotNumber(H_EFF, 2 * REFERENCE_EGG.radius_m), 2 * bi, 1e-9, 'Bi linear in R');
 });
 
 // --------------------------------------------------------------------------
@@ -417,8 +418,8 @@ test('15a. with the heat off the water falls, and the dose saturates', () => {
   const standing = setupOf({
     startMode: 'cold', afterBoil: 'off', timeToBoil_s: 480, cooling: 'tap',
   });
-  const twenty = simulate(EU_LARGE, standing, DEFAULT_PARAMS, 480 + 20 * 60);
-  const forty = simulate(EU_LARGE, standing, DEFAULT_PARAMS, 480 + 40 * 60);
+  const twenty = simulate(REFERENCE_EGG, standing, DEFAULT_PARAMS, 480 + 20 * 60);
+  const forty = simulate(REFERENCE_EGG, standing, DEFAULT_PARAMS, 480 + 40 * 60);
 
   // Held at the boil, twice the time is orders of magnitude more dose. Here the
   // pan has nothing left to give, so the two cooks are the same egg. This is
@@ -430,7 +431,7 @@ test('15a. with the heat off the water falls, and the dose saturates', () => {
   );
 
   const held = simulate(
-    EU_LARGE, setupOf({ startMode: 'cold', timeToBoil_s: 480, cooling: 'tap' }),
+    REFERENCE_EGG, setupOf({ startMode: 'cold', timeToBoil_s: 480, cooling: 'tap' }),
     DEFAULT_PARAMS, 480 + 40 * 60,
   );
   assert.ok(
@@ -444,7 +445,7 @@ test('15b. a small pan cannot stand its way to hard', () => {
   // Same hob, same eight-minute ramp: only the water differs. A litre holds
   // too little heat to finish the yolk once the burner is off; three do.
   const small = solveCookTime(
-    EU_LARGE,
+    REFERENCE_EGG,
     setupOf({ startMode: 'cold', afterBoil: 'off', timeToBoil_s: 480, waterLitres: 1, cooling: 'ice' }),
     DEFAULT_PARAMS, hard,
   );
@@ -452,7 +453,7 @@ test('15b. a small pan cannot stand its way to hard', () => {
   assert.ok(small.hardestLevel < 1, `hardestLevel should be capped, got ${small.hardestLevel}`);
 
   const big = solveCookTime(
-    EU_LARGE,
+    REFERENCE_EGG,
     setupOf({ startMode: 'cold', afterBoil: 'off', timeToBoil_s: 480, waterLitres: 3, cooling: 'ice' }),
     DEFAULT_PARAMS, hard,
   );
@@ -462,7 +463,7 @@ test('15b. a small pan cannot stand its way to hard', () => {
 
 test('15c. holding the boil is never capped at the hard end', () => {
   const sol = solveCookTime(
-    EU_LARGE, setupOf({}), DEFAULT_PARAMS, donenessFromSlider(1.0),
+    REFERENCE_EGG, setupOf({}), DEFAULT_PARAMS, donenessFromSlider(1.0),
   );
   close(sol.hardestLevel, 1, 1e-9, 'a boiling pan can always cook harder');
 });
@@ -473,7 +474,7 @@ test('15d. a pan with too little heat never sets the white at all', () => {
   // white's own target within minutes. There is no cook time to offer here, at
   // any doneness.
   const sol = solveCookTime(
-    EU_LARGE,
+    REFERENCE_EGG,
     setupOf({ startMode: 'hot', afterBoil: 'off', waterLitres: 1, eggCount: 4 }),
     DEFAULT_PARAMS, donenessFromSlider(0.41),
   );
@@ -487,7 +488,7 @@ test('15d. a pan with too little heat never sets the white at all', () => {
   );
 
   const generous = solveCookTime(
-    EU_LARGE,
+    REFERENCE_EGG,
     setupOf({ startMode: 'hot', afterBoil: 'off', waterLitres: 6, eggCount: 2 }),
     DEFAULT_PARAMS, donenessFromSlider(0.41),
   );
@@ -506,7 +507,7 @@ test('15e. with the heat off the pan cools at a rate set by the water, not the h
   const fast = setupOf({ startMode: 'cold', afterBoil: 'off', timeToBoil_s: 240 });
   const slow = setupOf({ startMode: 'cold', afterBoil: 'off', timeToBoil_s: 720 });
   close(
-    bathTemperature(EU_LARGE, fast, 240 + 600), bathTemperature(EU_LARGE, slow, 720 + 600),
+    bathTemperature(REFERENCE_EGG, fast, 240 + 600), bathTemperature(REFERENCE_EGG, slow, 720 + 600),
     1e-9, 'the hob has dropped out of the cooling',
   );
 
@@ -514,7 +515,7 @@ test('15e. with the heat off the pan cools at a rate set by the water, not the h
   // pan's - must not move the answer at all.
   const level = donenessFromSlider(0.41);
   const remembered = (boil_s: number) => solveCookTime(
-    EU_LARGE,
+    REFERENCE_EGG,
     setupOf({ startMode: 'hot', afterBoil: 'off', timeToBoil_s: boil_s, waterLitres: 6, eggCount: 2 }),
     DEFAULT_PARAMS, level,
   );
@@ -536,7 +537,7 @@ function worstDoseStep(
   let worst = 0;
   let prev = Number.NEGATIVE_INFINITY;
   for (let t = start; t <= start + 1800; t += 20) {
-    const dose = pick(simulate(EU_LARGE, setup, DEFAULT_PARAMS, t));
+    const dose = pick(simulate(REFERENCE_EGG, setup, DEFAULT_PARAMS, t));
     if (prev > Number.NEGATIVE_INFINITY && dose - prev < worst) worst = dose - prev;
     prev = dose;
   }

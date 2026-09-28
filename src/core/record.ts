@@ -487,7 +487,7 @@ export interface GridRequest {
 }
 
 /** The surface this record is scored on, centred where the posterior stands
- *  NOW - before the egg is folded - exactly as `recordOutcome` always did. */
+ *  NOW - before the egg is folded. */
 export function gridRequestFor(c: Calibration, r: EggRecord, grid: GridPolicy): GridRequest {
   const params = calibrationParams(c);
   return {

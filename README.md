@@ -567,7 +567,7 @@ clock. It is also a single folk anchor with an unstated pot and a judged exponen
 is exactly why `TAU_STANDING_SCALE` exists.
 
 **What moved when the rule changed** (27 September 2026). Standing time after the boil,
-cold start, EU Large fridge egg, four eggs, ice bath; old → new:
+cold start, the 62 g reference egg from the fridge, four eggs, ice bath; old → new:
 
 | hob | doneness | 1 L | 2 L | 3 L | 4 L |
 |---|---|---|---|---|---|

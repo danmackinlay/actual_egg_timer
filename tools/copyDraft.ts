@@ -8,11 +8,18 @@
  *    `e1f7068`.
  *  - `reach`: the odds-shaded slider's new strings - two refusals, the (i)
  *    and what it opens, and the advice - on `1667dcf`.
- *  - `truths`: no new words; iOS gains the web's runny-white line, on `cc0dc47`.
+ *  - `history`: the remembered boil said as history, not as a time this pan
+ *    took; and (`TRUTHS_DRAFT`) no new words, iOS gaining the web's
+ *    runny-white line - both on `cc0dc47`.
  *  - `redesign`: the web redesign of UI.md, with the owner's wording rules
  *    of 27 September, on `80799d0`.
  *  - `outcome`: the web's outcome summary - the direction, the white's line,
  *    the odds in their (i) and the bracket's words - on `7a40373`.
+ *  - `counter`: iOS's pull alarm and note on a counter rest, on `4817303`.
+ *  - `boil`: the setup sentence's start clause carries the boil and the
+ *    standing, on `e29887c`.
+ *  - `help`: Help's sections as a short gist and a technical aside, on
+ *    `9116d33`.
  *  - `safe`: playing safe - the one-tap suggestion under the direction, the
  *    direction's one (i) rewritten for the bracket with "I'm still learning"
  *    folded into it, and the owner's first-egg welcome - on `ff6c6e9`.
@@ -42,6 +49,8 @@
  *    a switch changes only the numbers, since on an English page Imperial
  *    changes the words too; and four iOS strings nothing can draw any more
  *    are retired - on `5d71a3c`.
+ *  - `units`: the units' (i) says only where the first choice came from, on
+ *    `055bd4e`.
  *
  * This is the list the proofs hold the catalogue to. `copyLiterals.ts --since`
  * diffs copy/en.json and the keys each app's source names against a base
