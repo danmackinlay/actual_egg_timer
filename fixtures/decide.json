@@ -6034,6 +6034,14 @@
         "chosen": false,
         "odds": 0.2322971140570191,
         "oddsTenths": 2
+      },
+      "level": 0.22,
+      "decided": {
+        "reachable": true,
+        "cookTime_s": 419.4287109375,
+        "peakYolk_C": 60.64063915875693,
+        "yolkDose_min": 0.5252747058705801,
+        "whiteDose_min": 0.31264115615967186
       }
     },
     {
@@ -6077,6 +6085,14 @@
         "chosen": false,
         "odds": 0.248986383572479,
         "oddsTenths": 2
+      },
+      "level": 0.41,
+      "decided": {
+        "reachable": true,
+        "cookTime_s": 464.00390625,
+        "peakYolk_C": 64.72243834517772,
+        "yolkDose_min": 3.9277328273544434,
+        "whiteDose_min": 1.1585353841460635
       }
     },
     {
@@ -6120,6 +6136,14 @@
         "chosen": false,
         "odds": 0.25384251322984375,
         "oddsTenths": 3
+      },
+      "level": 0.62,
+      "decided": {
+        "reachable": true,
+        "cookTime_s": 519.0673828125,
+        "peakYolk_C": 69.2444961079092,
+        "yolkDose_min": 36.826466893476,
+        "whiteDose_min": 4.7140625101994384
       }
     },
     {
@@ -6163,6 +6187,14 @@
         "chosen": false,
         "odds": 0.2620513046568222,
         "oddsTenths": 3
+      },
+      "level": 1,
+      "decided": {
+        "reachable": true,
+        "cookTime_s": 637.9345703125,
+        "peakYolk_C": 77.2567848666738,
+        "yolkDose_min": 2005.6235719973822,
+        "whiteDose_min": 52.283481414506554
       }
     },
     {
@@ -6206,6 +6238,14 @@
         "chosen": true,
         "odds": 0.634591863371363,
         "oddsTenths": 6
+      },
+      "level": 0.22,
+      "decided": {
+        "reachable": true,
+        "cookTime_s": 425.56470402225307,
+        "peakYolk_C": 60.51558797842075,
+        "yolkDose_min": 0.5027064337943877,
+        "whiteDose_min": 0.3057775941160587
       }
     },
     {
@@ -6249,6 +6289,14 @@
         "chosen": true,
         "odds": 0.6606323746515114,
         "oddsTenths": 7
+      },
+      "level": 0.41,
+      "decided": {
+        "reachable": true,
+        "cookTime_s": 468.58086667285033,
+        "peakYolk_C": 64.40589827285223,
+        "yolkDose_min": 3.4190316800859635,
+        "whiteDose_min": 1.0678262825580205
       }
     },
     {
@@ -6292,6 +6340,14 @@
         "chosen": true,
         "odds": 0.6638142838612886,
         "oddsTenths": 7
+      },
+      "level": 0.62,
+      "decided": {
+        "reachable": true,
+        "cookTime_s": 523.6669172227621,
+        "peakYolk_C": 68.89146706961462,
+        "yolkDose_min": 31.459319145272143,
+        "whiteDose_min": 4.309034878912686
       }
     },
     {
@@ -6335,6 +6391,14 @@
         "chosen": true,
         "odds": 0.6719181817529708,
         "oddsTenths": 7
+      },
+      "level": 1,
+      "decided": {
+        "reachable": true,
+        "cookTime_s": 644.7464906461478,
+        "peakYolk_C": 76.99557605517047,
+        "yolkDose_min": 1790.302878988734,
+        "whiteDose_min": 49.263461196587905
       }
     },
     {
@@ -6378,6 +6442,14 @@
         "chosen": true,
         "odds": 0.6850984636020291,
         "oddsTenths": 7
+      },
+      "level": 0.22,
+      "decided": {
+        "reachable": true,
+        "cookTime_s": 429.756063539637,
+        "peakYolk_C": 61.57199886217352,
+        "yolkDose_min": 0.8317770315245375,
+        "whiteDose_min": 0.4238505690952837
       }
     },
     {
@@ -6421,6 +6493,14 @@
         "chosen": true,
         "odds": 0.6854240307590908,
         "oddsTenths": 7
+      },
+      "level": 0.41,
+      "decided": {
+        "reachable": true,
+        "cookTime_s": 475.30986565257444,
+        "peakYolk_C": 65.64733276655082,
+        "yolkDose_min": 6.210118642742666,
+        "whiteDose_min": 1.5512078467420343
       }
     },
     {
@@ -6464,6 +6544,14 @@
         "chosen": true,
         "odds": 0.6872618280043911,
         "oddsTenths": 7
+      },
+      "level": 0.62,
+      "decided": {
+        "reachable": true,
+        "cookTime_s": 531.5238175971522,
+        "peakYolk_C": 70.14422315214865,
+        "yolkDose_min": 57.631398410286636,
+        "whiteDose_min": 6.210627985492141
       }
     },
     {
@@ -6507,6 +6595,14 @@
         "chosen": true,
         "odds": 0.6976513867548492,
         "oddsTenths": 7
+      },
+      "level": 1,
+      "decided": {
+        "reachable": true,
+        "cookTime_s": 655.4944982752293,
+        "peakYolk_C": 78.21591424134476,
+        "yolkDose_min": 3252.372038692658,
+        "whiteDose_min": 69.54976148041239
       }
     },
     {
@@ -6550,6 +6646,14 @@
         "chosen": false,
         "odds": 0.36903553598488725,
         "oddsTenths": 4
+      },
+      "level": 0,
+      "decided": {
+        "reachable": true,
+        "cookTime_s": 372,
+        "peakYolk_C": 55.16913933520111,
+        "yolkDose_min": 0.036435308305685025,
+        "whiteDose_min": 0.05057909492270845
       }
     },
     {
@@ -6593,6 +6697,148 @@
         "chosen": true,
         "odds": 0.6719179955706095,
         "oddsTenths": 7
+      },
+      "level": 1,
+      "decided": {
+        "reachable": true,
+        "cookTime_s": 644.7484730673823,
+        "peakYolk_C": 76.99569067803638,
+        "yolkDose_min": 1790.4059247027194,
+        "whiteDose_min": 49.265135768601354
+      }
+    }
+  ],
+  "carried": [
+    {
+      "posterior": "learned",
+      "level": 0.41,
+      "setup": {
+        "startMode": "hot",
+        "eggStart_C": 4,
+        "ambient_C": 20,
+        "boiling_C": 100,
+        "timeToBoil_s": 480,
+        "cooling": "ice",
+        "waterLitres": 2,
+        "eggCount": 2
+      },
+      "lean_s": 0,
+      "carried": {
+        "reachable": true,
+        "cookTime_s": 471.8701171875,
+        "peakYolk_C": 64.68889325514421,
+        "yolkDose_min": 3.9317650151514614,
+        "whiteDose_min": 1.1676353560227568
+      }
+    },
+    {
+      "posterior": "learned",
+      "level": 0.41,
+      "setup": {
+        "startMode": "hot",
+        "eggStart_C": 4,
+        "ambient_C": 20,
+        "boiling_C": 100,
+        "timeToBoil_s": 480,
+        "cooling": "ice",
+        "waterLitres": 2,
+        "eggCount": 2
+      },
+      "lean_s": -12,
+      "carried": {
+        "reachable": true,
+        "cookTime_s": 459.8701171875,
+        "peakYolk_C": 63.64610075626758,
+        "yolkDose_min": 2.349990926711039,
+        "whiteDose_min": 0.8391804896941467
+      }
+    },
+    {
+      "posterior": "learned",
+      "level": 0.41,
+      "setup": {
+        "startMode": "hot",
+        "eggStart_C": 4,
+        "ambient_C": 20,
+        "boiling_C": 100,
+        "timeToBoil_s": 480,
+        "cooling": "ice",
+        "waterLitres": 2,
+        "eggCount": 2
+      },
+      "lean_s": 18,
+      "carried": {
+        "reachable": true,
+        "cookTime_s": 489.8701171875,
+        "peakYolk_C": 66.20356539231295,
+        "yolkDose_min": 8.310934489488886,
+        "whiteDose_min": 1.8776395339010035
+      }
+    },
+    {
+      "posterior": "learned",
+      "level": 0,
+      "setup": {
+        "startMode": "hot",
+        "eggStart_C": 4,
+        "ambient_C": 20,
+        "boiling_C": 100,
+        "timeToBoil_s": 480,
+        "cooling": "counter",
+        "waterLitres": 2,
+        "eggCount": 2
+      },
+      "lean_s": 0,
+      "carried": {
+        "reachable": false,
+        "cookTime_s": 318.916015625,
+        "peakYolk_C": 65.73419762051593,
+        "yolkDose_min": 25.477748533788343,
+        "whiteDose_min": 0.04487187274578741
+      }
+    },
+    {
+      "posterior": "learned",
+      "level": 0,
+      "setup": {
+        "startMode": "hot",
+        "eggStart_C": 4,
+        "ambient_C": 20,
+        "boiling_C": 100,
+        "timeToBoil_s": 480,
+        "cooling": "counter",
+        "waterLitres": 2,
+        "eggCount": 2
+      },
+      "lean_s": -12,
+      "carried": {
+        "reachable": false,
+        "cookTime_s": 318.916015625,
+        "peakYolk_C": 65.73419762051593,
+        "yolkDose_min": 25.477748533788343,
+        "whiteDose_min": 0.04487187274578741
+      }
+    },
+    {
+      "posterior": "learned",
+      "level": 0,
+      "setup": {
+        "startMode": "hot",
+        "eggStart_C": 4,
+        "ambient_C": 20,
+        "boiling_C": 100,
+        "timeToBoil_s": 480,
+        "cooling": "counter",
+        "waterLitres": 2,
+        "eggCount": 2
+      },
+      "lean_s": 18,
+      "carried": {
+        "reachable": false,
+        "cookTime_s": 318.916015625,
+        "peakYolk_C": 65.73419762051593,
+        "yolkDose_min": 25.477748533788343,
+        "whiteDose_min": 0.04487187274578741
       }
     }
   ],

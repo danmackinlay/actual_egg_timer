@@ -134,7 +134,7 @@ DONE: **3.6 Swift never checks the record's identity constants.**
 - `kernelDiscount` is not in `calibration.json.likelihood`.
 - Fix: add the `#expect`s, and add `KERNEL_DISCOUNT` to the fixture (keep it exported in TS).
 
-**3.7 App-used Swift paths that no fixture covers.**
+DONE: **3.7 App-used Swift paths that no fixture covers.** (`decide.json` `cases[].decided`, and `carried` rows on a pot whose lean applies and a counter pot where it does not; TS test 6d.)
 - `decidedSolution` and `carriedSolution` (`Decide.swift:281,289`) are not fixtured, and `decidedSolution` has no TS test either.
 - Fix: add a `decided` row per `decide.json` case, plus one `carriedSolution` row with `lean_s ≠ 0`.
 

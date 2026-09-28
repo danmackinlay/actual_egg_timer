@@ -24,7 +24,7 @@ import assert from 'node:assert/strict';
 
 import {
   DECISION_WINDOW_S, Decision, LEAN_COST_PER_S, RUNNY_WHITE_LOSS,
-  carriedSolution, chooseCookTime, decide, decisionApplies, decisionGridRequest,
+  carriedSolution, chooseCookTime, decide, decidedSolution, decisionApplies, decisionGridRequest,
   decisionGridSpec, decisionInputs, expectedLoss, hitOdds,
 } from '../src/core/decide.js';
 import { DoseGrid } from '../src/core/doseGrid.js';
@@ -411,6 +411,24 @@ test('6c. one surface serves every level: the slider never waits for a grid', ()
 // --------------------------------------------------------------------------
 // 7. Two runny whites at soft (E3's half-met test, under E5)
 // --------------------------------------------------------------------------
+
+test('6d. the decided solution is the mean solve moved to the chosen time, and the mean solve itself at its own time', () => {
+  const learned = replay(PRIOR, [recordAt(0.41, 464, 0, 'firm')], COARSE);
+  const params = calibrationParams(learned);
+  const sol = solveCookTime(EGG, SETUP, params, calibrationDoneness(learned, 0.41));
+  const d = decide(learned, gridFor(learned), sol, logTarget(0.41));
+  assert.ok(d.chosen);
+  assert.notEqual(d.cookTime_s, sol.result.cookTime_s, 'the choice leans off the mean');
+  const decided = decidedSolution(EGG, SETUP, params, sol, d);
+  assert.equal(decided.result.cookTime_s, d.cookTime_s);
+  assert.equal(decided.reachable, sol.reachable);
+  assert.equal(decided.softestLevel, sol.softestLevel);
+  // A later pull is a firmer yolk, and an earlier one softer.
+  assert.equal(Math.sign(decided.result.yolkDose_min - sol.result.yolkDose_min),
+    Math.sign(d.cookTime_s - sol.result.cookTime_s));
+  // At the mean's own time it is the mean solve, not a re-simulation of it.
+  assert.equal(decidedSolution(EGG, SETUP, params, sol, { ...d, cookTime_s: sol.result.cookTime_s }), sol);
+});
 
 test('7. two runny whites at soft: what the choice does at soft and at jammy', () => {
   // Two eggs at soft, the white runny - alone, or with the yolk just right -

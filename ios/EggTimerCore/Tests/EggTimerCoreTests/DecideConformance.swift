@@ -74,6 +74,22 @@ private func fixtureGrid(_ file: [String: Any]) -> (grid: DoseGrid, json: [Strin
     return (grid, g)
 }
 
+/// The solution at a row's level, as the app solves it: the posterior's
+/// parameters and doneness.
+private func meanSolve(_ c: Calibration, egg: Egg, setup: CookSetup, level: Double) -> Solution {
+    solveCookTime(
+        egg: egg, setup: setup, params: calibrationParams(c), doneness: calibrationDoneness(c, level: level)
+    )
+}
+
+private func expectSolution(_ s: Solution, _ json: [String: Any], _ label: String) {
+    #expect(s.reachable == json.flag("reachable"), "\(label) reachable")
+    expectClose(s.result.cookTimeS, json.num("cookTime_s"), "\(label) cook time")
+    expectClose(s.result.peakYolkC, json.num("peakYolk_C"), "\(label) peak yolk")
+    expectClose(s.result.yolkDoseMin, json.num("yolkDose_min"), "\(label) yolk dose")
+    expectClose(s.result.whiteDoseMin, json.num("whiteDose_min"), "\(label) white dose")
+}
+
 @Suite("Decide")
 struct DecideConformance {
     @Test("the constants")
@@ -158,6 +174,38 @@ struct DecideConformance {
             #expect(d.chosen == expected.flag("chosen"), "\(label) chosen")
             expectClose(d.odds, expected.num("odds"), "\(label) odds")
             #expect(d.oddsTenths == Int(expected.num("oddsTenths")), "\(label) tenths")
+
+            let c = Calibration(posterior: post, eggsLogged: Int(row.num("eggsLogged")))
+            let g = object(file, "grid")
+            let egg = Geometry.eggFromMass(object(g, "egg").num("mass_kg"))
+            let pot = setup(object(g, "setup"))
+            let decided = decidedSolution(
+                egg: egg, setup: pot, params: calibrationParams(c),
+                solution: meanSolve(c, egg: egg, setup: pot, level: row.num("level")), decision: d
+            )
+            expectSolution(decided, object(row, "decided"), "\(label) decided")
+        }
+    }
+
+    @Test("a cook re-solved mid-cook carries the lean it chose")
+    func carried() {
+        let file = Fixtures.load("decide.json")
+        guard let posteriors = file["posteriors"] as? [[String: Any]],
+              let rows = file["carried"] as? [[String: Any]], !rows.isEmpty else {
+            fatalError("fixtures/decide.json has no carried rows")
+        }
+        var byName = [String: (Posterior, Int)]()
+        for p in posteriors { byName[p.str("name")] = (posterior(p), Int(p.num("eggsLogged"))) }
+        let egg = Geometry.eggFromMass(object(object(file, "grid"), "egg").num("mass_kg"))
+        for row in rows {
+            guard let (post, eggs) = byName[row.str("posterior")] else { fatalError("no posterior") }
+            let c = Calibration(posterior: post, eggsLogged: eggs)
+            let pot = setup(object(row, "setup"))
+            let sol = meanSolve(c, egg: egg, setup: pot, level: row.num("level"))
+            let carried = carriedSolution(
+                egg: egg, setup: pot, params: calibrationParams(c), solution: sol, leanS: row.num("lean_s")
+            )
+            expectSolution(carried, object(row, "carried"), "level \(row.num("level")), lean \(row.num("lean_s"))")
         }
     }
 

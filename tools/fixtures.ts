@@ -78,8 +78,8 @@ import { longDuration, startPhrase, weekdayKey } from '../src/core/sousvide.js';
 import {
   DECISION_ALPHA_COUNT, DECISION_ALPHA_HI, DECISION_ALPHA_LO, DECISION_TIME_STEP_S,
   DECISION_WINDOW_S, DecisionInputs, LEAN_COST_PER_S, RUNNY_WHITE_LOSS,
-  chooseCookTime,
-  decideAt, decisionApplies, decisionGridSpec, decisionInputs, expectedLoss, hitOdds, oddsInTenths,
+  carriedSolution, chooseCookTime,
+  decideAt, decidedSolution, decisionApplies, decisionGridSpec, decisionInputs, expectedLoss, hitOdds, oddsInTenths,
 } from '../src/core/decide.js';
 import { LEAN_RATIO, LEVEL_HIGH_Q, LEVEL_LOW_Q, leanOf, predictOutcome } from '../src/core/outcome.js';
 import {
@@ -1284,6 +1284,36 @@ for (const pz of decidePosteriors) {
 DECIDE_CASES.push({ posterior: 'learned', level: 0.0, meanCookTime_s: 372, applies: false });
 DECIDE_CASES.push({ posterior: 'learned', level: 1.0, meanCookTime_s: DECIDE_GRID_SPEC.timeMax_s - 30, applies: true });
 
+/* The solution at the chosen time (`decidedSolution`), and a cook re-solved
+ * mid-cook with the lean it chose at "Eggs in" carried (`carriedSolution`).
+ * The mean solve is the app's: the posterior's parameters and doneness. */
+function decideSolutionRow(sol: Solution) {
+  return {
+    reachable: sol.reachable, cookTime_s: sol.result.cookTime_s, peakYolk_C: sol.result.peakYolk_C,
+    yolkDose_min: sol.result.yolkDose_min, whiteDose_min: sol.result.whiteDose_min,
+  };
+}
+function decideMeanSolve(posterior: string, level: number, setup: CookSetup = DECIDE_SETUP): Solution {
+  const pz = decidePosteriors.find((x) => x.name === posterior);
+  if (pz === undefined) throw new Error(posterior);
+  const c: Calibration = { posterior: pz.post, eggsLogged: pz.eggsLogged };
+  return solveCookTime(DECIDE_EGG, setup, calibrationParams(c), calibrationDoneness(c, level));
+}
+// The second pot rests on the counter, where the softest yolk leaves the white
+// unset: no cook to choose for, so the lean is not carried.
+const DECIDE_CARRIED = [
+  { level: 0.41, setup: DECIDE_SETUP },
+  { level: 0, setup: setupOf({ timeToBoil_s: 480, eggCount: 2, cooling: 'counter' }) },
+].flatMap((pot) => [0, -12, 18].map((lean_s) => {
+  const pz = decidePosteriors[1];
+  const params = calibrationParams({ posterior: pz.post, eggsLogged: pz.eggsLogged });
+  const sol = decideMeanSolve(pz.name, pot.level, pot.setup);
+  return {
+    posterior: pz.name, level: pot.level, setup: pot.setup, lean_s: lean_s,
+    carried: decideSolutionRow(carriedSolution(DECIDE_EGG, pot.setup, params, sol, lean_s)),
+  };
+}));
+
 const decideFixture = {
   about: 'E5: decision surfaces, and the time chosen on one from three posteriors. src/core/decide.ts.',
   constants: {
@@ -1327,8 +1357,15 @@ const decideFixture = {
       // As if an egg had taught something: the choice itself, whatever the count.
       chosen_s: chooseCookTime(pz.post, DECIDE_GRID, logTarget, c.meanCookTime_s),
       decision: d,
+      // The mean solve at this level, moved to the decided time.
+      level: c.level,
+      decided: decideSolutionRow(decidedSolution(
+        DECIDE_EGG, DECIDE_SETUP, calibrationParams({ posterior: pz.post, eggsLogged: pz.eggsLogged }),
+        decideMeanSolve(c.posterior, c.level), d,
+      )),
     };
   }),
+  carried: DECIDE_CARRIED,
   tenths: [0, 0.049, 0.05, 0.051, 0.349, 0.35, 0.649, 0.65, 0.951, 1].map((p) => ({ odds: p, tenths: oddsInTenths(p) })),
 };
 
