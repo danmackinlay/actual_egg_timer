@@ -72,7 +72,7 @@ Baseline, all green:
 - Where: `src/ui/calibration.ts:620-624`. `onThisThread` resolves inside `setTimeout`. If `buildHere` throws, the promise hangs, `decisionBuilds` / `profileBuilds` keep the key, and `app.ts` `profilesAsked` never clears it, so that pot never gets a direction.
 - Fix: share one `runJob(job)` module between `gridWorker.ts:50-61` and `buildHere`. Reject on throw, and clean up the maps in `.finally`.
 
-**2.4 Web: while a cook runs, the display and re-solve read live `settings`, not the cook's ticket.**
+**DONE: 2.4 Web: while a cook runs, the display and re-solve read live `settings`, not the cook's ticket.**
 - Where: `render` (`app.ts:1146,1175-1270`) reads `settings.startMode/afterBoil/cooling`. `timeToBoil_s` / `rampSeconds` (`app.ts:437-446`) and `resolveDuring` (`app.ts:1447-1453`) also use live `currentEgg()` / `buildSetup()`.
 - How it breaks: a second tab changes settings, then the first tab reloads mid-cook. The labels and the boil-tap re-solve now describe a different pot than the ticket and machine.
 - Fix: when not IDLE, take every value from `ticket.setup`, `ticket.egg` and `machine`. Change the signature to `resolveDuring(ticket, boil_s)`.

@@ -435,14 +435,25 @@ function buildSetup(timeToBoil_s: number): CookSetup {
  *  water volume (see panTimeConstant) - but the setup still carries the
  *  remembered value, so the record can say which pan was assumed. */
 function timeToBoil_s(): number {
-  if (machine.phase !== 'IDLE' && settings.startMode === 'cold') return machine.assumedBoil_s;
+  if (machine.phase !== 'IDLE' && startModeNow() === 'cold') return machine.assumedBoil_s;
   return estimateTimeToBoil(boilMemory, settings.waterLitres);
 }
 
 /** How much of the clock the ramp takes: all of the time to boil on a cold
  *  start, none of it otherwise. */
 function rampSeconds(): number {
-  return settings.startMode === 'cold' ? timeToBoil_s() : 0;
+  return startModeNow() === 'cold' ? timeToBoil_s() : 0;
+}
+
+/** The pot of the cook under way: the ticket's, frozen at "Eggs in", and never
+ *  the controls', which another tab may have changed since. Null while idle. */
+function runningSetup(): CookSetup | null {
+  return machine.phase !== 'IDLE' && ticket !== null ? ticket.setup : null;
+}
+
+/** How the cook on screen starts: the running cook's, or the controls'. */
+function startModeNow(): UiStartMode {
+  return runningSetup()?.startMode ?? settings.startMode;
 }
 
 /* ------------------------------------------------------------------ copy */
@@ -1143,14 +1154,19 @@ function render(now_ms: number): void {
   const sol = solution;
   if (sol === null) return;
 
+  // While a cook runs, everything below describes the ticket's pot and the
+  // machine's cooling, not the controls: a second tab may have changed those.
+  const running = runningSetup();
+  const startMode = startModeNow();
+  const boiling_C = running?.boiling_C ?? boilingPoint_C();
   dom.body.dataset['phase'] = machine.phase;
-  dom.body.dataset['start'] = settings.startMode;
+  dom.body.dataset['start'] = startMode;
 
   const cookTime_s = machine.phase === 'IDLE' ? sol.result.cookTime_s : machine.cookTime_s;
   const boil_s = rampSeconds();
-  const standing = settings.afterBoil === 'off';
+  const standing = (running === null ? settings.afterBoil : running.afterBoil) === 'off';
 
-  dom.statBoil.textContent = show('boilingPoint', boilingPoint_C());
+  dom.statBoil.textContent = show('boilingPoint', boiling_C);
   dom.note.textContent = textureNote(sol);
   // The warning line carries one of two things. A refusal is advice about the
   // slider, so it is idle-only: popping "jammy isn't reachable" onto the screen
@@ -1177,7 +1193,7 @@ function render(now_ms: number): void {
   if (machine.phase === 'IDLE') {
     label = t('readout.phase.total');
     digits = formatClock(cookTime_s);
-    subline = settings.startMode === 'cold'
+    subline = startMode === 'cold'
       ? t(hasBoilMemory(boilMemory) ? 'readout.sub.coldAssumes' : 'readout.sub.coldGuesses',
         { boil: formatClock(boil_s) })
       : standing
@@ -1188,9 +1204,9 @@ function render(now_ms: number): void {
         : t('readout.sub.hot');
     spoken = t('spoken.total', { time: spokenClock(cookTime_s) });
     setPrimary(
-      t(settings.startMode === 'cold' ? 'action.startHeating' : 'action.eggsIn'),
+      t(startMode === 'cold' ? 'action.startHeating' : 'action.eggsIn'),
       sol.whiteSets
-        ? settings.startMode === 'cold'
+        ? startMode === 'cold'
           ? t('action.hint.cold')
           : standing
             ? t('action.hint.hotStanding')
@@ -1224,7 +1240,7 @@ function render(now_ms: number): void {
     // expected a boil under-cooks by minutes, and vice versa.
     label = t(standing ? 'readout.phase.cookingHeatOff' : 'readout.phase.cookingBoiling');
     digits = formatClock(secondsToPull(machine, now_ms));
-    subline = settings.startMode === 'cold'
+    subline = startMode === 'cold'
       ? t('readout.sub.cookingCold', {
         boil: formatClock(machine.assumedBoil_s), after: formatClock(secondsAfterBoil(machine)),
       })
@@ -1232,7 +1248,7 @@ function render(now_ms: number): void {
     spoken = t('spoken.cooking', { time: spokenClock(secondsToPull(machine, now_ms)) });
     setPrimary('', standing
       ? t('action.hint.cookingStanding')
-      : t('action.hint.cookingBoiling', { boiling: show('temperature', boilingPoint_C()) }), false);
+      : t('action.hint.cookingBoiling', { boiling: show('temperature', boiling_C) }), false);
     dom.secondary.hidden = false;
     dom.secondary.textContent = t('action.cancel');
   } else if (machine.phase === 'PULL') {
@@ -1241,8 +1257,8 @@ function render(now_ms: number): void {
     digits = `+${formatClock(late)}`;
     subline = t('readout.sub.pull');
     spoken = t('spoken.pull');
-    const into = settings.cooling === 'ice' ? 'action.pulled.ice'
-      : settings.cooling === 'tap' ? 'action.pulled.tap'
+    const into = machine.cooling === 'ice' ? 'action.pulled.ice'
+      : machine.cooling === 'tap' ? 'action.pulled.tap'
         : 'action.pulled.counter';
     // On a counter rest nothing starts on its own: the grace runs out into
     // Done. The line above already says the yolk is still cooking, so there
@@ -1254,7 +1270,7 @@ function render(now_ms: number): void {
     dom.secondary.hidden = false;
     dom.secondary.textContent = t('action.cancel');
   } else if (machine.phase === 'COOLING') {
-    label = t(settings.cooling === 'ice' ? 'readout.phase.coolingIce' : 'readout.phase.coolingTap');
+    label = t(machine.cooling === 'ice' ? 'readout.phase.coolingIce' : 'readout.phase.coolingTap');
     digits = formatClock(secondsToCool(machine, now_ms));
     // The countdown ends when the middle of the yolk peaks (E4), which is
     // also when a probe reading is asked for.
@@ -1266,7 +1282,7 @@ function render(now_ms: number): void {
   } else {
     label = t('readout.phase.done');
     digits = formatClock(cookTime_s);
-    subline = settings.startMode === 'cold'
+    subline = startMode === 'cold'
       ? t('readout.sub.doneCold', { boil: formatClock(boil_s), cooking: formatClock(cookTime_s - boil_s) })
       : t('readout.sub.doneHot');
     spoken = t(probePending() ? 'spoken.probe' : 'spoken.done');
@@ -1287,7 +1303,7 @@ function render(now_ms: number): void {
   dom.sublineText.textContent = subline;
   // "Based on history" has an (i) that says what history; the full rolling
   // boil has one that says what it looks like.
-  showInfo(dom.sublineInfo, machine.phase === 'IDLE' && settings.startMode === 'cold' && hasBoilMemory(boilMemory));
+  showInfo(dom.sublineInfo, machine.phase === 'IDLE' && startMode === 'cold' && hasBoilMemory(boilMemory));
   showInfo(dom.hintInfo, machine.phase === 'HEATING');
   renderOdds();
   renderAdvice();
@@ -1449,13 +1465,15 @@ function recompute(): void {
  *  having; an unreachable target answers with the furthest this pan goes, which
  *  is the only cook on offer. The refusal is left alone for the same reason:
  *  it is advice about a control the user cannot reach. */
-function resolveDuring(timeToBoil_s: number): Solution {
-  const mean = answerFor(timeToBoil_s, machine.targetLevel, false).solution;
+function resolveDuring(t: Ticket, timeToBoil_s: number): Solution {
+  // The ticket's egg and pot, never the controls': a second tab may have
+  // changed those since "Eggs in".
+  const { egg, setup } = withTimeToBoil(t, timeToBoil_s);
+  const params = calibrationParams(calib);
+  const mean = solveCookTime(egg, setup, params, calibrationDoneness(calib, machine.targetLevel));
   // Leaned as far as the choice leaned at "Eggs in": the new ramp is a new pot,
   // whose surface is a second away with the egg already in (`carriedSolution`).
-  return carriedSolution(
-    currentEgg(), buildSetup(timeToBoil_s), calibrationParams(calib), mean, ticket?.lean_s ?? 0,
-  );
+  return carriedSolution(egg, setup, params, mean, t.lean_s);
 }
 
 /** Coalesce solves: a solve is tens of milliseconds, which is too long to run
@@ -1841,15 +1859,15 @@ const REVISE_INTERVAL_MS = 10000;
 function onTick(): void {
   const now = Date.now();
 
-  if (machine.phase === 'HEATING' && secondsToPull(machine, now) < REVISE_WHEN_LEFT_S
+  if (machine.phase === 'HEATING' && ticket !== null && secondsToPull(machine, now) < REVISE_WHEN_LEFT_S
       && now - lastRevise_ms > REVISE_INTERVAL_MS) {
     // The hob is slower than we assumed. Push the estimate out rather than
     // count down to an alarm for an egg that has not begun cooking.
     lastRevise_ms = now;
     const assumed = secondsHeating(machine, now) + REVISE_EXTRA_S;
-    solution = resolveDuring(assumed);
-    if (ticket !== null) ticket = withTimeToBoil(ticket, assumed);
-    if (ticket !== null) ticket = { ...ticket, probeMoment: probeMomentFor(solution.result, ticket.setup.cooling) };
+    solution = resolveDuring(ticket, assumed);
+    ticket = withTimeToBoil(ticket, assumed);
+    ticket = { ...ticket, probeMoment: probeMomentFor(solution.result, ticket.setup.cooling) };
     setMachine(reviseProvisional(
       machine, solution.result.cookTime_s, assumed, coolingSecondsFor(solution.result),
     ));
@@ -1956,15 +1974,14 @@ function onPrimary(): void {
     return;
   }
 
-  if (machine.phase === 'HEATING') {
+  if (machine.phase === 'HEATING' && ticket !== null) {
     const measured = secondsHeating(machine, now);
-    boilMemory = rememberTimeToBoil(boilMemory, settings.waterLitres, measured);
-    solution = resolveDuring(measured);
+    boilMemory = rememberTimeToBoil(boilMemory, ticket.setup.waterLitres, measured);
+    solution = resolveDuring(ticket, measured);
     // Patch the measured ramp into the frozen setup rather than rebuilding it
-    // from the live controls. They cannot change mid-cook today, which is what
-    // made rebuilding harmless rather than correct.
-    if (ticket !== null) ticket = withTimeToBoil(ticket, measured);
-    if (ticket !== null) ticket = { ...ticket, probeMoment: probeMomentFor(solution.result, ticket.setup.cooling) };
+    // from the live controls, which another tab may have changed.
+    ticket = withTimeToBoil(ticket, measured);
+    ticket = { ...ticket, probeMoment: probeMomentFor(solution.result, ticket.setup.cooling) };
     setMachine(recordBoil(
       machine, now, solution.result.cookTime_s, coolingSecondsFor(solution.result),
     ));
@@ -2178,13 +2195,17 @@ function restoreCook(): void {
     return;
   }
 
+  // A running cook is described by its ticket alone, so one that cannot be
+  // read is dropped rather than shown against the controls.
+  const backTicket = restoreTicket(stored.ticket);
+  if (backTicket === null) {
+    clearCook();
+    return;
+  }
   machine = back;
-  ticket = restoreTicket(stored.ticket);
+  ticket = backTicket;
   feedbackGiven = stored.feedbackGiven;
   restored = true;
-
-  // Without a ticket there is nothing to learn from, so do not offer to learn.
-  if (ticket === null) feedbackGiven = true;
 
   const step = advance(machine, now);
   machine = step.machine;
