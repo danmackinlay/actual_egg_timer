@@ -176,7 +176,7 @@ Put one LOGBOOK line on the decision: "owner, 28 Sep: no post-19-Sep build shipp
   - Decide before the first push. `record.ts:259-260` freezes v1 fields forever once shipped.
 - iOS:
   - DONE: The optional ticket fields and their "saved before…" fallbacks: `Cook.swift:73-113,302-308,357`, the hand-written `Saved.init(from:)` (`Cook.swift:517-552`), and `SetupSentence.swift:164-170`.
-  - Settings downgrade writes and migrations: `Store.swift:54-58,68-78,84-97,112-113,122-123`.
+  - DONE: Settings downgrade writes and migrations: `Store.swift:54-58,68-78,84-97,112-113,122-123`.
   - Calibration v1–v3 migrations: `Calibration.swift:41-51,133-137,206-210,217-220,248-249`.
 - `CookActivity.Stage.done`:
   - It is never sent: `Cook.swift:733-734` builds it only to branch on it.
