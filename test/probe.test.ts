@@ -351,10 +351,10 @@ test('5a. the machine counts its cooling for as long as the cook said, and a re-
   assert.equal(timedOut.coolEnd_ms, 1_000_000 + (400 + PULL_GRACE_SECONDS + 191) * 1000);
 });
 
-test('5b. a cook stored before E4 is restored with the flat three minutes', () => {
+test('5b. a stored cook keeps its own cooling, and one without it is refused', () => {
   const m = startHot(Date.now() - 10_000, 400, 'ice', JAMMY, 191);
   const stored = JSON.parse(JSON.stringify(m)) as Record<string, unknown>;
   assert.equal(restoreMachine(stored, Date.now())?.cool_s, 191);
   delete stored['cool_s'];
-  assert.equal(restoreMachine(stored, Date.now())?.cool_s, COOLING_SECONDS);
+  assert.equal(restoreMachine(stored, Date.now()), null);
 });

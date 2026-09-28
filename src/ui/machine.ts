@@ -57,8 +57,7 @@ export interface Machine {
   /** How long the counted cooling runs once the egg is out, s: to the moment
    *  the yolk's centre peaks, for this cook (`coolingSecondsFor`, E4), which
    *  is also when a probe reading is asked for. Set when the cook starts and
-   *  again whenever it is re-solved. COOLING_SECONDS for a cook stored
-   *  before E4. */
+   *  again whenever it is re-solved. */
   cool_s: number;
   /** Cook time currently in force, s (from egg-in to egg-out). */
   cookTime_s: number;
@@ -275,30 +274,23 @@ export function restoreMachine(raw: unknown, now_ms: number): Machine | null {
 
   const numbers: Record<string, number> = {};
   for (const key of [
-    'startedAt_ms', 'cookEnd_ms', 'pulledAt_ms', 'coolEnd_ms',
+    'startedAt_ms', 'cookEnd_ms', 'pulledAt_ms', 'outAt_ms', 'coolEnd_ms', 'cool_s',
     'cookTime_s', 'targetLevel', 'assumedBoil_s',
   ]) {
     const value = r[key];
     if (typeof value !== 'number' || !Number.isFinite(value)) return null;
     numbers[key] = value;
   }
-  if (!(numbers['startedAt_ms'] > 0) || !(numbers['cookEnd_ms'] > 0)) return null;
+  if (!(numbers['startedAt_ms'] > 0) || !(numbers['cookEnd_ms'] > 0) || !(numbers['cool_s'] > 0)) return null;
 
   const ends = numbers['coolEnd_ms'] > 0 ? numbers['coolEnd_ms'] : numbers['cookEnd_ms'];
   if (now_ms > ends + RESTORE_WINDOW_MS) return null;
 
-  // Who ended PULL, which a cook stored before E1 does not say. Such a cook is
-  // not refused - it is still a timer somebody is relying on - it just records
-  // its pull as unmeasured, which is all that can honestly be said of it.
+  // Who ended PULL: the cook, at a moment of their own, or the grace running
+  // out; nobody yet before the pull.
   const by = r['pulledBy'];
-  const out = r['outAt_ms'];
-  const measured = by === 'cook' && typeof out === 'number' && Number.isFinite(out) && out > 0;
-  // How long this cook counts its cooling (E4). A cook stored before E4 has
-  // no length of its own, and its countdown was the flat one.
-  const coolFor = r['cool_s'];
-  const cool = typeof coolFor === 'number' && Number.isFinite(coolFor) && coolFor > 0
-    ? coolFor : COOLING_SECONDS;
-  const ended = phase === 'COOLING' || phase === 'DONE';
+  if (by !== 'cook' && by !== 'timeout' && by !== null) return null;
+  if (by === 'cook' && !(numbers['outAt_ms'] > 0)) return null;
 
   return {
     phase: phase as Phase,
@@ -306,10 +298,10 @@ export function restoreMachine(raw: unknown, now_ms: number): Machine | null {
     startedAt_ms: numbers['startedAt_ms'],
     cookEnd_ms: numbers['cookEnd_ms'],
     pulledAt_ms: numbers['pulledAt_ms'],
-    outAt_ms: measured ? out : 0,
-    pulledBy: measured ? 'cook' : ended ? 'timeout' : null,
+    outAt_ms: numbers['outAt_ms'],
+    pulledBy: by,
     coolEnd_ms: numbers['coolEnd_ms'],
-    cool_s: cool,
+    cool_s: numbers['cool_s'],
     cookTime_s: numbers['cookTime_s'],
     targetLevel: numbers['targetLevel'],
     assumedBoil_s: numbers['assumedBoil_s'],

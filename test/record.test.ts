@@ -411,14 +411,12 @@ test('4b3. the time to boil says whether this cook measured it', () => {
   assert.equal(r.setup.timeToBoil_s, 431.5);
 });
 
-test('4c. a cook stored before E1 restores, with its pull unmeasured', () => {
+test('4c. a stored cook keeps who pulled it, and one that does not say is refused', () => {
   const m = beginCooling(pulled(startHot(T0, 400, 'ice', 0.4)), T0 + 405_000);
   const old = JSON.parse(JSON.stringify(m)) as Record<string, unknown>;
   delete old['pulledBy'];
   delete old['outAt_ms'];
-  const back = restoreMachine(old, T0 + 500_000);
-  assert.notEqual(back, null);
-  assert.equal(back?.pulledBy, 'timeout');
+  assert.equal(restoreMachine(old, T0 + 500_000), null);
   const same = restoreMachine(JSON.parse(JSON.stringify(m)), T0 + 500_000);
   assert.equal(same?.pulledBy, 'cook');
   assert.equal(same?.outAt_ms, T0 + 405_000);

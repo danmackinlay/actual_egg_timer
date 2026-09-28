@@ -164,7 +164,7 @@ Keep only what makes a browser that last ran the live site start cleanly: delete
 The owner's own phone and browsers may hold E1-era data (a log with `'set'` white answers, a v3 store, old ticket fields). The owner has accepted losing it. Even so, decoding must fail safe: skip unreadable records, or start from the prior. It must never crash or refuse to launch.
 
 Put one LOGBOOK line on the decision: "owner, 28 Sep: no post-19-Sep build shipped; all interim back-compat removed".
-- Web ticket and machine:
+- DONE: Web ticket and machine:
   - Bump `COOK_KEY` to `aet.cook.v2` (`store.ts:27`). Also update `tools/copy-snapshot.html:109`, which reads the key by name.
   - Make the ticket fields required.
   - Delete the fallbacks at `app.ts:2222-2248`, `app.ts:984`, `machine.ts:275-285`, and `Ticket.peakYolk_C: number | null`.

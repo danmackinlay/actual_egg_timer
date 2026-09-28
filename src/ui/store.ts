@@ -25,7 +25,10 @@ export {
 } from '../core/policy.js';
 
 const SETTINGS_KEY = 'aet.settings.v1';
-const COOK_KEY = 'aet.cook.v1';
+const COOK_KEY = 'aet.cook.v2';
+/** The live site's cook (19 September), and every interim build's until 28
+ *  September: a shape the ticket no longer reads. Dropped, not migrated. */
+const SUPERSEDED_COOK_KEY = 'aet.cook.v1';
 const BOIL_KEY = 'aet.boil.v1';
 
 export type StartTempMode = 'fridge' | 'room' | 'custom';
@@ -279,6 +282,7 @@ export function saveCook(machine: unknown, ticket: unknown, feedbackGiven: boole
 }
 
 export function loadCook(): StoredCook | null {
+  removeStorage(SUPERSEDED_COOK_KEY);
   const raw = parseObject(readStorage(COOK_KEY));
   if (raw === null) return null;
   const machine = raw['machine'];

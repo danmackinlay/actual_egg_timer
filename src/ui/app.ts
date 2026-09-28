@@ -283,14 +283,11 @@ interface Ticket {
    *  was not chosen. */
   lean_s: number;
   /** What the egg was likely to be like at "Eggs in", shown for the whole
-   *  cook. Null when the time was started before the odds were known. (The
-   *  ticket once also carried the odds in tenths and "still learning"; nothing
-   *  read them, and a saved cook that still has them is read without them.) */
+   *  cook. Null when the time was started before the odds were known. */
   outcome: Outcome | null;
   /** The peak yolk the cook was started with, C: what the line under the
-   *  running cook's sentence says. Null in a ticket written before it was
-   *  kept. */
-  peakYolk_C: number | null;
+   *  running cook's sentence says. */
+  peakYolk_C: number;
   /** The language they were reading it in, for the record. */
   lang: string;
   /** Whether this cook has a moment to probe at (E4): a counted cooling that
@@ -996,12 +993,10 @@ function renderCookSetup(): void {
   dom.cookSentence.textContent = t('setup.sentence', {
     egg: texts.egg.text, from: texts.from.text, start: texts.start.text, cooling: texts.cooling.text,
   });
-  // The peak yolk the cook was started with; a ticket written before it was
-  // kept falls back to the running cook's own solve.
-  const peak = k.peakYolk_C ?? solution?.result.peakYolk_C ?? targetPeakYolk_C(machine.targetLevel);
+  // The peak yolk the cook was started with.
   dom.cookDoneness.textContent = t('cook.summary', {
     doneness: midSentence(t(anchorNear(machine.targetLevel).key), activeLocale()),
-    yolk: show('temperature', peak),
+    yolk: show('temperature', k.peakYolk_C),
   });
 }
 
@@ -2248,33 +2243,40 @@ function restoreTicket(raw: unknown): Ticket | null {
     return null;
   }
 
-  // A ticket written before E1 does not say where the egg came from. The
-  // controls cannot change while a cook is on screen, so the settings still
-  // say what they said at "Eggs in".
+  // Every field is required: the ticket is written whole by this build, and
+  // one that is not whole is refused, not patched from the controls.
   const mf = r['massFrom'];
   const ef = r['eggFrom'];
-  const from = mf === 'scale' || mf === 'girth' || mf === 'width' || mf === 'class' ? mf : massFrom();
+  const tb = r['sizeTable'];
+  if (mf !== 'scale' && mf !== 'girth' && mf !== 'width' && mf !== 'class') return null;
+  if (ef !== 'fridge' && ef !== 'room' && ef !== 'custom') return null;
+  if (mf === 'class' ? tb !== 'us' && tb !== 'eu' : tb !== null) return null;
+  if (typeof r['boilRemembered'] !== 'boolean') return null;
+  if (r['units'] !== 'metric' && r['units'] !== 'imperial') return null;
+  const lang = r['lang'];
+  if (typeof lang !== 'string' || lang === '') return null;
+  const lean = r['lean_s'];
+  if (typeof lean !== 'number' || !Number.isFinite(lean)) return null;
+  const peak = r['peakYolk_C'];
+  if (typeof peak !== 'number' || !Number.isFinite(peak)) return null;
+  if (typeof r['probeMoment'] !== 'boolean') return null;
+  // Null when the time was started before the odds were known.
+  const outcome = restoreOutcome(r['outcome']);
+  if (outcome === null && r['outcome'] !== null) return null;
   return {
     egg: egg as Egg,
-    massFrom: from,
-    sizeTable: from === 'class' ? sizeTable : null,
-    boilRemembered: r['boilRemembered'] === true
-      || (r['boilRemembered'] === undefined && hasBoilMemory(boilMemory)),
-    eggFrom: ef === 'fridge' || ef === 'room' || ef === 'custom' ? ef : settings.startTempMode,
+    massFrom: mf,
+    sizeTable: mf === 'class' ? tb as SizeTable : null,
+    boilRemembered: r['boilRemembered'],
+    eggFrom: ef,
     setup: setup as CookSetup,
     logNominalTarget: target,
-    // A ticket written before F3 was written by a metric-only app.
-    units: r['units'] === 'imperial' ? 'imperial' : 'metric',
-    // And one written before F4 by an app that spoke only English.
-    lang: typeof r['lang'] === 'string' && r['lang'] !== '' ? r['lang'] : 'en',
-    // And one written before E5 by an app that did not choose, and had no odds.
-    lean_s: typeof r['lean_s'] === 'number' && Number.isFinite(r['lean_s']) ? r['lean_s'] : 0,
-    // And one written before the outcome summary, which carried only the odds.
-    outcome: restoreOutcome(r['outcome']),
-    // And one written before the running cook showed its sentence.
-    peakYolk_C: typeof r['peakYolk_C'] === 'number' && Number.isFinite(r['peakYolk_C']) ? r['peakYolk_C'] : null,
-    // And one written before E4 counted a flat three minutes, not to a peak.
-    probeMoment: r['probeMoment'] === true,
+    units: r['units'],
+    lang: lang,
+    lean_s: lean,
+    outcome: outcome,
+    peakYolk_C: peak,
+    probeMoment: r['probeMoment'],
   };
 }
 
