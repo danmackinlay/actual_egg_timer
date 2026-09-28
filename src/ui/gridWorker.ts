@@ -22,18 +22,11 @@
  * the page would have built.
  */
 
-import { GridRequest, buildRequestedGrid } from '../core/record.js';
-import { DecisionInputs, decisionGridRequest } from '../core/decide.js';
-import { oddsProfile } from '../core/reach.js';
-import type { ProfileJob } from './calibration.js';
+import { Job, runJob } from './runJob.js';
 
-interface Request {
+/** A job, and the number its answer is posted back under. */
+interface Request extends Job {
   id: number;
-  request?: GridRequest;
-  decision?: DecisionInputs;
-  /** The odds at every level (reach.ts): a solve and a decision per level, on
-   *  a decision surface the page already has. */
-  profile?: ProfileJob;
 }
 
 /** The worker's global, typed as what it is. The project compiles against the
@@ -45,17 +38,10 @@ const scope = self as unknown as {
 };
 
 scope.onmessage = (event: MessageEvent<Request>): void => {
-  const { id, request, decision, profile } = event.data;
+  const { id, ...job } = event.data;
   try {
-    if (profile !== undefined) {
-      scope.postMessage({
-        id: id, profile: oddsProfile(profile.calibration, profile.egg, profile.setup, profile.grid),
-      });
-      return;
-    }
-    const q = request ?? (decision !== undefined ? decisionGridRequest(decision) : undefined);
-    if (q === undefined) throw new Error('nothing to build');
-    scope.postMessage({ id: id, grid: buildRequestedGrid(q) });
+    const built = runJob(job);
+    scope.postMessage(job.profile !== undefined ? { id: id, profile: built } : { id: id, grid: built });
   } catch (error) {
     scope.postMessage({ id: id, error: String(error) });
   }

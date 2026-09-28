@@ -68,7 +68,7 @@ Baseline, all green:
   - it still gives 62 g after a relaunch;
   - the label always equals the mass selected.
 
-**2.3 ✔ Web: a grid or profile build that throws on the main thread never settles.**
+**DONE: 2.3 ✔ Web: a grid or profile build that throws on the main thread never settles.**
 - Where: `src/ui/calibration.ts:620-624`. `onThisThread` resolves inside `setTimeout`. If `buildHere` throws, the promise hangs, `decisionBuilds` / `profileBuilds` keep the key, and `app.ts` `profilesAsked` never clears it, so that pot never gets a direction.
 - Fix: share one `runJob(job)` module between `gridWorker.ts:50-61` and `buildHere`. Reject on throw, and clean up the maps in `.finally`.
 

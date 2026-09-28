@@ -567,11 +567,11 @@ function askForDecision(inputs: DecisionInputs): void {
   decisionHandle = window.setTimeout(() => {
     decisionHandle = 0;
     const key = decisionKey(inputs);
-    void decisionGrid(inputs).then(() => {
+    decisionGrid(inputs).then(() => {
       if (machine.phase !== 'IDLE' || isSousVide()) return;
       const now = decisionKey(decisionInputs(calib, currentEgg(), buildSetup(timeToBoil_s())));
       if (now === key) recompute();
-    });
+    }, (error: unknown) => console.warn('decision surface failed', error));
   }, DECISION_SETTLE_MS);
 }
 
@@ -599,10 +599,15 @@ function askForProfile(inputs: DecisionInputs): void {
   const key = profileKey(inputs, calib);
   if (profilesAsked.has(key)) return;
   profilesAsked.add(key);
-  void oddsProfileFor(inputs, calib).then(() => {
+  // The key is cleared whether the profile lands or fails, so a failed one
+  // is asked for again the next time the screen wants it.
+  oddsProfileFor(inputs, calib).then(() => {
     profilesAsked.delete(key);
     if (machine.phase !== 'IDLE' || isSousVide()) return;
     if (wantedProfileKeys().has(key)) recompute();
+  }, (error: unknown) => {
+    profilesAsked.delete(key);
+    console.warn('odds profile failed', error);
   });
 }
 

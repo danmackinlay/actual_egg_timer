@@ -26,18 +26,19 @@ import { CookSetup } from '../core/protocol.js';
 import { Doneness, ModelParams } from '../core/solve.js';
 import { DoseGrid } from '../core/doseGrid.js';
 import { Feedback, Particle, WhiteReport } from '../core/infer.js';
-import { DecisionInputs, decisionGridRequest } from '../core/decide.js';
-import { OddsProfile, oddsProfile } from '../core/reach.js';
+import { DecisionInputs } from '../core/decide.js';
+import { OddsProfile } from '../core/reach.js';
 import { CALIBRATION_SEED, PARTICLE_COUNT, calibrationGrid } from '../core/policy.js';
 import {
   Calibration, EggFrom, EggRecord, GridRequest, MassFrom, PRIOR_ID, ProbeReading, RECORD_VERSION,
-  buildRequestedGrid, calibrationDoneness as donenessOf, calibrationParams as paramsOf,
+  calibrationDoneness as donenessOf, calibrationParams as paramsOf,
   copyCalibration, foldRecord, freshCalibration as freshFrom, gridRequestFor, parseLog,
   recordMass_g, recordTeaches,
 } from '../core/record.js';
 import { UnitSystem } from '../core/units.js';
 import { registerOf } from '../core/language.js';
 import { Machine } from './machine.js';
+import { Job, runJob } from './runJob.js';
 import { readStorage, writeStorage, removeStorage } from './store.js';
 
 export type { Calibration } from '../core/record.js';
@@ -576,37 +577,10 @@ export function clearCalibration(): Calibration {
 
 /* ------------------------------------------------------ the dose surface */
 
-/** One job for the worker: a fold's surface, described in full; a decision's,
- *  described by the pot and the posterior (E5, `decisionGridRequest`); or the
- *  odds at every level on a decision's surface (`oddsProfile`). */
-interface Job {
-  request?: GridRequest;
-  decision?: DecisionInputs;
-  profile?: ProfileJob;
-}
-
-/** What a profile is computed from. Plain data: it crosses to the worker by
- *  structured clone, which copies doubles bit for bit. */
-export interface ProfileJob {
-  calibration: Calibration;
-  egg: Egg;
-  setup: CookSetup;
-  grid: DoseGrid;
-}
-
 interface Waiting {
   job: Job;
   resolve: (result: unknown) => void;
-}
-
-function buildHere(job: Job): DoseGrid | OddsProfile {
-  if (job.request !== undefined) return buildRequestedGrid(job.request);
-  if (job.decision !== undefined) return buildRequestedGrid(decisionGridRequest(job.decision));
-  if (job.profile !== undefined) {
-    const p = job.profile;
-    return oddsProfile(p.calibration, p.egg, p.setup, p.grid);
-  }
-  throw new Error('nothing to build');
+  reject: (error: unknown) => void;
 }
 
 let worker: Worker | null = null;
@@ -618,8 +592,14 @@ const waiting = new Map<number, Waiting>();
  *  screen paints before the build blocks it. The fallback, and the path the
  *  tests take, since Node has no Web Worker. */
 function onThisThread(job: Job): Promise<unknown> {
-  return new Promise((resolve) => {
-    setTimeout(() => resolve(buildHere(job)), 30);
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      try {
+        resolve(runJob(job));
+      } catch (error) {
+        reject(error);
+      }
+    }, 30);
   });
 }
 
@@ -630,7 +610,7 @@ function abandonWorker(): void {
   worker = null;
   const held = Array.from(waiting.values());
   waiting.clear();
-  for (const w of held) void onThisThread(w.job).then(w.resolve);
+  for (const w of held) onThisThread(w.job).then(w.resolve, w.reject);
 }
 
 function gridWorker(): Worker | null {
@@ -650,7 +630,7 @@ function gridWorker(): Worker | null {
     waiting.delete(event.data.id);
     const result = event.data.grid ?? event.data.profile;
     if (result !== undefined) w.resolve(result);
-    else void onThisThread(w.job).then(w.resolve);
+    else onThisThread(w.job).then(w.resolve, w.reject);
   };
   // A browser without module workers, or a worker file that did not ship,
   // lands here. The fold still happens; it just blocks the page as it used to.
@@ -661,9 +641,9 @@ function gridWorker(): Worker | null {
 function offThread(job: Job): Promise<unknown> {
   const w = gridWorker();
   if (w === null) return onThisThread(job);
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     const id = nextId++;
-    waiting.set(id, { job: job, resolve: resolve });
+    waiting.set(id, { job: job, resolve: resolve, reject: reject });
     w.postMessage({ id: id, ...job });
   });
 }
@@ -699,8 +679,8 @@ export function decisionGrid(inputs: DecisionInputs): Promise<DoseGrid> {
   if (done !== undefined) return Promise.resolve(done);
   const running = decisionBuilds.get(key);
   if (running !== undefined) return running;
+  // A build that fails leaves no trace, so the next ask starts a fresh one.
   const build = (offThread({ decision: inputs }) as Promise<DoseGrid>).then((grid) => {
-    decisionBuilds.delete(key);
     decisionGrids.set(key, grid);
     while (decisionGrids.size > DECISION_GRIDS_KEPT) {
       const oldest = decisionGrids.keys().next().value;
@@ -708,7 +688,7 @@ export function decisionGrid(inputs: DecisionInputs): Promise<DoseGrid> {
       decisionGrids.delete(oldest);
     }
     return grid;
-  });
+  }).finally(() => decisionBuilds.delete(key));
   decisionBuilds.set(key, build);
   return build;
 }
@@ -770,7 +750,6 @@ export function oddsProfileFor(inputs: DecisionInputs, c: Calibration): Promise<
       profile: { calibration: snapshot, egg: inputs.egg, setup: inputs.setup, grid: grid },
     }) as Promise<OddsProfile>)
     .then((profile) => {
-      profileBuilds.delete(key);
       profiles.set(key, profile);
       while (profiles.size > PROFILES_KEPT) {
         const oldest = profiles.keys().next().value;
@@ -778,7 +757,8 @@ export function oddsProfileFor(inputs: DecisionInputs, c: Calibration): Promise<
         profiles.delete(oldest);
       }
       return profile;
-    });
+    })
+    .finally(() => profileBuilds.delete(key));
   profileBuilds.set(key, build);
   return build;
 }
