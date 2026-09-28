@@ -1,0 +1,20 @@
+# The gate, on every push and pull request: `npm run verify` - the type
+# checks, the tests, fixtures that match a fresh `npm run fixtures`, and the
+# Swift core against them. macOS, because the Swift half is tested against
+# the Foundation the apps are built with.
+name: verify
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+      - run: npm ci
+      - run: npm run verify

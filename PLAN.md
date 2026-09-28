@@ -839,7 +839,11 @@ from the code.
   `references.bib` has the sources with notes on what each is good for.
 - **The Swift core covers every module in `src/core/`** and is conformant
   against the TypeScript: pure functions to 1e-12, 17 whole cooks to the same,
-  measured disagreement 7e-15. `npm run conformance`.
+  measured disagreement 7e-15. `npm run conformance`, which now also fails
+  when the committed fixtures differ from a fresh `npm run fixtures`.
+- **One gate: `npm run verify`** - the type check, `npm test`, fresh fixtures
+  and `swift test`. `.github/workflows/verify.yml` runs it on macOS; nothing
+  is pushed, so it has not yet run there.
 - **The iOS app carries the whole model.** Every input the solver has, the
   reachability refusals, the cold start with its boil-timing step, and the
   standing method. Driven end to end in the simulator against the TypeScript's

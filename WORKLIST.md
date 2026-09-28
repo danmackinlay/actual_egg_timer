@@ -416,7 +416,7 @@ The candidates:
 
 ## 7. P1 — build, CI, hygiene
 
-**7.1 Add one gate.**
+**DONE: 7.1 Add one gate.**
 - Add `"fixtures:check": "npm run fixtures && git diff --exit-code -- fixtures/"`.
 - Add `"verify": "npm run check && npm test && npm run fixtures:check && cd ios/EggTimerCore && swift test"`.
 - Change `conformance` to fail on stale fixtures.

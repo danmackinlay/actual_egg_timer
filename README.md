@@ -833,6 +833,7 @@ half-minute of error.
 npm install
 npm run build      # tsc
 npm test           # node --test
+npm run verify     # the gate: check, test, fixtures:check and swift test
 npm run validate   # regenerates the validation table in §7
 npm run identifiability  # is h separable from alpha? (§11.2)
 npm run rank       # how many parameters can feedback move? (§11.5)
@@ -846,7 +847,9 @@ so a Netlify build compiles on the same Node the tests ran on. Vercel offers onl
 20.x, 22.x and 24.x — it does not carry a 26 — so `engines.node` is a range
 rather than a pin, and Vercel takes its newest. The range is a statement about
 the APIs this uses (`node:test`, ES2022), not a tested claim: 26 is what runs
-here and what CI would run.
+here, and what `.github/workflows/verify.yml` runs `npm run verify` on - the
+type checks, the tests, fixtures identical to a fresh `npm run fixtures`, and
+the Swift core against them.
 
 There is nothing else to configure. `netlify.toml` and `vercel.json` each carry
 the two settings their host needs, and the build is `tsc` plus a few `cp`s — no
