@@ -1,8 +1,9 @@
 #!/bin/sh
 # Regenerate everything in assets/ and the iOS app icon from design/icon-source.jpg.
 # Needs ImageMagick 7 (`brew install imagemagick`); sips alone cannot do the masking.
-# Run from the repository root:  sh design/build-icons.sh
+# Run from anywhere:  sh design/build-icons.sh
 set -eu
+cd "$(dirname "$0")/.."
 
 SRC=design/icon-source.jpg
 TMP=$(mktemp -d)
@@ -60,6 +61,11 @@ for pair in "1024 ios/App/Assets.xcassets/AppIcon.appiconset/icon-1024.png" \
     magick "$TMP/cropA.png" -filter Lanczos -resize "$1x$1" -alpha off "PNG24:$2"
 done
 magick "$TMP/cropB.png" -filter Lanczos -resize 32x32 -alpha off PNG24:assets/favicon-32.png
+
+# The maskable icon, for launchers that crop to a circle or a squircle: the egg
+# inside the central 80% safe zone, on the paper's colour.
+magick assets/icon-512.png -resize 410x410 -background "rgb(240,208,170)" -gravity center \
+    -extent 512x512 -alpha off PNG24:assets/icon-maskable-512.png
 
 # 5. The social card is the only place the artwork is shown whole: a link
 #    preview is hundreds of pixels wide, so the lettering survives and is the
