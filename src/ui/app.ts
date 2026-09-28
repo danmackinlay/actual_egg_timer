@@ -48,11 +48,11 @@ import {
 } from './store.js';
 import { sousVideCopy } from './sousvide.js';
 import { directionKey, rangeWords, restoreOutcome, whiteAtRisk } from './outcome.js';
-import { activeLocale, applyCopy, switchCopy, t } from './copy.js';
+import { activeLocale, applyCopy, loadCopy, t } from './copy.js';
 import { midSentence } from '../core/copy.js';
 import { formatClock, spokenClock } from './countdown.js';
 import {
-  REGION, REGIONAL_UNITS, UNITS_FLIP_EVENT, UnitsFlipDetail, announceFlip, measure, show, unitSystem,
+  REGION, REGIONAL_UNITS, measure, show, unitSystem,
   useUnits,
 } from './units.js';
 import { languageOf } from '../core/format.js';
@@ -368,16 +368,18 @@ function applyMeasure(input: HTMLInputElement, label: HTMLElement, m: Measure): 
   label.textContent = t(m.unitKey);
 }
 
-/** The cook picks a system. Stored as their choice, and announced if it
- *  changes what is on screen - see `UNITS_FLIP_EVENT`. */
+/** The cook picks a system, stored as their choice. F6: a cook's own switch
+ *  from metric to Imperial, in modern English, is also a switch into the
+ *  English of 1750, and back (LANGUAGE.md section 6); `setLanguage` saves
+ *  for both. */
 function onUnits(next: UnitSystem): void {
   const choice = chooseUnits(settings.unitsChosen, REGIONAL_UNITS, next);
   settings.unitsChosen = choice.chosen;
   useUnits(settings.unitsChosen);
-  saveNow();
+  if (choice.flip !== null) setLanguage(languageAfterFlip(settings.language, choice.flip));
+  else saveNow();
   applyUnitsToDom();
   recompute();
-  if (choice.flip !== null) announceFlip(choice.flip);
 }
 
 function eggStart_C(): number {
@@ -1746,7 +1748,7 @@ function setLanguage(next: LanguageState): void {
     return;
   }
   const asked = ++languageAsked;
-  void switchCopy(tag).then(() => {
+  void loadCopy(tag).then(() => {
     if (asked === languageAsked) relabel();
   });
 }
@@ -2126,12 +2128,6 @@ export function boot(): void {
   // works them, and aria-expanded says which way they stand.
   wireInfoButtons();
   wireViews();
-  // F6: a cook's own switch from metric to Imperial, in modern English, is
-  // also a switch into the English of 1750, and back (LANGUAGE.md section 6).
-  document.addEventListener(UNITS_FLIP_EVENT, (event) => {
-    const detail = (event as CustomEvent<UnitsFlipDetail>).detail;
-    setLanguage(languageAfterFlip(settings.language, detail.flip));
-  });
   dom.probeOfferYes.addEventListener('click', () => onProbeOffer(true));
   dom.probeOfferNo.addEventListener('click', () => onProbeOffer(false));
   dom.probeSave.addEventListener('click', onProbeSave);

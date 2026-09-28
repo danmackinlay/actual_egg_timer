@@ -17,14 +17,6 @@ import {
 import { formatTimeOfDay, formattingLocale } from '../core/format.js';
 import { DEFAULT_LANGUAGE } from '../core/language.js';
 
-/**
- * The language a fresh install speaks. The cook can pick another in Settings,
- * and the units switch can move an English cook into the English of 1750
- * (`src/core/language.ts`, LANGUAGE.md section 6); `main.ts` loads the one
- * they last had, and `switchCopy` changes it in place.
- */
-export const ACTIVE_LOCALE = DEFAULT_LANGUAGE;
-
 let active: Catalogue | null = null;
 
 /** Every catalogue fetched so far, by tag, so a language picked twice is
@@ -50,10 +42,18 @@ function catalogueFor(locale: string): Promise<Catalogue> {
   return promise;
 }
 
-/** Fetch the active catalogue, and English beneath it for any key it lacks:
- *  `en-x-1750` falls back to `en`. A catalogue that cannot be fetched falls
- *  back to English whole, rather than leave the page without words. */
-export async function loadCopy(locale: string = ACTIVE_LOCALE): Promise<Catalogue> {
+/**
+ * Fetch the active catalogue, and English beneath it for any key it lacks:
+ * `en-x-1750` falls back to `en`. A catalogue that cannot be fetched falls
+ * back to English whole, rather than leave the page without words.
+ *
+ * A fresh install speaks DEFAULT_LANGUAGE. The cook can pick another in
+ * Settings, and the units switch can move an English cook into the English of
+ * 1750 (`src/core/language.ts`, LANGUAGE.md section 6); `main.ts` loads the
+ * one they last had, and the page calls this again to change it in place,
+ * re-rendering what it drew.
+ */
+export async function loadCopy(locale: string = DEFAULT_LANGUAGE): Promise<Catalogue> {
   try {
     active = await catalogueFor(locale);
   } catch (error) {
@@ -61,11 +61,6 @@ export async function loadCopy(locale: string = ACTIVE_LOCALE): Promise<Catalogu
     active = await catalogueFor('en');
   }
   return active;
-}
-
-/** Change language in place. The caller re-renders what it drew. */
-export async function switchCopy(locale: string): Promise<Catalogue> {
-  return loadCopy(locale);
 }
 
 /** Install a catalogue already in hand - for a test, or a second language. */
@@ -129,10 +124,10 @@ export function tRef(ref: CopyRef, extra: CopyArgs = {}): string {
 /** A wall-clock time, in this browser's time zone and the formatting
  *  locale's clock: "3:05 PM", "15:05". Not the countdown, which is a
  *  duration and is built as m:ss everywhere. */
-export function timeOfDay(ms: number, withSeconds: boolean = false): string {
+export function timeOfDay(ms: number): string {
   const d = new Date(ms);
   const seconds = d.getHours() * 3600 + d.getMinutes() * 60 + d.getSeconds();
-  return formatTimeOfDay(formatLocale(), seconds, withSeconds);
+  return formatTimeOfDay(formatLocale(), seconds, false);
 }
 
 /** Fill every `data-copy` element in the document, and say which language the

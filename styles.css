@@ -378,7 +378,6 @@ button.info[aria-expanded="true"]::before { background: var(--fg); color: var(--
   opacity: 0.7;
   pointer-events: none;
 }
-.slider__bracket[hidden] { display: none; }
 .slider__median {
   position: absolute;
   bottom: -2px;
@@ -499,7 +498,6 @@ button.panel__close {
   color: var(--dim);
   font-size: 0.9375rem;
 }
-.prow:first-child { margin-top: 0; }
 
 /* Three ways of saying the same size. They stay in step, so they read as one
    control rather than three competing ones. */
@@ -666,7 +664,7 @@ button.danger { color: var(--warn); border-color: color-mix(in srgb, var(--warn)
 #help p { margin: 0 0 10px; }
 /* The technical aside under a gist: smaller and quieter, with its links. */
 #help p.aside { font-size: 0.9rem; color: var(--dim); margin-top: -4px; }
-#help p.aside a, #help p[data-copy-links] a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+#help p[data-copy-links] a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
 #help section { scroll-margin-top: 12px; }
 .toc {
   display: flex;
@@ -692,7 +690,7 @@ button.danger { color: var(--warn); border-color: color-mix(in srgb, var(--warn)
   background: color-mix(in srgb, var(--accent) 8%, transparent);
   border-radius: 0 8px 8px 0;
 }
-.foryou h3 { margin-top: 0 !important; }
+#help .foryou h3 { margin-top: 0; }
 .foryou ul { margin: 0; padding-left: 1.2em; }
 .foryou li + li { margin-top: 6px; }
 .sources { padding-left: 1.2em; font-size: 0.875rem; }
@@ -853,7 +851,6 @@ button.fb, button.wb {
   background: var(--panel);
   border: 1px solid var(--line);
 }
-button.fb[disabled], button.wb[disabled] { opacity: 0.5; }
 /* The answer given stays legible: it is the record of what was said. */
 button.fb[aria-pressed="true"], button.wb[aria-pressed="true"] {
   opacity: 1;

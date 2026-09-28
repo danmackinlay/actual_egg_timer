@@ -19,10 +19,8 @@ import {
   BoilMemory, DEFAULTS, LIMITS, Limit, carrySizeIndex, clamp, isWithin, rememberBoil,
 } from '../core/policy.js';
 
-export type { BoilMemory, Limit } from '../core/policy.js';
-export {
-  LIMITS, DEFAULT_TIME_TO_BOIL_S, START_TEMP_PRESETS_C, estimateTimeToBoil, hasBoilMemory,
-} from '../core/policy.js';
+export type { Limit } from '../core/policy.js';
+export { LIMITS, START_TEMP_PRESETS_C, estimateTimeToBoil, hasBoilMemory } from '../core/policy.js';
 
 const SETTINGS_KEY = 'aet.settings.v1';
 const COOK_KEY = 'aet.cook.v2';
@@ -31,7 +29,7 @@ const COOK_KEY = 'aet.cook.v2';
 const SUPERSEDED_COOK_KEY = 'aet.cook.v1';
 const BOIL_KEY = 'aet.boil.v1';
 
-export type StartTempMode = 'fridge' | 'room' | 'custom';
+type StartTempMode = 'fridge' | 'room' | 'custom';
 
 /** The Start control offers one more option than the solver understands.
  *  'sous' never reaches core: see buildSetup in app.ts. */
@@ -269,7 +267,7 @@ function clampLitres(litres: number): number {
  * state and the ticket; whether it is still worth restoring is
  * `isStaleCook`'s business.
  */
-export interface StoredCook {
+interface StoredCook {
   machine: unknown;
   ticket: unknown;
   feedbackGiven: boolean;

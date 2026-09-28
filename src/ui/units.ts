@@ -11,7 +11,7 @@
  */
 
 import {
-  Measure, Quantity, UnitSystem, UnitsFlip, effectiveUnits, measureFor, quantityText,
+  Measure, Quantity, UnitSystem, effectiveUnits, measureFor, quantityText,
   regionalUnits,
 } from '../core/units.js';
 import { REGION, t } from './copy.js';
@@ -48,20 +48,3 @@ export function show(q: Quantity, si: number): string {
   return t(text.key, { value: text.value });
 }
 
-/**
- * The event a cook's own switch of system raises on `document`, with
- * `detail.flip` saying which way. A regional default never raises it, and
- * neither does choosing the system already on screen.
- *
- * Nothing listens yet. It is the hook F6 needs: an English UI switched from
- * metric to Imperial goes into the English of 1750 (LANGUAGE.md §6).
- */
-export const UNITS_FLIP_EVENT = 'aet:unitsflip';
-
-export interface UnitsFlipDetail {
-  flip: UnitsFlip;
-}
-
-export function announceFlip(flip: UnitsFlip): void {
-  document.dispatchEvent(new CustomEvent<UnitsFlipDetail>(UNITS_FLIP_EVENT, { detail: { flip: flip } }));
-}

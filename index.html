@@ -65,7 +65,7 @@
   <!-- F6: the title page, after the Dictionary's, heading the egg's page in
        the English of 1750 only (styles.css). Its long s is drawn, and the
        aria-label that applyCopy gives it reads without. -->
-  <h1 id="titlePage" class="titlepage" data-copy="app.titlePage"></h1>
+  <h1 class="titlepage" data-copy="app.titlePage"></h1>
 
   <!-- ------------------------------------------------------------ readout -->
   <section id="readout">
@@ -84,7 +84,7 @@
          Then a line when a runny white is a real risk. Filled once the
          choice is made; the direction keeps its line's height until then, so
          nothing jumps when it lands. -->
-    <p id="direction"><span class="direction__line"><span id="directionText"></span><button type="button" id="oddsInfo" class="info" aria-expanded="false" aria-controls="oddsWhy" data-name="outcome.info" hidden></button></span></p>
+    <p id="direction"><span id="directionText"></span><button type="button" id="oddsInfo" class="info" aria-expanded="false" aria-controls="oddsWhy" data-name="outcome.info" hidden></button></p>
     <div id="oddsWhy" class="disclosed" hidden><p data-copy="outcome.bracket"></p><p data-copy="outcome.why"></p><p data-copy="outcome.learning"></p></div>
     <p id="whiteRisk" data-copy="outcome.whiteRunny" hidden></p>
   </section>
@@ -105,13 +105,13 @@
        markup cannot disagree with the model. -->
   <form id="controls" autocomplete="off">
 
-    <div class="field field--slider">
+    <div>
       <!-- The heading: the control's name, and at its end the peak yolk the
            level asks for (or, in sous-vide, the water's temperature). The
            slider's aria-valuetext says the doneness word with it, so the
            number is hidden here rather than read twice. -->
       <div class="slider__head">
-        <label for="doneness" id="donenessLabel" data-copy="controls.doneness"></label>
+        <label for="doneness" data-copy="controls.doneness"></label>
         <span id="donenessPeak" aria-hidden="true"></span>
       </div>
       <div class="slider">
@@ -236,7 +236,7 @@
   <div id="slot">
     <p id="warn" hidden></p>
     <p id="welcome" hidden data-copy="idle.welcome"></p>
-    <p id="advice" hidden><a href="#help-reliable" id="adviceLink" class="morelink" data-copy="advice.toggle"></a></p>
+    <p id="advice" hidden><a href="#help-reliable" class="morelink" data-copy="advice.toggle"></a></p>
   </div>
 
   <!-- ----------------------------------------------------------- kitchen -->
@@ -248,7 +248,7 @@
       <!-- Not pan-only: a sous-vide egg has a temperature too. Its default
            comes from the browser's region; a choice made here is stored as
            the cook's. -->
-      <fieldset class="krow" id="unitsField" aria-labelledby="lblUnits">
+      <fieldset class="krow" aria-labelledby="lblUnits">
         <div class="krow__head">
           <span id="lblUnits" data-copy="controls.units"></span>
           <button type="button" class="info" aria-expanded="false" aria-controls="moreUnits" data-label="controls.units"></button>
@@ -268,7 +268,7 @@
       <!-- F6: English, or the English of 1750. Changing it never changes
            the units; switching the units to Imperial in modern English
            changes it (src/core/language.ts). -->
-      <fieldset class="krow" id="languageField" aria-labelledby="lblLanguage">
+      <fieldset class="krow" aria-labelledby="lblLanguage">
         <div class="krow__head">
           <span id="lblLanguage" data-copy="controls.language"></span>
           <button type="button" class="info" aria-expanded="false" aria-controls="moreLanguage" data-label="controls.language"></button>
@@ -316,7 +316,7 @@
         <p id="moreEggs" class="disclosed" hidden data-copy="controls.eggsInPan.more"></p>
       </div>
 
-      <fieldset class="krow pan-only" id="afterBoilField" aria-labelledby="lblAfterBoil">
+      <fieldset class="krow pan-only" aria-labelledby="lblAfterBoil">
         <div class="krow__head">
           <span id="lblAfterBoil" data-copy="controls.afterTheBoil"></span>
           <button type="button" class="info" aria-expanded="false" aria-controls="moreAfterBoil" data-label="controls.afterTheBoil"></button>

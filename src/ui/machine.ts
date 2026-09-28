@@ -199,7 +199,7 @@ export function coolingStartsIn_s(m: Machine, now_ms: number): number | null {
 }
 
 /** Something that should make a noise. */
-export type MachineEvent = 'none' | 'pull' | 'done';
+type MachineEvent = 'none' | 'pull' | 'done';
 
 export interface Advance {
   machine: Machine;

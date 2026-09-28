@@ -23,8 +23,6 @@
 
 import { Fixed, countDecimals, formatCount, formatNumber, isFixed, languageOf, roundTo } from './format.js';
 
-export { languageOf } from './format.js';
-
 /** A word or phrase written to stand alone - a doneness word, a headline -
  *  set down in the middle of a sentence: its first letter lower-cased in the
  *  catalogue's language, and nothing else, so "Last Wednesday" becomes "last

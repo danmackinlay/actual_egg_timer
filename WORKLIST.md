@@ -209,7 +209,7 @@ Put one LOGBOOK line on the decision: "owner, 28 Sep: no post-19-Sep build shipp
 - `Calibrations.params` is a pure alias for `calibrationParams`. Delete it.
 - `Cook.coolingSeconds` and `pullGraceSeconds` (`Cook.swift:220-221`) alias core constants. Use the core names.
 
-**4.5 Web dead code.**
+**DONE: 4.5 Web dead code.** (Not quite as claimed: `store.ts` re-exports `LIMITS`, `Limit`, `START_TEMP_PRESETS_C`, `estimateTimeToBoil` and `hasBoilMemory`, which `app.ts` imports; only `BoilMemory` and `DEFAULT_TIME_TO_BOIL_S` went.)
 - `UNITS_FLIP_EVENT`, `UnitsFlipDetail` and `announceFlip` form a round-trip within one file, so a units change saves, relabels and recomputes twice (`app.ts:382,2112`, `units.ts:56`, whose comment is false).
   - Fix: call `setLanguage(languageAfterFlip(...))` directly from `onUnits`.
 - `copy.ts`: `ACTIVE_LOCALE`; `switchCopy` (an alias of `loadCopy`); `timeOfDay`'s unused `withSeconds` parameter; the `languageOf` re-export (line 26).

@@ -935,8 +935,10 @@ precisely than the table above:
   Australian who set Fahrenheit starts in Imperial.
 - **The explicit choice is stored as a choice**, `null` until the cook makes
   one, and stays a choice when it equals the default. A cook's own change of
-  system raises `aet:unitsflip` on the web and posts `.unitsFlipped` on iOS,
-  with `metricToImperial` or `imperialToMetric`. That is all F6 gets from F3.
+  system is a flip, `metricToImperial` or `imperialToMetric`: on the web
+  `onUnits` hands it straight to the language (an event, `aet:unitsflip`,
+  until 28 September), and iOS posts `.unitsFlipped`. That is all F6 gets
+  from F3.
 - **Numbers are plain digits with a point in both apps**, from core's
   `displayText`. iOS used the device locale for two readouts (the boiling
   point and the weighed mass); those now print the same digits as the web
@@ -1190,7 +1192,7 @@ whole catalogue is for their review. iOS is untouched and follows.
   Imperial to metric restores what was there, if the switch put the cook
   in 1750; a pick in the picker is always the cook's own and forgets the
   switch, so choosing English keeps °F and a later switch to metric does
-  not undo it. The web listens for F3's `aet:unitsflip`. Nothing here
+  not undo it. The web's `onUnits` calls `languageAfterFlip` itself. Nothing here
   touches the units.
 - **The web** stores the state in its settings, loads the catalogue the
   cook last read before painting, and redraws every word in place when it

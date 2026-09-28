@@ -294,10 +294,10 @@ export function encodeKept(k: Kept): string {
 
 /** What loading found, for the caller that has to write it back and for the
  *  tests that check each path. */
-export type LoadPath =
+type LoadPath =
   | 'fresh' | 'loaded' | 'rebased' | 'rebuild';
 
-export interface Decoded {
+interface Decoded {
   kept: Kept;
   path: LoadPath;
 }
@@ -373,7 +373,7 @@ let draining: Promise<void> | null = null;
 /** The record whose cook is on screen, whose second answer may still come.
  *  Every other record is folded quietly. */
 let live = -1;
-let last: Outcome | null = null;
+let last: LiveFold | null = null;
 
 function save(): void {
   writeStorage(KEY, encodeKept(kept));
@@ -415,7 +415,7 @@ export function logEgg(r: EggRecord): number {
 /** What folding the live egg leaves behind: the surface its answers were
  *  scored against and the calibration as it stood before them, so that a
  *  second answer can fold the egg again rather than on top of itself. */
-export interface Outcome {
+interface LiveFold {
   index: number;
   record: EggRecord;
   /** Not persisted: a reload drops the chance of a second answer rather than
@@ -427,15 +427,15 @@ export interface Outcome {
 /**
  * Fold every egg not yet folded, one surface at a time, off the main thread.
  *
- * Pass the index `logEgg` returned to hear back about that egg; with no index,
- * this only catches the posterior up with the log. Calls made while a fold is
+ * Pass the index `logEgg` returned for the egg on screen, so a second answer
+ * to it can be folded again (`recordSecondAnswer`); with no index, this only
+ * catches the posterior up with the log. Calls made while a fold is
  * running join it, and it runs until the log is empty of unfolded eggs, so
  * nothing written down is ever left behind.
  */
-export async function learn(index = -1): Promise<Outcome | null> {
+export async function learn(index = -1): Promise<void> {
   if (index >= 0) live = index;
   await drain();
-  return last !== null && last.index === index && index >= 0 ? last : null;
 }
 
 function drain(): Promise<void> {

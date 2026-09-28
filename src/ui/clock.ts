@@ -37,22 +37,11 @@ export function startTicker(onTick: () => void): Ticker {
 
 /* ---------------------------------------------------------------- wake lock */
 
-interface WakeLockSentinelLike {
-  released: boolean;
-  release(): Promise<void>;
-  addEventListener(type: 'release', listener: () => void): void;
+function wakeLockApi(): WakeLock | null {
+  return 'wakeLock' in navigator ? navigator.wakeLock : null;
 }
 
-interface WakeLockLike {
-  request(type: 'screen'): Promise<WakeLockSentinelLike>;
-}
-
-function wakeLockApi(): WakeLockLike | null {
-  const nav = navigator as unknown as { wakeLock?: WakeLockLike };
-  return nav.wakeLock === undefined ? null : nav.wakeLock;
-}
-
-let sentinel: WakeLockSentinelLike | null = null;
+let sentinel: WakeLockSentinel | null = null;
 let wakeWanted = false;
 let wakeListenerAttached = false;
 
@@ -63,7 +52,7 @@ async function acquire(): Promise<void> {
   try {
     const held = await api.request('screen');
     if (!wakeWanted) {
-      void held.release();
+      held.release().catch(() => { /* already gone */ });
       return;
     }
     sentinel = held;
@@ -93,13 +82,7 @@ export function releaseScreen(): void {
   wakeWanted = false;
   const held = sentinel;
   sentinel = null;
-  if (held !== null) {
-    try {
-      void held.release();
-    } catch {
-      /* already gone */
-    }
-  }
+  if (held !== null) held.release().catch(() => { /* already gone */ });
 }
 
 /* -------------------------------------------------------------------- alarm */
@@ -118,13 +101,7 @@ export function setMuted(value: boolean): void {
 }
 
 function audioCtor(): AudioContextCtor | null {
-  const w = window as unknown as {
-    AudioContext?: AudioContextCtor;
-    webkitAudioContext?: AudioContextCtor;
-  };
-  if (w.AudioContext !== undefined) return w.AudioContext;
-  if (w.webkitAudioContext !== undefined) return w.webkitAudioContext;
-  return null;
+  return typeof AudioContext === 'undefined' ? null : AudioContext;
 }
 
 /** Must be called from inside a user gesture (the Start tap). Browsers will
@@ -144,7 +121,9 @@ export function primeAudio(): void {
   if (audio.state === 'suspended') void audio.resume();
 }
 
-function scheduleBeep(ctx: AudioContext, at: number, freq: number, length: number): void {
+/** One beep on the audio clock. The alarm keeps its beeps, to stop them;
+ *  a blip is left to end on its own. */
+function scheduleBeep(ctx: AudioContext, at: number, freq: number, length: number): OscillatorNode {
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();
   osc.type = 'triangle';
@@ -158,7 +137,7 @@ function scheduleBeep(ctx: AudioContext, at: number, freq: number, length: numbe
   gain.connect(ctx.destination);
   osc.start(at);
   osc.stop(at + length + 0.02);
-  ringing.push(osc);
+  return osc;
 }
 
 const BURST_PERIOD_S = 1.6;
@@ -175,9 +154,9 @@ export function ringAlarm(urgent: boolean): void {
   const base = ctx.currentTime + 0.05;
   for (let i = 0; i < BURSTS; i += 1) {
     const at = base + i * BURST_PERIOD_S;
-    scheduleBeep(ctx, at, 880, 0.14);
-    scheduleBeep(ctx, at + 0.2, 880, 0.14);
-    if (urgent) scheduleBeep(ctx, at + 0.4, 1175, 0.2);
+    ringing.push(scheduleBeep(ctx, at, 880, 0.14));
+    ringing.push(scheduleBeep(ctx, at + 0.2, 880, 0.14));
+    if (urgent) ringing.push(scheduleBeep(ctx, at + 0.4, 1175, 0.2));
   }
 }
 

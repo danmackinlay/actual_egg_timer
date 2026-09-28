@@ -15,7 +15,7 @@ import {
 import { t, tRef, timeOfDay } from './copy.js';
 import { show } from './units.js';
 
-export interface SousVideCopy {
+interface SousVideCopy {
   /** Big text, in place of the clock. */
   headline: string;
   subline: string;

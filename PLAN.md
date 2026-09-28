@@ -467,8 +467,9 @@ F1 goes before E2 so that Phase E's new feedback copy is born in the catalogue.
       absent until made), apart from the regional default: Imperial only in
       region US on the web; on iOS the temperature preference, then the
       measurement system, then the region (`regionalUnits`). A change of
-      system by the cook raises `aet:unitsflip` on the web and posts
-      `.unitsFlipped` on iOS, the hook F6 needs; nothing listens yet. Every
+      system by the cook raised `aet:unitsflip` on the web (a direct call
+      since 28 September) and posts `.unitsFlipped` on iOS, the hook F6
+      needs. Every
       temperature carries its unit through `format.*` keys, the size menu
       shows ounces from the same mass, the Live Activity is handed its numbers
       rendered, and the record's `units` is the system the cook read at "Eggs
