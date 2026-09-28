@@ -105,7 +105,9 @@ import {
 import {
   LIMITS, SLIDER_STEPS, PARTICLE_COUNT as POLICY_PARTICLES, CALIBRATION_SEED,
   DEFAULTS, DEFAULT_EGG_MASS_KG, DEFAULT_TIME_TO_BOIL_S, START_TEMP_PRESETS_C,
-  BoilMemory, COOLING_SECONDS, GridSpec, PULL_GRACE_SECONDS, ambientFor, anchorNear, coolingSecondsFor,
+  BoilMemory, COOLING_SECONDS, GridSpec, PULL_GRACE_SECONDS, SLOW_HOB_EVERY_S, SLOW_HOB_EXTRA_S,
+  SLOW_HOB_WHEN_LEFT_S,
+  ambientFor, anchorNear, coolingSecondsFor,
   calibrationGrid, carrySizeIndex, estimateTimeToBoil, phaseAt, rememberBoil, snapDown, snapUp,
   targetPeakYolk_C, textureFor, textureNoteKeys, verdictFor,
 } from '../src/core/policy.js';
@@ -695,6 +697,7 @@ const policy = {
   phase: {
     coolingSeconds: COOLING_SECONDS,
     pullGraceSeconds: PULL_GRACE_SECONDS,
+    slowHob: { whenLeft_s: SLOW_HOB_WHEN_LEFT_S, extra_s: SLOW_HOB_EXTRA_S, every_s: SLOW_HOB_EVERY_S },
     /* Two timelines from the same cook, differing only in whether there is a
      * cooling step to time. The counter one is the bug: with no cooling
      * deadline, the iOS app used to fall from COOKING straight to DONE and

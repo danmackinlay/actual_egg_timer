@@ -2084,6 +2084,11 @@
   "phase": {
     "coolingSeconds": 180,
     "pullGraceSeconds": 20,
+    "slowHob": {
+      "whenLeft_s": 45,
+      "extra_s": 60,
+      "every_s": 10
+    },
     "timelines": [
       {
         "name": "ice bath",

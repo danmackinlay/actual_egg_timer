@@ -523,6 +523,15 @@ export function plausibleProbeRange_C(
   return [lo < floor ? floor : lo, hi > setup.boiling_C ? setup.boiling_C : hi];
 }
 
+/** A slow hob: a cold start still not boiling this close to its provisional
+ *  deadline, s, has a slower hob than assumed. Rather than count down to an
+ *  alarm for an egg that has not begun cooking, both apps push the estimate
+ *  out to the time heating so far plus SLOW_HOB_EXTRA_S, at most once every
+ *  SLOW_HOB_EVERY_S. */
+export const SLOW_HOB_WHEN_LEFT_S = 45;
+export const SLOW_HOB_EXTRA_S = 60;
+export const SLOW_HOB_EVERY_S = 10;
+
 /** If nobody confirms the transfer, assume it happened. A stalled timer at the
  *  hob is worse than a slightly optimistic one. */
 export const PULL_GRACE_SECONDS = 20;

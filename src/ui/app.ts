@@ -24,7 +24,8 @@ import {
   DONENESS_ANCHORS, Solution, donenessFromSlider, solveCookTime,
 } from '../core/solve.js';
 import {
-  DEFAULTS, SLIDER_STEPS, Verdict, ambientFor, anchorNear, coolingSecondsFor,
+  DEFAULTS, SLIDER_STEPS, SLOW_HOB_EVERY_S, SLOW_HOB_EXTRA_S, SLOW_HOB_WHEN_LEFT_S, Verdict, ambientFor,
+  anchorNear, coolingSecondsFor,
   plausibleProbeRange_C, probeMomentFor, targetPeakYolk_C, textureFor, textureNoteKeys,
 } from '../core/policy.js';
 import { Feedback, WhiteReport } from '../core/infer.js';
@@ -1738,22 +1739,15 @@ function onInput(event: Event): void {
 
 /* ------------------------------------------------------------------ cook */
 
-/** A slow hob: when this little of the provisional countdown is left and the
- *  water has still not boiled, push the estimate out by REVISE_EXTRA_S, at
- *  most once per REVISE_INTERVAL_MS. */
-const REVISE_WHEN_LEFT_S = 45;
-const REVISE_EXTRA_S = 60;
-const REVISE_INTERVAL_MS = 10000;
-
 function onTick(): void {
   const now = Date.now();
 
-  if (machine.phase === 'HEATING' && ticket !== null && secondsToPull(machine, now) < REVISE_WHEN_LEFT_S
-      && now - lastRevise_ms > REVISE_INTERVAL_MS) {
+  if (machine.phase === 'HEATING' && ticket !== null && secondsToPull(machine, now) < SLOW_HOB_WHEN_LEFT_S
+      && now - lastRevise_ms > SLOW_HOB_EVERY_S * 1000) {
     // The hob is slower than we assumed. Push the estimate out rather than
     // count down to an alarm for an egg that has not begun cooking.
     lastRevise_ms = now;
-    const assumed = secondsHeating(machine, now) + REVISE_EXTRA_S;
+    const assumed = secondsHeating(machine, now) + SLOW_HOB_EXTRA_S;
     solution = resolveDuring(ticket, assumed);
     ticket = withTimeToBoil(ticket, assumed);
     ticket = { ...ticket, probeMoment: probeMomentFor(solution.result, ticket.setup.cooling) };

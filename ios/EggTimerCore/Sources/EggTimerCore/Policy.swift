@@ -503,6 +503,14 @@ public func plausibleProbeRangeC(
     return (lo < floor ? floor : lo, hi > setup.boilingC ? setup.boilingC : hi)
 }
 
+/// A slow hob: a cold start still not boiling this close to its provisional
+/// deadline, s, has a slower hob than assumed. Both apps push the estimate out
+/// to the time heating so far plus `slowHobExtraS`, at most once every
+/// `slowHobEveryS`.
+public let slowHobWhenLeftS = 45.0
+public let slowHobExtraS = 60.0
+public let slowHobEveryS = 10.0
+
 /// If nobody confirms the transfer, assume it happened. A stalled timer at the
 /// hob is worse than a slightly optimistic one.
 public let pullGraceSeconds = 20.0

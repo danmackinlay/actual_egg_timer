@@ -118,7 +118,7 @@ DONE: **3.2 Which refusal and phase text to show is chosen separately in each ap
 - Fix: move each into core as a pure `…Key(…) → CopyRef` and fixture it. The precedents already exist: `pullLineKey`, `textureNoteKeys`, `sousvideCopy.json`.
 - Why it matters most here: the iOS app has **no test target** (`project.yml testTargets: []`), so this is the only way its choices get tested.
 
-**3.3 The slow-hob revision constants are literals in both apps.**
+DONE: **3.3 The slow-hob revision constants are literals in both apps.** (`SLOW_HOB_*` / `slowHob*`, in `policy.json` `phase.slowHob`.)
 - Where: `app.ts:1832-1834` and `Cook.swift:226-228` (45 s, 60 s, 10 s).
 - Fix: move them to `policy.ts`, its Swift twin and `policy.json`.
 

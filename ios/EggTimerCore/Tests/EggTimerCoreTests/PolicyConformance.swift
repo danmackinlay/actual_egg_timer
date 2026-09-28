@@ -370,5 +370,9 @@ struct PhaseConformance {
         let phase = Fixtures.policyObject("phase")
         expectClose(coolingSeconds, phase.num("coolingSeconds"), "coolingSeconds")
         expectClose(pullGraceSeconds, phase.num("pullGraceSeconds"), "pullGraceSeconds")
+        guard let slowHob = phase["slowHob"] as? [String: Any] else { fatalError("phase.slowHob") }
+        expectClose(slowHobWhenLeftS, slowHob.num("whenLeft_s"), "slowHobWhenLeftS")
+        expectClose(slowHobExtraS, slowHob.num("extra_s"), "slowHobExtraS")
+        expectClose(slowHobEveryS, slowHob.num("every_s"), "slowHobEveryS")
     }
 }

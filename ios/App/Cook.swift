@@ -213,13 +213,6 @@ final class Cook {
     /// differently. They used to be a pair of literals here and another pair in
     /// the web app's machine, with a comment asserting they matched.
 
-    /// A cold start still not boiling this close to its provisional deadline
-    /// has a slower hob than we assumed. Push the estimate out rather than
-    /// count down to an alarm for an egg that has not begun cooking.
-    private static let reviseWhenLeftS: TimeInterval = 45
-    private static let reviseExtraS: TimeInterval = 60
-    private static let reviseEverySSeconds: TimeInterval = 10
-
     var phase: Phase { phase(at: .now) }
 
     /// How long the cooling counts once the eggs are out, s: to the yolk's
@@ -634,13 +627,13 @@ final class Cook {
 
     private func reviseIfHobIsSlow() async {
         guard phase == .heating, let startedAt, let ticket else { return }
-        guard secondsToPull < Self.reviseWhenLeftS else { return }
+        guard secondsToPull < slowHobWhenLeftS else { return }
         let now = Date.now
-        if let lastRevise, now.timeIntervalSince(lastRevise) < Self.reviseEverySSeconds { return }
+        if let lastRevise, now.timeIntervalSince(lastRevise) < slowHobEveryS { return }
         lastRevise = now
 
         let gen = generation
-        let assumed = now.timeIntervalSince(startedAt) + Self.reviseExtraS
+        let assumed = now.timeIntervalSince(startedAt) + slowHobExtraS
         guard let result = await resolveCookTime?(assumed, ticket.level, ticket.leanS) else { return }
         guard gen == generation else { return }
         assumedBoilS = assumed
