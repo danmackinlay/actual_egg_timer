@@ -4,7 +4,9 @@
  * the record that says it was read.
  *
  * Placeholder parity and the length budgets are copy.test.ts's, which reads
- * every catalogue in copy/ and so this one too; 1a checks that it does.
+ * every catalogue in copy/ and so this one too; 1a checks that it does. The
+ * catalogue covers both apps' keys (1b), so every rule here binds iOS's
+ * alarms and Live Activity as it binds the web's page.
  *
  * Run from the repo root (npm test does). Zero dependencies.
  */
@@ -62,11 +64,38 @@ test('1a. the 1750 catalogue is a catalogue: copy.test.ts and the fixture read i
   assert.equal(P_JSON.locale, PERIOD_LANGUAGE);
 });
 
-test('1b. every key the web uses has its 1750 twin, and every twin is an English key', () => {
+/** Keys 1750 leaves to English on purpose: the app's name, which is a name. */
+const LEFT_TO_ENGLISH = new Set(['app.name']);
+
+test('1b. every key either app uses has its 1750 twin, and every twin is an English key', () => {
+  // The web's since F6 on the web, iOS's since F6 on iOS: the alarms, the
+  // alarm's status lines, the Live Activity and the Dynamic Island. So every
+  // rule below - the archaisms, the spellings, the long s - binds them too.
   for (const [key, entry] of Object.entries(EN_JSON.messages)) {
-    if ((entry['apps'] as string[]).includes('web')) assert.ok(PERIOD.messages.has(key), `${key}: no 1750 twin`);
+    if (LEFT_TO_ENGLISH.has(key)) continue;
+    const apps = entry['apps'] as string[];
+    assert.ok(apps.length > 0, `${key}: used by no app`);
+    assert.ok(PERIOD.messages.has(key), `${key} (${apps.join(', ')}): no 1750 twin`);
   }
   for (const key of PERIOD.messages.keys()) assert.ok(EN.messages.has(key), `${key}: not an English key`);
+  for (const key of LEFT_TO_ENGLISH) assert.ok(!PERIOD.messages.has(key), `${key}: left to English`);
+});
+
+test('1b2. the small surfaces keep to a few words of period flavour', () => {
+  // LANGUAGE.md section 6, rule 2: on the Lock Screen, the Dynamic Island and
+  // an alarm's title the register gets two or three words, not a paragraph.
+  // The budgets bind in copy.test.ts; this holds the flavour to few words.
+  const small = new Set(['notification.title', 'island.compact', 'island.expanded', 'lockscreen']);
+  for (const [key, entry] of Object.entries(EN_JSON.messages)) {
+    if (!small.has(entry['surface'] as string) || !PERIOD.messages.has(key)) continue;
+    for (const t of templatesOf(PERIOD.messages.get(key) as Parameters<typeof templatesOf>[0])) {
+      const words = t.split(/\s+/).filter((w) => w !== '' && w !== '·').length;
+      assert.ok(words <= 8, `${key}: ${words} words in "${t}"`);
+    }
+  }
+  // The Dynamic Island's compact words have no room for any flavour at all.
+  assert.equal(render(PERIOD, 'activity.now'), 'NOW');
+  assert.equal(render(PERIOD, 'activity.eat'), 'Eat');
 });
 
 test('1c. a key 1750 lacks falls back to English, with English\'s plural rule', () => {
