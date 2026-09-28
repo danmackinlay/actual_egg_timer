@@ -2777,9 +2777,15 @@
     },
     {
       "locale": "en-x-1750",
-      "key": "alarm.pull.body",
+      "key": "alarm.pull.bodyIce",
       "args": {},
-      "text": "Commit them at once to the cold; for heat, though withdrawn from the fire, is not yet withdrawn from the egg."
+      "text": "Commit them at once to the ice; for heat, though withdrawn from the fire, is not yet withdrawn from the egg."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "alarm.pull.bodyTap",
+      "args": {},
+      "text": "Commit them at once to the pump; for heat, though withdrawn from the fire, is not yet withdrawn from the egg."
     },
     {
       "locale": "en-x-1750",
@@ -2889,18 +2895,6 @@
       "key": "activity.note.cooking",
       "args": {},
       "text": "until the eggs are taken out"
-    },
-    {
-      "locale": "en-x-1750",
-      "key": "activity.note.pull",
-      "args": {},
-      "text": "to the cold, or the yolk cooks on"
-    },
-    {
-      "locale": "en-x-1750",
-      "key": "activity.note.pullCounter",
-      "args": {},
-      "text": "laid upon the table"
     },
     {
       "locale": "en-x-1750",
@@ -5711,9 +5705,15 @@
     },
     {
       "locale": "en",
-      "key": "alarm.pull.body",
+      "key": "alarm.pull.bodyIce",
       "args": {},
-      "text": "Straight into the cooling, or the yolk keeps cooking."
+      "text": "Straight into the ice bath, or the yolk keeps cooking."
+    },
+    {
+      "locale": "en",
+      "key": "alarm.pull.bodyTap",
+      "args": {},
+      "text": "Straight under the cold tap, or the yolk keeps cooking."
     },
     {
       "locale": "en",
@@ -5731,7 +5731,7 @@
       "locale": "en",
       "key": "alarm.cooled.body",
       "args": {},
-      "text": "The carryover is over. That is the egg you asked for."
+      "text": "The yolk has stopped cooking. That is the egg you asked for."
     },
     {
       "locale": "en",
@@ -5761,7 +5761,7 @@
       "locale": "en",
       "key": "activity.stage.pull",
       "args": {},
-      "text": "Eggs out — now"
+      "text": "Eggs out"
     },
     {
       "locale": "en",
@@ -5823,18 +5823,6 @@
       "key": "activity.note.cooking",
       "args": {},
       "text": "until the eggs come out"
-    },
-    {
-      "locale": "en",
-      "key": "activity.note.pull",
-      "args": {},
-      "text": "into the cooling, or the yolk keeps going"
-    },
-    {
-      "locale": "en",
-      "key": "activity.note.pullCounter",
-      "args": {},
-      "text": "resting on the counter"
     },
     {
       "locale": "en",

@@ -2279,3 +2279,31 @@ a person to lock the simulator (Device > Lock) or a phone.
 **In passing:** with `-noAlarmPrompt YES` the system still asked "Would Like
 to Send You Notifications" as the cook started. `Alarm.authorize` returns
 before asking in that case, so something else asks. Not looked into here.
+
+## 28 September 2026: the Lock Screen card, on a phone
+
+The previous entry was wrong about the cause. On the owner's phone the card
+was empty (half a flame, half a snowflake) in every stage that counts down,
+and drawn in full at "NOW" and "Eat", which do not. `.fixedSize()` on
+`Text(timerInterval:)` claimed more width than the card had, and pushed the
+words off one edge and the timer off the other. The countdown now takes the
+width of the longest string it will show ("0:00", "00:00", "0:00:00"). The
+owner's phone shows "COOLING", its line and "0:26" (5e38279).
+
+The same phone showed why the track's colour, the bracket and the play-safe
+line came and went: Xcode's Run is a Debug build, and EggTimerCore at
+`-Onone` takes 20 s for an odds profile that takes 0.4 s optimised. The
+package now builds EggTimerCore with `-O` in Debug too.
+
+From the owner, on the same cook:
+- the pull names the cooling chosen: "Straight into the ice bath" / "under
+  the cold tap" / "onto the counter", in the alarm and, word for word, on the
+  card, whose heading is now "Eggs out" beside the big NOW. In 1750, "Commit
+  them at once to the ice" / "to the pump", the owner's clause kept.
+- "The carryover is over" was jargon: "The yolk has stopped cooking."
+- The card and the alarm said "Done" twice: the card now ends at once when
+  the cooling does, and the alarm stays in Notification Centre.
+- The alarm arrives on a locked phone with sound, with the ringer on silent.
+- The notification showed the first icon (the rainbow egg). The app holds
+  only the watercolour one; iOS caches a notification's icon. Deleting the
+  app and reinstalling, or restarting the phone, refreshes it.

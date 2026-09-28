@@ -36,12 +36,15 @@ enum LiveActivity {
         }
     }
 
-    /// End the cook's card, leaving the finished state on the Lock Screen
-    /// briefly so someone who missed the alarm still sees what happened.
+    /// End the cook's card at once. It used to stay two minutes, saying
+    /// "Done" beside the alarm that says the same, and the owner saw one
+    /// message twice (28 September). The alarm stays in Notification Centre
+    /// for anyone who missed it; with notifications off, the app is on
+    /// screen ringing.
     static func finish(_ state: CookActivity.ContentState) async {
         let payload = content(state)
         for activity in Activity<CookActivity>.activities {
-            await activity.end(payload, dismissalPolicy: .after(.now.addingTimeInterval(120)))
+            await activity.end(payload, dismissalPolicy: .immediate)
         }
     }
 

@@ -74,15 +74,14 @@ final class Alarm: NSObject, UNUserNotificationCenterDelegate {
     /// probe thermometer that is the moment to take the reading, so the second
     /// alarm asks for it instead of announcing the end.
     ///
-    /// A cook resting the eggs on the counter has no cooling step, so the pull
-    /// alarm does not send them "into the cooling".
-    func schedule(pullAt: Date, coolDoneAt: Date?, probe: Bool = false, restsOnCounter: Bool = false) {
+    /// The pull alarm names the cooling the cook chose (`pullLineKey`).
+    func schedule(pullAt: Date, coolDoneAt: Date?, probe: Bool = false, cooling: String? = nil) {
         cancel()
 
         request(
             id: pullID, at: pullAt,
             title: tr("alarm.pull.title"),
-            body: tr(restsOnCounter ? "alarm.pull.bodyCounter" : "alarm.pull.body")
+            body: tr(CookActivity.pullLineKey(cooling: cooling))
         )
 
         if let coolDoneAt {

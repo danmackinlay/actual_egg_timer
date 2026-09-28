@@ -331,7 +331,8 @@
     "app.titlePage": { "text": "The Actual Egg-Timer: in which the times of boiling are deduced from their cauſes, and illuſtrated in their different degrees of hardneſs." },
 
     "alarm.pull.title": { "text": "Out with them" },
-    "alarm.pull.body": { "text": "Commit them at once to the cold; for heat, though withdrawn from the fire, is not yet withdrawn from the egg." },
+    "alarm.pull.bodyIce": { "text": "Commit them at once to the ice; for heat, though withdrawn from the fire, is not yet withdrawn from the egg." },
+    "alarm.pull.bodyTap": { "text": "Commit them at once to the pump; for heat, though withdrawn from the fire, is not yet withdrawn from the egg." },
     "alarm.cooled.title": { "text": "Cooling ended" },
     "alarm.pull.bodyCounter": { "text": "Take them from the water, and lay them upon the table." },
     "alarm.cooled.body": { "text": "The heat has run its course; the egg is such as you desired." },
@@ -367,8 +368,6 @@
     "activity.note.estimate": { "text": "my conjecture, till you tap the boil" },
     "activity.note.heating": { "text": "upon the fire" },
     "activity.note.cooking": { "text": "until the eggs are taken out" },
-    "activity.note.pull": { "text": "to the cold, or the yolk cooks on" },
-    "activity.note.pullCounter": { "text": "laid upon the table" },
     "activity.note.cooling": { "text": "the yolk cooks still" },
     "activity.note.done": { "text": "the egg is such as you desired" }
   }

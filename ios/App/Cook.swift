@@ -119,7 +119,7 @@ final class Cook {
                 doneness: doneness,
                 peakYolk: showIn(system, .temperature, peakYolkC),
                 eggMass: showIn(system, .mass, eggGrams),
-                restsOnCounter: cooling == .counter,
+                cooling: cooling.rawValue,
                 lang: lang
             )
         }
@@ -621,7 +621,7 @@ final class Cook {
         guard let pullAt else { return }
         Alarm.shared.schedule(
             pullAt: pullAt, coolDoneAt: coolDoneAt, probe: asksForProbe,
-            restsOnCounter: ticket?.cooling == .counter
+            cooling: ticket?.cooling.rawValue
         )
     }
 

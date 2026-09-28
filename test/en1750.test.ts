@@ -162,8 +162,12 @@ test('1h. the answers keep their meaning: three, distinct, and the soft one says
 });
 
 test('1i. the owner\'s alarm, word for word', () => {
-  assert.equal(render(PERIOD, 'alarm.pull.body'),
-    'Commit them at once to the cold; for heat, though withdrawn from the fire, is not yet withdrawn from the egg.');
+  // Its "the cold" became the cooling the cook chose, on the owner's word of
+  // 28 September; the clause after the semicolon is theirs, untouched.
+  assert.equal(render(PERIOD, 'alarm.pull.bodyIce'),
+    'Commit them at once to the ice; for heat, though withdrawn from the fire, is not yet withdrawn from the egg.');
+  assert.equal(render(PERIOD, 'alarm.pull.bodyTap'),
+    'Commit them at once to the pump; for heat, though withdrawn from the fire, is not yet withdrawn from the egg.');
 });
 
 test('1j. Help\'s links are the English links: the same URLs, in the same markdown', () => {

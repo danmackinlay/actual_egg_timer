@@ -37,10 +37,22 @@ struct CookActivity: ActivityAttributes {
     // spend the room on odds. An activity begun by an older build still
     // decodes, since a key nobody asks for is ignored.
 
-    /// True when the eggs rest on the counter after the pull. There is then no
-    /// cooling step to send them into, so the pull note says so. Optional, so
-    /// an activity begun by an older build decodes as not resting.
-    var restsOnCounter: Bool? = nil
+    /// The cooling the cook chose, `Cooling`'s raw value: `ice`, `tap` or
+    /// `counter`. The pull line names it (`pullLineKey`). A String, since this
+    /// file cannot see EggTimerCore; optional, so an activity begun by an
+    /// older build decodes, as the ice bath.
+    var cooling: String? = nil
+
+    /// The pull's line, in the alarm and on the card alike: into the ice bath,
+    /// under the cold tap, or onto the counter, as the cook chose - never "the
+    /// cooling", which is this app's word and not the cook's.
+    static func pullLineKey(cooling: String?) -> String {
+        switch cooling {
+        case "tap": "alarm.pull.bodyTap"
+        case "counter": "alarm.pull.bodyCounter"
+        default: "alarm.pull.bodyIce"
+        }
+    }
     /// The catalogue the cook was started in, `en` or `en-x-1750` (F6). The
     /// widget cannot read the app's settings, so the activity carries its
     /// language as it carries its units. Optional, so an activity begun by

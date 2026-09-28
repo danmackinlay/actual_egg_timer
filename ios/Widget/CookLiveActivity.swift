@@ -77,10 +77,12 @@ struct CookLiveActivity: Widget {
                     .font(.caption.smallCaps())
                     .foregroundStyle(tint(context.state.stage))
 
+                // Three lines: at the pull this is the alarm's whole sentence,
+                // and the English of 1750's runs past a hundred characters.
                 Text(note(context.state, context.attributes))
                     .font(.caption2)
                     .foregroundStyle(.secondary)
-                    .lineLimit(2)
+                    .lineLimit(3)
 
                 Text(tr("activity.summary", [
                     "mass": .text(context.attributes.eggMass),
@@ -158,7 +160,7 @@ struct CookLiveActivity: Widget {
         let key = switch state.stage {
         case .heating: state.provisional ? "activity.note.estimate" : "activity.note.heating"
         case .cooking: state.provisional ? "activity.note.estimate" : "activity.note.cooking"
-        case .pull: attributes.restsOnCounter == true ? "activity.note.pullCounter" : "activity.note.pull"
+        case .pull: CookActivity.pullLineKey(cooling: attributes.cooling)
         case .cooling: "activity.note.cooling"
         case .done: "activity.note.done"
         }
