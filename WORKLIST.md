@@ -48,12 +48,12 @@ Baseline, all green:
 
 ## 2. P0 — bugs
 
-**DONE: 2.1 ✔ iOS records a Custom egg temperature as "room".**
+**DONE 94cb3e3: 2.1 ✔ iOS records a Custom egg temperature as "room".**
 - Where: `ios/App/Cook.swift:318-323`, `eggFrom: ticket.setup.eggStartC == StartTempPresets.fridgeC ? .fridge : .room`. The comment ("Fridge or room are the only two") went stale when Custom was added. `Kitchen.swift:891` (debug seed) repeats it.
 - Fix: use `ticket.startTemp`. Then delete the app's `StartTemp` enum (`Kitchen.swift:28-30`), which duplicates core `EggFrom`, and use `EggFrom` throughout.
 - Done when: a Custom cook's record says `custom`, and the web (`app.ts:869`) and iOS agree.
 
-**DONE: 2.2 ✔ iOS "Weighed · {mass}" shows one mass and selects another.** Owner, 28 Sep: **go back** to the last weighed mass.
+**DONE d767bff: 2.2 ✔ iOS "Weighed · {mass}" shows one mass and selects another.** Owner, 28 Sep: **go back** to the last weighed mass.
 - Where: `SetupSentence.swift:346` labels the item with `weighedMassG`, but `Kitchen.chooseSize(-1)` (`Kitchen.swift:64-67`) first overwrites `weighedMassG = eggMassG`.
 - Example: weigh 62 g, pick Large, then pick "Weighed · 62 g", and you get 68 g.
 - It is also lost across a relaunch: `Store.save` persists `eggMassG`, not `weighedMassG` (`Store.swift:105`).
@@ -68,33 +68,33 @@ Baseline, all green:
   - it still gives 62 g after a relaunch;
   - the label always equals the mass selected.
 
-**DONE: 2.3 ✔ Web: a grid or profile build that throws on the main thread never settles.**
+**DONE 5005798: 2.3 ✔ Web: a grid or profile build that throws on the main thread never settles.**
 - Where: `src/ui/calibration.ts:620-624`. `onThisThread` resolves inside `setTimeout`. If `buildHere` throws, the promise hangs, `decisionBuilds` / `profileBuilds` keep the key, and `app.ts` `profilesAsked` never clears it, so that pot never gets a direction.
 - Fix: share one `runJob(job)` module between `gridWorker.ts:50-61` and `buildHere`. Reject on throw, and clean up the maps in `.finally`.
 
-**DONE: 2.4 Web: while a cook runs, the display and re-solve read live `settings`, not the cook's ticket.**
+**DONE 781db28: 2.4 Web: while a cook runs, the display and re-solve read live `settings`, not the cook's ticket.**
 - Where: `render` (`app.ts:1146,1175-1270`) reads `settings.startMode/afterBoil/cooling`. `timeToBoil_s` / `rampSeconds` (`app.ts:437-446`) and `resolveDuring` (`app.ts:1447-1453`) also use live `currentEgg()` / `buildSetup()`.
 - How it breaks: a second tab changes settings, then the first tab reloads mid-cook. The labels and the boil-tap re-solve now describe a different pot than the ticket and machine.
 - Fix: when not IDLE, take every value from `ticket.setup`, `ticket.egg` and `machine`. Change the signature to `resolveDuring(ticket, boil_s)`.
 
-**DONE: 2.5 ✔ Web: lower-casing catalogue text breaks words.**
+**DONE 5ac1854: 2.5 ✔ Web: lower-casing catalogue text breaks words.**
 - Where: `app.ts:1390`. `spoken.sousVide` lower-cases the headline, so "Last Wednesday" is announced as "last wednesday". `app.ts:460` and `986` do the same for `{limit}` and `{doneness}`, iOS mirrors it (`Kitchen.swift:1027`, `SetupSentence.swift:250`, `CookLiveActivity.swift:36,89`), and `toLowerCase()` ignores locale.
 - Fix: reword the templates so the inserted word can keep its capital, or add `*.inline` lower-case keys. At minimum use `toLocaleLowerCase(activeLocale())`.
 - LANGUAGE.md:105-107 calls this debt.
 
-**DONE: 2.6 ✔ `tools/copy-snapshot.html:75` waits for `#donenessValue`, which no longer exists.**
+**DONE a80b7ba: 2.6 ✔ `tools/copy-snapshot.html:75` waits for `#donenessValue`, which no longer exists.**
 - Effect: every `openApp` burns its full 5 s timeout, so the web half of the copy proof "boots" by timeout.
 - Fix: wait on `#donenessPeak`, and drop the E1-era `#whiteFeedback` / `#whiteNote` probes (lines 124-151).
 
-**DONE: 2.7 Clearing a measurement box on the web switches to a hard-coded egg.**
+**DONE ca733e4: 2.7 Clearing a measurement box on the web switches to a hard-coded egg.**
 - Where: `readInputs` falls back to literal 62 g and 137 mm (`app.ts:1762,1764`). The width box (1766) keeps the current egg instead.
 - Fix: fall back to the current egg (as width does), or ignore a blank field.
 
-**DONE: 2.8 Web routing runs twice on back/forward.**
+**DONE 6622b45: 2.8 Web routing runs twice on back/forward.**
 - Where: `app.ts:1087-1088` listens to both `popstate` and `hashchange`.
 - Fix: keep one, or make the second return early when the view hasn't changed.
 
-**DONE: 2.9 Minor iOS: `LiveActivity` operations are fire-and-forget and unordered.**
+**DONE 55f18d4: 2.9 Minor iOS: `LiveActivity` operations are fire-and-forget and unordered.**
 - Where: unstructured `Task`s at `Cook.swift:460,744-750`. The restore task (`Cook.swift:604-617`) and the `pulledOut` read-back (`:450-452`) don't check `generation`, so a cancel during them can be undone. For example, `alarmAuthorized` gets set again after a reset.
 - Fix: route all activity calls through one actor or serial stream, and guard with `gen == generation`.
 
@@ -152,7 +152,7 @@ Baseline, all green:
 
 ## 4. P1 — dead code and back-compat to remove
 
-**DONE: 4.1 Back-compat for formats that never left the dev devices.** UNBLOCKED: the owner said "kill em all" (D1).
+**DONE 521c15d..d5f52a9: 4.1 Back-compat for formats that never left the dev devices.** UNBLOCKED: the owner said "kill em all" (D1).
 
 The live site, `2f341b4` of 19 Sep, IS in the wild. Its storage formats are the one exception:
 - `aet.calibration.v2`
@@ -164,26 +164,26 @@ Keep only what makes a browser that last ran the live site start cleanly: delete
 The owner's own phone and browsers may hold E1-era data (a log with `'set'` white answers, a v3 store, old ticket fields). The owner has accepted losing it. Even so, decoding must fail safe: skip unreadable records, or start from the prior. It must never crash or refuse to launch.
 
 Put one LOGBOOK line on the decision: "owner, 28 Sep: no post-19-Sep build shipped; all interim back-compat removed".
-- DONE: Web ticket and machine:
+- DONE 521c15d: Web ticket and machine:
   - Bump `COOK_KEY` to `aet.cook.v2` (`store.ts:27`). Also update `tools/copy-snapshot.html:109`, which reads the key by name.
   - Make the ticket fields required.
   - Delete the fallbacks at `app.ts:2222-2248`, `app.ts:984`, `machine.ts:275-285`, and `Ticket.peakYolk_C: number | null`.
-- DONE: Web calibration:
+- DONE de235e8: Web calibration:
   - Drop the v3 ("E1") replay path: `E1_KEY`, the `'replayed'` branch of `decodeKept`, `calibration.ts:54-66,354-365,421-423`, and tests 3b and :245 in `record.test.ts`.
   - Add `aet.calibration.v3` to `SUPERSEDED_KEYS`.
   - **Keep the v2 path**: the live site writes v2.
-- DONE (whiteOffered removed from the record entirely): The E1 `'set'` white answer and `whiteOffered: false` records: `infer.ts:85,381-385`, `record.ts:160-170,313,317`, `Infer.swift:47`, and `fixtures.ts:1116-1117`.
+- DONE bbb1c99 (whiteOffered removed from the record entirely): The E1 `'set'` white answer and `whiteOffered: false` records: `infer.ts:85,381-385`, `record.ts:160-170,313,317`, `Infer.swift:47`, and `fixtures.ts:1116-1117`.
   - Decide before the first push. `record.ts:259-260` freezes v1 fields forever once shipped.
 - iOS:
-  - DONE: The optional ticket fields and their "saved before…" fallbacks: `Cook.swift:73-113,302-308,357`, the hand-written `Saved.init(from:)` (`Cook.swift:517-552`), and `SetupSentence.swift:164-170`.
-  - DONE: Settings downgrade writes and migrations: `Store.swift:54-58,68-78,84-97,112-113,122-123`.
-  - DONE: Calibration v1–v3 migrations: `Calibration.swift:41-51,133-137,206-210,217-220,248-249`.
-- DONE: `CookActivity.Stage.done`:
+  - DONE 232c414: The optional ticket fields and their "saved before…" fallbacks: `Cook.swift:73-113,302-308,357`, the hand-written `Saved.init(from:)` (`Cook.swift:517-552`), and `SetupSentence.swift:164-170`.
+  - DONE 86b0bf9: Settings downgrade writes and migrations: `Store.swift:54-58,68-78,84-97,112-113,122-123`.
+  - DONE 1c8c388: Calibration v1–v3 migrations: `Calibration.swift:41-51,133-137,206-210,217-220,248-249`.
+- DONE d5f52a9: `CookActivity.Stage.done`:
   - It is never sent: `Cook.swift:733-734` builds it only to branch on it.
   - Have `activityState` return nil at done, and have `pushActivity` check `phase(at:) == .done`.
   - Delete the case and its branches: `CookActivity.swift:57,66-70,80,84-85` and `CookLiveActivity.swift:154-156,167-168,179`.
 
-**DONE: 4.2 Delete `saferLevels` and friends.** UNBLOCKED: owner, 28 Sep. About 165 lines in each core, plus fixture, tests and tool.
+**DONE 23e6d3d: 4.2 Delete `saferLevels` and friends.** UNBLOCKED: owner, 28 Sep. About 165 lines in each core, plus fixture, tests and tool.
 - Code: `reach.ts:381-544`, `Reach.swift:344+`, `SaferConformance.swift`, `test/safer.test.ts`, `fixtures/safer.json`, `fixtures.ts:1571-1652`, and the `safer` section of `tools/decide.ts:529-596`.
 - It is also 23 s of `npm test`'s critical path (tests 3 and 7).
 - Delete, don't keep:
@@ -193,7 +193,7 @@ Put one LOGBOOK line on the decision: "owner, 28 Sep: no post-19-Sep build shipp
 - Drop §6.5 (the safer test split); it becomes moot.
 - LOGBOOK: one line on the decision.
 
-**DONE: 4.3 Drop `Decision.interval`, `stillLearning`, `loss`.** UNBLOCKED: owner, 28 Sep.
+**DONE 527e1a4: 4.3 Drop `Decision.interval`, `stillLearning`, `loss`.** UNBLOCKED: owner, 28 Sep.
 - Remove them from `decideAt` (`decide.ts:364-382`), along with `stillLearning()` and `STILL_LEARNING_HALF_WIDTH_S`.
 - Mirror the change in `Decide.swift`, `decide.json`, `DecideConformance`, `test/decide.test.ts` and `tools/decide.ts` (`learning`).
 - Fix the comments that describe "still learning" as on screen: `decide.ts:36,70-81`, `infer.ts:672`, `app.ts:200-202`.
@@ -201,7 +201,7 @@ Put one LOGBOOK line on the decision: "owner, 28 Sep: no post-19-Sep build shipp
 - Before deleting `STILL_LEARNING_HALF_WIDTH_S`, grep it. If the E6/E8 "still learning" condition in INFERENCE.md cites it, leave a note there that it is to be computed on demand from `predictCookTime`.
 - Done when: `decide.json` has no interval, stillLearning or loss fields, and `npm run conformance` is green.
 
-**DONE: 4.4 iOS dead code.**
+**DONE 61c697e: 4.4 iOS dead code.**
 - `Cook.Ticket.peakWhiteC` and `logNominalTarget` are written and never read (`Cook.swift:52,56-59`). `Kitchen.logNominalTarget` (`:379-382`) exists only to fill them.
 - Derive `eggGrams`, `coldStart` and `cooling` from `egg` / `setup` instead of storing them.
 - `LanguageChoice.current` (`:56-57`) has no callers.
@@ -209,7 +209,7 @@ Put one LOGBOOK line on the decision: "owner, 28 Sep: no post-19-Sep build shipp
 - `Calibrations.params` is a pure alias for `calibrationParams`. Delete it.
 - `Cook.coolingSeconds` and `pullGraceSeconds` (`Cook.swift:220-221`) alias core constants. Use the core names.
 
-**DONE: 4.5 Web dead code.** (Not quite as claimed: `store.ts` re-exports `LIMITS`, `Limit`, `START_TEMP_PRESETS_C`, `estimateTimeToBoil` and `hasBoilMemory`, which `app.ts` imports; only `BoilMemory` and `DEFAULT_TIME_TO_BOIL_S` went.)
+**DONE fedc2e1: 4.5 Web dead code.** (Not quite as claimed: `store.ts` re-exports `LIMITS`, `Limit`, `START_TEMP_PRESETS_C`, `estimateTimeToBoil` and `hasBoilMemory`, which `app.ts` imports; only `BoilMemory` and `DEFAULT_TIME_TO_BOIL_S` went.)
 - `UNITS_FLIP_EVENT`, `UnitsFlipDetail` and `announceFlip` form a round-trip within one file, so a units change saves, relabels and recomputes twice (`app.ts:382,2112`, `units.ts:56`, whose comment is false).
   - Fix: call `setLanguage(languageAfterFlip(...))` directly from `onUnits`.
 - `copy.ts`: `ACTIVE_LOCALE`; `switchCopy` (an alias of `loadCopy`); `timeOfDay`'s unused `withSeconds` parameter; the `languageOf` re-export (line 26).
@@ -231,7 +231,7 @@ Put one LOGBOOK line on the decision: "owner, 28 Sep: no post-19-Sep build shipp
   - `try { void held.release() }` cannot catch a rejection. Use `.catch(() => {})`.
   - `scheduleBeep` pushes every oscillator onto `ringing`, which only empties on stop.
 
-**DONE: 4.6 Drop Swift API with no app caller.** (`eggFromMinorDiameter` went too: the scenarios are built from mass.) UNBLOCKED: owner, 28 Sep.
+**DONE af0602f: 4.6 Drop Swift API with no app caller.** (`eggFromMinorDiameter` went too: the scenarios are built from mass.) UNBLOCKED: owner, 28 Sep.
 
 How to do it:
 - Delete each function from Swift, along with its Swift tests and the fixture sections only Swift reads (`core.json`'s `erfcTheta`, `oneTermTheta`, `biotNumber`, `boilingPointApprox`, `saltBoilingElevation`, `zFromActivationEnergy`, `diffusionTime`, the egg-from-diameter rows, and `calibration.json`'s `yolkProbs`/`whiteProbs`/`predictive` where only Swift reads them). Stop `tools/fixtures.ts` generating those sections.
@@ -247,7 +247,7 @@ The candidates:
 - Copy: `Message.templates` and `placeholders(_:)` (`EggTimerCopy/Copy.swift:68,289`). Delete these two regardless of D4.
 - In TS, `predictOutcome` computes the same numbers as `yolk/whiteAnswerProbabilities` inline (`outcome.ts:12-14`). Have it call them, or delete them.
 
-**DONE: 4.7 Over-exported symbols (tidy only).** (Swift: every `Protocols.*Temperature`, bathTemperature and initialSurfaceTemperature included.)
+**DONE a602acb: 4.7 Over-exported symbols (tidy only).** (Swift: every `Protocols.*Temperature`, bathTemperature and initialSurfaceTemperature included.)
 - TS: drop `export` from
   - `solutionAt`
   - `rampTemperature`, `dipMagnitude`, `standingTemperature`
@@ -264,7 +264,7 @@ The candidates:
   - `probePossible`, `recordEgg`, `recordCookSetup`, `recordLogTarget`
   - `countMaxDecimals`, `timeSpace`, `ownConvention`, `weekdayKeys`
 
-**DONE: 4.8 `tools/copyLiterals.ts` base-ref mode.** (`copy:literals` runs the lint and joins `verify`; its NOT_COPY list gained the ~100 literals the base-ref proof never had to classify. §7.6 still owns `copy:snapshot`.)
+**DONE f10a920: 4.8 `tools/copyLiterals.ts` base-ref mode.** (`copy:literals` runs the lint and joins `verify`; its NOT_COPY list gained the ~100 literals the base-ref proof never had to classify. §7.6 still owns `copy:snapshot`.)
 - Steps 2–3 (lines 420-486, `RESTRUCTURED`) are dead by the header's own account (lines 10-11).
 - Remove them. Keep step 4 ("no Swift literal is copy") as a standing lint, with an npm script (see §7.6).
 
@@ -416,18 +416,18 @@ The candidates:
 
 ## 7. P1 — build, CI, hygiene
 
-**DONE: 7.1 Add one gate.**
+**DONE 9d771dd: 7.1 Add one gate.**
 - Add `"fixtures:check": "npm run fixtures && git diff --exit-code -- fixtures/"`.
 - Add `"verify": "npm run check && npm test && npm run fixtures:check && cd ios/EggTimerCore && swift test"`.
 - Change `conformance` to fail on stale fixtures.
 - Add a macOS GitHub Actions workflow (`npm ci && npm run verify`, Node from `.node-version`), or a pre-push hook until pushing resumes.
 - Fix README.md:849's "what CI would run".
 
-**DONE: 7.2 Enforce purity with tsconfig.**
+**DONE 0b9194a: 7.2 Enforce purity with tsconfig.**
 - Add `tsconfig.core.json` (`src/core/**`, `lib: ["ES2022"]`, `types: []`, `noEmit`) and run it in `check`. Today `DOM` is visible to core.
 - Add `"types": []` to `tsconfig.site.json` so Node globals can't reach the browser build. Both are checked to pass with 0 errors today.
 
-**DONE: 7.3 tsconfig.**
+**DONE df49a84: 7.3 tsconfig.**
 - Switch to `"module"/"moduleResolution": "NodeNext"`; it has 0 errors today. `bundler` accepts extensionless imports that then 404 in the browser.
 - Turn on the free flags: `noFallthroughCasesInSwitch`, `noImplicitOverride`, `noPropertyAccessFromIndexSignature`, `allowUnreachableCode: false`, `allowUnusedLabels: false`.
 - Fix `store.ts:23` (`export type`) and `copySnapshot.ts:70`, then add `isolatedModules` and `erasableSyntaxOnly`.

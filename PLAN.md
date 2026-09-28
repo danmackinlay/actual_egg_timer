@@ -12,9 +12,9 @@ back up.
 cook and learning. The web app (`src/`) and the iOS app (`ios/`) carry the same
 model, refusals, particle filter and choice of time (Phase E up to E5), the same
 catalogue of words in two Englishes (Phase F but for Czech), and the same
-layout (UI.md). `npm test` runs 244 tests: 243 pass and one is an open todo
-(E3's 5b, below). `npm run validate` passes 28/28, and `swift test` passes 107
-tests in 30 suites. **Nothing since 19 September is pushed**: `origin/main` is
+layout (UI.md). `npm test` runs 235 tests: 234 pass and one is an open todo
+(E3's 5b, below). `npm run validate` passes 28/28, and `swift test` passes 99
+tests in 29 suites. **Nothing since 19 September is pushed**: `origin/main` is
 `2f341b4`, so the live site is the app from before E1, and every line below
 dated later is on local `main` only. The iOS app runs from Xcode on the owner's
 phone and has cooked real eggs; no TestFlight build is recorded

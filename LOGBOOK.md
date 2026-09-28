@@ -2441,3 +2441,57 @@ builds for the iPhone 17 simulator.
 
 **Not verified:** nothing was tapped; the Lock Screen card was not looked at
 after the done-state change, and an older build's done card was not tried.
+
+## 28 September 2026: the worklist, stage 1 - bugs, the gate, dead code
+
+WORKLIST.md sections 2, 7.1-7.3 and 4, on a branch from `048d18e`; each item
+there is ticked with its commit.
+
+- **Owner, 28 Sep: no post-19-Sep build shipped; all interim back-compat
+  removed (D1).** The web cook moves to `aet.cook.v2` and drops the live
+  site's `aet.cook.v1` on load; a stored ticket or machine is whole or
+  refused. The web calibration deletes `aet.calibration.v3` unread beside v2
+  and v1. Both cores lose E1's `'set'` white and the record's `whiteOffered`,
+  which had been true on every record since E2 (the schema stays `v: 1`: no
+  record had left the owner's devices). iOS: required ticket fields and a
+  synthesized decoder, no settings downgrade writes or migrations, the
+  calibration reads v4 alone, and the Live Activity has no done stage.
+- **Owner, 28 Sep: `saferLevels` and everything serving it deleted (D2)**,
+  in both cores, with its fixture, tests and `npm run decide -- safer`.
+  `npm test` falls from about 35 s to 18 s.
+- **Owner, 28 Sep: `Decision` drops `interval`, `stillLearning` and `loss`
+  (D3).** The +-15 s rule is computed on demand from `predictCookTime` where
+  it is still measured (test 5b, `npm run decide -- learning`).
+- **Owner, 28 Sep: the Swift core drops the API no app calls (D4).** The
+  scenarios' egg is now built from its mass on both sides; TypeScript keeps
+  the lot, and `predictOutcome` calls the answer probabilities
+  (`outcome.json` byte-identical).
+- **Bugs:** iOS records Custom as custom, and Weighed goes back to the last
+  weighed mass across a relaunch (D6); a web build that throws rejects and
+  is forgotten; a running web cook reads its ticket, not live settings; a
+  word set mid-sentence loses only its first capital (`midSentence`, both
+  apps); copy-snapshot boots on `#donenessPeak` (172 states in 64 s); a
+  cleared measurement box measures nothing; routing runs once; iOS Live
+  Activity calls are serialised and a cancel is not undone.
+- **The gate:** `npm run verify` (check, test, the Swift copy lint,
+  `fixtures:check`, swift test), a macOS workflow that runs it, and
+  `conformance` failing on stale fixtures. `tsconfig.core.json` keeps DOM and
+  Node out of core; NodeNext and the free strictness flags are on.
+- **Decisions of my own:** `whiteOffered` removed rather than required true;
+  a restored web cook with an unreadable ticket is dropped, so a running cook
+  always has one; `LiveActivity.finish` merged into `endAll`; the
+  copyLiterals lint needed about a hundred non-word literals classified on
+  `NOT_COPY` to pass, since nothing had run it. No copy key was retired or
+  reworded, so no draft was added (`copyLiterals --since 048d18e` shows only
+  the `units` draft's two rows, as before).
+
+**Run:** `npm test`, 235 tests: 234 pass, 1 todo. `npm run validate` 28/28.
+`npm run conformance` and `swift test`: 99 tests in 29 suites. `npm run
+copy:literals` passes. The app builds for, and launches on, the iPhone 17
+simulator; a cook starts. In the browser (port 8094): a restored cook keeps
+its own pot after another tab's settings change, a cleared mass box leaves
+the egg, one route per Back, and the Imperial switch still moves an English
+page into 1750.
+
+**Not verified:** Weighed's go-back on a phone; a Live Activity cancelled
+mid-start; the macOS workflow, which has not run since nothing is pushed.
