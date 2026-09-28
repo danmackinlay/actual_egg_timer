@@ -22,7 +22,14 @@ let package = Package(
         .library(name: "EggTimerRing", targets: ["EggTimerRing"])
     ],
     targets: [
-        .target(name: "EggTimerCore", dependencies: ["EggTimerCopy"]),
+        // Optimised in every configuration. The physics is a hot numeric loop,
+        // and at -Onone an odds profile takes 20 s instead of 0.4 s, so a Debug
+        // build run from Xcode on a phone leaves the track, the bracket and the
+        // play-safe line blank for most of a minute after every change.
+        .target(
+            name: "EggTimerCore", dependencies: ["EggTimerCopy"],
+            swiftSettings: [.unsafeFlags(["-O"], .when(configuration: .debug))]
+        ),
         .target(name: "EggTimerCopy"),
         .target(name: "EggTimerRing", dependencies: ["EggTimerCore"]),
         .testTarget(name: "EggTimerCoreTests", dependencies: ["EggTimerCore", "EggTimerCopy"]),

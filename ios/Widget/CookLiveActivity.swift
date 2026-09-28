@@ -102,13 +102,42 @@ struct CookLiveActivity: Widget {
             // draws dashes where the digits should be, which is a countdown
             // that tells you nothing. So it takes the width it needs first and
             // the description wraps around it, never the other way round.
-            countdown(context.state, lang: lang)
-                .font(.system(size: 40, weight: .semibold, design: .rounded))
-                .monospacedDigit()
-                .fixedSize()
-                .layoutPriority(1)
+            //
+            // But not by `.fixedSize()` on the timer itself: a timer's ideal
+            // width is not its digits', and on a phone (not in the simulator)
+            // it claimed more than the card, pushed the words off the leading
+            // edge and itself off the trailing one, and left an empty card with
+            // half a flame. So the width is a plain text's, as wide as the
+            // longest this countdown will show, and the timer is drawn in it.
+            if context.state.stage.countsDown {
+                Text(verbatim: widest(context.state))
+                    .font(Self.lockTimerFont)
+                    .monospacedDigit()
+                    .hidden()
+                    .fixedSize()
+                    .overlay(alignment: .trailing) {
+                        countdown(context.state, lang: lang)
+                            .font(Self.lockTimerFont)
+                            .monospacedDigit()
+                    }
+                    .layoutPriority(1)
+            } else {
+                countdown(context.state, lang: lang)
+                    .font(Self.lockTimerFont)
+                    .fixedSize()
+                    .layoutPriority(1)
+            }
         }
         .padding(16)
+    }
+
+    private static let lockTimerFont = Font.system(size: 40, weight: .semibold, design: .rounded)
+
+    /// The widest the countdown will be: "0:00:00" past an hour, "00:00" past
+    /// ten minutes, "0:00" under. Digits are monospaced, so zeros will do.
+    private func widest(_ state: CookActivity.ContentState) -> String {
+        let s = state.ends.timeIntervalSince(state.began)
+        return s >= 3600 ? "0:00:00" : s >= 600 ? "00:00" : "0:00"
     }
 
     /// The countdown itself. `timerInterval` hands the range to the system,
