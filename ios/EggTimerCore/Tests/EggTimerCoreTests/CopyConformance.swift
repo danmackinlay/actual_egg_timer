@@ -109,4 +109,12 @@ struct CopyConformance {
         let expected = (Fixtures.load("copy.json")["categories"] as? [String]) ?? []
         #expect(PluralCategory.allCases.map(\.rawValue) == expected)
     }
+
+    @Test("a word set mid-sentence loses its first capital and keeps the rest, as copy.test.ts 1e")
+    func midSentenceCase() {
+        #expect(midSentence("Last Wednesday", locale: "en") == "last Wednesday")
+        #expect(midSentence("Jammy", locale: "en-x-1750") == "jammy")
+        #expect(midSentence("To-day", locale: "en") == "to-day")
+        #expect(midSentence("", locale: "en") == "")
+    }
 }

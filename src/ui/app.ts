@@ -49,6 +49,7 @@ import {
 import { sousVideCopy } from './sousvide.js';
 import { directionKey, rangeWords, restoreOutcome, whiteAtRisk } from './outcome.js';
 import { activeLocale, applyCopy, switchCopy, t } from './copy.js';
+import { midSentence } from '../core/copy.js';
 import { formatClock, spokenClock } from './countdown.js';
 import {
   REGION, REGIONAL_UNITS, UNITS_FLIP_EVENT, UnitsFlipDetail, announceFlip, measure, show, unitSystem,
@@ -468,7 +469,7 @@ function startModeNow(): UiStartMode {
  */
 function refusalText(v: Verdict): string {
   if (!v.worthSaying) return '';
-  const limit = t(v.limit.key).toLowerCase();
+  const limit = midSentence(t(v.limit.key), activeLocale());
 
   if (v.kind === 'whiteNeverSets') return t('refusal.whiteNeverSets');
 
@@ -999,7 +1000,7 @@ function renderCookSetup(): void {
   // kept falls back to the running cook's own solve.
   const peak = k.peakYolk_C ?? solution?.result.peakYolk_C ?? targetPeakYolk_C(machine.targetLevel);
   dom.cookDoneness.textContent = t('cook.summary', {
-    doneness: t(anchorNear(machine.targetLevel).key).toLowerCase(),
+    doneness: midSentence(t(anchorNear(machine.targetLevel).key), activeLocale()),
     yolk: show('temperature', peak),
   });
 }
@@ -1408,7 +1409,7 @@ function renderSousVide(now_ms: number): void {
   if (key !== lastAnnounced) {
     lastAnnounced = key;
     dom.announce.textContent = t('spoken.sousVide', {
-      when: copy.headline.toLowerCase(), subline: copy.subline,
+      when: midSentence(copy.headline, activeLocale()), subline: copy.subline,
     });
   }
 }

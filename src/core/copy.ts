@@ -25,6 +25,17 @@ import { Fixed, countDecimals, formatCount, formatNumber, isFixed, languageOf, r
 
 export { languageOf } from './format.js';
 
+/** A word or phrase written to stand alone - a doneness word, a headline -
+ *  set down in the middle of a sentence: its first letter lower-cased in the
+ *  catalogue's language, and nothing else, so "Last Wednesday" becomes "last
+ *  Wednesday", not "last wednesday". */
+export function midSentence(text: string, locale: string): string {
+  const first = text.codePointAt(0);
+  if (first === undefined) return text;
+  const head = String.fromCodePoint(first);
+  return head.toLocaleLowerCase(locale) + text.slice(head.length);
+}
+
 /** The CLDR plural categories. English uses two, Czech four. */
 export type PluralCategory = 'zero' | 'one' | 'two' | 'few' | 'many' | 'other';
 

@@ -14,7 +14,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 
 import {
-  Catalogue, PLURAL_CATEGORIES, parseCatalogue, placeholders, pluralCategory, render,
+  Catalogue, PLURAL_CATEGORIES, midSentence, parseCatalogue, placeholders, pluralCategory, render,
   renderRef, templatesOf,
 } from '../src/core/copy.js';
 
@@ -79,6 +79,14 @@ test('1c. a key the language lacks falls back to English, with the English plura
 
 test('1d. a key nobody has renders as itself, so it is seen rather than blank', () => {
   assert.equal(render(EN, 'no.such.key'), 'no.such.key');
+});
+
+test('1e. a word set mid-sentence loses its first capital and keeps the rest', () => {
+  assert.equal(midSentence('Last Wednesday', 'en'), 'last Wednesday');
+  assert.equal(midSentence('Jammy', 'en-GB-x-1750'), 'jammy');
+  assert.equal(midSentence('To-day', 'en'), 'to-day');
+  assert.equal(midSentence('İ', 'tr'), 'i');
+  assert.equal(midSentence('', 'en'), '');
 });
 
 test('1e. a CopyRef from core renders with the app\'s extra arguments', () => {

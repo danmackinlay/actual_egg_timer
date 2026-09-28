@@ -247,7 +247,7 @@ struct CookSentence: View {
             // In the system the egg was set up in, which the controls cannot
             // have changed since.
             Text(tr("cook.summary", [
-                "doneness": .text(ticket.doneness.lowercased()),
+                "doneness": .text(midSentence(ticket.doneness, locale: Copy.activeLocale)),
                 "yolk": .text(showIn(facts.units, .temperature, ticket.peakYolkC)),
             ]))
             .font(.footnote)

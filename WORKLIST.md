@@ -77,7 +77,7 @@ Baseline, all green:
 - How it breaks: a second tab changes settings, then the first tab reloads mid-cook. The labels and the boil-tap re-solve now describe a different pot than the ticket and machine.
 - Fix: when not IDLE, take every value from `ticket.setup`, `ticket.egg` and `machine`. Change the signature to `resolveDuring(ticket, boil_s)`.
 
-**2.5 ✔ Web: lower-casing catalogue text breaks words.**
+**DONE: 2.5 ✔ Web: lower-casing catalogue text breaks words.**
 - Where: `app.ts:1390`. `spoken.sousVide` lower-cases the headline, so "Last Wednesday" is announced as "last wednesday". `app.ts:460` and `986` do the same for `{limit}` and `{doneness}`, iOS mirrors it (`Kitchen.swift:1027`, `SetupSentence.swift:250`, `CookLiveActivity.swift:36,89`), and `toLowerCase()` ignores locale.
 - Fix: reword the templates so the inserted word can keep its capital, or add `*.inline` lower-case keys. At minimum use `toLocaleLowerCase(activeLocale())`.
 - LANGUAGE.md:105-107 calls this debt.

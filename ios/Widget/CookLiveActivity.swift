@@ -33,7 +33,7 @@ struct CookLiveActivity: Widget {
                 }
                 DynamicIslandExpandedRegion(.trailing) {
                     Text(tr("activity.target", [
-                        "doneness": .text(context.attributes.doneness.lowercased()),
+                        "doneness": .text(midSentence(context.attributes.doneness, locale: lang ?? "en")),
                         "yolk": .text(context.attributes.peakYolk),
                     ], in: lang))
                         .font(.caption2)
@@ -86,7 +86,7 @@ struct CookLiveActivity: Widget {
 
                 Text(tr("activity.summary", [
                     "mass": .text(context.attributes.eggMass),
-                    "doneness": .text(context.attributes.doneness.lowercased()),
+                    "doneness": .text(midSentence(context.attributes.doneness, locale: lang ?? "en")),
                     "yolk": .text(context.attributes.peakYolk),
                 ], in: lang))
                     .font(.caption2)

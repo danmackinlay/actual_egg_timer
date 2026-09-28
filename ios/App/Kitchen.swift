@@ -1018,7 +1018,7 @@ actor DecisionGrids {
 /// point is to teach the constraint, not merely to block the control.
 private func refusalText(_ v: Verdict, setup: CookSetup, water: String) -> String {
     guard v.worthSaying else { return "" }
-    let limit = tr(v.limit.key).lowercased()
+    let limit = midSentence(tr(v.limit.key), locale: Copy.activeLocale)
 
     switch v.kind {
     case .none:

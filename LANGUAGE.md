@@ -102,9 +102,11 @@ languages.
 - **The language picker waits for Czech.** F1 built the active locale as
   plumbing, fixed at `en`; a picker with one row in it is a control that does
   nothing.
-- **Inserted doneness words are still lower-cased in code** (`toLowerCase`,
-  `lowercased()`), because the F1 wording inserts them mid-sentence. F2's
-  rewrite, which stands every inserted word alone (§5), removes the need.
+- **Inserted words are still lower-cased in code**, because some templates
+  insert a doneness word or a headline mid-sentence. `midSentence` (the core
+  copy module, both apps) lower-cases only the first letter, in the
+  catalogue's language, so "Last Wednesday" reads "last Wednesday". A
+  rewrite that stands every inserted word alone (§5) would remove the need.
 
 `src/core/` keeps its invariants: no I/O and no dependencies. The catalogue is
 data that the UI layer passes in.

@@ -221,6 +221,15 @@ public func pluralCategory(locale: String, _ n: Double, fractionDigits: Int? = n
     }
 }
 
+/// A word or phrase written to stand alone - a doneness word, a headline -
+/// set down in the middle of a sentence: its first letter lower-cased in the
+/// catalogue's language, and nothing else, so "Last Wednesday" becomes "last
+/// Wednesday", not "last wednesday". The web's `midSentence` in src/core/copy.ts.
+public func midSentence(_ text: String, locale: String) -> String {
+    guard let first = text.first else { return text }
+    return String(first).lowercased(with: Locale(identifier: locale)) + text.dropFirst()
+}
+
 /// The language subtag, lower-cased: "en" for "en-GB-x-1750".
 public func languageOf(_ locale: String) -> String {
     let language = locale.split(separator: "-", maxSplits: 1, omittingEmptySubsequences: false).first ?? ""
