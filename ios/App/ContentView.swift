@@ -109,8 +109,9 @@ struct ContentView: View {
         }
         // 1750 is set in a book face, as on the web (which uses Iowan Old
         // Style; this is New York, the system's serif, which follows Dynamic
-        // Type). The clock keeps its own face: every clock face here names
-        // its design, which a font design in the environment does not touch.
+        // Type). The clock keeps its own face, whose figures line up: the
+        // environment's design overrides even a `.system(design:)` font, so
+        // each clock face sets `.fontDesign(.rounded)` again on itself.
         .fontDesign(period ? .serif : nil)
         .onAppear {
             // Install the notification delegate before anything can fire.
@@ -199,6 +200,7 @@ struct ContentView: View {
                 // CSS rule that says the same thing.
                 Text(copy.headline)
                     .font(.system(size: 40, weight: .semibold, design: .rounded))
+                    .fontDesign(.rounded)
                     .minimumScaleFactor(0.6)
                     .lineLimit(1)
                 Text(copy.subline)
@@ -213,6 +215,7 @@ struct ContentView: View {
 
                 Text(bigTime(phase, at: now))
                     .font(.system(size: 76, weight: .semibold, design: .rounded))
+                    .fontDesign(.rounded)
                     .monospacedDigit()
                     .contentTransition(.numericText())
                     .animation(.snappy, value: bigTime(phase, at: now))

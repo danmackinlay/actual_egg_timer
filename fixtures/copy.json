@@ -2924,19 +2924,19 @@
       "locale": "en-x-1750",
       "key": "colophon.lede",
       "args": {},
-      "text": "Times computed from the conduction of heat and the kinetics of denaturation, not from a receipt."
+      "text": "I reckon each time from how heat enters an egg, not from a receipt."
     },
     {
       "locale": "en-x-1750",
       "key": "colophon.link",
       "args": {},
-      "text": "The source, and the natural philosophy on which it rests"
+      "text": "The source, and the reasoning"
     },
     {
       "locale": "en-x-1750",
       "key": "colophon.tail",
       "args": {},
-      "text": "— my errours not excepted."
+      "text": "— my errours included."
     },
     {
       "locale": "en",
@@ -5858,19 +5858,19 @@
       "locale": "en",
       "key": "colophon.lede",
       "args": {},
-      "text": "Times computed from heat conduction and denaturation kinetics, not from a recipe."
+      "text": "I work out each time from how heat gets into an egg, not from a recipe."
     },
     {
       "locale": "en",
       "key": "colophon.link",
       "args": {},
-      "text": "Source, and the physics it rests on"
+      "text": "The code and the science"
     },
     {
       "locale": "en",
       "key": "colophon.tail",
       "args": {},
-      "text": "— including what I get wrong."
+      "text": "— mistakes included."
     }
   ],
   "plural": [

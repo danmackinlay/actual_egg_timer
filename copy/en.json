@@ -365,8 +365,8 @@
     "activity.note.done": { "surface": "island.expanded", "apps": ["ios"], "text": "that is the egg you asked for" },
 
     "colophon.name": { "surface": "label", "apps": ["web", "ios"], "text": "Actual Egg Timer." },
-    "colophon.lede": { "surface": "body", "apps": ["web", "ios"], "text": "Times computed from heat conduction and denaturation kinetics, not from a recipe." },
-    "colophon.link": { "surface": "body", "apps": ["web", "ios"], "text": "Source, and the physics it rests on" },
-    "colophon.tail": { "surface": "body", "apps": ["web", "ios"], "text": "— including what I get wrong." }
+    "colophon.lede": { "surface": "body", "apps": ["web", "ios"], "text": "I work out each time from how heat gets into an egg, not from a recipe." },
+    "colophon.link": { "surface": "body", "apps": ["web", "ios"], "text": "The code and the science" },
+    "colophon.tail": { "surface": "body", "apps": ["web", "ios"], "text": "— mistakes included." }
   }
 }

@@ -319,9 +319,9 @@
     "weekday.saturday": { "text": "Saturday" },
 
     "colophon.name": { "text": "The Actual Egg-Timer." },
-    "colophon.lede": { "text": "Times computed from the conduction of heat and the kinetics of denaturation, not from a receipt." },
-    "colophon.link": { "text": "The source, and the natural philosophy on which it rests" },
-    "colophon.tail": { "text": "— my errours not excepted." },
+    "colophon.lede": { "text": "I reckon each time from how heat enters an egg, not from a receipt." },
+    "colophon.link": { "text": "The source, and the reasoning" },
+    "colophon.tail": { "text": "— my errours included." },
 
     "controls.language": { "text": "Language" },
     "controls.language.more": { "text": "Should the reader find this stile tiresome, the modern tongue may be restored without surrendering Fahrenheit's scale: choose English, and your measures stay as they are." },

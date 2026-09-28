@@ -2558,6 +2558,28 @@ export const PERIOD_IOS_DRAFT: Drafted[] = [
     key, row: 'F6 on iOS: the picker and the title, shared with the web',
     before: { text }, after: { text }, appsBefore: ['web'], appsAfter: ['web', 'ios'],
   })),
+  // The colophon in plain words, on the owner's request of 28 September:
+  // no conduction, kinetics or denaturation. Both apps read it as one
+  // sentence: "Actual Egg Timer. I work out each time ... not from a
+  // recipe. The code and the science — mistakes included."
+  {
+    key: 'colophon.lede', row: 'the colophon, plainly',
+    before: { text: 'Times computed from heat conduction and denaturation kinetics, not from a recipe.' },
+    after: { text: 'I work out each time from how heat gets into an egg, not from a recipe.' },
+    appsBefore: ['web', 'ios'], appsAfter: ['web', 'ios'],
+  },
+  {
+    key: 'colophon.link', row: 'the colophon, plainly',
+    before: { text: 'Source, and the physics it rests on' },
+    after: { text: 'The code and the science' },
+    appsBefore: ['web', 'ios'], appsAfter: ['web', 'ios'],
+  },
+  {
+    key: 'colophon.tail', row: 'the colophon, plainly',
+    before: { text: '— including what I get wrong.' },
+    after: { text: '— mistakes included.' },
+    appsBefore: ['web', 'ios'], appsAfter: ['web', 'ios'],
+  },
   {
     key: 'odds.hitTheMark', row: 'Lock Screen: no odds mid-cook',
     before: { text: '{hits}/{of} eggs hit the mark' },
