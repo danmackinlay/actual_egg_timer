@@ -317,7 +317,7 @@ private func coldestOf(_ s: RecordSetup) -> Double {
 /// colder than the coldest thing the egg touched, no hotter than the boil. The
 /// loader's test, deliberately loose; the apps refuse more at entry
 /// (`plausibleProbeRangeC`).
-public func probePossible(_ s: RecordSetup, centreC: Double) -> Bool {
+func probePossible(_ s: RecordSetup, centreC: Double) -> Bool {
     centreC.isFinite && centreC >= coldestOf(s) && centreC <= s.boilingC
 }
 
@@ -412,11 +412,11 @@ public func recordTeaches(_ r: EggRecord) -> Bool {
     r.yolk != nil || r.white != nil || r.probe != nil
 }
 
-public func recordEgg(_ r: EggRecord) -> Egg {
+func recordEgg(_ r: EggRecord) -> Egg {
     Geometry.eggFromMass(r.egg.massG / 1000)
 }
 
-public func recordCookSetup(_ r: EggRecord) -> CookSetup {
+func recordCookSetup(_ r: EggRecord) -> CookSetup {
     CookSetup(
         startMode: r.setup.startMode, eggStartC: r.setup.eggStartC,
         ambientC: r.setup.ambientC, boilingC: r.setup.boilingC,
@@ -432,7 +432,7 @@ public func recordCookTimeS(_ r: EggRecord) -> Double {
     r.pulledBy == .cook ? r.pulledS : r.recommendedS + r.nudgeS
 }
 
-public func recordLogTarget(_ r: EggRecord) -> Double {
+func recordLogTarget(_ r: EggRecord) -> Double {
     log10(donenessFromSlider(r.level).yolkDoseMin)
 }
 

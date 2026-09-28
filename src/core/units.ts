@@ -61,8 +61,8 @@ export type UnitId = 'C' | 'F' | 'g' | 'oz' | 'mm' | 'in' | 'm' | 'ft' | 'L' | '
  *  inch and foot of 1959, the US liquid quart, and the imperial pint of the
  *  1985 Weights and Measures Act. */
 export const OUNCE_G = 28.349523125;
-export const INCH_MM = 25.4;
-export const FOOT_M = 0.3048;
+const INCH_MM = 25.4;
+const FOOT_M = 0.3048;
 export const US_QUART_L = 0.946352946;
 export const IMPERIAL_PINT_L = 0.56826125;
 
@@ -219,7 +219,7 @@ export interface Measure {
 
 /** The unit water is measured in under Imperial: the US quart in the US, the
  *  imperial pint everywhere else. Region only, as for the size classes. */
-export function imperialWaterUnit(region: string | null | undefined): UnitId {
+function imperialWaterUnit(region: string | null | undefined): UnitId {
   return typeof region === 'string' && region.toUpperCase() === 'US' ? 'qt' : 'pt';
 }
 

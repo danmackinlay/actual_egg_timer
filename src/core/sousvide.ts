@@ -147,7 +147,7 @@ export function startPhrase(daysAgo: number): CopyRef {
 
 /** The catalogue key of a weekday's name, by `Date.getDay()` numbering:
  *  0 is Sunday. Swift's `Calendar` counts from 1, and subtracts it. */
-export const WEEKDAY_KEYS: readonly string[] = [
+const WEEKDAY_KEYS: readonly string[] = [
   'weekday.sunday', 'weekday.monday', 'weekday.tuesday', 'weekday.wednesday',
   'weekday.thursday', 'weekday.friday', 'weekday.saturday',
 ];

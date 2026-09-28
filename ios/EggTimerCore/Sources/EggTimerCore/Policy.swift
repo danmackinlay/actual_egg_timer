@@ -47,7 +47,7 @@ public func clamp(_ value: Double, to range: ClosedRange<Double>) -> Double {
     return min(range.upperBound, max(range.lowerBound, value))
 }
 
-public func isWithin(_ value: Double, _ range: ClosedRange<Double>) -> Bool {
+func isWithin(_ value: Double, _ range: ClosedRange<Double>) -> Bool {
     value.isFinite && range.contains(value)
 }
 
@@ -378,7 +378,7 @@ public func calibrationGrid(alphaCentre: Double, cookTimeS: Double) -> GridSpec 
 /// the app's business; how the numbers combine is this module's.
 public typealias BoilMemory = [String: Double]
 
-public func volumeKey(_ litres: Double) -> String {
+func volumeKey(_ litres: Double) -> String {
     String(format: "%.1f", litres)
 }
 

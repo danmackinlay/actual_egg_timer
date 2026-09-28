@@ -368,7 +368,7 @@ export function decide(
  *  cook the mean parameters predict at `cookTime_s`, so the peak yolk and the
  *  texture on screen describe the egg being offered rather than the one the
  *  mean solve found. */
-export function solutionAt(
+function solutionAt(
   egg: Egg, setup: CookSetup, params: ModelParams, sol: Solution, cookTime_s: number,
 ): Solution {
   if (cookTime_s === sol.result.cookTime_s) return sol;

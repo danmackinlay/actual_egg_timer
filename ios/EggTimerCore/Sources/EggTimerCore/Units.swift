@@ -159,7 +159,7 @@ public struct Measure: Sendable, Equatable {
 }
 
 /// Water under Imperial: the US quart in the US, the imperial pint elsewhere.
-public func imperialWaterUnit(region: String?) -> UnitId {
+func imperialWaterUnit(region: String?) -> UnitId {
     region?.uppercased() == "US" ? .quarts : .pints
 }
 

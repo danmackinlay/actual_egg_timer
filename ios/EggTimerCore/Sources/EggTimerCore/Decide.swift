@@ -76,7 +76,7 @@ public func decisionGridSpec(_ inputs: DecisionInputs) -> GridSpec {
     )
 }
 
-public func decisionGridRequest(_ inputs: DecisionInputs) -> GridRequest {
+func decisionGridRequest(_ inputs: DecisionInputs) -> GridRequest {
     GridRequest(
         egg: inputs.egg, setup: inputs.setup, tauAirScale: inputs.params.tauAirScale,
         spec: decisionGridSpec(inputs)
@@ -208,7 +208,7 @@ public struct Decision: Sendable {
 }
 
 /// Whether a solve leaves a cook to choose a time for.
-public func decisionApplies(_ sol: Solution) -> Bool {
+func decisionApplies(_ sol: Solution) -> Bool {
     sol.whiteSets && sol.reachable
 }
 
@@ -250,7 +250,7 @@ public func decide(
 
 /// The solve, re-read at another time: the same verdict and limits, and the
 /// cook the mean parameters predict at `cookTimeS`.
-public func solutionAt(
+func solutionAt(
     egg: Egg, setup: CookSetup, params: ModelParams, solution sol: Solution, cookTimeS: Double
 ) -> Solution {
     if cookTimeS == sol.result.cookTimeS { return sol }

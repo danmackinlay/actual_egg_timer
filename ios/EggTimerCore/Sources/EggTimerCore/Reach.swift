@@ -71,7 +71,7 @@ private func positionDown(_ level: Double) -> Int {
 
 /// The odds the app shows when the slider sits at `level`, a level the pan can
 /// deliver: the mean solve there, decided on `grid`.
-public func oddsAtLevel(
+func oddsAtLevel(
     _ c: Calibration, egg: Egg, setup: CookSetup, grid: DoseGrid, level: Double
 ) -> Double {
     let sol = solveCookTime(

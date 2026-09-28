@@ -233,7 +233,7 @@ function coldestOf(s: RecordSetup): number {
  * narrows later must not make an older record unreadable. The apps refuse far
  * more at entry, against the physics of the cook (`plausibleProbeRange_C`).
  */
-export function probePossible(s: RecordSetup, centre_C: number): boolean {
+function probePossible(s: RecordSetup, centre_C: number): boolean {
   return Number.isFinite(centre_C) && centre_C >= coldestOf(s) && centre_C <= s.boiling_C;
 }
 
@@ -443,11 +443,11 @@ export function recordTeaches(r: EggRecord): boolean {
 }
 
 /** The egg the fold sees. */
-export function recordEggOf(r: EggRecord): Egg {
+function recordEggOf(r: EggRecord): Egg {
   return eggFromMass(r.egg.mass_g / 1000);
 }
 
-export function recordSetupOf(r: EggRecord): CookSetup {
+function recordSetupOf(r: EggRecord): CookSetup {
   return {
     startMode: r.setup.startMode,
     eggStart_C: r.setup.eggStart_C,
@@ -468,14 +468,14 @@ export function recordCookTime_s(r: EggRecord): number {
 }
 
 /** log10 of the nominal yolk dose the cook was run at. */
-export function recordLogTarget(r: EggRecord): number {
+function recordLogTarget(r: EggRecord): number {
   return Math.log10(donenessFromSlider(r.level).yolkDose_min);
 }
 
 /** Where the dose surface goes, given its centre and the cook. Production is
  *  `calibrationGrid`; the fixtures and tests pass a coarser one so a replay of
  *  several eggs costs a fraction of a second rather than several. */
-export type GridPolicy = (alphaCentre: number, cookTime_s: number) => GridSpec;
+type GridPolicy = (alphaCentre: number, cookTime_s: number) => GridSpec;
 
 /** Everything a dose-surface build needs, as plain data, so it can be posted to
  *  a Web Worker and built there by `buildRequestedGrid`. */

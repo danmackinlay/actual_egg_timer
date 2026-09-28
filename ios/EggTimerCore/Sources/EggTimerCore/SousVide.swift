@@ -140,7 +140,7 @@ public func startPhrase(daysAgo: Int) -> CopyRef {
 /// `Date.getDay()` numbers them: 0 is Sunday. `Calendar`'s `.weekday` counts
 /// from 1, so the app subtracts one. Both apps name weekdays from the
 /// catalogue, not the platform (F4, LANGUAGE.md §2).
-public let weekdayKeys: [String] = [
+let weekdayKeys: [String] = [
     "weekday.sunday", "weekday.monday", "weekday.tuesday", "weekday.wednesday",
     "weekday.thursday", "weekday.friday", "weekday.saturday",
 ]

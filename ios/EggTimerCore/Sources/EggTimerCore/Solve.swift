@@ -46,7 +46,7 @@ public func donenessFromSlider(_ level: Double) -> Doneness {
     )
 }
 
-public func sliderFromYolkDose(_ yolkDoseMin: Double) -> Double {
+func sliderFromYolkDose(_ yolkDoseMin: Double) -> Double {
     let lo = log10(yolkDoseRunny)
     let hi = log10(yolkDoseHard)
     let level = (log10(yolkDoseMin) - lo) / (hi - lo)

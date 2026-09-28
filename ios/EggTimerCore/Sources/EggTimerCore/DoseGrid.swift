@@ -140,7 +140,7 @@ public func cookTimeForLogYolkDose(
 }
 
 /// The same for the white: the cook time delivering a given log10 white dose.
-public func cookTimeForLogWhiteDose(
+func cookTimeForLogWhiteDose(
     _ g: DoseGrid, _ alphaM2s: Double, _ logDose: Double
 ) -> Double {
     var lo = g.timeMinS

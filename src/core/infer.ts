@@ -250,7 +250,7 @@ export function probeLikelihood(
 
 /** log10 of the dose at which the innermost white is set: the runny | tender
  *  cutpoint before any offset. */
-export const LOG_WHITE_TARGET = Math.log10(WHITE_DOSE_TARGET);
+const LOG_WHITE_TARGET = Math.log10(WHITE_DOSE_TARGET);
 
 /** The white's noise, from the yolk's: the same degrees of peak temperature,
  *  converted through Z_WHITE instead of Z_YOLK. Degrees are what a person is

@@ -70,7 +70,7 @@ public enum Protocols {
     /// Pan heating ramp: constant power into a lumped water mass with Newtonian
     /// losses, clamped by boiling. One measurement (time to boil) plus RAMP_R
     /// determines the whole curve.
-    public static func rampTemperature(
+    static func rampTemperature(
         tS: Double, timeToBoilS: Double, ambientC: Double, boilingC: Double
     ) -> Double {
         if tS >= timeToBoilS { return boilingC }
@@ -101,7 +101,7 @@ public enum Protocols {
 
     /// Water temperature once the heat is off: Newtonian cooling of the pan
     /// toward the room, starting from `fromC`.
-    public static func standingTemperature(
+    static func standingTemperature(
         elapsedSinceOffS: Double, fromC: Double, ambientC: Double, waterLitres: Double
     ) -> Double {
         let tau = panTimeConstant(waterLitres)
@@ -112,7 +112,7 @@ public enum Protocols {
     /// Surface temperature during cooling. Ice and tap are effectively
     /// Dirichlet; still air is not, so the surface tracks the egg's own bulk
     /// temperature decaying toward the room.
-    public static func coolingTemperature(
+    static func coolingTemperature(
         setup: CookSetup, elapsedSincePullS: Double,
         waterAtPullC: Double, meanAtPullC: Double, tauAirScale: Double
     ) -> Double {
@@ -136,7 +136,7 @@ public enum Protocols {
     /// Water temperature while the egg is still in the pan, `tS` after it went
     /// in: ramp, boil, dip, and with the heat off the pan cooling toward the
     /// room.
-    public static func bathTemperature(_ egg: Egg, _ setup: CookSetup, tS: Double) -> Double {
+    static func bathTemperature(_ egg: Egg, _ setup: CookSetup, tS: Double) -> Double {
         let standing = setup.afterBoil == .off
         if setup.startMode == .cold {
             if tS < setup.timeToBoilS {
@@ -165,7 +165,7 @@ public enum Protocols {
     }
 
     /// Water temperature at the moment the egg goes in.
-    public static func initialSurfaceTemperature(_ egg: Egg, _ setup: CookSetup) -> Double {
+    static func initialSurfaceTemperature(_ egg: Egg, _ setup: CookSetup) -> Double {
         bathTemperature(egg, setup, tS: 0.0)
     }
 }

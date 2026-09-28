@@ -247,7 +247,7 @@ The candidates:
 - Copy: `Message.templates` and `placeholders(_:)` (`EggTimerCopy/Copy.swift:68,289`). Delete these two regardless of D4.
 - In TS, `predictOutcome` computes the same numbers as `yolk/whiteAnswerProbabilities` inline (`outcome.ts:12-14`). Have it call them, or delete them.
 
-**4.7 Over-exported symbols (tidy only).**
+**DONE: 4.7 Over-exported symbols (tidy only).** (Swift: every `Protocols.*Temperature`, bathTemperature and initialSurfaceTemperature included.)
 - TS: drop `export` from
   - `solutionAt`
   - `rampTemperature`, `dipMagnitude`, `standingTemperature`

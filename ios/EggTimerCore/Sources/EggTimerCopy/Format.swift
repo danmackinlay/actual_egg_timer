@@ -39,10 +39,10 @@ public struct Fixed: Sendable, Equatable {
 }
 
 /// The most decimals a count is shown with: `Intl`'s own default.
-public let countMaxDecimals = 3
+let countMaxDecimals = 3
 
 /// The space every time of day uses between its parts: U+202F.
-public let timeSpace: Unicode.Scalar = "\u{202F}"
+let timeSpace: Unicode.Scalar = "\u{202F}"
 
 // MARK: - Numbers
 
@@ -139,7 +139,7 @@ public enum HourCycle: String, Sendable, CaseIterable {
 /// whose conventions those are: a Czech UI formats as `cs-CZ` in any region.
 /// A language not listed takes the device's region, as English does (`en-DE`
 /// writes "2,4"). The same list as the web's `OWN_CONVENTION`.
-public let ownConvention: [String: String] = ["cs": "CZ"]
+let ownConvention: [String: String] = ["cs": "CZ"]
 
 /// The locale numbers and times are formatted in: the language the app speaks,
 /// in the region the device is in unless the language has a convention of its

@@ -51,10 +51,10 @@ export function isFixed(value: unknown): value is Fixed {
 /** The most decimals a count is shown with. A count is a whole number almost
  *  always; this is the cap for the day one is not, and it is `Intl`'s own
  *  default. */
-export const COUNT_MAX_DECIMALS = 3;
+const COUNT_MAX_DECIMALS = 3;
 
 /** The space every time of day uses between its parts: U+202F. */
-export const TIME_SPACE = ' ';
+const TIME_SPACE = ' ';
 
 /* -------------------------------------------------------------- numbers */
 
@@ -188,7 +188,7 @@ export type HourCycle = 'h11' | 'h12' | 'h23' | 'h24';
  * `en-IN` "1,23,456". A language joins this list when its catalogue ships
  * (F5), and the Swift twin holds the same list.
  */
-export const OWN_CONVENTION: Readonly<Record<string, string>> = { cs: 'CZ' };
+const OWN_CONVENTION: Readonly<Record<string, string>> = { cs: 'CZ' };
 
 /**
  * The locale numbers and times are formatted in: the language the app speaks,

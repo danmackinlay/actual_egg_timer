@@ -76,7 +76,7 @@ export interface CookSetup {
  * A linear ramp is the r -> infinity limit; at r = 3 the two differ by about
  * 4 C at the midpoint, worth ~30 s of cook time on a 10-minute ramp.
  */
-export function rampTemperature(
+function rampTemperature(
   t_s: number, timeToBoil_s: number, ambient_C: number, boiling_C: number,
 ): number {
   if (t_s >= timeToBoil_s) return boiling_C;
@@ -91,7 +91,7 @@ export function rampTemperature(
  * into 2 L drops it ~8 C; into 1 L, ~14 C. Worth modelling - it is why the
  * same recipe fails in a small pan.
  */
-export function dipMagnitude(egg: Egg, setup: CookSetup): number {
+function dipMagnitude(egg: Egg, setup: CookSetup): number {
   const waterCapacity = setup.waterLitres * C_WATER;
   const eggCapacity = setup.eggCount * egg.mass_kg * C_EGG;
   const total = waterCapacity + eggCapacity;
@@ -131,7 +131,7 @@ export function panTimeConstant(waterLitres: number): number {
  * more than a constant one - the egg simply sees a schedule that runs out of
  * heat instead of one that does not.
  */
-export function standingTemperature(
+function standingTemperature(
   elapsedSinceOff_s: number, from_C: number, ambient_C: number, waterLitres: number,
 ): number {
   const tau = panTimeConstant(waterLitres);
