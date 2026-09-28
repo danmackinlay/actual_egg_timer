@@ -91,8 +91,12 @@ export const START_TEMP_PRESETS_C: Record<'fridge' | 'room', number> = {
  * room temperature. A fridge egg says nothing about the room, so that case
  * keeps the default. */
 export function ambientFor(eggStart_C: number): number {
-  return eggStart_C >= 15 ? eggStart_C : T_ROOM_C;
+  return eggStart_C >= ROOM_EGG_FROM_C ? eggStart_C : T_ROOM_C;
 }
+
+/** An egg at or above this, C, has been sitting out, and is the room's
+ *  temperature; below it, it is a fridge egg and says nothing about the room. */
+export const ROOM_EGG_FROM_C = 15;
 
 /** Fallback when no pan has ever been measured, s. */
 export const DEFAULT_TIME_TO_BOIL_S = 480;
@@ -298,15 +302,25 @@ export interface Texture {
  *  only the web decided it: iOS named a white that never sets from its peak,
  *  on a scale whose softest word is "white just set". */
 export function textureFor(peakYolk_C: number, peakWhite_C: number, whiteSets: boolean): Texture {
+  const w = WHITE_BAND_BELOW_C;
+  const y = YOLK_BAND_BELOW_C;
   const white: WhiteBand = !whiteSets ? 'runny'
-    : peakWhite_C < 71 ? 'justSet' : peakWhite_C < 82 ? 'set' : 'firm';
-  const yolk: YolkBand = peakYolk_C < 58 ? 'liquid'
-    : peakYolk_C < 63 ? 'soft'
-      : peakYolk_C < 68 ? 'jammy'
-        : peakYolk_C < 73 ? 'fudgy'
+    : peakWhite_C < w.justSet ? 'justSet' : peakWhite_C < w.set ? 'set' : 'firm';
+  const yolk: YolkBand = peakYolk_C < y.liquid ? 'liquid'
+    : peakYolk_C < y.soft ? 'soft'
+      : peakYolk_C < y.jammy ? 'jammy'
+        : peakYolk_C < y.fudgy ? 'fudgy'
           : 'set';
   return { white: white, yolk: yolk };
 }
+
+/** The peak white temperature, C, below which the white is in each band; at or
+ *  above the last it is firm. */
+export const WHITE_BAND_BELOW_C = { justSet: 71, set: 82 } as const;
+
+/** The peak yolk temperature, C, below which the yolk is in each band; at or
+ *  above the last it is set. */
+export const YOLK_BAND_BELOW_C = { liquid: 58, soft: 63, jammy: 68, fudgy: 73 } as const;
 
 /** The texture note as the catalogue's keys: the line's own key, and the key
  *  of the fragment that fills each of its placeholders. The app renders the
@@ -350,6 +364,10 @@ export interface GridSpec {
   timeCount: number;
 }
 
+/** The calibration grid's alpha bounds, as factors of the posterior's centre. */
+export const CALIBRATION_ALPHA_LOW = 0.55;
+export const CALIBRATION_ALPHA_HIGH = 1.8;
+
 /**
  * Where to build the dose surface for one logged outcome.
  *
@@ -365,8 +383,8 @@ export interface GridSpec {
  */
 export function calibrationGrid(alphaCentre: number, cookTime_s: number): GridSpec {
   return {
-    alphaMin: alphaCentre * 0.55,
-    alphaMax: alphaCentre * 1.8,
+    alphaMin: alphaCentre * CALIBRATION_ALPHA_LOW,
+    alphaMax: alphaCentre * CALIBRATION_ALPHA_HIGH,
     alphaCount: 21,
     timeMin_s: Math.max(60, cookTime_s * 0.35),
     timeMax_s: cookTime_s * 2.4,

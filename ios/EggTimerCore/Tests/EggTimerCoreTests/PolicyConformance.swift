@@ -111,6 +111,22 @@ struct VerdictConformance {
 
 @Suite("Texture bands match the reference implementation")
 struct TextureConformance {
+    @Test("the named edges: texture bands, the room egg, the calibration grid's alpha")
+    func edges() {
+        let e = Fixtures.policyObject("edges")
+        guard let white = e["whiteBandBelow_C"] as? [String: Any],
+              let yolk = e["yolkBandBelow_C"] as? [String: Any] else { fatalError("edges") }
+        #expect(WhiteBandBelowC.justSet == white.num("justSet"))
+        #expect(WhiteBandBelowC.set == white.num("set"))
+        #expect(YolkBandBelowC.liquid == yolk.num("liquid"))
+        #expect(YolkBandBelowC.soft == yolk.num("soft"))
+        #expect(YolkBandBelowC.jammy == yolk.num("jammy"))
+        #expect(YolkBandBelowC.fudgy == yolk.num("fudgy"))
+        #expect(roomEggFromC == e.num("roomEggFrom_C"))
+        #expect(calibrationAlphaLow == e.num("calibrationAlphaLow"))
+        #expect(calibrationAlphaHigh == e.num("calibrationAlphaHigh"))
+    }
+
     @Test("every band boundary, from both sides, and a white that never sets")
     func cases() {
         var runny = 0

@@ -71,8 +71,12 @@ public enum StartTempPresets {
 /// at room temperature. A fridge egg says nothing about the room, so that case
 /// keeps the default.
 public func ambientFor(eggStartC: Double) -> Double {
-    eggStartC >= 15 ? eggStartC : Constants.tRoomC
+    eggStartC >= roomEggFromC ? eggStartC : Constants.tRoomC
 }
+
+/// An egg at or above this, C, has been sitting out, and is the room's
+/// temperature; below it, it is a fridge egg and says nothing about the room.
+public let roomEggFromC = 15.0
 
 /// Fallback when no pan has ever been measured, s.
 public let defaultTimeToBoilS = 480.0
@@ -289,16 +293,32 @@ public struct Texture: Sendable, Equatable {
 /// src/core/policy.ts.
 public func textureFor(peakYolkC: Double, peakWhiteC: Double, whiteSets: Bool) -> Texture {
     let white: WhiteBand = !whiteSets ? .runny
-        : (peakWhiteC < 71 ? .justSet : (peakWhiteC < 82 ? .set : .firm))
+        : (peakWhiteC < WhiteBandBelowC.justSet ? .justSet : (peakWhiteC < WhiteBandBelowC.set ? .set : .firm))
     let yolk: YolkBand
     switch peakYolkC {
-    case ..<58: yolk = .liquid
-    case ..<63: yolk = .soft
-    case ..<68: yolk = .jammy
-    case ..<73: yolk = .fudgy
+    case ..<YolkBandBelowC.liquid: yolk = .liquid
+    case ..<YolkBandBelowC.soft: yolk = .soft
+    case ..<YolkBandBelowC.jammy: yolk = .jammy
+    case ..<YolkBandBelowC.fudgy: yolk = .fudgy
     default: yolk = .set
     }
     return Texture(white: white, yolk: yolk)
+}
+
+/// The peak white temperature, C, below which the white is in each band; at or
+/// above the last it is firm.
+public enum WhiteBandBelowC {
+    public static let justSet = 71.0
+    public static let set = 82.0
+}
+
+/// The peak yolk temperature, C, below which the yolk is in each band; at or
+/// above the last it is set.
+public enum YolkBandBelowC {
+    public static let liquid = 58.0
+    public static let soft = 63.0
+    public static let jammy = 68.0
+    public static let fudgy = 73.0
 }
 
 /// The texture note as the catalogue's keys: the line's own key, and the key
@@ -357,13 +377,17 @@ public struct GridSpec: Sendable {
 /// different grids learn different things from the same egg. It was duplicated
 /// by hand in both apps, agreeing only by luck of maintenance.
 ///
+/// The calibration grid's alpha bounds, as factors of the posterior's centre.
+public let calibrationAlphaLow = 0.55
+public let calibrationAlphaHigh = 1.8
+
 /// The bounds bracket the plausible answer rather than the whole domain: alpha
 /// within a factor of ~2 of where the posterior currently sits, and cook times
 /// from a third of what was cooked to a bit over double it.
 public func calibrationGrid(alphaCentre: Double, cookTimeS: Double) -> GridSpec {
     GridSpec(
-        alphaMin: alphaCentre * 0.55,
-        alphaMax: alphaCentre * 1.8,
+        alphaMin: alphaCentre * calibrationAlphaLow,
+        alphaMax: alphaCentre * calibrationAlphaHigh,
         alphaCount: 21,
         timeMinS: max(60, cookTimeS * 0.35),
         timeMaxS: cookTimeS * 2.4,

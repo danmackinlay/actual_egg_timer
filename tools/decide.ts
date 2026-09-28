@@ -30,7 +30,9 @@ import { predictOutcome } from '../src/core/outcome.js';
 import { cookTimeForLogWhiteDose, lookupLogYolkDose } from '../src/core/doseGrid.js';
 import { UNRELATED } from '../src/core/infer.js';
 import { sliderFromYolkDose } from '../src/core/solve.js';
-import { CALIBRATION_SEED, PARTICLE_COUNT } from '../src/core/policy.js';
+import {
+  CALIBRATION_ALPHA_HIGH, CALIBRATION_ALPHA_LOW, CALIBRATION_SEED, PARTICLE_COUNT,
+} from '../src/core/policy.js';
 import {
   Calibration, EggRecord, PRIOR_ID, buildRequestedGrid, calibrationDoneness, calibrationParams,
   freshCalibration, replay,
@@ -201,7 +203,7 @@ function simulate(
   cooks: number, eggs: number, particles: number, seed: number,
   each: (c: Calibration, d: Decision, hit: boolean, egg: number, grid: DoseGrid, target: number) => void,
 ): void {
-  const grid = buildDoseGrid(REF_EGG, SETUP, 1, ALPHA_DEFAULT * 0.55, ALPHA_DEFAULT * 1.8, 17, 200, 900, 71);
+  const grid = buildDoseGrid(REF_EGG, SETUP, 1, ALPHA_DEFAULT * CALIBRATION_ALPHA_LOW, ALPHA_DEFAULT * CALIBRATION_ALPHA_HIGH, 17, 200, 900, 71);
   const random = rng(seed);
   const truths = createPrior(cooks, seed ^ 0x2545f49).particles;
   const levels = [0.22, 0.41, 0.62];
@@ -397,7 +399,7 @@ if (run('outcome')) {
   // that egg. A second egg at the chosen time +-30 s, not folded, checks the
   // lean where it has something to say: at the chosen time it is nearly
   // always balanced.
-  const grid = buildDoseGrid(REF_EGG, SETUP, 1, ALPHA_DEFAULT * 0.55, ALPHA_DEFAULT * 1.8, 17, 200, 900, 71);
+  const grid = buildDoseGrid(REF_EGG, SETUP, 1, ALPHA_DEFAULT * CALIBRATION_ALPHA_LOW, ALPHA_DEFAULT * CALIBRATION_ALPHA_HIGH, 17, 200, 900, 71);
   const random = rng(20260927);
   const normal = (): number => Math.sqrt(-2 * Math.log(Math.max(random(), 1e-12))) * Math.cos(2 * Math.PI * random());
   const eggOf = (truth: Particle, t: number, target: number): { level: number; yolk: number } => {

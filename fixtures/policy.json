@@ -1098,6 +1098,21 @@
       "worthSaying": true
     }
   ],
+  "edges": {
+    "whiteBandBelow_C": {
+      "justSet": 71,
+      "set": 82
+    },
+    "yolkBandBelow_C": {
+      "liquid": 58,
+      "soft": 63,
+      "jammy": 68,
+      "fudgy": 73
+    },
+    "roomEggFrom_C": 15,
+    "calibrationAlphaLow": 0.55,
+    "calibrationAlphaHigh": 1.8
+  },
   "texture": [
     {
       "peakYolk_C": 50,

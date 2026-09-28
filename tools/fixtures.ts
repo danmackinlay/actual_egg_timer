@@ -105,8 +105,8 @@ import {
 import {
   LIMITS, SLIDER_STEPS, PARTICLE_COUNT as POLICY_PARTICLES, CALIBRATION_SEED,
   DEFAULTS, DEFAULT_EGG_MASS_KG, DEFAULT_TIME_TO_BOIL_S, START_TEMP_PRESETS_C,
-  BoilMemory, COOLING_SECONDS, GridSpec, PULL_GRACE_SECONDS, SLOW_HOB_EVERY_S, SLOW_HOB_EXTRA_S,
-  SLOW_HOB_WHEN_LEFT_S,
+  BoilMemory, CALIBRATION_ALPHA_HIGH, CALIBRATION_ALPHA_LOW, COOLING_SECONDS, GridSpec, PULL_GRACE_SECONDS,
+  ROOM_EGG_FROM_C, SLOW_HOB_EVERY_S, SLOW_HOB_EXTRA_S, SLOW_HOB_WHEN_LEFT_S, WHITE_BAND_BELOW_C, YOLK_BAND_BELOW_C,
   ambientFor, anchorNear, coolingSecondsFor,
   calibrationGrid, carrySizeIndex, estimateTimeToBoil, phaseAt, rememberBoil, snapDown, snapUp,
   targetPeakYolk_C, textureFor, textureNoteKeys, verdictFor,
@@ -619,6 +619,15 @@ const policy = {
       worthSaying: v.worthSaying,
     };
   }),
+  // The texture bands' edges, the room egg's and the calibration grid's
+  // alpha factors, by name; the cases below pin how each is used.
+  edges: {
+    whiteBandBelow_C: WHITE_BAND_BELOW_C,
+    yolkBandBelow_C: YOLK_BAND_BELOW_C,
+    roomEggFrom_C: ROOM_EGG_FROM_C,
+    calibrationAlphaLow: CALIBRATION_ALPHA_LOW,
+    calibrationAlphaHigh: CALIBRATION_ALPHA_HIGH,
+  },
   texture: TEXTURE_CASES.map(([yolk, white, whiteSets]) => {
     const t = textureFor(yolk, white, whiteSets);
     const note = textureNoteKeys(t);

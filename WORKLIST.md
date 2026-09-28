@@ -142,7 +142,7 @@ DONE: **3.8 The `shadingOf` threshold `0.05` is unnamed and never exercised.** (
 - Where: `reach.ts:258`, `Reach.swift:216`. No fixture profile has a best below 0.05.
 - Fix: name the constant, put it in `reach.json`, and add a case below it.
 
-**3.9 Numbers both apps agree on that have no name.**
+DONE: **3.9 Numbers both apps agree on that have no name.** (`WHITE_BAND_BELOW_C`, `YOLK_BAND_BELOW_C`, `ROOM_EGG_FROM_C`, `CALIBRATION_ALPHA_LOW/HIGH`, in `policy.json` `edges`.)
 - `textureFor`'s 71/82 and 58/63/68/73 (`policy.ts:302-307`).
 - `ambientFor`'s 15 (`policy.ts:94`).
 - `calibrationGrid`'s factors, which `tools/decide.ts:211,402` repeat as `ALPHA_DEFAULT * 0.55` / `* 1.8`.
