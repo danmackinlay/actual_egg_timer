@@ -95,6 +95,7 @@ import { QUANTITIES, UNIT_SYSTEMS, measureFor, quantityText } from '../src/core/
 import { unitsFixture } from './unitsFixture.js';
 import { probeFixture } from './probeFixture.js';
 import { languageFixture } from './languageFixture.js';
+import { wordingFixture } from './wordingFixture.js';
 import {
   SOUS_VIDE_BATH_C, SOUS_VIDE_MODEL_FLOOR_C, equilibrationTime, sousVideEstimate,
 } from '../src/core/sousvide.js';
@@ -1809,6 +1810,11 @@ writeFileSync('fixtures/probe.json', `${JSON.stringify(thermometer, null, 2)}\n`
 
 const language = languageFixture();
 writeFileSync('fixtures/language.json', `${JSON.stringify(language, null, 2)}\n`);
+
+/* ---------------------------------------------------------------- wording */
+
+const wording = wordingFixture();
+writeFileSync('fixtures/wording.json', `${JSON.stringify(wording, null, 2)}\n`);
 
 const counts = [
   `${core.sphere.seriesTheta.length} seriesTheta`,

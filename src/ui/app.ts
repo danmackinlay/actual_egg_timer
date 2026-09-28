@@ -33,7 +33,7 @@ import {
   Decision, DecisionInputs, carriedSolution, decide, decidedSolution, decisionInputs,
 } from '../core/decide.js';
 import {
-  LevelAnswer, OddsProfile, REACH_ODDS, adviceWanted, answerAt, pricedChanges, protocolAdvice,
+  LevelAnswer, OddsProfile, adviceWanted, answerAt, pricedChanges, protocolAdvice,
   shadingOf,
 } from '../core/reach.js';
 import { Outcome, predictOutcome } from '../core/outcome.js';
@@ -48,8 +48,11 @@ import {
   loadCook, loadSettings, rememberTimeToBoil, saveCook, saveSettings,
 } from './store.js';
 import { sousVideCopy } from './sousvide.js';
-import { directionKey, rangeWords, restoreOutcome, whiteAtRisk } from './outcome.js';
-import { activeLocale, applyCopy, loadCopy, t } from './copy.js';
+import { restoreOutcome } from './outcome.js';
+import {
+  Clause, ClauseKeys, clauseKeys, directionKey, phaseKeys, rangeWords, refusalKey, whiteAtRisk,
+} from '../core/wording.js';
+import { activeLocale, applyCopy, loadCopy, t, tRef } from './copy.js';
 import { midSentence } from '../core/copy.js';
 import { formatClock, spokenClock } from './countdown.js';
 import {
@@ -459,36 +462,14 @@ function startModeNow(): UiStartMode {
 
 /* ------------------------------------------------------------------ copy */
 
-/** The refusal, in words.
- *
- * The DECISION - which refusal applies, where the slider must move to, and
- * whether the gap is big enough to be worth a sentence at all - is
- * `verdictFor` in the core, so that this app and the iOS app cannot refuse
- * differently. What is left here is the sentence, which is this app's own: the
- * point is to teach the constraint, not merely to block the control.
- */
+/** The refusal, in words. Which refusal, and which words teach it, are
+ *  core's (`verdictWithOdds`, `refusalKey`); the arguments are this app's. */
 function refusalText(v: Verdict): string {
-  if (!v.worthSaying) return '';
-  const limit = midSentence(t(v.limit.key), activeLocale());
-
-  if (v.kind === 'whiteNeverSets') return t('refusal.whiteNeverSets');
-
-  // The pan could, but the odds say it would rarely come out right (reach.ts).
-  if (v.kind === 'unlikelySoft' || v.kind === 'unlikelyHard') {
-    return t(v.kind === 'unlikelySoft' ? 'refusal.unlikelySoft' : 'refusal.unlikelyHard', {
-      hits: Math.round(REACH_ODDS * 10), of: 10, limit: limit,
-    });
-  }
-
-  if (v.kind === 'harderThanPanReaches') {
-    return t('refusal.harderThanPan', {
-      water: show('water', settings.waterLitres), limit: limit,
-    });
-  }
-
-  if (settings.cooling === 'counter') return t('refusal.counter', { limit: limit });
-  if (settings.cooling === 'tap') return t('refusal.tap', { limit: limit });
-  return t('refusal.ice', { limit: limit });
+  const ref = refusalKey(v, settings.cooling);
+  if (ref === null) return '';
+  return tRef(ref, {
+    limit: midSentence(t(v.limit.key), activeLocale()), water: show('water', settings.waterLitres),
+  });
 }
 
 /* --------------------------------------------------------------- solving */
@@ -808,7 +789,6 @@ function labelInfoButtons(): void {
 
 /* ------------------------------------------------------------ the sentence */
 
-type Clause = 'egg' | 'from' | 'start' | 'cooling';
 
 const CLAUSE_PANELS: Record<Clause, string> = {
   egg: 'panelEgg', from: 'panelFrom', start: 'panelStart', cooling: 'panelCooling',
@@ -877,32 +857,21 @@ function ticketSetupFacts(k: Ticket): SetupFacts {
 /** What each clause says, and what a screen reader hears for it: its heading
  *  and the option chosen, as the choice itself shows them ("Egg: 68 g"). */
 function clauseTexts(f: SetupFacts): Record<Clause, { text: string; label: string; value: string }> {
-  const mass = f.mass;
-  const custom = show('eggTemp', f.customStart_C);
-  const bath = show('temperature', SOUS_VIDE_BATH_C);
-  const from = f.eggFrom === 'fridge'
-    ? { text: t('setup.from.fridge'), value: t('controls.eggFrom.fridge') }
-    : f.eggFrom === 'room'
-      ? { text: t('setup.from.room'), value: t('controls.eggFrom.room') }
-      : { text: t('setup.from.custom', { temp: custom }), value: custom };
-  // The start clause carries the boil, and the standing when the heat goes
-  // off: "into cold water" alone reads as if the eggs never boil.
-  const standing = f.standing;
-  const start = f.startMode === 'cold'
-    ? { text: t(standing ? 'setup.start.coldStanding' : 'setup.start.cold'), value: t('controls.start.cold') }
-    : f.startMode === 'hot'
-      ? { text: t(standing ? 'setup.start.hotStanding' : 'setup.start.hot'), value: t('controls.start.hot') }
-      : { text: t('setup.start.sous', { bath: bath }), value: t('controls.start.sousVide', { bath: bath }) };
-  const cooling = f.cooling === 'ice'
-    ? { text: t('setup.cooling.ice'), value: t('controls.then.ice') }
-    : f.cooling === 'tap'
-      ? { text: t('setup.cooling.tap'), value: t('controls.then.tap') }
-      : { text: t('setup.cooling.counter'), value: t('controls.then.counter') };
+  const args = {
+    mass: f.mass, temp: show('eggTemp', f.customStart_C), bath: show('temperature', SOUS_VIDE_BATH_C),
+  };
+  const keys = clauseKeys({
+    eggFrom: f.eggFrom, startMode: f.startMode === 'cold' ? 'cold' : 'hot', sousVide: f.startMode === 'sous',
+    afterBoil: f.standing ? 'off' : 'hold', cooling: f.cooling,
+  });
+  const words = (k: ClauseKeys, own: string) => ({
+    text: t(k.text, args), label: t(k.label), value: k.value === null ? own : t(k.value, args),
+  });
   return {
-    egg: { text: t('setup.egg', { mass: mass }), label: t('controls.egg'), value: mass },
-    from: { ...from, label: t('controls.eggFrom') },
-    start: { ...start, label: t('controls.start') },
-    cooling: { ...cooling, label: t('controls.cooling') },
+    egg: words(keys.egg, args.mass),
+    from: words(keys.from, args.temp),
+    start: words(keys.start, ''),
+    cooling: words(keys.cooling, ''),
   };
 }
 
@@ -1152,110 +1121,63 @@ function render(now_ms: number): void {
   renderDonenessReading({ peakYolk_C: sol.result.peakYolk_C });
   renderDonenessScale(sol);
 
-  let label = '';
+  // Which words: core's (`phaseKeys`). The arguments are this app's.
+  const keys = phaseKeys({
+    phase: machine.phase, startMode: startMode === 'cold' ? 'cold' : 'hot',
+    afterBoil: standing ? 'off' : 'hold',
+    cooling: machine.phase === 'IDLE' ? settings.cooling : machine.cooling,
+    whiteSets: sol.whiteSets, boilKnown: hasBoilMemory(boilMemory), probeWanted: probeWanted(),
+  });
+  const label = t(keys.label);
   let digits = '';
   let subline = '';
   let spoken = '';
+  let hintArgs = {};
 
   if (machine.phase === 'IDLE') {
-    label = t('readout.phase.total');
     digits = formatClock(cookTime_s);
-    subline = startMode === 'cold'
-      ? t(hasBoilMemory(boilMemory) ? 'readout.sub.coldAssumes' : 'readout.sub.coldGuesses',
-        { boil: formatClock(boil_s) })
-      : standing
-        // With the heat off, how fast the pan cools is set by the water in it,
-        // and that is the most load-bearing number in the cook. The time to
-        // boil plays no part on a hot start, so it is not mentioned.
-        ? t('readout.sub.standing', { water: show('water', settings.waterLitres) })
-        : t('readout.sub.hot');
+    subline = t(keys.subline, { boil: formatClock(boil_s), water: show('water', settings.waterLitres) });
     spoken = t('spoken.total', { time: spokenClock(cookTime_s) });
-    setPrimary(
-      t(startMode === 'cold' ? 'action.startHeating' : 'action.eggsIn'),
-      sol.whiteSets
-        ? startMode === 'cold'
-          ? t('action.hint.cold')
-          : standing
-            ? t('action.hint.hotStanding')
-            : t('action.hint.hotBoiling', { time: formatClock(cookTime_s) })
-        : t('action.hint.whiteNeverSets'),
-      true,
-    );
-    // There is no cook on offer at all, so there is nothing to start. iOS has
-    // always disabled this; the web offered a button that led nowhere.
-    dom.primary.disabled = !sol.whiteSets;
-    dom.secondary.hidden = true;
+    hintArgs = { time: formatClock(cookTime_s) };
   } else if (machine.phase === 'HEATING') {
-    label = t('readout.phase.heating');
     digits = formatClock(secondsToPull(machine, now_ms));
-    subline = t('readout.sub.heating', {
+    subline = t(keys.subline, {
       elapsed: formatClock(secondsHeating(machine, now_ms)), boil: formatClock(machine.assumedBoil_s),
     });
     spoken = t('spoken.heating', { time: spokenClock(secondsToPull(machine, now_ms)) });
-    setPrimary(
-      t('action.fullBoil'),
-      t(standing ? 'action.hint.heatingStanding' : 'action.hint.heating'),
-      true,
-    );
-    dom.secondary.hidden = false;
-    dom.secondary.textContent = t('action.cancel');
   } else if (machine.phase === 'COOKING') {
-    // The one instruction the user has to act on goes in the phase label, where
-    // it sits next to the clock. The model holds the water at its boiling point
-    // for the whole cook - or, with the heat off, assumes it cools on its own -
-    // so this is not a style note: a pan taken off the heat when the model
-    // expected a boil under-cooks by minutes, and vice versa.
-    label = t(standing ? 'readout.phase.cookingHeatOff' : 'readout.phase.cookingBoiling');
     digits = formatClock(secondsToPull(machine, now_ms));
-    subline = startMode === 'cold'
-      ? t('readout.sub.cookingCold', {
-        boil: formatClock(machine.assumedBoil_s), after: formatClock(secondsAfterBoil(machine)),
-      })
-      : t('readout.sub.cookingHot');
+    subline = t(keys.subline, {
+      boil: formatClock(machine.assumedBoil_s), after: formatClock(secondsAfterBoil(machine)),
+    });
     spoken = t('spoken.cooking', { time: spokenClock(secondsToPull(machine, now_ms)) });
-    setPrimary('', standing
-      ? t('action.hint.cookingStanding')
-      : t('action.hint.cookingBoiling', { boiling: show('temperature', boiling_C) }), false);
-    dom.secondary.hidden = false;
-    dom.secondary.textContent = t('action.cancel');
+    hintArgs = { boiling: show('temperature', boiling_C) };
   } else if (machine.phase === 'PULL') {
-    const late = (now_ms - machine.pulledAt_ms) / 1000;
-    label = t('readout.phase.pull');
-    digits = `+${formatClock(late)}`;
-    subline = t('readout.sub.pull');
+    digits = `+${formatClock((now_ms - machine.pulledAt_ms) / 1000)}`;
+    subline = t(keys.subline);
     spoken = t('spoken.pull');
-    const into = machine.cooling === 'ice' ? 'action.pulled.ice'
-      : machine.cooling === 'tap' ? 'action.pulled.tap'
-        : 'action.pulled.counter';
-    // On a counter rest nothing starts on its own: the grace runs out into
-    // Done. The line above already says the yolk is still cooking, so there
-    // is nothing true left to add, and the hint is empty.
-    const startsIn = coolingStartsIn_s(machine, now_ms);
-    setPrimary(t(into), startsIn === null ? '' : t('action.hint.pull', { seconds: startsIn }), true);
-    // Reachable here too: a reload can land in this phase, and a cook you have
-    // picked back up must always be one you can put down.
-    dom.secondary.hidden = false;
-    dom.secondary.textContent = t('action.cancel');
+    hintArgs = { seconds: coolingStartsIn_s(machine, now_ms) ?? 0 };
   } else if (machine.phase === 'COOLING') {
-    label = t(machine.cooling === 'ice' ? 'readout.phase.coolingIce' : 'readout.phase.coolingTap');
     digits = formatClock(secondsToCool(machine, now_ms));
-    // The countdown ends when the middle of the yolk peaks (E4), which is
-    // also when a probe reading is asked for.
-    subline = t(probeWanted() ? 'readout.sub.coolingProbe' : 'readout.sub.coolingPeak');
+    subline = t(keys.subline);
     spoken = t('spoken.cooling', { time: spokenClock(secondsToCool(machine, now_ms)) });
-    setPrimary('', '', false);
-    dom.secondary.hidden = false;
-    dom.secondary.textContent = t('action.cancel');
   } else {
-    label = t('readout.phase.done');
     digits = formatClock(cookTime_s);
-    subline = startMode === 'cold'
-      ? t('readout.sub.doneCold', { boil: formatClock(boil_s), cooking: formatClock(cookTime_s - boil_s) })
-      : t('readout.sub.doneHot');
+    subline = t(keys.subline, { boil: formatClock(boil_s), cooking: formatClock(cookTime_s - boil_s) });
     spoken = t(probePending() ? 'spoken.probe' : 'spoken.done');
-    setPrimary(t('action.startAgain'), '', true);
-    dom.secondary.hidden = true;
   }
+  setPrimary(
+    keys.action === null ? '' : t(keys.action),
+    keys.hint === null ? '' : t(keys.hint, hintArgs),
+    keys.action !== null,
+  );
+  // Idle with no cook on offer at all, there is nothing to start.
+  if (machine.phase === 'IDLE') dom.primary.disabled = !sol.whiteSets;
+  // Cancel is reachable in every phase of a cook under way, including one a
+  // reload lands in: a cook picked back up must be one you can put down.
+  const cancellable = machine.phase !== 'IDLE' && machine.phase !== 'DONE';
+  dom.secondary.hidden = !cancellable;
+  if (cancellable) dom.secondary.textContent = t('action.cancel');
 
   // The model is calibrated against the literature, not against this kitchen.
   // Asking once per egg is what closes that gap. Both questions stay on screen

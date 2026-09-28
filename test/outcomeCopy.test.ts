@@ -1,5 +1,5 @@
 /**
- * The outcome summary in words (src/ui/outcome.ts): which sentence each
+ * The outcome summary in words (src/core/wording.ts): which sentence each
  * outcome gets, when the white gets its line, the range in the slider's own
  * words, and a cook's outcome read back after a reload. The play-safe
  * suggestion that went under the direction is gone from both apps, and
@@ -17,9 +17,9 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 import { Lean, Outcome } from '../src/core/outcome.js';
-import {
-  DIRECTION_LIKELY, WHITE_RISK, directionKey, rangeWords, restoreOutcome, whiteAtRisk,
-} from '../src/ui/outcome.js';
+import { WHITE_RISK } from '../src/core/outcome.js';
+import { DIRECTION_LIKELY, directionKey, rangeWords, whiteAtRisk } from '../src/core/wording.js';
+import { restoreOutcome } from '../src/ui/outcome.js';
 
 const MESSAGES = (JSON.parse(readFileSync('copy/en.json', 'utf8')) as { messages: Record<string, unknown> }).messages;
 

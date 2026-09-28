@@ -1,0 +1,6333 @@
+{
+  "about": "Which catalogue key each part of the screen says, from the facts of the cook. src/core/wording.ts.",
+  "constants": {
+    "directionLikely": 0.5,
+    "whiteRisk": 0.2
+  },
+  "refusal": [
+    {
+      "kind": "none",
+      "worthSaying": true,
+      "cooling": "ice",
+      "key": null,
+      "args": null
+    },
+    {
+      "kind": "none",
+      "worthSaying": true,
+      "cooling": "tap",
+      "key": null,
+      "args": null
+    },
+    {
+      "kind": "none",
+      "worthSaying": true,
+      "cooling": "counter",
+      "key": null,
+      "args": null
+    },
+    {
+      "kind": "none",
+      "worthSaying": false,
+      "cooling": "ice",
+      "key": null,
+      "args": null
+    },
+    {
+      "kind": "none",
+      "worthSaying": false,
+      "cooling": "tap",
+      "key": null,
+      "args": null
+    },
+    {
+      "kind": "none",
+      "worthSaying": false,
+      "cooling": "counter",
+      "key": null,
+      "args": null
+    },
+    {
+      "kind": "tooSoftForWhite",
+      "worthSaying": true,
+      "cooling": "ice",
+      "key": "refusal.ice",
+      "args": {}
+    },
+    {
+      "kind": "tooSoftForWhite",
+      "worthSaying": true,
+      "cooling": "tap",
+      "key": "refusal.tap",
+      "args": {}
+    },
+    {
+      "kind": "tooSoftForWhite",
+      "worthSaying": true,
+      "cooling": "counter",
+      "key": "refusal.counter",
+      "args": {}
+    },
+    {
+      "kind": "tooSoftForWhite",
+      "worthSaying": false,
+      "cooling": "ice",
+      "key": null,
+      "args": null
+    },
+    {
+      "kind": "tooSoftForWhite",
+      "worthSaying": false,
+      "cooling": "tap",
+      "key": null,
+      "args": null
+    },
+    {
+      "kind": "tooSoftForWhite",
+      "worthSaying": false,
+      "cooling": "counter",
+      "key": null,
+      "args": null
+    },
+    {
+      "kind": "harderThanPanReaches",
+      "worthSaying": true,
+      "cooling": "ice",
+      "key": "refusal.harderThanPan",
+      "args": {}
+    },
+    {
+      "kind": "harderThanPanReaches",
+      "worthSaying": true,
+      "cooling": "tap",
+      "key": "refusal.harderThanPan",
+      "args": {}
+    },
+    {
+      "kind": "harderThanPanReaches",
+      "worthSaying": true,
+      "cooling": "counter",
+      "key": "refusal.harderThanPan",
+      "args": {}
+    },
+    {
+      "kind": "harderThanPanReaches",
+      "worthSaying": false,
+      "cooling": "ice",
+      "key": null,
+      "args": null
+    },
+    {
+      "kind": "harderThanPanReaches",
+      "worthSaying": false,
+      "cooling": "tap",
+      "key": null,
+      "args": null
+    },
+    {
+      "kind": "harderThanPanReaches",
+      "worthSaying": false,
+      "cooling": "counter",
+      "key": null,
+      "args": null
+    },
+    {
+      "kind": "whiteNeverSets",
+      "worthSaying": true,
+      "cooling": "ice",
+      "key": "refusal.whiteNeverSets",
+      "args": {}
+    },
+    {
+      "kind": "whiteNeverSets",
+      "worthSaying": true,
+      "cooling": "tap",
+      "key": "refusal.whiteNeverSets",
+      "args": {}
+    },
+    {
+      "kind": "whiteNeverSets",
+      "worthSaying": true,
+      "cooling": "counter",
+      "key": "refusal.whiteNeverSets",
+      "args": {}
+    },
+    {
+      "kind": "whiteNeverSets",
+      "worthSaying": false,
+      "cooling": "ice",
+      "key": null,
+      "args": null
+    },
+    {
+      "kind": "whiteNeverSets",
+      "worthSaying": false,
+      "cooling": "tap",
+      "key": null,
+      "args": null
+    },
+    {
+      "kind": "whiteNeverSets",
+      "worthSaying": false,
+      "cooling": "counter",
+      "key": null,
+      "args": null
+    },
+    {
+      "kind": "unlikelySoft",
+      "worthSaying": true,
+      "cooling": "ice",
+      "key": "refusal.unlikelySoft",
+      "args": {
+        "hits": 3,
+        "of": 10
+      }
+    },
+    {
+      "kind": "unlikelySoft",
+      "worthSaying": true,
+      "cooling": "tap",
+      "key": "refusal.unlikelySoft",
+      "args": {
+        "hits": 3,
+        "of": 10
+      }
+    },
+    {
+      "kind": "unlikelySoft",
+      "worthSaying": true,
+      "cooling": "counter",
+      "key": "refusal.unlikelySoft",
+      "args": {
+        "hits": 3,
+        "of": 10
+      }
+    },
+    {
+      "kind": "unlikelySoft",
+      "worthSaying": false,
+      "cooling": "ice",
+      "key": null,
+      "args": null
+    },
+    {
+      "kind": "unlikelySoft",
+      "worthSaying": false,
+      "cooling": "tap",
+      "key": null,
+      "args": null
+    },
+    {
+      "kind": "unlikelySoft",
+      "worthSaying": false,
+      "cooling": "counter",
+      "key": null,
+      "args": null
+    },
+    {
+      "kind": "unlikelyHard",
+      "worthSaying": true,
+      "cooling": "ice",
+      "key": "refusal.unlikelyHard",
+      "args": {
+        "hits": 3,
+        "of": 10
+      }
+    },
+    {
+      "kind": "unlikelyHard",
+      "worthSaying": true,
+      "cooling": "tap",
+      "key": "refusal.unlikelyHard",
+      "args": {
+        "hits": 3,
+        "of": 10
+      }
+    },
+    {
+      "kind": "unlikelyHard",
+      "worthSaying": true,
+      "cooling": "counter",
+      "key": "refusal.unlikelyHard",
+      "args": {
+        "hits": 3,
+        "of": 10
+      }
+    },
+    {
+      "kind": "unlikelyHard",
+      "worthSaying": false,
+      "cooling": "ice",
+      "key": null,
+      "args": null
+    },
+    {
+      "kind": "unlikelyHard",
+      "worthSaying": false,
+      "cooling": "tap",
+      "key": null,
+      "args": null
+    },
+    {
+      "kind": "unlikelyHard",
+      "worthSaying": false,
+      "cooling": "counter",
+      "key": null,
+      "args": null
+    }
+  ],
+  "outcome": [
+    {
+      "pJustRight": 0,
+      "lean": "soft",
+      "pWhiteRunny": 0,
+      "levelLow": 0.1,
+      "levelHigh": 0.12,
+      "direction": "outcome.miss.soft",
+      "whiteAtRisk": false,
+      "range": {
+        "key": "outcome.range",
+        "args": {
+          "low": "doneness.runny",
+          "high": "doneness.soft"
+        }
+      }
+    },
+    {
+      "pJustRight": 0,
+      "lean": "soft",
+      "pWhiteRunny": 0,
+      "levelLow": 0.2,
+      "levelHigh": 0.7,
+      "direction": "outcome.miss.soft",
+      "whiteAtRisk": false,
+      "range": {
+        "key": "outcome.range",
+        "args": {
+          "low": "doneness.soft",
+          "high": "doneness.fudgy"
+        }
+      }
+    },
+    {
+      "pJustRight": 0,
+      "lean": "soft",
+      "pWhiteRunny": 0.199999999,
+      "levelLow": 0.1,
+      "levelHigh": 0.12,
+      "direction": "outcome.miss.soft",
+      "whiteAtRisk": false,
+      "range": {
+        "key": "outcome.range",
+        "args": {
+          "low": "doneness.runny",
+          "high": "doneness.soft"
+        }
+      }
+    },
+    {
+      "pJustRight": 0,
+      "lean": "soft",
+      "pWhiteRunny": 0.199999999,
+      "levelLow": 0.2,
+      "levelHigh": 0.7,
+      "direction": "outcome.miss.soft",
+      "whiteAtRisk": false,
+      "range": {
+        "key": "outcome.range",
+        "args": {
+          "low": "doneness.soft",
+          "high": "doneness.fudgy"
+        }
+      }
+    },
+    {
+      "pJustRight": 0,
+      "lean": "soft",
+      "pWhiteRunny": 0.2,
+      "levelLow": 0.1,
+      "levelHigh": 0.12,
+      "direction": "outcome.miss.soft",
+      "whiteAtRisk": true,
+      "range": {
+        "key": "outcome.range",
+        "args": {
+          "low": "doneness.runny",
+          "high": "doneness.soft"
+        }
+      }
+    },
+    {
+      "pJustRight": 0,
+      "lean": "soft",
+      "pWhiteRunny": 0.2,
+      "levelLow": 0.2,
+      "levelHigh": 0.7,
+      "direction": "outcome.miss.soft",
+      "whiteAtRisk": true,
+      "range": {
+        "key": "outcome.range",
+        "args": {
+          "low": "doneness.soft",
+          "high": "doneness.fudgy"
+        }
+      }
+    },
+    {
+      "pJustRight": 0,
+      "lean": "firm",
+      "pWhiteRunny": 0,
+      "levelLow": 0.1,
+      "levelHigh": 0.12,
+      "direction": "outcome.miss.firm",
+      "whiteAtRisk": false,
+      "range": {
+        "key": "outcome.range",
+        "args": {
+          "low": "doneness.runny",
+          "high": "doneness.soft"
+        }
+      }
+    },
+    {
+      "pJustRight": 0,
+      "lean": "firm",
+      "pWhiteRunny": 0,
+      "levelLow": 0.2,
+      "levelHigh": 0.7,
+      "direction": "outcome.miss.firm",
+      "whiteAtRisk": false,
+      "range": {
+        "key": "outcome.range",
+        "args": {
+          "low": "doneness.soft",
+          "high": "doneness.fudgy"
+        }
+      }
+    },
+    {
+      "pJustRight": 0,
+      "lean": "firm",
+      "pWhiteRunny": 0.199999999,
+      "levelLow": 0.1,
+      "levelHigh": 0.12,
+      "direction": "outcome.miss.firm",
+      "whiteAtRisk": false,
+      "range": {
+        "key": "outcome.range",
+        "args": {
+          "low": "doneness.runny",
+          "high": "doneness.soft"
+        }
+      }
+    },
+    {
+      "pJustRight": 0,
+      "lean": "firm",
+      "pWhiteRunny": 0.199999999,
+      "levelLow": 0.2,
+      "levelHigh": 0.7,
+      "direction": "outcome.miss.firm",
+      "whiteAtRisk": false,
+      "range": {
+        "key": "outcome.range",
+        "args": {
+          "low": "doneness.soft",
+          "high": "doneness.fudgy"
+        }
+      }
+    },
+    {
+      "pJustRight": 0,
+      "lean": "firm",
+      "pWhiteRunny": 0.2,
+      "levelLow": 0.1,
+      "levelHigh": 0.12,
+      "direction": "outcome.miss.firm",
+      "whiteAtRisk": true,
+      "range": {
+        "key": "outcome.range",
+        "args": {
+          "low": "doneness.runny",
+          "high": "doneness.soft"
+        }
+      }
+    },
+    {
+      "pJustRight": 0,
+      "lean": "firm",
+      "pWhiteRunny": 0.2,
+      "levelLow": 0.2,
+      "levelHigh": 0.7,
+      "direction": "outcome.miss.firm",
+      "whiteAtRisk": true,
+      "range": {
+        "key": "outcome.range",
+        "args": {
+          "low": "doneness.soft",
+          "high": "doneness.fudgy"
+        }
+      }
+    },
+    {
+      "pJustRight": 0,
+      "lean": "balanced",
+      "pWhiteRunny": 0,
+      "levelLow": 0.1,
+      "levelHigh": 0.12,
+      "direction": "outcome.unsure",
+      "whiteAtRisk": false,
+      "range": {
+        "key": "outcome.range",
+        "args": {
+          "low": "doneness.runny",
+          "high": "doneness.soft"
+        }
+      }
+    },
+    {
+      "pJustRight": 0,
+      "lean": "balanced",
+      "pWhiteRunny": 0,
+      "levelLow": 0.2,
+      "levelHigh": 0.7,
+      "direction": "outcome.unsure",
+      "whiteAtRisk": false,
+      "range": {
+        "key": "outcome.range",
+        "args": {
+          "low": "doneness.soft",
+          "high": "doneness.fudgy"
+        }
+      }
+    },
+    {
+      "pJustRight": 0,
+      "lean": "balanced",
+      "pWhiteRunny": 0.199999999,
+      "levelLow": 0.1,
+      "levelHigh": 0.12,
+      "direction": "outcome.unsure",
+      "whiteAtRisk": false,
+      "range": {
+        "key": "outcome.range",
+        "args": {
+          "low": "doneness.runny",
+          "high": "doneness.soft"
+        }
+      }
+    },
+    {
+      "pJustRight": 0,
+      "lean": "balanced",
+      "pWhiteRunny": 0.199999999,
+      "levelLow": 0.2,
+      "levelHigh": 0.7,
+      "direction": "outcome.unsure",
+      "whiteAtRisk": false,
+      "range": {
+        "key": "outcome.range",
+        "args": {
+          "low": "doneness.soft",
+          "high": "doneness.fudgy"
+        }
+      }
+    },
+    {
+      "pJustRight": 0,
+      "lean": "balanced",
+      "pWhiteRunny": 0.2,
+      "levelLow": 0.1,
+      "levelHigh": 0.12,
+      "direction": "outcome.unsure",
+      "whiteAtRisk": true,
+      "range": {
+        "key": "outcome.range",
+        "args": {
+          "low": "doneness.runny",
+          "high": "doneness.soft"
+        }
+      }
+    },
+    {
+      "pJustRight": 0,
+      "lean": "balanced",
+      "pWhiteRunny": 0.2,
+      "levelLow": 0.2,
+      "levelHigh": 0.7,
+      "direction": "outcome.unsure",
+      "whiteAtRisk": true,
+      "range": {
+        "key": "outcome.range",
+        "args": {
+          "low": "doneness.soft",
+          "high": "doneness.fudgy"
+        }
+      }
+    },
+    {
+      "pJustRight": 0.499999999,
+      "lean": "soft",
+      "pWhiteRunny": 0,
+      "levelLow": 0.1,
+      "levelHigh": 0.12,
+      "direction": "outcome.miss.soft",
+      "whiteAtRisk": false,
+      "range": {
+        "key": "outcome.range",
+        "args": {
+          "low": "doneness.runny",
+          "high": "doneness.soft"
+        }
+      }
+    },
+    {
+      "pJustRight": 0.499999999,
+      "lean": "soft",
+      "pWhiteRunny": 0,
+      "levelLow": 0.2,
+      "levelHigh": 0.7,
+      "direction": "outcome.miss.soft",
+      "whiteAtRisk": false,
+      "range": {
+        "key": "outcome.range",
+        "args": {
+          "low": "doneness.soft",
+          "high": "doneness.fudgy"
+        }
+      }
+    },
+    {
+      "pJustRight": 0.499999999,
+      "lean": "soft",
+      "pWhiteRunny": 0.199999999,
+      "levelLow": 0.1,
+      "levelHigh": 0.12,
+      "direction": "outcome.miss.soft",
+      "whiteAtRisk": false,
+      "range": {
+        "key": "outcome.range",
+        "args": {
+          "low": "doneness.runny",
+          "high": "doneness.soft"
+        }
+      }
+    },
+    {
+      "pJustRight": 0.499999999,
+      "lean": "soft",
+      "pWhiteRunny": 0.199999999,
+      "levelLow": 0.2,
+      "levelHigh": 0.7,
+      "direction": "outcome.miss.soft",
+      "whiteAtRisk": false,
+      "range": {
+        "key": "outcome.range",
+        "args": {
+          "low": "doneness.soft",
+          "high": "doneness.fudgy"
+        }
+      }
+    },
+    {
+      "pJustRight": 0.499999999,
+      "lean": "soft",
+      "pWhiteRunny": 0.2,
+      "levelLow": 0.1,
+      "levelHigh": 0.12,
+      "direction": "outcome.miss.soft",
+      "whiteAtRisk": true,
+      "range": {
+        "key": "outcome.range",
+        "args": {
+          "low": "doneness.runny",
+          "high": "doneness.soft"
+        }
+      }
+    },
+    {
+      "pJustRight": 0.499999999,
+      "lean": "soft",
+      "pWhiteRunny": 0.2,
+      "levelLow": 0.2,
+      "levelHigh": 0.7,
+      "direction": "outcome.miss.soft",
+      "whiteAtRisk": true,
+      "range": {
+        "key": "outcome.range",
+        "args": {
+          "low": "doneness.soft",
+          "high": "doneness.fudgy"
+        }
+      }
+    },
+    {
+      "pJustRight": 0.499999999,
+      "lean": "firm",
+      "pWhiteRunny": 0,
+      "levelLow": 0.1,
+      "levelHigh": 0.12,
+      "direction": "outcome.miss.firm",
+      "whiteAtRisk": false,
+      "range": {
+        "key": "outcome.range",
+        "args": {
+          "low": "doneness.runny",
+          "high": "doneness.soft"
+        }
+      }
+    },
+    {
+      "pJustRight": 0.499999999,
+      "lean": "firm",
+      "pWhiteRunny": 0,
+      "levelLow": 0.2,
+      "levelHigh": 0.7,
+      "direction": "outcome.miss.firm",
+      "whiteAtRisk": false,
+      "range": {
+        "key": "outcome.range",
+        "args": {
+          "low": "doneness.soft",
+          "high": "doneness.fudgy"
+        }
+      }
+    },
+    {
+      "pJustRight": 0.499999999,
+      "lean": "firm",
+      "pWhiteRunny": 0.199999999,
+      "levelLow": 0.1,
+      "levelHigh": 0.12,
+      "direction": "outcome.miss.firm",
+      "whiteAtRisk": false,
+      "range": {
+        "key": "outcome.range",
+        "args": {
+          "low": "doneness.runny",
+          "high": "doneness.soft"
+        }
+      }
+    },
+    {
+      "pJustRight": 0.499999999,
+      "lean": "firm",
+      "pWhiteRunny": 0.199999999,
+      "levelLow": 0.2,
+      "levelHigh": 0.7,
+      "direction": "outcome.miss.firm",
+      "whiteAtRisk": false,
+      "range": {
+        "key": "outcome.range",
+        "args": {
+          "low": "doneness.soft",
+          "high": "doneness.fudgy"
+        }
+      }
+    },
+    {
+      "pJustRight": 0.499999999,
+      "lean": "firm",
+      "pWhiteRunny": 0.2,
+      "levelLow": 0.1,
+      "levelHigh": 0.12,
+      "direction": "outcome.miss.firm",
+      "whiteAtRisk": true,
+      "range": {
+        "key": "outcome.range",
+        "args": {
+          "low": "doneness.runny",
+          "high": "doneness.soft"
+        }
+      }
+    },
+    {
+      "pJustRight": 0.499999999,
+      "lean": "firm",
+      "pWhiteRunny": 0.2,
+      "levelLow": 0.2,
+      "levelHigh": 0.7,
+      "direction": "outcome.miss.firm",
+      "whiteAtRisk": true,
+      "range": {
+        "key": "outcome.range",
+        "args": {
+          "low": "doneness.soft",
+          "high": "doneness.fudgy"
+        }
+      }
+    },
+    {
+      "pJustRight": 0.499999999,
+      "lean": "balanced",
+      "pWhiteRunny": 0,
+      "levelLow": 0.1,
+      "levelHigh": 0.12,
+      "direction": "outcome.unsure",
+      "whiteAtRisk": false,
+      "range": {
+        "key": "outcome.range",
+        "args": {
+          "low": "doneness.runny",
+          "high": "doneness.soft"
+        }
+      }
+    },
+    {
+      "pJustRight": 0.499999999,
+      "lean": "balanced",
+      "pWhiteRunny": 0,
+      "levelLow": 0.2,
+      "levelHigh": 0.7,
+      "direction": "outcome.unsure",
+      "whiteAtRisk": false,
+      "range": {
+        "key": "outcome.range",
+        "args": {
+          "low": "doneness.soft",
+          "high": "doneness.fudgy"
+        }
+      }
+    },
+    {
+      "pJustRight": 0.499999999,
+      "lean": "balanced",
+      "pWhiteRunny": 0.199999999,
+      "levelLow": 0.1,
+      "levelHigh": 0.12,
+      "direction": "outcome.unsure",
+      "whiteAtRisk": false,
+      "range": {
+        "key": "outcome.range",
+        "args": {
+          "low": "doneness.runny",
+          "high": "doneness.soft"
+        }
+      }
+    },
+    {
+      "pJustRight": 0.499999999,
+      "lean": "balanced",
+      "pWhiteRunny": 0.199999999,
+      "levelLow": 0.2,
+      "levelHigh": 0.7,
+      "direction": "outcome.unsure",
+      "whiteAtRisk": false,
+      "range": {
+        "key": "outcome.range",
+        "args": {
+          "low": "doneness.soft",
+          "high": "doneness.fudgy"
+        }
+      }
+    },
+    {
+      "pJustRight": 0.499999999,
+      "lean": "balanced",
+      "pWhiteRunny": 0.2,
+      "levelLow": 0.1,
+      "levelHigh": 0.12,
+      "direction": "outcome.unsure",
+      "whiteAtRisk": true,
+      "range": {
+        "key": "outcome.range",
+        "args": {
+          "low": "doneness.runny",
+          "high": "doneness.soft"
+        }
+      }
+    },
+    {
+      "pJustRight": 0.499999999,
+      "lean": "balanced",
+      "pWhiteRunny": 0.2,
+      "levelLow": 0.2,
+      "levelHigh": 0.7,
+      "direction": "outcome.unsure",
+      "whiteAtRisk": true,
+      "range": {
+        "key": "outcome.range",
+        "args": {
+          "low": "doneness.soft",
+          "high": "doneness.fudgy"
+        }
+      }
+    },
+    {
+      "pJustRight": 0.5,
+      "lean": "soft",
+      "pWhiteRunny": 0,
+      "levelLow": 0.1,
+      "levelHigh": 0.12,
+      "direction": "outcome.likely.soft",
+      "whiteAtRisk": false,
+      "range": {
+        "key": "outcome.range",
+        "args": {
+          "low": "doneness.runny",
+          "high": "doneness.soft"
+        }
+      }
+    },
+    {
+      "pJustRight": 0.5,
+      "lean": "soft",
+      "pWhiteRunny": 0,
+      "levelLow": 0.2,
+      "levelHigh": 0.7,
+      "direction": "outcome.likely.soft",
+      "whiteAtRisk": false,
+      "range": {
+        "key": "outcome.range",
+        "args": {
+          "low": "doneness.soft",
+          "high": "doneness.fudgy"
+        }
+      }
+    },
+    {
+      "pJustRight": 0.5,
+      "lean": "soft",
+      "pWhiteRunny": 0.199999999,
+      "levelLow": 0.1,
+      "levelHigh": 0.12,
+      "direction": "outcome.likely.soft",
+      "whiteAtRisk": false,
+      "range": {
+        "key": "outcome.range",
+        "args": {
+          "low": "doneness.runny",
+          "high": "doneness.soft"
+        }
+      }
+    },
+    {
+      "pJustRight": 0.5,
+      "lean": "soft",
+      "pWhiteRunny": 0.199999999,
+      "levelLow": 0.2,
+      "levelHigh": 0.7,
+      "direction": "outcome.likely.soft",
+      "whiteAtRisk": false,
+      "range": {
+        "key": "outcome.range",
+        "args": {
+          "low": "doneness.soft",
+          "high": "doneness.fudgy"
+        }
+      }
+    },
+    {
+      "pJustRight": 0.5,
+      "lean": "soft",
+      "pWhiteRunny": 0.2,
+      "levelLow": 0.1,
+      "levelHigh": 0.12,
+      "direction": "outcome.likely.soft",
+      "whiteAtRisk": true,
+      "range": {
+        "key": "outcome.range",
+        "args": {
+          "low": "doneness.runny",
+          "high": "doneness.soft"
+        }
+      }
+    },
+    {
+      "pJustRight": 0.5,
+      "lean": "soft",
+      "pWhiteRunny": 0.2,
+      "levelLow": 0.2,
+      "levelHigh": 0.7,
+      "direction": "outcome.likely.soft",
+      "whiteAtRisk": true,
+      "range": {
+        "key": "outcome.range",
+        "args": {
+          "low": "doneness.soft",
+          "high": "doneness.fudgy"
+        }
+      }
+    },
+    {
+      "pJustRight": 0.5,
+      "lean": "firm",
+      "pWhiteRunny": 0,
+      "levelLow": 0.1,
+      "levelHigh": 0.12,
+      "direction": "outcome.likely.firm",
+      "whiteAtRisk": false,
+      "range": {
+        "key": "outcome.range",
+        "args": {
+          "low": "doneness.runny",
+          "high": "doneness.soft"
+        }
+      }
+    },
+    {
+      "pJustRight": 0.5,
+      "lean": "firm",
+      "pWhiteRunny": 0,
+      "levelLow": 0.2,
+      "levelHigh": 0.7,
+      "direction": "outcome.likely.firm",
+      "whiteAtRisk": false,
+      "range": {
+        "key": "outcome.range",
+        "args": {
+          "low": "doneness.soft",
+          "high": "doneness.fudgy"
+        }
+      }
+    },
+    {
+      "pJustRight": 0.5,
+      "lean": "firm",
+      "pWhiteRunny": 0.199999999,
+      "levelLow": 0.1,
+      "levelHigh": 0.12,
+      "direction": "outcome.likely.firm",
+      "whiteAtRisk": false,
+      "range": {
+        "key": "outcome.range",
+        "args": {
+          "low": "doneness.runny",
+          "high": "doneness.soft"
+        }
+      }
+    },
+    {
+      "pJustRight": 0.5,
+      "lean": "firm",
+      "pWhiteRunny": 0.199999999,
+      "levelLow": 0.2,
+      "levelHigh": 0.7,
+      "direction": "outcome.likely.firm",
+      "whiteAtRisk": false,
+      "range": {
+        "key": "outcome.range",
+        "args": {
+          "low": "doneness.soft",
+          "high": "doneness.fudgy"
+        }
+      }
+    },
+    {
+      "pJustRight": 0.5,
+      "lean": "firm",
+      "pWhiteRunny": 0.2,
+      "levelLow": 0.1,
+      "levelHigh": 0.12,
+      "direction": "outcome.likely.firm",
+      "whiteAtRisk": true,
+      "range": {
+        "key": "outcome.range",
+        "args": {
+          "low": "doneness.runny",
+          "high": "doneness.soft"
+        }
+      }
+    },
+    {
+      "pJustRight": 0.5,
+      "lean": "firm",
+      "pWhiteRunny": 0.2,
+      "levelLow": 0.2,
+      "levelHigh": 0.7,
+      "direction": "outcome.likely.firm",
+      "whiteAtRisk": true,
+      "range": {
+        "key": "outcome.range",
+        "args": {
+          "low": "doneness.soft",
+          "high": "doneness.fudgy"
+        }
+      }
+    },
+    {
+      "pJustRight": 0.5,
+      "lean": "balanced",
+      "pWhiteRunny": 0,
+      "levelLow": 0.1,
+      "levelHigh": 0.12,
+      "direction": "outcome.likely",
+      "whiteAtRisk": false,
+      "range": {
+        "key": "outcome.range",
+        "args": {
+          "low": "doneness.runny",
+          "high": "doneness.soft"
+        }
+      }
+    },
+    {
+      "pJustRight": 0.5,
+      "lean": "balanced",
+      "pWhiteRunny": 0,
+      "levelLow": 0.2,
+      "levelHigh": 0.7,
+      "direction": "outcome.likely",
+      "whiteAtRisk": false,
+      "range": {
+        "key": "outcome.range",
+        "args": {
+          "low": "doneness.soft",
+          "high": "doneness.fudgy"
+        }
+      }
+    },
+    {
+      "pJustRight": 0.5,
+      "lean": "balanced",
+      "pWhiteRunny": 0.199999999,
+      "levelLow": 0.1,
+      "levelHigh": 0.12,
+      "direction": "outcome.likely",
+      "whiteAtRisk": false,
+      "range": {
+        "key": "outcome.range",
+        "args": {
+          "low": "doneness.runny",
+          "high": "doneness.soft"
+        }
+      }
+    },
+    {
+      "pJustRight": 0.5,
+      "lean": "balanced",
+      "pWhiteRunny": 0.199999999,
+      "levelLow": 0.2,
+      "levelHigh": 0.7,
+      "direction": "outcome.likely",
+      "whiteAtRisk": false,
+      "range": {
+        "key": "outcome.range",
+        "args": {
+          "low": "doneness.soft",
+          "high": "doneness.fudgy"
+        }
+      }
+    },
+    {
+      "pJustRight": 0.5,
+      "lean": "balanced",
+      "pWhiteRunny": 0.2,
+      "levelLow": 0.1,
+      "levelHigh": 0.12,
+      "direction": "outcome.likely",
+      "whiteAtRisk": true,
+      "range": {
+        "key": "outcome.range",
+        "args": {
+          "low": "doneness.runny",
+          "high": "doneness.soft"
+        }
+      }
+    },
+    {
+      "pJustRight": 0.5,
+      "lean": "balanced",
+      "pWhiteRunny": 0.2,
+      "levelLow": 0.2,
+      "levelHigh": 0.7,
+      "direction": "outcome.likely",
+      "whiteAtRisk": true,
+      "range": {
+        "key": "outcome.range",
+        "args": {
+          "low": "doneness.soft",
+          "high": "doneness.fudgy"
+        }
+      }
+    },
+    {
+      "pJustRight": 0.9,
+      "lean": "soft",
+      "pWhiteRunny": 0,
+      "levelLow": 0.1,
+      "levelHigh": 0.12,
+      "direction": "outcome.likely.soft",
+      "whiteAtRisk": false,
+      "range": {
+        "key": "outcome.range",
+        "args": {
+          "low": "doneness.runny",
+          "high": "doneness.soft"
+        }
+      }
+    },
+    {
+      "pJustRight": 0.9,
+      "lean": "soft",
+      "pWhiteRunny": 0,
+      "levelLow": 0.2,
+      "levelHigh": 0.7,
+      "direction": "outcome.likely.soft",
+      "whiteAtRisk": false,
+      "range": {
+        "key": "outcome.range",
+        "args": {
+          "low": "doneness.soft",
+          "high": "doneness.fudgy"
+        }
+      }
+    },
+    {
+      "pJustRight": 0.9,
+      "lean": "soft",
+      "pWhiteRunny": 0.199999999,
+      "levelLow": 0.1,
+      "levelHigh": 0.12,
+      "direction": "outcome.likely.soft",
+      "whiteAtRisk": false,
+      "range": {
+        "key": "outcome.range",
+        "args": {
+          "low": "doneness.runny",
+          "high": "doneness.soft"
+        }
+      }
+    },
+    {
+      "pJustRight": 0.9,
+      "lean": "soft",
+      "pWhiteRunny": 0.199999999,
+      "levelLow": 0.2,
+      "levelHigh": 0.7,
+      "direction": "outcome.likely.soft",
+      "whiteAtRisk": false,
+      "range": {
+        "key": "outcome.range",
+        "args": {
+          "low": "doneness.soft",
+          "high": "doneness.fudgy"
+        }
+      }
+    },
+    {
+      "pJustRight": 0.9,
+      "lean": "soft",
+      "pWhiteRunny": 0.2,
+      "levelLow": 0.1,
+      "levelHigh": 0.12,
+      "direction": "outcome.likely.soft",
+      "whiteAtRisk": true,
+      "range": {
+        "key": "outcome.range",
+        "args": {
+          "low": "doneness.runny",
+          "high": "doneness.soft"
+        }
+      }
+    },
+    {
+      "pJustRight": 0.9,
+      "lean": "soft",
+      "pWhiteRunny": 0.2,
+      "levelLow": 0.2,
+      "levelHigh": 0.7,
+      "direction": "outcome.likely.soft",
+      "whiteAtRisk": true,
+      "range": {
+        "key": "outcome.range",
+        "args": {
+          "low": "doneness.soft",
+          "high": "doneness.fudgy"
+        }
+      }
+    },
+    {
+      "pJustRight": 0.9,
+      "lean": "firm",
+      "pWhiteRunny": 0,
+      "levelLow": 0.1,
+      "levelHigh": 0.12,
+      "direction": "outcome.likely.firm",
+      "whiteAtRisk": false,
+      "range": {
+        "key": "outcome.range",
+        "args": {
+          "low": "doneness.runny",
+          "high": "doneness.soft"
+        }
+      }
+    },
+    {
+      "pJustRight": 0.9,
+      "lean": "firm",
+      "pWhiteRunny": 0,
+      "levelLow": 0.2,
+      "levelHigh": 0.7,
+      "direction": "outcome.likely.firm",
+      "whiteAtRisk": false,
+      "range": {
+        "key": "outcome.range",
+        "args": {
+          "low": "doneness.soft",
+          "high": "doneness.fudgy"
+        }
+      }
+    },
+    {
+      "pJustRight": 0.9,
+      "lean": "firm",
+      "pWhiteRunny": 0.199999999,
+      "levelLow": 0.1,
+      "levelHigh": 0.12,
+      "direction": "outcome.likely.firm",
+      "whiteAtRisk": false,
+      "range": {
+        "key": "outcome.range",
+        "args": {
+          "low": "doneness.runny",
+          "high": "doneness.soft"
+        }
+      }
+    },
+    {
+      "pJustRight": 0.9,
+      "lean": "firm",
+      "pWhiteRunny": 0.199999999,
+      "levelLow": 0.2,
+      "levelHigh": 0.7,
+      "direction": "outcome.likely.firm",
+      "whiteAtRisk": false,
+      "range": {
+        "key": "outcome.range",
+        "args": {
+          "low": "doneness.soft",
+          "high": "doneness.fudgy"
+        }
+      }
+    },
+    {
+      "pJustRight": 0.9,
+      "lean": "firm",
+      "pWhiteRunny": 0.2,
+      "levelLow": 0.1,
+      "levelHigh": 0.12,
+      "direction": "outcome.likely.firm",
+      "whiteAtRisk": true,
+      "range": {
+        "key": "outcome.range",
+        "args": {
+          "low": "doneness.runny",
+          "high": "doneness.soft"
+        }
+      }
+    },
+    {
+      "pJustRight": 0.9,
+      "lean": "firm",
+      "pWhiteRunny": 0.2,
+      "levelLow": 0.2,
+      "levelHigh": 0.7,
+      "direction": "outcome.likely.firm",
+      "whiteAtRisk": true,
+      "range": {
+        "key": "outcome.range",
+        "args": {
+          "low": "doneness.soft",
+          "high": "doneness.fudgy"
+        }
+      }
+    },
+    {
+      "pJustRight": 0.9,
+      "lean": "balanced",
+      "pWhiteRunny": 0,
+      "levelLow": 0.1,
+      "levelHigh": 0.12,
+      "direction": "outcome.likely",
+      "whiteAtRisk": false,
+      "range": {
+        "key": "outcome.range",
+        "args": {
+          "low": "doneness.runny",
+          "high": "doneness.soft"
+        }
+      }
+    },
+    {
+      "pJustRight": 0.9,
+      "lean": "balanced",
+      "pWhiteRunny": 0,
+      "levelLow": 0.2,
+      "levelHigh": 0.7,
+      "direction": "outcome.likely",
+      "whiteAtRisk": false,
+      "range": {
+        "key": "outcome.range",
+        "args": {
+          "low": "doneness.soft",
+          "high": "doneness.fudgy"
+        }
+      }
+    },
+    {
+      "pJustRight": 0.9,
+      "lean": "balanced",
+      "pWhiteRunny": 0.199999999,
+      "levelLow": 0.1,
+      "levelHigh": 0.12,
+      "direction": "outcome.likely",
+      "whiteAtRisk": false,
+      "range": {
+        "key": "outcome.range",
+        "args": {
+          "low": "doneness.runny",
+          "high": "doneness.soft"
+        }
+      }
+    },
+    {
+      "pJustRight": 0.9,
+      "lean": "balanced",
+      "pWhiteRunny": 0.199999999,
+      "levelLow": 0.2,
+      "levelHigh": 0.7,
+      "direction": "outcome.likely",
+      "whiteAtRisk": false,
+      "range": {
+        "key": "outcome.range",
+        "args": {
+          "low": "doneness.soft",
+          "high": "doneness.fudgy"
+        }
+      }
+    },
+    {
+      "pJustRight": 0.9,
+      "lean": "balanced",
+      "pWhiteRunny": 0.2,
+      "levelLow": 0.1,
+      "levelHigh": 0.12,
+      "direction": "outcome.likely",
+      "whiteAtRisk": true,
+      "range": {
+        "key": "outcome.range",
+        "args": {
+          "low": "doneness.runny",
+          "high": "doneness.soft"
+        }
+      }
+    },
+    {
+      "pJustRight": 0.9,
+      "lean": "balanced",
+      "pWhiteRunny": 0.2,
+      "levelLow": 0.2,
+      "levelHigh": 0.7,
+      "direction": "outcome.likely",
+      "whiteAtRisk": true,
+      "range": {
+        "key": "outcome.range",
+        "args": {
+          "low": "doneness.soft",
+          "high": "doneness.fudgy"
+        }
+      }
+    }
+  ],
+  "phase": [
+    {
+      "phase": "IDLE",
+      "startMode": "hot",
+      "afterBoil": "hold",
+      "cooling": "ice",
+      "whiteSets": false,
+      "boilKnown": true,
+      "probeWanted": true,
+      "label": "readout.phase.total",
+      "subline": "readout.sub.hot",
+      "action": "action.eggsIn",
+      "hint": "action.hint.whiteNeverSets"
+    },
+    {
+      "phase": "IDLE",
+      "startMode": "hot",
+      "afterBoil": "hold",
+      "cooling": "ice",
+      "whiteSets": true,
+      "boilKnown": false,
+      "probeWanted": true,
+      "label": "readout.phase.total",
+      "subline": "readout.sub.hot",
+      "action": "action.eggsIn",
+      "hint": "action.hint.hotBoiling"
+    },
+    {
+      "phase": "IDLE",
+      "startMode": "hot",
+      "afterBoil": "hold",
+      "cooling": "ice",
+      "whiteSets": true,
+      "boilKnown": true,
+      "probeWanted": false,
+      "label": "readout.phase.total",
+      "subline": "readout.sub.hot",
+      "action": "action.eggsIn",
+      "hint": "action.hint.hotBoiling"
+    },
+    {
+      "phase": "IDLE",
+      "startMode": "hot",
+      "afterBoil": "hold",
+      "cooling": "tap",
+      "whiteSets": false,
+      "boilKnown": true,
+      "probeWanted": true,
+      "label": "readout.phase.total",
+      "subline": "readout.sub.hot",
+      "action": "action.eggsIn",
+      "hint": "action.hint.whiteNeverSets"
+    },
+    {
+      "phase": "IDLE",
+      "startMode": "hot",
+      "afterBoil": "hold",
+      "cooling": "tap",
+      "whiteSets": true,
+      "boilKnown": false,
+      "probeWanted": true,
+      "label": "readout.phase.total",
+      "subline": "readout.sub.hot",
+      "action": "action.eggsIn",
+      "hint": "action.hint.hotBoiling"
+    },
+    {
+      "phase": "IDLE",
+      "startMode": "hot",
+      "afterBoil": "hold",
+      "cooling": "tap",
+      "whiteSets": true,
+      "boilKnown": true,
+      "probeWanted": false,
+      "label": "readout.phase.total",
+      "subline": "readout.sub.hot",
+      "action": "action.eggsIn",
+      "hint": "action.hint.hotBoiling"
+    },
+    {
+      "phase": "IDLE",
+      "startMode": "hot",
+      "afterBoil": "hold",
+      "cooling": "counter",
+      "whiteSets": false,
+      "boilKnown": true,
+      "probeWanted": true,
+      "label": "readout.phase.total",
+      "subline": "readout.sub.hot",
+      "action": "action.eggsIn",
+      "hint": "action.hint.whiteNeverSets"
+    },
+    {
+      "phase": "IDLE",
+      "startMode": "hot",
+      "afterBoil": "hold",
+      "cooling": "counter",
+      "whiteSets": true,
+      "boilKnown": false,
+      "probeWanted": true,
+      "label": "readout.phase.total",
+      "subline": "readout.sub.hot",
+      "action": "action.eggsIn",
+      "hint": "action.hint.hotBoiling"
+    },
+    {
+      "phase": "IDLE",
+      "startMode": "hot",
+      "afterBoil": "hold",
+      "cooling": "counter",
+      "whiteSets": true,
+      "boilKnown": true,
+      "probeWanted": false,
+      "label": "readout.phase.total",
+      "subline": "readout.sub.hot",
+      "action": "action.eggsIn",
+      "hint": "action.hint.hotBoiling"
+    },
+    {
+      "phase": "IDLE",
+      "startMode": "hot",
+      "afterBoil": "off",
+      "cooling": "ice",
+      "whiteSets": false,
+      "boilKnown": true,
+      "probeWanted": true,
+      "label": "readout.phase.total",
+      "subline": "readout.sub.standing",
+      "action": "action.eggsIn",
+      "hint": "action.hint.whiteNeverSets"
+    },
+    {
+      "phase": "IDLE",
+      "startMode": "hot",
+      "afterBoil": "off",
+      "cooling": "ice",
+      "whiteSets": true,
+      "boilKnown": false,
+      "probeWanted": true,
+      "label": "readout.phase.total",
+      "subline": "readout.sub.standing",
+      "action": "action.eggsIn",
+      "hint": "action.hint.hotStanding"
+    },
+    {
+      "phase": "IDLE",
+      "startMode": "hot",
+      "afterBoil": "off",
+      "cooling": "ice",
+      "whiteSets": true,
+      "boilKnown": true,
+      "probeWanted": false,
+      "label": "readout.phase.total",
+      "subline": "readout.sub.standing",
+      "action": "action.eggsIn",
+      "hint": "action.hint.hotStanding"
+    },
+    {
+      "phase": "IDLE",
+      "startMode": "hot",
+      "afterBoil": "off",
+      "cooling": "tap",
+      "whiteSets": false,
+      "boilKnown": true,
+      "probeWanted": true,
+      "label": "readout.phase.total",
+      "subline": "readout.sub.standing",
+      "action": "action.eggsIn",
+      "hint": "action.hint.whiteNeverSets"
+    },
+    {
+      "phase": "IDLE",
+      "startMode": "hot",
+      "afterBoil": "off",
+      "cooling": "tap",
+      "whiteSets": true,
+      "boilKnown": false,
+      "probeWanted": true,
+      "label": "readout.phase.total",
+      "subline": "readout.sub.standing",
+      "action": "action.eggsIn",
+      "hint": "action.hint.hotStanding"
+    },
+    {
+      "phase": "IDLE",
+      "startMode": "hot",
+      "afterBoil": "off",
+      "cooling": "tap",
+      "whiteSets": true,
+      "boilKnown": true,
+      "probeWanted": false,
+      "label": "readout.phase.total",
+      "subline": "readout.sub.standing",
+      "action": "action.eggsIn",
+      "hint": "action.hint.hotStanding"
+    },
+    {
+      "phase": "IDLE",
+      "startMode": "hot",
+      "afterBoil": "off",
+      "cooling": "counter",
+      "whiteSets": false,
+      "boilKnown": true,
+      "probeWanted": true,
+      "label": "readout.phase.total",
+      "subline": "readout.sub.standing",
+      "action": "action.eggsIn",
+      "hint": "action.hint.whiteNeverSets"
+    },
+    {
+      "phase": "IDLE",
+      "startMode": "hot",
+      "afterBoil": "off",
+      "cooling": "counter",
+      "whiteSets": true,
+      "boilKnown": false,
+      "probeWanted": true,
+      "label": "readout.phase.total",
+      "subline": "readout.sub.standing",
+      "action": "action.eggsIn",
+      "hint": "action.hint.hotStanding"
+    },
+    {
+      "phase": "IDLE",
+      "startMode": "hot",
+      "afterBoil": "off",
+      "cooling": "counter",
+      "whiteSets": true,
+      "boilKnown": true,
+      "probeWanted": false,
+      "label": "readout.phase.total",
+      "subline": "readout.sub.standing",
+      "action": "action.eggsIn",
+      "hint": "action.hint.hotStanding"
+    },
+    {
+      "phase": "IDLE",
+      "startMode": "cold",
+      "afterBoil": "hold",
+      "cooling": "ice",
+      "whiteSets": false,
+      "boilKnown": true,
+      "probeWanted": true,
+      "label": "readout.phase.total",
+      "subline": "readout.sub.coldAssumes",
+      "action": "action.startHeating",
+      "hint": "action.hint.whiteNeverSets"
+    },
+    {
+      "phase": "IDLE",
+      "startMode": "cold",
+      "afterBoil": "hold",
+      "cooling": "ice",
+      "whiteSets": true,
+      "boilKnown": false,
+      "probeWanted": true,
+      "label": "readout.phase.total",
+      "subline": "readout.sub.coldGuesses",
+      "action": "action.startHeating",
+      "hint": "action.hint.cold"
+    },
+    {
+      "phase": "IDLE",
+      "startMode": "cold",
+      "afterBoil": "hold",
+      "cooling": "ice",
+      "whiteSets": true,
+      "boilKnown": true,
+      "probeWanted": false,
+      "label": "readout.phase.total",
+      "subline": "readout.sub.coldAssumes",
+      "action": "action.startHeating",
+      "hint": "action.hint.cold"
+    },
+    {
+      "phase": "IDLE",
+      "startMode": "cold",
+      "afterBoil": "hold",
+      "cooling": "tap",
+      "whiteSets": false,
+      "boilKnown": true,
+      "probeWanted": true,
+      "label": "readout.phase.total",
+      "subline": "readout.sub.coldAssumes",
+      "action": "action.startHeating",
+      "hint": "action.hint.whiteNeverSets"
+    },
+    {
+      "phase": "IDLE",
+      "startMode": "cold",
+      "afterBoil": "hold",
+      "cooling": "tap",
+      "whiteSets": true,
+      "boilKnown": false,
+      "probeWanted": true,
+      "label": "readout.phase.total",
+      "subline": "readout.sub.coldGuesses",
+      "action": "action.startHeating",
+      "hint": "action.hint.cold"
+    },
+    {
+      "phase": "IDLE",
+      "startMode": "cold",
+      "afterBoil": "hold",
+      "cooling": "tap",
+      "whiteSets": true,
+      "boilKnown": true,
+      "probeWanted": false,
+      "label": "readout.phase.total",
+      "subline": "readout.sub.coldAssumes",
+      "action": "action.startHeating",
+      "hint": "action.hint.cold"
+    },
+    {
+      "phase": "IDLE",
+      "startMode": "cold",
+      "afterBoil": "hold",
+      "cooling": "counter",
+      "whiteSets": false,
+      "boilKnown": true,
+      "probeWanted": true,
+      "label": "readout.phase.total",
+      "subline": "readout.sub.coldAssumes",
+      "action": "action.startHeating",
+      "hint": "action.hint.whiteNeverSets"
+    },
+    {
+      "phase": "IDLE",
+      "startMode": "cold",
+      "afterBoil": "hold",
+      "cooling": "counter",
+      "whiteSets": true,
+      "boilKnown": false,
+      "probeWanted": true,
+      "label": "readout.phase.total",
+      "subline": "readout.sub.coldGuesses",
+      "action": "action.startHeating",
+      "hint": "action.hint.cold"
+    },
+    {
+      "phase": "IDLE",
+      "startMode": "cold",
+      "afterBoil": "hold",
+      "cooling": "counter",
+      "whiteSets": true,
+      "boilKnown": true,
+      "probeWanted": false,
+      "label": "readout.phase.total",
+      "subline": "readout.sub.coldAssumes",
+      "action": "action.startHeating",
+      "hint": "action.hint.cold"
+    },
+    {
+      "phase": "IDLE",
+      "startMode": "cold",
+      "afterBoil": "off",
+      "cooling": "ice",
+      "whiteSets": false,
+      "boilKnown": true,
+      "probeWanted": true,
+      "label": "readout.phase.total",
+      "subline": "readout.sub.coldAssumes",
+      "action": "action.startHeating",
+      "hint": "action.hint.whiteNeverSets"
+    },
+    {
+      "phase": "IDLE",
+      "startMode": "cold",
+      "afterBoil": "off",
+      "cooling": "ice",
+      "whiteSets": true,
+      "boilKnown": false,
+      "probeWanted": true,
+      "label": "readout.phase.total",
+      "subline": "readout.sub.coldGuesses",
+      "action": "action.startHeating",
+      "hint": "action.hint.cold"
+    },
+    {
+      "phase": "IDLE",
+      "startMode": "cold",
+      "afterBoil": "off",
+      "cooling": "ice",
+      "whiteSets": true,
+      "boilKnown": true,
+      "probeWanted": false,
+      "label": "readout.phase.total",
+      "subline": "readout.sub.coldAssumes",
+      "action": "action.startHeating",
+      "hint": "action.hint.cold"
+    },
+    {
+      "phase": "IDLE",
+      "startMode": "cold",
+      "afterBoil": "off",
+      "cooling": "tap",
+      "whiteSets": false,
+      "boilKnown": true,
+      "probeWanted": true,
+      "label": "readout.phase.total",
+      "subline": "readout.sub.coldAssumes",
+      "action": "action.startHeating",
+      "hint": "action.hint.whiteNeverSets"
+    },
+    {
+      "phase": "IDLE",
+      "startMode": "cold",
+      "afterBoil": "off",
+      "cooling": "tap",
+      "whiteSets": true,
+      "boilKnown": false,
+      "probeWanted": true,
+      "label": "readout.phase.total",
+      "subline": "readout.sub.coldGuesses",
+      "action": "action.startHeating",
+      "hint": "action.hint.cold"
+    },
+    {
+      "phase": "IDLE",
+      "startMode": "cold",
+      "afterBoil": "off",
+      "cooling": "tap",
+      "whiteSets": true,
+      "boilKnown": true,
+      "probeWanted": false,
+      "label": "readout.phase.total",
+      "subline": "readout.sub.coldAssumes",
+      "action": "action.startHeating",
+      "hint": "action.hint.cold"
+    },
+    {
+      "phase": "IDLE",
+      "startMode": "cold",
+      "afterBoil": "off",
+      "cooling": "counter",
+      "whiteSets": false,
+      "boilKnown": true,
+      "probeWanted": true,
+      "label": "readout.phase.total",
+      "subline": "readout.sub.coldAssumes",
+      "action": "action.startHeating",
+      "hint": "action.hint.whiteNeverSets"
+    },
+    {
+      "phase": "IDLE",
+      "startMode": "cold",
+      "afterBoil": "off",
+      "cooling": "counter",
+      "whiteSets": true,
+      "boilKnown": false,
+      "probeWanted": true,
+      "label": "readout.phase.total",
+      "subline": "readout.sub.coldGuesses",
+      "action": "action.startHeating",
+      "hint": "action.hint.cold"
+    },
+    {
+      "phase": "IDLE",
+      "startMode": "cold",
+      "afterBoil": "off",
+      "cooling": "counter",
+      "whiteSets": true,
+      "boilKnown": true,
+      "probeWanted": false,
+      "label": "readout.phase.total",
+      "subline": "readout.sub.coldAssumes",
+      "action": "action.startHeating",
+      "hint": "action.hint.cold"
+    },
+    {
+      "phase": "HEATING",
+      "startMode": "hot",
+      "afterBoil": "hold",
+      "cooling": "ice",
+      "whiteSets": false,
+      "boilKnown": true,
+      "probeWanted": true,
+      "label": "readout.phase.heating",
+      "subline": "readout.sub.heating",
+      "action": "action.fullBoil",
+      "hint": "action.hint.heating"
+    },
+    {
+      "phase": "HEATING",
+      "startMode": "hot",
+      "afterBoil": "hold",
+      "cooling": "ice",
+      "whiteSets": true,
+      "boilKnown": false,
+      "probeWanted": true,
+      "label": "readout.phase.heating",
+      "subline": "readout.sub.heating",
+      "action": "action.fullBoil",
+      "hint": "action.hint.heating"
+    },
+    {
+      "phase": "HEATING",
+      "startMode": "hot",
+      "afterBoil": "hold",
+      "cooling": "ice",
+      "whiteSets": true,
+      "boilKnown": true,
+      "probeWanted": false,
+      "label": "readout.phase.heating",
+      "subline": "readout.sub.heating",
+      "action": "action.fullBoil",
+      "hint": "action.hint.heating"
+    },
+    {
+      "phase": "HEATING",
+      "startMode": "hot",
+      "afterBoil": "hold",
+      "cooling": "tap",
+      "whiteSets": false,
+      "boilKnown": true,
+      "probeWanted": true,
+      "label": "readout.phase.heating",
+      "subline": "readout.sub.heating",
+      "action": "action.fullBoil",
+      "hint": "action.hint.heating"
+    },
+    {
+      "phase": "HEATING",
+      "startMode": "hot",
+      "afterBoil": "hold",
+      "cooling": "tap",
+      "whiteSets": true,
+      "boilKnown": false,
+      "probeWanted": true,
+      "label": "readout.phase.heating",
+      "subline": "readout.sub.heating",
+      "action": "action.fullBoil",
+      "hint": "action.hint.heating"
+    },
+    {
+      "phase": "HEATING",
+      "startMode": "hot",
+      "afterBoil": "hold",
+      "cooling": "tap",
+      "whiteSets": true,
+      "boilKnown": true,
+      "probeWanted": false,
+      "label": "readout.phase.heating",
+      "subline": "readout.sub.heating",
+      "action": "action.fullBoil",
+      "hint": "action.hint.heating"
+    },
+    {
+      "phase": "HEATING",
+      "startMode": "hot",
+      "afterBoil": "hold",
+      "cooling": "counter",
+      "whiteSets": false,
+      "boilKnown": true,
+      "probeWanted": true,
+      "label": "readout.phase.heating",
+      "subline": "readout.sub.heating",
+      "action": "action.fullBoil",
+      "hint": "action.hint.heating"
+    },
+    {
+      "phase": "HEATING",
+      "startMode": "hot",
+      "afterBoil": "hold",
+      "cooling": "counter",
+      "whiteSets": true,
+      "boilKnown": false,
+      "probeWanted": true,
+      "label": "readout.phase.heating",
+      "subline": "readout.sub.heating",
+      "action": "action.fullBoil",
+      "hint": "action.hint.heating"
+    },
+    {
+      "phase": "HEATING",
+      "startMode": "hot",
+      "afterBoil": "hold",
+      "cooling": "counter",
+      "whiteSets": true,
+      "boilKnown": true,
+      "probeWanted": false,
+      "label": "readout.phase.heating",
+      "subline": "readout.sub.heating",
+      "action": "action.fullBoil",
+      "hint": "action.hint.heating"
+    },
+    {
+      "phase": "HEATING",
+      "startMode": "hot",
+      "afterBoil": "off",
+      "cooling": "ice",
+      "whiteSets": false,
+      "boilKnown": true,
+      "probeWanted": true,
+      "label": "readout.phase.heating",
+      "subline": "readout.sub.heating",
+      "action": "action.fullBoil",
+      "hint": "action.hint.heatingStanding"
+    },
+    {
+      "phase": "HEATING",
+      "startMode": "hot",
+      "afterBoil": "off",
+      "cooling": "ice",
+      "whiteSets": true,
+      "boilKnown": false,
+      "probeWanted": true,
+      "label": "readout.phase.heating",
+      "subline": "readout.sub.heating",
+      "action": "action.fullBoil",
+      "hint": "action.hint.heatingStanding"
+    },
+    {
+      "phase": "HEATING",
+      "startMode": "hot",
+      "afterBoil": "off",
+      "cooling": "ice",
+      "whiteSets": true,
+      "boilKnown": true,
+      "probeWanted": false,
+      "label": "readout.phase.heating",
+      "subline": "readout.sub.heating",
+      "action": "action.fullBoil",
+      "hint": "action.hint.heatingStanding"
+    },
+    {
+      "phase": "HEATING",
+      "startMode": "hot",
+      "afterBoil": "off",
+      "cooling": "tap",
+      "whiteSets": false,
+      "boilKnown": true,
+      "probeWanted": true,
+      "label": "readout.phase.heating",
+      "subline": "readout.sub.heating",
+      "action": "action.fullBoil",
+      "hint": "action.hint.heatingStanding"
+    },
+    {
+      "phase": "HEATING",
+      "startMode": "hot",
+      "afterBoil": "off",
+      "cooling": "tap",
+      "whiteSets": true,
+      "boilKnown": false,
+      "probeWanted": true,
+      "label": "readout.phase.heating",
+      "subline": "readout.sub.heating",
+      "action": "action.fullBoil",
+      "hint": "action.hint.heatingStanding"
+    },
+    {
+      "phase": "HEATING",
+      "startMode": "hot",
+      "afterBoil": "off",
+      "cooling": "tap",
+      "whiteSets": true,
+      "boilKnown": true,
+      "probeWanted": false,
+      "label": "readout.phase.heating",
+      "subline": "readout.sub.heating",
+      "action": "action.fullBoil",
+      "hint": "action.hint.heatingStanding"
+    },
+    {
+      "phase": "HEATING",
+      "startMode": "hot",
+      "afterBoil": "off",
+      "cooling": "counter",
+      "whiteSets": false,
+      "boilKnown": true,
+      "probeWanted": true,
+      "label": "readout.phase.heating",
+      "subline": "readout.sub.heating",
+      "action": "action.fullBoil",
+      "hint": "action.hint.heatingStanding"
+    },
+    {
+      "phase": "HEATING",
+      "startMode": "hot",
+      "afterBoil": "off",
+      "cooling": "counter",
+      "whiteSets": true,
+      "boilKnown": false,
+      "probeWanted": true,
+      "label": "readout.phase.heating",
+      "subline": "readout.sub.heating",
+      "action": "action.fullBoil",
+      "hint": "action.hint.heatingStanding"
+    },
+    {
+      "phase": "HEATING",
+      "startMode": "hot",
+      "afterBoil": "off",
+      "cooling": "counter",
+      "whiteSets": true,
+      "boilKnown": true,
+      "probeWanted": false,
+      "label": "readout.phase.heating",
+      "subline": "readout.sub.heating",
+      "action": "action.fullBoil",
+      "hint": "action.hint.heatingStanding"
+    },
+    {
+      "phase": "HEATING",
+      "startMode": "cold",
+      "afterBoil": "hold",
+      "cooling": "ice",
+      "whiteSets": false,
+      "boilKnown": true,
+      "probeWanted": true,
+      "label": "readout.phase.heating",
+      "subline": "readout.sub.heating",
+      "action": "action.fullBoil",
+      "hint": "action.hint.heating"
+    },
+    {
+      "phase": "HEATING",
+      "startMode": "cold",
+      "afterBoil": "hold",
+      "cooling": "ice",
+      "whiteSets": true,
+      "boilKnown": false,
+      "probeWanted": true,
+      "label": "readout.phase.heating",
+      "subline": "readout.sub.heating",
+      "action": "action.fullBoil",
+      "hint": "action.hint.heating"
+    },
+    {
+      "phase": "HEATING",
+      "startMode": "cold",
+      "afterBoil": "hold",
+      "cooling": "ice",
+      "whiteSets": true,
+      "boilKnown": true,
+      "probeWanted": false,
+      "label": "readout.phase.heating",
+      "subline": "readout.sub.heating",
+      "action": "action.fullBoil",
+      "hint": "action.hint.heating"
+    },
+    {
+      "phase": "HEATING",
+      "startMode": "cold",
+      "afterBoil": "hold",
+      "cooling": "tap",
+      "whiteSets": false,
+      "boilKnown": true,
+      "probeWanted": true,
+      "label": "readout.phase.heating",
+      "subline": "readout.sub.heating",
+      "action": "action.fullBoil",
+      "hint": "action.hint.heating"
+    },
+    {
+      "phase": "HEATING",
+      "startMode": "cold",
+      "afterBoil": "hold",
+      "cooling": "tap",
+      "whiteSets": true,
+      "boilKnown": false,
+      "probeWanted": true,
+      "label": "readout.phase.heating",
+      "subline": "readout.sub.heating",
+      "action": "action.fullBoil",
+      "hint": "action.hint.heating"
+    },
+    {
+      "phase": "HEATING",
+      "startMode": "cold",
+      "afterBoil": "hold",
+      "cooling": "tap",
+      "whiteSets": true,
+      "boilKnown": true,
+      "probeWanted": false,
+      "label": "readout.phase.heating",
+      "subline": "readout.sub.heating",
+      "action": "action.fullBoil",
+      "hint": "action.hint.heating"
+    },
+    {
+      "phase": "HEATING",
+      "startMode": "cold",
+      "afterBoil": "hold",
+      "cooling": "counter",
+      "whiteSets": false,
+      "boilKnown": true,
+      "probeWanted": true,
+      "label": "readout.phase.heating",
+      "subline": "readout.sub.heating",
+      "action": "action.fullBoil",
+      "hint": "action.hint.heating"
+    },
+    {
+      "phase": "HEATING",
+      "startMode": "cold",
+      "afterBoil": "hold",
+      "cooling": "counter",
+      "whiteSets": true,
+      "boilKnown": false,
+      "probeWanted": true,
+      "label": "readout.phase.heating",
+      "subline": "readout.sub.heating",
+      "action": "action.fullBoil",
+      "hint": "action.hint.heating"
+    },
+    {
+      "phase": "HEATING",
+      "startMode": "cold",
+      "afterBoil": "hold",
+      "cooling": "counter",
+      "whiteSets": true,
+      "boilKnown": true,
+      "probeWanted": false,
+      "label": "readout.phase.heating",
+      "subline": "readout.sub.heating",
+      "action": "action.fullBoil",
+      "hint": "action.hint.heating"
+    },
+    {
+      "phase": "HEATING",
+      "startMode": "cold",
+      "afterBoil": "off",
+      "cooling": "ice",
+      "whiteSets": false,
+      "boilKnown": true,
+      "probeWanted": true,
+      "label": "readout.phase.heating",
+      "subline": "readout.sub.heating",
+      "action": "action.fullBoil",
+      "hint": "action.hint.heatingStanding"
+    },
+    {
+      "phase": "HEATING",
+      "startMode": "cold",
+      "afterBoil": "off",
+      "cooling": "ice",
+      "whiteSets": true,
+      "boilKnown": false,
+      "probeWanted": true,
+      "label": "readout.phase.heating",
+      "subline": "readout.sub.heating",
+      "action": "action.fullBoil",
+      "hint": "action.hint.heatingStanding"
+    },
+    {
+      "phase": "HEATING",
+      "startMode": "cold",
+      "afterBoil": "off",
+      "cooling": "ice",
+      "whiteSets": true,
+      "boilKnown": true,
+      "probeWanted": false,
+      "label": "readout.phase.heating",
+      "subline": "readout.sub.heating",
+      "action": "action.fullBoil",
+      "hint": "action.hint.heatingStanding"
+    },
+    {
+      "phase": "HEATING",
+      "startMode": "cold",
+      "afterBoil": "off",
+      "cooling": "tap",
+      "whiteSets": false,
+      "boilKnown": true,
+      "probeWanted": true,
+      "label": "readout.phase.heating",
+      "subline": "readout.sub.heating",
+      "action": "action.fullBoil",
+      "hint": "action.hint.heatingStanding"
+    },
+    {
+      "phase": "HEATING",
+      "startMode": "cold",
+      "afterBoil": "off",
+      "cooling": "tap",
+      "whiteSets": true,
+      "boilKnown": false,
+      "probeWanted": true,
+      "label": "readout.phase.heating",
+      "subline": "readout.sub.heating",
+      "action": "action.fullBoil",
+      "hint": "action.hint.heatingStanding"
+    },
+    {
+      "phase": "HEATING",
+      "startMode": "cold",
+      "afterBoil": "off",
+      "cooling": "tap",
+      "whiteSets": true,
+      "boilKnown": true,
+      "probeWanted": false,
+      "label": "readout.phase.heating",
+      "subline": "readout.sub.heating",
+      "action": "action.fullBoil",
+      "hint": "action.hint.heatingStanding"
+    },
+    {
+      "phase": "HEATING",
+      "startMode": "cold",
+      "afterBoil": "off",
+      "cooling": "counter",
+      "whiteSets": false,
+      "boilKnown": true,
+      "probeWanted": true,
+      "label": "readout.phase.heating",
+      "subline": "readout.sub.heating",
+      "action": "action.fullBoil",
+      "hint": "action.hint.heatingStanding"
+    },
+    {
+      "phase": "HEATING",
+      "startMode": "cold",
+      "afterBoil": "off",
+      "cooling": "counter",
+      "whiteSets": true,
+      "boilKnown": false,
+      "probeWanted": true,
+      "label": "readout.phase.heating",
+      "subline": "readout.sub.heating",
+      "action": "action.fullBoil",
+      "hint": "action.hint.heatingStanding"
+    },
+    {
+      "phase": "HEATING",
+      "startMode": "cold",
+      "afterBoil": "off",
+      "cooling": "counter",
+      "whiteSets": true,
+      "boilKnown": true,
+      "probeWanted": false,
+      "label": "readout.phase.heating",
+      "subline": "readout.sub.heating",
+      "action": "action.fullBoil",
+      "hint": "action.hint.heatingStanding"
+    },
+    {
+      "phase": "COOKING",
+      "startMode": "hot",
+      "afterBoil": "hold",
+      "cooling": "ice",
+      "whiteSets": false,
+      "boilKnown": true,
+      "probeWanted": true,
+      "label": "readout.phase.cookingBoiling",
+      "subline": "readout.sub.cookingHot",
+      "action": null,
+      "hint": "action.hint.cookingBoiling"
+    },
+    {
+      "phase": "COOKING",
+      "startMode": "hot",
+      "afterBoil": "hold",
+      "cooling": "ice",
+      "whiteSets": true,
+      "boilKnown": false,
+      "probeWanted": true,
+      "label": "readout.phase.cookingBoiling",
+      "subline": "readout.sub.cookingHot",
+      "action": null,
+      "hint": "action.hint.cookingBoiling"
+    },
+    {
+      "phase": "COOKING",
+      "startMode": "hot",
+      "afterBoil": "hold",
+      "cooling": "ice",
+      "whiteSets": true,
+      "boilKnown": true,
+      "probeWanted": false,
+      "label": "readout.phase.cookingBoiling",
+      "subline": "readout.sub.cookingHot",
+      "action": null,
+      "hint": "action.hint.cookingBoiling"
+    },
+    {
+      "phase": "COOKING",
+      "startMode": "hot",
+      "afterBoil": "hold",
+      "cooling": "tap",
+      "whiteSets": false,
+      "boilKnown": true,
+      "probeWanted": true,
+      "label": "readout.phase.cookingBoiling",
+      "subline": "readout.sub.cookingHot",
+      "action": null,
+      "hint": "action.hint.cookingBoiling"
+    },
+    {
+      "phase": "COOKING",
+      "startMode": "hot",
+      "afterBoil": "hold",
+      "cooling": "tap",
+      "whiteSets": true,
+      "boilKnown": false,
+      "probeWanted": true,
+      "label": "readout.phase.cookingBoiling",
+      "subline": "readout.sub.cookingHot",
+      "action": null,
+      "hint": "action.hint.cookingBoiling"
+    },
+    {
+      "phase": "COOKING",
+      "startMode": "hot",
+      "afterBoil": "hold",
+      "cooling": "tap",
+      "whiteSets": true,
+      "boilKnown": true,
+      "probeWanted": false,
+      "label": "readout.phase.cookingBoiling",
+      "subline": "readout.sub.cookingHot",
+      "action": null,
+      "hint": "action.hint.cookingBoiling"
+    },
+    {
+      "phase": "COOKING",
+      "startMode": "hot",
+      "afterBoil": "hold",
+      "cooling": "counter",
+      "whiteSets": false,
+      "boilKnown": true,
+      "probeWanted": true,
+      "label": "readout.phase.cookingBoiling",
+      "subline": "readout.sub.cookingHot",
+      "action": null,
+      "hint": "action.hint.cookingBoiling"
+    },
+    {
+      "phase": "COOKING",
+      "startMode": "hot",
+      "afterBoil": "hold",
+      "cooling": "counter",
+      "whiteSets": true,
+      "boilKnown": false,
+      "probeWanted": true,
+      "label": "readout.phase.cookingBoiling",
+      "subline": "readout.sub.cookingHot",
+      "action": null,
+      "hint": "action.hint.cookingBoiling"
+    },
+    {
+      "phase": "COOKING",
+      "startMode": "hot",
+      "afterBoil": "hold",
+      "cooling": "counter",
+      "whiteSets": true,
+      "boilKnown": true,
+      "probeWanted": false,
+      "label": "readout.phase.cookingBoiling",
+      "subline": "readout.sub.cookingHot",
+      "action": null,
+      "hint": "action.hint.cookingBoiling"
+    },
+    {
+      "phase": "COOKING",
+      "startMode": "hot",
+      "afterBoil": "off",
+      "cooling": "ice",
+      "whiteSets": false,
+      "boilKnown": true,
+      "probeWanted": true,
+      "label": "readout.phase.cookingHeatOff",
+      "subline": "readout.sub.cookingHot",
+      "action": null,
+      "hint": "action.hint.cookingStanding"
+    },
+    {
+      "phase": "COOKING",
+      "startMode": "hot",
+      "afterBoil": "off",
+      "cooling": "ice",
+      "whiteSets": true,
+      "boilKnown": false,
+      "probeWanted": true,
+      "label": "readout.phase.cookingHeatOff",
+      "subline": "readout.sub.cookingHot",
+      "action": null,
+      "hint": "action.hint.cookingStanding"
+    },
+    {
+      "phase": "COOKING",
+      "startMode": "hot",
+      "afterBoil": "off",
+      "cooling": "ice",
+      "whiteSets": true,
+      "boilKnown": true,
+      "probeWanted": false,
+      "label": "readout.phase.cookingHeatOff",
+      "subline": "readout.sub.cookingHot",
+      "action": null,
+      "hint": "action.hint.cookingStanding"
+    },
+    {
+      "phase": "COOKING",
+      "startMode": "hot",
+      "afterBoil": "off",
+      "cooling": "tap",
+      "whiteSets": false,
+      "boilKnown": true,
+      "probeWanted": true,
+      "label": "readout.phase.cookingHeatOff",
+      "subline": "readout.sub.cookingHot",
+      "action": null,
+      "hint": "action.hint.cookingStanding"
+    },
+    {
+      "phase": "COOKING",
+      "startMode": "hot",
+      "afterBoil": "off",
+      "cooling": "tap",
+      "whiteSets": true,
+      "boilKnown": false,
+      "probeWanted": true,
+      "label": "readout.phase.cookingHeatOff",
+      "subline": "readout.sub.cookingHot",
+      "action": null,
+      "hint": "action.hint.cookingStanding"
+    },
+    {
+      "phase": "COOKING",
+      "startMode": "hot",
+      "afterBoil": "off",
+      "cooling": "tap",
+      "whiteSets": true,
+      "boilKnown": true,
+      "probeWanted": false,
+      "label": "readout.phase.cookingHeatOff",
+      "subline": "readout.sub.cookingHot",
+      "action": null,
+      "hint": "action.hint.cookingStanding"
+    },
+    {
+      "phase": "COOKING",
+      "startMode": "hot",
+      "afterBoil": "off",
+      "cooling": "counter",
+      "whiteSets": false,
+      "boilKnown": true,
+      "probeWanted": true,
+      "label": "readout.phase.cookingHeatOff",
+      "subline": "readout.sub.cookingHot",
+      "action": null,
+      "hint": "action.hint.cookingStanding"
+    },
+    {
+      "phase": "COOKING",
+      "startMode": "hot",
+      "afterBoil": "off",
+      "cooling": "counter",
+      "whiteSets": true,
+      "boilKnown": false,
+      "probeWanted": true,
+      "label": "readout.phase.cookingHeatOff",
+      "subline": "readout.sub.cookingHot",
+      "action": null,
+      "hint": "action.hint.cookingStanding"
+    },
+    {
+      "phase": "COOKING",
+      "startMode": "hot",
+      "afterBoil": "off",
+      "cooling": "counter",
+      "whiteSets": true,
+      "boilKnown": true,
+      "probeWanted": false,
+      "label": "readout.phase.cookingHeatOff",
+      "subline": "readout.sub.cookingHot",
+      "action": null,
+      "hint": "action.hint.cookingStanding"
+    },
+    {
+      "phase": "COOKING",
+      "startMode": "cold",
+      "afterBoil": "hold",
+      "cooling": "ice",
+      "whiteSets": false,
+      "boilKnown": true,
+      "probeWanted": true,
+      "label": "readout.phase.cookingBoiling",
+      "subline": "readout.sub.cookingCold",
+      "action": null,
+      "hint": "action.hint.cookingBoiling"
+    },
+    {
+      "phase": "COOKING",
+      "startMode": "cold",
+      "afterBoil": "hold",
+      "cooling": "ice",
+      "whiteSets": true,
+      "boilKnown": false,
+      "probeWanted": true,
+      "label": "readout.phase.cookingBoiling",
+      "subline": "readout.sub.cookingCold",
+      "action": null,
+      "hint": "action.hint.cookingBoiling"
+    },
+    {
+      "phase": "COOKING",
+      "startMode": "cold",
+      "afterBoil": "hold",
+      "cooling": "ice",
+      "whiteSets": true,
+      "boilKnown": true,
+      "probeWanted": false,
+      "label": "readout.phase.cookingBoiling",
+      "subline": "readout.sub.cookingCold",
+      "action": null,
+      "hint": "action.hint.cookingBoiling"
+    },
+    {
+      "phase": "COOKING",
+      "startMode": "cold",
+      "afterBoil": "hold",
+      "cooling": "tap",
+      "whiteSets": false,
+      "boilKnown": true,
+      "probeWanted": true,
+      "label": "readout.phase.cookingBoiling",
+      "subline": "readout.sub.cookingCold",
+      "action": null,
+      "hint": "action.hint.cookingBoiling"
+    },
+    {
+      "phase": "COOKING",
+      "startMode": "cold",
+      "afterBoil": "hold",
+      "cooling": "tap",
+      "whiteSets": true,
+      "boilKnown": false,
+      "probeWanted": true,
+      "label": "readout.phase.cookingBoiling",
+      "subline": "readout.sub.cookingCold",
+      "action": null,
+      "hint": "action.hint.cookingBoiling"
+    },
+    {
+      "phase": "COOKING",
+      "startMode": "cold",
+      "afterBoil": "hold",
+      "cooling": "tap",
+      "whiteSets": true,
+      "boilKnown": true,
+      "probeWanted": false,
+      "label": "readout.phase.cookingBoiling",
+      "subline": "readout.sub.cookingCold",
+      "action": null,
+      "hint": "action.hint.cookingBoiling"
+    },
+    {
+      "phase": "COOKING",
+      "startMode": "cold",
+      "afterBoil": "hold",
+      "cooling": "counter",
+      "whiteSets": false,
+      "boilKnown": true,
+      "probeWanted": true,
+      "label": "readout.phase.cookingBoiling",
+      "subline": "readout.sub.cookingCold",
+      "action": null,
+      "hint": "action.hint.cookingBoiling"
+    },
+    {
+      "phase": "COOKING",
+      "startMode": "cold",
+      "afterBoil": "hold",
+      "cooling": "counter",
+      "whiteSets": true,
+      "boilKnown": false,
+      "probeWanted": true,
+      "label": "readout.phase.cookingBoiling",
+      "subline": "readout.sub.cookingCold",
+      "action": null,
+      "hint": "action.hint.cookingBoiling"
+    },
+    {
+      "phase": "COOKING",
+      "startMode": "cold",
+      "afterBoil": "hold",
+      "cooling": "counter",
+      "whiteSets": true,
+      "boilKnown": true,
+      "probeWanted": false,
+      "label": "readout.phase.cookingBoiling",
+      "subline": "readout.sub.cookingCold",
+      "action": null,
+      "hint": "action.hint.cookingBoiling"
+    },
+    {
+      "phase": "COOKING",
+      "startMode": "cold",
+      "afterBoil": "off",
+      "cooling": "ice",
+      "whiteSets": false,
+      "boilKnown": true,
+      "probeWanted": true,
+      "label": "readout.phase.cookingHeatOff",
+      "subline": "readout.sub.cookingCold",
+      "action": null,
+      "hint": "action.hint.cookingStanding"
+    },
+    {
+      "phase": "COOKING",
+      "startMode": "cold",
+      "afterBoil": "off",
+      "cooling": "ice",
+      "whiteSets": true,
+      "boilKnown": false,
+      "probeWanted": true,
+      "label": "readout.phase.cookingHeatOff",
+      "subline": "readout.sub.cookingCold",
+      "action": null,
+      "hint": "action.hint.cookingStanding"
+    },
+    {
+      "phase": "COOKING",
+      "startMode": "cold",
+      "afterBoil": "off",
+      "cooling": "ice",
+      "whiteSets": true,
+      "boilKnown": true,
+      "probeWanted": false,
+      "label": "readout.phase.cookingHeatOff",
+      "subline": "readout.sub.cookingCold",
+      "action": null,
+      "hint": "action.hint.cookingStanding"
+    },
+    {
+      "phase": "COOKING",
+      "startMode": "cold",
+      "afterBoil": "off",
+      "cooling": "tap",
+      "whiteSets": false,
+      "boilKnown": true,
+      "probeWanted": true,
+      "label": "readout.phase.cookingHeatOff",
+      "subline": "readout.sub.cookingCold",
+      "action": null,
+      "hint": "action.hint.cookingStanding"
+    },
+    {
+      "phase": "COOKING",
+      "startMode": "cold",
+      "afterBoil": "off",
+      "cooling": "tap",
+      "whiteSets": true,
+      "boilKnown": false,
+      "probeWanted": true,
+      "label": "readout.phase.cookingHeatOff",
+      "subline": "readout.sub.cookingCold",
+      "action": null,
+      "hint": "action.hint.cookingStanding"
+    },
+    {
+      "phase": "COOKING",
+      "startMode": "cold",
+      "afterBoil": "off",
+      "cooling": "tap",
+      "whiteSets": true,
+      "boilKnown": true,
+      "probeWanted": false,
+      "label": "readout.phase.cookingHeatOff",
+      "subline": "readout.sub.cookingCold",
+      "action": null,
+      "hint": "action.hint.cookingStanding"
+    },
+    {
+      "phase": "COOKING",
+      "startMode": "cold",
+      "afterBoil": "off",
+      "cooling": "counter",
+      "whiteSets": false,
+      "boilKnown": true,
+      "probeWanted": true,
+      "label": "readout.phase.cookingHeatOff",
+      "subline": "readout.sub.cookingCold",
+      "action": null,
+      "hint": "action.hint.cookingStanding"
+    },
+    {
+      "phase": "COOKING",
+      "startMode": "cold",
+      "afterBoil": "off",
+      "cooling": "counter",
+      "whiteSets": true,
+      "boilKnown": false,
+      "probeWanted": true,
+      "label": "readout.phase.cookingHeatOff",
+      "subline": "readout.sub.cookingCold",
+      "action": null,
+      "hint": "action.hint.cookingStanding"
+    },
+    {
+      "phase": "COOKING",
+      "startMode": "cold",
+      "afterBoil": "off",
+      "cooling": "counter",
+      "whiteSets": true,
+      "boilKnown": true,
+      "probeWanted": false,
+      "label": "readout.phase.cookingHeatOff",
+      "subline": "readout.sub.cookingCold",
+      "action": null,
+      "hint": "action.hint.cookingStanding"
+    },
+    {
+      "phase": "PULL",
+      "startMode": "hot",
+      "afterBoil": "hold",
+      "cooling": "ice",
+      "whiteSets": false,
+      "boilKnown": true,
+      "probeWanted": true,
+      "label": "readout.phase.pull",
+      "subline": "readout.sub.pull",
+      "action": "action.pulled.ice",
+      "hint": "action.hint.pull"
+    },
+    {
+      "phase": "PULL",
+      "startMode": "hot",
+      "afterBoil": "hold",
+      "cooling": "ice",
+      "whiteSets": true,
+      "boilKnown": false,
+      "probeWanted": true,
+      "label": "readout.phase.pull",
+      "subline": "readout.sub.pull",
+      "action": "action.pulled.ice",
+      "hint": "action.hint.pull"
+    },
+    {
+      "phase": "PULL",
+      "startMode": "hot",
+      "afterBoil": "hold",
+      "cooling": "ice",
+      "whiteSets": true,
+      "boilKnown": true,
+      "probeWanted": false,
+      "label": "readout.phase.pull",
+      "subline": "readout.sub.pull",
+      "action": "action.pulled.ice",
+      "hint": "action.hint.pull"
+    },
+    {
+      "phase": "PULL",
+      "startMode": "hot",
+      "afterBoil": "hold",
+      "cooling": "tap",
+      "whiteSets": false,
+      "boilKnown": true,
+      "probeWanted": true,
+      "label": "readout.phase.pull",
+      "subline": "readout.sub.pull",
+      "action": "action.pulled.tap",
+      "hint": "action.hint.pull"
+    },
+    {
+      "phase": "PULL",
+      "startMode": "hot",
+      "afterBoil": "hold",
+      "cooling": "tap",
+      "whiteSets": true,
+      "boilKnown": false,
+      "probeWanted": true,
+      "label": "readout.phase.pull",
+      "subline": "readout.sub.pull",
+      "action": "action.pulled.tap",
+      "hint": "action.hint.pull"
+    },
+    {
+      "phase": "PULL",
+      "startMode": "hot",
+      "afterBoil": "hold",
+      "cooling": "tap",
+      "whiteSets": true,
+      "boilKnown": true,
+      "probeWanted": false,
+      "label": "readout.phase.pull",
+      "subline": "readout.sub.pull",
+      "action": "action.pulled.tap",
+      "hint": "action.hint.pull"
+    },
+    {
+      "phase": "PULL",
+      "startMode": "hot",
+      "afterBoil": "hold",
+      "cooling": "counter",
+      "whiteSets": false,
+      "boilKnown": true,
+      "probeWanted": true,
+      "label": "readout.phase.pull",
+      "subline": "readout.sub.pull",
+      "action": "action.pulled.counter",
+      "hint": null
+    },
+    {
+      "phase": "PULL",
+      "startMode": "hot",
+      "afterBoil": "hold",
+      "cooling": "counter",
+      "whiteSets": true,
+      "boilKnown": false,
+      "probeWanted": true,
+      "label": "readout.phase.pull",
+      "subline": "readout.sub.pull",
+      "action": "action.pulled.counter",
+      "hint": null
+    },
+    {
+      "phase": "PULL",
+      "startMode": "hot",
+      "afterBoil": "hold",
+      "cooling": "counter",
+      "whiteSets": true,
+      "boilKnown": true,
+      "probeWanted": false,
+      "label": "readout.phase.pull",
+      "subline": "readout.sub.pull",
+      "action": "action.pulled.counter",
+      "hint": null
+    },
+    {
+      "phase": "PULL",
+      "startMode": "hot",
+      "afterBoil": "off",
+      "cooling": "ice",
+      "whiteSets": false,
+      "boilKnown": true,
+      "probeWanted": true,
+      "label": "readout.phase.pull",
+      "subline": "readout.sub.pull",
+      "action": "action.pulled.ice",
+      "hint": "action.hint.pull"
+    },
+    {
+      "phase": "PULL",
+      "startMode": "hot",
+      "afterBoil": "off",
+      "cooling": "ice",
+      "whiteSets": true,
+      "boilKnown": false,
+      "probeWanted": true,
+      "label": "readout.phase.pull",
+      "subline": "readout.sub.pull",
+      "action": "action.pulled.ice",
+      "hint": "action.hint.pull"
+    },
+    {
+      "phase": "PULL",
+      "startMode": "hot",
+      "afterBoil": "off",
+      "cooling": "ice",
+      "whiteSets": true,
+      "boilKnown": true,
+      "probeWanted": false,
+      "label": "readout.phase.pull",
+      "subline": "readout.sub.pull",
+      "action": "action.pulled.ice",
+      "hint": "action.hint.pull"
+    },
+    {
+      "phase": "PULL",
+      "startMode": "hot",
+      "afterBoil": "off",
+      "cooling": "tap",
+      "whiteSets": false,
+      "boilKnown": true,
+      "probeWanted": true,
+      "label": "readout.phase.pull",
+      "subline": "readout.sub.pull",
+      "action": "action.pulled.tap",
+      "hint": "action.hint.pull"
+    },
+    {
+      "phase": "PULL",
+      "startMode": "hot",
+      "afterBoil": "off",
+      "cooling": "tap",
+      "whiteSets": true,
+      "boilKnown": false,
+      "probeWanted": true,
+      "label": "readout.phase.pull",
+      "subline": "readout.sub.pull",
+      "action": "action.pulled.tap",
+      "hint": "action.hint.pull"
+    },
+    {
+      "phase": "PULL",
+      "startMode": "hot",
+      "afterBoil": "off",
+      "cooling": "tap",
+      "whiteSets": true,
+      "boilKnown": true,
+      "probeWanted": false,
+      "label": "readout.phase.pull",
+      "subline": "readout.sub.pull",
+      "action": "action.pulled.tap",
+      "hint": "action.hint.pull"
+    },
+    {
+      "phase": "PULL",
+      "startMode": "hot",
+      "afterBoil": "off",
+      "cooling": "counter",
+      "whiteSets": false,
+      "boilKnown": true,
+      "probeWanted": true,
+      "label": "readout.phase.pull",
+      "subline": "readout.sub.pull",
+      "action": "action.pulled.counter",
+      "hint": null
+    },
+    {
+      "phase": "PULL",
+      "startMode": "hot",
+      "afterBoil": "off",
+      "cooling": "counter",
+      "whiteSets": true,
+      "boilKnown": false,
+      "probeWanted": true,
+      "label": "readout.phase.pull",
+      "subline": "readout.sub.pull",
+      "action": "action.pulled.counter",
+      "hint": null
+    },
+    {
+      "phase": "PULL",
+      "startMode": "hot",
+      "afterBoil": "off",
+      "cooling": "counter",
+      "whiteSets": true,
+      "boilKnown": true,
+      "probeWanted": false,
+      "label": "readout.phase.pull",
+      "subline": "readout.sub.pull",
+      "action": "action.pulled.counter",
+      "hint": null
+    },
+    {
+      "phase": "PULL",
+      "startMode": "cold",
+      "afterBoil": "hold",
+      "cooling": "ice",
+      "whiteSets": false,
+      "boilKnown": true,
+      "probeWanted": true,
+      "label": "readout.phase.pull",
+      "subline": "readout.sub.pull",
+      "action": "action.pulled.ice",
+      "hint": "action.hint.pull"
+    },
+    {
+      "phase": "PULL",
+      "startMode": "cold",
+      "afterBoil": "hold",
+      "cooling": "ice",
+      "whiteSets": true,
+      "boilKnown": false,
+      "probeWanted": true,
+      "label": "readout.phase.pull",
+      "subline": "readout.sub.pull",
+      "action": "action.pulled.ice",
+      "hint": "action.hint.pull"
+    },
+    {
+      "phase": "PULL",
+      "startMode": "cold",
+      "afterBoil": "hold",
+      "cooling": "ice",
+      "whiteSets": true,
+      "boilKnown": true,
+      "probeWanted": false,
+      "label": "readout.phase.pull",
+      "subline": "readout.sub.pull",
+      "action": "action.pulled.ice",
+      "hint": "action.hint.pull"
+    },
+    {
+      "phase": "PULL",
+      "startMode": "cold",
+      "afterBoil": "hold",
+      "cooling": "tap",
+      "whiteSets": false,
+      "boilKnown": true,
+      "probeWanted": true,
+      "label": "readout.phase.pull",
+      "subline": "readout.sub.pull",
+      "action": "action.pulled.tap",
+      "hint": "action.hint.pull"
+    },
+    {
+      "phase": "PULL",
+      "startMode": "cold",
+      "afterBoil": "hold",
+      "cooling": "tap",
+      "whiteSets": true,
+      "boilKnown": false,
+      "probeWanted": true,
+      "label": "readout.phase.pull",
+      "subline": "readout.sub.pull",
+      "action": "action.pulled.tap",
+      "hint": "action.hint.pull"
+    },
+    {
+      "phase": "PULL",
+      "startMode": "cold",
+      "afterBoil": "hold",
+      "cooling": "tap",
+      "whiteSets": true,
+      "boilKnown": true,
+      "probeWanted": false,
+      "label": "readout.phase.pull",
+      "subline": "readout.sub.pull",
+      "action": "action.pulled.tap",
+      "hint": "action.hint.pull"
+    },
+    {
+      "phase": "PULL",
+      "startMode": "cold",
+      "afterBoil": "hold",
+      "cooling": "counter",
+      "whiteSets": false,
+      "boilKnown": true,
+      "probeWanted": true,
+      "label": "readout.phase.pull",
+      "subline": "readout.sub.pull",
+      "action": "action.pulled.counter",
+      "hint": null
+    },
+    {
+      "phase": "PULL",
+      "startMode": "cold",
+      "afterBoil": "hold",
+      "cooling": "counter",
+      "whiteSets": true,
+      "boilKnown": false,
+      "probeWanted": true,
+      "label": "readout.phase.pull",
+      "subline": "readout.sub.pull",
+      "action": "action.pulled.counter",
+      "hint": null
+    },
+    {
+      "phase": "PULL",
+      "startMode": "cold",
+      "afterBoil": "hold",
+      "cooling": "counter",
+      "whiteSets": true,
+      "boilKnown": true,
+      "probeWanted": false,
+      "label": "readout.phase.pull",
+      "subline": "readout.sub.pull",
+      "action": "action.pulled.counter",
+      "hint": null
+    },
+    {
+      "phase": "PULL",
+      "startMode": "cold",
+      "afterBoil": "off",
+      "cooling": "ice",
+      "whiteSets": false,
+      "boilKnown": true,
+      "probeWanted": true,
+      "label": "readout.phase.pull",
+      "subline": "readout.sub.pull",
+      "action": "action.pulled.ice",
+      "hint": "action.hint.pull"
+    },
+    {
+      "phase": "PULL",
+      "startMode": "cold",
+      "afterBoil": "off",
+      "cooling": "ice",
+      "whiteSets": true,
+      "boilKnown": false,
+      "probeWanted": true,
+      "label": "readout.phase.pull",
+      "subline": "readout.sub.pull",
+      "action": "action.pulled.ice",
+      "hint": "action.hint.pull"
+    },
+    {
+      "phase": "PULL",
+      "startMode": "cold",
+      "afterBoil": "off",
+      "cooling": "ice",
+      "whiteSets": true,
+      "boilKnown": true,
+      "probeWanted": false,
+      "label": "readout.phase.pull",
+      "subline": "readout.sub.pull",
+      "action": "action.pulled.ice",
+      "hint": "action.hint.pull"
+    },
+    {
+      "phase": "PULL",
+      "startMode": "cold",
+      "afterBoil": "off",
+      "cooling": "tap",
+      "whiteSets": false,
+      "boilKnown": true,
+      "probeWanted": true,
+      "label": "readout.phase.pull",
+      "subline": "readout.sub.pull",
+      "action": "action.pulled.tap",
+      "hint": "action.hint.pull"
+    },
+    {
+      "phase": "PULL",
+      "startMode": "cold",
+      "afterBoil": "off",
+      "cooling": "tap",
+      "whiteSets": true,
+      "boilKnown": false,
+      "probeWanted": true,
+      "label": "readout.phase.pull",
+      "subline": "readout.sub.pull",
+      "action": "action.pulled.tap",
+      "hint": "action.hint.pull"
+    },
+    {
+      "phase": "PULL",
+      "startMode": "cold",
+      "afterBoil": "off",
+      "cooling": "tap",
+      "whiteSets": true,
+      "boilKnown": true,
+      "probeWanted": false,
+      "label": "readout.phase.pull",
+      "subline": "readout.sub.pull",
+      "action": "action.pulled.tap",
+      "hint": "action.hint.pull"
+    },
+    {
+      "phase": "PULL",
+      "startMode": "cold",
+      "afterBoil": "off",
+      "cooling": "counter",
+      "whiteSets": false,
+      "boilKnown": true,
+      "probeWanted": true,
+      "label": "readout.phase.pull",
+      "subline": "readout.sub.pull",
+      "action": "action.pulled.counter",
+      "hint": null
+    },
+    {
+      "phase": "PULL",
+      "startMode": "cold",
+      "afterBoil": "off",
+      "cooling": "counter",
+      "whiteSets": true,
+      "boilKnown": false,
+      "probeWanted": true,
+      "label": "readout.phase.pull",
+      "subline": "readout.sub.pull",
+      "action": "action.pulled.counter",
+      "hint": null
+    },
+    {
+      "phase": "PULL",
+      "startMode": "cold",
+      "afterBoil": "off",
+      "cooling": "counter",
+      "whiteSets": true,
+      "boilKnown": true,
+      "probeWanted": false,
+      "label": "readout.phase.pull",
+      "subline": "readout.sub.pull",
+      "action": "action.pulled.counter",
+      "hint": null
+    },
+    {
+      "phase": "COOLING",
+      "startMode": "hot",
+      "afterBoil": "hold",
+      "cooling": "ice",
+      "whiteSets": false,
+      "boilKnown": true,
+      "probeWanted": true,
+      "label": "readout.phase.coolingIce",
+      "subline": "readout.sub.coolingProbe",
+      "action": null,
+      "hint": null
+    },
+    {
+      "phase": "COOLING",
+      "startMode": "hot",
+      "afterBoil": "hold",
+      "cooling": "ice",
+      "whiteSets": true,
+      "boilKnown": false,
+      "probeWanted": true,
+      "label": "readout.phase.coolingIce",
+      "subline": "readout.sub.coolingProbe",
+      "action": null,
+      "hint": null
+    },
+    {
+      "phase": "COOLING",
+      "startMode": "hot",
+      "afterBoil": "hold",
+      "cooling": "ice",
+      "whiteSets": true,
+      "boilKnown": true,
+      "probeWanted": false,
+      "label": "readout.phase.coolingIce",
+      "subline": "readout.sub.coolingPeak",
+      "action": null,
+      "hint": null
+    },
+    {
+      "phase": "COOLING",
+      "startMode": "hot",
+      "afterBoil": "hold",
+      "cooling": "tap",
+      "whiteSets": false,
+      "boilKnown": true,
+      "probeWanted": true,
+      "label": "readout.phase.coolingTap",
+      "subline": "readout.sub.coolingProbe",
+      "action": null,
+      "hint": null
+    },
+    {
+      "phase": "COOLING",
+      "startMode": "hot",
+      "afterBoil": "hold",
+      "cooling": "tap",
+      "whiteSets": true,
+      "boilKnown": false,
+      "probeWanted": true,
+      "label": "readout.phase.coolingTap",
+      "subline": "readout.sub.coolingProbe",
+      "action": null,
+      "hint": null
+    },
+    {
+      "phase": "COOLING",
+      "startMode": "hot",
+      "afterBoil": "hold",
+      "cooling": "tap",
+      "whiteSets": true,
+      "boilKnown": true,
+      "probeWanted": false,
+      "label": "readout.phase.coolingTap",
+      "subline": "readout.sub.coolingPeak",
+      "action": null,
+      "hint": null
+    },
+    {
+      "phase": "COOLING",
+      "startMode": "hot",
+      "afterBoil": "hold",
+      "cooling": "counter",
+      "whiteSets": false,
+      "boilKnown": true,
+      "probeWanted": true,
+      "label": "readout.phase.coolingTap",
+      "subline": "readout.sub.coolingProbe",
+      "action": null,
+      "hint": null
+    },
+    {
+      "phase": "COOLING",
+      "startMode": "hot",
+      "afterBoil": "hold",
+      "cooling": "counter",
+      "whiteSets": true,
+      "boilKnown": false,
+      "probeWanted": true,
+      "label": "readout.phase.coolingTap",
+      "subline": "readout.sub.coolingProbe",
+      "action": null,
+      "hint": null
+    },
+    {
+      "phase": "COOLING",
+      "startMode": "hot",
+      "afterBoil": "hold",
+      "cooling": "counter",
+      "whiteSets": true,
+      "boilKnown": true,
+      "probeWanted": false,
+      "label": "readout.phase.coolingTap",
+      "subline": "readout.sub.coolingPeak",
+      "action": null,
+      "hint": null
+    },
+    {
+      "phase": "COOLING",
+      "startMode": "hot",
+      "afterBoil": "off",
+      "cooling": "ice",
+      "whiteSets": false,
+      "boilKnown": true,
+      "probeWanted": true,
+      "label": "readout.phase.coolingIce",
+      "subline": "readout.sub.coolingProbe",
+      "action": null,
+      "hint": null
+    },
+    {
+      "phase": "COOLING",
+      "startMode": "hot",
+      "afterBoil": "off",
+      "cooling": "ice",
+      "whiteSets": true,
+      "boilKnown": false,
+      "probeWanted": true,
+      "label": "readout.phase.coolingIce",
+      "subline": "readout.sub.coolingProbe",
+      "action": null,
+      "hint": null
+    },
+    {
+      "phase": "COOLING",
+      "startMode": "hot",
+      "afterBoil": "off",
+      "cooling": "ice",
+      "whiteSets": true,
+      "boilKnown": true,
+      "probeWanted": false,
+      "label": "readout.phase.coolingIce",
+      "subline": "readout.sub.coolingPeak",
+      "action": null,
+      "hint": null
+    },
+    {
+      "phase": "COOLING",
+      "startMode": "hot",
+      "afterBoil": "off",
+      "cooling": "tap",
+      "whiteSets": false,
+      "boilKnown": true,
+      "probeWanted": true,
+      "label": "readout.phase.coolingTap",
+      "subline": "readout.sub.coolingProbe",
+      "action": null,
+      "hint": null
+    },
+    {
+      "phase": "COOLING",
+      "startMode": "hot",
+      "afterBoil": "off",
+      "cooling": "tap",
+      "whiteSets": true,
+      "boilKnown": false,
+      "probeWanted": true,
+      "label": "readout.phase.coolingTap",
+      "subline": "readout.sub.coolingProbe",
+      "action": null,
+      "hint": null
+    },
+    {
+      "phase": "COOLING",
+      "startMode": "hot",
+      "afterBoil": "off",
+      "cooling": "tap",
+      "whiteSets": true,
+      "boilKnown": true,
+      "probeWanted": false,
+      "label": "readout.phase.coolingTap",
+      "subline": "readout.sub.coolingPeak",
+      "action": null,
+      "hint": null
+    },
+    {
+      "phase": "COOLING",
+      "startMode": "hot",
+      "afterBoil": "off",
+      "cooling": "counter",
+      "whiteSets": false,
+      "boilKnown": true,
+      "probeWanted": true,
+      "label": "readout.phase.coolingTap",
+      "subline": "readout.sub.coolingProbe",
+      "action": null,
+      "hint": null
+    },
+    {
+      "phase": "COOLING",
+      "startMode": "hot",
+      "afterBoil": "off",
+      "cooling": "counter",
+      "whiteSets": true,
+      "boilKnown": false,
+      "probeWanted": true,
+      "label": "readout.phase.coolingTap",
+      "subline": "readout.sub.coolingProbe",
+      "action": null,
+      "hint": null
+    },
+    {
+      "phase": "COOLING",
+      "startMode": "hot",
+      "afterBoil": "off",
+      "cooling": "counter",
+      "whiteSets": true,
+      "boilKnown": true,
+      "probeWanted": false,
+      "label": "readout.phase.coolingTap",
+      "subline": "readout.sub.coolingPeak",
+      "action": null,
+      "hint": null
+    },
+    {
+      "phase": "COOLING",
+      "startMode": "cold",
+      "afterBoil": "hold",
+      "cooling": "ice",
+      "whiteSets": false,
+      "boilKnown": true,
+      "probeWanted": true,
+      "label": "readout.phase.coolingIce",
+      "subline": "readout.sub.coolingProbe",
+      "action": null,
+      "hint": null
+    },
+    {
+      "phase": "COOLING",
+      "startMode": "cold",
+      "afterBoil": "hold",
+      "cooling": "ice",
+      "whiteSets": true,
+      "boilKnown": false,
+      "probeWanted": true,
+      "label": "readout.phase.coolingIce",
+      "subline": "readout.sub.coolingProbe",
+      "action": null,
+      "hint": null
+    },
+    {
+      "phase": "COOLING",
+      "startMode": "cold",
+      "afterBoil": "hold",
+      "cooling": "ice",
+      "whiteSets": true,
+      "boilKnown": true,
+      "probeWanted": false,
+      "label": "readout.phase.coolingIce",
+      "subline": "readout.sub.coolingPeak",
+      "action": null,
+      "hint": null
+    },
+    {
+      "phase": "COOLING",
+      "startMode": "cold",
+      "afterBoil": "hold",
+      "cooling": "tap",
+      "whiteSets": false,
+      "boilKnown": true,
+      "probeWanted": true,
+      "label": "readout.phase.coolingTap",
+      "subline": "readout.sub.coolingProbe",
+      "action": null,
+      "hint": null
+    },
+    {
+      "phase": "COOLING",
+      "startMode": "cold",
+      "afterBoil": "hold",
+      "cooling": "tap",
+      "whiteSets": true,
+      "boilKnown": false,
+      "probeWanted": true,
+      "label": "readout.phase.coolingTap",
+      "subline": "readout.sub.coolingProbe",
+      "action": null,
+      "hint": null
+    },
+    {
+      "phase": "COOLING",
+      "startMode": "cold",
+      "afterBoil": "hold",
+      "cooling": "tap",
+      "whiteSets": true,
+      "boilKnown": true,
+      "probeWanted": false,
+      "label": "readout.phase.coolingTap",
+      "subline": "readout.sub.coolingPeak",
+      "action": null,
+      "hint": null
+    },
+    {
+      "phase": "COOLING",
+      "startMode": "cold",
+      "afterBoil": "hold",
+      "cooling": "counter",
+      "whiteSets": false,
+      "boilKnown": true,
+      "probeWanted": true,
+      "label": "readout.phase.coolingTap",
+      "subline": "readout.sub.coolingProbe",
+      "action": null,
+      "hint": null
+    },
+    {
+      "phase": "COOLING",
+      "startMode": "cold",
+      "afterBoil": "hold",
+      "cooling": "counter",
+      "whiteSets": true,
+      "boilKnown": false,
+      "probeWanted": true,
+      "label": "readout.phase.coolingTap",
+      "subline": "readout.sub.coolingProbe",
+      "action": null,
+      "hint": null
+    },
+    {
+      "phase": "COOLING",
+      "startMode": "cold",
+      "afterBoil": "hold",
+      "cooling": "counter",
+      "whiteSets": true,
+      "boilKnown": true,
+      "probeWanted": false,
+      "label": "readout.phase.coolingTap",
+      "subline": "readout.sub.coolingPeak",
+      "action": null,
+      "hint": null
+    },
+    {
+      "phase": "COOLING",
+      "startMode": "cold",
+      "afterBoil": "off",
+      "cooling": "ice",
+      "whiteSets": false,
+      "boilKnown": true,
+      "probeWanted": true,
+      "label": "readout.phase.coolingIce",
+      "subline": "readout.sub.coolingProbe",
+      "action": null,
+      "hint": null
+    },
+    {
+      "phase": "COOLING",
+      "startMode": "cold",
+      "afterBoil": "off",
+      "cooling": "ice",
+      "whiteSets": true,
+      "boilKnown": false,
+      "probeWanted": true,
+      "label": "readout.phase.coolingIce",
+      "subline": "readout.sub.coolingProbe",
+      "action": null,
+      "hint": null
+    },
+    {
+      "phase": "COOLING",
+      "startMode": "cold",
+      "afterBoil": "off",
+      "cooling": "ice",
+      "whiteSets": true,
+      "boilKnown": true,
+      "probeWanted": false,
+      "label": "readout.phase.coolingIce",
+      "subline": "readout.sub.coolingPeak",
+      "action": null,
+      "hint": null
+    },
+    {
+      "phase": "COOLING",
+      "startMode": "cold",
+      "afterBoil": "off",
+      "cooling": "tap",
+      "whiteSets": false,
+      "boilKnown": true,
+      "probeWanted": true,
+      "label": "readout.phase.coolingTap",
+      "subline": "readout.sub.coolingProbe",
+      "action": null,
+      "hint": null
+    },
+    {
+      "phase": "COOLING",
+      "startMode": "cold",
+      "afterBoil": "off",
+      "cooling": "tap",
+      "whiteSets": true,
+      "boilKnown": false,
+      "probeWanted": true,
+      "label": "readout.phase.coolingTap",
+      "subline": "readout.sub.coolingProbe",
+      "action": null,
+      "hint": null
+    },
+    {
+      "phase": "COOLING",
+      "startMode": "cold",
+      "afterBoil": "off",
+      "cooling": "tap",
+      "whiteSets": true,
+      "boilKnown": true,
+      "probeWanted": false,
+      "label": "readout.phase.coolingTap",
+      "subline": "readout.sub.coolingPeak",
+      "action": null,
+      "hint": null
+    },
+    {
+      "phase": "COOLING",
+      "startMode": "cold",
+      "afterBoil": "off",
+      "cooling": "counter",
+      "whiteSets": false,
+      "boilKnown": true,
+      "probeWanted": true,
+      "label": "readout.phase.coolingTap",
+      "subline": "readout.sub.coolingProbe",
+      "action": null,
+      "hint": null
+    },
+    {
+      "phase": "COOLING",
+      "startMode": "cold",
+      "afterBoil": "off",
+      "cooling": "counter",
+      "whiteSets": true,
+      "boilKnown": false,
+      "probeWanted": true,
+      "label": "readout.phase.coolingTap",
+      "subline": "readout.sub.coolingProbe",
+      "action": null,
+      "hint": null
+    },
+    {
+      "phase": "COOLING",
+      "startMode": "cold",
+      "afterBoil": "off",
+      "cooling": "counter",
+      "whiteSets": true,
+      "boilKnown": true,
+      "probeWanted": false,
+      "label": "readout.phase.coolingTap",
+      "subline": "readout.sub.coolingPeak",
+      "action": null,
+      "hint": null
+    },
+    {
+      "phase": "DONE",
+      "startMode": "hot",
+      "afterBoil": "hold",
+      "cooling": "ice",
+      "whiteSets": false,
+      "boilKnown": true,
+      "probeWanted": true,
+      "label": "readout.phase.done",
+      "subline": "readout.sub.doneHot",
+      "action": "action.startAgain",
+      "hint": null
+    },
+    {
+      "phase": "DONE",
+      "startMode": "hot",
+      "afterBoil": "hold",
+      "cooling": "ice",
+      "whiteSets": true,
+      "boilKnown": false,
+      "probeWanted": true,
+      "label": "readout.phase.done",
+      "subline": "readout.sub.doneHot",
+      "action": "action.startAgain",
+      "hint": null
+    },
+    {
+      "phase": "DONE",
+      "startMode": "hot",
+      "afterBoil": "hold",
+      "cooling": "ice",
+      "whiteSets": true,
+      "boilKnown": true,
+      "probeWanted": false,
+      "label": "readout.phase.done",
+      "subline": "readout.sub.doneHot",
+      "action": "action.startAgain",
+      "hint": null
+    },
+    {
+      "phase": "DONE",
+      "startMode": "hot",
+      "afterBoil": "hold",
+      "cooling": "tap",
+      "whiteSets": false,
+      "boilKnown": true,
+      "probeWanted": true,
+      "label": "readout.phase.done",
+      "subline": "readout.sub.doneHot",
+      "action": "action.startAgain",
+      "hint": null
+    },
+    {
+      "phase": "DONE",
+      "startMode": "hot",
+      "afterBoil": "hold",
+      "cooling": "tap",
+      "whiteSets": true,
+      "boilKnown": false,
+      "probeWanted": true,
+      "label": "readout.phase.done",
+      "subline": "readout.sub.doneHot",
+      "action": "action.startAgain",
+      "hint": null
+    },
+    {
+      "phase": "DONE",
+      "startMode": "hot",
+      "afterBoil": "hold",
+      "cooling": "tap",
+      "whiteSets": true,
+      "boilKnown": true,
+      "probeWanted": false,
+      "label": "readout.phase.done",
+      "subline": "readout.sub.doneHot",
+      "action": "action.startAgain",
+      "hint": null
+    },
+    {
+      "phase": "DONE",
+      "startMode": "hot",
+      "afterBoil": "hold",
+      "cooling": "counter",
+      "whiteSets": false,
+      "boilKnown": true,
+      "probeWanted": true,
+      "label": "readout.phase.done",
+      "subline": "readout.sub.doneHot",
+      "action": "action.startAgain",
+      "hint": null
+    },
+    {
+      "phase": "DONE",
+      "startMode": "hot",
+      "afterBoil": "hold",
+      "cooling": "counter",
+      "whiteSets": true,
+      "boilKnown": false,
+      "probeWanted": true,
+      "label": "readout.phase.done",
+      "subline": "readout.sub.doneHot",
+      "action": "action.startAgain",
+      "hint": null
+    },
+    {
+      "phase": "DONE",
+      "startMode": "hot",
+      "afterBoil": "hold",
+      "cooling": "counter",
+      "whiteSets": true,
+      "boilKnown": true,
+      "probeWanted": false,
+      "label": "readout.phase.done",
+      "subline": "readout.sub.doneHot",
+      "action": "action.startAgain",
+      "hint": null
+    },
+    {
+      "phase": "DONE",
+      "startMode": "hot",
+      "afterBoil": "off",
+      "cooling": "ice",
+      "whiteSets": false,
+      "boilKnown": true,
+      "probeWanted": true,
+      "label": "readout.phase.done",
+      "subline": "readout.sub.doneHot",
+      "action": "action.startAgain",
+      "hint": null
+    },
+    {
+      "phase": "DONE",
+      "startMode": "hot",
+      "afterBoil": "off",
+      "cooling": "ice",
+      "whiteSets": true,
+      "boilKnown": false,
+      "probeWanted": true,
+      "label": "readout.phase.done",
+      "subline": "readout.sub.doneHot",
+      "action": "action.startAgain",
+      "hint": null
+    },
+    {
+      "phase": "DONE",
+      "startMode": "hot",
+      "afterBoil": "off",
+      "cooling": "ice",
+      "whiteSets": true,
+      "boilKnown": true,
+      "probeWanted": false,
+      "label": "readout.phase.done",
+      "subline": "readout.sub.doneHot",
+      "action": "action.startAgain",
+      "hint": null
+    },
+    {
+      "phase": "DONE",
+      "startMode": "hot",
+      "afterBoil": "off",
+      "cooling": "tap",
+      "whiteSets": false,
+      "boilKnown": true,
+      "probeWanted": true,
+      "label": "readout.phase.done",
+      "subline": "readout.sub.doneHot",
+      "action": "action.startAgain",
+      "hint": null
+    },
+    {
+      "phase": "DONE",
+      "startMode": "hot",
+      "afterBoil": "off",
+      "cooling": "tap",
+      "whiteSets": true,
+      "boilKnown": false,
+      "probeWanted": true,
+      "label": "readout.phase.done",
+      "subline": "readout.sub.doneHot",
+      "action": "action.startAgain",
+      "hint": null
+    },
+    {
+      "phase": "DONE",
+      "startMode": "hot",
+      "afterBoil": "off",
+      "cooling": "tap",
+      "whiteSets": true,
+      "boilKnown": true,
+      "probeWanted": false,
+      "label": "readout.phase.done",
+      "subline": "readout.sub.doneHot",
+      "action": "action.startAgain",
+      "hint": null
+    },
+    {
+      "phase": "DONE",
+      "startMode": "hot",
+      "afterBoil": "off",
+      "cooling": "counter",
+      "whiteSets": false,
+      "boilKnown": true,
+      "probeWanted": true,
+      "label": "readout.phase.done",
+      "subline": "readout.sub.doneHot",
+      "action": "action.startAgain",
+      "hint": null
+    },
+    {
+      "phase": "DONE",
+      "startMode": "hot",
+      "afterBoil": "off",
+      "cooling": "counter",
+      "whiteSets": true,
+      "boilKnown": false,
+      "probeWanted": true,
+      "label": "readout.phase.done",
+      "subline": "readout.sub.doneHot",
+      "action": "action.startAgain",
+      "hint": null
+    },
+    {
+      "phase": "DONE",
+      "startMode": "hot",
+      "afterBoil": "off",
+      "cooling": "counter",
+      "whiteSets": true,
+      "boilKnown": true,
+      "probeWanted": false,
+      "label": "readout.phase.done",
+      "subline": "readout.sub.doneHot",
+      "action": "action.startAgain",
+      "hint": null
+    },
+    {
+      "phase": "DONE",
+      "startMode": "cold",
+      "afterBoil": "hold",
+      "cooling": "ice",
+      "whiteSets": false,
+      "boilKnown": true,
+      "probeWanted": true,
+      "label": "readout.phase.done",
+      "subline": "readout.sub.doneCold",
+      "action": "action.startAgain",
+      "hint": null
+    },
+    {
+      "phase": "DONE",
+      "startMode": "cold",
+      "afterBoil": "hold",
+      "cooling": "ice",
+      "whiteSets": true,
+      "boilKnown": false,
+      "probeWanted": true,
+      "label": "readout.phase.done",
+      "subline": "readout.sub.doneCold",
+      "action": "action.startAgain",
+      "hint": null
+    },
+    {
+      "phase": "DONE",
+      "startMode": "cold",
+      "afterBoil": "hold",
+      "cooling": "ice",
+      "whiteSets": true,
+      "boilKnown": true,
+      "probeWanted": false,
+      "label": "readout.phase.done",
+      "subline": "readout.sub.doneCold",
+      "action": "action.startAgain",
+      "hint": null
+    },
+    {
+      "phase": "DONE",
+      "startMode": "cold",
+      "afterBoil": "hold",
+      "cooling": "tap",
+      "whiteSets": false,
+      "boilKnown": true,
+      "probeWanted": true,
+      "label": "readout.phase.done",
+      "subline": "readout.sub.doneCold",
+      "action": "action.startAgain",
+      "hint": null
+    },
+    {
+      "phase": "DONE",
+      "startMode": "cold",
+      "afterBoil": "hold",
+      "cooling": "tap",
+      "whiteSets": true,
+      "boilKnown": false,
+      "probeWanted": true,
+      "label": "readout.phase.done",
+      "subline": "readout.sub.doneCold",
+      "action": "action.startAgain",
+      "hint": null
+    },
+    {
+      "phase": "DONE",
+      "startMode": "cold",
+      "afterBoil": "hold",
+      "cooling": "tap",
+      "whiteSets": true,
+      "boilKnown": true,
+      "probeWanted": false,
+      "label": "readout.phase.done",
+      "subline": "readout.sub.doneCold",
+      "action": "action.startAgain",
+      "hint": null
+    },
+    {
+      "phase": "DONE",
+      "startMode": "cold",
+      "afterBoil": "hold",
+      "cooling": "counter",
+      "whiteSets": false,
+      "boilKnown": true,
+      "probeWanted": true,
+      "label": "readout.phase.done",
+      "subline": "readout.sub.doneCold",
+      "action": "action.startAgain",
+      "hint": null
+    },
+    {
+      "phase": "DONE",
+      "startMode": "cold",
+      "afterBoil": "hold",
+      "cooling": "counter",
+      "whiteSets": true,
+      "boilKnown": false,
+      "probeWanted": true,
+      "label": "readout.phase.done",
+      "subline": "readout.sub.doneCold",
+      "action": "action.startAgain",
+      "hint": null
+    },
+    {
+      "phase": "DONE",
+      "startMode": "cold",
+      "afterBoil": "hold",
+      "cooling": "counter",
+      "whiteSets": true,
+      "boilKnown": true,
+      "probeWanted": false,
+      "label": "readout.phase.done",
+      "subline": "readout.sub.doneCold",
+      "action": "action.startAgain",
+      "hint": null
+    },
+    {
+      "phase": "DONE",
+      "startMode": "cold",
+      "afterBoil": "off",
+      "cooling": "ice",
+      "whiteSets": false,
+      "boilKnown": true,
+      "probeWanted": true,
+      "label": "readout.phase.done",
+      "subline": "readout.sub.doneCold",
+      "action": "action.startAgain",
+      "hint": null
+    },
+    {
+      "phase": "DONE",
+      "startMode": "cold",
+      "afterBoil": "off",
+      "cooling": "ice",
+      "whiteSets": true,
+      "boilKnown": false,
+      "probeWanted": true,
+      "label": "readout.phase.done",
+      "subline": "readout.sub.doneCold",
+      "action": "action.startAgain",
+      "hint": null
+    },
+    {
+      "phase": "DONE",
+      "startMode": "cold",
+      "afterBoil": "off",
+      "cooling": "ice",
+      "whiteSets": true,
+      "boilKnown": true,
+      "probeWanted": false,
+      "label": "readout.phase.done",
+      "subline": "readout.sub.doneCold",
+      "action": "action.startAgain",
+      "hint": null
+    },
+    {
+      "phase": "DONE",
+      "startMode": "cold",
+      "afterBoil": "off",
+      "cooling": "tap",
+      "whiteSets": false,
+      "boilKnown": true,
+      "probeWanted": true,
+      "label": "readout.phase.done",
+      "subline": "readout.sub.doneCold",
+      "action": "action.startAgain",
+      "hint": null
+    },
+    {
+      "phase": "DONE",
+      "startMode": "cold",
+      "afterBoil": "off",
+      "cooling": "tap",
+      "whiteSets": true,
+      "boilKnown": false,
+      "probeWanted": true,
+      "label": "readout.phase.done",
+      "subline": "readout.sub.doneCold",
+      "action": "action.startAgain",
+      "hint": null
+    },
+    {
+      "phase": "DONE",
+      "startMode": "cold",
+      "afterBoil": "off",
+      "cooling": "tap",
+      "whiteSets": true,
+      "boilKnown": true,
+      "probeWanted": false,
+      "label": "readout.phase.done",
+      "subline": "readout.sub.doneCold",
+      "action": "action.startAgain",
+      "hint": null
+    },
+    {
+      "phase": "DONE",
+      "startMode": "cold",
+      "afterBoil": "off",
+      "cooling": "counter",
+      "whiteSets": false,
+      "boilKnown": true,
+      "probeWanted": true,
+      "label": "readout.phase.done",
+      "subline": "readout.sub.doneCold",
+      "action": "action.startAgain",
+      "hint": null
+    },
+    {
+      "phase": "DONE",
+      "startMode": "cold",
+      "afterBoil": "off",
+      "cooling": "counter",
+      "whiteSets": true,
+      "boilKnown": false,
+      "probeWanted": true,
+      "label": "readout.phase.done",
+      "subline": "readout.sub.doneCold",
+      "action": "action.startAgain",
+      "hint": null
+    },
+    {
+      "phase": "DONE",
+      "startMode": "cold",
+      "afterBoil": "off",
+      "cooling": "counter",
+      "whiteSets": true,
+      "boilKnown": true,
+      "probeWanted": false,
+      "label": "readout.phase.done",
+      "subline": "readout.sub.doneCold",
+      "action": "action.startAgain",
+      "hint": null
+    }
+  ],
+  "clauses": [
+    {
+      "eggFrom": "fridge",
+      "startMode": "hot",
+      "sousVide": false,
+      "afterBoil": "hold",
+      "cooling": "ice",
+      "keys": {
+        "egg": {
+          "text": "setup.egg",
+          "label": "controls.egg",
+          "value": null
+        },
+        "from": {
+          "text": "setup.from.fridge",
+          "label": "controls.eggFrom",
+          "value": "controls.eggFrom.fridge"
+        },
+        "start": {
+          "text": "setup.start.hot",
+          "label": "controls.start",
+          "value": "controls.start.hot"
+        },
+        "cooling": {
+          "text": "setup.cooling.ice",
+          "label": "controls.cooling",
+          "value": "controls.then.ice"
+        }
+      }
+    },
+    {
+      "eggFrom": "fridge",
+      "startMode": "hot",
+      "sousVide": false,
+      "afterBoil": "hold",
+      "cooling": "tap",
+      "keys": {
+        "egg": {
+          "text": "setup.egg",
+          "label": "controls.egg",
+          "value": null
+        },
+        "from": {
+          "text": "setup.from.fridge",
+          "label": "controls.eggFrom",
+          "value": "controls.eggFrom.fridge"
+        },
+        "start": {
+          "text": "setup.start.hot",
+          "label": "controls.start",
+          "value": "controls.start.hot"
+        },
+        "cooling": {
+          "text": "setup.cooling.tap",
+          "label": "controls.cooling",
+          "value": "controls.then.tap"
+        }
+      }
+    },
+    {
+      "eggFrom": "fridge",
+      "startMode": "hot",
+      "sousVide": false,
+      "afterBoil": "hold",
+      "cooling": "counter",
+      "keys": {
+        "egg": {
+          "text": "setup.egg",
+          "label": "controls.egg",
+          "value": null
+        },
+        "from": {
+          "text": "setup.from.fridge",
+          "label": "controls.eggFrom",
+          "value": "controls.eggFrom.fridge"
+        },
+        "start": {
+          "text": "setup.start.hot",
+          "label": "controls.start",
+          "value": "controls.start.hot"
+        },
+        "cooling": {
+          "text": "setup.cooling.counter",
+          "label": "controls.cooling",
+          "value": "controls.then.counter"
+        }
+      }
+    },
+    {
+      "eggFrom": "fridge",
+      "startMode": "hot",
+      "sousVide": false,
+      "afterBoil": "off",
+      "cooling": "ice",
+      "keys": {
+        "egg": {
+          "text": "setup.egg",
+          "label": "controls.egg",
+          "value": null
+        },
+        "from": {
+          "text": "setup.from.fridge",
+          "label": "controls.eggFrom",
+          "value": "controls.eggFrom.fridge"
+        },
+        "start": {
+          "text": "setup.start.hotStanding",
+          "label": "controls.start",
+          "value": "controls.start.hot"
+        },
+        "cooling": {
+          "text": "setup.cooling.ice",
+          "label": "controls.cooling",
+          "value": "controls.then.ice"
+        }
+      }
+    },
+    {
+      "eggFrom": "fridge",
+      "startMode": "hot",
+      "sousVide": false,
+      "afterBoil": "off",
+      "cooling": "tap",
+      "keys": {
+        "egg": {
+          "text": "setup.egg",
+          "label": "controls.egg",
+          "value": null
+        },
+        "from": {
+          "text": "setup.from.fridge",
+          "label": "controls.eggFrom",
+          "value": "controls.eggFrom.fridge"
+        },
+        "start": {
+          "text": "setup.start.hotStanding",
+          "label": "controls.start",
+          "value": "controls.start.hot"
+        },
+        "cooling": {
+          "text": "setup.cooling.tap",
+          "label": "controls.cooling",
+          "value": "controls.then.tap"
+        }
+      }
+    },
+    {
+      "eggFrom": "fridge",
+      "startMode": "hot",
+      "sousVide": false,
+      "afterBoil": "off",
+      "cooling": "counter",
+      "keys": {
+        "egg": {
+          "text": "setup.egg",
+          "label": "controls.egg",
+          "value": null
+        },
+        "from": {
+          "text": "setup.from.fridge",
+          "label": "controls.eggFrom",
+          "value": "controls.eggFrom.fridge"
+        },
+        "start": {
+          "text": "setup.start.hotStanding",
+          "label": "controls.start",
+          "value": "controls.start.hot"
+        },
+        "cooling": {
+          "text": "setup.cooling.counter",
+          "label": "controls.cooling",
+          "value": "controls.then.counter"
+        }
+      }
+    },
+    {
+      "eggFrom": "fridge",
+      "startMode": "hot",
+      "sousVide": true,
+      "afterBoil": "hold",
+      "cooling": "ice",
+      "keys": {
+        "egg": {
+          "text": "setup.egg",
+          "label": "controls.egg",
+          "value": null
+        },
+        "from": {
+          "text": "setup.from.fridge",
+          "label": "controls.eggFrom",
+          "value": "controls.eggFrom.fridge"
+        },
+        "start": {
+          "text": "setup.start.sous",
+          "label": "controls.start",
+          "value": "controls.start.sousVide"
+        },
+        "cooling": {
+          "text": "setup.cooling.ice",
+          "label": "controls.cooling",
+          "value": "controls.then.ice"
+        }
+      }
+    },
+    {
+      "eggFrom": "fridge",
+      "startMode": "hot",
+      "sousVide": true,
+      "afterBoil": "hold",
+      "cooling": "tap",
+      "keys": {
+        "egg": {
+          "text": "setup.egg",
+          "label": "controls.egg",
+          "value": null
+        },
+        "from": {
+          "text": "setup.from.fridge",
+          "label": "controls.eggFrom",
+          "value": "controls.eggFrom.fridge"
+        },
+        "start": {
+          "text": "setup.start.sous",
+          "label": "controls.start",
+          "value": "controls.start.sousVide"
+        },
+        "cooling": {
+          "text": "setup.cooling.tap",
+          "label": "controls.cooling",
+          "value": "controls.then.tap"
+        }
+      }
+    },
+    {
+      "eggFrom": "fridge",
+      "startMode": "hot",
+      "sousVide": true,
+      "afterBoil": "hold",
+      "cooling": "counter",
+      "keys": {
+        "egg": {
+          "text": "setup.egg",
+          "label": "controls.egg",
+          "value": null
+        },
+        "from": {
+          "text": "setup.from.fridge",
+          "label": "controls.eggFrom",
+          "value": "controls.eggFrom.fridge"
+        },
+        "start": {
+          "text": "setup.start.sous",
+          "label": "controls.start",
+          "value": "controls.start.sousVide"
+        },
+        "cooling": {
+          "text": "setup.cooling.counter",
+          "label": "controls.cooling",
+          "value": "controls.then.counter"
+        }
+      }
+    },
+    {
+      "eggFrom": "fridge",
+      "startMode": "hot",
+      "sousVide": true,
+      "afterBoil": "off",
+      "cooling": "ice",
+      "keys": {
+        "egg": {
+          "text": "setup.egg",
+          "label": "controls.egg",
+          "value": null
+        },
+        "from": {
+          "text": "setup.from.fridge",
+          "label": "controls.eggFrom",
+          "value": "controls.eggFrom.fridge"
+        },
+        "start": {
+          "text": "setup.start.sous",
+          "label": "controls.start",
+          "value": "controls.start.sousVide"
+        },
+        "cooling": {
+          "text": "setup.cooling.ice",
+          "label": "controls.cooling",
+          "value": "controls.then.ice"
+        }
+      }
+    },
+    {
+      "eggFrom": "fridge",
+      "startMode": "hot",
+      "sousVide": true,
+      "afterBoil": "off",
+      "cooling": "tap",
+      "keys": {
+        "egg": {
+          "text": "setup.egg",
+          "label": "controls.egg",
+          "value": null
+        },
+        "from": {
+          "text": "setup.from.fridge",
+          "label": "controls.eggFrom",
+          "value": "controls.eggFrom.fridge"
+        },
+        "start": {
+          "text": "setup.start.sous",
+          "label": "controls.start",
+          "value": "controls.start.sousVide"
+        },
+        "cooling": {
+          "text": "setup.cooling.tap",
+          "label": "controls.cooling",
+          "value": "controls.then.tap"
+        }
+      }
+    },
+    {
+      "eggFrom": "fridge",
+      "startMode": "hot",
+      "sousVide": true,
+      "afterBoil": "off",
+      "cooling": "counter",
+      "keys": {
+        "egg": {
+          "text": "setup.egg",
+          "label": "controls.egg",
+          "value": null
+        },
+        "from": {
+          "text": "setup.from.fridge",
+          "label": "controls.eggFrom",
+          "value": "controls.eggFrom.fridge"
+        },
+        "start": {
+          "text": "setup.start.sous",
+          "label": "controls.start",
+          "value": "controls.start.sousVide"
+        },
+        "cooling": {
+          "text": "setup.cooling.counter",
+          "label": "controls.cooling",
+          "value": "controls.then.counter"
+        }
+      }
+    },
+    {
+      "eggFrom": "fridge",
+      "startMode": "cold",
+      "sousVide": false,
+      "afterBoil": "hold",
+      "cooling": "ice",
+      "keys": {
+        "egg": {
+          "text": "setup.egg",
+          "label": "controls.egg",
+          "value": null
+        },
+        "from": {
+          "text": "setup.from.fridge",
+          "label": "controls.eggFrom",
+          "value": "controls.eggFrom.fridge"
+        },
+        "start": {
+          "text": "setup.start.cold",
+          "label": "controls.start",
+          "value": "controls.start.cold"
+        },
+        "cooling": {
+          "text": "setup.cooling.ice",
+          "label": "controls.cooling",
+          "value": "controls.then.ice"
+        }
+      }
+    },
+    {
+      "eggFrom": "fridge",
+      "startMode": "cold",
+      "sousVide": false,
+      "afterBoil": "hold",
+      "cooling": "tap",
+      "keys": {
+        "egg": {
+          "text": "setup.egg",
+          "label": "controls.egg",
+          "value": null
+        },
+        "from": {
+          "text": "setup.from.fridge",
+          "label": "controls.eggFrom",
+          "value": "controls.eggFrom.fridge"
+        },
+        "start": {
+          "text": "setup.start.cold",
+          "label": "controls.start",
+          "value": "controls.start.cold"
+        },
+        "cooling": {
+          "text": "setup.cooling.tap",
+          "label": "controls.cooling",
+          "value": "controls.then.tap"
+        }
+      }
+    },
+    {
+      "eggFrom": "fridge",
+      "startMode": "cold",
+      "sousVide": false,
+      "afterBoil": "hold",
+      "cooling": "counter",
+      "keys": {
+        "egg": {
+          "text": "setup.egg",
+          "label": "controls.egg",
+          "value": null
+        },
+        "from": {
+          "text": "setup.from.fridge",
+          "label": "controls.eggFrom",
+          "value": "controls.eggFrom.fridge"
+        },
+        "start": {
+          "text": "setup.start.cold",
+          "label": "controls.start",
+          "value": "controls.start.cold"
+        },
+        "cooling": {
+          "text": "setup.cooling.counter",
+          "label": "controls.cooling",
+          "value": "controls.then.counter"
+        }
+      }
+    },
+    {
+      "eggFrom": "fridge",
+      "startMode": "cold",
+      "sousVide": false,
+      "afterBoil": "off",
+      "cooling": "ice",
+      "keys": {
+        "egg": {
+          "text": "setup.egg",
+          "label": "controls.egg",
+          "value": null
+        },
+        "from": {
+          "text": "setup.from.fridge",
+          "label": "controls.eggFrom",
+          "value": "controls.eggFrom.fridge"
+        },
+        "start": {
+          "text": "setup.start.coldStanding",
+          "label": "controls.start",
+          "value": "controls.start.cold"
+        },
+        "cooling": {
+          "text": "setup.cooling.ice",
+          "label": "controls.cooling",
+          "value": "controls.then.ice"
+        }
+      }
+    },
+    {
+      "eggFrom": "fridge",
+      "startMode": "cold",
+      "sousVide": false,
+      "afterBoil": "off",
+      "cooling": "tap",
+      "keys": {
+        "egg": {
+          "text": "setup.egg",
+          "label": "controls.egg",
+          "value": null
+        },
+        "from": {
+          "text": "setup.from.fridge",
+          "label": "controls.eggFrom",
+          "value": "controls.eggFrom.fridge"
+        },
+        "start": {
+          "text": "setup.start.coldStanding",
+          "label": "controls.start",
+          "value": "controls.start.cold"
+        },
+        "cooling": {
+          "text": "setup.cooling.tap",
+          "label": "controls.cooling",
+          "value": "controls.then.tap"
+        }
+      }
+    },
+    {
+      "eggFrom": "fridge",
+      "startMode": "cold",
+      "sousVide": false,
+      "afterBoil": "off",
+      "cooling": "counter",
+      "keys": {
+        "egg": {
+          "text": "setup.egg",
+          "label": "controls.egg",
+          "value": null
+        },
+        "from": {
+          "text": "setup.from.fridge",
+          "label": "controls.eggFrom",
+          "value": "controls.eggFrom.fridge"
+        },
+        "start": {
+          "text": "setup.start.coldStanding",
+          "label": "controls.start",
+          "value": "controls.start.cold"
+        },
+        "cooling": {
+          "text": "setup.cooling.counter",
+          "label": "controls.cooling",
+          "value": "controls.then.counter"
+        }
+      }
+    },
+    {
+      "eggFrom": "fridge",
+      "startMode": "cold",
+      "sousVide": true,
+      "afterBoil": "hold",
+      "cooling": "ice",
+      "keys": {
+        "egg": {
+          "text": "setup.egg",
+          "label": "controls.egg",
+          "value": null
+        },
+        "from": {
+          "text": "setup.from.fridge",
+          "label": "controls.eggFrom",
+          "value": "controls.eggFrom.fridge"
+        },
+        "start": {
+          "text": "setup.start.sous",
+          "label": "controls.start",
+          "value": "controls.start.sousVide"
+        },
+        "cooling": {
+          "text": "setup.cooling.ice",
+          "label": "controls.cooling",
+          "value": "controls.then.ice"
+        }
+      }
+    },
+    {
+      "eggFrom": "fridge",
+      "startMode": "cold",
+      "sousVide": true,
+      "afterBoil": "hold",
+      "cooling": "tap",
+      "keys": {
+        "egg": {
+          "text": "setup.egg",
+          "label": "controls.egg",
+          "value": null
+        },
+        "from": {
+          "text": "setup.from.fridge",
+          "label": "controls.eggFrom",
+          "value": "controls.eggFrom.fridge"
+        },
+        "start": {
+          "text": "setup.start.sous",
+          "label": "controls.start",
+          "value": "controls.start.sousVide"
+        },
+        "cooling": {
+          "text": "setup.cooling.tap",
+          "label": "controls.cooling",
+          "value": "controls.then.tap"
+        }
+      }
+    },
+    {
+      "eggFrom": "fridge",
+      "startMode": "cold",
+      "sousVide": true,
+      "afterBoil": "hold",
+      "cooling": "counter",
+      "keys": {
+        "egg": {
+          "text": "setup.egg",
+          "label": "controls.egg",
+          "value": null
+        },
+        "from": {
+          "text": "setup.from.fridge",
+          "label": "controls.eggFrom",
+          "value": "controls.eggFrom.fridge"
+        },
+        "start": {
+          "text": "setup.start.sous",
+          "label": "controls.start",
+          "value": "controls.start.sousVide"
+        },
+        "cooling": {
+          "text": "setup.cooling.counter",
+          "label": "controls.cooling",
+          "value": "controls.then.counter"
+        }
+      }
+    },
+    {
+      "eggFrom": "fridge",
+      "startMode": "cold",
+      "sousVide": true,
+      "afterBoil": "off",
+      "cooling": "ice",
+      "keys": {
+        "egg": {
+          "text": "setup.egg",
+          "label": "controls.egg",
+          "value": null
+        },
+        "from": {
+          "text": "setup.from.fridge",
+          "label": "controls.eggFrom",
+          "value": "controls.eggFrom.fridge"
+        },
+        "start": {
+          "text": "setup.start.sous",
+          "label": "controls.start",
+          "value": "controls.start.sousVide"
+        },
+        "cooling": {
+          "text": "setup.cooling.ice",
+          "label": "controls.cooling",
+          "value": "controls.then.ice"
+        }
+      }
+    },
+    {
+      "eggFrom": "fridge",
+      "startMode": "cold",
+      "sousVide": true,
+      "afterBoil": "off",
+      "cooling": "tap",
+      "keys": {
+        "egg": {
+          "text": "setup.egg",
+          "label": "controls.egg",
+          "value": null
+        },
+        "from": {
+          "text": "setup.from.fridge",
+          "label": "controls.eggFrom",
+          "value": "controls.eggFrom.fridge"
+        },
+        "start": {
+          "text": "setup.start.sous",
+          "label": "controls.start",
+          "value": "controls.start.sousVide"
+        },
+        "cooling": {
+          "text": "setup.cooling.tap",
+          "label": "controls.cooling",
+          "value": "controls.then.tap"
+        }
+      }
+    },
+    {
+      "eggFrom": "fridge",
+      "startMode": "cold",
+      "sousVide": true,
+      "afterBoil": "off",
+      "cooling": "counter",
+      "keys": {
+        "egg": {
+          "text": "setup.egg",
+          "label": "controls.egg",
+          "value": null
+        },
+        "from": {
+          "text": "setup.from.fridge",
+          "label": "controls.eggFrom",
+          "value": "controls.eggFrom.fridge"
+        },
+        "start": {
+          "text": "setup.start.sous",
+          "label": "controls.start",
+          "value": "controls.start.sousVide"
+        },
+        "cooling": {
+          "text": "setup.cooling.counter",
+          "label": "controls.cooling",
+          "value": "controls.then.counter"
+        }
+      }
+    },
+    {
+      "eggFrom": "room",
+      "startMode": "hot",
+      "sousVide": false,
+      "afterBoil": "hold",
+      "cooling": "ice",
+      "keys": {
+        "egg": {
+          "text": "setup.egg",
+          "label": "controls.egg",
+          "value": null
+        },
+        "from": {
+          "text": "setup.from.room",
+          "label": "controls.eggFrom",
+          "value": "controls.eggFrom.room"
+        },
+        "start": {
+          "text": "setup.start.hot",
+          "label": "controls.start",
+          "value": "controls.start.hot"
+        },
+        "cooling": {
+          "text": "setup.cooling.ice",
+          "label": "controls.cooling",
+          "value": "controls.then.ice"
+        }
+      }
+    },
+    {
+      "eggFrom": "room",
+      "startMode": "hot",
+      "sousVide": false,
+      "afterBoil": "hold",
+      "cooling": "tap",
+      "keys": {
+        "egg": {
+          "text": "setup.egg",
+          "label": "controls.egg",
+          "value": null
+        },
+        "from": {
+          "text": "setup.from.room",
+          "label": "controls.eggFrom",
+          "value": "controls.eggFrom.room"
+        },
+        "start": {
+          "text": "setup.start.hot",
+          "label": "controls.start",
+          "value": "controls.start.hot"
+        },
+        "cooling": {
+          "text": "setup.cooling.tap",
+          "label": "controls.cooling",
+          "value": "controls.then.tap"
+        }
+      }
+    },
+    {
+      "eggFrom": "room",
+      "startMode": "hot",
+      "sousVide": false,
+      "afterBoil": "hold",
+      "cooling": "counter",
+      "keys": {
+        "egg": {
+          "text": "setup.egg",
+          "label": "controls.egg",
+          "value": null
+        },
+        "from": {
+          "text": "setup.from.room",
+          "label": "controls.eggFrom",
+          "value": "controls.eggFrom.room"
+        },
+        "start": {
+          "text": "setup.start.hot",
+          "label": "controls.start",
+          "value": "controls.start.hot"
+        },
+        "cooling": {
+          "text": "setup.cooling.counter",
+          "label": "controls.cooling",
+          "value": "controls.then.counter"
+        }
+      }
+    },
+    {
+      "eggFrom": "room",
+      "startMode": "hot",
+      "sousVide": false,
+      "afterBoil": "off",
+      "cooling": "ice",
+      "keys": {
+        "egg": {
+          "text": "setup.egg",
+          "label": "controls.egg",
+          "value": null
+        },
+        "from": {
+          "text": "setup.from.room",
+          "label": "controls.eggFrom",
+          "value": "controls.eggFrom.room"
+        },
+        "start": {
+          "text": "setup.start.hotStanding",
+          "label": "controls.start",
+          "value": "controls.start.hot"
+        },
+        "cooling": {
+          "text": "setup.cooling.ice",
+          "label": "controls.cooling",
+          "value": "controls.then.ice"
+        }
+      }
+    },
+    {
+      "eggFrom": "room",
+      "startMode": "hot",
+      "sousVide": false,
+      "afterBoil": "off",
+      "cooling": "tap",
+      "keys": {
+        "egg": {
+          "text": "setup.egg",
+          "label": "controls.egg",
+          "value": null
+        },
+        "from": {
+          "text": "setup.from.room",
+          "label": "controls.eggFrom",
+          "value": "controls.eggFrom.room"
+        },
+        "start": {
+          "text": "setup.start.hotStanding",
+          "label": "controls.start",
+          "value": "controls.start.hot"
+        },
+        "cooling": {
+          "text": "setup.cooling.tap",
+          "label": "controls.cooling",
+          "value": "controls.then.tap"
+        }
+      }
+    },
+    {
+      "eggFrom": "room",
+      "startMode": "hot",
+      "sousVide": false,
+      "afterBoil": "off",
+      "cooling": "counter",
+      "keys": {
+        "egg": {
+          "text": "setup.egg",
+          "label": "controls.egg",
+          "value": null
+        },
+        "from": {
+          "text": "setup.from.room",
+          "label": "controls.eggFrom",
+          "value": "controls.eggFrom.room"
+        },
+        "start": {
+          "text": "setup.start.hotStanding",
+          "label": "controls.start",
+          "value": "controls.start.hot"
+        },
+        "cooling": {
+          "text": "setup.cooling.counter",
+          "label": "controls.cooling",
+          "value": "controls.then.counter"
+        }
+      }
+    },
+    {
+      "eggFrom": "room",
+      "startMode": "hot",
+      "sousVide": true,
+      "afterBoil": "hold",
+      "cooling": "ice",
+      "keys": {
+        "egg": {
+          "text": "setup.egg",
+          "label": "controls.egg",
+          "value": null
+        },
+        "from": {
+          "text": "setup.from.room",
+          "label": "controls.eggFrom",
+          "value": "controls.eggFrom.room"
+        },
+        "start": {
+          "text": "setup.start.sous",
+          "label": "controls.start",
+          "value": "controls.start.sousVide"
+        },
+        "cooling": {
+          "text": "setup.cooling.ice",
+          "label": "controls.cooling",
+          "value": "controls.then.ice"
+        }
+      }
+    },
+    {
+      "eggFrom": "room",
+      "startMode": "hot",
+      "sousVide": true,
+      "afterBoil": "hold",
+      "cooling": "tap",
+      "keys": {
+        "egg": {
+          "text": "setup.egg",
+          "label": "controls.egg",
+          "value": null
+        },
+        "from": {
+          "text": "setup.from.room",
+          "label": "controls.eggFrom",
+          "value": "controls.eggFrom.room"
+        },
+        "start": {
+          "text": "setup.start.sous",
+          "label": "controls.start",
+          "value": "controls.start.sousVide"
+        },
+        "cooling": {
+          "text": "setup.cooling.tap",
+          "label": "controls.cooling",
+          "value": "controls.then.tap"
+        }
+      }
+    },
+    {
+      "eggFrom": "room",
+      "startMode": "hot",
+      "sousVide": true,
+      "afterBoil": "hold",
+      "cooling": "counter",
+      "keys": {
+        "egg": {
+          "text": "setup.egg",
+          "label": "controls.egg",
+          "value": null
+        },
+        "from": {
+          "text": "setup.from.room",
+          "label": "controls.eggFrom",
+          "value": "controls.eggFrom.room"
+        },
+        "start": {
+          "text": "setup.start.sous",
+          "label": "controls.start",
+          "value": "controls.start.sousVide"
+        },
+        "cooling": {
+          "text": "setup.cooling.counter",
+          "label": "controls.cooling",
+          "value": "controls.then.counter"
+        }
+      }
+    },
+    {
+      "eggFrom": "room",
+      "startMode": "hot",
+      "sousVide": true,
+      "afterBoil": "off",
+      "cooling": "ice",
+      "keys": {
+        "egg": {
+          "text": "setup.egg",
+          "label": "controls.egg",
+          "value": null
+        },
+        "from": {
+          "text": "setup.from.room",
+          "label": "controls.eggFrom",
+          "value": "controls.eggFrom.room"
+        },
+        "start": {
+          "text": "setup.start.sous",
+          "label": "controls.start",
+          "value": "controls.start.sousVide"
+        },
+        "cooling": {
+          "text": "setup.cooling.ice",
+          "label": "controls.cooling",
+          "value": "controls.then.ice"
+        }
+      }
+    },
+    {
+      "eggFrom": "room",
+      "startMode": "hot",
+      "sousVide": true,
+      "afterBoil": "off",
+      "cooling": "tap",
+      "keys": {
+        "egg": {
+          "text": "setup.egg",
+          "label": "controls.egg",
+          "value": null
+        },
+        "from": {
+          "text": "setup.from.room",
+          "label": "controls.eggFrom",
+          "value": "controls.eggFrom.room"
+        },
+        "start": {
+          "text": "setup.start.sous",
+          "label": "controls.start",
+          "value": "controls.start.sousVide"
+        },
+        "cooling": {
+          "text": "setup.cooling.tap",
+          "label": "controls.cooling",
+          "value": "controls.then.tap"
+        }
+      }
+    },
+    {
+      "eggFrom": "room",
+      "startMode": "hot",
+      "sousVide": true,
+      "afterBoil": "off",
+      "cooling": "counter",
+      "keys": {
+        "egg": {
+          "text": "setup.egg",
+          "label": "controls.egg",
+          "value": null
+        },
+        "from": {
+          "text": "setup.from.room",
+          "label": "controls.eggFrom",
+          "value": "controls.eggFrom.room"
+        },
+        "start": {
+          "text": "setup.start.sous",
+          "label": "controls.start",
+          "value": "controls.start.sousVide"
+        },
+        "cooling": {
+          "text": "setup.cooling.counter",
+          "label": "controls.cooling",
+          "value": "controls.then.counter"
+        }
+      }
+    },
+    {
+      "eggFrom": "room",
+      "startMode": "cold",
+      "sousVide": false,
+      "afterBoil": "hold",
+      "cooling": "ice",
+      "keys": {
+        "egg": {
+          "text": "setup.egg",
+          "label": "controls.egg",
+          "value": null
+        },
+        "from": {
+          "text": "setup.from.room",
+          "label": "controls.eggFrom",
+          "value": "controls.eggFrom.room"
+        },
+        "start": {
+          "text": "setup.start.cold",
+          "label": "controls.start",
+          "value": "controls.start.cold"
+        },
+        "cooling": {
+          "text": "setup.cooling.ice",
+          "label": "controls.cooling",
+          "value": "controls.then.ice"
+        }
+      }
+    },
+    {
+      "eggFrom": "room",
+      "startMode": "cold",
+      "sousVide": false,
+      "afterBoil": "hold",
+      "cooling": "tap",
+      "keys": {
+        "egg": {
+          "text": "setup.egg",
+          "label": "controls.egg",
+          "value": null
+        },
+        "from": {
+          "text": "setup.from.room",
+          "label": "controls.eggFrom",
+          "value": "controls.eggFrom.room"
+        },
+        "start": {
+          "text": "setup.start.cold",
+          "label": "controls.start",
+          "value": "controls.start.cold"
+        },
+        "cooling": {
+          "text": "setup.cooling.tap",
+          "label": "controls.cooling",
+          "value": "controls.then.tap"
+        }
+      }
+    },
+    {
+      "eggFrom": "room",
+      "startMode": "cold",
+      "sousVide": false,
+      "afterBoil": "hold",
+      "cooling": "counter",
+      "keys": {
+        "egg": {
+          "text": "setup.egg",
+          "label": "controls.egg",
+          "value": null
+        },
+        "from": {
+          "text": "setup.from.room",
+          "label": "controls.eggFrom",
+          "value": "controls.eggFrom.room"
+        },
+        "start": {
+          "text": "setup.start.cold",
+          "label": "controls.start",
+          "value": "controls.start.cold"
+        },
+        "cooling": {
+          "text": "setup.cooling.counter",
+          "label": "controls.cooling",
+          "value": "controls.then.counter"
+        }
+      }
+    },
+    {
+      "eggFrom": "room",
+      "startMode": "cold",
+      "sousVide": false,
+      "afterBoil": "off",
+      "cooling": "ice",
+      "keys": {
+        "egg": {
+          "text": "setup.egg",
+          "label": "controls.egg",
+          "value": null
+        },
+        "from": {
+          "text": "setup.from.room",
+          "label": "controls.eggFrom",
+          "value": "controls.eggFrom.room"
+        },
+        "start": {
+          "text": "setup.start.coldStanding",
+          "label": "controls.start",
+          "value": "controls.start.cold"
+        },
+        "cooling": {
+          "text": "setup.cooling.ice",
+          "label": "controls.cooling",
+          "value": "controls.then.ice"
+        }
+      }
+    },
+    {
+      "eggFrom": "room",
+      "startMode": "cold",
+      "sousVide": false,
+      "afterBoil": "off",
+      "cooling": "tap",
+      "keys": {
+        "egg": {
+          "text": "setup.egg",
+          "label": "controls.egg",
+          "value": null
+        },
+        "from": {
+          "text": "setup.from.room",
+          "label": "controls.eggFrom",
+          "value": "controls.eggFrom.room"
+        },
+        "start": {
+          "text": "setup.start.coldStanding",
+          "label": "controls.start",
+          "value": "controls.start.cold"
+        },
+        "cooling": {
+          "text": "setup.cooling.tap",
+          "label": "controls.cooling",
+          "value": "controls.then.tap"
+        }
+      }
+    },
+    {
+      "eggFrom": "room",
+      "startMode": "cold",
+      "sousVide": false,
+      "afterBoil": "off",
+      "cooling": "counter",
+      "keys": {
+        "egg": {
+          "text": "setup.egg",
+          "label": "controls.egg",
+          "value": null
+        },
+        "from": {
+          "text": "setup.from.room",
+          "label": "controls.eggFrom",
+          "value": "controls.eggFrom.room"
+        },
+        "start": {
+          "text": "setup.start.coldStanding",
+          "label": "controls.start",
+          "value": "controls.start.cold"
+        },
+        "cooling": {
+          "text": "setup.cooling.counter",
+          "label": "controls.cooling",
+          "value": "controls.then.counter"
+        }
+      }
+    },
+    {
+      "eggFrom": "room",
+      "startMode": "cold",
+      "sousVide": true,
+      "afterBoil": "hold",
+      "cooling": "ice",
+      "keys": {
+        "egg": {
+          "text": "setup.egg",
+          "label": "controls.egg",
+          "value": null
+        },
+        "from": {
+          "text": "setup.from.room",
+          "label": "controls.eggFrom",
+          "value": "controls.eggFrom.room"
+        },
+        "start": {
+          "text": "setup.start.sous",
+          "label": "controls.start",
+          "value": "controls.start.sousVide"
+        },
+        "cooling": {
+          "text": "setup.cooling.ice",
+          "label": "controls.cooling",
+          "value": "controls.then.ice"
+        }
+      }
+    },
+    {
+      "eggFrom": "room",
+      "startMode": "cold",
+      "sousVide": true,
+      "afterBoil": "hold",
+      "cooling": "tap",
+      "keys": {
+        "egg": {
+          "text": "setup.egg",
+          "label": "controls.egg",
+          "value": null
+        },
+        "from": {
+          "text": "setup.from.room",
+          "label": "controls.eggFrom",
+          "value": "controls.eggFrom.room"
+        },
+        "start": {
+          "text": "setup.start.sous",
+          "label": "controls.start",
+          "value": "controls.start.sousVide"
+        },
+        "cooling": {
+          "text": "setup.cooling.tap",
+          "label": "controls.cooling",
+          "value": "controls.then.tap"
+        }
+      }
+    },
+    {
+      "eggFrom": "room",
+      "startMode": "cold",
+      "sousVide": true,
+      "afterBoil": "hold",
+      "cooling": "counter",
+      "keys": {
+        "egg": {
+          "text": "setup.egg",
+          "label": "controls.egg",
+          "value": null
+        },
+        "from": {
+          "text": "setup.from.room",
+          "label": "controls.eggFrom",
+          "value": "controls.eggFrom.room"
+        },
+        "start": {
+          "text": "setup.start.sous",
+          "label": "controls.start",
+          "value": "controls.start.sousVide"
+        },
+        "cooling": {
+          "text": "setup.cooling.counter",
+          "label": "controls.cooling",
+          "value": "controls.then.counter"
+        }
+      }
+    },
+    {
+      "eggFrom": "room",
+      "startMode": "cold",
+      "sousVide": true,
+      "afterBoil": "off",
+      "cooling": "ice",
+      "keys": {
+        "egg": {
+          "text": "setup.egg",
+          "label": "controls.egg",
+          "value": null
+        },
+        "from": {
+          "text": "setup.from.room",
+          "label": "controls.eggFrom",
+          "value": "controls.eggFrom.room"
+        },
+        "start": {
+          "text": "setup.start.sous",
+          "label": "controls.start",
+          "value": "controls.start.sousVide"
+        },
+        "cooling": {
+          "text": "setup.cooling.ice",
+          "label": "controls.cooling",
+          "value": "controls.then.ice"
+        }
+      }
+    },
+    {
+      "eggFrom": "room",
+      "startMode": "cold",
+      "sousVide": true,
+      "afterBoil": "off",
+      "cooling": "tap",
+      "keys": {
+        "egg": {
+          "text": "setup.egg",
+          "label": "controls.egg",
+          "value": null
+        },
+        "from": {
+          "text": "setup.from.room",
+          "label": "controls.eggFrom",
+          "value": "controls.eggFrom.room"
+        },
+        "start": {
+          "text": "setup.start.sous",
+          "label": "controls.start",
+          "value": "controls.start.sousVide"
+        },
+        "cooling": {
+          "text": "setup.cooling.tap",
+          "label": "controls.cooling",
+          "value": "controls.then.tap"
+        }
+      }
+    },
+    {
+      "eggFrom": "room",
+      "startMode": "cold",
+      "sousVide": true,
+      "afterBoil": "off",
+      "cooling": "counter",
+      "keys": {
+        "egg": {
+          "text": "setup.egg",
+          "label": "controls.egg",
+          "value": null
+        },
+        "from": {
+          "text": "setup.from.room",
+          "label": "controls.eggFrom",
+          "value": "controls.eggFrom.room"
+        },
+        "start": {
+          "text": "setup.start.sous",
+          "label": "controls.start",
+          "value": "controls.start.sousVide"
+        },
+        "cooling": {
+          "text": "setup.cooling.counter",
+          "label": "controls.cooling",
+          "value": "controls.then.counter"
+        }
+      }
+    },
+    {
+      "eggFrom": "custom",
+      "startMode": "hot",
+      "sousVide": false,
+      "afterBoil": "hold",
+      "cooling": "ice",
+      "keys": {
+        "egg": {
+          "text": "setup.egg",
+          "label": "controls.egg",
+          "value": null
+        },
+        "from": {
+          "text": "setup.from.custom",
+          "label": "controls.eggFrom",
+          "value": null
+        },
+        "start": {
+          "text": "setup.start.hot",
+          "label": "controls.start",
+          "value": "controls.start.hot"
+        },
+        "cooling": {
+          "text": "setup.cooling.ice",
+          "label": "controls.cooling",
+          "value": "controls.then.ice"
+        }
+      }
+    },
+    {
+      "eggFrom": "custom",
+      "startMode": "hot",
+      "sousVide": false,
+      "afterBoil": "hold",
+      "cooling": "tap",
+      "keys": {
+        "egg": {
+          "text": "setup.egg",
+          "label": "controls.egg",
+          "value": null
+        },
+        "from": {
+          "text": "setup.from.custom",
+          "label": "controls.eggFrom",
+          "value": null
+        },
+        "start": {
+          "text": "setup.start.hot",
+          "label": "controls.start",
+          "value": "controls.start.hot"
+        },
+        "cooling": {
+          "text": "setup.cooling.tap",
+          "label": "controls.cooling",
+          "value": "controls.then.tap"
+        }
+      }
+    },
+    {
+      "eggFrom": "custom",
+      "startMode": "hot",
+      "sousVide": false,
+      "afterBoil": "hold",
+      "cooling": "counter",
+      "keys": {
+        "egg": {
+          "text": "setup.egg",
+          "label": "controls.egg",
+          "value": null
+        },
+        "from": {
+          "text": "setup.from.custom",
+          "label": "controls.eggFrom",
+          "value": null
+        },
+        "start": {
+          "text": "setup.start.hot",
+          "label": "controls.start",
+          "value": "controls.start.hot"
+        },
+        "cooling": {
+          "text": "setup.cooling.counter",
+          "label": "controls.cooling",
+          "value": "controls.then.counter"
+        }
+      }
+    },
+    {
+      "eggFrom": "custom",
+      "startMode": "hot",
+      "sousVide": false,
+      "afterBoil": "off",
+      "cooling": "ice",
+      "keys": {
+        "egg": {
+          "text": "setup.egg",
+          "label": "controls.egg",
+          "value": null
+        },
+        "from": {
+          "text": "setup.from.custom",
+          "label": "controls.eggFrom",
+          "value": null
+        },
+        "start": {
+          "text": "setup.start.hotStanding",
+          "label": "controls.start",
+          "value": "controls.start.hot"
+        },
+        "cooling": {
+          "text": "setup.cooling.ice",
+          "label": "controls.cooling",
+          "value": "controls.then.ice"
+        }
+      }
+    },
+    {
+      "eggFrom": "custom",
+      "startMode": "hot",
+      "sousVide": false,
+      "afterBoil": "off",
+      "cooling": "tap",
+      "keys": {
+        "egg": {
+          "text": "setup.egg",
+          "label": "controls.egg",
+          "value": null
+        },
+        "from": {
+          "text": "setup.from.custom",
+          "label": "controls.eggFrom",
+          "value": null
+        },
+        "start": {
+          "text": "setup.start.hotStanding",
+          "label": "controls.start",
+          "value": "controls.start.hot"
+        },
+        "cooling": {
+          "text": "setup.cooling.tap",
+          "label": "controls.cooling",
+          "value": "controls.then.tap"
+        }
+      }
+    },
+    {
+      "eggFrom": "custom",
+      "startMode": "hot",
+      "sousVide": false,
+      "afterBoil": "off",
+      "cooling": "counter",
+      "keys": {
+        "egg": {
+          "text": "setup.egg",
+          "label": "controls.egg",
+          "value": null
+        },
+        "from": {
+          "text": "setup.from.custom",
+          "label": "controls.eggFrom",
+          "value": null
+        },
+        "start": {
+          "text": "setup.start.hotStanding",
+          "label": "controls.start",
+          "value": "controls.start.hot"
+        },
+        "cooling": {
+          "text": "setup.cooling.counter",
+          "label": "controls.cooling",
+          "value": "controls.then.counter"
+        }
+      }
+    },
+    {
+      "eggFrom": "custom",
+      "startMode": "hot",
+      "sousVide": true,
+      "afterBoil": "hold",
+      "cooling": "ice",
+      "keys": {
+        "egg": {
+          "text": "setup.egg",
+          "label": "controls.egg",
+          "value": null
+        },
+        "from": {
+          "text": "setup.from.custom",
+          "label": "controls.eggFrom",
+          "value": null
+        },
+        "start": {
+          "text": "setup.start.sous",
+          "label": "controls.start",
+          "value": "controls.start.sousVide"
+        },
+        "cooling": {
+          "text": "setup.cooling.ice",
+          "label": "controls.cooling",
+          "value": "controls.then.ice"
+        }
+      }
+    },
+    {
+      "eggFrom": "custom",
+      "startMode": "hot",
+      "sousVide": true,
+      "afterBoil": "hold",
+      "cooling": "tap",
+      "keys": {
+        "egg": {
+          "text": "setup.egg",
+          "label": "controls.egg",
+          "value": null
+        },
+        "from": {
+          "text": "setup.from.custom",
+          "label": "controls.eggFrom",
+          "value": null
+        },
+        "start": {
+          "text": "setup.start.sous",
+          "label": "controls.start",
+          "value": "controls.start.sousVide"
+        },
+        "cooling": {
+          "text": "setup.cooling.tap",
+          "label": "controls.cooling",
+          "value": "controls.then.tap"
+        }
+      }
+    },
+    {
+      "eggFrom": "custom",
+      "startMode": "hot",
+      "sousVide": true,
+      "afterBoil": "hold",
+      "cooling": "counter",
+      "keys": {
+        "egg": {
+          "text": "setup.egg",
+          "label": "controls.egg",
+          "value": null
+        },
+        "from": {
+          "text": "setup.from.custom",
+          "label": "controls.eggFrom",
+          "value": null
+        },
+        "start": {
+          "text": "setup.start.sous",
+          "label": "controls.start",
+          "value": "controls.start.sousVide"
+        },
+        "cooling": {
+          "text": "setup.cooling.counter",
+          "label": "controls.cooling",
+          "value": "controls.then.counter"
+        }
+      }
+    },
+    {
+      "eggFrom": "custom",
+      "startMode": "hot",
+      "sousVide": true,
+      "afterBoil": "off",
+      "cooling": "ice",
+      "keys": {
+        "egg": {
+          "text": "setup.egg",
+          "label": "controls.egg",
+          "value": null
+        },
+        "from": {
+          "text": "setup.from.custom",
+          "label": "controls.eggFrom",
+          "value": null
+        },
+        "start": {
+          "text": "setup.start.sous",
+          "label": "controls.start",
+          "value": "controls.start.sousVide"
+        },
+        "cooling": {
+          "text": "setup.cooling.ice",
+          "label": "controls.cooling",
+          "value": "controls.then.ice"
+        }
+      }
+    },
+    {
+      "eggFrom": "custom",
+      "startMode": "hot",
+      "sousVide": true,
+      "afterBoil": "off",
+      "cooling": "tap",
+      "keys": {
+        "egg": {
+          "text": "setup.egg",
+          "label": "controls.egg",
+          "value": null
+        },
+        "from": {
+          "text": "setup.from.custom",
+          "label": "controls.eggFrom",
+          "value": null
+        },
+        "start": {
+          "text": "setup.start.sous",
+          "label": "controls.start",
+          "value": "controls.start.sousVide"
+        },
+        "cooling": {
+          "text": "setup.cooling.tap",
+          "label": "controls.cooling",
+          "value": "controls.then.tap"
+        }
+      }
+    },
+    {
+      "eggFrom": "custom",
+      "startMode": "hot",
+      "sousVide": true,
+      "afterBoil": "off",
+      "cooling": "counter",
+      "keys": {
+        "egg": {
+          "text": "setup.egg",
+          "label": "controls.egg",
+          "value": null
+        },
+        "from": {
+          "text": "setup.from.custom",
+          "label": "controls.eggFrom",
+          "value": null
+        },
+        "start": {
+          "text": "setup.start.sous",
+          "label": "controls.start",
+          "value": "controls.start.sousVide"
+        },
+        "cooling": {
+          "text": "setup.cooling.counter",
+          "label": "controls.cooling",
+          "value": "controls.then.counter"
+        }
+      }
+    },
+    {
+      "eggFrom": "custom",
+      "startMode": "cold",
+      "sousVide": false,
+      "afterBoil": "hold",
+      "cooling": "ice",
+      "keys": {
+        "egg": {
+          "text": "setup.egg",
+          "label": "controls.egg",
+          "value": null
+        },
+        "from": {
+          "text": "setup.from.custom",
+          "label": "controls.eggFrom",
+          "value": null
+        },
+        "start": {
+          "text": "setup.start.cold",
+          "label": "controls.start",
+          "value": "controls.start.cold"
+        },
+        "cooling": {
+          "text": "setup.cooling.ice",
+          "label": "controls.cooling",
+          "value": "controls.then.ice"
+        }
+      }
+    },
+    {
+      "eggFrom": "custom",
+      "startMode": "cold",
+      "sousVide": false,
+      "afterBoil": "hold",
+      "cooling": "tap",
+      "keys": {
+        "egg": {
+          "text": "setup.egg",
+          "label": "controls.egg",
+          "value": null
+        },
+        "from": {
+          "text": "setup.from.custom",
+          "label": "controls.eggFrom",
+          "value": null
+        },
+        "start": {
+          "text": "setup.start.cold",
+          "label": "controls.start",
+          "value": "controls.start.cold"
+        },
+        "cooling": {
+          "text": "setup.cooling.tap",
+          "label": "controls.cooling",
+          "value": "controls.then.tap"
+        }
+      }
+    },
+    {
+      "eggFrom": "custom",
+      "startMode": "cold",
+      "sousVide": false,
+      "afterBoil": "hold",
+      "cooling": "counter",
+      "keys": {
+        "egg": {
+          "text": "setup.egg",
+          "label": "controls.egg",
+          "value": null
+        },
+        "from": {
+          "text": "setup.from.custom",
+          "label": "controls.eggFrom",
+          "value": null
+        },
+        "start": {
+          "text": "setup.start.cold",
+          "label": "controls.start",
+          "value": "controls.start.cold"
+        },
+        "cooling": {
+          "text": "setup.cooling.counter",
+          "label": "controls.cooling",
+          "value": "controls.then.counter"
+        }
+      }
+    },
+    {
+      "eggFrom": "custom",
+      "startMode": "cold",
+      "sousVide": false,
+      "afterBoil": "off",
+      "cooling": "ice",
+      "keys": {
+        "egg": {
+          "text": "setup.egg",
+          "label": "controls.egg",
+          "value": null
+        },
+        "from": {
+          "text": "setup.from.custom",
+          "label": "controls.eggFrom",
+          "value": null
+        },
+        "start": {
+          "text": "setup.start.coldStanding",
+          "label": "controls.start",
+          "value": "controls.start.cold"
+        },
+        "cooling": {
+          "text": "setup.cooling.ice",
+          "label": "controls.cooling",
+          "value": "controls.then.ice"
+        }
+      }
+    },
+    {
+      "eggFrom": "custom",
+      "startMode": "cold",
+      "sousVide": false,
+      "afterBoil": "off",
+      "cooling": "tap",
+      "keys": {
+        "egg": {
+          "text": "setup.egg",
+          "label": "controls.egg",
+          "value": null
+        },
+        "from": {
+          "text": "setup.from.custom",
+          "label": "controls.eggFrom",
+          "value": null
+        },
+        "start": {
+          "text": "setup.start.coldStanding",
+          "label": "controls.start",
+          "value": "controls.start.cold"
+        },
+        "cooling": {
+          "text": "setup.cooling.tap",
+          "label": "controls.cooling",
+          "value": "controls.then.tap"
+        }
+      }
+    },
+    {
+      "eggFrom": "custom",
+      "startMode": "cold",
+      "sousVide": false,
+      "afterBoil": "off",
+      "cooling": "counter",
+      "keys": {
+        "egg": {
+          "text": "setup.egg",
+          "label": "controls.egg",
+          "value": null
+        },
+        "from": {
+          "text": "setup.from.custom",
+          "label": "controls.eggFrom",
+          "value": null
+        },
+        "start": {
+          "text": "setup.start.coldStanding",
+          "label": "controls.start",
+          "value": "controls.start.cold"
+        },
+        "cooling": {
+          "text": "setup.cooling.counter",
+          "label": "controls.cooling",
+          "value": "controls.then.counter"
+        }
+      }
+    },
+    {
+      "eggFrom": "custom",
+      "startMode": "cold",
+      "sousVide": true,
+      "afterBoil": "hold",
+      "cooling": "ice",
+      "keys": {
+        "egg": {
+          "text": "setup.egg",
+          "label": "controls.egg",
+          "value": null
+        },
+        "from": {
+          "text": "setup.from.custom",
+          "label": "controls.eggFrom",
+          "value": null
+        },
+        "start": {
+          "text": "setup.start.sous",
+          "label": "controls.start",
+          "value": "controls.start.sousVide"
+        },
+        "cooling": {
+          "text": "setup.cooling.ice",
+          "label": "controls.cooling",
+          "value": "controls.then.ice"
+        }
+      }
+    },
+    {
+      "eggFrom": "custom",
+      "startMode": "cold",
+      "sousVide": true,
+      "afterBoil": "hold",
+      "cooling": "tap",
+      "keys": {
+        "egg": {
+          "text": "setup.egg",
+          "label": "controls.egg",
+          "value": null
+        },
+        "from": {
+          "text": "setup.from.custom",
+          "label": "controls.eggFrom",
+          "value": null
+        },
+        "start": {
+          "text": "setup.start.sous",
+          "label": "controls.start",
+          "value": "controls.start.sousVide"
+        },
+        "cooling": {
+          "text": "setup.cooling.tap",
+          "label": "controls.cooling",
+          "value": "controls.then.tap"
+        }
+      }
+    },
+    {
+      "eggFrom": "custom",
+      "startMode": "cold",
+      "sousVide": true,
+      "afterBoil": "hold",
+      "cooling": "counter",
+      "keys": {
+        "egg": {
+          "text": "setup.egg",
+          "label": "controls.egg",
+          "value": null
+        },
+        "from": {
+          "text": "setup.from.custom",
+          "label": "controls.eggFrom",
+          "value": null
+        },
+        "start": {
+          "text": "setup.start.sous",
+          "label": "controls.start",
+          "value": "controls.start.sousVide"
+        },
+        "cooling": {
+          "text": "setup.cooling.counter",
+          "label": "controls.cooling",
+          "value": "controls.then.counter"
+        }
+      }
+    },
+    {
+      "eggFrom": "custom",
+      "startMode": "cold",
+      "sousVide": true,
+      "afterBoil": "off",
+      "cooling": "ice",
+      "keys": {
+        "egg": {
+          "text": "setup.egg",
+          "label": "controls.egg",
+          "value": null
+        },
+        "from": {
+          "text": "setup.from.custom",
+          "label": "controls.eggFrom",
+          "value": null
+        },
+        "start": {
+          "text": "setup.start.sous",
+          "label": "controls.start",
+          "value": "controls.start.sousVide"
+        },
+        "cooling": {
+          "text": "setup.cooling.ice",
+          "label": "controls.cooling",
+          "value": "controls.then.ice"
+        }
+      }
+    },
+    {
+      "eggFrom": "custom",
+      "startMode": "cold",
+      "sousVide": true,
+      "afterBoil": "off",
+      "cooling": "tap",
+      "keys": {
+        "egg": {
+          "text": "setup.egg",
+          "label": "controls.egg",
+          "value": null
+        },
+        "from": {
+          "text": "setup.from.custom",
+          "label": "controls.eggFrom",
+          "value": null
+        },
+        "start": {
+          "text": "setup.start.sous",
+          "label": "controls.start",
+          "value": "controls.start.sousVide"
+        },
+        "cooling": {
+          "text": "setup.cooling.tap",
+          "label": "controls.cooling",
+          "value": "controls.then.tap"
+        }
+      }
+    },
+    {
+      "eggFrom": "custom",
+      "startMode": "cold",
+      "sousVide": true,
+      "afterBoil": "off",
+      "cooling": "counter",
+      "keys": {
+        "egg": {
+          "text": "setup.egg",
+          "label": "controls.egg",
+          "value": null
+        },
+        "from": {
+          "text": "setup.from.custom",
+          "label": "controls.eggFrom",
+          "value": null
+        },
+        "start": {
+          "text": "setup.start.sous",
+          "label": "controls.start",
+          "value": "controls.start.sousVide"
+        },
+        "cooling": {
+          "text": "setup.cooling.counter",
+          "label": "controls.cooling",
+          "value": "controls.then.counter"
+        }
+      }
+    }
+  ]
+}

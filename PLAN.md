@@ -693,6 +693,12 @@ LEAN_RATIO / LEVEL_LOW_Q / LEVEL_HIGH_Q / WHITE_RISK = 0.2
 interface Outcome { pTooSoft; pJustRight; pTooFirm; pWhiteRunny; levelLow; levelMedian; levelHigh; lean }
 predictOutcome(post, grid, cookTime_s, logTarget) / leanOf(pTooSoft, pTooFirm)
 
+// wording.ts  (which catalogue key each part of the screen says; fixtures/wording.json)
+refusalKey(verdict, cooling): CopyRef | null
+DIRECTION_LIKELY = 0.5 / directionKey(outcome) / whiteAtRisk(outcome) / rangeWords(outcome)
+phaseKeys({ phase, startMode, afterBoil, cooling, whiteSets, boilKnown, probeWanted }) → { label; subline; action | null; hint | null }
+pulledKey(cooling) / clauseKeys({ eggFrom, startMode, sousVide, afterBoil, cooling }) → Record<Clause, { text; label; value | null }>
+
 // language.ts  (F6: the English of 1750 - LANGUAGE.md §6)
 DEFAULT_LANGUAGE / PERIOD_LANGUAGE / LANGUAGES / FRESH_LANGUAGE
 interface LanguageState
