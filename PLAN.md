@@ -13,8 +13,8 @@ cook and learning. The web app (`src/`) and the iOS app (`ios/`) carry the same
 model, refusals, particle filter and choice of time (Phase E up to E5), the same
 catalogue of words in two Englishes (Phase F but for Czech), and the same
 layout (UI.md). `npm test` runs 244 tests: 243 pass and one is an open todo
-(E3's 5b, below). `npm run validate` passes 28/28, and `swift test` passes 105
-tests in 29 suites. **Nothing since 19 September is pushed**: `origin/main` is
+(E3's 5b, below). `npm run validate` passes 28/28, and `swift test` passes 107
+tests in 30 suites. **Nothing since 19 September is pushed**: `origin/main` is
 `2f341b4`, so the live site is the app from before E1, and every line below
 dated later is on local `main` only. The iOS app runs from Xcode on the owner's
 phone and has cooked real eggs; no TestFlight build is recorded
@@ -1021,42 +1021,43 @@ which wants E2's likelihood and enough standing cooks to identify it apart from
 
 ### Loose ends, 28 September
 
-Found while reconciling these documents with the code, and not fixed: small,
-and each worth doing. The QA pass should start from here.
+Found while reconciling these documents with the code. The owner approved
+a pass of the easy ones the same day, before the adversarial QA; what it did
+is ticked (LOGBOOK, "the loose ends, tied"). The QA pass should start from
+what is left.
 
-- **The web can still make an egg over 90 g.** `LIMITS.girth_mm` (90-200) and
-  `minor_mm` (30-60) in `src/core/policy.ts` and `Policy.swift` were not
-  narrowed with `mass_g`, and the web stores its egg as `customMinor_mm`, so
-  a width or girth typed in reaches about 160-195 g, and a stored 120 g egg
-  reloads as 120 g (0e0ec98 says it comes back as 90 g, which is true only on
-  iOS). No test holds the three limits to one another.
-- **`-noAlarmPrompt YES` still lets the system ask for notifications.** The
-  only `requestAuthorization` (`ios/App/Alarm.swift`) is guarded; the likely
-  asker is `Activity.request` in `LiveActivity.start`, reached straight after.
-  Untested hypothesis.
-- **The ticket's `oddsTenths` and `stillLearning` are written and never read**,
-  in `src/ui/app.ts` and `ios/App/Cook.swift`, and `EggRecord` has no field
-  for either. Several documents said the record kept them; corrected on 28
-  September. Either drop them from the ticket, or add them to the record if
-  E6's fit wants to know what the cook was told.
-- **`tools/unitsFixture.ts` still round-trips 120 g** as the mass limit's edge,
-  and not 90.
-- **Dead code:** `Kitchen.cookTime(timeToBoilS:level:leanS:)` in
-  `ios/App/Kitchen.swift` has no caller; `readout.phase.cooling` is
-  unreachable (a counter rest never cools); the Live Activity's done state
-  (`activity.stage.done`, `activity.note.done`, `activity.eat`) is never drawn
-  now that the card ends at once.
-- **Stale comments:** `ios/EggTimerCore/Package.swift` justifies `-O` by "the
-  play-safe line"; `ios/Shared/CookActivity.swift` says two stages count down
-  (three do); "7/10 eggs hit the mark" is described as on screen in
-  `src/core/decide.ts`, `outcome.ts`, `reach.ts` and `Decide.swift`;
-  `ios/App/PrivacyInfo.xcprivacy`'s comment omits `LanguageChoice.swift`.
-- **A false line in the copy:** `controls.units.more` and `.more.ios` say
-  switching units "changes only how I write the numbers", but on an English
-  page it also switches to 1750.
-- **Untested:** which pull line each cooling gets (`CookActivity.pullLineKey`;
-  the iOS app project has no test target), the card ending with the cooling,
-  and the web's running sentence.
+- [x] **The web can make an egg over 90 g. Accepted as is**, on the owner's
+  word: "the 90 g cap doesn't need to be hard; if the user gets to a weird
+  place by dragging some slider, that's on them". `LIMITS.girth_mm` (90-200)
+  and `minor_mm` (30-60) stay as they are, so a width or girth typed in on
+  the web reaches about 160-195 g, and a stored 120 g egg reloads as 120 g.
+  `0e0ec98`'s message overstates the web (it is true only on iOS); LOGBOOK
+  says so.
+- [x] **`-noAlarmPrompt YES` and the notification prompt: not reproduced.**
+  On the iPhone 17 simulator (iOS 27.0), a fresh install launched with the
+  flag and `-uiScreen heating` started a cook, and `Activity.request` ran
+  (the Live Activity began), with no alert, at the start or on a relaunch
+  that restored the cook. The report was from a fresh iOS 26.5 simulator;
+  whether `Activity.request` asks there is still untested. No change.
+- [x] **The ticket's `oddsTenths` and `stillLearning`** are dropped from both
+  apps' tickets; a saved cook that still has them restores. What E6 keeps
+  instead is the full forecast (INFERENCE.md §7, §11.12).
+- [x] **`tools/unitsFixture.ts`** round-trips 90 g, the mass limit's edge.
+- [x] **Dead code:** `Kitchen.cookTime(timeToBoilS:level:leanS:)` gone (its
+  comment is on `cookResult`); `readout.phase.cooling` retired; the Live
+  Activity's done words (`activity.stage.done`, `activity.note.done`,
+  `activity.eat`) retired, and the card now ends on the content it last
+  showed. `CookActivity.Stage.done` stays: an older build's card may still
+  be done, and draws with `readout.phase.done`.
+- [x] **Stale comments** fixed: `Package.swift`, `CookActivity.swift`'s stage
+  count, the "7/10 … as shown" comments in `decide.ts`, `outcome.ts`,
+  `reach.ts` and `Decide.swift`, and the privacy manifest's list.
+- [x] **The units' (i)** now says switching "may change my words too" (the
+  `loose` draft, LANGUAGE.md §3).
+- [x] **Which pull line each cooling gets** is tested: `pullLineKey` is in
+  EggTimerCopy, and `swift test` holds its four answers and both catalogues.
+- [ ] **Still untested:** the card ending with the cooling, and the web's
+  running sentence.
 
 ### Still open from the list of 18-21 September
 

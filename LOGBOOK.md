@@ -2367,3 +2367,77 @@ lists the loose ends found. No code changed.
   learning" and the odds on the Lock Screen were written up as live in
   places; the pull alarm naming the cooling (`2c090c9`) had no entry in
   `LANGUAGE.md`; `ios/README.md`'s port table stopped at `sousvide.ts`.
+
+## 28 September 2026: the loose ends, tied
+
+The owner approved a pass of the easy loose ends in `PLAN.md` before the
+adversarial QA. On `5d71a3c`.
+
+- **The ticket's odds are gone.** `oddsTenths` and `stillLearning` came off
+  both apps' tickets. A saved cook that still carries them restores: the
+  web's `restoreTicket` reads only the fields it names, and iOS's
+  synthesized decoder ignores keys it does not know. The `Decision` keeps
+  both (the reach, the advice and `tools/decide.ts` read them).
+- **The owner's decision 12** (`INFERENCE.md` §11): calibration is checked
+  with proper scoring rules - the log score first, the ranked probability
+  score reported, CRPS or log density for probe readings, reliability
+  diagrams and randomised PIT histograms for display - and E6 stores each
+  egg's full forecast at "Eggs in" and a model version. Written into §6, §7
+  and §9 and pointed to from PLAN's E6 and E7. Nothing built.
+- **The 90 g cap is soft, by the owner's word.** "The 90 g cap doesn't need
+  to be hard; if the user gets to a weird place by dragging some slider,
+  that's on them." So the girth and width limits stay wide. For the record,
+  `0e0ec98`'s message ("A stored mass above the cap comes back as 90 g")
+  overstates the web: a web egg entered by width or girth, or stored as a
+  minor diameter (`customMinor_mm`), can exceed 90 g. Accepted.
+  `tools/unitsFixture.ts` now round-trips 90 g, not 120; `fixtures/units.json`
+  regenerated.
+- **`-noAlarmPrompt YES` did not reproduce.** On the iPhone 17 simulator
+  (`AEF03BE2`, iOS 27.0) the app was uninstalled and reinstalled - the
+  simulator then had no notification settings for it - and launched with
+  `-noAlarmPrompt YES -uiScreen heating`, and again with `-uiLanguage en`
+  added, as the earlier entry had it. The cook started, `Activity.request`
+  ran (`liveactivitiesd` logged the activity, with "Authorization options
+  type: First Permission", and the Dynamic Island showed it), and no alert
+  appeared: screenshots at 5 and 10 s, and after a terminate and relaunch
+  that restored the cook. The only sign of asking was SpringBoard's own
+  "Allow Live Activities from Actual Egg Timer?" in Notification Centre,
+  which is not an alert. The earlier sighting was on a fresh iOS 26.5
+  simulator; `Activity.request` there is still the likely asker, but that
+  is untested, and no runtime but this one was used. No fix: skipping the
+  Live Activity under the flag would hide the card the flag's screenshots
+  are often for.
+- **The pull line is tested.** `pullLineKey(cooling:)` moved from
+  `CookActivity` into EggTimerCopy (`PullLine.swift`), called by `Alarm` and
+  the widget; `PullLineTests` holds ice, tap, counter and nil to
+  `alarm.pull.bodyIce`/`Tap`/`Counter`/`Ice`, and each key to both
+  catalogues' own messages.
+- **Dead code and words.** `Kitchen.cookTime` (no caller) went, its comment
+  onto `cookResult`. `readout.phase.cooling` went: only a counter rest named
+  it, and a counter rest has no cooling deadline. The card's done state:
+  `LiveActivity.finish` now ends on the content last shown (`end(nil,
+  .immediate)`) instead of pushing a done state it dismisses at once, so
+  `activity.stage.done`, `activity.note.done` and `activity.eat` could go.
+  **A decision of my own:** `CookActivity.Stage.done` stays, because a card
+  an older build ended as done (with its old two-minute dismissal) could be
+  drawn by the new widget across an update; it draws as the app's "Done"
+  (`readout.phase.done`, the same words in both Englishes) with no note and
+  no big word.
+- **The units' (i)** now says switching "changes how I write the numbers,
+  and may change my words too"; 1750, "and may alter my words besides". The
+  old 1750 line, "and, from the imperial, the stile of my English", also
+  said too much, since a 1750 chosen in the picker stays when the units go
+  back to metric. The `loose` draft (base `5d71a3c`) lists these and the
+  four retired keys; `copyLiterals.js --since 5d71a3c loose` shows the six
+  and nothing else.
+- **Stale comments** fixed in `Package.swift`, `CookActivity.swift`,
+  `decide.ts`, `outcome.ts`, `reach.ts`, `Decide.swift`, the privacy
+  manifest, and the "kept with every egg" notes in `app.ts` and
+  `ContentView.swift`.
+
+**Run:** `npm test`, 244 tests: 243 pass, 1 todo. `npm run validate` 28/28.
+`npm run conformance` and `swift test`: 107 tests in 30 suites pass. The app
+builds for the iPhone 17 simulator.
+
+**Not verified:** nothing was tapped; the Lock Screen card was not looked at
+after the done-state change, and an older build's done card was not tried.
