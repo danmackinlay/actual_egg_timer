@@ -72,7 +72,7 @@ async function openApp(now) {
   for (let i = 0; i < 200; i++) {
     const d = frame.contentDocument;
     const label = d && d.getElementById('phaseLabel');
-    const value = d && d.getElementById('donenessValue');
+    const value = d && d.getElementById('donenessPeak');
     if (label && label.textContent !== '' && value && value.textContent !== '') break;
     await sleep(25);
   }
@@ -121,35 +121,13 @@ const toPull = { name: 'to pull', run: async () => { win().__now = storedMachine
 const toLeft = (s) => ({ name: `${s}s left`, run: async () => { win().__now = storedMachine().cookEnd_ms - s * 1000; await sleep(500); } });
 const toCoolEnd = { name: 'to cool end', run: async () => { win().__now = storedMachine().coolEnd_ms + 1000; await sleep(500); } };
 const reopen = { name: 'reload', run: async () => { await openApp(win().__now); } };
-/** Before E2 the white question had its own block, shown only sometimes;
- *  since, it is always on screen beside the yolk's. */
-const ifWhite = (inner) => ({
-  name: 'white question if asked',
-  run: async () => {
-    const block = doc().getElementById('whiteFeedback');
-    if (block === null || !block.hidden) await inner.run();
-  },
-});
-/** The first of these that the build has: E1's "set" or E2's "firm". */
-const clickAny = (selectors) => ({
-  name: `click ${selectors[0]}`,
-  run: async () => {
-    for (const sel of selectors) {
-      const el = doc().querySelector(sel);
-      if (el !== null) { el.click(); break; }
-    }
-    await sleep(60);
-  },
-});
 /** Wait until the feedback fold is done: no note says "learning…". */
 const learned = {
   name: 'learned',
   run: async () => {
     for (let i = 0; i < 400; i++) {
       const note = doc().getElementById('calibNote').textContent;
-      const whiteNote = doc().getElementById('whiteNote');
-      const white = whiteNote === null ? '' : whiteNote.textContent;
-      if (!note.includes('…') && !white.includes('…')) break;
+      if (!note.includes('…')) break;
       await sleep(50);
     }
     await sleep(300);
@@ -162,7 +140,7 @@ const cookThrough = [
   click('#primary'), advance(400), click('#primary'), advance(60), toPull,
   click('#primary'), toCoolEnd,
   click('button.fb[data-fb="-1"]'), learned,
-  ifWhite(click('button.wb[data-white="runny"]')), learned,
+  click('button.wb[data-white="runny"]'), learned,
   click('#primary'),
 ];
 
@@ -207,7 +185,7 @@ const SCENARIOS = [
     settings: { muted: true },
     // Since the redesign, Forget asks first; before it, there is nothing to
     // confirm and the second step does nothing.
-    steps: [...cookThrough, ...cookThrough, click('#forget'), clickAny(['#forgetYes'])],
+    steps: [...cookThrough, ...cookThrough, click('#forget'), click('#forgetYes')],
   },
   {
     // Before E2 the note after an answer said how many eggs; since, it says
@@ -227,20 +205,20 @@ const SCENARIOS = [
     settings: { muted: true, startMode: 'hot', cooling: 'tap', doneness: 0.22 },
     steps: [click('#primary'), advance(30), toPull, click('#primary'), toCoolEnd,
       click('button.fb[data-fb="1"]'), learned,
-      ifWhite(clickAny(['button.wb[data-white="set"]', 'button.wb[data-white="firm"]'])), learned, click('#primary')],
+      click('button.wb[data-white="firm"]'), learned, click('#primary')],
   },
   {
     name: 'hot soft, the white alone, then a reload',
     settings: { muted: true, startMode: 'hot', doneness: 0.22 },
     steps: [click('#primary'), toPull, click('#primary'), toCoolEnd,
-      ifWhite(clickAny(['button.wb[data-white="tender"]', 'button.wb[data-white="runny"]'])), learned,
+      click('button.wb[data-white="tender"]'), learned,
       reopen, click('#primary')],
   },
   {
     name: 'hot jammy, the white and then the yolk',
     settings: { muted: true, startMode: 'hot' },
     steps: [click('#primary'), toPull, click('#primary'), toCoolEnd,
-      ifWhite(clickAny(['button.wb[data-white="firm"]', 'button.wb[data-white="set"]'])), learned,
+      click('button.wb[data-white="firm"]'), learned,
       click('button.fb[data-fb="0"]'), learned, click('#primary')],
   },
   {
@@ -248,7 +226,7 @@ const SCENARIOS = [
     settings: { muted: true, startMode: 'hot', doneness: 0 },
     steps: [click('#primary'), toPull, click('#primary'), toCoolEnd,
       click('button.fb[data-fb="0"]'), learned,
-      ifWhite(click('button.wb[data-white="runny"]')), learned],
+      click('button.wb[data-white="runny"]'), learned],
   },
   {
     name: 'hot counter',

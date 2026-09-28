@@ -82,7 +82,7 @@ Baseline, all green:
 - Fix: reword the templates so the inserted word can keep its capital, or add `*.inline` lower-case keys. At minimum use `toLocaleLowerCase(activeLocale())`.
 - LANGUAGE.md:105-107 calls this debt.
 
-**2.6 ✔ `tools/copy-snapshot.html:75` waits for `#donenessValue`, which no longer exists.**
+**DONE: 2.6 ✔ `tools/copy-snapshot.html:75` waits for `#donenessValue`, which no longer exists.**
 - Effect: every `openApp` burns its full 5 s timeout, so the web half of the copy proof "boots" by timeout.
 - Fix: wait on `#donenessPeak`, and drop the E1-era `#whiteFeedback` / `#whiteNote` probes (lines 124-151).
 
