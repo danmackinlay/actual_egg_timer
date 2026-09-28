@@ -223,6 +223,21 @@ final class Kitchen {
     /// Under low odds, what would make this cook more reliable, as catalogue
     /// keys in the order shown; empty when there is nothing to say.
     private(set) var advice: [String] = []
+    /// What the direction, the white's line and the bracket are about, and what
+    /// a cook started now carries on its ticket: the choice on screen's outcome,
+    /// once this pot's surface has landed. Nil before that, where the white
+    /// never sets, and in sous-vide.
+    var shownForecast: Outcome? {
+        guard !isSousVide, decision != nil, solution?.whiteSets == true else { return nil }
+        return outcome
+    }
+    /// Whether the odds on screen are low enough to point the cook at Help
+    /// (`adviceWanted` in Reach.swift): under 5/10, or 3/10 short of the best
+    /// level's. Never in sous-vide, or where the white never sets.
+    var adviceWanted: Bool {
+        guard !isSousVide, solution?.whiteSets == true, let d = decision else { return false }
+        return EggTimerCore.adviceWanted(d.oddsTenths, profile: oddsProfile)
+    }
     /// Profiles asked for and not yet in, so each lands once.
     private var profilesAsked = Set<String>()
 
@@ -486,7 +501,7 @@ final class Kitchen {
         if answer.profile == nil {
             chosen.missing.append(decisionInputs(calibration, egg: egg, setup: answer.setup))
         }
-        guard answer.solution.whiteSets, adviceWanted(d.oddsTenths, profile: answer.profile) else {
+        guard answer.solution.whiteSets, EggTimerCore.adviceWanted(d.oddsTenths, profile: answer.profile) else {
             return chosen
         }
         var priced: [(key: String, profile: OddsProfile)] = []

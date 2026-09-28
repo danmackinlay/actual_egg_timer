@@ -690,3 +690,33 @@ final class Cook {
         activity { await LiveActivity.update(state) }
     }
 }
+
+extension Cook.Ticket {
+    /// Everything the cook is, frozen at "Eggs in", off the kitchen as it
+    /// stands and the solution being started. The calibration learns from this
+    /// and from nothing else, so a slider left somewhere different afterwards
+    /// cannot rewrite what was cooked.
+    @MainActor
+    init(kitchen: Kitchen, solution: Solution) {
+        self.init(
+            doneness: kitchen.label,
+            peakYolkC: solution.result.peakYolkC,
+            level: kitchen.doneness,
+            egg: kitchen.egg,
+            setup: kitchen.setup,
+            massFrom: kitchen.massFrom,
+            sizeTable: kitchen.sizeTable,
+            startTemp: kitchen.startTemp,
+            boilRemembered: kitchen.hasBoilMemory,
+            units: kitchen.units,
+            lang: Copy.activeLocale,
+            // The choice on screen, if it has been made: the time started IS
+            // the chosen one, and a mid-cook re-solve carries its lean.
+            leanS: kitchen.decision?.leanS ?? 0,
+            forecast: kitchen.shownForecast,
+            // The cooling counts to the yolk's peak for this cook (E4).
+            coolS: coolingSecondsFor(solution.result),
+            probeMoment: probeMomentFor(solution.result, cooling: kitchen.cooling)
+        )
+    }
+}
