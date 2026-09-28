@@ -168,7 +168,7 @@ Put one LOGBOOK line on the decision: "owner, 28 Sep: no post-19-Sep build shipp
   - Bump `COOK_KEY` to `aet.cook.v2` (`store.ts:27`). Also update `tools/copy-snapshot.html:109`, which reads the key by name.
   - Make the ticket fields required.
   - Delete the fallbacks at `app.ts:2222-2248`, `app.ts:984`, `machine.ts:275-285`, and `Ticket.peakYolk_C: number | null`.
-- Web calibration:
+- DONE: Web calibration:
   - Drop the v3 ("E1") replay path: `E1_KEY`, the `'replayed'` branch of `decodeKept`, `calibration.ts:54-66,354-365,421-423`, and tests 3b and :245 in `record.test.ts`.
   - Add `aet.calibration.v3` to `SUPERSEDED_KEYS`.
   - **Keep the v2 path**: the live site writes v2.

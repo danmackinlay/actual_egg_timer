@@ -9,11 +9,9 @@
  * Since E1 the answer is not thrown away once folded. Each egg is kept as a
  * record (INFERENCE.md section 4) in a log beside the posterior, and the
  * posterior is what `replay` makes of that log - so a later change to the
- * likelihood replays the eggs instead of discarding what they taught. E2 was
- * the first such change: on first load it reads E1's log and folds it again,
- * from the prior, under the new likelihood. The stored posterior is a cache of
- * that replay: `folded` says how many records it has absorbed, and anything past
- * it is folded again on load.
+ * likelihood replays the eggs instead of discarding what they taught. The
+ * stored posterior is a cache of that replay: `folded` says how many records it
+ * has absorbed, and anything past it is folded again on load.
  *
  * The dose surface costs about two seconds to build and is built once per
  * logged egg, in a Web Worker (`gridWorker.ts`), so the page stays live while it
@@ -52,25 +50,11 @@ export const APP_VERSION = '0.2.0';
  *  has six numbers where E1's had three. */
 const KEY = 'aet.calibration.v4';
 
-/** E1's store: the log, a posterior folded under the first likelihood, and the
- *  frozen v2 base under it. Read ONCE, for its log.
- *
- *  The posterior and the base go. Both were folded under the likelihood E2
- *  replaced, and a base cannot be replayed at all: it is what the owner's eggs
- *  from before E1 taught, and those eggs were never written down. The owner
- *  decided on 26 September to drop them here rather than carry a posterior
- *  nothing can reproduce (INFERENCE.md section 11, item 6). The log is kept and
- *  folded again, from the prior, under the new likelihood - which is what the
- *  log was for.
- *
- *  Removed once a v4 has been written. */
-const E1_KEY = 'aet.calibration.v3';
-
-/** Every store before the log: the v2 posterior E1 froze as a base, and the v1
- *  one v2 replaced. Neither has a log behind it, so neither can be replayed
- *  under E2's likelihood, and both are deleted rather than read. A phone that
- *  still has a v2 and no v3 never ran E1, and starts from the prior. */
-const SUPERSEDED_KEYS = ['aet.calibration.v2', 'aet.calibration.v1'];
+/** Every store before this one, deleted rather than read: the v1 and v2
+ *  posteriors, which have no log behind them (v2 is what the live site of 19
+ *  September writes), and E1's v3, which only the owner's devices ever held
+ *  and whose log the owner let go on 28 September (D1). */
+const SUPERSEDED_KEYS = ['aet.calibration.v3', 'aet.calibration.v2', 'aet.calibration.v1'];
 
 /** Everything that is kept, and the one invariant that holds it together:
  *  `calibration` is `replay(base ?? prior, log.slice(0, folded))`. */
@@ -313,7 +297,7 @@ export function encodeKept(k: Kept): string {
 /** What loading found, for the caller that has to write it back and for the
  *  tests that check each path. */
 export type LoadPath =
-  | 'fresh' | 'loaded' | 'replayed' | 'rebased' | 'rebuild';
+  | 'fresh' | 'loaded' | 'rebased' | 'rebuild';
 
 export interface Decoded {
   kept: Kept;
@@ -335,11 +319,7 @@ function parseJSON(raw: string | null): unknown {
  * Every damaged part is refused, never read around, and what is refused depends
  * on what can still be trusted:
  *
- *  - no v4, an E1 store (v3) with a good log: `replayed`. Its posterior and its
- *    frozen base are dropped, and the log is folded again from the prior under
- *    E2's likelihood. The records need no change: E2's schema is E1's, with
- *    three more white answers a loader accepts.
- *  - no v4, and no v3 log that can be read: `fresh`, the prior.
+ *  - no v4 that can be read: `fresh`, the prior.
  *  - the posterior damaged, the log good: `rebuild`. The log is the truth, so
  *    the posterior is set back to its start and every record is folded again.
  *  - the log damaged: `rebased`. The records cannot be folded, but what they
@@ -352,17 +332,10 @@ function parseJSON(raw: string | null): unknown {
  *
  * Pure, so the tests can walk every path without a browser.
  */
-export function decodeKept(v4raw: string | null, v3raw: string | null): Decoded {
+export function decodeKept(v4raw: string | null): Decoded {
   const obj = parseJSON(v4raw);
   if (obj === null || typeof obj !== 'object' || (obj as { v?: unknown }).v !== 4) {
-    const v3 = parseJSON(v3raw);
-    const log = v3 !== null && typeof v3 === 'object' && (v3 as { v?: unknown }).v === 3
-      ? parseLog((v3 as { log?: unknown }).log) : null;
-    if (log === null) return { kept: freshKept(), path: 'fresh' };
-    return {
-      kept: { base: null, calibration: freshCalibration(), folded: 0, log: log },
-      path: 'replayed',
-    };
+    return { kept: freshKept(), path: 'fresh' };
   }
   const s = obj as Partial<Record<keyof StoredV4, unknown>>;
   let base: Calibration | null = null;
@@ -416,12 +389,9 @@ export function loadCalibration(): Calibration {
   // Whatever came before the log goes now, rather than sitting in storage
   // being neither read nor collected.
   for (const key of SUPERSEDED_KEYS) removeStorage(key);
-  const decoded = decodeKept(readStorage(KEY), readStorage(E1_KEY));
+  const decoded = decodeKept(readStorage(KEY));
   kept = decoded.kept;
   if (decoded.path !== 'loaded') save();
-  // The v3 key is the only copy of E1's log until a v4 holding it is written,
-  // and storage can refuse the write.
-  if (readStorage(KEY) !== null) removeStorage(E1_KEY);
   return kept.calibration;
 }
 
@@ -569,7 +539,6 @@ export function clearCalibration(): Calibration {
   live = -1;
   last = null;
   removeStorage(KEY);
-  removeStorage(E1_KEY);
   for (const key of SUPERSEDED_KEYS) removeStorage(key);
   kept = freshKept();
   return kept.calibration;

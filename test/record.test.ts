@@ -105,20 +105,6 @@ function assertIdentical(a: Calibration, b: Calibration, label: string): void {
   }
 }
 
-/** E1's store, as the web app wrote it: a three-number particle, the frozen v2
- *  base under it, and the log. Only the log survives E2. */
-function storedV3(log: EggRecord[], withBase: boolean): string {
-  const p = createPrior(16, 5);
-  const columns = {
-    n: 2, rng: p.rng,
-    a: p.particles.map((x) => x.alpha_m2s),
-    o: p.particles.map((x) => x.logDoseOffset),
-    t: p.particles.map((x) => x.tauAirScale),
-    w: p.weights,
-  };
-  return JSON.stringify({ v: 3, base: withBase ? columns : null, cal: columns, folded: log.length, log: log });
-}
-
 // --------------------------------------------------------------------------
 // 1. What a loader trusts
 // --------------------------------------------------------------------------
@@ -236,67 +222,52 @@ test('2d. an egg is scored at the pull when the cook said when, and at the sched
 // 3. The web app's keeping
 // --------------------------------------------------------------------------
 
-test('3a. loading: replay E1\'s log, rebuild, rebase, and refuse a damaged log', () => {
+test('3a. loading: rebuild, rebase, and refuse a damaged log', () => {
   const r = recordAt(0.4, 0);
-  const e1 = [recordAt(0.3, -1), { ...recordAt(0.5, 0), white: 'set' as const }];
 
-  // E2's migration: E1's posterior and its frozen base are dropped, and its log
-  // is kept, to be folded again from the prior.
-  const replayed = decodeKept(null, storedV3(e1, true));
-  assert.equal(replayed.path, 'replayed');
-  assert.equal(replayed.kept.base, null, 'the frozen base is dropped (owner, 26 September)');
-  assert.equal(replayed.kept.log.length, 2);
-  assert.equal(replayed.kept.folded, 0);
-  assert.equal(replayed.kept.calibration.eggsLogged, 0, 'from the prior');
-
-  assert.equal(decodeKept(null, null).path, 'fresh');
-  assert.equal(decodeKept('{not json', null).path, 'fresh');
-  assert.equal(decodeKept(null, '{"v":3,"log":[{"v":1}]}').path, 'fresh', 'an E1 log that cannot be read');
+  assert.equal(decodeKept(null).path, 'fresh');
+  assert.equal(decodeKept('{not json').path, 'fresh');
+  assert.equal(decodeKept('{"v":3,"log":[]}').path, 'fresh', 'not a v4');
 
   const good = { base: null, calibration: freshCalibration(32, 3), log: [r], folded: 1 };
   const stored = JSON.parse(encodeKept(good)) as Record<string, unknown>;
-  assert.equal(decodeKept(JSON.stringify(stored), null).path, 'loaded');
-  // A v4 wins over a v3 written afterwards by an old tab.
-  assert.equal(decodeKept(JSON.stringify(stored), storedV3(e1, false)).path, 'loaded');
+  assert.equal(decodeKept(JSON.stringify(stored)).path, 'loaded');
 
   const badCal = { ...stored, cal: { ...(stored['cal'] as object), w: [Number.NaN] } };
-  const rebuild = decodeKept(JSON.stringify(badCal), null);
+  const rebuild = decodeKept(JSON.stringify(badCal));
   assert.equal(rebuild.path, 'rebuild');
   assert.equal(rebuild.kept.folded, 0);
   assert.equal(rebuild.kept.log.length, 1, 'the log survives a damaged posterior');
   // A posterior missing E2's columns is damaged, not half-read.
   const noNoise = { ...stored, cal: { ...(stored['cal'] as object), sd: undefined } };
-  assert.equal(decodeKept(JSON.stringify(noNoise), null).path, 'rebuild');
+  assert.equal(decodeKept(JSON.stringify(noNoise)).path, 'rebuild');
   const zeroNoise = { ...stored, cal: { ...(stored['cal'] as { sd: number[] }), sd: (stored['cal'] as { sd: number[] }).sd.map(() => 0) } };
-  assert.equal(decodeKept(JSON.stringify(zeroNoise), null).path, 'rebuild', 'a zero noise divides by zero');
+  assert.equal(decodeKept(JSON.stringify(zeroNoise)).path, 'rebuild', 'a zero noise divides by zero');
 
   const badLog = { ...stored, log: [{ ...r, level: -1 }] };
-  const rebased = decodeKept(JSON.stringify(badLog), null);
+  const rebased = decodeKept(JSON.stringify(badLog));
   assert.equal(rebased.path, 'rebased');
   assert.equal(rebased.kept.log.length, 0);
   assert.equal(rebased.kept.base?.eggsLogged, good.calibration.eggsLogged,
     'what the refused eggs taught is kept, frozen');
 
   const ahead = { ...stored, folded: 5 };
-  assert.equal(decodeKept(JSON.stringify(ahead), null).path, 'rebased');
+  assert.equal(decodeKept(JSON.stringify(ahead)).path, 'rebased');
 });
 
-test('3b. E1\'s log, replayed, then eggs answered in either order with a reload between: bit-identical to a replay', async () => {
+test('3b. eggs answered in either order with a reload between: bit-identical to a replay', async () => {
   storage.clear();
-  // The owner's phone at E2: an E1 store with a frozen base and two logged
-  // eggs, one of them with E1's two-level white.
-  const e1 = [recordAt(0.3, -1), { ...recordAt(0.45, 0, 66), white: 'set' as const }];
-  storage.set('aet.calibration.v3', storedV3(e1, true));
+  // A browser that last ran the live site (v2), or an interim build (v3):
+  // both are deleted unread, and the cook starts from the prior.
+  storage.set('aet.calibration.v3', '{"v":3,"log":[]}');
   storage.set('aet.calibration.v2', '{"v":2}');
 
   let calib = loadCalibration();
-  assert.equal(storage.has('aet.calibration.v3'), false, 'v3 is gone once v4 holds its log');
+  assert.equal(storage.has('aet.calibration.v3'), false);
   assert.equal(storage.has('aet.calibration.v2'), false);
   assert.equal(keptState().base, null);
-  assert.equal(eggsBehind(), 2, 'the log is behind the prior until it is replayed');
-  await learn();
-  calib = loadCalibration();
-  assertIdentical(calib, replay(freshCalibration(PARTICLE_COUNT, CALIBRATION_SEED), e1), 'E1 log replayed');
+  assert.equal(eggsBehind(), 0);
+  assert.equal(calib.eggsLogged, 0);
 
   // Then the app's own path, on real 21 x 32 surfaces: the yolk then the white;
   // the white alone; nothing; the white then the yolk.
@@ -322,8 +293,8 @@ test('3b. E1\'s log, replayed, then eggs answered in either order with a reload 
   }
   assert.equal(eggsBehind(), 0);
   const log = keptState().log;
-  assert.equal(log.length, 6);
-  assert.deepEqual(log.slice(2).map((r) => [r.yolk, r.white]),
+  assert.equal(log.length, 4);
+  assert.deepEqual(log.map((r) => [r.yolk, r.white]),
     [[-1, 'runny'], [null, 'tender'], [null, null], [1, 'firm']]);
 
   const rebuilt = replay(freshCalibration(PARTICLE_COUNT, CALIBRATION_SEED), log);
@@ -334,13 +305,13 @@ test('3b. E1\'s log, replayed, then eggs answered in either order with a reload 
   const stored = JSON.parse(storage.get('aet.calibration.v4') as string) as Record<string, unknown>;
   storage.set('aet.calibration.v4', JSON.stringify({ ...stored, cal: null }));
   calib = loadCalibration();
-  assert.equal(eggsBehind(), 6);
+  assert.equal(eggsBehind(), 4);
   await learn();
   assertIdentical(keptState().calibration, rebuilt, 'the app rebuilt it from the log');
 });
 
 test('3c. forget everything clears the log, the base and the posterior', () => {
-  storage.set('aet.calibration.v3', storedV3([recordAt(0.4, 0)], true));
+  storage.set('aet.calibration.v3', '{"v":3}');
   loadCalibration();
   logEgg(recordAt(0.4, null));
   const fresh = clearCalibration();
