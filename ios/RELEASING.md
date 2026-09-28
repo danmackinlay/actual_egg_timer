@@ -133,7 +133,8 @@ Two upload prerequisites are committed and verified in a built app, so they are
 listed here only so nobody removes them as clutter:
 
 - **`ios/App/PrivacyInfo.xcprivacy`** — `UserDefaults` is a required-reason API
-  and this app uses it in `Store.swift`, `Calibration.swift` and `Cook.swift`.
+  and this app uses it in `Store.swift`, `Calibration.swift`, `Cook.swift` and
+  `LanguageChoice.swift` (and `Screenshots.swift`, in Debug builds only).
   Reason `CA92.1`, not `1C8F.1`, because there is no App Group. Apple states this
   as an upload requirement; in practice it has often arrived as an `ITMS-91053`
   email after the fact, which is a slow way to learn it.
@@ -164,7 +165,7 @@ cd ios && xcodegen
 ```
 
 **This is the step that bites.** The `.xcodeproj` is generated and gitignored, and
-so is `Widget/Info.plist`. A new source file added since the last generation
+so are `Widget/Info.plist` and `App/Info.plist`. A new source file added since the last generation
 simply is not in the target — which shows up as `cannot find X in scope` on a
 tree that a moment ago compiled fine. It has already happened once in this repo's
 history. Make it the first line of any release script.

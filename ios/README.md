@@ -38,10 +38,18 @@ algebraic mistake is never that small.
 | `kinetics.ts` | `Kinetics.swift` | z-values, hold times, 20-step accumulation |
 | `sphere.ts` | `Sphere.swift` | 42 series points, 40-step integration, 30-step ramp |
 | `protocol.ts` | `Protocol.swift` | every scenario's schedule, via the cooks below |
-| `solve.ts` | `Solve.swift` | 13 whole cooks: times, peaks, doses, verdicts |
+| `solve.ts` | `Solve.swift` | 17 whole cooks: times, peaks, doses, verdicts |
 | `doseGrid.ts` | `DoseGrid.swift` | every cell, interpolation, the clamp, the inverse |
-| `infer.ts` | `Infer.swift` | every particle and weight, prior and 7 updates |
+| `infer.ts` | `Infer.swift` | every particle and weight, prior and 11 updates |
 | `sousvide.ts` | `SousVide.swift` | 34 baths, eggs and slider positions |
+| `policy.ts` | `Policy.swift` | `fixtures/policy.json`: limits, snapping, verdicts, texture, the phase timeline |
+| `record.ts` | `Record.swift` | `fixtures/record.json`: the egg log, and a replay bit-identical to folding egg by egg |
+| `decide.ts` | `Decide.swift` | `fixtures/decide.json`: the chosen time, the odds, "still learning" |
+| `outcome.ts` | `Outcome.swift` | `fixtures/outcome.json` |
+| `reach.ts` | `Reach.swift` | `fixtures/reach.json`, and `fixtures/safer.json` for `saferLevels` |
+| `units.ts` | `Units.swift` | `fixtures/units.json` |
+| `language.ts` | `Language.swift` | `fixtures/language.json` |
+| `copy.ts`, `format.ts` | `EggTimerCopy`: `Copy.swift`, `Format.swift` | `fixtures/copy.json`, `fixtures/format.json` |
 
 The integrator is covered against both a **held** surface and a **moving** one.
 The second matters: a step-only test cannot catch a sign error in the Duhamel
@@ -72,7 +80,7 @@ still ten orders tighter than anything that could change an answer.
 
 The whole-cook suite takes about 14 seconds, nearly all of it the standing
 scans. That is the price of not assuming monotonicity, and it is worth paying
-here — the two standing scenarios in the fixtures are the ones a bisection would
+here — the standing scenarios in the fixtures are the ones a bisection would
 have got wrong.
 
 ### The calibration, and why its fixtures are so much bigger
@@ -94,7 +102,7 @@ so no masking is needed. The recorded state goes negative partway through the
 fixture sequence on purpose — that is the case a port reaching for `UInt32` or
 `Int` throughout would get wrong, and it is checked as an `Int32`.
 
-Three of the seven updates drive the effective sample size below n/2 and
+Several of the eleven updates drive the effective sample size below n/2 and
 resample, which is the only part of the filter that touches the RNG after the
 prior is drawn, and the only part where the ORDER of the particles matters.
 
@@ -127,21 +135,24 @@ The project file is **generated, not committed**. `project.yml` is the source of
 truth and fits on a screen; a pbxproj is three thousand lines of machine-written
 XML that every branch conflicts on and nobody reviews. `ActualEggTimer.xcodeproj`
 is gitignored — run `xcodegen` after cloning, and after any change to targets,
-sources or settings. So is `Widget/Info.plist`, which xcodegen writes from the
-same file (see **The Live Activity** below for why that one cannot be generated
+sources or settings. So are `Widget/Info.plist` and `App/Info.plist`, which
+xcodegen writes from the same file (see **The Live Activity** below for why that one cannot be generated
 by the build system instead).
 
-The screen carries the whole model now:
+The screen carries the whole model now, laid out as the web's (UI.md sections
+9-11):
 
-- doneness, egg mass, fridge or room
-- cold start (the default), straight into boiling water, or a 58 °C bath
-- ice bath, cold tap, or resting on the counter
-- keep boiling, or the standing method — heat off at the boil, lid on
-- water volume, eggs in the pan, altitude
+- the doneness slider, with the peak yolk in its heading
+- one tappable sentence for what changes from egg to egg: the egg (a size class
+  or a weight), fridge, room or custom, cold start (the default), boiling water
+  or a 58 °C bath, and ice bath, cold tap or the counter
+- a pushed **Settings** page for the kitchen: units, language, altitude, water,
+  eggs in the pan, keep boiling or heat off with the lid on, the probe, and what
+  it has learned; and a **Help** page
 
-The last five are folded behind **Pan, hob and altitude**, because the defaults
-are right for most people most mornings and a first-time user should not have to
-answer six questions to boil an egg.
+The kitchen's settings are a page away because the defaults are right for most
+people most mornings, and a first-time user should not have to answer six
+questions to boil an egg.
 
 Two behaviours are taken from `src/ui/machine.ts` rather than reinvented, and
 both are the model refusing to lie:
@@ -153,9 +164,9 @@ both are the model refusing to lie:
   sets the white.
 - **The method is always on screen.** Which cooking method a running timer is
   for is the one thing you cannot check once the controls are hidden, and a hob
-  instruction like "keep it boiling" does not answer it. The readout says "Cold
-  start - then ice bath", and the idle subline says what the clock is measured
-  FROM rather than the ambiguous "from eggs in".
+  instruction like "keep it boiling" does not answer it. While a cook runs, the
+  setup sentence it was started with stays under the time, with nothing to tap,
+  over the doneness and peak yolk.
 - **A cold start is provisional until you tap the boil.** The countdown says so.
   `t = 0` is the egg going into the cold pan — the same `t = 0` the physics core
   uses — so one deadline covers the ramp and the boil together, and tapping
@@ -188,10 +199,9 @@ What it says is the honest answer and nothing more:
 - **Start time: Yesterday**, at the wall-clock time you would have had to begin.
   A 58 °C bath needs about 22 h 43 min for a 68 g egg, because the white's dose
   target lives at 80 °C.
-- **A `bath` stat, labelled `bath`.** Not "peak yolk", which is what the web app
-  printed it under until recently. In a bath held at 58 °C the yolk does end up
-  at 58 °C, which is the point, but the label still has to say which number it
-  is.
+- **"water at 58 °C"** at the end of the doneness slider's heading, where it
+  otherwise says "peak yolk". In a bath held at 58 °C the yolk does end up at
+  58 °C, which is the point, but the label still has to say which number it is.
 - **The warning.** A 58 °C bath is below the temperature at which egg white
   sets, so the white stays loose however long you leave it. The screen says so.
 - **`equilibrate_s` is deliberately not on screen.** It is the one output the
@@ -199,10 +209,10 @@ What it says is the honest answer and nothing more:
   white is liquid and convecting, so that number is too long by an unknown
   amount. The hold times do not depend on any of that.
 
-The copy — `formatLongDuration`, "Yesterday", "Last Tuesday", "2 weeks ago" —
-lives in `ios/App/SousVide.swift`, not in `EggTimerCore`, for the same reason
-`refusalText` does: the core carries the decision and the app carries the
-sentence. `StartChoice` is an app type for the same reason, which is why
+The words — "Yesterday", "Last Tuesday", "2 weeks ago" — are in the catalogue
+(`copy/en.json`); the core's `longDuration` and `startPhrase` choose which, and
+only the calendar arithmetic stays in `ios/App/SousVide.swift`. The core carries
+the decision and the catalogue carries the sentence. `StartChoice` is an app type for the same reason, which is why
 `StartMode` in the core is still a pair.
 
 ### It asks how the egg was
@@ -220,27 +230,32 @@ The answer goes into the particle filter. Building the dose surface for the cook
 that was actually performed costs about a second of arithmetic, so it runs in a
 detached task, once, after the egg has been eaten and never while anything is
 being adjusted — which is the entire reason the surface is cached rather than
-simulated per particle.
+simulated per particle. (Since E5 there is also one decision surface per pot,
+built off the main actor once the inputs settle.)
 
 Before any feedback the filter's prior mean IS the literature value, so the app
 is fully useful on day one and calibration is purely additive. Afterwards the
 suggested time moves: a room-temperature 62 g egg rested on the counter at fudgy
-goes 4:07 to 4:29 on the first "too soft", and the posterior's spread on alpha
-is reported next to it. That spread plateaus near 3% rather than collapsing,
-which is the honest answer — repeated agreement is consistent with a range.
+went 4:07 to 4:29 on the first "too soft", before E5 changed how the time is
+chosen (not re-measured since). The posterior's spread on alpha plateaus near 3%
+rather than collapsing, which is the honest answer — repeated agreement is
+consistent with a range. It is not shown; the sentence under the time says which
+way a miss is likely to go.
 
 There is a "Forget what it learned" button, and the web app has one too now. The
 posterior recovers on its own after a few more eggs, so this is for people who
 would rather not wait.
 
-The taste offset the filter learns is deliberately NOT applied to the solve. It
-is a nuisance parameter: it absorbs the difference between the user's palate and
-the nominal doneness scale so that `alpha` does not have to, which keeps the
-physics honest. Only `alpha` and `tauAirScale` feed back into the cook time.
+The taste offset absorbs the difference between the user's palate and the
+nominal doneness scale so that `alpha` does not have to, which keeps the physics
+honest. Until E5 it was deliberately left out of the time; since E5, from the
+first egg on, the time is chosen over every particle - taste, noise and white
+offset included - by expected loss (`Decide.swift`, INFERENCE.md §8).
 
-It agrees with the web app on screen. 62.3 g, fridge, ice bath, jammy gives
-**7:21** with a peak yolk of 65 °C and a peak white of 81 °C, against 441.28 s,
-64.8 °C and 80.6 °C from `solveCookTime` in TypeScript. The same egg at 400 m
+It agreed with the web app on screen (before E5, and before the peak white left
+the screen). 62.3 g, fridge, ice bath, jammy gave **7:21** with a peak yolk of
+65 °C and a peak white of 81 °C, against 441.28 s, 64.8 °C and 80.6 °C from
+`solveCookTime` in TypeScript. The same egg at 400 m
 gives **7:31** and a 98.7 °C boiling point, against 450.9 s and 98.7 °C. A
 room-temperature egg on a cold start gives **10:20**, against 620.45 s.
 
@@ -255,8 +270,11 @@ not need it. Nothing of ours runs in the background either. The difference is
 that a native app can hand the system **absolute fire dates** up front and let
 it do the waiting.
 
-Two are scheduled at "Eggs in": the pull, and the end of the cooling step
-(skipped when the egg is resting on the counter, where there is nothing to time).
+Two are scheduled at "Eggs in": the pull, which names the cooling chosen
+("Straight into the ice bath…"), and the end of the cooling step, at the yolk's
+modelled peak (skipped when the egg is resting on the counter, where there is
+nothing to time). With the probe on, the second asks for the reading instead,
+and tapping "They're in…" re-times it from the real pull.
 Cancelling removes both. A cold start reschedules them when the boil is tapped
 and on every revision. The app shows the wall-clock time the alarm is set for,
 and reads the pending count back from `UNUserNotificationCenter` rather than
@@ -410,8 +428,9 @@ too.
 The gap is the reverse case: with the phone unlocked and in your hand, the
 notification stays on the phone. Closing that needs a real watchOS target, and
 the honest cost is a second UI to keep in sync rather than the target itself —
-`EggTimerCore` is pure Swift with no UIKit and already compiles for watchOS
-unchanged. Worth it only if the wrist is meant to be the primary display.
+`EggTimerCore` is pure Swift with no UIKit and compiled for watchOS unchanged
+when this was written (not rebuilt since; `Package.swift` names only iOS and
+macOS). Worth it only if the wrist is meant to be the primary display.
 
 ## What Xcode is still needed for
 
@@ -424,7 +443,7 @@ Apple's servers rather than a file: adding the Time Sensitive Notifications
 capability to the App ID, and resolving a provisioning profile for a real
 device. Both are once-per-machine.
 
-The SwiftUI layer is a rewrite, not a port. `src/ui/` is 1,700 lines of DOM
+The SwiftUI layer is a rewrite, not a port. `src/ui/` is about 4,400 lines of DOM
 wiring and web-specific workarounds — `clock.ts` in particular exists to fight
 exactly the backgrounding problem that a local notification solves properly.
 The behaviour came across; the mechanism did not.

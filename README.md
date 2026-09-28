@@ -434,8 +434,8 @@ tenths of a degree of that limit. **Still air is not cooling; it is a lid.**
 cook that sets the white (4.9 min, with counter resting) carries the yolk to 65.6 °C.
 There is no cook time that produces a soft yolk and a set white in that protocol. The
 solver reports this honestly: `solveCookTime` returns `reachable: false` and a
-`softestLevel` of 0.58 — between "jammy" and "fudgy" — and the UI greys out everything
-below it rather than returning a time it cannot deliver.
+`softestLevel` of 0.58 — between "jammy" and "fudgy" — and the UI stripes out everything
+below it and snaps the slider there, rather than returning a time it cannot deliver.
 
 This is, most likely, why soft-boiled eggs are the least reproducible thing in the
 kitchen. It is not the timing. It is the step after the timing, the one no recipe
@@ -479,7 +479,7 @@ distrust.
 | `EGG_VOLUME_COEFF` | 0.51 | — | `V = k_v * L * B^2` (Hoyt 1979). The ovoid taper removes ~2.5% from a prolate spheroid's `pi/6 = 0.5236`. **High.** |
 | `EGG_LENGTH_RATIO` | 1.35 | — | `L/B`; shape index `100*B/L ~ 74`. **Medium** — varies by breed and bird age. |
 | `YOLK_RADIUS_FRAC` | 0.693 | — | Yolk = 33% of egg volume, `(1/3)^(1/3)`. **High** — four independent routes agree (§3), including Abbasnezhad's meshed 1.6 cm yolk sphere. |
-| `SIZE_CLASSES` | 48/58/68/76 | g | EU Regulation 589/2008 Art. 4. Every region except `US`. Labelled in grams deliberately: EU/UK "Large" (63-73 g) is a US "Extra Large", and a US "Large" (56.7-63.8 g) is mostly an EU "Medium". Using names would systematically mis-time for one audience. |
+| `SIZE_CLASSES` | 48/58/68/76 | g | EU Regulation 589/2008 Art. 4. Every region except `US`. Labelled in grams deliberately: EU/UK "Large" (63-73 g) is a US "Extra Large", and a US "Large" (56.7-63.8 g) is mostly an EU "Medium". Using one table's names for both would systematically mis-time for one audience, so each region gets its own table (`sizeClassesFor`), labelled by name with the mass beside it. |
 | `US_SIZE_CLASSES` | 46.1/53.2/60.2/67.3/74 | g | USDA carton classes, region `US` only. USDA sets a minimum net weight per dozen (18/21/24/27/30 oz), so a class runs from its own minimum to the next one's; the value is the midpoint, per egg. Jammy, from the fridge into boiling water, an EU Large cooks 34 s longer than a US Large, so this is not cosmetic. **High** for Small to Extra large; **low** for Jumbo, which has no ceiling. The table follows the region (`sizeClassesFor`), not the language or the units, and a stored class keeps its name when the region changes (`carrySizeIndex`). |
 
 ### Kinetics
@@ -741,8 +741,8 @@ one matters:
 3. **Measure the egg** — worth **2.2 minutes** between a small and an extra-large. A
    kitchen scale beats a ruler on an ovoid. Failing that, a paper strip round the middle
    beats calipers: the app takes weight, girth or width and derives the other two. Size
-   class is the fallback, and the labels differ between the EU and the US (which is why
-   the app labels them in grams).
+   class is the fallback, and the classes differ between the EU and the US (which is why
+   the app picks the table by region and shows the mass beside each name).
 4. **Say where the egg came from** — worth **1.2 minutes**. Fridge (4 °C) versus counter
    (20 °C).
 5. **Set altitude once** — worth **0.85 minutes** at 2000 m. The app derives the boiling
@@ -815,7 +815,8 @@ and a judgement of "too soft" is far more reliable than a guess at a temperature
 one thing at a time, and include at least a few cooks with a *different* cooling step if
 you want `tauAirScale` to mean anything. The app does this for you: after every cook
 it asks how the yolk was, and the answer goes into a particle filter
-(`src/core/infer.ts`) whose posterior mean is what the next solve uses. It asks about
+(`src/core/infer.ts`); from the first egg on, the next time is chosen over that whole
+posterior, not its mean (`src/core/decide.ts`, INFERENCE.md §8). It asks about
 the white too — runny, tender or firm — every time, and neither answer is required;
 the white has its own learned offset, which moves the shortest cook that sets it
 (INFERENCE.md §3). Both apps have a button that forgets everything
@@ -848,7 +849,7 @@ the APIs this uses (`node:test`, ES2022), not a tested claim: 26 is what runs
 here and what CI would run.
 
 There is nothing else to configure. `netlify.toml` and `vercel.json` each carry
-the two settings their host needs, and the build is `tsc` plus two `cp`s — no
+the two settings their host needs, and the build is `tsc` plus a few `cp`s — no
 bundler, no runtime dependencies, no environment variables, no secrets. Because
 nothing is bundled, nothing is hashed: `dist/` and `copy/` keep their filenames
 from one deploy to the next, so they are served to be revalidated on every load
@@ -1129,7 +1130,7 @@ answers are recorded here rather than deleted, because each one was a plausible 
 
   Queued as a **correctness** fix and not as an instrument. §11.2(2) now measures what
   it would buy: `h` is separable from `α` in principle but 15× too weak to learn from
-  feedback, so adding it as a fourth calibrated parameter would add a dimension the data
+  feedback, so adding it as another calibrated parameter would add a dimension the data
   cannot move. The reason to do this is that Dirichlet under-predicts cook time and that
   bias currently sits inside `ALPHA_DEFAULT` — not that anyone will ever fit `h` from
   eating eggs. `tools/identifiability.ts` already carries working Robin eigenmodes,
@@ -1172,30 +1173,29 @@ answers are recorded here rather than deleted, because each one was a plausible 
   *white lag* (threshold and radius, mixed 0.75 / 0.60 and inseparable), then a tenfold
   gap: ~60 for carryover (and *never* without counter-rested cooks), ~110 for size
   scaling, ~270 for start temperature, and 500 to 250 000 for the rest, with both
-  z-values at the bottom. The particle carries the first direction and holds the second
-  at `WHITE_DOSE_TARGET`. Both real eggs so far had a runny white at a soft target. The
+  z-values at the bottom. Since E3 the particle carries the first two: the time-scale,
+  and a white offset for the white lag. Both real eggs so far had a runny white at a soft
+  target. The
   counts are Gaussian-latent and good to an order of magnitude; the gaps are the
   result. `INFERENCE.md` is the plan this leads to.
-- **The cooling step is a flat three minutes** on both apps, regardless of egg size,
-  cooling medium or how long the cook was. It happens to match the model's own
-  `peakYolkTime_s` for an ice bath and a cold tap, which is why it has never looked
-  wrong, but the solver already reports that number and the countdown could be derived
-  from it rather than asserted.
-- **`predictCookTime` ships nowhere.** `src/core/infer.ts` computes the posterior
-  predictive cook time as a median and an 80% credible interval, and its own docstring
-  says the interval is what makes calibration legible without a settings screen. Both
-  apps show a single ±% spread instead. The function is fixtured and conformance-tested,
-  so it works; nothing calls it.
-- **Neither app has tests of its own above the shared layer.** What both apps decide —
-  snapping, refusals, texture bands, the calibration grid, the phase timeline — now lives
-  in `src/core/policy.ts` and is conformance-tested, which is where all three of the
-  real-egg bugs in `PLAN.md` would have been caught. What remains above it is view code:
-  DOM writes and SwiftUI bodies, tested by driving the apps.
+- **`predictCookTime`'s interval is not drawn.** `src/core/infer.ts` computes the
+  posterior predictive cook time as a median and an 80% credible interval. Since E5 it
+  decides "still learning" (`src/core/decide.ts`), but no screen shows the interval
+  or that flag now, and the egg's record does not keep it: the sentence under the time says which
+  way a miss is likely to go instead (UI.md §8).
+- **Little of either app is tested above the shared layer.** What both apps decide —
+  snapping, refusals, texture bands, the calibration grid, the phase timeline — lives in
+  `src/core/policy.ts` and is conformance-tested, which is where all three of the
+  real-egg bugs in `PLAN.md` would have been caught. Above it, the web's phase machine,
+  store and formatting have tests (`test/machine.test.ts`, `test/store.test.ts`,
+  `test/format.test.ts`), and iOS's decision to ring is `EggTimerRing`, under `swift
+  test`. The rest is view code: DOM writes and SwiftUI bodies, tested by driving the
+  apps. The iOS app project has no test target.
 
 - **The Swift port is complete.** `ios/EggTimerCore` carries every module in `src/core/`,
   `sousvide.ts` included, and is held to this implementation by a
   conformance suite over generated fixtures (`npm run conformance`). The pure functions
-  agree to 1e-12 and 13 whole cooks — times, peak temperatures, doses and the
+  agree to 1e-12 and 17 whole cooks — times, peak temperatures, doses and the
   reachability verdicts — to the same, where the measured disagreement is 7e-15. The
   calibration is pinned harder still: the fixtures carry every particle and every weight
   of an eleven-observation run — both channels, each white answer folded straight after the
@@ -1203,8 +1203,8 @@ answers are recorded here rather than deleted, because each one was a plausible 
   produce a different but entirely plausible posterior. The iOS app carries every input
   this document describes, schedules its alarm at absolute fire dates with a
   time-sensitive interruption level, shows the countdown on the Lock Screen and in the
-  Dynamic Island, and asks how the yolk was after each egg — and how the white was when
-  that answer would move something. See `ios/README.md`.
+  Dynamic Island, and asks how the yolk and the white were after each egg, every time,
+  with neither answer required. See `ios/README.md`.
 
 ### 11.6 Sources that returned fabricated citations
 
