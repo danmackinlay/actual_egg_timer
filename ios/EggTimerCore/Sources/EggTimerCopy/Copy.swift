@@ -63,12 +63,6 @@ public struct Message: Sendable, Equatable {
     public let count: String?
     /// One template per plural category; `other` is always present.
     public let forms: [PluralCategory: String]
-
-    /// Every template: the text, or each plural form in CLDR order.
-    public var templates: [String] {
-        if let text { return [text] }
-        return PluralCategory.allCases.compactMap { forms[$0] }
-    }
 }
 
 public enum CopyError: Error, CustomStringConvertible {
@@ -292,14 +286,4 @@ private func isLetter(_ c: Unicode.Scalar) -> Bool {
 
 private func isNameChar(_ c: Unicode.Scalar) -> Bool {
     isLetter(c) || (c.value >= 48 && c.value <= 57) || c.value == 95
-}
-
-/// Every placeholder a template uses, in order of first use.
-public func placeholders(_ template: String) -> [String] {
-    let scalars = Array(template.unicodeScalars)
-    var names: [String] = []
-    for i in scalars.indices {
-        if let name = placeholder(at: i, in: scalars), !names.contains(name) { names.append(name) }
-    }
-    return names
 }

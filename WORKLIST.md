@@ -231,7 +231,7 @@ Put one LOGBOOK line on the decision: "owner, 28 Sep: no post-19-Sep build shipp
   - `try { void held.release() }` cannot catch a rejection. Use `.catch(() => {})`.
   - `scheduleBeep` pushes every oscillator onto `ringing`, which only empties on stop.
 
-**4.6 Drop Swift API with no app caller.** UNBLOCKED: owner, 28 Sep.
+**DONE: 4.6 Drop Swift API with no app caller.** (`eggFromMinorDiameter` went too: the scenarios are built from mass.) UNBLOCKED: owner, 28 Sep.
 
 How to do it:
 - Delete each function from Swift, along with its Swift tests and the fixture sections only Swift reads (`core.json`'s `erfcTheta`, `oneTermTheta`, `biotNumber`, `boilingPointApprox`, `saltBoilingElevation`, `zFromActivationEnergy`, `diffusionTime`, the egg-from-diameter rows, and `calibration.json`'s `yolkProbs`/`whiteProbs`/`predictive` where only Swift reads them). Stop `tools/fixtures.ts` generating those sections.

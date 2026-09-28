@@ -88,34 +88,6 @@ public enum Sphere {
         return 2.0 * sum
     }
 
-    /// The same quantity by the method of images: an independent derivation,
-    /// so agreement with `seriesTheta` is a real check rather than a tautology.
-    public static func erfcTheta(x: Double, fourier: Double) -> Double {
-        var x = x
-        if x < 1e-9 { x = 1e-9 }
-        let s = fourier.squareRoot()
-        var total = 0.0
-        for n in 0...Constants.modeCount {
-            let a = Double(2 * n + 1) - x
-            let b = Double(2 * n + 1) + x
-            total += complementaryError(a / (2.0 * s)) - complementaryError(b / (2.0 * s))
-        }
-        return 1.0 - total / x
-    }
-
-    /// Williams' one-term closed form, kept to document its error rather than
-    /// to use it: the coefficient is the origin of his famous 0.76.
-    public static func oneTermTheta(x: Double, fourier: Double) -> Double {
-        let u = Double.pi * x
-        let sinc = u < 1e-12 ? 1.0 : sin(u) / u
-        return 2.0 * sinc * exp(-Double.pi * Double.pi * fourier)
-    }
-
-    /// Biot number hR/k.
-    public static func biotNumber(hWm2K: Double, radiusM: Double) -> Double {
-        hWm2K * radiusM / Constants.kEgg
-    }
-
     /// Complementary error function, Chebyshev form (Numerical Recipes).
     ///
     /// Swift HAS `erfc` in Foundation, and it is more accurate than this. It is

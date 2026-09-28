@@ -21,15 +21,4 @@ public enum Thermo {
     public static func boilingPointAtAltitude(_ altitudeM: Double) -> Double {
         boilingPointAtPressure(pressureAtAltitude(altitudeM))
     }
-
-    /// The engineering one-liner, kept for cross-checking.
-    public static func boilingPointApprox(_ altitudeM: Double) -> Double {
-        100.0 - altitudeM / 300.0
-    }
-
-    /// Boiling-point elevation from dissolved salt, C.
-    public static func saltBoilingElevation(_ gramsSaltPerLitre: Double) -> Double {
-        let molality = gramsSaltPerLitre / 58.44
-        return 1.9 * 0.512 * molality
-    }
 }

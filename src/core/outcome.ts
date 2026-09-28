@@ -65,7 +65,7 @@
  */
 
 import { DoseGrid, lookupLogYolkDose } from './doseGrid.js';
-import { Posterior, UNRELATED, whiteProbit, yolkProbit } from './infer.js';
+import { Posterior, whiteAnswerProbabilities, yolkAnswerProbabilities } from './infer.js';
 import { erfc } from './sphere.js';
 import { YOLK_DOSE_HARD, YOLK_DOSE_RUNNY } from './solve.js';
 
@@ -129,32 +129,14 @@ export function predictOutcome(
 ): Outcome {
   const n = post.particles.length;
   const centre: number[] = new Array<number>(n);
-  let soft = 0.0;
-  let right = 0.0;
-  let firm = 0.0;
-  let runny = 0.0;
   let total = 0.0;
   for (let i = 0; i < n; i++) {
-    const p = post.particles[i];
-    const w = post.weights[i];
-    centre[i] = lookupLogYolkDose(grid, p.alpha_m2s, cookTime_s);
-    if (w === 0.0) continue;
-    const yolk = yolkProbit(grid, p, cookTime_s, logNominalTarget);
-    const white = whiteProbit(grid, p, cookTime_s);
-    soft += w * ((1.0 - UNRELATED) * yolk[0] + UNRELATED / 3.0);
-    right += w * ((1.0 - UNRELATED) * yolk[1] + UNRELATED / 3.0);
-    firm += w * ((1.0 - UNRELATED) * yolk[2] + UNRELATED / 3.0);
-    runny += w * ((1.0 - UNRELATED) * white[0] + UNRELATED / 3.0);
-    total += w;
+    centre[i] = lookupLogYolkDose(grid, post.particles[i].alpha_m2s, cookTime_s);
+    total += post.weights[i];
   }
-  if (total > 0.0) {
-    soft /= total;
-    right /= total;
-    firm /= total;
-    runny /= total;
-  } else {
-    soft = right = firm = runny = 1.0 / 3.0;
-  }
+  // The answers' own predictive, with the unrelated share (infer.ts).
+  const [soft, right, firm] = yolkAnswerProbabilities(post, grid, cookTime_s, logNominalTarget);
+  const runny = whiteAnswerProbabilities(post, grid, cookTime_s)[0];
 
   // The share of eggs delivered at or under log dose x: the mixture's CDF.
   const cdf = (x: number): number => {

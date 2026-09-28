@@ -27,11 +27,3 @@ public struct Dose: Sendable {
         doseMinutes / pow(10.0, (heldC - trefC) / zK)
     }
 }
-
-public enum Kinetics {
-    /// z = ln(10) * R * T^2 / Ea. Documents where zYolk and zWhite come from.
-    public static func zFromActivationEnergy(eaJmol: Double, temperatureK: Double) -> Double {
-        let gasConstant = 8.314
-        return log(10.0) * gasConstant * temperatureK * temperatureK / eaJmol
-    }
-}

@@ -558,6 +558,15 @@ rows, and whether `Intl` inside `src/core/format.ts` is acceptable
 
 ## Frozen core API
 
+This is the TypeScript core's. The Swift core ports all of it that an app
+calls; since 28 September (D4) it leaves out the measure-by-width geometry
+(`eggFromMinorDiameter`, `eggVolumeFromMinorDiameter`, `diffusionTime`, the
+girth and width quantities and bounds), the science checks (`erfcTheta`,
+`oneTermTheta`, `biotNumber`, `boilingPointApprox`, `saltBoilingElevation`,
+`zFromActivationEnergy`) and the inference read-outs (`yolk/whiteAnswer
+Probabilities`, `posteriorMeanOffset`, `posteriorAlphaRelSd`), which
+`tools/validate.ts`, the tests and the web's width input use here.
+
 `CookSetup.eggMass_kg` was removed in September 2026: it duplicated
 `Egg.mass_kg`, and since every function that took a setup also took an egg,
 callers had to keep the two in step by hand. `tools/validate.ts` had to remember

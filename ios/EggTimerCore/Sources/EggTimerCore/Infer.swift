@@ -304,40 +304,6 @@ public func updatePosterior(
     if effectiveSampleSize(post) < Double(n) / 2.0 { resample(&post) }
 }
 
-// MARK: - The predictive
-
-/// Posterior predictive probabilities of too soft, just right and too firm.
-public func yolkAnswerProbabilities(
-    _ post: Posterior, _ grid: DoseGrid, _ cookTimeS: Double, _ logNominalTarget: Double
-) -> [Double] {
-    var out = [0.0, 0.0, 0.0]
-    var total = 0.0
-    for i in 0..<post.particles.count {
-        let probs = yolkProbit(grid, post.particles[i], cookTimeS, logNominalTarget)
-        let w = post.weights[i]
-        for k in 0..<3 { out[k] += w * ((1.0 - unrelated) * probs[k] + unrelated / 3.0) }
-        total += w
-    }
-    for k in 0..<3 { out[k] = total <= 0.0 ? 1.0 / 3.0 : out[k] / total }
-    return out
-}
-
-/// Posterior predictive probabilities of runny, tender and firm.
-public func whiteAnswerProbabilities(
-    _ post: Posterior, _ grid: DoseGrid, _ cookTimeS: Double
-) -> [Double] {
-    var out = [0.0, 0.0, 0.0]
-    var total = 0.0
-    for i in 0..<post.particles.count {
-        let probs = whiteProbit(grid, post.particles[i], cookTimeS)
-        let w = post.weights[i]
-        for k in 0..<3 { out[k] += w * ((1.0 - unrelated) * probs[k] + unrelated / 3.0) }
-        total += w
-    }
-    for k in 0..<3 { out[k] = total <= 0.0 ? 1.0 / 3.0 : out[k] / total }
-    return out
-}
-
 /// The resample's kernel: Liu and West's shrinkage, with discount
 /// `kernelDiscount`. Each resampled particle is shrunk toward the weighted mean
 /// and moved by a draw from the weighted covariance, in coordinates where every
@@ -449,14 +415,6 @@ public func posteriorParams(_ post: Posterior) -> ModelParams {
     return ModelParams(alphaM2s: alpha, tauAirScale: tauAir)
 }
 
-public func posteriorMeanOffset(_ post: Posterior) -> Double {
-    var v = 0.0
-    for i in 0..<post.particles.count {
-        v += post.weights[i] * post.particles[i].logDoseOffset
-    }
-    return v
-}
-
 /// The posterior mean of the white offset: where the runny | tender cutpoint
 /// now sits, in decades above `whiteDoseTarget`.
 public func posteriorMeanWhiteOffset(_ post: Posterior) -> Double {
@@ -465,18 +423,6 @@ public func posteriorMeanWhiteOffset(_ post: Posterior) -> Double {
         v += post.weights[i] * post.particles[i].whiteOffset
     }
     return v
-}
-
-/// Standard deviation of alpha, as a fraction of its mean - the honest measure
-/// of how much the cook's eggs have actually taught us.
-public func posteriorAlphaRelSd(_ post: Posterior) -> Double {
-    let mean = posteriorParams(post).alphaM2s
-    var v = 0.0
-    for i in 0..<post.particles.count {
-        let d = post.particles[i].alphaM2s - mean
-        v += post.weights[i] * d * d
-    }
-    return sqrt(v) / mean
 }
 
 public struct CookTimePrediction: Sendable {

@@ -60,7 +60,8 @@ Chebyshev form rather than Foundation's `erfc`, which is more accurate.
 Foundation's would be *better* and would diverge from the reference — quietly,
 in the fourth decimal place. The port's job is to agree.
 
-One real finding, recorded in the test: `erfcTheta` at the centre evaluates
+One real finding, from when the Swift core still had `erfcTheta` (it went on
+28 September with the rest of the API no app calls, D4): at the centre it evaluates
 `1 - total/x` with `x` clamped to 1e-9, so a one-ulp difference in `erfc` is
 amplified by 1e9. The two implementations differ by ~1e-8 there and by nothing
 anywhere else. That is the expression, not either implementation, and the model

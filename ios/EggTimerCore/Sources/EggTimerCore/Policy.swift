@@ -27,8 +27,6 @@ public enum Limits {
     /// Hens' eggs: an EU XL is 73 g and up, most under 80; above 90 is a
     /// double-yolker or another bird, which this model does not describe.
     public static let massG = 25.0...90.0
-    public static let girthMM = 90.0...200.0
-    public static let minorMM = 30.0...60.0
     public static let eggTempC = -2.0...40.0
     public static let altitudeM = -400.0...5000.0
     public static let waterLitres = 0.25...12.0
@@ -87,7 +85,6 @@ public enum Defaults {
     /// Index into the region's size classes - 'Large' in both tables, 68 g in
     /// the EU one and 60.2 g on an American carton.
     public static let sizeIndex = 2
-    public static let customMinorMM = 44.0
     public static let customStartC = 12.0
     public static let altitudeM = 0.0
     public static let waterLitres = 2.0

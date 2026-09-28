@@ -25,10 +25,10 @@ private func loadScenarios() -> (egg: Egg, params: ModelParams, cases: [Scenario
         fatalError("fixtures/scenarios.json is not shaped as expected")
     }
 
-    // Rebuilt from the recorded minor diameter rather than read field by field,
-    // so the geometry is exercised here too: if eggFromMinorDiameter drifts,
-    // every scenario moves and this is where it shows.
-    let egg = Geometry.eggFromMinorDiameter(eggJSON.num("minorDiameter_m"))
+    // Rebuilt from the recorded mass rather than read field by field, so the
+    // geometry is exercised here too: if eggFromMass drifts, every scenario
+    // moves and this is where it shows.
+    let egg = Geometry.eggFromMass(eggJSON.num("mass_kg"))
     let params = ModelParams(
         alphaM2s: paramsJSON.num("alpha_m2s"), tauAirScale: paramsJSON.num("tauAirScale")
     )

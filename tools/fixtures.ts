@@ -49,27 +49,20 @@ import {
   EGG_VOLUME_COEFF, EGG_LENGTH_RATIO, DT_SIM, CARRYOVER_WINDOW,
 } from '../src/core/constants.js';
 import {
-  eggFromMass, eggFromMinorDiameter, diffusionTime, eggVolumeFromMinorDiameter,
+  eggFromMass, eggFromMinorDiameter,
   SIZE_CLASSES, US_SIZE_CLASSES, SizeClass, sizeTableFor,
 } from '../src/core/geometry.js';
-import {
-  pressureAtAltitude, boilingPointAtPressure, boilingPointAtAltitude,
-  boilingPointApprox, saltBoilingElevation,
-} from '../src/core/thermo.js';
-import {
-  createDose, accumulateDose, holdTimeForDose, zFromActivationEnergy,
-} from '../src/core/kinetics.js';
+import { pressureAtAltitude, boilingPointAtPressure, boilingPointAtAltitude } from '../src/core/thermo.js';
+import { createDose, accumulateDose, holdTimeForDose } from '../src/core/kinetics.js';
 import { buildDoseGrid, lookupLogYolkDose, lookupLogWhiteDose, cookTimeForLogYolkDose } from '../src/core/doseGrid.js';
 import {
   Feedback, FEEDBACK_BAND, NOISE_LOG_SD, NOISE_MEDIAN, UNRELATED, WHITE_FIRM_GAP_LOG_SD,
   WHITE_FIRM_GAP_MEDIAN, WHITE_OFFSET_SD, WhiteReport, answerLikelihood, createPrior,
-  effectiveSampleSize, posteriorAlphaRelSd, posteriorMeanOffset, posteriorMeanWhiteOffset,
-  posteriorParams, predictCookTime, updatePosterior, whiteAnswerProbabilities,
-  yolkAnswerProbabilities,
+  effectiveSampleSize, posteriorMeanWhiteOffset, posteriorParams, predictCookTime, updatePosterior,
 } from '../src/core/infer.js';
 import {
   createSphere, stepSphere, temperatureAt, centreTemperature, meanTemperature,
-  seriesTheta, erfcTheta, oneTermTheta, biotNumber, erfc,
+  seriesTheta, erfc,
 } from '../src/core/sphere.js';
 import { CookSetup } from '../src/core/protocol.js';
 import {
@@ -130,7 +123,6 @@ for (const x of [0.0, 0.1, 0.35, 0.693, 0.9, 1.0]) {
 
 const ERFC_CASES = [-3.0, -1.0, -0.25, 0.0, 1e-9, 0.25, 0.5, 1.0, 2.0, 3.5, 6.0];
 const MASS_CASES_G = [40, 48, 53, 58, 62.3, 68, 76, 90];
-const MINOR_CASES_MM = [36, 40, 43.5, 44.8, 48, 52];
 const ALTITUDE_CASES_M = [-400, 0, 500, 1000, 1609, 2000, 3000, 4000, 5000];
 const PRESSURE_CASES_PA = [101325, 95000, 89870, 79500, 70110, 54020];
 
@@ -192,10 +184,7 @@ const core = {
   },
   sphere: {
     seriesTheta: THETA_CASES.map(([x, fo]) => ({ x: x, fourier: fo, value: round(seriesTheta(x, fo)) })),
-    erfcTheta: THETA_CASES.map(([x, fo]) => ({ x: x, fourier: fo, value: round(erfcTheta(x, fo)) })),
-    oneTermTheta: THETA_CASES.map(([x, fo]) => ({ x: x, fourier: fo, value: round(oneTermTheta(x, fo)) })),
     erfc: ERFC_CASES.map((x) => ({ x: x, value: round(erfc(x)) })),
-    biotNumber: [500, 850, 1100].map((h) => ({ h_Wm2K: h, radius_m: 0.0238, value: round(biotNumber(h, 0.0238)) })),
     stepResponse: sphereStep,
     rampResponse: rampedStep,
   },
@@ -207,17 +196,6 @@ const core = {
         radius_m: round(egg.radius_m),
         minorDiameter_m: round(egg.minorDiameter_m),
         volume_m3: round(egg.volume_m3),
-        tau_s: round(diffusionTime(egg, ALPHA_DEFAULT)),
-      };
-    }),
-    fromMinorDiameter: MINOR_CASES_MM.map((mm) => {
-      const egg = eggFromMinorDiameter(mm / 1000);
-      return {
-        minorDiameter_mm: mm,
-        radius_m: round(egg.radius_m),
-        mass_kg: round(egg.mass_kg),
-        volume_m3: round(egg.volume_m3),
-        volumeDirect_m3: round(eggVolumeFromMinorDiameter(mm / 1000)),
       };
     }),
   },
@@ -225,15 +203,8 @@ const core = {
     pressureAtAltitude: ALTITUDE_CASES_M.map((h) => ({ altitude_m: h, value: round(pressureAtAltitude(h)) })),
     boilingPointAtAltitude: ALTITUDE_CASES_M.map((h) => ({ altitude_m: h, value: round(boilingPointAtAltitude(h)) })),
     boilingPointAtPressure: PRESSURE_CASES_PA.map((p) => ({ pressure_Pa: p, value: round(boilingPointAtPressure(p)) })),
-    boilingPointApprox: ALTITUDE_CASES_M.map((h) => ({ altitude_m: h, value: round(boilingPointApprox(h)) })),
-    saltBoilingElevation: [0, 6, 18, 36].map((g) => ({ gramsPerLitre: g, value: round(saltBoilingElevation(g)) })),
   },
   kinetics: {
-    zFromActivationEnergy: [
-      { ea_Jmol: 469e3, temperature_K: 338.15 },
-      { ea_Jmol: 480e3, temperature_K: 353.15 },
-      { ea_Jmol: 470e3, temperature_K: 338.0 },
-    ].map((c) => ({ ...c, value: round(zFromActivationEnergy(c.ea_Jmol, c.temperature_K)) })),
     holdTimeForDose: [55, 60, 63, 65, 70, 80].map((held) => ({
       z_K: Z_YOLK, tref_C: TREF_YOLK_C, doseMinutes: 10.0, held_C: held,
       value: round(holdTimeForDose(createDose(Z_YOLK, TREF_YOLK_C), 10.0, held)),
@@ -254,7 +225,9 @@ const core = {
 
 /* --------------------------------------------------------- scenarios.json */
 
-const EU_LARGE = eggFromMinorDiameter(0.0435);
+/** The EU Large of the first scenarios, 43.5 mm across, built from its mass:
+ *  the iOS core, which only weighs eggs, builds it the same way (D4). */
+const EU_LARGE = eggFromMass(eggFromMinorDiameter(0.0435).mass_kg);
 
 function setupOf(over: Partial<CookSetup>): CookSetup {
   const base: CookSetup = {
@@ -300,9 +273,8 @@ const scenarios = {
   $comment: 'Generated by tools/fixtures.ts. The port covers these once solve.ts is ported.',
   generator: 'npm run fixtures',
   egg: {
-    minorDiameter_m: EU_LARGE.minorDiameter_m,
-    radius_m: EU_LARGE.radius_m,
     mass_kg: EU_LARGE.mass_kg,
+    radius_m: EU_LARGE.radius_m,
   },
   params: DEFAULT_PARAMS,
   cases: SCENARIOS.map((s) => {
@@ -417,9 +389,7 @@ function readout(post: ReturnType<typeof createPrior>) {
     ess: round(effectiveSampleSize(post)),
     alpha_m2s: round(params.alpha_m2s),
     tauAirScale: round(params.tauAirScale),
-    meanOffset: round(posteriorMeanOffset(post)),
     meanWhiteOffset: round(posteriorMeanWhiteOffset(post)),
-    alphaRelSd: round(posteriorAlphaRelSd(post)),
     predict: {
       low_s: round(predicted.low_s),
       median_s: round(predicted.median_s),
@@ -437,9 +407,6 @@ const COOK_TIMES_S = [360, 340, 380, 500, 355, 460, 345, 370, 440, 350, 365];
 const updates = FEEDBACK_SEQUENCE.map((feedback, i) => {
   const cookTime_s = COOK_TIMES_S[i];
   const white = WHITE_SEQUENCE[i];
-  // The predictive BEFORE the answers, which is what a cook would be shown.
-  const yolkProbs = yolkAnswerProbabilities(posterior, CALIB_GRID, cookTime_s, NOMINAL_TARGET).map(round);
-  const whiteProbs = whiteAnswerProbabilities(posterior, CALIB_GRID, cookTime_s).map(round);
   // One particle's likelihood, the first, so a port that gets the probit wrong
   // is told where before it is told that the whole set moved.
   const firstLikelihood = round(answerLikelihood(
@@ -451,8 +418,6 @@ const updates = FEEDBACK_SEQUENCE.map((feedback, i) => {
     logNominalTarget: round(NOMINAL_TARGET),
     feedback: feedback,
     white: white,
-    yolkProbs: yolkProbs,
-    whiteProbs: whiteProbs,
     firstLikelihood: firstLikelihood,
     after: readout(posterior),
   };
@@ -504,18 +469,6 @@ const WHITE_RESAMPLE_CASE = (() => {
   };
 })();
 
-/* The predictive over a sweep of cook times on the same surface and the same
- * prior: cheap - no state, no RNG - and dense, because it is what E5 will put
- * on screen as the odds. */
-const PREDICTIVE_CASES = [240, 270, 300, 340, 380, 420, 500, 650, 900].map((cookTime_s) => {
-  const fresh = createPrior(PARTICLE_COUNT, PRIOR_SEED);
-  return {
-    cookTime_s: cookTime_s,
-    yolkProbs: yolkAnswerProbabilities(fresh, CALIB_GRID, cookTime_s, NOMINAL_TARGET).map(round),
-    whiteProbs: whiteAnswerProbabilities(fresh, CALIB_GRID, cookTime_s).map(round),
-  };
-});
-
 const calibration = {
   $comment: 'Generated by tools/fixtures.ts from src/core/. Do not hand-edit.',
   generator: 'npm run fixtures',
@@ -559,7 +512,6 @@ const calibration = {
     whiteFirmGapMedian: WHITE_FIRM_GAP_MEDIAN,
     whiteFirmGapLogSd: WHITE_FIRM_GAP_LOG_SD,
   },
-  predictive: PREDICTIVE_CASES,
   whiteResample: WHITE_RESAMPLE_CASE,
   prior: {
     count: PARTICLE_COUNT,
@@ -1806,7 +1758,8 @@ const format = {
   ].map(([n, v]) => ({ locale: locale, n: n, fractionDigits: v, category: pluralCategory(locale, n, v) }))),
   // Every quantity a cook reads, in both systems, in every supported locale:
   // the key and the words, through the English catalogue.
-  measures: FORMAT_SUPPORTED.flatMap((locale) => QUANTITIES.flatMap((q) => UNIT_SYSTEMS.flatMap((system) =>
+  // Not the girth or the width: the iOS core measures neither (D4).
+  measures: FORMAT_SUPPORTED.flatMap((locale) => QUANTITIES.filter((q) => q !== 'girth' && q !== 'width').flatMap((q) => UNIT_SYSTEMS.flatMap((system) =>
     [0.5, 2.4, 63.5, 1500, 16400].map((si) => {
       const m = measureFor(q, system, locale.slice(-2));
       const text = quantityText(m, si);
@@ -1843,7 +1796,7 @@ const counts = [
   `${core.sphere.seriesTheta.length} seriesTheta`,
   `${core.sphere.stepResponse.length} step samples`,
   `${core.sphere.rampResponse.length} ramp samples`,
-  `${core.geometry.fromMass.length + core.geometry.fromMinorDiameter.length} geometry`,
+  `${core.geometry.fromMass.length} geometry`,
   `${core.thermo.boilingPointAtAltitude.length} altitudes`,
   `${scenarios.cases.length} scenarios`,
   `${calibration.grid.logYolk.length} grid cells`,

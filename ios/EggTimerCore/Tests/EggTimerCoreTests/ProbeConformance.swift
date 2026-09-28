@@ -160,7 +160,6 @@ struct ProbeConformance {
             #expect(post.rng == Int32(truncating: rng), "update \(i): rng state")
             expectClose(effectiveSampleSize(post), after.num("ess"), "update \(i) ess")
             expectClose(posteriorParams(post).alphaM2s, after.num("alpha_m2s"), "update \(i) mean alpha")
-            expectClose(posteriorAlphaRelSd(post), after.num("alphaRelSd"), "update \(i) alpha sd")
         }
     }
 

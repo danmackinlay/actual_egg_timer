@@ -12,18 +12,10 @@ public struct Egg: Sendable, Equatable, Codable {
     public let volumeM3: Double
 }
 
+/// The iOS app only weighs eggs, so only `eggFromMass` is here: the web's
+/// measure-by-width (`eggFromMinorDiameter`) and `diffusionTime` stay in
+/// TypeScript alone (owner, 28 September, D4).
 public enum Geometry {
-    /// V = k_v * ratio * B^3.
-    public static func eggVolumeFromMinorDiameter(_ minorDiameterM: Double) -> Double {
-        let b = minorDiameterM
-        return Constants.eggVolumeCoeff * Constants.eggLengthRatio * b * b * b
-    }
-
-    public static func eggFromMinorDiameter(_ minorDiameterM: Double) -> Egg {
-        let volume = eggVolumeFromMinorDiameter(minorDiameterM)
-        return egg(volumeM3: volume, minorDiameterM: minorDiameterM, massKg: Constants.rhoEgg * volume)
-    }
-
     public static func eggFromMass(_ massKg: Double) -> Egg {
         let volume = massKg / Constants.rhoEgg
         let b = cbrt(volume / (Constants.eggVolumeCoeff * Constants.eggLengthRatio))
@@ -37,11 +29,6 @@ public enum Geometry {
             massKg: massKg,
             volumeM3: volumeM3
         )
-    }
-
-    /// tau = R^2/alpha, s. Only this group affects the answer.
-    public static func diffusionTime(_ egg: Egg, alphaM2s: Double) -> Double {
-        egg.radiusM * egg.radiusM / alphaM2s
     }
 }
 

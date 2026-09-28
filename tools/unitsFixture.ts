@@ -48,9 +48,14 @@ const REGIONS: (string | null)[] = ['US', null];
 
 interface MeasureCase { system: UnitSystem; region: string | null; m: Measure }
 
+/** Only the quantities the iOS app has: it weighs eggs and never measures a
+ *  girth or a width, and its core has neither (D4). The web's are tested in
+ *  test/units.test.ts. */
+const SWIFT_QUANTITIES = QUANTITIES.filter((q) => q !== 'girth' && q !== 'width');
+
 function measures(): MeasureCase[] {
   const out: MeasureCase[] = [];
-  for (const q of QUANTITIES) {
+  for (const q of SWIFT_QUANTITIES) {
     // The region reaches only water; every other quantity is asked once.
     const regions = q === 'water' ? REGIONS : [null];
     for (const system of UNIT_SYSTEMS) {

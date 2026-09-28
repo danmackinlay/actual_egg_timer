@@ -228,7 +228,6 @@ struct DefaultsConformance {
     func defaults() {
         let d = Fixtures.policyObject("defaults")
         expectClose(Double(Defaults.sizeIndex), d.num("sizeIndex"), "sizeIndex")
-        expectClose(Defaults.customMinorMM, d.num("customMinor_mm"), "customMinor_mm")
         expectClose(Defaults.customStartC, d.num("customStart_C"), "customStart_C")
         expectClose(Defaults.altitudeM, d.num("altitude_m"), "altitude_m")
         expectClose(Defaults.waterLitres, d.num("waterLitres"), "waterLitres")
@@ -252,8 +251,6 @@ struct DefaultsConformance {
         let limits = Fixtures.policyObject("limits")
         let pairs: [(String, ClosedRange<Double>)] = [
             ("mass_g", Limits.massG),
-            ("girth_mm", Limits.girthMM),
-            ("minor_mm", Limits.minorMM),
             ("eggTemp_C", Limits.eggTempC),
             ("altitude_m", Limits.altitudeM),
             ("waterLitres", Limits.waterLitres),

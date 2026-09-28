@@ -79,50 +79,10 @@ struct SphereConformance {
         }
     }
 
-    @Test("method of images")
-    func erfcTheta() {
-        for c in Fixtures.cases("sphere", "erfcTheta") {
-            let x = c.num("x")
-            // At the centre the formula is 1 - total/x with x clamped to 1e-9,
-            // so a one-ulp difference in erfc - which is all two libm exp()
-            // implementations owe each other - is amplified by 1e9. This is a
-            // property of the expression, not a fault in either implementation:
-            // the observed gap is ~1e-8, and the model reads this quantity to
-            // five decimal places. Everywhere the expression is well
-            // conditioned, the two implementations still have to agree to the
-            // last few bits.
-            let tolerance = x < 1e-6 ? 1e-7 : 1e-12
-            expectClose(
-                Sphere.erfcTheta(x: x, fourier: c.num("fourier")), c.num("value"),
-                "erfcTheta(x: \(x), Fo: \(c.num("fourier")))", tolerance: tolerance
-            )
-        }
-    }
-
-    @Test("one-term truncation")
-    func oneTermTheta() {
-        for c in Fixtures.cases("sphere", "oneTermTheta") {
-            expectClose(
-                Sphere.oneTermTheta(x: c.num("x"), fourier: c.num("fourier")), c.num("value"),
-                "oneTermTheta(x: \(c.num("x")), Fo: \(c.num("fourier")))"
-            )
-        }
-    }
-
     @Test("complementary error function")
     func erfc() {
         for c in Fixtures.cases("sphere", "erfc") {
             expectClose(Sphere.complementaryError(c.num("x")), c.num("value"), "erfc(\(c.num("x")))")
-        }
-    }
-
-    @Test("Biot number")
-    func biot() {
-        for c in Fixtures.cases("sphere", "biotNumber") {
-            expectClose(
-                Sphere.biotNumber(hWm2K: c.num("h_Wm2K"), radiusM: c.num("radius_m")), c.num("value"),
-                "biotNumber"
-            )
         }
     }
 
@@ -169,27 +129,9 @@ struct GeometryConformance {
             expectClose(egg.radiusM, c.num("radius_m"), "radius, \(at)")
             expectClose(egg.minorDiameterM, c.num("minorDiameter_m"), "minor diameter, \(at)")
             expectClose(egg.volumeM3, c.num("volume_m3"), "volume, \(at)")
-            expectClose(
-                Geometry.diffusionTime(egg, alphaM2s: Constants.alphaDefault), c.num("tau_s"),
-                "tau, \(at)"
-            )
         }
     }
 
-    @Test("from minor diameter")
-    func fromMinorDiameter() {
-        for c in Fixtures.cases("geometry", "fromMinorDiameter") {
-            let b = c.num("minorDiameter_mm") / 1000.0
-            let egg = Geometry.eggFromMinorDiameter(b)
-            let at = "\(c.num("minorDiameter_mm")) mm"
-            expectClose(egg.radiusM, c.num("radius_m"), "radius, \(at)")
-            expectClose(egg.massKg, c.num("mass_kg"), "mass, \(at)")
-            expectClose(egg.volumeM3, c.num("volume_m3"), "volume, \(at)")
-            expectClose(
-                Geometry.eggVolumeFromMinorDiameter(b), c.num("volumeDirect_m3"), "volume direct, \(at)"
-            )
-        }
-    }
 }
 
 @Suite("Thermo")
@@ -218,39 +160,11 @@ struct ThermoConformance {
                 "boiling point at \(c.num("pressure_Pa")) Pa"
             )
         }
-        for c in Fixtures.cases("thermo", "boilingPointApprox") {
-            expectClose(
-                Thermo.boilingPointApprox(c.num("altitude_m")), c.num("value"),
-                "approximation at \(c.num("altitude_m")) m"
-            )
-        }
-    }
-
-    @Test("salt elevation")
-    func salt() {
-        for c in Fixtures.cases("thermo", "saltBoilingElevation") {
-            expectClose(
-                Thermo.saltBoilingElevation(c.num("gramsPerLitre")), c.num("value"),
-                "salt at \(c.num("gramsPerLitre")) g/L"
-            )
-        }
     }
 }
 
 @Suite("Kinetics")
 struct KineticsConformance {
-    @Test("z from activation energy")
-    func zValues() {
-        for c in Fixtures.cases("kinetics", "zFromActivationEnergy") {
-            expectClose(
-                Kinetics.zFromActivationEnergy(
-                    eaJmol: c.num("ea_Jmol"), temperatureK: c.num("temperature_K")
-                ),
-                c.num("value"), "z from \(c.num("ea_Jmol")) J/mol"
-            )
-        }
-    }
-
     @Test("hold time for a dose")
     func holdTime() {
         for c in Fixtures.cases("kinetics", "holdTimeForDose") {

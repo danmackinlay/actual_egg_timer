@@ -20,7 +20,7 @@ import { CookSetup } from '../src/core/protocol.js';
 import { buildDoseGrid, lookupPeakYolk_C } from '../src/core/doseGrid.js';
 import {
   Feedback, PROBE_HANDLING_MEAN_C, PROBE_INSTRUMENT_SD_C, PROBE_UNRELATED, PROBE_UNRELATED_SPAN_C,
-  Posterior, WhiteReport, answerLikelihood, createPrior, effectiveSampleSize, posteriorAlphaRelSd,
+  Posterior, WhiteReport, answerLikelihood, createPrior, effectiveSampleSize,
   posteriorParams, probeLikelihood, probeShortfallDensity, updatePosterior,
 } from '../src/core/infer.js';
 import {
@@ -43,7 +43,6 @@ function readout(post: Posterior) {
     rng: post.rng,
     ess: effectiveSampleSize(post),
     alpha_m2s: posteriorParams(post).alpha_m2s,
-    alphaRelSd: posteriorAlphaRelSd(post),
     weights: post.weights.slice(),
     particles: post.particles.map((p) => ({
       alpha_m2s: p.alpha_m2s, logDoseOffset: p.logDoseOffset, tauAirScale: p.tauAirScale,

@@ -210,9 +210,7 @@ struct InferenceConformance {
         let params = posteriorParams(post)
         expectClose(params.alphaM2s, expected.num("alpha_m2s"), "\(label) mean alpha")
         expectClose(params.tauAirScale, expected.num("tauAirScale"), "\(label) mean tauAirScale")
-        expectClose(posteriorMeanOffset(post), expected.num("meanOffset"), "\(label) mean offset")
         expectClose(posteriorMeanWhiteOffset(post), expected.num("meanWhiteOffset"), "\(label) mean white offset")
-        expectClose(posteriorAlphaRelSd(post), expected.num("alphaRelSd"), "\(label) alpha rel sd")
 
         guard let predictJSON = expected["predict"] as? [String: Any] else {
             fatalError("\(label): no predict")
@@ -241,11 +239,10 @@ struct InferenceConformance {
     }
 
     /// Replays the whole sequence: each egg's two answers folded jointly, either
-    /// of them possibly missing, with the predictive checked BEFORE each fold -
-    /// it is what a cook would be shown. Several updates drive the effective
+    /// of them possibly missing. Several updates drive the effective
     /// sample size below n/2 and resample, which is the only part of the filter
     /// that touches the RNG after the prior is drawn.
-    @Test("every update: the predictive, one particle's likelihood, and the whole set")
+    @Test("every update: one particle's likelihood, and the whole set")
     func updates() {
         let c = loadCalibration()
         let grid = buildFixtureGrid(c)
@@ -264,14 +261,6 @@ struct InferenceConformance {
             let target = step.num("logNominalTarget")
             let cookTimeS = step.num("cookTime_s")
 
-            let yolkProbs = yolkAnswerProbabilities(post, grid, cookTimeS, target)
-            let whiteProbs = whiteAnswerProbabilities(post, grid, cookTimeS)
-            let expectedYolk = doubles(step, "yolkProbs")
-            let expectedWhite = doubles(step, "whiteProbs")
-            for k in 0..<3 {
-                expectClose(yolkProbs[k], expectedYolk[k], "update \(i): P(yolk answer \(k))")
-                expectClose(whiteProbs[k], expectedWhite[k], "update \(i): P(white answer \(k))")
-            }
             expectClose(
                 answerLikelihood(grid, post.particles[0], cookTimeS, target, yolk: feedback, white: white),
                 step.num("firstLikelihood"), "update \(i): the first particle's likelihood"
@@ -312,33 +301,6 @@ struct InferenceConformance {
         let cookTimeS = step.num("cookTime_s")
         updatePosterior(&post, grid: grid, cookTimeS: cookTimeS, logNominalTarget: target, yolk: nil, white: white)
         expectPosterior(post, after, "whiteResample", grid, target)
-    }
-
-    /// The predictive over a sweep of cook times on a fresh prior: what E5 will
-    /// put on screen as the odds.
-    @Test("the predictive, across a range of cooks")
-    func predictive() {
-        let c = loadCalibration()
-        let grid = buildFixtureGrid(c)
-        guard let priorJSON = c.file["prior"] as? [String: Any],
-              let cases = c.file["predictive"] as? [[String: Any]],
-              let updates = c.file["updates"] as? [[String: Any]],
-              let first = updates.first else {
-            fatalError("fixtures/calibration.json has no predictive cases")
-        }
-        let target = first.num("logNominalTarget")
-        for row in cases {
-            let post = createPrior(count: Int(priorJSON.num("count")), seed: Int32(priorJSON.num("seed")))
-            let t = row.num("cookTime_s")
-            let yolk = yolkAnswerProbabilities(post, grid, t, target)
-            let white = whiteAnswerProbabilities(post, grid, t)
-            let expectedYolk = doubles(row, "yolkProbs")
-            let expectedWhite = doubles(row, "whiteProbs")
-            for k in 0..<3 {
-                expectClose(yolk[k], expectedYolk[k], "P(yolk answer \(k)) at t = \(t)")
-                expectClose(white[k], expectedWhite[k], "P(white answer \(k)) at t = \(t)")
-            }
-        }
     }
 
     @Test("the likelihood's constants and priors match the reference")

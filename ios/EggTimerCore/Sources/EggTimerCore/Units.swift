@@ -97,7 +97,7 @@ private func unitKeys(_ unit: UnitId) -> (unit: String, format: String) {
 /// temperature a cook can type (on the web); `probeTemp` is a probe
 /// thermometer's reading at the centre (E4), to a tenth and never clamped.
 public enum Quantity: String, Sendable, CaseIterable {
-    case temperature, eggTemp, probeTemp, boilingPoint, mass, girth, width, altitude, water
+    case temperature, eggTemp, probeTemp, boilingPoint, mass, altitude, water
 }
 
 /// A step as a ratio of integers, and the digits shown.
@@ -126,12 +126,6 @@ private func spec(_ q: Quantity) -> (limit: ClosedRange<Double>?, metric: Step, 
     case .mass:
         (Limits.massG, Step(unit: .grams, num: 1, den: 1, decimals: 0),
          Step(unit: .ounces, num: 1, den: 10, decimals: 1))
-    case .girth:
-        (Limits.girthMM, Step(unit: .millimetres, num: 1, den: 1, decimals: 0),
-         Step(unit: .inches, num: 1, den: 10, decimals: 1))
-    case .width:
-        (Limits.minorMM, Step(unit: .millimetres, num: 1, den: 2, decimals: 1),
-         Step(unit: .inches, num: 1, den: 50, decimals: 2))
     case .altitude:
         (Limits.altitudeM, Step(unit: .metres, num: 50, den: 1, decimals: 0),
          Step(unit: .feet, num: 100, den: 1, decimals: 0))
