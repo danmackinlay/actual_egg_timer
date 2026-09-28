@@ -2343,3 +2343,27 @@ web's sentence at Done on a phone.
 **In passing**: the simulator had a stale cold start from an earlier session
 (26 minutes heating) that the app restored on launch; it was cancelled
 before the screenshots.
+
+## 28 September 2026: the plans reconciled with the code
+
+Every checklist item, open question and "next" step in `PLAN.md`, `UI.md`,
+`LANGUAGE.md`, `INFERENCE.md`, both READMEs and `ios/RELEASING.md` was read
+against the code at `50aaa16` and the git log, ahead of an adversarial QA
+pass. `PLAN.md` now opens with where things stand and what is next, and
+lists the loose ends found. No code changed.
+
+- **Run:** `npm test`, 244 tests: 243 pass, 1 todo (5b). `swift test` in
+  `ios/EggTimerCore`, 105 tests in 29 suites, all pass. `origin/main` is
+  `2f341b4` (19 September), 191 commits behind local `main`.
+- **A claim that was never true:** four documents said `oddsTenths` and
+  `stillLearning` are recorded with every egg. `EggRecord` in
+  `src/core/record.ts` has no field for either; they live on the running
+  cook's ticket, and nothing reads them there.
+- **The 90 g cap has a hole on the web.** The girth and width limits were
+  not narrowed with the mass, and the web stores its egg as a width, so a
+  width or girth typed in, or a stored 120 g egg, gets past 90 g. Read in
+  the code, not run.
+- **Retired and still described:** playing safe, the odds line, "still
+  learning" and the odds on the Lock Screen were written up as live in
+  places; the pull alarm naming the cooling (`2c090c9`) had no entry in
+  `LANGUAGE.md`; `ios/README.md`'s port table stopped at `sousvide.ts`.

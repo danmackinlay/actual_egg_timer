@@ -1,8 +1,8 @@
 # LANGUAGE.md — words, units, and languages
 
-This is a design. It is not a record and it is not a statement of state, and none
-of it is built yet. The checklist that tracks it is Phase F in `PLAN.md`. It
-covers three requests made on 26 September 2026: localise both apps, revisit the
+This is a design, and since 27-28 September mostly built: F1-F4 and F6 are in
+both apps, each with an "as built" note below; F5, Czech, is not. The checklist
+that tracks it is Phase F in `PLAN.md`. It covers three requests made on 26 September 2026: localise both apps, revisit the
 wording of the copy they have now, and offer Imperial units. The third comes with
 an easter egg.
 
@@ -12,7 +12,7 @@ have to agree on, and that is copied between them by hand, drifts.
 
 ---
 
-## 1. Where the words are today
+## 1. Where the words were, 26 September (before F1)
 
 - **They are hand-copied between the two apps.** The five refusal messages
   appear in `src/ui/app.ts` and again in `ios/App/Kitchen.swift`. Nothing holds
@@ -284,8 +284,8 @@ web app said *Too firm* where iOS said *Too hard*.
 | forget dialog, iOS | Forget the calibration? — The model goes back to the literature values it shipped with, and the time to boil goes back to a guess. | Forget what it learned? — Every egg and your pan's boil time are forgotten, and the times go back to where they started. | checked against both apps: the button clears the eggs AND the boil memory |
 | pull screen, web | Out of the water — now · carryover is running | Out of the water — now · the yolk is still cooking | "carryover" is a README word; this says what is happening |
 | pull button, iOS | (none: iOS has no action out of the pull) | They're in the ice bath · They're under the tap · They're out | the web's existing button, so iOS records a MEASURED pull as the web does (E1 records every iOS pull as assumed today) |
-| **E5 — IMPLEMENTED 28 September** | — | 7/10 eggs hit the mark | the owner's wording. `odds.hitTheMark`, `{hits}/{of}`, both numbers through the renderer (F4 formats them); under the time in both apps, and on the Lock Screen |
-| **E5 — IMPLEMENTED 28 September** | — | Still learning your kitchen | `odds.stillLearning`, beside the odds while the 80% interval on the cook time is wider than ±15 s; "Learned from N eggs" stays where it was |
+| **E5 — IMPLEMENTED 28 September** | — | 7/10 eggs hit the mark | the owner's wording. `odds.hitTheMark`, `{hits}/{of}`, both numbers through the renderer (F4 formats them); under the time in both apps, and on the Lock Screen. *Retired by 28 September: the outcome summary replaced it under the time, and the owner dropped it from the Lock Screen (§6)* |
+| **E5 — IMPLEMENTED 28 September** | — | Still learning your kitchen | `odds.stillLearning`, beside the odds while the 80% interval on the cook time is wider than ±15 s; "Learned from N eggs" stays where it was. *Retired from both apps by 28 September; still computed, and not kept in the egg's record* |
 
 There is **no Skip button.** Every answer folds the moment it is tapped, and an
 unanswered question is recorded as skipped when the next cook starts (E1's
@@ -416,6 +416,12 @@ tables changed, against `e1f7068`; `copyLiterals.js --since e1f7068` and
 - **Held back: five rows, at their live wording.** Four are longer than their
   surface's budget in `copy/surfaces.json`, which is not raised for a small
   surface without the owner; each needs a shorter wording or a raised budget.
+  *Since then (28 September):* `alarm.cooled.body` went in as "The yolk has
+  stopped cooking. That is the egg you asked for.", once F6 had raised the
+  notification body's budget to 110; `readout.sub.coldAssumes` became "about
+  {boil} to boil, based on history" in the web redesign. The other three
+  (`feedback.thanks`, `learned.forget`, `learned.confirm.title`) still say
+  "it", and wait for the owner.
 
   | key | draft | length | budget |
   |---|---|---|---|
@@ -567,51 +573,51 @@ thresholds are where they are.
   refusals already say "{hits} times in {of}".
 - **`odds.hitTheMark` is iOS's alone** until iOS follows; the web does not
   draw it. `odds.info` ("About these odds") and `odds.why` are unchanged and
-  still both apps'. The first person: "I can't call it yet" is the app
+  still both apps'. (All three are retired since 28 September.) The first person: "I can't call it yet" is the app
   speaking; the other sentences have no subject to put in the first person.
 
-**Playing safe's strings - IMPLEMENTED 27 September 2026**, web only,
-drafted and not approved but for `idle.welcome`, which is the owner's. The
-owner found that the direction and the bracket still did not tell a cook how
-to err on the side of caution. So a one-tap suggestion goes under the
-direction, and the direction's (i) explains the bracket and how to act on it
-instead of saying the number. The owner also dropped "I'm still learning"
-as a line of its own on the web: beside "I can't call it yet" it said the
-same thing twice. What its (i) opened is now the last paragraph of the one
-(i). The `safe` draft in `tools/copyDraft.ts`, on `ff6c6e9`;
-`copyLiterals.js --since ff6c6e9 safe` and `copySnapshot.js compare --draft
-safe` show that nothing else changed. UI.md section 8 has when each shows.
+**Playing safe's strings - IMPLEMENTED 27 September 2026**, web only, and
+the suggestion itself retired on 28 September (below). The owner found that
+the direction and the bracket still did not tell a cook how to err on the
+side of caution, so a one-tap suggestion went under the direction
+(`outcome.safe.firm`, `.soft`, `.firmer`, `.softer`: all retired with it),
+and the direction's (i) was rewritten to explain the bracket instead of
+saying the number. The owner also dropped "I'm still learning" as a line of
+its own on the web: beside "I can't call it yet" it said the same thing
+twice. The `safe` draft in `tools/copyDraft.ts`, on `ff6c6e9`. What is still
+live from it:
 
 | key | where | text |
 |---|---|---|
-| `outcome.safe.firm` | a button under the direction: one yolk in five too soft, and a firmer level plays safe | Rather not risk it soft? Try: {level} |
-| `outcome.safe.soft` | its mirror: one in five too firm | Rather not risk it firm? Try: {level} |
-| `outcome.safe.firmer` / `.softer` | `{level}` when the level suggested reads as the word already on the slider | A little firmer · A little softer |
 | `outcome.info` | the name of the direction's one (i) | How sure I am |
-| `outcome.bracket` | first in what it opens | The bracket under the doneness slider is where I expect your yolk to land. If a soft yolk would bother you more than a firm one, slide right until the bracket's left end is somewhere you'd still be happy; if a firm one would, slide left until its right end is. Or tap the level I suggest, when I suggest one. |
+| `outcome.bracket` | first in what it opens | The bracket under the doneness slider is where I expect your yolk to land. If a soft yolk would bother you more than a firm one, slide right until the bracket's left end is somewhere you'd still be happy; if a firm one would, slide left until its right end is. |
 | `outcome.why` | second: the web's `odds.why`, without the number | Before your first egg I don't know your taste, your eggs or your kitchen, so the bracket starts wide. Each egg you tell me about narrows it. |
 | `outcome.learning` | last: what `odds.stillLearning.more` said, less its first sentence | I learn your taste in yolks from how you say they came out, … give me a reading: that is the quickest teacher. |
 | `idle.welcome` | the first-egg welcome (the owner's words) | Our first egg together. I start off guessing from a generic egg, but as you give me feedback, I learn to specialise on you. |
 
-- **`{level}` stands alone after the colon** (§5): the slider's own
-  doneness word, capitalised as the ticks are, or a two-word phrase that is
-  a whole label in itself. It is never inside running grammar. "Try Fudgy
-  instead" would need a case in Czech.
-- **The arrow is drawn, not written.** The brief's "Try: {level} →" puts
-  the arrow in CSS, as the low-odds link does, so a screen reader reads the
-  button as its words and not "right arrow". The button's name is its
-  text, and the text includes the level.
-- **"A little firmer / softer"** exists because after a few eggs the move is
-  a few hundredths. "Try: Jammy" at jammy would offer the word already on
-  screen.
-- **Retired on the web:** `outcome.odds` (the number is gone from the (i),
-  and it is still in Help's "How sure I am"), `odds.stillLearning.info` and
-  `odds.stillLearning.more` (web-only, so gone). `odds.info`, `odds.why` and
-  `odds.stillLearning` are iOS's alone, unchanged, until iOS follows. The
-  record still keeps `stillLearning` with every egg.
-- **Help is untouched.** Its "How sure I am" was to cover the direction,
-  the range, playing safe and then the number; the owner has Help's
-  rewrite in hand separately, so that waits for it.
+- **Retired on the web** by the same draft: `outcome.odds` (the number left
+  the (i), and no screen shows it now), `odds.stillLearning.info` and
+  `odds.stillLearning.more`. iOS followed in pass B.
+- **Help's "How sure I am"** was brought up to the direction and the bracket
+  afterwards (the `oddsHelp` draft), and lost its sentences on playing safe
+  in the tighter egg's draft below.
+
+**The pull names the cooling - IMPLEMENTED 28 September 2026**, iOS, on the
+owner's word after a cook on a phone: the `pull` draft in
+`tools/copyDraft.ts`. The pull alarm, and word for word the Lock Screen
+card's line at the pull, say the cooling the cook chose, not "the cooling":
+
+| key | text | 1750 |
+|---|---|---|
+| `alarm.pull.bodyIce` (new; was `alarm.pull.body`) | Straight into the ice bath, or the yolk keeps cooking. | Commit them at once to the ice; for heat, though withdrawn from the fire, is not yet withdrawn from the egg. |
+| `alarm.pull.bodyTap` (new) | Straight under the cold tap, or the yolk keeps cooking. | Commit them at once to the pump; … |
+| `alarm.pull.bodyCounter` | Out of the water and onto the counter. | Take them from the water, and lay them upon the table. |
+| `activity.stage.pull` | Eggs out (was "Eggs out — now": the big NOW beside it says it) | Out with them |
+| `alarm.cooled.body` | The yolk has stopped cooking. That is the egg you asked for. ("carryover" was a README word) | The heat has run its course; the egg is such as you desired. |
+
+`activity.note.pull` and `activity.note.pullCounter` are retired: the card's
+line is the alarm's sentence. The card now ends at once when the cooling does,
+rather than saying "Done" for two minutes beside an alarm that says the same.
 
 **A tighter egg's strings - IMPLEMENTED 28 September 2026**, both apps, on
 the owner's word after using the iOS app (UI.md section 11). The `tighten`
@@ -644,8 +650,14 @@ which the setup sentence replaces).
 
 ### Proposed: one wording per meaning (for the owner)
 
-**A proposal, 27 September 2026. Nothing here is implemented**: `copy/en.json`
-and both apps are unchanged. The principle is the owner's: one short string
+**Overtaken, 27-28 September, by the redesign (UI.md).** As the two apps took
+one layout, most pairs below merged or lost one side, and `learned.confirm.*`
+became both apps'. Still open from it: `readout.phase.cooling` (dead, still in
+the catalogue) and the guard test, which is not built. The rest is kept as the
+reasoning, not as a list of work.
+
+**A proposal, 27 September 2026. Nothing here was implemented as such**:
+`copy/en.json` and both apps were unchanged by it. The principle is the owner's: one short string
 per meaning, everywhere. A key used by one app is allowed only where the
 surface exists on one platform, or where the two apps' layouts differ in
 structure, not just in wording.
@@ -769,10 +781,14 @@ worth a line each:
 
 - `readout.alarm.denied` and `.failed` (iOS) end "— keep the app open". The
   app makes no sound of its own and does not keep the screen awake, so
-  keeping it open helps only if the cook is watching it.
+  keeping it open helps only if the cook is watching it. *Made true on 27
+  September: the app now rings on screen when no notification holds a
+  deadline (`EggTimerRing`, `Ringer.swift`).*
 - `learned.pan` (web), "your pan takes {time} to boil", has the same fault as
   the held-back `readout.sub.coldAssumes`. `{time}` is `estimateTimeToBoil`:
   a blend of past boils, or the nearest volume's time scaled by litres.
+  *Reworded in the redesign: "{water} of water takes about {time} to boil,
+  based on history".*
 - `action.hint.pull` (web), "cooling starts on its own in {seconds} s", is
   also shown for a counter rest. There nothing starts: the cook goes to Done.
   *Fixed on 27 September (06ea694): no hint on a counter rest.*
@@ -1182,8 +1198,8 @@ whole catalogue is for their review. iOS is untouched and follows.
 - **The doneness words** are *Rear · Soft · Thick · Firm · Hard*, five
   letters at most for the ticks. *Thick* and *Firm* stand where *jammy* and
   *fudgy* do, matched and not translated; the texture lines say *yolk
-  thick*, *yolk firm*. *Firm* is also the white's third answer and the play
-  safe word, as *firm* is in modern English.
+  thick*, *yolk firm*. *Firm* is also the white's third answer, as *firm* is
+  in modern English.
 - **Names that change**, for the owner to strike: Settings is
   *Particulars*; Help is *Preface* (its page *The Preface*); Sources are
   *Authorities*, as in the Dictionary; Units are *Measures*, and Metric is
@@ -1277,8 +1293,8 @@ the owner's review.
   the activity's attributes, on the owner's word: "I'd rather say nothing
   than waste space on useless odds". Mid-cook, nothing there can change what
   the cook does. `odds.hitTheMark` is retired from `copy/en.json`, and it
-  never had a 1750 twin. The odds stay on the ticket (`oddsTenths`) for the
-  record, as data and not display. This settles the departure UI.md §10
+  never had a 1750 twin. The odds stay on the ticket (`oddsTenths`), as data
+  and not display; the egg's record does not keep them. This settles the departure UI.md §10
   left open.
 - **The colophon in plain words, in both Englishes.** This is the owner's
   wording.
@@ -1299,6 +1315,9 @@ body on a real notification. Also the Live Activity and the Dynamic Island in
 show.
 
 ## 7. Order, and how it fits with Phase E
+
+As of 28 September, 1-4 and 6 are done, in both apps, and 5 waits for its
+reviewer (`PLAN.md`, Phase F).
 
 1. **F1, the catalogue.** Extract every string with the wording unchanged, and
    prove it byte-identical. Core stops returning English. Do this before E2,
@@ -1352,7 +1371,11 @@ Waiting on the owner, from 27 September:
 
 - **The two drafts in §3.** The E2 feedback draft is implemented, since the call
   was made while the owner slept, and remains open to revision. The draft for
-  the rest of F2 is not in the catalogue yet.
+  the rest of F2 was approved and went in on 27 September, but for three
+  rows still held back (§3).
 - **`Intl` inside `src/core/format.ts`.** F4 relaxed invariant 1 for this one
   file. The web's output therefore depends on the browser's ICU, while the
   fixtures are pinned against Node's. Safari has not been tried.
+- **The English of 1750, in both apps** (§6): the names that change, the
+  departures from the guide, and the alarms, which nobody has yet seen on a
+  device.

@@ -5,7 +5,8 @@ A design, not a record and not a state. Three parts are built: the record in
 the ordered probit and the white offset of §3 (E2 and E3, 27 September),
 whose numbers are in §3's "Built" paragraph, the thermometer of §5 (E4,
 27 September), whose numbers are in §5's, and deciding under uncertainty, §8
-(E5, 28 September). Nothing else is. The checklist
+(E5, 28 September), with the odds-shaded slider and the outcome summary
+built on it. Nothing else is: E6-E8 are not started. The checklist
 that tracks it is Phase E in `PLAN.md`; the two measurements it rests on are in
 `LOGBOOK.md` (21 September 2026) and can be re-run with `npm run rank` and
 `npm run probe`.
@@ -190,6 +191,10 @@ Measured, in `test/infer.test.ts`:
   mean runs past the cutpoint and makes jammy white-bound too. What pins the
   time-scale is other evidence - yolk answers, the thermometer (E4), other cooks
   (E7) - and a recommendation made from the posterior rather than its mean (E5).
+  The owner's call (27 September): leave it as it is until a probe or pooling
+  pins the time-scale. With E5, a yolk answer beside the two runny whites
+  gives the asked-for shape (soft +146 s, jammy +17 s); the white alone still
+  moves both. `test/infer.test.ts` 5b stays a todo.
 
 **A thermometer reading**, for cooks who own a probe (§5). Sketched here as a
 Gaussian, sd about 1.5 C, with a small hot skew; built (E4) as a Gaussian of
@@ -498,6 +503,9 @@ faster. You can turn it off, and delete what you sent, whenever you like."*
   plain words and wherever the time is shown, that the timer is still learning
   their kitchen - which is also simply true for anyone in their first few eggs,
   nudge or no nudge, and sets the right expectation for the odds on screen.
+  *Open, 28 September:* the "still learning" line has since left both
+  screens (below); what says it now is the direction, "I can't call it yet".
+  Whether that meets this condition is for the owner to settle before E8.
 
 **Built (E5, 28 September).** `src/core/decide.ts`, held to
 `EggTimerCore/Decide.swift` by `fixtures/decide.json`: given the same posterior
@@ -557,6 +565,9 @@ and the same pot, the two apps choose the same time to 1e-12. What settled:
   (`predictCookTime`). Under the old resample the rule came back after going
   for 44% of simulated cooks, and a fixed count of four eggs was built as the
   fallback; with the kernel it comes back for 7%, and the owner's rule stands.
+  It is still computed with every decision, but since 27-28 September no
+  screen shows it as a line: the owner found it said what the direction says
+  (UI.md §8). The egg's record (§4) does not keep it.
 - **A cook under way** carries the lean chosen at "Eggs in" onto the boil tap's
   re-solve rather than waiting a second for the new pot's surface: 3 s from
   choosing again at soft, under 0.5 s at jammy.
@@ -751,6 +762,9 @@ Not built: the nudge (E8), and any per-cook loss.
 
 ## 10. Order, and why
 
+As of 28 September, 1-4 are built (E3's done-when half met) and 5-6 are not
+started.
+
 1. **The record and the ordered probit** (E1, E2). Both pay off for one cook
    with no server, and everything later reads the record.
 2. **The white offset on the device** (E3). The missing direction, justified by
@@ -794,13 +808,19 @@ Not built: the nudge (E8), and any per-cook loss.
    not runny AND the yolk would be answered "just right". It is rounded to
    tenths, because more precision than that is not there. *Built 28
    September*, under the time in both apps and on the Lock Screen.
+   *Superseded on screen by the owner's later steers:* a sentence saying
+   which way a miss goes replaced the number under the time (27 September),
+   the number then left the (i) too, and the Lock Screen dropped it (28
+   September). No screen shows it now. The odds still shade the slider, set
+   its reach at 3 in 10 and open the advice under 5 in 10. The egg's record
+   (§4) does not keep them.
 9. **"Still learning" goes when the 80% interval on the cook time narrows
    below about +-15 s**, which is about the width of "just right". If that
    proves fiddly to compute or to make stable, fall back to a fixed number of
    eggs. The owner's view is that cooks will barely notice the difference, so
    the threshold is preferred but not worth a fight. *Built 28 September as
    the threshold*, after the resample was fixed; the fallback was built and
-   measured first (§8).
+   measured first (§8). Computed, no longer shown, not recorded (§8).
 10. **No kitchens.** Pans and hobs vary within a kitchen, and nobody maintains
     profiles, so the kitchen level folds into the cook (§2).
 11. **The standing method's pan constant comes from the water volume, not

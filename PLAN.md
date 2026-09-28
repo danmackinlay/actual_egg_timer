@@ -8,22 +8,34 @@ main part, and pooled across cooks - see `INFERENCE.md`; for languages, units
 and the wording itself, `LANGUAGE.md`. This file is for whoever picks the build
 back up.
 
-**Status: both apps complete and learning. The PHYSICS is now the open part.**
-142 TypeScript tests (141 pass, and one E3 check is reported as an open todo,
-not a pass), 28/28 validation checks and 69 Swift conformance tests.
-The web app and the iOS app carry the same model, the same refusals and the same
-particle filter; the Swift port covers every module in `src/core/`. The
-iOS app runs signed on a real phone, with a time-sensitive alarm and a Live
-Activity, and has cooked a real egg. What is left is not code: it is the two
-measurements in README §11.3 and a run of real eggs to calibrate against. As of
-21 September there is also a designed next phase - E, below - that makes the
-inference the main part. E1 the record is built (26 September), and E2 the
-ordered probit with E3's white offset (27 September); the rest is not.
+**Where things stand, 28 September 2026.** Both apps are complete for one
+cook and learning. The web app (`src/`) and the iOS app (`ios/`) carry the same
+model, refusals, particle filter and choice of time (Phase E up to E5), the same
+catalogue of words in two Englishes (Phase F but for Czech), and the same
+layout (UI.md). `npm test` runs 244 tests: 243 pass and one is an open todo
+(E3's 5b, below). `npm run validate` passes 28/28, and `swift test` passes 105
+tests in 29 suites. **Nothing since 19 September is pushed**: `origin/main` is
+`2f341b4`, so the live site is the app from before E1, and every line below
+dated later is on local `main` only. The iOS app runs from Xcode on the owner's
+phone and has cooked real eggs; no TestFlight build is recorded
+(`ios/RELEASING.md`).
 
-Counts in this paragraph are the only ones in the file. Three other lines used
-to restate them and all three had gone stale, which is how a status line ends up
-disagreeing with itself by six tests and twelve checks. If you want a number,
-run `npm test`.
+**What is next**, in order:
+
+1. **The owner's reviews** (*Waiting on the owner*, below): the English of
+   1750 in both apps, the push of `main`, and two things only a phone can
+   show - the iOS ring through the silent switch, and the slider's haptic tick.
+2. **An adversarial QA pass** against this baseline. *Loose ends*, below,
+   lists what is already known to be wrong or untidy.
+3. **F5, Czech**, when the owner's friend can review it.
+4. **E6-E8**, the collective part: not started.
+
+Throughout: cook real eggs, and the two measurements in README §11.3.
+
+Counts in the first paragraph are the only ones in the file. Three other lines
+used to restate them and all three had gone stale, which is how a status line
+ends up disagreeing with itself by six tests and twelve checks. If you want a
+number, run `npm test`.
 
 **The conformance line sits above the physics.** `src/core/policy.ts` and
 `EggTimerCore/Policy.swift` carry what the apps DECIDE - snapping, the refusal
@@ -93,7 +105,7 @@ The SwiftUI layer takes the BEHAVIOUR of `src/ui/machine.ts` and leaves its
 mechanism. `clock.ts` in particular exists to fight the backgrounding problem
 that a local notification solves properly, and has no counterpart here.
 
-### Phase E — the inference becomes the main part — E1, E2, E4, E5 DONE; E3 BUILT
+### Phase E — the inference becomes the main part — E1, E2, E4, E5 DONE; E3 BUILT; E6-E8 NOT STARTED
 
 The design and the reasons are in `INFERENCE.md`; this is only the list. Every
 core change lands in TypeScript and Swift together, under new fixtures, like
@@ -162,9 +174,13 @@ cook. Nothing leaves a phone before E6.
       is wider than the white offset's 0.5, so the posterior blames the
       time-scale about 2:1; wider white-offset priors (0.8, 1.2) overshoot
       instead. `test/infer.test.ts` 5b holds the unmet half as a todo.
-      Deciding what to do is the owner's: the candidates are E4 or E7 pinning
-      the time-scale, E5 recommending from the posterior rather than its mean,
-      or a different prior - INFERENCE.md §3 has the numbers.
+      The candidates were E4 or E7 pinning the time-scale, E5 recommending
+      from the posterior rather than its mean, or a different prior -
+      INFERENCE.md §3 has the numbers. **The owner's answer (27 September):
+      leave it as it is** until a probe or pooling pins the time-scale. E4
+      and E5 are built since, and with a yolk answer beside the two runny
+      whites E5 gives the asked-for shape (soft +146 s, jammy +17 s); the
+      white alone still moves both. Left open on purpose, with 5b a todo.
 - [x] **E4 the thermometer flow.** Optional. The app says when (the solver's
       `peakYolkTime_s`), the cook reports the lowest reading at the centre,
       Gaussian likelihood with a hot skew (§5). Done when: one simulated reading
@@ -246,7 +262,8 @@ cook. Nothing leaves a phone before E6.
         Measured: after one egg the soft end moves by 0.01-0.07 on boiling
         pots and 0.05 on the counter; after four eggs with one runny white,
         0.14 -> 0.19.
-      - *The (i)* beside the odds opens, in place, why they start low.
+      - *The (i)* beside the odds opens, in place, why they start low. (Since
+        the direction replaced the odds line, its (i) says so: UI.md §8.)
       - *Protocol advice*: under 5/10, or 3 tenths or more under the best
         level, "How to make this more reliable" opens in place. The model
         prices two changes from their own pots' profiles and shows them only
@@ -266,8 +283,8 @@ cook. Nothing leaves a phone before E6.
       when soft is asked for. Ships `predictCookTime`'s successor, which closes
       item 7 below.
 
-      DONE 28 September, except the protocol advice, which was not in this
-      pass. `src/core/decide.ts`, held to `EggTimerCore/Decide.swift` by
+      DONE 28 September. The protocol advice was not in this pass; it came
+      with the odds-shaded slider, above. `src/core/decide.ts`, held to `EggTimerCore/Decide.swift` by
       `fixtures/decide.json` (Swift chooses the same time as the TypeScript to
       1e-12); the reasoning is INFERENCE.md §8. The time minimises P(too soft)
       + P(too firm) + 3 P(runny) over every particle, within 120 s of the mean
@@ -347,26 +364,37 @@ cook. Nothing leaves a phone before E6.
         white at its median, a coin flip on runny, and a runny white costs
         three. The counter's softest level leans 81-99 s for the same reason.
 
-      Both apps show "7/10 eggs hit the mark" and "Still learning your
-      kitchen" under the time, frozen at "Eggs in" for the cook in flight,
-      and the Live Activity carries the odds on the Lock Screen. `PRIOR_ID`
-      is `2026-09-e5`. NOT verified: nothing on iOS was run or tapped - it
+      As built, both apps showed "7/10 eggs hit the mark" and "Still
+      learning your kitchen" under the time, frozen at "Eggs in" for the
+      cook in flight, and the Live Activity carried the odds on the Lock
+      Screen. *Superseded on screen*, on the owner's later word: a sentence
+      saying which way a miss is likely to go replaced both lines (the
+      outcome summary, UI.md §8, 27 September; iOS pass B, 28 September),
+      and the Lock Screen dropped the odds (`05e92ae`). No screen shows the
+      number now; the odds still shade the slider and set its reach. The
+      running cook's ticket carries `oddsTenths` and `stillLearning`, but the
+      egg's record does not keep them (see *Loose ends*).
+      `PRIOR_ID` is `2026-09-e5`. NOT verified: nothing on iOS was run or tapped - it
       builds for the simulator, and the core is held by `swift test`.
 - [ ] **E6 opt-in collection.** Consent, random id, upload, delete-by-id; the
       privacy manifest, both READMEs and `ios/RELEASING.md` stop claiming no
       networking. A Netlify function, append-only blobs, the web tier
       down-weighted in the global fit. Unblocked 21 September (`INFERENCE.md`
       §11). Privacy contact: forgetmyeggs@danmackinlay.name, which exists.
-      The app says it is still learning wherever it shows a time.
+      The owner's condition for the nudge was that the app says it is still
+      learning wherever it shows a time. The "still learning" line has since
+      left both screens; the direction's "I can't call it yet" is what says
+      it now. Whether that meets the condition is the owner's to settle
+      before E8 (INFERENCE.md §8). Not started.
 - [ ] **E7 the population fit.** Offline, Python, outside `src/core/`. An
       emulator for the likelihood, 2-4 global parameters, cook and kitchen
       effects with reliability. Publishes `fixtures/population.json`, which both
       apps read as their prior. Done when: held-out predictive calibration is
-      the reported headline.
+      the reported headline. Not started.
 - [ ] **E8 the nudge.** +-10 s on the recommendation for consenting cooks. Last,
-      because it is worthless before E7 exists to use it.
+      because it is worthless before E7 exists to use it. Not started.
 
-### Phase F — words, units and languages — STARTED
+### Phase F — words, units and languages — F1-F4 and F6 DONE; F5 WAITS FOR ITS REVIEWER
 
 Design and reasons in `LANGUAGE.md`. Both apps, under conformance, as always.
 F1 goes before E2 so that Phase E's new feedback copy is born in the catalogue.
@@ -388,7 +416,8 @@ F1 goes before E2 so that Phase E's new feedback copy is born in the catalogue.
       built**: a picker with one language in it is a control that does
       nothing. The active locale is plumbing (`ACTIVE_LOCALE` in
       `src/ui/copy.ts`, `Copy.activeLocale` in `ios/Shared/Copy.swift`),
-      fixed at `en`; the picker arrives with F5, and sets those.
+      fixed at `en`; the picker arrives with F5, and sets those. *It arrived
+      with F6 instead (28 September): English and English (1750).*
 - [x] **F2 the rewrite.** DONE 27 September 2026, but for five rows held
       back (below). Inside the catalogue, one diff for the owner. Known
       offenders listed in `LANGUAGE.md` §3: "carryover", "calibration",
@@ -416,6 +445,11 @@ F1 goes before E2 so that Phase E's new feedback copy is born in the catalogue.
           took {boil} to boil last time") would be false, because `{boil}` is
           a blend of every boil at that volume, or another volume's scaled.
           Each needs a shorter wording or a raised budget, and a true line.
+          *28 September:* two are settled - `alarm.cooled.body` went in once
+          F6 raised the notification body's budget to 110, and
+          `readout.sub.coldAssumes` became "about {boil} to boil, based on
+          history" in the redesign. `feedback.thanks`, `learned.forget` and
+          `learned.confirm.title` still say "it", for the owner.
 - [x] **F3 units.** DONE 27 September 2026. `src/core/units.ts` +
       `Units.swift` + `fixtures/units.json`: conversions, a step and decimals
       per quantity per system, input bounds rounded INWARD to the step, and
@@ -476,9 +510,10 @@ F1 goes before E2 so that Phase E's new feedback copy is born in the catalogue.
       where the language has no convention of its own (`OWN_CONVENTION`,
       today `cs` -> `CZ`: a Czech UI in the US writes "1 234,5" on both;
       en-DE still "2,4"). Pinned in `fixtures/format.json`, en-CZ included.
-- [ ] **F5 Czech**, reviewed by the owner's friend before it ships. Brings
-      the in-app language picker in both apps (deferred from F1), and adds
-      `cs` to `CFBundleLocalizations` in `ios/project.yml`. It tests
+- [ ] **F5 Czech**, reviewed by the owner's friend before it ships. Adds
+      Czech to the in-app language picker that F6 built in both apps, and
+      `cs` to `CFBundleLocalizations` in `ios/project.yml`. Not started: it
+      waits for the reviewer, and wants wording that will not move again. It tests
       all four CLDR plural categories (`many` is for fractions: 1,5 vejce),
       the decimal comma and seven cases. The case problem is why every
       inserted word stands alone in its dictionary form (`LANGUAGE.md` §5).
@@ -507,9 +542,11 @@ F1 goes before E2 so that Phase E's new feedback copy is born in the catalogue.
         and the Live Activity, no odds on the Lock Screen (`odds.hitTheMark`
         retired), and the colophon in plain words. As built in
         `LANGUAGE.md` §6.
-  - [ ] **The owner's review** of the 1750 wording.
+  - [ ] **The owner's review** of the 1750 wording, both apps.
 
-No owner decisions pending on Phase F.
+Owner decisions pending on Phase F: the 1750 review (F6), F2's three held-back
+rows, and whether `Intl` inside `src/core/format.ts` is acceptable
+(`LANGUAGE.md` §8).
 
 ---
 
@@ -636,6 +673,17 @@ decide(c, grid, meanSolution, logTarget) / decideAt(post, eggsLogged, grid, mean
 decisionApplies(sol) / decidedSolution(...) / carriedSolution(egg, setup, params, sol, lean_s)
 stillLearning(interval) / oddsInTenths(odds)
 
+// outcome.ts  (the direction under the time - INFERENCE.md §8, UI.md §8)
+LEAN_RATIO / LEVEL_LOW_Q / LEVEL_HIGH_Q / WHITE_RISK = 0.2
+interface Outcome { pTooSoft; pJustRight; pTooFirm; pWhiteRunny; levelLow; levelMedian; levelHigh; lean }
+predictOutcome(post, grid, cookTime_s, logTarget) / leanOf(pTooSoft, pTooFirm)
+
+// language.ts  (F6: the English of 1750 - LANGUAGE.md §6)
+DEFAULT_LANGUAGE / PERIOD_LANGUAGE / LANGUAGES / FRESH_LANGUAGE
+interface LanguageState
+effectiveLanguage / isPeriod / isModernEnglish / registerOf
+languageAfterFlip / languageAfterPick / readLanguageState
+
 // reach.ts  (the odds-shaded slider - INFERENCE.md §8)
 REACH_ODDS = 0.3 / PROFILE_STEP = 5 / ADVICE_BELOW_TENTHS = 5 / ADVICE_MARGIN_TENTHS = 3 / ADVICE_GAIN = 0.05
 interface OddsProfile { points: {level, odds}[]; best; physicalSoftest; physicalHardest; softest | null; hardest | null }
@@ -643,6 +691,7 @@ oddsProfile(c, egg, setup, grid) / oddsAtLevel(c, egg, setup, grid, level) / odd
 verdictWithOdds(sol, level, profile | null)   // adds 'unlikelySoft' | 'unlikelyHard'
 shadingOf(profile) / adviceWanted(tenths, profile) / pricedChanges(setup) / unpricedAdvice(setup, facts)
 protocolAdvice(setup, facts, level, odds, priced)
+saferLevels / outcomeAtLevel / offeredPositions   // playing safe: no screen uses them since 28 September
 
 // record.ts  (E1 - the schema is INFERENCE.md §4)
 interface EggRecord { v: 1; ... }          // one egg; RECORD_VERSION, PRIOR_ID
@@ -764,15 +813,17 @@ decisive (jammy vs fully set) but smaller than first computed.
 
 ---
 
-## Handoff — 17 September 2026
+## Handoff
 
-Where this stands, and what the next person (or the next context window) needs
-that is not obvious from the code.
+What the next person (or the next context window) needs that is not obvious
+from the code.
 
-### Done and verified
+### Standing facts, from 17 September 2026
 
 - **The web app is live** at <https://actualeggtimer.netlify.app>. Netlify
   builds it from `netlify.toml` on push; nothing is configured in a web form.
+  It serves `origin/main`, which is `2f341b4` of 19 September: nothing since
+  is pushed.
   `og:` tags carry absolute URLs at that domain, so a domain change is a commit.
   `vercel.json` is also checked in and is NOT deployed - it is a second host's
   two settings, kept so the site can move without an archaeology session. README
@@ -781,9 +832,9 @@ that is not obvious from the code.
 - **Every constant has been checked against the primary literature.** `Z_WHITE`
   was corrected; `H_EFF` is known high and recorded as an open problem (§11.2).
   `references.bib` has the sources with notes on what each is good for.
-- **The Swift core is complete except the calibration** and conformant against
-  the TypeScript: pure functions to 1e-12, 13 whole cooks to the same, measured
-  disagreement 7e-15. `npm run conformance`.
+- **The Swift core covers every module in `src/core/`** and is conformant
+  against the TypeScript: pure functions to 1e-12, 17 whole cooks to the same,
+  measured disagreement 7e-15. `npm run conformance`.
 - **The iOS app carries the whole model.** Every input the solver has, the
   reachability refusals, the cold start with its boil-timing step, and the
   standing method. Driven end to end in the simulator against the TypeScript's
@@ -791,69 +842,51 @@ that is not obvious from the code.
 - **The alarm fires, at `.timeSensitive`,** and now presents even with the app
   in the foreground. The entitlement is signed and verified in a device build,
   not merely requested in a plist.
-- **The Live Activity works** on the Lock Screen and in the Dynamic Island.
+- **The Live Activity works** on the Lock Screen and in the Dynamic Island,
+  seen on the owner's phone on 28 September once its countdown was sized by
+  its digits (`5e38279`).
 
-### Waiting on the owner, from the night of 26-27 September
+### Waiting on the owner, 28 September
 
-Merged overnight into local `main` and not pushed: E1, F1, the carton classes,
-the standing-method pan constant, F3, E2+E3, F4, E4 and E5. What came back
-needing a decision:
-
-1. ~~**The E5 odds on a fresh install read "2/10 eggs hit the mark".**~~
-   *Answered: they stay, with an (i). Built 27 September.* Before any
-   egg, the model is honestly unsure of the cook's taste and eggs, so that
-   figure is calibrated. It is also the first thing a new cook sees, and it
-   reads as "this timer mostly fails". Options:
-   - show the odds only after the first egg;
-   - word the first-egg case differently;
-   - keep it.
-2. ~~**White-bound levels lean long and read 0/10.**~~ *Answered:
-   reachability from the odds at 3/10. Built 27 September.* At the softest level a pan
-   can reach, the white is the constraint. There the loss (a runny white costs
-   3) leans the time 80-120 s long and reports 0/10, while the "Softest
-   possible" refusal still comes from the mean solve. The app offers a level,
-   then says it will almost never hit it. The fix is probably to take
-   reachability from the odds rather than from the mean, which is a design
-   call. See INFERENCE §8.
-3. **E3's attribution.** A runny white alone is blamed about 2:1 on the
-   time-scale rather than the white offset, so it moves jammy as much as soft.
-   A yolk answer beside it fixes the split (soft +146 s, jammy +17 s). Pooling
-   (E7) or a probe (E4) pins it properly, or the priors could change.
-   INFERENCE §3 has the numbers, and test 5b is held as a todo.
-4. **Wording:**
-   - The E2 feedback draft is live, since that call was made overnight, and
-     can still be revised.
-   - The rest-of-F2 draft (LANGUAGE §3) went in on 27 September, but for five
-     rows held back: four over their surfaces' budgets, one untrue. See F2.
-   - E4 changed the probe wording from "lowest" to "highest" number, because
-     at the moment the centre peaks it is the warmest point. That was a
-     physics correction, and it stands unless the owner objects.
-5. **Hot-start heat-off cooks never set the white** at 1-4 L with four fridge
+1. **The English of 1750, in both apps** (F6; LANGUAGE.md §6 lists the names
+   to strike and where it departs from the guide).
+2. **The push of `main`.** Nothing since 19 September is pushed. The owner's
+   rule (27 September) is to push after previewing the web app, and a deploy
+   preview needs a pushed branch; both are the owner's call. Do not push on
+   their behalf.
+3. **On a phone:** whether the iOS in-app ring (`Ringer.swift`, `.playback`)
+   gets through the silent switch as intended, and whether the slider's
+   haptic tick at each doneness word is wanted (UI.md §10).
+4. **Wording:** F2's three held-back rows; the E2 feedback draft, live and
+   still open to revision; the probe's "highest" (a physics correction of
+   E4's, which stands unless the owner objects).
+5. **Before E8:** whether the direction sentence meets the "still learning"
+   condition for the nudge (INFERENCE.md §8).
+6. **`Intl` inside `src/core/format.ts`** (LANGUAGE.md §8).
+7. **Hot-start heat-off cooks never set the white** at 1-4 L with four fridge
    eggs. `TAU_STANDING_SCALE = 1.0` may be pessimistic with a lid on. One real
    cook would settle it.
-6. ~~**F4's two platform splits** (LANGUAGE §8), before Czech ships.~~
-   Answered and built 27 September; see F4.
-7. ~~**Protocol advice when soft is asked for** (INFERENCE §8) was not built.
-   Nobody decided whether it should be.~~ Answered and built 27 September,
-   with items 1 and 2: see the odds-shaded slider under Phase E.
+
+Waiting on someone else: the Czech review (F5), by the owner's friend.
+
+Answered since the night of 26-27 September, and built: the fresh-install
+odds (kept, with an (i)), reachability from the odds at 3/10, F4's two
+platform splits, protocol advice, and E3's attribution (left as it is). See
+the two lists below.
 
 ### The UI redesign, from 27 September (UI.md)
 
 The owner's steer: brief controls get a longer (i) disclosure; there are few
 enough controls on screen that longer strings fit, for clarity or comedy; and
 wording is judged in place on a phone, not approved row by row in tables. The
-plan is UI.md. The web app is built first, the owner reviews it on a deploy
-preview, and iOS follows the web layout.
+plan is UI.md.
 
-**The web half is built (27 September), unreviewed.** UI.md section 8 says
-what was built and where it departs; LANGUAGE.md section 3 lists its strings,
-with the owner's wording rules of the same day (no narrating the interface,
-no "bath" for sous-vide, "pan" only for the pot, "I'm still learning"), a
-Kitchen page, a Help page, and one (i) everywhere. Next: the owner on a
-deploy preview, which needs the branch pushed (the owner's call); then the
-direction line and the slider's range bracket, whose hooks are in place and
-whose numbers are being built in core separately; then iOS, which drops the
-web-retired keys UI.md section 8 lists.
+**Built in both apps by 28 September**: the web (UI.md §8), iOS in two passes
+(§9, §10), and a tighter egg in both (§11). LANGUAGE.md §3 lists the strings,
+with the owner's wording rules of 27 September (no narrating the interface,
+no "bath" for sous-vide, "pan" only for the pot, the app as "I"). The web was
+meant to be reviewed on a deploy preview first; nothing is pushed, so it has
+not been, and iOS followed without waiting (UI.md §6).
 
 ### Answered by the owner, 27 September
 
@@ -873,6 +906,26 @@ web-retired keys UI.md section 8 lists.
 - **Wording:** the owner will hand-edit the rest-of-F2 table in LANGUAGE §3.
 - **Push `main` after the owner has previewed the web app.** No real eggs for
   now; the owner is travelling.
+
+### Answered by the owner, 28 September
+
+After cooking with the iOS app on a phone:
+
+- **No odds on the Lock Screen** (`05e92ae`): "I'd rather say nothing than
+  waste space on useless odds". `odds.hitTheMark` is retired.
+- **The pull names the cooling chosen**, in the alarm and word for word on
+  the Lock Screen card; **the card ends at once** when the cooling does; and
+  "carryover" leaves the cooled alarm ("The yolk has stopped cooking.")
+  (`2c090c9`).
+- **The egg's mass tops out at 90 g**, a hen's egg (`0e0ec98`); other birds'
+  eggs, emu first, someday (below).
+- **The doneness heading carries the peak yolk; the play-safe suggestion goes
+  from both apps** (core's `saferLevels` stays, unused by any screen); **the
+  setup sentence stays on screen while a cook runs** (`e04d72c`).
+- **Sous-vide is never remembered** across a reload or relaunch (`d12a978`).
+- Found on the same phone and fixed: the Lock Screen countdown, sized by its
+  digits, and the physics package built with `-O` in Debug, where `-Onone`
+  took 20 s for an odds profile (`5e38279`).
 
 ### Order of work, from 26 September
 
@@ -896,41 +949,29 @@ Some work is on one side only:
   length budgets (F6).
 - **Neither app:** the Netlify function (E6) and the Python fit (E7).
 
-**Now, in parallel**
-1. **US carton size classes** (the correctness half of F3). An American on the
-   default egg is overcooked by about 34 s today.
-2. ~~**E1, the record.**~~ Done 26 September. From here on every egg survives
-   model changes. It moved the web app's dose grid off the main thread (old
-   item 3), because replaying a log builds one grid per egg, at about 2 s each.
-3. **F1, the catalogue, with the wording unchanged.** It has to land before any
-   new feedback copy exists.
+State on 28 September: everything up to F6 is done; F5 waits for its
+reviewer; E6-E8 are not started.
 
-**Then the filter, once**
-
-4. **E2 and E3 together.** They are one likelihood revision, replayed from E1's
-   log, not two resets.
-5. **F2 for the feedback screens**, in the same pass, because E2 rewrites them
-   anyway. It is one diff for the owner.
-6. ~~**E5**: choosing the time by expected utility, the odds on screen, "still
-   learning", and the interval (old item 7).~~ Done 28 September, but for the
-   protocol advice; see the E5 entry.
-7. **E4, the thermometer.** Its only prerequisite is E2, so pull it forward if
-   a probe is to hand.
-
-**Then the words**
-
-8. **The rest of F2**, then **F3 (units)** and **F4 (formatting)**.
-9. **F6 (1750)** and **F5 (Czech)**, in whichever order the reviewers are free.
-   Both need F2's settled wording; F6 also needs F3. Hand the Czech reviewer
-   wording that will not move again.
-
-**Last, the collective part**
-
-10. **E6, opt-in upload.** It needs a settled schema (E1, E2), "still learning"
-    (E5). The privacy contact exists: forgetmyeggs@danmackinlay.name. The consent text has to exist
-    in every language that has shipped.
-11. **E7, the population fit**, once enough cooks have opted in.
-12. **E8, the nudge**, which is worthless before E7.
+- [x] **US carton size classes** (the correctness half of F3), 26 September.
+- [x] **E1, the record**, 26 September. It moved the web app's dose grid off
+  the main thread, because replaying a log builds one grid per egg.
+- [x] **F1, the catalogue, with the wording unchanged**, 27 September.
+- [x] **E2 and E3 together**, one likelihood revision replayed from E1's log,
+  27 September (E3's done-when half met; see E3).
+- [x] **F2 for the feedback screens**, in the same pass, 27 September.
+- [x] **E5**, 28 September; the protocol advice came with the odds-shaded
+  slider, 27 September.
+- [x] **E4, the thermometer**, 27 September.
+- [x] **The rest of F2, then F3 and F4**, 27 September (three F2 rows held
+  back).
+- [x] **F6 (1750)**, 28 September, both apps, for the owner's review.
+- [ ] **F5 (Czech)**, when its reviewer is free. Hand the reviewer wording that
+  will not move again.
+- [ ] **E6, opt-in upload.** It needs a settled schema (E1, E2) and the
+  learning condition (E5; see E6 above). The consent text has to exist in
+  every language that has shipped.
+- [ ] **E7, the population fit**, once enough cooks have opted in.
+- [ ] **E8, the nudge**, which is worthless before E7.
 
 ~~**Soon after E1 and F1 merge: the standing method's pan constant from the
 water volume**~~ (`INFERENCE.md` §11, item 11). **Done 27 September**, except
@@ -971,57 +1012,73 @@ scale learned only from that cook's standing eggs (`INFERENCE.md` §11, item 11)
 which wants E2's likelihood and enough standing cooks to identify it apart from
 `alpha`. Not built.
 
-~~**Anywhere:** derive the cooling countdown from `peakYolkTime_s` (old item 4).~~
-Done with E4, 27 September.
-**Throughout:** cook real eggs (old item 1). After E1 each one counts
-retroactively.
+**Throughout:** cook real eggs. After E1 each one counts retroactively.
 
-### Next, in order (superseded as an ORDER by the section above)
+### Loose ends, 28 September
 
-The entries below are kept for what they say, not for where they sit.
+Found while reconciling these documents with the code, and not fixed: small,
+and each worth doing. The QA pass should start from here.
 
-Nothing on this list is a missing feature. Both apps do everything the model can
-do; what is missing is contact with reality.
+- **The web can still make an egg over 90 g.** `LIMITS.girth_mm` (90-200) and
+  `minor_mm` (30-60) in `src/core/policy.ts` and `Policy.swift` were not
+  narrowed with `mass_g`, and the web stores its egg as `customMinor_mm`, so
+  a width or girth typed in reaches about 160-195 g, and a stored 120 g egg
+  reloads as 120 g (0e0ec98 says it comes back as 90 g, which is true only on
+  iOS). No test holds the three limits to one another.
+- **`-noAlarmPrompt YES` still lets the system ask for notifications.** The
+  only `requestAuthorization` (`ios/App/Alarm.swift`) is guarded; the likely
+  asker is `Activity.request` in `LiveActivity.start`, reached straight after.
+  Untested hypothesis.
+- **The ticket's `oddsTenths` and `stillLearning` are written and never read**,
+  in `src/ui/app.ts` and `ios/App/Cook.swift`, and `EggRecord` has no field
+  for either. Several documents said the record kept them; corrected on 28
+  September. Either drop them from the ticket, or add them to the record if
+  E6's fit wants to know what the cook was told.
+- **`tools/unitsFixture.ts` still round-trips 120 g** as the mass limit's edge,
+  and not 90.
+- **Dead code:** `Kitchen.cookTime(timeToBoilS:level:leanS:)` in
+  `ios/App/Kitchen.swift` has no caller; `readout.phase.cooling` is
+  unreachable (a counter rest never cools); the Live Activity's done state
+  (`activity.stage.done`, `activity.note.done`, `activity.eat`) is never drawn
+  now that the card ends at once.
+- **Stale comments:** `ios/EggTimerCore/Package.swift` justifies `-O` by "the
+  play-safe line"; `ios/Shared/CookActivity.swift` says two stages count down
+  (three do); "7/10 eggs hit the mark" is described as on screen in
+  `src/core/decide.ts`, `outcome.ts`, `reach.ts` and `Decide.swift`;
+  `ios/App/PrivacyInfo.xcprivacy`'s comment omits `LanguageChoice.swift`.
+- **A false line in the copy:** `controls.units.more` and `.more.ios` say
+  switching units "changes only how I write the numbers", but on an English
+  page it also switches to 1750.
+- **Untested:** which pull line each cooling gets (`CookActivity.pullLineKey`;
+  the iOS app project has no test target), the card ending with the cooling,
+  and the web's running sentence.
+
+### Still open from the list of 18-21 September
+
+The rest of that list is done (the grid off the main thread with E1, the
+cooling countdown with E4, `predictCookTime`'s interval with E5) or absorbed
+by Phase E. Nothing on it is a missing feature; what is missing is contact
+with reality.
 
 1. **Cook real eggs and answer honestly.** The first real cook happened on
    18 September and found three interface bugs and zero physics problems, which
    is the expected ratio and the reason to keep going. The filter needs about
    three eggs to stop moving, and it needs you to VARY something — egg size or
    cooling method — or `alpha` and your taste stay confounded (README §11.5).
-0. **Phase E, starting at E1** (above, and `INFERENCE.md`). Added 21 September.
-   It reorders this list rather than replacing it: items 1 and 5 are what E1-E3
-   make worth doing, item 7 is absorbed by E5, and item 2 is qualified below.
+   The white's channel (E2, E3) and the cooling countdown (E4) want real eggs
+   behind them too.
 2. **The two measurements nobody appears to have made** (README §11.3).
-   *Qualified 21 September by `npm run probe`:* a kitchen probe at the centre,
-   at the yolk's peak, pins the time-scale to ~2.5% from one egg, so for THAT
-   the thermocouple is no longer the only way. For `TAU_AIR` it still is - a
-   spot reading moves 1.1 C per prior sd of it against 3.5 C for `alpha` - and
-   a logged curve is what is wanted. The original entry follows.
-   Now the highest-value item on this list rather than the most interesting one:
-   `npm run identifiability` measures that `h` is 15x too weak to ever be learned
-   from feedback, so a thermocouple is not a nicer way to get this answer, it is
-   the only way. A road trip is packing one. A
-   thermocouple through the blunt end and a datalogger settles `TAU_AIR` in an
-   afternoon; a pot, a thermocouple and forty minutes settles `RAMP_R` and
-   `TAU_STANDING_SCALE` together. Both would beat every published source found,
-   and `TAU_AIR` drives the app's most opinionated behaviour — refusing soft
-   eggs to anyone resting them on the counter.
-3. ~~**The web app builds its dose grid on the main thread**~~, blocking ~2 s behind
-   a `setTimeout(30)` so the "learning" note paints first. iOS runs it detached.
-   *Done with E1:* a module Web Worker, with this thread as the fallback.
-4. ~~**Derive the cooling countdown** from the solver's `peakYolkTime_s` instead of
-   asserting three minutes (README §11.5).~~ *Done with E4, 27 September*: -46
-   to +56 s against the flat 180 s (the E4 entry has the table). It still
-   wants a real egg behind it.
-5. **Judge the white channel against real eggs** (README §11.5, issue #1).
-   *Superseded by E2 and E3:* the white is now always asked, three answers, with
-   its own learned offset and noise; see the E3 entry above for what two runny
-   whites do and do not do. The empirical question stands - it needs eggs.
-7. ~~**Show `predictCookTime`'s interval** somewhere, or stop claiming in its
-   docstring that it is what makes calibration legible (README §11.5).~~
-   *Absorbed by E5:* the interval now takes the white as well, is computed with
-   every decision, and is what "Still learning your kitchen" reads: it shows
-   while the interval is wider than ±15 s. The number itself is not shown.
+   A kitchen probe at the centre, at the yolk's peak, pins the time-scale to
+   ~2.5% from one egg (E4 builds that), so for THAT the thermocouple is no
+   longer the only way. For `TAU_AIR` it still is - a spot reading moves 1.1 C
+   per prior sd of it against 3.5 C for `alpha` - and a logged curve is what is
+   wanted: `npm run identifiability` measures that `h` is 15x too weak to ever
+   be learned from feedback. A thermocouple through the blunt end and a
+   datalogger settles `TAU_AIR` in an afternoon; a pot, a thermocouple and
+   forty minutes settles `RAMP_R` and `TAU_STANDING_SCALE` together. Both would
+   beat every published source found, and `TAU_AIR` drives the app's most
+   opinionated behaviour — refusing soft eggs to anyone resting them on the
+   counter.
 
 Checked on 18 September and NOT a problem, so nobody re-checks: the web app's
 `reset()` already re-solves, and its solve is synchronous, so neither of that
@@ -1032,8 +1089,9 @@ Considered and NOT queued: a watchOS target. A paired watch already rings,
 because iOS forwards notifications to the wrist whenever the phone is locked —
 which is the situation this app is for. A real watch app would only add the
 phone-unlocked case, and its cost is a second UI to keep in sync, not the
-target. `EggTimerCore` already compiles for watchOS unchanged, so this stays
-cheap to revisit.
+target. `EggTimerCore` compiled for watchOS unchanged when this was written,
+so this stays cheap to revisit (not rebuilt since: `Package.swift` names only
+iOS and macOS, and now carries an `-O` unsafe flag).
 
 Someday, on the owner's word of 28 September: other birds' eggs, emu first.
 The egg mass is capped at 90 g (hens' eggs; an EU XL is 73 g and up) because

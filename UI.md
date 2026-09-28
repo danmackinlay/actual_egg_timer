@@ -1,8 +1,10 @@
 # UI.md — fewer controls, room for sentences
 
-A design, and a record of what was built from it: the web half since 27
-September (section 8), and the iOS half's first pass since 28 September
-(section 9). It comes from the owner's steer of 27 September 2026:
+A design, and a record of what was built from it: the web half (section 8,
+27 September), iOS's two passes after it (sections 9 and 10, 28 September),
+and a tighter egg in both apps (section 11, 28 September). Where a later
+section changes an earlier one, the later one is what the code does. It
+comes from the owner's steer of 27 September 2026:
 
 1. Decorate brief controls and buttons with a longer (i) disclosure.
 2. Keep few enough controls on screen that longer strings fit where they help,
@@ -15,7 +17,7 @@ where they are read.
 
 ---
 
-## 1. Where things stand
+## 1. Where things stood, before the redesign (27 September)
 
 The web app's idle screen shows about thirteen controls at once: doneness,
 size, three measuring fields, where the egg comes from, the start, the heat
@@ -57,6 +59,10 @@ layouts do).
   shared ones.
 
 ## 3. The screens
+
+As designed. As built, the odds line became a sentence saying which way the
+egg is likely to miss, the language picker arrived with F6, and a running
+cook shows its setup sentence in place of a method line (sections 8-11).
 
 **Idle.**
 - The time, big, with the odds line and its (i).
@@ -147,6 +153,9 @@ In place, per the owner:
    the remote, which is the owner's call.
 3. iOS follows the web layout once the owner is happy with it.
 
+Still open on 28 September: nothing is pushed, so no deploy preview exists,
+and iOS followed (sections 9-11) without waiting for it.
+
 Wording then gets reviewed on the screen, and LANGUAGE.md records the result
 rather than being the place of review.
 
@@ -185,9 +194,8 @@ Kitchen and Help are links at the top of the egg; Help is also at the top of
 the Kitchen. Mute sits top right in every phase.
 
 **The egg.** The time with its line under it, which way the egg is likely
-to miss with its (i), and when a miss is a real risk a one-tap way to play
-safe (the outcome summary and playing safe, below); the doneness slider; the setup sentence; one slot; Start at the
-bottom. The slot holds a refusal, or the sous-vide
+to miss with its (i) (the outcome summary, below); the doneness slider; the
+setup sentence; one slot; Start at the bottom. The slot holds a refusal, or the sous-vide
 warning, or a reloaded cook's warning; failing those, before anything is
 learned, a first-egg welcome. The low-odds link to Help goes under whichever
 is there: it is one short line, not a longer one.
@@ -218,7 +226,8 @@ under it, the slot, and the action bar. The stats row (peak yolk, after the
 boil, water boils at) and the texture note are gone from the phases. What
 was said under the time at "Eggs in" stays under it for the whole cook, as
 it always has: the odds until the outcome summary, the direction since. The
-boiling point moved to the Kitchen, beside the altitude; the peak yolk is in the slider's reading. Heating's
+boiling point moved to the Kitchen, beside the altitude; the peak yolk is in
+the doneness heading (section 11). Heating's
 "wait for the whole surface to roll" has an (i) that says what a full
 rolling boil looks like and why the tap matters. Everything else is as it
 was: the phases, the alarm, the pull button, the probe offer and reading,
@@ -230,8 +239,8 @@ the two questions, mute, a reloaded cook.
 the `outcome` draft in `tools/copyDraft.ts`). Under the time, in place of
 "7/10 eggs hit the mark", a sentence says which way the egg is likely to
 miss, with the odds' (i) at its end; under it, a line when a runny white is
-a real risk; then "I'm still learning" and its (i), as before (since gone:
-see playing safe, below). The numbers
+a real risk; then "I'm still learning" and its (i), as before (since gone,
+below). The numbers
 are `predictOutcome` (INFERENCE.md §8), read at the decided time on the
 decision's own surface, on the main thread beside the decision: about 2 ms
 beside its 13-16, so it does not need the worker. `src/ui/outcome.ts` picks
@@ -256,11 +265,14 @@ softest levels on a fresh install (0.36 at runny), the counter's softest
 (0.42-0.45), a cold start's soft on a fresh install (0.22), and 0.21 at
 runny after three eggs just right.
 
-The number is in what the odds' (i) opens: "About 8 in 10 eggs like this
-come out just as you like them, with the white set.", then `odds.why`. The
-(i) keeps its name, "About these odds". `oddsTenths` is still recorded with
-every egg. The direction, the white's line and the number ride with the
-cook, as the odds did, and come back after a reload.
+The number went first into what the (i) opens ("About 8 in 10 eggs like
+this come out just as you like them…"), and later the same day out of it
+altogether (below): since then no screen shows it, in either app. The odds
+survive as the track's shading, the low-odds link to Help and the
+refusals at 3 in 10. (The ticket still carries `oddsTenths`; the egg's record
+never did.) The
+direction and the white's line ride with the cook, as the odds did, and
+come back after a reload.
 
 `#donenessBracket` runs from `levelLow` to `levelHigh` under the track, with
 a short mark at `levelMedian`, in the foreground colour at 70%: not the
@@ -289,73 +301,32 @@ changed it. The white's line can still appear mid-drag near the soft end, which 
 input takes its value from where the pointer is across the track, so the
 drag should hold, but that is not checked on a phone.
 
-Help's "How sure I am" was already written for a direction plus a range;
-its second paragraph now says "7 in 10" and "2 in 10", as the (i) does.
+Help's "How sure I am" (`help.odds.*`) now says which way an egg is likely
+to miss, what the bracket is, and how the time leans; it gives no number.
 
-**Playing safe** (since removed from both apps, 28 September: section 11. Built the same day; the `safe` draft in
-`tools/copyDraft.ts`, on `ff6c6e9`). The owner said the direction and the
-bracket still did not tell a cook how to err on the side of caution.
-
-**The suggestion.** Under the direction, a button:
-
-- "Rather not risk it soft? Try: Fudgy" when P(too soft) is at least 0.2
-  and core's `firmerLevel` exists (INFERENCE.md §8, playing safe);
-- "Rather not risk it firm? Try: Soft" for P(too firm) and `softerLevel`.
-
-It shows at most one, for the larger risk. On a tie it shows the firm-safe
-one, because an underdone egg is the worse failure for most cooks.
-
-- **The threshold** is 0.2, one egg in five, the white's line's threshold.
-- **The word** is the doneness word nearest the suggested level, standing
-  alone after the colon. When that word is already the slider's, the
-  button says "A little firmer" or "A little softer".
-- **The arrow** is drawn in CSS, as the low-odds link's is. The button's
-  accessible name is its text, level included, without "right arrow".
-- **Tapping** sets the slider to the level, as a drag there would. If the
-  line then goes, focus goes to the slider.
-- **No ratchet.** A level reached by tapping offers no second suggestion
-  until the level, the pot or the posterior changes. Without this, a tap
-  would ratchet: at the new level the same risk is measured against the new
-  level, and on a fresh install fudgy would suggest hard.
-
-**Where it is computed.** `saferLevels` runs in the worker once the slider
-has sat still for 300 ms and the pot's odds profile is in. It runs only when
-either risk reaches 0.2, and the result is cached per pot, posterior and
-level. The drag never waits for it. While it is on its way, the readout
-keeps the height it last had, as it does while a surface is on its way.
-Measured in headless Chrome, a drag from jammy to fudgy on a fresh install
-held the readout at 271 px throughout.
-
-**What the cook sees.**
-
-- A fresh install at jammy (P(too soft) 0.38, P(too firm) 0.41): "Rather
-  not risk it firm? Try: Soft", to 0.13.
-- After three jammy eggs just right: nothing. Both risks are near 0.12.
-- After one egg answered too soft: "Rather not risk it soft? Try: Fudgy",
-  to 0.56.
+**Playing safe** was built on 27 September (the `safe` draft, on `ff6c6e9`)
+and taken off both apps on 28 September (section 11): a one-tap suggestion
+under the direction to move the slider to a level that plays safe, from
+core's `saferLevels` (INFERENCE.md §8, which keeps its definition). The
+LOGBOOK entries of those two days record how it behaved.
 
 **The direction's one (i)**, named "How sure I am", now opens three
 paragraphs:
 
 - what the bracket is, and how to play safe with it: slide right until its
-  left end is somewhere you'd still be happy, or left for the mirror, or
-  tap the suggestion;
+  left end is somewhere you'd still be happy, or left for the mirror;
 - why it starts wide (`outcome.why`, the web's `odds.why` without the
   number);
 - what I learn from, and what speeds it up (`outcome.learning`).
 
-The number is gone from the (i), and it is still in Help's "How sure I am".
-The (i) shows only while idle, because it is about the slider. Mid-cook, the
+The number is gone from the (i). The (i) shows only while idle, because it is about the slider. Mid-cook, the
 direction and the white's line still stay as they were at "Eggs in".
 
 **"I'm still learning" is gone from the web** (owner). Beside "I can't call
 it yet" it said the same thing twice. Its (i)'s content is the last of the
-three paragraphs. The E5 computation stands, and the record still keeps
-`stillLearning` with every egg. iOS still shows the line (`odds.stillLearning`
-is now iOS's alone), and so do `odds.info` and `odds.why`, until iOS
-follows.
-
-**Help is untouched** by this: its rewrite is the owner's, separately.
+three paragraphs. The E5 computation stands, and the ticket still carries
+`stillLearning`, though nothing reads it. iOS followed in pass B (section 10), and
+`odds.stillLearning`, `odds.info` and `odds.why` are retired.
 
 **Departures from sections 3 and 4.**
 - **Heat after the boil stayed on the Kitchen page**, not in the sentence. It
@@ -374,11 +345,11 @@ follows.
   folded it into the direction's.
 - **An (i)'s name is "About {label}"** where the label reads inside it, and a
   name of its own where it does not (`*.info` keys: "About this boil time").
-- **The language picker** is not there, as §3 foresaw, because there is one
-  language.
+- **The language picker** came with F6 (28 September): a Language row in the
+  Kitchen, *English* / *English (1750)* (LANGUAGE.md §6).
 
-**Keys iOS still holds that the web has replaced.** When iOS follows, these
-go: `controls.start.hintSousVide` (cut by the owner), `controls.probe` and
+**Keys iOS held that the web had replaced**, all retired by iOS pass A
+(section 9): `controls.start.hintSousVide` (cut by the owner), `controls.probe` and
 `controls.probe.hint` (the web's probe row is `controls.thermometer`, its
 checkbox `probe.offer.yes`, its (i) `controls.thermometer.more`),
 `learned.forgetExplain` (`learned.forget.more`), `controls.then`
@@ -405,14 +376,13 @@ web. The system's Back button replaces `nav.back`.
 - The readout: "Total time", the time, and the web's line under it
   (`readout.sub.coldAssumes` with its (i), `coldGuesses`, `standing` or
   `hot`).
-- **The direction's slot.** It still holds the iOS odds line, "7/10 eggs hit
-  the mark", with its (i) and "I'm still learning". Pass B replaces it with
-  the direction sentence. `direction(_:)` in `ContentView.swift` is that
-  slot.
+- **The direction's slot**, `direction(_:)` in `ContentView.swift`. In pass
+  A it still held the iOS odds line; pass B put the direction there.
 - The doneness slider. Its label is above it and the odds track under it,
   with the five doneness words at their levels. Then the reading
-  (`controls.doneness.value`, "Jammy · peak yolk 65 °C", or `valueBath`),
-  and the texture note (in sous-vide, the bath's note).
+  (`controls.doneness.value`, "Jammy · peak yolk 65 °C", or `valueBath`;
+  since section 11 in the heading instead), and the texture note (in
+  sous-vide, the bath's note).
 - The sentence, then the open clause's panel.
 - The slot: the refusal, the sous-vide warning, or the first-egg welcome.
   Under low odds, "How to make this more reliable →" goes under any of
@@ -493,9 +463,8 @@ the odds' strength as the opacity.
   the web's says "where your browser says you are".
 - **No mute, and no reloaded-cook warning.** iOS has neither. Its alarm is
   the system's.
-- **Phase screens keep the iOS words** (`readout.phase.heatingTap`,
-  `readout.sub.heatingEstimate`, the alarm line, `cook.method`,
-  `cook.summary`). Only the stats row went.
+- **Phase screens keep the iOS words** in this pass; pass B moved them to
+  the web's (section 10). Only the stats row went.
 
 **Retired from iOS**:
 - `readout.phase.totalLidOn`, `readout.sub.idleCold`, `.idleHot`
@@ -510,19 +479,19 @@ the odds' strength as the opacity.
 - `odds.shown`, `odds.hidden`
 - `learned.forgetExplain`, `colophon.ios`
 
-Each was iOS's alone, so each is deleted from the catalogue.
-`odds.hitTheMark`, `odds.info`, `odds.why` and `odds.stillLearning` stay
-until pass B.
+Each was iOS's alone, so each is deleted from the catalogue. The odds keys
+went in pass B and with F6 (section 10).
 
 **Debug screens.** A debug build takes these launch arguments
 (`Screenshots.swift`), so screenshots need no taps:
 - `-uiScreen settings|help|help-reliable|clause-egg|clause-from|clause-start|clause-cooling|heating`;
-- `-noAlarmPrompt YES`.
+- `-noAlarmPrompt YES`. Known not to work fully: the system still asks for
+  notifications as a cook starts (LOGBOOK.md, 28 September); not yet traced.
 
 ## 10. As built (iOS, pass B), 28 September 2026
 
-Prediction: the web's outcome summary and playing safe on iOS, the phase
-screens in the web's words, and one track. `ios/App`: `Direction.swift`
+Prediction: the web's outcome summary (and playing safe, since removed) on
+iOS, the phase screens in the web's words, and one track. `ios/App`: `Direction.swift`
 (new, the web's `src/ui/outcome.ts`), `YolkSlider.swift` (new),
 `ContentView.swift`, `Kitchen.swift`, `OddsTrack.swift`, `Cook.swift`;
 core unchanged. The copy is the `iosB` draft in `tools/copyDraft.ts`, on
@@ -538,7 +507,8 @@ idle. Under it, from P(runny) 0.2 (core's `whiteRisk`), "The white might
 still be runny." in the warning colour. While idle the sentence keeps two
 lines' room and centres in it, so a drag that changes it does not move the
 slider. "I'm still learning" and the odds line are gone, as on the web.
-`oddsTenths` and `stillLearning` are still on the ticket and in the record.
+`oddsTenths` and `stillLearning` are still on the ticket (not in the egg's
+record, which never kept them).
 
 The outcome is `predictOutcome`, read in `Kitchen.decided` at the decided
 time on the decision's own surface, off the main actor beside the decision.
@@ -555,25 +525,9 @@ thumb's half-width like the track. VoiceOver reads it as `outcome.range` /
 the white never sets, in sous-vide, and once a cook runs. Its room is kept
 while it is hidden, so the words under it do not jump.
 
-**Playing safe** (since removed, section 11) follows the web's rules. `Kitchen.askForSafer` runs after
-every decided answer:
-- **The threshold.** It asks only when a risk is at least 0.2
-  (`Direction.safeRisk`) and this pot's odds profile is in.
-- **When it runs.** It waits 300 ms for the slider to settle, then runs
-  `saferLevels` in the `DecisionGrids` actor, on a detached task.
-- **The cache.** Results are cached by pot, posterior and level
-  (`profileKey@level`, 64 kept). A level the slider comes back to is
-  answered at once. A drag cancels the wait, not a build already running.
-- **Which one shows.** `Direction.playSafe` picks at most one suggestion:
-  the larger risk wins, and a tie goes firm-safe. When the nearest word is
-  the slider's own, it says "A little firmer" or "A little softer".
-- **The tap.** Tapping sets the slider to the suggested level and records
-  `playedSafeKey`, so no second suggestion follows until the level, the pot
-  or the posterior changes. VoiceOver focus moves to the slider.
-- **Holding its room.** While the next suggestion is on its way, the line
-  keeps its room if a suggestion was showing.
-- **Its look.** It is drawn as the low-odds link is: underlined in the
-  accent, with an arrow that VoiceOver does not read.
+**Playing safe** was ported with the web's rules (`Kitchen.askForSafer`,
+`Direction.playSafe`, a cache in `DecisionGrids`) and removed with it the
+same day (section 11).
 
 **One track.** `YolkSlider` wraps a `UISlider` with clear minimum and
 maximum track images, laid over `OddsTrack`, so the yolk strip is the only
@@ -609,14 +563,9 @@ is the open tab. Its place moved from under the time to above Cancel.
 - `readout.big.now`, `readout.big.eat`
 
 **Kept, and why.**
-- `odds.hitTheMark` stays, on the Lock Screen only (the Live Activity).
-  Its surface budget is 33 characters, and no direction sentence fits. Its
-  note says so now. That is a departure from the brief, which listed it for
-  retirement. The owner may prefer to drop the odds from the Lock Screen
-  altogether, which is a one-line change in `Cook.Ticket.activity`.
-  **Since F6 on iOS (28 September) the Lock Screen no longer shows odds**:
-  the owner dropped them, and `odds.hitTheMark` is retired (LANGUAGE.md §6,
-  As built (iOS)).
+- `odds.hitTheMark` stayed on the Lock Screen after this pass; the owner
+  dropped the odds from the Lock Screen with F6 the same day, and the key is
+  retired (LANGUAGE.md §6, As built (iOS)).
 - `readout.phase.cooling` ("Cooling") stays for a counter rest. The web has
   no cooling phase there, and iOS never reaches one either, so it is
   effectively dead. It is left for the owner rather than deleted.
@@ -630,17 +579,17 @@ is the open tab. Its place moved from under the time to above Cancel.
   `soft` or `firm`, then folded (`Kitchen.seed`). This gives a learned
   state without cooking.
 - `-uiScreen direction-info`: open the direction's (i).
-- `-uiScreen take-safe`: tap the first suggestion that lands.
+
+(`-uiScreen take-safe` went with playing safe, section 11.)
 
 **What the cook sees** on the reference setup (68 g, fridge, cold start,
 ice, jammy), in the simulator:
 
-| Log | Direction | Bracket | Suggestion |
-|---|---|---|---|
-| Fresh install | "I can't call it yet" | Soft to Fudgy | "Rather not risk it soft? Try: Fudgy", as the web offers since the runny-white guard |
-| After three eggs just right | "Probably just right." | about the thumb's width | none |
-| After one egg too soft | "I can't call it yet" (the time rises to 12:09) | as shown | "Try: Fudgy" |
-| That one tapped | the slider moves to Fudgy (12:59) | as shown | none |
+| Log | Direction | Bracket |
+|---|---|---|
+| Fresh install | "I can't call it yet" | Soft to Fudgy |
+| After three eggs just right | "Probably just right." | about the thumb's width |
+| After one egg too soft | "I can't call it yet" (the time rises to 12:09) | as shown |
 
 ## 11. As built (both apps), 28 September 2026: a tighter egg
 
@@ -681,8 +630,7 @@ served it:
 **Core keeps `saferLevels`** (`src/core/reach.ts`, `EggTimerCore`'s
 `Reach.swift`), with `test/safer.test.ts`, `fixtures/safer.json` and the
 Swift `Safer` suite. No screen uses it now. The direction sentence, its
-(i), the bracket and the runny-white line stay as they were. Sections 8 and
-10 describe the suggestion as it was built.
+(i), the bracket and the runny-white line stay as they were.
 
 **The sentence stays on screen while a cook runs.** Under the time, where
 the controls were, the setup sentence the cook was started with, so a
