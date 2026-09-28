@@ -241,6 +241,38 @@ export function verdictWithOdds(sol: Solution, level: number, profile: OddsProfi
   return v;
 }
 
+/* ------------------------------------------------------------- the answer */
+
+/** A solve, the verdict on it, and the level it is for. */
+export interface LevelAnswer {
+  solution: Solution;
+  verdict: Verdict;
+  /** The level the solution is for: the one asked, or the one it snapped to. */
+  level: number;
+}
+
+/**
+ * Solve for a level, judge it with the odds' range, and, when the verdict
+ * moves the slider, solve again at the level it moves to - so the numbers on
+ * screen are for the cook on offer rather than for one that was refused. The
+ * retry is kept only if it reaches.
+ *
+ * `snapRetry` is false for a cook already under way: its target is frozen,
+ * so a solve at a snapped level would answer for an egg nobody is cooking.
+ */
+export function answerAt(
+  c: Calibration, egg: Egg, setup: CookSetup, level: number, profile: OddsProfile | null, snapRetry: boolean,
+): LevelAnswer {
+  const params = calibrationParams(c);
+  const solution = solveCookTime(egg, setup, params, calibrationDoneness(c, level));
+  const verdict = verdictWithOdds(solution, level, profile);
+  if (snapRetry && verdict.snapTo !== null) {
+    const retry = solveCookTime(egg, setup, params, calibrationDoneness(c, verdict.snapTo));
+    if (retry.reachable) return { solution: retry, verdict: verdict, level: verdict.snapTo };
+  }
+  return { solution: solution, verdict: verdict, level: level };
+}
+
 /* ------------------------------------------------------------ the shading */
 
 /** How strongly the track is shaded at a level: its odds over the best

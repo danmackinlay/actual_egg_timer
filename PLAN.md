@@ -704,6 +704,7 @@ REACH_ODDS = 0.3 / PROFILE_STEP = 5 / ADVICE_BELOW_TENTHS = 5 / ADVICE_MARGIN_TE
 interface OddsProfile { points: {level, odds}[]; best; physicalSoftest; physicalHardest; softest | null; hardest | null }
 oddsProfile(c, egg, setup, grid) / oddsAtLevel(c, egg, setup, grid, level) / oddsNear(profile, level)
 verdictWithOdds(sol, level, profile | null)   // adds 'unlikelySoft' | 'unlikelyHard'
+answerAt(c, egg, setup, level, profile | null, snapRetry) → LevelAnswer { solution; verdict; level }
 shadingOf(profile) / adviceWanted(tenths, profile) / pricedChanges(setup) / unpricedAdvice(setup, facts)
 protocolAdvice(setup, facts, level, odds, priced)
 

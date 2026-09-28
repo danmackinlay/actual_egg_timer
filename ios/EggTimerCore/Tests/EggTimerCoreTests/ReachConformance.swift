@@ -132,6 +132,35 @@ struct ReachConformance {
         }
     }
 
+    /// The solve, the verdict and the retry at the level it snaps to, for each
+    /// profile's pot, with the profile as the fixture has it.
+    @Test("the answer at a level, and its snap-and-retry")
+    func answers() {
+        let byName = posteriors()
+        let json = Fixtures.load("reach.json")
+        let profiles = rows(json, "profiles")
+        let answers = rows(json, "answers")
+        #expect(!answers.isEmpty)
+        for row in answers {
+            let p = profiles[Int(row.num("profile"))]
+            guard let post = byName[p.str("posterior")] else { fatalError("no posterior") }
+            let c = Calibration(posterior: post, eggsLogged: Int(p.num("eggsLogged")))
+            let egg = Geometry.eggFromMass(object(p, "egg").num("mass_kg"))
+            let level = row.num("level")
+            let a = answerAt(
+                c, egg: egg, setup: setupOf(object(p, "setup")), level: level,
+                profile: row.flag("withOdds") ? profileOf(object(p, "profile")) : nil,
+                snapRetry: row.flag("snapRetry")
+            )
+            let label = "profile \(row.num("profile")) at \(level), odds \(row.flag("withOdds")), retry \(row.flag("snapRetry"))"
+            #expect(a.verdict.kind.rawValue == row.str("kind"), "\(label) kind")
+            #expect(a.verdict.snapTo == optional(row, "snapTo"), "\(label) snapTo")
+            #expect(a.level == row.num("answeredLevel"), "\(label) level")
+            #expect(a.solution.reachable == row.flag("reachable"), "\(label) reachable")
+            expectClose(a.solution.result.cookTimeS, row.num("cookTime_s"), "\(label) cook time")
+        }
+    }
+
     @Test("the verdict, with and without the odds' range")
     func verdicts() {
         let result = CookResult(

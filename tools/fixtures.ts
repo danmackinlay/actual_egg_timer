@@ -84,7 +84,7 @@ import {
 import { LEAN_RATIO, LEVEL_HIGH_Q, LEVEL_LOW_Q, leanOf, predictOutcome } from '../src/core/outcome.js';
 import {
   ADVICE_BELOW_TENTHS, ADVICE_GAIN, ADVICE_MARGIN_TENTHS, OddsProfile, PROFILE_STEP, REACH_ODDS,
-  adviceWanted, oddsNear, oddsProfile, pricedChanges, protocolAdvice, shadingOf, unpricedAdvice,
+  adviceWanted, answerAt, oddsNear, oddsProfile, pricedChanges, protocolAdvice, shadingOf, unpricedAdvice,
   verdictWithOdds,
 } from '../src/core/reach.js';
 import {
@@ -1415,12 +1415,29 @@ const REACH_CASES: { posterior: string; setup: CookSetup }[] = [
   { posterior: 'learned', setup: setupOf({ timeToBoil_s: 480, eggCount: 2, cooling: 'counter' }) },
 ];
 
-const reachProfiles = REACH_CASES.map((rc) => {
+/* The answer at a level (`answerAt`): the solve, the verdict, and the retry
+ * at the level it snaps to. Each profile's pot is asked at levels inside and
+ * outside its range, with and without its odds, and with the retry on and off. */
+const reachAnswers: unknown[] = [];
+
+const reachProfiles = REACH_CASES.map((rc, index) => {
   const pz = decidePosteriors.find((x) => x.name === rc.posterior);
   if (pz === undefined) throw new Error(rc.posterior);
   const c: Calibration = { posterior: pz.post, eggsLogged: pz.eggsLogged };
   const g = coarseDecisionGrid(c, DECIDE_EGG, rc.setup);
   const profile = oddsProfile(c, DECIDE_EGG, rc.setup, g.grid);
+  for (const withOdds of [false, true]) {
+    for (const level of [0, 0.05, 0.41, 0.95, 1]) {
+      for (const snapRetry of [true, false]) {
+        const a = answerAt(c, DECIDE_EGG, rc.setup, level, withOdds ? profile : null, snapRetry);
+        reachAnswers.push({
+          profile: index, withOdds: withOdds, level: level, snapRetry: snapRetry,
+          kind: a.verdict.kind, snapTo: a.verdict.snapTo, answeredLevel: a.level,
+          reachable: a.solution.reachable, cookTime_s: a.solution.result.cookTime_s,
+        });
+      }
+    }
+  }
   return {
     posterior: rc.posterior,
     eggsLogged: pz.eggsLogged,
@@ -1489,6 +1506,7 @@ const reachFixture = {
     adviceGain: ADVICE_GAIN,
   },
   profiles: reachProfiles,
+  answers: reachAnswers,
   verdicts: reachVerdicts,
   adviceWanted: [0, 3, 4, 5, 6, 7, 8].flatMap((tenths) => [null, 0.62, 0.8, 0.84].map((best) => ({
     tenths: tenths, best: best,

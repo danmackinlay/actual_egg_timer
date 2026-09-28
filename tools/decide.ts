@@ -24,13 +24,13 @@ import {
 import { ALPHA_DEFAULT } from '../src/core/constants.js';
 import { eggFromMass, Egg } from '../src/core/geometry.js';
 import { CookSetup } from '../src/core/protocol.js';
-import { Solution, donenessFromSlider, solveCookTime } from '../src/core/solve.js';
-import { LevelOdds, OddsProfile, oddsProfile } from '../src/core/reach.js';
+import { Solution, donenessFromSlider } from '../src/core/solve.js';
+import { LevelOdds, OddsProfile, answerAt, oddsProfile } from '../src/core/reach.js';
 import { predictOutcome } from '../src/core/outcome.js';
 import { cookTimeForLogWhiteDose, lookupLogYolkDose } from '../src/core/doseGrid.js';
 import { UNRELATED } from '../src/core/infer.js';
 import { sliderFromYolkDose } from '../src/core/solve.js';
-import { CALIBRATION_SEED, PARTICLE_COUNT, verdictFor } from '../src/core/policy.js';
+import { CALIBRATION_SEED, PARTICLE_COUNT } from '../src/core/policy.js';
 import {
   Calibration, EggRecord, PRIOR_ID, buildRequestedGrid, calibrationDoneness, calibrationParams,
   freshCalibration, replay,
@@ -64,15 +64,11 @@ function logTarget(level: number): number {
   return Math.log10(donenessFromSlider(level).yolkDose_min);
 }
 
+/** The app's idle answer (core `answerAt`), without the odds' range: this
+ *  tool measures the mean solve, not the slider's reach. */
 function meanSolve(c: Calibration, egg: Egg, setup: CookSetup, level: number): { sol: Solution; level: number } {
-  const params = calibrationParams(c);
-  const sol = solveCookTime(egg, setup, params, calibrationDoneness(c, level));
-  const v = verdictFor(sol, level);
-  if (v.snapTo !== null) {
-    const retry = solveCookTime(egg, setup, params, calibrationDoneness(c, v.snapTo));
-    if (retry.reachable) return { sol: retry, level: v.snapTo };
-  }
-  return { sol: sol, level: level };
+  const a = answerAt(c, egg, setup, level, null, true);
+  return { sol: a.solution, level: a.level };
 }
 
 function recordAt(level: number, t: number, yolk: Feedback | null, white: WhiteReport | null): EggRecord {

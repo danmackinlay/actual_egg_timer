@@ -104,7 +104,7 @@ Baseline, all green:
 
 `policy.ts` says that anything both apps must agree on belongs in core with a fixture. These items don't follow that rule yet.
 
-**3.1 The solve → refusal → snap-and-retry rule is written three times.**
+DONE: **3.1 The solve → refusal → snap-and-retry rule is written three times.** (`answerAt` in `reach.ts`/`Reach.swift`, pinned in `reach.json` `answers`. iOS loses its `Task.isCancelled` check between the solve and the retry; a superseded answer is still dropped by question number.)
 - Where: `app.ts:503-523` (`answerFor`), `Kitchen.swift:565-594` (`solve`), and `tools/decide.ts:70-79` (`meanSolve`, which also skips the odds profile).
 - Fix: add a core `answerAt(c, egg, setup, level, profile, snapRetry) → {solution, verdict, level}`, pin it in `reach.json`, and have all three call it.
 

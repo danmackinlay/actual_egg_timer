@@ -534,19 +534,13 @@ final class Kitchen {
         return keys
     }
 
-    /// Solve, and read the result as a decision about the slider.
+    /// Solve, and read the result as a decision about the slider: core
+    /// `answerAt`, with the setup and profile it was asked for.
     ///
-    /// No inner `Task` of any kind. This is `nonisolated async`, which is all
-    /// that is needed to get off the main actor, and it means the CALLER's
-    /// cancellation applies: `Task.isCancelled` below is the recompute task,
-    /// which `recompute()` cancels.
-    ///
-    /// Wrapping the body in `Task { }` - as this did, with a comment claiming
-    /// it fixed the cancellation - does not work. An unstructured task inherits
-    /// priority and actor context but NOT cancellation, exactly like the
-    /// `Task.detached` it replaced, so the guard inside it was dead code and
-    /// superseded solves still ran to completion. Only the 90 ms coalesce was
-    /// doing anything.
+    /// `nonisolated async` is what takes it off the main actor; no inner
+    /// `Task` of any kind, since an unstructured task does not inherit the
+    /// caller's cancellation. The caller (`recompute()`) drops a superseded
+    /// answer by its question number.
     ///
     /// `snapRetry` is false for a cook already under way: the target is frozen,
     /// so re-solving at a snapped position would answer for an egg nobody is
@@ -555,32 +549,10 @@ final class Kitchen {
         egg: Egg, setup: CookSetup, level: Double, calibration: Calibration, snapRetry: Bool = true,
         profile: OddsProfile? = nil
     ) async -> Answer {
-        // The white's target moves with what the eggs said about the white (E3),
-        // so the doneness comes from the calibration as well as the parameters.
-        let params = calibrationParams(calibration)
-        var result = solveCookTime(
-            egg: egg, setup: setup, params: params, doneness: calibrationDoneness(calibration, level: level)
+        let a = answerAt(
+            calibration, egg: egg, setup: setup, level: level, profile: profile, snapRetry: snapRetry
         )
-        // With this pot's odds in, the slider's ends are where they reach 3/10
-        // (Reach.swift); without them, or with none that high, where the pan
-        // reaches.
-        let verdict = verdictWithOdds(result, level: level, profile: profile)
-
-        // Re-solve at the position the user is actually being offered, so the
-        // numbers on screen are the numbers for that cook rather than for one
-        // that was refused. Only worth it when the slider is going to move, and
-        // only if nobody has asked a newer question in the meantime.
-        var solvedAt = level
-        if snapRetry, let snapTo = verdict.snapTo, !Task.isCancelled {
-            let retry = solveCookTime(
-                egg: egg, setup: setup, params: params, doneness: calibrationDoneness(calibration, level: snapTo)
-            )
-            if retry.reachable {
-                result = retry
-                solvedAt = snapTo
-            }
-        }
-        return Answer(solution: result, verdict: verdict, setup: setup, level: solvedAt, profile: profile)
+        return Answer(solution: a.solution, verdict: a.verdict, setup: setup, level: a.level, profile: profile)
     }
 
     /// Re-solve a cook already under way, for a corrected time to boil.

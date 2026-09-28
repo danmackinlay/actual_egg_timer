@@ -202,6 +202,39 @@ public func verdictWithOdds(_ sol: Solution, level: Double, profile: OddsProfile
     return v
 }
 
+// MARK: - The answer
+
+/// A solve, the verdict on it, and the level it is for.
+public struct LevelAnswer: Sendable {
+    public let solution: Solution
+    public let verdict: Verdict
+    /// The level the solution is for: the one asked, or the one it snapped to.
+    public let level: Double
+}
+
+/// Solve for a level, judge it with the odds' range, and, when the verdict
+/// moves the slider, solve again at the level it moves to, so the numbers on
+/// screen are for the cook on offer. The retry is kept only if it reaches.
+///
+/// `snapRetry` is false for a cook already under way: its target is frozen,
+/// so a solve at a snapped level would answer for an egg nobody is cooking.
+public func answerAt(
+    _ c: Calibration, egg: Egg, setup: CookSetup, level: Double, profile: OddsProfile?, snapRetry: Bool
+) -> LevelAnswer {
+    let params = calibrationParams(c)
+    let solution = solveCookTime(
+        egg: egg, setup: setup, params: params, doneness: calibrationDoneness(c, level: level)
+    )
+    let verdict = verdictWithOdds(solution, level: level, profile: profile)
+    if snapRetry, let snapTo = verdict.snapTo {
+        let retry = solveCookTime(
+            egg: egg, setup: setup, params: params, doneness: calibrationDoneness(c, level: snapTo)
+        )
+        if retry.reachable { return LevelAnswer(solution: retry, verdict: verdict, level: snapTo) }
+    }
+    return LevelAnswer(solution: solution, verdict: verdict, level: level)
+}
+
 // MARK: - The shading
 
 /// How strongly the track is shaded at a level: its odds over the best

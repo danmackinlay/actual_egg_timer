@@ -33,7 +33,8 @@ import {
   Decision, DecisionInputs, carriedSolution, decide, decidedSolution, decisionInputs,
 } from '../core/decide.js';
 import {
-  OddsProfile, REACH_ODDS, adviceWanted, pricedChanges, protocolAdvice, shadingOf, verdictWithOdds,
+  LevelAnswer, OddsProfile, REACH_ODDS, adviceWanted, answerAt, pricedChanges, protocolAdvice,
+  shadingOf,
 } from '../core/reach.js';
 import { Outcome, predictOutcome } from '../core/outcome.js';
 import {
@@ -492,45 +493,12 @@ function refusalText(v: Verdict): string {
 
 /* --------------------------------------------------------------- solving */
 
-/** A solve and what it implies, with nothing done about it yet.
- *
- * Splitting this out is the point: `solve()` used to solve, write a
- * module-level refusal string, move the slider, write the DOM and save to
- * localStorage, all from one function that the ticker and the boil tap both
- * called - so a slow hob could silently move the user's doneness mid-cook.
- * Deciding and acting are now two steps, and only the idle path takes the
- * second one. */
-interface Answer {
-  solution: Solution;
-  verdict: Verdict;
-  /** The level the solution is for: the one asked, or the one it snapped to. */
-  level: number;
-}
-
-/** Solve for the given inputs. Pure apart from reading `settings`: it moves
- *  nothing and writes nothing.
- *
- *  `snapRetry` is false for a cook already under way: the target is frozen, so
- *  re-solving at a snapped position would answer for an egg nobody is cooking. */
-function answerFor(
-  timeToBoil_s: number, level: number, snapRetry = true, odds: OddsProfile | null = null,
-): Answer {
-  const egg = currentEgg();
-  const setup = buildSetup(timeToBoil_s);
-  const params = calibrationParams(calib);
-  const result = solveCookTime(egg, setup, params, calibrationDoneness(calib, level));
-  // With this pot's odds in, the slider's ends are where they reach 3/10
-  // (reach.ts); without them, or with none that high, where the pan reaches.
-  const verdict = verdictWithOdds(result, level, odds);
-
-  // Re-solve at the position the user is actually being offered, so the
-  // numbers on screen are the numbers for that cook rather than for one that
-  // was refused. Only worth it when the slider is going to move.
-  if (snapRetry && verdict.snapTo !== null) {
-    const retry = solveCookTime(egg, setup, params, calibrationDoneness(calib, verdict.snapTo));
-    if (retry.reachable) return { solution: retry, verdict: verdict, level: verdict.snapTo };
-  }
-  return { solution: result, verdict: verdict, level: level };
+/** Solve for the given inputs (core `answerAt`). Pure apart from reading
+ *  `settings`: it moves nothing and writes nothing. Deciding and acting are
+ *  two steps, and only the idle path takes the second, so a slow hob cannot
+ *  move the user's doneness mid-cook. */
+function answerFor(timeToBoil_s: number, level: number, odds: OddsProfile | null): LevelAnswer {
+  return answerAt(calib, currentEgg(), buildSetup(timeToBoil_s), level, odds, true);
 }
 
 /**
@@ -543,7 +511,7 @@ function answerFor(
  * chosen one mid-drag. It changes once, when a new pot's surface lands.
  */
 function decided(
-  answer: Answer, timeToBoil_s: number,
+  answer: LevelAnswer, timeToBoil_s: number,
 ): { solution: Solution; decision: Decision | null; outcome: Outcome | null } {
   const egg = currentEgg();
   const setup = buildSetup(timeToBoil_s);
@@ -625,7 +593,7 @@ function askForProfile(inputs: DecisionInputs): void {
 /** Take the answer up: show the refusal, and move the slider if the answer
  *  says it must. Only ever called while idle - once the egg is in the water
  *  the controls are gone and there is nothing to snap. */
-function applyAnswer(answer: Answer): Solution {
+function applyAnswer(answer: LevelAnswer): Solution {
   refusal = refusalText(answer.verdict);
   const snapTo = answer.verdict.snapTo;
   if (snapTo !== null && snapTo !== settings.doneness) {
@@ -1446,7 +1414,7 @@ function recompute(): void {
   }
   const boil = timeToBoil_s();
   profile = cachedOddsProfile(currentInputs(boil), calib);
-  const answer = answerFor(boil, settings.doneness, true, profile);
+  const answer = answerFor(boil, settings.doneness, profile);
   applyAnswer(answer);
   const chosen = decided(answer, boil);
   solution = chosen.solution;
@@ -1934,7 +1902,7 @@ function onPrimary(): void {
     // level this returns is the one the cook is run at, and it does not move
     // again until the cook is over.
     profile = cachedOddsProfile(currentInputs(boil), calib);
-    const answer = answerFor(boil, settings.doneness, true, profile);
+    const answer = answerFor(boil, settings.doneness, profile);
     applyAnswer(answer);
     // The time on screen is the one started: the chosen one if this pot's
     // surface is in, and the mean solve's if the cook was quicker than it.
