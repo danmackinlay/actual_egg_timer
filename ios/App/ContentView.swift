@@ -283,7 +283,7 @@ struct ContentView: View {
                 ZStack {
                     // Two lines' room while idle, one sentence centred in it.
                     if idle { Text(verbatim: " \n ").hidden().accessibilityHidden(true) }
-                    Text(o.map { tr(Direction.key($0)) } ?? "")
+                    Text(o.map { tr(directionKey($0)) } ?? "")
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 .font(.subheadline.weight(.semibold))
@@ -296,7 +296,7 @@ struct ContentView: View {
                     .padding(.top, 4)
                     .transition(.opacity)
             }
-            if let o, Direction.whiteAtRisk(o) {
+            if let o, whiteAtRisk(o) {
                 Text(tr("outcome.whiteRunny"))
                     .font(.footnote)
                     .foregroundStyle(.orange)
@@ -309,7 +309,7 @@ struct ContentView: View {
     /// What the direction is about. While idle, the choice on screen's, once
     /// this pot's surface has landed; once a cook is running, what it was at
     /// "Eggs in".
-    private func forecast(_ phase: Cook.Phase) -> Forecast? {
+    private func forecast(_ phase: Cook.Phase) -> Outcome? {
         if phase == .idle {
             guard kitchen.decision != nil, kitchen.solution?.whiteSets == true else { return nil }
             return kitchen.outcome
@@ -915,7 +915,7 @@ struct ContentView: View {
     /// The outcome the bracket draws: only while idle with a decision in, and
     /// never where the white never sets, or in sous-vide, as on the web. The
     /// control is only on screen while idle.
-    private var bracketForecast: Forecast? {
+    private var bracketForecast: Outcome? {
         guard !kitchen.isSousVide, kitchen.decision != nil, kitchen.solution?.whiteSets == true else { return nil }
         return kitchen.outcome
     }

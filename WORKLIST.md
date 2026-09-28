@@ -126,7 +126,7 @@ DONE: **3.1 The solve → refusal → snap-and-retry rule is written three times
 - Where: `Cook.swift:32-43`, with two hand mappings at `:265-281` and `:645-652`. The tap-out override also lives outside core.
 - Fix: use `EggTimerCore.Phase`, add `outAtS` to `Deadlines` / `phaseAt`, and fixture it in `policy.json`.
 
-**3.5 `Forecast` (`Direction.swift:14-35`) is a field-by-field Codable copy of core `Outcome`, with `lean` stored as a String.**
+DONE: **3.5 `Forecast` (`Direction.swift:14-35`) is a field-by-field Codable copy of core `Outcome`, with `lean` stored as a String.**
 - Fix: make `Outcome` and `Lean` Codable/Equatable in core, then delete `Forecast`.
 
 **3.6 Swift never checks the record's identity constants.**

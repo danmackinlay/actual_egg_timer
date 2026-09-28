@@ -219,7 +219,7 @@ final class Kitchen {
     /// What the egg at the chosen time will be like (`predictOutcome`, read at
     /// the decided time on the decision's own surface): the direction, the
     /// white's line and the bracket. Nil whenever `decision` is.
-    private(set) var outcome: Forecast?
+    private(set) var outcome: Outcome?
     /// Under low odds, what would make this cook more reliable, as catalogue
     /// keys in the order shown; empty when there is nothing to say.
     private(set) var advice: [String] = []
@@ -482,7 +482,7 @@ final class Kitchen {
         chosen.decision = d
         // What the egg at that time will be like: about 2 ms beside the
         // decision's 13-16, so it goes with it (INFERENCE.md section 8).
-        chosen.outcome = Forecast(predictOutcome(calibration.posterior, grid, d.cookTimeS, target))
+        chosen.outcome = predictOutcome(calibration.posterior, grid, d.cookTimeS, target)
         if answer.profile == nil {
             chosen.missing.append(decisionInputs(calibration, egg: egg, setup: answer.setup))
         }
@@ -665,7 +665,7 @@ final class Kitchen {
         /// The choice made on it (E5), once this pot's surface is in.
         var decision: Decision? = nil
         /// What the egg at the chosen time will be like, with the decision.
-        var outcome: Forecast? = nil
+        var outcome: Outcome? = nil
         /// The odds at every level for this pot and posterior (Reach.swift),
         /// once worked out: the verdict read its range, and the track is
         /// shaded by it.

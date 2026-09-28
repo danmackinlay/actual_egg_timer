@@ -112,7 +112,7 @@ struct OddsTrack: View {
 /// accent and not the yolk, so it reads in both schemes and never covers the
 /// shading. Inset as the track is. VoiceOver reads it as `outcome.range`.
 struct YolkBracket: View {
-    let forecast: Forecast
+    let forecast: Outcome
 
     var body: some View {
         Canvas { context, size in
@@ -137,6 +137,13 @@ struct YolkBracket: View {
         }
         .frame(height: 9)
         .accessibilityElement()
-        .accessibilityLabel(Direction.range(forecast))
+        .accessibilityLabel(rangeText(forecast))
     }
+}
+
+/// The bracket in words, for VoiceOver: "Likely yolk: Soft to Fudgy", or one
+/// word when both ends are nearest the same one (core's `rangeWords`).
+private func rangeText(_ o: Outcome) -> String {
+    let r = rangeWords(o)
+    return tr(r.key, r.args.mapValues { .text(tr($0)) })
 }

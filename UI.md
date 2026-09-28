@@ -512,7 +512,7 @@ September (not in the egg's record, which never kept them).
 
 The outcome is `predictOutcome`, read in `Kitchen.decided` at the decided
 time on the decision's own surface, off the main actor beside the decision.
-It rides on the ticket (`Forecast`, Codable), so mid-cook the direction and
+It rides on the ticket (core `Outcome`, Codable), so mid-cook the direction and
 the white's line are what they were at "Eggs in", and they survive a
 relaunch. A cook started before the decision landed carries none, as on
 the web.

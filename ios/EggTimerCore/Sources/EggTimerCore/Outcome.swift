@@ -26,14 +26,15 @@ public let whiteRisk = 0.2
 /// Bisection steps for each point of the level range: 2^-20 of the slider.
 private let levelBisections = 20
 
-public enum Lean: String, Sendable {
+public enum Lean: String, Sendable, Codable {
     case soft
     case firm
     case balanced
 }
 
-/// What the egg at the chosen time will be like.
-public struct Outcome: Sendable {
+/// What the egg at the chosen time will be like. Codable, so a running cook
+/// keeps the outcome it started with across a relaunch.
+public struct Outcome: Sendable, Codable, Equatable {
     /// P(the cook answers too soft / just right / too firm) about the yolk.
     public let pTooSoft: Double
     public let pJustRight: Double
