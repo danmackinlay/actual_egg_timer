@@ -53,7 +53,7 @@ Baseline, all green:
 - Fix: use `ticket.startTemp`. Then delete the app's `StartTemp` enum (`Kitchen.swift:28-30`), which duplicates core `EggFrom`, and use `EggFrom` throughout.
 - Done when: a Custom cook's record says `custom`, and the web (`app.ts:869`) and iOS agree.
 
-**2.2 ✔ iOS "Weighed · {mass}" shows one mass and selects another.** Owner, 28 Sep: **go back** to the last weighed mass.
+**DONE: 2.2 ✔ iOS "Weighed · {mass}" shows one mass and selects another.** Owner, 28 Sep: **go back** to the last weighed mass.
 - Where: `SetupSentence.swift:346` labels the item with `weighedMassG`, but `Kitchen.chooseSize(-1)` (`Kitchen.swift:64-67`) first overwrites `weighedMassG = eggMassG`.
 - Example: weigh 62 g, pick Large, then pick "Weighed · 62 g", and you get 68 g.
 - It is also lost across a relaunch: `Store.save` persists `eggMassG`, not `weighedMassG` (`Store.swift:105`).

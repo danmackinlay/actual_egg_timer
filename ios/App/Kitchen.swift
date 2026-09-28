@@ -53,10 +53,10 @@ final class Kitchen {
     /// Whose carton, for a class; nil for a weighed egg.
     var sizeTable: SizeTable? { massFrom == .sizeClass ? sizeTableInUse : nil }
 
-    /// A class from the menu. Weighed starts from the egg on screen rather than
-    /// from whatever was last weighed, so choosing it moves nothing.
+    /// A class from the menu, or -1 for Weighed, which goes back to the mass
+    /// last weighed - the one its menu item names - as the web's "Measured
+    /// below" does.
     func chooseSize(_ index: Int) {
-        if index < 0, sizeIndex >= 0 { weighedMassG = eggMassG }
         sizeIndex = index
     }
 

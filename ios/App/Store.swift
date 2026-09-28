@@ -44,8 +44,13 @@ enum Settings {
         guard store.object(forKey: "doneness") != nil else { return }
         kitchen.doneness = clamp(store.double(forKey: "doneness"), to: Limits.doneness)
         let massG = clamp(store.double(forKey: "eggMassG"), to: Limits.massG)
+        // The last weighed mass, under its own key, so Weighed comes back to it
+        // whatever class was chosen since; the default egg when none was kept.
+        let weighedG = store.object(forKey: "weighedMassG") == nil
+            ? Defaults.eggMassKg * 1000
+            : clamp(store.double(forKey: "weighedMassG"), to: Limits.massG)
         kitchen.restoreSize(index: sizeIndex(in: store, massG: massG, classes: kitchen.sizeClasses),
-                            weighedMassG: massG)
+                            weighedMassG: weighedG)
         kitchen.altitudeM = clamp(store.double(forKey: "altitudeM"), to: Limits.altitudeM)
         kitchen.waterLitres = clamp(store.double(forKey: "waterLitres"), to: Limits.waterLitres)
         kitchen.eggCount = Int(clamp(store.double(forKey: "eggCount"), to: Limits.eggCount).rounded())
@@ -103,6 +108,7 @@ enum Settings {
         // The mass being cooked, class or weighed, so a downgrade - which reads
         // only this key - comes back to the same egg.
         store.set(kitchen.eggMassG, forKey: "eggMassG")
+        store.set(kitchen.weighedMassG, forKey: "weighedMassG")
         store.set(Double(kitchen.sizeIndex), forKey: "sizeIndex")
         store.set(kitchen.altitudeM, forKey: "altitudeM")
         store.set(kitchen.waterLitres, forKey: "waterLitres")
