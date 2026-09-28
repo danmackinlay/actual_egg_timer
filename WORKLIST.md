@@ -94,7 +94,7 @@ Baseline, all green:
 - Where: `app.ts:1087-1088` listens to both `popstate` and `hashchange`.
 - Fix: keep one, or make the second return early when the view hasn't changed.
 
-**2.9 Minor iOS: `LiveActivity` operations are fire-and-forget and unordered.**
+**DONE: 2.9 Minor iOS: `LiveActivity` operations are fire-and-forget and unordered.**
 - Where: unstructured `Task`s at `Cook.swift:460,744-750`. The restore task (`Cook.swift:604-617`) and the `pulledOut` read-back (`:450-452`) don't check `generation`, so a cancel during them can be undone. For example, `alarmAuthorized` gets set again after a reset.
 - Fix: route all activity calls through one actor or serial stream, and guard with `gen == generation`.
 

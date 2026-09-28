@@ -214,6 +214,24 @@ final class Cook {
     /// That is not hypothetical - it is what "cancel doesn't reset" looks like.
     private var generation = 0
 
+    /// The last Live Activity call made. Each new one waits for it, so the
+    /// calls reach ActivityKit in the order the cook made them: a cancel's
+    /// end can never land before the start it is ending, and a done card's
+    /// end never before the update it follows.
+    private var activityCalls: Task<Void, Never>?
+
+    /// Queue a Live Activity call behind every earlier one.
+    @discardableResult
+    private func activity(_ call: @escaping @Sendable () async -> Void) -> Task<Void, Never> {
+        let previous = activityCalls
+        let next = Task {
+            await previous?.value
+            await call()
+        }
+        activityCalls = next
+        return next
+    }
+
     /// Both from EggTimerCore, so the two apps cannot time the same egg
     /// differently. They used to be a pair of literals here and another pair in
     /// the web app's machine, with a comment asserting they matched.
@@ -398,7 +416,8 @@ final class Cook {
         guard gen == generation else { return }
 
         if let state = activityState {
-            await LiveActivity.start(ticket.activity, state: state)
+            let attributes = ticket.activity
+            await activity { await LiveActivity.start(attributes, state: state) }.value
             guard gen == generation else { return }
             pushedStage = state.stage
         }
@@ -445,9 +464,7 @@ final class Cook {
         // The pull alarm has been and gone; this puts the cooled one at the
         // cooling's new end.
         if alarmAuthorized == true { scheduleAlarms() }
-        Task {
-            await readBackAlarms()
-        }
+        Task { await readBackAlarms() }
         pushActivity(force: true)
     }
 
@@ -455,7 +472,7 @@ final class Cook {
         generation &+= 1
         Alarm.shared.cancel()
         Ringer.shared.stop()
-        Task { await LiveActivity.endAll() }
+        activity { await LiveActivity.endAll() }
         ticker?.cancel()
         ticker = nil
         startedAt = nil
@@ -599,9 +616,15 @@ final class Cook {
         ticket = saved.ticket
         // The alarms were handed to the system at absolute dates and are still
         // pending; read the count back rather than assuming it.
+        let gen = generation
         Task {
-            alarmAuthorized = await Alarm.shared.authorize()
+            // A cancel while either of these is awaited ends this cook; what
+            // they return is then about a cook that no longer exists.
+            let authorized = await Alarm.shared.authorize()
+            guard gen == generation else { return }
+            alarmAuthorized = authorized
             await readBackAlarms()
+            guard gen == generation else { return }
             // Re-establish the Lock Screen card. A cook can come back from a
             // force-quit, but it can also come back from a reinstall, which
             // takes the activity with it - and an app that has restored a cook
@@ -609,7 +632,9 @@ final class Cook {
             // the other direction. A cook that is already finished gets none:
             // there is nothing left to count down to.
             if phase != .done, let state = activityState {
-                await LiveActivity.start(saved.ticket.activity, state: state)
+                let attributes = saved.ticket.activity
+                await activity { await LiveActivity.start(attributes, state: state) }.value
+                guard gen == generation else { return }
                 pushedStage = state.stage
             }
         }
@@ -625,8 +650,13 @@ final class Cook {
     }
 
     /// Ask the system what it is holding, rather than assuming.
+    ///
+    /// A cancel while the system is asked leaves the answer unread: it is
+    /// about a cook that no longer exists.
     private func readBackAlarms() async {
+        let gen = generation
         let held = await Alarm.shared.pendingDeadlines()
+        guard gen == generation else { return }
         pendingAlarms = held.count
         let now = Date.now
         let delivered = alarmCovers.filter { deadline in
@@ -739,7 +769,7 @@ final class Cook {
         guard let state = activityState else { return }
         guard force || state.stage != pushedStage else { return }
         pushedStage = state.stage
-        Task {
+        activity {
             if state.stage == .done {
                 await LiveActivity.finish()
             } else {
