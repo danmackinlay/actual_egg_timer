@@ -1101,8 +1101,9 @@ function wireViews(): void {
     });
   }
   dom.navBack.addEventListener('click', goBack);
+  // Back, Forward and a hash typed into the address all fire popstate, and
+  // hashchange too whenever the hash differs: one listener routes once.
   window.addEventListener('popstate', () => route(true));
-  window.addEventListener('hashchange', () => route(true));
   route(false);
 }
 

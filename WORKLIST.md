@@ -90,7 +90,7 @@ Baseline, all green:
 - Where: `readInputs` falls back to literal 62 g and 137 mm (`app.ts:1762,1764`). The width box (1766) keeps the current egg instead.
 - Fix: fall back to the current egg (as width does), or ignore a blank field.
 
-**2.8 Web routing runs twice on back/forward.**
+**DONE: 2.8 Web routing runs twice on back/forward.**
 - Where: `app.ts:1087-1088` listens to both `popstate` and `hashchange`.
 - Fix: keep one, or make the second return early when the view hasn't changed.
 
