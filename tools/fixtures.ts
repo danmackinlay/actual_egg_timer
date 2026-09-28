@@ -128,12 +128,6 @@ const MASS_CASES_G = [40, 48, 53, 58, 62.3, 68, 76, 90];
 const ALTITUDE_CASES_M = [-400, 0, 500, 1000, 1609, 2000, 3000, 4000, 5000];
 const PRESSURE_CASES_PA = [101325, 95000, 89870, 79500, 70110, 54020];
 
-function round(value: number): number {
-  // JSON.stringify already emits the shortest round-tripping form of a double,
-  // so nothing is lost here. This only exists to keep the file readable.
-  return value;
-}
-
 /* ------------------------------------------------------------- core.json */
 
 const sphereStep = (() => {
@@ -147,9 +141,9 @@ const sphereStep = (() => {
     t += 10;
     samples.push({
       t_s: t,
-      centre_C: round(centreTemperature(s)),
-      yolkBoundary_C: round(temperatureAt(s, YOLK_RADIUS_FRAC)),
-      mean_C: round(meanTemperature(s)),
+      centre_C: centreTemperature(s),
+      yolkBoundary_C: temperatureAt(s, YOLK_RADIUS_FRAC),
+      mean_C: meanTemperature(s),
     });
   }
   return samples;
@@ -167,8 +161,8 @@ const rampedStep = (() => {
     samples.push({
       t_s: i * 15,
       surface_C: surface,
-      centre_C: round(centreTemperature(s)),
-      mean_C: round(meanTemperature(s)),
+      centre_C: centreTemperature(s),
+      mean_C: meanTemperature(s),
     });
   }
   return samples;
@@ -185,8 +179,8 @@ const core = {
     CARRYOVER_WINDOW,
   },
   sphere: {
-    seriesTheta: THETA_CASES.map(([x, fo]) => ({ x: x, fourier: fo, value: round(seriesTheta(x, fo)) })),
-    erfc: ERFC_CASES.map((x) => ({ x: x, value: round(erfc(x)) })),
+    seriesTheta: THETA_CASES.map(([x, fo]) => ({ x: x, fourier: fo, value: seriesTheta(x, fo) })),
+    erfc: ERFC_CASES.map((x) => ({ x: x, value: erfc(x) })),
     stepResponse: sphereStep,
     rampResponse: rampedStep,
   },
@@ -195,21 +189,21 @@ const core = {
       const egg = eggFromMass(g / 1000);
       return {
         mass_g: g,
-        radius_m: round(egg.radius_m),
-        minorDiameter_m: round(egg.minorDiameter_m),
-        volume_m3: round(egg.volume_m3),
+        radius_m: egg.radius_m,
+        minorDiameter_m: egg.minorDiameter_m,
+        volume_m3: egg.volume_m3,
       };
     }),
   },
   thermo: {
-    pressureAtAltitude: ALTITUDE_CASES_M.map((h) => ({ altitude_m: h, value: round(pressureAtAltitude(h)) })),
-    boilingPointAtAltitude: ALTITUDE_CASES_M.map((h) => ({ altitude_m: h, value: round(boilingPointAtAltitude(h)) })),
-    boilingPointAtPressure: PRESSURE_CASES_PA.map((p) => ({ pressure_Pa: p, value: round(boilingPointAtPressure(p)) })),
+    pressureAtAltitude: ALTITUDE_CASES_M.map((h) => ({ altitude_m: h, value: pressureAtAltitude(h) })),
+    boilingPointAtAltitude: ALTITUDE_CASES_M.map((h) => ({ altitude_m: h, value: boilingPointAtAltitude(h) })),
+    boilingPointAtPressure: PRESSURE_CASES_PA.map((p) => ({ pressure_Pa: p, value: boilingPointAtPressure(p) })),
   },
   kinetics: {
     holdTimeForDose: [55, 60, 63, 65, 70, 80].map((held) => ({
       z_K: Z_YOLK, tref_C: TREF_YOLK_C, doseMinutes: 10.0, held_C: held,
-      value: round(holdTimeForDose(createDose(Z_YOLK, TREF_YOLK_C), 10.0, held)),
+      value: holdTimeForDose(createDose(Z_YOLK, TREF_YOLK_C), 10.0, held),
     })),
     accumulateDose: (() => {
       // A ten-minute ramp from 50 to 80 C, integrated at the model's own step.
@@ -218,7 +212,7 @@ const core = {
       for (let i = 1; i <= 20; i++) {
         const temp = 50.0 + i * 1.5;
         accumulateDose(d, temp, 30.0);
-        out.push({ step: i, temperature_C: temp, dt_s: 30.0, minutes: round(d.minutes) });
+        out.push({ step: i, temperature_C: temp, dt_s: 30.0, minutes: d.minutes });
       }
       return out;
     })(),
@@ -290,20 +284,20 @@ const scenarios = {
       solution: {
         reachable: sol.reachable,
         whiteSets: sol.whiteSets,
-        softestLevel: round(sol.softestLevel),
-        hardestLevel: round(sol.hardestLevel),
-        minCookTime_s: round(sol.minCookTime_s),
-        cookTime_s: round(sol.result.cookTime_s),
-        peakYolk_C: round(sol.result.peakYolk_C),
-        peakWhite_C: round(sol.result.peakWhite_C),
-        yolkAtPull_C: round(sol.result.yolkAtPull_C),
-        yolkDose_min: round(sol.result.yolkDose_min),
-        whiteDose_min: round(sol.result.whiteDose_min),
+        softestLevel: sol.softestLevel,
+        hardestLevel: sol.hardestLevel,
+        minCookTime_s: sol.minCookTime_s,
+        cookTime_s: sol.result.cookTime_s,
+        peakYolk_C: sol.result.peakYolk_C,
+        peakWhite_C: sol.result.peakWhite_C,
+        yolkAtPull_C: sol.result.yolkAtPull_C,
+        yolkDose_min: sol.result.yolkDose_min,
+        whiteDose_min: sol.result.whiteDose_min,
       },
       atFixed444s: {
-        peakYolk_C: round(fixed.peakYolk_C),
-        yolkDose_min: round(fixed.yolkDose_min),
-        whiteDose_min: round(fixed.whiteDose_min),
+        peakYolk_C: fixed.peakYolk_C,
+        yolkDose_min: fixed.yolkDose_min,
+        whiteDose_min: fixed.whiteDose_min,
       },
     };
   }),
@@ -375,12 +369,12 @@ const WHITE_SEQUENCE: (WhiteReport | null)[] = [
 
 function particleRows(post: ReturnType<typeof createPrior>) {
   return post.particles.map((p) => ({
-    alpha_m2s: round(p.alpha_m2s),
-    logDoseOffset: round(p.logDoseOffset),
-    tauAirScale: round(p.tauAirScale),
-    noise: round(p.noise),
-    whiteOffset: round(p.whiteOffset),
-    whiteFirmGap: round(p.whiteFirmGap),
+    alpha_m2s: p.alpha_m2s,
+    logDoseOffset: p.logDoseOffset,
+    tauAirScale: p.tauAirScale,
+    noise: p.noise,
+    whiteOffset: p.whiteOffset,
+    whiteFirmGap: p.whiteFirmGap,
   }));
 }
 
@@ -389,16 +383,16 @@ function readout(post: ReturnType<typeof createPrior>) {
   const predicted = predictCookTime(post, CALIB_GRID, NOMINAL_TARGET);
   return {
     rng: post.rng,
-    ess: round(effectiveSampleSize(post)),
-    alpha_m2s: round(params.alpha_m2s),
-    tauAirScale: round(params.tauAirScale),
-    meanWhiteOffset: round(posteriorMeanWhiteOffset(post)),
+    ess: effectiveSampleSize(post),
+    alpha_m2s: params.alpha_m2s,
+    tauAirScale: params.tauAirScale,
+    meanWhiteOffset: posteriorMeanWhiteOffset(post),
     predict: {
-      low_s: round(predicted.low_s),
-      median_s: round(predicted.median_s),
-      high_s: round(predicted.high_s),
+      low_s: predicted.low_s,
+      median_s: predicted.median_s,
+      high_s: predicted.high_s,
     },
-    weights: post.weights.map(round),
+    weights: post.weights.slice(),
     particles: particleRows(post),
   };
 }
@@ -412,13 +406,13 @@ const updates = FEEDBACK_SEQUENCE.map((feedback, i) => {
   const white = WHITE_SEQUENCE[i];
   // One particle's likelihood, the first, so a port that gets the probit wrong
   // is told where before it is told that the whole set moved.
-  const firstLikelihood = round(answerLikelihood(
+  const firstLikelihood = answerLikelihood(
     CALIB_GRID, posterior.particles[0], cookTime_s, NOMINAL_TARGET, feedback, white,
-  ));
+  );
   updatePosterior(posterior, CALIB_GRID, cookTime_s, NOMINAL_TARGET, feedback, white);
   return {
     cookTime_s: cookTime_s,
-    logNominalTarget: round(NOMINAL_TARGET),
+    logNominalTarget: NOMINAL_TARGET,
     feedback: feedback,
     white: white,
     firstLikelihood: firstLikelihood,
@@ -452,9 +446,9 @@ const WHITE_RESAMPLE_CASE = (() => {
   }
   const before = {
     particles: particleRows(posterior),
-    weights: weights.map(round),
+    weights: weights.slice(),
     rng: posterior.rng,
-    ess: round(effectiveSampleSize({ particles: posterior.particles, weights: weights, rng: posterior.rng })),
+    ess: effectiveSampleSize({ particles: posterior.particles, weights: weights, rng: posterior.rng }),
   };
   const post = {
     particles: posterior.particles.map((p) => ({ ...p })),
@@ -476,9 +470,9 @@ const calibration = {
   $comment: 'Generated by tools/fixtures.ts from src/core/. Do not hand-edit.',
   generator: 'npm run fixtures',
   egg: {
-    mass_kg: round(CALIB_EGG.mass_kg),
-    radius_m: round(CALIB_EGG.radius_m),
-    minorDiameter_m: round(CALIB_EGG.minorDiameter_m),
+    mass_kg: CALIB_EGG.mass_kg,
+    radius_m: CALIB_EGG.radius_m,
+    minorDiameter_m: CALIB_EGG.minorDiameter_m,
   },
   setup: CALIB_SETUP,
   grid: {
@@ -489,22 +483,22 @@ const calibration = {
     timeMin_s: CALIB_TIME_MIN_S,
     timeMax_s: CALIB_TIME_MAX_S,
     timeCount: CALIB_TIME_COUNT,
-    logAlphaMin: round(CALIB_GRID.logAlphaMin),
-    logAlphaStep: round(CALIB_GRID.logAlphaStep),
-    timeStep_s: round(CALIB_GRID.timeStep_s),
-    logYolk: CALIB_GRID.logYolk.map(round),
-    logWhite: CALIB_GRID.logWhite.map(round),
+    logAlphaMin: CALIB_GRID.logAlphaMin,
+    logAlphaStep: CALIB_GRID.logAlphaStep,
+    timeStep_s: CALIB_GRID.timeStep_s,
+    logYolk: CALIB_GRID.logYolk.slice(),
+    logWhite: CALIB_GRID.logWhite.slice(),
   },
   lookups: LOOKUP_CASES.map((c) => ({
     alpha_m2s: c.alpha_m2s,
     cookTime_s: c.cookTime_s,
-    logYolk: round(lookupLogYolkDose(CALIB_GRID, c.alpha_m2s, c.cookTime_s)),
-    logWhite: round(lookupLogWhiteDose(CALIB_GRID, c.alpha_m2s, c.cookTime_s)),
+    logYolk: lookupLogYolkDose(CALIB_GRID, c.alpha_m2s, c.cookTime_s),
+    logWhite: lookupLogWhiteDose(CALIB_GRID, c.alpha_m2s, c.cookTime_s),
   })),
   inverse: INVERSE_CASES.map((c) => ({
     alpha_m2s: c.alpha_m2s,
     logDose: c.logDose,
-    cookTime_s: round(cookTimeForLogYolkDose(CALIB_GRID, c.alpha_m2s, c.logDose)),
+    cookTime_s: cookTimeForLogYolkDose(CALIB_GRID, c.alpha_m2s, c.logDose),
   })),
   likelihood: {
     feedbackBand: FEEDBACK_BAND,
@@ -597,11 +591,11 @@ const policy = {
   slider: {
     steps: SLIDER_STEPS,
     cases: SNAP_LEVELS.map((level) => ({
-      level: round(level),
-      snapUp: round(snapUp(level)),
-      snapDown: round(snapDown(level)),
+      level: level,
+      snapUp: snapUp(level),
+      snapDown: snapDown(level),
       anchor: anchorNear(level).key,
-      targetPeakYolk_C: round(targetPeakYolk_C(level)),
+      targetPeakYolk_C: targetPeakYolk_C(level),
     })),
   },
   verdict: VERDICT_CASES.map((c) => {
@@ -609,13 +603,13 @@ const policy = {
     return {
       reachable: c.reachable,
       whiteSets: c.whiteSets,
-      softestLevel: round(c.softest),
-      hardestLevel: round(c.hardest),
-      level: round(c.level),
+      softestLevel: c.softest,
+      hardestLevel: c.hardest,
+      level: c.level,
       kind: v.kind,
       wanted: v.wanted.key,
       limit: v.limit.key,
-      snapTo: v.snapTo === null ? null : round(v.snapTo),
+      snapTo: v.snapTo === null ? null : v.snapTo,
       worthSaying: v.worthSaying,
     };
   }),
@@ -646,20 +640,20 @@ const policy = {
     return {
       alphaCentre: c.alphaCentre,
       cookTime_s: c.cookTime_s,
-      alphaMin: round(g.alphaMin),
-      alphaMax: round(g.alphaMax),
+      alphaMin: g.alphaMin,
+      alphaMax: g.alphaMax,
       alphaCount: g.alphaCount,
-      timeMin_s: round(g.timeMin_s),
-      timeMax_s: round(g.timeMax_s),
+      timeMin_s: g.timeMin_s,
+      timeMax_s: g.timeMax_s,
       timeCount: g.timeCount,
     };
   }),
   boilMemory: {
     blend: [
-      { previous: null, measured: 480, result: round(estimateTimeToBoil(rememberBoil({}, 2, 480), 2)) },
+      { previous: null, measured: 480, result: estimateTimeToBoil(rememberBoil({}, 2, 480), 2) },
       {
         previous: 480, measured: 600,
-        result: round(estimateTimeToBoil(rememberBoil(rememberBoil({}, 2, 480), 2, 600), 2)),
+        result: estimateTimeToBoil(rememberBoil(rememberBoil({}, 2, 480), 2, 600), 2),
       },
     ],
     refused: [3, 99999].map((seconds) => ({
@@ -668,8 +662,8 @@ const policy = {
     })),
     estimate: BOIL_QUERY_LITRES.map((litres) => ({
       litres: litres,
-      forward: round(estimateTimeToBoil(BOIL_MEMORY_FORWARD, litres)),
-      backward: round(estimateTimeToBoil(BOIL_MEMORY_BACKWARD, litres)),
+      forward: estimateTimeToBoil(BOIL_MEMORY_FORWARD, litres),
+      backward: estimateTimeToBoil(BOIL_MEMORY_BACKWARD, litres),
     })),
     defaultSeconds: DEFAULT_TIME_TO_BOIL_S,
   },
@@ -700,7 +694,7 @@ const policy = {
   },
   ambient: [0, 4, 14.9, 15, 20, 26].map((eggStart_C) => ({
     eggStart_C: eggStart_C,
-    ambient_C: round(ambientFor(eggStart_C)),
+    ambient_C: ambientFor(eggStart_C),
   })),
   limits: LIMITS,
   calibration: { particles: POLICY_PARTICLES, seed: CALIBRATION_SEED },
@@ -824,7 +818,7 @@ const sousvide = {
    * Every other equilibration number in this file is that one times R^2/alpha,
    * so a port with a narrower bracket or a flipped comparison is caught here
    * rather than being absorbed into an egg-sized answer. */
-  fourierNumber: round(equilibrationTime(1.0, 1.0)),
+  fourierNumber: equilibrationTime(1.0, 1.0),
   cases: SOUS_VIDE_CASES.map((c) => {
     const egg = eggFromMass(c.mass_g / 1000);
     const doneness = donenessFromSlider(c.level);
@@ -834,16 +828,16 @@ const sousvide = {
     return {
       what: c.what,
       mass_g: c.mass_g,
-      radius_m: round(egg.radius_m),
+      radius_m: egg.radius_m,
       alpha_m2s: c.alpha_m2s,
-      level: round(c.level),
-      yolkDose_min: round(doneness.yolkDose_min),
-      whiteDose_min: round(doneness.whiteDose_min),
-      bath_C: round(est.bath_C),
-      equilibrate_s: round(est.equilibrate_s),
-      yolkHold_s: round(est.yolkHold_s),
-      whiteHold_s: round(est.whiteHold_s),
-      total_s: round(est.total_s),
+      level: c.level,
+      yolkDose_min: doneness.yolkDose_min,
+      whiteDose_min: doneness.whiteDose_min,
+      bath_C: est.bath_C,
+      equilibrate_s: est.equilibrate_s,
+      yolkHold_s: est.yolkHold_s,
+      whiteHold_s: est.whiteHold_s,
+      total_s: est.total_s,
       whiteBound: est.whiteBound,
     };
   }),
@@ -1009,7 +1003,7 @@ function calibrationRows(c: Calibration) {
   return {
     eggsLogged: c.eggsLogged,
     rng: c.posterior.rng,
-    weights: c.posterior.weights.map(round),
+    weights: c.posterior.weights.slice(),
     particles: particleRows(c.posterior),
   };
 }
@@ -1030,7 +1024,7 @@ const replaySteps = REPLAY_LOG.map((r) => {
   return {
     spec: spec,
     cookTime_s: recordCookTime_s(r),
-    whiteDoseAtSoft: round(calibrationDoneness(replayState, 0.22).whiteDose_min),
+    whiteDoseAtSoft: calibrationDoneness(replayState, 0.22).whiteDose_min,
     after: calibrationRows(replayState),
   };
 });
