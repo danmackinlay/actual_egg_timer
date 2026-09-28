@@ -9,20 +9,6 @@ import Foundation
 /// solve, then arithmetic), the surface itself, the expected loss and the odds
 /// at fixed times, and the time the search lands on - a scan and a golden
 /// section, whose comparisons both languages must make the same way.
-private let tolerance = 1e-12
-
-private func expectClose(
-    _ actual: Double, _ expected: Double, _ what: String, tolerance: Double = tolerance,
-    sourceLocation: SourceLocation = #_sourceLocation
-) {
-    let scale = max(abs(expected), 1.0)
-    let error = abs(actual - expected) / scale
-    #expect(
-        error <= tolerance,
-        "\(what): expected \(expected), got \(actual) (relative error \(error))",
-        sourceLocation: sourceLocation
-    )
-}
 
 private func doubles(_ json: [String: Any], _ key: String) -> [Double] {
     guard let list = json[key] as? [NSNumber] else {

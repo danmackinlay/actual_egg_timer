@@ -13,20 +13,6 @@ import Foundation
 ///
 /// So the fixtures carry every particle and every weight, before the first
 /// observation and after each one, and this compares all of them.
-private let tolerance = 1e-12
-
-private func expectClose(
-    _ actual: Double, _ expected: Double, _ what: String,
-    sourceLocation: SourceLocation = #_sourceLocation
-) {
-    let scale = max(abs(expected), 1.0)
-    let error = abs(actual - expected) / scale
-    #expect(
-        error <= tolerance,
-        "\(what): expected \(expected), got \(actual) (relative error \(error))",
-        sourceLocation: sourceLocation
-    )
-}
 
 private struct Calibration {
     let egg: Egg

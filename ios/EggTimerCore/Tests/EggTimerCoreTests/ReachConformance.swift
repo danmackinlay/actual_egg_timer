@@ -8,19 +8,6 @@ import Foundation
 /// A profile is a solve and a decision per level, and both apps must walk the
 /// same levels in the same order and land on the same ends of the range, or
 /// the two sliders offer different eggs. The posteriors are decide.json's.
-private let tolerance = 1e-12
-
-private func expectClose(
-    _ actual: Double, _ expected: Double, _ what: String,
-    sourceLocation: SourceLocation = #_sourceLocation
-) {
-    let scale = max(abs(expected), 1.0)
-    let error = abs(actual - expected) / scale
-    #expect(
-        error <= tolerance, "\(what): expected \(expected), got \(actual) (relative error \(error))",
-        sourceLocation: sourceLocation
-    )
-}
 
 private func object(_ json: [String: Any], _ key: String) -> [String: Any] {
     guard let o = json[key] as? [String: Any] else { fatalError("fixture has no object \(key)") }

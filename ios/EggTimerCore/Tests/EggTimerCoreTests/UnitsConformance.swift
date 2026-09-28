@@ -13,20 +13,6 @@ import EggTimerCopy
 ///
 /// Numbers are compared at 1e-12 relative, like the rest of the port; the TEXT
 /// a cook reads is compared exactly.
-private let tolerance = 1e-12
-
-private func expectClose(
-    _ actual: Double, _ expected: Double, _ what: String,
-    sourceLocation: SourceLocation = #_sourceLocation
-) {
-    let scale = max(abs(expected), 1.0)
-    let error = abs(actual - expected) / scale
-    #expect(
-        error <= tolerance,
-        "\(what): expected \(expected), got \(actual) (relative error \(error))",
-        sourceLocation: sourceLocation
-    )
-}
 
 private func units() -> [String: Any] { Fixtures.load("units.json") }
 

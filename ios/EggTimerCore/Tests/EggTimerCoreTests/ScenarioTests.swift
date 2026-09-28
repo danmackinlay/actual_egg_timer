@@ -62,31 +62,16 @@ private func loadScenarios() -> (egg: Egg, params: ModelParams, cases: [Scenario
     return (egg, params, cases)
 }
 
-/// Whole-cook tolerance, relative.
-///
-/// The same 1e-12 the pure functions hold to, which is more than this needed:
-/// probing at 1e-15 puts the worst observed disagreement at 7e-15, on an
-/// accumulated dose after ~20,000 calls each to exp() and pow(), where two libm
-/// implementations are entitled to differ in the last bit every time. Cook
-/// times, peak temperatures and the boolean verdicts agree at 1e-15 outright.
-///
-/// Three orders of headroom over the noise, and still ten orders tighter than
-/// anything that would change an answer - so an algebraic mistake, an
-/// off-by-one in the integration loop, or a misread branch cannot pass.
-private let scenarioTolerance = 1e-12
-
-private func expectClose(
-    _ actual: Double, _ expected: Double, _ what: String,
-    tolerance: Double = scenarioTolerance, sourceLocation: SourceLocation = #_sourceLocation
-) {
-    let scale = max(abs(expected), 1.0)
-    let error = abs(actual - expected) / scale
-    #expect(
-        error <= tolerance,
-        "\(what): expected \(expected), got \(actual) (relative error \(error))",
-        sourceLocation: sourceLocation
-    )
-}
+// Whole cooks are held to the same `conformanceTolerance` (1e-12, relative)
+// as the pure functions, which is more than this needed: probing at 1e-15 puts
+// the worst observed disagreement at 7e-15, on an accumulated dose after
+// ~20,000 calls each to exp() and pow(), where two libm implementations are
+// entitled to differ in the last bit every time. Cook times, peak temperatures
+// and the boolean verdicts agree at 1e-15 outright.
+//
+// Three orders of headroom over the noise, and still ten orders tighter than
+// anything that would change an answer - so an algebraic mistake, an
+// off-by-one in the integration loop, or a misread branch cannot pass.
 
 @Suite("Whole cooks")
 struct ScenarioConformance {

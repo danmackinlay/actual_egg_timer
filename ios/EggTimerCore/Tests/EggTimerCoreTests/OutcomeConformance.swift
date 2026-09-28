@@ -6,19 +6,6 @@ import Foundation
 /// the three yolk answers, a runny white, the level range and the lean. The
 /// surface and three of the posteriors are decide.json's; a fourth, a cook
 /// whose three jammy eggs were all just right, is outcome.json's own.
-private let tolerance = 1e-12
-
-private func expectClose(
-    _ actual: Double, _ expected: Double, _ what: String,
-    sourceLocation: SourceLocation = #_sourceLocation
-) {
-    let scale = max(abs(expected), 1.0)
-    let error = abs(actual - expected) / scale
-    #expect(
-        error <= tolerance, "\(what): expected \(expected), got \(actual) (relative error \(error))",
-        sourceLocation: sourceLocation
-    )
-}
 
 private func object(_ json: [String: Any], _ key: String) -> [String: Any] {
     guard let o = json[key] as? [String: Any] else { fatalError("fixture has no object \(key)") }

@@ -16,20 +16,6 @@ import Foundation
 /// Same rule as the rest of the port: the fixtures are never regenerated to
 /// make this pass. If a NUMBER is wrong it is wrong in the TypeScript first,
 /// and `npm test` is what should catch it.
-private let tolerance = 1e-12
-
-private func expectClose(
-    _ actual: Double, _ expected: Double, _ what: String,
-    sourceLocation: SourceLocation = #_sourceLocation
-) {
-    let scale = max(abs(expected), 1.0)
-    let error = abs(actual - expected) / scale
-    #expect(
-        error <= tolerance,
-        "\(what): expected \(expected), got \(actual) (relative error \(error))",
-        sourceLocation: sourceLocation
-    )
-}
 
 @Suite("The isothermal limit matches the reference implementation")
 struct SousVideConformance {
