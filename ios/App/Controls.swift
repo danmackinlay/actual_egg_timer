@@ -26,9 +26,13 @@ struct StepperValue: View {
 
     var body: some View {
         HStack(spacing: 10) {
+            // One line, whatever the face: a value is never broken between
+            // its number and its unit, which the wider serif of 1750 did.
             Text(show(value))
                 .foregroundStyle(.secondary)
                 .monospacedDigit()
+                .lineLimit(1)
+                .fixedSize()
             Stepper(label, value: measured(measure, $value), in: measure.bounds ?? 0...0, step: measure.step)
                 .labelsHidden()
                 .accessibilityValue(show(value))
