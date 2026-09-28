@@ -14,12 +14,12 @@
 
 import {
   Decision, DecisionInputs, chooseCookTime, decide, decideAt, decisionGridRequest,
-  decisionGridSpec, decisionInputs, oddsInTenths, STILL_LEARNING_HALF_WIDTH_S,
+  decisionGridSpec, decisionInputs, oddsInTenths,
 } from '../src/core/decide.js';
 import { DoseGrid, buildDoseGrid, cookTimeForLogYolkDose } from '../src/core/doseGrid.js';
 import {
   Feedback, FEEDBACK_BAND, Particle, WhiteReport, answerLikelihood, createPrior,
-  posteriorMeanOffset, posteriorParams, updatePosterior,
+  posteriorMeanOffset, posteriorParams, predictCookTime, updatePosterior,
 } from '../src/core/infer.js';
 import { ALPHA_DEFAULT } from '../src/core/constants.js';
 import { eggFromMass, Egg } from '../src/core/geometry.js';
@@ -262,17 +262,22 @@ if (run('odds')) {
 
 if (run('learning')) {
   console.log('\n== learning: the interval rule, against the count (150 cooks x 8 eggs)');
+  // The owner's rule, +-15 s (INFERENCE.md section 11, decision 9). No screen
+  // shows it and `Decision` no longer carries it (D3), so it is read here, on
+  // demand, from `predictCookTime`, as E8 would.
+  const STILL_LEARNING_S = 15;
   type Flags = { interval: boolean; band: boolean; count: boolean }[];
   const flags: Flags[] = [];
   let current: Flags = [];
-  simulate(150, 8, 1000, 20260930, (c, d, _hit, egg, grid, target) => {
+  simulate(150, 8, 1000, 20260930, (c, _d, _hit, egg, grid, target) => {
     if (egg === 0) { current = []; flags.push(current); }
-    const half = 0.5 * (d.interval.high_s - d.interval.low_s);
+    const interval = predictCookTime(c.posterior, grid, target);
+    const half = 0.5 * (interval.high_s - interval.low_s);
     const a = posteriorParams(c.posterior).alpha_m2s;
     const o = posteriorMeanOffset(c.posterior);
     const band = 0.5 * (cookTimeForLogYolkDose(grid, a, target + o + FEEDBACK_BAND)
       - cookTimeForLogYolkDose(grid, a, target + o - FEEDBACK_BAND));
-    current.push({ interval: d.stillLearning, band: half > band, count: c.eggsLogged < 4 });
+    current.push({ interval: half > STILL_LEARNING_S, band: half > band, count: c.eggsLogged < 4 });
   });
   for (const rule of ['interval', 'band', 'count'] as const) {
     const firstOff: number[] = [];
@@ -291,7 +296,7 @@ if (run('learning')) {
     console.log(`${rule}: first off after ${firstOff[Math.floor(firstOff.length / 2)]} eggs (median), never off in 8: ${never}, `
       + `came back after going: ${back} of ${flags.length}; on after each egg: ${share.map((s) => (s / flags.length).toFixed(2)).join(' ')}`);
   }
-  console.log(`(interval is the app's rule, +-${STILL_LEARNING_HALF_WIDTH_S} s; band is +-the width of "just right" at that cook; count is the first four eggs, the fallback)`);
+  console.log(`(interval is the owner's rule, +-${STILL_LEARNING_S} s; band is +-the width of "just right" at that cook; count is the first four eggs, the fallback)`);
 }
 
 /* ---------------------------------------------------------- runny whites */

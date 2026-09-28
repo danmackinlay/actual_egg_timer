@@ -9,19 +9,14 @@ import Foundation
 ///     P(too soft) + P(too firm) + runnyWhiteLoss * P(runny)
 ///
 /// is the recommendation - from the first egg that taught anything; before it,
-/// the literature's time stands. The odds on screen are P(not runny AND just
-/// right) there, and the app is still learning while the 80% interval of the
-/// right time is wider than +-15 s. The reasons, and the measurements behind every constant, are
+/// the literature's time stands. The odds are P(not runny AND just right)
+/// there. The reasons, and the measurements behind every constant, are
 /// in src/core/decide.ts, which this is held to by fixtures/decide.json: two
 /// apps given the same posterior and the same pot must choose the same time.
 
 /// How much worse a runny white is than a yolk one answer off (owner, 26
 /// September).
 public let runnyWhiteLoss = 3.0
-
-/// Half-width of the 80% interval on the cook time, s, above which the app
-/// says it is still learning this kitchen: about the width of "just right".
-public let stillLearningHalfWidthS = 15.0
 
 // MARK: - The surface
 
@@ -202,14 +197,10 @@ public struct Decision: Sendable {
     public let meanCookTimeS: Double
     /// Whether the time was chosen, or is the mean solve's.
     public let chosen: Bool
-    public let loss: Double
     /// P(hit the mark) at `cookTimeS`, and the same in tenths, which is how
     /// the reach and the advice thresholds are written. Not on screen.
     public let odds: Double
     public let oddsTenths: Int
-    /// The 80% interval of the time each particle would call right.
-    public let interval: CookTimePrediction
-    public let stillLearning: Bool
 
     /// How far the choice leaned from the mean solve, s: what a mid-cook
     /// re-solve carries (`carriedSolution`).
@@ -227,10 +218,6 @@ public func oddsInTenths(_ odds: Double) -> Int {
     Int((odds * 10.0).rounded())
 }
 
-public func stillLearning(_ interval: CookTimePrediction) -> Bool {
-    0.5 * (interval.highS - interval.lowS) > stillLearningHalfWidthS
-}
-
 /// Decide, from the parts. The time is chosen when `applies` and at least one
 /// egg has taught something; otherwise it is `meanCookTimeS`.
 public func decideAt(
@@ -242,16 +229,12 @@ public func decideAt(
         ? chooseCookTime(post, grid, logNominalTarget, aroundS: meanCookTimeS)
         : meanCookTimeS
     let odds = hitOdds(post, grid, t, logNominalTarget)
-    let interval = predictCookTime(post, grid, logNominalTarget)
     return Decision(
         cookTimeS: t,
         meanCookTimeS: meanCookTimeS,
         chosen: chosen,
-        loss: expectedLoss(post, grid, t, logNominalTarget),
         odds: odds,
-        oddsTenths: oddsInTenths(odds),
-        interval: interval,
-        stillLearning: stillLearning(interval)
+        oddsTenths: oddsInTenths(odds)
     )
 }
 

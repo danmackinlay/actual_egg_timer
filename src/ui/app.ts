@@ -198,8 +198,8 @@ let boilMemory = loadBoilMemory();
 let calib: Calibration = loadCalibration();
 let machine: Machine = idleMachine(settings.cooling);
 let solution: Solution | null = null;
-/** The choice behind the time on screen while idle (E5): the odds, "still
- *  learning", and how far it leaned from the mean solve. Null until the
+/** The choice behind the time on screen while idle (E5): the odds, and how
+ *  far it leaned from the mean solve. Null until the
  *  setup's decision surface has been built, and on the sous-vide screen. */
 let decision: Decision | null = null;
 /** What the egg at the chosen time will be like (src/core/outcome.ts): the
@@ -1334,8 +1334,7 @@ function render(now_ms: number): void {
  *  "I'm still learning" is no longer a line of its own on the web (owner, 27
  *  September): beside "I can't call it yet" it said the same thing twice.
  *  What it opened, what I learn from and what speeds it up, is the last
- *  paragraph of the (i). The decision still works it out; nothing keeps it
- *  with the egg. */
+ *  paragraph of the (i). Nothing works it out any more (D3). */
 function renderOdds(): void {
   let o: Outcome | null = null;
   if (machine.phase === 'IDLE') {

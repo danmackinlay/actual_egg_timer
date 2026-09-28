@@ -658,8 +658,9 @@ export interface CookTimePrediction {
  *
  * The spread comes from the posterior alone: the noise scale, which no number
  * of eggs narrows, plays no part. That makes the width the measure of what is
- * still being learned, which is what E5's "still learning" reads
- * (decide.ts). Times are found on the grid, so they are clamped to its span.
+ * still being learned: the owner's "still learning" rule, +-15 s, which no
+ * screen shows now and which E8 would read here (decide.ts). Times are found
+ * on the grid, so they are clamped to its span.
  */
 export function predictCookTime(
   post: Posterior, grid: DoseGrid, logNominalTarget: number,

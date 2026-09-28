@@ -33,7 +33,7 @@
  * pins the time-scale to about 6%, and from then on the choice leans by a few
  * seconds (test/decide.test.ts). So until an egg has taught something, the
  * time is the literature's, exactly as `calibrationParams` has always had it,
- * and only the odds and "still learning" are read from the prior.
+ * and only the odds are read from the prior.
  *
  * THE SURFACE. The loss needs the delivered log doses at every particle's
  * time-scale for every candidate time, for the setup on screen. The offsets
@@ -67,17 +67,10 @@
  * line (outcome.ts), and the odds now decide which levels the slider offers
  * (reach.ts) and when the app says how to make a cook more reliable.
  *
- * STILL LEARNING. While the 80% interval of the right cook time
- * (`predictCookTime`) is wider than +-STILL_LEARNING_HALF_WIDTH_S, which is
- * about the width of "just right": the owner's rule. It was nearly not: under
- * the filter's old fixed resample jitter the interval rose again after every
- * second or third egg, and on simulated cooks the line came back after going
- * for 44% of them, so the fallback - a fixed count of eggs - was built first.
- * The resample now keeps the posterior's shape (Liu and West's kernel,
- * infer.ts), the interval narrows egg by egg, and the line comes back for 7%
- * - cooks whose answers really do disagree (`npm run decide -- learning`).
- * It is read at the level on screen, so a cook who has only ever had jammy
- * eggs may see it beside hard for an egg or two longer.
+ * STILL LEARNING is not decided here. The owner's rule - the 80% interval of
+ * the right cook time wider than +-15 s (INFERENCE.md section 11, decision 9)
+ * - left both screens on 28 September, and the decision stopped computing it
+ * (D3). If E8 needs it, it is `predictCookTime` (infer.ts), read on demand.
  *
  * Pure, like the rest of `src/core/`.
  */
@@ -89,7 +82,7 @@ import {
 } from './solve.js';
 import { DoseGrid } from './doseGrid.js';
 import {
-  CookTimePrediction, Posterior, UNRELATED, predictCookTime, whiteProbit, yolkProbit,
+  Posterior, UNRELATED, whiteProbit, yolkProbit,
 } from './infer.js';
 import { GridSpec } from './policy.js';
 import { Calibration, GridRequest, calibrationDoneness, calibrationParams } from './record.js';
@@ -97,11 +90,6 @@ import { Calibration, GridRequest, calibrationDoneness, calibrationParams } from
 /** How much worse a runny white is than a yolk one answer off (owner, 26
  *  September). */
 export const RUNNY_WHITE_LOSS = 3;
-
-/** Half-width of the 80% interval on the cook time, s, above which the app
- *  says it is still learning this kitchen: about the width of "just right"
- *  (INFERENCE.md section 11, decision 9). */
-export const STILL_LEARNING_HALF_WIDTH_S = 15;
 
 /* ------------------------------------------------------------ the surface */
 
@@ -322,16 +310,10 @@ export interface Decision {
   meanCookTime_s: number;
   /** Whether the time was chosen, or is the mean solve's: see `decideAt`. */
   chosen: boolean;
-  /** The expected loss at `cookTime_s`. */
-  loss: number;
   /** P(hit the mark) at `cookTime_s`, and the same in tenths, which is how
    *  the reach and the advice thresholds are written. Not on screen. */
   odds: number;
   oddsTenths: number;
-  /** The 80% interval of the time each particle would call right, and
-   *  whether it is still wider than +-STILL_LEARNING_HALF_WIDTH_S. */
-  interval: CookTimePrediction;
-  stillLearning: boolean;
 }
 
 /** Whether a solve leaves a cook to choose a time for. Not when the white never
@@ -349,17 +331,12 @@ export function oddsInTenths(odds: number): number {
   return Math.round(odds * 10);
 }
 
-export function stillLearning(interval: CookTimePrediction): boolean {
-  return 0.5 * (interval.high_s - interval.low_s) > STILL_LEARNING_HALF_WIDTH_S;
-}
-
 /**
- * Decide, from the parts: the time, the odds there, and whether the app is
- * still learning.
+ * Decide, from the parts: the time, and the odds there.
  *
  * The time is chosen when `applies` - there is a cook to choose for - and at
  * least one egg has taught something (see the header); otherwise it is
- * `meanCookTime_s`, and only the odds and the interval are read there.
+ * `meanCookTime_s`, and only the odds are read there.
  */
 export function decideAt(
   post: Posterior, eggsLogged: number, grid: DoseGrid, meanCookTime_s: number, applies: boolean,
@@ -368,16 +345,12 @@ export function decideAt(
   const chosen = applies && eggsLogged > 0;
   const t = chosen ? chooseCookTime(post, grid, logNominalTarget, meanCookTime_s) : meanCookTime_s;
   const odds = hitOdds(post, grid, t, logNominalTarget);
-  const interval = predictCookTime(post, grid, logNominalTarget);
   return {
     cookTime_s: t,
     meanCookTime_s: meanCookTime_s,
     chosen: chosen,
-    loss: expectedLoss(post, grid, t, logNominalTarget),
     odds: odds,
     oddsTenths: oddsInTenths(odds),
-    interval: interval,
-    stillLearning: stillLearning(interval),
   };
 }
 

@@ -668,15 +668,15 @@ predictCookTime                            // since E5 the later of the yolk's a
 cookTimeForLogWhiteDose(grid, alpha, logDose)
 
 // decide.ts  (E5 - INFERENCE.md §8)
-RUNNY_WHITE_LOSS = 3 / STILL_LEARNING_HALF_WIDTH_S = 15 / LEAN_COST_PER_S / DECISION_WINDOW_S
+RUNNY_WHITE_LOSS = 3 / LEAN_COST_PER_S / DECISION_WINDOW_S
 interface DecisionInputs { egg; setup; params; whiteDose_min }   // one surface per pot; no level
 decisionInputs(c, egg, setup) / decisionGridSpec(inputs) / decisionGridRequest(inputs)
 expectedLoss(post, grid, t, logTarget) / hitOdds(post, grid, t, logTarget)
 chooseCookTime(post, grid, logTarget, around_s)
-interface Decision { cookTime_s; meanCookTime_s; chosen; loss; odds; oddsTenths; interval; stillLearning }
+interface Decision { cookTime_s; meanCookTime_s; chosen; odds; oddsTenths }   // interval, stillLearning, loss dropped 28 Sep (D3)
 decide(c, grid, meanSolution, logTarget) / decideAt(post, eggsLogged, grid, mean_s, applies, logTarget)
 decisionApplies(sol) / decidedSolution(...) / carriedSolution(egg, setup, params, sol, lean_s)
-stillLearning(interval) / oddsInTenths(odds)
+oddsInTenths(odds)
 
 // outcome.ts  (the direction under the time - INFERENCE.md §8, UI.md §8)
 LEAN_RATIO / LEVEL_LOW_Q / LEVEL_HIGH_Q / WHITE_RISK = 0.2

@@ -81,7 +81,6 @@ struct DecideConformance {
         let c = object(Fixtures.load("decide.json"), "constants")
         #expect(runnyWhiteLoss == c.num("runnyWhiteLoss"))
         #expect(leanCostPerS == c.num("leanCostPerS"))
-        #expect(stillLearningHalfWidthS == c.num("stillLearningHalfWidth_s"))
         #expect(decisionAlphaLo == c.num("decisionAlphaLo"))
         #expect(decisionAlphaHi == c.num("decisionAlphaHi"))
         #expect(decisionAlphaCount == Int(c.num("decisionAlphaCount")))
@@ -157,14 +156,8 @@ struct DecideConformance {
             let expected = object(row, "decision")
             expectClose(d.cookTimeS, expected.num("cookTime_s"), "\(label) decided time")
             #expect(d.chosen == expected.flag("chosen"), "\(label) chosen")
-            expectClose(d.loss, expected.num("loss"), "\(label) loss")
             expectClose(d.odds, expected.num("odds"), "\(label) odds")
             #expect(d.oddsTenths == Int(expected.num("oddsTenths")), "\(label) tenths")
-            #expect(d.stillLearning == expected.flag("stillLearning"), "\(label) still learning")
-            let interval = object(expected, "interval")
-            expectClose(d.interval.lowS, interval.num("low_s"), "\(label) interval low")
-            expectClose(d.interval.medianS, interval.num("median_s"), "\(label) interval median")
-            expectClose(d.interval.highS, interval.num("high_s"), "\(label) interval high")
         }
     }
 

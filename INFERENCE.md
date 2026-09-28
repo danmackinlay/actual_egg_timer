@@ -576,8 +576,11 @@ and the same pot, the two apps choose the same time to 1e-12. What settled:
   every dimension is additive, discount 0.98, so the mean and the covariance
   survive. Replayed, Phase C's recovery is unchanged and one probe reading is
   kept at 2.6-2.8%, not 3.3-3.5%.
-- **"Still learning"** shows while the 80% interval of the right cook time is
-  wider than +-15 s (§11, 9), read at the level on screen. Per particle the
+- **"Still learning"** was the 80% interval of the right cook time wider
+  than +-15 s (§11, 9), read at the level on screen. No screen shows it now,
+  and since 28 September (D3) the decision does not compute it: E8, if it
+  needs it, reads `predictCookTime` on demand (`npm run decide -- learning`
+  does exactly that). Per particle the
   right time is the later of the yolk's centre and the white's cutpoint
   (`predictCookTime`). Under the old resample the rule came back after going
   for 44% of simulated cooks, and a fixed count of four eggs was built as the

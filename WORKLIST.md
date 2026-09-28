@@ -193,7 +193,7 @@ Put one LOGBOOK line on the decision: "owner, 28 Sep: no post-19-Sep build shipp
 - Drop §6.5 (the safer test split); it becomes moot.
 - LOGBOOK: one line on the decision.
 
-**4.3 Drop `Decision.interval`, `stillLearning`, `loss`.** UNBLOCKED: owner, 28 Sep.
+**DONE: 4.3 Drop `Decision.interval`, `stillLearning`, `loss`.** UNBLOCKED: owner, 28 Sep.
 - Remove them from `decideAt` (`decide.ts:364-382`), along with `stillLearning()` and `STILL_LEARNING_HALF_WIDTH_S`.
 - Mirror the change in `Decide.swift`, `decide.json`, `DecideConformance`, `test/decide.test.ts` and `tools/decide.ts` (`learning`).
 - Fix the comments that describe "still learning" as on screen: `decide.ts:36,70-81`, `infer.ts:672`, `app.ts:200-202`.

@@ -3,7 +3,6 @@
   "constants": {
     "runnyWhiteLoss": 3,
     "leanCostPerS": 0.0001,
-    "stillLearningHalfWidth_s": 15,
     "decisionAlphaLo": 0.6,
     "decisionAlphaHi": 1.65,
     "decisionAlphaCount": 13,
@@ -6033,15 +6032,8 @@
         "cookTime_s": 419.4287109375,
         "meanCookTime_s": 419.4287109375,
         "chosen": false,
-        "loss": 1.2709044490414716,
         "odds": 0.2322971140570191,
-        "oddsTenths": 2,
-        "interval": {
-          "low_s": 371.2703729113309,
-          "median_s": 425.9774852531518,
-          "high_s": 484.8081250301948
-        },
-        "stillLearning": true
+        "oddsTenths": 2
       }
     },
     {
@@ -6083,15 +6075,8 @@
         "cookTime_s": 464.00390625,
         "meanCookTime_s": 464.00390625,
         "chosen": false,
-        "loss": 0.9348456132885289,
         "odds": 0.248986383572479,
-        "oddsTenths": 2,
-        "interval": {
-          "low_s": 406.9535371731945,
-          "median_s": 470.2679476508092,
-          "high_s": 535.4513869347102
-        },
-        "stillLearning": true
+        "oddsTenths": 2
       }
     },
     {
@@ -6133,15 +6118,8 @@
         "cookTime_s": 519.0673828125,
         "meanCookTime_s": 519.0673828125,
         "chosen": false,
-        "loss": 0.7925901163639032,
         "odds": 0.25384251322984375,
-        "oddsTenths": 3,
-        "interval": {
-          "low_s": 455.20084502475584,
-          "median_s": 525.7376942999508,
-          "high_s": 596.1719594937131
-        },
-        "stillLearning": true
+        "oddsTenths": 3
       }
     },
     {
@@ -6183,15 +6161,8 @@
         "cookTime_s": 637.9345703125,
         "meanCookTime_s": 637.9345703125,
         "chosen": false,
-        "loss": 0.7370318210702087,
         "odds": 0.2620513046568222,
-        "oddsTenths": 3,
-        "interval": {
-          "low_s": 561.3839497938716,
-          "median_s": 649.3510045816402,
-          "high_s": 735.6259808793948
-        },
-        "stillLearning": true
+        "oddsTenths": 3
       }
     },
     {
@@ -6233,15 +6204,8 @@
         "cookTime_s": 425.56470402225307,
         "meanCookTime_s": 426.4208984375,
         "chosen": true,
-        "loss": 0.45908385798099566,
         "odds": 0.634591863371363,
-        "oddsTenths": 6,
-        "interval": {
-          "low_s": 412.04429519058976,
-          "median_s": 423.3666910521242,
-          "high_s": 432.4411321556363
-        },
-        "stillLearning": false
+        "oddsTenths": 6
       }
     },
     {
@@ -6283,15 +6247,8 @@
         "cookTime_s": 468.58086667285033,
         "meanCookTime_s": 471.8701171875,
         "chosen": true,
-        "loss": 0.3306167858664223,
         "odds": 0.6606323746515114,
-        "oddsTenths": 7,
-        "interval": {
-          "low_s": 455.9900856227796,
-          "median_s": 468.4720573224513,
-          "high_s": 478.86652052244244
-        },
-        "stillLearning": false
+        "oddsTenths": 7
       }
     },
     {
@@ -6333,15 +6290,8 @@
         "cookTime_s": 523.6669172227621,
         "meanCookTime_s": 527.8076171875,
         "chosen": true,
-        "loss": 0.30935265621780583,
         "odds": 0.6638142838612886,
-        "oddsTenths": 7,
-        "interval": {
-          "low_s": 509.8474564679964,
-          "median_s": 524.0869296208439,
-          "high_s": 535.5312524672809
-        },
-        "stillLearning": false
+        "oddsTenths": 7
       }
     },
     {
@@ -6383,15 +6333,8 @@
         "cookTime_s": 644.7464906461478,
         "meanCookTime_s": 649.296875,
         "chosen": true,
-        "loss": 0.29830588036630745,
         "odds": 0.6719181817529708,
-        "oddsTenths": 7,
-        "interval": {
-          "low_s": 626.9582583313058,
-          "median_s": 645.6925609548307,
-          "high_s": 658.7956892998227
-        },
-        "stillLearning": true
+        "oddsTenths": 7
       }
     },
     {
@@ -6433,15 +6376,8 @@
         "cookTime_s": 429.756063539637,
         "meanCookTime_s": 420.302734375,
         "chosen": true,
-        "loss": 0.2902997327776824,
         "odds": 0.6850984636020291,
-        "oddsTenths": 7,
-        "interval": {
-          "low_s": 419.7337312467607,
-          "median_s": 429.92458065409664,
-          "high_s": 439.04881859611123
-        },
-        "stillLearning": false
+        "oddsTenths": 7
       }
     },
     {
@@ -6483,15 +6419,8 @@
         "cookTime_s": 475.30986565257444,
         "meanCookTime_s": 464.8779296875,
         "chosen": true,
-        "loss": 0.28427714895651657,
         "odds": 0.6854240307590908,
-        "oddsTenths": 7,
-        "interval": {
-          "low_s": 464.35897217465026,
-          "median_s": 475.62613136093205,
-          "high_s": 485.65657838289553
-        },
-        "stillLearning": false
+        "oddsTenths": 7
       }
     },
     {
@@ -6533,15 +6462,8 @@
         "cookTime_s": 531.5238175971522,
         "meanCookTime_s": 519.0673828125,
         "chosen": true,
-        "loss": 0.28189645342121644,
         "odds": 0.6872618280043911,
-        "oddsTenths": 7,
-        "interval": {
-          "low_s": 519.4124922737137,
-          "median_s": 531.8224900684254,
-          "high_s": 543.1853077925734
-        },
-        "stillLearning": false
+        "oddsTenths": 7
       }
     },
     {
@@ -6583,15 +6505,8 @@
         "cookTime_s": 655.4944982752293,
         "meanCookTime_s": 638.80859375,
         "chosen": true,
-        "loss": 0.27072731543412876,
         "odds": 0.6976513867548492,
-        "oddsTenths": 7,
-        "interval": {
-          "low_s": 640.4504220182389,
-          "median_s": 655.5607712702658,
-          "high_s": 669.8969108347046
-        },
-        "stillLearning": false
+        "oddsTenths": 7
       }
     },
     {
@@ -6633,15 +6548,8 @@
         "cookTime_s": 372,
         "meanCookTime_s": 372,
         "chosen": false,
-        "loss": 1.7562604514070108,
         "odds": 0.36903553598488725,
-        "oddsTenths": 4,
-        "interval": {
-          "low_s": 367.64966118082157,
-          "median_s": 380.98788111676186,
-          "high_s": 406.5914025334314
-        },
-        "stillLearning": true
+        "oddsTenths": 4
       }
     },
     {
@@ -6683,15 +6591,8 @@
         "cookTime_s": 644.7484730673823,
         "meanCookTime_s": 736.11328125,
         "chosen": true,
-        "loss": 0.2983060774083402,
         "odds": 0.6719179955706095,
-        "oddsTenths": 7,
-        "interval": {
-          "low_s": 626.9582583313058,
-          "median_s": 645.6925609548307,
-          "high_s": 658.7956892998227
-        },
-        "stillLearning": true
+        "oddsTenths": 7
       }
     }
   ],

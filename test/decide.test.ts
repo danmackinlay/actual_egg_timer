@@ -23,14 +23,14 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
-  DECISION_WINDOW_S, Decision, LEAN_COST_PER_S, RUNNY_WHITE_LOSS, STILL_LEARNING_HALF_WIDTH_S,
+  DECISION_WINDOW_S, Decision, LEAN_COST_PER_S, RUNNY_WHITE_LOSS,
   carriedSolution, chooseCookTime, decide, decisionApplies, decisionGridRequest,
-  decisionGridSpec, decisionInputs, expectedLoss, hitOdds, stillLearning,
+  decisionGridSpec, decisionInputs, expectedLoss, hitOdds,
 } from '../src/core/decide.js';
 import { DoseGrid } from '../src/core/doseGrid.js';
 import {
-  Feedback, Posterior, UNRELATED, WhiteReport, createPrior, whiteAnswerProbabilities, whiteProbit,
-  yolkAnswerProbabilities, yolkProbit,
+  CookTimePrediction, Feedback, Posterior, UNRELATED, WhiteReport, createPrior, predictCookTime,
+  whiteAnswerProbabilities, whiteProbit, yolkAnswerProbabilities, yolkProbit,
 } from '../src/core/infer.js';
 import { ALPHA_DEFAULT, ALPHA_REL_SD } from '../src/core/constants.js';
 import { eggFromMass } from '../src/core/geometry.js';
@@ -263,7 +263,6 @@ test('3a. before any egg the time is the literature\'s, exactly, on every pot', 
       const d = decide(PRIOR, grid, m.sol, logTarget(m.level));
       assert.equal(d.chosen, false);
       assert.equal(d.cookTime_s, literature);
-      assert.ok(d.stillLearning);
     }
   }
 });
@@ -301,31 +300,34 @@ test('3c. after one egg the choice leans by seconds, whichever level is asked fo
 // of its own so that it runs beside this one.
 
 // --------------------------------------------------------------------------
-// 5. Still learning
+// 5. How fast the posterior narrows
 // --------------------------------------------------------------------------
 
-test('5a. "still learning" is the 80% interval wider than +-15 s, exactly', () => {
-  assert.equal(STILL_LEARNING_HALF_WIDTH_S, 15);
-  assert.equal(stillLearning({ low_s: 400, median_s: 415, high_s: 430 }), false);
-  assert.equal(stillLearning({ low_s: 400, median_s: 415, high_s: 430.02 }), true);
-});
+/** The owner's "still learning" rule (INFERENCE.md section 11, decision 9):
+ *  the 80% interval of the right cook time wider than +-15 s. No screen shows
+ *  it since 28 September, and `Decision` no longer carries it (D3); this is
+ *  how E8 would compute it, on demand, from `predictCookTime`. */
+function stillLearning(interval: CookTimePrediction): boolean {
+  return 0.5 * (interval.high_s - interval.low_s) > 15;
+}
 
-test('5b. it goes after a few consistent eggs, stays gone, and comes back after a forget', () => {
+test('5b. the interval narrows below +-15 s after a few consistent eggs, stays there, and a forget widens it', () => {
   // A kitchen that is exactly the literature's, cooked at jammy at the times
   // the app chooses, answering as the truth would without noise. Measured on
-  // 28 September on the app's surfaces (`npm run decide -- learning` runs 150
-  // prior-drawn cooks): the interval is +-72 s before any egg, +-22 after one,
-  // +-13 after two, and narrows egg by egg from there; under the filter's old
-  // fixed jitter it rose again at every resample. An egg nobody answered about
-  // teaches nothing and moves nothing.
+  // 28 September on the app's surfaces: the interval is +-72 s before any
+  // egg, +-22 after one, +-13 after two, and narrows egg by egg from there;
+  // under the filter's old fixed jitter it rose again at every resample. An
+  // egg nobody answered about teaches nothing and moves nothing.
   const truth = { alpha_m2s: ALPHA_DEFAULT, logDoseOffset: 0, tauAirScale: 1, noise: 1e-6, whiteOffset: 0, whiteFirmGap: 1.08 };
   const flags: boolean[] = [];
   const widths: string[] = [];
   const c = copyCalibration(PRIOR);
   for (let egg = 0; egg <= 8; egg++) {
-    const d = decideFor(c, gridFor(c), 0.41);
-    flags.push(d.stillLearning);
-    widths.push((0.5 * (d.interval.high_s - d.interval.low_s)).toFixed(1));
+    const grid = gridFor(c);
+    const d = decideFor(c, grid, 0.41);
+    const interval = predictCookTime(c.posterior, grid, logTarget(0.41));
+    flags.push(stillLearning(interval));
+    widths.push((0.5 * (interval.high_s - interval.low_s)).toFixed(1));
     const t = d.cookTime_s;
     const truthGrid = buildRequestedGrid({ egg: EGG, setup: SETUP, tauAirScale: 1, spec: COARSE(ALPHA_DEFAULT, t) });
     const y = yolkProbit(truthGrid, truth, t, logTarget(0.41));
@@ -342,7 +344,7 @@ test('5b. it goes after a few consistent eggs, stays gone, and comes back after 
   assert.ok(off >= 2 && off <= 5, `first quiet after egg ${off}: +-${widths.join(', ')} s`);
   assert.ok(flags.slice(off).every((f) => !f), `came back: +-${widths.join(', ')} s`);
   // "Forget what it learned" is a fresh calibration: learning again.
-  assert.equal(decideFor(PRIOR, PRIOR_GRID, 0.41).stillLearning, true);
+  assert.equal(stillLearning(predictCookTime(PRIOR.posterior, PRIOR_GRID, logTarget(0.41))), true);
 });
 // --------------------------------------------------------------------------
 // 6. The refusals, and a cook under way
