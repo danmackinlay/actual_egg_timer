@@ -614,6 +614,9 @@ is the open tab. Its place moved from under the time to above Cancel.
   note says so now. That is a departure from the brief, which listed it for
   retirement. The owner may prefer to drop the odds from the Lock Screen
   altogether, which is a one-line change in `Cook.Ticket.activity`.
+  **Since F6 on iOS (28 September) the Lock Screen no longer shows odds**:
+  the owner dropped them, and `odds.hitTheMark` is retired (LANGUAGE.md §6,
+  As built (iOS)).
 - `readout.phase.cooling` ("Cooling") stays for a counter rest. The web has
   no cooling phase there, and iOS never reaches one either, so it is
   effectively dead. It is left for the owner rather than deleted.

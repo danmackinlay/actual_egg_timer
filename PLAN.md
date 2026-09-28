@@ -483,7 +483,8 @@ F1 goes before E2 so that Phase E's new feedback copy is born in the catalogue.
       the decimal comma and seven cases. The case problem is why every
       inserted word stands alone in its dictionary form (`LANGUAGE.md` §5).
       Doneness words are matched by the reviewer, not translated.
-- [ ] **F6 the English of 1750.** A language code, `<region>-x-1750`: strings
+- [x] **F6 the English of 1750.** DONE 28 September 2026, in both apps; the
+      owner's review of the wording is the one open item below. A language code, `<region>-x-1750`: strings
       from `copy/en-x-1750.json`, formats from the region (Intl and Foundation
       both already strip the subtag - `LANGUAGE.md` §6). *English (1750)* in the
       in-app picker; switching an English UI to Imperial selects it, back to
@@ -499,8 +500,13 @@ F1 goes before E2 so that Phase E's new feedback copy is born in the catalogue.
         `copy/en-x-1750.json` (307 keys), the picker, the switch
         (`src/core/language.ts`), the title, the record's `register`, and
         `test/en1750.test.ts`. As built in `LANGUAGE.md` §6.
-  - [ ] **The iOS half**: port `src/core/language.ts`, add the picker, and
-        listen to `.unitsFlipped`. The catalogue and fixture are shared.
+  - [x] **The iOS half**, 28 September (`01c621e`..`15cf890`): the switch
+        ported and held to `fixtures/language.json`, the picker, the title
+        with its accessibility label, the serif book face (the clock keeps
+        its own), the web's accent as the tint, 1750 twins for the alarms
+        and the Live Activity, no odds on the Lock Screen (`odds.hitTheMark`
+        retired), and the colophon in plain words. As built in
+        `LANGUAGE.md` §6.
   - [ ] **The owner's review** of the 1750 wording.
 
 No owner decisions pending on Phase F.

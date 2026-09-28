@@ -2182,3 +2182,29 @@ if there never was a pan. Everything else in the setup saves as before.
   chose; and with no `start` and no `coldStart` at all it opens cold. The app
   has no test target, so this is not under test; it is the web's rule, and
   the build passes.
+
+## The English of 1750 on iOS, written down (28 September 2026)
+
+The iOS half of F6 (`01c621e`..`15cf890`) shipped without its docs. They are
+now in `LANGUAGE.md` §6, *As built (iOS)*. F6 is ticked in `PLAN.md`, with the
+owner's review of the wording still open. `UI.md` §10 records that the Lock
+Screen no longer shows odds.
+
+What the docs rest on, checked against the code and not the commit messages:
+
+- **The switch** is `Language.swift` in the core, held to
+  `fixtures/language.json` by four Swift tests (30 transitions, 19 stored
+  reads, 17 tags). `LanguageChoice.swift` stores it under `languageState`.
+- **The catalogue** has 343 keys against English's 344. Of the 40 iOS-only
+  keys, 39 have a twin. The missing one is `app.name`, which
+  `test/en1750.test.ts` 1b leaves to English by name.
+- **The Lock Screen.** `odds.hitTheMark` appears nowhere in `copy/`, `src/`
+  or `ios/`, and the activity's attributes carry no odds. Only
+  `tools/copyDraft.ts` and the older, dated sections of the docs still name
+  the key.
+- **The tint.** `AccentColor` is #8A4B00 in light and #FFB020 in dark, in both
+  asset catalogues. These are the web's `--accent`.
+- **The colophon's new wording is shared copy**, so the web's changed too.
+  The web section's note that *denaturation* and *kinetics* stay in the
+  colophon is no longer true. The iOS section says so rather than rewriting
+  the web's dated record.

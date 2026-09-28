@@ -1178,6 +1178,97 @@ whole catalogue is for their review. iOS is untouched and follows.
   the whole truth. It was left alone because iOS is being ported onto
   `copy/en.json` at the same time; its 1750 twin says what happens.
 
+**As built (iOS), 28 September 2026.** Commits `01c621e` to `15cf890`,
+drafted as `period_ios` in `tools/copyDraft.ts`. Like the web half, it is for
+the owner's review.
+
+- **The switch is ported, not rewritten.** `src/core/language.ts` is
+  `ios/EggTimerCore/Sources/EggTimerCore/Language.swift`, held to it by
+  `fixtures/language.json` (`LanguageConformance.swift`): the constants, which
+  tags are 1750 and which register each gets, every move from every reachable
+  state (30 transitions), and 19 stored states read defensively. The app side
+  is `ios/App/LanguageChoice.swift`, which only stores and applies. It keeps
+  the state as the same JSON the web stores, under `languageState` rather
+  than `language`, because a launch argument of that name would shadow it
+  (UserDefaults' argument domain). It reads the state in the app's `init`,
+  so the first frame is already in the cook's language. It listens for
+  `.unitsFlipped`, which `Kitchen.chooseUnits` posts when the cook changes
+  the units and never for a default. Nothing in it touches the units. The
+  language is observed, so a pick or a units flip redraws every word in
+  place.
+- **The picker** is a Language section under Units in Settings, as on the
+  web: a segmented *English* / *English (1750)*, with an (i) that opens
+  `controls.language.more`. The line under the units, `controls.units.period`,
+  shows on any English page, 1750 included. The six F6 keys that were the
+  web's alone are now marked for both apps.
+- **The title** heads the egg's page while idle, in 1750 only: `app.titlePage`,
+  in italic, centred. It is the one place the long s is drawn. VoiceOver reads
+  it as a header, through an accessibility label with every long s an s
+  (`withoutLongS`, the Swift twin of what `applyCopy` does on the web).
+- **A book face.** In 1750 the page is set in `.fontDesign(.serif)`, which is
+  New York, the system's serif. The web uses Iowan Old Style. New York
+  follows Dynamic Type. The clock keeps the system's rounded face, whose
+  figures line up. The environment's design overrides even a
+  `.system(design:)` font, so the headline and the big time each set
+  `.fontDesign(.rounded)` again on themselves. The wider serif broke a
+  stepper's value between its number and its unit, so the value is now one
+  line in any face.
+- **The tint is the web's accent.** Before, it was the system default. `AccentColor`,
+  in both the app's and the widget's asset catalogues, is `--accent` from
+  `styles.css`: #8A4B00 in light, #FFB020 in dark. It is the global accent
+  in `ios/project.yml`. A prominent button's label is `--accent-fg`, through
+  `onAccent()`: white on the light brown, and near-black (#1A1200) on the
+  dark amber, where the system's white would be unreadable. A disabled
+  button keeps the system's grey.
+- **The iOS-only keys have 1750 entries.** Of the 40 keys only iOS uses,
+  39 now have a twin, and the catalogue has 343 of English's 344 keys. The
+  one left in English is `app.name`, because it is a name. The twins cover:
+  - the alarms: `alarm.pull.*`, `alarm.cooled.*` and `alarm.probe.*`;
+  - the alarm's status lines, `readout.alarm.*` ("the alarm is set for
+    {time}");
+  - the cook's summary and method (`cook.*`);
+  - the Live Activity and the Dynamic Island (`activity.*`), for example
+    *Upon the fire*, *Out with them*, *It is done*, and *my conjecture, till
+    you tap the boil*;
+  - a few controls: `controls.size.weighed`, `more.*`,
+    `controls.units.more.ios` and `readout.phase.cooling`.
+
+  `test/en1750.test.ts` 1b now asks for a twin for every key either app
+  uses, not only the web's, so the archaisms, the spellings and the long s
+  bind the alarms and the Lock Screen too. 1b2 holds the small surfaces (an
+  alarm's title, the Dynamic Island, the Lock Screen) to eight words at
+  most. That is rule 2, and it is tested. The compact island's *NOW* and
+  *Eat* have no room for flavour and stay as they are. The widget cannot
+  read the app's settings, so the Live Activity carries the language the
+  cook was started in (`CookActivity.lang`), as it carries its units. An
+  activity begun by an older build decodes as English. The record's
+  `register` follows the ticket's language (`registerOf`), as on the web.
+- **No odds on the Lock Screen.** The Live Activity used to show "7/10 eggs
+  hit the mark" under the summary. It is gone, from the Lock Screen and from
+  the activity's attributes, on the owner's word: "I'd rather say nothing
+  than waste space on useless odds". Mid-cook, nothing there can change what
+  the cook does. `odds.hitTheMark` is retired from `copy/en.json`, and it
+  never had a 1750 twin. The odds stay on the ticket (`oddsTenths`) for the
+  record, as data and not display. This settles the departure UI.md §10
+  left open.
+- **The colophon in plain words, in both Englishes.** This is the owner's
+  wording.
+  - Modern: "I work out each time from how heat gets into an egg, not from
+    a recipe." The link is "The code and the science", and the tail is
+    "— mistakes included."
+  - 1750: "I reckon each time from how heat enters an egg, not from a
+    receipt." The link is "The source, and the reasoning", and the tail is
+    "— my errours included."
+
+  *Denaturation* and *kinetics* are therefore no longer in the colophon in
+  either English (compare *Words the period lacks*, above). It is shared
+  copy, so the web's colophon changed with it.
+
+**Not verified on iOS.** The 1750 alarms on a device, and so the 110-character
+body on a real notification. Also the Live Activity and the Dynamic Island in
+1750 on screen: see LOGBOOK.md for what the simulator would and would not
+show.
+
 ## 7. Order, and how it fits with Phase E
 
 1. **F1, the catalogue.** Extract every string with the wording unchanged, and
