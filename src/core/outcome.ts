@@ -2,9 +2,9 @@
  * What the egg will be like: the predicted outcome at the chosen time
  * (INFERENCE.md section 8, "The outcome").
  *
- * "7/10 eggs hit the mark" says how often the cook will call the egg right.
- * It does not say which way the other three go, and a cook cannot act on a
- * miss without a direction. This reads the same posterior, on the same
+ * The odds (`hitOdds`, once on screen as "7/10 eggs hit the mark") say how
+ * often the cook will call the egg right. They do not say which way the
+ * misses go, and a cook cannot act on a miss without a direction. This reads the same posterior, on the same
  * surface, at the same time, and says two more things.
  *
  * THE ANSWERS. P(too soft), P(just right), P(too firm) for the yolk and

@@ -372,8 +372,9 @@ cook. Nothing leaves a phone before E6.
       outcome summary, UI.md §8, 27 September; iOS pass B, 28 September),
       and the Lock Screen dropped the odds (`05e92ae`). No screen shows the
       number now; the odds still shade the slider and set its reach. The
-      running cook's ticket carries `oddsTenths` and `stillLearning`, but the
-      egg's record does not keep them (see *Loose ends*).
+      running cook's ticket carried `oddsTenths` and `stillLearning`, never
+      read, until 28 September, when both apps dropped them; the egg's record
+      never kept them (E6 will store the full forecast instead).
       `PRIOR_ID` is `2026-09-e5`. NOT verified: nothing on iOS was run or tapped - it
       builds for the simulator, and the core is held by `swift test`.
 - [ ] **E6 opt-in collection.** Consent, random id, upload, delete-by-id; the

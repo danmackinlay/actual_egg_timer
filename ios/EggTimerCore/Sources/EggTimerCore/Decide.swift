@@ -203,7 +203,8 @@ public struct Decision: Sendable {
     /// Whether the time was chosen, or is the mean solve's.
     public let chosen: Bool
     public let loss: Double
-    /// P(hit the mark) at `cookTimeS`, and the same in tenths, as shown.
+    /// P(hit the mark) at `cookTimeS`, and the same in tenths, which is how
+    /// the reach and the advice thresholds are written. Not on screen.
     public let odds: Double
     public let oddsTenths: Int
     /// The 80% interval of the time each particle would call right.
@@ -220,7 +221,8 @@ public func decisionApplies(_ sol: Solution) -> Bool {
     sol.whiteSets && sol.reachable
 }
 
-/// Tenths, as the odds are shown: "7/10".
+/// Tenths, as the odds were once shown ("7/10") and as the reach and advice
+/// thresholds are still written.
 public func oddsInTenths(_ odds: Double) -> Int {
     Int((odds * 10.0).rounded())
 }

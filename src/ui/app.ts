@@ -281,13 +281,10 @@ interface Ticket {
    *  carried onto a mid-cook re-solve (`carriedSolution`). Zero when the time
    *  was not chosen. */
   lean_s: number;
-  /** The odds and "still learning" as they were at "Eggs in", for the
-   *  record. Null when the time was started before they were known. The web
-   *  no longer shows either: the direction says both. */
-  oddsTenths: number | null;
-  stillLearning: boolean | null;
   /** What the egg was likely to be like at "Eggs in", shown for the whole
-   *  cook as the odds are. Null when they are. */
+   *  cook. Null when the time was started before the odds were known. (The
+   *  ticket once also carried the odds in tenths and "still learning"; nothing
+   *  read them, and a saved cook that still has them is read without them.) */
   outcome: Outcome | null;
   /** The peak yolk the cook was started with, C: what the line under the
    *  running cook's sentence says. Null in a ticket written before it was
@@ -1319,8 +1316,8 @@ function render(now_ms: number): void {
  *  "I'm still learning" is no longer a line of its own on the web (owner, 27
  *  September): beside "I can't call it yet" it said the same thing twice.
  *  What it opened, what I learn from and what speeds it up, is the last
- *  paragraph of the (i). The decision still works it out, and the record
- *  still keeps it with every egg. */
+ *  paragraph of the (i). The decision still works it out; nothing keeps it
+ *  with the egg. */
 function renderOdds(): void {
   let o: Outcome | null = null;
   if (machine.phase === 'IDLE') {
@@ -1938,8 +1935,6 @@ function onPrimary(): void {
       units: unitSystem(),
       lang: activeLocale(),
       lean_s: decision === null ? 0 : decision.cookTime_s - decision.meanCookTime_s,
-      oddsTenths: decision === null ? null : decision.oddsTenths,
-      stillLearning: decision === null ? null : decision.stillLearning,
       outcome: decision === null ? null : outcome,
       peakYolk_C: solution.result.peakYolk_C,
       probeMoment: probeMomentFor(solution.result, settings.cooling),
@@ -2245,9 +2240,6 @@ function restoreTicket(raw: unknown): Ticket | null {
     lang: typeof r['lang'] === 'string' && r['lang'] !== '' ? r['lang'] : 'en',
     // And one written before E5 by an app that did not choose, and had no odds.
     lean_s: typeof r['lean_s'] === 'number' && Number.isFinite(r['lean_s']) ? r['lean_s'] : 0,
-    oddsTenths: Number.isInteger(r['oddsTenths']) && (r['oddsTenths'] as number) >= 0
-      && (r['oddsTenths'] as number) <= 10 ? r['oddsTenths'] as number : null,
-    stillLearning: typeof r['stillLearning'] === 'boolean' ? r['stillLearning'] : null,
     // And one written before the outcome summary, which carried only the odds.
     outcome: restoreOutcome(r['outcome']),
     // And one written before the running cook showed its sentence.

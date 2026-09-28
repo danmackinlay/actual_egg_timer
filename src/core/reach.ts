@@ -3,13 +3,14 @@
  * which levels are offered at all, how the track is shaded, and when the app
  * says how to make a cook more reliable (the owner, 27 September; PLAN.md).
  *
- * THE PROFILE. E5 put the odds of the time on screen beside it: "7/10 eggs
- * hit the mark". That is one level. The profile is the same number for every
- * level the pot can deliver, computed exactly as the app computes it when the
- * slider sits there: the mean solve at that level (`solveCookTime`, with the
- * white's target where the eggs have put it), then the decision on this pot's
- * decision surface (`decide`), and its odds. So a profile point and the line
- * under the time can never disagree - they are one computation.
+ * THE PROFILE. E5 computed the odds of the time (`decide`; once on screen as
+ * "7/10 eggs hit the mark", no longer). That is one level. The profile is the
+ * same number for every level the pot can deliver, computed exactly as the app
+ * computes it when the slider sits there: the mean solve at that level
+ * (`solveCookTime`, with the white's target where the eggs have put it), then
+ * the decision on this pot's decision surface (`decide`), and its odds. So a
+ * profile point and the decision at that level can never disagree - they are
+ * one computation.
  *
  * Which levels. The two physical edges on the slider's grid (the softest the
  * white allows, rounded up; the firmest the pan reaches, rounded down), every

@@ -269,8 +269,8 @@ The number went first into what the (i) opens ("About 8 in 10 eggs like
 this come out just as you like them…"), and later the same day out of it
 altogether (below): since then no screen shows it, in either app. The odds
 survive as the track's shading, the low-odds link to Help and the
-refusals at 3 in 10. (The ticket still carries `oddsTenths`; the egg's record
-never did.) The
+refusals at 3 in 10. (The ticket carried `oddsTenths` until 28 September,
+never read; the egg's record never did.) The
 direction and the white's line ride with the cook, as the odds did, and
 come back after a reload.
 
@@ -324,8 +324,8 @@ direction and the white's line still stay as they were at "Eggs in".
 
 **"I'm still learning" is gone from the web** (owner). Beside "I can't call
 it yet" it said the same thing twice. Its (i)'s content is the last of the
-three paragraphs. The E5 computation stands, and the ticket still carries
-`stillLearning`, though nothing reads it. iOS followed in pass B (section 10), and
+three paragraphs. The E5 computation stands; the ticket carried
+`stillLearning`, never read, until 28 September. iOS followed in pass B (section 10), and
 `odds.stillLearning`, `odds.info` and `odds.why` are retired.
 
 **Departures from sections 3 and 4.**
@@ -507,8 +507,8 @@ idle. Under it, from P(runny) 0.2 (core's `whiteRisk`), "The white might
 still be runny." in the warning colour. While idle the sentence keeps two
 lines' room and centres in it, so a drag that changes it does not move the
 slider. "I'm still learning" and the odds line are gone, as on the web.
-`oddsTenths` and `stillLearning` are still on the ticket (not in the egg's
-record, which never kept them).
+`oddsTenths` and `stillLearning` were on the ticket, never read, until 28
+September (not in the egg's record, which never kept them).
 
 The outcome is `predictOutcome`, read in `Kitchen.decided` at the decided
 time on the decision's own surface, off the main actor beside the decision.

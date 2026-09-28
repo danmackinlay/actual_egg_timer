@@ -94,13 +94,10 @@ final class Cook {
         /// carried onto a mid-cook re-solve. Nil in a cook saved before E5,
         /// and zero when the time was not chosen.
         var leanS: Double?
-        /// The odds and "still learning" as they were at "Eggs in", for the
-        /// record. Data, not display: nothing mid-cook shows them, the Lock
-        /// Screen included, since nothing there could change what the cook
-        /// does. Nil when the cook was started before they were known, or
-        /// saved before E5.
-        var oddsTenths: Int?
-        var stillLearning: Bool?
+        // A ticket saved by an earlier build may also carry `oddsTenths` and
+        // `stillLearning`: nothing read them, and the synthesized decoder
+        // ignores keys it does not know, so such a cook still restores.
+
         /// What the egg was expected to be like at "Eggs in": the direction
         /// and the white's line, shown for the whole cook as the web shows
         /// them. Nil when the cook was started before they were known, or

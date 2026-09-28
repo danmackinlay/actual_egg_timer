@@ -1293,8 +1293,9 @@ the owner's review.
   the activity's attributes, on the owner's word: "I'd rather say nothing
   than waste space on useless odds". Mid-cook, nothing there can change what
   the cook does. `odds.hitTheMark` is retired from `copy/en.json`, and it
-  never had a 1750 twin. The odds stay on the ticket (`oddsTenths`), as data
-  and not display; the egg's record does not keep them. This settles the departure UI.md §10
+  never had a 1750 twin. The odds stayed on the ticket (`oddsTenths`) until
+  28 September, when they were dropped as never read; the egg's record never
+  kept them. This settles the departure UI.md §10
   left open.
 - **The colophon in plain words, in both Englishes.** This is the owner's
   wording.

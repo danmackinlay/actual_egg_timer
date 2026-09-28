@@ -272,8 +272,8 @@ struct ContentView: View {
     ///
     /// "I'm still learning" is not a line of its own, as on the web: beside
     /// "I can't call it yet" it said the same thing twice. What it opened is
-    /// the last paragraph of the (i). The decision still works it out, and the
-    /// record keeps it with every egg.
+    /// the last paragraph of the (i). The decision still works it out; nothing
+    /// keeps it with the egg.
     @ViewBuilder
     private func direction(_ phase: Cook.Phase) -> some View {
         let idle = phase == .idle
@@ -453,8 +453,6 @@ struct ContentView: View {
             // started IS the chosen one, and a mid-cook re-solve
             // carries its lean.
             leanS: kitchen.decision?.leanS ?? 0,
-            oddsTenths: kitchen.decision?.oddsTenths,
-            stillLearning: kitchen.decision?.stillLearning,
             forecast: kitchen.decision == nil ? nil : kitchen.outcome,
             // The cooling counts to the yolk's peak for this cook (E4).
             coolS: coolingSecondsFor(solution.result),

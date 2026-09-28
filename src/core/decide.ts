@@ -56,13 +56,16 @@
  * could not be snapped into it - the solver's own answer stands
  * (`decisionApplies`), because that answer is already the furthest the pan goes.
  *
- * THE ODDS. "7/10 eggs hit the mark": the posterior predictive probability
+ * THE ODDS. P(hit the mark): the posterior predictive probability
  * that the cook answers "not runny" about the white AND "just right" about the
  * yolk, at the time recommended. Within one particle the two answers are
  * independent - two readings of two latents - and across particles they are
  * correlated, because a slow time-scale makes both late. The probabilities are
  * the answers', unrelated share included, so they are calibrated against what
- * cooks SAY, which is all anyone can check them against.
+ * cooks SAY, which is all anyone can check them against. They were once on
+ * screen as "7/10 eggs hit the mark"; the outcome's direction replaced that
+ * line (outcome.ts), and the odds now decide which levels the slider offers
+ * (reach.ts) and when the app says how to make a cook more reliable.
  *
  * STILL LEARNING. While the 80% interval of the right cook time
  * (`predictCookTime`) is wider than +-STILL_LEARNING_HALF_WIDTH_S, which is
@@ -321,7 +324,8 @@ export interface Decision {
   chosen: boolean;
   /** The expected loss at `cookTime_s`. */
   loss: number;
-  /** P(hit the mark) at `cookTime_s`, and the same in tenths, as shown. */
+  /** P(hit the mark) at `cookTime_s`, and the same in tenths, which is how
+   *  the reach and the advice thresholds are written. Not on screen. */
   odds: number;
   oddsTenths: number;
   /** The 80% interval of the time each particle would call right, and
@@ -338,7 +342,8 @@ export function decisionApplies(sol: Solution): boolean {
   return sol.whiteSets && sol.reachable;
 }
 
-/** Tenths, as the odds are shown: "7/10". Half away from zero, which is what
+/** Tenths, as the odds were once shown ("7/10") and as the reach and advice
+ *  thresholds are still written. Half away from zero, which is what
  *  both languages' plain rounding does for a probability. */
 export function oddsInTenths(odds: number): number {
   return Math.round(odds * 10);
