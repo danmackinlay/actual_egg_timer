@@ -19,6 +19,10 @@ import EggTimerCopy
 /// queued dozens of them. Now the coalesce keeps most of them from starting,
 /// and the ones that do start inherit cancellation and check it between solves.
 ///
+/// This file holds the inputs and what is derived from them. The solve is in
+/// Kitchen+Solve.swift, the learning from each egg in Kitchen+Learning.swift,
+/// and the decision surfaces both of them share in DecisionGrids.swift.
+///
 /// What this class decides is only what a KITCHEN knows. The decisions above
 /// the physics - snapping, which refusal applies, the texture bands, the
 /// calibration grid, the bounds and the defaults - live in EggTimerCore's
@@ -181,21 +185,26 @@ final class Kitchen {
     func show(_ q: Quantity, _ si: Double) -> String { showIn(units, q, si) }
 
     // MARK: - Outputs
+    //
+    // Written only by the Kitchen and its extensions (Kitchen+Solve.swift,
+    // Kitchen+Learning.swift). Internal rather than `private(set)` because
+    // Swift's `private` stops at the file; nothing outside the Kitchen writes
+    // them.
 
     /// The cook the pan is being asked for, or nil while there is no answer -
     /// which includes sous-vide, where there is no pan to solve for. A nil
     /// solution is already what disables the start button, so the sous-vide
     /// screen's dead action needs no second rule.
-    private(set) var solution: Solution?
+    var solution: Solution?
     /// What this kitchen has learned from its own eggs, and the eggs themselves:
     /// the posterior, the base it started from, and the log it was folded from.
-    private(set) var kept = Calibrations.freshKept()
+    var kept = Calibrations.freshKept()
     /// What this kitchen has learned from its own eggs. Before any feedback it
     /// is the prior, whose mean IS the literature value - so calibration is
     /// purely additive and the app is fully useful on day one.
     var calibration: Calibration { kept.calibration }
     /// True while the dose surface is being rebuilt after an outcome.
-    private(set) var learning = false
+    var learning = false
     /// What the cook on screen has said so far - the yolk, the white, or both -
     /// or nil before the first answer. Both questions stay on screen until the
     /// cook moves on; this is what marks each one answered.
@@ -203,26 +212,26 @@ final class Kitchen {
     /// Deliberately not persisted, with the surface a second answer is folded
     /// against: after a relaunch the questions are not offered again, and the
     /// one left unanswered stays a skip in the record.
-    private(set) var answers: Answers?
+    var answers: Answers?
     /// Why the requested doneness was refused, in words, or empty. The point is
     /// to teach the constraint rather than merely to block the control.
-    private(set) var refusal = ""
+    var refusal = ""
     /// The choice behind the time on screen (E5): the odds, "still learning",
     /// and how far it leaned from the mean solve. Nil until this pot's decision
     /// surface has been built, and on the sous-vide screen.
-    private(set) var decision: Decision?
+    var decision: Decision?
     /// The odds at every level for the pot on screen and the posterior as it
     /// stands (Reach.swift): the track's shading, and the range the slider
     /// offers. Nil until it has been worked out, after this pot's surface;
     /// until then the physical limits are the whole rule, as before.
-    private(set) var oddsProfile: OddsProfile?
+    var oddsProfile: OddsProfile?
     /// What the egg at the chosen time will be like (`predictOutcome`, read at
     /// the decided time on the decision's own surface): the direction, the
     /// white's line and the bracket. Nil whenever `decision` is.
-    private(set) var outcome: Outcome?
+    var outcome: Outcome?
     /// Under low odds, what would make this cook more reliable, as catalogue
     /// keys in the order shown; empty when there is nothing to say.
-    private(set) var advice: [String] = []
+    var advice: [String] = []
     /// What the direction, the white's line and the bracket are about, and what
     /// a cook started now carries on its ticket: the choice on screen's outcome,
     /// once this pot's surface has landed. Nil before that, where the white
@@ -238,8 +247,14 @@ final class Kitchen {
         guard !isSousVide, solution?.whiteSets == true, let d = decision else { return false }
         return EggTimerCore.adviceWanted(d.oddsTenths, profile: oddsProfile)
     }
+
+    // MARK: - Bookkeeping
+    //
+    // The solve's and the learning's own state. Internal for the same reason
+    // as the outputs, and for no one else.
+
     /// Profiles asked for and not yet in, so each lands once.
-    private var profilesAsked = Set<String>()
+    var profilesAsked = Set<String>()
 
     struct Answers: Sendable {
         var yolk: Feedback?
@@ -251,32 +266,32 @@ final class Kitchen {
     /// The live egg once folded: its place in the log, the surface it was
     /// scored against, and the calibration as it stood before it - so that a
     /// second answer folds the egg again rather than on top of itself.
-    private struct Folded: Sendable {
+    struct Folded: Sendable {
         let index: Int
         let grid: DoseGrid
         let before: Calibration
     }
-    private var folded: Folded?
+    var folded: Folded?
 
-    private var task: Task<Void, Never>?
+    var task: Task<Void, Never>?
     /// Bumped by every `recompute()`: which question the inputs are asking.
-    private var asked = 0
+    var asked = 0
     /// Which question `solution` answers, or nil when it answers none of them -
     /// a mid-cook re-solve, or nothing yet. `solution` is current only when
     /// this equals `asked`; between an input change and the coalesced solve
     /// landing, it is the answer to the PREVIOUS inputs.
-    private var answered: Int?
+    var answered: Int?
     /// Bumped by "forget what it learned", so a fold still running when the
     /// button is pressed lands on nothing rather than on the fresh prior.
-    private var generation = 0
+    var generation = 0
     /// The egg on screen, whose second answer may still come. Every other egg in
     /// the log is folded quietly.
-    private var liveIndex: Int?
-    private var draining = false
+    var liveIndex: Int?
+    var draining = false
     /// Set while the solver is moving the slider itself, so that snapping to a
     /// reachable position does not start another solve.
-    private var applying = false
-    private var boilMemory: BoilMemory = [:]
+    var applying = false
+    var boilMemory: BoilMemory = [:]
     private var loaded = false
 
     /// Read what was stored and solve for it.
@@ -385,498 +400,6 @@ final class Kitchen {
         )
     }
 
-    // MARK: - Solving
-
-    private func changed() {
-        guard !applying else { return }
-        Settings.save(self)
-        recompute()
-    }
-
-    /// Coalesce solves. A drag fires `didSet` on every step, and a solve is
-    /// far too long to run on each one - with the heat off it is a standing
-    /// scan of about a second. 90 ms, the same window the web app uses.
-    private static let coalesceNanos: UInt64 = 90_000_000
-
-    /// How long the inputs must sit still, on top of the coalesce, before a new
-    /// pot's decision surface is built. The web app's `DECISION_SETTLE_MS`.
-    private static let settleNanos: UInt64 = 300_000_000
-
-    private func recompute() {
-        task?.cancel()
-        task = nil
-        asked &+= 1
-        // No pan, no solve. The sous-vide answer is `sousVide` above and needs
-        // none of this. It goes FIRST, before anything is solved for - the web
-        // app used to branch only at the point of PAINTING, so it paid for a
-        // full hot-start solve it then discarded and left half of it on screen.
-        // Clearing the solution is what also makes the start button dead, which
-        // is the truth here: there is nothing to start.
-        if isSousVide {
-            solution = nil
-            refusal = ""
-            decision = nil
-            outcome = nil
-            oddsProfile = nil
-            advice = []
-            return
-        }
-        let level = doneness
-        let setup = setup
-        let egg = egg
-        let calibration = calibration
-        let facts = adviceFacts
-        // Tagged with the question it answers, so neither step below can land
-        // on inputs that have moved since, and "Eggs in" can tell whether the
-        // time on screen is theirs (`currentSolution`).
-        let question = asked
-        task = Task { [weak self] in
-            try? await Task.sleep(nanoseconds: Self.coalesceNanos)
-            guard !Task.isCancelled else { return }
-            // The odds at every level, if this pot's are in, set the slider's
-            // ends (Reach.swift); if not, the physical limits do.
-            let inputs = decisionInputs(calibration, egg: egg, setup: setup)
-            let profile = await DecisionGrids.shared.cachedProfile(inputs, calibration)
-            let answer = await Self.solve(
-                egg: egg, setup: setup, level: level, calibration: calibration, profile: profile
-            )
-            guard !Task.isCancelled else { return }
-            // E5: the time is chosen on this pot's decision surface. The surface
-            // does not depend on the slider, so a drag is answered from the one
-            // already built and the time never jumps mid-drag; a new pot shows
-            // the mean solve's time first, and the chosen one when its surface
-            // lands, once the inputs have settled.
-            if let grid = await DecisionGrids.shared.cached(inputs) {
-                let chosen = await Self.decided(
-                    answer, grid: grid, egg: egg, calibration: calibration, facts: facts
-                )
-                guard !Task.isCancelled, question == self?.asked else { return }
-                self?.task = nil
-                self?.apply(chosen, question: question)
-                self?.askForProfiles(chosen.missing, calibration: calibration)
-                return
-            }
-            guard question == self?.asked else { return }
-            self?.apply(answer, question: question)
-            try? await Task.sleep(nanoseconds: Self.settleNanos)
-            guard !Task.isCancelled else { return }
-            let grid = await DecisionGrids.shared.grid(inputs)
-            guard !Task.isCancelled else { return }
-            let chosen = await Self.decided(
-                answer, grid: grid, egg: egg, calibration: calibration, facts: facts
-            )
-            guard !Task.isCancelled, question == self?.asked else { return }
-            self?.task = nil
-            self?.apply(chosen, question: question)
-            self?.askForProfiles(chosen.missing, calibration: calibration)
-        }
-    }
-
-    /// What the advice needs to know that the setup does not say: whether the
-    /// egg is a size off the carton, and whether its start is the room preset's
-    /// assumption rather than the fridge.
-    private var adviceFacts: AdviceFacts {
-        AdviceFacts(eggFromClass: massFrom == .sizeClass, startAssumed: startTemp == .room)
-    }
-
-    /// The answer, with its time chosen from the whole posterior (E5, Decide.swift)
-    /// rather than solved at its mean, and what to say if the odds there are
-    /// low. Off the main actor, like the solve: a decision is a few thousand
-    /// probits. Profiles not yet worked out - this pot's, and those of the
-    /// changes the advice would price - are listed in `missing`.
-    private nonisolated static func decided(
-        _ answer: Answer, grid: DoseGrid, egg: Egg, calibration: Calibration, facts: AdviceFacts
-    ) async -> Answer {
-        let target = log10(donenessFromSlider(answer.level).yolkDoseMin)
-        let d = decide(calibration, grid: grid, solution: answer.solution, logNominalTarget: target)
-        var chosen = answer
-        chosen.solution = decidedSolution(
-            egg: egg, setup: answer.setup, params: calibrationParams(calibration),
-            solution: answer.solution, decision: d
-        )
-        chosen.decision = d
-        // What the egg at that time will be like: about 2 ms beside the
-        // decision's 13-16, so it goes with it (INFERENCE.md section 8).
-        chosen.outcome = predictOutcome(calibration.posterior, grid, d.cookTimeS, target)
-        if answer.profile == nil {
-            chosen.missing.append(decisionInputs(calibration, egg: egg, setup: answer.setup))
-        }
-        guard answer.solution.whiteSets, EggTimerCore.adviceWanted(d.oddsTenths, profile: answer.profile) else {
-            return chosen
-        }
-        var priced: [(key: String, profile: OddsProfile)] = []
-        for change in pricedChanges(answer.setup) {
-            let changed = decisionInputs(calibration, egg: egg, setup: change.setup)
-            if let p = await DecisionGrids.shared.cachedProfile(changed, calibration) {
-                priced.append((key: change.key, profile: p))
-            } else {
-                chosen.missing.append(changed)
-            }
-        }
-        chosen.advice = protocolAdvice(
-            answer.setup, facts: facts, level: answer.level, odds: d.odds, priced: priced
-        )
-        return chosen
-    }
-
-    /// Ask for the profiles an answer found missing, off the main actor, and
-    /// solve again when one lands if the screen still wants it: this pot's, or
-    /// a priced change of it. Each is asked for once.
-    private func askForProfiles(_ missing: [DecisionInputs], calibration: Calibration) {
-        for inputs in missing {
-            let key = DecisionGrids.profileKey(inputs, calibration)
-            guard !profilesAsked.contains(key) else { continue }
-            profilesAsked.insert(key)
-            Task { [weak self] in
-                _ = await DecisionGrids.shared.profile(inputs, calibration)
-                guard let self else { return }
-                self.profilesAsked.remove(key)
-                guard !self.isSousVide, self.wantedProfileKeys.contains(key) else { return }
-                self.recompute()
-            }
-        }
-    }
-
-    /// The profiles the screen wants now: this pot's, and its priced changes'.
-    private var wantedProfileKeys: Set<String> {
-        let inputs = decisionInputs(calibration, egg: egg, setup: setup)
-        var keys: Set<String> = [DecisionGrids.profileKey(inputs, calibration)]
-        for change in pricedChanges(setup) {
-            keys.insert(DecisionGrids.profileKey(
-                decisionInputs(calibration, egg: egg, setup: change.setup), calibration
-            ))
-        }
-        return keys
-    }
-
-    /// Solve, and read the result as a decision about the slider: core
-    /// `answerAt`, with the setup and profile it was asked for.
-    ///
-    /// `nonisolated async` is what takes it off the main actor; no inner
-    /// `Task` of any kind, since an unstructured task does not inherit the
-    /// caller's cancellation. The caller (`recompute()`) drops a superseded
-    /// answer by its question number.
-    ///
-    /// `snapRetry` is false for a cook already under way: the target is frozen,
-    /// so re-solving at a snapped position would answer for an egg nobody is
-    /// cooking.
-    private nonisolated static func solve(
-        egg: Egg, setup: CookSetup, level: Double, calibration: Calibration, snapRetry: Bool = true,
-        profile: OddsProfile? = nil
-    ) async -> Answer {
-        let a = answerAt(
-            calibration, egg: egg, setup: setup, level: level, profile: profile, snapRetry: snapRetry
-        )
-        return Answer(solution: a.solution, verdict: a.verdict, setup: setup, level: a.level, profile: profile)
-    }
-
-    /// Re-solve a cook already under way, for a corrected time to boil.
-    ///
-    /// The doneness is the one the cook was STARTED at, and nothing here may
-    /// move it - not the slider, and not the answer. This used to call the idle
-    /// path, discard its `snapTo` and return the SNAPPED solution's cook time,
-    /// so a measured ramp that made the requested doneness unreachable quietly
-    /// re-timed the pan for a different egg while the slider, the stored
-    /// setting and the captured ticket all still described the one asked for.
-    ///
-    /// `snapRetry: false` is what makes that true rather than merely intended:
-    /// an unreachable target now answers with the furthest this pan goes, which
-    /// is the only cook on offer, instead of with a cook at a target nobody
-    /// chose.
-    ///
-    /// `leanS` is how far the choice leaned from the mean solve at "Eggs in"
-    /// (E5). A new ramp is a new pot, whose decision surface is a second or more
-    /// away with the egg already in the water, so the lean is carried instead
-    /// (`carriedSolution`); test/decide.test.ts measures what that costs.
-    ///
-    /// The answer is the whole cook: its time, and the peak the cooling
-    /// counts to (E4).
-    func cookResult(timeToBoilS: Double, level: Double, leanS: Double) async -> CookResult? {
-        let setup = setup(timeToBoilS: timeToBoilS)
-        let answer = await Self.solve(
-            egg: egg, setup: setup, level: level, calibration: calibration, snapRetry: false
-        )
-        let carried = carriedSolution(
-            egg: egg, setup: setup, params: calibrationParams(calibration),
-            solution: answer.solution, leanS: leanS
-        )
-        // The numbers on screen follow the cook; the refusal does not. A
-        // refusal is advice about a control that is no longer on screen.
-        solution = carried
-        // A pan with a measured or pushed-out ramp is not the idle question.
-        answered = nil
-        return carried.result
-    }
-
-    /// The solution for the inputs as they stand NOW, solving for them first
-    /// if the one on screen is not yet theirs. Nil for sous-vide, where there
-    /// is no pan to solve for.
-    ///
-    /// "Eggs in" reads this rather than `solution`. The solve for an input
-    /// change waits out the coalesce and then runs off the main actor, and for
-    /// that whole time `solution` is still the answer to the previous inputs -
-    /// so a start mode changed and "Eggs in" tapped straight after started a
-    /// cold start's heating phase on the hot start's time. The web app solves
-    /// synchronously at start;
-    /// this solves the same question, off the main actor, and only when the
-    /// answer on screen is stale.
-    ///
-    /// Applied like any other answer, so a snap moves the slider before the
-    /// caller reads the level for its ticket. Loops only if the inputs move
-    /// again while it solves.
-    func currentSolution() async -> Solution? {
-        while true {
-            if isSousVide { return nil }
-            if let solution, answered == asked { return solution }
-            task?.cancel()
-            task = nil
-            let question = asked
-            let calibration = calibration
-            let egg = egg
-            let setup = setup
-            let facts = adviceFacts
-            let inputs = decisionInputs(calibration, egg: egg, setup: setup)
-            let profile = await DecisionGrids.shared.cachedProfile(inputs, calibration)
-            var answer = await Self.solve(
-                egg: egg, setup: setup, level: doneness, calibration: calibration, profile: profile
-            )
-            // The time on screen is the chosen one whenever this pot's surface
-            // is already built (E5), so "Eggs in" starts on that one too. A
-            // surface still to build is not waited for: the mean is what the
-            // screen would show, and the egg is going in now.
-            if let grid = await DecisionGrids.shared.cached(inputs) {
-                answer = await Self.decided(answer, grid: grid, egg: egg, calibration: calibration, facts: facts)
-            }
-            guard question == asked else { continue }
-            apply(answer, question: question)
-        }
-    }
-
-    private func apply(_ answer: Answer, question: Int) {
-        solution = answer.solution
-        answered = question
-        decision = answer.decision
-        outcome = answer.decision == nil ? nil : answer.outcome
-        oddsProfile = answer.profile
-        advice = answer.advice
-        refusal = refusalText(answer.verdict, setup: answer.setup, water: show(.water, answer.setup.waterLitres))
-        if let snapTo = answer.verdict.snapTo, snapTo != doneness {
-            applying = true
-            doneness = snapTo
-            applying = false
-            Settings.save(self)
-        }
-    }
-
-    private struct Answer: Sendable {
-        var solution: Solution
-        /// Why it was refused, if it was, and where the slider must go.
-        var verdict: Verdict
-        /// The setup this answer is about, so the refusal can quote the pan
-        /// the answer was computed for rather than whatever is current.
-        var setup: CookSetup
-        /// The level the solution is for: the one asked, or the one it snapped to.
-        var level: Double
-        /// The choice made on it (E5), once this pot's surface is in.
-        var decision: Decision? = nil
-        /// What the egg at the chosen time will be like, with the decision.
-        var outcome: Outcome? = nil
-        /// The odds at every level for this pot and posterior (Reach.swift),
-        /// once worked out: the verdict read its range, and the track is
-        /// shaded by it.
-        var profile: OddsProfile? = nil
-        /// What to say under low odds, as catalogue keys; empty for nothing.
-        var advice: [String] = []
-        /// Profiles this answer would have used and that are not worked out
-        /// yet: asked for once it is applied.
-        var missing: [DecisionInputs] = []
-    }
-
-    // MARK: - Learning from an egg
-
-    /// Write one egg down with its first answer - the yolk or the white - then
-    /// learn from it.
-    ///
-    /// Written down FIRST, before any arithmetic: an app killed during the fold
-    /// then folds it again on the next launch, rather than losing it. The
-    /// record carries the egg and pan the cook was RUN with, off the ticket.
-    func record(_ egg: EggRecord) async {
-        answers = Answers(yolk: egg.yolk, white: egg.white, probe: egg.probe)
-        folded = nil
-        liveIndex = kept.log.count
-        kept.log.append(egg)
-        Calibrations.save(kept)
-        await drain()
-    }
-
-    /// The second answer about the egg on screen - the white after the yolk, or
-    /// the yolk after the white.
-    ///
-    /// If the egg is still being folded, the answer is written into its record
-    /// and the fold, which reads the record when its surface lands, takes both.
-    /// If it has been folded, it is folded AGAIN from the calibration as it
-    /// stood before it, against the same surface, so the posterior is what a
-    /// replay of the log makes whichever order the taps came in. Refused, and
-    /// nothing written, when that is no longer possible - which is what keeps
-    /// the log and the posterior one thing. The web app's `recordSecondAnswer`.
-    func secondAnswer(yolk: Feedback?, white: WhiteReport?, probe: ProbeReading? = nil) async {
-        guard var given = answers, let index = liveIndex ?? folded?.index,
-              index == kept.log.count - 1 else { return }
-        if yolk != nil, given.yolk != nil { return }
-        if white != nil, given.white != nil { return }
-        if probe != nil, given.probe != nil { return }
-        var egg = kept.log[index]
-        if let yolk { egg.yolk = yolk; given.yolk = yolk }
-        if let white { egg.white = white; given.white = white }
-        if let probe { egg.probe = probe; given.probe = probe }
-        if kept.folded <= index {
-            answers = given
-            kept.log[index] = egg
-            Calibrations.save(kept)
-            await drain()
-            return
-        }
-        guard let done = folded, done.index == index, kept.folded == index + 1 else { return }
-        answers = given
-        learning = true
-        let gen = generation
-        let again = await Task.detached(priority: .userInitiated) {
-            var c = done.before
-            foldRecord(&c, egg, grid: done.grid)
-            return c
-        }.value
-        if gen == generation {
-            kept.log[index] = egg
-            kept.calibration = again
-            Calibrations.save(kept)
-        }
-        learning = false
-        recompute()
-    }
-
-    /// The cook has moved on: the next answers are about the next egg.
-    func endEgg() {
-        answers = nil
-        folded = nil
-        liveIndex = nil
-    }
-
-    /// An egg finished and never answered about. Still a record - the cook, the
-    /// recommendation and the pull are data for the fit - and it folds nothing.
-    func logUnanswered(_ egg: EggRecord) {
-        kept.log.append(egg)
-        Calibrations.save(kept)
-        Task { await drain() }
-    }
-
-    /// Fold every egg not yet folded, one surface at a time.
-    ///
-    /// The grid build is a second or two of arithmetic, so it goes to a
-    /// detached task, as it always has; a catch-up after a relaunch is several
-    /// of them, and takes the same path. The fold itself is milliseconds, and
-    /// happens back here, reading the record AFTER the surface lands: an answer
-    /// that arrived while it was being built is folded with the first, as a
-    /// replay folds them.
-    ///
-    /// One drain at a time: a call made while one runs returns at once, and the
-    /// running one picks up whatever was appended, because it reads the log
-    /// again after every egg.
-    private func drain() async {
-        guard !draining else { return }
-        draining = true
-        learning = true
-        while kept.folded < kept.log.count {
-            let gen = generation
-            let index = kept.folded
-            let egg = kept.log[index]
-            guard recordTeaches(egg) else {
-                kept.folded += 1
-                Calibrations.save(kept)
-                continue
-            }
-            // Centred where the posterior stood BEFORE this egg, exactly as
-            // `replay` does it; nothing else folds while this runs.
-            let request = gridRequest(kept.calibration, egg)
-            let grid = await Task.detached(priority: .userInitiated) {
-                buildRequestedGrid(request)
-            }.value
-            // Forgotten while the surface was being built.
-            guard gen == generation else { continue }
-            let before = kept.calibration
-            var next = before
-            foldRecord(&next, kept.log[index], grid: grid)
-            kept.calibration = next
-            kept.folded += 1
-            if index == liveIndex {
-                liveIndex = nil
-                folded = Folded(index: index, grid: grid, before: before)
-            }
-            Calibrations.save(kept)
-        }
-        draining = false
-        learning = false
-        // The egg just eaten keeps the numbers it was cooked with; the new
-        // ones show up on the next cook.
-        recompute()
-    }
-
-    /// Re-solve for the inputs as they stand.
-    ///
-    /// Needed after a cancel. A cold start's boil tap re-solves with the
-    /// MEASURED ramp and leaves that answer in `solution`; without this, the
-    /// idle screen goes on showing the cook that was just abandoned, which
-    /// reads as a Cancel button that did not work.
-    func refresh() {
-        recompute()
-    }
-
-    /// Take it all back: the posterior, the log of eggs it was folded from, the
-    /// base under it, AND the measured pan. The web app clears them all from one
-    /// button, and a kitchen that has forgotten your taste but still insists it
-    /// knows your hob is not a state anyone asked for.
-    func resetCalibration() {
-        generation &+= 1
-        liveIndex = nil
-        folded = nil
-        answers = nil
-        Calibrations.reset()
-        kept = Calibrations.freshKept()
-        BoilMemories.reset()
-        boilMemory = [:]
-        recompute()
-    }
-
-    #if DEBUG
-    /// Debug builds only (Screenshots.swift, `-seedEggs`): write eggs into
-    /// the log through the app's own store, as if each had been cooked at the
-    /// level and setup on screen, at its mean time, and answered as given
-    /// about the yolk; then fold them, as a relaunch folds eggs it finds
-    /// unfolded. Only into an empty log, so a relaunch does not seed twice.
-    func seed(_ answers: [Feedback]) {
-        guard kept.log.isEmpty, !answers.isEmpty, !isSousVide else { return }
-        let solved = solveCookTime(
-            egg: egg, setup: setup, params: calibrationParams(calibration),
-            doneness: calibrationDoneness(calibration, level: doneness)
-        )
-        let seconds = solved.result.cookTimeS
-        for answer in answers {
-            kept.log.append(EggRecord(
-                day: "2026-09-28", app: .ios, appVersion: Calibrations.appVersion,
-                egg: RecordEgg(massG: recordMassG(massKg: egg.massKg), massFrom: massFrom, sizeTable: sizeTable),
-                setup: RecordSetup(
-                    setup: setup, eggFrom: startTemp,
-                    timeToBoilFrom: coldStart ? .measured : .default
-                ),
-                level: doneness, recommendedS: seconds, pulledS: seconds, pulledBy: .cook,
-                cooledS: cooling == .counter ? 0 : coolingSecondsFor(solved.result),
-                yolk: answer, lang: "en", units: .metric
-            ))
-        }
-        Calibrations.save(kept)
-        Task { await drain() }
-    }
-    #endif
-
     // MARK: - Measuring the boil
 
     /// Record a measured time to a rolling boil and remember it for this
@@ -886,175 +409,4 @@ final class Kitchen {
         boilMemory = EggTimerCore.rememberBoil(boilMemory, litres: waterLitres, seconds: seconds)
         BoilMemories.save(boilMemory)
     }
-
-}
-
-// MARK: - Decision surfaces
-
-/// This app's decision surfaces (E5), one per pot and posterior, built off the
-/// main actor and kept. The slider is not part of the key, so dragging it never
-/// waits for one. Two asks for the same pot share one build, and the build is
-/// not cancelled with the solve that asked for it: a pot that comes back should
-/// not be built twice. The web app keeps the same cache (`decisionGrid`).
-actor DecisionGrids {
-    static let shared = DecisionGrids()
-
-    /// The pot on screen, the one before, and a cold start's measured ramp.
-    private static let kept = 6
-
-    private var done: [String: DoseGrid] = [:]
-    private var order: [String] = []
-    private var building: [String: Task<DoseGrid, Never>] = [:]
-
-    private static func key(_ inputs: DecisionInputs) -> String {
-        let encoder = JSONEncoder()
-        encoder.outputFormatting = .sortedKeys
-        guard let data = try? encoder.encode(inputs) else { return "" }
-        return String(decoding: data, as: UTF8.self)
-    }
-
-    func cached(_ inputs: DecisionInputs) -> DoseGrid? {
-        done[Self.key(inputs)]
-    }
-
-    func grid(_ inputs: DecisionInputs) async -> DoseGrid {
-        let key = Self.key(inputs)
-        if let grid = done[key] { return grid }
-        if let running = building[key] { return await running.value }
-        let build = Task.detached(priority: .userInitiated) { buildDecisionGrid(inputs) }
-        building[key] = build
-        let grid = await build.value
-        building[key] = nil
-        if done[key] == nil { order.append(key) }
-        done[key] = grid
-        while order.count > Self.kept {
-            done[order.removeFirst()] = nil
-        }
-        return grid
-    }
-
-    // MARK: The odds at every level
-
-    /// Profiles by pot AND posterior: unlike the surface, a profile reads every
-    /// particle, so a fold - or a second answer refolded, which keeps the
-    /// count - makes a new one. A few more than the surfaces, for the priced
-    /// changes the advice asks about.
-    private static let profilesKept = 8
-
-    private var profiles: [String: OddsProfile] = [:]
-    private var profileOrder: [String] = []
-    private var profileBuilds: [String: Task<OddsProfile, Never>] = [:]
-
-    /// A cheap summary of where the posterior stands: the count and the
-    /// weighted sums of every dimension. Any fold moves at least one of them.
-    /// The web app's `posteriorPrint`.
-    nonisolated static func profileKey(_ inputs: DecisionInputs, _ c: Calibration) -> String {
-        var a = 0.0, b = 0.0, d = 0.0, e = 0.0
-        let post = c.posterior
-        for (p, w) in zip(post.particles, post.weights) {
-            a += w * p.alphaM2s
-            b += w * p.logDoseOffset
-            d += w * (p.noise + p.tauAirScale)
-            e += w * (p.whiteOffset + p.whiteFirmGap)
-        }
-        return "\(key(inputs))#\(c.eggsLogged)|\(post.rng)|\(post.particles.count)|\(a)|\(b)|\(d)|\(e)"
-    }
-
-    func cachedProfile(_ inputs: DecisionInputs, _ c: Calibration) -> OddsProfile? {
-        profiles[Self.profileKey(inputs, c)]
-    }
-
-    /// The odds at every level for this pot and posterior, on the pot's
-    /// surface (built first if need be), off the main actor: a couple of dozen
-    /// solves and decisions. Two asks share one build.
-    func profile(_ inputs: DecisionInputs, _ c: Calibration) async -> OddsProfile {
-        let key = Self.profileKey(inputs, c)
-        if let p = profiles[key] { return p }
-        if let running = profileBuilds[key] { return await running.value }
-        let surface = await grid(inputs)
-        if let p = profiles[key] { return p }
-        if let running = profileBuilds[key] { return await running.value }
-        let build = Task.detached(priority: .userInitiated) {
-            oddsProfile(c, egg: inputs.egg, setup: inputs.setup, grid: surface)
-        }
-        profileBuilds[key] = build
-        let p = await build.value
-        profileBuilds[key] = nil
-        if profiles[key] == nil { profileOrder.append(key) }
-        profiles[key] = p
-        while profileOrder.count > Self.profilesKept {
-            profiles[profileOrder.removeFirst()] = nil
-        }
-        return p
-    }
-}
-
-// MARK: - Refusals, in words
-
-/// The refusal, in words. Which refusal, and which words teach it, are core's
-/// (`verdictWithOdds`, `refusalKey`); the arguments are this app's, and they
-/// quote the pan the answer was computed for.
-private func refusalText(_ v: Verdict, setup: CookSetup, water: String) -> String {
-    guard let ref = refusalKey(v, cooling: setup.cooling) else { return "" }
-    return tr(ref, [
-        "limit": .text(midSentence(tr(v.limit.key), locale: Copy.activeLocale)), "water": .text(water),
-    ])
-}
-
-// MARK: - Units
-
-/// The phone's region: which carton's size classes, and which Imperial unit
-/// water is in. Region only, as `Locale` reports it.
-let deviceRegion: String? = Locale.current.region?.identifier
-
-/// The system this phone starts in, before the cook chooses.
-///
-/// iOS knows more than a browser does: the measurement system, and since iOS
-/// 16 the temperature unit a cook can set in Settings, which reaches `Locale`
-/// as its `mu` keyword and so `UnitTemperature(forLocale:)`. Which of them
-/// wins is core policy (`regionalUnits`); this only reads them.
-func platformUnits() -> UnitSystem {
-    let locale = Locale.current
-    let system: MeasurementSystemName = switch locale.measurementSystem {
-    case .us: .us
-    case .uk: .uk
-    default: .metric
-    }
-    let fahrenheit = UnitTemperature(forLocale: locale).symbol == UnitTemperature.fahrenheit.symbol
-    return regionalUnits(
-        region: locale.region?.identifier, measurementSystem: system,
-        temperature: fahrenheit ? .fahrenheit : .celsius
-    )
-}
-
-/// A value stored in SI, as the cook reads it in a given system. Outside the
-/// Kitchen for the cook, which renders the Live Activity's numbers in the
-/// system the egg was set up in.
-func showIn(_ units: UnitSystem, _ q: Quantity, _ si: Double) -> String {
-    let text = quantityText(measureFor(q, system: units, region: deviceRegion), si)
-    return tr(text.key, ["value": .fixed(text.value)])
-}
-
-extension Notification.Name {
-    /// Posted by `Kitchen.chooseUnits` when the cook's own choice changes the
-    /// system on screen, with the `UnitsFlip` raw value under "flip".
-    /// `LanguageChoice` observes it: an English UI switched from metric to
-    /// Imperial goes into the English of 1750 (LANGUAGE.md §6).
-    static let unitsFlipped = Notification.Name("unitsFlipped")
-}
-
-// MARK: - Presentation helpers
-
-/// One line on what the model expects of this cook. Which band the egg falls
-/// in, and which keys say it, are core policy - including that a white the pan
-/// never sets is runny, which this app used to miss: it named such a white
-/// from its peak, "white just set".
-func textureNote(peakYolkC: Double, peakWhiteC: Double, whiteSets: Bool) -> String {
-    let note = textureNoteKeys(textureFor(peakYolkC: peakYolkC, peakWhiteC: peakWhiteC, whiteSets: whiteSets))
-    return tr(note.key, note.parts.mapValues { .text(tr($0)) })
-}
-
-func clockString(_ seconds: Double) -> String {
-    let total = Int(max(0, seconds.rounded()))
-    return String(format: "%d:%02d", total / 60, total % 60)
 }

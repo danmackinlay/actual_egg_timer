@@ -1,0 +1,179 @@
+import Foundation
+import EggTimerCore
+
+extension Kitchen {
+    // MARK: - Learning from an egg
+
+    /// Write one egg down with its first answer - the yolk or the white - then
+    /// learn from it.
+    ///
+    /// Written down FIRST, before any arithmetic: an app killed during the fold
+    /// then folds it again on the next launch, rather than losing it. The
+    /// record carries the egg and pan the cook was RUN with, off the ticket.
+    func record(_ egg: EggRecord) async {
+        answers = Answers(yolk: egg.yolk, white: egg.white, probe: egg.probe)
+        folded = nil
+        liveIndex = kept.log.count
+        kept.log.append(egg)
+        Calibrations.save(kept)
+        await drain()
+    }
+
+    /// The second answer about the egg on screen - the white after the yolk, or
+    /// the yolk after the white.
+    ///
+    /// If the egg is still being folded, the answer is written into its record
+    /// and the fold, which reads the record when its surface lands, takes both.
+    /// If it has been folded, it is folded AGAIN from the calibration as it
+    /// stood before it, against the same surface, so the posterior is what a
+    /// replay of the log makes whichever order the taps came in. Refused, and
+    /// nothing written, when that is no longer possible - which is what keeps
+    /// the log and the posterior one thing. The web app's `recordSecondAnswer`.
+    func secondAnswer(yolk: Feedback?, white: WhiteReport?, probe: ProbeReading? = nil) async {
+        guard var given = answers, let index = liveIndex ?? folded?.index,
+              index == kept.log.count - 1 else { return }
+        if yolk != nil, given.yolk != nil { return }
+        if white != nil, given.white != nil { return }
+        if probe != nil, given.probe != nil { return }
+        var egg = kept.log[index]
+        if let yolk { egg.yolk = yolk; given.yolk = yolk }
+        if let white { egg.white = white; given.white = white }
+        if let probe { egg.probe = probe; given.probe = probe }
+        if kept.folded <= index {
+            answers = given
+            kept.log[index] = egg
+            Calibrations.save(kept)
+            await drain()
+            return
+        }
+        guard let done = folded, done.index == index, kept.folded == index + 1 else { return }
+        answers = given
+        learning = true
+        let gen = generation
+        let again = await Task.detached(priority: .userInitiated) {
+            var c = done.before
+            foldRecord(&c, egg, grid: done.grid)
+            return c
+        }.value
+        if gen == generation {
+            kept.log[index] = egg
+            kept.calibration = again
+            Calibrations.save(kept)
+        }
+        learning = false
+        recompute()
+    }
+
+    /// The cook has moved on: the next answers are about the next egg.
+    func endEgg() {
+        answers = nil
+        folded = nil
+        liveIndex = nil
+    }
+
+    /// An egg finished and never answered about. Still a record - the cook, the
+    /// recommendation and the pull are data for the fit - and it folds nothing.
+    func logUnanswered(_ egg: EggRecord) {
+        kept.log.append(egg)
+        Calibrations.save(kept)
+        Task { await drain() }
+    }
+
+    /// Fold every egg not yet folded, one surface at a time.
+    ///
+    /// The grid build is a second or two of arithmetic, so it goes to a
+    /// detached task, as it always has; a catch-up after a relaunch is several
+    /// of them, and takes the same path. The fold itself is milliseconds, and
+    /// happens back here, reading the record AFTER the surface lands: an answer
+    /// that arrived while it was being built is folded with the first, as a
+    /// replay folds them.
+    ///
+    /// One drain at a time: a call made while one runs returns at once, and the
+    /// running one picks up whatever was appended, because it reads the log
+    /// again after every egg.
+    func drain() async {
+        guard !draining else { return }
+        draining = true
+        learning = true
+        while kept.folded < kept.log.count {
+            let gen = generation
+            let index = kept.folded
+            let egg = kept.log[index]
+            guard recordTeaches(egg) else {
+                kept.folded += 1
+                Calibrations.save(kept)
+                continue
+            }
+            // Centred where the posterior stood BEFORE this egg, exactly as
+            // `replay` does it; nothing else folds while this runs.
+            let request = gridRequest(kept.calibration, egg)
+            let grid = await Task.detached(priority: .userInitiated) {
+                buildRequestedGrid(request)
+            }.value
+            // Forgotten while the surface was being built.
+            guard gen == generation else { continue }
+            let before = kept.calibration
+            var next = before
+            foldRecord(&next, kept.log[index], grid: grid)
+            kept.calibration = next
+            kept.folded += 1
+            if index == liveIndex {
+                liveIndex = nil
+                folded = Folded(index: index, grid: grid, before: before)
+            }
+            Calibrations.save(kept)
+        }
+        draining = false
+        learning = false
+        // The egg just eaten keeps the numbers it was cooked with; the new
+        // ones show up on the next cook.
+        recompute()
+    }
+
+    /// Take it all back: the posterior, the log of eggs it was folded from, the
+    /// base under it, AND the measured pan. The web app clears them all from one
+    /// button, and a kitchen that has forgotten your taste but still insists it
+    /// knows your hob is not a state anyone asked for.
+    func resetCalibration() {
+        generation &+= 1
+        liveIndex = nil
+        folded = nil
+        answers = nil
+        Calibrations.reset()
+        kept = Calibrations.freshKept()
+        BoilMemories.reset()
+        boilMemory = [:]
+        recompute()
+    }
+
+    #if DEBUG
+    /// Debug builds only (Screenshots.swift, `-seedEggs`): write eggs into
+    /// the log through the app's own store, as if each had been cooked at the
+    /// level and setup on screen, at its mean time, and answered as given
+    /// about the yolk; then fold them, as a relaunch folds eggs it finds
+    /// unfolded. Only into an empty log, so a relaunch does not seed twice.
+    func seed(_ answers: [Feedback]) {
+        guard kept.log.isEmpty, !answers.isEmpty, !isSousVide else { return }
+        let solved = solveCookTime(
+            egg: egg, setup: setup, params: calibrationParams(calibration),
+            doneness: calibrationDoneness(calibration, level: doneness)
+        )
+        let seconds = solved.result.cookTimeS
+        for answer in answers {
+            kept.log.append(EggRecord(
+                day: "2026-09-28", app: .ios, appVersion: Calibrations.appVersion,
+                egg: RecordEgg(massG: recordMassG(massKg: egg.massKg), massFrom: massFrom, sizeTable: sizeTable),
+                setup: RecordSetup(
+                    setup: setup, eggFrom: startTemp,
+                    timeToBoilFrom: coldStart ? .measured : .default
+                ),
+                level: doneness, recommendedS: seconds, pulledS: seconds, pulledBy: .cook,
+                cooledS: cooling == .counter ? 0 : coolingSecondsFor(solved.result),
+                yolk: answer, lang: "en", units: .metric
+            ))
+        }
+        Calibrations.save(kept)
+        Task { await drain() }
+    }
+    #endif
+}
