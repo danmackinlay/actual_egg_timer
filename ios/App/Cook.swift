@@ -18,8 +18,9 @@ import EggTimerRing
 /// force a redraw does NOT work under `@Observable`, because a property the
 /// view never reads creates no dependency - which is exactly the bug that used
 /// to leave the on-screen clock frozen while the alarm underneath it was
-/// perfectly correct. The ticker below exists only to revise a slow hob and to
-/// push Live Activity stage changes.
+/// perfectly correct. The ticker below exists only to revise a slow hob, to
+/// push Live Activity stage changes, and to ring for a deadline no
+/// notification holds.
 ///
 /// HEATING exists only on a cold start, where t = 0 is the moment the egg goes
 /// into the cold pan - the same t = 0 the physics core uses, so the one

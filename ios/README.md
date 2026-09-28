@@ -148,15 +148,15 @@ The screen carries the whole model now, laid out as the web's (UI.md sections
   or a weight), fridge, room or custom, cold start (the default), boiling water
   or a 58 °C bath, and ice bath, cold tap or the counter
 - a pushed **Settings** page for the kitchen: units, language, altitude, water,
-  eggs in the pan, keep boiling or heat off with the lid on, the probe, and what
+  the number of eggs, keep boiling or heat off with the lid on, the probe, and what
   it has learned; and a **Help** page
 
 The kitchen's settings are a page away because the defaults are right for most
 people most mornings, and a first-time user should not have to answer six
 questions to boil an egg.
 
-Two behaviours are taken from `src/ui/machine.ts` rather than reinvented, and
-both are the model refusing to lie:
+Three behaviours are taken from the web app rather than reinvented, and all
+three are the model refusing to lie:
 
 - **The slider clamps to what is reachable.** Ask for a jammy yolk while resting
   the egg on the counter and it snaps to the softest that carryover actually
@@ -295,7 +295,9 @@ default level, which is the right failure: quieter, never wrong.
 `Cook.swift` holds the state, and holds it as **absolute dates**: every phase is
 derived from `Date.now` rather than counted down, so a ticker that stops —
 backgrounded, locked, or simply busy — cannot make the egg wrong. The ticker
-exists only to redraw. This is the native form of the same discipline the web
+counts nothing down: it revises a slow hob's estimate, pushes the Live
+Activity's stage changes, and rings for a deadline no notification holds; the
+screen redraws from its own `TimelineView`. This is the native form of the same discipline the web
 app uses when it recomputes from timestamps on `visibilitychange`.
 
 A cook in progress is written to `UserDefaults` and restored on launch. Without

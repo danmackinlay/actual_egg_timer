@@ -507,39 +507,47 @@ distrust.
 | `DT_SIM` | 0.5 | s | The integrator is exact for a piecewise-linear drive, so this resolves the schedule, not stability. **Numerical.** |
 | `CARRYOVER_WINDOW` | 900 | s | How long to keep integrating after the pull. Carryover peaks 3-8 min in; 15 min captures it fully. **Numerical.** |
 
-> **Note on `TAU_REF`.** `PLAN.md` records `TAU_REF = 3354 s` as "`R^2/alpha` for a 57 g
-> egg". Recomputing, a 57 g egg gives `tau = 3146 s`; 3354 s corresponds to a ~63 g egg.
-> The value is right for the reference egg used throughout the validation tables (62.3 g,
-> `tau = 3340 s`); the "57 g" label appears to be a slip. `TAU_REF` is not itself a
-> constant in the code — `ALPHA_DEFAULT` and the geometry determine it.
-
 ---
 
 ## 7. Validation
 
-`npm run validate` rebuilds and regenerates this table from the current code
-(`tools/validate.ts`). The "target" column is the expectation recorded in `PLAN.md`
-during the design phase; "computed" is what the implementation actually returns today.
+`npm run validate` runs these checks against the current code
+(`tools/validate.ts`) and prints this table, then the cold-start, carryover,
+slider, room, pan and altitude tables and the external comparisons below. The
+reference egg is 43.5 mm across, about 62.3 g (not the app's 68 g EU Large),
+fridge-cold at 4 °C, into boiling water, then an ice bath, jammy (slider 0.41),
+unless a row says otherwise. As of 29 September 2026, all 28 pass:
 
-| check | target | computed | status |
-|---|---|---|---|
-| Williams' published prefactor, reconstructed from his stated properties | 0.451 min | 0.451 min | pass |
-| Williams' worked example (57 g, 4 °C, yolk boundary to 63 °C) | ~4.5 min | 4.53 min | pass |
-| eigenfunction vs method-of-images series at `Fo = 0.0688, x = 0.693` | agree | 0.41142 vs 0.41142 | pass |
-| one-term truncation error at the soft-boil criterion | -8.4% | -8.4% (Fo 0.06811 vs 0.07434) | pass |
-| `T_b(h)` vs `100 - h/300`, 0-5000 m | within 0.03 °C | max 0.031 °C | pass |
-| fridge 4 °C, sea level, jammy, ice bath | 7.4 min | 7.4 min | pass |
-| room 21 °C, sea level, jammy, ice bath | 6.3 min | 6.2 min | within rounding |
-| fridge 4 °C, 2000 m, jammy, ice bath | 9.2 min | 8.2 min | **disagrees — see below** |
-| carryover: same 7.4 min cook, ice / tap / counter | 65.0 / 65.6 / 76.3 °C | 65.0 / 65.6 / 76.3 °C | pass |
-| counter resting cannot reach soft | unreachable | `reachable: false`, `softestLevel` 0.58 | pass |
-
-**The altitude row does not reproduce.** The current model gives 8.2 min for a jammy
-fridge egg at 2000 m (boiling point 93.4 °C); `PLAN.md` records a planning-phase
-expectation of 9.2 min, which corresponds to roughly 3700 m in the present code. The
-planning figure predates the implemented ramp and dose machinery and appears to be the
-stale one, but it has not been chased down. Treat altitude predictions as carrying that
-1-minute question mark until it is resolved.
+| check | expected | computed | tolerance | status |
+|---|---|---|---|---|
+| jammy, fridge 4 C, sea level | 7.36 min | 7.37 min | ±0.3 min | PASS |
+| jammy, room temp 21 C | 6.23 min | 6.23 min | ±0.3 min | PASS |
+| jammy, fridge, 2000 m | 8.21 min | 8.21 min | ±0.3 min | PASS |
+| jammy, 48 g egg | 6.23 min | 6.23 min | ±0.3 min | PASS |
+| jammy, 58 g egg | 7.03 min | 7.03 min | ±0.3 min | PASS |
+| jammy, 68 g egg | 7.78 min | 7.79 min | ±0.3 min | PASS |
+| jammy, 76 g egg | 8.35 min | 8.36 min | ±0.3 min | PASS |
+| cold start, 4 min ramp: after boiling | 4.90 min | 4.94 min | ±0.3 min | PASS |
+| cold start, 8 min ramp: after boiling | 2.90 min | 2.89 min | ±0.3 min | PASS |
+| cold start, 12 min ramp: after boiling | 1.00 min | 1.05 min | ±0.3 min | PASS |
+| Denver 1609 m hard-boiled vs sea level | 12.00 % | 12.23 % | ±3 % | PASS |
+| carryover peak yolk, 7.4 min cook, ice | 65.00 C | 65.04 C | ±0.5 C | PASS |
+| carryover peak yolk, 7.4 min cook, tap | 65.60 C | 65.56 C | ±0.5 C | PASS |
+| carryover peak yolk, 7.4 min cook, counter | 76.30 C | 76.33 C | ±0.5 C | PASS |
+| T_b(h) vs 100 - h/300, 0-5000 m (worst case) | 0.00 C | 0.03 C | ±0.05 C | PASS |
+| room temperature is inert on a hot start into an ice bath | 0.00 min | 0.00 min | ±0.001 min | PASS |
+| Williams' standing method: 17 min, peak yolk | 75.60 C | 75.60 C | ±1 C | PASS |
+| Williams' standing method: 17 min reaches hard | 1.00 | 1.00 | ±0 | PASS |
+| standing dose saturates: 20 min vs 30 min | 0.00 % | 0.01 % | ±1 % | PASS |
+| pan time constant at 2 L (1183.8 s) is the old rule's at an 8-minute boil | 1183.83 s | 1183.83 s | ±1e-9 s | PASS |
+| a 1 L pan cannot stand its way to hard | 1.00 | 1.00 | ±0 | PASS |
+| Williams prefactor from his rho, c, K | 0.45 min/g^(2/3) | 0.45 min/g^(2/3) | ±0.002 min/g^(2/3) | PASS |
+| Williams' worked example: 57 g, 4 C, yolk 63 C | 4.50 min | 4.53 min | ±0.1 min | PASS |
+| Buay 2006 fig 6 vs their published prediction | 745.00 s | 744.95 s | ±10 s | PASS |
+| Buay 2006 measured 750 s vs our defaults | 750.00 s | 715.60 s | ±45 s | PASS |
+| Vega 2011 yolk gel point as a slider position | 0.68 | 0.68 | ±0.06 | PASS |
+| Z_YOLK from Ea = 469 kJ/mol at 338 K | 4.65 K | 4.67 K | ±0.15 K | PASS |
+| Z_WHITE from Ea = 480 kJ/mol at 353 K | 4.97 K | 4.97 K | ±0.05 K | PASS |
 
 ### The standing method against Williams' own recipe
 
@@ -740,7 +748,8 @@ one matters:
    recipe. "Ice bath" means ice *and* water, in enough volume that it stays cold.
 3. **Measure the egg** — worth **2.2 minutes** between a small and an extra-large. A
    kitchen scale beats a ruler on an ovoid. Failing that, a paper strip round the middle
-   beats calipers: the app takes weight, girth or width and derives the other two. Size
+   beats calipers: the web app takes weight, girth or width and derives the other two
+   (the iOS app takes weight only). Size
    class is the fallback, and the classes differ between the EU and the US (which is why
    the app picks the table by region and shows the mass beside each name).
 4. **Say where the egg came from** — worth **1.2 minutes**. Fridge (4 °C) versus counter
@@ -1189,7 +1198,8 @@ answers are recorded here rather than deleted, because each one was a plausible 
 - **Little of either app is tested above the shared layer.** What both apps decide —
   snapping, refusals, texture bands, the calibration grid, the phase timeline — lives in
   `src/core/policy.ts` and is conformance-tested, which is where all three of the
-  real-egg bugs in `PLAN.md` would have been caught. Above it, the web's phase machine,
+  real-egg bugs in `LOGBOOK.md` ("Three things a real egg found that the simulator did
+  not") would have been caught. Above it, the web's phase machine,
   store and formatting have tests (`test/machine.test.ts`, `test/store.test.ts`,
   `test/format.test.ts`), and iOS's decision to ring is `EggTimerRing`, under `swift
   test`. The rest is view code: DOM writes and SwiftUI bodies, tested by driving the

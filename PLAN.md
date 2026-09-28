@@ -12,9 +12,9 @@ back up.
 cook and learning. The web app (`src/`) and the iOS app (`ios/`) carry the same
 model, refusals, particle filter and choice of time (Phase E up to E5), the same
 catalogue of words in two Englishes (Phase F but for Czech), and the same
-layout (UI.md). `npm test` runs 235 tests: 234 pass and one is an open todo
-(E3's 5b, below). `npm run validate` passes 28/28, and `swift test` passes 99
-tests in 29 suites. **Nothing since 19 September is pushed**: `origin/main` is
+layout (UI.md). `npm test` runs 236 tests: 235 pass and one is an open todo
+(E3's 5b, below). `npm run validate` passes 28/28, and `swift test` passes 109
+tests in 30 suites for the core and 10 in 1 for EggTimerRing. **Nothing since 19 September is pushed**: `origin/main` is
 `2f341b4`, so the live site is the app from before E1, and every line below
 dated later is on local `main` only. The iOS app runs from Xcode on the owner's
 phone and has cooked real eggs; no TestFlight build is recorded
@@ -747,72 +747,12 @@ midpoint, so a dose compared against its own target at the answer always passes.
 
 ---
 
-## Calibration constants and provenance
+## Constants and validation targets
 
-| constant | value | units | source / confidence |
-|---|---|---|---|
-| `TAU_REF` | 3354 | s | R²/α for a 57 g egg. **The single calibration knob.** ∝ M^(2/3). Medium confidence — reproduces kitchen practice. |
-| `ALPHA` | 1.70e−7 | m²/s | albumen at cooking temperature. Low-T literature values (1.36e−7) are inconsistent with reported α; water's k rises ~13% by 100 °C. |
-| `YOLK_RADIUS_FRAC` | 0.693 | — | yolk = 33% of volume. High confidence: three independent routes agree. |
-| `Z_YOLK` / `TREF_YOLK` | 4.65 / 63 | K / °C | from Eₐ ≈ 470 kJ/mol (Vega & Mercadé-Prieto 2011). Since checked at source: Eₐ = 469 ± 13 kJ/mol, measured 54-70 °C. |
-| `Z_WHITE` / `TREF_WHITE` | ~~5.2~~ **4.97** / 80 | K / °C | ovalbumin. Planned with Eₐ ≈ 460 kJ/mol; Weijers et al. (2003) report ≈ 480, so the constant was corrected. |
-| `H_EFF` | 850 | W/m²K | convection + shell + membranes in series. Estimated, not measured. |
-| `RAMP_R` | 3.0 | — | hob overshoot ratio; 1/r = fraction of full power to hold a boil. |
-| `TAU_AIR` | 2030 | s | lumped cooling time constant in still air. **Least-verified constant in the model.** |
-| `TAU_PLUNGE` | 4 | s | surface equilibration on entering a cooling bath. Physical (finite Bi, finite handling time) *and* a necessary numerical regulariser — see below. |
-| `WHITE_DOSE_TARGET` | 0.05 | min-eq @80C | calibrated so the shortest white-setting cook is ~5.9 min for a fridge-cold large egg, peak inner white ~75 C: set but tender. |
-| `YOLK_DOSE_RUNNY` / `_HARD` | 0.05 / 2000 | min-eq @63C | slider endpoints. Log-interpolating dose is equivalent to linearly interpolating peak yolk temperature, so the slider spans ~56–77 C evenly. |
-
-⚠️ **Superseded — kept as a record of the planning phase.** At planning time the
-primary sources were not fetched, so these were re-derived and cross-validated rather
-than transcribed. Three independent checks passed: Williams' published 0.451 prefactor,
-his published 4.5-min worked example, and two independent series solutions agreeing to
-5 decimal places.
-
-The sources have since been read at first hand — most of them are freely available —
-and the derivations held up, with one constant corrected (`Z_WHITE`) and one known to be
-high (`H_EFF`). See `references.bib`, README §10 for what each source says, and §11 for
-what is still open. The model is now also checked against two published measurements it
-did not choose: see README §7.
-
-## Validation targets
-
-The model must reproduce these (verified during planning, large egg unless stated):
-
-| scenario | expected |
-|---|---|
-| 57 g, 4 °C, T_yolk 63 °C via Williams' closed form | 4.53 min (he published ~4.5) |
-| fridge 4 °C, sea level, jammy, ice bath | 7.4 min |
-| room 21 °C, sea level, jammy, ice bath | 6.3 min |
-| fridge, 2000 m, jammy | 9.2 min |
-| eigenfunction vs erfc series at Fo = 0.0688, x = 0.693 | both 0.41094 |
-| one-term truncation error | under-predicts 8.4% |
-| `T_b(h)` vs `100 − h/300`, 0–5000 m | within 0.03 °C |
-
-Cold start, jammy, ice bath — **minutes after boiling depends on hob power**:
-
-| time-to-boil | total | after boil |
-|---|---|---|
-| 4 min | 9.2 | 5.2 |
-| 8 min | 11.2 | 3.2 |
-| 12 min | 13.2 | 1.2 |
-
-Carryover — identical 7.4-min cook, varying only the cooling step. Yolk centre is
-48.5 °C at pull in all three cases (same cook ⇒ same state), and they diverge after:
-
-| cooling | peak yolk | rise after pull |
-|---|---|---|
-| ice bath | 65.0 °C | +16.5 |
-| cold tap | 65.6 °C | +17.0 |
-| counter | 76.3 °C | +27.8 |
-
-⇒ soft doneness is **unreachable** with counter cooling; the slider constrains to it.
-
-⚠️ **Correction to the planning estimate.** Planning predicted 64.9 / 65.4 / 85.3 °C.
-The counter figure was wrong: that model relaxed the surface from the *water*
-temperature, when a lumped egg in air relaxes from its own *volume-average*
-temperature. Corrected in `coolingTemperature`. The effect is real and still
-decisive (jammy vs fully set) but smaller than first computed.
+The constants, their values and their sources are README §6; what the model
+must reproduce is `npm run validate` (README §7), which fails if it does not.
+The planning phase's own tables, some of whose numbers were superseded, are in
+LOGBOOK.md (29 September 2026).
 
 ## Invariants — do not break these
 
@@ -823,8 +763,10 @@ decisive (jammy vs fully set) but smaller than first computed.
    `tsconfig.core.json` (run by `npm run check`) compiles core with neither the
    DOM library nor Node's types, so a DOM or Node global there does not build;
    `tsconfig.site.json` keeps Node's types out of the browser build the same way.
-2. **Swift-portable subset**: plain interfaces + top-level functions; explicit `for` loops;
-   no classes, closures over mutable state, `null`/`undefined`, or `map`/`reduce` in hot paths.
+2. **Swift-portable subset**: plain interfaces + top-level functions, and no
+   classes or closures over mutable state; explicit `for` loops in hot paths.
+   Absence is `null` (Swift's `nil`) and a field that may be missing is optional
+   in both (`?:` / `?`); `undefined` is never a value core returns.
 3. **SI units internally.** Convert only at the UI boundary.
 4. **Sum 40 series terms**, never one — one-term truncation is 8.4% low at realistic Fo.
 5. **z ≈ 4.65 K for eggs**, never the food-engineering default of 33.1 K (7× too shallow).
@@ -1031,9 +973,9 @@ ice bath, at 1 / 2 / 3 / 4 L (README §7 has the full table):
   cannot reach (0.91) / unchanged / 10:13 → 8:26 / 10:13 → 7:52.
 
 The copy that said the boil time is how fast the pan cools is gone
-(`readout.sub.standing`: "for 2 L of water with the lid on — measure the
-water, it changes the time"), the white-never-sets refusal no longer advises
-"a slower boil", and the iOS heat-off explanation drops "standing method".
+(`readout.sub.standing` now names the water), the white-never-sets refusal
+(`refusal.whiteNeverSets`) no longer advises a slower boil, and the iOS
+heat-off explanation no longer names the method.
 
 **Deferred: a per-cook standing scale.** `TAU_STANDING_SCALE` stays 1.0, a
 global multiplier. The lid, the pan's shape and material belong in a per-cook
@@ -1076,8 +1018,9 @@ what is left.
 - [x] **Stale comments** fixed: `Package.swift`, `CookActivity.swift`'s stage
   count, the "7/10 … as shown" comments in `decide.ts`, `outcome.ts`,
   `reach.ts` and `Decide.swift`, and the privacy manifest's list.
-- [x] **The units' (i)** now says switching "may change my words too" (the
-  `loose` draft, LANGUAGE.md §3).
+- [x] **The units' (i)** (`controls.units.more`, `.more.ios`) says the words
+  may change too (the `loose` draft; the `units` draft later cut it to where
+  the first choice came from).
 - [x] **Which pull line each cooling gets** is tested: `pullLineKey` is in
   EggTimerCopy, and `swift test` holds its four answers and both catalogues.
 - [ ] **Still untested:** the card ending with the cooling, and the web's

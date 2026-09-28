@@ -1173,9 +1173,9 @@ there is only style.
 **As built (web), 28 September 2026.** Built while the owner slept; the
 whole catalogue is for their review. iOS is untouched and follows.
 
-- **The catalogue** is `copy/en-x-1750.json`: 307 keys, every one the web
-  uses, the six new F6 keys, and three of iOS's alarm keys (below). It falls
-  back to `en` for the rest. Placeholder parity and the budgets come from
+- **The catalogue** is `copy/en-x-1750.json`: at first every key the web
+  used, the six new F6 keys, and three of iOS's alarm keys (below); now every
+  key but `app.name`. It falls back to `en` for the rest. Placeholder parity and the budgets come from
   `test/copy.test.ts`, which reads every catalogue; the conformance fixture
   (`fixtures/copy.json`) now renders it too, so the Swift renderer is held
   to it byte for byte. Both needed their file filter to take a digit in a
@@ -1301,9 +1301,9 @@ the owner's review.
   `onAccent()`: white on the light brown, and near-black (#1A1200) on the
   dark amber, where the system's white would be unreadable. A disabled
   button keeps the system's grey.
-- **The iOS-only keys have 1750 entries.** Of the 40 keys only iOS uses,
-  39 now have a twin, and the catalogue has 343 of English's 344 keys. The
-  one left in English is `app.name`, because it is a name. The twins cover:
+- **The iOS-only keys have 1750 entries.** Every key in English has a 1750
+  twin but `app.name`, which stays English because it is a name
+  (`test/en1750.test.ts` holds this). The twins cover:
   - the alarms: `alarm.pull.*`, `alarm.cooled.*` and `alarm.probe.*`;
   - the alarm's status lines, `readout.alarm.*` ("the alarm is set for
     {time}");

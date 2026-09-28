@@ -7,8 +7,8 @@
  * Exits non-zero if any check fails, so it can gate a commit.
  *
  * Reference setup unless a row says otherwise: the reference egg (43.5 mm
- * minor diameter, ~62 g; not the app's 68 g EU Large), fridge-cold at 4 C, hot start into boiling water, ice
- * bath afterwards, jammy = slider 0.41.
+ * minor diameter, ~62 g; not the app's 68 g EU Large), fridge-cold at 4 C,
+ * hot start into boiling water, ice bath afterwards, jammy = slider 0.41.
  */
 
 import { readFileSync } from 'node:fs';
@@ -522,7 +522,7 @@ for (const level of [0, 0.22, 0.41, 0.62, 1.0]) {
   ]);
 }
 printTable(
-  'Doneness slider (EU Large, fridge, sea level, ice bath)',
+  'Doneness slider (the reference egg, fridge, sea level, ice bath)',
   ['level', 'label', 'cook (min)', 'peak yolk (C)', 'peak white (C)', 'reachable'],
   sliderRows,
 );

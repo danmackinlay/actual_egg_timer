@@ -526,7 +526,7 @@ DONE: **8.2 Comments that are now false (fix now).** (`EU_LARGE` is `REFERENCE_E
 | `SCAN_STEP_S` | Means 30 s in `solve.ts` and 4 s in `decide.ts`. Rename one |
 | `format.ts:57,162` | Invisible U+202F / U+00A0 literals, and a `c === TIME_SPACE` branch that maps a char to itself. Use `\u` escapes |
 
-**8.3 Docs that contradict the code (fix values).**
+DONE: **8.3 Docs that contradict the code (fix values).** (PLAN's constants and targets went to LOGBOOK, 29 September, with README's `TAU_REF` note. One claim was wrong: PLAN's "README §10" is right, §10 is References. UI.md's page is "Settings"; its `Kitchen.*` code names wait for §5.9.)
 
 | Where | Fix |
 |---|---|

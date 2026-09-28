@@ -35,7 +35,7 @@ layouts do).
   and no more.
 - **Set once, cook many.** Most inputs are properties of the kitchen, not of
   the egg: units, altitude, water, egg count, the probe, and the language. They
-  live on a separate Kitchen page and are visited rarely.
+  live on a separate Settings page and are visited rarely.
 - **The setup is a sentence, not a form.** What varies from egg to egg is
   shown as one line of prose, and each clause of it is tappable:
 
@@ -71,11 +71,11 @@ cook shows its setup sentence in place of a method line (sections 8-11).
 - One longer line when it matters: the refusal, the advice, or a first-egg
   welcome.
 - The start button.
-- A "Kitchen" link.
+- A "Settings" link.
 
 That is two controls and one sentence, against thirteen today.
 
-**Kitchen** (web: a section below the fold, or its own view; iOS: a pushed
+**Settings** (web: a section below the fold, or its own view; iOS: a pushed
 page).
 - Units.
 - Altitude, with the boiling point it gives.
@@ -190,8 +190,8 @@ added, changed or took off the web (the `redesign` draft, on `80799d0`).
 the phone's back button leaves a page the way it came; the page's own Back
 goes back along that history, or to the egg when the page was opened from
 its address. A running cook is always the egg, whatever the address says.
-Kitchen and Help are links at the top of the egg; Help is also at the top of
-the Kitchen. Mute sits top right in every phase.
+Settings and Help are links at the top of the egg; Help is also at the top of
+Settings. Mute sits top right in every phase.
 
 **The egg.** The time with its line under it, which way the egg is likely
 to miss with its (i) (the outcome summary, below); the doneness slider; the
@@ -214,7 +214,7 @@ it is. The egg's panel holds the size menu and the three measuring fields.
 Each clause's name to a screen reader is "{label}: {value}, change" ("Egg:
 68 g, change").
 
-**The Kitchen**: units, altitude with the boiling point it gives, water, eggs
+**Settings**: units, altitude with the boiling point it gives, water, eggs
 in the pan, heat after the boil, the probe thermometer, and what I've
 learned with Forget, which now asks first, in place, as iOS does (the
 `learned.confirm.*` keys, now both apps'); then the colophon. Each has its
@@ -226,7 +226,7 @@ under it, the slot, and the action bar. The stats row (peak yolk, after the
 boil, water boils at) and the texture note are gone from the phases. What
 was said under the time at "Eggs in" stays under it for the whole cook, as
 it always has: the odds until the outcome summary, the direction since. The
-boiling point moved to the Kitchen, beside the altitude; the peak yolk is in
+boiling point moved to Settings, beside the altitude; the peak yolk is in
 the doneness heading (section 11). Heating's
 "wait for the whole surface to roll" has an (i) that says what a full
 rolling boil looks like and why the tap matters. Everything else is as it
@@ -285,7 +285,7 @@ deep orange at runny, golden at jammy, pale yellow at hard (`--yolk-runny`,
 stay its opacity, a mask over that hue, where they were a green. After three consistent eggs it is about
 the thumb's width and peeks out either side; on a fresh install it runs
 from soft to fudgy. The slider is described by it as well
-(`aria-describedby="donenessValue donenessRange"`): "Likely yolk: Soft to
+(`aria-describedby="donenessRange"`): "Likely yolk: Soft to
 Fudgy", each end the nearest doneness word, or "Likely yolk: Jammy" when
 both ends are nearest the same one. The words stand alone after a colon, as
 LANGUAGE.md §5 asks. The bracket is not drawn before the pot's surface
@@ -329,15 +329,15 @@ three paragraphs. The E5 computation stands; the ticket carried
 `odds.stillLearning`, `odds.info` and `odds.why` are retired.
 
 **Departures from sections 3 and 4.**
-- **Heat after the boil stayed on the Kitchen page**, not in the sentence. It
+- **Heat after the boil stayed on the Settings page**, not in the sentence. It
   is a habit of a kitchen rather than a property of an egg, it is tied to the
   water, which lives there, and a fifth clause would push the sentence onto
   a third line at 390 px. The idle line under the time says "with the lid
   on" when it is set, so the time is never read without it.
-- **Mute is at the top of every screen**, and the Kitchen and Help links at
+- **Mute is at the top of every screen**, and the Settings and Help links at
   the top of the egg rather than below it: they are rare visits and belong
   out of the thumb's way, which is where Start is.
-- **The Kitchen's title reuses `controls.pan`**, reworded "Kitchen" for both
+- **The Settings page's title is `controls.settings`**, "Settings" in both
   apps: iOS's group title "Pan, hob and altitude" named the pan as a
   stand-in for the stove, which the owner ruled out.
 - **One more (i) than listed**, for "about 6:40 to boil, based on history"
@@ -346,7 +346,7 @@ three paragraphs. The E5 computation stands; the ticket carried
 - **An (i)'s name is "About {label}"** where the label reads inside it, and a
   name of its own where it does not (`*.info` keys: "About this boil time").
 - **The language picker** came with F6 (28 September): a Language row in the
-  Kitchen, *English* / *English (1750)* (LANGUAGE.md §6).
+  Settings, *English* / *English (1750)* (LANGUAGE.md §6).
 
 **Keys iOS held that the web had replaced**, all retired by iOS pass A
 (section 9): `controls.start.hintSousVide` (cut by the owner), `controls.probe` and
@@ -435,8 +435,7 @@ In sous-vide only the units, what I've learned and the colophon stay.
 (`info.circle`, filled while open), an optional control at the line's
 end, and the paragraph it opens under the line. The paragraph has a rule
 down its left, the web's `.disclosed`. VoiceOver reads "About {label}"
-(`more.about`) or a name of its own (`odds.info`,
-`readout.sub.coldAssumes.info`, `action.hint.heating.info`), and its
+(`more.about`) or a name of its own (`readout.sub.coldAssumes.info`, `action.hint.heating.info`), and its
 value is Expanded or Collapsed (`more.expanded`, `more.collapsed`, both
 new). No `DisclosureGroup` is left in the app. Heating gained the web's
 "wait for the whole surface to roll" line and its (i).
@@ -482,11 +481,8 @@ the odds' strength as the opacity.
 Each was iOS's alone, so each is deleted from the catalogue. The odds keys
 went in pass B and with F6 (section 10).
 
-**Debug screens.** A debug build takes these launch arguments
-(`Screenshots.swift`), so screenshots need no taps:
-- `-uiScreen settings|help|help-reliable|clause-egg|clause-from|clause-start|clause-cooling|heating`;
-- `-noAlarmPrompt YES`. Known not to work fully: the system still asks for
-  notifications as a cook starts (LOGBOOK.md, 28 September); not yet traced.
+**Debug screens.** A debug build takes launch arguments, so screenshots need
+no taps; the header of `ios/App/Screenshots.swift` lists them.
 
 ## 10. As built (iOS, pass B), 28 September 2026
 
@@ -573,14 +569,9 @@ is the open tab. Its place moved from under the time to above Cancel.
   The web has no such line. (Since section 11 the running cook shows its setup
   sentence over `cook.summary`, in both apps, and `cook.method` is retired.)
 
-**Debug screens** (`Screenshots.swift`), added to pass A's:
-- `-seedEggs right,right,right`: on a fresh install, eggs written through
-  the app's own store at the level and setup on screen, answered `right`,
-  `soft` or `firm`, then folded (`Kitchen.seed`). This gives a learned
-  state without cooking.
-- `-uiScreen direction-info`: open the direction's (i).
-
-(`-uiScreen take-safe` went with playing safe, section 11.)
+**Debug screens**: pass B added `-seedEggs` (a learned state without
+cooking) and `-uiScreen direction-info`; the header of
+`ios/App/Screenshots.swift` lists them all.
 
 **What the cook sees** on the reference setup (68 g, fridge, cold start,
 ice, jammy), in the simulator:

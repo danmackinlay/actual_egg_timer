@@ -128,7 +128,7 @@ something it has to assume. The nudge (§8) and the thermometer panel (§5) are
 the checks on it, since neither depends on who chose to answer.
 
 **A robustness component.** With small probability an answer is unrelated to the
-egg. This is what `P_DISAGREE` is already standing in for.
+egg. This is what `UNRELATED` is already standing in for.
 
 **Built (E2 and E3, 27 September).** `src/core/infer.ts`, held to
 `EggTimerCore/Infer.swift` by `fixtures/calibration.json`. The particle has six
@@ -281,9 +281,8 @@ held to `EggTimerCore/Record.swift` by `fixtures/record.json`.
   is a word and words differ: "soft" may not sit where *weich* does, and "Unset"
   in the English of 1750 may not be answered like "Runny". `LANGUAGE.md` §5-6.
   Constant (`en`, `modern`, `metric`) until F1 and F3 give them values.
-  Since F6 on the web (28 September), a cook read in the English of 1750
-  records `lang: "en-x-1750"` and `register: "1750"`; iOS still records
-  `modern` until it follows.
+  Since F6 (28 September), a cook read in the English of 1750 records
+  `lang: "en-x-1750"` and `register: "1750"`, in both apps.
 - A day, not a timestamp. A boiling point, not an altitude or a place:
   `boiling_C` is a one-to-one function of the altitude setting, so it carries
   everything the altitude would, and the altitude itself is not recorded.
