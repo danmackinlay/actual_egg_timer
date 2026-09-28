@@ -147,7 +147,7 @@ struct UnitsConformance {
                 }
             }
         }
-        #expect(checked > 1000, "\(checked) round trips")
+        #expect(checked > 900, "\(checked) round trips")
     }
 
     @Test("the regional default")

@@ -2038,7 +2038,7 @@
   "limits": {
     "mass_g": {
       "lo": 25,
-      "hi": 120
+      "hi": 90
     },
     "girth_mm": {
       "lo": 90,

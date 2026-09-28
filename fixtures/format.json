@@ -5190,10 +5190,10 @@
       "si": 1500,
       "key": "format.grams",
       "value": {
-        "value": 120,
+        "value": 90,
         "decimals": 0
       },
-      "text": "120 g"
+      "text": "90 g"
     },
     {
       "locale": "en-US",
@@ -5203,10 +5203,10 @@
       "si": 16400,
       "key": "format.grams",
       "value": {
-        "value": 120,
+        "value": 90,
         "decimals": 0
       },
-      "text": "120 g"
+      "text": "90 g"
     },
     {
       "locale": "en-US",
@@ -5255,10 +5255,10 @@
       "si": 1500,
       "key": "format.ounces",
       "value": {
-        "value": 4.2,
+        "value": 3.1,
         "decimals": 1
       },
-      "text": "4.2 oz"
+      "text": "3.1 oz"
     },
     {
       "locale": "en-US",
@@ -5268,10 +5268,10 @@
       "si": 16400,
       "key": "format.ounces",
       "value": {
-        "value": 4.2,
+        "value": 3.1,
         "decimals": 1
       },
-      "text": "4.2 oz"
+      "text": "3.1 oz"
     },
     {
       "locale": "en-US",
@@ -6360,10 +6360,10 @@
       "si": 1500,
       "key": "format.grams",
       "value": {
-        "value": 120,
+        "value": 90,
         "decimals": 0
       },
-      "text": "120 g"
+      "text": "90 g"
     },
     {
       "locale": "en-GB",
@@ -6373,10 +6373,10 @@
       "si": 16400,
       "key": "format.grams",
       "value": {
-        "value": 120,
+        "value": 90,
         "decimals": 0
       },
-      "text": "120 g"
+      "text": "90 g"
     },
     {
       "locale": "en-GB",
@@ -6425,10 +6425,10 @@
       "si": 1500,
       "key": "format.ounces",
       "value": {
-        "value": 4.2,
+        "value": 3.1,
         "decimals": 1
       },
-      "text": "4.2 oz"
+      "text": "3.1 oz"
     },
     {
       "locale": "en-GB",
@@ -6438,10 +6438,10 @@
       "si": 16400,
       "key": "format.ounces",
       "value": {
-        "value": 4.2,
+        "value": 3.1,
         "decimals": 1
       },
-      "text": "4.2 oz"
+      "text": "3.1 oz"
     },
     {
       "locale": "en-GB",
@@ -7530,10 +7530,10 @@
       "si": 1500,
       "key": "format.grams",
       "value": {
-        "value": 120,
+        "value": 90,
         "decimals": 0
       },
-      "text": "120 g"
+      "text": "90 g"
     },
     {
       "locale": "cs-CZ",
@@ -7543,10 +7543,10 @@
       "si": 16400,
       "key": "format.grams",
       "value": {
-        "value": 120,
+        "value": 90,
         "decimals": 0
       },
-      "text": "120 g"
+      "text": "90 g"
     },
     {
       "locale": "cs-CZ",
@@ -7595,10 +7595,10 @@
       "si": 1500,
       "key": "format.ounces",
       "value": {
-        "value": 4.2,
+        "value": 3.1,
         "decimals": 1
       },
-      "text": "4,2 oz"
+      "text": "3,1 oz"
     },
     {
       "locale": "cs-CZ",
@@ -7608,10 +7608,10 @@
       "si": 16400,
       "key": "format.ounces",
       "value": {
-        "value": 4.2,
+        "value": 3.1,
         "decimals": 1
       },
-      "text": "4,2 oz"
+      "text": "3,1 oz"
     },
     {
       "locale": "cs-CZ",

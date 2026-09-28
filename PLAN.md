@@ -1035,6 +1035,12 @@ phone-unlocked case, and its cost is a second UI to keep in sync, not the
 target. `EggTimerCore` already compiles for watchOS unchanged, so this stays
 cheap to revisit.
 
+Someday, on the owner's word of 28 September: other birds' eggs, emu first.
+The egg mass is capped at 90 g (hens' eggs; an EU XL is 73 g and up) because
+the model's geometry and the yolk and white it cooks are a hen's. An emu egg
+(about 600 g, a thick dark shell) would need its own shape, composition and
+shell, and probably a bird picker rather than a longer slider.
+
 
 ---
 

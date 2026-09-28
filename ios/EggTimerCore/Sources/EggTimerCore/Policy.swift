@@ -24,7 +24,9 @@ import Foundation
 /// so the three cannot drift apart - and now they cannot drift between the two
 /// apps either.
 public enum Limits {
-    public static let massG = 25.0...120.0
+    /// Hens' eggs: an EU XL is 73 g and up, most under 80; above 90 is a
+    /// double-yolker or another bird, which this model does not describe.
+    public static let massG = 25.0...90.0
     public static let girthMM = 90.0...200.0
     public static let minorMM = 30.0...60.0
     public static let eggTempC = -2.0...40.0

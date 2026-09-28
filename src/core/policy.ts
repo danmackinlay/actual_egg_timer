@@ -39,7 +39,9 @@ export interface Limit {
  *  storage, so the three cannot drift apart - and now they cannot drift
  *  between the two apps either. */
 export const LIMITS = {
-  mass_g: { lo: 25, hi: 120 },
+  // Hens' eggs: an EU XL is 73 g and up, most under 80; above 90 is a
+  // double-yolker or another bird, which this model does not describe.
+  mass_g: { lo: 25, hi: 90 },
   girth_mm: { lo: 90, hi: 200 },
   minor_mm: { lo: 30, hi: 60 },
   eggTemp_C: { lo: -2, hi: 40 },

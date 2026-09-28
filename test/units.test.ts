@@ -126,7 +126,7 @@ test('2c. an input\'s bounds are on its grid, inside the model\'s limits, and as
     assert.ok(toSI(m.unit, b.hi + m.step) > m.limit.hi, `${m.quantity} ${m.unit}: hi is the highest`);
   }
   const oz = measureFor('mass', 'imperial', 'US');
-  assert.deepEqual(oz.bounds, { lo: 0.9, hi: 4.2 });
+  assert.deepEqual(oz.bounds, { lo: 0.9, hi: 3.1 });
   assert.deepEqual(measureFor('eggTemp', 'imperial', 'US').bounds, { lo: 29, hi: 104 });
   assert.deepEqual(measureFor('altitude', 'imperial', 'US').bounds, { lo: -1300, hi: 16400 });
   assert.deepEqual(measureFor('water', 'metric', 'US').bounds, LIMITS.waterLitres);
@@ -156,7 +156,7 @@ test('3b. every value every input can hold comes back as typed', () => {
       checked += 1;
     }
   }
-  assert.ok(checked > 1000, `${checked} values`);
+  assert.ok(checked > 900, `${checked} values`);
 });
 
 test('3c. and through the egg: mass and girth come back through the one diameter they are stored as', () => {
