@@ -1692,13 +1692,13 @@
       "locale": "en-x-1750",
       "key": "controls.units.more",
       "args": {},
-      "text": "Metrick or imperial, for every number I shew and every number you enter. I begin with what is customary where your browser says you are. To change them alters the manner of writing the numbers, and may alter my words besides; the egg and the times remain exactly the same, and the eggs are indifferent to either."
+      "text": "I begin with what is customary where your browser says you are."
     },
     {
       "locale": "en-x-1750",
       "key": "controls.units.more.ios",
       "args": {},
-      "text": "Metrick or imperial, for every number I shew and every number you enter. I begin with what is customary where your phone says you are. To change them alters the manner of writing the numbers, and may alter my words besides; the egg and the times remain exactly the same, and the eggs are indifferent to either."
+      "text": "I begin with what is customary where your phone says you are."
     },
     {
       "locale": "en-x-1750",
@@ -4544,13 +4544,13 @@
       "locale": "en",
       "key": "controls.units.more",
       "args": {},
-      "text": "Metric or Imperial, for every number I show and every number you type. I start with what's usual where your browser says you are. Switching changes how I write the numbers, and may change my words too: the egg and the times stay exactly the same, and the eggs don't mind which."
+      "text": "I start with what's usual where your browser says you are."
     },
     {
       "locale": "en",
       "key": "controls.units.more.ios",
       "args": {},
-      "text": "Metric or Imperial, for every number I show and every number you set. I start with what's usual where your phone says you are. Switching changes how I write the numbers, and may change my words too: the egg and the times stay exactly the same, and the eggs don't mind which."
+      "text": "I start with what's usual where your phone says you are."
     },
     {
       "locale": "en",

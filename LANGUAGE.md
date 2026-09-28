@@ -661,6 +661,16 @@ delivered.
 | `controls.units.more` (web) | … Switching changes how I write the numbers, and may change my words too: the egg and the times stay exactly the same, and the eggs don't mind which. (was "changes only how I write the numbers:") | … To change them alters the manner of writing the numbers, and may alter my words besides; the egg and the times remain exactly the same, and the eggs are indifferent to either. (was "and, from the imperial, the stile of my English;", which also said too much: a 1750 chosen in the picker stays when the units go back) |
 | `controls.units.more.ios` | the same, with "set" and "phone" as before | the same, with "phone" as before |
 
+**Then shorter, the same day** (the `units` draft, on `055bd4e`): the owner
+found both sentences over-explaining. The cook sees the numbers, and on an
+English page the words, change as they switch; saying so adds nothing. The
+(i) now says only what the cook cannot see.
+
+| key | now | 1750 |
+|---|---|---|
+| `controls.units.more` (web) | I start with what's usual where your browser says you are. | I begin with what is customary where your browser says you are. |
+| `controls.units.more.ios` | I start with what's usual where your phone says you are. | I begin with what is customary where your phone says you are. |
+
 **Retired**, because nothing can draw them: `readout.phase.cooling` (iOS;
 a counter rest never cools, see *Leftovers: orphaned* below), and the Lock
 Screen card's done state, `activity.stage.done`, `activity.note.done` and

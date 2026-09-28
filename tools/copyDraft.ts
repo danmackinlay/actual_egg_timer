@@ -2804,6 +2804,24 @@ export const LOOSE_DRAFT: Drafted[] = [
   },
 ];
 
+/** 28 September, the owner: the units' (i) over-explained. You see the
+ *  numbers (and, on an English page, the words) change as you switch, so it
+ *  says only what you cannot see: where the first choice came from. */
+export const UNITS_DRAFT: Drafted[] = [
+  {
+    key: 'controls.units.more', row: "the units' (i): only where it starts",
+    before: { text: "Metric or Imperial, for every number I show and every number you type. I start with what's usual where your browser says you are. Switching changes how I write the numbers, and may change my words too: the egg and the times stay exactly the same, and the eggs don't mind which." },
+    after: { text: "I start with what's usual where your browser says you are." },
+    appsBefore: ['web'], appsAfter: ['web'],
+  },
+  {
+    key: 'controls.units.more.ios', row: "the units' (i): only where it starts",
+    before: { text: "Metric or Imperial, for every number I show and every number you set. I start with what's usual where your phone says you are. Switching changes how I write the numbers, and may change my words too: the egg and the times stay exactly the same, and the eggs don't mind which." },
+    after: { text: "I start with what's usual where your phone says you are." },
+    appsBefore: ['ios'], appsAfter: ['ios'],
+  },
+];
+
 export const DRAFTS: Record<string, Draft> = {
   feedback: {
     base: 'cfe38e9',
@@ -2907,10 +2925,15 @@ export const DRAFTS: Record<string, Draft> = {
     rows: LOOSE_DRAFT,
     exampleOnly: {},
   },
+  units: {
+    base: '055bd4e',
+    rows: UNITS_DRAFT,
+    exampleOnly: {},
+  },
 };
 
 /** The draft most recently applied: what a proof checks when it is not told. */
-export const LATEST_DRAFT = 'loose';
+export const LATEST_DRAFT = 'units';
 
 /** A draft by its name, or by the commit it was applied to; the latest when
  *  neither is given or neither matches. */
