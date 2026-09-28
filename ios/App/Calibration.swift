@@ -12,11 +12,10 @@ import EggTimerCore
 /// Since E1 the answer is not thrown away once folded. Each egg is kept as a
 /// record (INFERENCE.md section 4) in a log beside the posterior, and the
 /// posterior is what `replay` makes of that log - so a later change to the
-/// likelihood replays the eggs instead of discarding what they taught. E2 was
-/// the first such change: on first launch it reads E1's log and folds it again,
-/// from the prior, under the new likelihood. The stored posterior is a cache of
-/// that replay; `folded` says how much of the log it has absorbed, and the rest
-/// is folded again on launch. The web app keeps its log the same way.
+/// likelihood replays the eggs instead of discarding what they taught. The
+/// stored posterior is a cache of that replay; `folded` says how much of the
+/// log it has absorbed, and the rest is folded again on launch. The web app
+/// keeps its log the same way.
 ///
 /// `Calibration` itself - a posterior and the count of eggs that taught it -
 /// now lives in EggTimerCore, because a replay has to carry the count exactly.
@@ -36,19 +35,9 @@ struct Kept: Sendable {
 enum Calibrations {
     /// The posterior, the base under it, and the log. v4 since E2, whose
     /// particle has six numbers where E1's had three.
+    /// Nothing before it is read: no build older than this one left the
+    /// owner's devices (D1), so the v1-v3 stores are simply never looked at.
     private static let key = "calibration.v4"
-
-    /// E1's store: the log, a posterior folded under the first likelihood, and
-    /// the frozen v2 base under it. Read ONCE, for its log. The posterior and
-    /// the base go - both were folded under the likelihood E2 replaced, and a
-    /// base cannot be replayed at all (the owner decided on 26 September to drop
-    /// it). The log is folded again, from the prior. Removed once a v4 is
-    /// written. The web app does the same.
-    private static let e1Key = "calibration.v3"
-
-    /// Every store before the log, deleted rather than read: neither has a log
-    /// behind it, so neither can be replayed under E2's likelihood.
-    private static let supersededKeys = ["calibration.v2", "calibration.v1"]
 
     /// Carried on every record: the web app deploys on push and this one ships
     /// when a build does, and the fit has to know which version said what.
@@ -130,12 +119,6 @@ enum Calibrations {
         var log: [EggRecord]
     }
 
-    /// All E2 reads of E1's store: its version, and its log.
-    private struct StoredE1: Decodable {
-        var v: Int
-        var log: [EggRecord]
-    }
-
     private static func columns(_ c: Calibration) -> StoredPosterior {
         let p = c.posterior.particles
         return StoredPosterior(
@@ -191,8 +174,7 @@ enum Calibrations {
     /// refused, never read around - the same paths as the web app's
     /// `decodeKept`:
     ///
-    ///  - no v4, E1's store with a good log: its posterior and frozen base are
-    ///    dropped, and the log is folded again from the prior under E2.
+    ///  - no v4 that can be read: the prior.
     ///  - the posterior damaged, the log good: the posterior goes back to its
     ///    start and the whole log is folded again.
     ///  - the log damaged: what it taught is in the posterior, which is sound, so
@@ -200,24 +182,15 @@ enum Calibrations {
     ///  - a posterior ahead of its log: the same.
     ///  - a damaged base: dropped, and the log replayed from the prior.
     static func load() -> Kept {
-        let defaults = UserDefaults.standard
-        // Whatever came before the log goes now, rather than sitting in
-        // UserDefaults being neither read nor collected.
-        for old in supersededKeys { defaults.removeObject(forKey: old) }
-        let (kept, loaded) = decode(defaults.data(forKey: key), defaults.data(forKey: e1Key))
+        let (kept, loaded) = decode(UserDefaults.standard.data(forKey: key))
         if !loaded { save(kept) }
-        // The v3 key is the only copy of E1's log until a v4 holding it is written.
-        if defaults.data(forKey: key) != nil { defaults.removeObject(forKey: e1Key) }
         return kept
     }
 
-    private static func decode(_ v4: Data?, _ v3: Data?) -> (Kept, loaded: Bool) {
+    private static func decode(_ v4: Data?) -> (Kept, loaded: Bool) {
         let decoder = JSONDecoder()
         guard let v4, let parts = try? decoder.decode(StoredParts.self, from: v4), parts.v == 4 else {
-            guard let v3, let e1 = try? decoder.decode(StoredE1.self, from: v3), e1.v == 3,
-                  e1.log.allSatisfy(validRecord)
-            else { return (freshKept(), false) }
-            return (Kept(base: nil, calibration: fresh(), folded: 0, log: e1.log), false)
+            return (freshKept(), false)
         }
         let base = calibration(parts.base)
         let cal = calibration(parts.cal)
@@ -245,7 +218,5 @@ enum Calibrations {
     /// the app, and the honest thing is to let someone take it back.
     static func reset() {
         UserDefaults.standard.removeObject(forKey: key)
-        UserDefaults.standard.removeObject(forKey: e1Key)
-        for old in supersededKeys { UserDefaults.standard.removeObject(forKey: old) }
     }
 }
