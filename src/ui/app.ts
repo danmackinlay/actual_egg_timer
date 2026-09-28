@@ -1780,14 +1780,15 @@ function readInputs(source: EventTarget | null): void {
   settings.sizeIndex = Number.isFinite(sizeIndex) ? sizeIndex : DEFAULTS.sizeIndex;
 
   // Measuring the egg any of the three ways overrides the size class, because
-  // a measured egg is better information than a box label.
-  let measured_mm = -1;
+  // a measured egg is better information than a box label. A box cleared, or
+  // holding something that is not a number, measures nothing: the egg stays.
+  let measured_mm = NaN;
   if (source === dom.measureMass) {
-    measured_mm = minorFromMass_mm(readField(dom.measureMass, 'mass', 62));
+    measured_mm = minorFromMass_mm(readField(dom.measureMass, 'mass', NaN));
   } else if (source === dom.measureGirth) {
-    measured_mm = minorFromGirth_mm(readField(dom.measureGirth, 'girth', 137));
+    measured_mm = minorFromGirth_mm(readField(dom.measureGirth, 'girth', NaN));
   } else if (source === dom.measureMinor) {
-    measured_mm = readField(dom.measureMinor, 'width', settings.customMinor_mm);
+    measured_mm = readField(dom.measureMinor, 'width', NaN);
   }
   if (measured_mm > 0) {
     settings.measuredBy = source === dom.measureMass ? 'scale'

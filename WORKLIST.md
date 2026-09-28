@@ -86,7 +86,7 @@ Baseline, all green:
 - Effect: every `openApp` burns its full 5 s timeout, so the web half of the copy proof "boots" by timeout.
 - Fix: wait on `#donenessPeak`, and drop the E1-era `#whiteFeedback` / `#whiteNote` probes (lines 124-151).
 
-**2.7 Clearing a measurement box on the web switches to a hard-coded egg.**
+**DONE: 2.7 Clearing a measurement box on the web switches to a hard-coded egg.**
 - Where: `readInputs` falls back to literal 62 g and 137 mm (`app.ts:1762,1764`). The width box (1766) keeps the current egg instead.
 - Fix: fall back to the current egg (as width does), or ignore a blank field.
 
