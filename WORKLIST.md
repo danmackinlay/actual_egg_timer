@@ -384,7 +384,7 @@ The candidates:
 - Particles: write one line per particle, emit a set only when it changed, and point to duplicate states by step index. Several states are exact duplicates: `calibration.json` prior equals `updates[0]`; `record.json` `fromBase.final` equals `steps[9]`, and so on. Update `RecordConformance.swift:260-274` and `CalibrationTests.swift:248-291` to match.
 - `decide.json`: emit the prior as `{count, seed}`, as `safer.json` does, instead of 200 literal particles.
 
-**6.2 Replace the permanent todo `infer.test.ts:442` (5b).**
+DONE: **6.2 Replace the permanent todo `infer.test.ts:442` (5b).** (jammy moves between 0.6 and 1.6 times soft's move, so a change either way shows.)
 - It prints as a failure with a stack trace on every run.
 - Replace it with a characterisation test asserting the known limit (e.g. `jammyMove > 0.6*softMove`), with a LOGBOOK reference.
 - The owner already decided to leave the behaviour as it is (PLAN:176-183).

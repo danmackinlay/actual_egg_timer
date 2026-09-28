@@ -429,17 +429,20 @@ test('5a. two runny whites at soft move the next soft recommendation later', (t)
   assert.ok(twoRunny.withYolk.after.softWhiteBound, 'soft is now bound by the white');
 });
 
-test('5b. ...and leave a jammy one nearly alone', {
-  todo: 'NOT MET with the specified priors. The white offset (sd 0.5 decades) is a '
-    + 'smaller prior explanation of a runny white than the time-scale is (alpha sd 11.9% '
-    + 'is 0.70 decades of white dose), so the posterior blames alpha about 2:1 and jammy '
-    + 'moves about as far as soft. See LOGBOOK.md, 27 September.',
-}, () => {
+// E3's done-when also asked that a jammy recommendation be left nearly alone.
+// It is not: with these priors a runny white is blamed on the time-scale about
+// 2:1 over the white offset (alpha's prior is 0.70 decades of white dose wide,
+// the offset's 0.5), so jammy moves about as far as soft. The owner left it as
+// it is on 27 September, until a probe or pooling pins the time-scale (PLAN,
+// E3; LOGBOOK, 27 September). This holds the limit as it stands, so a change
+// that moves it - either way - is seen and has to be argued for.
+test('5b. ...and, a known limit, move a jammy one about as far', (t) => {
   for (const kind of ['whiteOnly', 'withYolk'] as const) {
     const r = twoRunny[kind];
     const softMove = r.after.soft - r.before.soft;
     const jammyMove = r.after.jammy - r.before.jammy;
-    assert.ok(Math.abs(jammyMove) < 0.25 * softMove,
+    t.diagnostic(`${kind}: soft moved ${softMove.toFixed(1)} s, jammy ${jammyMove.toFixed(1)} s`);
+    assert.ok(jammyMove > 0.6 * softMove && jammyMove < 1.6 * softMove,
       `${kind}: soft moved ${softMove.toFixed(1)} s, jammy ${jammyMove.toFixed(1)} s`);
   }
 });

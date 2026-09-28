@@ -12,8 +12,8 @@ back up.
 cook and learning. The web app (`src/`) and the iOS app (`ios/`) carry the same
 model, refusals, particle filter and choice of time (Phase E up to E5), the same
 catalogue of words in two Englishes (Phase F but for Czech), and the same
-layout (UI.md). `npm test` runs 236 tests: 235 pass and one is an open todo
-(E3's 5b, below). `npm run validate` passes 28/28, and `swift test` passes 109
+layout (UI.md). `npm test` runs 238 tests, all passing (E3's 5b, below, pins a known
+limit). `npm run validate` passes 28/28, and `swift test` passes 109
 tests in 30 suites for the core and 10 in 1 for EggTimerRing. **Nothing since 19 September is pushed**: `origin/main` is
 `2f341b4`, so the live site is the app from before E1, and every line below
 dated later is on local `main` only. The iOS app runs from Xcode on the owner's
@@ -173,14 +173,14 @@ cook. Nothing leaves a phone before E6.
       slow time-scale, and `alpha`'s prior (11.9%, 0.70 decades of white dose)
       is wider than the white offset's 0.5, so the posterior blames the
       time-scale about 2:1; wider white-offset priors (0.8, 1.2) overshoot
-      instead. `test/infer.test.ts` 5b holds the unmet half as a todo.
+      instead. `test/infer.test.ts` 5b holds the unmet half as it stands.
       The candidates were E4 or E7 pinning the time-scale, E5 recommending
       from the posterior rather than its mean, or a different prior -
       INFERENCE.md §3 has the numbers. **The owner's answer (27 September):
       leave it as it is** until a probe or pooling pins the time-scale. E4
       and E5 are built since, and with a yolk answer beside the two runny
       whites E5 gives the asked-for shape (soft +146 s, jammy +17 s); the
-      white alone still moves both. Left open on purpose, with 5b a todo.
+      white alone still moves both. Left open on purpose; 5b pins the limit.
 - [x] **E4 the thermometer flow.** Optional. The app says when (the solver's
       `peakYolkTime_s`), the cook reports the lowest reading at the centre,
       Gaussian likelihood with a hot skew (§5). Done when: one simulated reading
