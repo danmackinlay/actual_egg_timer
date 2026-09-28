@@ -155,19 +155,13 @@ struct SetupFacts {
     /// when the carton still has a class of that mass; otherwise it is the
     /// egg's own.
     @MainActor init(_ ticket: Cook.Ticket, kitchen: Kitchen) {
-        let system = ticket.units ?? kitchen.units
+        let system = ticket.units
         units = system
         let byClass = ticket.massFrom == .sizeClass
             ? kitchen.sizeClasses.first { $0.massKg * 1000 == ticket.eggGrams }
             : nil
         mass = byClass.map { classMass($0, units: system) } ?? showIn(system, .mass, ticket.eggGrams)
-        // A ticket saved before it said where the egg came from: the fridge
-        // and the room are the presets' own temperatures, and anything else
-        // was the cook's own number.
-        from = ticket.startTemp ?? (
-            ticket.setup.eggStartC == StartTempPresets.fridgeC ? .fridge
-                : ticket.setup.eggStartC == StartTempPresets.roomC ? .room : .custom
-        )
+        from = ticket.startTemp
         customC = ticket.setup.eggStartC
         start = ticket.coldStart ? .cold : .hot
         heatOff = ticket.setup.afterBoil == .off

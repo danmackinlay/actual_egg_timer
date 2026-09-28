@@ -71,51 +71,41 @@ final class Cook {
         var egg: Egg
         var setup: CookSetup
         /// Where the egg's mass came from, and whose carton if it was a class -
-        /// for the record. Optional, so a cook saved by a build that did not
-        /// write them still restores; `eggRecord` says what it assumes then.
-        var massFrom: MassFrom?
+        /// for the record. No carton for a weighed egg.
+        var massFrom: MassFrom
         var sizeTable: SizeTable?
         /// Where the egg came from - the fridge, the room or the cook's own
-        /// number - for the sentence shown while the cook runs. Optional for
-        /// the same reason; `SetupFacts` reads it off the temperature then.
-        var startTemp: EggFrom?
+        /// number - for the record and the sentence shown while the cook runs.
+        var startTemp: EggFrom
         /// Whether a measured pan was on file at "Eggs in" - what a hot start,
-        /// which never times its own pan, cooked on. Optional for the same
-        /// reason as the two above.
-        var boilRemembered: Bool?
+        /// which never times its own pan, cooked on.
+        var boilRemembered: Bool
         /// The system the cook was reading at "Eggs in", for the record and the
-        /// Lock Screen. Everything above is SI whatever it says. Nil in a cook
-        /// saved before there was a choice, which was metric.
-        var units: UnitSystem?
+        /// Lock Screen. Everything above is SI whatever it says.
+        var units: UnitSystem
         /// The language the cook was reading at "Eggs in", for the record: the
-        /// catalogue's tag. Nil in a cook saved before F4, which was English.
-        var lang: String?
+        /// catalogue's tag.
+        var lang: String
         /// How far E5's choice leaned from the mean solve at "Eggs in", s,
-        /// carried onto a mid-cook re-solve. Nil in a cook saved before E5,
-        /// and zero when the time was not chosen.
-        var leanS: Double?
-        // A ticket saved by an earlier build may also carry `oddsTenths` and
-        // `stillLearning`: nothing read them, and the synthesized decoder
-        // ignores keys it does not know, so such a cook still restores.
+        /// carried onto a mid-cook re-solve. Zero when the time was not chosen.
+        var leanS: Double
 
         /// What the egg was expected to be like at "Eggs in": the direction
         /// and the white's line, shown for the whole cook as the web shows
-        /// them. Nil when the cook was started before they were known, or
-        /// saved before iOS pass B.
+        /// them. Nil when the cook was started before they were known.
         var forecast: Forecast?
 
         /// How long the counted cooling runs from the pull, s: to the moment the
-        /// yolk's centre peaks, for this cook (`coolingSecondsFor`, E4). Nil in
-        /// a cook saved before E4, whose cooling was the flat three minutes.
-        var coolS: Double?
+        /// yolk's centre peaks, for this cook (`coolingSecondsFor`, E4).
+        var coolS: Double
         /// Whether this cook has a moment to probe at: a counted cooling that
-        /// ends at the peak (`probeMomentFor`, E4). Nil before E4.
-        var probeMoment: Bool?
+        /// ends at the peak (`probeMomentFor`, E4).
+        var probeMoment: Bool
 
         /// The Lock Screen's description of this cook, in its own units and
         /// its own language.
         var activity: CookActivity {
-            let system = units ?? .metric
+            let system = units
             return CookActivity(
                 doneness: doneness,
                 peakYolk: showIn(system, .temperature, peakYolkC),
@@ -317,25 +307,18 @@ final class Cook {
         guard let startedAt, pullAt != nil, let ticket else { return nil }
         let scheduled = cookSeconds
         let measured = outAt.map { $0.timeIntervalSince(startedAt) }.flatMap { $0 > 0 ? $0 : nil }
-        // A cook saved before the ticket carried these came from a build whose
-        // only control was a slider opening on an EU Large. Left there, it was
-        // the default class; moved, it was dialled in - the rule Store.swift
-        // applies to the same stored mass.
-        let untouched = ticket.eggGrams == sizeClasses[Defaults.sizeIndex].massKg * 1000
-        let massFrom = ticket.massFrom ?? (untouched ? .sizeClass : .scale)
-        let sizeTable = ticket.massFrom == nil ? (untouched ? .eu : nil) : ticket.sizeTable
         return EggRecord(
             day: Self.day(startedAt),
             app: .ios,
             appVersion: Calibrations.appVersion,
             egg: RecordEgg(
                 massG: recordMassG(massKg: ticket.egg.massKg),
-                massFrom: massFrom,
-                sizeTable: massFrom == .sizeClass ? sizeTable ?? .eu : nil
+                massFrom: ticket.massFrom,
+                sizeTable: ticket.massFrom == .sizeClass ? ticket.sizeTable ?? .eu : nil
             ),
             setup: RecordSetup(
                 setup: ticket.setup,
-                eggFrom: ticket.startTemp ?? (ticket.setup.eggStartC == StartTempPresets.fridgeC ? .fridge : .room),
+                eggFrom: ticket.startTemp,
                 timeToBoilFrom: Self.timeToBoilFrom(ticket)
             ),
             level: ticket.level,
@@ -346,11 +329,11 @@ final class Cook {
             yolk: yolk,
             white: white,
             probe: probe,
-            lang: ticket.lang ?? "en",
+            lang: ticket.lang,
             // What kind of English the answers were given in (F6): the fit
             // can then tell a 1750 "Too rear" from a modern "Too soft".
-            register: registerOf(ticket.lang ?? "en"),
-            units: ticket.units ?? .metric
+            register: registerOf(ticket.lang),
+            units: ticket.units
         )
     }
 
@@ -365,12 +348,10 @@ final class Cook {
 
     /// Where the solve's time to boil came from. A cold start cannot finish
     /// without the boil being tapped, so it is always measured. A hot start
-    /// cooked on the remembered pan or the default guess; a ticket saved before
-    /// it said which is read by whether the number IS the default guess.
+    /// cooked on the remembered pan or the default guess.
     private static func timeToBoilFrom(_ ticket: Ticket) -> TimeToBoilFrom {
         if ticket.setup.startMode == .cold { return .measured }
-        let remembered = ticket.boilRemembered ?? (ticket.setup.timeToBoilS != defaultTimeToBoilS)
-        return remembered ? .remembered : .default
+        return ticket.boilRemembered ? .remembered : .default
     }
 
     /// The local calendar day a cook started on, YYYY-MM-DD. A day, not a
@@ -432,7 +413,7 @@ final class Cook {
         guard phase == .heating, let startedAt, let ticket else { return nil }
         let gen = generation
         let measured = Date.now.timeIntervalSince(startedAt)
-        guard let result = await resolveCookTime?(measured, ticket.level, ticket.leanS ?? 0) else { return nil }
+        guard let result = await resolveCookTime?(measured, ticket.level, ticket.leanS) else { return nil }
         // Cancelled while the solve was running: there is no cook to correct.
         guard gen == generation else { return nil }
         assumedBoilS = measured
@@ -528,42 +509,10 @@ final class Cook {
         var coolDoneAt: Date?
         var assumedBoilS: Double
         var provisional: Bool
-        /// Absent from a record written before this field existed, which
-        /// restores as unanswered. That takes the decoder below: a synthesized
-        /// `Decodable` ignores a property's default and THROWS on a missing
-        /// key, so `= false` alone lost every cook in progress across the
-        /// update that added it.
         var feedbackGiven: Bool
-        /// The cook's tap out of PULL. Optional, so a cook saved before the
-        /// button existed restores with its pull unmeasured.
+        /// The cook's tap out of PULL, or nil while nobody has made it.
         var outAt: Date?
         var ticket: Ticket
-
-        init(
-            startedAt: Date, pullAt: Date, coolDoneAt: Date?, assumedBoilS: Double,
-            provisional: Bool, feedbackGiven: Bool, outAt: Date?, ticket: Ticket
-        ) {
-            self.startedAt = startedAt
-            self.pullAt = pullAt
-            self.coolDoneAt = coolDoneAt
-            self.assumedBoilS = assumedBoilS
-            self.provisional = provisional
-            self.feedbackGiven = feedbackGiven
-            self.outAt = outAt
-            self.ticket = ticket
-        }
-
-        init(from decoder: Decoder) throws {
-            let c = try decoder.container(keyedBy: CodingKeys.self)
-            startedAt = try c.decode(Date.self, forKey: .startedAt)
-            pullAt = try c.decode(Date.self, forKey: .pullAt)
-            coolDoneAt = try c.decodeIfPresent(Date.self, forKey: .coolDoneAt)
-            assumedBoilS = try c.decode(Double.self, forKey: .assumedBoilS)
-            provisional = try c.decode(Bool.self, forKey: .provisional)
-            feedbackGiven = try c.decodeIfPresent(Bool.self, forKey: .feedbackGiven) ?? false
-            outAt = try c.decodeIfPresent(Date.self, forKey: .outAt)
-            ticket = try c.decode(Ticket.self, forKey: .ticket)
-        }
     }
 
     private static let savedKey = "cookInProgress"
@@ -592,10 +541,14 @@ final class Cook {
     /// tickers nobody will ever cancel.
     func restoreIfNeeded() {
         guard startedAt == nil else { return }
-        guard
-            let data = UserDefaults.standard.data(forKey: Self.savedKey),
-            let saved = try? JSONDecoder().decode(Saved.self, from: data)
-        else { return }
+        guard let data = UserDefaults.standard.data(forKey: Self.savedKey) else { return }
+        // A cook this build cannot read whole - one saved by a build before
+        // 28 September - is dropped, not patched: nothing that old left the
+        // owner's devices (D1).
+        guard let saved = try? JSONDecoder().decode(Saved.self, from: data) else {
+            UserDefaults.standard.removeObject(forKey: Self.savedKey)
+            return
+        }
 
         // An egg an hour past the end of its cooling step has been eaten or
         // thrown out. Either way nobody wants yesterday's timer on screen.
@@ -724,7 +677,7 @@ final class Cook {
 
         let gen = generation
         let assumed = now.timeIntervalSince(startedAt) + Self.reviseExtraS
-        guard let result = await resolveCookTime?(assumed, ticket.level, ticket.leanS ?? 0) else { return }
+        guard let result = await resolveCookTime?(assumed, ticket.level, ticket.leanS) else { return }
         guard gen == generation else { return }
         assumedBoilS = assumed
         self.ticket = ticket.withTimeToBoil(assumed).withResolved(result)

@@ -175,7 +175,7 @@ Put one LOGBOOK line on the decision: "owner, 28 Sep: no post-19-Sep build shipp
 - DONE (whiteOffered removed from the record entirely): The E1 `'set'` white answer and `whiteOffered: false` records: `infer.ts:85,381-385`, `record.ts:160-170,313,317`, `Infer.swift:47`, and `fixtures.ts:1116-1117`.
   - Decide before the first push. `record.ts:259-260` freezes v1 fields forever once shipped.
 - iOS:
-  - The optional ticket fields and their "saved before…" fallbacks: `Cook.swift:73-113,302-308,357`, the hand-written `Saved.init(from:)` (`Cook.swift:517-552`), and `SetupSentence.swift:164-170`.
+  - DONE: The optional ticket fields and their "saved before…" fallbacks: `Cook.swift:73-113,302-308,357`, the hand-written `Saved.init(from:)` (`Cook.swift:517-552`), and `SetupSentence.swift:164-170`.
   - Settings downgrade writes and migrations: `Store.swift:54-58,68-78,84-97,112-113,122-123`.
   - Calibration v1–v3 migrations: `Calibration.swift:41-51,133-137,206-210,217-220,248-249`.
 - `CookActivity.Stage.done`:
