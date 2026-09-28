@@ -427,7 +427,7 @@ The candidates:
 - Add `tsconfig.core.json` (`src/core/**`, `lib: ["ES2022"]`, `types: []`, `noEmit`) and run it in `check`. Today `DOM` is visible to core.
 - Add `"types": []` to `tsconfig.site.json` so Node globals can't reach the browser build. Both are checked to pass with 0 errors today.
 
-**7.3 tsconfig.**
+**DONE: 7.3 tsconfig.**
 - Switch to `"module"/"moduleResolution": "NodeNext"`; it has 0 errors today. `bundler` accepts extensionless imports that then 404 in the browser.
 - Turn on the free flags: `noFallthroughCasesInSwitch`, `noImplicitOverride`, `noPropertyAccessFromIndexSignature`, `allowUnreachableCode: false`, `allowUnusedLabels: false`.
 - Fix `store.ts:23` (`export type`) and `copySnapshot.ts:70`, then add `isolatedModules` and `erasableSyntaxOnly`.

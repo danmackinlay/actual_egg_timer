@@ -19,9 +19,9 @@ import {
   BoilMemory, DEFAULTS, LIMITS, Limit, carrySizeIndex, clamp, isWithin, rememberBoil,
 } from '../core/policy.js';
 
+export type { BoilMemory, Limit } from '../core/policy.js';
 export {
-  BoilMemory, LIMITS, Limit, DEFAULT_TIME_TO_BOIL_S, START_TEMP_PRESETS_C,
-  estimateTimeToBoil, hasBoilMemory,
+  LIMITS, DEFAULT_TIME_TO_BOIL_S, START_TEMP_PRESETS_C, estimateTimeToBoil, hasBoilMemory,
 } from '../core/policy.js';
 
 const SETTINGS_KEY = 'aet.settings.v1';

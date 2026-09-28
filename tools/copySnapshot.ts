@@ -66,8 +66,10 @@ async function waitForHttp(url: string): Promise<Response> {
 class Cdp {
   private next = 1;
   private pending = new Map<number, (value: unknown) => void>();
+  private ws: WebSocket;
 
-  private constructor(private ws: WebSocket) {
+  private constructor(ws: WebSocket) {
+    this.ws = ws;
     ws.addEventListener('message', (event) => {
       const msg = JSON.parse(String(event.data)) as { id?: number; result?: unknown };
       if (msg.id !== undefined) {
