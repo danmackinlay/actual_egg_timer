@@ -56,7 +56,7 @@ import { pressureAtAltitude, boilingPointAtPressure, boilingPointAtAltitude } fr
 import { createDose, accumulateDose, holdTimeForDose } from '../src/core/kinetics.js';
 import { buildDoseGrid, lookupLogYolkDose, lookupLogWhiteDose, cookTimeForLogYolkDose } from '../src/core/doseGrid.js';
 import {
-  Feedback, FEEDBACK_BAND, NOISE_LOG_SD, NOISE_MEDIAN, UNRELATED, WHITE_FIRM_GAP_LOG_SD,
+  Feedback, FEEDBACK_BAND, KERNEL_DISCOUNT, NOISE_LOG_SD, NOISE_MEDIAN, UNRELATED, WHITE_FIRM_GAP_LOG_SD,
   WHITE_FIRM_GAP_MEDIAN, WHITE_OFFSET_SD, WhiteReport, answerLikelihood, createPrior,
   effectiveSampleSize, posteriorMeanWhiteOffset, posteriorParams, predictCookTime, updatePosterior,
 } from '../src/core/infer.js';
@@ -514,6 +514,7 @@ const calibration = {
     whiteOffsetSd: WHITE_OFFSET_SD,
     whiteFirmGapMedian: WHITE_FIRM_GAP_MEDIAN,
     whiteFirmGapLogSd: WHITE_FIRM_GAP_LOG_SD,
+    kernelDiscount: KERNEL_DISCOUNT,
   },
   whiteResample: WHITE_RESAMPLE_CASE,
   prior: {

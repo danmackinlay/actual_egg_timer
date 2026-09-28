@@ -129,7 +129,7 @@ DONE: **3.4 `Cook.Phase` duplicates core `Phase`.** (`Deadlines.outAt_s`/`outAtS
 DONE: **3.5 `Forecast` (`Direction.swift:14-35`) is a field-by-field Codable copy of core `Outcome`, with `lean` stored as a String.**
 - Fix: make `Outcome` and `Lean` Codable/Equatable in core, then delete `Forecast`.
 
-**3.6 Swift never checks the record's identity constants.**
+DONE: **3.6 Swift never checks the record's identity constants.**
 - `priorID` and `recordVersion` (`Record.swift:22,28`), which are stamped into every iOS record, are never compared with `record.json`'s `prior` / `version`.
 - `kernelDiscount` is not in `calibration.json.likelihood`.
 - Fix: add the `#expect`s, and add `KERNEL_DISCOUNT` to the fixture (keep it exported in TS).

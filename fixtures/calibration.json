@@ -321,7 +321,8 @@
     "noiseLogSd": 0.5,
     "whiteOffsetSd": 0.5,
     "whiteFirmGapMedian": 1.08,
-    "whiteFirmGapLogSd": 0.4
+    "whiteFirmGapLogSd": 0.4,
+    "kernelDiscount": 0.98
   },
   "whiteResample": {
     "cookTime_s": 365,

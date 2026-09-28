@@ -172,6 +172,14 @@ private func throughJSON(_ c: Calibration) throws -> Calibration {
 
 @Suite("The record")
 struct RecordConformance {
+    /// Stamped into every iOS record, so a record from either app names the
+    /// same schema and the same prior.
+    @Test("the record's version and prior are the reference's")
+    func identity() {
+        #expect(recordVersion == Int(file().num("version")))
+        #expect(priorID == file().str("prior"))
+    }
+
     @Test("which records a loader trusts, case by case")
     func validation() {
         guard let cases = file()["cases"] as? [[String: Any]] else { fatalError("no record cases") }

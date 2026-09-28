@@ -314,5 +314,6 @@ struct InferenceConformance {
         expectClose(whiteOffsetSd, l.num("whiteOffsetSd"), "WHITE_OFFSET_SD")
         expectClose(whiteFirmGapMedian, l.num("whiteFirmGapMedian"), "WHITE_FIRM_GAP_MEDIAN")
         expectClose(whiteFirmGapLogSd, l.num("whiteFirmGapLogSd"), "WHITE_FIRM_GAP_LOG_SD")
+        expectClose(kernelDiscount, l.num("kernelDiscount"), "KERNEL_DISCOUNT")
     }
 }
