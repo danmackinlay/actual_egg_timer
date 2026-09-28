@@ -123,28 +123,84 @@ struct ClauseText {
     let value: String
 }
 
-/// The web's `clauseTexts`, word for word.
+/// What the sentence says, whichever cook it is about: the one on the
+/// controls, or the one in the pan (`Cook.Ticket`). The web's `SetupFacts`.
+struct SetupFacts {
+    /// The egg's mass as the size menu or the scale says it, with its unit.
+    var mass: String
+    var from: StartTemp
+    /// The egg's temperature when it is the cook's own number, C.
+    var customC: Double
+    var start: StartChoice
+    var heatOff: Bool
+    var cooling: Cooling
+    var units: UnitSystem
+
+    /// The setup on the controls.
+    @MainActor init(_ kitchen: Kitchen) {
+        units = kitchen.units
+        mass = kitchen.sizeClasses.indices.contains(kitchen.sizeIndex)
+            ? classMass(kitchen.sizeClasses[kitchen.sizeIndex], units: units)
+            : showIn(units, .mass, kitchen.eggMassG)
+        from = kitchen.startTemp
+        customC = kitchen.customStartC
+        start = kitchen.start
+        heatOff = kitchen.heatOff
+        cooling = kitchen.cooling
+    }
+
+    /// The setup a cook was started with, from its ticket and not the
+    /// controls: what the cook promised, in the units they set it up in. A
+    /// class egg is named as its class's mass, as the size menu names it,
+    /// when the carton still has a class of that mass; otherwise it is the
+    /// egg's own.
+    @MainActor init(_ ticket: Cook.Ticket, kitchen: Kitchen) {
+        let system = ticket.units ?? kitchen.units
+        units = system
+        let byClass = ticket.massFrom == .sizeClass
+            ? kitchen.sizeClasses.first { $0.massKg * 1000 == ticket.eggGrams }
+            : nil
+        mass = byClass.map { classMass($0, units: system) } ?? showIn(system, .mass, ticket.eggGrams)
+        // A ticket saved before it said where the egg came from: the fridge
+        // and the room are the presets' own temperatures, and anything else
+        // was the cook's own number.
+        from = ticket.startTemp ?? (
+            ticket.setup.eggStartC == StartTempPresets.fridgeC ? .fridge
+                : ticket.setup.eggStartC == StartTempPresets.roomC ? .room : .custom
+        )
+        customC = ticket.setup.eggStartC
+        start = ticket.coldStart ? .cold : .hot
+        heatOff = ticket.setup.afterBoil == .off
+        cooling = ticket.cooling
+    }
+}
+
+/// A size class's mass as the size menu shows it.
+private func classMass(_ c: SizeClass, units: UnitSystem) -> String {
+    let label = sizeClassLabel(c, system: units)
+    return tr(label.mass.key, ["value": .fixed(label.mass.value)])
+}
+
 @MainActor
 func clauseTexts(_ kitchen: Kitchen) -> [Clause: ClauseText] {
-    let mass: String
-    if kitchen.sizeClasses.indices.contains(kitchen.sizeIndex) {
-        let label = sizeClassLabel(kitchen.sizeClasses[kitchen.sizeIndex], system: kitchen.units)
-        mass = tr(label.mass.key, ["value": .fixed(label.mass.value)])
-    } else {
-        mass = kitchen.show(.mass, kitchen.eggMassG)
-    }
-    let custom = kitchen.show(.eggTemp, kitchen.customStartC)
-    let bath = kitchen.show(.temperature, sousVideBathC)
+    clauseTexts(SetupFacts(kitchen))
+}
 
-    let from: (String, String) = switch kitchen.startTemp {
+/// The web's `clauseTexts`, word for word.
+func clauseTexts(_ f: SetupFacts) -> [Clause: ClauseText] {
+    let mass = f.mass
+    let custom = showIn(f.units, .eggTemp, f.customC)
+    let bath = showIn(f.units, .temperature, sousVideBathC)
+
+    let from: (String, String) = switch f.from {
     case .fridge: (tr("setup.from.fridge"), tr("controls.eggFrom.fridge"))
     case .room: (tr("setup.from.room"), tr("controls.eggFrom.room"))
     case .custom: (tr("setup.from.custom", ["temp": .text(custom)]), custom)
     }
     // The start clause carries the boil, and the standing when the heat goes
     // off: "into cold water" alone reads as if the eggs never boil.
-    let standing = kitchen.heatOff
-    let start: (String, String) = switch kitchen.start {
+    let standing = f.heatOff
+    let start: (String, String) = switch f.start {
     case .cold: (tr(standing ? "setup.start.coldStanding" : "setup.start.cold"), tr("controls.start.cold"))
     case .hot: (tr(standing ? "setup.start.hotStanding" : "setup.start.hot"), tr("controls.start.hot"))
     case .sousVide: (
@@ -152,7 +208,7 @@ func clauseTexts(_ kitchen: Kitchen) -> [Clause: ClauseText] {
         tr("controls.start.sousVide", ["bath": .text(bath)])
     )
     }
-    let cooling: (String, String) = switch kitchen.cooling {
+    let cooling: (String, String) = switch f.cooling {
     case .ice: (tr("setup.cooling.ice"), tr("controls.then.ice"))
     case .tap: (tr("setup.cooling.tap"), tr("controls.then.tap"))
     case .counter: (tr("setup.cooling.counter"), tr("controls.then.counter"))
@@ -163,6 +219,43 @@ func clauseTexts(_ kitchen: Kitchen) -> [Clause: ClauseText] {
         .start: ClauseText(text: start.0, label: tr("controls.start"), value: start.1),
         .cooling: ClauseText(text: cooling.0, label: tr("controls.cooling"), value: cooling.1),
     ]
+}
+
+// MARK: - The cook in the pan
+
+/// The cook in the pan, once the controls are gone (owner, 28 September): the
+/// setup sentence it was started with, so a forgetful cook can see what they
+/// promised, and under it what the sentence does not say, the doneness and
+/// the peak yolk. From the ticket, never the controls. Plain prose: nothing in
+/// it can change a cook under way, so nothing in it is a link. Sous-vide never
+/// runs a cook, so it never shows this.
+struct CookSentence: View {
+    let ticket: Cook.Ticket
+    let kitchen: Kitchen
+
+    var body: some View {
+        let facts = SetupFacts(ticket, kitchen: kitchen)
+        let texts = clauseTexts(facts)
+        VStack(alignment: .leading, spacing: 6) {
+            Text(tr("setup.sentence", [
+                "egg": .text(texts[.egg]?.text ?? ""), "from": .text(texts[.from]?.text ?? ""),
+                "start": .text(texts[.start]?.text ?? ""), "cooling": .text(texts[.cooling]?.text ?? ""),
+            ]))
+            .font(.title3)
+            .lineSpacing(4)
+            .fixedSize(horizontal: false, vertical: true)
+            // In the system the egg was set up in, which the controls cannot
+            // have changed since.
+            Text(tr("cook.summary", [
+                "doneness": .text(ticket.doneness.lowercased()),
+                "yolk": .text(showIn(facts.units, .temperature, ticket.peakYolkC)),
+            ]))
+            .font(.footnote)
+            .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityElement(children: .combine)
+    }
 }
 
 // MARK: - The choices

@@ -39,7 +39,7 @@ import { Outcome, predictOutcome } from '../core/outcome.js';
 import {
   Calibration, cachedDecisionGrid, cachedOddsProfile, calibrationDoneness, calibrationParams,
   clearCalibration, decisionGrid, decisionKey, eggRecordFor, eggsBehind, learn, loadCalibration,
-  logEgg, oddsProfileFor, profileKey, recordSecondAnswer, cachedSaferLevels, saferKey, saferLevelsFor,
+  logEgg, oddsProfileFor, profileKey, recordSecondAnswer,
 } from './calibration.js';
 import {
   LIMITS, Limit, START_TEMP_PRESETS_C, Settings, UiStartMode, clampNumber,
@@ -47,9 +47,7 @@ import {
   loadCook, loadSettings, rememberTimeToBoil, saveCook, saveSettings,
 } from './store.js';
 import { sousVideCopy } from './sousvide.js';
-import {
-  PlaySafe, directionKey, playSafe, playSafeWanted, rangeWords, restoreOutcome, whiteAtRisk,
-} from './outcome.js';
+import { directionKey, rangeWords, restoreOutcome, whiteAtRisk } from './outcome.js';
 import { activeLocale, applyCopy, switchCopy, t } from './copy.js';
 import { formatClock, spokenClock } from './countdown.js';
 import {
@@ -92,14 +90,15 @@ const dom = {
   whiteRisk: el<HTMLParagraphElement>('whiteRisk'),
   oddsInfo: el<HTMLButtonElement>('oddsInfo'),
   oddsWhy: el<HTMLDivElement>('oddsWhy'),
-  playSafeLine: el<HTMLParagraphElement>('playSafeLine'),
-  playSafe: el<HTMLButtonElement>('playSafe'),
   advice: el<HTMLParagraphElement>('advice'),
   adviceList: el<HTMLUListElement>('adviceList'),
   forYou: el<HTMLDivElement>('forYou'),
   welcome: el<HTMLParagraphElement>('welcome'),
   helpSousVide: el<HTMLParagraphElement>('helpSousVide'),
   sentence: el<HTMLParagraphElement>('sentence'),
+  cookSetup: el<HTMLElement>('cookSetup'),
+  cookSentence: el<HTMLParagraphElement>('cookSentence'),
+  cookDoneness: el<HTMLParagraphElement>('cookDoneness'),
   navBack: el<HTMLButtonElement>('navBack'),
   kitchenTitle: el<HTMLElement>('kitchenTitle'),
   helpTitle: el<HTMLElement>('helpTitle'),
@@ -117,7 +116,7 @@ const dom = {
   donenessBracket: el<HTMLDivElement>('donenessBracket'),
   donenessMedian: el<HTMLDivElement>('donenessMedian'),
   donenessRange: el<HTMLSpanElement>('donenessRange'),
-  donenessValue: el<HTMLParagraphElement>('donenessValue'),
+  donenessPeak: el<HTMLSpanElement>('donenessPeak'),
   size: el<HTMLSelectElement>('size'),
   measureMass: el<HTMLInputElement>('measureMass'),
   measureGirth: el<HTMLInputElement>('measureGirth'),
@@ -219,18 +218,6 @@ let decisionHandle = 0;
 let profile: OddsProfile | null = null;
 /** Profiles asked for and not yet in, by key, so each lands once. */
 const profilesAsked = new Set<string>();
-/** Play-safe levels waiting for the slider to settle before they are asked
- *  for (`askForSafer`). */
-let saferHandle = 0;
-/** The play-safe levels last asked for, by key, so a slider left still asks
- *  once. */
-let saferAsked = '';
-/** The key (pot, posterior, level) the cook last reached by tapping the
- *  play-safe suggestion. No new suggestion is offered there: the level was
- *  chosen to play safe, and a second tap would ratchet it on - at the new
- *  level the same risk is measured against the new level. Any other level,
- *  pot or posterior offers one again. */
-let playedSafeKey = '';
 /** Set when the requested doneness had to be clamped; empty otherwise. */
 let refusal = '';
 /** What the running cook is, frozen at the moment it started.
@@ -302,6 +289,10 @@ interface Ticket {
   /** What the egg was likely to be like at "Eggs in", shown for the whole
    *  cook as the odds are. Null when they are. */
   outcome: Outcome | null;
+  /** The peak yolk the cook was started with, C: what the line under the
+   *  running cook's sentence says. Null in a ticket written before it was
+   *  kept. */
+  peakYolk_C: number | null;
   /** The language they were reading it in, for the record. */
   lang: string;
   /** Whether this cook has a moment to probe at (E4): a counted cooling that
@@ -618,73 +609,6 @@ function askForProfile(inputs: DecisionInputs): void {
   });
 }
 
-/** How long the slider must sit still before its play-safe levels are asked
- *  for, ms. They are a dozen or so solves and decisions in the worker
- *  (reach.ts, "playing safe"), so a drag asks once, where it stops, and never
- *  waits for them. */
-const SAFER_SETTLE_MS = 300;
-
-/** The key the play-safe levels on screen are for: this pot, this posterior
- *  and the level the slider sits at. */
-function currentSaferKey(): string {
-  return saferKey(currentInputs(timeToBoil_s()), calib, settings.doneness);
-}
-
-/** Ask the worker for the play-safe levels at the level on screen, once the
- *  slider has settled and this pot's profile is in, and only when either way
- *  of missing is risk enough to show one. Redraw when they land, if the
- *  screen still wants them. */
-function askForSafer(): void {
-  if (machine.phase !== 'IDLE' || isSousVide() || outcome === null || profile === null) return;
-  if (!playSafeWanted(outcome)) return;
-  const inputs = currentInputs(timeToBoil_s());
-  const level = settings.doneness;
-  if (cachedSaferLevels(inputs, calib, level) !== null) return;
-  const key = saferKey(inputs, calib, level);
-  if (key === saferAsked) return;
-  if (saferHandle !== 0) window.clearTimeout(saferHandle);
-  const odds = profile;
-  saferHandle = window.setTimeout(() => {
-    saferHandle = 0;
-    if (currentSaferKey() !== key) return;
-    saferAsked = key;
-    void saferLevelsFor(inputs, calib, odds, level).then(() => {
-      if (saferAsked === key) saferAsked = '';
-      if (machine.phase !== 'IDLE' || isSousVide()) return;
-      if (currentSaferKey() === key) render(Date.now());
-    });
-  }, SAFER_SETTLE_MS);
-}
-
-/** The play-safe suggestion for the level on screen, and whether it is still
- *  on its way. Only while idle, with an outcome: none where neither way of
- *  missing is risk enough, and none at a level reached by tapping one. */
-function playSafeNow(): { suggestion: PlaySafe | null; pending: boolean } {
-  if (machine.phase !== 'IDLE' || isSousVide() || decision === null || outcome === null
-      || solution === null || !solution.whiteSets) {
-    return { suggestion: null, pending: false };
-  }
-  if (!playSafeWanted(outcome)) return { suggestion: null, pending: false };
-  if (profile === null) return { suggestion: null, pending: true };
-  if (currentSaferKey() === playedSafeKey) return { suggestion: null, pending: false };
-  const levels = cachedSaferLevels(currentInputs(timeToBoil_s()), calib, settings.doneness);
-  if (levels === null) return { suggestion: null, pending: true };
-  return { suggestion: playSafe(outcome, levels, settings.doneness), pending: false };
-}
-
-/** Tapping the suggestion moves the slider to its level, as dragging there
- *  would. If the line then goes, the focus goes to the slider it moved. */
-function onPlaySafe(): void {
-  const to = Number(dom.playSafe.dataset['level']);
-  if (machine.phase !== 'IDLE' || !Number.isFinite(to)) return;
-  settings.doneness = to;
-  dom.doneness.value = String(to);
-  playedSafeKey = currentSaferKey();
-  saveNow();
-  recompute();
-  if (dom.playSafeLine.hidden) dom.doneness.focus();
-}
-
 /** Take the answer up: show the refusal, and move the slider if the answer
  *  says it must. Only ever called while idle - once the egg is in the water
  *  the controls are gone and there is nothing to snap. */
@@ -711,13 +635,24 @@ function textureNote(sol: Solution): string {
   return t(note.key, parts);
 }
 
-/** The reading under the slider. The same shape whether the temperature is
- *  the solver's or the quick interpolation that tracks the thumb, so it does
- *  not flicker between two formats mid-drag. */
-function donenessValueText(peakYolk_C: number): string {
-  return t('controls.doneness.value', {
-    doneness: t(anchorNear(settings.doneness).key), yolk: show('temperature', peakYolk_C),
-  });
+/** The slider's reading: at the end of its heading, the peak yolk the level
+ *  asks for, and to a screen reader, as the slider's value, the doneness word
+ *  with it. The word is not drawn again: it is on the ticks. In sous-vide there
+ *  is no peak, and the water's temperature is said instead, so the reading
+ *  says which number it is. The same shape whether the temperature is the
+ *  solver's or the quick interpolation that tracks the thumb, so it does not
+ *  flicker between two formats mid-drag. */
+function renderDonenessReading(reading: { peakYolk_C: number } | { bath_C: number }): void {
+  const doneness = t(anchorNear(settings.doneness).key);
+  if ('bath_C' in reading) {
+    const bath = show('temperature', reading.bath_C);
+    dom.donenessPeak.textContent = t('controls.doneness.bath', { bath: bath });
+    dom.doneness.setAttribute('aria-valuetext', t('controls.doneness.valueBath', { doneness: doneness, bath: bath }));
+    return;
+  }
+  const yolk = show('temperature', reading.peakYolk_C);
+  dom.donenessPeak.textContent = t('controls.doneness.peak', { yolk: yolk });
+  dom.doneness.setAttribute('aria-valuetext', t('controls.doneness.value', { doneness: doneness, yolk: yolk }));
 }
 
 /** Stripe out the parts of the track this setup cannot deliver: the soft end
@@ -729,7 +664,6 @@ function renderDonenessScale(sol: Solution): void {
   const hardest = sol.whiteSets ? sol.hardestLevel : 0;
   dom.donenessBlockedSoft.style.width = `${percent(softest)}%`;
   dom.donenessBlockedHard.style.width = `${percent(1 - hardest)}%`;
-  dom.doneness.setAttribute('aria-valuetext', t(anchorNear(settings.doneness).key));
 
   // The odds at each level, relative to the best level's, and the levels the
   // pan can deliver but the odds do not offer yet (reach.ts). Only while
@@ -909,34 +843,78 @@ function panelFor(clause: Clause): HTMLElement {
   return el<HTMLElement>(CLAUSE_PANELS[clause]);
 }
 
+/** What the sentence says, whichever cook it is about: the one on the
+ *  controls (`liveSetupFacts`), or the one in the pan (`ticketSetupFacts`). */
+interface SetupFacts {
+  /** The egg's mass as the size menu or the scale says it, with its unit. */
+  mass: string;
+  eggFrom: EggFrom;
+  /** The egg's temperature when it is the cook's own number, C. */
+  customStart_C: number;
+  startMode: UiStartMode;
+  /** The heat goes off at the boil. */
+  standing: boolean;
+  cooling: Cooling;
+}
+
+/** The mass of a size class as the size menu shows it, in the units on
+ *  screen. */
+function classMass(index: number): string {
+  const label = sizeClassLabel(sizeClasses[index], unitSystem());
+  return t(label.mass.key, { value: label.mass.value });
+}
+
+/** The setup on the controls. */
+function liveSetupFacts(): SetupFacts {
+  const byClass = settings.sizeIndex >= 0 && settings.sizeIndex < sizeClasses.length;
+  return {
+    mass: byClass ? classMass(settings.sizeIndex) : show('mass', currentEgg().mass_kg * 1000),
+    eggFrom: settings.startTempMode,
+    customStart_C: settings.customStart_C,
+    startMode: settings.startMode,
+    standing: settings.afterBoil === 'off',
+    cooling: settings.cooling,
+  };
+}
+
+/** The setup a cook was started with, from its ticket and not the controls:
+ *  what the cook promised, whatever the controls say later. A class egg is
+ *  named as its class's mass, as the size menu names it, when this page's
+ *  carton still has a class of that mass; otherwise it is the egg's own. */
+function ticketSetupFacts(k: Ticket): SetupFacts {
+  const index = k.massFrom === 'class' ? sizeClasses.findIndex((c) => c.mass_kg === k.egg.mass_kg) : -1;
+  return {
+    mass: index >= 0 ? classMass(index) : show('mass', k.egg.mass_kg * 1000),
+    eggFrom: k.eggFrom,
+    customStart_C: k.setup.eggStart_C,
+    startMode: k.setup.startMode,
+    standing: k.setup.afterBoil === 'off',
+    cooling: k.setup.cooling,
+  };
+}
+
 /** What each clause says, and what a screen reader hears for it: its heading
  *  and the option chosen, as the choice itself shows them ("Egg: 68 g"). */
-function clauseTexts(): Record<Clause, { text: string; label: string; value: string }> {
-  let mass: string;
-  if (settings.sizeIndex >= 0 && settings.sizeIndex < sizeClasses.length) {
-    const label = sizeClassLabel(sizeClasses[settings.sizeIndex], unitSystem());
-    mass = t(label.mass.key, { value: label.mass.value });
-  } else {
-    mass = show('mass', currentEgg().mass_kg * 1000);
-  }
-  const custom = show('eggTemp', settings.customStart_C);
+function clauseTexts(f: SetupFacts): Record<Clause, { text: string; label: string; value: string }> {
+  const mass = f.mass;
+  const custom = show('eggTemp', f.customStart_C);
   const bath = show('temperature', SOUS_VIDE_BATH_C);
-  const from = settings.startTempMode === 'fridge'
+  const from = f.eggFrom === 'fridge'
     ? { text: t('setup.from.fridge'), value: t('controls.eggFrom.fridge') }
-    : settings.startTempMode === 'room'
+    : f.eggFrom === 'room'
       ? { text: t('setup.from.room'), value: t('controls.eggFrom.room') }
       : { text: t('setup.from.custom', { temp: custom }), value: custom };
   // The start clause carries the boil, and the standing when the heat goes
   // off: "into cold water" alone reads as if the eggs never boil.
-  const standing = settings.afterBoil === 'off';
-  const start = settings.startMode === 'cold'
+  const standing = f.standing;
+  const start = f.startMode === 'cold'
     ? { text: t(standing ? 'setup.start.coldStanding' : 'setup.start.cold'), value: t('controls.start.cold') }
-    : settings.startMode === 'hot'
+    : f.startMode === 'hot'
       ? { text: t(standing ? 'setup.start.hotStanding' : 'setup.start.hot'), value: t('controls.start.hot') }
       : { text: t('setup.start.sous', { bath: bath }), value: t('controls.start.sousVide', { bath: bath }) };
-  const cooling = settings.cooling === 'ice'
+  const cooling = f.cooling === 'ice'
     ? { text: t('setup.cooling.ice'), value: t('controls.then.ice') }
-    : settings.cooling === 'tap'
+    : f.cooling === 'tap'
       ? { text: t('setup.cooling.tap'), value: t('controls.then.tap') }
       : { text: t('setup.cooling.counter'), value: t('controls.then.counter') };
   return {
@@ -959,7 +937,7 @@ const SLOT = '\u0001';
  * egg comes from and how it cools change nothing there.
  */
 function renderSentence(): void {
-  const texts = clauseTexts();
+  const texts = clauseTexts(liveSetupFacts());
   const key = isSousVide() ? 'setup.sentenceSousVide' : 'setup.sentence';
   const marked = t(key, {
     egg: `${SLOT}egg${SLOT}`, from: `${SLOT}from${SLOT}`,
@@ -987,6 +965,30 @@ function renderSentence(): void {
   // A choice whose clause the sentence no longer has - sous-vide drops two -
   // closes with it.
   if (openClause !== null && !clauses[openClause].isConnected) setOpenClause(null);
+}
+
+/** The cook in the pan, once the controls are gone (owner, 28 September): the
+ *  setup sentence it was started with, so a forgetful cook can see what they
+ *  promised, as plain prose - nothing in it can change a cook under way, so
+ *  nothing in it is a button - and under it what the sentence does not say,
+ *  the doneness and the peak yolk it was started at. From the ticket, never
+ *  the controls. Sous-vide never runs a cook, so it never shows this. */
+function renderCookSetup(): void {
+  const k = ticket;
+  const shown = machine.phase !== 'IDLE' && k !== null;
+  dom.cookSetup.hidden = !shown;
+  if (!shown || k === null) return;
+  const texts = clauseTexts(ticketSetupFacts(k));
+  dom.cookSentence.textContent = t('setup.sentence', {
+    egg: texts.egg.text, from: texts.from.text, start: texts.start.text, cooling: texts.cooling.text,
+  });
+  // The peak yolk the cook was started with; a ticket written before it was
+  // kept falls back to the running cook's own solve.
+  const peak = k.peakYolk_C ?? solution?.result.peakYolk_C ?? targetPeakYolk_C(machine.targetLevel);
+  dom.cookDoneness.textContent = t('cook.summary', {
+    doneness: t(anchorNear(machine.targetLevel).key).toLowerCase(),
+    yolk: show('temperature', peak),
+  });
 }
 
 /** Open one clause's choice under the sentence, or none. One at a time. */
@@ -1085,7 +1087,6 @@ function wireViews(): void {
     });
   }
   dom.navBack.addEventListener('click', goBack);
-  dom.playSafe.addEventListener('click', onPlaySafe);
   window.addEventListener('popstate', () => route(true));
   window.addEventListener('hashchange', () => route(true));
   route(false);
@@ -1131,6 +1132,7 @@ function render(now_ms: number): void {
   // written, so it both paid for an answer it discarded and left half of that
   // answer on screen beside its own.
   renderSentence();
+  renderCookSetup();
   if (isSousVide() && machine.phase === 'IDLE') {
     renderSousVide(now_ms);
     return;
@@ -1162,7 +1164,7 @@ function render(now_ms: number): void {
   }
   dom.warn.textContent = warning;
   dom.warn.hidden = warning === '';
-  dom.donenessValue.textContent = donenessValueText(sol.result.peakYolk_C);
+  renderDonenessReading({ peakYolk_C: sol.result.peakYolk_C });
   renderDonenessScale(sol);
 
   let label = '';
@@ -1302,14 +1304,17 @@ function render(now_ms: number): void {
 }
 
 /** Which way the egg is likely to miss, and the white's line, under the
- *  time, with one (i) that explains the bracket, playing safe and what I
- *  learn from; and, while idle, the play-safe suggestion (src/ui/outcome.ts).
- *  While idle they are the choice on screen's, and blank until this pot's
- *  surface lands - the direction's line keeps its height, so nothing moves
- *  when they arrive. Once a cook is running the direction and the white's
- *  line are what they were at "Eggs in"; the (i), which is about the slider,
- *  and the suggestion, which moves it, go with the slider. Never where the
- *  white never sets: there is no cook to say anything about.
+ *  time, with one (i) that explains the bracket, how to play safe with it and
+ *  what I learn from (src/ui/outcome.ts). While idle they are the choice on
+ *  screen's, and blank until this pot's surface lands - the direction's line
+ *  keeps its height, so nothing moves when they arrive. Once a cook is running
+ *  the direction and the white's line are what they were at "Eggs in"; the
+ *  (i), which is about the slider, goes with the slider. Never where the white
+ *  never sets: there is no cook to say anything about.
+ *
+ *  The one-tap play-safe suggestion that went under the direction is gone
+ *  (owner, 28 September): it said in words what the slider and the bracket
+ *  already show.
  *
  *  "I'm still learning" is no longer a line of its own on the web (owner, 27
  *  September): beside "I can't call it yet" it said the same thing twice.
@@ -1327,23 +1332,11 @@ function renderOdds(): void {
   dom.whiteRisk.hidden = o === null || !whiteAtRisk(o);
   showInfo(dom.oddsInfo, machine.phase === 'IDLE' && o !== null);
 
-  const safe = playSafeNow();
-  const s = safe.suggestion;
-  dom.playSafeLine.hidden = s === null;
-  if (s !== null) {
-    dom.playSafe.textContent = t(s.key, { level: t(s.word) });
-    dom.playSafe.dataset['level'] = String(s.level);
-  } else {
-    delete dom.playSafe.dataset['level'];
-  }
-
   // While a new pot's surface is on its way the lines above are blank, and
   // the readout would shrink and grow back a second later, moving the
-  // sentence's open choice under the thumb that just tapped it; and while
-  // the play-safe levels for a level just reached are on their way, the
-  // suggestion's line would go and come back under the thumb on the slider.
-  // So it keeps the height it had when the lines were last all there.
-  if (machine.phase === 'IDLE' && (decision === null || safe.pending)) {
+  // sentence's open choice under the thumb that just tapped it. So it keeps
+  // the height it had when the lines were last all there.
+  if (machine.phase === 'IDLE' && decision === null) {
     dom.readout.style.minHeight = settledReadout_px > 0 ? `${settledReadout_px}px` : '';
   } else {
     dom.readout.style.minHeight = '';
@@ -1359,7 +1352,6 @@ function renderSousVide(now_ms: number): void {
   // pan (E5 chooses pan times). So no direction, and no bracket either.
   dom.directionText.textContent = '';
   dom.whiteRisk.hidden = true;
-  dom.playSafeLine.hidden = true;
   dom.readout.style.minHeight = '';
   renderBracket(null);
   showInfo(dom.oddsInfo, false);
@@ -1382,12 +1374,10 @@ function renderSousVide(now_ms: number): void {
   dom.digits.textContent = copy.headline;
   dom.sublineText.textContent = copy.subline;
   dom.statBoil.textContent = show('boilingPoint', boilingPoint_C());
-  // The slider reading is a pan number. There is no pan: the water's
+  // The slider's reading is a pan number. There is no pan: the water's
   // temperature is not a peak yolk temperature, and the reading says which
   // number it is.
-  dom.donenessValue.textContent = t('controls.doneness.valueBath', {
-    doneness: t(anchorNear(settings.doneness).key), bath: show('temperature', est.bath_C),
-  });
+  renderDonenessReading({ bath_C: est.bath_C });
   dom.note.textContent = copy.note;
   dom.warn.textContent = copy.warn;
   dom.warn.hidden = false;
@@ -1446,7 +1436,6 @@ function recompute(): void {
   solution = chosen.solution;
   decision = chosen.decision;
   outcome = chosen.outcome;
-  askForSafer();
   render(Date.now());
 }
 
@@ -1831,7 +1820,7 @@ function onInput(event: Event): void {
   // Instant feedback on what the eye is on while dragging or choosing - the
   // reading under the slider, the sentence, the boiling point beside the
   // altitude; the full solve (tens of milliseconds) follows and corrects them.
-  dom.donenessValue.textContent = donenessValueText(targetPeakYolk_C(settings.doneness));
+  renderDonenessReading(isSousVide() ? { bath_C: SOUS_VIDE_BATH_C } : { peakYolk_C: targetPeakYolk_C(settings.doneness) });
   dom.statBoil.textContent = show('boilingPoint', boilingPoint_C());
   dom.body.dataset['start'] = settings.startMode;
   renderSentence();
@@ -1952,6 +1941,7 @@ function onPrimary(): void {
       oddsTenths: decision === null ? null : decision.oddsTenths,
       stillLearning: decision === null ? null : decision.stillLearning,
       outcome: decision === null ? null : outcome,
+      peakYolk_C: solution.result.peakYolk_C,
       probeMoment: probeMomentFor(solution.result, settings.cooling),
     };
     // The cooling counts to the yolk's peak for this cook (E4).
@@ -2260,6 +2250,8 @@ function restoreTicket(raw: unknown): Ticket | null {
     stillLearning: typeof r['stillLearning'] === 'boolean' ? r['stillLearning'] : null,
     // And one written before the outcome summary, which carried only the odds.
     outcome: restoreOutcome(r['outcome']),
+    // And one written before the running cook showed its sentence.
+    peakYolk_C: typeof r['peakYolk_C'] === 'number' && Number.isFinite(r['peakYolk_C']) ? r['peakYolk_C'] : null,
     // And one written before E4 counted a flat three minutes, not to a peak.
     probeMoment: r['probeMoment'] === true,
   };

@@ -75,6 +75,10 @@ final class Cook {
         /// write them still restores; `eggRecord` says what it assumes then.
         var massFrom: MassFrom?
         var sizeTable: SizeTable?
+        /// Where the egg came from - the fridge, the room or the cook's own
+        /// number - for the sentence shown while the cook runs. Optional for
+        /// the same reason; `SetupFacts` reads it off the temperature then.
+        var startTemp: StartTemp?
         /// Whether a measured pan was on file at "Eggs in" - what a hot start,
         /// which never times its own pan, cooked on. Optional for the same
         /// reason as the two above.

@@ -1,8 +1,9 @@
 /**
  * The outcome summary in words (src/ui/outcome.ts): which sentence each
  * outcome gets, when the white gets its line, the range in the slider's own
- * words, a cook's outcome read back after a reload, and which play-safe
- * suggestion, if any, goes under the direction.
+ * words, and a cook's outcome read back after a reload. The play-safe
+ * suggestion that went under the direction is gone from both apps (28
+ * September); core's `saferLevels` is still tested in test/safer.test.ts.
  *
  * The numbers are core's and are tested in test/outcome.test.ts; this holds
  * the thresholds the web chose on top of them, at their edges, and checks
@@ -17,8 +18,7 @@ import { readFileSync } from 'node:fs';
 
 import { Lean, Outcome } from '../src/core/outcome.js';
 import {
-  DIRECTION_LIKELY, SAFE_RISK, WHITE_RISK, directionKey, playSafe, playSafeWanted, rangeWords,
-  restoreOutcome, whiteAtRisk,
+  DIRECTION_LIKELY, WHITE_RISK, directionKey, rangeWords, restoreOutcome, whiteAtRisk,
 } from '../src/ui/outcome.js';
 
 const MESSAGES = (JSON.parse(readFileSync('copy/en.json', 'utf8')) as { messages: Record<string, unknown> }).messages;
@@ -82,35 +82,11 @@ test('an outcome carried with a cook comes back whole, or not at all', () => {
   assert.equal(restoreOutcome(partial), null);
 });
 
-test('playing safe: from one yolk in five, the larger risk, a tie to the firm-safe side', () => {
-  const both = { firmerLevel: 0.69, softerLevel: 0.1 };
-  // A fresh install at jammy: soft 0.38, firm 0.41. The firm risk is larger.
-  assert.deepEqual(playSafe(outcome({ pTooSoft: 0.38, pTooFirm: 0.41 }), both, 0.41),
-    { key: 'outcome.safe.soft', level: 0.1, word: 'doneness.runny' });
-  assert.deepEqual(playSafe(outcome({ pTooSoft: 0.41, pTooFirm: 0.38 }), both, 0.41),
-    { key: 'outcome.safe.firm', level: 0.69, word: 'doneness.fudgy' });
-  // A tie goes to the firm-safe side: an underdone egg is the worse failure.
-  assert.equal(playSafe(outcome({ pTooSoft: 0.3, pTooFirm: 0.3 }), both, 0.41)?.key, 'outcome.safe.firm');
-  // Under one in five, nothing; at it, something.
-  assert.equal(playSafe(outcome({ pTooSoft: SAFE_RISK - 1e-9, pTooFirm: 0.1 }), both, 0.41), null);
-  assert.equal(playSafe(outcome({ pTooSoft: SAFE_RISK, pTooFirm: 0.1 }), both, 0.41)?.key, 'outcome.safe.firm');
-  assert.equal(playSafeWanted(outcome({ pTooSoft: 0.19, pTooFirm: 0.19 })), false);
-  assert.equal(playSafeWanted(outcome({ pTooSoft: 0.1, pTooFirm: SAFE_RISK })), true);
-  // The larger risk has no level to offer: the other side's, if it is a risk.
-  assert.equal(playSafe(outcome({ pTooSoft: 0.4, pTooFirm: 0.25 }), { firmerLevel: null, softerLevel: 0.3 }, 0.41)?.key,
-    'outcome.safe.soft');
-  assert.equal(playSafe(outcome({ pTooSoft: 0.4, pTooFirm: 0.1 }), { firmerLevel: null, softerLevel: 0.3 }, 0.41), null);
-});
-
-test('playing safe: the word is the nearest doneness, or "a little" when that is the word on screen', () => {
-  assert.equal(playSafe(outcome({ pTooSoft: 0.3 }), { firmerLevel: 0.49, softerLevel: null }, 0.41)?.word,
-    'outcome.safe.firmer');
-  assert.equal(playSafe(outcome({ pTooFirm: 0.3 }), { firmerLevel: null, softerLevel: 0.34 }, 0.41)?.word,
-    'outcome.safe.softer');
-  assert.equal(playSafe(outcome({ pTooSoft: 0.3 }), { firmerLevel: 0.52, softerLevel: null }, 0.41)?.word,
-    'doneness.fudgy');
-  for (const key of ['outcome.safe.firm', 'outcome.safe.soft', 'outcome.safe.firmer', 'outcome.safe.softer',
-    'outcome.info', 'outcome.bracket', 'outcome.why', 'outcome.learning']) {
+test('the direction\'s (i) and what it opens are in the catalogue, and the suggestion is not', () => {
+  for (const key of ['outcome.info', 'outcome.bracket', 'outcome.why', 'outcome.learning']) {
     assert.ok(key in MESSAGES, key);
+  }
+  for (const key of ['outcome.safe.firm', 'outcome.safe.soft', 'outcome.safe.firmer', 'outcome.safe.softer']) {
+    assert.ok(!(key in MESSAGES), `${key} is retired`);
   }
 });

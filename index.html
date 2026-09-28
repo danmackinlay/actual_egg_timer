@@ -81,14 +81,21 @@
     <!-- Which way the egg is likely to miss (src/ui/outcome.ts), with one
          (i) at its end: what the bracket under the slider means and how to
          play safe with it, why it starts wide, and what I learn from.
-         Then, when one way of missing is a real risk, a button that moves
-         the slider to the level that plays safe, and a line when a runny
-         white is a real risk. Filled once the choice is made; the direction
-         keeps its line's height until then, so nothing jumps when it lands. -->
+         Then a line when a runny white is a real risk. Filled once the
+         choice is made; the direction keeps its line's height until then, so
+         nothing jumps when it lands. -->
     <p id="direction"><span class="direction__line"><span id="directionText"></span><button type="button" id="oddsInfo" class="info" aria-expanded="false" aria-controls="oddsWhy" data-name="outcome.info" hidden></button></span></p>
-    <p id="playSafeLine" hidden><button type="button" id="playSafe" class="playsafe"></button></p>
     <div id="oddsWhy" class="disclosed" hidden><p data-copy="outcome.bracket"></p><p data-copy="outcome.why"></p><p data-copy="outcome.learning"></p></div>
     <p id="whiteRisk" data-copy="outcome.whiteRunny" hidden></p>
+  </section>
+
+  <!-- While a cook runs, the cook in the pan (src/ui/app.ts,
+       renderCookSetup): the setup sentence it was started with, as plain
+       prose with nothing to tap, and under it the doneness and the peak
+       yolk. From the cook's ticket, not the controls, which are put away. -->
+  <section id="cookSetup" hidden>
+    <p id="cookSentence"></p>
+    <p id="cookDoneness"></p>
   </section>
 
   <!-- ----------------------------------------------------------- the egg -->
@@ -99,7 +106,14 @@
   <form id="controls" autocomplete="off">
 
     <div class="field field--slider">
-      <label for="doneness" id="donenessLabel" data-copy="controls.doneness"></label>
+      <!-- The heading: the control's name, and at its end the peak yolk the
+           level asks for (or, in sous-vide, the water's temperature). The
+           slider's aria-valuetext says the doneness word with it, so the
+           number is hidden here rather than read twice. -->
+      <div class="slider__head">
+        <label for="doneness" id="donenessLabel" data-copy="controls.doneness"></label>
+        <span id="donenessPeak" aria-hidden="true"></span>
+      </div>
       <div class="slider">
         <div class="slider__track" aria-hidden="true">
           <!-- The odds at each level, relative to the best level's: the
@@ -116,10 +130,9 @@
              middle, under the thumb and clear of the odds shading on the
              track above. Drawn for the eye; #donenessRange says it in words. -->
         <div class="slider__range" aria-hidden="true"><div class="slider__bracket" id="donenessBracket" hidden><div class="slider__median" id="donenessMedian"></div></div></div>
-        <input type="range" id="doneness" value="0.41" aria-describedby="donenessValue donenessRange">
+        <input type="range" id="doneness" value="0.41" aria-describedby="donenessRange">
         <div class="slider__ticks" id="donenessTicks" aria-hidden="true"></div>
       </div>
-      <p class="value" id="donenessValue"></p>
       <span class="sr-only" id="donenessRange"></span>
       <p class="value value--note" id="note"></p>
     </div>
