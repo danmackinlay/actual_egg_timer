@@ -104,15 +104,14 @@ struct ReachConformance {
         }
     }
 
-    /// One test per profile, so the three run side by side: a profile is a
-    /// couple of dozen solves, slow in a debug build.
-    @Test("the odds at every level, the range, and the shading", arguments: [0, 1, 2])
-    func profile(_ i: Int) {
+    /// Every profile in the fixture. The package builds `-O` even for tests,
+    /// so a profile's couple of dozen solves are quick.
+    @Test("the odds at every level, the range, and the shading")
+    func profiles() {
         let byName = posteriors()
         let all = rows(Fixtures.load("reach.json"), "profiles")
-        #expect(all.count == 3)
-        do {
-            let row = all[i]
+        #expect(!all.isEmpty)
+        for (i, row) in all.enumerated() {
             guard let post = byName[row.str("posterior")] else { fatalError("profile \(i): no posterior") }
             let c = Calibration(posterior: post, eggsLogged: Int(row.num("eggsLogged")))
             let egg = Geometry.eggFromMass(object(row, "egg").num("mass_kg"))

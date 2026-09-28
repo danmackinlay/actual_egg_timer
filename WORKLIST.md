@@ -408,7 +408,7 @@ The candidates:
 - It is bound by `safer.test.ts`, 31 s.
 - Moot: §4.2 deletes `safer.test.ts`, which takes the critical path to about 17 s, set by `decide`.
 
-**6.6 Remove index-hardcoded "slow in debug" tests.**
+DONE: **6.6 Remove index-hardcoded "slow in debug" tests.** (`SaferConformance.swift` went with §4.2.)
 - `ReachConformance.swift:90-92` and `SaferConformance.swift:85-93` hard-code `[0,1,2]` and `count == 3`.
 - The package builds `-O` now, so iterate over the fixture instead.
 
