@@ -292,7 +292,7 @@ drag should hold, but that is not checked on a phone.
 Help's "How sure I am" was already written for a direction plus a range;
 its second paragraph now says "7 in 10" and "2 in 10", as the (i) does.
 
-**Playing safe** (built the same day; the `safe` draft in
+**Playing safe** (since removed from both apps, 28 September: section 11. Built the same day; the `safe` draft in
 `tools/copyDraft.ts`, on `ff6c6e9`). The owner said the direction and the
 bracket still did not tell a cook how to err on the side of caution.
 
@@ -555,7 +555,7 @@ thumb's half-width like the track. VoiceOver reads it as `outcome.range` /
 the white never sets, in sous-vide, and once a cook runs. Its room is kept
 while it is hidden, so the words under it do not jump.
 
-**Playing safe** follows the web's rules. `Kitchen.askForSafer` runs after
+**Playing safe** (since removed, section 11) follows the web's rules. `Kitchen.askForSafer` runs after
 every decided answer:
 - **The threshold.** It asks only when a risk is at least 0.2
   (`Direction.safeRisk`) and this pot's odds profile is in.
@@ -621,7 +621,8 @@ is the open tab. Its place moved from under the time to above Cancel.
   no cooling phase there, and iOS never reaches one either, so it is
   effectively dead. It is left for the owner rather than deleted.
 - `cook.method` and `cook.summary`, the note under a running cook, stay.
-  The web has no such line.
+  The web has no such line. (Since section 11 the running cook shows its setup
+  sentence over `cook.summary`, in both apps, and `cook.method` is retired.)
 
 **Debug screens** (`Screenshots.swift`), added to pass A's:
 - `-seedEggs right,right,right`: on a fresh install, eggs written through
@@ -640,3 +641,78 @@ ice, jammy), in the simulator:
 | After three eggs just right | "Probably just right." | about the thumb's width | none |
 | After one egg too soft | "I can't call it yet" (the time rises to 12:09) | as shown | "Try: Fudgy" |
 | That one tapped | the slider moves to Fudgy (12:59) | as shown | none |
+
+## 11. As built (both apps), 28 September 2026: a tighter egg
+
+The owner's three changes, after using the iOS app on a phone. Both apps,
+the same wherever the platform allows. The copy is the `tighten` draft in
+`tools/copyDraft.ts`, on `2c090c9` (LANGUAGE.md section 3).
+
+**The doneness heading carries the peak yolk.** The slider said its word
+twice: on the ticks and again in the reading under them ("Soft · peak yolk
+59 °C"). The heading row now reads "Doneness" at its start and "peak yolk
+59 °C" at its end (`controls.doneness.peak`), in the heading's size and a
+little bolder, in the cook's units. The reading line is gone; the texture
+line under the ticks stays. In sous-vide the end of the heading says
+"water at 63 °C" (`controls.doneness.bath`): what the reading said there,
+less the word. A screen reader still hears both, as the slider's value:
+`controls.doneness.value`, "Soft, peak yolk 59 °C" (or `.valueBath`), now
+an `a11y` string with a comma for the dot. The web's number in the heading
+is `aria-hidden`, and iOS's `accessibilityHidden`, so it is not read twice.
+In 1750 the heading reads "Degree of hardness" and "the yolk at most
+59 °C", on one line at 402 pt.
+
+**No play-safe suggestion.** The owner judged the line ("Rather not risk it
+soft? Try: Jammy") visual noise that says in words what the slider and the
+bracket already show. It is gone from both apps, with everything that
+served it:
+- the web: `#playSafeLine`, `playSafeNow`, `askForSafer`, `onPlaySafe`,
+  the readout's held height while one was on its way, the worker's `safer`
+  job and the `saferLevelsFor` cache, and `playSafe` / `SAFE_RISK` in
+  `src/ui/outcome.ts`;
+- iOS: `playSafeLine` and its hidden placeholder, `Kitchen.askForSafer`,
+  `saferKey`, `playSafe`, `takePlaySafe`, `playSafeWasShown`, the slider's
+  focus hand-off, `DecisionGrids`' safer cache, `PlaySafe` in
+  `Direction.swift`, and the `-uiScreen take-safe` debug scene;
+- the copy: `outcome.safe.firm`, `.soft`, `.firmer`, `.softer` are retired;
+  `outcome.bracket` loses "Or tap the level I suggest…", and Help's
+  `help.odds.p1` and `.aside` lose their sentences about it.
+
+**Core keeps `saferLevels`** (`src/core/reach.ts`, `EggTimerCore`'s
+`Reach.swift`), with `test/safer.test.ts`, `fixtures/safer.json` and the
+Swift `Safer` suite. No screen uses it now. The direction sentence, its
+(i), the bracket and the runny-white line stay as they were. Sections 8 and
+10 describe the suggestion as it was built.
+
+**The sentence stays on screen while a cook runs.** Under the time, where
+the controls were, the setup sentence the cook was started with, so a
+forgetful cook can see what they promised: "76 g eggs at room temperature,
+into cold water and boiled, then an ice bath." Under it, one small
+secondary line with what the sentence does not say: "soft · peak yolk
+59 °C" (`cook.summary`, now both apps', without the mass the sentence
+already has).
+- **From the ticket**, never the controls: the egg (named as its size
+  class's mass when it was a class), where it came from, the start, the
+  heat after the boil and the cooling, in the units the cook was set up in.
+  The web's ticket gains `peakYolk_C` and iOS's `startTemp`, both optional,
+  so a cook saved before them still restores (the web then reads the
+  running cook's solve; iOS reads where the egg came from off its
+  temperature).
+- **Nothing to tap**: plain text, no underlines, no hover, no links, one
+  element to VoiceOver. The idle sentence's face: iOS `.title3` without the
+  clauses' weight; the web a size down, 1.125rem.
+- **Where.** iOS's summary sat under Cancel, below the probe offer, and at
+  Done below the two questions, far down the page; the web has no such place,
+  its action bar being stuck to the bottom. So both put it straight under
+  the time card. On an iPhone 17 the heating screen still shows the
+  sentence, the hint, Full rolling boil, Cancel and the probe offer without
+  scrolling.
+- It replaces iOS's method line and summary: `cook.method` and its five
+  fragments are retired. Sous-vide never runs a cook, so it never shows
+  this.
+
+**Checked**: `npm test`, `npm run validate`, `npm run conformance`; the iOS
+Debug build; screenshots on the iPhone 17 simulator, idle and heating, in
+English and in 1750; the web at 375 px, idle, cooking and after a reload
+mid-cook, with the slider's `aria-valuetext` read back ("Runny, peak yolk
+56 °C").

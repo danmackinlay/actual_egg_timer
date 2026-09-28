@@ -28,20 +28,21 @@
  * screen reader: the bracket under the slider is drawn, and this is what it
  * says. The words stand alone after a colon (LANGUAGE.md section 5).
  *
- * PLAYING SAFE, at the end of the file: the one-tap suggestion under the
- * direction.
+ * There used to be a fourth part here, PLAYING SAFE: a one-tap suggestion
+ * under the direction that moved the slider to core's play-safe level
+ * (`saferLevels`, reach.ts). The owner took it off both screens on 28
+ * September - it said in words what the slider and the bracket already show
+ * - and core keeps `saferLevels`, which no screen calls now.
  */
 
 import { Lean, Outcome, WHITE_RISK } from '../core/outcome.js';
 import { anchorNear } from '../core/policy.js';
-import { SaferLevels } from '../core/reach.js';
 
 /** P(just right) at or above which the yolk is "probably just right". */
 export const DIRECTION_LIKELY = 0.5;
 
-/** P(runny) at or above which the white gets a line of its own: core's, so
- *  the line and a softer play-safe level (`saferLevels`) can never disagree
- *  about what a risky white is. */
+/** P(runny) at or above which the white gets a line of its own: core's, the
+ *  same threshold `saferLevels` holds a softer level to. */
 export { WHITE_RISK };
 
 /** The catalogue key of the direction sentence. */
@@ -89,67 +90,4 @@ export function restoreOutcome(raw: unknown): Outcome | null {
     pTooSoft: o.pTooSoft, pJustRight: o.pJustRight, pTooFirm: o.pTooFirm, pWhiteRunny: o.pWhiteRunny,
     levelLow: o.levelLow, levelMedian: o.levelMedian, levelHigh: o.levelHigh, lean: lean as Lean,
   };
-}
-
-/* ------------------------------------------------------------ playing safe */
-
-/**
- * PLAYING SAFE. The range says where the yolk will probably land; the
- * suggestion says what to do about it. Under the direction, one tap that
- * moves the slider to core's play-safe level (`saferLevels`, reach.ts):
- *
- *  - "Rather not risk it soft? Try: {level}" when the yolk is answered too
- *    soft at least SAFE_RISK of the time and a firmer level gives an egg at
- *    least as firm as the one asked for nine times in ten;
- *  - "Rather not risk it firm? Try: {level}", its mirror.
- *
- * One at most: the one for the larger risk. A tie goes to the firm-safe one,
- * because an underdone egg is the worse failure for most cooks - a yolk a
- * step too firm is still breakfast, and a runny one where a set one was
- * wanted often is not - which is also why the decision weighs a runny white
- * three times a yolk miss. SAFE_RISK is one egg in five, the white's line's
- * threshold: a risk the cook would notice within a week of eggs.
- *
- * {level} is the doneness word nearest the suggested level, standing alone
- * after the colon. When that is the word the slider already reads - after a
- * few eggs the move is a few hundredths - it says "A little firmer" or "A
- * little softer" instead, so the button never offers the word on screen.
- */
-
-/** P(too soft) or P(too firm) at or above which a play-safe level is offered. */
-export const SAFE_RISK = 0.2;
-
-export interface PlaySafe {
-  /** The catalogue key of the line. */
-  key: 'outcome.safe.firm' | 'outcome.safe.soft';
-  /** The level a tap moves the slider to. */
-  level: number;
-  /** The catalogue key of the word in {level}. */
-  word: string;
-}
-
-/** Whether either way of missing is risk enough to look for a play-safe
- *  level at all: when neither is, there is nothing to compute. */
-export function playSafeWanted(o: Outcome): boolean {
-  return o.pTooSoft >= SAFE_RISK || o.pTooFirm >= SAFE_RISK;
-}
-
-/** The suggestion for the outcome at `level` and its play-safe levels, or
- *  null when there is none worth making. */
-export function playSafe(o: Outcome, s: SaferLevels, level: number): PlaySafe | null {
-  const firmSafe = s.firmerLevel !== null && o.pTooSoft >= SAFE_RISK;
-  const softSafe = s.softerLevel !== null && o.pTooFirm >= SAFE_RISK;
-  // The larger risk wins; a tie goes to the firm-safe side (see above).
-  if (firmSafe && s.firmerLevel !== null && (!softSafe || o.pTooSoft >= o.pTooFirm)) {
-    return { key: 'outcome.safe.firm', level: s.firmerLevel, word: wordFor(s.firmerLevel, level, 'outcome.safe.firmer') };
-  }
-  if (softSafe && s.softerLevel !== null) {
-    return { key: 'outcome.safe.soft', level: s.softerLevel, word: wordFor(s.softerLevel, level, 'outcome.safe.softer') };
-  }
-  return null;
-}
-
-function wordFor(to: number, from: number, same: string): string {
-  const word = anchorNear(to).key;
-  return word === anchorNear(from).key ? same : word;
 }

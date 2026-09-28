@@ -1015,7 +1015,7 @@
         "doneness": "Jammy",
         "yolk": "149 °F"
       },
-      "text": "Jammy · the yolk at most 149 °F"
+      "text": "Jammy, the yolk at most 149 °F"
     },
     {
       "locale": "en-x-1750",
@@ -1024,7 +1024,23 @@
         "doneness": "Jammy",
         "bath": "136 °F"
       },
-      "text": "Jammy · the water at 136 °F"
+      "text": "Jammy, the water at 136 °F"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "controls.doneness.peak",
+      "args": {
+        "yolk": "149 °F"
+      },
+      "text": "the yolk at most 149 °F"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "controls.doneness.bath",
+      "args": {
+        "bath": "136 °F"
+      },
+      "text": "the water at 136 °F"
     },
     {
       "locale": "en-x-1750",
@@ -1409,13 +1425,13 @@
       "locale": "en-x-1750",
       "key": "help.odds.p1",
       "args": {},
-      "text": "Under the time, I say which way an egg is likely to miss. The bracket under the slider shews where the yolk will probably fall. When a miss is likely enough to signify, I propose a degree that plays safe, one tap away, and never one where the white may be unset. All of it grows narrower as I learn; for knowledge is, in great part, only errour diminished."
+      "text": "Under the time, I say which way an egg is likely to miss. The bracket under the slider shews where the yolk will probably fall. All of it grows narrower as I learn; for knowledge is, in great part, only errour diminished."
     },
     {
       "locale": "en-x-1750",
       "key": "help.odds.aside",
       "args": {},
-      "text": "The bracket comprehends eight eggs in ten. When I choose the time, a white left unset is reckoned three times worse than a yolk a little too firm; I therefore incline somewhat to the longer side. I propose to play safe when either way of missing is at least one egg in five: firmer means nine yolks in ten at least as firm as you asked, and softer the reverse of that, with the danger to the white under one in five. The shading of the slider shews how often each degree comes out right for you."
+      "text": "The bracket comprehends eight eggs in ten. When I choose the time, a white left unset is reckoned three times worse than a yolk a little too firm; I therefore incline somewhat to the longer side. The shading of the slider shews how often each degree comes out right for you."
     },
     {
       "locale": "en-x-1750",
@@ -1771,7 +1787,7 @@
       "locale": "en-x-1750",
       "key": "outcome.bracket",
       "args": {},
-      "text": "The bracket under the slider is where I expect your yolk to fall. If a soft yolk would vex you more than a firm one, slide to the right, till the left end of the bracket rests where you would still be content; if a firm one would, slide to the left, till its right end does. Or tap the degree I propose, when I propose one."
+      "text": "The bracket under the slider is where I expect your yolk to fall. If a soft yolk would vex you more than a firm one, slide to the right, till the left end of the bracket rests where you would still be content; if a firm one would, slide to the left, till its right end does."
     },
     {
       "locale": "en-x-1750",
@@ -1784,34 +1800,6 @@
       "key": "outcome.learning",
       "args": {},
       "text": "I learn your taste in yolks from what you say of them, the setting of your whites from the second question, how fast heat enters your eggs from both, and how long your water takes to boil when you tap the boil. Answer both questions after every egg; and if you have a probe thermometer, give me a reading, for that is the quickest of teachers."
-    },
-    {
-      "locale": "en-x-1750",
-      "key": "outcome.safe.firm",
-      "args": {
-        "level": "Fudgy"
-      },
-      "text": "Would you not hazard it soft? Try: Fudgy"
-    },
-    {
-      "locale": "en-x-1750",
-      "key": "outcome.safe.soft",
-      "args": {
-        "level": "Soft"
-      },
-      "text": "Would you not hazard it firm? Try: Soft"
-    },
-    {
-      "locale": "en-x-1750",
-      "key": "outcome.safe.firmer",
-      "args": {},
-      "text": "Somewhat firmer"
-    },
-    {
-      "locale": "en-x-1750",
-      "key": "outcome.safe.softer",
-      "args": {},
-      "text": "Somewhat softer"
     },
     {
       "locale": "en-x-1750",
@@ -2140,50 +2128,10 @@
       "locale": "en-x-1750",
       "key": "cook.summary",
       "args": {
-        "mass": "2.4 oz",
         "doneness": "jammy",
         "yolk": "149 °F"
       },
-      "text": "2.4 oz · jammy · the yolk rising to 149 °F"
-    },
-    {
-      "locale": "en-x-1750",
-      "key": "cook.method",
-      "args": {
-        "start": "Cold water",
-        "after": "ice bath"
-      },
-      "text": "Cold water · and then ice bath"
-    },
-    {
-      "locale": "en-x-1750",
-      "key": "cook.method.cold",
-      "args": {},
-      "text": "Set in cold water"
-    },
-    {
-      "locale": "en-x-1750",
-      "key": "cook.method.hot",
-      "args": {},
-      "text": "Put into boiling water"
-    },
-    {
-      "locale": "en-x-1750",
-      "key": "cook.method.ice",
-      "args": {},
-      "text": "iced water"
-    },
-    {
-      "locale": "en-x-1750",
-      "key": "cook.method.tap",
-      "args": {},
-      "text": "a cold tap"
-    },
-    {
-      "locale": "en-x-1750",
-      "key": "cook.method.counter",
-      "args": {},
-      "text": "laid upon the table"
+      "text": "jammy · the yolk rising to 149 °F"
     },
     {
       "locale": "en-x-1750",
@@ -3943,7 +3891,7 @@
         "doneness": "Jammy",
         "yolk": "149 °F"
       },
-      "text": "Jammy · peak yolk 149 °F"
+      "text": "Jammy, peak yolk 149 °F"
     },
     {
       "locale": "en",
@@ -3952,7 +3900,23 @@
         "doneness": "Jammy",
         "bath": "136 °F"
       },
-      "text": "Jammy · water at 136 °F"
+      "text": "Jammy, water at 136 °F"
+    },
+    {
+      "locale": "en",
+      "key": "controls.doneness.peak",
+      "args": {
+        "yolk": "149 °F"
+      },
+      "text": "peak yolk 149 °F"
+    },
+    {
+      "locale": "en",
+      "key": "controls.doneness.bath",
+      "args": {
+        "bath": "136 °F"
+      },
+      "text": "water at 136 °F"
     },
     {
       "locale": "en",
@@ -4337,13 +4301,13 @@
       "locale": "en",
       "key": "help.odds.p1",
       "args": {},
-      "text": "Under the time, I say which way an egg is likely to miss. The bracket under the slider shows where the yolk will probably land. When a miss is likely enough to matter, I suggest a level that plays safe, one tap away, and never one where the white might be runny. All of it narrows as I learn."
+      "text": "Under the time, I say which way an egg is likely to miss. The bracket under the slider shows where the yolk will probably land. All of it narrows as I learn."
     },
     {
       "locale": "en",
       "key": "help.odds.aside",
       "args": {},
-      "text": "The bracket covers eight eggs in ten. When I choose the time, a runny white counts three times as bad as a yolk a little too firm, so I lean slightly long. I suggest playing safe when either way of missing is at least one egg in five: firmer means nine yolks in ten at least as firm as you asked, and softer the mirror of that, with the white's risk under one in five. The slider's shading shows how often each doneness comes out right for you."
+      "text": "The bracket covers eight eggs in ten. When I choose the time, a runny white counts three times as bad as a yolk a little too firm, so I lean slightly long. The slider's shading shows how often each doneness comes out right for you."
     },
     {
       "locale": "en",
@@ -4699,7 +4663,7 @@
       "locale": "en",
       "key": "outcome.bracket",
       "args": {},
-      "text": "The bracket under the doneness slider is where I expect your yolk to land. If a soft yolk would bother you more than a firm one, slide right until the bracket's left end is somewhere you'd still be happy; if a firm one would, slide left until its right end is. Or tap the level I suggest, when I suggest one."
+      "text": "The bracket under the doneness slider is where I expect your yolk to land. If a soft yolk would bother you more than a firm one, slide right until the bracket's left end is somewhere you'd still be happy; if a firm one would, slide left until its right end is."
     },
     {
       "locale": "en",
@@ -4712,34 +4676,6 @@
       "key": "outcome.learning",
       "args": {},
       "text": "I learn your taste in yolks from how you say they came out, how your whites set from the second question, how fast heat gets into your eggs from both, and how long your water takes to boil when you tap the boil. Answer both questions after each egg, and if you have a probe thermometer, give me a reading: that is the quickest teacher."
-    },
-    {
-      "locale": "en",
-      "key": "outcome.safe.firm",
-      "args": {
-        "level": "Fudgy"
-      },
-      "text": "Rather not risk it soft? Try: Fudgy"
-    },
-    {
-      "locale": "en",
-      "key": "outcome.safe.soft",
-      "args": {
-        "level": "Soft"
-      },
-      "text": "Rather not risk it firm? Try: Soft"
-    },
-    {
-      "locale": "en",
-      "key": "outcome.safe.firmer",
-      "args": {},
-      "text": "A little firmer"
-    },
-    {
-      "locale": "en",
-      "key": "outcome.safe.softer",
-      "args": {},
-      "text": "A little softer"
     },
     {
       "locale": "en",
@@ -5068,50 +5004,10 @@
       "locale": "en",
       "key": "cook.summary",
       "args": {
-        "mass": "2.4 oz",
         "doneness": "jammy",
         "yolk": "149 °F"
       },
-      "text": "2.4 oz · jammy · peak yolk 149 °F"
-    },
-    {
-      "locale": "en",
-      "key": "cook.method",
-      "args": {
-        "start": "Cold water",
-        "after": "ice bath"
-      },
-      "text": "Cold water · then ice bath"
-    },
-    {
-      "locale": "en",
-      "key": "cook.method.cold",
-      "args": {},
-      "text": "Cold water"
-    },
-    {
-      "locale": "en",
-      "key": "cook.method.hot",
-      "args": {},
-      "text": "Boiling water"
-    },
-    {
-      "locale": "en",
-      "key": "cook.method.ice",
-      "args": {},
-      "text": "ice bath"
-    },
-    {
-      "locale": "en",
-      "key": "cook.method.tap",
-      "args": {},
-      "text": "cold tap"
-    },
-    {
-      "locale": "en",
-      "key": "cook.method.counter",
-      "args": {},
-      "text": "rest on the counter"
+      "text": "jammy · peak yolk 149 °F"
     },
     {
       "locale": "en",

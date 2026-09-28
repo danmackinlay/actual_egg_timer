@@ -37,9 +37,6 @@ struct ContentView: View {
     /// Half the slider's thumb, pt, as the slider reports it: where the track,
     /// the bracket and the doneness words are inset to.
     @State private var thumbInset: CGFloat = 14
-    /// VoiceOver's focus on the slider, where a tap on the play-safe
-    /// suggestion sends it once the suggestion has gone.
-    @AccessibilityFocusState private var sliderFocused: Bool
     /// Whether the direction's (i) is open.
     @State private var directionInfoOpen = false
 
@@ -69,6 +66,11 @@ struct ContentView: View {
                     if outerPhase == .idle {
                         donenessControl
                         setup
+                    } else if let ticket = cook.ticket {
+                        // The cook in the pan, where the controls were: the
+                        // first thing under the time, and never pushed down
+                        // by the probe offer or the two questions at Done.
+                        CookSentence(ticket: ticket, kitchen: kitchen)
                     }
                     TimelineView(.periodic(from: .now, by: 1)) { context in
                         let phase = cook.phase(at: context.date)
@@ -83,7 +85,6 @@ struct ContentView: View {
                             if phase == .done { feedback }
                         }
                     }
-                    if outerPhase != .idle { cookNote }
                 }
                 .padding(20)
             }
@@ -150,7 +151,6 @@ struct ContentView: View {
         case "help": path = [.help(nil)]
         case "help-reliable": path = [.help(.reliable)]
         case "direction-info": directionInfoOpen = true
-        case "take-safe": kitchen.takeFirstPlaySafe = true
         case "heating":
             guard cook.phase == .idle else { return }
             starting = true
@@ -255,18 +255,20 @@ struct ContentView: View {
 
     /// The direction's slot, beneath the time (UI.md section 8, the web's
     /// `renderOdds`): which way the egg is likely to miss, with one (i), "How
-    /// sure I am", at its end; while idle, when a miss one way is a real risk,
-    /// a one-tap way to play safe; what the (i) opens; and a line when a runny
+    /// sure I am", at its end; what the (i) opens; and a line when a runny
     /// white is a real risk.
     ///
     /// While idle it is the choice on screen's, and blank until this pot's
     /// surface lands. The sentence holds two lines, the most any of them
-    /// takes, so a drag that changes it does not move the slider, and the
-    /// suggestion's line keeps its height while the next one is on its way.
-    /// Once a cook is running the direction and the white's line are what
-    /// they were at "Eggs in"; the (i), which is about the slider, and the
-    /// suggestion, which moves it, go with the slider. Never where the white
-    /// never sets: there is no cook to say anything about.
+    /// takes, so a drag that changes it does not move the slider. Once a cook
+    /// is running the direction and the white's line are what they were at
+    /// "Eggs in"; the (i), which is about the slider, goes with the slider.
+    /// Never where the white never sets: there is no cook to say anything
+    /// about.
+    ///
+    /// The one-tap play-safe suggestion under it is gone (owner, 28
+    /// September): it said in words what the slider and the bracket already
+    /// show.
     ///
     /// "I'm still learning" is not a line of its own, as on the web: beside
     /// "I can't call it yet" it said the same thing twice. What it opened is
@@ -289,7 +291,6 @@ struct ContentView: View {
                     InfoButton(expanded: $directionInfoOpen, name: tr("outcome.info"))
                 }
             }
-            if idle { playSafeLine }
             if idle && o != nil && directionInfoOpen {
                 MoreText([tr("outcome.bracket"), tr("outcome.why"), tr("outcome.learning")])
                     .padding(.top, 4)
@@ -314,44 +315,6 @@ struct ContentView: View {
             return kitchen.outcome
         }
         return cook.ticket?.forecast
-    }
-
-    /// The play-safe suggestion (the web's `outcome.safe.*`): a button drawn
-    /// as the low-odds link is, underlined in the accent, the arrow drawn so
-    /// VoiceOver hears the words and not "right arrow". A tap moves the slider
-    /// to its level, as a drag there would; the line then goes, so VoiceOver
-    /// goes to the slider it moved. While the next one is on its way, its
-    /// room is kept if it was there.
-    @ViewBuilder
-    private var playSafeLine: some View {
-        let safe = kitchen.playSafe
-        if let s = safe.suggestion {
-            playSafeButton(s)
-        } else if (kitchen.decision == nil || safe.pending) && kitchen.playSafeWasShown {
-            playSafeButton(PlaySafe(key: "outcome.safe.firm", level: 0, word: "outcome.safe.firmer"))
-                .hidden()
-                .accessibilityHidden(true)
-        }
-    }
-
-    private func playSafeButton(_ s: PlaySafe) -> some View {
-        Button {
-            kitchen.takePlaySafe(s)
-            sliderFocused = true
-        } label: {
-            HStack(spacing: 6) {
-                Text(s.text)
-                    .underline(true, color: Palette.accent)
-                Image(systemName: "arrow.right")
-                    .accessibilityHidden(true)
-            }
-            .font(.subheadline.weight(.semibold))
-            .foregroundStyle(.primary)
-            .frame(minHeight: 44)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel(s.text)
     }
 
     private func phaseLabel(_ phase: Cook.Phase) -> String {
@@ -482,6 +445,7 @@ struct ContentView: View {
             setup: kitchen.setup,
             massFrom: kitchen.massFrom,
             sizeTable: kitchen.sizeTable,
+            startTemp: kitchen.startTemp,
             boilRemembered: kitchen.hasBoilMemory,
             units: kitchen.units,
             lang: Copy.activeLocale,
@@ -657,43 +621,6 @@ struct ContentView: View {
                 .frame(maxWidth: .infinity)
             }
         }
-    }
-
-    /// What is in the pan, once the controls are gone.
-    @ViewBuilder
-    private var cookNote: some View {
-        if let ticket = cook.ticket {
-            VStack(spacing: 4) {
-                // The method, stated rather than implied. "Keep it boiling" is
-                // an instruction to the hob and says nothing about whether the
-                // egg went into cold water or boiling, which is the one thing
-                // you cannot check once the controls are gone.
-                Text(methodLine(ticket))
-                    .font(.footnote.weight(.medium))
-                // In the system the egg was set up in, which the controls
-                // cannot have changed since.
-                Text(tr("cook.summary", [
-                    "mass": .text(showIn(ticket.units ?? kitchen.units, .mass, ticket.eggGrams)),
-                    "doneness": .text(ticket.doneness.lowercased()),
-                    "yolk": .text(showIn(ticket.units ?? kitchen.units, .temperature, ticket.peakYolkC)),
-                ]))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            .multilineTextAlignment(.center)
-            .frame(maxWidth: .infinity)
-        }
-    }
-
-    private func methodLine(_ ticket: Cook.Ticket) -> String {
-        let start = tr(ticket.coldStart ? "cook.method.cold" : "cook.method.hot")
-        let after: String
-        switch ticket.cooling {
-        case .ice: after = tr("cook.method.ice")
-        case .tap: after = tr("cook.method.tap")
-        case .counter: after = tr("cook.method.counter")
-        }
-        return tr("cook.method", ["start": .text(start), "after": .text(after)])
     }
 
     // MARK: - The thermometer (E4)
@@ -912,14 +839,25 @@ struct ContentView: View {
 
     // MARK: - The egg's two controls and its sentence
 
-    /// The doneness slider, shaded by the odds, its five words under it, and
-    /// its reading: the doneness and the peak yolk it asks for, or, in a bath,
-    /// which bath - there is no peak there.
+    /// The doneness slider: its heading, with the peak yolk the level asks for
+    /// at its end (in sous-vide, the water's temperature - there is no peak
+    /// there); the track shaded by the odds; the five words under it; and the
+    /// texture. The doneness word is on the ticks, so it is not drawn again;
+    /// VoiceOver hears it with the temperature as the slider's value.
     private var donenessControl: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(tr("controls.doneness"))
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+            HStack(alignment: .firstTextBaseline, spacing: 12) {
+                Text(tr("controls.doneness"))
+                    .foregroundStyle(.secondary)
+                Spacer(minLength: 0)
+                Text(donenessPeak)
+                    .fontWeight(.semibold)
+                    .monospacedDigit()
+                    .multilineTextAlignment(.trailing)
+                    // The slider's value says it, with the word.
+                    .accessibilityHidden(true)
+            }
+            .font(.subheadline)
             // One track, the yolk's: the system's thumb on no track of its
             // own, over the odds in the yolk's colour and what this pan cannot
             // deliver (OddsTrack), inset by half a thumb so a level sits under
@@ -930,9 +868,8 @@ struct ContentView: View {
                     .padding(.horizontal, thumbInset)
                 YolkSlider(
                     value: $kitchen.doneness, range: Limits.doneness, step: 0.01,
-                    label: tr("controls.doneness"), valueText: kitchen.label, inset: $thumbInset
+                    label: tr("controls.doneness"), valueText: donenessValue, inset: $thumbInset
                 )
-                .accessibilityFocused($sliderFocused)
             }
             // Where the yolk will probably land, under the track.
             // Its room is kept while it is away, so the words under it do not
@@ -947,9 +884,6 @@ struct ContentView: View {
             .padding(.horizontal, thumbInset)
             .padding(.top, -4)
             ticks
-            Text(donenessValue)
-                .font(.subheadline.weight(.semibold))
-                .padding(.top, 2)
             let note = donenessNote
             if !note.isEmpty {
                 Text(note)
@@ -994,6 +928,17 @@ struct ContentView: View {
         return kitchen.outcome
     }
 
+    /// At the end of the slider's heading: the peak yolk the level asks for,
+    /// or in sous-vide the water's temperature.
+    private var donenessPeak: String {
+        if kitchen.isSousVide {
+            return tr("controls.doneness.bath", ["bath": .text(kitchen.show(.temperature, sousVideBathC))])
+        }
+        let yolk = kitchen.solution?.result.peakYolkC ?? targetPeakYolkC(kitchen.doneness)
+        return tr("controls.doneness.peak", ["yolk": .text(kitchen.show(.temperature, yolk))])
+    }
+
+    /// The slider's value to VoiceOver: the doneness word and the temperature.
     private var donenessValue: String {
         if kitchen.isSousVide {
             return tr("controls.doneness.valueBath", [
