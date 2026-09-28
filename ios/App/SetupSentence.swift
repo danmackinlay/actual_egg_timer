@@ -3,11 +3,6 @@ import EggTimerCore
 import EggTimerCopy
 
 /// A clause of the setup sentence: each opens its own choice.
-enum Clause: String, CaseIterable, Identifiable {
-    case egg, from, start, cooling
-    var id: String { rawValue }
-}
-
 /// The setup as one line of prose, each clause of it tappable (UI.md section
 /// 2; the web's `renderSentence`):
 ///
@@ -180,39 +175,28 @@ func clauseTexts(_ kitchen: Kitchen) -> [Clause: ClauseText] {
     clauseTexts(SetupFacts(kitchen))
 }
 
-/// The web's `clauseTexts`, word for word.
+/// The clauses' words: core's `clauseKeys`, with this app's arguments. The
+/// web's `clauseTexts`.
 func clauseTexts(_ f: SetupFacts) -> [Clause: ClauseText] {
-    let mass = f.mass
-    let custom = showIn(f.units, .eggTemp, f.customC)
-    let bath = showIn(f.units, .temperature, sousVideBathC)
-
-    let from: (String, String) = switch f.from {
-    case .fridge: (tr("setup.from.fridge"), tr("controls.eggFrom.fridge"))
-    case .room: (tr("setup.from.room"), tr("controls.eggFrom.room"))
-    case .custom: (tr("setup.from.custom", ["temp": .text(custom)]), custom)
-    }
-    // The start clause carries the boil, and the standing when the heat goes
-    // off: "into cold water" alone reads as if the eggs never boil.
-    let standing = f.heatOff
-    let start: (String, String) = switch f.start {
-    case .cold: (tr(standing ? "setup.start.coldStanding" : "setup.start.cold"), tr("controls.start.cold"))
-    case .hot: (tr(standing ? "setup.start.hotStanding" : "setup.start.hot"), tr("controls.start.hot"))
-    case .sousVide: (
-        tr("setup.start.sous", ["bath": .text(bath)]),
-        tr("controls.start.sousVide", ["bath": .text(bath)])
-    )
-    }
-    let cooling: (String, String) = switch f.cooling {
-    case .ice: (tr("setup.cooling.ice"), tr("controls.then.ice"))
-    case .tap: (tr("setup.cooling.tap"), tr("controls.then.tap"))
-    case .counter: (tr("setup.cooling.counter"), tr("controls.then.counter"))
-    }
-    return [
-        .egg: ClauseText(text: tr("setup.egg", ["mass": .text(mass)]), label: tr("controls.egg"), value: mass),
-        .from: ClauseText(text: from.0, label: tr("controls.eggFrom"), value: from.1),
-        .start: ClauseText(text: start.0, label: tr("controls.start"), value: start.1),
-        .cooling: ClauseText(text: cooling.0, label: tr("controls.cooling"), value: cooling.1),
+    let args: CopyArgs = [
+        "mass": .text(f.mass),
+        "temp": .text(showIn(f.units, .eggTemp, f.customC)),
+        "bath": .text(showIn(f.units, .temperature, sousVideBathC)),
     ]
+    let keys = clauseKeys(ClauseFacts(
+        eggFrom: f.from, startMode: f.start == .cold ? .cold : .hot, sousVide: f.start == .sousVide,
+        afterBoil: f.heatOff ? .off : .hold, cooling: f.cooling
+    ))
+    /// A nil value is the argument itself: the mass, or the cook's own
+    /// temperature.
+    let own: [Clause: String] = [.egg: f.mass, .from: showIn(f.units, .eggTemp, f.customC)]
+    return keys.reduce(into: [:]) { out, entry in
+        let (clause, k) = entry
+        out[clause] = ClauseText(
+            text: tr(k.text, args), label: tr(k.label),
+            value: k.value.map { tr($0, args) } ?? own[clause] ?? ""
+        )
+    }
 }
 
 // MARK: - The cook in the pan

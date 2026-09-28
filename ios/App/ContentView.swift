@@ -317,19 +317,23 @@ struct ContentView: View {
         return cook.ticket?.forecast
     }
 
+    /// Which words the readout says in a phase: core's `phaseKeys`, from the
+    /// cook's ticket while one runs and from the controls while idle.
+    private func keys(_ phase: Phase) -> PhaseKeys {
+        let setup = cook.ticket?.setup
+        return phaseKeys(PhaseFacts(
+            phase: phase,
+            startMode: setup?.startMode ?? (kitchen.coldStart ? .cold : .hot),
+            afterBoil: setup?.afterBoil ?? (kitchen.heatOff ? .off : .hold),
+            cooling: setup?.cooling ?? kitchen.cooling,
+            whiteSets: kitchen.solution?.whiteSets ?? true,
+            boilKnown: kitchen.hasBoilMemory,
+            probeWanted: cook.asksForProbe
+        ))
+    }
+
     private func phaseLabel(_ phase: Phase) -> String {
-        switch phase {
-        case .idle: tr("readout.phase.total")
-        case .heating: tr("readout.phase.heating")
-        case .cooking: tr(kitchen.heatOff ? "readout.phase.cookingHeatOff" : "readout.phase.cookingBoiling")
-        case .pull: tr("readout.phase.pull")
-        case .cooling:
-            // Only a counted cooling gets here: a counter rest has no cooling
-            // deadline (`Cook.setDeadlines`), so it goes from the pull to done.
-            // As on the web, anything not the ice bath is the tap.
-            tr(kitchen.cooling == .ice ? "readout.phase.coolingIce" : "readout.phase.coolingTap")
-        case .done: tr("readout.phase.done")
-        }
+        tr(keys(phase).label)
     }
 
     /// The web's clock face in every phase: the countdown, how late the pull
@@ -345,50 +349,32 @@ struct ContentView: View {
         }
     }
 
+    /// The line under the clock: core's key, with this phase's arguments.
     private func subline(_ phase: Phase, at now: Date) -> String {
-        switch phase {
+        let key = keys(phase).subline
+        return switch phase {
         case .idle:
-            // The web's: on a cold start, the boil it assumes, and whether
-            // that is history or a guess; with the heat off, the water, which
-            // is the most load-bearing number in the cook. The time to boil
-            // plays no part on a hot start, so it is not mentioned.
-            if kitchen.coldStart {
-                tr(kitchen.hasBoilMemory ? "readout.sub.coldAssumes" : "readout.sub.coldGuesses",
-                   ["boil": .text(clockString(kitchen.timeToBoilS))])
-            } else if kitchen.heatOff {
-                tr("readout.sub.standing", ["water": .text(kitchen.show(.water, kitchen.waterLitres))])
-            } else {
-                tr("readout.sub.hot")
-            }
+            tr(key, [
+                "boil": .text(clockString(kitchen.timeToBoilS)),
+                "water": .text(kitchen.show(.water, kitchen.waterLitres)),
+            ])
         case .heating:
-            // The web's: how long it has been heating, and the boil I expect.
-            tr("readout.sub.heating", [
+            tr(key, [
                 "elapsed": .text(clockString(now.timeIntervalSince(cook.startedAt ?? now))),
                 "boil": .text(clockString(cook.assumedBoilS)),
             ])
         case .cooking:
-            // The web's: on a cold start, what the boil took and how long the
-            // egg has cooked since; on a hot start, only that it is in.
-            cook.ticket?.coldStart == true
-                ? tr("readout.sub.cookingCold", [
-                    "boil": .text(clockString(cook.assumedBoilS)),
-                    "after": .text(clockString(cook.secondsAfterBoil)),
-                ])
-                : tr("readout.sub.cookingHot")
-        case .pull:
-            tr("readout.sub.pull")
-        case .cooling:
-            // The countdown ends when the middle of the yolk peaks (E4), which
-            // is also when a probe reading is asked for.
-            tr(cook.asksForProbe ? "readout.sub.coolingProbe" : "readout.sub.coolingPeak")
+            tr(key, [
+                "boil": .text(clockString(cook.assumedBoilS)),
+                "after": .text(clockString(cook.secondsAfterBoil)),
+            ])
         case .done:
-            // The web's: what the clock face above is made of.
-            cook.ticket?.coldStart == true
-                ? tr("readout.sub.doneCold", [
-                    "boil": .text(clockString(cook.assumedBoilS)),
-                    "cooking": .text(clockString(cook.cookSeconds - cook.assumedBoilS)),
-                ])
-                : tr("readout.sub.doneHot")
+            tr(key, [
+                "boil": .text(clockString(cook.assumedBoilS)),
+                "cooking": .text(clockString(cook.cookSeconds - cook.assumedBoilS)),
+            ])
+        case .pull, .cooling:
+            tr(key)
         }
     }
 
@@ -493,7 +479,7 @@ struct ContentView: View {
                     starting = true
                     Task { await startCook() }
                 } label: {
-                    Text(tr(kitchen.coldStart ? "action.startHeating" : "action.eggsIn"))
+                    Text(tr(keys(.idle).action ?? "action.eggsIn"))
                         .frame(maxWidth: .infinity)
                         .onAccent()
                 }
@@ -511,7 +497,7 @@ struct ContentView: View {
                     more: [tr("action.hint.heating.more")],
                     alignment: .center
                 ) {
-                    Text(tr(kitchen.heatOff ? "action.hint.heatingStanding" : "action.hint.heating"))
+                    Text(keys(.heating).hint.map { tr($0) } ?? "")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
@@ -525,7 +511,7 @@ struct ContentView: View {
                         }
                     }
                 } label: {
-                    Text(tr("action.fullBoil")).frame(maxWidth: .infinity).onAccent()
+                    Text(tr(keys(.heating).action ?? "action.fullBoil")).frame(maxWidth: .infinity).onAccent()
                 }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
@@ -543,9 +529,9 @@ struct ContentView: View {
                 // The web's hint: when the cooling starts on its own. Not on
                 // the counter, where the grace runs out into Done and the line
                 // under the time already says the yolk is still cooking.
-                if (cook.ticket?.cooling ?? kitchen.cooling) != .counter, let pullAt = cook.pullAt {
+                if let hint = keys(.pull).hint, let pullAt = cook.pullAt {
                     let left = max(0, (pullGraceSeconds - now.timeIntervalSince(pullAt)).rounded(.up))
-                    Text(tr("action.hint.pull", ["seconds": .int(Int(left))]))
+                    Text(tr(hint, ["seconds": .int(Int(left))]))
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
@@ -557,7 +543,7 @@ struct ContentView: View {
                 Button {
                     cook.pulledOut()
                 } label: {
-                    Text(tr(pulledKey)).frame(maxWidth: .infinity).onAccent()
+                    Text(tr(keys(.pull).action ?? pulledKey(.ice))).frame(maxWidth: .infinity).onAccent()
                 }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
@@ -571,7 +557,7 @@ struct ContentView: View {
             }
 
         case .done:
-            Button(tr("action.startAgain")) {
+            Button(tr(keys(.done).action ?? "action.startAgain")) {
                 // An egg nobody answered about is still logged; it folds nothing.
                 if !cook.feedbackGiven, let egg = cook.eggRecord(yolk: nil) {
                     kitchen.logUnanswered(egg)
@@ -591,11 +577,11 @@ struct ContentView: View {
                 if phase == .cooking {
                     VStack(spacing: 4) {
                         // The web's hint: what the hob must do until the pull.
-                        Text(kitchen.heatOff
-                             ? tr("action.hint.cookingStanding")
-                             : tr("action.hint.cookingBoiling", [
-                                "boiling": .text(kitchen.show(.temperature, kitchen.boilingC)),
-                             ]))
+                        Text(keys(.cooking).hint.map {
+                            tr($0, ["boiling": .text(kitchen.show(
+                                .temperature, cook.ticket?.setup.boilingC ?? kitchen.boilingC
+                            ))])
+                        } ?? "")
                         // Whether the alarm is really set: iOS's own line,
                         // since the web's alarm is the open tab.
                         Text(alarmLine)
@@ -703,15 +689,6 @@ struct ContentView: View {
         guard let probe = cook.probeReading(centreC: reading) else { return }
         probeNote = kitchen.show(.probeTemp, reading)
         answer(yolk: nil, white: nil, probe: probe)
-    }
-
-    /// What the pull button says, by where the eggs are going.
-    private var pulledKey: String {
-        switch cook.ticket?.cooling ?? kitchen.cooling {
-        case .ice: "action.pulled.ice"
-        case .tap: "action.pulled.tap"
-        case .counter: "action.pulled.counter"
-        }
     }
 
     // MARK: - Learning from the egg
@@ -1016,10 +993,7 @@ struct ContentView: View {
     /// What Start is about to ask of the cook, above the button.
     private var idleHint: String {
         guard let solution = kitchen.solution else { return " " }
-        guard solution.whiteSets else { return tr("action.hint.whiteNeverSets") }
-        if kitchen.coldStart { return tr("action.hint.cold") }
-        if kitchen.heatOff { return tr("action.hint.hotStanding") }
-        return tr("action.hint.hotBoiling", ["time": .text(clockString(solution.result.cookTimeS))])
+        return keys(.idle).hint.map { tr($0, ["time": .text(clockString(solution.result.cookTimeS))]) } ?? " "
     }
 }
 

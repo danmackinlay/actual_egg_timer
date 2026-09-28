@@ -108,7 +108,7 @@ DONE: **3.1 The solve → refusal → snap-and-retry rule is written three times
 - Where: `app.ts:503-523` (`answerFor`), `Kitchen.swift:565-594` (`solve`), and `tools/decide.ts:70-79` (`meanSolve`, which also skips the odds profile).
 - Fix: add a core `answerAt(c, egg, setup, level, profile, snapRetry) → {solution, verdict, level}`, pin it in `reach.json`, and have all three call it.
 
-**3.2 Which refusal and phase text to show is chosen separately in each app.**
+DONE: **3.2 Which refusal and phase text to show is chosen separately in each app.** (All five in `src/core/wording.ts` / `Wording.swift`, fixtured in `wording.json`. Phase keys return plain key strings, not `CopyRef`: their arguments are clocks and quantities only the app renders. iOS now reads the ticket's pot for the cooking label, heating hint and cooling label, where it read live controls.)
 - Duplicated key selection:
   - `refusalText`: `Kitchen.swift:1025-1063` vs `app.ts:458-480`
   - `Direction.key` and `whiteAtRisk`: `Direction.swift:37-58` vs `src/ui/outcome.ts:42-58` ("word for word", unfixtured)

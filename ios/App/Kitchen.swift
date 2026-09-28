@@ -976,51 +976,14 @@ actor DecisionGrids {
 
 // MARK: - Refusals, in words
 
-/// The refusal, in words.
-///
-/// The DECISION - which refusal applies, where the slider must move to, and
-/// whether the gap is big enough to be worth a sentence at all - is
-/// `verdictFor` in EggTimerCore, so that this app and the web app cannot refuse
-/// differently. What is left here is the sentence, which is this app's own: the
-/// point is to teach the constraint, not merely to block the control.
+/// The refusal, in words. Which refusal, and which words teach it, are core's
+/// (`verdictWithOdds`, `refusalKey`); the arguments are this app's, and they
+/// quote the pan the answer was computed for.
 private func refusalText(_ v: Verdict, setup: CookSetup, water: String) -> String {
-    guard v.worthSaying else { return "" }
-    let limit = midSentence(tr(v.limit.key), locale: Copy.activeLocale)
-
-    switch v.kind {
-    case .none:
-        return ""
-
-    case .whiteNeverSets:
-        // The standing method's worst failure: the water falls past the
-        // temperature the white needs before the white has had it, so there is
-        // no cook here at all - not a soft one, not a hard one.
-        return tr("refusal.whiteNeverSets")
-
-    case .harderThanPanReaches:
-        // The standing method's own failure: the pan cools off before the yolk
-        // gets where it was asked to go, and no amount of waiting fixes it.
-        return tr("refusal.harderThanPan", [
-            "water": .text(water), "limit": .text(limit),
-        ])
-
-    case .tooSoftForWhite:
-        switch setup.cooling {
-        case .counter:
-            return tr("refusal.counter", ["limit": .text(limit)])
-        case .tap:
-            return tr("refusal.tap", ["limit": .text(limit)])
-        case .ice:
-            return tr("refusal.ice", ["limit": .text(limit)])
-        }
-
-    case .unlikelySoft, .unlikelyHard:
-        // The pan could, but the odds say it would rarely come out right
-        // (Reach.swift): the slider's end is the last level at 3/10.
-        return tr(v.kind == .unlikelySoft ? "refusal.unlikelySoft" : "refusal.unlikelyHard", [
-            "hits": .int(Int((reachOdds * 10).rounded())), "of": .int(10), "limit": .text(limit),
-        ])
-    }
+    guard let ref = refusalKey(v, cooling: setup.cooling) else { return "" }
+    return tr(ref, [
+        "limit": .text(midSentence(tr(v.limit.key), locale: Copy.activeLocale)), "water": .text(water),
+    ])
 }
 
 // MARK: - Units
