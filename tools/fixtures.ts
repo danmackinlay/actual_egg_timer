@@ -395,7 +395,7 @@ const NOMINAL_TARGET = Math.log10(6.0);
  * setting, so every answer is scored where it is likely and where it is not. */
 const FEEDBACK_SEQUENCE: (Feedback | null)[] = [-1, 0, -1, 1, 0, null, -1, 0, -1, 1, 1];
 const WHITE_SEQUENCE: (WhiteReport | null)[] = [
-  'runny', 'tender', 'runny', null, 'firm', 'runny', 'set', 'tender', null, 'firm', 'runny',
+  'runny', 'tender', 'runny', null, 'firm', 'runny', 'firm', 'tender', null, 'firm', 'runny',
 ];
 
 function particleRows(post: ReturnType<typeof createPrior>) {
@@ -919,7 +919,6 @@ interface EggSpec {
   late_s: number;
   yolk: EggRecord['yolk'];
   white: EggRecord['white'];
-  whiteOffered: boolean;
   /** A probe reading (E4), as degrees off the peak the literature values
    *  predict for this cook, so the fixture reads where a real one would. */
   probeOff_C?: number;
@@ -968,7 +967,6 @@ function recordOf(e: EggSpec): EggRecord {
     cooled_s: setup.cooling === 'counter' ? 0 : probe !== null ? coolingSecondsFor(solved) : COOLING_SECONDS,
     yolk: e.yolk,
     white: e.white,
-    whiteOffered: e.whiteOffered,
     probe: probe,
     lang: 'en',
     register: 'modern',
@@ -977,63 +975,62 @@ function recordOf(e: EggSpec): EggRecord {
 }
 
 const REPLAY_LOG: EggRecord[] = [
-  // E1's eggs, first: this is the log E2 replays.
   // Soft, too soft, and the white was runny: both channels, from the prior.
   recordOf({
     app: 'web', mass_g: 62, massFrom: 'class', eggFrom: 'fridge', over: {},
-    level: 0.3, pulledBy: 'cook', late_s: 7.25, yolk: -1, white: 'runny', whiteOffered: true,
+    level: 0.3, pulledBy: 'cook', late_s: 7.25, yolk: -1, white: 'runny',
   }),
-  // A cold start with a measured ramp; not asked about the white.
+  // A cold start with a measured ramp; the white skipped.
   recordOf({
     app: 'ios', mass_g: 68.5, massFrom: 'scale', eggFrom: 'fridge',
     over: { startMode: 'cold', timeToBoil_s: 512.4 },
-    level: 0.45, pulledBy: 'timeout', late_s: 0, yolk: 0, white: null, whiteOffered: false,
+    level: 0.45, pulledBy: 'timeout', late_s: 0, yolk: 0, white: null,
   }),
   // Nobody answered. Still a record; it folds nothing and builds no surface.
   // Nor had anybody ever timed the pan.
   recordOf({
     app: 'web', mass_g: 58, massFrom: 'class', eggFrom: 'room', over: { eggStart_C: 20 },
     boilFrom: 'default',
-    level: 0.5, pulledBy: 'timeout', late_s: 0, yolk: null, white: null, whiteOffered: false,
+    level: 0.5, pulledBy: 'timeout', late_s: 0, yolk: null, white: null,
   }),
   // Asked about the white, and skipped it.
   recordOf({
     app: 'web', mass_g: 55.3, massFrom: 'girth', eggFrom: 'custom',
     over: { eggStart_C: 8, cooling: 'tap' },
-    level: 0.4, pulledBy: 'cook', late_s: 31.5, yolk: 1, white: null, whiteOffered: true,
+    level: 0.4, pulledBy: 'cook', late_s: 31.5, yolk: 1, white: null,
   }),
   // Rested on the counter, the only cook that reaches tauAirScale.
   recordOf({
     app: 'ios', mass_g: 67.3, massFrom: 'class', sizeTable: 'us', eggFrom: 'room',
     over: { eggStart_C: 20, cooling: 'counter' },
-    level: 0.62, pulledBy: 'timeout', late_s: 0, yolk: 0, white: null, whiteOffered: false,
+    level: 0.62, pulledBy: 'timeout', late_s: 0, yolk: 0, white: null,
   }),
-  // The standing method, from a cold start, and E1's two-level "set".
+  // The standing method, from a cold start, and a tender white.
   recordOf({
     app: 'web', mass_g: 60.2, massFrom: 'width', eggFrom: 'fridge',
     over: { startMode: 'cold', timeToBoil_s: 430, afterBoil: 'off', waterLitres: 1.5, eggCount: 2 },
-    level: 0.5, pulledBy: 'cook', late_s: 2, yolk: -1, white: 'set', whiteOffered: true,
+    level: 0.5, pulledBy: 'cook', late_s: 2, yolk: -1, white: 'tender',
   }),
   // E2's: the white alone, tender, pulled late by the cook's own tap - scored
   // at the tap, 40 s after the alarm.
   recordOf({
     app: 'ios', mass_g: 68, massFrom: 'class', eggFrom: 'fridge', over: {},
-    level: 0.22, pulledBy: 'cook', late_s: 40, yolk: null, white: 'tender', whiteOffered: true,
+    level: 0.22, pulledBy: 'cook', late_s: 40, yolk: null, white: 'tender',
   }),
   // Both, and a firm white at fudgy.
   recordOf({
     app: 'web', mass_g: 63, massFrom: 'scale', eggFrom: 'fridge', over: {},
-    level: 0.62, pulledBy: 'cook', late_s: 5, yolk: 1, white: 'firm', whiteOffered: true,
+    level: 0.62, pulledBy: 'cook', late_s: 5, yolk: 1, white: 'firm',
   }),
   // E4's: a probe reading a degree hot, with the yolk "just right".
   recordOf({
     app: 'ios', mass_g: 68, massFrom: 'scale', eggFrom: 'fridge', over: {},
-    level: 0.41, pulledBy: 'cook', late_s: 3, yolk: 0, white: null, whiteOffered: true, probeOff_C: 1.0,
+    level: 0.41, pulledBy: 'cook', late_s: 3, yolk: 0, white: null, probeOff_C: 1.0,
   }),
   // And a reading alone, under a tap, cold - nothing else answered.
   recordOf({
     app: 'web', mass_g: 58, massFrom: 'class', eggFrom: 'fridge', over: { cooling: 'tap' },
-    level: 0.3, pulledBy: 'timeout', late_s: 0, yolk: null, white: null, whiteOffered: true, probeOff_C: -1.5,
+    level: 0.3, pulledBy: 'timeout', late_s: 0, yolk: null, white: null, probeOff_C: -1.5,
   }),
 ];
 
@@ -1113,8 +1110,6 @@ const RECORD_CASES: { why: string; mutate: Mutation }[] = [
   { why: 'the white offered and skipped', mutate: (r) => { r['white'] = null; } },
   { why: 'a tender white (E2)', mutate: (r) => { r['white'] = 'tender'; } },
   { why: 'a firm white (E2)', mutate: (r) => { r['white'] = 'firm'; } },
-  { why: 'the two-level white E1 logged', mutate: (r) => { r['white'] = 'set'; } },
-  { why: 'not asked about the white (E1)', mutate: (r) => { r['white'] = null; r['whiteOffered'] = false; } },
   {
     why: 'a weighed egg names no carton',
     mutate: (r) => { eggPart(r)['massFrom'] = 'scale'; eggPart(r)['sizeTable'] = null; },
@@ -1165,9 +1160,7 @@ const RECORD_CASES: { why: string; mutate: Mutation }[] = [
   { why: 'a yolk answer out of range', mutate: (r) => { r['yolk'] = 2; } },
   { why: 'a yolk answer as a word', mutate: (r) => { r['yolk'] = 'soft'; } },
   { why: 'a white answer nobody offers', mutate: (r) => { r['white'] = 'rubbery'; } },
-  { why: 'an answer to a question never asked', mutate: (r) => { r['whiteOffered'] = false; } },
-  { why: 'offered as a number', mutate: (r) => { r['whiteOffered'] = 1; } },
-  { why: 'offered missing', mutate: (r) => { delete r['whiteOffered']; } },
+  { why: 'the two-level white E1 logged, gone with D1', mutate: (r) => { r['white'] = 'set'; } },
   { why: 'a probe reading (E4)', mutate: (r) => { r['probe'] = { centre_C: 61.3, after_s: 187 }; } },
   { why: 'a probe reading, when unknown', mutate: (r) => { r['probe'] = { centre_C: 61.3, after_s: null }; } },
   { why: 'a probe reading, when absent', mutate: (r) => { r['probe'] = { centre_C: 61.3 }; } },

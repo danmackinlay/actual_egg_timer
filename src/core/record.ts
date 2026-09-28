@@ -157,17 +157,9 @@ export interface EggRecord {
   /** The yolk answer, or null when the question was on screen and the cook
    *  moved on without answering. */
   yolk: Feedback | null;
-  /** The white answer: runny, tender or firm, or null for a skip. `set` is the
-   *  two-level answer E1 logged, and means tender or firm (see `WhiteReport`).
-   *  With `whiteOffered`, three states:
-   *    whiteOffered false, white null   - not asked (E1 only)
-   *    whiteOffered true,  white null   - asked, and skipped
-   *    whiteOffered true,  white answer - answered
-   *  Until E2 the model decided whether to ask, so a null alone could not tell
-   *  the first two apart. Since E2 the white is always offered and every new
-   *  record says `true`; the field stays so that old records read the same. */
+  /** The white answer: runny, tender or firm, or null when the question was
+   *  on screen and the cook moved on without answering. It is always asked. */
   white: WhiteReport | null;
-  whiteOffered: boolean;
   /** A thermometer reading at the centre's peak (E4), or null: no probe, or
    *  not taken. Null in every record before E4. */
   probe: ProbeReading | null;
@@ -257,10 +249,11 @@ export function probePossible(s: RecordSetup, centre_C: number): boolean {
  * VERSION SKEW. The web app deploys on push and the iOS app ships when a build
  * does, so records from different app versions coexist. Any `appVersion` is
  * accepted under `v: 1`. Fields may be ADDED within v1 but never removed or
- * reinterpreted, so unknown fields are ignored here, and the nullable fields
- * (`uid`, `egg.sizeTable`, `yolk`, `white`, `probe`) may be absent and read as
- * null - which is
- * also what Swift's Codable does, and the fixtures hold the two to it.
+ * reinterpreted once a record has left the owner's devices (E1's
+ * `whiteOffered` and `set` went on 28 September, before any had), so unknown
+ * fields are ignored here, and the nullable fields (`uid`, `egg.sizeTable`,
+ * `yolk`, `white`, `probe`) may be absent and read as null - which is also
+ * what Swift's Codable does, and the fixtures hold the two to it.
  *
  * Returns a fresh object with exactly the known fields, so what is folded is
  * what was checked.
@@ -309,12 +302,7 @@ export function parseRecord(raw: unknown): EggRecord | null {
   const yolk = raw['yolk'] ?? null;
   if (yolk !== null && yolk !== -1 && yolk !== 0 && yolk !== 1) return null;
   const white = raw['white'] ?? null;
-  if (white !== null && white !== 'runny' && white !== 'tender' && white !== 'firm'
-    && white !== 'set') return null;
-  const offered = raw['whiteOffered'];
-  if (typeof offered !== 'boolean') return null;
-  // An answer to a question that was never asked is not an observation.
-  if (white !== null && !offered) return null;
+  if (white !== null && white !== 'runny' && white !== 'tender' && white !== 'firm') return null;
 
   if (!nonEmptyString(raw['lang']) || !nonEmptyString(raw['register'])) return null;
   if (!oneOf(raw['units'], ['metric', 'imperial'] as const)) return null;
@@ -363,7 +351,6 @@ export function parseRecord(raw: unknown): EggRecord | null {
     cooled_s: raw['cooled_s'],
     yolk: yolk as Feedback | null,
     white: white as WhiteReport | null,
-    whiteOffered: offered,
     probe: probe,
     lang: raw['lang'],
     register: raw['register'],

@@ -81,7 +81,7 @@ function recordAt(
       eggCount: setup.eggCount,
     },
     level: level, recommended_s: t, nudge_s: 0, pulled_s: t + 4, pulledBy: 'cook',
-    cooled_s: 180, yolk: yolk, white: null, whiteOffered: true, probe: null,
+    cooled_s: 180, yolk: yolk, white: null, probe: null,
     lang: 'en', register: 'modern', units: 'metric',
   };
 }
@@ -127,22 +127,14 @@ test('1b. unknown fields are ignored and dropped; absent nullable fields read as
   assert.equal('futureField' in (parsed as object), false);
 });
 
-test('1c. white has three states, and an answer to an unasked question is refused', () => {
-  const base = recordAt(0.3, -1);
-  assert.notEqual(parseRecord({ ...base, whiteOffered: false, white: null }), null, 'not asked');
-  assert.notEqual(parseRecord({ ...base, whiteOffered: true, white: null }), null, 'skipped');
-  assert.notEqual(parseRecord({ ...base, whiteOffered: true, white: 'runny' }), null, 'answered');
-  assert.equal(parseRecord({ ...base, whiteOffered: false, white: 'runny' }), null, 'unasked');
-});
-
-test('1c2. the white\'s three answers load, and so does E1\'s two-level "set"', () => {
-  // The schema change E2 needed is additive: three new values a loader
-  // accepts, and every egg E1 logged still reads as it did.
+test('1c. the white\'s three answers load, a skip loads, and nothing else does', () => {
   const base = recordAt(0.3, null);
-  for (const white of ['runny', 'tender', 'firm', 'set']) {
+  for (const white of ['runny', 'tender', 'firm']) {
     assert.equal(parseRecord({ ...base, white: white })?.white, white, white);
   }
+  assert.equal(parseRecord({ ...base, white: null })?.white, null, 'skipped');
   assert.equal(parseRecord({ ...base, white: 'soft' }), null, 'not a white answer');
+  assert.equal(parseRecord({ ...base, white: 'set' }), null, 'E1\'s two-level answer, gone with D1');
 });
 
 test('1d. one bad record refuses the whole log', () => {
@@ -345,7 +337,6 @@ test('4a. the cook\'s tap out of PULL is recorded as a measured pull', () => {
   const r = eggRecordFor(COOKED, tapped, 0);
   assert.equal(r.pulled_s, 409.5);
   assert.equal(r.pulledBy, 'cook');
-  assert.equal(r.whiteOffered, true, 'the white is always offered since E2');
   assert.equal(r.recommended_s, 400);
   assert.notEqual(parseRecord(r), null);
 });

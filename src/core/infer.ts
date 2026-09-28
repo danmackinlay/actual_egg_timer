@@ -76,13 +76,8 @@ export type Feedback = -1 | 0 | 1; // too soft | just right | too firm
  * Three answers since E2: runny, tender, firm. The first filter stopped at two
  * because a third needed a ceiling the model did not have; the ceiling is now a
  * learned cutpoint like any other (`whiteFirmGap`).
- *
- * `set` is the answer the two-level question gave - "set right through" - and
- * is kept so that every egg logged under E1 still loads and still counts. It
- * means tender OR firm, and is scored as exactly that: the probability of not
- * runny. No app offers it any more.
  */
-export type WhiteReport = 'runny' | 'tender' | 'firm' | 'set';
+export type WhiteReport = 'runny' | 'tender' | 'firm';
 
 export interface Particle {
   alpha_m2s: number;
@@ -378,14 +373,8 @@ export function answerLikelihood(
   }
   if (white !== null) {
     const probs = whiteProbit(grid, p, cookTime_s);
-    if (white === 'set') {
-      // Tender or firm: two of the three answers, and two thirds of the
-      // unrelated share.
-      l *= (1.0 - UNRELATED) * (probs[1] + probs[2]) + 2.0 * UNRELATED / 3.0;
-    } else {
-      const k = white === 'runny' ? 0 : white === 'tender' ? 1 : 2;
-      l *= (1.0 - UNRELATED) * probs[k] + UNRELATED / 3.0;
-    }
+    const k = white === 'runny' ? 0 : white === 'tender' ? 1 : 2;
+    l *= (1.0 - UNRELATED) * probs[k] + UNRELATED / 3.0;
   }
   return l;
 }

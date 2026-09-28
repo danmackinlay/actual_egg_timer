@@ -77,7 +77,7 @@ function recordWith(probe_C: number | null, over: Partial<EggRecord> = {}): EggR
       waterLitres: 2, eggCount: 2,
     },
     level: JAMMY, recommended_s: COOK_S, nudge_s: 0, pulled_s: COOK_S, pulledBy: 'timeout',
-    cooled_s: coolingSecondsFor(COOK.result), yolk: null, white: null, whiteOffered: true,
+    cooled_s: coolingSecondsFor(COOK.result), yolk: null, white: null,
     probe: probe_C === null ? null : { centre_C: probe_C, after_s: coolingSecondsFor(COOK.result) },
     lang: 'en', register: 'modern', units: 'metric',
     ...over,

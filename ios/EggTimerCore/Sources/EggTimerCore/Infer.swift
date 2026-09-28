@@ -36,15 +36,11 @@ public enum Feedback: Int, Sendable, Codable {
     case tooHard = 1
 }
 
-/// What the cook reports about the WHITE. Three answers since E2. `set` is the
-/// two-level answer E1 logged ("set right through"), kept so every egg logged
-/// then still loads: it means tender or firm, and is scored as exactly that. No
-/// app offers it any more.
+/// What the cook reports about the WHITE: three answers since E2.
 public enum WhiteReport: String, Sendable, Codable {
     case runny
     case tender
     case firm
-    case set
 }
 
 public struct Particle: Sendable, Codable, Equatable {
@@ -262,8 +258,6 @@ public func answerLikelihood(
     if let white {
         let probs = whiteProbit(grid, p, cookTimeS)
         switch white {
-        case .set:
-            l *= (1.0 - unrelated) * (probs[1] + probs[2]) + 2.0 * unrelated / 3.0
         case .runny:
             l *= (1.0 - unrelated) * probs[0] + unrelated / 3.0
         case .tender:

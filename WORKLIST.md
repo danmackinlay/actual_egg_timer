@@ -172,7 +172,7 @@ Put one LOGBOOK line on the decision: "owner, 28 Sep: no post-19-Sep build shipp
   - Drop the v3 ("E1") replay path: `E1_KEY`, the `'replayed'` branch of `decodeKept`, `calibration.ts:54-66,354-365,421-423`, and tests 3b and :245 in `record.test.ts`.
   - Add `aet.calibration.v3` to `SUPERSEDED_KEYS`.
   - **Keep the v2 path**: the live site writes v2.
-- The E1 `'set'` white answer and `whiteOffered: false` records: `infer.ts:85,381-385`, `record.ts:160-170,313,317`, `Infer.swift:47`, and `fixtures.ts:1116-1117`.
+- DONE (whiteOffered removed from the record entirely): The E1 `'set'` white answer and `whiteOffered: false` records: `infer.ts:85,381-385`, `record.ts:160-170,313,317`, `Infer.swift:47`, and `fixtures.ts:1116-1117`.
   - Decide before the first push. `record.ts:259-260` freezes v1 fields forever once shipped.
 - iOS:
   - The optional ticket fields and their "saved before…" fallbacks: `Cook.swift:73-113,302-308,357`, the hand-written `Saved.init(from:)` (`Cook.swift:517-552`), and `SetupSentence.swift:164-170`.

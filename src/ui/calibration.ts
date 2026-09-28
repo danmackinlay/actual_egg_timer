@@ -130,8 +130,7 @@ export function localDay(ms: number): string {
 /**
  * The record of one egg, from the cook that was started and the machine that
  * ran it, with whichever answers have been given so far, and the probe reading
- * if there is one (E4). The white is always offered since E2, so
- * `whiteOffered` is always true.
+ * if there is one (E4).
  *
  * `pulled_s` is the cook's own tap out of PULL when there was one. When the
  * grace ran out instead, nobody said when the egg came out, and the record says
@@ -177,7 +176,6 @@ export function eggRecordFor(
     cooled_s: m.cooling === 'counter' ? 0 : m.cool_s,
     yolk: yolk,
     white: white,
-    whiteOffered: true,
     probe: probe,
     lang: c.lang,
     register: registerOf(c.lang),

@@ -163,16 +163,6 @@ test('1d. no answer can kill a particle: every likelihood is at least the unrela
   }
 });
 
-test('1e. E1\'s "set" is scored as tender or firm, and nothing else', () => {
-  const c = cookAt(0.3);
-  for (const l of [-1, -0.1, 0.4, 1.2, 3]) {
-    const p = particleAtWhite(c, l);
-    const probs = whiteProbs(c, p);
-    const set = answerLikelihood(c.grid, p, c.cookTime_s, c.logNominalTarget, null, 'set');
-    assert.ok(Math.abs(set - (probs[1] + probs[2])) < 1e-12, `at ${l}`);
-  }
-});
-
 test('1f. the white\'s noise is the yolk\'s, in degrees', () => {
   // A white answer three quarters of the yolk's noise in decades is the same
   // peak temperature, because Z_WHITE > Z_YOLK: 50% of the way from runny to
@@ -398,7 +388,7 @@ function softRecord(cal: Calibration, level: number, yolk: Feedback | null, whit
       waterLitres: 2, eggCount: 2,
     },
     level: level, recommended_s: t, nudge_s: 0, pulled_s: t, pulledBy: 'timeout', cooled_s: 180,
-    yolk: yolk, white: white, whiteOffered: true, probe: null, lang: 'en', register: 'modern', units: 'metric',
+    yolk: yolk, white: white, probe: null, lang: 'en', register: 'modern', units: 'metric',
   };
 }
 

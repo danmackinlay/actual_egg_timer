@@ -186,11 +186,9 @@ public struct EggRecord: Sendable, Codable, Equatable {
     public var cooledS: Double
     /// Nil when the question was on screen and the cook moved on.
     public var yolk: Feedback?
-    /// Three states with `whiteOffered`: not asked (false, nil - E1 only), asked
-    /// and skipped (true, nil), answered (true, an answer). Since E2 the white
-    /// is always offered; `.set` is E1's two-level answer.
+    /// Nil when the question was on screen and the cook moved on; it is
+    /// always asked.
     public var white: WhiteReport?
-    public var whiteOffered: Bool
     /// A reading at the centre's peak (E4), or nil: no probe, or not taken.
     public var probe: ProbeReading?
     public var lang: String
@@ -201,7 +199,7 @@ public struct EggRecord: Sendable, Codable, Equatable {
         uid: String? = nil, day: String, app: AppName, appVersion: String,
         prior: String = priorID, egg: RecordEgg, setup: RecordSetup, level: Double,
         recommendedS: Double, nudgeS: Double = 0, pulledS: Double, pulledBy: PulledBy,
-        cooledS: Double, yolk: Feedback?, white: WhiteReport? = nil, whiteOffered: Bool = true,
+        cooledS: Double, yolk: Feedback?, white: WhiteReport? = nil,
         probe: ProbeReading? = nil,
         lang: String = "en", register: String = "modern", units: Units = .metric
     ) {
@@ -221,7 +219,6 @@ public struct EggRecord: Sendable, Codable, Equatable {
         self.cooledS = cooledS
         self.yolk = yolk
         self.white = white
-        self.whiteOffered = whiteOffered
         self.probe = probe
         self.lang = lang
         self.register = register
@@ -235,7 +232,7 @@ public struct EggRecord: Sendable, Codable, Equatable {
         case pulledS = "pulled_s"
         case pulledBy
         case cooledS = "cooled_s"
-        case yolk, white, whiteOffered, probe, lang, register, units
+        case yolk, white, probe, lang, register, units
     }
 
     /// Nullable fields may be absent and read as nil, which is what the
@@ -258,7 +255,6 @@ public struct EggRecord: Sendable, Codable, Equatable {
         cooledS = try c.decode(Double.self, forKey: .cooledS)
         yolk = try c.decodeIfPresent(Feedback.self, forKey: .yolk)
         white = try c.decodeIfPresent(WhiteReport.self, forKey: .white)
-        whiteOffered = try c.decode(Bool.self, forKey: .whiteOffered)
         probe = try c.decodeIfPresent(ProbeReading.self, forKey: .probe)
         lang = try c.decode(String.self, forKey: .lang)
         register = try c.decode(String.self, forKey: .register)
@@ -286,7 +282,6 @@ public struct EggRecord: Sendable, Codable, Equatable {
         try c.encode(cooledS, forKey: .cooledS)
         try c.encode(yolk, forKey: .yolk)
         try c.encode(white, forKey: .white)
-        try c.encode(whiteOffered, forKey: .whiteOffered)
         try c.encode(probe, forKey: .probe)
         try c.encode(lang, forKey: .lang)
         try c.encode(register, forKey: .register)
@@ -364,8 +359,6 @@ public func validRecord(_ r: EggRecord) -> Bool {
     guard r.nudgeS.isFinite, r.recommendedS + r.nudgeS > 0 else { return false }
     guard r.pulledS.isFinite, r.pulledS > 0 else { return false }
     guard r.cooledS.isFinite, r.cooledS >= 0 else { return false }
-    // An answer to a question that was never asked is not an observation.
-    if r.white != nil && !r.whiteOffered { return false }
     if let probe = r.probe {
         guard probePossible(s, centreC: probe.centreC) else { return false }
         if let after = probe.afterS, !(after.isFinite && after >= 0) { return false }

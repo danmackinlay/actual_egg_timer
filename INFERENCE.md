@@ -168,7 +168,8 @@ three new ones.
   (`calibrationDoneness`). The taste offset did not enter the
   recommendation, as before E2; since E5 it does, because the time is chosen
   from every particle (§8).
-- **E1's two-level "set"** still loads and is scored as tender-or-firm.
+- **E1's two-level "set"** is gone (owner, 28 September: no build after 19
+  September left the owner's devices). A record carrying it is refused.
 
 Measured, in `test/infer.test.ts`:
 
@@ -227,7 +228,7 @@ held to `EggTimerCore/Record.swift` by `fixtures/record.json`.
   "level": 0.22,
   "recommended_s": 399, "nudge_s": 0, "pulled_s": 412, "pulledBy": "cook",
   "cooled_s": 180,
-  "yolk": -1, "white": null, "whiteOffered": true,
+  "yolk": -1, "white": null,
   "probe": null,
   "lang": "en", "register": "modern", "units": "metric"
 }
@@ -237,16 +238,14 @@ held to `EggTimerCore/Record.swift` by `fixtures/record.json`.
   `null` is still a record, because the cook, the recommendation and the actual
   pull time are data too. An egg finished and never answered about is logged
   when the cook starts again.
-- **The white has three states, not two.** Until E2 the model decided whether
-  to ask (`shouldAskAboutWhite`), so `null` alone would not tell "not asked"
-  from "asked and skipped". `whiteOffered` says which: `false`/`null` is not
-  asked, `true`/`null` is skipped, `true` with an answer is answered. An answer
-  with `whiteOffered: false` is refused by the loader. Since E2 the white is
-  always offered and every new record says `true`; the field stays, so old
-  records read the same.
-- **The white's answers are `runny`, `tender` and `firm`** since E2. E1 logged a
-  two-level `set`; it still loads, and is scored as tender-or-firm. The change
-  was additive: the schema stays `v: 1`.
+- **The white is always asked** since E2, so `null` is a skip. E1 asked only
+  sometimes and carried a `whiteOffered` flag to tell "not asked" from
+  "skipped"; with nothing of E1's kept, the flag went on 28 September, and a
+  record that still carries it has it ignored like any unknown field.
+- **The white's answers are `runny`, `tender` and `firm`.** E1's two-level
+  `set` went with the flag; a record carrying it is refused. Both were
+  removed before any record left the owner's devices, so the schema stays
+  `v: 1`.
 - `pulled_s` is when the cook said the egg came out, not when the alarm went -
   the tap out of PULL ("they're in the ice bath", "they're out"). When nobody
   taps and the 20 s grace runs out, `pulledBy` is `timeout` and `pulled_s` is

@@ -88,7 +88,7 @@ function recordAt(level: number, t: number, yolk: Feedback | null, white: WhiteR
       waterLitres: 2, eggCount: 2,
     },
     level: level, recommended_s: t, nudge_s: 0, pulled_s: t, pulledBy: 'timeout', cooled_s: 180,
-    yolk: yolk, white: white, whiteOffered: true, probe: null, lang: 'en', register: 'modern', units: 'metric',
+    yolk: yolk, white: white, probe: null, lang: 'en', register: 'modern', units: 'metric',
   };
 }
 

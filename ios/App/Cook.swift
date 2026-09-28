@@ -345,7 +345,6 @@ final class Cook {
             cooledS: ticket.cooling == .counter ? 0 : coolFor,
             yolk: yolk,
             white: white,
-            whiteOffered: true,
             probe: probe,
             lang: ticket.lang ?? "en",
             // What kind of English the answers were given in (F6): the fit

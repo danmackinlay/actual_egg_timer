@@ -658,7 +658,7 @@ formattingLocale(uiLanguage, region, hourCycle): string                       //
 // doseGrid.ts / infer.ts  (calibration; see Phase C)
 buildDoseGrid(...) / lookupLogYolkDose / lookupLogWhiteDose / cookTimeForLogYolkDose
 type Feedback = -1 | 0 | 1                 // the YOLK answer
-type WhiteReport = 'runny' | 'tender' | 'firm' | 'set'   // 'set' is E1's, = tender or firm
+type WhiteReport = 'runny' | 'tender' | 'firm'
 createPrior(count, seed)                   // six numbers a particle (E2, E3)
 updatePosterior(post, grid, cookTime_s, logTarget, yolk | null, white | null, probe_C?)  // one fold per egg; resamples through Liu and West's kernel (E5)
 answerLikelihood(grid, particle, cookTime_s, logTarget, yolk, white)
