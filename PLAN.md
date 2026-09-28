@@ -696,7 +696,6 @@ oddsProfile(c, egg, setup, grid) / oddsAtLevel(c, egg, setup, grid, level) / odd
 verdictWithOdds(sol, level, profile | null)   // adds 'unlikelySoft' | 'unlikelyHard'
 shadingOf(profile) / adviceWanted(tenths, profile) / pricedChanges(setup) / unpricedAdvice(setup, facts)
 protocolAdvice(setup, facts, level, odds, priced)
-saferLevels / outcomeAtLevel / offeredPositions   // playing safe: no screen uses them since 28 September
 
 // record.ts  (E1 - the schema is INFERENCE.md §4)
 interface EggRecord { v: 1; ... }          // one egg; RECORD_VERSION, PRIOR_ID
@@ -932,7 +931,7 @@ After cooking with the iOS app on a phone:
 - **The egg's mass tops out at 90 g**, a hen's egg (`0e0ec98`); other birds'
   eggs, emu first, someday (below).
 - **The doneness heading carries the peak yolk; the play-safe suggestion goes
-  from both apps** (core's `saferLevels` stays, unused by any screen); **the
+  from both apps** (and core's `saferLevels` with it, the same day: D2); **the
   setup sentence stays on screen while a cook runs** (`e04d72c`).
 - **Sous-vide is never remembered** across a reload or relaunch (`d12a978`).
 - Found on the same phone and fixed: the Lock Screen countdown, sized by its

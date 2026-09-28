@@ -152,7 +152,7 @@ Baseline, all green:
 
 ## 4. P1 — dead code and back-compat to remove
 
-**4.1 Back-compat for formats that never left the dev devices.** UNBLOCKED: the owner said "kill em all" (D1).
+**DONE: 4.1 Back-compat for formats that never left the dev devices.** UNBLOCKED: the owner said "kill em all" (D1).
 
 The live site, `2f341b4` of 19 Sep, IS in the wild. Its storage formats are the one exception:
 - `aet.calibration.v2`
@@ -183,7 +183,7 @@ Put one LOGBOOK line on the decision: "owner, 28 Sep: no post-19-Sep build shipp
   - Have `activityState` return nil at done, and have `pushActivity` check `phase(at:) == .done`.
   - Delete the case and its branches: `CookActivity.swift:57,66-70,80,84-85` and `CookLiveActivity.swift:154-156,167-168,179`.
 
-**4.2 Delete `saferLevels` and friends.** UNBLOCKED: owner, 28 Sep. About 165 lines in each core, plus fixture, tests and tool.
+**DONE: 4.2 Delete `saferLevels` and friends.** UNBLOCKED: owner, 28 Sep. About 165 lines in each core, plus fixture, tests and tool.
 - Code: `reach.ts:381-544`, `Reach.swift:344+`, `SaferConformance.swift`, `test/safer.test.ts`, `fixtures/safer.json`, `fixtures.ts:1571-1652`, and the `safer` section of `tools/decide.ts:529-596`.
 - It is also 23 s of `npm test`'s critical path (tests 3 and 7).
 - Delete, don't keep:

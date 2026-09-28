@@ -5,8 +5,7 @@ import EggTimerCore
 /// yolk's likely range as the slider's own words. The numbers are core's
 /// (`predictOutcome`); this only chooses which catalogue key says them, by the
 /// web's rules, word for word. The one-tap way to play safe that went under
-/// the direction is gone from both apps (28 September); core keeps
-/// `saferLevels`, which no screen calls now.
+/// the direction is gone from both apps, and from core (28 September).
 
 /// What the egg at the chosen time will be like: core's `Outcome`, as the app
 /// carries it. Codable, so a running cook keeps the direction it started with
@@ -51,8 +50,7 @@ enum Direction {
         return "outcome.unsure"
     }
 
-    /// Whether the white gets its line: core's `whiteRisk`, the same threshold
-    /// `saferLevels` holds a softer level to.
+    /// Whether the white gets its line: core's `whiteRisk`.
     static func whiteAtRisk(_ o: Forecast) -> Bool {
         o.pWhiteRunny >= whiteRisk
     }

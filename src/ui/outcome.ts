@@ -29,10 +29,9 @@
  * says. The words stand alone after a colon (LANGUAGE.md section 5).
  *
  * There used to be a fourth part here, PLAYING SAFE: a one-tap suggestion
- * under the direction that moved the slider to core's play-safe level
- * (`saferLevels`, reach.ts). The owner took it off both screens on 28
- * September - it said in words what the slider and the bracket already show
- * - and core keeps `saferLevels`, which no screen calls now.
+ * under the direction. The owner took it off both screens on 28 September -
+ * it said in words what the slider and the bracket already show - and had
+ * core's `saferLevels` deleted with it.
  */
 
 import { Lean, Outcome, WHITE_RISK } from '../core/outcome.js';
@@ -41,8 +40,7 @@ import { anchorNear } from '../core/policy.js';
 /** P(just right) at or above which the yolk is "probably just right". */
 export const DIRECTION_LIKELY = 0.5;
 
-/** P(runny) at or above which the white gets a line of its own: core's, the
- *  same threshold `saferLevels` holds a softer level to. */
+/** P(runny) at or above which the white gets a line of its own: core's. */
 export { WHITE_RISK };
 
 /** The catalogue key of the direction sentence. */

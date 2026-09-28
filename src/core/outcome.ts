@@ -78,11 +78,9 @@ export const LEAN_RATIO = 1.5;
 export const LEVEL_LOW_Q = 0.1;
 export const LEVEL_HIGH_Q = 0.9;
 
-/** P(runny) at or above which the white is a risk: one egg in five. The web
- *  gives the white a line of its own from here (src/ui/outcome.ts, which has
- *  the reasons), and a softer play-safe level must stay under it
- *  (`saferLevels`, reach.ts), so playing safe never buys a firm-enough yolk
- *  with a runny white. */
+/** P(runny) at or above which the white is a risk: one egg in five. Both
+ *  apps give the white a line of its own from here (src/ui/outcome.ts, which
+ *  has the reasons). */
 export const WHITE_RISK = 0.2;
 
 /** Bisection steps for each point of the level range, on the slider's span:

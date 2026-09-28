@@ -19,10 +19,8 @@ public let leanRatio = 1.5
 public let levelLowQ = 0.1
 public let levelHighQ = 0.9
 
-/// P(runny) at or above which the white is a risk: one egg in five. A softer
-/// play-safe level must stay under it (`saferLevels`), so playing safe never
-/// buys a firm-enough yolk with a runny white. The web's line for the white
-/// shows from here.
+/// P(runny) at or above which the white is a risk: one egg in five. Both
+/// apps' line for the white shows from here.
 public let whiteRisk = 0.2
 
 /// Bisection steps for each point of the level range: 2^-20 of the slider.

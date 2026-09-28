@@ -307,7 +307,7 @@ to miss, what the bracket is, and how the time leans; it gives no number.
 **Playing safe** was built on 27 September (the `safe` draft, on `ff6c6e9`)
 and taken off both apps on 28 September (section 11): a one-tap suggestion
 under the direction to move the slider to a level that plays safe, from
-core's `saferLevels` (INFERENCE.md §8, which keeps its definition). The
+core's `saferLevels` (INFERENCE.md §8), which was deleted the same day. The
 LOGBOOK entries of those two days record how it behaved.
 
 **The direction's one (i)**, named "How sure I am", now opens three
@@ -627,10 +627,10 @@ served it:
   `outcome.bracket` loses "Or tap the level I suggest…", and Help's
   `help.odds.p1` and `.aside` lose their sentences about it.
 
-**Core keeps `saferLevels`** (`src/core/reach.ts`, `EggTimerCore`'s
-`Reach.swift`), with `test/safer.test.ts`, `fixtures/safer.json` and the
-Swift `Safer` suite. No screen uses it now. The direction sentence, its
-(i), the bracket and the runny-white line stay as they were.
+**Core's `saferLevels` went too** (owner, 28 September, D2), with
+`test/safer.test.ts`, `fixtures/safer.json`, the Swift `Safer` suite and the
+`safer` section of `npm run decide`. The direction sentence, its (i), the
+bracket and the runny-white line stay as they were.
 
 **The sentence stays on screen while a cook runs.** Under the time, where
 the controls were, the setup sentence the cook was started with, so a

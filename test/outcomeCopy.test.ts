@@ -2,8 +2,8 @@
  * The outcome summary in words (src/ui/outcome.ts): which sentence each
  * outcome gets, when the white gets its line, the range in the slider's own
  * words, and a cook's outcome read back after a reload. The play-safe
- * suggestion that went under the direction is gone from both apps (28
- * September); core's `saferLevels` is still tested in test/safer.test.ts.
+ * suggestion that went under the direction is gone from both apps, and
+ * core's `saferLevels` with it (28 September).
  *
  * The numbers are core's and are tested in test/outcome.test.ts; this holds
  * the thresholds the web chose on top of them, at their edges, and checks

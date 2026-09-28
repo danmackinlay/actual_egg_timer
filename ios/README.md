@@ -46,7 +46,7 @@ algebraic mistake is never that small.
 | `record.ts` | `Record.swift` | `fixtures/record.json`: the egg log, and a replay bit-identical to folding egg by egg |
 | `decide.ts` | `Decide.swift` | `fixtures/decide.json`: the chosen time, the odds, "still learning" |
 | `outcome.ts` | `Outcome.swift` | `fixtures/outcome.json` |
-| `reach.ts` | `Reach.swift` | `fixtures/reach.json`, and `fixtures/safer.json` for `saferLevels` |
+| `reach.ts` | `Reach.swift` | `fixtures/reach.json` |
 | `units.ts` | `Units.swift` | `fixtures/units.json` |
 | `language.ts` | `Language.swift` | `fixtures/language.json` |
 | `copy.ts`, `format.ts` | `EggTimerCopy`: `Copy.swift`, `Format.swift` | `fixtures/copy.json`, `fixtures/format.json` |
