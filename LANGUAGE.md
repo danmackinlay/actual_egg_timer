@@ -613,6 +613,35 @@ safe` show that nothing else changed. UI.md section 8 has when each shows.
   the range, playing safe and then the number; the owner has Help's
   rewrite in hand separately, so that waits for it.
 
+**A tighter egg's strings - IMPLEMENTED 28 September 2026**, both apps, on
+the owner's word after using the iOS app (UI.md section 11). The `tighten`
+draft in `tools/copyDraft.ts`, on `2c090c9`; `copyLiterals.js --since
+2c090c9 tighten` shows these 18 keys and nothing else. 1750 shadows each,
+reusing its existing phrasing.
+
+| key | now | 1750 |
+|---|---|---|
+| `controls.doneness.peak` (new) | peak yolk {yolk} | the yolk at most {yolk} |
+| `controls.doneness.bath` (new) | water at {bath} | the water at {bath} |
+| `controls.doneness.value` | {doneness}, peak yolk {yolk} (was "·"; now the slider's value to a screen reader only) | {doneness}, the yolk at most {yolk} |
+| `controls.doneness.valueBath` | {doneness}, water at {bath} (the same) | {doneness}, the water at {bath} |
+| `cook.summary` | {doneness} · peak yolk {yolk} (was "{mass} · …", iOS only; now both apps, under the running cook's sentence) | {doneness} · the yolk rising to {yolk} |
+| `outcome.bracket` | less its last sentence, "Or tap the level I suggest, when I suggest one." | less "Or tap the degree I propose, when I propose one." |
+| `help.odds.p1` | less "When a miss is likely enough to matter, I suggest a level that plays safe, one tap away, and never one where the white might be runny." | less its "I propose a degree that plays safe" sentence |
+| `help.odds.aside` | less "I suggest playing safe when either way of missing is at least one egg in five: …" | less its "I propose to play safe" sentence |
+
+**Retired**: `outcome.safe.firm`, `.soft`, `.firmer`, `.softer` (the
+play-safe suggestion, both apps), and `cook.method` with `cook.method.cold`,
+`.hot`, `.ice`, `.tap`, `.counter` (iOS's method line under a running cook,
+which the setup sentence replaces).
+
+- **The heading's words stand alone at its end**, as a label, so no
+  language has to fit them into "Doneness".
+- **A comma, not a dot, in the slider's value.** It is never drawn now, and
+  a screen reader may read "·" aloud.
+- **The running sentence is `setup.sentence`**, with the same fragments as
+  the idle one, so there is nothing new to translate.
+
 ### Proposed: one wording per meaning (for the owner)
 
 **A proposal, 27 September 2026. Nothing here is implemented**: `copy/en.json`

@@ -655,7 +655,7 @@ least one in ten is at or past the hardest, which at hard is half the eggs.
 It costs about 2 ms in node beside a decision's 13-16 ms, and is computed
 once, at the time on screen.
 
-**Playing safe (27 September).** The range says where the yolk will
+**Playing safe (27 September).** (Since 28 September no screen uses this: the owner took the suggestion off both apps, UI.md section 11. The function, its fixture and its tests stay.) The range says where the yolk will
 probably land, and the lean which way a miss goes. Neither says what to do
 about it. `saferLevels` in `src/core/reach.ts`, held to
 `EggTimerCore/Reach.swift` by `fixtures/safer.json`, answers the cook who

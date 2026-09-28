@@ -2307,3 +2307,39 @@ From the owner, on the same cook:
 - The notification showed the first icon (the rainbow egg). The app holds
   only the watercolour one; iOS caches a notification's icon. Deleting the
   app and reinstalling, or restarting the phone, refreshes it.
+
+## 28 September 2026: a tighter egg, both apps
+
+The owner, after using the iOS app on a phone, asked for three changes, made
+in both apps (UI.md section 11; the `tighten` draft, LANGUAGE.md section 3):
+the peak yolk moves into the doneness slider's heading and the reading line
+that repeated the doneness word goes; the play-safe suggestion goes, with
+the code that computed it (core's `saferLevels` stays, unused by any
+screen); and the setup sentence stays on screen while a cook runs, from the
+ticket and with nothing to tap, over "soft · peak yolk 59 °C", replacing
+iOS's method line and summary.
+
+**Verified**: `npm test` (243 pass, the one known todo), `npm run validate`
+(28/28), `npm run conformance` (fixture regenerated; 105 Swift tests pass);
+`copyLiterals.js --since 2c090c9 tighten` shows the 18 drafted keys and
+nothing else. The iOS Debug build, and on the iPhone 17 simulator, idle and
+heating, in English and in 1750: the heading fits on one line in both
+("peak yolk 59 °C"; "the yolk at most 59 °C" beside "Degree of hardness"),
+and the heating screen shows the sentence, its line, the hint, Full rolling
+boil, Cancel and the probe offer without scrolling. The web at 375 px on a
+private port: idle, cooking, and a reload mid-cook, which brought the
+sentence and its line back from the stored ticket; the slider's
+`aria-valuetext` read "Runny, peak yolk 56 °C".
+
+**A decision of my own**: the sentence goes straight under the time card in
+both apps, not where iOS's summary was (under Cancel). There the probe
+offer came between it and the time, and at Done the two questions put it
+far down the page (reasoned from the layout, not screenshotted); the web has no such place, its action bar being stuck to
+the bottom.
+
+**Not verified**: VoiceOver on a device reading the slider's new value; the
+web's sentence at Done on a phone.
+
+**In passing**: the simulator had a stale cold start from an earlier session
+(26 minutes heating) that the app restored on launch; it was cancelled
+before the screenshots.
