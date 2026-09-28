@@ -6,7 +6,7 @@ extension Planner {
 
     func changed() {
         guard !applying else { return }
-        Settings.save(self)
+        SettingsStore.save(self)
         recompute()
     }
 
@@ -296,7 +296,7 @@ extension Planner {
             applying = true
             doneness = snapTo
             applying = false
-            Settings.save(self)
+            SettingsStore.save(self)
         }
     }
 

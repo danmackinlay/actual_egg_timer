@@ -31,7 +31,7 @@ enum BoilMemories {
 
 /// The inputs, remembered between launches. Nobody wants to re-enter their
 /// altitude every morning.
-enum Settings {
+enum SettingsStore {
     @MainActor
     static func load(into planner: Planner) {
         let store = UserDefaults.standard

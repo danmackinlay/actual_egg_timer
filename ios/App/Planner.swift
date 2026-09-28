@@ -124,7 +124,7 @@ final class Planner {
     /// the system on screen, which falls back to `regionalUnits`: storing that
     /// instead would turn a default into a choice nobody made. Saved, but no
     /// re-solve: the egg does not change when its numbers change clothes.
-    private(set) var unitsChosen: UnitSystem? { didSet { if !applying { Settings.save(self) } } }
+    private(set) var unitsChosen: UnitSystem? { didSet { if !applying { SettingsStore.save(self) } } }
 
     /// The system on screen.
     var units: UnitSystem { effectiveUnits(chosen: unitsChosen, regional: regionalUnits) }
@@ -157,14 +157,14 @@ final class Planner {
     func setProbe(_ on: Bool) {
         probe = on
         probeAsked = true
-        Settings.save(self)
+        SettingsStore.save(self)
     }
 
     /// The answer to the offer made during a cook.
     func answerProbeOffer(_ yes: Bool) {
         probeAsked = true
         if yes { probe = true }
-        Settings.save(self)
+        SettingsStore.save(self)
     }
 
     /// Restore from storage without saving it straight back.
@@ -317,7 +317,7 @@ final class Planner {
         applying = true
         kept = Calibrations.load()
         boilMemory = BoilMemories.load()
-        Settings.load(into: self)
+        SettingsStore.load(into: self)
         applying = false
         recompute()
         // Eggs written down but not yet folded - the app was killed mid-fold, or
