@@ -1,0 +1,752 @@
+{
+  "defaultLanguage": "en",
+  "periodLanguage": "en-x-1750",
+  "languages": [
+    "en",
+    "en-x-1750"
+  ],
+  "tags": [
+    {
+      "tag": "en",
+      "isPeriod": false,
+      "isModernEnglish": true,
+      "register": "modern"
+    },
+    {
+      "tag": "en-US",
+      "isPeriod": false,
+      "isModernEnglish": true,
+      "register": "modern"
+    },
+    {
+      "tag": "en-GB",
+      "isPeriod": false,
+      "isModernEnglish": true,
+      "register": "modern"
+    },
+    {
+      "tag": "EN-gb",
+      "isPeriod": false,
+      "isModernEnglish": true,
+      "register": "modern"
+    },
+    {
+      "tag": "en-x-1750",
+      "isPeriod": true,
+      "isModernEnglish": false,
+      "register": "1750"
+    },
+    {
+      "tag": "en-US-x-1750",
+      "isPeriod": true,
+      "isModernEnglish": false,
+      "register": "1750"
+    },
+    {
+      "tag": "en-GB-x-1750",
+      "isPeriod": true,
+      "isModernEnglish": false,
+      "register": "1750"
+    },
+    {
+      "tag": "EN-GB-X-1750",
+      "isPeriod": true,
+      "isModernEnglish": false,
+      "register": "1750"
+    },
+    {
+      "tag": "en-x-1750-a",
+      "isPeriod": true,
+      "isModernEnglish": false,
+      "register": "1750"
+    },
+    {
+      "tag": "en-x-17500",
+      "isPeriod": false,
+      "isModernEnglish": true,
+      "register": "modern"
+    },
+    {
+      "tag": "en-x-175",
+      "isPeriod": false,
+      "isModernEnglish": true,
+      "register": "modern"
+    },
+    {
+      "tag": "cs",
+      "isPeriod": false,
+      "isModernEnglish": false,
+      "register": "modern"
+    },
+    {
+      "tag": "cs-CZ",
+      "isPeriod": false,
+      "isModernEnglish": false,
+      "register": "modern"
+    },
+    {
+      "tag": "cs-x-1750",
+      "isPeriod": false,
+      "isModernEnglish": false,
+      "register": "modern"
+    },
+    {
+      "tag": "x-1750",
+      "isPeriod": false,
+      "isModernEnglish": false,
+      "register": "modern"
+    },
+    {
+      "tag": "",
+      "isPeriod": false,
+      "isModernEnglish": false,
+      "register": "modern"
+    },
+    {
+      "tag": "enx-1750",
+      "isPeriod": false,
+      "isModernEnglish": false,
+      "register": "modern"
+    }
+  ],
+  "transitions": [
+    {
+      "state": {
+        "chosen": null,
+        "flippedFrom": null
+      },
+      "move": {
+        "flip": "metricToImperial"
+      },
+      "next": {
+        "chosen": "en-x-1750",
+        "flippedFrom": {
+          "chosen": null
+        }
+      },
+      "effective": "en-x-1750"
+    },
+    {
+      "state": {
+        "chosen": null,
+        "flippedFrom": null
+      },
+      "move": {
+        "flip": "imperialToMetric"
+      },
+      "next": {
+        "chosen": null,
+        "flippedFrom": null
+      },
+      "effective": "en"
+    },
+    {
+      "state": {
+        "chosen": null,
+        "flippedFrom": null
+      },
+      "move": {
+        "pick": "en"
+      },
+      "next": {
+        "chosen": "en",
+        "flippedFrom": null
+      },
+      "effective": "en"
+    },
+    {
+      "state": {
+        "chosen": null,
+        "flippedFrom": null
+      },
+      "move": {
+        "pick": "en-x-1750"
+      },
+      "next": {
+        "chosen": "en-x-1750",
+        "flippedFrom": null
+      },
+      "effective": "en-x-1750"
+    },
+    {
+      "state": {
+        "chosen": null,
+        "flippedFrom": null
+      },
+      "move": {
+        "pick": "cs"
+      },
+      "next": {
+        "chosen": "cs",
+        "flippedFrom": null
+      },
+      "effective": "cs"
+    },
+    {
+      "state": {
+        "chosen": "en",
+        "flippedFrom": null
+      },
+      "move": {
+        "flip": "metricToImperial"
+      },
+      "next": {
+        "chosen": "en-x-1750",
+        "flippedFrom": {
+          "chosen": "en"
+        }
+      },
+      "effective": "en-x-1750"
+    },
+    {
+      "state": {
+        "chosen": "en",
+        "flippedFrom": null
+      },
+      "move": {
+        "flip": "imperialToMetric"
+      },
+      "next": {
+        "chosen": "en",
+        "flippedFrom": null
+      },
+      "effective": "en"
+    },
+    {
+      "state": {
+        "chosen": "en",
+        "flippedFrom": null
+      },
+      "move": {
+        "pick": "en"
+      },
+      "next": {
+        "chosen": "en",
+        "flippedFrom": null
+      },
+      "effective": "en"
+    },
+    {
+      "state": {
+        "chosen": "en",
+        "flippedFrom": null
+      },
+      "move": {
+        "pick": "en-x-1750"
+      },
+      "next": {
+        "chosen": "en-x-1750",
+        "flippedFrom": null
+      },
+      "effective": "en-x-1750"
+    },
+    {
+      "state": {
+        "chosen": "en",
+        "flippedFrom": null
+      },
+      "move": {
+        "pick": "cs"
+      },
+      "next": {
+        "chosen": "cs",
+        "flippedFrom": null
+      },
+      "effective": "cs"
+    },
+    {
+      "state": {
+        "chosen": "en-x-1750",
+        "flippedFrom": null
+      },
+      "move": {
+        "flip": "metricToImperial"
+      },
+      "next": {
+        "chosen": "en-x-1750",
+        "flippedFrom": null
+      },
+      "effective": "en-x-1750"
+    },
+    {
+      "state": {
+        "chosen": "en-x-1750",
+        "flippedFrom": null
+      },
+      "move": {
+        "flip": "imperialToMetric"
+      },
+      "next": {
+        "chosen": "en-x-1750",
+        "flippedFrom": null
+      },
+      "effective": "en-x-1750"
+    },
+    {
+      "state": {
+        "chosen": "en-x-1750",
+        "flippedFrom": null
+      },
+      "move": {
+        "pick": "en"
+      },
+      "next": {
+        "chosen": "en",
+        "flippedFrom": null
+      },
+      "effective": "en"
+    },
+    {
+      "state": {
+        "chosen": "en-x-1750",
+        "flippedFrom": null
+      },
+      "move": {
+        "pick": "en-x-1750"
+      },
+      "next": {
+        "chosen": "en-x-1750",
+        "flippedFrom": null
+      },
+      "effective": "en-x-1750"
+    },
+    {
+      "state": {
+        "chosen": "en-x-1750",
+        "flippedFrom": null
+      },
+      "move": {
+        "pick": "cs"
+      },
+      "next": {
+        "chosen": "cs",
+        "flippedFrom": null
+      },
+      "effective": "cs"
+    },
+    {
+      "state": {
+        "chosen": "cs",
+        "flippedFrom": null
+      },
+      "move": {
+        "flip": "metricToImperial"
+      },
+      "next": {
+        "chosen": "cs",
+        "flippedFrom": null
+      },
+      "effective": "cs"
+    },
+    {
+      "state": {
+        "chosen": "cs",
+        "flippedFrom": null
+      },
+      "move": {
+        "flip": "imperialToMetric"
+      },
+      "next": {
+        "chosen": "cs",
+        "flippedFrom": null
+      },
+      "effective": "cs"
+    },
+    {
+      "state": {
+        "chosen": "cs",
+        "flippedFrom": null
+      },
+      "move": {
+        "pick": "en"
+      },
+      "next": {
+        "chosen": "en",
+        "flippedFrom": null
+      },
+      "effective": "en"
+    },
+    {
+      "state": {
+        "chosen": "cs",
+        "flippedFrom": null
+      },
+      "move": {
+        "pick": "en-x-1750"
+      },
+      "next": {
+        "chosen": "en-x-1750",
+        "flippedFrom": null
+      },
+      "effective": "en-x-1750"
+    },
+    {
+      "state": {
+        "chosen": "cs",
+        "flippedFrom": null
+      },
+      "move": {
+        "pick": "cs"
+      },
+      "next": {
+        "chosen": "cs",
+        "flippedFrom": null
+      },
+      "effective": "cs"
+    },
+    {
+      "state": {
+        "chosen": "en-x-1750",
+        "flippedFrom": {
+          "chosen": null
+        }
+      },
+      "move": {
+        "flip": "metricToImperial"
+      },
+      "next": {
+        "chosen": "en-x-1750",
+        "flippedFrom": {
+          "chosen": null
+        }
+      },
+      "effective": "en-x-1750"
+    },
+    {
+      "state": {
+        "chosen": "en-x-1750",
+        "flippedFrom": {
+          "chosen": null
+        }
+      },
+      "move": {
+        "flip": "imperialToMetric"
+      },
+      "next": {
+        "chosen": null,
+        "flippedFrom": null
+      },
+      "effective": "en"
+    },
+    {
+      "state": {
+        "chosen": "en-x-1750",
+        "flippedFrom": {
+          "chosen": null
+        }
+      },
+      "move": {
+        "pick": "en"
+      },
+      "next": {
+        "chosen": "en",
+        "flippedFrom": null
+      },
+      "effective": "en"
+    },
+    {
+      "state": {
+        "chosen": "en-x-1750",
+        "flippedFrom": {
+          "chosen": null
+        }
+      },
+      "move": {
+        "pick": "en-x-1750"
+      },
+      "next": {
+        "chosen": "en-x-1750",
+        "flippedFrom": null
+      },
+      "effective": "en-x-1750"
+    },
+    {
+      "state": {
+        "chosen": "en-x-1750",
+        "flippedFrom": {
+          "chosen": null
+        }
+      },
+      "move": {
+        "pick": "cs"
+      },
+      "next": {
+        "chosen": "cs",
+        "flippedFrom": null
+      },
+      "effective": "cs"
+    },
+    {
+      "state": {
+        "chosen": "en-x-1750",
+        "flippedFrom": {
+          "chosen": "en"
+        }
+      },
+      "move": {
+        "flip": "metricToImperial"
+      },
+      "next": {
+        "chosen": "en-x-1750",
+        "flippedFrom": {
+          "chosen": "en"
+        }
+      },
+      "effective": "en-x-1750"
+    },
+    {
+      "state": {
+        "chosen": "en-x-1750",
+        "flippedFrom": {
+          "chosen": "en"
+        }
+      },
+      "move": {
+        "flip": "imperialToMetric"
+      },
+      "next": {
+        "chosen": "en",
+        "flippedFrom": null
+      },
+      "effective": "en"
+    },
+    {
+      "state": {
+        "chosen": "en-x-1750",
+        "flippedFrom": {
+          "chosen": "en"
+        }
+      },
+      "move": {
+        "pick": "en"
+      },
+      "next": {
+        "chosen": "en",
+        "flippedFrom": null
+      },
+      "effective": "en"
+    },
+    {
+      "state": {
+        "chosen": "en-x-1750",
+        "flippedFrom": {
+          "chosen": "en"
+        }
+      },
+      "move": {
+        "pick": "en-x-1750"
+      },
+      "next": {
+        "chosen": "en-x-1750",
+        "flippedFrom": null
+      },
+      "effective": "en-x-1750"
+    },
+    {
+      "state": {
+        "chosen": "en-x-1750",
+        "flippedFrom": {
+          "chosen": "en"
+        }
+      },
+      "move": {
+        "pick": "cs"
+      },
+      "next": {
+        "chosen": "cs",
+        "flippedFrom": null
+      },
+      "effective": "cs"
+    }
+  ],
+  "reads": [
+    {
+      "raw": null,
+      "state": {
+        "chosen": null,
+        "flippedFrom": null
+      }
+    },
+    {
+      "raw": "en",
+      "state": {
+        "chosen": null,
+        "flippedFrom": null
+      }
+    },
+    {
+      "raw": 42,
+      "state": {
+        "chosen": null,
+        "flippedFrom": null
+      }
+    },
+    {
+      "raw": [],
+      "state": {
+        "chosen": null,
+        "flippedFrom": null
+      }
+    },
+    {
+      "raw": {},
+      "state": {
+        "chosen": null,
+        "flippedFrom": null
+      }
+    },
+    {
+      "raw": {
+        "chosen": "xx"
+      },
+      "state": {
+        "chosen": null,
+        "flippedFrom": null
+      }
+    },
+    {
+      "raw": {
+        "chosen": 5
+      },
+      "state": {
+        "chosen": null,
+        "flippedFrom": null
+      }
+    },
+    {
+      "raw": {
+        "chosen": "en"
+      },
+      "state": {
+        "chosen": "en",
+        "flippedFrom": null
+      }
+    },
+    {
+      "raw": {
+        "chosen": "cs"
+      },
+      "state": {
+        "chosen": null,
+        "flippedFrom": null
+      }
+    },
+    {
+      "raw": {
+        "chosen": "en-x-1750"
+      },
+      "state": {
+        "chosen": "en-x-1750",
+        "flippedFrom": null
+      }
+    },
+    {
+      "raw": {
+        "chosen": "en-x-1750",
+        "flippedFrom": null
+      },
+      "state": {
+        "chosen": "en-x-1750",
+        "flippedFrom": null
+      }
+    },
+    {
+      "raw": {
+        "chosen": "en-x-1750",
+        "flippedFrom": {
+          "chosen": null
+        }
+      },
+      "state": {
+        "chosen": "en-x-1750",
+        "flippedFrom": {
+          "chosen": null
+        }
+      }
+    },
+    {
+      "raw": {
+        "chosen": "en-x-1750",
+        "flippedFrom": {
+          "chosen": "en"
+        }
+      },
+      "state": {
+        "chosen": "en-x-1750",
+        "flippedFrom": {
+          "chosen": "en"
+        }
+      }
+    },
+    {
+      "raw": {
+        "chosen": "en-x-1750",
+        "flippedFrom": {
+          "chosen": "cs"
+        }
+      },
+      "state": {
+        "chosen": "en-x-1750",
+        "flippedFrom": {
+          "chosen": null
+        }
+      }
+    },
+    {
+      "raw": {
+        "chosen": "en-x-1750",
+        "flippedFrom": {}
+      },
+      "state": {
+        "chosen": "en-x-1750",
+        "flippedFrom": {
+          "chosen": null
+        }
+      }
+    },
+    {
+      "raw": {
+        "chosen": "en-x-1750",
+        "flippedFrom": "en"
+      },
+      "state": {
+        "chosen": "en-x-1750",
+        "flippedFrom": null
+      }
+    },
+    {
+      "raw": {
+        "chosen": "en-x-1750",
+        "flippedFrom": []
+      },
+      "state": {
+        "chosen": "en-x-1750",
+        "flippedFrom": null
+      }
+    },
+    {
+      "raw": {
+        "chosen": "en",
+        "flippedFrom": {
+          "chosen": null
+        }
+      },
+      "state": {
+        "chosen": "en",
+        "flippedFrom": null
+      }
+    },
+    {
+      "raw": {
+        "chosen": null,
+        "flippedFrom": {
+          "chosen": "en"
+        }
+      },
+      "state": {
+        "chosen": null,
+        "flippedFrom": null
+      }
+    }
+  ]
+}

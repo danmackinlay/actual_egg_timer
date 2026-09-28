@@ -35,6 +35,9 @@
  *                           formatting locale, the locale each app derives and
  *                           what it writes, and a pseudo-Czech catalogue
  *                           rendered in cs-CZ
+ *   fixtures/language.json  the switch into the English of 1750 and out, and
+ *                           a stored state read defensively
+ *                           (tools/languageFixture.ts)
  */
 
 import { writeFileSync, mkdirSync, readFileSync, readdirSync } from 'node:fs';
@@ -98,6 +101,7 @@ import {
 import { QUANTITIES, UNIT_SYSTEMS, measureFor, quantityText } from '../src/core/units.js';
 import { unitsFixture } from './unitsFixture.js';
 import { probeFixture } from './probeFixture.js';
+import { languageFixture } from './languageFixture.js';
 import {
   SOUS_VIDE_BATH_C, SOUS_VIDE_MODEL_FLOOR_C, equilibrationTime, sousVideEstimate,
 } from '../src/core/sousvide.js';
@@ -1920,6 +1924,11 @@ writeFileSync('fixtures/units.json', `${JSON.stringify(units, null, 2)}\n`);
 const thermometer = probeFixture();
 writeFileSync('fixtures/probe.json', `${JSON.stringify(thermometer, null, 2)}\n`);
 
+/* --------------------------------------------------------------- language */
+
+const language = languageFixture();
+writeFileSync('fixtures/language.json', `${JSON.stringify(language, null, 2)}\n`);
+
 const counts = [
   `${core.sphere.seriesTheta.length} seriesTheta`,
   `${core.sphere.stepResponse.length} step samples`,
@@ -1949,5 +1958,6 @@ const counts = [
   `${saferFixture.cases.reduce((n, c) => n + c.safer.length, 0)} play-safe levels`,
   `${(thermometer['updates'] as unknown[]).length} probe folds`,
   `${(thermometer['solved'] as unknown[]).length} probe cooks`,
+  `${(language['transitions'] as unknown[]).length} language moves`,
 ];
 console.log(`fixtures/*.json written: ${counts.join(', ')}`);
