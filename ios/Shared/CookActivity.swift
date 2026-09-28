@@ -76,7 +76,7 @@ struct CookActivity: ActivityAttributes {
 
         /// Three stages are counted down. `pull` is a moment; a timer on it
         /// would count toward nothing. There is no done stage: the card ends
-        /// at once when the cooling does (`LiveActivity.finish`).
+        /// at once when the cooling does (`LiveActivity.endAll`).
         var countsDown: Bool {
             self == .heating || self == .cooking || self == .cooling
         }

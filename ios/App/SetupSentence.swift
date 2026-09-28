@@ -158,7 +158,7 @@ struct SetupFacts {
         let system = ticket.units
         units = system
         let byClass = ticket.massFrom == .sizeClass
-            ? kitchen.sizeClasses.first { $0.massKg * 1000 == ticket.eggGrams }
+            ? kitchen.sizeClasses.first { abs($0.massKg * 1000 - ticket.eggGrams) < 1e-9 }
             : nil
         mass = byClass.map { classMass($0, units: system) } ?? showIn(system, .mass, ticket.eggGrams)
         from = ticket.startTemp

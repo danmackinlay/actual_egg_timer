@@ -49,14 +49,6 @@ final class Cook {
     struct Ticket: Equatable, Codable {
         var doneness: String
         var peakYolkC: Double
-        var peakWhiteC: Double
-        var eggGrams: Double
-        var cooling: Cooling
-        var coldStart: Bool
-        /// log10 of the yolk dose this cook is being RUN at, captured at "Eggs
-        /// in". The calibration needs what was cooked, not what the slider
-        /// happens to say by the time the egg is eaten.
-        var logNominalTarget: Double
         /// The doneness level that target came from, so a mid-cook re-solve can
         /// answer for the cook in the pan rather than for the slider.
         var level: Double
@@ -101,6 +93,11 @@ final class Cook {
         /// Whether this cook has a moment to probe at: a counted cooling that
         /// ends at the peak (`probeMomentFor`, E4).
         var probeMoment: Bool
+
+        /// Read off the egg and the pan, not stored beside them.
+        var eggGrams: Double { egg.massKg * 1000 }
+        var cooling: Cooling { setup.cooling }
+        var coldStart: Bool { setup.startMode == .cold }
 
         /// The Lock Screen's description of this cook, in its own units and
         /// its own language.
@@ -228,8 +225,6 @@ final class Cook {
     /// Both from EggTimerCore, so the two apps cannot time the same egg
     /// differently. They used to be a pair of literals here and another pair in
     /// the web app's machine, with a comment asserting they matched.
-    static let coolingSeconds: TimeInterval = EggTimerCore.coolingSeconds
-    static let pullGraceSeconds: TimeInterval = EggTimerCore.pullGraceSeconds
 
     /// A cold start still not boiling this close to its provisional deadline
     /// has a slower hob than we assumed. Push the estimate out rather than
@@ -242,7 +237,7 @@ final class Cook {
 
     /// How long the cooling counts once the eggs are out, s: to the yolk's
     /// peak for this cook (E4), or the flat fallback for a cook from before.
-    var coolFor: TimeInterval { ticket?.coolS ?? Self.coolingSeconds }
+    var coolFor: TimeInterval { ticket?.coolS ?? coolingSeconds }
 
     /// Whether this cook will ask for a probe reading when its cooling ends.
     var asksForProbe: Bool { ticket?.probeMoment == true && probeWanted?() == true }
@@ -494,7 +489,7 @@ final class Cook {
         // out, and the carryover is the point rather than something to wait out.
         coolDoneAt = cooling == .counter
             ? nil
-            : pull.addingTimeInterval(Self.pullGraceSeconds + coolFor)
+            : pull.addingTimeInterval(pullGraceSeconds + coolFor)
         persist()
     }
 
@@ -707,10 +702,10 @@ final class Cook {
         case .pull:
             return .init(
                 stage: .pull, began: pullAt,
-                ends: pullAt.addingTimeInterval(Self.pullGraceSeconds), provisional: false
+                ends: pullAt.addingTimeInterval(pullGraceSeconds), provisional: false
             )
         case .cooling:
-            let from = outAt ?? pullAt.addingTimeInterval(Self.pullGraceSeconds)
+            let from = outAt ?? pullAt.addingTimeInterval(pullGraceSeconds)
             return .init(
                 stage: .cooling, began: from,
                 ends: coolDoneAt ?? from, provisional: false
@@ -721,14 +716,14 @@ final class Cook {
     /// Push only when the stage changes, or when a deadline has actually moved.
     /// The countdown itself needs no help: the system draws it from the dates.
     ///
-    /// At done the card ends at once (`LiveActivity.finish`), once per cook -
+    /// At done the card ends at once (`LiveActivity.endAll`), once per cook -
     /// including a card left from before a relaunch that restored a cook
     /// already done.
     private func pushActivity(force: Bool) {
         if phase == .done {
             guard force || !activityFinished else { return }
             activityFinished = true
-            activity { await LiveActivity.finish() }
+            activity { await LiveActivity.endAll() }
             return
         }
         guard let state = activityState else { return }

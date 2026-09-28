@@ -201,7 +201,7 @@ Put one LOGBOOK line on the decision: "owner, 28 Sep: no post-19-Sep build shipp
 - Before deleting `STILL_LEARNING_HALF_WIDTH_S`, grep it. If the E6/E8 "still learning" condition in INFERENCE.md cites it, leave a note there that it is to be computed on demand from `predictCookTime`.
 - Done when: `decide.json` has no interval, stillLearning or loss fields, and `npm run conformance` is green.
 
-**4.4 iOS dead code.**
+**DONE: 4.4 iOS dead code.**
 - `Cook.Ticket.peakWhiteC` and `logNominalTarget` are written and never read (`Cook.swift:52,56-59`). `Kitchen.logNominalTarget` (`:379-382`) exists only to fill them.
 - Derive `eggGrams`, `coldStart` and `cooling` from `egg` / `setup` instead of storing them.
 - `LanguageChoice.current` (`:56-57`) has no callers.

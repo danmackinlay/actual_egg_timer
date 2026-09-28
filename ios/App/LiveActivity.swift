@@ -45,15 +45,10 @@ enum LiveActivity {
     /// It ends on the content it last showed, not on a done state: a card
     /// dismissed at once never draws its final content, so the done stage's
     /// words were retired from the widget.
-    static func finish() async {
-        for activity in Activity<CookActivity>.activities {
-            await activity.end(nil, dismissalPolicy: .immediate)
-        }
-    }
-
-    /// Clear everything, including a card left behind by a force-quit mid-cook,
-    /// which would otherwise sit there counting down to an egg nobody is
-    /// cooking.
+    ///
+    /// The same call clears everything else: a cancel, and a card left behind
+    /// by a force-quit mid-cook, which would otherwise sit there counting down
+    /// to an egg nobody is cooking.
     static func endAll() async {
         for activity in Activity<CookActivity>.activities {
             await activity.end(nil, dismissalPolicy: .immediate)

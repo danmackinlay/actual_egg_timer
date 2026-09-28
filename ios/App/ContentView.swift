@@ -434,11 +434,6 @@ struct ContentView: View {
         let ticket = Cook.Ticket(
             doneness: kitchen.label,
             peakYolkC: solution.result.peakYolkC,
-            peakWhiteC: solution.result.peakWhiteC,
-            eggGrams: kitchen.eggMassG,
-            cooling: kitchen.cooling,
-            coldStart: kitchen.coldStart,
-            logNominalTarget: kitchen.logNominalTarget,
             level: kitchen.doneness,
             egg: kitchen.egg,
             setup: kitchen.setup,
@@ -549,7 +544,7 @@ struct ContentView: View {
                 // the counter, where the grace runs out into Done and the line
                 // under the time already says the yolk is still cooking.
                 if (cook.ticket?.cooling ?? kitchen.cooling) != .counter, let pullAt = cook.pullAt {
-                    let left = max(0, (Cook.pullGraceSeconds - now.timeIntervalSince(pullAt)).rounded(.up))
+                    let left = max(0, (pullGraceSeconds - now.timeIntervalSince(pullAt)).rounded(.up))
                     Text(tr("action.hint.pull", ["seconds": .int(Int(left))]))
                         .font(.footnote)
                         .foregroundStyle(.secondary)

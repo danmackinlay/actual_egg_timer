@@ -363,17 +363,12 @@ final class Kitchen {
         let doneness = calibrationDoneness(calibration, level: doneness)
         return sousVideEstimate(
             radiusM: egg.radiusM,
-            alphaM2s: Calibrations.params(calibration).alphaM2s,
+            alphaM2s: calibrationParams(calibration).alphaM2s,
             bathC: sousVideBathC,
             yolkDoseMin: doneness.yolkDoseMin,
             whiteDoseMin: doneness.whiteDoseMin
         )
     }
-
-    /// log10 of the yolk dose the slider is currently asking for. This is what
-    /// the filter treats as the nominal target, and the user's taste offset is
-    /// learned relative to it, so it carries across slider positions.
-    var logNominalTarget: Double { log10(donenessFromSlider(doneness).yolkDoseMin) }
 
     // MARK: - Solving
 
@@ -481,7 +476,7 @@ final class Kitchen {
         let d = decide(calibration, grid: grid, solution: answer.solution, logNominalTarget: target)
         var chosen = answer
         chosen.solution = decidedSolution(
-            egg: egg, setup: answer.setup, params: Calibrations.params(calibration),
+            egg: egg, setup: answer.setup, params: calibrationParams(calibration),
             solution: answer.solution, decision: d
         )
         chosen.decision = d
@@ -562,7 +557,7 @@ final class Kitchen {
     ) async -> Answer {
         // The white's target moves with what the eggs said about the white (E3),
         // so the doneness comes from the calibration as well as the parameters.
-        let params = Calibrations.params(calibration)
+        let params = calibrationParams(calibration)
         var result = solveCookTime(
             egg: egg, setup: setup, params: params, doneness: calibrationDoneness(calibration, level: level)
         )
@@ -615,7 +610,7 @@ final class Kitchen {
             egg: egg, setup: setup, level: level, calibration: calibration, snapRetry: false
         )
         let carried = carriedSolution(
-            egg: egg, setup: setup, params: Calibrations.params(calibration),
+            egg: egg, setup: setup, params: calibrationParams(calibration),
             solution: answer.solution, leanS: leanS
         )
         // The numbers on screen follow the cook; the refusal does not. A
@@ -873,7 +868,7 @@ final class Kitchen {
     func seed(_ answers: [Feedback]) {
         guard kept.log.isEmpty, !answers.isEmpty, !isSousVide else { return }
         let solved = solveCookTime(
-            egg: egg, setup: setup, params: Calibrations.params(calibration),
+            egg: egg, setup: setup, params: calibrationParams(calibration),
             doneness: calibrationDoneness(calibration, level: doneness)
         )
         let seconds = solved.result.cookTimeS

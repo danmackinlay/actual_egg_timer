@@ -53,9 +53,6 @@ final class LanguageChoice {
         set(languageAfterPick(state, tag))
     }
 
-    /// The catalogue on screen.
-    var current: String { effectiveLanguage(state) }
-
     private func set(_ next: LanguageState) {
         guard next != state else { return }
         state = next

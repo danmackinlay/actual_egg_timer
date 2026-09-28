@@ -57,13 +57,6 @@ enum Calibrations {
         base ?? fresh()
     }
 
-    /// Parameters to solve with. Before any feedback this is the literature
-    /// values, so the app is fully useful on day one and calibration is purely
-    /// additive.
-    static func params(_ c: Calibration) -> ModelParams {
-        calibrationParams(c)
-    }
-
     // MARK: - Persistence
 
     /// Column-wise, one column per particle field. The current posterior is
