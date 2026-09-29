@@ -9,8 +9,9 @@ things stand is `PLAN.md`; which document holds what is its last section.
 - **Stage files by name.** Another agent (the owner's QA agent) commits in
   this tree at the same time. Never `git add -A` or `git add .`; check
   `git log --oneline` before and after each commit.
-- **Never push, and never merge to `main` on the owner's behalf.** Pushing
-  deploys the web app; it is the owner's call.
+- **Never push.** Pushing deploys the web app; it is the owner's call.
+  Agents working in a worktree commit on their branch and do not merge;
+  the session that sent them verifies and merges to local `main`.
 - **One gate: `npm run verify`** (the type checks, `npm test`, the Swift copy
   lint, fresh fixtures, `swift test`). Run it before every commit that
   touches code; `rm -rf dist/test` first if a test file was deleted.
