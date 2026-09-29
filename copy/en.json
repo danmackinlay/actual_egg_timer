@@ -1,6 +1,6 @@
 {
   "locale": "en",
-  "about": "Every word both apps put on screen. One entry per key: `text`, or a `count` argument and one template per CLDR plural category (`one`, `few`, `many`, `other`). `{name}` is a placeholder. `surface` is where it is drawn, and copy/surfaces.json holds each surface's length budget. `apps` says which app uses it; `example` is the arguments the fixture and the budget render it with. Design: LANGUAGE.md §2.",
+  "about": "Every word both apps put on screen. One entry per key: `text`, or a `count` argument and one template per CLDR plural category (`one`, `few`, `many`, `other`). `{name}` is a placeholder. `surface` is where it is drawn, and test/data/surfaces.json holds each surface's length budget. `apps` says which app uses it; `example` is the arguments the fixture and the budget render it with. Design: LANGUAGE.md §2.",
   "messages": {
     "app.name": { "surface": "title", "apps": ["ios"], "text": "Actual Egg Timer" },
 

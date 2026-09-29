@@ -1,6 +1,6 @@
 {
   "locale": "en-x-1750",
-  "about": "The English of 1750: every word the web app puts on screen, in the manner of Samuel Johnson's Preface to the Dictionary as first printed in 1755. A shadow of copy/en.json, which holds the schema (surface, apps, example); a key missing here falls back to it. Spelling as copy/en-x-1750.spelling.json; no stage-play archaisms, no capitalised common nouns, and the long s only in app.titlePage. Design: LANGUAGE.md section 6.",
+  "about": "The English of 1750: every word both apps put on screen, in the manner of Samuel Johnson's Preface to the Dictionary as first printed in 1755. A shadow of copy/en.json, which holds the schema (surface, apps, example); a key missing here falls back to it. Spelling as test/data/en-x-1750.spelling.json; no stage-play archaisms, no capitalised common nouns, and the long s only in app.titlePage. Design: LANGUAGE.md section 6.",
   "messages": {
     "doneness.runny": { "text": "Rear" },
     "doneness.soft": { "text": "Soft" },
