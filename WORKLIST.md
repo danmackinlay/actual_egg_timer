@@ -104,11 +104,11 @@ Baseline, all green:
 
 `policy.ts` says that anything both apps must agree on belongs in core with a fixture. These items don't follow that rule yet.
 
-DONE: **3.1 The solve → refusal → snap-and-retry rule is written three times.** (`answerAt` in `reach.ts`/`Reach.swift`, pinned in `reach.json` `answers`. iOS loses its `Task.isCancelled` check between the solve and the retry; a superseded answer is still dropped by question number.)
+DONE daf1ce1: **3.1 The solve → refusal → snap-and-retry rule is written three times.** (`answerAt` in `reach.ts`/`Reach.swift`, pinned in `reach.json` `answers`. iOS loses its `Task.isCancelled` check between the solve and the retry; a superseded answer is still dropped by question number.)
 - Where: `app.ts:503-523` (`answerFor`), `Kitchen.swift:565-594` (`solve`), and `tools/decide.ts:70-79` (`meanSolve`, which also skips the odds profile).
 - Fix: add a core `answerAt(c, egg, setup, level, profile, snapRetry) → {solution, verdict, level}`, pin it in `reach.json`, and have all three call it.
 
-DONE: **3.2 Which refusal and phase text to show is chosen separately in each app.** (All five in `src/core/wording.ts` / `Wording.swift`, fixtured in `wording.json`. Phase keys return plain key strings, not `CopyRef`: their arguments are clocks and quantities only the app renders. iOS now reads the ticket's pot for the cooking label, heating hint and cooling label, where it read live controls.)
+DONE 9604cfa, c982126: **3.2 Which refusal and phase text to show is chosen separately in each app.** (All five in `src/core/wording.ts` / `Wording.swift`, fixtured in `wording.json`. Phase keys return plain key strings, not `CopyRef`: their arguments are clocks and quantities only the app renders. iOS now reads the ticket's pot for the cooking label, heating hint and cooling label, where it read live controls.)
 - Duplicated key selection:
   - `refusalText`: `Kitchen.swift:1025-1063` vs `app.ts:458-480`
   - `Direction.key` and `whiteAtRisk`: `Direction.swift:37-58` vs `src/ui/outcome.ts:42-58` ("word for word", unfixtured)
@@ -118,31 +118,31 @@ DONE: **3.2 Which refusal and phase text to show is chosen separately in each ap
 - Fix: move each into core as a pure `…Key(…) → CopyRef` and fixture it. The precedents already exist: `pullLineKey`, `textureNoteKeys`, `sousvideCopy.json`.
 - Why it matters most here: the iOS app has **no test target** (`project.yml testTargets: []`), so this is the only way its choices get tested.
 
-DONE: **3.3 The slow-hob revision constants are literals in both apps.** (`SLOW_HOB_*` / `slowHob*`, in `policy.json` `phase.slowHob`.)
+DONE 22b19b6: **3.3 The slow-hob revision constants are literals in both apps.** (`SLOW_HOB_*` / `slowHob*`, in `policy.json` `phase.slowHob`.)
 - Where: `app.ts:1832-1834` and `Cook.swift:226-228` (45 s, 60 s, 10 s).
 - Fix: move them to `policy.ts`, its Swift twin and `policy.json`.
 
-DONE: **3.4 `Cook.Phase` duplicates core `Phase`.** (`Deadlines.outAt_s`/`outAtS`, pinned by two tapped-out timelines in `policy.json`.)
+DONE e5ab187: **3.4 `Cook.Phase` duplicates core `Phase`.** (`Deadlines.outAt_s`/`outAtS`, pinned by two tapped-out timelines in `policy.json`.)
 - Where: `Cook.swift:32-43`, with two hand mappings at `:265-281` and `:645-652`. The tap-out override also lives outside core.
 - Fix: use `EggTimerCore.Phase`, add `outAtS` to `Deadlines` / `phaseAt`, and fixture it in `policy.json`.
 
-DONE: **3.5 `Forecast` (`Direction.swift:14-35`) is a field-by-field Codable copy of core `Outcome`, with `lean` stored as a String.**
+DONE 456718d: **3.5 `Forecast` (`Direction.swift:14-35`) is a field-by-field Codable copy of core `Outcome`, with `lean` stored as a String.**
 - Fix: make `Outcome` and `Lean` Codable/Equatable in core, then delete `Forecast`.
 
-DONE: **3.6 Swift never checks the record's identity constants.**
+DONE bc53af3: **3.6 Swift never checks the record's identity constants.**
 - `priorID` and `recordVersion` (`Record.swift:22,28`), which are stamped into every iOS record, are never compared with `record.json`'s `prior` / `version`.
 - `kernelDiscount` is not in `calibration.json.likelihood`.
 - Fix: add the `#expect`s, and add `KERNEL_DISCOUNT` to the fixture (keep it exported in TS).
 
-DONE: **3.7 App-used Swift paths that no fixture covers.** (`decide.json` `cases[].decided`, and `carried` rows on a pot whose lean applies and a counter pot where it does not; TS test 6d.)
+DONE 3a1ada4: **3.7 App-used Swift paths that no fixture covers.** (`decide.json` `cases[].decided`, and `carried` rows on a pot whose lean applies and a counter pot where it does not; TS test 6d.)
 - `decidedSolution` and `carriedSolution` (`Decide.swift:281,289`) are not fixtured, and `decidedSolution` has no TS test either.
 - Fix: add a `decided` row per `decide.json` case, plus one `carriedSolution` row with `lean_s ≠ 0`.
 
-DONE: **3.8 The `shadingOf` threshold `0.05` is unnamed and never exercised.** (`SHADE_BEST_MIN` / `shadeBestMin`; `reach.json` `shading` straddles it.)
+DONE 2ff81dc: **3.8 The `shadingOf` threshold `0.05` is unnamed and never exercised.** (`SHADE_BEST_MIN` / `shadeBestMin`; `reach.json` `shading` straddles it.)
 - Where: `reach.ts:258`, `Reach.swift:216`. No fixture profile has a best below 0.05.
 - Fix: name the constant, put it in `reach.json`, and add a case below it.
 
-DONE: **3.9 Numbers both apps agree on that have no name.** (`WHITE_BAND_BELOW_C`, `YOLK_BAND_BELOW_C`, `ROOM_EGG_FROM_C`, `CALIBRATION_ALPHA_LOW/HIGH`, in `policy.json` `edges`.)
+DONE b7e10ca: **3.9 Numbers both apps agree on that have no name.** (`WHITE_BAND_BELOW_C`, `YOLK_BAND_BELOW_C`, `ROOM_EGG_FROM_C`, `CALIBRATION_ALPHA_LOW/HIGH`, in `policy.json` `edges`.)
 - `textureFor`'s 71/82 and 58/63/68/73 (`policy.ts:302-307`).
 - `ambientFor`'s 15 (`policy.ts:94`).
 - `calibrationGrid`'s factors, which `tools/decide.ts:211,402` repeat as `ALPHA_DEFAULT * 0.55` / `* 1.8`.
@@ -272,7 +272,7 @@ The candidates:
 
 ## 5. P2 — structure
 
-**5.1 Split `src/ui/app.ts` (2263 lines).**
+**DONE 59830d7: 5.1 Split `src/ui/app.ts` (2263 lines).** (Every module under `src/ui` imports in node; tests for `phaseView`, the ticket helpers and the routes. `app.ts` keeps the state and the wiring, about 1300 lines.)
 - The problem: it builds `dom` and reads storage at import time (`app.ts:79-197`), so no test can import it.
 - Move `dom` construction and loading into `boot()`.
 - Extract these modules, following its own section banners:
@@ -286,19 +286,19 @@ The candidates:
   - a pure `phaseView(machine, ticket, now) → {label, digits, subline, spoken, primary, hint, secondaryVisible}`, lifted out of `render()`
 - Add tests for the now-importable pure pieces.
 
-**5.2 Split `render()` into `renderIdle` and `renderRunning`.**
+**DONE d1e390a: 5.2 Split `render()` into `renderIdle` and `renderRunning`.**
 - The 200 ms ticker currently re-renders the hidden idle UI five times a second: the sentence, the setup, the scale's `mask-image`, and `renderOdds`, which forces layout via `offsetHeight` (`app.ts:1339-1341`).
 - `renderSousVide` also re-runs `renderSentence` (`app.ts:1131,1360`).
 
-**5.3 Collapse three flags into one feedback state.**
+**DONE 2354db7: 5.3 Collapse three flags into one feedback state.** (`answers: none | live | beforeReload`; `restored` is `none` with `reloaded`, since nothing is answered before DONE.)
 - `feedbackGiven`, `answered` and `restored` (`app.ts:236-253`, derived again at 1276 and 1634).
 - Replace them with one persisted `answers: 'none' | 'live' | 'beforeReload'`.
 
-**5.4 Small web consolidations.**
+**DONE fedc03b, 0f1d340: 5.4 Small web consolidations.** (Kept as specified: another tab's change of pan start is no longer picked up by this page's next sous-vide save. Nothing else in the web app reads another tab's settings, so the one cross-tab read was an accident; its own next pan save wins, as before.)
 - One `retime(boil_s)` in place of the copy-pasted pair at `app.ts:1846-1847` / `1961-1962`.
 - Keep `lastPanStart` in memory instead of `saveSettings` re-parsing storage on every save (`store.ts:210-214`).
 
-**5.5 Split `ios/App/ContentView.swift` (1033 lines).**
+**DONE 4ebd3ea: 5.5 Split `ios/App/ContentView.swift` (1033 lines).**
 - `ReadoutView`
 - `PhaseActions`
 - `FeedbackPanel`
@@ -307,7 +307,7 @@ The candidates:
 - Move the Cook↔Kitchen wiring in `onAppear` (`:123-138`) into a small `AppModel`.
 - Expose `Kitchen.shownForecast` and `Kitchen.adviceWanted` rather than re-deriving them three times (`:312-318,455,923-926,1014-1019`).
 
-**5.6 Split `ios/App/Kitchen.swift` (1121 lines).**
+**DONE 06e0a23: 5.6 Split `ios/App/Kitchen.swift` (1121 lines).** (Now `Planner.swift`, `Planner+Solve.swift`, `Planner+Learning.swift`, `DecisionGrids.swift`, `Presentation.swift`; one `InputSnapshot` and one `land(_:)`.)
 - `DecisionGrids.swift` (918-1014)
 - `Kitchen+Learning.swift`
 - `Kitchen+Solve.swift`
@@ -315,12 +315,12 @@ The candidates:
 - Factor out the input snapshot shared by `recompute` / `currentSolution` and the duplicate apply-and-ask tails (`:445-453` vs `:459-467`).
 - Move the class doc comment (`:6-25`), which is currently attached to `enum StartTemp`.
 
-**5.7 iOS: throttle the idle `TimelineView`s.**
+**DONE d291be7: 5.7 iOS: throttle the idle `TimelineView`s.** (A minute while idle on the pan; every second while cooking and in sous-vide, whose estimate is solved once per change of inputs.)
 - Both tick every second when idle (`ContentView.swift:63,75`).
 - In sous-vide, `kitchen.sousVide` (a bisection) runs about three times per tick (`:194,475,955,986`).
 - Fix: use a coarser idle schedule and compute the copy once per tick.
 
-**5.8 Split `tools/fixtures.ts` (1963 lines, 16 outputs) into `tools/fixtures/<name>.ts` plus a shared helpers module.** While there:
+**DONE b636dd7..f37a2d8: 5.8 Split `tools/fixtures.ts` (1963 lines, 16 outputs) into `tools/fixtures/<name>.ts` plus a shared helpers module.** (Fixtures byte-identical throughout.) While there:
 - Move `mkdirSync('fixtures')` (line 1658) before the first write (1235).
 - Delete the identity function `round()` (137-141, 94 calls).
 - Call `calibrationParams` / `calibrationDoneness` instead of hand-coding them with a literal `0.05` (1322-1324, 1422-1424).
@@ -328,7 +328,7 @@ The candidates:
 - `probeFixture.ts` copies the calibration egg, grid and lookup cases from `fixtures.ts`. Share them.
 - Use one metadata convention (`about`) instead of mixing `$comment`, `generator` and `about`.
 
-**5.9 Rename the internal "kitchen" to "settings".** UNBLOCKED: owner, 28 Sep.
+**DONE 6b060d9, 274cce0, 7bdb816: 5.9 Rename the internal "kitchen" to "settings".** (iOS: `Kitchen` is `Planner`, `Settings` is `SettingsStore`. Web: `#settings`, with `#kitchen` still opening it; `.krow` is `.setting`. Catalogue: the `settings` draft on `72f447c`, ten rows, words byte-identical in both catalogues.) UNBLOCKED: owner, 28 Sep.
 - **Careful on iOS.** The Swift `Kitchen` class (`Kitchen.swift`) is not the settings page. It is the app's model: every input, the solve, and the learning. `Settings` is already taken there (`Store.swift`'s `Settings.save`, `SettingsView`), so don't rename it to Settings. Rename it as part of the §5.6 split, to something like `Planner`, and rename `kitchen.` call sites to match.
 - **Optional, for clarity:** rename iOS `Settings` (the UserDefaults load/save helper in `Store.swift`) to `SettingsStore`.
 - **The catalogue.** Its notes also say "kitchen" (`en.json` 175, 216, 217, 228, 230, 243), and so do UI.md and LANGUAGE.md. User-facing strings that mean the cook's real kitchen, e.g. "a new kitchen" in `learned.forget.more`, are correct and stay.
@@ -336,12 +336,12 @@ The candidates:
 - Finish the key renames (`controls.cooling.*`, `controls.afterTheBoil.*`).
 - Fix the `controls.thermometer` note (`en.json:243`), which names the wrong key.
 
-**5.10 One `tools/common.ts`, or `test/support.ts` imported by tools too.**
+**DONE db2f11b: 5.10 One `tools/common.ts`, or `test/support.ts` imported by tools too.** (`setupOf` was two pots: `referenceSetup` and `appSetup`. Its `logTarget` became core's `logYolkTarget` in §5.11.)
 - `setupOf`: 10 copies, and `fixtures.ts` vs `tools/decide.ts` have **different defaults** under the same name.
 - `rng` / `draw`: 4 copies of the xorshift from `infer.ts`.
 - `recordOf` / `recordAt`, `knowing`, `gridFor`, `logTarget`.
 
-**5.11 Core helpers to deduplicate.**
+**DONE 16137f0: 5.11 Core helpers to deduplicate.** (Both cores. `decisionAtLevel` was moot: `outcomeAtLevel` went in stage 1. Decide's white sum keeps its one-step form, which `reach.json` pins to the last digit.)
 - `logYolkTarget(level)`: `Math.log10(donenessFromSlider(level).yolkDose_min)` appears 17 times in 13 files.
 - `decisionAtLevel`, shared by `oddsAtLevel` / `outcomeAtLevel` (`reach.ts:108-114,459-466`).
 - `coolingMedium_C(cooling, ambient)`: `policy.ts:519`, `record.ts:233`, `protocol.ts:165-175`.
@@ -350,27 +350,27 @@ The candidates:
 - `isUS(region)` (3 sites).
 - Cache `Intl.NumberFormat` / `DateTimeFormat` per (locale, decimals) (`format.ts:95-104,130`).
 
-**5.12 Move the grid-request types into `doseGrid.ts`.**
+**DONE bf7f35b: 5.12 Move the grid-request types into `doseGrid.ts`.** (And `GridSpec`, from policy; both cores.)
 - `GridRequest`, `GridPolicy` and `buildRequestedGrid` live in `record.ts:491-520`.
 - `buildDoseGrid` takes nine positional arguments. Make it take a `GridSpec`.
 
-**5.13 Separate wording from physics.**
+**DONE 471db1a, 37f6a3d: 5.13 Separate wording from physics.** (The three move to `wording.ts` / `Wording.swift`.)
 - `sousvide.ts:87-157` (`longDuration`, `startPhrase`, `weekdayKey`): move to a copy-facing module so the physics file doesn't import `copy.ts`.
 - `copy.ts` `Message`: use a discriminated union instead of nullable `text` / `count` / `forms`, which removes the casts at 131, 144, 156 and 220.
 
-**5.14 Merge EggTimerRing into EggTimerCore.**
+**DONE be32814: 5.14 Merge EggTimerRing into EggTimerCore.**
 - It is one enum and one function. Move `deadlineToRing` and `RingDeadline` into `Policy.swift` beside `phaseAt`, and move `RingTests` over.
 - Delete the product, both targets, and the `project.yml:62-63` dependency.
 
-**5.15 Swift naming drift from TS**, which breaks grep-based parity checks.
+**DONE 42e2981: 5.15 Swift naming drift from TS**, which breaks grep-based parity checks. (`languageOf` moved to EggTimerCopy's `Format.swift`.)
 - Renames: `gridRequest`→`gridRequestFor`, `recordEgg`→`recordEggOf`, `recordCookSetup`→`recordSetupOf`, `holdTime`→`holdTimeForDose`.
 - Also `languageOf`'s home module.
 
-**5.16 Split `tools/copyDraft.ts` (2985 lines, 20 drafts).**
+**DONE c8e12b1: 5.16 Split `tools/copyDraft.ts` (2985 lines, 20 drafts).** (No draft dropped: all 19 moved verbatim. `draftFor` also throws on a base two drafts share, `iosA` and `oddsHelp`.)
 - Separate the mechanism (~100 lines) from the data (`tools/drafts/<name>.ts`), and drop drafts nobody will re-prove.
 - **Bug:** `draftFor` (2940-2946) silently falls back to the latest draft when a name is mistyped. Make it throw.
 
-**5.17 Stringly-typed cooling and a duplicated parser (iOS).**
+**DONE 3d5971e: 5.17 Stringly-typed cooling and a duplicated parser (iOS).**
 - `Alarm.schedule(cooling: String?)` has unused defaults. Pass `Cooling`.
 - Decimal-comma parsing is duplicated (`ContentView.swift:696-697`, `Controls.swift:104-105`). Extract a `parseTyped(_:)`.
 
@@ -378,18 +378,18 @@ The candidates:
 
 ## 6. P2 — tests and fixtures
 
-**6.1 Shrink fixture churn.** Fixtures total about 90k lines.
+**DONE 8a0ae78: 6.1 Shrink fixture churn.** Fixtures total about 90k lines. (70k to 45k. A repeated particle set is `{ "sameAs": path }`, resolved in `Fixtures.load`, so the Swift readers did not change.)
 - `copy.json`: 499 of 830 rows are no-argument keys that restate `en.json`, so every wording edit rewrites the fixture (34 commits so far). In `copyRows` (`fixtures.ts:1706-1742`), emit only rows with arguments, plurals or fallback.
 - `units.json` `display[].rendered`: 409 English renders. Drop them, and the render at `UnitsConformance.swift:109`.
 - Particles: write one line per particle, emit a set only when it changed, and point to duplicate states by step index. Several states are exact duplicates: `calibration.json` prior equals `updates[0]`; `record.json` `fromBase.final` equals `steps[9]`, and so on. Update `RecordConformance.swift:260-274` and `CalibrationTests.swift:248-291` to match.
 - `decide.json`: emit the prior as `{count, seed}`, as `safer.json` does, instead of 200 literal particles.
 
-DONE: **6.2 Replace the permanent todo `infer.test.ts:442` (5b).** (jammy moves between 0.6 and 1.6 times soft's move, so a change either way shows.)
+DONE 031dfd3: **6.2 Replace the permanent todo `infer.test.ts:442` (5b).** (jammy moves between 0.6 and 1.6 times soft's move, so a change either way shows.)
 - It prints as a failure with a stack trace on every run.
 - Replace it with a characterisation test asserting the known limit (e.g. `jammyMove > 0.6*softMove`), with a LOGBOOK reference.
 - The owner already decided to leave the behaviour as it is (PLAN:176-183).
 
-**6.3 `Fixtures.swift`.**
+**DONE 5059bff..17d4a23: 6.3 `Fixtures.swift`.**
 - Every missing key calls `fatalError`, which kills the whole run. Make the helpers `throws` and use `try #require`.
 - `list()` should reject empty arrays: 129 loops have only 20 guards, so they can pass vacuously.
 - Fix the "35 kB" comment.
@@ -400,15 +400,15 @@ DONE: **6.2 Replace the permanent todo `infer.test.ts:442` (5b).** (jammy moves 
   - a posterior parser (5 copies)
   - `profileOf` (2 copies)
 
-DONE: **6.4 Tests named after phases.** (Only one title still named a phase, infer's "Phase C recovery"; comments that tell history are §8.1's.)
+DONE 360991a: **6.4 Tests named after phases.** (Only one title still named a phase, infer's "Phase C recovery"; comments that tell history are §8.1's.)
 - Rename by behaviour: "E1's 'set'", "Phase C recovery", "stored before E4", and so on.
 - Renumber `policy.test.ts`, where 6c and 6d come after 6h.
 
-**6.5 Rebalance `npm test` wall time.**
+**SKIPPED (moot, as it says: §4.2 took `safer.test.ts`; `npm test` runs in about 18 s): 6.5 Rebalance `npm test` wall time.**
 - It is bound by `safer.test.ts`, 31 s.
 - Moot: §4.2 deletes `safer.test.ts`, which takes the critical path to about 17 s, set by `decide`.
 
-DONE: **6.6 Remove index-hardcoded "slow in debug" tests.** (`SaferConformance.swift` went with §4.2.)
+DONE 2c5ef00: **6.6 Remove index-hardcoded "slow in debug" tests.** (`SaferConformance.swift` went with §4.2.)
 - `ReachConformance.swift:90-92` and `SaferConformance.swift:85-93` hard-code `[0,1,2]` and `count == 3`.
 - The package builds `-O` now, so iterate over the fixture instead.
 
@@ -434,52 +434,52 @@ DONE: **6.6 Remove index-hardcoded "slow in debug" tests.** (`SaferConformance.s
 - Drop `declaration: true`.
 - Leave `noUncheckedIndexedAccess` off: 711 hits, mostly false positives.
 
-DONE: **7.4 Add `netlify.toml` security headers.** (Checked by serving `_site` with the same headers: the page, its styles, the worker and the shading all run, with no console errors.)
+DONE 8791814: **7.4 Add `netlify.toml` security headers.** (Checked by serving `_site` with the same headers: the page, its styles, the worker and the shading all run, with no console errors.)
 - Headers: a strict CSP (`default-src 'self'` …, `frame-ancestors 'none'`, `object-src 'none'`), `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`.
 - The page has no inline script or style, so a strict CSP costs nothing. Verified: one module script, one same-origin worker, same-origin `copy/` fetches.
 - Mirror them in `vercel.json`, or note there that it has none.
 
-DONE: **7.5 Clean builds.**
+DONE 8bf29c6: **7.5 Clean builds.**
 - `build:site` should start with `rm -rf _site`.
 - `test` should start with `rm -rf dist`; otherwise a deleted test keeps running from `dist/`.
 - `.claude/launch.json` should build before serving `_site`.
 
-DONE: **7.6 Missing npm scripts.** (`copy:literals` came with §4.8.)
+DONE e0377cd: **7.6 Missing npm scripts.** (`copy:literals` came with §4.8.)
 - Add `copy:literals` and `copy:snapshot`. They are cited about 30 times in the docs and currently depend on a prior `tsc`.
 - Complete README "Running it", which is missing `check`, `fixtures`, `conformance`, `decide`, `serve:site` and the copy proofs.
 
-**7.7 Move test data out of `copy/` so it stops shipping.**
+**DONE 0008cc6: 7.7 Move test data out of `copy/` so it stops shipping.**
 - Move `copy/surfaces.json` and `copy/en-x-1750.spelling.json` to `test/data/`. Both currently ship to the web and both iOS bundles.
 - Update the 5 references, and drop the "not a catalogue" filters (`fixtures.ts:1724-1728`, `copy.test.ts:31`, `en1750.test.ts:61-63`).
 
-DONE (but the descriptions, which are §9.6's wording): **7.8 Head and manifest.** (`twitter:card` is `summary`; the maskable icon is `icon-512` in the 80% safe zone on the paper's colour, generated by `build-icons.sh`; the manifest takes the dark theme, the page's default.)
+DONE 18a5930 (but the descriptions, which are §9.6's wording): **7.8 Head and manifest.** (`twitter:card` is `summary`; the maskable icon is `icon-512` in the 80% safe zone on the paper's colour, generated by `build-icons.sh`; the manifest takes the dark theme, the page's default.)
 - `theme-color` `#111214` matches neither theme. Use two `media`-scoped metas: `#0c0d0f` for dark, `#f7f7f8` for light. Match the manifest.
 - The square 1200² `og:image` is used with `summary_large_image`, so it gets cropped. Switch to `summary`, or generate a 1200×630 image in `build-icons.sh`.
 - Add a manifest `id` and a maskable icon.
 - Unify the three descriptions (wording in §9.6).
 
-DONE: **7.9 Version drift.** (`test/version.test.ts` holds the version and the team ID; `@types/node` is ^26.6.3.)
+DONE 9b3a81f: **7.9 Version drift.** (`test/version.test.ts` holds the version and the team ID; `@types/node` is ^26.6.3.)
 - `package-lock.json` says `0.1.0` while `package.json` says `0.2.0`. Run `npm install --package-lock-only`.
 - Add a test asserting `project.yml` `MARKETING_VERSION === pkg.version`.
 - Cross-reference the team ID between `ExportOptions.plist:21` and `project.yml:28`.
 - Bump `@types/node` (22 vs runtime 26).
 
-DONE: **7.10 `.gitignore`.**
+DONE 63a0094: **7.10 `.gitignore`.**
 - Replace lines 1-62, GitHub's Xcode template (CocoaPods, Carthage, fastlane).
 - Add `.DS_Store` and `.swiftpm/`, which are currently ignored only by the owner's global ignore.
 - Remove the duplicate `.build/`.
 
-DONE (the `cd` only; `oxipng` is optional and `ios/build/` is local): **7.11 Minor build items.**
+DONE 18a5930 (the `cd` only; `oxipng` is optional and `ios/build/` is local): **7.11 Minor build items.**
 - `design/build-icons.sh`: add `cd "$(dirname "$0")/.."`.
 - Optional: an `oxipng` pass (`icon-512.png` is 310 KB).
 - Local only: `ios/build/` holds 588 MB of stale output from 18 Sep.
 
-**7.12 `Package.swift:31` `-O` unsafe flag.**
+**DONE be32814: 7.12 `Package.swift:31` `-O` unsafe flag.**
 - Keep it.
 - Extend the comment: it is only acceptable because the package is a local path dependency, and it gives up core debugging and unoptimised test coverage.
 - Fix the header's "the physics, and nothing else".
 
-**7.13 Optional: Swift formatting.**
+**SKIPPED (optional; a formatter's first pass rewrites most Swift files, which is best not done under §8.1's comment sweep): 7.13 Optional: Swift formatting.**
 - Add `.editorconfig`, plus `.swift-format` with `swift format lint -r ios/` in `verify`.
 - Skip ESLint; tsc covers it once §7.2–7.3 land.
 
@@ -508,7 +508,7 @@ DONE (the `cd` only; `oxipng` is optional and `ios/build/` is local): **7.11 Min
   - gridWorker.ts 4-8
 - Do this after §4, since many of these comments die with the code they describe.
 
-DONE: **8.2 Comments that are now false (fix now).** (`EU_LARGE` is `REFERENCE_EGG`; decide's `SCAN_STEP_S` is `CHOICE_SCAN_STEP_S`, Swift `choiceScanStepS`; `isStaleCook` now names `restoreMachine`; the copyDraft list gains `history` (listed as `truths`), `counter`, `boil`, `help` and `units`.)
+DONE 49a70d4: **8.2 Comments that are now false (fix now).** (`EU_LARGE` is `REFERENCE_EGG`; decide's `SCAN_STEP_S` is `CHOICE_SCAN_STEP_S`, Swift `choiceScanStepS`; `isStaleCook` now names `restoreMachine`; the copyDraft list gains `history` (listed as `truths`), `counter`, `boil`, `help` and `units`.)
 
 | Where | What's wrong |
 |---|---|
@@ -526,7 +526,7 @@ DONE: **8.2 Comments that are now false (fix now).** (`EU_LARGE` is `REFERENCE_E
 | `SCAN_STEP_S` | Means 30 s in `solve.ts` and 4 s in `decide.ts`. Rename one |
 | `format.ts:57,162` | Invisible U+202F / U+00A0 literals, and a `c === TIME_SPACE` branch that maps a char to itself. Use `\u` escapes |
 
-DONE: **8.3 Docs that contradict the code (fix values).** (PLAN's constants and targets went to LOGBOOK, 29 September, with README's `TAU_REF` note. One claim was wrong: PLAN's "README §10" is right, §10 is References. UI.md's page is "Settings"; its `Kitchen.*` code names wait for §5.9.)
+DONE 13bf8dc: **8.3 Docs that contradict the code (fix values).** (PLAN's constants and targets went to LOGBOOK, 29 September, with README's `TAU_REF` note. One claim was wrong: PLAN's "README §10" is right, §10 is References. UI.md's page is "Settings"; its `Kitchen.*` code names wait for §5.9.)
 
 | Where | Fix |
 |---|---|
