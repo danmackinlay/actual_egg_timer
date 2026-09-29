@@ -2,7 +2,7 @@
  * Metric and Imperial: what a number looks like on screen, and what a typed
  * number means to the model.
  *
- * Core stays in SI (invariant 3: convert only at the UI boundary). What this
+ * Core stays in SI (CLAUDE.md invariant 3: convert only at the UI boundary). What this
  * module owns is making both UIs convert IDENTICALLY, which they cannot do if
  * each has its own conversion factors, its own rounding and its own idea of
  * where an input's bounds are. Design: LANGUAGE.md §4.

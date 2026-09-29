@@ -83,7 +83,7 @@ test('2. one-term truncation under-predicts the full series by 6-10%', () => {
     `one-term shortfall should be 6-10%, got ${(100 * shortfall).toFixed(2)}%`,
   );
   // This is exactly why Williams' closed form comes out ~8.4% low, and why
-  // MODE_COUNT is 40 rather than 1 (PLAN.md invariant 4).
+  // MODE_COUNT is 40 rather than 1 (CLAUDE.md invariant 4).
 });
 
 // --------------------------------------------------------------------------
@@ -116,7 +116,7 @@ test('4. the centre coefficient is exactly 2.0', () => {
   // Abel-summable alternating series, whose truncation to an even number of
   // terms gives 0 and whose true limit at the centre is 1 (the initial
   // condition). Only the FIRST MODE has amplitude 2. Same artefact as
-  // PLAN.md invariant 7, seen in the closed form.
+  // CLAUDE.md invariant 7, seen in the closed form.
   // Once Fo is large enough for the higher modes to have died (at Fo = 0.25
   // mode 2 is down by exp(-3*pi^2*Fo) ~ 6e-4 relative to mode 1), the full
   // series collapses onto the one-term form, whose centre prefactor is 2.0.
@@ -146,7 +146,7 @@ test('5. modal integrator reproduces the closed-form step response', () => {
     if (checkpoints.indexOf(t) >= 0) {
       // NOTE: deliberately no checkpoint at t = 0 or t < 2 s. A truncated modal
       // basis cannot represent a fresh discontinuity at the centre (modes are
-      // weighted by n there) — PLAN.md invariant 7. The closed-form series has
+      // weighted by n there) — CLAUDE.md invariant 7. The closed-form series has
       // precisely the same artefact, so the comparison would still "pass" while
       // both were wrong; excluding it keeps this an honest check.
       const fourier = alpha * t / (R * R);
@@ -182,7 +182,7 @@ test('6. mean temperature is strictly between centre and surface while heating',
     stepSphere(s, 0.5, 100);
     // Skip the first 2 s: a truncated modal basis rings at a fresh
     // discontinuity (the centre briefly reads 12.5 C instead of 4 C — the
-    // exact artefact PLAN.md invariant 7 documents), so the bracket is
+    // exact artefact CLAUDE.md invariant 7 documents), so the bracket is
     // meaningless there. It holds for every step afterwards.
     if (i < 4) continue;
     const centre = centreTemperature(s);
@@ -255,7 +255,7 @@ test('8b. radius and diffusion time increase with mass', () => {
 test('9. z from activation energy gives Z_YOLK', () => {
   // Ea ~ 470 kJ/mol (Vega & Mercade-Prieto 2011) at 338 K. This is where the
   // model's Z_YOLK = 4.65 K comes from — NOT the food-engineering default of
-  // 33.1 K, which is 7x too shallow for egg protein (PLAN.md invariant 5).
+  // 33.1 K, which is 7x too shallow for egg protein (CLAUDE.md invariant 5).
   const z = zFromActivationEnergy(470000, 338);
   close(z, 4.65, 0.02, 'zFromActivationEnergy(470000, 338)');
   close(Z_YOLK, z, 0.02, 'Z_YOLK matches its derivation');

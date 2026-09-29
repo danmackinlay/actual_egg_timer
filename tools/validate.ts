@@ -1,6 +1,6 @@
 /**
- * Validation harness: reproduces every number in PLAN.md's validation table
- * from the frozen core API, checks the model against published measurements,
+ * Validation harness: reproduces every number in README section 7's tables
+ * from the core's exports, checks the model against published measurements,
  * and prints a markdown report.
  *
  * Run: npx tsc && node dist/tools/validate.js
@@ -172,8 +172,9 @@ function jammySeaLevel(): number {
   return jammySeaLevelCache;
 }
 
-// Altitude table. Also re-checks the 100 - h/300 one-liner, which PLAN.md
-// claims holds to 0.03 C over 0-5000 m.
+// Altitude table. Also re-checks the 100 - h/300 one-liner, which the
+// planning phase claimed holds to 0.03 C over 0-5000 m (LOGBOOK.md, 29
+// September 2026).
 const altitudeRows: string[][] = [];
 let worstApproxError = 0;
 for (let h = 0; h <= 5000; h += 500) {

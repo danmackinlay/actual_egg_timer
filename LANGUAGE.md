@@ -288,7 +288,7 @@ owner has been through it; the draft file keeps it.
 
 After that, the setting is the cook's.
 
-**Core stays in SI.** This is invariant 3 already: "convert only at the UI
+**Core stays in SI.** This is `CLAUDE.md` invariant 3: "convert only at the UI
 boundary". The new work is making both UIs convert *identically*. That means a
 `units.ts` in core, fixtured like `policy.ts`, which owns three things:
 
