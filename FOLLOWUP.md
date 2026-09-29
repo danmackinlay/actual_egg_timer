@@ -12,37 +12,37 @@ WORKLIST.md was verified against the code at HEAD `cbd8d66`, not against its tic
 
 Everything below is what was left over. It is all small. Follow CLAUDE.md throughout: stage by name, run the gate, one change per commit, PLAN/LOGBOOK/DECISIONS as it says.
 
-**`main` is pushed now.** The storage formats as of `cbd8d66` are live in other people's browsers: `aet.settings.v1`, `aet.cook.v2`, `aet.calibration.v4`, `aet.boil.v1`, and record v1. From here on, a change to any of them needs a migration or a version bump. The "no back-compat" decision (DECISIONS, D1) covered the interim formats only. Say this in PLAN.md's standing facts, if it isn't already there.
+**DONE 677cb73: `main` is pushed now.** The storage formats as of `cbd8d66` are live in other people's browsers: `aet.settings.v1`, `aet.cook.v2`, `aet.calibration.v4`, `aet.boil.v1`, and record v1. From here on, a change to any of them needs a migration or a version bump. The "no back-compat" decision (DECISIONS, D1) covered the interim formats only. Say this in PLAN.md's standing facts, if it isn't already there.
 
 ## 0. For the owner (do not act on this without the owner)
 
-- **Commit `5a9b290` changed a CLAUDE.md rule about how agents themselves may work.** Before, agents did not merge. Now, "the session that sent them verifies and merges to local `main`". Pushing is still forbidden. The change is sensible, but agents had been merging (`632bdbd` and others) before the rule allowed it, and DECISIONS.md records no owner decision for it.
+- **DONE e5d690d: owner approved, DECISIONS 47. Commit `5a9b290` changed a CLAUDE.md rule about how agents themselves may work.** Before, agents did not merge. Now, "the session that sent them verifies and merges to local `main`". Pushing is still forbidden. The change is sensible, but agents had been merging (`632bdbd` and others) before the rule allowed it, and DECISIONS.md records no owner decision for it.
   - If the owner approves: add a DECISIONS.md entry citing `5a9b290`.
   - If not: revert that paragraph.
 
 ## 1. Correctness
 
-**1.1 Web: `boot()` re-solves from live settings during a restored cook.** This is WORKLIST 2.4, done except for one call.
+**DONE be691d3: 1.1 Web: `boot()` re-solves from live settings during a restored cook.** This is WORKLIST 2.4, done except for one call.
 - Where: `src/ui/app.ts:1238`. After `restoreCook()`, `recompute()` runs unconditionally. Mid-cook, after another tab changed settings, it solves the other tab's pot and overwrites `solution`, `decision` and `outcome`. Through `applyAnswer` (`app.ts:400-411`) it can also snap `settings.doneness` and `saveNow()` in the middle of a cook, although `applyAnswer`'s comment says "only ever called while idle".
 - Fix: `if (machine.phase === 'IDLE') recompute();`, as line 1245 already does. Also grep the other `recompute()` call sites (219, 784, 822, 1020, 360, 394) for any that can run outside IDLE, and make `applyAnswer`'s claim true by construction. For example, assert or early-return when not IDLE.
 - Test: a `phaseView`/`app` test, or a documented browser check. Restore a cook, change stored settings, reload. Then `settings.doneness` must be unchanged in storage, and the display must follow the ticket. (The display part was checked by hand on 29 Sep and passes.)
 
-**1.2 `restoreTicket` accepts a missing `afterBoil`.**
+**DONE 087cd08: 1.2 `restoreTicket` accepts a missing `afterBoil`.**
 - Where: `src/ui/ticket.ts:87`. `st['afterBoil'] !== undefined && …` lets `undefined` through, which contradicts its own comment "Every field is required".
 - Fix: require it (`'hold' | 'off'`), and add a case to `test/ticket.test.ts`. This is safe, because every `aet.cook.v2` ticket this build writes carries it. Check that by grepping the writer.
 
-**1.3 Scale-weighed eggs from live-site settings are recorded as measured by width.**
+**DONE 58fc86a: 1.3 Scale-weighed eggs from live-site settings are recorded as measured by width.**
 - Where: `store.ts:81` defaults `measuredBy: 'width'`. A 19-Sep settings record has no `measuredBy`, so a cook whose last measurement was a weight is recorded as `'width'` in the record's provenance until they measure again.
 - Fix: infer it once on load, when the field is absent. For example, fall back to `'scale'`, the web's first measurement box and the common case, or to "unknown" if the record schema allows it. Record v1 fields are frozen, so check `record.ts` before adding a value.
 - Low stakes: this only affects provenance, not the cook time.
 
-**1.4 Two paths re-solve a running cook.**
+**DONE a0f1bfa: 1.4 Two paths re-solve a running cook.**
 - Where: the web calls `solveCookTime` directly (`app.ts:759`), while iOS goes through `answerAt(snapRetry: false)` (`Planner+Solve.swift:232`). The result is the same today, but it is exactly the kind of fork `answerAt` exists to prevent.
 - Fix: route the web through `answerAt(..., snapRetry: false)`, as iOS does.
 
 ## 2. Gate and tests
 
-**2.1 Build the iOS app in CI.**
+**DONE 4c35ef4: 2.1 Build the iOS app in CI.**
 - Why: `verify` runs only the core package's `swift test`. The Planner/ContentView split was verified by hand with `xcodebuild`, and nothing stops a future break.
 - Fix: add a step to `.github/workflows/verify.yml` (macOS runner):
   - `brew install xcodegen`
@@ -50,30 +50,30 @@ Everything below is what was left over. It is all small. Follow CLAUDE.md throug
   - `xcodebuild -project ActualEggTimer.xcodeproj -scheme ActualEggTimer -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build`
 - Keep it out of local `npm run verify` if it is slow (~1-2 min). Mention it in CLAUDE.md's gate line, e.g. an `npm run ios:build` script that CI calls.
 
-**2.2 `fixtures:check` misses a new untracked fixture.**
+**DONE ea9723c: 2.2 `fixtures:check` misses a new untracked fixture.**
 - Where: `package.json:22`. `git diff --exit-code -- fixtures/` ignores untracked files.
 - Fix: `npm run fixtures && git diff --exit-code -- fixtures/ && test -z "$(git status --porcelain -- fixtures/)"`.
 
-**2.3 `Fixtures.swift` leftovers (WORKLIST 6.3).**
+**DONE 4917fdc: 2.3 `Fixtures.swift` leftovers (WORKLIST 6.3).**
 - The per-file wrappers the worklist said to drop are still there: `policyCases`, `sousVideCases`, `sousVideCopyCases`, `constant` and others (`Fixtures.swift:119-142`, about 69 call sites). Replace them with the generic `list(file, path)` / `object(file, path)`.
 - The repo-root lookup still calls `fatalError` (`Fixtures.swift:32`). Make it throw, like the rest, so a missing fixtures directory fails the tests rather than killing the run.
 
-**2.4 No test covers the build-rejection path (WORKLIST 2.3).**
+**DONE 39b001f: 2.4 No test covers the build-rejection path (WORKLIST 2.3).**
 - Add one: a job whose `buildHere` throws must reject, clear `decisionBuilds`/`profileBuilds`, and let the same pot be asked again.
 
 ## 3. Code hygiene
 
-**3.1 `src/ui/dom.ts:103`: `export let dom: Dom = undefined as unknown as Dom;` is a lying cast.**
+**DONE eebc008: 3.1 `src/ui/dom.ts:103`: `export let dom: Dom = undefined as unknown as Dom;` is a lying cast.**
 - It came with moving `dom` into `boot()`.
 - Fix, either:
   - `let dom: Dom | null`, with a `page()` accessor that throws if it is called before `boot()`; or
   - pass `dom` explicitly to the modules that need it.
 
-**3.2 The catalogue `about` lines name old paths.**
+**DONE fe8c607: 3.2 The catalogue `about` lines name old paths.**
 - `copy/en.json:3` says `copy/surfaces.json`, and `copy/en-x-1750.json:3` names `….spelling.json` under `copy/`. Both moved to `test/data/`.
 - Updating an `about` field is not a wording change, so no draft is needed. Regenerate fixtures anyway, in case `about` is carried into them.
 
-**3.3 Exports used nowhere else.** `localDay`, `withoutLongS`, `eggVolumeFromMinorDiameter`, and `pulledKey` on the TS side. These predate the worklist. Un-export them where TS has no importer.
+**DONE 68a6fda: 3.3 Exports used nowhere else.** `localDay`, `withoutLongS`, `eggVolumeFromMinorDiameter`, and `pulledKey` on the TS side. These predate the worklist. Un-export them where TS has no importer.
 
 ## 4. Web polish (older than the worklist, found in the browser)
 
