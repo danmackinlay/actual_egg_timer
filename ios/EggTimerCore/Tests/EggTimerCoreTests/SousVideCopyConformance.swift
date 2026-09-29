@@ -30,7 +30,7 @@ struct SousVideCopyConformance {
     @Test("the duration's bucket, at every boundary from both sides")
     func duration() throws {
         let english = try Fixtures.catalogue("en")
-        for c in try Fixtures.sousVideCopyCases("duration") {
+        for c in try Fixtures.list("sousvideCopy.json", "duration") {
             let seconds = try c.num("seconds")
             let actual = longDuration(seconds)
             #expect(try actual == CopyRef(c.str("key"), Self.args(c["args"])), "longDuration(\(seconds)): \(actual)")
@@ -46,7 +46,7 @@ struct SousVideCopyConformance {
     @Test("how long ago the cook should have started")
     func phrase() throws {
         let english = try Fixtures.catalogue("en")
-        for c in try Fixtures.sousVideCopyCases("startPhrase") {
+        for c in try Fixtures.list("sousvideCopy.json", "startPhrase") {
             let days = try Int(c.num("daysAgo"))
             let actual = startPhrase(daysAgo: days)
             #expect(try actual == CopyRef(c.str("key"), Self.args(c["args"])), "startPhrase(\(days)): \(actual)")
@@ -59,7 +59,7 @@ struct SousVideCopyConformance {
     @Test("the weekday's name comes from the catalogue, by the web's day numbering")
     func weekday() throws {
         let english = try Fixtures.catalogue("en")
-        for c in try Fixtures.sousVideCopyCases("weekday") {
+        for c in try Fixtures.list("sousvideCopy.json", "weekday") {
             let day = try Int(c.num("day"))
             #expect(try weekdayKey(day) == c.str("key"), "weekdayKey(\(day)): \(weekdayKey(day))")
             #expect(try english.render(weekdayKey(day)) == c.str("text"), "weekday \(day)")

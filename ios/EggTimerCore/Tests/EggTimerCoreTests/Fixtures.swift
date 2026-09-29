@@ -18,10 +18,7 @@ struct FixtureError: Error, CustomStringConvertible {
 enum Fixtures {
     /// Walk up from this file until the fixtures directory appears. Works for
     /// `swift test` and for Xcode, neither of which agrees about the cwd.
-    ///
-    /// The one trap left: with no fixtures directory at all there is nothing
-    /// for any test to fail on its own.
-    static let repoRoot: URL = {
+    private static let foundRoot: URL? = {
         var dir = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
         for _ in 0..<8 {
             if FileManager.default.fileExists(atPath: dir.appendingPathComponent("fixtures/core.json").path) {
@@ -29,14 +26,23 @@ enum Fixtures {
             }
             dir = dir.deletingLastPathComponent()
         }
-        fatalError("fixtures/core.json not found above \(#filePath) - run `npm run fixtures`")
+        return nil
     }()
+
+    /// The repository, or a throw: with no fixtures directory every test that
+    /// reads one fails on its own, rather than the run dying at the first.
+    static func repoRoot() throws -> URL {
+        guard let root = foundRoot else {
+            throw FixtureError("fixtures/core.json not found above \(#filePath) - run `npm run fixtures`")
+        }
+        return root
+    }
 
     /// Parsed fresh on each call rather than cached in a static. Even the
     /// largest fixture, a few hundred kB, parses for less than the concurrency
     /// argument a shared `[String: Any]` would start with Swift 6.
     static func load(_ name: String) throws -> [String: Any] {
-        let url = repoRoot.appendingPathComponent("fixtures/\(name)")
+        let url = try repoRoot().appendingPathComponent("fixtures/\(name)")
         guard let data = try? Data(contentsOf: url),
               let object = try? JSONSerialization.jsonObject(with: data),
               let dictionary = object as? [String: Any] else {
@@ -75,7 +81,7 @@ enum Fixtures {
     /// A shipped catalogue, read from `copy/` in the repository as the fixtures
     /// are, so the one the app bundles is the one tested.
     static func catalogue(_ locale: String, fallback: Catalogue? = nil) throws -> Catalogue {
-        let url = repoRoot.appendingPathComponent("copy/\(locale).json")
+        let url = try repoRoot().appendingPathComponent("copy/\(locale).json")
         return try Catalogue(json: Data(contentsOf: url), fallback: fallback)
     }
 
@@ -110,41 +116,12 @@ enum Fixtures {
         return dictionary
     }
 
-    /// A section of `core.json`, as a list of cases.
-    static func cases(_ group: String, _ key: String) throws -> [[String: Any]] {
-        try list("core.json", "\(group).\(key)")
-    }
-
-    /// A section of `policy.json`, as a list of cases.
-    static func policyCases(_ path: String) throws -> [[String: Any]] {
-        try list("policy.json", path)
-    }
-
-    /// A dictionary node of `policy.json`.
-    static func policyObject(_ path: String) throws -> [String: Any] {
-        try object("policy.json", path)
-    }
-
-    /// A section of `sousvide.json`, as a list of cases.
-    static func sousVideCases(_ path: String) throws -> [[String: Any]] {
-        try list("sousvide.json", path)
-    }
-
-    /// A scalar at the top level of `sousvide.json`.
-    static func sousVideNumber(_ path: String) throws -> Double {
-        guard let value = try node("sousvide.json", path) as? NSNumber else {
-            throw FixtureError("fixtures/sousvide.json \(path) is not a number")
+    /// A number at a dotted path.
+    static func number(_ file: String, _ path: String) throws -> Double {
+        guard let value = try node(file, path) as? NSNumber else {
+            throw FixtureError("fixtures/\(file) \(path) is not a number")
         }
         return value.doubleValue
-    }
-
-    /// A list from `sousvideCopy.json`.
-    static func sousVideCopyCases(_ key: String) throws -> [[String: Any]] {
-        try list("sousvideCopy.json", key)
-    }
-
-    static func constant(_ name: String) throws -> Double {
-        try object("core.json", "constants").num(name)
     }
 }
 

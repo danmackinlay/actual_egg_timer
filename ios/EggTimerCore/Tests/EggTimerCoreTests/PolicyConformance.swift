@@ -18,13 +18,13 @@ import Foundation
 struct SliderConformance {
     @Test("the slider grid is the same grid")
     func steps() throws {
-        let slider = try Fixtures.policyObject("slider")
+        let slider = try Fixtures.object("policy.json", "slider")
         try expectClose(sliderSteps, slider.num("steps"), "sliderSteps")
     }
 
     @Test("snapUp, snapDown, anchorNear and the target temperature, every case")
     func cases() throws {
-        for c in try Fixtures.policyCases("slider.cases") {
+        for c in try Fixtures.list("policy.json", "slider.cases") {
             let level = try c.num("level")
             try expectClose(snapUp(level), c.num("snapUp"), "snapUp(\(level))")
             try expectClose(snapDown(level), c.num("snapDown"), "snapDown(\(level))")
@@ -64,7 +64,7 @@ struct VerdictConformance {
 
     @Test("kind, labels, snap target and whether it is worth saying")
     func cases() throws {
-        for c in try Fixtures.policyCases("verdict") {
+        for c in try Fixtures.list("policy.json", "verdict") {
             let level = try c.num("level")
             let sol = try solution(
                 reachable: c.flag("reachable"),
@@ -98,7 +98,7 @@ struct VerdictConformance {
 struct TextureConformance {
     @Test("the named edges: texture bands, the room egg, the calibration grid's alpha")
     func edges() throws {
-        let e = try Fixtures.policyObject("edges")
+        let e = try Fixtures.object("policy.json", "edges")
         let white = try e.object("whiteBandBelow_C")
         let yolk = try e.object("yolkBandBelow_C")
         #expect(try WhiteBandBelowC.justSet == white.num("justSet"))
@@ -115,7 +115,7 @@ struct TextureConformance {
     @Test("every band boundary, from both sides, and a white that never sets")
     func cases() throws {
         var runny = 0
-        for c in try Fixtures.policyCases("texture") {
+        for c in try Fixtures.list("policy.json", "texture") {
             let yolk = try c.num("peakYolk_C")
             let white = try c.num("peakWhite_C")
             let sets = try c.flag("whiteSets")
@@ -150,7 +150,7 @@ struct CalibrationGridConformance {
     /// what the posterior becomes.
     @Test("extent and resolution, including the floor on a short cook")
     func cases() throws {
-        for c in try Fixtures.policyCases("calibrationGrid") {
+        for c in try Fixtures.list("policy.json", "calibrationGrid") {
             let alphaCentre = try c.num("alphaCentre")
             let cookTimeS = try c.num("cookTime_s")
             let g = calibrationGrid(alphaCentre: alphaCentre, cookTimeS: cookTimeS)
@@ -166,7 +166,7 @@ struct CalibrationGridConformance {
 
     @Test("the particle count and seed are the same kitchen")
     func particles() throws {
-        let calibration = try Fixtures.policyObject("calibration")
+        let calibration = try Fixtures.object("policy.json", "calibration")
         try expectClose(Double(particleCount), calibration.num("particles"), "particleCount")
         try expectClose(Double(calibrationSeed), calibration.num("seed"), "calibrationSeed")
     }
@@ -176,7 +176,7 @@ struct CalibrationGridConformance {
 struct BoilMemoryConformance {
     @Test("a first measurement is whole, a second is blended")
     func blend() throws {
-        let blend = try Fixtures.policyCases("boilMemory.blend")
+        let blend = try Fixtures.list("policy.json", "boilMemory.blend")
         try #require(blend.count >= 2, "boilMemory.blend needs a first and a second measurement")
         let first = try rememberBoil([:], litres: 2, seconds: blend[0].num("measured"))
         try expectClose(estimateTimeToBoil(first, litres: 2), blend[0].num("result"), "first measurement")
@@ -186,7 +186,7 @@ struct BoilMemoryConformance {
 
     @Test("an incredible measurement is refused rather than remembered")
     func refused() throws {
-        for c in try Fixtures.policyCases("boilMemory.refused") {
+        for c in try Fixtures.list("policy.json", "boilMemory.refused") {
             let seconds = try c.num("seconds")
             let remembered = try c.flag("remembered")
             let memory = rememberBoil([:], litres: 2, seconds: seconds)
@@ -204,7 +204,7 @@ struct BoilMemoryConformance {
     func estimate() throws {
         let forward = rememberBoil(rememberBoil([:], litres: 1, seconds: 300), litres: 3, seconds: 900)
         let backward = rememberBoil(rememberBoil([:], litres: 3, seconds: 900), litres: 1, seconds: 300)
-        for c in try Fixtures.policyCases("boilMemory.estimate") {
+        for c in try Fixtures.list("policy.json", "boilMemory.estimate") {
             let litres = try c.num("litres")
             try expectClose(
                 estimateTimeToBoil(forward, litres: litres), c.num("forward"),
@@ -219,7 +219,7 @@ struct BoilMemoryConformance {
 
     @Test("the fallback is the same fallback")
     func fallback() throws {
-        let memory = try Fixtures.policyObject("boilMemory")
+        let memory = try Fixtures.object("policy.json", "boilMemory")
         try expectClose(defaultTimeToBoilS, memory.num("defaultSeconds"), "defaultTimeToBoilS")
     }
 }
@@ -229,7 +229,7 @@ struct DefaultsConformance {
     /// Both apps open on the same eggs in the pan and the same egg.
     @Test("a fresh install starts from the same kitchen")
     func defaults() throws {
-        let d = try Fixtures.policyObject("defaults")
+        let d = try Fixtures.object("policy.json", "defaults")
         try expectClose(Double(Defaults.sizeIndex), d.num("sizeIndex"), "sizeIndex")
         try expectClose(Defaults.customStartC, d.num("customStart_C"), "customStart_C")
         try expectClose(Defaults.altitudeM, d.num("altitude_m"), "altitude_m")
@@ -243,7 +243,7 @@ struct DefaultsConformance {
 
     @Test("the room follows the egg at the same threshold")
     func ambient() throws {
-        for c in try Fixtures.policyCases("ambient") {
+        for c in try Fixtures.list("policy.json", "ambient") {
             let start = try c.num("eggStart_C")
             try expectClose(ambientFor(eggStartC: start), c.num("ambient_C"), "ambient for \(start) C")
         }
@@ -251,7 +251,7 @@ struct DefaultsConformance {
 
     @Test("every bound is the same bound")
     func limits() throws {
-        let limits = try Fixtures.policyObject("limits")
+        let limits = try Fixtures.object("policy.json", "limits")
         let pairs: [(String, ClosedRange<Double>)] = [
             ("mass_g", Limits.massG),
             ("eggTemp_C", Limits.eggTempC),
@@ -282,7 +282,7 @@ struct SizeClassConformance {
     @Test("both tables are the same tables")
     func tables() throws {
         for (name, classes) in [("eu", sizeClasses), ("us", usSizeClasses)] {
-            let expected = try Fixtures.policyCases("sizeClasses.\(name)")
+            let expected = try Fixtures.list("policy.json", "sizeClasses.\(name)")
             #expect(classes.count == expected.count, "\(name) table has \(classes.count) classes")
             for (actual, c) in zip(classes, expected) {
                 #expect(try actual.key == c.str("key"), "\(name): \(actual.key)")
@@ -293,7 +293,7 @@ struct SizeClassConformance {
 
     @Test("the same regions get the American carton")
     func regions() throws {
-        for c in try Fixtures.policyCases("sizeClasses.regions") {
+        for c in try Fixtures.list("policy.json", "sizeClasses.regions") {
             let region = c["region"] as? String
             let table = try c.str("table")
             let expected = table == "us" ? usSizeClasses : sizeClasses
@@ -312,7 +312,7 @@ struct SizeClassConformance {
     /// store the same index, so they must read it back the same way.
     @Test("a stored size is carried into either table the same way")
     func carry() throws {
-        for c in try Fixtures.policyCases("sizeClasses.carry") {
+        for c in try Fixtures.list("policy.json", "sizeClasses.carry") {
             let stored = try c.num("stored")
             #expect(
                 try carrySizeIndex(stored, classes: sizeClasses) == Int(c.num("eu")),
@@ -335,7 +335,7 @@ struct PhaseConformance {
     /// every boundary.
     @Test("every boundary, with and without a cooling step")
     func timelines() throws {
-        for timeline in try Fixtures.policyCases("phase.timelines") {
+        for timeline in try Fixtures.list("policy.json", "phase.timelines") {
             let name = try timeline.str("name")
             let cookEndS = try timeline.num("cookEnd_s")
             let coolEndS = try timeline.optionalNum("coolEnd_s")
@@ -365,7 +365,7 @@ struct PhaseConformance {
 
     @Test("the cooling step and the pull grace are the same lengths")
     func constants() throws {
-        let phase = try Fixtures.policyObject("phase")
+        let phase = try Fixtures.object("policy.json", "phase")
         try expectClose(coolingSeconds, phase.num("coolingSeconds"), "coolingSeconds")
         try expectClose(pullGraceSeconds, phase.num("pullGraceSeconds"), "pullGraceSeconds")
         let slowHob = try phase.object("slowHob")
