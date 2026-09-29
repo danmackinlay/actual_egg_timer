@@ -159,10 +159,16 @@ function oneOf<T extends string>(value: unknown, allowed: readonly T[], fallback
 
 /* -------------------------------------------------------------- settings */
 
+/** The pan method last saved - what a save made in sous-vide writes in its
+ *  place (`saveSettings`). Read with the settings, and kept up by every save
+ *  of a pan, so a save need not read storage back to find it. */
+let lastPanStart: StartMode = 'cold';
+
 /** `classes` is the table the app is showing now, which need not be the one
  *  the record was saved against. */
 export function loadSettings(classes: SizeClass[]): Settings {
   const raw = parseObject(readStorage(SETTINGS_KEY));
+  lastPanStart = storedPanStart(raw);
   if (raw === null) return { ...DEFAULT_SETTINGS };
   const d = DEFAULT_SETTINGS;
   return {
@@ -174,7 +180,7 @@ export function loadSettings(classes: SizeClass[]): Settings {
     altitude_m: clampNumber(raw['altitude_m'], LIMITS.altitude_m, d.altitude_m),
     // Only a pan comes back. A stored 'sous', from before it stopped being
     // saved, is read as the default, because nothing recorded the pan before it.
-    startMode: storedPanStart(raw),
+    startMode: lastPanStart,
     afterBoil: oneOf(raw['afterBoil'], ['hold', 'off'] as const, d.afterBoil),
     cooling: oneOf(raw['cooling'], ['ice', 'tap', 'counter'] as const, d.cooling),
     waterLitres: clampNumber(raw['waterLitres'], LIMITS.waterLitres, d.waterLitres),
@@ -200,12 +206,10 @@ export function loadLanguage(): LanguageState {
  *  the cook by telling them they are 22 hours late, which is a bad first
  *  choice. It is still a choice for as long as the page is open; what is saved
  *  in its place is whatever pan was saved before it, cold or hot, so a reload
- *  comes back to the last pan the cook used. */
+ *  comes back to the last pan the cook used. `loadSettings` comes first. */
 export function saveSettings(settings: Settings): void {
-  const startMode = settings.startMode === 'sous'
-    ? storedPanStart(parseObject(readStorage(SETTINGS_KEY)))
-    : settings.startMode;
-  writeStorage(SETTINGS_KEY, JSON.stringify({ ...settings, startMode: startMode }));
+  if (settings.startMode !== 'sous') lastPanStart = settings.startMode;
+  writeStorage(SETTINGS_KEY, JSON.stringify({ ...settings, startMode: lastPanStart }));
 }
 
 /** The pan method in a stored record: cold or hot, and cold for anything else,
