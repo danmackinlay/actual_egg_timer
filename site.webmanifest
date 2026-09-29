@@ -1,7 +1,7 @@
 {
   "name": "Actual Egg Timer",
   "short_name": "Egg Timer",
-  "description": "A boiled-egg timer that computes the time from heat conduction and denaturation kinetics, not from a recipe.",
+  "description": "A boiled-egg timer that works out the time from how heat gets into your egg, counts the cooling, and learns how you like your yolk.",
   "id": "./",
   "start_url": "./",
   "scope": "./",

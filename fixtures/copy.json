@@ -185,7 +185,7 @@
       "args": {
         "boil": "8:00"
       },
-      "text": "I conjecture 8:00 to the boil; tap when it comes"
+      "text": "about 8:00 to boil, by conjecture"
     },
     {
       "locale": "en-x-1750",
@@ -193,7 +193,7 @@
       "args": {
         "water": "12.50 qt"
       },
-      "text": "for this quantity of water, the lid on (12.50 qt); measure it, for the quantity alters the time"
+      "text": "for 12.50 qt of water, the lid on; measure it"
     },
     {
       "locale": "en-x-1750",
@@ -202,7 +202,7 @@
         "elapsed": "2:15",
         "boil": "8:00"
       },
-      "text": "2:15 upon the fire · I expect 8:00 before you tap"
+      "text": "2:15 hitherto · about 8:00 to the boil"
     },
     {
       "locale": "en-x-1750",
@@ -211,7 +211,7 @@
         "boil": "6:40",
         "after": "3:57"
       },
-      "text": "the boil came in 6:40 · 3:57 after it"
+      "text": "it boiled in 6:40 · then 3:57"
     },
     {
       "locale": "en-x-1750",
@@ -298,7 +298,7 @@
       "args": {
         "time": "7:44"
       },
-      "text": "the water at a full boil, and kept so for the whole 7:44"
+      "text": "the eggs into water at a full boil, and kept so the whole 7:44"
     },
     {
       "locale": "en-x-1750",
@@ -306,7 +306,7 @@
       "args": {
         "boiling": "212 °F"
       },
-      "text": "keep it at a full boil (212 °F) till the eggs come out"
+      "text": "at 212 °F till the eggs come out"
     },
     {
       "locale": "en-x-1750",
@@ -619,11 +619,11 @@
     },
     {
       "locale": "en-x-1750",
-      "key": "controls.size.weighed",
+      "key": "controls.size.measured",
       "args": {
         "mass": "2.4 oz"
       },
-      "text": "As weighed · 2.4 oz"
+      "text": "As measured — 2.4 oz"
     },
     {
       "locale": "en-x-1750",
@@ -632,7 +632,7 @@
         "fridge": "39 °F",
         "room": "68 °F"
       },
-      "text": "Supposed temperatures: fridge, 39 °F; room, 68 °F. Choose Your own if yours differ."
+      "text": "I suppose 39 °F for a fridge and 68 °F for a room. Choose Your own if yours differ."
     },
     {
       "locale": "en-x-1750",
@@ -1351,7 +1351,7 @@
         "doneness": "jammy",
         "yolk": "149 °F"
       },
-      "text": "jammy · the yolk 149 °F"
+      "text": "jammy · the yolk at most 149 °F"
     },
     {
       "locale": "en-x-1750",
@@ -1537,7 +1537,7 @@
       "args": {
         "boil": "8:00"
       },
-      "text": "I'm guessing 8:00 to boil — tap when it does"
+      "text": "about 8:00 to boil, my guess"
     },
     {
       "locale": "en",
@@ -1545,7 +1545,7 @@
       "args": {
         "water": "12.50 qt"
       },
-      "text": "for this much water with the lid on (12.50 qt) — measure the water, it changes the time"
+      "text": "for 12.50 qt of water, lid on — measure it"
     },
     {
       "locale": "en",
@@ -1554,7 +1554,7 @@
         "elapsed": "2:15",
         "boil": "8:00"
       },
-      "text": "2:15 heating · I expect 8:00 until you tap"
+      "text": "2:15 so far · about 8:00 to boil"
     },
     {
       "locale": "en",
@@ -1563,7 +1563,7 @@
         "boil": "6:40",
         "after": "3:57"
       },
-      "text": "boil took 6:40 · 3:57 after the boil"
+      "text": "boiled in 6:40 · then 3:57"
     },
     {
       "locale": "en",
@@ -1650,7 +1650,7 @@
       "args": {
         "time": "7:44"
       },
-      "text": "water at a full rolling boil, and kept there for the whole 7:44"
+      "text": "eggs into water at a full boil; keep it there for all 7:44"
     },
     {
       "locale": "en",
@@ -1658,7 +1658,7 @@
       "args": {
         "boiling": "212 °F"
       },
-      "text": "keep it at a full boil (212 °F) until the eggs come out"
+      "text": "at 212 °F until the eggs come out"
     },
     {
       "locale": "en",
@@ -1971,11 +1971,11 @@
     },
     {
       "locale": "en",
-      "key": "controls.size.weighed",
+      "key": "controls.size.measured",
       "args": {
         "mass": "2.4 oz"
       },
-      "text": "Weighed · 2.4 oz"
+      "text": "Measured — 2.4 oz"
     },
     {
       "locale": "en",
@@ -1984,7 +1984,7 @@
         "fridge": "39 °F",
         "room": "68 °F"
       },
-      "text": "Assumed temperatures — fridge: 39 °F, room: 68 °F. Pick Custom if yours differ."
+      "text": "I assume 39 °F for a fridge and 68 °F for a room. Pick Custom if yours differ."
     },
     {
       "locale": "en",
@@ -2703,7 +2703,7 @@
         "doneness": "jammy",
         "yolk": "149 °F"
       },
-      "text": "jammy · yolk 149 °F"
+      "text": "jammy · peak yolk 149 °F"
     },
     {
       "locale": "en",

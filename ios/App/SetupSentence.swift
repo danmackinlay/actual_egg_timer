@@ -321,7 +321,7 @@ struct ClausePanel: View {
                     ForEach(planner.sizeClasses.indices, id: \.self) { i in
                         Text(sizeLabel(planner.sizeClasses[i])).tag(i)
                     }
-                    Text(tr("controls.size.weighed", [
+                    Text(tr("controls.size.measured", [
                         "mass": .text(planner.show(.mass, planner.weighedMassG)),
                     ])).tag(-1)
                 }

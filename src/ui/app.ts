@@ -936,6 +936,7 @@ function readInputs(source: EventTarget | null): void {
 
   dom.customTempField.hidden = settings.startTempMode !== 'custom';
   syncMeasurements(source);
+  labelMeasuredOption();
   scheduleSave();
 }
 
@@ -1118,7 +1119,16 @@ function labelSizeOptions(): void {
     const label = sizeClassLabel(sizeClasses[i], unitSystem());
     dom.size.options[i].textContent = t(label.key, { mass: t(label.mass.key, { value: label.mass.value }) });
   }
-  dom.size.options[sizeClasses.length].textContent = t('controls.size.measured');
+  labelMeasuredOption();
+}
+
+/** The measured egg's option carries its mass, as iOS's does, so choosing it
+ *  says which egg comes back (D6). */
+function labelMeasuredOption(): void {
+  const measured = eggFromMinorDiameter(settings.customMinor_mm / 1000);
+  dom.size.options[sizeClasses.length].textContent = t('controls.size.measured', {
+    mass: show('mass', measured.mass_kg * 1000),
+  });
 }
 
 function applyLimit(input: HTMLInputElement, limit: Limit): void {
