@@ -68,9 +68,9 @@ test('1a. the 1750 catalogue is a catalogue: copy.test.ts and the fixture read i
 const LEFT_TO_ENGLISH = new Set(['app.name']);
 
 test('1b. every key either app uses has its 1750 twin, and every twin is an English key', () => {
-  // The web's since F6 on the web, iOS's since F6 on iOS: the alarms, the
-  // alarm's status lines, the Live Activity and the Dynamic Island. So every
-  // rule below - the archaisms, the spellings, the long s - binds them too.
+  // The web's, and iOS's: the alarms, the alarm's status lines, the Live
+  // Activity and the Dynamic Island. So every rule below - the archaisms, the
+  // spellings, the long s - binds them too.
   for (const [key, entry] of Object.entries(EN_JSON.messages)) {
     if (LEFT_TO_ENGLISH.has(key)) continue;
     const apps = entry['apps'] as string[];
@@ -161,8 +161,8 @@ test('1h. the answers keep their meaning: three, distinct, and the soft one says
 });
 
 test('1i. the owner\'s alarm, word for word', () => {
-  // Its "the cold" became the cooling the cook chose, on the owner's word of
-  // 28 September; the clause after the semicolon is theirs, untouched.
+  // The first clause names the cooling the cook chose; the clause after the
+  // semicolon is the owner's, untouched.
   assert.equal(render(PERIOD, 'alarm.pull.bodyIce'),
     'Commit them at once to the ice; for heat, though withdrawn from the fire, is not yet withdrawn from the egg.');
   assert.equal(render(PERIOD, 'alarm.pull.bodyTap'),

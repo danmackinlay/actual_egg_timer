@@ -483,8 +483,8 @@ test('15d. a pan with too little heat never sets the white at all', () => {
 });
 
 test('15e. with the heat off the pan cools at a rate set by the water, not the hob', () => {
-  // Anchored so Williams' 8-minute boil in 2 L is exactly what the old
-  // boil-time rule gave, and scaled as the cube root of the volume.
+  // Anchored so Williams' 8-minute boil in 2 L is exactly what the boil-time
+  // rule gives, and scaled as the cube root of the volume.
   close(panTimeConstant(2), 480 / Math.log(1.5), 1e-9, 'the 2 L anchor');
   close(panTimeConstant(2), TAU_STANDING_REF_S, 1e-9, 'the anchor is the constant');
   close(panTimeConstant(16), 2 * panTimeConstant(2), 1e-9, 'eight times the water, twice the tau');

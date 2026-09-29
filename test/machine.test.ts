@@ -109,8 +109,8 @@ test('2c. a counter rest finishes at the pull; the others cool first', () => {
 });
 
 test('2e. "cooling starts on its own" is promised only where the grace runs out into COOLING', () => {
-  // The web's PULL hint reads this. It used to count down on a counter rest
-  // too, where the grace runs out into DONE and nothing starts.
+  // The web's PULL hint reads this. Not on a counter rest, where the grace
+  // runs out into DONE and nothing starts.
   for (const cooling of ['ice', 'tap', 'counter'] as Cooling[]) {
     const pull = walk(startHot(T0, COOK_S, cooling, 0.41), T0 + COOK_S * 1000);
     assert.equal(pull.phase, 'PULL');
@@ -225,8 +225,8 @@ test('5b. a half-written record restores as nothing at all', () => {
   assert.equal(restoreMachine('a cook', now), null);
   assert.equal(restoreMachine({}, now), null);
   assert.equal(restoreMachine(idleMachine('ice'), now), null, 'an idle machine is not a cook');
-  // A deadline with no start is the shape that used to resurrect a cancelled
-  // timer: it reads as running without ever having been started.
+  // A deadline with no start would resurrect a cancelled timer: it reads as
+  // running without ever having been started.
   assert.equal(restoreMachine({ ...m, startedAt_ms: 0 }, now), null);
   assert.equal(restoreMachine({ ...m, cookEnd_ms: 0 }, now), null);
   assert.equal(restoreMachine({ ...m, phase: 'BOILING' }, now), null);

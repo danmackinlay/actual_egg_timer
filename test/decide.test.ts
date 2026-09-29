@@ -1,15 +1,15 @@
 /**
- * E5: choosing the time under uncertainty, the odds on screen, and "still
- * learning" (INFERENCE.md section 8, src/core/decide.ts).
+ * Choosing the time under uncertainty, the odds, and how fast the posterior
+ * narrows (INFERENCE.md section 8, src/core/decide.ts).
  *
- * The claims the phase is done on: the choice is right on posteriors built to
+ * The claims: the choice is right on posteriors built to
  * know something - a cook who likes a firmer yolk gets a later time at every
  * level, which the mean solve never gave them; before any egg the time is the
  * literature's, and after one it leans by seconds, not by the 43 s the prior
- * alone would have it lean; the odds are calibrated on simulated cooks, as
- * E2's answers were; and "still learning" goes where the rule says. Also: the
- * refusals still work, a cook under way keeps its lean, and the numbers for two
- * runny whites at soft (E3's half-met test) as the choice now sees them.
+ * alone would have it lean; the odds are calibrated on simulated cooks, as the
+ * answers' probabilities are; and the interval narrows where the "still
+ * learning" rule says. Also: the refusals hold, a cook under way keeps its
+ * lean, and the numbers for two runny whites at soft as the choice sees them.
  *
  * The fixture (`fixtures/decide.json`) pins the arithmetic for the Swift port;
  * what is checked here is the reasoning. `npm run decide` prints the longer
@@ -125,8 +125,7 @@ const NEUTRAL = knowing({ particles: PARTICLE_COUNT, eggsLogged: 6, taste: 0, wh
 const NEUTRAL_GRID = gridFor(NEUTRAL, EGG, SETUP);
 
 test('2a. a posterior that knows the cook likes a firmer yolk moves the time later, at every level', () => {
-  // The gap E5 closes: until now the taste offset never reached the time. The
-  // mean solve for these two posteriors is the same to the second, because
+  // The mean solve never lets the taste offset reach the time. The mean solve for these two posteriors is the same to the second, because
   // their time-scales are; the choice is not.
   const firmer = knowing({ particles: PARTICLE_COUNT, eggsLogged: 6, taste: 0.2, white: 0 });
   const softer = knowing({ particles: PARTICLE_COUNT, eggsLogged: 6, taste: -0.2, white: 0 });
@@ -247,8 +246,8 @@ test('3c. after one egg the choice leans by seconds, whichever level is asked fo
 
 /** The owner's "still learning" rule (INFERENCE.md section 11, decision 9):
  *  the 80% interval of the right cook time wider than +-15 s. No screen shows
- *  it since 28 September, and `Decision` no longer carries it (D3); this is
- *  how E8 would compute it, on demand, from `predictCookTime`. */
+ *  it and `Decision` does not carry it; this computes it on demand, from
+ *  `predictCookTime`. */
 function stillLearning(interval: CookTimePrediction): boolean {
   return 0.5 * (interval.high_s - interval.low_s) > 15;
 }
@@ -258,7 +257,7 @@ test('5b. the interval narrows below +-15 s after a few consistent eggs, stays t
   // the app chooses, answering as the truth would without noise. Measured on
   // 28 September on the app's surfaces: the interval is +-72 s before any
   // egg, +-22 after one, +-13 after two, and narrows egg by egg from there;
-  // under the filter's old fixed jitter it rose again at every resample. An
+  // under a fixed resample jitter it would rise again at every resample. An
   // egg nobody answered about teaches nothing and moves nothing.
   const truth = { alpha_m2s: ALPHA_DEFAULT, logDoseOffset: 0, tauAirScale: 1, noise: 1e-6, whiteOffset: 0, whiteFirmGap: 1.08 };
   const flags: boolean[] = [];
@@ -351,7 +350,7 @@ test('6c. one surface serves every level: the slider never waits for a grid', ()
 });
 
 // --------------------------------------------------------------------------
-// 7. Two runny whites at soft (E3's half-met test, under E5)
+// 7. Two runny whites at soft, under the choice
 // --------------------------------------------------------------------------
 
 test('6d. the decided solution is the mean solve moved to the chosen time, and the mean solve itself at its own time', () => {
@@ -374,12 +373,12 @@ test('6d. the decided solution is the mean solve moved to the chosen time, and t
 
 test('7. two runny whites at soft: what the choice does at soft and at jammy', () => {
   // Two eggs at soft, the white runny - alone, or with the yolk just right -
-  // built two ways. E3's construction cooks each at the time the MEAN solve
-  // recommended then (test/infer.test.ts 5), so it shows what E5 makes of the
-  // same evidence; E5's own sequence cooks the second egg at the time E5 chose
-  // after the first. The known limit stands (INFERENCE.md section 3): a runny
-  // white is blamed on the time-scale about 2:1, so jammy moves too, and E5 does
-  // not try to fix that. The LOGBOOK's numbers (28 September) are `npm run
+  // built two ways. 'E3' cooks each at the time the MEAN solve recommends
+  // (test/infer.test.ts 5), so it shows what the choice makes of the same
+  // evidence; 'E5' cooks the second egg at the time the choice made after
+  // the first. The known limit stands (INFERENCE.md section 3): a runny white
+  // is blamed on the time-scale about 2:1, so jammy moves too, and the choice
+  // does not try to fix that. The LOGBOOK's numbers (28 September) are `npm run
   // decide -- runny`, on the app's surfaces; these are coarser, and within a
   // few seconds of them.
   const rows: string[] = [];

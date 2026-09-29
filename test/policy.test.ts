@@ -409,8 +409,8 @@ test('7c. an unmeasured volume scales from the nearest measured one', () => {
 });
 
 test('7d. equidistant volumes resolve the same way every time', () => {
-  // Insertion order used to decide this on the web and Dictionary order on
-  // iOS, so the same two pans could give the two apps different answers.
+  // Neither insertion order (the web) nor Dictionary order (iOS) may decide
+  // this, or the same two pans could give the two apps different answers.
   const forwards = rememberBoil(rememberBoil({}, 1, 300), 3, 900);
   const backwards = rememberBoil(rememberBoil({}, 3, 900), 1, 300);
   assert.equal(estimateTimeToBoil(forwards, 2), estimateTimeToBoil(backwards, 2));

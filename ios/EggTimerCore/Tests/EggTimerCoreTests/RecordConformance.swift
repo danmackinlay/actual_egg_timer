@@ -152,7 +152,7 @@ struct RecordConformance {
             let yolk = try c.optionalNum("yolk")
             #expect(record.yolk.map { Double($0.rawValue) } == yolk, "\(why): yolk")
             #expect(record.white?.rawValue == c["white"] as? String, "\(why): white")
-            // The probe reading (E4): the same number, and the same "when".
+            // The probe reading: the same number, and the same "when".
             let probe = c["probe"] as? [String: Any]
             #expect((record.probe == nil) == (probe == nil), "\(why): probe")
             if let probe, let read = record.probe {
@@ -233,11 +233,11 @@ struct ReplayConformance {
         try expectCalibration(rebuilt, block.object("final"), "from base")
     }
 
-    /// The claim E1 is done on, in this language, with E2's second answer: the
-    /// app folds each egg when its first answer comes, stores the posterior,
-    /// and on the second answer folds the egg AGAIN from the posterior before
-    /// it; a replay folds the log in one go. They must not merely agree to twelve figures - they must be
-    /// the same bits, or "a model change is a replay" quietly means "a model
+    /// The record's headline claim, in this language: the app folds each egg
+    /// when its first answer comes, stores the posterior, and on the second
+    /// answer folds the egg AGAIN from the posterior before it; a replay folds
+    /// the log in one go. They must not merely agree to twelve figures - they
+    /// must be the same bits, or "a model change is a replay" quietly means "a model
     /// change moves your posterior a little for no reason".
     @Test("egg by egg, stored between eggs, is bit-identical to a replay")
     func bitIdentical() throws {

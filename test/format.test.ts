@@ -1,5 +1,5 @@
 /**
- * Locale formatting (F4): numbers, times of day, the plural rule with visible
+ * Locale formatting: numbers, times of day, the plural rule with visible
  * decimals, the formatting locale each app derives, and Czech formatting end
  * to end through the web's own renderer with a pseudo-Czech catalogue - Czech's
  * plural rule and Czech numbers, and no Czech words.

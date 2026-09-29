@@ -2,7 +2,7 @@ import Testing
 import Foundation
 @testable import EggTimerCore
 
-/// E5's choice, against `fixtures/decide.json`.
+/// The choice of time, against `fixtures/decide.json`.
 ///
 /// The two apps must choose the SAME time for the same posterior and the same
 /// pot, so this pins every step: where each pot's decision surface goes (a

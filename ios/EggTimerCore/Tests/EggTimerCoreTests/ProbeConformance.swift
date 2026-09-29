@@ -2,7 +2,7 @@ import Testing
 import Foundation
 @testable import EggTimerCore
 
-/// The thermometer (E4), against `fixtures/probe.json`.
+/// The thermometer, against `fixtures/probe.json`.
 ///
 /// The peak on the dose grid and its interpolation; the error model's density
 /// across both tails, where a careless exp(big) * erfc(tiny) would be NaN; one

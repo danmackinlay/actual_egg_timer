@@ -1,7 +1,7 @@
 /**
- * E5's odds, "7/10 eggs hit the mark", held to simulated cooks: when the app
- * says seven in ten, seven in ten hit it. E2's calibration test, for the joint
- * answer the odds are about. In a file of its own so that it runs beside
+ * The odds, held to simulated cooks: when the model says seven in ten, seven
+ * in ten hit it. The answers' calibration test (test/infer.test.ts), for the
+ * joint answer the odds are about. In a file of its own so that it runs beside
  * test/decide.test.ts rather than after it.
  *
  * Zero dependencies: node:test + node:assert/strict only.
@@ -32,12 +32,10 @@ test('"7/10 eggs hit the mark" is calibrated: simulated cooks hit it as often as
   // hit is a white not answered runny and a yolk answered just right. One
   // fixed surface, for speed.
   //
-  // Measured on 28 September with `npm run decide -- odds` (400 cooks, six eggs
-  // each, 1000 particles): expected calibration error 3.8%; the first three
-  // eggs within a point (21% -> 21%, 36% -> 37%, 48% -> 49%), and from the
-  // fourth the odds UNDER-state the hits by 4-6 points (60% -> 66% at egg six).
-  // This smaller run has the same shape, and the bounds below allow it; the
-  // gap is written up in PLAN.md (E5) rather than hidden in a tolerance.
+  // Measured with `npm run decide -- odds` (400 cooks, six eggs each, 1000
+  // particles): expected calibration error 2.2%, every egg within 1-3 points
+  // (INFERENCE.md section 8). This smaller run has the same shape, and the
+  // bounds below allow it.
   const grid = buildDoseGrid(EGG, SETUP, 1, { alphaMin: ALPHA_DEFAULT * 0.55, alphaMax: ALPHA_DEFAULT * 1.8, alphaCount: 17, timeMin_s: 200, timeMax_s: 900, timeCount: 71 });
   const levels = [0.22, 0.41, 0.62];
   const random = rng(20260928);
