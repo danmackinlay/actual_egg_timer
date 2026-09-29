@@ -25,6 +25,7 @@ import {
   simulate, solveCookTime, donenessFromSlider, sliderFromYolkDose,
   DEFAULT_PARAMS, DONENESS_ANCHORS, YOLK_DOSE_HARD,
 } from '../src/core/solve.js';
+import { referenceSetup } from './common.js';
 
 /** The report names the anchors in English, as the app does. */
 const EN = parseCatalogue(JSON.parse(readFileSync('copy/en.json', 'utf8')));
@@ -77,20 +78,6 @@ function printTable(title: string, header: string[], body: string[][]): void {
 const REFERENCE_EGG: Egg = eggFromMinorDiameter(0.0435);
 const JAMMY = donenessFromSlider(0.41);
 
-function setupOf(over: Partial<CookSetup>): CookSetup {
-  const base: CookSetup = {
-    startMode: 'hot',
-    eggStart_C: 4,
-    ambient_C: 20,
-    boiling_C: 100,
-    timeToBoil_s: 0,
-    cooling: 'ice',
-    waterLitres: 2,
-    eggCount: 4,
-  };
-  return { ...base, ...over };
-}
-
 /** The doneness label nearest a slider position, for the report tables. */
 function anchorNear(level: number): string {
   let best = DONENESS_ANCHORS[0];
@@ -111,17 +98,17 @@ function cookMinutes(egg: Egg, setup: CookSetup, level: number): number {
 // headline scenarios
 // --------------------------------------------------------------------------
 
-check('jammy, fridge 4 C, sea level', cookMinutes(REFERENCE_EGG, setupOf({}), 0.41), 7.36, TOL_MIN, 'min');
+check('jammy, fridge 4 C, sea level', cookMinutes(REFERENCE_EGG, referenceSetup({}), 0.41), 7.36, TOL_MIN, 'min');
 
 check(
   'jammy, room temp 21 C',
-  cookMinutes(REFERENCE_EGG, setupOf({ eggStart_C: 21, ambient_C: 21 }), 0.41),
+  cookMinutes(REFERENCE_EGG, referenceSetup({ eggStart_C: 21, ambient_C: 21 }), 0.41),
   6.23, TOL_MIN, 'min',
 );
 
 check(
   'jammy, fridge, 2000 m',
-  cookMinutes(REFERENCE_EGG, setupOf({ boiling_C: boilingPointAtAltitude(2000) }), 0.41),
+  cookMinutes(REFERENCE_EGG, referenceSetup({ boiling_C: boilingPointAtAltitude(2000) }), 0.41),
   8.21, TOL_MIN, 'min',
 );
 
@@ -132,7 +119,7 @@ for (let i = 0; i < SIZE_GRAMS.length; i++) {
   const egg = eggFromMass(SIZE_GRAMS[i] / 1000);
   check(
     `jammy, ${SIZE_GRAMS[i]} g egg`,
-    cookMinutes(egg, setupOf({}), 0.41),
+    cookMinutes(egg, referenceSetup({}), 0.41),
     SIZE_EXPECTED[i], TOL_MIN, 'min',
   );
 }
@@ -144,7 +131,7 @@ const RAMP_MIN = [4, 8, 12];
 const RAMP_AFTER_EXPECTED = [4.9, 2.9, 1.0];
 const coldRows: string[][] = [];
 for (let i = 0; i < RAMP_MIN.length; i++) {
-  const setup = setupOf({ startMode: 'cold', timeToBoil_s: RAMP_MIN[i] * 60 });
+  const setup = referenceSetup({ startMode: 'cold', timeToBoil_s: RAMP_MIN[i] * 60 });
   const total = cookMinutes(REFERENCE_EGG, setup, 0.41);
   const after = total - RAMP_MIN[i];
   check(`cold start, ${RAMP_MIN[i]} min ramp: after boiling`, after, RAMP_AFTER_EXPECTED[i], TOL_MIN, 'min');
@@ -154,8 +141,8 @@ for (let i = 0; i < RAMP_MIN.length; i++) {
 }
 
 // Altitude penalty at Denver (1609 m), hard-boiled.
-const denverSetup = setupOf({ boiling_C: boilingPointAtAltitude(1609) });
-const hardSea = cookMinutes(REFERENCE_EGG, setupOf({}), 1.0);
+const denverSetup = referenceSetup({ boiling_C: boilingPointAtAltitude(1609) });
+const hardSea = cookMinutes(REFERENCE_EGG, referenceSetup({}), 1.0);
 const hardDenver = cookMinutes(REFERENCE_EGG, denverSetup, 1.0);
 check(
   'Denver 1609 m hard-boiled vs sea level',
@@ -167,7 +154,7 @@ const CARRY_COOLING: CookSetup['cooling'][] = ['ice', 'tap', 'counter'];
 const CARRY_EXPECTED = [65.0, 65.6, 76.3];
 const carryRows: string[][] = [];
 for (let i = 0; i < CARRY_COOLING.length; i++) {
-  const r = simulate(REFERENCE_EGG, setupOf({ cooling: CARRY_COOLING[i] }), DEFAULT_PARAMS, 7.4 * 60);
+  const r = simulate(REFERENCE_EGG, referenceSetup({ cooling: CARRY_COOLING[i] }), DEFAULT_PARAMS, 7.4 * 60);
   check(`carryover peak yolk, 7.4 min cook, ${CARRY_COOLING[i]}`, r.peakYolk_C, CARRY_EXPECTED[i], 0.5, 'C');
   carryRows.push([
     CARRY_COOLING[i],
@@ -181,7 +168,7 @@ for (let i = 0; i < CARRY_COOLING.length; i++) {
 /** Sea-level jammy cook time, computed once and reused by the altitude table. */
 let jammySeaLevelCache = -1;
 function jammySeaLevel(): number {
-  if (jammySeaLevelCache < 0) jammySeaLevelCache = cookMinutes(REFERENCE_EGG, setupOf({}), 0.41);
+  if (jammySeaLevelCache < 0) jammySeaLevelCache = cookMinutes(REFERENCE_EGG, referenceSetup({}), 0.41);
   return jammySeaLevelCache;
 }
 
@@ -194,7 +181,7 @@ for (let h = 0; h <= 5000; h += 500) {
   const approx = boilingPointApprox(h);
   const error = Math.abs(boiling - approx);
   if (error > worstApproxError) worstApproxError = error;
-  const minutes = cookMinutes(REFERENCE_EGG, setupOf({ boiling_C: boiling }), 0.41);
+  const minutes = cookMinutes(REFERENCE_EGG, referenceSetup({ boiling_C: boiling }), 0.41);
   altitudeRows.push([
     String(h),
     (pressureAtAltitude(h) / 1000).toFixed(2),
@@ -216,17 +203,17 @@ check('T_b(h) vs 100 - h/300, 0-5000 m (worst case)', worstApproxError, 0.0, 0.0
 
 const roomRows: string[][] = [];
 for (const room of [10, 20, 30]) {
-  const hot = cookMinutes(REFERENCE_EGG, setupOf({ ambient_C: room }), 0.41);
+  const hot = cookMinutes(REFERENCE_EGG, referenceSetup({ ambient_C: room }), 0.41);
   const cold = cookMinutes(
-    REFERENCE_EGG, setupOf({ ambient_C: room, startMode: 'cold', timeToBoil_s: 480 }), 0.41,
+    REFERENCE_EGG, referenceSetup({ ambient_C: room, startMode: 'cold', timeToBoil_s: 480 }), 0.41,
   );
   const standing = solveCookTime(
     REFERENCE_EGG,
-    setupOf({ ambient_C: room, startMode: 'cold', afterBoil: 'off', timeToBoil_s: 480 }),
+    referenceSetup({ ambient_C: room, startMode: 'cold', afterBoil: 'off', timeToBoil_s: 480 }),
     DEFAULT_PARAMS, donenessFromSlider(0.41),
   );
   const counter = simulate(
-    REFERENCE_EGG, setupOf({ ambient_C: room, cooling: 'counter' }), DEFAULT_PARAMS, 7.4 * 60,
+    REFERENCE_EGG, referenceSetup({ ambient_C: room, cooling: 'counter' }), DEFAULT_PARAMS, 7.4 * 60,
   );
   roomRows.push([
     `${room} °C`,
@@ -241,8 +228,8 @@ for (const room of [10, 20, 30]) {
 // bath does not care what the room is doing.
 check(
   'room temperature is inert on a hot start into an ice bath',
-  cookMinutes(REFERENCE_EGG, setupOf({ ambient_C: 30 }), 0.41)
-  - cookMinutes(REFERENCE_EGG, setupOf({ ambient_C: 10 }), 0.41),
+  cookMinutes(REFERENCE_EGG, referenceSetup({ ambient_C: 30 }), 0.41)
+  - cookMinutes(REFERENCE_EGG, referenceSetup({ ambient_C: 10 }), 0.41),
   0.0, 0.001, 'min',
 );
 
@@ -255,7 +242,7 @@ const standingRows: string[][] = [];
 /** Cold start, heat killed at the boil, cooled under the tap - Williams'
  *  description of the method, as closely as this model can express it. */
 function standingSetup(boil_s: number, litres: number): CookSetup {
-  return setupOf({
+  return referenceSetup({
     startMode: 'cold', afterBoil: 'off', timeToBoil_s: boil_s,
     waterLitres: litres, cooling: 'tap',
   });
@@ -507,7 +494,7 @@ printTable(
 // Doneness slider sweep.
 const sliderRows: string[][] = [];
 for (const level of [0, 0.22, 0.41, 0.62, 1.0]) {
-  const solution = solveCookTime(REFERENCE_EGG, setupOf({}), DEFAULT_PARAMS, donenessFromSlider(level));
+  const solution = solveCookTime(REFERENCE_EGG, referenceSetup({}), DEFAULT_PARAMS, donenessFromSlider(level));
   let label = '';
   for (let i = 0; i < DONENESS_ANCHORS.length; i++) {
     if (Math.abs(DONENESS_ANCHORS[i].level - level) < 1e-9) label = render(EN, DONENESS_ANCHORS[i].key);

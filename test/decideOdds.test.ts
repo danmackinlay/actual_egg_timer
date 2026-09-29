@@ -17,35 +17,12 @@ import {
 } from '../src/core/infer.js';
 import { ALPHA_DEFAULT } from '../src/core/constants.js';
 import { eggFromMass } from '../src/core/geometry.js';
-import { CookSetup } from '../src/core/protocol.js';
 import { donenessFromSlider } from '../src/core/solve.js';
 import { Calibration, calibrationDoneness, calibrationParams } from '../src/core/record.js';
+import { appSetup, draw, rng } from '../tools/common.js';
 
 const EGG = eggFromMass(0.068);
-const SETUP: CookSetup = {
-  startMode: 'hot', eggStart_C: 4, ambient_C: 20, boiling_C: 100, timeToBoil_s: 480,
-  cooling: 'ice', afterBoil: 'hold', waterLitres: 2, eggCount: 2,
-};
-
-/** xorshift, for the simulated cooks: seeded, so every run draws the same eggs. */
-function rng(seed: number): () => number {
-  let s = seed | 0 || 1;
-  return () => {
-    s ^= s << 13; s |= 0;
-    s ^= s >>> 17;
-    s ^= s << 5; s |= 0;
-    return ((s >>> 0) % 16777216) / 16777216;
-  };
-}
-
-function draw(probs: number[], u: number): number {
-  let acc = 0;
-  for (let k = 0; k < probs.length; k++) {
-    acc += probs[k];
-    if (u < acc) return k;
-  }
-  return probs.length - 1;
-}
+const SETUP = appSetup();
 
 test('"7/10 eggs hit the mark" is calibrated: simulated cooks hit it as often as they are told', () => {
   // Each cook's truth is a draw from the prior. Every egg is cooked at the time

@@ -24,7 +24,7 @@ import {
 import { ALPHA_DEFAULT } from '../src/core/constants.js';
 import { eggFromMass, Egg } from '../src/core/geometry.js';
 import { CookSetup } from '../src/core/protocol.js';
-import { Solution, donenessFromSlider } from '../src/core/solve.js';
+import { Solution } from '../src/core/solve.js';
 import { LevelOdds, OddsProfile, answerAt, oddsProfile } from '../src/core/reach.js';
 import { predictOutcome } from '../src/core/outcome.js';
 import { cookTimeForLogWhiteDose, lookupLogYolkDose } from '../src/core/doseGrid.js';
@@ -34,57 +34,33 @@ import {
   CALIBRATION_ALPHA_HIGH, CALIBRATION_ALPHA_LOW, CALIBRATION_SEED, PARTICLE_COUNT,
 } from '../src/core/policy.js';
 import {
-  Calibration, EggRecord, PRIOR_ID, buildRequestedGrid, calibrationDoneness, calibrationParams,
-  freshCalibration, replay,
+  Calibration, EggRecord, buildRequestedGrid, calibrationDoneness, calibrationParams, freshCalibration,
+  replay,
 } from '../src/core/record.js';
+import { appSetup, draw, logTarget, recordAt, rng } from './common.js';
 
 const only = process.argv[2] ?? 'all';
 const run = (name: string): boolean => only === 'all' || only === name;
 
-function setupOf(over: Partial<CookSetup> = {}): CookSetup {
-  return {
-    startMode: 'hot', eggStart_C: 4, ambient_C: 20, boiling_C: 100, timeToBoil_s: 480,
-    cooling: 'ice', afterBoil: 'hold', waterLitres: 2, eggCount: 2, ...over,
-  };
-}
-
 const REF_EGG = eggFromMass(0.068);
-const SETUP = setupOf();
+const SETUP = appSetup();
 
 interface Pot { name: string; egg: Egg; setup: CookSetup }
 const POTS: Pot[] = [
   { name: '68 g, boiling, ice', egg: REF_EGG, setup: SETUP },
-  { name: '68 g, cold start', egg: REF_EGG, setup: setupOf({ startMode: 'cold' }) },
-  { name: '68 g, tap', egg: REF_EGG, setup: setupOf({ cooling: 'tap' }) },
-  { name: '68 g, counter', egg: REF_EGG, setup: setupOf({ cooling: 'counter' }) },
-  { name: '68 g, heat off, 4 L', egg: REF_EGG, setup: setupOf({ afterBoil: 'off', waterLitres: 4 }) },
+  { name: '68 g, cold start', egg: REF_EGG, setup: appSetup({ startMode: 'cold' }) },
+  { name: '68 g, tap', egg: REF_EGG, setup: appSetup({ cooling: 'tap' }) },
+  { name: '68 g, counter', egg: REF_EGG, setup: appSetup({ cooling: 'counter' }) },
+  { name: '68 g, heat off, 4 L', egg: REF_EGG, setup: appSetup({ afterBoil: 'off', waterLitres: 4 }) },
   { name: '50 g, boiling, ice', egg: eggFromMass(0.05), setup: SETUP },
   { name: '80 g, boiling, ice', egg: eggFromMass(0.08), setup: SETUP },
 ];
-
-function logTarget(level: number): number {
-  return Math.log10(donenessFromSlider(level).yolkDose_min);
-}
 
 /** The app's idle answer (core `answerAt`), without the odds' range: this
  *  tool measures the mean solve, not the slider's reach. */
 function meanSolve(c: Calibration, egg: Egg, setup: CookSetup, level: number): { sol: Solution; level: number } {
   const a = answerAt(c, egg, setup, level, null, true);
   return { sol: a.solution, level: a.level };
-}
-
-function recordAt(level: number, t: number, yolk: Feedback | null, white: WhiteReport | null): EggRecord {
-  return {
-    v: 1, uid: null, day: '2026-09-28', app: 'web', appVersion: '0.2.0', prior: PRIOR_ID,
-    egg: { mass_g: 68, massFrom: 'class', sizeTable: 'eu' },
-    setup: {
-      startMode: 'hot', eggStart_C: 4, eggFrom: 'fridge', ambient_C: 20, boiling_C: 100,
-      timeToBoil_s: 480, timeToBoilFrom: 'default', cooling: 'ice', afterBoil: 'hold',
-      waterLitres: 2, eggCount: 2,
-    },
-    level: level, recommended_s: t, nudge_s: 0, pulled_s: t, pulledBy: 'timeout', cooled_s: 180,
-    yolk: yolk, white: white, probe: null, lang: 'en', register: 'modern', units: 'metric',
-  };
 }
 
 function ms(f: () => void): number {
@@ -176,25 +152,6 @@ if (run('lean')) {
 }
 
 /* ------------------------------------------------------ simulated cooks */
-
-function rng(seed: number): () => number {
-  let s = seed | 0 || 1;
-  return () => {
-    s ^= s << 13; s |= 0;
-    s ^= s >>> 17;
-    s ^= s << 5; s |= 0;
-    return ((s >>> 0) % 16777216) / 16777216;
-  };
-}
-
-function draw(probs: number[], u: number): number {
-  let acc = 0;
-  for (let k = 0; k < probs.length; k++) {
-    acc += probs[k];
-    if (u < acc) return k;
-  }
-  return probs.length - 1;
-}
 
 /** Cooks drawn from the prior, each at one level, eggs at the time the app
  *  would choose, answers from the truth's own probit. Calls `each` before every
@@ -376,7 +333,7 @@ if (run('advice')) {
     for (const [name, c] of cals) {
       const row: string[] = [];
       for (const which of [change.from, change.to]) {
-        const setup = setupOf(which);
+        const setup = appSetup(which);
         const grid = buildRequestedGrid(decisionGridRequest(decisionInputs(c, REF_EGG, setup)));
         row.push([0.22, 0.41, 0.62, 1].map((level) => {
           const m = meanSolve(c, REF_EGG, setup, level);

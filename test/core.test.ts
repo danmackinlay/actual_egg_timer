@@ -30,6 +30,7 @@ import {
 import {
   H_EFF, Z_YOLK, TREF_YOLK_C, YOLK_RADIUS_FRAC, TAU_STANDING_REF_S,
 } from '../src/core/constants.js';
+import { referenceSetup } from '../tools/common.js';
 
 // --------------------------------------------------------------------------
 // shared fixtures
@@ -38,20 +39,6 @@ import {
 /** The reference egg, 43.5 mm across and about 62.3 g (not the app's 68 g EU
  *  Large). The egg for every behavioural test below. */
 const REFERENCE_EGG = eggFromMinorDiameter(0.0435);
-
-function setupOf(over: Partial<CookSetup>): CookSetup {
-  const base: CookSetup = {
-    startMode: 'hot',
-    eggStart_C: 4,
-    ambient_C: 20,
-    boiling_C: 100,
-    timeToBoil_s: 0,
-    cooling: 'ice',
-    waterLitres: 2,
-    eggCount: 4,
-  };
-  return { ...base, ...over };
-}
 
 function close(actual: number, expected: number, tol: number, what: string): void {
   assert.ok(
@@ -314,7 +301,7 @@ test('9c. +4.65 C multiplies the dose rate by 10', () => {
 // --------------------------------------------------------------------------
 
 test('10. both doses increase monotonically with cook time', () => {
-  const setup = setupOf({});
+  const setup = referenceSetup({});
   let previousYolk = -1;
   let previousWhite = -1;
   for (let minutes = 1; minutes <= 15; minutes += 0.5) {
@@ -353,7 +340,7 @@ test('11. slider -> dose -> slider round-trips', () => {
 
 test('12. a soft yolk is unreachable on the counter but reachable from an ice bath', () => {
   const soft = donenessFromSlider(0.1);
-  const counter = solveCookTime(REFERENCE_EGG, setupOf({ cooling: 'counter' }), DEFAULT_PARAMS, soft);
+  const counter = solveCookTime(REFERENCE_EGG, referenceSetup({ cooling: 'counter' }), DEFAULT_PARAMS, soft);
   assert.equal(counter.reachable, false, 'soft yolk must be unreachable with counter resting');
   assert.ok(
     counter.softestLevel > 0.4,
@@ -361,7 +348,7 @@ test('12. a soft yolk is unreachable on the counter but reachable from an ice ba
   );
   assert.ok(counter.softestLevel <= 1.0, 'softestLevel is a slider position');
 
-  const ice = solveCookTime(REFERENCE_EGG, setupOf({ cooling: 'ice' }), DEFAULT_PARAMS, soft);
+  const ice = solveCookTime(REFERENCE_EGG, referenceSetup({ cooling: 'ice' }), DEFAULT_PARAMS, soft);
   assert.equal(ice.reachable, true, 'the same target must be reachable with an ice bath');
   assert.ok(
     ice.softestLevel <= soft.level,
@@ -375,9 +362,9 @@ test('12. a soft yolk is unreachable on the counter but reachable from an ice ba
 
 test('13. identical cook, different cooling: same pull state, ordered peaks', () => {
   const cookTime = 7.4 * 60;
-  const ice = simulate(REFERENCE_EGG, setupOf({ cooling: 'ice' }), DEFAULT_PARAMS, cookTime);
-  const tap = simulate(REFERENCE_EGG, setupOf({ cooling: 'tap' }), DEFAULT_PARAMS, cookTime);
-  const counter = simulate(REFERENCE_EGG, setupOf({ cooling: 'counter' }), DEFAULT_PARAMS, cookTime);
+  const ice = simulate(REFERENCE_EGG, referenceSetup({ cooling: 'ice' }), DEFAULT_PARAMS, cookTime);
+  const tap = simulate(REFERENCE_EGG, referenceSetup({ cooling: 'tap' }), DEFAULT_PARAMS, cookTime);
+  const counter = simulate(REFERENCE_EGG, referenceSetup({ cooling: 'counter' }), DEFAULT_PARAMS, cookTime);
 
   // Same cook => same state at the moment of pulling, whatever happens next.
   close(tap.yolkAtPull_C, ice.yolkAtPull_C, 0.1, 'yolk at pull: tap vs ice');
@@ -415,7 +402,7 @@ test('14. the Biot number in water justifies the Dirichlet treatment', () => {
 // --------------------------------------------------------------------------
 
 test('15a. with the heat off the water falls, and the dose saturates', () => {
-  const standing = setupOf({
+  const standing = referenceSetup({
     startMode: 'cold', afterBoil: 'off', timeToBoil_s: 480, cooling: 'tap',
   });
   const twenty = simulate(REFERENCE_EGG, standing, DEFAULT_PARAMS, 480 + 20 * 60);
@@ -431,7 +418,7 @@ test('15a. with the heat off the water falls, and the dose saturates', () => {
   );
 
   const held = simulate(
-    REFERENCE_EGG, setupOf({ startMode: 'cold', timeToBoil_s: 480, cooling: 'tap' }),
+    REFERENCE_EGG, referenceSetup({ startMode: 'cold', timeToBoil_s: 480, cooling: 'tap' }),
     DEFAULT_PARAMS, 480 + 40 * 60,
   );
   assert.ok(
@@ -446,7 +433,7 @@ test('15b. a small pan cannot stand its way to hard', () => {
   // too little heat to finish the yolk once the burner is off; three do.
   const small = solveCookTime(
     REFERENCE_EGG,
-    setupOf({ startMode: 'cold', afterBoil: 'off', timeToBoil_s: 480, waterLitres: 1, cooling: 'ice' }),
+    referenceSetup({ startMode: 'cold', afterBoil: 'off', timeToBoil_s: 480, waterLitres: 1, cooling: 'ice' }),
     DEFAULT_PARAMS, hard,
   );
   assert.equal(small.reachable, false, 'hard should be out of reach in a litre');
@@ -454,7 +441,7 @@ test('15b. a small pan cannot stand its way to hard', () => {
 
   const big = solveCookTime(
     REFERENCE_EGG,
-    setupOf({ startMode: 'cold', afterBoil: 'off', timeToBoil_s: 480, waterLitres: 3, cooling: 'ice' }),
+    referenceSetup({ startMode: 'cold', afterBoil: 'off', timeToBoil_s: 480, waterLitres: 3, cooling: 'ice' }),
     DEFAULT_PARAMS, hard,
   );
   assert.equal(big.reachable, true, 'three litres have heat to spare');
@@ -463,7 +450,7 @@ test('15b. a small pan cannot stand its way to hard', () => {
 
 test('15c. holding the boil is never capped at the hard end', () => {
   const sol = solveCookTime(
-    REFERENCE_EGG, setupOf({}), DEFAULT_PARAMS, donenessFromSlider(1.0),
+    REFERENCE_EGG, referenceSetup({}), DEFAULT_PARAMS, donenessFromSlider(1.0),
   );
   close(sol.hardestLevel, 1, 1e-9, 'a boiling pan can always cook harder');
 });
@@ -475,7 +462,7 @@ test('15d. a pan with too little heat never sets the white at all', () => {
   // any doneness.
   const sol = solveCookTime(
     REFERENCE_EGG,
-    setupOf({ startMode: 'hot', afterBoil: 'off', waterLitres: 1, eggCount: 4 }),
+    referenceSetup({ startMode: 'hot', afterBoil: 'off', waterLitres: 1, eggCount: 4 }),
     DEFAULT_PARAMS, donenessFromSlider(0.41),
   );
   assert.equal(sol.whiteSets, false, 'the white should never set');
@@ -489,7 +476,7 @@ test('15d. a pan with too little heat never sets the white at all', () => {
 
   const generous = solveCookTime(
     REFERENCE_EGG,
-    setupOf({ startMode: 'hot', afterBoil: 'off', waterLitres: 6, eggCount: 2 }),
+    referenceSetup({ startMode: 'hot', afterBoil: 'off', waterLitres: 6, eggCount: 2 }),
     DEFAULT_PARAMS, donenessFromSlider(0.41),
   );
   assert.equal(generous.whiteSets, true, 'six litres and two eggs have heat to spare');
@@ -504,8 +491,8 @@ test('15e. with the heat off the pan cools at a rate set by the water, not the h
 
   // Cold start: once the heat is off, a fast hob and a slow one leave the same
   // pan cooling at the same rate. Ten minutes after the boil, same water.
-  const fast = setupOf({ startMode: 'cold', afterBoil: 'off', timeToBoil_s: 240 });
-  const slow = setupOf({ startMode: 'cold', afterBoil: 'off', timeToBoil_s: 720 });
+  const fast = referenceSetup({ startMode: 'cold', afterBoil: 'off', timeToBoil_s: 240 });
+  const slow = referenceSetup({ startMode: 'cold', afterBoil: 'off', timeToBoil_s: 720 });
   close(
     bathTemperature(REFERENCE_EGG, fast, 240 + 600), bathTemperature(REFERENCE_EGG, slow, 720 + 600),
     1e-9, 'the hob has dropped out of the cooling',
@@ -516,7 +503,7 @@ test('15e. with the heat off the pan cools at a rate set by the water, not the h
   const level = donenessFromSlider(0.41);
   const remembered = (boil_s: number) => solveCookTime(
     REFERENCE_EGG,
-    setupOf({ startMode: 'hot', afterBoil: 'off', timeToBoil_s: boil_s, waterLitres: 6, eggCount: 2 }),
+    referenceSetup({ startMode: 'hot', afterBoil: 'off', timeToBoil_s: boil_s, waterLitres: 6, eggCount: 2 }),
     DEFAULT_PARAMS, level,
   );
   const a = remembered(240);
@@ -551,14 +538,14 @@ test('16a. held at the boil, both doses are monotonic in cook time', () => {
   // so a later pull also starts carryover from a HOTTER egg. Growing plus
   // growing. Nothing here may ever go backwards.
   const cases: CookSetup[] = [
-    setupOf({}),
-    setupOf({ cooling: 'tap' }),
-    setupOf({ cooling: 'counter' }),
-    setupOf({ startMode: 'cold', timeToBoil_s: 480 }),
-    setupOf({ startMode: 'cold', timeToBoil_s: 480, cooling: 'counter' }),
-    setupOf({ startMode: 'cold', timeToBoil_s: 720 }),
-    setupOf({ eggCount: 8, waterLitres: 0.75 }),
-    setupOf({ boiling_C: 83.3 }),
+    referenceSetup({}),
+    referenceSetup({ cooling: 'tap' }),
+    referenceSetup({ cooling: 'counter' }),
+    referenceSetup({ startMode: 'cold', timeToBoil_s: 480 }),
+    referenceSetup({ startMode: 'cold', timeToBoil_s: 480, cooling: 'counter' }),
+    referenceSetup({ startMode: 'cold', timeToBoil_s: 720 }),
+    referenceSetup({ eggCount: 8, waterLitres: 0.75 }),
+    referenceSetup({ boiling_C: 83.3 }),
   ];
   for (const setup of cases) {
     assert.equal(worstDoseStep(setup, (r) => r.yolkDose_min), 0, 'yolk dose must not fall');
@@ -572,7 +559,7 @@ test('16b. with the heat off they are not, which is why standing scans', () => {
   // cook, and a bisection on it lands anywhere. If this test ever goes green in
   // the other direction, solveStanding can go back to bisecting - and not
   // before.
-  const standing = setupOf({
+  const standing = referenceSetup({
     startMode: 'cold', afterBoil: 'off', timeToBoil_s: 480, cooling: 'counter',
   });
   assert.ok(

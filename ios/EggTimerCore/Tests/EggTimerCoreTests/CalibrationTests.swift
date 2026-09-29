@@ -193,7 +193,7 @@ struct InferenceConformance {
         let white = try #require(try step.optionalValue(WhiteReport.self, "white"), "whiteResample has no white answer")
         let target = try c.file.rows("updates")[0].num("logNominalTarget")
         // A particle set the reference constructed rather than one this
-        // implementation could redraw - see `whiteResample` in tools/fixtures.ts.
+        // implementation could redraw - see `whiteResample` in tools/fixtures/calibration.ts.
         var post = try posterior(before)
         try expectClose(effectiveSampleSize(post), before.num("ess"), "whiteResample: starting ess")
         #expect(

@@ -31,7 +31,7 @@ const SURFACES = JSON.parse(readFileSync('copy/surfaces.json', 'utf8')) as Recor
 /** Every catalogue: `copy/<tag>.json`. Not the surfaces, and not a file with
  *  a second dot in its name, such as the 1750 spelling table
  *  (`en-x-1750.spelling.json`), which is a test's data, not a language. The
- *  same rule as `tools/fixtures.ts`. */
+ *  same rule as `tools/fixtures/copy.ts`. */
 const LOCALES = readdirSync('copy')
   .filter((f) => /^[a-zA-Z0-9-]+\.json$/.test(f) && f !== 'surfaces.json')
   .map((f) => f.replace(/\.json$/, ''));

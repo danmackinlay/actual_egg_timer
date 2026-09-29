@@ -27,12 +27,12 @@ import {
   DEFAULT_PARAMS, ModelParams, WHITE_DOSE_TARGET, donenessFromSlider, simulate, solveCookTime,
 } from '../src/core/solve.js';
 import { eggFromMass } from '../src/core/geometry.js';
-import { CookSetup } from '../src/core/protocol.js';
 import { Z_WHITE, Z_YOLK } from '../src/core/constants.js';
 import { CALIBRATION_SEED, PARTICLE_COUNT, calibrationGrid } from '../src/core/policy.js';
 import {
   Calibration, EggRecord, PRIOR_ID, calibrationDoneness, calibrationParams, freshCalibration, replay,
 } from '../src/core/record.js';
+import { appSetup, draw, rng } from '../tools/common.js';
 
 // --------------------------------------------------------------------------
 // shared fixtures
@@ -40,18 +40,10 @@ import {
 
 const EGG = eggFromMass(0.068);
 
-function setupOf(over: Partial<CookSetup> = {}): CookSetup {
-  const base: CookSetup = {
-    startMode: 'hot', eggStart_C: 4, ambient_C: 20, boiling_C: 100,
-    timeToBoil_s: 480, cooling: 'ice', afterBoil: 'hold', waterLitres: 2, eggCount: 2,
-  };
-  return { ...base, ...over };
-}
-
 /** A cook at a slider level, and a surface around it. Deliberately coarser than
  *  the app's grid where the test is about what the filter DOES with a surface. */
 function cookAt(level: number): { grid: DoseGrid; cookTime_s: number; logNominalTarget: number } {
-  const setup = setupOf();
+  const setup = appSetup();
   const t = solveCookTime(EGG, setup, DEFAULT_PARAMS, donenessFromSlider(level)).result.cookTime_s;
   const grid = buildDoseGrid(
     EGG, setup, 1.0,
@@ -90,26 +82,6 @@ function whiteProbs(c: ReturnType<typeof cookAt>, p: Particle): number[] {
   return (['runny', 'tender', 'firm'] as WhiteReport[]).map(
     (w) => answerLikelihood(c.grid, p, c.cookTime_s, c.logNominalTarget, null, w),
   );
-}
-
-/** xorshift, for the simulated cooks: seeded, so every run draws the same eggs. */
-function rng(seed: number): () => number {
-  let s = seed | 0 || 1;
-  return () => {
-    s ^= s << 13; s |= 0;
-    s ^= s >>> 17;
-    s ^= s << 5; s |= 0;
-    return ((s >>> 0) % 16777216) / 16777216;
-  };
-}
-
-function draw(probs: number[], u: number): number {
-  let acc = 0;
-  for (let k = 0; k < probs.length; k++) {
-    acc += probs[k];
-    if (u < acc) return k;
-  }
-  return probs.length - 1;
 }
 
 // --------------------------------------------------------------------------
@@ -272,7 +244,7 @@ test('3. an injected alpha and taste are recovered in no more eggs, to no worse 
   // short, sd about 3.3%; since E5's resample kernel the same, with sd 3.0%.
   const truth: ModelParams = { alpha_m2s: 1.535e-7, tauAirScale: 1 };
   const TASTE = 0.2;
-  const setup = setupOf();
+  const setup = appSetup();
   const d = donenessFromSlider(0.41);
   const target = Math.log10(d.yolkDose_min);
   const optimum = solveCookTime(EGG, setup, truth, { ...d, yolkDose_min: d.yolkDose_min * 10 ** TASTE }).result.cookTime_s;
@@ -316,7 +288,7 @@ test('4. P(answer) is calibrated: simulated cooks answer as often as the model s
   // prior after prior from consecutive seeds: xorshift's first outputs from
   // nearby seeds are correlated, and that sample is not the prior - it showed
   // up here as a miscalibrated first egg before anything had been learned.
-  const setup = setupOf();
+  const setup = appSetup();
   const levels = [0.1, 0.22, 0.3, 0.41, 0.5, 0.62, 0.75];
   const times = levels.map((l) => solveCookTime(EGG, setup, DEFAULT_PARAMS, donenessFromSlider(l)).result.cookTime_s);
   const grid = buildDoseGrid(EGG, setup, 1, DEFAULT_PARAMS.alpha_m2s * 0.55, DEFAULT_PARAMS.alpha_m2s * 1.8, 21,
@@ -377,7 +349,7 @@ test('4. P(answer) is calibrated: simulated cooks answer as often as the model s
 // --------------------------------------------------------------------------
 
 function softRecord(cal: Calibration, level: number, yolk: Feedback | null, white: WhiteReport | null): EggRecord {
-  const setup = setupOf();
+  const setup = appSetup();
   const t = solveCookTime(EGG, setup, calibrationParams(cal), calibrationDoneness(cal, level)).result.cookTime_s;
   return {
     v: 1, uid: null, day: '2026-09-27', app: 'web', appVersion: '0.2.0', prior: PRIOR_ID,
@@ -393,7 +365,7 @@ function softRecord(cal: Calibration, level: number, yolk: Feedback | null, whit
 }
 
 function nextTimes(cal: Calibration): { soft: number; jammy: number; softWhiteBound: boolean } {
-  const setup = setupOf();
+  const setup = appSetup();
   const soft = solveCookTime(EGG, setup, calibrationParams(cal), calibrationDoneness(cal, 0.22));
   const jammy = solveCookTime(EGG, setup, calibrationParams(cal), calibrationDoneness(cal, 0.41));
   return { soft: soft.result.cookTime_s, jammy: jammy.result.cookTime_s, softWhiteBound: !soft.reachable };

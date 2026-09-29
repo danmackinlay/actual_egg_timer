@@ -15,7 +15,7 @@
 import {
   DEFAULT_LANGUAGE, FRESH_LANGUAGE, LANGUAGES, LanguageState, PERIOD_LANGUAGE, effectiveLanguage,
   isModernEnglish, isPeriod, languageAfterFlip, languageAfterPick, readLanguageState, registerOf,
-} from '../src/core/language.js';
+} from '../../src/core/language.js';
 
 type Move = { flip: 'metricToImperial' | 'imperialToMetric' } | { pick: string };
 
@@ -76,6 +76,7 @@ export function languageFixture(): Record<string, unknown> {
   const reads = raws.map((raw) => ({ raw, state: readLanguageState(raw, LANGUAGES) }));
 
   return {
+    about: 'The switch into the English of 1750 and out: tags, transitions and defensive reads. src/core/language.ts.',
     defaultLanguage: DEFAULT_LANGUAGE,
     periodLanguage: PERIOD_LANGUAGE,
     languages: LANGUAGES,
