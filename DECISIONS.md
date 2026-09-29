@@ -199,9 +199,22 @@ The worklist's questions (WORKLIST.md §1, D1-D8), answered the same day:
 Decided by the owner, 29 September 2026:
 
 46. **Push `main`** ("yes push"): the first push since 19 September,
-    `2f341b4..5ff6940`. The storage formats of that build are now live, so a
-    change to one needs a migration or a version bump. Recorded `cbd8d66`.
+    `2f341b4..5ff6940`, tagged `v0.2.0`. Recorded `cbd8d66`.
 47. **Agents in worktrees commit on their branch and do not merge; the
     session that sent them verifies their work and merges it to local
     `main`.** Pushing stays the owner's call. This was already how the work
     ran before the rule said so (FOLLOWUP §0). Rule `5a9b290`.
+48. **Alpha: no back-compat until the app is widely deployed**, and the owner
+    says when that is ("actual widespread deployment is what makes storage
+    formats permanent; I will tell you when that happens"). A public site
+    with no users to speak of is still free to change a storage format:
+    bump its key so an old value is dropped, and write no migration. This
+    corrects the reading of 46 that the push alone made the formats
+    permanent.
+49. **Versions for both apps, with no promise of stability, and tags in
+    git.** `0.3.0-alpha.1`: the owner asked for "something like 0.0.2alpha";
+    it is 0.3.0 because the live site already reports 0.2.0 and versions only
+    go up (TestFlight refuses a lower one too). iOS carries `0.3.0`, since
+    Apple takes integers only. Each push to `origin/main` is a release:
+    bump the version, tag the pushed commit `v<version>` (annotated), push
+    the tag with it. CI checks a tag against `package.json`.

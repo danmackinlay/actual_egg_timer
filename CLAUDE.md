@@ -19,6 +19,16 @@ things stand is `PLAN.md`; which document holds what is its last section.
   unsigned; about a minute, so not in `verify`): run it too before a commit
   that touches `ios/App`, `ios/Shared`, `ios/Widget` or `project.yml`.
 - **One logical change per commit.**
+- **Versions and tags.** One version, `package.json`'s (`0.x.y-alpha.n`
+  while alpha; no stability promised), held in step with iOS's
+  `MARKETING_VERSION` (integers only, so without the `-alpha.n`) and the web's
+  `APP_VERSION` by `test/version.test.ts`; `npm version <v>
+  --no-git-tag-version` sets the first two. A push to `origin/main` is a
+  release and the owner's call: bump the version in its own commit, tag that
+  commit `git tag -a v<version> -m "<one line>"`, and push with
+  `--follow-tags`. Never move or reuse a tag. Before wide deployment
+  (`DECISIONS.md` 48) a storage format may change without a migration: bump
+  its key.
 - **`PLAN.md` changes in the same commit as the work it describes.** Test and
   check counts appear only in its status line; history goes to `LOGBOOK.md`,
   which is a record and is appended to, never rewritten. An owner decision

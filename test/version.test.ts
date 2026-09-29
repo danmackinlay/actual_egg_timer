@@ -23,7 +23,9 @@ function match(file: string, re: RegExp): string {
 test('1. the version is one number: package.json, its lockfile and iOS', () => {
   const lock = JSON.parse(readFileSync('package-lock.json', 'utf8')) as { version: string };
   assert.equal(lock.version, pkg.version, 'package-lock.json');
-  assert.equal(match('ios/project.yml', /MARKETING_VERSION:\s*"([^"]+)"/), pkg.version, 'ios/project.yml');
+  // iOS takes integers only, so it carries the version without its
+  // pre-release tag: 0.3.0-alpha.1 is 0.3.0 on the phone.
+  assert.equal(match('ios/project.yml', /MARKETING_VERSION:\s*"([^"]+)"/), pkg.version.replace(/-.*$/, ''), 'ios/project.yml');
 });
 
 test('2. the iOS team ID is the same for building and for exporting', () => {

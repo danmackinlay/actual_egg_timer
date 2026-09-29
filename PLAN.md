@@ -188,12 +188,16 @@ checked, fixed or deleted. Start the QA pass here.
   carry absolute URLs at that domain, so a domain change is a commit.
   `vercel.json` is checked in and NOT deployed: a second host's settings,
   kept so the site can move (README §10 says why its Node pin differs).
-- **The storage formats are live.** Since the push of 29 September, the web
-  app's `aet.settings.v1`, `aet.cook.v2`, `aet.calibration.v4` and
-  `aet.boil.v1`, and the egg's record at v1 (`RECORD_VERSION`, both apps),
-  are in other people's browsers. Any change to one needs a migration or a
-  version bump. "No back-compat" (`DECISIONS.md` 38) covered only the
-  interim formats that never left the owner's devices.
+- **Alpha: no stability promised, and no back-compat yet** (`DECISIONS.md`
+  48). The site is public but not in wide use, so the storage formats
+  (`aet.settings.v1`, `aet.cook.v2`, `aet.calibration.v4`, `aet.boil.v1`,
+  record v1) may change without a migration; bump the key's version so an
+  old value is dropped rather than misread. Back-compat starts when the
+  owner says the app is widely deployed, and not before.
+- **Versions and tags** (`DECISIONS.md` 49, `CLAUDE.md`): the version is
+  `package.json`'s, now `0.3.0-alpha.1`; iOS carries it without the
+  pre-release tag. Each push the owner makes is a release, tagged
+  `v<version>`.
 - **Every constant has been checked against the primary literature.**
   `Z_WHITE` was corrected; `H_EFF` is known high and open (README §11.2).
 - **The alarm fires at `.timeSensitive`**, also in the foreground, with the

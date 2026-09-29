@@ -19,6 +19,9 @@ jobs:
         with:
           node-version-file: .node-version
       - run: npm ci
+      # A release tag names the version it releases: v<package.json version>.
+      - if: startsWith(github.ref, 'refs/tags/v')
+        run: test "${GITHUB_REF_NAME#v}" = "$(node -p "require('./package.json').version")"
       - run: npm run verify
       - run: brew install xcodegen
       - run: npm run ios:build

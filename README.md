@@ -4,6 +4,9 @@ A boiled-egg timer that computes the time from physics instead of reciting it: t
 heat conduction in a sphere, coupled to Arrhenius denaturation kinetics, with the pan
 ramp and the cooling step treated as part of the cook.
 
+**Alpha** (version `0.3.0-alpha.1`): no stability is promised. Anything may
+change between versions, including what the app remembers of your cooks.
+
 It is a static web app with zero runtime dependencies. All of the physics lives in
 `src/core/`, which is pure numerics — no DOM, no I/O, no clock — so it can be tested
 headlessly and ported to Swift more or less mechanically.
