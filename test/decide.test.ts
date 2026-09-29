@@ -26,7 +26,7 @@ import {
   DECISION_WINDOW_S, Decision, LEAN_COST_PER_S, RUNNY_WHITE_LOSS, carriedSolution, chooseCookTime, decide,
   decidedSolution, decisionApplies, decisionGridSpec, decisionInputs, expectedLoss, hitOdds,
 } from '../src/core/decide.js';
-import { DoseGrid } from '../src/core/doseGrid.js';
+import { DoseGrid, GridSpec, buildRequestedGrid } from '../src/core/doseGrid.js';
 import {
   CookTimePrediction, Feedback, Posterior, UNRELATED, predictCookTime, whiteAnswerProbabilities, whiteProbit,
   yolkAnswerProbabilities, yolkProbit,
@@ -37,11 +37,11 @@ import {
   DEFAULT_PARAMS, Solution, donenessFromSlider, solveCookTime,
 } from '../src/core/solve.js';
 import {
-  CALIBRATION_SEED, GridSpec, PARTICLE_COUNT, calibrationGrid, verdictFor,
+  CALIBRATION_SEED, PARTICLE_COUNT, calibrationGrid, verdictFor,
 } from '../src/core/policy.js';
 import {
-  Calibration, EggRecord, buildRequestedGrid, calibrationDoneness, calibrationParams, copyCalibration,
-  foldRecord, freshCalibration, gridRequestFor, replay,
+  Calibration, EggRecord, calibrationDoneness, calibrationParams, copyCalibration, foldRecord,
+  freshCalibration, gridRequestFor, replay,
 } from '../src/core/record.js';
 import { appSetup, gridFor, knowing, logTarget, recordAt } from '../tools/common.js';
 

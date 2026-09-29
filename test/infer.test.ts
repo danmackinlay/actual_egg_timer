@@ -46,9 +46,14 @@ function cookAt(level: number): { grid: DoseGrid; cookTime_s: number; logNominal
   const setup = appSetup();
   const t = solveCookTime(EGG, setup, DEFAULT_PARAMS, donenessFromSlider(level)).result.cookTime_s;
   const grid = buildDoseGrid(
-    EGG, setup, 1.0,
-    DEFAULT_PARAMS.alpha_m2s * 0.55, DEFAULT_PARAMS.alpha_m2s * 1.8, 9,
-    Math.max(60, t * 0.35), t * 2.4, 12,
+    EGG, setup, 1.0, {
+      alphaMin: DEFAULT_PARAMS.alpha_m2s * 0.55,
+      alphaMax: DEFAULT_PARAMS.alpha_m2s * 1.8,
+      alphaCount: 9,
+      timeMin_s: Math.max(60, t * 0.35),
+      timeMax_s: t * 2.4,
+      timeCount: 12,
+    },
   );
   return { grid: grid, cookTime_s: t, logNominalTarget: Math.log10(donenessFromSlider(level).yolkDose_min) };
 }
@@ -258,7 +263,7 @@ test('3. an injected alpha and taste are recovered in no more eggs, to no worse 
       { ...d, yolkDose_min: d.yolkDose_min * 10 ** taste }).result.cookTime_s;
     errors.push(t - optimum);
     const g = calibrationGrid(alpha, t);
-    const grid = buildDoseGrid(EGG, setup, 1, g.alphaMin, g.alphaMax, g.alphaCount, g.timeMin_s, g.timeMax_s, g.timeCount);
+    const grid = buildDoseGrid(EGG, setup, 1, g);
     const latent = Math.log10(simulate(EGG, setup, truth, t).yolkDose_min) - (target + TASTE);
     const yolk: Feedback = latent < -FEEDBACK_BAND ? -1 : latent > FEEDBACK_BAND ? 1 : 0;
     updatePosterior(post, grid, t, target, yolk, null);
@@ -291,8 +296,16 @@ test('4. P(answer) is calibrated: simulated cooks answer as often as the model s
   const setup = appSetup();
   const levels = [0.1, 0.22, 0.3, 0.41, 0.5, 0.62, 0.75];
   const times = levels.map((l) => solveCookTime(EGG, setup, DEFAULT_PARAMS, donenessFromSlider(l)).result.cookTime_s);
-  const grid = buildDoseGrid(EGG, setup, 1, DEFAULT_PARAMS.alpha_m2s * 0.55, DEFAULT_PARAMS.alpha_m2s * 1.8, 21,
-    200, 900, 32);
+  const grid = buildDoseGrid(
+    EGG, setup, 1, {
+      alphaMin: DEFAULT_PARAMS.alpha_m2s * 0.55,
+      alphaMax: DEFAULT_PARAMS.alpha_m2s * 1.8,
+      alphaCount: 21,
+      timeMin_s: 200,
+      timeMax_s: 900,
+      timeCount: 32,
+    },
+  );
   const random = rng(20260927);
   const BINS = 10;
   const predicted = new Array<number>(BINS).fill(0);

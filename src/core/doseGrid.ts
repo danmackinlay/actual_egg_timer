@@ -37,6 +37,30 @@ export interface DoseGrid {
   peakYolk_C: number[];
 }
 
+/** The dose surface's extent and resolution. */
+export interface GridSpec {
+  alphaMin: number;
+  alphaMax: number;
+  alphaCount: number;
+  timeMin_s: number;
+  timeMax_s: number;
+  timeCount: number;
+}
+
+/** Where the dose surface goes, given its centre and the cook. Production is
+ *  `calibrationGrid` (policy.ts); the fixtures and tests pass a coarser one so
+ *  a replay of several eggs costs a fraction of a second rather than several. */
+export type GridPolicy = (alphaCentre: number, cookTime_s: number) => GridSpec;
+
+/** Everything a dose-surface build needs, as plain data, so it can be posted to
+ *  a Web Worker and built there by `buildRequestedGrid`. */
+export interface GridRequest {
+  egg: Egg;
+  setup: CookSetup;
+  tauAirScale: number;
+  spec: GridSpec;
+}
+
 const LOG_FLOOR = -12.0;
 
 function safeLog10(v: number): number {
@@ -46,11 +70,8 @@ function safeLog10(v: number): number {
 /** Build the surface. Cost is alphaCount * timeCount simulations, so ~1.5 s at
  *  the default 21 x 32. Rebuild only when the egg, setup or tauAirScale change,
  *  never on every keystroke. */
-export function buildDoseGrid(
-  egg: Egg, setup: CookSetup, tauAirScale: number,
-  alphaMin: number, alphaMax: number, alphaCount: number,
-  timeMin_s: number, timeMax_s: number, timeCount: number,
-): DoseGrid {
+export function buildDoseGrid(egg: Egg, setup: CookSetup, tauAirScale: number, spec: GridSpec): DoseGrid {
+  const { alphaMin, alphaMax, alphaCount, timeMin_s, timeMax_s, timeCount } = spec;
   const logAlphaMin = Math.log(alphaMin);
   const logAlphaStep = (Math.log(alphaMax) - logAlphaMin) / (alphaCount - 1);
   const timeStep = (timeMax_s - timeMin_s) / (timeCount - 1);
@@ -73,6 +94,10 @@ export function buildDoseGrid(
     timeMin_s: timeMin_s, timeStep_s: timeStep, timeCount: timeCount,
     logYolk: logYolk, logWhite: logWhite, peakYolk_C: peakYolk,
   };
+}
+
+export function buildRequestedGrid(q: GridRequest): DoseGrid {
+  return buildDoseGrid(q.egg, q.setup, q.tauAirScale, q.spec);
 }
 
 function interpolate(

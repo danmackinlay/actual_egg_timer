@@ -8,7 +8,8 @@
 import type { Egg } from '../core/geometry.js';
 import type { CookSetup } from '../core/protocol.js';
 import type { DoseGrid } from '../core/doseGrid.js';
-import { Calibration, GridRequest, buildRequestedGrid } from '../core/record.js';
+import { GridRequest, buildRequestedGrid } from '../core/doseGrid.js';
+import { Calibration } from '../core/record.js';
 import { DecisionInputs, decisionGridRequest } from '../core/decide.js';
 import { OddsProfile, oddsProfile } from '../core/reach.js';
 

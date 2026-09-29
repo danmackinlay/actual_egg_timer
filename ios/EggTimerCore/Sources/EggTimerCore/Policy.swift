@@ -359,16 +359,6 @@ public func textureNoteKeys(_ t: Texture) -> TextureNote {
 public let particleCount = 1000
 public let calibrationSeed: Int32 = 0x5eed_1e
 
-/// The dose surface's extent and resolution.
-public struct GridSpec: Sendable {
-    public let alphaMin: Double
-    public let alphaMax: Double
-    public let alphaCount: Int
-    public let timeMinS: Double
-    public let timeMaxS: Double
-    public let timeCount: Int
-}
-
 /// Where to build the dose surface for one logged outcome.
 ///
 /// This is the single most consequential thing in this file. The grid is handed

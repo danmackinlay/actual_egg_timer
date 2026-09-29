@@ -663,7 +663,10 @@ formatTimeOfDay(locale, secondsOfDay, withSeconds): string                    //
 formattingLocale(uiLanguage, region, hourCycle): string                       // 'en-GB', 'en-AU-u-hc-h23'
 
 // doseGrid.ts / infer.ts  (calibration; see Phase C)
-buildDoseGrid(...) / lookupLogYolkDose / lookupLogWhiteDose / cookTimeForLogYolkDose
+interface GridSpec { alphaMin; alphaMax; alphaCount; timeMin_s; timeMax_s; timeCount }
+type GridPolicy = (alphaCentre, cookTime_s) => GridSpec   // production: policy's calibrationGrid
+buildDoseGrid(egg, setup, tauAirScale, spec) / buildRequestedGrid({ egg, setup, tauAirScale, spec })
+lookupLogYolkDose / lookupLogWhiteDose / cookTimeForLogYolkDose
 type Feedback = -1 | 0 | 1                 // the YOLK answer
 type WhiteReport = 'runny' | 'tender' | 'firm'
 createPrior(count, seed)                   // six numbers a particle (E2, E3)
@@ -719,7 +722,7 @@ interface EggRecord { v: 1; ... }          // one egg; RECORD_VERSION, PRIOR_ID
 parseRecord(raw): EggRecord | null / parseLog(raw): EggRecord[] | null
 interface Calibration { posterior; eggsLogged }
 freshCalibration(count, seed) / copyCalibration(c) / calibrationParams(c)
-gridRequestFor(c, record, gridPolicy) / buildRequestedGrid(request)
+gridRequestFor(c, record, gridPolicy): GridRequest   // built by doseGrid's buildRequestedGrid
 foldRecord(c, record, grid) / recordCookTime_s(record)   // the pull if measured
 calibrationDoneness(c, level)              // the white target moved by E3
 replay(start, records, gridPolicy = calibrationGrid): Calibration   // never moves start

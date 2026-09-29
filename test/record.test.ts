@@ -20,11 +20,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
+import { GridSpec, buildRequestedGrid } from '../src/core/doseGrid.js';
 import {
-  Calibration, EggRecord, PRIOR_ID, buildRequestedGrid, copyCalibration, foldRecord,
-  freshCalibration, gridRequestFor, parseLog, parseRecord, recordCookTime_s, recordMass_g, replay,
+  Calibration, EggRecord, PRIOR_ID, copyCalibration, foldRecord, freshCalibration, gridRequestFor,
+  parseLog, parseRecord, recordCookTime_s, recordMass_g, replay,
 } from '../src/core/record.js';
-import { GridSpec, calibrationGrid, PARTICLE_COUNT, CALIBRATION_SEED } from '../src/core/policy.js';
+import { calibrationGrid, PARTICLE_COUNT, CALIBRATION_SEED } from '../src/core/policy.js';
 import { createPrior, updatePosterior } from '../src/core/infer.js';
 import { eggFromMass } from '../src/core/geometry.js';
 import { DEFAULT_PARAMS, donenessFromSlider, solveCookTime } from '../src/core/solve.js';

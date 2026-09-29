@@ -72,7 +72,9 @@ func posteriorsByName(_ list: [[String: Any]]) throws -> [String: Posterior] {
 func doseGrid(_ g: [String: Any], egg: Egg, setup: CookSetup) throws -> DoseGrid {
     try buildDoseGrid(
         egg: egg, setup: setup, tauAirScale: g.num("tauAirScale"),
-        alphaMin: g.num("alphaMin"), alphaMax: g.num("alphaMax"), alphaCount: Int(g.num("alphaCount")),
-        timeMinS: g.num("timeMin_s"), timeMaxS: g.num("timeMax_s"), timeCount: Int(g.num("timeCount"))
+        spec: GridSpec(
+            alphaMin: g.num("alphaMin"), alphaMax: g.num("alphaMax"), alphaCount: Int(g.num("alphaCount")),
+            timeMinS: g.num("timeMin_s"), timeMaxS: g.num("timeMax_s"), timeCount: Int(g.num("timeCount"))
+        )
     )
 }

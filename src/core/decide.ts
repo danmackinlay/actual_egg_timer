@@ -80,12 +80,11 @@ import { CookSetup } from './protocol.js';
 import {
   ModelParams, Solution, YOLK_DOSE_HARD, simulate, solveCookTime,
 } from './solve.js';
-import { DoseGrid } from './doseGrid.js';
+import { DoseGrid, GridRequest, GridSpec } from './doseGrid.js';
 import {
   Posterior, UNRELATED, whiteProbit, yolkProbit,
 } from './infer.js';
-import { GridSpec } from './policy.js';
-import { Calibration, GridRequest, calibrationDoneness, calibrationParams } from './record.js';
+import { Calibration, calibrationDoneness, calibrationParams } from './record.js';
 
 /** How much worse a runny white is than a yolk one answer off (owner, 26
  *  September). */

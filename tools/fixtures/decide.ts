@@ -4,11 +4,11 @@
 
 import { ALPHA_DEFAULT, ALPHA_REL_SD } from '../../src/core/constants.js';
 import { eggFromMass } from '../../src/core/geometry.js';
-import { DoseGrid } from '../../src/core/doseGrid.js';
+import { DoseGrid, GridSpec, buildRequestedGrid } from '../../src/core/doseGrid.js';
 import { Posterior, createPrior, updatePosterior } from '../../src/core/infer.js';
 import { CookSetup } from '../../src/core/protocol.js';
 import {
-  Calibration, buildRequestedGrid, calibrationDoneness, calibrationParams,
+  Calibration, calibrationDoneness, calibrationParams,
 } from '../../src/core/record.js';
 import {
   DECISION_ALPHA_COUNT, DECISION_ALPHA_HI, DECISION_ALPHA_LO, DECISION_TIME_STEP_S, DECISION_WINDOW_S,
@@ -16,7 +16,6 @@ import {
   decidedSolution, decisionApplies, decisionGridSpec, expectedLoss, hitOdds, oddsInTenths,
 } from '../../src/core/decide.js';
 import { solveCookTime, DEFAULT_PARAMS, Solution } from '../../src/core/solve.js';
-import { GridSpec } from '../../src/core/policy.js';
 
 import { particleRows } from './shared.js';
 import { logTarget, referenceSetup } from '../common.js';

@@ -24,6 +24,7 @@ import {
   CookResult, DonenessAnchor, DONENESS_ANCHORS, ModelParams, Solution, simulate,
 } from './solve.js';
 import { CookSetup, Cooling } from './protocol.js';
+import { GridSpec } from './doseGrid.js';
 import { ALPHA_REL_SD, T_COLD_TAP_C, T_ICE_BATH_C, T_ROOM_C } from './constants.js';
 
 /* ------------------------------------------------------------------ bounds */
@@ -353,16 +354,6 @@ export function textureNoteKeys(t: Texture): TextureNote {
  *  or two identical kitchens learn two different things from the same egg. */
 export const PARTICLE_COUNT = 1000;
 export const CALIBRATION_SEED = 0x5eed1e;
-
-/** The dose surface's extent and resolution. */
-export interface GridSpec {
-  alphaMin: number;
-  alphaMax: number;
-  alphaCount: number;
-  timeMin_s: number;
-  timeMax_s: number;
-  timeCount: number;
-}
 
 /** The calibration grid's alpha bounds, as factors of the posterior's centre. */
 export const CALIBRATION_ALPHA_LOW = 0.55;

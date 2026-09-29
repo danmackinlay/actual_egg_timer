@@ -10,12 +10,12 @@
 
 import { ALPHA_DEFAULT, ALPHA_REL_SD } from '../src/core/constants.js';
 import { decisionGridRequest, decisionInputs } from '../src/core/decide.js';
-import { DoseGrid } from '../src/core/doseGrid.js';
+import { DoseGrid, buildRequestedGrid } from '../src/core/doseGrid.js';
 import { Egg } from '../src/core/geometry.js';
 import { Feedback, WhiteReport, createPrior } from '../src/core/infer.js';
 import { CALIBRATION_SEED } from '../src/core/policy.js';
 import { CookSetup } from '../src/core/protocol.js';
-import { Calibration, EggRecord, PRIOR_ID, buildRequestedGrid } from '../src/core/record.js';
+import { Calibration, EggRecord, PRIOR_ID } from '../src/core/record.js';
 import { donenessFromSlider } from '../src/core/solve.js';
 
 /* ------------------------------------------------------------------ pots */

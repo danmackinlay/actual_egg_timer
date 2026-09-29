@@ -51,14 +51,34 @@ private func safeLog10(_ v: Double) -> Double {
     v <= 1e-12 ? logFloor : log10(v)
 }
 
+/// The dose surface's extent and resolution.
+public struct GridSpec: Sendable {
+    public let alphaMin: Double
+    public let alphaMax: Double
+    public let alphaCount: Int
+    public let timeMinS: Double
+    public let timeMaxS: Double
+    public let timeCount: Int
+}
+
+/// Where the dose surface goes, given its centre and the cook. Production is
+/// `calibrationGrid` (Policy.swift); fixtures and tests pass a coarser one.
+public typealias GridPolicy = @Sendable (Double, Double) -> GridSpec
+
+/// Everything a dose-surface build needs.
+public struct GridRequest: Sendable {
+    public let egg: Egg
+    public let setup: CookSetup
+    public let tauAirScale: Double
+    public let spec: GridSpec
+}
+
 /// Build the surface. Cost is alphaCount * timeCount simulations, so ~1.5 s at
-/// the default 21 x 36. Rebuild only when the egg, setup or tauAirScale change,
+/// the default 21 x 32. Rebuild only when the egg, setup or tauAirScale change,
 /// never on every keystroke.
-public func buildDoseGrid(
-    egg: Egg, setup: CookSetup, tauAirScale: Double,
-    alphaMin: Double, alphaMax: Double, alphaCount: Int,
-    timeMinS: Double, timeMaxS: Double, timeCount: Int
-) -> DoseGrid {
+public func buildDoseGrid(egg: Egg, setup: CookSetup, tauAirScale: Double, spec: GridSpec) -> DoseGrid {
+    let (alphaMin, alphaMax, alphaCount) = (spec.alphaMin, spec.alphaMax, spec.alphaCount)
+    let (timeMinS, timeMaxS, timeCount) = (spec.timeMinS, spec.timeMaxS, spec.timeCount)
     let logAlphaMin = log(alphaMin)
     let logAlphaStep = (log(alphaMax) - logAlphaMin) / Double(alphaCount - 1)
     let timeStep = (timeMaxS - timeMinS) / Double(timeCount - 1)
@@ -85,6 +105,10 @@ public func buildDoseGrid(
         timeMinS: timeMinS, timeStepS: timeStep, timeCount: timeCount,
         logYolk: logYolk, logWhite: logWhite, peakYolkC: peakYolk
     )
+}
+
+public func buildRequestedGrid(_ q: GridRequest) -> DoseGrid {
+    buildDoseGrid(egg: q.egg, setup: q.setup, tauAirScale: q.tauAirScale, spec: q.spec)
 }
 
 private func interpolate(

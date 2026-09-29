@@ -22,16 +22,15 @@
 import { Egg, SizeTable } from '../core/geometry.js';
 import { CookSetup } from '../core/protocol.js';
 import { Doneness, ModelParams } from '../core/solve.js';
-import { DoseGrid } from '../core/doseGrid.js';
+import { DoseGrid, GridRequest } from '../core/doseGrid.js';
 import { Feedback, Particle, WhiteReport } from '../core/infer.js';
 import { DecisionInputs } from '../core/decide.js';
 import { OddsProfile } from '../core/reach.js';
 import { CALIBRATION_SEED, PARTICLE_COUNT, calibrationGrid } from '../core/policy.js';
 import {
-  Calibration, EggFrom, EggRecord, GridRequest, MassFrom, PRIOR_ID, ProbeReading, RECORD_VERSION,
-  calibrationDoneness as donenessOf, calibrationParams as paramsOf,
-  copyCalibration, foldRecord, freshCalibration as freshFrom, gridRequestFor, parseLog,
-  recordMass_g, recordTeaches,
+  Calibration, EggFrom, EggRecord, MassFrom, PRIOR_ID, ProbeReading, RECORD_VERSION,
+  calibrationDoneness as donenessOf, calibrationParams as paramsOf, copyCalibration, foldRecord,
+  freshCalibration as freshFrom, gridRequestFor, parseLog, recordMass_g, recordTeaches,
 } from '../core/record.js';
 import { UnitSystem } from '../core/units.js';
 import { registerOf } from '../core/language.js';

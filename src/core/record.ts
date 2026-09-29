@@ -34,12 +34,12 @@
 import { Egg, SizeTable, eggFromMass } from './geometry.js';
 import { CookSetup, Cooling, HeatAfterBoil, StartMode } from './protocol.js';
 import { DEFAULT_PARAMS, Doneness, ModelParams, WHITE_DOSE_TARGET, donenessFromSlider } from './solve.js';
-import { DoseGrid, buildDoseGrid } from './doseGrid.js';
+import { DoseGrid, GridPolicy, GridRequest, buildRequestedGrid } from './doseGrid.js';
 import {
   Feedback, Particle, Posterior, WhiteReport, createPrior, posteriorMeanWhiteOffset,
   posteriorParams, updatePosterior,
 } from './infer.js';
-import { GridSpec, calibrationGrid } from './policy.js';
+import { calibrationGrid } from './policy.js';
 import { T_COLD_TAP_C, T_ICE_BATH_C } from './constants.js';
 
 /** The schema version. A loader refuses any other: a record from a later
@@ -472,20 +472,6 @@ function recordLogTarget(r: EggRecord): number {
   return Math.log10(donenessFromSlider(r.level).yolkDose_min);
 }
 
-/** Where the dose surface goes, given its centre and the cook. Production is
- *  `calibrationGrid`; the fixtures and tests pass a coarser one so a replay of
- *  several eggs costs a fraction of a second rather than several. */
-type GridPolicy = (alphaCentre: number, cookTime_s: number) => GridSpec;
-
-/** Everything a dose-surface build needs, as plain data, so it can be posted to
- *  a Web Worker and built there by `buildRequestedGrid`. */
-export interface GridRequest {
-  egg: Egg;
-  setup: CookSetup;
-  tauAirScale: number;
-  spec: GridSpec;
-}
-
 /** The surface this record is scored on, centred where the posterior stands
  *  NOW - before the egg is folded. */
 export function gridRequestFor(c: Calibration, r: EggRecord, grid: GridPolicy): GridRequest {
@@ -496,14 +482,6 @@ export function gridRequestFor(c: Calibration, r: EggRecord, grid: GridPolicy): 
     tauAirScale: params.tauAirScale,
     spec: grid(params.alpha_m2s, recordCookTime_s(r)),
   };
-}
-
-export function buildRequestedGrid(q: GridRequest): DoseGrid {
-  return buildDoseGrid(
-    q.egg, q.setup, q.tauAirScale,
-    q.spec.alphaMin, q.spec.alphaMax, q.spec.alphaCount,
-    q.spec.timeMin_s, q.spec.timeMax_s, q.spec.timeCount,
-  );
 }
 
 /**

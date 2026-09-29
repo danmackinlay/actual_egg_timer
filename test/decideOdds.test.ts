@@ -38,7 +38,7 @@ test('"7/10 eggs hit the mark" is calibrated: simulated cooks hit it as often as
   // fourth the odds UNDER-state the hits by 4-6 points (60% -> 66% at egg six).
   // This smaller run has the same shape, and the bounds below allow it; the
   // gap is written up in PLAN.md (E5) rather than hidden in a tolerance.
-  const grid = buildDoseGrid(EGG, SETUP, 1, ALPHA_DEFAULT * 0.55, ALPHA_DEFAULT * 1.8, 17, 200, 900, 71);
+  const grid = buildDoseGrid(EGG, SETUP, 1, { alphaMin: ALPHA_DEFAULT * 0.55, alphaMax: ALPHA_DEFAULT * 1.8, alphaCount: 17, timeMin_s: 200, timeMax_s: 900, timeCount: 71 });
   const levels = [0.22, 0.41, 0.62];
   const random = rng(20260928);
   const truths = createPrior(150, 4242).particles;

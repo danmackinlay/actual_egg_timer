@@ -436,19 +436,7 @@ func recordLogTarget(_ r: EggRecord) -> Double {
     log10(donenessFromSlider(r.level).yolkDoseMin)
 }
 
-/// Where the dose surface goes, given its centre and the cook. Production is
-/// `calibrationGrid`; fixtures and tests pass a coarser one.
-public typealias GridPolicy = @Sendable (Double, Double) -> GridSpec
-
 public let productionGrid: GridPolicy = { calibrationGrid(alphaCentre: $0, cookTimeS: $1) }
-
-/// Everything a dose-surface build needs.
-public struct GridRequest: Sendable {
-    public let egg: Egg
-    public let setup: CookSetup
-    public let tauAirScale: Double
-    public let spec: GridSpec
-}
 
 /// The surface this record is scored on, centred where the posterior stands
 /// before the egg is folded.
@@ -459,14 +447,6 @@ public func gridRequestFor(
     return GridRequest(
         egg: recordEggOf(r), setup: recordSetupOf(r), tauAirScale: params.tauAirScale,
         spec: grid(params.alphaM2s, recordCookTimeS(r))
-    )
-}
-
-public func buildRequestedGrid(_ q: GridRequest) -> DoseGrid {
-    buildDoseGrid(
-        egg: q.egg, setup: q.setup, tauAirScale: q.tauAirScale,
-        alphaMin: q.spec.alphaMin, alphaMax: q.spec.alphaMax, alphaCount: q.spec.alphaCount,
-        timeMinS: q.spec.timeMinS, timeMaxS: q.spec.timeMaxS, timeCount: q.spec.timeCount
     )
 }
 

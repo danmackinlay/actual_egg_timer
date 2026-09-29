@@ -5,13 +5,14 @@
 
 import { eggFromMass } from '../../src/core/geometry.js';
 import { CookSetup } from '../../src/core/protocol.js';
+import { GridSpec, buildRequestedGrid } from '../../src/core/doseGrid.js';
 import {
-  Calibration, EggRecord, PRIOR_ID, RECORD_VERSION, buildRequestedGrid, calibrationDoneness, copyCalibration,
-  foldRecord, freshCalibration, gridRequestFor, parseRecord, recordCookTime_s, recordMass_g, recordProbe_C,
-  recordTeaches, replay,
+  Calibration, EggRecord, PRIOR_ID, RECORD_VERSION, calibrationDoneness, copyCalibration,
+  foldRecord, freshCalibration, gridRequestFor, parseRecord, recordCookTime_s, recordMass_g,
+  recordProbe_C, recordTeaches, replay,
 } from '../../src/core/record.js';
 import { simulate, solveCookTime, donenessFromSlider, DEFAULT_PARAMS } from '../../src/core/solve.js';
-import { COOLING_SECONDS, GridSpec, coolingSecondsFor, calibrationGrid } from '../../src/core/policy.js';
+import { COOLING_SECONDS, coolingSecondsFor, calibrationGrid } from '../../src/core/policy.js';
 
 import { particleRows } from './shared.js';
 import { referenceSetup } from '../common.js';

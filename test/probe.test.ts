@@ -22,7 +22,7 @@ import {
   answerLikelihood, createPrior, posteriorAlphaRelSd, posteriorParams, probeLikelihood,
   probeShortfallDensity, updatePosterior,
 } from '../src/core/infer.js';
-import { buildDoseGrid, lookupPeakYolk_C } from '../src/core/doseGrid.js';
+import { buildDoseGrid, buildRequestedGrid, lookupPeakYolk_C } from '../src/core/doseGrid.js';
 import {
   CookResult, DEFAULT_PARAMS, donenessFromSlider, simulate, solveCookTime,
 } from '../src/core/solve.js';
@@ -33,8 +33,8 @@ import {
   coolingSecondsFor, plausibleProbeRange_C, probeMomentFor,
 } from '../src/core/policy.js';
 import {
-  EggRecord, PRIOR_ID, buildRequestedGrid, calibrationDoneness, calibrationParams, copyCalibration,
-  foldRecord, freshCalibration, gridRequestFor, parseRecord, recordProbe_C, recordTeaches, replay,
+  EggRecord, PRIOR_ID, calibrationDoneness, calibrationParams, copyCalibration, foldRecord,
+  freshCalibration, gridRequestFor, parseRecord, recordProbe_C, recordTeaches, replay,
 } from '../src/core/record.js';
 import {
   advance, beginCooling, recordBoil, restoreMachine, startCold, startHot, PULL_GRACE_SECONDS,
@@ -119,8 +119,14 @@ test('1b. the skew is COLD: a reading under the peak costs less than one the sam
 
 test('1c. no reading can kill a particle, and none makes a NaN', () => {
   const grid = buildDoseGrid(
-    EGG, appSetup(), 1.0, DEFAULT_PARAMS.alpha_m2s * 0.55, DEFAULT_PARAMS.alpha_m2s * 1.8, 7,
-    COOK_S * 0.35, COOK_S * 2.4, 9,
+    EGG, appSetup(), 1.0, {
+      alphaMin: DEFAULT_PARAMS.alpha_m2s * 0.55,
+      alphaMax: DEFAULT_PARAMS.alpha_m2s * 1.8,
+      alphaCount: 7,
+      timeMin_s: COOK_S * 0.35,
+      timeMax_s: COOK_S * 2.4,
+      timeCount: 9,
+    },
   );
   const p = {
     alpha_m2s: DEFAULT_PARAMS.alpha_m2s, logDoseOffset: 0, tauAirScale: 1, noise: 0.2,
@@ -135,10 +141,7 @@ test('1c. no reading can kill a particle, and none makes a NaN', () => {
 
 test('1d. the grid carries the peak, and interpolates it to within a tenth of a degree', () => {
   const spec = calibrationGrid(DEFAULT_PARAMS.alpha_m2s, COOK_S);
-  const grid = buildDoseGrid(
-    EGG, appSetup(), 1.0, spec.alphaMin, spec.alphaMax, spec.alphaCount,
-    spec.timeMin_s, spec.timeMax_s, spec.timeCount,
-  );
+  const grid = buildDoseGrid(EGG, appSetup(), 1.0, spec);
   assert.equal(grid.peakYolk_C.length, spec.alphaCount * spec.timeCount);
   for (const factor of [0.7, 0.9, 1.0, 1.13, 1.4]) {
     const alpha = DEFAULT_PARAMS.alpha_m2s * factor;
@@ -222,8 +225,14 @@ test('2b. a hot reading says the egg heats fast, so the next cook is shorter; a 
 
 test('3a. the reading multiplies into the answers: one fold, whatever arrived first', () => {
   const grid = buildDoseGrid(
-    EGG, appSetup(), 1.0, DEFAULT_PARAMS.alpha_m2s * 0.55, DEFAULT_PARAMS.alpha_m2s * 1.8, 7,
-    COOK_S * 0.35, COOK_S * 2.4, 9,
+    EGG, appSetup(), 1.0, {
+      alphaMin: DEFAULT_PARAMS.alpha_m2s * 0.55,
+      alphaMax: DEFAULT_PARAMS.alpha_m2s * 1.8,
+      alphaCount: 7,
+      timeMin_s: COOK_S * 0.35,
+      timeMax_s: COOK_S * 2.4,
+      timeCount: 9,
+    },
   );
   const target = Math.log10(donenessFromSlider(JAMMY).yolkDose_min);
   const prior = createPrior(40, 7);

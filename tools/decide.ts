@@ -16,7 +16,7 @@ import {
   Decision, DecisionInputs, chooseCookTime, decide, decideAt, decisionGridRequest,
   decisionGridSpec, decisionInputs, oddsInTenths,
 } from '../src/core/decide.js';
-import { DoseGrid, buildDoseGrid, cookTimeForLogYolkDose } from '../src/core/doseGrid.js';
+import { DoseGrid, buildDoseGrid, buildRequestedGrid, cookTimeForLogYolkDose } from '../src/core/doseGrid.js';
 import {
   Feedback, FEEDBACK_BAND, Particle, WhiteReport, answerLikelihood, createPrior,
   posteriorMeanOffset, posteriorParams, predictCookTime, updatePosterior,
@@ -34,8 +34,7 @@ import {
   CALIBRATION_ALPHA_HIGH, CALIBRATION_ALPHA_LOW, CALIBRATION_SEED, PARTICLE_COUNT,
 } from '../src/core/policy.js';
 import {
-  Calibration, EggRecord, buildRequestedGrid, calibrationDoneness, calibrationParams, freshCalibration,
-  replay,
+  Calibration, EggRecord, calibrationDoneness, calibrationParams, freshCalibration, replay,
 } from '../src/core/record.js';
 import { appSetup, draw, logTarget, recordAt, rng } from './common.js';
 
@@ -110,10 +109,9 @@ if (run('accuracy')) {
       const inputs = decisionInputs(c, pot.egg, pot.setup);
       const spec = decisionGridSpec(inputs);
       const grid = buildRequestedGrid(decisionGridRequest(inputs));
-      const fine = buildDoseGrid(
-        pot.egg, pot.setup, inputs.params.tauAirScale, spec.alphaMin, spec.alphaMax, 29,
-        spec.timeMin_s, spec.timeMax_s, Math.round((spec.timeMax_s - spec.timeMin_s) / 4) + 1,
-      );
+      const fine = buildDoseGrid(pot.egg, pot.setup, inputs.params.tauAirScale, {
+        ...spec, alphaCount: 29, timeCount: Math.round((spec.timeMax_s - spec.timeMin_s) / 4) + 1,
+      });
       for (const level of [0.1, 0.22, 0.41, 0.62, 0.85, 1]) {
         const m = meanSolve(c, pot.egg, pot.setup, level);
         const a = decide(c, grid, m.sol, logTarget(m.level));
@@ -160,7 +158,7 @@ function simulate(
   cooks: number, eggs: number, particles: number, seed: number,
   each: (c: Calibration, d: Decision, hit: boolean, egg: number, grid: DoseGrid, target: number) => void,
 ): void {
-  const grid = buildDoseGrid(REF_EGG, SETUP, 1, ALPHA_DEFAULT * CALIBRATION_ALPHA_LOW, ALPHA_DEFAULT * CALIBRATION_ALPHA_HIGH, 17, 200, 900, 71);
+  const grid = buildDoseGrid(REF_EGG, SETUP, 1, { alphaMin: ALPHA_DEFAULT * CALIBRATION_ALPHA_LOW, alphaMax: ALPHA_DEFAULT * CALIBRATION_ALPHA_HIGH, alphaCount: 17, timeMin_s: 200, timeMax_s: 900, timeCount: 71 });
   const random = rng(seed);
   const truths = createPrior(cooks, seed ^ 0x2545f49).particles;
   const levels = [0.22, 0.41, 0.62];
@@ -356,7 +354,7 @@ if (run('outcome')) {
   // that egg. A second egg at the chosen time +-30 s, not folded, checks the
   // lean where it has something to say: at the chosen time it is nearly
   // always balanced.
-  const grid = buildDoseGrid(REF_EGG, SETUP, 1, ALPHA_DEFAULT * CALIBRATION_ALPHA_LOW, ALPHA_DEFAULT * CALIBRATION_ALPHA_HIGH, 17, 200, 900, 71);
+  const grid = buildDoseGrid(REF_EGG, SETUP, 1, { alphaMin: ALPHA_DEFAULT * CALIBRATION_ALPHA_LOW, alphaMax: ALPHA_DEFAULT * CALIBRATION_ALPHA_HIGH, alphaCount: 17, timeMin_s: 200, timeMax_s: 900, timeCount: 71 });
   const random = rng(20260927);
   const normal = (): number => Math.sqrt(-2 * Math.log(Math.max(random(), 1e-12))) * Math.cos(2 * Math.PI * random());
   const eggOf = (truth: Particle, t: number, target: number): { level: number; yolk: number } => {
