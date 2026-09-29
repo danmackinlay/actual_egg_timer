@@ -84,9 +84,9 @@ export function restoreTicket(raw: unknown): Ticket | null {
   }
   if (st['startMode'] !== 'cold' && st['startMode'] !== 'hot') return null;
   if (st['cooling'] !== 'ice' && st['cooling'] !== 'tap' && st['cooling'] !== 'counter') return null;
-  if (st['afterBoil'] !== undefined && st['afterBoil'] !== 'hold' && st['afterBoil'] !== 'off') {
-    return null;
-  }
+  // Required too: every `aet.cook.v2` ticket this build writes carries it
+  // (`buildSetup`), and a missing one would be read as the heat held.
+  if (st['afterBoil'] !== 'hold' && st['afterBoil'] !== 'off') return null;
 
   // Every field is required: the ticket is written whole by this build, and
   // one that is not whole is refused, not patched from the controls.

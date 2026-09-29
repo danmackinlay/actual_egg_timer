@@ -92,10 +92,10 @@ test('a ticket that is not one of this build\'s is refused, not patched', () => 
   assert.equal(restoreTicket('ticket'), null);
 });
 
-test('a setup without a heat after the boil is read as it was written', () => {
+test('a setup without a heat after the boil is refused, not read as the heat held', () => {
   const k = stored(aTicket()) as { setup: Record<string, unknown> };
   delete k.setup['afterBoil'];
-  assert.equal(restoreTicket(k)?.setup.afterBoil, undefined);
+  assert.equal(restoreTicket(k), null);
 });
 
 test('withTimeToBoil moves the time to boil and nothing else, on a copy', () => {
