@@ -547,7 +547,7 @@
       "args": {
         "time": "11 minutes 17 seconds"
       },
-      "text": "Upon the fire. 11 minutes 17 seconds remaining in all"
+      "text": "11 minutes 17 seconds remaining in all"
     },
     {
       "locale": "en-x-1750",
@@ -555,7 +555,7 @@
       "args": {
         "time": "3 minutes 57 seconds"
       },
-      "text": "Cooking. 3 minutes 57 seconds remaining"
+      "text": "3 minutes 57 seconds remaining"
     },
     {
       "locale": "en-x-1750",
@@ -563,7 +563,7 @@
       "args": {
         "time": "3 minutes 0 seconds"
       },
-      "text": "Cooling. 3 minutes 0 seconds remaining"
+      "text": "3 minutes 0 seconds remaining"
     },
     {
       "locale": "en-x-1750",
@@ -1899,7 +1899,7 @@
       "args": {
         "time": "11 minutes 17 seconds"
       },
-      "text": "Heating. 11 minutes 17 seconds left in total"
+      "text": "11 minutes 17 seconds left in total"
     },
     {
       "locale": "en",
@@ -1907,7 +1907,7 @@
       "args": {
         "time": "3 minutes 57 seconds"
       },
-      "text": "Cooking. 3 minutes 57 seconds left"
+      "text": "3 minutes 57 seconds left"
     },
     {
       "locale": "en",
@@ -1915,7 +1915,7 @@
       "args": {
         "time": "3 minutes 0 seconds"
       },
-      "text": "Cooling. 3 minutes 0 seconds left"
+      "text": "3 minutes 0 seconds left"
     },
     {
       "locale": "en",

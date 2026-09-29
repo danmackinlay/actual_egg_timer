@@ -14,8 +14,8 @@ tests in 31 suites. **Pushed on 29 September** at `5ff6940`, the owner's
 call: Netlify serves it at actualeggtimer.netlify.app, and the first run of
 `.github/workflows/verify.yml` passed. The iOS app runs from Xcode on the owner's
 phone and has cooked real eggs; no TestFlight build is recorded
-(`ios/RELEASING.md`). The owner is reviewing the `tidy` copy draft on a
-phone.
+(`ios/RELEASING.md`). The owner is reviewing the `tidy` and `tidy2` copy
+drafts on a phone.
 
 These counts are the only ones in the documents. If you want a number, run
 `npm test`.
@@ -40,6 +40,11 @@ The one queue. Nothing else in the documents waits on the owner.
    feedback wording, which went in on the owner's behalf, and the probe's
    "highest" (a physics correction of the draft's "lowest", which stands
    unless the owner objects; `INFERENCE.md` §5).
+   With it, **`tidy2`**: FOLLOWUP §5 and §4.2, 15 keys the first tidy left
+   clunky (the Forget button and dialog, "or else", the restored cook's
+   line, "Full rolling boil" mid-sentence, the screen reader's phase said
+   twice). `LANGUAGE.md` §3 has its table, and where it departs from
+   FOLLOWUP.
 2. **The English of 1750, in both apps** (`DECISIONS.md` 17). `LANGUAGE.md`
    §6 lists the names to strike and where it departs from the guide.
 3. **The push of `main`**: done 29 September (`5ff6940`); CI passed. Each
