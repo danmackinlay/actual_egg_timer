@@ -9,7 +9,7 @@ import EggTimerCore
 /// the app asks how each egg turned out and folds the answer into a posterior.
 /// After about three eggs the suggested time stops moving.
 ///
-/// Since E1 the answer is not thrown away once folded. Each egg is kept as a
+/// The answer is not thrown away once folded. Each egg is kept as a
 /// record (INFERENCE.md section 4) in a log beside the posterior, and the
 /// posterior is what `replay` makes of that log - so a later change to the
 /// likelihood replays the eggs instead of discarding what they taught. The
@@ -18,14 +18,14 @@ import EggTimerCore
 /// keeps its log the same way.
 ///
 /// `Calibration` itself - a posterior and the count of eggs that taught it -
-/// now lives in EggTimerCore, because a replay has to carry the count exactly.
+/// lives in EggTimerCore, because a replay has to carry the count exactly.
 
 /// Everything that is kept, and the invariant that holds it together:
 /// `calibration` is `replay(base ?? prior, log.prefix(folded))`.
 struct Kept: Sendable {
     /// Where the replay starts when it is not the prior: only ever the posterior
     /// of a log that was damaged and had to be dropped. Nil on every healthy
-    /// phone since E2 dropped E1's frozen base.
+    /// phone.
     var base: Calibration?
     var calibration: Calibration
     var folded: Int
@@ -33,10 +33,9 @@ struct Kept: Sendable {
 }
 
 enum Calibrations {
-    /// The posterior, the base under it, and the log. v4 since E2, whose
-    /// particle has six numbers where E1's had three.
-    /// Nothing before it is read: no build older than this one left the
-    /// owner's devices (D1), so the v1-v3 stores are simply never looked at.
+    /// The posterior, the base under it, and the log. v4: a particle of six
+    /// numbers. Nothing before it is read: no build older than this one left
+    /// the owner's devices, so the v1-v3 stores are never looked at.
     private static let key = "calibration.v4"
 
     /// Carried on every record: the web app deploys on push and this one ships
@@ -69,7 +68,7 @@ enum Calibrations {
         var a: [Double]
         var o: [Double]
         var t: [Double]
-        /// The noise scale, the white offset and the tender | firm gap (E2, E3).
+        /// The noise scale, the white offset and the tender | firm gap.
         var sd: [Double]
         var wo: [Double]
         var wg: [Double]

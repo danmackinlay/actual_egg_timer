@@ -5,8 +5,8 @@ import EggTimerCore
 /// The doneness slider, whose track is the yolk (UI.md section 8, "the track
 /// is a yolk"): the system's thumb, its drag and its VoiceOver adjusting, on
 /// no track of its own, laid over `OddsTrack`, which is the one track there
-/// is. Pass A drew the system's blue track above a separate yolk strip, so
-/// there were two; the web has one.
+/// is: the system's blue track above a separate yolk strip would make two,
+/// and the web has one.
 ///
 /// A `UISlider` rather than SwiftUI's `Slider`, because only UIKit lets the
 /// track go and says where the thumb's centre travels: `inset` is half a

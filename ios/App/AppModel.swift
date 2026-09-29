@@ -28,7 +28,7 @@ final class AppModel {
         cook.resolveCookTime = { [planner] seconds, level, lean in
             await planner.cookResult(timeToBoilS: seconds, level: level, leanS: lean)
         }
-        // Whether the cooling's alarm asks for a probe reading (E4).
+        // Whether the cooling's alarm asks for a probe reading.
         cook.probeWanted = { [planner] in planner.probe }
         // The planner's own stored state, read here rather than in its
         // init: @State evaluates its initial value on every construction of

@@ -4,7 +4,7 @@ import EggTimerCopy
 
 /// At Done: the two questions, both always on screen and neither required
 /// (INFERENCE.md section 3), and above them the probe reading when this cook
-/// asks for one (E4). Three answers each is not a poor interface for a rating
+/// asks for one. Three answers each is not a poor interface for a rating
 /// - it is the whole measurement: ordinal feedback is worth one to two bits
 /// per egg, and a number out of ten would collect precision that is not
 /// there. There is no Skip button: an unanswered question is recorded as
@@ -12,7 +12,7 @@ import EggTimerCopy
 struct FeedbackPanel: View {
     let model: AppModel
     /// The probe reading as typed, in the cook's units, and what was said
-    /// back about it (E4). The panel is only on screen at Done, so both go
+    /// back about it. The panel is only on screen at Done, so both go
     /// with the egg.
     @State private var probeText = ""
     @State private var probeNote = ""
@@ -67,7 +67,7 @@ struct FeedbackPanel: View {
         .background(.quaternary.opacity(0.25), in: RoundedRectangle(cornerRadius: 18))
     }
 
-    // MARK: - The thermometer (E4)
+    // MARK: - The thermometer
 
     /// The reading, at DONE: typed in the cook's units, refused with the range
     /// it should be in when no believable kitchen could have made it, and

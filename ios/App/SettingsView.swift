@@ -42,7 +42,7 @@ struct SettingsView: View {
                 }
             }
 
-            // F6: English, or the English of 1750. Named alike in both
+            // English, or the English of 1750. Named alike in both
             // catalogues, so either can be found from the other.
             Section {
                 InfoRow(name: about("controls.language"), more: [tr("controls.language.more")]) {
@@ -97,7 +97,8 @@ struct SettingsView: View {
                     .labelsHidden()
                 }
 
-                // E4. Off by default; offered once during a cook, and changed here.
+                // The probe thermometer. Off by default; offered once during a
+                // cook, and changed here.
                 Section {
                     InfoRow("controls.thermometer", more: [tr("controls.thermometer.more")])
                     Toggle(tr("controls.thermometer.ask"), isOn: Binding(

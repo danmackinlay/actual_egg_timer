@@ -3,11 +3,10 @@ import EggTimerCore
 
 /// Persistence: UserDefaults in, UserDefaults out.
 ///
-/// The BOUNDS and the blending rules used to live here too. They now live in
-/// EggTimerCore's Policy, because the web app had its own hand-copied set and
-/// the two drifted - and because `estimate` walked this Dictionary in whatever
-/// order it felt like, so two equidistant pans could give the two apps
-/// different answers. This file applies the rules; it no longer decides them.
+/// The BOUNDS and the blending rules are EggTimerCore's Policy, so the two apps
+/// share one set, and one order: a Dictionary walked in whatever order it
+/// likes would let two equidistant pans give the two apps different answers.
+/// This file applies the rules; it does not decide them.
 
 /// Where a boil memory is kept. How the numbers combine is `rememberBoil` and
 /// `estimateTimeToBoil` in the core.
@@ -38,7 +37,7 @@ enum SettingsStore {
         // The cook's choice of units, or none. Read before the early return,
         // because it is its own key and a choice can predate the rest.
         planner.restoreUnits(readChosenUnits(store.string(forKey: "unitsChosen")))
-        // The probe thermometer (E4), the same way: its own keys, and off when
+        // The probe thermometer, the same way: its own keys, and off when
         // they are absent.
         planner.restoreProbe(on: store.bool(forKey: "probe"), asked: store.bool(forKey: "probeAsked"))
         guard store.object(forKey: "doneness") != nil else { return }

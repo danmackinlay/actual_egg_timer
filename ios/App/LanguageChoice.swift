@@ -2,7 +2,7 @@ import Foundation
 import EggTimerCore
 
 /// The language the cook reads, kept: the picker in Settings, and the units
-/// switch into the English of 1750 and out (F6, LANGUAGE.md section 6).
+/// switch into the English of 1750 and out (LANGUAGE.md section 6).
 ///
 /// The rule is the core's (`languageAfterFlip`, `languageAfterPick`), the
 /// same as the web's and held to it by `fixtures/language.json`. This file

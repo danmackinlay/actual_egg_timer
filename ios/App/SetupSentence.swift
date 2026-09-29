@@ -201,7 +201,7 @@ func clauseTexts(_ f: SetupFacts) -> [Clause: ClauseText] {
 
 // MARK: - The cook in the pan
 
-/// The cook in the pan, once the controls are gone (owner, 28 September): the
+/// The cook in the pan, once the controls are gone: the
 /// setup sentence it was started with, so a forgetful cook can see what they
 /// promised, and under it what the sentence does not say, the doneness and
 /// the peak yolk. From the ticket, never the controls. Plain prose: nothing in

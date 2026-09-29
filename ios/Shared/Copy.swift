@@ -19,7 +19,7 @@ import EggTimerCopy
 /// and the widget renders in that (`tr(_:_:in:)`).
 enum Copy {
     /// The language the app speaks: a catalogue's tag, `en` or `en-x-1750`
-    /// (F6, LANGUAGE.md §6). Set by `LanguageChoice` in the app, from the
+    /// (LANGUAGE.md §6). Set by `LanguageChoice` in the app, from the
     /// picker and the units switch; the widget never sets it.
     ///
     /// Reading it is observed: a view whose body calls `tr` depends on it, so

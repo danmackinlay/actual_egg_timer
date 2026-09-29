@@ -41,12 +41,11 @@ final class Cook {
         var level: Double
         /// The egg and the pan this cook was run with.
         ///
-        /// These used to be read off the planner at the moment the user
-        /// answered how the egg was - so the time to boil came from the blended
-        /// memory rather than from THIS cook's measured ramp, and the dose grid
-        /// the posterior was updated against described a pan that had never
-        /// cooked this egg. Frozen here, and updated only when the ramp is
-        /// actually measured.
+        /// Frozen here, and updated only when the ramp is actually measured.
+        /// Read off the planner when the cook answers, the time to boil would
+        /// come from the blended memory rather than from THIS cook's measured
+        /// ramp, and the dose grid the posterior is updated against would
+        /// describe a pan that never cooked this egg.
         var egg: Egg
         var setup: CookSetup
         /// Where the egg's mass came from, and whose carton if it was a class -
@@ -65,7 +64,7 @@ final class Cook {
         /// The language the cook was reading at "Eggs in", for the record: the
         /// catalogue's tag.
         var lang: String
-        /// How far E5's choice leaned from the mean solve at "Eggs in", s,
+        /// How far the choice leaned from the mean solve at "Eggs in", s,
         /// carried onto a mid-cook re-solve. Zero when the time was not chosen.
         var leanS: Double
 
@@ -75,10 +74,10 @@ final class Cook {
         var forecast: Outcome?
 
         /// How long the counted cooling runs from the pull, s: to the moment the
-        /// yolk's centre peaks, for this cook (`coolingSecondsFor`, E4).
+        /// yolk's centre peaks, for this cook (`coolingSecondsFor`).
         var coolS: Double
         /// Whether this cook has a moment to probe at: a counted cooling that
-        /// ends at the peak (`probeMomentFor`, E4).
+        /// ends at the peak (`probeMomentFor`).
         var probeMoment: Bool
 
         /// Read off the egg and the pan, not stored beside them.
@@ -164,10 +163,10 @@ final class Cook {
     ///
     /// Takes the level the cook is being RUN at, so a corrected ramp re-times
     /// the egg in the pan instead of whatever the slider now says, and the lean
-    /// E5's choice made at "Eggs in", which the re-solve carries.
+    /// the choice made at "Eggs in", which the re-solve carries.
     var resolveCookTime: ((Double, Double, Double) async -> CookResult?)?
 
-    /// Whether the cook has said they have a probe thermometer (E4), read when
+    /// Whether the cook has said they have a probe thermometer, read when
     /// the alarms are scheduled: the cooling's alarm then asks for the reading.
     /// Set by the view, which owns the setting.
     var probeWanted: (() -> Bool)?
@@ -209,14 +208,14 @@ final class Cook {
         return next
     }
 
-    /// Both from EggTimerCore, so the two apps cannot time the same egg
-    /// differently. They used to be a pair of literals here and another pair in
-    /// the web app's machine, with a comment asserting they matched.
+    // The grace and the cooling's lengths are EggTimerCore's
+    // (`pullGraceSeconds`, `coolingSeconds`), so the two apps cannot time the
+    // same egg differently.
 
     var phase: Phase { phase(at: .now) }
 
     /// How long the cooling counts once the eggs are out, s: to the yolk's
-    /// peak for this cook (E4), or the flat fallback for a cook from before.
+    /// peak for this cook, or the flat fallback when there is no cook.
     var coolFor: TimeInterval { ticket?.coolS ?? coolingSeconds }
 
     /// Whether this cook will ask for a probe reading when its cooling ends.
@@ -224,22 +223,23 @@ final class Cook {
 
     /// The phase at a given instant.
     ///
-    /// Takes the clock rather than reading it, so one render sees ONE time. The
-    /// computed `phase` used to call `Date.now` on every access and a single
-    /// `body` pass reads it about ten times, so a phase boundary could land
-    /// between two of those reads and the label could describe one phase while
-    /// the button below it described the next. `TimelineView` already hands the
-    /// view a date; this is what it is for.
+    /// Takes the clock rather than reading it, so one render sees ONE time. A
+    /// `body` pass reads the phase about ten times, so a phase that read
+    /// `Date.now` on every access could cross a boundary between two of those
+    /// reads, and the label describe one phase while the button below it
+    /// described the next. `TimelineView` already hands the view a date; this
+    /// is what it is for.
     func phase(at now: Date) -> Phase {
         // A cook is its START, its DEADLINE and its ticket, or it is nothing.
-        // Keying off `pullAt` alone let a half-written state read as a running
-        // cook: anything that set a deadline without a start - a late async
-        // continuation, a partial restore - resurrected a timer the user had
-        // cancelled. Requiring all three makes that unrepresentable rather than
-        // merely unlikely, which is the right guarantee for a Cancel button.
+        // Keying off `pullAt` alone would let a half-written state read as a
+        // running cook: anything that set a deadline without a start - a late
+        // async continuation, a partial restore - would resurrect a timer the
+        // user had cancelled. Requiring all three makes that unrepresentable
+        // rather than merely unlikely, which is the right guarantee for a
+        // Cancel button.
         guard let pullAt, startedAt != nil, ticket != nil else { return .idle }
-        // The ORDER of the remaining tests is core policy, and it is core
-        // policy because the two apps disagreed about it. See `phaseAt`. The
+        // The ORDER of the remaining tests is core policy, so the two apps
+        // cannot disagree about it. See `phaseAt`. The
         // cook's tap out of PULL (`outAt`) is core's too.
         return phaseAt(
             Deadlines(
@@ -293,7 +293,7 @@ final class Cook {
             white: white,
             probe: probe,
             lang: ticket.lang,
-            // What kind of English the answers were given in (F6): the fit
+            // What kind of English the answers were given in: the fit
             // can then tell a 1750 "Too rear" from a modern "Too soft".
             register: registerOf(ticket.lang),
             units: ticket.units
@@ -507,9 +507,8 @@ final class Cook {
     func restoreIfNeeded() {
         guard startedAt == nil else { return }
         guard let data = UserDefaults.standard.data(forKey: Self.savedKey) else { return }
-        // A cook this build cannot read whole - one saved by a build before
-        // 28 September - is dropped, not patched: nothing that old left the
-        // owner's devices (D1).
+        // A cook this build cannot read whole is dropped, not patched: no build
+        // that saved an older shape left the owner's devices.
         guard let saved = try? JSONDecoder().decode(Saved.self, from: data) else {
             UserDefaults.standard.removeObject(forKey: Self.savedKey)
             return
@@ -601,7 +600,7 @@ final class Cook {
         Ringer.shared.ring(due)
     }
 
-    /// The cook has just said they have a probe (E4): the cooling's alarm, if
+    /// The cook has just said they have a probe: the cooling's alarm, if
     /// it is still to come, now asks for the reading.
     func probeSettingChanged() {
         guard alarmAuthorized == true, phase != .done else { return }
@@ -713,7 +712,7 @@ extension Cook.Ticket {
             // the chosen one, and a mid-cook re-solve carries its lean.
             leanS: planner.decision?.leanS ?? 0,
             forecast: planner.shownForecast,
-            // The cooling counts to the yolk's peak for this cook (E4).
+            // The cooling counts to the yolk's peak for this cook.
             coolS: coolingSecondsFor(solution.result),
             probeMoment: probeMomentFor(solution.result, cooling: planner.cooling)
         )
