@@ -1,8 +1,7 @@
 /**
  * `fixtures/units.json`: Metric and Imperial, as `src/core/units.ts` answers.
  *
- * Its own module, called from `tools/fixtures.ts`, because it is a whole
- * contract of its own and that file is already long. Five things are pinned:
+ * A whole contract of its own. Five things are pinned:
  *
  *  - every conversion, both ways, at points that matter (freezing, boiling,
  *    the limits, the defaults);
@@ -18,13 +17,13 @@
  *    listens for, and the size labels in both systems, rendered in English.
  */
 
-import { Catalogue, render } from '../src/core/copy.js';
-import { SIZE_CLASSES, US_SIZE_CLASSES } from '../src/core/geometry.js';
+import { Catalogue, render } from '../../src/core/copy.js';
+import { SIZE_CLASSES, US_SIZE_CLASSES } from '../../src/core/geometry.js';
 import {
   Measure, PlatformUnits, QUANTITIES, UNIT_SYSTEMS, UnitId, UnitSystem, chooseUnits, display,
   displayText, fromSI, measureFor, parse, quantityText, readChosenUnits, regionalUnits,
   sizeClassLabel, snap, toSI,
-} from '../src/core/units.js';
+} from '../../src/core/units.js';
 
 const UNITS: UnitId[] = ['C', 'F', 'g', 'oz', 'mm', 'in', 'm', 'ft', 'L', 'qt', 'pt'];
 

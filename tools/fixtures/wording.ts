@@ -7,14 +7,14 @@
 
 import { readFileSync } from 'node:fs';
 
-import { Lean, Outcome } from '../src/core/outcome.js';
-import { Phase, RefusalKind, Verdict, anchorNear } from '../src/core/policy.js';
-import { Cooling, HeatAfterBoil, StartMode } from '../src/core/protocol.js';
-import { EggFrom } from '../src/core/record.js';
+import { Lean, Outcome } from '../../src/core/outcome.js';
+import { Phase, RefusalKind, Verdict, anchorNear } from '../../src/core/policy.js';
+import { Cooling, HeatAfterBoil, StartMode } from '../../src/core/protocol.js';
+import { EggFrom } from '../../src/core/record.js';
 import {
   DIRECTION_LIKELY, clauseKeys, directionKey, phaseKeys, rangeWords, refusalKey, whiteAtRisk,
-} from '../src/core/wording.js';
-import { WHITE_RISK } from '../src/core/outcome.js';
+} from '../../src/core/wording.js';
+import { WHITE_RISK } from '../../src/core/outcome.js';
 
 const PHASES: Phase[] = ['IDLE', 'HEATING', 'COOKING', 'PULL', 'COOLING', 'DONE'];
 const STARTS: StartMode[] = ['hot', 'cold'];

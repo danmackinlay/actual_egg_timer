@@ -14,19 +14,19 @@
  * asked for, and which readings are taken at entry.
  */
 
-import { CookResult, DEFAULT_PARAMS, donenessFromSlider, simulate, solveCookTime } from '../src/core/solve.js';
-import { eggFromMass } from '../src/core/geometry.js';
-import { CookSetup } from '../src/core/protocol.js';
-import { buildDoseGrid, lookupPeakYolk_C } from '../src/core/doseGrid.js';
+import { CookResult, DEFAULT_PARAMS, donenessFromSlider, simulate, solveCookTime } from '../../src/core/solve.js';
+import { eggFromMass } from '../../src/core/geometry.js';
+import { CookSetup } from '../../src/core/protocol.js';
+import { buildDoseGrid, lookupPeakYolk_C } from '../../src/core/doseGrid.js';
 import {
   Feedback, PROBE_HANDLING_MEAN_C, PROBE_INSTRUMENT_SD_C, PROBE_UNRELATED, PROBE_UNRELATED_SPAN_C,
   Posterior, WhiteReport, answerLikelihood, createPrior, effectiveSampleSize,
   posteriorParams, probeLikelihood, probeShortfallDensity, updatePosterior,
-} from '../src/core/infer.js';
+} from '../../src/core/infer.js';
 import {
   COOLING_MIN_SECONDS, COOLING_SECONDS, PROBE_ALPHA_SDS, PROBE_MARGIN_C, coolingSecondsFor,
   plausibleProbeRange_C, probeMomentFor,
-} from '../src/core/policy.js';
+} from '../../src/core/policy.js';
 
 const EGG = eggFromMass(0.062);
 const SETUP: CookSetup = {

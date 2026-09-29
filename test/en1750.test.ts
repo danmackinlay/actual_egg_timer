@@ -57,7 +57,7 @@ function wordPattern(word: string): RegExp {
 // --------------------------------------------------------------------------
 
 test('1a. the 1750 catalogue is a catalogue: copy.test.ts and the fixture read it', () => {
-  // The same rule as test/copy.test.ts and tools/fixtures.ts.
+  // The same rule as test/copy.test.ts and tools/fixtures/copy.ts.
   const catalogues = readdirSync('copy').filter((f) => /^[a-zA-Z0-9-]+\.json$/.test(f) && f !== 'surfaces.json');
   assert.ok(catalogues.includes('en-x-1750.json'));
   assert.ok(!catalogues.includes('en-x-1750.spelling.json'), 'the spelling table is not a language');

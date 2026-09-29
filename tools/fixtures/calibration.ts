@@ -1,0 +1,219 @@
+/**
+ * fixtures/calibration.json: the particle filter, particle by particle.
+ */
+
+import { eggFromMass } from '../../src/core/geometry.js';
+import {
+  buildDoseGrid, lookupLogYolkDose, lookupLogWhiteDose, cookTimeForLogYolkDose,
+} from '../../src/core/doseGrid.js';
+import {
+  Feedback, FEEDBACK_BAND, KERNEL_DISCOUNT, NOISE_LOG_SD, NOISE_MEDIAN, UNRELATED, WHITE_FIRM_GAP_LOG_SD,
+  WHITE_FIRM_GAP_MEDIAN, WHITE_OFFSET_SD, WhiteReport, answerLikelihood, createPrior, effectiveSampleSize,
+  posteriorMeanWhiteOffset, posteriorParams, predictCookTime, updatePosterior,
+} from '../../src/core/infer.js';
+import { CookSetup } from '../../src/core/protocol.js';
+
+import { particleRows, setupOf } from './shared.js';
+
+/* The calibration is the one part of the core with STATE and a random number
+ * generator, so conformance needs more than a few scalars: a divergence in the
+ * RNG produces a different but entirely plausible posterior, which no summary
+ * statistic would flag. Every particle is therefore written out, before and
+ * after every update.
+ *
+ * The grid here is deliberately smaller than the app's 21 x 32 - it costs one
+ * simulation per cell in both implementations, and 9 x 12 exercises every path
+ * through the interpolation while keeping `swift test` quick. */
+
+const CALIB_EGG = eggFromMass(0.062);
+const CALIB_SETUP: CookSetup = setupOf({});
+const CALIB_ALPHA_MIN = 1.2e-7;
+const CALIB_ALPHA_MAX = 2.4e-7;
+const CALIB_ALPHA_COUNT = 9;
+const CALIB_TIME_MIN_S = 240;
+const CALIB_TIME_MAX_S = 900;
+const CALIB_TIME_COUNT = 12;
+
+const CALIB_GRID = buildDoseGrid(
+  CALIB_EGG, CALIB_SETUP, 1.0,
+  CALIB_ALPHA_MIN, CALIB_ALPHA_MAX, CALIB_ALPHA_COUNT,
+  CALIB_TIME_MIN_S, CALIB_TIME_MAX_S, CALIB_TIME_COUNT,
+);
+
+/* Includes points outside the grid on both axes, because the clamp is where an
+ * off-by-one in the interpolation would hide. */
+const LOOKUP_CASES: { alpha_m2s: number; cookTime_s: number }[] = [
+  { alpha_m2s: 1.70e-7, cookTime_s: 444 },
+  { alpha_m2s: 1.20e-7, cookTime_s: 240 },
+  { alpha_m2s: 2.40e-7, cookTime_s: 900 },
+  { alpha_m2s: 1.55e-7, cookTime_s: 317.5 },
+  { alpha_m2s: 2.01e-7, cookTime_s: 623.25 },
+  { alpha_m2s: 0.90e-7, cookTime_s: 100 },
+  { alpha_m2s: 3.10e-7, cookTime_s: 1200 },
+];
+
+const INVERSE_CASES: { alpha_m2s: number; logDose: number }[] = [
+  { alpha_m2s: 1.70e-7, logDose: 0.0 },
+  { alpha_m2s: 1.70e-7, logDose: 1.5 },
+  { alpha_m2s: 1.40e-7, logDose: 0.5 },
+  { alpha_m2s: 2.20e-7, logDose: -0.5 },
+];
+
+const PARTICLE_COUNT = 64;
+const PRIOR_SEED = 20260917;
+const NOMINAL_TARGET = Math.log10(6.0);
+
+/* What the cook said about each egg: the yolk and the white, either of which
+ * may be missing, folded jointly (E2). A sequence with a repeat, a reversal,
+ * both answers, each alone, E1's two-level "set", and enough agreement to drive
+ * the effective sample size below n/2 and trigger a resample - which is the only
+ * part of the filter that consumes the RNG after the prior.
+ *
+ * The cook times straddle the white's threshold on this surface: around
+ * 340-380 s the particles disagree about the white, and 440-500 s puts it past
+ * setting, so every answer is scored where it is likely and where it is not. */
+const FEEDBACK_SEQUENCE: (Feedback | null)[] = [-1, 0, -1, 1, 0, null, -1, 0, -1, 1, 1];
+const WHITE_SEQUENCE: (WhiteReport | null)[] = [
+  'runny', 'tender', 'runny', null, 'firm', 'runny', 'firm', 'tender', null, 'firm', 'runny',
+];
+
+function readout(post: ReturnType<typeof createPrior>) {
+  const params = posteriorParams(post);
+  const predicted = predictCookTime(post, CALIB_GRID, NOMINAL_TARGET);
+  return {
+    rng: post.rng,
+    ess: effectiveSampleSize(post),
+    alpha_m2s: params.alpha_m2s,
+    tauAirScale: params.tauAirScale,
+    meanWhiteOffset: posteriorMeanWhiteOffset(post),
+    predict: {
+      low_s: predicted.low_s,
+      median_s: predicted.median_s,
+      high_s: predicted.high_s,
+    },
+    weights: post.weights.slice(),
+    particles: particleRows(post),
+  };
+}
+
+const posterior = createPrior(PARTICLE_COUNT, PRIOR_SEED);
+const prior = readout(posterior);
+
+const COOK_TIMES_S = [360, 340, 380, 500, 355, 460, 345, 370, 440, 350, 365];
+const updates = FEEDBACK_SEQUENCE.map((feedback, i) => {
+  const cookTime_s = COOK_TIMES_S[i];
+  const white = WHITE_SEQUENCE[i];
+  // One particle's likelihood, the first, so a port that gets the probit wrong
+  // is told where before it is told that the whole set moved.
+  const firstLikelihood = answerLikelihood(
+    CALIB_GRID, posterior.particles[0], cookTime_s, NOMINAL_TARGET, feedback, white,
+  );
+  updatePosterior(posterior, CALIB_GRID, cookTime_s, NOMINAL_TARGET, feedback, white);
+  return {
+    cookTime_s: cookTime_s,
+    logNominalTarget: NOMINAL_TARGET,
+    feedback: feedback,
+    white: white,
+    firstLikelihood: firstLikelihood,
+    after: readout(posterior),
+  };
+});
+
+/* One more fold, from a deliberately degenerate particle set, so that the
+ * resample after a WHITE-ONLY answer is executed from a known starting point,
+ * rather than only wherever the sequence above happens to cross the threshold.
+ *
+ * The input posterior is therefore synthetic: the particles are the real ones
+ * from the end of the sequence above, with their weights sharpened by a power
+ * until the effective sample size sits just over the threshold. It is written out
+ * in full, so the port reads the same starting point rather than reproducing the
+ * sharpening - the same reason the policy verdicts are built from synthetic
+ * Solutions. What is being pinned is the branch, not the road to it. */
+const WHITE_RESAMPLE_CASE = (() => {
+  const n = posterior.particles.length;
+  const base = posterior.weights.slice();
+  let exponent = 1.0;
+  let weights = base.slice();
+  for (let step = 0; step < 400; step++) {
+    exponent += 0.05;
+    let total = 0.0;
+    for (let i = 0; i < n; i++) { weights[i] = Math.pow(base[i], exponent); total += weights[i]; }
+    for (let i = 0; i < n; i++) weights[i] /= total;
+    const probe = { particles: posterior.particles, weights: weights, rng: posterior.rng };
+    // Just above the threshold, so the white answer is what pushes it under.
+    if (effectiveSampleSize(probe) < n / 2.0 + 2.0) break;
+  }
+  const before = {
+    particles: particleRows(posterior),
+    weights: weights.slice(),
+    rng: posterior.rng,
+    ess: effectiveSampleSize({ particles: posterior.particles, weights: weights, rng: posterior.rng }),
+  };
+  const post = {
+    particles: posterior.particles.map((p) => ({ ...p })),
+    weights: weights.slice(),
+    rng: posterior.rng,
+  };
+  const cookTime_s = 365;
+  const white: WhiteReport = 'runny';
+  updatePosterior(post, CALIB_GRID, cookTime_s, NOMINAL_TARGET, null, white);
+  return {
+    cookTime_s: cookTime_s,
+    white: white,
+    before: before,
+    after: readout(post),
+  };
+})();
+
+export const calibrationFixture = {
+  $comment: 'Generated by tools/fixtures.ts from src/core/. Do not hand-edit.',
+  generator: 'npm run fixtures',
+  egg: {
+    mass_kg: CALIB_EGG.mass_kg,
+    radius_m: CALIB_EGG.radius_m,
+    minorDiameter_m: CALIB_EGG.minorDiameter_m,
+  },
+  setup: CALIB_SETUP,
+  grid: {
+    tauAirScale: 1.0,
+    alphaMin: CALIB_ALPHA_MIN,
+    alphaMax: CALIB_ALPHA_MAX,
+    alphaCount: CALIB_ALPHA_COUNT,
+    timeMin_s: CALIB_TIME_MIN_S,
+    timeMax_s: CALIB_TIME_MAX_S,
+    timeCount: CALIB_TIME_COUNT,
+    logAlphaMin: CALIB_GRID.logAlphaMin,
+    logAlphaStep: CALIB_GRID.logAlphaStep,
+    timeStep_s: CALIB_GRID.timeStep_s,
+    logYolk: CALIB_GRID.logYolk.slice(),
+    logWhite: CALIB_GRID.logWhite.slice(),
+  },
+  lookups: LOOKUP_CASES.map((c) => ({
+    alpha_m2s: c.alpha_m2s,
+    cookTime_s: c.cookTime_s,
+    logYolk: lookupLogYolkDose(CALIB_GRID, c.alpha_m2s, c.cookTime_s),
+    logWhite: lookupLogWhiteDose(CALIB_GRID, c.alpha_m2s, c.cookTime_s),
+  })),
+  inverse: INVERSE_CASES.map((c) => ({
+    alpha_m2s: c.alpha_m2s,
+    logDose: c.logDose,
+    cookTime_s: cookTimeForLogYolkDose(CALIB_GRID, c.alpha_m2s, c.logDose),
+  })),
+  likelihood: {
+    feedbackBand: FEEDBACK_BAND,
+    unrelated: UNRELATED,
+    noiseMedian: NOISE_MEDIAN,
+    noiseLogSd: NOISE_LOG_SD,
+    whiteOffsetSd: WHITE_OFFSET_SD,
+    whiteFirmGapMedian: WHITE_FIRM_GAP_MEDIAN,
+    whiteFirmGapLogSd: WHITE_FIRM_GAP_LOG_SD,
+    kernelDiscount: KERNEL_DISCOUNT,
+  },
+  whiteResample: WHITE_RESAMPLE_CASE,
+  prior: {
+    count: PARTICLE_COUNT,
+    seed: PRIOR_SEED,
+    ...prior,
+  },
+  updates: updates,
+};
