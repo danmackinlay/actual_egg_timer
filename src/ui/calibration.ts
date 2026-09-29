@@ -6,7 +6,7 @@
  * asks how each egg turned out and folds the answer into a posterior. After
  * about three eggs the suggested time stops moving.
  *
- * Since E1 the answer is not thrown away once folded. Each egg is kept as a
+ * The answer is not thrown away once folded. Each egg is kept as a
  * record (INFERENCE.md section 4) in a log beside the posterior, and the
  * posterior is what `replay` makes of that log - so a later change to the
  * likelihood replays the eggs instead of discarding what they taught. The
@@ -16,7 +16,7 @@
  * The dose surface costs about two seconds to build and is built once per
  * logged egg, in a Web Worker (`gridWorker.ts`), so the page stays live while it
  * runs. If a worker cannot be had, the build falls back to this thread, behind a
- * yield so the "learning" note paints first - which is what it always did.
+ * yield so the "learning" note paints first.
  */
 
 import { Egg, SizeTable } from '../core/geometry.js';
@@ -45,14 +45,14 @@ export type { Calibration } from '../core/record.js';
  *  push and the iOS app ships later, and the fit has to know which was which. */
 export const APP_VERSION = '0.2.0';
 
-/** The posterior, the base under it, and the log. v4 since E2, whose particle
- *  has six numbers where E1's had three. */
+/** The posterior, the base under it, and the log. v4: a particle of six
+ *  numbers. */
 const KEY = 'aet.calibration.v4';
 
 /** Every store before this one, deleted rather than read: the v1 and v2
  *  posteriors, which have no log behind them (v2 is what the live site of 19
- *  September writes), and E1's v3, which only the owner's devices ever held
- *  and whose log the owner let go on 28 September (D1). */
+ *  September writes), and v3, a three-number particle that only the owner's
+ *  devices ever held. */
 const SUPERSEDED_KEYS = ['aet.calibration.v3', 'aet.calibration.v2', 'aet.calibration.v1'];
 
 /** Everything that is kept, and the one invariant that holds it together:
@@ -60,7 +60,7 @@ const SUPERSEDED_KEYS = ['aet.calibration.v3', 'aet.calibration.v2', 'aet.calibr
 export interface Kept {
   /** Where the replay starts when it is not the prior: only ever the posterior
    *  of a log that was damaged and had to be dropped (`rebased`). Null on every
-   *  healthy phone since E2 dropped E1's frozen base. */
+   *  healthy phone. */
   base: Calibration | null;
   calibration: Calibration;
   /** How many records `calibration` has absorbed. Behind the log only between
@@ -89,7 +89,7 @@ export function calibrationParams(c: Calibration): ModelParams {
 }
 
 /** The doneness to solve for at a slider level: the white's target moves with
- *  what the eggs said about the white (E3). See `calibrationDoneness` in core. */
+ *  what the eggs said about the white. See `calibrationDoneness` in core. */
 export function calibrationDoneness(c: Calibration, level: number): Doneness {
   return donenessOf(c, level);
 }
@@ -129,7 +129,7 @@ export function localDay(ms: number): string {
 /**
  * The record of one egg, from the cook that was started and the machine that
  * ran it, with whichever answers have been given so far, and the probe reading
- * if there is one (E4).
+ * if there is one.
  *
  * `pulled_s` is the cook's own tap out of PULL when there was one. When the
  * grace ran out instead, nobody said when the egg came out, and the record says
@@ -194,7 +194,7 @@ interface StoredPosterior {
   a: number[];
   o: number[];
   t: number[];
-  /** The noise scale, the white offset and the tender | firm gap (E2, E3). */
+  /** The noise scale, the white offset and the tender | firm gap. */
   sd: number[];
   wo: number[];
   wg: number[];
@@ -485,7 +485,7 @@ function assign(into: Calibration, from: Calibration): void {
 /**
  * The cook's second answer about an egg already written down - the yolk after
  * the white, the white after the yolk, or a probe reading before or after
- * either (E4). "Second" means any answer after the first: each one refolds
+ * either. "Second" means any answer after the first: each one refolds
  * the egg with everything it now holds.
  *
  * If the egg has not been folded yet (its surface is still being built), the
@@ -530,7 +530,7 @@ export async function recordSecondAnswer(
 /** Forget every egg: the posterior, the base under it and the log. A run of
  *  wrong answers about how an egg was is otherwise undone only by clearing the
  *  site's storage, and the honest thing is to let someone take it back. The iOS
- *  app has had this since it shipped. */
+ *  app has the same. */
 export function clearCalibration(): Calibration {
   generation += 1;
   live = -1;
@@ -599,7 +599,7 @@ function gridWorker(): Worker | null {
     else onThisThread(w.job).then(w.resolve, w.reject);
   };
   // A browser without module workers, or a worker file that did not ship,
-  // lands here. The fold still happens; it just blocks the page as it used to.
+  // lands here. The fold still happens; it just blocks the page while it runs.
   worker.onerror = () => abandonWorker();
   return worker;
 }
@@ -620,7 +620,7 @@ function buildOffThread(request: GridRequest): Promise<DoseGrid> {
 
 /* ---------------------------------------------------- the decision's surface */
 
-/** Decision surfaces by what they were built from (E5). One per setup: the
+/** Decision surfaces by what they were built from. One per setup: the
  *  slider is not part of the key, so dragging it never waits for one. A handful
  *  is plenty - the pot on screen, the one before, and a cold start's measured
  *  ramp - and the oldest goes first. */

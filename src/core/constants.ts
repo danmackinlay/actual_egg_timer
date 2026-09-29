@@ -104,8 +104,8 @@ export const RAMP_R = 3.0;
  *  Williams' folk method - bring to the boil, cover, off the heat, seventeen
  *  minutes, and it is hard-boiled - with an 8-minute boil in 2 L:
  *  480 / ln(r/(r-1)) at r = 3, i.e. 480 / ln(1.5) = 1183.8 s. So that one
- *  validation case is unchanged by construction, and the Williams check in
- *  tools/validate.ts still reads 75.6 C.
+ *  validation case is the same under either rule, by construction, and the
+ *  Williams check in tools/validate.ts reads 75.6 C.
  *
  *  Why not derive it from the time to boil, since the ramp's tau = m*c/(U*A)
  *  is the same quantity? Because the boil time identifies it only through

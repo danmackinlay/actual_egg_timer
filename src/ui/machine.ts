@@ -189,8 +189,8 @@ export function beginCooling(m: Machine, now_ms: number, by: PulledBy = 'cook'):
 
 /** Whole seconds until the counted cooling starts without the cook, if they
  *  do not tap first; null outside PULL, and null on a counter rest, where
- *  nothing starts - the grace runs out into DONE. The web used to promise
- *  "cooling starts on its own" on every PULL, a counter rest's included. */
+ *  nothing starts - the grace runs out into DONE, so a counter rest must not
+ *  promise that cooling starts on its own. */
 export function coolingStartsIn_s(m: Machine, now_ms: number): number | null {
   if (m.phase !== 'PULL' || m.cooling === 'counter') return null;
   const late_s = (now_ms - m.pulledAt_ms) / 1000;

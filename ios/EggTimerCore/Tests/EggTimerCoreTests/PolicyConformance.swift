@@ -4,13 +4,11 @@ import Foundation
 
 /// Conformance against `fixtures/policy.json`, generated from `src/core/policy.ts`.
 ///
-/// This suite exists because the review found that everything it covers used to
-/// live twice - here and in `src/ui/app.ts` - copied by hand. The apps had
-/// already drifted: 4 eggs in the pan against 2, a 62.3 g default egg against
-/// 68 g, and preset temperatures written out three separate times on this side.
-/// The calibration grid had not drifted yet, which was luck rather than design:
-/// its six numbers decide what the particle filter can see, so two apps with
-/// different grids learn different things from the same egg.
+/// Everything it covers is a decision both apps make, so a copy that drifts
+/// shows on screen: the eggs in the pan, the default egg, the presets. The
+/// calibration grid matters most: its six numbers decide what the particle
+/// filter can see, so two apps with different grids learn different things
+/// from the same egg.
 ///
 /// Same rule as the rest of the port: the fixtures are never regenerated to
 /// make this pass. If a NUMBER is wrong it is wrong in the TypeScript first,

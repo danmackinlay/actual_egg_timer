@@ -4,11 +4,8 @@
  * Everything here must survive localStorage being absent, disabled, full, or
  * throwing (Safari private mode throws on setItem).
  *
- * The BOUNDS and the DEFAULTS used to live here too. They now live in
- * `src/core/policy.ts`, because iOS had its own hand-copied set and the two
- * drifted - different eggs in the pan, a different default egg, preset
- * temperatures written out three times. This module still applies them; it no
- * longer decides them.
+ * The BOUNDS and the DEFAULTS are core policy (`src/core/policy.ts`), so the
+ * two apps share one set. This module applies them; it does not decide them.
  */
 
 import { SizeClass } from '../core/geometry.js';
@@ -24,8 +21,8 @@ export { LIMITS, START_TEMP_PRESETS_C, estimateTimeToBoil, hasBoilMemory } from 
 
 const SETTINGS_KEY = 'aet.settings.v1';
 const COOK_KEY = 'aet.cook.v2';
-/** The live site's cook (19 September), and every interim build's until 28
- *  September: a shape the ticket no longer reads. Dropped, not migrated. */
+/** The cook as the live site of 19 September stores it: a shape the ticket
+ *  does not read. Dropped, not migrated. */
 const SUPERSEDED_COOK_KEY = 'aet.cook.v1';
 const BOIL_KEY = 'aet.boil.v1';
 
@@ -65,7 +62,7 @@ export interface Settings {
    *  units switch replaced when it went into 1750 (`src/core/language.ts`).
    *  Like the units, a choice is kept apart from the default it overrides. */
   language: LanguageState;
-  /** "I have a probe thermometer" (E4): ask for a reading at the middle of
+  /** "I have a probe thermometer": ask for a reading at the middle of
    *  the egg when the cooling ends. Off until the cook says so. */
   probe: boolean;
   /** Whether the once-only offer has been answered, either way. The setting
@@ -261,10 +258,8 @@ function clampLitres(litres: number): number {
 /**
  * A cook in progress, so a reload does not lose the egg.
  *
- * The machine is already built out of absolute epoch deadlines - that is what
- * its own header means by surviving a reload - but nothing was writing it
- * down, so boot() started clean every time. The comment there promised the app
- * would "say so"; it said nothing at all.
+ * The machine is built out of absolute epoch deadlines, so writing it down is
+ * all a reload needs.
  *
  * The alarm is a timer in this tab and dies with it, so unlike iOS there is no
  * notification still counting down to contradict. What is restored is the
@@ -286,10 +281,8 @@ export function saveCook(machine: unknown, ticket: unknown, answers: KeptAnswers
   writeStorage(COOK_KEY, JSON.stringify({ machine: machine, ticket: ticket, answers: answers }));
 }
 
-/** The cook written down, or null. One without `answers` - written before
- *  they replaced `feedbackGiven`, by a build that never left the owner's
- *  devices - is dropped rather than read as unanswered, which would log its
- *  egg a second time. */
+/** The cook written down, or null. One without a known `answers` is dropped
+ *  rather than read as unanswered, which would log its egg a second time. */
 export function loadCook(): StoredCook | null {
   removeStorage(SUPERSEDED_COOK_KEY);
   const raw = parseObject(readStorage(COOK_KEY));

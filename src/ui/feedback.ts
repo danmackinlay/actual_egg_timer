@@ -1,6 +1,6 @@
 /**
  * The questions at DONE - how was the yolk, how was the white - and the probe
- * reading (E4): what has been said about the egg on screen, and writing it
+ * reading: what has been said about the egg on screen, and writing it
  * down for the calibration to learn from.
  *
  * The model is calibrated against the literature, not against this kitchen.
@@ -22,15 +22,14 @@ import { Ticket } from './ticket.js';
 import { measure, show } from './units.js';
 
 /**
- * What has been said about the egg on screen, and on which page. One state
- * for what were three flags (`feedbackGiven`, `answered` and `restored`):
+ * What has been said about the egg on screen, and on which page:
  *
  * - `none`: nothing yet. `reloaded` is whether the cook was picked back up
  *   after a reload, which a running cook says on screen: its alarm died with
  *   the old page. It is read only before DONE, and nothing can be answered
  *   before DONE, so the other two states have no need of it.
  * - `live`: answered on this page - which of the two questions, whether a
- *   probe reading has been taken (E4), and the egg's place in the log, which
+ *   probe reading has been taken, and the egg's place in the log, which
  *   the first answer wrote it to. A later answer is folded into the same egg.
  * - `beforeReload`: answered on a page before this one. The egg is in the
  *   log, and the rest of the questions are not offered again, because the

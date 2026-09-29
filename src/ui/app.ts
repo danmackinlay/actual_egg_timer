@@ -102,7 +102,7 @@ let boilMemory!: BoilMemory;
 let calib!: Calibration;
 let machine!: Machine;
 let solution: Solution | null = null;
-/** The choice behind the time on screen while idle (E5): the odds, and how
+/** The choice behind the time on screen while idle: the odds, and how
  *  far it leaned from the mean solve. Null until the
  *  setup's decision surface has been built, and on the sous-vide screen. */
 let decision: Decision | null = null;
@@ -205,7 +205,7 @@ function applyMeasure(input: HTMLInputElement, label: HTMLElement, m: Measure): 
   label.textContent = t(m.unitKey);
 }
 
-/** The cook picks a system, stored as their choice. F6: a cook's own switch
+/** The cook picks a system, stored as their choice. A cook's own switch
  *  from metric to Imperial, in modern English, is also a switch into the
  *  English of 1750, and back (LANGUAGE.md section 6); `setLanguage` saves
  *  for both. */
@@ -310,7 +310,7 @@ function answerFor(timeToBoil_s: number, level: number, odds: OddsProfile | null
 }
 
 /**
- * The time chosen for an answer (E5, src/core/decide.ts), if this pot's
+ * The time chosen for an answer (src/core/decide.ts), if this pot's
  * decision surface has been built - and if it has not, the mean solve's time,
  * with the surface asked for once the inputs settle.
  *
@@ -415,8 +415,7 @@ function applyAnswer(answer: LevelAnswer): Solution {
 /* --------------------------------------------------------------- display */
 
 /** The texture note. Which band the egg falls in, and which keys say it, are
- *  core policy - including that a white the pan never sets is runny, which
- *  this app used to decide here, and iOS did not decide at all. */
+ *  core policy - including that a white the pan never sets is runny. */
 function textureNote(sol: Solution): string {
   const note = textureNoteKeys(textureFor(sol.result.peakYolk_C, sol.result.peakWhite_C, sol.whiteSets));
   const parts: Record<string, string> = {};
@@ -506,10 +505,9 @@ function render(now_ms: number): void {
 function renderIdle(now_ms: number): void {
   // Sous-vide is answered honestly and separately: no cook to run, no clock to
   // start, and a start time that has already been and gone. It goes FIRST,
-  // before any of the pan readout is computed or painted - it used to run
-  // after a full hot-start solve and after the stats row had already been
-  // written, so it both paid for an answer it discarded and left half of that
-  // answer on screen beside its own.
+  // before any of the pan readout is computed or painted, so it neither pays
+  // for a hot-start solve it would discard nor leaves half of that answer on
+  // screen beside its own.
   renderSentence(liveSetupFacts(settings, sizeClasses, currentEgg()));
   renderCookSetup(null, machine.targetLevel, sizeClasses);
   if (isSousVide()) {
@@ -618,14 +616,10 @@ function renderReadout(now_ms: number, sol: Solution, warning: string): void {
  *  (i), which is about the slider, goes with the slider. Never where the white
  *  never sets: there is no cook to say anything about.
  *
- *  The one-tap play-safe suggestion that went under the direction is gone
- *  (owner, 28 September): it said in words what the slider and the bracket
- *  already show.
- *
- *  "I'm still learning" is no longer a line of its own on the web (owner, 27
- *  September): beside "I can't call it yet" it said the same thing twice.
- *  What it opened, what I learn from and what speeds it up, is the last
- *  paragraph of the (i). Nothing works it out any more (D3). */
+ *  There is no play-safe suggestion under the direction, and no "still
+ *  learning" line: the slider and the bracket already show the one, and "I
+ *  can't call it yet" already says the other. What I learn from and what
+ *  speeds it up is the last paragraph of the (i). */
 function renderOdds(): void {
   let o: Outcome | null = null;
   if (machine.phase === 'IDLE') {
@@ -659,7 +653,8 @@ function renderOdds(): void {
  *  sentence (`renderIdle`). */
 function renderSousVide(now_ms: number): void {
   // No pan, no choice, and no odds: the bath's answer is not a guess about a
-  // pan (E5 chooses pan times). So no direction, and no bracket either.
+  // pan (the decision chooses pan times). So no direction, and no bracket
+  // either.
   dom.directionText.textContent = '';
   dom.whiteRisk.hidden = true;
   dom.readout.style.minHeight = '';
@@ -1065,7 +1060,7 @@ function onPrimary(): void {
       peakYolk_C: solution.result.peakYolk_C,
       probeMoment: probeMomentFor(solution.result, settings.cooling),
     };
-    // The cooling counts to the yolk's peak for this cook (E4).
+    // The cooling counts to the yolk's peak for this cook.
     const cool = coolingSecondsFor(solution.result);
     setMachine(settings.startMode === 'cold'
       ? startCold(now, cook, boil, settings.cooling, target, cool)

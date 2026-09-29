@@ -36,7 +36,7 @@ export interface Ticket {
   /** The system the cook was reading when they set this egg up, for the
    *  record. Everything above is SI whatever it says. */
   units: UnitSystem;
-  /** How far the choice leaned from the mean solve at "Eggs in", s (E5),
+  /** How far the choice leaned from the mean solve at "Eggs in", s,
    *  carried onto a mid-cook re-solve (`carriedSolution`). Zero when the time
    *  was not chosen. */
   lean_s: number;
@@ -48,7 +48,7 @@ export interface Ticket {
   peakYolk_C: number;
   /** The language they were reading it in, for the record. */
   lang: string;
-  /** Whether this cook has a moment to probe at (E4): a counted cooling that
+  /** Whether this cook has a moment to probe at: a counted cooling that
    *  ends when the yolk's centre peaks. Frozen with the cook, and moved only
    *  by the re-solve at the boil. */
   probeMoment: boolean;
