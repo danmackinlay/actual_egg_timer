@@ -20,7 +20,7 @@ import { SOUS_VIDE_BATH_C, SOUS_VIDE_MODEL_FLOOR_C, sousVideEstimate } from '../
 import {
   Measure, Quantity, UnitSystem, chooseUnits, displayText, parse, sizeClassLabel,
 } from '../core/units.js';
-import { Solution, logYolkTarget, solveCookTime } from '../core/solve.js';
+import { Solution, logYolkTarget } from '../core/solve.js';
 import {
   BoilMemory, DEFAULTS, SLIDER_STEPS, SLOW_HOB_EVERY_S, SLOW_HOB_EXTRA_S, SLOW_HOB_WHEN_LEFT_S, Verdict,
   ambientFor, coolingSecondsFor, probeMomentFor, targetPeakYolk_C, textureFor, textureNoteKeys,
@@ -763,11 +763,13 @@ function resolveDuring(t: Ticket, timeToBoil_s: number): Solution {
   // The ticket's egg and pot, never the controls': a second tab may have
   // changed those since "Eggs in".
   const { egg, setup } = withTimeToBoil(t, timeToBoil_s);
-  const params = calibrationParams(calib);
-  const mean = solveCookTime(egg, setup, params, calibrationDoneness(calib, machine.targetLevel));
+  // Through `answerAt`, as every solve is, with no snap retry: the target is
+  // frozen, so a retry would answer for an egg nobody is cooking. iOS's
+  // `cookResult` asks the same.
+  const mean = answerAt(calib, egg, setup, machine.targetLevel, null, false).solution;
   // Leaned as far as the choice leaned at "Eggs in": the new ramp is a new pot,
   // whose surface is a second away with the egg already in (`carriedSolution`).
-  return carriedSolution(egg, setup, params, mean, t.lean_s);
+  return carriedSolution(egg, setup, calibrationParams(calib), mean, t.lean_s);
 }
 
 /** Take a new time to boil into the cook under way - the slow hob's guess, or
