@@ -108,10 +108,7 @@ struct FeedbackPanel: View {
 
     private func saveProbe() {
         guard let ticket = cook.ticket, planner.answers?.probe == nil else { return }
-        // A comma is the decimal point in half the world's keyboards.
-        let typed = Double(probeText.replacingOccurrences(of: ",", with: ".")
-            .trimmingCharacters(in: .whitespaces))
-        let reading = typed.flatMap { parse(planner.measure(.probeTemp), $0) }
+        let reading = parseTyped(probeText).flatMap { parse(planner.measure(.probeTemp), $0) }
         guard let scored = cook.eggRecord(yolk: nil).map(recordCookTimeS) else { return }
         let range = planner.probeRange(egg: ticket.egg, setup: ticket.setup, cookTimeS: scored)
         guard let reading, reading >= range.low, reading <= range.high else {

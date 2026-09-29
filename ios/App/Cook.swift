@@ -562,7 +562,7 @@ final class Cook {
         guard let pullAt else { return }
         Alarm.shared.schedule(
             pullAt: pullAt, coolDoneAt: coolDoneAt, probe: asksForProbe,
-            cooling: ticket?.cooling.rawValue
+            cooling: ticket?.cooling ?? .ice
         )
     }
 
