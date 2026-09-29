@@ -61,8 +61,8 @@ export const PRIOR_SEED = 20260917;
 export const NOMINAL_TARGET = Math.log10(6.0);
 
 /* What the cook said about each egg: the yolk and the white, either of which
- * may be missing, folded jointly (E2). A sequence with a repeat, a reversal,
- * both answers, each alone, E1's two-level "set", and enough agreement to drive
+ * may be missing, folded jointly. A sequence with a repeat, a reversal, both
+ * answers, each alone, all three whites, and enough agreement to drive
  * the effective sample size below n/2 and trigger a resample - which is the only
  * part of the filter that consumes the RNG after the prior.
  *

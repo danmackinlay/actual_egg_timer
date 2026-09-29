@@ -1,8 +1,8 @@
 /**
- * fixtures/probe.json: the thermometer (E4), for the Swift port.
+ * fixtures/probe.json: the thermometer, for the Swift port.
  *
- * Kept out of calibration.json so that E4's additions and E5's can land in
- * either order without one regenerating the other's cases. The surface is
+ * Kept out of calibration.json so that a change to either does not regenerate
+ * the other's cases. The surface is
  * calibration.json's - same egg, same pot, same grid - so the peak cells here
  * sit beside the dose cells there.
  *
@@ -66,7 +66,7 @@ export function probeFixture(): Record<string, unknown> {
   }));
 
   // A reading alone, hot; answers and a reading together; a reading far off,
-  // which only the unrelated share survives; then answers alone, as before E4.
+  // which only the unrelated share survives; then answers alone.
   const steps: { cookTime_s: number; yolk: Feedback | null; white: WhiteReport | null; probe_C: number | null }[] = [
     { cookTime_s: 360, yolk: null, white: null, probe_C: peakAt(360) + 0.8 },
     { cookTime_s: 420, yolk: 0, white: 'firm', probe_C: peakAt(420) - 0.5 },

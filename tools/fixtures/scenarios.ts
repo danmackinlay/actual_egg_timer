@@ -12,7 +12,7 @@ import { referenceSetup } from '../common.js';
 
 /** The reference egg of the validation and the scenarios: 43.5 mm across,
  *  about 62.3 g - not the app's 68 g EU Large. Built from its mass: the iOS
- *  core, which only weighs eggs, builds it the same way (D4). */
+ *  core, which only weighs eggs, builds it the same way. */
 const REFERENCE_EGG = eggFromMass(eggFromMinorDiameter(0.0435).mass_kg);
 
 interface Scenario {

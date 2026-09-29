@@ -22,8 +22,9 @@ import { CatalogueJson, english } from './shared.js';
  * disagreements found while choosing these are in LANGUAGE.md §2.
  *
  * Then the pseudo-Czech catalogue in test/pseudo-cs.json - Czech's plural rule
- * and no Czech words - rendered in cs-CZ, which is the machinery F5 will use,
- * end to end, before there is a word of Czech to use it with. */
+ * and no Czech words - rendered in cs-CZ, which is the machinery a Czech
+ * catalogue will use, end to end, before there is a word of Czech to use it
+ * with. */
 const FORMAT_SUPPORTED = ['en-US', 'en-GB', 'cs-CZ'];
 const FORMAT_ALSO = ['en', 'en-AU', 'en-DE', 'en-CZ', 'cs', 'en-US-u-hc-h23', 'en-GB-u-hc-h12'];
 const FORMAT_LOCALES = [...FORMAT_SUPPORTED, ...FORMAT_ALSO];
@@ -91,7 +92,7 @@ export const formatFixture = {
   ].map((text) => ({ text: text, unpadded: unpadHour(text) })),
   // The whole path, from what each app knows - the UI's language, the
   // device's region, the device's own clock setting - to the bytes a cook
-  // reads: the owner's rules of 27 September, end to end.
+  // reads: the owner's rules, end to end.
   derived: ([
     ['en', 'GB', null], ['en', 'US', null], ['cs', 'CZ', null], ['en', 'CZ', null], ['cs', 'US', null],
     ['cs', 'GB', null], ['cs', 'DE', null], ['cs', null, null], ['en', 'DE', null], ['en', 'US', 'h23'],
@@ -116,7 +117,7 @@ export const formatFixture = {
   ].map(([n, v]) => ({ locale: locale, n: n, fractionDigits: v, category: pluralCategory(locale, n, v) }))),
   // Every quantity a cook reads, in both systems, in every supported locale:
   // the key and the words, through the English catalogue.
-  // Not the girth or the width: the iOS core measures neither (D4).
+  // Not the girth or the width: the iOS core measures neither.
   measures: FORMAT_SUPPORTED.flatMap((locale) => QUANTITIES.filter((q) => q !== 'girth' && q !== 'width').flatMap((q) => UNIT_SYSTEMS.flatMap((system) =>
     [0.5, 2.4, 63.5, 1500, 16400].map((si) => {
       const m = measureFor(q, system, locale.slice(-2));

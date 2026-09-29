@@ -13,8 +13,8 @@
  *  - THE ROUND TRIP, for every grid value of every input: typed, stored in
  *    SI, displayed again, and the display must be what was typed. The
  *    generator refuses to write a fixture in which it is not;
- *  - the regional default and the explicit choice, including the flip F6
- *    listens for, and the size labels in both systems, rendered in English.
+ *  - the regional default and the explicit choice, including the flip the
+ *    switch into 1750 listens for, and the size labels in both systems, rendered in English.
  */
 
 import { Catalogue, render } from '../../src/core/copy.js';
@@ -48,7 +48,7 @@ const REGIONS: (string | null)[] = ['US', null];
 interface MeasureCase { system: UnitSystem; region: string | null; m: Measure }
 
 /** Only the quantities the iOS app has: it weighs eggs and never measures a
- *  girth or a width, and its core has neither (D4). The web's are tested in
+ *  girth or a width, and its core has neither. The web's are tested in
  *  test/units.test.ts. */
 const SWIFT_QUANTITIES = QUANTITIES.filter((q) => q !== 'girth' && q !== 'width');
 

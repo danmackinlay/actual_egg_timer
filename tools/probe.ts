@@ -104,8 +104,8 @@ console.log();
 
 // At the pull the centre is the COLDEST point and every error reads hot. At the
 // centre's peak it is the WARMEST, in space and in time, so every error reads
-// cold - which is the direction the likelihood's skew has to go (infer.ts,
-// E4), and why the cook is asked for the HIGHEST number, not the lowest.
+// cold - which is the direction the likelihood's skew has to go (infer.ts),
+// and why the cook is asked for the HIGHEST number, not the lowest.
 const iceAfter = peakIce.peakYolkTime_s - COOK_S;
 const radial = [0, 0.1, 0.2, 0.3, 0.4, 0.5].map((x) => reading('ice', THETA0, x, iceAfter).toFixed(1));
 const timely = [-60, -30, -15, 0, 15, 30, 60].map((d) => reading('ice', THETA0, 0, iceAfter + d).toFixed(2));
