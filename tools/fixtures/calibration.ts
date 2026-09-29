@@ -3,15 +3,15 @@
  */
 
 import { eggFromMass } from '../../src/core/geometry.js';
-import {
-  buildDoseGrid, lookupLogYolkDose, lookupLogWhiteDose, cookTimeForLogYolkDose,
-} from '../../src/core/doseGrid.js';
+import { lookupLogYolkDose, lookupLogWhiteDose, cookTimeForLogYolkDose } from '../../src/core/doseGrid.js';
 import {
   Feedback, FEEDBACK_BAND, KERNEL_DISCOUNT, NOISE_LOG_SD, NOISE_MEDIAN, UNRELATED, WHITE_FIRM_GAP_LOG_SD,
   WHITE_FIRM_GAP_MEDIAN, WHITE_OFFSET_SD, WhiteReport, answerLikelihood, createPrior, effectiveSampleSize,
   posteriorMeanWhiteOffset, posteriorParams, predictCookTime, updatePosterior,
 } from '../../src/core/infer.js';
 import { CookSetup } from '../../src/core/protocol.js';
+import { GridSpec } from '../../src/core/policy.js';
+import { buildRequestedGrid } from '../../src/core/record.js';
 
 import { particleRows, setupOf } from './shared.js';
 
@@ -25,24 +25,22 @@ import { particleRows, setupOf } from './shared.js';
  * simulation per cell in both implementations, and 9 x 12 exercises every path
  * through the interpolation while keeping `swift test` quick. */
 
-const CALIB_EGG = eggFromMass(0.062);
-const CALIB_SETUP: CookSetup = setupOf({});
-const CALIB_ALPHA_MIN = 1.2e-7;
-const CALIB_ALPHA_MAX = 2.4e-7;
-const CALIB_ALPHA_COUNT = 9;
-const CALIB_TIME_MIN_S = 240;
-const CALIB_TIME_MAX_S = 900;
-const CALIB_TIME_COUNT = 12;
+/* The egg, the pot, the surface, the lookups and the prior are exported:
+ * probe.json reads the same ones, so its peak cells sit beside the dose cells
+ * here. */
 
-const CALIB_GRID = buildDoseGrid(
-  CALIB_EGG, CALIB_SETUP, 1.0,
-  CALIB_ALPHA_MIN, CALIB_ALPHA_MAX, CALIB_ALPHA_COUNT,
-  CALIB_TIME_MIN_S, CALIB_TIME_MAX_S, CALIB_TIME_COUNT,
-);
+export const CALIB_EGG = eggFromMass(0.062);
+export const CALIB_SETUP: CookSetup = setupOf({});
+export const CALIB_GRID_SPEC: GridSpec = {
+  alphaMin: 1.2e-7, alphaMax: 2.4e-7, alphaCount: 9, timeMin_s: 240, timeMax_s: 900, timeCount: 12,
+};
+export const CALIB_GRID = buildRequestedGrid({
+  egg: CALIB_EGG, setup: CALIB_SETUP, tauAirScale: 1.0, spec: CALIB_GRID_SPEC,
+});
 
 /* Includes points outside the grid on both axes, because the clamp is where an
  * off-by-one in the interpolation would hide. */
-const LOOKUP_CASES: { alpha_m2s: number; cookTime_s: number }[] = [
+export const LOOKUP_CASES: { alpha_m2s: number; cookTime_s: number }[] = [
   { alpha_m2s: 1.70e-7, cookTime_s: 444 },
   { alpha_m2s: 1.20e-7, cookTime_s: 240 },
   { alpha_m2s: 2.40e-7, cookTime_s: 900 },
@@ -59,9 +57,9 @@ const INVERSE_CASES: { alpha_m2s: number; logDose: number }[] = [
   { alpha_m2s: 2.20e-7, logDose: -0.5 },
 ];
 
-const PARTICLE_COUNT = 64;
-const PRIOR_SEED = 20260917;
-const NOMINAL_TARGET = Math.log10(6.0);
+export const PARTICLE_COUNT = 64;
+export const PRIOR_SEED = 20260917;
+export const NOMINAL_TARGET = Math.log10(6.0);
 
 /* What the cook said about each egg: the yolk and the white, either of which
  * may be missing, folded jointly (E2). A sequence with a repeat, a reversal,
@@ -176,12 +174,7 @@ export const calibrationFixture = {
   setup: CALIB_SETUP,
   grid: {
     tauAirScale: 1.0,
-    alphaMin: CALIB_ALPHA_MIN,
-    alphaMax: CALIB_ALPHA_MAX,
-    alphaCount: CALIB_ALPHA_COUNT,
-    timeMin_s: CALIB_TIME_MIN_S,
-    timeMax_s: CALIB_TIME_MAX_S,
-    timeCount: CALIB_TIME_COUNT,
+    ...CALIB_GRID_SPEC,
     logAlphaMin: CALIB_GRID.logAlphaMin,
     logAlphaStep: CALIB_GRID.logAlphaStep,
     timeStep_s: CALIB_GRID.timeStep_s,

@@ -17,7 +17,7 @@
 import { CookResult, DEFAULT_PARAMS, donenessFromSlider, simulate, solveCookTime } from '../../src/core/solve.js';
 import { eggFromMass } from '../../src/core/geometry.js';
 import { CookSetup } from '../../src/core/protocol.js';
-import { buildDoseGrid, lookupPeakYolk_C } from '../../src/core/doseGrid.js';
+import { lookupPeakYolk_C } from '../../src/core/doseGrid.js';
 import {
   Feedback, PROBE_HANDLING_MEAN_C, PROBE_INSTRUMENT_SD_C, PROBE_UNRELATED, PROBE_UNRELATED_SPAN_C,
   Posterior, WhiteReport, answerLikelihood, createPrior, effectiveSampleSize,
@@ -28,15 +28,10 @@ import {
   plausibleProbeRange_C, probeMomentFor,
 } from '../../src/core/policy.js';
 
-const EGG = eggFromMass(0.062);
-const SETUP: CookSetup = {
-  startMode: 'hot', eggStart_C: 4, ambient_C: 20, boiling_C: 100, timeToBoil_s: 0,
-  cooling: 'ice', waterLitres: 2, eggCount: 4,
-};
-const GRID = { alphaMin: 1.2e-7, alphaMax: 2.4e-7, alphaCount: 9, timeMin_s: 240, timeMax_s: 900, timeCount: 12 };
-const PARTICLES = 64;
-const SEED = 20260917;
-const TARGET = Math.log10(6.0);
+import {
+  CALIB_EGG, CALIB_GRID, CALIB_GRID_SPEC, CALIB_SETUP, LOOKUP_CASES, NOMINAL_TARGET, PARTICLE_COUNT, PRIOR_SEED,
+} from './calibration.js';
+import { particleRows } from './shared.js';
 
 function readout(post: Posterior) {
   return {
@@ -44,10 +39,7 @@ function readout(post: Posterior) {
     ess: effectiveSampleSize(post),
     alpha_m2s: posteriorParams(post).alpha_m2s,
     weights: post.weights.slice(),
-    particles: post.particles.map((p) => ({
-      alpha_m2s: p.alpha_m2s, logDoseOffset: p.logDoseOffset, tauAirScale: p.tauAirScale,
-      noise: p.noise, whiteOffset: p.whiteOffset, whiteFirmGap: p.whiteFirmGap,
-    })),
+    particles: particleRows(post),
   };
 }
 
@@ -60,26 +52,15 @@ function timed(cookTime_s: number, toPeak_s: number): CookResult {
 }
 
 export function probeFixture(): Record<string, unknown> {
-  const grid = buildDoseGrid(
-    EGG, SETUP, 1.0, GRID.alphaMin, GRID.alphaMax, GRID.alphaCount,
-    GRID.timeMin_s, GRID.timeMax_s, GRID.timeCount,
-  );
-  const peakAt = (cook_s: number): number => simulate(EGG, SETUP, DEFAULT_PARAMS, cook_s).peakYolk_C;
+  const grid = CALIB_GRID;
+  const peakAt = (cook_s: number): number => simulate(CALIB_EGG, CALIB_SETUP, DEFAULT_PARAMS, cook_s).peakYolk_C;
 
-  const lookups = [
-    { alpha_m2s: 1.70e-7, cookTime_s: 444 },
-    { alpha_m2s: 1.20e-7, cookTime_s: 240 },
-    { alpha_m2s: 2.40e-7, cookTime_s: 900 },
-    { alpha_m2s: 1.55e-7, cookTime_s: 317.5 },
-    { alpha_m2s: 2.01e-7, cookTime_s: 623.25 },
-    { alpha_m2s: 0.90e-7, cookTime_s: 100 },
-    { alpha_m2s: 3.10e-7, cookTime_s: 1200 },
-  ].map((c) => ({ ...c, peakYolk_C: lookupPeakYolk_C(grid, c.alpha_m2s, c.cookTime_s) }));
+  const lookups = LOOKUP_CASES.map((c) => ({ ...c, peakYolk_C: lookupPeakYolk_C(grid, c.alpha_m2s, c.cookTime_s) }));
 
   const density = [-300, -80, -10, -3, -1, -0.4, 0, 0.2, 0.4, 1, 2.5, 6, 30, 200]
     .map((d) => ({ shortfall_C: d, density: probeShortfallDensity(d) }));
 
-  const first = createPrior(PARTICLES, SEED).particles[0];
+  const first = createPrior(PARTICLE_COUNT, PRIOR_SEED).particles[0];
   const likelihood = [-20, 40, 58, 62, 66, 90, 1000].map((reading) => ({
     cookTime_s: 360, reading_C: reading, likelihood: probeLikelihood(grid, first, 360, reading),
   }));
@@ -93,13 +74,13 @@ export function probeFixture(): Record<string, unknown> {
     { cookTime_s: 400, yolk: -1, white: null, probe_C: null },
     { cookTime_s: 350, yolk: null, white: 'tender', probe_C: peakAt(350) - 1.5 },
   ];
-  const post = createPrior(PARTICLES, SEED);
+  const post = createPrior(PARTICLE_COUNT, PRIOR_SEED);
   const updates = steps.map((s) => {
     const firstLikelihood = answerLikelihood(
-      grid, post.particles[0], s.cookTime_s, TARGET, s.yolk, s.white, s.probe_C,
+      grid, post.particles[0], s.cookTime_s, NOMINAL_TARGET, s.yolk, s.white, s.probe_C,
     );
-    updatePosterior(post, grid, s.cookTime_s, TARGET, s.yolk, s.white, s.probe_C);
-    return { ...s, logNominalTarget: TARGET, firstLikelihood: firstLikelihood, after: readout(post) };
+    updatePosterior(post, grid, s.cookTime_s, NOMINAL_TARGET, s.yolk, s.white, s.probe_C);
+    return { ...s, logNominalTarget: NOMINAL_TARGET, firstLikelihood: firstLikelihood, after: readout(post) };
   });
 
   const cooling = [
@@ -126,7 +107,7 @@ export function probeFixture(): Record<string, unknown> {
   for (const s of setups) {
     for (const level of [0.22, 0.41, 1.0]) {
       const egg = eggFromMass(s.mass_kg);
-      const setup: CookSetup = { ...SETUP, afterBoil: 'hold', ...s.over };
+      const setup: CookSetup = { ...CALIB_SETUP, afterBoil: 'hold', ...s.over };
       const r = solveCookTime(egg, setup, DEFAULT_PARAMS, donenessFromSlider(level)).result;
       const moved = { alpha_m2s: DEFAULT_PARAMS.alpha_m2s * 1.07, tauAirScale: 0.9 };
       solved.push({
@@ -154,13 +135,13 @@ export function probeFixture(): Record<string, unknown> {
       coolingSeconds: COOLING_SECONDS,
       coolingMinSeconds: COOLING_MIN_SECONDS,
     },
-    egg: { mass_kg: EGG.mass_kg },
-    setup: SETUP,
-    grid: { ...GRID, tauAirScale: 1.0, peakYolk_C: grid.peakYolk_C },
+    egg: { mass_kg: CALIB_EGG.mass_kg },
+    setup: CALIB_SETUP,
+    grid: { ...CALIB_GRID_SPEC, tauAirScale: 1.0, peakYolk_C: grid.peakYolk_C },
     lookups: lookups,
     density: density,
     likelihood: likelihood,
-    prior: { count: PARTICLES, seed: SEED },
+    prior: { count: PARTICLE_COUNT, seed: PRIOR_SEED },
     updates: updates,
     cooling: cooling,
     solved: solved,
