@@ -618,7 +618,8 @@ expected, since it is also absorbing the Dirichlet and shape errors, but it is t
 first honest external error bar the model has. The `H_EFF` row is an open problem, not
 a pass: see §11.2.
 
-`PLAN.md` also carries a correction worth repeating: the planning estimate for
+`LOGBOOK.md` (29 September 2026, the planning phase's targets) carries a correction
+worth repeating: the planning estimate for
 counter-resting was 85.3 °C, computed with a model that relaxed the surface from the
 *water* temperature. A lumped egg in still air relaxes from its own *volume-average*
 temperature. Corrected in `coolingTemperature`, the figure is 76.3 °C. The effect is
@@ -1177,7 +1178,8 @@ answers are recorded here rather than deleted, because each one was a plausible 
   white's lag and the cook's idea of "runny" together. It replaced a fixed, deliberately
   weak white channel. What it does not yet do: a runny white is as well explained by a
   slow time-scale as by a late white, and `alpha`'s prior is the wider of the two, so two
-  runny whites at soft move a jammy time about as far as a soft one (PLAN.md, E3).
+  runny whites at soft move a jammy time about as far as a soft one (INFERENCE.md §3;
+  the owner has left it so, `DECISIONS.md` 18).
   See [issue #1](https://github.com/danmackinlay/actual_egg_timer/issues/1).
 - **`alpha` and the taste offset are confounded at a fixed protocol** in the yolk channel.
   The *combination* is identified — the suggested time converges — but the individual
@@ -1198,11 +1200,13 @@ answers are recorded here rather than deleted, because each one was a plausible 
   target. The
   counts are Gaussian-latent and good to an order of magnitude; the gaps are the
   result. `INFERENCE.md` is the plan this leads to.
-- **`predictCookTime`'s interval is not drawn.** `src/core/infer.ts` computes the
-  posterior predictive cook time as a median and an 80% credible interval. Since E5 it
-  decides "still learning" (`src/core/decide.ts`), but no screen shows the interval
-  or that flag now, and the egg's record does not keep it: the sentence under the time says which
-  way a miss is likely to go instead (UI.md §8).
+- **`predictCookTime`'s interval is not drawn, by choice.** `src/core/infer.ts` computes
+  the posterior predictive cook time as a median and an 80% credible interval, which is
+  the owner's "still learning" rule (`DECISIONS.md` 9). The owner chose a sentence saying
+  which way a miss is likely to go instead (`DECISIONS.md` 27, UI.md §8), so no screen
+  shows the interval, the decision does not compute it (`DECISIONS.md` 40), and the
+  record does not keep it. The tests and `npm run decide -- learning` read it on demand;
+  E8's nudge may need it back.
 - **Little of either app is tested above the shared layer.** What both apps decide —
   snapping, refusals, texture bands, the calibration grid, the phase timeline — lives in
   `src/core/policy.ts` and is conformance-tested, which is where all three of the
@@ -1211,21 +1215,16 @@ answers are recorded here rather than deleted, because each one was a plausible 
   store and formatting have tests (`test/machine.test.ts`, `test/store.test.ts`,
   `test/format.test.ts`), and iOS's decision to ring is `deadlineToRing` in the core, under `swift
   test`. The rest is view code: DOM writes and SwiftUI bodies, tested by driving the
-  apps. The iOS app project has no test target.
-
-- **The Swift port is complete.** `ios/EggTimerCore` carries every module in `src/core/`,
-  `sousvide.ts` included, and is held to this implementation by a
-  conformance suite over generated fixtures (`npm run conformance`). The pure functions
-  agree to 1e-12 and 17 whole cooks — times, peak temperatures, doses and the
-  reachability verdicts — to the same, where the measured disagreement is 7e-15. The
-  calibration is pinned harder still: the fixtures carry every particle and every weight
-  of an eleven-observation run — both channels, each white answer folded straight after the
-  yolk answer for the same egg — because a wrong random number generator would otherwise
-  produce a different but entirely plausible posterior. The iOS app carries every input
-  this document describes, schedules its alarm at absolute fire dates with a
-  time-sensitive interruption level, shows the countdown on the Lock Screen and in the
-  Dynamic Island, and asks how the yolk and the white were after each egg, every time,
-  with neither answer required. See `ios/README.md`.
+  apps. The iOS app project has no test target. Two things a cook sees are untested
+  anywhere: the Lock Screen card ending as the cooling does, and the web's setup
+  sentence while a cook runs.
+- **The web can make an egg over 90 g, on purpose.** Both apps cap the mass at 90 g, a
+  hen's egg, but the web's girth (90-200 mm) and width (30-60 mm) fields keep their own
+  limits, so a typed measurement reaches about 160-195 g, and a stored 120 g egg reloads
+  as 120 g. The owner accepted this (`DECISIONS.md` 34). The model is a hen's egg's, so
+  those times are an extrapolation.
+- **The Swift port is complete and held to this one** by `npm run conformance`; how
+  closely, and how, is `ios/README.md`.
 
 ### 11.6 Sources that returned fabricated citations
 

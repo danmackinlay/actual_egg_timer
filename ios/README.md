@@ -28,28 +28,50 @@ Tolerance is 1e-12 relative — a few ulps of a double, which is all that
 differing libm implementations of `exp`, `sin` and `log10` can cost. An
 algebraic mistake is never that small.
 
-## Ported
+## The core, module by module
 
-| module | Swift | conformance |
-|---|---|---|
-| `constants.ts` | `Constants.swift` | every value |
-| `thermo.ts` | `Thermo.swift` | 9 altitudes, 6 pressures, salt |
-| `geometry.ts` | `Geometry.swift` | 8 masses, 6 diameters, tau |
-| `kinetics.ts` | `Kinetics.swift` | z-values, hold times, 20-step accumulation |
-| `sphere.ts` | `Sphere.swift` | 42 series points, 40-step integration, 30-step ramp |
-| `protocol.ts` | `Protocol.swift` | every scenario's schedule, via the cooks below |
-| `solve.ts` | `Solve.swift` | 17 whole cooks: times, peaks, doses, verdicts |
-| `doseGrid.ts` | `DoseGrid.swift` | every cell, interpolation, the clamp, the inverse |
-| `infer.ts` | `Infer.swift` | every particle and weight, prior and 11 updates |
-| `sousvide.ts` | `SousVide.swift` | 34 baths, eggs and slider positions |
-| `policy.ts` | `Policy.swift` | `fixtures/policy.json`: limits, snapping, verdicts, texture, the phase timeline |
-| `record.ts` | `Record.swift` | `fixtures/record.json`: the egg log, and a replay bit-identical to folding egg by egg |
-| `decide.ts` | `Decide.swift` | `fixtures/decide.json`: the chosen time, the odds, "still learning" |
-| `outcome.ts` | `Outcome.swift` | `fixtures/outcome.json` |
-| `reach.ts` | `Reach.swift` | `fixtures/reach.json` |
-| `units.ts` | `Units.swift` | `fixtures/units.json` |
-| `language.ts` | `Language.swift` | `fixtures/language.json` |
-| `copy.ts`, `format.ts` | `EggTimerCopy`: `Copy.swift`, `Format.swift` | `fixtures/copy.json`, `fixtures/format.json` |
+Every module in `src/core/` has a Swift twin, held to it by a fixture. This
+table is the map; each file's header comment is its documentation, and the
+exports are its API. Apps call what is exported and nothing else, and
+anything both apps must agree on lives here, not in either app.
+
+| module | what it answers | main entry points | Swift | fixture |
+|---|---|---|---|---|
+| `constants.ts` | every physical and model constant (README §6) | - | `Constants.swift` | `core.json` |
+| `thermo.ts` | altitude and pressure to a boiling point | `boilingPointAtAltitude` | `Thermo.swift` | `core.json` |
+| `geometry.ts` | an egg from its mass; the size classes by region | `eggFromMass`, `sizeClassesFor` | `Geometry.swift` | `core.json` |
+| `kinetics.ts` | the Arrhenius dose | `createDose`, `accumulateDose` | `Kinetics.swift` | `core.json` |
+| `sphere.ts` | the modal/Duhamel solver | `createSphere`, `stepSphere` | `Sphere.swift` | `core.json` |
+| `protocol.ts` | the water's schedule: ramp, dip, heat off, cooling | `bathTemperature`, `panTimeConstant` | `Protocol.swift` | via `scenarios.json` |
+| `solve.ts` | the cook time for a doneness, and what is reachable | `solveCookTime`, `simulate`, `donenessFromSlider` | `Solve.swift` | `scenarios.json` |
+| `sousvide.ts` | the isothermal limit | `sousVideEstimate` | `SousVide.swift` | `sousvide.json` |
+| `doseGrid.ts` | the cached dose surface and its lookups | `buildDoseGrid`, `buildRequestedGrid` | `DoseGrid.swift` | `calibration.json` |
+| `infer.ts` | the particle filter: prior, likelihood, fold | `createPrior`, `updatePosterior`, `probeLikelihood` | `Infer.swift` | `calibration.json`, `probe.json` |
+| `record.ts` | the egg log, and the posterior as its replay | `parseLog`, `foldRecord`, `replay` | `Record.swift` | `record.json` |
+| `decide.ts` | the chosen time and its odds | `decide`, `chooseCookTime`, `hitOdds` | `Decide.swift` | `decide.json` |
+| `outcome.ts` | which way a miss goes, and the likely level | `predictOutcome` | `Outcome.swift` | `outcome.json` |
+| `reach.ts` | the odds at every level, the shading, the advice | `oddsProfile`, `answerAt`, `protocolAdvice` | `Reach.swift` | `reach.json` |
+| `policy.ts` | what both apps decide: bounds, defaults, snapping, verdicts, texture, the phase timeline, the calibration grid | `verdictFor`, `phaseAt`, `calibrationGrid` | `Policy.swift` | `policy.json` |
+| `wording.ts` | which catalogue key each part of the screen says | `phaseKeys`, `refusalKey`, `directionKey`, `clauseKeys` | `Wording.swift` | `wording.json`, `sousvideCopy.json` |
+| `units.ts` | Metric and Imperial: steps, bounds, the round trip | `measureFor`, `display`, `parse`, `quantityText` | `Units.swift` | `units.json` |
+| `language.ts` | the switch into and out of the English of 1750 | `languageAfterFlip`, `languageAfterPick` | `Language.swift` | `language.json` |
+| `copy.ts`, `format.ts` | the catalogue's renderer; numbers and times by locale | `render`, `pluralCategory`, `formatNumber`, `formatTimeOfDay` | `EggTimerCopy`: `Copy.swift`, `Format.swift` | `copy.json`, `format.json` |
+
+The Swift core leaves out what no app calls (`DECISIONS.md` 41): the
+measure-by-width geometry, the science checks (`erfcTheta`, `oneTermTheta`,
+`biotNumber`, `boilingPointApprox`, `saltBoilingElevation`,
+`zFromActivationEnergy`) and the inference read-outs. The TypeScript keeps
+them for `npm run validate`, the tests and the web's width input.
+
+**The UI contract.** `solveCookTime` returns `reachable: false` when the
+yolk asked for cannot be had: too soft for the white (`softestLevel` is the
+softest level that is, and the slider stripes out everything below it, which
+is what makes a counter rest refuse soft eggs rather than lie about them), or,
+with the heat off, harder than the pan can manage (`hardestLevel`). If
+`whiteSets` is false nothing on the slider is reachable. Every cook time the
+solver returns is the first one known to meet its dose target, to within a
+second: the search returns the upper end of its final bracket, never the
+midpoint, so a dose compared against its own target at the answer passes.
 
 The integrator is covered against both a **held** surface and a **moving** one.
 The second matters: a step-only test cannot catch a sign error in the Duhamel
@@ -108,22 +130,31 @@ resample, which is the only part of the filter that touches the RNG after the
 prior is drawn, and the only part where the ORDER of the particles matters.
 
 One ordering subtlety that is not in the TypeScript because it does not have to
-be: `predictCookTime` sorts particles by predicted time, and JavaScript's sort
-is required to be stable while Swift's is not. The Swift sorts by time with the
+be: `predictCookTime`, which only the tests and `npm run decide` call now (no
+screen shows its interval), sorts particles by predicted time, and JavaScript's
+sort is required to be stable while Swift's is not. The Swift sorts by time with the
 original index as a tie-break, which is the same thing.
 
-## Nothing is unported
+## The port is complete
 
-This section used to say "`sousvide.ts` is a joke and can wait forever", and
-that line is why the owner of this repo went looking for the feature on his
-phone and did not find it. Two things were wrong with it. The module is not a
-joke — it is the same dose machinery as every other answer here with the surface
-temperature held constant, and its caveats about convection below 60 °C are the
-careful part. And what made it look like one is the ANSWER it gives, which is a
-start time in the past: that is the model reporting a real conclusion about a
-58 °C bath, not the code declining to work.
+`EggTimerCore` carries every module in `src/core/`, `sousvide.ts` included.
+The pure functions agree to 1e-12 and 17 whole cooks - times, peak
+temperatures, doses and the reachability verdicts - to the same, where the
+measured disagreement is 7e-15. The calibration is pinned harder still: every
+particle and every weight of an eleven-observation run, both channels, each
+white answer folded straight after the yolk answer for the same egg, because
+a wrong random number generator would otherwise produce a different but
+entirely plausible posterior. The app on top carries every input README.md
+describes, schedules its alarm at absolute fire dates with a time-sensitive
+interruption level, shows the countdown on the Lock Screen and in the Dynamic
+Island, and asks how the yolk and the white were after each egg, every time,
+with neither answer required.
 
-`src/core/` and `EggTimerCore` now carry the same modules.
+Sous-vide was once left unported as "a joke", which is why the owner went
+looking for it on his phone and did not find it. It is the same dose
+machinery with the surface temperature held constant, and its answer - a
+start time in the past, for a 58 °C bath - is the model's real conclusion,
+not the code declining to work.
 
 ## The app
 
@@ -140,8 +171,7 @@ sources or settings. So are `Widget/Info.plist` and `App/Info.plist`, which
 xcodegen writes from the same file (see **The Live Activity** below for why that one cannot be generated
 by the build system instead).
 
-The screen carries the whole model now, laid out as the web's (UI.md sections
-9-11):
+The screen carries the whole model, laid out as the web's (UI.md):
 
 - the doneness slider, with the peak yolk in its heading
 - one tappable sentence for what changes from egg to egg: the egg (a size class
@@ -231,30 +261,29 @@ The answer goes into the particle filter. Building the dose surface for the cook
 that was actually performed costs about a second of arithmetic, so it runs in a
 detached task, once, after the egg has been eaten and never while anything is
 being adjusted — which is the entire reason the surface is cached rather than
-simulated per particle. (Since E5 there is also one decision surface per pot,
-built off the main actor once the inputs settle.)
+simulated per particle. (There is also one decision surface per pot, built off
+the main actor once the inputs settle.)
 
 Before any feedback the filter's prior mean IS the literature value, so the app
 is fully useful on day one and calibration is purely additive. Afterwards the
 suggested time moves: a room-temperature 62 g egg rested on the counter at fudgy
-went 4:07 to 4:29 on the first "too soft", before E5 changed how the time is
-chosen (not re-measured since). The posterior's spread on alpha plateaus near 3%
+went 4:07 to 4:29 on the first "too soft", when the time was still solved at
+the posterior mean (not re-measured since). The posterior's spread on alpha plateaus near 3%
 rather than collapsing, which is the honest answer — repeated agreement is
 consistent with a range. It is not shown; the sentence under the time says which
 way a miss is likely to go.
 
-There is a "Forget what it learned" button, and the web app has one too now. The
-posterior recovers on its own after a few more eggs, so this is for people who
+Settings has Forget, in both apps, which asks first. The posterior recovers on its own after a few more eggs, so this is for people who
 would rather not wait.
 
 The taste offset absorbs the difference between the user's palate and the
 nominal doneness scale so that `alpha` does not have to, which keeps the physics
-honest. Until E5 it was deliberately left out of the time; since E5, from the
-first egg on, the time is chosen over every particle - taste, noise and white
-offset included - by expected loss (`Decide.swift`, INFERENCE.md §8).
+honest. From the first egg on, the time is chosen over every particle - taste,
+noise and white offset included - by expected loss (`Decide.swift`,
+INFERENCE.md §8).
 
-It agreed with the web app on screen (before E5, and before the peak white left
-the screen). 62.3 g, fridge, ice bath, jammy gave **7:21** with a peak yolk of
+It agreed with the web app on screen, measured when the time was still solved
+at the posterior mean and the peak white was still shown. 62.3 g, fridge, ice bath, jammy gave **7:21** with a peak yolk of
 65 °C and a peak white of 81 °C, against 441.28 s, 64.8 °C and 80.6 °C from
 `solveCookTime` in TypeScript. The same egg at 400 m
 gives **7:31** and a 98.7 °C boiling point, against 450.9 s and 98.7 °C. A
