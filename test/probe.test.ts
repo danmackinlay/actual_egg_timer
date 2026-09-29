@@ -24,7 +24,7 @@ import {
 } from '../src/core/infer.js';
 import { buildDoseGrid, buildRequestedGrid, lookupPeakYolk_C } from '../src/core/doseGrid.js';
 import {
-  CookResult, DEFAULT_PARAMS, donenessFromSlider, simulate, solveCookTime,
+  CookResult, DEFAULT_PARAMS, donenessFromSlider, logYolkTarget, simulate, solveCookTime,
 } from '../src/core/solve.js';
 import { eggFromMass } from '../src/core/geometry.js';
 import { CookSetup } from '../src/core/protocol.js';
@@ -234,7 +234,7 @@ test('3a. the reading multiplies into the answers: one fold, whatever arrived fi
       timeCount: 9,
     },
   );
-  const target = Math.log10(donenessFromSlider(JAMMY).yolkDose_min);
+  const target = logYolkTarget(JAMMY);
   const prior = createPrior(40, 7);
   for (const p of prior.particles) {
     const both = answerLikelihood(grid, p, COOK_S, target, 0, 'firm', 64.0);

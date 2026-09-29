@@ -92,15 +92,25 @@ export function formatCount(locale: string, value: number): string {
   return formatNumber(locale, value, countDecimals(value));
 }
 
+/** Formatters are slow to make and the app asks for the same few every
+ *  frame, so each (locale, decimals) is made once. */
+const NUMBER_FORMATS = new Map<string, Intl.NumberFormat>();
+
 function numberFormat(locale: string, decimals: number): Intl.NumberFormat {
-  const options = { minimumFractionDigits: decimals, maximumFractionDigits: decimals };
-  try {
-    return new Intl.NumberFormat(locale, options);
-  } catch {
-    // A malformed tag. `formattingLocale` never makes one; Foundation would
-    // take it without complaint, so rather than throw, fall back to English.
-    return new Intl.NumberFormat('en', options);
+  const key = `${locale}|${decimals}`;
+  let format = NUMBER_FORMATS.get(key);
+  if (format === undefined) {
+    const options = { minimumFractionDigits: decimals, maximumFractionDigits: decimals };
+    try {
+      format = new Intl.NumberFormat(locale, options);
+    } catch {
+      // A malformed tag. `formattingLocale` never makes one; Foundation would
+      // take it without complaint, so rather than throw, fall back to English.
+      format = new Intl.NumberFormat('en', options);
+    }
+    NUMBER_FORMATS.set(key, format);
   }
+  return format;
 }
 
 /* ---------------------------------------------------------- time of day */
@@ -123,16 +133,27 @@ function numberFormat(locale: string, decimals: number): Intl.NumberFormat {
  */
 export function formatTimeOfDay(locale: string, secondsOfDay: number, withSeconds: boolean): string {
   const s = ((Math.floor(secondsOfDay) % 86400) + 86400) % 86400;
-  const options: Intl.DateTimeFormatOptions = {
-    timeStyle: withSeconds ? 'medium' : 'short', timeZone: 'UTC',
-  };
-  let format: Intl.DateTimeFormat;
-  try {
-    format = new Intl.DateTimeFormat(locale, options);
-  } catch {
-    format = new Intl.DateTimeFormat('en', options);
+  return unpadHour(normaliseTime(timeFormat(locale, withSeconds).format(s * 1000)));
+}
+
+/** Made once per (locale, seconds or not), as the number formats are. */
+const TIME_FORMATS = new Map<string, Intl.DateTimeFormat>();
+
+function timeFormat(locale: string, withSeconds: boolean): Intl.DateTimeFormat {
+  const key = `${locale}|${withSeconds}`;
+  let format = TIME_FORMATS.get(key);
+  if (format === undefined) {
+    const options: Intl.DateTimeFormatOptions = {
+      timeStyle: withSeconds ? 'medium' : 'short', timeZone: 'UTC',
+    };
+    try {
+      format = new Intl.DateTimeFormat(locale, options);
+    } catch {
+      format = new Intl.DateTimeFormat('en', options);
+    }
+    TIME_FORMATS.set(key, format);
   }
-  return unpadHour(normaliseTime(format.format(s * 1000)));
+  return format;
 }
 
 /**

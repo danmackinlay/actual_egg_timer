@@ -28,7 +28,9 @@ import {
 import { calibrationGrid, PARTICLE_COUNT, CALIBRATION_SEED } from '../src/core/policy.js';
 import { createPrior, updatePosterior } from '../src/core/infer.js';
 import { eggFromMass } from '../src/core/geometry.js';
-import { DEFAULT_PARAMS, donenessFromSlider, solveCookTime } from '../src/core/solve.js';
+import {
+  DEFAULT_PARAMS, donenessFromSlider, logYolkTarget, solveCookTime,
+} from '../src/core/solve.js';
 import { CookSetup } from '../src/core/protocol.js';
 import {
   APP_VERSION, Cooked, clearCalibration, decodeKept, eggRecordFor, eggsBehind, encodeKept,
@@ -194,7 +196,7 @@ test('2d. an egg is scored at the pull when the cook said when, and at the sched
     foldRecord(viaRecord, r, surface);
     const direct = createPrior(64, 7);
     updatePosterior(
-      direct, surface, recordCookTime_s(r), Math.log10(donenessFromSlider(r.level).yolkDose_min),
+      direct, surface, recordCookTime_s(r), logYolkTarget(r.level),
       -1, null,
     );
     assertIdentical(viaRecord, { posterior: direct, eggsLogged: 1 }, r.pulledBy);

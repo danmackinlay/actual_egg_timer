@@ -122,3 +122,9 @@ public enum Sphere {
         return x >= 0.0 ? ans : 2.0 - ans
     }
 }
+
+/// The standard normal CDF, from the core's own erfc - the one both languages
+/// already share - rather than the platform's.
+func normalCdf(_ x: Double) -> Double {
+    0.5 * Sphere.complementaryError(-x / 2.0.squareRoot())
+}

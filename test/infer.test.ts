@@ -24,7 +24,8 @@ import {
 } from '../src/core/infer.js';
 import { DoseGrid, buildDoseGrid, lookupLogWhiteDose, lookupLogYolkDose } from '../src/core/doseGrid.js';
 import {
-  DEFAULT_PARAMS, ModelParams, WHITE_DOSE_TARGET, donenessFromSlider, simulate, solveCookTime,
+  DEFAULT_PARAMS, ModelParams, WHITE_DOSE_TARGET, donenessFromSlider, logYolkTarget, simulate,
+  solveCookTime,
 } from '../src/core/solve.js';
 import { eggFromMass } from '../src/core/geometry.js';
 import { Z_WHITE, Z_YOLK } from '../src/core/constants.js';
@@ -55,7 +56,7 @@ function cookAt(level: number): { grid: DoseGrid; cookTime_s: number; logNominal
       timeCount: 12,
     },
   );
-  return { grid: grid, cookTime_s: t, logNominalTarget: Math.log10(donenessFromSlider(level).yolkDose_min) };
+  return { grid: grid, cookTime_s: t, logNominalTarget: logYolkTarget(level) };
 }
 
 function particle(over: Partial<Particle> = {}): Particle {
@@ -324,7 +325,7 @@ test('4. P(answer) is calibrated: simulated cooks answer as often as the model s
     for (let egg = 0; egg < 5; egg++) {
       const k = Math.floor(random() * levels.length);
       const t = times[k];
-      const target = Math.log10(donenessFromSlider(levels[k]).yolkDose_min);
+      const target = logYolkTarget(levels[k]);
       const py = yolkAnswerProbabilities(post, grid, t, target);
       const pw = whiteAnswerProbabilities(post, grid, t);
       const ty = ([-1, 0, 1] as Feedback[]).map((y) => answerLikelihood(grid, truth, t, target, y, null));

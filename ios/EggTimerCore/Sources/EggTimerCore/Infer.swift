@@ -90,6 +90,12 @@ public let feedbackBand = 0.28
 /// over the answers. No likelihood falls below `unrelated / 3`.
 public let unrelated = 0.05
 
+/// One answer's probability `p` with the unrelated share mixed in: the chance
+/// the cook gives that answer, whatever the egg did.
+func withUnrelated(_ p: Double) -> Double {
+    (1.0 - unrelated) * p + unrelated / 3.0
+}
+
 /// The noise scale's prior: lognormal, median `noiseMedian` decades of yolk
 /// dose. 0.20 gives "just right" 0.81 at the band's centre and 0.093 one
 /// band-width out, where the likelihood it replaces gave 0.8 and 0.1. See
@@ -180,12 +186,6 @@ public func createPrior(count: Int, seed: Int32) -> Posterior {
 
 // MARK: - The likelihood
 
-/// The standard normal CDF, from the core's own erfc - the one both languages
-/// already share - rather than the platform's.
-private func normalCdf(_ x: Double) -> Double {
-    0.5 * Sphere.complementaryError(-x / 2.0.squareRoot())
-}
-
 /// Too soft, just right, too firm, for one particle, before the unrelated share.
 /// Internal rather than private: the decision (Decide.swift) scores candidate
 /// times with the same arithmetic the filter learns with.
@@ -253,17 +253,17 @@ public func answerLikelihood(
     if let probeC { l *= probeLikelihood(grid, p, cookTimeS, probeC) }
     if let yolk {
         let probs = yolkProbit(grid, p, cookTimeS, logNominalTarget)
-        l *= (1.0 - unrelated) * probs[yolk.rawValue + 1] + unrelated / 3.0
+        l *= withUnrelated(probs[yolk.rawValue + 1])
     }
     if let white {
         let probs = whiteProbit(grid, p, cookTimeS)
         switch white {
         case .runny:
-            l *= (1.0 - unrelated) * probs[0] + unrelated / 3.0
+            l *= withUnrelated(probs[0])
         case .tender:
-            l *= (1.0 - unrelated) * probs[1] + unrelated / 3.0
+            l *= withUnrelated(probs[1])
         case .firm:
-            l *= (1.0 - unrelated) * probs[2] + unrelated / 3.0
+            l *= withUnrelated(probs[2])
         }
     }
     return l

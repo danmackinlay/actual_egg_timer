@@ -50,9 +50,6 @@ public struct Outcome: Sendable, Codable, Equatable {
     public let lean: Lean
 }
 
-private func normalCdf(_ x: Double) -> Double {
-    0.5 * Sphere.complementaryError(-x / 2.0.squareRoot())
-}
 
 /// Which way a miss leans, from the two ways of missing.
 public func leanOf(_ pTooSoft: Double, _ pTooFirm: Double) -> Lean {
@@ -81,10 +78,10 @@ public func predictOutcome(
         if w == 0.0 { continue }
         let yolk = yolkProbit(grid, p, cookTimeS, logNominalTarget)
         let white = whiteProbit(grid, p, cookTimeS)
-        soft += w * ((1.0 - unrelated) * yolk[0] + unrelated / 3.0)
-        right += w * ((1.0 - unrelated) * yolk[1] + unrelated / 3.0)
-        firm += w * ((1.0 - unrelated) * yolk[2] + unrelated / 3.0)
-        runny += w * ((1.0 - unrelated) * white[0] + unrelated / 3.0)
+        soft += w * withUnrelated(yolk[0])
+        right += w * withUnrelated(yolk[1])
+        firm += w * withUnrelated(yolk[2])
+        runny += w * withUnrelated(white[0])
         total += w
     }
     if total > 0.0 {

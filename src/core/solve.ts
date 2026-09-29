@@ -69,6 +69,12 @@ export function donenessFromSlider(level: number): Doneness {
   };
 }
 
+/** log10 of the yolk dose the slider asks for at `level`: the target every
+ *  fold, forecast and odds is scored against. */
+export function logYolkTarget(level: number): number {
+  return Math.log10(donenessFromSlider(level).yolkDose_min);
+}
+
 /** Inverse of the above - which slider position corresponds to a given dose. */
 export function sliderFromYolkDose(yolkDose_min: number): number {
   const lo = Math.log10(YOLK_DOSE_RUNNY);

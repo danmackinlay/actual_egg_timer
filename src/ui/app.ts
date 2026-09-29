@@ -20,7 +20,7 @@ import { SOUS_VIDE_BATH_C, SOUS_VIDE_MODEL_FLOOR_C, sousVideEstimate } from '../
 import {
   Measure, Quantity, UnitSystem, chooseUnits, displayText, parse, sizeClassLabel,
 } from '../core/units.js';
-import { Solution, donenessFromSlider, solveCookTime } from '../core/solve.js';
+import { Solution, logYolkTarget, solveCookTime } from '../core/solve.js';
 import {
   BoilMemory, DEFAULTS, SLIDER_STEPS, SLOW_HOB_EVERY_S, SLOW_HOB_EXTRA_S, SLOW_HOB_WHEN_LEFT_S, Verdict,
   ambientFor, coolingSecondsFor, probeMomentFor, targetPeakYolk_C, textureFor, textureNoteKeys,
@@ -331,7 +331,7 @@ function decided(
   }
   // The odds at every level follow the surface, in the worker.
   if (cachedOddsProfile(inputs, calib) === null) askForProfile(inputs);
-  const logTarget = Math.log10(donenessFromSlider(answer.level).yolkDose_min);
+  const logTarget = logYolkTarget(answer.level);
   const d = decide(calib, grid, answer.solution, logTarget);
   return {
     solution: decidedSolution(egg, setup, calibrationParams(calib), answer.solution, d),
@@ -1057,7 +1057,7 @@ function onPrimary(): void {
       boilRemembered: hasBoilMemory(boilMemory),
       eggFrom: settings.startTempMode,
       setup: buildSetup(boil),
-      logNominalTarget: Math.log10(donenessFromSlider(target).yolkDose_min),
+      logNominalTarget: logYolkTarget(target),
       units: unitSystem(),
       lang: activeLocale(),
       lean_s: decision === null ? 0 : decision.cookTime_s - decision.meanCookTime_s,

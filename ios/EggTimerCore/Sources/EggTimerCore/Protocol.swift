@@ -116,18 +116,9 @@ public enum Protocols {
         setup: CookSetup, elapsedSincePullS: Double,
         waterAtPullC: Double, meanAtPullC: Double, tauAirScale: Double
     ) -> Double {
-        var target: Double
-        switch setup.cooling {
-        case .ice:
-            target = Constants.tIceBathC
-        case .tap:
-            // Mains water is not room temperature: nearer ground temperature.
-            target = Constants.tColdTapC
-        case .counter:
-            let tau = Constants.tauAir * tauAirScale
-            target = setup.ambientC
-                + (meanAtPullC - setup.ambientC) * exp(-elapsedSincePullS / tau)
-        }
+        let target = setup.cooling == .counter
+            ? setup.ambientC + (meanAtPullC - setup.ambientC) * exp(-elapsedSincePullS / (Constants.tauAir * tauAirScale))
+            : coolingMediumC(setup.cooling, ambientC: setup.ambientC)
         // Blend out of the water temperature rather than jumping, so the
         // surface is continuous at the moment of pulling.
         return target + (waterAtPullC - target) * exp(-elapsedSincePullS / Constants.tauPlunge)
@@ -167,5 +158,16 @@ public enum Protocols {
     /// Water temperature at the moment the egg goes in.
     static func initialSurfaceTemperature(_ egg: Egg, _ setup: CookSetup) -> Double {
         bathTemperature(egg, setup, tS: 0.0)
+    }
+}
+
+/// What the egg cools in, C: the ice bath, the tap's water, or on the counter
+/// the room. Mains water is not room temperature: nearer ground temperature,
+/// so it has its own constant.
+public func coolingMediumC(_ cooling: Cooling, ambientC: Double) -> Double {
+    switch cooling {
+    case .ice: Constants.tIceBathC
+    case .tap: Constants.tColdTapC
+    case .counter: ambientC
     }
 }

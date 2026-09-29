@@ -139,32 +139,27 @@ export function lookupPeakYolk_C(g: DoseGrid, alpha_m2s: number, cookTime_s: num
   return interpolate(g.peakYolk_C, g, alpha_m2s, cookTime_s);
 }
 
-/** Invert the surface: the cook time delivering a given log10 yolk dose.
- *  Dose is monotonic in cook time, so bisection on the interpolant is safe. */
-export function cookTimeForLogYolkDose(
-  g: DoseGrid, alpha_m2s: number, logDose: number,
-): number {
+/** The cook time at which `table` reaches `logDose` for this alpha, by
+ *  bisection on the interpolant over the grid's time span. The dose tables are
+ *  monotonic in cook time, which is all bisection needs. */
+function cookTimeFor(table: number[], g: DoseGrid, alpha_m2s: number, logDose: number): number {
   let lo = g.timeMin_s;
   let hi = g.timeMin_s + g.timeStep_s * (g.timeCount - 1);
   for (let i = 0; i < 40; i++) {
     const mid = 0.5 * (lo + hi);
-    if (lookupLogYolkDose(g, alpha_m2s, mid) < logDose) lo = mid;
+    if (interpolate(table, g, alpha_m2s, mid) < logDose) lo = mid;
     else hi = mid;
   }
   return 0.5 * (lo + hi);
 }
 
+/** Invert the surface: the cook time delivering a given log10 yolk dose. */
+export function cookTimeForLogYolkDose(g: DoseGrid, alpha_m2s: number, logDose: number): number {
+  return cookTimeFor(g.logYolk, g, alpha_m2s, logDose);
+}
+
 /** The same for the white: the cook time delivering a given log10 white dose.
  *  Monotonic while the water is held at the boil, as the yolk's is. */
-export function cookTimeForLogWhiteDose(
-  g: DoseGrid, alpha_m2s: number, logDose: number,
-): number {
-  let lo = g.timeMin_s;
-  let hi = g.timeMin_s + g.timeStep_s * (g.timeCount - 1);
-  for (let i = 0; i < 40; i++) {
-    const mid = 0.5 * (lo + hi);
-    if (lookupLogWhiteDose(g, alpha_m2s, mid) < logDose) lo = mid;
-    else hi = mid;
-  }
-  return 0.5 * (lo + hi);
+export function cookTimeForLogWhiteDose(g: DoseGrid, alpha_m2s: number, logDose: number): number {
+  return cookTimeFor(g.logWhite, g, alpha_m2s, logDose);
 }

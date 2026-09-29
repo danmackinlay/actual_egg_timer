@@ -46,6 +46,12 @@ public func donenessFromSlider(_ level: Double) -> Doneness {
     )
 }
 
+/// log10 of the yolk dose the slider asks for at `level`: the target every
+/// fold, forecast and odds is scored against.
+public func logYolkTarget(_ level: Double) -> Double {
+    log10(donenessFromSlider(level).yolkDoseMin)
+}
+
 func sliderFromYolkDose(_ yolkDoseMin: Double) -> Double {
     let lo = log10(yolkDoseRunny)
     let hi = log10(yolkDoseHard)

@@ -15,10 +15,10 @@ import {
   DecisionInputs, LEAN_COST_PER_S, RUNNY_WHITE_LOSS, carriedSolution, chooseCookTime, decideAt,
   decidedSolution, decisionApplies, decisionGridSpec, expectedLoss, hitOdds, oddsInTenths,
 } from '../../src/core/decide.js';
-import { solveCookTime, DEFAULT_PARAMS, Solution } from '../../src/core/solve.js';
+import { DEFAULT_PARAMS, Solution, logYolkTarget, solveCookTime } from '../../src/core/solve.js';
 
 import { particleRows } from './shared.js';
-import { logTarget, referenceSetup } from '../common.js';
+import { referenceSetup } from '../common.js';
 
 /* E5: the time is CHOSEN from the whole posterior, and the two apps must choose
  * the same time for the same posterior and pot. Three things are pinned: where
@@ -94,9 +94,9 @@ export const decidePosteriors: NamedPosterior[] = (() => {
   const learned = createPrior(DECIDE_PARTICLES, DECIDE_SEED);
   // Three eggs: jammy just right with a firm white, soft with a runny white,
   // and jammy again, the yolk alone.
-  updatePosterior(learned, DECIDE_GRID, 464, logTarget(0.41), 0, 'firm');
-  updatePosterior(learned, DECIDE_GRID, 419, logTarget(0.22), null, 'runny');
-  updatePosterior(learned, DECIDE_GRID, 470, logTarget(0.41), 0, null);
+  updatePosterior(learned, DECIDE_GRID, 464, logYolkTarget(0.41), 0, 'firm');
+  updatePosterior(learned, DECIDE_GRID, 419, logYolkTarget(0.22), null, 'runny');
+  updatePosterior(learned, DECIDE_GRID, 470, logYolkTarget(0.41), 0, null);
   // A cook the model knows well, who likes a yolk a fifth of a decade firmer.
   const firmer = createPrior(DECIDE_PARTICLES, DECIDE_SEED);
   for (let i = 0; i < firmer.particles.length; i++) {
@@ -178,7 +178,7 @@ export const decideFixture = {
   cases: DECIDE_CASES.map((c) => {
     const pz = decidePosteriors.find((x) => x.name === c.posterior);
     if (pz === undefined) throw new Error(c.posterior);
-    const target = logTarget(c.level);
+    const target = logYolkTarget(c.level);
     const d = decideAt(pz.post, pz.eggsLogged, DECIDE_GRID, c.meanCookTime_s, c.applies, target);
     const probes = [c.meanCookTime_s - 40, c.meanCookTime_s, c.meanCookTime_s + 25];
     return {

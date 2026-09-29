@@ -77,7 +77,7 @@ func oddsAtLevel(
     let sol = solveCookTime(
         egg: egg, setup: setup, params: calibrationParams(c), doneness: calibrationDoneness(c, level: level)
     )
-    let logTarget = log10(donenessFromSlider(level).yolkDoseMin)
+    let logTarget = logYolkTarget(level)
     return decide(c, grid: grid, solution: sol, logNominalTarget: logTarget).odds
 }
 

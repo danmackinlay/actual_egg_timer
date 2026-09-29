@@ -34,7 +34,7 @@ import {
 import { ALPHA_DEFAULT } from '../src/core/constants.js';
 import { eggFromMass } from '../src/core/geometry.js';
 import {
-  DEFAULT_PARAMS, Solution, donenessFromSlider, solveCookTime,
+  DEFAULT_PARAMS, Solution, donenessFromSlider, logYolkTarget, solveCookTime,
 } from '../src/core/solve.js';
 import {
   CALIBRATION_SEED, PARTICLE_COUNT, calibrationGrid, verdictFor,
@@ -43,7 +43,7 @@ import {
   Calibration, EggRecord, calibrationDoneness, calibrationParams, copyCalibration, foldRecord,
   freshCalibration, gridRequestFor, replay,
 } from '../src/core/record.js';
-import { appSetup, gridFor, knowing, logTarget, recordAt } from '../tools/common.js';
+import { appSetup, gridFor, knowing, recordAt } from '../tools/common.js';
 
 // --------------------------------------------------------------------------
 // shared
@@ -69,7 +69,7 @@ function meanSolve(c: Calibration, level: number, setup = SETUP): { sol: Solutio
 
 function decideFor(c: Calibration, grid: DoseGrid, level: number, setup = SETUP): Decision {
   const m = meanSolve(c, level, setup);
-  return decide(c, grid, m.sol, logTarget(m.level));
+  return decide(c, grid, m.sol, logYolkTarget(m.level));
 }
 
 /** The folds' surfaces, coarser than the app's for the same reason. */
@@ -95,7 +95,7 @@ test('1a. for one particle, the loss is the answers\' less a constant, and the o
   // will SAY.
   const one: Posterior = { particles: [PRIOR.posterior.particles[7]], weights: [1], rng: 1 };
   for (const t of [380, 430, 470, 520]) {
-    const target = logTarget(0.41);
+    const target = logYolkTarget(0.41);
     const y = yolkAnswerProbabilities(one, PRIOR_GRID, t, target);
     const w = whiteAnswerProbabilities(one, PRIOR_GRID, t);
     const answers = y[0] + y[2] + RUNNY_WHITE_LOSS * w[0];
@@ -110,7 +110,7 @@ test('1b. across particles the two answers are correlated: the odds are not the 
   // A slow time-scale makes the yolk soft AND the white runny, so a cook who
   // misses on one tends to miss on both, and the joint beats the product.
   const t = 419;
-  const target = logTarget(0.22);
+  const target = logYolkTarget(0.22);
   const y = yolkAnswerProbabilities(PRIOR.posterior, PRIOR_GRID, t, target);
   const w = whiteAnswerProbabilities(PRIOR.posterior, PRIOR_GRID, t);
   const joint = hitOdds(PRIOR.posterior, PRIOR_GRID, t, target);
@@ -160,7 +160,7 @@ test('2c. a cook the model knows is offered close to the mean solve, and good od
 });
 
 test('2d. the choice is the minimum inside its window, and the cost of leaning moves it by under a second', () => {
-  const target = logTarget(0.41);
+  const target = logYolkTarget(0.41);
   const around = 464;
   const t = chooseCookTime(ONE_EGG.posterior, ONE_EGG_GRID, target, around);
   const f = (s: number): number => expectedLoss(ONE_EGG.posterior, ONE_EGG_GRID, s, target)
@@ -183,7 +183,7 @@ test('2e. where the loss is flat, the choice stops at the earliest time that is 
   const counter = appSetup({ cooling: 'counter' });
   const grid = gridFor(ONE_EGG, EGG, counter);
   const d = decideFor(ONE_EGG, grid, 0.0, counter);
-  const target = logTarget(meanSolve(ONE_EGG, 0.0, counter).level);
+  const target = logYolkTarget(meanSolve(ONE_EGG, 0.0, counter).level);
   const slope = (expectedLoss(ONE_EGG.posterior, grid, d.cookTime_s + 2, target)
     - expectedLoss(ONE_EGG.posterior, grid, d.cookTime_s - 2, target)) / 4;
   assert.ok(Math.abs(slope + LEAN_COST_PER_S) < 5e-5 || d.cookTime_s - d.meanCookTime_s >= DECISION_WINDOW_S - 0.1,
@@ -202,7 +202,7 @@ test('3a. before any egg the time is the literature\'s, exactly, on every pot', 
     for (const level of LEVELS) {
       const m = meanSolve(PRIOR, level, setup);
       const literature = solveCookTime(EGG, setup, DEFAULT_PARAMS, donenessFromSlider(m.level)).result.cookTime_s;
-      const d = decide(PRIOR, grid, m.sol, logTarget(m.level));
+      const d = decide(PRIOR, grid, m.sol, logYolkTarget(m.level));
       assert.equal(d.chosen, false);
       assert.equal(d.cookTime_s, literature);
     }
@@ -215,7 +215,7 @@ test('3b. ...because under the prior alone the choice would run far from it (mea
   // September: jammy +42 s, soft +86 s, hard +2 s (`npm run decide -- lean`).
   const lean = (level: number): number => {
     const m = meanSolve(PRIOR, level);
-    return chooseCookTime(PRIOR.posterior, PRIOR_GRID, logTarget(m.level), m.sol.result.cookTime_s) - m.sol.result.cookTime_s;
+    return chooseCookTime(PRIOR.posterior, PRIOR_GRID, logYolkTarget(m.level), m.sol.result.cookTime_s) - m.sol.result.cookTime_s;
   };
   assert.ok(lean(0.41) > 30, `jammy would lean ${lean(0.41).toFixed(1)} s`);
   assert.ok(lean(0.22) > 60, `soft would lean ${lean(0.22).toFixed(1)} s`);
@@ -267,12 +267,12 @@ test('5b. the interval narrows below +-15 s after a few consistent eggs, stays t
   for (let egg = 0; egg <= 8; egg++) {
     const grid = gridFor(c, EGG, SETUP);
     const d = decideFor(c, grid, 0.41);
-    const interval = predictCookTime(c.posterior, grid, logTarget(0.41));
+    const interval = predictCookTime(c.posterior, grid, logYolkTarget(0.41));
     flags.push(stillLearning(interval));
     widths.push((0.5 * (interval.high_s - interval.low_s)).toFixed(1));
     const t = d.cookTime_s;
     const truthGrid = buildRequestedGrid({ egg: EGG, setup: SETUP, tauAirScale: 1, spec: COARSE(ALPHA_DEFAULT, t) });
-    const y = yolkProbit(truthGrid, truth, t, logTarget(0.41));
+    const y = yolkProbit(truthGrid, truth, t, logYolkTarget(0.41));
     const w = whiteProbit(truthGrid, truth, t);
     const r = recordAt(0.41, t, y[0] > 0.5 ? -1 : y[2] > 0.5 ? 1 : 0, w[0] > 0.5 ? 'runny' : w[2] > 0.5 ? 'firm' : 'tender');
     foldRecord(c, r, buildRequestedGrid(gridRequestFor(c, r, COARSE)));
@@ -286,7 +286,7 @@ test('5b. the interval narrows below +-15 s after a few consistent eggs, stays t
   assert.ok(off >= 2 && off <= 5, `first quiet after egg ${off}: +-${widths.join(', ')} s`);
   assert.ok(flags.slice(off).every((f) => !f), `came back: +-${widths.join(', ')} s`);
   // "Forget what it learned" is a fresh calibration: learning again.
-  assert.equal(stillLearning(predictCookTime(PRIOR.posterior, PRIOR_GRID, logTarget(0.41))), true);
+  assert.equal(stillLearning(predictCookTime(PRIOR.posterior, PRIOR_GRID, logYolkTarget(0.41))), true);
 });
 // --------------------------------------------------------------------------
 // 6. The refusals, and a cook under way
@@ -311,7 +311,7 @@ test('6a. the refusals still decide what the slider may ask for; the choice is m
   const sol = solveCookTime(EGG, standing, params, calibrationDoneness(twoRunny, 0.41));
   assert.equal(sol.whiteSets, false);
   assert.equal(decisionApplies(sol), false);
-  const none = decide(twoRunny, grid, sol, logTarget(0.41));
+  const none = decide(twoRunny, grid, sol, logYolkTarget(0.41));
   assert.equal(none.chosen, false);
   assert.equal(none.cookTime_s, sol.result.cookTime_s);
 });
@@ -329,7 +329,7 @@ test('6b. a cold start re-solved for its measured boil keeps its lean, to within
     const lean = atStart.cookTime_s - atStart.meanCookTime_s;
     const m = meanSolve(c, level, measured);
     const carried = carriedSolution(EGG, measured, params, m.sol, lean).result.cookTime_s;
-    const again = decide(c, gridFor(c, EGG, measured), m.sol, logTarget(m.level)).cookTime_s;
+    const again = decide(c, gridFor(c, EGG, measured), m.sol, logYolkTarget(m.level)).cookTime_s;
     rows.push(`L${level}: lean ${lean.toFixed(1)} s, carried ${carried.toFixed(1)}, chosen again ${again.toFixed(1)}`);
     assert.ok(Math.abs(lean) > 3, `L${level}: a lean worth carrying (${lean.toFixed(1)} s)`);
     // Measured 28 September: 3.1 s at soft, where the white binds and the lean
@@ -358,7 +358,7 @@ test('6d. the decided solution is the mean solve moved to the chosen time, and t
   const learned = replay(PRIOR, [recordAt(0.41, 464, 0, 'firm')], COARSE);
   const params = calibrationParams(learned);
   const sol = solveCookTime(EGG, SETUP, params, calibrationDoneness(learned, 0.41));
-  const d = decide(learned, gridFor(learned, EGG, SETUP), sol, logTarget(0.41));
+  const d = decide(learned, gridFor(learned, EGG, SETUP), sol, logYolkTarget(0.41));
   assert.ok(d.chosen);
   assert.notEqual(d.cookTime_s, sol.result.cookTime_s, 'the choice leans off the mean');
   const decided = decidedSolution(EGG, SETUP, params, sol, d);

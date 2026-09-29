@@ -160,7 +160,7 @@ public struct Measure: Sendable, Equatable {
 
 /// Water under Imperial: the US quart in the US, the imperial pint elsewhere.
 func imperialWaterUnit(region: String?) -> UnitId {
-    region?.uppercased() == "US" ? .quarts : .pints
+    isUS(region) ? .quarts : .pints
 }
 
 public func measureFor(_ quantity: Quantity, system: UnitSystem, region: String?) -> Measure {
@@ -267,7 +267,7 @@ public func regionalUnits(
 ) -> UnitSystem {
     if let temperature { return temperature == .fahrenheit ? .imperial : .metric }
     if let measurementSystem { return measurementSystem == .us ? .imperial : .metric }
-    return region?.uppercased() == "US" ? .imperial : .metric
+    return isUS(region) ? .imperial : .metric
 }
 
 /// The cook's choice if they made one, the region's otherwise.

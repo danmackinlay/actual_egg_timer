@@ -304,12 +304,7 @@ public func recordProbeC(_ centreC: Double) -> Double {
 
 /// The coolest thing this cook's egg ever touched, C.
 private func coldestOf(_ s: RecordSetup) -> Double {
-    let bath: Double
-    switch s.cooling {
-    case .ice: bath = Constants.tIceBathC
-    case .tap: bath = Constants.tColdTapC
-    case .counter: bath = s.ambientC
-    }
+    let bath = coolingMediumC(s.cooling, ambientC: s.ambientC)
     return min(s.eggStartC, s.ambientC, bath)
 }
 
@@ -432,10 +427,6 @@ public func recordCookTimeS(_ r: EggRecord) -> Double {
     r.pulledBy == .cook ? r.pulledS : r.recommendedS + r.nudgeS
 }
 
-func recordLogTarget(_ r: EggRecord) -> Double {
-    log10(donenessFromSlider(r.level).yolkDoseMin)
-}
-
 public let productionGrid: GridPolicy = { calibrationGrid(alphaCentre: $0, cookTimeS: $1) }
 
 /// The surface this record is scored on, centred where the posterior stands
@@ -458,7 +449,7 @@ public func foldRecord(_ c: inout Calibration, _ r: EggRecord, grid: DoseGrid) {
     guard recordTeaches(r) else { return }
     updatePosterior(
         &c.posterior, grid: grid, cookTimeS: recordCookTimeS(r),
-        logNominalTarget: recordLogTarget(r), yolk: r.yolk, white: r.white,
+        logNominalTarget: logYolkTarget(r.level), yolk: r.yolk, white: r.white,
         probeC: r.probe?.centreC
     )
     c.eggsLogged += 1

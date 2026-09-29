@@ -24,7 +24,7 @@ import {
 import { ALPHA_DEFAULT } from '../src/core/constants.js';
 import { eggFromMass, Egg } from '../src/core/geometry.js';
 import { CookSetup } from '../src/core/protocol.js';
-import { Solution } from '../src/core/solve.js';
+import { Solution, logYolkTarget } from '../src/core/solve.js';
 import { LevelOdds, OddsProfile, answerAt, oddsProfile } from '../src/core/reach.js';
 import { predictOutcome } from '../src/core/outcome.js';
 import { cookTimeForLogWhiteDose, lookupLogYolkDose } from '../src/core/doseGrid.js';
@@ -36,7 +36,7 @@ import {
 import {
   Calibration, EggRecord, calibrationDoneness, calibrationParams, freshCalibration, replay,
 } from '../src/core/record.js';
-import { appSetup, draw, logTarget, recordAt, rng } from './common.js';
+import { appSetup, draw, recordAt, rng } from './common.js';
 
 const only = process.argv[2] ?? 'all';
 const run = (name: string): boolean => only === 'all' || only === name;
@@ -90,7 +90,7 @@ if (run('cost')) {
     const g = grid as unknown as DoseGrid;
     const m = meanSolve(LEARNED['one egg'], pot.egg, pot.setup, 0.41);
     let d: Decision | null = null;
-    const choose = ms(() => { d = decide(LEARNED['one egg'], g, m.sol, logTarget(m.level)); });
+    const choose = ms(() => { d = decide(LEARNED['one egg'], g, m.sol, logYolkTarget(m.level)); });
     const solve = ms(() => meanSolve(LEARNED['one egg'], pot.egg, pot.setup, 0.41));
     console.log(`${pot.name}: surface ${spec.alphaCount} x ${spec.timeCount} (${spec.timeMin_s.toFixed(0)}-${spec.timeMax_s.toFixed(0)} s) built in ${build.toFixed(0)} ms; `
       + `a decision ${choose.toFixed(1)} ms; the mean solve ${solve.toFixed(1)} ms${(d as Decision | null)?.chosen ? '' : ' (nothing to choose)'}`);
@@ -114,8 +114,8 @@ if (run('accuracy')) {
       });
       for (const level of [0.1, 0.22, 0.41, 0.62, 0.85, 1]) {
         const m = meanSolve(c, pot.egg, pot.setup, level);
-        const a = decide(c, grid, m.sol, logTarget(m.level));
-        const b = decide(c, fine, m.sol, logTarget(m.level));
+        const a = decide(c, grid, m.sol, logYolkTarget(m.level));
+        const b = decide(c, fine, m.sol, logYolkTarget(m.level));
         const e = Math.abs(a.cookTime_s - b.cookTime_s);
         if (e > worst.t) worst = { ...worst, t: e, where: `${name}, level ${m.level}` };
         worst.odds = Math.max(worst.odds, Math.abs(a.odds - b.odds));
@@ -139,8 +139,8 @@ if (run('lean')) {
         const m = meanSolve(c, pot.egg, pot.setup, level);
         const mean = m.sol.result.cookTime_s;
         // Before any egg the app does not choose; this is what it WOULD choose.
-        const t = chooseCookTime(c.posterior, grid, logTarget(m.level), mean);
-        const d = decideAt(c.posterior, c.eggsLogged, grid, mean, true, logTarget(m.level));
+        const t = chooseCookTime(c.posterior, grid, logYolkTarget(m.level), mean);
+        const d = decideAt(c.posterior, c.eggsLogged, grid, mean, true, logYolkTarget(m.level));
         row.push(`${m.level}: ${t - mean >= 0 ? '+' : ''}${(t - mean).toFixed(0)} (${d.oddsTenths}/10)`);
       }
       cells.push(`${name}${c.eggsLogged === 0 ? ' [would]' : ''} ${row.join(' ')}`);
@@ -168,7 +168,7 @@ function simulate(
     const level = levels[k % levels.length];
     for (let egg = 0; egg <= eggs; egg++) {
       const m = meanSolve(cal, REF_EGG, SETUP, level);
-      const target = logTarget(m.level);
+      const target = logYolkTarget(m.level);
       const d = decide(cal, grid, m.sol, target);
       if (egg === eggs) {
         each(cal, d, false, egg, grid, target);
@@ -259,7 +259,7 @@ if (run('runny')) {
   const grid0 = buildRequestedGrid(decisionGridRequest(decisionInputs(PRIOR, REF_EGG, SETUP)));
   const at = (c: Calibration, g: DoseGrid, level: number): Decision => {
     const m = meanSolve(c, REF_EGG, SETUP, level);
-    return decide(c, g, m.sol, logTarget(m.level));
+    return decide(c, g, m.sol, logYolkTarget(m.level));
   };
   const before = [at(PRIOR, grid0, 0.22), at(PRIOR, grid0, 0.41)];
   for (const sequence of ['E3', 'E5'] as const) {
@@ -335,7 +335,7 @@ if (run('advice')) {
         const grid = buildRequestedGrid(decisionGridRequest(decisionInputs(c, REF_EGG, setup)));
         row.push([0.22, 0.41, 0.62, 1].map((level) => {
           const m = meanSolve(c, REF_EGG, setup, level);
-          const d = decide(c, grid, m.sol, logTarget(m.level));
+          const d = decide(c, grid, m.sol, logYolkTarget(m.level));
           return `${m.level === level ? '' : '*'}${d.oddsTenths}`;
         }).join('/'));
       }
@@ -385,7 +385,7 @@ if (run('outcome')) {
     const truth = truths[c];
     const cal: Calibration = { posterior: createPrior(1000, 1 + Math.floor(random() * 2147483646)), eggsLogged: 0 };
     const level = levels[c % levels.length];
-    const target = logTarget(level);
+    const target = logYolkTarget(level);
     for (let k = 0; k < 6; k++) {
       const params = calibrationParams(cal);
       const whiteTarget = Math.log10(calibrationDoneness(cal, level).whiteDose_min);
@@ -468,10 +468,10 @@ if (run('outcome')) {
     for (const level of [0.22, 0.41, 0.62, 1.0]) {
       const m = meanSolve(cal, REF_EGG, SETUP, level);
       let d: Decision | null = null;
-      const dm = ms(() => { for (let i = 0; i < 10; i++) d = decide(cal, g, m.sol, logTarget(m.level)); }) / 10;
+      const dm = ms(() => { for (let i = 0; i < 10; i++) d = decide(cal, g, m.sol, logYolkTarget(m.level)); }) / 10;
       const dd = d as unknown as Decision;
-      let o = predictOutcome(cal.posterior, g, dd.cookTime_s, logTarget(m.level));
-      const om = ms(() => { for (let i = 0; i < 10; i++) o = predictOutcome(cal.posterior, g, dd.cookTime_s, logTarget(m.level)); }) / 10;
+      let o = predictOutcome(cal.posterior, g, dd.cookTime_s, logYolkTarget(m.level));
+      const om = ms(() => { for (let i = 0; i < 10; i++) o = predictOutcome(cal.posterior, g, dd.cookTime_s, logYolkTarget(m.level)); }) / 10;
       console.log(`${name}, level ${level}: ${dd.cookTime_s.toFixed(0)} s, ${dd.oddsTenths}/10; soft/right/firm ${o.pTooSoft.toFixed(2)}/${o.pJustRight.toFixed(2)}/${o.pTooFirm.toFixed(2)}, `
         + `runny ${o.pWhiteRunny.toFixed(2)}; level ${o.levelLow.toFixed(2)}-${o.levelHigh.toFixed(2)} (median ${o.levelMedian.toFixed(2)}), ${o.lean}; `
         + `decision ${dm.toFixed(1)} ms, outcome ${om.toFixed(1)} ms`);

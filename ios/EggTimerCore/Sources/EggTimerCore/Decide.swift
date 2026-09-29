@@ -121,7 +121,8 @@ public func hitOdds(
         let p = post.particles[i]
         let yolk = yolkProbit(grid, p, cookTimeS, logNominalTarget)
         let white = whiteProbit(grid, p, cookTimeS)
-        let right = (1.0 - unrelated) * yolk[1] + unrelated / 3.0
+        let right = withUnrelated(yolk[1])
+        // withUnrelated(white[1]) + withUnrelated(white[2]), in one step.
         let set = (1.0 - unrelated) * (1.0 - white[0]) + 2.0 * unrelated / 3.0
         hit += w * right * set
         total += w

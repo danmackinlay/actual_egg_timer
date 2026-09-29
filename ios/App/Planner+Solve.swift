@@ -114,7 +114,7 @@ extension Planner {
     ) async -> Answer {
         let egg = snapshot.egg
         let calibration = snapshot.calibration
-        let target = log10(donenessFromSlider(answer.level).yolkDoseMin)
+        let target = logYolkTarget(answer.level)
         let d = decide(calibration, grid: grid, solution: answer.solution, logNominalTarget: target)
         var chosen = answer
         chosen.solution = decidedSolution(

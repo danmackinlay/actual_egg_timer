@@ -90,6 +90,12 @@ public enum SizeTable: String, Sendable, Codable {
     case eu, us
 }
 
+/// Whether a platform's region is the United States, the one region whose
+/// eggs, water and default units differ.
+func isUS(_ region: String?) -> Bool {
+    region?.uppercased() == "US"
+}
+
 public func sizeTableFor(region: String?) -> SizeTable {
-    region?.uppercased() == "US" ? .us : .eu
+    isUS(region) ? .us : .eu
 }

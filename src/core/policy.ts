@@ -23,9 +23,9 @@ import { Egg, SIZE_CLASSES, SizeClass, US_SIZE_CLASSES } from './geometry.js';
 import {
   CookResult, DonenessAnchor, DONENESS_ANCHORS, ModelParams, Solution, simulate,
 } from './solve.js';
-import { CookSetup, Cooling } from './protocol.js';
+import { CookSetup, Cooling, coolingMedium_C } from './protocol.js';
 import { GridSpec } from './doseGrid.js';
-import { ALPHA_REL_SD, T_COLD_TAP_C, T_ICE_BATH_C, T_ROOM_C } from './constants.js';
+import { ALPHA_REL_SD, T_ROOM_C } from './constants.js';
 
 /* ------------------------------------------------------------------ bounds */
 
@@ -525,8 +525,7 @@ export function plausibleProbeRange_C(
   const spread = Math.exp(PROBE_ALPHA_SDS * ALPHA_REL_SD);
   const slow = simulate(egg, setup, { alpha_m2s: params.alpha_m2s / spread, tauAirScale: params.tauAirScale }, cookTime_s);
   const fast = simulate(egg, setup, { alpha_m2s: params.alpha_m2s * spread, tauAirScale: params.tauAirScale }, cookTime_s);
-  const bath = setup.cooling === 'ice' ? T_ICE_BATH_C : setup.cooling === 'tap' ? T_COLD_TAP_C : setup.ambient_C;
-  const floor = Math.min(setup.eggStart_C, setup.ambient_C, bath);
+  const floor = Math.min(setup.eggStart_C, setup.ambient_C, coolingMedium_C(setup.cooling, setup.ambient_C));
   const lo = Math.min(slow.peakYolk_C, fast.peakYolk_C) - PROBE_MARGIN_C;
   const hi = Math.max(slow.peakYolk_C, fast.peakYolk_C) + PROBE_MARGIN_C;
   return [lo < floor ? floor : lo, hi > setup.boiling_C ? setup.boiling_C : hi];

@@ -26,14 +26,14 @@ import {
 import { LEAN_RATIO, Outcome, leanOf, predictOutcome } from '../src/core/outcome.js';
 import { ALPHA_DEFAULT } from '../src/core/constants.js';
 import { eggFromMass } from '../src/core/geometry.js';
-import { donenessFromSlider, sliderFromYolkDose } from '../src/core/solve.js';
+import { logYolkTarget, sliderFromYolkDose } from '../src/core/solve.js';
 import { Calibration, calibrationDoneness, calibrationParams } from '../src/core/record.js';
 import { appSetup, draw, rng } from '../tools/common.js';
 
 const EGG = eggFromMass(0.068);
 const SETUP = appSetup();
 const GRID = buildDoseGrid(EGG, SETUP, 1, { alphaMin: ALPHA_DEFAULT * 0.55, alphaMax: ALPHA_DEFAULT * 1.8, alphaCount: 17, timeMin_s: 200, timeMax_s: 900, timeCount: 71 });
-const JAMMY = Math.log10(donenessFromSlider(0.41).yolkDose_min);
+const JAMMY = logYolkTarget(0.41);
 
 function learned(): Posterior {
   const post = createPrior(400, 777);
@@ -160,7 +160,7 @@ test('on simulated cooks the level range holds the egg about four times in five,
     const truth = truths[c];
     const cal: Calibration = { posterior: createPrior(250, 1 + Math.floor(random() * 2147483646)), eggsLogged: 0 };
     const level = levels[c % levels.length];
-    const target = Math.log10(donenessFromSlider(level).yolkDose_min);
+    const target = logYolkTarget(level);
     for (let k = 0; k < 6; k++) {
       const params = calibrationParams(cal);
       const whiteTarget = Math.log10(calibrationDoneness(cal, level).whiteDose_min);

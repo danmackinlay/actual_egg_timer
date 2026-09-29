@@ -149,29 +149,25 @@ public func lookupPeakYolkC(_ g: DoseGrid, _ alphaM2s: Double, _ cookTimeS: Doub
     interpolate(g.peakYolkC, g, alphaM2s, cookTimeS)
 }
 
-/// Invert the surface: the cook time delivering a given log10 yolk dose.
-/// Dose is monotonic in cook time, so bisection on the interpolant is safe.
-public func cookTimeForLogYolkDose(
-    _ g: DoseGrid, _ alphaM2s: Double, _ logDose: Double
-) -> Double {
+/// The cook time at which `table` reaches `logDose` for this alpha, by
+/// bisection on the interpolant over the grid's time span. The dose tables are
+/// monotonic in cook time, which is all bisection needs.
+private func cookTimeFor(_ table: [Double], _ g: DoseGrid, _ alphaM2s: Double, _ logDose: Double) -> Double {
     var lo = g.timeMinS
     var hi = g.timeMinS + g.timeStepS * Double(g.timeCount - 1)
     for _ in 0..<40 {
         let mid = 0.5 * (lo + hi)
-        if lookupLogYolkDose(g, alphaM2s, mid) < logDose { lo = mid } else { hi = mid }
+        if interpolate(table, g, alphaM2s, mid) < logDose { lo = mid } else { hi = mid }
     }
     return 0.5 * (lo + hi)
 }
 
+/// Invert the surface: the cook time delivering a given log10 yolk dose.
+public func cookTimeForLogYolkDose(_ g: DoseGrid, _ alphaM2s: Double, _ logDose: Double) -> Double {
+    cookTimeFor(g.logYolk, g, alphaM2s, logDose)
+}
+
 /// The same for the white: the cook time delivering a given log10 white dose.
-func cookTimeForLogWhiteDose(
-    _ g: DoseGrid, _ alphaM2s: Double, _ logDose: Double
-) -> Double {
-    var lo = g.timeMinS
-    var hi = g.timeMinS + g.timeStepS * Double(g.timeCount - 1)
-    for _ in 0..<40 {
-        let mid = 0.5 * (lo + hi)
-        if lookupLogWhiteDose(g, alphaM2s, mid) < logDose { lo = mid } else { hi = mid }
-    }
-    return 0.5 * (lo + hi)
+func cookTimeForLogWhiteDose(_ g: DoseGrid, _ alphaM2s: Double, _ logDose: Double) -> Double {
+    cookTimeFor(g.logWhite, g, alphaM2s, logDose)
 }

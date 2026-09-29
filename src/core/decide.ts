@@ -82,7 +82,7 @@ import {
 } from './solve.js';
 import { DoseGrid, GridRequest, GridSpec } from './doseGrid.js';
 import {
-  Posterior, UNRELATED, whiteProbit, yolkProbit,
+  Posterior, UNRELATED, whiteProbit, withUnrelated, yolkProbit,
 } from './infer.js';
 import { Calibration, calibrationDoneness, calibrationParams } from './record.js';
 
@@ -205,7 +205,8 @@ export function hitOdds(
     const p = post.particles[i];
     const yolk = yolkProbit(grid, p, cookTime_s, logNominalTarget);
     const white = whiteProbit(grid, p, cookTime_s);
-    const right = (1.0 - UNRELATED) * yolk[1] + UNRELATED / 3.0;
+    const right = withUnrelated(yolk[1]);
+    // withUnrelated(white[1]) + withUnrelated(white[2]), in one step.
     const set = (1.0 - UNRELATED) * (1.0 - white[0]) + 2.0 * UNRELATED / 3.0;
     hit += w * right * set;
     total += w;

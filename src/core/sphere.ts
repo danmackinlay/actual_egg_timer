@@ -192,3 +192,9 @@ export function erfc(x: number): number {
   const ans = t * Math.exp(-z * z + 0.5 * (cof[0] + ty * d) - dd);
   return x >= 0.0 ? ans : 2.0 - ans;
 }
+
+/** The standard normal CDF, from this erfc - the one both languages already
+ *  share to 1e-12 - rather than a platform's. */
+export function normalCdf(x: number): number {
+  return 0.5 * erfc(-x / Math.SQRT2);
+}

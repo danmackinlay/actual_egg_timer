@@ -23,14 +23,14 @@ import { DoseGrid } from '../src/core/doseGrid.js';
 import { createPrior } from '../src/core/infer.js';
 import { eggFromMass } from '../src/core/geometry.js';
 import { CookSetup } from '../src/core/protocol.js';
-import { Solution, solveCookTime } from '../src/core/solve.js';
+import { Solution, logYolkTarget, solveCookTime } from '../src/core/solve.js';
 import { CALIBRATION_SEED, anchorNear, snapUp, verdictFor } from '../src/core/policy.js';
 import { Calibration, calibrationDoneness, calibrationParams } from '../src/core/record.js';
 import {
   ADVICE_BELOW_TENTHS, AdviceFacts, OddsProfile, REACH_ODDS, adviceWanted, oddsAtLevel, oddsNear,
   oddsProfile, pricedChanges, protocolAdvice, shadingOf, unpricedAdvice, verdictWithOdds,
 } from '../src/core/reach.js';
-import { appSetup, gridFor, knowing, logTarget } from '../tools/common.js';
+import { appSetup, gridFor, knowing } from '../tools/common.js';
 
 const EGG = eggFromMass(0.068);
 
@@ -52,7 +52,7 @@ function appAt(c: Calibration, grid: DoseGrid, setup: CookSetup, level: number, 
       at = v.snapTo;
     }
   }
-  return { verdict: v, level: at, decision: decide(c, grid, sol, logTarget(at)) };
+  return { verdict: v, level: at, decision: decide(c, grid, sol, logYolkTarget(at)) };
 }
 
 const FRESH: Calibration = { posterior: createPrior(PARTICLES, CALIBRATION_SEED), eggsLogged: 0 };

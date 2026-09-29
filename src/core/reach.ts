@@ -50,7 +50,7 @@
 
 import { Egg } from './geometry.js';
 import { CookSetup } from './protocol.js';
-import { donenessFromSlider, solveCookTime, Solution } from './solve.js';
+import { Solution, logYolkTarget, solveCookTime } from './solve.js';
 import { DoseGrid } from './doseGrid.js';
 import { decide, oddsInTenths } from './decide.js';
 import { Calibration, calibrationDoneness, calibrationParams } from './record.js';
@@ -108,7 +108,7 @@ export function oddsAtLevel(
   c: Calibration, egg: Egg, setup: CookSetup, grid: DoseGrid, level: number,
 ): number {
   const sol = solveCookTime(egg, setup, calibrationParams(c), calibrationDoneness(c, level));
-  const logTarget = Math.log10(donenessFromSlider(level).yolkDose_min);
+  const logTarget = logYolkTarget(level);
   return decide(c, grid, sol, logTarget).odds;
 }
 

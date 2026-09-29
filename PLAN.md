@@ -587,6 +587,7 @@ SIZE_CLASSES: { key: string; mass_kg: number }[]     // EU, and the default tabl
 US_SIZE_CLASSES: { key: string; mass_kg: number }[]  // region US
 sizeClassesFor(region: string | null | undefined): SizeClass[]
 sizeTableFor(region): 'eu' | 'us'                         // the same choice, by name, for the record
+isUS(region): boolean                      // the one region whose eggs, water and units differ
 
 // thermo.ts
 pressureAtAltitude(altitude_m): number          // Pa
@@ -611,6 +612,7 @@ panTimeConstant(waterLitres): number            // s, heat off and lid on: TAU_S
 standingTemperature(elapsedSinceOff_s, from_C, ambient_C, waterLitres): number
 bathTemperature(egg, setup, t_s): number        // the in-water schedule, t = 0 at egg-in
 coolingTemperature(setup, elapsedSincePull_s, waterAtPull_C, meanAtPull_C, tauAirScale): number
+coolingMedium_C(cooling, ambient_C): number     // the ice bath, the tap's water, or the room
 initialSurfaceTemperature(egg, setup): number
 
 // solve.ts  <- the main entry points
@@ -618,6 +620,7 @@ interface ModelParams { alpha_m2s; tauAirScale }
 DEFAULT_PARAMS: ModelParams
 interface Doneness { level; yolkDose_min; whiteDose_min }
 donenessFromSlider(level: number): Doneness     // level in [0,1]
+logYolkTarget(level): number                    // log10 of that yolk dose: what every fold and odds scores against
 sliderFromYolkDose(dose: number): number
 DONENESS_ANCHORS: { key; level; approxPeakYolk_C }[]   // key into copy/en.json
 interface CookResult {
@@ -730,7 +733,7 @@ recordMass_g(mass_kg)
 
 // sphere.ts (mostly internal; exported for tests)
 createSphere / stepSphere / temperatureAt / centreTemperature / meanTemperature
-seriesTheta(x, Fo) / erfcTheta(x, Fo) / oneTermTheta(x, Fo) / biotNumber / erfc
+seriesTheta(x, Fo) / erfcTheta(x, Fo) / oneTermTheta(x, Fo) / biotNumber / erfc / normalCdf
 
 // kinetics.ts
 createDose(z_K, tref_C) / accumulateDose(d, T_C, dt_s) / holdTimeForDose

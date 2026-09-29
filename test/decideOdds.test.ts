@@ -17,7 +17,7 @@ import {
 } from '../src/core/infer.js';
 import { ALPHA_DEFAULT } from '../src/core/constants.js';
 import { eggFromMass } from '../src/core/geometry.js';
-import { donenessFromSlider } from '../src/core/solve.js';
+import { logYolkTarget } from '../src/core/solve.js';
 import { Calibration, calibrationDoneness, calibrationParams } from '../src/core/record.js';
 import { appSetup, draw, rng } from '../tools/common.js';
 
@@ -50,7 +50,7 @@ test('"7/10 eggs hit the mark" is calibrated: simulated cooks hit it as often as
     const truth: Particle = truths[c];
     const cal: Calibration = { posterior: createPrior(250, 1 + Math.floor(random() * 2147483646)), eggsLogged: 0 };
     const level = levels[c % levels.length];
-    const target = Math.log10(donenessFromSlider(level).yolkDose_min);
+    const target = logYolkTarget(level);
     for (let egg = 0; egg < 6; egg++) {
       // The mean solve, read off the surface rather than solved: the later of
       // the yolk's time at the posterior mean and the white's. It is where the

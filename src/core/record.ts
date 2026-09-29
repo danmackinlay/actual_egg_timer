@@ -32,15 +32,16 @@
  */
 
 import { Egg, SizeTable, eggFromMass } from './geometry.js';
-import { CookSetup, Cooling, HeatAfterBoil, StartMode } from './protocol.js';
-import { DEFAULT_PARAMS, Doneness, ModelParams, WHITE_DOSE_TARGET, donenessFromSlider } from './solve.js';
+import { CookSetup, Cooling, HeatAfterBoil, StartMode, coolingMedium_C } from './protocol.js';
+import {
+  DEFAULT_PARAMS, Doneness, ModelParams, WHITE_DOSE_TARGET, donenessFromSlider, logYolkTarget,
+} from './solve.js';
 import { DoseGrid, GridPolicy, GridRequest, buildRequestedGrid } from './doseGrid.js';
 import {
   Feedback, Particle, Posterior, WhiteReport, createPrior, posteriorMeanWhiteOffset,
   posteriorParams, updatePosterior,
 } from './infer.js';
 import { calibrationGrid } from './policy.js';
-import { T_COLD_TAP_C, T_ICE_BATH_C } from './constants.js';
 
 /** The schema version. A loader refuses any other: a record from a later
  *  schema means something this code does not know how to fold. */
@@ -222,8 +223,7 @@ function isObject(v: unknown): v is Record<string, unknown> {
 /** The coolest thing this cook's egg ever touched, C: the fridge, the room or
  *  the cooling water, whichever is lowest. */
 function coldestOf(s: RecordSetup): number {
-  const bath = s.cooling === 'ice' ? T_ICE_BATH_C : s.cooling === 'tap' ? T_COLD_TAP_C : s.ambient_C;
-  return Math.min(s.eggStart_C, s.ambient_C, bath);
+  return Math.min(s.eggStart_C, s.ambient_C, coolingMedium_C(s.cooling, s.ambient_C));
 }
 
 /**
@@ -467,11 +467,6 @@ export function recordCookTime_s(r: EggRecord): number {
   return r.pulledBy === 'cook' ? r.pulled_s : r.recommended_s + r.nudge_s;
 }
 
-/** log10 of the nominal yolk dose the cook was run at. */
-function recordLogTarget(r: EggRecord): number {
-  return Math.log10(donenessFromSlider(r.level).yolkDose_min);
-}
-
 /** The surface this record is scored on, centred where the posterior stands
  *  NOW - before the egg is folded. */
 export function gridRequestFor(c: Calibration, r: EggRecord, grid: GridPolicy): GridRequest {
@@ -499,7 +494,7 @@ export function gridRequestFor(c: Calibration, r: EggRecord, grid: GridPolicy): 
 export function foldRecord(c: Calibration, r: EggRecord, grid: DoseGrid): void {
   if (!recordTeaches(r)) return;
   updatePosterior(
-    c.posterior, grid, recordCookTime_s(r), recordLogTarget(r), r.yolk, r.white,
+    c.posterior, grid, recordCookTime_s(r), logYolkTarget(r.level), r.yolk, r.white,
     r.probe === null ? null : r.probe.centre_C,
   );
   c.eggsLogged += 1;

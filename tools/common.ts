@@ -16,7 +16,6 @@ import { Feedback, WhiteReport, createPrior } from '../src/core/infer.js';
 import { CALIBRATION_SEED } from '../src/core/policy.js';
 import { CookSetup } from '../src/core/protocol.js';
 import { Calibration, EggRecord, PRIOR_ID } from '../src/core/record.js';
-import { donenessFromSlider } from '../src/core/solve.js';
 
 /* ------------------------------------------------------------------ pots */
 
@@ -74,11 +73,6 @@ export function draw(probs: number[], u: number): number {
     if (u < acc) return k;
   }
   return probs.length - 1;
-}
-
-/** The log10 yolk dose the slider asks for at `level`. */
-export function logTarget(level: number): number {
-  return Math.log10(donenessFromSlider(level).yolkDose_min);
 }
 
 /** A record of a 68 g egg cooked for `t` s in `setup`, pulled by the alarm,

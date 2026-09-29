@@ -10,7 +10,7 @@ import { particleRows } from './shared.js';
 import {
   DECIDE_GRID, DECIDE_PARTICLES, DECIDE_SEED, decidePosteriors, meanSolve,
 } from './decide.js';
-import { logTarget } from '../common.js';
+import { logYolkTarget } from '../../src/core/solve.js';
 
 /* What the egg at the chosen time will be like (src/core/outcome.ts): the
  * three yolk answers, a runny white, the level range and the lean. On
@@ -21,7 +21,7 @@ import { logTarget } from '../common.js';
  * are pinned. */
 
 const outcomeConsistent = createPrior(DECIDE_PARTICLES, DECIDE_SEED);
-for (const t of [464, 462, 463]) updatePosterior(outcomeConsistent, DECIDE_GRID, t, logTarget(0.41), 0, 'firm');
+for (const t of [464, 462, 463]) updatePosterior(outcomeConsistent, DECIDE_GRID, t, logYolkTarget(0.41), 0, 'firm');
 const outcomePosteriors = [...decidePosteriors, { name: 'consistent', eggsLogged: 3, post: outcomeConsistent }];
 
 const OUTCOME_CASES: { posterior: string; level: number; note: string }[] = [
@@ -48,7 +48,7 @@ export const outcomeFixture = {
   cases: OUTCOME_CASES.map((c) => {
     const pz = outcomePosteriors.find((x) => x.name === c.posterior);
     if (pz === undefined) throw new Error(c.posterior);
-    const target = logTarget(c.level);
+    const target = logYolkTarget(c.level);
     const sol = meanSolve(pz, c.level);
     const mean = sol.result.cookTime_s;
     const d = decideAt(pz.post, pz.eggsLogged, DECIDE_GRID, mean, decisionApplies(sol), target);

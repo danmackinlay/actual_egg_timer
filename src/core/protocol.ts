@@ -139,6 +139,15 @@ function standingTemperature(
   return ambient_C + (from_C - ambient_C) * Math.exp(-elapsedSinceOff_s / tau);
 }
 
+/** What the egg cools in, C: the ice bath, the tap's water, or on the counter
+ *  the room. Mains water is NOT room temperature: it arrives at something
+ *  closer to ground temperature, usually below the room and occasionally - a
+ *  long run of pipe in a hot summer - well above it, so it has its own
+ *  constant. */
+export function coolingMedium_C(cooling: Cooling, ambient_C: number): number {
+  return cooling === 'ice' ? T_ICE_BATH_C : cooling === 'tap' ? T_COLD_TAP_C : ambient_C;
+}
+
 /**
  * Surface temperature during cooling.
  *
@@ -161,18 +170,9 @@ export function coolingTemperature(
   setup: CookSetup, elapsedSincePull_s: number,
   waterAtPull_C: number, meanAtPull_C: number, tauAirScale: number,
 ): number {
-  let target: number;
-  if (setup.cooling === 'ice') {
-    target = T_ICE_BATH_C;
-  } else if (setup.cooling === 'tap') {
-    // Mains water is NOT room temperature: it arrives at something closer to
-    // ground temperature, usually below the room and occasionally - a long run
-    // of pipe in a hot summer - well above it. It gets its own constant.
-    target = T_COLD_TAP_C;
-  } else {
-    const tau = TAU_AIR * tauAirScale;
-    target = setup.ambient_C + (meanAtPull_C - setup.ambient_C) * Math.exp(-elapsedSincePull_s / tau);
-  }
+  const target = setup.cooling === 'counter'
+    ? setup.ambient_C + (meanAtPull_C - setup.ambient_C) * Math.exp(-elapsedSincePull_s / (TAU_AIR * tauAirScale))
+    : coolingMedium_C(setup.cooling, setup.ambient_C);
   // Blend out of the water temperature rather than jumping, so the surface is
   // continuous at the moment of pulling. See TAU_PLUNGE.
   return target + (waterAtPull_C - target) * Math.exp(-elapsedSincePull_s / TAU_PLUNGE);

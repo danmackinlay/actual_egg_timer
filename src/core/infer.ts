@@ -61,7 +61,7 @@
 
 import { ALPHA_DEFAULT, ALPHA_REL_SD, Z_WHITE, Z_YOLK } from './constants.js';
 import { ModelParams, WHITE_DOSE_TARGET } from './solve.js';
-import { erfc } from './sphere.js';
+import { erfc, normalCdf } from './sphere.js';
 import {
   DoseGrid, lookupLogYolkDose, lookupLogWhiteDose, lookupPeakYolk_C, cookTimeForLogYolkDose,
   cookTimeForLogWhiteDose,
@@ -119,6 +119,12 @@ export const FEEDBACK_BAND = 0.28;
  *  an otherwise good particle. It stands in for nothing else: the noise scale
  *  does the work of ordinary disagreement. */
 export const UNRELATED = 0.05;
+
+/** One answer's probability `p` with the unrelated share mixed in: the chance
+ *  the cook gives that answer, whatever the egg did. */
+export function withUnrelated(p: number): number {
+  return (1.0 - UNRELATED) * p + UNRELATED / 3.0;
+}
 
 /**
  * The noise scale's prior: lognormal, median NOISE_MEDIAN decades of yolk dose.
@@ -315,12 +321,6 @@ export function createPrior(count: number, seed: number): Posterior {
 
 /* ---- the likelihood ---- */
 
-/** The standard normal CDF, from the core's own erfc - the one both languages
- *  already share to 1e-12, rather than a platform's. */
-function normalCdf(x: number): number {
-  return 0.5 * erfc(-x / Math.SQRT2);
-}
-
 /** Probabilities of the three yolk answers, in the order too soft, just right,
  *  too firm, for one particle - before the unrelated share. Exported for the
  *  decision (decide.ts), which scores candidate times with the same arithmetic
@@ -369,12 +369,12 @@ export function answerLikelihood(
   if (probe_C !== null) l *= probeLikelihood(grid, p, cookTime_s, probe_C);
   if (yolk !== null) {
     const probs = yolkProbit(grid, p, cookTime_s, logNominalTarget);
-    l *= (1.0 - UNRELATED) * probs[yolkIndex(yolk)] + UNRELATED / 3.0;
+    l *= withUnrelated(probs[yolkIndex(yolk)]);
   }
   if (white !== null) {
     const probs = whiteProbit(grid, p, cookTime_s);
     const k = white === 'runny' ? 0 : white === 'tender' ? 1 : 2;
-    l *= (1.0 - UNRELATED) * probs[k] + UNRELATED / 3.0;
+    l *= withUnrelated(probs[k]);
   }
   return l;
 }
@@ -437,7 +437,7 @@ export function yolkAnswerProbabilities(
   for (let i = 0; i < post.particles.length; i++) {
     const probs = yolkProbit(grid, post.particles[i], cookTime_s, logNominalTarget);
     const w = post.weights[i];
-    for (let k = 0; k < 3; k++) out[k] += w * ((1.0 - UNRELATED) * probs[k] + UNRELATED / 3.0);
+    for (let k = 0; k < 3; k++) out[k] += w * withUnrelated(probs[k]);
     total += w;
   }
   for (let k = 0; k < 3; k++) out[k] = total <= 0.0 ? 1.0 / 3.0 : out[k] / total;
@@ -453,7 +453,7 @@ export function whiteAnswerProbabilities(
   for (let i = 0; i < post.particles.length; i++) {
     const probs = whiteProbit(grid, post.particles[i], cookTime_s);
     const w = post.weights[i];
-    for (let k = 0; k < 3; k++) out[k] += w * ((1.0 - UNRELATED) * probs[k] + UNRELATED / 3.0);
+    for (let k = 0; k < 3; k++) out[k] += w * withUnrelated(probs[k]);
     total += w;
   }
   for (let k = 0; k < 3; k++) out[k] = total <= 0.0 ? 1.0 / 3.0 : out[k] / total;

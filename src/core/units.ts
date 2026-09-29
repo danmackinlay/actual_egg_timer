@@ -43,7 +43,7 @@
  */
 
 import { LIMITS, Limit, clamp } from './policy.js';
-import { SizeClass } from './geometry.js';
+import { SizeClass, isUS } from './geometry.js';
 import { Fixed } from './format.js';
 
 /** The one setting. The record's `Units` is the same pair. */
@@ -220,7 +220,7 @@ export interface Measure {
 /** The unit water is measured in under Imperial: the US quart in the US, the
  *  imperial pint everywhere else. Region only, as for the size classes. */
 function imperialWaterUnit(region: string | null | undefined): UnitId {
-  return typeof region === 'string' && region.toUpperCase() === 'US' ? 'qt' : 'pt';
+  return isUS(region) ? 'qt' : 'pt';
 }
 
 export function measureFor(
@@ -358,7 +358,7 @@ export function regionalUnits(p: PlatformUnits): UnitSystem {
   if (p.measurementSystem !== undefined && p.measurementSystem !== null) {
     return p.measurementSystem === 'us' ? 'imperial' : 'metric';
   }
-  return typeof p.region === 'string' && p.region.toUpperCase() === 'US' ? 'imperial' : 'metric';
+  return isUS(p.region) ? 'imperial' : 'metric';
 }
 
 /** The system in use: the cook's choice if they made one, the region's

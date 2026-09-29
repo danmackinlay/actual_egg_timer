@@ -66,7 +66,7 @@
 
 import { DoseGrid, lookupLogYolkDose } from './doseGrid.js';
 import { Posterior, whiteAnswerProbabilities, yolkAnswerProbabilities } from './infer.js';
-import { erfc } from './sphere.js';
+import { normalCdf } from './sphere.js';
 import { YOLK_DOSE_HARD, YOLK_DOSE_RUNNY } from './solve.js';
 
 /** How much likelier one way of missing has to be than the other before the
@@ -106,10 +106,6 @@ export interface Outcome {
   levelHigh: number;
   /** Which way a miss is more likely. */
   lean: Lean;
-}
-
-function normalCdf(x: number): number {
-  return 0.5 * erfc(-x / Math.SQRT2);
 }
 
 /** Which way a miss leans, from the two ways of missing. */

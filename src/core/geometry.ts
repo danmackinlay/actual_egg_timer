@@ -118,6 +118,12 @@ export function sizeClassesFor(region: string | null | undefined): SizeClass[] {
  *  differs with it. */
 export type SizeTable = 'eu' | 'us';
 
+/** Whether a platform's region is the United States, the one region whose
+ *  eggs, water and default units differ. */
+export function isUS(region: string | null | undefined): boolean {
+  return typeof region === 'string' && region.toUpperCase() === 'US';
+}
+
 export function sizeTableFor(region: string | null | undefined): SizeTable {
-  return typeof region === 'string' && region.toUpperCase() === 'US' ? 'us' : 'eu';
+  return isUS(region) ? 'us' : 'eu';
 }
