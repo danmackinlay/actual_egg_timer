@@ -12,7 +12,7 @@ import { OddsProfile, shadingOf } from '../core/reach.js';
 import { Outcome } from '../core/outcome.js';
 import { rangeWords } from '../core/wording.js';
 import { t } from './copy.js';
-import { dom } from './dom.js';
+import { page } from './dom.js';
 import { clampNumber } from './store.js';
 import { show } from './units.js';
 
@@ -29,13 +29,13 @@ export function renderDonenessReading(
   const doneness = t(anchorNear(level).key);
   if ('bath_C' in reading) {
     const bath = show('temperature', reading.bath_C);
-    dom.donenessPeak.textContent = t('controls.doneness.bath', { bath: bath });
-    dom.doneness.setAttribute('aria-valuetext', t('controls.doneness.valueBath', { doneness: doneness, bath: bath }));
+    page().donenessPeak.textContent = t('controls.doneness.bath', { bath: bath });
+    page().doneness.setAttribute('aria-valuetext', t('controls.doneness.valueBath', { doneness: doneness, bath: bath }));
     return;
   }
   const yolk = show('temperature', reading.peakYolk_C);
-  dom.donenessPeak.textContent = t('controls.doneness.peak', { yolk: yolk });
-  dom.doneness.setAttribute('aria-valuetext', t('controls.doneness.value', { doneness: doneness, yolk: yolk }));
+  page().donenessPeak.textContent = t('controls.doneness.peak', { yolk: yolk });
+  page().doneness.setAttribute('aria-valuetext', t('controls.doneness.value', { doneness: doneness, yolk: yolk }));
 }
 
 /** Stripe out the parts of the track this setup cannot deliver: the soft end
@@ -51,8 +51,8 @@ export function renderDonenessScale(
 ): void {
   const softest = sol.whiteSets ? sol.softestLevel : 1;
   const hardest = sol.whiteSets ? sol.hardestLevel : 0;
-  dom.donenessBlockedSoft.style.width = `${percent(softest)}%`;
-  dom.donenessBlockedHard.style.width = `${percent(1 - hardest)}%`;
+  page().donenessBlockedSoft.style.width = `${percent(softest)}%`;
+  page().donenessBlockedHard.style.width = `${percent(1 - hardest)}%`;
 
   // The odds at each level, relative to the best level's, and the levels the
   // pan can deliver but the odds do not offer yet (reach.ts).
@@ -60,11 +60,11 @@ export function renderDonenessScale(
   const offeredSoft = odds !== null && odds.softest !== null ? odds.softest : softest;
   const offeredHard = odds !== null && odds.hardest !== null ? odds.hardest : hardest;
   const refusing = odds !== null && odds.softest !== null && odds.hardest !== null;
-  placeBand(dom.donenessUnlikelySoft, refusing ? odds.physicalSoftest : 0, refusing ? offeredSoft : 0);
-  placeBand(dom.donenessUnlikelyHard, refusing ? offeredHard : 0, refusing ? odds.physicalHardest : 0);
+  placeBand(page().donenessUnlikelySoft, refusing ? odds.physicalSoftest : 0, refusing ? offeredSoft : 0);
+  placeBand(page().donenessUnlikelyHard, refusing ? offeredHard : 0, refusing ? odds.physicalHardest : 0);
   renderBracket(bracket);
 
-  const ticks = dom.donenessTicks.children;
+  const ticks = page().donenessTicks.children;
   for (let i = 0; i < ticks.length; i += 1) {
     const anchor = DONENESS_ANCHORS[i];
     if (anchor === undefined) continue;
@@ -79,19 +79,19 @@ export function renderDonenessScale(
  *  screen reader, each end as the nearest doneness word. Nothing without an
  *  outcome: no decision yet, no white, sous-vide, or a cook under way. */
 export function renderBracket(o: Outcome | null): void {
-  dom.donenessBracket.hidden = o === null;
+  page().donenessBracket.hidden = o === null;
   if (o === null) {
-    dom.donenessRange.textContent = '';
+    page().donenessRange.textContent = '';
     return;
   }
-  placeBand(dom.donenessBracket, o.levelLow, o.levelHigh);
+  placeBand(page().donenessBracket, o.levelLow, o.levelHigh);
   const span = o.levelHigh - o.levelLow;
   const middle = span > 0 ? (o.levelMedian - o.levelLow) / span : 0.5;
-  dom.donenessMedian.style.left = `${clampNumber(middle * 100, { lo: 0, hi: 100 }, 50)}%`;
+  page().donenessMedian.style.left = `${clampNumber(middle * 100, { lo: 0, hi: 100 }, 50)}%`;
   const words = rangeWords(o);
   const args: Record<string, string> = {};
   for (const [name, key] of Object.entries(words.args)) args[name] = t(key);
-  dom.donenessRange.textContent = t(words.key, args);
+  page().donenessRange.textContent = t(words.key, args);
 }
 
 /** A level as a percentage of the track, clamped. */
@@ -122,8 +122,8 @@ function renderOddsBand(odds: OddsProfile | null): void {
     mask = `linear-gradient(to right, transparent ${first.toFixed(2)}%, `
       + `${stops.join(', ')}, transparent ${last.toFixed(2)}%)`;
   }
-  dom.donenessOdds.style.setProperty('-webkit-mask-image', mask);
-  dom.donenessOdds.style.setProperty('mask-image', mask);
+  page().donenessOdds.style.setProperty('-webkit-mask-image', mask);
+  page().donenessOdds.style.setProperty('mask-image', mask);
 }
 
 /** One tick per doneness word, placed at its level. Once, at boot. */
@@ -131,14 +131,14 @@ export function buildTicks(): void {
   for (const anchor of DONENESS_ANCHORS) {
     const span = document.createElement('span');
     span.style.left = `${anchor.level * 100}%`;
-    dom.donenessTicks.append(span);
+    page().donenessTicks.append(span);
   }
   labelTicks();
 }
 
 /** The ticks' words, in the language on screen. Again whenever it changes. */
 export function labelTicks(): void {
-  const spans = dom.donenessTicks.querySelectorAll<HTMLSpanElement>('span');
+  const spans = page().donenessTicks.querySelectorAll<HTMLSpanElement>('span');
   DONENESS_ANCHORS.forEach((anchor, i) => {
     if (spans[i] !== undefined) spans[i].textContent = t(anchor.key);
   });

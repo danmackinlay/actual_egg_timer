@@ -13,7 +13,7 @@ import { EggFrom } from '../core/record.js';
 import { Clause, ClauseKeys, clauseKeys } from '../core/wording.js';
 import { midSentence } from '../core/copy.js';
 import { activeLocale, t } from './copy.js';
-import { dom, el } from './dom.js';
+import { el, page } from './dom.js';
 import { Settings, UiStartMode } from './store.js';
 import { Ticket } from './ticket.js';
 import { show, unitSystem } from './units.js';
@@ -139,7 +139,7 @@ export function renderSentence(facts: SetupFacts): void {
     button.setAttribute('aria-label', t('setup.clause', { label: texts[clause].label, value: texts[clause].value }));
     nodes.push(button);
   });
-  dom.sentence.replaceChildren(...nodes);
+  page().sentence.replaceChildren(...nodes);
   if (focused instanceof HTMLElement && focused.isConnected && focused !== document.activeElement) focused.focus();
   // A choice whose clause the sentence no longer has - sous-vide drops two -
   // closes with it.
@@ -161,14 +161,14 @@ export function redrawSentence(): void {
  *  doneness the cook was started at. Sous-vide never runs a cook, so it never
  *  shows this. */
 export function renderCookSetup(k: Ticket | null, targetLevel: number, classes: SizeClass[]): void {
-  dom.cookSetup.hidden = k === null;
+  page().cookSetup.hidden = k === null;
   if (k === null) return;
   const texts = clauseTexts(ticketSetupFacts(k, classes));
-  dom.cookSentence.textContent = t('setup.sentence', {
+  page().cookSentence.textContent = t('setup.sentence', {
     egg: texts.egg.text, from: texts.from.text, start: texts.start.text, cooling: texts.cooling.text,
   });
   // The peak yolk the cook was started with.
-  dom.cookDoneness.textContent = t('cook.summary', {
+  page().cookDoneness.textContent = t('cook.summary', {
     doneness: midSentence(t(anchorNear(targetLevel).key), activeLocale()),
     yolk: show('temperature', k.peakYolk_C),
   });
