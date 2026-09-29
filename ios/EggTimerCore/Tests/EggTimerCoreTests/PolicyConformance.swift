@@ -19,23 +19,24 @@ import Foundation
 @Suite("Snapping and the labels match the reference implementation")
 struct SliderConformance {
     @Test("the slider grid is the same grid")
-    func steps() {
-        let slider = Fixtures.policyObject("slider")
-        expectClose(sliderSteps, slider.num("steps"), "sliderSteps")
+    func steps() throws {
+        let slider = try Fixtures.policyObject("slider")
+        try expectClose(sliderSteps, slider.num("steps"), "sliderSteps")
     }
 
     @Test("snapUp, snapDown, anchorNear and the target temperature, every case")
-    func cases() {
-        for c in Fixtures.policyCases("slider.cases") {
-            let level = c.num("level")
-            expectClose(snapUp(level), c.num("snapUp"), "snapUp(\(level))")
-            expectClose(snapDown(level), c.num("snapDown"), "snapDown(\(level))")
-            expectClose(
+    func cases() throws {
+        for c in try Fixtures.policyCases("slider.cases") {
+            let level = try c.num("level")
+            try expectClose(snapUp(level), c.num("snapUp"), "snapUp(\(level))")
+            try expectClose(snapDown(level), c.num("snapDown"), "snapDown(\(level))")
+            try expectClose(
                 targetPeakYolkC(level), c.num("targetPeakYolk_C"), "targetPeakYolkC(\(level))"
             )
+            let anchor = try c.str("anchor")
             #expect(
-                anchorNear(level).key == c.str("anchor"),
-                "anchorNear(\(level)): expected \(c.str("anchor")), got \(anchorNear(level).key)"
+                anchorNear(level).key == anchor,
+                "anchorNear(\(level)): expected \(anchor), got \(anchorNear(level).key)"
             )
         }
     }
@@ -64,26 +65,26 @@ struct VerdictConformance {
     }
 
     @Test("kind, labels, snap target and whether it is worth saying")
-    func cases() {
-        for c in Fixtures.policyCases("verdict") {
-            let level = c.num("level")
-            let sol = solution(
+    func cases() throws {
+        for c in try Fixtures.policyCases("verdict") {
+            let level = try c.num("level")
+            let sol = try solution(
                 reachable: c.flag("reachable"),
                 whiteSets: c.flag("whiteSets"),
                 softestLevel: c.num("softestLevel"),
                 hardestLevel: c.num("hardestLevel")
             )
             let v = verdictFor(sol, level: level)
-            let what = "verdict(level \(level), reachable \(c.flag("reachable")),"
-                + " whiteSets \(c.flag("whiteSets")), softest \(c.num("softestLevel")),"
-                + " hardest \(c.num("hardestLevel")))"
+            let what = "verdict(level \(level), reachable \(sol.reachable),"
+                + " whiteSets \(sol.whiteSets), softest \(sol.softestLevel),"
+                + " hardest \(sol.hardestLevel))"
 
-            #expect(v.kind.rawValue == c.str("kind"), "\(what) kind")
-            #expect(v.wanted.key == c.str("wanted"), "\(what) wanted")
-            #expect(v.limit.key == c.str("limit"), "\(what) limit")
-            #expect(v.worthSaying == c.flag("worthSaying"), "\(what) worthSaying")
+            #expect(try v.kind.rawValue == c.str("kind"), "\(what) kind")
+            #expect(try v.wanted.key == c.str("wanted"), "\(what) wanted")
+            #expect(try v.limit.key == c.str("limit"), "\(what) limit")
+            #expect(try v.worthSaying == c.flag("worthSaying"), "\(what) worthSaying")
 
-            switch (v.snapTo, c.optionalNum("snapTo")) {
+            switch (v.snapTo, try c.optionalNum("snapTo")) {
             case (nil, nil):
                 break
             case let (actual?, expected?):
@@ -98,33 +99,33 @@ struct VerdictConformance {
 @Suite("Texture bands match the reference implementation")
 struct TextureConformance {
     @Test("the named edges: texture bands, the room egg, the calibration grid's alpha")
-    func edges() {
-        let e = Fixtures.policyObject("edges")
-        guard let white = e["whiteBandBelow_C"] as? [String: Any],
-              let yolk = e["yolkBandBelow_C"] as? [String: Any] else { fatalError("edges") }
-        #expect(WhiteBandBelowC.justSet == white.num("justSet"))
-        #expect(WhiteBandBelowC.set == white.num("set"))
-        #expect(YolkBandBelowC.liquid == yolk.num("liquid"))
-        #expect(YolkBandBelowC.soft == yolk.num("soft"))
-        #expect(YolkBandBelowC.jammy == yolk.num("jammy"))
-        #expect(YolkBandBelowC.fudgy == yolk.num("fudgy"))
-        #expect(roomEggFromC == e.num("roomEggFrom_C"))
-        #expect(calibrationAlphaLow == e.num("calibrationAlphaLow"))
-        #expect(calibrationAlphaHigh == e.num("calibrationAlphaHigh"))
+    func edges() throws {
+        let e = try Fixtures.policyObject("edges")
+        let white = try e.object("whiteBandBelow_C")
+        let yolk = try e.object("yolkBandBelow_C")
+        #expect(try WhiteBandBelowC.justSet == white.num("justSet"))
+        #expect(try WhiteBandBelowC.set == white.num("set"))
+        #expect(try YolkBandBelowC.liquid == yolk.num("liquid"))
+        #expect(try YolkBandBelowC.soft == yolk.num("soft"))
+        #expect(try YolkBandBelowC.jammy == yolk.num("jammy"))
+        #expect(try YolkBandBelowC.fudgy == yolk.num("fudgy"))
+        #expect(try roomEggFromC == e.num("roomEggFrom_C"))
+        #expect(try calibrationAlphaLow == e.num("calibrationAlphaLow"))
+        #expect(try calibrationAlphaHigh == e.num("calibrationAlphaHigh"))
     }
 
     @Test("every band boundary, from both sides, and a white that never sets")
-    func cases() {
+    func cases() throws {
         var runny = 0
-        for c in Fixtures.policyCases("texture") {
-            let yolk = c.num("peakYolk_C")
-            let white = c.num("peakWhite_C")
-            let sets = c.flag("whiteSets")
+        for c in try Fixtures.policyCases("texture") {
+            let yolk = try c.num("peakYolk_C")
+            let white = try c.num("peakWhite_C")
+            let sets = try c.flag("whiteSets")
             let t = textureFor(peakYolkC: yolk, peakWhiteC: white, whiteSets: sets)
-            #expect(t.white.rawValue == c.str("white"), "white band at \(white) C, sets \(sets)")
-            #expect(t.yolk.rawValue == c.str("yolk"), "yolk band at \(yolk) C")
+            #expect(try t.white.rawValue == c.str("white"), "white band at \(white) C, sets \(sets)")
+            #expect(try t.yolk.rawValue == c.str("yolk"), "yolk band at \(yolk) C")
             let note = textureNoteKeys(t)
-            #expect(note.key == c.str("noteKey"), "note at \(yolk) / \(white) C, sets \(sets)")
+            #expect(try note.key == c.str("noteKey"), "note at \(yolk) / \(white) C, sets \(sets)")
             #expect(note.parts["white"] == c["noteWhite"] as? String, "note's white at \(white) C")
             #expect(note.parts["yolk"] == c["noteYolk"] as? String, "note's yolk at \(yolk) C")
             if !sets { runny += 1 }
@@ -150,47 +151,50 @@ struct CalibrationGridConformance {
     /// `buildDoseGrid`, so they decide what the filter can see and therefore
     /// what the posterior becomes.
     @Test("extent and resolution, including the floor on a short cook")
-    func cases() {
-        for c in Fixtures.policyCases("calibrationGrid") {
-            let g = calibrationGrid(
-                alphaCentre: c.num("alphaCentre"), cookTimeS: c.num("cookTime_s")
-            )
-            let what = "grid(alpha \(c.num("alphaCentre")), cook \(c.num("cookTime_s")))"
-            expectClose(g.alphaMin, c.num("alphaMin"), "\(what) alphaMin")
-            expectClose(g.alphaMax, c.num("alphaMax"), "\(what) alphaMax")
-            expectClose(Double(g.alphaCount), c.num("alphaCount"), "\(what) alphaCount")
-            expectClose(g.timeMinS, c.num("timeMin_s"), "\(what) timeMinS")
-            expectClose(g.timeMaxS, c.num("timeMax_s"), "\(what) timeMaxS")
-            expectClose(Double(g.timeCount), c.num("timeCount"), "\(what) timeCount")
+    func cases() throws {
+        for c in try Fixtures.policyCases("calibrationGrid") {
+            let alphaCentre = try c.num("alphaCentre")
+            let cookTimeS = try c.num("cookTime_s")
+            let g = calibrationGrid(alphaCentre: alphaCentre, cookTimeS: cookTimeS)
+            let what = "grid(alpha \(alphaCentre), cook \(cookTimeS))"
+            try expectClose(g.alphaMin, c.num("alphaMin"), "\(what) alphaMin")
+            try expectClose(g.alphaMax, c.num("alphaMax"), "\(what) alphaMax")
+            try expectClose(Double(g.alphaCount), c.num("alphaCount"), "\(what) alphaCount")
+            try expectClose(g.timeMinS, c.num("timeMin_s"), "\(what) timeMinS")
+            try expectClose(g.timeMaxS, c.num("timeMax_s"), "\(what) timeMaxS")
+            try expectClose(Double(g.timeCount), c.num("timeCount"), "\(what) timeCount")
         }
     }
 
     @Test("the particle count and seed are the same kitchen")
-    func particles() {
-        let calibration = Fixtures.policyObject("calibration")
-        expectClose(Double(particleCount), calibration.num("particles"), "particleCount")
-        expectClose(Double(calibrationSeed), calibration.num("seed"), "calibrationSeed")
+    func particles() throws {
+        let calibration = try Fixtures.policyObject("calibration")
+        try expectClose(Double(particleCount), calibration.num("particles"), "particleCount")
+        try expectClose(Double(calibrationSeed), calibration.num("seed"), "calibrationSeed")
     }
 }
 
 @Suite("Boil memory matches the reference implementation")
 struct BoilMemoryConformance {
     @Test("a first measurement is whole, a second is blended")
-    func blend() {
-        let blend = Fixtures.policyCases("boilMemory.blend")
-        let first = rememberBoil([:], litres: 2, seconds: blend[0].num("measured"))
-        expectClose(estimateTimeToBoil(first, litres: 2), blend[0].num("result"), "first measurement")
-        let second = rememberBoil(first, litres: 2, seconds: blend[1].num("measured"))
-        expectClose(estimateTimeToBoil(second, litres: 2), blend[1].num("result"), "blended")
+    func blend() throws {
+        let blend = try Fixtures.policyCases("boilMemory.blend")
+        try #require(blend.count >= 2, "boilMemory.blend needs a first and a second measurement")
+        let first = try rememberBoil([:], litres: 2, seconds: blend[0].num("measured"))
+        try expectClose(estimateTimeToBoil(first, litres: 2), blend[0].num("result"), "first measurement")
+        let second = try rememberBoil(first, litres: 2, seconds: blend[1].num("measured"))
+        try expectClose(estimateTimeToBoil(second, litres: 2), blend[1].num("result"), "blended")
     }
 
     @Test("an incredible measurement is refused rather than remembered")
-    func refused() {
-        for c in Fixtures.policyCases("boilMemory.refused") {
-            let memory = rememberBoil([:], litres: 2, seconds: c.num("seconds"))
+    func refused() throws {
+        for c in try Fixtures.policyCases("boilMemory.refused") {
+            let seconds = try c.num("seconds")
+            let remembered = try c.flag("remembered")
+            let memory = rememberBoil([:], litres: 2, seconds: seconds)
             #expect(
-                hasBoilMemory(memory) == c.flag("remembered"),
-                "a \(c.num("seconds")) s tap should\(c.flag("remembered") ? "" : " not") be remembered"
+                hasBoilMemory(memory) == remembered,
+                "a \(seconds) s tap should\(remembered ? "" : " not") be remembered"
             )
         }
     }
@@ -199,16 +203,16 @@ struct BoilMemoryConformance {
     /// has no order of its own, which is exactly how the two apps could once
     /// give different answers for the same two equidistant pans.
     @Test("the nearest remembered volume does not depend on insertion order")
-    func estimate() {
+    func estimate() throws {
         let forward = rememberBoil(rememberBoil([:], litres: 1, seconds: 300), litres: 3, seconds: 900)
         let backward = rememberBoil(rememberBoil([:], litres: 3, seconds: 900), litres: 1, seconds: 300)
-        for c in Fixtures.policyCases("boilMemory.estimate") {
-            let litres = c.num("litres")
-            expectClose(
+        for c in try Fixtures.policyCases("boilMemory.estimate") {
+            let litres = try c.num("litres")
+            try expectClose(
                 estimateTimeToBoil(forward, litres: litres), c.num("forward"),
                 "estimate at \(litres) L, remembered small-first"
             )
-            expectClose(
+            try expectClose(
                 estimateTimeToBoil(backward, litres: litres), c.num("backward"),
                 "estimate at \(litres) L, remembered large-first"
             )
@@ -216,9 +220,9 @@ struct BoilMemoryConformance {
     }
 
     @Test("the fallback is the same fallback")
-    func fallback() {
-        let memory = Fixtures.policyObject("boilMemory")
-        expectClose(defaultTimeToBoilS, memory.num("defaultSeconds"), "defaultTimeToBoilS")
+    func fallback() throws {
+        let memory = try Fixtures.policyObject("boilMemory")
+        try expectClose(defaultTimeToBoilS, memory.num("defaultSeconds"), "defaultTimeToBoilS")
     }
 }
 
@@ -227,30 +231,30 @@ struct DefaultsConformance {
     /// The drift the review actually caught: this app opened on 4 eggs of
     /// 62.3 g where the web opened on 2 of 68 g.
     @Test("a fresh install starts from the same kitchen")
-    func defaults() {
-        let d = Fixtures.policyObject("defaults")
-        expectClose(Double(Defaults.sizeIndex), d.num("sizeIndex"), "sizeIndex")
-        expectClose(Defaults.customStartC, d.num("customStart_C"), "customStart_C")
-        expectClose(Defaults.altitudeM, d.num("altitude_m"), "altitude_m")
-        expectClose(Defaults.waterLitres, d.num("waterLitres"), "waterLitres")
-        expectClose(Double(Defaults.eggCount), d.num("eggCount"), "eggCount")
-        expectClose(Defaults.doneness, d.num("doneness"), "doneness")
-        expectClose(Defaults.eggMassKg, d.num("eggMass_kg"), "eggMass_kg")
-        expectClose(StartTempPresets.fridgeC, d.num("fridge_C"), "fridge preset")
-        expectClose(StartTempPresets.roomC, d.num("room_C"), "room preset")
+    func defaults() throws {
+        let d = try Fixtures.policyObject("defaults")
+        try expectClose(Double(Defaults.sizeIndex), d.num("sizeIndex"), "sizeIndex")
+        try expectClose(Defaults.customStartC, d.num("customStart_C"), "customStart_C")
+        try expectClose(Defaults.altitudeM, d.num("altitude_m"), "altitude_m")
+        try expectClose(Defaults.waterLitres, d.num("waterLitres"), "waterLitres")
+        try expectClose(Double(Defaults.eggCount), d.num("eggCount"), "eggCount")
+        try expectClose(Defaults.doneness, d.num("doneness"), "doneness")
+        try expectClose(Defaults.eggMassKg, d.num("eggMass_kg"), "eggMass_kg")
+        try expectClose(StartTempPresets.fridgeC, d.num("fridge_C"), "fridge preset")
+        try expectClose(StartTempPresets.roomC, d.num("room_C"), "room preset")
     }
 
     @Test("the room follows the egg at the same threshold")
-    func ambient() {
-        for c in Fixtures.policyCases("ambient") {
-            let start = c.num("eggStart_C")
-            expectClose(ambientFor(eggStartC: start), c.num("ambient_C"), "ambient for \(start) C")
+    func ambient() throws {
+        for c in try Fixtures.policyCases("ambient") {
+            let start = try c.num("eggStart_C")
+            try expectClose(ambientFor(eggStartC: start), c.num("ambient_C"), "ambient for \(start) C")
         }
     }
 
     @Test("every bound is the same bound")
-    func limits() {
-        let limits = Fixtures.policyObject("limits")
+    func limits() throws {
+        let limits = try Fixtures.policyObject("limits")
         let pairs: [(String, ClosedRange<Double>)] = [
             ("mass_g", Limits.massG),
             ("eggTemp_C", Limits.eggTempC),
@@ -266,46 +270,43 @@ struct DefaultsConformance {
                 Issue.record("fixtures/policy.json has no limit \(name)")
                 continue
             }
-            expectClose(range.lowerBound, bounds.num("lo"), "\(name) lower bound")
-            expectClose(range.upperBound, bounds.num("hi"), "\(name) upper bound")
+            try expectClose(range.lowerBound, bounds.num("lo"), "\(name) lower bound")
+            try expectClose(range.upperBound, bounds.num("hi"), "\(name) upper bound")
         }
     }
 }
 
 @Suite("Size classes by region match the reference implementation")
 struct SizeClassConformance {
-    private static func table(_ name: String) -> [[String: Any]] {
-        Fixtures.policyCases("sizeClasses.\(name)")
-    }
-
     /// Every key and every mass, in order (what each label shows, in either
     /// system, is UnitsConformance's). A US Large 8 g lighter than an EU
     /// one is half a minute of cooking, so a table that differs by a row is a
     /// different egg on the default path.
     @Test("both tables are the same tables")
-    func tables() {
+    func tables() throws {
         for (name, classes) in [("eu", sizeClasses), ("us", usSizeClasses)] {
-            let expected = Self.table(name)
+            let expected = try Fixtures.policyCases("sizeClasses.\(name)")
             #expect(classes.count == expected.count, "\(name) table has \(classes.count) classes")
             for (actual, c) in zip(classes, expected) {
-                #expect(actual.key == c.str("key"), "\(name): \(actual.key)")
-                expectClose(actual.massKg, c.num("mass_kg"), "\(name) \(actual.key)")
+                #expect(try actual.key == c.str("key"), "\(name): \(actual.key)")
+                try expectClose(actual.massKg, c.num("mass_kg"), "\(name) \(actual.key)")
             }
         }
     }
 
     @Test("the same regions get the American carton")
-    func regions() {
-        for c in Fixtures.policyCases("sizeClasses.regions") {
+    func regions() throws {
+        for c in try Fixtures.policyCases("sizeClasses.regions") {
             let region = c["region"] as? String
-            let expected = c.str("table") == "us" ? usSizeClasses : sizeClasses
+            let table = try c.str("table")
+            let expected = table == "us" ? usSizeClasses : sizeClasses
             #expect(
                 sizeClassesFor(region: region) == expected,
-                "region \(region ?? "nil") should get the \(c.str("table")) table"
+                "region \(region ?? "nil") should get the \(table) table"
             )
             #expect(
-                sizeTableFor(region: region).rawValue == c.str("table"),
-                "region \(region ?? "nil") names the \(c.str("table")) table"
+                sizeTableFor(region: region).rawValue == table,
+                "region \(region ?? "nil") names the \(table) table"
             )
         }
     }
@@ -313,15 +314,15 @@ struct SizeClassConformance {
     /// The rule for a stored record meeting a changed region. The two apps
     /// store the same index, so they must read it back the same way.
     @Test("a stored size is carried into either table the same way")
-    func carry() {
-        for c in Fixtures.policyCases("sizeClasses.carry") {
-            let stored = c.num("stored")
+    func carry() throws {
+        for c in try Fixtures.policyCases("sizeClasses.carry") {
+            let stored = try c.num("stored")
             #expect(
-                carrySizeIndex(stored, classes: sizeClasses) == Int(c.num("eu")),
+                try carrySizeIndex(stored, classes: sizeClasses) == Int(c.num("eu")),
                 "stored \(stored) read against the EU table"
             )
             #expect(
-                carrySizeIndex(stored, classes: usSizeClasses) == Int(c.num("us")),
+                try carrySizeIndex(stored, classes: usSizeClasses) == Int(c.num("us")),
                 "stored \(stored) read against the US table"
             )
         }
@@ -336,45 +337,43 @@ struct PhaseConformance {
     /// the 20 s grace never ran - while the pull notification still fired at a
     /// screen that already said Done. Sampled either side of every boundary.
     @Test("every boundary, with and without a cooling step")
-    func timelines() {
-        for timeline in Fixtures.policyCases("phase.timelines") {
-            let name = timeline.str("name")
-            let cookEndS = timeline.num("cookEnd_s")
-            let coolEndS = timeline.optionalNum("coolEnd_s")
-            let outAtS = timeline.optionalNum("outAt_s")
-            guard let samples = timeline["samples"] as? [[String: Any]] else {
-                Issue.record("timeline \(name) has no samples")
-                continue
-            }
-            for sample in samples {
-                let nowS = sample.num("now_s")
+    func timelines() throws {
+        for timeline in try Fixtures.policyCases("phase.timelines") {
+            let name = try timeline.str("name")
+            let cookEndS = try timeline.num("cookEnd_s")
+            let coolEndS = try timeline.optionalNum("coolEnd_s")
+            let outAtS = try timeline.optionalNum("outAt_s")
+            for sample in try timeline.rows("samples") {
+                let nowS = try sample.num("now_s")
+                let phase = try sample.str("phase")
+                let provisional = try sample.str("provisional")
                 let running = phaseAt(
                     Deadlines(cookEndS: cookEndS, coolEndS: coolEndS, provisional: false, outAtS: outAtS),
                     nowS: nowS
                 )
                 #expect(
-                    running.rawValue == sample.str("phase"),
-                    "\(name) at \(nowS) s: expected \(sample.str("phase")), got \(running.rawValue)"
+                    running.rawValue == phase,
+                    "\(name) at \(nowS) s: expected \(phase), got \(running.rawValue)"
                 )
                 let guessing = phaseAt(
                     Deadlines(cookEndS: cookEndS, coolEndS: coolEndS, provisional: true, outAtS: outAtS),
                     nowS: nowS
                 )
                 let what = "\(name) at \(nowS) s, boil not yet tapped:"
-                    + " expected \(sample.str("provisional")), got \(guessing.rawValue)"
-                #expect(guessing.rawValue == sample.str("provisional"), "\(what)")
+                    + " expected \(provisional), got \(guessing.rawValue)"
+                #expect(guessing.rawValue == provisional, "\(what)")
             }
         }
     }
 
     @Test("the cooling step and the pull grace are the same lengths")
-    func constants() {
-        let phase = Fixtures.policyObject("phase")
-        expectClose(coolingSeconds, phase.num("coolingSeconds"), "coolingSeconds")
-        expectClose(pullGraceSeconds, phase.num("pullGraceSeconds"), "pullGraceSeconds")
-        guard let slowHob = phase["slowHob"] as? [String: Any] else { fatalError("phase.slowHob") }
-        expectClose(slowHobWhenLeftS, slowHob.num("whenLeft_s"), "slowHobWhenLeftS")
-        expectClose(slowHobExtraS, slowHob.num("extra_s"), "slowHobExtraS")
-        expectClose(slowHobEveryS, slowHob.num("every_s"), "slowHobEveryS")
+    func constants() throws {
+        let phase = try Fixtures.policyObject("phase")
+        try expectClose(coolingSeconds, phase.num("coolingSeconds"), "coolingSeconds")
+        try expectClose(pullGraceSeconds, phase.num("pullGraceSeconds"), "pullGraceSeconds")
+        let slowHob = try phase.object("slowHob")
+        try expectClose(slowHobWhenLeftS, slowHob.num("whenLeft_s"), "slowHobWhenLeftS")
+        try expectClose(slowHobExtraS, slowHob.num("extra_s"), "slowHobExtraS")
+        try expectClose(slowHobEveryS, slowHob.num("every_s"), "slowHobEveryS")
     }
 }

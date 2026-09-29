@@ -17,34 +17,26 @@ private struct Scenario {
     let atFixed: [String: Any]
 }
 
-private func loadScenarios() -> (egg: Egg, params: ModelParams, cases: [Scenario]) {
-    let file = Fixtures.load("scenarios.json")
-    guard let eggJSON = file["egg"] as? [String: Any],
-          let paramsJSON = file["params"] as? [String: Any],
-          let caseList = file["cases"] as? [[String: Any]] else {
-        fatalError("fixtures/scenarios.json is not shaped as expected")
-    }
+private func loadScenarios() throws -> (egg: Egg, params: ModelParams, cases: [Scenario]) {
+    let file = try Fixtures.load("scenarios.json")
+    let eggJSON = try file.object("egg")
+    let paramsJSON = try file.object("params")
 
     // Rebuilt from the recorded mass rather than read field by field, so the
     // geometry is exercised here too: if eggFromMass drifts, every scenario
     // moves and this is where it shows.
-    let egg = Geometry.eggFromMass(eggJSON.num("mass_kg"))
-    let params = ModelParams(
+    let egg = try Geometry.eggFromMass(eggJSON.num("mass_kg"))
+    let params = try ModelParams(
         alphaM2s: paramsJSON.num("alpha_m2s"), tauAirScale: paramsJSON.num("tauAirScale")
     )
 
-    let cases = caseList.map { c -> Scenario in
-        guard let setupJSON = c["setup"] as? [String: Any],
-              let solution = c["solution"] as? [String: Any],
-              let atFixed = c["atFixed444s"] as? [String: Any],
-              let name = c["name"] as? String,
-              let startMode = StartMode(rawValue: setupJSON["startMode"] as? String ?? ""),
-              let cooling = Cooling(rawValue: setupJSON["cooling"] as? String ?? "") else {
-            fatalError("malformed scenario: \(c)")
-        }
+    let cases = try file.rows("cases").map { c -> Scenario in
+        let setupJSON = try c.object("setup")
+        let startMode = try #require(StartMode(rawValue: setupJSON["startMode"] as? String ?? ""), "malformed scenario: \(c)")
+        let cooling = try #require(Cooling(rawValue: setupJSON["cooling"] as? String ?? ""), "malformed scenario: \(c)")
         // Absent means 'hold', exactly as the TypeScript's optional field does.
         let afterBoil = HeatAfterBoil(rawValue: setupJSON["afterBoil"] as? String ?? "hold") ?? .hold
-        let setup = CookSetup(
+        let setup = try CookSetup(
             startMode: startMode,
             eggStartC: setupJSON.num("eggStart_C"),
             ambientC: setupJSON.num("ambient_C"),
@@ -55,8 +47,9 @@ private func loadScenarios() -> (egg: Egg, params: ModelParams, cases: [Scenario
             afterBoil: afterBoil,
             eggCount: setupJSON.num("eggCount")
         )
-        return Scenario(
-            name: name, level: c.num("level"), setup: setup, solution: solution, atFixed: atFixed
+        return try Scenario(
+            name: c.str("name"), level: c.num("level"), setup: setup,
+            solution: c.object("solution"), atFixed: c.object("atFixed444s")
         )
     }
     return (egg, params, cases)
@@ -76,8 +69,8 @@ private func loadScenarios() -> (egg: Egg, params: ModelParams, cases: [Scenario
 @Suite("Whole cooks")
 struct ScenarioConformance {
     @Test("every scenario solves to the same cook")
-    func solutions() {
-        let (egg, params, cases) = loadScenarios()
+    func solutions() throws {
+        let (egg, params, cases) = try loadScenarios()
         for scenario in cases {
             let solution = solveCookTime(
                 egg: egg, setup: scenario.setup, params: params,
@@ -86,39 +79,33 @@ struct ScenarioConformance {
             let expected = scenario.solution
             let at = scenario.name
 
-            #expect(
-                solution.reachable == (expected["reachable"] as? Bool ?? true),
-                "reachable, \(at)"
-            )
-            #expect(
-                solution.whiteSets == (expected["whiteSets"] as? Bool ?? true),
-                "whiteSets, \(at)"
-            )
-            expectClose(solution.softestLevel, expected.num("softestLevel"), "softestLevel, \(at)")
-            expectClose(solution.hardestLevel, expected.num("hardestLevel"), "hardestLevel, \(at)")
-            expectClose(solution.minCookTimeS, expected.num("minCookTime_s"), "minCookTime, \(at)")
-            expectClose(solution.result.cookTimeS, expected.num("cookTime_s"), "cookTime, \(at)")
-            expectClose(solution.result.peakYolkC, expected.num("peakYolk_C"), "peak yolk, \(at)")
-            expectClose(solution.result.peakWhiteC, expected.num("peakWhite_C"), "peak white, \(at)")
-            expectClose(solution.result.yolkAtPullC, expected.num("yolkAtPull_C"), "yolk at pull, \(at)")
-            expectClose(solution.result.yolkDoseMin, expected.num("yolkDose_min"), "yolk dose, \(at)")
-            expectClose(solution.result.whiteDoseMin, expected.num("whiteDose_min"), "white dose, \(at)")
+            #expect(try solution.reachable == expected.flag("reachable"), "reachable, \(at)")
+            #expect(try solution.whiteSets == expected.flag("whiteSets"), "whiteSets, \(at)")
+            try expectClose(solution.softestLevel, expected.num("softestLevel"), "softestLevel, \(at)")
+            try expectClose(solution.hardestLevel, expected.num("hardestLevel"), "hardestLevel, \(at)")
+            try expectClose(solution.minCookTimeS, expected.num("minCookTime_s"), "minCookTime, \(at)")
+            try expectClose(solution.result.cookTimeS, expected.num("cookTime_s"), "cookTime, \(at)")
+            try expectClose(solution.result.peakYolkC, expected.num("peakYolk_C"), "peak yolk, \(at)")
+            try expectClose(solution.result.peakWhiteC, expected.num("peakWhite_C"), "peak white, \(at)")
+            try expectClose(solution.result.yolkAtPullC, expected.num("yolkAtPull_C"), "yolk at pull, \(at)")
+            try expectClose(solution.result.yolkDoseMin, expected.num("yolkDose_min"), "yolk dose, \(at)")
+            try expectClose(solution.result.whiteDoseMin, expected.num("whiteDose_min"), "white dose, \(at)")
         }
     }
 
     @Test("a fixed 7.4 minute cook lands identically")
-    func fixedCook() {
+    func fixedCook() throws {
         // No search involved: straight integration, so a difference here is the
         // simulation itself rather than a bisection landing on a different step.
-        let (egg, params, cases) = loadScenarios()
+        let (egg, params, cases) = try loadScenarios()
         for scenario in cases {
             let r = simulate(
                 egg: egg, setup: scenario.setup, params: params, cookTimeS: 7.4 * 60
             )
             let at = scenario.name
-            expectClose(r.peakYolkC, scenario.atFixed.num("peakYolk_C"), "peak yolk, \(at)")
-            expectClose(r.yolkDoseMin, scenario.atFixed.num("yolkDose_min"), "yolk dose, \(at)")
-            expectClose(r.whiteDoseMin, scenario.atFixed.num("whiteDose_min"), "white dose, \(at)")
+            try expectClose(r.peakYolkC, scenario.atFixed.num("peakYolk_C"), "peak yolk, \(at)")
+            try expectClose(r.yolkDoseMin, scenario.atFixed.num("yolkDose_min"), "yolk dose, \(at)")
+            try expectClose(r.whiteDoseMin, scenario.atFixed.num("whiteDose_min"), "white dose, \(at)")
         }
     }
 }

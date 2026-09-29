@@ -9,16 +9,9 @@ import Foundation
 /// The two apps must agree move for move, or a cook who flips units on the web
 /// and on the phone ends up reading different Englishes for the same reason.
 
-private func language() -> [String: Any] { Fixtures.load("language.json") }
-
-private func list(_ key: String) -> [[String: Any]] {
-    guard let rows = language()[key] as? [[String: Any]] else { fatalError("fixtures/language.json has no \(key)") }
-    return rows
-}
-
 /// A state as the fixture writes it: JSON, with null for nil.
-private func state(_ raw: Any?) -> LanguageState {
-    guard let object = raw as? [String: Any] else { fatalError("not a language state: \(String(describing: raw))") }
+private func state(_ raw: Any?) throws -> LanguageState {
+    let object = try #require(raw as? [String: Any], "not a language state: \(String(describing: raw))")
     let from = object["flippedFrom"] as? [String: Any]
     return LanguageState(
         chosen: object["chosen"] as? String,
@@ -29,52 +22,51 @@ private func state(_ raw: Any?) -> LanguageState {
 @Suite("The English of 1750 switches as the reference implementation does")
 struct LanguageConformance {
     @Test("the constants")
-    func constants() {
-        let fixture = language()
-        #expect(defaultLanguage == fixture.str("defaultLanguage"))
-        #expect(periodLanguage == fixture.str("periodLanguage"))
+    func constants() throws {
+        let fixture = try Fixtures.load("language.json")
+        #expect(try defaultLanguage == fixture.str("defaultLanguage"))
+        #expect(try periodLanguage == fixture.str("periodLanguage"))
         #expect(languages == fixture["languages"] as? [String])
     }
 
     @Test("which tags are 1750, which are modern English, and the register")
-    func tags() {
-        for c in list("tags") {
-            let tag = c.str("tag")
-            #expect(isPeriod(tag) == c.flag("isPeriod"), "isPeriod(\(tag))")
-            #expect(isModernEnglish(tag) == c.flag("isModernEnglish"), "isModernEnglish(\(tag))")
-            #expect(registerOf(tag) == c.str("register"), "registerOf(\(tag))")
+    func tags() throws {
+        for c in try Fixtures.list("language.json", "tags") {
+            let tag = try c.str("tag")
+            #expect(try isPeriod(tag) == c.flag("isPeriod"), "isPeriod(\(tag))")
+            #expect(try isModernEnglish(tag) == c.flag("isModernEnglish"), "isModernEnglish(\(tag))")
+            #expect(try registerOf(tag) == c.str("register"), "registerOf(\(tag))")
         }
     }
 
     @Test("every move from every reachable state")
-    func transitions() {
-        let rows = list("transitions")
+    func transitions() throws {
+        let rows = try Fixtures.list("language.json", "transitions")
         #expect(rows.count > 20)
         for c in rows {
-            let before = state(c["state"])
-            guard let move = c["move"] as? [String: Any] else { fatalError("move \(c)") }
+            let before = try state(c["state"])
+            let move = try c.object("move")
             let after: LanguageState
-            if let flip = move["flip"] as? String {
-                guard let f = UnitsFlip(rawValue: flip) else { fatalError("flip \(flip)") }
-                after = languageAfterFlip(before, f)
+            if move["flip"] is String {
+                after = try languageAfterFlip(before, move.value(UnitsFlip.self, "flip"))
             } else {
-                after = languageAfterPick(before, move.str("pick"))
+                after = try languageAfterPick(before, move.str("pick"))
             }
-            #expect(after == state(c["next"]), "\(before) then \(move)")
-            #expect(effectiveLanguage(after) == c.str("effective"), "\(before) then \(move)")
+            #expect(try after == state(c["next"]), "\(before) then \(move)")
+            #expect(try effectiveLanguage(after) == c.str("effective"), "\(before) then \(move)")
         }
     }
 
     @Test("a stored state is read defensively, and what is written reads back")
-    func reads() {
-        for c in list("reads") {
+    func reads() throws {
+        for c in try Fixtures.list("language.json", "reads") {
             let raw: Any? = c["raw"] is NSNull ? nil : c["raw"]
             let read = readLanguageState(raw, known: languages)
-            #expect(read == state(c["state"]), "read \(String(describing: raw))")
+            #expect(try read == state(c["state"]), "read \(String(describing: raw))")
             // The app stores `jsonObject` through JSONSerialization; the read
             // of that is the same state.
-            let data = try! JSONSerialization.data(withJSONObject: read.jsonObject)
-            let back = try! JSONSerialization.jsonObject(with: data)
+            let data = try JSONSerialization.data(withJSONObject: read.jsonObject)
+            let back = try JSONSerialization.jsonObject(with: data)
             #expect(readLanguageState(back, known: languages) == read, "round trip of \(read)")
         }
     }

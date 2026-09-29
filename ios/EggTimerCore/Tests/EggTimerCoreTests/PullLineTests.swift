@@ -7,14 +7,6 @@ import EggTimerCopy
 /// catalogues - not left to fall back from 1750 to modern English.
 @Suite("The pull line names the cooling the cook chose")
 struct PullLineTests {
-    private static func messages(_ locale: String) -> [String: Message] {
-        let url = Fixtures.repoRoot.appendingPathComponent("copy/\(locale).json")
-        guard let data = try? Data(contentsOf: url), let catalogue = try? Catalogue(json: data) else {
-            fatalError("could not read copy/\(locale).json")
-        }
-        return catalogue.messages
-    }
-
     @Test("ice, tap, counter, and none")
     func keys() {
         #expect(pullLineKey(cooling: "ice") == "alarm.pull.bodyIce")
@@ -25,10 +17,11 @@ struct PullLineTests {
     }
 
     @Test("each line is in both catalogues")
-    func inBothCatalogues() {
+    func inBothCatalogues() throws {
         let keys = Set([nil, "ice", "tap", "counter"].map { pullLineKey(cooling: $0) })
         for locale in ["en", "en-x-1750"] {
-            let own = Self.messages(locale)
+            // No fallback: each line must be in the catalogue's own messages.
+            let own = try Fixtures.catalogue(locale).messages
             for key in keys {
                 #expect(own[key] != nil, "copy/\(locale).json has no \(key)")
             }

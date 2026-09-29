@@ -10,49 +10,32 @@ import Foundation
 /// at fixed times, and the time the search lands on - a scan and a golden
 /// section, whose comparisons both languages must make the same way.
 
-private func doubles(_ json: [String: Any], _ key: String) -> [Double] {
-    guard let list = json[key] as? [NSNumber] else {
-        fatalError("fixture has no numeric array \(key)")
-    }
-    return list.map(\.doubleValue)
-}
-
-private func object(_ json: [String: Any], _ key: String) -> [String: Any] {
-    guard let o = json[key] as? [String: Any] else { fatalError("fixture has no object \(key)") }
-    return o
-}
-
-private func setup(_ json: [String: Any]) -> CookSetup {
-    guard let startMode = StartMode(rawValue: json.str("startMode")),
-          let cooling = Cooling(rawValue: json.str("cooling")) else {
-        fatalError("fixture setup is not shaped as expected: \(json)")
-    }
+private func setup(_ json: [String: Any]) throws -> CookSetup {
+    let startMode = try #require(StartMode(rawValue: json.str("startMode")), "fixture setup: \(json)")
+    let cooling = try #require(Cooling(rawValue: json.str("cooling")), "fixture setup: \(json)")
     let afterBoil = HeatAfterBoil(rawValue: json["afterBoil"] as? String ?? "hold") ?? .hold
-    return CookSetup(
+    return try CookSetup(
         startMode: startMode, eggStartC: json.num("eggStart_C"), ambientC: json.num("ambient_C"),
         boilingC: json.num("boiling_C"), timeToBoilS: json.num("timeToBoil_s"), cooling: cooling,
         waterLitres: json.num("waterLitres"), afterBoil: afterBoil, eggCount: json.num("eggCount")
     )
 }
 
-private func posterior(_ json: [String: Any]) -> Posterior {
-    guard let rows = json["particles"] as? [[String: Any]] else {
-        fatalError("fixture posterior has no particles")
-    }
-    let particles = rows.map {
-        Particle(
+private func posterior(_ json: [String: Any]) throws -> Posterior {
+    let particles = try json.rows("particles").map {
+        try Particle(
             alphaM2s: $0.num("alpha_m2s"), logDoseOffset: $0.num("logDoseOffset"),
             tauAirScale: $0.num("tauAirScale"), noise: $0.num("noise"),
             whiteOffset: $0.num("whiteOffset"), whiteFirmGap: $0.num("whiteFirmGap")
         )
     }
-    return Posterior(particles: particles, weights: doubles(json, "weights"), rng: 1)
+    return Posterior(particles: particles, weights: try json.numbers("weights"), rng: 1)
 }
 
-private func fixtureGrid(_ file: [String: Any]) -> (grid: DoseGrid, json: [String: Any]) {
-    let g = object(file, "grid")
-    let grid = buildDoseGrid(
-        egg: Geometry.eggFromMass(object(g, "egg").num("mass_kg")), setup: setup(object(g, "setup")),
+private func fixtureGrid(_ file: [String: Any]) throws -> (grid: DoseGrid, json: [String: Any]) {
+    let g = try file.object("grid")
+    let grid = try buildDoseGrid(
+        egg: Geometry.eggFromMass(g.object("egg").num("mass_kg")), setup: setup(g.object("setup")),
         tauAirScale: g.num("tauAirScale"),
         alphaMin: g.num("alphaMin"), alphaMax: g.num("alphaMax"), alphaCount: Int(g.num("alphaCount")),
         timeMinS: g.num("timeMin_s"), timeMaxS: g.num("timeMax_s"), timeCount: Int(g.num("timeCount"))
@@ -68,57 +51,55 @@ private func meanSolve(_ c: Calibration, egg: Egg, setup: CookSetup, level: Doub
     )
 }
 
-private func expectSolution(_ s: Solution, _ json: [String: Any], _ label: String) {
-    #expect(s.reachable == json.flag("reachable"), "\(label) reachable")
-    expectClose(s.result.cookTimeS, json.num("cookTime_s"), "\(label) cook time")
-    expectClose(s.result.peakYolkC, json.num("peakYolk_C"), "\(label) peak yolk")
-    expectClose(s.result.yolkDoseMin, json.num("yolkDose_min"), "\(label) yolk dose")
-    expectClose(s.result.whiteDoseMin, json.num("whiteDose_min"), "\(label) white dose")
+private func expectSolution(_ s: Solution, _ json: [String: Any], _ label: String) throws {
+    let reachable = try json.flag("reachable")
+    #expect(s.reachable == reachable, "\(label) reachable")
+    try expectClose(s.result.cookTimeS, json.num("cookTime_s"), "\(label) cook time")
+    try expectClose(s.result.peakYolkC, json.num("peakYolk_C"), "\(label) peak yolk")
+    try expectClose(s.result.yolkDoseMin, json.num("yolkDose_min"), "\(label) yolk dose")
+    try expectClose(s.result.whiteDoseMin, json.num("whiteDose_min"), "\(label) white dose")
 }
 
 @Suite("Decide")
 struct DecideConformance {
     @Test("the constants")
-    func constants() {
-        let c = object(Fixtures.load("decide.json"), "constants")
-        #expect(runnyWhiteLoss == c.num("runnyWhiteLoss"))
-        #expect(leanCostPerS == c.num("leanCostPerS"))
-        #expect(decisionAlphaLo == c.num("decisionAlphaLo"))
-        #expect(decisionAlphaHi == c.num("decisionAlphaHi"))
-        #expect(decisionAlphaCount == Int(c.num("decisionAlphaCount")))
-        #expect(decisionTimeStepS == c.num("decisionTimeStep_s"))
-        #expect(decisionWindowS == c.num("decisionWindow_s"))
+    func constants() throws {
+        let c = try Fixtures.object("decide.json", "constants")
+        #expect(try runnyWhiteLoss == c.num("runnyWhiteLoss"))
+        #expect(try leanCostPerS == c.num("leanCostPerS"))
+        #expect(try decisionAlphaLo == c.num("decisionAlphaLo"))
+        #expect(try decisionAlphaHi == c.num("decisionAlphaHi"))
+        #expect(try decisionAlphaCount == Int(c.num("decisionAlphaCount")))
+        #expect(try decisionTimeStepS == c.num("decisionTimeStep_s"))
+        #expect(try decisionWindowS == c.num("decisionWindow_s"))
     }
 
     @Test("where each pot's decision surface goes")
-    func specs() {
-        guard let rows = Fixtures.load("decide.json")["specs"] as? [[String: Any]] else {
-            fatalError("no specs in fixtures/decide.json")
-        }
-        for (i, row) in rows.enumerated() {
-            let inputs = object(row, "inputs")
-            let params = object(inputs, "params")
-            let spec = decisionGridSpec(DecisionInputs(
-                egg: Geometry.eggFromMass(object(inputs, "egg").num("mass_kg")),
-                setup: setup(object(inputs, "setup")),
+    func specs() throws {
+        for (i, row) in try Fixtures.list("decide.json", "specs").enumerated() {
+            let inputs = try row.object("inputs")
+            let params = try inputs.object("params")
+            let spec = try decisionGridSpec(DecisionInputs(
+                egg: Geometry.eggFromMass(inputs.object("egg").num("mass_kg")),
+                setup: setup(inputs.object("setup")),
                 params: ModelParams(alphaM2s: params.num("alpha_m2s"), tauAirScale: params.num("tauAirScale")),
                 whiteDoseMin: inputs.num("whiteDose_min")
             ))
-            let expected = object(row, "spec")
-            expectClose(spec.alphaMin, expected.num("alphaMin"), "spec \(i) alphaMin")
-            expectClose(spec.alphaMax, expected.num("alphaMax"), "spec \(i) alphaMax")
-            #expect(spec.alphaCount == Int(expected.num("alphaCount")), "spec \(i) alphaCount")
-            expectClose(spec.timeMinS, expected.num("timeMin_s"), "spec \(i) timeMin")
-            expectClose(spec.timeMaxS, expected.num("timeMax_s"), "spec \(i) timeMax")
-            #expect(spec.timeCount == Int(expected.num("timeCount")), "spec \(i) timeCount")
+            let expected = try row.object("spec")
+            try expectClose(spec.alphaMin, expected.num("alphaMin"), "spec \(i) alphaMin")
+            try expectClose(spec.alphaMax, expected.num("alphaMax"), "spec \(i) alphaMax")
+            #expect(try spec.alphaCount == Int(expected.num("alphaCount")), "spec \(i) alphaCount")
+            try expectClose(spec.timeMinS, expected.num("timeMin_s"), "spec \(i) timeMin")
+            try expectClose(spec.timeMaxS, expected.num("timeMax_s"), "spec \(i) timeMax")
+            #expect(try spec.timeCount == Int(expected.num("timeCount")), "spec \(i) timeCount")
         }
     }
 
     @Test("the surface the choices are made on")
-    func surface() {
-        let (grid, json) = fixtureGrid(Fixtures.load("decide.json"))
-        let yolk = doubles(json, "logYolk")
-        let white = doubles(json, "logWhite")
+    func surface() throws {
+        let (grid, json) = try fixtureGrid(Fixtures.load("decide.json"))
+        let yolk = try json.numbers("logYolk")
+        let white = try json.numbers("logWhite")
         #expect(grid.logYolk.count == yolk.count)
         for i in 0..<yolk.count {
             expectClose(grid.logYolk[i], yolk[i], "logYolk[\(i)]")
@@ -127,81 +108,78 @@ struct DecideConformance {
     }
 
     @Test("the loss, the odds, the time chosen and the decision, from three posteriors")
-    func decisions() {
-        let file = Fixtures.load("decide.json")
-        let (grid, _) = fixtureGrid(file)
-        guard let posteriors = file["posteriors"] as? [[String: Any]],
-              let cases = file["cases"] as? [[String: Any]] else {
-            fatalError("fixtures/decide.json is not shaped as expected")
-        }
+    func decisions() throws {
+        let file = try Fixtures.load("decide.json")
+        let (grid, _) = try fixtureGrid(file)
         var byName = [String: Posterior]()
-        for p in posteriors { byName[p.str("name")] = posterior(p) }
+        for p in try file.rows("posteriors") { byName[try p.str("name")] = try posterior(p) }
 
-        for (i, row) in cases.enumerated() {
-            guard let post = byName[row.str("posterior")] else { fatalError("case \(i): no posterior") }
-            let target = row.num("logNominalTarget")
-            let label = "case \(i) (\(row.str("posterior")))"
-            for probe in (row["loss"] as? [[String: Any]]) ?? [] {
-                expectClose(expectedLoss(post, grid, probe.num("t"), target), probe.num("loss"), "\(label) loss at \(probe.num("t"))")
+        for (i, row) in try file.rows("cases").enumerated() {
+            let name = try row.str("posterior")
+            let post = try #require(byName[name], "case \(i): no posterior \(name)")
+            let target = try row.num("logNominalTarget")
+            let label = "case \(i) (\(name))"
+            for probe in try row.rows("loss") {
+                let t = try probe.num("t")
+                try expectClose(expectedLoss(post, grid, t, target), probe.num("loss"), "\(label) loss at \(t)")
             }
-            for probe in (row["odds"] as? [[String: Any]]) ?? [] {
-                expectClose(hitOdds(post, grid, probe.num("t"), target), probe.num("odds"), "\(label) odds at \(probe.num("t"))")
+            for probe in try row.rows("odds") {
+                let t = try probe.num("t")
+                try expectClose(hitOdds(post, grid, t, target), probe.num("odds"), "\(label) odds at \(t)")
             }
-            expectClose(
+            try expectClose(
                 chooseCookTime(post, grid, target, aroundS: row.num("meanCookTime_s")), row.num("chosen_s"),
                 "\(label) chosen time"
             )
-            let d = decideAt(
+            let d = try decideAt(
                 post, eggsLogged: Int(row.num("eggsLogged")), grid: grid,
                 meanCookTimeS: row.num("meanCookTime_s"), applies: row.flag("applies"), logNominalTarget: target
             )
-            let expected = object(row, "decision")
-            expectClose(d.cookTimeS, expected.num("cookTime_s"), "\(label) decided time")
-            #expect(d.chosen == expected.flag("chosen"), "\(label) chosen")
-            expectClose(d.odds, expected.num("odds"), "\(label) odds")
-            #expect(d.oddsTenths == Int(expected.num("oddsTenths")), "\(label) tenths")
+            let expected = try row.object("decision")
+            try expectClose(d.cookTimeS, expected.num("cookTime_s"), "\(label) decided time")
+            #expect(try d.chosen == expected.flag("chosen"), "\(label) chosen")
+            try expectClose(d.odds, expected.num("odds"), "\(label) odds")
+            #expect(try d.oddsTenths == Int(expected.num("oddsTenths")), "\(label) tenths")
 
-            let c = Calibration(posterior: post, eggsLogged: Int(row.num("eggsLogged")))
-            let g = object(file, "grid")
-            let egg = Geometry.eggFromMass(object(g, "egg").num("mass_kg"))
-            let pot = setup(object(g, "setup"))
-            let decided = decidedSolution(
+            let c = try Calibration(posterior: post, eggsLogged: Int(row.num("eggsLogged")))
+            let g = try file.object("grid")
+            let egg = try Geometry.eggFromMass(g.object("egg").num("mass_kg"))
+            let pot = try setup(g.object("setup"))
+            let decided = try decidedSolution(
                 egg: egg, setup: pot, params: calibrationParams(c),
                 solution: meanSolve(c, egg: egg, setup: pot, level: row.num("level")), decision: d
             )
-            expectSolution(decided, object(row, "decided"), "\(label) decided")
+            try expectSolution(decided, row.object("decided"), "\(label) decided")
         }
     }
 
     @Test("a cook re-solved mid-cook carries the lean it chose")
-    func carried() {
-        let file = Fixtures.load("decide.json")
-        guard let posteriors = file["posteriors"] as? [[String: Any]],
-              let rows = file["carried"] as? [[String: Any]], !rows.isEmpty else {
-            fatalError("fixtures/decide.json has no carried rows")
-        }
+    func carried() throws {
+        let file = try Fixtures.load("decide.json")
         var byName = [String: (Posterior, Int)]()
-        for p in posteriors { byName[p.str("name")] = (posterior(p), Int(p.num("eggsLogged"))) }
-        let egg = Geometry.eggFromMass(object(object(file, "grid"), "egg").num("mass_kg"))
-        for row in rows {
-            guard let (post, eggs) = byName[row.str("posterior")] else { fatalError("no posterior") }
+        for p in try file.rows("posteriors") {
+            byName[try p.str("name")] = (try posterior(p), Int(try p.num("eggsLogged")))
+        }
+        let egg = try Geometry.eggFromMass(file.object("grid").object("egg").num("mass_kg"))
+        for row in try file.rows("carried") {
+            let (post, eggs) = try #require(byName[row.str("posterior")], "no posterior")
             let c = Calibration(posterior: post, eggsLogged: eggs)
-            let pot = setup(object(row, "setup"))
-            let sol = meanSolve(c, egg: egg, setup: pot, level: row.num("level"))
+            let pot = try setup(row.object("setup"))
+            let level = try row.num("level")
+            let lean = try row.num("lean_s")
+            let sol = meanSolve(c, egg: egg, setup: pot, level: level)
             let carried = carriedSolution(
-                egg: egg, setup: pot, params: calibrationParams(c), solution: sol, leanS: row.num("lean_s")
+                egg: egg, setup: pot, params: calibrationParams(c), solution: sol, leanS: lean
             )
-            expectSolution(carried, object(row, "carried"), "level \(row.num("level")), lean \(row.num("lean_s"))")
+            try expectSolution(carried, row.object("carried"), "level \(level), lean \(lean)")
         }
     }
 
     @Test("odds in tenths, at the rounding edges")
-    func tenths() {
-        guard let rows = Fixtures.load("decide.json")["tenths"] as? [[String: Any]] else {
-            fatalError("no tenths in fixtures/decide.json")
-        }
-        for row in rows {
-            #expect(oddsInTenths(row.num("odds")) == Int(row.num("tenths")), "\(row.num("odds"))")
+    func tenths() throws {
+        for row in try Fixtures.list("decide.json", "tenths") {
+            let odds = try row.num("odds")
+            #expect(try oddsInTenths(odds) == Int(row.num("tenths")), "\(odds)")
         }
     }
 }

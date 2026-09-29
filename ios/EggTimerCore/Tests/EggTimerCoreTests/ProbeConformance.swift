@@ -11,99 +11,80 @@ import Foundation
 /// how long the cooling counts, whether a probe is asked for, and which
 /// readings are taken at entry.
 
-private func file() -> [String: Any] { Fixtures.load("probe.json") }
-
-private func block(_ key: String) -> [String: Any] {
-    guard let b = file()[key] as? [String: Any] else { fatalError("probe.json has no \(key)") }
-    return b
-}
-
-private func rows(_ key: String) -> [[String: Any]] {
-    guard let r = file()[key] as? [[String: Any]] else { fatalError("probe.json has no \(key)") }
-    return r
-}
-
-private func doubles(_ json: [String: Any], _ key: String) -> [Double] {
-    guard let list = json[key] as? [NSNumber] else { fatalError("no numeric array \(key)") }
-    return list.map(\.doubleValue)
-}
-
-private func setup(_ json: [String: Any]) -> CookSetup {
-    guard let startMode = StartMode(rawValue: json.str("startMode")),
-          let cooling = Cooling(rawValue: json.str("cooling")) else {
-        fatalError("probe.json: a setup not shaped as expected")
-    }
+private func setup(_ json: [String: Any]) throws -> CookSetup {
+    let startMode = try #require(StartMode(rawValue: json.str("startMode")), "probe.json: a setup not shaped as expected")
+    let cooling = try #require(Cooling(rawValue: json.str("cooling")), "probe.json: a setup not shaped as expected")
     let afterBoil = HeatAfterBoil(rawValue: json["afterBoil"] as? String ?? "hold") ?? .hold
-    return CookSetup(
+    return try CookSetup(
         startMode: startMode, eggStartC: json.num("eggStart_C"), ambientC: json.num("ambient_C"),
         boilingC: json.num("boiling_C"), timeToBoilS: json.num("timeToBoil_s"), cooling: cooling,
         waterLitres: json.num("waterLitres"), afterBoil: afterBoil, eggCount: json.num("eggCount")
     )
 }
 
-private func fixtureGrid() -> DoseGrid {
-    let g = block("grid")
-    guard let egg = file()["egg"] as? [String: Any] else { fatalError("no egg") }
-    return buildDoseGrid(
-        egg: Geometry.eggFromMass(egg.num("mass_kg")), setup: setup(block("setup")),
+private func fixtureGrid() throws -> DoseGrid {
+    let g = try Fixtures.object("probe.json", "grid")
+    let egg = try Fixtures.object("probe.json", "egg")
+    return try buildDoseGrid(
+        egg: Geometry.eggFromMass(egg.num("mass_kg")), setup: setup(Fixtures.object("probe.json", "setup")),
         tauAirScale: g.num("tauAirScale"),
         alphaMin: g.num("alphaMin"), alphaMax: g.num("alphaMax"), alphaCount: Int(g.num("alphaCount")),
         timeMinS: g.num("timeMin_s"), timeMaxS: g.num("timeMax_s"), timeCount: Int(g.num("timeCount"))
     )
 }
 
-private func whiteReport(_ json: [String: Any]) -> WhiteReport? {
+private func whiteReport(_ json: [String: Any]) throws -> WhiteReport? {
     guard let raw = json["white"] as? String else { return nil }
-    guard let report = WhiteReport(rawValue: raw) else { fatalError("unknown white \(raw)") }
+    let report: WhiteReport = try #require(WhiteReport(rawValue: raw), "unknown white \(raw)")
     return report
 }
 
 @Suite("The thermometer")
 struct ProbeConformance {
     @Test("the constants match the reference")
-    func constants() {
-        let c = block("constants")
-        expectClose(probeInstrumentSdC, c.num("instrumentSd_C"), "instrument sd")
-        expectClose(probeHandlingMeanC, c.num("handlingMean_C"), "handling mean")
-        expectClose(probeUnrelated, c.num("unrelated"), "unrelated share")
-        expectClose(probeUnrelatedSpanC, c.num("unrelatedSpan_C"), "unrelated span")
-        expectClose(probeAlphaSds, c.num("alphaSds"), "alpha sds")
-        expectClose(probeMarginC, c.num("margin_C"), "margin")
-        expectClose(coolingSeconds, c.num("coolingSeconds"), "cooling fallback")
-        expectClose(coolingMinSeconds, c.num("coolingMinSeconds"), "cooling floor")
+    func constants() throws {
+        let c = try Fixtures.object("probe.json", "constants")
+        try expectClose(probeInstrumentSdC, c.num("instrumentSd_C"), "instrument sd")
+        try expectClose(probeHandlingMeanC, c.num("handlingMean_C"), "handling mean")
+        try expectClose(probeUnrelated, c.num("unrelated"), "unrelated share")
+        try expectClose(probeUnrelatedSpanC, c.num("unrelatedSpan_C"), "unrelated span")
+        try expectClose(probeAlphaSds, c.num("alphaSds"), "alpha sds")
+        try expectClose(probeMarginC, c.num("margin_C"), "margin")
+        try expectClose(coolingSeconds, c.num("coolingSeconds"), "cooling fallback")
+        try expectClose(coolingMinSeconds, c.num("coolingMinSeconds"), "cooling floor")
     }
 
     @Test("the peak in every cell of the grid, and between them")
-    func grid() {
-        let grid = fixtureGrid()
-        let cells = doubles(block("grid"), "peakYolk_C")
+    func grid() throws {
+        let grid = try fixtureGrid()
+        let cells = try Fixtures.object("probe.json", "grid").numbers("peakYolk_C")
         #expect(grid.peakYolkC.count == cells.count)
         for i in 0..<cells.count { expectClose(grid.peakYolkC[i], cells[i], "peakYolk_C[\(i)]") }
-        for row in rows("lookups") {
-            let a = row.num("alpha_m2s")
-            let t = row.num("cookTime_s")
-            expectClose(lookupPeakYolkC(grid, a, t), row.num("peakYolk_C"), "peak at alpha \(a), t \(t)")
+        for row in try Fixtures.list("probe.json", "lookups") {
+            let a = try row.num("alpha_m2s")
+            let t = try row.num("cookTime_s")
+            try expectClose(lookupPeakYolkC(grid, a, t), row.num("peakYolk_C"), "peak at alpha \(a), t \(t)")
         }
     }
 
     @Test("the error model's density, across both tails")
-    func density() {
-        for row in rows("density") {
-            let d = row.num("shortfall_C")
+    func density() throws {
+        for row in try Fixtures.list("probe.json", "density") {
+            let d = try row.num("shortfall_C")
             let f = probeShortfallDensity(d)
             #expect(f.isFinite, "density at \(d) is finite")
-            expectClose(f, row.num("density"), "density at \(d)")
+            try expectClose(f, row.num("density"), "density at \(d)")
         }
     }
 
     @Test("one particle's likelihood, from a reading below freezing to a thousand degrees")
-    func likelihood() {
-        let grid = fixtureGrid()
-        let prior = block("prior")
-        let first = createPrior(count: Int(prior.num("count")), seed: Int32(prior.num("seed"))).particles[0]
-        for row in rows("likelihood") {
-            let r = row.num("reading_C")
-            expectClose(
+    func likelihood() throws {
+        let grid = try fixtureGrid()
+        let prior = try Fixtures.object("probe.json", "prior")
+        let first = try createPrior(count: Int(prior.num("count")), seed: Int32(prior.num("seed"))).particles[0]
+        for row in try Fixtures.list("probe.json", "likelihood") {
+            let r = try row.num("reading_C")
+            try expectClose(
                 probeLikelihood(grid, first, row.num("cookTime_s"), r), row.num("likelihood"),
                 "likelihood of \(r) C"
             )
@@ -111,20 +92,20 @@ struct ProbeConformance {
     }
 
     @Test("a fold sequence with readings, particle by particle")
-    func updates() {
-        let grid = fixtureGrid()
-        let prior = block("prior")
-        var post = createPrior(count: Int(prior.num("count")), seed: Int32(prior.num("seed")))
-        for (i, step) in rows("updates").enumerated() {
-            guard let after = step["after"] as? [String: Any],
-                  let particles = after["particles"] as? [[String: Any]],
-                  let rng = after["rng"] as? NSNumber else { fatalError("malformed update \(i)") }
+    func updates() throws {
+        let grid = try fixtureGrid()
+        let prior = try Fixtures.object("probe.json", "prior")
+        var post = try createPrior(count: Int(prior.num("count")), seed: Int32(prior.num("seed")))
+        for (i, step) in try Fixtures.list("probe.json", "updates").enumerated() {
+            let after = try step.object("after")
+            let particles = try after.rows("particles")
+            let rng = try #require(after["rng"] as? NSNumber, "malformed update \(i)")
             let yolk = (step["yolk"] as? NSNumber).flatMap { Feedback(rawValue: $0.intValue) }
-            let white = whiteReport(step)
-            let probeC = step.optionalNum("probe_C")
-            let t = step.num("cookTime_s")
-            let target = step.num("logNominalTarget")
-            expectClose(
+            let white = try whiteReport(step)
+            let probeC = try step.optionalNum("probe_C")
+            let t = try step.num("cookTime_s")
+            let target = try step.num("logNominalTarget")
+            try expectClose(
                 answerLikelihood(grid, post.particles[0], t, target, yolk: yolk, white: white, probeC: probeC),
                 step.num("firstLikelihood"), "update \(i): the first particle's likelihood"
             )
@@ -132,64 +113,65 @@ struct ProbeConformance {
                 &post, grid: grid, cookTimeS: t, logNominalTarget: target,
                 yolk: yolk, white: white, probeC: probeC
             )
-            let weights = doubles(after, "weights")
+            let weights = try after.numbers("weights")
             #expect(post.particles.count == particles.count)
             for k in 0..<particles.count {
-                expectClose(post.particles[k].alphaM2s, particles[k].num("alpha_m2s"), "update \(i) particle \(k) alpha")
-                expectClose(post.particles[k].logDoseOffset, particles[k].num("logDoseOffset"), "update \(i) particle \(k) offset")
-                expectClose(post.particles[k].tauAirScale, particles[k].num("tauAirScale"), "update \(i) particle \(k) tau")
-                expectClose(post.particles[k].noise, particles[k].num("noise"), "update \(i) particle \(k) noise")
-                expectClose(post.particles[k].whiteOffset, particles[k].num("whiteOffset"), "update \(i) particle \(k) white")
-                expectClose(post.particles[k].whiteFirmGap, particles[k].num("whiteFirmGap"), "update \(i) particle \(k) gap")
+                try expectClose(post.particles[k].alphaM2s, particles[k].num("alpha_m2s"), "update \(i) particle \(k) alpha")
+                try expectClose(post.particles[k].logDoseOffset, particles[k].num("logDoseOffset"), "update \(i) particle \(k) offset")
+                try expectClose(post.particles[k].tauAirScale, particles[k].num("tauAirScale"), "update \(i) particle \(k) tau")
+                try expectClose(post.particles[k].noise, particles[k].num("noise"), "update \(i) particle \(k) noise")
+                try expectClose(post.particles[k].whiteOffset, particles[k].num("whiteOffset"), "update \(i) particle \(k) white")
+                try expectClose(post.particles[k].whiteFirmGap, particles[k].num("whiteFirmGap"), "update \(i) particle \(k) gap")
                 expectClose(post.weights[k], weights[k], "update \(i) weight \(k)")
             }
             #expect(post.rng == Int32(truncating: rng), "update \(i): rng state")
-            expectClose(effectiveSampleSize(post), after.num("ess"), "update \(i) ess")
-            expectClose(posteriorParams(post).alphaM2s, after.num("alpha_m2s"), "update \(i) mean alpha")
+            try expectClose(effectiveSampleSize(post), after.num("ess"), "update \(i) ess")
+            try expectClose(posteriorParams(post).alphaM2s, after.num("alpha_m2s"), "update \(i) mean alpha")
         }
     }
 
     @Test("the cooling counts to the peak, and the probe is asked for only where there is one")
-    func cooling() {
-        for row in rows("cooling") {
-            guard let moment = row["moment"] as? [String: Any] else { fatalError("no moment") }
-            let r = CookResult(
+    func cooling() throws {
+        for row in try Fixtures.list("probe.json", "cooling") {
+            let moment = try row.object("moment")
+            let r = try CookResult(
                 cookTimeS: row.num("cookTime_s"), peakYolkC: 60, peakYolkTimeS: row.num("peakYolkTime_s"),
                 yolkAtPullC: 40, yolkDoseMin: 1, whiteDoseMin: 1, peakWhiteC: 80
             )
-            let label = "peak at \(row.num("peakYolkTime_s") - row.num("cookTime_s")) s"
-            #expect(coolingSecondsFor(r) == row.num("coolingSeconds"), "\(label): cooling")
-            #expect(probeMomentFor(r, cooling: .ice) == moment.flag("ice"), "\(label): ice")
-            #expect(probeMomentFor(r, cooling: .tap) == moment.flag("tap"), "\(label): tap")
-            #expect(probeMomentFor(r, cooling: .counter) == moment.flag("counter"), "\(label): counter")
+            let label = "peak at \(r.peakYolkTimeS - r.cookTimeS) s"
+            #expect(try coolingSecondsFor(r) == row.num("coolingSeconds"), "\(label): cooling")
+            #expect(try probeMomentFor(r, cooling: .ice) == moment.flag("ice"), "\(label): ice")
+            #expect(try probeMomentFor(r, cooling: .tap) == moment.flag("tap"), "\(label): tap")
+            #expect(try probeMomentFor(r, cooling: .counter) == moment.flag("counter"), "\(label): counter")
         }
     }
 
     @Test("solved cooks: the countdown, the moment, and the readings the entry takes")
-    func solved() {
-        for row in rows("solved") {
-            guard let setupJSON = row["setup"] as? [String: Any],
-                  let range = row["range"] as? [NSNumber],
-                  let rangeMoved = row["rangeMoved"] as? [NSNumber],
-                  let moved = row["moved"] as? [String: Any] else { fatalError("malformed solved cook") }
-            let s = setup(setupJSON)
-            let egg = Geometry.eggFromMass(row.num("mass_kg"))
-            let level = row.num("level")
-            let label = "\(row.num("mass_kg")) kg, \(s.cooling), \(s.startMode), level \(level)"
+    func solved() throws {
+        for row in try Fixtures.list("probe.json", "solved") {
+            let range = try row.numbers("range")
+            let rangeMoved = try row.numbers("rangeMoved")
+            try #require(range.count == 2 && rangeMoved.count == 2, "a range is a low and a high")
+            let moved = try row.object("moved")
+            let s = try setup(row.object("setup"))
+            let massKg = try row.num("mass_kg")
+            let egg = Geometry.eggFromMass(massKg)
+            let level = try row.num("level")
+            let label = "\(massKg) kg, \(s.cooling), \(s.startMode), level \(level)"
             let sol = solveCookTime(egg: egg, setup: s, params: .default, doneness: donenessFromSlider(level))
-            expectClose(sol.result.cookTimeS, row.num("cookTime_s"), "\(label): cook")
-            expectClose(sol.result.peakYolkTimeS, row.num("peakYolkTime_s"), "\(label): peak time")
-            expectClose(sol.result.peakYolkC, row.num("peakYolk_C"), "\(label): peak")
-            #expect(coolingSecondsFor(sol.result) == row.num("coolingSeconds"), "\(label): cooling")
-            #expect(probeMomentFor(sol.result, cooling: s.cooling) == row.flag("moment"), "\(label): moment")
-            let cook = row.num("cookTime_s")
+            try expectClose(sol.result.cookTimeS, row.num("cookTime_s"), "\(label): cook")
+            try expectClose(sol.result.peakYolkTimeS, row.num("peakYolkTime_s"), "\(label): peak time")
+            try expectClose(sol.result.peakYolkC, row.num("peakYolk_C"), "\(label): peak")
+            #expect(try coolingSecondsFor(sol.result) == row.num("coolingSeconds"), "\(label): cooling")
+            #expect(try probeMomentFor(sol.result, cooling: s.cooling) == row.flag("moment"), "\(label): moment")
+            let cook = try row.num("cookTime_s")
             let at = plausibleProbeRangeC(egg: egg, setup: s, params: .default, cookTimeS: cook)
-            expectClose(at.low, range[0].doubleValue, "\(label): lowest reading taken")
-            expectClose(at.high, range[1].doubleValue, "\(label): highest reading taken")
-            let params = ModelParams(alphaM2s: moved.num("alpha_m2s"), tauAirScale: moved.num("tauAirScale"))
+            expectClose(at.low, range[0], "\(label): lowest reading taken")
+            expectClose(at.high, range[1], "\(label): highest reading taken")
+            let params = try ModelParams(alphaM2s: moved.num("alpha_m2s"), tauAirScale: moved.num("tauAirScale"))
             let movedAt = plausibleProbeRangeC(egg: egg, setup: s, params: params, cookTimeS: cook)
-            expectClose(movedAt.low, rangeMoved[0].doubleValue, "\(label): lowest, moved")
-            expectClose(movedAt.high, rangeMoved[1].doubleValue, "\(label): highest, moved")
+            expectClose(movedAt.low, rangeMoved[0], "\(label): lowest, moved")
+            expectClose(movedAt.high, rangeMoved[1], "\(label): highest, moved")
         }
     }
 }

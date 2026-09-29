@@ -19,14 +19,6 @@ import EggTimerCopy
 /// have caught a mistake in them; this can.
 @Suite("Sous-vide copy matches the reference implementation")
 struct SousVideCopyConformance {
-    private static let english: Catalogue = {
-        let url = Fixtures.repoRoot.appendingPathComponent("copy/en.json")
-        guard let data = try? Data(contentsOf: url), let catalogue = try? Catalogue(json: data) else {
-            fatalError("could not read copy/en.json")
-        }
-        return catalogue
-    }()
-
     private static func args(_ json: Any?) -> [String: Double] {
         var out: [String: Double] = [:]
         for (name, value) in (json as? [String: Any]) ?? [:] {
@@ -36,13 +28,15 @@ struct SousVideCopyConformance {
     }
 
     @Test("the duration's bucket, at every boundary from both sides")
-    func duration() {
-        for c in Fixtures.sousVideCopyCases("duration") {
-            let seconds = c.num("seconds")
+    func duration() throws {
+        let english = try Fixtures.catalogue("en")
+        for c in try Fixtures.sousVideCopyCases("duration") {
+            let seconds = try c.num("seconds")
             let actual = longDuration(seconds)
-            #expect(actual == CopyRef(c.str("key"), Self.args(c["args"])), "longDuration(\(seconds)): \(actual)")
-            let text = Self.english.render(actual)
-            #expect(text == c.str("text"), "longDuration(\(seconds)): expected \(c.str("text")), got \(text)")
+            #expect(try actual == CopyRef(c.str("key"), Self.args(c["args"])), "longDuration(\(seconds)): \(actual)")
+            let text = english.render(actual)
+            let expected = try c.str("text")
+            #expect(text == expected, "longDuration(\(seconds)): expected \(expected), got \(text)")
         }
     }
 
@@ -50,22 +44,25 @@ struct SousVideCopyConformance {
     /// dragging a locale into the fixture. Which name goes in is `weekday` below:
     /// both apps take it from the catalogue.
     @Test("how long ago the cook should have started")
-    func phrase() {
-        for c in Fixtures.sousVideCopyCases("startPhrase") {
-            let days = Int(c.num("daysAgo"))
+    func phrase() throws {
+        let english = try Fixtures.catalogue("en")
+        for c in try Fixtures.sousVideCopyCases("startPhrase") {
+            let days = try Int(c.num("daysAgo"))
             let actual = startPhrase(daysAgo: days)
-            #expect(actual == CopyRef(c.str("key"), Self.args(c["args"])), "startPhrase(\(days)): \(actual)")
-            let text = Self.english.render(actual, ["weekday": .text("Tuesday")])
-            #expect(text == c.str("text"), "startPhrase(\(days)): expected \(c.str("text")), got \(text)")
+            #expect(try actual == CopyRef(c.str("key"), Self.args(c["args"])), "startPhrase(\(days)): \(actual)")
+            let text = english.render(actual, ["weekday": .text("Tuesday")])
+            let expected = try c.str("text")
+            #expect(text == expected, "startPhrase(\(days)): expected \(expected), got \(text)")
         }
     }
 
     @Test("the weekday's name comes from the catalogue, by the web's day numbering")
-    func weekday() {
-        for c in Fixtures.sousVideCopyCases("weekday") {
-            let day = Int(c.num("day"))
-            #expect(weekdayKey(day) == c.str("key"), "weekdayKey(\(day)): \(weekdayKey(day))")
-            #expect(Self.english.render(weekdayKey(day)) == c.str("text"), "weekday \(day)")
+    func weekday() throws {
+        let english = try Fixtures.catalogue("en")
+        for c in try Fixtures.sousVideCopyCases("weekday") {
+            let day = try Int(c.num("day"))
+            #expect(try weekdayKey(day) == c.str("key"), "weekdayKey(\(day)): \(weekdayKey(day))")
+            #expect(try english.render(weekdayKey(day)) == c.str("text"), "weekday \(day)")
         }
     }
 }
