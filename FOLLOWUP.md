@@ -50,7 +50,7 @@ Everything below is what was left over. It is all small. Follow CLAUDE.md throug
   - `xcodebuild -project ActualEggTimer.xcodeproj -scheme ActualEggTimer -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build`
 - Keep it out of local `npm run verify` if it is slow (~1-2 min). Mention it in CLAUDE.md's gate line, e.g. an `npm run ios:build` script that CI calls.
 
-**DONE ea9723c: 2.2 `fixtures:check` misses a new untracked fixture.**
+**DONE ea9723c, 9783d30: 2.2 `fixtures:check` misses a new untracked fixture.**
 - Where: `package.json:22`. `git diff --exit-code -- fixtures/` ignores untracked files.
 - Fix: `npm run fixtures && git diff --exit-code -- fixtures/ && test -z "$(git status --porcelain -- fixtures/)"`.
 
@@ -77,18 +77,18 @@ Everything below is what was left over. It is all small. Follow CLAUDE.md throug
 
 ## 4. Web polish (older than the worklist, found in the browser)
 
-**4.1 The setup sentence can break before a comma.**
+**DONE 46351e8: 4.1 The setup sentence can break before a comma.**
 - The clauses are inline `<button>`s, and the ", " / "." between them are bare text nodes, so a line can start with ", then under a cold tap". It was seen at phone width with a room-temperature egg, a boiling-water start and a cold tap.
 - Fix: in `sentence.ts`, wrap each clause button with its trailing punctuation in `<span class="clause-wrap">` and give it `white-space: nowrap`. Check iOS's `SetupSentence` for the same break.
 
-**4.2 The screen reader hears the phase twice.**
+**DONE a05752d (in `tidy2`): 4.2 The screen reader hears the phase twice.**
 - It hears "Cooking — keep it boiling. Cooking. 9 minutes 28 seconds left".
 - Why: `spoken.announcement` = "{label}. {spoken}", the label is the phase label, and `spoken.cooking` / `spoken.heating` / `spoken.cooling` start with the phase word again.
 - Fix: drop the phase word from `spoken.cooking`/`heating`/`cooling` (e.g. "{time} left"). Check first that `spoken.*` is never read without the label, since the ticker may announce the time alone. This is a wording change, so it goes in a draft (§5).
 
 ## 5. Copy: one small draft for the owner's phone pass
 
-Put these in a named draft (e.g. `tools/drafts/tidy2.ts`), in both apps and the 1750 twins, following CLAUDE.md "Words". Then give the owner a before/after list. The owner judges on a phone and reverts what they dislike. These came out clunky from the first tidy draft (several were prescribed by WORKLIST §9 itself):
+**DONE a05752d: `tidy2`, 15 keys; the departures are in LANGUAGE.md §3. Waits on the owner's phone pass.** Put these in a named draft (e.g. `tools/drafts/tidy2.ts`), in both apps and the 1750 twins, following CLAUDE.md "Words". Then give the owner a before/after list. The owner judges on a phone and reverts what they dislike. These came out clunky from the first tidy draft (several were prescribed by WORKLIST §9 itself):
 
 | Key | Now | Problem | Proposed |
 |---|---|---|---|

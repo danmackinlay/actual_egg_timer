@@ -3343,3 +3343,63 @@ copy lint; the fixtures unchanged; `swift test` 119 tests in 31 suites.
 Comments and documents only.
 
 **Not verified:** nothing runs differently, so nothing was run on a device.
+
+## 29 September 2026: FOLLOWUP, worked through
+
+QA's worklist after WORKLIST (FOLLOWUP.md, verified at `cbd8d66`), on a
+branch from `a04ccfc`, all but §0, which the owner settled on main
+(`DECISIONS.md` 47). Each item is ticked there with its commit.
+
+- **The storage formats are live** (677cb73): PLAN's standing facts say a
+  change to `aet.settings.v1`, `aet.cook.v2`, `aet.calibration.v4`,
+  `aet.boil.v1` or record v1 needs a migration or a bump.
+- **A restored web cook is the ticket's, all the way** (be691d3). `boot()`
+  solved a running cook from the live settings, and through `applyAnswer`
+  could snap and save `settings.doneness` mid-cook. Checked in a browser:
+  a cold cook started at a snapped doneness (0.04), then doneness 0 and
+  3 L written to storage as another tab would, then a reload. This build
+  leaves the stored settings byte for byte and counts down the ticket's
+  cook; `a04ccfc`'s build rewrote doneness to 0.04. `recompute` only
+  redraws outside IDLE now, and `applyAnswer` takes nothing up.
+- **Smaller fixes.** `restoreTicket` requires `afterBoil` (087cd08). A
+  live-site settings record with no `measuredBy` reads as the scale, not
+  the width, since record v1's `massFrom` has no "unknown" (58fc86a). The
+  web's mid-cook re-solve goes through `answerAt(snapRetry: false)`, as
+  iOS's does (a0f1bfa). `dom` is `page()`, which throws before boot
+  (eebc008). Four exports nothing imports are private (68a6fda). The
+  catalogues' `about` lines name `test/data/` (fe8c607).
+- **The gate.** CI builds the app and widget (`npm run ios:build`, 18 s
+  locally with a warm cache; 4c35ef4), kept out of the local `verify`.
+  `fixtures:check` fails on an untracked fixture (ea9723c); its first form,
+  `git status --porcelain`, also failed on a fixture change staged for the
+  commit, and `git ls-files --others` replaced it (9783d30). The Swift
+  tests read fixtures only through `list` / `object` / `number(file,
+  path)`, and a missing fixtures directory throws rather than traps
+  (4917fdc). A test pins WORKLIST 2.3: a build that throws rejects and
+  can be asked again (39b001f).
+- **The setup sentence's comma** (46351e8). A clause button is an atomic
+  inline, so a line could start with ", then under a cold tap". Each
+  button now sits in a nowrap span with the punctuation after it. At
+  every width from 150 to 520 px, with a room-temperature egg, a
+  boiling-water start and a cold tap, no line starts with a comma or a
+  stop; without the span, 115 line starts did. iOS sets the sentence as
+  one `Text`, where a comma after a letter is never a break.
+- **The `tidy2` draft** (a05752d): FOLLOWUP §5 with §4.2, 15 keys, both
+  apps, 1750 twins rewritten. LANGUAGE.md §3 has the table and where it
+  departs from FOLLOWUP: "I can't sound the alarm" rather than "the alarm
+  is off", which reads as the Sound switch; "Forget it" under "Start
+  learning again?" reads as "never mind", so it became "Start again"; and
+  a screen with no button asks for "a full rolling boil" in lower case,
+  not "when the water boils", which invites the early tap. Proved by
+  `copyLiterals --since a04ccfc tidy2` and `copySnapshot compare --draft
+  tidy2` (172 web states). `spoken.total` has the same fault as the three
+  it fixes, and is left: the snapshot proof reads the label "Total time"
+  as the template "Total {time}".
+
+**Run:** `rm -rf dist/test && npm run verify`: 258 tests, all pass; the
+Swift copy lint; the fixtures fresh; `swift test` 119 tests in 31 suites.
+`npm run validate` 28/28. `npm run ios:build` builds.
+
+**Not verified:** `tidy2` on either app on a phone (the owner's pass), and
+on iOS at all; the setup sentence's wrap in Safari; `ios:build` on a CI
+runner, which needs a push.

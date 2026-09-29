@@ -8,7 +8,7 @@ working here are `CLAUDE.md`; the last section says where everything else is.
 cook and learning. The web app (`src/`) and the iOS app (`ios/`) carry the
 same model, refusals, particle filter and choice of time (Phase E up to E5),
 the same catalogue of words in two Englishes (Phase F but for Czech), and the
-same layout (`UI.md`). `npm test` runs 255 tests, all passing (5b pins E3's
+same layout (`UI.md`). `npm test` runs 258 tests, all passing (5b pins E3's
 known limit). `npm run validate` passes 28/28, and `swift test` passes 119
 tests in 31 suites. **Pushed on 29 September** at `5ff6940`, the owner's
 call: Netlify serves it at actualeggtimer.netlify.app, and the first run of
@@ -216,3 +216,4 @@ checked, fixed or deleted. Start the QA pass here.
 | `ios/RELEASING.md` | getting the app onto other people's phones |
 | `LOGBOOK.md` | the record: what was verified, measured and learned, by date |
 | `WORKLIST.md` | the review of 28 September 2026, worked through |
+| `FOLLOWUP.md` | QA's worklist after it, 29 September 2026, worked through; `tidy2` waits on the owner |
