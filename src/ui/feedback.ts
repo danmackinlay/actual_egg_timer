@@ -17,50 +17,64 @@ import {
 import { t } from './copy.js';
 import { dom } from './dom.js';
 import { Machine } from './machine.js';
+import { KeptAnswers } from './store.js';
 import { Ticket } from './ticket.js';
 import { measure, show } from './units.js';
 
-/** Whether this egg has been written down with an answer. Persisted with the
- *  cook, so a reload neither asks again nor logs the egg a second time as
- *  unanswered. */
-let feedbackGiven = false;
-/** Which of the two questions have been answered on screen, whether a probe
- *  reading has been taken (E4), and the egg's place in the log once the first
- *  of them has written it down. Not persisted: after a reload the rest are not
- *  offered again, because the surface their answers would be folded against is
- *  gone (see `recordSecondAnswer`). An unanswered question stays a skip in the
- *  record. */
-let answered: {
-  yolk: Feedback | null; white: WhiteReport | null; probe: ProbeReading | null; index: number;
-} | null = null;
+/**
+ * What has been said about the egg on screen, and on which page. One state
+ * for what were three flags (`feedbackGiven`, `answered` and `restored`):
+ *
+ * - `none`: nothing yet. `reloaded` is whether the cook was picked back up
+ *   after a reload, which a running cook says on screen: its alarm died with
+ *   the old page. It is read only before DONE, and nothing can be answered
+ *   before DONE, so the other two states have no need of it.
+ * - `live`: answered on this page - which of the two questions, whether a
+ *   probe reading has been taken (E4), and the egg's place in the log, which
+ *   the first answer wrote it to. A later answer is folded into the same egg.
+ * - `beforeReload`: answered on a page before this one. The egg is in the
+ *   log, and the rest of the questions are not offered again, because the
+ *   surface their answers would be folded against is gone (see
+ *   `recordSecondAnswer`). An unanswered question stays a skip in the record.
+ *
+ * Persisted with the cook (`keptAnswers`), so a reload neither asks again nor
+ * logs the egg a second time as unanswered.
+ */
+export type Answers =
+  | { kind: 'none'; reloaded: boolean }
+  | {
+    kind: 'live';
+    yolk: Feedback | null; white: WhiteReport | null; probe: ProbeReading | null; index: number;
+  }
+  | { kind: 'beforeReload' };
 
-/** Whether the egg on screen has been written down with an answer. */
-export function eggWrittenDown(): boolean {
-  return feedbackGiven;
+let answers: Answers = { kind: 'none', reloaded: false };
+
+/** What has been said about the egg on screen. */
+export function answersNow(): Readonly<Answers> {
+  return answers;
 }
 
-/** Whether it was answered about on a page before this one: the questions are
- *  put away, since a second answer could no longer be folded. */
-export function answeredBeforeReload(): boolean {
-  return feedbackGiven && answered === null;
+/** What to write down with the cook: whether the egg is in the log. An egg
+ *  answered on this page is written as what a reload will make it. */
+export function keptAnswers(): KeptAnswers {
+  return answers.kind === 'none' ? 'none' : 'beforeReload';
 }
 
-/** Whether anything has been answered on this page. */
-export function answeredHere(): boolean {
-  return answered !== null;
+/** A cook picked back up after a reload, with what was written down with it. */
+export function resumeAnswers(kept: KeptAnswers): void {
+  answers = kept === 'none' ? { kind: 'none', reloaded: true } : { kind: 'beforeReload' };
 }
 
-/** A cook picked back up after a reload: whether it had been written down. */
-export function resumeAnswers(given: boolean): void {
-  feedbackGiven = given;
-  answered = null;
+/** Whether the cook on screen was picked back up after a reload. */
+export function pickedUpAfterReload(): boolean {
+  return answers.kind === 'beforeReload' || (answers.kind === 'none' && answers.reloaded);
 }
 
-/** Nothing said, and both rows and the probe back to empty, for the next
- *  egg. */
+/** Nothing said, on a cook of this page's own, and both rows and the probe
+ *  back to empty: for the next egg. */
 export function forgetAnswers(): void {
-  feedbackGiven = false;
-  answered = null;
+  answers = { kind: 'none', reloaded: false };
   resetRows();
   resetProbe();
 }
@@ -110,8 +124,8 @@ function resetRows(): void {
  * shows up on the next "Start again".
  */
 function onAnswer(yolk: Feedback | null, white: WhiteReport | null, pressed: HTMLButtonElement): void {
-  if (answered !== null && ((yolk !== null && answered.yolk !== null)
-    || (white !== null && answered.white !== null))) return;
+  const a = answers;
+  if (a.kind === 'live' && ((yolk !== null && a.yolk !== null) || (white !== null && a.white !== null))) return;
   if (host === null || host.ticket() === null) return;
   settleRow(yolk !== null ? 'button.fb' : 'button.wb', pressed);
   foldAnswer(yolk, white, null);
@@ -135,10 +149,10 @@ function foldAnswer(yolk: Feedback | null, white: WhiteReport | null, probe: Pro
     h.learned();
   };
 
-  if (answered === null) {
+  const a = answers;
+  if (a.kind !== 'live') {
     const index = logEgg(eggRecordFor(cooked, machine, yolk, white, probe));
-    answered = { yolk: yolk, white: white, probe: probe, index: index };
-    feedbackGiven = true;
+    answers = { kind: 'live', yolk: yolk, white: white, probe: probe, index: index };
     // Written down with the log, not after the fold: a reload between the two
     // would otherwise offer the questions again, and log the egg twice.
     h.persist();
@@ -147,12 +161,12 @@ function foldAnswer(yolk: Feedback | null, white: WhiteReport | null, probe: Pro
     void learn(index).then(thanks);
     return;
   }
-  if (yolk !== null) answered.yolk = yolk;
-  if (white !== null) answered.white = white;
-  if (probe !== null) answered.probe = probe;
+  if (yolk !== null) a.yolk = yolk;
+  if (white !== null) a.white = white;
+  if (probe !== null) a.probe = probe;
   const second = yolk !== null ? { yolk: yolk } : white !== null ? { white: white }
     : probe !== null ? { probe: probe } : {};
-  void recordSecondAnswer(answered.index, second).then(thanks);
+  void recordSecondAnswer(a.index, second).then(thanks);
 }
 
 /* ------------------------------------------------------------ thermometer */
@@ -165,8 +179,8 @@ export function probeWanted(probeOn: boolean, ticket: Ticket | null): boolean {
 
 /** Whether the probe is asked for NOW: the egg is done, and no reading yet. */
 export function probePending(machine: Machine, wanted: boolean): boolean {
-  return machine.phase === 'DONE' && wanted && !answeredBeforeReload()
-    && (answered === null || answered.probe === null);
+  const a = answers;
+  return machine.phase === 'DONE' && wanted && (a.kind === 'none' || (a.kind === 'live' && a.probe === null));
 }
 
 /** The once-only offer during a cook, and the reading at DONE. `offerOpen`
@@ -191,7 +205,7 @@ export function renderProbe(
 function onProbeSave(): void {
   const cooked = host === null ? null : host.ticket();
   if (host === null || cooked === null || dom.probeReading.disabled) return;
-  if (answered !== null && answered.probe !== null) return;
+  if (answers.kind === 'live' && answers.probe !== null) return;
   const typed = dom.probeReading.value.trim();
   if (typed === '') return;
   const machine = host.machine();

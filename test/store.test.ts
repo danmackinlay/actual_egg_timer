@@ -13,7 +13,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { sizeClassesFor } from '../src/core/geometry.js';
-import { DEFAULT_SETTINGS, Settings, loadSettings, saveSettings } from '../src/ui/store.js';
+import {
+  DEFAULT_SETTINGS, Settings, loadCook, loadSettings, saveCook, saveSettings,
+} from '../src/ui/store.js';
 
 /** localStorage, in memory, as in record.test.ts: the store reads
  *  `window.localStorage` at call time, inside a try. */
@@ -27,6 +29,7 @@ const storage = new Map<string, string>();
 };
 
 const SETTINGS_KEY = 'aet.settings.v1';
+const COOK_KEY = 'aet.cook.v2';
 const classes = sizeClassesFor('eu');
 
 function settingsWith(over: Partial<Settings>): Settings {
@@ -78,4 +81,34 @@ test('choosing sous-vide still works within the session', () => {
   const settings = settingsWith({ startMode: 'sous' });
   saveSettings(settings);
   assert.equal(settings.startMode, 'sous');
+});
+
+test('a cook comes back with whether its egg was written down', () => {
+  storage.clear();
+  const machine = { phase: 'DONE' };
+  const ticket = { lang: 'en' };
+  saveCook(machine, ticket, 'beforeReload');
+  assert.deepEqual(loadCook(), { machine: machine, ticket: ticket, answers: 'beforeReload' });
+  saveCook(machine, ticket, 'none');
+  assert.equal(loadCook()?.answers, 'none');
+});
+
+test('a cook kept before `answers` is dropped, never read as unanswered', () => {
+  // Read as unanswered, an egg already in the log would be logged again.
+  storage.clear();
+  storage.set(COOK_KEY, JSON.stringify({ machine: { phase: 'DONE' }, ticket: null, feedbackGiven: true }));
+  assert.equal(loadCook(), null);
+  storage.set(COOK_KEY, JSON.stringify({ machine: { phase: 'DONE' }, ticket: null, answers: 'live' }));
+  assert.equal(loadCook(), null, 'only what saveCook writes');
+});
+
+test('the live site\'s cook, and junk, are never a crash', () => {
+  storage.clear();
+  storage.set('aet.cook.v1', JSON.stringify({ machine: { phase: 'COOKING' }, feedbackGiven: false }));
+  assert.equal(loadCook(), null);
+  assert.equal(storage.has('aet.cook.v1'), false, 'the superseded key is removed');
+  for (const junk of ['{', 'null', '[]', '"cook"', JSON.stringify({ machine: 3, answers: 'none' })]) {
+    storage.set(COOK_KEY, junk);
+    assert.equal(loadCook(), null, junk);
+  }
 });

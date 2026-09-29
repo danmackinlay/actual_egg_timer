@@ -270,25 +270,34 @@ function clampLitres(litres: number): number {
 interface StoredCook {
   machine: unknown;
   ticket: unknown;
-  feedbackGiven: boolean;
+  answers: KeptAnswers;
 }
 
-export function saveCook(machine: unknown, ticket: unknown, feedbackGiven: boolean): void {
-  writeStorage(COOK_KEY, JSON.stringify({
-    machine: machine, ticket: ticket, feedbackGiven: feedbackGiven,
-  }));
+/** Whether the egg has been written down with an answer, as a cook keeps it
+ *  (src/ui/feedback.ts): an egg answered on the page that wrote it is kept as
+ *  answered before a reload, which is what it is when it is read back. */
+export type KeptAnswers = 'none' | 'beforeReload';
+
+export function saveCook(machine: unknown, ticket: unknown, answers: KeptAnswers): void {
+  writeStorage(COOK_KEY, JSON.stringify({ machine: machine, ticket: ticket, answers: answers }));
 }
 
+/** The cook written down, or null. One without `answers` - written before
+ *  they replaced `feedbackGiven`, by a build that never left the owner's
+ *  devices - is dropped rather than read as unanswered, which would log its
+ *  egg a second time. */
 export function loadCook(): StoredCook | null {
   removeStorage(SUPERSEDED_COOK_KEY);
   const raw = parseObject(readStorage(COOK_KEY));
   if (raw === null) return null;
   const machine = raw['machine'];
   if (machine === null || typeof machine !== 'object') return null;
+  const answers = raw['answers'];
+  if (answers !== 'none' && answers !== 'beforeReload') return null;
   return {
     machine: machine,
     ticket: raw['ticket'] ?? null,
-    feedbackGiven: raw['feedbackGiven'] === true,
+    answers: answers,
   };
 }
 

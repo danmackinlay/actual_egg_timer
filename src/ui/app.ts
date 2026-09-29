@@ -75,7 +75,7 @@ import {
 import { Ticket, restoreTicket, withTimeToBoil } from './ticket.js';
 import { Learning, renderCalibNote, renderLearned, wireForget } from './learned.js';
 import {
-  answeredBeforeReload, answeredHere, eggWrittenDown, forgetAnswers, probePending, probeWanted,
+  answersNow, forgetAnswers, keptAnswers, pickedUpAfterReload, probePending, probeWanted,
   renderProbe, resumeAnswers, wireFeedback,
 } from './feedback.js';
 import { phaseView } from './phaseView.js';
@@ -132,11 +132,6 @@ let solveHandle = 0;
 let saveHandle = 0;
 let lastRevise_ms = 0;
 let lastAnnounced = '';
-/** True while the cook on screen is one that was picked back up after a reload.
- *  Cleared when that cook ends or is cancelled: it is a fact about a particular
- *  cook, not about the tab, and left set it would caption every later cook with
- *  a reload that had nothing to do with it. */
-let restored = false;
 
 /* --------------------------------------------------------------- physics */
 
@@ -552,7 +547,7 @@ function renderRunning(now_ms: number): void {
   // opposite of a refusal, it only exists mid-cook. Only while the cook is
   // still in flight: at DONE the egg is out and "keep this tab open" is
   // advice about a deadline that has already passed.
-  const warning = restored && machine.phase !== 'DONE' ? t('readout.restored') : '';
+  const warning = pickedUpAfterReload() && machine.phase !== 'DONE' ? t('readout.restored') : '';
   renderReadout(now_ms, sol, warning);
   showInfo(dom.sublineInfo, false);
   renderOdds();
@@ -591,8 +586,9 @@ function renderReadout(now_ms: number, sol: Solution, warning: string): void {
   // Asking once per egg is what closes that gap. Both questions stay on screen
   // until the cook moves on, answered or not; a reload after an answer puts
   // them away, since the second could no longer be folded.
-  dom.feedback.hidden = machine.phase !== 'DONE' || answeredBeforeReload();
-  if (!dom.feedback.hidden && !answeredHere()) renderCalibNote(learning());
+  const said = answersNow().kind;
+  dom.feedback.hidden = machine.phase !== 'DONE' || said === 'beforeReload';
+  if (!dom.feedback.hidden && said !== 'live') renderCalibNote(learning());
   renderProbe(machine, ticket, !settings.probeAsked, pending);
 
   dom.phaseLabel.textContent = view.label;
@@ -722,7 +718,7 @@ function persistCook(): void {
     clearCook();
     return;
   }
-  saveCook(machine, ticket, eggWrittenDown());
+  saveCook(machine, ticket, keptAnswers());
 }
 
 /* -------------------------------------------------------------- recompute */
@@ -1008,12 +1004,11 @@ function reset(): void {
   releaseScreen();
   // An egg finished and never answered about is still an egg: the cook, the
   // recommendation and the pull are data for the fit. It folds nothing.
-  if (machine.phase === 'DONE' && !eggWrittenDown() && ticket !== null) {
+  if (machine.phase === 'DONE' && answersNow().kind === 'none' && ticket !== null) {
     logEgg(eggRecordFor(ticket, machine, null));
     void learn();
   }
   forgetAnswers();
-  restored = false;
   ticket = null;
   machine = idleMachine(settings.cooling);
   clearCook();
@@ -1045,7 +1040,7 @@ function onPrimary(): void {
     const target = settings.doneness;
     const cook = solution.result.cookTime_s;
     // A cook started here is this tab's own, whatever happened before it.
-    restored = false;
+    forgetAnswers();
     ticket = {
       egg: currentEgg(),
       massFrom: massFrom(),
@@ -1273,8 +1268,7 @@ function restoreCook(): void {
   }
   machine = back;
   ticket = backTicket;
-  resumeAnswers(stored.feedbackGiven);
-  restored = true;
+  resumeAnswers(stored.answers);
 
   const step = advance(machine, now);
   machine = step.machine;
