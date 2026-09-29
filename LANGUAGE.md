@@ -277,6 +277,38 @@ owner has been through it; the draft file keeps it.
 | `help.odds.p1` | less "When a miss is likely enough to matter, I suggest a level that plays safe, one tap away, and never one where the white might be runny." | less its "I propose a degree that plays safe" sentence |
 | `help.odds.aside` | less "I suggest playing safe when either way of missing is at least one egg in five: …" | less its "I propose to play safe" sentence |
 
+**The second draft under review: `tidy2`** (29 September 2026). FOLLOWUP.md
+section 5 with 4.2: the lines the first tidy left clunky, in both apps, for
+the same phone pass. `tools/drafts/tidy2.ts`, on `a04ccfc`, 15 keys, none
+retired; its header has each 1750 twin before and after. Where it departs
+from FOLLOWUP's proposals: `readout.restored` says "I can't sound the
+alarm", since "the alarm is off" reads as the header's Sound switch;
+`learned.confirm.forget` moves with its title, since under "Start learning
+again?" a button saying "Forget it" reads as "never mind"; "Full rolling
+boil" stays as the button's name wherever the cook is told to tap it, and
+where a screen with no button asks for a future tap it is "a full rolling
+boil" in lower case, since "when the water boils" there invites the tap at
+the first bubbles (`CLAUDE.md` invariant 6). `spoken.total` ("Total time.
+Total 6 minutes") has the same fault as the three `spoken.*` below and is
+left: the web proof reads the label "Total time" as the template "Total
+{time}". Delete this table with the other.
+
+| key | now | 1750 |
+|---|---|---|
+| `learned.forget` | Start learning again | Begin to learn anew |
+| `learned.confirm.title` | Start learning again? | Shall I learn anew? |
+| `learned.confirm.forget` | Start again | Begin anew |
+| `outcome.likely.firm` / `.soft` | Probably just right; if not, a little firm. / …soft. | Probably as you desire; if not, a little firm. / …soft. |
+| `readout.restored` | …The times are right, but I can't sound the alarm, so watch the clock. | …The times are true, but I cannot sound the alarm, so watch the clock. |
+| `controls.eggFrom.more` | Fridge eggs are the most predictable. A fridge is much the same every day and a room isn't, and each degree moves the time a little. | …the most certain. A fridge is much the same from day to day and a room is not, and… |
+| `readout.sub.coldAssumes.more` | …taken to boil before, timed from your taps. … | …hitherto been in boiling, timed by your taps. … |
+| `controls.eggsInPan.more` | …your tap when the water boils already counts them. | …your tap when the water boils already reckons them. |
+| `help.learn.p1` | …From your taps at the boil, I learn how long your water takes to boil. … | …from your taps at the boil, how long your water is in boiling. … |
+| `outcome.learning` | …and on a cold-water start, tell me when the water is at a full rolling boil. … | …and, having begun from cold water, tell me when the water boils in earnest. … |
+| `learned.literature` | I haven't learned anything yet. Tell me how each egg came out, and on a cold-water start, when the water reaches a full rolling boil. | …Tell me how each egg came out, and, having begun from cold water, when the water boils in earnest. |
+| `spoken.heating` | {time} left in total (was "Heating. …", after the label "Heating") | {time} remaining in all |
+| `spoken.cooking` / `.cooling` | {time} left (was "Cooking. …" / "Cooling. …") | {time} remaining |
+
 ## 4. Units
 
 **One setting: Metric or Imperial.** Its default comes from the platform:

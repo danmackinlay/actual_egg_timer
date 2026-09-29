@@ -433,6 +433,9 @@ button.clause {
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
 }
+/* A clause and the punctuation after it break as one (sentence.ts). */
+.clause-wrap { white-space: nowrap; }
+.clause-wrap > button.clause { white-space: normal; }
 button.clause:hover { background: color-mix(in srgb, var(--accent) 12%, transparent); }
 button.clause[aria-expanded="true"] {
   background: var(--accent);

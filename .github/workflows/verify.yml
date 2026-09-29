@@ -1,7 +1,9 @@
 # The gate, on every push and pull request: `npm run verify` - the type
 # checks, the tests, fixtures that match a fresh `npm run fixtures`, and the
 # Swift core against them. macOS, because the Swift half is tested against
-# the Foundation the apps are built with.
+# the Foundation the apps are built with. Then `npm run ios:build`: the app
+# and its widget built for the simulator, unsigned, which `swift test` does
+# not reach. It is kept out of the local `verify` for its time.
 name: verify
 
 on:
@@ -18,3 +20,5 @@ jobs:
           node-version-file: .node-version
       - run: npm ci
       - run: npm run verify
+      - run: brew install xcodegen
+      - run: npm run ios:build

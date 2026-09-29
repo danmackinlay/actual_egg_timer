@@ -19,7 +19,7 @@ export interface Egg {
 /** Volume of an ovoid egg from its minor diameter B, m^3.
  *  V = k_v * L * B^2 with L = B * EGG_LENGTH_RATIO, so V = k_v * ratio * B^3.
  *  k_v = 0.51 rather than pi/6 = 0.5236 because the ovoid taper removes ~2.5%. */
-export function eggVolumeFromMinorDiameter(minorDiameter_m: number): number {
+function eggVolumeFromMinorDiameter(minorDiameter_m: number): number {
   const b = minorDiameter_m;
   return EGG_VOLUME_COEFF * EGG_LENGTH_RATIO * b * b * b;
 }

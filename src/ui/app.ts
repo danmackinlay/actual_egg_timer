@@ -20,7 +20,7 @@ import { SOUS_VIDE_BATH_C, SOUS_VIDE_MODEL_FLOOR_C, sousVideEstimate } from '../
 import {
   Measure, Quantity, UnitSystem, chooseUnits, displayText, parse, sizeClassLabel,
 } from '../core/units.js';
-import { Solution, logYolkTarget, solveCookTime } from '../core/solve.js';
+import { Solution, logYolkTarget } from '../core/solve.js';
 import {
   BoilMemory, DEFAULTS, SLIDER_STEPS, SLOW_HOB_EVERY_S, SLOW_HOB_EXTRA_S, SLOW_HOB_WHEN_LEFT_S, Verdict,
   ambientFor, coolingSecondsFor, probeMomentFor, targetPeakYolk_C, textureFor, textureNoteKeys,
@@ -63,7 +63,7 @@ import {
   Ticker, blip, keepScreenAwake, primeAudio, releaseScreen, ringAlarm, setMuted, startTicker,
   stopAlarm,
 } from './clock.js';
-import { bindDom, dom, el, radioValue, selectRadio } from './dom.js';
+import { bindDom, el, page, radioValue, selectRadio } from './dom.js';
 import { labelInfoButtons, showInfo, wireInfoButtons } from './info.js';
 import { wireViews } from './views.js';
 import {
@@ -170,9 +170,9 @@ function minorFromMass_mm(mass_g: number): number {
 function syncMeasurements(except: EventTarget | null): void {
   const egg = currentEgg();
   const minor_mm = egg.minorDiameter_m * 1000;
-  if (except !== dom.measureMass) dom.measureMass.value = inputText('mass', egg.mass_kg * 1000);
-  if (except !== dom.measureGirth) dom.measureGirth.value = inputText('girth', Math.PI * minor_mm);
-  if (except !== dom.measureMinor) dom.measureMinor.value = inputText('width', minor_mm);
+  if (except !== page().measureMass) page().measureMass.value = inputText('mass', egg.mass_kg * 1000);
+  if (except !== page().measureGirth) page().measureGirth.value = inputText('girth', Math.PI * minor_mm);
+  if (except !== page().measureMinor) page().measureMinor.value = inputText('width', minor_mm);
 }
 
 /* ------------------------------------------------------------------ units */
@@ -399,14 +399,16 @@ function askForProfile(inputs: DecisionInputs): void {
 }
 
 /** Take the answer up: show the refusal, and move the slider if the answer
- *  says it must. Only ever called while idle - once the egg is in the water
- *  the controls are gone and there is nothing to snap. */
+ *  says it must. Idle only - once the egg is in the water the controls are
+ *  gone and there is nothing to snap, so a call mid-cook takes nothing up:
+ *  it neither moves `settings.doneness` nor writes it. */
 function applyAnswer(answer: LevelAnswer): Solution {
+  if (machine.phase !== 'IDLE') return answer.solution;
   refusal = refusalText(answer.verdict);
   const snapTo = answer.verdict.snapTo;
   if (snapTo !== null && snapTo !== settings.doneness) {
     settings.doneness = snapTo;
-    dom.doneness.value = String(snapTo);
+    page().doneness.value = String(snapTo);
     saveNow();
   }
   return answer.solution;
@@ -448,12 +450,12 @@ function renderAdvice(): void {
       settings.doneness, decision.odds, priced,
     );
   }
-  dom.advice.hidden = !wanted;
-  dom.forYou.hidden = keys.length === 0;
+  page().advice.hidden = !wanted;
+  page().forYou.hidden = keys.length === 0;
   const shown = keys.join(' ');
   if (shown === adviceShown) return;
   adviceShown = shown;
-  dom.adviceList.replaceChildren(...keys.map((key) => {
+  page().adviceList.replaceChildren(...keys.map((key) => {
     const li = document.createElement('li');
     li.textContent = t(key);
     return li;
@@ -461,8 +463,8 @@ function renderAdvice(): void {
 }
 
 function renderMute(): void {
-  dom.mute.textContent = t(settings.muted ? 'readout.mute.off' : 'readout.mute.on');
-  dom.mute.setAttribute('aria-pressed', settings.muted ? 'true' : 'false');
+  page().mute.textContent = t(settings.muted ? 'readout.mute.off' : 'readout.mute.on');
+  page().mute.setAttribute('aria-pressed', settings.muted ? 'true' : 'false');
 }
 
 /** Sound is a setting, not a phase: the toggle works mid-cook, and muting
@@ -475,12 +477,12 @@ function onToggleMute(): void {
 }
 
 function setPrimary(label: string, hint: string, visible: boolean): void {
-  dom.primary.textContent = label;
-  dom.primary.hidden = !visible;
+  page().primary.textContent = label;
+  page().primary.hidden = !visible;
   // Enabled unless the caller says otherwise, so a disabled Start cannot leak
   // into the next phase's button.
-  dom.primary.disabled = false;
-  dom.primaryHintText.textContent = hint;
+  page().primary.disabled = false;
+  page().primaryHintText.textContent = hint;
 }
 
 /** The one longer line under the egg while idle (UI.md section 3): a refusal
@@ -488,7 +490,7 @@ function setPrimary(label: string, hint: string, visible: boolean): void {
  *  welcome. The way to Help under low odds is a short link, and goes under
  *  either. */
 function renderWelcome(warning: string): void {
-  dom.welcome.hidden = !(machine.phase === 'IDLE' && !isSousVide() && warning === ''
+  page().welcome.hidden = !(machine.phase === 'IDLE' && !isSousVide() && warning === ''
     && calib.eggsLogged === 0 && !hasBoilMemory(boilMemory));
 }
 
@@ -518,8 +520,8 @@ function renderIdle(now_ms: number): void {
   const sol = solution;
   if (sol === null) return;
 
-  dom.statBoil.textContent = show('boilingPoint', boilingPoint_C());
-  dom.note.textContent = textureNote(sol);
+  page().statBoil.textContent = show('boilingPoint', boilingPoint_C());
+  page().note.textContent = textureNote(sol);
   // The warning line carries a refusal while idle. It is advice about the
   // slider: popping "jammy isn't reachable" onto the screen while the egg is
   // already in the water would be advice about a control the user cannot
@@ -529,7 +531,7 @@ function renderIdle(now_ms: number): void {
   renderDonenessScale(sol, sol.whiteSets ? profile : null, sol.whiteSets ? outcome : null);
   renderReadout(now_ms, sol, warning);
   // "Based on history" has an (i) that says what history.
-  showInfo(dom.sublineInfo, settings.startMode === 'cold' && hasBoilMemory(boilMemory));
+  showInfo(page().sublineInfo, settings.startMode === 'cold' && hasBoilMemory(boilMemory));
   renderOdds();
   renderAdvice();
   renderWelcome(warning);
@@ -547,19 +549,19 @@ function renderRunning(now_ms: number): void {
   // advice about a deadline that has already passed.
   const warning = pickedUpAfterReload() && machine.phase !== 'DONE' ? t('readout.restored') : '';
   renderReadout(now_ms, sol, warning);
-  showInfo(dom.sublineInfo, false);
+  showInfo(page().sublineInfo, false);
   renderOdds();
   renderAdvice();
-  dom.welcome.hidden = true;
+  page().welcome.hidden = true;
 }
 
 /** The readout, the buttons under it and the questions at DONE, idle or not,
  *  and the warning line with `warning` in it. */
 function renderReadout(now_ms: number, sol: Solution, warning: string): void {
-  dom.body.dataset['phase'] = machine.phase;
-  dom.body.dataset['start'] = startModeNow();
-  dom.warn.textContent = warning;
-  dom.warn.hidden = warning === '';
+  page().body.dataset['phase'] = machine.phase;
+  page().body.dataset['start'] = startModeNow();
+  page().warn.textContent = warning;
+  page().warn.hidden = warning === '';
 
   const wanted = probeWanted(settings.probe, ticket);
   const pending = probePending(machine, wanted);
@@ -576,24 +578,24 @@ function renderReadout(now_ms: number, sol: Solution, warning: string): void {
     probePending: pending,
   });
   setPrimary(view.primary ?? '', view.hint, view.primary !== null);
-  dom.primary.disabled = view.primaryDisabled;
-  dom.secondary.hidden = !view.secondaryVisible;
-  if (view.secondaryVisible) dom.secondary.textContent = t('action.cancel');
+  page().primary.disabled = view.primaryDisabled;
+  page().secondary.hidden = !view.secondaryVisible;
+  if (view.secondaryVisible) page().secondary.textContent = t('action.cancel');
 
   // The model is calibrated against the literature, not against this kitchen.
   // Asking once per egg is what closes that gap. Both questions stay on screen
   // until the cook moves on, answered or not; a reload after an answer puts
   // them away, since the second could no longer be folded.
   const said = answersNow().kind;
-  dom.feedback.hidden = machine.phase !== 'DONE' || said === 'beforeReload';
-  if (!dom.feedback.hidden && said !== 'live') renderCalibNote(learning());
+  page().feedback.hidden = machine.phase !== 'DONE' || said === 'beforeReload';
+  if (!page().feedback.hidden && said !== 'live') renderCalibNote(learning());
   renderProbe(machine, ticket, !settings.probeAsked, pending);
 
-  dom.phaseLabel.textContent = view.label;
-  dom.digits.textContent = view.digits;
-  dom.sublineText.textContent = view.subline;
+  page().phaseLabel.textContent = view.label;
+  page().digits.textContent = view.digits;
+  page().sublineText.textContent = view.subline;
   // The full rolling boil has an (i) that says what it looks like.
-  showInfo(dom.hintInfo, machine.phase === 'HEATING');
+  showInfo(page().hintInfo, machine.phase === 'HEATING');
 
   // The live region carries a coarse announcement, not a per-second one: the
   // ticking digits are aria-hidden, so a screen reader hears the phase and the
@@ -603,7 +605,7 @@ function renderReadout(now_ms: number, sol: Solution, warning: string): void {
   const key = `${machine.phase}|${minute}`;
   if (key !== lastAnnounced) {
     lastAnnounced = key;
-    dom.announce.textContent = announcement;
+    page().announce.textContent = announcement;
   }
 }
 
@@ -627,9 +629,9 @@ function renderOdds(): void {
   } else if (ticket !== null) {
     o = ticket.outcome;
   }
-  dom.directionText.textContent = o === null ? '' : t(directionKey(o));
-  dom.whiteRisk.hidden = o === null || !whiteAtRisk(o);
-  showInfo(dom.oddsInfo, machine.phase === 'IDLE' && o !== null);
+  page().directionText.textContent = o === null ? '' : t(directionKey(o));
+  page().whiteRisk.hidden = o === null || !whiteAtRisk(o);
+  showInfo(page().oddsInfo, machine.phase === 'IDLE' && o !== null);
 
   // While a new pot's surface is on its way the lines above are blank, and
   // the readout would shrink and grow back a second later, moving the
@@ -638,12 +640,12 @@ function renderOdds(): void {
   // while idle: reading the height forces a layout, and a running cook, drawn
   // five times a second, has no choice to keep still.
   if (machine.phase !== 'IDLE') {
-    dom.readout.style.minHeight = '';
+    page().readout.style.minHeight = '';
   } else if (decision === null) {
-    dom.readout.style.minHeight = settledReadout_px > 0 ? `${settledReadout_px}px` : '';
+    page().readout.style.minHeight = settledReadout_px > 0 ? `${settledReadout_px}px` : '';
   } else {
-    dom.readout.style.minHeight = '';
-    const height = dom.readout.offsetHeight;
+    page().readout.style.minHeight = '';
+    const height = page().readout.offsetHeight;
     if (height > 0) settledReadout_px = height;
   }
 }
@@ -655,16 +657,16 @@ function renderSousVide(now_ms: number): void {
   // No pan, no choice, and no odds: the bath's answer is not a guess about a
   // pan (the decision chooses pan times). So no direction, and no bracket
   // either.
-  dom.directionText.textContent = '';
-  dom.whiteRisk.hidden = true;
-  dom.readout.style.minHeight = '';
+  page().directionText.textContent = '';
+  page().whiteRisk.hidden = true;
+  page().readout.style.minHeight = '';
   renderBracket(null);
-  showInfo(dom.oddsInfo, false);
-  showInfo(dom.sublineInfo, false);
-  showInfo(dom.hintInfo, false);
+  showInfo(page().oddsInfo, false);
+  showInfo(page().sublineInfo, false);
+  showInfo(page().hintInfo, false);
   renderAdvice();
-  dom.body.dataset['phase'] = machine.phase;
-  dom.body.dataset['start'] = settings.startMode;
+  page().body.dataset['phase'] = machine.phase;
+  page().body.dataset['start'] = settings.startMode;
 
   const egg = currentEgg();
   const doneness = calibrationDoneness(calib, settings.doneness);
@@ -674,26 +676,26 @@ function renderSousVide(now_ms: number): void {
   );
   const copy = sousVideCopy(est, now_ms);
 
-  dom.phaseLabel.textContent = t('readout.phase.startTime');
-  dom.digits.textContent = copy.headline;
-  dom.sublineText.textContent = copy.subline;
-  dom.statBoil.textContent = show('boilingPoint', boilingPoint_C());
+  page().phaseLabel.textContent = t('readout.phase.startTime');
+  page().digits.textContent = copy.headline;
+  page().sublineText.textContent = copy.subline;
+  page().statBoil.textContent = show('boilingPoint', boilingPoint_C());
   // The slider's reading is a pan number. There is no pan: the water's
   // temperature is not a peak yolk temperature, and the reading says which
   // number it is.
   renderDonenessReading(settings.doneness, { bath_C: est.bath_C });
-  dom.note.textContent = copy.note;
-  dom.warn.textContent = copy.warn;
-  dom.warn.hidden = false;
-  dom.welcome.hidden = true;
+  page().note.textContent = copy.note;
+  page().warn.textContent = copy.warn;
+  page().warn.hidden = false;
+  page().welcome.hidden = true;
   setPrimary('', copy.hint, false);
-  dom.secondary.hidden = true;
-  dom.feedback.hidden = true;
+  page().secondary.hidden = true;
+  page().feedback.hidden = true;
 
   const key = `SOUS|${copy.headline}`;
   if (key !== lastAnnounced) {
     lastAnnounced = key;
-    dom.announce.textContent = t('spoken.sousVide', {
+    page().announce.textContent = t('spoken.sousVide', {
       when: midSentence(copy.headline, activeLocale()), subline: copy.subline,
     });
   }
@@ -718,13 +720,19 @@ function persistCook(): void {
 
 /* -------------------------------------------------------------- recompute */
 
-/** Solve for what is on screen and take the answer up. Idle only in practice:
- *  every mid-cook path goes through `resolveDuring` instead, which keeps the
- *  target the cook was started at. */
+/** Solve for what is on screen and take the answer up. Idle only: mid-cook
+ *  it only redraws, since the controls describe the next cook, not this one
+ *  (a second tab may have changed them). Every mid-cook solve goes through
+ *  `resolveDuring` instead, which keeps the ticket's pot and the target the
+ *  cook was started at. */
 function recompute(): void {
+  if (machine.phase !== 'IDLE') {
+    render(Date.now());
+    return;
+  }
   // No pan, no solve. The sous-vide answer comes from src/core/sousvide.ts and
   // needs none of this.
-  if (isSousVide() && machine.phase === 'IDLE') {
+  if (isSousVide()) {
     refusal = '';
     decision = null;
     outcome = null;
@@ -755,11 +763,13 @@ function resolveDuring(t: Ticket, timeToBoil_s: number): Solution {
   // The ticket's egg and pot, never the controls': a second tab may have
   // changed those since "Eggs in".
   const { egg, setup } = withTimeToBoil(t, timeToBoil_s);
-  const params = calibrationParams(calib);
-  const mean = solveCookTime(egg, setup, params, calibrationDoneness(calib, machine.targetLevel));
+  // Through `answerAt`, as every solve is, with no snap retry: the target is
+  // frozen, so a retry would answer for an egg nobody is cooking. iOS's
+  // `cookResult` asks the same.
+  const mean = answerAt(calib, egg, setup, machine.targetLevel, null, false).solution;
   // Leaned as far as the choice leaned at "Eggs in": the new ramp is a new pot,
   // whose surface is a second away with the egg already in (`carriedSolution`).
-  return carriedSolution(egg, setup, params, mean, t.lean_s);
+  return carriedSolution(egg, setup, calibrationParams(calib), mean, t.lean_s);
 }
 
 /** Take a new time to boil into the cook under way - the slow hob's guess, or
@@ -829,7 +839,7 @@ function forgetAll(): void {
 function onProbeOffer(yes: boolean): void {
   settings.probeAsked = true;
   if (yes) settings.probe = true;
-  dom.probeSetting.checked = settings.probe;
+  page().probeSetting.checked = settings.probe;
   saveNow();
   render(Date.now());
 }
@@ -840,7 +850,7 @@ function onProbeOffer(yes: boolean): void {
  *  of 1750 is there, which only an English page shows. */
 function applyLanguageToDom(): void {
   selectRadio('language', activeLocale());
-  dom.unitsPeriod.hidden = languageOf(activeLocale()) !== 'en';
+  page().unitsPeriod.hidden = languageOf(activeLocale()) !== 'en';
 }
 
 /** Which language changes went in last, so two quick changes land in order. */
@@ -887,49 +897,49 @@ function relabel(): void {
 /* ------------------------------------------------------------------ input */
 
 function readInputs(source: EventTarget | null): void {
-  const sizeIndex = Number(dom.size.value);
+  const sizeIndex = Number(page().size.value);
   settings.sizeIndex = Number.isFinite(sizeIndex) ? sizeIndex : DEFAULTS.sizeIndex;
 
   // Measuring the egg any of the three ways overrides the size class, because
   // a measured egg is better information than a box label. A box cleared, or
   // holding something that is not a number, measures nothing: the egg stays.
   let measured_mm = NaN;
-  if (source === dom.measureMass) {
-    measured_mm = minorFromMass_mm(readField(dom.measureMass, 'mass', NaN));
-  } else if (source === dom.measureGirth) {
-    measured_mm = minorFromGirth_mm(readField(dom.measureGirth, 'girth', NaN));
-  } else if (source === dom.measureMinor) {
-    measured_mm = readField(dom.measureMinor, 'width', NaN);
+  if (source === page().measureMass) {
+    measured_mm = minorFromMass_mm(readField(page().measureMass, 'mass', NaN));
+  } else if (source === page().measureGirth) {
+    measured_mm = minorFromGirth_mm(readField(page().measureGirth, 'girth', NaN));
+  } else if (source === page().measureMinor) {
+    measured_mm = readField(page().measureMinor, 'width', NaN);
   }
   if (measured_mm > 0) {
-    settings.measuredBy = source === dom.measureMass ? 'scale'
-      : source === dom.measureGirth ? 'girth' : 'width';
+    settings.measuredBy = source === page().measureMass ? 'scale'
+      : source === page().measureGirth ? 'girth' : 'width';
     settings.customMinor_mm = clampNumber(measured_mm, LIMITS.minor_mm, settings.customMinor_mm);
     settings.sizeIndex = -1;
-    dom.size.value = '-1';
+    page().size.value = '-1';
   }
   settings.startTempMode = radioValue('startTemp', 'fridge') as Settings['startTempMode'];
   // The three fields with a unit are read only when they are the one being
   // edited, like the measurements above: see `readField`.
-  if (source === dom.customTemp) {
-    settings.customStart_C = readField(dom.customTemp, 'eggTemp', settings.customStart_C);
+  if (source === page().customTemp) {
+    settings.customStart_C = readField(page().customTemp, 'eggTemp', settings.customStart_C);
   }
-  if (source === dom.altitude) {
-    settings.altitude_m = readField(dom.altitude, 'altitude', settings.altitude_m);
+  if (source === page().altitude) {
+    settings.altitude_m = readField(page().altitude, 'altitude', settings.altitude_m);
   }
   settings.startMode = radioValue('startMode', 'cold') as UiStartMode;
   settings.afterBoil = radioValue('afterBoil', 'hold') as Settings['afterBoil'];
   settings.cooling = radioValue('cooling', 'ice') as Cooling;
-  if (source === dom.litres) {
-    settings.waterLitres = readField(dom.litres, 'water', settings.waterLitres);
+  if (source === page().litres) {
+    settings.waterLitres = readField(page().litres, 'water', settings.waterLitres);
   }
-  settings.eggCount = Math.round(clampNumber(dom.eggCount.value, LIMITS.eggCount, settings.eggCount));
-  settings.doneness = clampNumber(dom.doneness.value, LIMITS.doneness, settings.doneness);
+  settings.eggCount = Math.round(clampNumber(page().eggCount.value, LIMITS.eggCount, settings.eggCount));
+  settings.doneness = clampNumber(page().doneness.value, LIMITS.doneness, settings.doneness);
   // Ticking the box is saying so: the offer has its answer.
-  if (dom.probeSetting.checked !== settings.probe) settings.probeAsked = true;
-  settings.probe = dom.probeSetting.checked;
+  if (page().probeSetting.checked !== settings.probe) settings.probeAsked = true;
+  settings.probe = page().probeSetting.checked;
 
-  dom.customTempField.hidden = settings.startTempMode !== 'custom';
+  page().customTempField.hidden = settings.startTempMode !== 'custom';
   syncMeasurements(source);
   labelMeasuredOption();
   scheduleSave();
@@ -955,8 +965,8 @@ function onInput(event: Event): void {
   // reading under the slider, the sentence, the boiling point beside the
   // altitude; the full solve (tens of milliseconds) follows and corrects them.
   renderDonenessReading(settings.doneness, isSousVide() ? { bath_C: SOUS_VIDE_BATH_C } : { peakYolk_C: targetPeakYolk_C(settings.doneness) });
-  dom.statBoil.textContent = show('boilingPoint', boilingPoint_C());
-  dom.body.dataset['start'] = settings.startMode;
+  page().statBoil.textContent = show('boilingPoint', boilingPoint_C());
+  page().body.dataset['start'] = settings.startMode;
   renderSentence(liveSetupFacts(settings, sizeClasses, currentEgg()));
   scheduleSolve();
 }
@@ -1100,11 +1110,11 @@ function buildSizeOptions(): void {
   for (let i = 0; i < sizeClasses.length; i += 1) {
     const option = document.createElement('option');
     option.value = String(i);
-    dom.size.append(option);
+    page().size.append(option);
   }
   const custom = document.createElement('option');
   custom.value = '-1';
-  dom.size.append(custom);
+  page().size.append(custom);
 }
 
 /** The classes' names, with their masses in the units on screen, and the
@@ -1112,7 +1122,7 @@ function buildSizeOptions(): void {
 function labelSizeOptions(): void {
   for (let i = 0; i < sizeClasses.length; i += 1) {
     const label = sizeClassLabel(sizeClasses[i], unitSystem());
-    dom.size.options[i].textContent = t(label.key, { mass: t(label.mass.key, { value: label.mass.value }) });
+    page().size.options[i].textContent = t(label.key, { mass: t(label.mass.key, { value: label.mass.value }) });
   }
   labelMeasuredOption();
 }
@@ -1121,7 +1131,7 @@ function labelSizeOptions(): void {
  *  says which egg comes back (D6). */
 function labelMeasuredOption(): void {
   const measured = eggFromMinorDiameter(settings.customMinor_mm / 1000);
-  dom.size.options[sizeClasses.length].textContent = t('controls.size.measured', {
+  page().size.options[sizeClasses.length].textContent = t('controls.size.measured', {
     mass: show('mass', measured.mass_kg * 1000),
   });
 }
@@ -1134,9 +1144,9 @@ function applyLimit(input: HTMLInputElement, limit: Limit): void {
 /** Everything the markup says about numbers comes from the same tables the
  *  model reads, so a bound or a preset changed in one place changes here too. */
 function applyConstantsToDom(): void {
-  applyLimit(dom.eggCount, LIMITS.eggCount);
-  applyLimit(dom.doneness, LIMITS.doneness);
-  dom.doneness.step = String(1 / SLIDER_STEPS);
+  applyLimit(page().eggCount, LIMITS.eggCount);
+  applyLimit(page().doneness, LIMITS.doneness);
+  page().doneness.step = String(1 / SLIDER_STEPS);
 }
 
 /** Everything on the form that has a unit: each input's step, bounds, unit
@@ -1144,30 +1154,30 @@ function applyConstantsToDom(): void {
  *  whenever the cook changes system, from the stored SI values - so switching
  *  back and forth never moves the egg. */
 function applyUnitsToDom(): void {
-  applyMeasure(dom.measureMass, dom.unitMass, measure('mass'));
-  applyMeasure(dom.measureGirth, dom.unitGirth, measure('girth'));
-  applyMeasure(dom.measureMinor, dom.unitMinor, measure('width'));
-  applyMeasure(dom.customTemp, dom.unitTemp, measure('eggTemp'));
-  applyMeasure(dom.altitude, dom.unitAltitude, measure('altitude'));
-  applyMeasure(dom.litres, dom.unitLitres, measure('water'));
-  applyMeasure(dom.probeReading, dom.unitProbe, measure('probeTemp'));
+  applyMeasure(page().measureMass, page().unitMass, measure('mass'));
+  applyMeasure(page().measureGirth, page().unitGirth, measure('girth'));
+  applyMeasure(page().measureMinor, page().unitMinor, measure('width'));
+  applyMeasure(page().customTemp, page().unitTemp, measure('eggTemp'));
+  applyMeasure(page().altitude, page().unitAltitude, measure('altitude'));
+  applyMeasure(page().litres, page().unitLitres, measure('water'));
+  applyMeasure(page().probeReading, page().unitProbe, measure('probeTemp'));
   syncMeasurements(null);
-  dom.customTemp.value = inputText('eggTemp', settings.customStart_C);
-  dom.litres.value = inputText('water', settings.waterLitres);
-  dom.altitude.value = inputText('altitude', settings.altitude_m);
+  page().customTemp.value = inputText('eggTemp', settings.customStart_C);
+  page().litres.value = inputText('water', settings.waterLitres);
+  page().altitude.value = inputText('altitude', settings.altitude_m);
   selectRadio('units', unitSystem());
   labelSizeOptions();
   // The presets are assumptions, and are labelled as such rather than baked
   // into the buttons: a room is not necessarily 20 C, and Custom is there for
   // anyone who knows better.
-  dom.startTempHint.textContent = t('controls.eggFrom.hint', {
+  page().startTempHint.textContent = t('controls.eggFrom.hint', {
     fridge: show('temperature', START_TEMP_PRESETS_C.fridge),
     room: show('temperature', START_TEMP_PRESETS_C.room),
   });
-  dom.startSousLabel.textContent = t('controls.start.sousVide', {
+  page().startSousLabel.textContent = t('controls.start.sousVide', {
     bath: show('temperature', SOUS_VIDE_BATH_C),
   });
-  dom.helpSousVide.textContent = t('help.unsure.sousVide', {
+  page().helpSousVide.textContent = t('help.unsure.sousVide', {
     floor: show('temperature', SOUS_VIDE_MODEL_FLOOR_C),
   });
   // The sentence's masses and temperatures are in the units too.
@@ -1176,16 +1186,16 @@ function applyUnitsToDom(): void {
 }
 
 function applySettingsToDom(): void {
-  dom.size.value = String(settings.sizeIndex);
+  page().size.value = String(settings.sizeIndex);
   applyUnitsToDom();
   selectRadio('startTemp', settings.startTempMode);
   selectRadio('startMode', settings.startMode);
   selectRadio('afterBoil', settings.afterBoil);
   selectRadio('cooling', settings.cooling);
-  dom.eggCount.value = String(settings.eggCount);
-  dom.doneness.value = String(settings.doneness);
-  dom.customTempField.hidden = settings.startTempMode !== 'custom';
-  dom.probeSetting.checked = settings.probe;
+  page().eggCount.value = String(settings.eggCount);
+  page().doneness.value = String(settings.doneness);
+  page().customTempField.hidden = settings.startTempMode !== 'custom';
+  page().probeSetting.checked = settings.probe;
   applyLanguageToDom();
 }
 
@@ -1212,16 +1222,16 @@ export function boot(): void {
     form.addEventListener('submit', (event) => event.preventDefault());
   }
 
-  dom.primary.addEventListener('click', onPrimary);
-  dom.secondary.addEventListener('click', reset);
-  dom.mute.addEventListener('click', onToggleMute);
+  page().primary.addEventListener('click', onPrimary);
+  page().secondary.addEventListener('click', reset);
+  page().mute.addEventListener('click', onToggleMute);
   wireForget(forgetAll);
   // Every (i) opens in place. They are buttons, so the keyboard reaches and
   // works them, and aria-expanded says which way they stand.
   wireInfoButtons();
   wireViews();
-  dom.probeOfferYes.addEventListener('click', () => onProbeOffer(true));
-  dom.probeOfferNo.addEventListener('click', () => onProbeOffer(false));
+  page().probeOfferYes.addEventListener('click', () => onProbeOffer(true));
+  page().probeOfferNo.addEventListener('click', () => onProbeOffer(false));
   setMuted(settings.muted);
   renderMute();
 
@@ -1235,7 +1245,13 @@ export function boot(): void {
 
   renderCalibNote(learning());
   restoreCook();
-  recompute();
+  // A cook picked back up is described by its ticket, never by the
+  // controls, which another tab may have changed since "Eggs in".
+  if (machine.phase === 'IDLE') recompute();
+  else if (ticket !== null) {
+    solution = resolveDuring(ticket, ticket.setup.timeToBoil_s);
+    render(Date.now());
+  }
   // Eggs written down but not yet folded - a reload mid-fold, or a posterior
   // that had to be rebuilt from the log - are folded now, off the main thread.
   // The app runs on what it had until they land.

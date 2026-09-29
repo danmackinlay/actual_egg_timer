@@ -121,7 +121,7 @@ function pad2(n: number): string {
 }
 
 /** The LOCAL date a cook started on. A day, not a timestamp. */
-export function localDay(ms: number): string {
+function localDay(ms: number): string {
   const d = new Date(ms);
   return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
 }

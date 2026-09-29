@@ -15,7 +15,7 @@ import {
   Calibration, calibrationParams, eggRecordFor, learn, logEgg, recordSecondAnswer,
 } from './calibration.js';
 import { t } from './copy.js';
-import { dom } from './dom.js';
+import { page } from './dom.js';
 import { Machine } from './machine.js';
 import { KeptAnswers } from './store.js';
 import { Ticket } from './ticket.js';
@@ -95,7 +95,7 @@ let host: FeedbackHost | null = null;
 /** Mark which answer of a row was given, and put the row out of reach. The
  *  pressed button stays legible - it is the record of what was said. */
 function settleRow(selector: string, pressed: HTMLButtonElement): void {
-  const buttons = dom.feedback.querySelectorAll<HTMLButtonElement>(selector);
+  const buttons = page().feedback.querySelectorAll<HTMLButtonElement>(selector);
   for (let i = 0; i < buttons.length; i++) {
     buttons[i].disabled = true;
     buttons[i].setAttribute('aria-pressed', buttons[i] === pressed ? 'true' : 'false');
@@ -104,7 +104,7 @@ function settleRow(selector: string, pressed: HTMLButtonElement): void {
 
 /** Both rows back to unanswered, for the next egg. */
 function resetRows(): void {
-  const buttons = dom.feedback.querySelectorAll<HTMLButtonElement>('button.fb, button.wb');
+  const buttons = page().feedback.querySelectorAll<HTMLButtonElement>('button.fb, button.wb');
   for (let i = 0; i < buttons.length; i++) {
     buttons[i].disabled = false;
     buttons[i].removeAttribute('aria-pressed');
@@ -136,7 +136,7 @@ function foldAnswer(yolk: Feedback | null, white: WhiteReport | null, probe: Pro
   const h = host;
   const cooked = h === null ? null : h.ticket();
   if (h === null || cooked === null) return;
-  dom.calibNote.textContent = t('feedback.learning');
+  page().calibNote.textContent = t('feedback.learning');
   const machine = h.machine();
   const cookStarted = machine.startedAt_ms;
   const stillHere = (): boolean => {
@@ -144,7 +144,7 @@ function foldAnswer(yolk: Feedback | null, white: WhiteReport | null, probe: Pro
     return now.phase === 'DONE' && now.startedAt_ms === cookStarted;
   };
   const thanks = (): void => {
-    if (stillHere()) dom.calibNote.textContent = t('feedback.thanks');
+    if (stillHere()) page().calibNote.textContent = t('feedback.thanks');
     h.learned();
   };
 
@@ -189,10 +189,10 @@ export function renderProbe(
 ): void {
   const running = machine.phase === 'HEATING' || machine.phase === 'COOKING'
     || machine.phase === 'PULL' || machine.phase === 'COOLING';
-  dom.probeOffer.hidden = !(running && offerOpen && ticket !== null && ticket.probeMoment);
+  page().probeOffer.hidden = !(running && offerOpen && ticket !== null && ticket.probeMoment);
   // Asked for until it is given, and left showing what was given.
-  const visible = pending || (machine.phase === 'DONE' && dom.probeReading.disabled);
-  dom.probeEntry.hidden = !visible;
+  const visible = pending || (machine.phase === 'DONE' && page().probeReading.disabled);
+  page().probeEntry.hidden = !visible;
 }
 
 /**
@@ -203,9 +203,9 @@ export function renderProbe(
  */
 function onProbeSave(): void {
   const cooked = host === null ? null : host.ticket();
-  if (host === null || cooked === null || dom.probeReading.disabled) return;
+  if (host === null || cooked === null || page().probeReading.disabled) return;
   if (answers.kind === 'live' && answers.probe !== null) return;
-  const typed = dom.probeReading.value.trim();
+  const typed = page().probeReading.value.trim();
   if (typed === '') return;
   const machine = host.machine();
   const reading_C = parse(measure('probeTemp'), Number(typed));
@@ -214,7 +214,7 @@ function onProbeSave(): void {
     cooked.egg, cooked.setup, calibrationParams(host.calib()), scoredAt_s,
   );
   if (reading_C === null || reading_C < low || reading_C > high) {
-    dom.probeNote.textContent = t('probe.refused', {
+    page().probeNote.textContent = t('probe.refused', {
       low: show('probeTemp', low), high: show('probeTemp', high),
     });
     return;
@@ -226,29 +226,29 @@ function onProbeSave(): void {
     centre_C: recordProbe_C(reading_C),
     after_s: machine.coolEnd_ms > 0 && asked_s >= 0 ? asked_s : null,
   };
-  dom.probeReading.disabled = true;
-  dom.probeSave.disabled = true;
-  dom.probeNote.textContent = show('probeTemp', reading_C);
+  page().probeReading.disabled = true;
+  page().probeSave.disabled = true;
+  page().probeNote.textContent = show('probeTemp', reading_C);
   foldAnswer(null, null, probe);
 }
 
 /** Back to empty, for the next egg. */
 function resetProbe(): void {
-  dom.probeReading.value = '';
-  dom.probeReading.disabled = false;
-  dom.probeSave.disabled = false;
-  dom.probeNote.textContent = '';
+  page().probeReading.value = '';
+  page().probeReading.disabled = false;
+  page().probeSave.disabled = false;
+  page().probeNote.textContent = '';
 }
 
 /** Wire both rows of answers and the probe's entry. Once, at boot. */
 export function wireFeedback(h: FeedbackHost): void {
   host = h;
-  dom.probeSave.addEventListener('click', onProbeSave);
-  dom.probeReading.addEventListener('keydown', (event) => {
+  page().probeSave.addEventListener('click', onProbeSave);
+  page().probeReading.addEventListener('keydown', (event) => {
     if (event.key === 'Enter') onProbeSave();
   });
 
-  const fbButtons = dom.feedback.querySelectorAll<HTMLButtonElement>('button.fb');
+  const fbButtons = page().feedback.querySelectorAll<HTMLButtonElement>('button.fb');
   for (let i = 0; i < fbButtons.length; i++) {
     fbButtons[i].addEventListener('click', () => {
       const raw = Number(fbButtons[i].dataset['fb']);
@@ -256,7 +256,7 @@ export function wireFeedback(h: FeedbackHost): void {
     });
   }
 
-  const whiteButtons = dom.feedback.querySelectorAll<HTMLButtonElement>('button.wb');
+  const whiteButtons = page().feedback.querySelectorAll<HTMLButtonElement>('button.wb');
   for (let i = 0; i < whiteButtons.length; i++) {
     whiteButtons[i].addEventListener('click', () => {
       const raw = whiteButtons[i].dataset['white'];

@@ -158,7 +158,7 @@ export function applyCopy(doc: Document): void {
 const LONG_S = '\u017f';
 
 /** A text as it is read aloud: every long s an s. */
-export function withoutLongS(text: string): string {
+function withoutLongS(text: string): string {
   return text.split(LONG_S).join('s');
 }
 

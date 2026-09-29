@@ -1,9 +1,11 @@
 /**
  * The page's elements, found once at boot, and the radio groups' helpers.
  *
- * Nothing here touches the document when the module is imported: `dom` is
- * filled in by `bindDom()`, which `boot()` calls first, so a test can import
- * any module that uses it.
+ * Nothing here touches the document when the module is imported: the
+ * elements are found by `bindDom()`, which `boot()` calls first, and read
+ * through `page()`, which throws before then - so a test can import any
+ * module that uses it, and a read before boot says so rather than reading
+ * undefined.
  */
 
 export function el<T extends HTMLElement>(id: string): T {
@@ -99,12 +101,18 @@ function findDom() {
 
 export type Dom = ReturnType<typeof findDom>;
 
-/** Every element the code writes to. Empty until `bindDom()`. */
-export let dom: Dom = undefined as unknown as Dom;
+/** Every element the code writes to. Null until `bindDom()`. */
+let bound: Dom | null = null;
 
-/** Find the page's elements. Once, at boot, before anything reads `dom`. */
+/** Find the page's elements. Once, at boot, before anything reads `page()`. */
 export function bindDom(): void {
-  dom = findDom();
+  bound = findDom();
+}
+
+/** Every element the code writes to. Throws if called before `bindDom()`. */
+export function page(): Dom {
+  if (bound === null) throw new Error('page() before bindDom()');
+  return bound;
 }
 
 function radios(name: string): HTMLInputElement[] {

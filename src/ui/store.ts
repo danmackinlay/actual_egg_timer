@@ -76,9 +76,13 @@ export interface Settings {
 export const DEFAULT_SETTINGS: Settings = {
   sizeIndex: DEFAULTS.sizeIndex,
   customMinor_mm: DEFAULTS.customMinor_mm,
-  // A stored diameter from before the field existed was typed into SOMETHING;
-  // width is the one it literally is.
-  measuredBy: 'width',
+  // Read only for a measured egg, and set by whichever box is typed in. A
+  // settings record from the live site of 19 September has no field for it,
+  // and its diameter was typed into one of the same three boxes: the first,
+  // the scale, is the likely one and the one that is read. The record's
+  // `massFrom` has no "unknown" (record v1 is frozen), so it is a guess
+  // either way, and the likely one beats the literal one.
+  measuredBy: 'scale',
   startTempMode: 'fridge',
   customStart_C: DEFAULTS.customStart_C,
   altitude_m: DEFAULTS.altitude_m,

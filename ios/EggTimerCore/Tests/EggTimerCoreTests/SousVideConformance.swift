@@ -21,8 +21,8 @@ import Foundation
 struct SousVideConformance {
     @Test("the bath the app offers is the same bath")
     func bath() throws {
-        try expectClose(sousVideBathC, Fixtures.sousVideNumber("bath_C"), "sousVideBathC")
-        try expectClose(sousVideModelFloorC, Fixtures.sousVideNumber("modelFloor_C"), "sousVideModelFloorC")
+        try expectClose(sousVideBathC, Fixtures.number("sousvide.json", "bath_C"), "sousVideBathC")
+        try expectClose(sousVideModelFloorC, Fixtures.number("sousvide.json", "modelFloor_C"), "sousVideModelFloorC")
     }
 
     /// The bisection is the only iteration in this module, and the fixture
@@ -33,7 +33,7 @@ struct SousVideConformance {
     func fourierNumber() throws {
         try expectClose(
             equilibrationTime(radiusM: 1.0, alphaM2s: 1.0),
-            Fixtures.sousVideNumber("fourierNumber"),
+            Fixtures.number("sousvide.json", "fourierNumber"),
             "equilibrationTime(1 m, 1 m^2/s)"
         )
     }
@@ -47,7 +47,7 @@ struct SousVideConformance {
     /// mapping surface as a sous-vide failure as well.
     @Test("equilibration, both hold times, the total and which one binds")
     func cases() throws {
-        for c in try Fixtures.sousVideCases("cases") {
+        for c in try Fixtures.list("sousvide.json", "cases") {
             let est = try sousVideEstimate(
                 radiusM: c.num("radius_m"),
                 alphaM2s: c.num("alpha_m2s"),

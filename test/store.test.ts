@@ -82,6 +82,20 @@ test('a stored sous-vide from an older build loads as cold', () => {
   assert.equal(back.altitude_m, 600);
 });
 
+test('a measured egg saved before measuredBy existed is read as weighed', () => {
+  // The live site of 19 September saved a custom diameter with no word of
+  // which box it came from; the scale is the first box and the likely one.
+  freshPage();
+  const old: Record<string, unknown> = { ...DEFAULT_SETTINGS, sizeIndex: -1, customMinor_mm: 44 };
+  delete old['measuredBy'];
+  storage.set(SETTINGS_KEY, JSON.stringify(old));
+  const back = loadSettings(classes);
+  assert.equal(back.measuredBy, 'scale');
+  assert.equal(back.customMinor_mm, 44);
+  saveSettings(settingsWith({ sizeIndex: -1, measuredBy: 'girth' }));
+  assert.equal(loadSettings(classes).measuredBy, 'girth', 'a box typed in since is kept');
+});
+
 test('choosing sous-vide still works within the session', () => {
   // The in-memory setting is the page's; only what is written down changes.
   freshPage();

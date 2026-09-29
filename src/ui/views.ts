@@ -4,7 +4,7 @@
  * Settings page's old address, still opens it.
  */
 
-import { dom } from './dom.js';
+import { page } from './dom.js';
 
 export type View = 'egg' | 'settings' | 'help';
 
@@ -23,10 +23,10 @@ export function viewFromHash(address: string): { view: View; target: string | nu
  * always shown as the egg whatever the address says (styles.css).
  */
 function route(focus: boolean): void {
-  const before = dom.body.dataset['view'];
+  const before = page().body.dataset['view'];
   const { view, target } = viewFromHash(location.hash);
   if (location.hash === '#kitchen') history.replaceState(history.state, '', '#settings');
-  dom.body.dataset['view'] = view;
+  page().body.dataset['view'] = view;
   const section = target === null ? null : document.getElementById(target);
   if (section !== null) {
     section.scrollIntoView();
@@ -34,8 +34,8 @@ function route(focus: boolean): void {
     window.scrollTo(0, 0);
   }
   if (!focus || before === view) return;
-  if (view === 'settings') dom.settingsTitle.focus();
-  else if (view === 'help' && section === null) dom.helpTitle.focus();
+  if (view === 'settings') page().settingsTitle.focus();
+  else if (view === 'help' && section === null) page().helpTitle.focus();
 }
 
 /** A link to another view goes into the history as ours, so Back can return
@@ -65,7 +65,7 @@ export function wireViews(): void {
       event.preventDefault();
       // Within Help, a contents link only scrolls: it is not somewhere Back
       // should stop.
-      if (dom.body.dataset['view'] === 'help' && hash.startsWith('#help-')) {
+      if (page().body.dataset['view'] === 'help' && hash.startsWith('#help-')) {
         history.replaceState(history.state, '', hash);
         route(false);
         return;
@@ -73,7 +73,7 @@ export function wireViews(): void {
       navigate(hash);
     });
   }
-  dom.navBack.addEventListener('click', goBack);
+  page().navBack.addEventListener('click', goBack);
   // Back, Forward and a hash typed into the address all fire popstate, and
   // hashchange too whenever the hash differs: one listener routes once.
   window.addEventListener('popstate', () => route(true));

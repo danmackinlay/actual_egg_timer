@@ -8,14 +8,14 @@ working here are `CLAUDE.md`; the last section says where everything else is.
 cook and learning. The web app (`src/`) and the iOS app (`ios/`) carry the
 same model, refusals, particle filter and choice of time (Phase E up to E5),
 the same catalogue of words in two Englishes (Phase F but for Czech), and the
-same layout (`UI.md`). `npm test` runs 255 tests, all passing (5b pins E3's
+same layout (`UI.md`). `npm test` runs 258 tests, all passing (5b pins E3's
 known limit). `npm run validate` passes 28/28, and `swift test` passes 119
 tests in 31 suites. **Pushed on 29 September** at `5ff6940`, the owner's
 call: Netlify serves it at actualeggtimer.netlify.app, and the first run of
 `.github/workflows/verify.yml` passed. The iOS app runs from Xcode on the owner's
 phone and has cooked real eggs; no TestFlight build is recorded
-(`ios/RELEASING.md`). The owner is reviewing the `tidy` copy draft on a
-phone.
+(`ios/RELEASING.md`). The owner is reviewing the `tidy` and `tidy2` copy
+drafts on a phone.
 
 These counts are the only ones in the documents. If you want a number, run
 `npm test`.
@@ -40,6 +40,11 @@ The one queue. Nothing else in the documents waits on the owner.
    feedback wording, which went in on the owner's behalf, and the probe's
    "highest" (a physics correction of the draft's "lowest", which stands
    unless the owner objects; `INFERENCE.md` §5).
+   With it, **`tidy2`**: FOLLOWUP §5 and §4.2, 15 keys the first tidy left
+   clunky (the Forget button and dialog, "or else", the restored cook's
+   line, "Full rolling boil" mid-sentence, the screen reader's phase said
+   twice). `LANGUAGE.md` §3 has its table, and where it departs from
+   FOLLOWUP.
 2. **The English of 1750, in both apps** (`DECISIONS.md` 17). `LANGUAGE.md`
    §6 lists the names to strike and where it departs from the guide.
 3. **The push of `main`**: done 29 September (`5ff6940`); CI passed. Each
@@ -183,6 +188,12 @@ checked, fixed or deleted. Start the QA pass here.
   carry absolute URLs at that domain, so a domain change is a commit.
   `vercel.json` is checked in and NOT deployed: a second host's settings,
   kept so the site can move (README §10 says why its Node pin differs).
+- **The storage formats are live.** Since the push of 29 September, the web
+  app's `aet.settings.v1`, `aet.cook.v2`, `aet.calibration.v4` and
+  `aet.boil.v1`, and the egg's record at v1 (`RECORD_VERSION`, both apps),
+  are in other people's browsers. Any change to one needs a migration or a
+  version bump. "No back-compat" (`DECISIONS.md` 38) covered only the
+  interim formats that never left the owner's devices.
 - **Every constant has been checked against the primary literature.**
   `Z_WHITE` was corrected; `H_EFF` is known high and open (README §11.2).
 - **The alarm fires at `.timeSensitive`**, also in the foreground, with the
@@ -205,3 +216,4 @@ checked, fixed or deleted. Start the QA pass here.
 | `ios/RELEASING.md` | getting the app onto other people's phones |
 | `LOGBOOK.md` | the record: what was verified, measured and learned, by date |
 | `WORKLIST.md` | the review of 28 September 2026, worked through |
+| `FOLLOWUP.md` | QA's worklist after it, 29 September 2026, worked through; `tidy2` waits on the owner |

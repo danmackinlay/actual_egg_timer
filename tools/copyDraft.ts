@@ -44,6 +44,7 @@ import { loose } from './drafts/loose.js';
 import { units } from './drafts/units.js';
 import { settings } from './drafts/settings.js';
 import { tidy } from './drafts/tidy.js';
+import { tidy2 } from './drafts/tidy2.js';
 
 export type Templates = Record<string, string>;
 
@@ -88,6 +89,7 @@ export const DRAFTS: Record<string, Draft> = {
   units,
   settings,
   tidy,
+  tidy2,
 };
 
 /** The draft most recently applied, the last in `DRAFTS`: what a proof checks

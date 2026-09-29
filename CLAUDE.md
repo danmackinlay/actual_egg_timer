@@ -15,6 +15,9 @@ things stand is `PLAN.md`; which document holds what is its last section.
 - **One gate: `npm run verify`** (the type checks, `npm test`, the Swift copy
   lint, fresh fixtures, `swift test`). Run it before every commit that
   touches code; `rm -rf dist/test` first if a test file was deleted.
+  CI also runs `npm run ios:build` (the app and widget for the simulator,
+  unsigned; about a minute, so not in `verify`): run it too before a commit
+  that touches `ios/App`, `ios/Shared`, `ios/Widget` or `project.yml`.
 - **One logical change per commit.**
 - **`PLAN.md` changes in the same commit as the work it describes.** Test and
   check counts appear only in its status line; history goes to `LOGBOOK.md`,
