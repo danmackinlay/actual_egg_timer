@@ -137,7 +137,7 @@ export interface PhaseKeys {
 }
 
 /** Where the eggs go at the pull, as the button says it. */
-export function pulledKey(cooling: Cooling): string {
+function pulledKey(cooling: Cooling): string {
   return cooling === 'ice' ? 'action.pulled.ice' : cooling === 'tap' ? 'action.pulled.tap' : 'action.pulled.counter';
 }
 
