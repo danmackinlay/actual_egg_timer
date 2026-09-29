@@ -5,9 +5,7 @@
 import { ALPHA_DEFAULT, ALPHA_REL_SD } from '../../src/core/constants.js';
 import { eggFromMass } from '../../src/core/geometry.js';
 import { buildDoseGrid } from '../../src/core/doseGrid.js';
-import {
-  createPrior, posteriorMeanWhiteOffset, posteriorParams, updatePosterior,
-} from '../../src/core/infer.js';
+import { Posterior, createPrior, updatePosterior } from '../../src/core/infer.js';
 import { CookSetup } from '../../src/core/protocol.js';
 import { Calibration, calibrationDoneness, calibrationParams } from '../../src/core/record.js';
 import {
@@ -74,7 +72,21 @@ export function levelTarget(level: number): number {
   return Math.log10(donenessFromSlider(level).yolkDose_min);
 }
 
-export const decidePosteriors: { name: string; eggsLogged: number; post: ReturnType<typeof createPrior> }[] = (() => {
+/** A posterior as the fixtures name it, and the eggs it has learned from. */
+export interface NamedPosterior { name: string; eggsLogged: number; post: Posterior }
+
+export function calibrationOf(pz: NamedPosterior): Calibration {
+  return { posterior: pz.post, eggsLogged: pz.eggsLogged };
+}
+
+/** The mean solve, as the apps make it: the posterior's parameters and
+ *  doneness. */
+export function meanSolve(pz: NamedPosterior, level: number, setup: CookSetup = DECIDE_SETUP): Solution {
+  const c = calibrationOf(pz);
+  return solveCookTime(DECIDE_EGG, setup, calibrationParams(c), calibrationDoneness(c, level));
+}
+
+export const decidePosteriors: NamedPosterior[] = (() => {
   const prior = createPrior(DECIDE_PARTICLES, DECIDE_SEED);
   const learned = createPrior(DECIDE_PARTICLES, DECIDE_SEED);
   // Three eggs: jammy just right with a firm white, soft with a runny white,
@@ -103,9 +115,7 @@ export const decidePosteriors: { name: string; eggsLogged: number; post: ReturnT
 const DECIDE_CASES: { posterior: string; level: number; meanCookTime_s: number; applies: boolean }[] = [];
 for (const pz of decidePosteriors) {
   for (const level of [0.22, 0.41, 0.62, 1.0]) {
-    const params = pz.eggsLogged === 0 ? DEFAULT_PARAMS : posteriorParams(pz.post);
-    const white = pz.eggsLogged === 0 ? 0.05 : 0.05 * 10 ** posteriorMeanWhiteOffset(pz.post);
-    const sol = solveCookTime(DECIDE_EGG, DECIDE_SETUP, params, { ...donenessFromSlider(level), whiteDose_min: white });
+    const sol = meanSolve(pz, level);
     DECIDE_CASES.push({ posterior: pz.name, level: level, meanCookTime_s: sol.result.cookTime_s, applies: decisionApplies(sol) });
   }
 }
@@ -114,19 +124,12 @@ DECIDE_CASES.push({ posterior: 'learned', level: 0.0, meanCookTime_s: 372, appli
 DECIDE_CASES.push({ posterior: 'learned', level: 1.0, meanCookTime_s: DECIDE_GRID_SPEC.timeMax_s - 30, applies: true });
 
 /* The solution at the chosen time (`decidedSolution`), and a cook re-solved
- * mid-cook with the lean it chose at "Eggs in" carried (`carriedSolution`).
- * The mean solve is the app's: the posterior's parameters and doneness. */
+ * mid-cook with the lean it chose at "Eggs in" carried (`carriedSolution`). */
 function decideSolutionRow(sol: Solution) {
   return {
     reachable: sol.reachable, cookTime_s: sol.result.cookTime_s, peakYolk_C: sol.result.peakYolk_C,
     yolkDose_min: sol.result.yolkDose_min, whiteDose_min: sol.result.whiteDose_min,
   };
-}
-function decideMeanSolve(posterior: string, level: number, setup: CookSetup = DECIDE_SETUP): Solution {
-  const pz = decidePosteriors.find((x) => x.name === posterior);
-  if (pz === undefined) throw new Error(posterior);
-  const c: Calibration = { posterior: pz.post, eggsLogged: pz.eggsLogged };
-  return solveCookTime(DECIDE_EGG, setup, calibrationParams(c), calibrationDoneness(c, level));
 }
 // The second pot rests on the counter, where the softest yolk leaves the white
 // unset: no cook to choose for, so the lean is not carried.
@@ -135,8 +138,8 @@ const DECIDE_CARRIED = [
   { level: 0, setup: setupOf({ timeToBoil_s: 480, eggCount: 2, cooling: 'counter' }) },
 ].flatMap((pot) => [0, -12, 18].map((lean_s) => {
   const pz = decidePosteriors[1];
-  const params = calibrationParams({ posterior: pz.post, eggsLogged: pz.eggsLogged });
-  const sol = decideMeanSolve(pz.name, pot.level, pot.setup);
+  const params = calibrationParams(calibrationOf(pz));
+  const sol = meanSolve(pz, pot.level, pot.setup);
   return {
     posterior: pz.name, level: pot.level, setup: pot.setup, lean_s: lean_s,
     carried: decideSolutionRow(carriedSolution(DECIDE_EGG, pot.setup, params, sol, lean_s)),
@@ -189,8 +192,7 @@ export const decideFixture = {
       // The mean solve at this level, moved to the decided time.
       level: c.level,
       decided: decideSolutionRow(decidedSolution(
-        DECIDE_EGG, DECIDE_SETUP, calibrationParams({ posterior: pz.post, eggsLogged: pz.eggsLogged }),
-        decideMeanSolve(c.posterior, c.level), d,
+        DECIDE_EGG, DECIDE_SETUP, calibrationParams(calibrationOf(pz)), meanSolve(pz, c.level), d,
       )),
     };
   }),

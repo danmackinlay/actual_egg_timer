@@ -2,16 +2,13 @@
  * fixtures/outcome.json: the predicted outcome at the chosen time.
  */
 
-import {
-  UNRELATED, createPrior, posteriorMeanWhiteOffset, posteriorParams, updatePosterior,
-} from '../../src/core/infer.js';
+import { UNRELATED, createPrior, updatePosterior } from '../../src/core/infer.js';
 import { decideAt, decisionApplies } from '../../src/core/decide.js';
 import { LEAN_RATIO, LEVEL_HIGH_Q, LEVEL_LOW_Q, leanOf, predictOutcome } from '../../src/core/outcome.js';
-import { solveCookTime, donenessFromSlider, DEFAULT_PARAMS } from '../../src/core/solve.js';
 
 import { particleRows } from './shared.js';
 import {
-  DECIDE_EGG, DECIDE_GRID, DECIDE_PARTICLES, DECIDE_SEED, DECIDE_SETUP, decidePosteriors, levelTarget,
+  DECIDE_GRID, DECIDE_PARTICLES, DECIDE_SEED, decidePosteriors, levelTarget, meanSolve,
 } from './decide.js';
 
 /* What the egg at the chosen time will be like (src/core/outcome.ts): the
@@ -51,9 +48,7 @@ export const outcomeFixture = {
     const pz = outcomePosteriors.find((x) => x.name === c.posterior);
     if (pz === undefined) throw new Error(c.posterior);
     const logTarget = levelTarget(c.level);
-    const params = pz.eggsLogged === 0 ? DEFAULT_PARAMS : posteriorParams(pz.post);
-    const white = pz.eggsLogged === 0 ? 0.05 : 0.05 * 10 ** posteriorMeanWhiteOffset(pz.post);
-    const sol = solveCookTime(DECIDE_EGG, DECIDE_SETUP, params, { ...donenessFromSlider(c.level), whiteDose_min: white });
+    const sol = meanSolve(pz, c.level);
     const mean = sol.result.cookTime_s;
     const d = decideAt(pz.post, pz.eggsLogged, DECIDE_GRID, mean, decisionApplies(sol), logTarget);
     return {
