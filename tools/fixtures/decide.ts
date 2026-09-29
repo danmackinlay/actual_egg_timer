@@ -4,10 +4,12 @@
 
 import { ALPHA_DEFAULT, ALPHA_REL_SD } from '../../src/core/constants.js';
 import { eggFromMass } from '../../src/core/geometry.js';
-import { buildDoseGrid } from '../../src/core/doseGrid.js';
+import { DoseGrid } from '../../src/core/doseGrid.js';
 import { Posterior, createPrior, updatePosterior } from '../../src/core/infer.js';
 import { CookSetup } from '../../src/core/protocol.js';
-import { Calibration, calibrationDoneness, calibrationParams } from '../../src/core/record.js';
+import {
+  Calibration, buildRequestedGrid, calibrationDoneness, calibrationParams,
+} from '../../src/core/record.js';
 import {
   DECISION_ALPHA_COUNT, DECISION_ALPHA_HI, DECISION_ALPHA_LO, DECISION_TIME_STEP_S, DECISION_WINDOW_S,
   DecisionInputs, LEAN_COST_PER_S, RUNNY_WHITE_LOSS, carriedSolution, chooseCookTime, decideAt,
@@ -54,16 +56,21 @@ const decideSpecs = DECIDE_SPEC_INPUTS.map((inputs) => ({
   spec: decisionGridSpec(inputs),
 }));
 
-const DECIDE_GRID_SPEC: GridSpec = (() => {
-  const full = decisionGridSpec(DECIDE_SPEC_INPUTS[0]);
+/** A pot's decision surface as the fixtures build it: where the production
+ *  spec puts it, at 7 rows and 20 s columns, the last column on or past the
+ *  spec's end. reach.json builds one per pot the same way. */
+export function coarseDecisionGrid(inputs: DecisionInputs): { spec: GridSpec; tauAirScale: number; grid: DoseGrid } {
+  const full = decisionGridSpec(inputs);
   const count = Math.ceil((full.timeMax_s - full.timeMin_s) / 20) + 1;
-  return { ...full, alphaCount: 7, timeMax_s: full.timeMin_s + 20 * (count - 1), timeCount: count };
-})();
-export const DECIDE_GRID = buildDoseGrid(
-  DECIDE_EGG, DECIDE_SETUP, 1.0,
-  DECIDE_GRID_SPEC.alphaMin, DECIDE_GRID_SPEC.alphaMax, DECIDE_GRID_SPEC.alphaCount,
-  DECIDE_GRID_SPEC.timeMin_s, DECIDE_GRID_SPEC.timeMax_s, DECIDE_GRID_SPEC.timeCount,
-);
+  const spec: GridSpec = { ...full, alphaCount: 7, timeMax_s: full.timeMin_s + 20 * (count - 1), timeCount: count };
+  const tauAirScale = inputs.params.tauAirScale;
+  const grid = buildRequestedGrid({ egg: inputs.egg, setup: inputs.setup, tauAirScale: tauAirScale, spec: spec });
+  return { spec: spec, tauAirScale: tauAirScale, grid: grid };
+}
+
+const DECIDE_SURFACE = coarseDecisionGrid(DECIDE_SPEC_INPUTS[0]);
+const DECIDE_GRID_SPEC = DECIDE_SURFACE.spec;
+export const DECIDE_GRID = DECIDE_SURFACE.grid;
 
 export const DECIDE_PARTICLES = 200;
 export const DECIDE_SEED = 20260928;
@@ -161,7 +168,7 @@ export const decideFixture = {
   grid: {
     egg: { mass_kg: DECIDE_EGG.mass_kg },
     setup: DECIDE_SETUP,
-    tauAirScale: 1.0,
+    tauAirScale: DECIDE_SURFACE.tauAirScale,
     ...DECIDE_GRID_SPEC,
     logYolk: DECIDE_GRID.logYolk,
     logWhite: DECIDE_GRID.logWhite,

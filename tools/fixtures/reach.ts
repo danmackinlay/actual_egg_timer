@@ -3,21 +3,18 @@
  * answer at a level, the shading, the advice.
  */
 
-import { eggFromMass } from '../../src/core/geometry.js';
-import { buildDoseGrid } from '../../src/core/doseGrid.js';
 import { CookSetup } from '../../src/core/protocol.js';
-import { Calibration, calibrationParams } from '../../src/core/record.js';
-import { decisionGridSpec, decisionInputs } from '../../src/core/decide.js';
+import { Calibration } from '../../src/core/record.js';
+import { decisionInputs } from '../../src/core/decide.js';
 import {
   ADVICE_BELOW_TENTHS, ADVICE_GAIN, ADVICE_MARGIN_TENTHS, OddsProfile, PROFILE_STEP, REACH_ODDS,
   SHADE_BEST_MIN, adviceWanted, answerAt, oddsNear, oddsProfile, pricedChanges, protocolAdvice, shadingOf,
   unpricedAdvice, verdictWithOdds,
 } from '../../src/core/reach.js';
 import { Solution } from '../../src/core/solve.js';
-import { GridSpec } from '../../src/core/policy.js';
 
 import { setupOf } from './shared.js';
-import { DECIDE_EGG, DECIDE_SETUP, decidePosteriors } from './decide.js';
+import { DECIDE_EGG, DECIDE_SETUP, coarseDecisionGrid, decidePosteriors } from './decide.js';
 
 /* The odds at every level, the range they allow, the verdict with that range,
  * the shading and the advice (src/core/reach.ts). A profile is a solve and a
@@ -25,18 +22,6 @@ import { DECIDE_EGG, DECIDE_SETUP, decidePosteriors } from './decide.js';
  * order and land on the same ends. The surfaces are coarse, as decide.json's
  * is, and built per pot from the production spec; the posteriors are
  * decide.json's. */
-
-function coarseDecisionGrid(c: Calibration, egg: ReturnType<typeof eggFromMass>, setup: CookSetup) {
-  const full = decisionGridSpec(decisionInputs(c, egg, setup));
-  const count = Math.ceil((full.timeMax_s - full.timeMin_s) / 20) + 1;
-  const spec: GridSpec = { ...full, alphaCount: 7, timeMax_s: full.timeMin_s + 20 * (count - 1), timeCount: count };
-  const tauAirScale = calibrationParams(c).tauAirScale;
-  const grid = buildDoseGrid(
-    egg, setup, tauAirScale, spec.alphaMin, spec.alphaMax, spec.alphaCount,
-    spec.timeMin_s, spec.timeMax_s, spec.timeCount,
-  );
-  return { spec: spec, tauAirScale: tauAirScale, grid: grid };
-}
 
 const REACH_CASES: { posterior: string; setup: CookSetup }[] = [
   { posterior: 'prior', setup: DECIDE_SETUP },
@@ -53,7 +38,7 @@ const reachProfiles = REACH_CASES.map((rc, index) => {
   const pz = decidePosteriors.find((x) => x.name === rc.posterior);
   if (pz === undefined) throw new Error(rc.posterior);
   const c: Calibration = { posterior: pz.post, eggsLogged: pz.eggsLogged };
-  const g = coarseDecisionGrid(c, DECIDE_EGG, rc.setup);
+  const g = coarseDecisionGrid(decisionInputs(c, DECIDE_EGG, rc.setup));
   const profile = oddsProfile(c, DECIDE_EGG, rc.setup, g.grid);
   for (const withOdds of [false, true]) {
     for (const level of [0, 0.05, 0.41, 0.95, 1]) {
