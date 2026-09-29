@@ -4,16 +4,15 @@ import Foundation
 /// Transliterated from `src/core/record.ts`, and held to it by
 /// `fixtures/record.json`.
 ///
-/// Until E1 each answer was folded into the particles and thrown away, so a
-/// change to the likelihood meant discarding the posterior. With the
-/// observations kept, a model change is a replay of the log.
+/// Every answer is kept, not only folded into the particles, so a change to
+/// the likelihood is a replay of the log rather than a posterior thrown away.
 ///
 /// The posterior is a function of the log and of nothing else: both apps fold
 /// an egg FROM ITS RECORD, through `gridRequestFor` and `foldRecord`, and `replay`
 /// is those same calls in a loop. That is what makes a posterior rebuilt from
 /// the log bit-identical to the one built egg by egg.
 ///
-/// Since E2 an egg is scored at the cook's own pull when they tapped one
+/// An egg is scored at the cook's own pull when they tapped one
 /// (`pulledBy == .cook`), and at the scheduled time when nobody did.
 ///
 /// Codable lives here so the two apps' storage and the fixtures agree on one
@@ -21,10 +20,10 @@ import Foundation
 
 public let recordVersion = 1
 
-/// Which prior the record's cook was recommended under: '2026-09' was E1's
-/// three-number particle, '2026-09-e2' is E2's six, and '2026-09-e5' is the
-/// same prior under E5's policy, which chooses the time from the whole
-/// posterior (Decide.swift).
+/// Which prior the record's cook was recommended under: '2026-09' is a
+/// three-number particle, '2026-09-e2' six numbers, and '2026-09-e5' the same
+/// prior under the policy that chooses the time from the whole posterior
+/// (Decide.swift).
 public let priorID = "2026-09-e5"
 
 /// Where the egg's mass came from. A size class is a 10 g bucket, worth about
@@ -132,7 +131,7 @@ public struct RecordSetup: Sendable, Codable, Equatable {
     }
 }
 
-/// A probe thermometer reading at the centre (E4), taken when the app said: at
+/// A probe thermometer reading at the centre, taken when the app said: at
 /// the end of the counted cooling, when the model has the centre peaking. In C
 /// whatever the cook typed it in. See src/core/record.ts.
 public struct ProbeReading: Sendable, Codable, Equatable {
@@ -169,7 +168,8 @@ public struct ProbeReading: Sendable, Codable, Equatable {
 
 public struct EggRecord: Sendable, Codable, Equatable {
     public var v: Int
-    /// The cook's random id. Nil until E6 mints one.
+    /// The cook's random id, for opt-in collection, which is not built: nothing
+    /// mints one yet.
     public var uid: String?
     /// The local date the cook started, YYYY-MM-DD.
     public var day: String
@@ -189,7 +189,7 @@ public struct EggRecord: Sendable, Codable, Equatable {
     /// Nil when the question was on screen and the cook moved on; it is
     /// always asked.
     public var white: WhiteReport?
-    /// A reading at the centre's peak (E4), or nil: no probe, or not taken.
+    /// A reading at the centre's peak, or nil: no probe, or not taken.
     public var probe: ProbeReading?
     public var lang: String
     public var register: String
@@ -388,7 +388,7 @@ public func calibrationParams(_ c: Calibration) -> ModelParams {
 }
 
 /// The doneness to solve for: the slider's yolk target, and the white's target
-/// moved by what the eggs have said about the white (E3). The literature target
+/// moved by what the eggs have said about the white. The literature target
 /// exactly before any egg. See src/core/record.ts.
 public func calibrationDoneness(_ c: Calibration, level: Double) -> Doneness {
     let d = donenessFromSlider(level)

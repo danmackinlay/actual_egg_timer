@@ -1,12 +1,11 @@
 /**
  * The record: one observation per egg, kept beside the posterior.
  *
- * Until E1 each answer was folded into the particles and thrown away, so the
- * only thing a phone knew about its eggs was the posterior they had left
- * behind. When the likelihood changed in September the v1 posterior had to be
- * discarded rather than repaired, because nothing was left to repair it FROM.
- * With the observations kept, a change to the likelihood is a replay of the
- * log, and every egg already cooked counts under the new model.
+ * Every answer is kept, not only folded into the particles. A posterior on
+ * its own cannot be repaired when the likelihood changes, because nothing is
+ * left to repair it FROM; with the observations kept, a change to the
+ * likelihood is a replay of the log, and every egg already cooked counts under
+ * the new model.
  *
  * The schema is INFERENCE.md section 4, and this file is its reference
  * implementation; `EggTimerCore/Record.swift` is held to it by
@@ -21,11 +20,9 @@
  * (a mass rounded to 0.01 g) rather than the one the solver timed, which is
  * 0.02% of an egg and a hundredth of a second of cook.
  *
- * WHERE IT IS SCORED (E2). At the moment the egg came out when the cook said
- * so - `pulled_s`, when `pulledBy` is 'cook' - and at the scheduled time,
- * `recommended_s + nudge_s`, when nobody did. E1 recorded the pull and scored
- * the schedule; E2 changed the likelihood, once, by replay, and started using
- * it.
+ * WHERE IT IS SCORED. At the moment the egg came out when the cook said so -
+ * `pulled_s`, when `pulledBy` is 'cook' - and at the scheduled time,
+ * `recommended_s + nudge_s`, when nobody did.
  *
  * Pure, like the rest of `src/core/`: the day, the times and the version are
  * handed in; nothing here reads a clock.
@@ -49,10 +46,10 @@ export const RECORD_VERSION = 1;
 
 /** Which prior the record's cook was recommended under: the literature prior,
  *  `PARTICLE_COUNT` particles from `CALIBRATION_SEED`. Recorded so a later fit
- *  knows what policy put the data where it lies. '2026-09' was E1's three-number
- *  particle; '2026-09-e2' is E2's six, whose white offset also moves the
+ *  knows what policy put the data where it lies. '2026-09' is a three-number
+ *  particle; '2026-09-e2' is six numbers, whose white offset also moves the
  *  recommendation (`calibrationDoneness`); '2026-09-e5' is the same prior
- *  under E5's policy, which CHOOSES the time from the whole posterior
+ *  under the policy that CHOOSES the time from the whole posterior
  *  (decide.ts) from the first egg that taught anything. */
 export const PRIOR_ID = '2026-09-e5';
 
@@ -67,11 +64,10 @@ export type EggFrom = 'fridge' | 'room' | 'custom';
  *  tap, and every finished cold start has one, because neither app leaves
  *  HEATING without it. A hot start never times the pan, so it cooks on the
  *  `remembered` pan, or on the `default` guess when no pan has ever been
- *  measured. With the heat off that number used to be the pan's whole cooling
- *  curve; since 27 September the standing method's pan constant comes from the
- *  water volume instead (`panTimeConstant`), and this is what says which logged
- *  cooks were recommended under the old derivation, and how hard they leaned
- *  on it. */
+ *  measured. With the heat off, records from before 27 September took the
+ *  pan's whole cooling curve from this number (the standing method's pan
+ *  constant now comes from the water volume, `panTimeConstant`), so this also
+ *  says how hard those cooks leaned on it. */
 export type TimeToBoilFrom = 'measured' | 'remembered' | 'default';
 
 
@@ -81,7 +77,7 @@ export type TimeToBoilFrom = 'measured' | 'remembered' | 'default';
 export type PulledBy = 'cook' | 'timeout';
 
 /**
- * A probe thermometer reading at the centre of the egg (E4, INFERENCE.md
+ * A probe thermometer reading at the centre of the egg (INFERENCE.md
  * section 5), taken when the app said: at the moment the model has the yolk's
  * centre peaking, which is when the cooling countdown ends. In degrees C
  * whatever the cook typed it in; the record is SI.
@@ -135,7 +131,8 @@ export interface RecordSetup {
 
 export interface EggRecord {
   v: 1;
-  /** The cook's random id. Null until E6 mints one; never derived from anything. */
+  /** The cook's random id, for opt-in collection, which is not built: nothing
+   *  mints one yet. Never derived from anything. */
   uid: string | null;
   /** The local date the cook started, YYYY-MM-DD. A day, not a timestamp. */
   day: string;
@@ -148,7 +145,8 @@ export interface EggRecord {
   level: number;
   /** What the solver said, s from egg-in to egg-out. */
   recommended_s: number;
-  /** What the app added to it on purpose (E8). Zero until then. */
+  /** What the app added to it on purpose, to learn from. Nothing adds any
+   *  yet, so it is zero. */
   nudge_s: number;
   /** When the egg came out, s from egg-in. See `pulledBy`. */
   pulled_s: number;
@@ -161,8 +159,8 @@ export interface EggRecord {
   /** The white answer: runny, tender or firm, or null when the question was
    *  on screen and the cook moved on without answering. It is always asked. */
   white: WhiteReport | null;
-  /** A thermometer reading at the centre's peak (E4), or null: no probe, or
-   *  not taken. Null in every record before E4. */
+  /** A thermometer reading at the centre's peak, or null: no probe, or not
+   *  taken. */
   probe: ProbeReading | null;
   /** What the cook READ: an answer is a word, and words differ. */
   lang: string;
@@ -249,8 +247,7 @@ function probePossible(s: RecordSetup, centre_C: number): boolean {
  * VERSION SKEW. The web app deploys on push and the iOS app ships when a build
  * does, so records from different app versions coexist. Any `appVersion` is
  * accepted under `v: 1`. Fields may be ADDED within v1 but never removed or
- * reinterpreted once a record has left the owner's devices (E1's
- * `whiteOffered` and `set` went on 28 September, before any had), so unknown
+ * reinterpreted once a record has left the owner's devices, so unknown
  * fields are ignored here, and the nullable fields (`uid`, `egg.sizeTable`,
  * `yolk`, `white`, `probe`) may be absent and read as null - which is also
  * what Swift's Codable does, and the fixtures hold the two to it.
@@ -321,7 +318,7 @@ export function parseRecord(raw: unknown): EggRecord | null {
     eggCount: s['eggCount'],
   };
 
-  // A reading at the centre (E4): a number the egg could have been, and when
+  // A reading at the centre: a number the egg could have been, and when
   // it was asked for, if that is known.
   const rawProbe = raw['probe'] ?? null;
   let probe: ProbeReading | null = null;
@@ -415,7 +412,7 @@ export function calibrationParams(c: Calibration): ModelParams {
 
 /**
  * The doneness to solve for: the slider's yolk target, and the white's target
- * moved by what the eggs have said about the white (E3).
+ * moved by what the eggs have said about the white.
  *
  * The solver's white constraint IS the runny | tender cutpoint, so a cook
  * whose whites come out runny moves it up, and the shortest cook that sets the

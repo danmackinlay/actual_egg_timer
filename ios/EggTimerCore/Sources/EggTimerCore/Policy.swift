@@ -3,17 +3,15 @@ import Foundation
 /// The decisions that turn a Solution into a cook, transliterated from
 /// `src/core/policy.ts`.
 ///
-/// Everything here used to live in `ios/App/Kitchen.swift` and again in
-/// `src/ui/app.ts`, copied by hand, with nothing holding the two versions
-/// together and no test on either. That is where every user-visible divergence
-/// between the two apps came from - a different default egg, a different number
-/// of eggs in the pan, and a calibration grid that agreed only by luck.
+/// These decisions live in core, not in each app, so that the two apps cannot
+/// disagree about them: a default egg, a number of eggs in the pan, a
+/// calibration grid.
 ///
 /// The line is drawn at DECISIONS, not at words. Which refusal applies, where
 /// the slider must move to, which texture band a temperature falls in, how wide
 /// the calibration grid is: policy, pure, and conformance-tested against
-/// `fixtures/policy.json`. The sentences a cook reads stay in the app, because
-/// they are copy and they differ per platform.
+/// `fixtures/policy.json`. The sentences a cook reads are not here: which key
+/// a screen says is `Wording.swift`, and the text is the catalogue.
 ///
 /// Pure, like the rest of this package: no UserDefaults, no SwiftUI, no clock.
 

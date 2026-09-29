@@ -1,19 +1,15 @@
 /**
  * The decisions that turn a Solution into a cook.
  *
- * Everything here used to live twice - once in `src/ui/app.ts` and once in
- * `ios/App/Kitchen.swift` - transliterated by hand, with nothing holding the
- * copies together and no test on either. That is where every user-visible
- * divergence between the two apps came from, and it is why this module exists:
- * below the line the fixtures cover, two implementations cannot disagree
- * without `npm run conformance` saying so.
+ * These decisions live here, and not in each app, so that the two apps cannot
+ * disagree about them: below the line the fixtures cover, two implementations
+ * cannot differ without `npm run conformance` saying so.
  *
  * The line is drawn at DECISIONS, not at WORDS. Which refusal applies, where
  * the slider must move to, which texture band a temperature falls in, how wide
  * the calibration grid is - all of that is policy, it is pure, and it changes
- * what the user gets, so it belongs here. The sentences a cook actually reads
- * stay in the apps: they are copy, they differ per platform, and a physics
- * package has no business holding a string table.
+ * what the user gets, so it belongs here. The sentences a cook reads are not
+ * here: which key a screen says is `wording.ts`, and the text is the catalogue.
  *
  * Pure, like the rest of `src/core/`: no storage, no DOM, no clock.
  */

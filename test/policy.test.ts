@@ -1,9 +1,8 @@
 /**
  * The policy layer: the decisions that turn a Solution into a cook.
  *
- * These are the tests the review found missing. Every one of them names an
- * invariant that a hand-transliterated copy in `ios/App/Kitchen.swift` used to
- * be free to break, because nothing checked either side.
+ * Every test names an invariant both apps depend on; the Swift twin is held
+ * to the same answers by `fixtures/policy.json`.
  *
  * Zero dependencies: node:test + node:assert/strict only.
  */

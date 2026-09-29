@@ -12,7 +12,7 @@ import Foundation
 /// inference. There are six uncertain scalars here and a cached forward model,
 /// so particles give the exact posterior predictive with none of the machinery.
 ///
-/// THE LIKELIHOOD (E2, INFERENCE.md section 3) is an ordered probit. For the
+/// THE LIKELIHOOD (INFERENCE.md section 3) is an ordered probit. For the
 /// yolk, the latent quantity is the delivered log10 dose minus the one the cook
 /// wanted; the answer says which side of two cutpoints, at -+`feedbackBand`, it
 /// fell, seen through a Gaussian whose sd is the cook's own `noise`. A small
@@ -36,7 +36,7 @@ public enum Feedback: Int, Sendable, Codable {
     case tooHard = 1
 }
 
-/// What the cook reports about the WHITE: three answers since E2.
+/// What the cook reports about the WHITE: three answers.
 public enum WhiteReport: String, Sendable, Codable {
     case runny
     case tender
@@ -103,7 +103,7 @@ func withUnrelated(_ p: Double) -> Double {
 public let noiseMedian = 0.2
 public let noiseLogSd = 0.5
 
-/// The white offset's prior sd, decades of white dose (PLAN.md E3).
+/// The white offset's prior sd, decades of white dose.
 public let whiteOffsetSd = 0.5
 
 /// The tender | firm cutpoint's prior: lognormal, median 1.08 decades above the
@@ -209,7 +209,7 @@ func whiteProbit(_ grid: DoseGrid, _ p: Particle, _ cookTimeS: Double) -> [Doubl
     return [runny, tender > 0.0 ? tender : 0.0, firm]
 }
 
-// MARK: - The thermometer (E4)
+// MARK: - The thermometer
 
 /// A reading at the centre's peak is the peak plus the thermometer's error
 /// (Gaussian) minus a handling error (exponential) that reads COLD, because at

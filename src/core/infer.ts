@@ -20,7 +20,7 @@
  * uncertainty lives in the parameters. The spread across particles is the
  * posterior over egg temperature.
  *
- * THE LIKELIHOOD (E2, INFERENCE.md section 3) is an ordered probit. For the
+ * THE LIKELIHOOD (INFERENCE.md section 3) is an ordered probit. For the
  * yolk, the latent quantity is the delivered log10 dose minus the one the cook
  * wanted; the answer says which side of two cutpoints, at -+FEEDBACK_BAND, it
  * fell, seen through a Gaussian whose sd is the cook's own `noise`. A particle
@@ -28,15 +28,14 @@
  * one a decade away - more information per answer, and no cliff for the filter
  * to fall over. A small `UNRELATED` share of every answer is uniform over the
  * answers: somebody tapped the wrong button, or answered about yesterday's egg.
- * That is what the fixed 0.8 / 0.1 of the first filter was standing in for.
  *
  * TWO CHANNELS. The white is judged at YOLK_RADIUS_FRAC, the innermost white,
  * against two cutpoints of its own: runny | tender at WHITE_DOSE_TARGET shifted
  * by the particle's `whiteOffset`, and tender | firm a learned `whiteFirmGap`
  * above that. On one phone the white offset is the white's lag and the cook's
  * idea of "runny" together - a single cook cannot tell them apart (INFERENCE.md
- * section 2) - and it is the second-strongest direction in the data, which the
- * first filter held at a constant.
+ * section 2) - and it is the second-strongest direction in the data, so it is
+ * learned rather than held constant.
  *
  * IDENTIFIABILITY - stated honestly:
  *  - Ordinal feedback is worth 1-2 bits per egg. The posterior on alpha
@@ -46,17 +45,18 @@
  *    channel, and alpha and the white offset in the white channel. Only the
  *    combinations are identified for one cook. What separates them is the
  *    geometry - alpha moves the yolk and the white together, in the physics
- *    ratio, where each offset moves one - and, later, other cooks (E7).
- *  - The first filter scored the white against a FIXED target, so that it
- *    would constrain alpha with nothing in the way, and then had to down-weight
- *    it because the white is the channel most exposed to the H_EFF error README
- *    11.2 records. The white offset is the principled version of that discount:
- *    whatever the white does that alpha cannot explain has somewhere to go.
+ *    ratio, where each offset moves one - and, once there is pooled data,
+ *    other cooks.
+ *  - The white is the channel most exposed to the H_EFF error README 11.2
+ *    records. Scored against a FIXED target it would push that error into
+ *    alpha; with the white offset, whatever the white does that alpha cannot
+ *    explain has somewhere to go.
  *  - tauAirScale is only identifiable if the cook actually varies the cooling
  *    protocol. Otherwise it stays at its prior, which is the correct behaviour.
  *  - The noise scale is learned from how consistent a cook's answers are, which
  *    takes many eggs. Until then it sits near its prior, which is chosen (see
- *    NOISE_MEDIAN) so that one answer carries what it did before E2.
+ *    NOISE_MEDIAN) so that one answer near the band carries what a hard
+ *    0.8 / 0.1 band would.
  */
 
 import { ALPHA_DEFAULT, ALPHA_REL_SD, Z_WHITE, Z_YOLK } from './constants.js';
@@ -73,8 +73,7 @@ export type Feedback = -1 | 0 | 1; // too soft | just right | too firm
 /**
  * What the cook reports about the WHITE.
  *
- * Three answers since E2: runny, tender, firm. The first filter stopped at two
- * because a third needed a ceiling the model did not have; the ceiling is now a
+ * Three answers: runny, tender, firm. The third needs a ceiling, and that is a
  * learned cutpoint like any other (`whiteFirmGap`).
  */
 export type WhiteReport = 'runny' | 'tender' | 'firm';
@@ -109,7 +108,7 @@ export interface Posterior {
 /** Half-width of the "just right" band, log10 dose units. 0.28 decades is
  *  about 1.3 C of peak yolk temperature - roughly the finest distinction
  *  anyone can actually make by eating an egg. The yolk's two cutpoints sit at
- *  -+ this, so the probit keeps the old hard band's meaning: a particle that
+ *  -+ this, so the probit keeps a hard band's meaning: a particle that
  *  delivered exactly what was wanted expects "just right". */
 export const FEEDBACK_BAND = 0.28;
 
@@ -129,11 +128,11 @@ export function withUnrelated(p: number): number {
 /**
  * The noise scale's prior: lognormal, median NOISE_MEDIAN decades of yolk dose.
  *
- * Chosen so that the probit is as confident as the old 0.8 / 0.1 where the old
- * one was describing a typical egg - a cook the model already roughly knows,
- * whose particles sit around the band:
+ * Chosen so that the probit is as confident as a hard band scoring 0.8 / 0.1
+ * (the first filter's likelihood) where that band describes a typical egg - a
+ * cook the model already roughly knows, whose particles sit around the band:
  *
- *                                         old    probit, 0.20    at 0.207
+ *                                         hard   probit, 0.20    at 0.207
  *   P(just right | delivered = wanted)    0.80        0.813        0.799
  *   P(just right | one band-width out)    0.10        0.093        0.100
  *   ratio                                 8.0         8.7          8.0
@@ -144,9 +143,9 @@ export function withUnrelated(p: number): number {
  * now scores UNRELATED / 3 = 0.017, not 0.1. That is the point of the change,
  * not extra confidence, but it is worth stating what it costs. On the very
  * first egg from a fresh prior - where most particles are far from the band -
- * one yolk answer now carries 0.96 bits against the old 0.63. To carry only
+ * one yolk answer carries 0.96 bits against the hard band's 0.63. To carry only
  * 0.63 there the median would have to be about 0.48, which would make every
- * later egg, near the band, carry half of what it used to. The Phase C recovery
+ * later egg, near the band, carry half of what it does. The recovery
  * experiment is the check that the first-egg sharpness does no harm
  * (test/infer.test.ts).
  *
@@ -157,9 +156,9 @@ export function withUnrelated(p: number): number {
 export const NOISE_MEDIAN = 0.2;
 export const NOISE_LOG_SD = 0.5;
 
-/** The white offset's prior sd, decades of white dose (PLAN.md E3). Wide: half
- *  a decade is about 2.5 C of inner white, and both real eggs in LOGBOOK.md say
- *  the constant it replaces was wrong. */
+/** The white offset's prior sd, decades of white dose. Wide: half a decade is
+ *  about 2.5 C of inner white, and both real eggs in LOGBOOK.md say a constant
+ *  white target was wrong. */
 export const WHITE_OFFSET_SD = 0.5;
 
 /**
@@ -181,7 +180,7 @@ export const WHITE_OFFSET_SD = 0.5;
 export const WHITE_FIRM_GAP_MEDIAN = 1.08;
 export const WHITE_FIRM_GAP_LOG_SD = 0.4;
 
-/* ---- the thermometer (E4, INFERENCE.md section 5) ---- */
+/* ---- the thermometer (INFERENCE.md section 5) ---- */
 
 /**
  * A probe reading at the centre, taken when the centre peaks, is the peak yolk
@@ -211,9 +210,8 @@ export const WHITE_FIRM_GAP_LOG_SD = 0.4;
  * on the default egg at jammy in ice: the time-scale's sd goes from the
  * prior's 12.5% to 2.7-2.8% in the weights (a 1.0 C Gaussian alone would give
  * 2.45%; the handling tail costs the rest), and the filter keeps 2.6-2.8%
- * once it has resampled. Until E5 it kept 3.3-3.5%, because the resample's
- * jitter was a fixed 2% on alpha whatever the posterior; the kernel that
- * replaced it keeps the posterior's spread (`resample`). A 1.5 C Gaussian
+ * once it has resampled, because the resample's kernel keeps the posterior's
+ * spread (`resample`; a fixed 2% jitter on alpha kept 3.3-3.5%). A 1.5 C Gaussian
  * would give about 3.7% in the weights.
  *
  * A PROBE_UNRELATED share of readings has nothing to do with the egg - a probe
@@ -388,7 +386,7 @@ export function effectiveSampleSize(post: Posterior): number {
 /**
  * Fold in one egg: cooked for `cookTime_s`, aiming at a nominal yolk dose of
  * 10^`logNominalTarget`, with whatever the cook said about the yolk and the
- * white, and a probe reading at the centre's peak if they took one (E4) - any
+ * white, and a probe reading at the centre's peak if they took one - any
  * of them may be null. Reweights by the joint likelihood, then resamples
  * through Liu and West's kernel if the particle set has degenerated.
  *
@@ -464,18 +462,18 @@ export function whiteAnswerProbabilities(
  * The resample's kernel: Liu and West's shrinkage (2001), with discount
  * KERNEL_DISCOUNT.
  *
- * Until E5 each resampled particle was jittered by a FIXED amount - 2% on
- * alpha, 0.015 decades on the offsets, 3% on the rest - whatever the posterior
- * looked like. Every resample therefore added the same spread, in every
- * direction independently, and three things followed. The time-scale could not
- * be held tighter than about 3% (E4 measured 3.3% after one probe reading whose
- * weights said 2.7%). The one combination a cook's answers DO pin - the
- * time-scale and the taste together, which move a yolk in opposite directions
- * - was pulled apart at every resample, so the spread of the right cook time
- * climbed back after every second or third egg (a sawtooth: +-8 s at jammy,
- * then +-15 s, then +-8 s again, on a cook who never changed). And the odds on
- * screen, read off that inflated posterior, under-stated the hits by 4-6 points
- * from the fourth egg (INFERENCE.md section 8).
+ * Why not a FIXED jitter - say 2% on alpha, 0.015 decades on the offsets, 3%
+ * on the rest - whatever the posterior looks like? Every resample would then
+ * add the same spread, in every direction independently, and three things
+ * follow (they did, in this filter's first version). The time-scale cannot be
+ * held tighter than about 3% (3.3% after one probe reading whose weights said
+ * 2.7%). The one combination a cook's answers DO pin - the time-scale and the
+ * taste together, which move a yolk in opposite directions - is pulled apart
+ * at every resample, so the spread of the right cook time climbs back after
+ * every second or third egg (a sawtooth: +-8 s at jammy, then +-15 s, then
+ * +-8 s again, on a cook who never changed). And odds read off that inflated
+ * posterior under-state the hits by 4-6 points from the fourth egg
+ * (INFERENCE.md section 8).
  *
  * Liu and West's kernel keeps the posterior's mean and covariance through the
  * resample. In coordinates where every dimension is additive - log alpha, the
@@ -647,20 +645,20 @@ export interface CookTimePrediction {
  * and an 80% credible interval: for each particle, the time it would call
  * right, weighted.
  *
- * Under E2's likelihood a particle's right time is the LATER of two: the time
+ * A particle's right time is the LATER of two: the time
  * its yolk reaches the middle of "just right" - the nominal target moved by its
  * taste offset, where the probit's two cutpoints are equidistant - and the time
  * its white reaches its own runny | tender cutpoint, which is where the white
  * stops being more likely runny than not. On most cooks the yolk's is later,
- * and this is the yolk's interval, as it was before E2; where the white binds,
+ * and this is the yolk's interval; where the white binds,
  * as it does at the soft end once a cook has reported runny whites, the white's
  * uncertainty is what widens it.
  *
  * The spread comes from the posterior alone: the noise scale, which no number
  * of eggs narrows, plays no part. That makes the width the measure of what is
- * still being learned: the owner's "still learning" rule, +-15 s, which no
- * screen shows now and which E8 would read here (decide.ts). Times are found
- * on the grid, so they are clamped to its span.
+ * still being learned. No screen shows it; a deliberate nudge on the
+ * recommendation, if one is built, would read it here (decide.ts). Times are
+ * found on the grid, so they are clamped to its span.
  */
 export function predictCookTime(
   post: Posterior, grid: DoseGrid, logNominalTarget: number,
