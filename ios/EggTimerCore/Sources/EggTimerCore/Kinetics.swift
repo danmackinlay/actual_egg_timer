@@ -23,7 +23,7 @@ public struct Dose: Sendable {
     }
 
     /// Time held at `heldC` that reaches `doseMinutes` of this dose.
-    public func holdTime(doseMinutes: Double, heldC: Double) -> Double {
+    public func holdTimeForDose(doseMinutes: Double, heldC: Double) -> Double {
         doseMinutes / pow(10.0, (heldC - trefC) / zK)
     }
 }

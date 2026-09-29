@@ -106,7 +106,7 @@ extension Planner {
             }
             // Centred where the posterior stood BEFORE this egg, exactly as
             // `replay` does it; nothing else folds while this runs.
-            let request = gridRequest(kept.calibration, egg)
+            let request = gridRequestFor(kept.calibration, egg)
             let grid = await Task.detached(priority: .userInitiated) {
                 buildRequestedGrid(request)
             }.value

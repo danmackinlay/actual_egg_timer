@@ -9,7 +9,7 @@ import Foundation
 /// observations kept, a model change is a replay of the log.
 ///
 /// The posterior is a function of the log and of nothing else: both apps fold
-/// an egg FROM ITS RECORD, through `gridRequest` and `foldRecord`, and `replay`
+/// an egg FROM ITS RECORD, through `gridRequestFor` and `foldRecord`, and `replay`
 /// is those same calls in a loop. That is what makes a posterior rebuilt from
 /// the log bit-identical to the one built egg by egg.
 ///
@@ -412,11 +412,11 @@ public func recordTeaches(_ r: EggRecord) -> Bool {
     r.yolk != nil || r.white != nil || r.probe != nil
 }
 
-func recordEgg(_ r: EggRecord) -> Egg {
+func recordEggOf(_ r: EggRecord) -> Egg {
     Geometry.eggFromMass(r.egg.massG / 1000)
 }
 
-func recordCookSetup(_ r: EggRecord) -> CookSetup {
+func recordSetupOf(_ r: EggRecord) -> CookSetup {
     CookSetup(
         startMode: r.setup.startMode, eggStartC: r.setup.eggStartC,
         ambientC: r.setup.ambientC, boilingC: r.setup.boilingC,
@@ -452,12 +452,12 @@ public struct GridRequest: Sendable {
 
 /// The surface this record is scored on, centred where the posterior stands
 /// before the egg is folded.
-public func gridRequest(
+public func gridRequestFor(
     _ c: Calibration, _ r: EggRecord, grid: GridPolicy = productionGrid
 ) -> GridRequest {
     let params = calibrationParams(c)
     return GridRequest(
-        egg: recordEgg(r), setup: recordCookSetup(r), tauAirScale: params.tauAirScale,
+        egg: recordEggOf(r), setup: recordSetupOf(r), tauAirScale: params.tauAirScale,
         spec: grid(params.alphaM2s, recordCookTimeS(r))
     )
 }
@@ -493,7 +493,7 @@ public func replay(
 ) -> Calibration {
     var c = start
     for r in records where recordTeaches(r) {
-        foldRecord(&c, r, grid: buildRequestedGrid(gridRequest(c, r, grid: grid)))
+        foldRecord(&c, r, grid: buildRequestedGrid(gridRequestFor(c, r, grid: grid)))
     }
     return c
 }

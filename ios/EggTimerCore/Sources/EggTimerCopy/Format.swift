@@ -129,6 +129,14 @@ public func normaliseTime(_ text: String) -> String {
 
 // MARK: - The formatting locale
 
+/// The language subtag, lower-cased: "en" for "en-GB-x-1750". It picks the
+/// plural rule in Copy.swift, and the language of the formatting locale here.
+/// The web's `languageOf` in src/core/format.ts.
+public func languageOf(_ locale: String) -> String {
+    let language = locale.split(separator: "-", maxSplits: 1, omittingEmptySubsequences: false).first ?? ""
+    return String(language).lowercased()
+}
+
 /// A 12- or 24-hour preference the device holds apart from its region, as a
 /// BCP 47 `hc` value.
 public enum HourCycle: String, Sendable, CaseIterable {

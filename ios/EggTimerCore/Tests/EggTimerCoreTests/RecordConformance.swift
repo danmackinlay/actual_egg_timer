@@ -247,7 +247,7 @@ struct ReplayConformance {
         for (i, r) in log.enumerated() {
             let step = steps[i]
             if recordTeaches(r) {
-                let q = gridRequest(c, r, grid: grid)
+                let q = gridRequestFor(c, r, grid: grid)
                 guard let spec = step["spec"] as? [String: Any] else { fatalError("step \(i): no spec") }
                 expectClose(q.spec.alphaMin, spec.num("alphaMin"), "step \(i) alphaMin")
                 expectClose(q.spec.timeMaxS, spec.num("timeMax_s"), "step \(i) timeMax")
@@ -291,7 +291,7 @@ struct ReplayConformance {
         for r in log.dropFirst() {
             guard recordTeaches(r) else { continue }
             let before = c
-            let surface = buildRequestedGrid(gridRequest(c, r, grid: grid))
+            let surface = buildRequestedGrid(gridRequestFor(c, r, grid: grid))
             // The first answer alone - whichever it was - folded and stored.
             var first = r
             if r.yolk != nil { first.white = nil }
