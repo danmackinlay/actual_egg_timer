@@ -18,8 +18,8 @@
  *     P(too soft) + P(too firm) + RUNNY_WHITE_LOSS * P(runny)
  *
  * over the posterior, and the recommendation is the candidate that minimises
- * it. RUNNY_WHITE_LOSS is 3: the owner's number (INFERENCE.md section 11,
- * decision 7), a constant, and a per-cook slider only if someone asks.
+ * it. RUNNY_WHITE_LOSS is 3: the owner's number (DECISIONS.md 7), a
+ * constant, and a per-cook slider only if someone asks.
  *
  * NOT BEFORE THE FIRST EGG. Under the prior alone the choice runs far from the
  * literature: 42 s later at jammy and 86 s at soft, on the reference egg, and
@@ -83,7 +83,7 @@ import {
 import { Calibration, calibrationDoneness, calibrationParams } from './record.js';
 
 /** How much worse a runny white is than a yolk one answer off: the owner's
- *  number (INFERENCE.md section 11, decision 7). */
+ *  number (DECISIONS.md 7). */
 export const RUNNY_WHITE_LOSS = 3;
 
 /* ------------------------------------------------------------ the surface */

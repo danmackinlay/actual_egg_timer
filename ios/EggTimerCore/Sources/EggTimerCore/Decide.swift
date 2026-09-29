@@ -15,7 +15,7 @@ import Foundation
 /// apps given the same posterior and the same pot must choose the same time.
 
 /// How much worse a runny white is than a yolk one answer off: the owner's
-/// number (INFERENCE.md section 11, decision 7).
+/// number (DECISIONS.md 7).
 public let runnyWhiteLoss = 3.0
 
 // MARK: - The surface

@@ -418,7 +418,7 @@ test('5a. two runny whites at soft move the next soft recommendation later', (t)
 // these priors a runny white is blamed on the time-scale about
 // 2:1 over the white offset (alpha's prior is 0.70 decades of white dose wide,
 // the offset's 0.5), so jammy moves about as far as soft. The owner has left it
-// so until a probe or pooling pins the time-scale (LOGBOOK, 27 September).
+// so until a probe or pooling pins the time-scale (DECISIONS.md 18).
 // This holds the limit as it stands, so a change
 // that moves it - either way - is seen and has to be argued for.
 test('5b. ...and, a known limit, move a jammy one about as far', (t) => {

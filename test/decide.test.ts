@@ -244,7 +244,7 @@ test('3c. after one egg the choice leans by seconds, whichever level is asked fo
 // 5. How fast the posterior narrows
 // --------------------------------------------------------------------------
 
-/** The owner's "still learning" rule (INFERENCE.md section 11, decision 9):
+/** The owner's "still learning" rule (DECISIONS.md 9):
  *  the 80% interval of the right cook time wider than +-15 s. No screen shows
  *  it and `Decision` does not carry it; this computes it on demand, from
  *  `predictCookTime`. */

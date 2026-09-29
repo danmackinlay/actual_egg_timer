@@ -8,7 +8,7 @@
  *                                 learning, runny, reach, advice, outcome)
  *
  * Read-only. Nothing in src/ is touched. The numbers it prints are the ones in
- * PLAN.md, INFERENCE.md section 8 and LOGBOOK.md, 28 September 2026; the
+ * INFERENCE.md section 8 and LOGBOOK.md, 28 September 2026; the
  * claims they rest on are asserted, more cheaply, in test/decide.test.ts.
  */
 
@@ -215,7 +215,7 @@ if (run('odds')) {
 
 if (run('learning')) {
   console.log('\n== learning: the interval rule, against the count (150 cooks x 8 eggs)');
-  // The owner's rule, +-15 s (INFERENCE.md section 11, decision 9). No screen
+  // The owner's rule, +-15 s (DECISIONS.md 9). No screen
   // shows it and `Decision` does not carry it, so it is read here, on demand,
   // from `predictCookTime`.
   const STILL_LEARNING_S = 15;

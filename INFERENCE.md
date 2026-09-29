@@ -1,14 +1,12 @@
 # INFERENCE.md — making the inference the main part
 
-A design, not a record and not a state. Three parts are built: the record in
-§4 (E1, 26 September 2026), whose schema below is now the one the code writes,
-the ordered probit and the white offset of §3 (E2 and E3, 27 September),
-whose numbers are in §3's "Built" paragraph, the thermometer of §5 (E4,
-27 September), whose numbers are in §5's, and deciding under uncertainty, §8
-(E5, 28 September), with the odds-shaded slider and the outcome summary
-built on it. Nothing else is: E6-E8 are not started. The checklist
-that tracks it is Phase E in `PLAN.md`; the two measurements it rests on are in
-`LOGBOOK.md` (21 September 2026) and can be re-run with `npm run rank` and
+The design of the learning, and the facts of the model as built. Built: the
+record (§4), the ordered probit and the white offset (§3), the thermometer
+(§5), and choosing the time under uncertainty, with the odds-shaded slider and
+the outcome summary (§8). Not built: collection (§7), the population fit (§9)
+and the nudge (§8), which are E6-E8 in `PLAN.md`. The owner's decisions are
+numbered in `DECISIONS.md`; the two measurements the design rests on are in
+`LOGBOOK.md` (21 September 2026) and re-run with `npm run rank` and
 `npm run probe`.
 
 ---
@@ -113,7 +111,7 @@ discontinuities for the filter to fall over.
 
 **Three answers for the yolk, three for the white, and neither is required.**
 Too soft / just right / too hard stays as it is: five levels were considered and
-are too many at breakfast (§11). The white gets runny / tender / firm. The
+are too many at breakfast (`DECISIONS.md` 4). The white gets runny / tender / firm. The
 comment in `infer.ts` declines a third level because it would need an unmeasured
 ceiling; pooled, the ceiling is a learned cutpoint like any other.
 
@@ -288,7 +286,7 @@ held to `EggTimerCore/Record.swift` by `fixtures/record.json`.
   everything the altitude would, and the altitude itself is not recorded.
 - `uid` is `null` until E6 mints one. `mass_g` is rounded to 0.01 g.
 - `forecast` and `model` are not written yet: E6 adds them, so that what the
-  app actually said at "Eggs in" is kept beside the answer (§7, §11.12).
+  app actually said at "Eggs in" is kept beside the answer (§7; `DECISIONS.md` 37).
 - `probe` (E4) is `null`, or `{ "centre_C": 64.2, "after_s": 183 }`: the
   highest number the cook saw with the probe at the middle, in C to 0.01
   whatever they typed it in, and when the app asked for it - the end of the
@@ -399,14 +397,13 @@ point.
 - **Measured** (`test/probe.test.ts`, default egg, jammy, ice, the app's
   grid): one reading at -1 / 0 / +1 C of the truth takes the time-scale sd
   from 12.5% to 2.74 / 2.74 / 2.79% in the weights - the ~2.5% above, less a
-  little for the tail - and to 3.28 / 3.33 / 3.52% once the filter has
-  resampled, because its jitter was a fixed 2% on alpha. Since E5's resample
-  kernel (§8) the filter keeps 2.60 / 2.61 / 2.81%. A kitchen 10% fast is
-  found at x1.10 from one reading. +1 C shortens the next jammy cook by 15 s,
+  little for the tail - and the resample (§8) keeps 2.60 / 2.61 / 2.81%. With
+  the sketched 1.5 C Gaussian the weights would hold about 3.7%. A kitchen
+  10% fast is found at x1.10 from one reading. +1 C shortens the next jammy cook by 15 s,
   -1 C lengthens it by 5 s (the asymmetry is the cold tail: a reading at the
   peak already looks slightly hot).
-- **When**: the counted cooling now ends at `peakYolkTime_s` for the cook as
-  solved (old item 4), so the countdown's end, its alarm and the reading are
+- **When**: the counted cooling ends at `peakYolkTime_s` for the cook as
+  solved, so the countdown's end, its alarm and the reading are
   one moment. The probe is offered only where that moment exists: an ice bath
   or a tap, with the peak after the pull. Not on the counter, where nothing is
   counted, the peak is nine minutes out and `tauAirScale` is in it; not with
@@ -431,7 +428,7 @@ What bounds the damage:
   absorbed as outlying cooks rather than moving the mean;
 - App Attest on iOS, which proves a genuine copy of the app without saying whose.
   The web app has no equivalent, and it contributes anyway, at a lower weight
-  (§11): its records enter the GLOBAL fit under a tempered likelihood (a power
+  (`DECISIONS.md` 2): its records enter the GLOBAL fit under a tempered likelihood (a power
   below one, 0.5 to start), and the web tier's total effective sample size is
   capped at the attested tier's, so no number of browser tabs can outvote the
   phones. The discount applies only to what a web cook teaches everybody else.
@@ -441,7 +438,7 @@ What bounds the damage:
 - the thermometer panel and the physics prior as anchors.
 
 **The screen for an unreliable or hostile contributor is a score, not a
-threshold on answers** (§11.12): each cook's prequential log score - the log
+threshold on answers** (`DECISIONS.md` 37): each cook's prequential log score - the log
 predictive of each of their answers given their earlier ones, summed over their
 eggs - taken relative to what the population model alone would have scored.
 A cook the model predicts worse than the population does, egg after egg, is
@@ -476,7 +473,7 @@ carelessness, which the first paragraph handles.
   entries ("not linked to you"); the README, `ios/README.md` and the App Store
   answers in `ios/RELEASING.md` all stop saying the app has no networking; the
   web app gains its first request.
-- **Each egg carries what the app said** (owner, 28 September; §11.12). Every
+- **Each egg carries what the app said** (`DECISIONS.md` 37). Every
   uploaded record - and, once E6 lands, every record kept on the device - holds
   the full forecast at "Eggs in": the yolk's three answer probabilities (too
   soft, just right, too firm) and the white's (runny, tender, firm), as
@@ -514,7 +511,7 @@ faster. You can turn it off, and delete what you sent, whenever you like."*
   seen. Moving the recommendation by up to +-10 s - inside "just right" - fixes
   that at no cost to the cook, and gives an estimate free of selection. Consent
   in §7.
-- **Say that it is learning.** The nudge is acceptable on one condition (§11):
+- **Say that it is learning.** The nudge is acceptable on one condition (`DECISIONS.md` 3):
   the app does not present itself as finished. A cook who has opted in sees, in
   plain words and wherever the time is shown, that the timer is still learning
   their kitchen - which is also simply true for anyone in their first few eggs,
@@ -529,7 +526,7 @@ and the same pot, the two apps choose the same time to 1e-12. What settled:
 
 - **The loss** is P(too soft) + P(too firm) + 3 P(runny), over every particle,
   each through the probit the filter learns with - time-scale, taste, noise,
-  white offset and firm gap together. The 3 is the owner's (§11, 7), a constant.
+  white offset and firm gap together. The 3 is the owner's (`DECISIONS.md` 7), a constant.
   The unrelated share is left out of the loss, where it adds a constant, and
   kept in the odds, which are about what a cook will say.
 - **Where it looks.** Within 120 s of the mean solve's time, at the level the
@@ -555,8 +552,11 @@ and the same pot, the two apps choose the same time to 1e-12. What settled:
   later time at every level, where the mean solve gave the same one.
 - **The odds** are P(white not runny AND yolk just right) at the chosen time,
   independent within a particle and correlated across particles, in tenths. On
-  400 simulated cooks x 6 eggs the expected calibration error is 2.2%, every egg
-  within 1-3 points. A fresh install says 2/10; one egg, 5-6/10; three, 7/10.
+  400 simulated cooks x 6 eggs, 1000 particles, the expected calibration error
+  is **2.2%**, every egg within 1-3 points (21% -> 21%, 39% -> 37%, 51% -> 51%,
+  58% -> 59%, 62% -> 64%, 65% -> 68%; `npm run decide -- odds`). A fresh
+  install says 2/10; one egg, 5-6/10; three, 7/10. This is the one place the
+  calibration numbers live; `test/decideOdds.test.ts` runs a smaller copy.
 - **The surface.** Only the time-scale needs the physics - the offsets and the
   noise are additive in log dose - so a decision needs one dose grid per pot,
   with `tauAirScale` at its posterior mean, spanning every level the pot can
@@ -564,29 +564,25 @@ and the same pot, the two apps choose the same time to 1e-12. What settled:
   with the heat off), within 0.2 s of a fine grid's choice on boiling pots. The
   slider is not part of what it is built from, so a drag never waits for one.
   The apps show the mean solve's time at once and switch when the surface lands.
-- **The resample.** Calibrating the odds found them 4-6 points low from the
-  fourth egg, and plain reweighting did not, so it was the filter: E2's
-  resample moved every particle a fixed 2% on alpha (and 0.015 decades, 3%)
-  whatever the posterior, independently in every direction. That held alpha
-  over ~3%, pulled apart the time-scale-and-taste combination that the answers
-  pin, and made the right time's spread climb back at every resample. It is
-  now Liu and West's kernel: each resampled particle shrunk toward the weighted
-  mean and moved by a draw from the weighted covariance, in coordinates where
-  every dimension is additive, discount 0.98, so the mean and the covariance
-  survive. Replayed, Phase C's recovery is unchanged and one probe reading is
-  kept at 2.6-2.8%, not 3.3-3.5%.
-- **"Still learning"** was the 80% interval of the right cook time wider
-  than +-15 s (§11, 9), read at the level on screen. No screen shows it now,
-  and since 28 September (D3) the decision does not compute it: E8, if it
-  needs it, reads `predictCookTime` on demand (`npm run decide -- learning`
-  does exactly that). Per particle the
+- **The resample** is Liu and West's kernel, discount 0.98, in both cores:
+  each resampled particle is shrunk toward the weighted mean and moved by a
+  draw from the weighted covariance, in coordinates where every dimension is
+  additive, so the mean and the covariance survive it. A fixed jitter would
+  not: it holds alpha's spread above its own size whatever the answers say,
+  pulls apart the time-scale-and-taste combination the answers pin, and makes
+  the right time's spread climb back at every resample, which showed as odds
+  4-6 points low from the fourth egg (LOGBOOK.md, 28 September). With the
+  kernel, Phase C's recovery is egg 2, 12.2 s short, sd 3.0%; the answers'
+  calibration 1.3%; and one probe reading keeps the time-scale at 2.6-2.8%.
+- **"Still learning"** is the 80% interval of the right cook time wider than
+  +-15 s (`DECISIONS.md` 9), read at the level on screen; per particle the
   right time is the later of the yolk's centre and the white's cutpoint
-  (`predictCookTime`). Under the old resample the rule came back after going
-  for 44% of simulated cooks, and a fixed count of four eggs was built as the
-  fallback; with the kernel it comes back for 7%, and the owner's rule stands.
-  It is still computed with every decision, but since 27-28 September no
-  screen shows it as a line: the owner found it said what the direction says
-  (UI.md §8). The egg's record (§4) does not keep it.
+  (`predictCookTime`). With the kernel it is quiet after a median of four
+  eggs and comes back for 7% of simulated cooks; on a consistent cook at
+  jammy it runs +-72, 22, 13, 11, 9, 8 s over the first five eggs. No screen
+  shows it (`DECISIONS.md` 27), the decision does not compute it
+  (`DECISIONS.md` 40), and the record does not keep it: `npm run decide --
+  learning` and `test/decide.test.ts` read it on demand.
 - **A cook under way** carries the lean chosen at "Eggs in" onto the boil tap's
   re-solve rather than waiting a second for the new pot's surface: 3 s from
   choosing again at soft, under 0.5 s at jammy.
@@ -685,14 +681,10 @@ least one in ten is at or past the hardest, which at hard is half the eggs.
 It costs about 2 ms in node beside a decision's 13-16 ms, and is computed
 once, at the time on screen.
 
-**Playing safe (27-28 September), built and then deleted.** `saferLevels`
-answered the cook who would rather err one way: for the level on the slider,
-the softest offered level at least as firm nine eggs in ten, and the mirror,
-with the softer one held under `WHITE_RISK` so it never bought a firm-enough
-yolk with a runny white. The owner took its suggestion off both screens on 28
-September, and the same day had the function, its fixture, its tests and its
-section of `npm run decide` deleted (D2). LOGBOOK.md, 27 and 28 September,
-has what it measured.
+**Playing safe** - a suggested level that errs the cook's preferred way - was
+built and then deleted on the owner's word (`DECISIONS.md` 36, 39). The
+bracket under the slider does the same job without a suggestion.
+LOGBOOK.md, 27 and 28 September, has what it measured.
 
 Not built: the nudge (E8), and any per-cook loss.
 
@@ -709,7 +701,7 @@ Not built: the nudge (E8), and any per-cook loss.
   means and covariance, and the hyperpriors for cook effects. Both
   apps read it as the prior, under the conformance suite like every other
   fixture.
-- **Validation is by proper scoring rules** (owner, 28 September; §11.12), on
+- **Validation is by proper scoring rules** (`DECISIONS.md` 37), on
   held-out cooks and one step ahead, not by home-made quantile checks:
   - **The log score is primary.** For an answer it is the ordered-probit log
     likelihood of that answer one step ahead; summed over a cook's eggs it is
@@ -729,103 +721,3 @@ Not built: the nudge (E8), and any per-cook loss.
     "still learning" interval are display and decision heuristics. None is
     used for evaluation.
   README §7's table remains as the check on the prior.
-
-## 10. Order, and why
-
-As of 28 September, 1-4 are built (E3's done-when half met) and 5-6 are not
-started.
-
-1. **The record and the ordered probit** (E1, E2). Both pay off for one cook
-   with no server, and everything later reads the record.
-2. **The white offset on the device** (E3). The missing direction, justified by
-   the rank measurement and by two real eggs.
-3. **The thermometer flow** (E4). One egg for a kitchen's time-scale.
-4. **Expected utility and the odds on screen** (E5). Needs E2's predictive.
-5. **Opt-in upload, the endpoint, deletion** (E6). Only now does anything leave
-   the phone.
-6. **The population fit and the published prior** (E7), then the nudge (E8),
-   which is worthless before there is a fit to use it.
-
-## 11. Decided by the owner, 21 September 2026
-
-1. **The endpoint is a Netlify function, and the controller is the owner, in their
-   own name.** §7 has the shape. The contact address is
-   forgetmyeggs@danmackinlay.name, chosen and created 26 September.
-2. **The web app contributes, at a lower weight.** §6 says how: a tempered
-   likelihood in the global fit and a cap on the tier's effective sample size,
-   with no discount on what a web cook's answers teach their own browser.
-3. **The nudge is fine, provided the app advertises that it is learning.** §8.
-   The point is to manage expectations, so the wording belongs on the screen
-   with the time, not only in the consent.
-4. **Three yolk answers, not five - and every answer is optional.** §3 and §4:
-   a skip is recorded as a skip. This is the decision with a statistical cost,
-   and the cost is accepted rather than engineered away.
-5. **"Tender" stands, for now.** Slightly odd, not pathological, and no picture
-   could do better. Revisit if real cooks stumble on it; the record will show
-   whether the middle answer is being used.
-
-### Decided by the owner, 26 September 2026
-
-6. **Eggs from before E1 are dropped at E2, not backfilled.** E1 keeps the
-   pre-log posterior as a frozen base. The new likelihood cannot replay it, so
-   E2 starts from the prior plus E1's log, and the base goes. *Done 27
-   September.*
-7. **The loss ratio is 3.** A runny white counts as three times as bad as a
-   yolk one step too firm (§8). It is a constant for now, and a per-cook
-   slider only if someone asks for one. *Built 28 September* (`RUNNY_WHITE_LOSS`).
-8. **The odds are always on screen, and brief**: *"7/10 eggs hit the mark"*.
-   "Hit the mark" means the posterior predictive probability that the white is
-   not runny AND the yolk would be answered "just right". It is rounded to
-   tenths, because more precision than that is not there. *Built 28
-   September*, under the time in both apps and on the Lock Screen.
-   *Superseded on screen by the owner's later steers:* a sentence saying
-   which way a miss goes replaced the number under the time (27 September),
-   the number then left the (i) too, and the Lock Screen dropped it (28
-   September). No screen shows it now. The odds still shade the slider, set
-   its reach at 3 in 10 and open the advice under 5 in 10. The egg's record
-   (§4) does not keep them.
-9. **"Still learning" goes when the 80% interval on the cook time narrows
-   below about +-15 s**, which is about the width of "just right". If that
-   proves fiddly to compute or to make stable, fall back to a fixed number of
-   eggs. The owner's view is that cooks will barely notice the difference, so
-   the threshold is preferred but not worth a fight. *Built 28 September as
-   the threshold*, after the resample was fixed; the fallback was built and
-   measured first (§8). Computed, no longer shown, not recorded (§8).
-10. **No kitchens.** Pans and hobs vary within a kitchen, and nobody maintains
-    profiles, so the kitchen level folds into the cook (§2).
-11. **The standing method's pan constant comes from the water volume, not
-    the boil time.** Deriving it from the boil time, with `RAMP_R` fixed, reads
-    the HOB as the pan. A hob twice as strong as assumed makes the app believe
-    the pan cools about 2.2 times faster than it does, and a weak one about 2.7
-    times slower. The replacement is anchored so that Williams' 17-minute
-    method (a 480 s boil, 2 L) is unchanged, and scaled by volume. Lid and pan
-    material become a per-cook scale, learned only from standing cooks.
-    Nobody is asked to time an empty pan: the only timed boil left is a cold
-    start's, where the eggs are already in.
-    **Done 27 September**, except the per-cook scale: `TAU_STANDING_REF_S =
-    480 / ln(1.5) = 1183.8 s` at 2 L, scaled as `V^(1/3)`, with
-    `TAU_STANDING_SCALE` still a global 1.0. The learned per-cook scale is
-    deferred (`PLAN.md`). Logged standing cooks replay under the new rule
-    without change to the record: it keeps the water volume, and
-    `timeToBoilFrom` still says which of them had leaned on a remembered pan.
-
-### Decided by the owner, 28 September 2026
-
-12. **Calibration is checked with proper scoring rules, not home-made quantile
-    checks.** E6 stores, with each uploaded egg (and each egg recorded on the
-    device, once E6 lands), the full forecast at "Eggs in" - the yolk's
-    categorical distribution over too soft / just right / too firm and the
-    white's over runny / tender / firm, not the tenths - and a model version,
-    so the model as shipped can be scored after the code changes; replay
-    regenerates only what the current code would have said. E7 evaluates by
-    the log score first (the ordered-probit log likelihood one step ahead,
-    whose sum over a cook's eggs is the prequential log marginal likelihood
-    the filter's incremental weights already compute; the 0.05 unrelated
-    share keeps it finite), reports the ranked probability score as the
-    ordinal-aware bounded score, scores probe readings by CRPS or log
-    predictive density, and shows calibration as reliability diagrams and
-    randomised PIT histograms. The same per-cook prequential log score,
-    relative to the population model, is the screen for unreliable or
-    hostile contributors (§6). The direction sentence, the bracket and the
-    "still learning" interval are display and decision heuristics, not
-    evaluation. §7 and §9 have the detail. Not built.

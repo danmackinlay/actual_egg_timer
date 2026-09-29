@@ -114,8 +114,7 @@ export const RAMP_R = 3.0;
  *  and would make the pan look 2.2 times quicker to cool; a weak one
  *  (r = 1.5), 2.7 times slower. How fast a lidded pan cools with the burner
  *  off depends on the water and the pan, so it comes from the water volume
- *  (see panTimeConstant), and the hob drops out. INFERENCE.md section 11,
- *  item 11. */
+ *  (see panTimeConstant), and the hob drops out. DECISIONS.md 11. */
 export const TAU_STANDING_REF_S = 480.0 / Math.log(1.5);
 
 /** The water volume TAU_STANDING_REF_S is quoted at, litres. Williams' pan is
