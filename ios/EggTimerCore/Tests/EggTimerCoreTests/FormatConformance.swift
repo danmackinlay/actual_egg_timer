@@ -15,11 +15,8 @@ import Foundation
 /// pseudo-Czech catalogue rendered in cs-CZ.
 @Suite("Numbers and times match the reference implementation")
 struct FormatConformance {
-    private static func section(_ name: String) -> [[String: Any]] {
-        guard let list = Fixtures.load("format.json")[name] as? [[String: Any]] else {
-            fatalError("fixtures/format.json has no \(name)")
-        }
-        return list
+    private static func section(_ name: String) throws -> [[String: Any]] {
+        try Fixtures.list("format.json", name)
     }
 
     private static func show(_ s: String) -> String {
@@ -27,67 +24,76 @@ struct FormatConformance {
     }
 
     @Test("rounding, and how many decimals a count shows")
-    func rounding() {
-        for c in Self.section("roundTo") {
-            let actual = roundTo(c.num("value"), Int(c.num("decimals")))
-            #expect(actual == c.num("result"), "roundTo(\(c.num("value")), \(c.num("decimals"))): \(actual)")
+    func rounding() throws {
+        for c in try Self.section("roundTo") {
+            let value = try c.num("value")
+            let decimals = try c.num("decimals")
+            let actual = roundTo(value, Int(decimals))
+            #expect(try actual == c.num("result"), "roundTo(\(value), \(decimals)): \(actual)")
             #expect(actual.sign == .plus || actual != 0, "roundTo gave -0")
         }
-        for c in Self.section("countDecimals") {
-            #expect(countDecimals(c.num("value")) == Int(c.num("decimals")), "countDecimals(\(c.num("value")))")
+        for c in try Self.section("countDecimals") {
+            let value = try c.num("value")
+            #expect(try countDecimals(value) == Int(c.num("decimals")), "countDecimals(\(value))")
         }
     }
 
     @Test("numbers, in every locale")
-    func numbers() {
-        for c in Self.section("numbers") {
-            let locale = c.str("locale")
-            let actual = formatNumber(c.num("value"), decimals: Int(c.num("decimals")), locale: locale)
-            #expect(actual == c.str("text"),
-                    "\(locale) \(c.num("value")) to \(c.num("decimals")): expected \(Self.show(c.str("text"))), got \(Self.show(actual))")
+    func numbers() throws {
+        for c in try Self.section("numbers") {
+            let locale = try c.str("locale")
+            let value = try c.num("value")
+            let decimals = try c.num("decimals")
+            let text = try c.str("text")
+            let actual = formatNumber(value, decimals: Int(decimals), locale: locale)
+            #expect(actual == text,
+                    "\(locale) \(value) to \(decimals): expected \(Self.show(text)), got \(Self.show(actual))")
         }
-        for c in Self.section("counts") {
-            let locale = c.str("locale")
-            let actual = formatCount(c.num("value"), locale: locale)
-            #expect(actual == c.str("text"),
-                    "\(locale) count \(c.num("value")): expected \(Self.show(c.str("text"))), got \(Self.show(actual))")
+        for c in try Self.section("counts") {
+            let locale = try c.str("locale")
+            let value = try c.num("value")
+            let text = try c.str("text")
+            let actual = formatCount(value, locale: locale)
+            #expect(actual == text,
+                    "\(locale) count \(value): expected \(Self.show(text)), got \(Self.show(actual))")
         }
     }
 
     @Test("times of day, in every locale")
-    func times() {
-        for c in Self.section("times") {
-            let locale = c.str("locale")
-            let withSeconds = (c["withSeconds"] as? Bool) ?? false
-            let actual = formatTimeOfDay(c.num("seconds"), withSeconds: withSeconds, locale: locale)
-            #expect(actual == c.str("text"),
-                    "\(locale) \(c.num("seconds")) s: expected \(Self.show(c.str("text"))), got \(Self.show(actual))")
+    func times() throws {
+        for c in try Self.section("times") {
+            let locale = try c.str("locale")
+            let seconds = try c.num("seconds")
+            let text = try c.str("text")
+            let actual = try formatTimeOfDay(seconds, withSeconds: c.flag("withSeconds"), locale: locale)
+            #expect(actual == text,
+                    "\(locale) \(seconds) s: expected \(Self.show(text)), got \(Self.show(actual))")
         }
-        for c in Self.section("normaliseTime") {
-            #expect(normaliseTime(c.str("text")) == c.str("normalised"), "normaliseTime(\(Self.show(c.str("text"))))")
+        for c in try Self.section("normaliseTime") {
+            let text = try c.str("text")
+            #expect(try normaliseTime(text) == c.str("normalised"), "normaliseTime(\(Self.show(text)))")
         }
-        for c in Self.section("unpadHour") {
-            #expect(unpadHour(c.str("text")) == c.str("unpadded"), "unpadHour(\(Self.show(c.str("text"))))")
+        for c in try Self.section("unpadHour") {
+            let text = try c.str("text")
+            #expect(try unpadHour(text) == c.str("unpadded"), "unpadHour(\(Self.show(text)))")
         }
     }
 
     @Test("the formatting locale each app derives")
-    func derivedLocale() {
-        for c in Self.section("formattingLocale") {
+    func derivedLocale() throws {
+        for c in try Self.section("formattingLocale") {
             let hc = (c["hourCycle"] as? String).flatMap(HourCycle.init(rawValue:))
-            let actual = formattingLocale(uiLanguage: c.str("uiLanguage"), region: c["region"] as? String, hourCycle: hc)
-            #expect(actual == c.str("tag"), "\(c): \(actual)")
+            let actual = try formattingLocale(uiLanguage: c.str("uiLanguage"), region: c["region"] as? String, hourCycle: hc)
+            #expect(try actual == c.str("tag"), "\(c): \(actual)")
         }
     }
 
     @Test("from the UI's language, the region and the clock setting to what a cook reads")
-    func derived() {
-        let cases = Self.section("derived")
-        #expect(!cases.isEmpty)
-        for c in cases {
+    func derived() throws {
+        for c in try Self.section("derived") {
             let hc = (c["hourCycle"] as? String).flatMap(HourCycle.init(rawValue:))
-            let tag = formattingLocale(uiLanguage: c.str("uiLanguage"), region: c["region"] as? String, hourCycle: hc)
-            #expect(tag == c.str("tag"), "\(c): \(tag)")
+            let tag = try formattingLocale(uiLanguage: c.str("uiLanguage"), region: c["region"] as? String, hourCycle: hc)
+            #expect(try tag == c.str("tag"), "\(c): \(tag)")
             let actual: [(String, String)] = [
                 ("number", formatNumber(1234.5, decimals: 1, locale: tag)),
                 ("decimal", formatNumber(2.4, decimals: 1, locale: tag)),
@@ -97,51 +103,47 @@ struct FormatConformance {
                 ("withSeconds", formatTimeOfDay(9 * 3600 + 5 * 60 + 9, withSeconds: true, locale: tag)),
             ]
             for (field, text) in actual {
-                #expect(text == c.str(field), "\(tag) \(field): expected \(Self.show(c.str(field))), got \(Self.show(text))")
+                let expected = try c.str(field)
+                #expect(text == expected, "\(tag) \(field): expected \(Self.show(expected)), got \(Self.show(text))")
             }
         }
     }
 
     @Test("the plural rule sees the decimals a number is shown with")
-    func plurals() {
-        for c in Self.section("plural") {
-            let actual = pluralCategory(locale: c.str("locale"), c.num("n"), fractionDigits: Int(c.num("fractionDigits")))
-            #expect(actual.rawValue == c.str("category"), "\(c): \(actual)")
+    func plurals() throws {
+        for c in try Self.section("plural") {
+            let actual = try pluralCategory(locale: c.str("locale"), c.num("n"), fractionDigits: Int(c.num("fractionDigits")))
+            #expect(try actual.rawValue == c.str("category"), "\(c): \(actual)")
         }
     }
 
     @Test("every quantity a cook reads, in every supported locale")
     func measures() throws {
-        let url = Fixtures.repoRoot.appendingPathComponent("copy/en.json")
-        let en = try Catalogue(json: Data(contentsOf: url))
-        for c in Self.section("measures") {
-            guard let q = Quantity(rawValue: c.str("quantity")),
-                  let system = UnitSystem(rawValue: c.str("system")) else { fatalError("measure \(c)") }
+        let en = try Fixtures.catalogue("en")
+        for c in try Self.section("measures") {
+            let q = try c.value(Quantity.self, "quantity")
+            let system = try c.value(UnitSystem.self, "system")
             let m = measureFor(q, system: system, region: c["region"] as? String)
-            let text = quantityText(m, c.num("si"))
-            #expect(text.key == c.str("key"), "\(c)")
-            let locale = c.str("locale")
+            let si = try c.num("si")
+            let text = quantityText(m, si)
+            #expect(try text.key == c.str("key"), "\(c)")
+            let locale = try c.str("locale")
+            let expected = try c.str("text")
             let actual = en.render(text.key, ["value": .fixed(text.value)], formatLocale: locale)
-            #expect(actual == c.str("text"), "\(locale) \(q) \(c.num("si")): expected \(Self.show(c.str("text"))), got \(Self.show(actual))")
+            #expect(actual == expected, "\(locale) \(q) \(si): expected \(Self.show(expected)), got \(Self.show(actual))")
         }
     }
 
     @Test("a pseudo-Czech catalogue, rendered in cs-CZ")
     func pseudo() throws {
-        guard let pseudo = Fixtures.load("format.json")["pseudo"] as? [String: Any],
-              let json = pseudo["catalogue"] as? [String: Any],
-              let cases = pseudo["cases"] as? [[String: Any]] else {
-            fatalError("fixtures/format.json has no pseudo")
-        }
-        let url = Fixtures.repoRoot.appendingPathComponent("copy/en.json")
-        let en = try Catalogue(json: Data(contentsOf: url))
-        let catalogue = try Catalogue(object: json, fallback: en)
-        let locale = pseudo.str("formatLocale")
-        #expect(!cases.isEmpty)
-        for c in cases {
-            let key = c.str("key")
-            let actual = catalogue.render(key, CopyConformance.args(c["args"]), formatLocale: locale)
-            #expect(actual == c.str("text"), "\(key): expected \(Self.show(c.str("text"))), got \(Self.show(actual))")
+        let pseudo = try Fixtures.object("format.json", "pseudo")
+        let catalogue = try Catalogue(object: pseudo.object("catalogue"), fallback: Fixtures.catalogue("en"))
+        let locale = try pseudo.str("formatLocale")
+        for c in try pseudo.rows("cases") {
+            let key = try c.str("key")
+            let expected = try c.str("text")
+            let actual = try catalogue.render(key, CopyConformance.args(c["args"]), formatLocale: locale)
+            #expect(actual == expected, "\(key): expected \(Self.show(expected)), got \(Self.show(actual))")
         }
     }
 }

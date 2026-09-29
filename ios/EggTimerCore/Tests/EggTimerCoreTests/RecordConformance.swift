@@ -14,29 +14,6 @@ import Foundation
 /// implementation agreeing with itself: a posterior built egg by egg, with a
 /// trip through JSON between every egg the way the app stores it, is
 /// bit-identical to the one replayed from the log.
-private let tolerance = 1e-12
-
-private func expectClose(
-    _ actual: Double, _ expected: Double, _ what: String,
-    sourceLocation: SourceLocation = #_sourceLocation
-) {
-    let scale = max(abs(expected), 1.0)
-    let error = abs(actual - expected) / scale
-    #expect(
-        error <= tolerance,
-        "\(what): expected \(expected), got \(actual) (relative error \(error))",
-        sourceLocation: sourceLocation
-    )
-}
-
-private func file() -> [String: Any] { Fixtures.load("record.json") }
-
-private func replayJSON() -> [String: Any] {
-    guard let replay = file()["replay"] as? [String: Any] else {
-        fatalError("fixtures/record.json has no replay")
-    }
-    return replay
-}
 
 /// A record the way the app reads one: JSON bytes, the Codable shape, then the
 /// rules on top. Nil if either refuses it.
@@ -47,19 +24,19 @@ private func decodeRecord(_ json: Any) -> EggRecord? {
     return record
 }
 
-private func fixtureLog() -> [EggRecord] {
-    guard let rows = replayJSON()["log"] as? [Any] else { fatalError("no replay log") }
-    return rows.map { row in
-        guard let r = decodeRecord(row) else { fatalError("replay log record refused: \(row)") }
-        return r
+private func fixtureLog() throws -> [EggRecord] {
+    let rows = try #require(Fixtures.node("record.json", "replay.log") as? [Any], "no replay log")
+    try #require(!rows.isEmpty, "an empty replay log")
+    return try rows.map { row in
+        try #require(decodeRecord(row), "replay log record refused: \(row)")
     }
 }
 
 /// `calibrationGrid`'s bounds at the fixture's coarser counts.
-private func fixtureGrid() -> GridPolicy {
-    guard let grid = replayJSON()["grid"] as? [String: Any] else { fatalError("no replay grid") }
-    let alphaCount = Int(grid.num("alphaCount"))
-    let timeCount = Int(grid.num("timeCount"))
+private func fixtureGrid() throws -> GridPolicy {
+    let grid = try Fixtures.object("record.json", "replay.grid")
+    let alphaCount = try Int(grid.num("alphaCount"))
+    let timeCount = try Int(grid.num("timeCount"))
     return { alphaCentre, cookTimeS in
         let g = calibrationGrid(alphaCentre: alphaCentre, cookTimeS: cookTimeS)
         return GridSpec(
@@ -69,34 +46,17 @@ private func fixtureGrid() -> GridPolicy {
     }
 }
 
-private func fixtureStart() -> Calibration {
-    guard let start = replayJSON()["start"] as? [String: Any] else { fatalError("no replay start") }
-    return freshCalibration(count: Int(start.num("count")), seed: Int32(start.num("seed")))
+private func fixtureStart() throws -> Calibration {
+    let start = try Fixtures.object("record.json", "replay.start")
+    return try freshCalibration(count: Int(start.num("count")), seed: Int32(start.num("seed")))
 }
 
-private func calibration(from json: [String: Any]) -> Calibration {
-    guard let rows = json["particles"] as? [[String: Any]],
-          let weights = json["weights"] as? [NSNumber],
-          let rng = json["rng"] as? NSNumber else {
-        fatalError("fixture has no particle set")
-    }
-    let particles = rows.map {
-        Particle(
-            alphaM2s: $0.num("alpha_m2s"), logDoseOffset: $0.num("logDoseOffset"),
-            tauAirScale: $0.num("tauAirScale"), noise: $0.num("noise"),
-            whiteOffset: $0.num("whiteOffset"), whiteFirmGap: $0.num("whiteFirmGap")
-        )
-    }
-    return Calibration(
-        posterior: Posterior(
-            particles: particles, weights: weights.map(\.doubleValue), rng: Int32(truncating: rng)
-        ),
-        eggsLogged: Int(json.num("eggsLogged"))
-    )
+private func calibration(from json: [String: Any]) throws -> Calibration {
+    try Calibration(posterior: posterior(json), eggsLogged: Int(json.num("eggsLogged")))
 }
 
-private func expectCalibration(_ c: Calibration, _ expected: [String: Any], _ label: String) {
-    let want = calibration(from: expected)
+private func expectCalibration(_ c: Calibration, _ expected: [String: Any], _ label: String) throws {
+    let want = try calibration(from: expected)
     #expect(c.eggsLogged == want.eggsLogged, "\(label): eggs logged")
     #expect(c.posterior.rng == want.posterior.rng, "\(label): rng")
     #expect(c.posterior.particles.count == want.posterior.particles.count, "\(label): count")
@@ -175,52 +135,53 @@ struct RecordConformance {
     /// Stamped into every iOS record, so a record from either app names the
     /// same schema and the same prior.
     @Test("the record's version and prior are the reference's")
-    func identity() {
-        #expect(recordVersion == Int(file().num("version")))
-        #expect(priorID == file().str("prior"))
+    func identity() throws {
+        let file = try Fixtures.load("record.json")
+        #expect(try recordVersion == Int(file.num("version")))
+        #expect(try priorID == file.str("prior"))
     }
 
     @Test("which records a loader trusts, case by case")
-    func validation() {
-        guard let cases = file()["cases"] as? [[String: Any]] else { fatalError("no record cases") }
-        for c in cases {
-            let why = c.str("why")
+    func validation() throws {
+        for c in try Fixtures.list("record.json", "cases") {
+            let why = try c.str("why")
+            let valid = try c.flag("valid")
             let record = decodeRecord(c["record"] as Any)
-            #expect((record != nil) == c.flag("valid"), "\(why): valid should be \(c.flag("valid"))")
+            #expect((record != nil) == valid, "\(why): valid should be \(valid)")
             guard let record else { continue }
-            let yolk = c.optionalNum("yolk")
+            let yolk = try c.optionalNum("yolk")
             #expect(record.yolk.map { Double($0.rawValue) } == yolk, "\(why): yolk")
             #expect(record.white?.rawValue == c["white"] as? String, "\(why): white")
             // The probe reading (E4): the same number, and the same "when".
             let probe = c["probe"] as? [String: Any]
             #expect((record.probe == nil) == (probe == nil), "\(why): probe")
             if let probe, let read = record.probe {
-                #expect(read.centreC == probe.num("centre_C"), "\(why): probe reading")
-                #expect(read.afterS == probe.optionalNum("after_s"), "\(why): probe asked at")
+                #expect(try read.centreC == probe.num("centre_C"), "\(why): probe reading")
+                #expect(try read.afterS == probe.optionalNum("after_s"), "\(why): probe asked at")
             }
         }
     }
 
     @Test("masses round to a hundredth of a gram")
-    func massRounding() {
-        guard let cases = file()["massRounding"] as? [[String: Any]] else { fatalError("no mass cases") }
-        for c in cases {
-            #expect(recordMassG(massKg: c.num("mass_kg")) == c.num("mass_g"), "mass \(c.num("mass_kg"))")
+    func massRounding() throws {
+        for c in try Fixtures.list("record.json", "massRounding") {
+            let massKg = try c.num("mass_kg")
+            #expect(try recordMassG(massKg: massKg) == c.num("mass_g"), "mass \(massKg)")
         }
     }
 
     @Test("probe readings round to a hundredth of a degree")
-    func probeRounding() {
-        guard let cases = file()["probeRounding"] as? [[String: Any]] else { fatalError("no probe cases") }
-        for c in cases {
-            #expect(recordProbeC(c.num("centre_C")) == c.num("record_C"), "reading \(c.num("centre_C"))")
+    func probeRounding() throws {
+        for c in try Fixtures.list("record.json", "probeRounding") {
+            let centreC = try c.num("centre_C")
+            #expect(try recordProbeC(centreC) == c.num("record_C"), "reading \(centreC)")
         }
     }
 
     /// Written with explicit nulls, and read back as the same record.
     @Test("a record survives its own JSON, nulls and all")
     func roundTrip() throws {
-        for record in fixtureLog() {
+        for record in try fixtureLog() {
             let data = try JSONEncoder().encode(record)
             let back = try JSONDecoder().decode(EggRecord.self, from: data)
             #expect(back == record)
@@ -238,27 +199,26 @@ struct RecordConformance {
 @Suite("Replay")
 struct ReplayConformance {
     @Test("a ten-egg log, egg by egg, every particle")
-    func stepByStep() {
-        guard let steps = replayJSON()["steps"] as? [[String: Any]] else { fatalError("no steps") }
-        let log = fixtureLog()
-        let grid = fixtureGrid()
-        var c = fixtureStart()
-        #expect(steps.count == log.count)
+    func stepByStep() throws {
+        let steps = try Fixtures.list("record.json", "replay.steps")
+        let log = try fixtureLog()
+        let grid = try fixtureGrid()
+        var c = try fixtureStart()
+        try #require(steps.count == log.count)
         for (i, r) in log.enumerated() {
             let step = steps[i]
             if recordTeaches(r) {
                 let q = gridRequest(c, r, grid: grid)
-                guard let spec = step["spec"] as? [String: Any] else { fatalError("step \(i): no spec") }
-                expectClose(q.spec.alphaMin, spec.num("alphaMin"), "step \(i) alphaMin")
-                expectClose(q.spec.timeMaxS, spec.num("timeMax_s"), "step \(i) timeMax")
-                expectClose(recordCookTimeS(r), step.num("cookTime_s"), "step \(i) scored at")
+                let spec = try step.object("spec")
+                try expectClose(q.spec.alphaMin, spec.num("alphaMin"), "step \(i) alphaMin")
+                try expectClose(q.spec.timeMaxS, spec.num("timeMax_s"), "step \(i) timeMax")
+                try expectClose(recordCookTimeS(r), step.num("cookTime_s"), "step \(i) scored at")
                 foldRecord(&c, r, grid: buildRequestedGrid(q))
             } else {
                 #expect(step["spec"] is NSNull, "step \(i): an unanswered egg builds no surface")
             }
-            guard let after = step["after"] as? [String: Any] else { fatalError("step \(i): no state") }
-            expectCalibration(c, after, "step \(i)")
-            expectClose(
+            try expectCalibration(c, step.object("after"), "step \(i)")
+            try expectClose(
                 calibrationDoneness(c, level: 0.22).whiteDoseMin, step.num("whiteDoseAtSoft"),
                 "step \(i): the white target the next soft egg is solved for"
             )
@@ -266,13 +226,11 @@ struct ReplayConformance {
     }
 
     @Test("the tail of the log from a frozen base")
-    func fromBase() {
-        guard let block = replayJSON()["fromBase"] as? [String: Any],
-              let base = block["base"] as? [String: Any],
-              let final = block["final"] as? [String: Any] else { fatalError("no fromBase") }
-        let tail = Array(fixtureLog().dropFirst(Int(block.num("after"))))
-        let rebuilt = replay(calibration(from: base), tail, grid: fixtureGrid())
-        expectCalibration(rebuilt, final, "from base")
+    func fromBase() throws {
+        let block = try Fixtures.object("record.json", "replay.fromBase")
+        let tail = try Array(fixtureLog().dropFirst(Int(block.num("after"))))
+        let rebuilt = try replay(calibration(from: block.object("base")), tail, grid: fixtureGrid())
+        try expectCalibration(rebuilt, block.object("final"), "from base")
     }
 
     /// The claim E1 is done on, in this language, with E2's second answer: the
@@ -283,10 +241,10 @@ struct ReplayConformance {
     /// change moves your posterior a little for no reason".
     @Test("egg by egg, stored between eggs, is bit-identical to a replay")
     func bitIdentical() throws {
-        let log = fixtureLog()
-        let grid = fixtureGrid()
+        let log = try fixtureLog()
+        let grid = try fixtureGrid()
         // From a base that is not the prior, as a migrated phone starts.
-        let base = replay(fixtureStart(), Array(log.prefix(1)), grid: grid)
+        let base = try replay(fixtureStart(), Array(log.prefix(1)), grid: grid)
         var c = try throughJSON(base)
         for r in log.dropFirst() {
             guard recordTeaches(r) else { continue }
@@ -311,10 +269,10 @@ struct ReplayConformance {
     }
 
     @Test("a replay does not move where it started")
-    func startUntouched() {
-        let start = fixtureStart()
+    func startUntouched() throws {
+        let start = try fixtureStart()
         let before = start
-        _ = replay(start, Array(fixtureLog().prefix(2)), grid: fixtureGrid())
+        _ = try replay(start, Array(fixtureLog().prefix(2)), grid: fixtureGrid())
         #expect(identical(start, before))
     }
 }

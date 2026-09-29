@@ -15,15 +15,8 @@ import Foundation
 /// so the one the app bundles is the one tested here.
 @Suite("The copy renderer matches the reference implementation")
 struct CopyConformance {
-    private static func catalogue(_ locale: String) -> Catalogue {
-        let url = Fixtures.repoRoot.appendingPathComponent("copy/\(locale).json")
-        guard let data = try? Data(contentsOf: url) else { fatalError("could not read copy/\(locale).json") }
-        do {
-            let english = locale == "en" ? nil : catalogue("en")
-            return try Catalogue(json: data, fallback: english)
-        } catch {
-            fatalError("copy/\(locale).json: \(error)")
-        }
+    private static func catalogue(_ locale: String) throws -> Catalogue {
+        try Fixtures.catalogue(locale, fallback: locale == "en" ? nil : Fixtures.catalogue("en"))
     }
 
     /// One argument as the fixture writes it: a string, a number, or a
@@ -38,75 +31,66 @@ struct CopyConformance {
         return nil
     }
 
-    static func args(_ json: Any?) -> CopyArgs {
+    static func args(_ json: Any?) throws -> CopyArgs {
         var out: CopyArgs = [:]
         for (name, value) in (json as? [String: Any]) ?? [:] {
-            guard let arg = arg(value) else { fatalError("argument \(name) is not a string, number or measurement") }
-            out[name] = arg
+            let parsed: CopyArg = try #require(arg(value), "argument \(name) is not a string, number or measurement")
+            out[name] = parsed
         }
         return out
     }
 
-    private static func section(_ name: String) -> [[String: Any]] {
-        guard let list = Fixtures.load("copy.json")[name] as? [[String: Any]] else {
-            fatalError("fixtures/copy.json has no \(name)")
-        }
-        return list
-    }
-
     @Test("every key of every catalogue, rendered")
-    func renders() {
+    func renders() throws {
         var catalogues: [String: Catalogue] = [:]
-        let rows = Self.section("render")
-        #expect(!rows.isEmpty)
-        for c in rows {
-            let locale = c.str("locale")
-            let catalogue = catalogues[locale] ?? Self.catalogue(locale)
+        for c in try Fixtures.list("copy.json", "render") {
+            let locale = try c.str("locale")
+            let catalogue = try catalogues[locale] ?? Self.catalogue(locale)
             catalogues[locale] = catalogue
-            let key = c.str("key")
-            let actual = catalogue.render(key, Self.args(c["args"]))
-            #expect(actual == c.str("text"), "\(locale) \(key): expected \(c.str("text")), got \(actual)")
+            let key = try c.str("key")
+            let text = try c.str("text")
+            let actual = try catalogue.render(key, Self.args(c["args"]))
+            #expect(actual == text, "\(locale) \(key): expected \(text), got \(actual)")
         }
     }
 
     @Test("the plural rule of every language, at every edge")
-    func plurals() {
-        for c in Self.section("plural") {
-            let locale = c.str("locale")
-            let n = c.num("n")
+    func plurals() throws {
+        for c in try Fixtures.list("copy.json", "plural") {
+            let locale = try c.str("locale")
+            let n = try c.num("n")
+            let category = try c.str("category")
             let actual = pluralCategory(locale: locale, n)
-            #expect(actual.rawValue == c.str("category"), "\(locale) \(n): expected \(c.str("category")), got \(actual)")
+            #expect(actual.rawValue == category, "\(locale) \(n): expected \(category), got \(actual)")
         }
     }
 
     @Test("arguments as text, in English and in Czech formatting")
-    func numbers() {
-        for c in Self.section("formatArg") {
-            guard let value = c["value"], let arg = Self.arg(value) else { fatalError("formatArg \(c)") }
-            let locale = c.str("locale")
+    func numbers() throws {
+        for c in try Fixtures.list("copy.json", "formatArg") {
+            let arg = try #require(c["value"].flatMap(Self.arg), "formatArg \(c)")
+            let locale = try c.str("locale")
+            let text = try c.str("text")
             let actual = formatArg(arg, formatLocale: locale)
-            #expect(actual == c.str("text"), "\(locale) \(arg): expected \(c.str("text")), got \(actual)")
+            #expect(actual == text, "\(locale) \(arg): expected \(text), got \(actual)")
         }
     }
 
     @Test("the probe: every plural form, the fallback, and every way a brace can be wrong")
     func probe() throws {
-        guard let probe = Fixtures.load("copy.json")["probe"] as? [String: Any],
-              let json = probe["catalogue"] as? [String: Any],
-              let cases = probe["cases"] as? [[String: Any]] else {
-            fatalError("fixtures/copy.json has no probe")
-        }
-        let catalogue = try Catalogue(object: json, fallback: Self.catalogue("en"))
-        for c in cases {
-            let key = c.str("key")
-            let actual = catalogue.render(key, Self.args(c["args"]))
-            #expect(actual == c.str("text"), "\(key) \(String(describing: c["args"])): expected \(c.str("text")), got \(actual)")
+        let probe = try Fixtures.object("copy.json", "probe")
+        let catalogue = try Catalogue(object: probe.object("catalogue"), fallback: Self.catalogue("en"))
+        for c in try probe.rows("cases") {
+            let key = try c.str("key")
+            let text = try c.str("text")
+            let actual = try catalogue.render(key, Self.args(c["args"]))
+            #expect(actual == text, "\(key) \(String(describing: c["args"])): expected \(text), got \(actual)")
         }
     }
 
     @Test("the categories are CLDR's, in CLDR's order")
-    func categories() {
-        let expected = (Fixtures.load("copy.json")["categories"] as? [String]) ?? []
+    func categories() throws {
+        let expected = try #require(Fixtures.node("copy.json", "categories") as? [String])
         #expect(PluralCategory.allCases.map(\.rawValue) == expected)
     }
 

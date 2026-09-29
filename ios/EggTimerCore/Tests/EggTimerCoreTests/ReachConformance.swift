@@ -8,98 +8,41 @@ import Foundation
 /// A profile is a solve and a decision per level, and both apps must walk the
 /// same levels in the same order and land on the same ends of the range, or
 /// the two sliders offer different eggs. The posteriors are decide.json's.
-private let tolerance = 1e-12
 
-private func expectClose(
-    _ actual: Double, _ expected: Double, _ what: String,
-    sourceLocation: SourceLocation = #_sourceLocation
-) {
-    let scale = max(abs(expected), 1.0)
-    let error = abs(actual - expected) / scale
-    #expect(
-        error <= tolerance, "\(what): expected \(expected), got \(actual) (relative error \(error))",
-        sourceLocation: sourceLocation
-    )
-}
-
-private func object(_ json: [String: Any], _ key: String) -> [String: Any] {
-    guard let o = json[key] as? [String: Any] else { fatalError("fixture has no object \(key)") }
-    return o
-}
-
-private func rows(_ json: [String: Any], _ key: String) -> [[String: Any]] {
-    guard let r = json[key] as? [[String: Any]] else { fatalError("fixture has no rows \(key)") }
-    return r
-}
-
-/// A number or null.
-private func optional(_ json: [String: Any], _ key: String) -> Double? {
-    (json[key] as? NSNumber)?.doubleValue
-}
-
-private func setupOf(_ json: [String: Any]) -> CookSetup {
-    guard let startMode = StartMode(rawValue: json.str("startMode")),
-          let cooling = Cooling(rawValue: json.str("cooling")) else {
-        fatalError("fixture setup is not shaped as expected: \(json)")
-    }
-    let afterBoil = HeatAfterBoil(rawValue: json["afterBoil"] as? String ?? "hold") ?? .hold
-    return CookSetup(
-        startMode: startMode, eggStartC: json.num("eggStart_C"), ambientC: json.num("ambient_C"),
-        boilingC: json.num("boiling_C"), timeToBoilS: json.num("timeToBoil_s"), cooling: cooling,
-        waterLitres: json.num("waterLitres"), afterBoil: afterBoil, eggCount: json.num("eggCount")
-    )
-}
-
-private func posteriors() -> [String: Posterior] {
-    var out = [String: Posterior]()
-    for p in rows(Fixtures.load("decide.json"), "posteriors") {
-        let particles = rows(p, "particles").map {
-            Particle(
-                alphaM2s: $0.num("alpha_m2s"), logDoseOffset: $0.num("logDoseOffset"),
-                tauAirScale: $0.num("tauAirScale"), noise: $0.num("noise"),
-                whiteOffset: $0.num("whiteOffset"), whiteFirmGap: $0.num("whiteFirmGap")
-            )
-        }
-        guard let weights = p["weights"] as? [NSNumber] else { fatalError("no weights") }
-        out[p.str("name")] = Posterior(particles: particles, weights: weights.map(\.doubleValue), rng: 1)
-    }
-    return out
-}
-
-private func profileOf(_ json: [String: Any]) -> OddsProfile {
-    OddsProfile(
-        points: rows(json, "points").map { LevelOdds(level: $0.num("level"), odds: $0.num("odds")) },
+private func profileOf(_ json: [String: Any]) throws -> OddsProfile {
+    try OddsProfile(
+        points: json.rows("points").map { try LevelOdds(level: $0.num("level"), odds: $0.num("odds")) },
         best: json.num("best"),
         physicalSoftest: json.num("physicalSoftest"), physicalHardest: json.num("physicalHardest"),
-        softest: optional(json, "softest"), hardest: optional(json, "hardest")
+        softest: json.optionalNum("softest"), hardest: json.optionalNum("hardest")
     )
 }
 
 @Suite("Reach")
 struct ReachConformance {
     @Test("the constants")
-    func constants() {
-        let c = object(Fixtures.load("reach.json"), "constants")
-        #expect(reachOdds == c.num("reachOdds"))
-        #expect(profileStep == Int(c.num("profileStep")))
-        #expect(adviceBelowTenths == Int(c.num("adviceBelowTenths")))
-        #expect(adviceMarginTenths == Int(c.num("adviceMarginTenths")))
-        #expect(adviceGain == c.num("adviceGain"))
-        #expect(shadeBestMin == c.num("shadeBestMin"))
+    func constants() throws {
+        let c = try Fixtures.object("reach.json", "constants")
+        #expect(try reachOdds == c.num("reachOdds"))
+        #expect(try profileStep == Int(c.num("profileStep")))
+        #expect(try adviceBelowTenths == Int(c.num("adviceBelowTenths")))
+        #expect(try adviceMarginTenths == Int(c.num("adviceMarginTenths")))
+        #expect(try adviceGain == c.num("adviceGain"))
+        #expect(try shadeBestMin == c.num("shadeBestMin"))
     }
 
     @Test("no shading when the best odds are under a tenth")
-    func shadingThreshold() {
-        let cases = rows(Fixtures.load("reach.json"), "shading")
-        #expect(!cases.isEmpty)
-        for row in cases {
-            let profile = profileOf(object(row, "profile"))
+    func shadingThreshold() throws {
+        for row in try Fixtures.list("reach.json", "shading") {
+            let profile = try profileOf(row.object("profile"))
             let shades = shadingOf(profile)
-            let expected = rows(row, "shading")
+            // Empty for the profile under a tenth, which is the point; the
+            // count is compared first, so an empty list is still checked.
+            let expected = try row.rows("shading", mayBeEmpty: true)
             #expect(shades.count == expected.count, "best \(profile.best)")
             for (a, b) in zip(shades, expected) {
-                expectClose(a.level, b.num("level"), "best \(profile.best) level")
-                expectClose(a.strength, b.num("strength"), "best \(profile.best) strength")
+                try expectClose(a.level, b.num("level"), "best \(profile.best) level")
+                try expectClose(a.strength, b.num("strength"), "best \(profile.best) strength")
             }
         }
     }
@@ -107,24 +50,18 @@ struct ReachConformance {
     /// Every profile in the fixture. The package builds `-O` even for tests,
     /// so a profile's couple of dozen solves are quick.
     @Test("the odds at every level, the range, and the shading")
-    func profiles() {
-        let byName = posteriors()
-        let all = rows(Fixtures.load("reach.json"), "profiles")
-        #expect(!all.isEmpty)
-        for (i, row) in all.enumerated() {
-            guard let post = byName[row.str("posterior")] else { fatalError("profile \(i): no posterior") }
-            let c = Calibration(posterior: post, eggsLogged: Int(row.num("eggsLogged")))
-            let egg = Geometry.eggFromMass(object(row, "egg").num("mass_kg"))
-            let setup = setupOf(object(row, "setup"))
-            let g = object(row, "grid")
-            let grid = buildDoseGrid(
-                egg: egg, setup: setup, tauAirScale: g.num("tauAirScale"),
-                alphaMin: g.num("alphaMin"), alphaMax: g.num("alphaMax"), alphaCount: Int(g.num("alphaCount")),
-                timeMinS: g.num("timeMin_s"), timeMaxS: g.num("timeMax_s"), timeCount: Int(g.num("timeCount"))
-            )
+    func profiles() throws {
+        let byName = try posteriorsByName(Fixtures.list("decide.json", "posteriors"))
+        for (i, row) in try Fixtures.list("reach.json", "profiles").enumerated() {
+            let name = try row.str("posterior")
+            let post = try #require(byName[name], "profile \(i): no posterior")
+            let c = try Calibration(posterior: post, eggsLogged: Int(row.num("eggsLogged")))
+            let egg = try Geometry.eggFromMass(row.object("egg").num("mass_kg"))
+            let setup = try cookSetup(row.object("setup"))
+            let grid = try doseGrid(row.object("grid"), egg: egg, setup: setup)
             let p = oddsProfile(c, egg: egg, setup: setup, grid: grid)
-            let expected = profileOf(object(row, "profile"))
-            let label = "profile \(i) (\(row.str("posterior")), \(setup.cooling))"
+            let expected = try profileOf(row.object("profile"))
+            let label = "profile \(i) (\(name), \(setup.cooling))"
             #expect(p.points.count == expected.points.count, "\(label) points")
             for (a, b) in zip(p.points, expected.points) {
                 expectClose(a.level, b.level, "\(label) level")
@@ -137,13 +74,14 @@ struct ReachConformance {
             #expect(p.hardest == expected.hardest, "\(label) hardest")
 
             let shades = shadingOf(p)
-            let expectedShades = rows(row, "shading")
+            let expectedShades = try row.rows("shading")
             #expect(shades.count == expectedShades.count, "\(label) shades")
             for (a, b) in zip(shades, expectedShades) {
-                expectClose(a.strength, b.num("strength"), "\(label) shade at \(b.num("level"))")
+                try expectClose(a.strength, b.num("strength"), "\(label) shade at \(b.num("level"))")
             }
-            for near in rows(row, "near") {
-                expectClose(oddsNear(p, level: near.num("level")), near.num("odds"), "\(label) near \(near.num("level"))")
+            for near in try row.rows("near") {
+                let level = try near.num("level")
+                try expectClose(oddsNear(p, level: level), near.num("odds"), "\(label) near \(level)")
             }
         }
     }
@@ -151,34 +89,35 @@ struct ReachConformance {
     /// The solve, the verdict and the retry at the level it snaps to, for each
     /// profile's pot, with the profile as the fixture has it.
     @Test("the answer at a level, and its snap-and-retry")
-    func answers() {
-        let byName = posteriors()
-        let json = Fixtures.load("reach.json")
-        let profiles = rows(json, "profiles")
-        let answers = rows(json, "answers")
-        #expect(!answers.isEmpty)
-        for row in answers {
-            let p = profiles[Int(row.num("profile"))]
-            guard let post = byName[p.str("posterior")] else { fatalError("no posterior") }
-            let c = Calibration(posterior: post, eggsLogged: Int(p.num("eggsLogged")))
-            let egg = Geometry.eggFromMass(object(p, "egg").num("mass_kg"))
-            let level = row.num("level")
-            let a = answerAt(
-                c, egg: egg, setup: setupOf(object(p, "setup")), level: level,
-                profile: row.flag("withOdds") ? profileOf(object(p, "profile")) : nil,
-                snapRetry: row.flag("snapRetry")
+    func answers() throws {
+        let byName = try posteriorsByName(Fixtures.list("decide.json", "posteriors"))
+        let profiles = try Fixtures.list("reach.json", "profiles")
+        for row in try Fixtures.list("reach.json", "answers") {
+            let index = try Int(row.num("profile"))
+            try #require(profiles.indices.contains(index), "answer for a profile \(index) the fixture lacks")
+            let p = profiles[index]
+            let post = try #require(byName[p.str("posterior")], "no posterior")
+            let c = try Calibration(posterior: post, eggsLogged: Int(p.num("eggsLogged")))
+            let egg = try Geometry.eggFromMass(p.object("egg").num("mass_kg"))
+            let level = try row.num("level")
+            let withOdds = try row.flag("withOdds")
+            let snapRetry = try row.flag("snapRetry")
+            let a = try answerAt(
+                c, egg: egg, setup: cookSetup(p.object("setup")), level: level,
+                profile: withOdds ? profileOf(p.object("profile")) : nil,
+                snapRetry: snapRetry
             )
-            let label = "profile \(row.num("profile")) at \(level), odds \(row.flag("withOdds")), retry \(row.flag("snapRetry"))"
-            #expect(a.verdict.kind.rawValue == row.str("kind"), "\(label) kind")
-            #expect(a.verdict.snapTo == optional(row, "snapTo"), "\(label) snapTo")
-            #expect(a.level == row.num("answeredLevel"), "\(label) level")
-            #expect(a.solution.reachable == row.flag("reachable"), "\(label) reachable")
-            expectClose(a.solution.result.cookTimeS, row.num("cookTime_s"), "\(label) cook time")
+            let label = "profile \(index) at \(level), odds \(withOdds), retry \(snapRetry)"
+            #expect(try a.verdict.kind.rawValue == row.str("kind"), "\(label) kind")
+            #expect(try a.verdict.snapTo == row.optionalNum("snapTo"), "\(label) snapTo")
+            #expect(try a.level == row.num("answeredLevel"), "\(label) level")
+            #expect(try a.solution.reachable == row.flag("reachable"), "\(label) reachable")
+            try expectClose(a.solution.result.cookTimeS, row.num("cookTime_s"), "\(label) cook time")
         }
     }
 
     @Test("the verdict, with and without the odds' range")
-    func verdicts() {
+    func verdicts() throws {
         let result = CookResult(
             cookTimeS: 400, peakYolkC: 65, peakYolkTimeS: 500, yolkAtPullC: 60, yolkDoseMin: 1,
             whiteDoseMin: 1, peakWhiteC: 80
@@ -189,31 +128,33 @@ struct ReachConformance {
                 softestLevel: 0.1, hardestLevel: 0.9, whiteSets: name != "never"
             )
         }
-        for row in rows(Fixtures.load("reach.json"), "verdicts") {
+        for row in try Fixtures.list("reach.json", "verdicts") {
             var profile: OddsProfile?
             if let range = row["range"] as? [String: Any] {
-                profile = OddsProfile(
+                profile = try OddsProfile(
                     points: [], best: 0.6, physicalSoftest: 0.1, physicalHardest: 0.9,
-                    softest: optional(range, "softest"), hardest: optional(range, "hardest")
+                    softest: range.optionalNum("softest"), hardest: range.optionalNum("hardest")
                 )
             }
-            let level = row.num("level")
-            let v = verdictWithOdds(solution(row.str("solution")), level: level, profile: profile)
-            let label = "\(row.str("solution")) at \(level), \(String(describing: row["range"]))"
-            #expect(v.kind.rawValue == row.str("kind"), "\(label) kind")
-            #expect(v.wanted.key == row.str("wanted"), "\(label) wanted")
-            #expect(v.limit.key == row.str("limit"), "\(label) limit")
-            #expect(v.snapTo == optional(row, "snapTo"), "\(label) snapTo")
-            #expect(v.worthSaying == row.flag("worthSaying"), "\(label) worthSaying")
+            let level = try row.num("level")
+            let name = try row.str("solution")
+            let v = verdictWithOdds(solution(name), level: level, profile: profile)
+            let label = "\(name) at \(level), \(String(describing: row["range"]))"
+            #expect(try v.kind.rawValue == row.str("kind"), "\(label) kind")
+            #expect(try v.wanted.key == row.str("wanted"), "\(label) wanted")
+            #expect(try v.limit.key == row.str("limit"), "\(label) limit")
+            #expect(try v.snapTo == row.optionalNum("snapTo"), "\(label) snapTo")
+            #expect(try v.worthSaying == row.flag("worthSaying"), "\(label) worthSaying")
         }
     }
 
     @Test("when advice is offered, and which")
-    func advice() {
-        let file = Fixtures.load("reach.json")
-        let adviceProfile = profileOf(object(file, "adviceProfile"))
-        for row in rows(file, "adviceWanted") {
-            let best = optional(row, "best")
+    func advice() throws {
+        let file = try Fixtures.load("reach.json")
+        let adviceProfile = try profileOf(file.object("adviceProfile"))
+        for row in try file.rows("adviceWanted") {
+            let best = try row.optionalNum("best")
+            let tenths = try row.num("tenths")
             let profile = best.map {
                 OddsProfile(
                     points: adviceProfile.points, best: $0, physicalSoftest: adviceProfile.physicalSoftest,
@@ -222,22 +163,24 @@ struct ReachConformance {
                 )
             }
             #expect(
-                adviceWanted(Int(row.num("tenths")), profile: profile) == row.flag("wanted"),
-                "\(row.num("tenths")) against \(String(describing: best))"
+                try adviceWanted(Int(tenths), profile: profile) == row.flag("wanted"),
+                "\(tenths) against \(String(describing: best))"
             )
         }
-        for row in rows(file, "advice") {
-            let setup = setupOf(object(row, "setup"))
-            let facts = AdviceFacts(eggFromClass: row.flag("eggFromClass"), startAssumed: row.flag("startAssumed"))
+        for row in try file.rows("advice") {
+            let setup = try cookSetup(row.object("setup"))
+            let facts = try AdviceFacts(eggFromClass: row.flag("eggFromClass"), startAssumed: row.flag("startAssumed"))
             #expect(unpricedAdvice(setup, facts: facts) == (row["unpriced"] as? [String]), "unpriced \(row)")
             let priced = pricedChanges(setup)
-            let expected = rows(row, "priced")
-            #expect(priced.map(\.key) == expected.map { $0.str("key") }, "priced keys \(row)")
+            // Most pots have nothing to price; the keys are compared whole, so
+            // an empty list is still checked.
+            let expected = try row.rows("priced", mayBeEmpty: true)
+            #expect(try priced.map(\.key) == expected.map { try $0.str("key") }, "priced keys \(row)")
             for (a, b) in zip(priced, expected) {
-                #expect(a.setup == setupOf(object(b, "setup")), "priced setup \(a.key)")
+                #expect(try a.setup == cookSetup(b.object("setup")), "priced setup \(a.key)")
             }
-            for shown in rows(row, "shown") {
-                let keys = protocolAdvice(
+            for shown in try row.rows("shown") {
+                let keys = try protocolAdvice(
                     setup, facts: facts, level: shown.num("level"), odds: shown.num("odds"),
                     priced: priced.map { (key: $0.key, profile: adviceProfile) }
                 )

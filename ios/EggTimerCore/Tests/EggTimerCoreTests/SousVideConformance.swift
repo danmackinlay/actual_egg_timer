@@ -16,27 +16,13 @@ import Foundation
 /// Same rule as the rest of the port: the fixtures are never regenerated to
 /// make this pass. If a NUMBER is wrong it is wrong in the TypeScript first,
 /// and `npm test` is what should catch it.
-private let tolerance = 1e-12
-
-private func expectClose(
-    _ actual: Double, _ expected: Double, _ what: String,
-    sourceLocation: SourceLocation = #_sourceLocation
-) {
-    let scale = max(abs(expected), 1.0)
-    let error = abs(actual - expected) / scale
-    #expect(
-        error <= tolerance,
-        "\(what): expected \(expected), got \(actual) (relative error \(error))",
-        sourceLocation: sourceLocation
-    )
-}
 
 @Suite("The isothermal limit matches the reference implementation")
 struct SousVideConformance {
     @Test("the bath the app offers is the same bath")
-    func bath() {
-        expectClose(sousVideBathC, Fixtures.sousVideNumber("bath_C"), "sousVideBathC")
-        expectClose(sousVideModelFloorC, Fixtures.sousVideNumber("modelFloor_C"), "sousVideModelFloorC")
+    func bath() throws {
+        try expectClose(sousVideBathC, Fixtures.sousVideNumber("bath_C"), "sousVideBathC")
+        try expectClose(sousVideModelFloorC, Fixtures.sousVideNumber("modelFloor_C"), "sousVideModelFloorC")
     }
 
     /// The bisection is the only iteration in this module, and the fixture
@@ -44,8 +30,8 @@ struct SousVideConformance {
     /// a port narrowed, or a comparison it flipped, fails here on a bare number
     /// instead of hiding inside an egg-sized time.
     @Test("the Fourier number the bisection converges on")
-    func fourierNumber() {
-        expectClose(
+    func fourierNumber() throws {
+        try expectClose(
             equilibrationTime(radiusM: 1.0, alphaM2s: 1.0),
             Fixtures.sousVideNumber("fourierNumber"),
             "equilibrationTime(1 m, 1 m^2/s)"
@@ -60,27 +46,28 @@ struct SousVideConformance {
     /// `fixtures/policy.json`, and reading it again would make a failure in that
     /// mapping surface as a sous-vide failure as well.
     @Test("equilibration, both hold times, the total and which one binds")
-    func cases() {
-        for c in Fixtures.sousVideCases("cases") {
-            let est = sousVideEstimate(
+    func cases() throws {
+        for c in try Fixtures.sousVideCases("cases") {
+            let est = try sousVideEstimate(
                 radiusM: c.num("radius_m"),
                 alphaM2s: c.num("alpha_m2s"),
                 bathC: c.num("bath_C"),
                 yolkDoseMin: c.num("yolkDose_min"),
                 whiteDoseMin: c.num("whiteDose_min")
             )
-            let what = "\(c.str("what")): \(c.num("mass_g")) g,"
+            let what = try "\(c.str("what")): \(c.num("mass_g")) g,"
                 + " alpha \(c.num("alpha_m2s")), \(c.num("bath_C")) C,"
                 + " level \(c.num("level"))"
 
-            expectClose(est.bathC, c.num("bath_C"), "\(what) bathC")
-            expectClose(est.equilibrateS, c.num("equilibrate_s"), "\(what) equilibrateS")
-            expectClose(est.yolkHoldS, c.num("yolkHold_s"), "\(what) yolkHoldS")
-            expectClose(est.whiteHoldS, c.num("whiteHold_s"), "\(what) whiteHoldS")
-            expectClose(est.totalS, c.num("total_s"), "\(what) totalS")
+            try expectClose(est.bathC, c.num("bath_C"), "\(what) bathC")
+            try expectClose(est.equilibrateS, c.num("equilibrate_s"), "\(what) equilibrateS")
+            try expectClose(est.yolkHoldS, c.num("yolkHold_s"), "\(what) yolkHoldS")
+            try expectClose(est.whiteHoldS, c.num("whiteHold_s"), "\(what) whiteHoldS")
+            try expectClose(est.totalS, c.num("total_s"), "\(what) totalS")
+            let whiteBound = try c.flag("whiteBound")
             #expect(
-                est.whiteBound == c.flag("whiteBound"),
-                "\(what) whiteBound: expected \(c.flag("whiteBound")), got \(est.whiteBound)"
+                est.whiteBound == whiteBound,
+                "\(what) whiteBound: expected \(whiteBound), got \(est.whiteBound)"
             )
         }
     }
