@@ -2498,7 +2498,59 @@ mid-start; the macOS workflow, which has not run since nothing is pushed.
 
 ## 29 September 2026: the worklist, stage 2 - conformance, false comments and docs, structure, tests
 
-(Summary to follow at the end of the stage.)
+WORKLIST.md sections 3, 5, 6, 7.4-7.13 and 8.2-8.3, on a branch from
+`72f447c`: a lead and four helpers in parallel, merged in turn. Each item
+there is ticked with its commit.
+
+- **Conformance (section 3).** What both apps decide above the physics is
+  core's and fixtured: the solve-refuse-snap rule (`answerAt`), which key
+  each part of the screen says (`wording.ts`), the slow hob's constants, the
+  pull, the texture edges and the shading threshold. iOS lost `Cook.Phase`,
+  `Forecast` and `Direction.swift` to core's `Phase` and `Outcome`, and now
+  checks the record's version, prior and kernel discount.
+- **Structure (section 5).** The web's `app.ts` split into a dozen modules
+  that import in node, with `render()` in two, one feedback state and one
+  `retime`. iOS's ContentView and Kitchen split, the Kitchen became the
+  Planner and `Settings` the SettingsStore, the idle screen stops redrawing
+  every second, and EggTimerRing folded into the core. `tools/fixtures.ts`
+  became one module per output, `tools/copyDraft.ts` one file per draft
+  (with `draftFor` throwing), and `tools/common.ts` holds the helpers the
+  tools and tests had copied. Both cores lost their copied helpers
+  (`logYolkTarget`, `coolingMedium_C`, `normalCdf`, `withUnrelated`, one
+  bisection, `isUS`), the grid request moved to `doseGrid`, and the
+  sous-vide clock's units moved out of the physics into `wording`.
+- **Owner, 28 Sep: "kitchen" is "settings" (D7).** The web page is
+  `#settings`, and `#kitchen` still opens it. `controls.then.*` and
+  `controls.afterBoil.*` are `controls.cooling.*` and
+  `controls.afterTheBoil.*`, word for word, proved as the `settings` draft
+  on `72f447c`.
+- **Tests and fixtures (section 6).** The Swift fixture helpers throw, so a
+  missing key fails one test, not the run, and an empty list fails. The
+  fixtures fell from 70k lines to 45k: `copy.json` renders only keys with
+  arguments, counts or a fallback, so a wording edit no longer rewrites it,
+  each particle is one line, and a repeated particle set is a `sameAs`
+  that `Fixtures.load` resolves.
+- **Hygiene (section 7).** Security headers, clean builds, the missing
+  scripts, per-scheme theme colours and a maskable icon, one version held
+  by a test, the project's own `.gitignore`, and the surfaces and the 1750
+  spelling table out of `copy/`, so they no longer ship.
+- **Decisions of my own:** the web keeps its last pan start in memory, so
+  another tab's change of it is no longer picked up (nothing else on the
+  page reads another tab's settings); decide's white sum keeps its
+  one-step arithmetic, since `withUnrelated` twice moved `reach.json` in the
+  last digit; `#kitchen` is rewritten to `#settings` in place; section 6.5
+  was moot and 7.13 (a formatter) is left for after the comment sweep.
+
+**Run:** `npm run verify`: 255 tests, all pass; the Swift copy lint; the
+fixtures unchanged; `swift test` 119 tests in 31 suites. `npm run
+validate` 28/28. `copyLiterals --since 72f447c` shows the ten drafted rows
+and nothing else. The app builds for, and launches on, the iPhone 17
+simulator, and a cook starts. The built site on port 8096: idle, a started
+cook, Settings at `#settings` and at `#kitchen` (which becomes
+`#settings`), and Help, with no console errors.
+
+**Not verified:** anything on a phone; the web in a second tab changing the
+pan start mid-sous-vide.
 
 ### Moved from PLAN.md: the planning phase's constants and targets
 
