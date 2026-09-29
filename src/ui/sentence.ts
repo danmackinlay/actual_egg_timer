@@ -128,16 +128,31 @@ export function renderSentence(facts: SetupFacts): void {
 
   const focused = document.activeElement;
   const nodes: Node[] = [];
+  // Each button keeps the punctuation straight after it - the text up to the
+  // next space - in one unbreakable span. A button is an atomic inline, which
+  // a line may break after, so without it a line could start with ", then
+  // under a cold tap".
+  let wrap: HTMLSpanElement | null = null;
   marked.split(SLOT).forEach((part, i) => {
     if (i % 2 === 0) {
-      if (part !== '') nodes.push(document.createTextNode(part));
+      let rest = part;
+      if (wrap !== null) {
+        const stuck = /^\S*/.exec(rest)?.[0] ?? '';
+        if (stuck !== '') wrap.append(stuck);
+        rest = rest.slice(stuck.length);
+        wrap = null;
+      }
+      if (rest !== '') nodes.push(document.createTextNode(rest));
       return;
     }
     const clause = part as Clause;
     const button = clauses[clause];
     button.textContent = texts[clause].text;
     button.setAttribute('aria-label', t('setup.clause', { label: texts[clause].label, value: texts[clause].value }));
-    nodes.push(button);
+    wrap = document.createElement('span');
+    wrap.className = 'clause-wrap';
+    wrap.append(button);
+    nodes.push(wrap);
   });
   page().sentence.replaceChildren(...nodes);
   if (focused instanceof HTMLElement && focused.isConnected && focused !== document.activeElement) focused.focus();
