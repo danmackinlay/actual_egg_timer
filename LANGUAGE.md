@@ -76,7 +76,7 @@ languages.
 - **One file per language, plus one for the surfaces.** `copy/en.json` is the
   schema as well as the English: each entry carries `surface`, `apps` (`web`,
   `ios` or both) and `example` arguments, which translations do not repeat.
-  `copy/surfaces.json` holds one budget per surface, not per key: a per-key
+  `test/data/surfaces.json` holds one budget per surface, not per key: a per-key
   budget set from the English would fail every language that runs longer than
   English, which is all of them.
 - **A message is `text`, or a `count` and plural forms.** The `count` names
@@ -416,7 +416,7 @@ tables changed, against `e1f7068`; `copyLiterals.js --since e1f7068` and
   takes nothing; both apps' call sites changed to match. `{limit}` is still
   lower-cased by the app, which reads correctly after a colon.
 - **Held back: five rows, at their live wording.** Four are longer than their
-  surface's budget in `copy/surfaces.json`, which is not raised for a small
+  surface's budget in `test/data/surfaces.json`, which is not raised for a small
   surface without the owner; each needs a shorter wording or a raised budget.
   *Since then (28 September):* `alarm.cooled.body` went in as "The yolk has
   stopped cooking. That is the egg you asked for.", once F6 had raised the
@@ -1086,7 +1086,7 @@ findings are the same in both editions.
   *likewise* (8), *therefore* (17) and *perhaps* (17). A test fails the
   catalogue if any of the eight appears.
 - **His spellings, as a fixed table, and not completist.**
-  `copy/en-x-1750.spelling.json` maps the modern form, American or British, to
+  `test/data/en-x-1750.spelling.json` maps the modern form, American or British, to
   the 1755 one, and a test fails if the catalogue uses a modern form. The table
   starts with what the 1755 text attests and grows when a string needs a word
   it lacks:
@@ -1181,7 +1181,7 @@ whole catalogue is for their review. iOS is untouched and follows.
   to it byte for byte. Both needed their file filter to take a digit in a
   tag and skip a file with a second dot, which is the spelling table.
 - **Its rules are `test/en1750.test.ts`**: the eight archaisms as whole
-  words, straight or curly apostrophe; `copy/en-x-1750.spelling.json` (47
+  words, straight or curly apostrophe; `test/data/en-x-1750.spelling.json` (47
   modern forms, seeded from the table above) as whole words, ignoring case;
   the long s only in `app.titlePage`; the owner's alarm word for word; Help's
   links the same URLs in the same markdown; the switch; the record.

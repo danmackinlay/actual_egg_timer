@@ -31,7 +31,7 @@ interface CatalogueJson { locale: string; messages: Record<string, Entry> }
 
 const EN_JSON = JSON.parse(readFileSync('copy/en.json', 'utf8')) as CatalogueJson;
 const P_JSON = JSON.parse(readFileSync('copy/en-x-1750.json', 'utf8')) as CatalogueJson;
-const SPELLING = (JSON.parse(readFileSync('copy/en-x-1750.spelling.json', 'utf8')) as {
+const SPELLING = (JSON.parse(readFileSync('test/data/en-x-1750.spelling.json', 'utf8')) as {
   spellings: Record<string, string>;
 }).spellings;
 const EN = parseCatalogue(EN_JSON);
@@ -58,9 +58,9 @@ function wordPattern(word: string): RegExp {
 
 test('1a. the 1750 catalogue is a catalogue: copy.test.ts and the fixture read it', () => {
   // The same rule as test/copy.test.ts and tools/fixtures/copy.ts.
-  const catalogues = readdirSync('copy').filter((f) => /^[a-zA-Z0-9-]+\.json$/.test(f) && f !== 'surfaces.json');
+  const catalogues = readdirSync('copy').filter((f) => f.endsWith('.json'));
   assert.ok(catalogues.includes('en-x-1750.json'));
-  assert.ok(!catalogues.includes('en-x-1750.spelling.json'), 'the spelling table is not a language');
+  for (const f of catalogues) assert.match(f, /^[a-zA-Z0-9-]+\.json$/, `${f}: copy/ holds catalogues, <tag>.json, and nothing else`);
   assert.equal(P_JSON.locale, PERIOD_LANGUAGE);
 });
 

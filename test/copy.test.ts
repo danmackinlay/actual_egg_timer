@@ -27,13 +27,12 @@ type Entry = Record<string, unknown>;
 interface CatalogueJson { locale: string; messages: Record<string, Entry> }
 interface Surface { budget: number; about: string }
 
-const SURFACES = JSON.parse(readFileSync('copy/surfaces.json', 'utf8')) as Record<string, Surface>;
-/** Every catalogue: `copy/<tag>.json`. Not the surfaces, and not a file with
- *  a second dot in its name, such as the 1750 spelling table
- *  (`en-x-1750.spelling.json`), which is a test's data, not a language. The
+const SURFACES = JSON.parse(readFileSync('test/data/surfaces.json', 'utf8')) as Record<string, Surface>;
+/** Every catalogue: `copy/<tag>.json`, and nothing else is in copy/ (the
+ *  surfaces and the 1750 spelling table are tests' data, in test/data/). The
  *  same rule as `tools/fixtures/copy.ts`. */
 const LOCALES = readdirSync('copy')
-  .filter((f) => /^[a-zA-Z0-9-]+\.json$/.test(f) && f !== 'surfaces.json')
+  .filter((f) => f.endsWith('.json'))
   .map((f) => f.replace(/\.json$/, ''));
 const JSONS = new Map<string, CatalogueJson>(LOCALES.map((l) => [
   l, JSON.parse(readFileSync(`copy/${l}.json`, 'utf8')) as CatalogueJson,

@@ -28,12 +28,11 @@ const PLURAL_NUMBERS = [0, 1, 2, 3, 4, 5, 10, 11, 21, 22, 100, 101, 1.5, 2.5, 0.
 
 interface CopyRow { locale: string; key: string; args: CopyArgs; text: string }
 
-// A catalogue's tag may carry digits (`en-x-1750`); a file with a second dot
-// (`en-x-1750.spelling.json`) is a test's data, not a catalogue.
-const copyFiles = readdirSync('copy').filter((f) => /^[a-zA-Z0-9-]+\.json$/.test(f)).sort();
+// Every file in copy/ is a catalogue, `<tag>.json`; the tests' data about the
+// words (surfaces, the 1750 spelling table) is in test/data/.
+const copyFiles = readdirSync('copy').filter((f) => f.endsWith('.json')).sort();
 const catalogueJson = new Map<string, CatalogueJson>();
 for (const file of copyFiles) {
-  if (file === 'surfaces.json') continue;
   catalogueJson.set(file.replace(/\.json$/, ''), JSON.parse(readFileSync(`copy/${file}`, 'utf8')) as CatalogueJson);
 }
 

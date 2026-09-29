@@ -569,7 +569,7 @@ The owner decided on 28 Sep: apply everything in §9.1–9.6 as one draft, then 
 How:
 - **One named draft** in `tools/copyDraft.ts`, e.g. `plain`, following the existing workflow.
 - **Both apps**, plus the **1750 twins** trimmed in proportion.
-- **Surface budgets:** check each string against `copy/surfaces.json` and make the drafts fit.
+- **Surface budgets:** check each string against `test/data/surfaces.json` and make the drafts fit.
 - **Prove it** with `copyLiterals --since <base> plain` and `copySnapshot compare --draft plain`.
 - **Regenerate fixtures.**
 - **Commit the §9.1 factual fixes separately, first**, so they survive whatever the owner reverts from the rest.
