@@ -82,7 +82,7 @@ private func doubles(_ json: [String: Any], _ key: String) -> [Double] {
 
 /// A whole particle set read straight out of the fixture. Needed because one case
 /// starts from a posterior the reference constructed rather than from one this
-/// implementation could redraw - see `whiteResample` in tools/fixtures.ts.
+/// implementation could redraw - see `whiteResample` in tools/fixtures/calibration.ts.
 private func posterior(from json: [String: Any], _ label: String) -> Posterior {
     guard let rows = json["particles"] as? [[String: Any]],
           let rng = json["rng"] as? NSNumber else {
