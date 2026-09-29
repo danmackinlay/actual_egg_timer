@@ -85,6 +85,7 @@ for (const mass_g of SOUS_VIDE_EGGS_G) {
 }
 
 export const sousvideFixture = {
+  about: 'The isothermal limit: no pan, no ramp, no cooling, and an answer in hours. src/core/sousvide.ts.',
   bath_C: SOUS_VIDE_BATH_C,
   modelFloor_C: SOUS_VIDE_MODEL_FLOOR_C,
   /* The bisection's answer stripped of its scaling: at R = 1 m and

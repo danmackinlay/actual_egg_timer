@@ -68,6 +68,7 @@ const pseudoCases: { key: string; args: CopyArgs }[] = [
 
 const HOUR_CYCLES: (HourCycle | null)[] = [null, 'h23', 'h12'];
 export const formatFixture = {
+  about: 'Numbers and times of day in every formatting locale, and a pseudo-Czech catalogue in cs-CZ. src/core/format.ts.',
   supported: FORMAT_SUPPORTED,
   locales: FORMAT_LOCALES,
   roundTo: FORMAT_NUMBERS.map(([value, decimals]) => ({ value: value, decimals: decimals, result: roundTo(value, decimals) })),

@@ -82,6 +82,7 @@ function sizeClassRow(c: SizeClass): { key: string; mass_kg: number } {
 }
 
 export const policyFixture = {
+  about: 'The decisions above the physics: snapping, the refusal verdict, texture bands, the calibration grid\'s geometry, the bounds and defaults, both size-class tables, the phase rule. src/core/policy.ts.',
   slider: {
     steps: SLIDER_STEPS,
     cases: SNAP_LEVELS.map((level) => ({

@@ -80,6 +80,7 @@ const probeCases: { key: string; args: CopyArgs }[] = [
 ];
 
 export const copyFixture = {
+  about: 'Every catalogue rendered, the plural rule of every language at its edges, and a probe catalogue. src/core/copy.ts.',
   locales: [...catalogueJson.keys()],
   render: [...catalogueJson.entries()].flatMap(([locale, json]) => copyRows(
     locale, locale === 'en' ? english : parseCatalogue(json, english),
