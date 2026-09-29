@@ -1,0 +1,125 @@
+/**
+ * The page's elements, found once at boot, and the radio groups' helpers.
+ *
+ * Nothing here touches the document when the module is imported: `dom` is
+ * filled in by `bindDom()`, which `boot()` calls first, so a test can import
+ * any module that uses it.
+ */
+
+export function el<T extends HTMLElement>(id: string): T {
+  const node = document.getElementById(id);
+  if (node === null) throw new Error(`missing element #${id}`);
+  return node as T;
+}
+
+function findDom() {
+  return {
+    body: document.body,
+    readout: el<HTMLElement>('readout'),
+    phaseLabel: el<HTMLParagraphElement>('phaseLabel'),
+    digits: el<HTMLSpanElement>('digits'),
+    announce: el<HTMLSpanElement>('announce'),
+    sublineText: el<HTMLSpanElement>('sublineText'),
+    sublineInfo: el<HTMLButtonElement>('sublineInfo'),
+    sublineMore: el<HTMLParagraphElement>('sublineMore'),
+    direction: el<HTMLParagraphElement>('direction'),
+    directionText: el<HTMLSpanElement>('directionText'),
+    whiteRisk: el<HTMLParagraphElement>('whiteRisk'),
+    oddsInfo: el<HTMLButtonElement>('oddsInfo'),
+    oddsWhy: el<HTMLDivElement>('oddsWhy'),
+    advice: el<HTMLParagraphElement>('advice'),
+    adviceList: el<HTMLUListElement>('adviceList'),
+    forYou: el<HTMLDivElement>('forYou'),
+    welcome: el<HTMLParagraphElement>('welcome'),
+    helpSousVide: el<HTMLParagraphElement>('helpSousVide'),
+    sentence: el<HTMLParagraphElement>('sentence'),
+    cookSetup: el<HTMLElement>('cookSetup'),
+    cookSentence: el<HTMLParagraphElement>('cookSentence'),
+    cookDoneness: el<HTMLParagraphElement>('cookDoneness'),
+    navBack: el<HTMLButtonElement>('navBack'),
+    kitchenTitle: el<HTMLElement>('kitchenTitle'),
+    helpTitle: el<HTMLElement>('helpTitle'),
+    statBoil: el<HTMLElement>('statBoil'),
+    note: el<HTMLParagraphElement>('note'),
+    warn: el<HTMLParagraphElement>('warn'),
+    mute: el<HTMLButtonElement>('mute'),
+    doneness: el<HTMLInputElement>('doneness'),
+    donenessOdds: el<HTMLDivElement>('donenessOdds'),
+    donenessUnlikelySoft: el<HTMLDivElement>('donenessUnlikelySoft'),
+    donenessUnlikelyHard: el<HTMLDivElement>('donenessUnlikelyHard'),
+    donenessBlockedSoft: el<HTMLDivElement>('donenessBlockedSoft'),
+    donenessBlockedHard: el<HTMLDivElement>('donenessBlockedHard'),
+    donenessTicks: el<HTMLDivElement>('donenessTicks'),
+    donenessBracket: el<HTMLDivElement>('donenessBracket'),
+    donenessMedian: el<HTMLDivElement>('donenessMedian'),
+    donenessRange: el<HTMLSpanElement>('donenessRange'),
+    donenessPeak: el<HTMLSpanElement>('donenessPeak'),
+    size: el<HTMLSelectElement>('size'),
+    measureMass: el<HTMLInputElement>('measureMass'),
+    measureGirth: el<HTMLInputElement>('measureGirth'),
+    measureMinor: el<HTMLInputElement>('measureMinor'),
+    unitMass: el<HTMLSpanElement>('unitMass'),
+    unitGirth: el<HTMLSpanElement>('unitGirth'),
+    unitMinor: el<HTMLSpanElement>('unitMinor'),
+    unitTemp: el<HTMLSpanElement>('unitTemp'),
+    unitLitres: el<HTMLSpanElement>('unitLitres'),
+    unitAltitude: el<HTMLSpanElement>('unitAltitude'),
+    startTempHint: el<HTMLParagraphElement>('startTempHint'),
+    startSousLabel: el<HTMLLabelElement>('startSousLabel'),
+    customTempField: el<HTMLDivElement>('customTempField'),
+    customTemp: el<HTMLInputElement>('customTemp'),
+    litres: el<HTMLInputElement>('litres'),
+    eggCount: el<HTMLInputElement>('eggCount'),
+    altitude: el<HTMLInputElement>('altitude'),
+    primary: el<HTMLButtonElement>('primary'),
+    primaryHintText: el<HTMLSpanElement>('primaryHintText'),
+    hintInfo: el<HTMLButtonElement>('hintInfo'),
+    hintMore: el<HTMLParagraphElement>('hintMore'),
+    secondary: el<HTMLButtonElement>('secondary'),
+    feedback: el<HTMLDivElement>('feedback'),
+    calibNote: el<HTMLParagraphElement>('calibNote'),
+    learnedNote: el<HTMLParagraphElement>('learnedNote'),
+    forget: el<HTMLButtonElement>('forget'),
+    forgetInfo: el<HTMLButtonElement>('forgetInfo'),
+    forgetConfirm: el<HTMLDivElement>('forgetConfirm'),
+    forgetYes: el<HTMLButtonElement>('forgetYes'),
+    forgetNo: el<HTMLButtonElement>('forgetNo'),
+    probeSetting: el<HTMLInputElement>('probeSetting'),
+    probeOffer: el<HTMLDivElement>('probeOffer'),
+    probeOfferYes: el<HTMLButtonElement>('probeOfferYes'),
+    probeOfferNo: el<HTMLButtonElement>('probeOfferNo'),
+    probeEntry: el<HTMLDivElement>('probeEntry'),
+    probeReading: el<HTMLInputElement>('probeReading'),
+    unitProbe: el<HTMLSpanElement>('unitProbe'),
+    probeSave: el<HTMLButtonElement>('probeSave'),
+    probeNote: el<HTMLParagraphElement>('probeNote'),
+    unitsPeriod: el<HTMLParagraphElement>('unitsPeriod'),
+  };
+}
+
+export type Dom = ReturnType<typeof findDom>;
+
+/** Every element the code writes to. Empty until `bindDom()`. */
+export let dom: Dom = undefined as unknown as Dom;
+
+/** Find the page's elements. Once, at boot, before anything reads `dom`. */
+export function bindDom(): void {
+  dom = findDom();
+}
+
+function radios(name: string): HTMLInputElement[] {
+  return Array.from(
+    document.querySelectorAll<HTMLInputElement>(`input[type="radio"][name="${name}"]`),
+  );
+}
+
+export function selectRadio(name: string, value: string): void {
+  for (const input of radios(name)) input.checked = input.value === value;
+}
+
+export function radioValue(name: string, fallback: string): string {
+  for (const input of radios(name)) {
+    if (input.checked) return input.value;
+  }
+  return fallback;
+}

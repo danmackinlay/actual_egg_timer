@@ -12,7 +12,7 @@
  */
 
 import {
-  Egg, SizeTable, eggFromMass, eggFromMinorDiameter, sizeClassesFor, sizeTableFor,
+  Egg, eggFromMass, eggFromMinorDiameter, sizeClassesFor, sizeTableFor,
 } from '../core/geometry.js';
 import { boilingPointAtAltitude } from '../core/thermo.js';
 import { Cooling, CookSetup, StartMode } from '../core/protocol.js';
@@ -20,28 +20,23 @@ import { SOUS_VIDE_BATH_C, SOUS_VIDE_MODEL_FLOOR_C, sousVideEstimate } from '../
 import {
   Measure, Quantity, UnitSystem, chooseUnits, displayText, parse, sizeClassLabel,
 } from '../core/units.js';
+import { Solution, donenessFromSlider, solveCookTime } from '../core/solve.js';
 import {
-  DONENESS_ANCHORS, Solution, donenessFromSlider, solveCookTime,
-} from '../core/solve.js';
-import {
-  DEFAULTS, SLIDER_STEPS, SLOW_HOB_EVERY_S, SLOW_HOB_EXTRA_S, SLOW_HOB_WHEN_LEFT_S, Verdict, ambientFor,
-  anchorNear, coolingSecondsFor,
-  plausibleProbeRange_C, probeMomentFor, targetPeakYolk_C, textureFor, textureNoteKeys,
+  BoilMemory, DEFAULTS, SLIDER_STEPS, SLOW_HOB_EVERY_S, SLOW_HOB_EXTRA_S, SLOW_HOB_WHEN_LEFT_S, Verdict,
+  ambientFor, coolingSecondsFor, probeMomentFor, targetPeakYolk_C, textureFor, textureNoteKeys,
 } from '../core/policy.js';
-import { Feedback, WhiteReport } from '../core/infer.js';
-import { EggFrom, MassFrom, ProbeReading, recordCookTime_s, recordProbe_C } from '../core/record.js';
 import {
   Decision, DecisionInputs, carriedSolution, decide, decidedSolution, decisionInputs,
 } from '../core/decide.js';
 import {
   LevelAnswer, OddsProfile, adviceWanted, answerAt, pricedChanges, protocolAdvice,
-  shadingOf,
 } from '../core/reach.js';
+import { MassFrom } from '../core/record.js';
 import { Outcome, predictOutcome } from '../core/outcome.js';
 import {
   Calibration, cachedDecisionGrid, cachedOddsProfile, calibrationDoneness, calibrationParams,
   clearCalibration, decisionGrid, decisionKey, eggRecordFor, eggsBehind, learn, loadCalibration,
-  logEgg, oddsProfileFor, profileKey, recordSecondAnswer,
+  logEgg, oddsProfileFor, profileKey,
 } from './calibration.js';
 import {
   LIMITS, Limit, START_TEMP_PRESETS_C, Settings, UiStartMode, clampNumber,
@@ -49,13 +44,9 @@ import {
   loadCook, loadSettings, rememberTimeToBoil, saveCook, saveSettings,
 } from './store.js';
 import { sousVideCopy } from './sousvide.js';
-import { restoreOutcome } from './outcome.js';
-import {
-  Clause, ClauseKeys, clauseKeys, directionKey, phaseKeys, rangeWords, refusalKey, whiteAtRisk,
-} from '../core/wording.js';
+import { directionKey, refusalKey, whiteAtRisk } from '../core/wording.js';
 import { activeLocale, applyCopy, loadCopy, t, tRef } from './copy.js';
 import { midSentence } from '../core/copy.js';
-import { formatClock, spokenClock } from './countdown.js';
 import {
   REGION, REGIONAL_UNITS, measure, show, unitSystem,
   useUnits,
@@ -65,122 +56,29 @@ import {
   LANGUAGES, LanguageState, effectiveLanguage, languageAfterFlip, languageAfterPick,
 } from '../core/language.js';
 import {
-  Machine, advance, beginCooling, coolingStartsIn_s, idleMachine, recordBoil, restoreMachine,
-  reviseProvisional, secondsAfterBoil, secondsHeating, secondsToCool, secondsToPull,
-  startCold, startHot,
+  Machine, advance, beginCooling, idleMachine, recordBoil, restoreMachine,
+  reviseProvisional, secondsHeating, secondsToPull, startCold, startHot,
 } from './machine.js';
 import {
   Ticker, blip, keepScreenAwake, primeAudio, releaseScreen, ringAlarm, setMuted, startTicker,
   stopAlarm,
 } from './clock.js';
-
-/* ------------------------------------------------------------------- DOM */
-
-function el<T extends HTMLElement>(id: string): T {
-  const node = document.getElementById(id);
-  if (node === null) throw new Error(`missing element #${id}`);
-  return node as T;
-}
-
-const dom = {
-  body: document.body,
-  readout: el<HTMLElement>('readout'),
-  phaseLabel: el<HTMLParagraphElement>('phaseLabel'),
-  digits: el<HTMLSpanElement>('digits'),
-  announce: el<HTMLSpanElement>('announce'),
-  sublineText: el<HTMLSpanElement>('sublineText'),
-  sublineInfo: el<HTMLButtonElement>('sublineInfo'),
-  sublineMore: el<HTMLParagraphElement>('sublineMore'),
-  direction: el<HTMLParagraphElement>('direction'),
-  directionText: el<HTMLSpanElement>('directionText'),
-  whiteRisk: el<HTMLParagraphElement>('whiteRisk'),
-  oddsInfo: el<HTMLButtonElement>('oddsInfo'),
-  oddsWhy: el<HTMLDivElement>('oddsWhy'),
-  advice: el<HTMLParagraphElement>('advice'),
-  adviceList: el<HTMLUListElement>('adviceList'),
-  forYou: el<HTMLDivElement>('forYou'),
-  welcome: el<HTMLParagraphElement>('welcome'),
-  helpSousVide: el<HTMLParagraphElement>('helpSousVide'),
-  sentence: el<HTMLParagraphElement>('sentence'),
-  cookSetup: el<HTMLElement>('cookSetup'),
-  cookSentence: el<HTMLParagraphElement>('cookSentence'),
-  cookDoneness: el<HTMLParagraphElement>('cookDoneness'),
-  navBack: el<HTMLButtonElement>('navBack'),
-  kitchenTitle: el<HTMLElement>('kitchenTitle'),
-  helpTitle: el<HTMLElement>('helpTitle'),
-  statBoil: el<HTMLElement>('statBoil'),
-  note: el<HTMLParagraphElement>('note'),
-  warn: el<HTMLParagraphElement>('warn'),
-  mute: el<HTMLButtonElement>('mute'),
-  doneness: el<HTMLInputElement>('doneness'),
-  donenessOdds: el<HTMLDivElement>('donenessOdds'),
-  donenessUnlikelySoft: el<HTMLDivElement>('donenessUnlikelySoft'),
-  donenessUnlikelyHard: el<HTMLDivElement>('donenessUnlikelyHard'),
-  donenessBlockedSoft: el<HTMLDivElement>('donenessBlockedSoft'),
-  donenessBlockedHard: el<HTMLDivElement>('donenessBlockedHard'),
-  donenessTicks: el<HTMLDivElement>('donenessTicks'),
-  donenessBracket: el<HTMLDivElement>('donenessBracket'),
-  donenessMedian: el<HTMLDivElement>('donenessMedian'),
-  donenessRange: el<HTMLSpanElement>('donenessRange'),
-  donenessPeak: el<HTMLSpanElement>('donenessPeak'),
-  size: el<HTMLSelectElement>('size'),
-  measureMass: el<HTMLInputElement>('measureMass'),
-  measureGirth: el<HTMLInputElement>('measureGirth'),
-  measureMinor: el<HTMLInputElement>('measureMinor'),
-  unitMass: el<HTMLSpanElement>('unitMass'),
-  unitGirth: el<HTMLSpanElement>('unitGirth'),
-  unitMinor: el<HTMLSpanElement>('unitMinor'),
-  unitTemp: el<HTMLSpanElement>('unitTemp'),
-  unitLitres: el<HTMLSpanElement>('unitLitres'),
-  unitAltitude: el<HTMLSpanElement>('unitAltitude'),
-  startTempHint: el<HTMLParagraphElement>('startTempHint'),
-  startSousLabel: el<HTMLLabelElement>('startSousLabel'),
-  customTempField: el<HTMLDivElement>('customTempField'),
-  customTemp: el<HTMLInputElement>('customTemp'),
-  litres: el<HTMLInputElement>('litres'),
-  eggCount: el<HTMLInputElement>('eggCount'),
-  altitude: el<HTMLInputElement>('altitude'),
-  primary: el<HTMLButtonElement>('primary'),
-  primaryHintText: el<HTMLSpanElement>('primaryHintText'),
-  hintInfo: el<HTMLButtonElement>('hintInfo'),
-  hintMore: el<HTMLParagraphElement>('hintMore'),
-  secondary: el<HTMLButtonElement>('secondary'),
-  feedback: el<HTMLDivElement>('feedback'),
-  calibNote: el<HTMLParagraphElement>('calibNote'),
-  learnedNote: el<HTMLParagraphElement>('learnedNote'),
-  forget: el<HTMLButtonElement>('forget'),
-  forgetInfo: el<HTMLButtonElement>('forgetInfo'),
-  forgetConfirm: el<HTMLDivElement>('forgetConfirm'),
-  forgetYes: el<HTMLButtonElement>('forgetYes'),
-  forgetNo: el<HTMLButtonElement>('forgetNo'),
-  probeSetting: el<HTMLInputElement>('probeSetting'),
-  probeOffer: el<HTMLDivElement>('probeOffer'),
-  probeOfferYes: el<HTMLButtonElement>('probeOfferYes'),
-  probeOfferNo: el<HTMLButtonElement>('probeOfferNo'),
-  probeEntry: el<HTMLDivElement>('probeEntry'),
-  probeReading: el<HTMLInputElement>('probeReading'),
-  unitProbe: el<HTMLSpanElement>('unitProbe'),
-  probeSave: el<HTMLButtonElement>('probeSave'),
-  probeNote: el<HTMLParagraphElement>('probeNote'),
-  unitsPeriod: el<HTMLParagraphElement>('unitsPeriod'),
-};
-
-function radios(name: string): HTMLInputElement[] {
-  return Array.from(
-    document.querySelectorAll<HTMLInputElement>(`input[type="radio"][name="${name}"]`),
-  );
-}
-
-function selectRadio(name: string, value: string): void {
-  for (const input of radios(name)) input.checked = input.value === value;
-}
-
-function radioValue(name: string, fallback: string): string {
-  for (const input of radios(name)) {
-    if (input.checked) return input.value;
-  }
-  return fallback;
-}
+import { bindDom, dom, el, radioValue, selectRadio } from './dom.js';
+import { labelInfoButtons, showInfo, wireInfoButtons } from './info.js';
+import { wireViews } from './views.js';
+import {
+  buildClauses, liveSetupFacts, redrawSentence, renderCookSetup, renderSentence,
+} from './sentence.js';
+import {
+  buildTicks, labelTicks, renderBracket, renderDonenessReading, renderDonenessScale,
+} from './slider.js';
+import { Ticket, restoreTicket, withTimeToBoil } from './ticket.js';
+import { Learning, renderCalibNote, renderLearned, wireForget } from './learned.js';
+import {
+  answersNow, forgetAnswers, keptAnswers, pickedUpAfterReload, probePending, probeWanted,
+  renderProbe, resumeAnswers, wireFeedback,
+} from './feedback.js';
+import { phaseView } from './phaseView.js';
 
 /* ----------------------------------------------------------------- state */
 
@@ -194,14 +92,15 @@ const sizeClasses = sizeClassesFor(REGION);
  *  the other. */
 const sizeTable = sizeTableFor(REGION);
 
-let settings: Settings = loadSettings(sizeClasses);
-useUnits(settings.unitsChosen);
-let boilMemory = loadBoilMemory();
+// The four below are read from storage by `boot()`, not when this module is
+// imported, so a test can import it.
+let settings!: Settings;
+let boilMemory!: BoilMemory;
 /** Posterior over the model's uncertain constants, learned from how the user's
  *  own eggs actually turn out. Before any feedback this is the prior mean,
  *  i.e. the literature values. */
-let calib: Calibration = loadCalibration();
-let machine: Machine = idleMachine(settings.cooling);
+let calib!: Calibration;
+let machine!: Machine;
 let solution: Solution | null = null;
 /** The choice behind the time on screen while idle (E5): the odds, and how
  *  far it leaned from the mean solve. Null until the
@@ -226,80 +125,13 @@ let profile: OddsProfile | null = null;
 const profilesAsked = new Set<string>();
 /** Set when the requested doneness had to be clamped; empty otherwise. */
 let refusal = '';
-/** What the running cook is, frozen at the moment it started.
- *
- *  The calibration must learn from the egg that was actually cooked, not from
- *  whatever the controls happen to say when the user gets round to answering
- *  how the egg was - which may be after a reload, and is certainly after the
- *  measured time to boil has replaced the guess. Everything the posterior
- *  update needs is captured here and nowhere else. */
+/** What the running cook is, frozen at the moment it started (ticket.ts). */
 let ticket: Ticket | null = null;
 let ticker: Ticker | null = null;
 let solveHandle = 0;
 let saveHandle = 0;
 let lastRevise_ms = 0;
 let lastAnnounced = '';
-/** True while the cook on screen is one that was picked back up after a reload.
- *  Cleared when that cook ends or is cancelled: it is a fact about a particular
- *  cook, not about the tab, and left set it would caption every later cook with
- *  a reload that had nothing to do with it. */
-let restored = false;
-/** Whether this egg has been written down with an answer. Persisted with the
- *  cook, so a reload neither asks again nor logs the egg a second time as
- *  unanswered. */
-let feedbackGiven = false;
-/** Which of the two questions have been answered on screen, whether a probe
- *  reading has been taken (E4), and the egg's place in the log once the first
- *  of them has written it down. Not persisted: after a reload the rest are not
- *  offered again, because the surface their answers would be folded against is
- *  gone (see `recordSecondAnswer`). An unanswered question stays a skip in the
- *  record. */
-let answered: {
-  yolk: Feedback | null; white: WhiteReport | null; probe: ProbeReading | null; index: number;
-} | null = null;
-
-/** The same cook, against a time to boil that is now known rather than
- *  guessed. Everything else about it is frozen. */
-function withTimeToBoil(t: Ticket, timeToBoil_s: number): Ticket {
-  return { ...t, setup: { ...t.setup, timeToBoil_s: timeToBoil_s } };
-}
-
-/** The cook that was started: the only thing the calibration is allowed to
- *  learn from. */
-interface Ticket {
-  egg: Egg;
-  /** Which input the egg came from, whose carton if it was a class, and where
-   *  its temperature came from. */
-  massFrom: MassFrom;
-  sizeTable: SizeTable | null;
-  eggFrom: EggFrom;
-  /** Whether the pan's time to boil was on file at "Eggs in": what a hot start,
-   *  which never times its own pan, cooked on. */
-  boilRemembered: boolean;
-  setup: CookSetup;
-  /** log10 of the yolk dose this cook was RUN at. Frozen with everything else,
-   *  so a slider left somewhere else afterwards cannot rewrite history. */
-  logNominalTarget: number;
-  /** The system the cook was reading when they set this egg up, for the
-   *  record. Everything above is SI whatever it says. */
-  units: UnitSystem;
-  /** How far the choice leaned from the mean solve at "Eggs in", s (E5),
-   *  carried onto a mid-cook re-solve (`carriedSolution`). Zero when the time
-   *  was not chosen. */
-  lean_s: number;
-  /** What the egg was likely to be like at "Eggs in", shown for the whole
-   *  cook. Null when the time was started before the odds were known. */
-  outcome: Outcome | null;
-  /** The peak yolk the cook was started with, C: what the line under the
-   *  running cook's sentence says. */
-  peakYolk_C: number;
-  /** The language they were reading it in, for the record. */
-  lang: string;
-  /** Whether this cook has a moment to probe at (E4): a counted cooling that
-   *  ends when the yolk's centre peaks. Frozen with the cook, and moved only
-   *  by the re-solve at the boil. */
-  probeMoment: boolean;
-}
 
 /* --------------------------------------------------------------- physics */
 
@@ -442,12 +274,6 @@ function buildSetup(timeToBoil_s: number): CookSetup {
 function timeToBoil_s(): number {
   if (machine.phase !== 'IDLE' && startModeNow() === 'cold') return machine.assumedBoil_s;
   return estimateTimeToBoil(boilMemory, settings.waterLitres);
-}
-
-/** How much of the clock the ramp takes: all of the time to boil on a cold
- *  start, none of it otherwise. */
-function rampSeconds(): number {
-  return startModeNow() === 'cold' ? timeToBoil_s() : 0;
 }
 
 /** The pot of the cook under way: the ticket's, frozen at "Eggs in", and never
@@ -598,110 +424,6 @@ function textureNote(sol: Solution): string {
   return t(note.key, parts);
 }
 
-/** The slider's reading: at the end of its heading, the peak yolk the level
- *  asks for, and to a screen reader, as the slider's value, the doneness word
- *  with it. The word is not drawn again: it is on the ticks. In sous-vide there
- *  is no peak, and the water's temperature is said instead, so the reading
- *  says which number it is. The same shape whether the temperature is the
- *  solver's or the quick interpolation that tracks the thumb, so it does not
- *  flicker between two formats mid-drag. */
-function renderDonenessReading(reading: { peakYolk_C: number } | { bath_C: number }): void {
-  const doneness = t(anchorNear(settings.doneness).key);
-  if ('bath_C' in reading) {
-    const bath = show('temperature', reading.bath_C);
-    dom.donenessPeak.textContent = t('controls.doneness.bath', { bath: bath });
-    dom.doneness.setAttribute('aria-valuetext', t('controls.doneness.valueBath', { doneness: doneness, bath: bath }));
-    return;
-  }
-  const yolk = show('temperature', reading.peakYolk_C);
-  dom.donenessPeak.textContent = t('controls.doneness.peak', { yolk: yolk });
-  dom.doneness.setAttribute('aria-valuetext', t('controls.doneness.value', { doneness: doneness, yolk: yolk }));
-}
-
-/** Stripe out the parts of the track this setup cannot deliver: the soft end
- *  the white forbids, and - with the heat off - the hard end the pan cannot
- *  reach. If the white never sets there is nothing to offer, and the whole
- *  track says so. */
-function renderDonenessScale(sol: Solution): void {
-  const softest = sol.whiteSets ? sol.softestLevel : 1;
-  const hardest = sol.whiteSets ? sol.hardestLevel : 0;
-  dom.donenessBlockedSoft.style.width = `${percent(softest)}%`;
-  dom.donenessBlockedHard.style.width = `${percent(1 - hardest)}%`;
-
-  // The odds at each level, relative to the best level's, and the levels the
-  // pan can deliver but the odds do not offer yet (reach.ts). Only while
-  // idle: once a cook is running the slider is put away.
-  const odds = machine.phase === 'IDLE' && sol.whiteSets ? profile : null;
-  renderOddsBand(odds);
-  const offeredSoft = odds !== null && odds.softest !== null ? odds.softest : softest;
-  const offeredHard = odds !== null && odds.hardest !== null ? odds.hardest : hardest;
-  const refusing = odds !== null && odds.softest !== null && odds.hardest !== null;
-  placeBand(dom.donenessUnlikelySoft, refusing ? odds.physicalSoftest : 0, refusing ? offeredSoft : 0);
-  placeBand(dom.donenessUnlikelyHard, refusing ? offeredHard : 0, refusing ? odds.physicalHardest : 0);
-  renderBracket(machine.phase === 'IDLE' && sol.whiteSets ? outcome : null);
-
-  const ticks = dom.donenessTicks.children;
-  for (let i = 0; i < ticks.length; i += 1) {
-    const anchor = DONENESS_ANCHORS[i];
-    if (anchor === undefined) continue;
-    const blocked = anchor.level < Math.max(softest, offeredSoft) - 0.005
-      || anchor.level > Math.min(hardest, offeredHard) + 0.005;
-    ticks[i].classList.toggle('blocked', blocked);
-  }
-}
-
-/** The likely range of the yolk under the track, from the outcome's 10% to
- *  its 90% point, with a mark at its middle; and the same in words for a
- *  screen reader, each end as the nearest doneness word. Nothing without an
- *  outcome: no decision yet, no white, sous-vide, or a cook under way. */
-function renderBracket(o: Outcome | null): void {
-  dom.donenessBracket.hidden = o === null;
-  if (o === null) {
-    dom.donenessRange.textContent = '';
-    return;
-  }
-  placeBand(dom.donenessBracket, o.levelLow, o.levelHigh);
-  const span = o.levelHigh - o.levelLow;
-  const middle = span > 0 ? (o.levelMedian - o.levelLow) / span : 0.5;
-  dom.donenessMedian.style.left = `${clampNumber(middle * 100, { lo: 0, hi: 100 }, 50)}%`;
-  const words = rangeWords(o);
-  const args: Record<string, string> = {};
-  for (const [name, key] of Object.entries(words.args)) args[name] = t(key);
-  dom.donenessRange.textContent = t(words.key, args);
-}
-
-/** A level as a percentage of the track, clamped. */
-function percent(level: number): number {
-  return clampNumber(level * 100, { lo: 0, hi: 100 }, 0);
-}
-
-/** Lay a band over the track from one level to another; nothing when the
- *  second is not past the first. */
-function placeBand(band: HTMLElement, from: number, to: number): void {
-  band.style.left = `${percent(from)}%`;
-  band.style.width = `${to > from ? percent(to) - percent(from) : 0}%`;
-}
-
-/** Shade the track by the odds (`shadingOf`): the band's hue is the yolk's,
- *  runny to hard (styles.css), and this masks it to an opacity that is the
- *  level's odds over the best level's, stop by stop between the profile's
- *  points, and clear outside them, where the stripes are. */
-function renderOddsBand(odds: OddsProfile | null): void {
-  const shades = odds === null ? [] : shadingOf(odds);
-  let mask = 'linear-gradient(transparent, transparent)';
-  if (shades.length > 0) {
-    const first = shades[0].level * 100;
-    const last = shades[shades.length - 1].level * 100;
-    const stops = shades.map((s) => (
-      `rgb(0 0 0 / ${s.strength.toFixed(3)}) ${(s.level * 100).toFixed(2)}%`
-    ));
-    mask = `linear-gradient(to right, transparent ${first.toFixed(2)}%, `
-      + `${stops.join(', ')}, transparent ${last.toFixed(2)}%)`;
-  }
-  dom.donenessOdds.style.setProperty('-webkit-mask-image', mask);
-  dom.donenessOdds.style.setProperty('mask-image', mask);
-}
-
 /** The way to Help under low odds (reach.ts): a link, shown while idle when
  *  the odds at the level on screen are under 5/10 or 3/10 short of the best
  *  level's. It opens Help at its reliability section, whose top lists the
@@ -739,309 +461,6 @@ function renderAdvice(): void {
   }));
 }
 
-/* ------------------------------------------------------------------- (i) */
-
-/** The paragraph an (i) opens: the element its aria-controls names. */
-function infoPanel(button: HTMLButtonElement): HTMLElement | null {
-  const id = button.getAttribute('aria-controls');
-  return id === null ? null : document.getElementById(id);
-}
-
-/** Open or close an (i)'s paragraph in place. */
-function toggleDisclosure(button: HTMLButtonElement): void {
-  const panel = infoPanel(button);
-  if (panel === null) return;
-  const open = button.getAttribute('aria-expanded') !== 'true';
-  button.setAttribute('aria-expanded', open ? 'true' : 'false');
-  panel.hidden = !open;
-}
-
-/** Show or hide an (i) with what it describes. Its paragraph follows it:
- *  hidden with it, and shown again only if it was left open. */
-function showInfo(button: HTMLButtonElement, visible: boolean): void {
-  button.hidden = !visible;
-  const panel = infoPanel(button);
-  if (panel !== null) panel.hidden = !visible || button.getAttribute('aria-expanded') !== 'true';
-}
-
-/**
- * Every (i) on the page, one component (UI.md section 4). Its name to a
- * screen reader is "About {label}", with the label its control shows
- * (`data-label`), or a whole name of its own (`data-name`) where a label will
- * not read inside that. Its paragraph is filled by `applyCopy` from the
- * `data-copy` on the element it controls.
- */
-function wireInfoButtons(): void {
-  labelInfoButtons();
-  for (const button of Array.from(document.querySelectorAll<HTMLButtonElement>('button.info'))) {
-    button.addEventListener('click', () => toggleDisclosure(button));
-  }
-}
-
-/** Each (i)'s name, in the language on screen. Again whenever it changes. */
-function labelInfoButtons(): void {
-  for (const button of Array.from(document.querySelectorAll<HTMLButtonElement>('button.info'))) {
-    const name = button.dataset['name'];
-    const label = button.dataset['label'];
-    if (name !== undefined) button.setAttribute('aria-label', t(name));
-    else if (label !== undefined) button.setAttribute('aria-label', t('more.about', { label: t(label) }));
-  }
-}
-
-/* ------------------------------------------------------------ the sentence */
-
-
-const CLAUSE_PANELS: Record<Clause, string> = {
-  egg: 'panelEgg', from: 'panelFrom', start: 'panelStart', cooling: 'panelCooling',
-};
-
-/** The four clause buttons, made once and kept, so re-rendering the sentence
- *  around a new answer never takes the focus off the one being used. */
-const clauses = {} as Record<Clause, HTMLButtonElement>;
-let sentenceShown = '';
-let openClause: Clause | null = null;
-
-function panelFor(clause: Clause): HTMLElement {
-  return el<HTMLElement>(CLAUSE_PANELS[clause]);
-}
-
-/** What the sentence says, whichever cook it is about: the one on the
- *  controls (`liveSetupFacts`), or the one in the pan (`ticketSetupFacts`). */
-interface SetupFacts {
-  /** The egg's mass as the size menu or the scale says it, with its unit. */
-  mass: string;
-  eggFrom: EggFrom;
-  /** The egg's temperature when it is the cook's own number, C. */
-  customStart_C: number;
-  startMode: UiStartMode;
-  /** The heat goes off at the boil. */
-  standing: boolean;
-  cooling: Cooling;
-}
-
-/** The mass of a size class as the size menu shows it, in the units on
- *  screen. */
-function classMass(index: number): string {
-  const label = sizeClassLabel(sizeClasses[index], unitSystem());
-  return t(label.mass.key, { value: label.mass.value });
-}
-
-/** The setup on the controls. */
-function liveSetupFacts(): SetupFacts {
-  const byClass = settings.sizeIndex >= 0 && settings.sizeIndex < sizeClasses.length;
-  return {
-    mass: byClass ? classMass(settings.sizeIndex) : show('mass', currentEgg().mass_kg * 1000),
-    eggFrom: settings.startTempMode,
-    customStart_C: settings.customStart_C,
-    startMode: settings.startMode,
-    standing: settings.afterBoil === 'off',
-    cooling: settings.cooling,
-  };
-}
-
-/** The setup a cook was started with, from its ticket and not the controls:
- *  what the cook promised, whatever the controls say later. A class egg is
- *  named as its class's mass, as the size menu names it, when this page's
- *  carton still has a class of that mass; otherwise it is the egg's own. */
-function ticketSetupFacts(k: Ticket): SetupFacts {
-  const index = k.massFrom === 'class' ? sizeClasses.findIndex((c) => c.mass_kg === k.egg.mass_kg) : -1;
-  return {
-    mass: index >= 0 ? classMass(index) : show('mass', k.egg.mass_kg * 1000),
-    eggFrom: k.eggFrom,
-    customStart_C: k.setup.eggStart_C,
-    startMode: k.setup.startMode,
-    standing: k.setup.afterBoil === 'off',
-    cooling: k.setup.cooling,
-  };
-}
-
-/** What each clause says, and what a screen reader hears for it: its heading
- *  and the option chosen, as the choice itself shows them ("Egg: 68 g"). */
-function clauseTexts(f: SetupFacts): Record<Clause, { text: string; label: string; value: string }> {
-  const args = {
-    mass: f.mass, temp: show('eggTemp', f.customStart_C), bath: show('temperature', SOUS_VIDE_BATH_C),
-  };
-  const keys = clauseKeys({
-    eggFrom: f.eggFrom, startMode: f.startMode === 'cold' ? 'cold' : 'hot', sousVide: f.startMode === 'sous',
-    afterBoil: f.standing ? 'off' : 'hold', cooling: f.cooling,
-  });
-  const words = (k: ClauseKeys, own: string) => ({
-    text: t(k.text, args), label: t(k.label), value: k.value === null ? own : t(k.value, args),
-  });
-  return {
-    egg: words(keys.egg, args.mass),
-    from: words(keys.from, args.temp),
-    start: words(keys.start, ''),
-    cooling: words(keys.cooling, ''),
-  };
-}
-
-/** Marks a placeholder's place in a rendered template: a character no
- *  catalogue will contain. */
-const SLOT = '\u0001';
-
-/**
- * The setup as one line of prose, rebuilt around the answers whenever they
- * change. The template is the catalogue's, so a language may order the
- * clauses as it likes; each placeholder becomes its clause's button, and
- * everything between them stays text. Sous-vide says less, because where the
- * egg comes from and how it cools change nothing there.
- */
-function renderSentence(): void {
-  const texts = clauseTexts(liveSetupFacts());
-  const key = isSousVide() ? 'setup.sentenceSousVide' : 'setup.sentence';
-  const marked = t(key, {
-    egg: `${SLOT}egg${SLOT}`, from: `${SLOT}from${SLOT}`,
-    start: `${SLOT}start${SLOT}`, cooling: `${SLOT}cooling${SLOT}`,
-  });
-  const signature = [marked, ...Object.values(texts).map((c) => `${c.text}|${c.label}|${c.value}`)].join('\n');
-  if (signature === sentenceShown) return;
-  sentenceShown = signature;
-
-  const focused = document.activeElement;
-  const nodes: Node[] = [];
-  marked.split(SLOT).forEach((part, i) => {
-    if (i % 2 === 0) {
-      if (part !== '') nodes.push(document.createTextNode(part));
-      return;
-    }
-    const clause = part as Clause;
-    const button = clauses[clause];
-    button.textContent = texts[clause].text;
-    button.setAttribute('aria-label', t('setup.clause', { label: texts[clause].label, value: texts[clause].value }));
-    nodes.push(button);
-  });
-  dom.sentence.replaceChildren(...nodes);
-  if (focused instanceof HTMLElement && focused.isConnected && focused !== document.activeElement) focused.focus();
-  // A choice whose clause the sentence no longer has - sous-vide drops two -
-  // closes with it.
-  if (openClause !== null && !clauses[openClause].isConnected) setOpenClause(null);
-}
-
-/** The cook in the pan, once the controls are gone (owner, 28 September): the
- *  setup sentence it was started with, so a forgetful cook can see what they
- *  promised, as plain prose - nothing in it can change a cook under way, so
- *  nothing in it is a button - and under it what the sentence does not say,
- *  the doneness and the peak yolk it was started at. From the ticket, never
- *  the controls. Sous-vide never runs a cook, so it never shows this. */
-function renderCookSetup(): void {
-  const k = ticket;
-  const shown = machine.phase !== 'IDLE' && k !== null;
-  dom.cookSetup.hidden = !shown;
-  if (!shown || k === null) return;
-  const texts = clauseTexts(ticketSetupFacts(k));
-  dom.cookSentence.textContent = t('setup.sentence', {
-    egg: texts.egg.text, from: texts.from.text, start: texts.start.text, cooling: texts.cooling.text,
-  });
-  // The peak yolk the cook was started with.
-  dom.cookDoneness.textContent = t('cook.summary', {
-    doneness: midSentence(t(anchorNear(machine.targetLevel).key), activeLocale()),
-    yolk: show('temperature', k.peakYolk_C),
-  });
-}
-
-/** Open one clause's choice under the sentence, or none. One at a time. */
-function setOpenClause(next: Clause | null): void {
-  openClause = next;
-  for (const clause of Object.keys(CLAUSE_PANELS) as Clause[]) {
-    const open = clause === next;
-    clauses[clause].setAttribute('aria-expanded', open ? 'true' : 'false');
-    panelFor(clause).hidden = !open;
-  }
-}
-
-function buildClauses(): void {
-  for (const clause of Object.keys(CLAUSE_PANELS) as Clause[]) {
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'clause';
-    button.setAttribute('aria-controls', CLAUSE_PANELS[clause]);
-    button.setAttribute('aria-expanded', 'false');
-    button.addEventListener('click', () => setOpenClause(openClause === clause ? null : clause));
-    clauses[clause] = button;
-    // The panel's own Done puts the focus back where the cook came from.
-    const close = panelFor(clause).querySelector<HTMLButtonElement>('button.panel__close');
-    close?.addEventListener('click', () => {
-      setOpenClause(null);
-      button.focus();
-    });
-  }
-}
-
-/* ----------------------------------------------------------------- views */
-
-type View = 'egg' | 'kitchen' | 'help';
-
-/** Which view the address asks for, and which element to scroll to in it. */
-function viewFromHash(): { view: View; target: string | null } {
-  const hash = location.hash.replace(/^#/, '');
-  if (hash === 'kitchen') return { view: 'kitchen', target: null };
-  if (hash === 'help' || hash.startsWith('help-')) return { view: 'help', target: hash === 'help' ? null : hash };
-  return { view: 'egg', target: null };
-}
-
-/**
- * Show the view the address names. The Kitchen and Help are hash routes, so
- * the phone's back button leaves them the way it came; a running cook is
- * always shown as the egg whatever the address says (styles.css).
- */
-function route(focus: boolean): void {
-  const before = dom.body.dataset['view'];
-  const { view, target } = viewFromHash();
-  dom.body.dataset['view'] = view;
-  const section = target === null ? null : document.getElementById(target);
-  if (section !== null) {
-    section.scrollIntoView();
-  } else if (before !== view) {
-    window.scrollTo(0, 0);
-  }
-  if (!focus || before === view) return;
-  if (view === 'kitchen') dom.kitchenTitle.focus();
-  else if (view === 'help' && section === null) dom.helpTitle.focus();
-}
-
-/** A link to another view goes into the history as ours, so Back can return
- *  along it rather than leave the site. */
-function navigate(hash: string): void {
-  history.pushState({ aet: true }, '', hash);
-  route(true);
-}
-
-/** Back: along our own history when there is some, and otherwise - a view
- *  opened straight from its address - to the egg, without leaving a step
- *  behind. */
-function goBack(): void {
-  const state = history.state as { aet?: boolean } | null;
-  if (state !== null && state.aet === true) {
-    history.back();
-    return;
-  }
-  history.replaceState(null, '', location.pathname + location.search);
-  route(true);
-}
-
-function wireViews(): void {
-  for (const link of Array.from(document.querySelectorAll<HTMLAnchorElement>('a[href^="#"]'))) {
-    link.addEventListener('click', (event) => {
-      const hash = link.getAttribute('href') ?? '#';
-      event.preventDefault();
-      // Within Help, a contents link only scrolls: it is not somewhere Back
-      // should stop.
-      if (dom.body.dataset['view'] === 'help' && hash.startsWith('#help-')) {
-        history.replaceState(history.state, '', hash);
-        route(false);
-        return;
-      }
-      navigate(hash);
-    });
-  }
-  dom.navBack.addEventListener('click', goBack);
-  // Back, Forward and a hash typed into the address all fire popstate, and
-  // hashchange too whenever the hash differs: one listener routes once.
-  window.addEventListener('popstate', () => route(true));
-  route(false);
-}
-
 function renderMute(): void {
   dom.mute.textContent = t(settings.muted ? 'readout.mute.off' : 'readout.mute.on');
   dom.mute.setAttribute('aria-pressed', settings.muted ? 'true' : 'false');
@@ -1074,16 +493,26 @@ function renderWelcome(warning: string): void {
     && calib.eggsLogged === 0 && !hasBoilMemory(boilMemory));
 }
 
+/** Draw the screen: the controls and the answer they give while idle, and
+ *  the cook under way otherwise. The 200 ms ticker only ever draws a cook
+ *  under way, so it never repaints the controls, which are put away beneath
+ *  it (styles.css) and drawn again when the cook ends. */
 function render(now_ms: number): void {
+  if (machine.phase === 'IDLE') renderIdle(now_ms);
+  else renderRunning(now_ms);
+}
+
+/** The controls, and the answer they give. */
+function renderIdle(now_ms: number): void {
   // Sous-vide is answered honestly and separately: no cook to run, no clock to
   // start, and a start time that has already been and gone. It goes FIRST,
   // before any of the pan readout is computed or painted - it used to run
   // after a full hot-start solve and after the stats row had already been
   // written, so it both paid for an answer it discarded and left half of that
   // answer on screen beside its own.
-  renderSentence();
-  renderCookSetup();
-  if (isSousVide() && machine.phase === 'IDLE') {
+  renderSentence(liveSetupFacts(settings, sizeClasses, currentEgg()));
+  renderCookSetup(null, machine.targetLevel, sizeClasses);
+  if (isSousVide()) {
     renderSousVide(now_ms);
     return;
   }
@@ -1091,119 +520,88 @@ function render(now_ms: number): void {
   const sol = solution;
   if (sol === null) return;
 
-  // While a cook runs, everything below describes the ticket's pot and the
-  // machine's cooling, not the controls: a second tab may have changed those.
-  const running = runningSetup();
-  const startMode = startModeNow();
-  const boiling_C = running?.boiling_C ?? boilingPoint_C();
-  dom.body.dataset['phase'] = machine.phase;
-  dom.body.dataset['start'] = startMode;
-
-  const cookTime_s = machine.phase === 'IDLE' ? sol.result.cookTime_s : machine.cookTime_s;
-  const boil_s = rampSeconds();
-  const standing = (running === null ? settings.afterBoil : running.afterBoil) === 'off';
-
-  dom.statBoil.textContent = show('boilingPoint', boiling_C);
+  dom.statBoil.textContent = show('boilingPoint', boilingPoint_C());
   dom.note.textContent = textureNote(sol);
-  // The warning line carries one of two things. A refusal is advice about the
-  // slider, so it is idle-only: popping "jammy isn't reachable" onto the screen
-  // while the egg is already in the water is advice about a control the user
-  // cannot reach. A restored cook is the opposite - it only exists mid-cook.
-  let warning = '';
-  // Only while the cook is still in flight. At DONE the egg is out and "keep
-  // this tab open" is advice about a deadline that has already passed.
-  if (restored && machine.phase !== 'IDLE' && machine.phase !== 'DONE') {
-    warning = t('readout.restored');
-  } else if (machine.phase === 'IDLE' && refusal !== '') {
-    warning = refusal;
-  }
+  // The warning line carries a refusal while idle. It is advice about the
+  // slider: popping "jammy isn't reachable" onto the screen while the egg is
+  // already in the water would be advice about a control the user cannot
+  // reach.
+  const warning = refusal;
+  renderDonenessReading(settings.doneness, { peakYolk_C: sol.result.peakYolk_C });
+  renderDonenessScale(sol, sol.whiteSets ? profile : null, sol.whiteSets ? outcome : null);
+  renderReadout(now_ms, sol, warning);
+  // "Based on history" has an (i) that says what history.
+  showInfo(dom.sublineInfo, settings.startMode === 'cold' && hasBoilMemory(boilMemory));
+  renderOdds();
+  renderAdvice();
+  renderWelcome(warning);
+}
+
+/** The cook under way, five times a second: the readout, and nothing of the
+ *  controls. */
+function renderRunning(now_ms: number): void {
+  renderCookSetup(ticket, machine.targetLevel, sizeClasses);
+  const sol = solution;
+  if (sol === null) return;
+  // The warning line carries a restored cook's warning while it runs - the
+  // opposite of a refusal, it only exists mid-cook. Only while the cook is
+  // still in flight: at DONE the egg is out and "keep this tab open" is
+  // advice about a deadline that has already passed.
+  const warning = pickedUpAfterReload() && machine.phase !== 'DONE' ? t('readout.restored') : '';
+  renderReadout(now_ms, sol, warning);
+  showInfo(dom.sublineInfo, false);
+  renderOdds();
+  renderAdvice();
+  dom.welcome.hidden = true;
+}
+
+/** The readout, the buttons under it and the questions at DONE, idle or not,
+ *  and the warning line with `warning` in it. */
+function renderReadout(now_ms: number, sol: Solution, warning: string): void {
+  dom.body.dataset['phase'] = machine.phase;
+  dom.body.dataset['start'] = startModeNow();
   dom.warn.textContent = warning;
   dom.warn.hidden = warning === '';
-  renderDonenessReading({ peakYolk_C: sol.result.peakYolk_C });
-  renderDonenessScale(sol);
 
-  // Which words: core's (`phaseKeys`). The arguments are this app's.
-  const keys = phaseKeys({
-    phase: machine.phase, startMode: startMode === 'cold' ? 'cold' : 'hot',
-    afterBoil: standing ? 'off' : 'hold',
-    cooling: machine.phase === 'IDLE' ? settings.cooling : machine.cooling,
-    whiteSets: sol.whiteSets, boilKnown: hasBoilMemory(boilMemory), probeWanted: probeWanted(),
+  const wanted = probeWanted(settings.probe, ticket);
+  const pending = probePending(machine, wanted);
+  const view = phaseView(machine, ticket, now_ms, {
+    cookTime_s: sol.result.cookTime_s,
+    whiteSets: sol.whiteSets,
+    controls: {
+      startMode: settings.startMode, afterBoil: settings.afterBoil, cooling: settings.cooling,
+      waterLitres: settings.waterLitres, boiling_C: boilingPoint_C(),
+      timeToBoil_s: estimateTimeToBoil(boilMemory, settings.waterLitres),
+    },
+    boilKnown: hasBoilMemory(boilMemory),
+    probeWanted: wanted,
+    probePending: pending,
   });
-  const label = t(keys.label);
-  let digits = '';
-  let subline = '';
-  let spoken = '';
-  let hintArgs = {};
-
-  if (machine.phase === 'IDLE') {
-    digits = formatClock(cookTime_s);
-    subline = t(keys.subline, { boil: formatClock(boil_s), water: show('water', settings.waterLitres) });
-    spoken = t('spoken.total', { time: spokenClock(cookTime_s) });
-    hintArgs = { time: formatClock(cookTime_s) };
-  } else if (machine.phase === 'HEATING') {
-    digits = formatClock(secondsToPull(machine, now_ms));
-    subline = t(keys.subline, {
-      elapsed: formatClock(secondsHeating(machine, now_ms)), boil: formatClock(machine.assumedBoil_s),
-    });
-    spoken = t('spoken.heating', { time: spokenClock(secondsToPull(machine, now_ms)) });
-  } else if (machine.phase === 'COOKING') {
-    digits = formatClock(secondsToPull(machine, now_ms));
-    subline = t(keys.subline, {
-      boil: formatClock(machine.assumedBoil_s), after: formatClock(secondsAfterBoil(machine)),
-    });
-    spoken = t('spoken.cooking', { time: spokenClock(secondsToPull(machine, now_ms)) });
-    hintArgs = { boiling: show('temperature', boiling_C) };
-  } else if (machine.phase === 'PULL') {
-    digits = `+${formatClock((now_ms - machine.pulledAt_ms) / 1000)}`;
-    subline = t(keys.subline);
-    spoken = t('spoken.pull');
-    hintArgs = { seconds: coolingStartsIn_s(machine, now_ms) ?? 0 };
-  } else if (machine.phase === 'COOLING') {
-    digits = formatClock(secondsToCool(machine, now_ms));
-    subline = t(keys.subline);
-    spoken = t('spoken.cooling', { time: spokenClock(secondsToCool(machine, now_ms)) });
-  } else {
-    digits = formatClock(cookTime_s);
-    subline = t(keys.subline, { boil: formatClock(boil_s), cooking: formatClock(cookTime_s - boil_s) });
-    spoken = t(probePending() ? 'spoken.probe' : 'spoken.done');
-  }
-  setPrimary(
-    keys.action === null ? '' : t(keys.action),
-    keys.hint === null ? '' : t(keys.hint, hintArgs),
-    keys.action !== null,
-  );
-  // Idle with no cook on offer at all, there is nothing to start.
-  if (machine.phase === 'IDLE') dom.primary.disabled = !sol.whiteSets;
-  // Cancel is reachable in every phase of a cook under way, including one a
-  // reload lands in: a cook picked back up must be one you can put down.
-  const cancellable = machine.phase !== 'IDLE' && machine.phase !== 'DONE';
-  dom.secondary.hidden = !cancellable;
-  if (cancellable) dom.secondary.textContent = t('action.cancel');
+  setPrimary(view.primary ?? '', view.hint, view.primary !== null);
+  dom.primary.disabled = view.primaryDisabled;
+  dom.secondary.hidden = !view.secondaryVisible;
+  if (view.secondaryVisible) dom.secondary.textContent = t('action.cancel');
 
   // The model is calibrated against the literature, not against this kitchen.
   // Asking once per egg is what closes that gap. Both questions stay on screen
   // until the cook moves on, answered or not; a reload after an answer puts
   // them away, since the second could no longer be folded.
-  dom.feedback.hidden = machine.phase !== 'DONE' || (feedbackGiven && answered === null);
-  if (!dom.feedback.hidden && answered === null) renderCalibNote();
-  renderProbe();
+  const said = answersNow().kind;
+  dom.feedback.hidden = machine.phase !== 'DONE' || said === 'beforeReload';
+  if (!dom.feedback.hidden && said !== 'live') renderCalibNote(learning());
+  renderProbe(machine, ticket, !settings.probeAsked, pending);
 
-  dom.phaseLabel.textContent = label;
-  dom.digits.textContent = digits;
-  dom.sublineText.textContent = subline;
-  // "Based on history" has an (i) that says what history; the full rolling
-  // boil has one that says what it looks like.
-  showInfo(dom.sublineInfo, machine.phase === 'IDLE' && startMode === 'cold' && hasBoilMemory(boilMemory));
+  dom.phaseLabel.textContent = view.label;
+  dom.digits.textContent = view.digits;
+  dom.sublineText.textContent = view.subline;
+  // The full rolling boil has an (i) that says what it looks like.
   showInfo(dom.hintInfo, machine.phase === 'HEATING');
-  renderOdds();
-  renderAdvice();
-  renderWelcome(warning);
 
   // The live region carries a coarse announcement, not a per-second one: the
   // ticking digits are aria-hidden, so a screen reader hears the phase and the
   // minute rather than being flooded once a second.
-  const announcement = t('spoken.announcement', { label: label, spoken: spoken });
-  const minute = digits.split(':')[0];
+  const announcement = t('spoken.announcement', { label: view.label, spoken: view.spoken });
+  const minute = view.digits.split(':')[0];
   const key = `${machine.phase}|${minute}`;
   if (key !== lastAnnounced) {
     lastAnnounced = key;
@@ -1242,18 +640,23 @@ function renderOdds(): void {
   // While a new pot's surface is on its way the lines above are blank, and
   // the readout would shrink and grow back a second later, moving the
   // sentence's open choice under the thumb that just tapped it. So it keeps
-  // the height it had when the lines were last all there.
-  if (machine.phase === 'IDLE' && decision === null) {
+  // the height it had when the lines were last all there. Measured only
+  // while idle: reading the height forces a layout, and a running cook, drawn
+  // five times a second, has no choice to keep still.
+  if (machine.phase !== 'IDLE') {
+    dom.readout.style.minHeight = '';
+  } else if (decision === null) {
     dom.readout.style.minHeight = settledReadout_px > 0 ? `${settledReadout_px}px` : '';
   } else {
     dom.readout.style.minHeight = '';
     const height = dom.readout.offsetHeight;
-    if (machine.phase === 'IDLE' && height > 0) settledReadout_px = height;
+    if (height > 0) settledReadout_px = height;
   }
 }
 
 /** The sous-vide readout: hold times from the isothermal limit, and the plain
- *  statement that you should have started yesterday. */
+ *  statement that you should have started yesterday. Idle only, after the
+ *  sentence (`renderIdle`). */
 function renderSousVide(now_ms: number): void {
   // No pan, no choice, and no odds: the bath's answer is not a guess about a
   // pan (E5 chooses pan times). So no direction, and no bracket either.
@@ -1267,7 +670,6 @@ function renderSousVide(now_ms: number): void {
   renderAdvice();
   dom.body.dataset['phase'] = machine.phase;
   dom.body.dataset['start'] = settings.startMode;
-  renderSentence();
 
   const egg = currentEgg();
   const doneness = calibrationDoneness(calib, settings.doneness);
@@ -1284,7 +686,7 @@ function renderSousVide(now_ms: number): void {
   // The slider's reading is a pan number. There is no pan: the water's
   // temperature is not a peak yolk temperature, and the reading says which
   // number it is.
-  renderDonenessReading({ bath_C: est.bath_C });
+  renderDonenessReading(settings.doneness, { bath_C: est.bath_C });
   dom.note.textContent = copy.note;
   dom.warn.textContent = copy.warn;
   dom.warn.hidden = false;
@@ -1316,7 +718,7 @@ function persistCook(): void {
     clearCook();
     return;
   }
-  saveCook(machine, ticket, feedbackGiven);
+  saveCook(machine, ticket, keptAnswers());
 }
 
 /* -------------------------------------------------------------- recompute */
@@ -1332,7 +734,7 @@ function recompute(): void {
     decision = null;
     outcome = null;
     profile = null;
-    renderSousVide(Date.now());
+    render(Date.now());
     return;
   }
   const boil = timeToBoil_s();
@@ -1363,6 +765,19 @@ function resolveDuring(t: Ticket, timeToBoil_s: number): Solution {
   // Leaned as far as the choice leaned at "Eggs in": the new ramp is a new pot,
   // whose surface is a second away with the egg already in (`carriedSolution`).
   return carriedSolution(egg, setup, params, mean, t.lean_s);
+}
+
+/** Take a new time to boil into the cook under way - the slow hob's guess, or
+ *  the boil the cook tapped: re-solve it (`resolveDuring`), and patch the ramp
+ *  into the frozen ticket rather than rebuilding it from the live controls,
+ *  which another tab may have changed. Whether the cook has a moment to probe
+ *  at moves with the solve. Returns the solve, for the machine's deadlines. */
+function retime(k: Ticket, boil_s: number): Solution {
+  const sol = resolveDuring(k, boil_s);
+  const moved = withTimeToBoil(k, boil_s);
+  solution = sol;
+  ticket = { ...moved, probeMoment: probeMomentFor(sol.result, moved.setup.cooling) };
+  return sol;
 }
 
 /** Coalesce solves: a solve is tens of milliseconds, which is too long to run
@@ -1398,164 +813,21 @@ function saveNow(): void {
 
 /* ------------------------------------------------------------ calibration */
 
-function renderCalibNote(): void {
-  dom.calibNote.textContent = calib.eggsLogged === 0
-    ? t('feedback.invite')
-    : t('learned.tuned', { eggs: calib.eggsLogged });
-  renderLearned();
+/** What has been learned, as it stands now, for learned.ts to say. */
+function learning(): Learning {
+  return { eggs: calib.eggsLogged, boilMemory: boilMemory, waterLitres: settings.waterLitres };
 }
 
-/** What this kitchen has taught the app, and the way to take it back. */
-function renderLearned(): void {
-  const eggs = calib.eggsLogged;
-  const pan = hasBoilMemory(boilMemory);
-  if (eggs === 0 && !pan) {
-    dom.learnedNote.textContent = t('learned.literature');
-    showForget(false);
-    return;
-  }
-  const tuned = eggs > 0 ? t('learned.tuned', { eggs: eggs }) : '';
-  const measured = pan
-    ? t('learned.pan', {
-      water: show('water', settings.waterLitres),
-      time: formatClock(estimateTimeToBoil(boilMemory, settings.waterLitres)),
-    })
-    : '';
-  dom.learnedNote.textContent = tuned !== '' && measured !== ''
-    ? t('learned.both', { tuned: tuned, pan: measured })
-    : tuned + measured;
-  // Not while the confirmation is up: it stands in the button's place.
-  if (dom.forgetConfirm.hidden) showForget(true);
-}
-
-/** Forget and its (i) come and go together. */
-function showForget(visible: boolean): void {
-  dom.forget.hidden = !visible;
-  showInfo(dom.forgetInfo, visible);
-}
-
-/** Forget asks first, in place, as iOS does: the button gives way to the
- *  question and its two answers, and the focus goes to the safe one. */
-function onForgetAsked(): void {
-  showForget(false);
-  dom.forgetConfirm.hidden = false;
-  dom.forgetNo.focus();
-}
-
-function onForgetKept(): void {
-  dom.forgetConfirm.hidden = true;
-  showForget(true);
-  dom.forget.focus();
-}
-
-/** Take it all back. A run of wrong answers about how the eggs were was otherwise
- *  undone only by clearing the site's storage - README 11.5 listed that as a
- *  known gap from the day the iOS app got its own version of this button. */
-function onForget(): void {
-  dom.forgetConfirm.hidden = true;
+/** Take it all back: the posterior and the pan. */
+function forgetAll(): void {
   calib = clearCalibration();
   boilMemory = {};
   clearBoilMemory();
-  renderCalibNote();
+  renderCalibNote(learning());
   recompute();
-  // The button has gone with what it forgot; the note that says so now has
-  // the focus.
-  dom.learnedNote.focus();
-}
-
-/** Mark which answer of a row was given, and put the row out of reach. The
- *  pressed button stays legible - it is the record of what was said. */
-function settleRow(selector: string, pressed: HTMLButtonElement): void {
-  const buttons = dom.feedback.querySelectorAll<HTMLButtonElement>(selector);
-  for (let i = 0; i < buttons.length; i++) {
-    buttons[i].disabled = true;
-    buttons[i].setAttribute('aria-pressed', buttons[i] === pressed ? 'true' : 'false');
-  }
-}
-
-/** Both rows back to unanswered, for the next egg. */
-function resetRows(): void {
-  const buttons = dom.feedback.querySelectorAll<HTMLButtonElement>('button.fb, button.wb');
-  for (let i = 0; i < buttons.length; i++) {
-    buttons[i].disabled = false;
-    buttons[i].removeAttribute('aria-pressed');
-  }
-}
-
-/**
- * One answer, about the yolk or the white, in whichever order they come.
- *
- * The first answer writes the egg down - before anything is learned from it,
- * so a reload during the fold refolds it on load rather than losing it - and
- * folds it: a couple of seconds, for the dose surface, built in a worker. The
- * second is folded into the SAME egg, from the posterior as it stood before it
- * (`recordSecondAnswer`), so the order they were tapped in changes nothing.
- * The readout is left describing the egg that was eaten; the recalibrated model
- * shows up on the next "Start again".
- */
-function onAnswer(yolk: Feedback | null, white: WhiteReport | null, pressed: HTMLButtonElement): void {
-  if (answered !== null && ((yolk !== null && answered.yolk !== null)
-    || (white !== null && answered.white !== null))) return;
-  if (ticket === null) return;
-  settleRow(yolk !== null ? 'button.fb' : 'button.wb', pressed);
-  foldAnswer(yolk, white, null);
-}
-
-/** Write the egg down with its first answer, or fold a later one into it -
- *  a yolk, a white or a probe reading, whichever came. */
-function foldAnswer(yolk: Feedback | null, white: WhiteReport | null, probe: ProbeReading | null): void {
-  const cooked = ticket;
-  if (cooked === null) return;
-  dom.calibNote.textContent = t('feedback.learning');
-  const cookStarted = machine.startedAt_ms;
-  const stillHere = (): boolean => machine.phase === 'DONE' && machine.startedAt_ms === cookStarted;
-  const thanks = (): void => {
-    if (stillHere()) dom.calibNote.textContent = t('feedback.thanks');
-    renderLearned();
-  };
-
-  if (answered === null) {
-    const index = logEgg(eggRecordFor(cooked, machine, yolk, white, probe));
-    answered = { yolk: yolk, white: white, probe: probe, index: index };
-    feedbackGiven = true;
-    // Written down with the log, not after the fold: a reload between the two
-    // would otherwise offer the questions again, and log the egg twice.
-    persistCook();
-    // The surface is built in a worker, so the page stays live while it is -
-    // which means the cook can have moved on by the time it lands.
-    void learn(index).then(thanks);
-    return;
-  }
-  if (yolk !== null) answered.yolk = yolk;
-  if (white !== null) answered.white = white;
-  if (probe !== null) answered.probe = probe;
-  const second = yolk !== null ? { yolk: yolk } : white !== null ? { white: white }
-    : probe !== null ? { probe: probe } : {};
-  void recordSecondAnswer(answered.index, second).then(thanks);
 }
 
 /* ------------------------------------------------------------ thermometer */
-
-/** Whether this cook will ask for a probe reading when its cooling ends. */
-function probeWanted(): boolean {
-  return settings.probe && ticket !== null && ticket.probeMoment;
-}
-
-/** Whether the probe is asked for NOW: the egg is done, and no reading yet. */
-function probePending(): boolean {
-  return machine.phase === 'DONE' && probeWanted() && !(feedbackGiven && answered === null)
-    && (answered === null || answered.probe === null);
-}
-
-/** The once-only offer during a cook, and the reading at DONE. */
-function renderProbe(): void {
-  const running = machine.phase === 'HEATING' || machine.phase === 'COOKING'
-    || machine.phase === 'PULL' || machine.phase === 'COOLING';
-  dom.probeOffer.hidden = !(running && !settings.probeAsked && ticket !== null && ticket.probeMoment);
-  // Asked for until it is given, and left showing what was given.
-  const visible = probePending() || (machine.phase === 'DONE' && dom.probeReading.disabled);
-  dom.probeEntry.hidden = !visible;
-}
 
 /** The cook's answer to the offer. Either way it is not made again; the
  *  setting stays in the controls. */
@@ -1565,50 +837,6 @@ function onProbeOffer(yes: boolean): void {
   dom.probeSetting.checked = settings.probe;
   saveNow();
   render(Date.now());
-}
-
-/**
- * A reading typed at DONE, in the cook's units. Refused, with the range it
- * should be in, when no believable kitchen could have made it for this cook
- * (`plausibleProbeRange_C`); otherwise folded into the egg with whatever else
- * has been said about it, one fold per egg.
- */
-function onProbeSave(): void {
-  const cooked = ticket;
-  if (cooked === null || dom.probeReading.disabled) return;
-  if (answered !== null && answered.probe !== null) return;
-  const typed = dom.probeReading.value.trim();
-  if (typed === '') return;
-  const reading_C = parse(measure('probeTemp'), Number(typed));
-  const scoredAt_s = recordCookTime_s(eggRecordFor(cooked, machine, null));
-  const [low, high] = plausibleProbeRange_C(
-    cooked.egg, cooked.setup, calibrationParams(calib), scoredAt_s,
-  );
-  if (reading_C === null || reading_C < low || reading_C > high) {
-    dom.probeNote.textContent = t('probe.refused', {
-      low: show('probeTemp', low), high: show('probeTemp', high),
-    });
-    return;
-  }
-  // When it was asked for: the end of the counted cooling, from the moment
-  // the record scores as the pull.
-  const asked_s = (machine.coolEnd_ms - machine.startedAt_ms) / 1000 - scoredAt_s;
-  const probe: ProbeReading = {
-    centre_C: recordProbe_C(reading_C),
-    after_s: machine.coolEnd_ms > 0 && asked_s >= 0 ? asked_s : null,
-  };
-  dom.probeReading.disabled = true;
-  dom.probeSave.disabled = true;
-  dom.probeNote.textContent = show('probeTemp', reading_C);
-  foldAnswer(null, null, probe);
-}
-
-/** Back to empty, for the next egg. */
-function resetProbe(): void {
-  dom.probeReading.value = '';
-  dom.probeReading.disabled = false;
-  dom.probeSave.disabled = false;
-  dom.probeNote.textContent = '';
 }
 
 /* -------------------------------------------------------------- language */
@@ -1656,7 +884,7 @@ function relabel(): void {
   // Drawn only when what they say changes, so they are told it has.
   adviceShown = '';
   lastAnnounced = '';
-  renderCalibNote();
+  renderCalibNote(learning());
   if (machine.phase === 'IDLE') recompute();
   else render(Date.now());
 }
@@ -1730,10 +958,10 @@ function onInput(event: Event): void {
   // Instant feedback on what the eye is on while dragging or choosing - the
   // reading under the slider, the sentence, the boiling point beside the
   // altitude; the full solve (tens of milliseconds) follows and corrects them.
-  renderDonenessReading(isSousVide() ? { bath_C: SOUS_VIDE_BATH_C } : { peakYolk_C: targetPeakYolk_C(settings.doneness) });
+  renderDonenessReading(settings.doneness, isSousVide() ? { bath_C: SOUS_VIDE_BATH_C } : { peakYolk_C: targetPeakYolk_C(settings.doneness) });
   dom.statBoil.textContent = show('boilingPoint', boilingPoint_C());
   dom.body.dataset['start'] = settings.startMode;
-  renderSentence();
+  renderSentence(liveSetupFacts(settings, sizeClasses, currentEgg()));
   scheduleSolve();
 }
 
@@ -1748,12 +976,8 @@ function onTick(): void {
     // count down to an alarm for an egg that has not begun cooking.
     lastRevise_ms = now;
     const assumed = secondsHeating(machine, now) + SLOW_HOB_EXTRA_S;
-    solution = resolveDuring(ticket, assumed);
-    ticket = withTimeToBoil(ticket, assumed);
-    ticket = { ...ticket, probeMoment: probeMomentFor(solution.result, ticket.setup.cooling) };
-    setMachine(reviseProvisional(
-      machine, solution.result.cookTime_s, assumed, coolingSecondsFor(solution.result),
-    ));
+    const sol = retime(ticket, assumed);
+    setMachine(reviseProvisional(machine, sol.result.cookTime_s, assumed, coolingSecondsFor(sol.result)));
   }
 
   const step = advance(machine, now);
@@ -1789,15 +1013,11 @@ function reset(): void {
   releaseScreen();
   // An egg finished and never answered about is still an egg: the cook, the
   // recommendation and the pull are data for the fit. It folds nothing.
-  if (machine.phase === 'DONE' && !feedbackGiven && ticket !== null) {
+  if (machine.phase === 'DONE' && answersNow().kind === 'none' && ticket !== null) {
     logEgg(eggRecordFor(ticket, machine, null));
     void learn();
   }
-  feedbackGiven = false;
-  answered = null;
-  resetRows();
-  resetProbe();
-  restored = false;
+  forgetAnswers();
   ticket = null;
   machine = idleMachine(settings.cooling);
   clearCook();
@@ -1829,7 +1049,7 @@ function onPrimary(): void {
     const target = settings.doneness;
     const cook = solution.result.cookTime_s;
     // A cook started here is this tab's own, whatever happened before it.
-    restored = false;
+    forgetAnswers();
     ticket = {
       egg: currentEgg(),
       massFrom: massFrom(),
@@ -1860,14 +1080,8 @@ function onPrimary(): void {
   if (machine.phase === 'HEATING' && ticket !== null) {
     const measured = secondsHeating(machine, now);
     boilMemory = rememberTimeToBoil(boilMemory, ticket.setup.waterLitres, measured);
-    solution = resolveDuring(ticket, measured);
-    // Patch the measured ramp into the frozen setup rather than rebuilding it
-    // from the live controls, which another tab may have changed.
-    ticket = withTimeToBoil(ticket, measured);
-    ticket = { ...ticket, probeMoment: probeMomentFor(solution.result, ticket.setup.cooling) };
-    setMachine(recordBoil(
-      machine, now, solution.result.cookTime_s, coolingSecondsFor(solution.result),
-    ));
+    const sol = retime(ticket, measured);
+    setMachine(recordBoil(machine, now, sol.result.cookTime_s, coolingSecondsFor(sol.result)));
     blip();
     onTick();
     return;
@@ -1905,22 +1119,6 @@ function labelSizeOptions(): void {
     dom.size.options[i].textContent = t(label.key, { mass: t(label.mass.key, { value: label.mass.value }) });
   }
   dom.size.options[sizeClasses.length].textContent = t('controls.size.measured');
-}
-
-function buildTicks(): void {
-  for (const anchor of DONENESS_ANCHORS) {
-    const span = document.createElement('span');
-    span.style.left = `${anchor.level * 100}%`;
-    dom.donenessTicks.append(span);
-  }
-  labelTicks();
-}
-
-function labelTicks(): void {
-  const spans = dom.donenessTicks.querySelectorAll<HTMLSpanElement>('span');
-  DONENESS_ANCHORS.forEach((anchor, i) => {
-    if (spans[i] !== undefined) spans[i].textContent = t(anchor.key);
-  });
 }
 
 function applyLimit(input: HTMLInputElement, limit: Limit): void {
@@ -1968,8 +1166,8 @@ function applyUnitsToDom(): void {
     floor: show('temperature', SOUS_VIDE_MODEL_FLOOR_C),
   });
   // The sentence's masses and temperatures are in the units too.
-  sentenceShown = '';
-  renderSentence();
+  redrawSentence();
+  renderSentence(liveSetupFacts(settings, sizeClasses, currentEgg()));
 }
 
 function applySettingsToDom(): void {
@@ -1987,6 +1185,13 @@ function applySettingsToDom(): void {
 }
 
 export function boot(): void {
+  bindDom();
+  settings = loadSettings(sizeClasses);
+  useUnits(settings.unitsChosen);
+  boilMemory = loadBoilMemory();
+  calib = loadCalibration();
+  machine = idleMachine(settings.cooling);
+
   buildSizeOptions();
   buildTicks();
   buildClauses();
@@ -2005,40 +1210,25 @@ export function boot(): void {
   dom.primary.addEventListener('click', onPrimary);
   dom.secondary.addEventListener('click', reset);
   dom.mute.addEventListener('click', onToggleMute);
-  dom.forget.addEventListener('click', onForgetAsked);
-  dom.forgetYes.addEventListener('click', onForget);
-  dom.forgetNo.addEventListener('click', onForgetKept);
+  wireForget(forgetAll);
   // Every (i) opens in place. They are buttons, so the keyboard reaches and
   // works them, and aria-expanded says which way they stand.
   wireInfoButtons();
   wireViews();
   dom.probeOfferYes.addEventListener('click', () => onProbeOffer(true));
   dom.probeOfferNo.addEventListener('click', () => onProbeOffer(false));
-  dom.probeSave.addEventListener('click', onProbeSave);
-  dom.probeReading.addEventListener('keydown', (event) => {
-    if (event.key === 'Enter') onProbeSave();
-  });
   setMuted(settings.muted);
   renderMute();
 
-  const fbButtons = dom.feedback.querySelectorAll<HTMLButtonElement>('button.fb');
-  for (let i = 0; i < fbButtons.length; i++) {
-    fbButtons[i].addEventListener('click', () => {
-      const raw = Number(fbButtons[i].dataset['fb']);
-      onAnswer((raw === -1 ? -1 : raw === 1 ? 1 : 0) as Feedback, null, fbButtons[i]);
-    });
-  }
+  wireFeedback({
+    machine: () => machine,
+    ticket: () => ticket,
+    calib: () => calib,
+    persist: persistCook,
+    learned: () => renderLearned(learning()),
+  });
 
-  const whiteButtons = dom.feedback.querySelectorAll<HTMLButtonElement>('button.wb');
-  for (let i = 0; i < whiteButtons.length; i++) {
-    whiteButtons[i].addEventListener('click', () => {
-      const raw = whiteButtons[i].dataset['white'];
-      const white: WhiteReport = raw === 'runny' ? 'runny' : raw === 'tender' ? 'tender' : 'firm';
-      onAnswer(null, white, whiteButtons[i]);
-    });
-  }
-
-  renderCalibNote();
+  renderCalibNote(learning());
   restoreCook();
   recompute();
   // Eggs written down but not yet folded - a reload mid-fold, or a posterior
@@ -2046,7 +1236,7 @@ export function boot(): void {
   // The app runs on what it had until they land.
   if (eggsBehind() > 0) {
     void learn().then(() => {
-      renderCalibNote();
+      renderCalibNote(learning());
       if (machine.phase === 'IDLE') recompute();
     });
   }
@@ -2081,8 +1271,7 @@ function restoreCook(): void {
   }
   machine = back;
   ticket = backTicket;
-  feedbackGiven = stored.feedbackGiven;
-  restored = true;
+  resumeAnswers(stored.answers);
 
   const step = advance(machine, now);
   machine = step.machine;
@@ -2092,82 +1281,4 @@ function restoreCook(): void {
     keepScreenAwake();
     startTicking();
   }
-}
-
-/** A stored ticket, or null if it cannot be trusted. Partial is not good
- *  enough: this is what the posterior learns from. */
-function restoreTicket(raw: unknown): Ticket | null {
-  if (raw === null || typeof raw !== 'object') return null;
-  const r = raw as Record<string, unknown>;
-
-  const target = r['logNominalTarget'];
-  if (typeof target !== 'number' || !Number.isFinite(target)) return null;
-
-  const egg = positiveFields(r['egg'], ['radius_m', 'minorDiameter_m', 'mass_kg', 'volume_m3']);
-  if (egg === null) return null;
-
-  const setup = r['setup'];
-  if (setup === null || typeof setup !== 'object') return null;
-  const st = setup as Record<string, unknown>;
-  // Every number the solver will read. A partial setup does not throw - it
-  // produces a plausible wrong answer, and then teaches it to the posterior.
-  if (positiveFields(setup, ['boiling_C', 'waterLitres', 'eggCount']) === null) return null;
-  for (const key of ['eggStart_C', 'ambient_C', 'timeToBoil_s']) {
-    const value = st[key];
-    if (typeof value !== 'number' || !Number.isFinite(value)) return null;
-  }
-  if (st['startMode'] !== 'cold' && st['startMode'] !== 'hot') return null;
-  if (st['cooling'] !== 'ice' && st['cooling'] !== 'tap' && st['cooling'] !== 'counter') return null;
-  if (st['afterBoil'] !== undefined && st['afterBoil'] !== 'hold' && st['afterBoil'] !== 'off') {
-    return null;
-  }
-
-  // Every field is required: the ticket is written whole by this build, and
-  // one that is not whole is refused, not patched from the controls.
-  const mf = r['massFrom'];
-  const ef = r['eggFrom'];
-  const tb = r['sizeTable'];
-  if (mf !== 'scale' && mf !== 'girth' && mf !== 'width' && mf !== 'class') return null;
-  if (ef !== 'fridge' && ef !== 'room' && ef !== 'custom') return null;
-  if (mf === 'class' ? tb !== 'us' && tb !== 'eu' : tb !== null) return null;
-  if (typeof r['boilRemembered'] !== 'boolean') return null;
-  if (r['units'] !== 'metric' && r['units'] !== 'imperial') return null;
-  const lang = r['lang'];
-  if (typeof lang !== 'string' || lang === '') return null;
-  const lean = r['lean_s'];
-  if (typeof lean !== 'number' || !Number.isFinite(lean)) return null;
-  const peak = r['peakYolk_C'];
-  if (typeof peak !== 'number' || !Number.isFinite(peak)) return null;
-  if (typeof r['probeMoment'] !== 'boolean') return null;
-  // Null when the time was started before the odds were known.
-  const outcome = restoreOutcome(r['outcome']);
-  if (outcome === null && r['outcome'] !== null) return null;
-  return {
-    egg: egg as Egg,
-    massFrom: mf,
-    sizeTable: mf === 'class' ? tb as SizeTable : null,
-    boilRemembered: r['boilRemembered'],
-    eggFrom: ef,
-    setup: setup as CookSetup,
-    logNominalTarget: target,
-    units: r['units'],
-    lang: lang,
-    lean_s: lean,
-    outcome: outcome,
-    peakYolk_C: peak,
-    probeMoment: r['probeMoment'],
-  };
-}
-
-/** The object, if every named field on it is a finite number above zero.
- *  Returns null rather than narrowing by assertion, so the cast at the end of
- *  `restoreTicket` is the last step rather than the only check. */
-function positiveFields(raw: unknown, keys: string[]): object | null {
-  if (raw === null || typeof raw !== 'object') return null;
-  const r = raw as Record<string, unknown>;
-  for (const key of keys) {
-    const value = r[key];
-    if (typeof value !== 'number' || !Number.isFinite(value) || !(value > 0)) return null;
-  }
-  return raw as object;
 }

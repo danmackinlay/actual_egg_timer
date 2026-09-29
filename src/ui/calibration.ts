@@ -97,8 +97,8 @@ export function calibrationDoneness(c: Calibration, level: number): Doneness {
 
 /* ------------------------------------------------------------- the record */
 
-/** What a cook was, frozen at "Eggs in" - the fields of app.ts's ticket that a
- *  record needs. */
+/** What a cook was, frozen at "Eggs in" - the fields of the ticket
+ *  (ticket.ts) that a record needs. */
 export interface Cooked {
   egg: Egg;
   massFrom: MassFrom;

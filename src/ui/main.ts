@@ -1,4 +1,4 @@
-/** Entry point. Everything else is in app.ts.
+/** Entry point. The app is app.ts, and the modules it imports.
  *
  *  The words come first: every string on the page is in copy/<locale>.json,
  *  and index.html carries none of its own, so nothing is painted until the
