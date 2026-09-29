@@ -177,6 +177,16 @@ extension Dictionary where Key == String, Value == Any {
         return value
     }
 
+    /// One of an enum's cases, or nil where the generator wrote null or left
+    /// the key out. An unknown string still fails.
+    func optionalValue<T: RawRepresentable>(_ type: T.Type, _ key: String) throws -> T? where T.RawValue == String {
+        guard let raw = try optionalStr(key) else { return nil }
+        guard let value = T(rawValue: raw) else {
+            throw FixtureError("fixture case has an unknown \(T.self) \(raw) at \(key)")
+        }
+        return value
+    }
+
     /// A nested object.
     func object(_ key: String) throws -> [String: Any] {
         guard let value = self[key] as? [String: Any] else {

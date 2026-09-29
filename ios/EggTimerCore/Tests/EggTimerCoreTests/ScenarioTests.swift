@@ -31,22 +31,7 @@ private func loadScenarios() throws -> (egg: Egg, params: ModelParams, cases: [S
     )
 
     let cases = try file.rows("cases").map { c -> Scenario in
-        let setupJSON = try c.object("setup")
-        let startMode = try #require(StartMode(rawValue: setupJSON["startMode"] as? String ?? ""), "malformed scenario: \(c)")
-        let cooling = try #require(Cooling(rawValue: setupJSON["cooling"] as? String ?? ""), "malformed scenario: \(c)")
-        // Absent means 'hold', exactly as the TypeScript's optional field does.
-        let afterBoil = HeatAfterBoil(rawValue: setupJSON["afterBoil"] as? String ?? "hold") ?? .hold
-        let setup = try CookSetup(
-            startMode: startMode,
-            eggStartC: setupJSON.num("eggStart_C"),
-            ambientC: setupJSON.num("ambient_C"),
-            boilingC: setupJSON.num("boiling_C"),
-            timeToBoilS: setupJSON.num("timeToBoil_s"),
-            cooling: cooling,
-            waterLitres: setupJSON.num("waterLitres"),
-            afterBoil: afterBoil,
-            eggCount: setupJSON.num("eggCount")
-        )
+        let setup = try cookSetup(c.object("setup"))
         return try Scenario(
             name: c.str("name"), level: c.num("level"), setup: setup,
             solution: c.object("solution"), atFixed: c.object("atFixed444s")

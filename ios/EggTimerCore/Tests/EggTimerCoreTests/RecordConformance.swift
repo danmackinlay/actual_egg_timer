@@ -52,20 +52,7 @@ private func fixtureStart() throws -> Calibration {
 }
 
 private func calibration(from json: [String: Any]) throws -> Calibration {
-    let rng = try #require(json["rng"] as? NSNumber, "fixture has no particle set")
-    let particles = try json.rows("particles").map {
-        try Particle(
-            alphaM2s: $0.num("alpha_m2s"), logDoseOffset: $0.num("logDoseOffset"),
-            tauAirScale: $0.num("tauAirScale"), noise: $0.num("noise"),
-            whiteOffset: $0.num("whiteOffset"), whiteFirmGap: $0.num("whiteFirmGap")
-        )
-    }
-    return try Calibration(
-        posterior: Posterior(
-            particles: particles, weights: json.numbers("weights"), rng: Int32(truncating: rng)
-        ),
-        eggsLogged: Int(json.num("eggsLogged"))
-    )
+    try Calibration(posterior: posterior(json), eggsLogged: Int(json.num("eggsLogged")))
 }
 
 private func expectCalibration(_ c: Calibration, _ expected: [String: Any], _ label: String) throws {

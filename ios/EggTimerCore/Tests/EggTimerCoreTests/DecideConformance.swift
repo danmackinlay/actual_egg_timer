@@ -10,35 +10,10 @@ import Foundation
 /// at fixed times, and the time the search lands on - a scan and a golden
 /// section, whose comparisons both languages must make the same way.
 
-private func setup(_ json: [String: Any]) throws -> CookSetup {
-    let startMode = try #require(StartMode(rawValue: json.str("startMode")), "fixture setup: \(json)")
-    let cooling = try #require(Cooling(rawValue: json.str("cooling")), "fixture setup: \(json)")
-    let afterBoil = HeatAfterBoil(rawValue: json["afterBoil"] as? String ?? "hold") ?? .hold
-    return try CookSetup(
-        startMode: startMode, eggStartC: json.num("eggStart_C"), ambientC: json.num("ambient_C"),
-        boilingC: json.num("boiling_C"), timeToBoilS: json.num("timeToBoil_s"), cooling: cooling,
-        waterLitres: json.num("waterLitres"), afterBoil: afterBoil, eggCount: json.num("eggCount")
-    )
-}
-
-private func posterior(_ json: [String: Any]) throws -> Posterior {
-    let particles = try json.rows("particles").map {
-        try Particle(
-            alphaM2s: $0.num("alpha_m2s"), logDoseOffset: $0.num("logDoseOffset"),
-            tauAirScale: $0.num("tauAirScale"), noise: $0.num("noise"),
-            whiteOffset: $0.num("whiteOffset"), whiteFirmGap: $0.num("whiteFirmGap")
-        )
-    }
-    return Posterior(particles: particles, weights: try json.numbers("weights"), rng: 1)
-}
-
 private func fixtureGrid(_ file: [String: Any]) throws -> (grid: DoseGrid, json: [String: Any]) {
     let g = try file.object("grid")
-    let grid = try buildDoseGrid(
-        egg: Geometry.eggFromMass(g.object("egg").num("mass_kg")), setup: setup(g.object("setup")),
-        tauAirScale: g.num("tauAirScale"),
-        alphaMin: g.num("alphaMin"), alphaMax: g.num("alphaMax"), alphaCount: Int(g.num("alphaCount")),
-        timeMinS: g.num("timeMin_s"), timeMaxS: g.num("timeMax_s"), timeCount: Int(g.num("timeCount"))
+    let grid = try doseGrid(
+        g, egg: Geometry.eggFromMass(g.object("egg").num("mass_kg")), setup: cookSetup(g.object("setup"))
     )
     return (grid, g)
 }
@@ -81,7 +56,7 @@ struct DecideConformance {
             let params = try inputs.object("params")
             let spec = try decisionGridSpec(DecisionInputs(
                 egg: Geometry.eggFromMass(inputs.object("egg").num("mass_kg")),
-                setup: setup(inputs.object("setup")),
+                setup: cookSetup(inputs.object("setup")),
                 params: ModelParams(alphaM2s: params.num("alpha_m2s"), tauAirScale: params.num("tauAirScale")),
                 whiteDoseMin: inputs.num("whiteDose_min")
             ))
@@ -111,8 +86,7 @@ struct DecideConformance {
     func decisions() throws {
         let file = try Fixtures.load("decide.json")
         let (grid, _) = try fixtureGrid(file)
-        var byName = [String: Posterior]()
-        for p in try file.rows("posteriors") { byName[try p.str("name")] = try posterior(p) }
+        let byName = try posteriorsByName(file.rows("posteriors"))
 
         for (i, row) in try file.rows("cases").enumerated() {
             let name = try row.str("posterior")
@@ -144,7 +118,7 @@ struct DecideConformance {
             let c = try Calibration(posterior: post, eggsLogged: Int(row.num("eggsLogged")))
             let g = try file.object("grid")
             let egg = try Geometry.eggFromMass(g.object("egg").num("mass_kg"))
-            let pot = try setup(g.object("setup"))
+            let pot = try cookSetup(g.object("setup"))
             let decided = try decidedSolution(
                 egg: egg, setup: pot, params: calibrationParams(c),
                 solution: meanSolve(c, egg: egg, setup: pot, level: row.num("level")), decision: d
@@ -158,13 +132,13 @@ struct DecideConformance {
         let file = try Fixtures.load("decide.json")
         var byName = [String: (Posterior, Int)]()
         for p in try file.rows("posteriors") {
-            byName[try p.str("name")] = (try posterior(p), Int(try p.num("eggsLogged")))
+            byName[try p.str("name")] = (try posterior(p, rng: 1), Int(try p.num("eggsLogged")))
         }
         let egg = try Geometry.eggFromMass(file.object("grid").object("egg").num("mass_kg"))
         for row in try file.rows("carried") {
             let (post, eggs) = try #require(byName[row.str("posterior")], "no posterior")
             let c = Calibration(posterior: post, eggsLogged: eggs)
-            let pot = try setup(row.object("setup"))
+            let pot = try cookSetup(row.object("setup"))
             let level = try row.num("level")
             let lean = try row.num("lean_s")
             let sol = meanSolve(c, egg: egg, setup: pot, level: level)

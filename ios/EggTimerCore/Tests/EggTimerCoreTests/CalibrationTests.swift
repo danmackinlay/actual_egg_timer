@@ -26,64 +26,10 @@ private func loadCalibration() throws -> Calibration {
     let eggJSON = try file.object("egg")
     let setupJSON = try file.object("setup")
     let gridJSON = try file.object("grid")
-    let startMode = try #require(StartMode(rawValue: setupJSON["startMode"] as? String ?? ""))
-    let cooling = try #require(Cooling(rawValue: setupJSON["cooling"] as? String ?? ""))
     // Rebuilt from the recorded mass, so the geometry is exercised here too.
     let egg = try Geometry.eggFromMass(eggJSON.num("mass_kg"))
-    let afterBoil = HeatAfterBoil(rawValue: setupJSON["afterBoil"] as? String ?? "hold") ?? .hold
-    let setup = try CookSetup(
-        startMode: startMode,
-        eggStartC: setupJSON.num("eggStart_C"),
-        ambientC: setupJSON.num("ambient_C"),
-        boilingC: setupJSON.num("boiling_C"),
-        timeToBoilS: setupJSON.num("timeToBoil_s"),
-        cooling: cooling,
-        waterLitres: setupJSON.num("waterLitres"),
-        afterBoil: afterBoil,
-        eggCount: setupJSON.num("eggCount")
-    )
+    let setup = try cookSetup(setupJSON)
     return Calibration(egg: egg, setup: setup, file: file, gridJSON: gridJSON)
-}
-
-private func buildFixtureGrid(_ c: Calibration) throws -> DoseGrid {
-    try buildDoseGrid(
-        egg: c.egg, setup: c.setup, tauAirScale: c.gridJSON.num("tauAirScale"),
-        alphaMin: c.gridJSON.num("alphaMin"),
-        alphaMax: c.gridJSON.num("alphaMax"),
-        alphaCount: Int(c.gridJSON.num("alphaCount")),
-        timeMinS: c.gridJSON.num("timeMin_s"),
-        timeMaxS: c.gridJSON.num("timeMax_s"),
-        timeCount: Int(c.gridJSON.num("timeCount"))
-    )
-}
-
-/// A whole particle set read straight out of the fixture. Needed because one case
-/// starts from a posterior the reference constructed rather than from one this
-/// implementation could redraw - see `whiteResample` in tools/fixtures.ts.
-private func posterior(from json: [String: Any], _ label: String) throws -> Posterior {
-    let rows = try json.rows("particles")
-    let rng = try #require(json["rng"] as? NSNumber, "\(label): no rng in the fixture")
-    var particles = [Particle]()
-    particles.reserveCapacity(rows.count)
-    for row in rows {
-        particles.append(try Particle(
-            alphaM2s: row.num("alpha_m2s"),
-            logDoseOffset: row.num("logDoseOffset"),
-            tauAirScale: row.num("tauAirScale"),
-            noise: row.num("noise"),
-            whiteOffset: row.num("whiteOffset"),
-            whiteFirmGap: row.num("whiteFirmGap")
-        ))
-    }
-    return Posterior(particles: particles, weights: try json.numbers("weights"), rng: Int32(truncating: rng))
-}
-
-/// The white answer a fixture row carries, or nil for a skip. A row with an unknown string is a fixture the port cannot read, which
-/// must fail loudly rather than quietly skip a fold.
-private func whiteReport(_ json: [String: Any], _ label: String) throws -> WhiteReport? {
-    guard let raw = json["white"] as? String else { return nil }
-    let report: WhiteReport = try #require(WhiteReport(rawValue: raw), "\(label): unknown white report \(raw)")
-    return report
 }
 
 @Suite("Dose grid")
@@ -91,7 +37,7 @@ struct DoseGridConformance {
     @Test("every cell of the cached surface")
     func cells() throws {
         let c = try loadCalibration()
-        let grid = try buildFixtureGrid(c)
+        let grid = try doseGrid(c.gridJSON, egg: c.egg, setup: c.setup)
 
         try expectClose(grid.logAlphaMin, c.gridJSON.num("logAlphaMin"), "logAlphaMin")
         try expectClose(grid.logAlphaStep, c.gridJSON.num("logAlphaStep"), "logAlphaStep")
@@ -113,7 +59,7 @@ struct DoseGridConformance {
     @Test("interpolation, including the clamp outside the grid")
     func lookups() throws {
         let c = try loadCalibration()
-        let grid = try buildFixtureGrid(c)
+        let grid = try doseGrid(c.gridJSON, egg: c.egg, setup: c.setup)
         for row in try c.file.rows("lookups") {
             let alpha = try row.num("alpha_m2s")
             let time = try row.num("cookTime_s")
@@ -131,7 +77,7 @@ struct DoseGridConformance {
     @Test("inverting the surface for a cook time")
     func inverse() throws {
         let c = try loadCalibration()
-        let grid = try buildFixtureGrid(c)
+        let grid = try doseGrid(c.gridJSON, egg: c.egg, setup: c.setup)
         for row in try c.file.rows("inverse") {
             try expectClose(
                 cookTimeForLogYolkDose(grid, row.num("alpha_m2s"), row.num("logDose")),
@@ -187,7 +133,7 @@ struct InferenceConformance {
     @Test("the prior, particle by particle")
     func prior() throws {
         let c = try loadCalibration()
-        let grid = try buildFixtureGrid(c)
+        let grid = try doseGrid(c.gridJSON, egg: c.egg, setup: c.setup)
         let priorJSON = try c.file.object("prior")
         let first = try c.file.rows("updates")[0]
         let target = try first.num("logNominalTarget")
@@ -205,7 +151,7 @@ struct InferenceConformance {
     @Test("every update: one particle's likelihood, and the whole set")
     func updates() throws {
         let c = try loadCalibration()
-        let grid = try buildFixtureGrid(c)
+        let grid = try doseGrid(c.gridJSON, egg: c.egg, setup: c.setup)
         let priorJSON = try c.file.object("prior")
         let updates = try c.file.rows("updates")
         var post = try createPrior(
@@ -215,7 +161,7 @@ struct InferenceConformance {
         for (i, step) in updates.enumerated() {
             let after = try step.object("after")
             let feedback = (step["feedback"] as? NSNumber).flatMap { Feedback(rawValue: $0.intValue) }
-            let white = try whiteReport(step, "update \(i)")
+            let white = try step.optionalValue(WhiteReport.self, "white")
             let target = try step.num("logNominalTarget")
             let cookTimeS = try step.num("cookTime_s")
 
@@ -240,13 +186,15 @@ struct InferenceConformance {
     @Test("a white answer that degenerates the set resamples identically")
     func whiteResample() throws {
         let c = try loadCalibration()
-        let grid = try buildFixtureGrid(c)
+        let grid = try doseGrid(c.gridJSON, egg: c.egg, setup: c.setup)
         let step = try c.file.object("whiteResample")
         let before = try step.object("before")
         let after = try step.object("after")
-        let white = try #require(try whiteReport(step, "whiteResample"), "whiteResample has no white answer")
+        let white = try #require(try step.optionalValue(WhiteReport.self, "white"), "whiteResample has no white answer")
         let target = try c.file.rows("updates")[0].num("logNominalTarget")
-        var post = try posterior(from: before, "whiteResample")
+        // A particle set the reference constructed rather than one this
+        // implementation could redraw - see `whiteResample` in tools/fixtures.ts.
+        var post = try posterior(before)
         try expectClose(effectiveSampleSize(post), before.num("ess"), "whiteResample: starting ess")
         #expect(
             effectiveSampleSize(post) >= Double(post.particles.count) / 2.0,

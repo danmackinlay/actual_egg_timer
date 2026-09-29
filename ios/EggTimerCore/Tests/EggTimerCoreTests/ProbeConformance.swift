@@ -11,32 +11,12 @@ import Foundation
 /// how long the cooling counts, whether a probe is asked for, and which
 /// readings are taken at entry.
 
-private func setup(_ json: [String: Any]) throws -> CookSetup {
-    let startMode = try #require(StartMode(rawValue: json.str("startMode")), "probe.json: a setup not shaped as expected")
-    let cooling = try #require(Cooling(rawValue: json.str("cooling")), "probe.json: a setup not shaped as expected")
-    let afterBoil = HeatAfterBoil(rawValue: json["afterBoil"] as? String ?? "hold") ?? .hold
-    return try CookSetup(
-        startMode: startMode, eggStartC: json.num("eggStart_C"), ambientC: json.num("ambient_C"),
-        boilingC: json.num("boiling_C"), timeToBoilS: json.num("timeToBoil_s"), cooling: cooling,
-        waterLitres: json.num("waterLitres"), afterBoil: afterBoil, eggCount: json.num("eggCount")
-    )
-}
-
 private func fixtureGrid() throws -> DoseGrid {
-    let g = try Fixtures.object("probe.json", "grid")
     let egg = try Fixtures.object("probe.json", "egg")
-    return try buildDoseGrid(
-        egg: Geometry.eggFromMass(egg.num("mass_kg")), setup: setup(Fixtures.object("probe.json", "setup")),
-        tauAirScale: g.num("tauAirScale"),
-        alphaMin: g.num("alphaMin"), alphaMax: g.num("alphaMax"), alphaCount: Int(g.num("alphaCount")),
-        timeMinS: g.num("timeMin_s"), timeMaxS: g.num("timeMax_s"), timeCount: Int(g.num("timeCount"))
+    return try doseGrid(
+        Fixtures.object("probe.json", "grid"),
+        egg: Geometry.eggFromMass(egg.num("mass_kg")), setup: cookSetup(Fixtures.object("probe.json", "setup"))
     )
-}
-
-private func whiteReport(_ json: [String: Any]) throws -> WhiteReport? {
-    guard let raw = json["white"] as? String else { return nil }
-    let report: WhiteReport = try #require(WhiteReport(rawValue: raw), "unknown white \(raw)")
-    return report
 }
 
 @Suite("The thermometer")
@@ -101,7 +81,7 @@ struct ProbeConformance {
             let particles = try after.rows("particles")
             let rng = try #require(after["rng"] as? NSNumber, "malformed update \(i)")
             let yolk = (step["yolk"] as? NSNumber).flatMap { Feedback(rawValue: $0.intValue) }
-            let white = try whiteReport(step)
+            let white = try step.optionalValue(WhiteReport.self, "white")
             let probeC = try step.optionalNum("probe_C")
             let t = try step.num("cookTime_s")
             let target = try step.num("logNominalTarget")
@@ -153,7 +133,7 @@ struct ProbeConformance {
             let rangeMoved = try row.numbers("rangeMoved")
             try #require(range.count == 2 && rangeMoved.count == 2, "a range is a low and a high")
             let moved = try row.object("moved")
-            let s = try setup(row.object("setup"))
+            let s = try cookSetup(row.object("setup"))
             let massKg = try row.num("mass_kg")
             let egg = Geometry.eggFromMass(massKg)
             let level = try row.num("level")
