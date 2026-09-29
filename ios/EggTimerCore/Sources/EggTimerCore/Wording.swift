@@ -239,3 +239,70 @@ public func clauseKeys(_ f: ClauseFacts) -> [Clause: ClauseKeys] {
         .cooling: cooling,
     ]
 }
+
+// MARK: - The sous-vide clock's units
+
+/*
+ * The sous-vide clock's two unit choices, here rather than in the app or in
+ * the physics (SousVide.swift, which says nothing).
+ *
+ * These are not sentences. They are UNIT CHOICES - when minutes stop being a
+ * useful unit and become hours, when hours become days, when a date stops being
+ * a weekday and becomes "N weeks ago". Both apps have to bucket an estimate
+ * identically or the same number reads differently on each, which is precisely
+ * what happened: they were transliterated by hand and at a 58 C bath only two of
+ * the six branches below are ever reached, so four of them were ported and never
+ * once executed in either language.
+ *
+ * They used to return the English as well. They return a catalogue key and its
+ * numbers now, because "22 h 43 min" is English, and so is the order of the
+ * words in "3 weeks ago". Core picks the bucket; the catalogue says it.
+ */
+
+/// 45 min, 22 h 43 min, 3 days, 5 weeks - as a key into the catalogue and the
+/// numbers it needs.
+public func longDuration(_ seconds: Double) -> CopyRef {
+    let minutes = Int((seconds / 60.0).rounded())
+    if minutes < 90 { return CopyRef("duration.minutes", ["minutes": Double(minutes)]) }
+    let hours = minutes / 60
+    let rest = minutes % 60
+    if hours < 48 {
+        return rest == 0
+            ? CopyRef("duration.hours", ["hours": Double(hours)])
+            : CopyRef("duration.hoursMinutes", ["hours": Double(hours), "minutes": Double(rest)])
+    }
+    let days = Int((Double(hours) / 24.0).rounded())
+    if days < 14 { return CopyRef("duration.days", ["days": Double(days)]) }
+    return CopyRef("duration.weeks", ["weeks": (Double(days) / 7.0).rounded()])
+}
+
+/// How long ago the cook should have started: today, yesterday, last Tuesday,
+/// last week, 3 weeks ago, 4 months ago - as a key and its numbers.
+///
+/// Takes the day count rather than a date, so it is pure and so the calendar
+/// arithmetic stays where it belongs: `Calendar` counts whole days across a
+/// local midnight correctly, and this package should not reimplement it. For
+/// the same reason `sousvide.start.lastWeekday` wants a `{weekday}` this does
+/// not supply. The app adds it, from the catalogue through `weekdayKey`, as the
+/// web does (F4).
+public func startPhrase(daysAgo: Int) -> CopyRef {
+    if daysAgo <= 0 { return CopyRef("sousvide.start.today") }
+    if daysAgo == 1 { return CopyRef("sousvide.start.yesterday") }
+    if daysAgo < 7 { return CopyRef("sousvide.start.lastWeekday") }
+    if daysAgo < 14 { return CopyRef("sousvide.start.lastWeek") }
+    if daysAgo < 60 { return CopyRef("sousvide.start.weeksAgo", ["weeks": (Double(daysAgo) / 7.0).rounded()]) }
+    return CopyRef("sousvide.start.monthsAgo", ["months": (Double(daysAgo) / 30.0).rounded()])
+}
+
+/// The catalogue key of a weekday's name, numbered as JavaScript's
+/// `Date.getDay()` numbers them: 0 is Sunday. `Calendar`'s `.weekday` counts
+/// from 1, so the app subtracts one. Both apps name weekdays from the
+/// catalogue, not the platform (F4, LANGUAGE.md §2).
+let weekdayKeys: [String] = [
+    "weekday.sunday", "weekday.monday", "weekday.tuesday", "weekday.wednesday",
+    "weekday.thursday", "weekday.friday", "weekday.saturday",
+]
+
+public func weekdayKey(_ dayOfWeek: Int) -> String {
+    weekdayKeys[((dayOfWeek % 7) + 7) % 7]
+}

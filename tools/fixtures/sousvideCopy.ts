@@ -3,7 +3,7 @@
  */
 
 import { render, renderRef } from '../../src/core/copy.js';
-import { longDuration, startPhrase, weekdayKey } from '../../src/core/sousvide.js';
+import { longDuration, startPhrase, weekdayKey } from '../../src/core/wording.js';
 
 import { english } from './shared.js';
 
@@ -15,7 +15,7 @@ import { english } from './shared.js';
  * English, and is unchanged. */
 
 export const sousvideCopyFixture = {
-  about: 'Which words say the sous-vide answer: the duration\'s bucket, the start phrase and the weekday, rendered in English. src/core/sousvide.ts.',
+  about: 'Which words say the sous-vide answer: the duration\'s bucket, the start phrase and the weekday, rendered in English. src/core/wording.ts.',
   duration: [
     0, 1, 59, 60, 89 * 60, 90 * 60, 91 * 60, 120 * 60,
     2 * 3600, 2.5 * 3600, 47 * 3600, 47.5 * 3600, 48 * 3600, 49 * 3600,

@@ -256,3 +256,75 @@ export function clauseKeys(f: ClauseFacts): Record<Clause, ClauseKeys> {
     cooling: cooling,
   };
 }
+
+/* -------------------------------------------- the sous-vide clock's units */
+
+/*
+ * The sous-vide clock's two unit choices, here rather than in the apps or in
+ * the physics (src/core/sousvide.ts, which says nothing).
+ *
+ * These are not sentences. They are UNIT CHOICES - when minutes stop being a
+ * useful unit and become hours, when hours become days, when a date stops being
+ * a weekday and becomes "N weeks ago". Both apps have to bucket an estimate
+ * identically or the same number reads differently on each, which is precisely
+ * what happened: they were transliterated by hand and at a 58 C bath only two of
+ * the six branches below are ever reached, so four of them were ported and never
+ * once executed in either language.
+ *
+ * They used to return the English as well, on the grounds that a number and
+ * its unit are one thing. They still are - but the thing is a catalogue key and
+ * its numbers, because "22 h 43 min" is English, and so is the order of the
+ * words in "3 weeks ago". Core picks the bucket; the catalogue says it.
+ */
+
+/** 45 min, 22 h 43 min, 3 days, 5 weeks - as a key into the catalogue and the
+ *  numbers it needs. Minutes and seconds stop being a useful unit somewhere
+ *  around the point this app stops being useful. */
+export function longDuration(seconds: number): CopyRef {
+  const minutes = Math.round(seconds / 60);
+  if (minutes < 90) return { key: 'duration.minutes', args: { minutes: minutes } };
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  if (hours < 48) {
+    return rest === 0
+      ? { key: 'duration.hours', args: { hours: hours } }
+      : { key: 'duration.hoursMinutes', args: { hours: hours, minutes: rest } };
+  }
+  const days = Math.round(hours / 24);
+  if (days < 14) return { key: 'duration.days', args: { days: days } };
+  return { key: 'duration.weeks', args: { weeks: Math.round(days / 7) } };
+}
+
+/**
+ * How long ago the cook should have started: today, yesterday, last Tuesday,
+ * last week, 3 weeks ago, 4 months ago - as a key and its numbers.
+ *
+ * Takes the day count rather than a date, so it is pure and so the calendar
+ * arithmetic stays where it belongs. Counting whole days across a local
+ * midnight is a platform job - `Calendar` does it correctly on iOS, and the web
+ * normalises to midnight and divides - and neither should be reimplemented
+ * here. For the same reason `sousvide.start.lastWeekday` wants a `{weekday}`
+ * that this does not supply: the app adds the name, from `weekdayKey`. Both
+ * apps take it from the catalogue, not from a platform formatter (F4,
+ * LANGUAGE.md §2): the translator sees the names, and can give the form the
+ * sentence needs, which in Czech is not the dictionary one.
+ */
+export function startPhrase(daysAgo: number): CopyRef {
+  if (daysAgo <= 0) return { key: 'sousvide.start.today', args: {} };
+  if (daysAgo === 1) return { key: 'sousvide.start.yesterday', args: {} };
+  if (daysAgo < 7) return { key: 'sousvide.start.lastWeekday', args: {} };
+  if (daysAgo < 14) return { key: 'sousvide.start.lastWeek', args: {} };
+  if (daysAgo < 60) return { key: 'sousvide.start.weeksAgo', args: { weeks: Math.round(daysAgo / 7) } };
+  return { key: 'sousvide.start.monthsAgo', args: { months: Math.round(daysAgo / 30) } };
+}
+
+/** The catalogue key of a weekday's name, by `Date.getDay()` numbering:
+ *  0 is Sunday. Swift's `Calendar` counts from 1, and subtracts it. */
+const WEEKDAY_KEYS: readonly string[] = [
+  'weekday.sunday', 'weekday.monday', 'weekday.tuesday', 'weekday.wednesday',
+  'weekday.thursday', 'weekday.friday', 'weekday.saturday',
+];
+
+export function weekdayKey(dayOfWeek: number): string {
+  return WEEKDAY_KEYS[((Math.floor(dayOfWeek) % 7) + 7) % 7];
+}

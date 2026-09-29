@@ -6,7 +6,7 @@
 import { readFileSync } from 'node:fs';
 
 import { CopyArgs, parseCatalogue, pluralCategory, render } from '../../src/core/copy.js';
-import { weekdayKey } from '../../src/core/sousvide.js';
+import { weekdayKey } from '../../src/core/wording.js';
 import {
   Fixed, HourCycle, countDecimals, formatCount, formatNumber, formatTimeOfDay, formattingLocale,
   normaliseTime, roundTo, unpadHour,

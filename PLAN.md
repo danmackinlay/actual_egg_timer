@@ -637,9 +637,6 @@ solveCookTime(egg, setup, params, doneness): Solution
 SOUS_VIDE_BATH_C
 equilibrationTime(radius_m, alpha_m2s): number
 sousVideEstimate(radius_m, alpha_m2s, bath_C, yolkDose_min, whiteDose_min): SousVideEstimate
-longDuration(seconds): CopyRef             // the unit choice, as a key and its numbers
-startPhrase(daysAgo): CopyRef              // the app adds {weekday}
-weekdayKey(dayOfWeek): string              // 0 = Sunday; both apps name days from the catalogue
 
 // units.ts  (Metric and Imperial; LANGUAGE.md §4. Core stays SI.)
 type UnitSystem = 'metric' | 'imperial'
@@ -698,6 +695,9 @@ refusalKey(verdict, cooling): CopyRef | null
 DIRECTION_LIKELY = 0.5 / directionKey(outcome) / whiteAtRisk(outcome) / rangeWords(outcome)
 phaseKeys({ phase, startMode, afterBoil, cooling, whiteSets, boilKnown, probeWanted }) → { label; subline; action | null; hint | null }
 pulledKey(cooling) / clauseKeys({ eggFrom, startMode, sousVide, afterBoil, cooling }) → Record<Clause, { text; label; value | null }>
+longDuration(seconds): CopyRef             // sous-vide's unit choice, as a key and its numbers
+startPhrase(daysAgo): CopyRef              // the app adds {weekday}
+weekdayKey(dayOfWeek): string              // 0 = Sunday; both apps name days from the catalogue
 
 // language.ts  (F6: the English of 1750 - LANGUAGE.md §6)
 DEFAULT_LANGUAGE / PERIOD_LANGUAGE / LANGUAGES / FRESH_LANGUAGE

@@ -9,9 +9,8 @@
  * in the past. All this module does is say so out loud.
  */
 
-import {
-  SOUS_VIDE_MODEL_FLOOR_C, SousVideEstimate, longDuration, startPhrase, weekdayKey,
-} from '../core/sousvide.js';
+import { SOUS_VIDE_MODEL_FLOOR_C, SousVideEstimate } from '../core/sousvide.js';
+import { longDuration, startPhrase, weekdayKey } from '../core/wording.js';
 import { t, tRef, timeOfDay } from './copy.js';
 import { show } from './units.js';
 
