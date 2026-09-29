@@ -4,7 +4,7 @@ import EggTimerCopy
 
 /// A clause of the setup sentence: each opens its own choice.
 /// The setup as one line of prose, each clause of it tappable (UI.md section
-/// 2; the web's `renderSentence`):
+/// 5; the web's `renderSentence`):
 ///
 /// > **68 g eggs** **from the fridge**, **into cold water and boiled**, **then
 /// > an ice bath**.

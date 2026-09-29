@@ -2682,3 +2682,72 @@ fixtures unchanged; `swift test` 119 tests in 31 suites. The app builds for
 the iPhone 17 simulator.
 
 **Not verified:** nothing runs differently, so nothing was run on a device.
+
+## 29 September 2026: the worklist, 8.4 - the documents restructured
+
+WORKLIST.md section 8.4, on a branch from `632bdbd`. Each document now owns
+one thing: `CLAUDE.md` the rules for whoever works here, `PLAN.md` the state
+and what waits on whom, `DECISIONS.md` the owner's decisions, `UI.md` the
+layout as built, `LANGUAGE.md` the words' machinery and rules, `INFERENCE.md`
+the learning, `README.md` the science, `ios/README.md` the port, and this file
+the record. What left the others is below, told once; the documents as they
+stood before are in git at `632bdbd`, which is where an older entry's section
+number points.
+
+### Moved from UI.md
+
+UI.md was a design followed by four "as built" sections, each correcting the
+last. It is now one current spec. What it no longer carries:
+
+- **The design as first drawn** (27 September): the idle screen was to keep
+  the odds line ("7/10 eggs hit the mark") and its (i) under the time; the
+  running phases a method line; the language picker "once there is more than
+  one". As built, a sentence saying which way the egg is likely to miss took
+  the odds line's place, the picker came with F6, and a running cook shows
+  its setup sentence.
+- **What it retired** (the old section 5): the short-string approvals then
+  open in LANGUAGE.md section 3 - the four over-budget rows could keep a
+  short label and move their meaning into `.more`, and the one-wording
+  proposal shrank because a shared layout made most of its pairs vanish.
+- **The passes, and their drafts:**
+
+| pass | date | draft, on | code |
+|---|---|---|---|
+| web redesign | 27 Sep | `redesign`, `80799d0` | `index.html`, `styles.css`, `src/ui/app.ts` (since split under `src/ui/`) |
+| web outcome summary | 27 Sep | `outcome`, `7a40373` | `src/ui/outcome.ts` (since core's `directionKey`) |
+| web playing safe | 27 Sep | `safe`, `ff6c6e9` | removed 28 Sep |
+| iOS pass A, layout | 28 Sep | `iosA`, `91d5fff` | `ContentView`, `SetupSentence`, `SettingsView`, `HelpView`, `Info`, `Controls`, `Palette` |
+| iOS pass B, prediction | 28 Sep | `iosB`, `44b0cb1` | `Direction.swift` (gone 29 Sep for core's `Outcome`), `YolkSlider`, `OddsTrack`, `Cook` |
+| a tighter egg, both | 28 Sep | `tighten`, `2c090c9` | heading, sentence while cooking, no play-safe line |
+
+- **Keys retired by the passes** (each was one app's alone, so each was
+  deleted from the catalogue):
+  - from the web by the redesign: `controls.atTheBoil`, `controls.eggs`,
+    `controls.start.hint`, `controls.afterBoil.hint`;
+  - from iOS by pass A: `readout.phase.totalLidOn`, `readout.sub.idleCold`,
+    `.idleHot`, `readout.stat.peakYolk`, `.peakWhite`, `.afterBoil`, `.bath`,
+    `action.eggsInHeatOn`, `controls.eggFrom.fridgeAt`, `.roomAt`,
+    `controls.start.hintSousVide`, `controls.then`,
+    `controls.afterBoil.explainHeatOff`, `.explainHold`, `controls.probe`,
+    `controls.probe.hint`, `pan.waterBoilsAt`, `pan.timeToBoil`, `.assumed`,
+    `pan.measured`, `pan.unmeasured`, `odds.shown`, `odds.hidden`,
+    `learned.forgetExplain`, `colophon.ios`;
+  - from iOS by pass B: `odds.info`, `odds.why`, `odds.stillLearning`,
+    `readout.phase.heatingTap`, `readout.sub.heatingEstimate`,
+    `readout.sub.done`, `readout.big.now`, `readout.big.eat`;
+  - by a tighter egg: `outcome.safe.firm`, `.soft`, `.firmer`, `.softer`,
+    `cook.method` and its five fragments.
+- **"Kept, and why"** listed `odds.hitTheMark` (retired with F6's Lock
+  Screen), `readout.phase.cooling` (retired 28 September) and `cook.method`
+  (retired by a tighter egg). Nothing on it survives.
+- **Departures from the design, as built on the web**: heat after the boil
+  stayed in Settings and not in the sentence; mute went to the top of every
+  screen and the Settings and Help links to the top of the egg, out of the
+  thumb's way; the page's title became "Settings", since "Pan, hob and
+  altitude" named the pan as a stand-in for the stove; and one more (i)
+  than listed, for the boil time under the readout.
+- **Checked for a tighter egg**: `npm test`, `npm run validate`, `npm run
+  conformance`, the iOS Debug build, iPhone 17 screenshots idle and heating
+  in English and 1750 (the 1750 heading fits one line at 402 pt), and the web
+  at 375 px idle, cooking and after a reload mid-cook, with the slider's
+  `aria-valuetext` read back ("Runny, peak yolk 56 °C").
