@@ -8,13 +8,13 @@ main part, and pooled across cooks - see `INFERENCE.md`; for languages, units
 and the wording itself, `LANGUAGE.md`. This file is for whoever picks the build
 back up.
 
-**Where things stand, 28 September 2026.** Both apps are complete for one
+**Where things stand, 29 September 2026.** Both apps are complete for one
 cook and learning. The web app (`src/`) and the iOS app (`ios/`) carry the same
 model, refusals, particle filter and choice of time (Phase E up to E5), the same
 catalogue of words in two Englishes (Phase F but for Czech), and the same
-layout (UI.md). `npm test` runs 238 tests, all passing (E3's 5b, below, pins a known
-limit). `npm run validate` passes 28/28, and `swift test` passes 109
-tests in 30 suites for the core and 10 in 1 for EggTimerRing. **Nothing since 19 September is pushed**: `origin/main` is
+layout (UI.md). `npm test` runs 255 tests, all passing (E3's 5b, below, pins a known
+limit). `npm run validate` passes 28/28, and `swift test` passes 119
+tests in 31 suites. **Nothing since 19 September is pushed**: `origin/main` is
 `2f341b4`, so the live site is the app from before E1, and every line below
 dated later is on local `main` only. The iOS app runs from Xcode on the owner's
 phone and has cooked real eggs; no TestFlight build is recorded
@@ -69,7 +69,8 @@ down. Zero runtime dependencies. The core is written for a near-mechanical Swift
 
 ### Phase B — parallel (three subagents, no shared files) — DONE
 - [x] `test/core.test.ts` + `tools/validate.ts` (counts in the status line above)
-- [x] `index.html`, `styles.css`, `src/ui/*` (app, machine, clock, store, main)
+- [x] `index.html`, `styles.css`, `src/ui/*` (app, machine, clock, store, main; `app.ts`
+      split into its parts on 29 September, WORKLIST §5.1)
 - [x] `README.md` — the science write-up, 652 lines
 
 ### Phase C — calibration (solo) — DONE
@@ -94,7 +95,7 @@ dose rate is 1e-6 of peak. Cut simulate 2.80 -> 1.87 ms with identical results.
 - [x] `ios/EggTimerCore` — the physics in Swift, held to generated fixtures
 - [x] `ios/App/Cook.swift` — the phase machine, absolute dates, survives relaunch
 - [x] `ios/App/Alarm.swift` — local notifications, `.timeSensitive`, foreground
-- [x] `ios/App/Kitchen.swift` — every input, the refusals, the boil memory
+- [x] `ios/App/Planner.swift` (then `Kitchen.swift`) — every input, the refusals, the boil memory
 - [x] `ios/Widget/` — the Live Activity: Lock Screen and Dynamic Island
 - [x] `ios/EggTimerCore/DoseGrid.swift`, `Infer.swift` — the calibration
 - [x] `ios/App/Calibration.swift` — "how was it?", and the app learns
@@ -432,13 +433,13 @@ F1 goes before E2 so that Phase E's new feedback copy is born in the catalogue.
       never has to decline it. Runs alongside E2 and E5.
     - [x] **The feedback screens**, with E2, 27 September: LANGUAGE.md §3's
           draft, in both apps, approved on the owner's behalf while they were
-          away. 19 keys changed, each listed in `tools/copyDraft.ts`; the
+          away. 19 keys changed, each listed in `tools/drafts/feedback.ts`; the
           proofs show nothing else did. Left for the rest of F2: the iOS
           alarm's and Live Activity's "carryover", `learned.forgetExplain`'s
           "posterior", and the heat-off explanation.
     - [x] **The rest of F2, and the first-person pass**, 27 September: both
           of LANGUAGE.md §3's owner-approved tables, in both apps. 37 keys
-          changed, each listed in `tools/copyDraft.ts` against `e1f7068`;
+          changed, each listed in `tools/drafts/rest.ts` against `e1f7068`;
           `copyLiterals.js --since e1f7068` and `copySnapshot.js compare
           --draft` show nothing else did. Three pairs are now one key each
           (`controls.start.cold`, `controls.afterBoil.keepBoiling`,
@@ -1014,7 +1015,7 @@ what is left.
 - [x] **The ticket's `oddsTenths` and `stillLearning`** are dropped from both
   apps' tickets; a saved cook that still has them restores. What E6 keeps
   instead is the full forecast (INFERENCE.md §7, §11.12).
-- [x] **`tools/unitsFixture.ts`** round-trips 90 g, the mass limit's edge.
+- [x] **`tools/fixtures/units.ts`** round-trips 90 g, the mass limit's edge.
 - [x] **Dead code:** `Kitchen.cookTime(timeToBoilS:level:leanS:)` gone (its
   comment is on `cookResult`); `readout.phase.cooling` retired; the Live
   Activity's done words (`activity.stage.done`, `activity.note.done`,

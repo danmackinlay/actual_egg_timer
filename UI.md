@@ -182,8 +182,10 @@ The owner's steer of 27 September, after using the first web preview:
 
 ## 8. As built (web), 27 September 2026
 
-`index.html`, `styles.css` and `src/ui/app.ts`; core unchanged. Every string
-is in `copy/en.json`, and `tools/copyDraft.ts` lists each one the redesign
+`index.html`, `styles.css` and `src/ui/app.ts` (since split into its parts
+under `src/ui/`: the routes are `views.ts`, the sentence `sentence.ts`, the
+slider `slider.ts`, the (i) `info.ts`); core unchanged. Every string is in
+`copy/en.json`, and `tools/drafts/redesign.ts` lists each one the redesign
 added, changed or took off the web (the `redesign` draft, on `80799d0`).
 
 **Three views, one page.** The egg, `#settings` and `#help`, hash-routed
@@ -237,7 +239,7 @@ the two questions, mute, a reloaded cook.
 **The action bar** (28 September) is opaque, fading in over its top 20 px, and stuck to the bottom of the page's column rather than fixed over it, so what scrolls under it is hidden, not read through the hint, and the last line always scrolls clear of it, however tall the bar.
 
 **The outcome summary** (built the same day, on the hooks the redesign left;
-the `outcome` draft in `tools/copyDraft.ts`). Under the time, in place of
+the `outcome` draft, `tools/drafts/outcome.ts`). Under the time, in place of
 "7/10 eggs hit the mark", a sentence says which way the egg is likely to
 miss, with the odds' (i) at its end; under it, a line when a runny white is
 a real risk; then "I'm still learning" and its (i), as before (since gone,
@@ -361,10 +363,13 @@ checkbox `controls.thermometer.ask`, its (i) `controls.thermometer.more`),
 ## 9. As built (iOS, pass A), 28 September 2026
 
 Layout only: the web's egg, Settings and Help on iOS, and the one (i).
-`ios/App`: `ContentView.swift` (the egg), `SetupSentence.swift`,
-`SettingsView.swift`, `HelpView.swift`, `Info.swift` (the (i)),
-`Controls.swift`, `Palette.swift`; core unchanged. The copy is the `iosA`
-draft in `tools/copyDraft.ts`, on `91d5fff`: 132 rows and no change of
+`ios/App`: `ContentView.swift` (the egg; its readout, buttons, questions
+and slider are now `ReadoutView`, `PhaseActions`, `FeedbackPanel` and
+`DonenessControl`), `SetupSentence.swift`, `SettingsView.swift`,
+`HelpView.swift`, `Info.swift` (the (i)), `Controls.swift`, `Palette.swift`;
+core unchanged. The copy is the `iosA` draft, `tools/drafts/iosA.ts`, on
+`91d5fff` (`copyLiterals.js --since 91d5fff iosA`: `oddsHelp` shares the
+base): 132 rows and no change of
 wording. The web's keys gain `"ios"`, the iOS keys they replace are
 retired, and there are three new iOS keys.
 
@@ -377,7 +382,7 @@ web. The system's Back button replaces `nav.back`.
 - The readout: "Total time", the time, and the web's line under it
   (`readout.sub.coldAssumes` with its (i), `coldGuesses`, `standing` or
   `hot`).
-- **The direction's slot**, `direction(_:)` in `ContentView.swift`. In pass
+- **The direction's slot**, `direction` in `ReadoutView.swift`. In pass
   A it still held the iOS odds line; pass B put the direction there.
 - The doneness slider. Its label is above it and the odds track under it,
   with the five doneness words at their levels. Then the reading
@@ -446,7 +451,7 @@ list that scrolls to each section.
 - `[label](https://…)` in the copy becomes a link through `linked()`,
   the web's rule: only https is linked, and nothing else is parsed.
 - Asides are footnote-sized and secondary.
-- The top of "Getting reliable eggs" lists `Kitchen.advice`: the same
+- The top of "Getting reliable eggs" lists `Planner.advice`: the same
   `protocolAdvice` the web uses, which the Swift core already had.
 
 **The track is a yolk.** It uses the web's stops for each scheme
@@ -489,9 +494,11 @@ no taps; the header of `ios/App/Screenshots.swift` lists them.
 
 Prediction: the web's outcome summary (and playing safe, since removed) on
 iOS, the phase screens in the web's words, and one track. `ios/App`: `Direction.swift`
-(new, the web's `src/ui/outcome.ts`), `YolkSlider.swift` (new),
-`ContentView.swift`, `Kitchen.swift`, `OddsTrack.swift`, `Cook.swift`;
-core unchanged. The copy is the `iosB` draft in `tools/copyDraft.ts`, on
+(new, the web's `src/ui/outcome.ts`; gone on 29 September, when the ticket
+took core's `Outcome` and the words core's `directionKey`), `YolkSlider.swift`
+(new), `ContentView.swift`, `Kitchen.swift` (now `Planner.swift` and its
+extensions), `OddsTrack.swift`, `Cook.swift`; core unchanged. The copy is the
+`iosB` draft, `tools/drafts/iosB.ts`, on
 `44b0cb1`: 34 rows, no change of wording. The web's keys gain `"ios"`, and
 the iOS keys they replace are retired.
 
@@ -507,7 +514,7 @@ slider. "I'm still learning" and the odds line are gone, as on the web.
 `oddsTenths` and `stillLearning` were on the ticket, never read, until 28
 September (not in the egg's record, which never kept them).
 
-The outcome is `predictOutcome`, read in `Kitchen.decided` at the decided
+The outcome is `predictOutcome`, read in `Planner.decided` at the decided
 time on the decision's own surface, off the main actor beside the decision.
 It rides on the ticket (core `Outcome`, Codable), so mid-cook the direction and
 the white's line are what they were at "Eggs in", and they survive a
@@ -522,7 +529,7 @@ thumb's half-width like the track. VoiceOver reads it as `outcome.range` /
 the white never sets, in sous-vide, and once a cook runs. Its room is kept
 while it is hidden, so the words under it do not jump.
 
-**Playing safe** was ported with the web's rules (`Kitchen.askForSafer`,
+**Playing safe** was ported with the web's rules (`Kitchen.askForSafer`, `Kitchen` being today's `Planner`;
 `Direction.playSafe`, a cache in `DecisionGrids`) and removed with it the
 same day (section 11).
 
@@ -586,8 +593,8 @@ ice, jammy), in the simulator:
 ## 11. As built (both apps), 28 September 2026: a tighter egg
 
 The owner's three changes, after using the iOS app on a phone. Both apps,
-the same wherever the platform allows. The copy is the `tighten` draft in
-`tools/copyDraft.ts`, on `2c090c9` (LANGUAGE.md section 3).
+the same wherever the platform allows. The copy is the `tighten` draft,
+`tools/drafts/tighten.ts`, on `2c090c9` (LANGUAGE.md section 3).
 
 **The doneness heading carries the peak yolk.** The slider said its word
 twice: on the ticks and again in the reading under them ("Soft · peak yolk

@@ -1209,7 +1209,7 @@ answers are recorded here rather than deleted, because each one was a plausible 
   real-egg bugs in `LOGBOOK.md` ("Three things a real egg found that the simulator did
   not") would have been caught. Above it, the web's phase machine,
   store and formatting have tests (`test/machine.test.ts`, `test/store.test.ts`,
-  `test/format.test.ts`), and iOS's decision to ring is `EggTimerRing`, under `swift
+  `test/format.test.ts`), and iOS's decision to ring is `deadlineToRing` in the core, under `swift
   test`. The rest is view code: DOM writes and SwiftUI bodies, tested by driving the
   apps. The iOS app project has no test target.
 

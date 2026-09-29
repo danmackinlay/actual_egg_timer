@@ -15,8 +15,8 @@ have to agree on, and that is copied between them by hand, drifts.
 ## 1. Where the words were, 26 September (before F1)
 
 - **They are hand-copied between the two apps.** The five refusal messages
-  appear in `src/ui/app.ts` and again in `ios/App/Kitchen.swift`. Nothing holds
-  the two copies together. This is the failure `src/core/policy.ts` was created
+  appeared in `src/ui/app.ts` and again in `ios/App/Kitchen.swift` (as the
+  planner was then called). Nothing held the two copies together. This is the failure `src/core/policy.ts` was created
   to end for numbers, and nobody has done the same for words.
 - **Some of the English is in core.** Core returns English in three places:
   - `DONENESS_ANCHORS` (`Runny`, `Soft`, `Jammy`, …)
@@ -264,7 +264,7 @@ warning was cut down, written down here for the first time:
 `copy/en.json` and both apps, except the two "E5, preview" rows, which belonged
 to E5 and went in with it on 28 September. The owner has not formally approved it; it went in on their behalf while
 they were away, and it lives in the catalogue so that revising it is an edit to
-one file. `tools/copyDraft.ts` lists every key it changed, and
+one file. `tools/drafts/feedback.ts` lists every key it changed, and
 `copyLiterals.js --since cfe38e9` and `copySnapshot.js compare --draft` show
 that nothing else did. This is modern English only; 1750 and Czech shadow it
 once it is settled. Both apps get the same wording. That is new: until E2 the
@@ -399,7 +399,7 @@ Left as they are: "Still learning your kitchen" (the "I" is implied), "keep
 the app open" (the app is the object there, not the speaker), and "Learned
 from N eggs".
 
-**As built, 27 September.** `tools/copyDraft.ts` lists the 37 keys the two
+**As built, 27 September.** `tools/drafts/rest.ts` lists the 37 keys the two
 tables changed, against `e1f7068`; `copyLiterals.js --since e1f7068` and
 `copySnapshot.js compare --draft` show that nothing else did.
 
@@ -447,7 +447,7 @@ tables changed, against `e1f7068`; `copyLiterals.js --since e1f7068` and
 
 **The odds-shaded slider's strings - IMPLEMENTED 27 September 2026**, in
 `copy/en.json` and both apps, drafted for the owner's answers of the same day
-and not yet approved. All new: the `reach` draft in `tools/copyDraft.ts`, on
+and not yet approved. All new: the `reach` draft, `tools/drafts/reach.ts`, on
 `1667dcf`, and `copyLiterals.js --since 1667dcf` shows these eleven keys
 added and nothing else changed. First person, per the rule above; the
 refusals put `{limit}` after a colon, as F2's do.
@@ -478,7 +478,7 @@ is why F1 comes before E2 (§7).
 **The web redesign's strings - IMPLEMENTED 27 September 2026**, web only,
 drafted and not approved. The owner reviews them in place on a deploy
 preview (UI.md section 6), so they are listed here by key, not tabled for
-approval; the words are in `copy/en.json`, and `tools/copyDraft.ts` (the
+approval; the words are in `copy/en.json`, and `tools/drafts/redesign.ts` (the
 `redesign` draft, on `80799d0`) holds every one, with what it was.
 `copyLiterals.js --since 80799d0 redesign` and `copySnapshot.js compare
 --draft redesign` show that nothing else changed. Two new surfaces: `more`
@@ -546,7 +546,7 @@ both apps where a key is shared:
 only, drafted and not approved: for review in place, like the redesign's.
 The owner found "7/10 eggs hit the mark" unnatural, because it does not say
 which way the misses go. So the web leads with a direction, and the number
-moves into the odds' (i). The `outcome` draft in `tools/copyDraft.ts`, on
+moves into the odds' (i). The `outcome` draft, `tools/drafts/outcome.ts`, on
 `7a40373`; `copyLiterals.js --since 7a40373 outcome` and
 `copySnapshot.js compare --draft outcome` show that nothing else changed.
 UI.md section 8 has which sentence each outcome gets, and why the
@@ -586,7 +586,7 @@ side of caution, so a one-tap suggestion went under the direction
 and the direction's (i) was rewritten to explain the bracket instead of
 saying the number. The owner also dropped "I'm still learning" as a line of
 its own on the web: beside "I can't call it yet" it said the same thing
-twice. The `safe` draft in `tools/copyDraft.ts`, on `ff6c6e9`. What is still
+twice. The `safe` draft, `tools/drafts/safe.ts`, on `ff6c6e9`. What is still
 live from it:
 
 | key | where | text |
@@ -605,8 +605,8 @@ live from it:
   in the tighter egg's draft below.
 
 **The pull names the cooling - IMPLEMENTED 28 September 2026**, iOS, on the
-owner's word after a cook on a phone: the `pull` draft in
-`tools/copyDraft.ts`. The pull alarm, and word for word the Lock Screen
+owner's word after a cook on a phone: the `pull` draft,
+`tools/drafts/pull.ts`. The pull alarm, and word for word the Lock Screen
 card's line at the pull, say the cooling the cook chose, not "the cooling":
 
 | key | text | 1750 |
@@ -623,7 +623,7 @@ rather than saying "Done" for two minutes beside an alarm that says the same.
 
 **A tighter egg's strings - IMPLEMENTED 28 September 2026**, both apps, on
 the owner's word after using the iOS app (UI.md section 11). The `tighten`
-draft in `tools/copyDraft.ts`, on `2c090c9`; `copyLiterals.js --since
+draft, `tools/drafts/tighten.ts`, on `2c090c9`; `copyLiterals.js --since
 2c090c9 tighten` shows these 18 keys and nothing else. 1750 shadows each,
 reusing its existing phrasing.
 
@@ -651,7 +651,7 @@ which the setup sentence replaces).
   the idle one, so there is nothing new to translate.
 
 **Loose ends - IMPLEMENTED 28 September 2026**, both apps: the `loose` draft
-in `tools/copyDraft.ts`, on `5d71a3c`; `copyLiterals.js --since 5d71a3c
+in `tools/drafts/loose.ts`, on `5d71a3c`; `copyLiterals.js --since 5d71a3c
 loose` shows these six keys and nothing else. The units' (i) said a switch
 "changes only how I write the numbers", which is false on an English page,
 where Imperial also switches to the English of 1750 (§6). It now says the
@@ -817,7 +817,7 @@ worth a line each:
   app makes no sound of its own and does not keep the screen awake, so
   keeping it open helps only if the cook is watching it. *Made true on 27
   September: the app now rings on screen when no notification holds a
-  deadline (`EggTimerRing`, `Ringer.swift`).*
+  deadline (`deadlineToRing` in the core, `Ringer.swift`).*
 - `learned.pan` (web), "your pan takes {time} to boil", has the same fault as
   the held-back `readout.sub.coldAssumes`. `{time}` is `estimateTimeToBoil`:
   a blend of past boils, or the nearest volume's time scaled by litres.
@@ -1260,7 +1260,7 @@ whole catalogue is for their review. iOS is untouched and follows.
   `copy/en.json` at the same time; its 1750 twin says what happens.
 
 **As built (iOS), 28 September 2026.** Commits `01c621e` to `15cf890`,
-drafted as `period_ios` in `tools/copyDraft.ts`. Like the web half, it is for
+drafted as `period_ios` in `tools/drafts/period_ios.ts`. Like the web half, it is for
 the owner's review.
 
 - **The switch is ported, not rewritten.** `src/core/language.ts` is
@@ -1273,7 +1273,7 @@ the owner's review.
   than `language`, because a launch argument of that name would shadow it
   (UserDefaults' argument domain). It reads the state in the app's `init`,
   so the first frame is already in the cook's language. It listens for
-  `.unitsFlipped`, which `Kitchen.chooseUnits` posts when the cook changes
+  `.unitsFlipped`, which `Planner.chooseUnits` posts when the cook changes
   the units and never for a default. Nothing in it touches the units. The
   language is observed, so a pick or a units flip redraws every word in
   place.

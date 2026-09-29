@@ -3,7 +3,7 @@ import EggTimerCore
 import EggTimerCopy
 
 /// Settings: what belongs to the kitchen rather than the egg (UI.md sections
-/// 2 and 3, the web's `#kitchen`). Set once, cook many, so it is a page of its
+/// 2 and 3, the web's `#settings`). Set once, cook many, so it is a page of its
 /// own, pushed, and visited rarely. Each item has its (i).
 ///
 /// In sous-vide the settings that change nothing there are put away, as on
