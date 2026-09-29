@@ -14,7 +14,7 @@ public struct Egg: Sendable, Equatable, Codable {
 
 /// The iOS app only weighs eggs, so only `eggFromMass` is here: the web's
 /// measure-by-width (`eggFromMinorDiameter`) and `diffusionTime` stay in
-/// TypeScript alone (owner, 28 September, D4).
+/// TypeScript alone.
 public enum Geometry {
     public static func eggFromMass(_ massKg: Double) -> Egg {
         let volume = massKg / Constants.rhoEgg

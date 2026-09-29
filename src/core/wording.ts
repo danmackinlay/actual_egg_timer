@@ -266,14 +266,12 @@ export function clauseKeys(f: ClauseFacts): Record<Clause, ClauseKeys> {
  * These are not sentences. They are UNIT CHOICES - when minutes stop being a
  * useful unit and become hours, when hours become days, when a date stops being
  * a weekday and becomes "N weeks ago". Both apps have to bucket an estimate
- * identically or the same number reads differently on each, which is precisely
- * what happened: they were transliterated by hand and at a 58 C bath only two of
- * the six branches below are ever reached, so four of them were ported and never
- * once executed in either language.
+ * identically or the same number reads differently on each, and at a 58 C bath
+ * only two of the six branches below are ever reached, so a copy kept by hand
+ * in each app would go untested.
  *
- * They used to return the English as well, on the grounds that a number and
- * its unit are one thing. They still are - but the thing is a catalogue key and
- * its numbers, because "22 h 43 min" is English, and so is the order of the
+ * They return a catalogue key and its numbers, not English. A number and its
+ * unit are one thing, but "22 h 43 min" is English, and so is the order of the
  * words in "3 weeks ago". Core picks the bucket; the catalogue says it.
  */
 
@@ -305,8 +303,8 @@ export function longDuration(seconds: number): CopyRef {
  * normalises to midnight and divides - and neither should be reimplemented
  * here. For the same reason `sousvide.start.lastWeekday` wants a `{weekday}`
  * that this does not supply: the app adds the name, from `weekdayKey`. Both
- * apps take it from the catalogue, not from a platform formatter (F4,
- * LANGUAGE.md §2): the translator sees the names, and can give the form the
+ * apps take it from the catalogue, not from a platform formatter
+ * (LANGUAGE.md §2): the translator sees the names, and can give the form the
  * sentence needs, which in Czech is not the dictionary one.
  */
 export function startPhrase(daysAgo: number): CopyRef {

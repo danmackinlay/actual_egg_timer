@@ -18,8 +18,9 @@ import EggTimerCopy
 /// Grid values are `n * num / den` from integers, the double nearest the
 /// decimal, and rounding is `floor(x + 0.5)` written out, because
 /// `rounded()` and JavaScript's `Math.round` disagree about negative halves.
-/// Numbers are written with `String(format:)` and no locale: locale-aware
-/// digits are F4's, and until then both apps print the same ones.
+/// `displayText` writes plain digits with `String(format:)` and no locale, as
+/// the web's `toFixed` does; what the cook reads goes through the formatting
+/// locale (Format.swift).
 ///
 /// Pure, like the rest of this package. The app asks `Locale` for the region,
 /// the measurement system and the temperature preference, and hands them in.
@@ -95,7 +96,7 @@ private func unitKeys(_ unit: UnitId) -> (unit: String, format: String) {
 /// Every number with a unit that either app shows or takes. `temperature` is
 /// a readout (peak yolk, the bath, the presets); `eggTemp` is the egg's
 /// temperature a cook can type (on the web); `probeTemp` is a probe
-/// thermometer's reading at the centre (E4), to a tenth and never clamped.
+/// thermometer's reading at the centre, to a tenth and never clamped.
 public enum Quantity: String, Sendable, CaseIterable {
     case temperature, eggTemp, probeTemp, boilingPoint, mass, altitude, water
 }
@@ -275,7 +276,8 @@ public func effectiveUnits(chosen: UnitSystem?, regional: UnitSystem) -> UnitSys
     chosen ?? regional
 }
 
-/// An explicit change of system. F6 listens for `metricToImperial`.
+/// An explicit change of system. `languageAfterFlip` listens for
+/// `metricToImperial`.
 public enum UnitsFlip: String, Sendable {
     case metricToImperial, imperialToMetric
 }

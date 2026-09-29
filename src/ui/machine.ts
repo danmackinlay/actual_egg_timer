@@ -23,10 +23,9 @@ import { Cooling } from '../core/protocol.js';
 import { PulledBy } from '../core/record.js';
 import { COOLING_SECONDS, PULL_GRACE_SECONDS } from '../core/policy.js';
 
-/** The lengths of the two untimed stages, from the core. They were a pair of
- *  literals here and another pair in ios/App/Cook.swift, with a comment on the
- *  Swift side asserting that they matched. `phaseAt` in the core now states the
- *  whole timeline, and test/machine.test.ts holds this file to it. */
+/** The lengths of the two untimed stages, from the core, so the two apps
+ *  cannot differ. `phaseAt` in the core states the whole timeline, and
+ *  test/machine.test.ts holds this file to it. */
 export { COOLING_SECONDS, PULL_GRACE_SECONDS } from '../core/policy.js';
 
 export type Phase = 'IDLE' | 'HEATING' | 'COOKING' | 'PULL' | 'COOLING' | 'DONE';
@@ -55,7 +54,7 @@ export interface Machine {
   /** Epoch ms cooling finishes. 0 unless cooling. */
   coolEnd_ms: number;
   /** How long the counted cooling runs once the egg is out, s: to the moment
-   *  the yolk's centre peaks, for this cook (`coolingSecondsFor`, E4), which
+   *  the yolk's centre peaks, for this cook (`coolingSecondsFor`), which
    *  is also when a probe reading is asked for. Set when the cook starts and
    *  again whenever it is re-solved. */
   cool_s: number;

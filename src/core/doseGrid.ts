@@ -12,7 +12,7 @@
  * interpolation of the raw value would be hopeless. In log space the surface is
  * close to linear, because log10(dose) is roughly T/z and T is smooth.
  *
- * The yolk's PEAK temperature is kept beside the doses (E4), in degrees rather
+ * The yolk's PEAK temperature is kept beside the doses, in degrees rather
  * than logs: it is what a probe thermometer at the centre reads when the
  * centre peaks, and it is smooth in both alpha and cook time, so it is
  * interpolated exactly as the doses are.
@@ -32,7 +32,7 @@ export interface DoseGrid {
   /** log10 equivalent-minutes, row-major [alphaIndex * timeCount + timeIndex]. */
   logYolk: number[];
   logWhite: number[];
-  /** The yolk centre's peak temperature, C, same layout (E4): what a probe at
+  /** The yolk centre's peak temperature, C, same layout: what a probe at
    *  the centre reads at `peakYolkTime_s`. */
   peakYolk_C: number[];
 }
@@ -134,7 +134,7 @@ export function lookupLogWhiteDose(g: DoseGrid, alpha_m2s: number, cookTime_s: n
 }
 
 /** The yolk centre's peak temperature, C: what a probe at the centre reads
- *  when the centre peaks (E4). */
+ *  when the centre peaks. */
 export function lookupPeakYolk_C(g: DoseGrid, alpha_m2s: number, cookTime_s: number): number {
   return interpolate(g.peakYolk_C, g, alpha_m2s, cookTime_s);
 }

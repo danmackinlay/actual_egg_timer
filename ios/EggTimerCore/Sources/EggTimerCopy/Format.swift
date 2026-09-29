@@ -16,7 +16,7 @@ import Foundation
 ///    prints before "PM" and what CLDR says. V8 prints a plain space there, and
 ///    the web side normalises to this.
 ///  - A time of day never zero-pads its hour: "9:05", not "09:05", in every
-///    locale (the owner, 27 September). `unpadHour` does it, here and on the
+///    locale (the owner's rule). `unpadHour` does it, here and on the
 ///    web, after the platform has formatted.
 ///
 /// Every formatter is given an explicit locale and UTC, and a time of day is

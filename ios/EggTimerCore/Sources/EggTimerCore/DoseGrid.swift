@@ -13,7 +13,7 @@ import Foundation
 /// interpolation of the raw value would be hopeless. In log space the surface is
 /// close to linear, because log10(dose) is roughly T/z and T is smooth.
 ///
-/// The yolk's peak temperature is kept beside the doses (E4), in degrees: what
+/// The yolk's peak temperature is kept beside the doses, in degrees: what
 /// a probe at the centre reads when the centre peaks. See src/core/doseGrid.ts.
 public struct DoseGrid: Sendable {
     public let logAlphaMin: Double
@@ -25,7 +25,7 @@ public struct DoseGrid: Sendable {
     /// log10 equivalent-minutes, row-major [alphaIndex * timeCount + timeIndex].
     public let logYolk: [Double]
     public let logWhite: [Double]
-    /// The yolk centre's peak temperature, C, same layout (E4).
+    /// The yolk centre's peak temperature, C, same layout.
     public let peakYolkC: [Double]
 
     public init(
@@ -144,7 +144,7 @@ public func lookupLogWhiteDose(_ g: DoseGrid, _ alphaM2s: Double, _ cookTimeS: D
     interpolate(g.logWhite, g, alphaM2s, cookTimeS)
 }
 
-/// The yolk centre's peak temperature, C (E4).
+/// The yolk centre's peak temperature, C.
 public func lookupPeakYolkC(_ g: DoseGrid, _ alphaM2s: Double, _ cookTimeS: Double) -> Double {
     interpolate(g.peakYolkC, g, alphaM2s, cookTimeS)
 }

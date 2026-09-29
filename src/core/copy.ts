@@ -49,7 +49,7 @@ export type CopyArg = string | number | Fixed;
 
 export type CopyArgs = Readonly<Record<string, CopyArg>>;
 
-/** What core returns where it used to return English: a key, and the numbers
+/** What core returns instead of English: a key, and the numbers
  *  the sentence needs. The app renders it, and may add arguments of its own
  *  (a weekday name, say) that only a platform can answer. */
 export interface CopyRef {

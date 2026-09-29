@@ -42,7 +42,7 @@ public enum CopyArg: Sendable, Equatable {
 
 public typealias CopyArgs = [String: CopyArg]
 
-/// What the core returns where it used to return English: a key, and the
+/// What the core returns instead of English: a key, and the
 /// numbers the sentence needs. The app renders it, and may add arguments of its
 /// own (a weekday name, say) that only a platform can answer.
 public struct CopyRef: Sendable, Equatable {

@@ -115,7 +115,7 @@ const UNIT_KEYS: Record<UnitId, { unit: string; format: string }> = {
  *
  *  - `temperature`   a readout: peak yolk, the bath, the presets, a hint. 1 degree.
  *  - `eggTemp`       the typed egg temperature.
- *  - `probeTemp`     a probe thermometer's reading at the centre (E4), typed
+ *  - `probeTemp`     a probe thermometer's reading at the centre, typed
  *                    to a tenth, as a probe shows it. Not clamped: a reading
  *                    the egg could not have made is refused, not moved.
  *  - `boilingPoint`  the water's boiling point, to a tenth of a degree.
@@ -368,8 +368,8 @@ export function effectiveUnits(chosen: UnitSystem | null, regional: UnitSystem):
   return chosen ?? regional;
 }
 
-/** An explicit change of system, in the direction it went. F6 listens for
- *  `metricToImperial`: it is the switch into the English of 1750
+/** An explicit change of system, in the direction it went.
+ *  `languageAfterFlip` listens for `metricToImperial`: it is the switch into the English of 1750
  *  (LANGUAGE.md §6), and only a cook's own choice may throw it. */
 export type UnitsFlip = 'metricToImperial' | 'imperialToMetric';
 
