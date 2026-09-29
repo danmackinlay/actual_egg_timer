@@ -158,7 +158,7 @@ export function coolingMedium_C(cooling: Cooling, ambient_C: number): number {
  * over almost adiabatically, and its surface tracks its own bulk temperature
  * decaying toward the room.
  *
- * `startFrom_C` is the egg's VOLUME-AVERAGE temperature at the moment it left
+ * `meanAtPull_C` is the egg's VOLUME-AVERAGE temperature at the moment it left
  * the water, not the water temperature. A lumped body relaxes from its own
  * bulk temperature; using the water's would keep a briefly-cooked egg near
  * boiling in open air, which is badly wrong for short cooks.

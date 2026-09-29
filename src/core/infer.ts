@@ -87,7 +87,7 @@ export interface Particle {
   tauAirScale: number;
   /** The sd of the Gaussian every yolk answer is seen through, log10 yolk dose
    *  units: how sharply this cook tells one yolk from the next. The white's is
-   *  the same scale in degrees (`whiteNoise`). */
+   *  the same scale in degrees (`WHITE_NOISE_PER_YOLK`). */
   noise: number;
   /** Additive shift on the white's runny | tender cutpoint, log10 white dose
    *  units. Positive means the white needs more than the model thinks: it sets

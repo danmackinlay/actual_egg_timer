@@ -609,7 +609,7 @@ function renderReadout(now_ms: number, sol: Solution, warning: string): void {
 
 /** Which way the egg is likely to miss, and the white's line, under the
  *  time, with one (i) that explains the bracket, how to play safe with it and
- *  what I learn from (src/ui/outcome.ts). While idle they are the choice on
+ *  what I learn from (src/core/wording.ts). While idle they are the choice on
  *  screen's, and blank until this pot's surface lands - the direction's line
  *  keeps its height, so nothing moves when they arrive. Once a cook is running
  *  the direction and the white's line are what they were at "Eggs in"; the
