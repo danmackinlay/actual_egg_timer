@@ -505,122 +505,102 @@
         {
           "si": -40,
           "value": -40,
-          "text": "-40",
-          "rendered": "-40 °C"
+          "text": "-40"
         },
         {
           "si": -2,
           "value": -2,
-          "text": "-2",
-          "rendered": "-2 °C"
+          "text": "-2"
         },
         {
           "si": 0,
           "value": 0,
-          "text": "0",
-          "rendered": "0 °C"
+          "text": "0"
         },
         {
           "si": 4,
           "value": 4,
-          "text": "4",
-          "rendered": "4 °C"
+          "text": "4"
         },
         {
           "si": 20,
           "value": 20,
-          "text": "20",
-          "rendered": "20 °C"
+          "text": "20"
         },
         {
           "si": 37,
           "value": 37,
-          "text": "37",
-          "rendered": "37 °C"
+          "text": "37"
         },
         {
           "si": 40,
           "value": 40,
-          "text": "40",
-          "rendered": "40 °C"
+          "text": "40"
         },
         {
           "si": 58,
           "value": 58,
-          "text": "58",
-          "rendered": "58 °C"
+          "text": "58"
         },
         {
           "si": 60,
           "value": 60,
-          "text": "60",
-          "rendered": "60 °C"
+          "text": "60"
         },
         {
           "si": 63,
           "value": 63,
-          "text": "63",
-          "rendered": "63 °C"
+          "text": "63"
         },
         {
           "si": 65,
           "value": 65,
-          "text": "65",
-          "rendered": "65 °C"
+          "text": "65"
         },
         {
           "si": 82.4,
           "value": 82,
-          "text": "82",
-          "rendered": "82 °C"
+          "text": "82"
         },
         {
           "si": 100,
           "value": 100,
-          "text": "100",
-          "rendered": "100 °C"
+          "text": "100"
         },
         {
           "si": 101.3,
           "value": 101,
-          "text": "101",
-          "rendered": "101 °C"
+          "text": "101"
         },
         {
           "si": 3,
           "value": 3,
-          "text": "3",
-          "rendered": "3 °C"
+          "text": "3"
         },
         {
           "si": 4.25,
           "value": 4,
-          "text": "4",
-          "rendered": "4 °C"
+          "text": "4"
         },
         {
           "si": 4.5,
           "value": 5,
-          "text": "5",
-          "rendered": "5 °C"
+          "text": "5"
         },
         {
           "si": 4.75,
           "value": 5,
-          "text": "5",
-          "rendered": "5 °C"
+          "text": "5"
         },
         {
           "si": 5,
           "value": 5,
-          "text": "5",
-          "rendered": "5 °C"
+          "text": "5"
         },
         {
           "si": 5.5,
           "value": 6,
-          "text": "6",
-          "rendered": "6 °C"
+          "text": "6"
         }
       ],
       "notANumber": {
@@ -663,128 +643,107 @@
         {
           "si": -40,
           "value": -40,
-          "text": "-40",
-          "rendered": "-40 °F"
+          "text": "-40"
         },
         {
           "si": -2,
           "value": 28,
-          "text": "28",
-          "rendered": "28 °F"
+          "text": "28"
         },
         {
           "si": 0,
           "value": 32,
-          "text": "32",
-          "rendered": "32 °F"
+          "text": "32"
         },
         {
           "si": 4,
           "value": 39,
-          "text": "39",
-          "rendered": "39 °F"
+          "text": "39"
         },
         {
           "si": 20,
           "value": 68,
-          "text": "68",
-          "rendered": "68 °F"
+          "text": "68"
         },
         {
           "si": 37,
           "value": 99,
-          "text": "99",
-          "rendered": "99 °F"
+          "text": "99"
         },
         {
           "si": 40,
           "value": 104,
-          "text": "104",
-          "rendered": "104 °F"
+          "text": "104"
         },
         {
           "si": 58,
           "value": 136,
-          "text": "136",
-          "rendered": "136 °F"
+          "text": "136"
         },
         {
           "si": 60,
           "value": 140,
-          "text": "140",
-          "rendered": "140 °F"
+          "text": "140"
         },
         {
           "si": 63,
           "value": 145,
-          "text": "145",
-          "rendered": "145 °F"
+          "text": "145"
         },
         {
           "si": 65,
           "value": 149,
-          "text": "149",
-          "rendered": "149 °F"
+          "text": "149"
         },
         {
           "si": 82.4,
           "value": 180,
-          "text": "180",
-          "rendered": "180 °F"
+          "text": "180"
         },
         {
           "si": 100,
           "value": 212,
-          "text": "212",
-          "rendered": "212 °F"
+          "text": "212"
         },
         {
           "si": 101.3,
           "value": 214,
-          "text": "214",
-          "rendered": "214 °F"
+          "text": "214"
         },
         {
           "si": 3.333333333333333,
           "value": 38,
-          "text": "38",
-          "rendered": "38 °F"
+          "text": "38"
         },
         {
           "si": 3.888888888888889,
           "value": 39,
-          "text": "39",
-          "rendered": "39 °F"
+          "text": "39"
         },
         {
           "si": 4.027777777777778,
           "value": 39,
-          "text": "39",
-          "rendered": "39 °F"
+          "text": "39"
         },
         {
           "si": 4.166666666666667,
           "value": 40,
-          "text": "40",
-          "rendered": "40 °F"
+          "text": "40"
         },
         {
           "si": 4.305555555555555,
           "value": 40,
-          "text": "40",
-          "rendered": "40 °F"
+          "text": "40"
         },
         {
           "si": 4.444444444444445,
           "value": 40,
-          "text": "40",
-          "rendered": "40 °F"
+          "text": "40"
         },
         {
           "si": 4.722222222222222,
           "value": 41,
-          "text": "41",
-          "rendered": "41 °F"
+          "text": "41"
         }
       ],
       "notANumber": {
@@ -833,158 +792,132 @@
         {
           "si": -40,
           "value": -2,
-          "text": "-2",
-          "rendered": "-2 °C"
+          "text": "-2"
         },
         {
           "si": -2,
           "value": -2,
-          "text": "-2",
-          "rendered": "-2 °C"
+          "text": "-2"
         },
         {
           "si": 0,
           "value": 0,
-          "text": "0",
-          "rendered": "0 °C"
+          "text": "0"
         },
         {
           "si": 4,
           "value": 4,
-          "text": "4",
-          "rendered": "4 °C"
+          "text": "4"
         },
         {
           "si": 20,
           "value": 20,
-          "text": "20",
-          "rendered": "20 °C"
+          "text": "20"
         },
         {
           "si": 37,
           "value": 37,
-          "text": "37",
-          "rendered": "37 °C"
+          "text": "37"
         },
         {
           "si": 40,
           "value": 40,
-          "text": "40",
-          "rendered": "40 °C"
+          "text": "40"
         },
         {
           "si": 58,
           "value": 40,
-          "text": "40",
-          "rendered": "40 °C"
+          "text": "40"
         },
         {
           "si": 60,
           "value": 40,
-          "text": "40",
-          "rendered": "40 °C"
+          "text": "40"
         },
         {
           "si": 63,
           "value": 40,
-          "text": "40",
-          "rendered": "40 °C"
+          "text": "40"
         },
         {
           "si": 65,
           "value": 40,
-          "text": "40",
-          "rendered": "40 °C"
+          "text": "40"
         },
         {
           "si": 82.4,
           "value": 40,
-          "text": "40",
-          "rendered": "40 °C"
+          "text": "40"
         },
         {
           "si": 100,
           "value": 40,
-          "text": "40",
-          "rendered": "40 °C"
+          "text": "40"
         },
         {
           "si": 101.3,
           "value": 40,
-          "text": "40",
-          "rendered": "40 °C"
+          "text": "40"
         },
         {
           "si": 18,
           "value": 18,
-          "text": "18",
-          "rendered": "18 °C"
+          "text": "18"
         },
         {
           "si": 19,
           "value": 19,
-          "text": "19",
-          "rendered": "19 °C"
+          "text": "19"
         },
         {
           "si": 19.25,
           "value": 19,
-          "text": "19",
-          "rendered": "19 °C"
+          "text": "19"
         },
         {
           "si": 19.5,
           "value": 20,
-          "text": "20",
-          "rendered": "20 °C"
+          "text": "20"
         },
         {
           "si": 19.75,
           "value": 20,
-          "text": "20",
-          "rendered": "20 °C"
+          "text": "20"
         },
         {
           "si": 20.5,
           "value": 21,
-          "text": "21",
-          "rendered": "21 °C"
+          "text": "21"
         },
         {
           "si": -2.000000001,
           "value": -2,
-          "text": "-2",
-          "rendered": "-2 °C"
+          "text": "-2"
         },
         {
           "si": -1.999999999,
           "value": -2,
-          "text": "-2",
-          "rendered": "-2 °C"
+          "text": "-2"
         },
         {
           "si": 39.999999999,
           "value": 40,
-          "text": "40",
-          "rendered": "40 °C"
+          "text": "40"
         },
         {
           "si": 40.000000001,
           "value": 40,
-          "text": "40",
-          "rendered": "40 °C"
+          "text": "40"
         },
         {
           "si": -1002,
           "value": -2,
-          "text": "-2",
-          "rendered": "-2 °C"
+          "text": "-2"
         },
         {
           "si": 1040,
           "value": 40,
-          "text": "40",
-          "rendered": "40 °C"
+          "text": "40"
         }
       ],
       "notANumber": {
@@ -1264,158 +1197,132 @@
         {
           "si": -40,
           "value": 29,
-          "text": "29",
-          "rendered": "29 °F"
+          "text": "29"
         },
         {
           "si": -2,
           "value": 29,
-          "text": "29",
-          "rendered": "29 °F"
+          "text": "29"
         },
         {
           "si": 0,
           "value": 32,
-          "text": "32",
-          "rendered": "32 °F"
+          "text": "32"
         },
         {
           "si": 4,
           "value": 39,
-          "text": "39",
-          "rendered": "39 °F"
+          "text": "39"
         },
         {
           "si": 20,
           "value": 68,
-          "text": "68",
-          "rendered": "68 °F"
+          "text": "68"
         },
         {
           "si": 37,
           "value": 99,
-          "text": "99",
-          "rendered": "99 °F"
+          "text": "99"
         },
         {
           "si": 40,
           "value": 104,
-          "text": "104",
-          "rendered": "104 °F"
+          "text": "104"
         },
         {
           "si": 58,
           "value": 104,
-          "text": "104",
-          "rendered": "104 °F"
+          "text": "104"
         },
         {
           "si": 60,
           "value": 104,
-          "text": "104",
-          "rendered": "104 °F"
+          "text": "104"
         },
         {
           "si": 63,
           "value": 104,
-          "text": "104",
-          "rendered": "104 °F"
+          "text": "104"
         },
         {
           "si": 65,
           "value": 104,
-          "text": "104",
-          "rendered": "104 °F"
+          "text": "104"
         },
         {
           "si": 82.4,
           "value": 104,
-          "text": "104",
-          "rendered": "104 °F"
+          "text": "104"
         },
         {
           "si": 100,
           "value": 104,
-          "text": "104",
-          "rendered": "104 °F"
+          "text": "104"
         },
         {
           "si": 101.3,
           "value": 104,
-          "text": "104",
-          "rendered": "104 °F"
+          "text": "104"
         },
         {
           "si": 18.88888888888889,
           "value": 66,
-          "text": "66",
-          "rendered": "66 °F"
+          "text": "66"
         },
         {
           "si": 19.444444444444443,
           "value": 67,
-          "text": "67",
-          "rendered": "67 °F"
+          "text": "67"
         },
         {
           "si": 19.583333333333332,
           "value": 67,
-          "text": "67",
-          "rendered": "67 °F"
+          "text": "67"
         },
         {
           "si": 19.72222222222222,
           "value": 68,
-          "text": "68",
-          "rendered": "68 °F"
+          "text": "68"
         },
         {
           "si": 19.86111111111111,
           "value": 68,
-          "text": "68",
-          "rendered": "68 °F"
+          "text": "68"
         },
         {
           "si": 20.27777777777778,
           "value": 69,
-          "text": "69",
-          "rendered": "69 °F"
+          "text": "69"
         },
         {
           "si": -2.000000001,
           "value": 29,
-          "text": "29",
-          "rendered": "29 °F"
+          "text": "29"
         },
         {
           "si": -1.999999999,
           "value": 29,
-          "text": "29",
-          "rendered": "29 °F"
+          "text": "29"
         },
         {
           "si": 39.999999999,
           "value": 104,
-          "text": "104",
-          "rendered": "104 °F"
+          "text": "104"
         },
         {
           "si": 40.000000001,
           "value": 104,
-          "text": "104",
-          "rendered": "104 °F"
+          "text": "104"
         },
         {
           "si": -1002,
           "value": 29,
-          "text": "29",
-          "rendered": "29 °F"
+          "text": "29"
         },
         {
           "si": 1040,
           "value": 104,
-          "text": "104",
-          "rendered": "104 °F"
+          "text": "104"
         }
       ],
       "notANumber": {
@@ -1854,122 +1761,102 @@
         {
           "si": -40,
           "value": -40,
-          "text": "-40.0",
-          "rendered": "-40.0 °C"
+          "text": "-40.0"
         },
         {
           "si": -2,
           "value": -2,
-          "text": "-2.0",
-          "rendered": "-2.0 °C"
+          "text": "-2.0"
         },
         {
           "si": 0,
           "value": 0,
-          "text": "0.0",
-          "rendered": "0.0 °C"
+          "text": "0.0"
         },
         {
           "si": 4,
           "value": 4,
-          "text": "4.0",
-          "rendered": "4.0 °C"
+          "text": "4.0"
         },
         {
           "si": 20,
           "value": 20,
-          "text": "20.0",
-          "rendered": "20.0 °C"
+          "text": "20.0"
         },
         {
           "si": 37,
           "value": 37,
-          "text": "37.0",
-          "rendered": "37.0 °C"
+          "text": "37.0"
         },
         {
           "si": 40,
           "value": 40,
-          "text": "40.0",
-          "rendered": "40.0 °C"
+          "text": "40.0"
         },
         {
           "si": 58,
           "value": 58,
-          "text": "58.0",
-          "rendered": "58.0 °C"
+          "text": "58.0"
         },
         {
           "si": 60,
           "value": 60,
-          "text": "60.0",
-          "rendered": "60.0 °C"
+          "text": "60.0"
         },
         {
           "si": 63,
           "value": 63,
-          "text": "63.0",
-          "rendered": "63.0 °C"
+          "text": "63.0"
         },
         {
           "si": 65,
           "value": 65,
-          "text": "65.0",
-          "rendered": "65.0 °C"
+          "text": "65.0"
         },
         {
           "si": 82.4,
           "value": 82.4,
-          "text": "82.4",
-          "rendered": "82.4 °C"
+          "text": "82.4"
         },
         {
           "si": 100,
           "value": 100,
-          "text": "100.0",
-          "rendered": "100.0 °C"
+          "text": "100.0"
         },
         {
           "si": 101.3,
           "value": 101.3,
-          "text": "101.3",
-          "rendered": "101.3 °C"
+          "text": "101.3"
         },
         {
           "si": 3.9,
           "value": 3.9,
-          "text": "3.9",
-          "rendered": "3.9 °C"
+          "text": "3.9"
         },
         {
           "si": 4.025,
           "value": 4,
-          "text": "4.0",
-          "rendered": "4.0 °C"
+          "text": "4.0"
         },
         {
           "si": 4.05,
           "value": 4.1,
-          "text": "4.1",
-          "rendered": "4.1 °C"
+          "text": "4.1"
         },
         {
           "si": 4.075,
           "value": 4.1,
-          "text": "4.1",
-          "rendered": "4.1 °C"
+          "text": "4.1"
         },
         {
           "si": 4.1,
           "value": 4.1,
-          "text": "4.1",
-          "rendered": "4.1 °C"
+          "text": "4.1"
         },
         {
           "si": 4.15,
           "value": 4.2,
-          "text": "4.2",
-          "rendered": "4.2 °C"
+          "text": "4.2"
         }
       ],
       "notANumber": {
@@ -2012,128 +1899,107 @@
         {
           "si": -40,
           "value": -40,
-          "text": "-40.0",
-          "rendered": "-40.0 °F"
+          "text": "-40.0"
         },
         {
           "si": -2,
           "value": 28.4,
-          "text": "28.4",
-          "rendered": "28.4 °F"
+          "text": "28.4"
         },
         {
           "si": 0,
           "value": 32,
-          "text": "32.0",
-          "rendered": "32.0 °F"
+          "text": "32.0"
         },
         {
           "si": 4,
           "value": 39.2,
-          "text": "39.2",
-          "rendered": "39.2 °F"
+          "text": "39.2"
         },
         {
           "si": 20,
           "value": 68,
-          "text": "68.0",
-          "rendered": "68.0 °F"
+          "text": "68.0"
         },
         {
           "si": 37,
           "value": 98.6,
-          "text": "98.6",
-          "rendered": "98.6 °F"
+          "text": "98.6"
         },
         {
           "si": 40,
           "value": 104,
-          "text": "104.0",
-          "rendered": "104.0 °F"
+          "text": "104.0"
         },
         {
           "si": 58,
           "value": 136.4,
-          "text": "136.4",
-          "rendered": "136.4 °F"
+          "text": "136.4"
         },
         {
           "si": 60,
           "value": 140,
-          "text": "140.0",
-          "rendered": "140.0 °F"
+          "text": "140.0"
         },
         {
           "si": 63,
           "value": 145.4,
-          "text": "145.4",
-          "rendered": "145.4 °F"
+          "text": "145.4"
         },
         {
           "si": 65,
           "value": 149,
-          "text": "149.0",
-          "rendered": "149.0 °F"
+          "text": "149.0"
         },
         {
           "si": 82.4,
           "value": 180.3,
-          "text": "180.3",
-          "rendered": "180.3 °F"
+          "text": "180.3"
         },
         {
           "si": 100,
           "value": 212,
-          "text": "212.0",
-          "rendered": "212.0 °F"
+          "text": "212.0"
         },
         {
           "si": 101.3,
           "value": 214.3,
-          "text": "214.3",
-          "rendered": "214.3 °F"
+          "text": "214.3"
         },
         {
           "si": 3.944444444444445,
           "value": 39.1,
-          "text": "39.1",
-          "rendered": "39.1 °F"
+          "text": "39.1"
         },
         {
           "si": 4.000000000000002,
           "value": 39.2,
-          "text": "39.2",
-          "rendered": "39.2 °F"
+          "text": "39.2"
         },
         {
           "si": 4.013888888888889,
           "value": 39.2,
-          "text": "39.2",
-          "rendered": "39.2 °F"
+          "text": "39.2"
         },
         {
           "si": 4.027777777777778,
           "value": 39.3,
-          "text": "39.3",
-          "rendered": "39.3 °F"
+          "text": "39.3"
         },
         {
           "si": 4.04166666666667,
           "value": 39.3,
-          "text": "39.3",
-          "rendered": "39.3 °F"
+          "text": "39.3"
         },
         {
           "si": 4.055555555555558,
           "value": 39.3,
-          "text": "39.3",
-          "rendered": "39.3 °F"
+          "text": "39.3"
         },
         {
           "si": 4.083333333333334,
           "value": 39.4,
-          "text": "39.4",
-          "rendered": "39.4 °F"
+          "text": "39.4"
         }
       ],
       "notANumber": {
@@ -2176,122 +2042,102 @@
         {
           "si": -40,
           "value": -40,
-          "text": "-40.0",
-          "rendered": "-40.0 °C"
+          "text": "-40.0"
         },
         {
           "si": -2,
           "value": -2,
-          "text": "-2.0",
-          "rendered": "-2.0 °C"
+          "text": "-2.0"
         },
         {
           "si": 0,
           "value": 0,
-          "text": "0.0",
-          "rendered": "0.0 °C"
+          "text": "0.0"
         },
         {
           "si": 4,
           "value": 4,
-          "text": "4.0",
-          "rendered": "4.0 °C"
+          "text": "4.0"
         },
         {
           "si": 20,
           "value": 20,
-          "text": "20.0",
-          "rendered": "20.0 °C"
+          "text": "20.0"
         },
         {
           "si": 37,
           "value": 37,
-          "text": "37.0",
-          "rendered": "37.0 °C"
+          "text": "37.0"
         },
         {
           "si": 40,
           "value": 40,
-          "text": "40.0",
-          "rendered": "40.0 °C"
+          "text": "40.0"
         },
         {
           "si": 58,
           "value": 58,
-          "text": "58.0",
-          "rendered": "58.0 °C"
+          "text": "58.0"
         },
         {
           "si": 60,
           "value": 60,
-          "text": "60.0",
-          "rendered": "60.0 °C"
+          "text": "60.0"
         },
         {
           "si": 63,
           "value": 63,
-          "text": "63.0",
-          "rendered": "63.0 °C"
+          "text": "63.0"
         },
         {
           "si": 65,
           "value": 65,
-          "text": "65.0",
-          "rendered": "65.0 °C"
+          "text": "65.0"
         },
         {
           "si": 82.4,
           "value": 82.4,
-          "text": "82.4",
-          "rendered": "82.4 °C"
+          "text": "82.4"
         },
         {
           "si": 100,
           "value": 100,
-          "text": "100.0",
-          "rendered": "100.0 °C"
+          "text": "100.0"
         },
         {
           "si": 101.3,
           "value": 101.3,
-          "text": "101.3",
-          "rendered": "101.3 °C"
+          "text": "101.3"
         },
         {
           "si": 3.9,
           "value": 3.9,
-          "text": "3.9",
-          "rendered": "3.9 °C"
+          "text": "3.9"
         },
         {
           "si": 4.025,
           "value": 4,
-          "text": "4.0",
-          "rendered": "4.0 °C"
+          "text": "4.0"
         },
         {
           "si": 4.05,
           "value": 4.1,
-          "text": "4.1",
-          "rendered": "4.1 °C"
+          "text": "4.1"
         },
         {
           "si": 4.075,
           "value": 4.1,
-          "text": "4.1",
-          "rendered": "4.1 °C"
+          "text": "4.1"
         },
         {
           "si": 4.1,
           "value": 4.1,
-          "text": "4.1",
-          "rendered": "4.1 °C"
+          "text": "4.1"
         },
         {
           "si": 4.15,
           "value": 4.2,
-          "text": "4.2",
-          "rendered": "4.2 °C"
+          "text": "4.2"
         }
       ],
       "notANumber": {
@@ -2334,128 +2180,107 @@
         {
           "si": -40,
           "value": -40,
-          "text": "-40.0",
-          "rendered": "-40.0 °F"
+          "text": "-40.0"
         },
         {
           "si": -2,
           "value": 28.4,
-          "text": "28.4",
-          "rendered": "28.4 °F"
+          "text": "28.4"
         },
         {
           "si": 0,
           "value": 32,
-          "text": "32.0",
-          "rendered": "32.0 °F"
+          "text": "32.0"
         },
         {
           "si": 4,
           "value": 39.2,
-          "text": "39.2",
-          "rendered": "39.2 °F"
+          "text": "39.2"
         },
         {
           "si": 20,
           "value": 68,
-          "text": "68.0",
-          "rendered": "68.0 °F"
+          "text": "68.0"
         },
         {
           "si": 37,
           "value": 98.6,
-          "text": "98.6",
-          "rendered": "98.6 °F"
+          "text": "98.6"
         },
         {
           "si": 40,
           "value": 104,
-          "text": "104.0",
-          "rendered": "104.0 °F"
+          "text": "104.0"
         },
         {
           "si": 58,
           "value": 136.4,
-          "text": "136.4",
-          "rendered": "136.4 °F"
+          "text": "136.4"
         },
         {
           "si": 60,
           "value": 140,
-          "text": "140.0",
-          "rendered": "140.0 °F"
+          "text": "140.0"
         },
         {
           "si": 63,
           "value": 145.4,
-          "text": "145.4",
-          "rendered": "145.4 °F"
+          "text": "145.4"
         },
         {
           "si": 65,
           "value": 149,
-          "text": "149.0",
-          "rendered": "149.0 °F"
+          "text": "149.0"
         },
         {
           "si": 82.4,
           "value": 180.3,
-          "text": "180.3",
-          "rendered": "180.3 °F"
+          "text": "180.3"
         },
         {
           "si": 100,
           "value": 212,
-          "text": "212.0",
-          "rendered": "212.0 °F"
+          "text": "212.0"
         },
         {
           "si": 101.3,
           "value": 214.3,
-          "text": "214.3",
-          "rendered": "214.3 °F"
+          "text": "214.3"
         },
         {
           "si": 3.944444444444445,
           "value": 39.1,
-          "text": "39.1",
-          "rendered": "39.1 °F"
+          "text": "39.1"
         },
         {
           "si": 4.000000000000002,
           "value": 39.2,
-          "text": "39.2",
-          "rendered": "39.2 °F"
+          "text": "39.2"
         },
         {
           "si": 4.013888888888889,
           "value": 39.2,
-          "text": "39.2",
-          "rendered": "39.2 °F"
+          "text": "39.2"
         },
         {
           "si": 4.027777777777778,
           "value": 39.3,
-          "text": "39.3",
-          "rendered": "39.3 °F"
+          "text": "39.3"
         },
         {
           "si": 4.04166666666667,
           "value": 39.3,
-          "text": "39.3",
-          "rendered": "39.3 °F"
+          "text": "39.3"
         },
         {
           "si": 4.055555555555558,
           "value": 39.3,
-          "text": "39.3",
-          "rendered": "39.3 °F"
+          "text": "39.3"
         },
         {
           "si": 4.083333333333334,
           "value": 39.4,
-          "text": "39.4",
-          "rendered": "39.4 °F"
+          "text": "39.4"
         }
       ],
       "notANumber": {
@@ -2504,128 +2329,107 @@
         {
           "si": 25,
           "value": 25,
-          "text": "25",
-          "rendered": "25 g"
+          "text": "25"
         },
         {
           "si": 28.349523125,
           "value": 28,
-          "text": "28",
-          "rendered": "28 g"
+          "text": "28"
         },
         {
           "si": 46.1,
           "value": 46,
-          "text": "46",
-          "rendered": "46 g"
+          "text": "46"
         },
         {
           "si": 48,
           "value": 48,
-          "text": "48",
-          "rendered": "48 g"
+          "text": "48"
         },
         {
           "si": 60.2,
           "value": 60,
-          "text": "60",
-          "rendered": "60 g"
+          "text": "60"
         },
         {
           "si": 68,
           "value": 68,
-          "text": "68",
-          "rendered": "68 g"
+          "text": "68"
         },
         {
           "si": 74,
           "value": 74,
-          "text": "74",
-          "rendered": "74 g"
+          "text": "74"
         },
         {
           "si": 90,
           "value": 90,
-          "text": "90",
-          "rendered": "90 g"
+          "text": "90"
         },
         {
           "si": 57,
           "value": 57,
-          "text": "57",
-          "rendered": "57 g"
+          "text": "57"
         },
         {
           "si": 58,
           "value": 58,
-          "text": "58",
-          "rendered": "58 g"
+          "text": "58"
         },
         {
           "si": 58.25,
           "value": 58,
-          "text": "58",
-          "rendered": "58 g"
+          "text": "58"
         },
         {
           "si": 58.5,
           "value": 59,
-          "text": "59",
-          "rendered": "59 g"
+          "text": "59"
         },
         {
           "si": 58.75,
           "value": 59,
-          "text": "59",
-          "rendered": "59 g"
+          "text": "59"
         },
         {
           "si": 59,
           "value": 59,
-          "text": "59",
-          "rendered": "59 g"
+          "text": "59"
         },
         {
           "si": 59.5,
           "value": 60,
-          "text": "60",
-          "rendered": "60 g"
+          "text": "60"
         },
         {
           "si": 24.999999999,
           "value": 25,
-          "text": "25",
-          "rendered": "25 g"
+          "text": "25"
         },
         {
           "si": 25.000000001,
           "value": 25,
-          "text": "25",
-          "rendered": "25 g"
+          "text": "25"
         },
         {
           "si": 89.999999999,
           "value": 90,
-          "text": "90",
-          "rendered": "90 g"
+          "text": "90"
         },
         {
           "si": 90.000000001,
           "value": 90,
-          "text": "90",
-          "rendered": "90 g"
+          "text": "90"
         },
         {
           "si": -975,
           "value": 25,
-          "text": "25",
-          "rendered": "25 g"
+          "text": "25"
         },
         {
           "si": 1090,
           "value": 90,
-          "text": "90",
-          "rendered": "90 g"
+          "text": "90"
         }
       ],
       "notANumber": {
@@ -3020,128 +2824,107 @@
         {
           "si": 25,
           "value": 0.9,
-          "text": "0.9",
-          "rendered": "0.9 oz"
+          "text": "0.9"
         },
         {
           "si": 28.349523125,
           "value": 1,
-          "text": "1.0",
-          "rendered": "1.0 oz"
+          "text": "1.0"
         },
         {
           "si": 46.1,
           "value": 1.6,
-          "text": "1.6",
-          "rendered": "1.6 oz"
+          "text": "1.6"
         },
         {
           "si": 48,
           "value": 1.7,
-          "text": "1.7",
-          "rendered": "1.7 oz"
+          "text": "1.7"
         },
         {
           "si": 60.2,
           "value": 2.1,
-          "text": "2.1",
-          "rendered": "2.1 oz"
+          "text": "2.1"
         },
         {
           "si": 68,
           "value": 2.4,
-          "text": "2.4",
-          "rendered": "2.4 oz"
+          "text": "2.4"
         },
         {
           "si": 74,
           "value": 2.6,
-          "text": "2.6",
-          "rendered": "2.6 oz"
+          "text": "2.6"
         },
         {
           "si": 90,
           "value": 3.1,
-          "text": "3.1",
-          "rendered": "3.1 oz"
+          "text": "3.1"
         },
         {
           "si": 53.8640939375,
           "value": 1.9,
-          "text": "1.9",
-          "rendered": "1.9 oz"
+          "text": "1.9"
         },
         {
           "si": 56.69904625,
           "value": 2,
-          "text": "2.0",
-          "rendered": "2.0 oz"
+          "text": "2.0"
         },
         {
           "si": 57.407784328125,
           "value": 2,
-          "text": "2.0",
-          "rendered": "2.0 oz"
+          "text": "2.0"
         },
         {
           "si": 58.11652240625,
           "value": 2.1,
-          "text": "2.1",
-          "rendered": "2.1 oz"
+          "text": "2.1"
         },
         {
           "si": 58.82526048437501,
           "value": 2.1,
-          "text": "2.1",
-          "rendered": "2.1 oz"
+          "text": "2.1"
         },
         {
           "si": 59.5339985625,
           "value": 2.1,
-          "text": "2.1",
-          "rendered": "2.1 oz"
+          "text": "2.1"
         },
         {
           "si": 60.95147471875,
           "value": 2.2,
-          "text": "2.2",
-          "rendered": "2.2 oz"
+          "text": "2.2"
         },
         {
           "si": 24.999999999,
           "value": 0.9,
-          "text": "0.9",
-          "rendered": "0.9 oz"
+          "text": "0.9"
         },
         {
           "si": 25.000000001,
           "value": 0.9,
-          "text": "0.9",
-          "rendered": "0.9 oz"
+          "text": "0.9"
         },
         {
           "si": 89.999999999,
           "value": 3.1,
-          "text": "3.1",
-          "rendered": "3.1 oz"
+          "text": "3.1"
         },
         {
           "si": 90.000000001,
           "value": 3.1,
-          "text": "3.1",
-          "rendered": "3.1 oz"
+          "text": "3.1"
         },
         {
           "si": -975,
           "value": 0.9,
-          "text": "0.9",
-          "rendered": "0.9 oz"
+          "text": "0.9"
         },
         {
           "si": 1090,
           "value": 3.1,
-          "text": "3.1",
-          "rendered": "3.1 oz"
+          "text": "3.1"
         }
       ],
       "notANumber": {
@@ -3321,110 +3104,92 @@
         {
           "si": -400,
           "value": -400,
-          "text": "-400",
-          "rendered": "-400 m"
+          "text": "-400"
         },
         {
           "si": 0,
           "value": 0,
-          "text": "0",
-          "rendered": "0 m"
+          "text": "0"
         },
         {
           "si": 304.8,
           "value": 300,
-          "text": "300",
-          "rendered": "300 m"
+          "text": "300"
         },
         {
           "si": 1609,
           "value": 1600,
-          "text": "1600",
-          "rendered": "1,600 m"
+          "text": "1600"
         },
         {
           "si": 5000,
           "value": 5000,
-          "text": "5000",
-          "rendered": "5,000 m"
+          "text": "5000"
         },
         {
           "si": 2250,
           "value": 2250,
-          "text": "2250",
-          "rendered": "2,250 m"
+          "text": "2250"
         },
         {
           "si": 2300,
           "value": 2300,
-          "text": "2300",
-          "rendered": "2,300 m"
+          "text": "2300"
         },
         {
           "si": 2312.5,
           "value": 2300,
-          "text": "2300",
-          "rendered": "2,300 m"
+          "text": "2300"
         },
         {
           "si": 2325,
           "value": 2350,
-          "text": "2350",
-          "rendered": "2,350 m"
+          "text": "2350"
         },
         {
           "si": 2337.5,
           "value": 2350,
-          "text": "2350",
-          "rendered": "2,350 m"
+          "text": "2350"
         },
         {
           "si": 2350,
           "value": 2350,
-          "text": "2350",
-          "rendered": "2,350 m"
+          "text": "2350"
         },
         {
           "si": 2375,
           "value": 2400,
-          "text": "2400",
-          "rendered": "2,400 m"
+          "text": "2400"
         },
         {
           "si": -400.000000001,
           "value": -400,
-          "text": "-400",
-          "rendered": "-400 m"
+          "text": "-400"
         },
         {
           "si": -399.999999999,
           "value": -400,
-          "text": "-400",
-          "rendered": "-400 m"
+          "text": "-400"
         },
         {
           "si": 4999.999999999,
           "value": 5000,
-          "text": "5000",
-          "rendered": "5,000 m"
+          "text": "5000"
         },
         {
           "si": 5000.000000001,
           "value": 5000,
-          "text": "5000",
-          "rendered": "5,000 m"
+          "text": "5000"
         },
         {
           "si": -1400,
           "value": -400,
-          "text": "-400",
-          "rendered": "-400 m"
+          "text": "-400"
         },
         {
           "si": 6000,
           "value": 5000,
-          "text": "5000",
-          "rendered": "5,000 m"
+          "text": "5000"
         }
       ],
       "notANumber": {
@@ -4034,110 +3799,92 @@
         {
           "si": -400,
           "value": -1300,
-          "text": "-1300",
-          "rendered": "-1,300 ft"
+          "text": "-1300"
         },
         {
           "si": 0,
           "value": 0,
-          "text": "0",
-          "rendered": "0 ft"
+          "text": "0"
         },
         {
           "si": 304.8,
           "value": 1000,
-          "text": "1000",
-          "rendered": "1,000 ft"
+          "text": "1000"
         },
         {
           "si": 1609,
           "value": 5300,
-          "text": "5300",
-          "rendered": "5,300 ft"
+          "text": "5300"
         },
         {
           "si": 5000,
           "value": 16400,
-          "text": "16400",
-          "rendered": "16,400 ft"
+          "text": "16400"
         },
         {
           "si": 2286,
           "value": 7500,
-          "text": "7500",
-          "rendered": "7,500 ft"
+          "text": "7500"
         },
         {
           "si": 2316.48,
           "value": 7600,
-          "text": "7600",
-          "rendered": "7,600 ft"
+          "text": "7600"
         },
         {
           "si": 2324.1,
           "value": 7600,
-          "text": "7600",
-          "rendered": "7,600 ft"
+          "text": "7600"
         },
         {
           "si": 2331.7200000000003,
           "value": 7700,
-          "text": "7700",
-          "rendered": "7,700 ft"
+          "text": "7700"
         },
         {
           "si": 2339.34,
           "value": 7700,
-          "text": "7700",
-          "rendered": "7,700 ft"
+          "text": "7700"
         },
         {
           "si": 2346.96,
           "value": 7700,
-          "text": "7700",
-          "rendered": "7,700 ft"
+          "text": "7700"
         },
         {
           "si": 2362.2000000000003,
           "value": 7800,
-          "text": "7800",
-          "rendered": "7,800 ft"
+          "text": "7800"
         },
         {
           "si": -400.000000001,
           "value": -1300,
-          "text": "-1300",
-          "rendered": "-1,300 ft"
+          "text": "-1300"
         },
         {
           "si": -399.999999999,
           "value": -1300,
-          "text": "-1300",
-          "rendered": "-1,300 ft"
+          "text": "-1300"
         },
         {
           "si": 4999.999999999,
           "value": 16400,
-          "text": "16400",
-          "rendered": "16,400 ft"
+          "text": "16400"
         },
         {
           "si": 5000.000000001,
           "value": 16400,
-          "text": "16400",
-          "rendered": "16,400 ft"
+          "text": "16400"
         },
         {
           "si": -1400,
           "value": -1300,
-          "text": "-1300",
-          "rendered": "-1,300 ft"
+          "text": "-1300"
         },
         {
           "si": 6000,
           "value": 16400,
-          "text": "16400",
-          "rendered": "16,400 ft"
+          "text": "16400"
         }
       ],
       "notANumber": {
@@ -5092,116 +4839,97 @@
         {
           "si": 0.25,
           "value": 0.25,
-          "text": "0.25",
-          "rendered": "0.25 L"
+          "text": "0.25"
         },
         {
           "si": 0.56826125,
           "value": 0.5,
-          "text": "0.50",
-          "rendered": "0.50 L"
+          "text": "0.50"
         },
         {
           "si": 0.946352946,
           "value": 1,
-          "text": "1.00",
-          "rendered": "1.00 L"
+          "text": "1.00"
         },
         {
           "si": 1.8,
           "value": 1.75,
-          "text": "1.75",
-          "rendered": "1.75 L"
+          "text": "1.75"
         },
         {
           "si": 2,
           "value": 2,
-          "text": "2.00",
-          "rendered": "2.00 L"
+          "text": "2.00"
         },
         {
           "si": 12,
           "value": 12,
-          "text": "12.00",
-          "rendered": "12.00 L"
+          "text": "12.00"
         },
         {
           "si": 6,
           "value": 6,
-          "text": "6.00",
-          "rendered": "6.00 L"
+          "text": "6.00"
         },
         {
           "si": 6.25,
           "value": 6.25,
-          "text": "6.25",
-          "rendered": "6.25 L"
+          "text": "6.25"
         },
         {
           "si": 6.3125,
           "value": 6.25,
-          "text": "6.25",
-          "rendered": "6.25 L"
+          "text": "6.25"
         },
         {
           "si": 6.375,
           "value": 6.5,
-          "text": "6.50",
-          "rendered": "6.50 L"
+          "text": "6.50"
         },
         {
           "si": 6.4375,
           "value": 6.5,
-          "text": "6.50",
-          "rendered": "6.50 L"
+          "text": "6.50"
         },
         {
           "si": 6.5,
           "value": 6.5,
-          "text": "6.50",
-          "rendered": "6.50 L"
+          "text": "6.50"
         },
         {
           "si": 6.625,
           "value": 6.75,
-          "text": "6.75",
-          "rendered": "6.75 L"
+          "text": "6.75"
         },
         {
           "si": 0.249999999,
           "value": 0.25,
-          "text": "0.25",
-          "rendered": "0.25 L"
+          "text": "0.25"
         },
         {
           "si": 0.250000001,
           "value": 0.25,
-          "text": "0.25",
-          "rendered": "0.25 L"
+          "text": "0.25"
         },
         {
           "si": 11.999999999,
           "value": 12,
-          "text": "12.00",
-          "rendered": "12.00 L"
+          "text": "12.00"
         },
         {
           "si": 12.000000001,
           "value": 12,
-          "text": "12.00",
-          "rendered": "12.00 L"
+          "text": "12.00"
         },
         {
           "si": -999.75,
           "value": 0.25,
-          "text": "0.25",
-          "rendered": "0.25 L"
+          "text": "0.25"
         },
         {
           "si": 1012,
           "value": 12,
-          "text": "12.00",
-          "rendered": "12.00 L"
+          "text": "12.00"
         }
       ],
       "notANumber": {
@@ -5506,116 +5234,97 @@
         {
           "si": 0.25,
           "value": 0.25,
-          "text": "0.25",
-          "rendered": "0.25 L"
+          "text": "0.25"
         },
         {
           "si": 0.56826125,
           "value": 0.5,
-          "text": "0.50",
-          "rendered": "0.50 L"
+          "text": "0.50"
         },
         {
           "si": 0.946352946,
           "value": 1,
-          "text": "1.00",
-          "rendered": "1.00 L"
+          "text": "1.00"
         },
         {
           "si": 1.8,
           "value": 1.75,
-          "text": "1.75",
-          "rendered": "1.75 L"
+          "text": "1.75"
         },
         {
           "si": 2,
           "value": 2,
-          "text": "2.00",
-          "rendered": "2.00 L"
+          "text": "2.00"
         },
         {
           "si": 12,
           "value": 12,
-          "text": "12.00",
-          "rendered": "12.00 L"
+          "text": "12.00"
         },
         {
           "si": 6,
           "value": 6,
-          "text": "6.00",
-          "rendered": "6.00 L"
+          "text": "6.00"
         },
         {
           "si": 6.25,
           "value": 6.25,
-          "text": "6.25",
-          "rendered": "6.25 L"
+          "text": "6.25"
         },
         {
           "si": 6.3125,
           "value": 6.25,
-          "text": "6.25",
-          "rendered": "6.25 L"
+          "text": "6.25"
         },
         {
           "si": 6.375,
           "value": 6.5,
-          "text": "6.50",
-          "rendered": "6.50 L"
+          "text": "6.50"
         },
         {
           "si": 6.4375,
           "value": 6.5,
-          "text": "6.50",
-          "rendered": "6.50 L"
+          "text": "6.50"
         },
         {
           "si": 6.5,
           "value": 6.5,
-          "text": "6.50",
-          "rendered": "6.50 L"
+          "text": "6.50"
         },
         {
           "si": 6.625,
           "value": 6.75,
-          "text": "6.75",
-          "rendered": "6.75 L"
+          "text": "6.75"
         },
         {
           "si": 0.249999999,
           "value": 0.25,
-          "text": "0.25",
-          "rendered": "0.25 L"
+          "text": "0.25"
         },
         {
           "si": 0.250000001,
           "value": 0.25,
-          "text": "0.25",
-          "rendered": "0.25 L"
+          "text": "0.25"
         },
         {
           "si": 11.999999999,
           "value": 12,
-          "text": "12.00",
-          "rendered": "12.00 L"
+          "text": "12.00"
         },
         {
           "si": 12.000000001,
           "value": 12,
-          "text": "12.00",
-          "rendered": "12.00 L"
+          "text": "12.00"
         },
         {
           "si": -999.75,
           "value": 0.25,
-          "text": "0.25",
-          "rendered": "0.25 L"
+          "text": "0.25"
         },
         {
           "si": 1012,
           "value": 12,
-          "text": "12.00",
-          "rendered": "12.00 L"
+          "text": "12.00"
         }
       ],
       "notANumber": {
@@ -5920,116 +5629,97 @@
         {
           "si": 0.25,
           "value": 0.5,
-          "text": "0.50",
-          "rendered": "0.50 qt"
+          "text": "0.50"
         },
         {
           "si": 0.56826125,
           "value": 0.5,
-          "text": "0.50",
-          "rendered": "0.50 qt"
+          "text": "0.50"
         },
         {
           "si": 0.946352946,
           "value": 1,
-          "text": "1.00",
-          "rendered": "1.00 qt"
+          "text": "1.00"
         },
         {
           "si": 1.8,
           "value": 2,
-          "text": "2.00",
-          "rendered": "2.00 qt"
+          "text": "2.00"
         },
         {
           "si": 2,
           "value": 2,
-          "text": "2.00",
-          "rendered": "2.00 qt"
+          "text": "2.00"
         },
         {
           "si": 12,
           "value": 12.5,
-          "text": "12.50",
-          "rendered": "12.50 qt"
+          "text": "12.50"
         },
         {
           "si": 5.9147059125,
           "value": 6.25,
-          "text": "6.25",
-          "rendered": "6.25 qt"
+          "text": "6.25"
         },
         {
           "si": 6.151294149,
           "value": 6.5,
-          "text": "6.50",
-          "rendered": "6.50 qt"
+          "text": "6.50"
         },
         {
           "si": 6.210441208125,
           "value": 6.5,
-          "text": "6.50",
-          "rendered": "6.50 qt"
+          "text": "6.50"
         },
         {
           "si": 6.26958826725,
           "value": 6.75,
-          "text": "6.75",
-          "rendered": "6.75 qt"
+          "text": "6.75"
         },
         {
           "si": 6.328735326375,
           "value": 6.75,
-          "text": "6.75",
-          "rendered": "6.75 qt"
+          "text": "6.75"
         },
         {
           "si": 6.3878823855,
           "value": 6.75,
-          "text": "6.75",
-          "rendered": "6.75 qt"
+          "text": "6.75"
         },
         {
           "si": 6.50617650375,
           "value": 7,
-          "text": "7.00",
-          "rendered": "7.00 qt"
+          "text": "7.00"
         },
         {
           "si": 0.249999999,
           "value": 0.5,
-          "text": "0.50",
-          "rendered": "0.50 qt"
+          "text": "0.50"
         },
         {
           "si": 0.250000001,
           "value": 0.5,
-          "text": "0.50",
-          "rendered": "0.50 qt"
+          "text": "0.50"
         },
         {
           "si": 11.999999999,
           "value": 12.5,
-          "text": "12.50",
-          "rendered": "12.50 qt"
+          "text": "12.50"
         },
         {
           "si": 12.000000001,
           "value": 12.5,
-          "text": "12.50",
-          "rendered": "12.50 qt"
+          "text": "12.50"
         },
         {
           "si": -999.75,
           "value": 0.5,
-          "text": "0.50",
-          "rendered": "0.50 qt"
+          "text": "0.50"
         },
         {
           "si": 1012,
           "value": 12.5,
-          "text": "12.50",
-          "rendered": "12.50 qt"
+          "text": "12.50"
         }
       ],
       "notANumber": {
@@ -6339,116 +6029,97 @@
         {
           "si": 0.25,
           "value": 0.5,
-          "text": "0.50",
-          "rendered": "0.50 pt"
+          "text": "0.50"
         },
         {
           "si": 0.56826125,
           "value": 1,
-          "text": "1.00",
-          "rendered": "1.00 pt"
+          "text": "1.00"
         },
         {
           "si": 0.946352946,
           "value": 1.75,
-          "text": "1.75",
-          "rendered": "1.75 pt"
+          "text": "1.75"
         },
         {
           "si": 1.8,
           "value": 3.25,
-          "text": "3.25",
-          "rendered": "3.25 pt"
+          "text": "3.25"
         },
         {
           "si": 2,
           "value": 3.5,
-          "text": "3.50",
-          "rendered": "3.50 pt"
+          "text": "3.50"
         },
         {
           "si": 12,
           "value": 21,
-          "text": "21.00",
-          "rendered": "21.00 pt"
+          "text": "21.00"
         },
         {
           "si": 5.966743125000001,
           "value": 10.5,
-          "text": "10.50",
-          "rendered": "10.50 pt"
+          "text": "10.50"
         },
         {
           "si": 6.1088084375000005,
           "value": 10.75,
-          "text": "10.75",
-          "rendered": "10.75 pt"
+          "text": "10.75"
         },
         {
           "si": 6.144324765625001,
           "value": 10.75,
-          "text": "10.75",
-          "rendered": "10.75 pt"
+          "text": "10.75"
         },
         {
           "si": 6.17984109375,
           "value": 11,
-          "text": "11.00",
-          "rendered": "11.00 pt"
+          "text": "11.00"
         },
         {
           "si": 6.215357421875001,
           "value": 11,
-          "text": "11.00",
-          "rendered": "11.00 pt"
+          "text": "11.00"
         },
         {
           "si": 6.25087375,
           "value": 11,
-          "text": "11.00",
-          "rendered": "11.00 pt"
+          "text": "11.00"
         },
         {
           "si": 6.321906406250001,
           "value": 11.25,
-          "text": "11.25",
-          "rendered": "11.25 pt"
+          "text": "11.25"
         },
         {
           "si": 0.249999999,
           "value": 0.5,
-          "text": "0.50",
-          "rendered": "0.50 pt"
+          "text": "0.50"
         },
         {
           "si": 0.250000001,
           "value": 0.5,
-          "text": "0.50",
-          "rendered": "0.50 pt"
+          "text": "0.50"
         },
         {
           "si": 11.999999999,
           "value": 21,
-          "text": "21.00",
-          "rendered": "21.00 pt"
+          "text": "21.00"
         },
         {
           "si": 12.000000001,
           "value": 21,
-          "text": "21.00",
-          "rendered": "21.00 pt"
+          "text": "21.00"
         },
         {
           "si": -999.75,
           "value": 0.5,
-          "text": "0.50",
-          "rendered": "0.50 pt"
+          "text": "0.50"
         },
         {
           "si": 1012,
           "value": 21,
-          "text": "21.00",
-          "rendered": "21.00 pt"
+          "text": "21.00"
         }
       ],
       "notANumber": {

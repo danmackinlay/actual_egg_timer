@@ -55,9 +55,8 @@ struct UnitsConformance {
         }
     }
 
-    @Test("what is shown for a stored value, and how it reads in English")
+    @Test("what is shown for a stored value")
     func display() throws {
-        let en = try Fixtures.catalogue("en")
         for c in try Fixtures.list("units.json", "measures") {
             let q = try c.value(Quantity.self, "quantity")
             let nan = try c.object("notANumber")
@@ -67,8 +66,6 @@ struct UnitsConformance {
                 let what = "\(q.rawValue) in \(m.unit.rawValue) at \(si)"
                 try expectClose(EggTimerCore.display(m, si), p.num("value"), what)
                 #expect(try displayText(m, si) == p.str("text"), "\(what): \(displayText(m, si))")
-                let text = quantityText(m, si)
-                #expect(try en.render(text.key, ["value": .fixed(text.value)]) == p.str("rendered"), "\(what) rendered")
             }
             try expectClose(EggTimerCore.display(m, .nan), nan.num("value"), "\(q.rawValue) NaN")
             #expect(try displayText(m, .nan) == nan.str("text"), "\(q.rawValue) NaN text")

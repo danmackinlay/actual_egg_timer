@@ -60,10 +60,15 @@ func posterior(_ json: [String: Any], rng: Int32? = nil) throws -> Posterior {
 }
 
 /// decide.json's named posteriors (outcome.json has one more), which carry no
-/// RNG state because nothing draws from them.
+/// RNG state because nothing draws from them. The prior is written as its
+/// count and seed, and drawn here as the app draws it.
 func posteriorsByName(_ list: [[String: Any]]) throws -> [String: Posterior] {
     var out = [String: Posterior]()
-    for p in list { out[try p.str("name")] = try posterior(p, rng: 1) }
+    for p in list {
+        out[try p.str("name")] = p["particles"] == nil
+            ? try createPrior(count: Int(p.num("count")), seed: Int32(p.num("seed")))
+            : try posterior(p, rng: 1)
+    }
     return out
 }
 

@@ -6,10 +6,11 @@ import Foundation
 ///
 /// Every string both apps draw goes through a renderer, and there are two of
 /// them: `src/core/copy.ts` for the web and `EggTimerCopy` here. This holds the
-/// second to the first byte for byte - every key of every shipped catalogue at
-/// its example arguments and at a dozen counts, the plural rule of every
-/// language at its edges, and a probe catalogue that exercises the fallback,
-/// the missing argument and every malformed brace.
+/// second to the first byte for byte - every key of every shipped catalogue
+/// that takes an argument (at its example) or a count (at a dozen), or falls
+/// back to English; the plural rule of every language at its edges; and a
+/// probe catalogue that exercises the fallback, the missing argument and every
+/// malformed brace. A key with none of those renders as its own text.
 ///
 /// The catalogues are read from `copy/` in the repository, as the fixtures are,
 /// so the one the app bundles is the one tested here.
@@ -40,7 +41,7 @@ struct CopyConformance {
         return out
     }
 
-    @Test("every key of every catalogue, rendered")
+    @Test("every key with an argument, a count or a fallback, rendered")
     func renders() throws {
         var catalogues: [String: Catalogue] = [:]
         for c in try Fixtures.list("copy.json", "render") {

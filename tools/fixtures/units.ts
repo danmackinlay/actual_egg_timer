@@ -21,7 +21,7 @@ import { Catalogue, render } from '../../src/core/copy.js';
 import { SIZE_CLASSES, US_SIZE_CLASSES } from '../../src/core/geometry.js';
 import {
   Measure, PlatformUnits, QUANTITIES, UNIT_SYSTEMS, UnitId, UnitSystem, chooseUnits, display,
-  displayText, fromSI, measureFor, parse, quantityText, readChosenUnits, regionalUnits,
+  displayText, fromSI, measureFor, parse, readChosenUnits, regionalUnits,
   sizeClassLabel, snap, toSI,
 } from '../../src/core/units.js';
 
@@ -159,12 +159,10 @@ export function unitsFixture(english: Catalogue): Record<string, unknown> {
       limit: m.limit,
       bounds: m.bounds,
       display: displayPoints(m).map((si) => {
-        const q = quantityText(m, si);
         return {
           si: si,
           value: display(m, si),
           text: displayText(m, si),
-          rendered: render(english, q.key, { value: q.value }),
         };
       }),
       notANumber: { value: display(m, Number.NaN), text: displayText(m, Number.NaN) },

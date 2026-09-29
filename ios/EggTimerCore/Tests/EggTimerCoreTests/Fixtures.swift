@@ -42,7 +42,34 @@ enum Fixtures {
               let dictionary = object as? [String: Any] else {
             throw FixtureError("could not read fixtures/\(name) - run `npm run fixtures`")
         }
-        return dictionary
+        guard let resolved = try resolveShared(dictionary, root: dictionary, file: name) as? [String: Any] else {
+            throw FixtureError("fixtures/\(name) is not an object")
+        }
+        return resolved
+    }
+
+    /// The generator writes a particle set that repeats an earlier one in the
+    /// same file as `{ "sameAs": "<dotted path>" }` (tools/fixtures.ts); here
+    /// it becomes the set it names, so no reader sees the difference.
+    private static func resolveShared(_ node: Any, root: [String: Any], file: String) throws -> Any {
+        if let list = node as? [Any] {
+            return try list.map { try resolveShared($0, root: root, file: file) }
+        }
+        guard let dictionary = node as? [String: Any] else { return node }
+        if dictionary.count == 1, let path = dictionary["sameAs"] as? String {
+            var target: Any = root
+            for key in path.split(separator: ".") {
+                if let list = target as? [Any], let i = Int(key), list.indices.contains(i) {
+                    target = list[i]
+                } else if let object = target as? [String: Any], let next = object[String(key)] {
+                    target = next
+                } else {
+                    throw FixtureError("fixtures/\(file): sameAs \(path) names nothing")
+                }
+            }
+            return target
+        }
+        return try dictionary.mapValues { try resolveShared($0, root: root, file: file) }
     }
 
     /// A shipped catalogue, read from `copy/` in the repository as the fixtures

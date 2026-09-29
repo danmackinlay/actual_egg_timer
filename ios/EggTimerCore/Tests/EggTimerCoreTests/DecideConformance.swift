@@ -130,9 +130,11 @@ struct DecideConformance {
     @Test("a cook re-solved mid-cook carries the lean it chose")
     func carried() throws {
         let file = try Fixtures.load("decide.json")
+        let posteriors = try posteriorsByName(file.rows("posteriors"))
         var byName = [String: (Posterior, Int)]()
         for p in try file.rows("posteriors") {
-            byName[try p.str("name")] = (try posterior(p, rng: 1), Int(try p.num("eggsLogged")))
+            let name = try p.str("name")
+            byName[name] = (try #require(posteriors[name]), Int(try p.num("eggsLogged")))
         }
         let egg = try Geometry.eggFromMass(file.object("grid").object("egg").num("mass_kg"))
         for row in try file.rows("carried") {

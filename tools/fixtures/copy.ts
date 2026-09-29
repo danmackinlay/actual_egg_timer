@@ -36,13 +36,19 @@ for (const file of copyFiles) {
   catalogueJson.set(file.replace(/\.json$/, ''), JSON.parse(readFileSync(`copy/${file}`, 'utf8')) as CatalogueJson);
 }
 
-function copyRows(locale: string, catalogue: Catalogue): CopyRow[] {
+/** The renders worth pinning: every key that takes an argument or a count,
+ *  and every key a catalogue leaves to English. A key with neither renders as
+ *  its own text, which the catalogue already says, so pinning it would only
+ *  rewrite this fixture on every change of wording. */
+function copyRows(locale: string, catalogue: Catalogue, own: Record<string, unknown>): CopyRow[] {
   const rows: CopyRow[] = [];
   for (const key of Object.keys(englishJson.messages)) {
     const entry = englishJson.messages[key];
     const example = (entry['example'] ?? {}) as Record<string, string | number>;
-    rows.push({ locale: locale, key: key, args: example, text: render(catalogue, key, example) });
     const count = entry['count'];
+    const fallsBack = !Object.hasOwn(own, key);
+    if (Object.keys(example).length === 0 && typeof count !== 'string' && !fallsBack) continue;
+    rows.push({ locale: locale, key: key, args: example, text: render(catalogue, key, example) });
     if (typeof count === 'string') {
       for (const n of COPY_COUNTS) {
         const args = { ...example, [count]: n };
@@ -79,10 +85,10 @@ const probeCases: { key: string; args: CopyArgs }[] = [
 ];
 
 export const copyFixture = {
-  about: 'Every catalogue rendered, the plural rule of every language at its edges, and a probe catalogue. src/core/copy.ts.',
+  about: 'Every key of every catalogue that takes an argument or a count, or falls back to English, rendered; the plural rule of every language at its edges; and a probe catalogue. src/core/copy.ts.',
   locales: [...catalogueJson.keys()],
   render: [...catalogueJson.entries()].flatMap(([locale, json]) => copyRows(
-    locale, locale === 'en' ? english : parseCatalogue(json, english),
+    locale, locale === 'en' ? english : parseCatalogue(json, english), json.messages,
   )),
   plural: PLURAL_LOCALES.flatMap((locale) => PLURAL_NUMBERS.map((n) => ({
     locale: locale, n: n, category: pluralCategory(locale, n),

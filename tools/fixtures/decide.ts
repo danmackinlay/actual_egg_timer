@@ -169,12 +169,11 @@ export const decideFixture = {
     logYolk: DECIDE_GRID.logYolk,
     logWhite: DECIDE_GRID.logWhite,
   },
-  posteriors: decidePosteriors.map((pz) => ({
-    name: pz.name,
-    eggsLogged: pz.eggsLogged,
-    weights: pz.post.weights,
-    particles: particleRows(pz.post),
-  })),
+  // The prior as its count and seed: createPrior is pinned particle by
+  // particle in calibration.json, so 200 more of its particles pin nothing.
+  posteriors: decidePosteriors.map((pz) => (pz.name === 'prior'
+    ? { name: pz.name, eggsLogged: pz.eggsLogged, count: DECIDE_PARTICLES, seed: DECIDE_SEED }
+    : { name: pz.name, eggsLogged: pz.eggsLogged, weights: pz.post.weights, particles: particleRows(pz.post) })),
   cases: DECIDE_CASES.map((c) => {
     const pz = decidePosteriors.find((x) => x.name === c.posterior);
     if (pz === undefined) throw new Error(c.posterior);
