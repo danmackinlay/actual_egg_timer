@@ -767,6 +767,19 @@ function resolveDuring(t: Ticket, timeToBoil_s: number): Solution {
   return carriedSolution(egg, setup, params, mean, t.lean_s);
 }
 
+/** Take a new time to boil into the cook under way - the slow hob's guess, or
+ *  the boil the cook tapped: re-solve it (`resolveDuring`), and patch the ramp
+ *  into the frozen ticket rather than rebuilding it from the live controls,
+ *  which another tab may have changed. Whether the cook has a moment to probe
+ *  at moves with the solve. Returns the solve, for the machine's deadlines. */
+function retime(k: Ticket, boil_s: number): Solution {
+  const sol = resolveDuring(k, boil_s);
+  const moved = withTimeToBoil(k, boil_s);
+  solution = sol;
+  ticket = { ...moved, probeMoment: probeMomentFor(sol.result, moved.setup.cooling) };
+  return sol;
+}
+
 /** Coalesce solves: a solve is tens of milliseconds, which is too long to run
  *  on every pixel of a slider drag. */
 function scheduleSolve(): void {
@@ -963,12 +976,8 @@ function onTick(): void {
     // count down to an alarm for an egg that has not begun cooking.
     lastRevise_ms = now;
     const assumed = secondsHeating(machine, now) + SLOW_HOB_EXTRA_S;
-    solution = resolveDuring(ticket, assumed);
-    ticket = withTimeToBoil(ticket, assumed);
-    ticket = { ...ticket, probeMoment: probeMomentFor(solution.result, ticket.setup.cooling) };
-    setMachine(reviseProvisional(
-      machine, solution.result.cookTime_s, assumed, coolingSecondsFor(solution.result),
-    ));
+    const sol = retime(ticket, assumed);
+    setMachine(reviseProvisional(machine, sol.result.cookTime_s, assumed, coolingSecondsFor(sol.result)));
   }
 
   const step = advance(machine, now);
@@ -1071,14 +1080,8 @@ function onPrimary(): void {
   if (machine.phase === 'HEATING' && ticket !== null) {
     const measured = secondsHeating(machine, now);
     boilMemory = rememberTimeToBoil(boilMemory, ticket.setup.waterLitres, measured);
-    solution = resolveDuring(ticket, measured);
-    // Patch the measured ramp into the frozen setup rather than rebuilding it
-    // from the live controls, which another tab may have changed.
-    ticket = withTimeToBoil(ticket, measured);
-    ticket = { ...ticket, probeMoment: probeMomentFor(solution.result, ticket.setup.cooling) };
-    setMachine(recordBoil(
-      machine, now, solution.result.cookTime_s, coolingSecondsFor(solution.result),
-    ));
+    const sol = retime(ticket, measured);
+    setMachine(recordBoil(machine, now, sol.result.cookTime_s, coolingSecondsFor(sol.result)));
     blip();
     onTick();
     return;
