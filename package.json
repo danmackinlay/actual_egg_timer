@@ -22,6 +22,7 @@
     "fixtures:check": "npm run fixtures && git diff --exit-code -- fixtures/",
     "conformance": "npm run fixtures:check && cd ios/EggTimerCore && swift test",
     "verify": "npm run check && npm test && npm run copy:literals && npm run fixtures:check && cd ios/EggTimerCore && swift test",
+    "ios:build": "cd ios && xcodegen --quiet && xcodebuild -project ActualEggTimer.xcodeproj -scheme ActualEggTimer -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO -quiet build",
     "serve": "python3 -m http.server 8080",
     "build:site": "rm -rf _site && tsc -p tsconfig.site.json && cp index.html styles.css site.webmanifest _site/ && rm -rf _site/assets _site/copy && cp -R assets _site/assets && cp -R copy _site/copy",
     "serve:site": "python3 -m http.server 8080 --directory _site"
