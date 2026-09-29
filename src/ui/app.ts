@@ -399,9 +399,11 @@ function askForProfile(inputs: DecisionInputs): void {
 }
 
 /** Take the answer up: show the refusal, and move the slider if the answer
- *  says it must. Only ever called while idle - once the egg is in the water
- *  the controls are gone and there is nothing to snap. */
+ *  says it must. Idle only - once the egg is in the water the controls are
+ *  gone and there is nothing to snap, so a call mid-cook takes nothing up:
+ *  it neither moves `settings.doneness` nor writes it. */
 function applyAnswer(answer: LevelAnswer): Solution {
+  if (machine.phase !== 'IDLE') return answer.solution;
   refusal = refusalText(answer.verdict);
   const snapTo = answer.verdict.snapTo;
   if (snapTo !== null && snapTo !== settings.doneness) {
@@ -718,13 +720,19 @@ function persistCook(): void {
 
 /* -------------------------------------------------------------- recompute */
 
-/** Solve for what is on screen and take the answer up. Idle only in practice:
- *  every mid-cook path goes through `resolveDuring` instead, which keeps the
- *  target the cook was started at. */
+/** Solve for what is on screen and take the answer up. Idle only: mid-cook
+ *  it only redraws, since the controls describe the next cook, not this one
+ *  (a second tab may have changed them). Every mid-cook solve goes through
+ *  `resolveDuring` instead, which keeps the ticket's pot and the target the
+ *  cook was started at. */
 function recompute(): void {
+  if (machine.phase !== 'IDLE') {
+    render(Date.now());
+    return;
+  }
   // No pan, no solve. The sous-vide answer comes from src/core/sousvide.ts and
   // needs none of this.
-  if (isSousVide() && machine.phase === 'IDLE') {
+  if (isSousVide()) {
     refusal = '';
     decision = null;
     outcome = null;
@@ -1235,7 +1243,13 @@ export function boot(): void {
 
   renderCalibNote(learning());
   restoreCook();
-  recompute();
+  // A cook picked back up is described by its ticket, never by the
+  // controls, which another tab may have changed since "Eggs in".
+  if (machine.phase === 'IDLE') recompute();
+  else if (ticket !== null) {
+    solution = resolveDuring(ticket, ticket.setup.timeToBoil_s);
+    render(Date.now());
+  }
   // Eggs written down but not yet folded - a reload mid-fold, or a posterior
   // that had to be rebuilt from the log - are folded now, off the main thread.
   // The app runs on what it had until they land.
