@@ -2648,7 +2648,7 @@ number was taken.
 - **The catalogue.** One note, on `controls.afterTheBoil.more`: it named
   `controls.afterBoil.hint` and iOS's `explainHeatOff` / `explainHold`,
   none of which exist. No text field touched.
-- **Dead code.** Seven `NOT_COPY` entries in `tools/copyLiterals.ts`
+- **Dead code.** Nine `NOT_COPY` entries in `tools/copyLiterals.ts`
   matched no Swift literal any more; they went, and the lint still passes.
 - **Left alone:** names that carry history (`forecast`, `shownForecast`,
   test names quoting "the old band" and "7/10", the 'E3' / 'E5' sequence

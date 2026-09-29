@@ -79,7 +79,6 @@ const NOT_COPY: Record<string, string> = {
   CFBundleShortVersionString: 'Info.plist key',
   unknown: 'record field value, never shown',
   '%04d-%02d-%02d': 'record day format, never shown',
-  '2026-09': 'record date prefix, never shown',
   class: 'record field value, never shown',
   mass_g: 'record field name',
   eggStart_C: 'record field name',
@@ -93,7 +92,6 @@ const NOT_COPY: Record<string, string> = {
   cooled_s: 'record field name',
   // the store and the prior (INFERENCE.md section 4): schema, never shown
   'calibration.v4': 'UserDefaults key',
-  '2026-09-e2': 'record prior id, never shown',
   // more literals that were never words
   weighedMassG: 'UserDefaults key',
   startTemp: 'UserDefaults key',
