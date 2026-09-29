@@ -37,7 +37,7 @@ function findDom() {
     cookSentence: el<HTMLParagraphElement>('cookSentence'),
     cookDoneness: el<HTMLParagraphElement>('cookDoneness'),
     navBack: el<HTMLButtonElement>('navBack'),
-    kitchenTitle: el<HTMLElement>('kitchenTitle'),
+    settingsTitle: el<HTMLElement>('settingsTitle'),
     helpTitle: el<HTMLElement>('helpTitle'),
     statBoil: el<HTMLElement>('statBoil'),
     note: el<HTMLParagraphElement>('note'),

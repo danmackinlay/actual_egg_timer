@@ -1190,31 +1190,31 @@
     },
     {
       "locale": "en-x-1750",
-      "key": "controls.afterBoil.keepBoiling",
+      "key": "controls.afterTheBoil.keepBoiling",
       "args": {},
       "text": "Keep it boiling"
     },
     {
       "locale": "en-x-1750",
-      "key": "controls.afterBoil.heatOff",
+      "key": "controls.afterTheBoil.heatOff",
       "args": {},
       "text": "Fire out, lid on"
     },
     {
       "locale": "en-x-1750",
-      "key": "controls.then.ice",
+      "key": "controls.cooling.ice",
       "args": {},
       "text": "Iced water"
     },
     {
       "locale": "en-x-1750",
-      "key": "controls.then.tap",
+      "key": "controls.cooling.tap",
       "args": {},
       "text": "Cold tap"
     },
     {
       "locale": "en-x-1750",
-      "key": "controls.then.counter",
+      "key": "controls.cooling.counter",
       "args": {},
       "text": "Table"
     },
@@ -4042,31 +4042,31 @@
     },
     {
       "locale": "en",
-      "key": "controls.afterBoil.keepBoiling",
+      "key": "controls.afterTheBoil.keepBoiling",
       "args": {},
       "text": "Keep boiling"
     },
     {
       "locale": "en",
-      "key": "controls.afterBoil.heatOff",
+      "key": "controls.afterTheBoil.heatOff",
       "args": {},
       "text": "Heat off, lid on"
     },
     {
       "locale": "en",
-      "key": "controls.then.ice",
+      "key": "controls.cooling.ice",
       "args": {},
       "text": "Ice bath"
     },
     {
       "locale": "en",
-      "key": "controls.then.tap",
+      "key": "controls.cooling.tap",
       "args": {},
       "text": "Cold tap"
     },
     {
       "locale": "en",
-      "key": "controls.then.counter",
+      "key": "controls.cooling.counter",
       "args": {},
       "text": "Counter"
     },

@@ -41,9 +41,10 @@
      boot, so the page and the iOS app read the same catalogue. The <head> is
      the exception: crawlers and link previews do not run scripts.
 
-     Three views, one page (UI.md): the egg, the Kitchen and Help. The hash
-     picks one (#kitchen, #help, #help-<section>), so the phone's back button
-     works; src/ui/app.ts sets data-view from it. While a cook is running only
+     Three views, one page (UI.md): the egg, Settings and Help. The hash
+     picks one (#settings, #help, #help-<section>), so the phone's back button
+     works; src/ui/views.ts sets data-view from it (#kitchen, the old
+     address, still opens Settings). While a cook is running only
      the egg is shown, whatever the hash says.
 
      Every (i) is a button.info with aria-controls naming the paragraph it
@@ -54,11 +55,11 @@
 
   <!-- ------------------------------------------------------------ top bar -->
   <!-- The ways out to the other views, and sound, which works in every
-       phase. Kitchen and Help are rare visits, so they sit at the top, out of
+       phase. Settings and Help are rare visits, so they sit at the top, out of
        the thumb's way; Start is at the bottom, in it. -->
   <header id="topbar">
     <button type="button" id="navBack" class="navlink navlink--back" data-copy="nav.back"></button>
-    <a href="#kitchen" id="kitchenLink" class="navlink" data-copy="controls.settings"></a>
+    <a href="#settings" id="settingsLink" class="navlink" data-copy="controls.settings"></a>
     <a href="#help" id="helpLink" class="navlink" data-copy="help.link"></a>
     <button type="button" id="mute" class="mute" aria-pressed="false" data-copy="readout.mute.on"></button>
   </header>
@@ -220,11 +221,11 @@
         <p id="moreCooling" class="disclosed" hidden data-copy="controls.cooling.more"></p>
         <div class="seg">
           <input type="radio" name="cooling" id="coolIce" value="ice">
-          <label for="coolIce" data-copy="controls.then.ice"></label>
+          <label for="coolIce" data-copy="controls.cooling.ice"></label>
           <input type="radio" name="cooling" id="coolTap" value="tap">
-          <label for="coolTap" data-copy="controls.then.tap"></label>
+          <label for="coolTap" data-copy="controls.cooling.tap"></label>
           <input type="radio" name="cooling" id="coolCounter" value="counter">
-          <label for="coolCounter" data-copy="controls.then.counter"></label>
+          <label for="coolCounter" data-copy="controls.cooling.counter"></label>
         </div>
       </div>
     </div>
@@ -240,17 +241,17 @@
     <p id="advice" hidden><a href="#help-reliable" class="morelink" data-copy="advice.toggle"></a></p>
   </div>
 
-  <!-- ----------------------------------------------------------- kitchen -->
+  <!-- ---------------------------------------------------------- settings -->
   <!-- Set once, cook many: what belongs to the kitchen rather than the egg. -->
-  <section id="kitchen" class="page" aria-labelledby="kitchenTitle">
-    <h1 id="kitchenTitle" tabindex="-1" data-copy="controls.settings"></h1>
-    <form id="kitchenForm" autocomplete="off">
+  <section id="settings" class="page" aria-labelledby="settingsTitle">
+    <h1 id="settingsTitle" tabindex="-1" data-copy="controls.settings"></h1>
+    <form id="settingsForm" autocomplete="off">
 
       <!-- Not pan-only: a sous-vide egg has a temperature too. Its default
            comes from the browser's region; a choice made here is stored as
            the cook's. -->
-      <fieldset class="krow" aria-labelledby="lblUnits">
-        <div class="krow__head">
+      <fieldset class="setting" aria-labelledby="lblUnits">
+        <div class="setting__head">
           <span id="lblUnits" data-copy="controls.units"></span>
           <button type="button" class="info" aria-expanded="false" aria-controls="moreUnits" data-label="controls.units"></button>
         </div>
@@ -263,14 +264,14 @@
         </div>
         <!-- F6: the one line that finds the English of 1750 for a cook who
              starts in Imperial (LANGUAGE.md section 6). English UIs only. -->
-        <p id="unitsPeriod" class="krow__sub" data-copy="controls.units.period"></p>
+        <p id="unitsPeriod" class="setting__sub" data-copy="controls.units.period"></p>
       </fieldset>
 
       <!-- F6: English, or the English of 1750. Changing it never changes
            the units; switching the units to Imperial in modern English
            changes it (src/core/language.ts). -->
-      <fieldset class="krow" aria-labelledby="lblLanguage">
-        <div class="krow__head">
+      <fieldset class="setting" aria-labelledby="lblLanguage">
+        <div class="setting__head">
           <span id="lblLanguage" data-copy="controls.language"></span>
           <button type="button" class="info" aria-expanded="false" aria-controls="moreLanguage" data-label="controls.language"></button>
         </div>
@@ -283,21 +284,21 @@
         </div>
       </fieldset>
 
-      <div class="krow pan-only">
-        <div class="krow__line">
-          <span class="krow__head">
+      <div class="setting pan-only">
+        <div class="setting__line">
+          <span class="setting__head">
             <label for="altitude" data-copy="controls.altitude"></label>
             <button type="button" class="info" aria-expanded="false" aria-controls="moreAltitude" data-label="controls.altitude"></button>
           </span>
           <span class="unit"><input type="number" id="altitude" inputmode="numeric"><span id="unitAltitude"></span></span>
         </div>
         <p id="moreAltitude" class="disclosed" hidden data-copy="controls.altitude.more"></p>
-        <p class="krow__sub"><span data-copy="readout.stat.waterBoilsAt"></span> <strong id="statBoil">--</strong></p>
+        <p class="setting__sub"><span data-copy="readout.stat.waterBoilsAt"></span> <strong id="statBoil">--</strong></p>
       </div>
 
-      <div class="krow pan-only">
-        <div class="krow__line">
-          <span class="krow__head">
+      <div class="setting pan-only">
+        <div class="setting__line">
+          <span class="setting__head">
             <label for="litres" data-copy="controls.water"></label>
             <button type="button" class="info" aria-expanded="false" aria-controls="moreWater" data-label="controls.water"></button>
           </span>
@@ -306,9 +307,9 @@
         <p id="moreWater" class="disclosed" hidden data-copy="controls.water.more"></p>
       </div>
 
-      <div class="krow pan-only">
-        <div class="krow__line">
-          <span class="krow__head">
+      <div class="setting pan-only">
+        <div class="setting__line">
+          <span class="setting__head">
             <label for="eggCount" data-copy="controls.eggsInPan"></label>
             <button type="button" class="info" aria-expanded="false" aria-controls="moreEggs" data-label="controls.eggsInPan"></button>
           </span>
@@ -317,23 +318,23 @@
         <p id="moreEggs" class="disclosed" hidden data-copy="controls.eggsInPan.more"></p>
       </div>
 
-      <fieldset class="krow pan-only" aria-labelledby="lblAfterBoil">
-        <div class="krow__head">
+      <fieldset class="setting pan-only" aria-labelledby="lblAfterBoil">
+        <div class="setting__head">
           <span id="lblAfterBoil" data-copy="controls.afterTheBoil"></span>
           <button type="button" class="info" aria-expanded="false" aria-controls="moreAfterBoil" data-label="controls.afterTheBoil"></button>
         </div>
         <p id="moreAfterBoil" class="disclosed" hidden data-copy="controls.afterTheBoil.more"></p>
         <div class="seg">
           <input type="radio" name="afterBoil" id="heatHold" value="hold">
-          <label for="heatHold" data-copy="controls.afterBoil.keepBoiling"></label>
+          <label for="heatHold" data-copy="controls.afterTheBoil.keepBoiling"></label>
           <input type="radio" name="afterBoil" id="heatOff" value="off">
-          <label for="heatOff" data-copy="controls.afterBoil.heatOff"></label>
+          <label for="heatOff" data-copy="controls.afterTheBoil.heatOff"></label>
         </div>
       </fieldset>
 
       <!-- E4. Off by default; offered once during a cook, and changed here. -->
-      <fieldset class="krow pan-only" aria-labelledby="lblProbe">
-        <div class="krow__head">
+      <fieldset class="setting pan-only" aria-labelledby="lblProbe">
+        <div class="setting__head">
           <span id="lblProbe" data-copy="controls.thermometer"></span>
           <button type="button" class="info" aria-expanded="false" aria-controls="moreProbe" data-label="controls.thermometer"></button>
         </div>
@@ -344,8 +345,8 @@
 
     <!-- What the app has learned from this kitchen, and the way to take it
          back, confirmed first. -->
-    <section id="learned" class="krow" aria-labelledby="lblLearned">
-      <div class="krow__head">
+    <section id="learned" class="setting" aria-labelledby="lblLearned">
+      <div class="setting__head">
         <span id="lblLearned" data-copy="learned.title"></span>
       </div>
       <p class="hint" id="learnedNote" tabindex="-1"></p>

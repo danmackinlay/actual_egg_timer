@@ -90,8 +90,8 @@ struct SettingsView: View {
                 Section {
                     InfoRow("controls.afterTheBoil", more: [tr("controls.afterTheBoil.more")])
                     Picker(tr("controls.afterTheBoil"), selection: $planner.heatOff) {
-                        Text(tr("controls.afterBoil.keepBoiling")).tag(false)
-                        Text(tr("controls.afterBoil.heatOff")).tag(true)
+                        Text(tr("controls.afterTheBoil.keepBoiling")).tag(false)
+                        Text(tr("controls.afterTheBoil.heatOff")).tag(true)
                     }
                     .pickerStyle(.segmented)
                     .labelsHidden()

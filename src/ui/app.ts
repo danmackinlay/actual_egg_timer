@@ -1198,9 +1198,9 @@ export function boot(): void {
   applyConstantsToDom();
   applySettingsToDom();
 
-  // The egg's two controls and its sentence, and the Kitchen's settings, are
+  // The egg's two controls and its sentence, and the Settings page's, are
   // read the same way: every input goes through readInputs.
-  for (const id of ['controls', 'kitchenForm']) {
+  for (const id of ['controls', 'settingsForm']) {
     const form = el<HTMLFormElement>(id);
     form.addEventListener('input', onInput);
     form.addEventListener('change', onInput);

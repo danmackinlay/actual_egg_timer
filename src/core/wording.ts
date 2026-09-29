@@ -245,10 +245,10 @@ export function clauseKeys(f: ClauseFacts): Record<Clause, ClauseKeys> {
       ? { text: standing ? 'setup.start.coldStanding' : 'setup.start.cold', label: 'controls.start', value: 'controls.start.cold' }
       : { text: standing ? 'setup.start.hotStanding' : 'setup.start.hot', label: 'controls.start', value: 'controls.start.hot' };
   const cooling: ClauseKeys = f.cooling === 'ice'
-    ? { text: 'setup.cooling.ice', label: 'controls.cooling', value: 'controls.then.ice' }
+    ? { text: 'setup.cooling.ice', label: 'controls.cooling', value: 'controls.cooling.ice' }
     : f.cooling === 'tap'
-      ? { text: 'setup.cooling.tap', label: 'controls.cooling', value: 'controls.then.tap' }
-      : { text: 'setup.cooling.counter', label: 'controls.cooling', value: 'controls.then.counter' };
+      ? { text: 'setup.cooling.tap', label: 'controls.cooling', value: 'controls.cooling.tap' }
+      : { text: 'setup.cooling.counter', label: 'controls.cooling', value: 'controls.cooling.counter' };
   return {
     egg: { text: 'setup.egg', label: 'controls.egg', value: null },
     from: from,

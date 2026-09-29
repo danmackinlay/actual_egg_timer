@@ -42,6 +42,7 @@ import { pull } from './drafts/pull.js';
 import { tighten } from './drafts/tighten.js';
 import { loose } from './drafts/loose.js';
 import { units } from './drafts/units.js';
+import { settings } from './drafts/settings.js';
 
 export type Templates = Record<string, string>;
 
@@ -59,7 +60,8 @@ export interface Draft {
   /** The commit on main the draft was applied to. */
   base: string;
   rows: Drafted[];
-  /** Keys whose ENTRY changed only in an example, which renders nothing. */
+  /** Keys whose ENTRY changed only in an example or a note, which render
+   *  nothing: the key, and why. */
   exampleOnly: Record<string, string>;
 }
 
@@ -83,6 +85,7 @@ export const DRAFTS: Record<string, Draft> = {
   tighten,
   loose,
   units,
+  settings,
 };
 
 /** The draft most recently applied, the last in `DRAFTS`: what a proof checks

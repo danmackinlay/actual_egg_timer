@@ -227,10 +227,10 @@ public func clauseKeys(_ f: ClauseFacts) -> [Clause: ClauseKeys] {
         )
     }
     let cooling: ClauseKeys = switch f.cooling {
-    case .ice: ClauseKeys(text: "setup.cooling.ice", label: "controls.cooling", value: "controls.then.ice")
-    case .tap: ClauseKeys(text: "setup.cooling.tap", label: "controls.cooling", value: "controls.then.tap")
+    case .ice: ClauseKeys(text: "setup.cooling.ice", label: "controls.cooling", value: "controls.cooling.ice")
+    case .tap: ClauseKeys(text: "setup.cooling.tap", label: "controls.cooling", value: "controls.cooling.tap")
     case .counter:
-        ClauseKeys(text: "setup.cooling.counter", label: "controls.cooling", value: "controls.then.counter")
+        ClauseKeys(text: "setup.cooling.counter", label: "controls.cooling", value: "controls.cooling.counter")
     }
     return [
         .egg: ClauseKeys(text: "setup.egg", label: "controls.egg", value: nil),

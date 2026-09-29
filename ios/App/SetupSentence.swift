@@ -300,9 +300,9 @@ struct ClausePanel: View {
             .pickerStyle(.segmented)
         case .cooling:
             Picker(tr("controls.cooling"), selection: $planner.cooling) {
-                Text(tr("controls.then.ice")).tag(Cooling.ice)
-                Text(tr("controls.then.tap")).tag(Cooling.tap)
-                Text(tr("controls.then.counter")).tag(Cooling.counter)
+                Text(tr("controls.cooling.ice")).tag(Cooling.ice)
+                Text(tr("controls.cooling.tap")).tag(Cooling.tap)
+                Text(tr("controls.cooling.counter")).tag(Cooling.counter)
             }
             .pickerStyle(.segmented)
         }

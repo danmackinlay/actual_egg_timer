@@ -4266,7 +4266,7 @@
         "cooling": {
           "text": "setup.cooling.ice",
           "label": "controls.cooling",
-          "value": "controls.then.ice"
+          "value": "controls.cooling.ice"
         }
       }
     },
@@ -4295,7 +4295,7 @@
         "cooling": {
           "text": "setup.cooling.tap",
           "label": "controls.cooling",
-          "value": "controls.then.tap"
+          "value": "controls.cooling.tap"
         }
       }
     },
@@ -4324,7 +4324,7 @@
         "cooling": {
           "text": "setup.cooling.counter",
           "label": "controls.cooling",
-          "value": "controls.then.counter"
+          "value": "controls.cooling.counter"
         }
       }
     },
@@ -4353,7 +4353,7 @@
         "cooling": {
           "text": "setup.cooling.ice",
           "label": "controls.cooling",
-          "value": "controls.then.ice"
+          "value": "controls.cooling.ice"
         }
       }
     },
@@ -4382,7 +4382,7 @@
         "cooling": {
           "text": "setup.cooling.tap",
           "label": "controls.cooling",
-          "value": "controls.then.tap"
+          "value": "controls.cooling.tap"
         }
       }
     },
@@ -4411,7 +4411,7 @@
         "cooling": {
           "text": "setup.cooling.counter",
           "label": "controls.cooling",
-          "value": "controls.then.counter"
+          "value": "controls.cooling.counter"
         }
       }
     },
@@ -4440,7 +4440,7 @@
         "cooling": {
           "text": "setup.cooling.ice",
           "label": "controls.cooling",
-          "value": "controls.then.ice"
+          "value": "controls.cooling.ice"
         }
       }
     },
@@ -4469,7 +4469,7 @@
         "cooling": {
           "text": "setup.cooling.tap",
           "label": "controls.cooling",
-          "value": "controls.then.tap"
+          "value": "controls.cooling.tap"
         }
       }
     },
@@ -4498,7 +4498,7 @@
         "cooling": {
           "text": "setup.cooling.counter",
           "label": "controls.cooling",
-          "value": "controls.then.counter"
+          "value": "controls.cooling.counter"
         }
       }
     },
@@ -4527,7 +4527,7 @@
         "cooling": {
           "text": "setup.cooling.ice",
           "label": "controls.cooling",
-          "value": "controls.then.ice"
+          "value": "controls.cooling.ice"
         }
       }
     },
@@ -4556,7 +4556,7 @@
         "cooling": {
           "text": "setup.cooling.tap",
           "label": "controls.cooling",
-          "value": "controls.then.tap"
+          "value": "controls.cooling.tap"
         }
       }
     },
@@ -4585,7 +4585,7 @@
         "cooling": {
           "text": "setup.cooling.counter",
           "label": "controls.cooling",
-          "value": "controls.then.counter"
+          "value": "controls.cooling.counter"
         }
       }
     },
@@ -4614,7 +4614,7 @@
         "cooling": {
           "text": "setup.cooling.ice",
           "label": "controls.cooling",
-          "value": "controls.then.ice"
+          "value": "controls.cooling.ice"
         }
       }
     },
@@ -4643,7 +4643,7 @@
         "cooling": {
           "text": "setup.cooling.tap",
           "label": "controls.cooling",
-          "value": "controls.then.tap"
+          "value": "controls.cooling.tap"
         }
       }
     },
@@ -4672,7 +4672,7 @@
         "cooling": {
           "text": "setup.cooling.counter",
           "label": "controls.cooling",
-          "value": "controls.then.counter"
+          "value": "controls.cooling.counter"
         }
       }
     },
@@ -4701,7 +4701,7 @@
         "cooling": {
           "text": "setup.cooling.ice",
           "label": "controls.cooling",
-          "value": "controls.then.ice"
+          "value": "controls.cooling.ice"
         }
       }
     },
@@ -4730,7 +4730,7 @@
         "cooling": {
           "text": "setup.cooling.tap",
           "label": "controls.cooling",
-          "value": "controls.then.tap"
+          "value": "controls.cooling.tap"
         }
       }
     },
@@ -4759,7 +4759,7 @@
         "cooling": {
           "text": "setup.cooling.counter",
           "label": "controls.cooling",
-          "value": "controls.then.counter"
+          "value": "controls.cooling.counter"
         }
       }
     },
@@ -4788,7 +4788,7 @@
         "cooling": {
           "text": "setup.cooling.ice",
           "label": "controls.cooling",
-          "value": "controls.then.ice"
+          "value": "controls.cooling.ice"
         }
       }
     },
@@ -4817,7 +4817,7 @@
         "cooling": {
           "text": "setup.cooling.tap",
           "label": "controls.cooling",
-          "value": "controls.then.tap"
+          "value": "controls.cooling.tap"
         }
       }
     },
@@ -4846,7 +4846,7 @@
         "cooling": {
           "text": "setup.cooling.counter",
           "label": "controls.cooling",
-          "value": "controls.then.counter"
+          "value": "controls.cooling.counter"
         }
       }
     },
@@ -4875,7 +4875,7 @@
         "cooling": {
           "text": "setup.cooling.ice",
           "label": "controls.cooling",
-          "value": "controls.then.ice"
+          "value": "controls.cooling.ice"
         }
       }
     },
@@ -4904,7 +4904,7 @@
         "cooling": {
           "text": "setup.cooling.tap",
           "label": "controls.cooling",
-          "value": "controls.then.tap"
+          "value": "controls.cooling.tap"
         }
       }
     },
@@ -4933,7 +4933,7 @@
         "cooling": {
           "text": "setup.cooling.counter",
           "label": "controls.cooling",
-          "value": "controls.then.counter"
+          "value": "controls.cooling.counter"
         }
       }
     },
@@ -4962,7 +4962,7 @@
         "cooling": {
           "text": "setup.cooling.ice",
           "label": "controls.cooling",
-          "value": "controls.then.ice"
+          "value": "controls.cooling.ice"
         }
       }
     },
@@ -4991,7 +4991,7 @@
         "cooling": {
           "text": "setup.cooling.tap",
           "label": "controls.cooling",
-          "value": "controls.then.tap"
+          "value": "controls.cooling.tap"
         }
       }
     },
@@ -5020,7 +5020,7 @@
         "cooling": {
           "text": "setup.cooling.counter",
           "label": "controls.cooling",
-          "value": "controls.then.counter"
+          "value": "controls.cooling.counter"
         }
       }
     },
@@ -5049,7 +5049,7 @@
         "cooling": {
           "text": "setup.cooling.ice",
           "label": "controls.cooling",
-          "value": "controls.then.ice"
+          "value": "controls.cooling.ice"
         }
       }
     },
@@ -5078,7 +5078,7 @@
         "cooling": {
           "text": "setup.cooling.tap",
           "label": "controls.cooling",
-          "value": "controls.then.tap"
+          "value": "controls.cooling.tap"
         }
       }
     },
@@ -5107,7 +5107,7 @@
         "cooling": {
           "text": "setup.cooling.counter",
           "label": "controls.cooling",
-          "value": "controls.then.counter"
+          "value": "controls.cooling.counter"
         }
       }
     },
@@ -5136,7 +5136,7 @@
         "cooling": {
           "text": "setup.cooling.ice",
           "label": "controls.cooling",
-          "value": "controls.then.ice"
+          "value": "controls.cooling.ice"
         }
       }
     },
@@ -5165,7 +5165,7 @@
         "cooling": {
           "text": "setup.cooling.tap",
           "label": "controls.cooling",
-          "value": "controls.then.tap"
+          "value": "controls.cooling.tap"
         }
       }
     },
@@ -5194,7 +5194,7 @@
         "cooling": {
           "text": "setup.cooling.counter",
           "label": "controls.cooling",
-          "value": "controls.then.counter"
+          "value": "controls.cooling.counter"
         }
       }
     },
@@ -5223,7 +5223,7 @@
         "cooling": {
           "text": "setup.cooling.ice",
           "label": "controls.cooling",
-          "value": "controls.then.ice"
+          "value": "controls.cooling.ice"
         }
       }
     },
@@ -5252,7 +5252,7 @@
         "cooling": {
           "text": "setup.cooling.tap",
           "label": "controls.cooling",
-          "value": "controls.then.tap"
+          "value": "controls.cooling.tap"
         }
       }
     },
@@ -5281,7 +5281,7 @@
         "cooling": {
           "text": "setup.cooling.counter",
           "label": "controls.cooling",
-          "value": "controls.then.counter"
+          "value": "controls.cooling.counter"
         }
       }
     },
@@ -5310,7 +5310,7 @@
         "cooling": {
           "text": "setup.cooling.ice",
           "label": "controls.cooling",
-          "value": "controls.then.ice"
+          "value": "controls.cooling.ice"
         }
       }
     },
@@ -5339,7 +5339,7 @@
         "cooling": {
           "text": "setup.cooling.tap",
           "label": "controls.cooling",
-          "value": "controls.then.tap"
+          "value": "controls.cooling.tap"
         }
       }
     },
@@ -5368,7 +5368,7 @@
         "cooling": {
           "text": "setup.cooling.counter",
           "label": "controls.cooling",
-          "value": "controls.then.counter"
+          "value": "controls.cooling.counter"
         }
       }
     },
@@ -5397,7 +5397,7 @@
         "cooling": {
           "text": "setup.cooling.ice",
           "label": "controls.cooling",
-          "value": "controls.then.ice"
+          "value": "controls.cooling.ice"
         }
       }
     },
@@ -5426,7 +5426,7 @@
         "cooling": {
           "text": "setup.cooling.tap",
           "label": "controls.cooling",
-          "value": "controls.then.tap"
+          "value": "controls.cooling.tap"
         }
       }
     },
@@ -5455,7 +5455,7 @@
         "cooling": {
           "text": "setup.cooling.counter",
           "label": "controls.cooling",
-          "value": "controls.then.counter"
+          "value": "controls.cooling.counter"
         }
       }
     },
@@ -5484,7 +5484,7 @@
         "cooling": {
           "text": "setup.cooling.ice",
           "label": "controls.cooling",
-          "value": "controls.then.ice"
+          "value": "controls.cooling.ice"
         }
       }
     },
@@ -5513,7 +5513,7 @@
         "cooling": {
           "text": "setup.cooling.tap",
           "label": "controls.cooling",
-          "value": "controls.then.tap"
+          "value": "controls.cooling.tap"
         }
       }
     },
@@ -5542,7 +5542,7 @@
         "cooling": {
           "text": "setup.cooling.counter",
           "label": "controls.cooling",
-          "value": "controls.then.counter"
+          "value": "controls.cooling.counter"
         }
       }
     },
@@ -5571,7 +5571,7 @@
         "cooling": {
           "text": "setup.cooling.ice",
           "label": "controls.cooling",
-          "value": "controls.then.ice"
+          "value": "controls.cooling.ice"
         }
       }
     },
@@ -5600,7 +5600,7 @@
         "cooling": {
           "text": "setup.cooling.tap",
           "label": "controls.cooling",
-          "value": "controls.then.tap"
+          "value": "controls.cooling.tap"
         }
       }
     },
@@ -5629,7 +5629,7 @@
         "cooling": {
           "text": "setup.cooling.counter",
           "label": "controls.cooling",
-          "value": "controls.then.counter"
+          "value": "controls.cooling.counter"
         }
       }
     },
@@ -5658,7 +5658,7 @@
         "cooling": {
           "text": "setup.cooling.ice",
           "label": "controls.cooling",
-          "value": "controls.then.ice"
+          "value": "controls.cooling.ice"
         }
       }
     },
@@ -5687,7 +5687,7 @@
         "cooling": {
           "text": "setup.cooling.tap",
           "label": "controls.cooling",
-          "value": "controls.then.tap"
+          "value": "controls.cooling.tap"
         }
       }
     },
@@ -5716,7 +5716,7 @@
         "cooling": {
           "text": "setup.cooling.counter",
           "label": "controls.cooling",
-          "value": "controls.then.counter"
+          "value": "controls.cooling.counter"
         }
       }
     },
@@ -5745,7 +5745,7 @@
         "cooling": {
           "text": "setup.cooling.ice",
           "label": "controls.cooling",
-          "value": "controls.then.ice"
+          "value": "controls.cooling.ice"
         }
       }
     },
@@ -5774,7 +5774,7 @@
         "cooling": {
           "text": "setup.cooling.tap",
           "label": "controls.cooling",
-          "value": "controls.then.tap"
+          "value": "controls.cooling.tap"
         }
       }
     },
@@ -5803,7 +5803,7 @@
         "cooling": {
           "text": "setup.cooling.counter",
           "label": "controls.cooling",
-          "value": "controls.then.counter"
+          "value": "controls.cooling.counter"
         }
       }
     },
@@ -5832,7 +5832,7 @@
         "cooling": {
           "text": "setup.cooling.ice",
           "label": "controls.cooling",
-          "value": "controls.then.ice"
+          "value": "controls.cooling.ice"
         }
       }
     },
@@ -5861,7 +5861,7 @@
         "cooling": {
           "text": "setup.cooling.tap",
           "label": "controls.cooling",
-          "value": "controls.then.tap"
+          "value": "controls.cooling.tap"
         }
       }
     },
@@ -5890,7 +5890,7 @@
         "cooling": {
           "text": "setup.cooling.counter",
           "label": "controls.cooling",
-          "value": "controls.then.counter"
+          "value": "controls.cooling.counter"
         }
       }
     },
@@ -5919,7 +5919,7 @@
         "cooling": {
           "text": "setup.cooling.ice",
           "label": "controls.cooling",
-          "value": "controls.then.ice"
+          "value": "controls.cooling.ice"
         }
       }
     },
@@ -5948,7 +5948,7 @@
         "cooling": {
           "text": "setup.cooling.tap",
           "label": "controls.cooling",
-          "value": "controls.then.tap"
+          "value": "controls.cooling.tap"
         }
       }
     },
@@ -5977,7 +5977,7 @@
         "cooling": {
           "text": "setup.cooling.counter",
           "label": "controls.cooling",
-          "value": "controls.then.counter"
+          "value": "controls.cooling.counter"
         }
       }
     },
@@ -6006,7 +6006,7 @@
         "cooling": {
           "text": "setup.cooling.ice",
           "label": "controls.cooling",
-          "value": "controls.then.ice"
+          "value": "controls.cooling.ice"
         }
       }
     },
@@ -6035,7 +6035,7 @@
         "cooling": {
           "text": "setup.cooling.tap",
           "label": "controls.cooling",
-          "value": "controls.then.tap"
+          "value": "controls.cooling.tap"
         }
       }
     },
@@ -6064,7 +6064,7 @@
         "cooling": {
           "text": "setup.cooling.counter",
           "label": "controls.cooling",
-          "value": "controls.then.counter"
+          "value": "controls.cooling.counter"
         }
       }
     },
@@ -6093,7 +6093,7 @@
         "cooling": {
           "text": "setup.cooling.ice",
           "label": "controls.cooling",
-          "value": "controls.then.ice"
+          "value": "controls.cooling.ice"
         }
       }
     },
@@ -6122,7 +6122,7 @@
         "cooling": {
           "text": "setup.cooling.tap",
           "label": "controls.cooling",
-          "value": "controls.then.tap"
+          "value": "controls.cooling.tap"
         }
       }
     },
@@ -6151,7 +6151,7 @@
         "cooling": {
           "text": "setup.cooling.counter",
           "label": "controls.cooling",
-          "value": "controls.then.counter"
+          "value": "controls.cooling.counter"
         }
       }
     },
@@ -6180,7 +6180,7 @@
         "cooling": {
           "text": "setup.cooling.ice",
           "label": "controls.cooling",
-          "value": "controls.then.ice"
+          "value": "controls.cooling.ice"
         }
       }
     },
@@ -6209,7 +6209,7 @@
         "cooling": {
           "text": "setup.cooling.tap",
           "label": "controls.cooling",
-          "value": "controls.then.tap"
+          "value": "controls.cooling.tap"
         }
       }
     },
@@ -6238,7 +6238,7 @@
         "cooling": {
           "text": "setup.cooling.counter",
           "label": "controls.cooling",
-          "value": "controls.then.counter"
+          "value": "controls.cooling.counter"
         }
       }
     },
@@ -6267,7 +6267,7 @@
         "cooling": {
           "text": "setup.cooling.ice",
           "label": "controls.cooling",
-          "value": "controls.then.ice"
+          "value": "controls.cooling.ice"
         }
       }
     },
@@ -6296,7 +6296,7 @@
         "cooling": {
           "text": "setup.cooling.tap",
           "label": "controls.cooling",
-          "value": "controls.then.tap"
+          "value": "controls.cooling.tap"
         }
       }
     },
@@ -6325,7 +6325,7 @@
         "cooling": {
           "text": "setup.cooling.counter",
           "label": "controls.cooling",
-          "value": "controls.then.counter"
+          "value": "controls.cooling.counter"
         }
       }
     }

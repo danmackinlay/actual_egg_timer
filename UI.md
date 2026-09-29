@@ -186,7 +186,8 @@ The owner's steer of 27 September, after using the first web preview:
 is in `copy/en.json`, and `tools/copyDraft.ts` lists each one the redesign
 added, changed or took off the web (the `redesign` draft, on `80799d0`).
 
-**Three views, one page.** The egg, `#kitchen` and `#help`, hash-routed, so
+**Three views, one page.** The egg, `#settings` and `#help`, hash-routed
+(`#kitchen`, the Settings page's first address, still opens it), so
 the phone's back button leaves a page the way it came; the page's own Back
 goes back along that history, or to the egg when the page was opened from
 its address. A running cook is always the egg, whatever the address says.
@@ -351,7 +352,7 @@ three paragraphs. The E5 computation stands; the ticket carried
 **Keys iOS held that the web had replaced**, all retired by iOS pass A
 (section 9): `controls.start.hintSousVide` (cut by the owner), `controls.probe` and
 `controls.probe.hint` (the web's probe row is `controls.thermometer`, its
-checkbox `probe.offer.yes`, its (i) `controls.thermometer.more`),
+checkbox `controls.thermometer.ask`, its (i) `controls.thermometer.more`),
 `learned.forgetExplain` (`learned.forget.more`), `controls.then`
 (`controls.cooling`), `controls.afterBoil.explainHeatOff` and
 `.explainHold` (`controls.afterTheBoil.more`), and the stat labels

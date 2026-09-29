@@ -1,7 +1,7 @@
 /* Ultra-functionalist: read at arm's length, hit with a wet thumb.
    Dark by default; the light scheme is an override, not the base.
 
-   Three views share this page (UI.md): the egg, the Kitchen and Help. The
+   Three views share this page (UI.md): the egg, Settings and Help. The
    egg is two controls and a sentence; everything else is a rarer visit. */
 
 :root {
@@ -60,7 +60,7 @@ body {
 /* A column at least a screen tall, so the action bar, last in it, sits at the
    bottom of a short page and stays there over a long one (#actions). In a
    column the margins between its parts add up rather than overlap; the
-   Kitchen and Help, which have no bar, stay a plain block (views). */
+   Settings and Help, which have no bar, stay a plain block (views). */
 main {
   max-width: 32rem;
   margin: 0 auto;
@@ -484,7 +484,7 @@ button.panel__close {
   font-size: 0.9375rem;
   font-weight: 600;
 }
-.panel .hint, .krow .hint {
+.panel .hint, .setting .hint {
   margin: 8px 0 0;
   font-size: 0.8125rem;
   color: var(--dim);
@@ -583,7 +583,7 @@ a.morelink {
 }
 a.morelink::after { content: "\2192"; display: inline-block; margin-left: 6px; }
 
-/* --------------------------------------------------------- Kitchen, Help */
+/* -------------------------------------------------------- Settings, Help */
 
 .page h1 {
   margin: 4px 0 10px;
@@ -593,15 +593,15 @@ a.morelink::after { content: "\2192"; display: inline-block; margin-left: 6px; }
 }
 .page h1:focus { outline: none; }
 
-.krow {
+.setting {
   margin: 0;
   padding: 12px 0;
   border: 0;
   border-bottom: 1px solid var(--line);
   min-width: 0;
 }
-.krow__line { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.krow__head {
+.setting__line { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.setting__head {
   display: flex;
   align-items: center;
   gap: 2px;
@@ -609,9 +609,9 @@ a.morelink::after { content: "\2192"; display: inline-block; margin-left: 6px; }
   font-size: 1rem;
   font-weight: 600;
 }
-fieldset.krow .krow__head { margin-bottom: 8px; }
-.krow__sub { margin: 6px 0 0; font-size: 0.875rem; color: var(--dim); }
-.krow__sub strong { color: var(--fg); font-weight: 600; }
+fieldset.setting .setting__head { margin-bottom: 8px; }
+.setting__sub { margin: 6px 0 0; font-size: 0.875rem; color: var(--dim); }
+.setting__sub strong { color: var(--fg); font-weight: 600; }
 
 .check { display: flex; align-items: center; gap: 10px; min-height: 44px; cursor: pointer; }
 .check input[type="checkbox"] { width: 22px; height: 22px; margin: 0; accent-color: var(--accent); }
@@ -699,11 +699,11 @@ button.danger { color: var(--warn); border-color: color-mix(in srgb, var(--warn)
 
 /* ---------------------------------------------------------------- views */
 
-/* The Kitchen and Help are pages of their own; the egg's parts, and the
+/* Settings and Help are pages of their own; the egg's parts, and the
    button at the bottom, step aside while one is open. A running cook is
    always the egg: the app never leaves the clock for a settings page. */
 .page { display: none; }
-body[data-phase="IDLE"][data-view="kitchen"] #kitchen,
+body[data-phase="IDLE"][data-view="settings"] #settings,
 body[data-phase="IDLE"][data-view="help"] #help { display: block; }
 body[data-phase="IDLE"]:not([data-view="egg"]) :is(#readout, #controls, #slot, #actions) { display: none; }
 body[data-phase="IDLE"]:not([data-view="egg"]) main {
@@ -714,9 +714,9 @@ body[data-phase="IDLE"]:not([data-view="egg"]) main {
 
 #navBack { display: none; }
 body[data-phase="IDLE"]:not([data-view="egg"]) #navBack { display: inline-flex; }
-body[data-phase="IDLE"]:not([data-view="egg"]) #kitchenLink,
+body[data-phase="IDLE"]:not([data-view="egg"]) #settingsLink,
 body[data-view="help"] #helpLink,
-body:not([data-phase="IDLE"]) :is(#kitchenLink, #helpLink) { display: none; }
+body:not([data-phase="IDLE"]) :is(#settingsLink, #helpLink) { display: none; }
 
 /* ------------------------------------------------------ 1750 (F6) */
 
