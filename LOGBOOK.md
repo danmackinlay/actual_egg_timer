@@ -2751,3 +2751,60 @@ last. It is now one current spec. What it no longer carries:
   in English and 1750 (the 1750 heading fits one line at 402 pt), and the web
   at 375 px idle, cooking and after a reload mid-cook, with the slider's
   `aria-valuetext` read back ("Runny, peak yolk 56 °C").
+
+### Moved from LANGUAGE.md
+
+LANGUAGE.md section 3 was every wording draft's table, one after another,
+about 600 lines and 75 references to keys that no longer exist, followed by
+"one wording per meaning", a proposal the redesign overtook. The drafts
+themselves are `tools/drafts/*.ts`, each with its base commit, and every
+row's before and after; section 3 is now the rules they were held to, and
+the one draft under review. Section 8, the decisions, is in `DECISIONS.md`
+(12-17, 22-23). What went, as an index:
+
+| draft | base | keys | what |
+|---|---|---|---|
+| `feedback` | `cfe38e9` | 19 | E2's questions and answers, both apps alike; approved on the owner's behalf while they were away |
+| `rest` | `e1f7068` | 37 | the rest of F2 and the first person, approved by the owner; five rows held back (four over budget, one untrue) |
+| `reach` | `1667dcf` | 11 | the odds-shaded slider's refusals and advice |
+| `redesign` | `80799d0` | 109 | the web's sentence, (i)s, Settings and Help, with the owner's wording rules |
+| `outcome` | `7a40373` | 12 | which way a miss goes, in place of "7/10 eggs hit the mark" |
+| `boil`, `counter`, `help`, `history` | `e29887c`, `4817303`, `9116d33`, `cc0dc47` | 49 | the start clause carries the boil; iOS's pull on a counter rest; Help as a gist then an aside; the remembered boil "based on history" |
+| `safe`, `oddsHelp` | `ff6c6e9`, `91d5fff` | 17 | playing safe, and Help's "How sure I am" brought up to it |
+| `period`, `period_ios` | `05d466b`, `394f74d` | 10 | F6's new modern English: the picker, the line under Imperial, the title's twin; the Lock Screen's odds retired |
+| `iosA`, `iosB` | `91d5fff`, `44b0cb1` | 166 | which app says what; no wording changed |
+| `pull`, `tighten` | `5e38279`, `2c090c9` | 25 | the pull names the cooling; the heading's peak yolk, the running sentence |
+| `loose`, `units` | `5d71a3c`, `055bd4e` | 8 | the units' (i), and four dead strings |
+| `settings` | `72f447c` | 2 | "kitchen" becomes "settings", word for word |
+| `tidy` | `bfc070d` | 67 | WORKLIST section 9, under the owner's review |
+
+Things section 3 said that are worth one line each:
+
+- **The held-back rows** of `rest` all went in later: `alarm.cooled.body`
+  once F6 raised the notification body's budget to 110,
+  `readout.sub.coldAssumes` as "about {boil} to boil, based on history" in
+  the redesign, and `feedback.thanks`, `learned.forget` and
+  `learned.confirm.title` in `tidy`. The untrue one was untrue because
+  `{boil}` is a blend of every boil at that volume, or another volume's
+  scaled, never "last time".
+- **The E4 probe offer's one departure** from the owner's draft: "lowest"
+  became "highest", because at the moment the reading is taken the middle of
+  the egg is its warmest point (`INFERENCE.md` §5).
+- **No Skip button**: every answer folds when tapped, and an unanswered
+  question is recorded as skipped when the next cook starts.
+- **The one-wording guard test was never built.** It would have given each
+  surface a platform in `test/data/surfaces.json` and made any key used by
+  one app on a shared surface carry a `why`. The redesign merged most pairs,
+  so what it would guard is small; `test/copy.test.ts` 6a still checks each
+  key's `apps` against the code.
+
+### The units' (i), 28 September (`31a1ee1`, which had no entry)
+
+On the owner's word, the units' (i) (`controls.units.more`, `.more.ios`) now
+says only where the first choice came from: "I start with what's usual where
+your browser says you are" (or "your phone"). The `loose` draft had just made
+it say that switching may change the words too, which was true on an English
+page; the owner found both sentences over-explaining, since the cook sees
+the numbers, and on an English page the words, change as they switch. Proved
+as the `units` draft on `055bd4e`: two keys, their 1750 twins, and nothing
+else.

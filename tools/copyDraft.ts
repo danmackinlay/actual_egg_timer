@@ -53,7 +53,7 @@ export interface Drafted {
   after: Templates | null;
   appsBefore: string[];
   appsAfter: string[];
-  /** The row of LANGUAGE.md section 3 this is. */
+  /** Where the draft puts this key: its row or group, in a word or two. */
   row: string;
 }
 

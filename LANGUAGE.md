@@ -1,45 +1,25 @@
 # LANGUAGE.md — words, units, and languages
 
-This is a design, and since 27-28 September mostly built: F1-F4 and F6 are in
-both apps, each with an "as built" note below; F5, Czech, is not. The checklist
-that tracks it is Phase F in `PLAN.md`. It covers three requests made on 26 September 2026: localise both apps, revisit the
-wording of the copy they have now, and offer Imperial units. The third comes with
-an easter egg.
-
-It lives in its own file, beside `INFERENCE.md`, because it cuts across both apps
-the same way the policy layer did. That layer exists because text that both apps
-have to agree on, and that is copied between them by hand, drifts.
+How both apps get their words, units and languages, and the rules the words
+are held to. Built: the catalogue (F1), units (F3), locale formatting (F4)
+and the English of 1750 (F6), in both apps. Not built: Czech (F5), which waits
+for its reviewer. The owner's decisions on all of it are in `DECISIONS.md`
+(12-17, 22-23, 28-30); the drafts that changed the wording are in
+`tools/drafts/`, one file each, and each draft's reasoning is in the
+`LOGBOOK.md` entry of its day.
 
 ---
 
-## 1. Where the words were, 26 September (before F1)
+## 1. Why one catalogue
 
-- **They are hand-copied between the two apps.** The five refusal messages
-  appeared in `src/ui/app.ts` and again in `ios/App/Kitchen.swift` (as the
-  planner was then called). Nothing held the two copies together. This is the failure `src/core/policy.ts` was created
-  to end for numbers, and nobody has done the same for words.
-- **Some of the English is in core.** Core returns English in three places:
-  - `DONENESS_ANCHORS` (`Runny`, `Soft`, `Jammy`, …)
-  - the size-class labels in `geometry.ts`
-  - `formatLongDuration` and `startPhrase` in `sousvide.ts`
-
-  `fixtures/sousvideCopy.json` already holds that English under conformance.
-  That fixture is the precedent this plan generalises.
-- **English grammar is written into the code.** Examples:
-  - `egg${eggs === 1 ? '' : 's'}`
-  - `minute${m === 1 ? '' : 's'}`
-  - an array of seven English weekday names
-  - a 24-hour clock built by hand on the web, and `"HH:mm:ss"` on iOS
-
-  None of these survive contact with a second language, and the 24-hour clock
-  does not survive contact with an American.
-- **The copy is SI only, and it sometimes leaves the unit off.** "Fridge 4°" and
-  "Sous-vide 63°" are unambiguous today. Once °F exists they are not, because
-  63 °F is a cold kitchen.
-- **The scale is small.** There are about 46 text nodes in `index.html`, about
-  35 strings in the web UI code, and about 80 in the Swift app, widget and alarm.
-  All of it can be read in one sitting, so the review in §3 is a real review
-  rather than a sample.
+Until 27 September 2026 the two apps typed their sentences separately, and
+nothing but care kept them together: the five refusals were in the web's UI
+code and again in the iOS planner. That is the failure `src/core/policy.ts`
+was created to end for numbers. Core also returned English in three places
+(the doneness anchors, the size-class labels and the sous-vide durations),
+and English grammar was written into the code (`egg${n === 1 ? '' : 's'}`, a
+hand-made 24-hour clock, seven English weekday names). None of that survives
+a second language, and the 24-hour clock does not survive an American.
 
 ## 2. One catalogue, both apps
 
@@ -99,9 +79,10 @@ languages.
   its key with `data-copy`. The `<head>` keeps its English, because crawlers
   and link previews do not run scripts; localising it needs a page per
   language, which is F5's problem.
-- **The language picker waits for Czech.** F1 built the active locale as
-  plumbing, fixed at `en`; a picker with one row in it is a control that does
-  nothing.
+- **The language picker** came with F6, not F1: a picker with one row in it
+  is a control that does nothing. The active locale is plumbing
+  (`ACTIVE_LOCALE` in `src/ui/copy.ts`, `Copy.activeLocale` in
+  `ios/Shared/Copy.swift`) that the picker sets.
 - **Inserted words are still lower-cased in code**, because some templates
   insert a doneness word or a headline mid-sentence. `midSentence` (the core
   copy module, both apps) lower-cases only the first letter, in the
@@ -144,9 +125,8 @@ up as a failing test and not as a surprise in a Czech kitchen.
   differs from the region's, so an Australian iPhone set to 24-hour time
   reads "15:05" and not "3:05 pm"; a browser does not expose that setting,
   so the web uses the region's. The web reads the region from
-  `navigator.language`, iOS from `Locale.current`. There is no picker yet
-  (F5), so the language is `en`, and `forceFormatLocale` pins the whole tag
-  for a test.
+  `navigator.language`, iOS from `Locale.current`. `forceFormatLocale` pins
+  the whole tag for a test.
 - **Numbers go through `Intl.NumberFormat` and `NumberFormatter`**, with an
   explicit locale. **The rounding is ours**, done first by the units'
   `floor(x + 0.5)`: `Intl` rounds halves away from zero and `NumberFormatter`
@@ -231,404 +211,60 @@ as in the last row of the table, so both apps print "15:05".
 Safari was not measured: it runs Apple's ICU, not V8's, and the U+202F
 normalisation covers the one difference known in advance.
 
-## 3. The wording, reviewed
 
-The catalogue is the natural moment to review the wording, because it puts every
-string in one file for the first time. **The move and the rewrite are two
-separate steps.**
+## 3. Copy rules
 
-1. Extract every string with no change in wording. This is proved by rendering
-   both apps before and after and getting byte-identical output, the way the
-   `CookSetup.eggMass_kg` removal was proved.
-2. Rewrite inside the catalogue, as one diff the owner reads and approves.
-
-**Criteria.** These are the rule the copy has been held to since the sous-vide
-warning was cut down, written down here for the first time:
+**The criteria**, which every string is held to:
 
 - Say what to do.
 - When a caveat cannot be put plainly, say its consequence, not its mechanism.
-- Use no term that only this repository uses.
+- Use no term that only this repository uses ("carryover", "calibration",
+  "literature values", "the model", "standing method" all failed this).
+- Every temperature carries its unit (§4), and every inserted word stands
+  alone, after a colon or as a label, never inside running grammar (§5).
 
-**Strings that already fail those criteria.**
+**The app speaks in the first person singular, in the active voice**
+(`DECISIONS.md` 28): "Tap the boil … and I'll remember for next time", not
+"it's remembered". The app is "I", the cook is "you", and a sentence has
+someone doing something. Instructions stay imperative. It matches the 1750
+register, since Johnson's *Preface* is in the first person (§6), and it has a
+cost in Czech (§5).
 
-| where | string | problem |
-|---|---|---|
-| iOS alarm, second notification | "The carryover is over. That is the egg you asked for." | "carryover" is a README word |
-| iOS, reset dialog | "Forget the calibration?" … "goes back to the literature values it shipped with" | "calibration", "literature values" |
-| iOS, after feedback | "Telling it tunes the model to your eggs and your pan." | "the model" |
-| web, learned note | "tuned on 3 eggs · ±4%" | ±4% of what? The honest answer is a range of times, which is E5's job (`INFERENCE.md` §8) |
-| iOS, heat-off explanation | "The standing method: the pan coasts down…" | "standing method" is the README's name for it, not a cook's. Reworded 27 September, when the pan's cooling moved to the water volume: "Lid on and burner off: the water's own heat finishes the eggs…" |
-| both, presets | "Fridge 4°", "Sous-vide 63°" | there is no unit, and °F is coming (§4) |
+**The owner's wording rules** (`DECISIONS.md` 26, 29):
 
-**Draft for E2's feedback screens - IMPLEMENTED 27 September 2026**, in
-`copy/en.json` and both apps, except the two "E5, preview" rows, which belonged
-to E5 and went in with it on 28 September. The owner has not formally approved it; it went in on their behalf while
-they were away, and it lives in the catalogue so that revising it is an edit to
-one file. `tools/drafts/feedback.ts` lists every key it changed, and
-`copyLiterals.js --since cfe38e9` and `copySnapshot.js compare --draft` show
-that nothing else did. This is modern English only; 1750 and Czech shadow it
-once it is settled. Both apps get the same wording. That is new: until E2 the
-web app said *Too firm* where iOS said *Too hard*.
+- Never narrate what the interface visibly did.
+- Sous-vide is not "a bath". "Ice bath" stays.
+- "Pan" only where it means the pot. The boil-time memory is keyed by water
+  volume, so it is "how long your water takes to boil", not "your pan".
+- The (i) is short enough to read standing at the hob; the whole story goes to
+  Help (`UI.md` §7).
+- Wording is judged in place on a phone, not approved row by row in a table
+  (`UI.md` §6).
 
-| where | now | draft | why |
-|---|---|---|---|
-| yolk question | How was the yolk? | How was the yolk? | unchanged |
-| yolk answers | Too soft · Just right · Too firm (web) / Too hard (iOS) | Too soft · Just right · Too firm | one word in both apps; *firm* matches the white's scale |
-| white question | And the white — was it runny? (asked only sometimes) | And the white? | always shown now (E2), so it no longer presumes the answer |
-| white answers | Still runny · Set right through | Runny · Tender · Firm | three levels, decided 21 September |
-| optional hint | The white sets from the outside in, so this says something about your eggs that the yolk cannot. | Answer either, both or neither. | the old line explains the mechanism; the cook needs to know they may skip |
-| after an answer | Thanks — it has adjusted. | Thanks. The next egg will use that. | says the consequence |
-| while updating | learning… | learning… | unchanged; it matches "still learning" (E5) |
-| before any egg | Telling it tunes the model to your eggs and your pan. | Your answers adjust the times to your eggs and your pan. | drops "the model" |
-| what it has learned | tuned on 3 eggs · ±4% | Learned from 3 eggs | the ±% is of nothing a cook knows; E5 replaces it with "still learning" and the odds |
-| nothing learned yet | Running on the literature values. It learns your pan when you time a boil, and your taste when you say how an egg was. | Nothing learned yet. It learns your pan when you time a boil, and your eggs when you say how one came out. | drops "literature values"; "your eggs", because the white answers are about the egg, not taste |
-| forget button | Forget what it learned | Forget what it learned | unchanged |
-| forget dialog, iOS | Forget the calibration? — The model goes back to the literature values it shipped with, and the time to boil goes back to a guess. | Forget what it learned? — Every egg and your pan's boil time are forgotten, and the times go back to where they started. | checked against both apps: the button clears the eggs AND the boil memory |
-| pull screen, web | Out of the water — now · carryover is running | Out of the water — now · the yolk is still cooking | "carryover" is a README word; this says what is happening |
-| pull button, iOS | (none: iOS has no action out of the pull) | They're in the ice bath · They're under the tap · They're out | the web's existing button, so iOS records a MEASURED pull as the web does (E1 records every iOS pull as assumed today) |
-| **E5 — IMPLEMENTED 28 September** | — | 7/10 eggs hit the mark | the owner's wording. `odds.hitTheMark`, `{hits}/{of}`, both numbers through the renderer (F4 formats them); under the time in both apps, and on the Lock Screen. *Retired by 28 September: the outcome summary replaced it under the time, and the owner dropped it from the Lock Screen (§6)* |
-| **E5 — IMPLEMENTED 28 September** | — | Still learning your kitchen | `odds.stillLearning`, beside the odds while the 80% interval on the cook time is wider than ±15 s; "Learned from N eggs" stays where it was. *Retired from both apps by 28 September; still computed, and not kept in the egg's record* |
+**How a wording change is made.** As one named draft in `tools/drafts/`,
+proved to have changed only what it lists, in both apps and with each 1750
+twin; `CLAUDE.md` has the steps. A string the owner has approved (the
+`alarm.pull.*` bodies, `alarm.cooled.body`, `idle.welcome`,
+`activity.note.estimate`) stays unless the owner says otherwise.
 
-There is **no Skip button.** Every answer folds the moment it is tapped, and an
-unanswered question is recorded as skipped when the next cook starts (E1's
-offered-or-skipped field). A button would be one more thing to press that
-teaches nothing.
-
-**E4's strings - IMPLEMENTED 27 September 2026**, in `copy/en.json` and both
-apps, not yet approved by the owner. One is INFERENCE.md §5's draft with one
-word changed; the rest are new. `readout.sub.cooling` ("3 minutes, or the yolk
-keeps cooking") is retired, because the countdown is no longer three minutes.
-
-| key | where | text |
-|---|---|---|
-| `probe.offer` | once, during a cook (both) | Got a probe thermometer? When the timer says, push it to the middle of the egg and tell us the **highest** number you see. |
-| `probe.offer.yes` / `.no` | its buttons | I have one · No thanks |
-| `controls.probe` | the setting | I have a probe thermometer |
-| `controls.probe.hint` | under it | When the cooling ends it asks for one reading from the middle of the egg. That tells it how fast your eggs heat, from a single egg. |
-| `readout.sub.coolingPeak` | cooling subline | until the middle of the yolk stops warming |
-| `readout.sub.coolingProbe` | the same, probe on | until the middle of the yolk stops warming — have the probe ready |
-| `probe.now` / `probe.hint` | at Done | Push the probe to the middle · Tell us the highest number you see. |
-| `probe.entry` / `probe.save` | the field, the button | Highest reading · Use this reading |
-| `probe.refused` | a reading refused | That doesn't look like the middle of this egg: expect {low} to {high}. Is the tip in the yolk? |
-| `alarm.probe.title` / `.body` | iOS notification | Probe it now · Middle of the egg: tell us the highest number. (12 and 46 of 14 and 53) |
-| `spoken.probe` | web, screen reader at Done | Now push the probe to the middle of the egg. |
-
-**"Lowest" became "highest"** because at the moment the reading is taken the
-middle of the egg is its warmest point, not its coldest (INFERENCE.md §5): the
-highest number is the middle, and a probe that is off-centre, late, or not yet
-settled reads lower. It is the one departure from the owner's draft.
-
-The reading is typed in the cook's units: a new quantity, `probeTemp`, to a
-tenth of a degree in C or F, and never clamped - a reading the egg could not
-have made is refused with the range it should be in, not silently moved to
-the edge of it (§4).
-
-**Draft for the rest of F2 (everything but the feedback screens) -
-IMPLEMENTED 27 September 2026**, in `copy/en.json` and both apps, but for the
-rows held back below. Approved by the owner on 27 September. Drafted on 27
-September while the owner slept, from F1's list of strings that fail the
-criteria above. The E2 draft above covers the feedback screens, the pull line
-and the forget dialog. F3 and F4 already fixed the bare "°" and "1 seconds".
-
-The refusals drop `{wanted}` altogether. The slider already shows it right
-above them, and removing an inserted word is simpler than making it stand
-alone. `{limit}` moves after a colon, so no language has to decline it.
-
-| key | now | draft |
-|---|---|---|
-| `refusal.counter` | Resting on the counter keeps cooking the yolk — {wanted} isn't reachable. Softest here is {limit}. Use an ice bath. | Resting on the counter keeps cooking the yolk. Softest possible: {limit}. An ice bath would leave the egg softer. |
-| `refusal.tap` | A cold tap doesn't pull the heat out fast enough — {wanted} isn't reachable. Softest here is {limit}. Ice water gets you further. | A cold tap doesn't cool the egg fast enough to stop the yolk. Softest possible: {limit}. An ice bath would leave the egg a little softer. |
-| `refusal.ice` | Any shorter and the white is still raw — {wanted} isn't reachable for this egg. Softest here is {limit}. | Any shorter and the white is still raw. Softest possible for this egg: {limit}. |
-| `refusal.harderThanPan` | With the heat off, the water runs out before the yolk gets there — {wanted} isn't reachable with this much water ({water}). Hardest here is {limit}. More water, or keep it boiling. | With the heat off, this much water ({water}) cools before the yolk gets there. Firmest possible: {limit}. Add more water, or keep it boiling. |
-| `refusal.whiteNeverSets` | With the heat off this pan never sets the white: the water falls below what the white needs while the egg is still in it. Nothing on the slider is reachable. More water, or keep it boiling. | With the heat off, the water cools before the white sets, so no setting works. Add more water, or keep it boiling. |
-| `alarm.cooled.body` | The carryover is over. That is the egg you asked for. | The yolk has stopped cooking. That's the egg you asked for. |
-| `activity.note.cooling` | carryover still running | yolk still cooking |
-| `colophon.ios` | Times computed from heat conduction and denaturation kinetics, not from a recipe. The cooling step is part of the recipe: carryover is what ruins a soft egg. | I work out times from the physics and chemistry of eggs. Both heating and cooling matter for cooking the middle. |
-| `readout.sub.idleCold` | from eggs into COLD water, heat on, to eggs out | from eggs into cold water, heat on, to eggs out |
-| `readout.sub.idleHot` | from eggs into BOILING water to eggs out | from eggs into boiling water to eggs out |
-| `readout.sub.coldAssumes` | assumes {boil} to a rolling boil | your pan took {boil} to boil last time |
-| `readout.sub.coldGuesses` | guesses {boil} to a rolling boil | I'm guessing {boil} to boil — tap when it does |
-| `readout.sub.heating` | {elapsed} heating · provisional, assumes {boil} to boil | {elapsed} heating · I expect {boil} until you tap |
-| `readout.sub.heatingEstimate`, `activity.note.estimate` | estimate — the clock corrects itself when you tap the boil / estimate until the boil is tapped | my guess until you tap Full rolling boil |
-| `controls.start.coldPan` (web), `controls.start.cold` (iOS), `cook.method.cold` | Cold pan / Cold start / Cold start | Cold water (all three) |
-| `cook.method.hot` | Into boiling water | Boiling water (matches `controls.start.hot`) |
-| `controls.start.hint` | Hot start peels far better; cold start needs no timing of the drop-in. | Eggs into boiling water peel better. Eggs into cold water are done sooner, counting the wait for the water to boil. |
-| `controls.afterBoil.keepItBoiling` (web), `keepBoiling` (iOS) | Keep it boiling / Keep boiling | Keep boiling (both) |
-| `readout.stat.afterBoiling` (web), `afterBoil` (iOS) | after boiling / after boil | after the boil (both) |
-| `controls.afterBoil.hint` | Standing in cooling water is a real method, but it lives or dies on the pan: the water has to carry the whole cook. More water holds more heat. | Heat off, lid on: the hot water continues to cook the eggs. More water holds more heat. |
-| `action.hint.cookingStanding` | lid on, burner off — the timing assumes the water cools on its own from the boil ({boiling}) | lid on, burner off |
-| `action.hint.cookingBoiling` | keep it boiling — the timing assumes a full boil ({boiling}) right up to the pull | keep it at a full boil ({boiling}) until the eggs come out |
-| `pan.measured` | Measured on this pan at this volume. It is re-measured every cold start. | From your earlier boils with this much water. I update it each time you tap the boil on a cold-water start. |
-| `pan.unmeasured` | Never measured. Run one cold start and tap the boil, and this becomes your pan rather than a guess. | Tap the boil on a cold-water start and I'll remember for next time. |
-| `learned.forgetExplain` | Clears both what it learned from your eggs and the time it measured for your pan. The posterior is honest about its own spread, so a few wrong answers wash out after a few more eggs anyway - this is for when you would rather not wait. | Clears what I've learned from your answers and your boil times. A few wrong answers wash out after a few more eggs anyway; this is for when you'd rather not wait. |
-| `sousvide.warn` | This bath ({bath}) is below the temperature at which egg white sets — only one of its proteins reacts down here — so the white stays loose however long you leave it. This app was built for boiling water and is out of its depth below {floor} anyway. Use the pan. | This bath ({bath}) is too cool to set the white, however long you leave it. I'm built for boiling water, and I'm not reliable below {floor}. Use the pan. |
-
-Owner-edited on 27 September, then proof-read against what the app does. The
-proof-read corrected the verb missing from `refusal.whiteNeverSets`, the
-"log" in the estimate line (the button says *Full rolling boil*), and a
-"sooner" that read as false beside the two totals on screen. It also made
-`pan.measured` truthful: the memory is keyed by water volume, not by pan, and
-it blends each boil in rather than re-timing. The sous-vide warning was never
-owner-edited; an earlier line here said it was, and that was wrong.
-
-**The app speaks in the first person singular, in the active voice.** Owner,
-27 September: "Tap the boil … and I'll remember for next time", not "it's
-remembered". The app is "I", the cook is "you", and a sentence has someone
-doing something. Instructions stay imperative. This also matches the 1750
-register, since Johnson's *Preface* is written in the first person (§6), and
-it has a cost in Czech (§5).
-
-These strings are already live and need the same pass. **IMPLEMENTED 27
-September 2026**, with the table above, but for the rows held back below:
-
-| key | live | first person |
-|---|---|---|
-| `feedback.invite` | Your answers adjust the times to your eggs and your pan. | Your answers teach me your eggs and your pan. |
-| `feedback.thanks` | Thanks. The next egg will use that. | Thanks. I'll use that for the next egg. |
-| `learned.literature` | Nothing learned yet. It learns your pan when you time a boil, and your eggs when you say how one came out. | I haven't learned anything yet. I learn your pan when you time a boil, and your eggs when you tell me how one came out. |
-| `learned.forget` | Forget what it learned | Forget what I've learned |
-| `learned.confirm.title` | Forget what it learned? | Forget what I've learned? |
-| `controls.probe.hint` | When the cooling ends it asks for one reading from the middle of the egg. That tells it how fast your eggs heat, from a single egg. | When the cooling ends, I'll ask for one reading from the middle of the egg. From a single egg, that tells me how fast your eggs heat. |
-| `controls.afterBoil.explainHeatOff` | Lid on and burner off: the water's own heat finishes the eggs. The time is worked out for the water below, so measure it — more or less water changes the time, or whether it works at all. | Lid on and burner off: the water's own heat finishes the eggs. I work out the time from the water below, so measure it — more or less water changes the time, or whether it works at all. |
-| `probe.offer` | Got a probe thermometer? When the timer says, push it to the middle of the egg and tell us the highest number you see. | Got a probe thermometer? When I say, push it to the middle of the egg and tell me the highest number you see. |
-| `probe.hint` | Tell us the highest number you see. | Tell me the highest number you see. |
-| `alarm.probe.body` | Middle of the egg: tell us the highest number. | Middle of the egg: tell me the highest number. |
-| `colophon.tail` | — including what it gets wrong. | — including what I get wrong. |
-
-Left as they are: "Still learning your kitchen" (the "I" is implied), "keep
-the app open" (the app is the object there, not the speaker), and "Learned
-from N eggs".
-
-**As built, 27 September.** `tools/drafts/rest.ts` lists the 37 keys the two
-tables changed, against `e1f7068`; `copyLiterals.js --since e1f7068` and
-`copySnapshot.js compare --draft` show that nothing else did.
-
-- **One key where two apps now say the same thing.** `controls.start.coldPan`
-  (web) went into `controls.start.cold`, `controls.afterBoil.keepItBoiling`
-  (web) into `controls.afterBoil.keepBoiling`, and `readout.stat.afterBoiling`
-  (web) into `readout.stat.afterBoil`; each survivor now names both apps.
-  `cook.method.cold` and `.hot` say "Cold water" and "Boiling water" too, but
-  stay keys of their own: they are fragments inside "{start} · then
-  {after}", on another surface, where a translation may need another form.
-  The two iOS estimate lines (`readout.sub.heatingEstimate`,
-  `activity.note.estimate`) are likewise one wording on two surfaces.
-- **The refusals take `{limit}` alone**, and `action.hint.cookingStanding`
-  takes nothing; both apps' call sites changed to match. `{limit}` is still
-  lower-cased by the app, which reads correctly after a colon.
-- **Held back: five rows, at their live wording.** Four are longer than their
-  surface's budget in `test/data/surfaces.json`, which is not raised for a small
-  surface without the owner; each needs a shorter wording or a raised budget.
-  *Since then (28 September):* `alarm.cooled.body` went in as "The yolk has
-  stopped cooking. That is the egg you asked for.", once F6 had raised the
-  notification body's budget to 110; `readout.sub.coldAssumes` became "about
-  {boil} to boil, based on history" in the web redesign. The other three
-  (`feedback.thanks`, `learned.forget`, `learned.confirm.title`) still say
-  "it", and wait for the owner.
-
-  | key | draft | length | budget |
-  |---|---|---|---|
-  | `alarm.cooled.body` | The yolk has stopped cooking. That's the egg you asked for. | 59 | notification body, 53 |
-  | `feedback.thanks` | Thanks. I'll use that for the next egg. | 39 | label, 36 |
-  | `learned.forget` | Forget what I've learned | 24 | button, 23 |
-  | `learned.confirm.title` | Forget what I've learned? | 25 | title, 23 |
-
-  The fifth would be false. `readout.sub.coldAssumes`, "your pan took {boil}
-  to boil last time", is shown whenever any boil is remembered, and `{boil}`
-  is `estimateTimeToBoil`: the remembered time for this volume, which is
-  every boil there blended half-and-half and not the last one, or, when this
-  volume has none, the nearest remembered volume's time scaled by litres,
-  which the pan never took. The live "assumes {boil} to a rolling boil"
-  stays until the owner rewords it.
-- **`pan.measured` is not quite true either, but no less than before.** "From
-  your earlier boils with this much water" is shown whenever any boil is
-  remembered, including when the time on screen was scaled from another
-  volume. The line it replaced ("Measured on this pan at this volume") had
-  the same fault, so it went in, and the case is noted here.
-
-**The odds-shaded slider's strings - IMPLEMENTED 27 September 2026**, in
-`copy/en.json` and both apps, drafted for the owner's answers of the same day
-and not yet approved. All new: the `reach` draft, `tools/drafts/reach.ts`, on
-`1667dcf`, and `copyLiterals.js --since 1667dcf` shows these eleven keys
-added and nothing else changed. First person, per the rule above; the
-refusals put `{limit}` after a colon, as F2's do.
-
-| key | where | text |
-|---|---|---|
-| `odds.info` | the (i) beside the odds: its name to a screen reader (both) | About these odds |
-| `odds.why` | what the (i) opens, in place (both) | Before your first egg I don't know your taste, your eggs or your pan, so I can't be sure, and this number starts low. Each egg you tell me about makes me surer, and the number goes up. |
-| `odds.shown` / `odds.hidden` | the (i)'s state to VoiceOver (iOS; the web says it with `aria-expanded`) | Showing · Hidden |
-| `advice.toggle` | the line under low odds that opens the advice (both) | How to make this more reliable |
-| `advice.fridge` | when the egg is the room preset | Use eggs straight from the fridge. I know how cold a fridge is; a room can be a few degrees either way, and that moves the time. |
-| `advice.weigh` | when the egg is a size class | Weigh the egg instead of picking a size. One size on the box covers eggs that need quite different times. |
-| `advice.ice` | on the counter, where ice raises this level's odds | Put the eggs straight into ice water when they come out. On the counter the yolk keeps cooking, by an amount that is hard to predict. |
-| `advice.moreWater` | heat off, where twice the water raises this level's odds | Use more water. With the heat off, more water holds its heat for longer, so the time depends less on your pan. |
-| `refusal.unlikelySoft` | a level the pan delivers, under 3/10 | The softest I get right at least {hits} times in {of}, so far: {limit}. |
-| `refusal.unlikelyHard` | the same at the firm end | The firmest I get right at least {hits} times in {of}, so far: {limit}. |
-
-No numbers with units in the advice: "10 g apart" would need `{mass}` and a
-unit, and the consequence ("quite different times", "moves the time") is
-what the cook needs. "So far" in the refusals says the range moves as eggs
-are told about. "Odds" is the owner's word from E5's line.
-
-**Strings that are about to change anyway.** Phase E rewrites the feedback copy:
-three white answers, every answer optional, "still learning" beside the time, and
-a thermometer prompt. Those strings should go straight into the catalogue, which
-is why F1 comes before E2 (§7).
-
-**The web redesign's strings - IMPLEMENTED 27 September 2026**, web only,
-drafted and not approved. The owner reviews them in place on a deploy
-preview (UI.md section 6), so they are listed here by key, not tabled for
-approval; the words are in `copy/en.json`, and `tools/drafts/redesign.ts` (the
-`redesign` draft, on `80799d0`) holds every one, with what it was.
-`copyLiterals.js --since 80799d0 redesign` and `copySnapshot.js compare
---draft redesign` show that nothing else changed. Two new surfaces: `more`
-(560), for what an (i) opens, and `help` (640), for the Help page.
-
-- **The setup sentence:** `setup.sentence`, `setup.sentenceSousVide`,
-  `setup.egg`, `setup.from.fridge`, `.room`, `.custom`, `setup.start.cold`,
-  `.hot`, `.sous`, `setup.cooling.ice`, `.tap`, `.counter`, `setup.clause`
-  (a clause's name to a screen reader), `setup.close`. Each fragment carries
-  its own preposition and article, so the template is punctuation and a
-  translation may reorder it; the egg is plural so that English needs no
-  "a"/"an" before a number. `controls.cooling` heads the cooling choice.
-- **The (i):** `more.about` ("About {label}"), and a paragraph for
-  `controls.egg`, `.eggFrom`, `.start`, `.cooling`, `.units`, `.altitude`,
-  `.water`, `.eggsInPan`, `.afterTheBoil`, `.thermometer`, `learned.forget`,
-  `readout.sub.coldAssumes`, `action.hint.heating` and `odds.stillLearning`,
-  each as `K.more`; the last three also have a `K.info`, the (i)'s whole name.
-  `controls.thermometer` heads the probe row.
-- **The Kitchen and the slot:** `controls.pan` is now "Kitchen", the page's
-  title, in both apps; `nav.back`, `learned.title`, `idle.welcome`.
-- **Help:** `help.link`, `help.title`, and `help.how.*`, `help.learn.*`,
-  `help.reliable.*`, `help.odds.*`, `help.unsure.*`, `help.sources.*` and
-  eight `help.source.*`, each a source as README.md section 10 gives it and
-  nothing else.
-- **Retired from the web**, the web now saying the same with a shared key or
-  a `.more`: `controls.atTheBoil` (now `controls.afterTheBoil`),
-  `controls.eggs` (now `controls.eggsInPan`), `controls.start.hint` and
-  `controls.afterBoil.hint` (deleted, now `.more`s). Still iOS's, until iOS
-  follows: `controls.then`, `controls.probe`, `controls.probe.hint`,
-  `controls.start.hintSousVide`, `readout.stat.peakYolk`, `.afterBoil` and
-  `.bath`. `learned.confirm.*` are now both apps': the web asks before
-  forgetting.
-
-**The owner's wording rules, 27 September**, applied in the same draft, to
-both apps where a key is shared:
-
-- **Never narrate what the interface visibly did.** `controls.start.hintSousVide`
-  ("A bath needs no pan, so the pan controls are put away…") is cut from the
-  web; iOS still shows it until it follows.
-- **Sous-vide is not "a bath".** `readout.stat.bath` "bath" → "sous-vide at"
-  (iOS only now); `controls.doneness.valueBath` "{doneness} · bath {bath}" →
-  "{doneness} · water at {bath}"; `sousvide.subline` "…{duration} in the bath
-  ({bath}), to eat now" → "…{duration} at {bath}, to eat now";
-  `sousvide.warn` "This bath ({bath}) is too cool to set the white…" → "At
-  {bath} the white won't set, however long you leave it…" (false, since the
-  model does set it, after about 22.7 h at 58 °C: "At {bath} the white takes
-  most of a day to set, if it sets at all…" since the `tidy` draft, 29
-  September). "Ice bath" stays.
-- **"Pan" only where it means the pot.** `controls.pan` "Pan, hob and
-  altitude" → "Kitchen"; `learned.pan` "your pan: about {time} to boil, based
-  on history" → "{water} of water takes about {time} to boil, based on
-  history" (true: the memory is keyed by water volume, not by pan);
-  `learned.literature` "I learn your pan when you time a boil" → "I learn how
-  fast your stove boils water when you tap the boil"; `learned.confirm.message`
-  → "I forget every egg and how long your water takes to boil, and the times
-  go back to where they started."; `odds.why` "your pan" → "your kitchen";
-  `feedback.invite` → "Your answers teach me your eggs and your kitchen.";
-  `advice.moreWater` "so the time depends less on your pan" → "so small
-  differences in how fast it cools matter less"; `action.hint.whiteNeverSets`
-  "this pan never sets the white" → "with this much water the white never
-  sets". Kept, because they mean the pot: "eggs in the pan, lid on",
-  "Eggs in the pan", "Use the pan."
-- **`odds.stillLearning`** "Still learning your kitchen" → "I'm still
-  learning": I learn a cook's taste, their eggs' whites and how fast their
-  water boils, not a kitchen. Its (i) says what, and what speeds it up.
-
-**The outcome summary's strings - IMPLEMENTED 27 September 2026**, web
-only, drafted and not approved: for review in place, like the redesign's.
-The owner found "7/10 eggs hit the mark" unnatural, because it does not say
-which way the misses go. So the web leads with a direction, and the number
-moves into the odds' (i). The `outcome` draft, `tools/drafts/outcome.ts`, on
-`7a40373`; `copyLiterals.js --since 7a40373 outcome` and
-`copySnapshot.js compare --draft outcome` show that nothing else changed.
-UI.md section 8 has which sentence each outcome gets, and why the
-thresholds are where they are.
-
-| key | where | text |
-|---|---|---|
-| `outcome.likely` | under the time: just right at least half the time, a miss either way | Probably just right. |
-| `outcome.likely.firm` / `.soft` | the same, leaning | Probably just right. If not, more likely a little firm. · …a little soft. |
-| `outcome.unsure` | under half, a miss either way (a fresh install) | Could come out softer or firmer than you like — I can't call it yet. |
-| `outcome.miss.firm` / `.soft` | under half, leaning | It could miss, and if it does, more likely firmer than you like. · …softer than you like. |
-| `outcome.whiteRunny` | under it, from one runny white in five | The white might still be runny. |
-| `outcome.odds` | first in what the odds' (i) opens, before `odds.why` | About {hits} in {of} eggs like this come out just as you like them, with the white set. |
-| `outcome.range` / `.range.one` | the bracket under the slider, to a screen reader | Likely yolk: {low} to {high} · Likely yolk: {level} |
-
-- **Each sentence is one message**, lean included, so a translation can
-  reorder the two halves; nothing is glued together in code. The number
-  and `odds.why` are two messages side by side, each whole sentences.
-- **The bracket's words stand alone** after a colon (§5): `{low}` and
-  `{high}` are the slider's own doneness words, in their dictionary form,
-  capitalised as the ticks are. "Likely anywhere from soft to fudgy" was
-  the first idea; it puts the words inside running grammar, which Czech
-  would have to decline.
-- **"7 in 10", not "7/10"**, in `outcome.odds` and now in `help.odds.p2`,
-  whose two numbers matched the old line: the (i) is a sentence, and the
-  refusals already say "{hits} times in {of}".
-- **`odds.hitTheMark` is iOS's alone** until iOS follows; the web does not
-  draw it. `odds.info` ("About these odds") and `odds.why` are unchanged and
-  still both apps'. (All three are retired since 28 September.) The first person: "I can't call it yet" is the app
-  speaking; the other sentences have no subject to put in the first person.
-
-**Playing safe's strings - IMPLEMENTED 27 September 2026**, web only, and
-the suggestion itself retired on 28 September (below). The owner found that
-the direction and the bracket still did not tell a cook how to err on the
-side of caution, so a one-tap suggestion went under the direction
-(`outcome.safe.firm`, `.soft`, `.firmer`, `.softer`: all retired with it),
-and the direction's (i) was rewritten to explain the bracket instead of
-saying the number. The owner also dropped "I'm still learning" as a line of
-its own on the web: beside "I can't call it yet" it said the same thing
-twice. The `safe` draft, `tools/drafts/safe.ts`, on `ff6c6e9`. What is still
-live from it:
-
-| key | where | text |
-|---|---|---|
-| `outcome.info` | the name of the direction's one (i) | How sure I am |
-| `outcome.bracket` | first in what it opens | The bracket under the doneness slider is where I expect your yolk to land. If a soft yolk would bother you more than a firm one, slide right until the bracket's left end is somewhere you'd still be happy; if a firm one would, slide left until its right end is. |
-| `outcome.why` | second: the web's `odds.why`, without the number | Before your first egg I don't know your taste, your eggs or your kitchen, so the bracket starts wide. Each egg you tell me about narrows it. |
-| `outcome.learning` | last: what `odds.stillLearning.more` said, less its first sentence | I learn your taste in yolks from how you say they came out, … give me a reading: that is the quickest teacher. |
-| `idle.welcome` | the first-egg welcome (the owner's words) | Our first egg together. I start off guessing from a generic egg, but as you give me feedback, I learn to specialise on you. |
-
-- **Retired on the web** by the same draft: `outcome.odds` (the number left
-  the (i), and no screen shows it now), `odds.stillLearning.info` and
-  `odds.stillLearning.more`. iOS followed in pass B.
-- **Help's "How sure I am"** was brought up to the direction and the bracket
-  afterwards (the `oddsHelp` draft), and lost its sentences on playing safe
-  in the tighter egg's draft below.
-
-**The pull names the cooling - IMPLEMENTED 28 September 2026**, iOS, on the
-owner's word after a cook on a phone: the `pull` draft,
-`tools/drafts/pull.ts`. The pull alarm, and word for word the Lock Screen
-card's line at the pull, say the cooling the cook chose, not "the cooling":
-
-| key | text | 1750 |
-|---|---|---|
-| `alarm.pull.bodyIce` (new; was `alarm.pull.body`) | Straight into the ice bath, or the yolk keeps cooking. | Commit them at once to the ice; for heat, though withdrawn from the fire, is not yet withdrawn from the egg. |
-| `alarm.pull.bodyTap` (new) | Straight under the cold tap, or the yolk keeps cooking. | Commit them at once to the pump; … |
-| `alarm.pull.bodyCounter` | Out of the water and onto the counter. | Take them from the water, and lay them upon the table. |
-| `activity.stage.pull` | Eggs out (was "Eggs out — now": the big NOW beside it says it) | Out with them |
-| `alarm.cooled.body` | The yolk has stopped cooking. That is the egg you asked for. ("carryover" was a README word) | The heat has run its course; the egg is such as you desired. |
-
-`activity.note.pull` and `activity.note.pullCounter` are retired: the card's
-line is the alarm's sentence. The card now ends at once when the cooling does,
-rather than saying "Done" for two minutes beside an alarm that says the same.
-
-**A tighter egg's strings - IMPLEMENTED 28 September 2026**, both apps, on
-the owner's word after using the iOS app (UI.md section 11). The `tighten`
-draft, `tools/drafts/tighten.ts`, on `2c090c9`; `copyLiterals.js --since
-2c090c9 tighten` shows these 18 keys and nothing else. 1750 shadows each,
-reusing its existing phrasing.
+**The draft under review: `tidy`** (29 September 2026, `DECISIONS.md` 45).
+WORKLIST.md section 9 applied at once, in both apps, for the owner to read on
+a phone and say what to put back: `tools/drafts/tidy.ts`, on `bfc070d`, 67
+keys, one retired. Each 1750 twin is rewritten with its key: "ice bath" stays
+"iced water" there, and "Full rolling boil" is "It boils in earnest". Where it
+departs from WORKLIST Appendix A: the sous-vide notes say what the model
+computes (whichever of yolk and white binds, the other has passed its target);
+`help.unsure.sousVide` says "hours, even days", since the white's hold is
+9.7 h just under 60 °C and 89 h at 55 °C, while the warning keeps "most of a
+day" for the one bath the app offers (22.7 h at 58 °C); `controls.egg.more`
+says "give me its weight", as iOS takes it on a slider; the F2 cooking hints
+are trimmed to what their label does not say; `outcome.unsure` holds "I
+can't" together with a no-break space. Held to the old wording:
+`help.reliable.forYou`, `idle.welcome`, and the 1750 twins of
+`learned.forget` and `learned.confirm.title`. Outside the catalogue: the
+head's and the manifest's descriptions, and the web's measured-egg option,
+which now carries the egg's mass as iOS's does. Delete this table once the
+owner has been through it; the draft file keeps it.
 
 | key | now | 1750 |
 |---|---|---|
@@ -640,314 +276,6 @@ reusing its existing phrasing.
 | `outcome.bracket` | less its last sentence, "Or tap the level I suggest, when I suggest one." | less "Or tap the degree I propose, when I propose one." |
 | `help.odds.p1` | less "When a miss is likely enough to matter, I suggest a level that plays safe, one tap away, and never one where the white might be runny." | less its "I propose a degree that plays safe" sentence |
 | `help.odds.aside` | less "I suggest playing safe when either way of missing is at least one egg in five: …" | less its "I propose to play safe" sentence |
-
-**Retired**: `outcome.safe.firm`, `.soft`, `.firmer`, `.softer` (the
-play-safe suggestion, both apps), and `cook.method` with `cook.method.cold`,
-`.hot`, `.ice`, `.tap`, `.counter` (iOS's method line under a running cook,
-which the setup sentence replaces).
-
-- **The heading's words stand alone at its end**, as a label, so no
-  language has to fit them into "Doneness".
-- **A comma, not a dot, in the slider's value.** It is never drawn now, and
-  a screen reader may read "·" aloud.
-- **The running sentence is `setup.sentence`**, with the same fragments as
-  the idle one, so there is nothing new to translate.
-
-**Loose ends - IMPLEMENTED 28 September 2026**, both apps: the `loose` draft
-in `tools/drafts/loose.ts`, on `5d71a3c`; `copyLiterals.js --since 5d71a3c
-loose` shows these six keys and nothing else. The units' (i) said a switch
-"changes only how I write the numbers", which is false on an English page,
-where Imperial also switches to the English of 1750 (§6). It now says the
-words may change too, and no more: the joke is still better found than
-delivered.
-
-| key | now | 1750 |
-|---|---|---|
-| `controls.units.more` (web) | … Switching changes how I write the numbers, and may change my words too: the egg and the times stay exactly the same, and the eggs don't mind which. (was "changes only how I write the numbers:") | … To change them alters the manner of writing the numbers, and may alter my words besides; the egg and the times remain exactly the same, and the eggs are indifferent to either. (was "and, from the imperial, the stile of my English;", which also said too much: a 1750 chosen in the picker stays when the units go back) |
-| `controls.units.more.ios` | the same, with "set" and "phone" as before | the same, with "phone" as before |
-
-**Then shorter, the same day** (the `units` draft, on `055bd4e`): the owner
-found both sentences over-explaining. The cook sees the numbers, and on an
-English page the words, change as they switch; saying so adds nothing. The
-(i) now says only what the cook cannot see.
-
-| key | now | 1750 |
-|---|---|---|
-| `controls.units.more` (web) | I start with what's usual where your browser says you are. | I begin with what is customary where your browser says you are. |
-| `controls.units.more.ios` | I start with what's usual where your phone says you are. | I begin with what is customary where your phone says you are. |
-
-**Retired**, because nothing can draw them: `readout.phase.cooling` (iOS;
-a counter rest never cools, see *Leftovers: orphaned* below), and the Lock
-Screen card's done state, `activity.stage.done`, `activity.note.done` and
-`activity.eat` - the card ends at once on the stage before done, so its
-final content is never drawn. `CookActivity.Stage.done` stays, so a card an
-older build ended as done still decodes; it draws with the app's own
-`readout.phase.done`.
-
-**WORKLIST §9, the `tidy` draft - IMPLEMENTED 29 September 2026**, both
-apps, on the owner's D8: all of §9 applied at once, for the owner to judge
-on a phone and say what to put back. `tools/drafts/tidy.ts`, on `bfc070d`;
-`copyLiterals.js --since bfc070d tidy` shows these 67 keys (one retired)
-and nothing else. The §9.1 rows went in first, in a commit of their own.
-Each 1750 twin is rewritten with its key, not transformed from it: "ice
-bath" stays "iced water" there, as the 1750 option says, and "Full rolling
-boil" is "It boils in earnest". `copySnapshot.js compare --draft tidy`
-passes but for the two linked Help asides, whose words a link splits into
-pieces the draft's templates cannot match; they are drafted all the same.
-
-- **Checked against the code, and changed from WORKLIST Appendix A:**
-  the sous-vide notes say what the model computes at the time given, since
-  whichever of yolk and white binds, the other has passed its own target
-  (`whiteBound`: the yolk is firmer than asked; `yolkBound`: the white is
-  set, where the old line said it was not). `help.unsure.sousVide` says
-  "hours, even days", not "most of a day": the white's hold is 9.7 h just
-  under 60 °C and 89 h at 55 °C; the warning keeps "most of a day", being
-  about the one bath the app offers (22.7 h at 58 °C). `controls.egg.more`
-  says "give me its weight", as iOS takes it on a slider, not typed. The
-  cooking hints (F2) are trimmed to what the label beside them does not
-  say, since "heat off, lid on" would have repeated it word for word.
-  `outcome.unsure` holds "I can't" together with a no-break space: the
-  iPhone 17 left a lone "I" at a line's end.
-- **Held to the old wording:** `help.reliable.forYou` ("For these eggs" is
-  unclear on the Help page, which is not beside the eggs), `idle.welcome`
-  (the owner's), and the 1750 twins of `learned.forget` and
-  `learned.confirm.title`, which already said "what is learned".
-- **Outside the catalogue:** the head's and the manifest's descriptions
-  (§9.6), and the web's measured-egg option, which now carries the egg's
-  mass as iOS's does.
-
-| key | now | 1750 |
-|---|---|---|
-| `sousvide.warn` | At {bath} the white takes most of a day to set, if it sets at all. I'm built for boiling water, and I'm not reliable below {floor}. Use the pan. | At {bath} the white takes the better part of a day to set, if it sets at all. I was made for boiling water, and below {floor} I am not to be trusted. Use the pan. |
-| `help.unsure.sousVide` | Sous-vide. Below {floor} the white stays liquid and moves inside the shell, which I leave out, so I'm not reliable there. I estimate the white takes hours, even days, to set that cool, if it sets at all. | Sous-vide. Below {floor} the white remains liquid and moves within the shell, which I leave out of my account; there I am not to be trusted. By my reckoning, so cool, the white takes hours, or even days, to set, if it sets at all. |
-| `sousvide.note.whiteBound` | white only just set, yolk firmer than you asked | the white but newly set, the yolk firmer than you desired |
-| `sousvide.note.yolkBound` | yolk as you asked, white set | the yolk as you desired, the white set |
-| `help.learn.p1` | From your answers I learn how you like your yolk and how your eggs cook. From your taps on Full rolling boil, I learn how long your water takes to boil. One probe reading teaches me how fast heat gets into your eggs. Every question is optional. | From your answers I learn how you like your yolk, and how your eggs cook; from your taps upon It boils in earnest, how long your water is in boiling. A single reading of the probe teaches me how fast heat enters your eggs. No question is compulsory. |
-| `readout.restored` | I picked this cook back up after a reload. The times are right, but I can't ring for it: watch the clock. | I have taken up this cook again after the page was reloaded. The times are true, but I cannot ring for it: watch the clock. |
-| `help.odds.p1` | Under the time, I say which way an egg is likely to miss. The bracket under the slider shows where the yolk will probably land, and it narrows as I learn. | Under the time, I say which way an egg is likely to miss. The bracket under the slider shews where the yolk will probably fall, and grows narrower as I learn. |
-| `feedback.invite` | Your answers teach me your taste and your eggs. | Your answers instruct me in your taste and your eggs. |
-| `action.hint.whiteNeverSets` | nothing to start | nothing to begin |
-| `refusal.whiteNeverSets` | With the heat off, the water cools before the white sets. Add more water, or keep it boiling. | With the heat withdrawn, the water cools before the white is set. Add more water, or keep it boiling. |
-| `action.hint.cookingBoiling` | at {boiling} until the eggs come out | at {boiling} till the eggs come out |
-| `action.hint.cookingStanding` | lid on until the eggs come out | the lid on till the eggs come out |
-| `controls.eggFrom.more` | Eggs from the fridge are the most predictable: a fridge is much the same every day, a room isn't, and every degree moves the time a little. | Eggs from the fridge are the most certain: a fridge is much the same from day to day, a room is not, and every degree moves the time a little. |
-| `controls.measure.hint` | Kitchen scales are the most accurate. Without them, wrap a strip of paper round the fattest part and measure the strip. | Kitchen scales are the most exact. Wanting them, wrap a slip of paper round the fattest part, and measure the slip. |
-| `controls.cooling.more` | Out of the water, the yolk keeps cooking for a few minutes. An ice bath stops that soonest, so I can offer the softest yolks; a cold tap is nearly as good. On the counter the egg barely cools, so the softest yolks are out, and how much more the yolk cooks is hard to predict. | Out of the water, the yolk cooks on for some minutes. Iced water arrests it soonest, and so permits me to offer the softest yolks; a cold tap is nearly as good. Upon the table the egg scarcely cools; the softest yolks are therefore forbidden, and how much more the yolk will cook is not easily foretold. |
-| `controls.afterTheBoil.more` | Keep boiling: the water stays at a full boil until the eggs come out, and how much water hardly matters. Heat off, lid on: once the eggs are in boiling water, the water finishes them as it cools. It saves energy, but the amount of water sets the time, and too little can't finish the job, so measure it. | Keep it boiling: the water stays at a full boil till the eggs come out, and its quantity is of little moment. Fire out, lid on: the eggs once in boiling water, the water finishes them as it cools. This spares fewel; but the quantity of water decides the time, and too little cannot finish the work; measure it therefore. |
-| `controls.thermometer.more` | When the cooling countdown ends, the middle of the yolk is at its hottest, and I'll ask for one reading. Push the tip to the very middle and tell me the highest number you see: anywhere else, or later, reads lower. That one reading teaches me how fast heat gets into your eggs. On the counter nothing is counted down, so I don't ask. | When the counting-down of the cooling ends, the middle of the yolk is at its hottest, and I shall ask for one reading. Thrust the point to the very middle, and tell me the highest number you see: anywhere else, or any later, reads lower. That single reading teaches me how fast heat enters your eggs. Upon the table nothing is counted down, and I do not ask. |
-| `readout.sub.coldAssumes.more` | It's how long this much water has taken to boil before, from your taps on Full rolling boil. For an amount I haven't timed, I scale from the nearest one I have. Tap Full rolling boil today and I'll correct the time while the eggs cook. | It is how long this quantity of water has hitherto been in boiling, from your taps upon It boils in earnest. For a quantity I have never timed, I reckon from the nearest I have. Tap It boils in earnest to-day, and I shall correct the time while the eggs are cooking. |
-| `controls.start.more` | Boiling water: lower the eggs into water at a full boil. They peel more easily. Cold water: eggs into a cold pan, heat on, and tap Full rolling boil when the water rolls. Counting the wait for the boil, they're done sooner. Sous-vide: I'll tell you when you should have started, usually a while ago. | Boiling water: lower the eggs into water at a full boil; they peel more easily. Cold water: the eggs in a cold pan, the fire lit, and tap It boils in earnest when the water rolls; the waiting for the boil included, they are done sooner. Sous-vide: I shall tell you when you ought to have begun, which is commonly some while ago. |
-| `controls.water.more` | How much water, not counting the eggs. It matters most with the heat off, when the water's own heat cooks the eggs: more water stays hot longer. With the heat on it matters a little. I also remember how long each amount takes to boil, so it's worth measuring. | The quantity of water, the eggs not reckoned. It signifies most with the fire out, when the water's own heat cooks the eggs: more water stays hot longer. With the fire lit it signifies a little. I remember besides how long each quantity takes to boil; it is therefore worth measuring. |
-| `action.hint.heating.more` | Tap Full rolling boil when the whole surface is heaving and stirring doesn't calm it, not at the first bubbles. I time the rest of the cook from your tap: a few seconds either way is fine, a minute early isn't. Until you tap, the countdown is my guess. | Tap It boils in earnest when the whole surface heaves, and is not to be calmed by stirring; not at the first bubbles. I time the rest of the cook from your tap: a few seconds either way are of no moment, but a minute early is an errour. Until you tap, the countdown is but my conjecture. |
-| `outcome.learning` | To help me learn faster, answer both questions after each egg, and tap Full rolling boil when the water rolls. If you have a probe thermometer, one reading teaches me most. | To hasten my learning, answer both questions after every egg, and tap It boils in earnest when the water rolls. If you have a probe thermometer, a single reading instructs me most. |
-| `controls.eggsInPan.more` | Cold eggs cool boiling water as they go in, and more eggs cool it more, so it takes longer to come back to the boil, or with the heat off never does. On a cold-water start I don't need it: your tap on Full rolling boil already counts them. | Cold eggs cool boiling water as they enter, and more eggs cool it more; so it is longer in returning to the boil, or, with the fire out, never returns. For eggs begun in cold water I have no need of it: your tap upon It boils in earnest already reckons them. |
-| `learned.forget.more` | I forget every egg you've told me about and every boil you've timed, and start again from eggs in general. A wrong answer or two washes out after a few more eggs, so this is for a new stove, a new kitchen or a fresh start. | I forget every egg you have told me of and every boil you have timed, and begin again from eggs in general. A wrong answer or two a few eggs more will wash out; this is for a new stove, a new kitchen, or a new beginning. |
-| `controls.egg.more` | A bigger egg takes longer: the heat has further to go. One size on the box covers quite different weights, so if you have kitchen scales, weigh an egg and give me its weight. | A bigger egg takes longer, for the heat has further to go. One size upon the box comprehends very different weights; if therefore you have kitchen scales, weigh an egg, and give me its weight. |
-| `outcome.bracket` | The bracket under the slider shows where your yolk will probably land. To be safe from a soft yolk, slide right until the bracket's left end is somewhere you'd be happy; to be safe from a firm one, slide left until its right end is. | The bracket under the slider shews where your yolk will probably fall. To be secure against a soft yolk, slide to the right, till the left end of the bracket rests where you would be content; against a firm one, slide to the left, till its right end does. |
-| `controls.altitude.more` | Higher up, water boils cooler, so eggs cook more slowly, noticeably so up a mountain. Tell me roughly how high you are and I'll use the boiling point shown. | The higher you are, the cooler water boils, and the slower eggs cook; upon a mountain, sensibly so. Tell me nearly how high you are, and I shall use the boiling point here shewn. |
-| `controls.language.more` | English (1750) is English as Samuel Johnson wrote it. I switch to it when you pick Imperial, and back when you pick Metric. Pick English to keep Imperial in today's English. | English (1750) is English as Samuel Johnson wrote it. I change to it when you choose Imperial, and back when you choose Metrick. Should the reader find this stile tiresome, choose English: the modern tongue is restored, and Fahrenheit's scale kept. |
-| `help.how.p1` | I work out how heat soaks into your egg and how far the yolk and white set, then pick the time that leaves the yolk as you asked. | I compute how heat passes into your egg, and how far the yolk and the white are set; and then I choose the time that leaves the yolk as you desired. |
-| `help.how.aside` | I model [heat conduction] through a sphere the size of your egg, and protein setting as a dose of heat over time, with the [Arrhenius equation]. Every constant and its source is in the [README]. | I reason by [heat conduction] through a sphere of the bigness of your egg, and the setting of white and yolk as a dose of heat accumulated over time, by the [Arrhenius equation]. Every constant, with its authority, is in the [README]. |
-| `help.how.p2` | The cooling counts too. An egg out of the water keeps cooking from the inside for a few minutes. An ice bath stops that soonest; the counter barely slows it. | The cooling is likewise to be counted. An egg taken from the water continues some minutes to cook from within; iced water stops it soonest, and the table scarcely retards it. |
-| `help.learn.title` | What I learn | Of what I learn |
-| `help.learn.aside` | I use [sequential Monte Carlo] to learn your eggs and your taste, with an [ordered probit] for too soft, just right and too firm. I keep every egg, so when I improve, I relearn from all of them. [The design]. | I use [sequential Monte Carlo] to learn your eggs and your taste, with an [ordered probit] for too rear, as was desired, and too hard. I keep every egg; so that when I am improved, I learn again from all of them. [The design]. |
-| `help.reliable.cooling` | An ice bath is the most predictable, and a cold tap nearly as good. On the counter the yolk keeps cooking, so for soft eggs use ice. | Iced water is the most certain, and a cold tap nearly as good. Upon the table the yolk cooks on; for soft eggs, therefore, use ice. |
-| `feedback.thanks` | Thanks — I'll use that next time. | Thanks; I shall profit by it. |
-| `controls.eggFrom.hint` | I assume {fridge} for a fridge and {room} for a room. Pick Custom if yours differ. | I suppose {fridge} for a fridge and {room} for a room. Choose Your own if yours differ. |
-| `readout.alarm.failed` | I couldn't set the alarm — keep the app open | I could not set the alarm; keep the app open |
-| `readout.alarm.denied` | notifications are off — keep the app open | notices are forbidden; keep the app open |
-| `controls.units.period` | I can also write Imperial units in the English of their day. | I can likewise write the imperial measures in the English of their day. |
-| `learned.forget` | Forget what's learned | (as it was) Forget what is learned |
-| `learned.confirm.title` | Forget what's learned? | (as it was) Shall it all be forgot? |
-| `readout.phase.pull` | Eggs out — now | Out with the eggs, at once |
-| `activity.target` | {doneness} · peak yolk {yolk} | {doneness} · the yolk at most {yolk} |
-| `readout.mute.off` | Sound off | Bell off |
-| `setup.start.hotStanding` | into boiling water, heat off and lid on | put into boiling water, the fire out and the lid on |
-| `setup.start.coldStanding` | into cold water, brought to the boil, heat off and lid on | set in cold water, boiled, the fire out and the lid on |
-| `setup.start.cold` | into cold water, brought to the boil | set in cold water and brought to the boil |
-| `action.hint.hotStanding` | eggs into boiling water, then heat off, lid on | the eggs into boiling water; then the fire out, the lid on |
-| `action.hint.heatingStanding` | wait for the whole surface to roll, then heat off, lid on | wait until the whole surface rolls; then the fire out, the lid on |
-| `action.hint.hotBoiling` | eggs into water at a full boil; keep it there for all {time} | the eggs into water at a full boil, and kept so the whole {time} |
-| `readout.sub.coldGuesses` | about {boil} to boil, my guess | about {boil} to boil, by conjecture |
-| `readout.sub.heating` | {elapsed} so far · about {boil} to boil | {elapsed} hitherto · about {boil} to the boil |
-| `learned.literature` | I haven't learned anything yet. Tap Full rolling boil on a cold-water start, and tell me how each egg came out. | I have hitherto learned nothing. Tap It boils in earnest, having begun from cold water, and tell me how each egg came out. |
-| `learned.confirm.message` | I'll forget every egg and every boil, and the times go back to where they started. | I shall forget every egg and every boil, and the times return to where they began. |
-| `readout.sub.standing` | for {water} of water, lid on — measure it | for {water} of water, the lid on; measure it |
-| `readout.sub.cookingCold` | boiled in {boil} · then {after} | it boiled in {boil} · then {after} |
-| `outcome.unsure` | Could come out too soft or too firm; I can't tell yet. | It may come out too soft or too firm; which, I cannot yet foretell. |
-| `outcome.miss.firm` | Might miss, more likely too firm. | It may miss; more likely too firm. |
-| `outcome.miss.soft` | Might miss, more likely too soft. | It may miss; more likely too soft. |
-| `outcome.likely.firm` | Probably just right, or else a little firm. | Probably as you desire, or else a little firm. |
-| `outcome.likely.soft` | Probably just right, or else a little soft. | Probably as you desire, or else a little soft. |
-| `advice.fridge` | Use eggs straight from the fridge: I know how cold a fridge is, but not your room. | Use eggs straight from the fridge: how cold a fridge is I know, but not your room. |
-| `advice.ice` | Cool the eggs in an ice bath. On the counter, how much more the yolk cooks is hard to predict. | Cool the eggs in iced water. Upon the table, how much more the yolk will cook is not easily foretold. |
-| `advice.weigh` | Weigh the egg. One size on the box covers eggs that need quite different times. | Weigh the egg. One size upon the box comprehends eggs that need very different times. |
-| `colophon.lede` | I work out each time from how heat gets into an egg. | I reckon each time from how heat enters an egg. |
-| `controls.size.measured` | Measured — {mass} (iOS's too now) | As measured — {mass} |
-| `controls.size.weighed` | *retired into `controls.size.measured`* | *retired* |
-
-### Proposed: one wording per meaning (for the owner)
-
-**Overtaken, 27-28 September, by the redesign (UI.md).** As the two apps took
-one layout, most pairs below merged or lost one side, and `learned.confirm.*`
-became both apps'. Still open from it: `readout.phase.cooling` (dead, still in
-the catalogue) and the guard test, which is not built. The rest is kept as the
-reasoning, not as a list of work.
-
-**A proposal, 27 September 2026. Nothing here was implemented as such**:
-`copy/en.json` and both apps were unchanged by it. The principle is the owner's: one short string
-per meaning, everywhere. A key used by one app is allowed only where the
-surface exists on one platform, or where the two apps' layouts differ in
-structure, not just in wording.
-
-At `1667dcf` the catalogue has 139 shared keys and 125 used by one app (61 web,
-64 iOS). Every one of the 125 was read at its call site, with the other app's
-screen at the same moment, and sorted like this:
-
-| | keys |
-|---|---|
-| paired: the other app says the same thing at the same moment (15 pairs) | 29 |
-| platform-only: the surface, or the feature, exists on one platform | 40 |
-| different layout: the screens are built differently | 46 |
-| orphaned: nothing in the other app answers to it (1 dead, 9 live) | 10 |
-
-**The pairs.** In screen order. The proposed wording is one of the two
-existing strings, the shorter one where it works in both apps. Only one row
-needed a new wording, and it is marked **NEW**. Each proposal was checked
-against what both apps do, and fits the tighter of the two surfaces' budgets.
-Merging a pair means one key, and both apps' call sites changing to it.
-
-| key(s) | web now | iOS now | proposed | why |
-|---|---|---|---|---|
-| `readout.phase.totalLidOn` (iOS), against the shared `readout.phase.total` | Total time | Total time, lid on | Total time | The lid is for the heating, not a property of the total. The web says it under the button: "eggs in the pan, lid on, then tap". Cost: on a cold start with Keep boiling, iOS then says "lid on" nowhere. |
-| `readout.sub.hot`, `readout.sub.idleHot`, `readout.sub.idleCold` | from eggs in to eggs out (hot start, Keep boiling) | from eggs into boiling water to eggs out · from eggs into cold water, heat on, to eggs out | from eggs in to eggs out | Shortest, and true for both starts, since a cold start's eggs go in before the heat. The Start choice just below says which water. |
-| `action.startHeating`, `action.eggsInHeatOn` | Start heating | Eggs in, heat on | Eggs in, heat on | Says what to do, and pairs with "Eggs in" on a hot start. iOS has no line under the button to say "eggs in the pan". |
-| `readout.phase.heating`, `readout.phase.heatingTap` | Heating | Heating — tap when it boils | Heating | The button right below names the moment (Full rolling boil), and the next row says to tap it. "When it boils" invites a tap at the first bubbles, which under-measures the boil (PLAN.md, invariant 6). The Dynamic Island already says "Heating". |
-| `readout.sub.heating`, `readout.sub.heatingEstimate` | {elapsed} heating · I expect {boil} until you tap | my guess until you tap Full rolling boil | my guess until you tap Full rolling boil | This is already the Live Activity's wording (`activity.note.estimate`). It is shorter, and "I expect {boil} until you tap" does not parse. Cost: the web stops showing the heating time so far and the boil time it expects. |
-| `readout.stat.waterBoilsAt`, `pan.waterBoilsAt` | water boils at | Water boils at | Water boils at | The same words. The web's stats are upper-cased by CSS, so the capital never shows there. |
-| `texture.white.runny` (web), against iOS's texture note | white stays runny | white just set, {yolk} | white stays runny | **iOS is wrong today.** When the pan never sets the white, iOS still names the white from its peak temperature, on a scale whose lowest word is "white just set". The web switches to this line when the white's dose falls short, and iOS should do the same. *Fixed on 27 September (3da5d47): the decision is in core, and iOS says this line too.* |
-| `controls.size`, `controls.egg` | Egg size | Egg | Egg size | Names the choice. If the Eggs row below goes in, iOS would otherwise have "Egg" and "Eggs" on one screen. |
-| `controls.size.measured`, `controls.size.weighed` | Measured below… | Weighed · {mass} | **NEW:** Measured — {mass} | iOS's mass slider shows no number, so the menu has to carry the mass. "Weighed" is false on the web when the girth was typed in instead of the weight. The dash matches "Large — {mass}". The web would render the mass it measured. |
-| `controls.eggFrom.fridge`, `controls.eggFrom.fridgeAt` | Fridge (the temperature is in the hint below) | Fridge {temp} | Fridge {temp} | Puts the assumption where the choice is made. iOS has no hint line to carry it. "Fridge 39 °F" is 12 of a segment's 17. |
-| `controls.eggFrom.room`, `controls.eggFrom.roomAt` | Room | Room {temp} | Room {temp} | As above. |
-| `controls.atTheBoil`, `controls.afterTheBoil` | At the boil | After the boil | At the boil | Shorter, and "after the boil" already names a duration, the stat `readout.stat.afterBoil`. |
-| `controls.afterBoil.hint`, `controls.afterBoil.explainHeatOff` | Heat off, lid on: the hot water continues to cook the eggs. More water holds more heat. | Lid on and burner off: the water's own heat finishes the eggs. I work out the time from the water below, so measure it — more or less water changes the time, or whether it works at all. | the web's | Half the length, and it is the owner's own F2 edit. Cost: iOS stops telling the cook to measure the water. The web says so in `readout.sub.standing`, but iOS says it nowhere else. |
-| `controls.eggs`, `controls.eggsInPan` | Eggs | Eggs in the pan | Eggs | Shorter. It sits beside Water on the web and inside the pan's fold on iOS, so "in the pan" goes without saying. |
-| `colophon.lede`, `colophon.ios` | Times computed from heat conduction and denaturation kinetics, not from a recipe. | I work out times from the physics and chemistry of eggs. Both heating and cooling matter for cooking the middle. | iOS's | The web's is the wording F2 retired from iOS: "denaturation kinetics" is jargon, and the sentence has no speaker. iOS's runs on into the web's link: "…the middle. Source, and the physics it rests on — including what I get wrong." |
-
-**Leftovers: platform-only (40).** The first 33 need nothing, because their
-surface exists on one platform:
-
-- iOS notification (6): `alarm.pull.*`, `alarm.cooled.*`, `alarm.probe.*`.
-- iOS Dynamic Island (14): `activity.stage.*` (5), `activity.now`,
-  `activity.eat`, `activity.target`, `activity.note.*` (6).
-- iOS Lock Screen (1): `activity.summary`.
-- Web screen reader (12): `spoken.*`.
-
-The other 7 are on surfaces both apps have, but the feature exists on one
-platform:
-
-- `readout.alarm.setting`, `.denied`, `.failed`, `.set` (iOS): the web
-  schedules no alarm, so it has none to report.
-- `readout.mute.on`, `.off` (web): the web plays its own sound. The iOS alarm
-  is a notification, and the phone decides its sound.
-- `readout.restored` (web): only the web's alarm is lost on a reload.
-
-**Leftovers: different layout (46).** The first line of each group says how
-the two screens differ:
-
-- *The big readout at the pull and at Done holds a word on iOS (NOW, Eat) and
-  digits on the web (the overrun, then the total), so the lines under it say
-  different things.* `readout.big.now`, `readout.big.eat` and
-  `readout.sub.done` (iOS); `readout.sub.doneCold` and `readout.sub.doneHot` (web).
-- *The web gives the boil it assumes under the total. iOS gives it as a row
-  in the pan's fold.* `readout.sub.coldAssumes` and `readout.sub.coldGuesses` (web);
-  `pan.timeToBoil` and `pan.timeToBoil.assumed` (iOS).
-- *The web says what it has learned about the pan in one sentence under the
-  controls. iOS says it in a note under that row.* `learned.literature`, `learned.pan`
-  and `learned.both` (web); `pan.measured` and `pan.unmeasured` (iOS).
-- *Only iOS folds the pan's controls away.* `controls.pan` (iOS).
-- *The web gives the water for a heat-off hot start under the total. iOS gives
-  it beside the Water stepper.* `readout.sub.standing` (web).
-- *While cooking, iOS's subline reports the alarm.* `readout.sub.cookingCold` and
-  `readout.sub.cookingHot` (web).
-- *The stats differ. iOS shows peak yolk, peak white and after the boil; the
-  web shows peak yolk, after the boil and water boils at, and iOS shows the
-  last of those in its fold.* `readout.stat.peakWhite` (iOS).
-- *iOS has no line under its main button.* `action.hint.cold`,
-  `.hotStanding`, `.hotBoiling`, `.whiteNeverSets`, `.heating`,
-  `.heatingStanding`, `.cookingStanding`, `.cookingBoiling` and `.pull` (web).
-- *The web's reading under the doneness slider follows the thumb with a
-  temperature. iOS shows the bare word in the label's row.*
-  `controls.doneness.value` (web).
-- *The web measures the egg in three fields. iOS uses a mass slider.*
-  `controls.measure.legend`, `.weight`, `.girth`, `.minor` and `.hint` (web).
-- *Only the web offers a custom egg temperature.* `controls.eggFrom.custom`,
-  `controls.eggTemp` and `controls.eggFrom.hint` (web). If the Fridge and Room rows
-  go in, the hint no longer needs the temperatures, and can be cut to "Pick
-  Custom if yours differ." That also drops "Assumed temperatures", which has
-  no speaker.
-- *iOS changes the line under the after-boil choice with the choice. The web
-  shows one line for both.* `controls.afterBoil.explainHold` (iOS).
-- *iOS asks before it forgets. The web forgets on one tap.*
-  `learned.confirm.title`, `.forget`, `.keep` and `.message` (iOS). **For the
-  owner:** should the web ask too? If it should, these become shared.
-- *iOS shows the name as the navigation title. On the web it is a run-in
-  bold heading, so it ends in a full stop.* `app.name` (iOS), `colophon.name`
-  (web).
-- *Only the web's colophon links to the source.* `colophon.link` and
-  `colophon.tail` (web).
-
-**Leftovers: orphaned (10).** Nothing in the other app answers to these keys.
-
-- `readout.phase.cooling` (iOS), "Cooling", is **dead**. It is drawn only
-  while a counter rest is cooling, but a counter cook never cools. `Cook.swift`
-  sets no cooling deadline for it, so it goes from the pull straight to Done,
-  as the web's machine does. Delete it. *Deleted 28 September (the `loose`
-  draft).*
-- `controls.start.hint` (web) is live. iOS shows a line under Start only in
-  sous-vide (`controls.start.hintSousVide`). It could show this one in the
-  same place, and the key would then be shared.
-- `learned.forgetExplain` (iOS) is live. The web's Forget button has no
-  explanation beside it, and it could carry this one.
-- `cook.summary`, `cook.method`, `cook.method.cold`, `.hot`, `.ice`, `.tap`
-  and `.counter` (iOS) are live. Mid-cook, iOS replaces its hidden controls
-  with what is in the pan. The web hides its controls too (`styles.css`)
-  and puts nothing in their place, so it has the gap that iOS closed.
-
-**Also not quite true, found on the way.** These are not pairs, but they are
-worth a line each:
-
-- `readout.alarm.denied` and `.failed` (iOS) end "— keep the app open". The
-  app makes no sound of its own and does not keep the screen awake, so
-  keeping it open helps only if the cook is watching it. *Made true on 27
-  September: the app now rings on screen when no notification holds a
-  deadline (`deadlineToRing` in the core, `Ringer.swift`).*
-- `learned.pan` (web), "your pan takes {time} to boil", has the same fault as
-  the held-back `readout.sub.coldAssumes`. `{time}` is `estimateTimeToBoil`:
-  a blend of past boils, or the nearest volume's time scaled by litres.
-  *Reworded in the redesign: "{water} of water takes about {time} to boil,
-  based on history".*
-- `action.hint.pull` (web), "cooling starts on its own in {seconds} s", is
-  also shown for a counter rest. There nothing starts: the cook goes to Done.
-  *Fixed on 27 September (06ea694): no hint on a counter rest.*
-
-**A guard, described only.** A new test in `test/copy.test.ts`, beside 6a,
-which already checks that each key's `apps` matches the code:
-
-- `copy/surfaces.json` gains `"platform": "ios"` on `notification.title`,
-  `notification.body`, `lockscreen`, `island.expanded` and `island.compact`,
-  and `"platform": "web"` on `a11y`.
-- An entry whose `apps` names one app passes if its surface's `platform` is
-  that app. Otherwise it must carry a `why`: a non-empty string that says
-  what the other app does instead. The test fails on anything else, and also
-  on a key whose surface belongs to one platform but which names the other
-  app.
-- Keys that would need a `why` once the pairs above are merged: the 7
-  platform-only features, the 46 layout keys and the 9 live orphans, 62 in
-  all. The first line of each group above is a draft of its `why`.
-  `readout.phase.cooling` is deleted, not excused. Any pair the owner
-  declines adds both its keys to the list.
 
 ## 4. Units
 
@@ -1129,7 +457,7 @@ maintainable about the joke follows from that:
   UK system). An American in 1750 English keeps their clock, and a Briton keeps
   theirs.
 - **It is one row in the language picker.** Both apps get an in-app picker
-  (with F5, not F1: see §2) in any case, because the catalogue is ours and not Apple's. iOS's own
+  in any case, because the catalogue is ours and not Apple's. iOS's own
   per-app language setting would not list a private-use tag anyway. The picker
   shows it as *English (1750)*, which is the discoverable way in, and choosing
   *English* is the way out. That replaces the escape hatch this section used to
@@ -1258,8 +586,8 @@ there is only style.
 **Four rules keep the joke from costing anyone a breakfast:**
 
 1. **Substance is not exempt.** Every string says what its modern twin says, and
-   no instruction is lost to the flourish. The owner's review of the rewrite in
-   §3 covers this catalogue too.
+   no instruction is lost to the flourish. The owner's review of the modern
+   wording covers this catalogue too.
 2. **The length budget binds hardest here.** "Eggs out — now" has to fit the
    Dynamic Island, and "Pray remove the Eggs from the Water forthwith" does not.
    On the small surfaces the register gets two or three words of period flavour,
@@ -1276,7 +604,7 @@ there is only style.
    the Modern Tongue may be restored without surrendering Fahrenheit's Scale."*
 
 **As built (web), 28 September 2026.** Built while the owner slept; the
-whole catalogue is for their review. iOS is untouched and follows.
+whole catalogue is for their review (`DECISIONS.md` 17).
 
 - **The catalogue** is `copy/en-x-1750.json`: at first every key the web
   used, the six new F6 keys, and three of iOS's alarm keys (below); now every
@@ -1326,8 +654,7 @@ whole catalogue is for their review. iOS is untouched and follows.
   that the owner approved that line for that surface; not yet seen on a
   device. `alarm.pull.title` is *Out with them*, not the draft's *Out with
   them; delay is ruin* (28, against 14). The draft's second alarm, *The
-  cooling is ended*, is *Cooling ended*, for the same reason. iOS reads
-  none of these until it follows.
+  cooling is ended*, is *Cooling ended*, for the same reason.
 - **The reset dialog** is *Shall it all be forgot?*, not the draft's *Shall
   all that has hitherto been learned be forgotten?* (54, against the title
   budget of 23). **The yolk question** is the draft's, *In what condition
@@ -1358,11 +685,7 @@ whole catalogue is for their review. iOS is untouched and follows.
   heat" (Help, the cooling); "knowledge is, in great part, only errour
   diminished" (Help, certainty); "rule of thumb, which is only the
   experience of others imperfectly remembered". The draft's *still
-  learning* line is not used: the web dropped that key.
-- **`controls.units.more` in modern English** still says switching
-  "changes only how I write the numbers", which on the web is no longer
-  the whole truth. It was left alone because iOS is being ported onto
-  `copy/en.json` at the same time; its 1750 twin says what happens.
+  learning* line is not used: that key is retired.
 
 **As built (iOS), 28 September 2026.** Commits `01c621e` to `15cf890`,
 drafted as `period_ios` in `tools/drafts/period_ios.ts`. Like the web half, it is for
@@ -1412,12 +735,11 @@ the owner's review.
   - the alarms: `alarm.pull.*`, `alarm.cooled.*` and `alarm.probe.*`;
   - the alarm's status lines, `readout.alarm.*` ("the alarm is set for
     {time}");
-  - the cook's summary and method (`cook.*`);
+  - the cook's summary (`cook.summary`);
   - the Live Activity and the Dynamic Island (`activity.*`), for example
     *Upon the fire*, *Out with them*, *It is done*, and *my conjecture, till
     you tap the boil*;
-  - a few controls: `controls.size.weighed`, `more.*`,
-    `controls.units.more.ios` and `readout.phase.cooling`.
+  - a few controls: `more.*` and `controls.units.more.ios`.
 
   `test/en1750.test.ts` 1b now asks for a twin for every key either app
   uses, not only the web's, so the archaisms, the spellings and the long s
@@ -1436,8 +758,7 @@ the owner's review.
   the cook does. `odds.hitTheMark` is retired from `copy/en.json`, and it
   never had a 1750 twin. The odds stayed on the ticket (`oddsTenths`) until
   28 September, when they were dropped as never read; the egg's record never
-  kept them. This settles the departure UI.md §10
-  left open.
+  kept them.
 - **The colophon in plain words, in both Englishes.** This is the owner's
   wording.
   - Modern: "I work out each time from how heat gets into an egg, not from
@@ -1456,68 +777,12 @@ body on a real notification. Also the Live Activity and the Dynamic Island in
 1750 on screen: see LOGBOOK.md for what the simulator would and would not
 show.
 
-## 7. Order, and how it fits with Phase E
+## 7. Order
 
-As of 28 September, 1-4 and 6 are done, in both apps, and 5 waits for its
-reviewer (`PLAN.md`, Phase F).
-
-1. **F1, the catalogue.** Extract every string with the wording unchanged, and
-   prove it byte-identical. Core stops returning English. Do this before E2,
-   because E2 is the next phase to write feedback copy, and its new strings
-   should be born in the catalogue rather than migrated into it later.
-2. **F2, the rewrite**, inside the catalogue. The owner approves one diff. This
-   runs alongside E2 and E5, which rewrite the feedback and learned-note copy
-   anyway.
-3. **F3, units.** `units.ts`, the setting and the regional default, size classes
-   by region, and a unit on every temperature.
-4. **F4, locale formatting.** Numbers, plurals, the 12- or 24-hour clock, and
-   weekday names.
-5. **F5, Czech**, reviewed by the owner's friend.
-6. **F6, 1750.** It comes last because it needs F1's catalogue, F3's setting and
-   F2's settled modern wording to shadow.
-
-E1's record gains `lang`, `register` and `units`. That is three short strings
-with no privacy cost beyond what `app` already reveals. They should be added
-while the schema is still unwritten.
-
-## 8. Decisions
-
-Taken by the owner, 26 September 2026:
-
-- **1750 is a language code**, `<region>-x-1750`, reached by the picker or by
-  switching an English UI to Imperial, and left by picking English (§6).
-- **Americans should be able to find it**: a picker row and one line under the
-  Imperial option, and nothing more insistent.
-- **Support burden is not a design constraint.** The app is free. Feature
-  requests come as pull requests. No choice in this file is made or unmade on
-  the grounds that it will generate questions.
-
-- **Czech is the first language after English**, and a friend of the owner
-  reviews it (§5).
-- **US carton classes in region `US`** (§4). Measured, the gap is 34 s at
-  Large, so this is a correctness fix for Americans in either unit system.
-
-- **The owner reviews the 1750**, against Johnson's *Preface* (§6).
-
-Taken by the owner, 27 September 2026, and built the same day (§2):
-
-- **No time of day zero-pads its hour**, in either app, in any locale:
-  "9:05", never "09:05". The countdown is not a time of day. This settled
-  en-CZ, where the web wrote "09:05" and iOS "9:05".
-- **Numbers follow the UI's language**, and the region only where the
-  language has no convention of its own: a Czech UI writes "1 234,5" in the
-  US as in Czechia, on both apps. English keeps following the region, so
-  `en-DE` still writes "2,4".
-
-Waiting on the owner, from 27 September:
-
-- **The two drafts in §3.** The E2 feedback draft is implemented, since the call
-  was made while the owner slept, and remains open to revision. The draft for
-  the rest of F2 was approved and went in on 27 September, but for three
-  rows still held back (§3).
-- **`Intl` inside `src/core/format.ts`.** F4 relaxed invariant 1 for this one
-  file. The web's output therefore depends on the browser's ICU, while the
-  fixtures are pinned against Node's. Safari has not been tried.
-- **The English of 1750, in both apps** (§6): the names that change, the
-  departures from the guide, and the alarms, which nobody has yet seen on a
-  device.
+F1, the catalogue, came first, before E2, so that Phase E's new feedback copy
+was born in it. F2, the rewrite, ran alongside E2 and E5. F3 (units) and F4
+(locale formatting) followed, then F6 (1750), which needed F1's catalogue,
+F3's setting and F2's settled modern wording to shadow. F5, Czech, waits for
+its reviewer, and wants wording that will not move again. The record gained
+`lang`, `register` and `units` while its schema was still unwritten
+(`INFERENCE.md` §4).
