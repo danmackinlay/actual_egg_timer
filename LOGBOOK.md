@@ -3288,3 +3288,58 @@ Checked on 18 September and NOT a problem, so nobody re-checks: the web app's
 `reset()` already re-solves, and its solve is synchronous, so neither of that
 day's iOS bugs has a twin there. The web app also already defaults to a cold
 start — iOS was the outlier, and now matches.
+
+### Three retirements, told once
+
+Each of these was told in five to eight places across the documents, each
+telling a little different. This is the one to cite.
+
+- **The odds as a number.** "7/10 eggs hit the mark" went under the time in
+  both apps and on the Lock Screen with E5 (`e2b63db`; `DECISIONS.md` 8).
+  It did not say which way the other three eggs miss, so on the web a
+  sentence saying which way a miss is likely to go replaced it (`7b9059f`),
+  with the number moved into the sentence's (i); then the number left the
+  (i) too (`1c4143d`). iOS followed in pass B (`3f771c6`), and the owner took
+  the odds off the Lock Screen (`05e92ae`), which retired `odds.hitTheMark`.
+  No screen shows the number. The odds still shade the slider, set its reach
+  at 3 in 10 and open the advice under 5 in 10.
+- **"Still learning".** The owner's rule is the 80% interval of the right
+  cook time wider than ±15 s (`DECISIONS.md` 9, built `3be2ff5`). It was a
+  line under the time until the owner found it said what "I can't call it
+  yet" says: gone from the web with `1c4143d`, from iOS with `3f771c6`
+  (`odds.stillLearning` retired). The running cook's ticket carried
+  `oddsTenths` and `stillLearning`, never read, until both apps dropped them
+  (`9dbca9c`); the egg's record never kept either, and E6 will keep the full
+  forecast instead (`DECISIONS.md` 37). `Decision` stopped computing the
+  interval (`527e1a4`, D3); the tests and `npm run decide -- learning` read
+  it on demand from `predictCookTime`.
+- **Playing safe.** A one-tap suggestion under the direction, to the softest
+  level at least as firm nine eggs in ten (or the mirror), built in core
+  (`af0af98`), on the web (`1c4143d`) and on iOS (`3f771c6`), and held under
+  `WHITE_RISK` so that a softer suggestion never bought the yolk with a runny
+  white (`936dbe0`). The owner found it noise that says in words what the
+  slider and the bracket already show, and it left both apps (`e04d72c`);
+  `saferLevels`, its fixture, its tests and its section of `npm run decide`
+  were deleted the same day (`23e6d3d`, D2). What it measured is in the
+  entries of 27 and 28 September.
+
+### Citations
+
+Code comments that pointed into a document that changed now point at the
+new place: the loss ratio, the ±15 s rule, the heat-off pan and E3's limit
+at `DECISIONS.md` 7, 9, 11 and 18 (`decide.ts`, `Decide.swift`,
+`constants.ts`, `test/decide.test.ts`, `test/infer.test.ts`,
+`tools/decide.ts`); core's invariants at `CLAUDE.md` (`test/core.test.ts`,
+`units.ts`); the validation table at README section 7 (`tools/validate.ts`);
+the setup sentence at UI.md section 5 (`SetupSentence.swift`). The odds'
+calibration (2.2%) lives only in INFERENCE.md section 8, which
+`test/decideOdds.test.ts` and `tools/decide.ts` cite. UI.md and LANGUAGE.md
+kept every section number code cites. INFERENCE.md lost its last two
+sections: the order to PLAN.md, and the decisions to DECISIONS.md with their
+numbers kept.
+
+**Run:** `rm -rf dist/test && npm run verify`: 255 tests, all pass; the Swift
+copy lint; the fixtures unchanged; `swift test` 119 tests in 31 suites.
+Comments and documents only.
+
+**Not verified:** nothing runs differently, so nothing was run on a device.

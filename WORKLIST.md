@@ -1,5 +1,7 @@
 # Actual Egg Timer — cleanup worklist (review of main @ 055bd4e, 28 Sep 2026)
 
+**Status, 29 Sep 2026: every item is done or skipped** (6.5 and 7.13 skipped, as they say). Kept as a record.
+
 This comes from seven parallel read-only reviews:
 
 - web core and tools
@@ -547,7 +549,7 @@ DONE 13bf8dc: **8.3 Docs that contradict the code (fix values).** (PLAN's consta
 | README.md:743 | "weight, girth or width": iOS takes weight only |
 | ios/README.md:149-157, 296-297 | "eggs in the pan", "Two behaviours" followed by three, and "ticker only redraws" (false) |
 
-**8.4 Restructure the doc set.** Target ownership:
+DONE d5b69d9 f103bc4 a318a1d 79b767d db1e065: **8.4 Restructure the doc set.** (New: `CLAUDE.md`, 95 lines, and `DECISIONS.md`, 45 decisions, INFERENCE §11's numbers kept. PLAN 1092 -> 209 lines, UI 665 -> 287, LANGUAGE 1523 -> 788, INFERENCE 831 -> 723. `LANGUAGE.md` §3 keeps the `tidy` table while the owner reviews it; the other drafts' tables are `tools/drafts/` and git. PLAN's measured blocks, UI's passes and retired keys, an index of LANGUAGE's drafts, the missing `31a1ee1` entry and the three retirement stories went to LOGBOOK, 29 September. `ios/README.md`'s module table replaces the frozen API.) Target ownership:
 
 | File | Owns |
 |---|---|
