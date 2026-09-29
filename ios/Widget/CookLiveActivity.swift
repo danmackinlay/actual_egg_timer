@@ -93,9 +93,9 @@ struct CookLiveActivity: Widget {
                     .foregroundStyle(.tertiary)
                     .lineLimit(2)
 
-                // No odds here, on the owner's word of 28 September: mid-cook
-                // nothing on the Lock Screen can change what the cook does, so
-                // it says nothing rather than spend the room on odds.
+                // No odds here: mid-cook nothing on the Lock Screen can change
+                // what the cook does, so it says nothing rather than spend the
+                // room on odds.
             }
 
             Spacer(minLength: 8)

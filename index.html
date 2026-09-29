@@ -64,7 +64,7 @@
     <button type="button" id="mute" class="mute" aria-pressed="false" data-copy="readout.mute.on"></button>
   </header>
 
-  <!-- F6: the title page, after the Dictionary's, heading the egg's page in
+  <!-- The title page, after the Dictionary's, heading the egg's page in
        the English of 1750 only (styles.css). Its long s is drawn, and the
        aria-label that applyCopy gives it reads without. -->
   <h1 class="titlepage" data-copy="app.titlePage"></h1>
@@ -262,12 +262,12 @@
           <input type="radio" name="units" id="unitsImperial" value="imperial">
           <label for="unitsImperial" data-copy="controls.units.imperial"></label>
         </div>
-        <!-- F6: the one line that finds the English of 1750 for a cook who
+        <!-- The one line that finds the English of 1750 for a cook who
              starts in Imperial (LANGUAGE.md section 6). English UIs only. -->
         <p id="unitsPeriod" class="setting__sub" data-copy="controls.units.period"></p>
       </fieldset>
 
-      <!-- F6: English, or the English of 1750. Changing it never changes
+      <!-- English, or the English of 1750. Changing it never changes
            the units; switching the units to Imperial in modern English
            changes it (src/core/language.ts). -->
       <fieldset class="setting" aria-labelledby="lblLanguage">
@@ -332,7 +332,7 @@
         </div>
       </fieldset>
 
-      <!-- E4. Off by default; offered once during a cook, and changed here. -->
+      <!-- The probe thermometer. Off by default; offered once during a cook, and changed here. -->
       <fieldset class="setting pan-only" aria-labelledby="lblProbe">
         <div class="setting__head">
           <span id="lblProbe" data-copy="controls.thermometer"></span>
@@ -459,7 +459,7 @@
     <p id="hintMore" class="disclosed" hidden data-copy="action.hint.heating.more"></p>
     <button type="button" id="primary" class="primary" data-copy="action.startHeating"></button>
     <button type="button" id="secondary" class="secondary" hidden data-copy="action.cancel"></button>
-    <!-- The thermometer, offered once, after "Eggs in" (E4). -->
+    <!-- The thermometer, offered once, after "Eggs in". -->
     <div id="probeOffer" hidden>
       <p class="hint" data-copy="probe.offer"></p>
       <div class="pair">
@@ -471,7 +471,7 @@
          Each answer is folded the moment it is tapped; one left unanswered is
          recorded as skipped when the next cook starts. -->
     <div id="feedback" hidden>
-      <!-- A reading at the middle, when the cooling ends (E4). -->
+      <!-- A reading at the middle, when the cooling ends. -->
       <div id="probeEntry" hidden>
         <p id="probeNow" data-copy="probe.now"></p>
         <p class="hint" id="probeHint" data-copy="probe.hint"></p>
