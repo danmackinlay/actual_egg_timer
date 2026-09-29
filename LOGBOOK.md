@@ -2626,3 +2626,25 @@ temperature, when a lumped egg in air relaxes from its own *volume-average*
 temperature. Corrected in `coolingTemperature`. The effect is real and still
 decisive (jammy vs fully set) but smaller than first computed.
 
+
+## 29 September 2026: the worklist's copy - the `tidy` draft
+
+WORKLIST.md section 9 as one named draft, `tidy`, on `bfc070d`, in both
+apps with each 1750 twin rewritten: 67 keys, one retired
+(`controls.size.weighed` into `controls.size.measured`, "Measured —
+{mass}", so the web's option now shows the egg's mass). LANGUAGE.md §3 has
+the table; the owner reads it on a phone and says what to put back.
+
+- **The false ones went first** (eb1fddf). Checked by running the model:
+  at 58 °C the white sets after 22.25 h of hold (22.7 h in all), so the
+  warning says "most of a day, if it sets at all". Help says "hours, even
+  days", since just under 60 °C it is 9.7 h and at 55 °C 89 h. Whichever
+  of yolk and white binds, the other has already passed its target, so
+  `yolkBound`'s "white still not" was as false as `whiteBound`'s.
+- **Found by looking, not by reading:** the iPhone 17 set the new
+  `outcome.unsure` with "I" alone at a line's end; a no-break space holds
+  "I can't" together. Nothing else wrapped badly on the main screen,
+  Settings, Help or a running cook.
+- **What the proofs cannot see:** `copySnapshot compare --draft` fails
+  only on Help's two linked asides, whose words a link splits into pieces
+  no template matches.

@@ -22,8 +22,8 @@ phone and has cooked real eggs; no TestFlight build is recorded
 
 **What is next**, in order:
 
-1. **The owner's reviews** (*Waiting on the owner*, below): the English of
-   1750 in both apps, the push of `main`, and two things only a phone can
+1. **The owner's reviews** (*Waiting on the owner*, below): the `tidy`
+   copy draft on a phone, the English of 1750 in both apps, the push of `main`, and two things only a phone can
    show - the iOS ring through the silent switch, and the slider's haptic tick.
 2. **An adversarial QA pass** against this baseline. *Loose ends*, below,
    lists what is already known to be wrong or untidy.
@@ -835,9 +835,12 @@ from the code.
 3. **On a phone:** whether the iOS in-app ring (`Ringer.swift`, `.playback`)
    gets through the silent switch as intended, and whether the slider's
    haptic tick at each doneness word is wanted (UI.md §10).
-4. **Wording:** F2's three held-back rows; the E2 feedback draft, live and
-   still open to revision; the probe's "highest" (a physics correction of
-   E4's, which stands unless the owner objects).
+4. **Wording:** the `tidy` draft (WORKLIST §9, 29 September), all of it
+   live in both apps, to be read on a phone and trimmed back where the
+   owner says (LANGUAGE.md §3); it includes F2's three held-back rows and
+   the two owner-approved cooking hints, trimmed. The E2 feedback draft,
+   live and still open to revision; the probe's "highest" (a physics
+   correction of E4's, which stands unless the owner objects).
 5. **Before E8:** whether the direction sentence meets the "still learning"
    condition for the nudge (INFERENCE.md §8).
 6. **`Intl` inside `src/core/format.ts`** (LANGUAGE.md §8).

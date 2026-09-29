@@ -591,6 +591,8 @@ Present each change to the owner in place on a phone. The review holds full befo
 
 ### 9.1 Factual fixes: the text is wrong against the code
 
+**DONE eb1fddf** (the `tidy` draft's first commit). The sous-vide notes went further than proposed: `yolkBound` was false too (its white is set). LANGUAGE.md §3 has what changed from the proposals and why.
+
 | Key | Problem | Proposed |
 |---|---|---|
 | `sousvide.warn` | Says the white "won't set, however long you leave it". The model sets it after about 22.7 h, which is what the headline shows. | "At {bath} the white takes most of a day to set, if it sets at all. I'm built for boiling water, and I'm not reliable below {floor}. Use the pan." |
@@ -610,12 +612,16 @@ Keep `help.odds.aside` as it is (owner, 28 Sep). "Three times as bad as a yolk a
 
 ### 9.2 Duplicates on one screen
 
+**DONE 25a36f4** (copy only; no line had to leave either app). The two F2 cooking hints are trimmed, not cut: for the owner.
+
 - `action.hint.cookingBoiling` and `action.hint.cookingStanding` repeat their phase labels in both apps. These two are owner-approved (F2), so ask before cutting them.
 - `action.hint.whiteNeverSets` sits beside `refusal.whiteNeverSets`. Proposed: hint → "nothing to start".
 - `controls.eggFrom.hint` and `.more` both say "pick Custom".
 - `controls.measure.legend` and `.hint` repeat each other.
 
 ### 9.3 Worst (i)s, to trim first
+
+**DONE 25a36f4.** `help.reliable.forYou` kept as it was (LANGUAGE.md §3).
 
 | Key | Words now → proposed |
 |---|---|
@@ -644,6 +650,8 @@ Keep `help.odds.aside` as it is (owner, 28 Sep). "Three times as bad as a yolk a
 
 ### 9.4 Voice
 
+**DONE 25a36f4**, the two F2 rows included, for the owner.
+
 - `learned.forget` / `learned.confirm.title`: "Forget what it learned" should become "Forget what's learned". It is held in F2; ask the owner.
 - `feedback.thanks`: "Thanks — I'll use that next time." The owner approved that direction; check it fits the 36-character budget.
 - `controls.eggFrom.hint`: "I assume {fridge} for a fridge and {room} for a room. Pick Custom if yours differ."
@@ -652,6 +660,8 @@ Keep `help.odds.aside` as it is (owner, 28 Sep). "Three times as bad as a yolk a
 - `controls.units.period`: "I can also write Imperial in the English of its day."
 
 ### 9.5 One wording per meaning
+
+**DONE 25a36f4**, and "Measured — {mass}" in both apps (`controls.size.weighed` retired).
 
 | Concept | Use | Instead of |
 |---|---|---|
@@ -665,6 +675,8 @@ Keep `help.odds.aside` as it is (owner, 28 Sep). "Three times as bad as a yolk a
 | Mute pair | "Sound on / Sound off" | — |
 
 ### 9.6 Head and manifest descriptions (outside the catalogue)
+
+**DONE 25a36f4.**
 
 - The three current descriptions all differ. They use jargon ("denaturation kinetics") and "not from a recipe".
 - Proposed meta, twitter and manifest description: "A boiled-egg timer that works out the time from how heat gets into your egg, counts the cooling, and learns how you like your yolk."

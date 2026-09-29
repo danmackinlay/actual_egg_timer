@@ -684,6 +684,108 @@ final content is never drawn. `CookActivity.Stage.done` stays, so a card an
 older build ended as done still decodes; it draws with the app's own
 `readout.phase.done`.
 
+**WORKLIST §9, the `tidy` draft - IMPLEMENTED 29 September 2026**, both
+apps, on the owner's D8: all of §9 applied at once, for the owner to judge
+on a phone and say what to put back. `tools/drafts/tidy.ts`, on `bfc070d`;
+`copyLiterals.js --since bfc070d tidy` shows these 67 keys (one retired)
+and nothing else. The §9.1 rows went in first, in a commit of their own.
+Each 1750 twin is rewritten with its key, not transformed from it: "ice
+bath" stays "iced water" there, as the 1750 option says, and "Full rolling
+boil" is "It boils in earnest". `copySnapshot.js compare --draft tidy`
+passes but for the two linked Help asides, whose words a link splits into
+pieces the draft's templates cannot match; they are drafted all the same.
+
+- **Checked against the code, and changed from WORKLIST Appendix A:**
+  the sous-vide notes say what the model computes at the time given, since
+  whichever of yolk and white binds, the other has passed its own target
+  (`whiteBound`: the yolk is firmer than asked; `yolkBound`: the white is
+  set, where the old line said it was not). `help.unsure.sousVide` says
+  "hours, even days", not "most of a day": the white's hold is 9.7 h just
+  under 60 °C and 89 h at 55 °C; the warning keeps "most of a day", being
+  about the one bath the app offers (22.7 h at 58 °C). `controls.egg.more`
+  says "give me its weight", as iOS takes it on a slider, not typed. The
+  cooking hints (F2) are trimmed to what the label beside them does not
+  say, since "heat off, lid on" would have repeated it word for word.
+  `outcome.unsure` holds "I can't" together with a no-break space: the
+  iPhone 17 left a lone "I" at a line's end.
+- **Held to the old wording:** `help.reliable.forYou` ("For these eggs" is
+  unclear on the Help page, which is not beside the eggs), `idle.welcome`
+  (the owner's), and the 1750 twins of `learned.forget` and
+  `learned.confirm.title`, which already said "what is learned".
+- **Outside the catalogue:** the head's and the manifest's descriptions
+  (§9.6), and the web's measured-egg option, which now carries the egg's
+  mass as iOS's does.
+
+| key | now | 1750 |
+|---|---|---|
+| `sousvide.warn` | At {bath} the white takes most of a day to set, if it sets at all. I'm built for boiling water, and I'm not reliable below {floor}. Use the pan. | At {bath} the white takes the better part of a day to set, if it sets at all. I was made for boiling water, and below {floor} I am not to be trusted. Use the pan. |
+| `help.unsure.sousVide` | Sous-vide. Below {floor} the white stays liquid and moves inside the shell, which I leave out, so I'm not reliable there. I estimate the white takes hours, even days, to set that cool, if it sets at all. | Sous-vide. Below {floor} the white remains liquid and moves within the shell, which I leave out of my account; there I am not to be trusted. By my reckoning, so cool, the white takes hours, or even days, to set, if it sets at all. |
+| `sousvide.note.whiteBound` | white only just set, yolk firmer than you asked | the white but newly set, the yolk firmer than you desired |
+| `sousvide.note.yolkBound` | yolk as you asked, white set | the yolk as you desired, the white set |
+| `help.learn.p1` | From your answers I learn how you like your yolk and how your eggs cook. From your taps on Full rolling boil, I learn how long your water takes to boil. One probe reading teaches me how fast heat gets into your eggs. Every question is optional. | From your answers I learn how you like your yolk, and how your eggs cook; from your taps upon It boils in earnest, how long your water is in boiling. A single reading of the probe teaches me how fast heat enters your eggs. No question is compulsory. |
+| `readout.restored` | I picked this cook back up after a reload. The times are right, but I can't ring for it: watch the clock. | I have taken up this cook again after the page was reloaded. The times are true, but I cannot ring for it: watch the clock. |
+| `help.odds.p1` | Under the time, I say which way an egg is likely to miss. The bracket under the slider shows where the yolk will probably land, and it narrows as I learn. | Under the time, I say which way an egg is likely to miss. The bracket under the slider shews where the yolk will probably fall, and grows narrower as I learn. |
+| `feedback.invite` | Your answers teach me your taste and your eggs. | Your answers instruct me in your taste and your eggs. |
+| `action.hint.whiteNeverSets` | nothing to start | nothing to begin |
+| `refusal.whiteNeverSets` | With the heat off, the water cools before the white sets. Add more water, or keep it boiling. | With the heat withdrawn, the water cools before the white is set. Add more water, or keep it boiling. |
+| `action.hint.cookingBoiling` | at {boiling} until the eggs come out | at {boiling} till the eggs come out |
+| `action.hint.cookingStanding` | lid on until the eggs come out | the lid on till the eggs come out |
+| `controls.eggFrom.more` | Eggs from the fridge are the most predictable: a fridge is much the same every day, a room isn't, and every degree moves the time a little. | Eggs from the fridge are the most certain: a fridge is much the same from day to day, a room is not, and every degree moves the time a little. |
+| `controls.measure.hint` | Kitchen scales are the most accurate. Without them, wrap a strip of paper round the fattest part and measure the strip. | Kitchen scales are the most exact. Wanting them, wrap a slip of paper round the fattest part, and measure the slip. |
+| `controls.cooling.more` | Out of the water, the yolk keeps cooking for a few minutes. An ice bath stops that soonest, so I can offer the softest yolks; a cold tap is nearly as good. On the counter the egg barely cools, so the softest yolks are out, and how much more the yolk cooks is hard to predict. | Out of the water, the yolk cooks on for some minutes. Iced water arrests it soonest, and so permits me to offer the softest yolks; a cold tap is nearly as good. Upon the table the egg scarcely cools; the softest yolks are therefore forbidden, and how much more the yolk will cook is not easily foretold. |
+| `controls.afterTheBoil.more` | Keep boiling: the water stays at a full boil until the eggs come out, and how much water hardly matters. Heat off, lid on: once the eggs are in boiling water, the water finishes them as it cools. It saves energy, but the amount of water sets the time, and too little can't finish the job, so measure it. | Keep it boiling: the water stays at a full boil till the eggs come out, and its quantity is of little moment. Fire out, lid on: the eggs once in boiling water, the water finishes them as it cools. This spares fewel; but the quantity of water decides the time, and too little cannot finish the work; measure it therefore. |
+| `controls.thermometer.more` | When the cooling countdown ends, the middle of the yolk is at its hottest, and I'll ask for one reading. Push the tip to the very middle and tell me the highest number you see: anywhere else, or later, reads lower. That one reading teaches me how fast heat gets into your eggs. On the counter nothing is counted down, so I don't ask. | When the counting-down of the cooling ends, the middle of the yolk is at its hottest, and I shall ask for one reading. Thrust the point to the very middle, and tell me the highest number you see: anywhere else, or any later, reads lower. That single reading teaches me how fast heat enters your eggs. Upon the table nothing is counted down, and I do not ask. |
+| `readout.sub.coldAssumes.more` | It's how long this much water has taken to boil before, from your taps on Full rolling boil. For an amount I haven't timed, I scale from the nearest one I have. Tap Full rolling boil today and I'll correct the time while the eggs cook. | It is how long this quantity of water has hitherto been in boiling, from your taps upon It boils in earnest. For a quantity I have never timed, I reckon from the nearest I have. Tap It boils in earnest to-day, and I shall correct the time while the eggs are cooking. |
+| `controls.start.more` | Boiling water: lower the eggs into water at a full boil. They peel more easily. Cold water: eggs into a cold pan, heat on, and tap Full rolling boil when the water rolls. Counting the wait for the boil, they're done sooner. Sous-vide: I'll tell you when you should have started, usually a while ago. | Boiling water: lower the eggs into water at a full boil; they peel more easily. Cold water: the eggs in a cold pan, the fire lit, and tap It boils in earnest when the water rolls; the waiting for the boil included, they are done sooner. Sous-vide: I shall tell you when you ought to have begun, which is commonly some while ago. |
+| `controls.water.more` | How much water, not counting the eggs. It matters most with the heat off, when the water's own heat cooks the eggs: more water stays hot longer. With the heat on it matters a little. I also remember how long each amount takes to boil, so it's worth measuring. | The quantity of water, the eggs not reckoned. It signifies most with the fire out, when the water's own heat cooks the eggs: more water stays hot longer. With the fire lit it signifies a little. I remember besides how long each quantity takes to boil; it is therefore worth measuring. |
+| `action.hint.heating.more` | Tap Full rolling boil when the whole surface is heaving and stirring doesn't calm it, not at the first bubbles. I time the rest of the cook from your tap: a few seconds either way is fine, a minute early isn't. Until you tap, the countdown is my guess. | Tap It boils in earnest when the whole surface heaves, and is not to be calmed by stirring; not at the first bubbles. I time the rest of the cook from your tap: a few seconds either way are of no moment, but a minute early is an errour. Until you tap, the countdown is but my conjecture. |
+| `outcome.learning` | To help me learn faster, answer both questions after each egg, and tap Full rolling boil when the water rolls. If you have a probe thermometer, one reading teaches me most. | To hasten my learning, answer both questions after every egg, and tap It boils in earnest when the water rolls. If you have a probe thermometer, a single reading instructs me most. |
+| `controls.eggsInPan.more` | Cold eggs cool boiling water as they go in, and more eggs cool it more, so it takes longer to come back to the boil, or with the heat off never does. On a cold-water start I don't need it: your tap on Full rolling boil already counts them. | Cold eggs cool boiling water as they enter, and more eggs cool it more; so it is longer in returning to the boil, or, with the fire out, never returns. For eggs begun in cold water I have no need of it: your tap upon It boils in earnest already reckons them. |
+| `learned.forget.more` | I forget every egg you've told me about and every boil you've timed, and start again from eggs in general. A wrong answer or two washes out after a few more eggs, so this is for a new stove, a new kitchen or a fresh start. | I forget every egg you have told me of and every boil you have timed, and begin again from eggs in general. A wrong answer or two a few eggs more will wash out; this is for a new stove, a new kitchen, or a new beginning. |
+| `controls.egg.more` | A bigger egg takes longer: the heat has further to go. One size on the box covers quite different weights, so if you have kitchen scales, weigh an egg and give me its weight. | A bigger egg takes longer, for the heat has further to go. One size upon the box comprehends very different weights; if therefore you have kitchen scales, weigh an egg, and give me its weight. |
+| `outcome.bracket` | The bracket under the slider shows where your yolk will probably land. To be safe from a soft yolk, slide right until the bracket's left end is somewhere you'd be happy; to be safe from a firm one, slide left until its right end is. | The bracket under the slider shews where your yolk will probably fall. To be secure against a soft yolk, slide to the right, till the left end of the bracket rests where you would be content; against a firm one, slide to the left, till its right end does. |
+| `controls.altitude.more` | Higher up, water boils cooler, so eggs cook more slowly, noticeably so up a mountain. Tell me roughly how high you are and I'll use the boiling point shown. | The higher you are, the cooler water boils, and the slower eggs cook; upon a mountain, sensibly so. Tell me nearly how high you are, and I shall use the boiling point here shewn. |
+| `controls.language.more` | English (1750) is English as Samuel Johnson wrote it. I switch to it when you pick Imperial, and back when you pick Metric. Pick English to keep Imperial in today's English. | English (1750) is English as Samuel Johnson wrote it. I change to it when you choose Imperial, and back when you choose Metrick. Should the reader find this stile tiresome, choose English: the modern tongue is restored, and Fahrenheit's scale kept. |
+| `help.how.p1` | I work out how heat soaks into your egg and how far the yolk and white set, then pick the time that leaves the yolk as you asked. | I compute how heat passes into your egg, and how far the yolk and the white are set; and then I choose the time that leaves the yolk as you desired. |
+| `help.how.aside` | I model [heat conduction] through a sphere the size of your egg, and protein setting as a dose of heat over time, with the [Arrhenius equation]. Every constant and its source is in the [README]. | I reason by [heat conduction] through a sphere of the bigness of your egg, and the setting of white and yolk as a dose of heat accumulated over time, by the [Arrhenius equation]. Every constant, with its authority, is in the [README]. |
+| `help.how.p2` | The cooling counts too. An egg out of the water keeps cooking from the inside for a few minutes. An ice bath stops that soonest; the counter barely slows it. | The cooling is likewise to be counted. An egg taken from the water continues some minutes to cook from within; iced water stops it soonest, and the table scarcely retards it. |
+| `help.learn.title` | What I learn | Of what I learn |
+| `help.learn.aside` | I use [sequential Monte Carlo] to learn your eggs and your taste, with an [ordered probit] for too soft, just right and too firm. I keep every egg, so when I improve, I relearn from all of them. [The design]. | I use [sequential Monte Carlo] to learn your eggs and your taste, with an [ordered probit] for too rear, as was desired, and too hard. I keep every egg; so that when I am improved, I learn again from all of them. [The design]. |
+| `help.reliable.cooling` | An ice bath is the most predictable, and a cold tap nearly as good. On the counter the yolk keeps cooking, so for soft eggs use ice. | Iced water is the most certain, and a cold tap nearly as good. Upon the table the yolk cooks on; for soft eggs, therefore, use ice. |
+| `feedback.thanks` | Thanks — I'll use that next time. | Thanks; I shall profit by it. |
+| `controls.eggFrom.hint` | I assume {fridge} for a fridge and {room} for a room. Pick Custom if yours differ. | I suppose {fridge} for a fridge and {room} for a room. Choose Your own if yours differ. |
+| `readout.alarm.failed` | I couldn't set the alarm — keep the app open | I could not set the alarm; keep the app open |
+| `readout.alarm.denied` | notifications are off — keep the app open | notices are forbidden; keep the app open |
+| `controls.units.period` | I can also write Imperial units in the English of their day. | I can likewise write the imperial measures in the English of their day. |
+| `learned.forget` | Forget what's learned | (as it was) Forget what is learned |
+| `learned.confirm.title` | Forget what's learned? | (as it was) Shall it all be forgot? |
+| `readout.phase.pull` | Eggs out — now | Out with the eggs, at once |
+| `activity.target` | {doneness} · peak yolk {yolk} | {doneness} · the yolk at most {yolk} |
+| `readout.mute.off` | Sound off | Bell off |
+| `setup.start.hotStanding` | into boiling water, heat off and lid on | put into boiling water, the fire out and the lid on |
+| `setup.start.coldStanding` | into cold water, brought to the boil, heat off and lid on | set in cold water, boiled, the fire out and the lid on |
+| `setup.start.cold` | into cold water, brought to the boil | set in cold water and brought to the boil |
+| `action.hint.hotStanding` | eggs into boiling water, then heat off, lid on | the eggs into boiling water; then the fire out, the lid on |
+| `action.hint.heatingStanding` | wait for the whole surface to roll, then heat off, lid on | wait until the whole surface rolls; then the fire out, the lid on |
+| `action.hint.hotBoiling` | eggs into water at a full boil; keep it there for all {time} | the eggs into water at a full boil, and kept so the whole {time} |
+| `readout.sub.coldGuesses` | about {boil} to boil, my guess | about {boil} to boil, by conjecture |
+| `readout.sub.heating` | {elapsed} so far · about {boil} to boil | {elapsed} hitherto · about {boil} to the boil |
+| `learned.literature` | I haven't learned anything yet. Tap Full rolling boil on a cold-water start, and tell me how each egg came out. | I have hitherto learned nothing. Tap It boils in earnest, having begun from cold water, and tell me how each egg came out. |
+| `learned.confirm.message` | I'll forget every egg and every boil, and the times go back to where they started. | I shall forget every egg and every boil, and the times return to where they began. |
+| `readout.sub.standing` | for {water} of water, lid on — measure it | for {water} of water, the lid on; measure it |
+| `readout.sub.cookingCold` | boiled in {boil} · then {after} | it boiled in {boil} · then {after} |
+| `outcome.unsure` | Could come out too soft or too firm; I can't tell yet. | It may come out too soft or too firm; which, I cannot yet foretell. |
+| `outcome.miss.firm` | Might miss, more likely too firm. | It may miss; more likely too firm. |
+| `outcome.miss.soft` | Might miss, more likely too soft. | It may miss; more likely too soft. |
+| `outcome.likely.firm` | Probably just right, or else a little firm. | Probably as you desire, or else a little firm. |
+| `outcome.likely.soft` | Probably just right, or else a little soft. | Probably as you desire, or else a little soft. |
+| `advice.fridge` | Use eggs straight from the fridge: I know how cold a fridge is, but not your room. | Use eggs straight from the fridge: how cold a fridge is I know, but not your room. |
+| `advice.ice` | Cool the eggs in an ice bath. On the counter, how much more the yolk cooks is hard to predict. | Cool the eggs in iced water. Upon the table, how much more the yolk will cook is not easily foretold. |
+| `advice.weigh` | Weigh the egg. One size on the box covers eggs that need quite different times. | Weigh the egg. One size upon the box comprehends eggs that need very different times. |
+| `colophon.lede` | I work out each time from how heat gets into an egg. | I reckon each time from how heat enters an egg. |
+| `controls.size.measured` | Measured — {mass} (iOS's too now) | As measured — {mass} |
+| `controls.size.weighed` | *retired into `controls.size.measured`* | *retired* |
+
 ### Proposed: one wording per meaning (for the owner)
 
 **Overtaken, 27-28 September, by the redesign (UI.md).** As the two apps took
