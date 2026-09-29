@@ -1,7 +1,6 @@
 import Foundation
 import Observation
 import EggTimerCore
-import EggTimerRing
 
 /// A cook in progress.
 ///

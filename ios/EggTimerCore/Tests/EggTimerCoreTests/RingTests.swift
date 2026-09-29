@@ -1,6 +1,5 @@
 import Testing
 import EggTimerCore
-@testable import EggTimerRing
 
 /// The in-app alarm's decision: ring once per deadline, only while the app is
 /// on screen, and never when a notification is already holding it.

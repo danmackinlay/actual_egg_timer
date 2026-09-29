@@ -1,5 +1,5 @@
+import EggTimerCore
 import EggTimerCopy
-import EggTimerRing
 import Foundation
 import UserNotifications
 

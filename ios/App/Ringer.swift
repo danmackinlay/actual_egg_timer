@@ -1,6 +1,6 @@
 import AVFoundation
 import AudioToolbox
-import EggTimerRing
+import EggTimerCore
 import os
 import UIKit
 import UIKit.UIGestureRecognizerSubclass
@@ -10,7 +10,7 @@ import UIKit.UIGestureRecognizerSubclass
 /// With notifications refused, unanswered or not taken, the screen says "keep
 /// the app open". This is what makes that true: while the app is on screen it
 /// rings at each deadline itself. `Cook` decides WHEN, through the tested rule
-/// in EggTimerRing (`deadlineToRing`); this only makes the noise.
+/// in EggTimerCore (`deadlineToRing`); this only makes the noise.
 ///
 /// The sound is the web app's (`src/ui/clock.ts`, `ringAlarm`), generated here
 /// rather than shipped as a file: two 880 Hz beeps every 1.6 s, with a third,
