@@ -673,8 +673,8 @@ phase §1 argues matters most. Do not use this model for sous-vide.
 regardless, for exactly one purpose: to answer the question in the model's own units,
 and let the answer speak for itself. The white's dose target lives at 80 °C, so a 58 °C
 bath needs 22 h 43 min of it for a 68 g egg — which both apps report as a start time
-yesterday, under a warning saying the white will not set at that temperature whatever
-the clock says. Note which part of that answer is load-bearing: the HOLD times depend
+yesterday, under a warning that at that temperature the white takes most of a day to
+set, if it sets at all, and that the model is not to be trusted below 60 °C. Note which part of that answer is load-bearing: the HOLD times depend
 only on the bath and the dose targets, so the convection above does not touch them,
 while `equilibrate_s` is conduction-only and is too long by an unknown amount. Neither
 app puts it on screen.

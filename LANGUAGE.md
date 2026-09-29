@@ -523,7 +523,10 @@ both apps where a key is shared:
   "{doneness} · water at {bath}"; `sousvide.subline` "…{duration} in the bath
   ({bath}), to eat now" → "…{duration} at {bath}, to eat now";
   `sousvide.warn` "This bath ({bath}) is too cool to set the white…" → "At
-  {bath} the white won't set, however long you leave it…". "Ice bath" stays.
+  {bath} the white won't set, however long you leave it…" (false, since the
+  model does set it, after about 22.7 h at 58 °C: "At {bath} the white takes
+  most of a day to set, if it sets at all…" since the `tidy` draft, 29
+  September). "Ice bath" stays.
 - **"Pan" only where it means the pot.** `controls.pan` "Pan, hob and
   altitude" → "Kitchen"; `learned.pan` "your pan: about {time} to boil, based
   on history" → "{water} of water takes about {time} to boil, based on

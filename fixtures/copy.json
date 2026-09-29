@@ -648,7 +648,7 @@
       "args": {
         "floor": "140 °F"
       },
-      "text": "Sous-vide. Below 140 °F the white remains liquid and moves within the shell, which I leave out of my account; there I am not to be trusted. The very long times are real, however: so cool, the white takes the better part of a day to set."
+      "text": "Sous-vide. Below 140 °F the white remains liquid and moves within the shell, which I leave out of my account; there I am not to be trusted. By my reckoning, so cool, the white takes hours, or even days, to set, if it sets at all."
     },
     {
       "locale": "en-x-1750",
@@ -885,7 +885,7 @@
         "bath": "136 °F",
         "floor": "140 °F"
       },
-      "text": "At 136 °F the white will not set, however long you leave it. I was made for boiling water, and below 140 °F I am not to be trusted. Use the pan."
+      "text": "At 136 °F the white takes the better part of a day to set, if it sets at all. I was made for boiling water, and below 140 °F I am not to be trusted. Use the pan."
     },
     {
       "locale": "en-x-1750",
@@ -2000,7 +2000,7 @@
       "args": {
         "floor": "140 °F"
       },
-      "text": "Sous-vide. Below 140 °F the white stays liquid and moves inside the shell, which I leave out, so I'm not reliable there. The very long times are real, though: that cool, the white takes most of a day to set."
+      "text": "Sous-vide. Below 140 °F the white stays liquid and moves inside the shell, which I leave out, so I'm not reliable there. I estimate the white takes hours, even days, to set that cool, if it sets at all."
     },
     {
       "locale": "en",
@@ -2237,7 +2237,7 @@
         "bath": "136 °F",
         "floor": "140 °F"
       },
-      "text": "At 136 °F the white won't set, however long you leave it. I'm built for boiling water, and I'm not reliable below 140 °F. Use the pan."
+      "text": "At 136 °F the white takes most of a day to set, if it sets at all. I'm built for boiling water, and I'm not reliable below 140 °F. Use the pan."
     },
     {
       "locale": "en",
