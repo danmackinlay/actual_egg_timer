@@ -12,7 +12,7 @@ import EggTimerCopy
 /// and the probe are all pan arithmetic. A new input to `sousVideEstimate` is
 /// the signal to bring one back.
 struct SettingsView: View {
-    @Bindable var kitchen: Kitchen
+    @Bindable var planner: Planner
     /// Forget asks first, in place, as the web's does: the button gives way to
     /// the question and its two answers.
     @State private var confirming = false
@@ -24,8 +24,8 @@ struct SettingsView: View {
                     Text(tr("controls.units"))
                 }
                 Picker(tr("controls.units"), selection: Binding(
-                    get: { kitchen.units },
-                    set: { kitchen.chooseUnits($0) }
+                    get: { planner.units },
+                    set: { planner.chooseUnits($0) }
                 )) {
                     Text(tr("controls.units.metric")).tag(UnitSystem.metric)
                     Text(tr("controls.units.imperial")).tag(UnitSystem.imperial)
@@ -59,16 +59,16 @@ struct SettingsView: View {
                 .labelsHidden()
             }
 
-            if !kitchen.isSousVide {
+            if !planner.isSousVide {
                 Section {
                     InfoRow("controls.altitude", more: [tr("controls.altitude.more")]) {
                         StepperValue(
-                            label: tr("controls.altitude"), measure: kitchen.measure(.altitude),
-                            value: $kitchen.altitudeM, show: { kitchen.show(.altitude, $0) }
+                            label: tr("controls.altitude"), measure: planner.measure(.altitude),
+                            value: $planner.altitudeM, show: { planner.show(.altitude, $0) }
                         )
                     }
                     LabeledContent(tr("readout.stat.waterBoilsAt")) {
-                        Text(kitchen.show(.boilingPoint, kitchen.boilingC))
+                        Text(planner.show(.boilingPoint, planner.boilingC))
                             .monospacedDigit()
                     }
                     .font(.footnote)
@@ -78,18 +78,18 @@ struct SettingsView: View {
                 Section {
                     InfoRow("controls.water", more: [tr("controls.water.more")]) {
                         StepperValue(
-                            label: tr("controls.water"), measure: kitchen.measure(.water),
-                            value: $kitchen.waterLitres, show: { kitchen.show(.water, $0) }
+                            label: tr("controls.water"), measure: planner.measure(.water),
+                            value: $planner.waterLitres, show: { planner.show(.water, $0) }
                         )
                     }
                     InfoRow("controls.eggsInPan", more: [tr("controls.eggsInPan.more")]) {
-                        CountValue(label: tr("controls.eggsInPan"), value: $kitchen.eggCount, range: Limits.eggCount)
+                        CountValue(label: tr("controls.eggsInPan"), value: $planner.eggCount, range: Limits.eggCount)
                     }
                 }
 
                 Section {
                     InfoRow("controls.afterTheBoil", more: [tr("controls.afterTheBoil.more")])
-                    Picker(tr("controls.afterTheBoil"), selection: $kitchen.heatOff) {
+                    Picker(tr("controls.afterTheBoil"), selection: $planner.heatOff) {
                         Text(tr("controls.afterBoil.keepBoiling")).tag(false)
                         Text(tr("controls.afterBoil.heatOff")).tag(true)
                     }
@@ -101,8 +101,8 @@ struct SettingsView: View {
                 Section {
                     InfoRow("controls.thermometer", more: [tr("controls.thermometer.more")])
                     Toggle(tr("controls.thermometer.ask"), isOn: Binding(
-                        get: { kitchen.probe },
-                        set: { kitchen.setProbe($0) }
+                        get: { planner.probe },
+                        set: { planner.setProbe($0) }
                     ))
                 }
             }
@@ -130,7 +130,7 @@ struct SettingsView: View {
             Text(learnedNote)
                 .font(.footnote)
                 .foregroundStyle(.secondary)
-            if kitchen.eggsLogged > 0 || kitchen.hasBoilMemory {
+            if planner.eggsLogged > 0 || planner.hasBoilMemory {
                 if confirming {
                     VStack(alignment: .leading, spacing: 6) {
                         Text(tr("learned.confirm.title"))
@@ -142,7 +142,7 @@ struct SettingsView: View {
                     .accessibilityElement(children: .combine)
                     Button(tr("learned.confirm.forget"), role: .destructive) {
                         confirming = false
-                        kitchen.resetCalibration()
+                        planner.resetCalibration()
                     }
                     Button(tr("learned.confirm.keep")) {
                         confirming = false
@@ -163,14 +163,14 @@ struct SettingsView: View {
 
     /// The web's `renderLearned`: nothing yet, the eggs, the pan, or both.
     private var learnedNote: String {
-        let eggs = kitchen.eggsLogged
-        let pan = kitchen.hasBoilMemory
+        let eggs = planner.eggsLogged
+        let pan = planner.hasBoilMemory
         if eggs == 0 && !pan { return tr("learned.literature") }
         let tuned = eggs > 0 ? tr("learned.tuned", ["eggs": .int(eggs)]) : ""
         let measured = pan
             ? tr("learned.pan", [
-                "water": .text(kitchen.show(.water, kitchen.waterLitres)),
-                "time": .text(clockString(kitchen.timeToBoilS)),
+                "water": .text(planner.show(.water, planner.waterLitres)),
+                "time": .text(clockString(planner.timeToBoilS)),
             ])
             : ""
         if !tuned.isEmpty && !measured.isEmpty {

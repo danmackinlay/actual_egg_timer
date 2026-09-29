@@ -21,24 +21,20 @@ enum Route: Hashable {
 /// the egg is already in the water and the answer is already fixed - and the
 /// screen is better spent on the one number that matters.
 struct ContentView: View {
-    @State private var kitchen = Kitchen()
-    @State private var cook = Cook()
+    @State private var model = AppModel()
     @State private var path: [Route] = []
     /// The clause whose choice is open under the sentence, if any. One at a
     /// time.
     @State private var openClause: Clause?
-    /// The probe reading as typed, in the cook's units, and what was said
-    /// back about it (E4).
-    @State private var probeText = ""
-    @State private var probeNote = ""
-    /// True while "Eggs in" waits on a solve for the inputs as they now stand,
-    /// so a second tap cannot start a second cook.
-    @State private var starting = false
-    /// Half the slider's thumb, pt, as the slider reports it: where the track,
-    /// the bracket and the doneness words are inset to.
+    /// Half the slider's thumb, pt, as the slider reports it. Kept here rather
+    /// than in the control, which leaves the screen while a cook runs, so the
+    /// control comes back with the inset it had.
     @State private var thumbInset: CGFloat = 14
     /// Whether the direction's (i) is open.
     @State private var directionInfoOpen = false
+
+    private var planner: Planner { model.planner }
+    private var cook: Cook { model.cook }
 
     var body: some View {
         // One clock read for everything outside the timelines. `cook.phase(at:)`
@@ -49,6 +45,18 @@ struct ContentView: View {
         // The English of 1750 (F6): read here, so this body depends on it and
         // a change of language redraws the page in place.
         let period = isPeriod(Copy.activeLocale)
+        // The sous-vide estimate, once for the inputs as they stand: it is a
+        // bisection, and nothing in it reads the clock. Nil for a pan.
+        let sousVide = planner.isSousVide ? planner.sousVide : nil
+        // How often the timelines redraw. Every second while a cook runs, and
+        // in sous-vide, whose start time is read off the clock. The pan's idle
+        // screen reads nothing off the clock at all - what it shows changes
+        // only when an input or an answer does, and observation redraws it
+        // then - so its once a minute is only a backstop, where it used to be
+        // every second for nothing. The period is also the timelines'
+        // identity, so a change of it starts them afresh on the new schedule
+        // with a fresh date, rather than on a date up to a minute old.
+        let tick: TimeInterval = outerPhase == .idle && sousVide == nil ? 60 : 1
 
         return NavigationStack(path: $path) {
             ScrollView {
@@ -58,33 +66,41 @@ struct ContentView: View {
                     // not of any stored property, so nothing the observation
                     // system watches ever changes while a cook counts down.
                     // TimelineView is what redraws them: it asks for a new body
-                    // once a second, and hands over the date it drew for -
+                    // once a `tick`, and hands over the date it drew for -
                     // which is the date the phase is computed from.
-                    TimelineView(.periodic(from: .now, by: 1)) { context in
-                        readout(cook.phase(at: context.date), at: context.date)
+                    TimelineView(.periodic(from: .now, by: tick)) { context in
+                        let phase = cook.phase(at: context.date)
+                        ReadoutView(
+                            model: model, phase: phase, now: context.date,
+                            sousVide: sousVideAt(context.date, sousVide, phase: phase),
+                            directionInfoOpen: $directionInfoOpen
+                        )
                     }
+                    .id(tick)
                     if outerPhase == .idle {
-                        donenessControl
+                        DonenessControl(planner: planner, thumbInset: $thumbInset)
                         setup
                     } else if let ticket = cook.ticket {
                         // The cook in the pan, where the controls were: the
                         // first thing under the time, and never pushed down
                         // by the probe offer or the two questions at Done.
-                        CookSentence(ticket: ticket, kitchen: kitchen)
+                        CookSentence(ticket: ticket, planner: planner)
                     }
-                    TimelineView(.periodic(from: .now, by: 1)) { context in
+                    TimelineView(.periodic(from: .now, by: tick)) { context in
                         let phase = cook.phase(at: context.date)
                         VStack(spacing: 18) {
-                            slot(phase, at: context.date)
-                            action(phase, at: context.date)
-                            if phase != .idle && phase != .done { probeOffer }
+                            PhaseActions(
+                                model: model, phase: phase, now: context.date,
+                                sousVide: sousVideAt(context.date, sousVide, phase: phase)
+                            )
                             // Inside the TimelineView for the same reason as
                             // the readout: reaching DONE changes no stored
                             // property, so nothing outside would redraw and
                             // the question would never appear.
-                            if phase == .done { feedback }
+                            if phase == .done { FeedbackPanel(model: model) }
                         }
                     }
+                    .id(tick)
                 }
                 .padding(20)
             }
@@ -103,8 +119,8 @@ struct ContentView: View {
             }
             .navigationDestination(for: Route.self) { route in
                 switch route {
-                case .settings: SettingsView(kitchen: kitchen)
-                case .help(let section): HelpView(kitchen: kitchen, start: section)
+                case .settings: SettingsView(planner: planner)
+                case .help(let section): HelpView(planner: planner, start: section)
                 }
             }
         }
@@ -115,31 +131,18 @@ struct ContentView: View {
         // each clock face sets `.fontDesign(.rounded)` again on itself.
         .fontDesign(period ? .serif : nil)
         .onAppear {
-            // Install the notification delegate before anything can fire.
-            Alarm.shared.activate()
-            // The machine cannot solve for itself. A cold start needs a fresh
-            // answer twice: when the boil is tapped, and whenever a slow hob
-            // forces the estimate out.
-            cook.resolveCookTime = { [kitchen] seconds, level, lean in
-                await kitchen.cookResult(timeToBoilS: seconds, level: level, leanS: lean)
-            }
-            // Whether the cooling's alarm asks for a probe reading (E4).
-            cook.probeWanted = { [kitchen] in kitchen.probe }
-            // The kitchen's own stored state, read here rather than in its
-            // init: @State evaluates its initial value on every construction of
-            // this struct and keeps only the first, so init was doing the I/O
-            // and starting a solve for Kitchens that were then thrown away.
-            kitchen.load()
-            #if DEBUG
-            kitchen.seed(Screenshots.seedEggs)
-            #endif
-            // After the solver is wired, so a restored cold start can revise
-            // straight away rather than waiting for the next attempt.
-            cook.restoreIfNeeded()
+            model.appear()
             #if DEBUG
             showScreenshotScene()
             #endif
         }
+    }
+
+    /// What the sous-vide screen says at one tick of a timeline, once for
+    /// everything in it: nil for a pan, and while a cook runs.
+    private func sousVideAt(_ now: Date, _ estimate: SousVideEstimate?, phase: Phase) -> SousVideCopy? {
+        guard phase == .idle, let estimate else { return nil }
+        return sousVideCopy(estimate, now: now, units: planner.units)
     }
 
     #if DEBUG
@@ -153,8 +156,7 @@ struct ContentView: View {
         case "direction-info": directionInfoOpen = true
         case "heating":
             guard cook.phase == .idle else { return }
-            starting = true
-            Task { await startCook() }
+            model.eggsIn()
         default:
             if scene.hasPrefix("clause-"), let clause = Clause(rawValue: String(scene.dropFirst(7))) {
                 openClause = clause
@@ -181,819 +183,22 @@ struct ContentView: View {
             .accessibilityAddTraits(.isHeader)
     }
 
-    // MARK: - Readout
-
-    /// The phase, the time, and the line under it; then the direction's slot.
-    ///
-    /// Sous-vide is answered honestly and separately: no cook to run, no clock
-    /// to start, and a start time that has already been and gone. It branches
-    /// FIRST, before any of the pan readout.
-    private func readout(_ phase: Phase, at now: Date) -> some View {
-        VStack(spacing: 6) {
-            if kitchen.isSousVide && phase == .idle {
-                let copy = sousVideCopy(kitchen.sousVide, now: now, units: kitchen.units)
-                Text(tr("readout.phase.startTime"))
-                    .font(.caption.smallCaps())
-                    .foregroundStyle(.secondary)
-                // Not the 76 pt clock face the other phases use: "Yesterday" is
-                // not a clock face and will not fit like one. The web app has a
-                // CSS rule that says the same thing.
-                Text(copy.headline)
-                    .font(.system(size: 40, weight: .semibold, design: .rounded))
-                    .fontDesign(.rounded)
-                    .minimumScaleFactor(0.6)
-                    .lineLimit(1)
-                Text(copy.subline)
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-            } else {
-                Text(phaseLabel(phase))
-                    .font(.caption.smallCaps())
-                    .foregroundStyle(phase == .pull ? .orange : .secondary)
-                    .multilineTextAlignment(.center)
-
-                Text(bigTime(phase, at: now))
-                    .font(.system(size: 76, weight: .semibold, design: .rounded))
-                    .fontDesign(.rounded)
-                    .monospacedDigit()
-                    .contentTransition(.numericText())
-                    .animation(.snappy, value: bigTime(phase, at: now))
-
-                sublineLine(phase, at: now)
-                direction(phase)
-            }
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 22)
-        .padding(.horizontal, 12)
-        .background(.quaternary.opacity(0.4), in: RoundedRectangle(cornerRadius: 18))
-    }
-
-    /// The line under the time. "Based on history" has an (i) that says what
-    /// history, as on the web.
-    @ViewBuilder
-    private func sublineLine(_ phase: Phase, at now: Date) -> some View {
-        if phase == .idle && kitchen.coldStart && kitchen.hasBoilMemory {
-            InfoRow(
-                name: tr("readout.sub.coldAssumes.info"),
-                more: [tr("readout.sub.coldAssumes.more")],
-                alignment: .center
-            ) {
-                Text(subline(phase, at: now))
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-            }
-        } else {
-            Text(subline(phase, at: now))
-                .font(.footnote)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-        }
-    }
-
-    /// The direction's slot, beneath the time (UI.md section 8, the web's
-    /// `renderOdds`): which way the egg is likely to miss, with one (i), "How
-    /// sure I am", at its end; what the (i) opens; and a line when a runny
-    /// white is a real risk.
-    ///
-    /// While idle it is the choice on screen's, and blank until this pot's
-    /// surface lands. The sentence holds two lines, the most any of them
-    /// takes, so a drag that changes it does not move the slider. Once a cook
-    /// is running the direction and the white's line are what they were at
-    /// "Eggs in"; the (i), which is about the slider, goes with the slider.
-    /// Never where the white never sets: there is no cook to say anything
-    /// about.
-    ///
-    /// The one-tap play-safe suggestion under it is gone (owner, 28
-    /// September): it said in words what the slider and the bracket already
-    /// show.
-    ///
-    /// "I'm still learning" is not a line of its own, as on the web: beside
-    /// "I can't call it yet" it said the same thing twice. What it opened is
-    /// the last paragraph of the (i). The decision still works it out; nothing
-    /// keeps it with the egg.
-    @ViewBuilder
-    private func direction(_ phase: Phase) -> some View {
-        let idle = phase == .idle
-        let o = forecast(phase)
-        VStack(spacing: 2) {
-            HStack(alignment: .center, spacing: 2) {
-                ZStack {
-                    // Two lines' room while idle, one sentence centred in it.
-                    if idle { Text(verbatim: " \n ").hidden().accessibilityHidden(true) }
-                    Text(o.map { tr(directionKey($0)) } ?? "")
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                .font(.subheadline.weight(.semibold))
-                if idle && o != nil {
-                    InfoButton(expanded: $directionInfoOpen, name: tr("outcome.info"))
-                }
-            }
-            if idle && o != nil && directionInfoOpen {
-                MoreText([tr("outcome.bracket"), tr("outcome.why"), tr("outcome.learning")])
-                    .padding(.top, 4)
-                    .transition(.opacity)
-            }
-            if let o, whiteAtRisk(o) {
-                Text(tr("outcome.whiteRunny"))
-                    .font(.footnote)
-                    .foregroundStyle(.orange)
-                    .padding(.top, 2)
-            }
-        }
-        .multilineTextAlignment(.center)
-    }
-
-    /// What the direction is about. While idle, the choice on screen's, once
-    /// this pot's surface has landed; once a cook is running, what it was at
-    /// "Eggs in".
-    private func forecast(_ phase: Phase) -> Outcome? {
-        if phase == .idle {
-            guard kitchen.decision != nil, kitchen.solution?.whiteSets == true else { return nil }
-            return kitchen.outcome
-        }
-        return cook.ticket?.forecast
-    }
-
-    /// Which words the readout says in a phase: core's `phaseKeys`, from the
-    /// cook's ticket while one runs and from the controls while idle.
-    private func keys(_ phase: Phase) -> PhaseKeys {
-        let setup = cook.ticket?.setup
-        return phaseKeys(PhaseFacts(
-            phase: phase,
-            startMode: setup?.startMode ?? (kitchen.coldStart ? .cold : .hot),
-            afterBoil: setup?.afterBoil ?? (kitchen.heatOff ? .off : .hold),
-            cooling: setup?.cooling ?? kitchen.cooling,
-            whiteSets: kitchen.solution?.whiteSets ?? true,
-            boilKnown: kitchen.hasBoilMemory,
-            probeWanted: cook.asksForProbe
-        ))
-    }
-
-    private func phaseLabel(_ phase: Phase) -> String {
-        tr(keys(phase).label)
-    }
-
-    /// The web's clock face in every phase: the countdown, how late the pull
-    /// is running while the eggs wait to come out, and at the end the time
-    /// the egg was in the water.
-    private func bigTime(_ phase: Phase, at now: Date) -> String {
-        switch phase {
-        case .idle: kitchen.solution.map { clockString($0.result.cookTimeS) } ?? "--:--"
-        case .heating, .cooking: clockString(cook.secondsToPull)
-        case .pull: "+" + clockString(now.timeIntervalSince(cook.pullAt ?? now))
-        case .cooling: clockString(cook.secondsToCoolDone)
-        case .done: clockString(cook.cookSeconds)
-        }
-    }
-
-    /// The line under the clock: core's key, with this phase's arguments.
-    private func subline(_ phase: Phase, at now: Date) -> String {
-        let key = keys(phase).subline
-        return switch phase {
-        case .idle:
-            tr(key, [
-                "boil": .text(clockString(kitchen.timeToBoilS)),
-                "water": .text(kitchen.show(.water, kitchen.waterLitres)),
-            ])
-        case .heating:
-            tr(key, [
-                "elapsed": .text(clockString(now.timeIntervalSince(cook.startedAt ?? now))),
-                "boil": .text(clockString(cook.assumedBoilS)),
-            ])
-        case .cooking:
-            tr(key, [
-                "boil": .text(clockString(cook.assumedBoilS)),
-                "after": .text(clockString(cook.secondsAfterBoil)),
-            ])
-        case .done:
-            tr(key, [
-                "boil": .text(clockString(cook.assumedBoilS)),
-                "cooking": .text(clockString(cook.cookSeconds - cook.assumedBoilS)),
-            ])
-        case .pull, .cooling:
-            tr(key)
-        }
-    }
-
-    /// What the alarm actually is, not what permission was granted.
-    ///
-    /// This used to read the authorization result alone, so it said "alarm set"
-    /// whether or not the request had been accepted - while ios/README.md
-    /// claimed the app reads the pending count back "rather than assuming",
-    /// which it did and then ignored. An egg timer that claims an alarm it has
-    /// not got is worse than one with no alarm at all.
-    private var alarmLine: String {
-        switch cook.alarmAuthorized {
-        case .none:
-            return tr("readout.alarm.setting")
-        case .some(false):
-            return tr("readout.alarm.denied")
-        case .some(true):
-            guard cook.pendingAlarms > 0 else {
-                return tr("readout.alarm.failed")
-            }
-            return tr("readout.alarm.set", ["time": .text(timeOfDay(cook.pullAt ?? .now, withSeconds: true))])
-        }
-    }
-
-    /// "Eggs in": start a cook on the answer to the inputs as they stand.
-    ///
-    /// `kitchen.solution` is what is on screen, and for the coalesce and the
-    /// solve after any change it still answers the previous inputs - so this
-    /// asks for the current one, which is the same answer unless an input has
-    /// just moved. Nothing awaits between that answer landing and `cook.start(...)`
-    /// taking it, so the ticket and the start are read off the inputs it was
-    /// solved for, including a slider the answer has just snapped. They used
-    /// to be read at two different moments - the ticket in the tap, the start
-    /// mode in a task after it - and a picker change landing between the two
-    /// ran a cold start's heating phase under a ticket that said hot.
-    private func startCook() async {
-        let current = await kitchen.currentSolution()
-        starting = false
-        guard cook.phase == .idle, let solution = current, solution.whiteSets else { return }
-        // Everything the cook is, frozen here. The calibration learns
-        // from this and from nothing else, so a slider left somewhere
-        // different afterwards cannot rewrite what was cooked.
-        let ticket = Cook.Ticket(
-            doneness: kitchen.label,
-            peakYolkC: solution.result.peakYolkC,
-            level: kitchen.doneness,
-            egg: kitchen.egg,
-            setup: kitchen.setup,
-            massFrom: kitchen.massFrom,
-            sizeTable: kitchen.sizeTable,
-            startTemp: kitchen.startTemp,
-            boilRemembered: kitchen.hasBoilMemory,
-            units: kitchen.units,
-            lang: Copy.activeLocale,
-            // The choice on screen, if it has been made: the time
-            // started IS the chosen one, and a mid-cook re-solve
-            // carries its lean.
-            leanS: kitchen.decision?.leanS ?? 0,
-            forecast: kitchen.decision == nil ? nil : kitchen.outcome,
-            // The cooling counts to the yolk's peak for this cook (E4).
-            coolS: coolingSecondsFor(solution.result),
-            probeMoment: probeMomentFor(solution.result, cooling: kitchen.cooling)
-        )
-        await cook.start(
-            cookSeconds: solution.result.cookTimeS,
-            assumedBoilS: kitchen.timeToBoilS,
-            coldStart: kitchen.coldStart,
-            ticket: ticket
-        )
-    }
-
-    // MARK: - Action
-
-    @ViewBuilder
-    private func action(_ phase: Phase, at now: Date) -> some View {
-        switch phase {
-        case .idle where kitchen.isSousVide:
-            VStack(spacing: 8) {
-                Text(sousVideCopy(kitchen.sousVide, now: now, units: kitchen.units).hint)
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                // Dead rather than absent. There is nothing to start, and a
-                // button that has gone missing looks like a layout accident
-                // where one that will not press is the answer.
-                Button {} label: {
-                    Text(tr("action.eggsIn")).frame(maxWidth: .infinity).onAccent()
-                }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
-                .disabled(true)
-            }
-
-        case .idle:
-            VStack(spacing: 8) {
-                Text(idleHint)
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                Button {
-                    guard !starting else { return }
-                    starting = true
-                    Task { await startCook() }
-                } label: {
-                    Text(tr(keys(.idle).action ?? "action.eggsIn"))
-                        .frame(maxWidth: .infinity)
-                        .onAccent()
-                }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
-                .disabled(starting || kitchen.solution == nil || kitchen.solution?.whiteSets == false)
-            }
-
-        case .heating:
-            VStack(spacing: 10) {
-                // What a full rolling boil looks like, and why the tap
-                // matters, in its (i).
-                InfoRow(
-                    name: tr("action.hint.heating.info"),
-                    more: [tr("action.hint.heating.more")],
-                    alignment: .center
-                ) {
-                    Text(keys(.heating).hint.map { tr($0) } ?? "")
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                }
-                // Invariant 6: tapping at first bubbles under-measures the boil
-                // by 15-25%, so the button names the thing to wait for.
-                Button {
-                    Task {
-                        if let measured = await cook.recordBoil() {
-                            kitchen.rememberBoil(seconds: measured)
-                        }
-                    }
-                } label: {
-                    Text(tr(keys(.heating).action ?? "action.fullBoil")).frame(maxWidth: .infinity).onAccent()
-                }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
-
-                Button(tr("action.cancel"), role: .destructive) {
-                    cook.cancel()
-                    kitchen.refresh()
-                }
-                .buttonStyle(.bordered)
-                .frame(maxWidth: .infinity)
-            }
-
-        case .pull:
-            VStack(spacing: 10) {
-                // The web's hint: when the cooling starts on its own. Not on
-                // the counter, where the grace runs out into Done and the line
-                // under the time already says the yolk is still cooking.
-                if let hint = keys(.pull).hint, let pullAt = cook.pullAt {
-                    let left = max(0, (pullGraceSeconds - now.timeIntervalSince(pullAt)).rounded(.up))
-                    Text(tr(hint, ["seconds": .int(Int(left))]))
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                }
-                // The web app's button, in its words: the cook's tap is the
-                // nearest thing to when the egg left the water that the app will
-                // ever know, and the record calls it a measured pull. Without it
-                // the grace runs out and the pull is only assumed.
-                Button {
-                    cook.pulledOut()
-                } label: {
-                    Text(tr(keys(.pull).action ?? pulledKey(.ice))).frame(maxWidth: .infinity).onAccent()
-                }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
-
-                Button(tr("action.cancel"), role: .destructive) {
-                    cook.cancel()
-                    kitchen.refresh()
-                }
-                .buttonStyle(.bordered)
-                .frame(maxWidth: .infinity)
-            }
-
-        case .done:
-            Button(tr(keys(.done).action ?? "action.startAgain")) {
-                // An egg nobody answered about is still logged; it folds nothing.
-                if !cook.feedbackGiven, let egg = cook.eggRecord(yolk: nil) {
-                    kitchen.logUnanswered(egg)
-                }
-                probeText = ""
-                probeNote = ""
-                cook.cancel()
-                kitchen.endEgg()
-                kitchen.refresh()
-            }
-            .buttonStyle(.bordered)
-            .controlSize(.large)
-            .frame(maxWidth: .infinity)
-
-        default:
-            VStack(spacing: 10) {
-                if phase == .cooking {
-                    VStack(spacing: 4) {
-                        // The web's hint: what the hob must do until the pull.
-                        Text(keys(.cooking).hint.map {
-                            tr($0, ["boiling": .text(kitchen.show(
-                                .temperature, cook.ticket?.setup.boilingC ?? kitchen.boilingC
-                            ))])
-                        } ?? "")
-                        // Whether the alarm is really set: iOS's own line,
-                        // since the web's alarm is the open tab.
-                        Text(alarmLine)
-                    }
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                }
-                Button(tr("action.cancel"), role: .destructive) {
-                    cook.cancel()
-                    kitchen.refresh()
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.large)
-                .frame(maxWidth: .infinity)
-            }
-        }
-    }
-
-    // MARK: - The thermometer (E4)
-
-    /// Offered once, while a cook is running, to a cook whose cooling ends at
-    /// the yolk's peak. Either answer puts it away for good; the setting stays
-    /// in the controls.
-    @ViewBuilder
-    private var probeOffer: some View {
-        if !kitchen.probeAsked, cook.ticket?.probeMoment == true {
-            VStack(spacing: 10) {
-                Text(tr("probe.offer"))
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                HStack(spacing: 10) {
-                    Button {
-                        kitchen.answerProbeOffer(true)
-                        cook.probeSettingChanged()
-                    } label: {
-                        Text(tr("probe.offer.yes")).frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(.bordered)
-                    Button {
-                        kitchen.answerProbeOffer(false)
-                    } label: {
-                        Text(tr("probe.offer.no")).frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(.bordered)
-                }
-            }
-            .frame(maxWidth: .infinity)
-        }
-    }
-
-    /// The reading, at DONE: typed in the cook's units, refused with the range
-    /// it should be in when no believable kitchen could have made it, and
-    /// otherwise folded into the egg with whatever else has been said.
-    @ViewBuilder
-    private var probeEntry: some View {
-        if cook.asksForProbe {
-            let given = kitchen.answers?.probe
-            VStack(spacing: 8) {
-                Text(tr("probe.now"))
-                    .font(.headline)
-                Text(tr("probe.hint"))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                HStack(spacing: 10) {
-                    TextField(tr("probe.entry"), text: $probeText)
-                        .keyboardType(.decimalPad)
-                        .textFieldStyle(.roundedBorder)
-                        .multilineTextAlignment(.trailing)
-                        .frame(maxWidth: 150)
-                        .disabled(given != nil)
-                    Text(tr(kitchen.measure(.probeTemp).unitKey))
-                        .foregroundStyle(.secondary)
-                    Button(tr("probe.save")) { saveProbe() }
-                        .buttonStyle(.bordered)
-                        .disabled(given != nil || probeText.isEmpty)
-                }
-                if !probeNote.isEmpty {
-                    Text(probeNote)
-                        .font(.caption)
-                        .foregroundStyle(given == nil ? .orange : .secondary)
-                        .multilineTextAlignment(.center)
-                }
-            }
-            .padding(.bottom, 6)
-        }
-    }
-
-    private func saveProbe() {
-        guard let ticket = cook.ticket, kitchen.answers?.probe == nil else { return }
-        // A comma is the decimal point in half the world's keyboards.
-        let typed = Double(probeText.replacingOccurrences(of: ",", with: ".")
-            .trimmingCharacters(in: .whitespaces))
-        let reading = typed.flatMap { parse(kitchen.measure(.probeTemp), $0) }
-        guard let scored = cook.eggRecord(yolk: nil).map(recordCookTimeS) else { return }
-        let range = kitchen.probeRange(egg: ticket.egg, setup: ticket.setup, cookTimeS: scored)
-        guard let reading, reading >= range.low, reading <= range.high else {
-            probeNote = tr("probe.refused", [
-                "low": .text(kitchen.show(.probeTemp, range.low)),
-                "high": .text(kitchen.show(.probeTemp, range.high)),
-            ])
-            return
-        }
-        guard let probe = cook.probeReading(centreC: reading) else { return }
-        probeNote = kitchen.show(.probeTemp, reading)
-        answer(yolk: nil, white: nil, probe: probe)
-    }
-
-    // MARK: - Learning from the egg
-
-    /// The two questions, both always on screen and neither required
-    /// (INFERENCE.md section 3). Three answers each is not a poor interface for
-    /// a rating - it is the whole measurement: ordinal feedback is worth one to
-    /// two bits per egg, and a number out of ten would collect precision that is
-    /// not there. There is no Skip button: an unanswered question is recorded as
-    /// skipped when the next cook starts.
-    private var feedback: some View {
-        VStack(spacing: 12) {
-            // After a relaunch the second question is not offered again: the
-            // surface it would be folded against is gone, and the one left
-            // unanswered stays a skip in the record.
-            if cook.feedbackGiven && kitchen.answers == nil {
-                Text(tr(kitchen.learning ? "feedback.learning" : "feedback.thanks"))
-                    .font(.subheadline)
-                Text(kitchen.learning ? " " : tunedLine)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .monospacedDigit()
-            } else {
-                probeEntry
-                Text(tr("feedback.ask"))
-                    .font(.headline)
-                HStack(spacing: 10) {
-                    yolkButton(tr("feedback.tooSoft"), .tooSoft)
-                    yolkButton(tr("feedback.justRight"), .justRight)
-                    yolkButton(tr("feedback.tooFirm"), .tooHard)
-                }
-
-                Text(tr("feedback.white.ask"))
-                    .font(.headline)
-                    .padding(.top, 4)
-                HStack(spacing: 10) {
-                    whiteButton(tr("feedback.white.runny"), .runny)
-                    whiteButton(tr("feedback.white.tender"), .tender)
-                    whiteButton(tr("feedback.white.firm"), .firm)
-                }
-
-                Text(tr("feedback.optional"))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                Text(calibrationNote)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-            }
-        }
-        .padding(.vertical, 16)
-        .padding(.horizontal, 12)
-        .frame(maxWidth: .infinity)
-        .background(.quaternary.opacity(0.25), in: RoundedRectangle(cornerRadius: 18))
-    }
-
-    /// One answer, about the yolk or the white, in whichever order they come.
-    /// The first writes the egg down, before anything is learned from it; the
-    /// second folds the same egg again from the posterior before it.
-    private func answer(yolk: Feedback?, white: WhiteReport?, probe: ProbeReading? = nil) {
-        if kitchen.answers != nil {
-            Task { await kitchen.secondAnswer(yolk: yolk, white: white, probe: probe) }
-            return
-        }
-        // The cook owns the flag and persists it, so a relaunch neither asks
-        // again nor logs the egg a second time as unanswered.
-        guard !cook.feedbackGiven,
-              let egg = cook.eggRecord(yolk: yolk, white: white, probe: probe) else { return }
-        cook.recordFeedbackGiven()
-        Task { await kitchen.record(egg) }
-    }
-
-    private func yolkButton(_ label: String, _ value: Feedback) -> some View {
-        let given = kitchen.answers?.yolk
-        return answerButton(label, chosen: given == value, answered: given != nil) {
-            answer(yolk: value, white: nil)
-        }
-    }
-
-    private func whiteButton(_ label: String, _ value: WhiteReport) -> some View {
-        let given = kitchen.answers?.white
-        return answerButton(label, chosen: given == value, answered: given != nil) {
-            answer(yolk: nil, white: value)
-        }
-    }
-
-    /// The answer given stays legible, filled; its row goes out of reach.
-    @ViewBuilder
-    private func answerButton(
-        _ label: String, chosen: Bool, answered: Bool, action: @escaping () -> Void
-    ) -> some View {
-        let text = Text(label)
-            .font(.subheadline)
-            .frame(maxWidth: .infinity)
-        if chosen {
-            Button(action: action) { text.onAccent() }
-                .buttonStyle(.borderedProminent).allowsHitTesting(false)
-        } else {
-            Button(action: action) { text }
-                .buttonStyle(.bordered).disabled(answered)
-        }
-    }
-
-    private var calibrationNote: String {
-        if kitchen.learning { return tr("feedback.learning") }
-        if kitchen.answers != nil { return tr("feedback.thanks") }
-        if kitchen.eggsLogged == 0 {
-            return tr("feedback.invite")
-        }
-        return tunedLine
-    }
-
-    private var tunedLine: String {
-        tr("learned.tuned", ["eggs": .int(kitchen.eggsLogged)])
-    }
-
-    // MARK: - The egg's two controls and its sentence
-
-    /// The doneness slider: its heading, with the peak yolk the level asks for
-    /// at its end (in sous-vide, the water's temperature - there is no peak
-    /// there); the track shaded by the odds; the five words under it; and the
-    /// texture. The doneness word is on the ticks, so it is not drawn again;
-    /// VoiceOver hears it with the temperature as the slider's value.
-    private var donenessControl: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack(alignment: .firstTextBaseline, spacing: 12) {
-                Text(tr("controls.doneness"))
-                    .foregroundStyle(.secondary)
-                Spacer(minLength: 0)
-                Text(donenessPeak)
-                    .fontWeight(.semibold)
-                    .monospacedDigit()
-                    .multilineTextAlignment(.trailing)
-                    // The slider's value says it, with the word.
-                    .accessibilityHidden(true)
-            }
-            .font(.subheadline)
-            // One track, the yolk's: the system's thumb on no track of its
-            // own, over the odds in the yolk's colour and what this pan cannot
-            // deliver (OddsTrack), inset by half a thumb so a level sits under
-            // the thumb that asks for it.
-            ZStack {
-                OddsTrack(solution: kitchen.isSousVide ? nil : kitchen.solution, profile: kitchen.oddsProfile)
-                    .frame(height: 10)
-                    .padding(.horizontal, thumbInset)
-                YolkSlider(
-                    value: $kitchen.doneness, range: Limits.doneness, step: 0.01,
-                    label: tr("controls.doneness"), valueText: donenessValue, inset: $thumbInset
-                )
-            }
-            // Where the yolk will probably land, under the track.
-            // Its room is kept while it is away, so the words under it do not
-            // move when it lands.
-            Group {
-                if let bracket = bracketForecast {
-                    YolkBracket(forecast: bracket)
-                } else {
-                    Color.clear.frame(height: 9).accessibilityHidden(true)
-                }
-            }
-            .padding(.horizontal, thumbInset)
-            .padding(.top, -4)
-            ticks
-            let note = donenessNote
-            if !note.isEmpty {
-                Text(note)
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-            }
-        }
-    }
-
-    /// The five doneness words, each under the level it names, as the web's
-    /// ticks are. The ends are held inside the track.
-    private var ticks: some View {
-        GeometryReader { geo in
-            let inset = thumbInset
-            let span = geo.size.width - 2 * inset
-            ZStack(alignment: .topLeading) {
-                ForEach(donenessAnchors.indices, id: \.self) { i in
-                    let anchor = donenessAnchors[i]
-                    if i == 0 {
-                        Text(tr(anchor.key)).frame(maxWidth: .infinity, alignment: .leading)
-                    } else if i == donenessAnchors.count - 1 {
-                        Text(tr(anchor.key)).frame(maxWidth: .infinity, alignment: .trailing)
-                    } else {
-                        Text(tr(anchor.key))
-                            .fixedSize()
-                            .position(x: inset + CGFloat(anchor.level) * span, y: 8)
-                    }
-                }
-            }
-        }
-        .frame(height: 16)
-        .font(.caption2)
-        .foregroundStyle(.secondary)
-        .accessibilityHidden(true)
-    }
-
-    /// The outcome the bracket draws: only while idle with a decision in, and
-    /// never where the white never sets, or in sous-vide, as on the web. The
-    /// control is only on screen while idle.
-    private var bracketForecast: Outcome? {
-        guard !kitchen.isSousVide, kitchen.decision != nil, kitchen.solution?.whiteSets == true else { return nil }
-        return kitchen.outcome
-    }
-
-    /// At the end of the slider's heading: the peak yolk the level asks for,
-    /// or in sous-vide the water's temperature.
-    private var donenessPeak: String {
-        if kitchen.isSousVide {
-            return tr("controls.doneness.bath", ["bath": .text(kitchen.show(.temperature, sousVideBathC))])
-        }
-        let yolk = kitchen.solution?.result.peakYolkC ?? targetPeakYolkC(kitchen.doneness)
-        return tr("controls.doneness.peak", ["yolk": .text(kitchen.show(.temperature, yolk))])
-    }
-
-    /// The slider's value to VoiceOver: the doneness word and the temperature.
-    private var donenessValue: String {
-        if kitchen.isSousVide {
-            return tr("controls.doneness.valueBath", [
-                "doneness": .text(kitchen.label), "bath": .text(kitchen.show(.temperature, sousVideBathC)),
-            ])
-        }
-        let yolk = kitchen.solution?.result.peakYolkC ?? targetPeakYolkC(kitchen.doneness)
-        return tr("controls.doneness.value", [
-            "doneness": .text(kitchen.label), "yolk": .text(kitchen.show(.temperature, yolk)),
-        ])
-    }
-
-    /// What the yolk and white will be like, or, in a bath, the bath's own
-    /// note.
-    private var donenessNote: String {
-        if kitchen.isSousVide {
-            return sousVideCopy(kitchen.sousVide, now: .now, units: kitchen.units).note
-        }
-        guard let s = kitchen.solution else { return "" }
-        return textureNote(peakYolkC: s.result.peakYolkC, peakWhiteC: s.result.peakWhiteC, whiteSets: s.whiteSets)
-    }
+    // MARK: - The setup sentence
 
     /// The setup sentence, and under it the choice of the clause that is open.
     /// A clause the sentence no longer has - sous-vide drops two - closes with
     /// it.
     private var setup: some View {
         VStack(alignment: .leading, spacing: 10) {
-            SetupSentence(kitchen: kitchen, open: $openClause)
-            if let clause = openClause, !(kitchen.isSousVide && (clause == .from || clause == .cooling)) {
-                ClausePanel(kitchen: kitchen, clause: clause) {
+            SetupSentence(planner: planner, open: $openClause)
+            if let clause = openClause, !(planner.isSousVide && (clause == .from || clause == .cooling)) {
+                ClausePanel(planner: planner, clause: clause) {
                     withAnimation(.snappy) { openClause = nil }
                 }
                 .id(clause)
                 .transition(.opacity)
             }
         }
-    }
-
-    /// The one place for a longer line (UI.md section 2). While idle: the
-    /// refusal, or the sous-vide warning, or, before anything is learned, the
-    /// first-egg welcome; and under low odds, the way to Help, which is one
-    /// short line and goes under whichever is there.
-    @ViewBuilder
-    private func slot(_ phase: Phase, at now: Date) -> some View {
-        if phase == .idle {
-            VStack(spacing: 10) {
-                if kitchen.isSousVide {
-                    Text(sousVideCopy(kitchen.sousVide, now: now, units: kitchen.units).warn)
-                        .foregroundStyle(.orange)
-                } else if !kitchen.refusal.isEmpty {
-                    Text(kitchen.refusal)
-                        .foregroundStyle(.orange)
-                } else if kitchen.eggsLogged == 0 && !kitchen.hasBoilMemory {
-                    Text(tr("idle.welcome"))
-                        .foregroundStyle(.secondary)
-                }
-                if adviceLinkShown {
-                    NavigationLink(value: Route.help(.reliable)) {
-                        HStack(spacing: 4) {
-                            Text(tr("advice.toggle"))
-                            Image(systemName: "arrow.right")
-                                .accessibilityHidden(true)
-                        }
-                    }
-                    .tint(Palette.accent)
-                }
-            }
-            .font(.footnote)
-            .multilineTextAlignment(.center)
-            .frame(maxWidth: .infinity)
-        }
-    }
-
-    /// The low-odds link (reach.ts): while idle, when the odds at the level on
-    /// screen are under 5/10, or 3/10 short of the best level's.
-    private var adviceLinkShown: Bool {
-        guard !kitchen.isSousVide, kitchen.solution?.whiteSets == true, let d = kitchen.decision else {
-            return false
-        }
-        return adviceWanted(d.oddsTenths, profile: kitchen.oddsProfile)
-    }
-
-    /// What Start is about to ask of the cook, above the button.
-    private var idleHint: String {
-        guard let solution = kitchen.solution else { return " " }
-        return keys(.idle).hint.map { tr($0, ["time": .text(clockString(solution.result.cookTimeS))]) } ?? " "
     }
 }
 

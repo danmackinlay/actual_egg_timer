@@ -191,7 +191,7 @@ The branch is taken FIRST, before anything is solved for. That ordering is the
 whole of the fix the review asked for on the web side, where the branch ran
 *after* a full hot-start solve and after the stats row had been painted, so the
 app paid for an answer it discarded and left half of it on screen. Here it means
-`Kitchen.recompute` returns without starting a task, `solution` goes nil, and the
+`Planner.recompute` returns without starting a task, `solution` goes nil, and the
 nil solution is already what disables the start button — so the dead action on
 that screen needs no second rule.
 
@@ -282,7 +282,7 @@ and reads the pending count back from `UNUserNotificationCenter` rather than
 assuming — an egg timer that claims an alarm it has not got is worse than one
 with no alarm at all.
 
-A deadline no notification holds (refused, unanswered, or not taken) is rung by `Ringer.swift` while the app is on screen — the web's beeps plus a vibration, through the silent switch, up to 40 s or until a touch — which is what "keep the app open" promises; `deadlineToRing` in `EggTimerRing` decides, under `swift test`.
+A deadline no notification holds (refused, unanswered, or not taken) is rung by `Ringer.swift` while the app is on screen — the web's beeps plus a vibration, through the silent switch, up to 40 s or until a touch — which is what "keep the app open" promises; `deadlineToRing` in EggTimerCore decides, under `swift test`.
 
 Both fire at **`.timeSensitive`** interruption level, which is what gets them
 through a Focus mode. An egg is time-sensitive in the literal sense the name was

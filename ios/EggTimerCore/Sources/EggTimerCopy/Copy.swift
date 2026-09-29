@@ -224,12 +224,6 @@ public func midSentence(_ text: String, locale: String) -> String {
     return String(first).lowercased(with: Locale(identifier: locale)) + text.dropFirst()
 }
 
-/// The language subtag, lower-cased: "en" for "en-GB-x-1750".
-public func languageOf(_ locale: String) -> String {
-    let language = locale.split(separator: "-", maxSplits: 1, omittingEmptySubsequences: false).first ?? ""
-    return String(language).lowercased()
-}
-
 // MARK: - Substitution
 
 /// An argument as text. A string as it is; a count in the locale, with its

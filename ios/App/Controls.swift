@@ -4,6 +4,13 @@ import EggTimerCore
 /// The small controls the setup sentence's panels and Settings share: a stored
 /// SI value on a stepper or in a typed field, in the cook's units.
 
+/// A number as the cook typed it, or nil if it is not one. A comma is the
+/// decimal point on half the world's keyboards, and a stray space is not a
+/// mistake worth refusing.
+func parseTyped(_ text: String) -> Double? {
+    Double(text.replacingOccurrences(of: ",", with: ".").trimmingCharacters(in: .whitespaces))
+}
+
 /// An SI binding seen through a measure: it reads the stored value as
 /// displayed, and a control's value as SI, clamped by the limit.
 func measured(_ m: Measure, _ si: Binding<Double>) -> Binding<Double> {
@@ -81,7 +88,7 @@ struct CountValue: View {
 /// time the field shows the stored value rounded to its step, so the field
 /// never fights the cursor and a rounded display is never parsed back over
 /// the stored value. A comma is the decimal point on half the world's
-/// keyboards.
+/// keyboards (`parseTyped`).
 struct MeasureField: View {
     let label: String
     let measure: Measure
@@ -101,9 +108,7 @@ struct MeasureField: View {
                     .focused($focused)
                     .onChange(of: text) {
                         guard focused else { return }
-                        let typed = Double(text.replacingOccurrences(of: ",", with: ".")
-                            .trimmingCharacters(in: .whitespaces))
-                        if let typed, let si = parse(measure, typed) { set(si) }
+                        if let typed = parseTyped(text), let si = parse(measure, typed) { set(si) }
                     }
                 Text(tr(measure.unitKey))
                     .foregroundStyle(.secondary)

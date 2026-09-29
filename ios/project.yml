@@ -58,9 +58,6 @@ targets:
         product: EggTimerCore
       - package: EggTimerCore
         product: EggTimerCopy
-      # When the app rings itself because no notification will. See Ringer.swift.
-      - package: EggTimerCore
-        product: EggTimerRing
       - target: EggTimerWidget
     # A shared scheme, so xcodebuild (and anything driving it) can find the
     # target without Xcode having opened the project first and invented one.

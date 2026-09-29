@@ -150,11 +150,11 @@ struct ThermoConformance {
 @Suite("Kinetics")
 struct KineticsConformance {
     @Test("hold time for a dose")
-    func holdTime() throws {
+    func holdTimeForDose() throws {
         for c in try Fixtures.cases("kinetics", "holdTimeForDose") {
             let dose = try Dose(zK: c.num("z_K"), trefC: c.num("tref_C"))
             try expectClose(
-                dose.holdTime(doseMinutes: c.num("doseMinutes"), heldC: c.num("held_C")),
+                dose.holdTimeForDose(doseMinutes: c.num("doseMinutes"), heldC: c.num("held_C")),
                 c.num("value"), "hold at \(c.num("held_C")) C"
             )
         }

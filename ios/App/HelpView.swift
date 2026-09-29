@@ -23,7 +23,7 @@ enum HelpSection: String, CaseIterable, Hashable, Identifiable {
 /// (i); this is everything around it. Each section is a short gist, then a
 /// smaller aside that names the method and links it.
 struct HelpView: View {
-    let kitchen: Kitchen
+    let planner: Planner
     /// Where to open: the low-odds link opens at the reliability section,
     /// whose top lists the changes that would help the setup on screen.
     var start: HelpSection?
@@ -87,10 +87,10 @@ struct HelpView: View {
             // Under low odds: the changes that would help the setup on
             // screen, from `protocolAdvice` in the core's Reach.swift - the
             // same list the web shows here.
-            if !kitchen.advice.isEmpty {
+            if !planner.advice.isEmpty {
                 VStack(alignment: .leading, spacing: 8) {
                     subhead(tr("help.reliable.forYou"))
-                    ForEach(kitchen.advice, id: \.self) { key in
+                    ForEach(planner.advice, id: \.self) { key in
                         HStack(alignment: .firstTextBaseline, spacing: 8) {
                             Text(verbatim: "•")
                             Text(tr(key)).fixedSize(horizontal: false, vertical: true)
@@ -125,7 +125,7 @@ struct HelpView: View {
             para(tr("help.unsure.counter"))
             para(tr("help.unsure.heatOff"))
             para(tr("help.unsure.white"))
-            para(tr("help.unsure.sousVide", ["floor": .text(kitchen.show(.temperature, sousVideModelFloorC))]))
+            para(tr("help.unsure.sousVide", ["floor": .text(planner.show(.temperature, sousVideModelFloorC))]))
         }
     }
 

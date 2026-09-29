@@ -31,18 +31,18 @@ enum BoilMemories {
 
 /// The inputs, remembered between launches. Nobody wants to re-enter their
 /// altitude every morning.
-enum Settings {
+enum SettingsStore {
     @MainActor
-    static func load(into kitchen: Kitchen) {
+    static func load(into planner: Planner) {
         let store = UserDefaults.standard
         // The cook's choice of units, or none. Read before the early return,
         // because it is its own key and a choice can predate the rest.
-        kitchen.restoreUnits(readChosenUnits(store.string(forKey: "unitsChosen")))
+        planner.restoreUnits(readChosenUnits(store.string(forKey: "unitsChosen")))
         // The probe thermometer (E4), the same way: its own keys, and off when
         // they are absent.
-        kitchen.restoreProbe(on: store.bool(forKey: "probe"), asked: store.bool(forKey: "probeAsked"))
+        planner.restoreProbe(on: store.bool(forKey: "probe"), asked: store.bool(forKey: "probeAsked"))
         guard store.object(forKey: "doneness") != nil else { return }
-        kitchen.doneness = clamp(store.double(forKey: "doneness"), to: Limits.doneness)
+        planner.doneness = clamp(store.double(forKey: "doneness"), to: Limits.doneness)
         // The last weighed mass, under its own key, so Weighed comes back to it
         // whatever class was chosen since; the default egg when none was kept.
         let weighedG = store.object(forKey: "weighedMassG") == nil
@@ -51,50 +51,50 @@ enum Settings {
         let index = store.object(forKey: "sizeIndex") == nil
             ? Defaults.sizeIndex
             : carrySizeIndex(clamp(store.double(forKey: "sizeIndex"), to: Limits.sizeIndex),
-                             classes: kitchen.sizeClasses)
-        kitchen.restoreSize(index: index, weighedMassG: weighedG)
-        kitchen.altitudeM = clamp(store.double(forKey: "altitudeM"), to: Limits.altitudeM)
-        kitchen.waterLitres = clamp(store.double(forKey: "waterLitres"), to: Limits.waterLitres)
-        kitchen.eggCount = Int(clamp(store.double(forKey: "eggCount"), to: Limits.eggCount).rounded())
-        kitchen.startTemp = EggFrom(rawValue: store.string(forKey: "startTemp") ?? "") ?? .fridge
+                             classes: planner.sizeClasses)
+        planner.restoreSize(index: index, weighedMassG: weighedG)
+        planner.altitudeM = clamp(store.double(forKey: "altitudeM"), to: Limits.altitudeM)
+        planner.waterLitres = clamp(store.double(forKey: "waterLitres"), to: Limits.waterLitres)
+        planner.eggCount = Int(clamp(store.double(forKey: "eggCount"), to: Limits.eggCount).rounded())
+        planner.startTemp = EggFrom(rawValue: store.string(forKey: "startTemp") ?? "") ?? .fridge
         if store.object(forKey: "customStartC") != nil {
-            kitchen.customStartC = clamp(store.double(forKey: "customStartC"), to: Limits.eggTempC)
+            planner.customStartC = clamp(store.double(forKey: "customStartC"), to: Limits.eggTempC)
         }
         // Only a pan is ever saved (see `save`), so anything else - none saved
         // yet, or a sous-vide - opens on the default.
         let start = StartChoice(rawValue: store.string(forKey: "start") ?? "") ?? .cold
-        kitchen.start = start == .sousVide ? .cold : start
-        kitchen.heatOff = store.bool(forKey: "heatOff")
-        kitchen.cooling = Cooling(rawValue: store.string(forKey: "cooling") ?? "") ?? .ice
+        planner.start = start == .sousVide ? .cold : start
+        planner.heatOff = store.bool(forKey: "heatOff")
+        planner.cooling = Cooling(rawValue: store.string(forKey: "cooling") ?? "") ?? .ice
     }
 
     @MainActor
-    static func save(_ kitchen: Kitchen) {
+    static func save(_ planner: Planner) {
         let store = UserDefaults.standard
-        store.set(kitchen.doneness, forKey: "doneness")
-        store.set(kitchen.weighedMassG, forKey: "weighedMassG")
-        store.set(Double(kitchen.sizeIndex), forKey: "sizeIndex")
-        store.set(kitchen.altitudeM, forKey: "altitudeM")
-        store.set(kitchen.waterLitres, forKey: "waterLitres")
-        store.set(Double(kitchen.eggCount), forKey: "eggCount")
-        store.set(kitchen.startTemp.rawValue, forKey: "startTemp")
-        store.set(kitchen.customStartC, forKey: "customStartC")
+        store.set(planner.doneness, forKey: "doneness")
+        store.set(planner.weighedMassG, forKey: "weighedMassG")
+        store.set(Double(planner.sizeIndex), forKey: "sizeIndex")
+        store.set(planner.altitudeM, forKey: "altitudeM")
+        store.set(planner.waterLitres, forKey: "waterLitres")
+        store.set(Double(planner.eggCount), forKey: "eggCount")
+        store.set(planner.startTemp.rawValue, forKey: "startTemp")
+        store.set(planner.customStartC, forKey: "customStartC")
         // Sous-vide is never remembered. Its answer is a start time most of a
         // day in the past, and an app that reopened on it would greet the cook
         // by telling them they are 22 hours late. So while it is chosen, the
         // pan saved before it stays saved, and a relaunch comes back to that
         // pan - or to cold, the default, if there never was one. The web app
         // does the same (`saveSettings` in src/ui/store.ts).
-        if kitchen.start != .sousVide {
-            store.set(kitchen.start.rawValue, forKey: "start")
+        if planner.start != .sousVide {
+            store.set(planner.start.rawValue, forKey: "start")
         }
-        store.set(kitchen.heatOff, forKey: "heatOff")
-        store.set(kitchen.cooling.rawValue, forKey: "cooling")
+        store.set(planner.heatOff, forKey: "heatOff")
+        store.set(planner.cooling.rawValue, forKey: "cooling")
         // The cook's choice, not the system on screen: absent until they make
         // one, so a default can still follow the phone.
-        store.set(kitchen.probe, forKey: "probe")
-        store.set(kitchen.probeAsked, forKey: "probeAsked")
-        if let chosen = kitchen.unitsChosen {
+        store.set(planner.probe, forKey: "probe")
+        store.set(planner.probeAsked, forKey: "probeAsked")
+        if let chosen = planner.unitsChosen {
             store.set(chosen.rawValue, forKey: "unitsChosen")
         } else {
             store.removeObject(forKey: "unitsChosen")

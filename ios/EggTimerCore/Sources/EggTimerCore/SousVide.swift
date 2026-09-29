@@ -65,9 +65,9 @@ public func sousVideEstimate(
 ) -> SousVideEstimate {
     let equilibrateS = equilibrationTime(radiusM: radiusM, alphaM2s: alphaM2s)
     let yolkHoldS = Dose(zK: Constants.zYolk, trefC: Constants.tRefYolkC)
-        .holdTime(doseMinutes: yolkDoseMin, heldC: bathC) * 60.0
+        .holdTimeForDose(doseMinutes: yolkDoseMin, heldC: bathC) * 60.0
     let whiteHoldS = Dose(zK: Constants.zWhite, trefC: Constants.tRefWhiteC)
-        .holdTime(doseMinutes: whiteDoseMin, heldC: bathC) * 60.0
+        .holdTimeForDose(doseMinutes: whiteDoseMin, heldC: bathC) * 60.0
     let boundS = yolkHoldS > whiteHoldS ? yolkHoldS : whiteHoldS
     return SousVideEstimate(
         bathC: bathC,

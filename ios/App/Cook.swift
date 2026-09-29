@@ -1,7 +1,6 @@
 import Foundation
 import Observation
 import EggTimerCore
-import EggTimerRing
 
 /// A cook in progress.
 ///
@@ -42,7 +41,7 @@ final class Cook {
         var level: Double
         /// The egg and the pan this cook was run with.
         ///
-        /// These used to be read off the kitchen at the moment the user
+        /// These used to be read off the planner at the moment the user
         /// answered how the egg was - so the time to boil came from the blended
         /// memory rather than from THIS cook's measured ramp, and the dose grid
         /// the posterior was updated against described a pan that had never
@@ -563,7 +562,7 @@ final class Cook {
         guard let pullAt else { return }
         Alarm.shared.schedule(
             pullAt: pullAt, coolDoneAt: coolDoneAt, probe: asksForProbe,
-            cooling: ticket?.cooling.rawValue
+            cooling: ticket?.cooling ?? .ice
         )
     }
 
@@ -688,5 +687,35 @@ final class Cook {
         guard force || state.stage != pushedStage else { return }
         pushedStage = state.stage
         activity { await LiveActivity.update(state) }
+    }
+}
+
+extension Cook.Ticket {
+    /// Everything the cook is, frozen at "Eggs in", off the planner as it
+    /// stands and the solution being started. The calibration learns from this
+    /// and from nothing else, so a slider left somewhere different afterwards
+    /// cannot rewrite what was cooked.
+    @MainActor
+    init(planner: Planner, solution: Solution) {
+        self.init(
+            doneness: planner.label,
+            peakYolkC: solution.result.peakYolkC,
+            level: planner.doneness,
+            egg: planner.egg,
+            setup: planner.setup,
+            massFrom: planner.massFrom,
+            sizeTable: planner.sizeTable,
+            startTemp: planner.startTemp,
+            boilRemembered: planner.hasBoilMemory,
+            units: planner.units,
+            lang: Copy.activeLocale,
+            // The choice on screen, if it has been made: the time started IS
+            // the chosen one, and a mid-cook re-solve carries its lean.
+            leanS: planner.decision?.leanS ?? 0,
+            forecast: planner.shownForecast,
+            // The cooling counts to the yolk's peak for this cook (E4).
+            coolS: coolingSecondsFor(solution.result),
+            probeMoment: probeMomentFor(solution.result, cooling: planner.cooling)
+        )
     }
 }
