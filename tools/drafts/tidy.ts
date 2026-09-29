@@ -354,7 +354,7 @@ const TIDY_DRAFT: Drafted[] = [
   {
     key: "outcome.unsure", row: "shorter line",
     before: { text: "Could come out softer or firmer than you like — I can't call it yet." },
-    after: { text: "Could come out too soft or too firm; I can't tell yet." },
+    after: { text: "Could come out too soft or too firm; I can't tell yet." },
     appsBefore: ["web","ios"], appsAfter: ["web","ios"],
   },
   {
