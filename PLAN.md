@@ -10,9 +10,9 @@ same model, refusals, particle filter and choice of time (Phase E up to E5),
 the same catalogue of words in two Englishes (Phase F but for Czech), and the
 same layout (`UI.md`). `npm test` runs 255 tests, all passing (5b pins E3's
 known limit). `npm run validate` passes 28/28, and `swift test` passes 119
-tests in 31 suites. **Nothing since 19 September is pushed**: `origin/main`
-is `2f341b4`, so the live site is the app from before E1, and everything else
-here is on local `main` only. The iOS app runs from Xcode on the owner's
+tests in 31 suites. **Pushed on 29 September** at `5ff6940`, the owner's
+call: Netlify serves it at actualeggtimer.netlify.app, and the first run of
+`.github/workflows/verify.yml` passed. The iOS app runs from Xcode on the owner's
 phone and has cooked real eggs; no TestFlight build is recorded
 (`ios/RELEASING.md`). The owner is reviewing the `tidy` copy draft on a
 phone.
@@ -42,10 +42,8 @@ The one queue. Nothing else in the documents waits on the owner.
    unless the owner objects; `INFERENCE.md` §5).
 2. **The English of 1750, in both apps** (`DECISIONS.md` 17). `LANGUAGE.md`
    §6 lists the names to strike and where it departs from the guide.
-3. **The push of `main`** (`DECISIONS.md` 24): after previewing the web app,
-   and a deploy preview needs a pushed branch. Both are the owner's call; do
-   not push on their behalf. The first push is also the first run of
-   `.github/workflows/verify.yml`.
+3. **The push of `main`**: done 29 September (`5ff6940`); CI passed. Each
+   later push is still the owner's call.
 4. **On a phone:** whether the iOS in-app ring (`Ringer.swift`, `.playback`)
    gets through the silent switch as intended, and whether the slider's
    haptic tick at each doneness word is wanted.
