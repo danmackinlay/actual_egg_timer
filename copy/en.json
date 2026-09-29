@@ -75,7 +75,7 @@
     "readout.stat.waterBoilsAt": { "surface": "label", "apps": ["web", "ios"], "text": "water boils at" },
     "readout.mute.on": { "surface": "button", "apps": ["web"], "text": "Sound on" },
     "readout.mute.off": { "surface": "button", "apps": ["web"], "text": "Sound off" },
-    "readout.restored": { "surface": "body", "apps": ["web"], "text": "I picked this cook back up after a reload. The times are right, but I can't ring for it: watch the clock." },
+    "readout.restored": { "surface": "body", "apps": ["web"], "text": "I picked this one back up after a reload. The times are right, but I can't ring for it: watch the clock." },
 
     "texture.note": { "surface": "body", "apps": ["web", "ios"], "text": "{white}, {yolk}", "example": { "white": "white set", "yolk": "yolk jammy" } },
     "texture.white.justSet": { "surface": "fragment", "apps": ["web", "ios"], "text": "white just set" },

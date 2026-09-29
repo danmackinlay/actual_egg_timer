@@ -67,7 +67,7 @@
     "readout.stat.waterBoilsAt": { "text": "water here boils at" },
     "readout.mute.on": { "text": "Bell on" },
     "readout.mute.off": { "text": "Bell off" },
-    "readout.restored": { "text": "I have taken up this cook again after the page was reloaded. The times are true, but I cannot ring for it: watch the clock." },
+    "readout.restored": { "text": "I have taken up this one again after the page was reloaded. The times are true, but I cannot ring for it: watch the clock." },
 
     "texture.note": { "text": "{white}, {yolk}" },
     "texture.white.justSet": { "text": "white newly set" },

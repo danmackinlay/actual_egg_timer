@@ -48,7 +48,7 @@ const TIDY_DRAFT: Drafted[] = [
   {
     key: "readout.restored", row: "9.1 factual",
     before: { text: "Picked this cook back up after a reload. The deadlines are right, but the alarm went with the old page — keep this tab open, or Cancel and start again." },
-    after: { text: "I picked this cook back up after a reload. The times are right, but I can't ring for it: watch the clock." },
+    after: { text: "I picked this one back up after a reload. The times are right, but I can't ring for it: watch the clock." },
     appsBefore: ["web"], appsAfter: ["web"],
   },
   {
