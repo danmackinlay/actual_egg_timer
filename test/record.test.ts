@@ -36,6 +36,7 @@ import {
 import {
   Machine, advance, beginCooling, restoreMachine, startHot, PULL_GRACE_SECONDS,
 } from '../src/ui/machine.js';
+import { appSetup } from '../tools/common.js';
 
 // --------------------------------------------------------------------------
 // shared
@@ -56,19 +57,12 @@ const COARSE = (alphaCentre: number, cookTime_s: number): GridSpec => ({
   ...calibrationGrid(alphaCentre, cookTime_s), alphaCount: 7, timeCount: 9,
 });
 
-function setupOf(over: Partial<CookSetup> = {}): CookSetup {
-  return {
-    startMode: 'hot', eggStart_C: 4, ambient_C: 20, boiling_C: 100, timeToBoil_s: 480,
-    cooling: 'ice', afterBoil: 'hold', waterLitres: 2, eggCount: 2, ...over,
-  };
-}
-
 /** A realistic record: the time is what the solver says for this egg. */
-function recordAt(
+function solvedRecord(
   level: number, yolk: EggRecord['yolk'], mass_g = 62, over: Partial<CookSetup> = {},
 ): EggRecord {
   const egg = eggFromMass(mass_g / 1000);
-  const setup = setupOf(over);
+  const setup = appSetup(over);
   const t = solveCookTime(egg, setup, DEFAULT_PARAMS, donenessFromSlider(level)).result.cookTime_s;
   return {
     v: 1, uid: null, day: '2026-09-26', app: 'web', appVersion: APP_VERSION, prior: PRIOR_ID,
@@ -110,12 +104,12 @@ function assertIdentical(a: Calibration, b: Calibration, label: string): void {
 // --------------------------------------------------------------------------
 
 test('1a. a record from an older app version of the same schema is accepted', () => {
-  const r = { ...recordAt(0.4, 0), appVersion: '0.0.1', app: 'ios' };
+  const r = { ...solvedRecord(0.4, 0), appVersion: '0.0.1', app: 'ios' };
   assert.notEqual(parseRecord(r), null);
 });
 
 test('1b. unknown fields are ignored and dropped; absent nullable fields read as null', () => {
-  const r = recordAt(0.4, 0) as unknown as Record<string, unknown>;
+  const r = solvedRecord(0.4, 0) as unknown as Record<string, unknown>;
   const raw: Record<string, unknown> = { ...r, futureField: 1 };
   delete raw['yolk'];
   delete raw['uid'];
@@ -128,7 +122,7 @@ test('1b. unknown fields are ignored and dropped; absent nullable fields read as
 });
 
 test('1c. the white\'s three answers load, a skip loads, and nothing else does', () => {
-  const base = recordAt(0.3, null);
+  const base = solvedRecord(0.3, null);
   for (const white of ['runny', 'tender', 'firm']) {
     assert.equal(parseRecord({ ...base, white: white })?.white, white, white);
   }
@@ -138,7 +132,7 @@ test('1c. the white\'s three answers load, a skip loads, and nothing else does',
 });
 
 test('1d. one bad record refuses the whole log', () => {
-  const good = recordAt(0.4, 0);
+  const good = solvedRecord(0.4, 0);
   assert.equal(parseLog([good, good])?.length, 2);
   assert.equal(parseLog([good, { ...good, level: 2 }]), null);
   assert.equal(parseLog({ 0: good }), null);
@@ -154,7 +148,7 @@ test('1e. the web app version is the package version', () => {
 // --------------------------------------------------------------------------
 
 test('2a. a replay is the egg-by-egg fold, and leaves its start alone', () => {
-  const log = [recordAt(0.3, -1), recordAt(0.5, 1, 70), recordAt(0.45, 0, 55), recordAt(0.25, null, 64)];
+  const log = [solvedRecord(0.3, -1), solvedRecord(0.5, 1, 70), solvedRecord(0.45, 0, 55), solvedRecord(0.25, null, 64)];
   log[0].white = 'runny';
   log[3].white = 'tender';
   const start = freshCalibration(64, 7);
@@ -168,8 +162,8 @@ test('2a. a replay is the egg-by-egg fold, and leaves its start alone', () => {
 });
 
 test('2b. an unanswered egg folds nothing and builds no surface', () => {
-  const answered = [recordAt(0.3, -1), recordAt(0.5, 1, 70)];
-  const withSkip = [answered[0], recordAt(0.4, null, 58), answered[1]];
+  const answered = [solvedRecord(0.3, -1), solvedRecord(0.5, 1, 70)];
+  const withSkip = [answered[0], solvedRecord(0.4, null, 58), answered[1]];
   const start = freshCalibration(64, 7);
   assertIdentical(replay(start, withSkip, COARSE), replay(start, answered, COARSE), 'skip');
 });
@@ -178,7 +172,7 @@ test('2c. the first egg is scored on a surface centred on the literature values'
   // Not on the prior's mean, which is close to them but not them: the app solves
   // with DEFAULT_PARAMS until an egg has taught it anything, and the first
   // surface has always been built around what it solved with.
-  const r = recordAt(0.4, 0);
+  const r = solvedRecord(0.4, 0);
   const q = gridRequestFor(freshCalibration(64, 7), r, calibrationGrid);
   assert.equal(q.spec.alphaMin, DEFAULT_PARAMS.alpha_m2s * 0.55);
   assert.equal(q.tauAirScale, DEFAULT_PARAMS.tauAirScale);
@@ -187,7 +181,7 @@ test('2c. the first egg is scored on a surface centred on the literature values'
 test('2d. an egg is scored at the pull when the cook said when, and at the schedule when not', () => {
   // E2's other model change (INFERENCE.md section 4). A measured pull is the
   // cook's tap; an assumed one is the scheduled time standing in for it.
-  const measured = { ...recordAt(0.35, -1), pulled_s: 0, pulledBy: 'cook' as const };
+  const measured = { ...solvedRecord(0.35, -1), pulled_s: 0, pulledBy: 'cook' as const };
   measured.pulled_s = measured.recommended_s + 25;
   const assumed = { ...measured, pulledBy: 'timeout' as const, pulled_s: measured.recommended_s };
   assert.equal(recordCookTime_s(measured), measured.recommended_s + 25);
@@ -215,7 +209,7 @@ test('2d. an egg is scored at the pull when the cook said when, and at the sched
 // --------------------------------------------------------------------------
 
 test('3a. loading: rebuild, rebase, and refuse a damaged log', () => {
-  const r = recordAt(0.4, 0);
+  const r = solvedRecord(0.4, 0);
 
   assert.equal(decodeKept(null).path, 'fresh');
   assert.equal(decodeKept('{not json').path, 'fresh');
@@ -273,7 +267,7 @@ test('3b. eggs answered in either order with a reload between: bit-identical to 
   const levels = [0.22, 0.3, 0.5, 0.55];
   for (let i = 0; i < answers.length; i++) {
     const a = answers[i];
-    const r = recordAt(levels[i], a.first.yolk ?? null, 60 + 3 * i);
+    const r = solvedRecord(levels[i], a.first.yolk ?? null, 60 + 3 * i);
     r.white = a.first.white ?? null;
     const index = logEgg(r);
     await learn(index);
@@ -305,7 +299,7 @@ test('3b. eggs answered in either order with a reload between: bit-identical to 
 test('3c. forget everything clears the log, the base and the posterior', () => {
   storage.set('aet.calibration.v3', '{"v":3}');
   loadCalibration();
-  logEgg(recordAt(0.4, null));
+  logEgg(solvedRecord(0.4, null));
   const fresh = clearCalibration();
   assert.equal(storage.size, 0);
   assert.equal(keptState().log.length, 0);
@@ -319,7 +313,7 @@ test('3c. forget everything clears the log, the base and the posterior', () => {
 
 const T0 = 1_750_000_000_000;
 const COOKED: Cooked = {
-  egg: eggFromMass(0.062), massFrom: 'scale', sizeTable: null, setup: setupOf(), eggFrom: 'fridge',
+  egg: eggFromMass(0.062), massFrom: 'scale', sizeTable: null, setup: appSetup(), eggFrom: 'fridge',
   boilRemembered: false, units: 'metric', lang: 'en',
 };
 
@@ -367,7 +361,7 @@ test('4b3. the time to boil says whether this cook measured it', () => {
   const m = beginCooling(pulled(startHot(T0, 400, 'ice', 0.4)), T0 + 402_000);
   assert.equal(eggRecordFor(COOKED, m, 0).setup.timeToBoilFrom, 'default');
   assert.equal(eggRecordFor({ ...COOKED, boilRemembered: true }, m, 0).setup.timeToBoilFrom, 'remembered');
-  const cold = { ...COOKED, setup: setupOf({ startMode: 'cold', timeToBoil_s: 431.5 }) };
+  const cold = { ...COOKED, setup: appSetup({ startMode: 'cold', timeToBoil_s: 431.5 }) };
   const r = eggRecordFor(cold, m, 0);
   assert.equal(r.setup.timeToBoilFrom, 'measured');
   assert.equal(r.setup.timeToBoil_s, 431.5);

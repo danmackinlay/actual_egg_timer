@@ -18,48 +18,25 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { decide, decisionGridRequest, decisionInputs, oddsInTenths } from '../src/core/decide.js';
+import { decide, oddsInTenths } from '../src/core/decide.js';
 import { DoseGrid } from '../src/core/doseGrid.js';
 import { createPrior } from '../src/core/infer.js';
-import { ALPHA_DEFAULT, ALPHA_REL_SD } from '../src/core/constants.js';
 import { eggFromMass } from '../src/core/geometry.js';
 import { CookSetup } from '../src/core/protocol.js';
-import { Solution, donenessFromSlider, solveCookTime } from '../src/core/solve.js';
+import { Solution, solveCookTime } from '../src/core/solve.js';
 import { CALIBRATION_SEED, anchorNear, snapUp, verdictFor } from '../src/core/policy.js';
-import {
-  Calibration, buildRequestedGrid, calibrationDoneness, calibrationParams,
-} from '../src/core/record.js';
+import { Calibration, calibrationDoneness, calibrationParams } from '../src/core/record.js';
 import {
   ADVICE_BELOW_TENTHS, AdviceFacts, OddsProfile, REACH_ODDS, adviceWanted, oddsAtLevel, oddsNear,
   oddsProfile, pricedChanges, protocolAdvice, shadingOf, unpricedAdvice, verdictWithOdds,
 } from '../src/core/reach.js';
+import { appSetup, gridFor, knowing, logTarget } from '../tools/common.js';
 
 const EGG = eggFromMass(0.068);
 
-function setupOf(over: Partial<CookSetup> = {}): CookSetup {
-  return {
-    startMode: 'hot', eggStart_C: 4, ambient_C: 20, boiling_C: 100, timeToBoil_s: 480,
-    cooling: 'ice', afterBoil: 'hold', waterLitres: 2, eggCount: 2, ...over,
-  };
-}
-
-const SETUP = setupOf();
-const COUNTER = setupOf({ cooling: 'counter' });
+const SETUP = appSetup();
+const COUNTER = appSetup({ cooling: 'counter' });
 const PARTICLES = 400;
-
-function logTarget(level: number): number {
-  return Math.log10(donenessFromSlider(level).yolkDose_min);
-}
-
-/** The production surface's extent at a third of its cost, as
- *  test/decide.test.ts has it. */
-function gridFor(c: Calibration, setup: CookSetup): DoseGrid {
-  const q = decisionGridRequest(decisionInputs(c, EGG, setup));
-  const count = Math.ceil((q.spec.timeMax_s - q.spec.timeMin_s) / 20) + 1;
-  return buildRequestedGrid({
-    ...q, spec: { ...q.spec, alphaCount: 9, timeMax_s: q.spec.timeMin_s + 20 * (count - 1), timeCount: count },
-  });
-}
 
 /** What the app does at a level, verdict and snap and all, with the profile's
  *  range or without it. */
@@ -78,29 +55,13 @@ function appAt(c: Calibration, grid: DoseGrid, setup: CookSetup, level: number, 
   return { verdict: v, level: at, decision: decide(c, grid, sol, logTarget(at)) };
 }
 
-/** A posterior that knows its cook: the time-scale to 2%, the taste and the
- *  white to a twentieth of a decade. With a white that needs `white` decades
- *  more than the literature's, the soft end is white-bound and its odds fall. */
-function knowing(white: number, eggsLogged = 4): Calibration {
-  const post = createPrior(PARTICLES, CALIBRATION_SEED);
-  for (let i = 0; i < post.particles.length; i++) {
-    const p = post.particles[i];
-    const z = Math.log(p.alpha_m2s / ALPHA_DEFAULT) / ALPHA_REL_SD;
-    post.particles[i] = {
-      ...p,
-      alpha_m2s: ALPHA_DEFAULT * Math.exp(0.02 * z),
-      logDoseOffset: 0.05 * p.logDoseOffset / 0.22,
-      whiteOffset: white + 0.05 * p.whiteOffset / 0.5,
-    };
-  }
-  return { posterior: post, eggsLogged: eggsLogged };
-}
-
 const FRESH: Calibration = { posterior: createPrior(PARTICLES, CALIBRATION_SEED), eggsLogged: 0 };
-const WHITE_BOUND = knowing(0.4);
+/** A cook whose white needs 0.4 decades more than the literature's: the soft
+ *  end is white-bound and its odds fall. */
+const WHITE_BOUND = knowing({ particles: PARTICLES, eggsLogged: 4, white: 0.4 });
 
 test('1. a profile point is the odds the app shows at that level', () => {
-  const grid = gridFor(WHITE_BOUND, SETUP);
+  const grid = gridFor(WHITE_BOUND, EGG, SETUP);
   const p = oddsProfile(WHITE_BOUND, EGG, SETUP, grid);
   assert.ok(p.points.length >= 21, `${p.points.length} points`);
   for (let i = 1; i < p.points.length; i++) assert.ok(p.points[i].level > p.points[i - 1].level);
@@ -113,7 +74,7 @@ test('1. a profile point is the odds the app shows at that level', () => {
 
 test('2. a fresh install is refused nothing the pan can deliver, at any level', () => {
   for (const setup of [SETUP, COUNTER]) {
-    const grid = gridFor(FRESH, setup);
+    const grid = gridFor(FRESH, EGG, setup);
     const p = oddsProfile(FRESH, EGG, setup, grid);
     assert.equal(p.softest, null);
     assert.equal(p.hardest, null);
@@ -130,7 +91,7 @@ test('2. a fresh install is refused nothing the pan can deliver, at any level', 
 });
 
 test('3. after eggs, the ends are the softest and firmest levels at 3/10 or better, on the slider\'s grid', () => {
-  const grid = gridFor(WHITE_BOUND, SETUP);
+  const grid = gridFor(WHITE_BOUND, EGG, SETUP);
   const p = oddsProfile(WHITE_BOUND, EGG, SETUP, grid);
   assert.ok(p.softest !== null && p.hardest !== null);
   const softest = p.softest as number;
@@ -160,7 +121,7 @@ test('3. after eggs, the ends are the softest and firmest levels at 3/10 or bett
 test('4. when no level reaches 3/10, the physical limits stand', () => {
   // The prior's spread, after an egg that taught nothing that narrowed it.
   const unsure: Calibration = { posterior: createPrior(PARTICLES, CALIBRATION_SEED), eggsLogged: 1 };
-  const grid = gridFor(unsure, SETUP);
+  const grid = gridFor(unsure, EGG, SETUP);
   const p = oddsProfile(unsure, EGG, SETUP, grid);
   assert.ok(p.best < REACH_ODDS, `best ${p.best}`);
   assert.equal(p.softest, null);
@@ -172,8 +133,8 @@ test('4. when no level reaches 3/10, the physical limits stand', () => {
 });
 
 test('5. a counter rest asked for soft: refused for the physical reason, and landed at 3/10 or better', () => {
-  const c = knowing(0.1);
-  const grid = gridFor(c, COUNTER);
+  const c = knowing({ particles: PARTICLES, eggsLogged: 4, white: 0.1 });
+  const grid = gridFor(c, EGG, COUNTER);
   const p = oddsProfile(c, EGG, COUNTER, grid);
   assert.ok(p.softest !== null);
   const a = appAt(c, grid, COUNTER, 0.22, p);
@@ -260,20 +221,20 @@ test('8. advice: when it is offered, and what it says for which setup', () => {
   // What the model cannot price: the inputs it takes as exact.
   assert.deepEqual(unpricedAdvice(SETUP, facts(false, false)), []);
   assert.deepEqual(unpricedAdvice(SETUP, facts(true, false)), ['advice.weigh']);
-  assert.deepEqual(unpricedAdvice(setupOf({ eggStart_C: 20 }), facts(true, true)), ['advice.fridge', 'advice.weigh']);
-  assert.deepEqual(unpricedAdvice(setupOf({ eggStart_C: 20 }), facts(false, false)), [], 'a temperature the cook typed is known');
-  assert.deepEqual(unpricedAdvice(setupOf({ eggStart_C: 5 }), facts(false, true)), [], 'a degree over the fridge is the fridge');
+  assert.deepEqual(unpricedAdvice(appSetup({ eggStart_C: 20 }), facts(true, true)), ['advice.fridge', 'advice.weigh']);
+  assert.deepEqual(unpricedAdvice(appSetup({ eggStart_C: 20 }), facts(false, false)), [], 'a temperature the cook typed is known');
+  assert.deepEqual(unpricedAdvice(appSetup({ eggStart_C: 5 }), facts(false, true)), [], 'a degree over the fridge is the fridge');
 
   // What it can: the counter to ice, and more water with the heat off; never the tap.
   assert.deepEqual(pricedChanges(SETUP), []);
-  assert.deepEqual(pricedChanges(setupOf({ cooling: 'tap' })), []);
+  assert.deepEqual(pricedChanges(appSetup({ cooling: 'tap' })), []);
   assert.deepEqual(pricedChanges(COUNTER).map((c) => [c.key, c.setup.cooling]), [['advice.ice', 'ice']]);
   assert.deepEqual(
-    pricedChanges(setupOf({ afterBoil: 'off', waterLitres: 2 })).map((c) => [c.key, c.setup.waterLitres]),
+    pricedChanges(appSetup({ afterBoil: 'off', waterLitres: 2 })).map((c) => [c.key, c.setup.waterLitres]),
     [['advice.moreWater', 4]],
   );
-  assert.deepEqual(pricedChanges(setupOf({ afterBoil: 'off', waterLitres: 8 }))[0].setup.waterLitres, 12);
-  assert.deepEqual(pricedChanges(setupOf({ afterBoil: 'off', waterLitres: 12 })), [], 'no more water to add');
+  assert.deepEqual(pricedChanges(appSetup({ afterBoil: 'off', waterLitres: 8 }))[0].setup.waterLitres, 12);
+  assert.deepEqual(pricedChanges(appSetup({ afterBoil: 'off', waterLitres: 12 })), [], 'no more water to add');
 
   // Kept only where the change's own profile raises this level's odds.
   const ice: OddsProfile = {
@@ -290,10 +251,10 @@ test('8. advice: when it is offered, and what it says for which setup', () => {
 });
 
 test('9. on the model, ice helps a counter rest where the carryover binds, and not at hard', () => {
-  const c = knowing(0.1);
-  const counter = oddsProfile(c, EGG, COUNTER, gridFor(c, COUNTER));
+  const c = knowing({ particles: PARTICLES, eggsLogged: 4, white: 0.1 });
+  const counter = oddsProfile(c, EGG, COUNTER, gridFor(c, EGG, COUNTER));
   const change = pricedChanges(COUNTER)[0];
-  const ice = oddsProfile(c, EGG, change.setup, gridFor(c, change.setup));
+  const ice = oddsProfile(c, EGG, change.setup, gridFor(c, EGG, change.setup));
   const at = (level: number): string[] => protocolAdvice(
     COUNTER, { eggFromClass: false, startAssumed: false }, level, oddsNear(counter, level),
     [{ key: change.key, profile: ice }],

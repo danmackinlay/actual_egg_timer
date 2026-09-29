@@ -26,15 +26,12 @@ import {
 import { LEAN_RATIO, Outcome, leanOf, predictOutcome } from '../src/core/outcome.js';
 import { ALPHA_DEFAULT } from '../src/core/constants.js';
 import { eggFromMass } from '../src/core/geometry.js';
-import { CookSetup } from '../src/core/protocol.js';
 import { donenessFromSlider, sliderFromYolkDose } from '../src/core/solve.js';
 import { Calibration, calibrationDoneness, calibrationParams } from '../src/core/record.js';
+import { appSetup, draw, rng } from '../tools/common.js';
 
 const EGG = eggFromMass(0.068);
-const SETUP: CookSetup = {
-  startMode: 'hot', eggStart_C: 4, ambient_C: 20, boiling_C: 100, timeToBoil_s: 480,
-  cooling: 'ice', afterBoil: 'hold', waterLitres: 2, eggCount: 2,
-};
+const SETUP = appSetup();
 const GRID = buildDoseGrid(EGG, SETUP, 1, ALPHA_DEFAULT * 0.55, ALPHA_DEFAULT * 1.8, 17, 200, 900, 71);
 const JAMMY = Math.log10(donenessFromSlider(0.41).yolkDose_min);
 
@@ -122,25 +119,6 @@ test('the lean: three misses in five one way, and nothing on the line', () => {
 });
 
 /* ------------------------------------------------------ simulated cooks */
-
-function rng(seed: number): () => number {
-  let s = seed | 0 || 1;
-  return () => {
-    s ^= s << 13; s |= 0;
-    s ^= s >>> 17;
-    s ^= s << 5; s |= 0;
-    return ((s >>> 0) % 16777216) / 16777216;
-  };
-}
-
-function draw(probs: number[], u: number): number {
-  let acc = 0;
-  for (let k = 0; k < probs.length; k++) {
-    acc += probs[k];
-    if (u < acc) return k;
-  }
-  return probs.length - 1;
-}
 
 function normal(random: () => number): number {
   return Math.sqrt(-2 * Math.log(Math.max(random(), 1e-12))) * Math.cos(2 * Math.PI * random());

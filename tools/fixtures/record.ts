@@ -13,7 +13,8 @@ import {
 import { simulate, solveCookTime, donenessFromSlider, DEFAULT_PARAMS } from '../../src/core/solve.js';
 import { COOLING_SECONDS, GridSpec, coolingSecondsFor, calibrationGrid } from '../../src/core/policy.js';
 
-import { particleRows, setupOf } from './shared.js';
+import { particleRows } from './shared.js';
+import { referenceSetup } from '../common.js';
 
 /* The record (INFERENCE.md section 4) and the replay built on it.
  *
@@ -63,7 +64,7 @@ interface EggSpec {
  * and pan at the literature values, so the surfaces sit where real ones would. */
 function recordOf(e: EggSpec): EggRecord {
   const egg = eggFromMass(e.mass_g / 1000);
-  const setup = setupOf(e.over);
+  const setup = referenceSetup(e.over);
   const solved = solveCookTime(egg, setup, DEFAULT_PARAMS, donenessFromSlider(e.level)).result;
   const recommended = solved.cookTime_s;
   const probe = e.probeOff_C === undefined ? null : {

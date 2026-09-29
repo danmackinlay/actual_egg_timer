@@ -13,8 +13,9 @@ import {
 } from '../../src/core/reach.js';
 import { Solution } from '../../src/core/solve.js';
 
-import { setupOf } from './shared.js';
+
 import { DECIDE_EGG, DECIDE_SETUP, coarseDecisionGrid, decidePosteriors } from './decide.js';
+import { referenceSetup } from '../common.js';
 
 /* The odds at every level, the range they allow, the verdict with that range,
  * the shading and the advice (src/core/reach.ts). A profile is a solve and a
@@ -26,7 +27,7 @@ import { DECIDE_EGG, DECIDE_SETUP, coarseDecisionGrid, decidePosteriors } from '
 const REACH_CASES: { posterior: string; setup: CookSetup }[] = [
   { posterior: 'prior', setup: DECIDE_SETUP },
   { posterior: 'learned', setup: DECIDE_SETUP },
-  { posterior: 'learned', setup: setupOf({ timeToBoil_s: 480, eggCount: 2, cooling: 'counter' }) },
+  { posterior: 'learned', setup: referenceSetup({ timeToBoil_s: 480, eggCount: 2, cooling: 'counter' }) },
 ];
 
 /* The answer at a level (`answerAt`): the solve, the verdict, and the retry
@@ -100,10 +101,10 @@ for (const s of REACH_VERDICT_SOLUTIONS) {
 const ADVICE_SETUPS: { setup: CookSetup; eggFromClass: boolean; startAssumed: boolean }[] = [
   { setup: DECIDE_SETUP, eggFromClass: false, startAssumed: false },
   { setup: DECIDE_SETUP, eggFromClass: true, startAssumed: false },
-  { setup: setupOf({ eggStart_C: 20, cooling: 'counter', afterBoil: 'off', waterLitres: 3 }), eggFromClass: true, startAssumed: true },
-  { setup: setupOf({ eggStart_C: 20, cooling: 'tap' }), eggFromClass: false, startAssumed: false },
-  { setup: setupOf({ eggStart_C: 5, afterBoil: 'off', waterLitres: 8 }), eggFromClass: false, startAssumed: true },
-  { setup: setupOf({ afterBoil: 'off', waterLitres: 12 }), eggFromClass: false, startAssumed: true },
+  { setup: referenceSetup({ eggStart_C: 20, cooling: 'counter', afterBoil: 'off', waterLitres: 3 }), eggFromClass: true, startAssumed: true },
+  { setup: referenceSetup({ eggStart_C: 20, cooling: 'tap' }), eggFromClass: false, startAssumed: false },
+  { setup: referenceSetup({ eggStart_C: 5, afterBoil: 'off', waterLitres: 8 }), eggFromClass: false, startAssumed: true },
+  { setup: referenceSetup({ afterBoil: 'off', waterLitres: 12 }), eggFromClass: false, startAssumed: true },
 ];
 const ADVICE_PROFILE: OddsProfile = {
   points: [{ level: 0, odds: 0.5 }, { level: 0.5, odds: 0.7 }, { level: 1, odds: 0.3 }],

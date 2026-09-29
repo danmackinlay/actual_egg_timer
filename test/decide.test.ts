@@ -23,18 +23,16 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
-  DECISION_WINDOW_S, Decision, LEAN_COST_PER_S, RUNNY_WHITE_LOSS,
-  carriedSolution, chooseCookTime, decide, decidedSolution, decisionApplies, decisionGridRequest,
-  decisionGridSpec, decisionInputs, expectedLoss, hitOdds,
+  DECISION_WINDOW_S, Decision, LEAN_COST_PER_S, RUNNY_WHITE_LOSS, carriedSolution, chooseCookTime, decide,
+  decidedSolution, decisionApplies, decisionGridSpec, decisionInputs, expectedLoss, hitOdds,
 } from '../src/core/decide.js';
 import { DoseGrid } from '../src/core/doseGrid.js';
 import {
-  CookTimePrediction, Feedback, Posterior, UNRELATED, WhiteReport, createPrior, predictCookTime,
-  whiteAnswerProbabilities, whiteProbit, yolkAnswerProbabilities, yolkProbit,
+  CookTimePrediction, Feedback, Posterior, UNRELATED, predictCookTime, whiteAnswerProbabilities, whiteProbit,
+  yolkAnswerProbabilities, yolkProbit,
 } from '../src/core/infer.js';
-import { ALPHA_DEFAULT, ALPHA_REL_SD } from '../src/core/constants.js';
+import { ALPHA_DEFAULT } from '../src/core/constants.js';
 import { eggFromMass } from '../src/core/geometry.js';
-import { CookSetup } from '../src/core/protocol.js';
 import {
   DEFAULT_PARAMS, Solution, donenessFromSlider, solveCookTime,
 } from '../src/core/solve.js';
@@ -42,9 +40,10 @@ import {
   CALIBRATION_SEED, GridSpec, PARTICLE_COUNT, calibrationGrid, verdictFor,
 } from '../src/core/policy.js';
 import {
-  Calibration, EggRecord, PRIOR_ID, buildRequestedGrid, calibrationDoneness, calibrationParams,
-  copyCalibration, foldRecord, freshCalibration, gridRequestFor, replay,
+  Calibration, EggRecord, buildRequestedGrid, calibrationDoneness, calibrationParams, copyCalibration,
+  foldRecord, freshCalibration, gridRequestFor, replay,
 } from '../src/core/record.js';
+import { appSetup, gridFor, knowing, logTarget, recordAt } from '../tools/common.js';
 
 // --------------------------------------------------------------------------
 // shared
@@ -52,19 +51,8 @@ import {
 
 const EGG = eggFromMass(0.068);
 
-function setupOf(over: Partial<CookSetup> = {}): CookSetup {
-  return {
-    startMode: 'hot', eggStart_C: 4, ambient_C: 20, boiling_C: 100, timeToBoil_s: 480,
-    cooling: 'ice', afterBoil: 'hold', waterLitres: 2, eggCount: 2, ...over,
-  };
-}
-
-const SETUP = setupOf();
+const SETUP = appSetup();
 const LEVELS = [0.22, 0.41, 0.62, 0.85, 1.0];
-
-function logTarget(level: number): number {
-  return Math.log10(donenessFromSlider(level).yolkDose_min);
-}
 
 /** What the apps do: the mean solve, the verdict, a snap if there is one, and
  *  the level the solve is for. */
@@ -84,64 +72,18 @@ function decideFor(c: Calibration, grid: DoseGrid, level: number, setup = SETUP)
   return decide(c, grid, m.sol, logTarget(m.level));
 }
 
-/** A surface for this calibration and pot: the production extent at a third
- *  of its cost - 9 rows and 20 s columns where the app has 13 and 10. What is
- *  checked here is what the choice does, which a second either way does not
- *  change; `npm run decide` measures the production surface against a fine one
- *  (1.3 s at worst), and fixtures/decide.json pins the arithmetic. */
-function gridFor(c: Calibration, setup = SETUP): DoseGrid {
-  const q = decisionGridRequest(decisionInputs(c, EGG, setup));
-  const count = Math.ceil((q.spec.timeMax_s - q.spec.timeMin_s) / 20) + 1;
-  return buildRequestedGrid({
-    ...q, spec: { ...q.spec, alphaCount: 9, timeMax_s: q.spec.timeMin_s + 20 * (count - 1), timeCount: count },
-  });
-}
-
 /** The folds' surfaces, coarser than the app's for the same reason. */
 const COARSE = (alphaCentre: number, cookTime_s: number): GridSpec => ({
   ...calibrationGrid(alphaCentre, cookTime_s), alphaCount: 9, timeCount: 12,
 });
 
-/** A posterior that KNOWS: the time-scale to 2%, the taste and the white to a
- *  twentieth of a decade, around the centres given. Built from a real prior so
- *  the noise and the firm gap are the prior's. */
-function knowing(taste: number, white: number, alphaFactor = 1): Calibration {
-  const post = createPrior(PARTICLE_COUNT, CALIBRATION_SEED);
-  for (let i = 0; i < post.particles.length; i++) {
-    const p = post.particles[i];
-    const z = Math.log(p.alpha_m2s / ALPHA_DEFAULT) / ALPHA_REL_SD;
-    post.particles[i] = {
-      ...p,
-      alpha_m2s: ALPHA_DEFAULT * alphaFactor * Math.exp(0.02 * z),
-      logDoseOffset: taste + 0.05 * p.logDoseOffset / 0.22,
-      whiteOffset: white + 0.05 * p.whiteOffset / 0.5,
-    };
-  }
-  return { posterior: post, eggsLogged: 6 };
-}
-
-function recordAt(level: number, t: number, yolk: Feedback | null, white: WhiteReport | null, setup = SETUP): EggRecord {
-  return {
-    v: 1, uid: null, day: '2026-09-28', app: 'web', appVersion: '0.2.0', prior: PRIOR_ID,
-    egg: { mass_g: 68, massFrom: 'class', sizeTable: 'eu' },
-    setup: {
-      startMode: setup.startMode, eggStart_C: setup.eggStart_C, eggFrom: 'fridge',
-      ambient_C: setup.ambient_C, boiling_C: setup.boiling_C, timeToBoil_s: setup.timeToBoil_s,
-      timeToBoilFrom: 'default', cooling: setup.cooling, afterBoil: setup.afterBoil ?? 'hold',
-      waterLitres: setup.waterLitres, eggCount: setup.eggCount,
-    },
-    level: level, recommended_s: t, nudge_s: 0, pulled_s: t, pulledBy: 'timeout', cooled_s: 180,
-    yolk: yolk, white: white, probe: null, lang: 'en', register: 'modern', units: 'metric',
-  };
-}
-
 const PRIOR = freshCalibration(PARTICLE_COUNT, CALIBRATION_SEED);
-const PRIOR_GRID = gridFor(PRIOR);
+const PRIOR_GRID = gridFor(PRIOR, EGG, SETUP);
 
 /** One egg at the literature's jammy time, answered as a cook with the
  *  literature's kitchen would: just right, and a firm white. */
 const ONE_EGG = replay(PRIOR, [recordAt(0.41, meanSolve(PRIOR, 0.41).sol.result.cookTime_s, 0, 'firm')], COARSE);
-const ONE_EGG_GRID = gridFor(ONE_EGG);
+const ONE_EGG_GRID = gridFor(ONE_EGG, EGG, SETUP);
 
 // --------------------------------------------------------------------------
 // 1. The loss and the odds
@@ -179,15 +121,15 @@ test('1b. across particles the two answers are correlated: the odds are not the 
 // 2. The choice, on posteriors built to know something
 // --------------------------------------------------------------------------
 
-const NEUTRAL = knowing(0, 0);
-const NEUTRAL_GRID = gridFor(NEUTRAL);
+const NEUTRAL = knowing({ particles: PARTICLE_COUNT, eggsLogged: 6, taste: 0, white: 0 });
+const NEUTRAL_GRID = gridFor(NEUTRAL, EGG, SETUP);
 
 test('2a. a posterior that knows the cook likes a firmer yolk moves the time later, at every level', () => {
   // The gap E5 closes: until now the taste offset never reached the time. The
   // mean solve for these two posteriors is the same to the second, because
   // their time-scales are; the choice is not.
-  const firmer = knowing(0.2, 0);
-  const softer = knowing(-0.2, 0);
+  const firmer = knowing({ particles: PARTICLE_COUNT, eggsLogged: 6, taste: 0.2, white: 0 });
+  const softer = knowing({ particles: PARTICLE_COUNT, eggsLogged: 6, taste: -0.2, white: 0 });
   const rows: string[] = [];
   for (const level of LEVELS) {
     const n = decideFor(NEUTRAL, NEUTRAL_GRID, level);
@@ -202,7 +144,7 @@ test('2a. a posterior that knows the cook likes a firmer yolk moves the time lat
 });
 
 test('2b. whites known to set late move the soft end later, and leave the hard end alone', () => {
-  const late = knowing(0, 0.6);
+  const late = knowing({ particles: PARTICLE_COUNT, eggsLogged: 6, taste: 0, white: 0.6 });
   const soft = [decideFor(NEUTRAL, NEUTRAL_GRID, 0.22), decideFor(late, NEUTRAL_GRID, 0.22)];
   const hard = [decideFor(NEUTRAL, NEUTRAL_GRID, 1.0), decideFor(late, NEUTRAL_GRID, 1.0)];
   assert.ok(soft[1].cookTime_s > soft[0].cookTime_s + 5, `soft ${soft[0].cookTime_s.toFixed(1)} -> ${soft[1].cookTime_s.toFixed(1)}`);
@@ -238,8 +180,8 @@ test('2e. where the loss is flat, the choice stops at the earliest time that is 
   // certainly set. Without the cost of leaning the minimum would be wherever
   // the last digits put it; with it, the choice stops where waiting longer
   // buys less than LEAN_COST_PER_S.
-  const counter = setupOf({ cooling: 'counter' });
-  const grid = gridFor(ONE_EGG, counter);
+  const counter = appSetup({ cooling: 'counter' });
+  const grid = gridFor(ONE_EGG, EGG, counter);
   const d = decideFor(ONE_EGG, grid, 0.0, counter);
   const target = logTarget(meanSolve(ONE_EGG, 0.0, counter).level);
   const slope = (expectedLoss(ONE_EGG.posterior, grid, d.cookTime_s + 2, target)
@@ -255,8 +197,8 @@ test('2e. where the loss is flat, the choice stops at the earliest time that is 
 
 test('3a. before any egg the time is the literature\'s, exactly, on every pot', () => {
   for (const over of [{}, { startMode: 'cold' as const }, { cooling: 'tap' as const }, { eggStart_C: 20 }]) {
-    const setup = setupOf(over);
-    const grid = gridFor(PRIOR, setup);
+    const setup = appSetup(over);
+    const grid = gridFor(PRIOR, EGG, setup);
     for (const level of LEVELS) {
       const m = meanSolve(PRIOR, level, setup);
       const literature = solveCookTime(EGG, setup, DEFAULT_PARAMS, donenessFromSlider(m.level)).result.cookTime_s;
@@ -289,7 +231,7 @@ test('3c. after one egg the choice leans by seconds, whichever level is asked fo
   }
   // And with the white skipped: the yolk alone pins the time-scale enough.
   const yolkOnly = replay(PRIOR, [recordAt(0.41, meanSolve(PRIOR, 0.41).sol.result.cookTime_s, 0, null)], COARSE);
-  const grid = gridFor(yolkOnly);
+  const grid = gridFor(yolkOnly, EGG, SETUP);
   for (const level of [0.22, 0.41, 0.62]) {
     const d = decideFor(yolkOnly, grid, level);
     assert.ok(Math.abs(d.cookTime_s - d.meanCookTime_s) < 10, `yolk only, L${level}: leaned ${(d.cookTime_s - d.meanCookTime_s).toFixed(1)} s`);
@@ -323,7 +265,7 @@ test('5b. the interval narrows below +-15 s after a few consistent eggs, stays t
   const widths: string[] = [];
   const c = copyCalibration(PRIOR);
   for (let egg = 0; egg <= 8; egg++) {
-    const grid = gridFor(c);
+    const grid = gridFor(c, EGG, SETUP);
     const d = decideFor(c, grid, 0.41);
     const interval = predictCookTime(c.posterior, grid, logTarget(0.41));
     flags.push(stillLearning(interval));
@@ -354,7 +296,7 @@ test('6a. the refusals still decide what the slider may ask for; the choice is m
   // Runny is out of reach once the whites have been runny: the verdict snaps it
   // to the softest level whose white sets, and the choice leans from there.
   const twoRunny = replay(PRIOR, [recordAt(0.22, 419, null, 'runny'), recordAt(0.22, 419, null, 'runny')], COARSE);
-  const grid = gridFor(twoRunny);
+  const grid = gridFor(twoRunny, EGG, SETUP);
   const params = calibrationParams(twoRunny);
   const asked = solveCookTime(EGG, SETUP, params, calibrationDoneness(twoRunny, 0.0));
   const v = verdictFor(asked, 0.0);
@@ -365,7 +307,7 @@ test('6a. the refusals still decide what the slider may ask for; the choice is m
   assert.ok(d.cookTime_s >= d.meanCookTime_s, 'near the white, the lean is later');
 
   // A pan that never sets the white: nothing to choose, the solver's answer stands.
-  const standing = setupOf({ afterBoil: 'off', waterLitres: 2 });
+  const standing = appSetup({ afterBoil: 'off', waterLitres: 2 });
   const sol = solveCookTime(EGG, standing, params, calibrationDoneness(twoRunny, 0.41));
   assert.equal(sol.whiteSets, false);
   assert.equal(decisionApplies(sol), false);
@@ -377,17 +319,17 @@ test('6a. the refusals still decide what the slider may ask for; the choice is m
 test('6b. a cold start re-solved for its measured boil keeps its lean, to within a few seconds of choosing again', () => {
   // The boil is tapped with the egg in the water; a new surface is a second
   // away, so the lean chosen at "Eggs in" is carried (`carriedSolution`).
-  const assumed = setupOf({ startMode: 'cold', timeToBoil_s: 480 });
-  const measured = setupOf({ startMode: 'cold', timeToBoil_s: 600 });
-  const c = knowing(0.15, 0.2, 1.05);
+  const assumed = appSetup({ startMode: 'cold', timeToBoil_s: 480 });
+  const measured = appSetup({ startMode: 'cold', timeToBoil_s: 600 });
+  const c = knowing({ particles: PARTICLE_COUNT, eggsLogged: 6, taste: 0.15, white: 0.2, alphaFactor: 1.05 });
   const params = calibrationParams(c);
   const rows: string[] = [];
   for (const level of [0.22, 0.41, 0.62]) {
-    const atStart = decideFor(c, gridFor(c, assumed), level, assumed);
+    const atStart = decideFor(c, gridFor(c, EGG, assumed), level, assumed);
     const lean = atStart.cookTime_s - atStart.meanCookTime_s;
     const m = meanSolve(c, level, measured);
     const carried = carriedSolution(EGG, measured, params, m.sol, lean).result.cookTime_s;
-    const again = decide(c, gridFor(c, measured), m.sol, logTarget(m.level)).cookTime_s;
+    const again = decide(c, gridFor(c, EGG, measured), m.sol, logTarget(m.level)).cookTime_s;
     rows.push(`L${level}: lean ${lean.toFixed(1)} s, carried ${carried.toFixed(1)}, chosen again ${again.toFixed(1)}`);
     assert.ok(Math.abs(lean) > 3, `L${level}: a lean worth carrying (${lean.toFixed(1)} s)`);
     // Measured 28 September: 3.1 s at soft, where the white binds and the lean
@@ -416,7 +358,7 @@ test('6d. the decided solution is the mean solve moved to the chosen time, and t
   const learned = replay(PRIOR, [recordAt(0.41, 464, 0, 'firm')], COARSE);
   const params = calibrationParams(learned);
   const sol = solveCookTime(EGG, SETUP, params, calibrationDoneness(learned, 0.41));
-  const d = decide(learned, gridFor(learned), sol, logTarget(0.41));
+  const d = decide(learned, gridFor(learned, EGG, SETUP), sol, logTarget(0.41));
   assert.ok(d.chosen);
   assert.notEqual(d.cookTime_s, sol.result.cookTime_s, 'the choice leans off the mean');
   const decided = decidedSolution(EGG, SETUP, params, sol, d);
@@ -447,11 +389,11 @@ test('7. two runny whites at soft: what the choice does at soft and at jammy', (
       let cal = PRIOR;
       const log: EggRecord[] = [];
       for (let i = 0; i < 2; i++) {
-        const d = decideFor(cal, gridFor(cal), 0.22);
+        const d = decideFor(cal, gridFor(cal, EGG, SETUP), 0.22);
         log.push(recordAt(0.22, sequence === 'E3' ? d.meanCookTime_s : d.cookTime_s, yolk, 'runny'));
         cal = replay(PRIOR, log, COARSE);
       }
-      const grid = gridFor(cal);
+      const grid = gridFor(cal, EGG, SETUP);
       const after = [decideFor(cal, grid, 0.22), decideFor(cal, grid, 0.41)];
       rows.push(`${sequence}, ${yolk === null ? 'white only' : 'yolk just right too'}, cooked at ${log.map((r) => r.recommended_s.toFixed(0)).join(' and ')}: `
         + `soft ${before[0].cookTime_s.toFixed(0)} -> mean ${after[0].meanCookTime_s.toFixed(0)}, chosen ${after[0].cookTime_s.toFixed(0)} (${after[0].oddsTenths}/10); `

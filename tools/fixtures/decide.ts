@@ -15,10 +15,11 @@ import {
   DecisionInputs, LEAN_COST_PER_S, RUNNY_WHITE_LOSS, carriedSolution, chooseCookTime, decideAt,
   decidedSolution, decisionApplies, decisionGridSpec, expectedLoss, hitOdds, oddsInTenths,
 } from '../../src/core/decide.js';
-import { solveCookTime, donenessFromSlider, DEFAULT_PARAMS, Solution } from '../../src/core/solve.js';
+import { solveCookTime, DEFAULT_PARAMS, Solution } from '../../src/core/solve.js';
 import { GridSpec } from '../../src/core/policy.js';
 
-import { particleRows, setupOf } from './shared.js';
+import { particleRows } from './shared.js';
+import { logTarget, referenceSetup } from '../common.js';
 
 /* E5: the time is CHOSEN from the whole posterior, and the two apps must choose
  * the same time for the same posterior and pot. Three things are pinned: where
@@ -32,7 +33,7 @@ import { particleRows, setupOf } from './shared.js';
  * the production one, and the surface is only the arithmetic's input. */
 
 export const DECIDE_EGG = eggFromMass(0.068);
-export const DECIDE_SETUP: CookSetup = setupOf({ timeToBoil_s: 480, eggCount: 2 });
+export const DECIDE_SETUP: CookSetup = referenceSetup({ timeToBoil_s: 480, eggCount: 2 });
 
 function decisionInputsRow(i: DecisionInputs) {
   return {
@@ -46,9 +47,9 @@ function decisionInputsRow(i: DecisionInputs) {
 const DECIDE_SPEC_INPUTS: DecisionInputs[] = [
   { egg: DECIDE_EGG, setup: DECIDE_SETUP, params: DEFAULT_PARAMS, whiteDose_min: 0.05 },
   { egg: eggFromMass(0.05), setup: DECIDE_SETUP, params: { alpha_m2s: 1.62e-7, tauAirScale: 1.08 }, whiteDose_min: 0.11 },
-  { egg: DECIDE_EGG, setup: setupOf({ startMode: 'cold', timeToBoil_s: 540 }), params: DEFAULT_PARAMS, whiteDose_min: 0.05 },
-  { egg: DECIDE_EGG, setup: setupOf({ cooling: 'counter' }), params: DEFAULT_PARAMS, whiteDose_min: 0.05 },
-  { egg: DECIDE_EGG, setup: setupOf({ afterBoil: 'off', waterLitres: 4 }), params: DEFAULT_PARAMS, whiteDose_min: 0.05 },
+  { egg: DECIDE_EGG, setup: referenceSetup({ startMode: 'cold', timeToBoil_s: 540 }), params: DEFAULT_PARAMS, whiteDose_min: 0.05 },
+  { egg: DECIDE_EGG, setup: referenceSetup({ cooling: 'counter' }), params: DEFAULT_PARAMS, whiteDose_min: 0.05 },
+  { egg: DECIDE_EGG, setup: referenceSetup({ afterBoil: 'off', waterLitres: 4 }), params: DEFAULT_PARAMS, whiteDose_min: 0.05 },
 ];
 
 const decideSpecs = DECIDE_SPEC_INPUTS.map((inputs) => ({
@@ -75,10 +76,6 @@ export const DECIDE_GRID = DECIDE_SURFACE.grid;
 export const DECIDE_PARTICLES = 200;
 export const DECIDE_SEED = 20260928;
 
-export function levelTarget(level: number): number {
-  return Math.log10(donenessFromSlider(level).yolkDose_min);
-}
-
 /** A posterior as the fixtures name it, and the eggs it has learned from. */
 export interface NamedPosterior { name: string; eggsLogged: number; post: Posterior }
 
@@ -98,9 +95,9 @@ export const decidePosteriors: NamedPosterior[] = (() => {
   const learned = createPrior(DECIDE_PARTICLES, DECIDE_SEED);
   // Three eggs: jammy just right with a firm white, soft with a runny white,
   // and jammy again, the yolk alone.
-  updatePosterior(learned, DECIDE_GRID, 464, levelTarget(0.41), 0, 'firm');
-  updatePosterior(learned, DECIDE_GRID, 419, levelTarget(0.22), null, 'runny');
-  updatePosterior(learned, DECIDE_GRID, 470, levelTarget(0.41), 0, null);
+  updatePosterior(learned, DECIDE_GRID, 464, logTarget(0.41), 0, 'firm');
+  updatePosterior(learned, DECIDE_GRID, 419, logTarget(0.22), null, 'runny');
+  updatePosterior(learned, DECIDE_GRID, 470, logTarget(0.41), 0, null);
   // A cook the model knows well, who likes a yolk a fifth of a decade firmer.
   const firmer = createPrior(DECIDE_PARTICLES, DECIDE_SEED);
   for (let i = 0; i < firmer.particles.length; i++) {
@@ -142,7 +139,7 @@ function decideSolutionRow(sol: Solution) {
 // unset: no cook to choose for, so the lean is not carried.
 const DECIDE_CARRIED = [
   { level: 0.41, setup: DECIDE_SETUP },
-  { level: 0, setup: setupOf({ timeToBoil_s: 480, eggCount: 2, cooling: 'counter' }) },
+  { level: 0, setup: referenceSetup({ timeToBoil_s: 480, eggCount: 2, cooling: 'counter' }) },
 ].flatMap((pot) => [0, -12, 18].map((lean_s) => {
   const pz = decidePosteriors[1];
   const params = calibrationParams(calibrationOf(pz));
@@ -182,19 +179,19 @@ export const decideFixture = {
   cases: DECIDE_CASES.map((c) => {
     const pz = decidePosteriors.find((x) => x.name === c.posterior);
     if (pz === undefined) throw new Error(c.posterior);
-    const logTarget = levelTarget(c.level);
-    const d = decideAt(pz.post, pz.eggsLogged, DECIDE_GRID, c.meanCookTime_s, c.applies, logTarget);
+    const target = logTarget(c.level);
+    const d = decideAt(pz.post, pz.eggsLogged, DECIDE_GRID, c.meanCookTime_s, c.applies, target);
     const probes = [c.meanCookTime_s - 40, c.meanCookTime_s, c.meanCookTime_s + 25];
     return {
       posterior: c.posterior,
       eggsLogged: pz.eggsLogged,
-      logNominalTarget: logTarget,
+      logNominalTarget: target,
       meanCookTime_s: c.meanCookTime_s,
       applies: c.applies,
-      loss: probes.map((t) => ({ t: t, loss: expectedLoss(pz.post, DECIDE_GRID, t, logTarget) })),
-      odds: probes.map((t) => ({ t: t, odds: hitOdds(pz.post, DECIDE_GRID, t, logTarget) })),
+      loss: probes.map((t) => ({ t: t, loss: expectedLoss(pz.post, DECIDE_GRID, t, target) })),
+      odds: probes.map((t) => ({ t: t, odds: hitOdds(pz.post, DECIDE_GRID, t, target) })),
       // As if an egg had taught something: the choice itself, whatever the count.
-      chosen_s: chooseCookTime(pz.post, DECIDE_GRID, logTarget, c.meanCookTime_s),
+      chosen_s: chooseCookTime(pz.post, DECIDE_GRID, target, c.meanCookTime_s),
       decision: d,
       // The mean solve at this level, moved to the decided time.
       level: c.level,

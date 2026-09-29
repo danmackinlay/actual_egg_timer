@@ -39,6 +39,7 @@ import {
 import {
   advance, beginCooling, recordBoil, restoreMachine, startCold, startHot, PULL_GRACE_SECONDS,
 } from '../src/ui/machine.js';
+import { appSetup } from '../tools/common.js';
 
 // --------------------------------------------------------------------------
 // shared
@@ -46,23 +47,15 @@ import {
 
 const EGG = eggFromMass(0.068);
 
-function setupOf(over: Partial<CookSetup> = {}): CookSetup {
-  return {
-    startMode: 'hot', eggStart_C: 4, ambient_C: 20, boiling_C: 100,
-    timeToBoil_s: 480, cooling: 'ice', afterBoil: 'hold', waterLitres: 2, eggCount: 2,
-    ...over,
-  };
-}
-
 const JAMMY = 0.41;
-const COOK = solveCookTime(EGG, setupOf(), DEFAULT_PARAMS, donenessFromSlider(JAMMY));
+const COOK = solveCookTime(EGG, appSetup(), DEFAULT_PARAMS, donenessFromSlider(JAMMY));
 const COOK_S = COOK.result.cookTime_s;
 
 /** The peak a probe would see if the kitchen's time-scale were `factor` times
  *  the literature's. */
 function truePeak(factor: number, cooling: CookSetup['cooling'] = 'ice'): number {
   return simulate(
-    EGG, setupOf({ cooling: cooling }), { alpha_m2s: DEFAULT_PARAMS.alpha_m2s * factor, tauAirScale: 1 },
+    EGG, appSetup({ cooling: cooling }), { alpha_m2s: DEFAULT_PARAMS.alpha_m2s * factor, tauAirScale: 1 },
     COOK_S,
   ).peakYolk_C;
 }
@@ -85,7 +78,7 @@ function recordWith(probe_C: number | null, over: Partial<EggRecord> = {}): EggR
 }
 
 function nextCook(cal: ReturnType<typeof freshCalibration>): number {
-  return solveCookTime(EGG, setupOf(), calibrationParams(cal), calibrationDoneness(cal, JAMMY))
+  return solveCookTime(EGG, appSetup(), calibrationParams(cal), calibrationDoneness(cal, JAMMY))
     .result.cookTime_s;
 }
 
@@ -126,7 +119,7 @@ test('1b. the skew is COLD: a reading under the peak costs less than one the sam
 
 test('1c. no reading can kill a particle, and none makes a NaN', () => {
   const grid = buildDoseGrid(
-    EGG, setupOf(), 1.0, DEFAULT_PARAMS.alpha_m2s * 0.55, DEFAULT_PARAMS.alpha_m2s * 1.8, 7,
+    EGG, appSetup(), 1.0, DEFAULT_PARAMS.alpha_m2s * 0.55, DEFAULT_PARAMS.alpha_m2s * 1.8, 7,
     COOK_S * 0.35, COOK_S * 2.4, 9,
   );
   const p = {
@@ -143,13 +136,13 @@ test('1c. no reading can kill a particle, and none makes a NaN', () => {
 test('1d. the grid carries the peak, and interpolates it to within a tenth of a degree', () => {
   const spec = calibrationGrid(DEFAULT_PARAMS.alpha_m2s, COOK_S);
   const grid = buildDoseGrid(
-    EGG, setupOf(), 1.0, spec.alphaMin, spec.alphaMax, spec.alphaCount,
+    EGG, appSetup(), 1.0, spec.alphaMin, spec.alphaMax, spec.alphaCount,
     spec.timeMin_s, spec.timeMax_s, spec.timeCount,
   );
   assert.equal(grid.peakYolk_C.length, spec.alphaCount * spec.timeCount);
   for (const factor of [0.7, 0.9, 1.0, 1.13, 1.4]) {
     const alpha = DEFAULT_PARAMS.alpha_m2s * factor;
-    const exact = simulate(EGG, setupOf(), { alpha_m2s: alpha, tauAirScale: 1 }, COOK_S).peakYolk_C;
+    const exact = simulate(EGG, appSetup(), { alpha_m2s: alpha, tauAirScale: 1 }, COOK_S).peakYolk_C;
     const looked = lookupPeakYolk_C(grid, alpha, COOK_S);
     assert.ok(Math.abs(looked - exact) < 0.1, `x${factor}: ${looked.toFixed(3)} against ${exact.toFixed(3)}`);
   }
@@ -229,7 +222,7 @@ test('2b. a hot reading says the egg heats fast, so the next cook is shorter; a 
 
 test('3a. the reading multiplies into the answers: one fold, whatever arrived first', () => {
   const grid = buildDoseGrid(
-    EGG, setupOf(), 1.0, DEFAULT_PARAMS.alpha_m2s * 0.55, DEFAULT_PARAMS.alpha_m2s * 1.8, 7,
+    EGG, appSetup(), 1.0, DEFAULT_PARAMS.alpha_m2s * 0.55, DEFAULT_PARAMS.alpha_m2s * 1.8, 7,
     COOK_S * 0.35, COOK_S * 2.4, 9,
   );
   const target = Math.log10(donenessFromSlider(JAMMY).yolkDose_min);
@@ -302,7 +295,7 @@ test('3c. the loader takes a reading the egg could have been, and refuses one it
 
 test('4a. the cooling countdown runs to the peak, for the cooling actually used', (t) => {
   const ice = coolingSecondsFor(COOK.result);
-  const tapSol = solveCookTime(EGG, setupOf({ cooling: 'tap' }), DEFAULT_PARAMS, donenessFromSlider(JAMMY));
+  const tapSol = solveCookTime(EGG, appSetup({ cooling: 'tap' }), DEFAULT_PARAMS, donenessFromSlider(JAMMY));
   const tap = coolingSecondsFor(tapSol.result);
   t.diagnostic(`68 g jammy: ice ${ice} s, tap ${tap} s, against the flat ${COOLING_SECONDS} s`);
   assert.equal(ice, Math.round(COOK.result.peakYolkTime_s - COOK.result.cookTime_s));
@@ -323,7 +316,7 @@ test('4b. no peak after the pull, no probe, and the flat three minutes', () => {
 });
 
 test('4c. the entry range holds every reading a kitchen could make, and not a typo', (t) => {
-  const [lo, hi] = plausibleProbeRange_C(EGG, setupOf(), DEFAULT_PARAMS, COOK_S);
+  const [lo, hi] = plausibleProbeRange_C(EGG, appSetup(), DEFAULT_PARAMS, COOK_S);
   t.diagnostic(`68 g jammy in ice, peak ${truePeak(1.0).toFixed(1)} C: takes ${lo.toFixed(1)} to ${hi.toFixed(1)} C`);
   for (const factor of [0.72, 1.0, 1.4]) {
     const peak = truePeak(factor);

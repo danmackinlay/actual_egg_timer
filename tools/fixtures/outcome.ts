@@ -8,8 +8,9 @@ import { LEAN_RATIO, LEVEL_HIGH_Q, LEVEL_LOW_Q, leanOf, predictOutcome } from '.
 
 import { particleRows } from './shared.js';
 import {
-  DECIDE_GRID, DECIDE_PARTICLES, DECIDE_SEED, decidePosteriors, levelTarget, meanSolve,
+  DECIDE_GRID, DECIDE_PARTICLES, DECIDE_SEED, decidePosteriors, meanSolve,
 } from './decide.js';
+import { logTarget } from '../common.js';
 
 /* What the egg at the chosen time will be like (src/core/outcome.ts): the
  * three yolk answers, a runny white, the level range and the lean. On
@@ -20,7 +21,7 @@ import {
  * are pinned. */
 
 const outcomeConsistent = createPrior(DECIDE_PARTICLES, DECIDE_SEED);
-for (const t of [464, 462, 463]) updatePosterior(outcomeConsistent, DECIDE_GRID, t, levelTarget(0.41), 0, 'firm');
+for (const t of [464, 462, 463]) updatePosterior(outcomeConsistent, DECIDE_GRID, t, logTarget(0.41), 0, 'firm');
 const outcomePosteriors = [...decidePosteriors, { name: 'consistent', eggsLogged: 3, post: outcomeConsistent }];
 
 const OUTCOME_CASES: { posterior: string; level: number; note: string }[] = [
@@ -47,19 +48,19 @@ export const outcomeFixture = {
   cases: OUTCOME_CASES.map((c) => {
     const pz = outcomePosteriors.find((x) => x.name === c.posterior);
     if (pz === undefined) throw new Error(c.posterior);
-    const logTarget = levelTarget(c.level);
+    const target = logTarget(c.level);
     const sol = meanSolve(pz, c.level);
     const mean = sol.result.cookTime_s;
-    const d = decideAt(pz.post, pz.eggsLogged, DECIDE_GRID, mean, decisionApplies(sol), logTarget);
+    const d = decideAt(pz.post, pz.eggsLogged, DECIDE_GRID, mean, decisionApplies(sol), target);
     return {
       posterior: c.posterior,
       note: c.note,
       level: c.level,
-      logNominalTarget: logTarget,
+      logNominalTarget: target,
       meanCookTime_s: mean,
       at: [d.cookTime_s, mean - 40, mean + 40].map((t) => ({
         t: t,
-        outcome: predictOutcome(pz.post, DECIDE_GRID, t, logTarget),
+        outcome: predictOutcome(pz.post, DECIDE_GRID, t, target),
       })),
     };
   }),

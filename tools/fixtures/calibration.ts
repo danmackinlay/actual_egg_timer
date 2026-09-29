@@ -13,7 +13,8 @@ import { CookSetup } from '../../src/core/protocol.js';
 import { GridSpec } from '../../src/core/policy.js';
 import { buildRequestedGrid } from '../../src/core/record.js';
 
-import { particleRows, setupOf } from './shared.js';
+import { particleRows } from './shared.js';
+import { referenceSetup } from '../common.js';
 
 /* The calibration is the one part of the core with STATE and a random number
  * generator, so conformance needs more than a few scalars: a divergence in the
@@ -30,7 +31,7 @@ import { particleRows, setupOf } from './shared.js';
  * here. */
 
 export const CALIB_EGG = eggFromMass(0.062);
-export const CALIB_SETUP: CookSetup = setupOf({});
+export const CALIB_SETUP: CookSetup = referenceSetup({});
 export const CALIB_GRID_SPEC: GridSpec = {
   alphaMin: 1.2e-7, alphaMax: 2.4e-7, alphaCount: 9, timeMin_s: 240, timeMax_s: 900, timeCount: 12,
 };
