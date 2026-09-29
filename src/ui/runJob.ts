@@ -23,7 +23,7 @@ export interface ProfileJob {
 }
 
 /** One thing to build: a fold's surface, described in full; a decision's,
- *  described by the pot and the posterior (E5, `decisionGridRequest`); or the
+ *  described by the pot and the posterior (`decisionGridRequest`); or the
  *  odds at every level on a decision's surface (`oddsProfile`). */
 export interface Job {
   request?: GridRequest;

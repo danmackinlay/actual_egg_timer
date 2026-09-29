@@ -10,16 +10,14 @@
  * `capture` serves the repo root, opens the harness page in headless Chrome
  * over the DevTools protocol and waits for it to finish. It needs Chrome; set
  * CHROME to its binary if it is not in the usual macOS place. It is not part of
- * `npm test` for that reason: it is the proof that Phase F1 moved the copy into
- * copy/en.json without changing a byte of what is rendered, run before and
- * after the move, and it can be run again before any change that should not
- * touch the words.
+ * `npm test` for that reason. Run before and after a change that should not
+ * touch the words, it proves that no byte of what is rendered moved.
  *
  * `compare` exits non-zero on the first difference and says where it is.
  *
- * `compare --draft` is the proof for a REWRITE (F2 onwards), where the words
- * are meant to change and the screens may too - E2 put both questions on
- * screen at once, and a new likelihood moves the times a second cook is shown.
+ * `compare --draft` is the proof for a REWRITE, where the words are meant to
+ * change and the screens may too - a new likelihood, say, moves the times a
+ * second cook is shown.
  * It pools every string of every state on each side, rewrites the old side
  * through tools/copyDraft.ts, reads every digit as the same digit, and then
  * requires the two pools to hold the same strings: nothing new unless it is a

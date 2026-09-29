@@ -487,7 +487,7 @@ DONE 18a5930 (the `cd` only; `oxipng` is optional and `ios/build/` is local): **
 
 ## 8. P2 — comments and docs
 
-**8.1 Comments that narrate history instead of describing the code.**
+DONE 220a3fc 1952f53 0aa6417 6e7a625 7f1f638 62afe2f 6b69867 9351d0d 31094ce 09233cc: **8.1 Comments that narrate history instead of describing the code.** (Found by grep, since stages 1-2 moved every line below: 94 files. Phase labels, "used to" stories, dated owner stamps and the Kitchen/app.ts history went; where the old way is the reason for the new one it stays as a "why not". Measurement dates in tests stay, as provenance. Also fixed on the way: comments that were false - "still learning" still computed (Planner, ReadoutView), decideOdds' pre-kernel 3.8% gap, a two-level white in two fixture headers, pointers to `src/ui/outcome.ts`, `startFrom_C`, `whiteNoise`, `setupOf` - and the catalogue note on `controls.afterTheBoil.more`. Dead: nine `NOT_COPY` entries no Swift literal matched. Left: identifiers and test names that carry history (`forecast`, `shownForecast`, the 'E3'/'E5' sequences in decide.test.ts, fixture `why` strings), and `tools/drafts/`, which is a record by design.)
 - About 170 references to plan-phase labels (E1, F2…), plus "used to…", "owner, 28 September" and "before E4" stories.
 - Heaviest in:
   - `src/ui/calibration.ts` (26)

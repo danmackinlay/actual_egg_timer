@@ -20,7 +20,7 @@
  *    otherwise differ by one byte between the apps, and could break a line
  *    between the digits and the "PM".
  *  - A time of day never zero-pads its hour: "9:05", not "09:05", in every
- *    locale (the owner, 27 September). CLDR's en-GB pads and its cs-CZ does
+ *    locale (the owner's rule). CLDR's en-GB pads and its cs-CZ does
  *    not, and for en-CZ `Intl` pads where Foundation does not; one rule in
  *    both cores, `unpadHour`, makes all of them agree.
  *
@@ -201,13 +201,13 @@ export type HourCycle = 'h11' | 'h12' | 'h23' | 'h24';
  * Languages that write numbers one way wherever they are read, and the region
  * whose conventions those are. A UI in one of these formats in that locale,
  * whatever region the device is in: a Czech UI in the US writes "1 234,5",
- * because the words around the number are Czech (the owner, 27 September).
+ * because the words around the number are Czech (the owner's rule).
  *
  * A language not listed has no convention of its own and takes the device's
  * region, as English does: CLDR has English in Britain, India, Germany and
  * Switzerland, each writing numbers its own way, so `en-DE` writes "2,4" and
- * `en-IN` "1,23,456". A language joins this list when its catalogue ships
- * (F5), and the Swift twin holds the same list.
+ * `en-IN` "1,23,456". A language joins this list when its catalogue ships,
+ * and the Swift twin holds the same list.
  */
 const OWN_CONVENTION: Readonly<Record<string, string>> = { cs: 'CZ' };
 

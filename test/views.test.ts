@@ -2,8 +2,8 @@
  * The web app's structure: every module can be imported without a page, and
  * the hash routes (src/ui/views.ts).
  *
- * The app used to find its elements and read storage when app.ts was
- * imported, so no test could import it; `boot()` does both now.
+ * Nothing finds its elements or reads storage on import - `boot()` does both -
+ * so every module can be tested.
  *
  * Zero dependencies: node:test + node:assert/strict only.
  */

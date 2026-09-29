@@ -32,11 +32,9 @@ struct CookActivity: ActivityAttributes {
     /// physics and no units table, so it is handed the words, not the numbers.
     var peakYolk: String
     var eggMass: String
-    // E5's odds used to ride here, as "7/10 eggs hit the mark" on the Lock
-    // Screen. Gone, on the owner's word of 28 September: mid-cook nothing
-    // there can change what the cook does, so it says nothing rather than
-    // spend the room on odds. An activity begun by an older build still
-    // decodes, since a key nobody asks for is ignored.
+    // No odds: mid-cook nothing on the Lock Screen can change what the cook
+    // does, so it says nothing rather than spend the room on them. A key an
+    // older build wrote is ignored when an activity decodes.
 
     /// The cooling the cook chose, `Cooling`'s raw value: `ice`, `tap` or
     /// `counter`. The pull line names it (`pullLineKey`, in EggTimerCopy). A
@@ -44,7 +42,7 @@ struct CookActivity: ActivityAttributes {
     /// older build decodes, as the ice bath.
     var cooling: String? = nil
 
-    /// The catalogue the cook was started in, `en` or `en-x-1750` (F6). The
+    /// The catalogue the cook was started in, `en` or `en-x-1750`. The
     /// widget cannot read the app's settings, so the activity carries its
     /// language as it carries its units. Optional, so an activity begun by
     /// an older build decodes, as English.

@@ -6,14 +6,13 @@
 <!--
   Every word the web app puts on screen, in every state worth reaching.
 
-  This is the proof that the move into copy/en.json (Phase F1) changed no
-  wording: run it against the build before the move and the build after it, and
-  the two outputs must be identical. Since F2 it is also the proof that a
-  rewrite changed ONLY the strings it meant to: `copySnapshot.js compare
-  --draft` holds the two outputs to tools/copyDraft.ts instead of to each
-  other. The steps below work on the build before E2 (one question, then maybe
-  a second) and after it (both questions, always). It drives the real app, unmodified, in an
-  iframe - the only thing it touches is Date.now, which it freezes and then
+  It is the proof that a change touched no wording: run it against the build
+  before and the build after, and the two outputs must be identical. It is also
+  the proof that a rewrite changed ONLY the strings it meant to:
+  `copySnapshot.js compare --draft` holds the two outputs to tools/copyDraft.ts
+  instead of to each other. The steps below also work on older builds that
+  asked one question, then maybe a second. It drives the real app, unmodified,
+  in an iframe - the only thing it touches is Date.now, which it freezes and then
   steps, because the cook machine is a pure function of it. That makes every
   state reproducible, including the countdowns and the sous-vide wall clock.
 
@@ -117,7 +116,7 @@ const click = (sel) => ({ name: `click ${sel}`, run: async () => { doc().querySe
 const advance = (s) => ({ name: `+${s}s`, run: async () => { win().__now += s * 1000; await sleep(500); } });
 const wait = (ms) => ({ name: `wait ${ms}`, run: async () => { await sleep(ms); } });
 const toPull = { name: 'to pull', run: async () => { win().__now = storedMachine().cookEnd_ms + 3000; await sleep(500); } };
-/** F4: a countdown left at exactly `s` seconds, for the spoken forms. */
+/** A countdown left at exactly `s` seconds, for the spoken forms. */
 const toLeft = (s) => ({ name: `${s}s left`, run: async () => { win().__now = storedMachine().cookEnd_ms - s * 1000; await sleep(500); } });
 const toCoolEnd = { name: 'to cool end', run: async () => { win().__now = storedMachine().coolEnd_ms + 1000; await sleep(500); } };
 const reopen = { name: 'reload', run: async () => { await openApp(win().__now); } };
@@ -171,10 +170,10 @@ const SCENARIOS = [
   { name: 'sous-vide 0.8', settings: { startMode: 'sous', doneness: 0.8 }, steps: [] },
   { name: 'sous-vide 0.9', settings: { startMode: 'sous', doneness: 0.9 }, steps: [] },
   { name: 'sous-vide hard', settings: { startMode: 'sous', doneness: 1 }, steps: [] },
-  // F4: a time of day and numbers in a 12-hour, comma-grouped locale.
+  // A time of day and numbers in a 12-hour, comma-grouped locale.
   { name: 'sous-vide jammy, en-US', lang: 'en-US', settings: { startMode: 'sous' }, steps: [] },
   { name: 'sous-vide hard, en-US', lang: 'en-US', settings: { startMode: 'sous', doneness: 1 }, steps: [] },
-  // F4: the spoken countdown at one of each, which read "1 seconds".
+  // The spoken countdown at one of each, so "1 seconds" would show.
   {
     name: 'hot cook, spoken at 61 s and 1 s',
     settings: { muted: true, startMode: 'hot' },
@@ -188,8 +187,8 @@ const SCENARIOS = [
     steps: [...cookThrough, ...cookThrough, click('#forget'), click('#forgetYes')],
   },
   {
-    // Before E2 the note after an answer said how many eggs; since, it says
-    // thanks, and the count waits for the next egg's questions. A third egg
+    // The note after an answer says thanks, and the count waits for the next
+    // egg's questions (an older build said how many eggs). A third egg
     // is what puts "N eggs", plural, on screen again.
     name: 'cold cook, three times',
     settings: { muted: true },

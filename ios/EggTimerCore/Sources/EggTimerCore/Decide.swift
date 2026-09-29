@@ -1,6 +1,6 @@
 import Foundation
 
-/// Deciding, not just estimating (E5, INFERENCE.md section 8).
+/// Deciding, not just estimating (INFERENCE.md section 8).
 ///
 /// The time is CHOSEN: for a candidate pull time every particle says how likely
 /// each answer is, through the probit the filter learns with, and the time with
@@ -14,8 +14,8 @@ import Foundation
 /// in src/core/decide.ts, which this is held to by fixtures/decide.json: two
 /// apps given the same posterior and the same pot must choose the same time.
 
-/// How much worse a runny white is than a yolk one answer off (owner, 26
-/// September).
+/// How much worse a runny white is than a yolk one answer off: the owner's
+/// number (INFERENCE.md section 11, decision 7).
 public let runnyWhiteLoss = 3.0
 
 // MARK: - The surface
@@ -213,8 +213,7 @@ func decisionApplies(_ sol: Solution) -> Bool {
     sol.whiteSets && sol.reachable
 }
 
-/// Tenths, as the odds were once shown ("7/10") and as the reach and advice
-/// thresholds are still written.
+/// Tenths, which is how the reach and advice thresholds are written.
 public func oddsInTenths(_ odds: Double) -> Int {
     Int((odds * 10.0).rounded())
 }

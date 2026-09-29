@@ -9,10 +9,7 @@
  * joined and each `\(...)` interpolation reduced to `{}`, must be a catalogue
  * key, an argument's name in key position, or on the NOT_COPY list below with
  * the reason it is not words. So no word reaches an iOS screen without going
- * through copy/. It began as step 4 of F1's proof that the move into the
- * catalogue changed no word (base 942623d, held at 40b9efa); steps 2 and 3,
- * which compared against the base, went on 28 September, since F2 and F3 have
- * changed words on purpose since.
+ * through copy/.
  *
  * The second is the proof for every rewrite once the words live in the
  * catalogue: both apps, not only iOS. It diffs copy/en.json and the keys each
@@ -57,15 +54,9 @@ const NOT_COPY: Record<string, string> = {
   timer: 'SF Symbol',
   'bell.fill': 'SF Symbol',
   snowflake: 'SF Symbol',
-  'checkmark.circle.fill': 'SF Symbol',
-  // number and date formats: F4 (locale formatting) owns these
-  '%d:%02d': 'clock format, F4',
-  'HH:mm:ss': 'clock format, F4',
-  'HH:mm': 'clock format, F4',
-  EEEE: 'weekday format, F4',
-  '%.0f': 'number format, F4',
-  '%.1f': 'number format, F4',
-  '%.2f': 'number format, F4',
+  // number formats: machine text, or formatted for the locale elsewhere
+  '%d:%02d': 'clock format',
+  '%.1f': 'number format',
   '{}': 'a number on its own, "\\(value)"',
   '--:--': 'the empty clock, not words',
   ' ': 'a spacer that keeps a line\'s height while learning',
@@ -84,11 +75,10 @@ const NOT_COPY: Record<string, string> = {
   PULL: 'phase name, never shown',
   COOLING: 'phase name, never shown',
   DONE: 'phase name, never shown',
-  // E1's record (INFERENCE.md §4), merged after the move: schema, never shown
+  // the record (INFERENCE.md §4): schema, never shown
   CFBundleShortVersionString: 'Info.plist key',
   unknown: 'record field value, never shown',
   '%04d-%02d-%02d': 'record day format, never shown',
-  '2026-09': 'record date prefix, never shown',
   class: 'record field value, never shown',
   mass_g: 'record field name',
   eggStart_C: 'record field name',
@@ -100,12 +90,9 @@ const NOT_COPY: Record<string, string> = {
   nudge_s: 'record field name',
   pulled_s: 'record field name',
   cooled_s: 'record field name',
-  'probe readings arrive in E4': 'decoding error, never shown',
-  // E2's store and prior (INFERENCE.md section 4): schema, never shown
+  // the store and the prior (INFERENCE.md section 4): schema, never shown
   'calibration.v4': 'UserDefaults key',
-  '2026-09-e2': 'record prior id, never shown',
-  // Added 28 September, when this became a standing lint: literals that were
-  // never words, which the base-ref proof never had to classify.
+  // more literals that were never words
   weighedMassG: 'UserDefaults key',
   startTemp: 'UserDefaults key',
   customStartC: 'UserDefaults key',

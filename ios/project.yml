@@ -67,7 +67,7 @@ targets:
     # settings below cannot express, so xcodegen writes this much of the plist
     # (App/Info.plist, generated and gitignored like the widget's) and the build
     # merges the generated keys into it. One row per shipped catalogue in
-    # copy/; English only until Czech ships (PLAN.md F5).
+    # copy/; English only until Czech ships.
     info:
       path: App/Info.plist
       properties:

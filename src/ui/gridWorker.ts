@@ -1,14 +1,12 @@
 /**
  * The dose surfaces, built off the main thread.
  *
- * A surface is several hundred whole simulations, about a second, and until E1
- * the page sat frozen behind a `setTimeout(30)` while one was built after each
- * egg. That was one surface per answer, and tolerable. A replay of the log
- * builds one per egg - twenty eggs would have been forty seconds of a page that
- * does not scroll - so the arithmetic moved here.
+ * A surface is several hundred whole simulations, about a second, and a replay
+ * of the log builds one per egg: on the page, twenty eggs would be forty
+ * seconds of a page that does not scroll. So the arithmetic is here.
  *
  * Two kinds are built. A fold's surface (`request`) is described in full by the
- * page. A decision's surface (`decision`, E5) is described by the pot, the egg
+ * page. A decision's surface (`decision`) is described by the pot, the egg
  * and where the posterior stands, and its extent takes two solves to find, so
  * those run here too rather than on the page (`decisionGridRequest`). And the
  * odds at every level on a decision's surface (`oddsProfile`, reach.ts), a

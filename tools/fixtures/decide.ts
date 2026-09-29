@@ -20,7 +20,7 @@ import { DEFAULT_PARAMS, Solution, logYolkTarget, solveCookTime } from '../../sr
 import { particleRows } from './shared.js';
 import { referenceSetup } from '../common.js';
 
-/* E5: the time is CHOSEN from the whole posterior, and the two apps must choose
+/* The time is CHOSEN from the whole posterior, and the two apps must choose
  * the same time for the same posterior and pot. Three things are pinned: where
  * each pot's decision surface goes (`decisionGridSpec`, which runs a solve), a
  * surface itself, and the choice made on it from three posteriors - the prior,

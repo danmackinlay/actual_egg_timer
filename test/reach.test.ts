@@ -1,8 +1,8 @@
 /**
  * The odds at every level, the range they allow, the shading and the advice
- * (src/core/reach.ts; the owner's answers of 27 September, PLAN.md).
+ * (src/core/reach.ts).
  *
- * The claims: a profile point IS the odds the app shows at that level, so the
+ * The claims: a profile point IS the odds the app computes at that level, so the
  * two cannot disagree; a fresh install is refused nothing the pan can deliver;
  * once an egg has taught something the slider's ends are the softest and
  * firmest levels at 3/10 or better, found on the slider's own grid, and never

@@ -36,15 +36,14 @@ enum LiveActivity {
         }
     }
 
-    /// End the cook's card at once. It used to stay two minutes, saying
-    /// "Done" beside the alarm that says the same, and the owner saw one
-    /// message twice (28 September). The alarm stays in Notification Centre
-    /// for anyone who missed it; with notifications off, the app is on
+    /// End the cook's card at once: a card saying "Done" beside the alarm that
+    /// says the same is one message twice. The alarm stays in Notification
+    /// Centre for anyone who missed it; with notifications off, the app is on
     /// screen ringing.
     ///
     /// It ends on the content it last showed, not on a done state: a card
-    /// dismissed at once never draws its final content, so the done stage's
-    /// words were retired from the widget.
+    /// dismissed at once never draws its final content, so the widget has no
+    /// words for a done stage.
     ///
     /// The same call clears everything else: a cancel, and a card left behind
     /// by a force-quit mid-cook, which would otherwise sit there counting down

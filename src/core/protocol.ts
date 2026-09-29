@@ -38,8 +38,8 @@ export interface CookSetup {
   /** Measured time for the pan to reach a full rolling boil, s. On a cold
    *  start it is how long the ramp lasts, and that is all it is used for. A hot
    *  start carries the remembered value (the record says where it came from)
-   *  but nothing in the physics reads it. It used to set the heat-off pan's
-   *  loss time constant too; that measured the hob, not the pan, and now comes
+   *  but nothing in the physics reads it. It does not set the heat-off pan's
+   *  loss time constant: that would measure the hob, not the pan, so it comes
    *  from the water volume (see panTimeConstant). */
   timeToBoil_s: number;
   cooling: Cooling;
@@ -106,15 +106,15 @@ function dipMagnitude(egg: Egg, setup: CookSetup): number {
  *   tau(V) = TAU_STANDING_SCALE * TAU_STANDING_REF_S * (V / 2 L)^(1/3)
  *
  * tau = m*c/(U*A): the heat held goes as the volume, the surface it leaks
- * through as V^(2/3) for similar-shaped pans. The reference is pinned so that
- * Williams' 17-minute method in 2 L is exactly what it was.
+ * through as V^(2/3) for similar-shaped pans. The reference is pinned to
+ * Williams' 17-minute method in 2 L (see TAU_STANDING_REF_S).
  *
- * It used to be the time to boil over ln(r/(r-1)). That is the same tau only
- * if the hob's overshoot ratio r is known, and r is the HOB, not the pan: a
- * strong hob read as a pan that cooled about 2.2 times too fast. It also meant
- * a hot start, which never times the boil, cooled at the rate of whatever pan
- * was remembered. Neither is true of this one; the time to boil now shapes the
- * cold-start ramp and nothing else. See constants.ts for what is judgement.
+ * Why not the time to boil over ln(r/(r-1))? That is the same tau only if the
+ * hob's overshoot ratio r is known, and r is the HOB, not the pan: a strong
+ * hob would read as a pan that cooled about 2.2 times too fast. And a hot
+ * start, which never times the boil, would cool at the rate of whatever pan
+ * was remembered. So the time to boil shapes the cold-start ramp and nothing
+ * else. See constants.ts for what is judgement.
  */
 export function panTimeConstant(waterLitres: number): number {
   if (!(waterLitres > 0.0)) return 0.0;
@@ -158,7 +158,7 @@ export function coolingMedium_C(cooling: Cooling, ambient_C: number): number {
  * over almost adiabatically, and its surface tracks its own bulk temperature
  * decaying toward the room.
  *
- * `startFrom_C` is the egg's VOLUME-AVERAGE temperature at the moment it left
+ * `meanAtPull_C` is the egg's VOLUME-AVERAGE temperature at the moment it left
  * the water, not the water temperature. A lumped body relaxes from its own
  * bulk temperature; using the water's would keep a briefly-cooked egg near
  * boiling in open air, which is badly wrong for short cooks.

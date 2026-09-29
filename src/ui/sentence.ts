@@ -152,7 +152,7 @@ export function redrawSentence(): void {
   sentenceShown = '';
 }
 
-/** The cook in the pan, once the controls are gone (owner, 28 September): the
+/** The cook in the pan, once the controls are gone: the
  *  setup sentence it was started with, so a forgetful cook can see what they
  *  promised, as plain prose - nothing in it can change a cook under way, so
  *  nothing in it is a button - and under it what the sentence does not say,

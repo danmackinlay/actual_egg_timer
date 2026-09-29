@@ -100,14 +100,10 @@ struct ReadoutView: View {
     /// Never where the white never sets: there is no cook to say anything
     /// about.
     ///
-    /// The one-tap play-safe suggestion under it is gone (owner, 28
-    /// September): it said in words what the slider and the bracket already
-    /// show.
-    ///
-    /// "I'm still learning" is not a line of its own, as on the web: beside
-    /// "I can't call it yet" it said the same thing twice. What it opened is
-    /// the last paragraph of the (i). The decision still works it out; nothing
-    /// keeps it with the egg.
+    /// There is no play-safe suggestion under it, and no "still learning" line,
+    /// as on the web: the slider and the bracket already show the one, and "I
+    /// can't call it yet" already says the other. What I learn from is the last
+    /// paragraph of the (i).
     @ViewBuilder
     private var direction: some View {
         let idle = phase == .idle

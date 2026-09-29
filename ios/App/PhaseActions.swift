@@ -4,7 +4,7 @@ import EggTimerCopy
 
 /// Under the controls, in every phase: the one slot for a longer line, the
 /// hint and the button that move the cook on, and, while a cook runs, the
-/// once-only offer of the thermometer (E4).
+/// once-only offer of the thermometer.
 ///
 /// A function of the clock, like the readout: the egg screen's `TimelineView`
 /// hands over the date it drew for, and the phase at that date.
@@ -215,10 +215,9 @@ struct PhaseActions: View {
 
     /// What the alarm actually is, not what permission was granted.
     ///
-    /// This used to read the authorization result alone, so it said "alarm set"
-    /// whether or not the request had been accepted - while ios/README.md
-    /// claimed the app reads the pending count back "rather than assuming",
-    /// which it did and then ignored. An egg timer that claims an alarm it has
+    /// The authorization result alone would say "alarm set" whether or not the
+    /// request had been accepted, so the pending count is read back rather than
+    /// assumed. An egg timer that claims an alarm it has
     /// not got is worse than one with no alarm at all.
     private var alarmLine: String {
         switch cook.alarmAuthorized {
@@ -234,7 +233,7 @@ struct PhaseActions: View {
         }
     }
 
-    // MARK: - The thermometer (E4)
+    // MARK: - The thermometer
 
     /// Offered once, while a cook is running, to a cook whose cooling ends at
     /// the yolk's peak. Either answer puts it away for good; the setting stays

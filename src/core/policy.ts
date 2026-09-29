@@ -1,19 +1,15 @@
 /**
  * The decisions that turn a Solution into a cook.
  *
- * Everything here used to live twice - once in `src/ui/app.ts` and once in
- * `ios/App/Kitchen.swift` - transliterated by hand, with nothing holding the
- * copies together and no test on either. That is where every user-visible
- * divergence between the two apps came from, and it is why this module exists:
- * below the line the fixtures cover, two implementations cannot disagree
- * without `npm run conformance` saying so.
+ * These decisions live here, and not in each app, so that the two apps cannot
+ * disagree about them: below the line the fixtures cover, two implementations
+ * cannot differ without `npm run conformance` saying so.
  *
  * The line is drawn at DECISIONS, not at WORDS. Which refusal applies, where
  * the slider must move to, which texture band a temperature falls in, how wide
  * the calibration grid is - all of that is policy, it is pure, and it changes
- * what the user gets, so it belongs here. The sentences a cook actually reads
- * stay in the apps: they are copy, they differ per platform, and a physics
- * package has no business holding a string table.
+ * what the user gets, so it belongs here. The sentences a cook reads are not
+ * here: which key a screen says is `wording.ts`, and the text is the catalogue.
  *
  * Pure, like the rest of `src/core/`: no storage, no DOM, no clock.
  */
@@ -299,8 +295,7 @@ export interface Texture {
  *  The bands read PEAK TEMPERATURES, while the white's own criterion is a dose
  *  (`Solution.whiteSets`). The two disagree only when the pan never gets the
  *  white there at all, and then the dose is the one telling the truth: the
- *  white is runny, whatever its peak. That used to be decided in each app, and
- *  only the web decided it: iOS named a white that never sets from its peak,
+ *  white is runny, whatever its peak, and naming it from its peak would put it
  *  on a scale whose softest word is "white just set". */
 export function textureFor(peakYolk_C: number, peakWhite_C: number, whiteSets: boolean): Texture {
   const w = WHITE_BAND_BELOW_C;
@@ -455,11 +450,11 @@ export type Phase = 'IDLE' | 'HEATING' | 'COOKING' | 'PULL' | 'COOLING' | 'DONE'
 /** Counted-down cooling. Carryover is what ruins a soft egg, so this is a
  *  stage of the cook, not a suggestion appended to the end of it.
  *
- *  Since E4 this is the FALLBACK: the countdown runs to the moment the yolk's
- *  centre peaks (`coolingSecondsFor`), and this flat three minutes is only
- *  what a cook gets when there is no peak after the pull to run to - a
- *  heat-off pan that ran out while the egg was still in it - or when a cook
- *  stored before E4 is picked back up. */
+ *  This is the FALLBACK: the countdown runs to the moment the yolk's centre
+ *  peaks (`coolingSecondsFor`), and this flat three minutes is only what a
+ *  cook gets when there is no peak after the pull to run to - a heat-off pan
+ *  that ran out while the egg was still in it - and the default before a cook
+ *  is given its own. */
 export const COOLING_SECONDS = 180;
 
 /** The shortest counted cooling, s. The model's peak never comes sooner than
@@ -470,10 +465,10 @@ export const COOLING_MIN_SECONDS = 60;
 
 /**
  * How long to count the cooling down, s from the pull: to the moment the
- * yolk's centre peaks, for this cook as the solver ran it (PLAN.md, old item
- * 4). Until E4 it was a flat three minutes, which for the default egg in ice
- * ended 3 s before the peak and for a small one 25 s after it; the thermometer
- * is read at the peak, so the countdown and the reading now end together.
+ * yolk's centre peaks, for this cook as the solver ran it. A flat three minutes
+ * would end 3 s before the peak for the default egg in ice and 25 s after it
+ * for a small one; the thermometer is read at the peak, so the countdown and
+ * the reading end together.
  *
  * `result` is the solve the cook is running on, for its own cooling method -
  * the peak comes about 20 s later under a tap than in ice. On the counter
@@ -487,7 +482,7 @@ export function coolingSecondsFor(result: CookResult): number {
 }
 
 /**
- * Whether this cook has a moment to take a probe reading at (E4): a counted
+ * Whether this cook has a moment to take a probe reading at: a counted
  * cooling that ends when the yolk's centre peaks. Not on the counter, where
  * nothing is counted and the peak is nine minutes off with the carryover
  * constant in it (INFERENCE.md section 5), and not when the centre peaked

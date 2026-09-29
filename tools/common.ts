@@ -20,7 +20,7 @@ import { Calibration, EggRecord, PRIOR_ID } from '../src/core/record.js';
 /* ------------------------------------------------------------------ pots */
 
 /* Two pots, and they differ: which one a file starts from is part of what its
- * numbers mean, so each has its own name rather than both being `setupOf`. */
+ * numbers mean, so each has its own name rather than sharing one. */
 
 /** The reference pot of the validation (tools/validate.ts): four eggs from
  *  the fridge dropped into 2 L already at a rolling boil at sea level, then an

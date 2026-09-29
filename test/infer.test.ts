@@ -1,11 +1,11 @@
 /**
- * The particle filter under E2's ordered probit and E3's white offset.
+ * The particle filter under the ordered probit and the white offset.
  *
  * Claims in this repo get a test, and these are the claims INFERENCE.md
- * sections 2 and 3 make about the likelihood: that the probit keeps the old
+ * sections 2 and 3 make about the likelihood: that the probit keeps a hard
  * band's meaning and its confidence, that no answer can kill a particle, that
- * the white and the yolk are two observables, and - the three the phase is done
- * on - that the Phase C recovery is no worse, that the predictive is calibrated
+ * the white and the yolk are two observables, that an injected cook is
+ * recovered no worse than under a hard band, that the predictive is calibrated
  * on simulated cooks, and what two runny whites at soft do to the next cook.
  * The conformance fixtures pin the arithmetic particle by particle; what is
  * checked here is the reasoning the arithmetic rests on.
@@ -235,19 +235,18 @@ test('2d. one fold per egg: the answers together are the product, whichever arri
 });
 
 // --------------------------------------------------------------------------
-// 3. Phase C's recovery experiment, repeated under the new likelihood
+// 3. The recovery experiment
 // --------------------------------------------------------------------------
 
 test('3. an injected alpha and taste are recovered in no more eggs, to no worse an error', (t) => {
-  // PLAN.md Phase C: alpha = 1.535e-7 with a taste offset of +0.20 decades,
+  // alpha = 1.535e-7 with a taste offset of +0.20 decades,
   // answers generated without noise from the truth. Each egg is cooked at the
   // model's own best guess of what this cook wants - the posterior mean alpha,
   // aimed at the nominal target moved by the posterior mean taste - and the
-  // yolk answer is what the truth says about it. Repeated under the old
-  // likelihood on 27 September for the same egg (68 g, fridge, boiling water,
-  // ice, jammy): within 15 s of the true optimum from egg 3, settled 14.0 s
-  // long, alpha sd 2.9%. Under E2: within 15 s from egg 2, settled 12.2 s
-  // short, sd about 3.3%; since E5's resample kernel the same, with sd 3.0%.
+  // yolk answer is what the truth says about it. Measured 27 September on the
+  // same egg (68 g, fridge, boiling water, ice, jammy): a hard 0.8 / 0.1 band
+  // is within 15 s of the true optimum from egg 3, settled 14.0 s long, alpha
+  // sd 2.9%; the probit within 15 s from egg 2, settled 12.2 s short, sd 3.0%.
   const truth: ModelParams = { alpha_m2s: 1.535e-7, tauAirScale: 1 };
   const TASTE = 0.2;
   const setup = appSetup();
@@ -359,7 +358,7 @@ test('4. P(answer) is calibrated: simulated cooks answer as often as the model s
 });
 
 // --------------------------------------------------------------------------
-// 5. Two runny whites at soft (E3's "done when")
+// 5. Two runny whites at soft
 // --------------------------------------------------------------------------
 
 function softRecord(cal: Calibration, level: number, yolk: Feedback | null, white: WhiteReport | null): EggRecord {
@@ -415,12 +414,12 @@ test('5a. two runny whites at soft move the next soft recommendation later', (t)
   assert.ok(twoRunny.withYolk.after.softWhiteBound, 'soft is now bound by the white');
 });
 
-// E3's done-when also asked that a jammy recommendation be left nearly alone.
-// It is not: with these priors a runny white is blamed on the time-scale about
+// Ideally a jammy recommendation would be left nearly alone. It is not: with
+// these priors a runny white is blamed on the time-scale about
 // 2:1 over the white offset (alpha's prior is 0.70 decades of white dose wide,
-// the offset's 0.5), so jammy moves about as far as soft. The owner left it as
-// it is on 27 September, until a probe or pooling pins the time-scale (PLAN,
-// E3; LOGBOOK, 27 September). This holds the limit as it stands, so a change
+// the offset's 0.5), so jammy moves about as far as soft. The owner has left it
+// so until a probe or pooling pins the time-scale (LOGBOOK, 27 September).
+// This holds the limit as it stands, so a change
 // that moves it - either way - is seen and has to be argued for.
 test('5b. ...and, a known limit, move a jammy one about as far', (t) => {
   for (const kind of ['whiteOnly', 'withYolk'] as const) {

@@ -1,17 +1,16 @@
 /**
- * Deciding, not just estimating (E5, INFERENCE.md section 8).
+ * Deciding, not just estimating (INFERENCE.md section 8).
  *
- * Until E5 the time on screen was solved at the posterior MEAN of the
- * time-scale and `tauAirScale`, with the white's cutpoint moved by the mean
- * white offset. Three things were wrong with that. The learned yolk taste
- * offset never reached the recommendation at all - only the part of a "too
- * soft" answer the posterior happened to blame on the time-scale moved the
- * time, a gap that dates from Phase C. The noise and the spread of the
- * posterior played no part, so a cook the model knows nothing about got the
- * same time as one it knows well. And the two ways of getting an egg wrong were
+ * Why not solve at the posterior MEAN of the time-scale and `tauAirScale`,
+ * with the white's cutpoint moved by the mean white offset? Three things are
+ * wrong with that. The learned yolk taste offset never reaches the
+ * recommendation - only the part of a "too soft" answer the posterior happens
+ * to blame on the time-scale moves the time. The noise and the spread of the
+ * posterior play no part, so a cook the model knows nothing about gets the
+ * same time as one it knows well. And the two ways of getting an egg wrong are
  * treated alike, when a runny white is worse than a yolk a step too firm.
  *
- * So the time is now CHOSEN. Every particle is a whole hypothesis about this
+ * So the time is CHOSEN. Every particle is a whole hypothesis about this
  * cook - time-scale, taste, noise, white offset, tender | firm gap - and for a
  * candidate pull time each one says how likely each answer is, through the
  * same probit the filter learns with. The expected loss of the candidate is
@@ -32,7 +31,7 @@
  * kitchen in twenty turns a jammy egg's white runny. One answer of any kind
  * pins the time-scale to about 6%, and from then on the choice leans by a few
  * seconds (test/decide.test.ts). So until an egg has taught something, the
- * time is the literature's, exactly as `calibrationParams` has always had it,
+ * time is the literature's, exactly as `calibrationParams` gives it,
  * and only the odds are read from the prior.
  *
  * THE SURFACE. The loss needs the delivered log doses at every particle's
@@ -48,7 +47,7 @@
  * per setup.
  *
  * THE REFUSALS. The mean solve still runs first, and still decides what the
- * slider may ask for: `verdictFor` reads it as it always has, snaps a doneness
+ * slider may ask for: `verdictFor` reads it, snaps a doneness
  * the white forbids up to the softest one it allows, and says why. The choice
  * is then made at the level the verdict leaves, within DECISION_WINDOW_S of the
  * mean solve's time. It never overrides a refusal; it only leans. Where there is
@@ -62,15 +61,12 @@
  * independent - two readings of two latents - and across particles they are
  * correlated, because a slow time-scale makes both late. The probabilities are
  * the answers', unrelated share included, so they are calibrated against what
- * cooks SAY, which is all anyone can check them against. They were once on
- * screen as "7/10 eggs hit the mark"; the outcome's direction replaced that
- * line (outcome.ts), and the odds now decide which levels the slider offers
- * (reach.ts) and when the app says how to make a cook more reliable.
+ * cooks SAY, which is all anyone can check them against. The odds decide
+ * which levels the slider offers (reach.ts) and when the app says how to make
+ * a cook more reliable.
  *
- * STILL LEARNING is not decided here. The owner's rule - the 80% interval of
- * the right cook time wider than +-15 s (INFERENCE.md section 11, decision 9)
- * - left both screens on 28 September, and the decision stopped computing it
- * (D3). If E8 needs it, it is `predictCookTime` (infer.ts), read on demand.
+ * How much is still being learned is not decided here: that is the width of
+ * `predictCookTime` (infer.ts), read on demand.
  *
  * Pure, like the rest of `src/core/`.
  */
@@ -86,8 +82,8 @@ import {
 } from './infer.js';
 import { Calibration, calibrationDoneness, calibrationParams } from './record.js';
 
-/** How much worse a runny white is than a yolk one answer off (owner, 26
- *  September). */
+/** How much worse a runny white is than a yolk one answer off: the owner's
+ *  number (INFERENCE.md section 11, decision 7). */
 export const RUNNY_WHITE_LOSS = 3;
 
 /* ------------------------------------------------------------ the surface */
@@ -324,8 +320,7 @@ export function decisionApplies(sol: Solution): boolean {
   return sol.whiteSets && sol.reachable;
 }
 
-/** Tenths, as the odds were once shown ("7/10") and as the reach and advice
- *  thresholds are still written. Half away from zero, which is what
+/** Tenths, which is how the reach and advice thresholds are written. Half away from zero, which is what
  *  both languages' plain rounding does for a probability. */
 export function oddsInTenths(odds: number): number {
   return Math.round(odds * 10);

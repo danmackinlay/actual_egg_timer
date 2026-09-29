@@ -3,17 +3,15 @@ import Foundation
 /// The decisions that turn a Solution into a cook, transliterated from
 /// `src/core/policy.ts`.
 ///
-/// Everything here used to live in `ios/App/Kitchen.swift` and again in
-/// `src/ui/app.ts`, copied by hand, with nothing holding the two versions
-/// together and no test on either. That is where every user-visible divergence
-/// between the two apps came from - a different default egg, a different number
-/// of eggs in the pan, and a calibration grid that agreed only by luck.
+/// These decisions live in core, not in each app, so that the two apps cannot
+/// disagree about them: a default egg, a number of eggs in the pan, a
+/// calibration grid.
 ///
 /// The line is drawn at DECISIONS, not at words. Which refusal applies, where
 /// the slider must move to, which texture band a temperature falls in, how wide
 /// the calibration grid is: policy, pure, and conformance-tested against
-/// `fixtures/policy.json`. The sentences a cook reads stay in the app, because
-/// they are copy and they differ per platform.
+/// `fixtures/policy.json`. The sentences a cook reads are not here: which key
+/// a screen says is `Wording.swift`, and the text is the catalogue.
 ///
 /// Pure, like the rest of this package: no UserDefaults, no SwiftUI, no clock.
 
@@ -287,10 +285,7 @@ public struct Texture: Sendable, Equatable {
 /// The bands read PEAK TEMPERATURES, while the white's own criterion is a dose
 /// (`Solution.whiteSets`). The two disagree only when the pan never gets the
 /// white there at all, and then the dose is the one telling the truth: the
-/// white is runny, whatever its peak. That used to be decided in each app, and
-/// only the web decided it: this app named a white that never sets from its
-/// peak, on a scale whose softest word is "white just set". See
-/// src/core/policy.ts.
+/// white is runny, whatever its peak. See src/core/policy.ts.
 public func textureFor(peakYolkC: Double, peakWhiteC: Double, whiteSets: Bool) -> Texture {
     let white: WhiteBand = !whiteSets ? .runny
         : (peakWhiteC < WhiteBandBelowC.justSet ? .justSet : (peakWhiteC < WhiteBandBelowC.set ? .set : .firm))
@@ -457,7 +452,7 @@ public enum Phase: String, Sendable {
 /// Counted-down cooling. Carryover is what ruins a soft egg, so this is a stage
 /// of the cook, not a suggestion appended to the end of it.
 ///
-/// Since E4 this is the FALLBACK: the countdown runs to the moment the yolk's
+/// This is the FALLBACK: the countdown runs to the moment the yolk's
 /// centre peaks (`coolingSecondsFor`). See src/core/policy.ts.
 public let coolingSeconds = 180.0
 
@@ -465,7 +460,7 @@ public let coolingSeconds = 180.0
 public let coolingMinSeconds = 60.0
 
 /// How long to count the cooling down, s from the pull: to the moment the
-/// yolk's centre peaks, for this cook as the solver ran it (E4, old item 4).
+/// yolk's centre peaks, for this cook as the solver ran it.
 public func coolingSecondsFor(_ result: CookResult) -> Double {
     let toPeak = result.peakYolkTimeS - result.cookTimeS
     if !(toPeak > 0.0) { return coolingSeconds }
@@ -473,7 +468,7 @@ public func coolingSecondsFor(_ result: CookResult) -> Double {
     return whole < coolingMinSeconds ? coolingMinSeconds : whole
 }
 
-/// Whether this cook has a moment to take a probe reading at (E4): a counted
+/// Whether this cook has a moment to take a probe reading at: a counted
 /// cooling that ends when the yolk's centre peaks. Not on the counter, and not
 /// when the centre peaked before the egg came out.
 public func probeMomentFor(_ result: CookResult, cooling: Cooling) -> Bool {
@@ -584,7 +579,7 @@ public func phaseAt(_ d: Deadlines, nowS: Double) -> Phase {
 // notifications, so it rings at every deadline (`src/ui/app.ts`, `onTick`)
 // and has nothing to decide.
 
-/// A moment the cook is told about. The probe moment (E4) is not a third one:
+/// A moment the cook is told about. The probe moment is not a third one:
 /// it is the end of the counted cooling, and only its words differ.
 public enum RingDeadline: String, Sendable, Hashable, CaseIterable {
     /// Out of the water, now.

@@ -2,10 +2,10 @@
  * What the egg will be like: the predicted outcome at the chosen time
  * (INFERENCE.md section 8, "The outcome").
  *
- * The odds (`hitOdds`, once on screen as "7/10 eggs hit the mark") say how
- * often the cook will call the egg right. They do not say which way the
- * misses go, and a cook cannot act on a miss without a direction. This reads the same posterior, on the same
- * surface, at the same time, and says two more things.
+ * The odds (`hitOdds`) say how often the cook will call the egg right. They
+ * do not say which way the misses go, and a cook cannot act on a miss without
+ * a direction. This reads the same posterior, on the same surface, at the same
+ * time, and says two more things.
  *
  * THE ANSWERS. P(too soft), P(just right), P(too firm) for the yolk and
  * P(runny) for the white: the posterior predictive of what the cook will say,
@@ -79,8 +79,8 @@ export const LEVEL_LOW_Q = 0.1;
 export const LEVEL_HIGH_Q = 0.9;
 
 /** P(runny) at or above which the white is a risk: one egg in five. Both
- *  apps give the white a line of its own from here (src/ui/outcome.ts, which
- *  has the reasons). */
+ *  apps give the white a line of its own from here (wording.ts, which has the
+ *  reasons). */
 export const WHITE_RISK = 0.2;
 
 /** Bisection steps for each point of the level range, on the slider's span:

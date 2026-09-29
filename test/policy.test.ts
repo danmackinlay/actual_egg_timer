@@ -1,9 +1,8 @@
 /**
  * The policy layer: the decisions that turn a Solution into a cook.
  *
- * These are the tests the review found missing. Every one of them names an
- * invariant that a hand-transliterated copy in `ios/App/Kitchen.swift` used to
- * be free to break, because nothing checked either side.
+ * Every test names an invariant both apps depend on; the Swift twin is held
+ * to the same answers by `fixtures/policy.json`.
  *
  * Zero dependencies: node:test + node:assert/strict only.
  */
@@ -410,8 +409,8 @@ test('7c. an unmeasured volume scales from the nearest measured one', () => {
 });
 
 test('7d. equidistant volumes resolve the same way every time', () => {
-  // Insertion order used to decide this on the web and Dictionary order on
-  // iOS, so the same two pans could give the two apps different answers.
+  // Neither insertion order (the web) nor Dictionary order (iOS) may decide
+  // this, or the same two pans could give the two apps different answers.
   const forwards = rememberBoil(rememberBoil({}, 1, 300), 3, 900);
   const backwards = rememberBoil(rememberBoil({}, 3, 900), 1, 300);
   assert.equal(estimateTimeToBoil(forwards, 2), estimateTimeToBoil(backwards, 2));

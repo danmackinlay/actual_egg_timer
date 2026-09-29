@@ -22,9 +22,9 @@ import { referenceSetup } from '../common.js';
  * Two things are pinned. First, which records a loader TRUSTS: a canonical
  * record, the variations version skew allows, and one breakage per rule, so a
  * port that forgets a check - or adds one - disagrees on a named case. Second,
- * the replay: a log of eight eggs from both apps - E1's, with their two-level
- * white, and E2's, answered either way or not at all - folded from a fresh prior
- * under E2's likelihood with every particle and weight written out after each
+ * the replay: a log of eight eggs from both apps - answered either way or not
+ * at all, pulled by the cook or by the clock, one with a probe reading - folded
+ * from a fresh prior with every particle and weight written out after each
  * egg, and the tail of the same log folded again from the state after the second
  * egg, which is what a phone whose damaged log was dropped starts from.
  *
@@ -56,7 +56,7 @@ interface EggSpec {
   late_s: number;
   yolk: EggRecord['yolk'];
   white: EggRecord['white'];
-  /** A probe reading (E4), as degrees off the peak the literature values
+  /** A probe reading, as degrees off the peak the literature values
    *  predict for this cook, so the fixture reads where a real one would. */
   probeOff_C?: number;
 }
@@ -148,7 +148,7 @@ const REPLAY_LOG: EggRecord[] = [
     over: { startMode: 'cold', timeToBoil_s: 430, afterBoil: 'off', waterLitres: 1.5, eggCount: 2 },
     level: 0.5, pulledBy: 'cook', late_s: 2, yolk: -1, white: 'tender',
   }),
-  // E2's: the white alone, tender, pulled late by the cook's own tap - scored
+  // The white alone, tender, pulled late by the cook's own tap - scored
   // at the tap, 40 s after the alarm.
   recordOf({
     app: 'ios', mass_g: 68, massFrom: 'class', eggFrom: 'fridge', over: {},
@@ -159,7 +159,7 @@ const REPLAY_LOG: EggRecord[] = [
     app: 'web', mass_g: 63, massFrom: 'scale', eggFrom: 'fridge', over: {},
     level: 0.62, pulledBy: 'cook', late_s: 5, yolk: 1, white: 'firm',
   }),
-  // E4's: a probe reading a degree hot, with the yolk "just right".
+  // A probe reading a degree hot, with the yolk "just right".
   recordOf({
     app: 'ios', mass_g: 68, massFrom: 'scale', eggFrom: 'fridge', over: {},
     level: 0.41, pulledBy: 'cook', late_s: 3, yolk: 0, white: null, probeOff_C: 1.0,
@@ -181,7 +181,7 @@ function calibrationRows(c: Calibration) {
 }
 
 /* Egg by egg, the way an app folds them: a surface, then both answers. After
- * each, the white target the next soft cook would be solved for (E3). */
+ * each, the white target the next soft cook would be solved for. */
 const replayStart = freshCalibration(REPLAY_PARTICLES, REPLAY_SEED);
 const replayState = copyCalibration(replayStart);
 const replaySnapshots: Calibration[] = [];
@@ -343,7 +343,7 @@ export const recordFixture = {
   massRounding: [0.048, 0.058, 0.068, 0.076, 0.0553017, 0.06849999, 0.0624449999].map((kg) => ({
     mass_kg: kg, mass_g: recordMass_g(kg),
   })),
-  // A probe reading, typed in F and carried in C (E4).
+  // A probe reading, typed in F and carried in C.
   probeRounding: [147.2, 147.3, 150.1, 139.9, 180.5, 212].map((f) => (f - 32) * 5 / 9)
     .concat([64.005, 58.8849999, 61.3]).map((c) => ({ centre_C: c, record_C: recordProbe_C(c) })),
   replay: {

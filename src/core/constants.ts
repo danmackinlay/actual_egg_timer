@@ -93,29 +93,29 @@ export const K_EGG = 0.60;
 /** Hob overshoot ratio r = P/(U*dT_boil). 1/r is the fraction of full burner
  *  power needed to hold a rolling boil; measured cooktop studies put that near
  *  1/3. r -> infinity is a linear ramp. It shapes the cold-start ramp and
- *  nothing else: it describes the hob, so the heat-off pan no longer uses it
+ *  nothing else: it describes the hob, so the heat-off pan does not use it
  *  (see TAU_STANDING_REF_S). */
 export const RAMP_R = 3.0;
 
 /** The pan's Newtonian loss time constant with the heat off and the lid on,
  *  for 2 L of water (STANDING_REF_LITRES), s.
  *
- *  ANCHORED, NOT MEASURED. It is pinned to what the old derivation gave for
+ *  ANCHORED, NOT MEASURED. It is pinned to what the boil-time rule gives for
  *  Williams' folk method - bring to the boil, cover, off the heat, seventeen
  *  minutes, and it is hard-boiled - with an 8-minute boil in 2 L:
  *  480 / ln(r/(r-1)) at r = 3, i.e. 480 / ln(1.5) = 1183.8 s. So that one
- *  validation case is unchanged by construction, and the Williams check in
- *  tools/validate.ts still reads 75.6 C.
+ *  validation case is the same under either rule, by construction, and the
+ *  Williams check in tools/validate.ts reads 75.6 C.
  *
- *  It used to be derived from the time to boil, on the grounds that the ramp's
- *  tau = m*c/(U*A) is the same quantity. It is, but the boil time identifies
- *  it only through RAMP_R, and RAMP_R is a property of the HOB (burner power
- *  over losses), not of the pan. A hob twice as strong as assumed (r = 6)
- *  boils in tau*ln(1.2) and made the pan look 2.2 times quicker to cool; a
- *  weak one (r = 1.5), 2.7 times slower. How fast a lidded pan cools with the
- *  burner off depends on the water and the pan, so it now comes from the water
- *  volume (see panTimeConstant), and the hob drops out. Decided by the owner
- *  26 September 2026; INFERENCE.md section 11, item 11. */
+ *  Why not derive it from the time to boil, since the ramp's tau = m*c/(U*A)
+ *  is the same quantity? Because the boil time identifies it only through
+ *  RAMP_R, and RAMP_R is a property of the HOB (burner power over losses), not
+ *  of the pan. A hob twice as strong as assumed (r = 6) boils in tau*ln(1.2)
+ *  and would make the pan look 2.2 times quicker to cool; a weak one
+ *  (r = 1.5), 2.7 times slower. How fast a lidded pan cools with the burner
+ *  off depends on the water and the pan, so it comes from the water volume
+ *  (see panTimeConstant), and the hob drops out. INFERENCE.md section 11,
+ *  item 11. */
 export const TAU_STANDING_REF_S = 480.0 / Math.log(1.5);
 
 /** The water volume TAU_STANDING_REF_S is quoted at, litres. Williams' pan is
@@ -132,7 +132,7 @@ export const STANDING_REF_LITRES = 2.0;
  *  knows the pan's shape. Confidence: the direction and the rough size are
  *  physics; the exponent itself is unvalidated, and no standing cook has yet
  *  been measured at any volume but the anchor's. tools/validate.ts prints tau
- *  at 1-4 L beside what the old boil-time rule gave, so the disagreement is on
+ *  at 1-4 L beside what the boil-time rule would give, so the disagreement is on
  *  the page rather than hidden. */
 export const STANDING_VOLUME_EXPONENT = 1.0 / 3.0;
 

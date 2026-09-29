@@ -249,14 +249,13 @@ public func clauseKeys(_ f: ClauseFacts) -> [Clause: ClauseKeys] {
  * These are not sentences. They are UNIT CHOICES - when minutes stop being a
  * useful unit and become hours, when hours become days, when a date stops being
  * a weekday and becomes "N weeks ago". Both apps have to bucket an estimate
- * identically or the same number reads differently on each, which is precisely
- * what happened: they were transliterated by hand and at a 58 C bath only two of
- * the six branches below are ever reached, so four of them were ported and never
- * once executed in either language.
+ * identically or the same number reads differently on each, and at a 58 C bath
+ * only two of the six branches below are ever reached, so a copy kept by hand
+ * in each app would go untested.
  *
- * They used to return the English as well. They return a catalogue key and its
- * numbers now, because "22 h 43 min" is English, and so is the order of the
- * words in "3 weeks ago". Core picks the bucket; the catalogue says it.
+ * They return a catalogue key and its numbers, not English, because
+ * "22 h 43 min" is English, and so is the order of the words in "3 weeks ago".
+ * Core picks the bucket; the catalogue says it.
  */
 
 /// 45 min, 22 h 43 min, 3 days, 5 weeks - as a key into the catalogue and the
@@ -284,7 +283,7 @@ public func longDuration(_ seconds: Double) -> CopyRef {
 /// local midnight correctly, and this package should not reimplement it. For
 /// the same reason `sousvide.start.lastWeekday` wants a `{weekday}` this does
 /// not supply. The app adds it, from the catalogue through `weekdayKey`, as the
-/// web does (F4).
+/// web does.
 public func startPhrase(daysAgo: Int) -> CopyRef {
     if daysAgo <= 0 { return CopyRef("sousvide.start.today") }
     if daysAgo == 1 { return CopyRef("sousvide.start.yesterday") }
@@ -297,7 +296,7 @@ public func startPhrase(daysAgo: Int) -> CopyRef {
 /// The catalogue key of a weekday's name, numbered as JavaScript's
 /// `Date.getDay()` numbers them: 0 is Sunday. `Calendar`'s `.weekday` counts
 /// from 1, so the app subtracts one. Both apps name weekdays from the
-/// catalogue, not the platform (F4, LANGUAGE.md §2).
+/// catalogue, not the platform (LANGUAGE.md §2).
 let weekdayKeys: [String] = [
     "weekday.sunday", "weekday.monday", "weekday.tuesday", "weekday.wednesday",
     "weekday.thursday", "weekday.friday", "weekday.saturday",

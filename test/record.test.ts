@@ -1,13 +1,12 @@
 /**
- * The record (E1): what a loader trusts, what a replay rebuilds, and the web
- * app's own keeping of both - and, since E2, the migration that replays E1's
- * log under the new likelihood.
+ * The record: what a loader trusts, what a replay rebuilds, and the web app's
+ * own keeping of both.
  *
- * The headline claim is the one E1 is done on: a posterior rebuilt from the log
- * is BIT-identical to the one the app built egg by egg, with a reload between
- * every egg - and since E2, whichever order the two answers came in. Close is not enough. A replay that moves a posterior a little for
- * no reason would turn every future model change into a quiet change of taste,
- * and nobody would ever find out why.
+ * The headline claim: a posterior rebuilt from the log is BIT-identical to the
+ * one the app built egg by egg, with a reload between every egg, whichever
+ * order the two answers came in. Close is not enough. A replay that moves a
+ * posterior a little for no reason would turn every future model change into a
+ * quiet change of taste, and nobody would ever find out why.
  *
  * The conformance fixture (`fixtures/record.json`) pins the arithmetic particle
  * by particle for the Swift port; what is checked here is the reasoning and the
@@ -182,7 +181,7 @@ test('2c. the first egg is scored on a surface centred on the literature values'
 });
 
 test('2d. an egg is scored at the pull when the cook said when, and at the schedule when not', () => {
-  // E2's other model change (INFERENCE.md section 4). A measured pull is the
+  // INFERENCE.md section 4. A measured pull is the
   // cook's tap; an assumed one is the scheduled time standing in for it.
   const measured = { ...solvedRecord(0.35, -1), pulled_s: 0, pulledBy: 'cook' as const };
   measured.pulled_s = measured.recommended_s + 25;
@@ -227,7 +226,8 @@ test('3a. loading: rebuild, rebase, and refuse a damaged log', () => {
   assert.equal(rebuild.path, 'rebuild');
   assert.equal(rebuild.kept.folded, 0);
   assert.equal(rebuild.kept.log.length, 1, 'the log survives a damaged posterior');
-  // A posterior missing E2's columns is damaged, not half-read.
+  // A posterior missing the noise, white-offset or gap columns is damaged,
+  // not half-read.
   const noNoise = { ...stored, cal: { ...(stored['cal'] as object), sd: undefined } };
   assert.equal(decodeKept(JSON.stringify(noNoise)).path, 'rebuild');
   const zeroNoise = { ...stored, cal: { ...(stored['cal'] as { sd: number[] }), sd: (stored['cal'] as { sd: number[] }).sd.map(() => 0) } };

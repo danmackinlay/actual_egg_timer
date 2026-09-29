@@ -2648,3 +2648,37 @@ the table; the owner reads it on a phone and says what to put back.
 - **What the proofs cannot see:** `copySnapshot compare --draft` fails
   only on Help's two linked asides, whose words a link splits into pieces
   no template matches.
+
+## 29 September 2026: the worklist, 8.1 - the comment sweep
+
+WORKLIST.md section 8.1, on a branch from `bfc070d`. Comments only, in 94
+files across both cores, both apps, the tests and the tools: the plan-phase
+labels (E1-E8, F1-F6, "Phase C"), "this used to" stories, dated owner stamps
+and the Kitchen.swift / app.ts history are gone. Where the old way is the
+reason for the new one - a fixed resample jitter, the pan constant from the
+time to boil, solving at the posterior mean - it stays, as a "why not" in
+the present tense. Dates on measurements in the tests stay: they say when a
+number was taken.
+
+- **False comments fixed on the way.** Planner and ReadoutView said the
+  decision still works out "still learning" (not since D3). decideOdds
+  quoted the 3.8% calibration error from before the resample kernel;
+  INFERENCE.md's 2.2% is the current one. Two fixture headers described a
+  two-level "set" white neither sequence has. Units.swift waited for F4,
+  which is done. Pointers to `src/ui/outcome.ts` (now only the restore),
+  `startFrom_C`, `whiteNoise` and `setupOf` name what is there now.
+- **The catalogue.** One note, on `controls.afterTheBoil.more`: it named
+  `controls.afterBoil.hint` and iOS's `explainHeatOff` / `explainHold`,
+  none of which exist. No text field touched.
+- **Dead code.** Nine `NOT_COPY` entries in `tools/copyLiterals.ts`
+  matched no Swift literal any more; they went, and the lint still passes.
+- **Left alone:** names that carry history (`forecast`, `shownForecast`,
+  test names quoting "the old band" and "7/10", the 'E3' / 'E5' sequence
+  labels in decide.test.ts, fixture `why` strings, which are data), and
+  `tools/drafts/`, which is a record of each draft by design.
+
+**Run:** `npm run verify`: 255 tests, all pass; the Swift copy lint; the
+fixtures unchanged; `swift test` 119 tests in 31 suites. The app builds for
+the iPhone 17 simulator.
+
+**Not verified:** nothing runs differently, so nothing was run on a device.

@@ -3,7 +3,7 @@ import SwiftUI
 @main
 struct ActualEggTimerApp: App {
     init() {
-        // The cook's language, before anything is drawn in it (F6).
+        // The cook's language, before anything is drawn in it.
         LanguageChoice.shared.start()
     }
 

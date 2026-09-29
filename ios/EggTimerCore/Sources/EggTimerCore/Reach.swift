@@ -2,9 +2,9 @@ import Foundation
 
 /// The odds at every level the slider offers, and what follows from them:
 /// which levels are offered at all, how the track is shaded, and when the app
-/// says how to make a cook more reliable (the owner, 27 September).
+/// says how to make a cook more reliable.
 ///
-/// A profile point is the odds the app shows when the slider sits at that
+/// A profile point is the odds the app computes when the slider sits at that
 /// level - the mean solve there, decided on the pot's decision surface - so
 /// the two cannot disagree. The levels are the two physical edges on the
 /// slider's grid, every `profileStep` positions between them, and, once an egg
@@ -14,7 +14,7 @@ import Foundation
 /// limits stand. The reasons, and the measurements, are in src/core/reach.ts,
 /// which this is held to by fixtures/reach.json.
 
-/// The odds a level must reach to be offered: 3/10 (owner, 27 September).
+/// The odds a level must reach to be offered: 3/10, the owner's number.
 public let reachOdds = 0.3
 
 /// Slider positions between profile points.

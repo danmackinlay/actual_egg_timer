@@ -156,7 +156,7 @@
     "controls.start.hot": { "surface": "segment", "apps": ["web", "ios"], "text": "Boiling water" },
     "controls.start.sousVide": { "surface": "segment", "apps": ["web", "ios"], "text": "Sous-vide {bath}", "example": { "bath": "136 °F" } },
     "controls.afterTheBoil": { "surface": "label", "apps": ["web", "ios"], "text": "After the boil" },
-    "controls.afterTheBoil.more": { "surface": "more", "apps": ["web", "ios"], "note": "A paragraph opened in place by the (i) beside After the boil (UI.md section 4). Replaces controls.afterBoil.hint on the web; iOS's explainHeatOff and explainHold say the same in two halves.", "text": "Keep boiling: the water stays at a full boil until the eggs come out, and how much water hardly matters. Heat off, lid on: once the eggs are in boiling water, the water finishes them as it cools. It saves energy, but the amount of water sets the time, and too little can't finish the job, so measure it." },
+    "controls.afterTheBoil.more": { "surface": "more", "apps": ["web", "ios"], "note": "A paragraph opened in place by the (i) beside After the boil (UI.md section 4), in both apps.", "text": "Keep boiling: the water stays at a full boil until the eggs come out, and how much water hardly matters. Heat off, lid on: once the eggs are in boiling water, the water finishes them as it cools. It saves energy, but the amount of water sets the time, and too little can't finish the job, so measure it." },
     "controls.afterTheBoil.keepBoiling": { "surface": "segment", "apps": ["web", "ios"], "text": "Keep boiling" },
     "controls.afterTheBoil.heatOff": { "surface": "segment", "apps": ["web", "ios"], "text": "Heat off, lid on" },
     "controls.cooling.ice": { "surface": "segment", "apps": ["web", "ios"], "text": "Ice bath" },

@@ -1,5 +1,5 @@
 /**
- * E5's measurements: what choosing the time costs, how accurate its surface
+ * The decision's measurements: what choosing the time costs, how accurate its surface
  * is, what it does before and after the first egg, whether the odds are
  * calibrated, and why "still learning" is a count.
  *
@@ -8,7 +8,7 @@
  *                                 learning, runny, reach, advice, outcome)
  *
  * Read-only. Nothing in src/ is touched. The numbers it prints are the ones in
- * PLAN.md (E5), INFERENCE.md section 8 and LOGBOOK.md, 28 September 2026; the
+ * PLAN.md, INFERENCE.md section 8 and LOGBOOK.md, 28 September 2026; the
  * claims they rest on are asserted, more cheaply, in test/decide.test.ts.
  */
 
@@ -216,8 +216,8 @@ if (run('odds')) {
 if (run('learning')) {
   console.log('\n== learning: the interval rule, against the count (150 cooks x 8 eggs)');
   // The owner's rule, +-15 s (INFERENCE.md section 11, decision 9). No screen
-  // shows it and `Decision` no longer carries it (D3), so it is read here, on
-  // demand, from `predictCookTime`, as E8 would.
+  // shows it and `Decision` does not carry it, so it is read here, on demand,
+  // from `predictCookTime`.
   const STILL_LEARNING_S = 15;
   type Flags = { interval: boolean; band: boolean; count: boolean }[];
   const flags: Flags[] = [];

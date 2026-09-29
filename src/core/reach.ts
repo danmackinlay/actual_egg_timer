@@ -1,10 +1,9 @@
 /**
  * The odds at every level the slider offers, and what follows from them:
  * which levels are offered at all, how the track is shaded, and when the app
- * says how to make a cook more reliable (the owner, 27 September; PLAN.md).
+ * says how to make a cook more reliable.
  *
- * THE PROFILE. E5 computed the odds of the time (`decide`; once on screen as
- * "7/10 eggs hit the mark", no longer). That is one level. The profile is the
+ * THE PROFILE. `decide` computes the odds of the time: that is one level. The profile is the
  * same number for every level the pot can deliver, computed exactly as the app
  * computes it when the slider sits there: the mean solve at that level
  * (`solveCookTime`, with the white's target where the eggs have put it), then
@@ -30,8 +29,8 @@
  *
  * REACHABILITY. The softest and firmest levels offered are the softest and
  * firmest whose odds are at least REACH_ODDS (3/10, the owner's number) -
- * not, as before, whatever the mean solve could reach. That removes the case
- * the E5 build left: the app offering a level, then reporting 0/10 for it.
+ * not whatever the mean solve can reach, which would let the app offer a
+ * level it then gives 0/10.
  * Physical impossibility still wins: the profile only has points the pan can
  * deliver, so the odds can narrow the range and never widen it. Levels inside
  * the range whose odds dip below the threshold are not refused; only the ends
@@ -43,7 +42,7 @@
  * refuse a cook for being new. It is also written as a rule of its own - no
  * odds-based refusal before the first egg that taught something - so that no
  * pot whose prior odds happen to cross 3/10 somewhere can refuse a new cook
- * either. Physical limits are the whole rule until then, exactly as before.
+ * either. Physical limits are the whole rule until then.
  *
  * Pure, like the rest of `src/core/`.
  */
@@ -58,7 +57,7 @@ import {
   LIMITS, SLIDER_STEPS, START_TEMP_PRESETS_C, Verdict, anchorNear, snapDown, snapUp, verdictFor,
 } from './policy.js';
 
-/** The odds a level must reach to be offered: 3/10 (owner, 27 September). */
+/** The odds a level must reach to be offered: 3/10, the owner's number. */
 export const REACH_ODDS = 0.3;
 
 /** Slider positions between profile points: 5, so a point every 0.05 of the
@@ -277,7 +276,7 @@ export function answerAt(
 
 /** How strongly the track is shaded at a level: its odds over the best
  *  level's, 0 to 1. Relative, so a fresh install at 2/10 everywhere still
- *  shows where this pan works best (owner, 27 September). */
+ *  shows where this pan works best. */
 export interface Shade {
   level: number;
   strength: number;

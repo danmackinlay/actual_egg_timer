@@ -1,5 +1,5 @@
 /**
- * Metric and Imperial (LANGUAGE.md §4, PLAN.md F3).
+ * Metric and Imperial (LANGUAGE.md §4).
  *
  * The one promise that matters: a cook who types 2.4 oz sees 2.4 oz again,
  * however the value was stored, clamped and carried through the egg's

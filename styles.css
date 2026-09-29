@@ -718,7 +718,7 @@ body[data-phase="IDLE"]:not([data-view="egg"]) #settingsLink,
 body[data-view="help"] #helpLink,
 body:not([data-phase="IDLE"]) :is(#settingsLink, #helpLink) { display: none; }
 
-/* ------------------------------------------------------ 1750 (F6) */
+/* ----------------------------------------------------------------------- 1750 */
 
 /* The English of 1750 (LANGUAGE.md section 6) is set in a book face, and its
    egg's page is headed by a title page after the Dictionary's. Only the
@@ -863,7 +863,7 @@ button.fb[aria-pressed="true"], button.wb[aria-pressed="true"] {
   text-align: center; margin: 8px 0 0; min-height: 1.1em; font-size: 0.8125rem; color: var(--dim);
 }
 
-/* ---- the thermometer (E4) ---- */
+/* ---- the thermometer ---- */
 #probeOffer { margin-top: 10px; text-align: center; }
 #probeOffer .hint { margin: 0 0 8px; font-size: 0.875rem; color: var(--dim); }
 #probeOffer button { margin-top: 0; }

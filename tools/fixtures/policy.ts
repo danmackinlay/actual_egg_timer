@@ -15,7 +15,7 @@ import {
   textureNoteKeys, verdictFor,
 } from '../../src/core/policy.js';
 
-/* The layer the review found unguarded. None of it is expensive, so the cases
+/* The decisions above the physics. None of it is expensive, so the cases
  * are dense rather than representative: an off-by-one in a port's loop or a
  * flipped comparison should have nowhere to hide.
  *
@@ -198,9 +198,9 @@ export const policyFixture = {
     pullGraceSeconds: PULL_GRACE_SECONDS,
     slowHob: { whenLeft_s: SLOW_HOB_WHEN_LEFT_S, extra_s: SLOW_HOB_EXTRA_S, every_s: SLOW_HOB_EVERY_S },
     /* Two timelines from the same cook, differing only in whether there is a
-     * cooling step to time. The counter one is the bug: with no cooling
-     * deadline, the iOS app used to fall from COOKING straight to DONE and
-     * never show the pull at all. Sampled either side of every boundary. */
+     * cooling step to time. The counter one matters most: with no cooling
+     * deadline, a port could fall from COOKING straight to DONE and never show
+     * the pull at all. Sampled either side of every boundary. */
     timelines: [
       { name: 'ice bath', cookEnd_s: 600, coolEnd_s: 600 + PULL_GRACE_SECONDS + COOLING_SECONDS, outAt_s: null },
       { name: 'counter rest', cookEnd_s: 600, coolEnd_s: null, outAt_s: null },

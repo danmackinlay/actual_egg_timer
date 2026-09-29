@@ -3,7 +3,7 @@ import EggTimerCore
 
 // MARK: - Decision surfaces
 
-/// This app's decision surfaces (E5), one per pot and posterior, built off the
+/// This app's decision surfaces, one per pot and posterior, built off the
 /// main actor and kept. The slider is not part of the key, so dragging it never
 /// waits for one. Two asks for the same pot share one build, and the build is
 /// not cancelled with the solve that asked for it: a pot that comes back should

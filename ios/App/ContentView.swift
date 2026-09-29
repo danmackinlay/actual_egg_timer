@@ -42,7 +42,7 @@ struct ContentView: View {
         // boundary cannot land between two reads and leave the label describing
         // one phase while the button below it describes the next.
         let outerPhase = cook.phase(at: .now)
-        // The English of 1750 (F6): read here, so this body depends on it and
+        // The English of 1750: read here, so this body depends on it and
         // a change of language redraws the page in place.
         let period = isPeriod(Copy.activeLocale)
         // The sous-vide estimate, once for the inputs as they stand: it is a
@@ -52,10 +52,9 @@ struct ContentView: View {
         // in sous-vide, whose start time is read off the clock. The pan's idle
         // screen reads nothing off the clock at all - what it shows changes
         // only when an input or an answer does, and observation redraws it
-        // then - so its once a minute is only a backstop, where it used to be
-        // every second for nothing. The period is also the timelines'
-        // identity, so a change of it starts them afresh on the new schedule
-        // with a fresh date, rather than on a date up to a minute old.
+        // then - so its once a minute is only a backstop. The period is also
+        // the timelines' identity, so a change of it starts them afresh on the
+        // new schedule with a fresh date, rather than on a date up to a minute old.
         let tick: TimeInterval = outerPhase == .idle && sousVide == nil ? 60 : 1
 
         return NavigationStack(path: $path) {

@@ -1,15 +1,15 @@
 /**
- * The thermometer (E4): a probe reading at the centre of the egg, taken when
+ * The thermometer: a probe reading at the centre of the egg, taken when
  * the model has the centre peaking, folded as a third observation beside the
  * yolk and the white.
  *
- * The claims are INFERENCE.md section 5's and PLAN.md E4's: that the error
+ * The claims are INFERENCE.md section 5's: that the error
  * model is a density, skewed the way the handling errors at the peak go (cold);
  * that one reading good to a degree pins the time-scale to about 2.5%; that a
  * hot reading shortens the next cook and a cold one lengthens it; that it folds
- * through E2's one-fold-per-egg path, so a replay is still bit-identical; that
+ * through the one-fold-per-egg path, so a replay is still bit-identical; that
  * the record carries it and refuses what cannot be; and that the cooling
- * countdown now ends when the yolk peaks, which is when the reading is asked for.
+ * countdown ends when the yolk peaks, which is when the reading is asked for.
  *
  * Zero dependencies: node:test + node:assert/strict only.
  */
@@ -152,7 +152,7 @@ test('1d. the grid carries the peak, and interpolates it to within a tenth of a 
 });
 
 // --------------------------------------------------------------------------
-// 2. E4's "done when": one reading at +-1 C
+// 2. One reading at +-1 C
 // --------------------------------------------------------------------------
 
 /** One probe-only egg folded from the prior on the app's own grid, and what the
@@ -195,11 +195,10 @@ test('2a. one reading at +-1 C takes the time-scale sd from 11.9% to about 2.5%'
     // 1.0 C Gaussian at 0.40 C per 1% is 2.45%; the handling tail costs a
     // little of it.
     assert.ok(r.weighted < 0.030, `weights: ${(100 * r.weighted).toFixed(2)}%`);
-    // What the filter keeps. Until E5 the resample's jitter was a fixed 2% on
-    // alpha, and the stored sd sat above the weights' by about that in
-    // quadrature (3.28 / 3.33 / 3.52%). Liu and West's kernel keeps the
-    // posterior's spread through the resample: 2.60 / 2.61 / 2.81% on 28
-    // September, within resampling noise of the weights.
+    // What the filter keeps. Liu and West's kernel keeps the posterior's
+    // spread through the resample: 2.60 / 2.61 / 2.81% on 28 September, within
+    // resampling noise of the weights. A fixed 2% jitter on alpha would sit
+    // above the weights' by about that in quadrature (3.28 / 3.33 / 3.52%).
     assert.ok(r.kept < 0.031, `kept: ${(100 * r.kept).toFixed(2)}%`);
     assert.ok(r.kept < prior / 3, 'at least a third of the prior');
   }
@@ -242,7 +241,7 @@ test('3a. the reading multiplies into the answers: one fold, whatever arrived fi
       * answerLikelihood(grid, p, COOK_S, target, null, null, 64.0);
     assert.ok(Math.abs(both - apart) <= 1e-15 * Math.abs(both));
   }
-  // A null reading is no reading: bit-identical to before E4.
+  // A null reading is no reading: bit-identical to a fold without one.
   const a = createPrior(200, 11);
   const b = createPrior(200, 11);
   updatePosterior(a, grid, COOK_S, target, 1, 'tender');
@@ -292,7 +291,7 @@ test('3c. the loader takes a reading the egg could have been, and refuses one it
   // Typed in F, carried in C to a hundredth: 147.2 F is 64 C, not 63.99999999999999.
   assert.equal(recordProbe_C((147.2 - 32) * 5 / 9), 64);
   assert.equal(recordProbe_C((147.3 - 32) * 5 / 9), 64.06);
-  // Absent reads as null, as every record before E4 has it.
+  // Absent reads as null, as a record without a probe field has it.
   const raw = { ...recordWith(null) } as Record<string, unknown>;
   delete raw['probe'];
   assert.equal(parseRecord(raw)?.probe, null);

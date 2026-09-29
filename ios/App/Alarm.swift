@@ -71,7 +71,7 @@ final class Alarm: NSObject, UNUserNotificationCenterDelegate {
     /// the waiting, so a locked phone, a backgrounded app or a force-quit
     /// changes nothing.
     ///
-    /// The cooling ends when the yolk's centre peaks (E4). For a cook with a
+    /// The cooling ends when the yolk's centre peaks. For a cook with a
     /// probe thermometer that is the moment to take the reading, so the second
     /// alarm asks for it instead of announcing the end.
     ///
@@ -103,8 +103,8 @@ final class Alarm: NSObject, UNUserNotificationCenterDelegate {
     /// Claiming an alarm is set without asking is how an egg timer loses trust.
     ///
     /// Reads our two identifiers rather than every pending request on the
-    /// device. The unfiltered count was a weak check that any other app's
-    /// notification could satisfy - and nothing read it anyway.
+    /// device: an unfiltered count is a weak check that any other app's
+    /// notification could satisfy.
     func pendingDeadlines() async -> Set<RingDeadline> {
         let ours: [String: RingDeadline] = [pullID: .pull, coolID: .cooled]
         return Set(await centre.pendingNotificationRequests().compactMap { ours[$0.identifier] })

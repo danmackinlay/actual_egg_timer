@@ -4,13 +4,11 @@ import Foundation
 
 /// Conformance against `fixtures/policy.json`, generated from `src/core/policy.ts`.
 ///
-/// This suite exists because the review found that everything it covers used to
-/// live twice - here and in `src/ui/app.ts` - copied by hand. The apps had
-/// already drifted: 4 eggs in the pan against 2, a 62.3 g default egg against
-/// 68 g, and preset temperatures written out three separate times on this side.
-/// The calibration grid had not drifted yet, which was luck rather than design:
-/// its six numbers decide what the particle filter can see, so two apps with
-/// different grids learn different things from the same egg.
+/// Everything it covers is a decision both apps make, so a copy that drifts
+/// shows on screen: the eggs in the pan, the default egg, the presets. The
+/// calibration grid matters most: its six numbers decide what the particle
+/// filter can see, so two apps with different grids learn different things
+/// from the same egg.
 ///
 /// Same rule as the rest of the port: the fixtures are never regenerated to
 /// make this pass. If a NUMBER is wrong it is wrong in the TypeScript first,
@@ -135,8 +133,8 @@ struct TextureConformance {
         #expect(runny > 0, "the fixture has no white that never sets")
     }
 
-    /// iOS used to say "white just set" here: the peak is on the lowest rung
-    /// of the temperature scale, and the dose never gets there.
+    /// Not "white just set": the peak is on the lowest rung of the temperature
+    /// scale, but the dose never gets there.
     @Test("a white the pan never sets is runny, not just set")
     func runnyWhite() {
         let t = textureFor(peakYolkC: 48, peakWhiteC: 51, whiteSets: false)
@@ -228,8 +226,7 @@ struct BoilMemoryConformance {
 
 @Suite("Defaults and bounds match the reference implementation")
 struct DefaultsConformance {
-    /// The drift the review actually caught: this app opened on 4 eggs of
-    /// 62.3 g where the web opened on 2 of 68 g.
+    /// Both apps open on the same eggs in the pan and the same egg.
     @Test("a fresh install starts from the same kitchen")
     func defaults() throws {
         let d = try Fixtures.policyObject("defaults")
@@ -331,11 +328,11 @@ struct SizeClassConformance {
 
 @Suite("The phase rule matches the reference implementation")
 struct PhaseConformance {
-    /// The counter-rest timeline is the regression test for the divergence the
-    /// review found: with no cooling deadline, this app used to fall from
-    /// COOKING straight to DONE, so "Out of the water — now" never appeared and
-    /// the 20 s grace never ran - while the pull notification still fired at a
-    /// screen that already said Done. Sampled either side of every boundary.
+    /// The counter-rest timeline matters most: with no cooling deadline, an
+    /// app that fell from COOKING straight to DONE would never show "Out of
+    /// the water — now" or run the 20 s grace, while the pull notification
+    /// still fired at a screen that already said Done. Sampled either side of
+    /// every boundary.
     @Test("every boundary, with and without a cooling step")
     func timelines() throws {
         for timeline in try Fixtures.policyCases("phase.timelines") {

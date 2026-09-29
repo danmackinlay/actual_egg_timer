@@ -11,20 +11,15 @@ import EggTimerCopy
 /// flight, and a result is only published if it is still the answer to the
 /// current question.
 ///
-/// The cancel used to be a lie. The work ran inside `Task.detached`, which does
-/// not inherit cancellation and never checked for it, so `task?.cancel()`
-/// cancelled only the wrapper: every superseded slider tick still ran its full
-/// scan to completion - about a second each with the heat off - and the result
-/// was thrown away at the end. There was no debounce either, so a single drag
-/// queued dozens of them. Now the coalesce keeps most of them from starting,
-/// and the ones that do start inherit cancellation and check it between solves.
+/// The coalesce keeps most superseded slider ticks from starting, and the ones
+/// that do start inherit cancellation and check it between solves. Not
+/// `Task.detached`, which does not inherit cancellation: there `task?.cancel()`
+/// would cancel only the wrapper, and every superseded tick would run its full
+/// scan - about a second each with the heat off - for a result thrown away.
 ///
 /// This file holds the inputs and what is derived from them. The solve is in
 /// Planner+Solve.swift, the learning from each egg in Planner+Learning.swift,
 /// and the decision surfaces both of them share in DecisionGrids.swift.
-///
-/// It was called Kitchen, which it is not: it is the app's model, and the
-/// kitchen - the pan, the hob, the altitude - is the Settings page.
 ///
 /// What this class decides is only what a KITCHEN knows. The decisions above
 /// the physics - snapping, which refusal applies, the texture bands, the
@@ -109,9 +104,9 @@ final class Planner {
     var heatOff: Bool = false { didSet { changed() } }
     var altitudeM: Double = Defaults.altitudeM { didSet { changed() } }
     var waterLitres: Double = Defaults.waterLitres { didSet { changed() } }
-    /// An Int, because eggs are. It was a Double only because the core mirrors
-    /// a TypeScript `number`, and that is the core's business rather than the
-    /// app's - the conversion belongs at the boundary, not in the control.
+    /// An Int, because eggs are. The core takes a Double, because it mirrors a
+    /// TypeScript `number`; that is the core's business rather than the app's,
+    /// and the conversion belongs at the boundary, not in the control.
     var eggCount: Int = Defaults.eggCount { didSet { changed() } }
 
     // MARK: - Units
@@ -130,7 +125,8 @@ final class Planner {
     var units: UnitSystem { effectiveUnits(chosen: unitsChosen, regional: regionalUnits) }
 
     /// The cook picks a system. A change of system is posted as
-    /// `.unitsFlipped`, the hook F6 needs; a default never is.
+    /// `.unitsFlipped`, which the switch into 1750 listens for
+    /// (`LanguageChoice`); a default never is.
     func chooseUnits(_ next: UnitSystem) {
         let choice = EggTimerCore.chooseUnits(chosen: unitsChosen, regional: regionalUnits, next: next)
         unitsChosen = choice.chosen
@@ -144,7 +140,7 @@ final class Planner {
         unitsChosen = chosen
     }
 
-    // MARK: - The thermometer (E4)
+    // MARK: - The thermometer
 
     /// "I have a probe thermometer": when the cooling ends, ask for one reading
     /// from the middle of the egg. Off until the cook says so.
@@ -219,14 +215,14 @@ final class Planner {
     /// Why the requested doneness was refused, in words, or empty. The point is
     /// to teach the constraint rather than merely to block the control.
     var refusal = ""
-    /// The choice behind the time on screen (E5): the odds, "still learning",
-    /// and how far it leaned from the mean solve. Nil until this pot's decision
-    /// surface has been built, and on the sous-vide screen.
+    /// The choice behind the time on screen: the odds, and how far it leaned
+    /// from the mean solve. Nil until this pot's decision surface has been
+    /// built, and on the sous-vide screen.
     var decision: Decision?
     /// The odds at every level for the pot on screen and the posterior as it
     /// stands (Reach.swift): the track's shading, and the range the slider
     /// offers. Nil until it has been worked out, after this pot's surface;
-    /// until then the physical limits are the whole rule, as before.
+    /// until then the physical limits are the whole rule.
     var oddsProfile: OddsProfile?
     /// What the egg at the chosen time will be like (`predictOutcome`, read at
     /// the decided time on the decision's own surface): the direction, the
@@ -262,7 +258,7 @@ final class Planner {
     struct Answers: Sendable {
         var yolk: Feedback?
         var white: WhiteReport?
-        /// A probe reading at the middle, when the cooling ended (E4).
+        /// A probe reading at the middle, when the cooling ended.
         var probe: ProbeReading?
     }
 

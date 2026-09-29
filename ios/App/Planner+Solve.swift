@@ -48,11 +48,10 @@ extension Planner {
         task = nil
         asked &+= 1
         // No pan, no solve. The sous-vide answer is `sousVide` (Planner.swift)
-        // and needs none of this. It goes FIRST, before anything is solved for -
-        // the web app used to branch only at the point of PAINTING, so it paid
-        // for a full hot-start solve it then discarded and left half of it on
-        // screen. Clearing the solution is what also makes the start button
-        // dead, which is the truth here: there is nothing to start.
+        // and needs none of this. It goes FIRST, before anything is solved for,
+        // so it neither pays for a hot-start solve it would discard nor leaves
+        // half of one on screen. Clearing the solution is what also makes the
+        // start button dead, which is the truth here: there is nothing to start.
         if isSousVide {
             solution = nil
             refusal = ""
@@ -73,7 +72,7 @@ extension Planner {
             let inputs = snapshot.inputs
             let answer = await Self.solve(snapshot, inputs: inputs)
             guard !Task.isCancelled else { return }
-            // E5: the time is chosen on this pot's decision surface. The surface
+            // The time is chosen on this pot's decision surface. The surface
             // does not depend on the slider, so a drag is answered from the one
             // already built and the time never jumps mid-drag; a new pot shows
             // the mean solve's time first, and the chosen one when its surface
@@ -104,7 +103,7 @@ extension Planner {
         askForProfiles(chosen.missing, calibration: calibration)
     }
 
-    /// The answer, with its time chosen from the whole posterior (E5, Decide.swift)
+    /// The answer, with its time chosen from the whole posterior (Decide.swift)
     /// rather than solved at its mean, and what to say if the odds there are
     /// low. Off the main actor, like the solve: a decision is a few thousand
     /// probits. Profiles not yet worked out - this pot's, and those of the
@@ -211,24 +210,22 @@ extension Planner {
     /// Re-solve a cook already under way, for a corrected time to boil.
     ///
     /// The doneness is the one the cook was STARTED at, and nothing here may
-    /// move it - not the slider, and not the answer. This used to call the idle
-    /// path, discard its `snapTo` and return the SNAPPED solution's cook time,
-    /// so a measured ramp that made the requested doneness unreachable quietly
-    /// re-timed the pan for a different egg while the slider, the stored
+    /// move it - not the slider, and not the answer. The idle path would snap:
+    /// a measured ramp that made the requested doneness unreachable would
+    /// quietly re-time the pan for a different egg while the slider, the stored
     /// setting and the captured ticket all still described the one asked for.
     ///
     /// `snapRetry: false` is what makes that true rather than merely intended:
-    /// an unreachable target now answers with the furthest this pan goes, which
-    /// is the only cook on offer, instead of with a cook at a target nobody
-    /// chose.
+    /// an unreachable target answers with the furthest this pan goes, which is
+    /// the only cook on offer, instead of with a cook at a target nobody chose.
     ///
-    /// `leanS` is how far the choice leaned from the mean solve at "Eggs in"
-    /// (E5). A new ramp is a new pot, whose decision surface is a second or more
+    /// `leanS` is how far the choice leaned from the mean solve at "Eggs in".
+    /// A new ramp is a new pot, whose decision surface is a second or more
     /// away with the egg already in the water, so the lean is carried instead
     /// (`carriedSolution`); test/decide.test.ts measures what that costs.
     ///
     /// The answer is the whole cook: its time, and the peak the cooling
-    /// counts to (E4).
+    /// counts to.
     func cookResult(timeToBoilS: Double, level: Double, leanS: Double) async -> CookResult? {
         let setup = setup(timeToBoilS: timeToBoilS)
         let answer = await Self.solve(
@@ -273,7 +270,7 @@ extension Planner {
             let inputs = snapshot.inputs
             var answer = await Self.solve(snapshot, inputs: inputs)
             // The time on screen is the chosen one whenever this pot's surface
-            // is already built (E5), so "Eggs in" starts on that one too. A
+            // is already built, so "Eggs in" starts on that one too. A
             // surface still to build is not waited for: the mean is what the
             // screen would show, and the egg is going in now.
             if let grid = await DecisionGrids.shared.cached(inputs) {
@@ -309,7 +306,7 @@ extension Planner {
         var setup: CookSetup
         /// The level the solution is for: the one asked, or the one it snapped to.
         var level: Double
-        /// The choice made on it (E5), once this pot's surface is in.
+        /// The choice made on it, once this pot's surface is in.
         var decision: Decision? = nil
         /// What the egg at the chosen time will be like, with the decision.
         var outcome: Outcome? = nil

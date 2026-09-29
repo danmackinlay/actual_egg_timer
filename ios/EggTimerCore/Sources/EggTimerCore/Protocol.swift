@@ -91,8 +91,8 @@ public enum Protocols {
 
     /// The pan's Newtonian loss time constant with the heat off and the lid
     /// on, s, from the water volume alone:
-    /// tau(V) = scale * tauRef * (V / 2 L)^(1/3). It used to come from the
-    /// time to boil, which measures the hob, not the pan.
+    /// tau(V) = scale * tauRef * (V / 2 L)^(1/3). Not from the time to boil,
+    /// which measures the hob, not the pan.
     public static func panTimeConstant(_ waterLitres: Double) -> Double {
         if !(waterLitres > 0.0) { return 0.0 }
         return Constants.tauStandingScale * Constants.tauStandingRefS
