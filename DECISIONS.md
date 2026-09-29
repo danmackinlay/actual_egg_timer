@@ -195,3 +195,13 @@ The worklist's questions (WORKLIST.md §1, D1-D8), answered the same day:
 45. **The copy review is applied as one named draft**, `tidy`, which the
     owner reads on a phone and trims back (D8). Built `eb1fddf`, `25a36f4`.
     The review is in the owner queue.
+
+Decided by the owner, 29 September 2026:
+
+46. **Push `main`** ("yes push"): the first push since 19 September,
+    `2f341b4..5ff6940`. The storage formats of that build are now live, so a
+    change to one needs a migration or a version bump. Recorded `cbd8d66`.
+47. **Agents in worktrees commit on their branch and do not merge; the
+    session that sent them verifies their work and merges it to local
+    `main`.** Pushing stays the owner's call. This was already how the work
+    ran before the rule said so (FOLLOWUP §0). Rule `5a9b290`.
