@@ -8,7 +8,7 @@ working here are `CLAUDE.md`; the last section says where everything else is.
 cook and learning. The web app (`src/`) and the iOS app (`ios/`) carry the
 same model, refusals, particle filter and choice of time (Phase E up to E5),
 the same catalogue of words in two Englishes (Phase F but for Czech), and the
-same layout (`UI.md`). `npm test` runs 265 tests, all passing (5b pins E3's
+same layout (`UI.md`). `npm test` runs 269 tests, all passing (5b pins E3's
 known limit). `npm run validate` passes 28/28, and `swift test` passes 119
 tests in 31 suites. **Pushed on 29 September** at `5ff6940`, the owner's
 call: Netlify serves it at actualeggtimer.netlify.app, and the first run of
@@ -81,9 +81,12 @@ Waiting on someone else: the Czech review (F5), by the owner's friend.
   `claude/egg-state-visualization-dd4490`: the yolk and white drawn ring by
   ring as the cook runs, either as how set each layer is or as its
   temperature. `src/core/section.ts` carries the cook forward a tick at a
-  time with a dose at every ring, and agrees with `simulate`. Web only so
-  far, and no words. The owner picks state or heat on a phone. Then: the
-  Swift twin with a fixture, the iOS view, and words for a screen reader.
+  time with a dose at every ring, and agrees with `simulate`. The web's
+  cooking screen draws it under the time (`src/ui/eggSection.ts`, `UI.md`
+  §3); a tap swaps state for heat. Web only so far, with no words, and the
+  tap reaches no keyboard. The owner picks state or heat on a phone. Then:
+  the Swift twin with a fixture, the iOS view, and words for a screen
+  reader.
 - **A rename:** `Ticket.forecast` / `shownForecast` hold core's `Outcome`, and
   should say so (`outcome`, `shownOutcome`). Small; both apps.
 - **Untested:** the Lock Screen card ending with the cooling, and the web's

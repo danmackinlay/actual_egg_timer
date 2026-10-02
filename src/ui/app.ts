@@ -79,6 +79,11 @@ import {
   renderProbe, resumeAnswers, wireFeedback,
 } from './feedback.js';
 import { phaseView } from './phaseView.js';
+import { EggSection, advanceSection, createSection, sectionView } from '../core/section.js';
+import { CARRYOVER_WINDOW } from '../core/constants.js';
+import {
+  SectionMode, buildEggSection, paintEggSection, readPalette, ringFills,
+} from './eggSection.js';
 
 /* ----------------------------------------------------------------- state */
 
@@ -132,6 +137,15 @@ let solveHandle = 0;
 let saveHandle = 0;
 let lastRevise_ms = 0;
 let lastAnnounced = '';
+/** The egg in cross-section under the running cook (src/core/section.ts),
+ *  carried forward each tick, and the ticket it was started from: a new
+ *  ticket - a start, a boil tapped, a slow hob, a reload - replays it from
+ *  t = 0, since the water it has been in has changed. */
+let section: EggSection | null = null;
+let sectionTicket: Ticket | null = null;
+/** Whether the section shows how set the egg is or how hot. A prototype's
+ *  switch, a tap on the egg, and not kept. */
+let sectionMode: SectionMode = 'state';
 
 /* --------------------------------------------------------------- physics */
 
@@ -549,10 +563,41 @@ function renderRunning(now_ms: number): void {
   // advice about a deadline that has already passed.
   const warning = pickedUpAfterReload() && machine.phase !== 'DONE' ? t('readout.restored') : '';
   renderReadout(now_ms, sol, warning);
+  renderSection(now_ms);
   showInfo(page().sublineInfo, false);
   renderOdds();
   renderAdvice();
   page().welcome.hidden = true;
+}
+
+/** The egg in cross-section, as it is now: carried forward to the clock, in
+ *  the water until the cook said it was out (or the grace ran out), and on
+ *  through the carryover after. At the posterior mean, the same egg the
+ *  countdown times. */
+function renderSection(now_ms: number): void {
+  const k = ticket;
+  if (k === null) return;
+  const params = calibrationParams(calib);
+  if (section === null || sectionTicket !== k) {
+    section = createSection(k.egg, k.setup, params);
+    sectionTicket = k;
+    buildEggSection(page().eggSection, section.outer);
+  }
+  const out_s = machine.outAt_ms > 0 ? (machine.outAt_ms - machine.startedAt_ms) / 1000 : null;
+  const now_s = (now_ms - machine.startedAt_ms) / 1000;
+  advanceSection(
+    section, k.egg, k.setup, params,
+    out_s === null ? now_s : Math.min(now_s, out_s + CARRYOVER_WINDOW), out_s,
+  );
+  const view = sectionView(section, calibrationDoneness(calib, machine.targetLevel).whiteDose_min);
+  // Until the series has settled, a second in, the egg is as it went in.
+  const uniform = section.t_s < 1.0 ? k.setup.eggStart_C : null;
+  paintEggSection(page().eggSection, ringFills(view, sectionMode, readPalette(page().body), uniform));
+}
+
+function toggleSectionMode(): void {
+  sectionMode = sectionMode === 'state' ? 'heat' : 'state';
+  render(Date.now());
 }
 
 /** The readout, the buttons under it and the questions at DONE, idle or not,
@@ -1225,6 +1270,7 @@ export function boot(): void {
   page().primary.addEventListener('click', onPrimary);
   page().secondary.addEventListener('click', reset);
   page().mute.addEventListener('click', onToggleMute);
+  page().eggSection.addEventListener('click', toggleSectionMode);
   wireForget(forgetAll);
   // Every (i) opens in place. They are buttons, so the keyboard reaches and
   // works them, and aria-expanded says which way they stand.

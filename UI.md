@@ -113,6 +113,13 @@ units the cook was set up in. What was said under the time at "Eggs in"
 stays for the whole cook and comes back after a reload or relaunch. Settings,
 Help and the slider are put away.
 
+**A prototype, web only, on its branch:** between the time and the sentence,
+the egg in cross-section (`src/ui/eggSection.ts`), an ovoid with a round
+yolk, ring by ring as it cooks. It shows how set each layer is: the yolk in
+the slider track's colours, the white from glassy to opaque. A tap swaps
+that for its temperature, blue through a grey at 40 C to red. It has no
+words yet, so a screen reader skips it. The owner picks one on a phone.
+
 ## 4. The (i) component
 
 - **Keys.** `K.more` beside `K` in `copy/en.json`, on the surface `more`,

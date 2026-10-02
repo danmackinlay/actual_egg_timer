@@ -22,6 +22,18 @@
   --yolk-runny: #ff7417;
   --yolk-jammy: #ffb31f;
   --yolk-hard: #ffe680;
+  /* The egg in cross-section (src/ui/eggSection.ts), a prototype. The white
+     from clear to set: opaque both, since the rings are stacked, so the
+     clear one is a glassy grey of its own. */
+  --white-raw: #2b2f36;
+  --white-set: #f2efe6;
+  /* Its heat map: blue below the room, a grey at 40 C where nothing has
+     begun to set, red toward the boil. The poles brighten off the dark. */
+  --heat-cold: #6da7ec;
+  --heat-cool: #256abf;
+  --heat-mid: #45454a;
+  --heat-warm: #b8403c;
+  --heat-hot: #ff6b5e;
 }
 
 @media (prefers-color-scheme: light) {
@@ -42,6 +54,14 @@
     --yolk-runny: #d9530a;
     --yolk-jammy: #e89400;
     --yolk-hard: #e8c410;
+    --white-raw: #dde1e7;
+    --white-set: #ffffff;
+    /* The poles darken toward the light. */
+    --heat-cold: #1c5cab;
+    --heat-cool: #86b6ef;
+    --heat-mid: #ebeae6;
+    --heat-warm: #ec8a84;
+    --heat-hot: #b3261e;
   }
 }
 
@@ -836,6 +856,19 @@ body:not([data-phase="IDLE"]) main { padding-top: 2vh; }
 body:not([data-phase="IDLE"]) #readout { margin-top: calc(4vh - 6px); padding: 22px 16px 20px; }
 body:not([data-phase="IDLE"]) #bigtime { font-size: clamp(5rem, 32vw, 9rem); }
 body:not([data-phase="IDLE"]) #phaseLabel { font-size: 0.9375rem; color: var(--fg); font-weight: 600; }
+
+/* The egg in cross-section, under the time while a cook runs: a prototype
+   (src/ui/eggSection.ts). A tap swaps how set it is for how hot. */
+.egg-section { display: none; }
+body:not([data-phase="IDLE"]) .egg-section {
+  display: block;
+  height: 7.5rem;
+  width: 100%;
+  margin: 18px 0 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.egg-section__shell { fill: none; stroke: var(--line); stroke-width: 1.5; }
 
 /* A control is shown when the answer depends on it.
  *
