@@ -31,7 +31,7 @@ import {
 import {
   LevelAnswer, OddsProfile, adviceWanted, answerAt, pricedChanges, protocolAdvice,
 } from '../core/reach.js';
-import { MassFrom } from '../core/record.js';
+import { MassFrom, forecastOf } from '../core/record.js';
 import { Outcome, predictOutcome } from '../core/outcome.js';
 import {
   Calibration, cachedDecisionGrid, cachedOddsProfile, calibrationDoneness, calibrationParams,
@@ -1068,6 +1068,8 @@ function onPrimary(): void {
       lang: activeLocale(),
       lean_s: decision === null ? 0 : decision.cookTime_s - decision.meanCookTime_s,
       outcome: decision === null ? null : outcome,
+      // What the app says now, as the record keeps it (DECISIONS.md 37).
+      forecast: decision === null || outcome === null ? null : forecastOf(outcome, cook),
       peakYolk_C: solution.result.peakYolk_C,
       probeMoment: probeMomentFor(solution.result, settings.cooling),
     };

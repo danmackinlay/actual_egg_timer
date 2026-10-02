@@ -13,7 +13,7 @@
 import { Egg, SizeTable } from '../core/geometry.js';
 import { CookSetup } from '../core/protocol.js';
 import { UnitSystem } from '../core/units.js';
-import { EggFrom, MassFrom } from '../core/record.js';
+import { EggFrom, Forecast, MassFrom, parseForecast } from '../core/record.js';
 import { Outcome } from '../core/outcome.js';
 import { restoreOutcome } from './outcome.js';
 
@@ -43,6 +43,9 @@ export interface Ticket {
   /** What the egg was likely to be like at "Eggs in", shown for the whole
    *  cook. Null when the time was started before the odds were known. */
   outcome: Outcome | null;
+  /** The same outcome as the record keeps it: every answer's probability, and
+   *  the time it was for (`forecastOf`). Null when `outcome` is. */
+  forecast: Forecast | null;
   /** The peak yolk the cook was started with, C: what the line under the
    *  running cook's sentence says. */
   peakYolk_C: number;
@@ -108,6 +111,8 @@ export function restoreTicket(raw: unknown): Ticket | null {
   // Null when the time was started before the odds were known.
   const outcome = restoreOutcome(r['outcome']);
   if (outcome === null && r['outcome'] !== null) return null;
+  const forecast = r['forecast'] === null ? null : parseForecast(r['forecast']);
+  if (forecast === null && r['forecast'] !== null) return null;
   return {
     egg: egg as Egg,
     massFrom: mf,
@@ -120,6 +125,7 @@ export function restoreTicket(raw: unknown): Ticket | null {
     lang: lang,
     lean_s: lean,
     outcome: outcome,
+    forecast: forecast,
     peakYolk_C: peak,
     probeMoment: r['probeMoment'],
   };

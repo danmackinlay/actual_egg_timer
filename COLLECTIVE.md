@@ -13,8 +13,8 @@ badge with an (i) is what says the app is learning (52), a cook who turns
 sharing on sends the eggs already in the log too (53), and App Attest is built
 now (54).
 
-**State.** E6 under way: the plan, and the white's three answers in
-`Outcome`.
+**State.** E6 under way: core's half is in (the forecast and the model
+in every record); the endpoint is next.
 
 ---
 
@@ -73,7 +73,7 @@ its absence means.
 - `model`: the code that made the forecast and chose the time, `MODEL_ID` in
   core, changed whenever the likelihood, the decision or the nudge changes.
   Null (or absent) on records written before E6.
-- `prior` becomes the population the prior was drawn from (E7 below): the
+- `prior` becomes the population the prior was drawn from, when E7 lands: the
   literature's id until a fit is published. It was the prior and the policy
   together; the policy is now `model`. No record has left the owner's devices
   (`DECISIONS.md` 38, 48), so this is still free to change.
@@ -182,10 +182,13 @@ needs data and nothing an app does waits on it.
 ### E6, collection
 
 - [x] Plan, and `DECISIONS.md` 52-54 (`700b932`).
-- [x] Core: `Outcome` carries the white's three answers (TS, Swift, fixtures).
-- [ ] Core: the record's `forecast` and `model`; `prior` is the population's
-      id. `parseRecord` and `Record.swift`, `fixtures/record.json`; both apps
-      write them from the ticket.
+- [x] Core: `Outcome` carries the white's three answers (TS, Swift, fixtures)
+      (`67be30d`).
+- [x] iOS: the ticket's `Outcome` renamed `outcome`, freeing "forecast"
+      (`84b5a25`; PLAN.md's open item).
+- [x] Core: the record's `forecast` and `model`. `parseRecord` and
+      `Record.swift`, `fixtures/record.json`; both apps write them from the
+      ticket. (`prior` becomes the population's id with E7.)
 - [ ] Server: `server/` (records, deletion, tiers, CBOR, App Attest), the
       function, `netlify.toml`, `@netlify/blobs`; `test/server.test.ts` and
       `test/appAttest.test.ts`.

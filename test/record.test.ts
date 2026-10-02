@@ -21,7 +21,7 @@ import { readFileSync } from 'node:fs';
 
 import { GridSpec, buildRequestedGrid } from '../src/core/doseGrid.js';
 import {
-  Calibration, EggRecord, PRIOR_ID, copyCalibration, foldRecord, freshCalibration, gridRequestFor,
+  Calibration, EggRecord, MODEL_ID, PRIOR_ID, copyCalibration, foldRecord, freshCalibration, gridRequestFor,
   parseLog, parseRecord, recordCookTime_s, recordMass_g, replay,
 } from '../src/core/record.js';
 import { calibrationGrid, PARTICLE_COUNT, CALIBRATION_SEED } from '../src/core/policy.js';
@@ -67,7 +67,7 @@ function solvedRecord(
   const setup = appSetup(over);
   const t = solveCookTime(egg, setup, DEFAULT_PARAMS, donenessFromSlider(level)).result.cookTime_s;
   return {
-    v: 1, uid: null, day: '2026-09-26', app: 'web', appVersion: APP_VERSION, prior: PRIOR_ID,
+    v: 1, uid: null, day: '2026-09-26', app: 'web', appVersion: APP_VERSION, prior: PRIOR_ID, model: null,
     egg: { mass_g: recordMass_g(egg.mass_kg), massFrom: 'class', sizeTable: 'eu' },
     setup: {
       startMode: setup.startMode, eggStart_C: setup.eggStart_C, eggFrom: 'fridge',
@@ -78,6 +78,7 @@ function solvedRecord(
     },
     level: level, recommended_s: t, nudge_s: 0, pulled_s: t + 4, pulledBy: 'cook',
     cooled_s: 180, yolk: yolk, white: null, probe: null,
+    forecast: null,
     lang: 'en', register: 'modern', units: 'metric',
   };
 }
@@ -317,7 +318,7 @@ test('3c. forget everything clears the log, the base and the posterior', () => {
 const T0 = 1_750_000_000_000;
 const COOKED: Cooked = {
   egg: eggFromMass(0.062), massFrom: 'scale', sizeTable: null, setup: appSetup(), eggFrom: 'fridge',
-  boilRemembered: false, units: 'metric', lang: 'en',
+  boilRemembered: false, units: 'metric', lang: 'en', forecast: null,
 };
 
 function pulled(m: Machine): Machine {
@@ -368,6 +369,18 @@ test('4b3. the time to boil says whether this cook measured it', () => {
   const r = eggRecordFor(cold, m, 0);
   assert.equal(r.setup.timeToBoilFrom, 'measured');
   assert.equal(r.setup.timeToBoil_s, 431.5);
+});
+
+test('4b4. the record keeps what the app said at Eggs in, and names the model that said it', () => {
+  const m = beginCooling(pulled(startHot(T0, 400, 'ice', 0.4)), T0 + 402_000);
+  const forecast = { cook_s: 400, yolk: [0.25, 0.5, 0.25], white: [0.125, 0.375, 0.5] };
+  const r = eggRecordFor({ ...COOKED, forecast: forecast }, m, 0);
+  assert.deepEqual(r.forecast, forecast);
+  assert.equal(r.model, MODEL_ID);
+  assert.deepEqual(parseRecord(JSON.parse(JSON.stringify(r))), r);
+  const before = eggRecordFor(COOKED, m, 0);
+  assert.equal(before.forecast, null, 'started before the odds were known');
+  assert.notEqual(parseRecord(before), null);
 });
 
 test('4c. a stored cook keeps who pulled it, and one that does not say is refused', () => {

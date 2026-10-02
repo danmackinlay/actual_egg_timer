@@ -28,7 +28,7 @@ import { DecisionInputs } from '../core/decide.js';
 import { OddsProfile } from '../core/reach.js';
 import { CALIBRATION_SEED, PARTICLE_COUNT, calibrationGrid } from '../core/policy.js';
 import {
-  Calibration, EggFrom, EggRecord, MassFrom, PRIOR_ID, ProbeReading, RECORD_VERSION,
+  Calibration, EggFrom, EggRecord, Forecast, MODEL_ID, MassFrom, PRIOR_ID, ProbeReading, RECORD_VERSION,
   calibrationDoneness as donenessOf, calibrationParams as paramsOf, copyCalibration, foldRecord,
   freshCalibration as freshFrom, gridRequestFor, parseLog, recordMass_g, recordTeaches,
 } from '../core/record.js';
@@ -114,6 +114,9 @@ export interface Cooked {
    *  tag such as `en`, or `en-x-1750` for the English of 1750, whose
    *  record also says `register: '1750'` (`registerOf`). */
   lang: string;
+  /** What the app said at "Eggs in", for the record; null when the time was
+   *  started before the odds were known. */
+  forecast: Forecast | null;
 }
 
 function pad2(n: number): string {
@@ -148,6 +151,7 @@ export function eggRecordFor(
     app: 'web',
     appVersion: APP_VERSION,
     prior: PRIOR_ID,
+    model: MODEL_ID,
     egg: {
       mass_g: recordMass_g(c.egg.mass_kg),
       massFrom: c.massFrom,
@@ -176,6 +180,7 @@ export function eggRecordFor(
     yolk: yolk,
     white: white,
     probe: probe,
+    forecast: c.forecast,
     lang: c.lang,
     register: registerOf(c.lang),
     units: c.units,

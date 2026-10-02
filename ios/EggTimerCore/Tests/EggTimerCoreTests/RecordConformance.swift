@@ -139,6 +139,7 @@ struct RecordConformance {
         let file = try Fixtures.load("record.json")
         #expect(try recordVersion == Int(file.num("version")))
         #expect(try priorID == file.str("prior"))
+        #expect(try modelID == file.str("model"))
     }
 
     @Test("which records a loader trusts, case by case")
@@ -158,6 +159,15 @@ struct RecordConformance {
             if let probe, let read = record.probe {
                 #expect(try read.centreC == probe.num("centre_C"), "\(why): probe reading")
                 #expect(try read.afterS == probe.optionalNum("after_s"), "\(why): probe asked at")
+            }
+            #expect(record.model == c["model"] as? String, "\(why): model")
+            // What the app said at Eggs in: the same time and the same six numbers.
+            let forecast = c["forecast"] as? [String: Any]
+            #expect((record.forecast == nil) == (forecast == nil), "\(why): forecast")
+            if let forecast, let read = record.forecast {
+                #expect(try read.cookS == forecast.num("cook_s"), "\(why): forecast time")
+                #expect(read.yolk == forecast["yolk"] as? [Double], "\(why): forecast yolk")
+                #expect(read.white == forecast["white"] as? [Double], "\(why): forecast white")
             }
         }
     }

@@ -55,7 +55,7 @@ function coldTicket(): Ticket {
       startMode: 'cold', afterBoil: 'hold', eggStart_C: 4, ambient_C: 20, boiling_C: 100,
       timeToBoil_s: 480, cooling: 'ice', waterLitres: 2, eggCount: 2,
     },
-    logNominalTarget: 0.9, units: 'metric', lean_s: 0, outcome: null, peakYolk_C: 66, lang: 'en',
+    logNominalTarget: 0.9, units: 'metric', lean_s: 0, outcome: null, forecast: null, peakYolk_C: 66, lang: 'en',
     probeMoment: true,
   };
 }

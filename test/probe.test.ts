@@ -62,7 +62,7 @@ function truePeak(factor: number, cooling: CookSetup['cooling'] = 'ice'): number
 
 function recordWith(probe_C: number | null, over: Partial<EggRecord> = {}): EggRecord {
   return {
-    v: 1, uid: null, day: '2026-09-27', app: 'web', appVersion: '0.2.0', prior: PRIOR_ID,
+    v: 1, uid: null, day: '2026-09-27', app: 'web', appVersion: '0.2.0', prior: PRIOR_ID, model: null,
     egg: { mass_g: 68, massFrom: 'scale', sizeTable: null },
     setup: {
       startMode: 'hot', eggStart_C: 4, eggFrom: 'fridge', ambient_C: 20, boiling_C: 100,
@@ -72,6 +72,7 @@ function recordWith(probe_C: number | null, over: Partial<EggRecord> = {}): EggR
     level: JAMMY, recommended_s: COOK_S, nudge_s: 0, pulled_s: COOK_S, pulledBy: 'timeout',
     cooled_s: coolingSecondsFor(COOK.result), yolk: null, white: null,
     probe: probe_C === null ? null : { centre_C: probe_C, after_s: coolingSecondsFor(COOK.result) },
+    forecast: null,
     lang: 'en', register: 'modern', units: 'metric',
     ...over,
   };

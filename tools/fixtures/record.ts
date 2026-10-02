@@ -7,7 +7,7 @@ import { eggFromMass } from '../../src/core/geometry.js';
 import { CookSetup } from '../../src/core/protocol.js';
 import { GridSpec, buildRequestedGrid } from '../../src/core/doseGrid.js';
 import {
-  Calibration, EggRecord, PRIOR_ID, RECORD_VERSION, calibrationDoneness, copyCalibration,
+  Calibration, EggRecord, MODEL_ID, PRIOR_ID, RECORD_VERSION, calibrationDoneness, copyCalibration,
   foldRecord, freshCalibration, gridRequestFor, parseRecord, recordCookTime_s, recordMass_g,
   recordProbe_C, recordTeaches, replay,
 } from '../../src/core/record.js';
@@ -59,6 +59,8 @@ interface EggSpec {
   /** A probe reading, as degrees off the peak the literature values
    *  predict for this cook, so the fixture reads where a real one would. */
   probeOff_C?: number;
+  /** What the app said at "Eggs in", as answer probabilities; none if absent. */
+  forecast?: { yolk: number[]; white: number[] };
 }
 
 /* Realistic cooks: each recommended time is what the solver says for that egg
@@ -79,6 +81,7 @@ function recordOf(e: EggSpec): EggRecord {
     app: e.app,
     appVersion: '0.2.0',
     prior: PRIOR_ID,
+    model: MODEL_ID,
     egg: {
       mass_g: recordMass_g(egg.mass_kg), massFrom: e.massFrom,
       sizeTable: e.massFrom === 'class' ? e.sizeTable ?? 'eu' : null,
@@ -105,6 +108,9 @@ function recordOf(e: EggSpec): EggRecord {
     yolk: e.yolk,
     white: e.white,
     probe: probe,
+    forecast: e.forecast === undefined ? null : {
+      cook_s: recommended, yolk: e.forecast.yolk, white: e.forecast.white,
+    },
     lang: 'en',
     register: 'modern',
     units: 'metric',
@@ -116,6 +122,7 @@ const REPLAY_LOG: EggRecord[] = [
   recordOf({
     app: 'web', mass_g: 62, massFrom: 'class', eggFrom: 'fridge', over: {},
     level: 0.3, pulledBy: 'cook', late_s: 7.25, yolk: -1, white: 'runny',
+    forecast: { yolk: [0.25, 0.5, 0.25], white: [0.375, 0.5, 0.125] },
   }),
   // A cold start with a measured ramp; the white skipped.
   recordOf({
@@ -242,7 +249,36 @@ const RECORD_CASES: { why: string; mutate: Mutation }[] = [
     why: 'nullable fields may be absent',
     mutate: (r) => { delete r['uid']; delete r['probe']; delete r['yolk']; delete r['white']; },
   },
-  { why: 'a uid, once E6 mints one', mutate: (r) => { r['uid'] = '6f1c2a9e-2b1d-4c1e-9d6b-1a2b3c4d5e6f'; } },
+  { why: 'a uid, as an uploaded copy carries one', mutate: (r) => { r['uid'] = '6f1c2a9e-2b1d-4c1e-9d6b-1a2b3c4d5e6f'; } },
+  {
+    why: 'from before E6: no model, no forecast',
+    mutate: (r) => { delete r['model']; delete r['forecast']; },
+  },
+  { why: 'no forecast kept', mutate: (r) => { r['forecast'] = null; } },
+  {
+    why: 'a forecast whose answers sum to one in floating point',
+    mutate: (r) => { r['forecast'] = { cook_s: 400.5, yolk: [0.1, 0.2, 0.7], white: [0.3, 0.6, 0.1] }; },
+  },
+  { why: 'an empty model', mutate: (r) => { r['model'] = ''; } },
+  { why: 'a model as a number', mutate: (r) => { r['model'] = 6; } },
+  {
+    why: 'a forecast that does not sum to one',
+    mutate: (r) => { r['forecast'] = { cook_s: 400, yolk: [0.2, 0.5, 0.2], white: [0.3, 0.5, 0.2] }; },
+  },
+  {
+    why: 'a forecast with two answers',
+    mutate: (r) => { r['forecast'] = { cook_s: 400, yolk: [0.5, 0.5], white: [0.3, 0.5, 0.2] }; },
+  },
+  {
+    why: 'a forecast with a probability past one',
+    mutate: (r) => { r['forecast'] = { cook_s: 400, yolk: [1.5, -0.25, -0.25], white: [0.3, 0.5, 0.2] }; },
+  },
+  {
+    why: 'a forecast for no time',
+    mutate: (r) => { r['forecast'] = { cook_s: 0, yolk: [0.2, 0.6, 0.2], white: [0.3, 0.5, 0.2] }; },
+  },
+  { why: 'a forecast with no white', mutate: (r) => { r['forecast'] = { cook_s: 400, yolk: [0.2, 0.6, 0.2] }; } },
+  { why: 'a forecast as a string', mutate: (r) => { r['forecast'] = '7/10'; } },
   { why: 'an unanswered egg', mutate: (r) => { r['yolk'] = null; r['white'] = null; } },
   { why: 'the white offered and skipped', mutate: (r) => { r['white'] = null; } },
   { why: 'a tender white (E2)', mutate: (r) => { r['white'] = 'tender'; } },
@@ -323,6 +359,8 @@ const recordCases = RECORD_CASES.map((c) => {
     yolk: parsed === null ? null : parsed.yolk,
     white: parsed === null ? null : parsed.white,
     probe: parsed === null ? null : parsed.probe,
+    model: parsed === null ? null : parsed.model,
+    forecast: parsed === null ? null : parsed.forecast,
   };
 });
 // A log is all or nothing: one bad record refuses the lot.
@@ -333,12 +371,15 @@ recordCases.push({
   yolk: null,
   white: null,
   probe: null,
+  model: null,
+  forecast: null,
 });
 
 export const recordFixture = {
   about: 'The record (INFERENCE.md section 4): which records a loader trusts, and a replayed log. src/core/record.ts.',
   version: RECORD_VERSION,
   prior: PRIOR_ID,
+  model: MODEL_ID,
   cases: recordCases,
   massRounding: [0.048, 0.058, 0.068, 0.076, 0.0553017, 0.06849999, 0.0624449999].map((kg) => ({
     mass_kg: kg, mass_g: recordMass_g(kg),

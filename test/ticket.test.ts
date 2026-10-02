@@ -34,6 +34,7 @@ function aTicket(): Ticket {
       pTooSoft: 0.2, pJustRight: 0.6, pTooFirm: 0.2, pWhiteRunny: 0.05, pWhiteTender: 0.25, pWhiteFirm: 0.7,
       levelLow: 0.3, levelMedian: 0.4, levelHigh: 0.5, lean: 'balanced',
     },
+    forecast: { cook_s: 412.5, yolk: [0.2, 0.6, 0.2], white: [0.05, 0.25, 0.7] },
     peakYolk_C: 66,
     lang: 'en',
     probeMoment: true,
@@ -48,7 +49,7 @@ function stored(k: unknown): unknown {
 test('a ticket this build wrote comes back as it went in', () => {
   const k = aTicket();
   assert.deepEqual(restoreTicket(stored(k)), k);
-  const measured: Ticket = { ...k, massFrom: 'scale', sizeTable: null, outcome: null };
+  const measured: Ticket = { ...k, massFrom: 'scale', sizeTable: null, outcome: null, forecast: null };
   assert.deepEqual(restoreTicket(stored(measured)), measured, 'a weighed egg, started before the odds were in');
 });
 
@@ -82,6 +83,7 @@ test('a ticket that is not one of this build\'s is refused, not patched', () => 
     ['no language', (k) => { k['lang'] = ''; }],
     ['a target that is not a number', (k) => { k['logNominalTarget'] = 'soft'; }],
     ['an outcome that is not one', (k) => { k['outcome'] = { lean: 'soft' }; }],
+    ['a forecast that is not one', (k) => { k['forecast'] = { cook_s: 400, yolk: [1, 1, 1], white: [0, 0, 1] }; }],
   ];
   for (const [what, spoil] of bad) {
     const k = stored(aTicket()) as Record<string, unknown>;

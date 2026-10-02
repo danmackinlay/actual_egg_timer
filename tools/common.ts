@@ -81,7 +81,7 @@ export function recordAt(
   level: number, t: number, yolk: Feedback | null, white: WhiteReport | null, setup = appSetup(),
 ): EggRecord {
   return {
-    v: 1, uid: null, day: '2026-09-28', app: 'web', appVersion: '0.2.0', prior: PRIOR_ID,
+    v: 1, uid: null, day: '2026-09-28', app: 'web', appVersion: '0.2.0', prior: PRIOR_ID, model: null,
     egg: { mass_g: 68, massFrom: 'class', sizeTable: 'eu' },
     setup: {
       startMode: setup.startMode, eggStart_C: setup.eggStart_C, eggFrom: 'fridge',
@@ -90,7 +90,7 @@ export function recordAt(
       waterLitres: setup.waterLitres, eggCount: setup.eggCount,
     },
     level: level, recommended_s: t, nudge_s: 0, pulled_s: t, pulledBy: 'timeout', cooled_s: 180,
-    yolk: yolk, white: white, probe: null, lang: 'en', register: 'modern', units: 'metric',
+    yolk: yolk, white: white, probe: null, forecast: null, lang: 'en', register: 'modern', units: 'metric',
   };
 }
 

@@ -216,7 +216,7 @@ held to `EggTimerCore/Record.swift` by `fixtures/record.json`.
   "v": 1,
   "uid": null,
   "day": "2026-09-21",
-  "app": "ios", "appVersion": "0.3.0", "prior": "2026-09",
+  "app": "ios", "appVersion": "0.3.0", "prior": "2026-09-e5", "model": "2026-10-e6",
   "egg": { "mass_g": 68, "massFrom": "class", "sizeTable": "eu" },
   "setup": {
     "startMode": "hot", "eggStart_C": 4, "eggFrom": "fridge", "ambient_C": 20,
@@ -228,6 +228,7 @@ held to `EggTimerCore/Record.swift` by `fixtures/record.json`.
   "cooled_s": 180,
   "yolk": -1, "white": null,
   "probe": null,
+  "forecast": { "cook_s": 399, "yolk": [0.21, 0.55, 0.24], "white": [0.04, 0.31, 0.65] },
   "lang": "en", "register": "modern", "units": "metric"
 }
 ```
@@ -285,8 +286,16 @@ held to `EggTimerCore/Record.swift` by `fixtures/record.json`.
   `boiling_C` is a one-to-one function of the altitude setting, so it carries
   everything the altitude would, and the altitude itself is not recorded.
 - `uid` is `null` until E6 mints one. `mass_g` is rounded to 0.01 g.
-- `forecast` and `model` are not written yet: E6 adds them, so that what the
-  app actually said at "Eggs in" is kept beside the answer (§7; `DECISIONS.md` 37).
+- `forecast` (E6) is what the app actually said at "Eggs in" (§7;
+  `DECISIONS.md` 37): each answer's probability, unrelated share included,
+  as `predictOutcome` gives them, and `cook_s`, the time they were for. On a
+  cold start the boil tap re-solves the cook afterwards, so `cook_s` can
+  differ from `recommended_s`. Null when the cook was started before the
+  odds were known. `model` (E6) is `MODEL_ID`, the code that made the
+  forecast and chose the time - the likelihood, the decision and, from E8,
+  the nudge - changed whenever they change. Both are null, or absent, on a
+  record from before E6. A replay says what the current code would have
+  forecast; only these say what the app said.
 - `probe` (E4) is `null`, or `{ "centre_C": 64.2, "after_s": 183 }`: the
   highest number the cook saw with the probe at the middle, in C to 0.01
   whatever they typed it in, and when the app asked for it - the end of the

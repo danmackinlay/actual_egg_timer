@@ -26,6 +26,12 @@ public let recordVersion = 1
 /// (Decide.swift).
 public let priorID = "2026-09-e5"
 
+/// The code that made the record's forecast and chose its time: the
+/// likelihood, the decision and, from E8, the nudge. Changed whenever any of
+/// them changes, so the model as it shipped can be scored after the code has
+/// moved on (DECISIONS.md 37). See src/core/record.ts.
+public let modelID = "2026-10-e6"
+
 /// Where the egg's mass came from. A size class is a 10 g bucket, worth about
 /// +-24 s; a scale is a gram.
 public enum MassFrom: String, Sendable, Codable {
@@ -166,6 +172,60 @@ public struct ProbeReading: Sendable, Codable, Equatable {
     }
 }
 
+/// What the app said at "Eggs in" (DECISIONS.md 37): each answer's
+/// probability at the time the cook was started at, unrelated share
+/// included. See src/core/record.ts.
+public struct Forecast: Sendable, Codable, Equatable {
+    /// The cook time the forecast was made for, s from egg in: the time on
+    /// screen at "Eggs in", before any boil tap re-solved it.
+    public var cookS: Double
+    /// P(too soft), P(just right), P(too firm).
+    public var yolk: [Double]
+    /// P(runny), P(tender), P(firm).
+    public var white: [Double]
+
+    public init(cookS: Double, yolk: [Double], white: [Double]) {
+        self.cookS = cookS
+        self.yolk = yolk
+        self.white = white
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case cookS = "cook_s"
+        case yolk, white
+    }
+}
+
+/// The forecast a ticket keeps: the outcome on screen at "Eggs in", and the
+/// time it was for.
+public func forecastOf(_ o: Outcome, cookS: Double) -> Forecast {
+    Forecast(
+        cookS: cookS,
+        yolk: [o.pTooSoft, o.pJustRight, o.pTooFirm],
+        white: [o.pWhiteRunny, o.pWhiteTender, o.pWhiteFirm]
+    )
+}
+
+/// How far a forecast's three answers may sum from one.
+private let forecastSumTolerance = 1e-6
+
+/// Three probabilities that sum to one, as a forecast's answers are.
+private func threeAnswers(_ v: [Double]) -> Bool {
+    guard v.count == 3 else { return false }
+    var sum = 0.0
+    for p in v {
+        guard p.isFinite, p >= 0, p <= 1 else { return false }
+        sum += p
+    }
+    return abs(sum - 1.0) <= forecastSumTolerance
+}
+
+/// Whether a forecast is one: a positive time and two sets of three
+/// probabilities. `parseForecast`'s rules.
+public func validForecast(_ f: Forecast) -> Bool {
+    f.cookS.isFinite && f.cookS > 0 && threeAnswers(f.yolk) && threeAnswers(f.white)
+}
+
 public struct EggRecord: Sendable, Codable, Equatable {
     public var v: Int
     /// The cook's random id, for opt-in collection, which is not built: nothing
@@ -176,6 +236,8 @@ public struct EggRecord: Sendable, Codable, Equatable {
     public var app: AppName
     public var appVersion: String
     public var prior: String
+    /// `modelID` when the record was written; nil on one from before E6.
+    public var model: String?
     public var egg: RecordEgg
     public var setup: RecordSetup
     public var level: Double
@@ -191,16 +253,19 @@ public struct EggRecord: Sendable, Codable, Equatable {
     public var white: WhiteReport?
     /// A reading at the centre's peak, or nil: no probe, or not taken.
     public var probe: ProbeReading?
+    /// What the app said at "Eggs in", or nil: started before the odds were
+    /// known, or written before E6.
+    public var forecast: Forecast?
     public var lang: String
     public var register: String
     public var units: Units
 
     public init(
         uid: String? = nil, day: String, app: AppName, appVersion: String,
-        prior: String = priorID, egg: RecordEgg, setup: RecordSetup, level: Double,
-        recommendedS: Double, nudgeS: Double = 0, pulledS: Double, pulledBy: PulledBy,
+        prior: String = priorID, model: String? = modelID, egg: RecordEgg, setup: RecordSetup,
+        level: Double, recommendedS: Double, nudgeS: Double = 0, pulledS: Double, pulledBy: PulledBy,
         cooledS: Double, yolk: Feedback?, white: WhiteReport? = nil,
-        probe: ProbeReading? = nil,
+        probe: ProbeReading? = nil, forecast: Forecast? = nil,
         lang: String = "en", register: String = "modern", units: Units = .metric
     ) {
         v = recordVersion
@@ -209,6 +274,7 @@ public struct EggRecord: Sendable, Codable, Equatable {
         self.app = app
         self.appVersion = appVersion
         self.prior = prior
+        self.model = model
         self.egg = egg
         self.setup = setup
         self.level = level
@@ -220,19 +286,20 @@ public struct EggRecord: Sendable, Codable, Equatable {
         self.yolk = yolk
         self.white = white
         self.probe = probe
+        self.forecast = forecast
         self.lang = lang
         self.register = register
         self.units = units
     }
 
     enum CodingKeys: String, CodingKey {
-        case v, uid, day, app, appVersion, prior, egg, setup, level
+        case v, uid, day, app, appVersion, prior, model, egg, setup, level
         case recommendedS = "recommended_s"
         case nudgeS = "nudge_s"
         case pulledS = "pulled_s"
         case pulledBy
         case cooledS = "cooled_s"
-        case yolk, white, probe, lang, register, units
+        case yolk, white, probe, forecast, lang, register, units
     }
 
     /// Nullable fields may be absent and read as nil, which is what the
@@ -245,6 +312,7 @@ public struct EggRecord: Sendable, Codable, Equatable {
         app = try c.decode(AppName.self, forKey: .app)
         appVersion = try c.decode(String.self, forKey: .appVersion)
         prior = try c.decode(String.self, forKey: .prior)
+        model = try c.decodeIfPresent(String.self, forKey: .model)
         egg = try c.decode(RecordEgg.self, forKey: .egg)
         setup = try c.decode(RecordSetup.self, forKey: .setup)
         level = try c.decode(Double.self, forKey: .level)
@@ -256,6 +324,7 @@ public struct EggRecord: Sendable, Codable, Equatable {
         yolk = try c.decodeIfPresent(Feedback.self, forKey: .yolk)
         white = try c.decodeIfPresent(WhiteReport.self, forKey: .white)
         probe = try c.decodeIfPresent(ProbeReading.self, forKey: .probe)
+        forecast = try c.decodeIfPresent(Forecast.self, forKey: .forecast)
         lang = try c.decode(String.self, forKey: .lang)
         register = try c.decode(String.self, forKey: .register)
         units = try c.decode(Units.self, forKey: .units)
@@ -272,6 +341,7 @@ public struct EggRecord: Sendable, Codable, Equatable {
         try c.encode(app, forKey: .app)
         try c.encode(appVersion, forKey: .appVersion)
         try c.encode(prior, forKey: .prior)
+        try c.encode(model, forKey: .model)
         try c.encode(egg, forKey: .egg)
         try c.encode(setup, forKey: .setup)
         try c.encode(level, forKey: .level)
@@ -283,6 +353,7 @@ public struct EggRecord: Sendable, Codable, Equatable {
         try c.encode(yolk, forKey: .yolk)
         try c.encode(white, forKey: .white)
         try c.encode(probe, forKey: .probe)
+        try c.encode(forecast, forKey: .forecast)
         try c.encode(lang, forKey: .lang)
         try c.encode(register, forKey: .register)
         try c.encode(units, forKey: .units)
@@ -340,6 +411,8 @@ public func validRecord(_ r: EggRecord) -> Bool {
     guard r.v == recordVersion else { return false }
     if let uid = r.uid, uid.isEmpty { return false }
     guard isDay(r.day), !r.appVersion.isEmpty, !r.prior.isEmpty else { return false }
+    if let model = r.model, model.isEmpty { return false }
+    if let forecast = r.forecast, !validForecast(forecast) { return false }
     guard r.egg.massG.isFinite, r.egg.massG > 0 else { return false }
     // A class names its carton; nothing else has one.
     guard (r.egg.massFrom == .sizeClass) == (r.egg.sizeTable != nil) else { return false }

@@ -72,6 +72,10 @@ final class Cook {
         /// and the white's line, shown for the whole cook as the web shows
         /// them. Nil when the cook was started before they were known.
         var outcome: Outcome?
+        /// What the app said at "Eggs in", as the record keeps it: every
+        /// answer's probability and the time it was for (DECISIONS.md 37).
+        /// Nil when the cook was started before the odds were known.
+        var forecast: Forecast?
 
         /// How long the counted cooling runs from the pull, s: to the moment the
         /// yolk's centre peaks, for this cook (`coolingSecondsFor`).
@@ -292,6 +296,7 @@ final class Cook {
             yolk: yolk,
             white: white,
             probe: probe,
+            forecast: ticket.forecast,
             lang: ticket.lang,
             // What kind of English the answers were given in: the fit
             // can then tell a 1750 "Too rear" from a modern "Too soft".
@@ -712,6 +717,9 @@ extension Cook.Ticket {
             // the chosen one, and a mid-cook re-solve carries its lean.
             leanS: planner.decision?.leanS ?? 0,
             outcome: planner.shownOutcome,
+            // What the app says now, as the record keeps it: wherever a
+            // decision has been made, as the web's ticket has it.
+            forecast: planner.outcome.map { forecastOf($0, cookS: solution.result.cookTimeS) },
             // The cooling counts to the yolk's peak for this cook.
             coolS: coolingSecondsFor(solution.result),
             probeMoment: probeMomentFor(solution.result, cooling: planner.cooling)

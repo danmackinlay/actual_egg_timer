@@ -365,7 +365,7 @@ function softRecord(cal: Calibration, level: number, yolk: Feedback | null, whit
   const setup = appSetup();
   const t = solveCookTime(EGG, setup, calibrationParams(cal), calibrationDoneness(cal, level)).result.cookTime_s;
   return {
-    v: 1, uid: null, day: '2026-09-27', app: 'web', appVersion: '0.2.0', prior: PRIOR_ID,
+    v: 1, uid: null, day: '2026-09-27', app: 'web', appVersion: '0.2.0', prior: PRIOR_ID, model: null,
     egg: { mass_g: 68, massFrom: 'class', sizeTable: 'eu' },
     setup: {
       startMode: 'hot', eggStart_C: 4, eggFrom: 'fridge', ambient_C: 20, boiling_C: 100,
@@ -373,7 +373,7 @@ function softRecord(cal: Calibration, level: number, yolk: Feedback | null, whit
       waterLitres: 2, eggCount: 2,
     },
     level: level, recommended_s: t, nudge_s: 0, pulled_s: t, pulledBy: 'timeout', cooled_s: 180,
-    yolk: yolk, white: white, probe: null, lang: 'en', register: 'modern', units: 'metric',
+    yolk: yolk, white: white, probe: null, forecast: null, lang: 'en', register: 'modern', units: 'metric',
   };
 }
 

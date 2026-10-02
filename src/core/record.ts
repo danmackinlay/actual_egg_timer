@@ -39,6 +39,7 @@ import {
   posteriorParams, updatePosterior,
 } from './infer.js';
 import { calibrationGrid } from './policy.js';
+import { Outcome } from './outcome.js';
 
 /** The schema version. A loader refuses any other: a record from a later
  *  schema means something this code does not know how to fold. */
@@ -52,6 +53,14 @@ export const RECORD_VERSION = 1;
  *  under the policy that CHOOSES the time from the whole posterior
  *  (decide.ts) from the first egg that taught anything. */
 export const PRIOR_ID = '2026-09-e5';
+
+/** The code that made the record's forecast and chose its time: the
+ *  likelihood, the decision and, from E8, the nudge. Changed whenever any of
+ *  them changes, so that the model as it SHIPPED can be scored after the code
+ *  has moved on (DECISIONS.md 37); a replay can only say what the current code
+ *  would have said. '2026-10-e6' is E5's likelihood and decision, with the
+ *  forecast kept. Records from before E6 carry none. */
+export const MODEL_ID = '2026-10-e6';
 
 /** Where the egg's mass came from. A size class is a 10 g bucket, worth about
  *  +-24 s; a scale is a gram. The fit reads this as egg-level noise. */
@@ -90,6 +99,34 @@ export interface ProbeReading {
    *  is not known. The likelihood reads the reading as the peak; this is kept
    *  so that a later fit can check that it was. */
   after_s: number | null;
+}
+
+/**
+ * What the app said at "Eggs in" (DECISIONS.md 37): the probability of each
+ * answer the cook could give, at the time the cook was started at, unrelated
+ * share included - `predictOutcome`'s, not the odds in tenths. Kept so that
+ * the model as shipped can be scored by proper scoring rules after the code
+ * changes, which a replay cannot do.
+ */
+export interface Forecast {
+  /** The cook time the forecast was made for, s from egg in: the time on
+   *  screen at "Eggs in". A cold start's boil tap re-solves the cook after
+   *  that, and `recommended_s` is the re-solved time, so the two can differ. */
+  cook_s: number;
+  /** P(too soft), P(just right), P(too firm). */
+  yolk: number[];
+  /** P(runny), P(tender), P(firm). */
+  white: number[];
+}
+
+/** The forecast a ticket keeps: the outcome on screen at "Eggs in", and the
+ *  time it was for. */
+export function forecastOf(o: Outcome, cook_s: number): Forecast {
+  return {
+    cook_s: cook_s,
+    yolk: [o.pTooSoft, o.pJustRight, o.pTooFirm],
+    white: [o.pWhiteRunny, o.pWhiteTender, o.pWhiteFirm],
+  };
 }
 
 export type AppName = 'web' | 'ios';
@@ -139,6 +176,9 @@ export interface EggRecord {
   app: AppName;
   appVersion: string;
   prior: string;
+  /** `MODEL_ID` when the record was written; null on a record from before
+   *  E6, which kept no forecast. */
+  model: string | null;
   egg: RecordEgg;
   setup: RecordSetup;
   /** The doneness slider position the cook was RUN at, [0, 1]. */
@@ -162,6 +202,9 @@ export interface EggRecord {
   /** A thermometer reading at the centre's peak, or null: no probe, or not
    *  taken. */
   probe: ProbeReading | null;
+  /** What the app said at "Eggs in", or null: started before the odds were
+   *  known, no time chosen (the white never sets), or written before E6. */
+  forecast: Forecast | null;
   /** What the cook READ: an answer is a word, and words differ. */
   lang: string;
   register: string;
@@ -218,6 +261,34 @@ function isObject(v: unknown): v is Record<string, unknown> {
   return v !== null && typeof v === 'object' && !Array.isArray(v);
 }
 
+/** Three probabilities that sum to one, as a forecast's answers are. */
+function threeAnswers(v: unknown): v is number[] {
+  if (!Array.isArray(v) || v.length !== 3) return false;
+  let sum = 0.0;
+  for (let i = 0; i < 3; i++) {
+    const p: unknown = v[i];
+    if (!isFiniteNumber(p) || p < 0 || p > 1) return false;
+    sum += p;
+  }
+  return Math.abs(sum - 1.0) <= FORECAST_SUM_TOLERANCE;
+}
+
+/** How far a forecast's three answers may sum from one: far above what three
+ *  doubles add up to, far below any probability that means something. */
+const FORECAST_SUM_TOLERANCE = 1e-6;
+
+/** A forecast, or null if it is not one: a positive time and two sets of
+ *  three probabilities. A fresh object with exactly the known fields. */
+export function parseForecast(raw: unknown): Forecast | null {
+  if (!isObject(raw)) return null;
+  const t = raw['cook_s'];
+  if (!isFiniteNumber(t) || !(t > 0)) return null;
+  const yolk = raw['yolk'];
+  const white = raw['white'];
+  if (!threeAnswers(yolk) || !threeAnswers(white)) return null;
+  return { cook_s: t, yolk: [yolk[0], yolk[1], yolk[2]], white: [white[0], white[1], white[2]] };
+}
+
 /** The coolest thing this cook's egg ever touched, C: the fridge, the room or
  *  the cooling water, whichever is lowest. */
 function coldestOf(s: RecordSetup): number {
@@ -249,7 +320,8 @@ function probePossible(s: RecordSetup, centre_C: number): boolean {
  * accepted under `v: 1`. Fields may be ADDED within v1 but never removed or
  * reinterpreted once a record has left the owner's devices, so unknown
  * fields are ignored here, and the nullable fields (`uid`, `egg.sizeTable`,
- * `yolk`, `white`, `probe`) may be absent and read as null - which is also
+ * `yolk`, `white`, `probe`, and E6's `model` and `forecast`) may be absent and
+ * read as null - which is also
  * what Swift's Codable does, and the fixtures hold the two to it.
  *
  * Returns a fresh object with exactly the known fields, so what is folded is
@@ -264,6 +336,8 @@ export function parseRecord(raw: unknown): EggRecord | null {
   if (!isDay(raw['day'])) return null;
   if (!oneOf(raw['app'], ['web', 'ios'] as const)) return null;
   if (!nonEmptyString(raw['appVersion']) || !nonEmptyString(raw['prior'])) return null;
+  const model = raw['model'] ?? null;
+  if (model !== null && !nonEmptyString(model)) return null;
 
   const egg = raw['egg'];
   if (!isObject(egg)) return null;
@@ -331,6 +405,10 @@ export function parseRecord(raw: unknown): EggRecord | null {
     probe = { centre_C: centre, after_s: after };
   }
 
+  const rawForecast = raw['forecast'] ?? null;
+  const forecast = rawForecast === null ? null : parseForecast(rawForecast);
+  if (rawForecast !== null && forecast === null) return null;
+
   return {
     v: RECORD_VERSION,
     uid: uid,
@@ -338,6 +416,7 @@ export function parseRecord(raw: unknown): EggRecord | null {
     app: raw['app'],
     appVersion: raw['appVersion'],
     prior: raw['prior'],
+    model: model,
     egg: { mass_g: egg['mass_g'], massFrom: egg['massFrom'], sizeTable: table as SizeTable | null },
     setup: setup,
     level: level,
@@ -349,6 +428,7 @@ export function parseRecord(raw: unknown): EggRecord | null {
     yolk: yolk as Feedback | null,
     white: white as WhiteReport | null,
     probe: probe,
+    forecast: forecast,
     lang: raw['lang'],
     register: raw['register'],
     units: raw['units'],
