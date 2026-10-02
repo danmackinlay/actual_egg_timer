@@ -13,10 +13,10 @@ badge with an (i) is what says the app is learning (52), a cook who turns
 sharing on sends the eggs already in the log too (53), and App Attest is built
 now (54).
 
-**State.** E6 and E8 built in both apps and checked against a local
-endpoint; E7's plumbing is in (both apps draw from a published population,
-the literature's for now), and the fit itself is next. Nothing is deployed:
-the live endpoint is a push.
+**State.** E6, E7 and E8 are built. E6 and E8 were checked in both apps
+against a local endpoint; E7's fit was checked on simulated cooks, and both
+apps draw from the published population, the literature's until real eggs
+are fitted. Nothing is deployed: the live endpoint is a push.
 
 ---
 
@@ -257,10 +257,15 @@ needs data and nothing an app does waits on it.
       id; the policy is `model`'s.
 - [x] Both apps: read it (the web fetches it beside the words, iOS bundles
       it), keep the population's id with the posterior, replay on a
-      change.
-- [ ] `tools/eggs.ts`: `pull`, `emulate`, `simulate`.
-- [ ] `fit/`: the model, the fit, the scores, `population.json` out.
-- [ ] Validated on simulated cooks; the numbers into `LOGBOOK.md`.
+      change (`fea97d5`).
+- [x] `tools/eggs.ts`: `pull`, `emulate` (with the app's own likelihood for
+      a few eggs, for the fit's tests), `simulate`.
+- [x] `fit/`: the model, the fit, the scores, `population.json` out; the
+      likelihood held to `infer.ts` to the digit (`fit/tests`).
+- [x] Validated on 400 simulated cooks: the time-scale and the white's lag
+      recovered, the held-out one-step-ahead log score the truth's own to
+      the second decimal, the noise's spreads not recovered (INFERENCE.md
+      §9 has the numbers).
 
 ### Shipping
 

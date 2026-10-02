@@ -778,3 +778,56 @@ Not built: any per-cook loss.
     "still learning" interval are display and decision heuristics. None is
     used for evaluation.
   README §7's table remains as the check on the prior.
+
+**Built (E7, 2 October), and checked on cooks whose answer is known.** No
+shared egg exists yet, so nothing real has been fitted; what exists is the
+whole pipe, and its check on simulated cooks.
+
+- **The population** (`src/core/population.ts`, `Population.swift`): one
+  spread per particle dimension and an id. `createPrior` draws from it, and the
+  literature's is the old prior number for number, so every fixture stood
+  still. A calibration carries the population's centre (`PriorStart`) and
+  solves there before any egg, so a cook who never answers is still timed
+  where everyone's eggs put a new cook. `fixtures/population.json` is the
+  literature's (`npm run population -- literature`) until a fit is published;
+  the web fetches it, iOS bundles it, a stored posterior keeps the id it was
+  drawn from, and a different one is replayed. The record's `prior` is that
+  id.
+- **The emulator** (`npm run eggs -- emulate`): for each egg, its log yolk and
+  white doses and peak yolk temperature at its scored cook time on 17
+  time-scales, -4 to +4 literature sds, uniform in log alpha as the app's
+  grids are. The fit interpolates; it never runs the physics. Carryover and
+  size are held at the physics (§2).
+- **The fit** (`fit/`, NumPyro, NUTS, double precision): the globals - the
+  time-scale `mu_z` in literature sds, and the white's lag - with
+  heavy-tailed (Student-t, 4 df) cook effects for the time-scale, taste and
+  white cutpoint, lognormal noise and firm gap, the app's own likelihood
+  (`fit/tests` holds it to `infer.ts` to the digit), and the tiers: open
+  eggs at a power of 0.5, the open tier's total weight capped at the
+  attested tier's. It publishes a new cook's predictive as a population: per
+  dimension the median and half the central 68%, which a Student-t's tails
+  do not inflate. The taste's centre is 0 by convention.
+- **Checked** on 400 simulated cooks (2,602 answered eggs, 40% attested),
+  drawn from a known population - a kitchen 7% faster than the literature
+  (`mu_z` 0.6), whites a quarter of a decade later - cooked at the
+  literature's times with the nudge, fitted on four fifths and scored on the
+  rest (`npm run eggs -- simulate`, `fit/README.md`). 1,200 draws, none
+  divergent. The time-scale is recovered (0.597 +- 0.037 for 0.600) and the
+  white's lag (0.229 +- 0.053 for 0.250), and every spread but one inside its
+  90% interval. One step ahead on 77 held-out cooks, the fitted population
+  scores -0.455 per yolk answer and -0.463 per white, the truth's own -0.452
+  and -0.461, the literature's -0.509 and -0.478; on a cook's FIRST egg
+  -0.539 against the literature's -0.843 and the truth's -0.536. Probe
+  readings: -2.09 against -2.87 and -2.07. Reliability and PIT are in the
+  report; at 500 answers their bins are as ragged as the truth's own.
+- **Not recovered: the noise.** Its median comes out 0.207 for a true 0.18,
+  and its spread between cooks 0.13 for 0.35, outside both intervals. With
+  three to ten eggs a cook, a cook's noise, their taste and their time-scale
+  trade against each other: the taste's spread comes out half the truth's
+  and the time-scale's a sixth too wide. The predictive does not suffer -
+  that is what the held-out scores say - but the spreads are not to be read
+  as facts about cooks.
+- **The tiers with no attested eggs**: `DECISIONS.md` 2 read literally caps
+  the open tier at zero, so the first fit, if every egg comes from the web,
+  learns nothing. `--open-cap` changes it; the choice is the owner's
+  (`COLLECTIVE.md` §4).

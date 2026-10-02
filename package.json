@@ -14,6 +14,7 @@
     "validate": "tsc && node dist/tools/validate.js",
     "fixtures": "tsc && node dist/tools/fixtures.js",
     "population": "tsc && node dist/tools/population.js",
+    "eggs": "tsc && node dist/tools/eggs.js",
     "identifiability": "tsc && node dist/tools/identifiability.js",
     "rank": "tsc && node dist/tools/rank.js",
     "probe": "tsc && node dist/tools/probe.js",
