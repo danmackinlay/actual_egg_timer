@@ -10,7 +10,10 @@ import { Lean, Outcome } from '../core/outcome.js';
 export function restoreOutcome(raw: unknown): Outcome | null {
   if (raw === null || typeof raw !== 'object') return null;
   const r = raw as Record<string, unknown>;
-  const fields = ['pTooSoft', 'pJustRight', 'pTooFirm', 'pWhiteRunny', 'levelLow', 'levelMedian', 'levelHigh'];
+  const fields = [
+    'pTooSoft', 'pJustRight', 'pTooFirm', 'pWhiteRunny', 'pWhiteTender', 'pWhiteFirm',
+    'levelLow', 'levelMedian', 'levelHigh',
+  ];
   for (const key of fields) {
     const value = r[key];
     if (typeof value !== 'number' || !Number.isFinite(value) || value < 0 || value > 1) return null;
@@ -20,7 +23,8 @@ export function restoreOutcome(raw: unknown): Outcome | null {
   const o = raw as Outcome;
   if (!(o.levelLow <= o.levelMedian && o.levelMedian <= o.levelHigh)) return null;
   return {
-    pTooSoft: o.pTooSoft, pJustRight: o.pJustRight, pTooFirm: o.pTooFirm, pWhiteRunny: o.pWhiteRunny,
+    pTooSoft: o.pTooSoft, pJustRight: o.pJustRight, pTooFirm: o.pTooFirm,
+    pWhiteRunny: o.pWhiteRunny, pWhiteTender: o.pWhiteTender, pWhiteFirm: o.pWhiteFirm,
     levelLow: o.levelLow, levelMedian: o.levelMedian, levelHigh: o.levelHigh, lean: lean as Lean,
   };
 }

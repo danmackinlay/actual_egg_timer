@@ -43,6 +43,8 @@ struct OutcomeConformance {
                 try expectClose(o.pJustRight, expected.num("pJustRight"), "\(label) just right")
                 try expectClose(o.pTooFirm, expected.num("pTooFirm"), "\(label) too firm")
                 try expectClose(o.pWhiteRunny, expected.num("pWhiteRunny"), "\(label) runny")
+                try expectClose(o.pWhiteTender, expected.num("pWhiteTender"), "\(label) tender")
+                try expectClose(o.pWhiteFirm, expected.num("pWhiteFirm"), "\(label) white firm")
                 try expectClose(o.levelLow, expected.num("levelLow"), "\(label) level low")
                 try expectClose(o.levelMedian, expected.num("levelMedian"), "\(label) level median")
                 try expectClose(o.levelHigh, expected.num("levelHigh"), "\(label) level high")

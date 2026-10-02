@@ -8,7 +8,8 @@
  * time, and says two more things.
  *
  * THE ANSWERS. P(too soft), P(just right), P(too firm) for the yolk and
- * P(runny) for the white: the posterior predictive of what the cook will say,
+ * P(runny), P(tender), P(firm) for the white: the posterior predictive of what
+ * the cook will say,
  * through the probit the filter learns with, unrelated share included - the
  * same numbers `yolkAnswerProbabilities` and `whiteAnswerProbabilities` give,
  * and the same parts `hitOdds` is made of. They are calibrated against what
@@ -97,8 +98,12 @@ export interface Outcome {
   pTooSoft: number;
   pJustRight: number;
   pTooFirm: number;
-  /** P(the cook answers runny) about the white. */
+  /** P(the cook answers runny / tender / firm) about the white. Sum to 1. The
+   *  screens read only the first; a record keeps all three as the forecast
+   *  the app made at "Eggs in" (DECISIONS.md 37). */
   pWhiteRunny: number;
+  pWhiteTender: number;
+  pWhiteFirm: number;
   /** The 10%, 50% and 90% points of the delivered yolk doneness, on the
    *  slider's scale, clamped to [0, 1]. No taste offset: see the header. */
   levelLow: number;
@@ -132,7 +137,7 @@ export function predictOutcome(
   }
   // The answers' own predictive, with the unrelated share (infer.ts).
   const [soft, right, firm] = yolkAnswerProbabilities(post, grid, cookTime_s, logNominalTarget);
-  const runny = whiteAnswerProbabilities(post, grid, cookTime_s)[0];
+  const [runny, tender, whiteFirm] = whiteAnswerProbabilities(post, grid, cookTime_s);
 
   // The share of eggs delivered at or under log dose x: the mixture's CDF.
   const cdf = (x: number): number => {
@@ -171,6 +176,8 @@ export function predictOutcome(
     pJustRight: right,
     pTooFirm: firm,
     pWhiteRunny: runny,
+    pWhiteTender: tender,
+    pWhiteFirm: whiteFirm,
     levelLow: level(LEVEL_LOW_Q),
     levelMedian: level(0.5),
     levelHigh: level(LEVEL_HIGH_Q),

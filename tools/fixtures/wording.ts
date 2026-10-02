@@ -49,7 +49,8 @@ export function wordingFixture(): Record<string, unknown> {
     (lean) => [0, WHITE_RISK - 1e-9, WHITE_RISK].flatMap((pWhiteRunny) => [[0.1, 0.12], [0.2, 0.7]].map(
       ([levelLow, levelHigh]) => {
         const o: Outcome = {
-          pTooSoft: 0, pJustRight: pJustRight, pTooFirm: 0, pWhiteRunny: pWhiteRunny,
+          pTooSoft: 0, pJustRight: pJustRight, pTooFirm: 0,
+          pWhiteRunny: pWhiteRunny, pWhiteTender: 1 - pWhiteRunny, pWhiteFirm: 0,
           levelLow: levelLow, levelMedian: levelLow, levelHigh: levelHigh, lean: lean,
         };
         const range = rangeWords(o);

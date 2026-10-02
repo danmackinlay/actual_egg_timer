@@ -5,14 +5,16 @@ not started: opt-in collection (E6), the population fit (E7) and the nudge
 (E8). Begun 2 October 2026 on the branch `claude/collective-egg-inference-ce39cf`.
 `INFERENCE.md` stays the design and says what was built once it is; this file
 is the order of work, the choices made to build it, and what is ticked. Each
-item is ticked in the same commit as the work, with that commit's hash.
+item is ticked in the same commit as the work; its hash is added by the next
+commit that touches this file.
 
 The owner's answers of 2 October are `DECISIONS.md` 52-54: a small "learning"
 badge with an (i) is what says the app is learning (52), a cook who turns
 sharing on sends the eggs already in the log too (53), and App Attest is built
 now (54).
 
-**State.** Planned; nothing built yet.
+**State.** E6 under way: the plan, and the white's three answers in
+`Outcome`.
 
 ---
 
@@ -179,8 +181,8 @@ needs data and nothing an app does waits on it.
 
 ### E6, collection
 
-- [ ] Plan, and `DECISIONS.md` 52-54.
-- [ ] Core: `Outcome` carries the white's three answers (TS, Swift, fixtures).
+- [x] Plan, and `DECISIONS.md` 52-54 (`700b932`).
+- [x] Core: `Outcome` carries the white's three answers (TS, Swift, fixtures).
 - [ ] Core: the record's `forecast` and `model`; `prior` is the population's
       id. `parseRecord` and `Record.swift`, `fixtures/record.json`; both apps
       write them from the ticket.

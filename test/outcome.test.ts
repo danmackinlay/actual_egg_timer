@@ -51,6 +51,9 @@ test('the answers are the model\'s own: the same as the predictive, summing to o
       assert.ok(Math.abs(o.pJustRight - yolk[1]) < 1e-12);
       assert.ok(Math.abs(o.pTooFirm - yolk[2]) < 1e-12);
       assert.ok(Math.abs(o.pWhiteRunny - white[0]) < 1e-12);
+      assert.ok(Math.abs(o.pWhiteTender - white[1]) < 1e-12);
+      assert.ok(Math.abs(o.pWhiteFirm - white[2]) < 1e-12);
+      assert.ok(Math.abs(o.pWhiteRunny + o.pWhiteTender + o.pWhiteFirm - 1) < 1e-12);
       assert.ok(Math.abs(o.pTooSoft + o.pJustRight + o.pTooFirm - 1) < 1e-12);
       assert.ok(o.levelLow <= o.levelMedian && o.levelMedian <= o.levelHigh);
       assert.ok(o.levelLow >= 0 && o.levelHigh <= 1);

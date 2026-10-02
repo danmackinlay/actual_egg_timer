@@ -39,8 +39,12 @@ public struct Outcome: Sendable, Codable, Equatable {
     public let pTooSoft: Double
     public let pJustRight: Double
     public let pTooFirm: Double
-    /// P(the cook answers runny) about the white.
+    /// P(the cook answers runny / tender / firm) about the white. Sum to 1.
+    /// The screens read only the first; a record keeps all three as the
+    /// forecast made at "Eggs in" (DECISIONS.md 37).
     public let pWhiteRunny: Double
+    public let pWhiteTender: Double
+    public let pWhiteFirm: Double
     /// The 10%, 50% and 90% points of the delivered yolk doneness, on the
     /// slider's scale, clamped to [0, 1]. No taste offset.
     public let levelLow: Double
@@ -70,6 +74,8 @@ public func predictOutcome(
     var right = 0.0
     var firm = 0.0
     var runny = 0.0
+    var tender = 0.0
+    var whiteFirm = 0.0
     var total = 0.0
     for i in 0..<n {
         let p = post.particles[i]
@@ -82,6 +88,8 @@ public func predictOutcome(
         right += w * withUnrelated(yolk[1])
         firm += w * withUnrelated(yolk[2])
         runny += w * withUnrelated(white[0])
+        tender += w * withUnrelated(white[1])
+        whiteFirm += w * withUnrelated(white[2])
         total += w
     }
     if total > 0.0 {
@@ -89,11 +97,15 @@ public func predictOutcome(
         right /= total
         firm /= total
         runny /= total
+        tender /= total
+        whiteFirm /= total
     } else {
         soft = 1.0 / 3.0
         right = 1.0 / 3.0
         firm = 1.0 / 3.0
         runny = 1.0 / 3.0
+        tender = 1.0 / 3.0
+        whiteFirm = 1.0 / 3.0
     }
 
     // The share of eggs delivered at or under log dose x: the mixture's CDF.
@@ -127,6 +139,8 @@ public func predictOutcome(
         pJustRight: right,
         pTooFirm: firm,
         pWhiteRunny: runny,
+        pWhiteTender: tender,
+        pWhiteFirm: whiteFirm,
         levelLow: level(levelLowQ),
         levelMedian: level(0.5),
         levelHigh: level(levelHighQ),

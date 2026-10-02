@@ -23,7 +23,7 @@ const MESSAGES = (JSON.parse(readFileSync('copy/en.json', 'utf8')) as { messages
 
 function outcome(over: Partial<Outcome> = {}): Outcome {
   return {
-    pTooSoft: 0.1, pJustRight: 0.8, pTooFirm: 0.1, pWhiteRunny: 0.02,
+    pTooSoft: 0.1, pJustRight: 0.8, pTooFirm: 0.1, pWhiteRunny: 0.02, pWhiteTender: 0.3, pWhiteFirm: 0.68,
     levelLow: 0.35, levelMedian: 0.43, levelHigh: 0.51, lean: 'balanced', ...over,
   };
 }
