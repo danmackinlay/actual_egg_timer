@@ -3403,3 +3403,49 @@ Swift copy lint; the fixtures fresh; `swift test` 119 tests in 31 suites.
 **Not verified:** `tidy2` on either app on a phone (the owner's pass), and
 on iOS at all; the setup sentence's wrap in Safari; `ios:build` on a CI
 runner, which needs a push.
+
+## 2 October 2026: the egg in cross-section, a prototype
+
+On the branch `claude/egg-state-visualization-dd4490`, for the owner to
+judge on a phone: whether a running cook should show the egg as how set
+each layer is, or as how hot.
+
+- **Core** (953c698). `src/core/section.ts` runs `simulate`'s loop a step
+  at a time as the clock moves, with a dose at 34 radii: 17 across the
+  yolk and 17 across the white, the yolk's edge sampled as both. Advanced
+  past the carryover, the centre and the innermost white give `simulate`'s
+  peaks exactly and its doses to 1e-4 (it runs the window out where
+  `simulate` stops early). A tick at a time is bit-identical to one long
+  advance. At t = 0 the 40-term series reads a hot start's centre as
+  95.8 C: the shell's step is a fresh discontinuity (invariant 7). By
+  0.5 s it reads 11.6 C, by 2 s 4.0 C, so the screen draws a uniform egg
+  for the first second.
+- **The drawing** (f312cc1, c79c35b). An ovoid at the model's 1.35, blunt
+  end up, with a round yolk; across the white the outlines turn from
+  circle to ovoid. Each ring is a closed polygon filled opaque, outermost
+  first. A translucent fill would show the rings beneath it through, so
+  the clear white is a colour of its own. "How set" is the yolk on the
+  slider track's colours and the white from glassy to opaque, over the
+  decade of dose below its target. "How hot" runs blue through a grey at
+  40 C to red, two hues and a neutral, never a rainbow. A tap swaps
+  them. First placed under the time, it cost the column 7.5 rem; at the
+  owner's word it moved to the left of the setup sentence, where it costs
+  none.
+- **The lab** (`tools/egg-section.html`, the `egg-lab` launch
+  configuration). A whole cook scrubbed or played at 30 times real time,
+  both pictures side by side and eight moments in a strip. Five presets,
+  a doneness, a mass and a late pull. On each preset the centre ends on
+  the slider's colour for the level asked for (#e89400 at 0.41, light),
+  except a counter rest. There 0.41 is out of reach, the solve answers
+  its softest, 0.61, and the egg ends there.
+
+**Seen**, in the web app on a 375 px viewport in both schemes, the clock
+jumped through `Date.now`: heating, the boil tap's replay, cooking, a
+late pull timing out into cooling, and done, with both pictures. A reload
+restored mid-cook replays the egg from t = 0. The console stayed clean.
+
+**Run:** `rm -rf dist/test && npm run verify`: 269 tests, all pass; the
+copy lint; the fixtures fresh; `swift test` 119 tests in 31 suites.
+
+**Not verified:** a real phone, Safari, and iOS at all (there is no Swift
+yet). The tap reaches no keyboard, and the picture has no words.

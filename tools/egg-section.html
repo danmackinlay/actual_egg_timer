@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>egg section lab</title>
+<!--
+  The egg in cross-section, a whole cook at a time: for choosing between its
+  two pictures (how set, how hot) without cooking an egg per look. A tool,
+  not the app - its words are a developer's, and it is not shipped.
+
+  It draws with the app's own code (src/core/section.ts, src/ui/eggSection.ts)
+  in the app's own palette (styles.css), in whichever scheme the browser is
+  in; flip the system's dark mode to see the other.
+
+  Run it:
+    npm run build
+    python3 -m http.server 8391            # from the repo root
+    open http://localhost:8391/tools/egg-section.html
+  or the `egg-lab` configuration in .claude/launch.json.
+-->
+<link rel="stylesheet" href="../styles.css">
+<style>
+  body { padding: 16px; }
+  .lab { max-width: 46rem; margin: 0 auto; }
+  h1 { font-size: 1.1rem; margin: 0 0 12px; }
+  .controls { display: grid; grid-template-columns: max-content 1fr max-content; gap: 6px 12px; align-items: center; }
+  .controls label { color: var(--dim); font-size: 0.875rem; }
+  .controls output { font-size: 0.875rem; min-width: 5.5rem; text-align: right; }
+  .controls select, .controls input[type="range"] { width: 100%; }
+  .scrub { display: flex; gap: 10px; align-items: center; margin: 16px 0 6px; }
+  .scrub input { flex: 1; }
+  .scrub button { flex: none; width: auto; min-width: 4.5rem; min-height: 0; padding: 6px 10px; font-size: 0.875rem; }
+  .scrub output { white-space: nowrap; font-size: 0.875rem; }
+  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 10px 0 4px; }
+  .pair figure { margin: 0; text-align: center; }
+  .pair svg { width: 100%; height: 13rem; }
+  figcaption { color: var(--dim); font-size: 0.8125rem; }
+  .readings { font-size: 0.875rem; color: var(--dim); margin: 6px 0 0; min-height: 2.6em; }
+  .legend { display: flex; align-items: center; gap: 8px; font-size: 0.75rem; color: var(--dim); margin: 8px 0 0; }
+  .legend__bar { flex: 1; height: 10px; border-radius: 5px; }
+  h2 { font-size: 0.9375rem; margin: 22px 0 6px; }
+  .strip { display: grid; grid-template-columns: 3.2rem repeat(8, 1fr); gap: 4px; align-items: center; }
+  .strip svg { width: 100%; height: 4.6rem; }
+  .strip span { font-size: 0.75rem; color: var(--dim); text-align: center; }
+  .strip .row { text-align: left; }
+</style>
+</head>
+<body>
+<div class="lab">
+  <h1>The egg in cross-section</h1>
+  <div class="controls">
+    <label for="preset">cook</label>
+    <select id="preset"></select><span></span>
+    <label for="level">yolk asked for</label>
+    <input id="level" type="range" min="0" max="1" step="0.01" value="0.41"><output id="levelOut"></output>
+    <label for="mass">egg</label>
+    <input id="mass" type="range" min="45" max="80" step="1" value="60"><output id="massOut"></output>
+    <label for="late">pulled late by</label>
+    <input id="late" type="range" min="0" max="180" step="5" value="0"><output id="lateOut"></output>
+  </div>
+
+  <div class="scrub">
+    <button type="button" id="play">play</button>
+    <input id="time" type="range" min="0" max="1" step="1" value="0">
+    <output id="timeOut"></output>
+  </div>
+
+  <div class="pair">
+    <figure><svg id="bigState"></svg><figcaption>how set (the default)</figcaption></figure>
+    <figure><svg id="bigHeat"></svg><figcaption>how hot (a tap away)</figcaption></figure>
+  </div>
+  <p class="readings" id="readings"></p>
+  <div class="legend"><span>0 °C</span><div class="legend__bar" id="legend"></div><span>100 °C</span></div>
+
+  <h2>The whole cook, in eight</h2>
+  <div class="strip" id="strip"></div>
+</div>
+
+<script type="module">
+import { advanceSection, createSection, sectionView } from '../dist/src/core/section.js';
+import { eggFromMass } from '../dist/src/core/geometry.js';
+import { DEFAULT_PARAMS, WHITE_DOSE_TARGET, donenessFromSlider, solveCookTime } from '../dist/src/core/solve.js';
+import { CARRYOVER_WINDOW } from '../dist/src/core/constants.js';
+import {
+  HEAT_STOPS_C, buildEggSection, heatAt, paintEggSection, readPalette, ringFills,
+} from '../dist/src/ui/eggSection.js';
+
+const base = {
+  eggStart_C: 4, ambient_C: 20, boiling_C: 100, timeToBoil_s: 480,
+  afterBoil: 'hold', waterLitres: 2, eggCount: 2,
+};
+const PRESETS = {
+  'cold start, boiled, ice bath': { ...base, startMode: 'cold', cooling: 'ice' },
+  'into boiling water, ice bath': { ...base, startMode: 'hot', cooling: 'ice' },
+  'into boiling water, rest on the counter': { ...base, startMode: 'hot', cooling: 'counter' },
+  'cold start, heat off at the boil, tap water': { ...base, startMode: 'cold', afterBoil: 'off', cooling: 'tap' },
+  'room-temperature egg into boiling water, ice bath': { ...base, eggStart_C: 20, startMode: 'hot', cooling: 'ice' },
+};
+/** Seconds between frames. */
+const FRAME_S = 2;
+
+const $ = (id) => document.getElementById(id);
+const preset = $('preset');
+for (const name of Object.keys(PRESETS)) preset.append(new Option(name, name));
+
+let frames = [];
+let cook = { out_s: 0, end_s: 0, eggStart_C: 4 };
+const palette = () => readPalette(document.body);
+
+function clock(s) {
+  const m = Math.floor(s / 60);
+  return `${m}:${String(Math.floor(s - 60 * m)).padStart(2, '0')}`;
+}
+
+/** Replay the cook a frame at a time, as the app's ticks would. */
+function rebuild() {
+  const setup = PRESETS[preset.value];
+  const level = Number($('level').value);
+  const egg = eggFromMass(Number($('mass').value) / 1000);
+  const solved = solveCookTime(egg, setup, DEFAULT_PARAMS, donenessFromSlider(level));
+  const out_s = solved.result.cookTime_s + Number($('late').value);
+  const end_s = out_s + (setup.cooling === 'counter' ? CARRYOVER_WINDOW : 420);
+  const s = createSection(egg, setup, DEFAULT_PARAMS);
+  frames = [];
+  for (let t = 0; t <= end_s; t += FRAME_S) {
+    advanceSection(s, egg, setup, DEFAULT_PARAMS, t, out_s);
+    frames.push({ t: s.t_s, view: sectionView(s, WHITE_DOSE_TARGET) });
+  }
+  cook = { out_s, end_s, eggStart_C: setup.eggStart_C, peak_C: solved.result.peakYolk_C };
+  for (const id of ['bigState', 'bigHeat']) buildEggSection($(id), s.outer);
+  buildStrip(s.outer);
+  $('time').max = String(frames.length - 1);
+  $('levelOut').value = level.toFixed(2);
+  $('massOut').value = `${$('mass').value} g`;
+  $('lateOut').value = `${$('late').value} s`;
+  show();
+}
+
+function uniformAt(frame) {
+  return frame.t < 1 ? cook.eggStart_C : null;
+}
+
+function show() {
+  const frame = frames[Number($('time').value)] ?? frames[0];
+  const p = palette();
+  paintEggSection($('bigState'), ringFills(frame.view, 'state', p, null));
+  paintEggSection($('bigHeat'), ringFills(frame.view, 'heat', p, uniformAt(frame)));
+  const where = frame.t < cook.out_s ? 'in the water' : 'out';
+  $('timeOut').value = `${clock(frame.t)} of ${clock(cook.end_s)}`;
+  const v = frame.view;
+  const inner = v.yolk.indexOf(false);
+  $('readings').textContent = `${where} (out at ${clock(cook.out_s)}) · centre ${v.temperature_C[0].toFixed(1)} °C, `
+    + `yolk level ${v.set[0].toFixed(2)} · inner white ${v.temperature_C[inner].toFixed(1)} °C, `
+    + `set ${v.set[inner].toFixed(2)} · shell ${v.temperature_C[v.x.length - 1].toFixed(1)} °C · `
+    + `peak yolk ${cook.peak_C.toFixed(1)} °C`;
+}
+
+function buildStrip(outer) {
+  const strip = $('strip');
+  strip.replaceChildren();
+  const picks = [];
+  for (let k = 0; k < 8; k++) picks.push(Math.round(k * (frames.length - 1) / 7));
+  const p = palette();
+  for (const mode of ['state', 'heat']) {
+    const label = document.createElement('span');
+    label.className = 'row';
+    label.textContent = mode === 'state' ? 'how set' : 'how hot';
+    strip.append(label);
+    for (const i of picks) {
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      strip.append(svg);
+      buildEggSection(svg, outer);
+      paintEggSection(svg, ringFills(frames[i].view, mode, p, mode === 'heat' ? uniformAt(frames[i]) : null));
+    }
+  }
+  strip.append(document.createElement('span'));
+  for (const i of picks) {
+    const t = document.createElement('span');
+    t.textContent = clock(frames[i].t) + (frames[i].t >= cook.out_s ? ' out' : '');
+    strip.append(t);
+  }
+}
+
+function paintLegend() {
+  const p = palette();
+  const stops = [];
+  for (let c = 0; c <= 100; c += 5) {
+    const [r, g, b] = heatAt(c, p).map(Math.round);
+    stops.push(`rgb(${r} ${g} ${b}) ${c}%`);
+  }
+  $('legend').style.background = `linear-gradient(to right, ${stops.join(', ')})`;
+  $('legend').title = `stops at ${HEAT_STOPS_C.join(', ')} °C`;
+}
+
+let playing = 0;
+$('play').addEventListener('click', () => {
+  if (playing !== 0) {
+    clearInterval(playing);
+    playing = 0;
+    $('play').textContent = 'play';
+    return;
+  }
+  if (Number($('time').value) >= frames.length - 1) $('time').value = '0';
+  $('play').textContent = 'pause';
+  // Thirty times real time: a frame is two seconds of cook.
+  playing = setInterval(() => {
+    const next = Number($('time').value) + 1;
+    if (next >= frames.length) {
+      $('play').click();
+      return;
+    }
+    $('time').value = String(next);
+    show();
+  }, FRAME_S * 1000 / 30);
+});
+$('time').addEventListener('input', show);
+for (const id of ['preset', 'level', 'mass', 'late']) $(id).addEventListener('input', rebuild);
+matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => { paintLegend(); rebuild(); });
+
+paintLegend();
+rebuild();
+$('time').value = String(Math.round((cook.out_s / FRAME_S) * 0.98));
+show();
+</script>
+</body>
+</html>
