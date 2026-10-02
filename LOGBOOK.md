@@ -3403,3 +3403,13 @@ Swift copy lint; the fixtures fresh; `swift test` 119 tests in 31 suites.
 **Not verified:** `tidy2` on either app on a phone (the owner's pass), and
 on iOS at all; the setup sentence's wrap in Safari; `ios:build` on a CI
 runner, which needs a push.
+
+## 2 October 2026: the privacy page
+
+`privacy/index.html`, served at /privacy, for App Store Connect's privacy
+policy URL (DECISIONS 51), and a Privacy link in Help in both apps (the
+`privacy` draft). Every claim was checked against the code: no networking
+on iOS, a same-origin CSP on the web, and "Start learning again" clears the
+rated eggs and boil times in both apps. The App Privacy label is "Data Not
+Collected" until E6. The agent that built it stalled before its docs and
+checks; the session finished them.

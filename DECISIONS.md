@@ -226,3 +226,7 @@ Decided by the owner, 2 October 2026:
     iPad multitasking wants every orientation). `TARGETED_DEVICE_FAMILY` is
     1 for the app and the widget; an iPad still runs it in iPhone
     compatibility mode. A real iPad layout is for someday.
+51. **The privacy page lives on the Netlify site, at `/privacy`**, where the
+    opt-in data collection endpoint (E6) will live too; App Store Connect's
+    privacy policy URL points there. Plain English only, no 1750 twin.
+    Built `a3930e1`, linked from Help in both apps `48eb443`.
