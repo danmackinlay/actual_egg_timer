@@ -44,6 +44,19 @@
   .strip svg { width: 100%; height: 4.6rem; }
   .strip span { font-size: 0.75rem; color: var(--dim); text-align: center; }
   .strip .row { text-align: left; }
+  /* The heat map's colours, the lab's own since the app dropped the picture:
+     blue below the room, a grey at 40 C where nothing has begun to set, red
+     toward the boil. The poles brighten off the dark, darken off the light. */
+  :root {
+    --heat-cold: #6da7ec; --heat-cool: #256abf; --heat-mid: #45454a;
+    --heat-warm: #b8403c; --heat-hot: #ff6b5e;
+  }
+  @media (prefers-color-scheme: light) {
+    :root {
+      --heat-cold: #1c5cab; --heat-cool: #86b6ef; --heat-mid: #ebeae6;
+      --heat-warm: #ec8a84; --heat-hot: #b3261e;
+    }
+  }
 </style>
 </head>
 <body>
@@ -67,8 +80,8 @@
   </div>
 
   <div class="pair">
-    <figure><svg id="bigState"></svg><figcaption>how set (the default)</figcaption></figure>
-    <figure><svg id="bigHeat"></svg><figcaption>how hot (a tap away)</figcaption></figure>
+    <figure><svg id="bigState"></svg><figcaption>how set (the app's)</figcaption></figure>
+    <figure><svg id="bigHeat"></svg><figcaption>how hot (the lab's only)</figcaption></figure>
   </div>
   <p class="readings" id="readings"></p>
   <div class="legend"><span>0 °C</span><div class="legend__bar" id="legend"></div><span>100 °C</span></div>
@@ -83,7 +96,7 @@ import { eggFromMass } from '../dist/src/core/geometry.js';
 import { DEFAULT_PARAMS, WHITE_DOSE_TARGET, donenessFromSlider, solveCookTime } from '../dist/src/core/solve.js';
 import { CARRYOVER_WINDOW } from '../dist/src/core/constants.js';
 import {
-  HEAT_STOPS_C, buildEggSection, heatAt, paintEggSection, readPalette, ringFills,
+  HEAT_STOPS_C, buildEggSection, heatAt, heatFills, paintEggSection, parseHex, readPalette, ringFills,
 } from '../dist/src/ui/eggSection.js';
 
 const base = {
@@ -107,6 +120,11 @@ for (const name of Object.keys(PRESETS)) preset.append(new Option(name, name));
 let frames = [];
 let cook = { out_s: 0, end_s: 0, eggStart_C: 4 };
 const palette = () => readPalette(document.body);
+const heat = () => {
+  const style = getComputedStyle(document.body);
+  return ['--heat-cold', '--heat-cool', '--heat-mid', '--heat-warm', '--heat-hot']
+    .map((name) => parseHex(style.getPropertyValue(name)));
+};
 
 function clock(s) {
   const m = Math.floor(s / 60);
@@ -143,9 +161,8 @@ function uniformAt(frame) {
 
 function show() {
   const frame = frames[Number($('time').value)] ?? frames[0];
-  const p = palette();
-  paintEggSection($('bigState'), ringFills(frame.view, 'state', p, null));
-  paintEggSection($('bigHeat'), ringFills(frame.view, 'heat', p, uniformAt(frame)));
+  paintEggSection($('bigState'), ringFills(frame.view, palette()));
+  paintEggSection($('bigHeat'), heatFills(frame.view, heat(), uniformAt(frame)));
   const where = frame.t < cook.out_s ? 'in the water' : 'out';
   $('timeOut').value = `${clock(frame.t)} of ${clock(cook.end_s)}`;
   const v = frame.view;
@@ -162,6 +179,7 @@ function buildStrip(outer) {
   const picks = [];
   for (let k = 0; k < 8; k++) picks.push(Math.round(k * (frames.length - 1) / 7));
   const p = palette();
+  const h = heat();
   for (const mode of ['state', 'heat']) {
     const label = document.createElement('span');
     label.className = 'row';
@@ -171,7 +189,7 @@ function buildStrip(outer) {
       const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
       strip.append(svg);
       buildEggSection(svg, outer);
-      paintEggSection(svg, ringFills(frames[i].view, mode, p, mode === 'heat' ? uniformAt(frames[i]) : null));
+      paintEggSection(svg, mode === 'state' ? ringFills(frames[i].view, p) : heatFills(frames[i].view, h, uniformAt(frames[i])));
     }
   }
   strip.append(document.createElement('span'));
@@ -183,10 +201,10 @@ function buildStrip(outer) {
 }
 
 function paintLegend() {
-  const p = palette();
+  const h = heat();
   const stops = [];
   for (let c = 0; c <= 100; c += 5) {
-    const [r, g, b] = heatAt(c, p).map(Math.round);
+    const [r, g, b] = heatAt(c, h).map(Math.round);
     stops.push(`rgb(${r} ${g} ${b}) ${c}%`);
   }
   $('legend').style.background = `linear-gradient(to right, ${stops.join(', ')})`;

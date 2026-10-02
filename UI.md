@@ -113,13 +113,13 @@ units the cook was set up in. What was said under the time at "Eggs in"
 stays for the whole cook and comes back after a reload or relaunch. Settings,
 Help and the slider are put away.
 
-**A prototype, web only, on its branch:** to the left of the sentence, so
-it costs the column no height of its own, the egg in cross-section
-(`src/ui/eggSection.ts`): an ovoid with a round yolk, ring by ring as it
-cooks. It shows how set each layer is: the yolk in the slider track's
-colours, the white from glassy to opaque. A tap swaps that for its
-temperature, blue through a grey at 40 C to red. It has no words yet, so a
-screen reader skips it. The owner picks one on a phone.
+To the left of the sentence, so it costs the column no height of its own,
+**the egg in cross-section** (`DECISIONS.md` 51; web `src/ui/eggSection.ts`,
+iOS to follow). It is an ovoid with a round yolk, drawn ring by ring as it
+cooks, and shows how set each layer is: the yolk in the slider track's
+colours, the white from a clear, faintly blue raw white to opaque. It is a
+picture of what the sentence and the time already say, so it has no words
+and a screen reader passes over it.
 
 ## 4. The (i) component
 

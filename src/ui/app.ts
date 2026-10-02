@@ -81,9 +81,7 @@ import {
 import { phaseView } from './phaseView.js';
 import { EggSection, advanceSection, createSection, sectionView } from '../core/section.js';
 import { CARRYOVER_WINDOW } from '../core/constants.js';
-import {
-  SectionMode, buildEggSection, paintEggSection, readPalette, ringFills,
-} from './eggSection.js';
+import { buildEggSection, paintEggSection, readPalette, ringFills } from './eggSection.js';
 
 /* ----------------------------------------------------------------- state */
 
@@ -143,9 +141,6 @@ let lastAnnounced = '';
  *  t = 0, since the water it has been in has changed. */
 let section: EggSection | null = null;
 let sectionTicket: Ticket | null = null;
-/** Whether the section shows how set the egg is or how hot. A prototype's
- *  switch, a tap on the egg, and not kept. */
-let sectionMode: SectionMode = 'state';
 
 /* --------------------------------------------------------------- physics */
 
@@ -590,14 +585,7 @@ function renderSection(now_ms: number): void {
     out_s === null ? now_s : Math.min(now_s, out_s + CARRYOVER_WINDOW), out_s,
   );
   const view = sectionView(section, calibrationDoneness(calib, machine.targetLevel).whiteDose_min);
-  // Until the series has settled, a second in, the egg is as it went in.
-  const uniform = section.t_s < 1.0 ? k.setup.eggStart_C : null;
-  paintEggSection(page().eggSection, ringFills(view, sectionMode, readPalette(page().body), uniform));
-}
-
-function toggleSectionMode(): void {
-  sectionMode = sectionMode === 'state' ? 'heat' : 'state';
-  render(Date.now());
+  paintEggSection(page().eggSection, ringFills(view, readPalette(page().body)));
 }
 
 /** The readout, the buttons under it and the questions at DONE, idle or not,
@@ -1270,7 +1258,6 @@ export function boot(): void {
   page().primary.addEventListener('click', onPrimary);
   page().secondary.addEventListener('click', reset);
   page().mute.addEventListener('click', onToggleMute);
-  page().eggSection.addEventListener('click', toggleSectionMode);
   wireForget(forgetAll);
   // Every (i) opens in place. They are buttons, so the keyboard reaches and
   // works them, and aria-expanded says which way they stand.

@@ -22,18 +22,12 @@
   --yolk-runny: #ff7417;
   --yolk-jammy: #ffb31f;
   --yolk-hard: #ffe680;
-  /* The egg in cross-section (src/ui/eggSection.ts), a prototype. The white
-     from clear to set: opaque both, since the rings are stacked, so the
-     clear one is a glassy grey of its own. */
-  --white-raw: #2b2f36;
+  /* The egg in cross-section (src/ui/eggSection.ts): the white from clear to
+     set. Both opaque, since the rings are stacked, so the clear one is a
+     colour of its own: the page's, a touch lighter and a touch blue, as a
+     raw white looks in the pan. */
+  --white-raw: #19202b;
   --white-set: #f2efe6;
-  /* Its heat map: blue below the room, a grey at 40 C where nothing has
-     begun to set, red toward the boil. The poles brighten off the dark. */
-  --heat-cold: #6da7ec;
-  --heat-cool: #256abf;
-  --heat-mid: #45454a;
-  --heat-warm: #b8403c;
-  --heat-hot: #ff6b5e;
 }
 
 @media (prefers-color-scheme: light) {
@@ -54,14 +48,8 @@
     --yolk-runny: #d9530a;
     --yolk-jammy: #e89400;
     --yolk-hard: #e8c410;
-    --white-raw: #dde1e7;
+    --white-raw: #e6edf6;
     --white-set: #ffffff;
-    /* The poles darken toward the light. */
-    --heat-cold: #1c5cab;
-    --heat-cool: #86b6ef;
-    --heat-mid: #ebeae6;
-    --heat-warm: #ec8a84;
-    --heat-hot: #b3261e;
   }
 }
 
@@ -473,16 +461,13 @@ button.clause[aria-expanded="true"] {
   gap: 14px;
   align-items: center;
 }
-/* The egg in cross-section, a prototype (src/ui/eggSection.ts), beside the
-   sentence rather than above it, so it costs the column no height of its
-   own: the sentence runs to three lines or so anyway. A tap swaps how set
-   it is for how hot. */
+/* The egg in cross-section (src/ui/eggSection.ts), how set each layer is,
+   beside the sentence rather than above it, so it costs the column no
+   height of its own: the sentence runs to three lines or so anyway. */
 .egg-section {
   display: block;
   height: 6.5rem;
   width: 5rem;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
 }
 .egg-section__shell { fill: none; stroke: var(--line); stroke-width: 1.5; }
 #cookSentence {

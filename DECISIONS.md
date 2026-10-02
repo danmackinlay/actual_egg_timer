@@ -226,3 +226,12 @@ Decided by the owner, 2 October 2026:
     iPad multitasking wants every orientation). `TARGETED_DEVICE_FAMILY` is
     1 for the app and the widget; an iPad still runs it in iPhone
     compatibility mode. A real iPad layout is for someday.
+51. **The running cook shows the egg in cross-section, as how set each
+    layer is**, in both apps ("prioritise the 'how set' view"). The
+    prototype offered how hot as well, a tap away. The heat map waits for
+    a day it might be wanted ("we might put the heat view in one day"),
+    and lives on in the lab page, `tools/egg-section.html`. The egg sits
+    beside the setup sentence, not on a line of its own ("it burns
+    vertical space for a nicety"). Its outline is an ovoid ("go ovoid"),
+    though the model's egg is a sphere. Its raw white is clearer, with a
+    touch of blue. Prototype `953c698`..`3ed187c`.

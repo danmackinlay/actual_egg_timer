@@ -9,7 +9,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
-  HEAT_STOPS_C, SectionPalette, ringFills, ringPoints, shellRadius,
+  HEAT_STOPS_C, Rgb, SectionPalette, heatFills, ringFills, ringPoints, shellRadius,
 } from '../src/ui/eggSection.js';
 import { advanceSection, createSection, sectionView } from '../src/core/section.js';
 import { eggFromMass } from '../src/core/geometry.js';
@@ -23,8 +23,8 @@ const PALETTE: SectionPalette = {
   yolkHard: [0, 0, 255],
   whiteRaw: [10, 10, 10],
   whiteSet: [250, 250, 250],
-  heat: [[0, 0, 255], [0, 128, 255], [128, 128, 128], [255, 128, 0], [255, 0, 0]],
 };
+const HEAT: Rgb[] = [[0, 0, 255], [0, 128, 255], [128, 128, 128], [255, 128, 0], [255, 0, 0]];
 
 function radius(p: [number, number]): number {
   return Math.hypot(p[0], p[1]);
@@ -57,20 +57,20 @@ test('the yolk is round, and every outline lies inside the next', () => {
 test('a raw egg is runny yolk and clear white; a hard one is the other ends', () => {
   const setup = appSetup();
   const s = createSection(eggFromMass(0.060), setup, DEFAULT_PARAMS);
-  const raw = ringFills(sectionView(s, WHITE_DOSE_TARGET), 'state', PALETTE, null);
+  const raw = ringFills(sectionView(s, WHITE_DOSE_TARGET), PALETTE);
   assert.equal(raw[0], '#ff0000');
   assert.equal(raw[raw.length - 1], '#0a0a0a');
   advanceSection(s, eggFromMass(0.060), setup, DEFAULT_PARAMS, 1800, null);
-  const hard = ringFills(sectionView(s, WHITE_DOSE_TARGET), 'state', PALETTE, null);
+  const hard = ringFills(sectionView(s, WHITE_DOSE_TARGET), PALETTE);
   assert.equal(hard[0], '#0000ff');
   assert.equal(hard[hard.length - 1], '#fafafa');
 });
 
-test('the heat map runs blue to red through its stops', () => {
+test('the lab\'s heat map runs blue to red through its stops', () => {
   const s = createSection(eggFromMass(0.060), appSetup(), DEFAULT_PARAMS);
   const view = sectionView(s, WHITE_DOSE_TARGET);
-  assert.equal(ringFills(view, 'heat', PALETTE, -5)[0], '#0000ff');
-  assert.equal(ringFills(view, 'heat', PALETTE, HEAT_STOPS_C[2])[0], '#808080');
-  assert.equal(ringFills(view, 'heat', PALETTE, 100)[0], '#ff0000');
-  assert.equal(ringFills(view, 'heat', PALETTE, 30)[0], '#4080c0');
+  assert.equal(heatFills(view, HEAT, -5)[0], '#0000ff');
+  assert.equal(heatFills(view, HEAT, HEAT_STOPS_C[2])[0], '#808080');
+  assert.equal(heatFills(view, HEAT, 100)[0], '#ff0000');
+  assert.equal(heatFills(view, HEAT, 30)[0], '#4080c0');
 });

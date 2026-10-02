@@ -13,15 +13,15 @@
  * is opaque - a translucent one would show the rings beneath it through - so
  * a "clear" white is a colour of its own (`--white-raw`), not an opacity.
  *
- * Two ways of colouring the same rings, for the owner to choose between on a
- * phone: how set each layer is (`state`), or its temperature (`heat`).
+ * The app colours the rings by how set each layer is (`ringFills`). The
+ * same rings by temperature (`heatFills`) were the prototype's other picture;
+ * the owner chose how set, and the heat map lives on in the lab page
+ * (tools/egg-section.html) for a day it might be wanted.
  * Nothing here touches the document when the module is imported.
  */
 
 import { EGG_LENGTH_RATIO, YOLK_RADIUS_FRAC } from '../core/constants.js';
 import { SectionView } from '../core/section.js';
-
-export type SectionMode = 'state' | 'heat';
 
 /* ------------------------------------------------------------- the outline */
 
@@ -88,13 +88,11 @@ export interface SectionPalette {
   yolkHard: Rgb;
   whiteRaw: Rgb;
   whiteSet: Rgb;
-  /** The heat map's stops, coldest first, at `HEAT_STOPS_C`. */
-  heat: Rgb[];
 }
 
 /** Where the heat map's colours sit, C: blue from the ice to the room, a
  *  neutral grey at 40 C where nothing in an egg has begun to set, red toward
- *  the boil. Two hues and a grey, never a rainbow. */
+ *  the boil. Two hues and a grey, never a rainbow. The lab's only. */
 export const HEAT_STOPS_C = [0, 20, 40, 70, 100];
 
 /** Where the yolk's middle colour sits on the slider, as on the track
@@ -117,32 +115,35 @@ export function yolkAt(level: number, p: SectionPalette): Rgb {
   return mix(p.yolkJammy, p.yolkHard, (Math.min(1, level) - YOLK_JAMMY_AT) / (1 - YOLK_JAMMY_AT));
 }
 
-/** A temperature on the heat map. */
-export function heatAt(temperature_C: number, p: SectionPalette): Rgb {
-  const stops = HEAT_STOPS_C;
-  if (temperature_C <= stops[0]) return p.heat[0];
-  for (let i = 1; i < stops.length; i++) {
-    if (temperature_C <= stops[i]) {
-      return mix(p.heat[i - 1], p.heat[i], (temperature_C - stops[i - 1]) / (stops[i] - stops[i - 1]));
-    }
-  }
-  return p.heat[stops.length - 1];
-}
-
-/** Each ring's fill, in ring order (centre first). In `heat` mode,
- *  `uniform_C`, when not null, stands in for every ring's temperature: the
- *  first second of a cook, before the series has settled (section.ts). */
-export function ringFills(
-  view: SectionView, mode: SectionMode, p: SectionPalette, uniform_C: number | null,
-): string[] {
+/** Each ring's fill, in ring order (centre first), by how set it is: the
+ *  yolk on the slider track's colours, the white from clear to set. */
+export function ringFills(view: SectionView, p: SectionPalette): string[] {
   const fills: string[] = [];
   for (let i = 0; i < view.x.length; i++) {
-    if (mode === 'heat') {
-      fills.push(hex(heatAt(uniform_C ?? view.temperature_C[i], p)));
-    } else {
-      fills.push(hex(view.yolk[i] ? yolkAt(view.set[i], p) : mix(p.whiteRaw, p.whiteSet, view.set[i])));
+    fills.push(hex(view.yolk[i] ? yolkAt(view.set[i], p) : mix(p.whiteRaw, p.whiteSet, view.set[i])));
+  }
+  return fills;
+}
+
+/** A temperature on the heat map, whose colours `heat` are at
+ *  `HEAT_STOPS_C`. */
+export function heatAt(temperature_C: number, heat: Rgb[]): Rgb {
+  const stops = HEAT_STOPS_C;
+  if (temperature_C <= stops[0]) return heat[0];
+  for (let i = 1; i < stops.length; i++) {
+    if (temperature_C <= stops[i]) {
+      return mix(heat[i - 1], heat[i], (temperature_C - stops[i - 1]) / (stops[i] - stops[i - 1]));
     }
   }
+  return heat[stops.length - 1];
+}
+
+/** Each ring's fill by its temperature, for the lab. `uniform_C`, when not
+ *  null, stands in for every ring's: the first second of a cook, before the
+ *  series has settled (section.ts). */
+export function heatFills(view: SectionView, heat: Rgb[], uniform_C: number | null): string[] {
+  const fills: string[] = [];
+  for (let i = 0; i < view.x.length; i++) fills.push(hex(heatAt(uniform_C ?? view.temperature_C[i], heat)));
   return fills;
 }
 
@@ -180,7 +181,7 @@ export function paintEggSection(svg: SVGSVGElement, fills: string[]): void {
   }
 }
 
-function parseHex(value: string): Rgb {
+export function parseHex(value: string): Rgb {
   const v = value.trim().replace('#', '');
   const full = v.length === 3 ? v.split('').map((c) => c + c).join('') : v;
   return [parseInt(full.slice(0, 2), 16), parseInt(full.slice(2, 4), 16), parseInt(full.slice(4, 6), 16)];
@@ -196,6 +197,5 @@ export function readPalette(from: Element): SectionPalette {
     yolkHard: read('--yolk-hard'),
     whiteRaw: read('--white-raw'),
     whiteSet: read('--white-set'),
-    heat: ['--heat-cold', '--heat-cool', '--heat-mid', '--heat-warm', '--heat-hot'].map(read),
   };
 }

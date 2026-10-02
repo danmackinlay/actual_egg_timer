@@ -77,17 +77,15 @@ Waiting on someone else: the Czech review (F5), by the owner's friend.
   to tell it from `alpha`. Meanwhile hot-start heat-off cooks never set the
   white at 1-4 L with four fridge eggs; 1.0 may be pessimistic with a lid
   on, and one real cook would settle it.
-- **The egg in cross-section, a prototype** on the branch
-  `claude/egg-state-visualization-dd4490`: the yolk and white drawn ring by
-  ring as the cook runs, either as how set each layer is or as its
-  temperature. `src/core/section.ts` carries the cook forward a tick at a
-  time with a dose at every ring, and agrees with `simulate`. The web's
-  cooking screen draws it beside the setup sentence (`src/ui/eggSection.ts`,
-  `UI.md` §3); a tap swaps state for heat. `tools/egg-section.html`
-  (`egg-lab` in `.claude/launch.json`) plays a whole cook in both. Web only so far, with no words, and the
-  tap reaches no keyboard. The owner picks state or heat on a phone. Then:
-  the Swift twin with a fixture, the iOS view, and words for a screen
-  reader.
+- **The egg in cross-section**, on the branch
+  `claude/egg-state-visualization-dd4490` (`DECISIONS.md` 51): the yolk and
+  white drawn ring by ring as the cook runs, as how set each layer is.
+  `src/core/section.ts` carries the cook forward a tick at a time with a
+  dose at every ring, and agrees with `simulate`. The web's cooking screen
+  draws it beside the setup sentence (`src/ui/eggSection.ts`, `UI.md` §3).
+  `tools/egg-section.html` (`egg-lab` in `.claude/launch.json`) plays a
+  whole cook, with the heat map the owner set aside beside it. Next: the
+  Swift twin with a fixture, and the iOS view beside `CookSentence`.
 - **A rename:** `Ticket.forecast` / `shownForecast` hold core's `Outcome`, and
   should say so (`outcome`, `shownOutcome`). Small; both apps.
 - **Untested:** the Lock Screen card ending with the cooling, and the web's
