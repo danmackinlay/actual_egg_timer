@@ -22,6 +22,12 @@
   --yolk-runny: #ff7417;
   --yolk-jammy: #ffb31f;
   --yolk-hard: #ffe680;
+  /* The egg in cross-section (src/ui/eggSection.ts): the white from clear to
+     set. Both opaque, since the rings are stacked, so the clear one is a
+     colour of its own: the page's, a touch lighter and a touch blue, as a
+     raw white looks in the pan. */
+  --white-raw: #19202b;
+  --white-set: #f2efe6;
 }
 
 @media (prefers-color-scheme: light) {
@@ -42,6 +48,8 @@
     --yolk-runny: #d9530a;
     --yolk-jammy: #e89400;
     --yolk-hard: #e8c410;
+    --white-raw: #e6edf6;
+    --white-set: #ffffff;
   }
 }
 
@@ -469,7 +477,22 @@ button.clause[aria-expanded="true"] {
 /* The cook in the pan, while it runs: the sentence it was started with, in
    the idle sentence's face a size down and with nothing to tap, and under it
    the doneness and the peak yolk. */
-#cookSetup { margin: 22px 0 0; }
+#cookSetup {
+  margin: 22px 0 0;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 14px;
+  align-items: center;
+}
+/* The egg in cross-section (src/ui/eggSection.ts), how set each layer is,
+   beside the sentence rather than above it, so it costs the column no
+   height of its own: the sentence runs to three lines or so anyway. */
+.egg-section {
+  display: block;
+  height: 9.75rem;
+  width: 7.5rem;
+}
+.egg-section__shell { fill: none; stroke: var(--line); stroke-width: 1.5; }
 #cookSentence {
   margin: 0;
   font-size: 1.125rem;

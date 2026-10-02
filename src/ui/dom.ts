@@ -14,6 +14,13 @@ export function el<T extends HTMLElement>(id: string): T {
   return node as T;
 }
 
+/** An SVG element by id, which `el` cannot name: SVG is not HTML. */
+function svgEl(id: string): SVGSVGElement {
+  const node = document.getElementById(id);
+  if (!(node instanceof SVGSVGElement)) throw new Error(`missing svg #${id}`);
+  return node;
+}
+
 function findDom() {
   return {
     body: document.body,
@@ -37,6 +44,7 @@ function findDom() {
     welcome: el<HTMLParagraphElement>('welcome'),
     helpSousVide: el<HTMLParagraphElement>('helpSousVide'),
     sentence: el<HTMLParagraphElement>('sentence'),
+    eggSection: svgEl('eggSection'),
     cookSetup: el<HTMLElement>('cookSetup'),
     cookSentence: el<HTMLParagraphElement>('cookSentence'),
     cookDoneness: el<HTMLParagraphElement>('cookDoneness'),

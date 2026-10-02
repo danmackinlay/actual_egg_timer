@@ -10,12 +10,13 @@ population a prior is drawn from (E6-E8, `COLLECTIVE.md`) are built in
 both, not yet deployed. The web app (`src/`) and the iOS app (`ios/`) carry
 the same model, refusals, particle filter and choice of time, the same
 catalogue of words in two Englishes (Phase F but for Czech), and the same
-layout (`UI.md`). `npm test` runs 282 tests, all passing (5b pins E3's known
-limit). `npm run validate` passes 28/28, and `swift test` passes 122 tests
-in 32 suites. **Pushed on 29 September** at `5ff6940`, the owner's
+layout (`UI.md`). `npm test` runs 293 tests, all passing (5b pins E3's known
+limit). `npm run validate` passes 28/28, and `swift test` passes 124 tests
+in 33 suites. **Pushed on 29 September** at `5ff6940`, the owner's
 call: Netlify serves it at actualeggtimer.netlify.app, and the first run of
 `.github/workflows/verify.yml` passed. The iOS app runs from Xcode on the owner's
-phone and has cooked real eggs; no TestFlight build is recorded
+phone and has cooked real eggs; the first TestFlight build, 0.3.1 (1), was
+uploaded on 2 October 2026 from `v0.3.1-alpha.1`. The next upload needs build 2
 (`ios/RELEASING.md`). The owner is reviewing the `tidy` and `tidy2` copy
 drafts on a phone.
 
@@ -84,6 +85,17 @@ Waiting on someone else: the Czech review (F5), by the owner's friend.
   to tell it from `alpha`. Meanwhile hot-start heat-off cooks never set the
   white at 1-4 L with four fridge eggs; 1.0 may be pessimistic with a lid
   on, and one real cook would settle it.
+- **The egg in cross-section**, merged on 2 October (`DECISIONS.md` 52),
+  not yet released: the yolk and
+  white drawn ring by ring as the cook runs, as how set each layer is.
+  `src/core/section.ts` carries the cook forward a tick at a time with a
+  dose at every ring, and agrees with `simulate`. The web's cooking screen
+  draws it beside the setup sentence (`src/ui/eggSection.ts`, `UI.md` §3).
+  `tools/egg-section.html` (`egg-lab` in `.claude/launch.json`) plays a
+  whole cook, with the heat map the owner set aside beside it. Its Swift
+  twin is `EggSection` (`Section.swift`), held by `fixtures/section.json`;
+  iOS draws it beside `CookSentence` (`EggSectionView.swift`). Not yet seen
+  on a phone in either app.
 - **Untested:** the Lock Screen card ending with the cooling, and the web's
   setup sentence while a cook runs (README §11.5).
 - **Someday:** an iPad app (`DECISIONS.md` 50). iOS is iPhone only; an iPad

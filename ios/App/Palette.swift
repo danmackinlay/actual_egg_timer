@@ -34,15 +34,32 @@ enum Palette {
     /// stops as the web's linear gradient blends them.
     static func yolk(at level: Double, in scheme: ColorScheme) -> Color {
         let l = min(1, max(0, level))
+        return l <= yolkJammyAt
+            ? mix(yolkRunny, yolkJammy, l / yolkJammyAt, in: scheme)
+            : mix(yolkJammy, yolkHard, (l - yolkJammyAt) / (1 - yolkJammyAt), in: scheme)
+    }
+
+    /// The egg in cross-section's white (`--white-raw`, `--white-set`), from
+    /// raw to set. Both opaque, since its rings are stacked, so the raw one is
+    /// a colour of its own: the page's, a touch lighter and a touch blue.
+    static let whiteRaw = scheme(dark: 0x19202B, light: 0xE6EDF6)
+    static let whiteSet = scheme(dark: 0xF2EFE6, light: 0xFFFFFF)
+    /// Its shell's line (`--line`).
+    static let eggLine = scheme(dark: 0x2A2C31, light: 0xD8D9DD)
+
+    /// The white at how set it is, 0 raw to 1 set.
+    static func white(at set: Double, in scheme: ColorScheme) -> Color {
+        mix(whiteRaw, whiteSet, min(1, max(0, set)), in: scheme)
+    }
+
+    /// `from` to `to` at `t`, in RGB as the web blends, in `scheme`.
+    private static func mix(_ from: Color, _ to: Color, _ t: Double, in scheme: ColorScheme) -> Color {
         let traits = UITraitCollection(userInterfaceStyle: scheme == .dark ? .dark : .light)
         func rgba(_ c: Color) -> (CGFloat, CGFloat, CGFloat) {
             var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
             UIColor(c).resolvedColor(with: traits).getRed(&r, green: &g, blue: &b, alpha: &a)
             return (r, g, b)
         }
-        let (from, to, t): (Color, Color, Double) = l <= yolkJammyAt
-            ? (yolkRunny, yolkJammy, l / yolkJammyAt)
-            : (yolkJammy, yolkHard, (l - yolkJammyAt) / (1 - yolkJammyAt))
         let a = rgba(from), b = rgba(to)
         let mix = { (x: CGFloat, y: CGFloat) in x + (y - x) * CGFloat(t) }
         return Color(red: Double(mix(a.0, b.0)), green: Double(mix(a.1, b.1)), blue: Double(mix(a.2, b.2)))

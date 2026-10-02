@@ -19,6 +19,9 @@ import EggTimerCore
 /// - `-uiScreen direction-info`: open the direction's (i).
 /// - `-uiLanguage en-x-1750`: read in that catalogue, as a pick in the
 ///   picker would, before the first frame (`LanguageChoice.start`).
+/// - `-sectionAhead 540`: draw the egg in cross-section as it will be that
+///   many seconds on in the cook as planned, the pull and its grace included;
+///   with `-uiScreen heating`, a cook part done without waiting for it.
 /// - `-shareServer http://localhost:8888`: send what sharing sends there
 ///   rather than to the live site (`Sharing.server`), for `npm run
 ///   serve:dev`.
@@ -26,6 +29,7 @@ enum Screenshots {
     static var scene: String? { UserDefaults.standard.string(forKey: "uiScreen") }
     static var language: String? { UserDefaults.standard.string(forKey: "uiLanguage") }
     static var noAlarmPrompt: Bool { UserDefaults.standard.bool(forKey: "noAlarmPrompt") }
+    static var sectionAhead: Double { UserDefaults.standard.double(forKey: "sectionAhead") }
     static var seedEggs: [Feedback] {
         guard let list = UserDefaults.standard.string(forKey: "seedEggs") else { return [] }
         return list.split(separator: ",").compactMap { word in

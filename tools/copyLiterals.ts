@@ -106,6 +106,7 @@ const NOT_COPY: Record<string, string> = {
   'init(coder:) is not used': 'developer error, never shown',
   noAlarmPrompt: 'debug launch argument',
   seedEggs: 'debug launch argument',
+  sectionAhead: 'debug launch argument',
   uiLanguage: 'debug launch argument',
   uiScreen: 'debug launch argument',
   soft: 'debug launch argument value',

@@ -3430,6 +3430,131 @@ rated eggs and boil times in both apps. The App Privacy label is "Data Not
 Collected" until E6. The agent that built it stalled before its docs and
 checks; the session finished them.
 
+## 2 October 2026: the egg in cross-section, a prototype
+
+On the branch `claude/egg-state-visualization-dd4490`, for the owner to
+judge on a phone: whether a running cook should show the egg as how set
+each layer is, or as how hot.
+
+- **Core** (953c698). `src/core/section.ts` runs `simulate`'s loop a step
+  at a time as the clock moves, with a dose at 34 radii: 17 across the
+  yolk and 17 across the white, the yolk's edge sampled as both. Advanced
+  past the carryover, the centre and the innermost white give `simulate`'s
+  peaks exactly and its doses to 1e-4 (it runs the window out where
+  `simulate` stops early). A tick at a time is bit-identical to one long
+  advance. At t = 0 the 40-term series reads a hot start's centre as
+  95.8 C: the shell's step is a fresh discontinuity (invariant 7). By
+  0.5 s it reads 11.6 C, by 2 s 4.0 C, so the screen draws a uniform egg
+  for the first second.
+- **The drawing** (f312cc1, c79c35b). An ovoid at the model's 1.35, blunt
+  end up, with a round yolk; across the white the outlines turn from
+  circle to ovoid. Each ring is a closed polygon filled opaque, outermost
+  first. A translucent fill would show the rings beneath it through, so
+  the clear white is a colour of its own. "How set" is the yolk on the
+  slider track's colours and the white from glassy to opaque, over the
+  decade of dose below its target. "How hot" runs blue through a grey at
+  40 C to red, two hues and a neutral, never a rainbow. A tap swaps
+  them. First placed under the time, it cost the column 7.5 rem; at the
+  owner's word it moved to the left of the setup sentence, where it costs
+  none.
+- **The lab** (`tools/egg-section.html`, the `egg-lab` launch
+  configuration). A whole cook scrubbed or played at 30 times real time,
+  both pictures side by side and eight moments in a strip. Five presets,
+  a doneness, a mass and a late pull. On each preset the centre ends on
+  the slider's colour for the level asked for (#e89400 at 0.41, light),
+  except a counter rest. There 0.41 is out of reach, the solve answers
+  its softest, 0.61, and the egg ends there.
+
+**Seen**, in the web app on a 375 px viewport in both schemes, the clock
+jumped through `Date.now`: heating, the boil tap's replay, cooking, a
+late pull timing out into cooling, and done, with both pictures. A reload
+restored mid-cook replays the egg from t = 0. The console stayed clean.
+
+**Run:** `rm -rf dist/test && npm run verify`: 269 tests, all pass; the
+copy lint; the fixtures fresh; `swift test` 119 tests in 31 suites.
+
+**Not verified:** a real phone, Safari, and iOS at all (there is no Swift
+yet). The tap reaches no keyboard, and the picture has no words.
+
+## 2 October 2026: the egg in cross-section, chosen and in both apps
+
+The owner chose "how set" (DECISIONS 52) and asked for a clearer raw white,
+a touch blue.
+
+- **Web** (458150a). The tap to the heat map went, with its colours; the
+  lab keeps both pictures and now carries the heat map's colours itself.
+  The raw white is `#19202b` on the dark page and `#e6edf6` on the light:
+  the page's colour, a touch lighter and a touch blue. The picture says
+  nothing the sentence and the time do not, so it stays wordless and
+  hidden from a screen reader.
+- **The Swift core** (5ff0874). `EggSection` in `Section.swift`, held by
+  `fixtures/section.json`: three cooks tick by tick (hot start into ice; a
+  cold start with the heat off, rested on the counter; one still in the
+  water), with every ring's dose, temperature and set against the
+  constant white target and a moved one. It agrees at 1e-12, like every
+  other suite.
+- **iOS.** `EggSectionView.swift`, beside `CookSentence` in an `HStack`, in
+  its own one-second `TimelineView`. A small cache carries the section
+  between ticks and replays it from t = 0 when the ticket changes. The
+  outline is `ringPoints` from `eggSection.ts`, the same numbers, drawn on
+  a `Canvas` outermost first. The colours are `Palette.yolk(at:in:)` and a
+  new `Palette.white(at:in:)`, which share one RGB mix. The time out of
+  the water is the cook's tap, or the pull plus `pullGraceSeconds` once
+  the grace has run out, as the web's `outAt_ms` is.
+  `-sectionAhead <s>` (debug) draws the egg that far on in the cook as
+  planned.
+
+**Seen** on the simulator (Shots 14 Plus, iOS 26.5): a cold start's raw
+egg 1:29 in (light); +9 min, the white set and the yolk's outer ring paler
+(light); about six minutes into the ice bath, a jammy yolk (dark). Each
+matches the web's egg. `-uiScreen heating` did not start a cook when the
+app was already running, so Start was tapped. The simulator was left
+idle, in light appearance.
+
+**Run:** `rm -rf dist/test && npm run verify`: 269 tests, all pass; the
+copy lint; the fixtures fresh; `swift test` 121 tests in 32 suites. `npm
+run ios:build` builds.
+
+**Not verified:** either app on a real phone; Dynamic Type at large sizes
+beside the egg; Safari.
+
+## 2 October 2026: a browser from 19 September runs stale modules
+
+The owner's browser loaded the 0.3.2 page and failed at boot: "The requested
+module './geometry.js' does not provide an export named 'US_SIZE_CLASSES'".
+The 19 September site served /dist/* as `max-age=31536000, immutable`, so a
+browser that visited then keeps those modules for a year; the header was
+fixed on 27 September, but only for files fetched since. The published site
+now serves its scripts from /app/ (`tsconfig.site.json`,
+`tools/sitePaths.mjs` rewriting index.html's one script tag), a path no
+browser cached under the old header. Serving the repo root still uses
+dist/. Checked: the built site boots from /app/, its worker too.
+
+## 2 October 2026: the egg, bigger and egg-shaped
+
+The owner: too small, and "a perfect oval instead of one where one end is
+smaller". The first outline stretched an ellipse lengthwise at the blunt
+end, which leaves the two ends the same width; it read as an oval. The
+shell is now an ellipse whose width runs as 1 + 0.18 y along its length,
+so the pointed end is narrower as well as tighter. A quarter of the way in
+from each end, the blunt end is over 1.15 times the wider
+(`test/eggSection.test.ts`), at the model's 1.35 length to width. 0.22 was
+tried and read as a teardrop. The yolk sits 0.06 of the half-length toward
+the blunt end. The drawing's bounds are now worked out from the outline.
+Both apps draw it at 104 by 136 points, up from 80 by 104. That is taller
+than the sentence beside it at 375 px (136 against 101), which the owner
+asked for. Seen in the web app at 375 px and on the simulator; the
+simulator was left idle.
+
+## 2 October 2026: the egg, standing on its blunt end
+
+The owner: point up, so it does not look balanced on its small end, and
+about 15% bigger. The outline is turned over (the width runs as 1 - 0.18 y,
+and the yolk sits below the middle, toward the blunt end), and both apps
+draw it at 120 by 156 points. At 375 px the sentence beside it wraps to
+four lines (127 px), so the row costs about 29 px more than the words.
+Seen in the web app at 375 px and on the simulator, which was left idle.
+
 ## 2 October 2026: E6-E8, the collective part
 
 Built from `COLLECTIVE.md`, which has every choice; the owner's answers are

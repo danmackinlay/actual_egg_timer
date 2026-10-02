@@ -1,7 +1,7 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "outDir": "_site/dist",
+    "outDir": "_site/app",
     "sourceMap": false,
     "types": []
   },

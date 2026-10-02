@@ -20,6 +20,16 @@
       ],
       "port": 8888,
       "autoPort": true
+    },
+    {
+      "name": "egg-lab",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": [
+        "-c",
+        "npm run build && python3 -m http.server \"${PORT:-8391}\""
+      ],
+      "port": 8391,
+      "autoPort": true
     }
   ]
 }
