@@ -77,6 +77,22 @@ What was cleaned up, so nobody re-introduces it:
 
 ## Things that cost an hour to find out
 
+- **A quick synthetic tap does not flip a SwiftUI `Toggle` in the
+  simulator; a held one (0.15 s) does.** Like the `Slider` that ignores
+  synthetic drags, but with a cure. The screenshots also lag a tap by a
+  frame or two, so look again before tapping twice.
+- **JAX computes in single precision unless told** (`numpyro.enable_x64()`):
+  the fit's likelihood missed the app's at the sixth digit until it was.
+- **Apple's "Attestation Object Validation Guide" contradicts its own sample
+  twice**: step 5's "expected public key hash" is not the hash of the key in
+  credCert (the key id is), and the sample's bundle version is "1", not
+  "1.0". The sample also carries authenticator-data extensions without the
+  ED flag. Read the sample's bytes, not the prose, and fetch it as the page's
+  JSON (developer.apple.com/tutorials/data/documentation/...json): retyping
+  eight thousand base64 characters does not survive.
+- **Netlify Blobs' strongly consistent reads need `uncachedEdgeURL`** in the
+  environment the client reads; a hand-made context for the local server
+  must carry it as well as `edgeURL`.
 - **The Xcode project is generated.** `cd ios && xcodegen`. It is gitignored,
   and so is `ios/Widget/Info.plist`. Do not look for either in the history.
   `ios/project.yml` is the source of truth and fits on a screen.
@@ -3413,3 +3429,51 @@ on iOS, a same-origin CSP on the web, and "Start learning again" clears the
 rated eggs and boil times in both apps. The App Privacy label is "Data Not
 Collected" until E6. The agent that built it stalled before its docs and
 checks; the session finished them.
+
+## 2 October 2026: E6-E8, the collective part
+
+Built from `COLLECTIVE.md`, which has every choice; the owner's answers are
+`DECISIONS.md` 52-55. Nothing is deployed: the endpoint goes live with the
+next push.
+
+- **E6, collection.** Each record keeps what the app said at Eggs in
+  (`forecast`, the six answer probabilities and the time they were for) and
+  the code that said it (`model`); `Outcome` gained the white's tender and
+  firm for it (3c32227, 67be30d). The endpoint, `server/eggs.ts` behind
+  `netlify/functions/eggs.mts`, keeps an egg only if its key is new, after
+  `parseRecord`, and deletes by id (00186b1). App Attest's verification was
+  run against Apple's own sample attestation, which chains to Apple's real
+  root, and against a synthetic one for this app whose key the tests sign
+  assertions with; the function ran through the real Blobs client against
+  its local server. Both apps' sharing (f7f9e90, 0f93576, f902240) was driven
+  end to end against `npm run serve:dev`: turning it on sent the log so far
+  (two eggs, open tier, from the browser and from the simulator), and
+  Delete removed both on the server and said so. The `share` draft's proofs:
+  `copyLiterals --since c86f442 share` and `copySnapshot compare --draft
+  share` over 172 web states.
+- **E8, the nudge.** Measured before it shipped (`npm run decide -- nudge`,
+  300 simulated cooks x 6 eggs, the truth's own probit): eggs right fall from
+  52.1% to 49.3% at +-10 s, 51.3% at +-5 s, 51.8% at +-3 s; by a cook's sixth
+  egg 66.9% to 62.6% at +-10 s. INFERENCE.md had said "at no cost to the
+  cook"; it was wrong, and says so now. The owner chose +-10 s (55). In both
+  apps the time moved with sharing (11:17 to 11:21 in the browser, 11:35 to
+  11:29 in the simulator) and the Learning mark showed with its (i). The
+  `learning` draft's proofs as for `share`.
+- **E7, the fit.** Both apps draw from `fixtures/population.json`, the
+  literature's for now; with it every existing fixture stood still (fea97d5).
+  The fit (3068cdb) on 400 simulated cooks: the time-scale recovered (0.597
+  +- 0.037 for 0.600), the white's lag (0.229 +- 0.053 for 0.250), and on
+  77 held-out cooks one step ahead a log score of -0.455 per yolk answer
+  against the truth's -0.452 and the literature's -0.509; the noise's median
+  and spread not recovered. INFERENCE.md section 9 has the table.
+
+**Run:** `rm -rf dist/test && npm run verify`: 282 tests, all pass; the
+Swift copy lint; the fixtures fresh; `swift test` 122 tests in 32 suites.
+`npm run validate` 28/28. `npm run ios:build` builds. `fit/tests` 3 pass.
+
+**Not verified:** the live endpoint (it is not deployed); App Attest's
+attested path on a phone (the simulator cannot attest, and a development
+build attests against Apple's sandbox); sharing in Safari, and on a real
+phone's network; the `share` and `learning` words on a phone (the owner's
+pass); a real fit (no shared egg exists).
+

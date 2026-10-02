@@ -48,7 +48,10 @@ them out differently.
 - **The readout**: the total time, and one line under it for the method
   (`readout.sub.coldAssumes` with its (i), `coldGuesses`, `standing` or
   `hot`). With the heat off it says the lid is on, so the time is never read
-  without it.
+  without it. While sharing is on, a small **Learning** mark sits in the
+  panel's top corner with its (i) (`learning.badge`, E8, `DECISIONS.md` 52):
+  the time may be nudged a few seconds, and the (i), which opens under the
+  phase label, says so. Never in sous-vide.
 - **The direction**: which way the egg is likely to miss, with its (i), and
   the runny-white line when it applies (§8).
 - **The doneness slider.** The heading reads `controls.doneness` at its start
@@ -80,6 +83,11 @@ That is two controls and one sentence.
 - Language: English or English (1750) (`LANGUAGE.md` §6).
 - What I've learned (`learned.literature`, `.tuned`, `.pan` or `.both`), and
   Forget, which asks first, in place (`learned.confirm.*`).
+- Share my eggs (E6, the `share` draft), with its (i): the consent always on
+  screen (`share.what`), never behind the (i); the switch, off until the cook
+  turns it on; under it how many eggs have gone and how many wait; Delete
+  what I've sent, which asks first in place as Forget does; and the privacy
+  page.
 - The colophon, with its link.
 
 In sous-vide the settings that change nothing there are put away.

@@ -48,7 +48,8 @@ anything both apps must agree on lives here, not in either app.
 | `doseGrid.ts` | the cached dose surface and its lookups | `buildDoseGrid`, `buildRequestedGrid` | `DoseGrid.swift` | `calibration.json` |
 | `infer.ts` | the particle filter: prior, likelihood, fold | `createPrior`, `updatePosterior`, `probeLikelihood` | `Infer.swift` | `calibration.json`, `probe.json` |
 | `record.ts` | the egg log, and the posterior as its replay | `parseLog`, `foldRecord`, `replay` | `Record.swift` | `record.json` |
-| `decide.ts` | the chosen time and its odds | `decide`, `chooseCookTime`, `hitOdds` | `Decide.swift` | `decide.json` |
+| `population.ts` | the population a prior is drawn from (E7), and its centre | `parsePopulation`, `priorStart` | `Population.swift` | `prior.json` |
+| `decide.ts` | the chosen time and its odds, and the nudge (E8) | `decide`, `chooseCookTime`, `hitOdds`, `nudgeSeconds` | `Decide.swift` | `decide.json` |
 | `outcome.ts` | which way a miss goes, and the likely level | `predictOutcome` | `Outcome.swift` | `outcome.json` |
 | `reach.ts` | the odds at every level, the shading, the advice | `oddsProfile`, `answerAt`, `protocolAdvice` | `Reach.swift` | `reach.json` |
 | `policy.ts` | what both apps decide: bounds, defaults, snapping, verdicts, texture, the phase timeline, the calibration grid | `verdictFor`, `phaseAt`, `calibrationGrid` | `Policy.swift` | `policy.json` |

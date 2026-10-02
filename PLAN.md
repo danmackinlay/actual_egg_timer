@@ -4,13 +4,15 @@ The state of the build, what is next, and what waits on whom. Updated in the
 same commit as the work it describes. History is `LOGBOOK.md`; the rules for
 working here are `CLAUDE.md`; the last section says where everything else is.
 
-**Where things stand, 29 September 2026.** Both apps are complete for one
-cook and learning. The web app (`src/`) and the iOS app (`ios/`) carry the
-same model, refusals, particle filter and choice of time (Phase E up to E5),
-the same catalogue of words in two Englishes (Phase F but for Czech), and the
-same layout (`UI.md`). `npm test` runs 258 tests, all passing (5b pins E3's
-known limit). `npm run validate` passes 28/28, and `swift test` passes 119
-tests in 31 suites. **Pushed on 29 September** at `5ff6940`, the owner's
+**Where things stand, 2 October 2026.** Both apps are complete for one
+cook and learning, and now for many: opt-in sharing, the nudge and the
+population a prior is drawn from (E6-E8, `COLLECTIVE.md`) are built in
+both, not yet deployed. The web app (`src/`) and the iOS app (`ios/`) carry
+the same model, refusals, particle filter and choice of time, the same
+catalogue of words in two Englishes (Phase F but for Czech), and the same
+layout (`UI.md`). `npm test` runs 282 tests, all passing (5b pins E3's known
+limit). `npm run validate` passes 28/28, and `swift test` passes 122 tests
+in 32 suites. **Pushed on 29 September** at `5ff6940`, the owner's
 call: Netlify serves it at actualeggtimer.netlify.app, and the first run of
 `.github/workflows/verify.yml` passed. The iOS app runs from Xcode on the owner's
 phone and has cooked real eggs; no TestFlight build is recorded
@@ -26,8 +28,9 @@ These counts are the only ones in the documents. If you want a number, run
 2. **An adversarial QA pass** against this baseline, starting from the QA
    list below.
 3. **F5, Czech**, when the owner's friend can review it.
-4. **E6-E8**, the collective part: under way, worked through in
-   `COLLECTIVE.md` (the owner's answers are `DECISIONS.md` 52-54).
+4. **E6-E8**, the collective part: built (`COLLECTIVE.md`; the owner's
+   answers are `DECISIONS.md` 52-55). Live with the next push; then the
+   checks under "What is left", and the first real fit once eggs arrive.
 
 Throughout: cook real eggs, and the two measurements in README §11.3.
 
@@ -107,9 +110,9 @@ Waiting on someone else: the Czech review (F5), by the owner's friend.
 | E3 | the white offset | built 27 Sep; its done-when half met (above) |
 | E4 | the thermometer | done 27 Sep |
 | E5 | choosing the time under uncertainty; the odds, reach and advice | done 28 Sep |
-| E6 | opt-in collection | not started |
-| E7 | the population fit | not started |
-| E8 | the nudge | not started |
+| E6 | opt-in collection | built 2 Oct; live with the next push |
+| E7 | the population fit | built 2 Oct, checked on simulated cooks; no real fit until eggs arrive |
+| E8 | the nudge | built 2 Oct; live with the next push |
 | F1 | one catalogue for both apps | done 27 Sep |
 | F2 | the rewrite, in the first person | done 27 Sep |
 | F3 | Metric and Imperial; US size classes | done 27 Sep |
@@ -118,25 +121,16 @@ Waiting on someone else: the Czech review (F5), by the owner's friend.
 | F6 | the English of 1750 | done 28 Sep; the owner's review open |
 
 The design is `INFERENCE.md` (E) and `LANGUAGE.md` (F); what each phase
-measured is `LOGBOOK.md`. E6-E8 are being built from `COLLECTIVE.md`. What is
-left:
+measured is `LOGBOOK.md`. E6-E8 were built from `COLLECTIVE.md`, which has
+every choice made to build them. What is left:
 
-- **E6, opt-in collection.** Consent, a random id, upload, delete by id; a
-  Netlify function writing append-only blobs, the web tier down-weighted in
-  the global fit (`DECISIONS.md` 1, 2; `INFERENCE.md` §6-7). Each egg keeps
-  its full forecast at "Eggs in" and a model version (`DECISIONS.md` 37). The
-  privacy manifest, both READMEs and `ios/RELEASING.md` stop claiming no
-  networking. Web only: its first network request. iOS only: App Attest and
-  the privacy manifest's collected-data entries. The consent text has to
-  exist in every language that has shipped. Privacy contact:
-  forgetmyeggs@danmackinlay.name, which exists.
-- **E7, the population fit.** Offline, Python, outside `src/core/`: an
-  emulator for the likelihood, 2-4 global parameters, cook effects with
-  reliability. It publishes `fixtures/population.json`, which both apps read
-  as their prior. Done when held-out predictive calibration is the headline,
-  by proper scoring rules (`DECISIONS.md` 37, `INFERENCE.md` §9).
-- **E8, the nudge.** ±10 s on the recommendation for consenting cooks. Last,
-  because it is worthless before E7.
+- **E6-E8, after the push.** The endpoint goes live with it; then check a
+  record posted and deleted through the real one, and App Attest's attested
+  path on a phone (only the simulator's open tier has run).
+- **E7, the first real fit**, once shared eggs have arrived: `fit/README.md`
+  has the loop, and publishing is writing `fixtures/population.json` in a
+  release. Read the open tier's cap first (`COLLECTIVE.md` §4): with no
+  attested eggs, `DECISIONS.md` 2 read literally gives the web no weight.
 - **F5, Czech.** Adds Czech to the picker in both apps and `cs` to
   `CFBundleLocalizations` in `ios/project.yml`. It tests all four CLDR plural
   categories, the decimal comma and seven cases (`LANGUAGE.md` §5); doneness
@@ -147,6 +141,12 @@ left:
 
 Gathered from every "Not verified" in `LOGBOOK.md`, less what has since been
 checked, fixed or deleted. Start the QA pass here.
+
+- **Sharing, live.** The endpoint has run only locally (`npm run
+  serve:dev`): a record posted and deleted through the deployed one; App
+  Attest's attested path on a phone; the web in Safari; an iPhone on a
+  flaky network; Netlify's rate limit at work; a deletion asked offline and
+  confirmed at a later launch, outside the tests.
 
 - **iOS, by hand.** Nothing in these was tapped, in a simulator or on a
   phone: the units menu, the steppers in displayed units and a typed value's
@@ -202,9 +202,16 @@ checked, fixed or deleted. Start the QA pass here.
 - **Alpha: no stability promised, and no back-compat yet** (`DECISIONS.md`
   48). The site is public but not in wide use, so the storage formats
   (`aet.settings.v1`, `aet.cook.v2`, `aet.calibration.v4`, `aet.boil.v1`,
-  record v1) may change without a migration; bump the key's version so an
-  old value is dropped rather than misread. Back-compat starts when the
-  owner says the app is widely deployed, and not before.
+  `aet.share.v1`; iOS's `sharing.v1` and `sharing.attest.v1`; record v1) may
+  change without a migration; bump the key's version so an old value is
+  dropped rather than misread. Back-compat starts when the owner says the app
+  is widely deployed, and not before. What has been SENT is another matter:
+  the server's records are parsed by the same `parseRecord`, and a field
+  reinterpreted there would misread every egg already kept.
+- **Sharing's endpoint** is `netlify/functions/eggs.mts` on the same site,
+  backed by the site's Blobs store `eggs` in Netlify's default region
+  (`us-east-2`); `npm run serve:dev` runs it locally on a store in memory.
+  Nothing is sent unless a cook turns sharing on.
 - **Versions and tags** (`DECISIONS.md` 49, `CLAUDE.md`): the version is
   `package.json`'s, now `0.3.0-alpha.1`; iOS carries it without the
   pre-release tag. Each push the owner makes is a release, tagged
@@ -234,3 +241,4 @@ checked, fixed or deleted. Start the QA pass here.
 | `WORKLIST.md` | the review of 28 September 2026, worked through |
 | `FOLLOWUP.md` | QA's worklist after it, 29 September 2026, worked through; `tidy2` waits on the owner |
 | `COLLECTIVE.md` | E6-E8, the collective part: the choices made to build `INFERENCE.md` §6-§9, and the work, ticked as it lands |
+| `fit/README.md` | the population fit (E7): pulling the eggs, fitting, scoring, publishing |
