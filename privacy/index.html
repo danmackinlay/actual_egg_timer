@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark light">
+<meta name="theme-color" content="#0c0d0f" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f7f7f8" media="(prefers-color-scheme: light)">
+<title>Privacy - Actual Egg Timer</title>
+<meta name="description" content="What Actual Egg Timer keeps, where, and how to delete it. Nothing leaves your phone or your browser.">
+<link rel="stylesheet" href="/styles.css">
+<link rel="canonical" href="https://actualeggtimer.netlify.app/privacy">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/assets/icon-192.png">
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+</head>
+<!--
+  The privacy page: App Store Connect's privacy policy URL, and the Help
+  page's Privacy link in both apps (help.privacy). Served at /privacy, as
+  privacy/index.html so that every host and `python3 -m http.server` find it
+  (DECISIONS.md 51).
+
+  Outside the copy catalogue on purpose (LANGUAGE.md section 2): one plain
+  English, no 1750 twin, because it has to mean exactly one thing. The
+  speaker is the person who made the app, not the app. No script; the styles
+  are the app's own (styles.css, "the privacy page").
+
+  Every claim here is checked against the code. When the code changes what
+  it keeps or sends - E6 above all (INFERENCE.md section 7) - this page
+  changes first, with the date at the top and a line under "Changes".
+-->
+<body>
+<main class="doc">
+  <header class="doc__bar">
+    <a href="/" class="navlink navlink--back">Actual Egg Timer</a>
+  </header>
+
+  <h1>Privacy</h1>
+  <p class="doc__updated">Last updated 2 October 2026</p>
+
+  <p>Actual Egg Timer is a free app that I, Dan MacKinlay, make on my own as
+  a personal project. It comes as a website and as an iPhone app. This page
+  says what each one keeps about you, where, and how to delete it.</p>
+
+  <h2>In short</h2>
+  <p><strong>Nothing you put into Actual Egg Timer leaves your phone or your
+  browser.</strong> Neither app sends anything about you or your eggs to me
+  or to anyone else.</p>
+
+  <h2>What stays on your device</h2>
+  <p>So that they work the same way next time, both apps keep:</p>
+  <ul>
+    <li>your settings, such as the egg size, the units, your altitude, how
+    much water you use, how you cool the eggs, and the language;</li>
+    <li>the cook in progress, so a running timer survives the page reloading
+    or the app closing;</li>
+    <li>the eggs you rated: how each was cooked and how you said it came out,
+    and what the app has learned from them;</li>
+    <li>how long your water took to boil, for each amount you have timed.</li>
+  </ul>
+  <p>On iPhone, these are kept in the app's own storage on the phone. If you
+  back up your iPhone, the backup includes them, as it does any app's data.
+  On the web, they are kept in your browser's storage for this site. Neither
+  is ever sent anywhere.</p>
+
+  <h2>Deleting it</h2>
+  <ul>
+    <li><strong>iPhone:</strong> delete the app, and everything it kept goes
+    with it.</li>
+    <li><strong>Web:</strong> clear this site's data in your browser's
+    settings.</li>
+    <li><strong>Either app:</strong> <em>Start learning again</em>, in
+    Settings, deletes the eggs you rated and the boil times, and keeps your
+    settings.</li>
+  </ul>
+
+  <h2>What I don't do</h2>
+  <ul>
+    <li>No accounts and no sign-in.</li>
+    <li>No analytics, no advertising, no tracking and no cookies.</li>
+    <li>No code from other companies: no libraries, kits or trackers. Both
+    apps are built only from the code in
+    <a href="https://github.com/danmackinlay/actual_egg_timer">the project's
+    public repository</a>, on Apple's and your browser's own software.</li>
+    <li>The iPhone app makes no network connections at all. The website loads
+    only its own files, from this site.</li>
+  </ul>
+  <p>Both apps have links, in Help and to the code, that open in your
+  browser only when you tap them.</p>
+
+  <h2>Alarms and the Lock Screen</h2>
+  <p>On iPhone, the alarm is a notification that your phone schedules
+  itself, and the timer on the Lock Screen and in the Dynamic Island runs
+  on your phone. Neither goes through any server, mine or
+  Apple's. On the web, the alarm is a sound the page plays.</p>
+
+  <h2>Who else is involved</h2>
+  <p><strong>Netlify</strong> serves the website. Like any web host, it may
+  keep ordinary request logs, such as your IP address, the time and the page
+  you asked for, under
+  <a href="https://www.netlify.com/privacy/">its own privacy policy</a>. I
+  don't run analytics on the site, and I don't use those logs for
+  anything.</p>
+  <p><strong>Apple</strong> delivers the iPhone app, through TestFlight or
+  the App Store, under
+  <a href="https://www.apple.com/legal/privacy/">its own privacy policy</a>.
+  If you have agreed, in your iPhone's settings, to share analytics with app
+  developers, Apple may pass me crash reports and overall numbers. If you
+  send feedback through TestFlight, it comes to me. Both come from Apple,
+  not from the app.</p>
+
+  <h2>Sharing results, later</h2>
+  <p>I plan to add a way to share your egg results anonymously, so that
+  everyone's first guesses get better. <strong>It does not exist
+  yet.</strong> When it comes, it will be off unless you turn it on. It will
+  use a random number made on your device instead of your name, and you will
+  be able to delete what you sent. I will update this page before it ships,
+  and the date at the top will change.</p>
+
+  <h2>Contact</h2>
+  <p>Questions about any of this:
+  <a href="mailto:forgetmyeggs@danmackinlay.name">forgetmyeggs@danmackinlay.name</a>.</p>
+
+  <h2>Changes</h2>
+  <ul class="doc__changes">
+    <li>2 October 2026: first version.</li>
+  </ul>
+</main>
+</body>
+</html>

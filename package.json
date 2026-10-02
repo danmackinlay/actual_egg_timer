@@ -24,7 +24,7 @@
     "verify": "npm run check && npm test && npm run copy:literals && npm run fixtures:check && cd ios/EggTimerCore && swift test",
     "ios:build": "cd ios && xcodegen --quiet && xcodebuild -project ActualEggTimer.xcodeproj -scheme ActualEggTimer -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO -quiet build",
     "serve": "python3 -m http.server 8080",
-    "build:site": "rm -rf _site && tsc -p tsconfig.site.json && cp index.html styles.css site.webmanifest _site/ && rm -rf _site/assets _site/copy && cp -R assets _site/assets && cp -R copy _site/copy",
+    "build:site": "rm -rf _site && tsc -p tsconfig.site.json && cp index.html styles.css site.webmanifest _site/ && rm -rf _site/assets _site/copy _site/privacy && cp -R assets _site/assets && cp -R copy _site/copy && cp -R privacy _site/privacy",
     "serve:site": "python3 -m http.server 8080 --directory _site"
   },
   "devDependencies": {

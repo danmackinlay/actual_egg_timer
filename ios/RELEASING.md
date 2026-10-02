@@ -144,6 +144,31 @@ listed here only so nobody removes them as clutter:
   **Missing Compliance** and has to be answered by hand before anyone can install
   it.
 
+### 6. For a public link: the privacy policy, and the privacy answers
+
+Internal testing needs neither of these. A **public TestFlight link** is
+external testing, and App Store Connect will not open one without a
+**privacy policy URL** (the owner met this on 2 October 2026; it goes in the
+TestFlight tab's **Test Information**, and the App Store asks for it again
+under **App Privacy**):
+
+    https://actualeggtimer.netlify.app/privacy
+
+It is `privacy/index.html`, served by the web app's Netlify site, where the
+opt-in collection's endpoint will live (`DECISIONS.md` 51). It is plain
+English and outside the copy catalogue; every claim on it was checked against
+the code, so a change to what either app keeps or sends changes that page
+first.
+
+The **App Privacy** questionnaire's answer, today, is **Data Not Collected**.
+Apple counts data as collected only when it leaves the device for the
+developer or a third party to keep, and nothing does: no networking, no
+third-party code, everything in the app's own `UserDefaults`. Crash reports
+and App Analytics that Apple passes on from people who opted in to share them
+are Apple's to disclose, not the app's ("You are not responsible for
+disclosing data collected by Apple", Apple's App Privacy Details page). E6
+changes this answer: see `INFERENCE.md` §7.
+
 ---
 
 ## Every release

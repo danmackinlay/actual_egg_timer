@@ -58,6 +58,11 @@ The one queue. Nothing else in the documents waits on the owner.
 6. **Before E8:** whether the direction sentence meets the "still learning"
    condition for the nudge (`DECISIONS.md` 3), now that no screen shows that
    line.
+7. **A public TestFlight link** (`ios/RELEASING.md`, once, step 6). The
+   privacy policy URL is <https://actualeggtimer.netlify.app/privacy>
+   (`privacy/index.html`), which is live only after the next push; App
+   Privacy's answer is Data Not Collected. Read the page first: it speaks
+   in your name.
 
 Waiting on someone else: the Czech review (F5), by the owner's friend.
 
@@ -220,6 +225,7 @@ checked, fixed or deleted. Start the QA pass here.
 | `UI.md` | the layout both apps share, as built |
 | `ios/README.md` | the Swift port, module by module, and the iOS app |
 | `ios/RELEASING.md` | getting the app onto other people's phones |
+| `privacy/index.html` | the privacy page, at /privacy: what each app keeps and sends, checked against the code |
 | `LOGBOOK.md` | the record: what was verified, measured and learned, by date |
 | `WORKLIST.md` | the review of 28 September 2026, worked through |
 | `FOLLOWUP.md` | QA's worklist after it, 29 September 2026, worked through; `tidy2` waits on the owner |

@@ -721,6 +721,42 @@ body[data-phase="IDLE"]:not([data-view="egg"]) #settingsLink,
 body[data-view="help"] #helpLink,
 body:not([data-phase="IDLE"]) :is(#settingsLink, #helpLink) { display: none; }
 
+/* -------------------------------------------------------- the privacy page */
+
+/* privacy/index.html: a page of its own, outside the app, with no script.
+   It reads as Help does - the same column, faces and colours - and its one
+   way out is the top bar's back link, to the app. */
+main.doc {
+  display: block;
+  min-height: 0;
+  padding-bottom: calc(32px + env(safe-area-inset-bottom));
+  line-height: 1.5;
+}
+.doc__bar {
+  display: flex;
+  align-items: center;
+  min-height: 48px;
+  margin: 0 -8px 6px;
+}
+.doc h1 {
+  margin: 4px 0 4px;
+  font-size: 1.75rem;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+}
+.doc__updated { margin: 0 0 18px; font-size: 0.875rem; color: var(--dim); }
+.doc h2 { margin: 28px 0 8px; font-size: 1.25rem; line-height: 1.25; }
+.doc p { margin: 0 0 10px; }
+.doc ul { margin: 0 0 10px; padding-left: 1.2em; }
+.doc li + li { margin-top: 6px; }
+.doc p a, .doc li a {
+  color: var(--fg);
+  text-decoration-color: var(--accent);
+  text-underline-offset: 3px;
+  overflow-wrap: anywhere;
+}
+.doc__changes { font-size: 0.875rem; color: var(--dim); }
+
 /* ----------------------------------------------------------------------- 1750 */
 
 /* The English of 1750 (LANGUAGE.md section 6) is set in a book face, and its
