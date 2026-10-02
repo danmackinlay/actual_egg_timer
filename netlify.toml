@@ -34,8 +34,14 @@
 #
 # This is also Netlify's default for a file with no rule; it is written out so
 # that nobody adds the year back.
+# The published site serves the scripts from /app/, not /dist/ (the build
+# rewrites index.html's one <script src>; serving the repo root still uses
+# dist/). The 19 September site sent /dist/* as immutable for a year, so a
+# browser that visited then would keep running those modules against new
+# ones; a path it has never cached cannot be stale. Never mark /app/*
+# immutable for the same reason.
 [[headers]]
-  for = "/dist/*"
+  for = "/app/*"
   [headers.values]
     Cache-Control = "public, max-age=0, must-revalidate"
 

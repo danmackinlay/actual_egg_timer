@@ -3501,3 +3501,15 @@ run ios:build` builds.
 
 **Not verified:** either app on a real phone; Dynamic Type at large sizes
 beside the egg; Safari.
+
+## 2 October 2026: a browser from 19 September runs stale modules
+
+The owner's browser loaded the 0.3.2 page and failed at boot: "The requested
+module './geometry.js' does not provide an export named 'US_SIZE_CLASSES'".
+The 19 September site served /dist/* as `max-age=31536000, immutable`, so a
+browser that visited then keeps those modules for a year; the header was
+fixed on 27 September, but only for files fetched since. The published site
+now serves its scripts from /app/ (`tsconfig.site.json`,
+`tools/sitePaths.mjs` rewriting index.html's one script tag), a path no
+browser cached under the old header. Serving the repo root still uses
+dist/. Checked: the built site boots from /app/, its worker too.
