@@ -852,6 +852,214 @@
     },
     {
       "locale": "en-x-1750",
+      "key": "share.sent",
+      "args": {
+        "eggs": 3
+      },
+      "text": "I have sent 3 eggs."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "share.sent",
+      "args": {
+        "eggs": 0
+      },
+      "text": "I have sent 0 eggs."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "share.sent",
+      "args": {
+        "eggs": 1
+      },
+      "text": "I have sent 1 egg."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "share.sent",
+      "args": {
+        "eggs": 2
+      },
+      "text": "I have sent 2 eggs."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "share.sent",
+      "args": {
+        "eggs": 3
+      },
+      "text": "I have sent 3 eggs."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "share.sent",
+      "args": {
+        "eggs": 4
+      },
+      "text": "I have sent 4 eggs."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "share.sent",
+      "args": {
+        "eggs": 5
+      },
+      "text": "I have sent 5 eggs."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "share.sent",
+      "args": {
+        "eggs": 11
+      },
+      "text": "I have sent 11 eggs."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "share.sent",
+      "args": {
+        "eggs": 21
+      },
+      "text": "I have sent 21 eggs."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "share.sent",
+      "args": {
+        "eggs": 22
+      },
+      "text": "I have sent 22 eggs."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "share.sent",
+      "args": {
+        "eggs": 1.5
+      },
+      "text": "I have sent 1.5 eggs."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "share.sent",
+      "args": {
+        "eggs": 2.5
+      },
+      "text": "I have sent 2.5 eggs."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "share.sent",
+      "args": {
+        "eggs": 0.5
+      },
+      "text": "I have sent 0.5 eggs."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "share.waiting",
+      "args": {
+        "eggs": 2
+      },
+      "text": "2 more shall go when the server can be reached."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "share.waiting",
+      "args": {
+        "eggs": 0
+      },
+      "text": "0 more shall go when the server can be reached."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "share.waiting",
+      "args": {
+        "eggs": 1
+      },
+      "text": "1 more shall go when the server can be reached."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "share.waiting",
+      "args": {
+        "eggs": 2
+      },
+      "text": "2 more shall go when the server can be reached."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "share.waiting",
+      "args": {
+        "eggs": 3
+      },
+      "text": "3 more shall go when the server can be reached."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "share.waiting",
+      "args": {
+        "eggs": 4
+      },
+      "text": "4 more shall go when the server can be reached."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "share.waiting",
+      "args": {
+        "eggs": 5
+      },
+      "text": "5 more shall go when the server can be reached."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "share.waiting",
+      "args": {
+        "eggs": 11
+      },
+      "text": "11 more shall go when the server can be reached."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "share.waiting",
+      "args": {
+        "eggs": 21
+      },
+      "text": "21 more shall go when the server can be reached."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "share.waiting",
+      "args": {
+        "eggs": 22
+      },
+      "text": "22 more shall go when the server can be reached."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "share.waiting",
+      "args": {
+        "eggs": 1.5
+      },
+      "text": "1.5 more shall go when the server can be reached."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "share.waiting",
+      "args": {
+        "eggs": 2.5
+      },
+      "text": "2.5 more shall go when the server can be reached."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "share.waiting",
+      "args": {
+        "eggs": 0.5
+      },
+      "text": "0.5 more shall go when the server can be reached."
+    },
+    {
+      "locale": "en-x-1750",
       "key": "probe.refused",
       "args": {
         "low": "117.7 °F",
@@ -2201,6 +2409,214 @@
         "pan": "12.50 qt of water takes about 6:40 to boil, based on history"
       },
       "text": "Learned from 3 eggs · 12.50 qt of water takes about 6:40 to boil, based on history"
+    },
+    {
+      "locale": "en",
+      "key": "share.sent",
+      "args": {
+        "eggs": 3
+      },
+      "text": "I've sent 3 eggs."
+    },
+    {
+      "locale": "en",
+      "key": "share.sent",
+      "args": {
+        "eggs": 0
+      },
+      "text": "I've sent 0 eggs."
+    },
+    {
+      "locale": "en",
+      "key": "share.sent",
+      "args": {
+        "eggs": 1
+      },
+      "text": "I've sent 1 egg."
+    },
+    {
+      "locale": "en",
+      "key": "share.sent",
+      "args": {
+        "eggs": 2
+      },
+      "text": "I've sent 2 eggs."
+    },
+    {
+      "locale": "en",
+      "key": "share.sent",
+      "args": {
+        "eggs": 3
+      },
+      "text": "I've sent 3 eggs."
+    },
+    {
+      "locale": "en",
+      "key": "share.sent",
+      "args": {
+        "eggs": 4
+      },
+      "text": "I've sent 4 eggs."
+    },
+    {
+      "locale": "en",
+      "key": "share.sent",
+      "args": {
+        "eggs": 5
+      },
+      "text": "I've sent 5 eggs."
+    },
+    {
+      "locale": "en",
+      "key": "share.sent",
+      "args": {
+        "eggs": 11
+      },
+      "text": "I've sent 11 eggs."
+    },
+    {
+      "locale": "en",
+      "key": "share.sent",
+      "args": {
+        "eggs": 21
+      },
+      "text": "I've sent 21 eggs."
+    },
+    {
+      "locale": "en",
+      "key": "share.sent",
+      "args": {
+        "eggs": 22
+      },
+      "text": "I've sent 22 eggs."
+    },
+    {
+      "locale": "en",
+      "key": "share.sent",
+      "args": {
+        "eggs": 1.5
+      },
+      "text": "I've sent 1.5 eggs."
+    },
+    {
+      "locale": "en",
+      "key": "share.sent",
+      "args": {
+        "eggs": 2.5
+      },
+      "text": "I've sent 2.5 eggs."
+    },
+    {
+      "locale": "en",
+      "key": "share.sent",
+      "args": {
+        "eggs": 0.5
+      },
+      "text": "I've sent 0.5 eggs."
+    },
+    {
+      "locale": "en",
+      "key": "share.waiting",
+      "args": {
+        "eggs": 2
+      },
+      "text": "2 more will go when I can reach the server."
+    },
+    {
+      "locale": "en",
+      "key": "share.waiting",
+      "args": {
+        "eggs": 0
+      },
+      "text": "0 more will go when I can reach the server."
+    },
+    {
+      "locale": "en",
+      "key": "share.waiting",
+      "args": {
+        "eggs": 1
+      },
+      "text": "1 more will go when I can reach the server."
+    },
+    {
+      "locale": "en",
+      "key": "share.waiting",
+      "args": {
+        "eggs": 2
+      },
+      "text": "2 more will go when I can reach the server."
+    },
+    {
+      "locale": "en",
+      "key": "share.waiting",
+      "args": {
+        "eggs": 3
+      },
+      "text": "3 more will go when I can reach the server."
+    },
+    {
+      "locale": "en",
+      "key": "share.waiting",
+      "args": {
+        "eggs": 4
+      },
+      "text": "4 more will go when I can reach the server."
+    },
+    {
+      "locale": "en",
+      "key": "share.waiting",
+      "args": {
+        "eggs": 5
+      },
+      "text": "5 more will go when I can reach the server."
+    },
+    {
+      "locale": "en",
+      "key": "share.waiting",
+      "args": {
+        "eggs": 11
+      },
+      "text": "11 more will go when I can reach the server."
+    },
+    {
+      "locale": "en",
+      "key": "share.waiting",
+      "args": {
+        "eggs": 21
+      },
+      "text": "21 more will go when I can reach the server."
+    },
+    {
+      "locale": "en",
+      "key": "share.waiting",
+      "args": {
+        "eggs": 22
+      },
+      "text": "22 more will go when I can reach the server."
+    },
+    {
+      "locale": "en",
+      "key": "share.waiting",
+      "args": {
+        "eggs": 1.5
+      },
+      "text": "1.5 more will go when I can reach the server."
+    },
+    {
+      "locale": "en",
+      "key": "share.waiting",
+      "args": {
+        "eggs": 2.5
+      },
+      "text": "2.5 more will go when I can reach the server."
+    },
+    {
+      "locale": "en",
+      "key": "share.waiting",
+      "args": {
+        "eggs": 0.5
+      },
+      "text": "0.5 more will go when I can reach the server."
     },
     {
       "locale": "en",

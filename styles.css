@@ -619,7 +619,6 @@ fieldset.setting .setting__head { margin-bottom: 8px; }
 .check { display: flex; align-items: center; gap: 10px; min-height: 44px; cursor: pointer; }
 .check input[type="checkbox"] { width: 22px; height: 22px; margin: 0; accent-color: var(--accent); }
 
-#learned { border-bottom: 0; }
 #learned .hint { margin: 2px 0 10px; font-size: 0.875rem; }
 #learned .hint:focus { outline: none; }
 .forget__row { display: flex; align-items: center; gap: 6px; }
@@ -630,15 +629,23 @@ fieldset.setting .setting__head { margin-bottom: 8px; }
   padding: 8px 16px;
   font-size: 0.9375rem;
 }
-#forgetConfirm {
+#forgetConfirm, #shareConfirm {
   margin-top: 10px;
   padding: 12px;
   border: 1px solid color-mix(in srgb, var(--warn) 45%, transparent);
   border-radius: 12px;
   background: color-mix(in srgb, var(--warn) 8%, transparent);
 }
-#forgetTitle { margin: 0 0 4px; font-weight: 650; }
-#forgetConfirm .hint { margin: 0 0 12px; }
+#forgetTitle, #shareConfirmTitle { margin: 0 0 4px; font-weight: 650; }
+#forgetConfirm .hint, #shareConfirm .hint { margin: 0 0 12px; }
+/* Sharing, under what has been learned: the consent in the hint's size,
+   always shown; the note under the switch only when it has something to say. */
+#learned { border-bottom: 1px solid var(--line); }
+#share { border-bottom: 0; }
+#share .hint { margin: 2px 0 6px; font-size: 0.875rem; }
+#share .hint:empty { display: none; }
+#share .hint:focus { outline: none; }
+#share .privacylink { margin: 10px 0 0; font-size: 0.875rem; }
 .confirm__row { display: flex; gap: 8px; }
 button.danger { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 55%, transparent); font-weight: 600; }
 

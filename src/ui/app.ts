@@ -38,7 +38,8 @@ import {
   clearCalibration, decisionGrid, decisionKey, eggRecordFor, eggsBehind, keptState, learn,
   loadCalibration, logEgg, oddsProfileFor, profileKey,
 } from './calibration.js';
-import { forgetShare, loadShare, retryDeletes, sendFinal } from './share.js';
+import { forgetShare, loadShare, retryDeletes, sendFinal, shareState } from './share.js';
+import { renderShare, wireShare } from './shareView.js';
 import {
   LIMITS, Limit, START_TEMP_PRESETS_C, Settings, UiStartMode, clampNumber,
   clearBoilMemory, clearCook, estimateTimeToBoil, hasBoilMemory, loadBoilMemory,
@@ -835,6 +836,19 @@ function forgetAll(): void {
   recompute();
 }
 
+/* ---------------------------------------------------------------- sharing */
+
+/** How many of the log's eggs are final: all of them, unless the last is the
+ *  egg on screen, whose answers may still come (share.ts). */
+function finalEggs(): number {
+  return keptState().log.length - (answersNow().kind === 'live' ? 1 : 0);
+}
+
+/** The Settings section, with how many final eggs are still to go. */
+function drawShare(): void {
+  renderShare(Math.max(0, finalEggs() - shareState().sent));
+}
+
 /* ------------------------------------------------------------ thermometer */
 
 /** The cook's answer to the offer. Either way it is not made again; the
@@ -1032,6 +1046,7 @@ function reset(): void {
   clearCook();
   recompute();
   // The egg just finished is final now: no answer can be added to it.
+  drawShare();
   void sendFinal();
 }
 
@@ -1255,11 +1270,9 @@ export function boot(): void {
   // Sharing, if the cook turned it on: every egg in the log is final but the
   // one on screen, whose answers may still come. A deletion not yet confirmed
   // is asked again first.
-  loadShare({
-    log: () => keptState().log,
-    finalCount: () => keptState().log.length - (answersNow().kind === 'live' ? 1 : 0),
-    changed: () => {},
-  });
+  wireShare(drawShare);
+  loadShare({ log: () => keptState().log, finalCount: finalEggs, changed: drawShare });
+  drawShare();
   void retryDeletes().then(sendFinal);
   window.addEventListener('online', () => { void retryDeletes().then(sendFinal); });
   // A cook picked back up is described by its ticket, never by the

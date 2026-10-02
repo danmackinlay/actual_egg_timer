@@ -16,6 +16,12 @@ struct SettingsView: View {
     /// Forget asks first, in place, as the web's does: the button gives way to
     /// the question and its two answers.
     @State private var confirming = false
+    /// "Delete what I've sent" asks first, the same way.
+    @State private var confirmingDelete = false
+    /// Set once a deletion asked for here is confirmed by the server, so the
+    /// note can say so while Settings is open.
+    @State private var deletedHere = false
+    private var sharing: Sharing { Sharing.shared }
 
     var body: some View {
         Form {
@@ -110,6 +116,8 @@ struct SettingsView: View {
 
             learned
 
+            share
+
             Section {
                 Text(colophon)
                     .font(.footnote)
@@ -160,6 +168,74 @@ struct SettingsView: View {
                 }
             }
         }
+    }
+
+    // MARK: - Sharing
+
+    /// Sharing (E6), as the web's `#share`: the consent on screen beside the
+    /// switch rather than behind the (i), the note under it, and the
+    /// deletion, asked first. Sharing.swift does the work.
+    private var share: some View {
+        let s = sharing.state
+        return Section {
+            InfoRow(name: about("share.title"), more: [tr("share.more")]) {
+                Text(tr("share.title"))
+            }
+            Text(tr("share.what"))
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+            Toggle(tr("share.toggle"), isOn: Binding(
+                get: { s.on },
+                set: { on in
+                    deletedHere = false
+                    sharing.setSharing(on)
+                }
+            ))
+            if let note = shareNote(s) {
+                Text(note)
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            }
+            if confirmingDelete {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(tr("share.confirm.title"))
+                        .font(.subheadline.weight(.semibold))
+                    Text(tr("share.confirm.message"))
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+                .accessibilityElement(children: .combine)
+                Button(tr("share.confirm.delete"), role: .destructive) {
+                    confirmingDelete = false
+                    Task {
+                        await sharing.deleteSent()
+                        deletedHere = sharing.state.deleting.isEmpty
+                    }
+                }
+                Button(tr("share.confirm.keep")) {
+                    confirmingDelete = false
+                }
+            } else if !s.uids.isEmpty {
+                Button(tr("share.delete"), role: .destructive) {
+                    withAnimation(.snappy) { confirmingDelete = true }
+                }
+            }
+            Link(tr("help.privacy"), destination: HelpView.privacyURL)
+                .font(.footnote)
+        }
+    }
+
+    /// The web's `renderShare`: deleting, deleted, nothing yet, or how many
+    /// have gone and how many wait.
+    private func shareNote(_ s: Sharing.State) -> String? {
+        if !s.deleting.isEmpty { return tr("share.deleting") }
+        if deletedHere && !s.on { return tr("share.deleted") }
+        guard s.on else { return nil }
+        if s.sent == 0 { return tr("share.none") }
+        let final = planner.kept.log.count - (planner.answers == nil ? 0 : 1)
+        let waiting = max(0, final - s.sent)
+        let sent = tr("share.sent", ["eggs": .int(s.sent)])
+        return waiting > 0 ? sent + " " + tr("share.waiting", ["eggs": .int(waiting)]) : sent
     }
 
     /// The web's `renderLearned`: nothing yet, the eggs, the pan, or both.

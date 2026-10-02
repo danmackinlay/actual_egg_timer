@@ -19,6 +19,9 @@ import EggTimerCore
 /// - `-uiScreen direction-info`: open the direction's (i).
 /// - `-uiLanguage en-x-1750`: read in that catalogue, as a pick in the
 ///   picker would, before the first frame (`LanguageChoice.start`).
+/// - `-shareServer http://localhost:8888`: send what sharing sends there
+///   rather than to the live site (`Sharing.server`), for `npm run
+///   serve:dev`.
 enum Screenshots {
     static var scene: String? { UserDefaults.standard.string(forKey: "uiScreen") }
     static var language: String? { UserDefaults.standard.string(forKey: "uiLanguage") }

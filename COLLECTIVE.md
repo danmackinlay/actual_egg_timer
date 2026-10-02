@@ -13,9 +13,9 @@ badge with an (i) is what says the app is learning (52), a cook who turns
 sharing on sends the eggs already in the log too (53), and App Attest is built
 now (54).
 
-**State.** E6 under way: core's half is in (the forecast and the model
-in every record), and the endpoint is built and tested but not deployed;
-the apps' sharing is next.
+**State.** E6 built in both apps and checked end to end against a local
+endpoint; the privacy page and the docs are next, then E8. Nothing is
+deployed: the live endpoint is a push.
 
 ---
 
@@ -204,17 +204,22 @@ needs data and nothing an app does waits on it.
       `test/appAttest.test.ts`, and `test/serverBlobs.test.ts`, which runs
       the function through the real Blobs client against its local server
       (`00186b1`).
-- [ ] Copy: the `share` draft, both apps, with the 1750 twins.
+- [x] Copy: the `share` draft, both apps, with the 1750 twins. Proved by
+      `copyLiterals --since c86f442 share` and `copySnapshot compare --draft
+      share` (172 web states: only the drafted strings are new).
 - [x] Web: `src/ui/share.ts` - the id, the cursor, sending, deletion;
       Forget makes a new id; `test/share.test.ts`. Wired to boot, Start
       again and Forget; off until the Settings section can turn it on
       (`f7f9e90`).
-- [ ] Web: the Settings section (with the `share` draft).
+- [x] Web: the Settings section (with the `share` draft).
 - [x] iOS: `Sharing.swift` - the same, with App Attest; wired to launch,
       Start again, Forget and the foreground; the privacy manifest's
       collected data (Other Data Types and Device ID, neither linked nor
-      tracking, for the app's function). Off until Settings can turn it on.
-- [ ] iOS: the Settings section (with the `share` draft).
+      tracking, for the app's function). Off until Settings can turn it on
+      (`0f93576`).
+- [x] iOS: the Settings section (with the `share` draft). Both apps were
+      checked end to end against `npm run serve:dev`: sharing turned on
+      sends the log so far, and Delete removes it on the server.
 - [ ] The privacy page, before anything ships: what is sent, where, for how
       long, the id, deletion, Netlify as processor. Both READMEs and
       `ios/RELEASING.md` (the App Privacy answers) stop saying no networking.

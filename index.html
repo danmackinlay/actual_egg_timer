@@ -365,6 +365,32 @@
       </div>
     </section>
 
+    <!-- Sharing (E6): off until the cook turns it on. What it sends is on
+         screen beside the switch, not behind the (i); deleting asks first,
+         as Forget does. The privacy page is linked under it. -->
+    <section id="share" class="setting" aria-labelledby="lblShare">
+      <div class="setting__head">
+        <span id="lblShare" data-copy="share.title"></span>
+        <button type="button" class="info" aria-expanded="false" aria-controls="moreShare" data-label="share.title"></button>
+      </div>
+      <p id="moreShare" class="disclosed" hidden data-copy="share.more"></p>
+      <p class="hint" data-copy="share.what"></p>
+      <label class="check" for="shareSetting"><input type="checkbox" id="shareSetting"><span data-copy="share.toggle"></span></label>
+      <p class="hint" id="shareNote" tabindex="-1" aria-live="polite"></p>
+      <div class="forget__row">
+        <button type="button" id="shareDelete" class="secondary" hidden data-copy="share.delete"></button>
+      </div>
+      <div id="shareConfirm" class="confirm" role="group" aria-labelledby="shareConfirmTitle" aria-describedby="shareConfirmMessage" hidden>
+        <p id="shareConfirmTitle" class="confirm__title" data-copy="share.confirm.title"></p>
+        <p id="shareConfirmMessage" class="hint" data-copy="share.confirm.message"></p>
+        <div class="confirm__row">
+          <button type="button" id="shareDeleteYes" class="secondary danger" data-copy="share.confirm.delete"></button>
+          <button type="button" id="shareDeleteNo" class="secondary" data-copy="share.confirm.keep"></button>
+        </div>
+      </div>
+      <p class="privacylink"><a href="/privacy" class="morelink" data-copy="help.privacy"></a></p>
+    </section>
+
     <footer id="colophon">
       <p><strong data-copy="colophon.name"></strong> <span data-copy="colophon.lede"></span>
         <a href="https://github.com/danmackinlay/actual_egg_timer"

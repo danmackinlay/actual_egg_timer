@@ -150,8 +150,8 @@ struct HelpView: View {
 
     /// The last thing on the page, as on the web: the privacy page, which
     /// lives on the web app's site (privacy/index.html), plain English and
-    /// outside the catalogue. `Link` hands it to Safari; the app itself still
-    /// makes no network request.
+    /// outside the catalogue. `Link` hands it to Safari. Settings links it
+    /// too, under sharing.
     private var privacy: some View {
         VStack(alignment: .leading, spacing: 0) {
             Divider()
@@ -165,7 +165,7 @@ struct HelpView: View {
         }
     }
 
-    private static let privacyURL = URL(string: "https://actualeggtimer.netlify.app/privacy")!
+    static let privacyURL = URL(string: "https://actualeggtimer.netlify.app/privacy")!
 
     // MARK: - Pieces
 
