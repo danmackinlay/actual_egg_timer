@@ -202,14 +202,19 @@ needs data and nothing an app does waits on it.
 - [x] Server: `server/` (records, deletion, tiers, CBOR, App Attest), the
       function, `netlify.toml`, `@netlify/blobs`; `test/server.test.ts`,
       `test/appAttest.test.ts`, and `test/serverBlobs.test.ts`, which runs
-      the function through the real Blobs client against its local server.
+      the function through the real Blobs client against its local server
+      (`00186b1`).
 - [ ] Copy: the `share` draft, both apps, with the 1750 twins.
 - [x] Web: `src/ui/share.ts` - the id, the cursor, sending, deletion;
       Forget makes a new id; `test/share.test.ts`. Wired to boot, Start
-      again and Forget; off until the Settings section can turn it on.
+      again and Forget; off until the Settings section can turn it on
+      (`f7f9e90`).
 - [ ] Web: the Settings section (with the `share` draft).
-- [ ] iOS: `Sharing.swift` - the same, with App Attest; the Settings section;
-      the privacy manifest's collected data; `ios:build`.
+- [x] iOS: `Sharing.swift` - the same, with App Attest; wired to launch,
+      Start again, Forget and the foreground; the privacy manifest's
+      collected data (Other Data Types and Device ID, neither linked nor
+      tracking, for the app's function). Off until Settings can turn it on.
+- [ ] iOS: the Settings section (with the `share` draft).
 - [ ] The privacy page, before anything ships: what is sent, where, for how
       long, the id, deletion, Netlify as processor. Both READMEs and
       `ios/RELEASING.md` (the App Privacy answers) stop saying no networking.

@@ -32,6 +32,7 @@ struct ContentView: View {
     @State private var thumbInset: CGFloat = 14
     /// Whether the direction's (i) is open.
     @State private var directionInfoOpen = false
+    @Environment(\.scenePhase) private var scenePhase
 
     private var planner: Planner { model.planner }
     private var cook: Cook { model.cook }
@@ -134,6 +135,10 @@ struct ContentView: View {
             #if DEBUG
             showScreenshotScene()
             #endif
+        }
+        // Back in the foreground: whatever sharing owes, the web's "online".
+        .onChange(of: scenePhase) { _, now in
+            if now == .active { Sharing.shared.resume() }
         }
     }
 

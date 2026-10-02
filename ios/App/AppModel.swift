@@ -41,6 +41,12 @@ final class AppModel {
         // After the solver is wired, so a restored cold start can revise
         // straight away rather than waiting for the next attempt.
         cook.restoreIfNeeded()
+        // Sharing, if the cook turned it on (Sharing.swift): every egg in the
+        // log is final but the one on screen, whose answers may still come.
+        Sharing.shared.start(host: Sharing.Host(
+            log: { [planner] in planner.kept.log },
+            finalCount: { [planner] in planner.kept.log.count - (planner.answers == nil ? 0 : 1) }
+        ))
     }
 
     /// Which words the readout says in a phase: core's `phaseKeys`, from the
@@ -104,6 +110,8 @@ final class AppModel {
         cook.cancel()
         planner.endEgg()
         planner.refresh()
+        // The egg just finished is final now: no answer can be added to it.
+        Sharing.shared.sendFinal()
     }
 
     /// One answer, about the yolk, the white or the probe, in whichever order

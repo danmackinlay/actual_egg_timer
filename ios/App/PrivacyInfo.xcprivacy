@@ -14,9 +14,15 @@
   container. If an App Group is ever added - for a widget that needs more than
   the ActivityKit payload, say - this code has to change with it.
 
-  Everything else here is empty because it is true and not because nothing was
-  checked: the app has no networking of any kind (no URLSession, no Network, no
-  http), collects nothing, and tracks nobody.
+  What is collected is sharing's (Sharing.swift; E6, INFERENCE.md section 7),
+  and only from a cook who turns it on in Settings: how each egg was cooked
+  and how it came out (Other Data Types), and the random id made on the phone
+  that groups one cook's eggs and lets them be deleted (Device ID). Neither is
+  linked to the cook's identity - the id is made from nothing and replaced by
+  "Start learning again" - and nothing is used for tracking. The purpose is
+  the app's own function: everyone's eggs make the times better. The App
+  Store's App Privacy answers say the same (ios/RELEASING.md). Sharing's one
+  network call is URLSession to the app's own site; there is no other.
 -->
 <plist version="1.0">
 <dict>
@@ -25,7 +31,32 @@
     <key>NSPrivacyTrackingDomains</key>
     <array/>
     <key>NSPrivacyCollectedDataTypes</key>
-    <array/>
+    <array>
+        <dict>
+            <key>NSPrivacyCollectedDataType</key>
+            <string>NSPrivacyCollectedDataTypeOtherDataTypes</string>
+            <key>NSPrivacyCollectedDataTypeLinked</key>
+            <false/>
+            <key>NSPrivacyCollectedDataTypeTracking</key>
+            <false/>
+            <key>NSPrivacyCollectedDataTypePurposes</key>
+            <array>
+                <string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+            </array>
+        </dict>
+        <dict>
+            <key>NSPrivacyCollectedDataType</key>
+            <string>NSPrivacyCollectedDataTypeDeviceID</string>
+            <key>NSPrivacyCollectedDataTypeLinked</key>
+            <false/>
+            <key>NSPrivacyCollectedDataTypeTracking</key>
+            <false/>
+            <key>NSPrivacyCollectedDataTypePurposes</key>
+            <array>
+                <string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+            </array>
+        </dict>
+    </array>
     <key>NSPrivacyAccessedAPITypes</key>
     <array>
         <dict>

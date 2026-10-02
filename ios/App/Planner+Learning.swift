@@ -143,6 +143,8 @@ extension Planner {
         kept = Calibrations.freshKept()
         BoilMemories.reset()
         boilMemory = [:]
+        // The next egg is a new cook's, under a new id (Sharing.swift).
+        Sharing.shared.forget()
         recompute()
     }
 
