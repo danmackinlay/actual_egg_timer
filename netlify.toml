@@ -10,6 +10,17 @@
   command = "npm run build:site"
   publish = "_site"
 
+# The one function: the collection endpoint for cooks who turn sharing on
+# (E6; INFERENCE.md section 7, COLLECTIVE.md section 1). netlify/functions/
+# eggs.mts binds server/eggs.ts to the site's Blobs store; Netlify bundles it
+# from source with esbuild, imports of ../src/core included, so `build:site`
+# does not build it. Its routes (/api/eggs, /api/attest) and its per-address
+# rate limit are in the function's own `config`, which is the only place
+# Netlify reads a function's rate limit from. This is the directory Netlify
+# looks in anyway; it is written out so that nobody has to know that.
+[functions]
+  directory = "netlify/functions"
+
 # Node version lives in .node-version, not here: one file, which nvm, fnm and
 # Netlify all read, so the deploy builds on the same Node the tests ran on.
 # Netlify's own default is 24 as of July 2026; NODE_VERSION set here would

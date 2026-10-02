@@ -14,7 +14,8 @@ sharing on sends the eggs already in the log too (53), and App Attest is built
 now (54).
 
 **State.** E6 under way: core's half is in (the forecast and the model
-in every record); the endpoint is next.
+in every record), and the endpoint is built and tested but not deployed;
+the apps' sharing is next.
 
 ---
 
@@ -51,8 +52,12 @@ Each is settled here unless §6 lists it as the owner's.
   validation, and by a cap on `seq`. Everything else is the fit's job (§6 of
   `INFERENCE.md`): per-cook reliability, Student-t cook effects, the tier cap.
 - **The store** is the site-wide Blobs store `eggs`, in Netlify's default
-  region (`us-east-2`). The region is fixed once data exists, since a store
-  opened in another region finds nothing.
+  region (`us-east-2`), strongly consistent. The region is fixed once data
+  exists, since a store opened in another region finds nothing.
+- **`@netlify/blobs` is the one runtime dependency**, pinned exactly at
+  11.1.1, a week old when chosen rather than the day-old latest. Its runtime
+  entry imports only `@netlify/runtime-utils`; the rest of its tree (the
+  local server the integration test uses) never reaches the function.
 - **Same origin.** The web app posts to its own site, which its CSP already
   allows (`connect-src 'self'`); no CORS headers, so no other site's page can
   post from a browser.
@@ -116,8 +121,13 @@ its absence means.
 - **The server's verification** follows Apple's eleven steps, against Apple's
   App Attest root certificate, embedded. It is tested against Apple's own
   sample attestation from the "Attestation Object Validation Guide", at a
-  date inside its leaf certificate's validity, and against assertions signed
-  by a key the test makes.
+  date inside its leaf certificate's validity, and against a synthetic
+  attestation for this app under a made-up root (`tools/attestTestData.ts`),
+  whose key the tests sign assertions with. Apple's guide has two slips its
+  sample contradicts: step 5's "expected public key hash" is not the hash of
+  the key (the key id is), and the sample's bundle version is "1", not
+  "1.0". Its sample also carries extensions without setting the ED flag, so
+  the reader takes a map after the credential whatever the flag says.
 - **No entitlement is added.** Without one, a development build uses the
   sandbox environment, and TestFlight and the App Store use production
   whatever it says. The server accepts both and records which.
@@ -188,10 +198,11 @@ needs data and nothing an app does waits on it.
       (`84b5a25`; PLAN.md's open item).
 - [x] Core: the record's `forecast` and `model`. `parseRecord` and
       `Record.swift`, `fixtures/record.json`; both apps write them from the
-      ticket. (`prior` becomes the population's id with E7.)
-- [ ] Server: `server/` (records, deletion, tiers, CBOR, App Attest), the
-      function, `netlify.toml`, `@netlify/blobs`; `test/server.test.ts` and
-      `test/appAttest.test.ts`.
+      ticket. (`prior` becomes the population's id with E7.) (`3c32227`)
+- [x] Server: `server/` (records, deletion, tiers, CBOR, App Attest), the
+      function, `netlify.toml`, `@netlify/blobs`; `test/server.test.ts`,
+      `test/appAttest.test.ts`, and `test/serverBlobs.test.ts`, which runs
+      the function through the real Blobs client against its local server.
 - [ ] Copy: the `share` draft, both apps, with the 1750 twins.
 - [ ] Web: `src/ui/share.ts` - the id, the cursor, sending, deletion; the
       Settings section; Forget makes a new id; tests.
