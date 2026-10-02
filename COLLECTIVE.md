@@ -204,8 +204,10 @@ needs data and nothing an app does waits on it.
       `test/appAttest.test.ts`, and `test/serverBlobs.test.ts`, which runs
       the function through the real Blobs client against its local server.
 - [ ] Copy: the `share` draft, both apps, with the 1750 twins.
-- [ ] Web: `src/ui/share.ts` - the id, the cursor, sending, deletion; the
-      Settings section; Forget makes a new id; tests.
+- [x] Web: `src/ui/share.ts` - the id, the cursor, sending, deletion;
+      Forget makes a new id; `test/share.test.ts`. Wired to boot, Start
+      again and Forget; off until the Settings section can turn it on.
+- [ ] Web: the Settings section (with the `share` draft).
 - [ ] iOS: `Sharing.swift` - the same, with App Attest; the Settings section;
       the privacy manifest's collected data; `ios:build`.
 - [ ] The privacy page, before anything ships: what is sent, where, for how

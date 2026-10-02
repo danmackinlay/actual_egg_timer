@@ -35,9 +35,10 @@ import { MassFrom, forecastOf } from '../core/record.js';
 import { Outcome, predictOutcome } from '../core/outcome.js';
 import {
   Calibration, cachedDecisionGrid, cachedOddsProfile, calibrationDoneness, calibrationParams,
-  clearCalibration, decisionGrid, decisionKey, eggRecordFor, eggsBehind, learn, loadCalibration,
-  logEgg, oddsProfileFor, profileKey,
+  clearCalibration, decisionGrid, decisionKey, eggRecordFor, eggsBehind, keptState, learn,
+  loadCalibration, logEgg, oddsProfileFor, profileKey,
 } from './calibration.js';
+import { forgetShare, loadShare, retryDeletes, sendFinal } from './share.js';
 import {
   LIMITS, Limit, START_TEMP_PRESETS_C, Settings, UiStartMode, clampNumber,
   clearBoilMemory, clearCook, estimateTimeToBoil, hasBoilMemory, loadBoilMemory,
@@ -826,6 +827,8 @@ function learning(): Learning {
 /** Take it all back: the posterior and the pan. */
 function forgetAll(): void {
   calib = clearCalibration();
+  // The next egg is a new cook's, under a new id (share.ts).
+  forgetShare();
   boilMemory = {};
   clearBoilMemory();
   renderCalibNote(learning());
@@ -1028,6 +1031,8 @@ function reset(): void {
   machine = idleMachine(settings.cooling);
   clearCook();
   recompute();
+  // The egg just finished is final now: no answer can be added to it.
+  void sendFinal();
 }
 
 function onPrimary(): void {
@@ -1247,6 +1252,16 @@ export function boot(): void {
 
   renderCalibNote(learning());
   restoreCook();
+  // Sharing, if the cook turned it on: every egg in the log is final but the
+  // one on screen, whose answers may still come. A deletion not yet confirmed
+  // is asked again first.
+  loadShare({
+    log: () => keptState().log,
+    finalCount: () => keptState().log.length - (answersNow().kind === 'live' ? 1 : 0),
+    changed: () => {},
+  });
+  void retryDeletes().then(sendFinal);
+  window.addEventListener('online', () => { void retryDeletes().then(sendFinal); });
   // A cook picked back up is described by its ticket, never by the
   // controls, which another tab may have changed since "Eggs in".
   if (machine.phase === 'IDLE') recompute();
