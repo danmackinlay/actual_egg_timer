@@ -3449,3 +3449,45 @@ copy lint; the fixtures fresh; `swift test` 119 tests in 31 suites.
 
 **Not verified:** a real phone, Safari, and iOS at all (there is no Swift
 yet). The tap reaches no keyboard, and the picture has no words.
+
+## 2 October 2026: the egg in cross-section, chosen and in both apps
+
+The owner chose "how set" (DECISIONS 51) and asked for a clearer raw white,
+a touch blue.
+
+- **Web** (458150a). The tap to the heat map went, with its colours; the
+  lab keeps both pictures and now carries the heat map's colours itself.
+  The raw white is `#19202b` on the dark page and `#e6edf6` on the light:
+  the page's colour, a touch lighter and a touch blue. The picture says
+  nothing the sentence and the time do not, so it stays wordless and
+  hidden from a screen reader.
+- **The Swift core** (5ff0874). `EggSection` in `Section.swift`, held by
+  `fixtures/section.json`: three cooks tick by tick (hot start into ice; a
+  cold start with the heat off, rested on the counter; one still in the
+  water), with every ring's dose, temperature and set against the
+  constant white target and a moved one. It agrees at 1e-12, like every
+  other suite.
+- **iOS.** `EggSectionView.swift`, beside `CookSentence` in an `HStack`, in
+  its own one-second `TimelineView`. A small cache carries the section
+  between ticks and replays it from t = 0 when the ticket changes. The
+  outline is `ringPoints` from `eggSection.ts`, the same numbers, drawn on
+  a `Canvas` outermost first. The colours are `Palette.yolk(at:in:)` and a
+  new `Palette.white(at:in:)`, which share one RGB mix. The time out of
+  the water is the cook's tap, or the pull plus `pullGraceSeconds` once
+  the grace has run out, as the web's `outAt_ms` is.
+  `-sectionAhead <s>` (debug) draws the egg that far on in the cook as
+  planned.
+
+**Seen** on the simulator (Shots 14 Plus, iOS 26.5): a cold start's raw
+egg 1:29 in (light); +9 min, the white set and the yolk's outer ring paler
+(light); about six minutes into the ice bath, a jammy yolk (dark). Each
+matches the web's egg. `-uiScreen heating` did not start a cook when the
+app was already running, so Start was tapped. The simulator was left
+idle, in light appearance.
+
+**Run:** `rm -rf dist/test && npm run verify`: 269 tests, all pass; the
+copy lint; the fixtures fresh; `swift test` 121 tests in 32 suites. `npm
+run ios:build` builds.
+
+**Not verified:** either app on a real phone; Dynamic Type at large sizes
+beside the egg; Safari.

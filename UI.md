@@ -115,7 +115,7 @@ Help and the slider are put away.
 
 To the left of the sentence, so it costs the column no height of its own,
 **the egg in cross-section** (`DECISIONS.md` 51; web `src/ui/eggSection.ts`,
-iOS to follow). It is an ovoid with a round yolk, drawn ring by ring as it
+iOS `EggSectionView.swift`). It is an ovoid with a round yolk, drawn ring by ring as it
 cooks, and shows how set each layer is: the yolk in the slider track's
 colours, the white from a clear, faintly blue raw white to opaque. It is a
 picture of what the sentence and the time already say, so it has no words

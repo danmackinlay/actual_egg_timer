@@ -198,7 +198,11 @@ three are the model refusing to lie:
   for is the one thing you cannot check once the controls are hidden, and a hob
   instruction like "keep it boiling" does not answer it. While a cook runs, the
   setup sentence it was started with stays under the time, with nothing to tap,
-  over the doneness and peak yolk.
+  over the doneness and peak yolk. Beside it, `EggSectionView.swift` draws the
+  egg in cross-section, how set each layer is as the clock moves
+  (`EggSection` in core; `DECISIONS.md` 51), the web's egg drawn the same way.
+  `-sectionAhead <s>` on a debug build draws it that far on, for a screenshot
+  of a cook part done (`Screenshots.swift`).
 - **A cold start is provisional until you tap the boil.** The countdown says so.
   `t = 0` is the egg going into the cold pan — the same `t = 0` the physics core
   uses — so one deadline covers the ramp and the boil together, and tapping

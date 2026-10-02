@@ -85,8 +85,9 @@ Waiting on someone else: the Czech review (F5), by the owner's friend.
   draws it beside the setup sentence (`src/ui/eggSection.ts`, `UI.md` §3).
   `tools/egg-section.html` (`egg-lab` in `.claude/launch.json`) plays a
   whole cook, with the heat map the owner set aside beside it. Its Swift
-  twin is `EggSection` (`Section.swift`), held by `fixtures/section.json`.
-  Next: the iOS view beside `CookSentence`.
+  twin is `EggSection` (`Section.swift`), held by `fixtures/section.json`;
+  iOS draws it beside `CookSentence` (`EggSectionView.swift`). Not yet seen
+  on a phone in either app, and the branch is not merged.
 - **A rename:** `Ticket.forecast` / `shownForecast` hold core's `Outcome`, and
   should say so (`outcome`, `shownOutcome`). Small; both apps.
 - **Untested:** the Lock Screen card ending with the cooling, and the web's

@@ -83,7 +83,20 @@ struct ContentView: View {
                         // The cook in the pan, where the controls were: the
                         // first thing under the time, and never pushed down
                         // by the probe offer or the two questions at Done.
-                        CookSentence(ticket: ticket, planner: planner)
+                        // Beside it the egg in cross-section, which costs no
+                        // height of its own (DECISIONS.md 51), on the clock
+                        // as the readout is.
+                        HStack(alignment: .center, spacing: 14) {
+                            TimelineView(.periodic(from: .now, by: tick)) { context in
+                                EggSectionView(
+                                    cook: cook, ticket: ticket,
+                                    calibration: planner.calibration, now: context.date
+                                )
+                            }
+                            .id(tick)
+                            .frame(width: 80, height: 104)
+                            CookSentence(ticket: ticket, planner: planner)
+                        }
                     }
                     TimelineView(.periodic(from: .now, by: tick)) { context in
                         let phase = cook.phase(at: context.date)
