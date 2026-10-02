@@ -264,3 +264,11 @@ built on a branch:
     quarter as much per egg, +-3 s a third of a point and a ninth as much.
     The owner chose +-10 s. The Learning mark's (i) says the time may leave
     an egg a little softer or firmer. Built with E8 (`82aff4b`).
+Decided by the owner, 3 October 2026:
+
+57. **The motto is "Time eggs, not minutes"**, with a link to the owner's
+    blog, https://danmackinlay.name, where the app is credited. Neither goes
+    on the cooking screen: the motto heads Help in both apps and leads the
+    web page's description; "Made by Dan MacKinlay" ends Help and links the
+    blog, as the privacy page's name and the README do. It is also the App
+    Store subtitle. The `motto` draft.

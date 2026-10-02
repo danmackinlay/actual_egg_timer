@@ -754,6 +754,10 @@ button.danger { color: var(--warn); border-color: color-mix(in srgb, var(--warn)
 .sources a { color: var(--fg); text-underline-offset: 2px; overflow-wrap: anywhere; }
 /* The last line of Help: the way to the privacy page. */
 #help .privacylink { margin: 22px 0 0; padding-top: 6px; border-top: 1px solid var(--line); }
+/* The motto under Help's title, and the credit under the privacy link. */
+#help p.motto { margin: -4px 0 14px; color: var(--dim); font-style: italic; }
+#help p.credit { margin: 6px 0 0; font-size: 0.875rem; color: var(--dim); }
+#help .credit a { color: inherit; text-underline-offset: 2px; }
 
 /* ---------------------------------------------------------------- views */
 

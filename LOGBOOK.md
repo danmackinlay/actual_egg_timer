@@ -3602,3 +3602,8 @@ build attests against Apple's sandbox); sharing in Safari, and on a real
 phone's network; the `share` and `learning` words on a phone (the owner's
 pass); a real fit (no shared egg exists).
 
+## 3 October 2026: the motto
+
+"Time eggs, not minutes" heads Help in both apps and leads the web page's
+description; "Made by Dan MacKinlay" ends Help, linking https://danmackinlay.name,
+as the privacy page's name and the README do (the `motto` draft, DECISIONS 57).

@@ -68,6 +68,8 @@ The one queue. Nothing else in the documents waits on the owner.
    Read the page first: it speaks in your name, and now says what sharing
    sends. Help links it in both apps, as "Privacy" ("Of Privacy" in 1750;
    the `privacy` draft), and so does Settings, under sharing.
+   The App Store subtitle: "Time eggs, not minutes" (22 of 30 characters;
+   `DECISIONS.md` 57).
 7. **The `share` and `learning` drafts, on a phone** (E6, E8): the consent
    beside the switch, the deletion's words, and the Learning mark and its
    (i). `tools/drafts/share.ts` and `learning.ts` have every key and its

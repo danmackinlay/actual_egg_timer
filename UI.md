@@ -191,10 +191,12 @@ The owner's steer of 27 September, after using the first web preview
 
 - **The (i) is for one control's meaning** (§4).
 - **Help is for the whole story, opened on purpose.** A page of its own, with
-  a Back button: how I work, what I learn and from what, getting reliable eggs
+  a Back button: under its title the motto ("Time eggs, not minutes."),
+  then how I work, what I learn and from what, getting reliable eggs
   by method, how sure I am, where I'm unsure, and sources; last, a link to
   the privacy page (`privacy/index.html`, which the iOS app opens in
-  Safari). Anything that
+  Safari), and under it "Made by Dan MacKinlay", the name linking the owner's blog.
+  Anything that
   depends on the setup, or is longer than one control's meaning, goes there.
   The low-odds line is a link into it, not a disclosure.
 - **Never narrate what the interface just visibly did.** The cook can see
