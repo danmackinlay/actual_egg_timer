@@ -112,14 +112,14 @@ struct OddsTrack: View {
 /// accent and not the yolk, so it reads in both schemes and never covers the
 /// shading. Inset as the track is. VoiceOver reads it as `outcome.range`.
 struct YolkBracket: View {
-    let forecast: Outcome
+    let outcome: Outcome
 
     var body: some View {
         Canvas { context, size in
             let w = size.width
             func x(_ level: Double) -> CGFloat { CGFloat(min(1, max(0, level))) * w }
-            let low = x(forecast.levelLow)
-            let high = max(x(forecast.levelHigh), low + 2)
+            let low = x(outcome.levelLow)
+            let high = max(x(outcome.levelHigh), low + 2)
             let depth: CGFloat = 7
             var cup = Path()
             cup.move(to: CGPoint(x: low + 1, y: 0))
@@ -130,14 +130,14 @@ struct YolkBracket: View {
             cup.addLine(to: CGPoint(x: high - 1, y: 0))
             let ink = Color.primary.opacity(0.7)
             context.stroke(cup, with: .color(ink), style: StrokeStyle(lineWidth: 2, lineCap: .butt, lineJoin: .round))
-            let span = forecast.levelHigh - forecast.levelLow
-            let middle = span > 0 ? (forecast.levelMedian - forecast.levelLow) / span : 0.5
+            let span = outcome.levelHigh - outcome.levelLow
+            let middle = span > 0 ? (outcome.levelMedian - outcome.levelLow) / span : 0.5
             let mid = low + (high - low) * CGFloat(min(1, max(0, middle)))
             context.fill(Path(CGRect(x: mid - 1, y: 0, width: 2, height: depth + 2)), with: .color(ink))
         }
         .frame(height: 9)
         .accessibilityElement()
-        .accessibilityLabel(rangeText(forecast))
+        .accessibilityLabel(rangeText(outcome))
     }
 }
 

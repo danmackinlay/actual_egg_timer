@@ -109,7 +109,7 @@ struct ReadoutView: View {
         let idle = phase == .idle
         // While idle, the choice on screen's; once a cook is running, what it
         // was at "Eggs in".
-        let o = idle ? planner.shownForecast : cook.ticket?.forecast
+        let o = idle ? planner.shownOutcome : cook.ticket?.outcome
         VStack(spacing: 2) {
             HStack(alignment: .center, spacing: 2) {
                 ZStack {

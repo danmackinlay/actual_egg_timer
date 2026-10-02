@@ -78,8 +78,6 @@ Waiting on someone else: the Czech review (F5), by the owner's friend.
   to tell it from `alpha`. Meanwhile hot-start heat-off cooks never set the
   white at 1-4 L with four fridge eggs; 1.0 may be pessimistic with a lid
   on, and one real cook would settle it.
-- **A rename:** `Ticket.forecast` / `shownForecast` hold core's `Outcome`, and
-  should say so (`outcome`, `shownOutcome`). Small; both apps.
 - **Untested:** the Lock Screen card ending with the cooling, and the web's
   setup sentence while a cook runs (README §11.5).
 - **Someday:** an iPad app (`DECISIONS.md` 50). iOS is iPhone only; an iPad

@@ -235,7 +235,7 @@ final class Planner {
     /// a cook started now carries on its ticket: the choice on screen's outcome,
     /// once this pot's surface has landed. Nil before that, where the white
     /// never sets, and in sous-vide.
-    var shownForecast: Outcome? {
+    var shownOutcome: Outcome? {
         guard !isSousVide, decision != nil, solution?.whiteSets == true else { return nil }
         return outcome
     }

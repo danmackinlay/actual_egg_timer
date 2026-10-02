@@ -71,7 +71,7 @@ final class Cook {
         /// What the egg was expected to be like at "Eggs in": the direction
         /// and the white's line, shown for the whole cook as the web shows
         /// them. Nil when the cook was started before they were known.
-        var forecast: Outcome?
+        var outcome: Outcome?
 
         /// How long the counted cooling runs from the pull, s: to the moment the
         /// yolk's centre peaks, for this cook (`coolingSecondsFor`).
@@ -711,7 +711,7 @@ extension Cook.Ticket {
             // The choice on screen, if it has been made: the time started IS
             // the chosen one, and a mid-cook re-solve carries its lean.
             leanS: planner.decision?.leanS ?? 0,
-            forecast: planner.shownForecast,
+            outcome: planner.shownOutcome,
             // The cooling counts to the yolk's peak for this cook.
             coolS: coolingSecondsFor(solution.result),
             probeMoment: probeMomentFor(solution.result, cooling: planner.cooling)
