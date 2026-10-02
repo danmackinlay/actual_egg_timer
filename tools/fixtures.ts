@@ -37,6 +37,12 @@
  *                              locale, and a pseudo-Czech catalogue in cs-CZ
  *   fixtures/probe.json        the probe reading
  *   fixtures/language.json     the switch into the English of 1750 and out
+ *   fixtures/prior.json        a prior drawn from a population (E7), and the
+ *                              population files a reader refuses
+ *
+ * fixtures/population.json is NOT written here: it is the fit's output, the
+ * population both apps draw from (tools/population.ts, fit/). prior.json
+ * reads it.
  */
 
 import { mkdirSync, writeFileSync } from 'node:fs';
@@ -58,6 +64,7 @@ import { unitsFixture } from './fixtures/units.js';
 import { probeFixture } from './fixtures/probe.js';
 import { languageFixture } from './fixtures/language.js';
 import { wordingFixture } from './fixtures/wording.js';
+import { priorFixture } from './fixtures/population.js';
 
 const unitsJson = unitsFixture(english);
 const probeJson = probeFixture();
@@ -72,6 +79,7 @@ const written: Record<string, unknown> = {
   sousvide: sousvideFixture,
   sousvideCopy: sousvideCopyFixture,
   record: recordFixture,
+  prior: priorFixture,
   decide: decideFixture,
   outcome: outcomeFixture,
   reach: reachFixture,

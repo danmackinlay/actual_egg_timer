@@ -155,11 +155,71 @@ private func gaussian(_ state: Int32) -> (value: Double, state: Int32) {
     return (sqrt(-2.0 * log(u1)) * cos(2.0 * Double.pi * u2), s2)
 }
 
+// MARK: - The population
+
+/// A lognormal spread: its median, and the sd of its natural log.
+public struct LogNormal: Sendable, Codable, Equatable {
+    public var median: Double
+    public var logSd: Double
+    public init(median: Double, logSd: Double) {
+        self.median = median
+        self.logSd = logSd
+    }
+}
+
+/// A normal spread.
+public struct Normal: Sendable, Codable, Equatable {
+    public var mean: Double
+    public var sd: Double
+    public init(mean: Double, sd: Double) {
+        self.mean = mean
+        self.sd = sd
+    }
+}
+
+/// What a new cook's prior is drawn from: one spread per particle dimension
+/// (INFERENCE.md section 9, E7). See src/core/infer.ts and population.ts.
+public struct Population: Sendable, Equatable {
+    public var id: String
+    public var alphaM2s: LogNormal
+    public var logDoseOffset: Normal
+    public var tauAirScale: LogNormal
+    public var noise: LogNormal
+    public var whiteOffset: Normal
+    public var whiteFirmGap: LogNormal
+
+    public init(
+        id: String, alphaM2s: LogNormal, logDoseOffset: Normal, tauAirScale: LogNormal,
+        noise: LogNormal, whiteOffset: Normal, whiteFirmGap: LogNormal
+    ) {
+        self.id = id
+        self.alphaM2s = alphaM2s
+        self.logDoseOffset = logDoseOffset
+        self.tauAirScale = tauAirScale
+        self.noise = noise
+        self.whiteOffset = whiteOffset
+        self.whiteFirmGap = whiteFirmGap
+    }
+}
+
+/// The literature's population: the prior every cook drew from before E7,
+/// number for number.
+public let literaturePopulation = Population(
+    id: "2026-09",
+    alphaM2s: LogNormal(median: Constants.alphaDefault, logSd: Constants.alphaRelSD),
+    logDoseOffset: Normal(mean: 0.0, sd: priorOffsetSd),
+    tauAirScale: LogNormal(median: 1.0, logSd: priorTauAirLogSd),
+    noise: LogNormal(median: noiseMedian, logSd: noiseLogSd),
+    whiteOffset: Normal(mean: 0.0, sd: whiteOffsetSd),
+    whiteFirmGap: LogNormal(median: whiteFirmGapMedian, logSd: whiteFirmGapLogSd)
+)
+
 // MARK: - Prior
 
 /// Six draws per particle, always in this order, in the prior and in every
 /// resample: alpha, taste offset, tauAirScale, noise, white offset, firm gap.
-public func createPrior(count: Int, seed: Int32) -> Posterior {
+/// From the literature's population unless another is given.
+public func createPrior(count: Int, seed: Int32, population pop: Population = literaturePopulation) -> Posterior {
     var particles = [Particle]()
     particles.reserveCapacity(count)
     let weights = [Double](repeating: 1.0 / Double(count), count: count)
@@ -173,12 +233,12 @@ public func createPrior(count: Int, seed: Int32) -> Posterior {
         let e = gaussian(state); state = e.state
         let f = gaussian(state); state = f.state
         particles.append(Particle(
-            alphaM2s: Constants.alphaDefault * exp(Constants.alphaRelSD * a.value),
-            logDoseOffset: priorOffsetSd * b.value,
-            tauAirScale: exp(priorTauAirLogSd * c.value),
-            noise: noiseMedian * exp(noiseLogSd * d.value),
-            whiteOffset: whiteOffsetSd * e.value,
-            whiteFirmGap: whiteFirmGapMedian * exp(whiteFirmGapLogSd * f.value)
+            alphaM2s: pop.alphaM2s.median * exp(pop.alphaM2s.logSd * a.value),
+            logDoseOffset: pop.logDoseOffset.mean + pop.logDoseOffset.sd * b.value,
+            tauAirScale: pop.tauAirScale.median * exp(pop.tauAirScale.logSd * c.value),
+            noise: pop.noise.median * exp(pop.noise.logSd * d.value),
+            whiteOffset: pop.whiteOffset.mean + pop.whiteOffset.sd * e.value,
+            whiteFirmGap: pop.whiteFirmGap.median * exp(pop.whiteFirmGap.logSd * f.value)
         ))
     }
     return Posterior(particles: particles, weights: weights, rng: state)

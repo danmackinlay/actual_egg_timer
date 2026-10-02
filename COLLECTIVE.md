@@ -14,7 +14,9 @@ sharing on sends the eggs already in the log too (53), and App Attest is built
 now (54).
 
 **State.** E6 and E8 built in both apps and checked against a local
-endpoint; E7 is next. Nothing is deployed: the live endpoint is a push.
+endpoint; E7's plumbing is in (both apps draw from a published population,
+the literature's for now), and the fit itself is next. Nothing is deployed:
+the live endpoint is a push.
 
 ---
 
@@ -246,10 +248,16 @@ needs data and nothing an app does waits on it.
 
 ### E7, the population fit
 
-- [ ] Core: `Population`, `parsePopulation`, `createPrior` from it;
-      `fixtures/population.json` as the literature; Swift; fixtures.
-- [ ] Both apps: read it, keep the population's id with the posterior, replay
-      on a change.
+- [x] Core: `Population`, `parsePopulation`, `createPrior` from it, and the
+      zero-egg start a calibration carries (`PriorStart`, so a cook who never
+      answers is still timed at the population's centre);
+      `fixtures/population.json` as the literature (`npm run population --
+      literature`); Swift; `fixtures/prior.json`. With the literature every
+      existing fixture is unchanged. A record's `prior` is the population's
+      id; the policy is `model`'s.
+- [x] Both apps: read it (the web fetches it beside the words, iOS bundles
+      it), keep the population's id with the posterior, replay on a
+      change.
 - [ ] `tools/eggs.ts`: `pull`, `emulate`, `simulate`.
 - [ ] `fit/`: the model, the fit, the scores, `population.json` out.
 - [ ] Validated on simulated cooks; the numbers into `LOGBOOK.md`.

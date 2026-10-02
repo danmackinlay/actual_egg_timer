@@ -31,8 +31,9 @@ import { eggFromMass } from '../src/core/geometry.js';
 import { Z_WHITE, Z_YOLK } from '../src/core/constants.js';
 import { CALIBRATION_SEED, PARTICLE_COUNT, calibrationGrid } from '../src/core/policy.js';
 import {
-  Calibration, EggRecord, PRIOR_ID, calibrationDoneness, calibrationParams, freshCalibration, replay,
+  Calibration, EggRecord, calibrationDoneness, calibrationParams, freshCalibration, replay,
 } from '../src/core/record.js';
+import { LITERATURE_POPULATION } from '../src/core/infer.js';
 import { appSetup, draw, rng } from '../tools/common.js';
 
 // --------------------------------------------------------------------------
@@ -365,7 +366,7 @@ function softRecord(cal: Calibration, level: number, yolk: Feedback | null, whit
   const setup = appSetup();
   const t = solveCookTime(EGG, setup, calibrationParams(cal), calibrationDoneness(cal, level)).result.cookTime_s;
   return {
-    v: 1, uid: null, day: '2026-09-27', app: 'web', appVersion: '0.2.0', prior: PRIOR_ID, model: null,
+    v: 1, uid: null, day: '2026-09-27', app: 'web', appVersion: '0.2.0', prior: LITERATURE_POPULATION.id, model: null,
     egg: { mass_g: 68, massFrom: 'class', sizeTable: 'eu' },
     setup: {
       startMode: 'hot', eggStart_C: 4, eggFrom: 'fridge', ambient_C: 20, boiling_C: 100,

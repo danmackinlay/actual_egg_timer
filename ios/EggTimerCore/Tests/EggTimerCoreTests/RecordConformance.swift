@@ -138,7 +138,7 @@ struct RecordConformance {
     func identity() throws {
         let file = try Fixtures.load("record.json")
         #expect(try recordVersion == Int(file.num("version")))
-        #expect(try priorID == file.str("prior"))
+        #expect(try literaturePopulation.id == file.str("prior"))
         #expect(try modelID == file.str("model"))
     }
 

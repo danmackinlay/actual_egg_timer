@@ -285,6 +285,7 @@ final class Cook {
             day: Self.day(startedAt),
             app: .ios,
             appVersion: Calibrations.appVersion,
+            prior: Calibrations.population.id,
             egg: RecordEgg(
                 massG: recordMassG(massKg: ticket.egg.massKg),
                 massFrom: ticket.massFrom,

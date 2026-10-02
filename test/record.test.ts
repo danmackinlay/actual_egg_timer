@@ -21,9 +21,10 @@ import { readFileSync } from 'node:fs';
 
 import { GridSpec, buildRequestedGrid } from '../src/core/doseGrid.js';
 import {
-  Calibration, EggRecord, MODEL_ID, PRIOR_ID, copyCalibration, foldRecord, freshCalibration, gridRequestFor,
+  Calibration, EggRecord, MODEL_ID, copyCalibration, foldRecord, freshCalibration, gridRequestFor,
   parseLog, parseRecord, recordCookTime_s, recordMass_g, replay,
 } from '../src/core/record.js';
+import { LITERATURE_POPULATION } from '../src/core/infer.js';
 import { calibrationGrid, PARTICLE_COUNT, CALIBRATION_SEED } from '../src/core/policy.js';
 import { createPrior, updatePosterior } from '../src/core/infer.js';
 import { eggFromMass } from '../src/core/geometry.js';
@@ -67,7 +68,7 @@ function solvedRecord(
   const setup = appSetup(over);
   const t = solveCookTime(egg, setup, DEFAULT_PARAMS, donenessFromSlider(level)).result.cookTime_s;
   return {
-    v: 1, uid: null, day: '2026-09-26', app: 'web', appVersion: APP_VERSION, prior: PRIOR_ID, model: null,
+    v: 1, uid: null, day: '2026-09-26', app: 'web', appVersion: APP_VERSION, prior: LITERATURE_POPULATION.id, model: null,
     egg: { mass_g: recordMass_g(egg.mass_kg), massFrom: 'class', sizeTable: 'eu' },
     setup: {
       startMode: setup.startMode, eggStart_C: setup.eggStart_C, eggFrom: 'fridge',

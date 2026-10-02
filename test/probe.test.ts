@@ -33,9 +33,10 @@ import {
   coolingSecondsFor, plausibleProbeRange_C, probeMomentFor,
 } from '../src/core/policy.js';
 import {
-  EggRecord, PRIOR_ID, calibrationDoneness, calibrationParams, copyCalibration, foldRecord,
+  EggRecord, calibrationDoneness, calibrationParams, copyCalibration, foldRecord,
   freshCalibration, gridRequestFor, parseRecord, recordProbe_C, recordTeaches, replay,
 } from '../src/core/record.js';
+import { LITERATURE_POPULATION } from '../src/core/infer.js';
 import {
   advance, beginCooling, recordBoil, restoreMachine, startCold, startHot, PULL_GRACE_SECONDS,
 } from '../src/ui/machine.js';
@@ -62,7 +63,7 @@ function truePeak(factor: number, cooling: CookSetup['cooling'] = 'ice'): number
 
 function recordWith(probe_C: number | null, over: Partial<EggRecord> = {}): EggRecord {
   return {
-    v: 1, uid: null, day: '2026-09-27', app: 'web', appVersion: '0.2.0', prior: PRIOR_ID, model: null,
+    v: 1, uid: null, day: '2026-09-27', app: 'web', appVersion: '0.2.0', prior: LITERATURE_POPULATION.id, model: null,
     egg: { mass_g: 68, massFrom: 'scale', sizeTable: null },
     setup: {
       startMode: 'hot', eggStart_C: 4, eggFrom: 'fridge', ambient_C: 20, boiling_C: 100,

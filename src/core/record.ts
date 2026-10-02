@@ -35,9 +35,10 @@ import {
 } from './solve.js';
 import { DoseGrid, GridPolicy, GridRequest, buildRequestedGrid } from './doseGrid.js';
 import {
-  Feedback, Particle, Posterior, WhiteReport, createPrior, posteriorMeanWhiteOffset,
-  posteriorParams, updatePosterior,
+  Feedback, LITERATURE_POPULATION, Particle, Population, Posterior, WhiteReport, createPrior,
+  posteriorMeanWhiteOffset, posteriorParams, updatePosterior,
 } from './infer.js';
+import { PriorStart, priorStart } from './population.js';
 import { calibrationGrid } from './policy.js';
 import { Outcome } from './outcome.js';
 
@@ -45,14 +46,12 @@ import { Outcome } from './outcome.js';
  *  schema means something this code does not know how to fold. */
 export const RECORD_VERSION = 1;
 
-/** Which prior the record's cook was recommended under: the literature prior,
- *  `PARTICLE_COUNT` particles from `CALIBRATION_SEED`. Recorded so a later fit
- *  knows what policy put the data where it lies. '2026-09' is a three-number
- *  particle; '2026-09-e2' is six numbers, whose white offset also moves the
- *  recommendation (`calibrationDoneness`); '2026-09-e5' is the same prior
- *  under the policy that CHOOSES the time from the whole posterior
- *  (decide.ts) from the first egg that taught anything. */
-export const PRIOR_ID = '2026-09-e5';
+/* WHICH PRIOR. A record's `prior` is the id of the population the cook's
+ * prior was drawn from (population.ts): '2026-09', the literature's, until a
+ * fit publishes another. Before E6 it named the policy too - '2026-09' a
+ * three-number particle, '2026-09-e2' six numbers whose white offset moved
+ * the recommendation, '2026-09-e5' the time chosen from the whole posterior -
+ * and the policy is now `model`'s to say. */
 
 /** The code that made the record's forecast and chose its time: the
  *  likelihood, the decision and, from E8, the nudge. Changed whenever any of
@@ -459,10 +458,18 @@ export function parseLog(raw: unknown): EggRecord[] | null {
 export interface Calibration {
   posterior: Posterior;
   eggsLogged: number;
+  /** Where to solve while no egg has taught anything: the centre of the
+   *  population the prior was drawn from (population.ts). The literature's
+   *  values when absent, as they always were. */
+  start?: PriorStart;
 }
 
-export function freshCalibration(count: number, seed: number): Calibration {
-  return { posterior: createPrior(count, seed), eggsLogged: 0 };
+/** A prior of `count` particles from `seed`, drawn from a population - the
+ *  literature's unless another is given - and starting at its centre. */
+export function freshCalibration(
+  count: number, seed: number, pop: Population = LITERATURE_POPULATION,
+): Calibration {
+  return { posterior: createPrior(count, seed, pop), eggsLogged: 0, start: priorStart(pop) };
 }
 
 /** A deep copy, so a replay never moves the base it started from. */
@@ -478,16 +485,22 @@ export function copyCalibration(c: Calibration): Calibration {
     };
     weights[i] = c.posterior.weights[i];
   }
-  return {
+  const copy: Calibration = {
     posterior: { particles: particles, weights: weights, rng: c.posterior.rng },
     eggsLogged: c.eggsLogged,
   };
+  if (c.start !== undefined) copy.start = { ...c.start };
+  return copy;
 }
 
-/** Parameters to solve with. Before any egg this is the prior mean's stand-in,
- *  the literature values, so calibration is purely additive. */
+/** Parameters to solve with. Before any egg this is the prior's centre - the
+ *  population's median time-scale and carryover, which for the literature are
+ *  the literature values - so calibration is purely additive. */
 export function calibrationParams(c: Calibration): ModelParams {
-  if (c.eggsLogged === 0) return DEFAULT_PARAMS;
+  if (c.eggsLogged === 0) {
+    if (c.start === undefined) return DEFAULT_PARAMS;
+    return { alpha_m2s: c.start.alpha_m2s, tauAirScale: c.start.tauAirScale };
+  }
   return posteriorParams(c.posterior);
 }
 
@@ -504,11 +517,15 @@ export function calibrationParams(c: Calibration): ModelParams {
  */
 export function calibrationDoneness(c: Calibration, level: number): Doneness {
   const d = donenessFromSlider(level);
-  if (c.eggsLogged === 0) return d;
+  // Before any egg, the population's mean white offset: none for the
+  // literature, which is the literature target exactly.
+  const offset = c.eggsLogged > 0 ? posteriorMeanWhiteOffset(c.posterior)
+    : c.start === undefined ? 0.0 : c.start.whiteOffset;
+  if (c.eggsLogged === 0 && offset === 0.0) return d;
   return {
     level: d.level,
     yolkDose_min: d.yolkDose_min,
-    whiteDose_min: WHITE_DOSE_TARGET * Math.pow(10.0, posteriorMeanWhiteOffset(c.posterior)),
+    whiteDose_min: WHITE_DOSE_TARGET * Math.pow(10.0, offset),
   };
 }
 

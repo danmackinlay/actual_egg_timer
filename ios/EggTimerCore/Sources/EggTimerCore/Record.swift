@@ -20,11 +20,9 @@ import Foundation
 
 public let recordVersion = 1
 
-/// Which prior the record's cook was recommended under: '2026-09' is a
-/// three-number particle, '2026-09-e2' six numbers, and '2026-09-e5' the same
-/// prior under the policy that chooses the time from the whole posterior
-/// (Decide.swift).
-public let priorID = "2026-09-e5"
+// A record's `prior` is the id of the population the cook's prior was drawn
+// from (Population.swift): "2026-09", the literature's, until a fit publishes
+// another. Before E6 it named the policy too; `model` says that now.
 
 /// The code that made the record's forecast and chose its time: the
 /// likelihood, the decision and, from E8, the nudge. Changed whenever any of
@@ -262,7 +260,7 @@ public struct EggRecord: Sendable, Codable, Equatable {
 
     public init(
         uid: String? = nil, day: String, app: AppName, appVersion: String,
-        prior: String = priorID, model: String? = modelID, egg: RecordEgg, setup: RecordSetup,
+        prior: String = literaturePopulation.id, model: String? = modelID, egg: RecordEgg, setup: RecordSetup,
         level: Double, recommendedS: Double, nudgeS: Double = 0, pulledS: Double, pulledBy: PulledBy,
         cooledS: Double, yolk: Feedback?, white: WhiteReport? = nil,
         probe: ProbeReading? = nil, forecast: Forecast? = nil,
@@ -443,21 +441,35 @@ public func validRecord(_ r: EggRecord) -> Bool {
 public struct Calibration: Sendable {
     public var posterior: Posterior
     public var eggsLogged: Int
+    /// Where to solve while no egg has taught anything: the centre of the
+    /// population the prior was drawn from. The literature's values when nil.
+    public var start: PriorStart?
 
-    public init(posterior: Posterior, eggsLogged: Int) {
+    public init(posterior: Posterior, eggsLogged: Int, start: PriorStart? = nil) {
         self.posterior = posterior
         self.eggsLogged = eggsLogged
+        self.start = start
     }
 }
 
-public func freshCalibration(count: Int, seed: Int32) -> Calibration {
-    Calibration(posterior: createPrior(count: count, seed: seed), eggsLogged: 0)
+/// A prior of `count` particles from `seed`, drawn from a population - the
+/// literature's unless another is given - and starting at its centre.
+public func freshCalibration(count: Int, seed: Int32, population: Population = literaturePopulation) -> Calibration {
+    Calibration(
+        posterior: createPrior(count: count, seed: seed, population: population), eggsLogged: 0,
+        start: priorStart(population)
+    )
 }
 
-/// Parameters to solve with: the literature values until an egg has taught
-/// anything, the posterior mean after.
+/// Parameters to solve with: the prior's centre until an egg has taught
+/// anything - the literature values, for the literature - and the posterior
+/// mean after.
 public func calibrationParams(_ c: Calibration) -> ModelParams {
-    c.eggsLogged == 0 ? .default : posteriorParams(c.posterior)
+    if c.eggsLogged == 0 {
+        guard let start = c.start else { return .default }
+        return ModelParams(alphaM2s: start.alphaM2s, tauAirScale: start.tauAirScale)
+    }
+    return posteriorParams(c.posterior)
 }
 
 /// The doneness to solve for: the slider's yolk target, and the white's target
@@ -465,11 +477,14 @@ public func calibrationParams(_ c: Calibration) -> ModelParams {
 /// exactly before any egg. See src/core/record.ts.
 public func calibrationDoneness(_ c: Calibration, level: Double) -> Doneness {
     let d = donenessFromSlider(level)
-    if c.eggsLogged == 0 { return d }
+    // Before any egg, the population's mean white offset: none for the
+    // literature, which is the literature target exactly.
+    let offset = c.eggsLogged > 0 ? posteriorMeanWhiteOffset(c.posterior) : (c.start?.whiteOffset ?? 0.0)
+    if c.eggsLogged == 0 && offset == 0.0 { return d }
     return Doneness(
         level: d.level,
         yolkDoseMin: d.yolkDoseMin,
-        whiteDoseMin: whiteDoseTarget * pow(10.0, posteriorMeanWhiteOffset(c.posterior))
+        whiteDoseMin: whiteDoseTarget * pow(10.0, offset)
     )
 }
 

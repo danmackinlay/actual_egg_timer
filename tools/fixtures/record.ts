@@ -7,10 +7,11 @@ import { eggFromMass } from '../../src/core/geometry.js';
 import { CookSetup } from '../../src/core/protocol.js';
 import { GridSpec, buildRequestedGrid } from '../../src/core/doseGrid.js';
 import {
-  Calibration, EggRecord, MODEL_ID, PRIOR_ID, RECORD_VERSION, calibrationDoneness, copyCalibration,
+  Calibration, EggRecord, MODEL_ID, RECORD_VERSION, calibrationDoneness, copyCalibration,
   foldRecord, freshCalibration, gridRequestFor, parseRecord, recordCookTime_s, recordMass_g,
   recordProbe_C, recordTeaches, replay,
 } from '../../src/core/record.js';
+import { LITERATURE_POPULATION } from '../../src/core/infer.js';
 import { simulate, solveCookTime, donenessFromSlider, DEFAULT_PARAMS } from '../../src/core/solve.js';
 import { COOLING_SECONDS, coolingSecondsFor, calibrationGrid } from '../../src/core/policy.js';
 
@@ -80,7 +81,7 @@ function recordOf(e: EggSpec): EggRecord {
     day: '2026-09-26',
     app: e.app,
     appVersion: '0.2.0',
-    prior: PRIOR_ID,
+    prior: LITERATURE_POPULATION.id,
     model: MODEL_ID,
     egg: {
       mass_g: recordMass_g(egg.mass_kg), massFrom: e.massFrom,
@@ -378,7 +379,7 @@ recordCases.push({
 export const recordFixture = {
   about: 'The record (INFERENCE.md section 4): which records a loader trusts, and a replayed log. src/core/record.ts.',
   version: RECORD_VERSION,
-  prior: PRIOR_ID,
+  prior: LITERATURE_POPULATION.id,
   model: MODEL_ID,
   cases: recordCases,
   massRounding: [0.048, 0.058, 0.068, 0.076, 0.0553017, 0.06849999, 0.0624449999].map((kg) => ({

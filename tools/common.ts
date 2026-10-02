@@ -15,7 +15,8 @@ import { Egg } from '../src/core/geometry.js';
 import { Feedback, WhiteReport, createPrior } from '../src/core/infer.js';
 import { CALIBRATION_SEED } from '../src/core/policy.js';
 import { CookSetup } from '../src/core/protocol.js';
-import { Calibration, EggRecord, PRIOR_ID } from '../src/core/record.js';
+import { Calibration, EggRecord } from '../src/core/record.js';
+import { LITERATURE_POPULATION } from '../src/core/infer.js';
 
 /* ------------------------------------------------------------------ pots */
 
@@ -81,7 +82,7 @@ export function recordAt(
   level: number, t: number, yolk: Feedback | null, white: WhiteReport | null, setup = appSetup(),
 ): EggRecord {
   return {
-    v: 1, uid: null, day: '2026-09-28', app: 'web', appVersion: '0.2.0', prior: PRIOR_ID, model: null,
+    v: 1, uid: null, day: '2026-09-28', app: 'web', appVersion: '0.2.0', prior: LITERATURE_POPULATION.id, model: null,
     egg: { mass_g: 68, massFrom: 'class', sizeTable: 'eu' },
     setup: {
       startMode: setup.startMode, eggStart_C: setup.eggStart_C, eggFrom: 'fridge',

@@ -23,12 +23,13 @@ import { Egg, SizeTable } from '../core/geometry.js';
 import { CookSetup } from '../core/protocol.js';
 import { Doneness, ModelParams } from '../core/solve.js';
 import { DoseGrid, GridRequest } from '../core/doseGrid.js';
-import { Feedback, Particle, WhiteReport } from '../core/infer.js';
+import { Feedback, LITERATURE_POPULATION, Particle, Population, WhiteReport } from '../core/infer.js';
+import { priorStart } from '../core/population.js';
 import { DecisionInputs } from '../core/decide.js';
 import { OddsProfile } from '../core/reach.js';
 import { CALIBRATION_SEED, PARTICLE_COUNT, calibrationGrid } from '../core/policy.js';
 import {
-  Calibration, EggFrom, EggRecord, Forecast, MODEL_ID, MassFrom, PRIOR_ID, ProbeReading, RECORD_VERSION,
+  Calibration, EggFrom, EggRecord, Forecast, MODEL_ID, MassFrom, ProbeReading, RECORD_VERSION,
   calibrationDoneness as donenessOf, calibrationParams as paramsOf, copyCalibration, foldRecord,
   freshCalibration as freshFrom, gridRequestFor, parseLog, recordMass_g, recordTeaches,
 } from '../core/record.js';
@@ -36,6 +37,7 @@ import { UnitSystem } from '../core/units.js';
 import { registerOf } from '../core/language.js';
 import { Machine } from './machine.js';
 import { Job, runJob } from './runJob.js';
+import { activePopulation } from './population.js';
 import { readStorage, writeStorage, removeStorage } from './store.js';
 
 export type { Calibration } from '../core/record.js';
@@ -69,17 +71,18 @@ export interface Kept {
   log: EggRecord[];
 }
 
-export function freshCalibration(): Calibration {
-  return freshFrom(PARTICLE_COUNT, CALIBRATION_SEED);
+/** A fresh prior, from the population this page read (population.ts). */
+export function freshCalibration(pop: Population = activePopulation()): Calibration {
+  return freshFrom(PARTICLE_COUNT, CALIBRATION_SEED, pop);
 }
 
-function freshKept(): Kept {
-  return { base: null, calibration: freshCalibration(), folded: 0, log: [] };
+function freshKept(pop: Population = activePopulation()): Kept {
+  return { base: null, calibration: freshCalibration(pop), folded: 0, log: [] };
 }
 
 /** Where a replay starts: the base if there is one, the prior if not. */
-function startOf(base: Calibration | null): Calibration {
-  return base === null ? freshCalibration() : copyCalibration(base);
+function startOf(base: Calibration | null, pop: Population = activePopulation()): Calibration {
+  return base === null ? freshCalibration(pop) : copyCalibration(base);
 }
 
 /** Parameters to solve with. Before any feedback this is the literature values,
@@ -153,7 +156,7 @@ export function eggRecordFor(
     day: localDay(m.startedAt_ms),
     app: 'web',
     appVersion: APP_VERSION,
-    prior: PRIOR_ID,
+    prior: activePopulation().id,
     model: MODEL_ID,
     egg: {
       mass_g: recordMass_g(c.egg.mass_kg),
@@ -214,6 +217,9 @@ interface StoredPosterior {
 
 interface StoredV4 {
   v: 4;
+  /** The population the posterior was drawn from (E7). Absent in a store
+   *  written before E7, every one of which was drawn from the literature. */
+  p: string;
   base: StoredPosterior | null;
   cal: StoredPosterior;
   folded: number;
@@ -290,9 +296,10 @@ function readPosterior(raw: unknown): Calibration | null {
   return { posterior: { particles: particles, weights: weights, rng: s.rng }, eggsLogged: s.n };
 }
 
-export function encodeKept(k: Kept): string {
+export function encodeKept(k: Kept, pop: Population = activePopulation()): string {
   const stored: StoredV4 = {
     v: 4,
+    p: pop.id,
     base: k.base === null ? null : storedPosterior(k.base),
     cal: storedPosterior(k.calibration),
     folded: k.folded,
@@ -336,15 +343,31 @@ function parseJSON(raw: string | null): unknown {
  *  - a posterior that has absorbed more records than the log holds: also
  *    `rebased`, for the same reason.
  *  - a base that is damaged: dropped, and the log replayed from the prior.
+ *  - a posterior drawn from another population than `pop` (E7: a release
+ *    shipped a new one): `rebuild`, from a prior drawn from `pop` - "a model
+ *    change is a replay" (INFERENCE.md section 4). A base cannot be replayed,
+ *    so one stays as it is.
+ *
+ * The calibration and the base come back starting at `pop`'s centre
+ * (`priorStart`): the start is not stored, since it is the population's.
  *
  * Pure, so the tests can walk every path without a browser.
  */
-export function decodeKept(v4raw: string | null): Decoded {
+export function decodeKept(v4raw: string | null, pop: Population = activePopulation()): Decoded {
+  const decoded = decodeParts(v4raw, pop);
+  const start = priorStart(pop);
+  decoded.kept.calibration.start = { ...start };
+  if (decoded.kept.base !== null) decoded.kept.base.start = { ...start };
+  return decoded;
+}
+
+function decodeParts(v4raw: string | null, pop: Population): Decoded {
   const obj = parseJSON(v4raw);
   if (obj === null || typeof obj !== 'object' || (obj as { v?: unknown }).v !== 4) {
-    return { kept: freshKept(), path: 'fresh' };
+    return { kept: freshKept(pop), path: 'fresh' };
   }
   const s = obj as Partial<Record<keyof StoredV4, unknown>>;
+  const drawnFrom = typeof s.p === 'string' ? s.p : LITERATURE_POPULATION.id;
   let base: Calibration | null = null;
   let baseLost = false;
   if (s.base !== null) {
@@ -359,12 +382,12 @@ export function decodeKept(v4raw: string | null): Decoded {
   if (log === null) {
     const sound = cal ?? base;
     return {
-      kept: { base: sound, calibration: startOf(sound), folded: 0, log: [] },
+      kept: { base: sound, calibration: startOf(sound, pop), folded: 0, log: [] },
       path: 'rebased',
     };
   }
-  if (baseLost || cal === null || !foldedOk) {
-    return { kept: { base: base, calibration: startOf(base), folded: 0, log: log }, path: 'rebuild' };
+  if (baseLost || cal === null || !foldedOk || drawnFrom !== pop.id) {
+    return { kept: { base: base, calibration: startOf(base, pop), folded: 0, log: log }, path: 'rebuild' };
   }
   if ((folded as number) > log.length) {
     return { kept: { base: cal, calibration: copyCalibration(cal), folded: 0, log: [] }, path: 'rebased' };

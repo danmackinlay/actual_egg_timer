@@ -288,11 +288,60 @@ function gaussian(state: number): { value: number; state: number } {
   return { value: Math.sqrt(-2.0 * Math.log(u1)) * Math.cos(2.0 * Math.PI * u2), state: s2 };
 }
 
+/* ---- the population ---- */
+
+/** A lognormal spread: its median, and the sd of its natural log. */
+export interface LogNormal {
+  median: number;
+  logSd: number;
+}
+
+/** A normal spread. */
+export interface Normal {
+  mean: number;
+  sd: number;
+}
+
+/**
+ * What a new cook's prior is drawn from: one spread per particle dimension
+ * (INFERENCE.md section 9, E7). The literature's is the one below, every
+ * number README section 6 documents; a fit of everyone's shared eggs
+ * publishes another (`fixtures/population.json`), which both apps read, and
+ * the record names it (`prior`). A posterior drawn from one population is
+ * replayed from the next when a release ships it.
+ *
+ * Independent dimensions, as the prior has always been: the fit's posterior
+ * covariance is kept in the file for the record, and not used here.
+ */
+export interface Population {
+  id: string;
+  alpha_m2s: LogNormal;
+  logDoseOffset: Normal;
+  tauAirScale: LogNormal;
+  noise: LogNormal;
+  whiteOffset: Normal;
+  whiteFirmGap: LogNormal;
+}
+
+/** The literature's population: the prior every cook drew from before E7,
+ *  number for number, so a prior drawn from it is bit-identical to the old
+ *  one. '2026-09' is the id E1's records gave it. */
+export const LITERATURE_POPULATION: Population = {
+  id: '2026-09',
+  alpha_m2s: { median: ALPHA_DEFAULT, logSd: ALPHA_REL_SD },
+  logDoseOffset: { mean: 0.0, sd: PRIOR_OFFSET_SD },
+  tauAirScale: { median: 1.0, logSd: PRIOR_TAU_AIR_LOG_SD },
+  noise: { median: NOISE_MEDIAN, logSd: NOISE_LOG_SD },
+  whiteOffset: { mean: 0.0, sd: WHITE_OFFSET_SD },
+  whiteFirmGap: { median: WHITE_FIRM_GAP_MEDIAN, logSd: WHITE_FIRM_GAP_LOG_SD },
+};
+
 /* ---- prior ---- */
 
 /** Six draws per particle, always in this order, in the prior and in every
- *  resample: alpha, taste offset, tauAirScale, noise, white offset, firm gap. */
-export function createPrior(count: number, seed: number): Posterior {
+ *  resample: alpha, taste offset, tauAirScale, noise, white offset, firm gap.
+ *  From the literature's population unless another is given. */
+export function createPrior(count: number, seed: number, pop: Population = LITERATURE_POPULATION): Posterior {
   const particles: Particle[] = new Array<Particle>(count);
   const weights: number[] = new Array<number>(count);
   let state = seed | 0;
@@ -305,12 +354,12 @@ export function createPrior(count: number, seed: number): Posterior {
     const e = gaussian(state); state = e.state;
     const f = gaussian(state); state = f.state;
     particles[i] = {
-      alpha_m2s: ALPHA_DEFAULT * Math.exp(ALPHA_REL_SD * a.value),
-      logDoseOffset: PRIOR_OFFSET_SD * b.value,
-      tauAirScale: Math.exp(PRIOR_TAU_AIR_LOG_SD * c.value),
-      noise: NOISE_MEDIAN * Math.exp(NOISE_LOG_SD * d.value),
-      whiteOffset: WHITE_OFFSET_SD * e.value,
-      whiteFirmGap: WHITE_FIRM_GAP_MEDIAN * Math.exp(WHITE_FIRM_GAP_LOG_SD * f.value),
+      alpha_m2s: pop.alpha_m2s.median * Math.exp(pop.alpha_m2s.logSd * a.value),
+      logDoseOffset: pop.logDoseOffset.mean + pop.logDoseOffset.sd * b.value,
+      tauAirScale: pop.tauAirScale.median * Math.exp(pop.tauAirScale.logSd * c.value),
+      noise: pop.noise.median * Math.exp(pop.noise.logSd * d.value),
+      whiteOffset: pop.whiteOffset.mean + pop.whiteOffset.sd * e.value,
+      whiteFirmGap: pop.whiteFirmGap.median * Math.exp(pop.whiteFirmGap.logSd * f.value),
     };
     weights[i] = 1.0 / count;
   }

@@ -43,8 +43,20 @@ enum Calibrations {
     static let appVersion: String =
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "unknown"
 
+    /// The population a new cook's prior is drawn from (E7; Population.swift):
+    /// `fixtures/population.json` from the repo, bundled, which is the
+    /// literature's until a fit of shared eggs publishes another. A bundle
+    /// without it, or with one that does not read, draws from the literature.
+    static let population: Population = {
+        guard let url = Bundle.main.url(forResource: "population", withExtension: "json"),
+              let data = try? Data(contentsOf: url), let p = parsePopulation(data) else {
+            return literaturePopulation
+        }
+        return p
+    }()
+
     static func fresh() -> Calibration {
-        freshCalibration(count: particleCount, seed: calibrationSeed)
+        freshCalibration(count: particleCount, seed: calibrationSeed, population: population)
     }
 
     static func freshKept() -> Kept {
@@ -77,6 +89,8 @@ enum Calibrations {
 
     private struct StoredV4: Encodable {
         var v = 4
+        /// The population the posterior was drawn from (E7).
+        var p: String
         var base: StoredPosterior?
         var cal: StoredPosterior
         var folded: Int
@@ -88,16 +102,20 @@ enum Calibrations {
     /// `StoredLog`, separately, for the same reason.
     private struct StoredParts: Decodable {
         var v: Int?
+        /// Absent in a store from before E7, every one drawn from the
+        /// literature.
+        var p: String?
         var base: StoredPosterior?
         var baseDamaged = false
         var cal: StoredPosterior?
         var folded: Int?
 
-        enum CodingKeys: String, CodingKey { case v, base, cal, folded }
+        enum CodingKeys: String, CodingKey { case v, p, base, cal, folded }
 
         init(from decoder: Decoder) throws {
             let c = try decoder.container(keyedBy: CodingKeys.self)
             v = try? c.decode(Int.self, forKey: .v)
+            p = try? c.decode(String.self, forKey: .p)
             if c.contains(.base), (try? c.decodeNil(forKey: .base)) == false {
                 base = try? c.decode(StoredPosterior.self, forKey: .base)
                 baseDamaged = base == nil
@@ -153,7 +171,8 @@ enum Calibrations {
 
     static func save(_ k: Kept) {
         let stored = StoredV4(
-            base: k.base.map(columns), cal: columns(k.calibration), folded: k.folded, log: k.log
+            p: population.id, base: k.base.map(columns), cal: columns(k.calibration), folded: k.folded,
+            log: k.log
         )
         if let data = try? JSONEncoder().encode(stored) {
             UserDefaults.standard.set(data, forKey: key)
@@ -171,8 +190,17 @@ enum Calibrations {
     ///    that becomes the new base and the log starts again empty.
     ///  - a posterior ahead of its log: the same.
     ///  - a damaged base: dropped, and the log replayed from the prior.
+    ///  - a posterior drawn from another population (E7: a release shipped a
+    ///    new one): the log replayed from a prior drawn from this one - "a
+    ///    model change is a replay". A base cannot be replayed, and stays.
+    ///
+    /// Whatever comes back starts at this population's centre: the start is
+    /// the population's, not stored.
     static func load() -> Kept {
-        let (kept, loaded) = decode(UserDefaults.standard.data(forKey: key))
+        var (kept, loaded) = decode(UserDefaults.standard.data(forKey: key))
+        let start = priorStart(population)
+        kept.calibration.start = start
+        kept.base?.start = start
         if !loaded { save(kept) }
         return kept
     }
@@ -194,7 +222,8 @@ enum Calibrations {
             return (Kept(base: sound, calibration: start(sound), folded: 0, log: []), false)
         }
         guard !parts.baseDamaged, parts.base == nil || base != nil,
-              let cal, let folded = parts.folded, folded >= 0 else {
+              let cal, let folded = parts.folded, folded >= 0,
+              (parts.p ?? literaturePopulation.id) == population.id else {
             return (Kept(base: base, calibration: start(base), folded: 0, log: log), false)
         }
         if folded > log.count {
