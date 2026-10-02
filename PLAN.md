@@ -62,7 +62,8 @@ The one queue. Nothing else in the documents waits on the owner.
    privacy policy URL is <https://actualeggtimer.netlify.app/privacy>
    (`privacy/index.html`), which is live only after the next push; App
    Privacy's answer is Data Not Collected. Read the page first: it speaks
-   in your name.
+   in your name. Help links it in both apps, as "Privacy" ("Of Privacy" in
+   1750; the `privacy` draft).
 
 Waiting on someone else: the Czech review (F5), by the owner's friend.
 

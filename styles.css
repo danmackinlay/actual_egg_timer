@@ -699,6 +699,8 @@ button.danger { color: var(--warn); border-color: color-mix(in srgb, var(--warn)
 .sources { padding-left: 1.2em; font-size: 0.875rem; }
 .sources li + li { margin-top: 8px; }
 .sources a { color: var(--fg); text-underline-offset: 2px; overflow-wrap: anywhere; }
+/* The last line of Help: the way to the privacy page. */
+#help .privacylink { margin: 22px 0 0; padding-top: 6px; border-top: 1px solid var(--line); }
 
 /* ---------------------------------------------------------------- views */
 

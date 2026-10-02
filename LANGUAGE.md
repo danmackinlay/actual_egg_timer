@@ -79,6 +79,10 @@ languages.
   its key with `data-copy`. The `<head>` keeps its English, because crawlers
   and link previews do not run scripts; localising it needs a page per
   language, which is F5's problem.
+- **The privacy page (`privacy/index.html`) is outside the catalogue**: plain
+  English only, no 1750 twin and no translation, because it is a statement
+  that must mean exactly one thing, and its speaker is the owner, not the
+  app (`DECISIONS.md` 51). Only the Help link to it, `help.privacy`, is copy.
 - **The language picker** came with F6, not F1: a picker with one row in it
   is a control that does nothing. The active locale is plumbing
   (`ACTIVE_LOCALE` in `src/ui/copy.ts`, `Copy.activeLocale` in

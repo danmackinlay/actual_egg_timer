@@ -114,6 +114,7 @@ const NOT_COPY: Record<string, string> = {
   '2026-09-28': 'debug seed record date, never shown',
   '{}#{}|{}|{}|{}|{}|{}|{}': 'cache key, never shown',
   'https://github.com/danmackinlay/actual_egg_timer': 'URL',
+  'https://actualeggtimer.netlify.app/privacy': 'URL',
   'https://academic.oup.com/auk/article-pdf/96/1/73/32910692/auk0073.pdf': 'URL',
   'https://doi.org/10.1002/fsn3.257': 'URL',
   'https://doi.org/10.1007/s11483-010-9200-1': 'URL',

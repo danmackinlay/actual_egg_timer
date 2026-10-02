@@ -39,6 +39,7 @@ struct HelpView: View {
                     odds.id(HelpSection.odds)
                     unsure.id(HelpSection.unsure)
                     sources.id(HelpSection.sources)
+                    privacy
                 }
                 .padding(20)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -146,6 +147,25 @@ struct HelpView: View {
             }
         }
     }
+
+    /// The last thing on the page, as on the web: the privacy page, which
+    /// lives on the web app's site (privacy/index.html), plain English and
+    /// outside the catalogue. `Link` hands it to Safari; the app itself still
+    /// makes no network request.
+    private var privacy: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Divider()
+            Link(destination: Self.privacyURL) {
+                Text(tr("help.privacy"))
+                    .font(.subheadline.weight(.semibold))
+                    .underline()
+            }
+            .tint(Palette.accent)
+            .padding(.top, 14)
+        }
+    }
+
+    private static let privacyURL = URL(string: "https://actualeggtimer.netlify.app/privacy")!
 
     // MARK: - Pieces
 

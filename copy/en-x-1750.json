@@ -205,6 +205,7 @@
     "help.source.weijers": { "text": "M. Weijers, P. A. Barneveld, M. A. Cohen Stuart and R. W. Visschers, \"Heat-induced denaturation and aggregation of ovalbumin at neutral pH described by irreversible first-order kinetics\", Protein Science 12, 2693-2703 (2003). doi:10.1110/ps.03242803" },
     "help.source.hoyt": { "text": "D. F. Hoyt, \"Practical methods of estimating volume and fresh weight of bird eggs\", The Auk 96, 73-77 (1979)." },
     "help.source.usda": { "text": "USDA Food Safety and Inspection Service, \"High Altitude Cooking\"." },
+    "help.privacy": { "text": "Of Privacy" },
 
     "nav.back": { "text": "Return" },
     "learned.title": { "text": "What I have learned" },
