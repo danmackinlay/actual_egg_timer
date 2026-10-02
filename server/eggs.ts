@@ -8,7 +8,8 @@
  *   POST   /api/attest      { "uid", "keyId", "attestation" }  an iPhone's key
  *
  * An egg is kept at `records/<tier>/<uid>/<seq>.json`, written only if that
- * key is new: a retry is harmless and nothing is ever overwritten. The tier is
+ * key is new, and only if the other tier does not already hold it: a retry
+ * is harmless, one egg is one copy, and nothing is ever overwritten. The tier is
  * `attested` when the egg came with an App Attest assertion that verifies
  * against the key attested for its id, and `open` otherwise - the web app,
  * and any iPhone that cannot attest (`appAttest.ts`).
@@ -156,10 +157,13 @@ async function postEgg(req: Request, store: Store, opts: Options): Promise<Respo
   if (record === null) return refuse(400, 'not a record');
   if (!isUid(record.uid)) return refuse(400, 'uid');
   const tier = await tierOf(store, record.uid, body, req, opts);
-  // A retry whose assertion no longer counts up lands here as open; if the
-  // egg is already kept as attested, that is the copy that stands.
-  if (tier === 'open' && await store.get(recordKey('attested', record.uid, seq)) !== null) {
-    return json(200, { tier: 'attested', stored: false });
+  // One copy of an egg, whichever tier kept it first. A retry can land in the
+  // other tier: as open when its assertion no longer counts up, or as
+  // attested when the phone's attestation went through only after the first
+  // try was kept, with the answer lost on the way back.
+  const other: Tier = tier === 'open' ? 'attested' : 'open';
+  if (await store.get(recordKey(other, record.uid, seq)) !== null) {
+    return json(200, { tier: other, stored: false });
   }
   const stored = await store.set(recordKey(tier, record.uid, seq), JSON.stringify(record), true);
   return json(stored ? 201 : 200, { tier: tier, stored: stored });

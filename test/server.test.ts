@@ -125,6 +125,12 @@ test('4. an iPhone attests once, and its eggs go to the attested tier', async ()
     'x-egg-assertion': Buffer.from(makeAssertion(SYNTH.leafPrivateKey, new TextEncoder().encode(body), 5)).toString('base64'),
   });
   assert.equal((await send(store, forged)).body['tier'], 'open');
+  // The other way: an egg kept as open, then sent again once the phone has
+  // attested (the first answer lost on the way back), is not kept twice.
+  await store.set(recordKey('open', SYNTH.uid, 7), '{}', true);
+  const later = JSON.stringify({ seq: 7, record: egg(SYNTH.uid) });
+  assert.deepEqual(await send(store, signed(later, 6)), { status: 200, body: { tier: 'open', stored: false } });
+  assert.equal(store.blobs.has(recordKey('attested', SYNTH.uid, 7)), false);
   // An assertion for an id with no key: open.
   const nokey = JSON.stringify({ seq: 0, record: egg(UID) });
   assert.equal((await send(store, signed(nokey, 9))).body['tier'], 'open');
