@@ -231,24 +231,27 @@ Decided by the owner, 2 October 2026:
     privacy policy URL points there. Plain English only, no 1750 twin.
     Built `a3930e1`, linked from Help in both apps `48eb443`.
 
-Decided by the owner, 2 October 2026, for E6-E8 (`COLLECTIVE.md`):
+Decided by the owner, 2 October 2026, for E6-E8 (`COLLECTIVE.md`), numbered
+after 52, which `main` took for the egg in cross-section while E6-E8 were
+built on a branch:
 
-52. **The nudge's "still learning" is a small badge with an (i)**, not a
+53. **The nudge's "still learning" is a small badge with an (i)**, not a
     line: "A whole line saying still learning? How about a tiny badge over
     the UI with a disclosure (i)". It answers 3: a cook who is sharing sees
     a "Learning" mark by the time, and its (i) says why the time may move.
-    Not built (E8).
-53. **Turning sharing on sends the log so far**, not only the eggs after it:
+    Built with E8 (`82aff4b`).
+54. **Turning sharing on sends the log so far**, not only the eggs after it:
     the per-cook effects and the per-cook log score (37) need each cook's
-    whole sequence. The consent text says so. Not built (E6).
-54. **App Attest is built now**, the iOS side and the server's verification
+    whole sequence. The consent text says so. Built with E6 (`f7f9e90`,
+    `0f93576`).
+55. **App Attest is built now**, the iOS side and the server's verification
     together. An iPhone that cannot attest still sends, to the open tier.
-    Not built (E6).
-55. **The nudge is +-10 s, as designed, knowing what it costs.** Measured
+    Built with E6 (`00186b1`, `0f93576`).
+56. **The nudge is +-10 s, as designed, knowing what it costs.** Measured
     first (`npm run decide -- nudge`, 300 simulated cooks x 6 eggs): the
     share of eggs that come out right - the yolk just right and the white
     not runny - falls from 52.1% to 49.3% at +-10 s, and from 66.9% to 62.6%
     by a cook's sixth egg; +-5 s would cost under a point (51.3%) and teach a
     quarter as much per egg, +-3 s a third of a point and a ninth as much.
     The owner chose +-10 s. The Learning mark's (i) says the time may leave
-    an egg a little softer or firmer. Built with E8.
+    an egg a little softer or firmer. Built with E8 (`82aff4b`).

@@ -233,7 +233,7 @@ final class Planner {
     /// the decided time on the decision's own surface): the direction, the
     /// white's line and the bracket. Nil whenever `decision` is.
     var outcome: Outcome?
-    /// This launch's nudge (E8, DECISIONS.md 55): a whole number of seconds
+    /// This launch's nudge (E8, DECISIONS.md 56): a whole number of seconds
     /// from -10 to +10, drawn at launch and again after each cook, so the
     /// time on screen holds still while the cook looks at it.
     var nudgeDraw = nudgeSeconds(Double.random(in: 0..<1))

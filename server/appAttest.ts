@@ -1,5 +1,5 @@
 /**
- * App Attest (DECISIONS.md 54): telling an egg sent by a genuine copy of the
+ * App Attest (DECISIONS.md 55): telling an egg sent by a genuine copy of the
  * iPhone app from one sent by anything else.
  *
  * Two objects come from the phone. The ATTESTATION, once, when the cook turns

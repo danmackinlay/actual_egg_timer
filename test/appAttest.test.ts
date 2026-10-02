@@ -1,5 +1,5 @@
 /**
- * App Attest on the server (server/appAttest.ts, DECISIONS.md 54).
+ * App Attest on the server (server/appAttest.ts, DECISIONS.md 55).
  *
  * Two attestations: Apple's own sample, from its "Attestation Object
  * Validation Guide", which chains to Apple's real root; and a synthetic one

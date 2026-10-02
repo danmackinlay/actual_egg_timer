@@ -1,13 +1,13 @@
 /**
  * The `learning` draft: the Learning mark on the time (E8, DECISIONS.md 3,
- * 52 and 55), new in both apps, on `421ae8f` (2 October 2026). Two new keys.
+ * 53 and 56), new in both apps, on `421ae8f` (2 October 2026). Two new keys.
  *
  * DECISIONS.md 3 allowed the nudge on one condition, that the app says it is
- * learning, on the screen with the time; 52 made that "a tiny badge over the
+ * learning, on the screen with the time; 53 made that "a tiny badge over the
  * UI with a disclosure (i)". The mark shows while sharing is on, the only
  * time the time is nudged. Its (i) says why the time may move, that it can
  * cost a little - the owner chose +-10 s knowing it costs a cook about three
- * eggs in a hundred (55) - and how to stop it.
+ * eggs in a hundred (56) - and how to stop it.
  *
  * The 1750 twins (copy/en-x-1750.json), new:
  *   learning.badge: Yet learning

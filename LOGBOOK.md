@@ -3433,7 +3433,7 @@ checks; the session finished them.
 ## 2 October 2026: E6-E8, the collective part
 
 Built from `COLLECTIVE.md`, which has every choice; the owner's answers are
-`DECISIONS.md` 52-55. Nothing is deployed: the endpoint goes live with the
+`DECISIONS.md` 54-56. Nothing is deployed: the endpoint goes live with the
 next push.
 
 - **E6, collection.** Each record keeps what the app said at Eggs in
@@ -3455,7 +3455,7 @@ next push.
   300 simulated cooks x 6 eggs, the truth's own probit): eggs right fall from
   52.1% to 49.3% at +-10 s, 51.3% at +-5 s, 51.8% at +-3 s; by a cook's sixth
   egg 66.9% to 62.6% at +-10 s. INFERENCE.md had said "at no cost to the
-  cook"; it was wrong, and says so now. The owner chose +-10 s (55). In both
+  cook"; it was wrong, and says so now. The owner chose +-10 s (56). In both
   apps the time moved with sharing (11:17 to 11:21 in the browser, 11:35 to
   11:29 in the simulator) and the Learning mark showed with its (i). The
   `learning` draft's proofs as for `share`.

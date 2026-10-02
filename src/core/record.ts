@@ -59,7 +59,7 @@ export const RECORD_VERSION = 1;
  *  has moved on (DECISIONS.md 37); a replay can only say what the current code
  *  would have said. '2026-10-e6' is E5's likelihood and decision, with the
  *  forecast kept; '2026-10-e8' adds the nudge, +-10 s for a cook who is
- *  sharing (DECISIONS.md 55). Records from before E6 carry none. */
+ *  sharing (DECISIONS.md 56). Records from before E6 carry none. */
 export const MODEL_ID = '2026-10-e8';
 
 /** Where the egg's mass came from. A size class is a 10 g bucket, worth about

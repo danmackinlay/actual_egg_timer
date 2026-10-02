@@ -519,7 +519,7 @@ faster. You can turn it off, and delete what you sent, whenever you like."*
 - **The apps** (`src/ui/share.ts`, `ios/App/Sharing.swift`) keep the id, a
   cursor into the log and every id used, beside the log; the log itself keeps
   no id, and the copy sent carries it. On turning sharing on the log so far
-  goes (`DECISIONS.md` 53), then each egg once it is final, in order. "Start
+  goes (`DECISIONS.md` 54), then each egg once it is final, in order. "Start
   learning again" makes a new id; Delete what I've sent deletes every id the
   device has used and asks again until the server confirms. The consent is
   the `share` draft, on screen beside the switch.
@@ -553,7 +553,7 @@ faster. You can turn it off, and delete what you sent, whenever you like."*
   nudge or no nudge, and sets the right expectation for the odds on screen.
   *Settled, 2 October:* the "still learning" line had left both screens
   (below), and the owner chose a small "Learning" mark on the time, with an
-  (i), shown while sharing is on (`DECISIONS.md` 52).
+  (i), shown while sharing is on (`DECISIONS.md` 53).
 
 **Built (E5, 28 September).** `src/core/decide.ts`, held to
 `EggTimerCore/Decide.swift` by `fixtures/decide.json`: given the same posterior
@@ -739,7 +739,7 @@ close. Near the best time the chance of a good egg is a hill, and any
 symmetric spread about the top lowers it in proportion to the spread's
 variance; so does what the spread teaches about the slope. +-5 s costs
 under a point (51.3%) and teaches a quarter as much; +-3 s a third of a
-point and a ninth. The owner chose +-10 s knowing it (`DECISIONS.md` 55),
+point and a ninth. The owner chose +-10 s knowing it (`DECISIONS.md` 56),
 and the Learning mark's (i) says an egg may come out a little softer or
 firmer.
 

@@ -5,11 +5,11 @@ import EggTimerCore
 
 /// Sharing (E6; INFERENCE.md section 7, COLLECTIVE.md section 1): a cook who
 /// turns it on sends every egg in the log to the collection endpoint, the
-/// ones from before it was on included (DECISIONS.md 53), and can delete
+/// ones from before it was on included (DECISIONS.md 54), and can delete
 /// everything this phone has sent. The web app's `src/ui/share.ts`, rule for
 /// rule; what it keeps and why is said there.
 ///
-/// What iOS adds is App Attest (DECISIONS.md 54). When an id first sends, the
+/// What iOS adds is App Attest (DECISIONS.md 55). When an id first sends, the
 /// phone makes a key in its Secure Enclave and has Apple attest it, bound to
 /// the id (`clientDataHash = SHA256(uid)`), and posts the attestation; every
 /// egg then carries an assertion - the key's signature over the body sent -

@@ -29,7 +29,7 @@ These counts are the only ones in the documents. If you want a number, run
    list below.
 3. **F5, Czech**, when the owner's friend can review it.
 4. **E6-E8**, the collective part: built (`COLLECTIVE.md`; the owner's
-   answers are `DECISIONS.md` 52-55). Live with the next push; then the
+   answers are `DECISIONS.md` 54-56). Live with the next push; then the
    checks under "What is left", and the first real fit once eggs arrive.
 
 Throughout: cook real eggs, and the two measurements in README §11.3.
