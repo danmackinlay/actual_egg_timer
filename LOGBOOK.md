@@ -3491,3 +3491,19 @@ run ios:build` builds.
 
 **Not verified:** either app on a real phone; Dynamic Type at large sizes
 beside the egg; Safari.
+
+## 2 October 2026: the egg, bigger and egg-shaped
+
+The owner: too small, and "a perfect oval instead of one where one end is
+smaller". The first outline stretched an ellipse lengthwise at the blunt
+end, which leaves the two ends the same width; it read as an oval. The
+shell is now an ellipse whose width runs as 1 + 0.18 y along its length,
+so the pointed end is narrower as well as tighter. A quarter of the way in
+from each end, the blunt end is over 1.15 times the wider
+(`test/eggSection.test.ts`), at the model's 1.35 length to width. 0.22 was
+tried and read as a teardrop. The yolk sits 0.06 of the half-length toward
+the blunt end. The drawing's bounds are now worked out from the outline.
+Both apps draw it at 104 by 136 points, up from 80 by 104. That is taller
+than the sentence beside it at 375 px (136 against 101), which the owner
+asked for. Seen in the web app at 375 px and on the simulator; the
+simulator was left idle.

@@ -9,7 +9,7 @@ import EggTimerCore
 /// The model's egg is a sphere (`EggSection`, in core); this one is drawn as
 /// an egg. Each ring is a closed outline, filled outermost first, so the one
 /// inside covers all but the band between them. The yolk is round; through
-/// the white the outlines turn from that circle into the shell's ovoid, blunt
+/// the white the outlines turn from that circle into the shell's egg, blunt
 /// end up. Every fill is opaque, so a raw white is a colour of its own.
 ///
 /// It says nothing the sentence and the clock do not, so it has no words and
@@ -82,41 +82,53 @@ private final class SectionCache {
 /// The egg's outline, the twin of `ringPoints` in src/ui/eggSection.ts: the
 /// same numbers, so the two apps draw the same egg.
 enum EggOutline {
-    /// The shell's half-length, blunt end to centre, before the taper.
+    /// The shell's half-length, the drawing's unit.
     private static let halfLength = 1.0
-    /// Its half-width: the egg the model assumes, 1.35 times as long as wide.
+    /// Its half-width at the middle: the egg the model assumes, 1.35 times as
+    /// long as wide.
     private static let halfWidth = halfLength / Constants.eggLengthRatio
-    /// How much longer the blunt end is than the pointed end.
-    private static let taper = 0.14
+    /// How much the width swells toward the blunt end and narrows toward the
+    /// pointed one, so the pointed end is narrower as well as shorter.
+    private static let taper = 0.18
+    /// How far the yolk's centre sits above the egg's middle.
+    private static let yolkLift = 0.06
     private static let outlinePoints = 72
 
-    /// The drawing's bounds, y up: the shell's extent, and a hair for its line.
-    private static let left = -halfWidth * 1.06
-    private static let right = halfWidth * 1.06
-    private static let top = halfLength * (1.0 + taper) + 0.03
-    private static let bottom = -halfLength * (1.0 - taper) - 0.03
-
-    /// The shell's distance from the yolk's centre at angle `theta` (0 to the
-    /// right, pi/2 up, toward the blunt end).
-    static func shellRadius(_ theta: Double) -> Double {
-        let c = cos(theta) / halfWidth
-        let s = sin(theta) / halfLength
-        return (1.0 + taper * sin(theta)) / (c * c + s * s).squareRoot()
+    /// The shell at parameter `t` (0 to the right, pi/2 up, toward the blunt
+    /// end), relative to the yolk's centre, y up.
+    static func shellPoint(_ t: Double) -> (Double, Double) {
+        (halfWidth * cos(t) * (1.0 + taper * sin(t)), halfLength * sin(t) - yolkLift)
     }
 
-    /// The outline of everything inside `x` (r/R), y up.
+    /// The outline of everything inside `x` (r/R): a circle across the yolk,
+    /// turning into the shell's egg evenly across the white. Y up, the yolk's
+    /// centre at the origin.
     static func ringPoints(_ x: Double) -> [(Double, Double)] {
         let edge = Constants.yolkRadiusFrac
         let w = x <= edge ? 0.0 : (x - edge) / (1.0 - edge)
         return (0..<outlinePoints).map { i in
-            let theta = 2.0 * Double.pi * Double(i) / Double(outlinePoints)
-            let r = x * ((1.0 - w) * halfWidth + w * shellRadius(theta))
-            return (r * cos(theta), r * sin(theta))
+            let t = 2.0 * Double.pi * Double(i) / Double(outlinePoints)
+            let shell = shellPoint(t)
+            return (
+                x * ((1.0 - w) * halfWidth * cos(t) + w * shell.0),
+                x * ((1.0 - w) * halfWidth * sin(t) + w * shell.1)
+            )
         }
     }
 
+    /// The drawing's bounds, y up: the shell's extent, and a hair for its line.
+    private static let bounds: (left: Double, right: Double, top: Double, bottom: Double) = {
+        let shell = ringPoints(1.0)
+        let pad = 0.03
+        return (
+            shell.map(\.0).min()! - pad, shell.map(\.0).max()! + pad,
+            shell.map(\.1).max()! + pad, shell.map(\.1).min()! - pad
+        )
+    }()
+
     /// Draw `view` into `size`, centred, as large as fits.
     static func draw(_ view: SectionView?, in context: GraphicsContext, size: CGSize, scheme: ColorScheme) {
+        let (left, right, top, bottom) = bounds
         let scale = min(size.width / (right - left), size.height / (top - bottom))
         let midX = (left + right) / 2, midY = (top + bottom) / 2
         func path(_ x: Double) -> Path {

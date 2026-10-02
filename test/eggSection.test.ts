@@ -9,7 +9,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
-  HEAT_STOPS_C, Rgb, SectionPalette, heatFills, ringFills, ringPoints, shellRadius,
+  HEAT_STOPS_C, Rgb, SectionPalette, heatFills, ringFills, ringPoints,
 } from '../src/ui/eggSection.js';
 import { advanceSection, createSection, sectionView } from '../src/core/section.js';
 import { eggFromMass } from '../src/core/geometry.js';
@@ -30,14 +30,31 @@ function radius(p: [number, number]): number {
   return Math.hypot(p[0], p[1]);
 }
 
-test('the shell is the model\'s egg, blunt end up', () => {
+/** The shell's width at height y, from its outline. */
+function widthAt(y: number): number {
   const shell = ringPoints(1.0);
-  const xs = shell.map((p) => p[0]);
+  const xs: number[] = [];
+  for (let i = 0; i < shell.length; i++) {
+    const [ax, ay] = shell[i];
+    const [bx, by] = shell[(i + 1) % shell.length];
+    if ((ay - y) * (by - y) <= 0 && ay !== by) xs.push(ax + (bx - ax) * (y - ay) / (by - ay));
+  }
+  return Math.max(...xs) - Math.min(...xs);
+}
+
+test('the shell is the model\'s egg, its pointed end down and narrower', () => {
+  const shell = ringPoints(1.0);
   const ys = shell.map((p) => p[1]);
-  const length = Math.max(...ys) - Math.min(...ys);
-  const width = Math.max(...xs) - Math.min(...xs);
+  const top = Math.max(...ys);
+  const bottom = Math.min(...ys);
+  const length = top - bottom;
+  const width = Math.max(...shell.map((p) => p[0])) - Math.min(...shell.map((p) => p[0]));
   assert.ok(Math.abs(length / width - EGG_LENGTH_RATIO) < 0.05, `length/width ${length / width}`);
-  assert.ok(shellRadius(Math.PI / 2) > shellRadius(-Math.PI / 2), 'the blunt end is up');
+  // A quarter of the way in from each end: the blunt end is the wider.
+  const mid = (top + bottom) / 2;
+  const blunt = widthAt(mid + length / 4);
+  const pointed = widthAt(mid - length / 4);
+  assert.ok(blunt / pointed > 1.15, `blunt ${blunt}, pointed ${pointed}`);
 });
 
 test('the yolk is round, and every outline lies inside the next', () => {
