@@ -5,7 +5,8 @@
  * section is a closed outline, and the outlines are filled outermost first,
  * each in its ring's colour, so the one inside covers all but the band
  * between them. The yolk is round, as a real one is; through the white the
- * outlines turn from that circle into the shell's ovoid, blunt end up.
+ * outlines turn from that circle into the shell's egg, standing on its
+ * blunt end rather than balanced on its point.
  *
  * Built from what both apps can draw the same way: a list of points per ring
  * (`ringPoints`) and an opaque colour per ring (`ringFills`). On iOS the same
@@ -25,47 +26,61 @@ import { SectionView } from '../core/section.js';
 
 /* ------------------------------------------------------------- the outline */
 
-/** The shell's half-length, blunt end to centre, before the taper. The
- *  drawing's unit. */
+/** The shell's half-length, the drawing's unit. */
 const HALF_LENGTH = 1.0;
-/** Its half-width: the egg the model assumes, 1.35 times as long as wide. */
+/** Its half-width at the middle: the egg the model assumes, 1.35 times as
+ *  long as wide. */
 const HALF_WIDTH = HALF_LENGTH / EGG_LENGTH_RATIO;
-/** How much longer the blunt end is than the pointed end, as a fraction of
- *  the half-length. The yolk sits at the centre, so toward the blunt end. */
-const TAPER = 0.14;
+/** How much the width swells toward the blunt end, at the bottom, and
+ *  narrows toward the pointed one, at the top: the shell's half-width at
+ *  height y is HALF_WIDTH times (1 - TAPER y), so the pointed end is
+ *  narrower as well as the blunt end rounder - an egg, not an oval
+ *  stretched at one end. */
+const TAPER = 0.18;
+/** How far the yolk's centre sits below the egg's middle, toward the blunt
+ *  end. */
+const YOLK_DROP = 0.06;
 /** Points per outline. */
 const OUTLINE_POINTS = 72;
 
-/** The shell's distance from the yolk's centre at angle `theta` (0 to the
- *  right, pi/2 up, toward the blunt end): an ellipse about the centre,
- *  stretched by 1 + TAPER at the top and shrunk by 1 - TAPER at the bottom. */
-export function shellRadius(theta: number): number {
-  const c = Math.cos(theta) / HALF_WIDTH;
-  const s = Math.sin(theta) / HALF_LENGTH;
-  return (1.0 + TAPER * Math.sin(theta)) / Math.sqrt(c * c + s * s);
+/** The shell at parameter `t` (0 to the right, pi/2 up, toward the pointed
+ *  end), relative to the yolk's centre, y up. */
+export function shellPoint(t: number): [number, number] {
+  return [
+    HALF_WIDTH * Math.cos(t) * (1.0 - TAPER * Math.sin(t)),
+    HALF_LENGTH * Math.sin(t) + YOLK_DROP,
+  ];
 }
 
 /** The outline of everything inside `x` (r/R): a circle across the yolk,
- *  turning into the shell's ovoid evenly across the white. Points are in
- *  drawing units, y up. */
+ *  turning into the shell's egg evenly across the white. Points are in
+ *  drawing units, y up, the yolk's centre at the origin. */
 export function ringPoints(x: number): [number, number][] {
   const w = x <= YOLK_RADIUS_FRAC ? 0.0 : (x - YOLK_RADIUS_FRAC) / (1.0 - YOLK_RADIUS_FRAC);
   const points: [number, number][] = [];
   for (let i = 0; i < OUTLINE_POINTS; i++) {
-    const theta = 2.0 * Math.PI * i / OUTLINE_POINTS;
-    const r = x * ((1.0 - w) * HALF_WIDTH + w * shellRadius(theta));
-    points.push([r * Math.cos(theta), r * Math.sin(theta)]);
+    const t = 2.0 * Math.PI * i / OUTLINE_POINTS;
+    const shell = shellPoint(t);
+    points.push([
+      x * ((1.0 - w) * HALF_WIDTH * Math.cos(t) + w * shell[0]),
+      x * ((1.0 - w) * HALF_WIDTH * Math.sin(t) + w * shell[1]),
+    ]);
   }
   return points;
 }
 
 /** The drawing's bounds, y up: the shell's extent, and a hair for its line. */
-export const SECTION_BOX = {
-  left: -HALF_WIDTH * 1.06,
-  right: HALF_WIDTH * 1.06,
-  top: HALF_LENGTH * (1.0 + TAPER) + 0.03,
-  bottom: -HALF_LENGTH * (1.0 - TAPER) - 0.03,
-};
+export const SECTION_BOX = (() => {
+  let left = 0, right = 0, top = 0, bottom = 0;
+  for (const [px, py] of ringPoints(1.0)) {
+    left = Math.min(left, px);
+    right = Math.max(right, px);
+    top = Math.max(top, py);
+    bottom = Math.min(bottom, py);
+  }
+  const pad = 0.03;
+  return { left: left - pad, right: right + pad, top: top + pad, bottom: bottom - pad };
+})();
 
 /** An outline as SVG path data, y flipped to SVG's downward axis. */
 export function pathData(points: [number, number][]): string {

@@ -94,7 +94,7 @@ struct ContentView: View {
                                 )
                             }
                             .id(tick)
-                            .frame(width: 80, height: 104)
+                            .frame(width: 120, height: 156)
                             CookSentence(ticket: ticket, planner: planner)
                         }
                     }
