@@ -2,9 +2,9 @@
 
 The design of the learning, and the facts of the model as built. Built: the
 record (§4), the ordered probit and the white offset (§3), the thermometer
-(§5), and choosing the time under uncertainty, with the odds-shaded slider and
-the outcome summary (§8). Not built: collection (§7), the population fit (§9)
-and the nudge (§8), which are E6-E8 in `PLAN.md`. The owner's decisions are
+(§5), choosing the time under uncertainty, with the odds-shaded slider and
+the outcome summary (§8), and opt-in collection (§7, E6). Being built, from
+`COLLECTIVE.md`: the nudge (§8, E8) and the population fit (§9, E7). The owner's decisions are
 numbered in `DECISIONS.md`; the two measurements the design rests on are in
 `LOGBOOK.md` (21 September 2026) and re-run with `npm run rank` and
 `npm run probe`.
@@ -481,7 +481,8 @@ carelessness, which the first paragraph handles.
 - **What changes in the repo:** the privacy manifest gains collected-data
   entries ("not linked to you"); the README, `ios/README.md` and the App Store
   answers in `ios/RELEASING.md` all stop saying the app has no networking; the
-  web app gains its first request.
+  web app gains its first request. (All done with E6, and the privacy page
+  rewritten for it.)
 - **Each egg carries what the app said** (`DECISIONS.md` 37). Every
   uploaded record - and, once E6 lands, every record kept on the device - holds
   the full forecast at "Eggs in": the yolk's three answer probabilities (too
@@ -500,6 +501,31 @@ this on, the app sends how each egg was cooked and how you said it turned out.
 No name, no location, nothing about you - just the egg. The timer is still
 learning, so sometimes it will try a time a few seconds either way to learn
 faster. You can turn it off, and delete what you sent, whenever you like."*
+
+**Built (E6, 2 October).** `COLLECTIVE.md` §1 has every choice; in short:
+
+- **The endpoint** is `server/eggs.ts`, bound to Netlify Blobs by
+  `netlify/functions/eggs.mts`: `POST /api/eggs` keeps an egg at
+  `records/<tier>/<uid>/<seq>.json` only if that key is new, after
+  `parseRecord` has read it; `DELETE /api/eggs/<uid>` removes everything under
+  the id; `POST /api/attest` keeps an iPhone's attested key. Netlify's
+  per-address rate limit is in the function's config. Nothing about the sender
+  is written or logged.
+- **The tiers**: `attested`, an egg whose App Attest assertion verifies against
+  the key attested for its id, and `open`, everything else - the web, and any
+  iPhone that cannot attest. The attestation is bound to the id
+  (`clientDataHash = SHA256(uid)`) instead of a server challenge
+  (`server/appAttest.ts`, tested on Apple's own sample).
+- **The apps** (`src/ui/share.ts`, `ios/App/Sharing.swift`) keep the id, a
+  cursor into the log and every id used, beside the log; the log itself keeps
+  no id, and the copy sent carries it. On turning sharing on the log so far
+  goes (`DECISIONS.md` 53), then each egg once it is final, in order. "Start
+  learning again" makes a new id; Delete what I've sent deletes every id the
+  device has used and asks again until the server confirms. The consent is
+  the `share` draft, on screen beside the switch.
+- **Each record carries its forecast and `model`** (§4).
+- **Not yet**: the endpoint goes live with the next push; the attested path
+  has not run on a phone.
 
 ## 8. Deciding, not just estimating
 

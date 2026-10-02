@@ -276,6 +276,28 @@ way a miss is likely to go.
 Settings has Forget, in both apps, which asks first. The posterior recovers on its own after a few more eggs, so this is for people who
 would rather not wait.
 
+### It can share, if the cook says so
+
+`Sharing.swift` is the web's `src/ui/share.ts`, rule for rule (E6;
+INFERENCE.md §7, COLLECTIVE.md §1): off until the cook turns it on in
+Settings, where the consent sits beside the switch; then every final egg in
+the log, the ones from before included, goes to the endpoint on the web app's
+site, in order, each copy carrying the cook's random id; and Delete what I've
+sent deletes everything under every id this phone has used, asking again at
+each launch until the server confirms. It is the app's only network call:
+`URLSession`, HTTPS, to `actualeggtimer.netlify.app` (a debug build can point
+it at `npm run serve:dev` with `-shareServer`).
+
+What iOS has that the web cannot is App Attest (`DECISIONS.md` 54). The first
+time an id sends, the phone makes a key in its Secure Enclave and has Apple
+attest it, bound to the id (`clientDataHash = SHA256(uid)`); every egg then
+carries an assertion over its body, and the server files it in the attested
+tier, which outweighs the web in the fit (`DECISIONS.md` 2). No entitlement is
+set: a development build uses Apple's sandbox, TestFlight and the App Store
+use production, and the server takes both. The simulator cannot attest at
+all, so its eggs go to the open tier; that path was checked end to end, and
+the attested one has not yet run on a phone.
+
 The taste offset absorbs the difference between the user's palate and the
 nominal doneness scale so that `alpha` does not have to, which keeps the physics
 honest. From the first egg on, the time is chosen over every particle - taste,

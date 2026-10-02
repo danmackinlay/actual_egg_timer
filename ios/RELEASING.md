@@ -138,11 +138,16 @@ listed here only so nobody removes them as clutter:
   Reason `CA92.1`, not `1C8F.1`, because there is no App Group. Apple states this
   as an upload requirement; in practice it has often arrived as an `ITMS-91053`
   email after the fact, which is a slow way to learn it.
-- **`INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO`** in `project.yml`. The app
-  has no networking of any kind, so it uses no encryption — not even the HTTPS
-  that would merely be exempt. Without this, every single build arrives as
-  **Missing Compliance** and has to be answered by hand before anyone can install
-  it.
+- **`INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO`** in `project.yml`. The
+  app's one network call, sharing's, is HTTPS through `URLSession`, which is the
+  operating system's encryption and exempt, so NO ("no non-exempt
+  encryption") is still the true answer. Without this, every single build
+  arrives as **Missing Compliance** and has to be answered by hand before anyone
+  can install it.
+- **The privacy manifest's collected data**: sharing's records (Other Data
+  Types) and its random id (Device ID), neither linked to the user nor used for
+  tracking, for App Functionality. They must match the App Privacy answers
+  below.
 
 ### 6. For a public link: the privacy policy, and the privacy answers
 
@@ -160,14 +165,29 @@ English and outside the copy catalogue; every claim on it was checked against
 the code, so a change to what either app keeps or sends changes that page
 first.
 
-The **App Privacy** questionnaire's answer, today, is **Data Not Collected**.
-Apple counts data as collected only when it leaves the device for the
-developer or a third party to keep, and nothing does: no networking, no
-third-party code, everything in the app's own `UserDefaults`. Crash reports
-and App Analytics that Apple passes on from people who opted in to share them
-are Apple's to disclose, not the app's ("You are not responsible for
-disclosing data collected by Apple", Apple's App Privacy Details page). E6
-changes this answer: see `INFERENCE.md` §7.
+The **App Privacy** questionnaire's answer changed with E6, sharing (the
+answer was Data Not Collected until then). Apple counts data as collected
+when it leaves the device for the developer to keep, and opt-in collection is
+still collection: the exemption for optional data covers data the user
+chooses to provide each time, and sharing sends every egg once it is on. So,
+in App Store Connect, **App Privacy**:
+
+- **Do you or your third-party partners collect data from this app?** Yes.
+- **Other Data → Other Data Types**: collected; used for **App
+  Functionality**; **not linked** to the user's identity; **not used for
+  tracking**. (Each egg: how it was cooked and how the cook said it came out.)
+- **Identifiers → Device ID**: collected; **App Functionality**; **not
+  linked**; **not tracking**. (The random id made on the phone, which groups a
+  cook's eggs and lets them be deleted. It is not the advertising identifier
+  and not derived from anything.)
+- Nothing else: no contact info, location, user content, usage data or
+  diagnostics.
+
+These are the owner's answers to give, and they match
+`ios/App/PrivacyInfo.xcprivacy`, which Xcode's privacy report reads. Crash
+reports and App Analytics that Apple passes on from people who opted in to
+share them are Apple's to disclose, not the app's ("You are not responsible
+for disclosing data collected by Apple", Apple's App Privacy Details page).
 
 ---
 

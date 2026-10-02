@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#0c0d0f" media="(prefers-color-scheme: dark)">
 <meta name="theme-color" content="#f7f7f8" media="(prefers-color-scheme: light)">
 <title>Privacy - Actual Egg Timer</title>
-<meta name="description" content="What Actual Egg Timer keeps, where, and how to delete it. Nothing leaves your phone or your browser.">
+<meta name="description" content="What Actual Egg Timer keeps, where, what it sends if you turn on sharing, and how to delete it.">
 <link rel="stylesheet" href="/styles.css">
 <link rel="canonical" href="https://actualeggtimer.netlify.app/privacy">
 <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">
@@ -26,8 +26,10 @@
   are the app's own (styles.css, "the privacy page").
 
   Every claim here is checked against the code. When the code changes what
-  it keeps or sends - E6 above all (INFERENCE.md section 7) - this page
-  changes first, with the date at the top and a line under "Changes".
+  it keeps or sends, this page changes first, with the date at the top and
+  a line under "Changes". What sharing sends is the record
+  (src/core/record.ts, INFERENCE.md section 4) and nothing else, and the
+  list under "What is sent" is its fields, in words.
 -->
 <body>
 <main class="doc">
@@ -40,12 +42,15 @@
 
   <p>Actual Egg Timer is a free app that I, Dan MacKinlay, make on my own as
   a personal project. It comes as a website and as an iPhone app. This page
-  says what each one keeps about you, where, and how to delete it.</p>
+  says what each one keeps about you, where, what it sends if you turn
+  sharing on, and how to delete it.</p>
 
   <h2>In short</h2>
-  <p><strong>Nothing you put into Actual Egg Timer leaves your phone or your
-  browser.</strong> Neither app sends anything about you or your eggs to me
-  or to anyone else.</p>
+  <p><strong>Unless you turn on <em>Share my eggs</em>, nothing you put into
+  Actual Egg Timer leaves your phone or your browser.</strong> Sharing is off
+  until you turn it on, in Settings. If you do, the app sends me how each egg
+  was cooked and how you said it came out, with a random number in place of
+  your name, and you can delete all of it from the same place.</p>
 
   <h2>What stays on your device</h2>
   <p>So that they work the same way next time, both apps keep:</p>
@@ -56,34 +61,105 @@
     or the app closing;</li>
     <li>the eggs you rated: how each was cooked and how you said it came out,
     and what the app has learned from them;</li>
-    <li>how long your water took to boil, for each amount you have timed.</li>
+    <li>how long your water took to boil, for each amount you have timed;</li>
+    <li>if you have turned sharing on: the random number that stands in for
+    you, and how many of your eggs have been sent.</li>
   </ul>
   <p>On iPhone, these are kept in the app's own storage on the phone. If you
   back up your iPhone, the backup includes them, as it does any app's data.
-  On the web, they are kept in your browser's storage for this site. Neither
-  is ever sent anywhere.</p>
+  On the web, they are kept in your browser's storage for this site.</p>
+
+  <h2>Sharing your eggs, if you turn it on</h2>
+  <p>One kitchen can only teach the app about itself. Eggs from many
+  kitchens show how egg sizes, pans, water and cooling really differ, and
+  what they show goes into later versions of the app as better first
+  guesses for everyone. That is the only thing the shared eggs are used
+  for.</p>
+  <p><strong>What is sent</strong>, for each egg you cook, including the
+  eggs you rated before you turned sharing on:</p>
+  <ul>
+    <li>the day you cooked it (a date, not a time);</li>
+    <li>the egg's weight or size, and whether you weighed, measured or
+    picked a size;</li>
+    <li>how you cooked it: into cold or boiling water, how cold the egg
+    was and where it came from (the fridge, the room or a temperature you
+    typed), the room's temperature, the temperature your water boils at,
+    how long it took to boil and whether you timed it, how much water, how many eggs, whether the
+    heat stayed on, and how you cooled them;</li>
+    <li>how you wanted the yolk, the time the app gave you, any change it
+    made to that time on purpose (below), and when you took the eggs
+    out;</li>
+    <li>your answers about the yolk and the white, and a probe thermometer
+    reading if you gave one;</li>
+    <li>what the app expected you to say, and which version of it said
+    so;</li>
+    <li>which app it was (web or iPhone), its version, and the language and
+    units you were reading it in;</li>
+    <li>the random number.</li>
+  </ul>
+  <p>The temperature your water boils at says roughly how high up you are:
+  sea level from the mountains, not a place. Nothing else that is sent says
+  where you are.</p>
+  <p><strong>What is not sent:</strong> your name, an email address, an
+  account, your location, your contacts, your device's name or any of its
+  identifiers, an advertising identifier, or anything from outside the
+  app.</p>
+  <p><strong>The random number</strong> is made on your device, from
+  nothing about you, the first time you turn sharing on. It groups your
+  eggs together, so the app can learn how one cook's eggs differ from
+  another's, and it is what lets you delete them. <em>Start learning
+  again</em> gives you a new one, and from then on your eggs are a new
+  cook's.</p>
+  <p><strong>The time may move a few seconds.</strong> While sharing is on,
+  the app sometimes moves the time it gives you by up to ten seconds either
+  way, small enough to stay within &ldquo;just right&rdquo;. Every cook
+  following the app's usual times teaches it only about those times; a few
+  seconds either side teaches it what happens near them. A small
+  <em>Learning</em> mark beside the time says so while sharing is on.</p>
+  <p><strong>On iPhone</strong>, the first time an egg is sent, the app asks
+  Apple's App Attest service to vouch that it is a genuine copy of the app,
+  and every egg it then sends carries proof of that. The request goes to
+  Apple and carries nothing about you or your eggs. It lets me give eggs
+  from the app more weight than eggs from anywhere else. If it does not
+  work, your eggs are sent anyway.</p>
+  <p><strong>Where they go and how long they stay.</strong> The eggs go to
+  this site, and are kept in Netlify's storage for it, in the United
+  States. They are kept until you delete them, or until I do. What I publish
+  from them, in the app itself, is a handful of numbers about eggs in
+  general, never anyone's eggs.</p>
 
   <h2>Deleting it</h2>
   <ul>
+    <li><strong>What you sent:</strong> <em>Delete what I've sent</em>, in
+    Settings, deletes every egg your device has sent, under every random
+    number it has used, and turns sharing off. If you are offline, the app
+    keeps asking until the server confirms. Turning sharing off on its own
+    stops sending, and deletes nothing.</li>
     <li><strong>iPhone:</strong> delete the app, and everything it kept goes
-    with it.</li>
+    with it. Delete what you sent first: nothing links your eggs to you, so
+    once the app and its number are gone, I cannot tell which eggs were
+    yours.</li>
     <li><strong>Web:</strong> clear this site's data in your browser's
-    settings.</li>
+    settings. The same applies: delete what you sent first.</li>
     <li><strong>Either app:</strong> <em>Start learning again</em>, in
     Settings, deletes the eggs you rated and the boil times, and keeps your
-    settings.</li>
+    settings. It does not delete what you sent; that is the button
+    above.</li>
   </ul>
 
   <h2>What I don't do</h2>
   <ul>
     <li>No accounts and no sign-in.</li>
     <li>No analytics, no advertising, no tracking and no cookies.</li>
-    <li>No code from other companies: no libraries, kits or trackers. Both
-    apps are built only from the code in
+    <li>No code from other companies in either app: no libraries, kits or
+    trackers. Both apps are built only from the code in
     <a href="https://github.com/danmackinlay/actual_egg_timer">the project's
-    public repository</a>, on Apple's and your browser's own software.</li>
-    <li>The iPhone app makes no network connections at all. The website loads
-    only its own files, from this site.</li>
+    public repository</a>, on Apple's and your browser's own software. The
+    part on this site that receives shared eggs uses Netlify's own library
+    for Netlify's storage.</li>
+    <li>Neither app connects to anything but this site, and only to send
+    your eggs when sharing is on. The website loads only its own files, from
+    this site.</li>
   </ul>
   <p>Both apps have links, in Help and to the code, that open in your
   browser only when you tap them.</p>
@@ -95,27 +171,20 @@
   Apple's. On the web, the alarm is a sound the page plays.</p>
 
   <h2>Who else is involved</h2>
-  <p><strong>Netlify</strong> serves the website. Like any web host, it may
-  keep ordinary request logs, such as your IP address, the time and the page
-  you asked for, under
-  <a href="https://www.netlify.com/privacy/">its own privacy policy</a>. I
-  don't run analytics on the site, and I don't use those logs for
-  anything.</p>
+  <p><strong>Netlify</strong> serves the website, and stores the eggs people
+  share. Like any web host, it may keep ordinary request logs, such as your
+  IP address, the time and the page you asked for, under
+  <a href="https://www.netlify.com/privacy/">its own privacy policy</a>; it
+  also counts requests by address to turn away floods. The code that
+  receives shared eggs writes down no address and no time, and I don't run
+  analytics on the site or use Netlify's logs for anything.</p>
   <p><strong>Apple</strong> delivers the iPhone app, through TestFlight or
-  the App Store, under
+  the App Store, and runs the App Attest check above, under
   <a href="https://www.apple.com/legal/privacy/">its own privacy policy</a>.
   If you have agreed, in your iPhone's settings, to share analytics with app
   developers, Apple may pass me crash reports and overall numbers. If you
   send feedback through TestFlight, it comes to me. Both come from Apple,
   not from the app.</p>
-
-  <h2>Sharing results, later</h2>
-  <p>I plan to add a way to share your egg results anonymously, so that
-  everyone's first guesses get better. <strong>It does not exist
-  yet.</strong> When it comes, it will be off unless you turn it on. It will
-  use a random number made on your device instead of your name, and you will
-  be able to delete what you sent. I will update this page before it ships,
-  and the date at the top will change.</p>
 
   <h2>Contact</h2>
   <p>Questions about any of this:
@@ -123,6 +192,10 @@
 
   <h2>Changes</h2>
   <ul class="doc__changes">
+    <li>2 October 2026: sharing, which is off unless you turn it on: what
+    it sends, where, and how to delete it. The &ldquo;Sharing results,
+    later&rdquo; section it replaces had promised this page would change
+    before it shipped.</li>
     <li>2 October 2026: first version.</li>
   </ul>
 </main>

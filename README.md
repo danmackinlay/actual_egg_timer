@@ -861,6 +861,7 @@ npm run copy:snapshot -- compare <before.json> <after.json> --draft [name]
 npm run serve      # static server on :8080, the repo root
 npm run build:site # the deployable tree, in _site/
 npm run serve:site # static server on :8080, _site/
+npm run serve:dev  # _site/ and the sharing endpoint, on a store in memory, on :8888
 ```
 
 Node version is pinned in `.node-version`, which nvm, fnm and Netlify all read,
@@ -874,7 +875,12 @@ the Swift core against them.
 
 There is nothing else to configure. `netlify.toml` and `vercel.json` each carry
 the two settings their host needs, and the build is `tsc` plus a few `cp`s — no
-bundler, no runtime dependencies, no environment variables, no secrets. Because
+bundler, no environment variables, no secrets. The one exception is the
+endpoint that receives shared eggs (E6; `INFERENCE.md` §7), a Netlify function
+(`netlify/functions/eggs.mts`) that Netlify bundles from source on deploy and
+backs with its Blobs store; `@netlify/blobs` is its one runtime dependency, and
+the apps have none. On Vercel the site works and sharing does not, since
+nothing there answers `/api/eggs`; the apps keep the eggs and retry. Because
 nothing is bundled, nothing is hashed: `dist/` and `copy/` keep their filenames
 from one deploy to the next, so they are served to be revalidated on every load
 rather than cached for a year, and a returning browser never runs last month's

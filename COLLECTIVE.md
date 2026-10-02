@@ -219,10 +219,14 @@ needs data and nothing an app does waits on it.
       (`0f93576`).
 - [x] iOS: the Settings section (with the `share` draft). Both apps were
       checked end to end against `npm run serve:dev`: sharing turned on
-      sends the log so far, and Delete removes it on the server.
-- [ ] The privacy page, before anything ships: what is sent, where, for how
-      long, the id, deletion, Netlify as processor. Both READMEs and
-      `ios/RELEASING.md` (the App Privacy answers) stop saying no networking.
+      sends the log so far, and Delete removes it on the server
+      (`f902240`).
+- [x] The privacy page, before anything ships: what is sent (the record's
+      fields, in words), where, for how long, the id, the nudge, App Attest,
+      deletion, Netlify as processor. Both READMEs and `ios/RELEASING.md`
+      (the App Privacy answers: Other Data Types and Device ID, neither
+      linked nor tracking) stop saying no networking; INFERENCE.md §7 says
+      what was built.
 
 ### E8, the nudge
 
