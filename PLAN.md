@@ -225,7 +225,7 @@ checked, fixed or deleted. Start the QA pass here.
   (`us-east-2`); `npm run serve:dev` runs it locally on a store in memory.
   Nothing is sent unless a cook turns sharing on.
 - **Versions and tags** (`DECISIONS.md` 49, `CLAUDE.md`): the version is
-  `package.json`'s, now `0.3.0-alpha.1`; iOS carries it without the
+  `package.json`'s, now `0.4.0-alpha.1`; iOS carries it without the
   pre-release tag. Each push the owner makes is a release, tagged
   `v<version>`.
 - **Every constant has been checked against the primary literature.**
