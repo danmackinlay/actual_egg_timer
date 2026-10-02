@@ -466,7 +466,25 @@ button.clause[aria-expanded="true"] {
 /* The cook in the pan, while it runs: the sentence it was started with, in
    the idle sentence's face a size down and with nothing to tap, and under it
    the doneness and the peak yolk. */
-#cookSetup { margin: 22px 0 0; }
+#cookSetup {
+  margin: 22px 0 0;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 14px;
+  align-items: center;
+}
+/* The egg in cross-section, a prototype (src/ui/eggSection.ts), beside the
+   sentence rather than above it, so it costs the column no height of its
+   own: the sentence runs to three lines or so anyway. A tap swaps how set
+   it is for how hot. */
+.egg-section {
+  display: block;
+  height: 6.5rem;
+  width: 5rem;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.egg-section__shell { fill: none; stroke: var(--line); stroke-width: 1.5; }
 #cookSentence {
   margin: 0;
   font-size: 1.125rem;
@@ -856,19 +874,6 @@ body:not([data-phase="IDLE"]) main { padding-top: 2vh; }
 body:not([data-phase="IDLE"]) #readout { margin-top: calc(4vh - 6px); padding: 22px 16px 20px; }
 body:not([data-phase="IDLE"]) #bigtime { font-size: clamp(5rem, 32vw, 9rem); }
 body:not([data-phase="IDLE"]) #phaseLabel { font-size: 0.9375rem; color: var(--fg); font-weight: 600; }
-
-/* The egg in cross-section, under the time while a cook runs: a prototype
-   (src/ui/eggSection.ts). A tap swaps how set it is for how hot. */
-.egg-section { display: none; }
-body:not([data-phase="IDLE"]) .egg-section {
-  display: block;
-  height: 7.5rem;
-  width: 100%;
-  margin: 18px 0 0;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-}
-.egg-section__shell { fill: none; stroke: var(--line); stroke-width: 1.5; }
 
 /* A control is shown when the answer depends on it.
  *

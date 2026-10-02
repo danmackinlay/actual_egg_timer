@@ -82,8 +82,8 @@ Waiting on someone else: the Czech review (F5), by the owner's friend.
   ring as the cook runs, either as how set each layer is or as its
   temperature. `src/core/section.ts` carries the cook forward a tick at a
   time with a dose at every ring, and agrees with `simulate`. The web's
-  cooking screen draws it under the time (`src/ui/eggSection.ts`, `UI.md`
-  §3); a tap swaps state for heat. Web only so far, with no words, and the
+  cooking screen draws it beside the setup sentence (`src/ui/eggSection.ts`,
+  `UI.md` §3); a tap swaps state for heat. Web only so far, with no words, and the
   tap reaches no keyboard. The owner picks state or heat on a phone. Then:
   the Swift twin with a fixture, the iOS view, and words for a screen
   reader.
