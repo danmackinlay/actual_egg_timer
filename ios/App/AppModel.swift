@@ -47,6 +47,10 @@ final class AppModel {
             log: { [planner] in planner.kept.log },
             finalCount: { [planner] in planner.kept.log.count - (planner.answers == nil ? 0 : 1) }
         ))
+        // The planner solved before sharing was read, so without the nudge
+        // (E8); a cook who is sharing has the time solved again with it. Not
+        // the other way round: sharing reads the log, which the planner loads.
+        if Sharing.shared.state.on { planner.refresh() }
     }
 
     /// Which words the readout says in a phase: core's `phaseKeys`, from the
