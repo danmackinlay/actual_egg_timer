@@ -551,9 +551,9 @@ faster. You can turn it off, and delete what you sent, whenever you like."*
   plain words and wherever the time is shown, that the timer is still learning
   their kitchen - which is also simply true for anyone in their first few eggs,
   nudge or no nudge, and sets the right expectation for the odds on screen.
-  *Open, 28 September:* the "still learning" line has since left both
-  screens (below); what says it now is the direction, "I can't call it yet".
-  Whether that meets this condition is for the owner to settle before E8.
+  *Settled, 2 October:* the "still learning" line had left both screens
+  (below), and the owner chose a small "Learning" mark on the time, with an
+  (i), shown while sharing is on (`DECISIONS.md` 52).
 
 **Built (E5, 28 September).** `src/core/decide.ts`, held to
 `EggTimerCore/Decide.swift` by `fixtures/decide.json`: given the same posterior
@@ -721,7 +721,29 @@ built and then deleted on the owner's word (`DECISIONS.md` 36, 39). The
 bracket under the slider does the same job without a suggestion.
 LOGBOOK.md, 27 and 28 September, has what it measured.
 
-Not built: the nudge (E8), and any per-cook loss.
+**Built (E8, 2 October): the nudge.** `nudgeSeconds` in `decide.ts` turns a
+uniform draw into a whole number of seconds from -10 to +10, each equally
+likely; `appliedNudge` takes it only where a time is chosen; both apps draw
+it at launch and after each cook and apply it while sharing is on, so the
+time shown, the time started and the outcome under it agree, and a boil
+tap's re-solve carries it with the lean. The record keeps `recommended_s`
+and `nudge_s` apart, and `MODEL_ID` names the policy (`2026-10-e8`). The
+Learning mark (the `learning` draft) says so while it is on.
+
+What it costs was measured before it shipped, and "at no cost to the cook"
+above was wrong: on 300 simulated cooks x 6 eggs (`npm run decide --
+nudge`), with the truth's own probit, the share of eggs right - the yolk
+just right and the white not runny - falls from 52.1% to 49.3% at +-10 s,
+and from 66.9% to 62.6% by a cook's sixth egg, when the time is already
+close. Near the best time the chance of a good egg is a hill, and any
+symmetric spread about the top lowers it in proportion to the spread's
+variance; so does what the spread teaches about the slope. +-5 s costs
+under a point (51.3%) and teaches a quarter as much; +-3 s a third of a
+point and a ninth. The owner chose +-10 s knowing it (`DECISIONS.md` 55),
+and the Learning mark's (i) says an egg may come out a little softer or
+firmer.
+
+Not built: any per-cook loss.
 
 ## 9. The fit
 

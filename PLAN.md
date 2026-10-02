@@ -56,15 +56,18 @@ The one queue. Nothing else in the documents waits on the owner.
 5. **`Intl` inside `src/core/format.ts`.** `CLAUDE.md` invariant 1 allows it
    in that one file, so the web's output depends on the browser's ICU while
    the fixtures are pinned against Node's. Safari has not been tried.
-6. **Before E8:** whether the direction sentence meets the "still learning"
-   condition for the nudge (`DECISIONS.md` 3), now that no screen shows that
-   line.
-7. **A public TestFlight link** (`ios/RELEASING.md`, once, step 6). The
+6. **A public TestFlight link** (`ios/RELEASING.md`, once, step 6). The
    privacy policy URL is <https://actualeggtimer.netlify.app/privacy>
-   (`privacy/index.html`), which is live only after the next push; App
-   Privacy's answer is Data Not Collected. Read the page first: it speaks
-   in your name. Help links it in both apps, as "Privacy" ("Of Privacy" in
-   1750; the `privacy` draft).
+   (`privacy/index.html`), which is live only after the next push. App
+   Privacy's answers changed with sharing (E6): Other Data Types and Device
+   ID, neither linked nor tracking, as `ios/RELEASING.md` step 6 lists them.
+   Read the page first: it speaks in your name, and now says what sharing
+   sends. Help links it in both apps, as "Privacy" ("Of Privacy" in 1750;
+   the `privacy` draft), and so does Settings, under sharing.
+7. **The `share` and `learning` drafts, on a phone** (E6, E8): the consent
+   beside the switch, the deletion's words, and the Learning mark and its
+   (i). `tools/drafts/share.ts` and `learning.ts` have every key and its
+   1750 twin.
 
 Waiting on someone else: the Czech review (F5), by the owner's friend.
 
