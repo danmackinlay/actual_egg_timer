@@ -27,7 +27,11 @@ These counts are the only ones in the documents. If you want a number, run
 2. **An adversarial QA pass** against this baseline, starting from the QA
    list below.
 3. **F5, Czech**, when the owner's friend can review it.
-4. **E6-E8**, the collective part: not started.
+4. **E6-E8**, the collective part: built, on the branch `e6-e8` (on top of
+   0.3.4), not on `main` and not released. The owner reviews it first: the
+   `share` and `learning` drafts on a phone, the privacy page's sharing
+   section, and the endpoint (`netlify/functions/eggs.mts`, Netlify Blobs).
+   It is version 0.4.0-alpha.1 there; `main` releases small things meanwhile.
 
 Throughout: cook real eggs, and the two measurements in README §11.3.
 
