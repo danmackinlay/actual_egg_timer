@@ -269,6 +269,9 @@
     "learned.confirm.keep": { "text": "Let it stand" },
     "learned.confirm.message": { "text": "I shall forget every egg and every boil, and the times return to where they began." },
 
+    "learning.badge": { "text": "Yet learning" },
+    "learning.badge.more": { "text": "You share your eggs, and so I am yet learning from them. Now and then I move the time some seconds either way, ten at most, to learn what passes just beside the time I would choose. It may leave an egg a little softer or firmer than I would otherwise aim at. Leave off sharing in the settings, and the time stays where I would put it." },
+
     "share.title": { "text": "The sharing of my eggs" },
     "share.toggle": { "text": "Send word how my eggs come out" },
     "share.what": { "text": "I shall send how every egg was boiled and how you found it, those I already know among them. No name nor place: a number drawn at random upon this device stands for you. While this is on, I shall now and then move a time some seconds, to learn the faster." },

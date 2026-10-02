@@ -30,7 +30,7 @@ public let priorID = "2026-09-e5"
 /// likelihood, the decision and, from E8, the nudge. Changed whenever any of
 /// them changes, so the model as it shipped can be scored after the code has
 /// moved on (DECISIONS.md 37). See src/core/record.ts.
-public let modelID = "2026-10-e6"
+public let modelID = "2026-10-e8"
 
 /// Where the egg's mass came from. A size class is a 10 g bucket, worth about
 /// +-24 s; a scale is a gram.

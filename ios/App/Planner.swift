@@ -202,6 +202,11 @@ final class Planner {
     /// is the prior, whose mean IS the literature value - so calibration is
     /// purely additive and the app is fully useful on day one.
     var calibration: Calibration { kept.calibration }
+
+    /// A new cook, a new nudge.
+    func redrawNudge() {
+        nudgeDraw = nudgeSeconds(Double.random(in: 0..<1))
+    }
     /// True while the dose surface is being rebuilt after an outcome.
     var learning = false
     /// What the cook on screen has said so far - the yolk, the white, or both -
@@ -228,6 +233,16 @@ final class Planner {
     /// the decided time on the decision's own surface): the direction, the
     /// white's line and the bracket. Nil whenever `decision` is.
     var outcome: Outcome?
+    /// This launch's nudge (E8, DECISIONS.md 55): a whole number of seconds
+    /// from -10 to +10, drawn at launch and again after each cook, so the
+    /// time on screen holds still while the cook looks at it.
+    var nudgeDraw = nudgeSeconds(Double.random(in: 0..<1))
+    /// The nudge the time takes now: the draw while sharing is on, none while
+    /// it is off - the consent covers it, and nothing else does.
+    var nudgeS: Double { Sharing.shared.state.on ? nudgeDraw : 0 }
+    /// The nudge the time on screen took (`appliedNudge`): what a cook started
+    /// now carries, and its record keeps apart from the time recommended.
+    var appliedNudgeS: Double = 0
     /// Under low odds, what would make this cook more reliable, as catalogue
     /// keys in the order shown; empty when there is nothing to say.
     var advice: [String] = []

@@ -209,7 +209,7 @@ public struct Decision: Sendable {
 }
 
 /// Whether a solve leaves a cook to choose a time for.
-func decisionApplies(_ sol: Solution) -> Bool {
+public func decisionApplies(_ sol: Solution) -> Bool {
     sol.whiteSets && sol.reachable
 }
 

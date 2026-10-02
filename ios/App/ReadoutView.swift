@@ -19,6 +19,8 @@ struct ReadoutView: View {
     let sousVide: SousVideCopy?
     /// Whether the direction's (i) is open.
     @Binding var directionInfoOpen: Bool
+    /// Whether the Learning mark's (i) is open.
+    @State private var learningOpen = false
 
     private var planner: Planner { model.planner }
     private var cook: Cook { model.cook }
@@ -46,6 +48,10 @@ struct ReadoutView: View {
                     .font(.caption.smallCaps())
                     .foregroundStyle(phase == .pull ? .orange : .secondary)
                     .multilineTextAlignment(.center)
+                if learningShown && learningOpen {
+                    MoreText([tr("learning.badge.more")])
+                        .transition(.opacity)
+                }
 
                 Text(bigTime)
                     .font(.system(size: 76, weight: .semibold, design: .rounded))
@@ -62,6 +68,32 @@ struct ReadoutView: View {
         .padding(.vertical, 22)
         .padding(.horizontal, 12)
         .background(.quaternary.opacity(0.4), in: RoundedRectangle(cornerRadius: 18))
+        .overlay(alignment: .topTrailing) {
+            if learningShown { learningMark }
+        }
+    }
+
+    /// The Learning mark (E8, DECISIONS.md 52), as on the web: small, in the
+    /// panel's corner, over the time it is about, while sharing is on - the
+    /// time may then be nudged a few seconds. Never in sous-vide, which has no
+    /// time to nudge. Its (i) opens under the phase label.
+    private var learningShown: Bool {
+        Sharing.shared.state.on && sousVide == nil
+    }
+
+    private var learningMark: some View {
+        HStack(spacing: 0) {
+            Text(tr("learning.badge"))
+                .font(.caption2.weight(.semibold))
+                .textCase(.uppercase)
+                .foregroundStyle(Palette.accent)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 2)
+                .overlay(Capsule().strokeBorder(Palette.accent.opacity(0.55)))
+            InfoButton(expanded: $learningOpen, name: about("learning.badge"))
+        }
+        .padding(.top, 6)
+        .padding(.trailing, 4)
     }
 
     /// The line under the time. "Based on history" has an (i) that says what

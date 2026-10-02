@@ -30,6 +30,8 @@ extension Planner {
         /// the egg is a size off the carton, and whether its start is the room
         /// preset's assumption rather than the fridge.
         let facts: AdviceFacts
+        /// The nudge, for a cook who is sharing (E8); zero otherwise.
+        let nudgeS: Double
 
         /// What this pot's decision surface and odds profile are kept by.
         var inputs: DecisionInputs { decisionInputs(calibration, egg: egg, setup: setup) }
@@ -39,7 +41,8 @@ extension Planner {
     private var inputSnapshot: InputSnapshot {
         InputSnapshot(
             level: doneness, egg: egg, setup: setup, calibration: calibration,
-            facts: AdviceFacts(eggFromClass: massFrom == .sizeClass, startAssumed: startTemp == .room)
+            facts: AdviceFacts(eggFromClass: massFrom == .sizeClass, startAssumed: startTemp == .room),
+            nudgeS: nudgeS
         )
     }
 
@@ -116,14 +119,19 @@ extension Planner {
         let target = logYolkTarget(answer.level)
         let d = decide(calibration, grid: grid, solution: answer.solution, logNominalTarget: target)
         var chosen = answer
+        // The nudge moves the chosen time, where one is chosen, for a cook who
+        // is sharing (E8); the time shown, the time started and the outcome
+        // under it are all at the nudged time.
+        let nudge = appliedNudge(answer.solution, nudgeS: snapshot.nudgeS)
         chosen.solution = decidedSolution(
             egg: egg, setup: answer.setup, params: calibrationParams(calibration),
-            solution: answer.solution, decision: d
+            solution: answer.solution, decision: d, nudgeS: nudge
         )
         chosen.decision = d
+        chosen.nudgeS = nudge
         // What the egg at that time will be like: about 2 ms beside the
         // decision's 13-16, so it goes with it (INFERENCE.md section 8).
-        chosen.outcome = predictOutcome(calibration.posterior, grid, d.cookTimeS, target)
+        chosen.outcome = predictOutcome(calibration.posterior, grid, d.cookTimeS + nudge, target)
         if answer.profile == nil {
             chosen.missing.append(decisionInputs(calibration, egg: egg, setup: answer.setup))
         }
@@ -224,23 +232,29 @@ extension Planner {
     /// away with the egg already in the water, so the lean is carried instead
     /// (`carriedSolution`); test/decide.test.ts measures what that costs.
     ///
+    /// The nudge (E8) is carried with the lean, so the egg comes out when the
+    /// record says. Where the new ramp leaves no time to choose, neither is
+    /// carried, and `nudged` says so, for the record.
+    ///
     /// The answer is the whole cook: its time, and the peak the cooling
     /// counts to.
-    func cookResult(timeToBoilS: Double, level: Double, leanS: Double) async -> CookResult? {
+    func cookResult(
+        timeToBoilS: Double, level: Double, leanS: Double, nudgeS: Double
+    ) async -> (result: CookResult, nudged: Bool)? {
         let setup = setup(timeToBoilS: timeToBoilS)
         let answer = await Self.solve(
             egg: egg, setup: setup, level: level, calibration: calibration, snapRetry: false
         )
         let carried = carriedSolution(
             egg: egg, setup: setup, params: calibrationParams(calibration),
-            solution: answer.solution, leanS: leanS
+            solution: answer.solution, leanS: leanS + nudgeS
         )
         // The numbers on screen follow the cook; the refusal does not. A
         // refusal is advice about a control that is no longer on screen.
         solution = carried
         // A pan with a measured or pushed-out ramp is not the idle question.
         answered = nil
-        return carried.result
+        return (carried.result, decisionApplies(answer.solution))
     }
 
     /// The solution for the inputs as they stand NOW, solving for them first
@@ -286,6 +300,7 @@ extension Planner {
         answered = question
         decision = answer.decision
         outcome = answer.decision == nil ? nil : answer.outcome
+        appliedNudgeS = answer.decision == nil ? 0 : answer.nudgeS
         oddsProfile = answer.profile
         advice = answer.advice
         refusal = refusalText(answer.verdict, setup: answer.setup, water: show(.water, answer.setup.waterLitres))
@@ -310,6 +325,8 @@ extension Planner {
         var decision: Decision? = nil
         /// What the egg at the chosen time will be like, with the decision.
         var outcome: Outcome? = nil
+        /// The nudge the chosen time took (`appliedNudge`).
+        var nudgeS: Double = 0
         /// The odds at every level for this pot and posterior (Reach.swift),
         /// once worked out: the verdict read its range, and the track is
         /// shaded by it.

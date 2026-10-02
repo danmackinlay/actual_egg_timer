@@ -5,7 +5,8 @@
  *
  * Run: npm run decide            (all of it, several minutes)
  *      npm run decide -- cost    (one section: cost, accuracy, lean, odds,
- *                                 learning, runny, reach, advice, outcome)
+ *                                 learning, runny, reach, advice, outcome,
+ *                                 nudge)
  *
  * Read-only. Nothing in src/ is touched. The numbers it prints are the ones in
  * INFERENCE.md section 8 and LOGBOOK.md, 28 September 2026; the
@@ -13,13 +14,13 @@
  */
 
 import {
-  Decision, DecisionInputs, chooseCookTime, decide, decideAt, decisionGridRequest,
-  decisionGridSpec, decisionInputs, oddsInTenths,
+  Decision, DecisionInputs, NUDGE_MAX_S, RUNNY_WHITE_LOSS, chooseCookTime, decide, decideAt,
+  decisionGridRequest, decisionGridSpec, decisionInputs, oddsInTenths,
 } from '../src/core/decide.js';
 import { DoseGrid, buildDoseGrid, buildRequestedGrid, cookTimeForLogYolkDose } from '../src/core/doseGrid.js';
 import {
   Feedback, FEEDBACK_BAND, Particle, WhiteReport, answerLikelihood, createPrior,
-  posteriorMeanOffset, posteriorParams, predictCookTime, updatePosterior,
+  posteriorMeanOffset, posteriorParams, predictCookTime, updatePosterior, whiteProbit, yolkProbit,
 } from '../src/core/infer.js';
 import { ALPHA_DEFAULT } from '../src/core/constants.js';
 import { eggFromMass, Egg } from '../src/core/geometry.js';
@@ -211,6 +212,71 @@ if (run('odds')) {
   }
   console.log(`ECE ${(ece / total).toFixed(4)} over ${total}: ${rows.join('; ')}`);
   console.log(`by egg, mean predicted -> observed: ${byEgg.map((e, i) => `${i}: ${(100 * e.p / e.n).toFixed(0)}% -> ${(100 * e.o / e.n).toFixed(0)}%`).join('; ')}`);
+}
+
+if (run('nudge')) {
+  // E8: what +-10 s costs the cook. Cooks drawn from the prior, as for the
+  // odds, each egg at the time the app chooses; at every egg the TRUE cook's
+  // loss - P(too soft) + P(too firm) + 3 P(runny), the decision's own loss,
+  // read through the truth's probit rather than the posterior's - at the
+  // chosen time, and averaged over the 21 nudges. And how often the egg comes
+  // out right (the yolk just right, the white not runny) either way.
+  console.log(`\n== nudge: the true cook's loss at the chosen time, and +-${NUDGE_MAX_S} s about it (300 cooks x 6 eggs, 1000 particles)`);
+  const grid = buildDoseGrid(REF_EGG, SETUP, 1, { alphaMin: ALPHA_DEFAULT * CALIBRATION_ALPHA_LOW, alphaMax: ALPHA_DEFAULT * CALIBRATION_ALPHA_HIGH, alphaCount: 17, timeMin_s: 200, timeMax_s: 900, timeCount: 71 });
+  const random = rng(20261002);
+  const truths = createPrior(300, 20261002 ^ 0x2545f49).particles;
+  const levels = [0.22, 0.41, 0.62];
+  const lossOf = (p: Particle, t: number, target: number): { loss: number; right: number } => {
+    const y = yolkProbit(grid, p, t, target);
+    const w = whiteProbit(grid, p, t);
+    return { loss: y[0] + y[2] + RUNNY_WHITE_LOSS * w[0], right: y[1] * (1 - w[0]) };
+  };
+  // Each size of nudge, on the same cooks: the cost of a nudge goes with its
+  // variance, and so does what it teaches about the slope.
+  const SIZES = [3, 5, NUDGE_MAX_S];
+  const sums = SIZES.map(() => ({ base: 0, nudged: 0, rightBase: 0, rightNudged: 0, n: 0 }));
+  const byEgg: { base: number; nudged: number; rightBase: number; rightNudged: number; n: number }[] = [];
+  for (let k = 0; k < truths.length; k++) {
+    const truth = truths[k];
+    const cal: Calibration = { posterior: createPrior(1000, 1 + Math.floor(random() * 2147483646)), eggsLogged: 0 };
+    const level = levels[k % levels.length];
+    for (let egg = 0; egg < 6; egg++) {
+      const m = meanSolve(cal, REF_EGG, SETUP, level);
+      const target = logYolkTarget(m.level);
+      const d = decide(cal, grid, m.sol, target);
+      const t = d.cookTime_s;
+      const base = lossOf(truth, t, target);
+      SIZES.forEach((size, i) => {
+        let nudged = 0;
+        let right = 0;
+        for (let s = -size; s <= size; s++) {
+          const l = lossOf(truth, t + s, target);
+          nudged += l.loss;
+          right += l.right;
+        }
+        nudged /= 2 * size + 1;
+        right /= 2 * size + 1;
+        const a = sums[i];
+        a.base += base.loss; a.nudged += nudged; a.rightBase += base.right; a.rightNudged += right; a.n += 1;
+        if (size === NUDGE_MAX_S) {
+          byEgg[egg] ??= { base: 0, nudged: 0, rightBase: 0, rightNudged: 0, n: 0 };
+          const e = byEgg[egg];
+          e.base += base.loss; e.nudged += nudged; e.rightBase += base.right; e.rightNudged += right; e.n += 1;
+        }
+      });
+      const yv = draw(([-1, 0, 1] as Feedback[]).map((a) => answerLikelihood(grid, truth, t, target, a, null)), random());
+      const wv = draw((['runny', 'tender', 'firm'] as WhiteReport[]).map((a) => answerLikelihood(grid, truth, t, target, null, a)), random());
+      updatePosterior(cal.posterior, grid, t, target, (yv - 1) as Feedback, (['runny', 'tender', 'firm'] as WhiteReport[])[wv]);
+      cal.eggsLogged += 1;
+    }
+  }
+  SIZES.forEach((size, i) => {
+    const a = sums[i];
+    const variance = ((2 * size + 1) ** 2 - 1) / 12;
+    console.log(`+-${size} s (variance ${variance.toFixed(1)} s^2): loss ${(a.base / a.n).toFixed(4)} -> ${(a.nudged / a.n).toFixed(4)} `
+      + `(+${(100 * (a.nudged - a.base) / a.base).toFixed(1)}%); right ${(100 * a.rightBase / a.n).toFixed(1)}% -> ${(100 * a.rightNudged / a.n).toFixed(1)}%`);
+  });
+  console.log(`+-${NUDGE_MAX_S} s by egg: ${byEgg.map((e, i) => `${i + 1}: right ${(100 * e.rightBase / e.n).toFixed(1)}% -> ${(100 * e.rightNudged / e.n).toFixed(1)}%`).join('; ')}`);
 }
 
 if (run('learning')) {

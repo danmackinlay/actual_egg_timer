@@ -189,6 +189,8 @@ struct SettingsView: View {
                 set: { on in
                     deletedHere = false
                     sharing.setSharing(on)
+                    // The time moves by the nudge with it.
+                    planner.refresh()
                 }
             ))
             if let note = shareNote(s) {

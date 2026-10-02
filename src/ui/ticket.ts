@@ -40,6 +40,11 @@ export interface Ticket {
    *  carried onto a mid-cook re-solve (`carriedSolution`). Zero when the time
    *  was not chosen. */
   lean_s: number;
+  /** The nudge the time took at "Eggs in" (E8): seconds added on purpose to
+   *  the time chosen, for a cook who is sharing, carried onto a mid-cook
+   *  re-solve with the lean. Zero when there was none, or when a re-solve
+   *  left no time to choose and so carried neither. */
+  nudge_s: number;
   /** What the egg was likely to be like at "Eggs in", shown for the whole
    *  cook. Null when the time was started before the odds were known. */
   outcome: Outcome | null;
@@ -105,6 +110,8 @@ export function restoreTicket(raw: unknown): Ticket | null {
   if (typeof lang !== 'string' || lang === '') return null;
   const lean = r['lean_s'];
   if (typeof lean !== 'number' || !Number.isFinite(lean)) return null;
+  const nudge = r['nudge_s'];
+  if (typeof nudge !== 'number' || !Number.isFinite(nudge)) return null;
   const peak = r['peakYolk_C'];
   if (typeof peak !== 'number' || !Number.isFinite(peak)) return null;
   if (typeof r['probeMoment'] !== 'boolean') return null;
@@ -124,6 +131,7 @@ export function restoreTicket(raw: unknown): Ticket | null {
     units: r['units'],
     lang: lang,
     lean_s: lean,
+    nudge_s: nudge,
     outcome: outcome,
     forecast: forecast,
     peakYolk_C: peak,

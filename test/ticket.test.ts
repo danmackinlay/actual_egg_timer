@@ -30,6 +30,7 @@ function aTicket(): Ticket {
     logNominalTarget: 0.9,
     units: 'metric',
     lean_s: 12,
+    nudge_s: -7,
     outcome: {
       pTooSoft: 0.2, pJustRight: 0.6, pTooFirm: 0.2, pWhiteRunny: 0.05, pWhiteTender: 0.25, pWhiteFirm: 0.7,
       levelLow: 0.3, levelMedian: 0.4, levelHigh: 0.5, lean: 'balanced',

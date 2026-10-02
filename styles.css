@@ -152,11 +152,34 @@ button.mute[aria-pressed="true"] {
 /* ---------------------------------------------------------------- readout */
 
 #readout {
+  position: relative;
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 12px;
   padding: 14px 16px 14px;
   text-align: center;
+}
+
+/* The Learning mark: small, in the panel's corner, over the time it is
+   about. Its (i) opens in the readout's flow, under the phase label. */
+#learning {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  display: inline-flex;
+  align-items: center;
+  margin: 0;
+}
+#learning[hidden] { display: none; }
+#learning .badge {
+  padding: 2px 8px;
+  border: 1px solid color-mix(in srgb, var(--accent) 55%, transparent);
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
 }
 
 #phaseLabel {

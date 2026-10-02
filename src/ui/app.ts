@@ -26,7 +26,8 @@ import {
   ambientFor, coolingSecondsFor, probeMomentFor, targetPeakYolk_C, textureFor, textureNoteKeys,
 } from '../core/policy.js';
 import {
-  Decision, DecisionInputs, carriedSolution, decide, decidedSolution, decisionInputs,
+  Decision, DecisionInputs, appliedNudge, carriedSolution, decide, decidedSolution, decisionApplies,
+  decisionInputs, nudgeSeconds,
 } from '../core/decide.js';
 import {
   LevelAnswer, OddsProfile, adviceWanted, answerAt, pricedChanges, protocolAdvice,
@@ -322,26 +323,44 @@ function answerFor(timeToBoil_s: number, level: number, odds: OddsProfile | null
  */
 function decided(
   answer: LevelAnswer, timeToBoil_s: number,
-): { solution: Solution; decision: Decision | null; outcome: Outcome | null } {
+): { solution: Solution; decision: Decision | null; outcome: Outcome | null; nudge_s: number } {
   const egg = currentEgg();
   const setup = buildSetup(timeToBoil_s);
   const inputs = decisionInputs(calib, egg, setup);
   const grid = cachedDecisionGrid(inputs);
   if (grid === null) {
     askForDecision(inputs);
-    return { solution: answer.solution, decision: null, outcome: null };
+    return { solution: answer.solution, decision: null, outcome: null, nudge_s: 0 };
   }
   // The odds at every level follow the surface, in the worker.
   if (cachedOddsProfile(inputs, calib) === null) askForProfile(inputs);
   const logTarget = logYolkTarget(answer.level);
   const d = decide(calib, grid, answer.solution, logTarget);
+  // The nudge moves the chosen time, where one is chosen, for a cook who is
+  // sharing (E8); the time shown, the time started and the outcome under it
+  // are all at the nudged time.
+  const nudge = appliedNudge(answer.solution, nudgeNow());
   return {
-    solution: decidedSolution(egg, setup, calibrationParams(calib), answer.solution, d),
+    solution: decidedSolution(egg, setup, calibrationParams(calib), answer.solution, d, nudge),
     decision: d,
     // What that time will give, on the same surface: about 2 ms beside the
     // decision's 13-16, so it runs here with it rather than in the worker.
-    outcome: predictOutcome(calib.posterior, grid, d.cookTime_s, logTarget),
+    outcome: predictOutcome(calib.posterior, grid, d.cookTime_s + nudge, logTarget),
+    nudge_s: nudge,
   };
+}
+
+/* -------------------------------------------------------------- the nudge */
+
+/** This page's nudge (E8, DECISIONS.md 55): a whole number of seconds from
+ *  -10 to +10, drawn when the page loads and again after each cook, so the
+ *  time on screen holds still while the cook looks at it. */
+let nudgeDraw = nudgeSeconds(Math.random());
+
+/** The nudge the time takes now: the draw while sharing is on, and none
+ *  while it is off - the consent covers it, and nothing else does. */
+function nudgeNow(): number {
+  return shareState().on ? nudgeDraw : 0;
 }
 
 /** How long the inputs must sit still before a decision surface is asked for,
@@ -501,8 +520,18 @@ function renderWelcome(warning: string): void {
  *  under way, so it never repaints the controls, which are put away beneath
  *  it (styles.css) and drawn again when the cook ends. */
 function render(now_ms: number): void {
+  renderLearning();
   if (machine.phase === 'IDLE') renderIdle(now_ms);
   else renderRunning(now_ms);
+}
+
+/** The Learning mark (E8, DECISIONS.md 52): on the time while sharing is
+ *  on, since the time may then be nudged - and never in sous-vide, which has
+ *  no time to nudge. */
+function renderLearning(): void {
+  const on = shareState().on && !(machine.phase === 'IDLE' && isSousVide());
+  page().learning.hidden = !on;
+  showInfo(page().learningInfo, on);
 }
 
 /** The controls, and the answer they give. */
@@ -771,7 +800,8 @@ function resolveDuring(t: Ticket, timeToBoil_s: number): Solution {
   const mean = answerAt(calib, egg, setup, machine.targetLevel, null, false).solution;
   // Leaned as far as the choice leaned at "Eggs in": the new ramp is a new pot,
   // whose surface is a second away with the egg already in (`carriedSolution`).
-  return carriedSolution(egg, setup, calibrationParams(calib), mean, t.lean_s);
+  // The nudge is carried with it, so the egg comes out when the record says.
+  return carriedSolution(egg, setup, calibrationParams(calib), mean, t.lean_s + t.nudge_s);
 }
 
 /** Take a new time to boil into the cook under way - the slow hob's guess, or
@@ -783,7 +813,10 @@ function retime(k: Ticket, boil_s: number): Solution {
   const sol = resolveDuring(k, boil_s);
   const moved = withTimeToBoil(k, boil_s);
   solution = sol;
-  ticket = { ...moved, probeMoment: probeMomentFor(sol.result, moved.setup.cooling) };
+  // Where the new ramp leaves no time to choose, neither the lean nor the
+  // nudge was carried (`carriedSolution`), and the record must not say it was.
+  const carried = decisionApplies(sol) ? moved.nudge_s : 0;
+  ticket = { ...moved, nudge_s: carried, probeMoment: probeMomentFor(sol.result, moved.setup.cooling) };
   return sol;
 }
 
@@ -1044,6 +1077,8 @@ function reset(): void {
   ticket = null;
   machine = idleMachine(settings.cooling);
   clearCook();
+  // A new cook, a new nudge.
+  nudgeDraw = nudgeSeconds(Math.random());
   recompute();
   // The egg just finished is final now: no answer can be added to it.
   drawShare();
@@ -1087,6 +1122,7 @@ function onPrimary(): void {
       units: unitSystem(),
       lang: activeLocale(),
       lean_s: decision === null ? 0 : decision.cookTime_s - decision.meanCookTime_s,
+      nudge_s: chosen.nudge_s,
       outcome: decision === null ? null : outcome,
       // What the app says now, as the record keeps it (DECISIONS.md 37).
       forecast: decision === null || outcome === null ? null : forecastOf(outcome, cook),
@@ -1270,7 +1306,9 @@ export function boot(): void {
   // Sharing, if the cook turned it on: every egg in the log is final but the
   // one on screen, whose answers may still come. A deletion not yet confirmed
   // is asked again first.
-  wireShare(drawShare);
+  // Turning sharing on or off moves the time by the nudge, so the egg page
+  // is solved again with the section redrawn.
+  wireShare(() => { drawShare(); recompute(); });
   loadShare({ log: () => keptState().log, finalCount: finalEggs, changed: drawShare });
   drawShare();
   void retryDeletes().then(sendFinal);

@@ -257,7 +257,7 @@ test('3a. the record\'s register follows the language', () => {
 test('3b. a cook read in 1750 is recorded as 1750: lang and register both', () => {
   const cooked = (lang: string): Cooked => ({
     egg: eggFromMass(0.068), massFrom: 'class', sizeTable: 'eu', eggFrom: 'fridge',
-    boilRemembered: false, units: 'imperial', lang: lang, forecast: null,
+    boilRemembered: false, units: 'imperial', lang: lang, forecast: null, nudge_s: 0,
     setup: {
       startMode: 'hot', afterBoil: 'hold', eggStart_C: 4, ambient_C: 20, boiling_C: 100,
       timeToBoil_s: 480, cooling: 'ice', waterLitres: 2, eggCount: 2,

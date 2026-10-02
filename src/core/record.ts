@@ -59,8 +59,9 @@ export const PRIOR_ID = '2026-09-e5';
  *  them changes, so that the model as it SHIPPED can be scored after the code
  *  has moved on (DECISIONS.md 37); a replay can only say what the current code
  *  would have said. '2026-10-e6' is E5's likelihood and decision, with the
- *  forecast kept. Records from before E6 carry none. */
-export const MODEL_ID = '2026-10-e6';
+ *  forecast kept; '2026-10-e8' adds the nudge, +-10 s for a cook who is
+ *  sharing (DECISIONS.md 55). Records from before E6 carry none. */
+export const MODEL_ID = '2026-10-e8';
 
 /** Where the egg's mass came from. A size class is a 10 g bucket, worth about
  *  +-24 s; a scale is a gram. The fit reads this as egg-level noise. */

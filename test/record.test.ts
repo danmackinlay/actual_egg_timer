@@ -318,7 +318,7 @@ test('3c. forget everything clears the log, the base and the posterior', () => {
 const T0 = 1_750_000_000_000;
 const COOKED: Cooked = {
   egg: eggFromMass(0.062), massFrom: 'scale', sizeTable: null, setup: appSetup(), eggFrom: 'fridge',
-  boilRemembered: false, units: 'metric', lang: 'en', forecast: null,
+  boilRemembered: false, units: 'metric', lang: 'en', forecast: null, nudge_s: 0,
 };
 
 function pulled(m: Machine): Machine {
@@ -369,6 +369,17 @@ test('4b3. the time to boil says whether this cook measured it', () => {
   const r = eggRecordFor(cold, m, 0);
   assert.equal(r.setup.timeToBoilFrom, 'measured');
   assert.equal(r.setup.timeToBoil_s, 431.5);
+});
+
+test('4b5. a nudged cook is recorded as the time recommended and the nudge, apart', () => {
+  // The machine runs the nudged time; the record splits it, and scores an
+  // egg nobody pulled at the time that actually ran.
+  const m = advance(pulled(startHot(T0, 393, 'ice', 0.4)), T0 + 500_000).machine;
+  const r = eggRecordFor({ ...COOKED, nudge_s: -7 }, m, 0);
+  assert.equal(r.recommended_s, 400);
+  assert.equal(r.nudge_s, -7);
+  assert.equal(recordCookTime_s(r), 393);
+  assert.notEqual(parseRecord(r), null);
 });
 
 test('4b4. the record keeps what the app said at Eggs in, and names the model that said it', () => {

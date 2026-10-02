@@ -26,6 +26,8 @@ function findDom() {
     sublineMore: el<HTMLParagraphElement>('sublineMore'),
     direction: el<HTMLParagraphElement>('direction'),
     directionText: el<HTMLSpanElement>('directionText'),
+    learning: el<HTMLParagraphElement>('learning'),
+    learningInfo: el<HTMLButtonElement>('learningInfo'),
     whiteRisk: el<HTMLParagraphElement>('whiteRisk'),
     oddsInfo: el<HTMLButtonElement>('oddsInfo'),
     oddsWhy: el<HTMLDivElement>('oddsWhy'),

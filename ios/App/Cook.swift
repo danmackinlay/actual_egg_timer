@@ -67,6 +67,11 @@ final class Cook {
         /// How far the choice leaned from the mean solve at "Eggs in", s,
         /// carried onto a mid-cook re-solve. Zero when the time was not chosen.
         var leanS: Double
+        /// The nudge the time took at "Eggs in" (E8): seconds added on purpose
+        /// to the time chosen, for a cook who is sharing, carried onto a
+        /// mid-cook re-solve with the lean. Zero when there was none, or when
+        /// a re-solve left no time to choose and carried neither.
+        var nudgeS: Double
 
         /// What the egg was expected to be like at "Eggs in": the direction
         /// and the white's line, shown for the whole cook as the web shows
@@ -111,11 +116,13 @@ final class Cook {
         }
 
         /// The same cook, re-solved: the cooling counts to the peak the new
-        /// solve puts after the pull.
-        func withResolved(_ result: CookResult) -> Ticket {
+        /// solve puts after the pull, and the nudge stands only if the re-solve
+        /// carried it.
+        func withResolved(_ result: CookResult, nudged: Bool) -> Ticket {
             var next = self
             next.coolS = coolingSecondsFor(result)
             next.probeMoment = probeMomentFor(result, cooling: cooling)
+            if !nudged { next.nudgeS = 0 }
             return next
         }
     }
@@ -168,7 +175,7 @@ final class Cook {
     /// Takes the level the cook is being RUN at, so a corrected ramp re-times
     /// the egg in the pan instead of whatever the slider now says, and the lean
     /// the choice made at "Eggs in", which the re-solve carries.
-    var resolveCookTime: ((Double, Double, Double) async -> CookResult?)?
+    var resolveCookTime: ((Double, Double, Double, Double) async -> (result: CookResult, nudged: Bool)?)?
 
     /// Whether the cook has said they have a probe thermometer, read when
     /// the alarms are scheduled: the cooling's alarm then asks for the reading.
@@ -289,7 +296,10 @@ final class Cook {
                 timeToBoilFrom: Self.timeToBoilFrom(ticket)
             ),
             level: ticket.level,
-            recommendedS: scheduled,
+            // The cook ran the nudged time; the record splits it into what
+            // was recommended and what was added on purpose.
+            recommendedS: scheduled - ticket.nudgeS,
+            nudgeS: ticket.nudgeS,
             pulledS: measured ?? scheduled,
             pulledBy: measured == nil ? .timeout : .cook,
             cooledS: ticket.cooling == .counter ? 0 : coolFor,
@@ -382,7 +392,8 @@ final class Cook {
         guard phase == .heating, let startedAt, let ticket else { return nil }
         let gen = generation
         let measured = Date.now.timeIntervalSince(startedAt)
-        guard let result = await resolveCookTime?(measured, ticket.level, ticket.leanS) else { return nil }
+        guard let (result, nudged) = await resolveCookTime?(measured, ticket.level, ticket.leanS, ticket.nudgeS)
+        else { return nil }
         // Cancelled while the solve was running: there is no cook to correct.
         guard gen == generation else { return nil }
         assumedBoilS = measured
@@ -390,7 +401,7 @@ final class Cook {
         // The pan that actually cooked this egg. The calibration is told about
         // the measured ramp, not the blend that was guessed at "Eggs in"; and
         // the cooling counts to the peak this solve puts after the pull.
-        self.ticket = ticket.withTimeToBoil(measured).withResolved(result)
+        self.ticket = ticket.withTimeToBoil(measured).withResolved(result, nudged: nudged)
         setDeadlines(from: startedAt, cookSeconds: result.cookTimeS, cooling: ticket.cooling)
         if alarmAuthorized == true { scheduleAlarms() }
         await readBackAlarms()
@@ -638,10 +649,11 @@ final class Cook {
 
         let gen = generation
         let assumed = now.timeIntervalSince(startedAt) + slowHobExtraS
-        guard let result = await resolveCookTime?(assumed, ticket.level, ticket.leanS) else { return }
+        guard let (result, nudged) = await resolveCookTime?(assumed, ticket.level, ticket.leanS, ticket.nudgeS)
+        else { return }
         guard gen == generation else { return }
         assumedBoilS = assumed
-        self.ticket = ticket.withTimeToBoil(assumed).withResolved(result)
+        self.ticket = ticket.withTimeToBoil(assumed).withResolved(result, nudged: nudged)
         setDeadlines(from: startedAt, cookSeconds: result.cookTimeS, cooling: ticket.cooling)
         if alarmAuthorized == true { scheduleAlarms() }
         pushActivity(force: true)
@@ -716,6 +728,7 @@ extension Cook.Ticket {
             // The choice on screen, if it has been made: the time started IS
             // the chosen one, and a mid-cook re-solve carries its lean.
             leanS: planner.decision?.leanS ?? 0,
+            nudgeS: planner.decision == nil ? 0 : planner.appliedNudgeS,
             outcome: planner.shownOutcome,
             // What the app says now, as the record keeps it: wherever a
             // decision has been made, as the web's ticket has it.

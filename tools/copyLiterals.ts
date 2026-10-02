@@ -153,7 +153,7 @@ const NOT_COPY: Record<string, string> = {
   'audio session: {}': 'log message, never shown',
   'ringing for {}: no notification holds it': 'log message, never shown',
   '2026-09-e5': 'record prior id, never shown',
-  '2026-10-e6': 'record model id, never shown',
+  '2026-10-e8': 'record model id, never shown',
   'sharing.v1': 'UserDefaults key (Sharing.swift)',
   'sharing.attest.v1': 'UserDefaults key (Sharing.swift)',
   shareServer: 'debug launch argument (Sharing.swift)',

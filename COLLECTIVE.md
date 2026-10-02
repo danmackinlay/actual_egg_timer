@@ -13,9 +13,8 @@ badge with an (i) is what says the app is learning (52), a cook who turns
 sharing on sends the eggs already in the log too (53), and App Attest is built
 now (54).
 
-**State.** E6 built in both apps and checked end to end against a local
-endpoint; the privacy page and the docs are next, then E8. Nothing is
-deployed: the live endpoint is a push.
+**State.** E6 and E8 built in both apps and checked against a local
+endpoint; E7 is next. Nothing is deployed: the live endpoint is a push.
 
 ---
 
@@ -135,8 +134,9 @@ its absence means.
 
 ### The nudge and the badge (E8, `DECISIONS.md` 52)
 
-- **The nudge** is a whole number of seconds drawn uniformly from -10 to +10,
-  added to the chosen time, for a cook who is sharing and only where a time is
+- **The nudge** is a whole number of seconds drawn uniformly from -10 to +10
+  (`DECISIONS.md` 55: the owner's choice, with its cost measured), added to
+  the chosen time, for a cook who is sharing and only where a time is
   chosen (`decisionApplies`). Core turns a uniform number into seconds
   (`nudgeSeconds`); the app supplies the randomness, as it supplies the clock.
 - **Drawn before the time is shown**, at launch and after each cook, and
@@ -231,10 +231,18 @@ needs data and nothing an app does waits on it.
 ### E8, the nudge
 
 - [x] Core: `NUDGE_MAX_S`, `nudgeSeconds`, `appliedNudge`, the nudged
-      solution; both cores, `fixtures/decide.json`.
-- [ ] Both apps: the nudge drawn, shown, started, carried and recorded.
-- [ ] Copy: the `learning` draft - the badge and its (i), both apps.
-- [ ] Its cost measured (`npm run decide -- nudge`), into `LOGBOOK.md`.
+      solution; both cores, `fixtures/decide.json` (`421ae8f`).
+- [x] Its cost measured (`npm run decide -- nudge`): at +-10 s the share of
+      eggs that come out right falls from 52.1% to 49.3%, and 66.9% to
+      62.6% by a cook's sixth egg; +-5 s costs under a point. The owner chose
+      +-10 s knowing it (`DECISIONS.md` 55).
+- [x] Both apps: the nudge drawn at launch and after each cook, applied
+      while sharing is on, shown, started, carried through a boil tap (and
+      dropped from the record if the re-solve could not carry it), and split
+      out in the record. `MODEL_ID` is `2026-10-e8`.
+- [x] Copy: the `learning` draft - the Learning mark and its (i), both
+      apps, over the time's panel; proved by `copyLiterals --since 421ae8f
+      learning` and `copySnapshot compare --draft learning`.
 
 ### E7, the population fit
 

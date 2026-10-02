@@ -25,8 +25,8 @@ final class AppModel {
         // The machine cannot solve for itself. A cold start needs a fresh
         // answer twice: when the boil is tapped, and whenever a slow hob
         // forces the estimate out.
-        cook.resolveCookTime = { [planner] seconds, level, lean in
-            await planner.cookResult(timeToBoilS: seconds, level: level, leanS: lean)
+        cook.resolveCookTime = { [planner] seconds, level, lean, nudge in
+            await planner.cookResult(timeToBoilS: seconds, level: level, leanS: lean, nudgeS: nudge)
         }
         // Whether the cooling's alarm asks for a probe reading.
         cook.probeWanted = { [planner] in planner.probe }
@@ -98,6 +98,7 @@ final class AppModel {
     /// inputs as they stand.
     func cancel() {
         cook.cancel()
+        planner.redrawNudge()
         planner.refresh()
     }
 
@@ -109,6 +110,8 @@ final class AppModel {
         }
         cook.cancel()
         planner.endEgg()
+        // A new cook, a new nudge.
+        planner.redrawNudge()
         planner.refresh()
         // The egg just finished is final now: no answer can be added to it.
         Sharing.shared.sendFinal()

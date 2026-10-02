@@ -73,6 +73,11 @@
   <section id="readout">
     <p id="phaseLabel" data-copy="readout.phase.total"></p>
 
+    <!-- The Learning mark (E8, DECISIONS.md 52): over the time while sharing
+         is on, since the time may then be nudged a few seconds. -->
+    <p id="learning" hidden><span class="badge" data-copy="learning.badge"></span><button type="button" id="learningInfo" class="info" aria-expanded="false" aria-controls="learningMore" data-label="learning.badge" hidden></button></p>
+    <p id="learningMore" class="disclosed" hidden data-copy="learning.badge.more"></p>
+
     <div id="bigtime" role="timer" aria-live="polite">
       <span id="digits" aria-hidden="true">--:--</span>
       <span class="sr-only" id="announce"></span>

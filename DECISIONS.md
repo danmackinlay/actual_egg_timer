@@ -244,3 +244,11 @@ Decided by the owner, 2 October 2026, for E6-E8 (`COLLECTIVE.md`):
 54. **App Attest is built now**, the iOS side and the server's verification
     together. An iPhone that cannot attest still sends, to the open tier.
     Not built (E6).
+55. **The nudge is +-10 s, as designed, knowing what it costs.** Measured
+    first (`npm run decide -- nudge`, 300 simulated cooks x 6 eggs): the
+    share of eggs that come out right - the yolk just right and the white
+    not runny - falls from 52.1% to 49.3% at +-10 s, and from 66.9% to 62.6%
+    by a cook's sixth egg; +-5 s would cost under a point (51.3%) and teach a
+    quarter as much per egg, +-3 s a third of a point and a ninth as much.
+    The owner chose +-10 s. The Learning mark's (i) says the time may leave
+    an egg a little softer or firmer. Built with E8.

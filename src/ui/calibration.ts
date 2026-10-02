@@ -117,6 +117,9 @@ export interface Cooked {
   /** What the app said at "Eggs in", for the record; null when the time was
    *  started before the odds were known. */
   forecast: Forecast | null;
+  /** The nudge in the time that ran (E8), which the record keeps apart from
+   *  what was recommended. */
+  nudge_s: number;
 }
 
 function pad2(n: number): string {
@@ -172,8 +175,10 @@ export function eggRecordFor(
       eggCount: c.setup.eggCount,
     },
     level: m.targetLevel,
-    recommended_s: m.cookTime_s,
-    nudge_s: 0,
+    // The machine ran the nudged time; the record splits it into what was
+    // recommended and what was added on purpose (INFERENCE.md section 4).
+    recommended_s: m.cookTime_s - c.nudge_s,
+    nudge_s: c.nudge_s,
     pulled_s: measured ? (m.outAt_ms - m.startedAt_ms) / 1000 : m.cookTime_s,
     pulledBy: measured ? 'cook' : 'timeout',
     cooled_s: m.cooling === 'counter' ? 0 : m.cool_s,
