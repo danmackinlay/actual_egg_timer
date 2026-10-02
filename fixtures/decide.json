@@ -1425,6 +1425,13 @@
         "peakYolk_C": 60.64063915875693,
         "yolkDose_min": 0.5252747058705801,
         "whiteDose_min": 0.31264115615967186
+      },
+      "nudged": {
+        "reachable": true,
+        "cookTime_s": 412.4287109375,
+        "peakYolk_C": 59.96394921818914,
+        "yolkDose_min": 0.3765647522867822,
+        "whiteDose_min": 0.25042485601604625
       }
     },
     {
@@ -1476,6 +1483,13 @@
         "peakYolk_C": 64.72243834517772,
         "yolkDose_min": 3.9277328273544434,
         "whiteDose_min": 1.1585353841460635
+      },
+      "nudged": {
+        "reachable": true,
+        "cookTime_s": 457.00390625,
+        "peakYolk_C": 64.1070994508092,
+        "yolkDose_min": 2.8987525580433777,
+        "whiteDose_min": 0.953703692984874
       }
     },
     {
@@ -1527,6 +1541,13 @@
         "peakYolk_C": 69.2444961079092,
         "yolkDose_min": 36.826466893476,
         "whiteDose_min": 4.7140625101994384
+      },
+      "nudged": {
+        "reachable": true,
+        "cookTime_s": 512.0673828125,
+        "peakYolk_C": 68.70008959487222,
+        "yolkDose_min": 28.111824202119585,
+        "whiteDose_min": 3.990007612118508
       }
     },
     {
@@ -1578,6 +1599,13 @@
         "peakYolk_C": 77.2567848666738,
         "yolkDose_min": 2005.6235719973822,
         "whiteDose_min": 52.283481414506554
+      },
+      "nudged": {
+        "reachable": true,
+        "cookTime_s": 630.9345703125,
+        "peakYolk_C": 76.84486517909814,
+        "yolkDose_min": 1630.9568953927449,
+        "whiteDose_min": 46.27172161656463
       }
     },
     {
@@ -1629,6 +1657,13 @@
         "peakYolk_C": 60.51558797842075,
         "yolkDose_min": 0.5027064337943877,
         "whiteDose_min": 0.3057775941160587
+      },
+      "nudged": {
+        "reachable": true,
+        "cookTime_s": 418.56470402225307,
+        "peakYolk_C": 59.849024172734005,
+        "yolkDose_min": 0.36218782758879003,
+        "whiteDose_min": 0.2456841845533312
       }
     },
     {
@@ -1680,6 +1715,13 @@
         "peakYolk_C": 64.40589827285223,
         "yolkDose_min": 3.4190316800859635,
         "whiteDose_min": 1.0678262825580205
+      },
+      "nudged": {
+        "reachable": true,
+        "cookTime_s": 461.58086667285033,
+        "peakYolk_C": 63.796555913520734,
+        "yolkDose_min": 2.5310815680526266,
+        "whiteDose_min": 0.88031301337711
       }
     },
     {
@@ -1731,6 +1773,13 @@
         "peakYolk_C": 68.89146706961462,
         "yolkDose_min": 31.459319145272143,
         "whiteDose_min": 4.309034878912686
+      },
+      "nudged": {
+        "reachable": true,
+        "cookTime_s": 516.6669172227621,
+        "peakYolk_C": 68.3510980659388,
+        "yolkDose_min": 24.065308116740738,
+        "whiteDose_min": 3.650493180175068
       }
     },
     {
@@ -1782,6 +1831,13 @@
         "peakYolk_C": 76.99557605517047,
         "yolkDose_min": 1790.302878988734,
         "whiteDose_min": 49.263461196587905
+      },
+      "nudged": {
+        "reachable": true,
+        "cookTime_s": 637.7464906461478,
+        "peakYolk_C": 76.58656381592465,
+        "yolkDose_min": 1458.1230917458588,
+        "whiteDose_min": 43.634027802795764
       }
     },
     {
@@ -1833,6 +1889,13 @@
         "peakYolk_C": 61.57199886217352,
         "yolkDose_min": 0.8317770315245375,
         "whiteDose_min": 0.4238505690952837
+      },
+      "nudged": {
+        "reachable": true,
+        "cookTime_s": 422.756063539637,
+        "peakYolk_C": 60.90992046255069,
+        "yolkDose_min": 0.6004196406499938,
+        "whiteDose_min": 0.3417916202359135
       }
     },
     {
@@ -1884,6 +1947,13 @@
         "peakYolk_C": 65.64733276655082,
         "yolkDose_min": 6.210118642742666,
         "whiteDose_min": 1.5512078467420343
+      },
+      "nudged": {
+        "reachable": true,
+        "cookTime_s": 468.30986565257444,
+        "peakYolk_C": 65.04696281211446,
+        "yolkDose_min": 4.616023254989468,
+        "whiteDose_min": 1.2847750992503373
       }
     },
     {
@@ -1935,6 +2005,13 @@
         "peakYolk_C": 70.14422315214865,
         "yolkDose_min": 57.631398410286636,
         "whiteDose_min": 6.210627985492141
+      },
+      "nudged": {
+        "reachable": true,
+        "cookTime_s": 524.5238175971522,
+        "peakYolk_C": 69.61493301022729,
+        "yolkDose_min": 44.3119747961277,
+        "whiteDose_min": 5.285546307290902
       }
     },
     {
@@ -1986,6 +2063,13 @@
         "peakYolk_C": 78.21591424134476,
         "yolkDose_min": 3252.372038692658,
         "whiteDose_min": 69.54976148041239
+      },
+      "nudged": {
+        "reachable": true,
+        "cookTime_s": 648.4944982752293,
+        "peakYolk_C": 77.82091014767133,
+        "yolkDose_min": 2666.213691721916,
+        "whiteDose_min": 61.87247598460563
       }
     },
     {
@@ -2037,6 +2121,13 @@
         "peakYolk_C": 55.16913933520111,
         "yolkDose_min": 0.036435308305685025,
         "whiteDose_min": 0.05057909492270845
+      },
+      "nudged": {
+        "reachable": true,
+        "cookTime_s": 365,
+        "peakYolk_C": 54.42807561040345,
+        "yolkDose_min": 0.025346669125125457,
+        "whiteDose_min": 0.03906885147426288
       }
     },
     {
@@ -2088,6 +2179,13 @@
         "peakYolk_C": 76.99569067803638,
         "yolkDose_min": 1790.4059247027194,
         "whiteDose_min": 49.265135768601354
+      },
+      "nudged": {
+        "reachable": true,
+        "cookTime_s": 637.7484730673823,
+        "peakYolk_C": 76.58668069568259,
+        "yolkDose_min": 1458.2083558350487,
+        "whiteDose_min": 43.6355370454897
       }
     }
   ],
@@ -2265,6 +2363,53 @@
     {
       "odds": 1,
       "tenths": 10
+    }
+  ],
+  "nudgeMax_s": 10,
+  "nudges": [
+    {
+      "u": 0,
+      "nudge_s": -10
+    },
+    {
+      "u": 0.0476,
+      "nudge_s": -10
+    },
+    {
+      "u": 0.0477,
+      "nudge_s": -9
+    },
+    {
+      "u": 0.5,
+      "nudge_s": 0
+    },
+    {
+      "u": 0.52,
+      "nudge_s": 0
+    },
+    {
+      "u": 0.9523,
+      "nudge_s": 9
+    },
+    {
+      "u": 0.9524,
+      "nudge_s": 10
+    },
+    {
+      "u": 0.99999,
+      "nudge_s": 10
+    },
+    {
+      "u": -0.1,
+      "nudge_s": -10
+    },
+    {
+      "u": 1,
+      "nudge_s": 10
+    },
+    {
+      "u": 1.5,
+      "nudge_s": 10
     }
   ]
 }

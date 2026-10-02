@@ -23,8 +23,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
-  DECISION_WINDOW_S, Decision, LEAN_COST_PER_S, RUNNY_WHITE_LOSS, carriedSolution, chooseCookTime, decide,
-  decidedSolution, decisionApplies, decisionGridSpec, decisionInputs, expectedLoss, hitOdds,
+  DECISION_WINDOW_S, Decision, LEAN_COST_PER_S, NUDGE_MAX_S, RUNNY_WHITE_LOSS, appliedNudge, carriedSolution,
+  chooseCookTime, decide, decidedSolution, decisionApplies, decisionGridSpec, decisionInputs, expectedLoss,
+  hitOdds, nudgeSeconds,
 } from '../src/core/decide.js';
 import { DoseGrid, GridSpec, buildRequestedGrid } from '../src/core/doseGrid.js';
 import {
@@ -369,6 +370,31 @@ test('6d. the decided solution is the mean solve moved to the chosen time, and t
     Math.sign(d.cookTime_s - sol.result.cookTime_s));
   // At the mean's own time it is the mean solve, not a re-simulation of it.
   assert.equal(decidedSolution(EGG, SETUP, params, sol, { ...d, cookTime_s: sol.result.cookTime_s }), sol);
+});
+
+test('6e. the nudge: every whole second from -10 to +10 alike, and only where a time is chosen', () => {
+  const counts = new Map<number, number>();
+  for (let i = 0; i < 2100; i++) {
+    const n = nudgeSeconds((i + 0.5) / 2100);
+    counts.set(n, (counts.get(n) ?? 0) + 1);
+  }
+  assert.deepEqual([...counts.keys()].sort((a, b) => a - b), Array.from({ length: 21 }, (_, k) => k - NUDGE_MAX_S));
+  for (const c of counts.values()) assert.equal(c, 100, 'each second equally likely');
+  assert.equal(nudgeSeconds(-1), -NUDGE_MAX_S);
+  assert.equal(nudgeSeconds(1), NUDGE_MAX_S);
+
+  const learned = replay(PRIOR, [recordAt(0.41, 464, 0, 'firm')], COARSE);
+  const params = calibrationParams(learned);
+  const sol = solveCookTime(EGG, SETUP, params, calibrationDoneness(learned, 0.41));
+  const d = decide(learned, gridFor(learned, EGG, SETUP), sol, logYolkTarget(0.41));
+  const nudged = decidedSolution(EGG, SETUP, params, sol, d, -7);
+  assert.equal(nudged.result.cookTime_s, d.cookTime_s - 7);
+  assert.equal(appliedNudge(sol, -7), -7);
+  // Where the solver's answer stands, the nudge is not taken: that answer is
+  // the furthest the pan goes.
+  const stands = { ...sol, whiteSets: false };
+  assert.equal(appliedNudge(stands, -7), 0);
+  assert.equal(decidedSolution(EGG, SETUP, params, stands, { ...d, cookTime_s: sol.result.cookTime_s }, -7), stands);
 });
 
 test('7. two runny whites at soft: what the choice does at soft and at jammy', () => {

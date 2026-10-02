@@ -370,11 +370,51 @@ function solutionAt(
   return { ...sol, result: simulate(egg, setup, params, cookTime_s) };
 }
 
-/** The solve, at the decided time. */
+/** The solve, at the decided time, moved by the nudge where one applies
+ *  (`appliedNudge`). */
 export function decidedSolution(
-  egg: Egg, setup: CookSetup, params: ModelParams, sol: Solution, d: Decision,
+  egg: Egg, setup: CookSetup, params: ModelParams, sol: Solution, d: Decision, nudge_s = 0,
 ): Solution {
-  return solutionAt(egg, setup, params, sol, d.cookTime_s);
+  return solutionAt(egg, setup, params, sol, d.cookTime_s + appliedNudge(sol, nudge_s));
+}
+
+/* ------------------------------------------------------------- the nudge */
+
+/**
+ * The most the nudge moves a time, s, either way (INFERENCE.md section 8,
+ * E8).
+ *
+ * WHY. The app chooses the time as a function of the inputs, so every egg a
+ * cook reports on lies on one surface - the time the app thinks right - and
+ * the slopes off that surface are never seen: whether ten seconds more would
+ * have been "too firm" is a question the data cannot answer. Moving the time
+ * by a few seconds, at random, for cooks who have agreed to it (the consent,
+ * `share.what`), puts eggs either side of the surface at no cost a cook can
+ * taste, and the movement is independent of everything about the cook, so it
+ * is an estimate free of selection.
+ *
+ * WHY TEN. "Just right" is about +-12 s wide on the reference egg (a 10 g size
+ * class is +-24 s, twice the band; INFERENCE.md section 4), so +-10 s stays
+ * inside it. What it costs is measured, not assumed (`npm run decide --
+ * nudge`, LOGBOOK.md).
+ */
+export const NUDGE_MAX_S = 10;
+
+/** A uniform draw on [0, 1) as the nudge: a whole number of seconds from
+ *  -NUDGE_MAX_S to +NUDGE_MAX_S, each equally likely, so the nudge is
+ *  centred on the chosen time. The app supplies the randomness, as it
+ *  supplies the clock; core only turns it into seconds. */
+export function nudgeSeconds(u: number): number {
+  const n = 2 * NUDGE_MAX_S + 1;
+  const k = Math.floor(u * n);
+  return (k < 0 ? 0 : k > n - 1 ? n - 1 : k) - NUDGE_MAX_S;
+}
+
+/** The nudge a solve takes: all of it where a time is chosen for
+ *  (`decisionApplies`), none where the solver's own answer stands - the
+ *  furthest the pan goes, which the nudge must not overrun. */
+export function appliedNudge(sol: Solution, nudge_s: number): number {
+  return decisionApplies(sol) ? nudge_s : 0;
 }
 
 /**

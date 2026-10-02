@@ -226,11 +226,12 @@ needs data and nothing an app does waits on it.
       deletion, Netlify as processor. Both READMEs and `ios/RELEASING.md`
       (the App Privacy answers: Other Data Types and Device ID, neither
       linked nor tracking) stop saying no networking; INFERENCE.md §7 says
-      what was built.
+      what was built (`22f16cd`).
 
 ### E8, the nudge
 
-- [ ] Core: `NUDGE_MAX_S`, `nudgeSeconds`, the nudged solution; fixtures.
+- [x] Core: `NUDGE_MAX_S`, `nudgeSeconds`, `appliedNudge`, the nudged
+      solution; both cores, `fixtures/decide.json`.
 - [ ] Both apps: the nudge drawn, shown, started, carried and recorded.
 - [ ] Copy: the `learning` draft - the badge and its (i), both apps.
 - [ ] Its cost measured (`npm run decide -- nudge`), into `LOGBOOK.md`.

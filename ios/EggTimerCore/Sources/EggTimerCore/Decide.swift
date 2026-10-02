@@ -261,10 +261,36 @@ func solutionAt(
     )
 }
 
+/// The solve, at the decided time, moved by the nudge where one applies.
 public func decidedSolution(
-    egg: Egg, setup: CookSetup, params: ModelParams, solution sol: Solution, decision d: Decision
+    egg: Egg, setup: CookSetup, params: ModelParams, solution sol: Solution, decision d: Decision,
+    nudgeS: Double = 0
 ) -> Solution {
-    solutionAt(egg: egg, setup: setup, params: params, solution: sol, cookTimeS: d.cookTimeS)
+    solutionAt(
+        egg: egg, setup: setup, params: params, solution: sol,
+        cookTimeS: d.cookTimeS + appliedNudge(sol, nudgeS: nudgeS)
+    )
+}
+
+// MARK: - The nudge
+
+/// The most the nudge moves a time, s, either way (INFERENCE.md section 8,
+/// E8). Why, and why ten: src/core/decide.ts.
+public let nudgeMaxS = 10.0
+
+/// A uniform draw on [0, 1) as the nudge: a whole number of seconds from
+/// -nudgeMaxS to +nudgeMaxS, each equally likely. The app supplies the
+/// randomness; core only turns it into seconds.
+public func nudgeSeconds(_ u: Double) -> Double {
+    let n = 2 * nudgeMaxS + 1
+    let k = (u * n).rounded(.down)
+    return (k < 0 ? 0 : k > n - 1 ? n - 1 : k) - nudgeMaxS
+}
+
+/// The nudge a solve takes: all of it where a time is chosen for, none where
+/// the solver's own answer stands.
+public func appliedNudge(_ sol: Solution, nudgeS: Double) -> Double {
+    decisionApplies(sol) ? nudgeS : 0
 }
 
 /// A cook already under way, re-solved for a new time to boil: the mean solve,

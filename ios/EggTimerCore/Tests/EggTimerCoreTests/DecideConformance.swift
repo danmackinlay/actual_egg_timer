@@ -124,6 +124,21 @@ struct DecideConformance {
                 solution: meanSolve(c, egg: egg, setup: pot, level: row.num("level")), decision: d
             )
             try expectSolution(decided, row.object("decided"), "\(label) decided")
+            let nudged = try decidedSolution(
+                egg: egg, setup: pot, params: calibrationParams(c),
+                solution: meanSolve(c, egg: egg, setup: pot, level: row.num("level")), decision: d, nudgeS: -7
+            )
+            try expectSolution(nudged, row.object("nudged"), "\(label) nudged")
+        }
+    }
+
+    @Test("the nudge from a uniform draw: each whole second alike, clamped at the ends")
+    func nudges() throws {
+        let file = try Fixtures.load("decide.json")
+        #expect(try nudgeMaxS == file.num("nudgeMax_s"))
+        for row in try file.rows("nudges") {
+            let u = try row.num("u")
+            #expect(try nudgeSeconds(u) == row.num("nudge_s"), "draw \(u)")
         }
     }
 

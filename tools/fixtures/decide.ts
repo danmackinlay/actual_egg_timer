@@ -13,7 +13,8 @@ import {
 import {
   DECISION_ALPHA_COUNT, DECISION_ALPHA_HI, DECISION_ALPHA_LO, DECISION_TIME_STEP_S, DECISION_WINDOW_S,
   DecisionInputs, LEAN_COST_PER_S, RUNNY_WHITE_LOSS, carriedSolution, chooseCookTime, decideAt,
-  decidedSolution, decisionApplies, decisionGridSpec, expectedLoss, hitOdds, oddsInTenths,
+  NUDGE_MAX_S, decidedSolution, decisionApplies, decisionGridSpec, expectedLoss, hitOdds, nudgeSeconds,
+  oddsInTenths,
 } from '../../src/core/decide.js';
 import { DEFAULT_PARAMS, Solution, logYolkTarget, solveCookTime } from '../../src/core/solve.js';
 
@@ -196,8 +197,18 @@ export const decideFixture = {
       decided: decideSolutionRow(decidedSolution(
         DECIDE_EGG, DECIDE_SETUP, calibrationParams(calibrationOf(pz)), meanSolve(pz, c.level), d,
       )),
+      // The same, nudged seven seconds short (E8): moved where a time is
+      // chosen, and not where the solver's answer stands.
+      nudged: decideSolutionRow(decidedSolution(
+        DECIDE_EGG, DECIDE_SETUP, calibrationParams(calibrationOf(pz)), meanSolve(pz, c.level), d, -7,
+      )),
     };
   }),
   carried: DECIDE_CARRIED,
   tenths: [0, 0.049, 0.05, 0.051, 0.349, 0.35, 0.649, 0.65, 0.951, 1].map((p) => ({ odds: p, tenths: oddsInTenths(p) })),
+  // The nudge from a uniform draw: every whole second from -10 to +10, the
+  // edges of each, and a draw past either end.
+  nudgeMax_s: NUDGE_MAX_S,
+  nudges: [0, 0.0476, 0.0477, 0.5, 0.52, 0.9523, 0.9524, 0.99999, -0.1, 1, 1.5]
+    .map((u) => ({ u: u, nudge_s: nudgeSeconds(u) })),
 };
