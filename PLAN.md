@@ -9,8 +9,8 @@ cook and learning. The web app (`src/`) and the iOS app (`ios/`) carry the
 same model, refusals, particle filter and choice of time (Phase E up to E5),
 the same catalogue of words in two Englishes (Phase F but for Czech), and the
 same layout (`UI.md`). `npm test` runs 269 tests, all passing (5b pins E3's
-known limit). `npm run validate` passes 28/28, and `swift test` passes 119
-tests in 31 suites. **Pushed on 29 September** at `5ff6940`, the owner's
+known limit). `npm run validate` passes 28/28, and `swift test` passes 121
+tests in 32 suites. **Pushed on 29 September** at `5ff6940`, the owner's
 call: Netlify serves it at actualeggtimer.netlify.app, and the first run of
 `.github/workflows/verify.yml` passed. The iOS app runs from Xcode on the owner's
 phone and has cooked real eggs; no TestFlight build is recorded
@@ -84,8 +84,9 @@ Waiting on someone else: the Czech review (F5), by the owner's friend.
   dose at every ring, and agrees with `simulate`. The web's cooking screen
   draws it beside the setup sentence (`src/ui/eggSection.ts`, `UI.md` §3).
   `tools/egg-section.html` (`egg-lab` in `.claude/launch.json`) plays a
-  whole cook, with the heat map the owner set aside beside it. Next: the
-  Swift twin with a fixture, and the iOS view beside `CookSentence`.
+  whole cook, with the heat map the owner set aside beside it. Its Swift
+  twin is `EggSection` (`Section.swift`), held by `fixtures/section.json`.
+  Next: the iOS view beside `CookSentence`.
 - **A rename:** `Ticket.forecast` / `shownForecast` hold core's `Outcome`, and
   should say so (`outcome`, `shownOutcome`). Small; both apps.
 - **Untested:** the Lock Screen card ending with the cooling, and the web's

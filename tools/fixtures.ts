@@ -15,6 +15,7 @@
  *
  *   fixtures/core.json         pure functions: the sphere, geometry, boiling
  *   fixtures/scenarios.json    whole cooks, solved end to end
+ *   fixtures/section.json      the egg in cross-section, a tick at a time
  *   fixtures/policy.json       the decisions above the physics - snapping, the
  *                              refusal verdict, texture bands, the calibration
  *                              grid's geometry, the bounds and defaults, both
@@ -44,6 +45,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { english } from './fixtures/shared.js';
 import { coreFixture } from './fixtures/core.js';
 import { scenariosFixture } from './fixtures/scenarios.js';
+import { sectionFixture } from './fixtures/section.js';
 import { calibrationFixture } from './fixtures/calibration.js';
 import { policyFixture } from './fixtures/policy.js';
 import { sousvideFixture } from './fixtures/sousvide.js';
@@ -67,6 +69,7 @@ mkdirSync('fixtures', { recursive: true });
 const written: Record<string, unknown> = {
   core: coreFixture,
   scenarios: scenariosFixture,
+  section: sectionFixture,
   calibration: calibrationFixture,
   policy: policyFixture,
   sousvide: sousvideFixture,
