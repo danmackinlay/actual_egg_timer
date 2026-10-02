@@ -230,3 +230,17 @@ Decided by the owner, 2 October 2026:
     opt-in data collection endpoint (E6) will live too; App Store Connect's
     privacy policy URL points there. Plain English only, no 1750 twin.
     Built `a3930e1`, linked from Help in both apps `48eb443`.
+
+Decided by the owner, 2 October 2026, for E6-E8 (`COLLECTIVE.md`):
+
+52. **The nudge's "still learning" is a small badge with an (i)**, not a
+    line: "A whole line saying still learning? How about a tiny badge over
+    the UI with a disclosure (i)". It answers 3: a cook who is sharing sees
+    a "Learning" mark by the time, and its (i) says why the time may move.
+    Not built (E8).
+53. **Turning sharing on sends the log so far**, not only the eggs after it:
+    the per-cook effects and the per-cook log score (37) need each cook's
+    whole sequence. The consent text says so. Not built (E6).
+54. **App Attest is built now**, the iOS side and the server's verification
+    together. An iPhone that cannot attest still sends, to the open tier.
+    Not built (E6).

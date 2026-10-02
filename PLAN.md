@@ -26,7 +26,8 @@ These counts are the only ones in the documents. If you want a number, run
 2. **An adversarial QA pass** against this baseline, starting from the QA
    list below.
 3. **F5, Czech**, when the owner's friend can review it.
-4. **E6-E8**, the collective part: not started.
+4. **E6-E8**, the collective part: under way, worked through in
+   `COLLECTIVE.md` (the owner's answers are `DECISIONS.md` 52-54).
 
 Throughout: cook real eggs, and the two measurements in README §11.3.
 
@@ -116,7 +117,8 @@ Waiting on someone else: the Czech review (F5), by the owner's friend.
 | F6 | the English of 1750 | done 28 Sep; the owner's review open |
 
 The design is `INFERENCE.md` (E) and `LANGUAGE.md` (F); what each phase
-measured is `LOGBOOK.md`. What is left:
+measured is `LOGBOOK.md`. E6-E8 are being built from `COLLECTIVE.md`. What is
+left:
 
 - **E6, opt-in collection.** Consent, a random id, upload, delete by id; a
   Netlify function writing append-only blobs, the web tier down-weighted in
@@ -230,3 +232,4 @@ checked, fixed or deleted. Start the QA pass here.
 | `LOGBOOK.md` | the record: what was verified, measured and learned, by date |
 | `WORKLIST.md` | the review of 28 September 2026, worked through |
 | `FOLLOWUP.md` | QA's worklist after it, 29 September 2026, worked through; `tidy2` waits on the owner |
+| `COLLECTIVE.md` | E6-E8, the collective part: the choices made to build `INFERENCE.md` §6-§9, and the work, ticked as it lands |
