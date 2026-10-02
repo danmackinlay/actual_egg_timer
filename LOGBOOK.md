@@ -3538,3 +3538,9 @@ and the yolk sits below the middle, toward the blunt end), and both apps
 draw it at 120 by 156 points. At 375 px the sentence beside it wraps to
 four lines (127 px), so the row costs about 29 px more than the words.
 Seen in the web app at 375 px and on the simulator, which was left idle.
+
+## 3 October 2026: the motto
+
+"Time eggs, not minutes" heads Help in both apps and leads the web page's
+description; "Made by Dan MacKinlay" ends Help, linking https://danmackinlay.name,
+as the privacy page's name and the README do (the `motto` draft, DECISIONS 53).

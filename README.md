@@ -1,5 +1,7 @@
 # Actual Egg Timer
 
+*Time eggs, not minutes.*
+
 A boiled-egg timer that computes the time from physics instead of reciting it: transient
 heat conduction in a sphere, coupled to Arrhenius denaturation kinetics, with the pan
 ramp and the cooling step treated as part of the cook.
@@ -18,6 +20,8 @@ places where the model is weak are named as such.
 If you are extending this, start with **[§11 Open problems and what to read
 next](#11-open-problems-and-what-to-read-next)** — the unresolved discrepancies, the
 measurements that appear not to exist, and the sources worth checking at first hand.
+
+By Dan MacKinlay (<https://danmackinlay.name>).
 
 ---
 

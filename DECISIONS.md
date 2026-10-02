@@ -239,3 +239,12 @@ Decided by the owner, 2 October 2026:
     vertical space for a nicety"). Its outline is an ovoid ("go ovoid"),
     though the model's egg is a sphere. Its raw white is clearer, with a
     touch of blue. Prototype `953c698`..`3ed187c`.
+
+Decided by the owner, 3 October 2026:
+
+53. **The motto is "Time eggs, not minutes"**, with a link to the owner's
+    blog, https://danmackinlay.name, where the app is credited. Neither goes
+    on the cooking screen: the motto heads Help in both apps and leads the
+    web page's description; "Made by Dan MacKinlay" ends Help and links the
+    blog, as the privacy page's name and the README do. It is also the App
+    Store subtitle. The `motto` draft.

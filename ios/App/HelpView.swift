@@ -32,6 +32,7 @@ struct HelpView: View {
         ScrollViewReader { proxy in
             ScrollView {
                 VStack(alignment: .leading, spacing: 28) {
+                    motto
                     contents(proxy)
                     how.id(HelpSection.how)
                     learn.id(HelpSection.learn)
@@ -162,7 +163,21 @@ struct HelpView: View {
             }
             .tint(Palette.accent)
             .padding(.top, 14)
+            // Who made it, as on the web: the name links the owner's blog,
+            // which `linked` hands to Safari like Help's other links.
+            Text(linked(tr("help.credit")))
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+                .padding(.top, 10)
         }
+    }
+
+    /// The motto, under the title, as on the web.
+    private var motto: some View {
+        Text(tr("help.motto"))
+            .font(.subheadline.italic())
+            .foregroundStyle(.secondary)
+            .padding(.bottom, -12)
     }
 
     private static let privacyURL = URL(string: "https://actualeggtimer.netlify.app/privacy")!

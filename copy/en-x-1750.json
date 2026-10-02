@@ -166,6 +166,7 @@
 
     "help.link": { "text": "Preface" },
     "help.title": { "text": "The Preface" },
+    "help.motto": { "text": "Time the egg, and not the minute." },
     "help.how.title": { "text": "Of my method" },
     "help.how.p1": { "text": "I compute how heat passes into your egg, and how far the yolk and the white are set; and then I choose the time that leaves the yolk as you desired." },
     "help.how.aside": { "text": "I reason by [heat conduction](https://en.wikipedia.org/wiki/Heat_equation) through a sphere of the bigness of your egg, and the setting of white and yolk as a dose of heat accumulated over time, by the [Arrhenius equation](https://en.wikipedia.org/wiki/Arrhenius_equation). Every constant, with its authority, is in the [README](https://github.com/danmackinlay/actual_egg_timer#2-the-physical-model)." },
@@ -206,6 +207,7 @@
     "help.source.hoyt": { "text": "D. F. Hoyt, \"Practical methods of estimating volume and fresh weight of bird eggs\", The Auk 96, 73-77 (1979)." },
     "help.source.usda": { "text": "USDA Food Safety and Inspection Service, \"High Altitude Cooking\"." },
     "help.privacy": { "text": "Of Privacy" },
+    "help.credit": { "text": "Contrived by [Dan MacKinlay](https://danmackinlay.name)" },
 
     "nav.back": { "text": "Return" },
     "learned.title": { "text": "What I have learned" },
