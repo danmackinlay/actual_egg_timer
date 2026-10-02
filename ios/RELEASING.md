@@ -319,3 +319,25 @@ already has.
   creating the record rather than finding out.
 - **Promising it to someone on iOS 16, or on a managed Apple Account.** Neither
   can install it, and neither failure explains itself.
+- **Homebrew's rsync in front of Apple's, on the command line.** `-exportArchive`
+  fails with "Copy failed"; the distribution log
+  (`$TMPDIR/ActualEggTimer_*.xcdistributionlogs/IDEDistributionPipeline.log`)
+  shows `rsync: on remote machine: --extended-attributes: unknown option
+  … [server=3.5.0]`. Xcode runs `/usr/bin/rsync` (openrsync), which starts
+  its other half by name, and a PATH with `/opt/homebrew/bin` first hands it
+  Homebrew's rsync 3.x. Run the export with a clean PATH
+  (`env PATH=/usr/bin:/bin:/usr/sbin:/sbin xcodebuild -exportArchive …`), or
+  `brew unlink rsync`. Xcode's own Organizer does not use the shell's PATH.
+  Met 2 October 2026.
+- **"App Store Connect access … is required" while signed in.** On
+  2 October 2026 Xcode's App Store Connect helper
+  (`com.apple.dt.Xcode.ITunesSoftwareService`) crashed on every start, a
+  stack overflow inside ContentDelivery (`~/Library/Logs/DiagnosticReports`),
+  and Xcode reported the dead helper as "no account"; signing in again did not
+  help. It cleared after a session of quitting Xcode, re-signing in and
+  exporting from a clean PATH; which of those fixed it is not known. Check the
+  crash reports before re-entering a password. A fallback that needs no
+  Xcode account: export with `destination` `export` (an `.ipa` in
+  `build/export`) and deliver it with Apple's Transporter app.
+- **Piping `xcodebuild` into `head`.** It kills the upload when the pipe
+  closes. Send the output to a file.

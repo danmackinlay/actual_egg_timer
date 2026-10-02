@@ -13,7 +13,8 @@ known limit). `npm run validate` passes 28/28, and `swift test` passes 119
 tests in 31 suites. **Pushed on 29 September** at `5ff6940`, the owner's
 call: Netlify serves it at actualeggtimer.netlify.app, and the first run of
 `.github/workflows/verify.yml` passed. The iOS app runs from Xcode on the owner's
-phone and has cooked real eggs; no TestFlight build is recorded
+phone and has cooked real eggs; the first TestFlight build, 0.3.1 (1), was
+uploaded on 2 October 2026 from `v0.3.1-alpha.1`. The next upload needs build 2
 (`ios/RELEASING.md`). The owner is reviewing the `tidy` and `tidy2` copy
 drafts on a phone.
 
