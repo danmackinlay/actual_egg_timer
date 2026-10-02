@@ -96,8 +96,14 @@
        prose with nothing to tap, and under it the doneness and the peak
        yolk. From the cook's ticket, not the controls, which are put away. -->
   <section id="cookSetup" hidden>
-    <p id="cookSentence"></p>
-    <p id="cookDoneness"></p>
+    <!-- Beside it, the egg in cross-section (src/ui/eggSection.ts): how set
+         each layer is, or a tap away its temperature. A prototype, with no
+         words yet, so hidden from a screen reader. -->
+    <svg id="eggSection" class="egg-section" aria-hidden="true" focusable="false"></svg>
+    <div class="cook-setup__words">
+      <p id="cookSentence"></p>
+      <p id="cookDoneness"></p>
+    </div>
   </section>
 
   <!-- ----------------------------------------------------------- the egg -->

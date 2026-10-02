@@ -3413,3 +3413,91 @@ on iOS, a same-origin CSP on the web, and "Start learning again" clears the
 rated eggs and boil times in both apps. The App Privacy label is "Data Not
 Collected" until E6. The agent that built it stalled before its docs and
 checks; the session finished them.
+
+## 2 October 2026: the egg in cross-section, a prototype
+
+On the branch `claude/egg-state-visualization-dd4490`, for the owner to
+judge on a phone: whether a running cook should show the egg as how set
+each layer is, or as how hot.
+
+- **Core** (953c698). `src/core/section.ts` runs `simulate`'s loop a step
+  at a time as the clock moves, with a dose at 34 radii: 17 across the
+  yolk and 17 across the white, the yolk's edge sampled as both. Advanced
+  past the carryover, the centre and the innermost white give `simulate`'s
+  peaks exactly and its doses to 1e-4 (it runs the window out where
+  `simulate` stops early). A tick at a time is bit-identical to one long
+  advance. At t = 0 the 40-term series reads a hot start's centre as
+  95.8 C: the shell's step is a fresh discontinuity (invariant 7). By
+  0.5 s it reads 11.6 C, by 2 s 4.0 C, so the screen draws a uniform egg
+  for the first second.
+- **The drawing** (f312cc1, c79c35b). An ovoid at the model's 1.35, blunt
+  end up, with a round yolk; across the white the outlines turn from
+  circle to ovoid. Each ring is a closed polygon filled opaque, outermost
+  first. A translucent fill would show the rings beneath it through, so
+  the clear white is a colour of its own. "How set" is the yolk on the
+  slider track's colours and the white from glassy to opaque, over the
+  decade of dose below its target. "How hot" runs blue through a grey at
+  40 C to red, two hues and a neutral, never a rainbow. A tap swaps
+  them. First placed under the time, it cost the column 7.5 rem; at the
+  owner's word it moved to the left of the setup sentence, where it costs
+  none.
+- **The lab** (`tools/egg-section.html`, the `egg-lab` launch
+  configuration). A whole cook scrubbed or played at 30 times real time,
+  both pictures side by side and eight moments in a strip. Five presets,
+  a doneness, a mass and a late pull. On each preset the centre ends on
+  the slider's colour for the level asked for (#e89400 at 0.41, light),
+  except a counter rest. There 0.41 is out of reach, the solve answers
+  its softest, 0.61, and the egg ends there.
+
+**Seen**, in the web app on a 375 px viewport in both schemes, the clock
+jumped through `Date.now`: heating, the boil tap's replay, cooking, a
+late pull timing out into cooling, and done, with both pictures. A reload
+restored mid-cook replays the egg from t = 0. The console stayed clean.
+
+**Run:** `rm -rf dist/test && npm run verify`: 269 tests, all pass; the
+copy lint; the fixtures fresh; `swift test` 119 tests in 31 suites.
+
+**Not verified:** a real phone, Safari, and iOS at all (there is no Swift
+yet). The tap reaches no keyboard, and the picture has no words.
+
+## 2 October 2026: the egg in cross-section, chosen and in both apps
+
+The owner chose "how set" (DECISIONS 52) and asked for a clearer raw white,
+a touch blue.
+
+- **Web** (458150a). The tap to the heat map went, with its colours; the
+  lab keeps both pictures and now carries the heat map's colours itself.
+  The raw white is `#19202b` on the dark page and `#e6edf6` on the light:
+  the page's colour, a touch lighter and a touch blue. The picture says
+  nothing the sentence and the time do not, so it stays wordless and
+  hidden from a screen reader.
+- **The Swift core** (5ff0874). `EggSection` in `Section.swift`, held by
+  `fixtures/section.json`: three cooks tick by tick (hot start into ice; a
+  cold start with the heat off, rested on the counter; one still in the
+  water), with every ring's dose, temperature and set against the
+  constant white target and a moved one. It agrees at 1e-12, like every
+  other suite.
+- **iOS.** `EggSectionView.swift`, beside `CookSentence` in an `HStack`, in
+  its own one-second `TimelineView`. A small cache carries the section
+  between ticks and replays it from t = 0 when the ticket changes. The
+  outline is `ringPoints` from `eggSection.ts`, the same numbers, drawn on
+  a `Canvas` outermost first. The colours are `Palette.yolk(at:in:)` and a
+  new `Palette.white(at:in:)`, which share one RGB mix. The time out of
+  the water is the cook's tap, or the pull plus `pullGraceSeconds` once
+  the grace has run out, as the web's `outAt_ms` is.
+  `-sectionAhead <s>` (debug) draws the egg that far on in the cook as
+  planned.
+
+**Seen** on the simulator (Shots 14 Plus, iOS 26.5): a cold start's raw
+egg 1:29 in (light); +9 min, the white set and the yolk's outer ring paler
+(light); about six minutes into the ice bath, a jammy yolk (dark). Each
+matches the web's egg. `-uiScreen heating` did not start a cook when the
+app was already running, so Start was tapped. The simulator was left
+idle, in light appearance.
+
+**Run:** `rm -rf dist/test && npm run verify`: 269 tests, all pass; the
+copy lint; the fixtures fresh; `swift test` 121 tests in 32 suites. `npm
+run ios:build` builds.
+
+**Not verified:** either app on a real phone; Dynamic Type at large sizes
+beside the egg; Safari.

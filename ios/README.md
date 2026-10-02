@@ -44,6 +44,7 @@ anything both apps must agree on lives here, not in either app.
 | `sphere.ts` | the modal/Duhamel solver | `createSphere`, `stepSphere` | `Sphere.swift` | `core.json` |
 | `protocol.ts` | the water's schedule: ramp, dip, heat off, cooling | `bathTemperature`, `panTimeConstant` | `Protocol.swift` | via `scenarios.json` |
 | `solve.ts` | the cook time for a doneness, and what is reachable | `solveCookTime`, `simulate`, `donenessFromSlider` | `Solve.swift` | `scenarios.json` |
+| `section.ts` | the egg in cross-section, a tick at a time: each ring's temperature and how set | `createSection`, `advanceSection`, `sectionView` | `Section.swift` (`EggSection`) | `section.json` |
 | `sousvide.ts` | the isothermal limit | `sousVideEstimate` | `SousVide.swift` | `sousvide.json` |
 | `doseGrid.ts` | the cached dose surface and its lookups | `buildDoseGrid`, `buildRequestedGrid` | `DoseGrid.swift` | `calibration.json` |
 | `infer.ts` | the particle filter: prior, likelihood, fold | `createPrior`, `updatePosterior`, `probeLikelihood` | `Infer.swift` | `calibration.json`, `probe.json` |
@@ -197,7 +198,11 @@ three are the model refusing to lie:
   for is the one thing you cannot check once the controls are hidden, and a hob
   instruction like "keep it boiling" does not answer it. While a cook runs, the
   setup sentence it was started with stays under the time, with nothing to tap,
-  over the doneness and peak yolk.
+  over the doneness and peak yolk. Beside it, `EggSectionView.swift` draws the
+  egg in cross-section, how set each layer is as the clock moves
+  (`EggSection` in core; `DECISIONS.md` 52), the web's egg drawn the same way.
+  `-sectionAhead <s>` on a debug build draws it that far on, for a screenshot
+  of a cook part done (`Screenshots.swift`).
 - **A cold start is provisional until you tap the boil.** The countdown says so.
   `t = 0` is the egg going into the cold pan — the same `t = 0` the physics core
   uses — so one deadline covers the ramp and the boil together, and tapping

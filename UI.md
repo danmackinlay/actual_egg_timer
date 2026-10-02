@@ -113,6 +113,14 @@ units the cook was set up in. What was said under the time at "Eggs in"
 stays for the whole cook and comes back after a reload or relaunch. Settings,
 Help and the slider are put away.
 
+To the left of the sentence, so it costs the column no height of its own,
+**the egg in cross-section** (`DECISIONS.md` 52; web `src/ui/eggSection.ts`,
+iOS `EggSectionView.swift`). It is an ovoid with a round yolk, drawn ring by ring as it
+cooks, and shows how set each layer is: the yolk in the slider track's
+colours, the white from a clear, faintly blue raw white to opaque. It is a
+picture of what the sentence and the time already say, so it has no words
+and a screen reader passes over it.
+
 ## 4. The (i) component
 
 - **Keys.** `K.more` beside `K` in `copy/en.json`, on the surface `more`,
