@@ -9,28 +9,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { MAX_BODY_BYTES, MAX_SEQ, Options, Store, handle, keyKey, recordKey } from '../server/eggs.js';
+import { MemoryStore } from '../server/memoryStore.js';
 import { EggRecord } from '../src/core/record.js';
 import { recordAt } from '../tools/common.js';
 import { SYNTH, makeAssertion } from './attest.js';
-
-/** A store as Netlify Blobs behaves for these five calls. */
-class MapStore implements Store {
-  readonly blobs = new Map<string, string>();
-  async get(key: string): Promise<string | null> {
-    return this.blobs.get(key) ?? null;
-  }
-  async set(key: string, value: string, onlyIfNew: boolean): Promise<boolean> {
-    if (onlyIfNew && this.blobs.has(key)) return false;
-    this.blobs.set(key, value);
-    return true;
-  }
-  async list(prefix: string): Promise<string[]> {
-    return [...this.blobs.keys()].filter((k) => k.startsWith(prefix)).sort();
-  }
-  async delete(key: string): Promise<void> {
-    this.blobs.delete(key);
-  }
-}
 
 const UID = '6f1c2a9e-2b1d-4c1e-9d6b-1a2b3c4d5e6f';
 const SITE = 'https://actualeggtimer.netlify.app';
@@ -51,7 +33,7 @@ async function send(store: Store, req: Request): Promise<{ status: number; body:
 }
 
 test('1. an egg is kept once, in the open tier, as the loader reads it', async () => {
-  const store = new MapStore();
+  const store = new MemoryStore();
   const first = await send(store, post('/api/eggs', { seq: 0, record: { ...egg(), extra: 'dropped' } }));
   assert.deepEqual(first, { status: 201, body: { tier: 'open', stored: true } });
   const kept = JSON.parse(store.blobs.get(recordKey('open', UID, 0)) ?? 'null') as Record<string, unknown>;
@@ -67,7 +49,7 @@ test('1. an egg is kept once, in the open tier, as the loader reads it', async (
 });
 
 test('2. what a phone would refuse, the server refuses', async () => {
-  const store = new MapStore();
+  const store = new MemoryStore();
   const refused: [string, unknown, number][] = [
     ['no id', { seq: 0, record: egg(null) }, 400],
     ['an id that is not a UUID', { seq: 0, record: egg('cook-1') }, 400],
@@ -92,7 +74,7 @@ test('2. what a phone would refuse, the server refuses', async () => {
 });
 
 test('3. DELETE removes every egg under the id, in both tiers, and its key', async () => {
-  const store = new MapStore();
+  const store = new MemoryStore();
   await store.set(recordKey('open', UID, 0), '{}', true);
   await store.set(recordKey('open', UID, 1), '{}', true);
   await store.set(recordKey('attested', UID, 2), '{}', true);
@@ -110,7 +92,7 @@ test('3. DELETE removes every egg under the id, in both tiers, and its key', asy
 });
 
 test('4. an iPhone attests once, and its eggs go to the attested tier', async () => {
-  const store = new MapStore();
+  const store = new MemoryStore();
   const attest = { uid: SYNTH.uid, keyId: SYNTH.keyId, attestation: SYNTH.attestation };
   assert.deepEqual(await send(store, post('/api/attest', attest)), { status: 201, body: { environment: 'development' } });
   assert.equal((await send(store, post('/api/attest', attest))).status, 200, 'the same key again is a retry');

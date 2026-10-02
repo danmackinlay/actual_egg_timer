@@ -4,8 +4,21 @@
     {
       "name": "egg-timer",
       "runtimeExecutable": "sh",
-      "runtimeArgs": ["-c", "npm run build:site && python3 -m http.server \"${PORT:-8080}\" --directory _site"],
+      "runtimeArgs": [
+        "-c",
+        "npm run build:site && python3 -m http.server \"${PORT:-8080}\" --directory _site"
+      ],
       "port": 8080,
+      "autoPort": true
+    },
+    {
+      "name": "egg-timer-dev",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": [
+        "-c",
+        "npm run build:site && npx tsc && node dist/tools/devServer.js"
+      ],
+      "port": 8888,
       "autoPort": true
     }
   ]
