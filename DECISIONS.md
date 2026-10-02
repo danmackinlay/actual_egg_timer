@@ -218,3 +218,11 @@ Decided by the owner, 29 September 2026:
     Apple takes integers only. Each push to `origin/main` is a release:
     bump the version, tag the pushed commit `v<version>` (annotated), push
     the tag with it. CI checks a tag against `package.json`.
+
+Decided by the owner, 2 October 2026:
+
+50. **iPhone only, for now.** The app was universal and portrait-only, which
+    Xcode warns of and App Store Connect refuses at upload (ITMS-90474:
+    iPad multitasking wants every orientation). `TARGETED_DEVICE_FAMILY` is
+    1 for the app and the widget; an iPad still runs it in iPhone
+    compatibility mode. A real iPad layout is for someday.

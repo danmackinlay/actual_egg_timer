@@ -75,6 +75,8 @@ Waiting on someone else: the Czech review (F5), by the owner's friend.
   should say so (`outcome`, `shownOutcome`). Small; both apps.
 - **Untested:** the Lock Screen card ending with the cooling, and the web's
   setup sentence while a cook runs (README §11.5).
+- **Someday:** an iPad app (`DECISIONS.md` 50). iOS is iPhone only; an iPad
+  layout needs every orientation and Split View, checked by screenshots.
 - **Someday:** other birds' eggs, emu first (`DECISIONS.md` 34). The model's
   geometry, yolk and white are a hen's; an emu egg (about 600 g, a thick
   dark shell) wants its own shape, composition and shell, and probably a

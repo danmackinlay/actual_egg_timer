@@ -77,6 +77,11 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: name.danmackinlay.actualeggtimer
+        # iPhone only (DECISIONS.md 50). A universal app that is portrait-only
+        # is refused at upload (ITMS-90474): iPad multitasking wants every
+        # orientation. An iPad still runs it, in iPhone compatibility mode.
+        # Per target, since xcodegen gives each iOS target "1,2" by default.
+        TARGETED_DEVICE_FAMILY: "1"
         PRODUCT_NAME: Actual Egg Timer
         GENERATE_INFOPLIST_FILE: YES
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
@@ -138,6 +143,8 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: name.danmackinlay.actualeggtimer.widget
+        # As the app's: an extension's family must not be wider than its host's.
+        TARGETED_DEVICE_FAMILY: "1"
         PRODUCT_NAME: EggTimerWidget
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         SKIP_INSTALL: YES
