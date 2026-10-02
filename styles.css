@@ -466,8 +466,8 @@ button.clause[aria-expanded="true"] {
    height of its own: the sentence runs to three lines or so anyway. */
 .egg-section {
   display: block;
-  height: 8.5rem;
-  width: 6.5rem;
+  height: 9.75rem;
+  width: 7.5rem;
 }
 .egg-section__shell { fill: none; stroke: var(--line); stroke-width: 1.5; }
 #cookSentence {

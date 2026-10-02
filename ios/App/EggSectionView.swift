@@ -9,8 +9,9 @@ import EggTimerCore
 /// The model's egg is a sphere (`EggSection`, in core); this one is drawn as
 /// an egg. Each ring is a closed outline, filled outermost first, so the one
 /// inside covers all but the band between them. The yolk is round; through
-/// the white the outlines turn from that circle into the shell's egg, blunt
-/// end up. Every fill is opaque, so a raw white is a colour of its own.
+/// the white the outlines turn from that circle into the shell's egg,
+/// standing on its blunt end rather than balanced on its point. Every fill is
+/// opaque, so a raw white is a colour of its own.
 ///
 /// It says nothing the sentence and the clock do not, so it has no words and
 /// VoiceOver passes over it.
@@ -87,17 +88,18 @@ enum EggOutline {
     /// Its half-width at the middle: the egg the model assumes, 1.35 times as
     /// long as wide.
     private static let halfWidth = halfLength / Constants.eggLengthRatio
-    /// How much the width swells toward the blunt end and narrows toward the
-    /// pointed one, so the pointed end is narrower as well as shorter.
+    /// How much the width swells toward the blunt end, at the bottom, and
+    /// narrows toward the pointed one, at the top.
     private static let taper = 0.18
-    /// How far the yolk's centre sits above the egg's middle.
-    private static let yolkLift = 0.06
+    /// How far the yolk's centre sits below the egg's middle, toward the
+    /// blunt end.
+    private static let yolkDrop = 0.06
     private static let outlinePoints = 72
 
-    /// The shell at parameter `t` (0 to the right, pi/2 up, toward the blunt
-    /// end), relative to the yolk's centre, y up.
+    /// The shell at parameter `t` (0 to the right, pi/2 up, toward the
+    /// pointed end), relative to the yolk's centre, y up.
     static func shellPoint(_ t: Double) -> (Double, Double) {
-        (halfWidth * cos(t) * (1.0 + taper * sin(t)), halfLength * sin(t) - yolkLift)
+        (halfWidth * cos(t) * (1.0 - taper * sin(t)), halfLength * sin(t) + yolkDrop)
     }
 
     /// The outline of everything inside `x` (r/R): a circle across the yolk,

@@ -42,7 +42,7 @@ function widthAt(y: number): number {
   return Math.max(...xs) - Math.min(...xs);
 }
 
-test('the shell is the model\'s egg, its pointed end down and narrower', () => {
+test('the shell is the model\'s egg, standing on its blunt end', () => {
   const shell = ringPoints(1.0);
   const ys = shell.map((p) => p[1]);
   const top = Math.max(...ys);
@@ -50,10 +50,10 @@ test('the shell is the model\'s egg, its pointed end down and narrower', () => {
   const length = top - bottom;
   const width = Math.max(...shell.map((p) => p[0])) - Math.min(...shell.map((p) => p[0]));
   assert.ok(Math.abs(length / width - EGG_LENGTH_RATIO) < 0.05, `length/width ${length / width}`);
-  // A quarter of the way in from each end: the blunt end is the wider.
+  // A quarter of the way in from each end: the blunt end, below, is the wider.
   const mid = (top + bottom) / 2;
-  const blunt = widthAt(mid + length / 4);
-  const pointed = widthAt(mid - length / 4);
+  const blunt = widthAt(mid - length / 4);
+  const pointed = widthAt(mid + length / 4);
   assert.ok(blunt / pointed > 1.15, `blunt ${blunt}, pointed ${pointed}`);
 });
 

@@ -5,7 +5,8 @@
  * section is a closed outline, and the outlines are filled outermost first,
  * each in its ring's colour, so the one inside covers all but the band
  * between them. The yolk is round, as a real one is; through the white the
- * outlines turn from that circle into the shell's egg, blunt end up.
+ * outlines turn from that circle into the shell's egg, standing on its
+ * blunt end rather than balanced on its point.
  *
  * Built from what both apps can draw the same way: a list of points per ring
  * (`ringPoints`) and an opaque colour per ring (`ringFills`). On iOS the same
@@ -30,23 +31,24 @@ const HALF_LENGTH = 1.0;
 /** Its half-width at the middle: the egg the model assumes, 1.35 times as
  *  long as wide. */
 const HALF_WIDTH = HALF_LENGTH / EGG_LENGTH_RATIO;
-/** How much the width swells toward the blunt end and narrows toward the
- *  pointed one: the shell's half-width at height y is HALF_WIDTH times
- *  (1 + TAPER y), so the pointed end is narrower as well as the blunt end
- *  rounder - an egg, not an oval stretched at one end. */
+/** How much the width swells toward the blunt end, at the bottom, and
+ *  narrows toward the pointed one, at the top: the shell's half-width at
+ *  height y is HALF_WIDTH times (1 - TAPER y), so the pointed end is
+ *  narrower as well as the blunt end rounder - an egg, not an oval
+ *  stretched at one end. */
 const TAPER = 0.18;
-/** How far the yolk's centre sits above the egg's middle, toward the blunt
- *  end, where a real one floats. */
-const YOLK_LIFT = 0.06;
+/** How far the yolk's centre sits below the egg's middle, toward the blunt
+ *  end. */
+const YOLK_DROP = 0.06;
 /** Points per outline. */
 const OUTLINE_POINTS = 72;
 
-/** The shell at parameter `t` (0 to the right, pi/2 up, toward the blunt
+/** The shell at parameter `t` (0 to the right, pi/2 up, toward the pointed
  *  end), relative to the yolk's centre, y up. */
 export function shellPoint(t: number): [number, number] {
   return [
-    HALF_WIDTH * Math.cos(t) * (1.0 + TAPER * Math.sin(t)),
-    HALF_LENGTH * Math.sin(t) - YOLK_LIFT,
+    HALF_WIDTH * Math.cos(t) * (1.0 - TAPER * Math.sin(t)),
+    HALF_LENGTH * Math.sin(t) + YOLK_DROP,
   ];
 }
 
