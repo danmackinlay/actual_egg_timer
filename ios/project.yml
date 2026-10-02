@@ -33,8 +33,8 @@ settings:
     # lives in package.json and the git tag. Two version schemes for one program
     # is one more than anybody can keep straight; test/version.test.ts holds
     # them together.
-    MARKETING_VERSION: "0.3.1"
-    CURRENT_PROJECT_VERSION: "1"
+    MARKETING_VERSION: "0.3.2"
+    CURRENT_PROJECT_VERSION: "2"
     # The simulator needs no identity and must not wait on one: keeping it
     # unsigned is what makes the build-run-screenshot loop two seconds. Device
     # builds sign normally, which is what the entitlement requires.
