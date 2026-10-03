@@ -6,6 +6,8 @@
  *
  *   npm run eggs -- pull <out.jsonl>
  *       every record in the live store, one per line: { tier, seq, record }.
+ *       The tier is the one it counts in: attested only under a key from
+ *       Apple's production environment (`countedTier`, DECISIONS.md 68).
  *       Needs NETLIFY_AUTH_TOKEN (a personal access token) and
  *       NETLIFY_SITE_ID. The output is people's eggs: it stays out of git
  *       (fit/data/ is ignored), and is deleted with the id when they ask.
@@ -44,6 +46,7 @@ import { DEFAULT_PARAMS, WHITE_DOSE_TARGET, donenessFromSlider, logYolkTarget, s
 import { coolingSecondsFor } from '../src/core/policy.js';
 import { normalCdf } from '../src/core/sphere.js';
 import { NUDGE_MAX_S, nudgeSeconds } from '../src/core/decide.js';
+import { countedTier, keyKey } from '../server/eggs.js';
 import { appSetup, rng } from './common.js';
 
 /** The time-scale axis of the emulator, in literature sds. */
@@ -75,16 +78,28 @@ async function pull(out: string): Promise<void> {
   const { getStore } = await import('@netlify/blobs');
   const store = getStore({ name: 'eggs', siteID: siteID, token: token, consistency: 'strong' });
   const { blobs } = await store.list({ prefix: 'records/' });
+  // Each id's App Attest key, read once: a record counts as attested only if
+  // its key is from production, as the server files it (DECISIONS.md 68).
+  const keys = new Map<string, { environment: string } | null>();
   const lines: Line[] = [];
+  let demoted = 0;
   for (const b of blobs) {
-    const m = /^records\/(attested|open)\/[^/]+\/(\d+)\.json$/.exec(b.key);
+    const m = /^records\/(attested|open)\/([^/]+)\/(\d+)\.json$/.exec(b.key);
     if (m === null) continue;
     const text = await store.get(b.key, { type: 'text' });
     if (text === null) continue;
-    lines.push({ tier: m[1] as Line['tier'], seq: Number(m[2]), record: JSON.parse(text) as unknown });
+    const kept = m[1] as Line['tier'];
+    const uid = m[2];
+    if (kept === 'attested' && !keys.has(uid)) {
+      const raw = await store.get(keyKey(uid), { type: 'text' });
+      keys.set(uid, raw === null ? null : JSON.parse(raw) as { environment: string });
+    }
+    const tier = countedTier(kept, keys.get(uid) ?? null);
+    if (tier !== kept) demoted += 1;
+    lines.push({ tier: tier, seq: Number(m[3]), record: JSON.parse(text) as unknown });
   }
   writeLines(out, lines);
-  console.log(`${lines.length} records -> ${out}`);
+  console.log(`${lines.length} records -> ${out}` + (demoted > 0 ? ` (${demoted} filed as attested count as open)` : ''));
 }
 
 /* --------------------------------------------------------------- simulate */

@@ -1,14 +1,15 @@
 /**
  * The collection endpoint (server/eggs.ts; COLLECTIVE.md section 1), driven
  * against a map standing in for Netlify Blobs: an egg kept once and only
- * once, in the tier its assertion earns, refused when a phone's loader would
+ * once, in the tier its assertion earns (attested only under a key from
+ * Apple's production environment, DECISIONS.md 68), refused when a phone's loader would
  * refuse it, and every trace of an id gone on DELETE.
  */
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { MAX_BODY_BYTES, MAX_SEQ, Options, Store, handle, keyKey, recordKey } from '../server/eggs.js';
+import { MAX_BODY_BYTES, MAX_SEQ, Options, Store, countedTier, handle, keyKey, recordKey } from '../server/eggs.js';
 import { MemoryStore } from '../server/memoryStore.js';
 import { EggRecord } from '../src/core/record.js';
 import { recordAt } from '../tools/common.js';
@@ -91,48 +92,77 @@ test('3. DELETE removes every egg under the id, in both tiers, and its key', asy
   assert.equal((await del('')).status, 405, 'DELETE /api/eggs/ is DELETE /api/eggs, which takes only POST');
 });
 
-test('4. an iPhone attests once, and its eggs go to the attested tier', async () => {
+test('4. an iPhone from TestFlight or the App Store attests once, and its eggs go to the attested tier', async () => {
   const store = new MemoryStore();
-  const attest = { uid: SYNTH.uid, keyId: SYNTH.keyId, attestation: SYNTH.attestation };
-  assert.deepEqual(await send(store, post('/api/attest', attest)), { status: 201, body: { environment: 'development' } });
+  const P = SYNTH.production;
+  const attest = { uid: P.uid, keyId: P.keyId, attestation: P.attestation };
+  assert.deepEqual(await send(store, post('/api/attest', attest)), { status: 201, body: { environment: 'production' } });
   assert.equal((await send(store, post('/api/attest', attest))).status, 200, 'the same key again is a retry');
   const wrongId = { ...attest, uid: UID };
   assert.equal((await send(store, post('/api/attest', wrongId))).status, 400, 'bound to the id it was made for');
   assert.equal((await send(store, post('/api/attest', { ...attest, keyId: 'AAAA' }))).status, 400, 'not this key');
-  assert.equal((await send(store, post('/api/attest', { uid: SYNTH.uid }))).status, 400);
+  assert.equal((await send(store, post('/api/attest', { uid: P.uid }))).status, 400);
   // One key per id: an id already holding another key refuses a second.
-  const kept = store.blobs.get(keyKey(SYNTH.uid)) ?? '';
-  store.blobs.set(keyKey(SYNTH.uid), JSON.stringify({ ...JSON.parse(kept), keyId: 'another' }));
+  const kept = store.blobs.get(keyKey(P.uid)) ?? '';
+  store.blobs.set(keyKey(P.uid), JSON.stringify({ ...JSON.parse(kept), keyId: 'another' }));
   assert.equal((await send(store, post('/api/attest', attest))).status, 409);
-  store.blobs.set(keyKey(SYNTH.uid), kept);
+  store.blobs.set(keyKey(P.uid), kept);
 
   // An egg, signed: attested, and the counter moves on.
-  const body = JSON.stringify({ seq: 0, record: egg(SYNTH.uid) });
+  const body = JSON.stringify({ seq: 0, record: egg(P.uid) });
   const signed = (b: string, counter: number) => post('/api/eggs', b, {
-    'x-egg-assertion': Buffer.from(makeAssertion(SYNTH.leafPrivateKey, new TextEncoder().encode(b), counter)).toString('base64'),
+    'x-egg-assertion': Buffer.from(makeAssertion(P.leafPrivateKey, new TextEncoder().encode(b), counter)).toString('base64'),
   });
   assert.deepEqual(await send(store, signed(body, 1)), { status: 201, body: { tier: 'attested', stored: true } });
-  assert.equal(JSON.parse(store.blobs.get(keyKey(SYNTH.uid)) ?? 'null').counter, 1);
+  assert.equal(JSON.parse(store.blobs.get(keyKey(P.uid)) ?? 'null').counter, 1);
   // The same request again: the counter has not gone up, so it reads as open,
   // and the attested copy stands - no second copy is written.
   assert.deepEqual(await send(store, signed(body, 1)), { status: 200, body: { tier: 'attested', stored: false } });
-  assert.equal(store.blobs.has(recordKey('open', SYNTH.uid, 0)), false);
+  assert.equal(store.blobs.has(recordKey('open', P.uid, 0)), false);
 
   // Unsigned, or signed over another body: the open tier.
-  const unsigned = JSON.stringify({ seq: 1, record: egg(SYNTH.uid) });
+  const unsigned = JSON.stringify({ seq: 1, record: egg(P.uid) });
   assert.equal((await send(store, post('/api/eggs', unsigned))).body['tier'], 'open');
-  const forged = post('/api/eggs', JSON.stringify({ seq: 2, record: egg(SYNTH.uid) }), {
-    'x-egg-assertion': Buffer.from(makeAssertion(SYNTH.leafPrivateKey, new TextEncoder().encode(body), 5)).toString('base64'),
+  const forged = post('/api/eggs', JSON.stringify({ seq: 2, record: egg(P.uid) }), {
+    'x-egg-assertion': Buffer.from(makeAssertion(P.leafPrivateKey, new TextEncoder().encode(body), 5)).toString('base64'),
   });
   assert.equal((await send(store, forged)).body['tier'], 'open');
   // The other way: an egg kept as open, then sent again once the phone has
   // attested (the first answer lost on the way back), is not kept twice.
-  await store.set(recordKey('open', SYNTH.uid, 7), '{}', true);
-  const later = JSON.stringify({ seq: 7, record: egg(SYNTH.uid) });
+  await store.set(recordKey('open', P.uid, 7), '{}', true);
+  const later = JSON.stringify({ seq: 7, record: egg(P.uid) });
   assert.deepEqual(await send(store, signed(later, 6)), { status: 200, body: { tier: 'open', stored: false } });
-  assert.equal(store.blobs.has(recordKey('attested', SYNTH.uid, 7)), false);
+  assert.equal(store.blobs.has(recordKey('attested', P.uid, 7)), false);
   // An assertion for an id with no key: open.
   const nokey = JSON.stringify({ seq: 0, record: egg(UID) });
   assert.equal((await send(store, signed(nokey, 9))).body['tier'], 'open');
   assert.equal((await send(store, post('/api/eggs', nokey, { 'x-egg-assertion': '!!' }))).status, 200);
+});
+
+test('5. a development build attests, but its eggs go to the open tier, as if unsigned (DECISIONS.md 68)', async () => {
+  const store = new MemoryStore();
+  const attest = { uid: SYNTH.uid, keyId: SYNTH.keyId, attestation: SYNTH.attestation };
+  // The key is verified and kept, so the path can be tried on the owner's phone.
+  assert.deepEqual(await send(store, post('/api/attest', attest)), { status: 201, body: { environment: 'development' } });
+  assert.equal(JSON.parse(store.blobs.get(keyKey(SYNTH.uid)) ?? 'null').environment, 'development');
+  // A properly signed egg: open, and the key's counter is not moved.
+  const body = JSON.stringify({ seq: 0, record: egg(SYNTH.uid) });
+  const signed = post('/api/eggs', body, {
+    'x-egg-assertion': Buffer.from(makeAssertion(SYNTH.leafPrivateKey, new TextEncoder().encode(body), 1)).toString('base64'),
+  });
+  assert.deepEqual(await send(store, signed), { status: 201, body: { tier: 'open', stored: true } });
+  assert.equal(store.blobs.has(recordKey('attested', SYNTH.uid, 0)), false);
+  assert.equal(JSON.parse(store.blobs.get(keyKey(SYNTH.uid)) ?? 'null').counter, 0);
+  // Exactly as unsigned: the same egg without its assertion is the same copy.
+  assert.deepEqual(await send(store, post('/api/eggs', body)), { status: 200, body: { tier: 'open', stored: false } });
+  // DELETE takes the key with the results.
+  await handle(new Request(SITE + '/api/eggs/' + SYNTH.uid, { method: 'DELETE' }), store);
+  assert.equal(store.blobs.size, 0);
+});
+
+test('6. the tier a kept record counts in, for the fit: attested only under a key from production', () => {
+  assert.equal(countedTier('attested', { environment: 'production' }), 'attested');
+  assert.equal(countedTier('attested', { environment: 'development' }), 'open', 'filed before the rule, or by hand');
+  assert.equal(countedTier('attested', null), 'open', 'no key left to vouch for it');
+  assert.equal(countedTier('open', { environment: 'production' }), 'open', 'an unsigned egg stays open');
 });

@@ -18,7 +18,7 @@ import { readFileSync } from 'node:fs';
 import { generateKeyPairSync } from 'node:crypto';
 
 import {
-  APP_ID, AttestError, verifyAssertion, verifyAttestation,
+  APP_ID, AttestError, countsAsGenuine, verifyAssertion, verifyAttestation,
 } from '../server/appAttest.js';
 import { CborError, decode, decodeFirst, encode } from '../server/cbor.js';
 import { SYNTH, b64, makeAssertion, sha256 } from './attest.js';
@@ -87,6 +87,19 @@ test('3. the synthetic attestation is this app\'s, bound to the cook\'s id', () 
   throwsAt('1:', () => verifyAttestation({
     attestation: b64(SYNTH.attestation), keyId: b64(SYNTH.keyId), clientDataHash: clientDataHash,
   }));
+  // Its twin from production verifies the same way, and says so.
+  const p = SYNTH.production;
+  const kp = verifyAttestation({
+    attestation: b64(p.attestation), keyId: b64(p.keyId), root: SYNTH.root,
+    clientDataHash: sha256(new TextEncoder().encode(p.uid)),
+  });
+  assert.equal(kp.environment, 'production');
+});
+
+test('3b. only a key from production vouches for a genuine copy of the app (DECISIONS.md 68)', () => {
+  assert.equal(countsAsGenuine('production'), true, 'TestFlight and the App Store');
+  assert.equal(countsAsGenuine('development'), false, 'a build installed from Xcode');
+  assert.equal(countsAsGenuine(''), false);
 });
 
 function attestedKey(): string {

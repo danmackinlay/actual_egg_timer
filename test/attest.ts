@@ -1,5 +1,5 @@
 /**
- * What the App Attest tests share: the synthetic attestation for this app
+ * What the App Attest tests share: the synthetic attestations for this app
  * (test/data/appAttestSynthetic.json, made by tools/attestTestData.ts), and
  * an assertion made the way a phone makes one, with its throwaway key.
  */
@@ -9,13 +9,21 @@ import { createHash, createSign } from 'node:crypto';
 import { APP_ID } from '../server/appAttest.js';
 import { encode } from '../server/cbor.js';
 
-export interface Synthetic {
+/** One phone's attestation, and the key it attests, to sign with. */
+export interface SyntheticKey {
   uid: string;
-  appId: string;
-  root: string;
   keyId: string;
   attestation: string;
   leafPrivateKey: string;
+}
+
+/** The development attestation at the top level (a build from Xcode), and
+ *  a production one beside it (TestFlight and the App Store), under the same
+ *  made-up root. Only production counts as a genuine copy (DECISIONS.md 68). */
+export interface Synthetic extends SyntheticKey {
+  appId: string;
+  root: string;
+  production: SyntheticKey;
 }
 
 export const SYNTH = JSON.parse(readFileSync('test/data/appAttestSynthetic.json', 'utf8')) as Synthetic;

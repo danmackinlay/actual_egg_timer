@@ -11,8 +11,10 @@
  * key is new, and only if the other tier does not already hold it: a retry
  * is harmless, one egg is one copy, and nothing is ever overwritten. The tier is
  * `attested` when the egg came with an App Attest assertion that verifies
- * against the key attested for its id, and `open` otherwise - the web app,
- * and any iPhone that cannot attest (`appAttest.ts`).
+ * against the key attested for its id in Apple's production environment, and
+ * `open` otherwise - the web app, any iPhone that cannot attest, and a
+ * development build, whose key is kept but vouches for nothing
+ * (`appAttest.ts`, DECISIONS.md 68).
  *
  * The record must pass `parseRecord`, the loader both apps use, so the
  * server refuses exactly what a phone would; what is kept is what it
@@ -25,7 +27,7 @@
 
 import { createHash } from 'node:crypto';
 import { parseRecord } from '../src/core/record.js';
-import { AttestError, verifyAssertion, verifyAttestation } from './appAttest.js';
+import { AttestError, countsAsGenuine, verifyAssertion, verifyAttestation } from './appAttest.js';
 
 /** The store, as much of it as this needs. */
 export interface Store {
@@ -122,14 +124,28 @@ function base64(v: unknown): Uint8Array | null {
 
 /* ------------------------------------------------------------------ eggs */
 
+/**
+ * The tier a kept record counts in, given the key kept for its id: attested
+ * only if it was kept as attested and its key is from production
+ * (`countsAsGenuine`, DECISIONS.md 68). The server files by the same rule;
+ * the fit's pull reads every record through this, so that a record filed
+ * before the rule, or by hand, cannot count for more than it should.
+ */
+export function countedTier(kept: Tier, key: { environment: string } | null): Tier {
+  return kept === 'attested' && key !== null && countsAsGenuine(key.environment) ? 'attested' : 'open';
+}
+
 /** Which tier an egg belongs in: attested if its assertion verifies against
- *  the key kept for its id, and the counter is then moved on. */
+ *  the key kept for its id and that key is from production, and the counter
+ *  is then moved on. A development key's results are open, exactly as if
+ *  unsigned (DECISIONS.md 68): its assertion is not even read. */
 async function tierOf(store: Store, uid: string, body: Uint8Array, req: Request, opts: Options): Promise<Tier> {
   const assertion = base64(req.headers.get(ASSERTION_HEADER));
   if (assertion === null) return 'open';
   const raw = await store.get(keyKey(uid));
   if (raw === null) return 'open';
   const key = JSON.parse(raw) as StoredKey;
+  if (countedTier('attested', key) !== 'attested') return 'open';
   try {
     const counter = verifyAssertion({
       assertion: assertion, clientData: body, publicKey: key.publicKey, counter: key.counter,

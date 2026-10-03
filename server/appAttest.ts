@@ -55,6 +55,19 @@ export const APP_ID = 'L4D3TWC3A4.name.danmackinlay.actualeggtimer';
  *  build, production for TestFlight and the App Store. */
 export type AttestEnvironment = 'development' | 'production';
 
+/**
+ * Whether a key from this environment vouches for a genuine copy of the app
+ * (DECISIONS.md 68). Only production: TestFlight and the App Store always
+ * attest there. A development key is a build installed from Xcode, the
+ * owner's own phones, whose results do not count as a genuine copy's; it is
+ * still verified and kept, so the path can be tried on a phone, but its
+ * results go to the open tier exactly as if they were unsigned. The server
+ * (`eggs.ts`) and the fit's pull (`tools/eggs.ts`) both ask this.
+ */
+export function countsAsGenuine(environment: string): boolean {
+  return environment === 'production';
+}
+
 export class AttestError extends Error {}
 
 function sha256(...parts: Uint8Array[]): Uint8Array {

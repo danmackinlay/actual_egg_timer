@@ -131,7 +131,12 @@ its absence means.
   the reader takes a map after the credential whatever the flag says.
 - **No entitlement is added.** Without one, a development build uses the
   sandbox environment, and TestFlight and the App Store use production
-  whatever it says. The server accepts both and records which.
+  whatever it says. The server accepts both and records which, but **only
+  production counts** (`DECISIONS.md` 68): a development build is the
+  owner's own phone, so its eggs go to the open tier exactly as if they
+  were unsigned (`countsAsGenuine` in `server/appAttest.ts`). The fit's pull
+  reads each record's tier through the same rule (`countedTier`), so a
+  record filed as attested under a development key counts as open.
 - **A failure is never fatal**: the egg goes to the open tier.
 
 ### The nudge and the badge (E8, `DECISIONS.md` 58)

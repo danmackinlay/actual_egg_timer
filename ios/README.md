@@ -300,7 +300,9 @@ attest it, bound to the id (`clientDataHash = SHA256(uid)`); every egg then
 carries an assertion over its body, and the server files it in the attested
 tier, which outweighs the web in the fit (`DECISIONS.md` 2). No entitlement is
 set: a development build uses Apple's sandbox, TestFlight and the App Store
-use production, and the server takes both. The simulator cannot attest at
+use production, and the server takes both, but files a development build's
+eggs in the open tier, as if unsigned (`DECISIONS.md` 68): only a build
+from TestFlight or the App Store counts as genuine. The simulator cannot attest at
 all, so its eggs go to the open tier; that path was checked end to end, and
 the attested one has not yet run on a phone.
 
