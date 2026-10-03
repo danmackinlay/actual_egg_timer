@@ -83,10 +83,11 @@ That is two controls and one sentence.
 - Language: English or English (1750) (`LANGUAGE.md` §6).
 - What I've learned (`learned.literature`, `.tuned`, `.pan` or `.both`), and
   Forget, which asks first, in place (`learned.confirm.*`).
-- Share my eggs (E6, the `share` draft), with its (i): the consent always on
-  screen (`share.what`), never behind the (i); the switch, off until the cook
-  turns it on; under it how many eggs have gone and how many wait; Delete
-  what I've sent, which asks first in place as Forget does; and the privacy
+- Sharing results (E6, the `share` draft; the `data` draft named it), with
+  its (i): the consent always on screen (`share.what`), never behind the
+  (i); the switch, off until the cook
+  turns it on; under it how many results have gone and how many wait; Delete
+  shared results, which asks first in place as Forget does; and the privacy
   page.
 - The colophon, with its link.
 

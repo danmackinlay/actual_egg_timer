@@ -4016,3 +4016,8 @@ published in `ios/App/Fonts`, registered by `UIAppFonts` in `project.yml`.
   size, XXXL and AX-large. Nothing clips. Modern English looked as before.
 
 **Not verified:** a device; VoiceOver, which reads the same text as before.
+
+## 3 October 2026: results, not eggs (the `data` draft)
+
+The owner's rule against metonyms, in 13 keys of both apps and their 1750 twins: what is kept, sent and deleted is a "result" (one cooked egg: how it was cooked and how it came out), the settings are the settings, and the rest of the cook is the rest of the cooking.
+The controls lost their pronouns ("Share results", "Delete shared results"); the privacy page, swept separately, must name them as they now read.

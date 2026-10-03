@@ -101,8 +101,8 @@ test('1c. a key 1750 lacks falls back to English, with English\'s plural rule', 
   // app.name is iOS's, and 1750 leaves it to English.
   assert.ok(!PERIOD.messages.has('app.name'));
   assert.equal(render(PERIOD, 'app.name'), 'Actual Egg Timer');
-  assert.equal(render(PERIOD, 'learned.tuned', { eggs: 1 }), 'Instructed by 1 egg');
-  assert.equal(render(PERIOD, 'learned.tuned', { eggs: 3 }), 'Instructed by 3 eggs');
+  assert.equal(render(PERIOD, 'learned.tuned', { eggs: 1 }), 'Instructed by 1 result');
+  assert.equal(render(PERIOD, 'learned.tuned', { eggs: 3 }), 'Instructed by 3 results');
 });
 
 test('1d. none of the eight stage-play archaisms', () => {

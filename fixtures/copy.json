@@ -735,7 +735,7 @@
       "args": {
         "eggs": 3
       },
-      "text": "Instructed by 3 eggs"
+      "text": "Instructed by 3 results"
     },
     {
       "locale": "en-x-1750",
@@ -743,7 +743,7 @@
       "args": {
         "eggs": 0
       },
-      "text": "Instructed by 0 eggs"
+      "text": "Instructed by 0 results"
     },
     {
       "locale": "en-x-1750",
@@ -751,7 +751,7 @@
       "args": {
         "eggs": 1
       },
-      "text": "Instructed by 1 egg"
+      "text": "Instructed by 1 result"
     },
     {
       "locale": "en-x-1750",
@@ -759,7 +759,7 @@
       "args": {
         "eggs": 2
       },
-      "text": "Instructed by 2 eggs"
+      "text": "Instructed by 2 results"
     },
     {
       "locale": "en-x-1750",
@@ -767,7 +767,7 @@
       "args": {
         "eggs": 3
       },
-      "text": "Instructed by 3 eggs"
+      "text": "Instructed by 3 results"
     },
     {
       "locale": "en-x-1750",
@@ -775,7 +775,7 @@
       "args": {
         "eggs": 4
       },
-      "text": "Instructed by 4 eggs"
+      "text": "Instructed by 4 results"
     },
     {
       "locale": "en-x-1750",
@@ -783,7 +783,7 @@
       "args": {
         "eggs": 5
       },
-      "text": "Instructed by 5 eggs"
+      "text": "Instructed by 5 results"
     },
     {
       "locale": "en-x-1750",
@@ -791,7 +791,7 @@
       "args": {
         "eggs": 11
       },
-      "text": "Instructed by 11 eggs"
+      "text": "Instructed by 11 results"
     },
     {
       "locale": "en-x-1750",
@@ -799,7 +799,7 @@
       "args": {
         "eggs": 21
       },
-      "text": "Instructed by 21 eggs"
+      "text": "Instructed by 21 results"
     },
     {
       "locale": "en-x-1750",
@@ -807,7 +807,7 @@
       "args": {
         "eggs": 22
       },
-      "text": "Instructed by 22 eggs"
+      "text": "Instructed by 22 results"
     },
     {
       "locale": "en-x-1750",
@@ -815,7 +815,7 @@
       "args": {
         "eggs": 1.5
       },
-      "text": "Instructed by 1.5 eggs"
+      "text": "Instructed by 1.5 results"
     },
     {
       "locale": "en-x-1750",
@@ -823,7 +823,7 @@
       "args": {
         "eggs": 2.5
       },
-      "text": "Instructed by 2.5 eggs"
+      "text": "Instructed by 2.5 results"
     },
     {
       "locale": "en-x-1750",
@@ -831,7 +831,7 @@
       "args": {
         "eggs": 0.5
       },
-      "text": "Instructed by 0.5 eggs"
+      "text": "Instructed by 0.5 results"
     },
     {
       "locale": "en-x-1750",
@@ -846,10 +846,10 @@
       "locale": "en-x-1750",
       "key": "learned.both",
       "args": {
-        "tuned": "Learned from 3 eggs",
+        "tuned": "Learned from 3 results",
         "pan": "12.50 qt of water takes about 6:40 to boil, based on history"
       },
-      "text": "Learned from 3 eggs · 12.50 qt of water takes about 6:40 to boil, based on history"
+      "text": "Learned from 3 results · 12.50 qt of water takes about 6:40 to boil, based on history"
     },
     {
       "locale": "en-x-1750",
@@ -857,7 +857,7 @@
       "args": {
         "eggs": 3
       },
-      "text": "I have sent 3 eggs."
+      "text": "I have sent 3 results."
     },
     {
       "locale": "en-x-1750",
@@ -865,7 +865,7 @@
       "args": {
         "eggs": 0
       },
-      "text": "I have sent 0 eggs."
+      "text": "I have sent 0 results."
     },
     {
       "locale": "en-x-1750",
@@ -873,7 +873,7 @@
       "args": {
         "eggs": 1
       },
-      "text": "I have sent 1 egg."
+      "text": "I have sent 1 result."
     },
     {
       "locale": "en-x-1750",
@@ -881,7 +881,7 @@
       "args": {
         "eggs": 2
       },
-      "text": "I have sent 2 eggs."
+      "text": "I have sent 2 results."
     },
     {
       "locale": "en-x-1750",
@@ -889,7 +889,7 @@
       "args": {
         "eggs": 3
       },
-      "text": "I have sent 3 eggs."
+      "text": "I have sent 3 results."
     },
     {
       "locale": "en-x-1750",
@@ -897,7 +897,7 @@
       "args": {
         "eggs": 4
       },
-      "text": "I have sent 4 eggs."
+      "text": "I have sent 4 results."
     },
     {
       "locale": "en-x-1750",
@@ -905,7 +905,7 @@
       "args": {
         "eggs": 5
       },
-      "text": "I have sent 5 eggs."
+      "text": "I have sent 5 results."
     },
     {
       "locale": "en-x-1750",
@@ -913,7 +913,7 @@
       "args": {
         "eggs": 11
       },
-      "text": "I have sent 11 eggs."
+      "text": "I have sent 11 results."
     },
     {
       "locale": "en-x-1750",
@@ -921,7 +921,7 @@
       "args": {
         "eggs": 21
       },
-      "text": "I have sent 21 eggs."
+      "text": "I have sent 21 results."
     },
     {
       "locale": "en-x-1750",
@@ -929,7 +929,7 @@
       "args": {
         "eggs": 22
       },
-      "text": "I have sent 22 eggs."
+      "text": "I have sent 22 results."
     },
     {
       "locale": "en-x-1750",
@@ -937,7 +937,7 @@
       "args": {
         "eggs": 1.5
       },
-      "text": "I have sent 1.5 eggs."
+      "text": "I have sent 1.5 results."
     },
     {
       "locale": "en-x-1750",
@@ -945,7 +945,7 @@
       "args": {
         "eggs": 2.5
       },
-      "text": "I have sent 2.5 eggs."
+      "text": "I have sent 2.5 results."
     },
     {
       "locale": "en-x-1750",
@@ -953,7 +953,7 @@
       "args": {
         "eggs": 0.5
       },
-      "text": "I have sent 0.5 eggs."
+      "text": "I have sent 0.5 results."
     },
     {
       "locale": "en-x-1750",
@@ -2295,7 +2295,7 @@
       "args": {
         "eggs": 3
       },
-      "text": "Learned from 3 eggs"
+      "text": "Learned from 3 results"
     },
     {
       "locale": "en",
@@ -2303,7 +2303,7 @@
       "args": {
         "eggs": 0
       },
-      "text": "Learned from 0 eggs"
+      "text": "Learned from 0 results"
     },
     {
       "locale": "en",
@@ -2311,7 +2311,7 @@
       "args": {
         "eggs": 1
       },
-      "text": "Learned from 1 egg"
+      "text": "Learned from 1 result"
     },
     {
       "locale": "en",
@@ -2319,7 +2319,7 @@
       "args": {
         "eggs": 2
       },
-      "text": "Learned from 2 eggs"
+      "text": "Learned from 2 results"
     },
     {
       "locale": "en",
@@ -2327,7 +2327,7 @@
       "args": {
         "eggs": 3
       },
-      "text": "Learned from 3 eggs"
+      "text": "Learned from 3 results"
     },
     {
       "locale": "en",
@@ -2335,7 +2335,7 @@
       "args": {
         "eggs": 4
       },
-      "text": "Learned from 4 eggs"
+      "text": "Learned from 4 results"
     },
     {
       "locale": "en",
@@ -2343,7 +2343,7 @@
       "args": {
         "eggs": 5
       },
-      "text": "Learned from 5 eggs"
+      "text": "Learned from 5 results"
     },
     {
       "locale": "en",
@@ -2351,7 +2351,7 @@
       "args": {
         "eggs": 11
       },
-      "text": "Learned from 11 eggs"
+      "text": "Learned from 11 results"
     },
     {
       "locale": "en",
@@ -2359,7 +2359,7 @@
       "args": {
         "eggs": 21
       },
-      "text": "Learned from 21 eggs"
+      "text": "Learned from 21 results"
     },
     {
       "locale": "en",
@@ -2367,7 +2367,7 @@
       "args": {
         "eggs": 22
       },
-      "text": "Learned from 22 eggs"
+      "text": "Learned from 22 results"
     },
     {
       "locale": "en",
@@ -2375,7 +2375,7 @@
       "args": {
         "eggs": 1.5
       },
-      "text": "Learned from 1.5 eggs"
+      "text": "Learned from 1.5 results"
     },
     {
       "locale": "en",
@@ -2383,7 +2383,7 @@
       "args": {
         "eggs": 2.5
       },
-      "text": "Learned from 2.5 eggs"
+      "text": "Learned from 2.5 results"
     },
     {
       "locale": "en",
@@ -2391,7 +2391,7 @@
       "args": {
         "eggs": 0.5
       },
-      "text": "Learned from 0.5 eggs"
+      "text": "Learned from 0.5 results"
     },
     {
       "locale": "en",
@@ -2406,10 +2406,10 @@
       "locale": "en",
       "key": "learned.both",
       "args": {
-        "tuned": "Learned from 3 eggs",
+        "tuned": "Learned from 3 results",
         "pan": "12.50 qt of water takes about 6:40 to boil, based on history"
       },
-      "text": "Learned from 3 eggs · 12.50 qt of water takes about 6:40 to boil, based on history"
+      "text": "Learned from 3 results · 12.50 qt of water takes about 6:40 to boil, based on history"
     },
     {
       "locale": "en",
@@ -2417,7 +2417,7 @@
       "args": {
         "eggs": 3
       },
-      "text": "I’ve sent 3 eggs."
+      "text": "I’ve sent 3 results."
     },
     {
       "locale": "en",
@@ -2425,7 +2425,7 @@
       "args": {
         "eggs": 0
       },
-      "text": "I’ve sent 0 eggs."
+      "text": "I’ve sent 0 results."
     },
     {
       "locale": "en",
@@ -2433,7 +2433,7 @@
       "args": {
         "eggs": 1
       },
-      "text": "I’ve sent 1 egg."
+      "text": "I’ve sent 1 result."
     },
     {
       "locale": "en",
@@ -2441,7 +2441,7 @@
       "args": {
         "eggs": 2
       },
-      "text": "I’ve sent 2 eggs."
+      "text": "I’ve sent 2 results."
     },
     {
       "locale": "en",
@@ -2449,7 +2449,7 @@
       "args": {
         "eggs": 3
       },
-      "text": "I’ve sent 3 eggs."
+      "text": "I’ve sent 3 results."
     },
     {
       "locale": "en",
@@ -2457,7 +2457,7 @@
       "args": {
         "eggs": 4
       },
-      "text": "I’ve sent 4 eggs."
+      "text": "I’ve sent 4 results."
     },
     {
       "locale": "en",
@@ -2465,7 +2465,7 @@
       "args": {
         "eggs": 5
       },
-      "text": "I’ve sent 5 eggs."
+      "text": "I’ve sent 5 results."
     },
     {
       "locale": "en",
@@ -2473,7 +2473,7 @@
       "args": {
         "eggs": 11
       },
-      "text": "I’ve sent 11 eggs."
+      "text": "I’ve sent 11 results."
     },
     {
       "locale": "en",
@@ -2481,7 +2481,7 @@
       "args": {
         "eggs": 21
       },
-      "text": "I’ve sent 21 eggs."
+      "text": "I’ve sent 21 results."
     },
     {
       "locale": "en",
@@ -2489,7 +2489,7 @@
       "args": {
         "eggs": 22
       },
-      "text": "I’ve sent 22 eggs."
+      "text": "I’ve sent 22 results."
     },
     {
       "locale": "en",
@@ -2497,7 +2497,7 @@
       "args": {
         "eggs": 1.5
       },
-      "text": "I’ve sent 1.5 eggs."
+      "text": "I’ve sent 1.5 results."
     },
     {
       "locale": "en",
@@ -2505,7 +2505,7 @@
       "args": {
         "eggs": 2.5
       },
-      "text": "I’ve sent 2.5 eggs."
+      "text": "I’ve sent 2.5 results."
     },
     {
       "locale": "en",
@@ -2513,7 +2513,7 @@
       "args": {
         "eggs": 0.5
       },
-      "text": "I’ve sent 0.5 eggs."
+      "text": "I’ve sent 0.5 results."
     },
     {
       "locale": "en",
@@ -4377,14 +4377,14 @@
         "args": {
           "eggs": 2
         },
-        "text": "Learned from 2 eggs"
+        "text": "Learned from 2 results"
       },
       {
         "key": "learned.tuned",
         "args": {
           "eggs": 1.5
         },
-        "text": "Learned from 1,5 eggs"
+        "text": "Learned from 1,5 results"
       },
       {
         "key": "no.such.key",
