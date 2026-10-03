@@ -129,6 +129,18 @@ What was cleaned up, so nobody re-introduces it:
   the Swift pass.** If that rule is broken once, the reference implementation
   silently becomes whatever the port happens to do, and the conformance suite
   becomes decoration.
+- **A service worker outlives the server it came from.** A browser that
+  opened the built site on `localhost:8080` keeps that build for the
+  address, and another worktree later served on the same port gets the old
+  build instead of its own. Since 3 October the page drops the worker when
+  `sw.js` answers 404 (`src/ui/offline.ts`), but a fresh build that has one
+  takes over only between cooks and out of sight. When a page on localhost
+  looks stale, unregister in the console
+  (`(await navigator.serviceWorker.getRegistrations()).map((r) => r.unregister())`)
+  or clear the site's data. On a simulator, Safari keeps it under
+  `Containers/Data/Application/<Safari>/Library/WebKit/com.apple.mobilesafari/WebsiteData/Default/`,
+  one folder per site with an `origin` file saying which, and a Home Screen
+  web app keeps its own inside its `Library/WebClips/<id>.webclip`.
 
 ---
 
@@ -3626,3 +3638,66 @@ fixtures fresh; `swift test` 122 tests in 32 suites. `npm run ios:build`
 builds.
 
 **Not verified:** the Lock Screen and the alarm in American English; Safari.
+
+## 3 October 2026: the web app opens with no signal
+
+Asked whether the app needs work to live on a Home Screen: it was already
+installable (the manifest, the icons, the safe area at the bottom, its own
+Back where iOS gives a web app none). The gap was opening it offline, and
+the owner said to do that work (`DECISIONS.md` 56).
+
+- **A service worker that keeps one build whole.** `npm run build:site` now
+  ends with `tools/precache.mjs`, which writes `_site/sw.js`: every file the
+  page can ask for (56 files, 687 kB; the 512 px icons and the social card,
+  775 kB the page never fetches, are left out), each with its SHA-256, the
+  list's own hash naming the build. `src/ui/serviceWorker.ts` fetches them
+  past the browser's cache and installs only if every file hashes to what
+  the build wrote, so a deploy landing mid-install cannot leave a mixed
+  copy. It then answers the page, the grid worker and the words from that
+  one build, which also closes the gap `netlify.toml` worried about: a page
+  kept open for days fetching this week's `gridWorker.js` or `copy/*.json`
+  under last week's modules.
+- **A new build takes over only between cooks** (`src/ui/offline.ts`). A
+  reload mid-cook would lose the alarm (`restoreCook`), so with a cook
+  running the new build waits. With none, it takes over at once on a page
+  nobody has touched yet (a reload, an app just opened), and otherwise when
+  the page goes out of sight; never while a second window is open. An app
+  kept open looks for a new build when it comes back into view, hourly at
+  most.
+- **Taking it out is deleting `sw.js`.** A browser keeps a worker whose file
+  is gone, so the page asks for `sw.js` itself, and on a 404 drops the
+  worker and its builds and reloads from the network.
+- **Only the built page has it**, named by `<meta name="service-worker">`,
+  which `precache.mjs` adds; the repo root, served as is, registers nothing.
+  It is a module worker; a browser that cannot start one runs online only,
+  as before.
+- **`test/offline.test.ts`**: which file answers which address, and
+  `precache.mjs` run on a small site (what it lists, the hashes, the meta,
+  the build's name changing with any file it lists and with none it
+  leaves out).
+
+**Seen working,** in the browser pane against `npm run build:site` on
+localhost: the first visit installs 56 files; the next is answered by the
+worker; with the server stopped, the page, Settings, `/privacy`, the 1750
+words and the grid worker all load, and the social card fails as meant. A
+second build, after one reload of an untouched page, took over 2 s later
+and deleted the first; mid-cook it waited through a reload and a check;
+on a touched, visible page it waited, and took over once the page was
+hidden; with a second tab open it waited, and took over at the next reload
+once the tab closed. With `sw.js` deleted, one reload left the page
+uncontrolled, with no caches. The repo root registers nothing. On the
+iPhone Air simulator (iOS 26.5): Safari registered the module worker and
+fetched the build; added to the Home Screen as "Egg Timer" (the manifest's
+`short_name`), opened as a web app; its first launch fetched everything
+again (its storage is its own), and after the simulator was restarted with
+the server down, it opened from the icon with the words, the odds and the
+bracket drawn.
+
+**Run:** `npm run verify`: 275 tests, all pass; the Swift copy lint; the
+fixtures fresh; `swift test` 122 tests in 32 suites.
+
+**Not verified:** a real phone; Netlify itself (whether it serves every
+file byte for byte, which the install needs, and `/privacy` without a
+redirect); Android; a visible page going hidden in a real tab (the pane was
+hidden, so `visibilityState` was overridden by hand for that case).
+

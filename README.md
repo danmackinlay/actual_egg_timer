@@ -882,7 +882,11 @@ bundler, no runtime dependencies, no environment variables, no secrets. Because
 nothing is bundled, nothing is hashed: `dist/` and `copy/` keep their filenames
 from one deploy to the next, so they are served to be revalidated on every load
 rather than cached for a year, and a returning browser never runs last month's
-scripts against this month's page. `netlify.toml` says why.
+scripts against this month's page. `netlify.toml` says why. The built site also has a
+service worker: `tools/precache.mjs` writes `sw.js`, listing every file with
+its SHA-256, and once a browser has it the app opens with no signal, from one
+build kept whole. A new build takes over only between cooks
+(`src/ui/offline.ts`), and deleting `sw.js` takes the worker out.
 
 `src/core/` has zero dependencies, no DOM, no `Date`, no I/O and no `async`. It is plain
 interfaces and top-level functions with explicit loops, which is deliberate: it is meant

@@ -8,7 +8,7 @@ working here are `CLAUDE.md`; the last section says where everything else is.
 cook and learning. The web app (`src/`) and the iOS app (`ios/`) carry the
 same model, refusals, particle filter and choice of time (Phase E up to E5),
 the same catalogue of words in two Englishes (Phase F but for Czech), and the
-same layout (`UI.md`). `npm test` runs 271 tests, all passing (5b pins E3's
+same layout (`UI.md`). `npm test` runs 275 tests, all passing (5b pins E3's
 known limit). `npm run validate` passes 28/28, and `swift test` passes 122
 tests in 32 suites. **Pushed on 29 September** at `5ff6940`, the owner's
 call: Netlify serves it at actualeggtimer.netlify.app, and the first run of
@@ -199,7 +199,9 @@ checked, fixed or deleted. Start the QA pass here.
 - **The web on a phone, and Safari.** Every web check was an emulated
   viewport in desktop Chromium: no real thumb on the sentence, no Safari
   (Apple's ICU, and any locale with non-ASCII digits), no alarm heard. Not
-  tried: a second tab changing the pan start mid-sous-vide.
+  tried: a second tab changing the pan start mid-sous-vide; the app on a
+  phone's Home Screen opening offline, and taking a new build after a
+  deploy (both seen only on localhost and in the simulator).
 - **Real eggs.** None cooked at a chosen time (the odds are calibrated
   against the model's own idea of cooks); none probed (the 1.0 C instrument
   sd and 0.4 C handling mean are the model's); no hot-start heat-off cook.
@@ -222,6 +224,12 @@ checked, fixed or deleted. Start the QA pass here.
   carry absolute URLs at that domain, so a domain change is a commit.
   `vercel.json` is checked in and NOT deployed: a second host's settings,
   kept so the site can move (README §10 says why its Node pin differs).
+- **The web app opens with no signal** once a browser has visited, on a
+  Home Screen too (`DECISIONS.md` 56): the built site's service worker
+  keeps one build whole (`src/ui/serviceWorker.ts`, written into `sw.js` by
+  `tools/precache.mjs`), and a new build takes over only between cooks
+  (`src/ui/offline.ts`). Deleting `sw.js` takes it out. Seen in Chromium and
+  the iOS simulator, not yet on a phone or on Netlify.
 - **Alpha: no stability promised, and no back-compat yet** (`DECISIONS.md`
   48). The site is public but not in wide use, so the storage formats
   (`aet.settings.v1`, `aet.cook.v2`, `aet.calibration.v4`, `aet.boil.v1`,
