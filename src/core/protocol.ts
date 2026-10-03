@@ -4,11 +4,12 @@
  */
 
 import {
-  RAMP_R, TAU_AIR, T_ICE_BATH_C, T_COLD_TAP_C,
+  RAMP_R, H_AIR, WET_SHELL_KG_M2, LATENT_HEAT_WATER, T_ICE_BATH_C, T_COLD_TAP_C,
   TAU_DIP_RECOVERY, TAU_STANDING_SCALE, TAU_STANDING_REF_S, STANDING_REF_LITRES,
   STANDING_VOLUME_EXPONENT, C_WATER, C_EGG, TAU_PLUNGE,
 } from './constants.js';
 import { Egg } from './geometry.js';
+import { SphereState, robinSurface } from './sphere.js';
 
 /** Cold start: eggs go in the cold pan and heat with the water. Hot start:
  *  eggs are lowered into water already boiling - peels far better, and the
@@ -149,30 +150,70 @@ export function coolingMedium_C(cooling: Cooling, ambient_C: number): number {
 }
 
 /**
- * Surface temperature during cooling.
+ * The egg's Newtonian cooling time constant on the counter, s: m*c/(h*A) over
+ * the equal-volume sphere, with h = H_AIR. 1860 s for a 62 g egg; it goes as
+ * the radius (heat held as R^3, shell as R^2), so a 76 g egg holds its heat
+ * 7% longer and a 48 g one 8% shorter.
+ */
+export function airTimeConstant(egg: Egg): number {
+  return egg.mass_kg * C_EGG / (H_AIR * 4.0 * Math.PI * egg.radius_m * egg.radius_m);
+}
+
+/**
+ * What drying off costs the egg, as a fall in its mean temperature, C: the
+ * latent heat of the film it carries out of the pan (WET_SHELL_KG_M2) over its
+ * heat capacity. 1.2 C for a 62 g egg, and like the area over the mass it
+ * goes as 1/R.
+ */
+export function wetShellDrop_C(egg: Egg): number {
+  const area = 4.0 * Math.PI * egg.radius_m * egg.radius_m;
+  return WET_SHELL_KG_M2 * area * LATENT_HEAT_WATER / (egg.mass_kg * C_EGG);
+}
+
+/**
+ * Surface temperature during cooling, for the step of `dt_s` that ends
+ * `elapsedSincePull_s` after the pull and starts from `sphere` as it stands.
  *
  * Ice water and a cold tap are effectively Dirichlet - the surface goes to the
- * bath temperature and stays there. Still air is not: the egg is nearly lumped
- * (Bi ~ 0.4) and cools with a time constant of ~34 minutes, which is about 7x
- * SLOWER than it equilibrates internally (~4.5 min). So a rested egg carries
- * over almost adiabatically, and its surface tracks its own bulk temperature
- * decaying toward the room.
+ * bath temperature and stays there.
  *
- * `meanAtPull_C` is the egg's VOLUME-AVERAGE temperature at the moment it left
- * the water, not the water temperature. A lumped body relaxes from its own
- * bulk temperature; using the water's would keep a briefly-cooked egg near
- * boiling in open air, which is badly wrong for short cooks.
+ * Still air is not: Bi ~ 0.6, so the shell is neither held at the room's
+ * temperature nor at the egg's mean, and it loses heat by Newton's law at
+ * whatever temperature it has reached - hot at first, while the heat of the
+ * outer white is still arriving, then below the mean as the egg empties
+ * (robinSurface). The time constant is the egg's own (airTimeConstant), about
+ * 5.5 times the slowest internal mode, so the egg evens out while it cools;
+ * but by the time the yolk peaks, the counter has taken 7-9 C off what an
+ * insulated egg would reach. It is cooling, slow beside water, not a lid.
  *
- * `tauAirScale` is a calibration multiplier on that decay - this is the
- * least-verified part of the model, so it is learned rather than asserted.
+ * The water on the shell evaporates in seconds and takes its latent heat
+ * (wetShellDrop_C) out of the egg on the way, withdrawn over TAU_PLUNGE so the
+ * drive stays continuous.
+ *
+ * `tauAirScale` is the kitchen's multiplier on the time constant: a draught,
+ * an egg cup, a stone counter - whatever is not still air on a counter.
  */
 export function coolingTemperature(
-  setup: CookSetup, elapsedSincePull_s: number,
-  waterAtPull_C: number, meanAtPull_C: number, tauAirScale: number,
+  sphere: SphereState, egg: Egg, setup: CookSetup, elapsedSincePull_s: number, dt_s: number,
+  waterAtPull_C: number, tauAirScale: number,
 ): number {
-  const target = setup.cooling === 'counter'
-    ? setup.ambient_C + (meanAtPull_C - setup.ambient_C) * Math.exp(-elapsedSincePull_s / (TAU_AIR * tauAirScale))
-    : coolingMedium_C(setup.cooling, setup.ambient_C);
+  if (setup.cooling === 'counter') {
+    const before = elapsedSincePull_s > dt_s ? elapsedSincePull_s - dt_s : 0.0;
+    const drying = wetShellDrop_C(egg)
+      * (Math.exp(-before / TAU_PLUNGE) - Math.exp(-elapsedSincePull_s / TAU_PLUNGE));
+    const tau = airTimeConstant(egg) * tauAirScale;
+    if (elapsedSincePull_s >= dt_s) return robinSurface(sphere, dt_s, setup.ambient_C, tau, drying);
+    // The step that straddles the pull spends only `out` of itself on the
+    // counter and the rest in the water. The heat a step moves is linear in the
+    // surface temperature it ends at, so splitting the step between the two
+    // is splitting that temperature - the water's at the pull itself, the
+    // counter's a whole step later - with the drying it holds delivered whole.
+    const out = elapsedSincePull_s / dt_s;
+    if (!(out > 0.0)) return waterAtPull_C;
+    const counter = robinSurface(sphere, dt_s, setup.ambient_C, tau, drying / out);
+    return waterAtPull_C + (counter - waterAtPull_C) * out;
+  }
+  const target = coolingMedium_C(setup.cooling, setup.ambient_C);
   // Blend out of the water temperature rather than jumping, so the surface is
   // continuous at the moment of pulling. See TAU_PLUNGE.
   return target + (waterAtPull_C - target) * Math.exp(-elapsedSincePull_s / TAU_PLUNGE);

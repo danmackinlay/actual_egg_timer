@@ -8,8 +8,8 @@ working here are `CLAUDE.md`; the last section says where everything else is.
 cook and learning. The web app (`src/`) and the iOS app (`ios/`) carry the
 same model, refusals, particle filter and choice of time (Phase E up to E5),
 the same catalogue of words in two Englishes (Phase F but for Czech), and the
-same layout (`UI.md`). `npm test` runs 271 tests, all passing (5b pins E3's
-known limit). `npm run validate` passes 28/28, and `swift test` passes 122
+same layout (`UI.md`). `npm test` runs 274 tests, all passing (5b pins E3's
+known limit). `npm run validate` passes 29/29, and `swift test` passes 122
 tests in 32 suites. **Pushed on 29 September** at `5ff6940`, the owner's
 call: Netlify serves it at actualeggtimer.netlify.app, and the first run of
 `.github/workflows/verify.yml` passed. The iOS app runs from Xcode on the owner's
@@ -79,6 +79,12 @@ The one queue. Nothing else in the documents waits on the owner.
    1750; the `privacy` draft).
    The App Store subtitle: "Time eggs, not minutes" (22 of 30 characters;
    `DECISIONS.md` 53).
+8. **The counter, from first principles** (`LOGBOOK.md`, 3 October 2026).
+   `help.unsure.counter` still says no measurement was found, which is no
+   longer the reason; the entry proposes a replacement, for the owner's
+   hand edit. And whether the prior on `tauAirScale` narrows from 0.35 to
+   ~0.2, now that physics pins still air and the width carries only the
+   kitchen.
 
 Waiting on someone else: the Czech review (F5), by the owner's friend.
 

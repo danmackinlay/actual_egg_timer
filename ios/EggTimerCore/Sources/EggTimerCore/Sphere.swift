@@ -64,13 +64,38 @@ public struct SphereState: Sendable {
         return surfaceC + Double.pi * sum / radiusM
     }
 
-    /// Volume-average temperature, C: the ceiling on carryover.
+    /// Volume-average temperature, C: the ceiling on carryover, and the heat
+    /// Newton's law at the shell draws down on the counter.
     public var meanTemperature: Double {
         var sum = 0.0
         for i in 0..<Constants.modeCount {
             sum += amp[i] * coef[i]
         }
         return surfaceC + 1.5 * sum / (radiusM * radiusM)
+    }
+
+    /// The surface temperature to step to over the next `dtS` for a sphere
+    /// losing heat by Newton's law at its own surface (a Robin boundary),
+    /// written as the heat balance on its mean:
+    /// dTavg/dt = -(Ts - Ta)/tau - `lossC` over the step. The mean after a
+    /// linear surface ramp is linear in the new surface temperature, so the
+    /// balance fixes it. sphere.ts has the derivation.
+    public func robinSurface(dtS: Double, ambientC: Double, tauS: Double, lossC: Double) -> Double {
+        var now = 0.0
+        var held = 0.0
+        var gain = 0.0
+        for i in 0..<Constants.modeCount {
+            let decay = exp(-lambda[i] * dtS)
+            now += amp[i] * coef[i]
+            held += amp[i] * coef[i] * decay
+            gain += coef[i] * coef[i] * (1.0 - decay) / (lambda[i] * dtS)
+        }
+        let w = 1.5 / (radiusM * radiusM)
+        let ts = surfaceC
+        let a = dtS / tauS
+        let g = w * gain
+        return (ts + w * now - a * (0.5 * ts - ambientC) - lossC - g * ts - w * held)
+            / (1.0 - g + 0.5 * a)
     }
 }
 

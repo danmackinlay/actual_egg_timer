@@ -5,8 +5,10 @@
  * literature was not retrieved during the initial build. It has since been
  * read at first hand: see references.bib, and README.md section 10 for what
  * each source actually says. Constants that were confirmed or corrected as a
- * result are marked CHECKED AT SOURCE; the two still resting on an inference
- * (H_EFF, TAU_AIR) say so in their own comments.
+ * result are marked CHECKED AT SOURCE; those resting on an inference or a
+ * judgement (H_EFF, the standing pan, WET_SHELL_KG_M2) say so in their own
+ * comments. Some need no egg-specific source at all: how an egg cools on the
+ * counter (H_AIR) is textbook convection and radiation.
  */
 
 /** Number of eigenmodes retained in the sphere series.
@@ -146,12 +148,44 @@ export const STANDING_VOLUME_EXPONENT = 1.0 / 3.0;
  *  section 11.3. */
 export const TAU_STANDING_SCALE = 1.0;
 
-/** Lumped cooling time constant of an egg in still air, s.
- *  m*c/(h*A) with h ~ 15 W/m^2K. Internal equilibration takes ~270 s, so this
- *  is ~7x slower: a rested egg carries over almost adiabatically.
- *  THIS IS THE LEAST-VERIFIED CONSTANT IN THE MODEL - no published egg-centre
- *  measurements after removal were found. It carries a wide calibration prior. */
-export const TAU_AIR = 2030.0;
+/** Heat transfer coefficient at the shell of an egg resting in still room
+ *  air, W/m^2K: free convection and radiation, in about equal parts.
+ *
+ *  STANDARD PHYSICS. Free convection from a sphere (Churchill 1983,
+ *  Nu = 2 + 0.589 Ra^(1/4) / [1 + (0.469/Pr)^(9/16)]^(4/9)), 48 mm across in
+ *  a 20 C room, gives 7.3 W/m^2K with the shell at 60 C and 8.4 at 100 C;
+ *  radiation from a shell of emissivity 0.93, eps*sigma*(Ts^2 + Ta^2)(Ts + Ta),
+ *  adds 6.5 and 7.9. The sum runs 13.8 to 16.3, and while the yolk heads for
+ *  its peak the shell is at 65-95 C: a constant 15 reproduces the
+ *  temperature-dependent sum to 0.25 C of peak yolk for 48-76 g eggs cooked
+ *  4.9-12 min (LOGBOOK.md, 3 October 2026). The counter shelters the underside
+ *  from convection and conducts a little across the air gap at the contact;
+ *  on wood or stone, together they move h by less than 10% either way.
+ *  Bi = h*R/k ~ 0.6, so the shell is neither clamped nor at the egg's mean,
+ *  and the boundary is Newton's law at the shell itself (protocol.ts).
+ *  What is not still air - a draught, an extractor fan, an egg cup - is the
+ *  kitchen, and `tauAirScale` carries it. */
+export const H_AIR = 15.0;
+
+/** Water an egg carries out of the pan on its shell, kg per m^2 of shell:
+ *  a film about 15 micrometres thick, 0.1 g on a 62 g egg.
+ *
+ *  AN ESTIMATE FROM FILM PHYSICS, and the one input to the counter that no
+ *  correlation fixes. Lifted out at a spoon's pace, water leaves a
+ *  Landau-Levich film of 15-30 um, and gravity drains a wet wall as
+ *  sqrt(nu*x/(g*t)) (Jeffreys 1930), to 15-30 um after a second or two. On a
+ *  shell near the boil it evaporates in under ten seconds - by the heat-mass
+ *  analogy, with Spalding's correction for a vapour pressure near the
+ *  atmosphere's, it takes heat 13-26 times faster than convection and
+ *  radiation together, with the shell at 85-95 C - so all of it comes out of
+ *  the egg. Every 0.1 g costs a 62 g egg 1.1 C of mean temperature and 0.7 C
+ *  of peak yolk. A scale reading to 0.01 g would check it: weigh an egg
+ *  straight from the pan, and again a minute later. */
+export const WET_SHELL_KG_M2 = 0.015;
+
+/** Latent heat of vaporisation of water at 90-100 C, where the film on the
+ *  shell evaporates, J/kg (2.257e6 at 100 C, 2.283e6 at 90 C). */
+export const LATENT_HEAT_WATER = 2.27e6;
 
 /** Surface temperatures of the cooling media, C. */
 export const T_ICE_BATH_C = 2.0;

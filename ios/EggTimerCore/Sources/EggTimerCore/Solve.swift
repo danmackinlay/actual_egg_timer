@@ -108,9 +108,8 @@ public func simulate(
     var pullRecorded = false
     var prevYolk = setup.eggStartC
     var peakDoseRate = 0.0
-    // Captured when the egg leaves the water: a lumped egg in air relaxes from
-    // its own volume-average temperature, the ceiling on carryover.
-    var meanAtPull = setup.eggStartC
+    // Captured when the egg leaves the water: an ice bath or a tap blends out
+    // of it. On the counter the surface needs nothing but the egg's own state.
     var waterAtPull = initialSurface
 
     let endTime = cookTimeS + Constants.carryoverWindow
@@ -120,14 +119,10 @@ public func simulate(
         if tNext < cookTimeS {
             next = Protocols.bathTemperature(egg, setup, tS: tNext)
         } else {
-            if !pullRecorded {
-                meanAtPull = sphere.meanTemperature
-                waterAtPull = sphere.surfaceC
-            }
+            if !pullRecorded { waterAtPull = sphere.surfaceC }
             next = Protocols.coolingTemperature(
-                setup: setup, elapsedSincePullS: tNext - cookTimeS,
-                waterAtPullC: waterAtPull, meanAtPullC: meanAtPull,
-                tauAirScale: params.tauAirScale
+                sphere: sphere, egg: egg, setup: setup, elapsedSincePullS: tNext - cookTimeS,
+                dtS: Constants.dtSim, waterAtPullC: waterAtPull, tauAirScale: params.tauAirScale
             )
         }
         sphere.step(dtS: Constants.dtSim, nextSurfaceC: next)

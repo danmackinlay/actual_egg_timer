@@ -46,8 +46,15 @@ public enum Constants {
     public static let standingVolumeExponent = 1.0 / 3.0
     public static let tauStandingScale = 1.0
 
-    /// Lumped cooling time constant in still air, s.
-    public static let tauAir = 2030.0
+    /// Heat transfer coefficient at the shell of an egg resting in still room
+    /// air, W/m^2K: free convection (Churchill's sphere correlation) plus
+    /// radiation (emissivity 0.93), 13.8-16.3 over the shell temperatures that
+    /// matter. constants.ts has the numbers.
+    public static let hAir = 15.0
+    /// Water carried out of the pan on the shell, kg/m^2: a film ~15 um thick.
+    public static let wetShellKgM2 = 0.015
+    /// Latent heat of vaporisation of water at 90-100 C, J/kg.
+    public static let latentHeatWater = 2.27e6
 
     public static let tIceBathC = 2.0
     public static let tColdTapC = 15.0

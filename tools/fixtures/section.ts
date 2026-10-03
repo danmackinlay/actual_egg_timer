@@ -74,7 +74,6 @@ export const sectionFixture = {
           givenOut_s: out,
           t_s: s.t_s,
           outAt_s: s.outAt_s,
-          meanAtPull_C: s.meanAtPull_C,
           waterAtPull_C: s.waterAtPull_C,
           surface_C: s.sphere.surface_C,
           dose_min: s.dose.map((d) => d.minutes),

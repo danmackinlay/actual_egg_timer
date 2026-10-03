@@ -3626,3 +3626,110 @@ fixtures fresh; `swift test` 122 tests in 32 suites. `npm run ios:build`
 builds.
 
 **Not verified:** the Lock Screen and the alarm in American English; Safari.
+
+## 3 October 2026: cooling on the counter, from first principles
+
+The owner: an egg cooling on the bench in still air is standard convective
+cooling, nobody would publish an egg-specific measurement of it, and the
+model should be no weaker for the lack of one. Checked from first
+principles against an independent explicit finite-volume sphere (120
+shells; h, radiation and evaporation recomputed from the shell's
+temperature every step; scratch code, not kept), with the cook up to the
+pull taken from the app's own modal solver. Reference egg (62.3 g, R =
+23.8 mm), fridge, 7.4 min at a rolling boil, a 20 °C room at 50% RH.
+
+- **15 W/m²K is right for still air.** Free convection from a sphere,
+  Churchill (1983), `Nu = 2 + 0.589 Ra^(1/4) / [1 + (0.469/Pr)^(9/16)]^(4/9)`,
+  D = 2R = 47.7 mm, air at the film temperature (Sutherland's viscosity,
+  `k = 0.0241 (T/273)^0.81`): with the shell at 100/80/60/40/30 °C, Ra
+  5.1e5 to 1.1e5, Nu 14.1 to 10.2, h_conv 8.4/7.9/7.3/6.4/5.5. Radiation,
+  `eps*sigma*(Ts^2 + Ta^2)(Ts + Ta)` at eps = 0.93: 7.9/7.2/6.5/5.9/5.6.
+  Sum 16.3/15.1/13.8/12.3/11.1. Convection falls as Ra^(1/4), so slowly:
+  until the yolk peaks the shell is at 65-95 °C. The old 2030 s implied
+  13.8 for this egg. A constant 15 in a Robin boundary matches the
+  temperature-dependent sum to 0.12 °C of peak yolk on a dry shell.
+- **The wet shell was the real gap.** A film of 15 µm, 0.1 g on this egg:
+  a Landau-Levich film at a spoon's pace gives 15-30 µm, and Jeffreys'
+  drainage `sqrt(nu*x/(g*t))` (nu = 3.1e-7 m²/s, x 2-4 cm) 15-30 µm after
+  a second or two. Evaporation by the heat-mass analogy (Churchill with Sc
+  ~ 0.6 for Sh) and Spalding's `B = (Ys - Yinf)/(1 - Ys)`, needed with the
+  vapour pressure near the atmosphere's: 113 kW/m² with the shell at 100
+  °C, 31 at 95, 13 at 85, or 13-26 times convection and radiation together
+  at 85-95 °C. The film is gone in under 10 s and takes 1.2 °C off the
+  egg's mean temperature, 0.7 °C off its peak yolk. At 7/15/30 µm the
+  reference peak is 75.66/75.29/74.60 °C. Leaving it out had assumed a dry
+  egg. A scale reading to 0.01 g would check it.
+- **The counter's contact is small.** Air-gap conduction around the
+  contact, `4*pi*Rc*k_air*ln(r_max/r_min)` ~ 0.018 W/K, in series with
+  spreading into the counter (`1/(4*k*a)`: 20 K/W on stone, 330 on wood),
+  less the convection the sheltered patch would have carried anyway: net
+  about +0.007 W/K on stone and -0.004 on wood, against hA = 0.107 W/K. The
+  solid contact itself is ~0.001 W/K. A generous 0.01/0.03 W/K moves the
+  peak -0.3/-0.8 °C. Left in `tauAirScale`, with draughts: 0.3 m/s
+  (Whitaker's sphere, cube-summed with free convection) puts h at 18 and
+  the peak 0.6 °C lower; 1 m/s at 25, 1.7 °C lower. The egg's own water
+  leaving through the shell is about 2% of the loss, and left out.
+- **The lumped drive was off by up to 0.8 °C, either way.** Driving the
+  surface along `exp(-t/tau)` from the mean at the pull agreed with a Robin
+  boundary at the same h to 0.03 °C on the reference cook, by luck: over
+  48-76 g and 4.9-12 min it ran from 0.7 °C too cold (big egg, short cook,
+  where the hot outer white dumps into a surface clamped at the mean) to
+  0.8 °C too hot (small egg, long cook). And one 2030 s served every egg,
+  though `m*c/(h*A)` goes as R: 1708 s at 48 g, 1991 s at 76 g. With the dry
+  shell on top, the old counter was up to 1.47 °C too hot and never too
+  cold.
+- **A Robin boundary was cheap.** No new basis: each step solves for the
+  surface temperature that makes the sphere's own mean fall by exactly
+  `(Ts - Ta)/tau * dt` plus the drying (`robinSurface`), since the mean
+  after a linear surface ramp is linear in where the ramp ends. 40 modes,
+  g ~ 0.97, one exp per mode. It reproduces the closed-form Robin series
+  (roots of `1 - mu*cot(mu) = Bi`) to 0.005 °C at the surface and mean and
+  0.025 °C at the centre (test 17a), and the finite-volume solution to
+  0.22 °C of peak yolk across the sweep (old: 1.47). The step that
+  straddles the pull is split between water and counter by time, so peak
+  and dose are smooth in the cook time; without the split, a pull on the
+  grid read the yolk 0.6 °C low (test 13 caught it). At the pull the
+  truncated basis reads the centre 2.3 °C low for one 0.5 s step, against
+  4.3 °C for several seconds in the ice bath already; neither touches a
+  peak or a dose.
+- **The carryover conclusion survives; its framing did not.** Counter peak
+  76.33 -> 75.28 °C on the reference cook, ~7 min after the pull (was
+  ~8). The insulated ceiling was never 76.2 °C (README §5 since `4775ca1`,
+  never computed): it is the mean at the pull, 83.9 °C. The counter takes
+  8.6 °C of that and the ice bath 19. Up to the peak the egg's mean falls
+  13 °C: 6.2 by convection, 5.6 by radiation, 1.2 by the film. Still air is
+  slow cooling, not a lid, which is why h has to be right. Soft stays
+  unreachable on the counter: the shortest white-setting cook is 4.94 min,
+  peak 64.9 °C, `softestLevel` 0.61 -> 0.53 on the reference egg, still
+  between jammy and fudgy. `npm run decide`: after one egg, counter to ice
+  is now 0/0/5/6 -> 5/6/6/6 (was 0/0/3/6).
+- **The prior on `tauAirScale` stays at 0.35, for a different reason.**
+  Its comment said "least verified". Still air is now pinned to ~10%
+  (Churchill ±10%, eps 0.90-0.96, the contact). What the width carries is
+  the kitchen: a draught (-17% to -40% on tau), an egg cup or a towel (the
+  other way), half or twice the film. One sd (x0.70 to x1.42) moves the
+  reference peak 1.1-1.2 °C. `npm run rank`: carryover now takes ~30
+  answers to halve its prior, not ~60, since under Robin the peak answers
+  to tau more; `npm run probe`: one sd moves the rested reading 1.3 °C
+  (was 1.1).
+- **Code:** `TAU_AIR` is gone; `H_AIR`, `WET_SHELL_KG_M2` and
+  `LATENT_HEAT_WATER` replace it; `airTimeConstant`, `wetShellDrop_C` and
+  `robinSurface` are new; `coolingTemperature` takes the sphere and the
+  egg, and `EggSection.meanAtPull_C` is gone, since nothing reads it. Swift
+  twinned. Tests 17a-c; `validate` checks the insulated ceiling.
+
+**For the owner.** `help.unsure.counter` still says I couldn't find a
+measurement, which is no longer the reason; not edited, since the owner is
+editing the wording by hand. Proposed, after `help.unsure.heatOff`: "On the
+bench, I assume the egg sits in still air. In a draught the yolk comes out
+a little softer, and in an egg cup a little firmer." (en-US: "On the
+counter … In a draft …"; 1750: "The table. I suppose the air about it
+still; a draught will leave the yolk softer than I reckoned, and an
+egg-cup firmer.") Also the owner's: whether the prior narrows to ~0.2,
+which would take the rank, probe and calibration numbers with it.
+
+**Run:** `npm run verify`: 274 tests, all pass; the Swift copy lint; the
+fixtures fresh; `swift test` 122 tests in 32 suites. `npm run validate`
+29/29.
+
+**Not verified:** either app on a phone; a real egg on a real counter.

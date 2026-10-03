@@ -12,7 +12,7 @@ import {
   CookSetup, bathTemperature, coolingTemperature, initialSurfaceTemperature,
 } from './protocol.js';
 import {
-  createSphere, stepSphere, temperatureAt, centreTemperature, meanTemperature,
+  createSphere, stepSphere, temperatureAt, centreTemperature,
 } from './sphere.js';
 import { Dose, createDose, accumulateDose } from './kinetics.js';
 
@@ -21,8 +21,9 @@ export interface ModelParams {
   /** Thermal diffusivity, m^2/s. Absorbs all geometry/property model error,
    *  since only tau = R^2/alpha is identifiable. */
   alpha_m2s: number;
-  /** Multiplier on the still-air cooling time constant. Only identifiable if
-   *  the user actually varies the cooling protocol. */
+  /** Multiplier on the egg's cooling time constant on the counter
+   *  (airTimeConstant): the kitchen's draughts and surfaces. Only identifiable
+   *  if the user actually varies the cooling protocol. */
   tauAirScale: number;
 }
 
@@ -131,9 +132,8 @@ export function simulate(
   let pullRecorded = false;
   let prevYolk = setup.eggStart_C;
   let peakDoseRate = 0.0;
-  // Captured when the egg leaves the water: a lumped egg in air relaxes from
-  // its own volume-average temperature, which is also the ceiling on carryover.
-  let meanAtPull = setup.eggStart_C;
+  // Captured when the egg leaves the water: an ice bath or a tap blends out of
+  // it. On the counter the surface needs nothing but the egg's own state.
   let waterAtPull = initialSurface;
 
   const endTime = cookTime_s + CARRYOVER_WINDOW;
@@ -143,12 +143,9 @@ export function simulate(
     if (tNext < cookTime_s) {
       next = bathTemperature(egg, setup, tNext);
     } else {
-      if (!pullRecorded) {
-        meanAtPull = meanTemperature(sphere);
-        waterAtPull = sphere.surface_C;
-      }
+      if (!pullRecorded) waterAtPull = sphere.surface_C;
       next = coolingTemperature(
-        setup, tNext - cookTime_s, waterAtPull, meanAtPull, params.tauAirScale,
+        sphere, egg, setup, tNext - cookTime_s, DT_SIM, waterAtPull, params.tauAirScale,
       );
     }
     stepSphere(sphere, DT_SIM, next);

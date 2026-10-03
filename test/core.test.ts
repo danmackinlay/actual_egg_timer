@@ -13,7 +13,7 @@ import assert from 'node:assert/strict';
 
 import {
   createSphere, stepSphere, temperatureAt, centreTemperature, meanTemperature,
-  seriesTheta, erfcTheta, oneTermTheta, biotNumber, erfc,
+  seriesTheta, erfcTheta, oneTermTheta, biotNumber, erfc, robinSurface,
 } from '../src/core/sphere.js';
 import {
   boilingPointAtPressure, boilingPointAtAltitude, boilingPointApprox,
@@ -23,12 +23,15 @@ import { eggFromMass, eggFromMinorDiameter, diffusionTime } from '../src/core/ge
 import {
   createDose, accumulateDose, holdTimeForDose, zFromActivationEnergy,
 } from '../src/core/kinetics.js';
-import { CookSetup, bathTemperature, panTimeConstant } from '../src/core/protocol.js';
+import {
+  CookSetup, bathTemperature, panTimeConstant, airTimeConstant, wetShellDrop_C,
+} from '../src/core/protocol.js';
 import {
   simulate, solveCookTime, donenessFromSlider, sliderFromYolkDose, DEFAULT_PARAMS,
 } from '../src/core/solve.js';
 import {
-  H_EFF, Z_YOLK, TREF_YOLK_C, YOLK_RADIUS_FRAC, TAU_STANDING_REF_S,
+  H_EFF, Z_YOLK, TREF_YOLK_C, YOLK_RADIUS_FRAC, TAU_STANDING_REF_S, H_AIR, K_EGG, C_EGG,
+  ALPHA_DEFAULT, DT_SIM,
 } from '../src/core/constants.js';
 import { referenceSetup } from '../tools/common.js';
 
@@ -566,4 +569,98 @@ test('16b. with the heat off they are not, which is why standing scans', () => {
     worstDoseStep(standing, (r) => r.yolkDose_min) < 0,
     'standing should be non-monotonic in the yolk dose',
   );
+});
+
+// --------------------------------------------------------------------------
+// 17. on the counter: Newton's law at the shell
+// --------------------------------------------------------------------------
+
+/** Roots of 1 - mu*cot(mu) = Bi, one in each ((n-1)pi, n*pi). */
+function robinRoots(bi: number, count: number): number[] {
+  const roots: number[] = [];
+  for (let n = 1; n <= count; n++) {
+    let lo = (n - 1) * Math.PI + 1e-9;
+    let hi = n * Math.PI - 1e-9;
+    const f = (mu: number): number => 1 - mu / Math.tan(mu) - bi;
+    for (let k = 0; k < 200; k++) {
+      const mid = 0.5 * (lo + hi);
+      if (f(lo) * f(mid) <= 0) hi = mid; else lo = mid;
+    }
+    roots.push(0.5 * (lo + hi));
+  }
+  return roots;
+}
+
+test('17a. the counter closure reproduces the closed-form Robin series', () => {
+  // A sphere at a uniform 80 C cooling into a 20 C room by Newton's law at its
+  // surface, Bi ~ 0.6. The textbook series (Carslaw & Jaeger 9.4) and the
+  // modal closure share nothing but the physics: one has Robin eigenvalues,
+  // the other Dirichlet modes with the surface solved for each step.
+  const r = 0.024;
+  const tau = 1864;
+  // tau = m*c/(h*A) = R^2/(3*alpha*Bi), with rho*c = k/alpha.
+  const bi = r * r / (3 * ALPHA_DEFAULT * tau);
+  const mus = robinRoots(bi, 60);
+  const series = (fo: number): { centre: number; surface: number; mean: number } => {
+    let centre = 0; let surface = 0; let mean = 0;
+    for (const mu of mus) {
+      const a = 4 * (Math.sin(mu) - mu * Math.cos(mu)) / (2 * mu - Math.sin(2 * mu));
+      const e = Math.exp(-mu * mu * fo);
+      centre += a * e;
+      surface += a * e * Math.sin(mu) / mu;
+      mean += a * e * 3 * (Math.sin(mu) - mu * Math.cos(mu)) / (mu * mu * mu);
+    }
+    return { centre: 20 + 60 * centre, surface: 20 + 60 * surface, mean: 20 + 60 * mean };
+  };
+  const s = createSphere(r, ALPHA_DEFAULT, 80, 80);
+  let lost = 0;
+  let t = 0;
+  for (const at of [60, 300, 600, 1200]) {
+    while (t < at) {
+      const before = s.surface_C;
+      const next = robinSurface(s, DT_SIM, 20, tau, 0);
+      stepSphere(s, DT_SIM, next);
+      lost += DT_SIM / tau * (0.5 * (before + next) - 20);
+      t += DT_SIM;
+    }
+    const want = series(ALPHA_DEFAULT * t / (r * r));
+    close(centreTemperature(s), want.centre, 0.02, `centre at ${t} s`);
+    close(s.surface_C, want.surface, 0.01, `surface at ${t} s`);
+    close(meanTemperature(s), want.mean, 0.01, `mean at ${t} s`);
+    // Heat is conserved exactly: the mean falls by what the surface sent out.
+    close(80 - meanTemperature(s), lost, 1e-9, `heat balance at ${t} s`);
+  }
+});
+
+test("17b. the counter's time constant is the egg's own m*c/(h*A), and drying off costs ~1.2 C", () => {
+  const egg = REFERENCE_EGG;
+  const area = 4 * Math.PI * egg.radius_m * egg.radius_m;
+  close(airTimeConstant(egg), egg.mass_kg * C_EGG / (H_AIR * area), 1e-9, 'm*c/(h*A)');
+  close(airTimeConstant(egg), 1864, 1, 'reference egg, s');
+  // It goes as the radius: a bigger egg holds its heat longer.
+  const small = eggFromMass(0.048);
+  const big = eggFromMass(0.076);
+  close(airTimeConstant(big) / airTimeConstant(small), big.radius_m / small.radius_m, 1e-9, 'tau ~ R');
+  // In still air the shell is neither clamped nor lumped.
+  const bi = biotNumber(H_AIR, egg.radius_m);
+  assert.ok(bi > 0.4 && bi < 0.8, `Bi in still air should be ~0.6, got ${bi}`);
+  close(H_AIR * egg.radius_m / K_EGG, bi, 1e-12, 'Bi = hR/k');
+  // 15 g of water per m^2 of shell, at 2.27 MJ/kg, over the egg's heat capacity.
+  close(wetShellDrop_C(egg), 1.218, 0.001, 'drying off, reference egg');
+  assert.ok(wetShellDrop_C(small) > wetShellDrop_C(big), 'more shell per gram on a small egg');
+});
+
+test('17c. the counter is slow cooling, not a lid', () => {
+  // The reference cook of README section 5. An insulated egg would carry the
+  // yolk to its mean at the pull, 83.9 C. The counter takes 8-9 C of that, the
+  // ice bath 19. The 75.27 C is an independent explicit finite-volume
+  // solution with h from Churchill's correlation and radiation as functions
+  // of the shell's temperature, and the film evaporating by the heat-mass
+  // analogy (LOGBOOK.md, 3 October 2026).
+  const cookTime = 7.4 * 60;
+  const ice = simulate(REFERENCE_EGG, referenceSetup({ cooling: 'ice' }), DEFAULT_PARAMS, cookTime);
+  const counter = simulate(REFERENCE_EGG, referenceSetup({ cooling: 'counter' }), DEFAULT_PARAMS, cookTime);
+  close(counter.peakYolk_C, 75.27, 0.15, 'counter peak yolk vs finite volumes');
+  assert.ok(83.9 - counter.peakYolk_C > 7, 'the counter takes more than 7 C off the insulated ceiling');
+  assert.ok(counter.peakYolk_C - ice.peakYolk_C > 9, 'and is still far above the ice bath');
 });

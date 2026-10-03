@@ -130,7 +130,7 @@ volume average: Tavg  = Ts + (3/(2*R^2)) * sum_n b_n * c_n
 ```
 
 The volume average is not decoration — it is the ceiling on carryover (§5) and the
-temperature a lumped egg in still air relaxes *from*.
+egg's heat content, which on the counter Newton's law at the shell draws down (§8).
 
 ### 2.3 Why modes and not finite differences
 
@@ -412,14 +412,15 @@ egg, and it keeps going inward. Two time constants decide what happens next:
 | process | time constant | for the reference egg |
 |---|---|---|
 | internal equilibration | `R^2/(pi^2 * alpha)` — the slowest internal mode | ~340 s (the centre closes 93% of its gap to the volume average within 300 s, because the faster modes go first) |
-| cooling in still air | `m*c/(h*A)`, `TAU_AIR` | 2030 s |
+| cooling on the counter | `m*c/(h*A)` with `h = H_AIR = 15 W/m²K` (`airTimeConstant`) | 1864 s |
 
-Still air is **~6x slower at removing heat than the egg's slowest internal mode is at
-redistributing it**, and slower still relative to the effective gap closure. A
-rested egg therefore carries over almost *adiabatically*: it equilibrates toward its own
-volume-average temperature before the room has taken much heat out at all. Water is the
-opposite — an ice bath or a cold tap is effectively Dirichlet, pulling the surface to the
-bath temperature immediately and intercepting the carryover.
+Still air is **~5.5x slower at removing heat than the egg's slowest internal mode is at
+redistributing it**, so a rested egg evens out while it cools. Slower is not never,
+though: by the time the yolk peaks, the counter has drawn the egg's mean temperature down
+by 13 °C — 6.2 to free convection, 5.6 to radiation, and 1.2 to the water on the shell,
+which flashes off in the first few seconds. Water is the opposite — an ice bath or a cold
+tap is effectively Dirichlet, pulling the surface to the bath temperature immediately and
+intercepting the carryover.
 
 Here is the same cook — identical 7.4 minutes in the water, so the egg is in an identical
 state at the pull, **48.5 °C at the yolk centre in all three cases** — diverging purely
@@ -429,19 +430,28 @@ on what happens afterwards:
 |---|---|---|---|
 | ice bath | 65.0 | +16.5 | ~3 min after pull |
 | cold tap | 65.6 | +17.1 | ~3 min after pull |
-| **counter (still air)** | **76.3** | **+27.8** | ~8 min after pull |
+| **counter (still air)** | **75.3** | **+26.8** | ~7 min after pull |
+| insulated (the ceiling) | 83.9 | +35.4 | never quite |
 
-For comparison, a perfectly insulated egg — the true adiabatic limit, where the centre
-simply reaches the volume average — peaks at 76.2 °C. Counter-resting is within a few
-tenths of a degree of that limit. **Still air is not cooling; it is a lid.**
+The last row is a perfectly insulated egg, the true adiabatic limit, where the centre
+simply reaches the mean temperature the egg left the water with. The counter takes 8.6 °C
+of that and the ice bath 19. **Still air is slow cooling, not a lid**, and because it is
+cooling, how fast it cools matters: one prior sd of the kitchen's multiplier
+(`tauAirScale`, §9) moves this peak by 1.1-1.2 °C. So the counter is not guessed. It is
+textbook heat transfer — free convection from a sphere and radiation from the shell
+(`H_AIR`, §6), the latent heat of the water the egg carries out (`WET_SHELL_KG_M2`), and
+Newton's law applied at the shell itself rather than at the egg's mean (§8). An
+independent finite-volume solution with `h` worked out afresh from the shell's
+temperature at every step agrees with it to 0.25 °C of peak yolk, from 48 to 76 g and
+4.9 to 12 minutes (`LOGBOOK.md`, 3 October 2026).
 
 ### The consequence, stated plainly
 
 **Soft doneness is unreachable if you rest the egg on the counter.** Even the shortest
-cook that sets the white (4.9 min, with counter resting) carries the yolk to 65.6 °C.
+cook that sets the white (4.9 min, with counter resting) carries the yolk to 64.9 °C.
 There is no cook time that produces a soft yolk and a set white in that protocol. The
 solver reports this honestly: `solveCookTime` returns `reachable: false` and a
-`softestLevel` of 0.58 — between "jammy" and "fudgy" — and the UI stripes out everything
+`softestLevel` of 0.53 — between "jammy" and "fudgy" — and the UI stripes out everything
 below it and snaps the slider there, rather than returning a time it cannot deliver.
 
 This is, most likely, why soft-boiled eggs are the least reproducible thing in the
@@ -463,7 +473,6 @@ distrust.
 |---|---|---|---|
 | `ALPHA_DEFAULT` | 1.70e-7 | m²/s | Albumen at cooking temperature. **The calibration knob.** Only the group `tau = R^2/alpha` is identifiable, so radius and diffusivity cannot be fitted separately: geometry is fixed honestly and `alpha` absorbs the model error. Abbasnezhad's measured correlations give albumen `alpha` rising 1.36e-7 (20 °C) → 1.69e-7 (100 °C), and Buay's whole-egg fit to a real thermocouple trace gives 1.6e-7 (1.5-1.8e-7); 1.70e-7 is inside that band, at the fast end. For the reference egg `tau = R^2/alpha = 3340 s`. **Medium-high** — measured band plus kitchen practice, but 4.6% fast against Buay's trace (§7). |
 | `ALPHA_REL_SD` | 0.119 | — | Prior width for calibration, chosen so `tau` has sd ~400 s at the reference radius. **Judgement.** |
-| `TAU_AIR` | 2030 | s | Lumped `m*c/(h*A)` with `h ~ 15 W/m²K` in still air. **Lowest confidence in the model** — no published carryover curve has been found (§11.3). Carries a wide calibration prior (`tauAirScale`). |
 | `H_EFF` | 850 | W/m²K | Natural convection on a sphere (~1100) in series with shell + membranes (~3200). Used for the Biot number. **Known high**: Denys et al. (2003) measured 490 W/m²K at the shell, ~450 effective with their measured shell in series — `Bi ~ 18`, not 34 (§11.2). It enters as a justification rather than a driver, which is the only reason it still stands. |
 | `RAMP_R` | 3.0 | — | Hob overshoot ratio; `1/r` is the fraction of full power needed to hold a boil, which measured cooktop studies put near 1/3. Shapes the cold-start ramp and nothing else: it describes the hob, which is why the heat-off pan no longer goes through it (§2.4). **Medium-low.** |
 | `TAU_STANDING_REF_S` | 1183.8 | s | The heat-off, lid-on pan's loss time constant at 2 L: `480 / ln(1.5)`, what the retired boil-time rule gave for an 8-minute boil. **Anchored, not measured** — pinned so Williams' seventeen-minute method (§7) is unchanged by construction. One folk recipe with an unstated pot. |
@@ -478,6 +487,9 @@ distrust.
 | `C_EGG` | 3200 | J/kg·K | Whole egg (Coimbra et al. 2006). **Medium-high.** |
 | `C_WATER` | 4186 | J/kg·K | Standard. **High.** |
 | `RHO_EGG` | 1100 | kg/m³ | Whole egg including shell; specific gravity 1.07-1.10. **High.** |
+| `H_AIR` | 15 | W/m²K | The shell of an egg resting in still room air: free convection from a sphere (Churchill 1983, `Nu = 2 + 0.589 Ra^(1/4) / [1 + (0.469/Pr)^(9/16)]^(4/9)`), 7.3-8.4 W/m²K for a 48 mm egg with the shell at 60-100 °C in a 20 °C room, plus radiation at emissivity 0.93, 6.5-7.9. The sum is 13.8-16.3; a constant 15 reproduces the temperature-dependent sum to 0.25 °C of peak yolk. Sets the counter's time constant `m*c/(h*A)` per egg (`airTimeConstant`, 1864 s for the reference egg), which the kitchen's `tauAirScale` (§9) multiplies. **High for still air** — textbook heat transfer, which needs no egg-specific measurement; a draught, an extractor fan or an egg cup is the kitchen, not the physics. |
+| `WET_SHELL_KG_M2` | 0.015 | kg/m² | The water film an egg carries out of the pan, ~15 µm, 0.1 g on the reference egg: a Landau-Levich film at a spoon's pace, and Jeffreys' gravity drainage `sqrt(nu*x/(g*t))` after a second or two, both say 15-30 µm. It flashes off in under ten seconds and costs the reference egg 1.2 °C of mean temperature (`wetShellDrop_C`), 0.7 °C of peak yolk. **Medium** — film physics, not a weighing; 7-30 µm moves the reference peak by +0.4 to -0.7 °C. A scale reading to 0.01 g would settle it. |
+| `LATENT_HEAT_WATER` | 2.27e6 | J/kg | Water at 90-100 °C, where the film evaporates. **High.** |
 
 ### Geometry
 
@@ -540,7 +552,8 @@ unless a row says otherwise. As of 29 September 2026, all 28 pass:
 | Denver 1609 m hard-boiled vs sea level | 12.00 % | 12.23 % | ±3 % | PASS |
 | carryover peak yolk, 7.4 min cook, ice | 65.00 C | 65.04 C | ±0.5 C | PASS |
 | carryover peak yolk, 7.4 min cook, tap | 65.60 C | 65.56 C | ±0.5 C | PASS |
-| carryover peak yolk, 7.4 min cook, counter | 76.30 C | 76.33 C | ±0.5 C | PASS |
+| carryover peak yolk, 7.4 min cook, counter | 75.30 C | 75.28 C | ±0.5 C | PASS |
+| insulated ceiling, 7.4 min cook (mean temperature at the pull) | 83.90 C | 83.90 C | ±0.5 C | PASS |
 | T_b(h) vs 100 - h/300, 0-5000 m (worst case) | 0.00 C | 0.03 C | ±0.05 C | PASS |
 | room temperature is inert on a hot start into an ice bath | 0.00 min | 0.00 min | ±0.001 min | PASS |
 | Williams' standing method: 17 min, peak yolk | 75.60 C | 75.60 C | ±1 C | PASS |
@@ -629,8 +642,11 @@ a pass: see §11.2.
 worth repeating: the planning estimate for
 counter-resting was 85.3 °C, computed with a model that relaxed the surface from the
 *water* temperature. A lumped egg in still air relaxes from its own *volume-average*
-temperature. Corrected in `coolingTemperature`, the figure is 76.3 °C. The effect is
-still decisive (jammy versus fully set) but smaller than first computed.
+temperature. Corrected in `coolingTemperature`, the figure was 76.3 °C. On 3 October 2026
+the counter was worked from first principles (§8): Newton's law at the shell rather than
+at the mean, the time constant from each egg, and the latent heat of the wet shell. It
+is now 75.3 °C. The effect is still decisive (jammy versus fully set) but smaller than
+first computed.
 
 ---
 
@@ -687,17 +703,29 @@ only on the bath and the dose targets, so the convection above does not touch th
 while `equilibrate_s` is conduction-only and is too long by an unknown amount. Neither
 app puts it on screen.
 
-**The cooling phase is different, and weaker.** In still air `Bi ~ 0.6` and Dirichlet
-would be badly wrong, so the cooling phase instead drives the surface along the egg's
-own *lumped* decay from its volume-average temperature. That is a different
-approximation from the one used during the cook, and it is the **least verified part of
-the model**. No published *carryover curve* has been found — egg-centre temperature
-against time after removal from the water — though the measurement clearly exists:
-Vega & Mercadé-Prieto plunged instrumented eggs into ice-water and recorded the
-decrease, without plotting it, and Almonacid et al. (2007) and Sabliov et al. (2002)
-both model shell-egg cooling. The qualitative conclusion (counter-resting is nearly adiabatic) is
-robust because it depends only on the ratio of two time constants that differ by ~7x,
-but the specific 76.3 °C is soft.
+**The cooling phase on the counter has a boundary of its own.** In
+still air `Bi = h*R/k ~ 0.6`: the shell is neither clamped at the room's temperature
+(Dirichlet would be badly wrong) nor at the egg's mean (a lumped body). So the
+counter solves for the shell temperature each step from Newton's law at the shell
+itself, `-k dT/dr = h (Ts - Ta)`, written as the heat balance it implies on the whole
+egg (`robinSurface` in `sphere.ts`): the egg's mean falls by exactly what the shell sends
+out, and the shell starts where the water left it, hot while the outer white's heat is
+still arriving. It needs no change of basis, and it reproduces the closed-form Robin
+series to 0.02 °C (`test/core.test.ts` 17a). `h` is textbook: free convection from a
+sphere plus radiation, 15 W/m²K over the shell temperatures that matter (§6). The water
+on the shell evaporates in seconds, tens of times faster than convection takes heat, and
+its latent heat is withdrawn over `TAU_PLUNGE`.
+
+Until 3 October 2026 the counter drove the surface along a lumped exponential from the
+egg's mean, with one fixed 2030 s time constant for every egg and a dry shell. Against
+an independent finite-volume solution that was between 0.7 °C too cold and 0.8 °C too
+hot in peak yolk, depending on the cook, before the wet shell's 0.5-0.8 °C; together, up
+to 1.5 °C too hot. Now it is within 0.25 °C everywhere tried. What remains open is not
+the physics but the kitchen, which `tauAirScale` carries: a draught of 0.3 m/s takes
+0.6 °C off the reference peak and 1 m/s takes 1.7; a stone counter may conduct more
+through the contact than wood, up to 0.8 °C at a generous estimate; an egg cup or a tea
+towel slows it. The air cell (below), and the egg's own water leaving through the
+shell (about 2% of the loss), are left out.
 
 **The air cell is unmodelled.** A real egg contains a gas pocket at the blunt end,
 typically 2-5% of the volume and growing with age. It is an insulator and it displaces
@@ -790,14 +818,14 @@ is no input for it, because across a 20 °C swing of kitchen it is worth almost 
 
 | room | hot start, jammy | cold start, jammy | standing for jammy | counter-rested peak yolk |
 |---|---|---|---|---|
-| 10 °C | 7.36 min | 11.22 min | 3.72 min | 75.94 °C |
-| 20 °C | 7.36 min | 10.89 min | 3.20 min | 76.33 °C |
-| 30 °C | 7.36 min | 10.52 min | 2.73 min | 76.78 °C |
+| 10 °C | 7.37 min | 11.23 min | 3.72 min | 74.77 °C |
+| 20 °C | 7.37 min | 10.89 min | 3.21 min | 75.28 °C |
+| 30 °C | 7.37 min | 10.53 min | 2.74 min | 75.85 °C |
 
 On the default path — eggs into boiling water, straight into an ice bath — it is worth
 *exactly* nothing, to three decimal places, and `tools/validate.ts` checks that it stays
 that way. A cold start costs about two seconds per degree. Even counter-resting, where
-the room is the thing the egg is cooling toward, moves the peak yolk by 0.04 °C per
+the room is the thing the egg is cooling toward, moves the peak yolk by 0.05 °C per
 degree of room, because the carryover peak happens in the first few minutes while the egg
 is still far above the room whatever the room is doing.
 
@@ -810,7 +838,7 @@ egg says nothing about the room, so that case keeps the 20 °C default.
 **Tap water temperature.** Tempting to tie to the room, and wrong: mains water arrives at
 something closer to ground temperature. It keeps its own constant (§6), and §5 shows why
 it barely matters anyway — ice and tap differ by 0.6 °C of peak yolk, while the counter
-differs by 11.
+differs by 10.
 
 Keep those fixed and the same setting will give you the same egg. Change one and the
 app will tell you what it costs.
@@ -822,9 +850,11 @@ Two parameters are meant to be learned, not asserted:
 - `alpha_m2s` — absorbs everything about *how fast heat gets to the middle*: your eggs'
   composition, the shape error, the Dirichlet approximation, the yolk's extra
   insulation.
-- `tauAirScale` — a multiplier on `TAU_AIR`, absorbing your kitchen's draughtiness. It
-  is **only identifiable if you actually vary the cooling protocol**; cook every egg in
-  an ice bath and there is nothing in your data to learn it from.
+- `tauAirScale` — a multiplier on the counter's time constant (`airTimeConstant`, from
+  `H_AIR`), absorbing what still air on a counter does not describe: a draught, an
+  extractor fan, a stone counter, an egg cup. It is **only identifiable if you actually
+  vary the cooling protocol**; cook every egg in an ice bath and there is nothing in your
+  data to learn it from.
 
 To calibrate: cook eggs, and after each one record whether the result was softer or
 harder than you asked for. Ordinal feedback is enough — you do not need a thermocouple,
@@ -1110,17 +1140,21 @@ answers are recorded here rather than deleted, because each one was a plausible 
 ### 11.3 Measurements that still appear not to exist
 
 1. **A carryover curve: egg-centre temperature against time *after* removal from the
-   water**, under an ice bath, a cold tap, and resting on the counter. This remains the
-   weakest constant in the model (`TAU_AIR`) and it drives the app's most opinionated
-   behaviour — refusing soft doneness when the egg will be rested. Two leads: Vega &
-   Mercadé-Prieto instrumented yolks and plunged them into ice-water, recording the
-   decrease but not publishing the curve; Sabliov et al. (2002) and Almonacid et al.
-   (2007) both model shell-egg cooling, the first cryogenically. A thermocouple through
-   the blunt end and a datalogger would still settle it in an afternoon.
+   water**, under an ice bath, a cold tap, and resting on the counter. Not because the
+   counter's physics needs one: free convection, radiation and Newton's law at the shell
+   are textbook (§6, §8), and nobody would publish an egg-specific measurement of them.
+   A curve would test the whole chain end to end,
+   including the one estimate in it, the water on the shell (`WET_SHELL_KG_M2`), which a
+   scale reading to 0.01 g checks on its own: weigh an egg straight from the pan and
+   again a minute later. Two leads: Vega & Mercadé-Prieto instrumented yolks and plunged
+   them into ice-water, recording the decrease but not publishing the curve; Sabliov et
+   al. (2002) and Almonacid et al. (2007) both model shell-egg cooling, the first
+   cryogenically. A thermocouple through the blunt end and a datalogger would still
+   settle it in an afternoon.
 
    A kitchen probe thermometer is NOT a substitute for this one, and `npm run probe`
    says why: at the rested yolk's peak, one prior sd of `tauAirScale` moves the centre
-   reading 1.1 °C, while one prior sd of `alpha` moves it 3.5 °C. A spot reading mostly
+   reading 1.3 °C, while one prior sd of `alpha` moves it 3.5 °C. A spot reading mostly
    re-measures the time-scale. What a probe IS good for is exactly that - the centre, at
    the moment the centre peaks, is flat in space and in time (3 mm off: 0.03 °C; 15 s
    late: 0.14 °C), and ±1 °C there is ±2.5% of time-scale from one egg, with no taste
@@ -1196,12 +1230,12 @@ answers are recorded here rather than deleted, because each one was a plausible 
   `npm run rank` takes ten things one might hope to learn - `alpha`, `tauAirScale`,
   both z-values, the white's threshold and the radius it is judged at, a size exponent,
   a yolk offset, and errors in the start and boil temperatures - scales each by its
-  prior, and asks how many directions of the prediction they span over 174 reachable
+  prior, and asks how many directions of the prediction they span over 182 reachable
   cooks. Answers needed to halve the prior sd along each direction: **~1** for a
   time-scale (`alpha`, with the two temperature errors folded into it), **~5** for a
-  *white lag* (threshold and radius, mixed 0.75 / 0.60 and inseparable), then a tenfold
-  gap: ~60 for carryover (and *never* without counter-rested cooks), ~110 for size
-  scaling, ~270 for start temperature, and 500 to 250 000 for the rest, with both
+  *white lag* (threshold and radius, mixed 0.75 / 0.57 and inseparable), then a sixfold
+  gap: ~30 for carryover (and *never* without counter-rested cooks), ~110 for size
+  scaling, ~280 for start temperature, and 450 to 250 000 for the rest, with both
   z-values at the bottom. Since E3 the particle carries the first two: the time-scale,
   and a white offset for the white lag. Both real eggs so far had a runny white at a soft
   target. The

@@ -262,7 +262,11 @@ const LOG_WHITE_TARGET = Math.log10(WHITE_DOSE_TARGET);
 const WHITE_NOISE_PER_YOLK = Z_YOLK / Z_WHITE;
 
 const PRIOR_OFFSET_SD = 0.22;
-/** Deliberately wide: this is the least-verified part of the model. */
+/** Wide because kitchens differ, not because the physics is in doubt: still
+ *  air on a counter is textbook (H_AIR, to ~10%), but a draught of 0.3-1 m/s
+ *  shortens the time constant by 17-40%, an egg cup or a tea towel lengthens
+ *  it, and the shell may carry half or twice the water assumed. One sd (x0.70
+ *  to x1.42) moves the reference counter peak by 1.1-1.2 C. README section 8. */
 const PRIOR_TAU_AIR_LOG_SD = 0.35;
 
 /* ---- deterministic RNG, so calibration is reproducible and portable ---- */

@@ -38,19 +38,19 @@ prediction is right, and the confounded directions are simply not learned.
 
 Ten global parameters were proposed and the objection was that most of them cash
 out in the same predictive. `npm run rank` measures it: the Jacobian of the two
-log doses against ten candidates, scaled by their priors, over 174 reachable
+log doses against ten candidates, scaled by their priors, over 182 reachable
 cooks at the times the app would recommend.
 
 | direction | answers to halve its prior sd | what it is |
 |---|---|---|
 | 1 | ~1 | **time-scale** - `alpha`, with boil-temperature and start-temperature error folded in |
-| 2 | ~5 | **white lag** - the white's threshold and the radius it is judged at, mixed 0.75 / 0.60 and not separable |
-| 3 | ~60 | carryover (`tauAirScale`) - and **never**, from cooks that all go into water |
+| 2 | ~5 | **white lag** - the white's threshold and the radius it is judged at, mixed 0.75 / 0.57 and not separable |
+| 3 | ~30 | carryover (`tauAirScale`) - and **never**, from cooks that all go into water |
 | 4 | ~110 | size scaling - needs a spread of egg sizes |
-| 5 | ~270 | start-temperature bias |
-| 6-10 | 500 to 250 000 | both z-values, threshold-versus-radius, boil bias on its own |
+| 5 | ~280 | start-temperature bias |
+| 6-10 | 450 to 250 000 | both z-values, threshold-versus-radius, boil bias on its own |
 
-There is a tenfold gap after the second direction and the z-values are at the
+There is a sixfold gap after the second direction and the z-values are at the
 very bottom. So:
 
 **Global, always learned (2).** A *time-scale* and a *white lag*. They are named
@@ -339,7 +339,7 @@ new field must say what its absence means. A different `v` is refused.
 |---|---|---|---|---|
 | at the pull | 0.60 | +1.33 | +2.21 | 1.7% |
 | ice bath, at the yolk's peak (+195 s) | 0.40 | -0.03 | -0.14 | 2.5% |
-| counter, at the yolk's peak (+548 s) | 0.30 | 0.00 | -0.01 | 3.4% |
+| counter, at the yolk's peak (+458 s) | 0.29 | 0.00 | -0.02 | 3.4% |
 
 - **Do not probe the white.** At `0.693 R` the field falls 3.5 C per millimetre.
 - **Do not probe at the pull.** Every error has the same sign - a miss, a delay
@@ -350,7 +350,7 @@ new field must say what its absence means. A different `v` is refused.
   egg, still edible, pins a kitchen's time-scale to about 2.5% - the whole
   ordinal plateau is 3% - and with no taste in it.
 - **It does not settle the carryover constant.** One prior sd of `tauAirScale`
-  moves the rested reading 1.1 C; one prior sd of `alpha` moves it 3.5 C. README
+  moves the rested reading 1.3 C; one prior sd of `alpha` moves it 3.5 C. README
   §11.3's afternoon with a datalogger is still the way to get that.
 
 At scale the thermometer owners are the anchor. Ordinal answers can never tell
@@ -406,7 +406,7 @@ point.
   solved, so the countdown's end, its alarm and the reading are
   one moment. The probe is offered only where that moment exists: an ice bath
   or a tap, with the peak after the pull. Not on the counter, where nothing is
-  counted, the peak is nine minutes out and `tauAirScale` is in it; not with
+  counted, the peak is seven or eight minutes out and `tauAirScale` is in it; not with
   the heat off when the pan ran out before the pull.
 - **Not settled**: whether real cooks' readings sit where this says. No egg
   has been probed.
@@ -629,7 +629,7 @@ white-bound 0/10 above: the slider offers the levels whose odds are at least
 3 tenths or more under the best level's. What it lists is the changes that
 would help this setup. Two the model can price, from the changed pot's own
 profile, and they are listed only where they raise this level's odds by half
-a tenth: the counter to ice (after one egg, soft/jammy/fudgy/hard 0/0/3/6 to
+a tenth: the counter to ice (after one egg, soft/jammy/fudgy/hard 0/0/5/6 to
 5/6/6/6; no help at hard), and twice the water with the heat off (0 to 3-4/10
 from 2 to 4 L). Two it cannot, because it takes their inputs as exact: a room
 egg's temperature (17 against 23 C is 28 s at jammy) and a size class's mass
