@@ -28,14 +28,41 @@ turns on a page that says what it collects.
 
 The page (`privacy/index.html`) changes first; everything else follows it.
 
-- [ ] **Check every claim on the page against the 0.4 code**, as was done for
+- [x] **Check every claim on the page against the 0.4 code**, as was done for
       0.3: each field a record sends (`src/core/record.ts`), what the
       endpoint stores (`server/eggs.ts`), what it does *not* store (the IP
       address: the endpoint reads no address, but Netlify's function logs
       may see one — say so), what App Attest keeps server-side (a public key
       and a counter per id), what deletion removes, and how long anything is
       kept. "Until you delete them, or until I do" needs a concrete rule.
-- [ ] **Who and why, in GDPR terms** (EU users, including your family):
+      The page is rewritten (`2223bf9`): the two modes first, every field,
+      what the server keeps (with App Attest's key name, how the app was
+      installed and its build number, which `StoredKey` also keeps), where,
+      who can see it, Netlify's logs (a DELETE's path carries the id). The
+      retention rule is a proposal marked `OWNER` in the page: until
+      deleted, at most five years from the day cooked.
+- [ ] **The page's `OWNER:` marks** (comments in `privacy/index.html`):
+      the retention period; deleting the fit's local copy (`npm run eggs --
+      pull`) after each fit; saying you live in Australia; the id (next
+      item); the Australia line.
+- [ ] **The retention rule, enforced**: whatever period the owner picks
+      needs a step that applies it, e.g. `npm run eggs -- prune`, deleting
+      records whose `day` is older and any App Attest key left with no
+      records, run before each fit. The server keeps no time of arrival, so
+      the rule has to be by the day cooked.
+- [ ] **Show the random id** so a cook can quote it by email: neither app
+      shows it (`src/ui/shareView.ts`, `ios/App/SettingsView.swift`). A
+      selectable line under the switch while sharing is on, in both apps,
+      as a named draft. The page says today that neither app shows it and
+      the button is the way to delete; change that sentence when this
+      ships.
+- [ ] **Who and why, in GDPR terms** (EU users, including your family).
+      Written on the page in plain words (`2223bf9`), each legal fact marked
+      `VERIFY` until the research is in: the household exemption (assumed
+      not to apply), an EU representative (Art. 27(2) exemption claimed),
+      withdrawal (turning sharing off stops sending; consent for what was
+      sent is withdrawn by deleting it, which Art. 17(1)(b) may not
+      allow), Netlify's DPA, the transfer mechanism, the age (16):
       - who is responsible (you, by name, and the contact address);
       - the legal basis: consent, given by the switch, withdrawn by turning
         it off;
@@ -50,12 +77,13 @@ The page (`privacy/index.html`) changes first; everything else follows it.
 - [ ] **Australia** (**verify**): a person with turnover under $3M is
       generally outside the Privacy Act's APPs; worth one line of your own
       judgement, not a policy.
-- [ ] **What the offline web app keeps**: the service worker stores a copy of
+- [x] **What the offline web app keeps**: the service worker stores a copy of
       the site's own files on the device. Not personal data, but the page
-      says what is stored where, so add one line.
-- [ ] **The font is self-hosted** (no Google Fonts request): one line under
-      "What I don't do" if you want it.
-- [ ] **The changes list and the date** at the top of the page.
+      says what is stored where, so add one line (`2223bf9`).
+- [x] **The font is self-hosted** (no Google Fonts request): one line under
+      "What I don't do" if you want it (`2223bf9`).
+- [x] **The changes list and the date** at the top of the page: 3 October
+      2026, "version 0.4: sharing added, …" (`2223bf9`).
 - [ ] **App Store Connect → App Privacy** (`ios/RELEASING.md` step 6): from
       Data Not Collected to Other Data Types and Device ID, both App
       Functionality, not linked, not tracking. **Decide: Device ID or User
@@ -63,12 +91,14 @@ The page (`privacy/index.html`) changes first; everything else follows it.
       User ID includes "an assigned user ID". The id is made per install and
       replaced by Start learning again; it identifies a cook's eggs, not the
       hardware. Whichever is chosen, `PrivacyInfo.xcprivacy` (now
-      `NSPrivacyCollectedDataTypeDeviceID`) says the same.
+      `NSPrivacyCollectedDataTypeDeviceID`) says the same. Step 6 now
+      records the choice as pending and what App Attest keeps (`acddcb7`).
 - [ ] **Export compliance**: the app now uses HTTPS. That is exempt
       encryption, so `ITSAppUsesNonExemptEncryption: NO` should still be the
       honest answer (**verify** against Apple's export compliance page), but
       `project.yml`'s comment and RELEASING.md both say "no networking of any
-      kind" and need rewriting.
+      kind" and need rewriting. Rewritten, with the answer kept and marked
+      **VERIFY** in both (`acddcb7`); tick when Apple's page confirms it.
 - [ ] **TestFlight → Test Information**: the beta description mentions
       sharing; the review notes say what the endpoint is, that sharing is off
       by default, and what App Attest is for.

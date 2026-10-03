@@ -32,8 +32,9 @@ These counts are the only ones in the documents. If you want a number, run
 4. **E6-E8**, the collective part: built, on this branch, `0.4.x`
    (`COLLECTIVE.md`; the owner's answers are `DECISIONS.md` 58-61), kept up
    to date with `main` and not released. The owner reviews it first: the
-   `share` and `learning` drafts on a phone, the privacy page's sharing
-   section, and the endpoint (`netlify/functions/eggs.mts`, Netlify Blobs).
+   `share` and `learning` drafts on a phone, the privacy page (rewritten for
+   0.4, with `OWNER` and `VERIFY` marks to answer; `SHIP-0.4.md` B), and the
+   endpoint (`netlify/functions/eggs.mts`, Netlify Blobs).
    It is version 0.4.0-alpha.1 here; `main` releases small things meanwhile.
 
 Throughout: cook real eggs, and the two measurements in README §11.3.
@@ -84,8 +85,8 @@ The one queue. Nothing else in the documents waits on the owner.
    (`privacy/index.html`), which is live only after the next push. App
    Privacy's answers changed with sharing (E6): Other Data Types and Device
    ID, neither linked nor tracking, as `ios/RELEASING.md` step 6 lists them.
-   Read the page first: it speaks in your name, and now says what sharing
-   sends. Help links it in both apps, as "Privacy" ("Of Privacy" in 1750;
+   Read the page first: it speaks in your name, says what sharing sends
+   and keeps, and carries `OWNER` marks for you (`SHIP-0.4.md` B). Help links it in both apps, as "Privacy" ("Of Privacy" in 1750;
    the `privacy` draft), and so does Settings, under sharing.
    The App Store subtitle: "Time eggs, not minutes" (22 of 30 characters;
    `DECISIONS.md` 53).
