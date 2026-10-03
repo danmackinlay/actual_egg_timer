@@ -324,3 +324,10 @@ Decided by the owner, 3 October 2026, on the offline branch, numbered after
     and a new build takes over only between cooks, so an update never costs
     a running cook its alarm. Deleting `sw.js` takes it out. Built
     `6af878f`.
+
+Decided by the owner, 3 October 2026:
+
+64. **Branches are named for their version line**, not their contents:
+    "the `e6-e8` convention is not legible". `main` stays what is live (it
+    is what Netlify serves), the 0.4 work is `0.4.x`, and a `0.3.x` is cut
+    only to fix 0.3 after 0.4 ships. `CLAUDE.md` says how.
