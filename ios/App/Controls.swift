@@ -36,6 +36,7 @@ struct StepperValue: View {
             // One line, whatever the face: a value is never broken between
             // its number and its unit, which the wider serif of 1750 did.
             Text(show(value))
+                .systemFigures()
                 .foregroundStyle(.secondary)
                 .monospacedDigit()
                 .lineLimit(1)
@@ -74,6 +75,7 @@ struct CountValue: View {
     var body: some View {
         HStack(spacing: 10) {
             Text(countText(Double(value)))
+                .systemFigures()
                 .foregroundStyle(.secondary)
                 .monospacedDigit()
             Stepper(label, value: $value, in: Int(range.lowerBound)...Int(range.upperBound))
@@ -101,6 +103,7 @@ struct MeasureField: View {
         LabeledContent(label) {
             HStack(spacing: 6) {
                 TextField(label, text: $text)
+                    .systemFigures()
                     .keyboardType(.decimalPad)
                     .multilineTextAlignment(.trailing)
                     .textFieldStyle(.roundedBorder)

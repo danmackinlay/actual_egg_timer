@@ -795,14 +795,9 @@ the owner's review.
   in italic, centred. It is the one place the long s is drawn. VoiceOver reads
   it as a header, through an accessibility label with every long s an s
   (`withoutLongS`, the Swift twin of what `applyCopy` does on the web).
-- **A book face.** In 1750 the page is set in `.fontDesign(.serif)`, which is
-  New York, the system's serif. The web uses Iowan Old Style. New York
-  follows Dynamic Type. The clock keeps the system's rounded face, whose
-  figures line up. The environment's design overrides even a
-  `.system(design:)` font, so the headline and the big time each set
-  `.fontDesign(.rounded)` again on themselves. The wider serif broke a
-  stepper's value between its number and its unit, so the value is now one
-  line in any face.
+- **A period face**, since 3 October: *The face*, below. Before it, New
+  York broke a stepper's value between its number and its unit, so the
+  value is one line in any face.
 - **The tint is the web's accent.** Before, it was the system default. `AccentColor`,
   in both the app's and the widget's asset catalogues, is `--accent` from
   `styles.css`: #8A4B00 in light, #FFB020 in dark. It is the global accent
@@ -878,6 +873,10 @@ every visitor.
 - **Old-style figures only**, whose 0 is an o: right in a sentence, wrong
   in a field. A number the cook types or steps keeps the system face, as
   the clock does.
+- **On iOS, what UIKit draws keeps the system face**: the navigation bar,
+  the segmented controls, a menu. So does the Live Activity, read at a
+  glance across a kitchen beside the system's clock; the widget bundles no
+  font. `ios/App/PeriodFace.swift` has the rest.
 
 ## 7. Order
 

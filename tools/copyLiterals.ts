@@ -112,6 +112,13 @@ const NOT_COPY: Record<string, string> = {
   soft: 'debug launch argument value',
   right: 'debug launch argument value',
   firm: 'debug launch argument value',
+  // the face of 1750 (ios/App/PeriodFace.swift)
+  IM_FELL_English_Roman: 'font name',
+  IM_FELL_English_Italic: 'font name',
+  liga: 'OpenType feature tag',
+  dlig: 'OpenType feature tag',
+  hist: 'OpenType feature tag',
+  '{} is not registered: see UIAppFonts in project.yml': 'developer error, never shown',
   '2026-09-28': 'debug seed record date, never shown',
   '{}#{}|{}|{}|{}|{}|{}|{}': 'cache key, never shown',
   'https://github.com/danmackinlay/actual_egg_timer': 'URL',

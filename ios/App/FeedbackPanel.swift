@@ -27,15 +27,15 @@ struct FeedbackPanel: View {
             // unanswered stays a skip in the record.
             if cook.feedbackGiven && planner.answers == nil {
                 Text(tr(planner.learning ? "feedback.learning" : "feedback.thanks"))
-                    .font(.subheadline)
+                    .appFont(.subheadline)
                 Text(planner.learning ? " " : tunedLine)
-                    .font(.caption)
+                    .appFont(.caption)
                     .foregroundStyle(.secondary)
                     .monospacedDigit()
             } else {
                 probeEntry
                 Text(tr("feedback.ask"))
-                    .font(.headline)
+                    .appFont(.headline)
                 HStack(spacing: 10) {
                     yolkButton(tr("feedback.tooSoft"), .tooSoft)
                     yolkButton(tr("feedback.justRight"), .justRight)
@@ -43,7 +43,7 @@ struct FeedbackPanel: View {
                 }
 
                 Text(tr("feedback.white.ask"))
-                    .font(.headline)
+                    .appFont(.headline)
                     .padding(.top, 4)
                 HStack(spacing: 10) {
                     whiteButton(tr("feedback.white.runny"), .runny)
@@ -52,11 +52,11 @@ struct FeedbackPanel: View {
                 }
 
                 Text(tr("feedback.optional"))
-                    .font(.caption)
+                    .appFont(.caption)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
                 Text(calibrationNote)
-                    .font(.caption)
+                    .appFont(.caption)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
             }
@@ -78,9 +78,9 @@ struct FeedbackPanel: View {
             let given = planner.answers?.probe
             VStack(spacing: 8) {
                 Text(tr("probe.now"))
-                    .font(.headline)
+                    .appFont(.headline)
                 Text(tr("probe.hint"))
-                    .font(.caption)
+                    .appFont(.caption)
                     .foregroundStyle(.secondary)
                 HStack(spacing: 10) {
                     TextField(tr("probe.entry"), text: $probeText)
@@ -97,7 +97,7 @@ struct FeedbackPanel: View {
                 }
                 if !probeNote.isEmpty {
                     Text(probeNote)
-                        .font(.caption)
+                        .appFont(.caption)
                         .foregroundStyle(given == nil ? .orange : .secondary)
                         .multilineTextAlignment(.center)
                 }
@@ -145,7 +145,7 @@ struct FeedbackPanel: View {
         _ label: String, chosen: Bool, answered: Bool, action: @escaping () -> Void
     ) -> some View {
         let text = Text(label)
-            .font(.subheadline)
+            .appFont(.subheadline)
             .frame(maxWidth: .infinity)
         if chosen {
             Button(action: action) { text.onAccent() }

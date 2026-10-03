@@ -13,6 +13,7 @@ import EggTimerCopy
 /// the signal to bring one back.
 struct SettingsView: View {
     @Bindable var planner: Planner
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     /// Forget asks first, in place, as the web's does: the button gives way to
     /// the question and its two answers.
     @State private var confirming = false
@@ -43,7 +44,7 @@ struct SettingsView: View {
                 // English page, 1750 included, in its own twin.
                 if languageOf(Copy.activeLocale) == "en" {
                     Text(tr("controls.units.period"))
-                        .font(.footnote)
+                        .appFont(.footnote)
                         .foregroundStyle(.secondary)
                 }
             }
@@ -77,7 +78,7 @@ struct SettingsView: View {
                         Text(planner.show(.boilingPoint, planner.boilingC))
                             .monospacedDigit()
                     }
-                    .font(.footnote)
+                    .appFont(.footnote)
                     .foregroundStyle(.secondary)
                 }
 
@@ -120,7 +121,7 @@ struct SettingsView: View {
 
             Section {
                 Text(colophon)
-                    .font(.footnote)
+                    .appFont(.footnote)
                     .foregroundStyle(.secondary)
             }
         }
@@ -137,15 +138,15 @@ struct SettingsView: View {
         Section {
             Text(tr("learned.title"))
             Text(learnedNote)
-                .font(.footnote)
+                .appFont(.footnote)
                 .foregroundStyle(.secondary)
             if planner.eggsLogged > 0 || planner.hasBoilMemory {
                 if confirming {
                     VStack(alignment: .leading, spacing: 6) {
                         Text(tr("learned.confirm.title"))
-                            .font(.subheadline.weight(.semibold))
+                            .appFont(.subheadline, weight: .semibold)
                         Text(tr("learned.confirm.message"))
-                            .font(.footnote)
+                            .appFont(.footnote)
                             .foregroundStyle(.secondary)
                     }
                     .accessibilityElement(children: .combine)
@@ -182,7 +183,7 @@ struct SettingsView: View {
                 Text(tr("share.title"))
             }
             Text(tr("share.what"))
-                .font(.footnote)
+                .appFont(.footnote)
                 .foregroundStyle(.secondary)
             Toggle(tr("share.toggle"), isOn: Binding(
                 get: { s.on },
@@ -195,15 +196,15 @@ struct SettingsView: View {
             ))
             if let note = shareNote(s) {
                 Text(note)
-                    .font(.footnote)
+                    .appFont(.footnote)
                     .foregroundStyle(.secondary)
             }
             if confirmingDelete {
                 VStack(alignment: .leading, spacing: 6) {
                     Text(tr("share.confirm.title"))
-                        .font(.subheadline.weight(.semibold))
+                        .appFont(.subheadline, weight: .semibold)
                     Text(tr("share.confirm.message"))
-                        .font(.footnote)
+                        .appFont(.footnote)
                         .foregroundStyle(.secondary)
                 }
                 .accessibilityElement(children: .combine)
@@ -223,7 +224,7 @@ struct SettingsView: View {
                 }
             }
             Link(tr("help.privacy"), destination: HelpView.privacyURL)
-                .font(.footnote)
+                .appFont(.footnote)
         }
     }
 
@@ -261,7 +262,7 @@ struct SettingsView: View {
     /// The web's colophon, with its link to the source.
     private var colophon: AttributedString {
         var name = AttributedString(tr("colophon.name"))
-        name.font = .footnote.weight(.semibold)
+        name.font = .app(.footnote, weight: .semibold, size: dynamicTypeSize)
         var link = AttributedString(tr("colophon.link"))
         link.link = URL(string: "https://github.com/danmackinlay/actual_egg_timer")
         link.underlineStyle = .single

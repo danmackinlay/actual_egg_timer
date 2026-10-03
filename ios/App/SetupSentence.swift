@@ -21,6 +21,7 @@ import EggTimerCopy
 struct SetupSentence: View {
     let planner: Planner
     @Binding var open: Clause?
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     /// The scheme a clause's link uses. Never leaves the app.
     private static let scheme = "eggtimer-clause"
@@ -29,7 +30,7 @@ struct SetupSentence: View {
         let texts = clauseTexts(planner)
         let shown = clauses
         Text(attributed(texts, shown: shown))
-            .font(.title3)
+            .appFont(.title3)
             .lineSpacing(6)
             .tint(.primary)
             .fixedSize(horizontal: false, vertical: true)
@@ -87,7 +88,7 @@ struct SetupSentence: View {
             }
             var run = AttributedString(text.text)
             run.link = URL(string: "\(Self.scheme)://\(clause.rawValue)")
-            run.font = .title3.weight(.semibold)
+            run.font = .app(.title3, weight: .semibold, size: dynamicTypeSize)
             run.underlineStyle = Text.LineStyle(pattern: .solid, color: Palette.accent)
             if open == clause {
                 run.backgroundColor = Palette.accent.opacity(0.3)
@@ -219,7 +220,7 @@ struct CookSentence: View {
                 "egg": .text(texts[.egg]?.text ?? ""), "from": .text(texts[.from]?.text ?? ""),
                 "start": .text(texts[.start]?.text ?? ""), "cooling": .text(texts[.cooling]?.text ?? ""),
             ]))
-            .font(.title3)
+            .appFont(.title3)
             .lineSpacing(4)
             .fixedSize(horizontal: false, vertical: true)
             // In the system the egg was set up in, which the controls cannot
@@ -228,7 +229,7 @@ struct CookSentence: View {
                 "doneness": .text(midSentence(ticket.doneness, locale: Copy.activeLocale)),
                 "yolk": .text(showIn(facts.units, .temperature, ticket.peakYolkC)),
             ]))
-            .font(.footnote)
+            .appFont(.footnote)
             .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -250,12 +251,12 @@ struct ClausePanel: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 2) {
                 Text(tr(titleKey))
-                    .font(.footnote.weight(.semibold))
+                    .appFont(.footnote, weight: .semibold)
                     .foregroundStyle(.secondary)
                 InfoButton(expanded: $more, name: about(titleKey))
                 Spacer()
                 Button(tr("setup.close"), action: done)
-                    .font(.subheadline.weight(.semibold))
+                    .appFont(.subheadline, weight: .semibold)
             }
             if more { MoreText([moreText]).transition(.opacity) }
             choice
@@ -335,7 +336,7 @@ struct ClausePanel: View {
                 value: planner.eggMassG, set: { planner.weigh($0) }
             )
         }
-        .font(.subheadline)
+        .appFont(.subheadline)
     }
 
     /// Fridge, room, or the cook's own number. The presets' temperatures are
@@ -355,13 +356,13 @@ struct ClausePanel: View {
                     label: tr("controls.eggTemp"), measure: planner.measure(.eggTemp),
                     value: $planner.customStartC, show: { planner.show(.eggTemp, $0) }
                 )
-                .font(.subheadline)
+                .appFont(.subheadline)
             }
             Text(tr("controls.eggFrom.hint", [
                 "fridge": .text(planner.show(.temperature, StartTempPresets.fridgeC)),
                 "room": .text(planner.show(.temperature, StartTempPresets.roomC)),
             ]))
-            .font(.caption)
+            .appFont(.caption)
             .foregroundStyle(.secondary)
         }
     }

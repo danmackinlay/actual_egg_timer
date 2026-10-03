@@ -137,12 +137,10 @@ struct ContentView: View {
                 }
             }
         }
-        // 1750 is set in a book face, as on the web (which uses Iowan Old
-        // Style; this is New York, the system's serif, which follows Dynamic
-        // Type). The clock keeps its own face, whose figures line up: the
-        // environment's design overrides even a `.system(design:)` font, so
-        // each clock face sets `.fontDesign(.rounded)` again on itself.
-        .fontDesign(period ? .serif : nil)
+        // 1750 is set in its period face, as on the web (`PeriodFace`):
+        // here for whatever sets no style of its own, and through
+        // `appFont` for whatever does. The clock keeps its own face.
+        .periodFace()
         .onAppear {
             model.appear()
             #if DEBUG
@@ -191,7 +189,7 @@ struct ContentView: View {
     private var titlePage: some View {
         let title = tr("app.titlePage")
         return Text(title)
-            .font(.body.italic())
+            .appFont(.body, italic: true)
             .foregroundStyle(.secondary)
             .multilineTextAlignment(.center)
             .frame(maxWidth: .infinity)

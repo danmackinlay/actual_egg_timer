@@ -29,23 +29,22 @@ struct ReadoutView: View {
         VStack(spacing: 6) {
             if let copy = sousVide {
                 Text(tr("readout.phase.startTime"))
-                    .font(.caption.smallCaps())
+                    .appFont(.caption, smallCaps: true)
                     .foregroundStyle(.secondary)
                 // Not the 76 pt clock face the other phases use: "Yesterday" is
                 // not a clock face and will not fit like one. The web app has a
                 // CSS rule that says the same thing.
                 Text(copy.headline)
                     .font(.system(size: 40, weight: .semibold, design: .rounded))
-                    .fontDesign(.rounded)
                     .minimumScaleFactor(0.6)
                     .lineLimit(1)
                 Text(copy.subline)
-                    .font(.footnote)
+                    .appFont(.footnote)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
             } else {
                 Text(tr(model.keys(phase).label))
-                    .font(.caption.smallCaps())
+                    .appFont(.caption, smallCaps: true)
                     .foregroundStyle(phase == .pull ? .orange : .secondary)
                     .multilineTextAlignment(.center)
                 if learningShown && learningOpen {
@@ -55,7 +54,6 @@ struct ReadoutView: View {
 
                 Text(bigTime)
                     .font(.system(size: 76, weight: .semibold, design: .rounded))
-                    .fontDesign(.rounded)
                     .monospacedDigit()
                     .contentTransition(.numericText())
                     .animation(.snappy, value: bigTime)
@@ -84,7 +82,7 @@ struct ReadoutView: View {
     private var learningMark: some View {
         HStack(spacing: 0) {
             Text(tr("learning.badge"))
-                .font(.caption2.weight(.semibold))
+                .appFont(.caption2, weight: .semibold)
                 .textCase(.uppercase)
                 .foregroundStyle(Palette.accent)
                 .padding(.horizontal, 8)
@@ -107,13 +105,13 @@ struct ReadoutView: View {
                 alignment: .center
             ) {
                 Text(subline)
-                    .font(.footnote)
+                    .appFont(.footnote)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
             }
         } else {
             Text(subline)
-                .font(.footnote)
+                .appFont(.footnote)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
         }
@@ -150,7 +148,7 @@ struct ReadoutView: View {
                     Text(o.map { tr(directionKey($0)) } ?? "")
                         .fixedSize(horizontal: false, vertical: true)
                 }
-                .font(.subheadline.weight(.semibold))
+                .appFont(.subheadline, weight: .semibold)
                 if idle && o != nil {
                     InfoButton(expanded: $directionInfoOpen, name: tr("outcome.info"))
                 }
@@ -162,7 +160,7 @@ struct ReadoutView: View {
             }
             if let o, whiteAtRisk(o) {
                 Text(tr("outcome.whiteRunny"))
-                    .font(.footnote)
+                    .appFont(.footnote)
                     .foregroundStyle(.orange)
                     .padding(.top, 2)
             }

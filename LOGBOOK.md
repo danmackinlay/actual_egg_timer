@@ -3989,3 +3989,30 @@ IM FELL English for the English of 1750 (`DECISIONS.md` 65, 66;
   `127.0.0.1:8080`, a different origin.
 
 **Not verified:** Safari, and a phone; the pane is Chromium.
+
+## 3 October 2026: the face of 1750, on iOS
+
+The web's face in the app (`DECISIONS.md` 65, 66): the same TTFs as
+published in `ios/App/Fonts`, registered by `UIAppFonts` in `project.yml`.
+
+- **`ios/App/PeriodFace.swift`.** `Font.custom` turns on only the common
+  ligatures, so the face comes from a `UIFontDescriptor` naming `liga`,
+  `dlig` and `hist` (`kCTFontOpenTypeFeatureTag`), at the size
+  `UIFont.preferredFont` gives the text style for the view's Dynamic Type
+  size, handed to SwiftUI as `Font(CTFont)` and cached. A DEBUG assert
+  catches a wrong font name, which would otherwise fall back silently.
+- **`appFont(.footnote)`** replaces each `.font(.footnote)`: the system's
+  style in modern English, the face in 1750, small capitals as capitals a
+  size down. The two `AttributedString` runs (the clauses, the colophon's
+  name) take `Font.app(...)`. `periodFace()` at the root covers text with
+  no style of its own, replacing `.fontDesign(.serif)` and the clocks'
+  `.fontDesign(.rounded)` that undid it. `systemFigures()` keeps a stepped
+  or typed number in the system face at the style around it. Help's
+  subheads are italic in 1750, as on the web.
+- **Left to the system**: the navigation bar, the segmented controls, the
+  egg-size menu, the `InfoButton` symbol, the clock and the Live Activity.
+- **Seen on the iPhone 17 simulator (iOS 26.5)** in 1750: the egg page,
+  each clause's choices, Settings, Help and a running cook, at the default
+  size, XXXL and AX-large. Nothing clips. Modern English looked as before.
+
+**Not verified:** a device; VoiceOver, which reads the same text as before.

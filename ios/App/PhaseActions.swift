@@ -59,7 +59,7 @@ struct PhaseActions: View {
                     .tint(Palette.accent)
                 }
             }
-            .font(.footnote)
+            .appFont(.footnote)
             .multilineTextAlignment(.center)
             .frame(maxWidth: .infinity)
         }
@@ -73,7 +73,7 @@ struct PhaseActions: View {
         case .idle where sousVide != nil:
             VStack(spacing: 8) {
                 Text(sousVide?.hint ?? "")
-                    .font(.footnote)
+                    .appFont(.footnote)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
                 // Dead rather than absent. There is nothing to start, and a
@@ -90,7 +90,7 @@ struct PhaseActions: View {
         case .idle:
             VStack(spacing: 8) {
                 Text(idleHint)
-                    .font(.footnote)
+                    .appFont(.footnote)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
                 Button {
@@ -115,7 +115,7 @@ struct PhaseActions: View {
                     alignment: .center
                 ) {
                     Text(model.keys(.heating).hint.map { tr($0) } ?? "")
-                        .font(.footnote)
+                        .appFont(.footnote)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
                 }
@@ -148,7 +148,7 @@ struct PhaseActions: View {
                 if let hint = model.keys(.pull).hint, let pullAt = cook.pullAt {
                     let left = max(0, (pullGraceSeconds - now.timeIntervalSince(pullAt)).rounded(.up))
                     Text(tr(hint, ["seconds": .int(Int(left))]))
-                        .font(.footnote)
+                        .appFont(.footnote)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
                 }
@@ -193,7 +193,7 @@ struct PhaseActions: View {
                         // since the web's alarm is the open tab.
                         Text(alarmLine)
                     }
-                    .font(.footnote)
+                    .appFont(.footnote)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
                 }
@@ -243,7 +243,7 @@ struct PhaseActions: View {
         if !planner.probeAsked, cook.ticket?.probeMoment == true {
             VStack(spacing: 10) {
                 Text(tr("probe.offer"))
-                    .font(.footnote)
+                    .appFont(.footnote)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
                 HStack(spacing: 10) {

@@ -26,7 +26,7 @@ struct DonenessControl: View {
                     // The slider's value says it, with the word.
                     .accessibilityHidden(true)
             }
-            .font(.subheadline)
+            .appFont(.subheadline)
             // One track, the yolk's: the system's thumb on no track of its
             // own, over the odds in the yolk's colour and what this pan cannot
             // deliver (OddsTrack), inset by half a thumb so a level sits under
@@ -57,7 +57,7 @@ struct DonenessControl: View {
             let note = donenessNote
             if !note.isEmpty {
                 Text(note)
-                    .font(.footnote)
+                    .appFont(.footnote)
                     .foregroundStyle(.secondary)
             }
         }
@@ -85,7 +85,7 @@ struct DonenessControl: View {
             }
         }
         .frame(height: 16)
-        .font(.caption2)
+        .appFont(.caption2)
         .foregroundStyle(.secondary)
         .accessibilityHidden(true)
     }

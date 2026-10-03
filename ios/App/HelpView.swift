@@ -64,7 +64,7 @@ struct HelpView: View {
                 .tint(Palette.accent)
             }
         }
-        .font(.subheadline.weight(.medium))
+        .appFont(.subheadline, weight: .medium)
     }
 
     private var how: some View {
@@ -158,7 +158,7 @@ struct HelpView: View {
             Divider()
             Link(destination: Self.privacyURL) {
                 Text(tr("help.privacy"))
-                    .font(.subheadline.weight(.semibold))
+                    .appFont(.subheadline, weight: .semibold)
                     .underline()
             }
             .tint(Palette.accent)
@@ -166,7 +166,7 @@ struct HelpView: View {
             // Who made it, as on the web: the name links the owner's blog,
             // which `linked` hands to Safari like Help's other links.
             Text(linked(tr("help.credit")))
-                .font(.footnote)
+                .appFont(.footnote)
                 .foregroundStyle(.secondary)
                 .padding(.top, 10)
         }
@@ -175,7 +175,7 @@ struct HelpView: View {
     /// The motto, under the title, as on the web.
     private var motto: some View {
         Text(tr("help.motto"))
-            .font(.subheadline.italic())
+            .appFont(.subheadline, italic: true)
             .foregroundStyle(.secondary)
             .padding(.bottom, -12)
     }
@@ -189,15 +189,17 @@ struct HelpView: View {
     ) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             Text(tr(which.titleKey))
-                .font(.title3.weight(.semibold))
+                .appFont(.title3, weight: .semibold)
                 .accessibilityAddTraits(.isHeader)
             content()
         }
     }
 
+    /// In 1750, whose face has no bold, in italic, as a printer of the day
+    /// told a head from its paragraph; the web does the same.
     private func subhead(_ text: String) -> some View {
         Text(text)
-            .font(.subheadline.weight(.semibold))
+            .appFont(.subheadline, weight: .semibold, italic: isPeriod(Copy.activeLocale))
             .padding(.top, 4)
             .accessibilityAddTraits(.isHeader)
     }
@@ -211,7 +213,7 @@ struct HelpView: View {
     /// The technical aside: smaller and secondary, as the web's `p.aside`.
     private func aside(_ text: String) -> some View {
         Text(linked(text))
-            .font(.footnote)
+            .appFont(.footnote)
             .foregroundStyle(.secondary)
             .fixedSize(horizontal: false, vertical: true)
     }
@@ -219,7 +221,7 @@ struct HelpView: View {
     private func source(_ key: String, _ url: String) -> some View {
         Link(destination: URL(string: url)!) {
             Text(tr(key))
-                .font(.footnote)
+                .appFont(.footnote)
                 .underline()
                 .multilineTextAlignment(.leading)
                 .fixedSize(horizontal: false, vertical: true)

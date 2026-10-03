@@ -118,7 +118,7 @@ struct MoreText: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
-        .font(.footnote)
+        .appFont(.footnote)
         .foregroundStyle(.primary)
         .multilineTextAlignment(.leading)
         .frame(maxWidth: .infinity, alignment: .leading)

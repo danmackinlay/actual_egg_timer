@@ -74,10 +74,15 @@ targets:
     # (App/Info.plist, generated and gitignored like the widget's) and the build
     # merges the generated keys into it. One row per shipped catalogue in
     # copy/; English only until Czech ships.
+    #
+    # The face of the English of 1750 (App/PeriodFace.swift), an array too.
+    # App/Fonts, copied to the bundle's root with its licence. The app's
+    # alone: the Live Activity keeps the system face.
     info:
       path: App/Info.plist
       properties:
         CFBundleLocalizations: [en]
+        UIAppFonts: [IMFeENrm28P.ttf, IMFeENit28P.ttf]
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: name.danmackinlay.actualeggtimer
