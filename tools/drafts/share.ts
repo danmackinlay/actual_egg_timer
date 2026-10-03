@@ -5,7 +5,7 @@
  *
  * `share.what` is the consent, always on screen beside the switch rather
  * than behind an (i), and it says the three things the cook is agreeing to:
- * what is sent (the eggs already logged too, DECISIONS.md 54), that nothing
+ * what is sent (the eggs already logged too, DECISIONS.md 59), that nothing
  * names them, and that the time may move a few seconds (the nudge, which the
  * consent has to cover, INFERENCE.md section 7). Its first draft was
  * INFERENCE.md's, "to be argued over"; the owner reads this one on a phone.

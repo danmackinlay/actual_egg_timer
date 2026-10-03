@@ -241,22 +241,21 @@ Decided by the owner, 2 October 2026:
     touch of blue. Prototype `953c698`..`3ed187c`.
 
 Decided by the owner, 2 October 2026, for E6-E8 (`COLLECTIVE.md`), numbered
-after 52, which `main` took for the egg in cross-section while E6-E8 were
-built on a branch:
+after 57: `main` took 52-57 while E6-E8 were built on a branch:
 
-53. **The nudge's "still learning" is a small badge with an (i)**, not a
+58. **The nudge's "still learning" is a small badge with an (i)**, not a
     line: "A whole line saying still learning? How about a tiny badge over
     the UI with a disclosure (i)". It answers 3: a cook who is sharing sees
     a "Learning" mark by the time, and its (i) says why the time may move.
     Built with E8 (`82aff4b`).
-54. **Turning sharing on sends the log so far**, not only the eggs after it:
+59. **Turning sharing on sends the log so far**, not only the eggs after it:
     the per-cook effects and the per-cook log score (37) need each cook's
     whole sequence. The consent text says so. Built with E6 (`f7f9e90`,
     `0f93576`).
-55. **App Attest is built now**, the iOS side and the server's verification
+60. **App Attest is built now**, the iOS side and the server's verification
     together. An iPhone that cannot attest still sends, to the open tier.
     Built with E6 (`00186b1`, `0f93576`).
-56. **The nudge is +-10 s, as designed, knowing what it costs.** Measured
+61. **The nudge is +-10 s, as designed, knowing what it costs.** Measured
     first (`npm run decide -- nudge`, 300 simulated cooks x 6 eggs): the
     share of eggs that come out right - the yolk just right and the white
     not runny - falls from 52.1% to 49.3% at +-10 s, and from 66.9% to 62.6%

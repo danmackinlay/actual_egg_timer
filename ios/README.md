@@ -294,7 +294,7 @@ each launch until the server confirms. It is the app's only network call:
 `URLSession`, HTTPS, to `actualeggtimer.netlify.app` (a debug build can point
 it at `npm run serve:dev` with `-shareServer`).
 
-What iOS has that the web cannot is App Attest (`DECISIONS.md` 55). The first
+What iOS has that the web cannot is App Attest (`DECISIONS.md` 60). The first
 time an id sends, the phone makes a key in its Secure Enclave and has Apple
 attest it, bound to the id (`clientDataHash = SHA256(uid)`); every egg then
 carries an assertion over its body, and the server files it in the attested

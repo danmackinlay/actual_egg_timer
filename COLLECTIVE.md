@@ -8,7 +8,7 @@ is the order of work, the choices made to build it, and what is ticked. Each
 item is ticked in the same commit as the work; its hash is added by the next
 commit that touches this file.
 
-The owner's answers of 2 October are `DECISIONS.md` 54-55: a small "learning"
+The owner's answers of 2 October are `DECISIONS.md` 59-60: a small "learning"
 badge with an (i) is what says the app is learning (53), a cook who turns
 sharing on sends the eggs already in the log too (54), and App Attest is built
 now (55).
@@ -95,7 +95,7 @@ its absence means.
   says. Every id this device has used is kept on the device, so "Delete what
   I've sent" can delete all of them - otherwise forgetting would strand what
   was sent under the old id.
-- **What is sent** (`DECISIONS.md` 54): every egg in the log, the ones from
+- **What is sent** (`DECISIONS.md` 59): every egg in the log, the ones from
   before sharing was turned on included, then each egg once it is final. An
   egg is final when the cook has moved on from it (Start again, or a reload,
   after which no answer can be added to it). A cursor into the log says how
@@ -110,7 +110,7 @@ its absence means.
 - **Turning sharing off** stops sending. It deletes nothing; that is the other
   button.
 
-### App Attest (E6, `DECISIONS.md` 55)
+### App Attest (E6, `DECISIONS.md` 60)
 
 - **When sharing is turned on**, on a phone that supports it: make a key, attest
   it with `clientDataHash = SHA256(uid)`, and post the attestation. Binding the
@@ -134,10 +134,10 @@ its absence means.
   whatever it says. The server accepts both and records which.
 - **A failure is never fatal**: the egg goes to the open tier.
 
-### The nudge and the badge (E8, `DECISIONS.md` 53)
+### The nudge and the badge (E8, `DECISIONS.md` 58)
 
 - **The nudge** is a whole number of seconds drawn uniformly from -10 to +10
-  (`DECISIONS.md` 56: the owner's choice, with its cost measured), added to
+  (`DECISIONS.md` 61: the owner's choice, with its cost measured), added to
   the chosen time, for a cook who is sharing and only where a time is
   chosen (`decisionApplies`). Core turns a uniform number into seconds
   (`nudgeSeconds`); the app supplies the randomness, as it supplies the clock.
@@ -193,7 +193,7 @@ needs data and nothing an app does waits on it.
 
 ### E6, collection
 
-- [x] Plan, and `DECISIONS.md` 54-55 (`700b932`).
+- [x] Plan, and `DECISIONS.md` 59-60 (`700b932`).
 - [x] Core: `Outcome` carries the white's three answers (TS, Swift, fixtures)
       (`67be30d`).
 - [x] iOS: the ticket's `Outcome` renamed `outcome`, freeing "forecast"
@@ -237,7 +237,7 @@ needs data and nothing an app does waits on it.
 - [x] Its cost measured (`npm run decide -- nudge`): at +-10 s the share of
       eggs that come out right falls from 52.1% to 49.3%, and 66.9% to
       62.6% by a cook's sixth egg; +-5 s costs under a point. The owner chose
-      +-10 s knowing it (`DECISIONS.md` 56).
+      +-10 s knowing it (`DECISIONS.md` 61).
 - [x] Both apps: the nudge drawn at launch and after each cook, applied
       while sharing is on, shown, started, carried through a boil tap (and
       dropped from the record if the re-solve could not carry it), and split

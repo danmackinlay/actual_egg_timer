@@ -1,6 +1,6 @@
 /**
  * The `motto` draft: two new keys on the Help page in both apps, on
- * `e40d2a0` (3 October 2026; DECISIONS.md 57). `help.motto`, the owner's
+ * `e40d2a0` (3 October 2026; DECISIONS.md 53). `help.motto`, the owner's
  * motto, is a short line under the page's title; `help.credit`, the last
  * line of the page under the privacy link, names the owner and links their
  * blog. Nothing is added to the cooking screen.

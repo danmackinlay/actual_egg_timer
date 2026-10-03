@@ -49,7 +49,7 @@ them out differently.
   (`readout.sub.coldAssumes` with its (i), `coldGuesses`, `standing` or
   `hot`). With the heat off it says the lid is on, so the time is never read
   without it. While sharing is on, a small **Learning** mark sits in the
-  panel's top corner with its (i) (`learning.badge`, E8, `DECISIONS.md` 53):
+  panel's top corner with its (i) (`learning.badge`, E8, `DECISIONS.md` 58):
   the time may be nudged a few seconds, and the (i), which opens under the
   phase label, says so. Never in sous-vide.
 - **The direction**: which way the egg is likely to miss, with its (i), and

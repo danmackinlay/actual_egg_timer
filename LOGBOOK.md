@@ -3558,7 +3558,7 @@ Seen in the web app at 375 px and on the simulator, which was left idle.
 ## 2 October 2026: E6-E8, the collective part
 
 Built from `COLLECTIVE.md`, which has every choice; the owner's answers are
-`DECISIONS.md` 54-56. Nothing is deployed: the endpoint goes live with the
+`DECISIONS.md` 59-61. Nothing is deployed: the endpoint goes live with the
 next push.
 
 - **E6, collection.** Each record keeps what the app said at Eggs in
@@ -3606,4 +3606,4 @@ pass); a real fit (no shared egg exists).
 
 "Time eggs, not minutes" heads Help in both apps and leads the web page's
 description; "Made by Dan MacKinlay" ends Help, linking https://danmackinlay.name,
-as the privacy page's name and the README do (the `motto` draft, DECISIONS 57).
+as the privacy page's name and the README do (the `motto` draft, DECISIONS 53).

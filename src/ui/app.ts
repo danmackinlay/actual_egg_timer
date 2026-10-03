@@ -361,7 +361,7 @@ function decided(
 
 /* -------------------------------------------------------------- the nudge */
 
-/** This page's nudge (E8, DECISIONS.md 56): a whole number of seconds from
+/** This page's nudge (E8, DECISIONS.md 61): a whole number of seconds from
  *  -10 to +10, drawn when the page loads and again after each cook, so the
  *  time on screen holds still while the cook looks at it. */
 let nudgeDraw = nudgeSeconds(Math.random());
@@ -534,7 +534,7 @@ function render(now_ms: number): void {
   else renderRunning(now_ms);
 }
 
-/** The Learning mark (E8, DECISIONS.md 53): on the time while sharing is
+/** The Learning mark (E8, DECISIONS.md 58): on the time while sharing is
  *  on, since the time may then be nudged - and never in sous-vide, which has
  *  no time to nudge. */
 function renderLearning(): void {

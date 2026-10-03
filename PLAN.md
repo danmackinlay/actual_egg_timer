@@ -30,7 +30,7 @@ These counts are the only ones in the documents. If you want a number, run
    list below.
 3. **F5, Czech**, when the owner's friend can review it.
 4. **E6-E8**, the collective part: built (`COLLECTIVE.md`; the owner's
-   answers are `DECISIONS.md` 54-56). Live with the next push; then the
+   answers are `DECISIONS.md` 59-61). Live with the next push; then the
    checks under "What is left", and the first real fit once eggs arrive.
 
 Throughout: cook real eggs, and the two measurements in README §11.3.
@@ -69,7 +69,7 @@ The one queue. Nothing else in the documents waits on the owner.
    sends. Help links it in both apps, as "Privacy" ("Of Privacy" in 1750;
    the `privacy` draft), and so does Settings, under sharing.
    The App Store subtitle: "Time eggs, not minutes" (22 of 30 characters;
-   `DECISIONS.md` 57).
+   `DECISIONS.md` 53).
 7. **The `share` and `learning` drafts, on a phone** (E6, E8): the consent
    beside the switch, the deletion's words, and the Learning mark and its
    (i). `tools/drafts/share.ts` and `learning.ts` have every key and its

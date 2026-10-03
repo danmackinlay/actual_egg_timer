@@ -73,7 +73,7 @@ struct ReadoutView: View {
         }
     }
 
-    /// The Learning mark (E8, DECISIONS.md 53), as on the web: small, in the
+    /// The Learning mark (E8, DECISIONS.md 58), as on the web: small, in the
     /// panel's corner, over the time it is about, while sharing is on - the
     /// time may then be nudged a few seconds. Never in sous-vide, which has no
     /// time to nudge. Its (i) opens under the phase label.
