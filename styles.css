@@ -818,23 +818,52 @@ main.doc {
 
 /* ----------------------------------------------------------------------- 1750 */
 
-/* The English of 1750 (LANGUAGE.md section 6) is set in a book face, and its
-   egg's page is headed by a title page after the Dictionary's. Only the
-   words change: the clock keeps the system face, whose figures line up. The
-   title is the one place the long s is drawn; applyCopy names it without. */
+/* The English of 1750 is set in its own face (LANGUAGE.md section 6, "The
+   face"), served from here and fetched only by a 1750 page. Its egg's page
+   is headed by a title page after the Dictionary's. The clock and a number
+   the cook types keep the system face: this one's figures are old-style,
+   and its 0 is an o. */
+@font-face {
+  font-family: "IM FELL English";
+  src: url("assets/fonts/IMFeENrm28P.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "IM FELL English";
+  src: url("assets/fonts/IMFeENit28P.woff2") format("woff2");
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+}
 .titlepage { display: none; }
 html[lang$="-x-1750"] body[data-phase="IDLE"][data-view="egg"] .titlepage { display: block; }
+/* Longhands, not the `font` shorthand, which would reset the features the
+   title inherits. */
 .titlepage {
   margin: 0 8px 14px;
-  font: italic 400 1rem/1.4 "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+  font-style: italic;
+  font-size: 1rem;
+  line-height: 1.4;
   text-align: center;
   text-wrap: balance;
   color: var(--dim);
 }
+/* Every ligature (liga, dlig) and the long s before a letter (hist), drawn
+   by the face, so the text read aloud or searched keeps a plain s. One
+   weight, and nothing made bold for it: Help's smallest heads are italic. */
 html[lang$="-x-1750"] body {
-  font-family: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+  font-family: "IM FELL English", "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+  font-feature-settings: "liga", "dlig", "hist";
+  font-synthesis-weight: none;
 }
-html[lang$="-x-1750"] #bigtime { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+html[lang$="-x-1750"] #help h3 { font-style: italic; }
+html[lang$="-x-1750"] #bigtime,
+html[lang$="-x-1750"] input[type="number"] {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-feature-settings: normal;
+}
 
 /* ---------------------------------------------------------------- actions */
 

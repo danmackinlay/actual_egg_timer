@@ -68,7 +68,9 @@ The one queue. Nothing else in the documents waits on the owner.
    in the direction's (i) too; and **`notes`**, the owner's notes from
    reading every string, who found the rest fine.
 2. **The English of 1750, in both apps** (`DECISIONS.md` 17). `LANGUAGE.md`
-   §6 lists the names to strike and where it departs from the guide.
+   §6 lists the names to strike and where it departs from the guide. Its
+   face, IM FELL English with the long s everywhere (§6, *The face*), is
+   not yet seen on a phone.
 3. **The push of `main`**: done 29 September (`5ff6940`); CI passed. Each
    later push is still the owner's call.
 4. **On a phone:** whether the iOS in-app ring (`Ringer.swift`, `.playback`)

@@ -331,3 +331,14 @@ Decided by the owner, 3 October 2026:
     "the `e6-e8` convention is not legible". `main` stays what is live (it
     is what Netlify serves), the 0.4 work is `0.4.x`, and a `0.3.x` is cut
     only to fix 0.3 after 0.4 ships. `CLAUDE.md` says how.
+65. **The English of 1750 is set in IM FELL English**, a period face "with
+    not only serifs but aggressive ligatures", chosen from a specimen of
+    the catalogue's strings over EB Garamond. Close is enough: "within a
+    century and funny"; EB Garamond's 1592 would have been "acceptable
+    for a joke". It draws ſs as ß, "not too bad a downside". The whole
+    font as published, not a subset: "maintaining a cut down font is kind
+    to the user but crueller to us". Served by the app, not a font
+    service. `LANGUAGE.md` §6, *The face*.
+66. **The long s everywhere in 1750**, drawn by the face's `hist`: "cannot
+    the font handle it automatically everywhere? I'm fine with that". The
+    catalogue still spells it only on the title.

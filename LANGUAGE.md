@@ -726,9 +726,7 @@ whole catalogue is for their review (`DECISIONS.md` 17).
   does this for any text with a long s, and the test allows only one).
   The colophon's name is *The Actual Egg-Timer.* The `<head>` keeps the
   modern name, as for every language (§2).
-- **A book face.** In 1750 the page is set in Iowan Old Style (Palatino,
-  Georgia as fallbacks); the clock keeps the system face, whose figures
-  line up. Not asked for.
+- **A period face**, since 3 October: *The face*, below.
 
 **Where it departs from the guide, or chose where the guide was silent.**
 
@@ -859,6 +857,27 @@ the owner's review.
 body on a real notification. Also the Live Activity and the Dynamic Island in
 1750 on screen: see LOGBOOK.md for what the simulator would and would not
 show.
+
+**The face, 3 October 2026** (`DECISIONS.md` 65, 66). The register is
+set in **IM FELL English**, roman and italic: the types Bishop John Fell
+gave the Oxford press in the 1670s and 80s, Dutch in cut, as Igino
+Marini digitised them, the ink's spread and all. Google Fonts' files,
+whole and as published (the web's compressed to woff2), with the licence
+beside them; served by the app, never by a font service, which would see
+every visitor.
+
+- **Every ligature on**: fi, ff, fl, ffi, ffl, ct, and the long s's own,
+  ſi, ſl, ſh, ſt, ſſ; ſs is drawn as ß.
+- **The long s everywhere, by the face.** Its `hist` sets ſ for an s
+  before another letter, so the last s of a word stays round, as a
+  printer set it: "ſet", "paſſes", "hardneß". The catalogue is not
+  changed, so a screen reader, a search and the length tests read a plain
+  s, and the rule above (one long s, on the title) holds for the text.
+- **One weight**, as type had in 1750: nothing is made bold. Help's
+  smallest heads are in italic instead.
+- **Old-style figures only**, whose 0 is an o: right in a sentence, wrong
+  in a field. A number the cook types or steps keeps the system face, as
+  the clock does.
 
 ## 7. Order
 

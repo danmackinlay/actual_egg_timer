@@ -3958,3 +3958,34 @@ worker's own two files, and copied the other 53; with only
 **Run:** `npm run verify`: 275 tests, all pass; the Swift copy lint; the
 fixtures fresh; `swift test` 122 tests in 32 suites.
 
+
+## 3 October 2026: the face of 1750, on the web
+
+IM FELL English for the English of 1750 (`DECISIONS.md` 65, 66;
+`LANGUAGE.md` §6, *The face*).
+
+- **Chosen from the fonts' own tables** (fontTools on the Google Fonts
+  files), then a specimen of catalogue strings at the app's sizes. Libre
+  Caslon Text and Baskervville have no long s. Junicode has no `hist`,
+  and its `hlig` is medieval. EB Garamond's `hist` is a plain
+  substitution, so every final s goes long ("eggſ"). IM FELL's is
+  chained: s becomes ſ before a letter.
+- **`assets/fonts`**: the two TTFs from `google/fonts`
+  (`ofl/imfellenglish`, commit `8d618a0`), compressed to woff2 by
+  fontTools (`TTFont(path).flavor = 'woff2'`, nothing else), 93 and 97 KB,
+  and the licence. The offline app precaches them with the rest. The face
+  has no narrow no-break space, so the system face draws that blank.
+- **`styles.css`**: `@font-face` with `font-display: swap`, and under
+  `html[lang$="-x-1750"]` the family, `font-feature-settings: "liga",
+  "dlig", "hist"`, no synthetic bold, and Help's `h3` in italic. The title
+  page is set by longhands, since the `font` shorthand reset the features
+  it inherits. The clock and the number fields keep the system face.
+- **Seen in the preview pane** at 375 px, light and dark, and at 288 px
+  (130% zoom): the egg page, the clause choices, Help, Settings and a
+  running cook. Nothing clips. Modern English is untouched, since every
+  new rule is under the 1750 `lang`.
+- **Trap**: a service worker on `localhost:8080`, registered by another
+  session's testing, serves its cached build to the preview pane. Use
+  `127.0.0.1:8080`, a different origin.
+
+**Not verified:** Safari, and a phone; the pane is Chromium.
