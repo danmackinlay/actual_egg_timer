@@ -4,7 +4,7 @@ The state of the build, what is next, and what waits on whom. Updated in the
 same commit as the work it describes. History is `LOGBOOK.md`; the rules for
 working here are `CLAUDE.md`; the last section says where everything else is.
 
-**Where things stand, 3 October 2026, on the `e6-e8` branch.** Both apps are complete for one
+**Where things stand, 3 October 2026, on the `0.4.x` branch.** Both apps are complete for one
 cook and learning, and now for many: opt-in sharing, the nudge and the
 population a prior is drawn from (E6-E8, `COLLECTIVE.md`) are built in
 both, on this branch, not on `main` and not deployed. The web app (`src/`) and the iOS app (`ios/`) carry
@@ -29,7 +29,7 @@ These counts are the only ones in the documents. If you want a number, run
 2. **An adversarial QA pass** against this baseline, starting from the QA
    list below.
 3. **F5, Czech**, when the owner's friend can review it.
-4. **E6-E8**, the collective part: built, on this branch, `e6-e8`
+4. **E6-E8**, the collective part: built, on this branch, `0.4.x`
    (`COLLECTIVE.md`; the owner's answers are `DECISIONS.md` 58-61), kept up
    to date with `main` and not released. The owner reviews it first: the
    `share` and `learning` drafts on a phone, the privacy page's sharing

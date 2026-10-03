@@ -300,7 +300,7 @@ after 57: `main` took 52-57 while E6-E8 were built on a branch:
     an egg a little softer or firmer. Built with E8 (`82aff4b`).
 
 Decided by the owner, 3 October 2026, on the counter-physics branch, numbered
-after 61 on `e6-e8`:
+after 61 on `0.4.x`:
 
 62. **Cooling on the bench is textbook physics, and the model treats it
     so.** Still air on a bench is "standard Newtonian/convective cooling";
@@ -316,7 +316,7 @@ after 61 on `e6-e8`:
     at 0.35, "fine for now".
 
 Decided by the owner, 3 October 2026, on the offline branch, numbered after
-62 on `e6-e8`:
+62 on `0.4.x`:
 
 63. **The web app opens with no signal.** Asked whether the app needed
     work to sit on a Home Screen, the one gap was opening offline: "do the
