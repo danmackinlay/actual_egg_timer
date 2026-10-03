@@ -202,6 +202,28 @@ function parityFailures(json: CatalogueJson): string[] {
   return failures;
 }
 
+test('3c. every string a reader sees has curly apostrophes and quotes, never straight ones', () => {
+  const failures: string[] = [];
+  for (const [locale, json] of JSONS) {
+    for (const [key, entry] of Object.entries(json.messages)) {
+      for (const field of ['text', 'one', 'few', 'many', 'other', 'base']) {
+        const t = entry[field];
+        if (typeof t === 'string' && /['"]/.test(t)) failures.push(`${locale} ${key}.${field}: ${t}`);
+      }
+    }
+  }
+  // Outside the catalogue: the web page's descriptions, which link previews
+  // show, and the privacy page's text, less its comment.
+  const index = readFileSync('index.html', 'utf8');
+  for (const m of index.matchAll(/<meta\b[^>]*(?:name|property)="[a-z:]*description"[^>]*content="([^"]*)"/g)) {
+    if (m[1].includes("'")) failures.push(`index.html description: ${m[1]}`);
+  }
+  const privacy = readFileSync('privacy/index.html', 'utf8')
+    .replace(/<!--[\s\S]*?-->/g, '').replace(/<[^>]+>/g, '\n');
+  for (const line of privacy.split('\n')) if (/['"]/.test(line)) failures.push(`privacy/index.html: ${line.trim()}`);
+  assert.deepEqual(failures, []);
+});
+
 test('4a. every language uses exactly the English placeholders', () => {
   for (const [locale, json] of JSONS) {
     if (locale === 'en') continue;

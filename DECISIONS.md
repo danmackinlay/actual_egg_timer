@@ -260,3 +260,7 @@ Decided by the owner, 3 October 2026:
     the bench, under the cold tap, in a pan. An American reads
     `copy/en-US.json` over it, holding only the words an American kitchen
     says differently. The `bench` draft; the overlay is `LANGUAGE.md` §2.
+56. **Curly apostrophes and quotes, never straight ones**, in every string
+    a reader sees: ’ for an apostrophe, ‘ ’ and “ ” for quotation, in both
+    apps, every catalogue, the web page's descriptions and the privacy
+    page. `copy.test.ts` 3c holds it. The `quotes` draft.

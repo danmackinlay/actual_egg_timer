@@ -254,6 +254,8 @@ normalisation covers the one difference known in advance.
   rhythm, a wry last line, a pet word repeated ("predictable", "teaches
   me"). An aside another string already says is cut. The 1750 register is
   exempt: its semicolons and its stately asides are the joke.
+- Curly apostrophes and quotes, never straight ones: ’ ‘ ’ “ ”
+  (`DECISIONS.md` 56; `copy.test.ts` 3c).
 
 **The app speaks in the first person singular, in the active voice**
 (`DECISIONS.md` 28): "Tap the boil … and I'll remember for next time", not

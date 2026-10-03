@@ -3626,3 +3626,28 @@ fixtures fresh; `swift test` 122 tests in 32 suites. `npm run ios:build`
 builds.
 
 **Not verified:** the Lock Screen and the alarm in American English; Safari.
+
+## 3 October 2026: curly apostrophes and quotes
+
+The owner wants curly apostrophes everywhere (`DECISIONS.md` 56). The
+`quotes` draft (`tools/drafts/quotes.ts`, on `3e5f5f5`) sets 47 English
+strings, 9 1750 twins and the 8 American entries with ’, and the Help
+sources' titles with “ ”; notes have their apostrophes curled and keep their
+straight double quotes, which delimit examples. Outside the catalogue: the
+web page's preview description (‘N minutes after the water boils’, the only
+opening quote the pass made) and the privacy page's text. `copy.test.ts` 3c
+fails on a straight quote in any catalogue, in the page's descriptions or in
+the privacy page's text. The owner's own wording edits, made in the working
+tree at the same time, were set aside and follow in the next draft.
+
+- **Proved by** `copyLiterals --since 3e5f5f5 quotes` and `copySnapshot
+  compare --draft quotes`, less 12 strings, each checked by script: the
+  linked Help aside, and the American overlay's entries in the harness's
+  four en-US states. **What the proofs cannot see:** a draft's rows
+  describe `copy/en.json` only, so a change to `copy/en-US.json` shows in
+  those four states as undrafted. `copy.test.ts` 7a holds the overlay to
+  the English instead.
+- **A capture that hung:** `copySnapshot capture` polled a harness page
+  that had finished ("done" in its title) and never saw it, stuck on its
+  DevTools socket. The result was read from the page over the same port
+  and the capture stopped; not reproduced.
