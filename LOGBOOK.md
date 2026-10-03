@@ -3701,3 +3701,23 @@ file byte for byte, which the install needs, and `/privacy` without a
 redirect); Android; a visible page going hidden in a real tab (the pane was
 hidden, so `visibilityState` was overridden by hand for that case).
 
+## 3 October 2026: a deploy fetches only what it changed
+
+As first built, every new build made each browser fetch all 56 files
+again (687 kB), however little had changed. Now the worker copies a file
+from the build before when its contents already hash to the new list's
+SHA-256, and fetches the rest. Pages are always fetched: a page's
+headers carry its CSP, which no file's hash covers, and a copied page
+would keep the old ones. For the same reason `tools/precache.mjs` now
+puts `netlify.toml` and `vercel.json` into the build's name, so a deploy
+that changes only a header is still a new build; before, it changed
+nothing the browser could see. `test/offline.test.ts` 3 holds that.
+
+**Seen working,** in the browser pane, from the server's log: with
+`styles.css` changed, the install fetched it, the two pages and the
+worker's own two files, and copied the other 53; with only
+`netlify.toml` changed, it fetched the two pages alone.
+
+**Run:** `npm run verify`: 275 tests, all pass; the Swift copy lint; the
+fixtures fresh; `swift test` 122 tests in 32 suites.
+

@@ -73,7 +73,8 @@
 # not from these headers, and this file is how the browser learns of the
 # next build. The page asks for it past the browser's cache anyway
 # (updateViaCache 'none', src/ui/offline.ts); this says the same to anything
-# in between.
+# in between. A change to any header in this file is a new build too, so
+# the pages the worker keeps get it (tools/precache.mjs).
 [[headers]]
   for = "/sw.js"
   [headers.values]

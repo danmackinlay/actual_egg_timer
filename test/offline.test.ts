@@ -1,6 +1,6 @@
 /**
  * Opening with no signal: which file answers which address
- * (src/ui/serviceWorker.ts), and the build's list of files that
+ * (src/ui/serviceWorker.ts), and the build's list of files and its name that
  * tools/precache.mjs writes into sw.js.
  *
  * The worker itself runs only in a browser; it was checked there, offline,
@@ -53,13 +53,17 @@ const SITE: Record<string, string> = {
   'assets/.DS_Store': 'finder',
 };
 
-function buildSite(edits: Record<string, string> = {}): { files: Record<string, string>; build: string; dir: string } {
+/** Build a small site, from `host`'s directory if given: the hosts'
+ *  settings are read from where the build runs. */
+function buildSite(
+  edits: Record<string, string> = {}, host: string = process.cwd(),
+): { files: Record<string, string>; build: string; dir: string } {
   const dir = mkdtempSync(join(tmpdir(), 'aet-site-'));
   for (const [path, text] of Object.entries({ ...SITE, ...edits })) {
     mkdirSync(dirname(join(dir, path)), { recursive: true });
     writeFileSync(join(dir, path), text);
   }
-  execFileSync(process.execPath, ['tools/precache.mjs', dir]);
+  execFileSync(process.execPath, [join(process.cwd(), 'tools/precache.mjs'), dir], { cwd: host });
   const sw = readFileSync(join(dir, 'sw.js'), 'utf8');
   assert.match(sw, /^import \{ serve \} from '\.\/app\/src\/ui\/serviceWorker\.js';$/m);
   const m = sw.match(/^serve\('([0-9a-f]{16})', (\{[\s\S]*\})\);\s*$/m);
@@ -92,18 +96,28 @@ test('2. sw.js lists what the page can ask for, hashed as served', () => {
   }
 });
 
-test('3. the build is named by its files: any change is a new build', () => {
+test('3. the build is named by its files and the hosts\' headers: any change is a new build', () => {
   const a = buildSite();
   const b = buildSite();
   const c = buildSite({ 'copy/en.json': '{"x": 1}\n' });
   const d = buildSite({ 'assets/social.jpg': 'another card' });
+  // A deploy that changes only a header changes no file, but the pages the
+  // worker keeps must get it.
+  const hosts = [mkdtempSync(join(tmpdir(), 'aet-host-')), mkdtempSync(join(tmpdir(), 'aet-host-'))];
+  writeFileSync(join(hosts[0], 'netlify.toml'), 'Content-Security-Policy = "default-src \'self\'"\n');
+  writeFileSync(join(hosts[1], 'netlify.toml'), 'Content-Security-Policy = "default-src \'none\'"\n');
+  const e = buildSite({}, hosts[0]);
+  const f = buildSite({}, hosts[1]);
   try {
     assert.equal(a.build, b.build);
     assert.notEqual(a.build, c.build);
     // A file left out of the list changes nothing the page uses.
     assert.equal(a.build, d.build);
+    assert.notEqual(e.build, f.build);
+    assert.deepEqual(e.files, f.files);
   } finally {
-    for (const site of [a, b, c, d]) rmSync(site.dir, { recursive: true, force: true });
+    for (const site of [a, b, c, d, e, f]) rmSync(site.dir, { recursive: true, force: true });
+    for (const host of hosts) rmSync(host, { recursive: true, force: true });
   }
 });
 

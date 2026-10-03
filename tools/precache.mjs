@@ -8,6 +8,12 @@
 // there is a new build. Run it after everything is in _site, since a file
 // copied in later is not in the list.
 //
+// The headers the hosts send are kept with the files (a page's CSP arrives
+// with it), and changing them changes no file. So the hosts' settings, read
+// from where the build runs, go into the build's name as well: a deploy that
+// changes only them is still a new build, and the worker fetches the pages
+// afresh, with their new headers.
+//
 // The page finds the worker through <meta name="service-worker">, which only
 // the built page gets: the repo root, served as it is, has no sw.js to start.
 //
@@ -29,6 +35,8 @@ const LEFT_OUT = new Set([
 ]);
 
 const WORKER = 'app/src/ui/serviceWorker.js';
+
+const HOST_SETTINGS = ['netlify.toml', 'vercel.json'];
 
 /** Every file under `dir`, as a path from `site` with forward slashes,
  *  less hidden ones (a .DS_Store copied in with the artwork). */
@@ -63,7 +71,9 @@ const files = {};
 for (const path of walk(site).filter((p) => !LEFT_OUT.has(p)).sort()) {
   files[path] = sha256(readFileSync(join(site, path)));
 }
-const build = sha256(JSON.stringify(files)).slice(0, 16);
+const hosts = {};
+for (const path of HOST_SETTINGS.filter((p) => existsSync(p))) hosts[path] = sha256(readFileSync(path));
+const build = sha256(JSON.stringify({ files, hosts })).slice(0, 16);
 
 writeFileSync(join(site, 'sw.js'), `// Written by tools/precache.mjs; the code is src/ui/serviceWorker.ts.
 import { serve } from './${WORKER}';

@@ -8,7 +8,9 @@
  * all: each file must hash to the SHA-256 the build wrote down for it, and
  * one that does not (a deploy landing halfway through, say) fails the
  * install. The build already in use carries on, and the browser tries again
- * at the next visit.
+ * at the next visit. A file an earlier build holds with the same contents
+ * is copied across rather than fetched, so a deploy costs a browser only the
+ * files it changed.
  *
  * A new build waits until the page asks it to take over, which the page
  * does only when no cook is running (offline.ts), and it agrees only when
@@ -121,12 +123,23 @@ async function answer(cacheName: string, key: string, request: Request): Promise
   return kept ?? fetch(request);
 }
 
-/** Fetch every file of the build and keep it, or fail if any is missing or
- *  is not the file the build hashed. */
+/** Keep every file of the build, or fail if any is missing or is not the
+ *  file the build hashed. */
 async function fill(cacheName: string, root: URL, files: BuildFiles): Promise<void> {
   const cache = await caches.open(cacheName);
+  const earlier = (await caches.keys())
+    .filter((name) => name.startsWith(BUILD_CACHE_PREFIX) && name !== cacheName);
   await Promise.all(Object.keys(files).map(async (path) => {
     const url = new URL(path, root).href;
+    // A page is always fetched: its headers carry its policy (the CSP among
+    // them), which no file's hash covers, and a kept copy keeps the old ones.
+    if (!path.endsWith('.html')) {
+      const kept = await keptEarlier(earlier, url, files[path]);
+      if (kept !== null) {
+        await cache.put(url, kept);
+        return;
+      }
+    }
     // Past the browser's own cache, which keeps an icon for a day, so it may
     // still hold the last build's.
     const response = await fetch(url, { cache: 'reload' });
@@ -137,6 +150,15 @@ async function fill(cacheName: string, root: URL, files: BuildFiles): Promise<vo
     // reached by redirecting is kept as its contents alone.
     await cache.put(url, response.redirected ? unredirected(response, body) : response);
   }));
+}
+
+/** An earlier build's copy of `url`, if its contents hash to `digest`. */
+async function keptEarlier(earlier: readonly string[], url: string, digest: string): Promise<Response | null> {
+  for (const name of earlier) {
+    const kept = await (await caches.open(name)).match(url);
+    if (kept !== undefined && await sha256(await kept.clone().arrayBuffer()) === digest) return kept;
+  }
+  return null;
 }
 
 function unredirected(response: Response, body: ArrayBuffer): Response {
