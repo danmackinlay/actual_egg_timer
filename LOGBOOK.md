@@ -3544,3 +3544,41 @@ Seen in the web app at 375 px and on the simulator, which was left idle.
 "Time eggs, not minutes" heads Help in both apps and leads the web page's
 description; "Made by Dan MacKinlay" ends Help, linking https://danmackinlay.name,
 as the privacy page's name and the README do (the `motto` draft, DECISIONS 53).
+
+## 3 October 2026: the `plain` draft
+
+The owner: much of the copy "reads very Claudish", and the strings approved
+earlier were approved as good enough for now, not as final (`DECISIONS.md`
+54). The model is the owner's rewrite of the Help line on cooling: "The
+cooling time also counts as cooking time, since the egg is still warm
+inside." The `plain` draft follows it across 71 keys of both apps
+(`tools/drafts/plain.ts`, on `73ea0f8`). Eleven 1750 twins are rewritten
+where the meaning moved; the rest stand, since the period's semicolons are
+the joke. `LANGUAGE.md` §3 now lists the marks of machine prose among its
+criteria, and `CLAUDE.md` points there.
+
+- **Counted before the pass**, in `copy/en.json` less the sources: a dash
+  as a pivot in 24 strings (8 of them size labels, which keep it), a colon
+  meaning "because" in 11 (i) paragraphs, two clauses on a semicolon in 8,
+  "predictable" 5 times, "teaches me" 4.
+- **Left for the owner:** "counter", "cold tap" and "pan" wait on which
+  English is the base. "Counter" is American (a Briton says worktop, an
+  Australian bench), and "tap" also names the screen gesture in the same
+  app ("Tap Full rolling boil", "They're under the tap"). A regional
+  overlay is cheap here: `render` already falls back from one catalogue to
+  the next, `copy.test.ts` reads every file in `copy/`, and iOS bundles the
+  folder, so a `copy/en-US.json` holding only the keys that differ needs
+  just a core function choosing the chain from the language tag, fixtured
+  for both apps.
+- **One gap in the proofs closed:** the snapshot harness collapses a
+  no-break space to a space, so `compare --draft` now reads each template
+  the same way (`outcome.unsure`). The two linked Help asides still fail
+  it, as in `tidy`; their pieces are the drafted change, word for word.
+- **Proved by** `copyLiterals --since 73ea0f8 plain` and `copySnapshot
+  compare --draft plain` (172 web states), less those asides.
+
+**Run:** `npm run verify`: 269 tests, all pass; the Swift copy lint; the
+fixtures fresh; `swift test` 121 tests in 32 suites.
+
+**Not verified:** either app on a phone. The iOS-only strings (the alarms,
+the readout's alarm lines) are held only by their length budgets.

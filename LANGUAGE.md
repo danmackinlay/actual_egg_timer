@@ -226,6 +226,13 @@ normalisation covers the one difference known in advance.
   "literature values", "the model", "standing method" all failed this).
 - Every temperature carries its unit (§4), and every inserted word stands
   alone, after a colon or as a label, never inside running grammar (§5).
+- Say it as a person who cooks would (`DECISIONS.md` 54): the point once,
+  literally, in plain sentences, with "because" or "since" for a reason.
+  None of the marks of machine prose: a dash as a pivot, two clauses
+  hinged on a semicolon, "X, not Y" for effect, a list of three for its
+  rhythm, a wry last line, a pet word repeated ("predictable", "teaches
+  me"). An aside another string already says is cut. The 1750 register is
+  exempt: its semicolons and its stately asides are the joke.
 
 **The app speaks in the first person singular, in the active voice**
 (`DECISIONS.md` 28): "Tap the boil … and I'll remember for next time", not
@@ -249,7 +256,8 @@ cost in Czech (§5).
 proved to have changed only what it lists, in both apps and with each 1750
 twin; `CLAUDE.md` has the steps. A string the owner has approved (the
 `alarm.pull.*` bodies, `alarm.cooled.body`, `idle.welcome`,
-`activity.note.estimate`) stays unless the owner says otherwise.
+`activity.note.estimate`) was approved as good enough for now, not as
+final (`DECISIONS.md` 54): a style pass reads it like the rest.
 
 **The draft under review: `tidy`** (29 September 2026, `DECISIONS.md` 45).
 WORKLIST.md section 9 applied at once, in both apps, for the owner to read on
@@ -312,6 +320,15 @@ left: the web proof reads the label "Total time" as the template "Total
 | `learned.literature` | I haven't learned anything yet. Tell me how each egg came out, and on a cold-water start, when the water reaches a full rolling boil. | …Tell me how each egg came out, and, having begun from cold water, when the water boils in earnest. |
 | `spoken.heating` | {time} left in total (was "Heating. …", after the label "Heating") | {time} remaining in all |
 | `spoken.cooking` / `.cooling` | {time} left (was "Cooking. …" / "Cooling. …") | {time} remaining |
+
+**The third draft under review: `plain`** (3 October 2026, `DECISIONS.md`
+54). A style pass over both apps, after the owner's model rewrite of
+`help.how.p2`: `tools/drafts/plain.ts`, on `73ea0f8`, 71 keys, none
+retired, 11 of their 1750 twins rewritten where the meaning moved. Its
+header lists what it left alone on purpose (the motto, "Full rolling boil",
+the colon before an inserted word, "counter", "cold tap" and "pan", which
+wait on the owner's choice of base English) and every place a row now says
+more or less than it did.
 
 ## 4. Units
 

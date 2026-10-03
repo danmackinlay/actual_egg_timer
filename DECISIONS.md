@@ -248,3 +248,10 @@ Decided by the owner, 3 October 2026:
     web page's description; "Made by Dan MacKinlay" ends Help and links the
     blog, as the privacy page's name and the README do. It is also the App
     Store subtitle. The `motto` draft.
+54. **The words read as a person who cooks would say them, not as a model
+    writes.** Much of the copy "reads very Claudish". The model rewrite, of
+    the Help line on cooling: "The cooling time also counts as cooking time,
+    since the egg is still warm inside." The strings recorded as approved
+    were approved as "good enough for now", not as final, and a style pass
+    reads them like the rest. The `plain` draft; the rules are in
+    `LANGUAGE.md` §3.

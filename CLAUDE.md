@@ -89,7 +89,10 @@ things stand is `PLAN.md`; which document holds what is its last section.
   mechanism; never narrate what the interface visibly did; sous-vide is not
   "a bath"; "pan" only for the pot; an inserted word stands alone after a
   colon, never inside running grammar; an (i) is short enough to read at the
-  hob, and the rest goes to Help. Keep what the owner approved unless told.
+  hob, and the rest goes to Help. Say it as a person who cooks would, not
+  as a model writes (`LANGUAGE.md` §3 lists the marks). What the owner
+  approved was good enough for now (`DECISIONS.md` 54); change it in a
+  named draft like any other.
 - Wording is judged by the owner on a phone, not in a table.
 
 ## iOS gotchas

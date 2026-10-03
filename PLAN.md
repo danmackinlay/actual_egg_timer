@@ -15,8 +15,8 @@ call: Netlify serves it at actualeggtimer.netlify.app, and the first run of
 `.github/workflows/verify.yml` passed. The iOS app runs from Xcode on the owner's
 phone and has cooked real eggs; the first TestFlight build, 0.3.1 (1), was
 uploaded on 2 October 2026 from `v0.3.1-alpha.1`. The next upload needs build 2
-(`ios/RELEASING.md`). The owner is reviewing the `tidy` and `tidy2` copy
-drafts on a phone.
+(`ios/RELEASING.md`). The owner is reviewing the `tidy`, `tidy2` and
+`plain` copy drafts.
 
 These counts are the only ones in the documents. If you want a number, run
 `npm test`.
@@ -50,6 +50,13 @@ The one queue. Nothing else in the documents waits on the owner.
    line, "Full rolling boil" mid-sentence, the screen reader's phase said
    twice). `LANGUAGE.md` §3 has its table, and where it departs from
    FOLLOWUP.
+   Then **`plain`** (`DECISIONS.md` 54): a style pass over 71 keys of
+   both apps, after the owner's rewrite of the Help line on cooling,
+   including the strings approved as good enough for now.
+   `tools/drafts/plain.ts` has every row and what it left alone. Open with
+   it: which English is the base (American, British or Australian), for
+   "counter", "cold tap" and "pan", and whether the rest come as
+   overlays per region.
 2. **The English of 1750, in both apps** (`DECISIONS.md` 17). `LANGUAGE.md`
    §6 lists the names to strike and where it departs from the guide.
 3. **The push of `main`**: done 29 September (`5ff6940`); CI passed. Each

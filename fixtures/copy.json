@@ -839,7 +839,7 @@
         "water": "12.50 qt",
         "time": "6:40"
       },
-      "text": "12.50 qt of water is about 6:40 in boiling, as experience shews"
+      "text": "12.50 qt of water is about 6:40 in boiling"
     },
     {
       "locale": "en-x-1750",
@@ -1529,7 +1529,7 @@
       "args": {
         "boil": "6:40"
       },
-      "text": "about 6:40 to boil, based on history"
+      "text": "about 6:40 to boil, from what I've timed before"
     },
     {
       "locale": "en",
@@ -1545,7 +1545,7 @@
       "args": {
         "water": "12.50 qt"
       },
-      "text": "for 12.50 qt of water, lid on — measure it"
+      "text": "measure out 12.50 qt of water, and keep the lid on"
     },
     {
       "locale": "en",
@@ -1598,7 +1598,7 @@
         "water": "12.50 qt",
         "limit": "fudgy"
       },
-      "text": "With the heat off, this much water (12.50 qt) cools before the yolk gets there. Firmest possible: fudgy. Add more water, or keep it boiling."
+      "text": "With the heat off, this much water (12.50 qt) cools too soon to make the yolk any firmer. Firmest possible: fudgy. Add more water, or keep it boiling."
     },
     {
       "locale": "en",
@@ -1606,7 +1606,7 @@
       "args": {
         "limit": "fudgy"
       },
-      "text": "Resting on the counter keeps cooking the yolk. Softest possible: fudgy. An ice bath would leave the egg softer."
+      "text": "On the counter the yolk keeps cooking after the egg comes out. Softest possible: fudgy. For a softer yolk, cool the eggs in an ice bath."
     },
     {
       "locale": "en",
@@ -1614,7 +1614,7 @@
       "args": {
         "limit": "soft"
       },
-      "text": "A cold tap doesn't cool the egg fast enough to stop the yolk. Softest possible: soft. An ice bath would leave the egg a little softer."
+      "text": "A cold tap doesn't cool the egg fast enough to stop the yolk cooking. Softest possible: soft. For a slightly softer yolk, use an ice bath."
     },
     {
       "locale": "en",
@@ -1650,7 +1650,7 @@
       "args": {
         "time": "7:44"
       },
-      "text": "eggs into water at a full boil; keep it there for all 7:44"
+      "text": "eggs into water at a full boil, and keep it boiling for all 7:44"
     },
     {
       "locale": "en",
@@ -2000,7 +2000,7 @@
       "args": {
         "floor": "140 °F"
       },
-      "text": "Sous-vide. Below 140 °F the white stays liquid and moves inside the shell, which I leave out, so I'm not reliable there. I estimate the white takes hours, even days, to set that cool, if it sets at all."
+      "text": "Below 140 °F, a sous-vide white stays liquid and moves around inside the shell. I don't account for that, so my times are unreliable there. At those temperatures I estimate the white takes hours or even days to set, if it sets at all."
     },
     {
       "locale": "en",
@@ -2191,7 +2191,7 @@
         "water": "12.50 qt",
         "time": "6:40"
       },
-      "text": "12.50 qt of water takes about 6:40 to boil, based on history"
+      "text": "12.50 qt of water takes about 6:40 to boil"
     },
     {
       "locale": "en",
@@ -2209,7 +2209,7 @@
         "low": "117.7 °F",
         "high": "179.1 °F"
       },
-      "text": "That doesn't look like the middle of this egg: expect 117.7 °F to 179.1 °F. Is the tip in the yolk?"
+      "text": "That's not what I'd expect from the middle of this egg, which should read 117.7 °F to 179.1 °F. Is the tip in the yolk?"
     },
     {
       "locale": "en",
@@ -2228,7 +2228,7 @@
         "duration": "22 h 43 min",
         "bath": "136 °F"
       },
-      "text": "at 8:47 AM — 22 h 43 min at 136 °F, to eat now"
+      "text": "at 8:47 AM, for 22 h 43 min at 136 °F, to eat now"
     },
     {
       "locale": "en",
@@ -2237,7 +2237,7 @@
         "bath": "136 °F",
         "floor": "140 °F"
       },
-      "text": "At 136 °F the white takes most of a day to set, if it sets at all. I'm built for boiling water, and I'm not reliable below 140 °F. Use the pan."
+      "text": "At 136 °F the white takes most of a day to set, if it sets at all. My times aren't reliable below 140 °F, so boil the eggs instead."
     },
     {
       "locale": "en",
@@ -2245,7 +2245,7 @@
       "args": {
         "duration": "22 h 43 min"
       },
-      "text": "nothing to start — you are 22 h 43 min late"
+      "text": "nothing to start, and you're 22 h 43 min late"
     },
     {
       "locale": "en",
