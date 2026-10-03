@@ -177,41 +177,41 @@ The **App Privacy** questionnaire's answer changed with E6, sharing (the
 answer was Data Not Collected until then). Apple counts data as collected
 when it leaves the device for the developer to keep, and opt-in collection is
 still collection: the exemption for optional data covers data the user
-chooses to provide each time, and sharing sends every egg once it is on. So,
+chooses to provide each time, and sharing sends every result once it is on. So,
 in App Store Connect, **App Privacy**:
 
 - **Do you or your third-party partners collect data from this app?** Yes.
 - **Other Data → Other Data Types**: collected; used for **App
   Functionality**; **not linked** to the user's identity; **not used for
-  tracking**. (Each egg: how it was cooked and how the cook said it came out.)
+  tracking**. (Each result: how an egg was cooked and how the person said it
+  came out.)
 - **Identifiers → Device ID**: collected; **App Functionality**; **not
   linked**; **not tracking**. (The random id made on the phone, which groups a
-  cook's eggs and lets them be deleted. It is not the advertising identifier
-  and not derived from anything.) **Owner's decision pending**
-  (`SHIP-0.4.md` section B): Device ID or **User ID**. Apple's Device ID is
-  "a device-level ID"; User ID includes "an assigned user ID". The id is made
-  per install, replaced by Start learning again, and groups one person's
-  results rather than naming the hardware. Whichever is chosen,
-  `PrivacyInfo.xcprivacy` (now `NSPrivacyCollectedDataTypeDeviceID`) says
-  the same.
+  person's results and lets them be deleted. It is not the advertising
+  identifier and not derived from anything.) Device ID ("other device-level
+  ID") is the closer fit for an id made per install and replaced by Start
+  learning again; `PrivacyInfo.xcprivacy` says the same
+  (`NSPrivacyCollectedDataTypeDeviceID`), and `DECISIONS.md` 72 rests on
+  it.
+- **App Attest needs no answer of its own** (`DECISIONS.md` 72). What the
+  server keeps for it, per id (the key's public half and name, a counter,
+  how the app was installed and its build number), hangs off the same
+  random id, declared above as Device ID, and is deleted with that id's
+  results. Its use is App Functionality, which Apple defines as "such as to
+  authenticate the user, enable features, prevent fraud, implement security
+  measures, …" (Apple's App Privacy Details page): telling a genuine copy
+  of the app from anything else is that.
 - Nothing else: no contact info, location, user content, usage data or
   diagnostics.
 
 **Owner's questions before submitting 0.4** (`SHIP-0.4.md` section B; the
 research of 3 October 2026 against Apple's App Privacy Details page):
 
-- **Device ID or User ID** for the random id (above). Device ID ("other
-  device-level ID") is the closer fit for a per-install id; an "assigned user
-  ID" is also defensible.
 - **Linked or Not linked.** Apple's de-identification means stripping direct
   identifiers such as a user ID, and records keyed by a persistent id that
   drives deletion are arguably **Linked to You**: the safer reading.
 - **Other User Content** for the person's answers about each egg, as well as
   or instead of Other Data Types.
-- **App Attest**: the server keeps, per id, the key's public half, a
-  counter, how the app was installed and its build number, to tell a genuine
-  copy of the app from anything else, and deletes them with the id's results.
-  Whether App Privacy wants that answered on its own.
 
 `ios/App/PrivacyInfo.xcprivacy` changes with whatever is chosen, not before.
 
