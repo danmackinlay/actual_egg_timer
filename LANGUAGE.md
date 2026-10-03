@@ -96,8 +96,10 @@ languages.
 **Regional overlays** (3 October 2026, `DECISIONS.md` 55). English is one
 language with one catalogue, `copy/en.json`, and it is Australian. A region
 whose kitchen says some things differently gets an overlay holding only those
-keys: `copy/en-US.json` has 20, "counter" for the bench, "running water" for
-the cold tap, "pot" for the pan.
+keys: `copy/en-US.json` has four, "pot" for the pan. Where a neutral word
+serves every English, the base uses it and needs no overlay: the eggs cool in
+running water or in the air, not under a cold tap or on a bench
+(`DECISIONS.md` 57).
 
 - **Which catalogues render a language** is `catalogueChain`, in core for
   both apps and fixtured: modern English gains the overlay for the region of
@@ -256,6 +258,10 @@ normalisation covers the one difference known in advance.
   exempt: its semicolons and its stately asides are the joke.
 - Curly apostrophes and quotes, never straight ones: ’ ‘ ’ “ ”
   (`DECISIONS.md` 56; `copy.test.ts` 3c).
+- Name what a cook sees by what it tells them, not only by where it sits,
+  and use the house terms (`DECISIONS.md` 57): the line under the countdown
+  is "below the time display"; the cooling methods are "an ice bath",
+  "running water" and "the air".
 
 **The app speaks in the first person singular, in the active voice**
 (`DECISIONS.md` 28): "Tap the boil … and I'll remember for next time", not

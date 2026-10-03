@@ -57,8 +57,11 @@ The one queue. Nothing else in the documents waits on the owner.
    it, **`bench`** (`DECISIONS.md` 55): the base English is Australian,
    so the egg cools on the bench; and `copy/en-US.json`, the American
    overlay, 20 keys that an American phone or browser reads over it
-   ("counter", "running water", "pot"); and **`quotes`** (`DECISIONS.md`
-   56), curly apostrophes and quotes everywhere.
+   ("counter", "running water", "pot"); **`quotes`** (`DECISIONS.md`
+   56), curly apostrophes and quotes everywhere; and **`owner`**
+   (`DECISIONS.md` 57), the owner's own edits with "running water", "in
+   the air" and "below the time display", which cut the American overlay
+   to four "pot" strings.
 2. **The English of 1750, in both apps** (`DECISIONS.md` 17). `LANGUAGE.md`
    §6 lists the names to strike and where it departs from the guide.
 3. **The push of `main`**: done 29 September (`5ff6940`); CI passed. Each

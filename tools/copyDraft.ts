@@ -50,6 +50,7 @@ import { motto } from './drafts/motto.js';
 import { plain } from './drafts/plain.js';
 import { bench } from './drafts/bench.js';
 import { quotes } from './drafts/quotes.js';
+import { owner } from './drafts/owner.js';
 
 export type Templates = Record<string, string>;
 
@@ -100,6 +101,7 @@ export const DRAFTS: Record<string, Draft> = {
   plain,
   bench,
   quotes,
+  owner,
 };
 
 /** The draft most recently applied, the last in `DRAFTS`: what a proof checks

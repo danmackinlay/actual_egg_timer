@@ -264,3 +264,13 @@ Decided by the owner, 3 October 2026:
     a reader sees: ’ for an apostrophe, ‘ ’ and “ ” for quotation, in both
     apps, every catalogue, the web page's descriptions and the privacy
     page. `copy.test.ts` 3c holds it. The `quotes` draft.
+57. **The cooling methods are named for what they are: an ice bath,
+    running water, the air.** Not "cold tap" ("tap" is also the screen
+    gesture) and not a surface the eggs sit on ("bench", "counter" and
+    "worktop" are regional, and the method is the air, wherever the eggs
+    are). So every English says the same, and the American overlay is down
+    to "pot" for the pan. The line under the countdown is "below the time
+    display": "under the time" read as "in less time". The buttons at the
+    pull name only where the eggs are ("In the ice bath"), since the label
+    above them says "Eggs out now". The `owner` draft, which also carries
+    the owner's own edits of 3 October.

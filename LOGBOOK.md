@@ -3651,3 +3651,27 @@ tree at the same time, were set aside and follow in the next draft.
   that had finished ("done" in its title) and never saw it, stuck on its
   DevTools socket. The result was read from the page over the same port
   and the capture stopped; not reproduced.
+
+## 3 October 2026: the owner's own edits, and the cooling named for what it is
+
+The owner edited copy/en.json by hand, then asked for it drafted. The
+`owner` draft (`tools/drafts/owner.ts`, on `7fdd6b9`) carries 31 keys: the
+owner's 17 wording edits (four with a one-word fix: a full stop, "weigh
+one", "the heat", a comma), and what was agreed alongside (`DECISIONS.md`
+57). The cooling methods are an ice bath, running water and the air, in
+every English, so the American overlay keeps only "pot" for the pan: four
+entries, down from 20. The buttons at the pull lost "They're". The Help line
+on the odds says "below the time display", which the owner found clearer
+than "under the time". 26 1750 twins moved with their meaning: the pump for
+running water, as the 1750 alarm had it, and the open air for the air.
+
+The owner's edits were set aside while `quotes` was committed and restored
+from a copy; that their 17 keys, curled, were the only wording changes was
+checked by script before anything was laid on top.
+
+**Proved by** `copyLiterals --since 7fdd6b9 owner` and `copySnapshot compare
+--draft owner`, less 11 strings each checked by script: the two linked Help
+asides, and the American entries in the four en-US states.
+
+**Not verified:** either app on a phone; the alarms and the Live Activity
+in the new words, held only by their length budgets.

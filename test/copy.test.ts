@@ -414,7 +414,7 @@ test('7b. the region of a tag, and the catalogues that render a language', () =>
   assert.deepEqual(catalogueChain('cs', ['en-US'], 'US'), ['cs', 'en']);
 
   const american = parseCatalogue(JSONS.get('en-US'), EN);
-  assert.equal(render(american, 'controls.cooling.counter'), 'Counter');
-  assert.equal(render(EN, 'controls.cooling.counter'), 'Bench');
+  assert.equal(render(american, 'action.hint.cold'), 'eggs in the pot, lid on, then tap');
+  assert.equal(render(EN, 'action.hint.cold'), 'eggs in the pan, lid on, then tap');
   assert.equal(render(american, 'controls.cooling.ice'), render(EN, 'controls.cooling.ice'), 'a key the overlay leaves is English\'s');
 });

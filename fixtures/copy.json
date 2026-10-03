@@ -7,22 +7,6 @@
   ],
   "render": [
     {
-      "locale": "en-US",
-      "key": "refusal.counter",
-      "args": {
-        "limit": "fudgy"
-      },
-      "text": "On the counter the yolk keeps cooking after the egg comes out. Softest possible: fudgy. For a softer yolk, cool the eggs in an ice bath."
-    },
-    {
-      "locale": "en-US",
-      "key": "refusal.tap",
-      "args": {
-        "limit": "soft"
-      },
-      "text": "Cold running water doesn’t cool the egg fast enough to stop the yolk cooking. Softest possible: soft. For a slightly softer yolk, use an ice bath."
-    },
-    {
       "locale": "en-x-1750",
       "key": "app.name",
       "args": {},
@@ -271,7 +255,7 @@
       "args": {
         "limit": "fudgy"
       },
-      "text": "An egg left upon the table does not cease to cook because it has ceased to boil. Softest attainable: fudgy. In iced water it might be left softer."
+      "text": "An egg left in the open air does not cease to cook because it has ceased to boil. Softest attainable: fudgy. In iced water it might be left softer."
     },
     {
       "locale": "en-x-1750",
@@ -279,7 +263,7 @@
       "args": {
         "limit": "soft"
       },
-      "text": "A cold tap cools the egg too slowly to arrest the yolk. Softest attainable: soft. In iced water it might be left a little softer."
+      "text": "Water from the pump cools the egg too slowly to arrest the yolk. Softest attainable: soft. In iced water it might be left a little softer."
     },
     {
       "locale": "en-x-1750",
@@ -1623,7 +1607,7 @@
       "args": {
         "limit": "fudgy"
       },
-      "text": "On the bench the yolk keeps cooking after the egg comes out. Softest possible: fudgy. For a softer yolk, cool the eggs in an ice bath."
+      "text": "In the air the yolk keeps cooking after the egg comes out. Softest possible: fudgy. For a softer yolk, cool the eggs in an ice bath."
     },
     {
       "locale": "en",
@@ -1631,7 +1615,7 @@
       "args": {
         "limit": "soft"
       },
-      "text": "A cold tap doesn’t cool the egg fast enough to stop the yolk cooking. Softest possible: soft. For a slightly softer yolk, use an ice bath."
+      "text": "Cold running water doesn’t cool the egg fast enough to stop the yolk cooking. Softest possible: soft. For a slightly softer yolk, use an ice bath."
     },
     {
       "locale": "en",
