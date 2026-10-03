@@ -62,24 +62,24 @@
   <p><strong>By default, nothing you put into Actual Egg Timer leaves your
   phone or your browser.</strong></p>
   <p><strong>If you turn on <em>Share my eggs</em></strong>, in Settings, the
-  app sends me how each egg was cooked and how you said it came out, with a
-  random number in place of your name. Turn it off and nothing more is sent.
-  <em>Delete what I’ve sent</em>, in the same place, deletes everything that
-  was.</p>
+  app sends me a result for each egg you cook: how it was cooked and how you
+  said it came out, with a random number in place of your name. Turn it off
+  and nothing more is sent. <em>Delete what I’ve sent</em>, in the same
+  place, deletes every result that was.</p>
 
   <h2>What stays on your device</h2>
   <p>So that they work the same way next time, both apps keep:</p>
   <ul>
     <li>your settings, such as the egg size, the units, your altitude, how
     much water you use, how you cool the eggs, and the language;</li>
-    <li>the cook in progress, so a running timer survives the page reloading
-    or the app closing;</li>
-    <li>the eggs you rated: how each was cooked and how you said it came out,
-    and what the app has learned from them;</li>
+    <li>the timer in progress, so it survives the page reloading or the app
+    closing;</li>
+    <li>your results: how each egg you rated was cooked and how you said it
+    came out, and what the app has learned from them;</li>
     <li>how long your water took to boil, for each amount you have timed;</li>
     <li>if you have turned sharing on: whether it is on, your random number
     and any you used before (so that deleting reaches all of them), and how
-    many of your eggs have been sent.</li>
+    many of your results have been sent.</li>
   </ul>
   <p>On iPhone, these are kept in the app’s own storage on the phone. If you
   back up your iPhone, the backup includes them, as it does any app’s data.
@@ -91,8 +91,8 @@
   copy holds nothing about you, and is replaced when the site changes.</p>
 
   <h2>What sharing sends</h2>
-  <p>For each egg you cook, including the eggs you rated before you turned
-  sharing on:</p>
+  <p>One result for each egg you cook, including the ones you rated before
+  you turned sharing on. A result holds:</p>
   <ul>
     <li>the day you cooked it (a date, with no time of day);</li>
     <li>the egg’s weight, whether you weighed it, measured it or picked a
@@ -101,8 +101,8 @@
     and whether that was the fridge, the room or a temperature you typed,
     the room temperature the app worked with, the temperature your water
     boils at, how long it took to boil and whether you timed that, how much
-    water, how many eggs, whether the heat stayed on, and how you cooled
-    them;</li>
+    water, how many eggs were in the pot, whether the heat stayed on, and
+    how you cooled them;</li>
     <li>how you wanted the yolk, the time the app gave you, any change it
     made to that time on purpose (below), when the eggs came out and
     whether you said so, and how long the app counted for cooling;</li>
@@ -112,77 +112,84 @@
     reckoning and its starting guesses it used;</li>
     <li>which app it was (web or iPhone), its version, and the language and
     units you were reading it in;</li>
-    <li>your random number, and the egg’s place in the order you sent
+    <li>your random number, and the result’s place in the order you sent
     them.</li>
   </ul>
-  <p>The iPhone app also signs each egg it sends (below).</p>
+  <p>The iPhone app also signs each result it sends (below).</p>
   <p><strong>What is not sent:</strong> your name, an email address, an
   account, your location, your contacts, your device’s name or any of its
   identifiers, an advertising identifier, or anything from outside the
   app.</p>
-  <p>Two things in an egg say a little about where you are. The temperature
-  your water boils at says roughly how high up you are. Your language, your
-  units and whether you picked European or American egg sizes may suggest a
-  part of the world. Nothing sent says more than that.</p>
+  <p>Two things in a result say a little about where you are. The
+  temperature your water boils at says roughly how high up you are. Your
+  language, your units and whether you picked European or American egg
+  sizes may suggest a part of the world. Nothing sent says more than
+  that.</p>
   <p><strong>The random number</strong> is made on your device, from
   nothing about you, the first time you turn sharing on. It groups your
-  eggs together, so the app can learn how one cook’s eggs differ from
-  another’s, and it is what lets you delete them. After <em>Start learning
-  again</em>, the app uses a new one, and your next eggs count as a new
-  cook’s.</p>
+  results together, so that I can tell how one person’s kitchen differs
+  from another’s, and it is what lets you delete them. After <em>Start
+  learning again</em>, the app uses a new one, and your next results count
+  as a new person’s.</p>
   <p><strong>The time may move a few seconds.</strong> While sharing is on,
   the app sometimes moves the time it gives you by up to ten seconds either
-  way, small enough to stay within “just right”. Cooks who all follow the
-  app’s usual times teach it only about those times. A few seconds either
-  side teaches it what happens near them. A small <em>Learning</em> mark
-  beside the time says so while sharing is on.</p>
+  way, small enough to stay within “just right”. Results from people who
+  all follow the app’s usual times say nothing about other times. A few
+  seconds either side shows what happens near them. A small
+  <em>Learning</em> mark beside the time says so while sharing is on.</p>
   <p><strong>On iPhone</strong>, the first time the app sends under a
   random number, it makes a key in the phone’s secure chip and asks Apple’s
   App Attest service to confirm that the key belongs to a genuine copy of the
   app on a real iPhone. That request goes to Apple and carries none of your
-  eggs. It carries a scrambled form of your random number that cannot be
-  turned back into it. After that, the app signs every egg it sends with the
-  key. This lets me give eggs from the app more weight than eggs from
-  anywhere else. If it does not work, your eggs are sent anyway.</p>
+  results. It carries a scrambled form of your random number that cannot be
+  turned back into it. After that, the app signs every result it sends with
+  the key. This lets me count results from the app for more than results
+  from anywhere else. If it does not work, your results are sent
+  anyway.</p>
 
   <h2>What I keep, where, and for how long</h2>
-  <p>I keep each egg exactly as it was sent, with only the details listed
-  above. Anything else in a request is dropped. For the iPhone app I also
-  keep, for each random number, the key’s public half and its name, a count
-  of the eggs it has signed, whether that copy of the app came from the App
-  Store, TestFlight or a developer’s build, and its build number. The code
-  that receives eggs writes down no address, no device and no time.</p>
+  <p>I keep each result exactly as it was sent, with only the details
+  listed above. Anything else in a request is dropped. For the iPhone app I
+  also keep, for each random number, the key’s public half and its name, a
+  count of the results it has signed, whether that copy of the app came
+  from the App Store, TestFlight or a developer’s build, and its build
+  number. The code that receives results writes down no address, no device
+  and no time.</p>
   <p><strong>Where.</strong> In Netlify’s storage for this site, in the
   United States (the region Netlify calls us-east-2).</p>
   <!-- OWNER: the retention rule below is a proposal, not yet policy. Five
        years from the day cooked (the record's `day`, since the server keeps
-       no time of arrival) is long enough for the fit to see seasons and
-       repeat cooks, and short enough to be a real limit. Nothing enforces it
-       yet: it needs a prune step (e.g. `npm run eggs -- prune`, deleting
-       records whose `day` is older and any key left with no records) run
-       before each fit. Confirm the period, or choose another. -->
+       no time of arrival) is long enough for working out starting guesses
+       to see seasons and people who come back, and short enough to be a
+       real limit. Nothing enforces it yet: it needs a prune step (e.g.
+       `npm run eggs -- prune`, deleting records whose `day` is older and
+       any App Attest key left with no records) run before each time new
+       starting guesses are worked out.
+       Confirm the period, or choose another. -->
   <p><strong>How long.</strong> Until you delete them, and at most five
   years from the day each egg was cooked. The App Attest details for a
-  random number go when its last egg does. If I stop making the app, I
+  random number go when its last result does. If I stop making the app, I
   delete them all.</p>
   <!-- OWNER: `npm run eggs -- pull` copies every record to the owner's
-       computer for the fit (fit/data/, ignored by git). The page promises
-       that copy is deleted after each fit, so that a deletion in the app
-       reaches it by the next fit at the latest. Confirm that is how you will
-       work, or say how the local copy is handled instead. -->
+       computer to work out new starting guesses (fit/data/, ignored by
+       git). The page promises that copy is deleted each time, so that a
+       deletion in the app reaches it by the next time at the latest.
+       Confirm that is how you will work, or say how the local copy is
+       handled instead. -->
   <p><strong>Who can see them.</strong> Only me, through my Netlify account,
-  and Netlify, which stores them for me. I don’t publish anyone’s eggs or
-  give them to anyone. To work out better first guesses, I copy the eggs to
-  my own computer, never into the app’s public code, and delete that copy
-  when I’m done. What I publish is the result, a handful of numbers about
-  eggs in general, which every copy of the app starts from.</p>
+  and Netlify, which stores them for me. I don’t publish anyone’s results or
+  give them to anyone. To work out better starting guesses, I copy the
+  records to my own computer, never into the app’s public code, and delete
+  that copy when I’m done. What I publish is what I worked out: a handful
+  of numbers about eggs and kitchens in general, which every copy of the
+  app starts from.</p>
   <!-- Netlify Observability records each request's client IP, time and
        path, searchable for 24 hours on the Free and Personal plans and 7
        days on Pro (docs.netlify.com/manage/monitoring/observability/
        overview). Function logs hold only what the code logs, and
        netlify/functions/eggs.mts logs no address. -->
-  <p><strong>Your IP address.</strong> The code that receives eggs does not
-  store it. Netlify’s request logs record it, with the time and the page
+  <p><strong>Your IP address.</strong> The code that receives results does
+  not store it. Netlify’s request logs record it, with the time and the page
   asked for, for about a day (a week on paid plans). When you delete what
   you sent, the page asked for includes your random number. Netlify also
   counts requests by address to turn away floods. I don’t use these logs
@@ -196,16 +203,16 @@
     Settings. Nothing more is sent, and the time stays where the app would
     put it. What was already sent stays until you delete it.</li>
     <li><strong>To delete what you sent:</strong> <em>Delete what I’ve
-    sent</em>, in Settings, deletes every egg your device has sent, under
+    sent</em>, in Settings, deletes every result your device has sent, under
     every random number it has used, with the App Attest details, and turns
     sharing off. If you are offline, the app keeps asking until the server
     confirms.</li>
     <li><strong>By email:</strong> write to
     <a href="mailto:forgetmyeggs@danmackinlay.name">forgetmyeggs@danmackinlay.name</a>
-    with your random number, and I’ll delete its eggs. I need the number,
-    because nothing else tells me which eggs are yours.
+    with your random number, and I’ll delete the results sent under it. I
+    need the number, because nothing else tells me which results are yours.
     <!-- OWNER: neither app shows the random number (checked:
-         src/ui/shareView.ts, ios/App/SettingsView.swift), so a cook cannot
+         src/ui/shareView.ts, ios/App/SettingsView.swift), so nobody can
          quote it today. SHIP-0.4.md section B has an item for showing it in
          Settings. If that ships, replace the next sentence with where to
          find it. -->
@@ -214,10 +221,10 @@
     <li><strong>On your device:</strong> on iPhone, delete the app, and
     everything it kept goes with it. On the web, clear this site’s data in
     your browser’s settings. Delete what you sent first, because once the
-    app and its random number are gone, I cannot tell which eggs were
+    app and its random number are gone, I cannot tell which results were
     yours.</li>
     <li><strong><em>Start learning again</em></strong>, in Settings, deletes
-    the eggs you rated and the boil times on your device, and keeps your
+    your results and the boil times on your device, and keeps your
     settings. It does not delete what you sent.</li>
   </ul>
 
@@ -226,7 +233,7 @@
        household activity" (GDPR Art. 2(2)(c); CJEU Lindqvist C-101/01), so
        the GDPR applies. This section is GDPR Art. 13's list. -->
   <p>This is a personal project, but the app is open to anyone, so I treat
-  the eggs people share as the data protection law of the EU and the UK
+  the results people share as the data protection law of the EU and the UK
   expects. Sharing is optional, and the timer works the same without
   it.</p>
   <ul>
@@ -236,25 +243,25 @@
     about anything on this page.
     <!-- OWNER: confirm the page should say where you live. -->
     I live in Australia.</li>
-    <li><strong>Why:</strong> to improve the first guesses every copy of the
-    app starts from, and for nothing else. Nothing I do with your eggs
-    decides anything about you.</li>
+    <li><strong>Why:</strong> to improve the starting guesses every copy of
+    the app begins with, and for nothing else. Nothing I do with your
+    results decides anything about you.</li>
     <!-- OWNER: under GDPR Art. 17(1)(b), data held on consent must be
          erased once consent is withdrawn, unless another basis applies.
          Turning sharing off is built to stop sending and keep what was sent
-         (COLLECTIVE.md section 1), so the page says consent for the eggs
+         (COLLECTIVE.md section 1), so the page says consent for the results
          already sent is withdrawn by deleting them. The owner chooses
          whether that stands, or turning sharing off also deletes
          (SHIP-0.4.md section B). -->
     <li><strong>On what basis:</strong> your consent, which you give by
-    turning sharing on. You take it back for new eggs by turning sharing
-    off, and for the eggs already sent by deleting them, with the button or
-    by email. Taking it back doesn’t make what was done before it
+    turning sharing on. You take it back for new results by turning sharing
+    off, and for the results already sent by deleting them, with the button
+    or by email. Taking it back doesn’t make what was done before it
     unlawful.</li>
     <!-- Netlify's Data Processing Addendum is part of its terms, free plans
          included, with nothing to accept (netlify.com/gdpr-ccpa). -->
     <li><strong>Who handles it for me:</strong> Netlify, Inc. hosts this
-    site and stores the eggs, as my processor under the data processing
+    site and stores the results, as my processor under the data processing
     agreement in its terms. Apple delivers the iPhone app and runs App
     Attest, under
     <a href="https://www.apple.com/legal/privacy/">its own privacy
@@ -264,19 +271,19 @@
          (dataprivacyframework.gov/participant/6208); the adequacy decision
          is (EU) 2023/1795. Its DPA has the standard contractual clauses
          (Module Two) as a fallback. -->
-    <li><strong>Sent to the United States:</strong> the eggs are stored in
-    the United States. Netlify, Inc. is certified under the EU–U.S. Data
+    <li><strong>Sent to the United States:</strong> the results are stored
+    in the United States. Netlify, Inc. is certified under the EU–U.S. Data
     Privacy Framework (with its UK and Swiss parts), which the European
     Commission has found protects data adequately. Its data processing
     agreement adds the Commission’s standard contractual clauses as a
     fallback.</li>
     <li><strong>Your rights:</strong> you can ask me for a copy of your
-    eggs, in a form another program can read, and ask me to correct them,
-    delete them, stop using them for a while, or stop using them at all. You
-    can take back your consent at any time. Write to me with your random
-    number. If you think I have handled your eggs wrongly, you can complain
-    to a data protection authority, such as the one in the country where
-    you live. Please write to me first, so I can put it right.</li>
+    results, in a form another program can read, and ask me to correct
+    them, delete them, stop using them for a while, or stop using them at
+    all. You can take back your consent at any time. Write to me with your
+    random number. If you think I have handled your data wrongly, you can
+    complain to a data protection authority, such as the one in the country
+    where you live. Please write to me first, so I can put it right.</li>
     <!-- 16 is GDPR Art. 8's default age for consent to an online service;
          member states may lower it to 13. Under 16 is the safe choice. -->
     <li><strong>Children:</strong> the app is not made for children. If you
@@ -296,14 +303,14 @@
     trackers. Both apps are built only from the code in
     <a href="https://github.com/danmackinlay/actual_egg_timer">the project’s
     public repository</a>, on Apple’s and your browser’s own software. The
-    part on this site that receives shared eggs uses Netlify’s own library
-    for Netlify’s storage.</li>
+    part on this site that receives shared results uses Netlify’s own
+    library for Netlify’s storage.</li>
     <li>The website loads only its own files, from this site, the font
     included, so no font service learns that you visited.</li>
     <li>Beyond the website loading itself, neither app connects to
-    anything but this site, and then only to send or delete your eggs when
-    you share. The one exception is App Attest, when the iPhone app first
-    sends (above).</li>
+    anything but this site, and then only to send or delete your results
+    when you share. The one exception is App Attest, when the iPhone app
+    first sends (above).</li>
   </ul>
   <p>Both apps have links, in Help and to the code, that open in your
   browser only when you tap them.</p>
