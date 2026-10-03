@@ -95,7 +95,7 @@ The one queue. Nothing else in the documents waits on the owner.
    (i). `tools/drafts/share.ts` and `learning.ts` have every key and its
    1750 twin. With them, **`data`**: what is kept and sent is a "result",
    never "eggs" (13 keys; `LANGUAGE.md` §3 has the table). The privacy
-   page must name the controls as they now read: "Sharing results",
+   page names the controls as they now read: "Sharing results",
    "Share results" and "Delete shared results". And **`sharingid`**
    (`DECISIONS.md` 67): "Your random number" over the id, whole and
    selectable, in both apps' sharing section once sharing has been on.

@@ -33,7 +33,7 @@
   a line under "Changes". What sharing sends is the record
   (src/core/record.ts, INFERENCE.md section 4) and nothing else, and the
   list under "What sharing sends" is its fields, in words. What the server
-  keeps is server/eggs.ts (the eggs, and StoredKey for App Attest); where is
+  keeps is server/eggs.ts (the records, and StoredKey for App Attest); where is
   netlify/functions/eggs.mts.
 
   Two kinds of marker sit in comments beside the text they are about, for
@@ -61,11 +61,12 @@
   <h2>In short</h2>
   <p><strong>By default, nothing you put into Actual Egg Timer leaves your
   phone or your browser.</strong></p>
-  <p><strong>If you turn on <em>Share my eggs</em></strong>, in Settings, the
-  app sends me a result for each egg you cook: how it was cooked and how you
-  said it came out, with a random number in place of your name. Turn it off
-  and nothing more is sent. <em>Delete what I’ve sent</em>, in the same
-  place, deletes every result that was.</p>
+  <p><strong>If you turn on <em>Share results</em></strong>, under
+  <em>Sharing results</em> in Settings, the app sends me a result for each
+  egg you cook: how it was cooked and how you said it came out, with a
+  random number in place of your name. Turn it off and nothing more is sent,
+  but what was already sent stays. <em>Delete shared results</em>, in the
+  same place, deletes every result that was.</p>
 
   <h2>What stays on your device</h2>
   <p>So that they work the same way next time, both apps keep:</p>
@@ -128,9 +129,10 @@
   <p><strong>The random number</strong> is made on your device, from
   nothing about you, the first time you turn sharing on. It groups your
   results together, so that I can tell how one person’s kitchen differs
-  from another’s, and it is what lets you delete them. After <em>Start
-  learning again</em>, the app uses a new one, and your next results count
-  as a new person’s.</p>
+  from another’s, and it is what lets you delete them. Settings shows it,
+  under <em>Sharing results</em>, as <em>Your random number</em>. After
+  <em>Start learning again</em>, the app uses a new one, and your next
+  results count as a new person’s.</p>
   <p><strong>The time may move a few seconds.</strong> While sharing is on,
   the app sometimes moves the time it gives you by up to ten seconds either
   way, small enough to stay within “just right”. Results from people who
@@ -143,8 +145,9 @@
   app on a real iPhone. That request goes to Apple and carries none of your
   results. It carries a scrambled form of your random number that cannot be
   turned back into it. After that, the app signs every result it sends with
-  the key. This lets me count results from the app for more than results
-  from anywhere else. If it does not work, your results are sent
+  the key. This lets me count results from the app, as installed from the
+  App Store or TestFlight, for more than results from anywhere else. If it
+  does not work, your results are sent
   anyway.</p>
 
   <h2>What I keep, where, and for how long</h2>
@@ -199,11 +202,12 @@
 
   <h2>Stopping and deleting</h2>
   <ul>
-    <li><strong>To stop:</strong> turn <em>Share my eggs</em> off in
+    <li><strong>To stop:</strong> turn <em>Share results</em> off in
     Settings. Nothing more is sent, and the time stays where the app would
-    put it. What was already sent stays until you delete it.</li>
-    <li><strong>To delete what you sent:</strong> <em>Delete what I’ve
-    sent</em>, in Settings, deletes every result your device has sent, under
+    put it. Turning it off does not delete anything: what was already sent
+    stays until you delete it.</li>
+    <li><strong>To delete what you sent:</strong> <em>Delete shared
+    results</em>, in Settings, deletes every result your device has sent, under
     every random number it has used, with the App Attest details, and turns
     sharing off. If you are offline, the app keeps asking until the server
     confirms.</li>
@@ -211,13 +215,11 @@
     <a href="mailto:forgetmyeggs@danmackinlay.name">forgetmyeggs@danmackinlay.name</a>
     with your random number, and I’ll delete the results sent under it. I
     need the number, because nothing else tells me which results are yours.
-    <!-- OWNER: neither app shows the random number (checked:
-         src/ui/shareView.ts, ios/App/SettingsView.swift), so nobody can
-         quote it today. SHIP-0.4.md section B has an item for showing it in
-         Settings. If that ships, replace the next sentence with where to
-         find it. -->
-    Neither app shows the number yet, so for now the button is the way to
-    delete.</li>
+    <!-- Both apps show it from the first time sharing is turned on until a
+         deletion (share.id; src/ui/shareView.ts, ios/App/SettingsView.swift;
+         DECISIONS.md 67). -->
+    You’ll find it in Settings, under <em>Sharing results</em>, as
+    <em>Your random number</em>, and you can select it and copy it.</li>
     <li><strong>On your device:</strong> on iPhone, delete the app, and
     everything it kept goes with it. On the web, clear this site’s data in
     your browser’s settings. Delete what you sent first, because once the
@@ -240,24 +242,19 @@
     <li><strong>Who is responsible:</strong> I am, Dan MacKinlay, as a
     private person. Write to
     <a href="mailto:forgetmyeggs@danmackinlay.name">forgetmyeggs@danmackinlay.name</a>
-    about anything on this page.
-    <!-- OWNER: confirm the page should say where you live. -->
-    I live in Australia.</li>
+    about anything on this page. I live in Australia.</li>
     <li><strong>Why:</strong> to improve the starting guesses every copy of
     the app begins with, and for nothing else. Nothing I do with your
     results decides anything about you.</li>
-    <!-- OWNER: under GDPR Art. 17(1)(b), data held on consent must be
-         erased once consent is withdrawn, unless another basis applies.
-         Turning sharing off is built to stop sending and keep what was sent
-         (COLLECTIVE.md section 1), so the page says consent for the results
-         already sent is withdrawn by deleting them. The owner chooses
-         whether that stands, or turning sharing off also deletes
-         (SHIP-0.4.md section B). -->
+    <!-- Turning sharing off stops sending and keeps what was sent
+         (DECISIONS.md 69, COLLECTIVE.md section 1), so consent for the
+         results already sent is withdrawn by deleting them (GDPR
+         Art. 17(1)(b)). -->
     <li><strong>On what basis:</strong> your consent, which you give by
     turning sharing on. You take it back for new results by turning sharing
-    off, and for the results already sent by deleting them, with the button
-    or by email. Taking it back doesn’t make what was done before it
-    unlawful.</li>
+    off. Turning sharing off keeps the results already sent; to take your
+    consent back for those, delete them, with the button or by email.
+    Taking it back doesn’t make what was done before it unlawful.</li>
     <!-- Netlify's Data Processing Addendum is part of its terms, free plans
          included, with nothing to accept (netlify.com/gdpr-ccpa). -->
     <li><strong>Who handles it for me:</strong> Netlify, Inc. hosts this
@@ -335,8 +332,9 @@
   <ul class="doc__changes">
     <li>3 October 2026, version 0.4: sharing added, off unless you turn it
     on. What it sends, what I keep, where, for how long and who can see it,
-    how to stop and how to delete, and your rights. Also the website’s
-    offline copy of itself, and its font.</li>
+    how to stop and how to delete, where to find your random number, and
+    your rights. Also the website’s offline copy of itself, and its
+    font.</li>
     <li>2 October 2026: first version.</li>
   </ul>
 </main>
