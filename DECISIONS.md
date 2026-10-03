@@ -255,3 +255,8 @@ Decided by the owner, 3 October 2026:
     were approved as "good enough for now", not as final, and a style pass
     reads them like the rest. The `plain` draft; the rules are in
     `LANGUAGE.md` §3.
+55. **The words are Australian English, with an American overlay.** The
+    base catalogue says what an Australian kitchen says: the egg cools on
+    the bench, under the cold tap, in a pan. An American reads
+    `copy/en-US.json` over it, holding only the words an American kitchen
+    says differently. The `bench` draft; the overlay is `LANGUAGE.md` §2.

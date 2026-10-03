@@ -53,10 +53,9 @@ The one queue. Nothing else in the documents waits on the owner.
    Then **`plain`** (`DECISIONS.md` 54): a style pass over 71 keys of
    both apps, after the owner's rewrite of the Help line on cooling,
    including the strings approved as good enough for now.
-   `tools/drafts/plain.ts` has every row and what it left alone. Open with
-   it: which English is the base (American, British or Australian), for
-   "counter", "cold tap" and "pan", and whether the rest come as
-   overlays per region.
+   `tools/drafts/plain.ts` has every row and what it left alone. With
+   it, **`bench`** (`DECISIONS.md` 55): the base English is Australian,
+   so the egg cools on the bench.
 2. **The English of 1750, in both apps** (`DECISIONS.md` 17). `LANGUAGE.md`
    §6 lists the names to strike and where it departs from the guide.
 3. **The push of `main`**: done 29 September (`5ff6940`); CI passed. Each

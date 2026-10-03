@@ -48,6 +48,7 @@ import { tidy2 } from './drafts/tidy2.js';
 import { privacy } from './drafts/privacy.js';
 import { motto } from './drafts/motto.js';
 import { plain } from './drafts/plain.js';
+import { bench } from './drafts/bench.js';
 
 export type Templates = Record<string, string>;
 
@@ -96,6 +97,7 @@ export const DRAFTS: Record<string, Draft> = {
   privacy,
   motto,
   plain,
+  bench,
 };
 
 /** The draft most recently applied, the last in `DRAFTS`: what a proof checks

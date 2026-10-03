@@ -3582,3 +3582,13 @@ fixtures fresh; `swift test` 121 tests in 32 suites.
 
 **Not verified:** either app on a phone. The iOS-only strings (the alarms,
 the readout's alarm lines) are held only by their length budgets.
+
+## 3 October 2026: the base English is Australian
+
+The owner: "Australian base, with an en-US overlay" (`DECISIONS.md` 55).
+The `bench` draft (`tools/drafts/bench.ts`, on `63d9094`) makes the one
+change the base needed: the egg left out to cool is on the bench, in 11
+keys of both apps. "Cold tap", "pan" and the spelling were Australian
+already. The 1750 twins say "table" and stand. Proved by `copyLiterals
+--since 63d9094 bench` and `copySnapshot compare --draft bench`, less the
+linked Help aside on still air.
