@@ -44,7 +44,7 @@ The page (`privacy/index.html`) changes first; everything else follows it.
 - [ ] **The page's `OWNER:` marks** (comments in `privacy/index.html`):
       the retention period; deleting the fit's local copy (`npm run eggs --
       pull`) after each fit; saying you live in Australia; the id (next
-      item); the Australia line.
+      item); withdrawal (below).
 - [ ] **The retention rule, enforced**: whatever period the owner picks
       needs a step that applies it, e.g. `npm run eggs -- prune`, deleting
       records whose `day` is older and any App Attest key left with no
@@ -56,27 +56,36 @@ The page (`privacy/index.html`) changes first; everything else follows it.
       as a named draft. The page says today that neither app shows it and
       the button is the way to delete; change that sentence when this
       ships.
-- [ ] **Who and why, in GDPR terms** (EU users, including your family).
-      Written on the page in plain words (`2223bf9`), each legal fact marked
-      `VERIFY` until the research is in: the household exemption (assumed
-      not to apply), an EU representative (Art. 27(2) exemption claimed),
-      withdrawal (turning sharing off stops sending; consent for what was
-      sent is withdrawn by deleting it, which Art. 17(1)(b) may not
-      allow), Netlify's DPA, the transfer mechanism, the age (16):
-      - who is responsible (you, by name, and the contact address);
-      - the legal basis: consent, given by the switch, withdrawn by turning
-        it off;
-      - your rights and how to use them: deletion in the app; access and
-        anything else by email, quoting the random id (decide whether the app
-        should show the id so a cook can quote it);
-      - the transfer to the US: Netlify Blobs, us-east-2 (**verify** that
-        Netlify's Data Processing Addendum covers this and accept it in the
-        Netlify account; the EU–US Data Privacy Framework or standard
-        contractual clauses);
-      - not directed at children.
-- [ ] **Australia** (**verify**): a person with turnover under $3M is
-      generally outside the Privacy Act's APPs; worth one line of your own
-      judgement, not a policy.
+- [x] **Who and why, in GDPR terms** (EU users, including your family), in
+      plain words on the page (`2223bf9`, `5a85757`), checked by the
+      research of 3 October 2026 against the sources: GDPR Art. 13's list
+      (who, contact, purpose, consent as the basis, recipients, the
+      transfer, retention, every right, withdrawal without undoing what came
+      before, complaint, that sharing is optional, no decisions about the
+      cook). The household exemption does not apply to a public app (CJEU
+      Lindqvist C-101/01). Netlify's Data Processing Addendum is part of its
+      terms, free plans included: nothing to accept. The transfer rests on
+      the EU–US Data Privacy Framework (adequacy decision (EU) 2023/1795;
+      Netlify, Inc. active, with the UK Extension and Swiss–US), with the
+      standard contractual clauses (Module Two) in the DPA as a fallback.
+      Netlify's request logs keep the IP address, searchable 24 hours on
+      Free and Personal plans and 7 days on Pro.
+- [ ] **Withdrawal** (OWNER): under Art. 17(1)(b), data held on consent
+      must be erased once consent is withdrawn, unless another basis
+      applies. Turning sharing off stops sending and keeps what was sent;
+      the page says consent for the eggs already sent is withdrawn by
+      deleting them. Keep that, or have turning sharing off delete too.
+- [ ] **An EU representative** (OWNER; GDPR Art. 27): a controller outside
+      the EU collecting from people in it on a standing basis arguably needs
+      one, since the exemption for occasional processing likely does not
+      fit. Appoint a representative service, or accept the low risk
+      knowingly. Not needed if you are established in the EU. The page says
+      nothing about it.
+- [x] **Australia**: the APPs very likely don't apply (the small business
+      exemption, turnover of A$3M or less, which the 2024 amendments left
+      alone); the statutory tort for serious invasions of privacy (since
+      10 June 2025) applies regardless. The page keeps one line
+      (`5a85757`).
 - [x] **What the offline web app keeps**: the service worker stores a copy of
       the site's own files on the device. Not personal data, but the page
       says what is stored where, so add one line (`2223bf9`).
@@ -93,26 +102,39 @@ The page (`privacy/index.html`) changes first; everything else follows it.
       hardware. Whichever is chosen, `PrivacyInfo.xcprivacy` (now
       `NSPrivacyCollectedDataTypeDeviceID`) says the same. Step 6 now
       records the choice as pending and what App Attest keeps (`acddcb7`).
-- [ ] **Export compliance**: the app now uses HTTPS. That is exempt
-      encryption, so `ITSAppUsesNonExemptEncryption: NO` should still be the
-      honest answer (**verify** against Apple's export compliance page), but
-      `project.yml`'s comment and RELEASING.md both say "no networking of any
-      kind" and need rewriting. Rewritten, with the answer kept and marked
-      **VERIFY** in both (`acddcb7`); tick when Apple's page confirms it.
+      The research (Apple's App Privacy Details page): opt-in collection
+      must be disclosed. Device ID ("other device-level ID") is the closer
+      fit for a per-install id, and an assigned User ID is defensible.
+      **Not linked is doubtful**: Apple's de-identification means stripping
+      direct identifiers such as a user ID, and records keyed by a
+      persistent id that drives deletion are arguably Linked to You, the
+      safer reading. The cook's answers may be **Other User Content**.
+      Whether App Attest's key needs its own answer is open. These are your
+      choices; `PrivacyInfo.xcprivacy` follows them, unchanged until then
+      (step 6 lists them, `e5d362f`).
+- [x] **Export compliance**: `ITSAppUsesNonExemptEncryption: NO` is right:
+      HTTPS through `URLSession` and SHA-256 for App Attest are exempt
+      (Apple's "Complying with encryption export regulations"). The "no
+      networking" comments in `project.yml` and RELEASING.md are rewritten
+      (`acddcb7`, `e5d362f`).
 - [ ] **TestFlight → Test Information**: the beta description mentions
       sharing; the review notes say what the endpoint is, that sharing is off
       by default, and what App Attest is for.
 
 ## C. iOS
 
-- [ ] **App Attest on the App ID**: tick the **App Attest** capability on
-      `name.danmackinlay.actualeggtimer` (developer.apple.com → Identifiers).
-- [ ] **The App Attest environment**: `ActualEggTimer.entitlements` has no
-      `com.apple.developer.devicecheck.appattest-environment`, which
-      (**verify**) means every build, TestFlight included, attests against
-      the development environment. Add it with `production` for Release
-      builds. The server accepts both AAGUIDs; decide whether a development
-      attestation should count as attested in the fit.
+- [ ] **App Attest on the App ID**: App Attest is listed as a capability on
+      `name.danmackinlay.actualeggtimer` (developer.apple.com →
+      Identifiers). It is needed only if the entitlement is in the binary;
+      ticking it anyway is harmless, but invalidates the existing
+      provisioning profiles.
+- [ ] **The App Attest environment**: TestFlight and App Store builds always
+      attest against production and ignore the entitlement; only builds
+      installed from Xcode without it use the sandbox (Apple's
+      `appattest-environment` entitlement and "Preparing to use the App
+      Attest service"). So nothing needs adding. The decision left: do eggs
+      from your own development phones count as attested in the fit? The
+      server accepts both and records which.
 - [ ] **On a real phone** (the simulator cannot attest): turn sharing on, cook
       or seed an egg, see it arrive attested, delete it, see it gone.
 - [ ] **The 1750 face on a phone**: the bundled TTFs load (`UIAppFonts`), the
@@ -125,13 +147,20 @@ The page (`privacy/index.html`) changes first; everything else follows it.
 
 ## D. Web
 
-- [ ] **Previews write to the live store** (**verify**): the function opens
-      the site-wide Blobs store, so a Netlify deploy preview would read and
-      write the same eggs as production. Either give non-production contexts
-      their own store name, or never post from a preview.
-- [ ] **Abuse**: the endpoint caps a body's size (413) but has no rate limit.
-      Decide a per-id and per-request cap before the link is public, and
-      check the Netlify plan's function and Blobs quotas.
+- [ ] **Previews write to the live store**: confirmed. A `getStore` store is
+      shared across all deploys, so deploy previews and branch deploys read,
+      write and can delete production eggs (Netlify Blobs docs). Either give
+      non-production contexts their own store name, or never post from a
+      preview.
+- [ ] **Abuse**: the endpoint caps a body's size (413, 16 KB; Netlify's own
+      cap is 6 MB), an id's eggs (`MAX_SEQ`, 5000) and requests per address
+      (Netlify's rate limit, 120 a minute, in `eggs.mts`). Decide whether
+      that is enough before the link is public. **Check which plan the
+      account is on**: the credit-based Free plan is 300 credits a month, a
+      hard limit; the legacy free tier (accounts from before 4 September
+      2025) is 125,000 function invocations per site a month. Exhausting
+      either pauses the whole site, the web app included, not just the
+      endpoint.
 - [ ] **The offline web app on a real phone**: Safari on iOS from the Home
       Screen — first load, offline open, and an update arriving between
       cooks. My browser pane could not register the worker; the offline
