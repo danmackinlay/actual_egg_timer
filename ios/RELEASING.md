@@ -138,12 +138,16 @@ listed here only so nobody removes them as clutter:
   Reason `CA92.1`, not `1C8F.1`, because there is no App Group. Apple states this
   as an upload requirement; in practice it has often arrived as an `ITMS-91053`
   email after the fact, which is a slow way to learn it.
-- **`INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO`** in `project.yml`. The
-  app's one network call, sharing's, is HTTPS through `URLSession`, which is the
-  operating system's encryption and exempt, so NO ("no non-exempt
-  encryption") is still the true answer. Without this, every single build
-  arrives as **Missing Compliance** and has to be answered by hand before anyone
-  can install it.
+- **`INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO`** in `project.yml`. Since
+  0.4 the app is no longer without networking: when a cook turns sharing on, it
+  sends eggs over HTTPS through `URLSession` to the app's own site, and asks
+  App Attest through DeviceCheck. That is the operating system's encryption and
+  exempt, so NO ("no non-exempt encryption") should still be the true answer.
+  **VERIFY** against Apple's "Complying with encryption export regulations"
+  before 0.4 is uploaded (`SHIP-0.4.md` section B), and drop the mark here and
+  in `project.yml` once it is. Without the key, every single build arrives as
+  **Missing Compliance** and has to be answered by hand before anyone can
+  install it.
 - **The privacy manifest's collected data**: sharing's records (Other Data
   Types) and its random id (Device ID), neither linked to the user nor used for
   tracking, for App Functionality. They must match the App Privacy answers
@@ -159,11 +163,16 @@ under **App Privacy**):
 
     https://actualeggtimer.netlify.app/privacy
 
-It is `privacy/index.html`, served by the web app's Netlify site, where the
-opt-in collection's endpoint will live (`DECISIONS.md` 51). It is plain
-English and outside the copy catalogue; every claim on it was checked against
-the code, so a change to what either app keeps or sends changes that page
-first.
+It is `privacy/index.html`, served by the web app's Netlify site, which also
+hosts the endpoint sharing sends to (`DECISIONS.md` 51). It is plain English
+and outside the copy catalogue; every claim on it was checked against the
+code, so a change to what either app keeps or sends changes that page first.
+It was rewritten for 0.4 (3 October 2026): what sharing sends, what the
+server keeps (the eggs; for the iPhone, App Attest's public key and counter
+per id), where (Netlify Blobs, us-east-2), for how long, and the GDPR
+essentials. It carries `OWNER:` and `VERIFY:` comments until the owner and
+the legal check have answered them; none may be left when 0.4 is submitted
+for external review.
 
 The **App Privacy** questionnaire's answer changed with E6, sharing (the
 answer was Data Not Collected until then). Apple counts data as collected
@@ -179,9 +188,19 @@ in App Store Connect, **App Privacy**:
 - **Identifiers → Device ID**: collected; **App Functionality**; **not
   linked**; **not tracking**. (The random id made on the phone, which groups a
   cook's eggs and lets them be deleted. It is not the advertising identifier
-  and not derived from anything.)
+  and not derived from anything.) **Owner's decision pending**
+  (`SHIP-0.4.md` section B): Device ID or **User ID**. Apple's Device ID is
+  "a device-level ID"; User ID includes "an assigned user ID". The id is made
+  per install, replaced by Start learning again, and identifies a cook's
+  eggs rather than the hardware. Whichever is chosen,
+  `PrivacyInfo.xcprivacy` (now `NSPrivacyCollectedDataTypeDeviceID`) says
+  the same.
 - Nothing else: no contact info, location, user content, usage data or
-  diagnostics.
+  diagnostics. App Attest: the server keeps, per id, the key's public half,
+  a counter, and how the app was installed and its build number, to tell a
+  genuine copy of the app from anything else, and deletes them with the id's
+  eggs. **VERIFY** whether App Privacy wants that answered on its own (it
+  says nothing about the cook beyond the id it is filed under).
 
 These are the owner's answers to give, and they match
 `ios/App/PrivacyInfo.xcprivacy`, which Xcode's privacy report reads. Crash

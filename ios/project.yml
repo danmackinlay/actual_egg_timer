@@ -104,11 +104,15 @@ targets:
         INFOPLIST_KEY_UIStatusBarStyle: UIStatusBarStyleDefault
         # Without this the system refuses to start a Live Activity at all.
         INFOPLIST_KEY_NSSupportsLiveActivities: YES
-        # Answered here rather than per build in App Store Connect. The app's
-        # one network call is sharing's (Sharing.swift): HTTPS through
-        # URLSession to the app's own site, which is the operating system's
-        # encryption and exempt, so NO - "no non-exempt encryption" - is still
-        # the honest answer. Without it every upload arrives as "Missing
+        # Answered here rather than per build in App Store Connect. The app
+        # has no networking of its own until a cook turns sharing on; then it
+        # sends eggs over HTTPS (Sharing.swift: URLSession to the app's own
+        # site, and App Attest through DeviceCheck), which is the operating
+        # system's encryption and exempt, so NO - "no non-exempt encryption" -
+        # should still be the honest answer. VERIFY against Apple's export
+        # compliance page ("Complying with encryption export regulations")
+        # before 0.4 is uploaded (SHIP-0.4.md section B); drop this word once
+        # confirmed. Without the key every upload arrives as "Missing
         # Compliance" and has to be answered by hand before testers can install
         # it. Revisit if the app ever encrypts anything itself.
         INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO
