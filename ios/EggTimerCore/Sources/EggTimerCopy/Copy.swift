@@ -224,6 +224,50 @@ public func midSentence(_ text: String, locale: String) -> String {
     return String(first).lowercased(with: Locale(identifier: locale)) + text.dropFirst()
 }
 
+// MARK: - Overlays
+
+/// The regional overlays that ship, `copy/<tag>.json`: each holds only the
+/// words its region says differently from its language's own catalogue. The
+/// English catalogue is Australian (DECISIONS.md 55), and an American reads
+/// `en-US` over it. The web's `OVERLAYS` in src/core/copy.ts.
+public let overlays: [String] = ["en-US"]
+
+/// The region subtag of a language tag, upper-cased, or nil: the `US` of
+/// `en-US`, `en_US` and `en-Latn-US`. A private-use or extension singleton
+/// ends the search, so `en-x-us` names no region.
+public func regionOf(_ tag: String) -> String? {
+    let parts = tag.split(omittingEmptySubsequences: false, whereSeparator: { $0 == "-" || $0 == "_" })
+    var i = 1
+    while i < parts.count {
+        let part = parts[i]
+        if i == 1 && part.count == 4 {
+            i += 1
+            continue
+        }
+        let letters = part.count == 2 && part.allSatisfy({ $0.isASCII && $0.isLetter })
+        let digits = part.count == 3 && part.allSatisfy({ $0.isASCII && $0.isNumber })
+        return letters || digits ? part.uppercased() : nil
+    }
+    return nil
+}
+
+/// The catalogues that render a language, the first consulted first, with
+/// English always last, beneath everything. Modern English gains its region's
+/// overlay, when one ships, for the region of the device's own English: the
+/// first English tag in `preferred` (the device's languages, most wanted
+/// first) if it names one, or else `region`, the device's. The English of
+/// 1750 and any other language have no overlay. The web's `catalogueChain`.
+public func catalogueChain(language: String, preferred: [String], region: String?) -> [String] {
+    if language != "en" { return [language, "en"] }
+    var wordsRegion = region
+    for tag in preferred where languageOf(tag) == "en" {
+        if let own = regionOf(tag) { wordsRegion = own }
+        break
+    }
+    guard let r = wordsRegion, overlays.contains("en-" + r) else { return ["en"] }
+    return ["en-" + r, "en"]
+}
+
 // MARK: - Substitution
 
 /// An argument as text. A string as it is; a count in the locale, with its

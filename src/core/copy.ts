@@ -229,6 +229,51 @@ export function templatesOf(message: Message): string[] {
   return PLURAL_CATEGORIES.map((c) => forms[c]).filter((t): t is string => t !== undefined);
 }
 
+/* ------------------------------------------------------------ overlays */
+
+/**
+ * The regional overlays that ship, `copy/<tag>.json`: each holds only the
+ * words its region says differently from its language's own catalogue. The
+ * English catalogue is Australian (DECISIONS.md 55), and an American reads
+ * `en-US` over it: "counter" for the bench, "running water" for the cold tap.
+ */
+export const OVERLAYS: readonly string[] = ['en-US'];
+
+/** The region subtag of a language tag, upper-cased, or null: the `US` of
+ *  `en-US`, `en_US` and `en-Latn-US`. A private-use or extension singleton
+ *  ends the search, so `en-x-us` names no region. */
+export function regionOf(tag: string): string | null {
+  const parts = tag.split(/[-_]/);
+  for (let i = 1; i < parts.length; i++) {
+    const part = parts[i];
+    if (i === 1 && part.length === 4) continue;
+    if (/^[A-Za-z]{2}$/.test(part) || /^[0-9]{3}$/.test(part)) return part.toUpperCase();
+    return null;
+  }
+  return null;
+}
+
+/**
+ * The catalogues that render a language, the first consulted first, with
+ * English always last, beneath everything. Modern English gains its region's
+ * overlay, when one ships, for the region of the device's own English: the
+ * first English tag in `preferred` (the device's languages, most wanted first)
+ * if it names one, or else `region`, the device's. The English of 1750 and
+ * any other language have no overlay; a key they lack is English's.
+ */
+export function catalogueChain(language: string, preferred: readonly string[], region: string | null): string[] {
+  if (language !== 'en') return [language, 'en'];
+  let wordsRegion = region;
+  for (let i = 0; i < preferred.length; i++) {
+    if (languageOf(preferred[i]) !== 'en') continue;
+    const own = regionOf(preferred[i]);
+    if (own !== null) wordsRegion = own;
+    break;
+  }
+  const overlay = wordsRegion === null ? null : `en-${wordsRegion}`;
+  return overlay !== null && OVERLAYS.indexOf(overlay) >= 0 ? [overlay, 'en'] : ['en'];
+}
+
 /* ------------------------------------------------------------- parsing */
 
 /**

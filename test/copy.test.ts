@@ -14,8 +14,8 @@ import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 
 import {
-  Catalogue, Message, PLURAL_CATEGORIES, midSentence, parseCatalogue, placeholders, pluralCategory, render,
-  renderRef, templatesOf,
+  Catalogue, Message, OVERLAYS, PLURAL_CATEGORIES, catalogueChain, midSentence, parseCatalogue, placeholders,
+  pluralCategory, regionOf, render, renderRef, templatesOf,
 } from '../src/core/copy.js';
 
 /** The argument that picks a message's plural form, or null for plain text. */
@@ -339,4 +339,60 @@ test('6b. index.html has no words of its own below <head>, and names only real k
     .replace(/<[^>]+>/g, '\n')
     .split('\n').map((s) => s.trim()).filter((s) => s !== '');
   assert.deepEqual(text.filter((s) => s !== '--:--' && s !== '--'), []);
+});
+
+// --------------------------------------------------------------------------
+// regional overlays
+// --------------------------------------------------------------------------
+
+test('7a. an overlay says only what its region says differently, against today\'s English', () => {
+  const regional = LOCALES.filter((l) => l !== 'en' && !l.includes('-x-'));
+  assert.deepEqual([...regional].sort(), [...OVERLAYS].sort(), 'every regional catalogue is an overlay, and every overlay ships');
+  const failures: string[] = [];
+  for (const tag of OVERLAYS) {
+    const json = JSONS.get(tag) as CatalogueJson;
+    assert.equal(json.locale, tag);
+    for (const [key, entry] of Object.entries(json.messages)) {
+      const english = EN_JSON.messages[key];
+      if (english === undefined) {
+        failures.push(`${tag} ${key}: not an English key`);
+        continue;
+      }
+      const fields = Object.keys(entry).sort().join(',');
+      if (fields !== 'base,text') failures.push(`${tag} ${key}: has ${fields}, not just base and text`);
+      // Written against the English as it is: a draft that changed the English
+      // and not this would leave the region reading the old meaning.
+      if (entry['base'] !== english['text']) failures.push(`${tag} ${key}: written against "${String(entry['base'])}", but English now says "${String(english['text'])}"`);
+      if (entry['text'] === english['text']) failures.push(`${tag} ${key}: says what English says`);
+    }
+  }
+  assert.deepEqual(failures, []);
+});
+
+test('7b. the region of a tag, and the catalogues that render a language', () => {
+  const regions: [string, string | null][] = [
+    ['en-US', 'US'], ['en_US', 'US'], ['en-us', 'US'], ['en-Latn-US', 'US'], ['zh-Hant-TW', 'TW'],
+    ['es-419', '419'], ['en-US-x-1750', 'US'], ['en', null], ['en-x-us', null], ['en-Latn', null], ['', null],
+  ];
+  for (const [tag, region] of regions) assert.equal(regionOf(tag), region, tag);
+
+  // An American phone or browser reads the American words; an Australian one,
+  // or any English with no overlay, reads the base. The phone's own English
+  // decides before its region: English (Australia) in the US is Australian.
+  assert.deepEqual(catalogueChain('en', [], 'US'), ['en-US', 'en']);
+  assert.deepEqual(catalogueChain('en', [], 'AU'), ['en']);
+  assert.deepEqual(catalogueChain('en', [], null), ['en']);
+  assert.deepEqual(catalogueChain('en', ['en-AU'], 'US'), ['en']);
+  assert.deepEqual(catalogueChain('en', ['en-US'], 'AU'), ['en-US', 'en']);
+  assert.deepEqual(catalogueChain('en', ['en'], 'US'), ['en-US', 'en']);
+  assert.deepEqual(catalogueChain('en', ['fr-FR', 'en-US'], 'FR'), ['en-US', 'en']);
+  assert.deepEqual(catalogueChain('en', ['en-GB'], 'GB'), ['en']);
+  // The English of 1750 and any other language have no overlay.
+  assert.deepEqual(catalogueChain('en-x-1750', ['en-US'], 'US'), ['en-x-1750', 'en']);
+  assert.deepEqual(catalogueChain('cs', ['en-US'], 'US'), ['cs', 'en']);
+
+  const american = parseCatalogue(JSONS.get('en-US'), EN);
+  assert.equal(render(american, 'controls.cooling.counter'), 'Counter');
+  assert.equal(render(EN, 'controls.cooling.counter'), 'Bench');
+  assert.equal(render(american, 'controls.cooling.ice'), render(EN, 'controls.cooling.ice'), 'a key the overlay leaves is English\'s');
 });

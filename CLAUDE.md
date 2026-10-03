@@ -77,7 +77,8 @@ things stand is `PLAN.md`; which document holds what is its last section.
   (`npm run copy:literals`). `LANGUAGE.md` is the machinery.
 - **A wording change is a named draft**: `tools/drafts/<name>.ts`, registered
   last in `tools/copyDraft.ts`, in both apps and with each 1750 twin
-  rewritten, not transformed. Prove it changed only what it lists:
+  rewritten, not transformed. A key `copy/en-US.json` overrides is rewritten
+  there too, with its `base` (`LANGUAGE.md` §2). Prove it changed only what it lists:
   `node dist/tools/copyLiterals.js --since <base> <name>` and
   `node dist/tools/copySnapshot.js compare <before> <after> --draft <name>`.
   Fit each string to its surface's budget in `test/data/surfaces.json`;

@@ -8,8 +8,8 @@ working here are `CLAUDE.md`; the last section says where everything else is.
 cook and learning. The web app (`src/`) and the iOS app (`ios/`) carry the
 same model, refusals, particle filter and choice of time (Phase E up to E5),
 the same catalogue of words in two Englishes (Phase F but for Czech), and the
-same layout (`UI.md`). `npm test` runs 269 tests, all passing (5b pins E3's
-known limit). `npm run validate` passes 28/28, and `swift test` passes 121
+same layout (`UI.md`). `npm test` runs 271 tests, all passing (5b pins E3's
+known limit). `npm run validate` passes 28/28, and `swift test` passes 122
 tests in 32 suites. **Pushed on 29 September** at `5ff6940`, the owner's
 call: Netlify serves it at actualeggtimer.netlify.app, and the first run of
 `.github/workflows/verify.yml` passed. The iOS app runs from Xcode on the owner's
@@ -55,7 +55,9 @@ The one queue. Nothing else in the documents waits on the owner.
    including the strings approved as good enough for now.
    `tools/drafts/plain.ts` has every row and what it left alone. With
    it, **`bench`** (`DECISIONS.md` 55): the base English is Australian,
-   so the egg cools on the bench.
+   so the egg cools on the bench; and `copy/en-US.json`, the American
+   overlay, 20 keys that an American phone or browser reads over it
+   ("counter", "running water", "pot").
 2. **The English of 1750, in both apps** (`DECISIONS.md` 17). `LANGUAGE.md`
    §6 lists the names to strike and where it departs from the guide.
 3. **The push of `main`**: done 29 September (`5ff6940`); CI passed. Each

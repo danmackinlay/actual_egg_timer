@@ -93,6 +93,27 @@ languages.
   catalogue's language, so "Last Wednesday" reads "last Wednesday". A
   rewrite that stands every inserted word alone (§5) would remove the need.
 
+**Regional overlays** (3 October 2026, `DECISIONS.md` 55). English is one
+language with one catalogue, `copy/en.json`, and it is Australian. A region
+whose kitchen says some things differently gets an overlay holding only those
+keys: `copy/en-US.json` has 20, "counter" for the bench, "running water" for
+the cold tap, "pot" for the pan.
+
+- **Which catalogues render a language** is `catalogueChain`, in core for
+  both apps and fixtured: modern English gains the overlay for the region of
+  the device's own English. That is the first English tag in the phone's
+  preferred languages (`Locale.preferredLanguages`), or else its region; the
+  web has one tag, `navigator.language`, and follows its region. So English
+  (Australia) on an American phone reads Australian, and English (US)
+  anywhere reads American.
+- **The language stays `en`.** The picker, `<html lang>`, the record's
+  `lang` and the units switch never see an overlay's tag; only the words
+  move. The English of 1750 covers every key and has no overlay.
+- **An overlay cannot go stale unseen.** Each entry carries `base`, the
+  English it was written against, and `copy.test.ts` 7a fails when the two
+  part, so a draft that changes an overlaid key rewrites the overlay too.
+- A British overlay ("worktop") waits until someone asks for one.
+
 `src/core/` keeps its invariants: no I/O and no dependencies. The catalogue is
 data that the UI layer passes in.
 
@@ -254,7 +275,8 @@ cost in Czech (§5).
 
 **How a wording change is made.** As one named draft in `tools/drafts/`,
 proved to have changed only what it lists, in both apps and with each 1750
-twin; `CLAUDE.md` has the steps. A string the owner has approved (the
+twin, and with each `copy/en-US.json` entry it reaches (§2); `CLAUDE.md` has
+the steps. A string the owner has approved (the
 `alarm.pull.*` bodies, `alarm.cooled.body`, `idle.welcome`,
 `activity.note.estimate`) was approved as good enough for now, not as
 final (`DECISIONS.md` 54): a style pass reads it like the rest.

@@ -6,7 +6,8 @@
 import { readFileSync, readdirSync } from 'node:fs';
 
 import {
-  Catalogue, CopyArg, CopyArgs, PLURAL_CATEGORIES, formatArg, parseCatalogue, pluralCategory, render,
+  Catalogue, CopyArg, CopyArgs, OVERLAYS, PLURAL_CATEGORIES, catalogueChain, formatArg, parseCatalogue,
+  pluralCategory, regionOf, render,
 } from '../../src/core/copy.js';
 
 import { CatalogueJson, english, englishJson } from './shared.js';
@@ -39,14 +40,18 @@ for (const file of copyFiles) {
 /** The renders worth pinning: every key that takes an argument or a count,
  *  and every key a catalogue leaves to English. A key with neither renders as
  *  its own text, which the catalogue already says, so pinning it would only
- *  rewrite this fixture on every change of wording. */
+ *  rewrite this fixture on every change of wording. An overlay leaves almost
+ *  every key to English, so for one only its own keys are pinned: the 1750
+ *  catalogue's fallback already shows both renderers fall back alike. */
 function copyRows(locale: string, catalogue: Catalogue, own: Record<string, unknown>): CopyRow[] {
   const rows: CopyRow[] = [];
+  const overlay = OVERLAYS.indexOf(locale) >= 0;
   for (const key of Object.keys(englishJson.messages)) {
     const entry = englishJson.messages[key];
     const example = (entry['example'] ?? {}) as Record<string, string | number>;
     const count = entry['count'];
     const fallsBack = !Object.hasOwn(own, key);
+    if (overlay && fallsBack) continue;
     if (Object.keys(example).length === 0 && typeof count !== 'string' && !fallsBack) continue;
     rows.push({ locale: locale, key: key, args: example, text: render(catalogue, key, example) });
     if (typeof count === 'string') {
@@ -100,6 +105,19 @@ export const copyFixture = {
     0, 1, 3, -3, 21, 1234567, 1.5, 2.5, 0.25, -0.5, 1e15, 'text', '', '4,5',
     { value: 2, decimals: 2 }, { value: 1234.5, decimals: 1 }, { value: -0.001, decimals: 2 },
   ] as CopyArg[]).map((value) => ({ locale: locale, value: value, text: formatArg(value, locale) }))),
+  // Which catalogues render a language, for every language and a spread of
+  // devices, and the region read from each tag on the way.
+  overlays: OVERLAYS,
+  regions: [
+    'en-US', 'en_US', 'en-us', 'en-Latn-US', 'zh-Hant-TW', 'es-419', 'en-US-x-1750', 'en', 'en-x-us',
+    'en-Latn', '', 'en-AU', 'cs-CZ',
+  ].map((tag) => ({ tag: tag, region: regionOf(tag) })),
+  chains: ['en', 'en-x-1750', 'cs'].flatMap((language) => ([
+    [[], null], [[], 'US'], [[], 'AU'], [['en-AU'], 'US'], [['en-US'], 'AU'], [['en'], 'US'],
+    [['fr-FR', 'en-US'], 'FR'], [['en-GB'], 'GB'], [['cs-CZ'], 'US'], [['en_US'], null],
+  ] as [string[], string | null][]).map(([preferred, region]) => ({
+    language: language, preferred: preferred, region: region, chain: catalogueChain(language, preferred, region),
+  }))),
   probe: {
     catalogue: probeJson,
     cases: probeCases.map((c) => ({ ...c, text: render(probe, c.key, c.args) })),

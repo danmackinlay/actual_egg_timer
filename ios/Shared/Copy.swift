@@ -37,17 +37,27 @@ enum Copy {
     /// The active catalogue, with English beneath it for any key it lacks.
     static var catalogue: Catalogue { catalogue(for: activeLocale) }
 
-    /// The catalogue for a tag, with English beneath it; English itself for a
-    /// tag the bundle has no file for. Loaded once each, and kept.
+    /// The catalogues that render a language, each over the next, as
+    /// `catalogueChain` names them: `en-x-1750` over English, and on a phone
+    /// whose English is American, `en-US` over English, the few words an
+    /// American kitchen says differently. The language stays `en` either way;
+    /// only the words move. English itself for a tag the bundle has no file
+    /// for. Loaded once each, and kept.
     static func catalogue(for locale: String) -> Catalogue {
         if let hit = loaded.withLock({ $0[locale] }) { return hit }
-        let english = loaded.withLock({ $0["en"] }) ?? load("en", fallback: nil)
-        let catalogue = locale == "en" || !bundled(locale) ? english : load(locale, fallback: english)
-        loaded.withLock {
-            $0["en"] = english
-            $0[locale] = catalogue
+        let chain = catalogueChain(
+            language: bundled(locale) ? locale : "en",
+            preferred: Locale.preferredLanguages,
+            region: Locale.current.region?.identifier
+        )
+        // The chain ends in English, beneath everything.
+        var catalogue = load("en", fallback: nil)
+        for tag in chain.dropLast().reversed() where bundled(tag) {
+            catalogue = load(tag, fallback: catalogue)
         }
-        return catalogue
+        let found = catalogue
+        loaded.withLock { $0[locale] = found }
+        return found
     }
 
     /// The locale numbers and times are written in, for the language on

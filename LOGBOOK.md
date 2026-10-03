@@ -3592,3 +3592,37 @@ keys of both apps. "Cold tap", "pan" and the spelling were Australian
 already. The 1750 twins say "table" and stand. Proved by `copyLiterals
 --since 63d9094 bench` and `copySnapshot compare --draft bench`, less the
 linked Help aside on still air.
+
+## 3 October 2026: the American overlay
+
+`copy/en-US.json` holds the 20 keys an American kitchen says differently
+from the Australian base: "counter" for the bench, "running water" for the
+cold tap (which also stops "tap" meaning the screen and the water in one
+app), "pot" for the pan, "saucepan" where a heavy pot is the contrast. Each
+entry carries the base text it was written against.
+
+- **`catalogueChain`** (`src/core/copy.ts`, `EggTimerCopy`, fixtured in
+  `fixtures/copy.json`) names the catalogues that render a language. Both
+  loaders already layered one catalogue over another, so each now builds
+  the chain it names: the web from `navigator.language`'s region, iOS from
+  the phone's first English in `Locale.preferredLanguages`, else its
+  region. The language stays `en`, so the picker, the record and the units
+  switch are untouched. In `EggTimerCopy`, not the core module, because the
+  widget links only the words.
+- **The fixture pins only an overlay's own keys**: the rest are English's,
+  and pinning them would rewrite the fixture on every change of wording.
+- **`copy.test.ts` 7a** fails when an overlay's `base` is not today's
+  English, when it says what English says, or when a regional catalogue is
+  not listed in `OVERLAYS`. **7b** is the chain and region table.
+- **Seen working:** the snapshot harness's four en-US states, and only
+  those, now read "Running water | Counter" and "eggs in the pot"; the
+  other 168 are unchanged. On the iPhone 17 simulator, launched with
+  `-AppleLanguages (en-US)` and `(en-AU)` on the cooling choice, the
+  segments read "Ice bath | Running water | Counter" and "Ice bath | Cold
+  tap | Bench".
+
+**Run:** `npm run verify`: 271 tests, all pass; the Swift copy lint; the
+fixtures fresh; `swift test` 122 tests in 32 suites. `npm run ios:build`
+builds.
+
+**Not verified:** the Lock Screen and the alarm in American English; Safari.
