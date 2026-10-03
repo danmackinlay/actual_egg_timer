@@ -342,3 +342,39 @@ Decided by the owner, 3 October 2026:
 66. **The long s everywhere in 1750**, drawn by the face's `hist`: "cannot
     the font handle it automatically everywhere? I'm fine with that". The
     catalogue still spells it only on the title.
+
+Decided by the owner, 3 October 2026, on the privacy questions of
+`SHIP-0.4.md` sections B and C, for 0.4:
+
+67. **Settings shows the random number**, in both apps, in the sharing
+    section, so that a person can quote it in an email asking for their
+    results to be deleted (the privacy page's "write to
+    forgetmyeggs@danmackinlay.name with your random number"). Shown once
+    sharing has been turned on, since there is none before; whole, never
+    shortened, since the email needs all of it; and selectable, to copy.
+68. **Results from the owner's own development builds do not count as from
+    a genuine copy of the app**: asked whether they should, "ideally not".
+    The server treats a key attested in App Attest's development
+    environment (AAGUID `appattestdevelop`, a build installed from Xcode) as
+    vouching for nothing: its results are kept in the open tier, exactly as
+    if they were unsigned. Production attestations, which TestFlight and the
+    App Store always make, count. The key is still verified and kept, so the
+    whole path can be tried on a phone. The fit's pull reads each record's
+    tier by the same rule.
+69. **Turning sharing off keeps what was sent**: "keep what was sent".
+    It stops sending; consent for the results already sent is withdrawn by
+    deleting them, with the button or by email (GDPR Art. 17(1)(b) is met
+    by the deletion, which the person asks for). The privacy page says so
+    plainly.
+70. **The privacy page says the owner lives in Australia.**
+71. **No EU representative** (GDPR Art. 27): the owner chose to "accept
+    the risk of having no EU representative", knowing the exemption for
+    occasional processing likely does not apply. The privacy page says
+    nothing about it.
+72. **App Attest needs no answer of its own in App Store Connect's App
+    Privacy.** What the server keeps for App Attest (the key's public half
+    and name, a counter, how the app was installed and its build number)
+    hangs off the same random id, which is declared as Device ID, and the
+    use is App Functionality, whose definition includes "prevent fraud,
+    implement security measures" (Apple's App Privacy Details page).
+    `ios/RELEASING.md` step 6 says so.
