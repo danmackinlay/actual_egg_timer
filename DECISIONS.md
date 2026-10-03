@@ -298,3 +298,19 @@ after 57: `main` took 52-57 while E6-E8 were built on a branch:
     quarter as much per egg, +-3 s a third of a point and a ninth as much.
     The owner chose +-10 s. The Learning mark's (i) says the time may leave
     an egg a little softer or firmer. Built with E8 (`82aff4b`).
+
+Decided by the owner, 3 October 2026, on the counter-physics branch, numbered
+after 61 on `e6-e8`:
+
+62. **Cooling on the bench is textbook physics, and the model treats it
+    so.** Still air on a bench is "standard Newtonian/convective cooling";
+    nobody would publish an egg-specific measurement of it, and the model
+    should be no weaker, nor make odd choices, for the lack of one. Built
+    `9d00f48`: convection and radiation from correlations, Newton's law at
+    the shell, the wet shell's latent heat (`LOGBOOK.md`, 3 October 2026).
+    The Help line that said no measurement was found becomes, approved as
+    proposed: "On the bench, I assume the egg sits in still air. In a
+    draught the yolk comes out a little softer, and in an egg cup a little
+    firmer." (en-US: "counter", "draft".) It goes into the catalogue with
+    the owner's hand edit of the words. The prior on `tauAirScale` stays
+    at 0.35, "fine for now".

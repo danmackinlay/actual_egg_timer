@@ -19,7 +19,7 @@ import {
   YOLK_RADIUS_FRAC, DT_SIM, CARRYOVER_WINDOW,
 } from '../src/core/constants.js';
 import {
-  createSphere, stepSphere, temperatureAt, centreTemperature, meanTemperature,
+  createSphere, stepSphere, temperatureAt, centreTemperature,
 } from '../src/core/sphere.js';
 import {
   CookSetup, bathTemperature, coolingTemperature, initialSurfaceTemperature,
@@ -93,7 +93,6 @@ export function runPerturbed(
   let t = 0.0;
   let yolk = 0.0;
   let white = 0.0;
-  let meanAtPull = setup.eggStart_C;
   let waterAtPull = sphere.surface_C;
   let pulled = false;
   let probe_C = Number.NaN;
@@ -107,11 +106,10 @@ export function runPerturbed(
       next = bathTemperature(egg, setup, tNext);
     } else {
       if (!pulled) {
-        meanAtPull = meanTemperature(sphere);
         waterAtPull = sphere.surface_C;
         pulled = true;
       }
-      next = coolingTemperature(setup, tNext - cook_s, waterAtPull, meanAtPull, tauAirScale);
+      next = coolingTemperature(sphere, egg, setup, tNext - cook_s, DT_SIM, waterAtPull, tauAirScale);
     }
     stepSphere(sphere, DT_SIM, next);
     t = tNext;

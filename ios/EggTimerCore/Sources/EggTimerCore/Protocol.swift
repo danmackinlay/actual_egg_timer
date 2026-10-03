@@ -109,16 +109,44 @@ public enum Protocols {
         return ambientC + (fromC - ambientC) * exp(-elapsedSinceOffS / tau)
     }
 
-    /// Surface temperature during cooling. Ice and tap are effectively
-    /// Dirichlet; still air is not, so the surface tracks the egg's own bulk
-    /// temperature decaying toward the room.
+    /// The egg's Newtonian cooling time constant on the counter, s: m*c/(h*A)
+    /// over the equal-volume sphere, with h = `hAir`.
+    public static func airTimeConstant(_ egg: Egg) -> Double {
+        egg.massKg * Constants.cEgg / (Constants.hAir * 4.0 * Double.pi * egg.radiusM * egg.radiusM)
+    }
+
+    /// What drying off costs the egg, as a fall in its mean temperature, C:
+    /// the latent heat of the film on its shell over its heat capacity.
+    public static func wetShellDropC(_ egg: Egg) -> Double {
+        let area = 4.0 * Double.pi * egg.radiusM * egg.radiusM
+        return Constants.wetShellKgM2 * area * Constants.latentHeatWater / (egg.massKg * Constants.cEgg)
+    }
+
+    /// Surface temperature during cooling, for the step of `dtS` that ends
+    /// `elapsedSincePullS` after the pull and starts from `sphere` as it
+    /// stands. Ice and tap are effectively Dirichlet. On the counter the shell
+    /// loses heat by Newton's law at its own temperature, and the water on it
+    /// takes its latent heat over `tauPlunge`. protocol.ts has the physics.
     static func coolingTemperature(
-        setup: CookSetup, elapsedSincePullS: Double,
-        waterAtPullC: Double, meanAtPullC: Double, tauAirScale: Double
+        sphere: SphereState, egg: Egg, setup: CookSetup, elapsedSincePullS: Double, dtS: Double,
+        waterAtPullC: Double, tauAirScale: Double
     ) -> Double {
-        let target = setup.cooling == .counter
-            ? setup.ambientC + (meanAtPullC - setup.ambientC) * exp(-elapsedSincePullS / (Constants.tauAir * tauAirScale))
-            : coolingMediumC(setup.cooling, ambientC: setup.ambientC)
+        if setup.cooling == .counter {
+            let before = elapsedSincePullS > dtS ? elapsedSincePullS - dtS : 0.0
+            let drying = wetShellDropC(egg)
+                * (exp(-before / Constants.tauPlunge) - exp(-elapsedSincePullS / Constants.tauPlunge))
+            let tau = airTimeConstant(egg) * tauAirScale
+            if elapsedSincePullS >= dtS {
+                return sphere.robinSurface(dtS: dtS, ambientC: setup.ambientC, tauS: tau, lossC: drying)
+            }
+            // The step that straddles the pull is split between the water and
+            // the counter by the time spent in each; protocol.ts says why.
+            let out = elapsedSincePullS / dtS
+            if !(out > 0.0) { return waterAtPullC }
+            let counter = sphere.robinSurface(dtS: dtS, ambientC: setup.ambientC, tauS: tau, lossC: drying / out)
+            return waterAtPullC + (counter - waterAtPullC) * out
+        }
+        let target = coolingMediumC(setup.cooling, ambientC: setup.ambientC)
         // Blend out of the water temperature rather than jumping, so the
         // surface is continuous at the moment of pulling.
         return target + (waterAtPullC - target) * exp(-elapsedSincePullS / Constants.tauPlunge)

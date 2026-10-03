@@ -113,9 +113,9 @@
         "alphaMin": 1.0199999999999999e-7,
         "alphaMax": 2.8049999999999995e-7,
         "alphaCount": 13,
-        "timeMin_s": 201.5380859375,
-        "timeMax_s": 571.5380859375,
-        "timeCount": 38
+        "timeMin_s": 192.7978515625,
+        "timeMax_s": 592.7978515625,
+        "timeCount": 41
       }
     },
     {
@@ -2272,10 +2272,10 @@
       "lean_s": 0,
       "carried": {
         "reachable": false,
-        "cookTime_s": 318.916015625,
-        "peakYolk_C": 65.73419762051593,
-        "yolkDose_min": 25.477748533788343,
-        "whiteDose_min": 0.04487187274578741
+        "cookTime_s": 309.3017578125,
+        "peakYolk_C": 64.48104387999985,
+        "yolkDose_min": 11.830343678921746,
+        "whiteDose_min": 0.04483023930019143
       }
     },
     {
@@ -2294,10 +2294,10 @@
       "lean_s": -12,
       "carried": {
         "reachable": false,
-        "cookTime_s": 318.916015625,
-        "peakYolk_C": 65.73419762051593,
-        "yolkDose_min": 25.477748533788343,
-        "whiteDose_min": 0.04487187274578741
+        "cookTime_s": 309.3017578125,
+        "peakYolk_C": 64.48104387999985,
+        "yolkDose_min": 11.830343678921746,
+        "whiteDose_min": 0.04483023930019143
       }
     },
     {
@@ -2316,10 +2316,10 @@
       "lean_s": 18,
       "carried": {
         "reachable": false,
-        "cookTime_s": 318.916015625,
-        "peakYolk_C": 65.73419762051593,
-        "yolkDose_min": 25.477748533788343,
-        "whiteDose_min": 0.04487187274578741
+        "cookTime_s": 309.3017578125,
+        "peakYolk_C": 64.48104387999985,
+        "yolkDose_min": 11.830343678921746,
+        "whiteDose_min": 0.04483023930019143
       }
     }
   ],

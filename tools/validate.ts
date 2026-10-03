@@ -14,13 +14,17 @@
 import { readFileSync } from 'node:fs';
 import { eggFromMinorDiameter, eggFromMass, Egg } from '../src/core/geometry.js';
 import { parseCatalogue, render } from '../src/core/copy.js';
-import { seriesTheta, biotNumber } from '../src/core/sphere.js';
+import {
+  seriesTheta, biotNumber, createSphere, stepSphere, meanTemperature,
+} from '../src/core/sphere.js';
 import { zFromActivationEnergy } from '../src/core/kinetics.js';
 import {
-  ALPHA_DEFAULT, H_EFF, Z_YOLK, Z_WHITE, TREF_YOLK_C, RAMP_R, TAU_STANDING_SCALE, TAU_STANDING_REF_S,
+  ALPHA_DEFAULT, H_EFF, Z_YOLK, Z_WHITE, TREF_YOLK_C, RAMP_R, TAU_STANDING_SCALE, TAU_STANDING_REF_S, DT_SIM,
 } from '../src/core/constants.js';
 import { boilingPointAtAltitude, boilingPointApprox, pressureAtAltitude } from '../src/core/thermo.js';
-import { CookSetup, panTimeConstant } from '../src/core/protocol.js';
+import {
+  CookSetup, panTimeConstant, bathTemperature, initialSurfaceTemperature,
+} from '../src/core/protocol.js';
 import {
   simulate, solveCookTime, donenessFromSlider, sliderFromYolkDose,
   DEFAULT_PARAMS, DONENESS_ANCHORS, YOLK_DOSE_HARD,
@@ -151,7 +155,7 @@ check(
 
 // Carryover: identical 7.4-minute cook, only the cooling step changes.
 const CARRY_COOLING: CookSetup['cooling'][] = ['ice', 'tap', 'counter'];
-const CARRY_EXPECTED = [65.0, 65.6, 76.3];
+const CARRY_EXPECTED = [65.0, 65.6, 75.3];
 const carryRows: string[][] = [];
 for (let i = 0; i < CARRY_COOLING.length; i++) {
   const r = simulate(REFERENCE_EGG, referenceSetup({ cooling: CARRY_COOLING[i] }), DEFAULT_PARAMS, 7.4 * 60);
@@ -163,6 +167,23 @@ for (let i = 0; i < CARRY_COOLING.length; i++) {
     (r.peakYolk_C - r.yolkAtPull_C).toFixed(1),
     (r.peakYolkTime_s / 60).toFixed(1),
   ]);
+}
+
+// The ceiling all three are measured against: an insulated egg carries the
+// yolk to the mean temperature it left the water with. README section 5 says
+// how much of that the counter takes.
+{
+  const setup = referenceSetup({});
+  const sphere = createSphere(
+    REFERENCE_EGG.radius_m, DEFAULT_PARAMS.alpha_m2s, setup.eggStart_C,
+    initialSurfaceTemperature(REFERENCE_EGG, setup),
+  );
+  for (let t = DT_SIM; t <= 7.4 * 60 + 1e-9; t += DT_SIM) {
+    stepSphere(sphere, DT_SIM, bathTemperature(REFERENCE_EGG, setup, t));
+  }
+  const ceiling = meanTemperature(sphere);
+  check('insulated ceiling, 7.4 min cook (mean temperature at the pull)', ceiling, 83.9, 0.5, 'C');
+  carryRows.push(['insulated (the ceiling)', carryRows[0][1], ceiling.toFixed(1), (ceiling - Number(carryRows[0][1])).toFixed(1), 'never']);
 }
 
 /** Sea-level jammy cook time, computed once and reused by the altitude table. */

@@ -10,8 +10,8 @@ population a prior is drawn from (E6-E8, `COLLECTIVE.md`) are built in
 both, on this branch, not on `main` and not deployed. The web app (`src/`) and the iOS app (`ios/`) carry
 the same model, refusals, particle filter and choice of time, the same
 catalogue of words in two Englishes (Phase F but for Czech), and the same
-layout (`UI.md`). `npm test` runs 296 tests, all passing (5b pins E3's known
-limit). `npm run validate` passes 28/28, and `swift test` passes 125 tests
+layout (`UI.md`). `npm test` runs 299 tests, all passing (5b pins E3's known
+limit). `npm run validate` passes 29/29, and `swift test` passes 125 tests
 in 33 suites. **Pushed on 29 September** at `5ff6940`, the owner's
 call: Netlify serves it at actualeggtimer.netlify.app, and the first run of
 `.github/workflows/verify.yml` passed. The iOS app runs from Xcode on the owner's
@@ -91,6 +91,10 @@ The one queue. Nothing else in the documents waits on the owner.
    beside the switch, the deletion's words, and the Learning mark and its
    (i). `tools/drafts/share.ts` and `learning.ts` have every key and its
    1750 twin.
+8. **The counter's Help line**, approved (`DECISIONS.md` 62), goes into
+   `help.unsure.counter` with the owner's hand edit of the words, with its
+   en-US and 1750 twins (`LOGBOOK.md`, 3 October 2026, has a 1750
+   suggestion).
 
 Waiting on someone else: the Czech review (F5), by the owner's friend.
 

@@ -246,20 +246,20 @@
       "solution": {
         "reachable": false,
         "whiteSets": true,
-        "softestLevel": 0.6070065489701316,
+        "softestLevel": 0.5286899210043732,
         "hardestLevel": 1,
-        "minCookTime_s": 303.18359375,
-        "cookTime_s": 303.18359375,
-        "peakYolk_C": 66.14922748439349,
-        "peakWhite_C": 71.05638516752367,
-        "yolkAtPull_C": 25.481974702831124,
-        "yolkDose_min": 31.07782077726928,
-        "whiteDose_min": 0.050506344055424195
+        "minCookTime_s": 296.19140625,
+        "cookTime_s": 296.19140625,
+        "peakYolk_C": 64.88942958370902,
+        "peakWhite_C": 71.26925070524126,
+        "yolkAtPull_C": 23.382615548937395,
+        "yolkDose_min": 13.552915719100408,
+        "whiteDose_min": 0.05110093284081803
       },
       "atFixed444s": {
-        "peakYolk_C": 76.32549029668202,
-        "yolkDose_min": 4558.374888190283,
-        "whiteDose_min": 5.560144803973081
+        "peakYolk_C": 75.27667218893906,
+        "yolkDose_min": 2119.623761871061,
+        "whiteDose_min": 5.070624877134998
       }
     },
     {

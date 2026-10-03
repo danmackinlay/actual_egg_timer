@@ -24,10 +24,10 @@
  *
  * BOUNDARY CONDITION. These are Dirichlet eigenmodes: the surface is taken to
  * be at Ts(t). In water that is nearly exact (Bi = h*R/k ~ 33, see biotNumber),
- * costing a few percent which calibration absorbs. In air the egg is nearly
- * lumped (Bi ~ 0.4) and Dirichlet would be badly wrong, so the cooling phase
- * instead drives Ts along the egg's own lumped decay - see protocol.ts. That
- * approximation is the least-verified part of the model and is calibratable.
+ * costing a few percent which calibration absorbs. In still air Bi ~ 0.6 and
+ * the surface is free, so on the counter Ts is not given but solved for, step
+ * by step, from Newton's law at the shell (robinSurface): a Robin boundary on
+ * the same modes, with no change of basis.
  */
 
 import { MODE_COUNT, K_EGG } from './constants.js';
@@ -103,8 +103,8 @@ export function centreTemperature(s: SphereState): number {
  *
  * from integrating the modal expansion over the volume. This is the
  * temperature a perfectly insulated egg would equilibrate to, so it sets how
- * far carryover can possibly go - and it is where the surface of a lumped egg
- * in still air relaxes from once it leaves the water.
+ * far carryover can possibly go - and it is the egg's heat content, which on
+ * the counter is what Newton's law at the shell draws down (robinSurface).
  */
 export function meanTemperature(s: SphereState): number {
   let sum = 0.0;
@@ -112,6 +112,50 @@ export function meanTemperature(s: SphereState): number {
     sum += s.amp[i] * s.coef[i];
   }
   return s.surface_C + 1.5 * sum / (s.radius_m * s.radius_m);
+}
+
+/**
+ * The surface temperature to step to over the next `dt_s` for a sphere that
+ * loses heat by Newton's law at its own surface - a Robin boundary,
+ * -k dT/dr = h (Ts - Ta) - written as the heat balance it implies:
+ *
+ *   dTavg/dt = -(Ts - Ta)/tau - (what else leaves, as a fall in Tavg)
+ *   tau      = m*c/(h*A)
+ *
+ * Over a step the surface ramps linearly to Tn (stepSphere), so the mean at
+ * the end of the step is linear in Tn:
+ *
+ *   Tavg(t+dt) = Tn*(1 - g) + g*Ts + (3/(2R^2)) sum c_n b_n e_n
+ *   g          = (3/(2R^2)) sum c_n^2 (1 - e_n)/(lambda_n dt),  e_n = exp(-lambda_n dt)
+ *
+ * and the balance, trapezoidal in Ts, fixes Tn. Heat is conserved exactly:
+ * the sphere's mean falls by precisely what the surface sends out plus
+ * `loss_C`. The shell starts where the water left it and cools only as fast
+ * as heat reaches it, so the drive is continuous by construction. Checked
+ * against the closed-form Robin series (test/core.test.ts 17a) and an
+ * independent finite-volume solution (LOGBOOK.md, 3 October 2026).
+ *
+ * With 40 modes and DT_SIM, g ~ 0.97: Tn is solved through 1/(1 - g) ~ 34,
+ * which double precision carries without trouble.
+ */
+export function robinSurface(
+  s: SphereState, dt_s: number, ambient_C: number, tau_s: number, loss_C: number,
+): number {
+  let now = 0.0;
+  let held = 0.0;
+  let gain = 0.0;
+  for (let i = 0; i < MODE_COUNT; i++) {
+    const decay = Math.exp(-s.lambda[i] * dt_s);
+    now += s.amp[i] * s.coef[i];
+    held += s.amp[i] * s.coef[i] * decay;
+    gain += s.coef[i] * s.coef[i] * (1.0 - decay) / (s.lambda[i] * dt_s);
+  }
+  const w = 1.5 / (s.radius_m * s.radius_m);
+  const ts = s.surface_C;
+  const a = dt_s / tau_s;
+  const g = w * gain;
+  return (ts + w * now - a * (0.5 * ts - ambient_C) - loss_C - g * ts - w * held)
+    / (1.0 - g + 0.5 * a);
 }
 
 /**

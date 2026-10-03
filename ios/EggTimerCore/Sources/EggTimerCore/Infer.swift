@@ -120,7 +120,8 @@ let logWhiteTarget = log10(whiteDoseTarget)
 private let whiteNoisePerYolk = Constants.zYolk / Constants.zWhite
 
 private let priorOffsetSd = 0.22
-/// Deliberately wide: this is the least-verified part of the model.
+/// Wide because kitchens differ, not because the physics is in doubt: a
+/// draught, an egg cup, a wetter shell. infer.ts has the numbers.
 private let priorTauAirLogSd = 0.35
 
 // MARK: - Deterministic RNG, so calibration is reproducible and portable
