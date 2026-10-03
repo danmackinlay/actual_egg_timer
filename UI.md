@@ -86,9 +86,11 @@ That is two controls and one sentence.
 - Sharing results (E6, the `share` draft; the `data` draft named it), with
   its (i): the consent always on screen (`share.what`), never behind the
   (i); the switch, off until the cook
-  turns it on; under it how many results have gone and how many wait; Delete
-  shared results, which asks first in place as Forget does; and the privacy
-  page.
+  turns it on; under it how many results have gone and how many wait; the
+  random number (`share.id`, the `sharingid` draft), whole, fixed-width and
+  selectable, from the first time sharing is turned on until a deletion, to
+  quote by email; Delete shared results, which asks first in place as Forget
+  does; and the privacy page.
 - The colophon, with its link.
 
 In sous-vide the settings that change nothing there are put away.

@@ -4021,3 +4021,8 @@ published in `ios/App/Fonts`, registered by `UIAppFonts` in `project.yml`.
 
 The owner's rule against metonyms, in 13 keys of both apps and their 1750 twins: what is kept, sent and deleted is a "result" (one cooked egg: how it was cooked and how it came out), the settings are the settings, and the rest of the cook is the rest of the cooking.
 The controls lost their pronouns ("Share results", "Delete shared results"); the privacy page, swept separately, must name them as they now read.
+
+## 3 October 2026: the random number in Settings (the `sharingid` draft)
+
+The owner decided (`DECISIONS.md` 67) that both apps show the cook's random id, so that it can be quoted in an email asking for deletion, as the privacy page says. One new key, `share.id`, "Your random number" (1750: "Your number, drawn at random"), over the id in the sharing section, under the note of what has been sent; shown from the first time sharing is turned on until a deletion, so also while sharing is off with results still on the server.
+The id is shown whole, never shortened: the email needs all of it. Fixed-width in the system face on both apps, since IM FELL's old-style 0 is an o; selectable (`user-select: all` on the web, one tap selects it whole; `.textSelection(.enabled)` on iOS). Proved with `copyLiterals --since 99572b7 sharingid` and `copySnapshot compare --draft sharingid`.

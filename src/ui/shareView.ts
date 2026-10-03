@@ -1,6 +1,6 @@
 /**
  * The sharing section of Settings (`#share`): the switch, the note under it,
- * and "Delete what I've sent", which asks first in place as Forget does
+ * the random number, and "Delete shared results", which asks first in place as Forget does
  * (learned.ts). What sharing does is share.ts; this only says it.
  */
 
@@ -30,6 +30,11 @@ export function renderShare(waiting: number): void {
     if (s.sent > 0 && waiting > 0) note += ` ${t('share.waiting', { eggs: waiting })}`;
   }
   page().shareNote.textContent = note;
+  // The random number, to quote by email (DECISIONS.md 67): whole, and only
+  // while there is one - from the first time sharing is turned on until a
+  // deletion.
+  page().shareId.hidden = s.uid === null;
+  page().shareUid.textContent = s.uid ?? '';
   // Not while the confirmation is up: it stands in the button's place.
   if (page().shareConfirm.hidden) page().shareDelete.hidden = s.uids.length === 0;
 }

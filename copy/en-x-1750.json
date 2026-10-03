@@ -281,6 +281,7 @@
     "share.none": { "text": "Nothing yet sent." },
     "share.sent": { "count": "eggs", "one": "I have sent {eggs} result.", "other": "I have sent {eggs} results." },
     "share.waiting": { "count": "eggs", "one": "{eggs} more shall go when the server can be reached.", "other": "{eggs} more shall go when the server can be reached." },
+    "share.id": { "text": "Your number, drawn at random" },
     "share.delete": { "text": "Expunge the results" },
     "share.confirm.title": { "text": "Expunge the results?" },
     "share.confirm.message": { "text": "I shall bid the server expunge every result this device has sent, and leave off sharing. What I have learned here remains." },

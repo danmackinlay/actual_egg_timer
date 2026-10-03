@@ -390,6 +390,10 @@
       <p class="hint" data-copy="share.what"></p>
       <label class="check" for="shareSetting"><input type="checkbox" id="shareSetting"><span data-copy="share.toggle"></span></label>
       <p class="hint" id="shareNote" tabindex="-1" aria-live="polite"></p>
+      <!-- The random number, whole and selectable, once sharing has been
+           turned on, to quote by email (DECISIONS.md 67). -->
+      <p class="hint" id="shareId" hidden><span data-copy="share.id"></span>
+        <span id="shareUid" class="share__uid" translate="no"></span></p>
       <div class="forget__row">
         <button type="button" id="shareDelete" class="secondary" hidden data-copy="share.delete"></button>
       </div>

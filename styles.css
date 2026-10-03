@@ -692,6 +692,18 @@ fieldset.setting .setting__head { margin-bottom: 8px; }
 #share .hint:empty { display: none; }
 #share .hint:focus { outline: none; }
 #share .privacylink { margin: 10px 0 0; font-size: 0.875rem; }
+/* The random number under its label, on a line of its own: fixed-width, so
+   no face draws its 0 as an o, and selected whole by one tap, to copy. */
+.share__uid {
+  display: block;
+  margin-top: 2px;
+  color: var(--fg);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.8125rem;
+  overflow-wrap: anywhere;
+  -webkit-user-select: all;
+  user-select: all;
+}
 .confirm__row { display: flex; gap: 8px; }
 button.danger { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 55%, transparent); font-weight: 600; }
 

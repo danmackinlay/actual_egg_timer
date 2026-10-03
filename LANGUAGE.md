@@ -386,6 +386,15 @@ keeps "a record of" every egg rather than every egg.
 | `help.reliable.forYou` | For the eggs you’ve set up now | For your current settings |
 | `action.hint.heating.more` | …I time the rest of the cook from your input here… | …I time the rest of the cooking from your input here… |
 
+**The fifth: `sharingid`** (3 October 2026, `DECISIONS.md` 67). One new
+key, `share.id`, "Your random number" (1750: "Your number, drawn at
+random"), the label over the cook's random id in Settings' sharing section,
+shown once sharing has been turned on, so that it can be quoted in an email
+asking for deletion. It is the privacy page's own name for it, and
+`share.what`'s. The id is shown whole and selectable, in a fixed-width
+face; it is not words and has no key. No en-US entry: American English
+says it the same way. `tools/drafts/sharingid.ts`, on `99572b7`.
+
 ## 4. Units
 
 **One setting: Metric or Imperial.** Its default comes from the platform:

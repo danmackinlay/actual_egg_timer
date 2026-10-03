@@ -98,6 +98,8 @@ function findDom() {
     forgetNo: el<HTMLButtonElement>('forgetNo'),
     shareSetting: el<HTMLInputElement>('shareSetting'),
     shareNote: el<HTMLParagraphElement>('shareNote'),
+    shareId: el<HTMLParagraphElement>('shareId'),
+    shareUid: el<HTMLSpanElement>('shareUid'),
     shareDelete: el<HTMLButtonElement>('shareDelete'),
     shareConfirm: el<HTMLDivElement>('shareConfirm'),
     shareDeleteYes: el<HTMLButtonElement>('shareDeleteYes'),

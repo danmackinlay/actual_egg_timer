@@ -174,8 +174,8 @@ struct SettingsView: View {
     // MARK: - Sharing
 
     /// Sharing (E6), as the web's `#share`: the consent on screen beside the
-    /// switch rather than behind the (i), the note under it, and the
-    /// deletion, asked first. Sharing.swift does the work.
+    /// switch rather than behind the (i), the note under it, the random
+    /// number, and the deletion, asked first. Sharing.swift does the work.
     private var share: some View {
         let s = sharing.state
         return Section {
@@ -198,6 +198,20 @@ struct SettingsView: View {
                 Text(note)
                     .appFont(.footnote)
                     .foregroundStyle(.secondary)
+            }
+            // The random number, to quote by email (DECISIONS.md 67), as the
+            // web's `#shareId`: whole, selectable, and only while there is
+            // one. Fixed-width in the system face, so the 1750 face's figures
+            // never draw its 0 as an o.
+            if let uid = s.uid {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(tr("share.id"))
+                        .appFont(.footnote)
+                        .foregroundStyle(.secondary)
+                    Text(verbatim: uid)
+                        .font(.footnote.monospaced())
+                        .textSelection(.enabled)
+                }
             }
             if confirmingDelete {
                 VStack(alignment: .leading, spacing: 6) {

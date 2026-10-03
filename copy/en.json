@@ -284,6 +284,7 @@
     "share.none": { "surface": "body", "apps": ["web", "ios"], "note": "Under the switch, sharing on, before any egg has gone.", "text": "Nothing sent yet." },
     "share.sent": { "surface": "body", "apps": ["web", "ios"], "count": "eggs", "one": "I’ve sent {eggs} result.", "other": "I’ve sent {eggs} results.", "example": { "eggs": 3} },
     "share.waiting": { "surface": "body", "apps": ["web", "ios"], "note": "After share.sent, when eggs are waiting for the network.", "count": "eggs", "one": "{eggs} more will go when I can reach the server.", "other": "{eggs} more will go when I can reach the server.", "example": { "eggs": 2} },
+    "share.id": { "surface": "label", "apps": ["web", "ios"], "note": "Over the cook's random id, shown whole and selectable once sharing has been turned on (DECISIONS.md 67), so that it can be quoted in an email asking for deletion. The privacy page calls it the random number.", "text": "Your random number" },
     "share.delete": { "surface": "button", "apps": ["web", "ios"], "note": "Deletes every egg this device has sent, under every id it has used, after share.confirm.*.", "text": "Delete shared results" },
     "share.confirm.title": { "surface": "title", "apps": ["web", "ios"], "text": "Delete shared results?" },
     "share.confirm.message": { "surface": "body", "apps": ["web", "ios"], "text": "I’ll ask the server to delete every result this device has sent, and stop sharing. What I’ve learned here stays." },

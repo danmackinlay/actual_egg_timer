@@ -96,7 +96,9 @@ The one queue. Nothing else in the documents waits on the owner.
    1750 twin. With them, **`data`**: what is kept and sent is a "result",
    never "eggs" (13 keys; `LANGUAGE.md` §3 has the table). The privacy
    page must name the controls as they now read: "Sharing results",
-   "Share results" and "Delete shared results".
+   "Share results" and "Delete shared results". And **`sharingid`**
+   (`DECISIONS.md` 67): "Your random number" over the id, whole and
+   selectable, in both apps' sharing section once sharing has been on.
 8. **The counter's Help line**, approved (`DECISIONS.md` 62), goes into
    `help.unsure.counter` with the owner's hand edit of the words, with its
    en-US and 1750 twins (`LOGBOOK.md`, 3 October 2026, has a 1750
