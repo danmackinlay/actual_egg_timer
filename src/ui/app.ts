@@ -69,6 +69,7 @@ import {
 import { bindDom, el, page, radioValue, selectRadio } from './dom.js';
 import { labelInfoButtons, showInfo, wireInfoButtons } from './info.js';
 import { wireViews } from './views.js';
+import { startOffline } from './offline.js';
 import {
   buildClauses, liveSetupFacts, redrawSentence, renderCookSetup, renderSentence,
 } from './sentence.js';
@@ -1362,6 +1363,9 @@ export function boot(): void {
       if (machine.phase === 'IDLE') recompute();
     });
   }
+  // The app opens with no signal, from the last build it kept; a newer one
+  // takes over only between cooks (offline.ts).
+  startOffline(() => machine.phase === 'IDLE');
 }
 
 /**

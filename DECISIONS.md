@@ -314,3 +314,13 @@ after 61 on `e6-e8`:
     firmer." (en-US: "counter", "draft".) It goes into the catalogue with
     the owner's hand edit of the words. The prior on `tauAirScale` stays
     at 0.35, "fine for now".
+
+Decided by the owner, 3 October 2026, on the offline branch, numbered after
+62 on `e6-e8`:
+
+63. **The web app opens with no signal.** Asked whether the app needed
+    work to sit on a Home Screen, the one gap was opening offline: "do the
+    open-offline work". A service worker keeps one build of the site whole,
+    and a new build takes over only between cooks, so an update never costs
+    a running cook its alarm. Deleting `sw.js` takes it out. Built
+    `6af878f`.
