@@ -3681,3 +3681,15 @@ in the new words, held only by their length budgets.
 The owner asked for "below" in the direction's (i) too, as Help has it: the
 `below` draft (`tools/drafts/below.ts`, on `b0cb288`) changes
 `outcome.bracket` and its 1750 twin, "The bracket below the slider".
+
+## 3 October 2026: the owner's notes from reading every string
+
+The owner read every string on the review page and had two notes; the rest
+is fine. The `notes` draft (`tools/drafts/notes.ts`, on `b0ac5df`): the
+sous-vide option no longer says it takes many hours, which is the point of
+sous-vide (`controls.start.more`, its American entry and its 1750 twin);
+and in 1750 a pump runs only while someone works it, so the label under
+running water is "Cooling; keep working the pump".
+Proved by `copyLiterals --since b0ac5df notes` and `copySnapshot compare
+--draft notes`, less the American entry of the same key in the en-US
+states.

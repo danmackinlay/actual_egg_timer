@@ -61,8 +61,9 @@ The one queue. Nothing else in the documents waits on the owner.
    56), curly apostrophes and quotes everywhere; and **`owner`**
    (`DECISIONS.md` 57), the owner's own edits with "running water", "in
    the air" and "below the time display", which cut the American overlay
-   to four "pot" strings; and **`below`**, the bracket "below the slider"
-   in the direction's (i) too.
+   to four "pot" strings; **`below`**, the bracket "below the slider"
+   in the direction's (i) too; and **`notes`**, the owner's notes from
+   reading every string, who found the rest fine.
 2. **The English of 1750, in both apps** (`DECISIONS.md` 17). `LANGUAGE.md`
    §6 lists the names to strike and where it departs from the guide.
 3. **The push of `main`**: done 29 September (`5ff6940`); CI passed. Each

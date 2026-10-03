@@ -151,7 +151,7 @@
     "controls.eggFrom.hint": { "surface": "body", "apps": ["web", "ios"], "text": "I assume {fridge} for a fridge and {room} for a room. Pick Custom if yours differ.", "example": { "fridge": "39 °F", "room": "68 °F" } },
     "controls.eggTemp": { "surface": "label", "apps": ["web", "ios"], "text": "Egg temperature" },
     "controls.start": { "surface": "label", "apps": ["web", "ios"], "text": "Start" },
-    "controls.start.more": { "surface": "more", "apps": ["web", "ios"], "note": "A paragraph opened in place by the (i) beside Start (UI.md section 4). Replaces controls.start.hint.", "text": "Boiling water: lower the eggs into water at a full boil. They peel more easily this way. Cold water: put the eggs in a cold pan, turn the heat on, and tap Full rolling boil when the water rolls. This is quicker overall. Sous-vide: I’ll tell you how long the eggs need in the water. It’s usually many hours, so plan ahead." },
+    "controls.start.more": { "surface": "more", "apps": ["web", "ios"], "note": "A paragraph opened in place by the (i) beside Start (UI.md section 4). Replaces controls.start.hint.", "text": "Boiling water: lower the eggs into water at a full boil. They peel more easily this way. Cold water: put the eggs in a cold pan, turn the heat on, and tap Full rolling boil when the water rolls. This is quicker overall. Sous-vide: I’ll tell you how long the eggs need in the water." },
     "controls.start.cold": { "surface": "segment", "apps": ["web", "ios"], "text": "Cold water" },
     "controls.start.hot": { "surface": "segment", "apps": ["web", "ios"], "text": "Boiling water" },
     "controls.start.sousVide": { "surface": "segment", "apps": ["web", "ios"], "text": "Sous-vide {bath}", "example": { "bath": "136 °F" } },
