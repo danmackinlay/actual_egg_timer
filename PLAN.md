@@ -33,7 +33,7 @@ These counts are the only ones in the documents. If you want a number, run
    (`COLLECTIVE.md`; the owner's answers are `DECISIONS.md` 58-61), kept up
    to date with `main` and not released. The owner reviews it first: the
    `share` and `learning` drafts on a phone, the privacy page (rewritten for
-   0.4, with `OWNER` and `VERIFY` marks to answer; `SHIP-0.4.md` B), and the
+   0.4; two `OWNER` marks left to answer, `SHIP-0.4.md` B), and the
    endpoint (`netlify/functions/eggs.mts`, Netlify Blobs).
    It is version 0.4.0-alpha.1 here; `main` releases small things meanwhile.
 
@@ -84,10 +84,15 @@ The one queue. Nothing else in the documents waits on the owner.
    privacy policy URL is <https://actualeggtimer.netlify.app/privacy>
    (`privacy/index.html`), which is live only after the next push. App
    Privacy's answers changed with sharing (E6): Other Data Types and Device
-   ID, neither linked nor tracking, as `ios/RELEASING.md` step 6 lists them.
+   ID, not tracking, and App Attest needs no answer of its own
+   (`DECISIONS.md` 72), as `ios/RELEASING.md` step 6 lists them.
    Read the page first: it speaks in your name, says what sharing sends
    and keeps, and carries `OWNER` marks for you (`SHIP-0.4.md` B). Help links it in both apps, as "Privacy" ("Of Privacy" in 1750;
    the `privacy` draft), and so does Settings, under sharing.
+   **The owner's privacy items left**, after `DECISIONS.md` 67-72, and
+   only these: the retention rule (a five-year cap from the day cooked, or
+   criteria); whether you delete the local copy of the records after each
+   fit; and Linked to You or Not Linked on Apple's label.
    The App Store subtitle: "Time eggs, not minutes" (22 of 30 characters;
    `DECISIONS.md` 53).
 7. **The `share` and `learning` drafts, on a phone** (E6, E8): the consent

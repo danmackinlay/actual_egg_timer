@@ -344,7 +344,7 @@ Decided by the owner, 3 October 2026:
     catalogue still spells it only on the title.
 
 Decided by the owner, 3 October 2026, on the privacy questions of
-`SHIP-0.4.md` sections B and C, for 0.4:
+`SHIP-0.4.md` sections B and C, for 0.4. Recorded in `d5d9870`.
 
 67. **Settings shows the random number**, in both apps, in the sharing
     section, so that a person can quote it in an email asking for their
@@ -352,6 +352,8 @@ Decided by the owner, 3 October 2026, on the privacy questions of
     forgetmyeggs@danmackinlay.name with your random number"). Shown once
     sharing has been turned on, since there is none before; whole, never
     shortened, since the email needs all of it; and selectable, to copy.
+    Built `546fda7` (the `sharingid` draft, "Your random number"); the
+    privacy page says where it is (`8deebf5`).
 68. **Results from the owner's own development builds do not count as from
     a genuine copy of the app**: asked whether they should, "ideally not".
     The server treats a key attested in App Attest's development
@@ -360,13 +362,14 @@ Decided by the owner, 3 October 2026, on the privacy questions of
     if they were unsigned. Production attestations, which TestFlight and the
     App Store always make, count. The key is still verified and kept, so the
     whole path can be tried on a phone. The fit's pull reads each record's
-    tier by the same rule.
+    tier by the same rule. Built `d90e3cd`.
 69. **Turning sharing off keeps what was sent**: "keep what was sent".
     It stops sending; consent for the results already sent is withdrawn by
-    deleting them, with the button or by email (GDPR Art. 17(1)(b) is met
-    by the deletion, which the person asks for). The privacy page says so
-    plainly.
-70. **The privacy page says the owner lives in Australia.**
+    deleting them, with the button or by email, the answer to the GDPR
+    Art. 17(1)(b) question `SHIP-0.4.md` B raised. The privacy page says so
+    plainly (`8deebf5`).
+70. **The privacy page says the owner lives in Australia.** Its `OWNER`
+    mark is gone (`8deebf5`).
 71. **No EU representative** (GDPR Art. 27): the owner chose to "accept
     the risk of having no EU representative", knowing the exemption for
     occasional processing likely does not apply. The privacy page says
@@ -377,4 +380,4 @@ Decided by the owner, 3 October 2026, on the privacy questions of
     hangs off the same random id, which is declared as Device ID, and the
     use is App Functionality, whose definition includes "prevent fraud,
     implement security measures" (Apple's App Privacy Details page).
-    `ios/RELEASING.md` step 6 says so.
+    `ios/RELEASING.md` step 6 says so (`fbaa94c`).

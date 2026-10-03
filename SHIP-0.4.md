@@ -28,6 +28,13 @@ turns on a page that says what it collects.
 
 The page (`privacy/index.html`) changes first; everything else follows it.
 
+**The owner's items left in B** (after `DECISIONS.md` 67-72, 3 October
+2026), and only these: the **retention** rule (a five-year cap from the day
+cooked, or criteria); whether the **local copy** of the records is deleted
+after each time new starting guesses are worked out; and **Linked to You
+or Not Linked** on Apple's App Privacy label. Each keeps its `OWNER` mark
+or its line below until answered.
+
 - [x] **Check every claim on the page against the 0.4 code**, as was done for
       0.3: each field a record sends (`src/core/record.ts`), what the
       endpoint stores (`server/eggs.ts`), what it does *not* store (the IP
@@ -42,22 +49,22 @@ The page (`privacy/index.html`) changes first; everything else follows it.
       retention rule is a proposal marked `OWNER` in the page: until
       deleted, at most five years from the day the egg was cooked.
 - [ ] **The page's `OWNER:` marks** (comments in `privacy/index.html`):
-      the retention period; deleting the copy of the records on your own
-      computer (`npm run eggs -- pull`) each time you have worked out new
-      starting guesses; saying you live in Australia; the id (next item);
-      withdrawal (below).
+      two are left, the retention period, and deleting the copy of the
+      records on your own computer (`npm run eggs -- pull`) each time you
+      have worked out new starting guesses. Answered and removed
+      (`8deebf5`): saying you live in Australia (`DECISIONS.md` 70, it
+      stays), the id (next item) and withdrawal (below).
 - [ ] **The retention rule, enforced**: whatever period the owner picks
       needs a step that applies it, e.g. `npm run eggs -- prune`, deleting
       records whose `day` is older and any App Attest key left with no
       records, run before each time you work out new starting guesses. The
       server keeps no time of arrival, so the rule has to go by the day the
       egg was cooked.
-- [ ] **Show the random id** so a person can quote it by email: neither app
-      shows it (`src/ui/shareView.ts`, `ios/App/SettingsView.swift`). A
-      selectable line under the switch while sharing is on, in both apps,
-      as a named draft. The page says today that neither app shows it and
-      the button is the way to delete; change that sentence when this
-      ships.
+- [x] **Show the random id** so a person can quote it by email
+      (`DECISIONS.md` 67): "Your random number" over the id, whole,
+      fixed-width and selectable, in both apps' sharing section from the
+      first time sharing is turned on until a deletion; the `sharingid`
+      draft (`546fda7`). The page says where to find it (`8deebf5`).
 - [x] **Who and why, in GDPR terms** (EU users, including your family), in
       plain words on the page (`2223bf9`, `5a85757`), checked by the
       research of 3 October 2026 against the sources: GDPR Art. 13's list
@@ -72,17 +79,18 @@ The page (`privacy/index.html`) changes first; everything else follows it.
       standard contractual clauses (Module Two) in the DPA as a fallback.
       Netlify's request logs keep the IP address, searchable 24 hours on
       Free and Personal plans and 7 days on Pro.
-- [ ] **Withdrawal** (OWNER): under Art. 17(1)(b), data held on consent
+- [x] **Withdrawal**: under Art. 17(1)(b), data held on consent
       must be erased once consent is withdrawn, unless another basis
-      applies. Turning sharing off stops sending and keeps what was sent;
-      the page says consent for the results already sent is withdrawn by
-      deleting them. Keep that, or have turning sharing off delete too.
-- [ ] **An EU representative** (OWNER; GDPR Art. 27): a controller outside
+      applies. The owner: "keep what was sent" (`DECISIONS.md` 69).
+      Turning sharing off stops sending and keeps what was sent; consent
+      for the results already sent is withdrawn by deleting them, and the
+      page says so plainly (`8deebf5`).
+- [x] **An EU representative** (GDPR Art. 27): a controller outside
       the EU collecting from people in it on a standing basis arguably needs
       one, since the exemption for occasional processing likely does not
-      apply. Appoint a representative service, or accept the low risk
-      knowingly. Not needed if you are established in the EU. The page says
-      nothing about it.
+      apply. The owner chose to "accept the risk of having no EU
+      representative" (`DECISIONS.md` 71). The page says nothing about
+      it.
 - [x] **Australia**: the APPs very likely don't apply (the small business
       exemption, turnover of A$3M or less, which the 2024 amendments left
       alone); the statutory tort for serious invasions of privacy (since
@@ -95,7 +103,13 @@ The page (`privacy/index.html`) changes first; everything else follows it.
       "What I don't do" if you want it (`2223bf9`).
 - [x] **The changes list and the date** at the top of the page: 3 October
       2026, "version 0.4: sharing added, …" (`2223bf9`).
-- [ ] **App Store Connect → App Privacy** (`ios/RELEASING.md` step 6): from
+- [ ] **App Store Connect → App Privacy** (`ios/RELEASING.md` step 6). Left
+      for the owner: **Linked to You or Not Linked**. Answered: the id is
+      Device ID, and App Attest needs no answer of its own, since what the
+      server keeps for it hangs off that id and is App Functionality
+      ("prevent fraud, implement security measures"; `DECISIONS.md` 72,
+      `fbaa94c`). Step 6 still notes Other User Content for the answers,
+      to weigh when filling it in. The history: from
       Data Not Collected to Other Data Types and Device ID, both App
       Functionality, not linked, not tracking. **Decide: Device ID or User
       ID** for the random id — Apple's Device ID is "a device-level ID";
@@ -131,16 +145,22 @@ The page (`privacy/index.html`) changes first; everything else follows it.
       Identifiers). It is needed only if the entitlement is in the binary;
       ticking it anyway is harmless, but invalidates the existing
       provisioning profiles.
-- [ ] **The App Attest environment**: TestFlight and App Store builds always
+- [x] **The App Attest environment**: TestFlight and App Store builds always
       attest against production and ignore the entitlement; only builds
       installed from Xcode without it use the sandbox (Apple's
       `appattest-environment` entitlement and "Preparing to use the App
       Attest service"). So nothing needs adding. The decision left: when you
       work out new starting guesses, do results sent from your own
       development phones count as coming from a genuine copy of the app?
-      The server accepts both and records which.
+      The owner: "ideally not" (`DECISIONS.md` 68). The server still
+      verifies and keeps a development key, but files its results in the
+      open tier, exactly as if unsigned, and the fit's pull reads every
+      record's tier by the same rule (`d90e3cd`). So the real-phone check
+      below needs a TestFlight build to see a result arrive attested; a
+      build from Xcode sees it arrive open.
 - [ ] **On a real phone** (the simulator cannot attest): turn sharing on, cook
-      or seed an egg, see it arrive attested, delete it, see it gone.
+      or seed an egg, see its result arrive attested (from TestFlight; from
+      Xcode it arrives open, `DECISIONS.md` 68), delete it, see it gone.
 - [ ] **The 1750 face on a phone**: the bundled TTFs load (`UIAppFonts`), the
       widget and Live Activity look right in 1750.
 - [ ] **Version and build**: 0.4.0, the next unused build number (2; only

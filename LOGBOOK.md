@@ -4026,3 +4026,8 @@ The controls lost their pronouns ("Share results", "Delete shared results"); the
 
 The owner decided (`DECISIONS.md` 67) that both apps show the cook's random id, so that it can be quoted in an email asking for deletion, as the privacy page says. One new key, `share.id`, "Your random number" (1750: "Your number, drawn at random"), over the id in the sharing section, under the note of what has been sent; shown from the first time sharing is turned on until a deletion, so also while sharing is off with results still on the server.
 The id is shown whole, never shortened: the email needs all of it. Fixed-width in the system face on both apps, since IM FELL's old-style 0 is an o; selectable (`user-select: all` on the web, one tap selects it whole; `.textSelection(.enabled)` on iOS). Proved with `copyLiterals --since 99572b7 sharingid` and `copySnapshot compare --draft sharingid`.
+
+## 3 October 2026: the owner's privacy decisions (`DECISIONS.md` 67-72)
+
+Built: the random number in Settings (above); the server files a development build's results in the open tier, as if unsigned, and the fit's pull reads every record's tier by the same rule (`countsAsGenuine`, `countedTier`), tested with a pair of synthetic attestations, development and production, under one made-up root; the privacy page names the renamed controls, says where the number is and that turning sharing off keeps what was sent; `ios/RELEASING.md` step 6 says App Attest needs no App Privacy answer of its own. Recorded, nothing built: no EU representative, the risk accepted.
+Left for the owner: the retention rule, the local copy of the records after each fit, and Linked to You or Not Linked.
