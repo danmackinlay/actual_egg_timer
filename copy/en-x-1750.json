@@ -250,7 +250,7 @@
     "outcome.range": { "text": "The yolk, probably: {low} to {high}" },
     "outcome.range.one": { "text": "The yolk, probably: {level}" },
     "outcome.info": { "text": "Of my certainty" },
-    "outcome.bracket": { "text": "The bracket under the slider shews where your yolk will probably fall. To be secure against a soft yolk, slide to the right, till the left end of the bracket rests where you would be content; against a firm one, slide to the left, till its right end does." },
+    "outcome.bracket": { "text": "The bracket below the slider shews where your yolk will probably fall. To be secure against a soft yolk, slide to the right, till the left end of the bracket rests where you would be content; against a firm one, slide to the left, till its right end does." },
     "outcome.why": { "text": "Before your first egg I know neither your taste, nor your eggs, nor your kitchen, and the bracket therefore begins wide. Every egg you tell me of makes it narrower." },
     "outcome.learning": { "text": "To hasten my learning, answer both questions after every egg, and, having begun from cold water, tell me when the water boils in earnest. If you have a probe thermometer, a single reading instructs me most." },
 

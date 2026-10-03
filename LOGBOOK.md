@@ -3675,3 +3675,9 @@ asides, and the American entries in the four en-US states.
 
 **Not verified:** either app on a phone; the alarms and the Live Activity
 in the new words, held only by their length budgets.
+
+## 3 October 2026: the bracket is below the slider
+
+The owner asked for "below" in the direction's (i) too, as Help has it: the
+`below` draft (`tools/drafts/below.ts`, on `b0cb288`) changes
+`outcome.bracket` and its 1750 twin, "The bracket below the slider".
