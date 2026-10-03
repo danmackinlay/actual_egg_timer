@@ -274,3 +274,11 @@ Decided by the owner, 3 October 2026:
     pull name only where the eggs are ("In the ice bath"), since the label
     above them says "Eggs out now". The `owner` draft, which also carries
     the owner's own edits of 3 October.
+
+58-63 are on `0.4.x` until it is released (E6-E8, the counter, the offline
+web app). Decided by the owner, 3 October 2026:
+
+64. **Branches are named for their version line**, not their contents:
+    "the `e6-e8` convention is not legible". `main` stays what is live (it
+    is what Netlify serves), the 0.4 work is `0.4.x`, and a `0.3.x` is cut
+    only to fix 0.3 after 0.4 ships. `CLAUDE.md` says how.

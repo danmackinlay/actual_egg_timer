@@ -19,6 +19,12 @@ things stand is `PLAN.md`; which document holds what is its last section.
   unsigned; about a minute, so not in `verify`): run it too before a commit
   that touches `ios/App`, `ios/Shared`, `ios/Widget` or `project.yml`.
 - **One logical change per commit.**
+- **Branches are named for their version line** (`DECISIONS.md` 64):
+  `main` is what is live, today the 0.3 line; the next minor version is
+  built on `0.4.x` (and so on), kept up to date by merging `main` into it,
+  and merged into `main` when it is released. A `0.3.x` is cut from the last
+  0.3 tag only if 0.3 needs a fix after 0.4 ships. A working branch an agent
+  makes is named for what it does and merged into one of these.
 - **Versions and tags.** One version, `package.json`'s (`0.x.y-alpha.n`
   while alpha; no stability promised), held in step with iOS's
   `MARKETING_VERSION` (integers only, so without the `-alpha.n`) and the web's
