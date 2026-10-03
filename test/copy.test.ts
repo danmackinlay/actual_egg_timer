@@ -77,8 +77,8 @@ test('1b. the plural form is chosen by the count argument, in the catalogue\'s l
 });
 
 test('1c. a key the language lacks falls back to English, with the English plural rule', () => {
-  assert.equal(render(TINY, 'learned.tuned', { eggs: 1 }), 'Learned from 1 egg');
-  assert.equal(render(TINY, 'learned.tuned', { eggs: 2 }), 'Learned from 2 eggs');
+  assert.equal(render(TINY, 'learned.tuned', { eggs: 1 }), 'Learned from 1 result');
+  assert.equal(render(TINY, 'learned.tuned', { eggs: 2 }), 'Learned from 2 results');
 });
 
 test('1d. a key nobody has renders as itself, so it is seen rather than blank', () => {

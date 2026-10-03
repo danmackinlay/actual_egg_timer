@@ -93,7 +93,10 @@ The one queue. Nothing else in the documents waits on the owner.
 7. **The `share` and `learning` drafts, on a phone** (E6, E8): the consent
    beside the switch, the deletion's words, and the Learning mark and its
    (i). `tools/drafts/share.ts` and `learning.ts` have every key and its
-   1750 twin.
+   1750 twin. With them, **`data`**: what is kept and sent is a "result",
+   never "eggs" (13 keys; `LANGUAGE.md` §3 has the table). The privacy
+   page must name the controls as they now read: "Sharing results",
+   "Share results" and "Delete shared results".
 8. **The counter's Help line**, approved (`DECISIONS.md` 62), goes into
    `help.unsure.counter` with the owner's hand edit of the words, with its
    en-US and 1750 twins (`LOGBOOK.md`, 3 October 2026, has a 1750

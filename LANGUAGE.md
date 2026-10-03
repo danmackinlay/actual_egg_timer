@@ -360,6 +360,32 @@ the colon before an inserted word, "counter", "cold tap" and "pan", which
 wait on the owner's choice of base English) and every place a row now says
 more or less than it did.
 
+**The fourth draft under review: `data`** (3 October 2026). The owner's
+rule against metonyms: an object never stands in for the data about it.
+What the app keeps and sends is a **result** (one cooked egg: how it was
+cooked and how it came out), and "egg" is only the physical egg. Likewise
+the settings, a kitchen and a cooking session are named as themselves.
+`tools/drafts/data.ts`, on `13a5e05`, 13 keys, none retired or renamed. Each
+1750 twin is rewritten with its key ("result" there too, "Expunge the
+results"), and the twin of `help.learn.aside`, whose modern wording stands,
+keeps "a record of" every egg rather than every egg.
+
+| key | before | after |
+|---|---|---|
+| `share.title` | Share my eggs | Sharing results |
+| `share.toggle` | Send how my eggs come out | Share results |
+| `share.what` | I’ll send how each egg was cooked and how you said it came out, the eggs I already know included. … | I’ll send your results, including past ones: how each egg was cooked and how you said it came out. … |
+| `share.more` | One kitchen teaches me only about itself. Many together show me … from what they showed. … Turn this off whenever you like; Delete what I’ve sent takes back every egg. | Results from one kitchen tell me only about that kitchen. Results from many show me … from what they show. … Turn this off whenever you like, and tap Delete shared results to remove every one from the server. |
+| `share.sent` | I’ve sent {eggs} egg(s). | I’ve sent {eggs} result(s). |
+| `share.delete` | Delete what I’ve sent | Delete shared results |
+| `share.confirm.title` | Delete what I’ve sent? | Delete shared results? |
+| `share.confirm.message` | …delete every egg this device has sent… | …delete every result this device has sent… |
+| `learning.badge.more` | You’re sharing your eggs, … | You’re sharing your results, … |
+| `learned.tuned` | Learned from {eggs} egg(s) | Learned from {eggs} result(s) |
+| `learned.confirm.message` | I’ll forget every egg and every boil, … | I’ll forget all your results and boil times, … |
+| `help.reliable.forYou` | For the eggs you’ve set up now | For your current settings |
+| `action.hint.heating.more` | …I time the rest of the cook from your input here… | …I time the rest of the cooking from your input here… |
+
 ## 4. Units
 
 **One setting: Metric or Imperial.** Its default comes from the platform:
