@@ -260,3 +260,15 @@ Decided by the owner, 3 October 2026:
     the bench, under the cold tap, in a pan. An American reads
     `copy/en-US.json` over it, holding only the words an American kitchen
     says differently. The `bench` draft; the overlay is `LANGUAGE.md` §2.
+56. **Cooling on the bench is textbook physics, and the model treats it
+    so.** Still air on a bench is "standard Newtonian/convective cooling";
+    nobody would publish an egg-specific measurement of it, and the model
+    should be no weaker, nor make odd choices, for the lack of one. Built
+    `9d00f48`: convection and radiation from correlations, Newton's law at
+    the shell, the wet shell's latent heat (`LOGBOOK.md`, 3 October 2026).
+    The Help line that said no measurement was found becomes, approved as
+    proposed: "On the bench, I assume the egg sits in still air. In a
+    draught the yolk comes out a little softer, and in an egg cup a little
+    firmer." (en-US: "counter", "draft".) It goes into the catalogue with
+    the owner's hand edit of the words. The prior on `tauAirScale` stays
+    at 0.35, "fine for now".

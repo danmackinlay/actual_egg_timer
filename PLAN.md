@@ -79,12 +79,10 @@ The one queue. Nothing else in the documents waits on the owner.
    1750; the `privacy` draft).
    The App Store subtitle: "Time eggs, not minutes" (22 of 30 characters;
    `DECISIONS.md` 53).
-8. **The counter, from first principles** (`LOGBOOK.md`, 3 October 2026).
-   `help.unsure.counter` still says no measurement was found, which is no
-   longer the reason; the entry proposes a replacement, for the owner's
-   hand edit. And whether the prior on `tauAirScale` narrows from 0.35 to
-   ~0.2, now that physics pins still air and the width carries only the
-   kitchen.
+8. **The counter's Help line**, approved (`DECISIONS.md` 56), goes into
+   `help.unsure.counter` with the owner's hand edit of the words, with its
+   en-US and 1750 twins (`LOGBOOK.md`, 3 October 2026, has a 1750
+   suggestion).
 
 Waiting on someone else: the Czech review (F5), by the owner's friend.
 
