@@ -105,7 +105,7 @@ targets:
         # Without this the system refuses to start a Live Activity at all.
         INFOPLIST_KEY_NSSupportsLiveActivities: YES
         # Answered here rather than per build in App Store Connect. When a
-        # cook turns sharing on, the app sends eggs over HTTPS through
+        # person turns sharing on, the app sends results over HTTPS through
         # URLSession to its own site, and hashes with SHA-256 for App Attest
         # (Sharing.swift). Both are the operating system's encryption and
         # exempt, so NO - "no non-exempt encryption" - is the honest answer

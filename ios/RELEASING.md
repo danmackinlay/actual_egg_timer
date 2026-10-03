@@ -139,7 +139,7 @@ listed here only so nobody removes them as clutter:
   as an upload requirement; in practice it has often arrived as an `ITMS-91053`
   email after the fact, which is a slow way to learn it.
 - **`INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO`** in `project.yml`. Since
-  0.4, when a cook turns sharing on, the app sends eggs over HTTPS through
+  0.4, when a person turns sharing on, the app sends results over HTTPS through
   `URLSession` to its own site, and hashes with SHA-256 for App Attest. Both
   are the operating system's encryption and exempt, so NO ("no non-exempt
   encryption") is the true answer (Apple's "Complying with encryption export
@@ -167,7 +167,7 @@ hosts the endpoint sharing sends to (`DECISIONS.md` 51). It is plain English
 and outside the copy catalogue; every claim on it was checked against the
 code, so a change to what either app keeps or sends changes that page first.
 It was rewritten for 0.4 (3 October 2026): what sharing sends, what the
-server keeps (the eggs; for the iPhone, App Attest's public key and counter
+server keeps (the results; for the iPhone, App Attest's public key and counter
 per id), where (Netlify Blobs, us-east-2), for how long, and the GDPR
 essentials, its legal facts checked on 3 October 2026. It carries `OWNER:`
 comments until the owner has answered them; none may be left when 0.4 is
@@ -190,8 +190,8 @@ in App Store Connect, **App Privacy**:
   and not derived from anything.) **Owner's decision pending**
   (`SHIP-0.4.md` section B): Device ID or **User ID**. Apple's Device ID is
   "a device-level ID"; User ID includes "an assigned user ID". The id is made
-  per install, replaced by Start learning again, and identifies a cook's
-  eggs rather than the hardware. Whichever is chosen,
+  per install, replaced by Start learning again, and groups one person's
+  results rather than naming the hardware. Whichever is chosen,
   `PrivacyInfo.xcprivacy` (now `NSPrivacyCollectedDataTypeDeviceID`) says
   the same.
 - Nothing else: no contact info, location, user content, usage data or
@@ -206,11 +206,11 @@ research of 3 October 2026 against Apple's App Privacy Details page):
 - **Linked or Not linked.** Apple's de-identification means stripping direct
   identifiers such as a user ID, and records keyed by a persistent id that
   drives deletion are arguably **Linked to You**: the safer reading.
-- **Other User Content** for the cook's answers about each egg, as well as
+- **Other User Content** for the person's answers about each egg, as well as
   or instead of Other Data Types.
 - **App Attest**: the server keeps, per id, the key's public half, a
   counter, how the app was installed and its build number, to tell a genuine
-  copy of the app from anything else, and deletes them with the id's eggs.
+  copy of the app from anything else, and deletes them with the id's results.
   Whether App Privacy wants that answered on its own.
 
 `ios/App/PrivacyInfo.xcprivacy` changes with whatever is chosen, not before.

@@ -40,17 +40,19 @@ The page (`privacy/index.html`) changes first; everything else follows it.
       installed and its build number, which `StoredKey` also keeps), where,
       who can see it, Netlify's logs (a DELETE's path carries the id). The
       retention rule is a proposal marked `OWNER` in the page: until
-      deleted, at most five years from the day cooked.
+      deleted, at most five years from the day the egg was cooked.
 - [ ] **The page's `OWNER:` marks** (comments in `privacy/index.html`):
-      the retention period; deleting the fit's local copy (`npm run eggs --
-      pull`) after each fit; saying you live in Australia; the id (next
-      item); withdrawal (below).
+      the retention period; deleting the copy of the records on your own
+      computer (`npm run eggs -- pull`) each time you have worked out new
+      starting guesses; saying you live in Australia; the id (next item);
+      withdrawal (below).
 - [ ] **The retention rule, enforced**: whatever period the owner picks
       needs a step that applies it, e.g. `npm run eggs -- prune`, deleting
       records whose `day` is older and any App Attest key left with no
-      records, run before each fit. The server keeps no time of arrival, so
-      the rule has to be by the day cooked.
-- [ ] **Show the random id** so a cook can quote it by email: neither app
+      records, run before each time you work out new starting guesses. The
+      server keeps no time of arrival, so the rule has to go by the day the
+      egg was cooked.
+- [ ] **Show the random id** so a person can quote it by email: neither app
       shows it (`src/ui/shareView.ts`, `ios/App/SettingsView.swift`). A
       selectable line under the switch while sharing is on, in both apps,
       as a named draft. The page says today that neither app shows it and
@@ -62,7 +64,7 @@ The page (`privacy/index.html`) changes first; everything else follows it.
       (who, contact, purpose, consent as the basis, recipients, the
       transfer, retention, every right, withdrawal without undoing what came
       before, complaint, that sharing is optional, no decisions about the
-      cook). The household exemption does not apply to a public app (CJEU
+      person). The household exemption does not apply to a public app (CJEU
       Lindqvist C-101/01). Netlify's Data Processing Addendum is part of its
       terms, free plans included: nothing to accept. The transfer rests on
       the EU–US Data Privacy Framework (adequacy decision (EU) 2023/1795;
@@ -73,12 +75,12 @@ The page (`privacy/index.html`) changes first; everything else follows it.
 - [ ] **Withdrawal** (OWNER): under Art. 17(1)(b), data held on consent
       must be erased once consent is withdrawn, unless another basis
       applies. Turning sharing off stops sending and keeps what was sent;
-      the page says consent for the eggs already sent is withdrawn by
+      the page says consent for the results already sent is withdrawn by
       deleting them. Keep that, or have turning sharing off delete too.
 - [ ] **An EU representative** (OWNER; GDPR Art. 27): a controller outside
       the EU collecting from people in it on a standing basis arguably needs
       one, since the exemption for occasional processing likely does not
-      fit. Appoint a representative service, or accept the low risk
+      apply. Appoint a representative service, or accept the low risk
       knowingly. Not needed if you are established in the EU. The page says
       nothing about it.
 - [x] **Australia**: the APPs very likely don't apply (the small business
@@ -108,7 +110,8 @@ The page (`privacy/index.html`) changes first; everything else follows it.
       **Not linked is doubtful**: Apple's de-identification means stripping
       direct identifiers such as a user ID, and records keyed by a
       persistent id that drives deletion are arguably Linked to You, the
-      safer reading. The cook's answers may be **Other User Content**.
+      safer reading. The person's answers about each egg may be **Other
+      User Content**.
       Whether App Attest's key needs its own answer is open. These are your
       choices; `PrivacyInfo.xcprivacy` follows them, unchanged until then
       (step 6 lists them, `e5d362f`).
@@ -132,9 +135,10 @@ The page (`privacy/index.html`) changes first; everything else follows it.
       attest against production and ignore the entitlement; only builds
       installed from Xcode without it use the sandbox (Apple's
       `appattest-environment` entitlement and "Preparing to use the App
-      Attest service"). So nothing needs adding. The decision left: do eggs
-      from your own development phones count as attested in the fit? The
-      server accepts both and records which.
+      Attest service"). So nothing needs adding. The decision left: when you
+      work out new starting guesses, do results sent from your own
+      development phones count as coming from a genuine copy of the app?
+      The server accepts both and records which.
 - [ ] **On a real phone** (the simulator cannot attest): turn sharing on, cook
       or seed an egg, see it arrive attested, delete it, see it gone.
 - [ ] **The 1750 face on a phone**: the bundled TTFs load (`UIAppFonts`), the
@@ -149,11 +153,12 @@ The page (`privacy/index.html`) changes first; everything else follows it.
 
 - [ ] **Previews write to the live store**: confirmed. A `getStore` store is
       shared across all deploys, so deploy previews and branch deploys read,
-      write and can delete production eggs (Netlify Blobs docs). Either give
+      write and can delete the live records (Netlify Blobs docs). Either give
       non-production contexts their own store name, or never post from a
       preview.
 - [ ] **Abuse**: the endpoint caps a body's size (413, 16 KB; Netlify's own
-      cap is 6 MB), an id's eggs (`MAX_SEQ`, 5000) and requests per address
+      cap is 6 MB), the results one id can send (`MAX_SEQ`, 5000) and
+      requests per address
       (Netlify's rate limit, 120 a minute, in `eggs.mts`). Decide whether
       that is enough before the link is public. **Check which plan the
       account is on**: the credit-based Free plan is 300 credits a month, a
