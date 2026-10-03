@@ -12,14 +12,15 @@
  */
 
 import {
-  Catalogue, CopyArgs, CopyRef, parseCatalogue, render, renderRef,
+  Catalogue, CopyArgs, CopyRef, catalogueChain, parseCatalogue, render, renderRef,
 } from '../core/copy.js';
 import { formatTimeOfDay, formattingLocale } from '../core/format.js';
 import { DEFAULT_LANGUAGE } from '../core/language.js';
 
-let active: Catalogue | null = null;
+/** The language on screen, and the catalogues that render it. */
+let active: { language: string; catalogue: Catalogue } | null = null;
 
-/** Every catalogue fetched so far, by tag, so a language picked twice is
+/** Every chain of catalogues fetched so far, so a language picked twice is
  *  fetched once. English is the fallback beneath every other. */
 const fetched = new Map<string, Promise<Catalogue>>();
 
@@ -29,23 +30,30 @@ async function fetchCatalogue(locale: string, fallback: Catalogue | null): Promi
   return parseCatalogue(await response.json(), fallback);
 }
 
-function catalogueFor(locale: string): Promise<Catalogue> {
-  let promise = fetched.get(locale);
+/** A chain of catalogues, the first consulted first (`catalogueChain`), each
+ *  fetched over the rest. */
+function catalogueFor(chain: readonly string[]): Promise<Catalogue> {
+  const id = chain.join(' > ');
+  let promise = fetched.get(id);
   if (promise === undefined) {
-    promise = locale === 'en'
-      ? fetchCatalogue('en', null)
-      : catalogueFor('en').then((english) => fetchCatalogue(locale, english));
+    promise = chain.length === 1
+      ? fetchCatalogue(chain[0], null)
+      : catalogueFor(chain.slice(1)).then((below) => fetchCatalogue(chain[0], below));
     // A failed fetch is not remembered: the next ask tries again.
-    promise.catch(() => fetched.delete(locale));
-    fetched.set(locale, promise);
+    promise.catch(() => fetched.delete(id));
+    fetched.set(id, promise);
   }
   return promise;
 }
 
 /**
- * Fetch the active catalogue, and English beneath it for any key it lacks:
- * `en-x-1750` falls back to `en`. A catalogue that cannot be fetched falls
- * back to English whole, rather than leave the page without words.
+ * Fetch the catalogues that render a language, English beneath them for any
+ * key they lack: `en-x-1750` over `en`, and in an American browser `en-US`
+ * over `en`, the few words an American kitchen says differently. The browser
+ * tells a page one language tag, `navigator.language`, and REGION is its
+ * region, so that is the region the words follow. A catalogue that cannot be
+ * fetched falls back to English whole, rather than leave the page without
+ * words.
  *
  * A fresh install speaks DEFAULT_LANGUAGE. The cook can pick another in
  * Settings, and the units switch can move an English cook into the English of
@@ -53,29 +61,33 @@ function catalogueFor(locale: string): Promise<Catalogue> {
  * one they last had, and the page calls this again to change it in place,
  * re-rendering what it drew.
  */
-export async function loadCopy(locale: string = DEFAULT_LANGUAGE): Promise<Catalogue> {
+export async function loadCopy(language: string = DEFAULT_LANGUAGE): Promise<Catalogue> {
+  const chain = catalogueChain(language, [], REGION);
   try {
-    active = await catalogueFor(locale);
+    active = { language: language, catalogue: await catalogueFor(chain) };
   } catch (error) {
-    if (locale === 'en') throw error;
-    active = await catalogueFor('en');
+    if (chain.length === 1) throw error;
+    active = { language: 'en', catalogue: await catalogueFor(['en']) };
   }
-  return active;
+  return active.catalogue;
 }
 
 /** Install a catalogue already in hand - for a test, or a second language. */
 export function useCatalogue(catalogue: Catalogue): void {
-  active = catalogue;
+  active = { language: catalogue.locale, catalogue: catalogue };
 }
 
 function catalogue(): Catalogue {
   if (active === null) throw new Error('copy used before loadCopy()');
-  return active;
+  return active.catalogue;
 }
 
-/** The active locale's tag, for `<html lang>` and the record's `lang`. */
+/** The language on screen, `en` or `en-x-1750`, for `<html lang>`, the
+ *  picker and the record's `lang`: never an overlay's tag, which only says
+ *  which words an English page uses. */
 export function activeLocale(): string {
-  return catalogue().locale;
+  if (active === null) throw new Error('copy used before loadCopy()');
+  return active.language;
 }
 
 /** The region in the browser's language tag - the `US` in `en-US` - or null

@@ -26,7 +26,7 @@ const LEARNING_DRAFT: Drafted[] = [
   },
   {
     key: 'learning.badge.more', row: 'The time: Learning mark',
-    before: null, after: { text: "You're sharing your eggs, so I'm still learning from them. Now and then I move the time a few seconds either way, up to ten, to learn what happens just off the time I'd pick. It can leave an egg a little softer or firmer than I'd otherwise aim for. Turn sharing off in Settings and the time stays where I'd put it." },
+    before: null, after: { text: "You’re sharing your eggs, so I’m still learning from them. Now and then I move the time a few seconds either way, up to ten, to learn what happens just off the time I’d pick. It can leave an egg a little softer or firmer than I’d otherwise aim for. Turn sharing off in Settings and the time stays where I’d put it." },
     appsBefore: [], appsAfter: ['web', 'ios'],
   },
 ];

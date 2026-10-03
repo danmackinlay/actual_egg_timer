@@ -3607,3 +3607,152 @@ pass); a real fit (no shared egg exists).
 "Time eggs, not minutes" heads Help in both apps and leads the web page's
 description; "Made by Dan MacKinlay" ends Help, linking https://danmackinlay.name,
 as the privacy page's name and the README do (the `motto` draft, DECISIONS 53).
+
+## 3 October 2026: the `plain` draft
+
+The owner: much of the copy "reads very Claudish", and the strings approved
+earlier were approved as good enough for now, not as final (`DECISIONS.md`
+54). The model is the owner's rewrite of the Help line on cooling: "The
+cooling time also counts as cooking time, since the egg is still warm
+inside." The `plain` draft follows it across 71 keys of both apps
+(`tools/drafts/plain.ts`, on `73ea0f8`). Eleven 1750 twins are rewritten
+where the meaning moved; the rest stand, since the period's semicolons are
+the joke. `LANGUAGE.md` §3 now lists the marks of machine prose among its
+criteria, and `CLAUDE.md` points there.
+
+- **Counted before the pass**, in `copy/en.json` less the sources: a dash
+  as a pivot in 24 strings (8 of them size labels, which keep it), a colon
+  meaning "because" in 11 (i) paragraphs, two clauses on a semicolon in 8,
+  "predictable" 5 times, "teaches me" 4.
+- **Left for the owner:** "counter", "cold tap" and "pan" wait on which
+  English is the base. "Counter" is American (a Briton says worktop, an
+  Australian bench), and "tap" also names the screen gesture in the same
+  app ("Tap Full rolling boil", "They're under the tap"). A regional
+  overlay is cheap here: `render` already falls back from one catalogue to
+  the next, `copy.test.ts` reads every file in `copy/`, and iOS bundles the
+  folder, so a `copy/en-US.json` holding only the keys that differ needs
+  just a core function choosing the chain from the language tag, fixtured
+  for both apps.
+- **One gap in the proofs closed:** the snapshot harness collapses a
+  no-break space to a space, so `compare --draft` now reads each template
+  the same way (`outcome.unsure`). The two linked Help asides still fail
+  it, as in `tidy`; their pieces are the drafted change, word for word.
+- **Proved by** `copyLiterals --since 73ea0f8 plain` and `copySnapshot
+  compare --draft plain` (172 web states), less those asides.
+
+**Run:** `npm run verify`: 269 tests, all pass; the Swift copy lint; the
+fixtures fresh; `swift test` 121 tests in 32 suites.
+
+**Not verified:** either app on a phone. The iOS-only strings (the alarms,
+the readout's alarm lines) are held only by their length budgets.
+
+## 3 October 2026: the base English is Australian
+
+The owner: "Australian base, with an en-US overlay" (`DECISIONS.md` 55).
+The `bench` draft (`tools/drafts/bench.ts`, on `63d9094`) makes the one
+change the base needed: the egg left out to cool is on the bench, in 11
+keys of both apps. "Cold tap", "pan" and the spelling were Australian
+already. The 1750 twins say "table" and stand. Proved by `copyLiterals
+--since 63d9094 bench` and `copySnapshot compare --draft bench`, less the
+linked Help aside on still air.
+
+## 3 October 2026: the American overlay
+
+`copy/en-US.json` holds the 20 keys an American kitchen says differently
+from the Australian base: "counter" for the bench, "running water" for the
+cold tap (which also stops "tap" meaning the screen and the water in one
+app), "pot" for the pan, "saucepan" where a heavy pot is the contrast. Each
+entry carries the base text it was written against.
+
+- **`catalogueChain`** (`src/core/copy.ts`, `EggTimerCopy`, fixtured in
+  `fixtures/copy.json`) names the catalogues that render a language. Both
+  loaders already layered one catalogue over another, so each now builds
+  the chain it names: the web from `navigator.language`'s region, iOS from
+  the phone's first English in `Locale.preferredLanguages`, else its
+  region. The language stays `en`, so the picker, the record and the units
+  switch are untouched. In `EggTimerCopy`, not the core module, because the
+  widget links only the words.
+- **The fixture pins only an overlay's own keys**: the rest are English's,
+  and pinning them would rewrite the fixture on every change of wording.
+- **`copy.test.ts` 7a** fails when an overlay's `base` is not today's
+  English, when it says what English says, or when a regional catalogue is
+  not listed in `OVERLAYS`. **7b** is the chain and region table.
+- **Seen working:** the snapshot harness's four en-US states, and only
+  those, now read "Running water | Counter" and "eggs in the pot"; the
+  other 168 are unchanged. On the iPhone 17 simulator, launched with
+  `-AppleLanguages (en-US)` and `(en-AU)` on the cooling choice, the
+  segments read "Ice bath | Running water | Counter" and "Ice bath | Cold
+  tap | Bench".
+
+**Run:** `npm run verify`: 271 tests, all pass; the Swift copy lint; the
+fixtures fresh; `swift test` 122 tests in 32 suites. `npm run ios:build`
+builds.
+
+**Not verified:** the Lock Screen and the alarm in American English; Safari.
+
+## 3 October 2026: curly apostrophes and quotes
+
+The owner wants curly apostrophes everywhere (`DECISIONS.md` 56). The
+`quotes` draft (`tools/drafts/quotes.ts`, on `3e5f5f5`) sets 47 English
+strings, 9 1750 twins and the 8 American entries with ’, and the Help
+sources' titles with “ ”; notes have their apostrophes curled and keep their
+straight double quotes, which delimit examples. Outside the catalogue: the
+web page's preview description (‘N minutes after the water boils’, the only
+opening quote the pass made) and the privacy page's text. `copy.test.ts` 3c
+fails on a straight quote in any catalogue, in the page's descriptions or in
+the privacy page's text. The owner's own wording edits, made in the working
+tree at the same time, were set aside and follow in the next draft.
+
+- **Proved by** `copyLiterals --since 3e5f5f5 quotes` and `copySnapshot
+  compare --draft quotes`, less 12 strings, each checked by script: the
+  linked Help aside, and the American overlay's entries in the harness's
+  four en-US states. **What the proofs cannot see:** a draft's rows
+  describe `copy/en.json` only, so a change to `copy/en-US.json` shows in
+  those four states as undrafted. `copy.test.ts` 7a holds the overlay to
+  the English instead.
+- **A capture that hung:** `copySnapshot capture` polled a harness page
+  that had finished ("done" in its title) and never saw it, stuck on its
+  DevTools socket. The result was read from the page over the same port
+  and the capture stopped; not reproduced.
+
+## 3 October 2026: the owner's own edits, and the cooling named for what it is
+
+The owner edited copy/en.json by hand, then asked for it drafted. The
+`owner` draft (`tools/drafts/owner.ts`, on `7fdd6b9`) carries 31 keys: the
+owner's 17 wording edits (four with a one-word fix: a full stop, "weigh
+one", "the heat", a comma), and what was agreed alongside (`DECISIONS.md`
+57). The cooling methods are an ice bath, running water and the air, in
+every English, so the American overlay keeps only "pot" for the pan: four
+entries, down from 20. The buttons at the pull lost "They're". The Help line
+on the odds says "below the time display", which the owner found clearer
+than "under the time". 26 1750 twins moved with their meaning: the pump for
+running water, as the 1750 alarm had it, and the open air for the air.
+
+The owner's edits were set aside while `quotes` was committed and restored
+from a copy; that their 17 keys, curled, were the only wording changes was
+checked by script before anything was laid on top.
+
+**Proved by** `copyLiterals --since 7fdd6b9 owner` and `copySnapshot compare
+--draft owner`, less 11 strings each checked by script: the two linked Help
+asides, and the American entries in the four en-US states.
+
+**Not verified:** either app on a phone; the alarms and the Live Activity
+in the new words, held only by their length budgets.
+
+## 3 October 2026: the bracket is below the slider
+
+The owner asked for "below" in the direction's (i) too, as Help has it: the
+`below` draft (`tools/drafts/below.ts`, on `b0cb288`) changes
+`outcome.bracket` and its 1750 twin, "The bracket below the slider".
+
+## 3 October 2026: the owner's notes from reading every string
+
+The owner read every string on the review page and had two notes; the rest
+is fine. The `notes` draft (`tools/drafts/notes.ts`, on `b0ac5df`): the
+sous-vide option no longer says it takes many hours, which is the point of
+sous-vide (`controls.start.more`, its American entry and its 1750 twin);
+and in 1750 a pump runs only while someone works it, so the label under
+running water is "Cooling; keep working the pump".
+Proved by `copyLiterals --since b0ac5df notes` and `copySnapshot compare
+--draft notes`, less the American entry of the same key in the en-US
+states.

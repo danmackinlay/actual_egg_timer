@@ -55,6 +55,25 @@ struct CopyConformance {
         }
     }
 
+    @Test("the region of a tag, and the catalogues that render a language")
+    func chains() throws {
+        let fixture = try Fixtures.load("copy.json")
+        #expect(overlays == fixture["overlays"] as? [String])
+        for c in try Fixtures.list("copy.json", "regions") {
+            let tag = try c.str("tag")
+            #expect(regionOf(tag) == c["region"] as? String, "regionOf(\(tag))")
+        }
+        let rows = try Fixtures.list("copy.json", "chains")
+        #expect(rows.count == 30)
+        for c in rows {
+            let language = try c.str("language")
+            let preferred = try #require(c["preferred"] as? [String])
+            let region = c["region"] as? String
+            let chain = catalogueChain(language: language, preferred: preferred, region: region)
+            #expect(chain == c["chain"] as? [String], "\(language), \(preferred), \(region ?? "no region")")
+        }
+    }
+
     @Test("the plural rule of every language, at every edge")
     func plurals() throws {
         for c in try Fixtures.list("copy.json", "plural") {

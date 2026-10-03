@@ -240,6 +240,41 @@ Decided by the owner, 2 October 2026:
     though the model's egg is a sphere. Its raw white is clearer, with a
     touch of blue. Prototype `953c698`..`3ed187c`.
 
+Decided by the owner, 3 October 2026:
+
+53. **The motto is "Time eggs, not minutes"**, with a link to the owner's
+    blog, https://danmackinlay.name, where the app is credited. Neither goes
+    on the cooking screen: the motto heads Help in both apps and leads the
+    web page's description; "Made by Dan MacKinlay" ends Help and links the
+    blog, as the privacy page's name and the README do. It is also the App
+    Store subtitle. The `motto` draft.
+54. **The words read as a person who cooks would say them, not as a model
+    writes.** Much of the copy "reads very Claudish". The model rewrite, of
+    the Help line on cooling: "The cooling time also counts as cooking time,
+    since the egg is still warm inside." The strings recorded as approved
+    were approved as "good enough for now", not as final, and a style pass
+    reads them like the rest. The `plain` draft; the rules are in
+    `LANGUAGE.md` §3.
+55. **The words are Australian English, with an American overlay.** The
+    base catalogue says what an Australian kitchen says: the egg cools on
+    the bench, under the cold tap, in a pan. An American reads
+    `copy/en-US.json` over it, holding only the words an American kitchen
+    says differently. The `bench` draft; the overlay is `LANGUAGE.md` §2.
+56. **Curly apostrophes and quotes, never straight ones**, in every string
+    a reader sees: ’ for an apostrophe, ‘ ’ and “ ” for quotation, in both
+    apps, every catalogue, the web page's descriptions and the privacy
+    page. `copy.test.ts` 3c holds it. The `quotes` draft.
+57. **The cooling methods are named for what they are: an ice bath,
+    running water, the air.** Not "cold tap" ("tap" is also the screen
+    gesture) and not a surface the eggs sit on ("bench", "counter" and
+    "worktop" are regional, and the method is the air, wherever the eggs
+    are). So every English says the same, and the American overlay is down
+    to "pot" for the pan. The line under the countdown is "below the time
+    display": "under the time" read as "in less time". The buttons at the
+    pull name only where the eggs are ("In the ice bath"), since the label
+    above them says "Eggs out now". The `owner` draft, which also carries
+    the owner's own edits of 3 October.
+
 Decided by the owner, 2 October 2026, for E6-E8 (`COLLECTIVE.md`), numbered
 after 57: `main` took 52-57 while E6-E8 were built on a branch:
 
@@ -263,11 +298,3 @@ after 57: `main` took 52-57 while E6-E8 were built on a branch:
     quarter as much per egg, +-3 s a third of a point and a ninth as much.
     The owner chose +-10 s. The Learning mark's (i) says the time may leave
     an egg a little softer or firmer. Built with E8 (`82aff4b`).
-Decided by the owner, 3 October 2026:
-
-57. **The motto is "Time eggs, not minutes"**, with a link to the owner's
-    blog, https://danmackinlay.name, where the app is credited. Neither goes
-    on the cooking screen: the motto heads Help in both apps and leads the
-    web page's description; "Made by Dan MacKinlay" ends Help and links the
-    blog, as the privacy page's name and the README do. It is also the App
-    Store subtitle. The `motto` draft.

@@ -49,6 +49,12 @@ import { privacy } from './drafts/privacy.js';
 import { share } from './drafts/share.js';
 import { learning } from './drafts/learning.js';
 import { motto } from './drafts/motto.js';
+import { plain } from './drafts/plain.js';
+import { bench } from './drafts/bench.js';
+import { quotes } from './drafts/quotes.js';
+import { owner } from './drafts/owner.js';
+import { below } from './drafts/below.js';
+import { notes } from './drafts/notes.js';
 
 export type Templates = Record<string, string>;
 
@@ -98,6 +104,12 @@ export const DRAFTS: Record<string, Draft> = {
   share,
   learning,
   motto,
+  plain,
+  bench,
+  quotes,
+  owner,
+  below,
+  notes,
 };
 
 /** The draft most recently applied, the last in `DRAFTS`: what a proof checks

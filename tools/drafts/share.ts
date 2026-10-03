@@ -49,12 +49,12 @@ const SHARE_DRAFT: Drafted[] = [
   },
   {
     key: 'share.what', row: 'Settings: sharing',
-    before: null, after: { text: "I'll send how each egg was cooked and how you said it came out, the eggs I already know included. No name or place: a random number made on this device stands in for you. While this is on, I'll sometimes move a time a few seconds either way, to learn faster." },
+    before: null, after: { text: "I’ll send how each egg was cooked and how you said it came out, the eggs I already know included. No name or place: a random number made on this device stands in for you. While this is on, I’ll sometimes move a time a few seconds either way, to learn faster." },
     appsBefore: [], appsAfter: ['web', 'ios'],
   },
   {
     key: 'share.more', row: 'Settings: sharing',
-    before: null, after: { text: "One kitchen teaches me only about itself. Many together show me how eggs, pots, water and cooling really differ, and the next version of the app starts everyone from what they showed. I send each egg's size, how it was cooked, the water's boiling point (which says roughly how high up you are), your answers, and what I expected. Moving a time a few seconds teaches me what the usual times can't, and stays within just right. Turn this off whenever you like; Delete what I've sent takes back every egg." },
+    before: null, after: { text: "One kitchen teaches me only about itself. Many together show me how eggs, pots, water and cooling really differ, and the next version of the app starts everyone from what they showed. I send each egg’s size, how it was cooked, the water’s boiling point (which says roughly how high up you are), your answers, and what I expected. Moving a time a few seconds teaches me what the usual times can’t, and stays within just right. Turn this off whenever you like; Delete what I’ve sent takes back every egg." },
     appsBefore: [], appsAfter: ['web', 'ios'],
   },
   {
@@ -64,7 +64,7 @@ const SHARE_DRAFT: Drafted[] = [
   },
   {
     key: 'share.sent', row: 'Settings: sharing',
-    before: null, after: { one: "I've sent {eggs} egg.", other: "I've sent {eggs} eggs." },
+    before: null, after: { one: "I’ve sent {eggs} egg.", other: "I've sent {eggs} eggs." },
     appsBefore: [], appsAfter: ['web', 'ios'],
   },
   {
@@ -74,17 +74,17 @@ const SHARE_DRAFT: Drafted[] = [
   },
   {
     key: 'share.delete', row: 'Settings: sharing',
-    before: null, after: { text: "Delete what I've sent" },
+    before: null, after: { text: "Delete what I’ve sent" },
     appsBefore: [], appsAfter: ['web', 'ios'],
   },
   {
     key: 'share.confirm.title', row: 'Settings: sharing',
-    before: null, after: { text: "Delete what I've sent?" },
+    before: null, after: { text: "Delete what I’ve sent?" },
     appsBefore: [], appsAfter: ['web', 'ios'],
   },
   {
     key: 'share.confirm.message', row: 'Settings: sharing',
-    before: null, after: { text: "I'll ask the server to delete every egg this device has sent, and stop sharing. What I've learned here stays." },
+    before: null, after: { text: "I’ll ask the server to delete every egg this device has sent, and stop sharing. What I’ve learned here stays." },
     appsBefore: [], appsAfter: ['web', 'ios'],
   },
   {
@@ -99,7 +99,7 @@ const SHARE_DRAFT: Drafted[] = [
   },
   {
     key: 'share.deleting', row: 'Settings: sharing',
-    before: null, after: { text: "Deleting. If I can't reach the server now, I'll keep asking until it confirms." },
+    before: null, after: { text: "Deleting. If I can’t reach the server now, I’ll keep asking until it confirms." },
     appsBefore: [], appsAfter: ['web', 'ios'],
   },
   {

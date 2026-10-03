@@ -4,21 +4,21 @@ The state of the build, what is next, and what waits on whom. Updated in the
 same commit as the work it describes. History is `LOGBOOK.md`; the rules for
 working here are `CLAUDE.md`; the last section says where everything else is.
 
-**Where things stand, 2 October 2026.** Both apps are complete for one
+**Where things stand, 3 October 2026, on the `e6-e8` branch.** Both apps are complete for one
 cook and learning, and now for many: opt-in sharing, the nudge and the
 population a prior is drawn from (E6-E8, `COLLECTIVE.md`) are built in
-both, not yet deployed. The web app (`src/`) and the iOS app (`ios/`) carry
+both, on this branch, not on `main` and not deployed. The web app (`src/`) and the iOS app (`ios/`) carry
 the same model, refusals, particle filter and choice of time, the same
 catalogue of words in two Englishes (Phase F but for Czech), and the same
-layout (`UI.md`). `npm test` runs 293 tests, all passing (5b pins E3's known
-limit). `npm run validate` passes 28/28, and `swift test` passes 124 tests
+layout (`UI.md`). `npm test` runs 296 tests, all passing (5b pins E3's known
+limit). `npm run validate` passes 28/28, and `swift test` passes 125 tests
 in 33 suites. **Pushed on 29 September** at `5ff6940`, the owner's
 call: Netlify serves it at actualeggtimer.netlify.app, and the first run of
 `.github/workflows/verify.yml` passed. The iOS app runs from Xcode on the owner's
 phone and has cooked real eggs; the first TestFlight build, 0.3.1 (1), was
 uploaded on 2 October 2026 from `v0.3.1-alpha.1`. The next upload needs build 2
-(`ios/RELEASING.md`). The owner is reviewing the `tidy` and `tidy2` copy
-drafts on a phone.
+(`ios/RELEASING.md`). The owner is reviewing the `tidy`, `tidy2` and
+`plain` copy drafts.
 
 These counts are the only ones in the documents. If you want a number, run
 `npm test`.
@@ -29,9 +29,12 @@ These counts are the only ones in the documents. If you want a number, run
 2. **An adversarial QA pass** against this baseline, starting from the QA
    list below.
 3. **F5, Czech**, when the owner's friend can review it.
-4. **E6-E8**, the collective part: built (`COLLECTIVE.md`; the owner's
-   answers are `DECISIONS.md` 59-61). Live with the next push; then the
-   checks under "What is left", and the first real fit once eggs arrive.
+4. **E6-E8**, the collective part: built, on this branch, `e6-e8`
+   (`COLLECTIVE.md`; the owner's answers are `DECISIONS.md` 58-61), kept up
+   to date with `main` and not released. The owner reviews it first: the
+   `share` and `learning` drafts on a phone, the privacy page's sharing
+   section, and the endpoint (`netlify/functions/eggs.mts`, Netlify Blobs).
+   It is version 0.4.0-alpha.1 here; `main` releases small things meanwhile.
 
 Throughout: cook real eggs, and the two measurements in README §11.3.
 
@@ -50,6 +53,20 @@ The one queue. Nothing else in the documents waits on the owner.
    line, "Full rolling boil" mid-sentence, the screen reader's phase said
    twice). `LANGUAGE.md` §3 has its table, and where it departs from
    FOLLOWUP.
+   Then **`plain`** (`DECISIONS.md` 54): a style pass over 71 keys of
+   both apps, after the owner's rewrite of the Help line on cooling,
+   including the strings approved as good enough for now.
+   `tools/drafts/plain.ts` has every row and what it left alone. With
+   it, **`bench`** (`DECISIONS.md` 55): the base English is Australian,
+   so the egg cools on the bench; and `copy/en-US.json`, the American
+   overlay, 20 keys that an American phone or browser reads over it
+   ("counter", "running water", "pot"); **`quotes`** (`DECISIONS.md`
+   56), curly apostrophes and quotes everywhere; and **`owner`**
+   (`DECISIONS.md` 57), the owner's own edits with "running water", "in
+   the air" and "below the time display", which cut the American overlay
+   to four "pot" strings; **`below`**, the bracket "below the slider"
+   in the direction's (i) too; and **`notes`**, the owner's notes from
+   reading every string, who found the rest fine.
 2. **The English of 1750, in both apps** (`DECISIONS.md` 17). `LANGUAGE.md`
    §6 lists the names to strike and where it departs from the guide.
 3. **The push of `main`**: done 29 September (`5ff6940`); CI passed. Each

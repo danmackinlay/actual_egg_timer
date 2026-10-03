@@ -77,7 +77,8 @@ things stand is `PLAN.md`; which document holds what is its last section.
   (`npm run copy:literals`). `LANGUAGE.md` is the machinery.
 - **A wording change is a named draft**: `tools/drafts/<name>.ts`, registered
   last in `tools/copyDraft.ts`, in both apps and with each 1750 twin
-  rewritten, not transformed. Prove it changed only what it lists:
+  rewritten, not transformed. A key `copy/en-US.json` overrides is rewritten
+  there too, with its `base` (`LANGUAGE.md` §2). Prove it changed only what it lists:
   `node dist/tools/copyLiterals.js --since <base> <name>` and
   `node dist/tools/copySnapshot.js compare <before> <after> --draft <name>`.
   Fit each string to its surface's budget in `test/data/surfaces.json`;
@@ -89,7 +90,11 @@ things stand is `PLAN.md`; which document holds what is its last section.
   mechanism; never narrate what the interface visibly did; sous-vide is not
   "a bath"; "pan" only for the pot; an inserted word stands alone after a
   colon, never inside running grammar; an (i) is short enough to read at the
-  hob, and the rest goes to Help. Keep what the owner approved unless told.
+  hob, and the rest goes to Help. Say it as a person who cooks would, not
+  as a model writes (`LANGUAGE.md` §3 lists the marks). Apostrophes and
+  quotes are curly, ’ “ ”, never straight. What the owner
+  approved was good enough for now (`DECISIONS.md` 54); change it in a
+  named draft like any other.
 - Wording is judged by the owner on a phone, not in a table.
 
 ## iOS gotchas
