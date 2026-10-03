@@ -31,7 +31,7 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { applyDraft, draftFor, templateRegExp } from './copyDraft.js';
+import { Templates, applyDraft, draftFor, templateRegExp } from './copyDraft.js';
 
 interface Snapshot {
   name: string;
@@ -219,10 +219,15 @@ function compareDraft(beforePath: string, afterPath: string, draftName: string |
   // side with a key the web no longer shows would only corrupt it: the
   // redesign's "bath" -> "sous-vide at" (iOS only now) would rewrite every
   // "ice bath" on the old web screens.
+  // The harness collapses every run of white space in a text node to one
+  // space, a no-break space included ("I can't" in outcome.unsure), so each
+  // template is read the same way.
+  const flat = (t: Templates | null): Templates | null => (t === null ? null
+    : Object.fromEntries(Object.entries(t).map(([c, s]) => [c, s.replace(/\s+/g, ' ')])));
   const rows = draftFor(draftName).rows.map((d) => ({
     ...d,
-    before: d.appsBefore.includes('web') ? d.before : null,
-    after: d.appsAfter.includes('web') ? d.after : null,
+    before: d.appsBefore.includes('web') ? flat(d.before) : null,
+    after: d.appsAfter.includes('web') ? flat(d.after) : null,
   }));
   const before = JSON.parse(readFileSync(beforePath, 'utf8')) as Snapshot[];
   const after = JSON.parse(readFileSync(afterPath, 'utf8')) as Snapshot[];
