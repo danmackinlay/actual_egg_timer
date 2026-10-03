@@ -139,13 +139,12 @@ listed here only so nobody removes them as clutter:
   as an upload requirement; in practice it has often arrived as an `ITMS-91053`
   email after the fact, which is a slow way to learn it.
 - **`INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO`** in `project.yml`. Since
-  0.4 the app is no longer without networking: when a cook turns sharing on, it
-  sends eggs over HTTPS through `URLSession` to the app's own site, and asks
-  App Attest through DeviceCheck. That is the operating system's encryption and
-  exempt, so NO ("no non-exempt encryption") should still be the true answer.
-  **VERIFY** against Apple's "Complying with encryption export regulations"
-  before 0.4 is uploaded (`SHIP-0.4.md` section B), and drop the mark here and
-  in `project.yml` once it is. Without the key, every single build arrives as
+  0.4, when a cook turns sharing on, the app sends eggs over HTTPS through
+  `URLSession` to its own site, and hashes with SHA-256 for App Attest. Both
+  are the operating system's encryption and exempt, so NO ("no non-exempt
+  encryption") is the true answer (Apple's "Complying with encryption export
+  regulations", checked 3 October 2026). Without the key, every single build
+  arrives as
   **Missing Compliance** and has to be answered by hand before anyone can
   install it.
 - **The privacy manifest's collected data**: sharing's records (Other Data
@@ -170,9 +169,9 @@ code, so a change to what either app keeps or sends changes that page first.
 It was rewritten for 0.4 (3 October 2026): what sharing sends, what the
 server keeps (the eggs; for the iPhone, App Attest's public key and counter
 per id), where (Netlify Blobs, us-east-2), for how long, and the GDPR
-essentials. It carries `OWNER:` and `VERIFY:` comments until the owner and
-the legal check have answered them; none may be left when 0.4 is submitted
-for external review.
+essentials, its legal facts checked on 3 October 2026. It carries `OWNER:`
+comments until the owner has answered them; none may be left when 0.4 is
+submitted for external review.
 
 The **App Privacy** questionnaire's answer changed with E6, sharing (the
 answer was Data Not Collected until then). Apple counts data as collected
@@ -196,11 +195,25 @@ in App Store Connect, **App Privacy**:
   `PrivacyInfo.xcprivacy` (now `NSPrivacyCollectedDataTypeDeviceID`) says
   the same.
 - Nothing else: no contact info, location, user content, usage data or
-  diagnostics. App Attest: the server keeps, per id, the key's public half,
-  a counter, and how the app was installed and its build number, to tell a
-  genuine copy of the app from anything else, and deletes them with the id's
-  eggs. **VERIFY** whether App Privacy wants that answered on its own (it
-  says nothing about the cook beyond the id it is filed under).
+  diagnostics.
+
+**Owner's questions before submitting 0.4** (`SHIP-0.4.md` section B; the
+research of 3 October 2026 against Apple's App Privacy Details page):
+
+- **Device ID or User ID** for the random id (above). Device ID ("other
+  device-level ID") is the closer fit for a per-install id; an "assigned user
+  ID" is also defensible.
+- **Linked or Not linked.** Apple's de-identification means stripping direct
+  identifiers such as a user ID, and records keyed by a persistent id that
+  drives deletion are arguably **Linked to You**: the safer reading.
+- **Other User Content** for the cook's answers about each egg, as well as
+  or instead of Other Data Types.
+- **App Attest**: the server keeps, per id, the key's public half, a
+  counter, how the app was installed and its build number, to tell a genuine
+  copy of the app from anything else, and deletes them with the id's eggs.
+  Whether App Privacy wants that answered on its own.
+
+`ios/App/PrivacyInfo.xcprivacy` changes with whatever is chosen, not before.
 
 These are the owner's answers to give, and they match
 `ios/App/PrivacyInfo.xcprivacy`, which Xcode's privacy report reads. Crash
