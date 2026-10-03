@@ -260,3 +260,9 @@ Decided by the owner, 3 October 2026:
     the bench, under the cold tap, in a pan. An American reads
     `copy/en-US.json` over it, holding only the words an American kitchen
     says differently. The `bench` draft; the overlay is `LANGUAGE.md` §2.
+56. **The web app opens with no signal.** Asked whether the app needed
+    work to sit on a Home Screen, the one gap was opening offline: "do the
+    open-offline work". A service worker keeps one build of the site whole,
+    and a new build takes over only between cooks, so an update never costs
+    a running cook its alarm. Deleting `sw.js` takes it out. Built
+    `6af878f`.
