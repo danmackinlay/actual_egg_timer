@@ -423,4 +423,4 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     verb. The setting "After the boil" is **"Once it's boiling"** ("Once it
     boils" in 1750). Every English, en-US and 1750 included, and the
     privacy page; code identifiers and keys (`controls.afterTheBoil`) stay.
-    The `boiling` draft.
+    The `boiling` draft, `89d5aa1`; the privacy page, `7bf35a6`.

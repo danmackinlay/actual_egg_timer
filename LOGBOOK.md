@@ -4111,3 +4111,17 @@ read an en-US twin until now; a draft row can carry its overlay twins
 (`Drafted.overlays`), so the US screens are proved too. And "Your random
 number" is "Your random ID", a "cypher" in 1750, on the privacy page as
 well (`8c1f397`, the `randomid` draft).
+
+## 5 October 2026: "boil" is never a noun
+
+The owner: "the boil", "a full boil" and "signal the boil" sound medical
+(`DECISIONS.md` 78). The `boiling` draft (`89d5aa1`) rewrites eleven keys
+in both apps, with the en-US twin of the Start (i) and every 1750 twin:
+water "boiling hard" (1750: "boiling in earnest") for "a full boil", the
+setting "Once it's boiling" for "After the boil", and "how long your water
+took to boil" for "boil times", on the privacy page too (`7bf35a6`). The
+1750 Lock Screen note is "my conjecture, till you tell me it boils", 40 of
+its 41 characters. Kept, by the owner's call: the button's name, Full
+rolling boil, and "brought to the boil" and "to the boil", which sound like
+cooking. Proven with `copyLiterals --since 343fcff boiling` and the snapshot
+compare over 172 states.
