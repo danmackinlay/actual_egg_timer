@@ -171,7 +171,7 @@ so is the label's **Not Linked** (74).
 
 ## D. Web
 
-- [ ] **Previews write to the live store**: confirmed. A `getStore` store is
+- [x] (fixed: production alone opens the site-wide store; a preview or branch deploy gets a store of its own, `getDeployStore`; `test/serverBlobs.test.ts` holds it) **Previews write to the live store**: confirmed. A `getStore` store is
       shared across all deploys, so deploy previews and branch deploys read,
       write and can delete the live records (Netlify Blobs docs). Either give
       non-production contexts their own store name, or never post from a

@@ -9,14 +9,29 @@
  * see.
  */
 
-import { getStore } from '@netlify/blobs';
+import { getDeployStore, getStore } from '@netlify/blobs';
 import { Store, handle } from '../../server/eggs.js';
 
-/** The site-wide store, in Netlify's default region (us-east-2). Fixed once
- *  data exists: a store opened in another region finds nothing. Strong
- *  consistency, so a delete is seen by the next read. */
-function blobs(): Store {
-  const store = getStore({ name: 'eggs', consistency: 'strong' });
+/** What Netlify tells a function about the deploy it runs in (Functions 2.0's
+ *  second argument). Only the context is read. */
+interface FunctionContext {
+  deploy?: { context?: string };
+}
+
+/** The store for this deploy. Production, and only production, gets the
+ *  site-wide store: in Netlify's default region (us-east-2), fixed once data
+ *  exists (a store opened in another region finds nothing), with strong
+ *  consistency so a delete is seen by the next read. A site-wide store is
+ *  shared by every deploy (docs.netlify.com, Netlify Blobs), so a deploy
+ *  preview or branch deploy on it would read, write and delete the live
+ *  results; those get a store scoped to their own deploy instead, which
+ *  starts empty and goes with the deploy. A missing context counts as not
+ *  production. */
+function blobs(context: FunctionContext | undefined): Store {
+  const live = context?.deploy?.context === 'production';
+  const store = live
+    ? getStore({ name: 'eggs', consistency: 'strong' })
+    : getDeployStore({ name: 'eggs', consistency: 'strong' });
   return {
     get: (key) => store.get(key, { type: 'text' }),
     set: async (key, value, onlyIfNew) => (await store.set(key, value, onlyIfNew ? { onlyIfNew: true } : {})).modified,
@@ -25,9 +40,9 @@ function blobs(): Store {
   };
 }
 
-export default async (req: Request): Promise<Response> => {
+export default async (req: Request, context?: FunctionContext): Promise<Response> => {
   try {
-    return await handle(req, blobs());
+    return await handle(req, blobs(context));
   } catch (error) {
     console.error('eggs:', error instanceof Error ? error.name : 'unknown');
     return new Response(JSON.stringify({ error: 'server' }), {
