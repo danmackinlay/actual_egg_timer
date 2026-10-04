@@ -1,4 +1,4 @@
-"""The owner's trusted IDs (DECISIONS.md 81): read from a gitignored file and
+"""The owner's trusted IDs (DECISIONS.md 82): read from a gitignored file and
 the environment, and given the attested tier's full weight whatever tier
 their eggs came in.
 

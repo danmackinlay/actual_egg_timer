@@ -22,7 +22,7 @@ new prior. `fit/data/` is gitignored: pulled records are people's eggs.
 
 ## The owner's own results, and the trusted list
 
-The owner vouches for their own random IDs (`DECISIONS.md` 81): every egg
+The owner vouches for their own random IDs (`DECISIONS.md` 82): every egg
 under one counts at the attested tier's full weight, whatever tier it came in,
 and a trusted cook is never held out. The list never goes into git - it would
 tie the owner to their results - so it lives in `fit/trusted.local.txt`
@@ -36,7 +36,7 @@ cp fit/trusted.example.txt fit/trusted.local.txt
 ```
 
 A device's whole log, shared or not, comes in through "Export my results"
-(Settings, What I've learned) and `import` (`DECISIONS.md` 80):
+(Settings, What I've learned) and `import` (`DECISIONS.md` 81):
 
 ```
 npm run eggs -- import ~/Downloads/actual-egg-timer-results-2026-10-05.json fit/data/imported.jsonl

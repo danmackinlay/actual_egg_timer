@@ -626,7 +626,7 @@ export function replay(
 /* ---------------------------------------------------------- the results file */
 
 /* EXPORT. "Export my results", in Settings, saves everything a device keeps
- * about its eggs to a file the cook keeps (DECISIONS.md 80): the store EXACTLY
+ * about its eggs to a file the cook keeps (DECISIONS.md 81): the store EXACTLY
  * as stored - spliced in character for character, not parsed and written
  * again - and every stored copy the app could not read (the apps' `.unread`
  * side key), with enough beside them to say whose and which.

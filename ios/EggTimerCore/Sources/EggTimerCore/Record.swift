@@ -563,7 +563,7 @@ public func replay(
 
 // MARK: - The results file
 
-// "Export my results" (DECISIONS.md 80): the store exactly as stored, spliced
+// "Export my results" (DECISIONS.md 81): the store exactly as stored, spliced
 // in character for character, every stored copy the app could not read, and
 // enough beside them to say whose and which. `resultsFile` in
 // src/core/record.ts, held to it by `fixtures/record.json`.

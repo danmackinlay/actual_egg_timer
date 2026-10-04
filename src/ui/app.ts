@@ -1401,7 +1401,7 @@ function restoreCook(): void {
   const stored = loadCook();
   if (stored === null) {
     // Another build's cook, most likely: kept aside, as stored, and exported
-    // with the results (DECISIONS.md 80). Its egg may be one nothing else holds.
+    // with the results (DECISIONS.md 81). Its egg may be one nothing else holds.
     if (text !== null) keepUnreadCook(text);
     clearCook();
     return;

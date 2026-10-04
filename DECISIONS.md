@@ -424,3 +424,32 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     boils" in 1750). Every English, en-US and 1750 included, and the
     privacy page; code identifiers and keys (`controls.afterTheBoil`) stay.
     The `boiling` draft, `89d5aa1`; the privacy page, `7bf35a6`.
+81. **The owner's results are kept, and can be exported**: "build an
+    export function", and protect the log. Amends 48 for this one store:
+    **the results log's storage key and its record format change only
+    with a migration**, from now on (`calibration.v4` on iOS,
+    `aet.calibration.v4` on the web; the record is schema v1,
+    `INFERENCE.md` §4). Neither app writes over a log it cannot read: a
+    record it cannot read is set aside in its place and written back, and
+    a store it cannot read at all is kept as stored under a side key (the
+    newest three) before anything replaces it; a cook in progress it cannot
+    read is kept the same way. The posterior is replayed whenever the model
+    it was folded under (`MODEL_ID`, kept beside it) is not this build's.
+    "Export my results", in Settings under What I've learned, saves the
+    store exactly as stored and every copy kept aside to a file - a
+    download on the web, the share sheet on iOS, nothing sent - and
+    `npm run eggs -- import` reads it back for the fit. "Start learning
+    again" deletes what was kept aside with the rest. A cook too old to
+    pick back up that finished unanswered is logged as unanswered, and on
+    iOS a second answer after a relaunch is kept when the egg is the last
+    in the log and not yet shared. The `export` draft.
+82. **The owner's own random IDs are trusted in the population fit**:
+    "trust my random id explicitly". An egg under an ID the owner lists
+    counts at the attested tier's full weight whatever tier it came in -
+    a build from Xcode is open (68), and so is the web - and on the
+    attested side of the open tier's cap; a trusted cook is never held out.
+    The list is never committed, since it would tie the owner to their
+    results: `fit/trusted.local.txt` (gitignored) and `EGGFIT_TRUSTED`.
+    `npm run eggs -- pull` and `import` mark the lines, and the fit reads
+    the list again. The published population counts trusted eggs and names
+    no one.

@@ -531,7 +531,7 @@ final class Cook {
         guard startedAt == nil else { return nil }
         guard let data = UserDefaults.standard.data(forKey: Self.savedKey) else { return nil }
         // A cook this build cannot read whole is not patched; it is kept
-        // aside, as stored, and exported with the results (DECISIONS.md 80):
+        // aside, as stored, and exported with the results (DECISIONS.md 81):
         // another build wrote it, and its egg may be one nothing else holds.
         guard let saved = try? JSONDecoder().decode(Saved.self, from: data) else {
             Calibrations.keepUnreadCook(data)

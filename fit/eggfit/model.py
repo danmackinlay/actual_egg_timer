@@ -24,7 +24,7 @@ start - and the open tier's total weight is capped at the attested tier's,
 so no number of browser tabs can outvote the phones. The discount is only on
 what open eggs teach the population; nothing here touches what they teach
 their own cook's app. An egg under an ID on the owner's trusted list counts
-once, as an attested one does, whatever its tier (DECISIONS.md 81; data.py).
+once, as an attested one does, whatever its tier (DECISIONS.md 82; data.py).
 """
 
 from __future__ import annotations
@@ -89,7 +89,7 @@ def probe_density(c: dict, peak, reading):
 
 def full_weight(eggs: Eggs) -> np.ndarray:
     """The eggs that count once: attested, or under an ID the owner vouches
-    for (DECISIONS.md 81), whatever tier it came in."""
+    for (DECISIONS.md 82), whatever tier it came in."""
     return (eggs.tier == 1) | eggs.trusted
 
 

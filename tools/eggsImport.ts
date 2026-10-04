@@ -1,7 +1,7 @@
 /**
  * The fit's records from outside the live store: a results file read back
- * ("Export my results", DECISIONS.md 80), and the owner's list of the random
- * IDs they vouch for (DECISIONS.md 81). `tools/eggs.ts` is the command line;
+ * ("Export my results", DECISIONS.md 81), and the owner's list of the random
+ * IDs they vouch for (DECISIONS.md 82). `tools/eggs.ts` is the command line;
  * this is what it does, apart, so test/eggs.test.ts can run it.
  *
  * THE TRUSTED LIST is the owner's own random IDs: results they cooked and

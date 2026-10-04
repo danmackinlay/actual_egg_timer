@@ -12,9 +12,9 @@
  *       NETLIFY_SITE_ID. The output is people's eggs: it stays out of git
  *       (fit/data/ is ignored), and is deleted with the id when they ask.
  *       A record under an ID on the owner's trusted list is marked
- *       `trusted` (tools/eggsImport.ts; DECISIONS.md 81).
+ *       `trusted` (tools/eggsImport.ts; DECISIONS.md 82).
  *   npm run eggs -- import <results.json> [<out.jsonl>] [--uid <id>]
- *       a results file ("Export my results", DECISIONS.md 80) as records in
+ *       a results file ("Export my results", DECISIONS.md 81) as records in
  *       the same shape, open and marked `source: 'export'`, under the file's
  *       random ID or `--uid`, and `trusted` if that ID is on the list;
  *       fit/data/imported.jsonl unless told. To fit on both, put the pull

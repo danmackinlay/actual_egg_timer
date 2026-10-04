@@ -5,7 +5,7 @@ peak yolk temperature at its scored cook time, on a grid of time-scales in
 literature sds (`zGrid`) - so the likelihood never runs the physics, only
 interpolates (INFERENCE.md section 9).
 
-TRUSTED IDS (DECISIONS.md 81): the owner vouches for their own random IDs,
+TRUSTED IDS (DECISIONS.md 82): the owner vouches for their own random IDs,
 and the fit gives those cooks' eggs the attested tier's full weight whatever
 tier they came in (`model.tier_weights`). The list is never committed: it
 is read from `fit/trusted.local.txt` (gitignored; `trusted.example.txt`

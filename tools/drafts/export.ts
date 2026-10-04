@@ -1,7 +1,7 @@
 /**
  * The `export` draft: "Export my results" (5 October 2026), on `5a24742`,
  * both apps. The owner asked for a way to get every result off a device
- * (DECISIONS.md 80): under "What I’ve learned" in Settings, a button that
+ * (DECISIONS.md 81): under "What I’ve learned" in Settings, a button that
  * saves the whole log to a file - a download on the web, the share sheet on
  * iOS - and that says so when there is nothing to save. "Export my results"
  * is the owner's own wording; "Nothing to export yet." is the plainest way

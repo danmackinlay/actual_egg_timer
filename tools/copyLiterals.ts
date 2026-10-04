@@ -96,7 +96,7 @@ const NOT_COPY: Record<string, string> = {
   'calibration.v4': 'UserDefaults key',
   'calibration.v4.unread': 'UserDefaults key',
   'cookInProgress.unread': 'UserDefaults key',
-  // the results file (Record.swift, `resultsFile`; DECISIONS.md 80): JSON
+  // the results file (Record.swift, `resultsFile`; DECISIONS.md 81): JSON
   // written to a file, never on a screen
   'actual-egg-timer-results-{}.json': 'results file name: the share sheet shows it as a file name',
   'Actual Egg Timer: every result this device kept, as it keeps them. "stored" is the app\'s store, whose "log" has one record per egg (INFERENCE.md section 4); "unread" holds any stored copy the app could not read, kept rather than overwritten.':

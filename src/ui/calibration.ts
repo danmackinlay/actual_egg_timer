@@ -50,12 +50,12 @@ export const APP_VERSION = '0.4.0-alpha.1';
 
 /** The posterior, the base under it, and the log. v4: a particle of six
  *  numbers. The key and the record's format change only with a migration
- *  (DECISIONS.md 80, which amends 48 for this one store). */
+ *  (DECISIONS.md 81, which amends 48 for this one store). */
 const KEY = 'aet.calibration.v4';
 
 /** Every stored copy this build could not read whole, as it was stored,
  *  newest last: kept before anything is written over it, so no build ever
- *  loses a log another wrote (DECISIONS.md 80). Exported with the results;
+ *  loses a log another wrote (DECISIONS.md 81). Exported with the results;
  *  "Start learning again" deletes it with them. */
 const UNREAD_KEY = 'aet.calibration.v4.unread';
 /** How many unread copies are kept. Each is the size of the store, about
@@ -438,7 +438,7 @@ function parseJSON(raw: string | null): unknown {
  *
  * `fresh` from a store that held something, and `rebased`, say `loses`: the
  * caller keeps the stored text aside before writing over it, so nothing a
- * build cannot read is ever lost (DECISIONS.md 80).
+ * build cannot read is ever lost (DECISIONS.md 81).
  *
  * The calibration and the base come back starting at `pop`'s centre
  * (`priorStart`): the start is not stored, since it is the population's.

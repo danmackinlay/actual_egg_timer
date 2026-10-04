@@ -275,7 +275,7 @@
     "learned.confirm.forget": { "surface": "button", "apps": ["web", "ios"], "text": "Start again" },
     "learned.confirm.keep": { "surface": "button", "apps": ["web", "ios"], "text": "Keep it" },
     "learned.confirm.message": { "surface": "body", "apps": ["web", "ios"], "text": "I’ll forget all your results and how long your water took to boil, and go back to the times for a typical egg." },
-    "learned.export": { "surface": "button", "apps": ["web", "ios"], "note": "Saves every result this device keeps to a file the cook keeps (DECISIONS.md 80): a download on the web, the share sheet on iOS. Nothing is sent. Offered on an empty log too, which says learned.export.none.", "text": "Export my results" },
+    "learned.export": { "surface": "button", "apps": ["web", "ios"], "note": "Saves every result this device keeps to a file the cook keeps (DECISIONS.md 81): a download on the web, the share sheet on iOS. Nothing is sent. Offered on an empty log too, which says learned.export.none.", "text": "Export my results" },
     "learned.export.none": { "surface": "body", "apps": ["web", "ios"], "note": "Under Export my results, when it is pressed with no result kept.", "text": "Nothing to export yet." },
 
     "learning.badge": { "surface": "label", "apps": ["web", "ios"], "note": "A small mark on the time while sharing is on (E8, DECISIONS.md 3 and 53): the time may be nudged a few seconds, and this says the app is still learning. Its (i) is learning.badge.more.", "text": "Learning" },

@@ -148,7 +148,7 @@ struct SettingsView: View {
                 .appFont(.footnote)
                 .foregroundStyle(.secondary)
             // Every result kept here, to a file through the share sheet
-            // (DECISIONS.md 80). Offered on an empty log too, which says
+            // (DECISIONS.md 81). Offered on an empty log too, which says
             // there is nothing to save.
             if Calibrations.resultsKept(planner.kept) > 0 {
                 ShareLink(

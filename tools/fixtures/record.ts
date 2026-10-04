@@ -376,7 +376,7 @@ recordCases.push({
   forecast: null,
 });
 
-/* The results file (DECISIONS.md 80): the same store makes the same file in
+/* The results file (DECISIONS.md 81): the same store makes the same file in
  * both apps, character for character. A store spliced in as it is, a missing
  * store, damaged and bare copies kept as strings, and every character the
  * escaping treats specially. */

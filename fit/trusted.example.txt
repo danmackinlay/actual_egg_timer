@@ -1,4 +1,4 @@
-# The owner's trusted random IDs (DECISIONS.md 81): the fit gives every result
+# The owner's trusted random IDs (DECISIONS.md 82): the fit gives every result
 # filed under one of these the attested tier's full weight, whatever tier it
 # came in. One ID per line; '#' to the end of a line is a comment.
 #

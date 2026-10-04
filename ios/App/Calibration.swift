@@ -39,7 +39,7 @@ struct Kept: Sendable {
 }
 
 /// "Export my results" as the share sheet takes it: a file, written when the
-/// cook picks where it goes, from what is stored then (DECISIONS.md 80).
+/// cook picks where it goes, from what is stored then (DECISIONS.md 81).
 struct ResultsExport: Transferable {
     let uid: String?
     let name: String
@@ -110,13 +110,13 @@ enum Calibrations {
     /// The posterior, the base under it, and the log. v4: a particle of six
     /// numbers. Nothing before it is read: no build older than this one left
     /// the owner's devices, so the v1-v3 stores are never looked at. The key
-    /// and the record's format change only with a migration (DECISIONS.md 80,
+    /// and the record's format change only with a migration (DECISIONS.md 81,
     /// which amends 48 for this one store).
     private static let key = "calibration.v4"
 
     /// Every stored copy this build could not read whole, as it was stored,
     /// newest last: kept before anything is written over it, so no build ever
-    /// loses a log another wrote (DECISIONS.md 80). Exported with the
+    /// loses a log another wrote (DECISIONS.md 81). Exported with the
     /// results; "Start learning again" deletes it with them. The web's
     /// `aet.calibration.v4.unread`.
     private static let unreadKey = "calibration.v4.unread"

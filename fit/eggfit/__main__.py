@@ -121,7 +121,7 @@ def main() -> None:
     f.add_argument("--samples", type=int, default=600)
     f.add_argument("--chains", type=int, default=2)
     f.add_argument("--trusted", default=data.TRUSTED_FILE,
-                   help="the owner's trusted IDs, one per line (DECISIONS.md 81); "
+                   help="the owner's trusted IDs, one per line (DECISIONS.md 82); "
                         "fit/trusted.local.txt by default, pooled with $EGGFIT_TRUSTED")
     a = ap.parse_args()
 
