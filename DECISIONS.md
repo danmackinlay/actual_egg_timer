@@ -398,3 +398,6 @@ Decided by the owner, 3 October 2026, on the privacy questions of
     deletion on the server reaches the local copy at the next pull. Like
     other citizen science, the records are kept for statistical purposes,
     pseudonymised (GDPR Art. 5(1)(e), 89(1)).
+76. **The random id is a Device ID on Apple's App Privacy label** ("Device
+    ID seems fine"), as `PrivacyInfo.xcprivacy` already declares: per
+    install, no account behind it.

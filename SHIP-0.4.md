@@ -105,7 +105,7 @@ so is the label's **Not Linked** (74).
       2026, "version 0.4: sharing added, …" (`2223bf9`).
 - [ ] **App Store Connect → App Privacy** (`ios/RELEASING.md` step 6). Left
       for the owner: confirming **Device ID** for the random id. Answered:
-      **Not Linked** (`DECISIONS.md` 74), the id as Device ID (to confirm), and App Attest needs no answer of its own, since what the
+      **Not Linked** (`DECISIONS.md` 74), the id as Device ID (`DECISIONS.md` 76), and App Attest needs no answer of its own, since what the
       server keeps for it hangs off that id and is App Functionality
       ("prevent fraud, implement security measures"; `DECISIONS.md` 72,
       `fbaa94c`). Step 6 still notes Other User Content for the answers,
