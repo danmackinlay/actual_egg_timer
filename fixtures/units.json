@@ -497,6 +497,7 @@
       "stepNum": 1,
       "stepDen": 1,
       "decimals": 0,
+      "trim": false,
       "unitKey": "unit.celsius",
       "formatKey": "format.celsius",
       "limit": null,
@@ -635,6 +636,7 @@
       "stepNum": 1,
       "stepDen": 1,
       "decimals": 0,
+      "trim": false,
       "unitKey": "unit.fahrenheit",
       "formatKey": "format.fahrenheit",
       "limit": null,
@@ -778,6 +780,7 @@
       "stepNum": 1,
       "stepDen": 1,
       "decimals": 0,
+      "trim": false,
       "unitKey": "unit.celsius",
       "formatKey": "format.celsius",
       "limit": {
@@ -1183,6 +1186,7 @@
       "stepNum": 1,
       "stepDen": 1,
       "decimals": 0,
+      "trim": false,
       "unitKey": "unit.fahrenheit",
       "formatKey": "format.fahrenheit",
       "limit": {
@@ -1753,6 +1757,7 @@
       "stepNum": 1,
       "stepDen": 10,
       "decimals": 1,
+      "trim": false,
       "unitKey": "unit.celsius",
       "formatKey": "format.celsius",
       "limit": null,
@@ -1891,6 +1896,7 @@
       "stepNum": 1,
       "stepDen": 10,
       "decimals": 1,
+      "trim": false,
       "unitKey": "unit.fahrenheit",
       "formatKey": "format.fahrenheit",
       "limit": null,
@@ -2034,6 +2040,7 @@
       "stepNum": 1,
       "stepDen": 10,
       "decimals": 1,
+      "trim": false,
       "unitKey": "unit.celsius",
       "formatKey": "format.celsius",
       "limit": null,
@@ -2172,6 +2179,7 @@
       "stepNum": 1,
       "stepDen": 10,
       "decimals": 1,
+      "trim": false,
       "unitKey": "unit.fahrenheit",
       "formatKey": "format.fahrenheit",
       "limit": null,
@@ -2311,10 +2319,11 @@
       "system": "metric",
       "region": null,
       "unit": "g",
-      "step": 1,
+      "step": 0.5,
       "stepNum": 1,
-      "stepDen": 1,
-      "decimals": 0,
+      "stepDen": 2,
+      "decimals": 1,
+      "trim": true,
       "unitKey": "unit.grams",
       "formatKey": "format.grams",
       "limit": {
@@ -2333,8 +2342,8 @@
         },
         {
           "si": 28.349523125,
-          "value": 28,
-          "text": "28"
+          "value": 28.5,
+          "text": "28.5"
         },
         {
           "si": 46.1,
@@ -2372,34 +2381,34 @@
           "text": "57"
         },
         {
+          "si": 57.5,
+          "value": 57.5,
+          "text": "57.5"
+        },
+        {
+          "si": 57.625,
+          "value": 57.5,
+          "text": "57.5"
+        },
+        {
+          "si": 57.75,
+          "value": 58,
+          "text": "58"
+        },
+        {
+          "si": 57.875,
+          "value": 58,
+          "text": "58"
+        },
+        {
           "si": 58,
           "value": 58,
           "text": "58"
         },
         {
           "si": 58.25,
-          "value": 58,
-          "text": "58"
-        },
-        {
-          "si": 58.5,
-          "value": 59,
-          "text": "59"
-        },
-        {
-          "si": 58.75,
-          "value": 59,
-          "text": "59"
-        },
-        {
-          "si": 59,
-          "value": 59,
-          "text": "59"
-        },
-        {
-          "si": 59.5,
-          "value": 60,
-          "text": "60"
+          "value": 58.5,
+          "text": "58.5"
         },
         {
           "si": 24.999999999,
@@ -2443,9 +2452,19 @@
           "text": "25"
         },
         {
+          "typed": 25.5,
+          "si": 25.5,
+          "text": "25.5"
+        },
+        {
           "typed": 26,
           "si": 26,
           "text": "26"
+        },
+        {
+          "typed": 26.5,
+          "si": 26.5,
+          "text": "26.5"
         },
         {
           "typed": 27,
@@ -2453,9 +2472,19 @@
           "text": "27"
         },
         {
+          "typed": 27.5,
+          "si": 27.5,
+          "text": "27.5"
+        },
+        {
           "typed": 28,
           "si": 28,
           "text": "28"
+        },
+        {
+          "typed": 28.5,
+          "si": 28.5,
+          "text": "28.5"
         },
         {
           "typed": 29,
@@ -2463,9 +2492,19 @@
           "text": "29"
         },
         {
+          "typed": 29.5,
+          "si": 29.5,
+          "text": "29.5"
+        },
+        {
           "typed": 30,
           "si": 30,
           "text": "30"
+        },
+        {
+          "typed": 30.5,
+          "si": 30.5,
+          "text": "30.5"
         },
         {
           "typed": 31,
@@ -2473,9 +2512,19 @@
           "text": "31"
         },
         {
+          "typed": 31.5,
+          "si": 31.5,
+          "text": "31.5"
+        },
+        {
           "typed": 32,
           "si": 32,
           "text": "32"
+        },
+        {
+          "typed": 32.5,
+          "si": 32.5,
+          "text": "32.5"
         },
         {
           "typed": 33,
@@ -2483,9 +2532,19 @@
           "text": "33"
         },
         {
+          "typed": 33.5,
+          "si": 33.5,
+          "text": "33.5"
+        },
+        {
           "typed": 34,
           "si": 34,
           "text": "34"
+        },
+        {
+          "typed": 34.5,
+          "si": 34.5,
+          "text": "34.5"
         },
         {
           "typed": 35,
@@ -2493,9 +2552,19 @@
           "text": "35"
         },
         {
+          "typed": 35.5,
+          "si": 35.5,
+          "text": "35.5"
+        },
+        {
           "typed": 36,
           "si": 36,
           "text": "36"
+        },
+        {
+          "typed": 36.5,
+          "si": 36.5,
+          "text": "36.5"
         },
         {
           "typed": 37,
@@ -2503,9 +2572,19 @@
           "text": "37"
         },
         {
+          "typed": 37.5,
+          "si": 37.5,
+          "text": "37.5"
+        },
+        {
           "typed": 38,
           "si": 38,
           "text": "38"
+        },
+        {
+          "typed": 38.5,
+          "si": 38.5,
+          "text": "38.5"
         },
         {
           "typed": 39,
@@ -2513,9 +2592,19 @@
           "text": "39"
         },
         {
+          "typed": 39.5,
+          "si": 39.5,
+          "text": "39.5"
+        },
+        {
           "typed": 40,
           "si": 40,
           "text": "40"
+        },
+        {
+          "typed": 40.5,
+          "si": 40.5,
+          "text": "40.5"
         },
         {
           "typed": 41,
@@ -2523,9 +2612,19 @@
           "text": "41"
         },
         {
+          "typed": 41.5,
+          "si": 41.5,
+          "text": "41.5"
+        },
+        {
           "typed": 42,
           "si": 42,
           "text": "42"
+        },
+        {
+          "typed": 42.5,
+          "si": 42.5,
+          "text": "42.5"
         },
         {
           "typed": 43,
@@ -2533,9 +2632,19 @@
           "text": "43"
         },
         {
+          "typed": 43.5,
+          "si": 43.5,
+          "text": "43.5"
+        },
+        {
           "typed": 44,
           "si": 44,
           "text": "44"
+        },
+        {
+          "typed": 44.5,
+          "si": 44.5,
+          "text": "44.5"
         },
         {
           "typed": 45,
@@ -2543,9 +2652,19 @@
           "text": "45"
         },
         {
+          "typed": 45.5,
+          "si": 45.5,
+          "text": "45.5"
+        },
+        {
           "typed": 46,
           "si": 46,
           "text": "46"
+        },
+        {
+          "typed": 46.5,
+          "si": 46.5,
+          "text": "46.5"
         },
         {
           "typed": 47,
@@ -2553,9 +2672,19 @@
           "text": "47"
         },
         {
+          "typed": 47.5,
+          "si": 47.5,
+          "text": "47.5"
+        },
+        {
           "typed": 48,
           "si": 48,
           "text": "48"
+        },
+        {
+          "typed": 48.5,
+          "si": 48.5,
+          "text": "48.5"
         },
         {
           "typed": 49,
@@ -2563,9 +2692,19 @@
           "text": "49"
         },
         {
+          "typed": 49.5,
+          "si": 49.5,
+          "text": "49.5"
+        },
+        {
           "typed": 50,
           "si": 50,
           "text": "50"
+        },
+        {
+          "typed": 50.5,
+          "si": 50.5,
+          "text": "50.5"
         },
         {
           "typed": 51,
@@ -2573,9 +2712,19 @@
           "text": "51"
         },
         {
+          "typed": 51.5,
+          "si": 51.5,
+          "text": "51.5"
+        },
+        {
           "typed": 52,
           "si": 52,
           "text": "52"
+        },
+        {
+          "typed": 52.5,
+          "si": 52.5,
+          "text": "52.5"
         },
         {
           "typed": 53,
@@ -2583,9 +2732,19 @@
           "text": "53"
         },
         {
+          "typed": 53.5,
+          "si": 53.5,
+          "text": "53.5"
+        },
+        {
           "typed": 54,
           "si": 54,
           "text": "54"
+        },
+        {
+          "typed": 54.5,
+          "si": 54.5,
+          "text": "54.5"
         },
         {
           "typed": 55,
@@ -2593,9 +2752,19 @@
           "text": "55"
         },
         {
+          "typed": 55.5,
+          "si": 55.5,
+          "text": "55.5"
+        },
+        {
           "typed": 56,
           "si": 56,
           "text": "56"
+        },
+        {
+          "typed": 56.5,
+          "si": 56.5,
+          "text": "56.5"
         },
         {
           "typed": 57,
@@ -2603,9 +2772,19 @@
           "text": "57"
         },
         {
+          "typed": 57.5,
+          "si": 57.5,
+          "text": "57.5"
+        },
+        {
           "typed": 58,
           "si": 58,
           "text": "58"
+        },
+        {
+          "typed": 58.5,
+          "si": 58.5,
+          "text": "58.5"
         },
         {
           "typed": 59,
@@ -2613,9 +2792,19 @@
           "text": "59"
         },
         {
+          "typed": 59.5,
+          "si": 59.5,
+          "text": "59.5"
+        },
+        {
           "typed": 60,
           "si": 60,
           "text": "60"
+        },
+        {
+          "typed": 60.5,
+          "si": 60.5,
+          "text": "60.5"
         },
         {
           "typed": 61,
@@ -2623,9 +2812,19 @@
           "text": "61"
         },
         {
+          "typed": 61.5,
+          "si": 61.5,
+          "text": "61.5"
+        },
+        {
           "typed": 62,
           "si": 62,
           "text": "62"
+        },
+        {
+          "typed": 62.5,
+          "si": 62.5,
+          "text": "62.5"
         },
         {
           "typed": 63,
@@ -2633,9 +2832,19 @@
           "text": "63"
         },
         {
+          "typed": 63.5,
+          "si": 63.5,
+          "text": "63.5"
+        },
+        {
           "typed": 64,
           "si": 64,
           "text": "64"
+        },
+        {
+          "typed": 64.5,
+          "si": 64.5,
+          "text": "64.5"
         },
         {
           "typed": 65,
@@ -2643,9 +2852,19 @@
           "text": "65"
         },
         {
+          "typed": 65.5,
+          "si": 65.5,
+          "text": "65.5"
+        },
+        {
           "typed": 66,
           "si": 66,
           "text": "66"
+        },
+        {
+          "typed": 66.5,
+          "si": 66.5,
+          "text": "66.5"
         },
         {
           "typed": 67,
@@ -2653,9 +2872,19 @@
           "text": "67"
         },
         {
+          "typed": 67.5,
+          "si": 67.5,
+          "text": "67.5"
+        },
+        {
           "typed": 68,
           "si": 68,
           "text": "68"
+        },
+        {
+          "typed": 68.5,
+          "si": 68.5,
+          "text": "68.5"
         },
         {
           "typed": 69,
@@ -2663,9 +2892,19 @@
           "text": "69"
         },
         {
+          "typed": 69.5,
+          "si": 69.5,
+          "text": "69.5"
+        },
+        {
           "typed": 70,
           "si": 70,
           "text": "70"
+        },
+        {
+          "typed": 70.5,
+          "si": 70.5,
+          "text": "70.5"
         },
         {
           "typed": 71,
@@ -2673,9 +2912,19 @@
           "text": "71"
         },
         {
+          "typed": 71.5,
+          "si": 71.5,
+          "text": "71.5"
+        },
+        {
           "typed": 72,
           "si": 72,
           "text": "72"
+        },
+        {
+          "typed": 72.5,
+          "si": 72.5,
+          "text": "72.5"
         },
         {
           "typed": 73,
@@ -2683,9 +2932,19 @@
           "text": "73"
         },
         {
+          "typed": 73.5,
+          "si": 73.5,
+          "text": "73.5"
+        },
+        {
           "typed": 74,
           "si": 74,
           "text": "74"
+        },
+        {
+          "typed": 74.5,
+          "si": 74.5,
+          "text": "74.5"
         },
         {
           "typed": 75,
@@ -2693,9 +2952,19 @@
           "text": "75"
         },
         {
+          "typed": 75.5,
+          "si": 75.5,
+          "text": "75.5"
+        },
+        {
           "typed": 76,
           "si": 76,
           "text": "76"
+        },
+        {
+          "typed": 76.5,
+          "si": 76.5,
+          "text": "76.5"
         },
         {
           "typed": 77,
@@ -2703,9 +2972,19 @@
           "text": "77"
         },
         {
+          "typed": 77.5,
+          "si": 77.5,
+          "text": "77.5"
+        },
+        {
           "typed": 78,
           "si": 78,
           "text": "78"
+        },
+        {
+          "typed": 78.5,
+          "si": 78.5,
+          "text": "78.5"
         },
         {
           "typed": 79,
@@ -2713,9 +2992,19 @@
           "text": "79"
         },
         {
+          "typed": 79.5,
+          "si": 79.5,
+          "text": "79.5"
+        },
+        {
           "typed": 80,
           "si": 80,
           "text": "80"
+        },
+        {
+          "typed": 80.5,
+          "si": 80.5,
+          "text": "80.5"
         },
         {
           "typed": 81,
@@ -2723,9 +3012,19 @@
           "text": "81"
         },
         {
+          "typed": 81.5,
+          "si": 81.5,
+          "text": "81.5"
+        },
+        {
           "typed": 82,
           "si": 82,
           "text": "82"
+        },
+        {
+          "typed": 82.5,
+          "si": 82.5,
+          "text": "82.5"
         },
         {
           "typed": 83,
@@ -2733,9 +3032,19 @@
           "text": "83"
         },
         {
+          "typed": 83.5,
+          "si": 83.5,
+          "text": "83.5"
+        },
+        {
           "typed": 84,
           "si": 84,
           "text": "84"
+        },
+        {
+          "typed": 84.5,
+          "si": 84.5,
+          "text": "84.5"
         },
         {
           "typed": 85,
@@ -2743,9 +3052,19 @@
           "text": "85"
         },
         {
+          "typed": 85.5,
+          "si": 85.5,
+          "text": "85.5"
+        },
+        {
           "typed": 86,
           "si": 86,
           "text": "86"
+        },
+        {
+          "typed": 86.5,
+          "si": 86.5,
+          "text": "86.5"
         },
         {
           "typed": 87,
@@ -2753,14 +3072,29 @@
           "text": "87"
         },
         {
+          "typed": 87.5,
+          "si": 87.5,
+          "text": "87.5"
+        },
+        {
           "typed": 88,
           "si": 88,
           "text": "88"
         },
         {
+          "typed": 88.5,
+          "si": 88.5,
+          "text": "88.5"
+        },
+        {
           "typed": 89,
           "si": 89,
           "text": "89"
+        },
+        {
+          "typed": 89.5,
+          "si": 89.5,
+          "text": "89.5"
         },
         {
           "typed": 90,
@@ -2770,28 +3104,28 @@
       ],
       "typed": [
         {
-          "typed": 24,
+          "typed": 24.5,
           "si": 25,
           "text": "25"
         },
         {
-          "typed": 91,
+          "typed": 90.5,
           "si": 90,
           "text": "90"
         },
         {
-          "typed": -975,
+          "typed": -475,
           "si": 25,
           "text": "25"
         },
         {
-          "typed": 25.333333333333332,
-          "si": 25.333333333333332,
+          "typed": 25.166666666666668,
+          "si": 25.166666666666668,
           "text": "25"
         },
         {
-          "typed": 89.66666666666667,
-          "si": 89.66666666666667,
+          "typed": 89.83333333333333,
+          "si": 89.83333333333333,
           "text": "90"
         },
         {
@@ -2810,6 +3144,7 @@
       "stepNum": 1,
       "stepDen": 10,
       "decimals": 1,
+      "trim": false,
       "unitKey": "unit.ounces",
       "formatKey": "format.ounces",
       "limit": {
@@ -3090,6 +3425,7 @@
       "stepNum": 50,
       "stepDen": 1,
       "decimals": 0,
+      "trim": false,
       "unitKey": "unit.metres",
       "formatKey": "format.metres",
       "limit": {
@@ -3785,6 +4121,7 @@
       "stepNum": 100,
       "stepDen": 1,
       "decimals": 0,
+      "trim": false,
       "unitKey": "unit.feet",
       "formatKey": "format.feet",
       "limit": {
@@ -4825,6 +5162,7 @@
       "stepNum": 1,
       "stepDen": 4,
       "decimals": 2,
+      "trim": false,
       "unitKey": "unit.litres",
       "formatKey": "format.litres",
       "limit": {
@@ -5220,6 +5558,7 @@
       "stepNum": 1,
       "stepDen": 4,
       "decimals": 2,
+      "trim": false,
       "unitKey": "unit.litres",
       "formatKey": "format.litres",
       "limit": {
@@ -5615,6 +5954,7 @@
       "stepNum": 1,
       "stepDen": 4,
       "decimals": 2,
+      "trim": false,
       "unitKey": "unit.quarts",
       "formatKey": "format.quarts",
       "limit": {
@@ -6015,6 +6355,7 @@
       "stepNum": 1,
       "stepDen": 4,
       "decimals": 2,
+      "trim": false,
       "unitKey": "unit.pints",
       "formatKey": "format.pints",
       "limit": {

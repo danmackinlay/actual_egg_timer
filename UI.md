@@ -31,6 +31,13 @@ them out differently.
   language. They live on a Settings page, visited rarely.
 - **The setup is a sentence, not a form.** What varies from egg to egg is one
   line of prose, and each clause of it is tappable (§5).
+- **Every number has a − and a +** beside it (4 October 2026): the egg's
+  weight and size, its temperature when it is Custom, the altitude, the water
+  and the number of eggs. A press steps it on its grid (`src/core/units.ts`:
+  0.5 g, 0.1 oz, 50 m, 100 ft, 0.25 L, …), held it repeats, and the number
+  stays typeable. The pair is as tall as the field, so no row grows. The web
+  draws its own (`src/ui/stepper.ts`); iOS uses the system's `Stepper`, one
+  adjustable element to VoiceOver.
 - **Terse control, longer (i).** A control's label stays short. What it means
   goes in a paragraph opened in place by an (i) (§4).
 - **One place for longer text per phase.** Each screen has a single slot for

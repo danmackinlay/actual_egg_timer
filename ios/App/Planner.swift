@@ -6,16 +6,15 @@ import EggTimerCopy
 /// Every input the solver has, and the answer it last gave.
 ///
 /// The solve is roughly a dozen full simulations of ten thousand steps each, so
-/// it does not belong on the main actor while a finger is on the slider. Each
-/// change coalesces for a moment, then starts a task that cancels the one in
-/// flight, and a result is only published if it is still the answer to the
-/// current question.
+/// it does not belong on the main actor while a finger is on the slider. One
+/// solve loop runs at a time, off the main actor, starting a solve at most
+/// every 90 ms (`recompute`): a change while it solves is taken up when that
+/// solve is done, whose answer is shown meanwhile, a step behind and without
+/// the snap. Only an answer to the current question is applied in full.
 ///
-/// The coalesce keeps most superseded slider ticks from starting, and the ones
-/// that do start inherit cancellation and check it between solves. Not
-/// `Task.detached`, which does not inherit cancellation: there `task?.cancel()`
-/// would cancel only the wrapper, and every superseded tick would run its full
-/// scan - about a second each with the heat off - for a result thrown away.
+/// The loop is not `Task.detached`, which does not inherit cancellation:
+/// "Eggs in" cancels it (`currentSolution`), and a detached loop would go on
+/// solving for a result thrown away.
 ///
 /// This file holds the inputs and what is derived from them. The solve is in
 /// Planner+Solve.swift, the learning from each egg in Planner+Learning.swift,
@@ -262,6 +261,41 @@ final class Planner {
         return EggTimerCore.adviceWanted(d.oddsTenths, profile: oddsProfile)
     }
 
+    // MARK: - Held on screen
+
+    /// The shading, the outcome and the low-odds link as last shown, kept
+    /// while a new pot's surface is built (`hold()`), so a tap on a stepper
+    /// does not blank them for the second that takes and bring them back.
+    /// Display only: what a cook started now carries is `decision` and
+    /// `shownOutcome`, which are nil until the surface lands.
+    struct Held {
+        var profile: OddsProfile?
+        var outcome: Outcome?
+        var adviceWanted = false
+    }
+    var held = Held()
+
+    /// Take what is on screen into `held`, wherever it is this pot's own.
+    func hold() {
+        if let p = oddsProfile { held.profile = p }
+        if decision != nil {
+            held.outcome = shownOutcome
+            held.adviceWanted = adviceWanted
+        }
+    }
+
+    /// Whether something held may stand in: a pan whose white sets, with this
+    /// pot's own not in yet.
+    private var holding: Bool { !isSousVide && solution?.whiteSets == true }
+
+    /// The track's shading: this pot's odds, or the last shown until they land.
+    var shownProfile: OddsProfile? { oddsProfile ?? (holding ? held.profile : nil) }
+    /// The direction and the bracket: this pot's, or the last shown until its
+    /// surface lands.
+    var heldOutcome: Outcome? { decision != nil ? shownOutcome : (holding ? held.outcome : nil) }
+    /// The low-odds link, likewise.
+    var shownAdviceWanted: Bool { decision != nil ? adviceWanted : (holding && held.adviceWanted) }
+
     // MARK: - Bookkeeping
     //
     // The solve's and the learning's own state. Internal for the same reason
@@ -287,7 +321,13 @@ final class Planner {
     }
     var folded: Folded?
 
+    /// The solve loop in flight, if one is (`recompute`), and which run it is.
     var task: Task<Void, Never>?
+    var solverRun = 0
+    /// When the loop last started a solve, for the throttle.
+    var lastSolveStart: ContinuousClock.Instant?
+    /// Waiting for the inputs to sit still before building a new pot's surface.
+    var settleTask: Task<Void, Never>?
     /// Bumped by every `recompute()`: which question the inputs are asking.
     var asked = 0
     /// Which question `solution` answers, or nil when it answers none of them -

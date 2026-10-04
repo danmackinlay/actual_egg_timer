@@ -48,7 +48,7 @@ struct PhaseActions: View {
                         .foregroundStyle(.secondary)
                 }
                 // The low-odds link (reach.ts).
-                if planner.adviceWanted {
+                if planner.shownAdviceWanted {
                     NavigationLink(value: Route.help(.reliable)) {
                         HStack(spacing: 4) {
                             Text(tr("advice.toggle"))

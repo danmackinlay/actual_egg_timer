@@ -5178,10 +5178,10 @@
       "si": 63.5,
       "key": "format.grams",
       "value": {
-        "value": 64,
-        "decimals": 0
+        "value": 63.5,
+        "decimals": 1
       },
-      "text": "64 g"
+      "text": "63.5 g"
     },
     {
       "locale": "en-US",
@@ -6088,10 +6088,10 @@
       "si": 63.5,
       "key": "format.grams",
       "value": {
-        "value": 64,
-        "decimals": 0
+        "value": 63.5,
+        "decimals": 1
       },
-      "text": "64 g"
+      "text": "63.5 g"
     },
     {
       "locale": "en-GB",
@@ -6998,10 +6998,10 @@
       "si": 63.5,
       "key": "format.grams",
       "value": {
-        "value": 64,
-        "decimals": 0
+        "value": 63.5,
+        "decimals": 1
       },
-      "text": "64 g"
+      "text": "63,5 g"
     },
     {
       "locale": "cs-CZ",

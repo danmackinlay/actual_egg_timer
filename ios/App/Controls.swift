@@ -86,11 +86,15 @@ struct CountValue: View {
 }
 
 /// A stored SI value typed in, in the cook's units, as the web's number
-/// fields are. What is typed is kept while it is being typed; every other
-/// time the field shows the stored value rounded to its step, so the field
-/// never fights the cursor and a rounded display is never parsed back over
-/// the stored value. A comma is the decimal point on half the world's
-/// keyboards (`parseTyped`).
+/// fields are, with a stepper beside it. What is typed is kept while it is
+/// being typed; every other time the field shows the stored value rounded to
+/// its step, so the field never fights the cursor and a rounded display is
+/// never parsed back over the stored value. A comma is the decimal point on
+/// half the world's keyboards (`parseTyped`).
+///
+/// The stepper steps the displayed value on the measure's grid, as
+/// `StepperValue` does, and repeats while held. A step ends the typing, so
+/// the field shows the number stepped to rather than what was half typed.
 struct MeasureField: View {
     let label: String
     let measure: Measure
@@ -107,7 +111,7 @@ struct MeasureField: View {
                     .keyboardType(.decimalPad)
                     .multilineTextAlignment(.trailing)
                     .textFieldStyle(.roundedBorder)
-                    .frame(maxWidth: 96)
+                    .frame(maxWidth: 72)
                     .focused($focused)
                     .onChange(of: text) {
                         guard focused else { return }
@@ -115,12 +119,24 @@ struct MeasureField: View {
                     }
                 Text(tr(measure.unitKey))
                     .foregroundStyle(.secondary)
+                Stepper(label, value: measured(measure, Binding(
+                    get: { value },
+                    set: { focused = false; set($0) }
+                )), in: measure.bounds ?? 0...0, step: measure.step)
+                    .labelsHidden()
+                    .accessibilityValue(spoken)
             }
         }
         .onAppear { text = shown }
         .onChange(of: value) { if !focused { text = shown } }
         .onChange(of: measure) { text = shown }
         .onChange(of: focused) { if !focused { text = shown } }
+    }
+
+    /// The stored value as VoiceOver says it, with its unit: "58.5 g".
+    private var spoken: String {
+        let q = quantityText(measure, value)
+        return tr(q.key, ["value": .fixed(q.value)])
     }
 
     /// The stored value as the field holds it: without the trailing zeros a

@@ -469,7 +469,11 @@ precisely than the table above:
 - **Metric steps are the web's old inputs**, rounded to what they showed:
   1 °C, boiling point 0.1 °C, 1 g, girth 1 mm, width 0.5 mm, 50 m, 0.25 L. Two
   iOS controls moved to the table: the weight slider from half grams to 1 g,
-  and the altitude stepper from 100 m to 50 m.
+  and the altitude stepper from 100 m to 50 m. **Since 4 October 2026 the
+  egg's mass steps in half grams again**, the owner's step for the − and +
+  beside every number, and shows only the decimals it needs ("58 g",
+  "58.5 g"; `trim`, metric mass only). A size class is still named to the
+  whole gram ("Extra large — 67 g").
 - **Water under Imperial is the US quart in region US and the imperial pint
   elsewhere**, from the region alone, like the size classes.
 - **Bounds round inward, and the display stays inside them.** A value clamped

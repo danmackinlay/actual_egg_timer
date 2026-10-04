@@ -212,6 +212,8 @@
     "nav.back": { "text": "Return" },
     "learned.title": { "text": "What I have learned" },
     "more.about": { "text": "Of {label}" },
+    "controls.less": { "text": "Diminish: {label}" },
+    "controls.more": { "text": "Augment: {label}" },
 
     "setup.sentence": { "text": "{egg} {from}, {start}, {cooling}." },
     "setup.sentenceSousVide": { "text": "{egg}, {start}." },

@@ -109,6 +109,12 @@ The one queue. Nothing else in the documents waits on the owner.
    en-US and 1750 twins (`LOGBOOK.md`, 3 October 2026, has a 1750
    suggestion).
 
+9. **The − and + beside every number, on a phone** (4 October 2026): in
+   both apps, stepping on the units grid (the egg's mass now in half grams,
+   shown "58 g" and "58.5 g"), repeating while held. The web's two
+   screen-reader names are the **`steppers`** draft ("Less: {label}",
+   "More: {label}"; in 1750, "Diminish:" and "Augment:").
+
 Waiting on someone else: the Czech review (F5), by the owner's friend.
 
 ## Open items
@@ -132,6 +138,11 @@ Waiting on someone else: the Czech review (F5), by the owner's friend.
   twin is `EggSection` (`Section.swift`), held by `fixtures/section.json`;
   iOS draws it beside `CookSentence` (`EggSectionView.swift`). Not yet seen
   on a phone in either app.
+- **iOS answers a change as the web does** (4 October, `LOGBOOK.md`): the
+  solve is throttled, not debounced, so a held stepper and a drag are
+  followed; the time moves 15-30 ms after a tap on the simulator. A new pot
+  still shows the mean solve's time and then, 0.7 s later, the time chosen
+  on its surface, a few seconds apart, in both apps. Not yet felt on a phone.
 - **Untested:** the Lock Screen card ending with the cooling, and the web's
   setup sentence while a cook runs (README §11.5).
 - **Someday:** an iPad app (`DECISIONS.md` 50). iOS is iPhone only; an iPad

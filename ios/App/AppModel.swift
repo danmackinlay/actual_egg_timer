@@ -37,6 +37,7 @@ final class AppModel {
         planner.load()
         #if DEBUG
         planner.seed(Screenshots.seedEggs)
+        Perf.drive(planner)
         #endif
         // After the solver is wired, so a restored cold start can revise
         // straight away rather than waiting for the next attempt.

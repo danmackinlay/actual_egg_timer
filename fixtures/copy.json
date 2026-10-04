@@ -661,6 +661,22 @@
     },
     {
       "locale": "en-x-1750",
+      "key": "controls.less",
+      "args": {
+        "label": "Altitude"
+      },
+      "text": "Diminish: Altitude"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "controls.more",
+      "args": {
+        "label": "Altitude"
+      },
+      "text": "Augment: Altitude"
+    },
+    {
+      "locale": "en-x-1750",
       "key": "setup.sentence",
       "args": {
         "egg": "2.4 oz eggs",
@@ -2218,6 +2234,22 @@
         "label": "Eggs in the pan"
       },
       "text": "About Eggs in the pan"
+    },
+    {
+      "locale": "en",
+      "key": "controls.less",
+      "args": {
+        "label": "Altitude"
+      },
+      "text": "Less: Altitude"
+    },
+    {
+      "locale": "en",
+      "key": "controls.more",
+      "args": {
+        "label": "Altitude"
+      },
+      "text": "More: Altitude"
     },
     {
       "locale": "en",

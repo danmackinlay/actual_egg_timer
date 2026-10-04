@@ -22,6 +22,10 @@ import EggTimerCore
 /// - `-sectionAhead 540`: draw the egg in cross-section as it will be that
 ///   many seconds on in the cook as planned, the pull and its grace included;
 ///   with `-uiScreen heating`, a cook part done without waiting for it.
+/// - `-perfProbe all`: after the first solve, tap, hold and drag the inputs
+///   on a script and print how long each takes to reach the screen
+///   (`Perf.swift`). `-altitudeM 0 -waterLitres 1.5 -doneness 0.5` start it
+///   from the same place each time.
 /// - `-shareServer http://localhost:8888`: send what sharing sends there
 ///   rather than to the live site (`Sharing.server`), for `npm run
 ///   serve:dev`.
