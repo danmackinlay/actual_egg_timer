@@ -31,7 +31,8 @@ import { CALIBRATION_SEED, PARTICLE_COUNT, calibrationGrid } from '../core/polic
 import {
   Calibration, EggFrom, EggRecord, Forecast, MODEL_ID, MassFrom, ProbeReading, RECORD_VERSION,
   calibrationDoneness as donenessOf, calibrationParams as paramsOf, copyCalibration, foldRecord,
-  freshCalibration as freshFrom, gridRequestFor, parseLog, recordMass_g, recordTeaches,
+  freshCalibration as freshFrom, gridRequestFor, parseRecord, recordMass_g, recordTeaches,
+  resultsFile, resultsFileName,
 } from '../core/record.js';
 import { UnitSystem } from '../core/units.js';
 import { registerOf } from '../core/language.js';
@@ -48,8 +49,18 @@ export type { Calibration } from '../core/record.js';
 export const APP_VERSION = '0.4.0-alpha.1';
 
 /** The posterior, the base under it, and the log. v4: a particle of six
- *  numbers. */
+ *  numbers. The key and the record's format change only with a migration
+ *  (DECISIONS.md 81, which amends 48 for this one store). */
 const KEY = 'aet.calibration.v4';
+
+/** Every stored copy this build could not read whole, as it was stored,
+ *  newest last: kept before anything is written over it, so no build ever
+ *  loses a log another wrote (DECISIONS.md 81). Exported with the results;
+ *  "Start learning again" deletes it with them. */
+const UNREAD_KEY = 'aet.calibration.v4.unread';
+/** How many unread copies are kept. Each is the size of the store, about
+ *  200 KB, and localStorage has about 5 MB. */
+const UNREAD_KEPT = 3;
 
 /** Every store before this one, deleted rather than read: the v1 and v2
  *  posteriors, which have no log behind them (v2 is what the live site of 19
@@ -69,6 +80,18 @@ export interface Kept {
    *  an answer being written down and its surface being built. */
   folded: number;
   log: EggRecord[];
+  /** Records this build cannot read - from a newer build, most likely - kept
+   *  as they were stored and written back, where they sat in the log, and
+   *  folded by nothing here. Absent when there are none. */
+  unread?: Unread[];
+}
+
+/** A record this build cannot read, and its place in the whole log: `at` is
+ *  its index among every record, readable or not, so a build that can read it
+ *  puts it back where it was. */
+export interface Unread {
+  at: number;
+  record: unknown;
 }
 
 /** A fresh prior, from the population this page read (population.ts). */
@@ -220,10 +243,15 @@ interface StoredV4 {
   /** The population the posterior was drawn from (E7). Absent in a store
    *  written before E7, every one of which was drawn from the literature. */
   p: string;
+  /** The `MODEL_ID` the posterior was folded under. Absent in a store
+   *  written before it was kept, which is replayed once. */
+  m: string;
   base: StoredPosterior | null;
   cal: StoredPosterior;
   folded: number;
   log: EggRecord[];
+  /** Absent when there are none. */
+  unread?: Unread[];
 }
 
 function storedPosterior(c: Calibration): StoredPosterior {
@@ -300,11 +328,13 @@ export function encodeKept(k: Kept, pop: Population = activePopulation()): strin
   const stored: StoredV4 = {
     v: 4,
     p: pop.id,
+    m: MODEL_ID,
     base: k.base === null ? null : storedPosterior(k.base),
     cal: storedPosterior(k.calibration),
     folded: k.folded,
     log: k.log,
   };
+  if (k.unread !== undefined && k.unread.length > 0) stored.unread = k.unread;
   return JSON.stringify(stored);
 }
 
@@ -316,6 +346,61 @@ type LoadPath =
 interface Decoded {
   kept: Kept;
   path: LoadPath;
+  /** Whether writing `kept` back would lose something the store held - a
+   *  log, or a store this build cannot read at all - so the stored text has
+   *  to be kept aside first (`UNREAD_KEY`). */
+  loses: boolean;
+}
+
+/** The unread records as stored: each a place and a record, or nothing. A
+ *  damaged list is read as far as its entries are sound. */
+function readUnread(raw: unknown): Unread[] {
+  if (!Array.isArray(raw)) return [];
+  const out: Unread[] = [];
+  for (const u of raw as unknown[]) {
+    if (u === null || typeof u !== 'object') continue;
+    const at = (u as { at?: unknown }).at;
+    if (typeof at !== 'number' || !Number.isInteger(at) || at < 0) continue;
+    out.push({ at: at, record: (u as { record?: unknown }).record ?? null });
+  }
+  out.sort((a, b) => a.at - b.at);
+  return out;
+}
+
+/**
+ * The log, read record by record: the stored log and the stored unread
+ * records put back together in their places, then every record this build
+ * can read in `log` and every one it cannot in `unread`, each with its place.
+ *
+ * A record that does not read is skipped and kept, not a reason to drop the
+ * log: a newer build's record, read by this one, is set aside and written
+ * back, and the next build that can read it puts it back where it was.
+ * `moved` says whether the split differs from the stored one - a record has
+ * become unreadable, or readable - in which case what the posterior absorbed
+ * is no longer the log, and it is replayed. Null when the log is not a list.
+ */
+function readLog(rawLog: unknown, rawUnread: unknown): { log: EggRecord[]; unread: Unread[]; moved: boolean } | null {
+  if (!Array.isArray(rawLog)) return null;
+  const listed = rawLog as unknown[];
+  const held = readUnread(rawUnread);
+  const log: EggRecord[] = [];
+  const unread: Unread[] = [];
+  let moved = false;
+  let li = 0;
+  let hi = 0;
+  for (let at = 0; li < listed.length || hi < held.length; at++) {
+    const fromHeld = hi < held.length && (held[hi].at <= at || li >= listed.length);
+    const raw = fromHeld ? held[hi++].record : listed[li++];
+    const r = parseRecord(raw);
+    if (r !== null) {
+      log.push(r);
+      if (fromHeld) moved = true;
+    } else {
+      unread.push({ at: at, record: raw });
+      if (!fromHeld) moved = true;
+    }
+  }
+  return { log: log, unread: unread, moved: moved };
 }
 
 function parseJSON(raw: string | null): unknown {
@@ -336,17 +421,24 @@ function parseJSON(raw: string | null): unknown {
  *  - no v4 that can be read: `fresh`, the prior.
  *  - the posterior damaged, the log good: `rebuild`. The log is the truth, so
  *    the posterior is set back to its start and every record is folded again.
- *  - the log damaged: `rebased`. The records cannot be folded, but what they
- *    taught is in the posterior, which is sound - so it becomes the base, and
- *    the log starts again empty. What is lost is the ability to replay those
- *    eggs, not what they taught.
+ *  - a record that does not read (a newer build's, most likely): skipped and
+ *    kept, in its place (`readLog`), and the rest replayed - `rebuild` - if
+ *    that changed what the posterior should hold.
+ *  - the log not a list at all: `rebased`. Its records cannot be folded, but
+ *    what they taught is in the posterior, which is sound - so it becomes the
+ *    base, and the log starts again empty.
  *  - a posterior that has absorbed more records than the log holds: also
  *    `rebased`, for the same reason.
  *  - a base that is damaged: dropped, and the log replayed from the prior.
  *  - a posterior drawn from another population than `pop` (E7: a release
- *    shipped a new one): `rebuild`, from a prior drawn from `pop` - "a model
- *    change is a replay" (INFERENCE.md section 4). A base cannot be replayed,
- *    so one stays as it is.
+ *    shipped a new one), or folded under another model (`MODEL_ID`, the
+ *    store's `m`): `rebuild`, from a prior drawn from `pop` - "a model change
+ *    is a replay" (INFERENCE.md section 4). A base cannot be replayed, so one
+ *    stays as it is.
+ *
+ * `fresh` from a store that held something, and `rebased`, say `loses`: the
+ * caller keeps the stored text aside before writing over it, so nothing a
+ * build cannot read is ever lost (DECISIONS.md 81).
  *
  * The calibration and the base come back starting at `pop`'s centre
  * (`priorStart`): the start is not stored, since it is the population's.
@@ -364,10 +456,11 @@ export function decodeKept(v4raw: string | null, pop: Population = activePopulat
 function decodeParts(v4raw: string | null, pop: Population): Decoded {
   const obj = parseJSON(v4raw);
   if (obj === null || typeof obj !== 'object' || (obj as { v?: unknown }).v !== 4) {
-    return { kept: freshKept(pop), path: 'fresh' };
+    return { kept: freshKept(pop), path: 'fresh', loses: v4raw !== null && v4raw !== '' };
   }
   const s = obj as Partial<Record<keyof StoredV4, unknown>>;
   const drawnFrom = typeof s.p === 'string' ? s.p : LITERATURE_POPULATION.id;
+  const foldedUnder = typeof s.m === 'string' ? s.m : null;
   let base: Calibration | null = null;
   let baseLost = false;
   if (s.base !== null) {
@@ -375,24 +468,38 @@ function decodeParts(v4raw: string | null, pop: Population): Decoded {
     baseLost = base === null;
   }
   const cal = readPosterior(s.cal);
-  const log = parseLog(s.log);
+  const read = readLog(s.log, s.unread);
   const folded = s.folded;
   const foldedOk = typeof folded === 'number' && Number.isInteger(folded) && folded >= 0;
 
-  if (log === null) {
+  if (read === null) {
     const sound = cal ?? base;
     return {
       kept: { base: sound, calibration: startOf(sound, pop), folded: 0, log: [] },
       path: 'rebased',
+      loses: true,
     };
   }
-  if (baseLost || cal === null || !foldedOk || drawnFrom !== pop.id) {
-    return { kept: { base: base, calibration: startOf(base, pop), folded: 0, log: log }, path: 'rebuild' };
+  const { log, unread } = read;
+  if (baseLost || cal === null || !foldedOk || drawnFrom !== pop.id || foldedUnder !== MODEL_ID || read.moved) {
+    return {
+      kept: { base: base, calibration: startOf(base, pop), folded: 0, log: log, unread: unread },
+      path: 'rebuild',
+      loses: false,
+    };
   }
   if ((folded as number) > log.length) {
-    return { kept: { base: cal, calibration: copyCalibration(cal), folded: 0, log: [] }, path: 'rebased' };
+    return {
+      kept: { base: cal, calibration: copyCalibration(cal), folded: 0, log: [] },
+      path: 'rebased',
+      loses: true,
+    };
   }
-  return { kept: { base: base, calibration: cal, folded: folded as number, log: log }, path: 'loaded' };
+  return {
+    kept: { base: base, calibration: cal, folded: folded as number, log: log, unread: unread },
+    path: 'loaded',
+    loses: false,
+  };
 }
 
 /* ------------------------------------------------------------- the state */
@@ -419,10 +526,70 @@ export function loadCalibration(): Calibration {
   // Whatever came before the log goes now, rather than sitting in storage
   // being neither read nor collected.
   for (const key of SUPERSEDED_KEYS) removeStorage(key);
-  const decoded = decodeKept(readStorage(KEY));
+  const raw = readStorage(KEY);
+  const decoded = decodeKept(raw);
+  // Kept aside BEFORE anything is written over it.
+  if (decoded.loses && raw !== null) keepUnread(raw);
   kept = decoded.kept;
   if (decoded.path !== 'loaded') save();
   return kept.calibration;
+}
+
+/** The stored copies kept aside, oldest first. A side key that is itself
+ *  not a list of texts is kept as one more text, not dropped. */
+function unreadCopies(): string[] {
+  const raw = readStorage(UNREAD_KEY);
+  if (raw === null) return [];
+  const list = parseJSON(raw);
+  if (Array.isArray(list) && list.every((x) => typeof x === 'string')) return list as string[];
+  return [raw];
+}
+
+/** Keep a stored text this build is about to write over, with the newest
+ *  others: the same text twice is kept once. */
+function keepUnread(raw: string): void {
+  const copies = unreadCopies().filter((c) => c !== raw);
+  copies.push(raw);
+  // The newest first to go in, should storage be short of room.
+  for (let n = Math.min(copies.length, UNREAD_KEPT); n >= 1; n--) {
+    writeStorage(UNREAD_KEY, JSON.stringify(copies.slice(copies.length - n)));
+    const now = unreadCopies();
+    if (now.length > 0 && now[now.length - 1] === raw) return;
+  }
+}
+
+/** A cook in progress this build could not read (app.ts, `restoreCook`), the
+ *  newest one, kept as stored: its egg may be one nothing else holds. */
+const UNREAD_COOK_KEY = 'aet.cook.unread';
+
+export function keepUnreadCook(text: string): void {
+  writeStorage(UNREAD_COOK_KEY, text);
+}
+
+/** Every copy kept aside, the stores first, then the cook. */
+function keptAside(): string[] {
+  const cook = readStorage(UNREAD_COOK_KEY);
+  return cook === null ? unreadCopies() : [...unreadCopies(), cook];
+}
+
+/** How many results there are to export: every record, read or not, and
+ *  every copy kept aside. */
+export function resultsKept(): number {
+  return kept.log.length + (kept.unread?.length ?? 0) + keptAside().length;
+}
+
+/**
+ * The results file (`resultsFile` in core): the store exactly as stored,
+ * the copies kept aside, and the sharing ID if there is one. Its name is the
+ * local day. Null when there is nothing in it to export.
+ */
+export function exportResults(uid: string | null, now_ms: number): { name: string; text: string } | null {
+  if (resultsKept() === 0) return null;
+  const text = resultsFile({
+    app: 'web', appVersion: APP_VERSION, exported: new Date(now_ms).toISOString(),
+    population: activePopulation().id, uid: uid,
+  }, readStorage(KEY), keptAside());
+  return { name: resultsFileName(localDay(now_ms)), text: text };
 }
 
 /** How many eggs are written down and not yet folded. */
@@ -560,7 +727,8 @@ export async function recordSecondAnswer(
   return true;
 }
 
-/** Forget every egg: the posterior, the base under it and the log. A run of
+/** Forget every egg: the posterior, the base under it, the log and every copy
+ *  kept aside - the cook asked for it, and confirmed. A run of
  *  wrong answers about how an egg was is otherwise undone only by clearing the
  *  site's storage, and the honest thing is to let someone take it back. The iOS
  *  app has the same. */
@@ -569,6 +737,8 @@ export function clearCalibration(): Calibration {
   live = -1;
   last = null;
   removeStorage(KEY);
+  removeStorage(UNREAD_KEY);
+  removeStorage(UNREAD_COOK_KEY);
   for (const key of SUPERSEDED_KEYS) removeStorage(key);
   kept = freshKept();
   return kept.calibration;

@@ -259,6 +259,24 @@ export const RESTORE_WINDOW_MS = 60 * 60 * 1000;
  *  partial restore that reads as a running cook resurrects a timer the user
  *  had already finished with. */
 export function restoreMachine(raw: unknown, now_ms: number): Machine | null {
+  const m = readMachine(raw);
+  if (m === null) return null;
+  const ends = m.coolEnd_ms > 0 ? m.coolEnd_ms : m.cookEnd_ms;
+  return now_ms > ends + RESTORE_WINDOW_MS ? null : m;
+}
+
+/** A stored machine run on to `now_ms`, however long ago it was, or null if
+ *  it does not read: for a cook too old to pick back up, whose egg may still
+ *  be one to log (app.ts, `restoreCook`). */
+export function staleMachine(raw: unknown, now_ms: number): Machine | null {
+  let m = readMachine(raw);
+  if (m === null) return null;
+  for (let i = 0; i < 4; i++) m = advance(m, now_ms).machine;
+  return m;
+}
+
+/** A stored machine, whatever its age, or null if it is damaged. */
+function readMachine(raw: unknown): Machine | null {
   if (raw === null || typeof raw !== 'object') return null;
   const r = raw as Record<string, unknown>;
 
@@ -282,8 +300,6 @@ export function restoreMachine(raw: unknown, now_ms: number): Machine | null {
   }
   if (!(numbers['startedAt_ms'] > 0) || !(numbers['cookEnd_ms'] > 0) || !(numbers['cool_s'] > 0)) return null;
 
-  const ends = numbers['coolEnd_ms'] > 0 ? numbers['coolEnd_ms'] : numbers['cookEnd_ms'];
-  if (now_ms > ends + RESTORE_WINDOW_MS) return null;
 
   // Who ended PULL: the cook, at a moment of their own, or the grace running
   // out; nobody yet before the pull.

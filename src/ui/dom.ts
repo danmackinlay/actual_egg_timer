@@ -96,6 +96,8 @@ function findDom() {
     forgetConfirm: el<HTMLDivElement>('forgetConfirm'),
     forgetYes: el<HTMLButtonElement>('forgetYes'),
     forgetNo: el<HTMLButtonElement>('forgetNo'),
+    exportResults: el<HTMLButtonElement>('exportResults'),
+    exportNote: el<HTMLParagraphElement>('exportNote'),
     shareSetting: el<HTMLInputElement>('shareSetting'),
     shareNote: el<HTMLParagraphElement>('shareNote'),
     shareId: el<HTMLParagraphElement>('shareId'),

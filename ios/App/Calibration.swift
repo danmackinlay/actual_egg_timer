@@ -1,4 +1,6 @@
+import CoreTransferable
 import Foundation
+import UniformTypeIdentifiers
 import EggTimerCore
 
 /// Bridges the particle filter in `EggTimerCore` to the app, and keeps the
@@ -30,13 +32,96 @@ struct Kept: Sendable {
     var calibration: Calibration
     var folded: Int
     var log: [EggRecord]
+    /// Records this build cannot read - a newer build's, most likely - kept as
+    /// they were stored and written back, where they sat in the log, and
+    /// folded by nothing here.
+    var unread: [Unread] = []
+}
+
+/// "Export my results" as the share sheet takes it: a file, written when the
+/// cook picks where it goes, from what is stored then (DECISIONS.md 81).
+struct ResultsExport: Transferable {
+    let uid: String?
+    let name: String
+
+    static var transferRepresentation: some TransferRepresentation {
+        FileRepresentation(exportedContentType: .json) { item in
+            let url = FileManager.default.temporaryDirectory.appendingPathComponent(item.name)
+            try Data(Calibrations.exportText(uid: item.uid).utf8).write(to: url, options: .atomic)
+            return SentTransferredFile(url)
+        }
+    }
+}
+
+/// A record this build cannot read, and its place among every record,
+/// readable or not, so a build that can read it puts it back where it was.
+struct Unread: Codable, Equatable, Sendable {
+    var at: Int
+    var record: JSONValue
+
+    enum CodingKeys: String, CodingKey { case at, record }
+}
+
+/// Any JSON value, kept as it was read: what a record this build cannot read
+/// is held as, so it is written back rather than lost.
+enum JSONValue: Codable, Equatable, Sendable {
+    case null
+    case bool(Bool)
+    case int(Int)
+    case double(Double)
+    case string(String)
+    case array([JSONValue])
+    case object([String: JSONValue])
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.singleValueContainer()
+        if c.decodeNil() {
+            self = .null
+        } else if let b = try? c.decode(Bool.self) {
+            self = .bool(b)
+        } else if let i = try? c.decode(Int.self) {
+            self = .int(i)
+        } else if let d = try? c.decode(Double.self) {
+            self = .double(d)
+        } else if let s = try? c.decode(String.self) {
+            self = .string(s)
+        } else if let a = try? c.decode([JSONValue].self) {
+            self = .array(a)
+        } else {
+            self = .object(try c.decode([String: JSONValue].self))
+        }
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.singleValueContainer()
+        switch self {
+        case .null: try c.encodeNil()
+        case .bool(let b): try c.encode(b)
+        case .int(let i): try c.encode(i)
+        case .double(let d): try c.encode(d)
+        case .string(let s): try c.encode(s)
+        case .array(let a): try c.encode(a)
+        case .object(let o): try c.encode(o)
+        }
+    }
 }
 
 enum Calibrations {
     /// The posterior, the base under it, and the log. v4: a particle of six
     /// numbers. Nothing before it is read: no build older than this one left
-    /// the owner's devices, so the v1-v3 stores are never looked at.
+    /// the owner's devices, so the v1-v3 stores are never looked at. The key
+    /// and the record's format change only with a migration (DECISIONS.md 81,
+    /// which amends 48 for this one store).
     private static let key = "calibration.v4"
+
+    /// Every stored copy this build could not read whole, as it was stored,
+    /// newest last: kept before anything is written over it, so no build ever
+    /// loses a log another wrote (DECISIONS.md 81). Exported with the
+    /// results; "Start learning again" deletes it with them. The web's
+    /// `aet.calibration.v4.unread`.
+    private static let unreadKey = "calibration.v4.unread"
+    /// How many unread copies are kept, each the size of the store.
+    private static let unreadKept = 3
 
     /// Carried on every record: the web app deploys on push and this one ships
     /// when a build does, and the fit has to know which version said what.
@@ -64,7 +149,7 @@ enum Calibrations {
     }
 
     /// Where a replay starts: the base if there is one, the prior if not.
-    private static func start(_ base: Calibration?) -> Calibration {
+    static func start(_ base: Calibration?) -> Calibration {
         base ?? fresh()
     }
 
@@ -91,10 +176,14 @@ enum Calibrations {
         var v = 4
         /// The population the posterior was drawn from (E7).
         var p: String
+        /// The `modelID` the posterior was folded under.
+        var m: String = modelID
         var base: StoredPosterior?
         var cal: StoredPosterior
         var folded: Int
         var log: [EggRecord]
+        /// Omitted when there are none.
+        var unread: [Unread]?
     }
 
     /// The parts of a stored v4 read one at a time, so a damaged part is refused
@@ -105,17 +194,20 @@ enum Calibrations {
         /// Absent in a store from before E7, every one drawn from the
         /// literature.
         var p: String?
+        /// Absent in a store from before it was kept, which is replayed once.
+        var m: String?
         var base: StoredPosterior?
         var baseDamaged = false
         var cal: StoredPosterior?
         var folded: Int?
 
-        enum CodingKeys: String, CodingKey { case v, p, base, cal, folded }
+        enum CodingKeys: String, CodingKey { case v, p, m, base, cal, folded }
 
         init(from decoder: Decoder) throws {
             let c = try decoder.container(keyedBy: CodingKeys.self)
             v = try? c.decode(Int.self, forKey: .v)
             p = try? c.decode(String.self, forKey: .p)
+            m = try? c.decode(String.self, forKey: .m)
             if c.contains(.base), (try? c.decodeNil(forKey: .base)) == false {
                 base = try? c.decode(StoredPosterior.self, forKey: .base)
                 baseDamaged = base == nil
@@ -125,8 +217,73 @@ enum Calibrations {
         }
     }
 
+    /// The log as stored, each record as it was, and the unread records with
+    /// their places; an unread entry that is itself damaged is passed over.
     private struct StoredLog: Decodable {
-        var log: [EggRecord]
+        var log: [JSONValue]
+        var unread: [Unread]
+
+        private struct MaybeUnread: Decodable {
+            var entry: Unread?
+            init(from decoder: Decoder) throws {
+                let c = try decoder.container(keyedBy: Unread.CodingKeys.self)
+                guard let at = try? c.decode(Int.self, forKey: .at), at >= 0 else { return }
+                let record: JSONValue = (try? c.decodeIfPresent(JSONValue.self, forKey: .record)) ?? .null
+                entry = Unread(at: at, record: record)
+            }
+        }
+
+        enum CodingKeys: String, CodingKey { case log, unread }
+
+        init(from decoder: Decoder) throws {
+            let c = try decoder.container(keyedBy: CodingKeys.self)
+            log = try c.decode([JSONValue].self, forKey: .log)
+            let held = (try? c.decode([MaybeUnread].self, forKey: .unread)) ?? []
+            // In place order, and stable: the web sorts the same way.
+            unread = held.compactMap(\.entry).enumerated()
+                .sorted { ($0.element.at, $0.offset) < ($1.element.at, $1.offset) }
+                .map(\.element)
+        }
+    }
+
+    /// A record as this build reads one: the Codable shape, then the rules.
+    private static func record(_ raw: JSONValue) -> EggRecord? {
+        guard let data = try? JSONEncoder().encode(raw),
+              let r = try? JSONDecoder().decode(EggRecord.self, from: data), validRecord(r) else { return nil }
+        return r
+    }
+
+    /// The web's `readLog`: the stored log and the unread records put back
+    /// together in their places, then every record this build reads in `log`
+    /// and every one it cannot in `unread`, with its place. `moved` says the
+    /// split differs from the stored one, so the posterior is replayed.
+    private static func readLog(_ listed: [JSONValue], _ held: [Unread]) -> (log: [EggRecord], unread: [Unread], moved: Bool) {
+        var log: [EggRecord] = []
+        var unread: [Unread] = []
+        var moved = false
+        var li = 0
+        var hi = 0
+        var at = 0
+        while li < listed.count || hi < held.count {
+            let fromHeld = hi < held.count && (held[hi].at <= at || li >= listed.count)
+            let raw: JSONValue
+            if fromHeld {
+                raw = held[hi].record
+                hi += 1
+            } else {
+                raw = listed[li]
+                li += 1
+            }
+            if let r = record(raw) {
+                log.append(r)
+                if fromHeld { moved = true }
+            } else {
+                unread.append(Unread(at: at, record: raw))
+                if !fromHeld { moved = true }
+            }
+            at += 1
+        }
+        return (log, unread, moved)
     }
 
     private static func columns(_ c: Calibration) -> StoredPosterior {
@@ -172,7 +329,7 @@ enum Calibrations {
     static func save(_ k: Kept) {
         let stored = StoredV4(
             p: population.id, base: k.base.map(columns), cal: columns(k.calibration), folded: k.folded,
-            log: k.log
+            log: k.log, unread: k.unread.isEmpty ? nil : k.unread
         )
         if let data = try? JSONEncoder().encode(stored) {
             UserDefaults.standard.set(data, forKey: key)
@@ -186,18 +343,28 @@ enum Calibrations {
     ///  - no v4 that can be read: the prior.
     ///  - the posterior damaged, the log good: the posterior goes back to its
     ///    start and the whole log is folded again.
-    ///  - the log damaged: what it taught is in the posterior, which is sound, so
-    ///    that becomes the new base and the log starts again empty.
+    ///  - a record that does not read (a newer build's, most likely): skipped
+    ///    and kept in its place (`readLog`), and the rest replayed if that
+    ///    changed what the posterior should hold.
+    ///  - the log not a list: what it taught is in the posterior, which is
+    ///    sound, so that becomes the new base and the log starts again empty.
     ///  - a posterior ahead of its log: the same.
     ///  - a damaged base: dropped, and the log replayed from the prior.
     ///  - a posterior drawn from another population (E7: a release shipped a
-    ///    new one): the log replayed from a prior drawn from this one - "a
+    ///    new one), or folded under another model (`modelID`, the store's
+    ///    `m`): the log replayed from a prior drawn from this population - "a
     ///    model change is a replay". A base cannot be replayed, and stays.
+    ///
+    /// A store that held something this build is about to write over - one it
+    /// cannot read at all, or a log it has to drop - is kept aside first, as
+    /// stored (`unreadKey`), so no build loses what another wrote.
     ///
     /// Whatever comes back starts at this population's centre: the start is
     /// the population's, not stored.
     static func load() -> Kept {
-        var (kept, loaded) = decode(UserDefaults.standard.data(forKey: key))
+        let raw = UserDefaults.standard.data(forKey: key)
+        var (kept, loaded, loses) = decode(raw)
+        if loses, let raw { keepUnread(String(decoding: raw, as: UTF8.self)) }
         let start = priorStart(population)
         kept.calibration.start = start
         kept.base?.start = start
@@ -205,37 +372,89 @@ enum Calibrations {
         return kept
     }
 
-    private static func decode(_ v4: Data?) -> (Kept, loaded: Bool) {
+    private static func decode(_ v4: Data?) -> (Kept, loaded: Bool, loses: Bool) {
         let decoder = JSONDecoder()
         guard let v4, let parts = try? decoder.decode(StoredParts.self, from: v4), parts.v == 4 else {
-            return (freshKept(), false)
+            return (freshKept(), false, v4.map { !$0.isEmpty } ?? false)
         }
         let base = calibration(parts.base)
         let cal = calibration(parts.cal)
-        let log: [EggRecord]? = {
-            guard let stored = try? decoder.decode(StoredLog.self, from: v4),
-                  stored.log.allSatisfy(validRecord) else { return nil }
-            return stored.log
-        }()
-        guard let log else {
+        guard let stored = try? decoder.decode(StoredLog.self, from: v4) else {
             let sound = cal ?? base
-            return (Kept(base: sound, calibration: start(sound), folded: 0, log: []), false)
+            return (Kept(base: sound, calibration: start(sound), folded: 0, log: []), false, true)
         }
+        let (log, unread, moved) = readLog(stored.log, stored.unread)
         guard !parts.baseDamaged, parts.base == nil || base != nil,
               let cal, let folded = parts.folded, folded >= 0,
-              (parts.p ?? literaturePopulation.id) == population.id else {
-            return (Kept(base: base, calibration: start(base), folded: 0, log: log), false)
+              (parts.p ?? literaturePopulation.id) == population.id,
+              parts.m == modelID, !moved else {
+            return (Kept(base: base, calibration: start(base), folded: 0, log: log, unread: unread), false, false)
         }
         if folded > log.count {
-            return (Kept(base: cal, calibration: cal, folded: 0, log: []), false)
+            return (Kept(base: cal, calibration: cal, folded: 0, log: []), false, true)
         }
-        return (Kept(base: base, calibration: cal, folded: folded, log: log), true)
+        return (Kept(base: base, calibration: cal, folded: folded, log: log, unread: unread), true, false)
     }
 
-    /// Forget every egg: the posterior, the base under it and the log. A run of
-    /// wrong answers about how an egg was is otherwise undone only by deleting
-    /// the app, and the honest thing is to let someone take it back.
+    /// The stored copies kept aside, oldest first.
+    private static func unreadCopies() -> [String] {
+        UserDefaults.standard.stringArray(forKey: unreadKey) ?? []
+    }
+
+    /// Keep a stored text this build is about to write over, with the newest
+    /// others; the same text twice is kept once.
+    private static func keepUnread(_ raw: String) {
+        var copies = unreadCopies().filter { $0 != raw }
+        copies.append(raw)
+        UserDefaults.standard.set(Array(copies.suffix(unreadKept)), forKey: unreadKey)
+    }
+
+    /// A cook in progress this build could not read (Cook.swift), the newest
+    /// one, kept as stored: its egg may be one nothing else holds.
+    private static let unreadCookKey = "cookInProgress.unread"
+
+    static func keepUnreadCook(_ data: Data) {
+        UserDefaults.standard.set(String(decoding: data, as: UTF8.self), forKey: unreadCookKey)
+    }
+
+    /// Every copy kept aside, the stores first, then the cook.
+    private static func keptAside() -> [String] {
+        unreadCopies() + [UserDefaults.standard.string(forKey: unreadCookKey)].compactMap { $0 }
+    }
+
+    /// How many results there are to export: every record, read or not, and
+    /// every copy kept aside.
+    static func resultsKept(_ k: Kept) -> Int {
+        k.log.count + k.unread.count + keptAside().count
+    }
+
+    /// The results file (`resultsFile` in EggTimerCore): the store exactly as
+    /// stored, the copies kept aside, and the sharing ID if there is one. Read
+    /// from storage when it is asked for, so it is what is stored then.
+    static func exportText(uid: String?, now: Date = .now) -> String {
+        let iso = ISO8601DateFormatter()
+        iso.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        let stored = UserDefaults.standard.data(forKey: key).map { String(decoding: $0, as: UTF8.self) }
+        return resultsFile(
+            ResultsMeta(app: .ios, appVersion: appVersion, exported: iso.string(from: now),
+                        population: population.id, uid: uid),
+            stored: stored, unread: keptAside()
+        )
+    }
+
+    /// The results file's name, for the local day.
+    static func exportName(now: Date = .now) -> String {
+        let c = Calendar(identifier: .gregorian).dateComponents([.year, .month, .day], from: now)
+        return resultsFileName(day: String(format: "%04d-%02d-%02d", c.year ?? 0, c.month ?? 0, c.day ?? 0))
+    }
+
+    /// Forget every egg: the posterior, the base under it, the log and every
+    /// copy kept aside. A run of wrong answers about how an egg was is
+    /// otherwise undone only by deleting the app, and the honest thing is to
+    /// let someone take it back.
     static func reset() {
         UserDefaults.standard.removeObject(forKey: key)
+        UserDefaults.standard.removeObject(forKey: unreadKey)
+        UserDefaults.standard.removeObject(forKey: unreadCookKey)
     }
 }

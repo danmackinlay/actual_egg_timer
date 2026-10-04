@@ -20,6 +20,37 @@ Read `report.md`. To publish, run the fit again with
 both apps draws from it, and every phone and browser replays its eggs from the
 new prior. `fit/data/` is gitignored: pulled records are people's eggs.
 
+## The owner's own results, and the trusted list
+
+The owner vouches for their own random IDs (`DECISIONS.md` 82): every egg
+under one counts at the attested tier's full weight, whatever tier it came in,
+and a trusted cook is never held out. The list never goes into git - it would
+tie the owner to their results - so it lives in `fit/trusted.local.txt`
+(gitignored), one ID per line, `#` for comments, and in `EGGFIT_TRUSTED`
+(commas or spaces); the two are pooled. To set it up:
+
+```
+cp fit/trusted.example.txt fit/trusted.local.txt
+# then add each of your IDs on its own line (Settings > Sharing results >
+# Your random ID, on each device that has shared)
+```
+
+A device's whole log, shared or not, comes in through "Export my results"
+(Settings, What I've learned) and `import` (`DECISIONS.md` 81):
+
+```
+npm run eggs -- import ~/Downloads/actual-egg-timer-results-2026-10-05.json fit/data/imported.jsonl
+cat fit/data/records.jsonl fit/data/imported.jsonl > fit/data/all.jsonl   # the pull first
+npm run eggs -- emulate fit/data/all.jsonl fit/data/emulated.json
+```
+
+`import` files the records under the ID in the file, which is the device's
+sharing ID; a device that never shared has none, so give it one with
+`--uid <id>` and put that ID on the list. It says whether the ID is trusted.
+`emulate` keeps the first copy of an egg that is in both files. `fit` reads
+the list again (`--trusted <path>` for another file), so an emulated file made
+before an ID was added is trusted all the same.
+
 ## Checking it on cooks whose answer is known
 
 ```
@@ -36,8 +67,8 @@ score of the truth's own population beside the fit's and the literature's.
 
 ## What is in it
 
-- `eggfit/data.py` — the emulated eggs as arrays, and the held-out split (a
-  fifth of the cooks, by a hash of the id).
+- `eggfit/data.py` — the emulated eggs as arrays, the held-out split (a
+  fifth of the cooks, by a hash of the id), and the trusted list.
 - `eggfit/model.py` — the model: two learned globals (the time-scale and the
   white's lag), heavy-tailed cook effects, the app's own likelihood read off
   each egg's emulator column, and the tiers (`DECISIONS.md` 2). NUTS.

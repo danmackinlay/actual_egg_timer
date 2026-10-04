@@ -10,8 +10,8 @@ population a prior is drawn from (E6-E8, `COLLECTIVE.md`) are built in
 both, on this branch, not on `main` and not deployed. The web app (`src/`) and the iOS app (`ios/`) carry
 the same model, refusals, particle filter and choice of time, the same
 catalogue of words in two Englishes (Phase F but for Czech), and the same
-layout (`UI.md`). `npm test` runs 311 tests, all passing (5b pins E3's known
-limit). `npm run validate` passes 29/29, and `swift test` passes 127 tests
+layout (`UI.md`). `npm test` runs 321 tests, all passing (5b pins E3's known
+limit). `npm run validate` passes 29/29, and `swift test` passes 128 tests
 in 33 suites. **Pushed on 29 September** at `5ff6940`, the owner's
 call: Netlify serves it at actualeggtimer.netlify.app, and the first run of
 `.github/workflows/verify.yml` passed. The iOS app runs from Xcode on the owner's
@@ -146,10 +146,30 @@ The one queue. Nothing else in the documents waits on the owner.
     measured room is the room the model cools toward and the Room egg's
     start (`roomInUse`, `src/core/policy.ts`), recorded in each result's
     `ambient_C` as before.
+13. **Your results, kept and exported** (5 October 2026, `DECISIONS.md` 81
+    and 82). The **`export`** draft, on a phone: "Export my results" under
+    What I’ve learned in Settings (1750: "Copy out my results"), a
+    download on the web and the share sheet on iOS, and "Nothing to export
+    yet." on an empty log. The log is never written over now: a record a
+    build cannot read is set aside and kept, a store it cannot read is
+    kept aside before anything replaces it, and the log is replayed when
+    the model changes. `npm run eggs -- import` reads an exported file for
+    the fit, and the fit gives your own random IDs full weight once they
+    are in `fit/trusted.local.txt` (`fit/README.md` says how).
 
 Waiting on someone else: the Czech review (F5), by the owner's friend.
 
 ## Open items
+
+- **What keeping the log cannot reach** (`DECISIONS.md` 81). A 0.3 build
+  (`main`) still drops a log it cannot read whole and writes over it, so
+  switching a device back to 0.3 can lose what 0.4 kept; export first.
+  `MODEL_ID` was not changed when the counter's physics was (`9d00f48`), so
+  records from 3 October say `2026-10-e8` under two counters; every stored
+  posterior is replayed once on this build regardless, since none says its
+  model yet. The web still offers no question after a reload: its panel's
+  rule (`src/ui/feedback.ts`, "beforeReload"); iOS now does when the egg is
+  the last in the log and not yet shared.
 
 - **Dim the time while it is recalculated**, the owner's idea (5 October
   2026), not wanted yet: while a newer answer is on its way, the time and its

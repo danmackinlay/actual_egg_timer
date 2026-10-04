@@ -313,3 +313,8 @@ export function loadCook(): StoredCook | null {
 export function clearCook(): void {
   removeStorage(COOK_KEY);
 }
+
+/** The cook as stored, for keeping aside one this build cannot read. */
+export function storedCookText(): string | null {
+  return readStorage(COOK_KEY);
+}

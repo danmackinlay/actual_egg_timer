@@ -4984,6 +4984,65 @@
       "record_C": 61.3
     }
   ],
+  "resultsFile": {
+    "version": 1,
+    "names": [
+      {
+        "day": "2026-10-05",
+        "name": "actual-egg-timer-results-2026-10-05.json"
+      },
+      {
+        "day": "2027-01-31",
+        "name": "actual-egg-timer-results-2027-01-31.json"
+      }
+    ],
+    "cases": [
+      {
+        "meta": {
+          "app": "web",
+          "appVersion": "0.4.0-alpha.1",
+          "exported": "2026-10-05T09:41:07.250Z",
+          "population": "2026-09",
+          "uid": null
+        },
+        "stored": "{\"v\":4,\"p\":\"2026-09\",\"m\":\"2026-10-e8\",\"folded\":1,\"log\":[{\"v\":1,\"uid\":null,\"day\":\"2026-09-26\",\"app\":\"web\",\"appVersion\":\"0.2.0\",\"prior\":\"2026-09\",\"model\":\"2026-10-e8\",\"egg\":{\"mass_g\":62,\"massFrom\":\"class\",\"sizeTable\":\"eu\"},\"setup\":{\"startMode\":\"hot\",\"eggStart_C\":4,\"eggFrom\":\"fridge\",\"ambient_C\":20,\"boiling_C\":100,\"timeToBoil_s\":0,\"timeToBoilFrom\":\"remembered\",\"cooling\":\"ice\",\"afterBoil\":\"hold\",\"waterLitres\":2,\"eggCount\":4},\"level\":0.3,\"recommended_s\":415.05859375,\"nudge_s\":0,\"pulled_s\":422.30859375,\"pulledBy\":\"cook\",\"cooled_s\":180,\"yolk\":-1,\"white\":\"runny\",\"probe\":null,\"forecast\":{\"cook_s\":415.05859375,\"yolk\":[0.25,0.5,0.25],\"white\":[0.375,0.5,0.125]},\"lang\":\"en\",\"register\":\"modern\",\"units\":\"metric\"}]}",
+        "unread": [],
+        "file": "{\"about\":\"Actual Egg Timer: every result this device kept, as it keeps them. \\\"stored\\\" is the app's store, whose \\\"log\\\" has one record per egg (INFERENCE.md section 4); \\\"unread\\\" holds any stored copy the app could not read, kept rather than overwritten.\",\"file\":1,\"app\":\"web\",\"appVersion\":\"0.4.0-alpha.1\",\"exported\":\"2026-10-05T09:41:07.250Z\",\"population\":\"2026-09\",\"model\":\"2026-10-e8\",\"uid\":null,\"stored\":{\"v\":4,\"p\":\"2026-09\",\"m\":\"2026-10-e8\",\"folded\":1,\"log\":[{\"v\":1,\"uid\":null,\"day\":\"2026-09-26\",\"app\":\"web\",\"appVersion\":\"0.2.0\",\"prior\":\"2026-09\",\"model\":\"2026-10-e8\",\"egg\":{\"mass_g\":62,\"massFrom\":\"class\",\"sizeTable\":\"eu\"},\"setup\":{\"startMode\":\"hot\",\"eggStart_C\":4,\"eggFrom\":\"fridge\",\"ambient_C\":20,\"boiling_C\":100,\"timeToBoil_s\":0,\"timeToBoilFrom\":\"remembered\",\"cooling\":\"ice\",\"afterBoil\":\"hold\",\"waterLitres\":2,\"eggCount\":4},\"level\":0.3,\"recommended_s\":415.05859375,\"nudge_s\":0,\"pulled_s\":422.30859375,\"pulledBy\":\"cook\",\"cooled_s\":180,\"yolk\":-1,\"white\":\"runny\",\"probe\":null,\"forecast\":{\"cook_s\":415.05859375,\"yolk\":[0.25,0.5,0.25],\"white\":[0.375,0.5,0.125]},\"lang\":\"en\",\"register\":\"modern\",\"units\":\"metric\"}]},\"unread\":[]}"
+      },
+      {
+        "meta": {
+          "app": "ios",
+          "appVersion": "0.4.0",
+          "exported": "2026-10-05T09:41:07Z",
+          "population": "2026-11",
+          "uid": "0f8fad5b-d9cb-469f-a165-70867728950e"
+        },
+        "stored": null,
+        "unread": [
+          "{not json",
+          "{\"v\":5,\"log\":[{\"a/b\":\"‘café’\"}]}",
+          "17",
+          "",
+          "tab\there \"quoted\" back\\slash \u0001\u001f"
+        ],
+        "file": "{\"about\":\"Actual Egg Timer: every result this device kept, as it keeps them. \\\"stored\\\" is the app's store, whose \\\"log\\\" has one record per egg (INFERENCE.md section 4); \\\"unread\\\" holds any stored copy the app could not read, kept rather than overwritten.\",\"file\":1,\"app\":\"ios\",\"appVersion\":\"0.4.0\",\"exported\":\"2026-10-05T09:41:07Z\",\"population\":\"2026-11\",\"model\":\"2026-10-e8\",\"uid\":\"0f8fad5b-d9cb-469f-a165-70867728950e\",\"stored\":null,\"unread\":[\"{not json\",{\"v\":5,\"log\":[{\"a/b\":\"‘café’\"}]},\"17\",\"\",\"tab\\there \\\"quoted\\\" back\\\\slash \\u0001\\u001f\"]}"
+      },
+      {
+        "meta": {
+          "app": "web",
+          "appVersion": "a\"b\\c/d\n\r\t\b\f\u0000’",
+          "exported": "x",
+          "population": "p",
+          "uid": "u"
+        },
+        "stored": "[1,2.5,-0.0001,1e+21]",
+        "unread": [
+          "{\"v\":4,\"p\":\"2026-09\",\"m\":\"2026-10-e8\",\"folded\":1,\"log\":[{\"v\":1,\"uid\":null,\"day\":\"2026-09-26\",\"app\":\"web\",\"appVersion\":\"0.2.0\",\"prior\":\"2026-09\",\"model\":\"2026-10-e8\",\"egg\":{\"mass_g\":62,\"massFrom\":\"class\",\"sizeTable\":\"eu\"},\"setup\":{\"startMode\":\"hot\",\"eggStart_C\":4,\"eggFrom\":\"fridge\",\"ambient_C\":20,\"boiling_C\":100,\"timeToBoil_s\":0,\"timeToBoilFrom\":\"remembered\",\"cooling\":\"ice\",\"afterBoil\":\"hold\",\"waterLitres\":2,\"eggCount\":4},\"level\":0.3,\"recommended_s\":415.05859375,\"nudge_s\":0,\"pulled_s\":422.30859375,\"pulledBy\":\"cook\",\"cooled_s\":180,\"yolk\":-1,\"white\":\"runny\",\"probe\":null,\"forecast\":{\"cook_s\":415.05859375,\"yolk\":[0.25,0.5,0.25],\"white\":[0.375,0.5,0.125]},\"lang\":\"en\",\"register\":\"modern\",\"units\":\"metric\"}]}"
+        ],
+        "file": "{\"about\":\"Actual Egg Timer: every result this device kept, as it keeps them. \\\"stored\\\" is the app's store, whose \\\"log\\\" has one record per egg (INFERENCE.md section 4); \\\"unread\\\" holds any stored copy the app could not read, kept rather than overwritten.\",\"file\":1,\"app\":\"web\",\"appVersion\":\"a\\\"b\\\\c/d\\n\\r\\t\\b\\f\\u0000’\",\"exported\":\"x\",\"population\":\"p\",\"model\":\"2026-10-e8\",\"uid\":\"u\",\"stored\":[1,2.5,-0.0001,1e+21],\"unread\":[{\"v\":4,\"p\":\"2026-09\",\"m\":\"2026-10-e8\",\"folded\":1,\"log\":[{\"v\":1,\"uid\":null,\"day\":\"2026-09-26\",\"app\":\"web\",\"appVersion\":\"0.2.0\",\"prior\":\"2026-09\",\"model\":\"2026-10-e8\",\"egg\":{\"mass_g\":62,\"massFrom\":\"class\",\"sizeTable\":\"eu\"},\"setup\":{\"startMode\":\"hot\",\"eggStart_C\":4,\"eggFrom\":\"fridge\",\"ambient_C\":20,\"boiling_C\":100,\"timeToBoil_s\":0,\"timeToBoilFrom\":\"remembered\",\"cooling\":\"ice\",\"afterBoil\":\"hold\",\"waterLitres\":2,\"eggCount\":4},\"level\":0.3,\"recommended_s\":415.05859375,\"nudge_s\":0,\"pulled_s\":422.30859375,\"pulledBy\":\"cook\",\"cooled_s\":180,\"yolk\":-1,\"white\":\"runny\",\"probe\":null,\"forecast\":{\"cook_s\":415.05859375,\"yolk\":[0.25,0.5,0.25],\"white\":[0.375,0.5,0.125]},\"lang\":\"en\",\"register\":\"modern\",\"units\":\"metric\"}]}]}"
+      }
+    ]
+  },
   "replay": {
     "grid": {
       "alphaCount": 7,

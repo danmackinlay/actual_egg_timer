@@ -188,6 +188,26 @@ struct RecordConformance {
         }
     }
 
+    /// The same store makes the same results file, character for character.
+    @Test("the results file is the TypeScript's, character for character")
+    func resultsFiles() throws {
+        let section = try Fixtures.object("record.json", "resultsFile")
+        #expect(try Int(section.num("version")) == resultsFileVersion)
+        for n in try Fixtures.list("record.json", "resultsFile.names") {
+            #expect(try resultsFileName(day: n.str("day")) == n.str("name"))
+        }
+        for c in try Fixtures.list("record.json", "resultsFile.cases") {
+            let m = try c.object("meta")
+            let meta = try ResultsMeta(
+                app: #require(AppName(rawValue: m.str("app"))), appVersion: m.str("appVersion"),
+                exported: m.str("exported"), population: m.str("population"), uid: m["uid"] as? String
+            )
+            let unread = try #require(c["unread"] as? [String])
+            let file = resultsFile(meta, stored: c["stored"] as? String, unread: unread)
+            #expect(try file == c.str("file"), "results file for \(meta.appVersion)")
+        }
+    }
+
     /// Written with explicit nulls, and read back as the same record.
     @Test("a record survives its own JSON, nulls and all")
     func roundTrip() throws {

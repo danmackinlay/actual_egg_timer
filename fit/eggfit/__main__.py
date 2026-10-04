@@ -72,6 +72,7 @@ def recovery(draws: dict, truth: dict) -> list[dict]:
 def report_md(r: dict) -> str:
     lines = ["# The population fit", "",
              f"Fitted on {r['fitting_cooks']} cooks ({r['fitting_eggs']} eggs: {r['weights']['attested']:.0f} attested, "
+             f"{r['weights']['trusted']:.0f} open but trusted, at full weight, "
              f"{r['weights']['open']:.0f} open at weight {r['weights']['open_weight']}); scored on {r['held_out_cooks']} held-out cooks "
              f"({r['held_out_eggs']} eggs). NUTS: {r['samples']} draws, {r['divergences']} divergent.", ""]
     if r.get("recovery"):
@@ -119,10 +120,16 @@ def main() -> None:
     f.add_argument("--warmup", type=int, default=600)
     f.add_argument("--samples", type=int, default=600)
     f.add_argument("--chains", type=int, default=2)
+    f.add_argument("--trusted", default=data.TRUSTED_FILE,
+                   help="the owner's trusted IDs, one per line (DECISIONS.md 82); "
+                        "fit/trusted.local.txt by default, pooled with $EGGFIT_TRUSTED")
     a = ap.parse_args()
 
-    eggs = data.load(a.emulated)
+    eggs = data.load(a.emulated, data.read_trusted(a.trusted))
     fitting, held = data.split(eggs, a.holdout)
+    # A trusted cook is never held out: its eggs are there to be fitted.
+    vouched = {u for u, t in zip(eggs.uid, eggs.trusted) if t}
+    fitting, held = fitting | vouched, held - vouched
     train = eggs.subset(fitting)
     test = eggs.subset(held)
     draws = model.fit(train, open_power=a.open_power, open_cap=a.open_cap,
@@ -131,8 +138,9 @@ def main() -> None:
     pid = a.id or f"fit-{datetime.date.today().isoformat()}"
     settings = {"openPower": a.open_power, "openCap": a.open_cap, "holdout": a.holdout,
                 "warmup": a.warmup, "samples": a.samples, "chains": a.chains}
+    # Counts only: the trusted IDs themselves never leave the owner's machine.
     source = {"cooks": len(train.cooks), "eggs": train.n, "attested": int(np.sum(train.tier == 1)),
-              "open": int(np.sum(train.tier == 0))}
+              "open": int(np.sum(train.tier == 0)), "trusted": int(np.sum(train.trusted))}
     pop = population.population(draws, eggs.constants, pid, source, settings)
     with open(a.out, "w") as fh:
         json.dump(pop, fh, indent=2)

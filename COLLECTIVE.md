@@ -181,6 +181,23 @@ its absence means.
 - **The tiers**: open-tier eggs enter under a likelihood raised to 0.5, and
   the open tier's effective weight is capped at the attested tier's
   (`DECISIONS.md` 2).
+- **The owner's trusted IDs** (`DECISIONS.md` 82): the owner vouches for
+  their own random IDs, and every result under one counts at the attested
+  tier's full weight whatever tier it came in - a build from Xcode is open
+  (68), and so is the web - and on the attested side of the cap. The list
+  is never committed, since it would tie the owner to their results: it is
+  `fit/trusted.local.txt` (gitignored; `fit/trusted.example.txt` shows the
+  shape) and `EGGFIT_TRUSTED`, pooled. `pull` and `import` mark the lines,
+  and the fit reads the list again, so either is enough. A trusted cook is
+  never held out. The published population says how many eggs were trusted,
+  never whose.
+- **The owner's own results, from a device** (`DECISIONS.md` 81): Settings,
+  "Export my results", saves the device's whole store to a file;
+  `npm run eggs -- import <file> [<out.jsonl>] [--uid <id>]` writes its
+  records as `pull` writes the store's, open and marked as from an export,
+  under the file's random ID (or `--uid`, when sharing was never on). Pool it
+  after a pull - `cat pulled.jsonl imported.jsonl` - and `emulate` keeps the
+  pull's copy of any egg that was also shared.
 - **Evaluation** is by proper scoring rules on held-out cooks, one step ahead
   (`DECISIONS.md` 37): the log score first, the ranked probability score,
   reliability diagrams and randomised PIT. Run on simulated cooks with a known
@@ -300,3 +317,5 @@ block.
 - The privacy page, which speaks in the owner's name.
 - With no attested eggs the open tier's cap gives it no weight in the fit at
   all: `DECISIONS.md` 2 read literally. The first real fit may want a floor.
+  The owner's own results no longer wait on it: their trusted IDs count in
+  full, and lift the cap for the rest (`DECISIONS.md` 82).

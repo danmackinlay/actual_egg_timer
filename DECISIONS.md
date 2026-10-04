@@ -444,3 +444,35 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     leans firmer to set the white (decision 7), so the bracket's median sits
     right of the thumb; the direction sentence says so. Not hatched or
     skipped, and the 3× runny-white cost is unchanged. 5 October 2026.
+81. **The owner's results are kept, and can be exported**: "build an
+    export function", and protect the log. Amends 48 for this one store:
+    **the results log's storage key and its record format change only
+    with a migration**, from now on (`calibration.v4` on iOS,
+    `aet.calibration.v4` on the web; the record is schema v1,
+    `INFERENCE.md` §4). Neither app writes over a log it cannot read: a
+    record it cannot read is set aside in its place and written back, and
+    a store it cannot read at all is kept as stored under a side key (the
+    newest three) before anything replaces it; a cook in progress it cannot
+    read is kept the same way. The posterior is replayed whenever the model
+    it was folded under (`MODEL_ID`, kept beside it) is not this build's.
+    "Export my results", in Settings under What I've learned, saves the
+    store exactly as stored and every copy kept aside to a file - a
+    download on the web, the share sheet on iOS, nothing sent - and
+    `npm run eggs -- import` reads it back for the fit. "Start learning
+    again" deletes what was kept aside with the rest. A cook too old to
+    pick back up that finished unanswered is logged as unanswered, and on
+    iOS a second answer after a relaunch is kept when the egg is the last
+    in the log and not yet shared. The results file `8d1ab68`; the log
+    kept, web `2e37357` and iOS `301668c`; dropped cooks and the second
+    answer `5a24742`; the `export` draft `7596437`; import `6910cbd`; the
+    privacy page `8354d8a`.
+82. **The owner's own random IDs are trusted in the population fit**:
+    "trust my random id explicitly". An egg under an ID the owner lists
+    counts at the attested tier's full weight whatever tier it came in -
+    a build from Xcode is open (68), and so is the web - and on the
+    attested side of the open tier's cap; a trusted cook is never held out.
+    The list is never committed, since it would tie the owner to their
+    results: `fit/trusted.local.txt` (gitignored) and `EGGFIT_TRUSTED`.
+    `npm run eggs -- pull` and `import` mark the lines, and the fit reads
+    the list again. The published population counts trusted eggs and names
+    no one. Built `6910cbd` (the tools) and `a9c5ac8` (the fit).

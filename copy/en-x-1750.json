@@ -274,6 +274,8 @@
     "learned.confirm.forget": { "text": "Begin anew" },
     "learned.confirm.keep": { "text": "Let it stand" },
     "learned.confirm.message": { "text": "I shall forget all your results, and how long your water was in boiling, and the times return to where they began." },
+    "learned.export": { "text": "Copy out my results" },
+    "learned.export.none": { "text": "There is nothing yet to copy out." },
 
     "learning.badge": { "text": "Yet learning" },
     "learning.badge.more": { "text": "You share your results, and so I am yet learning from them. Now and then I move the time some seconds either way, ten at most, to learn what passes just beside the time I would choose. It may leave an egg a little softer or firmer than I would otherwise aim at. Leave off sharing in the settings, and the time stays where I would put it." },

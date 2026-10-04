@@ -1,0 +1,11 @@
+# The owner's trusted random IDs (DECISIONS.md 82): the fit gives every result
+# filed under one of these the attested tier's full weight, whatever tier it
+# came in. One ID per line; '#' to the end of a line is a comment.
+#
+# Copy this file to fit/trusted.local.txt, which git ignores, and put your own
+# IDs there - never here: this file is public, and an ID in it would tie you
+# to your results. Each device shows its ID in Settings, under Sharing
+# results, once sharing has been on; `npm run eggs -- import` prints the one a
+# results file is filed under. EGGFIT_TRUSTED, in the environment, adds more.
+#
+# 00000000-0000-4000-8000-000000000000

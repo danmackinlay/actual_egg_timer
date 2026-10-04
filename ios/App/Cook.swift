@@ -521,22 +521,22 @@ final class Cook {
     /// constructed, and SwiftUI keeps only the first - so anything with side
     /// effects in `init` runs on instances that are then thrown away, starting
     /// tickers nobody will ever cancel.
-    func restoreIfNeeded() {
-        guard startedAt == nil else { return }
-        guard let data = UserDefaults.standard.data(forKey: Self.savedKey) else { return }
-        // A cook this build cannot read whole is dropped, not patched: no build
-        // that saved an older shape left the owner's devices.
+    ///
+    /// Returns the egg of a cook that is too old to pick up but finished and
+    /// never answered about, for the caller to log as unanswered: it was still
+    /// cooked, and the cook, the recommendation and the pull are data for the
+    /// fit, as at "Start again".
+    @discardableResult
+    func restoreIfNeeded() -> EggRecord? {
+        guard startedAt == nil else { return nil }
+        guard let data = UserDefaults.standard.data(forKey: Self.savedKey) else { return nil }
+        // A cook this build cannot read whole is not patched; it is kept
+        // aside, as stored, and exported with the results (DECISIONS.md 81):
+        // another build wrote it, and its egg may be one nothing else holds.
         guard let saved = try? JSONDecoder().decode(Saved.self, from: data) else {
+            Calibrations.keepUnreadCook(data)
             UserDefaults.standard.removeObject(forKey: Self.savedKey)
-            return
-        }
-
-        // An egg an hour past the end of its cooling step has been eaten or
-        // thrown out. Either way nobody wants yesterday's timer on screen.
-        let ends = saved.coolDoneAt ?? saved.pullAt
-        guard Date.now < ends.addingTimeInterval(3600) else {
-            UserDefaults.standard.removeObject(forKey: Self.savedKey)
-            return
+            return nil
         }
 
         startedAt = saved.startedAt
@@ -547,6 +547,26 @@ final class Cook {
         feedbackGiven = saved.feedbackGiven
         outAt = saved.outAt
         ticket = saved.ticket
+
+        // An egg an hour past the end of its cooling step has been eaten or
+        // thrown out. Either way nobody wants yesterday's timer on screen -
+        // but an egg that was cooked through and never answered about is
+        // still logged, as "Start again" would have logged it.
+        let ends = saved.coolDoneAt ?? saved.pullAt
+        guard Date.now < ends.addingTimeInterval(3600) else {
+            let egg = !saved.feedbackGiven && phase(at: .now) == .done ? eggRecord(yolk: nil) : nil
+            startedAt = nil
+            pullAt = nil
+            coolDoneAt = nil
+            assumedBoilS = 0
+            provisional = false
+            feedbackGiven = false
+            outAt = nil
+            ticket = nil
+            UserDefaults.standard.removeObject(forKey: Self.savedKey)
+            return egg
+        }
+
         // The alarms were handed to the system at absolute dates and are still
         // pending; read the count back rather than assuming it.
         let gen = generation
@@ -572,6 +592,7 @@ final class Cook {
             }
         }
         startTicking()
+        return nil
     }
 
     private func scheduleAlarms() {
