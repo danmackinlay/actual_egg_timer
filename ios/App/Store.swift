@@ -40,6 +40,8 @@ enum SettingsStore {
         // The probe thermometer, the same way: its own keys, and off when
         // they are absent.
         planner.restoreProbe(on: store.bool(forKey: "probe"), asked: store.bool(forKey: "probeAsked"))
+        // The measured room, absent until set: not measured.
+        planner.restoreRoom(store.object(forKey: "roomC") == nil ? nil : store.double(forKey: "roomC"))
         guard store.object(forKey: "doneness") != nil else { return }
         planner.doneness = clamp(store.double(forKey: "doneness"), to: Limits.doneness)
         // The last weighed mass, under its own key, so Weighed comes back to it
@@ -93,6 +95,11 @@ enum SettingsStore {
         // one, so a default can still follow the phone.
         store.set(planner.probe, forKey: "probe")
         store.set(planner.probeAsked, forKey: "probeAsked")
+        if let room = planner.roomC {
+            store.set(room, forKey: "roomC")
+        } else {
+            store.removeObject(forKey: "roomC")
+        }
         if let chosen = planner.unitsChosen {
             store.set(chosen.rawValue, forKey: "unitsChosen")
         } else {

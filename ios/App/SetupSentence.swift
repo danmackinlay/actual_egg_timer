@@ -359,8 +359,8 @@ struct ClausePanel: View {
                 .appFont(.subheadline)
             }
             Text(tr("controls.eggFrom.hint", [
-                "fridge": .text(planner.show(.temperature, StartTempPresets.fridgeC)),
-                "room": .text(planner.show(.temperature, StartTempPresets.roomC)),
+                "fridge": .text(planner.show(.temperature, startTempPresetC(.fridge, roomC: planner.roomInUseC))),
+                "room": .text(planner.show(.temperature, startTempPresetC(.room, roomC: planner.roomInUseC))),
             ]))
             .appFont(.caption)
             .foregroundStyle(.secondary)

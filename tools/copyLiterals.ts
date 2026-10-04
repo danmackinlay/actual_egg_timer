@@ -100,6 +100,7 @@ const NOT_COPY: Record<string, string> = {
   customStartC: 'UserDefaults key',
   probe: 'UserDefaults key',
   probeAsked: 'UserDefaults key',
+  roomC: 'UserDefaults key',
   unitsChosen: 'UserDefaults key',
   languageState: 'UserDefaults key',
   flip: 'notification userInfo key',

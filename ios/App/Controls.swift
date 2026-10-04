@@ -150,3 +150,106 @@ struct MeasureField: View {
         return String(s)
     }
 }
+
+/// A number in the measure's unit as a field holds it: to its decimals,
+/// without trailing zeros ("65", "64.5").
+func fieldText(_ m: Measure, _ value: Double) -> String {
+    let t = String(format: "%.\(m.decimals)f", value)
+    guard t.contains(".") else { return t }
+    var s = Substring(t)
+    while s.hasSuffix("0") { s = s.dropLast() }
+    if s.hasSuffix(".") { s = s.dropLast() }
+    return String(s)
+}
+
+/// A number that may be left empty, typed or stepped (the `feedback2` draft):
+/// the probe's reading after a cook, and the room in Settings. The empty
+/// field shows, greyed, where the − and + start: the peak the cook was
+/// started at, or the room assumed. A press steps on the measure's own grid
+/// for the − and + (`stepPast`: whole degrees for a probe that is typed to a
+/// tenth), from what is typed, or from the greyed number when nothing is, and
+/// repeats while held. Nothing untouched is ever taken as typed. A step ends
+/// the typing, so the field shows the number stepped to.
+struct NudgeField: View {
+    /// What VoiceOver calls the field and its stepper.
+    let label: String
+    let measure: Measure
+    @Binding var text: String
+    /// Where an empty field starts, stored in SI.
+    let startSI: Double
+    var width: CGFloat = 72
+    var disabled = false
+    /// When the typing ends, for a field that shows what was stored.
+    var endEditing: () -> Void = {}
+    @FocusState private var focused: Bool
+
+    var body: some View {
+        HStack(spacing: 6) {
+            TextField(label, text: $text, prompt: Text(fieldText(measure, start)))
+                .systemFigures()
+                .keyboardType(.decimalPad)
+                .multilineTextAlignment(.trailing)
+                .textFieldStyle(.roundedBorder)
+                .frame(minWidth: 56, maxWidth: width)
+                .focused($focused)
+                .disabled(disabled)
+                .accessibilityLabel(label)
+            Text(tr(measure.unitKey))
+                .foregroundStyle(.secondary)
+                .fixedSize()
+            Stepper(label) {
+                step(up: true)
+            } onDecrement: {
+                step(up: false)
+            }
+            .labelsHidden()
+            .disabled(disabled)
+            .accessibilityValue(text.isEmpty ? fieldText(measure, start) : text)
+        }
+        .onChange(of: focused) { if !focused { endEditing() } }
+    }
+
+    private var start: Double { nudgeFrom(measure, startSI) }
+
+    private func step(up: Bool) {
+        focused = false
+        let from = parseTyped(text) ?? start
+        text = fieldText(measure, stepPast(measure, from, up: up))
+    }
+}
+
+/// The room in Settings, measured with the probe: empty until set, when the
+/// room is assumed; emptied again, it is assumed again. The planner holds it
+/// in SI (`roomC`); the field holds what the cook typed or stepped to, and
+/// shows the stored room again whenever it is not being typed in.
+struct RoomField: View {
+    let planner: Planner
+    @State private var text = ""
+
+    var body: some View {
+        let m = planner.measure(.roomTemp)
+        NudgeField(
+            label: tr("controls.room"), measure: m, text: $text, startSI: StartTempPresets.roomC,
+            endEditing: { text = shown }
+        )
+            .onAppear { text = shown }
+            .onChange(of: text) {
+                let typed = text.trimmingCharacters(in: .whitespaces)
+                // What the stored room already shows is not a new number: a
+                // rounded display is never parsed back over it.
+                if typed == shown { return }
+                if typed.isEmpty {
+                    if planner.roomC != nil { planner.setRoom(nil) }
+                } else if let value = parseTyped(typed), let si = parse(m, value), si != planner.roomC {
+                    planner.setRoom(si)
+                }
+            }
+            .onChange(of: m) { text = shown }
+    }
+
+    private var shown: String {
+        guard let room = planner.roomC else { return "" }
+        let m = planner.measure(.roomTemp)
+        return fieldText(m, display(m, room))
+    }
+}

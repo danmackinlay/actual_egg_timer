@@ -241,6 +241,8 @@
     "controls.thermometer": { "text": "A probe thermometer" },
     "controls.thermometer.more": { "text": "When the counting-down of the cooling ends, the middle of the yolk is at its hottest, and I shall ask for one reading. Thrust the point to the very middle, and tell me the highest number you see: anywhere else, or any later, reads lower. That single reading teaches me how fast heat enters your eggs. In the open air nothing is counted down, and I do not ask." },
     "controls.thermometer.ask": { "text": "Ask a reading after every egg" },
+    "controls.room": { "text": "The warmth of the room" },
+    "controls.room.more": { "text": "At your pleasure. Hold the probe in the air of your kitchen, and set down what it reads; it signifies most for eggs that have stood in the room, and for eggs cooled in the open air. Leave it empty, and I shall suppose {room}." },
 
     "outcome.likely": { "text": "Probably as you desire." },
     "outcome.likely.firm": { "text": "Probably as you desire; if not, a little firm." },
@@ -292,6 +294,7 @@
     "share.deleting": { "text": "Expunging. If the server cannot now be reached, I shall ask again until it answers." },
     "share.deleted": { "text": "Expunged: the server keeps nothing this device sent." },
 
+    "feedback.target": { "text": "You desired: {doneness}, the yolk rising to {yolk}" },
     "feedback.ask": { "text": "In what condition was the yolk?" },
     "feedback.tooSoft": { "text": "Too rear" },
     "feedback.justRight": { "text": "As was desired" },

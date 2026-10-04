@@ -112,6 +112,19 @@ struct SettingsView: View {
                         get: { planner.probe },
                         set: { planner.setProbe($0) }
                     ))
+                    // The room, measured with the probe: offered only while
+                    // the probe is on, and optional (`roomInUse`).
+                    // Its label is too long to share a line with the field
+                    // and its stepper, so the control has a line of its own.
+                    if planner.probe {
+                        InfoRow("controls.room", more: [tr("controls.room.more", [
+                            "room": .text(planner.show(.temperature, StartTempPresets.roomC)),
+                        ])])
+                        HStack {
+                            Spacer(minLength: 0)
+                            RoomField(planner: planner)
+                        }
+                    }
                 }
             }
 

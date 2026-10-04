@@ -93,7 +93,7 @@ export function startTempPreset_C(preset: 'fridge' | 'room', room_C: number | nu
 /** The room the model is told about, C, or null to assume one: the cook's
  *  measured room, from Settings, which is offered - and so counts - only while
  *  they have said they have a probe thermometer (the owner's request of
- *  5 October 2026, DECISIONS.md 78). A setting out of sight changes nothing.
+ *  5 October 2026, DECISIONS.md 79). A setting out of sight changes nothing.
  *  Clamped, like everything typed or stored. */
 export function roomInUse(probe: boolean, room_C: number | null): number | null {
   if (!probe || room_C === null || !Number.isFinite(room_C)) return null;

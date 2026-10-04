@@ -1077,6 +1077,23 @@
     },
     {
       "locale": "en-x-1750",
+      "key": "feedback.target",
+      "args": {
+        "doneness": "jammy",
+        "yolk": "149 °F"
+      },
+      "text": "You desired: jammy, the yolk rising to 149 °F"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "controls.room.more",
+      "args": {
+        "room": "68 °F"
+      },
+      "text": "At your pleasure. Hold the probe in the air of your kitchen, and set down what it reads; it signifies most for eggs that have stood in the room, and for eggs cooled in the open air. Leave it empty, and I shall suppose 68 °F."
+    },
+    {
+      "locale": "en-x-1750",
       "key": "probe.refused",
       "args": {
         "low": "117.7 °F",
@@ -2658,6 +2675,23 @@
         "eggs": 0.5
       },
       "text": "0.5 more will go when I can reach the server."
+    },
+    {
+      "locale": "en",
+      "key": "feedback.target",
+      "args": {
+        "doneness": "jammy",
+        "yolk": "149 °F"
+      },
+      "text": "You asked for: jammy, peak yolk 149 °F"
+    },
+    {
+      "locale": "en",
+      "key": "controls.room.more",
+      "args": {
+        "room": "68 °F"
+      },
+      "text": "Optional. Hold your probe in the air of your kitchen and set what it reads. It matters most for eggs left out at room temperature and eggs cooled in the air. Leave it blank and I’ll assume 68 °F."
     },
     {
       "locale": "en",

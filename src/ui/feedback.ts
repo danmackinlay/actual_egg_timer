@@ -7,16 +7,18 @@
  * Asking once per egg is what closes that gap.
  */
 
-import { plausibleProbeRange_C } from '../core/policy.js';
+import { anchorNear, plausibleProbeRange_C } from '../core/policy.js';
+import { midSentence } from '../core/copy.js';
 import { Feedback, WhiteReport } from '../core/infer.js';
 import { ProbeReading, recordCookTime_s, recordProbe_C } from '../core/record.js';
-import { parse } from '../core/units.js';
+import { nudgeFrom, parse, stepPast } from '../core/units.js';
 import {
   Calibration, calibrationParams, eggRecordFor, learn, logEgg, recordSecondAnswer,
 } from './calibration.js';
-import { t } from './copy.js';
+import { activeLocale, t } from './copy.js';
 import { page } from './dom.js';
 import { Machine } from './machine.js';
+import { disableSteppers, setStepRule } from './stepper.js';
 import { KeptAnswers } from './store.js';
 import { Ticket } from './ticket.js';
 import { measure, show } from './units.js';
@@ -193,6 +195,24 @@ export function renderProbe(
   // Asked for until it is given, and left showing what was given.
   const visible = pending || (machine.phase === 'DONE' && page().probeReading.disabled);
   page().probeEntry.hidden = !visible;
+  // The − and + start from the peak the cook was started at, shown greyed in
+  // the empty field: a suggestion, never taken as a reading until stepped or
+  // typed. Plain digits, as the field holds them.
+  if (visible && ticket !== null) {
+    page().probeReading.placeholder = String(nudgeFrom(measure('probeTemp'), ticket.peakYolk_C));
+  }
+}
+
+/** What the cook on screen was started for, over the yolk question, so the
+ *  answer is graded against it: "You asked for: jammy, peak yolk 65 °C".
+ *  From the ticket and the doneness it was started at, never the slider now. */
+export function renderTarget(ticket: Ticket | null, targetLevel: number): void {
+  page().feedbackTarget.hidden = ticket === null;
+  if (ticket === null) return;
+  page().feedbackTarget.textContent = t('feedback.target', {
+    doneness: midSentence(t(anchorNear(targetLevel).key), activeLocale()),
+    yolk: show('temperature', ticket.peakYolk_C),
+  });
 }
 
 /**
@@ -227,6 +247,7 @@ function onProbeSave(): void {
     after_s: machine.coolEnd_ms > 0 && asked_s >= 0 ? asked_s : null,
   };
   page().probeReading.disabled = true;
+  disableSteppers(page().probeReading, true);
   page().probeSave.disabled = true;
   page().probeNote.textContent = show('probeTemp', reading_C);
   foldAnswer(null, null, probe);
@@ -236,6 +257,7 @@ function onProbeSave(): void {
 function resetProbe(): void {
   page().probeReading.value = '';
   page().probeReading.disabled = false;
+  disableSteppers(page().probeReading, false);
   page().probeSave.disabled = false;
   page().probeNote.textContent = '';
 }
@@ -243,6 +265,8 @@ function resetProbe(): void {
 /** Wire both rows of answers and the probe's entry. Once, at boot. */
 export function wireFeedback(h: FeedbackHost): void {
   host = h;
+  // Whole degrees, in the units on screen when pressed.
+  setStepRule(page().probeReading, (value, up) => stepPast(measure('probeTemp'), value, up));
   page().probeSave.addEventListener('click', onProbeSave);
   page().probeReading.addEventListener('keydown', (event) => {
     if (event.key === 'Enter') onProbeSave();
