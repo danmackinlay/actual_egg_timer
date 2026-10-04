@@ -344,6 +344,7 @@
     "colophon.lede": { "text": "I reckon each time from how heat enters an egg." },
     "colophon.link": { "text": "The source, and the reasoning" },
     "colophon.tail": { "text": "are open to the inspection of any reader." },
+    "colophon.version": { "text": "Edition {version}" },
 
     "controls.language": { "text": "Language" },
     "controls.language.more": { "text": "English (1750) is English as Samuel Johnson wrote it. I change to it when you choose Imperial, and back when you choose Metrick. Should the reader find this stile tiresome, choose English: the modern tongue is restored, and Fahrenheit’s scale kept." },

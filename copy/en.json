@@ -377,6 +377,7 @@
     "colophon.name": { "surface": "label", "apps": ["web", "ios"], "text": "Actual Egg Timer." },
     "colophon.lede": { "surface": "body", "apps": ["web", "ios"], "text": "I work out each time from how heat gets into an egg." },
     "colophon.link": { "surface": "body", "apps": ["web", "ios"], "text": "The code and the science" },
-    "colophon.tail": { "surface": "body", "apps": ["web", "ios"], "text": "are open for anyone to check." }
+    "colophon.tail": { "surface": "body", "apps": ["web", "ios"], "text": "are open for anyone to check." },
+    "colophon.version": { "surface": "label", "apps": ["web", "ios"], "note": "The last line of Settings, under the colophon: which version of the app this is, so that someone writing in can say which. {version} is the number, shown whole in a fixed-width face and selectable, to copy: on the web the release, such as 0.4.0-alpha.1; on iOS the App Store version and, in brackets, the build, such as 0.4.0 (2).", "text": "Version {version}", "example": { "version": "0.4.0-alpha.1" } }
   }
 }

@@ -123,6 +123,10 @@ struct SettingsView: View {
                 Text(colophon)
                     .appFont(.footnote)
                     .foregroundStyle(.secondary)
+                Text(versionLine)
+                    .appFont(.footnote)
+                    .foregroundStyle(.secondary)
+                    .textSelection(.enabled)
             }
         }
         .navigationTitle(tr("controls.settings"))
@@ -282,5 +286,22 @@ struct SettingsView: View {
         link.underlineStyle = .single
         return name + AttributedString(" " + tr("colophon.lede") + " ") + link
             + AttributedString(" " + tr("colophon.tail"))
+    }
+
+    /// The web's last line, "Version 0.4.0 (2)": the App Store version, which
+    /// holds only integers, and the build in brackets. The number is a run of
+    /// its own, fixed-width in the system face, as the random number is, so
+    /// the 1750 face never draws its 0 as an o; the line is selectable.
+    private var versionLine: AttributedString {
+        let info = Bundle.main.infoDictionary
+        let short = info?["CFBundleShortVersionString"] as? String ?? ""
+        let build = info?["CFBundleVersion"] as? String ?? ""
+        let mark = "\u{1}"
+        let parts = tr("colophon.version", ["version": .text(mark)]).components(separatedBy: mark)
+        var number = AttributedString(build.isEmpty ? short : "\(short) (\(build))")
+        number.font = .footnote.monospaced()
+        number.foregroundColor = .primary
+        return AttributedString(parts.first ?? "") + number
+            + AttributedString(parts.count > 1 ? parts[1] : "")
     }
 }

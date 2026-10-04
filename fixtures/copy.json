@@ -1589,6 +1589,14 @@
       "text": "2.4 oz · jammy · yolk to 149 °F"
     },
     {
+      "locale": "en-x-1750",
+      "key": "colophon.version",
+      "args": {
+        "version": "0.4.0-alpha.1"
+      },
+      "text": "Edition 0.4.0-alpha.1"
+    },
+    {
       "locale": "en",
       "key": "size.eu.small",
       "args": {
@@ -3163,6 +3171,14 @@
         "yolk": "149 °F"
       },
       "text": "2.4 oz · jammy · peak yolk 149 °F"
+    },
+    {
+      "locale": "en",
+      "key": "colophon.version",
+      "args": {
+        "version": "0.4.0-alpha.1"
+      },
+      "text": "Version 0.4.0-alpha.1"
     }
   ],
   "plural": [

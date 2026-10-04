@@ -100,6 +100,7 @@ function findDom() {
     shareNote: el<HTMLParagraphElement>('shareNote'),
     shareId: el<HTMLParagraphElement>('shareId'),
     shareUid: el<HTMLSpanElement>('shareUid'),
+    appVersion: el<HTMLParagraphElement>('appVersion'),
     shareDelete: el<HTMLButtonElement>('shareDelete'),
     shareConfirm: el<HTMLDivElement>('shareConfirm'),
     shareDeleteYes: el<HTMLButtonElement>('shareDeleteYes'),

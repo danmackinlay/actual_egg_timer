@@ -200,6 +200,10 @@ so is the label's **Not Linked** (74).
 
 ## E. Release
 
+- [x] **The version in Settings**, so a person writing in can say which
+      they have: "Version 0.4.0-alpha.1" on the web, "Version 0.4.0 (2)" on
+      iOS (the build in brackets), the last line under the colophon, the
+      number selectable; the `version` draft.
 - [ ] `INFERENCE.md`, `PLAN.md`, `UI.md` and `LOGBOOK.md` say what was built
       (`COLLECTIVE.md`'s shipping list).
 - [ ] Merge `main` into `0.4.x` once more, then `0.4.x` into `main`; version

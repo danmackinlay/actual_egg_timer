@@ -114,6 +114,12 @@ The one queue. Nothing else in the documents waits on the owner.
    shown "58 g" and "58.5 g"), repeating while held. The web's two
    screen-reader names are the **`steppers`** draft ("Less: {label}",
    "More: {label}"; in 1750, "Diminish:" and "Augment:").
+10. **The version at the foot of Settings, on a phone** (5 October 2026):
+   the **`version`** draft, "Version {version}" (1750: "Edition
+   {version}"), under the colophon in both apps, the number fixed-width and
+   selectable like the random number. The web shows `APP_VERSION`
+   ("0.4.0-alpha.1"); iOS the App Store version and its build ("0.4.0
+   (2)"), since the App Store version holds only integers.
 
 Waiting on someone else: the Czech review (F5), by the owner's friend.
 

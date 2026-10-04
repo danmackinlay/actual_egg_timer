@@ -35,7 +35,7 @@ import {
 import { MassFrom, forecastOf } from '../core/record.js';
 import { Outcome, predictOutcome } from '../core/outcome.js';
 import {
-  Calibration, cachedDecisionGrid, cachedOddsProfile, calibrationDoneness, calibrationParams,
+  APP_VERSION, Calibration, cachedDecisionGrid, cachedOddsProfile, calibrationDoneness, calibrationParams,
   clearCalibration, decisionGrid, decisionKey, eggRecordFor, eggsBehind, keptState, learn,
   loadCalibration, logEgg, oddsProfileFor, profileKey,
 } from './calibration.js';
@@ -962,6 +962,19 @@ function setLanguage(next: LanguageState): void {
   });
 }
 
+/** The last line of Settings, "Version 0.4.0-alpha.1": the words from the
+ *  catalogue, the number in a span of its own, fixed-width, so that the 1750
+ *  face never draws its 0 as an o. Selectable, like the random number. */
+function renderVersion(): void {
+  const mark = '\u0001';
+  const [before = '', after = ''] = t('colophon.version', { version: mark }).split(mark);
+  const number = document.createElement('span');
+  number.className = 'colophon__number';
+  number.translate = false;
+  number.textContent = APP_VERSION;
+  page().appVersion.replaceChildren(before, number, after);
+}
+
 /** Every word on the page again, in the catalogue now active: the marked-up
  *  ones (`applyCopy`), and each one the code drew. */
 function relabel(): void {
@@ -970,6 +983,7 @@ function relabel(): void {
   labelSteppers();
   labelTicks();
   renderMute();
+  renderVersion();
   applyUnitsToDom();
   applyLanguageToDom();
   // Drawn only when what they say changes, so they are told it has.
@@ -1329,6 +1343,7 @@ export function boot(): void {
   page().probeOfferNo.addEventListener('click', () => onProbeOffer(false));
   setMuted(settings.muted);
   renderMute();
+  renderVersion();
 
   wireFeedback({
     machine: () => machine,

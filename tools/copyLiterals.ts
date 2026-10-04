@@ -77,6 +77,8 @@ const NOT_COPY: Record<string, string> = {
   DONE: 'phase name, never shown',
   // the record (INFERENCE.md §4): schema, never shown
   CFBundleShortVersionString: 'Info.plist key',
+  CFBundleVersion: 'Info.plist key',
+  '{} ({})': 'the version and its build, "0.4.0 (2)": numbers, not words',
   unknown: 'record field value, never shown',
   '%04d-%02d-%02d': 'record day format, never shown',
   class: 'record field value, never shown',
