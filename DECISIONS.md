@@ -391,3 +391,10 @@ Decided by the owner, 3 October 2026, on the privacy questions of
     account, no IP stored and nothing identifying sent. `ios/RELEASING.md`
     step 6 gives the reasoning; `PrivacyInfo.xcprivacy` already says not
     linked.
+75. **The owner's local copy of the shared results is a snapshot, replaced
+    at every pull**, not deleted after each run: the server keeps the
+    records, so successive starting guesses are worked out from a fresh
+    pull ("otherwise how do we update the successive posteriors?"). A
+    deletion on the server reaches the local copy at the next pull. Like
+    other citizen science, the records are kept for statistical purposes,
+    pseudonymised (GDPR Art. 5(1)(e), 89(1)).

@@ -167,17 +167,18 @@
   app’s starting guesses: until you delete them, or until I stop making the
   app, when I delete them all. The App Attest details for a random number go
   when its last result does.</p>
-  <!-- OWNER: `npm run eggs -- pull` copies every record to the owner's
-       computer to work out new starting guesses (fit/data/, ignored by
-       git). The page promises that copy is deleted each time, so that a
-       deletion in the app reaches it by the next time at the latest.
-       Confirm that is how you will work, or say how the local copy is
-       handled instead. -->
+  <!-- The local copy (DECISIONS.md 75): `npm run eggs -- pull <file>`
+       writes the whole store to one file, overwriting it, so each pull is a
+       fresh snapshot and a deletion on the server reaches the local copy at
+       the next pull. Kept for scientific and statistical purposes, which
+       GDPR Art. 5(1)(e) and 89(1) allow longer storage for, with
+       pseudonymisation (the random number) as the safeguard. -->
   <p><strong>Who can see them.</strong> Only me, through my Netlify account,
   and Netlify, which stores them for me. I don’t publish anyone’s results or
   give them to anyone. To work out better starting guesses, I copy the
-  records to my own computer, never into the app’s public code, and delete
-  that copy when I’m done. What I publish is what I worked out: a handful
+  records to my own computer, never into the app’s public code. Each time I
+  do, the copy is replaced with a fresh one from the server, so once you
+  delete your results, they leave my computer too the next time. What I publish is what I worked out: a handful
   of numbers about eggs and kitchens in general, which every copy of the
   app starts from.</p>
   <!-- Netlify Observability records each request's client IP, time and

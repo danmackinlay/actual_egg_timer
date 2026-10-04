@@ -29,9 +29,7 @@ turns on a page that says what it collects.
 The page (`privacy/index.html`) changes first; everything else follows it.
 
 **The owner's items left in B** (after `DECISIONS.md` 67-74, 4 October
-2026): whether the **local copy** of the records is deleted after each time
-new starting guesses are worked out (its `OWNER` mark stays on the page),
-and confirming **Device ID** (not User ID) for the random id on Apple's
+2026): confirming **Device ID** (not User ID) for the random id on Apple's
 label. Retention is decided (73: no fixed period, criteria on the page) and
 so is the label's **Not Linked** (74).
 
@@ -48,8 +46,9 @@ so is the label's **Not Linked** (74).
       who can see it, Netlify's logs (a DELETE's path carries the id). The
       retention rule is a proposal marked `OWNER` in the page: until
       deleted, at most five years from the day the egg was cooked.
-- [ ] **The page's `OWNER:` marks** (comments in `privacy/index.html`):
-      one is left (the retention period was answered by `DECISIONS.md` 73):
+- [x] **The page's `OWNER:` marks** (comments in `privacy/index.html`):
+      none left (retention, 73; the local copy is a snapshot replaced at
+      every pull, 75). Was:
       deleting the copy of the
       records on your own computer (`npm run eggs -- pull`) each time you
       have worked out new starting guesses. Answered and removed
