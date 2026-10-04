@@ -442,7 +442,10 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     again" deletes what was kept aside with the rest. A cook too old to
     pick back up that finished unanswered is logged as unanswered, and on
     iOS a second answer after a relaunch is kept when the egg is the last
-    in the log and not yet shared. The `export` draft.
+    in the log and not yet shared. The results file `8d1ab68`; the log
+    kept, web `2e37357` and iOS `301668c`; dropped cooks and the second
+    answer `5a24742`; the `export` draft `7596437`; import `6910cbd`; the
+    privacy page `8354d8a`.
 82. **The owner's own random IDs are trusted in the population fit**:
     "trust my random id explicitly". An egg under an ID the owner lists
     counts at the attested tier's full weight whatever tier it came in -
@@ -452,4 +455,4 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     results: `fit/trusted.local.txt` (gitignored) and `EGGFIT_TRUSTED`.
     `npm run eggs -- pull` and `import` mark the lines, and the fit reads
     the list again. The published population counts trusted eggs and names
-    no one.
+    no one. Built `6910cbd` (the tools) and `a9c5ac8` (the fit).

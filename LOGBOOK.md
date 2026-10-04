@@ -4125,3 +4125,45 @@ its 41 characters. Kept, by the owner's call: the button's name, Full
 rolling boil, and "brought to the boil" and "to the boil", which sound like
 cooking. Proven with `copyLiterals --since 343fcff boiling` and the snapshot
 compare over 172 states.
+
+## 5 October 2026: the results log kept, exported, and trusted in the fit
+
+An audit found the owner's log could be lost three ways: one record a
+build could not read made both apps drop the whole log and write the store
+over at once (switching a device between 0.3 and 0.4 builds could do it); a
+model change never replayed the posterior; and a cook dropped on relaunch
+took its egg with it. The owner decided: export, protect the log, and trust
+the owner's own random IDs in the fit (`DECISIONS.md` 81, 82).
+
+The log now loses nothing this build writes. A record that does not read is
+set aside with its place among all the records (the store's `unread`) and
+written back; the next build that can read it puts it back where it was,
+and the posterior is replayed when the split changes. A store that does not
+read at all, or whose log is not a list, is kept as stored under
+`calibration.v4.unread` / `aet.calibration.v4.unread` (the newest three)
+before anything is written over it; so is a cook in progress from another
+build. The store keeps `MODEL_ID` as `m`, and a posterior folded under
+another model, or none said, is replayed - so every existing store is
+replayed once on this build. A 0.3 build still drops what it cannot read;
+nothing here can reach it.
+
+"Export my results" (the `export` draft) saves the store spliced in
+character for character with whatever was kept aside: core's
+`resultsFile`, twinned in Swift and pinned by `fixtures/record.json`.
+Driven: on the iPhone 17 simulator, three seeded eggs exported through the
+share sheet to Files as `actual-egg-timer-results-2026-10-05.json` (128 KB);
+`npm run eggs -- import` refused it without an ID (sharing was never on) and
+wrote 3 records with `--uid`. That store, with one record made unreadable
+and a damaged copy aside, loaded on the web at port 8110: the bad record
+kept in place, the other two replayed ("Learned from 2 results"), and the
+web's export held the store verbatim, the unread record and the copy. On an
+empty log both apps say "Nothing to export yet." The fit gives a trusted
+ID's eggs full weight and never holds them out; the list is
+`fit/trusted.local.txt`, gitignored. Tests: `test/record.test.ts` 1f,
+3a-3a4, 3b's model change, 4d; `test/eggs.test.ts`, a round trip with no
+fixture; `fit/tests/test_trusted.py`.
+
+Left: the web still offers no question after a reload (its panel's rule);
+iOS now resumes the questions when the egg is last in the log and not yet
+shared, replaying the log for an egg already folded. `MODEL_ID` did not
+change with the counter's physics on 3 October.
