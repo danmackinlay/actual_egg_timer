@@ -132,6 +132,11 @@ Waiting on someone else: the Czech review (F5), by the owner's friend.
   twin is `EggSection` (`Section.swift`), held by `fixtures/section.json`;
   iOS draws it beside `CookSentence` (`EggSectionView.swift`). Not yet seen
   on a phone in either app.
+- **iOS answers a change as the web does** (4 October, `LOGBOOK.md`): the
+  solve is throttled, not debounced, so a held stepper and a drag are
+  followed; the time moves 15-30 ms after a tap on the simulator. A new pot
+  still shows the mean solve's time and then, 0.7 s later, the time chosen
+  on its surface, a few seconds apart, in both apps. Not yet felt on a phone.
 - **Untested:** the Lock Screen card ending with the cooling, and the web's
   setup sentence while a cook runs (README §11.5).
 - **Someday:** an iPad app (`DECISIONS.md` 50). iOS is iPhone only; an iPad

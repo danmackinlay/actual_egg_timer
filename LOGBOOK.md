@@ -4031,3 +4031,53 @@ The id is shown whole, never shortened: the email needs all of it. Fixed-width i
 
 Built: the random number in Settings (above); the server files a development build's results in the open tier, as if unsigned, and the fit's pull reads every record's tier by the same rule (`countsAsGenuine`, `countedTier`), tested with a pair of synthetic attestations, development and production, under one made-up root; the privacy page names the renamed controls, says where the number is and that turning sharing off keeps what was sent; `ios/RELEASING.md` step 6 says App Attest needs no App Privacy answer of its own. Recorded, nothing built: no EU representative, the risk accepted.
 Left for the owner: the retention rule, the local copy of the records after each fit, and Linked to You or Not Linked.
+
+## 4 October 2026: iOS follows a held stepper and a drag
+
+The owner found iOS slow to answer a change of number: the time could take
+seconds to move. Measured before touching anything, on the iPhone 17
+simulator (iOS 26.5, an M-series Mac), with `-perfProbe all` (debug builds,
+`ios/App/Perf.swift`), which taps, holds and drags the inputs on a script and
+prints when each answer reaches the screen, from a fresh install at 0 m,
+1.5 L, a cold start.
+
+**What each stage costs**, the same in both apps' cores: a solve
+(`answerAt`) 13 ms in Swift and 20 ms in Node (40 and 73 ms with the heat
+off); a pot's decision surface 280-340 ms in Swift and 510-600 ms in Node;
+the odds profile 250-290 ms in Swift and 440-490 ms in Node. Swift's core is
+the faster of the two, and it is `-O` in Debug too (`Package.swift`), so a
+Release build measured the same as a Debug one to within noise, at every
+step below. The physics was never the problem.
+
+**What was slow was the coalesce.** Every change cancelled the solve in
+flight and started the 90 ms wait again: a debounce, where the web's
+`scheduleSolve` is a throttle. So:
+
+| Input (scripted) | Before | After |
+|---|---|---|
+| a stepper tap: the time moves | 106-125 ms | 15-30 ms |
+| a held stepper, a change every 100 ms for 2 s | nothing until 114-122 ms after release | every step, 17-31 ms after it |
+| the slider dragged for 1.5 s | nothing until 116-130 ms after release | every ~90 ms through the drag |
+| the time chosen on the new pot's surface | 770-840 ms after the last change | 650-700 ms |
+| the odds shading and the advice | 1160-1260 ms | 940-1050 ms |
+
+Debug and Release are within 5% of each other in every row, before and after.
+The main actor's worst lateness was 10-20 ms in most runs, before and after,
+with a lone tick of 67-204 ms in a few that did not repeat: nothing was
+blocking the screen; it was waiting.
+
+What changed (`Planner+Solve.swift`): one solve loop at a time, off the main
+actor, the first solve of a burst at once and each after it at most every
+90 ms. A change during a solve is taken up when it finishes, and the answer it
+just got is shown meanwhile, a step behind, without the snap, which would
+move the slider under a finger still moving it. The answer for where the
+finger stops is applied in full, as before. The surface still waits for the
+inputs to sit still for 300 ms, as on the web. While a new pot's surface and
+odds are built, the shading, the direction, the bracket and the low-odds link
+stay as they were (`Planner.held`) instead of going blank for that second;
+what "Eggs in" starts and records still reads only this pot's own decision.
+
+**Still there, as on the web:** a change of pot shows the mean solve's time
+first and the time chosen on its surface 0.7 s later, a few seconds apart
+(700 s, then 695 s, for a tap from 0 to 50 m). On a phone, slower than this Mac, that second
+correction will take longer.

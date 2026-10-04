@@ -32,7 +32,7 @@ struct DonenessControl: View {
             // deliver (OddsTrack), inset by half a thumb so a level sits under
             // the thumb that asks for it.
             ZStack {
-                OddsTrack(solution: planner.isSousVide ? nil : planner.solution, profile: planner.oddsProfile)
+                OddsTrack(solution: planner.isSousVide ? nil : planner.solution, profile: planner.shownProfile)
                     .frame(height: 10)
                     .padding(.horizontal, thumbInset)
                 YolkSlider(
@@ -45,7 +45,7 @@ struct DonenessControl: View {
             // Its room is kept while it is away, so the words under it do not
             // move when it lands.
             Group {
-                if let bracket = planner.shownOutcome {
+                if let bracket = planner.heldOutcome {
                     YolkBracket(outcome: bracket)
                 } else {
                     Color.clear.frame(height: 9).accessibilityHidden(true)

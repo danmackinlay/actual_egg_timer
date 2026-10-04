@@ -6,18 +6,21 @@ extension Planner {
 
     func changed() {
         guard !applying else { return }
+        #if DEBUG
+        Perf.input()
+        #endif
         SettingsStore.save(self)
         recompute()
     }
 
-    /// Coalesce solves. A drag fires `didSet` on every step, and a solve is
-    /// far too long to run on each one - with the heat off it is a standing
-    /// scan of about a second. 90 ms, the same window the web app uses.
-    private static let coalesceNanos: UInt64 = 90_000_000
+    /// Solves start at most this often. A drag fires `didSet` on every step,
+    /// and a solve is too long to run on each one - with the heat off it is a
+    /// standing scan. 90 ms, the same window the web app uses.
+    private static let coalesce = Duration.milliseconds(90)
 
-    /// How long the inputs must sit still, on top of the coalesce, before a new
-    /// pot's decision surface is built. The web app's `DECISION_SETTLE_MS`.
-    private static let settleNanos: UInt64 = 300_000_000
+    /// How long the inputs must sit still, after the solve, before a new pot's
+    /// decision surface is built. The web app's `DECISION_SETTLE_MS`.
+    private static let settle = Duration.milliseconds(300)
 
     /// The question the inputs ask, read on the main actor for a solve off it:
     /// what `recompute` and `currentSolution` both solve for.
@@ -46,62 +49,107 @@ extension Planner {
         )
     }
 
+    /// Re-solve for the inputs as they stand.
+    ///
+    /// A THROTTLE, as the web's `scheduleSolve` is, not a debounce. It used to
+    /// cancel the solve in flight and wait out 90 ms afresh on every change,
+    /// so a stepper held down (a change every 100 ms) or a drag landed nothing
+    /// at all until the finger stopped: measured on the simulator, the time on
+    /// screen froze for the whole two seconds of a hold (LOGBOOK.md, 4 October
+    /// 2026). Now one solve loop runs at a time. A change while it solves is
+    /// picked up when it finishes; the answer it just got is shown meanwhile,
+    /// a step behind, without the snap (`applyInterim`).
     func recompute() {
-        task?.cancel()
-        task = nil
         asked &+= 1
+        // A pot's surface is built only once the inputs have sat still.
+        settleTask?.cancel()
+        settleTask = nil
         // No pan, no solve. The sous-vide answer is `sousVide` (Planner.swift)
         // and needs none of this. It goes FIRST, before anything is solved for,
         // so it neither pays for a hot-start solve it would discard nor leaves
         // half of one on screen. Clearing the solution is what also makes the
         // start button dead, which is the truth here: there is nothing to start.
         if isSousVide {
+            task?.cancel()
+            task = nil
             solution = nil
             refusal = ""
             decision = nil
             outcome = nil
             oddsProfile = nil
             advice = []
+            held = Held()
             return
         }
-        let snapshot = inputSnapshot
-        // Tagged with the question it answers, so neither step below can land
-        // on inputs that have moved since, and "Eggs in" can tell whether the
-        // time on screen is theirs (`currentSolution`).
-        let question = asked
+        // The loop in flight takes the new question when its solve is done.
+        guard task == nil else { return }
+        solverRun &+= 1
+        let run = solverRun
         task = Task { [weak self] in
-            try? await Task.sleep(nanoseconds: Self.coalesceNanos)
-            guard !Task.isCancelled else { return }
+            await self?.solveLoop()
+            // Only this run's own handle: one cancelled by `currentSolution`
+            // may finish after a newer run has started.
+            if self?.solverRun == run { self?.task = nil }
+        }
+    }
+
+    /// Solve until an answer is for the inputs as they stand. The first solve
+    /// of a burst starts at once; each after it at most every 90 ms, the web
+    /// app's window.
+    private func solveLoop() async {
+        while true {
+            if let last = lastSolveStart {
+                let wait = Self.coalesce - (ContinuousClock.now - last)
+                if wait > .zero { try? await Task.sleep(for: wait) }
+            }
+            guard !Task.isCancelled, !isSousVide else { return }
+            lastSolveStart = ContinuousClock.now
+            let question = asked
+            let snapshot = inputSnapshot
             let inputs = snapshot.inputs
             let answer = await Self.solve(snapshot, inputs: inputs)
-            guard !Task.isCancelled else { return }
             // The time is chosen on this pot's decision surface. The surface
             // does not depend on the slider, so a drag is answered from the one
             // already built and the time never jumps mid-drag; a new pot shows
             // the mean solve's time first, and the chosen one when its surface
             // lands, once the inputs have settled.
+            var chosen: Answer?
             if let grid = await DecisionGrids.shared.cached(inputs) {
-                let chosen = await Self.decided(answer, grid: grid, snapshot)
-                guard !Task.isCancelled, question == self?.asked else { return }
-                self?.land(chosen, question: question, calibration: snapshot.calibration)
-                return
+                chosen = await Self.decided(answer, grid: grid, snapshot)
             }
-            guard question == self?.asked else { return }
-            self?.apply(answer, question: question)
-            try? await Task.sleep(nanoseconds: Self.settleNanos)
+            guard !Task.isCancelled, !isSousVide else { return }
+            guard question == asked else {
+                applyInterim(chosen ?? answer, question: question)
+                continue
+            }
+            if let chosen {
+                land(chosen, question: question, calibration: snapshot.calibration)
+            } else {
+                apply(answer, question: question)
+                settle(answer, snapshot, question: question)
+            }
+            return
+        }
+    }
+
+    /// Build this pot's surface once the inputs have sat still, and show the
+    /// time chosen on it if they still have.
+    private func settle(_ answer: Answer, _ snapshot: InputSnapshot, question: Int) {
+        settleTask = Task { [weak self] in
+            try? await Task.sleep(for: Self.settle)
             guard !Task.isCancelled else { return }
-            let grid = await DecisionGrids.shared.grid(inputs)
+            let grid = await DecisionGrids.shared.grid(snapshot.inputs)
             guard !Task.isCancelled else { return }
             let chosen = await Self.decided(answer, grid: grid, snapshot)
-            guard !Task.isCancelled, question == self?.asked else { return }
-            self?.land(chosen, question: question, calibration: snapshot.calibration)
+            guard !Task.isCancelled, let self, question == self.asked, !self.isSousVide else { return }
+            self.settleTask = nil
+            self.land(chosen, question: question, calibration: snapshot.calibration)
         }
     }
 
     /// A chosen answer, on screen: the solve is done with, and the profiles it
     /// found missing are asked for.
     private func land(_ chosen: Answer, question: Int, calibration: Calibration) {
-        task = nil
         apply(chosen, question: question)
         askForProfiles(chosen.missing, calibration: calibration)
     }
@@ -198,9 +246,15 @@ extension Planner {
         egg: Egg, setup: CookSetup, level: Double, calibration: Calibration, snapRetry: Bool = true,
         profile: OddsProfile? = nil
     ) async -> Answer {
+        #if DEBUG
+        let a = Perf.time(.answerAt) { answerAt(
+            calibration, egg: egg, setup: setup, level: level, profile: profile, snapRetry: snapRetry
+        ) }
+        #else
         let a = answerAt(
             calibration, egg: egg, setup: setup, level: level, profile: profile, snapRetry: snapRetry
         )
+        #endif
         return Answer(solution: a.solution, verdict: a.verdict, setup: setup, level: a.level, profile: profile)
     }
 
@@ -295,7 +349,18 @@ extension Planner {
         }
     }
 
-    private func apply(_ answer: Answer, question: Int) {
+    /// An answer for inputs that have moved on while it was solved: on screen
+    /// so a drag or a held stepper is followed, but without the snap, which
+    /// would move the slider under a finger that is still moving it. The
+    /// answer for where the finger stops comes next and is applied in full.
+    private func applyInterim(_ answer: Answer, question: Int) {
+        apply(answer, question: question, snap: false)
+    }
+
+    private func apply(_ answer: Answer, question: Int, snap: Bool = true) {
+        #if DEBUG
+        Perf.landed(question: question, interim: !snap, chosen: answer.decision != nil, odds: answer.profile != nil, cookS: answer.solution.result.cookTimeS)
+        #endif
         solution = answer.solution
         answered = question
         decision = answer.decision
@@ -304,7 +369,8 @@ extension Planner {
         oddsProfile = answer.profile
         advice = answer.advice
         refusal = refusalText(answer.verdict, setup: answer.setup, water: show(.water, answer.setup.waterLitres))
-        if let snapTo = answer.verdict.snapTo, snapTo != doneness {
+        hold()
+        if snap, let snapTo = answer.verdict.snapTo, snapTo != doneness {
             applying = true
             doneness = snapTo
             applying = false
