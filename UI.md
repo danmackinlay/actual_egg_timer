@@ -253,6 +253,17 @@ white never sets, in sous-vide, or once a cook runs; its room is kept, so
 nothing under it moves. On a fresh install it runs from soft to fudgy; after
 three consistent eggs it is about the thumb's width.
 
+It is the egg at the time on screen, so its mark is the thumb only when that
+time does not lean. Before the first egg nothing leans and the mark is the
+thumb. After it, at the soft end, the time leans later so the white sets (a
+runny white costs three, `DECISIONS.md` 7), and the mark sits right of the
+thumb by what that costs the yolk: at the far left of a cold start after
+three good eggs, the thumb at 0.06 and the mark at 0.14, 16 s later. The
+direction says so (`outcome.miss.firm` or `.likely.firm`). The slider never
+rests on the stripes or the dots: asked for
+less than the pan or the odds offer, it moves to the softest level offered,
+which is the level the time and the bracket are for (test/reach.test.ts 10).
+
 **The track is a yolk** (`DECISIONS.md` 31): deep orange at runny, golden at
 jammy, pale yellow at hard (web `--yolk-runny`, `--yolk-jammy`,
 `--yolk-hard`; iOS `Palette.yolkRunny`, `yolkJammy`, `yolkHard`), deeper in
@@ -275,7 +286,8 @@ hidden from it so it is not read twice. On iOS it is `YolkSlider`, a
 half-width so a level sits exactly under the thumb that asks for it; it
 keeps VoiceOver's adjustable behaviour (a swipe moves a tenth of the range,
 on the 0.01 grid) and ticks a selection haptic each time a drag crosses
-into another doneness word.
+into another doneness word. A snap that lands while the finger is down moves
+the thumb when the finger lifts; the web's thumb moves at once.
 
 ## 9. Where the apps differ
 

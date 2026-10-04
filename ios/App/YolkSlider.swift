@@ -31,6 +31,10 @@ struct YolkSlider: UIViewRepresentable {
         slider.step = Float(step)
         slider.value = Float(value)
         slider.addTarget(context.coordinator, action: #selector(Coordinator.changed(_:)), for: .valueChanged)
+        slider.addTarget(
+            context.coordinator, action: #selector(Coordinator.released(_:)),
+            for: [.touchUpInside, .touchUpOutside, .touchCancel]
+        )
         slider.onLayout = { [coordinator = context.coordinator] measured in
             coordinator.measured(measured)
         }
@@ -42,6 +46,7 @@ struct YolkSlider: UIViewRepresentable {
         context.coordinator.parent = self
         if abs(Double(slider.value) - value) > step / 2, !slider.isTracking {
             slider.value = Float(value)
+            context.coordinator.sent = nil
         }
         slider.accessibilityLabel = label
         slider.accessibilityValue = valueText
@@ -56,6 +61,10 @@ struct YolkSlider: UIViewRepresentable {
         /// thumb feels where Soft ends and Jammy begins.
         private let haptic = UISelectionFeedbackGenerator()
         private var word: String?
+        /// The last level the finger put on the grid. UIKit sends the same
+        /// value again - while the finger rests, and once more as it lifts -
+        /// and passing that on would undo a snap that landed in between.
+        var sent: Double?
 
         init(_ parent: YolkSlider) { self.parent = parent }
 
@@ -69,7 +78,24 @@ struct YolkSlider: UIViewRepresentable {
                 haptic.prepare()
             }
             word = nearest
+            guard next != sent else { return }
+            sent = next
             if next != parent.value { parent.value = next }
+        }
+
+        /// The finger is off: put the thumb where the value is. A snap that
+        /// lands while the finger is still down (to the softest level the
+        /// white allows, say) moves the value but not the thumb, which
+        /// `updateUIView` leaves alone while tracking, and nothing need redraw
+        /// after the finger lifts. Without this, and `sent`, the thumb rested
+        /// on the stripes at the far left while the time and the bracket were
+        /// for the level the slider had been moved to (LOGBOOK.md, 5 October
+        /// 2026). The web's thumb goes there.
+        @objc func released(_ slider: TracklessSlider) {
+            sent = nil
+            if abs(Double(slider.value) - parent.value) > parent.step / 2 {
+                slider.value = Float(parent.value)
+            }
         }
 
         func measured(_ inset: CGFloat) {

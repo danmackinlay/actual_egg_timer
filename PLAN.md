@@ -241,8 +241,10 @@ checked, fixed or deleted. Start the QA pass here.
   refold; the probe offer, typing a reading, its refusal and the "Probe it
   now" notification; the clause links, Done, the (i)s opening, the Forget
   confirmation, the advice link into Help, setting a weight, and Weighed
-  going back to the last weighed mass; a real drag on `YolkSlider` (the
-  thumb, the grid, and the white's line appearing mid-drag); the cooking,
+  going back to the last weighed mass; a drag on `YolkSlider` by a finger
+  on a phone (the simulator's synthetic drag reaches it, being a
+  `UISlider`, and drove the thumb to the far left and back on 5 October;
+  the haptic and the white's line mid-drag are still unfelt); the cooking,
   pull and done screens in their words, and the direction mid-cook; the
   lower half of Settings and Help's reliability section with advice in it;
   a Live Activity cancelled mid-start.
@@ -273,8 +275,9 @@ checked, fixed or deleted. Start the QA pass here.
   judging; only a thermometer can.
 - **Cases no run has shown**: "It could miss" where a miss is nearly
   certain (a pot where no level reaches 3/10 and the lean is strong); the
-  bracket's median mark parting from the thumb (a cook who likes a firmer
-  yolk).
+  bracket's median mark parting from the thumb for a cook who likes a firmer
+  yolk (it has been seen parting at the soft end, where the white leans the
+  time, on the web: `UI.md` §8).
 - **For the owner's eye**: the light scheme's hard end, a mustard (no paler
   stop was tried), and iOS's accent wash on an open clause.
 - **Locales measured but not pinned**: en-CA and en-IN/NZ/SG print a time of
