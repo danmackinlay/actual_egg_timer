@@ -194,7 +194,7 @@
     "help.unsure.title": { "text": "Where I am in doubt" },
     "help.unsure.counter": { "text": "The open air. No one appears to have made publick how fast an egg cools in still air, and that is therefore the weakest of my numbers." },
     "help.unsure.heatOff": { "text": "The fire out. I suppose an ordinary pan with its lid on; a heavy pot or a loose lid will alter the time." },
-    "help.unsure.white": { "text": "Whites. I cannot distinguish a white that sets late from a cook who calls a tender white unset." },
+    "help.unsure.white": { "text": "Whites. When you call a white unset, I cannot tell whether it set late, or whether you call a tender white unset." },
     "help.unsure.sousVide": { "text": "Sous-vide. Below {floor} the white remains liquid and moves within the shell, which I leave out of my account; there I am not to be trusted. By my reckoning, so cool, the white takes hours, or even days, to set, if it sets at all." },
     "help.sources.title": { "text": "Authorities" },
     "help.sources.intro": { "text": "The chief authorities behind my numbers. The [README](https://github.com/danmackinlay/actual_egg_timer#10-references) lists them all, with what each has settled." },
