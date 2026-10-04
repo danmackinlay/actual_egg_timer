@@ -28,7 +28,7 @@ test('the function, through the Blobs client: keep once, list, delete', async ()
   const { port } = await server.start();
   const url = `http://localhost:${port}`;
   (globalThis as { netlifyBlobsContext?: string }).netlifyBlobsContext = Buffer.from(JSON.stringify({
-    siteID: 'test-site', deployID: 'test-deploy', primaryRegion: 'us-east-2', token: 'test-token', edgeURL: url, uncachedEdgeURL: url,
+    siteID: 'test-site', deployID: '6702c1d3e4f5a6b7c8d9e0f1', primaryRegion: 'us-east-2', token: 'test-token', edgeURL: url, uncachedEdgeURL: url,
   })).toString('base64');
   try {
     const post = (seq: number, context = PRODUCTION) => eggs(new Request(`${SITE}/api/eggs`, {
