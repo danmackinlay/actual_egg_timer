@@ -411,4 +411,4 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     the language, and the picker is the way out. The stored `flippedFrom`
     that made the switch back possible is gone and ignored when read, so no
     storage key changed. `LANGUAGE.md` §6; the `stay` draft drops the (i)'s
-    "and back when you pick Metric".
+    "and back when you pick Metric". Built `9c9ea24`.
