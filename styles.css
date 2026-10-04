@@ -572,6 +572,42 @@ select { max-width: 60vw; }
 
 .unit { display: inline-flex; align-items: center; gap: 6px; color: var(--dim); }
 
+/* The − and + either side of a number (src/ui/stepper.ts): as tall as the
+   field, so the row is no taller; the glyphs are drawn here, so the markup
+   holds no words. A press is a hold, never a selection or a menu. */
+button.step {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  min-height: 46px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--fg);
+  font: 400 1.375rem/1 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+button.step--less::before { content: "\2212"; }
+button.step--more::before { content: "+"; }
+button.step:active { background: var(--line); }
+.unit:has(button.step) { gap: 4px; }
+.unit:has(button.step) input[type="number"] { width: 4rem; padding-inline: 8px; }
+/* The unit after the +, in a column of its own, so the rows' − and + line up. */
+.unit:has(button.step) > span:last-child { min-width: 1.75em; margin-left: 2px; }
+/* A count has no unit; it keeps the unit's room, so its − and + line up too. */
+.unit:has(> button.step:last-child) { padding-right: calc(1.75em + 6px); }
+/* The browser's own spinner would be a third pair of arrows; the keyboard's
+   still step the field. */
+input[data-stepper] { appearance: textfield; -moz-appearance: textfield; }
+input[data-stepper]::-webkit-inner-spin-button,
+input[data-stepper]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+
 /* segmented radio group: big targets, no decoration */
 .seg { display: flex; gap: 6px; position: relative; }
 .seg input[type="radio"] {

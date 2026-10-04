@@ -172,15 +172,15 @@
         <div class="measure" role="group" aria-labelledby="measureLegend">
           <div>
             <label for="measureMass" data-copy="controls.measure.weight"></label>
-            <span class="unit"><input type="number" id="measureMass" inputmode="decimal"><span id="unitMass"></span></span>
+            <span class="unit"><input type="number" id="measureMass" data-stepper inputmode="decimal"><span id="unitMass"></span></span>
           </div>
           <div>
             <label for="measureGirth" data-copy="controls.measure.girth"></label>
-            <span class="unit"><input type="number" id="measureGirth" inputmode="decimal"><span id="unitGirth"></span></span>
+            <span class="unit"><input type="number" id="measureGirth" data-stepper inputmode="decimal"><span id="unitGirth"></span></span>
           </div>
           <div>
             <label for="measureMinor" data-copy="controls.measure.minor"></label>
-            <span class="unit"><input type="number" id="measureMinor" inputmode="decimal"><span id="unitMinor"></span></span>
+            <span class="unit"><input type="number" id="measureMinor" data-stepper inputmode="decimal"><span id="unitMinor"></span></span>
           </div>
         </div>
         <p class="hint" data-copy="controls.measure.hint"></p>
@@ -203,7 +203,7 @@
         </div>
         <div class="prow" id="customTempField" hidden>
           <label for="customTemp" data-copy="controls.eggTemp"></label>
-          <span class="unit"><input type="number" id="customTemp" inputmode="decimal"><span id="unitTemp"></span></span>
+          <span class="unit"><input type="number" id="customTemp" data-stepper inputmode="decimal"><span id="unitTemp"></span></span>
         </div>
         <p class="hint" id="startTempHint"></p>
       </div>
@@ -303,7 +303,7 @@
             <label for="altitude" data-copy="controls.altitude"></label>
             <button type="button" class="info" aria-expanded="false" aria-controls="moreAltitude" data-label="controls.altitude"></button>
           </span>
-          <span class="unit"><input type="number" id="altitude" inputmode="numeric"><span id="unitAltitude"></span></span>
+          <span class="unit"><input type="number" id="altitude" data-stepper inputmode="numeric"><span id="unitAltitude"></span></span>
         </div>
         <p id="moreAltitude" class="disclosed" hidden data-copy="controls.altitude.more"></p>
         <p class="setting__sub"><span data-copy="readout.stat.waterBoilsAt"></span> <strong id="statBoil">--</strong></p>
@@ -315,7 +315,7 @@
             <label for="litres" data-copy="controls.water"></label>
             <button type="button" class="info" aria-expanded="false" aria-controls="moreWater" data-label="controls.water"></button>
           </span>
-          <span class="unit"><input type="number" id="litres" inputmode="decimal"><span id="unitLitres"></span></span>
+          <span class="unit"><input type="number" id="litres" data-stepper inputmode="decimal"><span id="unitLitres"></span></span>
         </div>
         <p id="moreWater" class="disclosed" hidden data-copy="controls.water.more"></p>
       </div>
@@ -326,7 +326,7 @@
             <label for="eggCount" data-copy="controls.eggsInPan"></label>
             <button type="button" class="info" aria-expanded="false" aria-controls="moreEggs" data-label="controls.eggsInPan"></button>
           </span>
-          <span class="unit"><input type="number" id="eggCount" step="1" inputmode="numeric"></span>
+          <span class="unit"><input type="number" id="eggCount" data-stepper step="1" inputmode="numeric"></span>
         </div>
         <p id="moreEggs" class="disclosed" hidden data-copy="controls.eggsInPan.more"></p>
       </div>

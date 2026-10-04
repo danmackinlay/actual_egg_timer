@@ -68,6 +68,7 @@ import {
 } from './clock.js';
 import { bindDom, el, page, radioValue, selectRadio } from './dom.js';
 import { labelInfoButtons, showInfo, wireInfoButtons } from './info.js';
+import { labelSteppers, wireSteppers } from './stepper.js';
 import { wireViews } from './views.js';
 import { startOffline } from './offline.js';
 import {
@@ -966,6 +967,7 @@ function setLanguage(next: LanguageState): void {
 function relabel(): void {
   applyCopy(document);
   labelInfoButtons();
+  labelSteppers();
   labelTicks();
   renderMute();
   applyUnitsToDom();
@@ -1321,6 +1323,7 @@ export function boot(): void {
   // Every (i) opens in place. They are buttons, so the keyboard reaches and
   // works them, and aria-expanded says which way they stand.
   wireInfoButtons();
+  wireSteppers();
   wireViews();
   page().probeOfferYes.addEventListener('click', () => onProbeOffer(true));
   page().probeOfferNo.addEventListener('click', () => onProbeOffer(false));

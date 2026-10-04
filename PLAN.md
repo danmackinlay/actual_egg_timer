@@ -109,6 +109,12 @@ The one queue. Nothing else in the documents waits on the owner.
    en-US and 1750 twins (`LOGBOOK.md`, 3 October 2026, has a 1750
    suggestion).
 
+9. **The − and + beside every number, on a phone** (4 October 2026): in
+   both apps, stepping on the units grid (the egg's mass now in half grams,
+   shown "58 g" and "58.5 g"), repeating while held. The web's two
+   screen-reader names are the **`steppers`** draft ("Less: {label}",
+   "More: {label}"; in 1750, "Diminish:" and "Augment:").
+
 Waiting on someone else: the Czech review (F5), by the owner's friend.
 
 ## Open items
