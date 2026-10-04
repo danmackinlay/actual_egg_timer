@@ -1,4 +1,6 @@
+import CoreTransferable
 import Foundation
+import UniformTypeIdentifiers
 import EggTimerCore
 
 /// Bridges the particle filter in `EggTimerCore` to the app, and keeps the
@@ -34,6 +36,21 @@ struct Kept: Sendable {
     /// they were stored and written back, where they sat in the log, and
     /// folded by nothing here.
     var unread: [Unread] = []
+}
+
+/// "Export my results" as the share sheet takes it: a file, written when the
+/// cook picks where it goes, from what is stored then (DECISIONS.md 80).
+struct ResultsExport: Transferable {
+    let uid: String?
+    let name: String
+
+    static var transferRepresentation: some TransferRepresentation {
+        FileRepresentation(exportedContentType: .json) { item in
+            let url = FileManager.default.temporaryDirectory.appendingPathComponent(item.name)
+            try Data(Calibrations.exportText(uid: item.uid).utf8).write(to: url, options: .atomic)
+            return SentTransferredFile(url)
+        }
+    }
 }
 
 /// A record this build cannot read, and its place among every record,
@@ -412,21 +429,23 @@ enum Calibrations {
     }
 
     /// The results file (`resultsFile` in EggTimerCore): the store exactly as
-    /// stored, the copies kept aside, and the sharing ID if there is one,
-    /// named for the local day. Nil when there is nothing in it.
-    static func export(_ k: Kept, uid: String?, now: Date = .now) -> (name: String, text: String)? {
-        guard resultsKept(k) > 0 else { return nil }
+    /// stored, the copies kept aside, and the sharing ID if there is one. Read
+    /// from storage when it is asked for, so it is what is stored then.
+    static func exportText(uid: String?, now: Date = .now) -> String {
         let iso = ISO8601DateFormatter()
         iso.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         let stored = UserDefaults.standard.data(forKey: key).map { String(decoding: $0, as: UTF8.self) }
-        let text = resultsFile(
+        return resultsFile(
             ResultsMeta(app: .ios, appVersion: appVersion, exported: iso.string(from: now),
                         population: population.id, uid: uid),
             stored: stored, unread: keptAside()
         )
+    }
+
+    /// The results file's name, for the local day.
+    static func exportName(now: Date = .now) -> String {
         let c = Calendar(identifier: .gregorian).dateComponents([.year, .month, .day], from: now)
-        let day = String(format: "%04d-%02d-%02d", c.year ?? 0, c.month ?? 0, c.day ?? 0)
-        return (resultsFileName(day: day), text)
+        return resultsFileName(day: String(format: "%04d-%02d-%02d", c.year ?? 0, c.month ?? 0, c.day ?? 0))
     }
 
     /// Forget every egg: the posterior, the base under it, the log and every

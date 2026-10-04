@@ -37,7 +37,7 @@ import { Outcome, predictOutcome } from '../core/outcome.js';
 import {
   APP_VERSION, Calibration, cachedDecisionGrid, cachedOddsProfile, calibrationDoneness, calibrationParams,
   clearCalibration, decisionGrid, decisionKey, eggRecordFor, eggsBehind, keepUnreadCook, keptState, learn,
-  loadCalibration, logEgg, oddsProfileFor, profileKey,
+  exportResults, loadCalibration, logEgg, oddsProfileFor, profileKey,
 } from './calibration.js';
 import { forgetShare, loadShare, retryDeletes, sendFinal, shareState } from './share.js';
 import { renderShare, wireShare } from './shareView.js';
@@ -78,7 +78,7 @@ import {
   buildTicks, labelTicks, renderBracket, renderDonenessReading, renderDonenessScale,
 } from './slider.js';
 import { Ticket, restoreTicket, withTimeToBoil } from './ticket.js';
-import { Learning, renderCalibNote, renderLearned, wireForget } from './learned.js';
+import { Learning, renderCalibNote, renderLearned, wireExport, wireForget } from './learned.js';
 import {
   answersNow, forgetAnswers, keptAnswers, pickedUpAfterReload, probePending, probeWanted,
   renderProbe, resumeAnswers, wireFeedback,
@@ -1334,6 +1334,7 @@ export function boot(): void {
   page().secondary.addEventListener('click', reset);
   page().mute.addEventListener('click', onToggleMute);
   wireForget(forgetAll);
+  wireExport(() => exportResults(shareState().uid, Date.now()));
   // Every (i) opens in place. They are buttons, so the keyboard reaches and
   // works them, and aria-expanded says which way they stand.
   wireInfoButtons();

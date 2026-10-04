@@ -275,6 +275,8 @@
     "learned.confirm.forget": { "surface": "button", "apps": ["web", "ios"], "text": "Start again" },
     "learned.confirm.keep": { "surface": "button", "apps": ["web", "ios"], "text": "Keep it" },
     "learned.confirm.message": { "surface": "body", "apps": ["web", "ios"], "text": "I’ll forget all your results and how long your water took to boil, and go back to the times for a typical egg." },
+    "learned.export": { "surface": "button", "apps": ["web", "ios"], "note": "Saves every result this device keeps to a file the cook keeps (DECISIONS.md 80): a download on the web, the share sheet on iOS. Nothing is sent. Offered on an empty log too, which says learned.export.none.", "text": "Export my results" },
+    "learned.export.none": { "surface": "body", "apps": ["web", "ios"], "note": "Under Export my results, when it is pressed with no result kept.", "text": "Nothing to export yet." },
 
     "learning.badge": { "surface": "label", "apps": ["web", "ios"], "note": "A small mark on the time while sharing is on (E8, DECISIONS.md 3 and 53): the time may be nudged a few seconds, and this says the app is still learning. Its (i) is learning.badge.more.", "text": "Learning" },
     "learning.badge.more": { "surface": "more", "apps": ["web", "ios"], "note": "The (i) on the Learning mark: why the time may move, that it can cost a little (DECISIONS.md 61), and how to stop it.", "text": "You’re sharing your results, so I’m still learning from them. Now and then I move the time a few seconds either way, up to ten, to learn what happens just off the time I’d pick. It can leave an egg a little softer or firmer than I’d otherwise aim for. Turn sharing off in Settings and the time stays where I’d put it." },

@@ -17,6 +17,9 @@ struct SettingsView: View {
     /// Forget asks first, in place, as the web's does: the button gives way to
     /// the question and its two answers.
     @State private var confirming = false
+    /// Set when "Export my results" is pressed with nothing kept, so the note
+    /// under it can say so.
+    @State private var nothingToExport = false
     /// "Delete what I've sent" asks first, the same way.
     @State private var confirmingDelete = false
     /// Set once a deletion asked for here is confirmed by the server, so the
@@ -144,6 +147,26 @@ struct SettingsView: View {
             Text(learnedNote)
                 .appFont(.footnote)
                 .foregroundStyle(.secondary)
+            // Every result kept here, to a file through the share sheet
+            // (DECISIONS.md 80). Offered on an empty log too, which says
+            // there is nothing to save.
+            if Calibrations.resultsKept(planner.kept) > 0 {
+                ShareLink(
+                    item: ResultsExport(uid: sharing.state.uid, name: Calibrations.exportName()),
+                    preview: SharePreview(Calibrations.exportName())
+                ) {
+                    Text(tr("learned.export"))
+                }
+            } else {
+                Button(tr("learned.export")) {
+                    nothingToExport = true
+                }
+                if nothingToExport {
+                    Text(tr("learned.export.none"))
+                        .appFont(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+            }
             if planner.eggsLogged > 0 || planner.hasBoilMemory {
                 if confirming {
                     VStack(alignment: .leading, spacing: 6) {

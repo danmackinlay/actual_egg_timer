@@ -32,6 +32,8 @@ export function renderCalibNote(l: Learning): void {
 export function renderLearned(l: Learning): void {
   const eggs = l.eggs;
   const pan = hasBoilMemory(l.boilMemory);
+  // There is something to export now.
+  if (eggs > 0) page().exportNote.hidden = true;
   if (eggs === 0 && !pan) {
     page().learnedNote.textContent = t('learned.literature');
     showForget(false);
@@ -86,4 +88,27 @@ export function wireForget(forget: () => void): void {
     page().learnedNote.focus();
   });
   page().forgetNo.addEventListener('click', onForgetKept);
+}
+
+/**
+ * Wire "Export my results": `results` is the file to save, or null when
+ * there is nothing in it, which the note under the button then says. The
+ * file is made here and saved as a download, with no network: a link to a
+ * Blob of it, clicked and let go.
+ */
+export function wireExport(results: () => { name: string; text: string } | null): void {
+  page().exportResults.addEventListener('click', () => {
+    const file = results();
+    page().exportNote.hidden = file !== null;
+    if (file === null) return;
+    const url = URL.createObjectURL(new Blob([file.text], { type: 'application/json' }));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = file.name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    // Long enough for the browser to have started the download.
+    setTimeout(() => URL.revokeObjectURL(url), 10_000);
+  });
 }

@@ -363,6 +363,12 @@
         <span id="lblLearned" data-copy="learned.title"></span>
       </div>
       <p class="hint" id="learnedNote" tabindex="-1"></p>
+      <!-- Every result kept here, saved to a file (DECISIONS.md 80). Offered
+           on an empty log too, which says there is nothing to save. -->
+      <div class="forget__row">
+        <button type="button" id="exportResults" class="secondary" data-copy="learned.export"></button>
+      </div>
+      <p class="hint" id="exportNote" aria-live="polite" hidden data-copy="learned.export.none"></p>
       <div class="forget__row">
         <button type="button" id="forget" class="secondary" hidden data-copy="learned.forget"></button>
         <button type="button" id="forgetInfo" class="info" aria-expanded="false" aria-controls="moreForget" data-label="learned.forget" hidden></button>
