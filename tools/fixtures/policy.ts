@@ -12,7 +12,7 @@ import {
   COOLING_SECONDS, PULL_GRACE_SECONDS, ROOM_EGG_FROM_C, SLOW_HOB_EVERY_S, SLOW_HOB_EXTRA_S,
   SLOW_HOB_WHEN_LEFT_S, WHITE_BAND_BELOW_C, YOLK_BAND_BELOW_C, ambientFor, anchorNear, calibrationGrid,
   carrySizeIndex, estimateTimeToBoil, phaseAt, rememberBoil, snapDown, snapUp, targetPeakYolk_C, textureFor,
-  textureNoteKeys, verdictFor,
+  textureNoteKeys, verdictFor, roomInUse, startTempPreset_C,
 } from '../../src/core/policy.js';
 
 /* The decisions above the physics. None of it is expensive, so the cases
@@ -187,10 +187,24 @@ export const policyFixture = {
       us: carrySizeIndex(stored, US_SIZE_CLASSES),
     })),
   },
-  ambient: [0, 4, 14.9, 15, 20, 26].map((eggStart_C) => ({
+  // The room assumed from the egg, and the room as measured, which wins.
+  ambient: [null, 12, 27].flatMap((room_C) => [0, 4, 14.9, 15, 20, 26].map((eggStart_C) => ({
     eggStart_C: eggStart_C,
-    ambient_C: ambientFor(eggStart_C),
-  })),
+    room_C: room_C,
+    ambient_C: ambientFor(eggStart_C, room_C),
+  }))),
+  // The measured room counts only with a probe, clamped; and it moves the
+  // Room button, never the Fridge.
+  roomInUse: [true, false].flatMap((probe) => [null, 2, 5, 23.5, 40, 41].map((room_C) => ({
+    probe: probe,
+    room_C: room_C,
+    inUse_C: roomInUse(probe, room_C),
+  }))),
+  startTempPresets: (['fridge', 'room'] as const).flatMap((preset) => [null, 12, 27].map((room_C) => ({
+    preset: preset,
+    room_C: room_C,
+    eggStart_C: startTempPreset_C(preset, room_C),
+  }))),
   limits: LIMITS,
   calibration: { particles: POLICY_PARTICLES, seed: CALIBRATION_SEED },
   phase: {

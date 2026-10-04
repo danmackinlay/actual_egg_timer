@@ -42,6 +42,9 @@ export const LIMITS = {
   girth_mm: { lo: 90, hi: 200 },
   minor_mm: { lo: 30, hi: 60 },
   eggTemp_C: { lo: -2, hi: 40 },
+  /** A kitchen's air, measured with the probe (the room setting): colder
+   *  than 5 C is a cellar, hotter than 40 C a kitchen nobody cooks in. */
+  room_C: { lo: 5, hi: 40 },
   altitude_m: { lo: -400, hi: 5000 },
   waterLitres: { lo: 0.25, hi: 12 },
   eggCount: { lo: 1, hi: 24 },
@@ -70,24 +73,45 @@ export function isWithin(value: number, limit: Limit): boolean {
 
 /* ----------------------------------------------------------------- defaults */
 
-/** What the two named egg-temperature buttons mean, C. Their labels are
- *  rendered from this on both platforms, so a button cannot say one thing and
- *  the model another. */
+/** What the two named egg-temperature buttons mean, C, when the room has not
+ *  been measured. Both platforms label the buttons from `startTempPreset_C`,
+ *  so a button cannot say one thing and the model another. */
 export const START_TEMP_PRESETS_C: Record<'fridge' | 'room', number> = {
   fridge: 4,
   room: T_ROOM_C,
 };
 
-/** The room, as far as the model is concerned, given the egg's start.
+/** What an egg-temperature button means, C, given the room as measured, or
+ *  null when it has not been (`roomInUse`). An egg that has been sitting out
+ *  is at the room's temperature, so a measured room moves the Room button with
+ *  it; a fridge is a fridge. */
+export function startTempPreset_C(preset: 'fridge' | 'room', room_C: number | null): number {
+  if (preset === 'room' && room_C !== null) return room_C;
+  return START_TEMP_PRESETS_C[preset];
+}
+
+/** The room the model is told about, C, or null to assume one: the cook's
+ *  measured room, from Settings, which is offered - and so counts - only while
+ *  they have said they have a probe thermometer (the owner's request of
+ *  5 October 2026, DECISIONS.md 78). A setting out of sight changes nothing.
+ *  Clamped, like everything typed or stored. */
+export function roomInUse(probe: boolean, room_C: number | null): number | null {
+  if (!probe || room_C === null || !Number.isFinite(room_C)) return null;
+  return clamp(room_C, LIMITS.room_C);
+}
+
+/** The room, as far as the model is concerned, given the egg's start and the
+ *  room as measured (`roomInUse`), or null.
  *
- * There is no separate input for it, and there should not be: on the default
- * path - eggs into boiling water, straight into an ice bath - the room is worth
- * nothing at all, and on a cold start about two seconds per degree. It earns
- * its keep resting on the counter and standing with the heat off, and in both
- * the user has usually already said: an egg that has been sitting out IS at
- * room temperature. A fridge egg says nothing about the room, so that case
- * keeps the default. */
-export function ambientFor(eggStart_C: number): number {
+ * A measured room is the room. Without one: on the default path - eggs into
+ * boiling water, straight into an ice bath - the room is worth nothing at
+ * all, and on a cold start about two seconds per degree. It earns its keep
+ * resting on the counter and standing with the heat off, and in both the user
+ * has usually already said: an egg that has been sitting out IS at room
+ * temperature. A fridge egg says nothing about the room, so that case keeps
+ * the default. */
+export function ambientFor(eggStart_C: number, room_C: number | null): number {
+  if (room_C !== null) return room_C;
   return eggStart_C >= ROOM_EGG_FROM_C ? eggStart_C : T_ROOM_C;
 }
 

@@ -241,7 +241,7 @@ function eggStart_C(): number {
 /** The room, as far as the model is concerned. The rule - an egg that has been
  *  sitting out IS the room, a fridge egg says nothing - is core policy. */
 function ambient_C(): number {
-  return ambientFor(eggStart_C());
+  return ambientFor(eggStart_C(), null);
 }
 
 function boilingPoint_C(): number {

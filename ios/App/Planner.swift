@@ -400,7 +400,7 @@ final class Planner {
     /// heat off, and in both the user has usually already said: an egg that has
     /// been sitting out IS at room temperature. A fridge egg says nothing about
     /// the room, so that case keeps the default.
-    var ambientC: Double { ambientFor(eggStartC: eggStartC) }
+    var ambientC: Double { ambientFor(eggStartC: eggStartC, roomC: nil) }
 
     var boilingC: Double { Thermo.boilingPointAtAltitude(altitudeM) }
 

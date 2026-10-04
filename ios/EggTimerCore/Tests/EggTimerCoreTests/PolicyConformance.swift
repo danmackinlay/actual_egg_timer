@@ -241,11 +241,31 @@ struct DefaultsConformance {
         try expectClose(StartTempPresets.roomC, d.num("room_C"), "room preset")
     }
 
-    @Test("the room follows the egg at the same threshold")
+    @Test("the room follows the egg at the same threshold, and a measured room wins")
     func ambient() throws {
         for c in try Fixtures.list("policy.json", "ambient") {
             let start = try c.num("eggStart_C")
-            try expectClose(ambientFor(eggStartC: start), c.num("ambient_C"), "ambient for \(start) C")
+            let room = try c.optionalNum("room_C")
+            try expectClose(
+                ambientFor(eggStartC: start, roomC: room), c.num("ambient_C"),
+                "ambient for \(start) C in a room of \(String(describing: room))"
+            )
+        }
+    }
+
+    @Test("a measured room counts only with a probe, and moves only the Room button")
+    func measuredRoom() throws {
+        for c in try Fixtures.list("policy.json", "roomInUse") {
+            let probe = try c.flag("probe")
+            let room = try c.optionalNum("room_C")
+            let got = roomInUse(probe: probe, roomC: room)
+            let want = try c.optionalNum("inUse_C")
+            #expect(got == want, "room \(String(describing: room)), probe \(probe)")
+        }
+        for c in try Fixtures.list("policy.json", "startTempPresets") {
+            let preset = try c.value(StartTempPreset.self, "preset")
+            let room = try c.optionalNum("room_C")
+            try expectClose(startTempPresetC(preset, roomC: room), c.num("eggStart_C"), "\(preset) preset")
         }
     }
 
@@ -255,6 +275,7 @@ struct DefaultsConformance {
         let pairs: [(String, ClosedRange<Double>)] = [
             ("mass_g", Limits.massG),
             ("eggTemp_C", Limits.eggTempC),
+            ("room_C", Limits.roomC),
             ("altitude_m", Limits.altitudeM),
             ("waterLitres", Limits.waterLitres),
             ("eggCount", Limits.eggCount),

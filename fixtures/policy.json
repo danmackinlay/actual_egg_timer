@@ -2028,27 +2028,187 @@
   "ambient": [
     {
       "eggStart_C": 0,
+      "room_C": null,
       "ambient_C": 20
     },
     {
       "eggStart_C": 4,
+      "room_C": null,
       "ambient_C": 20
     },
     {
       "eggStart_C": 14.9,
+      "room_C": null,
       "ambient_C": 20
     },
     {
       "eggStart_C": 15,
+      "room_C": null,
       "ambient_C": 15
     },
     {
       "eggStart_C": 20,
+      "room_C": null,
       "ambient_C": 20
     },
     {
       "eggStart_C": 26,
+      "room_C": null,
       "ambient_C": 26
+    },
+    {
+      "eggStart_C": 0,
+      "room_C": 12,
+      "ambient_C": 12
+    },
+    {
+      "eggStart_C": 4,
+      "room_C": 12,
+      "ambient_C": 12
+    },
+    {
+      "eggStart_C": 14.9,
+      "room_C": 12,
+      "ambient_C": 12
+    },
+    {
+      "eggStart_C": 15,
+      "room_C": 12,
+      "ambient_C": 12
+    },
+    {
+      "eggStart_C": 20,
+      "room_C": 12,
+      "ambient_C": 12
+    },
+    {
+      "eggStart_C": 26,
+      "room_C": 12,
+      "ambient_C": 12
+    },
+    {
+      "eggStart_C": 0,
+      "room_C": 27,
+      "ambient_C": 27
+    },
+    {
+      "eggStart_C": 4,
+      "room_C": 27,
+      "ambient_C": 27
+    },
+    {
+      "eggStart_C": 14.9,
+      "room_C": 27,
+      "ambient_C": 27
+    },
+    {
+      "eggStart_C": 15,
+      "room_C": 27,
+      "ambient_C": 27
+    },
+    {
+      "eggStart_C": 20,
+      "room_C": 27,
+      "ambient_C": 27
+    },
+    {
+      "eggStart_C": 26,
+      "room_C": 27,
+      "ambient_C": 27
+    }
+  ],
+  "roomInUse": [
+    {
+      "probe": true,
+      "room_C": null,
+      "inUse_C": null
+    },
+    {
+      "probe": true,
+      "room_C": 2,
+      "inUse_C": 5
+    },
+    {
+      "probe": true,
+      "room_C": 5,
+      "inUse_C": 5
+    },
+    {
+      "probe": true,
+      "room_C": 23.5,
+      "inUse_C": 23.5
+    },
+    {
+      "probe": true,
+      "room_C": 40,
+      "inUse_C": 40
+    },
+    {
+      "probe": true,
+      "room_C": 41,
+      "inUse_C": 40
+    },
+    {
+      "probe": false,
+      "room_C": null,
+      "inUse_C": null
+    },
+    {
+      "probe": false,
+      "room_C": 2,
+      "inUse_C": null
+    },
+    {
+      "probe": false,
+      "room_C": 5,
+      "inUse_C": null
+    },
+    {
+      "probe": false,
+      "room_C": 23.5,
+      "inUse_C": null
+    },
+    {
+      "probe": false,
+      "room_C": 40,
+      "inUse_C": null
+    },
+    {
+      "probe": false,
+      "room_C": 41,
+      "inUse_C": null
+    }
+  ],
+  "startTempPresets": [
+    {
+      "preset": "fridge",
+      "room_C": null,
+      "eggStart_C": 4
+    },
+    {
+      "preset": "fridge",
+      "room_C": 12,
+      "eggStart_C": 4
+    },
+    {
+      "preset": "fridge",
+      "room_C": 27,
+      "eggStart_C": 4
+    },
+    {
+      "preset": "room",
+      "room_C": null,
+      "eggStart_C": 20
+    },
+    {
+      "preset": "room",
+      "room_C": 12,
+      "eggStart_C": 12
+    },
+    {
+      "preset": "room",
+      "room_C": 27,
+      "eggStart_C": 27
     }
   ],
   "limits": {
@@ -2066,6 +2226,10 @@
     },
     "eggTemp_C": {
       "lo": -2,
+      "hi": 40
+    },
+    "room_C": {
+      "lo": 5,
       "hi": 40
     },
     "altitude_m": {

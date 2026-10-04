@@ -21,7 +21,7 @@ import { parseCatalogue, render } from '../src/core/copy.js';
 import {
   IMPERIAL_PINT_L, Measure, OUNCE_G, QUANTITIES, Quantity, UNIT_SYSTEMS, US_QUART_L,
   UnitSystem, chooseUnits, display, displayText, effectiveUnits, fromSI, measureFor, parse,
-  readChosenUnits, regionalUnits, shownDecimals, sizeClassLabel, toSI,
+  nudgeFrom, readChosenUnits, regionalUnits, shownDecimals, sizeClassLabel, stepPast, toSI,
 } from '../src/core/units.js';
 import { eggRecordFor, Cooked } from '../src/ui/calibration.js';
 import { startHot, advance } from '../src/ui/machine.js';
@@ -311,4 +311,34 @@ test('5b. the record says which system the cook was reading, and stays SI', () =
   assert.equal(r.egg.mass_g, 68);
   assert.equal(r.setup.eggStart_C, 4);
   assert.notEqual(parseRecord(r), null);
+});
+
+// --------------------------------------------------------------------------
+// 6. The − and + where they step coarser than the typing, and the room
+// --------------------------------------------------------------------------
+
+test('6a. a probe reading is typed to a tenth and stepped in whole degrees', () => {
+  const c = measureFor('probeTemp', 'metric', null);
+  const f = measureFor('probeTemp', 'imperial', null);
+  assert.equal(c.step, 0.1);
+  assert.equal(nudgeFrom(c, 64.6), 65, 'from the peak, on the whole degree');
+  assert.equal(nudgeFrom(f, 65), 149);
+  assert.equal(stepPast(c, 65, true), 66);
+  assert.equal(stepPast(c, 65, false), 64);
+  assert.equal(stepPast(c, 64.3, true), 65, 'off the grid, up to the next whole degree');
+  assert.equal(stepPast(c, 64.3, false), 64);
+  assert.equal(stepPast(f, 148.9, true), 149);
+});
+
+test('6b. the room steps in whole degrees inside its bounds', () => {
+  const c = measureFor('roomTemp', 'metric', null);
+  const f = measureFor('roomTemp', 'imperial', null);
+  assert.deepEqual(c.bounds, LIMITS.room_C);
+  assert.deepEqual(f.bounds, { lo: 41, hi: 104 });
+  assert.equal(nudgeFrom(c, 20), 20);
+  assert.equal(nudgeFrom(f, 20), 68);
+  assert.equal(stepPast(c, 20, true), 21);
+  assert.equal(stepPast(c, LIMITS.room_C.hi, true), LIMITS.room_C.hi, 'held at the bound');
+  assert.equal(stepPast(f, 41, false), 41);
+  assert.equal(nudgeFrom(c, 99), LIMITS.room_C.hi);
 });

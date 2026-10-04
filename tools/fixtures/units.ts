@@ -21,7 +21,7 @@ import { Catalogue, render } from '../../src/core/copy.js';
 import { SIZE_CLASSES, US_SIZE_CLASSES } from '../../src/core/geometry.js';
 import {
   Measure, PlatformUnits, QUANTITIES, UNIT_SYSTEMS, UnitId, UnitSystem, chooseUnits, display,
-  displayText, fromSI, measureFor, parse, readChosenUnits, regionalUnits,
+  displayText, fromSI, measureFor, nudgeFrom, parse, readChosenUnits, regionalUnits, stepPast,
   shownDecimals, sizeClassLabel, snap, toSI,
 } from '../../src/core/units.js';
 
@@ -120,6 +120,24 @@ function typedEdges(m: Measure): { typed: number | null; si: number | null; text
   return rows;
 }
 
+/** The − and +: where an empty field starts (`nudgeFrom`, from SI), and one
+ *  press each way from a value in the measure's unit (`stepPast`) - on their
+ *  grid, a third and a half of a step off it, and at and past the bounds. */
+function nudgeCases(m: Measure): {
+  from: { si: number; value: number }[];
+  steps: { value: number; up: number; down: number }[];
+} {
+  const nudge = m.nudgeNum / m.nudgeDen;
+  const centre = m.bounds === null ? fromSI(m.unit, SI_POINTS[m.unit][3]) : (m.bounds.lo + m.bounds.hi) / 2;
+  const base = nudgeFrom(m, toSI(m.unit, centre));
+  const values = [base, base + nudge / 3, base + nudge / 2, base - nudge / 3, base + 0.1];
+  if (m.bounds !== null) values.push(m.bounds.lo, m.bounds.hi, m.bounds.lo - nudge, m.bounds.hi + nudge);
+  return {
+    from: SI_POINTS[m.unit].map((si) => ({ si: si, value: nudgeFrom(m, si) })),
+    steps: values.map((value) => ({ value: value, up: stepPast(m, value, true), down: stepPast(m, value, false) })),
+  };
+}
+
 const PLATFORMS: PlatformUnits[] = [
   { region: 'US' }, { region: 'us' }, { region: 'GB' }, { region: 'AU' }, { region: 'CZ' },
   { region: 'LR' }, { region: '' }, { region: null },
@@ -153,6 +171,8 @@ export function unitsFixture(english: Catalogue): Record<string, unknown> {
       step: m.step,
       stepNum: m.stepNum,
       stepDen: m.stepDen,
+      nudgeNum: m.nudgeNum,
+      nudgeDen: m.nudgeDen,
       decimals: m.decimals,
       trim: m.trim,
       unitKey: m.unitKey,
@@ -169,6 +189,7 @@ export function unitsFixture(english: Catalogue): Record<string, unknown> {
       notANumber: { value: display(m, Number.NaN), text: displayText(m, Number.NaN) },
       roundTrip: roundTrip(m),
       typed: typedEdges(m),
+      nudge: nudgeCases(m),
     })),
     regional: PLATFORMS.map((p) => ({
       region: p.region,

@@ -116,23 +116,33 @@ const UNIT_KEYS: Record<UnitId, { unit: string; format: string }> = {
  *  - `temperature`   a readout: peak yolk, the bath, the presets, a hint. 1 degree.
  *  - `eggTemp`       the typed egg temperature.
  *  - `probeTemp`     a probe thermometer's reading at the centre, typed
- *                    to a tenth, as a probe shows it. Not clamped: a reading
- *                    the egg could not have made is refused, not moved.
+ *                    to a tenth, as a probe shows it, and stepped by the −
+ *                    and + in whole degrees (its `nudge`). Not clamped: a
+ *                    reading the egg could not have made is refused, not
+ *                    moved.
+ *  - `roomTemp`      the kitchen's air, measured with the probe: the room
+ *                    setting, in whole degrees.
  *  - `boilingPoint`  the water's boiling point, to a tenth of a degree.
  *  - `mass`, `girth`, `width`   the egg, weighed or measured.
  *  - `altitude`, `water`        the kitchen and the pan.
  */
 export type Quantity =
-  | 'temperature' | 'eggTemp' | 'probeTemp' | 'boilingPoint' | 'mass' | 'girth' | 'width'
+  | 'temperature' | 'eggTemp' | 'probeTemp' | 'roomTemp' | 'boilingPoint' | 'mass' | 'girth' | 'width'
   | 'altitude' | 'water';
 
 export const QUANTITIES: readonly Quantity[] = [
-  'temperature', 'eggTemp', 'probeTemp', 'boilingPoint', 'mass', 'girth', 'width', 'altitude', 'water',
+  'temperature', 'eggTemp', 'probeTemp', 'roomTemp', 'boilingPoint', 'mass', 'girth', 'width', 'altitude',
+  'water',
 ];
 
 /** A step, as a ratio of integers: 1/10 for 0.1, 1/50 for 0.02, 100/1.
- *  `trim`: shown with only the decimals a value needs (`shownDecimals`). */
-interface Step { num: number; den: number; decimals: number; trim?: boolean }
+ *  `trim`: shown with only the decimals a value needs (`shownDecimals`).
+ *  `nudge`: the step of the − and + beside the input, where it is coarser
+ *  than the typed step, as a ratio of integers; the step otherwise. */
+interface Step {
+  num: number; den: number; decimals: number; trim?: boolean;
+  nudge?: { num: number; den: number };
+}
 
 interface QuantitySpec {
   /** The SI limit it is clamped to, or null for a readout nobody types. */
@@ -161,10 +171,18 @@ const SPECS: Record<Quantity, QuantitySpec> = {
     metric: { unit: 'C', num: 1, den: 1, decimals: 0 },
     imperial: { unit: 'F', num: 1, den: 1, decimals: 0 },
   },
+  // Typed to a tenth, as a probe shows it; the − and + move in whole degrees
+  // from the peak the cook was started at (the owner's request of 5 October
+  // 2026), since a tenth at a time is no help to a cook with a probe in hand.
   probeTemp: {
     limit: null,
-    metric: { unit: 'C', num: 1, den: 10, decimals: 1 },
-    imperial: { unit: 'F', num: 1, den: 10, decimals: 1 },
+    metric: { unit: 'C', num: 1, den: 10, decimals: 1, nudge: { num: 1, den: 1 } },
+    imperial: { unit: 'F', num: 1, den: 10, decimals: 1, nudge: { num: 1, den: 1 } },
+  },
+  roomTemp: {
+    limit: LIMITS.room_C,
+    metric: { unit: 'C', num: 1, den: 1, decimals: 0 },
+    imperial: { unit: 'F', num: 1, den: 1, decimals: 0 },
   },
   boilingPoint: {
     limit: null,
@@ -206,6 +224,11 @@ export interface Measure {
   step: number;
   stepNum: number;
   stepDen: number;
+  /** The step of the − and + beside the input (`stepPast`), as a ratio of
+   *  integers: the step itself, except for a probe reading, which is typed to
+   *  a tenth and stepped in whole degrees. */
+  nudgeNum: number;
+  nudgeDen: number;
   /** Digits after the point on screen: at most this many when `trim`. */
   decimals: number;
   /** Shown with only the decimals the value needs, up to `decimals`: "58 g"
@@ -241,6 +264,8 @@ export function measureFor(
     step: s.num / s.den,
     stepNum: s.num,
     stepDen: s.den,
+    nudgeNum: s.nudge === undefined ? s.num : s.nudge.num,
+    nudgeDen: s.nudge === undefined ? s.den : s.nudge.den,
     decimals: s.decimals,
     trim: s.trim === true,
     unitKey: UNIT_KEYS[unit].unit,
@@ -272,6 +297,37 @@ function onGrid(m: Measure, n: number): number {
  *  on both platforms, by writing the rounding out. */
 export function snap(m: Measure, value: number): number {
   return onGrid(m, Math.floor(value * m.stepDen / m.stepNum + 0.5));
+}
+
+/* ------------------------------------------------------ the − and + */
+
+/** The n-th point of the − and +'s grid. Never -0. */
+function onNudgeGrid(m: Measure, n: number): number {
+  const v = n * m.nudgeNum / m.nudgeDen;
+  return v === 0 ? 0 : v;
+}
+
+/** Where the − and + start from when the field is empty, in the measure's
+ *  unit: a value stored in SI, converted, put on their grid, and kept inside
+ *  the input's bounds. A probe reading starts from the peak the cook was
+ *  started at, a room from the room assumed. The field shows it greyed, as a
+ *  suggestion, and a step from it is the first number in the field: nothing
+ *  untouched is ever taken as typed. */
+export function nudgeFrom(m: Measure, si: number): number {
+  if (!Number.isFinite(si)) return m.bounds === null ? 0 : m.bounds.lo;
+  const v = onNudgeGrid(m, Math.floor(fromSI(m.unit, si) * m.nudgeDen / m.nudgeNum + 0.5));
+  return m.bounds === null ? v : clamp(v, m.bounds);
+}
+
+/** One press of the + (`up`) or the −, from a value in the measure's unit:
+ *  the next point of their grid strictly past it, so an off-grid 64.3 goes up
+ *  to 65 and down to 64, and kept inside the input's bounds. A trillionth of
+ *  a step of slack, so a value already on the grid moves a whole step. */
+export function stepPast(m: Measure, value: number, up: boolean): number {
+  const k = value * m.nudgeDen / m.nudgeNum;
+  const n = up ? Math.floor(k + 1e-9) + 1 : Math.ceil(k - 1e-9) - 1;
+  const v = onNudgeGrid(m, n);
+  return m.bounds === null ? v : clamp(v, m.bounds);
 }
 
 /* ------------------------------------------------- display and parse */

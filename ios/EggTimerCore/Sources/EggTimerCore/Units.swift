@@ -96,19 +96,23 @@ private func unitKeys(_ unit: UnitId) -> (unit: String, format: String) {
 /// Every number with a unit that either app shows or takes. `temperature` is
 /// a readout (peak yolk, the bath, the presets); `eggTemp` is the egg's
 /// temperature a cook can type (on the web); `probeTemp` is a probe
-/// thermometer's reading at the centre, to a tenth and never clamped.
+/// thermometer's reading at the centre, typed to a tenth, stepped in whole
+/// degrees and never clamped; `roomTemp` is the kitchen's air, measured with
+/// the probe (the room setting).
 public enum Quantity: String, Sendable, CaseIterable {
-    case temperature, eggTemp, probeTemp, boilingPoint, mass, altitude, water
+    case temperature, eggTemp, probeTemp, roomTemp, boilingPoint, mass, altitude, water
 }
 
 /// A step as a ratio of integers, and the digits shown. `trim`: only the
-/// digits a value needs (`shownDecimals`).
+/// digits a value needs (`shownDecimals`). `nudge`: the step of the − and +
+/// where it is coarser than the typed step; the step otherwise.
 private struct Step {
     let unit: UnitId
     let num: Double
     let den: Double
     let decimals: Int
     var trim = false
+    var nudge: (num: Double, den: Double)?
 }
 
 /// LANGUAGE.md §4's table for Imperial, and the web's inputs for metric.
@@ -121,8 +125,13 @@ private func spec(_ q: Quantity) -> (limit: ClosedRange<Double>?, metric: Step, 
         (Limits.eggTempC, Step(unit: .celsius, num: 1, den: 1, decimals: 0),
          Step(unit: .fahrenheit, num: 1, den: 1, decimals: 0))
     case .probeTemp:
-        (nil, Step(unit: .celsius, num: 1, den: 10, decimals: 1),
-         Step(unit: .fahrenheit, num: 1, den: 10, decimals: 1))
+        // Typed to a tenth, as a probe shows it; the − and + move in whole
+        // degrees from the peak the cook was started at (5 October 2026).
+        (nil, Step(unit: .celsius, num: 1, den: 10, decimals: 1, nudge: (1, 1)),
+         Step(unit: .fahrenheit, num: 1, den: 10, decimals: 1, nudge: (1, 1)))
+    case .roomTemp:
+        (Limits.roomC, Step(unit: .celsius, num: 1, den: 1, decimals: 0),
+         Step(unit: .fahrenheit, num: 1, den: 1, decimals: 0))
     case .boilingPoint:
         (nil, Step(unit: .celsius, num: 1, den: 10, decimals: 1),
          Step(unit: .fahrenheit, num: 1, den: 10, decimals: 1))
@@ -148,6 +157,11 @@ public struct Measure: Sendable, Equatable {
     public let step: Double
     public let stepNum: Double
     public let stepDen: Double
+    /// The step of the − and + beside the control (`stepPast`), as a ratio of
+    /// integers: the step itself, except for a probe reading, which is typed
+    /// to a tenth and stepped in whole degrees.
+    public let nudgeNum: Double
+    public let nudgeDen: Double
     /// Digits after the point on screen: at most this many when `trim`.
     public let decimals: Int
     /// Shown with only the decimals the value needs, up to `decimals`: "58 g"
@@ -165,6 +179,12 @@ public struct Measure: Sendable, Equatable {
         let v = n * stepNum / stepDen
         return v == 0 ? 0 : v
     }
+
+    /// The n-th point of the − and +'s grid. Never -0.
+    fileprivate func onNudgeGrid(_ n: Double) -> Double {
+        let v = n * nudgeNum / nudgeDen
+        return v == 0 ? 0 : v
+    }
 }
 
 /// Water under Imperial: the US quart in the US, the imperial pint elsewhere.
@@ -177,23 +197,21 @@ public func measureFor(_ quantity: Quantity, system: UnitSystem, region: String?
     let step = system == .imperial ? s.imperial : s.metric
     let unit = system == .imperial && quantity == .water ? imperialWaterUnit(region: region) : step.unit
     let keys = unitKeys(unit)
-    var m = Measure(
-        quantity: quantity, unit: unit, step: step.num / step.den, stepNum: step.num,
-        stepDen: step.den, decimals: step.decimals, trim: step.trim, unitKey: keys.unit, formatKey: keys.format,
-        limit: s.limit, bounds: nil
-    )
-    if let limit = s.limit {
-        // A billionth of a step of slack, so a limit that converts exactly onto
-        // the grid is not pushed a whole step inward by its last bit.
-        let lo = (fromSI(unit, limit.lowerBound) * step.den / step.num - 1e-9).rounded(.up)
-        let hi = (fromSI(unit, limit.upperBound) * step.den / step.num + 1e-9).rounded(.down)
-        m = Measure(
-            quantity: m.quantity, unit: m.unit, step: m.step, stepNum: m.stepNum,
-            stepDen: m.stepDen, decimals: m.decimals, trim: m.trim, unitKey: m.unitKey, formatKey: m.formatKey,
-            limit: m.limit, bounds: m.onGrid(lo)...m.onGrid(hi)
+    func made(bounds: ClosedRange<Double>?) -> Measure {
+        Measure(
+            quantity: quantity, unit: unit, step: step.num / step.den, stepNum: step.num,
+            stepDen: step.den, nudgeNum: step.nudge?.num ?? step.num, nudgeDen: step.nudge?.den ?? step.den,
+            decimals: step.decimals, trim: step.trim, unitKey: keys.unit, formatKey: keys.format,
+            limit: s.limit, bounds: bounds
         )
     }
-    return m
+    let m = made(bounds: nil)
+    guard let limit = s.limit else { return m }
+    // A billionth of a step of slack, so a limit that converts exactly onto
+    // the grid is not pushed a whole step inward by its last bit.
+    let lo = (fromSI(unit, limit.lowerBound) * step.den / step.num - 1e-9).rounded(.up)
+    let hi = (fromSI(unit, limit.upperBound) * step.den / step.num + 1e-9).rounded(.down)
+    return made(bounds: m.onGrid(lo)...m.onGrid(hi))
 }
 
 // MARK: - Display and parse
@@ -201,6 +219,33 @@ public func measureFor(_ quantity: Quantity, system: UnitSystem, region: String?
 /// The nearest grid point to a value in the measure's unit. Halves go up.
 public func snap(_ m: Measure, _ value: Double) -> Double {
     m.onGrid((value * m.stepDen / m.stepNum + 0.5).rounded(.down))
+}
+
+// MARK: - The − and +
+
+/// Where the − and + start from when the field is empty, in the measure's
+/// unit: a value stored in SI, converted, put on their grid, and kept inside
+/// the control's bounds. A probe reading starts from the peak the cook was
+/// started at, a room from the room assumed. The field shows it greyed, as a
+/// suggestion, and a step from it is the first number in the field: nothing
+/// untouched is ever taken as typed.
+public func nudgeFrom(_ m: Measure, _ si: Double) -> Double {
+    guard si.isFinite else { return m.bounds?.lowerBound ?? 0 }
+    let v = m.onNudgeGrid((fromSI(m.unit, si) * m.nudgeDen / m.nudgeNum + 0.5).rounded(.down))
+    guard let bounds = m.bounds else { return v }
+    return clamp(v, to: bounds)
+}
+
+/// One press of the + (`up`) or the −, from a value in the measure's unit: the
+/// next point of their grid strictly past it, so an off-grid 64.3 goes up to
+/// 65 and down to 64, and kept inside the control's bounds. A trillionth of a
+/// step of slack, so a value already on the grid moves a whole step.
+public func stepPast(_ m: Measure, _ value: Double, up: Bool) -> Double {
+    let k = value * m.nudgeDen / m.nudgeNum
+    let n = up ? (k + 1e-9).rounded(.down) + 1 : (k - 1e-9).rounded(.up) - 1
+    let v = m.onNudgeGrid(n)
+    guard let bounds = m.bounds else { return v }
+    return clamp(v, to: bounds)
 }
 
 /// What the screen shows for a value stored in SI: converted, rounded to the
