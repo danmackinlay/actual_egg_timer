@@ -22,7 +22,7 @@ import { SIZE_CLASSES, US_SIZE_CLASSES } from '../../src/core/geometry.js';
 import {
   Measure, PlatformUnits, QUANTITIES, UNIT_SYSTEMS, UnitId, UnitSystem, chooseUnits, display,
   displayText, fromSI, measureFor, parse, readChosenUnits, regionalUnits,
-  sizeClassLabel, snap, toSI,
+  shownDecimals, sizeClassLabel, snap, toSI,
 } from '../../src/core/units.js';
 
 const UNITS: UnitId[] = ['C', 'F', 'g', 'oz', 'mm', 'in', 'm', 'ft', 'L', 'qt', 'pt'];
@@ -94,7 +94,7 @@ function roundTrip(m: Measure): { typed: number; si: number; text: string }[] {
     const typed = n * m.stepNum / m.stepDen;
     const si = parse(m, typed) as number;
     const text = displayText(m, si);
-    if (text !== typed.toFixed(m.decimals)) {
+    if (text !== typed.toFixed(shownDecimals(m, typed))) {
       throw new Error(`${m.quantity} in ${m.unit}: typed ${typed}, shown ${text}`);
     }
     rows.push({ typed, si, text });
@@ -154,6 +154,7 @@ export function unitsFixture(english: Catalogue): Record<string, unknown> {
       stepNum: m.stepNum,
       stepDen: m.stepDen,
       decimals: m.decimals,
+      trim: m.trim,
       unitKey: m.unitKey,
       formatKey: m.formatKey,
       limit: m.limit,

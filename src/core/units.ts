@@ -44,7 +44,7 @@
 
 import { LIMITS, Limit, clamp } from './policy.js';
 import { SizeClass, isUS } from './geometry.js';
-import { Fixed } from './format.js';
+import { Fixed, roundTo } from './format.js';
 
 /** The one setting. The record's `Units` is the same pair. */
 export type UnitSystem = 'metric' | 'imperial';
@@ -130,8 +130,9 @@ export const QUANTITIES: readonly Quantity[] = [
   'temperature', 'eggTemp', 'probeTemp', 'boilingPoint', 'mass', 'girth', 'width', 'altitude', 'water',
 ];
 
-/** A step, as a ratio of integers: 1/10 for 0.1, 1/50 for 0.02, 100/1. */
-interface Step { num: number; den: number; decimals: number }
+/** A step, as a ratio of integers: 1/10 for 0.1, 1/50 for 0.02, 100/1.
+ *  `trim`: shown with only the decimals a value needs (`shownDecimals`). */
+interface Step { num: number; den: number; decimals: number; trim?: boolean }
 
 interface QuantitySpec {
   /** The SI limit it is clamped to, or null for a readout nobody types. */
@@ -144,9 +145,10 @@ interface QuantitySpec {
 /**
  * LANGUAGE.md §4's table, which is the spec for Imperial. The metric steps are
  * what the web inputs already offered, rounded to what they already showed, so
- * a metric cook sees nothing move: 1 g, 1 mm round the girth, 0.5 mm across,
- * 50 m, 0.25 L. The iOS weight slider moved in half grams and the altitude
- * stepper in 100 m; both now take the table.
+ * a metric cook sees nothing move: 1 mm round the girth, 0.5 mm across,
+ * 50 m, 0.25 L. The iOS altitude stepper moved in 100 m; it now takes the
+ * table. The egg's mass steps in half grams, the owner's step for the − and +
+ * beside it (4 October 2026), and is shown without a ".0": 58 g, 58.5 g.
  */
 const SPECS: Record<Quantity, QuantitySpec> = {
   temperature: {
@@ -171,7 +173,7 @@ const SPECS: Record<Quantity, QuantitySpec> = {
   },
   mass: {
     limit: LIMITS.mass_g,
-    metric: { unit: 'g', num: 1, den: 1, decimals: 0 },
+    metric: { unit: 'g', num: 1, den: 2, decimals: 1, trim: true },
     imperial: { unit: 'oz', num: 1, den: 10, decimals: 1 },
   },
   girth: {
@@ -204,8 +206,12 @@ export interface Measure {
   step: number;
   stepNum: number;
   stepDen: number;
-  /** Digits after the point on screen. */
+  /** Digits after the point on screen: at most this many when `trim`. */
   decimals: number;
+  /** Shown with only the decimals the value needs, up to `decimals`: "58 g"
+   *  and "58.5 g", never "58.0 g". Metric mass only; every other measure
+   *  keeps its decimals, as "2.00 L" does. */
+  trim: boolean;
   /** The catalogue key of the bare symbol, for the label beside an input. */
   unitKey: string;
   /** The catalogue key of "{value} unit". */
@@ -236,6 +242,7 @@ export function measureFor(
     stepNum: s.num,
     stepDen: s.den,
     decimals: s.decimals,
+    trim: s.trim === true,
     unitKey: UNIT_KEYS[unit].unit,
     formatKey: UNIT_KEYS[unit].format,
     limit: spec.limit,
@@ -289,7 +296,19 @@ export function display(m: Measure, si: number): number {
  *  What the cook READS goes through `quantityText` and the formatting locale
  *  instead ("2,4 oz" in Czech). */
 export function displayText(m: Measure, si: number): string {
-  return display(m, si).toFixed(m.decimals);
+  const v = display(m, si);
+  return v.toFixed(shownDecimals(m, v));
+}
+
+/** How many decimals a displayed value is shown with: the measure's own, or,
+ *  for a measure that trims, the fewest that say the value exactly. The value
+ *  is already on the step grid, so that is the grid's decimals or none. */
+export function shownDecimals(m: Measure, value: number): number {
+  if (!m.trim) return m.decimals;
+  for (let d = 0; d < m.decimals; d++) {
+    if (roundTo(value, d) === value) return d;
+  }
+  return m.decimals;
 }
 
 /** What a typed number means, in SI: converted, then clamped by `LIMITS` in
@@ -312,7 +331,8 @@ export interface QuantityText {
 }
 
 export function quantityText(m: Measure, si: number): QuantityText {
-  return { key: m.formatKey, value: { value: display(m, si), decimals: m.decimals } };
+  const v = display(m, si);
+  return { key: m.formatKey, value: { value: v, decimals: shownDecimals(m, v) } };
 }
 
 /** What the size menu says for a class: its name, which is its catalogue key,
@@ -326,7 +346,13 @@ export interface SizeLabel {
 }
 
 export function sizeClassLabel(c: SizeClass, system: UnitSystem): SizeLabel {
-  return { key: c.key, mass: quantityText(measureFor('mass', system, null), c.mass_kg * 1000) };
+  const m = measureFor('mass', system, null);
+  // A carton's class is named to the whole gram: the half gram is the step for
+  // an egg on the scale, and an American Extra Large is 67.3 g, not "67.5 g".
+  if (m.trim) {
+    return { key: c.key, mass: { key: m.formatKey, value: { value: roundTo(c.mass_kg * 1000, 0), decimals: 0 } } };
+  }
+  return { key: c.key, mass: quantityText(m, c.mass_kg * 1000) };
 }
 
 /* ------------------------------------------------------------ the setting */

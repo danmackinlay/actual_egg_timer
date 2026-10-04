@@ -101,12 +101,14 @@ public enum Quantity: String, Sendable, CaseIterable {
     case temperature, eggTemp, probeTemp, boilingPoint, mass, altitude, water
 }
 
-/// A step as a ratio of integers, and the digits shown.
+/// A step as a ratio of integers, and the digits shown. `trim`: only the
+/// digits a value needs (`shownDecimals`).
 private struct Step {
     let unit: UnitId
     let num: Double
     let den: Double
     let decimals: Int
+    var trim = false
 }
 
 /// LANGUAGE.md §4's table for Imperial, and the web's inputs for metric.
@@ -125,7 +127,9 @@ private func spec(_ q: Quantity) -> (limit: ClosedRange<Double>?, metric: Step, 
         (nil, Step(unit: .celsius, num: 1, den: 10, decimals: 1),
          Step(unit: .fahrenheit, num: 1, den: 10, decimals: 1))
     case .mass:
-        (Limits.massG, Step(unit: .grams, num: 1, den: 1, decimals: 0),
+        // Half grams, the owner's step for the − and + (4 October 2026),
+        // shown without a ".0": 58 g, 58.5 g.
+        (Limits.massG, Step(unit: .grams, num: 1, den: 2, decimals: 1, trim: true),
          Step(unit: .ounces, num: 1, den: 10, decimals: 1))
     case .altitude:
         (Limits.altitudeM, Step(unit: .metres, num: 50, den: 1, decimals: 0),
@@ -144,7 +148,11 @@ public struct Measure: Sendable, Equatable {
     public let step: Double
     public let stepNum: Double
     public let stepDen: Double
+    /// Digits after the point on screen: at most this many when `trim`.
     public let decimals: Int
+    /// Shown with only the decimals the value needs, up to `decimals`: "58 g"
+    /// and "58.5 g", never "58.0 g". Metric mass only.
+    public let trim: Bool
     public let unitKey: String
     public let formatKey: String
     /// The SI limit, or nil for a readout.
@@ -171,7 +179,7 @@ public func measureFor(_ quantity: Quantity, system: UnitSystem, region: String?
     let keys = unitKeys(unit)
     var m = Measure(
         quantity: quantity, unit: unit, step: step.num / step.den, stepNum: step.num,
-        stepDen: step.den, decimals: step.decimals, unitKey: keys.unit, formatKey: keys.format,
+        stepDen: step.den, decimals: step.decimals, trim: step.trim, unitKey: keys.unit, formatKey: keys.format,
         limit: s.limit, bounds: nil
     )
     if let limit = s.limit {
@@ -181,7 +189,7 @@ public func measureFor(_ quantity: Quantity, system: UnitSystem, region: String?
         let hi = (fromSI(unit, limit.upperBound) * step.den / step.num + 1e-9).rounded(.down)
         m = Measure(
             quantity: m.quantity, unit: m.unit, step: m.step, stepNum: m.stepNum,
-            stepDen: m.stepDen, decimals: m.decimals, unitKey: m.unitKey, formatKey: m.formatKey,
+            stepDen: m.stepDen, decimals: m.decimals, trim: m.trim, unitKey: m.unitKey, formatKey: m.formatKey,
             limit: m.limit, bounds: m.onGrid(lo)...m.onGrid(hi)
         )
     }
@@ -209,7 +217,19 @@ public func display(_ m: Measure, _ si: Double) -> Double {
 /// text, as a web input holds it. What the cook reads goes through
 /// `quantityText` and the formatting locale instead.
 public func displayText(_ m: Measure, _ si: Double) -> String {
-    String(format: "%.\(m.decimals)f", display(m, si))
+    let v = display(m, si)
+    return String(format: "%.\(shownDecimals(m, v))f", v)
+}
+
+/// How many decimals a displayed value is shown with: the measure's own, or,
+/// for a measure that trims, the fewest that say the value exactly. The value
+/// is already on the step grid, so that is the grid's decimals or none.
+public func shownDecimals(_ m: Measure, _ value: Double) -> Int {
+    guard m.trim else { return m.decimals }
+    for d in 0..<m.decimals where roundTo(value, d) == value {
+        return d
+    }
+    return m.decimals
 }
 
 /// What a number set on a control means, in SI: converted, then clamped by
@@ -230,7 +250,8 @@ public struct QuantityText: Sendable, Equatable {
 }
 
 public func quantityText(_ m: Measure, _ si: Double) -> QuantityText {
-    QuantityText(key: m.formatKey, value: Fixed(display(m, si), decimals: m.decimals))
+    let v = display(m, si)
+    return QuantityText(key: m.formatKey, value: Fixed(v, decimals: shownDecimals(m, v)))
 }
 
 /// What the size menu says for a class: its name and its mass in the cook's
@@ -242,7 +263,16 @@ public struct SizeLabel: Sendable, Equatable {
 }
 
 public func sizeClassLabel(_ c: SizeClass, system: UnitSystem) -> SizeLabel {
-    SizeLabel(key: c.key, mass: quantityText(measureFor(.mass, system: system, region: nil), c.massKg * 1000))
+    let m = measureFor(.mass, system: system, region: nil)
+    // A carton's class is named to the whole gram: the half gram is the step
+    // for an egg on the scale, and an American Extra Large is 67.3 g, not
+    // "67.5 g".
+    if m.trim {
+        return SizeLabel(key: c.key, mass: QuantityText(
+            key: m.formatKey, value: Fixed(roundTo(c.massKg * 1000, 0), decimals: 0)
+        ))
+    }
+    return SizeLabel(key: c.key, mass: quantityText(m, c.massKg * 1000))
 }
 
 // MARK: - The setting

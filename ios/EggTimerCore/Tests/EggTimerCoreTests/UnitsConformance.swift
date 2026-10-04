@@ -46,6 +46,7 @@ struct UnitsConformance {
             #expect(try m.step == c.num("step"), "\(what): step")
             #expect(try m.stepNum == c.num("stepNum") && m.stepDen == c.num("stepDen"), "\(what): step ratio")
             #expect(try Double(m.decimals) == c.num("decimals"), "\(what): decimals")
+            #expect(try m.trim == c.flag("trim"), "\(what): trim")
             #expect(try m.unitKey == c.str("unitKey"), "\(what): unit key")
             #expect(try m.formatKey == c.str("formatKey"), "\(what): format key")
             #expect(try m.limit == range(c["limit"]), "\(what): limit")
@@ -90,7 +91,7 @@ struct UnitsConformance {
                 }
                 try expectClose(si, r.num("si"), "\(q.rawValue) in \(m.unit.rawValue): \(value) stored")
                 #expect(try displayText(m, si) == r.str("text"), "\(q.rawValue) \(value): shown \(displayText(m, si))")
-                #expect(displayText(m, si) == String(format: "%.\(m.decimals)f", value), "\(q.rawValue) \(value)")
+                #expect(displayText(m, si) == String(format: "%.\(shownDecimals(m, value))f", value), "\(q.rawValue) \(value)")
                 checked += 1
             }
             for r in typed {

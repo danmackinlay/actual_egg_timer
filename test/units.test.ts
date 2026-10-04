@@ -21,7 +21,7 @@ import { parseCatalogue, render } from '../src/core/copy.js';
 import {
   IMPERIAL_PINT_L, Measure, OUNCE_G, QUANTITIES, Quantity, UNIT_SYSTEMS, US_QUART_L,
   UnitSystem, chooseUnits, display, displayText, effectiveUnits, fromSI, measureFor, parse,
-  readChosenUnits, regionalUnits, sizeClassLabel, toSI,
+  readChosenUnits, regionalUnits, shownDecimals, sizeClassLabel, toSI,
 } from '../src/core/units.js';
 import { eggRecordFor, Cooked } from '../src/ui/calibration.js';
 import { startHot, advance } from '../src/ui/machine.js';
@@ -99,6 +99,8 @@ test('2a. the steps are LANGUAGE.md §4\'s table', () => {
   assert.deepEqual([imperial('water', 'GB').unit, imperial('water', null).unit], ['pt', 'pt']);
   assert.equal(measureFor('water', 'imperial', 'us').unit, 'qt', 'the region is not case-sensitive');
   assert.equal(measureFor('water', 'metric', 'US').unit, 'L', 'metric is litres everywhere');
+  // The owner's step for the egg's − and + (4 October 2026).
+  assert.deepEqual([measureFor('mass', 'metric', null).unit, measureFor('mass', 'metric', null).step], ['g', 0.5]);
 });
 
 test('2b. the decimals shown are the decimals of the step', () => {
@@ -152,7 +154,7 @@ test('3b. every value every input can hold comes back as typed', () => {
       assert.ok(si !== null && m.limit !== null);
       assert.ok(si >= m.limit.lo && si <= m.limit.hi, `${m.quantity} ${m.unit} ${typed}: clamped`);
       assert.equal(display(m, si), typed, `${m.quantity} ${m.unit}: typed ${typed}`);
-      assert.equal(displayText(m, si), typed.toFixed(m.decimals));
+      assert.equal(displayText(m, si), typed.toFixed(shownDecimals(m, typed)));
       checked += 1;
     }
   }
@@ -168,7 +170,7 @@ test('3c. and through the egg: mass and girth come back through the one diameter
       const minor_mm = eggFromMass((parse(mass, typed) as number) / 1000).minorDiameter_m * 1000;
       if (minor_mm < LIMITS.minor_mm.lo || minor_mm > LIMITS.minor_mm.hi) continue;
       const back = eggFromMinorDiameter(minor_mm / 1000).mass_kg * 1000;
-      assert.equal(displayText(mass, back), typed.toFixed(mass.decimals), `${system} mass ${typed}`);
+      assert.equal(displayText(mass, back), typed.toFixed(shownDecimals(mass, typed)), `${system} mass ${typed}`);
     }
     const girth = measureFor('girth', system, null);
     for (const typed of grid(girth)) {
@@ -177,6 +179,22 @@ test('3c. and through the egg: mass and girth come back through the one diameter
       assert.equal(displayText(girth, Math.PI * minor_mm), typed.toFixed(girth.decimals), `${system} girth ${typed}`);
     }
   }
+});
+
+test('3c2. grams show only the decimals they need; every other measure keeps its own', () => {
+  const g = measureFor('mass', 'metric', null);
+  assert.equal(g.trim, true);
+  assert.equal(displayText(g, 58), '58');
+  assert.equal(displayText(g, 58.5), '58.5');
+  assert.equal(displayText(g, 58.2), '58');
+  assert.equal(displayText(g, 58.3), '58.5');
+  assert.equal(rendered(g, 58), '58 g');
+  assert.equal(rendered(g, 58.5), '58.5 g');
+  for (const m of everyMeasure()) {
+    if (m.quantity === 'mass' && m.unit === 'g') continue;
+    assert.equal(m.trim, false, `${m.quantity} in ${m.unit}`);
+  }
+  assert.equal(displayText(measureFor('water', 'metric', null), 2), '2.00');
 });
 
 test('3d. a stored value at a limit shows as the input\'s bound, never a step outside it', () => {
