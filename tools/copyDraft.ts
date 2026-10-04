@@ -59,6 +59,7 @@ import { data } from './drafts/data.js';
 import { sharingid } from './drafts/sharingid.js';
 import { steppers } from './drafts/steppers.js';
 import { stay } from './drafts/stay.js';
+import { press } from './drafts/press.js';
 
 export type Templates = Record<string, string>;
 
@@ -70,6 +71,21 @@ export interface Drafted {
   appsAfter: string[];
   /** Where the draft puts this key: its row or group, in a word or two. */
   row: string;
+  /** The key's twin in a regional overlay (copy/en-US.json), rewritten
+   *  with it, by locale: what the overlay said before and says after. The
+   *  web renders the overlay's words in that region, so the snapshot proof
+   *  reads these as rows of their own; `copyLiterals` reads only the base. */
+  overlays?: Record<string, { before: Templates; after: Templates }>;
+}
+
+/** A draft's rows with each overlay twin as a row of its own, for a proof
+ *  that reads rendered words, in which a region's twin is just another
+ *  string. */
+export function withOverlays(rows: Drafted[]): Drafted[] {
+  return rows.flatMap((d) => [d, ...Object.entries(d.overlays ?? {}).map(([locale, o]): Drafted => ({
+    key: d.key, row: `${d.row} (${locale})`, before: o.before, after: o.after,
+    appsBefore: d.appsBefore, appsAfter: d.appsAfter,
+  }))]);
 }
 
 export interface Draft {
@@ -118,6 +134,7 @@ export const DRAFTS: Record<string, Draft> = {
   sharingid,
   steppers,
   stay,
+  press,
 };
 
 /** The draft most recently applied, the last in `DRAFTS`: what a proof checks

@@ -118,7 +118,10 @@ The one queue. Nothing else in the documents waits on the owner.
 10. **The owner's fixes of 5 October 2026, on a phone.** Back to metric
     leaves the English of 1750 alone (`DECISIONS.md` 77), in both apps;
     the **`stay`** draft drops "and back when you pick Metric" from the
-    Language (i).
+    Language (i). The **`press`** draft takes "tap" for the screen gesture
+    out of eight strings, en-US and 1750 twins with them: "then press Start
+    heating", "press Full rolling boil", and on the Lock Screen "my guess
+    until Full rolling boil".
 
 Waiting on someone else: the Czech review (F5), by the owner's friend.
 
