@@ -61,7 +61,7 @@ so is the label's **Not Linked** (74).
       server keeps no time of arrival, so the rule has to go by the day the
       egg was cooked.
 - [x] **Show the random id** so a person can quote it by email
-      (`DECISIONS.md` 67): "Your random number" over the id, whole,
+      (`DECISIONS.md` 67): "Your random ID" (was "Your random number") over the id, whole,
       fixed-width and selectable, in both apps' sharing section from the
       first time sharing is turned on until a deletion; the `sharingid`
       draft (`546fda7`). The page says where to find it (`8deebf5`).

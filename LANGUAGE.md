@@ -394,6 +394,14 @@ asking for deletion. It is the privacy page's own name for it, and
 `share.what`'s. The id is shown whole and selectable, in a fixed-width
 face; it is not words and has no key. No en-US entry: American English
 says it the same way. `tools/drafts/sharingid.ts`, on `99572b7`.
+Since 5 October 2026 it is "Your random ID" (1750: "Your cypher, drawn at
+random"), with `share.what` and the privacy page: the `randomid` draft.
+
+**No "tap" for the screen gesture** (5 October 2026, the owner's: "not
+global English", and "then tap" read as tapping the eggs). A button is
+pressed, or named alone where there is no room for a verb; the `press`
+draft, with its en-US and 1750 twins. "Tap" for the kitchen fitting went
+earlier (`DECISIONS.md` 57).
 
 ## 4. Units
 

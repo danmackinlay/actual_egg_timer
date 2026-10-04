@@ -102,7 +102,7 @@ The one queue. Nothing else in the documents waits on the owner.
    never "eggs" (13 keys; `LANGUAGE.md` §3 has the table). The privacy
    page names the controls as they now read: "Sharing results",
    "Share results" and "Delete shared results". And **`sharingid`**
-   (`DECISIONS.md` 67): "Your random number" over the id, whole and
+   (`DECISIONS.md` 67): "Your random ID" over the id, whole and
    selectable, in both apps' sharing section once sharing has been on.
 8. **The counter's Help line**, approved (`DECISIONS.md` 62), goes into
    `help.unsure.counter` with the owner's hand edit of the words, with its
@@ -121,7 +121,9 @@ The one queue. Nothing else in the documents waits on the owner.
     Language (i). The **`press`** draft takes "tap" for the screen gesture
     out of eight strings, en-US and 1750 twins with them: "then press Start
     heating", "press Full rolling boil", and on the Lock Screen "my guess
-    until Full rolling boil".
+    until Full rolling boil". The **`randomid`** draft calls the random
+    number a "random ID" (1750: a "cypher"), in Settings, the consent
+    and the privacy page.
 
 Waiting on someone else: the Czech review (F5), by the owner's friend.
 
