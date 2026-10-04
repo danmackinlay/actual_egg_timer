@@ -8,7 +8,9 @@
  * firmest levels at 3/10 or better, found on the slider's own grid, and never
  * outside the physical limits; when nothing reaches 3/10 the physical limits
  * stand; and a counter rest asked for soft is refused for the physical reason
- * and lands where the odds are at least 3/10.
+ * and lands where the odds are at least 3/10; and at the far left the slider
+ * rests on the level the time and the bracket are for, whose middle leaves the
+ * thumb only by the lean the white asks for once a time is chosen.
  *
  * The fixture (`fixtures/reach.json`) pins the arithmetic for the Swift port.
  *
@@ -28,8 +30,10 @@ import { CALIBRATION_SEED, anchorNear, snapUp, verdictFor } from '../src/core/po
 import { Calibration, calibrationDoneness, calibrationParams } from '../src/core/record.js';
 import {
   ADVICE_BELOW_TENTHS, AdviceFacts, OddsProfile, REACH_ODDS, adviceWanted, oddsAtLevel, oddsNear,
-  oddsProfile, pricedChanges, protocolAdvice, shadingOf, unpricedAdvice, verdictWithOdds,
+  answerAt, oddsProfile, pricedChanges, protocolAdvice, shadingOf, unpricedAdvice, verdictWithOdds,
 } from '../src/core/reach.js';
+import { predictOutcome } from '../src/core/outcome.js';
+import { directionKey, whiteAtRisk } from '../src/core/wording.js';
 import { appSetup, gridFor, knowing } from '../tools/common.js';
 
 const EGG = eggFromMass(0.068);
@@ -263,4 +267,47 @@ test('9. on the model, ice helps a counter rest where the carryover binds, and n
   console.log(`# counter vs ice at ${lowest}: ${oddsNear(counter, lowest).toFixed(2)} vs ${oddsNear(ice, lowest).toFixed(2)}; at 1: ${oddsNear(counter, 1).toFixed(2)} vs ${oddsNear(ice, 1).toFixed(2)}`);
   assert.deepEqual(at(lowest), ['advice.ice']);
   assert.deepEqual(at(1), []);
+});
+
+test('10. the far left: the slider rests on the level the time and the bracket are for, and the bracket shows how far the white leans it', () => {
+  // A cold start, as a fresh install has it: the white sets only from a
+  // level above runny, so asked for runny, the slider goes there.
+  const cold = appSetup({ startMode: 'cold' });
+  const freshGrid = gridFor(FRESH, EGG, cold);
+  const fresh = answerAt(FRESH, EGG, cold, 0, oddsProfile(FRESH, EGG, cold, freshGrid), true);
+  assert.equal(fresh.verdict.kind, 'tooSoftForWhite');
+  assert.ok(fresh.verdict.snapTo !== null && fresh.verdict.snapTo > 0);
+  // Where both apps put the slider (the iOS thumb too, once the finger
+  // lifts): the snapped level, which the solve is for.
+  assert.equal(fresh.level, fresh.verdict.snapTo);
+  assert.equal(fresh.level, snapUp(fresh.solution.softestLevel));
+  assert.ok(fresh.solution.reachable);
+  // Before the first egg no time is chosen, so nothing leans: the bracket's
+  // middle is the thumb.
+  const fd = decide(FRESH, freshGrid, fresh.solution, logYolkTarget(fresh.level));
+  assert.equal(fd.chosen, false);
+  const fo = predictOutcome(FRESH.posterior, freshGrid, fd.cookTime_s, logYolkTarget(fresh.level));
+  console.log(`# fresh, cold, asked 0: slider at ${fresh.level}, bracket ${fo.levelLow.toFixed(3)}/${fo.levelMedian.toFixed(3)}/${fo.levelHigh.toFixed(3)}, ${directionKey(fo)}, runny white ${fo.pWhiteRunny.toFixed(2)}`);
+  assert.ok(Math.abs(fo.levelMedian - fresh.level) < 0.02, `median ${fo.levelMedian}`);
+  assert.ok(fo.levelLow <= fresh.level && fresh.level <= fo.levelHigh);
+  assert.ok(whiteAtRisk(fo), 'and the white has its line');
+
+  // After eggs the time is chosen, and at the soft end the white leans it
+  // later, because a runny white costs three. The bracket's middle sits right
+  // of the thumb by what that costs the yolk, and the sentence says firm.
+  const c = knowing({ particles: PARTICLES, eggsLogged: 3 });
+  const grid = gridFor(c, EGG, cold);
+  const a = answerAt(c, EGG, cold, 0, oddsProfile(c, EGG, cold, grid), true);
+  assert.equal(a.level, a.verdict.snapTo ?? 0);
+  const target = logYolkTarget(a.level);
+  const d = decide(c, grid, a.solution, target);
+  const o = predictOutcome(c.posterior, grid, d.cookTime_s, target);
+  const unleaned = predictOutcome(c.posterior, grid, d.meanCookTime_s, target);
+  console.log(`# three eggs, cold, asked 0: slider at ${a.level} (${a.verdict.kind}), ${d.meanCookTime_s.toFixed(0)} s -> ${d.cookTime_s.toFixed(0)} s, bracket ${o.levelLow.toFixed(3)}/${o.levelMedian.toFixed(3)}/${o.levelHigh.toFixed(3)}; unleaned middle ${unleaned.levelMedian.toFixed(3)}; runny white ${unleaned.pWhiteRunny.toFixed(2)} -> ${o.pWhiteRunny.toFixed(2)}; ${directionKey(o)}`);
+  assert.ok(d.chosen && d.cookTime_s > d.meanCookTime_s, 'the white leans the time later');
+  assert.ok(unleaned.pWhiteRunny > o.pWhiteRunny, 'to keep the white from running');
+  assert.ok(Math.abs(unleaned.levelMedian - a.level) < 0.03, 'unleaned, the middle is the thumb');
+  assert.ok(o.levelMedian > a.level + 0.03, `the lean moves it right: ${o.levelMedian}`);
+  assert.equal(o.lean, 'firm');
+  assert.ok(directionKey(o) === 'outcome.likely.firm' || directionKey(o) === 'outcome.miss.firm', directionKey(o));
 });

@@ -127,6 +127,10 @@ What was cleaned up, so nobody re-introduces it:
   (buttons, steppers, segmented controls, system alerts). To exercise a
   slider-dependent path, write the value into the app's `UserDefaults` plist in
   the simulator container and relaunch; an incremental build is two seconds.
+  The doneness slider is no longer one: `YolkSlider` is a `UISlider`, and a
+  `touch_path` drags it like a finger (5 October 2026). A `UISlider` sends
+  `.valueChanged` again while the finger rests and once more as it lifts,
+  with the finger's value, not the one the code set meanwhile.
 - **`sudo xcode-select -s ...` was a red herring.** When the simulator
   integration reports "Xcode is installed but not selected" while
   `xcode-select -p` already prints the right path, the fix is restarting the
@@ -4150,3 +4154,34 @@ zero, so a field that starts from a suggestion needs its own rule; and the
 DONE screen is reachable on iOS without waiting by backdating
 `cookInProgress` in the app's plist (its dates are seconds since 2001)
 before a relaunch.
+
+## 5 October 2026: the slider's left end, and the bracket's mark
+
+The owner, on iOS: dragged to the far left, the bracket's mark sat right of
+the thumb, "the target and the error bar decoupled". Two things, one a bug.
+
+**The bug, iOS only** (`253cd61`). On the iPhone 17 simulator, 70 g from the
+fridge, a cold start, nothing learned: the white sets only from 0.05, so a
+drag to 0 is snapped there, and the 9:56 and the bracket (mark at about
+0.06) were for 0.05, but the thumb stayed on the stripes at 0. The snap
+landed while the finger was down, which `updateUIView` leaves alone; then
+UIKit sent the finger's 0 again as it lifted, putting the value back to 0,
+and the re-solve that would have snapped it again was not always applied.
+Silent, because runny to runny is not worth a sentence. `YolkSlider` now
+passes on only a level the finger has moved to, and puts the thumb on the
+value when the finger lifts; driven, the thumb ends at 0.05. The web was
+right already: its thumb goes to 0.06 (68 g, cold) and 0.07 after one egg.
+
+**Not a bug: the lean.** Once an egg has taught something the time is
+chosen, and at the soft end it leans later because a runny white costs three
+(`DECISIONS.md` 7): at the pan's softest level a third to a half of the
+whites would still be runny at the mean time. On the reference cold start,
+asked for 0, after one egg just right: the slider at 0.07, 591 s leaned to
+612 s, P(runny) 0.32 to 0.13, the mark at 0.16 (0.06 unleaned), "It might
+miss, and if so, probably too firm." After three: 0.02, 582 to 596 s, mark
+0.09. After ten: 0, 578 to 593 s, mark 0.08. By 0.3 the lean is about 0.02
+and stays there. The bracket is the egg at the time on screen, and the
+sentence already says which way, so no word was added; `UI.md` §8 says what
+the mark is, and `test/reach.test.ts` 10 pins both (`207d72e`). Whether the
+far left should refuse what the white leans away from is the owner's call,
+not asked yet.

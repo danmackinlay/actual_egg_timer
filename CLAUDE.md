@@ -110,9 +110,10 @@ things stand is `PLAN.md`; which document holds what is its last section.
 - **A debug build takes launch arguments** (`-uiScreen`, `-seedEggs`,
   `-noAlarmPrompt`, …) to reach a screen without taps; the header of
   `ios/App/Screenshots.swift` lists them.
-- **SwiftUI's `Slider` ignores synthetic drags** from the simulator tools.
-  Write the value into the app's `UserDefaults` plist in the simulator
-  container and relaunch instead.
+- **SwiftUI's `Slider` ignores synthetic drags** from the simulator tools;
+  write the value into the app's `UserDefaults` plist in the simulator
+  container and relaunch instead. The doneness slider is a `UISlider`
+  (`YolkSlider`), which does take the simulator's drags.
 - **`xcrun simctl spawn <udid> defaults` is not the app's UserDefaults**: it
   writes a domain outside the app's container, which the app reads but cannot
   delete. Drive the app to make the state.
