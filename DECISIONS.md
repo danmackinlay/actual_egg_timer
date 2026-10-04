@@ -424,3 +424,18 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     boils" in 1750). Every English, en-US and 1750 included, and the
     privacy page; code identifiers and keys (`controls.afterTheBoil`) stay.
     The `boiling` draft, `89d5aa1`; the privacy page, `7bf35a6`.
+79. **The feedback reminds the cook what they asked for, the probe reading
+    steps, and a probe owner can give the room.** Three requests, in both
+    apps: the probe's highest reading gets a − and + like every other
+    number, in the cook's unit, starting from the peak yolk the app
+    predicted for that cook (whole degrees; still typed to a tenth); the
+    questions after a cook show the target from what was started ("You
+    asked for: jammy, peak yolk 65 °C"); and with the probe on, Settings
+    offers an optional room temperature, defaulting to the 20 °C assumed,
+    which then feeds the model wherever the room was assumed: the air the
+    eggs cool in, the water left to stand and a cold pan's start, and an
+    egg left out at room temperature. Not a reversal of the old rule that
+    the room needs no input of its own: without a measured room that rule
+    stands. The record's `ambient_C` already holds the room, so no record
+    format changed. The `feedback2` draft; built on the
+    `probe-target-room` branch.

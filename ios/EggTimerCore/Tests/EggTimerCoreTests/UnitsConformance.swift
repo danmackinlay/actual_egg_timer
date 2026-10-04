@@ -45,6 +45,7 @@ struct UnitsConformance {
             #expect(try m.unit.rawValue == c.str("unit"), "\(what): unit")
             #expect(try m.step == c.num("step"), "\(what): step")
             #expect(try m.stepNum == c.num("stepNum") && m.stepDen == c.num("stepDen"), "\(what): step ratio")
+            #expect(try m.nudgeNum == c.num("nudgeNum") && m.nudgeDen == c.num("nudgeDen"), "\(what): nudge")
             #expect(try Double(m.decimals) == c.num("decimals"), "\(what): decimals")
             #expect(try m.trim == c.flag("trim"), "\(what): trim")
             #expect(try m.unitKey == c.str("unitKey"), "\(what): unit key")
@@ -71,6 +72,28 @@ struct UnitsConformance {
             try expectClose(EggTimerCore.display(m, .nan), nan.num("value"), "\(q.rawValue) NaN")
             #expect(try displayText(m, .nan) == nan.str("text"), "\(q.rawValue) NaN text")
         }
+    }
+
+    @Test("the − and +: where an empty field starts, and one press each way")
+    func nudge() throws {
+        var checked = 0
+        for c in try Fixtures.list("units.json", "measures") {
+            let q = try c.value(Quantity.self, "quantity")
+            let m = try measureFor(q, system: c.value(UnitSystem.self, "system"), region: c["region"] as? String)
+            let cases = try c.object("nudge")
+            for r in try cases.rows("from") {
+                let si = try r.num("si")
+                #expect(try nudgeFrom(m, si) == r.num("value"), "\(q.rawValue) in \(m.unit.rawValue) from \(si)")
+                checked += 1
+            }
+            for r in try cases.rows("steps") {
+                let value = try r.num("value")
+                #expect(try stepPast(m, value, up: true) == r.num("up"), "\(q.rawValue) \(value) up")
+                #expect(try stepPast(m, value, up: false) == r.num("down"), "\(q.rawValue) \(value) down")
+                checked += 1
+            }
+        }
+        #expect(checked > 200, "\(checked) nudges")
     }
 
     @Test("the round trip: every value every control can hold comes back as set")

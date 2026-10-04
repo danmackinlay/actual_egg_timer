@@ -295,6 +295,7 @@
     "share.deleting": { "surface": "body", "apps": ["web", "ios"], "note": "While the server has not yet confirmed a deletion; it is asked again at every launch until it does.", "text": "Deleting. If I can’t reach the server now, I’ll keep asking until it confirms." },
     "share.deleted": { "surface": "body", "apps": ["web", "ios"], "text": "Deleted: the server has nothing this device sent." },
 
+    "feedback.target": { "surface": "body", "apps": ["web", "ios"], "note": "Above the yolk question after a cook: what the cook was started for, from what was started, not the slider now, so the answer is graded against it. {doneness} is a doneness word, lower-cased by the app; {yolk} the peak yolk, with its unit.", "text": "You asked for: {doneness}, peak yolk {yolk}", "example": { "doneness": "jammy", "yolk": "149 °F" } },
     "feedback.ask": { "surface": "label", "apps": ["web", "ios"], "text": "How was the yolk?" },
     "feedback.tooSoft": { "surface": "segment", "apps": ["web", "ios"], "text": "Too soft" },
     "feedback.justRight": { "surface": "segment", "apps": ["web", "ios"], "text": "Just right" },
@@ -311,6 +312,8 @@
     "probe.offer": { "surface": "body", "apps": ["web", "ios"], "note": "E4, the draft in INFERENCE.md section 5 with lowest made highest: when it is read, the middle is the warmest point, so the highest number is the middle and every mistake reads lower.", "text": "Do you have a probe thermometer? If so, when I ask, push it into the middle of the egg and tell me the highest number you see." },
     "probe.offer.yes": { "surface": "button", "apps": ["web", "ios"], "text": "Yes" },
     "controls.thermometer.ask": { "surface": "label", "apps": ["web", "ios"], "note": "The checkbox under the Probe thermometer heading. No pronoun: the app is \"I\" everywhere, so a control the cook taps never speaks as \"I\".", "text": "Ask for a reading after each egg" },
+    "controls.room": { "surface": "label", "apps": ["web", "ios"], "note": "The room setting, under Probe thermometer on the Settings page and shown only while the probe is on: the kitchen's air, measured with the probe. Optional; an empty field shows the room assumed, greyed.", "text": "Room temperature" },
+    "controls.room.more": { "surface": "more", "apps": ["web", "ios"], "note": "A paragraph opened in place by the (i) beside Room temperature (UI.md section 4). {room} is the room assumed when the field is empty, in the cook's units. The model cools eggs in the air, and water left to stand with the heat off, toward the room, starts a cold pan's water at it, and takes an egg left out to be at it.", "text": "Optional. Hold your probe in the air of your kitchen and set what it reads. It matters most for eggs left out at room temperature and eggs cooled in the air. Leave it blank and I’ll assume {room}.", "example": { "room": "68 °F" } },
     "probe.offer.no": { "surface": "button", "apps": ["web", "ios"], "text": "No thanks" },
     "probe.now": { "surface": "label", "apps": ["web", "ios"], "text": "Push the probe to the middle" },
     "probe.hint": { "surface": "body", "apps": ["web", "ios"], "text": "Tell me the highest number you see." },

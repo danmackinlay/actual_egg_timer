@@ -68,6 +68,10 @@ export interface Settings {
   /** Whether the once-only offer has been answered, either way. The setting
    *  itself stays in the controls; the offer does not come back. */
   probeAsked: boolean;
+  /** The room as the cook measured it, C, or null for not measured, when a
+   *  room is assumed. Offered, and counted, only while `probe` is on
+   *  (`roomInUse`); kept while it is off, for when it comes back on. */
+  room_C: number | null;
 }
 
 /** The numbers a fresh install starts from come from core; the three settings
@@ -97,6 +101,7 @@ export const DEFAULT_SETTINGS: Settings = {
   language: FRESH_LANGUAGE,
   probe: false,
   probeAsked: false,
+  room_C: null,
 };
 
 /* ------------------------------------------------------------- raw storage */
@@ -192,6 +197,9 @@ export function loadSettings(classes: SizeClass[]): Settings {
     language: readLanguageState(raw['language'], LANGUAGES),
     probe: raw['probe'] === true,
     probeAsked: raw['probeAsked'] === true,
+    // Absent from every settings record before 5 October 2026: not measured.
+    room_C: typeof raw['room_C'] === 'number' && Number.isFinite(raw['room_C'])
+      ? clamp(raw['room_C'], LIMITS.room_C) : null,
   };
 }
 

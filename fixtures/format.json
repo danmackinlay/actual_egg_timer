@@ -5016,6 +5016,136 @@
     },
     {
       "locale": "en-US",
+      "quantity": "roomTemp",
+      "system": "metric",
+      "region": "US",
+      "si": 0.5,
+      "key": "format.celsius",
+      "value": {
+        "value": 5,
+        "decimals": 0
+      },
+      "text": "5 °C"
+    },
+    {
+      "locale": "en-US",
+      "quantity": "roomTemp",
+      "system": "metric",
+      "region": "US",
+      "si": 2.4,
+      "key": "format.celsius",
+      "value": {
+        "value": 5,
+        "decimals": 0
+      },
+      "text": "5 °C"
+    },
+    {
+      "locale": "en-US",
+      "quantity": "roomTemp",
+      "system": "metric",
+      "region": "US",
+      "si": 63.5,
+      "key": "format.celsius",
+      "value": {
+        "value": 40,
+        "decimals": 0
+      },
+      "text": "40 °C"
+    },
+    {
+      "locale": "en-US",
+      "quantity": "roomTemp",
+      "system": "metric",
+      "region": "US",
+      "si": 1500,
+      "key": "format.celsius",
+      "value": {
+        "value": 40,
+        "decimals": 0
+      },
+      "text": "40 °C"
+    },
+    {
+      "locale": "en-US",
+      "quantity": "roomTemp",
+      "system": "metric",
+      "region": "US",
+      "si": 16400,
+      "key": "format.celsius",
+      "value": {
+        "value": 40,
+        "decimals": 0
+      },
+      "text": "40 °C"
+    },
+    {
+      "locale": "en-US",
+      "quantity": "roomTemp",
+      "system": "imperial",
+      "region": "US",
+      "si": 0.5,
+      "key": "format.fahrenheit",
+      "value": {
+        "value": 41,
+        "decimals": 0
+      },
+      "text": "41 °F"
+    },
+    {
+      "locale": "en-US",
+      "quantity": "roomTemp",
+      "system": "imperial",
+      "region": "US",
+      "si": 2.4,
+      "key": "format.fahrenheit",
+      "value": {
+        "value": 41,
+        "decimals": 0
+      },
+      "text": "41 °F"
+    },
+    {
+      "locale": "en-US",
+      "quantity": "roomTemp",
+      "system": "imperial",
+      "region": "US",
+      "si": 63.5,
+      "key": "format.fahrenheit",
+      "value": {
+        "value": 104,
+        "decimals": 0
+      },
+      "text": "104 °F"
+    },
+    {
+      "locale": "en-US",
+      "quantity": "roomTemp",
+      "system": "imperial",
+      "region": "US",
+      "si": 1500,
+      "key": "format.fahrenheit",
+      "value": {
+        "value": 104,
+        "decimals": 0
+      },
+      "text": "104 °F"
+    },
+    {
+      "locale": "en-US",
+      "quantity": "roomTemp",
+      "system": "imperial",
+      "region": "US",
+      "si": 16400,
+      "key": "format.fahrenheit",
+      "value": {
+        "value": 104,
+        "decimals": 0
+      },
+      "text": "104 °F"
+    },
+    {
+      "locale": "en-US",
       "quantity": "boilingPoint",
       "system": "metric",
       "region": "US",
@@ -5926,6 +6056,136 @@
     },
     {
       "locale": "en-GB",
+      "quantity": "roomTemp",
+      "system": "metric",
+      "region": "GB",
+      "si": 0.5,
+      "key": "format.celsius",
+      "value": {
+        "value": 5,
+        "decimals": 0
+      },
+      "text": "5 °C"
+    },
+    {
+      "locale": "en-GB",
+      "quantity": "roomTemp",
+      "system": "metric",
+      "region": "GB",
+      "si": 2.4,
+      "key": "format.celsius",
+      "value": {
+        "value": 5,
+        "decimals": 0
+      },
+      "text": "5 °C"
+    },
+    {
+      "locale": "en-GB",
+      "quantity": "roomTemp",
+      "system": "metric",
+      "region": "GB",
+      "si": 63.5,
+      "key": "format.celsius",
+      "value": {
+        "value": 40,
+        "decimals": 0
+      },
+      "text": "40 °C"
+    },
+    {
+      "locale": "en-GB",
+      "quantity": "roomTemp",
+      "system": "metric",
+      "region": "GB",
+      "si": 1500,
+      "key": "format.celsius",
+      "value": {
+        "value": 40,
+        "decimals": 0
+      },
+      "text": "40 °C"
+    },
+    {
+      "locale": "en-GB",
+      "quantity": "roomTemp",
+      "system": "metric",
+      "region": "GB",
+      "si": 16400,
+      "key": "format.celsius",
+      "value": {
+        "value": 40,
+        "decimals": 0
+      },
+      "text": "40 °C"
+    },
+    {
+      "locale": "en-GB",
+      "quantity": "roomTemp",
+      "system": "imperial",
+      "region": "GB",
+      "si": 0.5,
+      "key": "format.fahrenheit",
+      "value": {
+        "value": 41,
+        "decimals": 0
+      },
+      "text": "41 °F"
+    },
+    {
+      "locale": "en-GB",
+      "quantity": "roomTemp",
+      "system": "imperial",
+      "region": "GB",
+      "si": 2.4,
+      "key": "format.fahrenheit",
+      "value": {
+        "value": 41,
+        "decimals": 0
+      },
+      "text": "41 °F"
+    },
+    {
+      "locale": "en-GB",
+      "quantity": "roomTemp",
+      "system": "imperial",
+      "region": "GB",
+      "si": 63.5,
+      "key": "format.fahrenheit",
+      "value": {
+        "value": 104,
+        "decimals": 0
+      },
+      "text": "104 °F"
+    },
+    {
+      "locale": "en-GB",
+      "quantity": "roomTemp",
+      "system": "imperial",
+      "region": "GB",
+      "si": 1500,
+      "key": "format.fahrenheit",
+      "value": {
+        "value": 104,
+        "decimals": 0
+      },
+      "text": "104 °F"
+    },
+    {
+      "locale": "en-GB",
+      "quantity": "roomTemp",
+      "system": "imperial",
+      "region": "GB",
+      "si": 16400,
+      "key": "format.fahrenheit",
+      "value": {
+        "value": 104,
+        "decimals": 0
+      },
+      "text": "104 °F"
+    },
+    {
+      "locale": "en-GB",
       "quantity": "boilingPoint",
       "system": "metric",
       "region": "GB",
@@ -6833,6 +7093,136 @@
         "decimals": 1
       },
       "text": "29 552,0 °F"
+    },
+    {
+      "locale": "cs-CZ",
+      "quantity": "roomTemp",
+      "system": "metric",
+      "region": "CZ",
+      "si": 0.5,
+      "key": "format.celsius",
+      "value": {
+        "value": 5,
+        "decimals": 0
+      },
+      "text": "5 °C"
+    },
+    {
+      "locale": "cs-CZ",
+      "quantity": "roomTemp",
+      "system": "metric",
+      "region": "CZ",
+      "si": 2.4,
+      "key": "format.celsius",
+      "value": {
+        "value": 5,
+        "decimals": 0
+      },
+      "text": "5 °C"
+    },
+    {
+      "locale": "cs-CZ",
+      "quantity": "roomTemp",
+      "system": "metric",
+      "region": "CZ",
+      "si": 63.5,
+      "key": "format.celsius",
+      "value": {
+        "value": 40,
+        "decimals": 0
+      },
+      "text": "40 °C"
+    },
+    {
+      "locale": "cs-CZ",
+      "quantity": "roomTemp",
+      "system": "metric",
+      "region": "CZ",
+      "si": 1500,
+      "key": "format.celsius",
+      "value": {
+        "value": 40,
+        "decimals": 0
+      },
+      "text": "40 °C"
+    },
+    {
+      "locale": "cs-CZ",
+      "quantity": "roomTemp",
+      "system": "metric",
+      "region": "CZ",
+      "si": 16400,
+      "key": "format.celsius",
+      "value": {
+        "value": 40,
+        "decimals": 0
+      },
+      "text": "40 °C"
+    },
+    {
+      "locale": "cs-CZ",
+      "quantity": "roomTemp",
+      "system": "imperial",
+      "region": "CZ",
+      "si": 0.5,
+      "key": "format.fahrenheit",
+      "value": {
+        "value": 41,
+        "decimals": 0
+      },
+      "text": "41 °F"
+    },
+    {
+      "locale": "cs-CZ",
+      "quantity": "roomTemp",
+      "system": "imperial",
+      "region": "CZ",
+      "si": 2.4,
+      "key": "format.fahrenheit",
+      "value": {
+        "value": 41,
+        "decimals": 0
+      },
+      "text": "41 °F"
+    },
+    {
+      "locale": "cs-CZ",
+      "quantity": "roomTemp",
+      "system": "imperial",
+      "region": "CZ",
+      "si": 63.5,
+      "key": "format.fahrenheit",
+      "value": {
+        "value": 104,
+        "decimals": 0
+      },
+      "text": "104 °F"
+    },
+    {
+      "locale": "cs-CZ",
+      "quantity": "roomTemp",
+      "system": "imperial",
+      "region": "CZ",
+      "si": 1500,
+      "key": "format.fahrenheit",
+      "value": {
+        "value": 104,
+        "decimals": 0
+      },
+      "text": "104 °F"
+    },
+    {
+      "locale": "cs-CZ",
+      "quantity": "roomTemp",
+      "system": "imperial",
+      "region": "CZ",
+      "si": 16400,
+      "key": "format.fahrenheit",
+      "value": {
+        "value": 104,
+        "decimals": 0
+      },
+      "text": "104 °F"
     },
     {
       "locale": "cs-CZ",

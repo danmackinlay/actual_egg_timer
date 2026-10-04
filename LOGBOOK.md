@@ -4125,3 +4125,28 @@ its 41 characters. Kept, by the owner's call: the button's name, Full
 rolling boil, and "brought to the boil" and "to the boil", which sound like
 cooking. Proven with `copyLiterals --since 343fcff boiling` and the snapshot
 compare over 172 states.
+
+## 5 October 2026: what you asked for, a stepped probe, the room
+
+Three owner requests on the 0.4 line (`DECISIONS.md` 79). Core first
+(`7931530`): `roomInUse`, `ambientFor(eggStart_C, room_C)` and
+`startTempPreset_C` in policy, and in units a `roomTemp` quantity and the
+− and +'s own grid, so a probe reading typed to a tenth steps in whole
+degrees (`nudgeFrom`, `stepPast`); fixtured and ported. Then the
+`feedback2` draft in both apps (`a182766`; named so because `feedback` is
+the first draft of all): "You asked for: jammy, peak yolk 65 °C" over the
+yolk question, the probe's − and + from the predicted peak shown greyed in
+the empty field, and an optional Room temperature in Settings while the
+probe is on. Driven on the web at 375 px (65 greyed; + gives 66; held 1 s,
+64 to 71; 64.3 then + gives 65; room 22 saved and the Room egg hint says
+22 °C; probe off hides the row and the hint says 20 °C; counter cooling,
+5:20 at an assumed 20 °C and 5:07 in a measured 30 °C room) and on the
+iPhone 17 simulator (the same panel and stepping, held + from 66 to 69 in
+2 s; Settings' room row on a line of its own under its label, which is too
+long to share one with the field). `validate` 29/29.
+
+Two things learned: the web stepper's `stepUp` steps an empty field from
+zero, so a field that starts from a suggestion needs its own rule; and the
+DONE screen is reachable on iOS without waiting by backdating
+`cookInProgress` in the app's plist (its dates are seconds since 2001)
+before a relaunch.

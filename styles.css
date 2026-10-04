@@ -1039,6 +1039,7 @@ button.fb[aria-pressed="true"], button.wb[aria-pressed="true"] {
   border-color: var(--accent);
   font-weight: 600;
 }
+#feedbackTarget { margin: 0 0 10px; text-align: center; font-size: 0.875rem; color: var(--dim); }
 #feedbackOptional, #calibNote {
   text-align: center; margin: 8px 0 0; min-height: 1.1em; font-size: 0.8125rem; color: var(--dim);
 }
@@ -1050,8 +1051,8 @@ button.fb[aria-pressed="true"], button.wb[aria-pressed="true"] {
 #probeEntry { margin-bottom: 14px; text-align: center; }
 #probeNow { margin: 0 0 4px; font-size: 0.9375rem; color: var(--fg); font-weight: 600; }
 #probeHint, #probeNote { margin: 0 0 8px; font-size: 0.875rem; color: var(--dim); min-height: 1.1em; }
-.probe__row { display: flex; align-items: center; justify-content: center; gap: 10px; }
-.probe__row button { width: auto; margin-top: 0; padding: 10px 16px; }
+.probe__row { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px; }
+.probe__row > button { width: auto; margin-top: 0; padding: 10px 16px; }
 
 /* ---- wider screens: the same column, with room to breathe ---- */
 @media (min-width: 720px) {

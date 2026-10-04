@@ -10,8 +10,8 @@ population a prior is drawn from (E6-E8, `COLLECTIVE.md`) are built in
 both, on this branch, not on `main` and not deployed. The web app (`src/`) and the iOS app (`ios/`) carry
 the same model, refusals, particle filter and choice of time, the same
 catalogue of words in two Englishes (Phase F but for Czech), and the same
-layout (`UI.md`). `npm test` runs 306 tests, all passing (5b pins E3's known
-limit). `npm run validate` passes 29/29, and `swift test` passes 125 tests
+layout (`UI.md`). `npm test` runs 310 tests, all passing (5b pins E3's known
+limit). `npm run validate` passes 29/29, and `swift test` passes 127 tests
 in 33 suites. **Pushed on 29 September** at `5ff6940`, the owner's
 call: Netlify serves it at actualeggtimer.netlify.app, and the first run of
 `.github/workflows/verify.yml` passed. The iOS app runs from Xcode on the owner's
@@ -135,6 +135,17 @@ The one queue. Nothing else in the documents waits on the owner.
     hard" for "a full boil", and in 1750 on the Lock Screen "my conjecture,
     till you tell me it boils". The button stays "Full rolling boil", and
     "brought to the boil" stays.
+
+12. **The feedback and the room, on a phone** (5 October 2026,
+    `DECISIONS.md` 79), the **`feedback2`** draft in both apps. After a
+    cook, "You asked for: jammy, peak yolk 65 °C" over the yolk question
+    (1750: "You desired: thick, the yolk rising to …"); the probe reading
+    has a − and +, in whole degrees from the peak the cook was started at,
+    which the empty field shows greyed; and with the probe on, Settings
+    has an optional Room temperature, empty until set, with an (i). A
+    measured room is the room the model cools toward and the Room egg's
+    start (`roomInUse`, `src/core/policy.ts`), recorded in each result's
+    `ambient_C` as before.
 
 Waiting on someone else: the Czech review (F5), by the owner's friend.
 

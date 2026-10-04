@@ -148,11 +148,13 @@ final class Planner {
     /// way. The setting stays in the controls; the offer does not come back.
     private(set) var probeAsked = false
 
-    /// The setting, from the controls. Changing it is saying so.
+    /// The setting, from the controls. Changing it is saying so. It brings a
+    /// measured room into the model, or takes it out (`roomInUseC`), so the
+    /// pot is solved again.
     func setProbe(_ on: Bool) {
         probe = on
         probeAsked = true
-        SettingsStore.save(self)
+        changed()
     }
 
     /// The answer to the offer made during a cook.
@@ -167,6 +169,26 @@ final class Planner {
         probe = on
         probeAsked = asked
     }
+
+    /// The room as the cook measured it, C, or nil for not measured, when a
+    /// room is assumed. Offered, and counted, only while `probe` is on
+    /// (`roomInUse`); kept while it is off, for when it comes back on.
+    private(set) var roomC: Double?
+
+    /// The room, from Settings; nil is "not measured". Clamped like anything
+    /// typed.
+    func setRoom(_ c: Double?) {
+        roomC = c.map { clamp($0, to: Limits.roomC) }
+        changed()
+    }
+
+    /// Restore from storage without saving it straight back.
+    func restoreRoom(_ c: Double?) {
+        roomC = c.map { clamp($0, to: Limits.roomC) }
+    }
+
+    /// The room the model is told about, or nil to assume one.
+    var roomInUseC: Double? { roomInUse(probe: probe, roomC: roomC) }
 
     /// The readings the app takes for this cook, C: outside them it is a typo,
     /// the white or another egg, and is refused rather than folded.
@@ -385,22 +407,16 @@ final class Planner {
 
     var eggStartC: Double {
         switch startTemp {
-        case .fridge: StartTempPresets.fridgeC
-        case .room: StartTempPresets.roomC
+        case .fridge: startTempPresetC(.fridge, roomC: roomInUseC)
+        case .room: startTempPresetC(.room, roomC: roomInUseC)
         case .custom: customStartC
         }
     }
 
-    /// The room, as far as the model is concerned.
-    ///
-    /// There is no separate input for it, and there should not be: on the
-    /// default path - eggs into boiling water, straight into an ice bath - the
-    /// room is worth nothing at all, and on a cold start about two seconds per
-    /// degree. It earns its keep resting on the counter and standing with the
-    /// heat off, and in both the user has usually already said: an egg that has
-    /// been sitting out IS at room temperature. A fridge egg says nothing about
-    /// the room, so that case keeps the default.
-    var ambientC: Double { ambientFor(eggStartC: eggStartC) }
+    /// The room, as far as the model is concerned: the room as measured, with
+    /// the probe on; otherwise an egg that has been sitting out IS the room,
+    /// and a fridge egg says nothing (`ambientFor`, core policy).
+    var ambientC: Double { ambientFor(eggStartC: eggStartC, roomC: roomInUseC) }
 
     var boilingC: Double { Thermo.boilingPointAtAltitude(altitudeM) }
 

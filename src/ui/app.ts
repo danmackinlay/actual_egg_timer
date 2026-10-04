@@ -18,12 +18,13 @@ import { boilingPointAtAltitude } from '../core/thermo.js';
 import { Cooling, CookSetup, StartMode } from '../core/protocol.js';
 import { SOUS_VIDE_BATH_C, SOUS_VIDE_MODEL_FLOOR_C, sousVideEstimate } from '../core/sousvide.js';
 import {
-  Measure, Quantity, UnitSystem, chooseUnits, displayText, parse, sizeClassLabel,
+  Measure, Quantity, UnitSystem, chooseUnits, displayText, nudgeFrom, parse, sizeClassLabel, stepPast,
 } from '../core/units.js';
 import { Solution, logYolkTarget } from '../core/solve.js';
 import {
   BoilMemory, DEFAULTS, SLIDER_STEPS, SLOW_HOB_EVERY_S, SLOW_HOB_EXTRA_S, SLOW_HOB_WHEN_LEFT_S, Verdict,
-  ambientFor, coolingSecondsFor, probeMomentFor, targetPeakYolk_C, textureFor, textureNoteKeys,
+  ambientFor, coolingSecondsFor, probeMomentFor, roomInUse, startTempPreset_C, targetPeakYolk_C, textureFor,
+  textureNoteKeys,
 } from '../core/policy.js';
 import {
   Decision, DecisionInputs, appliedNudge, carriedSolution, decide, decidedSolution, decisionApplies,
@@ -68,7 +69,7 @@ import {
 } from './clock.js';
 import { bindDom, el, page, radioValue, selectRadio } from './dom.js';
 import { labelInfoButtons, showInfo, wireInfoButtons } from './info.js';
-import { labelSteppers, wireSteppers } from './stepper.js';
+import { labelSteppers, setStepRule, wireSteppers } from './stepper.js';
 import { wireViews } from './views.js';
 import { startOffline } from './offline.js';
 import {
@@ -81,7 +82,7 @@ import { Ticket, restoreTicket, withTimeToBoil } from './ticket.js';
 import { Learning, renderCalibNote, renderLearned, wireForget } from './learned.js';
 import {
   answersNow, forgetAnswers, keptAnswers, pickedUpAfterReload, probePending, probeWanted,
-  renderProbe, resumeAnswers, wireFeedback,
+  renderProbe, renderTarget, resumeAnswers, wireFeedback,
 } from './feedback.js';
 import { phaseView } from './phaseView.js';
 import { EggSection, advanceSection, createSection, sectionView } from '../core/section.js';
@@ -233,15 +234,22 @@ function onUnits(next: UnitSystem): void {
   recompute();
 }
 
-function eggStart_C(): number {
-  if (settings.startTempMode === 'custom') return settings.customStart_C;
-  return START_TEMP_PRESETS_C[settings.startTempMode];
+/** The room as the cook measured it, while it counts, or null to assume one
+ *  (`roomInUse`: only with the probe on). */
+function room_C(): number | null {
+  return roomInUse(settings.probe, settings.room_C);
 }
 
-/** The room, as far as the model is concerned. The rule - an egg that has been
- *  sitting out IS the room, a fridge egg says nothing - is core policy. */
+function eggStart_C(): number {
+  if (settings.startTempMode === 'custom') return settings.customStart_C;
+  return startTempPreset_C(settings.startTempMode, room_C());
+}
+
+/** The room, as far as the model is concerned. The rule - a measured room is
+ *  the room; otherwise an egg that has been sitting out IS the room, and a
+ *  fridge egg says nothing - is core policy. */
 function ambient_C(): number {
-  return ambientFor(eggStart_C());
+  return ambientFor(eggStart_C(), room_C());
 }
 
 function boilingPoint_C(): number {
@@ -656,6 +664,7 @@ function renderReadout(now_ms: number, sol: Solution, warning: string): void {
   page().feedback.hidden = machine.phase !== 'DONE' || said === 'beforeReload';
   if (!page().feedback.hidden && said !== 'live') renderCalibNote(learning());
   renderProbe(machine, ticket, !settings.probeAsked, pending);
+  if (!page().feedback.hidden) renderTarget(ticket, machine.targetLevel);
 
   page().phaseLabel.textContent = view.label;
   page().digits.textContent = view.digits;
@@ -925,6 +934,7 @@ function onProbeOffer(yes: boolean): void {
   settings.probeAsked = true;
   if (yes) settings.probe = true;
   page().probeSetting.checked = settings.probe;
+  page().roomField.hidden = !settings.probe;
   saveNow();
   render(Date.now());
 }
@@ -1038,6 +1048,14 @@ function readInputs(source: EventTarget | null): void {
   // Ticking the box is saying so: the offer has its answer.
   if (page().probeSetting.checked !== settings.probe) settings.probeAsked = true;
   settings.probe = page().probeSetting.checked;
+  // The room, measured: an emptied field is "not measured", and the room is
+  // assumed again. Read only when it is the one being edited (`readField`).
+  if (source === page().roomTemp) {
+    settings.room_C = page().roomTemp.value.trim() === ''
+      ? null : readField(page().roomTemp, 'roomTemp', settings.room_C ?? START_TEMP_PRESETS_C.room);
+  }
+  page().roomField.hidden = !settings.probe;
+  labelStartTemps();
 
   page().customTempField.hidden = settings.startTempMode !== 'custom';
   syncMeasurements(source);
@@ -1269,19 +1287,21 @@ function applyUnitsToDom(): void {
   applyMeasure(page().altitude, page().unitAltitude, measure('altitude'));
   applyMeasure(page().litres, page().unitLitres, measure('water'));
   applyMeasure(page().probeReading, page().unitProbe, measure('probeTemp'));
+  applyMeasure(page().roomTemp, page().unitRoom, measure('roomTemp'));
   syncMeasurements(null);
   page().customTemp.value = inputText('eggTemp', settings.customStart_C);
   page().litres.value = inputText('water', settings.waterLitres);
   page().altitude.value = inputText('altitude', settings.altitude_m);
-  selectRadio('units', unitSystem());
-  labelSizeOptions();
-  // The presets are assumptions, and are labelled as such rather than baked
-  // into the buttons: a room is not necessarily 20 C, and Custom is there for
-  // anyone who knows better.
-  page().startTempHint.textContent = t('controls.eggFrom.hint', {
-    fridge: show('temperature', START_TEMP_PRESETS_C.fridge),
+  // Empty until measured, showing the room assumed, greyed: the − and + start
+  // there.
+  page().roomTemp.value = settings.room_C === null ? '' : inputText('roomTemp', settings.room_C);
+  page().roomTemp.placeholder = String(nudgeFrom(measure('roomTemp'), START_TEMP_PRESETS_C.room));
+  page().moreRoom.textContent = t('controls.room.more', {
     room: show('temperature', START_TEMP_PRESETS_C.room),
   });
+  selectRadio('units', unitSystem());
+  labelSizeOptions();
+  labelStartTemps();
   page().startSousLabel.textContent = t('controls.start.sousVide', {
     bath: show('temperature', SOUS_VIDE_BATH_C),
   });
@@ -1291,6 +1311,16 @@ function applyUnitsToDom(): void {
   // The sentence's masses and temperatures are in the units too.
   redrawSentence();
   renderSentence(liveSetupFacts(settings, sizeClasses, currentEgg()));
+}
+
+/** The presets are assumptions, and are labelled as such rather than baked
+ *  into the buttons: a room is not necessarily 20 C, and Custom is there for
+ *  anyone who knows better. A measured room is what the Room button means. */
+function labelStartTemps(): void {
+  page().startTempHint.textContent = t('controls.eggFrom.hint', {
+    fridge: show('temperature', startTempPreset_C('fridge', room_C())),
+    room: show('temperature', startTempPreset_C('room', room_C())),
+  });
 }
 
 function applySettingsToDom(): void {
@@ -1304,6 +1334,7 @@ function applySettingsToDom(): void {
   page().doneness.value = String(settings.doneness);
   page().customTempField.hidden = settings.startTempMode !== 'custom';
   page().probeSetting.checked = settings.probe;
+  page().roomField.hidden = !settings.probe;
   applyLanguageToDom();
 }
 
@@ -1338,6 +1369,7 @@ export function boot(): void {
   // works them, and aria-expanded says which way they stand.
   wireInfoButtons();
   wireSteppers();
+  setStepRule(page().roomTemp, (value, up) => stepPast(measure('roomTemp'), value, up));
   wireViews();
   page().probeOfferYes.addEventListener('click', () => onProbeOffer(true));
   page().probeOfferNo.addEventListener('click', () => onProbeOffer(false));

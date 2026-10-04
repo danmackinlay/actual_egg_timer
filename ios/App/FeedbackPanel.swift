@@ -34,6 +34,12 @@ struct FeedbackPanel: View {
                     .monospacedDigit()
             } else {
                 probeEntry
+                if let target = targetLine {
+                    Text(target)
+                        .appFont(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                }
                 Text(tr("feedback.ask"))
                     .appFont(.headline)
                 HStack(spacing: 10) {
@@ -82,19 +88,16 @@ struct FeedbackPanel: View {
                 Text(tr("probe.hint"))
                     .appFont(.caption)
                     .foregroundStyle(.secondary)
-                HStack(spacing: 10) {
-                    TextField(tr("probe.entry"), text: $probeText)
-                        .keyboardType(.decimalPad)
-                        .textFieldStyle(.roundedBorder)
-                        .multilineTextAlignment(.trailing)
-                        .frame(maxWidth: 150)
-                        .disabled(given != nil)
-                    Text(tr(planner.measure(.probeTemp).unitKey))
-                        .foregroundStyle(.secondary)
-                    Button(tr("probe.save")) { saveProbe() }
-                        .buttonStyle(.bordered)
-                        .disabled(given != nil || probeText.isEmpty)
-                }
+                // The − and + step in whole degrees from the peak the cook was
+                // started at, which the empty field shows greyed; the button
+                // goes under them, since the three do not fit one line.
+                NudgeField(
+                    label: tr("probe.entry"), measure: planner.measure(.probeTemp), text: $probeText,
+                    startSI: cook.ticket?.peakYolkC ?? 0, width: 96, disabled: given != nil
+                )
+                Button(tr("probe.save")) { saveProbe() }
+                    .buttonStyle(.bordered)
+                    .disabled(given != nil || probeText.isEmpty)
                 if !probeNote.isEmpty {
                     Text(probeNote)
                         .appFont(.caption)
@@ -163,6 +166,17 @@ struct FeedbackPanel: View {
             return tr("feedback.invite")
         }
         return tunedLine
+    }
+
+    /// What this cook was started for, over the yolk question, so the answer
+    /// is graded against it: "You asked for: jammy, peak yolk 65 °C". From
+    /// the ticket, in the units it was set up in, never the slider now.
+    private var targetLine: String? {
+        guard let ticket = cook.ticket else { return nil }
+        return tr("feedback.target", [
+            "doneness": .text(midSentence(ticket.doneness, locale: Copy.activeLocale)),
+            "yolk": .text(showIn(ticket.units, .temperature, ticket.peakYolkC)),
+        ])
     }
 
     private var tunedLine: String {
