@@ -4081,3 +4081,15 @@ what "Eggs in" starts and records still reads only this pot's own decision.
 first and the time chosen on its surface 0.7 s later, a few seconds apart
 (700 s, then 695 s, for a tap from 0 to 50 m). On a phone, slower than this Mac, that second
 correction will take longer.
+
+## 5 October 2026: the egg's shape, quantified
+
+`tools/shape-study/RESULTS.md`, a finite-element solve on egg outlines checked
+against the app's own series (0.000 s on 18 cases). The equal-volume sphere is
+2-3% slow at every size and doneness (13.9 s for a 62 g jammy egg as an
+ovoid), a constant fraction the fitted alpha absorbs; shape variation at a
+fixed mass is about +-3-5 s; a ruler cannot recover it (+-9.5-19 s of its own
+against the scale's +-2.2 s), so weighing is the most accurate input and no
+shape correction is built. Side finding: the innermost white sets 70-120 s
+sooner at the yolk's equator and 30-70 s later at its poles than one radius
+says, which bears on the white floor, not on timing.
