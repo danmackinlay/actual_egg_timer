@@ -40,3 +40,8 @@ fit/data/
 fit/.venv/
 __pycache__/
 .pytest_cache/
+
+# The owner's trusted random IDs for the fit (DECISIONS.md 81): never in git,
+# since an ID here would tie the owner to their results. fit/trusted.example.txt
+# shows the shape.
+fit/trusted.local.txt

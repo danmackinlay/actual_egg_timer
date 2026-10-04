@@ -23,7 +23,8 @@ web, an iPhone that could not attest) enters at a power below one - 0.5 to
 start - and the open tier's total weight is capped at the attested tier's,
 so no number of browser tabs can outvote the phones. The discount is only on
 what open eggs teach the population; nothing here touches what they teach
-their own cook's app.
+their own cook's app. An egg under an ID on the owner's trusted list counts
+once, as an attested one does, whatever its tier (DECISIONS.md 81; data.py).
 """
 
 from __future__ import annotations
@@ -86,16 +87,25 @@ def probe_density(c: dict, peak, reading):
     return (1.0 - c["probeUnrelated"]) * dens + c["probeUnrelated"] / c["probeUnrelatedSpan_C"]
 
 
+def full_weight(eggs: Eggs) -> np.ndarray:
+    """The eggs that count once: attested, or under an ID the owner vouches
+    for (DECISIONS.md 81), whatever tier it came in."""
+    return (eggs.tier == 1) | eggs.trusted
+
+
 def tier_weights(eggs: Eggs, open_power: float, open_cap: float) -> np.ndarray:
-    """Each egg's power in the likelihood: 1 attested; for open eggs
-    `open_power`, lowered further if need be so the open tier's total weight
-    is at most `open_cap` times the attested tier's (DECISIONS.md 2)."""
-    n_att = float(np.sum(eggs.tier == 1))
-    n_open = float(np.sum(eggs.tier == 0))
+    """Each egg's power in the likelihood: 1 attested or trusted; for the
+    other open eggs `open_power`, lowered further if need be so their total
+    weight is at most `open_cap` times the full-weight eggs' (DECISIONS.md
+    2). A trusted egg counts as attested on both sides of the cap: the owner
+    has vouched for it as Apple vouches for a phone."""
+    full = full_weight(eggs)
+    n_full = float(np.sum(full))
+    n_open = float(np.sum(~full))
     w_open = open_power
     if n_open > 0:
-        w_open = min(open_power, open_cap * n_att / n_open)
-    return np.where(eggs.tier == 1, 1.0, w_open)
+        w_open = min(open_power, open_cap * n_full / n_open)
+    return np.where(full, 1.0, w_open)
 
 
 def egg_loglik(c: dict, d: dict, z, taste, white_offset, noise, gap):
@@ -170,6 +180,9 @@ def fit(eggs: Eggs, open_power: float = 0.5, open_cap: float = 1.0, warmup: int 
     draws = {k: np.asarray(v) for k, v in mcmc.get_samples().items()}
     extra = mcmc.get_extra_fields()
     draws["_divergences"] = np.asarray(extra["diverging"]).sum()
-    draws["_weights"] = {"attested": float(np.sum(eggs.tier == 1)), "open": float(np.sum(eggs.tier == 0)),
-                         "open_weight": float(weight[eggs.tier == 0][0]) if np.any(eggs.tier == 0) else None}
+    full = full_weight(eggs)
+    draws["_weights"] = {"attested": float(np.sum(eggs.tier == 1)),
+                         "trusted": float(np.sum(eggs.trusted & (eggs.tier == 0))),
+                         "open": float(np.sum(~full)),
+                         "open_weight": float(weight[~full][0]) if np.any(~full) else None}
     return draws
