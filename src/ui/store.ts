@@ -58,9 +58,9 @@ export interface Settings {
    *  default (`effectiveUnits`), and storing the result instead would turn a
    *  default into a choice the cook never made. */
   unitsChosen: UnitSystem | null;
-  /** The language the cook chose, or null for the default, and what the
-   *  units switch replaced when it went into 1750 (`src/core/language.ts`).
-   *  Like the units, a choice is kept apart from the default it overrides. */
+  /** The language the cook chose, or the units switch put on screen, or
+   *  null for the default (`src/core/language.ts`). Like the units, a
+   *  choice is kept apart from the default it overrides. */
   language: LanguageState;
   /** "I have a probe thermometer": ask for a reading at the middle of
    *  the egg when the cooling ends. Off until the cook says so. */

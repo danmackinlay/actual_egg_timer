@@ -31,7 +31,7 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { Templates, applyDraft, draftFor, templateRegExp } from './copyDraft.js';
+import { Templates, applyDraft, draftFor, templateRegExp, withOverlays } from './copyDraft.js';
 
 interface Snapshot {
   name: string;
@@ -224,7 +224,7 @@ function compareDraft(beforePath: string, afterPath: string, draftName: string |
   // template is read the same way.
   const flat = (t: Templates | null): Templates | null => (t === null ? null
     : Object.fromEntries(Object.entries(t).map(([c, s]) => [c, s.replace(/\s+/g, ' ')])));
-  const rows = draftFor(draftName).rows.map((d) => ({
+  const rows = withOverlays(draftFor(draftName).rows).map((d) => ({
     ...d,
     before: d.appsBefore.includes('web') ? flat(d.before) : null,
     after: d.appsAfter.includes('web') ? flat(d.after) : null,

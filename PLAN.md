@@ -102,7 +102,7 @@ The one queue. Nothing else in the documents waits on the owner.
    never "eggs" (13 keys; `LANGUAGE.md` §3 has the table). The privacy
    page names the controls as they now read: "Sharing results",
    "Share results" and "Delete shared results". And **`sharingid`**
-   (`DECISIONS.md` 67): "Your random number" over the id, whole and
+   (`DECISIONS.md` 67): "Your random ID" over the id, whole and
    selectable, in both apps' sharing section once sharing has been on.
 8. **The counter's Help line**, approved (`DECISIONS.md` 62), goes into
    `help.unsure.counter` with the owner's hand edit of the words, with its
@@ -121,9 +121,25 @@ The one queue. Nothing else in the documents waits on the owner.
    ("0.4.0-alpha.1"); iOS the App Store version and its build ("0.4.0
    (2)"), since the App Store version holds only integers.
 
+11. **The owner's fixes of 5 October 2026, on a phone.** Back to metric
+    leaves the English of 1750 alone (`DECISIONS.md` 77), in both apps;
+    the **`stay`** draft drops "and back when you pick Metric" from the
+    Language (i). The **`press`** draft takes "tap" for the screen gesture
+    out of eight strings, en-US and 1750 twins with them: "then press Start
+    heating", "press Full rolling boil", and on the Lock Screen "my guess
+    until Full rolling boil". The **`randomid`** draft calls the random
+    number a "random ID" (1750: a "cypher"), in Settings, the consent
+    and the privacy page.
+
 Waiting on someone else: the Czech review (F5), by the owner's friend.
 
 ## Open items
+
+- **Dim the time while it is recalculated**, the owner's idea (5 October
+  2026), not wanted yet: while a newer answer is on its way, the time and its
+  subline dim slightly, back to full when the final answer (and the odds'
+  correction) lands, in both apps; never delay the number instead. Not
+  noticeable today, since Settings takes as long to leave.
 
 - **E3's known limit.** Two runny whites at soft move jammy about as far as
   soft; left so until a probe or pooling pins the time-scale (`DECISIONS.md`
@@ -201,6 +217,12 @@ every choice made to build them. What is left:
   categories, the decimal comma and seven cases (`LANGUAGE.md` §5); doneness
   words are matched by the reviewer, not translated. Hand the reviewer
   wording that will not move again.
+  With Czech the language choice becomes a menu (the owner, 5 October 2026):
+  first "System (Čeština)" and so on, following the phone's or browser's
+  language; then every language in its own name, with the English of 1750
+  under English. A `<select>` on the web; on iOS a menu-style `Picker` that
+  follows iOS's own per-app language setting, which appears once the app
+  declares several localizations.
 
 ## QA: what nobody has checked
 

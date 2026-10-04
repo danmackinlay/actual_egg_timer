@@ -307,7 +307,7 @@ public func effectiveUnits(chosen: UnitSystem?, regional: UnitSystem) -> UnitSys
 }
 
 /// An explicit change of system. `languageAfterFlip` listens for
-/// `metricToImperial`.
+/// `metricToImperial`; `imperialToMetric` moves no language.
 public enum UnitsFlip: String, Sendable {
     case metricToImperial, imperialToMetric
 }

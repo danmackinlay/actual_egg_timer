@@ -1,7 +1,9 @@
 /**
  * Which catalogue the cook reads, and the one rule that moves it without
  * being asked: an English UI switched from metric to Imperial goes into the
- * English of 1750, and back to metric comes out again (LANGUAGE.md section 6).
+ * English of 1750 (LANGUAGE.md section 6). Switching back to metric changes
+ * nothing about the language; the cook leaves 1750 with the picker
+ * (DECISIONS.md 77).
  *
  * The English of 1750 is a language with a tag of its own, `en-x-1750`: the
  * strings come from `copy/en-x-1750.json`, and the formats from the region,
@@ -10,12 +12,11 @@
  *
  * Like the units (`chooseUnits` in `units.ts`), the cook's own choice is kept
  * apart from the default. `chosen` is what the cook picked, or null if they
- * never have, in which case the app speaks `DEFAULT_LANGUAGE`. `flippedFrom`
- * remembers what the units switch replaced, so that switching back restores
- * it - including "never chose", which stays a default rather than becoming a
- * choice the cook never made.
+ * never have, in which case the app speaks `DEFAULT_LANGUAGE`. A state stored
+ * before 5 October 2026 may also carry `flippedFrom`, what the units switch
+ * replaced, for a switch back that no longer happens; a read ignores it.
  *
- * No I/O. The web keeps this in its settings; iOS will when it follows.
+ * No I/O. The web keeps this in its settings, iOS in UserDefaults.
  */
 
 import { languageOf } from './format.js';
@@ -34,15 +35,12 @@ export const LANGUAGES: readonly string[] = [DEFAULT_LANGUAGE, PERIOD_LANGUAGE];
 const PERIOD_SUBTAG = 'x-1750';
 
 export interface LanguageState {
-  /** The catalogue the cook chose, or null for the default. */
+  /** The catalogue on screen, or null for the default: the cook's pick, or
+   *  1750 put there by the units switch. */
   chosen: string | null;
-  /** When the units switch put the cook into 1750, what `chosen` was before
-   *  it did, in a box so that a null choice can be remembered. Null when the
-   *  1750 on screen, if any, is not the switch's doing. */
-  flippedFrom: { chosen: string | null } | null;
 }
 
-export const FRESH_LANGUAGE: LanguageState = { chosen: null, flippedFrom: null };
+export const FRESH_LANGUAGE: LanguageState = { chosen: null };
 
 /** The catalogue on screen. */
 export function effectiveLanguage(state: LanguageState): string {
@@ -70,40 +68,27 @@ export function registerOf(tag: string): '1750' | 'modern' {
 
 /**
  * The language after the cook's own switch of units. Metric to Imperial in
- * modern English goes into 1750 and remembers what it left; Imperial to
- * metric comes back to it, if the switch was what put the cook there. Any
- * other language, or a 1750 the cook chose in the picker, is left alone.
+ * modern English goes into 1750. Imperial to metric leaves the language as it
+ * is, as does any switch in another language or in 1750 already.
  */
 export function languageAfterFlip(state: LanguageState, flip: UnitsFlip): LanguageState {
-  if (flip === 'metricToImperial') {
-    if (!isModernEnglish(effectiveLanguage(state))) return state;
-    return { chosen: PERIOD_LANGUAGE, flippedFrom: { chosen: state.chosen } };
-  }
-  if (state.flippedFrom === null) return state;
-  return { chosen: state.flippedFrom.chosen, flippedFrom: null };
+  if (flip !== 'metricToImperial') return state;
+  if (!isModernEnglish(effectiveLanguage(state))) return state;
+  return { chosen: PERIOD_LANGUAGE };
 }
 
-/** The language after the cook picks one. A pick is always the cook's own, so
- *  it forgets what the units switch did: choosing English leaves 1750 and
- *  keeps °F, and a later switch to metric does not undo a pick. */
+/** The language after the cook picks one: choosing English leaves 1750 and
+ *  keeps °F. */
 export function languageAfterPick(_state: LanguageState, tag: string): LanguageState {
-  return { chosen: tag, flippedFrom: null };
+  return { chosen: tag };
 }
 
 /** A stored state, read defensively: anything malformed is the fresh one. A
  *  tag is kept only if it is one of `known`, so a catalogue that has gone
- *  cannot be asked for. */
+ *  cannot be asked for. Any other field, such as the retired `flippedFrom`,
+ *  is ignored. */
 export function readLanguageState(raw: unknown, known: readonly string[]): LanguageState {
   if (raw === null || typeof raw !== 'object' || Array.isArray(raw)) return FRESH_LANGUAGE;
-  const r = raw as Record<string, unknown>;
-  const tag = (v: unknown): string | null => (typeof v === 'string' && known.includes(v) ? v : null);
-  const chosen = tag(r['chosen']);
-  const from = r['flippedFrom'];
-  let flippedFrom: LanguageState['flippedFrom'] = null;
-  if (from !== null && typeof from === 'object' && !Array.isArray(from)) {
-    flippedFrom = { chosen: tag((from as Record<string, unknown>)['chosen']) };
-  }
-  // A remembered switch only means something while 1750 is on screen.
-  if (chosen === null || !isPeriod(chosen)) flippedFrom = null;
-  return { chosen: chosen, flippedFrom: flippedFrom };
+  const chosen = (raw as Record<string, unknown>)['chosen'];
+  return { chosen: typeof chosen === 'string' && known.includes(chosen) ? chosen : null };
 }

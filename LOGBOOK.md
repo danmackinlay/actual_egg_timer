@@ -4093,3 +4093,21 @@ against the scale's +-2.2 s), so weighing is the most accurate input and no
 shape correction is built. Side finding: the innermost white sets 70-120 s
 sooner at the yolk's equator and 30-70 s later at its poles than one radius
 says, which bears on the white floor, not on timing.
+
+## 5 October 2026: back to metric keeps 1750; no "tap"; a random ID
+
+Three owner fixes on the 0.4 line. Imperial to metric no longer takes an
+English page out of the English of 1750 (`DECISIONS.md` 77; `9c9ea24`, the
+`stay` draft): the language state is now only `chosen`, the `flippedFrom`
+that remembered what the switch replaced is gone, and a state stored with it
+still reads, so no storage key moved. Driven on the web: English, Imperial,
+1750; metric, still 1750; the picker's English, modern English and metric;
+an old stored state with `flippedFrom` reads as 1750 and stays there.
+
+"Tap" as the screen gesture is out of every string (`ba30099`, the `press`
+draft; `8117f9e` on the privacy page): "press" where a button needs a verb,
+the button's name alone on the Lock Screen. The snapshot proof could not
+read an en-US twin until now; a draft row can carry its overlay twins
+(`Drafted.overlays`), so the US screens are proved too. And "Your random
+number" is "Your random ID", a "cypher" in 1750, on the privacy page as
+well (`8c1f397`, the `randomid` draft).

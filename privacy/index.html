@@ -64,7 +64,7 @@
   <p><strong>If you turn on <em>Share results</em></strong>, under
   <em>Sharing results</em> in Settings, the app sends me a result for each
   egg you cook: how it was cooked and how you said it came out, with a
-  random number in place of your name. Turn it off and nothing more is sent,
+  random ID in place of your name. Turn it off and nothing more is sent,
   but what was already sent stays. <em>Delete shared results</em>, in the
   same place, deletes every result that was.</p>
   <p>Sharing came with version 0.4. If your app has no <em>Sharing
@@ -81,7 +81,7 @@
     <li>your results: how each egg you rated was cooked and how you said it
     came out, and what the app has learned from them;</li>
     <li>how long your water took to boil, for each amount you have timed;</li>
-    <li>if you have turned sharing on: whether it is on, your random number
+    <li>if you have turned sharing on: whether it is on, your random ID
     and any you used before (so that deleting reaches all of them), and how
     many of your results have been sent.</li>
   </ul>
@@ -116,7 +116,7 @@
     reckoning and its starting guesses it used;</li>
     <li>which app it was (web or iPhone), its version, and the language and
     units you were reading it in;</li>
-    <li>your random number, and the result’s place in the order you sent
+    <li>your random ID, and the result’s place in the order you sent
     them.</li>
   </ul>
   <p>The iPhone app also signs each result it sends (below).</p>
@@ -129,11 +129,11 @@
   language, your units and whether you picked European or American egg
   sizes may suggest a part of the world. Nothing sent says more than
   that.</p>
-  <p><strong>The random number</strong> is made on your device, from
+  <p><strong>The random ID</strong> is made on your device, from
   nothing about you, the first time you turn sharing on. It groups your
   results together, so that I can tell how one person’s kitchen differs
   from another’s, and it is what lets you delete them. Settings shows it,
-  under <em>Sharing results</em>, as <em>Your random number</em>. After
+  under <em>Sharing results</em>, as <em>Your random ID</em>. After
   <em>Start learning again</em>, the app uses a new one, and your next
   results count as a new person’s.</p>
   <p><strong>The time may move a few seconds.</strong> While sharing is on,
@@ -143,10 +143,10 @@
   seconds either side shows what happens near them. A small
   <em>Learning</em> mark beside the time says so while sharing is on.</p>
   <p><strong>On iPhone</strong>, the first time the app sends under a
-  random number, it makes a key in the phone’s secure chip and asks Apple’s
+  random ID, it makes a key in the phone’s secure chip and asks Apple’s
   App Attest service to confirm that the key belongs to a genuine copy of the
   app on a real iPhone. That request goes to Apple and carries none of your
-  results. It carries a scrambled form of your random number that cannot be
+  results. It carries a scrambled form of your random ID that cannot be
   turned back into it. After that, the app signs every result it sends with
   the key. This lets me count results from the app, as installed from the
   App Store or TestFlight, for more than results from anywhere else. If it
@@ -156,7 +156,7 @@
   <h2>What I keep, where, and for how long</h2>
   <p>I keep each result exactly as it was sent, with only the details
   listed above. Anything else in a request is dropped. For the iPhone app I
-  also keep, for each random number, the key’s public half and its name, a
+  also keep, for each random ID, the key’s public half and its name, a
   count of the results it has signed, whether that copy of the app came
   from the App Store, TestFlight or a developer’s build, and its build
   number. The code that receives results writes down no address, no device
@@ -168,14 +168,14 @@
        13(2)(a) is met by stating the criteria. -->
   <p><strong>How long.</strong> For as long as I use them to work out the
   app’s starting guesses: until you delete them, or until I stop making the
-  app, when I delete them all. The App Attest details for a random number go
+  app, when I delete them all. The App Attest details for a random ID go
   when its last result does.</p>
   <!-- The local copy (DECISIONS.md 75): `npm run eggs -- pull <file>`
        writes the whole store to one file, overwriting it, so each pull is a
        fresh snapshot and a deletion on the server reaches the local copy at
        the next pull. Kept for scientific and statistical purposes, which
        GDPR Art. 5(1)(e) and 89(1) allow longer storage for, with
-       pseudonymisation (the random number) as the safeguard. -->
+       pseudonymisation (the random ID) as the safeguard. -->
   <p><strong>Who can see them.</strong> Only me, through my Netlify account,
   and Netlify, which stores them for me. I don’t publish anyone’s results or
   give them to anyone. To work out better starting guesses, I copy the
@@ -192,7 +192,7 @@
   <p><strong>Your IP address.</strong> The code that receives results does
   not store it. Netlify’s request logs record it, with the time and the page
   asked for, for about a day (a week on paid plans). When you delete what
-  you sent, the page asked for includes your random number. Netlify also
+  you sent, the page asked for includes your random ID. Netlify also
   counts requests by address to turn away floods. I don’t use these logs
   for anything. They are under
   <a href="https://www.netlify.com/privacy/">Netlify’s own privacy
@@ -206,22 +206,22 @@
     stays until you delete it.</li>
     <li><strong>To delete what you sent:</strong> <em>Delete shared
     results</em>, in Settings, deletes every result your device has sent, under
-    every random number it has used, with the App Attest details, and turns
+    every random ID it has used, with the App Attest details, and turns
     sharing off. If you are offline, the app keeps asking until the server
     confirms.</li>
     <li><strong>By email:</strong> write to
     <a href="mailto:forgetmyeggs@danmackinlay.name">forgetmyeggs@danmackinlay.name</a>
-    with your random number, and I’ll delete the results sent under it. I
-    need the number, because nothing else tells me which results are yours.
+    with your random ID, and I’ll delete the results sent under it. I
+    need the ID, because nothing else tells me which results are yours.
     <!-- Both apps show it from the first time sharing is turned on until a
          deletion (share.id; src/ui/shareView.ts, ios/App/SettingsView.swift;
          DECISIONS.md 67). -->
     You’ll find it in Settings, under <em>Sharing results</em>, as
-    <em>Your random number</em>, and you can select it and copy it.</li>
+    <em>Your random ID</em>, and you can select it and copy it.</li>
     <li><strong>On your device:</strong> on iPhone, delete the app, and
     everything it kept goes with it. On the web, clear this site’s data in
     your browser’s settings. Delete what you sent first, because once the
-    app and its random number are gone, I cannot tell which results were
+    app and its random ID are gone, I cannot tell which results were
     yours.</li>
     <li><strong><em>Start learning again</em></strong>, in Settings, deletes
     your results and the boil times on your device, and keeps your
@@ -276,7 +276,7 @@
     results, in a form another program can read, and ask me to correct
     them, delete them, stop using them for a while, or stop using them at
     all. You can take back your consent at any time. Write to me with your
-    random number. If you think I have handled your data wrongly, you can
+    random ID. If you think I have handled your data wrongly, you can
     complain to a data protection authority, such as the one in the country
     where you live. Please write to me first, so I can put it right.</li>
     <!-- 16 is GDPR Art. 8's default age for consent to an online service;
@@ -308,7 +308,7 @@
     first sends (above).</li>
   </ul>
   <p>Both apps have links, in Help and to the code, that open in your
-  browser only when you tap them.</p>
+  browser only when you follow one.</p>
 
   <h2>Alarms and the Lock Screen</h2>
   <p>On iPhone, the alarm is a notification that your phone schedules
@@ -330,7 +330,7 @@
   <ul class="doc__changes">
     <li>3 October 2026, version 0.4: sharing added, off unless you turn it
     on. What it sends, what I keep, where, for how long and who can see it,
-    how to stop and how to delete, where to find your random number, and
+    how to stop and how to delete, where to find your random ID, and
     your rights. Also the website’s offline copy of itself, and its
     font.</li>
     <li>2 October 2026: first version.</li>

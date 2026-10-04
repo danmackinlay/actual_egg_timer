@@ -401,3 +401,14 @@ Decided by the owner, 3 October 2026, on the privacy questions of
 76. **The random id is a Device ID on Apple's App Privacy label** ("Device
     ID seems fine"), as `PrivacyInfo.xcprivacy` already declares: per
     install, no account behind it.
+
+Decided by the owner, 5 October 2026, on the 0.4 line:
+
+77. **Back to metric leaves the English of 1750 alone**: "switching to
+    metric switched off English (1750). Switching *to* imperial should
+    switch the English, but not the reverse." Metric to Imperial in modern
+    English still goes into 1750; Imperial to metric changes nothing about
+    the language, and the picker is the way out. The stored `flippedFrom`
+    that made the switch back possible is gone and ignored when read, so no
+    storage key changed. `LANGUAGE.md` §6; the `stay` draft drops the (i)'s
+    "and back when you pick Metric". Built `9c9ea24`.

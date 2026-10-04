@@ -396,7 +396,8 @@ export function effectiveUnits(chosen: UnitSystem | null, regional: UnitSystem):
 
 /** An explicit change of system, in the direction it went.
  *  `languageAfterFlip` listens for `metricToImperial`: it is the switch into the English of 1750
- *  (LANGUAGE.md §6), and only a cook's own choice may throw it. */
+ *  (LANGUAGE.md §6), and only a cook's own choice may throw it. `imperialToMetric`
+ *  moves no language (DECISIONS.md 77). */
 export type UnitsFlip = 'metricToImperial' | 'imperialToMetric';
 
 export interface UnitsChoice {
