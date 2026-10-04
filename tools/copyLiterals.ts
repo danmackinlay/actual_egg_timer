@@ -190,7 +190,6 @@ const NOT_COPY: Record<string, string> = {
   'x-1750': 'language tag subtag',
   'en-x-1750': 'locale tag',
   chosen: 'stored language state field',
-  flippedFrom: 'stored language state field',
   C: 'unit id, never shown (the catalogue draws units)',
   F: 'unit id, never shown',
   g: 'unit id, never shown',

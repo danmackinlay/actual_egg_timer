@@ -347,7 +347,7 @@
     "weekday.saturday": { "surface": "fragment", "apps": ["web", "ios"], "text": "Saturday" },
 
     "controls.language": { "surface": "label", "apps": ["web", "ios"], "note": "F6: the language picker in Settings (LANGUAGE.md section 6).", "text": "Language" },
-    "controls.language.more": { "surface": "more", "apps": ["web", "ios"], "note": "F6: what the (i) beside Language opens.", "text": "English (1750) is English as Samuel Johnson wrote it. I switch to it when you pick Imperial, and back when you pick Metric. Pick English to keep Imperial in today’s English." },
+    "controls.language.more": { "surface": "more", "apps": ["web", "ios"], "note": "F6: what the (i) beside Language opens.", "text": "English (1750) is English as Samuel Johnson wrote it. I switch to it when you pick Imperial. Pick English to keep Imperial in today’s English." },
     "language.en": { "surface": "segment", "apps": ["web", "ios"], "note": "F6: a language’s own name, the same in every catalogue, so it can be found from any of them.", "text": "English" },
     "language.en1750": { "surface": "segment", "apps": ["web", "ios"], "note": "F6: as language.en.", "text": "English (1750)" },
     "controls.units.period": { "surface": "body", "apps": ["web", "ios"], "note": "F6: one line under the Imperial option, in an English UI (LANGUAGE.md section 6: discoverable, reluctantly).", "text": "I can also write Imperial units in the English of their day." },

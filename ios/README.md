@@ -56,7 +56,7 @@ anything both apps must agree on lives here, not in either app.
 | `policy.ts` | what both apps decide: bounds, defaults, snapping, verdicts, texture, the phase timeline, the calibration grid | `verdictFor`, `phaseAt`, `calibrationGrid` | `Policy.swift` | `policy.json` |
 | `wording.ts` | which catalogue key each part of the screen says | `phaseKeys`, `refusalKey`, `directionKey`, `clauseKeys` | `Wording.swift` | `wording.json`, `sousvideCopy.json` |
 | `units.ts` | Metric and Imperial: steps, bounds, the round trip | `measureFor`, `display`, `parse`, `quantityText` | `Units.swift` | `units.json` |
-| `language.ts` | the switch into and out of the English of 1750 | `languageAfterFlip`, `languageAfterPick` | `Language.swift` | `language.json` |
+| `language.ts` | the switch into the English of 1750 | `languageAfterFlip`, `languageAfterPick` | `Language.swift` | `language.json` |
 | `copy.ts`, `format.ts` | the catalogue's renderer; numbers and times by locale | `render`, `pluralCategory`, `formatNumber`, `formatTimeOfDay` | `EggTimerCopy`: `Copy.swift`, `Format.swift` | `copy.json`, `format.json` |
 
 The Swift core leaves out what no app calls (`DECISIONS.md` 41): the

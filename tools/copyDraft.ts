@@ -58,6 +58,7 @@ import { notes } from './drafts/notes.js';
 import { data } from './drafts/data.js';
 import { sharingid } from './drafts/sharingid.js';
 import { steppers } from './drafts/steppers.js';
+import { stay } from './drafts/stay.js';
 
 export type Templates = Record<string, string>;
 
@@ -116,6 +117,7 @@ export const DRAFTS: Record<string, Draft> = {
   data,
   sharingid,
   steppers,
+  stay,
 };
 
 /** The draft most recently applied, the last in `DRAFTS`: what a proof checks

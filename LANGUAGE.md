@@ -593,8 +593,10 @@ maintainable about the joke follows from that:
 1. **The picker**, for anyone.
 2. **The switch.** When a cook whose UI is in English flips units from Metric to
    Imperial, the app also sets the language to 1750. Flipping back to Metric
-   restores the English they had before. Changing the language never touches the
-   units, so this runs in one direction only.
+   changes nothing about the language: the cook leaves 1750 with the picker
+   (`DECISIONS.md` 77, 5 October 2026; until then it restored the English
+   they had before). Changing the language never touches the units, so this
+   runs in one direction only.
 
 **Discoverable for Americans, reluctantly.** Units default from the region
 (§4), so an American starts in °F and modern English and never makes the switch.
@@ -741,14 +743,14 @@ whole catalogue is for their review (`DECISIONS.md` 17).
   the long s only in `app.titlePage`; the owner's alarm word for word; Help's
   links the same URLs in the same markdown; the switch; the record.
 - **The switch is `src/core/language.ts`**, pure and tested, for iOS to
-  port. The state is `chosen` (null for the default) and `flippedFrom`, what
-  the units switch replaced, boxed so that "never chose" comes back as a
-  default and not as a choice. Metric to Imperial in modern English goes in;
-  Imperial to metric restores what was there, if the switch put the cook
-  in 1750; a pick in the picker is always the cook's own and forgets the
-  switch, so choosing English keeps °F and a later switch to metric does
-  not undo it. The web's `onUnits` calls `languageAfterFlip` itself. Nothing here
-  touches the units.
+  port. The state is `chosen`, null for the default. Metric to Imperial in
+  modern English goes in; Imperial to metric changes nothing; a pick in the
+  picker is the only way out, and choosing English keeps °F. Until 5
+  October 2026 (`DECISIONS.md` 77) the state also kept `flippedFrom`, what
+  the switch replaced, so that Imperial to metric could restore it; a
+  stored state that still has it reads as its `chosen`, so no storage key
+  changed. The web's `onUnits` calls `languageAfterFlip` itself. Nothing
+  here touches the units.
 - **The web** stores the state in its settings, loads the catalogue the
   cook last read before painting, and redraws every word in place when it
   changes (`relabel` in `app.ts`); a page switched in place and the same

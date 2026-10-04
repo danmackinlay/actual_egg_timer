@@ -3,7 +3,7 @@ import Foundation
 @testable import EggTimerCore
 
 /// Conformance against `fixtures/language.json`, generated from
-/// `src/core/language.ts`: the switch into the English of 1750 and out, which
+/// `src/core/language.ts`: the switch into the English of 1750, which
 /// tags are 1750, the record's register, and a stored state read defensively.
 ///
 /// The two apps must agree move for move, or a cook who flips units on the web
@@ -12,11 +12,7 @@ import Foundation
 /// A state as the fixture writes it: JSON, with null for nil.
 private func state(_ raw: Any?) throws -> LanguageState {
     let object = try #require(raw as? [String: Any], "not a language state: \(String(describing: raw))")
-    let from = object["flippedFrom"] as? [String: Any]
-    return LanguageState(
-        chosen: object["chosen"] as? String,
-        flippedFrom: from.map { LanguageState.Flipped(chosen: $0["chosen"] as? String) }
-    )
+    return LanguageState(chosen: object["chosen"] as? String)
 }
 
 @Suite("The English of 1750 switches as the reference implementation does")
@@ -42,7 +38,7 @@ struct LanguageConformance {
     @Test("every move from every reachable state")
     func transitions() throws {
         let rows = try Fixtures.list("language.json", "transitions")
-        #expect(rows.count > 20)
+        #expect(rows.count >= 20)
         for c in rows {
             let before = try state(c["state"])
             let move = try c.object("move")

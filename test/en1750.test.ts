@@ -200,20 +200,21 @@ test('2a. tags: 1750 in any region, and modern English is English without it', (
   assert.equal(effectiveLanguage(FRESH_LANGUAGE), DEFAULT_LANGUAGE);
 });
 
-test('2b. metric to Imperial in English goes into 1750, and back comes out to the default', () => {
+test('2b. metric to Imperial in English goes into 1750, and back to metric stays there', () => {
   const imperial = flip(FRESH_LANGUAGE, 'metricToImperial');
   assert.equal(effectiveLanguage(imperial), PERIOD_LANGUAGE);
-  const back = flip(imperial, 'imperialToMetric');
-  assert.deepEqual(back, FRESH_LANGUAGE, 'a default comes back a default, not a choice');
-});
-
-test('2c. back to metric restores the English chosen before, not merely the default', () => {
+  assert.deepEqual(flip(imperial, 'imperialToMetric'), imperial, 'the owner, DECISIONS.md 77');
   const chosen = languageAfterPick(FRESH_LANGUAGE, 'en');
-  const back = flip(chosen, 'metricToImperial', 'imperialToMetric');
-  assert.deepEqual(back, chosen);
+  assert.equal(effectiveLanguage(flip(chosen, 'metricToImperial', 'imperialToMetric')), PERIOD_LANGUAGE);
 });
 
-test('2d. choosing English in the picker leaves 1750, and a later switch to metric does not undo it', () => {
+test('2c. Imperial to metric never moves the language', () => {
+  for (const state of [FRESH_LANGUAGE, { chosen: 'en' }, { chosen: PERIOD_LANGUAGE }, { chosen: 'cs' }]) {
+    assert.deepEqual(flip(state, 'imperialToMetric'), state);
+  }
+});
+
+test('2d. choosing English in the picker leaves 1750 and keeps the units as they are', () => {
   const picked = languageAfterPick(flip(FRESH_LANGUAGE, 'metricToImperial'), 'en');
   assert.equal(effectiveLanguage(picked), 'en');
   assert.equal(effectiveLanguage(flip(picked, 'imperialToMetric')), 'en');
@@ -226,21 +227,21 @@ test('2e. 1750 chosen in the picker is not left by the units', () => {
 });
 
 test('2f. a language that is not English is never moved', () => {
-  const czech: LanguageState = { chosen: 'cs', flippedFrom: null };
+  const czech: LanguageState = { chosen: 'cs' };
   assert.deepEqual(flip(czech, 'metricToImperial'), czech);
   assert.deepEqual(flip(czech, 'imperialToMetric'), czech);
 });
 
-test('2g. a stored state is read defensively', () => {
+test('2g. a stored state is read defensively, and an old one still reads', () => {
   const known = ['en', PERIOD_LANGUAGE];
   assert.deepEqual(readLanguageState(null, known), FRESH_LANGUAGE);
   assert.deepEqual(readLanguageState('en', known), FRESH_LANGUAGE);
   assert.deepEqual(readLanguageState({ chosen: 'xx' }, known), FRESH_LANGUAGE);
   const stored = flip(FRESH_LANGUAGE, 'metricToImperial');
   assert.deepEqual(readLanguageState(JSON.parse(JSON.stringify(stored)), known), stored);
-  // A remembered switch with no 1750 on screen is dropped.
-  assert.deepEqual(readLanguageState({ chosen: 'en', flippedFrom: { chosen: null } }, known),
-    { chosen: 'en', flippedFrom: null });
+  // Stored before DECISIONS.md 77: what the switch replaced, now ignored.
+  assert.deepEqual(readLanguageState({ chosen: PERIOD_LANGUAGE, flippedFrom: { chosen: null } }, known),
+    { chosen: PERIOD_LANGUAGE });
 });
 
 // --------------------------------------------------------------------------

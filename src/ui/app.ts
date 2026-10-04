@@ -221,8 +221,8 @@ function applyMeasure(input: HTMLInputElement, label: HTMLElement, m: Measure): 
 
 /** The cook picks a system, stored as their choice. A cook's own switch
  *  from metric to Imperial, in modern English, is also a switch into the
- *  English of 1750, and back (LANGUAGE.md section 6); `setLanguage` saves
- *  for both. */
+ *  English of 1750 (LANGUAGE.md section 6); the switch back to metric
+ *  leaves the language alone. `setLanguage` saves for both. */
 function onUnits(next: UnitSystem): void {
   const choice = chooseUnits(settings.unitsChosen, REGIONAL_UNITS, next);
   settings.unitsChosen = choice.chosen;

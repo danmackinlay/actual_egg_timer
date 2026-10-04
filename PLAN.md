@@ -115,6 +115,11 @@ The one queue. Nothing else in the documents waits on the owner.
    screen-reader names are the **`steppers`** draft ("Less: {label}",
    "More: {label}"; in 1750, "Diminish:" and "Augment:").
 
+10. **The owner's fixes of 5 October 2026, on a phone.** Back to metric
+    leaves the English of 1750 alone (`DECISIONS.md` 77), in both apps;
+    the **`stay`** draft drops "and back when you pick Metric" from the
+    Language (i).
+
 Waiting on someone else: the Czech review (F5), by the owner's friend.
 
 ## Open items

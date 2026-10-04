@@ -1,5 +1,5 @@
 /**
- * fixtures/language.json: the switch into the English of 1750 and out
+ * fixtures/language.json: the switch into the English of 1750
  * (src/core/language.ts), for the Swift port to be held to.
  *
  *  - `tags`: which tags are 1750, which are modern English, and the record's
@@ -9,7 +9,8 @@
  *    what each move does to it. Czech has no catalogue yet; it stands for "a
  *    language that is not English", which the switch must never move.
  *  - `reads`: stored states, well and badly formed, and what a defensive read
- *    makes of each.
+ *    makes of each, including states stored with the `flippedFrom` that the
+ *    switch back to metric used before 5 October 2026 (DECISIONS.md 77).
  */
 
 import {
@@ -38,9 +39,9 @@ export function languageFixture(): Record<string, unknown> {
 
   const starts: LanguageState[] = [
     FRESH_LANGUAGE,
-    { chosen: DEFAULT_LANGUAGE, flippedFrom: null },
-    { chosen: PERIOD_LANGUAGE, flippedFrom: null },
-    { chosen: 'cs', flippedFrom: null },
+    { chosen: DEFAULT_LANGUAGE },
+    { chosen: PERIOD_LANGUAGE },
+    { chosen: 'cs' },
   ];
   const seen = new Set<string>();
   const transitions: { state: LanguageState; move: Move; next: LanguageState; effective: string }[] = [];
@@ -76,7 +77,7 @@ export function languageFixture(): Record<string, unknown> {
   const reads = raws.map((raw) => ({ raw, state: readLanguageState(raw, LANGUAGES) }));
 
   return {
-    about: 'The switch into the English of 1750 and out: tags, transitions and defensive reads. src/core/language.ts.',
+    about: 'The switch into the English of 1750: tags, transitions and defensive reads. src/core/language.ts.',
     defaultLanguage: DEFAULT_LANGUAGE,
     periodLanguage: PERIOD_LANGUAGE,
     languages: LANGUAGES,

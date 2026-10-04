@@ -2,7 +2,7 @@ import Foundation
 import EggTimerCore
 
 /// The language the cook reads, kept: the picker in Settings, and the units
-/// switch into the English of 1750 and out (LANGUAGE.md section 6).
+/// switch into the English of 1750 (LANGUAGE.md section 6).
 ///
 /// The rule is the core's (`languageAfterFlip`, `languageAfterPick`), the
 /// same as the web's and held to it by `fixtures/language.json`. This file
@@ -47,8 +47,8 @@ final class LanguageChoice {
         }
     }
 
-    /// The cook's pick in the picker: always their own, so it forgets what
-    /// the switch did. Choosing English leaves 1750 and keeps °F.
+    /// The cook's pick in the picker. Choosing English leaves 1750 and keeps
+    /// °F; it is the only way out of 1750.
     func pick(_ tag: String) {
         set(languageAfterPick(state, tag))
     }

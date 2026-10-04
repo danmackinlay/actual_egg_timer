@@ -346,7 +346,7 @@
     "colophon.tail": { "text": "are open to the inspection of any reader." },
 
     "controls.language": { "text": "Language" },
-    "controls.language.more": { "text": "English (1750) is English as Samuel Johnson wrote it. I change to it when you choose Imperial, and back when you choose Metrick. Should the reader find this stile tiresome, choose English: the modern tongue is restored, and Fahrenheit’s scale kept." },
+    "controls.language.more": { "text": "English (1750) is English as Samuel Johnson wrote it. I change to it when you choose Imperial. Should the reader find this stile tiresome, choose English: the modern tongue is restored, and Fahrenheit’s scale kept." },
     "language.en": { "text": "English" },
     "language.en1750": { "text": "English (1750)" },
     "controls.units.period": { "text": "I can likewise write the imperial measures in the English of their day." },
