@@ -207,9 +207,13 @@ in App Store Connect, **App Privacy**:
 **Owner's questions before submitting 0.4** (`SHIP-0.4.md` section B; the
 research of 3 October 2026 against Apple's App Privacy Details page):
 
-- **Linked or Not linked.** Apple's de-identification means stripping direct
-  identifiers such as a user ID, and records keyed by a persistent id that
-  drives deletion are arguably **Linked to You**: the safer reading.
+- **Not linked** (the owner, `DECISIONS.md` 74). Apple asks whether data is
+  linked to the user's *identity*. The id is random, made per install from
+  nothing about the person, and replaced by Start learning again; there is
+  no account, the endpoint stores no IP address, and nothing sent identifies
+  the device or the person. There is no identity to link to. (A stricter
+  reading treats any persistent id as linkage; the owner chose Not linked
+  knowingly.)
 - **Other User Content** for the person's answers about each egg, as well as
   or instead of Other Data Types.
 

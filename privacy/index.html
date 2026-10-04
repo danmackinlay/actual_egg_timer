@@ -160,19 +160,13 @@
   and no time.</p>
   <p><strong>Where.</strong> In Netlify’s storage for this site, in the
   United States (the region Netlify calls us-east-2).</p>
-  <!-- OWNER: the retention rule below is a proposal, not yet policy. Five
-       years from the day cooked (the record's `day`, since the server keeps
-       no time of arrival) is long enough for working out starting guesses
-       to see seasons and people who come back, and short enough to be a
-       real limit. Nothing enforces it yet: it needs a prune step (e.g.
-       `npm run eggs -- prune`, deleting records whose `day` is older and
-       any App Attest key left with no records) run before each time new
-       starting guesses are worked out.
-       Confirm the period, or choose another. -->
-  <p><strong>How long.</strong> Until you delete them, and at most five
-  years from the day each egg was cooked. The App Attest details for a
-  random number go when its last result does. If I stop making the app, I
-  delete them all.</p>
+  <!-- No fixed period (DECISIONS.md 73): the results stay useful for as
+       long as the app works out starting guesses from them, and GDPR Art.
+       13(2)(a) is met by stating the criteria. -->
+  <p><strong>How long.</strong> For as long as I use them to work out the
+  app’s starting guesses: until you delete them, or until I stop making the
+  app, when I delete them all. The App Attest details for a random number go
+  when its last result does.</p>
   <!-- OWNER: `npm run eggs -- pull` copies every record to the owner's
        computer to work out new starting guesses (fit/data/, ignored by
        git). The page promises that copy is deleted each time, so that a

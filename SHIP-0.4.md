@@ -28,12 +28,12 @@ turns on a page that says what it collects.
 
 The page (`privacy/index.html`) changes first; everything else follows it.
 
-**The owner's items left in B** (after `DECISIONS.md` 67-72, 3 October
-2026), and only these: the **retention** rule (a five-year cap from the day
-cooked, or criteria); whether the **local copy** of the records is deleted
-after each time new starting guesses are worked out; and **Linked to You
-or Not Linked** on Apple's App Privacy label. Each keeps its `OWNER` mark
-or its line below until answered.
+**The owner's items left in B** (after `DECISIONS.md` 67-74, 4 October
+2026): whether the **local copy** of the records is deleted after each time
+new starting guesses are worked out (its `OWNER` mark stays on the page),
+and confirming **Device ID** (not User ID) for the random id on Apple's
+label. Retention is decided (73: no fixed period, criteria on the page) and
+so is the label's **Not Linked** (74).
 
 - [x] **Check every claim on the page against the 0.4 code**, as was done for
       0.3: each field a record sends (`src/core/record.ts`), what the
@@ -49,12 +49,13 @@ or its line below until answered.
       retention rule is a proposal marked `OWNER` in the page: until
       deleted, at most five years from the day the egg was cooked.
 - [ ] **The page's `OWNER:` marks** (comments in `privacy/index.html`):
-      two are left, the retention period, and deleting the copy of the
+      one is left (the retention period was answered by `DECISIONS.md` 73):
+      deleting the copy of the
       records on your own computer (`npm run eggs -- pull`) each time you
       have worked out new starting guesses. Answered and removed
       (`8deebf5`): saying you live in Australia (`DECISIONS.md` 70, it
       stays), the id (next item) and withdrawal (below).
-- [ ] **The retention rule, enforced**: whatever period the owner picks
+- [x] **Not needed** (`DECISIONS.md` 73, no fixed period). Was: **The retention rule, enforced**: whatever period the owner picks
       needs a step that applies it, e.g. `npm run eggs -- prune`, deleting
       records whose `day` is older and any App Attest key left with no
       records, run before each time you work out new starting guesses. The
@@ -104,8 +105,8 @@ or its line below until answered.
 - [x] **The changes list and the date** at the top of the page: 3 October
       2026, "version 0.4: sharing added, …" (`2223bf9`).
 - [ ] **App Store Connect → App Privacy** (`ios/RELEASING.md` step 6). Left
-      for the owner: **Linked to You or Not Linked**. Answered: the id is
-      Device ID, and App Attest needs no answer of its own, since what the
+      for the owner: confirming **Device ID** for the random id. Answered:
+      **Not Linked** (`DECISIONS.md` 74), the id as Device ID (to confirm), and App Attest needs no answer of its own, since what the
       server keeps for it hangs off that id and is App Functionality
       ("prevent fraud, implement security measures"; `DECISIONS.md` 72,
       `fbaa94c`). Step 6 still notes Other User Content for the answers,

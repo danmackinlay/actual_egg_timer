@@ -381,3 +381,13 @@ Decided by the owner, 3 October 2026, on the privacy questions of
     use is App Functionality, whose definition includes "prevent fraud,
     implement security measures" (Apple's App Privacy Details page).
     `ios/RELEASING.md` step 6 says so (`fbaa94c`).
+73. **No fixed retention period**: shared results are kept while the app
+    works out starting guesses from them, until the person deletes them or
+    the owner stops making the app ("this seems extremely non-personal
+    information"). GDPR asks for a period *or the criteria*; the criteria
+    are stated on the privacy page. No prune step is needed.
+74. **Apple's App Privacy label says Not Linked to You** ("let's make sure
+    it's not linked to the user"): the id is random and per install, with no
+    account, no IP stored and nothing identifying sent. `ios/RELEASING.md`
+    step 6 gives the reasoning; `PrivacyInfo.xcprivacy` already says not
+    linked.
