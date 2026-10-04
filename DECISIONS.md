@@ -439,3 +439,8 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     stands. The record's `ambient_C` already holds the room, so no record
     format changed. The `feedback2` draft; built on the
     `probe-target-room` branch.
+80. **The soft end of the slider stays as it is** ("this seems fine for
+    now"): below about level 0.3, once a few results are learned, the time
+    leans firmer to set the white (decision 7), so the bracket's median sits
+    right of the thumb; the direction sentence says so. Not hatched or
+    skipped, and the 3× runny-white cost is unchanged. 5 October 2026.
