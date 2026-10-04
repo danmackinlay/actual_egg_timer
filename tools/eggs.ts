@@ -11,6 +11,15 @@
  *       Needs NETLIFY_AUTH_TOKEN (a personal access token) and
  *       NETLIFY_SITE_ID. The output is people's eggs: it stays out of git
  *       (fit/data/ is ignored), and is deleted with the id when they ask.
+ *       A record under an ID on the owner's trusted list is marked
+ *       `trusted` (tools/eggsImport.ts; DECISIONS.md 81).
+ *   npm run eggs -- import <results.json> [<out.jsonl>] [--uid <id>]
+ *       a results file ("Export my results", DECISIONS.md 80) as records in
+ *       the same shape, open and marked `source: 'export'`, under the file's
+ *       random ID or `--uid`, and `trusted` if that ID is on the list;
+ *       fit/data/imported.jsonl unless told. To fit on both, put the pull
+ *       first: `cat pulled.jsonl imported.jsonl > all.jsonl`; emulate keeps
+ *       the first of an egg seen twice.
  *   npm run eggs -- simulate <out.jsonl> <truth.json> [cooks] [seed]
  *       cooks drawn from a population whose answer is known, as records in
  *       the same shape, and the truth beside them.
@@ -28,7 +37,8 @@
  * 2): tauAirScale is 1, and the egg is the size the record says.
  */
 
-import { readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { dirname } from 'node:path';
 import { ALPHA_DEFAULT, ALPHA_REL_SD, Z_WHITE, Z_YOLK } from '../src/core/constants.js';
 import { buildDoseGrid } from '../src/core/doseGrid.js';
 import { eggFromMass } from '../src/core/geometry.js';
@@ -48,16 +58,12 @@ import { normalCdf } from '../src/core/sphere.js';
 import { NUDGE_MAX_S, nudgeSeconds } from '../src/core/decide.js';
 import { countedTier, keyKey } from '../server/eggs.js';
 import { appSetup, rng } from './common.js';
+import {
+  Line, TRUSTED_ENV, TRUSTED_FILE, importResults, readTrusted, sameEggKey, tagTrusted,
+} from './eggsImport.js';
 
 /** The time-scale axis of the emulator, in literature sds. */
 const Z_GRID = Array.from({ length: 17 }, (_, i) => -4 + 0.5 * i);
-
-/** A line of a records file: what the store holds, and where. */
-interface Line {
-  tier: 'attested' | 'open';
-  seq: number;
-  record: unknown;
-}
 
 function readLines(path: string): Line[] {
   return readFileSync(path, 'utf8').split('\n').filter((l) => l.trim() !== '').map((l) => JSON.parse(l) as Line);
@@ -98,8 +104,27 @@ async function pull(out: string): Promise<void> {
     if (tier !== kept) demoted += 1;
     lines.push({ tier: tier, seq: Number(m[3]), record: JSON.parse(text) as unknown });
   }
+  const trusted = tagTrusted(lines, readTrusted());
   writeLines(out, lines);
-  console.log(`${lines.length} records -> ${out}` + (demoted > 0 ? ` (${demoted} filed as attested count as open)` : ''));
+  console.log(`${lines.length} records -> ${out}` + (demoted > 0 ? ` (${demoted} filed as attested count as open)` : '')
+    + (trusted > 0 ? `; ${trusted} under a trusted ID, at full weight` : ''));
+}
+
+/* ----------------------------------------------------------------- import */
+
+/** A results file ("Export my results") as records for the fit, in the
+ *  shape `pull` writes: see `importResults`. */
+function importFile(input: string, out: string, uid: string | null): void {
+  const got = importResults(readFileSync(input, 'utf8'), uid);
+  const trusted = readTrusted();
+  tagTrusted(got.lines, trusted);
+  mkdirSync(dirname(out), { recursive: true });
+  writeLines(out, got.lines);
+  console.log(`${got.lines.length} records under ${got.uid} -> ${out}: ${got.fromStore} from the store, `
+    + `${got.fromAside} from copies kept aside, ${got.duplicates} seen twice and written once`);
+  console.log(trusted.has(got.uid)
+    ? 'that ID is trusted: the fit gives these records full weight.'
+    : `that ID is not on the trusted list (${TRUSTED_FILE} or ${TRUSTED_ENV}): the fit counts them as open.`);
 }
 
 /* --------------------------------------------------------------- simulate */
@@ -279,12 +304,23 @@ function emulate(input: string, out: string): void {
   const checks: unknown[] = [];
   let refused = 0;
   let silent = 0;
+  // A pull and an import of the same cook's results file, pooled, hold the
+  // eggs that were shared twice: the first line of each is kept, so put the
+  // pull first and its tier wins.
+  let twice = 0;
+  const seen = new Set<string>();
   const start = freshCalibration(1, 1);
   const alphaMin = ALPHA_DEFAULT * Math.exp(ALPHA_REL_SD * Z_GRID[0]);
   const alphaMax = ALPHA_DEFAULT * Math.exp(ALPHA_REL_SD * Z_GRID[Z_GRID.length - 1]);
   for (const line of lines) {
     const r = parseRecord(line.record);
     if (r === null || r.uid === null) { refused += 1; continue; }
+    // Its place too: two eggs alike in every field, cooked the same day, are
+    // two eggs. Sharing sends an egg's place in the log as `seq`, and import
+    // keeps it, so the same egg pulled and imported has the same.
+    const key = `${line.seq}|${sameEggKey(r)}`;
+    if (seen.has(key)) { twice += 1; continue; }
+    seen.add(key);
     if (!recordTeaches(r)) { silent += 1; continue; }
     const t = recordCookTime_s(r);
     const q = gridRequestFor(start, r, () => ({
@@ -310,7 +346,7 @@ function emulate(input: string, out: string): void {
       });
     }
     eggs.push({
-      uid: r.uid, tier: line.tier, seq: line.seq, day: r.day, app: r.app, model: r.model,
+      uid: r.uid, tier: line.tier, trusted: line.trusted === true, seq: line.seq, day: r.day, app: r.app, model: r.model,
       cook_s: t, level: r.level, logYolkTarget: logYolkTarget(r.level),
       yolk: r.yolk, white: r.white === null ? null : ['runny', 'tender', 'firm'].indexOf(r.white),
       probe: r.probe === null ? null : r.probe.centre_C,
@@ -328,24 +364,31 @@ function emulate(input: string, out: string): void {
       probeUnrelated: PROBE_UNRELATED, probeUnrelatedSpan_C: PROBE_UNRELATED_SPAN_C,
       literature: LITERATURE_POPULATION,
     },
-    counts: { lines: lines.length, eggs: eggs.length, refused: refused, unanswered: silent },
+    counts: { lines: lines.length, eggs: eggs.length, refused: refused, unanswered: silent, twice: twice },
     checks: checks,
     eggs: eggs,
   };
   writeFileSync(out, JSON.stringify(file) + '\n');
-  console.log(`${eggs.length} eggs emulated (${silent} unanswered, ${refused} refused) -> ${out}`);
+  console.log(`${eggs.length} eggs emulated (${silent} unanswered, ${refused} refused, ${twice} seen twice) -> ${out}`);
 }
 
 /* ------------------------------------------------------------------- main */
 
-const [, , command, a, b, c, d] = process.argv;
+const args = process.argv.slice(2);
+const uidAt = args.indexOf('--uid');
+const uidFlag = uidAt >= 0 ? args[uidAt + 1] ?? null : null;
+if (uidAt >= 0) args.splice(uidAt, 2);
+const [command, a, b, c, d] = args;
 if (command === 'pull' && a !== undefined) {
   await pull(a);
+} else if (command === 'import' && a !== undefined) {
+  importFile(a, b ?? 'fit/data/imported.jsonl', uidFlag);
 } else if (command === 'simulate' && a !== undefined && b !== undefined) {
   simulateCooks(a, b, Number(c ?? 400), Number(d ?? 20261002), SIMULATED_TRUTH);
 } else if (command === 'emulate' && a !== undefined && b !== undefined) {
   emulate(a, b);
 } else {
-  console.error('usage: npm run eggs -- pull <out.jsonl> | simulate <out.jsonl> <truth.json> [cooks] [seed] | emulate <in.jsonl> <out.json>');
+  console.error('usage: npm run eggs -- pull <out.jsonl> | import <results.json> [<out.jsonl>] [--uid <id>]'
+    + ' | simulate <out.jsonl> <truth.json> [cooks] [seed] | emulate <in.jsonl> <out.json>');
   process.exit(2);
 }
