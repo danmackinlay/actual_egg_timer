@@ -30,7 +30,7 @@ extension Planner {
     /// nothing written, when that is no longer possible - which is what keeps
     /// the log and the posterior one thing. The web app's `recordSecondAnswer`.
     func secondAnswer(yolk: Feedback?, white: WhiteReport?, probe: ProbeReading? = nil) async {
-        guard var given = answers, let index = liveIndex ?? folded?.index,
+        guard var given = answers, let index = liveIndex ?? folded?.index ?? resumedIndex,
               index == kept.log.count - 1 else { return }
         if yolk != nil, given.yolk != nil { return }
         if white != nil, given.white != nil { return }
@@ -46,7 +46,27 @@ extension Planner {
             await drain()
             return
         }
-        guard let done = folded, done.index == index, kept.folded == index + 1 else { return }
+        guard let done = folded, done.index == index, kept.folded == index + 1 else {
+            // Answered before a relaunch, and folded then: the surface and the
+            // posterior before this egg went with that process. The answer is
+            // written into the record and the whole log replayed from where it
+            // starts, which is what the posterior is by definition - seconds
+            // per egg, off the main actor, while the app runs on what it had.
+            guard resumedIndex == index, kept.folded == index + 1 else { return }
+            // Nothing is mid-fold (the log is all folded), but whatever was
+            // lands on nothing.
+            generation &+= 1
+            answers = given
+            kept.log[index] = egg
+            kept.calibration = Calibrations.start(kept.base)
+            kept.folded = 0
+            // Folded again as the live egg, so a third answer needs no replay.
+            liveIndex = index
+            resumedIndex = nil
+            Calibrations.save(kept)
+            await drain()
+            return
+        }
         answers = given
         learning = true
         let gen = generation
@@ -69,6 +89,30 @@ extension Planner {
         answers = nil
         folded = nil
         liveIndex = nil
+        resumedIndex = nil
+    }
+
+    /// A finished cook picked back up after a relaunch, answered before it:
+    /// if its egg is the last in the log - the same record but for the
+    /// answers - what it was told is on screen again, and the questions it
+    /// was not are still open. Anything else, and the cook stays as answered.
+    func resumeAnswers(_ cooked: EggRecord) {
+        guard answers == nil, let index = kept.log.indices.last else { return }
+        let last = kept.log[index]
+        var bare = last
+        bare.yolk = nil
+        bare.white = nil
+        bare.probe = nil
+        guard bare == cooked else { return }
+        answers = Answers(yolk: last.yolk, white: last.white, probe: last.probe)
+        folded = nil
+        // Not folded yet (the fold is caught up on launch): a later answer is
+        // written in and folded with it. Folded already: replayed.
+        if index >= kept.folded {
+            liveIndex = index
+        } else {
+            resumedIndex = index
+        }
     }
 
     /// An egg finished and never answered about. Still a record - the cook, the
@@ -137,6 +181,7 @@ extension Planner {
     func resetCalibration() {
         generation &+= 1
         liveIndex = nil
+        resumedIndex = nil
         folded = nil
         answers = nil
         Calibrations.reset()

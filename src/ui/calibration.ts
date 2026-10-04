@@ -558,10 +558,24 @@ function keepUnread(raw: string): void {
   }
 }
 
+/** A cook in progress this build could not read (app.ts, `restoreCook`), the
+ *  newest one, kept as stored: its egg may be one nothing else holds. */
+const UNREAD_COOK_KEY = 'aet.cook.unread';
+
+export function keepUnreadCook(text: string): void {
+  writeStorage(UNREAD_COOK_KEY, text);
+}
+
+/** Every copy kept aside, the stores first, then the cook. */
+function keptAside(): string[] {
+  const cook = readStorage(UNREAD_COOK_KEY);
+  return cook === null ? unreadCopies() : [...unreadCopies(), cook];
+}
+
 /** How many results there are to export: every record, read or not, and
  *  every copy kept aside. */
 export function resultsKept(): number {
-  return kept.log.length + (kept.unread?.length ?? 0) + unreadCopies().length;
+  return kept.log.length + (kept.unread?.length ?? 0) + keptAside().length;
 }
 
 /**
@@ -574,7 +588,7 @@ export function exportResults(uid: string | null, now_ms: number): { name: strin
   const text = resultsFile({
     app: 'web', appVersion: APP_VERSION, exported: new Date(now_ms).toISOString(),
     population: activePopulation().id, uid: uid,
-  }, readStorage(KEY), unreadCopies());
+  }, readStorage(KEY), keptAside());
   return { name: resultsFileName(localDay(now_ms)), text: text };
 }
 
@@ -724,6 +738,7 @@ export function clearCalibration(): Calibration {
   last = null;
   removeStorage(KEY);
   removeStorage(UNREAD_KEY);
+  removeStorage(UNREAD_COOK_KEY);
   for (const key of SUPERSEDED_KEYS) removeStorage(key);
   kept = freshKept();
   return kept.calibration;

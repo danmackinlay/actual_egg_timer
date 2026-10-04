@@ -40,14 +40,26 @@ final class AppModel {
         Perf.drive(planner)
         #endif
         // After the solver is wired, so a restored cold start can revise
-        // straight away rather than waiting for the next attempt.
-        cook.restoreIfNeeded()
+        // straight away rather than waiting for the next attempt. A cook too
+        // old to pick up, finished and never answered about, is still an egg,
+        // logged as "Start again" would have logged it.
+        if let dropped = cook.restoreIfNeeded() {
+            planner.logUnanswered(dropped)
+        }
         // Sharing, if the cook turned it on (Sharing.swift): every egg in the
         // log is final but the one on screen, whose answers may still come.
         Sharing.shared.start(host: Sharing.Host(
             log: { [planner] in planner.kept.log },
             finalCount: { [planner] in planner.kept.log.count - (planner.answers == nil ? 0 : 1) }
         ))
+        // A finished cook answered before the relaunch keeps its open
+        // questions open, if its egg is still the last in the log and has not
+        // been sent: a later answer then changes nothing already shared. Here,
+        // after sharing has read what it sent and before it sends anything.
+        if cook.feedbackGiven, cook.phase == .done, let egg = cook.eggRecord(yolk: nil),
+           Sharing.shared.state.sent < planner.kept.log.count {
+            planner.resumeAnswers(egg)
+        }
         // The planner solved before sharing was read, so without the nudge
         // (E8); a cook who is sharing has the time solved again with it. Not
         // the other way round: sharing reads the log, which the planner loads.
@@ -125,7 +137,7 @@ final class AppModel {
     /// One answer, about the yolk, the white or the probe, in whichever order
     /// they come. The first writes the egg down, before anything is learned
     /// from it; the second folds the same egg again from the posterior before
-    /// it.
+    /// it - or, after a relaunch, replays the log (`resumeAnswers`).
     func answer(yolk: Feedback?, white: WhiteReport?, probe: ProbeReading? = nil) {
         if planner.answers != nil {
             Task { await planner.secondAnswer(yolk: yolk, white: white, probe: probe) }

@@ -341,6 +341,10 @@ final class Planner {
     /// The egg on screen, whose second answer may still come. Every other egg in
     /// the log is folded quietly.
     var liveIndex: Int?
+    /// The egg on screen when it was answered before a relaunch and is the
+    /// last in the log (`resumeAnswers`): its surface went with the old
+    /// process, so a later answer to it replays the log instead.
+    var resumedIndex: Int?
     var draining = false
     /// Set while the solver is moving the slider itself, so that snapping to a
     /// reachable position does not start another solve.

@@ -36,7 +36,7 @@ import { MassFrom, forecastOf } from '../core/record.js';
 import { Outcome, predictOutcome } from '../core/outcome.js';
 import {
   APP_VERSION, Calibration, cachedDecisionGrid, cachedOddsProfile, calibrationDoneness, calibrationParams,
-  clearCalibration, decisionGrid, decisionKey, eggRecordFor, eggsBehind, keptState, learn,
+  clearCalibration, decisionGrid, decisionKey, eggRecordFor, eggsBehind, keepUnreadCook, keptState, learn,
   loadCalibration, logEgg, oddsProfileFor, profileKey,
 } from './calibration.js';
 import { forgetShare, loadShare, retryDeletes, sendFinal, shareState } from './share.js';
@@ -44,7 +44,7 @@ import { renderShare, wireShare } from './shareView.js';
 import {
   LIMITS, Limit, START_TEMP_PRESETS_C, Settings, UiStartMode, clampNumber,
   clearBoilMemory, clearCook, estimateTimeToBoil, hasBoilMemory, loadBoilMemory,
-  loadCook, loadSettings, rememberTimeToBoil, saveCook, saveSettings,
+  loadCook, loadSettings, rememberTimeToBoil, saveCook, saveSettings, storedCookText,
 } from './store.js';
 import { sousVideCopy } from './sousvide.js';
 import { directionKey, refusalKey, whiteAtRisk } from '../core/wording.js';
@@ -59,7 +59,7 @@ import {
   LANGUAGES, LanguageState, effectiveLanguage, languageAfterFlip, languageAfterPick,
 } from '../core/language.js';
 import {
-  Machine, advance, beginCooling, idleMachine, recordBoil, restoreMachine,
+  Machine, advance, beginCooling, idleMachine, recordBoil, restoreMachine, staleMachine,
   reviseProvisional, secondsHeating, secondsToPull, startCold, startHot,
 } from './machine.js';
 import {
@@ -1396,20 +1396,31 @@ export function boot(): void {
  * letting someone walk away trusting a noise that will not happen.
  */
 function restoreCook(): void {
+  const text = storedCookText();
   const stored = loadCook();
-  if (stored === null) return;
-
-  const now = Date.now();
-  const back = restoreMachine(stored.machine, now);
-  if (back === null) {
+  if (stored === null) {
+    // Another build's cook, most likely: kept aside, as stored, and exported
+    // with the results (DECISIONS.md 80). Its egg may be one nothing else holds.
+    if (text !== null) keepUnreadCook(text);
     clearCook();
     return;
   }
 
   // A running cook is described by its ticket alone, so one that cannot be
-  // read is dropped rather than shown against the controls.
+  // read is dropped rather than shown against the controls - and kept aside.
+  const now = Date.now();
   const backTicket = restoreTicket(stored.ticket);
-  if (backTicket === null) {
+  const back = restoreMachine(stored.machine, now);
+  if (back === null || backTicket === null) {
+    const stale = staleMachine(stored.machine, now);
+    if (backTicket === null || stale === null) {
+      if (text !== null) keepUnreadCook(text);
+    } else if (stale.phase === 'DONE' && stored.answers === 'none') {
+      // Too old to pick back up, but finished and never answered about: still
+      // an egg, logged as "Start again" would have logged it.
+      logEgg(eggRecordFor(backTicket, stale, null));
+      void learn();
+    }
     clearCook();
     return;
   }

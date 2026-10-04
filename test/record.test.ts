@@ -38,7 +38,7 @@ import {
   exportResults, keptState, learn, loadCalibration, logEgg, recordSecondAnswer,
 } from '../src/ui/calibration.js';
 import {
-  Machine, advance, beginCooling, restoreMachine, startHot, PULL_GRACE_SECONDS,
+  Machine, advance, beginCooling, restoreMachine, staleMachine, startCold, startHot, PULL_GRACE_SECONDS,
 } from '../src/ui/machine.js';
 import { appSetup } from '../tools/common.js';
 
@@ -518,4 +518,21 @@ test('4c. a stored cook keeps who pulled it, and one that does not say is refuse
   const same = restoreMachine(JSON.parse(JSON.stringify(m)), T0 + 500_000);
   assert.equal(same?.pulledBy, 'cook');
   assert.equal(same?.outAt_ms, T0 + 405_000);
+});
+
+test('4d. a cook too old to pick back up is still an egg: run on to DONE, by the clock', () => {
+  const m = startHot(T0, 400, 'ice', 0.4);
+  const raw = JSON.parse(JSON.stringify(m)) as unknown;
+  const later = T0 + 3 * 3600_000;
+  assert.equal(restoreMachine(raw, later), null, 'not picked back up');
+  const stale = staleMachine(raw, later);
+  assert.equal(stale?.phase, 'DONE');
+  assert.equal(stale?.pulledBy, 'timeout');
+  const r = eggRecordFor(COOKED, stale as Machine, null);
+  assert.equal(r.pulledBy, 'timeout');
+  assert.equal(r.pulled_s, 400);
+  assert.equal(r.yolk, null);
+  assert.notEqual(parseRecord(r), null);
+  // A cold start nobody said was boiling never cooked anything it could time.
+  assert.equal(staleMachine(JSON.parse(JSON.stringify(startCold(T0, 900, 480, 'ice', 0.4))), later)?.phase, 'HEATING');
 });
