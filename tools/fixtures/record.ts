@@ -9,7 +9,7 @@ import { GridSpec, buildRequestedGrid } from '../../src/core/doseGrid.js';
 import {
   Calibration, EggRecord, MODEL_ID, RECORD_VERSION, calibrationDoneness, copyCalibration,
   foldRecord, freshCalibration, gridRequestFor, parseRecord, recordCookTime_s, recordMass_g,
-  recordProbe_C, recordTeaches, replay,
+  recordProbe_C, recordTeaches, replay, RESULTS_FILE_VERSION, ResultsMeta, resultsFile, resultsFileName,
 } from '../../src/core/record.js';
 import { LITERATURE_POPULATION } from '../../src/core/infer.js';
 import { simulate, solveCookTime, donenessFromSlider, DEFAULT_PARAMS } from '../../src/core/solve.js';
@@ -376,6 +376,26 @@ recordCases.push({
   forecast: null,
 });
 
+/* The results file (DECISIONS.md 80): the same store makes the same file in
+ * both apps, character for character. A store spliced in as it is, a missing
+ * store, damaged and bare copies kept as strings, and every character the
+ * escaping treats specially. */
+const STORE_TEXT = JSON.stringify({ v: 4, p: LITERATURE_POPULATION.id, m: MODEL_ID, folded: 1, log: [REPLAY_LOG[0]] });
+const RESULTS_CASES: { meta: ResultsMeta; stored: string | null; unread: string[] }[] = [
+  {
+    meta: { app: 'web', appVersion: '0.4.0-alpha.1', exported: '2026-10-05T09:41:07.250Z', population: LITERATURE_POPULATION.id, uid: null },
+    stored: STORE_TEXT, unread: [],
+  },
+  {
+    meta: { app: 'ios', appVersion: '0.4.0', exported: '2026-10-05T09:41:07Z', population: '2026-11', uid: '0f8fad5b-d9cb-469f-a165-70867728950e' },
+    stored: null, unread: ['{not json', '{"v":5,"log":[{"a/b":"‘café’"}]}', '17', '', 'tab\there "quoted" back\\slash \u0001\u001f'],
+  },
+  {
+    meta: { app: 'web', appVersion: 'a"b\\c/d\n\r\t\b\f\u0000\u007f’', exported: 'x', population: 'p', uid: 'u' },
+    stored: '[1,2.5,-0.0001,1e+21]', unread: [STORE_TEXT],
+  },
+];
+
 export const recordFixture = {
   about: 'The record (INFERENCE.md section 4): which records a loader trusts, and a replayed log. src/core/record.ts.',
   version: RECORD_VERSION,
@@ -388,6 +408,11 @@ export const recordFixture = {
   // A probe reading, typed in F and carried in C.
   probeRounding: [147.2, 147.3, 150.1, 139.9, 180.5, 212].map((f) => (f - 32) * 5 / 9)
     .concat([64.005, 58.8849999, 61.3]).map((c) => ({ centre_C: c, record_C: recordProbe_C(c) })),
+  resultsFile: {
+    version: RESULTS_FILE_VERSION,
+    names: ['2026-10-05', '2027-01-31'].map((day) => ({ day: day, name: resultsFileName(day) })),
+    cases: RESULTS_CASES.map((c) => ({ ...c, file: resultsFile(c.meta, c.stored, c.unread) })),
+  },
   replay: {
     grid: { alphaCount: REPLAY_GRID_ALPHA, timeCount: REPLAY_GRID_TIME },
     start: { count: REPLAY_PARTICLES, seed: REPLAY_SEED },

@@ -23,6 +23,7 @@ import { GridSpec, buildRequestedGrid } from '../src/core/doseGrid.js';
 import {
   Calibration, EggRecord, MODEL_ID, copyCalibration, foldRecord, freshCalibration, gridRequestFor,
   parseLog, parseRecord, recordCookTime_s, recordMass_g, replay,
+  RESULTS_FILE_VERSION, jsonString, resultsFile, resultsFileName,
 } from '../src/core/record.js';
 import { LITERATURE_POPULATION } from '../src/core/infer.js';
 import { calibrationGrid, PARTICLE_COUNT, CALIBRATION_SEED } from '../src/core/policy.js';
@@ -145,6 +146,25 @@ test('1d. one bad record refuses the whole log', () => {
 test('1e. the web app version is the package version', () => {
   const pkg = JSON.parse(readFileSync('package.json', 'utf8')) as { version: string };
   assert.equal(APP_VERSION, pkg.version);
+});
+
+test('1f. the results file: the store spliced in as stored, damaged copies as text', () => {
+  for (const s of ['', 'plain', 'a"b\\c/d', '\n\r\t\b\f\u0000\u001f\u007f', '‘curly’ café 🥚']) {
+    assert.equal(jsonString(s), JSON.stringify(s), `escaped as JSON.stringify: ${JSON.stringify(s)}`);
+  }
+  const store = JSON.stringify({ v: 4, p: 'x', folded: 0, log: [solvedRecord(0.4, 0)] });
+  const meta = { app: 'web' as const, appVersion: APP_VERSION, exported: '2026-10-05T09:00:00.000Z', population: 'x', uid: null };
+  const text = resultsFile(meta, store, ['{damaged', '[1]', '7']);
+  // The store's characters are in the file unchanged.
+  assert.ok(text.includes(`"stored":${store}`));
+  const file = JSON.parse(text) as Record<string, unknown>;
+  assert.equal(file['file'], RESULTS_FILE_VERSION);
+  assert.equal(file['model'], MODEL_ID);
+  assert.equal(file['uid'], null);
+  assert.deepEqual(file['stored'], JSON.parse(store));
+  assert.deepEqual(file['unread'], ['{damaged', [1], '7'], 'only an object or array is spliced');
+  assert.equal(JSON.parse(resultsFile(meta, null, []))['stored'], null);
+  assert.equal(resultsFileName('2026-10-05'), 'actual-egg-timer-results-2026-10-05.json');
 });
 
 // --------------------------------------------------------------------------

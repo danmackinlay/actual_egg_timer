@@ -59,7 +59,12 @@ export const RECORD_VERSION = 1;
  *  has moved on (DECISIONS.md 37); a replay can only say what the current code
  *  would have said. '2026-10-e6' is E5's likelihood and decision, with the
  *  forecast kept; '2026-10-e8' adds the nudge, +-10 s for a cook who is
- *  sharing (DECISIONS.md 61). Records from before E6 carry none. */
+ *  sharing (DECISIONS.md 61). Records from before E6 carry none.
+ *
+ *  It is also what tells a stored posterior it is out of date: both apps
+ *  keep it beside the posterior (the store's `m`) and replay the log when it
+ *  differs, so the posterior is always what THIS code makes of the log. A
+ *  change to the physics changes the likelihood, so it changes this too. */
 export const MODEL_ID = '2026-10-e8';
 
 /** Where the egg's mass came from. A size class is a 10 g bucket, worth about
@@ -616,4 +621,100 @@ export function replay(
     foldRecord(c, r, buildRequestedGrid(gridRequestFor(c, r, grid)));
   }
   return c;
+}
+
+/* ---------------------------------------------------------- the results file */
+
+/* EXPORT. "Export my results", in Settings, saves everything a device keeps
+ * about its eggs to a file the cook keeps (DECISIONS.md 80): the store EXACTLY
+ * as stored - spliced in character for character, not parsed and written
+ * again - and every stored copy the app could not read (the apps' `.unread`
+ * side key), with enough beside them to say whose and which.
+ * `npm run eggs -- import` reads it back for the fit.
+ *
+ * Both apps write it with these functions (Record.swift twins them), so the
+ * same store makes the same file, which fixtures/record.json pins. Nothing
+ * here reads a clock: the moment of the export is handed in. */
+
+/** The results file's own version. A reader refuses any other. */
+export const RESULTS_FILE_VERSION = 1;
+
+/** What a results file says beside the store. */
+export interface ResultsMeta {
+  app: AppName;
+  appVersion: string;
+  /** When it was exported: an ISO 8601 instant, UTC. */
+  exported: string;
+  /** The population the app draws a prior from, which is the store's `p`. */
+  population: string;
+  /** The random ID sharing made, or null if sharing has none: it is what
+   *  lines these records up with the ones the device sent. */
+  uid: string | null;
+}
+
+/** The file's name, on the LOCAL day it was exported. */
+export function resultsFileName(day: string): string {
+  return `actual-egg-timer-results-${day}.json`;
+}
+
+/** A JSON string literal: `"`, the backslash and the control characters
+ *  escaped as JSON.stringify escapes them, and nothing else - so the Swift
+ *  twin writes the same characters without its encoder, which escapes `/`. */
+export function jsonString(s: string): string {
+  let out = '"';
+  for (let i = 0; i < s.length; i++) {
+    const c = s.charCodeAt(i);
+    if (c === 0x22) out += '\\"';
+    else if (c === 0x5c) out += '\\\\';
+    else if (c === 0x08) out += '\\b';
+    else if (c === 0x0c) out += '\\f';
+    else if (c === 0x0a) out += '\\n';
+    else if (c === 0x0d) out += '\\r';
+    else if (c === 0x09) out += '\\t';
+    else if (c < 0x20) out += '\\u' + c.toString(16).padStart(4, '0');
+    else out += s.charAt(i);
+  }
+  return out + '"';
+}
+
+/** Whether a stored text is a JSON object or array, and so can be spliced in
+ *  as it is. Anything else - damaged, or a bare value - goes in as a string. */
+function isJsonContainer(s: string): boolean {
+  try {
+    const v: unknown = JSON.parse(s);
+    return v !== null && typeof v === 'object';
+  } catch {
+    return false;
+  }
+}
+
+/** A stored text as it goes into the file: itself when it is a JSON object
+ *  or array, a JSON string holding it when not, so a damaged copy is kept
+ *  too. */
+function spliced(s: string): string {
+  return isJsonContainer(s) ? s : jsonString(s);
+}
+
+/** What the file says it is, for whoever opens it. */
+const RESULTS_ABOUT = 'Actual Egg Timer: every result this device kept, as it keeps them. '
+  + '"stored" is the app\'s store, whose "log" has one record per egg (INFERENCE.md section 4); '
+  + '"unread" holds any stored copy the app could not read, kept rather than overwritten.';
+
+/**
+ * The results file: the meta, the store (`stored`, null when there is none)
+ * and every unread copy, in the order they were kept. One line of JSON.
+ */
+export function resultsFile(meta: ResultsMeta, stored: string | null, unread: string[]): string {
+  const parts: string[] = [];
+  for (let i = 0; i < unread.length; i++) parts.push(spliced(unread[i]));
+  return '{"about":' + jsonString(RESULTS_ABOUT)
+    + ',"file":' + String(RESULTS_FILE_VERSION)
+    + ',"app":' + jsonString(meta.app)
+    + ',"appVersion":' + jsonString(meta.appVersion)
+    + ',"exported":' + jsonString(meta.exported)
+    + ',"population":' + jsonString(meta.population)
+    + ',"model":' + jsonString(MODEL_ID)
+    + ',"uid":' + (meta.uid === null ? 'null' : jsonString(meta.uid))
+    + ',"stored":' + (stored === null ? 'null' : spliced(stored))
+    + ',"unread":[' + parts.join(',') + ']}';
 }

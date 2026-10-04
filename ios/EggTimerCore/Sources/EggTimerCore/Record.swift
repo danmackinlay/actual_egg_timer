@@ -28,6 +28,10 @@ public let recordVersion = 1
 /// likelihood, the decision and, from E8, the nudge. Changed whenever any of
 /// them changes, so the model as it shipped can be scored after the code has
 /// moved on (DECISIONS.md 37). See src/core/record.ts.
+///
+/// Also what tells a stored posterior it is out of date: both apps keep it
+/// beside the posterior (the store's `m`) and replay the log when it differs.
+/// A change to the physics changes the likelihood, so it changes this too.
 public let modelID = "2026-10-e8"
 
 /// Where the egg's mass came from. A size class is a 10 g bucket, worth about
@@ -555,4 +559,90 @@ public func replay(
         foldRecord(&c, r, grid: buildRequestedGrid(gridRequestFor(c, r, grid: grid)))
     }
     return c
+}
+
+// MARK: - The results file
+
+// "Export my results" (DECISIONS.md 80): the store exactly as stored, spliced
+// in character for character, every stored copy the app could not read, and
+// enough beside them to say whose and which. `resultsFile` in
+// src/core/record.ts, held to it by `fixtures/record.json`.
+
+/// The results file's own version.
+public let resultsFileVersion = 1
+
+/// What a results file says beside the store.
+public struct ResultsMeta: Sendable, Equatable {
+    public var app: AppName
+    public var appVersion: String
+    /// When it was exported: an ISO 8601 instant, UTC.
+    public var exported: String
+    /// The population the app draws a prior from: the store's `p`.
+    public var population: String
+    /// The random ID sharing made, or nil if sharing has none.
+    public var uid: String?
+
+    public init(app: AppName, appVersion: String, exported: String, population: String, uid: String?) {
+        self.app = app
+        self.appVersion = appVersion
+        self.exported = exported
+        self.population = population
+        self.uid = uid
+    }
+}
+
+/// The file's name, on the LOCAL day it was exported.
+public func resultsFileName(day: String) -> String {
+    "actual-egg-timer-results-\(day).json"
+}
+
+/// A JSON string literal, escaped as JSON.stringify escapes one and no
+/// further: JSONEncoder would also escape `/`.
+public func jsonString(_ s: String) -> String {
+    var out = "\""
+    for u in s.unicodeScalars {
+        switch u.value {
+        case 0x22: out += "\\\""
+        case 0x5C: out += "\\\\"
+        case 0x08: out += "\\b"
+        case 0x0C: out += "\\f"
+        case 0x0A: out += "\\n"
+        case 0x0D: out += "\\r"
+        case 0x09: out += "\\t"
+        case 0..<0x20: out += String(format: "\\u%04x", u.value)
+        default: out.unicodeScalars.append(u)
+        }
+    }
+    return out + "\""
+}
+
+/// A stored text as it goes into the file: itself when it is a JSON object
+/// or array, a JSON string holding it when not, so a damaged copy is kept too.
+private func spliced(_ s: String) -> String {
+    guard let data = s.data(using: .utf8), (try? JSONSerialization.jsonObject(with: data)) != nil else {
+        return jsonString(s)
+    }
+    return s
+}
+
+private let resultsAbout = "Actual Egg Timer: every result this device kept, as it keeps them. "
+    + "\"stored\" is the app's store, whose \"log\" has one record per egg (INFERENCE.md section 4); "
+    + "\"unread\" holds any stored copy the app could not read, kept rather than overwritten."
+
+/// The results file: the meta, the store (nil when there is none) and every
+/// unread copy, in the order they were kept. One line of JSON.
+public func resultsFile(_ meta: ResultsMeta, stored: String?, unread: [String]) -> String {
+    let fields: [(String, String)] = [
+        ("about", jsonString(resultsAbout)),
+        ("file", String(resultsFileVersion)),
+        ("app", jsonString(meta.app.rawValue)),
+        ("appVersion", jsonString(meta.appVersion)),
+        ("exported", jsonString(meta.exported)),
+        ("population", jsonString(meta.population)),
+        ("model", jsonString(modelID)),
+        ("uid", meta.uid.map(jsonString) ?? "null"),
+        ("stored", stored.map(spliced) ?? "null"),
+        ("unread", "[" + unread.map(spliced).joined(separator: ",") + "]"),
+    ]
+    return "{" + fields.map { "\"\($0.0)\":\($0.1)" }.joined(separator: ",") + "}"
 }
