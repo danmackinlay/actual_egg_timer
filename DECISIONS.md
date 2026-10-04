@@ -412,3 +412,15 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     that made the switch back possible is gone and ignored when read, so no
     storage key changed. `LANGUAGE.md` §6; the `stay` draft drops the (i)'s
     "and back when you pick Metric". Built `9c9ea24`.
+78. **"Boil" is never a noun** in anything a person reads: "the boil", "a
+    full boil", "the rolling boil", "boil times" and "signal the boil"
+    sound medical. "Boiling" is fine, and so is "boil" the verb ("water
+    boils at", "how long your water takes to boil", "once it's boiling").
+    Refined the same day: "brought to the boil" and "to the boil" stay,
+    because they sound like cooking. The button keeps its name, **"Full
+    rolling boil"** (CLAUDE.md invariant 6), and text that names it keeps
+    the name exactly; its 1750 name, "It boils in earnest", is already a
+    verb. The setting "After the boil" is **"Once it's boiling"** ("Once it
+    boils" in 1750). Every English, en-US and 1750 included, and the
+    privacy page; code identifiers and keys (`controls.afterTheBoil`) stay.
+    The `boiling` draft.

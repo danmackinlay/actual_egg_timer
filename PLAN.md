@@ -129,7 +129,12 @@ The one queue. Nothing else in the documents waits on the owner.
     heating", "press Full rolling boil", and on the Lock Screen "my guess
     until Full rolling boil". The **`randomid`** draft calls the random
     number a "random ID" (1750: a "cypher"), in Settings, the consent
-    and the privacy page.
+    and the privacy page. The **`boiling`** draft takes "boil" as a noun out
+    of eleven strings (`DECISIONS.md` 78), en-US and 1750 twins with them:
+    the setting "Once it’s boiling" (1750: "Once it boils"), water "boiling
+    hard" for "a full boil", and in 1750 on the Lock Screen "my conjecture,
+    till you tell me it boils". The button stays "Full rolling boil", and
+    "brought to the boil" stays.
 
 Waiting on someone else: the Czech review (F5), by the owner's friend.
 

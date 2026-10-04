@@ -62,6 +62,7 @@ import { version } from './drafts/version.js';
 import { stay } from './drafts/stay.js';
 import { press } from './drafts/press.js';
 import { randomid } from './drafts/randomid.js';
+import { boiling } from './drafts/boiling.js';
 
 export type Templates = Record<string, string>;
 
@@ -139,6 +140,7 @@ export const DRAFTS: Record<string, Draft> = {
   stay,
   press,
   randomid,
+  boiling,
 };
 
 /** The draft most recently applied, the last in `DRAFTS`: what a proof checks
