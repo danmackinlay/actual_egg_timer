@@ -382,7 +382,12 @@ const [command, a, b, c, d] = args;
 if (command === 'pull' && a !== undefined) {
   await pull(a);
 } else if (command === 'import' && a !== undefined) {
-  importFile(a, b ?? 'fit/data/imported.jsonl', uidFlag);
+  try {
+    importFile(a, b ?? 'fit/data/imported.jsonl', uidFlag);
+  } catch (error) {
+    console.error(`import: ${error instanceof Error ? error.message : String(error)}`);
+    process.exit(1);
+  }
 } else if (command === 'simulate' && a !== undefined && b !== undefined) {
   simulateCooks(a, b, Number(c ?? 400), Number(d ?? 20261002), SIMULATED_TRUTH);
 } else if (command === 'emulate' && a !== undefined && b !== undefined) {
