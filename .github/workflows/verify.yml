@@ -1,9 +1,16 @@
-# The gate, on every push and pull request: `npm run verify` - the type
-# checks, the tests, fixtures that match a fresh `npm run fixtures`, and the
-# Swift core against them. macOS, because the Swift half is tested against
-# the Foundation the apps are built with. Then `npm run ios:build`: the app
-# and its widget built for the simulator, unsigned, which `swift test` does
-# not reach. It is kept out of the local `verify` for its time.
+# The gate, on every push and pull request, as two jobs that run side by
+# side. `npm run verify` locally is both of them but the iOS build.
+#
+# web, on Linux (quick to start): the type checks, the tests, the Swift copy
+# lint and fixtures that match a fresh `npm run fixtures`.
+#
+# apple, on macOS: the Swift core against the committed fixtures (`swift
+# test`, against the Foundation the apps are built with), then `npm run
+# ios:build`, the app and its widget built for the simulator, unsigned, which
+# `swift test` does not reach. It needs no npm packages, so no `npm ci`.
+#
+# The actions are @v5, which run on Node 24; @v4 ran on Node 20, which GitHub
+# retires. The Node the project itself runs is `.node-version`.
 name: verify
 
 on:
@@ -11,17 +18,26 @@ on:
   pull_request:
 
 jobs:
-  verify:
-    runs-on: macos-latest
+  web:
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version-file: .node-version
       - run: npm ci
       # A release tag names the version it releases: v<package.json version>.
       - if: startsWith(github.ref, 'refs/tags/v')
         run: test "${GITHUB_REF_NAME#v}" = "$(node -p "require('./package.json').version")"
-      - run: npm run verify
+      - run: npm run check
+      - run: npm test
+      - run: npm run copy:literals
+      - run: npm run fixtures:check
+
+  apple:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v5
+      - run: cd ios/EggTimerCore && swift test
       - run: brew install xcodegen
       - run: npm run ios:build
