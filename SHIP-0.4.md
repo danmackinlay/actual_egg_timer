@@ -138,6 +138,11 @@ so is the label's **Not Linked** (74).
       sharing; the review notes say what the endpoint is, that sharing is off
       by default, and what App Attest is for.
 
+- [x] **One privacy page for every version, no fork.** Every build links to
+      `/privacy`, the 0.3.1 TestFlight build included, so the page covers
+      both; it now says sharing came with 0.4 and a version without
+      *Sharing results* sends nothing.
+
 ## C. iOS
 
 - [ ] **App Attest on the App ID**: App Attest is listed as a capability on
@@ -203,5 +208,13 @@ so is the label's **Not Linked** (74).
 - [ ] **Live**: a record posted and deleted through the real endpoint; the
       privacy page live and current; the app and the worker load with no
       console errors in Chromium and Safari.
+- [ ] **Set the privacy page's date and Changes line to the release day**
+      (it says 3 October 2026 now; the 0.3 page is in force until 0.4
+      deploys).
+- [ ] **Gate:** no 0.4.0 build is uploaded until https://actualeggtimer.netlify.app/privacy
+      live shows the 0.4 page. With internal automatic distribution, an
+      upload is already a release to the family.
 - [ ] Then the iOS upload (section C) and the TestFlight review.
+- [ ] **Never roll the Netlify site back below 0.4** once results are
+      stored: the 0.3 page says nothing leaves the device. Fix forward.
 - [ ] Afterwards: `0.3.x` is cut from `v0.3.4-alpha.1` only if 0.3 needs a fix.

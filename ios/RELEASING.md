@@ -169,9 +169,12 @@ code, so a change to what either app keeps or sends changes that page first.
 It was rewritten for 0.4 (3 October 2026): what sharing sends, what the
 server keeps (the results; for the iPhone, App Attest's public key and counter
 per id), where (Netlify Blobs, us-east-2), for how long, and the GDPR
-essentials, its legal facts checked on 3 October 2026. It carries `OWNER:`
-comments until the owner has answered them; none may be left when 0.4 is
-submitted for external review.
+essentials, its legal facts checked on 3 October 2026. This one URL is what
+every build links to (the 0.3 builds included, from Help), so the page must
+stay true for the oldest build still installed: it says that a version with
+no Sharing results sends nothing. **Upload a build that changes what is sent
+only after `main` has deployed the page that describes it**, since with
+internal automatic distribution an upload is a release to the family.
 
 The **App Privacy** questionnaire's answer changed with E6, sharing (the
 answer was Data Not Collected until then). Apple counts data as collected
