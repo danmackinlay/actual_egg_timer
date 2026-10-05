@@ -8,7 +8,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
-  FRESH_SHARE, ShareState, Transport, advances, deleteSent, deletionAsked, forgetShare, forgotten,
+  FRESH_SHARE, ShareState, Transport, answered, deleteSent, deletionAsked, forgetShare, forgotten,
   loadShare, newUid, readShare, reconciled, retryDeletes, sendFinal, setSharing, shareState, shareStoredElsewhere, turnedOff,
   turnedOn,
 } from '../src/ui/share.js';
@@ -43,7 +43,11 @@ test('2. what storage holds is read defensively, and every readable id is kept',
   assert.deepEqual(readShare('[1]'), FRESH_SHARE);
   assert.equal(readShare(JSON.stringify({ on: true, uid: 'nobody' })).on, false, 'on, with no id, is off');
   const s = readShare(JSON.stringify({ on: true, uid: A, sent: 3, seq: -1, uids: [B, 'x', 7], deleting: [B] }));
-  assert.deepEqual(s, { on: true, uid: A, sent: 3, seq: 0, uids: [B, A], deleting: [B] });
+  assert.deepEqual(s, { on: true, uid: A, sent: 3, seq: 0, uids: [B, A], deleting: [B], busy: 0, busySince: null });
+  const waiting = readShare(JSON.stringify({ on: true, uid: A, busy: 2, busySince: 1e12 }));
+  assert.deepEqual([waiting.busy, waiting.busySince], [2, 1e12]);
+  const damaged = readShare(JSON.stringify({ on: true, uid: A, busy: 'x', busySince: 'y' }));
+  assert.deepEqual([damaged.busy, damaged.busySince], [0, null]);
 });
 
 test('3. on, off, forget, delete: the id lives as long as the log it sends', () => {
@@ -58,11 +62,40 @@ test('3. on, off, forget, delete: the id lives as long as the log it sends', () 
   const off = forgotten(turnedOff({ ...s, sent: 2 }), mint);
   assert.deepEqual([off.uid, off.sent, off.uids], [null, 0, [A, B]], 'off: the next id is made when it goes on');
   const gone = deletionAsked(s);
-  assert.deepEqual(gone, { on: false, uid: null, sent: 0, seq: 0, uids: [], deleting: [A, B] });
+  assert.deepEqual(gone, { ...FRESH_SHARE, deleting: [A, B] });
   assert.deepEqual(deletionAsked({ ...gone, uids: [A] }).deleting, [A, B], 'no id asked for twice');
   assert.equal(reconciled({ ...s, sent: 5 }, 2).sent, 0, 'a dropped log begins again');
   assert.equal(reconciled({ ...s, sent: 2 }, 5).sent, 2);
-  assert.deepEqual([200, 201, 400, 413, 404, 429, 500].map(advances), [true, true, true, true, false, false, false]);
+  assert.deepEqual(
+    [200, 201, 400, 409, 413, 415, 422, 403, 404, 429, 500, 503].map((status) => answered(s, status, 0).moved),
+    [true, true, true, true, true, true, true, false, false, false, false, false],
+  );
+});
+
+test('3b. a busy server is waited on, counted, and given up on after five busy answers and three days', () => {
+  const DAY = 24 * 3600 * 1000;
+  let s: ShareState = { ...turnedOn(FRESH_SHARE, () => A), sent: 2, seq: 7 };
+  const at = [0, 1, 2, 2.9, 3.5].map((d) => 1e12 + d * DAY);
+  for (const now of at.slice(0, 4)) {
+    const r = answered(s, 503, now);
+    assert.equal(r.moved, false);
+    s = r.next;
+  }
+  assert.deepEqual([s.sent, s.seq, s.busy, s.busySince], [2, 7, 4, 1e12], 'counted from the first');
+  const after = answered(s, 429, at[4]);
+  assert.equal(after.moved, true, 'the fifth, three days on: passed over');
+  assert.deepEqual([after.next.sent, after.next.seq, after.next.busy, after.next.busySince], [3, 8, 0, null]);
+  // Many busy answers in one afternoon are only an afternoon.
+  let t: ShareState = { ...s, busy: 0, busySince: null };
+  for (let i = 0; i < 20; i++) {
+    const r = answered(t, 500, 1e12 + i * 60_000);
+    assert.equal(r.moved, false);
+    t = r.next;
+  }
+  assert.equal(answered({ ...s, busySince: at[4] - DAY }, 500, at[4]).moved, false, 'four, then a fifth only a day on');
+  assert.deepEqual(answered({ ...s, busy: 3 }, 201, at[4]).next.busy, 0, 'kept: the count starts again');
+  assert.deepEqual(reconciled({ ...s, sent: 9 }, 2).busy, 0, 'a new log, a new count');
+  assert.deepEqual(forgotten(s, () => B).busySince, null, 'a new cook, a new count');
 });
 
 /** A transport that records what it was sent and answers from a script. */
@@ -110,21 +143,36 @@ test('4. turning sharing on sends the log so far, in order, each copy carrying t
   assert.equal(JSON.parse(storage.get('aet.share.v1') ?? '{}').sent, 2, 'written through');
 });
 
-test('5. a refused egg is passed over; a failure stops the run until the next', async () => {
+test('5. a refused egg is passed over; a busy server or none stops the run until the next', async () => {
   storage.clear();
   const t = fake([500]);
-  loadShare(page(LOG), t);
+  loadShare(page(LOG), t, () => 1e12);
   await setSharing(true);
-  assert.equal(shareState().sent, 0, '500: try again later');
+  assert.deepEqual([shareState().sent, shareState().busy], [0, 1], '500: try again later, counted');
   t.post = fake(['offline']).post;
   await sendFinal();
-  assert.equal(shareState().sent, 0, 'offline: try again later');
-  const ok = fake([400, 201, 200]);
+  assert.deepEqual([shareState().sent, shareState().busy], [0, 1], 'offline: try again later, not counted');
+  const ok = fake([415, 201, 200]);
   loadShare(page(LOG), ok);
   await sendFinal();
-  assert.deepEqual([shareState().sent, shareState().seq], [3, 3], 'refused, kept, already kept: all done with');
+  assert.deepEqual([shareState().sent, shareState().seq], [3, 3], 'refused (not JSON), kept, already kept: all done with');
   await sendFinal();
   assert.equal(ok.posts.length, 3, 'nothing is sent twice');
+});
+
+test('5b. an egg the server stays busy for, or out of reach, is passed over in the end, and the rest go', async () => {
+  storage.clear();
+  let clock = 1e12;
+  // Down, then a bad deploy (404), then a firewall (403): all waited on.
+  const t = fake([503, 404, 404, 403, 503, 201, 201]);
+  loadShare(page(LOG), t, () => clock);
+  await setSharing(true);
+  for (let run = 1; run < 5; run++) {
+    clock += 24 * 3600 * 1000;
+    await sendFinal();
+  }
+  assert.deepEqual([shareState().sent, shareState().seq], [3, 3], 'the first given up on the fifth try, four days on');
+  assert.deepEqual(t.posts.map((p) => p['seq']), [0, 0, 0, 0, 0, 1, 2]);
 });
 
 test('6. forgetting starts a new cook; deleting reaches every id, after what was in flight', async () => {

@@ -17,7 +17,10 @@ import EggTimerCore
 /// (a simulator, an old phone, a refusal) sends anyway, to the open tier.
 /// One that cannot attest yet (offline, Apple's service or the server busy)
 /// waits and tries again on the next run, rather than send its whole log
-/// open for good because of a passing failure.
+/// open for good because of a passing failure - but not for ever: after
+/// five busy answers and three days (`shareGivesUp`, core's policy) it gives
+/// up on the key and sends open, as a phone that lost its key does. What an
+/// answer means, for an egg as for an attestation, is core's `shareReply`.
 @MainActor
 @Observable
 final class Sharing {
@@ -31,8 +34,12 @@ final class Sharing {
         var seq = 0
         var uids: [String] = []
         var deleting: [String] = []
+        /// How many busy answers the egg at `sent` has had, and when the
+        /// first came.
+        var busy = 0
+        var busySince: Date?
 
-        enum CodingKeys: String, CodingKey { case on, uid, sent, seq, uids, deleting }
+        enum CodingKeys: String, CodingKey { case on, uid, sent, seq, uids, deleting, busy, busySince }
     }
 
     /// An id's attested key: made, attested by Apple, and taken by the server
@@ -50,6 +57,11 @@ final class Sharing {
         /// days, so one posted later is refused; absent in what an earlier
         /// build kept.
         var madeAt: Date?
+        /// How many busy answers - the server's or Apple's - or signatures
+        /// the phone could not make it has had, and when the first came:
+        /// what `shareGivesUp` bounds. Absent when there are none.
+        var busy: Int?
+        var busySince: Date?
     }
 
     /// How old an attestation may be and still be refused for itself: one
@@ -129,6 +141,8 @@ final class Sharing {
             next.sent = 0
             next.seq = 0
             next.uids.append(uid)
+            next.busy = 0
+            next.busySince = nil
         }
         return next
     }
@@ -137,6 +151,8 @@ final class Sharing {
         var next = s
         next.sent = 0
         next.seq = 0
+        next.busy = 0
+        next.busySince = nil
         if s.on {
             let uid = mint()
             next.uid = uid
@@ -155,13 +171,34 @@ final class Sharing {
 
     static func reconciled(_ s: State, logCount: Int) -> State {
         var next = s
-        if next.sent > logCount { next.sent = 0 }
+        if next.sent > logCount {
+            next.sent = 0
+            next.busy = 0
+            next.busySince = nil
+        }
         return next
     }
 
-    /// Kept (201), already kept (200), or refused for good (400, 413).
-    static func advances(_ status: Int) -> Bool {
-        status == 200 || status == 201 || status == 400 || status == 413
+    /// The egg at the cursor answered: whether the cursor moves on, and the
+    /// state with it (share.ts's `answered`). Kept or refused, it does; busy,
+    /// it waits - counted, unless it has waited long enough, when it is
+    /// passed over as if refused, so that one egg cannot hold up the rest.
+    static func answered(_ s: State, status: Int, now: Date) -> (next: State, moved: Bool) {
+        var next = s
+        if shareReply(status) == .busy {
+            let since = s.busySince ?? now
+            let busy = s.busy + 1
+            if !shareGivesUp(tries: busy, waitedS: now.timeIntervalSince(since)) {
+                next.busy = busy
+                next.busySince = since
+                return (next, false)
+            }
+        }
+        next.sent += 1
+        next.seq += 1
+        next.busy = 0
+        next.busySince = nil
+        return (next, true)
     }
 
     // MARK: - Kept
@@ -276,12 +313,13 @@ final class Sharing {
                 }
             }
             guard gen == generation else { return }
+            // No answer: offline, most likely, so nothing else would get
+            // through either. The next run tries again, uncounted.
             guard let status = await Self.send("POST", "api/eggs", body: body, assertion: assertion) else { return }
-            guard gen == generation, Self.advances(status) else { return }
-            var next = state
-            next.sent += 1
-            next.seq += 1
+            guard gen == generation else { return }
+            let (next, moved) = Self.answered(state, status: status, now: .now)
             save(next)
+            guard moved else { return }
         }
     }
 
@@ -297,9 +335,9 @@ final class Sharing {
     // MARK: - App Attest
 
     /// What App Attest gave: a key (or an assertion), the open tier for good
-    /// - the phone cannot attest, or the server will not take its key - or
-    /// not yet, a passing failure, so the run stops and the next one tries
-    /// again.
+    /// - the phone cannot attest, the server will not take its key, or it
+    /// has waited long enough - or not yet, a passing failure, so the run
+    /// stops and the next one tries again.
     enum Attested {
         case key(String)
         case open
@@ -336,25 +374,37 @@ final class Sharing {
                 saveAttest(a)
             }
             let body = try JSONEncoder().encode(["uid": uid, "keyId": keyId, "attestation": a.attestation ?? ""])
+            // No answer: offline, so no egg would get through either. The
+            // next run tries again, uncounted.
             guard let status = await Self.send("POST", "api/attest", body: body) else { return .later }
             guard gen == generation else { return .later }
-            if status == 200 || status == 201 {
+            switch shareReply(status) {
+            case .kept:
                 a.status = .attested
-            } else if status == 400, a.madeAt.map({ Date.now.timeIntervalSince($0) > Self.attestationFresh }) ?? true {
-                // Posted days after Apple made it - the phone was offline -
-                // and refused, most likely for its certificate's date: a new
-                // key, attested now, on the next run.
-                saveAttest(Attest(uid: uid, keyId: nil, attestation: nil, status: .pending))
-                return .later
-            } else if status == 400 || status == 409 {
+                a.busy = nil
+                a.busySince = nil
+            case .busy:
+                // Busy, limited or out of reach (403, 404, 408, 429, 5xx):
+                // the next run, for a while.
+                return waited(a)
+            case .refused:
+                if status == 400, a.madeAt.map({ Date.now.timeIntervalSince($0) > Self.attestationFresh }) ?? true {
+                    // Posted days after Apple made it - the phone was offline -
+                    // and refused, most likely for its certificate's date: a
+                    // new key, attested now, on the next run.
+                    saveAttest(Attest(uid: uid, keyId: nil, attestation: nil, status: .pending))
+                    return .later
+                }
+                // Refused (400), another key for this id (409), or another
+                // refusal of the request itself (413, 415, 422, ...), which
+                // no retry changes: open, so the eggs still go.
                 a.status = .failed
-            } else {
-                // Busy, or limited (429, 5xx): the next run.
-                return .later
             }
         } catch let error as DCError where error.code == .serverUnavailable {
-            // Apple's service is busy: try again on the next run.
-            return .later
+            // Apple's service is busy, or out of reach: the next run, for a
+            // while.
+            guard gen == generation else { return .later }
+            return waited(a)
         } catch {
             guard gen == generation else { return .later }
             a.status = .failed
@@ -365,12 +415,18 @@ final class Sharing {
 
     /// The key's signature over this body, base64. A key the phone no longer
     /// holds (`invalidKey`) is given up on for this id, which then sends open;
-    /// anything else waits for the next run.
+    /// anything else waits for the next run, counted, as a busy attestation
+    /// does (`waited`).
     private func assertion(keyId: String, body: Data, uid: String, generation gen: Int) async -> Attested {
         let hash = Data(SHA256.hash(data: body))
         do {
-            let a = try await DCAppAttestService.shared.generateAssertion(keyId, clientDataHash: hash)
-            return .key(a.base64EncodedString())
+            let made = try await DCAppAttestService.shared.generateAssertion(keyId, clientDataHash: hash)
+            if gen == generation, var a = attest, a.uid == uid, a.busy != nil {
+                a.busy = nil
+                a.busySince = nil
+                saveAttest(a)
+            }
+            return .key(made.base64EncodedString())
         } catch let error as DCError where error.code == .invalidKey {
             if gen == generation, var a = attest, a.uid == uid {
                 a.status = .failed
@@ -378,8 +434,33 @@ final class Sharing {
             }
             return .open
         } catch {
-            return .later
+            guard gen == generation, let a = attest, a.uid == uid else { return .later }
+            return waited(a)
         }
+    }
+
+    /// A passing failure of the attestation or of a signature, counted. Once
+    /// it has gone on long enough (`shareGivesUp`: five tries and three
+    /// days, core's policy says why), the key is given up on for this id,
+    /// which then sends open, as a phone that lost its key does: an outage
+    /// that does not pass, or a service out of reach from where the phone
+    /// is, must not stop its sharing for good.
+    private func waited(_ attest: Attest) -> Attested {
+        var a = attest
+        let now = Date.now
+        let since = a.busySince ?? now
+        let busy = (a.busy ?? 0) + 1
+        if shareGivesUp(tries: busy, waitedS: now.timeIntervalSince(since)) {
+            a.status = .failed
+            a.busy = nil
+            a.busySince = nil
+            saveAttest(a)
+            return .open
+        }
+        a.busy = busy
+        a.busySince = since
+        saveAttest(a)
+        return .later
     }
 
     // MARK: - Deleting
@@ -422,6 +503,7 @@ extension Sharing.State {
         }
         func count(_ key: CodingKeys) -> Int { max(0, (try? c.decode(Int.self, forKey: key)) ?? 0) }
         let uid = (try? c.decode(String.self, forKey: .uid)).flatMap { Sharing.isUid($0) ? $0 : nil }
+        let busySince = uid == nil ? nil : try? c.decode(Date.self, forKey: .busySince)
         var uids = ids(.uids)
         if let uid, !uids.contains(uid) { uids.append(uid) }
         self.init(
@@ -430,7 +512,9 @@ extension Sharing.State {
             sent: uid == nil ? 0 : count(.sent),
             seq: uid == nil ? 0 : count(.seq),
             uids: uids,
-            deleting: ids(.deleting)
+            deleting: ids(.deleting),
+            busy: uid == nil ? 0 : count(.busy),
+            busySince: busySince
         )
     }
 }

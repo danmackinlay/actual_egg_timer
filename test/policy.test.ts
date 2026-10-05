@@ -15,6 +15,7 @@ import {
   targetPeakYolk_C, verdictFor, textureFor, textureNoteKeys, calibrationGrid, DEFAULTS,
   DEFAULT_EGG_MASS_KG, DEFAULT_TIME_TO_BOIL_S, START_TEMP_PRESETS_C, ambientFor, roomInUse, startTempPreset_C,
   rememberBoil, estimateTimeToBoil, hasBoilMemory, volumeKey, BoilMemory, carrySizeIndex,
+  SHARE_WAIT_S, SHARE_WAIT_TRIES, shareGivesUp, shareReply,
 } from '../src/core/policy.js';
 import {
   DEFAULT_PARAMS, DONENESS_ANCHORS, Solution, CookResult, donenessFromSlider, solveCookTime,
@@ -473,3 +474,16 @@ function close(actual: number, expected: number, tol: number, what: string): voi
     `${what}: expected ${expected} +/- ${tol}, got ${actual} (delta ${actual - expected})`,
   );
 }
+
+test('8. a sender waits only on a busy server, and not for good', () => {
+  assert.deepEqual([200, 201].map(shareReply), ['kept', 'kept']);
+  // The way to the server - down, limited, a bad deploy, a firewall - may be
+  // put right: wait, within the bound.
+  assert.deepEqual([403, 404, 408, 429, 500, 502, 503, 504].map(shareReply), Array(8).fill('busy'));
+  // The request itself: asking again changes nothing.
+  assert.deepEqual([400, 401, 405, 409, 413, 415, 422, 204, 302].map(shareReply), Array(9).fill('refused'));
+  assert.equal(shareGivesUp(SHARE_WAIT_TRIES, SHARE_WAIT_S), true);
+  assert.equal(shareGivesUp(SHARE_WAIT_TRIES - 1, 10 * SHARE_WAIT_S), false, 'a phone opened once in days tries again');
+  assert.equal(shareGivesUp(100, SHARE_WAIT_S - 1), false, 'a busy afternoon is waited out');
+  assert.equal(shareGivesUp(SHARE_WAIT_TRIES, -60), true, 'a clock set back: the tries decide');
+});
