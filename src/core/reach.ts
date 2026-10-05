@@ -302,7 +302,8 @@ export function oddsProfile(c: Calibration, egg: Egg, setup: CookSetup, grid: Do
  */
 export function lowOddsAt(profile: OddsProfile | null, level: number): boolean {
   if (profile === null || profile.softest === null || profile.hardest === null) return false;
-  return level < profile.softest || level > profile.hardest;
+  // A level a hair off its end - 35 * 0.01 is not 35 / 100 - is that end.
+  return level < profile.softest - SAME_LEVEL || level > profile.hardest + SAME_LEVEL;
 }
 
 /* ------------------------------------------------------------- the answer */

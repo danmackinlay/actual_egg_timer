@@ -69,8 +69,11 @@ struct YolkSlider: UIViewRepresentable {
         init(_ parent: YolkSlider) { self.parent = parent }
 
         @objc func changed(_ slider: TracklessSlider) {
-            // On the grid, as SwiftUI's `Slider(step:)` put it.
-            let stepped = (Double(slider.value) / parent.step).rounded() * parent.step
+            // On the grid, as the web's `step="0.01"` puts it: k / 100, which
+            // `k * 0.01` is not for k = 35, 41, 47, ... - a hair firmer, so a
+            // thumb on the firmest good level would warn of it.
+            let steps = (1 / parent.step).rounded()
+            let stepped = (Double(slider.value) * steps).rounded() / steps
             let next = min(parent.range.upperBound, max(parent.range.lowerBound, stepped))
             let nearest = anchorNear(next).key
             if let word, word != nearest, slider.isTracking {

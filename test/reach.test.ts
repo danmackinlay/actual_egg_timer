@@ -187,6 +187,10 @@ test('6. the warning and the verdict, on hand-made ranges', () => {
     [0.1, 0.2, 0.29, 0.3, 0.5, 0.8, 0.81, 0.9].map((level) => lowOddsAt(profile, level)),
     [true, true, true, false, false, false, true, true],
   );
+  // A level a hair past an end, as an iPhone slider stepping by 0.01 made
+  // one (35 * 0.01 is not 0.35), is that end.
+  assert.equal(lowOddsAt({ ...profile, hardest: 0.35 }, 35 * 0.01), false);
+  assert.equal(lowOddsAt({ ...profile, softest: 0.41 }, 0.41 - 1e-12), false);
   // Nothing is warned of with no profile, or one with no range.
   assert.equal(lowOddsAt(null, 0.2), false);
   assert.equal(lowOddsAt({ ...profile, softest: null, hardest: null }, 0.2), false);

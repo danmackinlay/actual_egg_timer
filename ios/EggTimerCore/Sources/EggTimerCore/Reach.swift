@@ -234,7 +234,8 @@ public func oddsProfile(_ c: Calibration, egg: Egg, setup: CookSetup, grid: Dose
 /// cannot deliver is `verdictFor`'s.
 public func lowOddsAt(_ profile: OddsProfile?, level: Double) -> Bool {
     guard let profile, let softest = profile.softest, let hardest = profile.hardest else { return false }
-    return level < softest || level > hardest
+    // A level a hair off its end - 35 * 0.01 is not 35 / 100 - is that end.
+    return level < softest - sameLevel || level > hardest + sameLevel
 }
 
 // MARK: - The answer

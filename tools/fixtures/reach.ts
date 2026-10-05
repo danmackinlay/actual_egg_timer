@@ -81,11 +81,13 @@ const reachProfiles = REACH_CASES.map((rc, index) => {
 
 const REACH_RANGES: ({ softest: number | null; hardest: number | null } | null)[] = [
   null, { softest: null, hardest: null }, { softest: 0.3, hardest: 0.8 }, { softest: 0.1, hardest: 0.9 },
-  { softest: 0.23, hardest: 0.63 },
+  { softest: 0.23, hardest: 0.63 }, { softest: 0.35, hardest: 0.7 },
 ];
 const reachLowOdds: unknown[] = [];
 for (const range of REACH_RANGES) {
-  for (const level of [0, 0.05, 0.2, 0.23, 0.3, 0.5, 0.63, 0.8, 0.85, 0.95, 1]) {
+  // 35 * 0.01 and 70 * 0.01 are each a hair past 0.35 and 0.7, as a slider
+  // that steps by multiplying puts them: still the end, not past it.
+  for (const level of [0, 0.05, 0.2, 0.23, 0.3, 35 * 0.01, 0.5, 0.63, 70 * 0.01, 0.8, 0.85, 0.95, 1]) {
     const profile: OddsProfile | null = range === null ? null : {
       points: [], best: 0.6, physicalSoftest: 0.1, physicalHardest: 0.9,
       softest: range.softest, hardest: range.hardest,
