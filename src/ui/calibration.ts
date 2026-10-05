@@ -513,9 +513,64 @@ let draining: Promise<void> | null = null;
  *  Every other record is folded quietly. */
 let live = -1;
 let last: LiveFold | null = null;
+/** The text this page last read from `KEY` or wrote there. Anything else
+ *  found there was written by another tab, and is taken up before this one
+ *  writes (`current`): every tab writes the whole store, so a tab that wrote
+ *  back what it loaded would undo every egg another tab logged since. */
+let seen: string | null = null;
 
 function save(): void {
   writeStorage(KEY, encodeKept(kept));
+  // Read back rather than assumed: a write that failed (no room, no storage)
+  // leaves the store as it was, which is then not another tab's.
+  seen = readStorage(KEY);
+}
+
+/** Take up what another tab wrote, if it wrote anything since this one last
+ *  read or wrote: before every change, so a change lands on the store as it
+ *  is now. Says whether there was anything to take up. */
+function current(): boolean {
+  const raw = readStorage(KEY);
+  if (raw === seen) return false;
+  adopt(raw);
+  return true;
+}
+
+/**
+ * Another tab's store, read as a load reads one (`decodeKept`), into the
+ * calibration the page already holds, so every holder of the reference sees
+ * it. A fold under way lands on nothing, and the drain goes round again on
+ * what is there now. The egg on screen keeps its chance of a second answer
+ * only if the other tab left the log exactly as this one had it.
+ */
+function adopt(raw: string | null): void {
+  const decoded = decodeKept(raw);
+  if (decoded.loses && raw !== null) keepUnread(raw);
+  const had = kept;
+  assign(had.calibration, decoded.kept.calibration);
+  kept = { ...decoded.kept, calibration: had.calibration };
+  generation += 1;
+  if (live >= 0 && !sameRecord(kept.log[live], had.log[live])) live = -1;
+  if (last !== null) {
+    const r = kept.log[last.index];
+    last = r !== undefined && sameRecord(r, last.record)
+      && kept.log.length === last.index + 1 && kept.folded === last.index + 1
+      ? { ...last, record: r } : null;
+  }
+  seen = raw;
+  if (decoded.path !== 'loaded') save();
+}
+
+function sameRecord(a: EggRecord | undefined, b: EggRecord | undefined): boolean {
+  return a !== undefined && b !== undefined && JSON.stringify(a) === JSON.stringify(b);
+}
+
+/** Another tab changed storage (the page's `storage` event, whose key is
+ *  null when a tab cleared it all): taken up now, if it touched the store.
+ *  Says whether it did, so the page can redraw and fold what is behind. */
+export function calibrationStoredElsewhere(key: string | null): boolean {
+  if (key !== null && key !== KEY) return false;
+  return current();
 }
 
 /** Whatever is in storage, made safe (see `decodeKept`). The posterior it
@@ -531,6 +586,7 @@ export function loadCalibration(): Calibration {
   // Kept aside BEFORE anything is written over it.
   if (decoded.loses && raw !== null) keepUnread(raw);
   kept = decoded.kept;
+  seen = raw;
   if (decoded.path !== 'loaded') save();
   return kept.calibration;
 }
@@ -606,6 +662,7 @@ export function keptState(): Kept {
  *  answer and the fold then refolds it on load rather than losing it or folding
  *  it twice. Returns its index in the log. */
 export function logEgg(r: EggRecord): number {
+  current();
   kept.log.push(r);
   save();
   return kept.log.length - 1;
@@ -645,7 +702,9 @@ function drain(): Promise<void> {
 }
 
 async function drainLog(): Promise<void> {
-  while (kept.folded < kept.log.length) {
+  for (;;) {
+    current();
+    if (kept.folded >= kept.log.length) return;
     const k = kept;
     const gen = generation;
     const index = k.folded;
@@ -659,7 +718,9 @@ async function drainLog(): Promise<void> {
     // `gridRequestFor` - and nothing folds in between, because this loop is the
     // only thing that folds.
     const grid = await buildOffThread(gridRequestFor(k.calibration, r, calibrationGrid));
-    if (gen !== generation) continue;
+    // Another tab's store, written while the surface was being built, is
+    // taken up instead, and folded from where it stands.
+    if (current() || gen !== generation) continue;
     const before = index === live ? copyCalibration(k.calibration) : null;
     // Whatever answers the record holds NOW: one that arrived while the surface
     // was being built is folded with the first, as a replay would fold them.
@@ -680,6 +741,7 @@ function assign(into: Calibration, from: Calibration): void {
   into.posterior.weights = from.posterior.weights;
   into.posterior.rng = from.posterior.rng;
   into.eggsLogged = from.eggsLogged;
+  if (from.start !== undefined) into.start = from.start;
 }
 
 /**
@@ -702,6 +764,10 @@ function assign(into: Calibration, from: Calibration): void {
 export async function recordSecondAnswer(
   index: number, answer: { yolk?: Feedback; white?: WhiteReport; probe?: ProbeReading },
 ): Promise<boolean> {
+  const had = kept.log[index];
+  // Another tab's store first: the answer is written only to the egg it was
+  // given for, and only if no other egg has been logged since.
+  if (current() && !sameRecord(kept.log[index], had)) return false;
   const r = kept.log[index];
   if (r === undefined || index !== kept.log.length - 1) return false;
   if (answer.yolk !== undefined && r.yolk !== null) return false;
@@ -737,6 +803,7 @@ export function clearCalibration(): Calibration {
   live = -1;
   last = null;
   removeStorage(KEY);
+  seen = null;
   removeStorage(UNREAD_KEY);
   removeStorage(UNREAD_COOK_KEY);
   for (const key of SUPERSEDED_KEYS) removeStorage(key);

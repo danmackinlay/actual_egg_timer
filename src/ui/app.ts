@@ -38,9 +38,9 @@ import { Outcome, predictOutcome } from '../core/outcome.js';
 import {
   APP_VERSION, Calibration, cachedDecisionGrid, cachedOddsProfile, calibrationDoneness, calibrationParams,
   clearCalibration, decisionGrid, decisionKey, eggRecordFor, eggsBehind, keepUnreadCook, keptState, learn,
-  exportResults, loadCalibration, logEgg, oddsProfileFor, profileKey,
+  exportResults, loadCalibration, logEgg, oddsProfileFor, profileKey, calibrationStoredElsewhere,
 } from './calibration.js';
-import { forgetShare, loadShare, retryDeletes, sendFinal, shareState } from './share.js';
+import { forgetShare, loadShare, retryDeletes, sendFinal, shareState, shareStoredElsewhere } from './share.js';
 import { renderShare, wireShare } from './shareView.js';
 import {
   LIMITS, Limit, START_TEMP_PRESETS_C, Settings, UiStartMode, clampNumber,
@@ -937,6 +937,27 @@ function drawShare(): void {
   renderShare(Math.max(0, finalEggs() - shareState().sent));
 }
 
+/**
+ * Another tab wrote the log or the sharing state (the `storage` event): this
+ * page takes it up at once rather than writing back what it loaded, which
+ * would undo it. Eggs the other tab logged are folded here too, if it has
+ * not folded them, and the time on screen moves with what was learned.
+ */
+function storedElsewhere(key: string | null): void {
+  const calibration = calibrationStoredElsewhere(key);
+  const sharing = shareStoredElsewhere(key);
+  if (!calibration && !sharing) return;
+  renderCalibNote(learning());
+  drawShare();
+  if (machine.phase === 'IDLE') recompute();
+  if (calibration && eggsBehind() > 0) {
+    void learn().then(() => {
+      renderCalibNote(learning());
+      if (machine.phase === 'IDLE') recompute();
+    });
+  }
+}
+
 /* ------------------------------------------------------------ thermometer */
 
 /** The cook's answer to the offer. Either way it is not made again; the
@@ -1409,6 +1430,7 @@ export function boot(): void {
   drawShare();
   void retryDeletes().then(sendFinal);
   window.addEventListener('online', () => { void retryDeletes().then(sendFinal); });
+  window.addEventListener('storage', (event) => { storedElsewhere(event.key); });
   // A cook picked back up is described by its ticket, never by the
   // controls, which another tab may have changed since "Eggs in".
   if (machine.phase === 'IDLE') recompute();

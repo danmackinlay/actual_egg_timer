@@ -34,7 +34,7 @@ import {
 } from '../src/core/solve.js';
 import { CookSetup } from '../src/core/protocol.js';
 import {
-  APP_VERSION, Cooked, clearCalibration, decodeKept, eggRecordFor, eggsBehind, encodeKept,
+  APP_VERSION, Cooked, calibrationStoredElsewhere, clearCalibration, decodeKept, eggRecordFor, eggsBehind, encodeKept,
   exportResults, keptState, learn, loadCalibration, logEgg, recordSecondAnswer,
 } from '../src/ui/calibration.js';
 import {
@@ -424,6 +424,29 @@ test('3c. forget everything clears the log, the base and the posterior', () => {
   assert.equal(keptState().log.length, 0);
   assert.equal(keptState().base, null);
   assert.equal(fresh.eggsLogged, 0);
+});
+
+test('3d. another tab\'s egg is taken up, not written over', () => {
+  storage.clear();
+  const calib = loadCalibration();
+  logEgg(solvedRecord(0.3, null));
+  // Another tab, loaded now, logs an egg of its own.
+  const other = decodeKept(storage.get('aet.calibration.v4') as string).kept;
+  other.log.push(solvedRecord(0.4, null));
+  storage.set('aet.calibration.v4', encodeKept(other));
+  // This tab never heard, and logs another.
+  assert.equal(logEgg(solvedRecord(0.5, null)), 2, 'logged after the other tab\'s egg');
+  const stored = decodeKept(storage.get('aet.calibration.v4') as string).kept;
+  assert.deepEqual(stored.log.map((r) => r.level), [0.3, 0.4, 0.5]);
+  assert.equal(calibrationStoredElsewhere('aet.calibration.v4'), false, 'nothing new since');
+  assert.equal(calibrationStoredElsewhere('aet.settings.v1'), false);
+  // The other tab forgets everything: this one follows, in the calibration
+  // the app holds, and a late answer to its egg is refused.
+  storage.delete('aet.calibration.v4');
+  assert.equal(calibrationStoredElsewhere(null), true);
+  assert.equal(keptState().log.length, 0);
+  assert.equal(keptState().calibration, calib, 'the same reference, emptied');
+  assert.equal(calib.eggsLogged, 0);
 });
 
 // --------------------------------------------------------------------------

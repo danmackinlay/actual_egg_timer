@@ -9,7 +9,7 @@ import assert from 'node:assert/strict';
 
 import {
   FRESH_SHARE, ShareState, Transport, advances, deleteSent, deletionAsked, forgetShare, forgotten,
-  loadShare, newUid, readShare, reconciled, retryDeletes, sendFinal, setSharing, shareState, turnedOff,
+  loadShare, newUid, readShare, reconciled, retryDeletes, sendFinal, setSharing, shareState, shareStoredElsewhere, turnedOff,
   turnedOn,
 } from '../src/ui/share.js';
 import { EggRecord } from '../src/core/record.js';
@@ -165,4 +165,53 @@ test('7. a deletion the server did not confirm is asked again at the next load',
   loadShare(page([]), fake([200]));
   await retryDeletes();
   assert.deepEqual(shareState().deleting, []);
+});
+
+test('8. another tab\'s change is taken up before this one acts: a stale tab neither sends nor undoes a deletion', async () => {
+  storage.clear();
+  const t = fake();
+  const log = [...LOG];
+  loadShare(page(log), t);
+  await setSharing(true);
+  const uid = shareState().uid as string;
+  assert.equal(t.posts.length, 3);
+  assert.equal(shareStoredElsewhere('aet.share.v1'), false, 'nothing new');
+  // Another tab, loaded later, deletes everything sent.
+  storage.set('aet.share.v1', JSON.stringify(deletionAsked(readShare(storage.get('aet.share.v1') ?? null))));
+  // This tab, still showing sharing on, finishes an egg before it hears.
+  log.push({ ...LOG[0], day: '2026-10-04' });
+  await sendFinal();
+  assert.equal(t.posts.length, 3, 'nothing goes under an id another tab deleted');
+  assert.equal(shareState().on, false);
+  // And its own writes start from what the other tab wrote.
+  forgetShare();
+  assert.deepEqual(readShare(storage.get('aet.share.v1') ?? null).deleting, [uid], 'the deletion is still to be asked');
+  // The page's storage event: taken up once, and only for this key.
+  storage.set('aet.share.v1', JSON.stringify({ ...FRESH_SHARE, deleting: [uid, B] }));
+  assert.equal(shareStoredElsewhere('aet.settings.v1'), false);
+  assert.equal(shareStoredElsewhere('aet.share.v1'), true);
+  assert.equal(shareStoredElsewhere('aet.share.v1'), false);
+  assert.deepEqual(shareState().deleting, [uid, B]);
+});
+
+test('9. two tabs sending the same egg move the cursor once', async () => {
+  storage.clear();
+  let release: (status: number) => void = () => {};
+  const slow: Transport = {
+    post: () => new Promise<number>((resolve) => { release = resolve; }),
+    remove: async () => 200,
+  };
+  loadShare(page(LOG, 0), slow);
+  await setSharing(true);
+  const sending = (async () => {
+    loadShare(page(LOG, 1), slow);
+    return sendFinal();
+  })();
+  await new Promise((r) => setTimeout(r, 0));
+  // Meanwhile the other tab sent egg 0 and moved on.
+  const s = readShare(storage.get('aet.share.v1') ?? null);
+  storage.set('aet.share.v1', JSON.stringify({ ...s, sent: 1, seq: 1 }));
+  release(200);
+  await sending;
+  assert.deepEqual([shareState().sent, shareState().seq], [1, 1], 'not 2: the other tab already moved it');
 });

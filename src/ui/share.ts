@@ -169,15 +169,59 @@ let transport: Transport = fetchTransport;
 let generation = 0;
 let pumping: Promise<void> | null = null;
 let again = false;
+/** The text this page last read from `KEY` or wrote there; anything else
+ *  there is another tab's, and is taken up before this one acts (`current`).
+ *  A tab loaded yesterday must not send under an id another tab has since
+ *  deleted, nor write back the deletions it never saw. */
+let seen: string | null = null;
 
 function save(next: ShareState): void {
   state = next;
   writeStorage(KEY, JSON.stringify(state));
+  // Read back: a write that failed leaves the store as it was, which is then
+  // not another tab's.
+  seen = readStorage(KEY);
   if (host !== null) host.changed();
 }
 
-export function shareState(): Readonly<ShareState> {
+/** The state, with whatever another tab wrote since this one last looked
+ *  taken up first. A change of id or of on and off is a new generation, so
+ *  a send in flight under the old one lands on nothing. */
+function current(): ShareState {
+  const raw = readStorage(KEY);
+  if (raw === seen) return state;
+  seen = raw;
+  const next = reconciled(readShare(raw), host === null ? 0 : host.log().length);
+  if (next.uid !== state.uid || next.on !== state.on) generation += 1;
+  state = next;
   return state;
+}
+
+/** Another tab changed storage (the page's `storage` event; a null key is a
+ *  tab that cleared it all): taken up now, if it touched sharing. Says
+ *  whether it did. */
+export function shareStoredElsewhere(key: string | null): boolean {
+  if (key !== null && key !== KEY) return false;
+  const was = seen;
+  current();
+  if (seen === was) return false;
+  if (host !== null) host.changed();
+  return true;
+}
+
+/**
+ * One tab at a time, across every tab of the site, where the browser can say
+ * so (`navigator.locks`): a send, and the asking for a deletion, each read
+ * the state, talk to the server and write the state back, and another tab's
+ * deletion must not land in the middle of a send and be outlived by it.
+ */
+function exclusive<T>(f: () => Promise<T>): Promise<T> {
+  const locks = (globalThis as { navigator?: { locks?: LockManager } }).navigator?.locks;
+  return locks === undefined ? f() : locks.request('aet.share', f) as Promise<T>;
+}
+
+export function shareState(): Readonly<ShareState> {
+  return current();
 }
 
 /** Read what is stored, against the log as it now is, and remember who to
@@ -185,13 +229,14 @@ export function shareState(): Readonly<ShareState> {
 export function loadShare(h: ShareHost, t: Transport = fetchTransport): ShareState {
   host = h;
   transport = t;
-  state = reconciled(readShare(readStorage(KEY)), h.log().length);
+  seen = readStorage(KEY);
+  state = reconciled(readShare(seen), h.log().length);
   return state;
 }
 
 /** Sharing on or off. On sends the log so far; the promise is that run. */
 export function setSharing(on: boolean): Promise<void> {
-  if (on === state.on) return Promise.resolve();
+  if (on === current().on) return Promise.resolve();
   generation += 1;
   save(on ? turnedOn(state) : turnedOff(state));
   return on ? sendFinal() : Promise.resolve();
@@ -200,7 +245,7 @@ export function setSharing(on: boolean): Promise<void> {
 /** Forget everything: paired with the calibration's reset. */
 export function forgetShare(): void {
   generation += 1;
-  save(forgotten(state));
+  save(forgotten(current()));
 }
 
 /**
@@ -223,25 +268,31 @@ export function sendFinal(): Promise<void> {
 }
 
 async function sendRun(): Promise<void> {
+  while (await exclusive(sendOne));
+}
+
+/** The next final egg, if there is one and sharing is on: whether to go on. */
+async function sendOne(): Promise<boolean> {
   const h = host;
-  if (h === null) return;
-  for (;;) {
-    const s = state;
-    const log = h.log();
-    const final = Math.min(h.finalCount(), log.length);
-    if (!s.on || s.uid === null || s.sent >= final) return;
-    const gen = generation;
-    const body = JSON.stringify({ seq: s.seq, record: { ...log[s.sent], uid: s.uid } });
-    let status: number;
-    try {
-      status = await transport.post(body);
-    } catch {
-      return;
-    }
-    if (gen !== generation) return;
-    if (!advances(status)) return;
-    save({ ...state, sent: state.sent + 1, seq: state.seq + 1 });
+  if (h === null) return false;
+  const s = current();
+  const log = h.log();
+  const final = Math.min(h.finalCount(), log.length);
+  if (!s.on || s.uid === null || s.sent >= final) return false;
+  const gen = generation;
+  const body = JSON.stringify({ seq: s.seq, record: { ...log[s.sent], uid: s.uid } });
+  let status: number;
+  try {
+    status = await transport.post(body);
+  } catch {
+    return false;
   }
+  const now = current();
+  if (gen !== generation || !advances(status)) return false;
+  // Another tab may have sent the same egg meanwhile and moved on: then
+  // there is nothing to move, and the next is looked at afresh.
+  if (now.sent === s.sent && now.seq === s.seq) save({ ...now, sent: now.sent + 1, seq: now.seq + 1 });
+  return true;
 }
 
 /** "Delete what I've sent", confirmed: off, and every id asked for - after
@@ -249,24 +300,27 @@ async function sendRun(): Promise<void> {
  *  deletion and outlive it. */
 export async function deleteSent(): Promise<void> {
   generation += 1;
-  save(deletionAsked(state));
+  save(deletionAsked(current()));
   if (pumping !== null) await pumping;
   await retryDeletes();
 }
 
 /** Ask the server to delete every id it has not yet confirmed. At every
  *  load, and after the cook asks. */
-export async function retryDeletes(): Promise<void> {
-  for (const uid of [...state.deleting]) {
-    let status: number;
-    try {
-      status = await transport.remove(uid);
-    } catch {
-      return;
+export function retryDeletes(): Promise<void> {
+  return exclusive(async () => {
+    for (const uid of [...current().deleting]) {
+      let status: number;
+      try {
+        status = await transport.remove(uid);
+      } catch {
+        return;
+      }
+      // 400 is an id the server will never hold: as done as a 200.
+      if (status === 200 || status === 400) {
+        const now = current();
+        save({ ...now, deleting: now.deleting.filter((x) => x !== uid) });
+      }
     }
-    // 400 is an id the server will never hold: as done as a 200.
-    if (status === 200 || status === 400) {
-      save({ ...state, deleting: state.deleting.filter((x) => x !== uid) });
-    }
-  }
+  });
 }
