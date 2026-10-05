@@ -227,7 +227,7 @@ so is the label's **Not Linked** (74).
 
 Kept here so a new session can pick up without this conversation.
 
-1. [ ] **Action `REVIEW-0.4.x.md`** (the owner's adversarial review, committed
+1. [x] (done 47f098c; its OWNER questions remain, see 1b) **Action `REVIEW-0.4.x.md`** (the owner's adversarial review, committed
        on this branch): first "Fix before 0.4 ships" (multi-tab writes, the
        raw-JSON write-back, the ID that is also the password), then security,
        the privacy page against the code, data safety, decision logic,
