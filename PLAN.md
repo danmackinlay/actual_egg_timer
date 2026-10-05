@@ -210,7 +210,10 @@ Waiting on someone else: the Czech review (F5), by the owner's friend.
 - **0.5: one screen for setting up and boiling** (`DECISIONS.md` 91): the
   setup and the timer merged, so the start, the egg and the pot can be
   changed early in a cook and the time re-planned from what has happened.
-  Needs interface design first.
+  The egg in cross-section is always on that screen: while setting up it
+  shows the yolk and white the settings aim for, as a preview; at the
+  start it goes back to raw and then cooks along with the timer. Needs
+  interface design first.
 
 - **Dim the time while it is recalculated**, the owner's idea (5 October
   2026), not wanted yet: while a newer answer is on its way, the time and its
