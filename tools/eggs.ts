@@ -11,6 +11,8 @@
  *       Needs NETLIFY_AUTH_TOKEN (a personal access token) and
  *       NETLIFY_SITE_ID. The output is people's eggs: it stays out of git
  *       (fit/data/ is ignored), and is deleted with the id when they ask.
+ *       `all.jsonl` and `emulated.json` beside it, built from the last pull,
+ *       are deleted, so a result deleted since does not live on in them.
  *       Nothing pulled is trusted, whatever its ID: anyone who learned an
  *       ID could have posted under it (tools/eggsImport.ts).
  *   npm run eggs -- import <results.json> [<out.jsonl>] [--uid <id>]
@@ -37,8 +39,8 @@
  * 2): tauAirScale is 1, and the egg is the size the record says.
  */
 
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname } from 'node:path';
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 import { ALPHA_DEFAULT, ALPHA_REL_SD, Z_WHITE, Z_YOLK } from '../src/core/constants.js';
 import { buildDoseGrid } from '../src/core/doseGrid.js';
 import { eggFromMass } from '../src/core/geometry.js';
@@ -75,6 +77,9 @@ function writeLines(path: string, lines: Line[]): void {
 
 /* ------------------------------------------------------------------- pull */
 
+/** The files the fit's loop (fit/README.md) builds beside a pull from it. */
+const PULL_DERIVED = ['all.jsonl', 'emulated.json'];
+
 async function pull(out: string): Promise<void> {
   const token = process.env['NETLIFY_AUTH_TOKEN'];
   const siteID = process.env['NETLIFY_SITE_ID'];
@@ -106,6 +111,16 @@ async function pull(out: string): Promise<void> {
   }
   writeLines(out, lines);
   console.log(`${lines.length} records -> ${out}` + (demoted > 0 ? ` (${demoted} filed as attested count as open)` : ''));
+  // What was built from the last pull goes with it: it still holds every
+  // result deleted on the server since, with its random ID, day and place
+  // (privacy/index.html: once deleted, "they leave my computer too").
+  for (const name of PULL_DERIVED) {
+    const path = join(dirname(out), name);
+    if (existsSync(path)) {
+      rmSync(path);
+      console.log(`${path} was built from an earlier pull: deleted; emulate again`);
+    }
+  }
 }
 
 /* ----------------------------------------------------------------- import */

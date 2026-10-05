@@ -14,6 +14,12 @@ uv run --project fit python -m eggfit fit fit/data/emulated.json \
     --out fit/data/population.json --report fit/data/report.md
 ```
 
+`pull` overwrites its file with a fresh copy of the store, so a result a cook
+has deleted leaves this machine at the next pull, and it deletes
+`all.jsonl` and `emulated.json` beside it, which were built from the last
+one: emulate again after every pull. `population.json` and `report.md` hold
+no one's results, only counts.
+
 Read `report.md`. To publish, run the fit again with
 `--out fixtures/population.json`, then `npm run fixtures` (which reads it into
 `fixtures/prior.json`) and `npm run verify`, and commit: the next release of
