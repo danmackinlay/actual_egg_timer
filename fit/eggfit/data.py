@@ -62,7 +62,8 @@ class Eggs:
     trusted: np.ndarray  # bool: the cook's ID is on the owner's trusted list
     seq: np.ndarray
     target: np.ndarray  # log10 yolk dose the cook asked for
-    yolk: np.ndarray  # 0 too soft, 1 just right, 2 too firm, -1 not answered
+    yolk: np.ndarray  # 0 too soft, 1 just right, 2 too firm, -1 not answered (before DECISIONS.md 92)
+    yolk_word: np.ndarray  # 0 runny ... 4 hard, the yolk the cook got (DECISIONS.md 92), -1 not answered
     white: np.ndarray  # 0 runny, 1 tender, 2 firm, -1 not answered
     probe: np.ndarray  # C, nan when none
     log_yolk: np.ndarray  # (eggs, z)
@@ -89,6 +90,7 @@ class Eggs:
             seq=self.seq[keep],
             target=self.target[keep],
             yolk=self.yolk[keep],
+            yolk_word=self.yolk_word[keep],
             white=self.white[keep],
             probe=self.probe[keep],
             log_yolk=self.log_yolk[keep],
@@ -119,6 +121,8 @@ def load(path: str, trusted: set[str] | None = None) -> Eggs:
         seq=np.array([e["seq"] for e in eggs], dtype=np.int32),
         target=np.array([e["logYolkTarget"] for e in eggs]),
         yolk=np.array([-1 if e["yolk"] is None else e["yolk"] + 1 for e in eggs], dtype=np.int32),
+        # Absent on a file emulated before the five words.
+        yolk_word=np.array([-1 if e.get("yolkWord") is None else e["yolkWord"] for e in eggs], dtype=np.int32),
         white=np.array([-1 if e["white"] is None else e["white"] for e in eggs], dtype=np.int32),
         probe=np.array([nan if e["probe"] is None else e["probe"] for e in eggs]),
         log_yolk=np.array([e["logYolk"] for e in eggs]),

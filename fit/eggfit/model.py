@@ -16,7 +16,10 @@ to reach it (section 2).
 THE LIKELIHOOD is the app's own (src/core/infer.ts): the ordered probit for
 the yolk and the white, each with the 5% unrelated share, and the probe's
 exponentially modified Gaussian with its 2% floor, read off each egg's
-emulator column.
+emulator column. The yolk is the yolk the cook got, in the slider's five
+words, cut where the slider's word changes (DECISIONS.md 92), or on an egg
+answered before that, too soft / just right / too firm against the level
+asked for, scored as it always was.
 
 THE TIERS (DECISIONS.md 2): an attested egg counts once; an open one (the
 web, an iPhone that could not attest) enters at a power below one - 0.5 to
@@ -53,6 +56,18 @@ def interp(table, z, z0: float, dz: float):
     a = jnp.take_along_axis(table, i[:, None], axis=1)[:, 0]
     b = jnp.take_along_axis(table, (i + 1)[:, None], axis=1)[:, 0]
     return a * (1.0 - f) + b * f
+
+
+def word_probs(c: dict, ly, taste, noise):
+    """P(runny, soft, jammy, fudgy, hard), with the unrelated share spread
+    over five: infer.ts's `yolkWordProbit` and `withUnrelatedWord`."""
+    u = c["unrelated"]
+    cuts = c["yolkWordCuts"]
+    said = ly - taste
+    upto = [norm.cdf((cut - said) / noise) for cut in cuts]
+    probs = [upto[0]] + [jnp.clip(upto[k] - upto[k - 1], 0.0, 1.0) for k in range(1, 4)]
+    probs.append(norm.cdf((said - cuts[3]) / noise))
+    return (1.0 - u) * jnp.stack(probs, axis=-1) + u / 5.0
 
 
 def answer_probs(c: dict, ly, lw, target, taste, white_offset, noise, gap):
@@ -117,10 +132,16 @@ def egg_loglik(c: dict, d: dict, z, taste, white_offset, noise, gap):
     yolk, white = answer_probs(c, ly, lw, d["target"], taste, white_offset, noise, gap)
     ll_y = jnp.where(d["yolk"] >= 0, jnp.log(jnp.take_along_axis(yolk, jnp.maximum(d["yolk"], 0)[:, None], axis=1)[:, 0]), 0.0)
     ll_w = jnp.where(d["white"] >= 0, jnp.log(jnp.take_along_axis(white, jnp.maximum(d["white"], 0)[:, None], axis=1)[:, 0]), 0.0)
+    ll_yw = 0.0
+    if "yolkWordCuts" in c:  # absent from a file emulated before the five words, which has none
+        words = word_probs(c, ly, taste, noise)
+        ll_yw = jnp.where(d["yolk_word"] >= 0,
+                          jnp.log(jnp.take_along_axis(words, jnp.maximum(d["yolk_word"], 0)[:, None], axis=1)[:, 0]),
+                          0.0)
     has_probe = ~jnp.isnan(d["probe"])
     pk = interp(d["peak"], z, z0, dz)
     ll_p = jnp.where(has_probe, jnp.log(probe_density(c, pk, jnp.where(has_probe, d["probe"], pk))), 0.0)
-    return ll_y + ll_w + ll_p
+    return ll_y + ll_yw + ll_w + ll_p
 
 
 def model(c: dict, d: dict, n_cooks: int):
@@ -157,6 +178,7 @@ def arrays(eggs: Eggs, weight: np.ndarray) -> dict:
         "cook": jnp.asarray(eggs.cook),
         "target": jnp.asarray(eggs.target),
         "yolk": jnp.asarray(eggs.yolk),
+        "yolk_word": jnp.asarray(eggs.yolk_word),
         "white": jnp.asarray(eggs.white),
         "probe": jnp.asarray(eggs.probe),
         "log_yolk": jnp.asarray(eggs.log_yolk),

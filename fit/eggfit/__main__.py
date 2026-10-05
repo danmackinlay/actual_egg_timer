@@ -83,11 +83,13 @@ def report_md(r: dict) -> str:
                          f"{row['q05']:.3f} to {row['q95']:.3f} | {'yes' if row['covered'] else 'NO'} |")
         lines.append("")
     lines += ["## Held-out cooks, one step ahead", "",
-              "| prior drawn from | log score, yolk | log score, white | log score, probe | RPS yolk | RPS white | ECE just right | ECE runny |",
-              "|---|---|---|---|---|---|---|---|"]
+              "| prior drawn from | log score, yolk word | log score, yolk (old) | log score, white | log score, probe | "
+              "RPS yolk word | RPS yolk (old) | RPS white | ECE just right | ECE runny |",
+              "|---|---|---|---|---|---|---|---|---|---|"]
     for name, s in r["scores"].items():
         ls, rp, rel = s["log_score"], s["rps"], s["reliability"]
-        lines.append(f"| {name} | {ls['yolk']:.4f} | {ls['white']:.4f} | {ls['probe']:.3f} | {rp['yolk']:.4f} | "
+        lines.append(f"| {name} | {ls['yolk_word']:.4f} | {ls['yolk']:.4f} | {ls['white']:.4f} | {ls['probe']:.3f} | "
+                     f"{rp['yolk_word']:.4f} | {rp['yolk']:.4f} | "
                      f"{rp['white']:.4f} | {100 * rel['ece_just_right']:.1f}% | {100 * rel['ece_runny']:.1f}% |")
     lines += ["", "Higher log scores are better; lower RPS and ECE are better.", ""]
     fitted = r["scores"].get("fitted")
@@ -96,10 +98,15 @@ def report_md(r: dict) -> str:
         for row in fitted["reliability"]["just_right"]:
             lines.append(f"| {row['bin']} | {row['n']} | {row['predicted']:.3f} | {row['observed']:.3f} |")
         lines += ["", "## Randomised PIT, fitted (ten bins; flat when calibrated)", "",
-                  f"- yolk: {fitted['pit']['yolk']}", f"- white: {fitted['pit']['white']}", ""]
+                  f"- yolk word: {fitted['pit']['yolk_word']}", f"- yolk (old): {fitted['pit']['yolk']}",
+                  f"- white: {fitted['pit']['white']}", ""]
         lines += ["## Log score by egg, yolk (the first egg is the population's alone)", ""]
         for name, s in r["scores"].items():
             lines.append(f"- {name}: " + ", ".join(f"{int(k) + 1}: {v:.3f}" for k, v in s["by_egg_yolk_log_score"].items()))
+        lines += ["", "## Log score by egg, yolk word", ""]
+        for name, s in r["scores"].items():
+            lines.append(f"- {name}: "
+                         + ", ".join(f"{int(k) + 1}: {v:.3f}" for k, v in s["by_egg_yolk_word_log_score"].items()))
         lines.append("")
     lines += ["## The population published", "", "```json", json.dumps(r["population"]["prior"], indent=2), "```", ""]
     return "\n".join(lines)

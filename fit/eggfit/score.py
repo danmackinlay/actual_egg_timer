@@ -10,7 +10,10 @@ likelihood.
 
 - The LOG SCORE is primary: the log of the probability given to the answer.
   The 5% unrelated share keeps it finite.
-- The RANKED PROBABILITY SCORE, for the three ordered answers.
+- The RANKED PROBABILITY SCORE, for the ordered answers: three for the
+  white and the old yolk question, five for the yolk words (DECISIONS.md 92).
+  The two yolk questions are scored apart, since a score over three answers
+  and one over five are not the same scale.
 - RELIABILITY: the predicted chance of each answer against how often it was
   given, in ten bins.
 - A RANDOMISED PIT for each ordinal answer, which is uniform when the
@@ -52,6 +55,18 @@ def column(table_row: np.ndarray, z: np.ndarray, z_grid: np.ndarray) -> np.ndarr
     return np.interp(z, z_grid, table_row)
 
 
+def word_probs(c: dict, ly, cloud):
+    """P(runny ... hard) for each particle, with the unrelated share over
+    five: infer.ts's `yolkWordProbit` and `withUnrelatedWord`."""
+    u = c["unrelated"]
+    cuts = c["yolkWordCuts"]
+    said = ly - cloud["taste"]
+    upto = [norm.cdf((cut - said) / cloud["noise"]) for cut in cuts]
+    out = [upto[0]] + [np.clip(upto[k] - upto[k - 1], 0, 1) for k in range(1, 4)]
+    out.append(norm.cdf((said - cuts[3]) / cloud["noise"]))
+    return (1 - u) * np.stack(out, -1) + u / 5
+
+
 def probs(c: dict, ly, lw, target, cloud):
     band = c["feedbackBand"]
     u = c["unrelated"]
@@ -91,7 +106,8 @@ def score(eggs: Eggs, pop: dict, m: int = 4000, seed: int = 7) -> dict:
     c = eggs.constants
     rng = np.random.default_rng(seed + 1)
     out = {"yolk": [], "white": [], "probe": [], "rps_yolk": [], "rps_white": [],
-           "pit_yolk": [], "pit_white": [], "rel_right": [], "rel_runny": [], "by_egg": {}}
+           "pit_yolk": [], "pit_white": [], "rel_right": [], "rel_runny": [], "by_egg": {},
+           "yolk_word": [], "rps_yolk_word": [], "pit_yolk_word": [], "by_egg_word": {}}
     for ci in range(len(eggs.cooks)):
         idx = np.where(eggs.cook == ci)[0]
         idx = idx[np.argsort(eggs.seq[idx])]
@@ -114,6 +130,15 @@ def score(eggs: Eggs, pop: dict, m: int = 4000, seed: int = 7) -> dict:
                 out["rel_right"].append((float(py[1]), 1.0 if k == 1 else 0.0))
                 out["by_egg"].setdefault(n, []).append(math.log(py[k]))
                 like *= yolk[:, k]
+            if eggs.yolk_word[e] >= 0:
+                words = word_probs(c, ly, cloud)
+                pv = w @ words
+                k = int(eggs.yolk_word[e])
+                out["yolk_word"].append(math.log(pv[k]))
+                out["rps_yolk_word"].append(rps(pv, k))
+                out["pit_yolk_word"].append(float(np.sum(pv[:k]) + rng.uniform() * pv[k]))
+                out["by_egg_word"].setdefault(n, []).append(math.log(pv[k]))
+                like *= words[:, k]
             if eggs.white[e] >= 0:
                 k = int(eggs.white[e])
                 out["white"].append(math.log(pw[k]))
@@ -156,12 +181,14 @@ def summarise(out: dict) -> dict:
     rel_runny = reliability(out["rel_runny"])
     pit = lambda xs: np.histogram(xs, bins=10, range=(0, 1))[0].tolist() if xs else []
     return {
-        "answers": {"yolk": len(out["yolk"]), "white": len(out["white"]), "probe": len(out["probe"])},
-        "log_score": {"yolk": mean(out["yolk"]), "white": mean(out["white"]), "probe": mean(out["probe"]),
-                      "all_answers": mean(out["yolk"] + out["white"])},
-        "rps": {"yolk": mean(out["rps_yolk"]), "white": mean(out["rps_white"])},
+        "answers": {"yolk": len(out["yolk"]), "yolk_word": len(out["yolk_word"]), "white": len(out["white"]),
+                    "probe": len(out["probe"])},
+        "log_score": {"yolk": mean(out["yolk"]), "yolk_word": mean(out["yolk_word"]), "white": mean(out["white"]),
+                      "probe": mean(out["probe"]), "all_answers": mean(out["yolk"] + out["yolk_word"] + out["white"])},
+        "rps": {"yolk": mean(out["rps_yolk"]), "yolk_word": mean(out["rps_yolk_word"]), "white": mean(out["rps_white"])},
         "by_egg_yolk_log_score": {str(k): mean(v) for k, v in sorted(out["by_egg"].items())},
+        "by_egg_yolk_word_log_score": {str(k): mean(v) for k, v in sorted(out["by_egg_word"].items())},
         "reliability": {"just_right": rel_right, "runny": rel_runny,
                         "ece_just_right": ece(rel_right), "ece_runny": ece(rel_runny)},
-        "pit": {"yolk": pit(out["pit_yolk"]), "white": pit(out["pit_white"])},
+        "pit": {"yolk": pit(out["pit_yolk"]), "yolk_word": pit(out["pit_yolk_word"]), "white": pit(out["pit_white"])},
     }

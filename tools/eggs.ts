@@ -46,8 +46,8 @@ import { buildDoseGrid } from '../src/core/doseGrid.js';
 import { eggFromMass } from '../src/core/geometry.js';
 import {
   FEEDBACK_BAND, Feedback, LITERATURE_POPULATION, PROBE_HANDLING_MEAN_C, PROBE_INSTRUMENT_SD_C,
-  PROBE_UNRELATED, PROBE_UNRELATED_SPAN_C, Particle, UNRELATED, WhiteReport, probeLikelihood, whiteProbit,
-  withUnrelated, yolkProbit,
+  PROBE_UNRELATED, PROBE_UNRELATED_SPAN_C, Particle, UNRELATED, WhiteReport, YOLK_WORDS, YOLK_WORD_CUTS,
+  probeLikelihood, whiteProbit, withUnrelated, withUnrelatedWord, yolkProbit, yolkWordIndex, yolkWordProbit,
 } from '../src/core/infer.js';
 import { CookSetup } from '../src/core/protocol.js';
 import {
@@ -243,6 +243,10 @@ function simulateCooks(out: string, truthOut: string, cooks: number, seed: numbe
     const probes = kitchen.setup.cooling !== 'counter' && u() < 0.15;
     const alpha = ALPHA_DEFAULT * Math.exp(ALPHA_REL_SD * c.z);
     const eggs = 3 + Math.floor(u() * 8);
+    // A quarter of the cooks answered their first two eggs on a build from
+    // before the five yolk words (DECISIONS.md 92): too soft, just right or
+    // too firm. The rest name the yolk they got.
+    const before = u() < 0.25 ? 2 : 0;
     for (let e = 0; e < eggs; e++) {
       const level = u() < 0.2 ? Math.min(1, Math.max(0, kitchen.level + (u() - 0.5) * 0.3)) : kitchen.level;
       const egg = eggFromMass(kitchen.mass_g / 1000);
@@ -256,16 +260,35 @@ function simulateCooks(out: string, truthOut: string, cooks: number, seed: numbe
       const latent = Math.log10(truly.yolkDose_min) - (target + c.taste);
       const yp = [normalCdf((-FEEDBACK_BAND - latent) / c.noise), 0, normalCdf((latent - FEEDBACK_BAND) / c.noise)];
       yp[1] = Math.max(0, 1 - yp[0] - yp[2]);
+      // The five words: the delivered dose less the taste, against the
+      // slider's own cuts (infer.ts, yolkWordProbit).
+      const said = Math.log10(truly.yolkDose_min) - c.taste;
+      const wordP: number[] = [];
+      let below = 0;
+      for (let k = 0; k < 4; k++) {
+        const upTo = normalCdf((YOLK_WORD_CUTS[k] - said) / c.noise);
+        wordP.push(Math.max(0, upTo - below));
+        below = upTo;
+      }
+      wordP.push(normalCdf((said - YOLK_WORD_CUTS[3]) / c.noise));
       const wl = Math.log10(truly.whiteDose_min) - (logWhiteTarget + c.white);
       const sw = c.noise * whiteNoisePerYolk;
       const wp = [normalCdf(-wl / sw), 0, normalCdf((wl - c.gap) / sw)];
       wp[1] = Math.max(0, 1 - wp[0] - wp[2]);
       const answer = (p: number[]): number => {
-        if (u() < UNRELATED) return Math.floor(u() * 3);
+        if (u() < UNRELATED) return Math.floor(u() * p.length);
         const r = u();
-        return r < p[0] ? 0 : r < p[0] + p[1] ? 1 : 2;
+        let acc = 0;
+        for (let k = 0; k < p.length - 1; k++) {
+          acc += p[k];
+          if (r < acc) return k;
+        }
+        return p.length - 1;
       };
-      const yolk = u() < 0.9 ? (answer(yp) - 1) as Feedback : null;
+      const asked = u() < 0.9;
+      const old = e < before;
+      const yolk = asked && old ? (answer(yp) - 1) as Feedback : null;
+      const yolkWord = asked && !old ? YOLK_WORDS[answer(wordP)] : null;
       const white = u() < 0.8 ? (['runny', 'tender', 'firm'] as WhiteReport[])[answer(wp)] : null;
       let probe: EggRecord['probe'] = null;
       if (probes && e === 0) {
@@ -278,7 +301,7 @@ function simulateCooks(out: string, truthOut: string, cooks: number, seed: numbe
       const record: EggRecord = {
         v: RECORD_VERSION, uid: c.uid, day: `2026-11-${String(1 + (e % 28)).padStart(2, '0')}`,
         app: c.tier === 'attested' ? 'ios' : 'web', appVersion: 'simulated', prior: LITERATURE_POPULATION.id,
-        model: MODEL_ID,
+        model: old ? '2026-10-e8' : MODEL_ID,
         egg: { mass_g: recordMass_g(egg.mass_kg), massFrom: kitchen.massFrom, sizeTable: kitchen.massFrom === 'class' ? 'eu' : null },
         setup: {
           startMode: kitchen.setup.startMode, eggStart_C: kitchen.setup.eggStart_C,
@@ -290,7 +313,7 @@ function simulateCooks(out: string, truthOut: string, cooks: number, seed: numbe
         },
         level: level, recommended_s: solved.result.cookTime_s, nudge_s: nudge, pulled_s: time, pulledBy: 'cook',
         cooled_s: kitchen.setup.cooling === 'counter' ? 0 : coolingSecondsFor(solved.result),
-        yolk: yolk, yolkWord: null, white: white,
+        yolk: yolk, yolkWord: yolkWord, white: white,
         probe: probe && probe.centre_C <= kitchen.setup.boiling_C ? probe : null,
         forecast: null, lang: 'en', register: 'modern', units: 'metric',
       };
@@ -367,6 +390,7 @@ function emulate(input: string, out: string): void {
           return {
             z: z,
             yolk: yolkProbit(g, p, t, target).map(withUnrelated),
+            yolkWord: yolkWordProbit(g, p, t).map(withUnrelatedWord),
             white: whiteProbit(g, p, t).map(withUnrelated),
             probe: reading === null ? null : probeLikelihood(g, p, t, reading),
           };
@@ -377,7 +401,8 @@ function emulate(input: string, out: string): void {
       uid: r.uid, tier: line.tier, trusted: vouched.has(key), ...(exported.has(key) ? { source: 'export' } : {}),
       seq: line.seq, day: r.day, app: r.app, model: r.model,
       cook_s: t, level: r.level, logYolkTarget: logYolkTarget(r.level),
-      yolk: r.yolk, white: r.white === null ? null : ['runny', 'tender', 'firm'].indexOf(r.white),
+      yolk: r.yolk, yolkWord: r.yolkWord === null ? null : yolkWordIndex(r.yolkWord),
+      white: r.white === null ? null : ['runny', 'tender', 'firm'].indexOf(r.white),
       probe: r.probe === null ? null : r.probe.centre_C,
       logYolk: column(g.logYolk), logWhite: column(g.logWhite), peak: column(g.peakYolk_C),
       forecast: r.forecast,
@@ -388,6 +413,7 @@ function emulate(input: string, out: string): void {
     zGrid: Z_GRID,
     constants: {
       alphaDefault: ALPHA_DEFAULT, alphaRelSd: ALPHA_REL_SD, feedbackBand: FEEDBACK_BAND, unrelated: UNRELATED,
+      yolkWordCuts: YOLK_WORD_CUTS,
       whiteNoisePerYolk: Z_YOLK / Z_WHITE, logWhiteTarget: Math.log10(WHITE_DOSE_TARGET),
       probeInstrumentSd_C: PROBE_INSTRUMENT_SD_C, probeHandlingMean_C: PROBE_HANDLING_MEAN_C,
       probeUnrelated: PROBE_UNRELATED, probeUnrelatedSpan_C: PROBE_UNRELATED_SPAN_C,
