@@ -47,7 +47,8 @@ import { eggFromMass } from '../src/core/geometry.js';
 import {
   FEEDBACK_BAND, Feedback, LITERATURE_POPULATION, PROBE_HANDLING_MEAN_C, PROBE_INSTRUMENT_SD_C,
   PROBE_UNRELATED, PROBE_UNRELATED_SPAN_C, Particle, UNRELATED, WhiteReport, YOLK_WORDS, YOLK_WORD_CUTS,
-  probeLikelihood, whiteProbit, withUnrelated, withUnrelatedWord, yolkProbit, yolkWordIndex, yolkWordProbit,
+  probeLikelihood, whiteProbit, withUnrelated, withUnrelatedWord, yolkProbit, yolkWordBands, yolkWordIndex,
+  yolkWordProbit,
 } from '../src/core/infer.js';
 import { CookSetup } from '../src/core/protocol.js';
 import {
@@ -260,17 +261,9 @@ function simulateCooks(out: string, truthOut: string, cooks: number, seed: numbe
       const latent = Math.log10(truly.yolkDose_min) - (target + c.taste);
       const yp = [normalCdf((-FEEDBACK_BAND - latent) / c.noise), 0, normalCdf((latent - FEEDBACK_BAND) / c.noise)];
       yp[1] = Math.max(0, 1 - yp[0] - yp[2]);
-      // The five words: the delivered dose less the taste, against the
-      // slider's own cuts (infer.ts, yolkWordProbit).
-      const said = Math.log10(truly.yolkDose_min) - c.taste;
-      const wordP: number[] = [];
-      let below = 0;
-      for (let k = 0; k < 4; k++) {
-        const upTo = normalCdf((YOLK_WORD_CUTS[k] - said) / c.noise);
-        wordP.push(Math.max(0, upTo - below));
-        below = upTo;
-      }
-      wordP.push(normalCdf((said - YOLK_WORD_CUTS[3]) / c.noise));
+      // The five words: the delivered dose less the taste, through the
+      // filter's own probit (infer.ts, yolkWordBands).
+      const wordP = yolkWordBands(Math.log10(truly.yolkDose_min) - c.taste, c.noise);
       const wl = Math.log10(truly.whiteDose_min) - (logWhiteTarget + c.white);
       const sw = c.noise * whiteNoisePerYolk;
       const wp = [normalCdf(-wl / sw), 0, normalCdf((wl - c.gap) / sw)];

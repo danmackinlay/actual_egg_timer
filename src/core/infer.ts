@@ -446,16 +446,23 @@ export function yolkProbit(
  *  moves the cook's words as it moved their "just right": a cook with a
  *  positive offset likes a firmer yolk, and calls a given yolk softer. */
 export function yolkWordProbit(grid: DoseGrid, p: Particle, cookTime_s: number): number[] {
-  const latent = lookupLogYolkDose(grid, p.alpha_m2s, cookTime_s) - p.logDoseOffset;
+  return yolkWordBands(lookupLogYolkDose(grid, p.alpha_m2s, cookTime_s) - p.logDoseOffset, p.noise);
+}
+
+/** The ordered probit itself: the five yolk words' probabilities, runny to
+ *  hard, for a latent log dose (delivered, less the taste offset) seen
+ *  through a Gaussian of sd `noise`, against `YOLK_WORD_CUTS`. The filter
+ *  scores with it, and the simulated cooks (tools/eggs.ts) answer with it. */
+export function yolkWordBands(latent: number, noise: number): number[] {
   const out: number[] = new Array<number>(5);
   let below = 0.0;
   for (let k = 0; k < 4; k++) {
-    const upTo = normalCdf((YOLK_WORD_CUTS[k] - latent) / p.noise);
+    const upTo = normalCdf((YOLK_WORD_CUTS[k] - latent) / noise);
     const pk = upTo - below;
     out[k] = pk > 0.0 ? pk : 0.0;
     below = upTo;
   }
-  out[4] = normalCdf((latent - YOLK_WORD_CUTS[3]) / p.noise);
+  out[4] = normalCdf((latent - YOLK_WORD_CUTS[3]) / noise);
   return out;
 }
 

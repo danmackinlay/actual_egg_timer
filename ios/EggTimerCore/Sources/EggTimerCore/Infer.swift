@@ -305,16 +305,22 @@ func yolkProbit(
 /// share: the delivered log dose less the taste offset, against
 /// `yolkWordCuts`, through the particle's noise.
 func yolkWordProbit(_ grid: DoseGrid, _ p: Particle, _ cookTimeS: Double) -> [Double] {
-    let latent = lookupLogYolkDose(grid, p.alphaM2s, cookTimeS) - p.logDoseOffset
+    yolkWordBands(lookupLogYolkDose(grid, p.alphaM2s, cookTimeS) - p.logDoseOffset, p.noise)
+}
+
+/// The ordered probit itself: the five yolk words' probabilities, runny to
+/// hard, for a latent log dose seen through a Gaussian of sd `noise`, against
+/// `yolkWordCuts`. See src/core/infer.ts.
+func yolkWordBands(_ latent: Double, _ noise: Double) -> [Double] {
     var out = [Double](repeating: 0.0, count: 5)
     var below = 0.0
     for k in 0..<4 {
-        let upTo = normalCdf((yolkWordCuts[k] - latent) / p.noise)
+        let upTo = normalCdf((yolkWordCuts[k] - latent) / noise)
         let pk = upTo - below
         out[k] = pk > 0.0 ? pk : 0.0
         below = upTo
     }
-    out[4] = normalCdf((latent - yolkWordCuts[3]) / p.noise)
+    out[4] = normalCdf((latent - yolkWordCuts[3]) / noise)
     return out
 }
 
