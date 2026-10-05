@@ -10,7 +10,9 @@ and the fit gives those cooks' eggs the attested tier's full weight whatever
 tier they came in (`model.tier_weights`). The list is never committed: it
 is read from `fit/trusted.local.txt` (gitignored; `trusted.example.txt`
 shows the shape) and from `EGGFIT_TRUSTED`, pooled, and an egg the emulator
-already marked `trusted` (tools/eggs.ts pull and import) stays so.
+already marked `trusted` (tools/eggs.ts import) stays so. Only an egg from
+the owner's own results file (`source: "export"`) is trusted by its ID: an
+ID is shown on screen, so anyone who learned one could post under it.
 """
 
 from __future__ import annotations
@@ -98,8 +100,8 @@ class Eggs:
 
 
 def load(path: str, trusted: set[str] | None = None) -> Eggs:
-    """The emulated eggs, each marked trusted if the emulator said so or its
-    cook's ID is in `trusted`."""
+    """The emulated eggs, each marked trusted if the emulator said so, or if
+    it came from a results file and its cook's ID is in `trusted`."""
     with open(path) as f:
         raw = json.load(f)
     trusted = trusted or set()
@@ -112,7 +114,8 @@ def load(path: str, trusted: set[str] | None = None) -> Eggs:
         cook=np.array([index[e["uid"]] for e in eggs], dtype=np.int32),
         cooks=cooks,
         tier=np.array([1 if e["tier"] == "attested" else 0 for e in eggs], dtype=np.int32),
-        trusted=np.array([bool(e.get("trusted")) or e["uid"] in trusted for e in eggs], dtype=bool),
+        trusted=np.array([bool(e.get("trusted")) or (e.get("source") == "export" and e["uid"] in trusted)
+                          for e in eggs], dtype=bool),
         seq=np.array([e["seq"] for e in eggs], dtype=np.int32),
         target=np.array([e["logYolkTarget"] for e in eggs]),
         yolk=np.array([-1 if e["yolk"] is None else e["yolk"] + 1 for e in eggs], dtype=np.int32),

@@ -185,13 +185,17 @@ its absence means.
   kept: a likelihood raised to `--open-power`, capped at the attested tier's
   total (`DECISIONS.md` 2), with the per-id log score (37) as the screen.
 - **The owner's trusted IDs** (`DECISIONS.md` 82): the owner vouches for
-  their own random IDs, and every result under one counts at the attested
-  tier's full weight whatever tier it came in - a build from Xcode is open
-  (68), and so is the web - and on the attested side of the cap. The list
+  their own random IDs, and every result under one that comes from the
+  owner's own results file counts at the attested tier's full weight
+  whatever tier it came in - a build from Xcode is open (68), and so is the
+  web - and on the attested side of the cap. A result in the live store is
+  never trusted for its ID alone: an ID is shown on screen, so anyone who
+  learned one could post under it. The list
   is never committed, since it would tie the owner to their results: it is
   `fit/trusted.local.txt` (gitignored; `fit/trusted.example.txt` shows the
-  shape) and `EGGFIT_TRUSTED`, pooled. `pull` and `import` mark the lines,
-  and the fit reads the list again, so either is enough. A trusted cook is
+  shape) and `EGGFIT_TRUSTED`, pooled. `import` marks the lines, `emulate`
+  trusts a pulled egg whose twin in the file is trusted, and the fit reads
+  the list again, so either is enough. A trusted cook is
   never held out. The published population says how many eggs were trusted,
   never whose.
 - **The owner's own results, from a device** (`DECISIONS.md` 81): Settings,

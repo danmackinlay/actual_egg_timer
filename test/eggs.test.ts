@@ -97,8 +97,11 @@ test('3. the trusted list: a file and the environment, comments and separators',
   }
   const lines: Line[] = importResults(file(store(log()))).lines;
   lines.push({ tier: 'attested', seq: 0, record: { ...log()[0], uid: 'someone-else' } });
+  // Pulled from the live store under a trusted ID: anyone who learned the ID
+  // could have posted it, so only the owner's own file is trusted.
+  lines.push({ tier: 'open', seq: 9, record: { ...log()[0], uid: UID } });
   assert.equal(tagTrusted(lines, new Set([UID])), 4);
-  assert.deepEqual(lines.map((l) => l.trusted === true), [true, true, true, true, false]);
+  assert.deepEqual(lines.map((l) => l.trusted === true), [true, true, true, true, false, false]);
   assert.equal(tagTrusted(lines, new Set()), 0);
   assert.equal(lines.some((l) => l.trusted !== undefined), false, 'untagged when the list no longer has it');
 });
@@ -114,7 +117,7 @@ test('4. one egg is one key, whichever app wrote it and in whatever key order', 
   assert.notEqual(sameEggKey({ ...r, yolk: 1 }), sameEggKey(r));
 });
 
-test('5. the command line: import, then emulate keeps the pull\'s copy of an egg shared too', () => {
+test('5. the command line: import, then emulate keeps the pull\'s copy of an egg shared too, trusted from the file', () => {
   const dir = mkdtempSync(join(tmpdir(), 'import-'));
   try {
     const input = join(dir, 'actual-egg-timer-results-2026-10-05.json');
@@ -139,12 +142,15 @@ test('5. the command line: import, then emulate keeps the pull\'s copy of an egg
     const em = spawnSync(process.execPath, ['dist/tools/eggs.js', 'emulate', all, emulated], { encoding: 'utf8' });
     assert.equal(em.status, 0, em.stderr);
     const e = JSON.parse(readFileSync(emulated, 'utf8')) as {
-      counts: { twice: number; unanswered: number }; eggs: { seq: number; tier: string; trusted: boolean }[];
+      counts: { twice: number; unanswered: number };
+      eggs: { seq: number; tier: string; trusted: boolean; source?: string }[];
     };
     assert.equal(e.counts.twice, 1);
     assert.equal(e.counts.unanswered, 1);
-    assert.deepEqual(e.eggs.map((x) => [x.seq, x.tier, x.trusted]),
-      [[0, 'attested', false], [1, 'open', true], [3, 'open', true]]);
+    // The pulled copy is kept, and is the owner's: its twin in their file
+    // is trusted, so it is.
+    assert.deepEqual(e.eggs.map((x) => [x.seq, x.tier, x.trusted, x.source]),
+      [[0, 'attested', true, 'export'], [1, 'open', true, 'export'], [3, 'open', true, 'export']]);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

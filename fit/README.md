@@ -23,8 +23,11 @@ new prior. `fit/data/` is gitignored: pulled records are people's eggs.
 ## The owner's own results, and the trusted list
 
 The owner vouches for their own random IDs (`DECISIONS.md` 82): every egg
-under one counts at the attested tier's full weight, whatever tier it came in,
-and a trusted cook is never held out. The list never goes into git - it would
+under one that comes from the owner's own results file (`import`, below)
+counts at the attested tier's full weight, whatever tier it came in, and a
+trusted cook is never held out. An egg pulled from the live store is not
+trusted for its ID alone - an ID is shown on screen, so anyone who learned one
+could post under it - unless its twin from the file is. The list never goes into git - it would
 tie the owner to their results - so it lives in `fit/trusted.local.txt`
 (gitignored), one ID per line, `#` for comments, and in `EGGFIT_TRUSTED`
 (commas or spaces); the two are pooled. To set it up:
@@ -47,7 +50,8 @@ npm run eggs -- emulate fit/data/all.jsonl fit/data/emulated.json
 `import` files the records under the ID in the file, which is the device's
 sharing ID; a device that never shared has none, so give it one with
 `--uid <id>` and put that ID on the list. It says whether the ID is trusted.
-`emulate` keeps the first copy of an egg that is in both files. `fit` reads
+`emulate` keeps the first copy of an egg that is in both files, trusted if
+the file's copy is. `fit` reads
 the list again (`--trusted <path>` for another file), so an emulated file made
 before an ID was added is trusted all the same.
 

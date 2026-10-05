@@ -11,6 +11,11 @@
  * the owner to their records in a public repository. It is read from
  * `fit/trusted.local.txt` (gitignored; `fit/trusted.example.txt` shows the
  * shape) and from `EGGFIT_TRUSTED`, and the two are pooled.
+ *
+ * What is trusted is a record from the owner's own results file under one of
+ * those IDs, never a record in the live store because of its ID: an ID is
+ * shown on screen, so anyone who learned one could post open records under
+ * it, and only the file comes from the owner's own device.
  */
 
 import { existsSync, readFileSync } from 'node:fs';
@@ -24,8 +29,8 @@ export interface Line {
   /** Where a line came from when not from the live store: `export`, a
    *  results file read back by `import`. */
   source?: 'export';
-  /** The cook's random ID is on the owner's trusted list: the fit gives the
-   *  egg full weight whatever its tier. */
+  /** From the owner's own results file, under an ID on the trusted list:
+   *  the fit gives the egg full weight whatever its tier. */
   trusted?: true;
 }
 
@@ -64,12 +69,14 @@ function uidOf(record: unknown): string | null {
   return typeof uid === 'string' ? uid : null;
 }
 
-/** Mark every line whose record's ID is on the list. Returns how many. */
+/** Mark every line from a results file whose record's ID is on the list; a
+ *  line from the live store is never marked, whatever its ID. Returns how
+ *  many. */
 export function tagTrusted(lines: Line[], trusted: Set<string>): number {
   let n = 0;
   for (const l of lines) {
     const uid = uidOf(l.record);
-    if (uid !== null && trusted.has(uid)) {
+    if (l.source === 'export' && uid !== null && trusted.has(uid)) {
       l.trusted = true;
       n += 1;
     } else {

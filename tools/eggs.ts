@@ -11,15 +11,15 @@
  *       Needs NETLIFY_AUTH_TOKEN (a personal access token) and
  *       NETLIFY_SITE_ID. The output is people's eggs: it stays out of git
  *       (fit/data/ is ignored), and is deleted with the id when they ask.
- *       A record under an ID on the owner's trusted list is marked
- *       `trusted` (tools/eggsImport.ts; DECISIONS.md 82).
+ *       Nothing pulled is trusted, whatever its ID: anyone who learned an
+ *       ID could have posted under it (tools/eggsImport.ts).
  *   npm run eggs -- import <results.json> [<out.jsonl>] [--uid <id>]
  *       a results file ("Export my results", DECISIONS.md 81) as records in
  *       the same shape, open and marked `source: 'export'`, under the file's
  *       random ID or `--uid`, and `trusted` if that ID is on the list;
  *       fit/data/imported.jsonl unless told. To fit on both, put the pull
  *       first: `cat pulled.jsonl imported.jsonl > all.jsonl`; emulate keeps
- *       the first of an egg seen twice.
+ *       the first of an egg seen twice, trusted if any copy of it was.
  *   npm run eggs -- simulate <out.jsonl> <truth.json> [cooks] [seed]
  *       cooks drawn from a population whose answer is known, as records in
  *       the same shape, and the truth beside them.
@@ -104,10 +104,8 @@ async function pull(out: string): Promise<void> {
     if (tier !== kept) demoted += 1;
     lines.push({ tier: tier, seq: Number(m[3]), record: JSON.parse(text) as unknown });
   }
-  const trusted = tagTrusted(lines, readTrusted());
   writeLines(out, lines);
-  console.log(`${lines.length} records -> ${out}` + (demoted > 0 ? ` (${demoted} filed as attested count as open)` : '')
-    + (trusted > 0 ? `; ${trusted} under a trusted ID, at full weight` : ''));
+  console.log(`${lines.length} records -> ${out}` + (demoted > 0 ? ` (${demoted} filed as attested count as open)` : ''));
 }
 
 /* ----------------------------------------------------------------- import */
@@ -296,6 +294,14 @@ const CHECK_PARTICLE = { logDoseOffset: 0.05, tauAirScale: 1, noise: 0.23, white
 const CHECK_Z = [-1.0, 0.0, 1.3];
 const CHECKED_EGGS = 12;
 
+/** One egg, wherever it came from: its place too, since two eggs alike in
+ *  every field, cooked the same day, are two eggs. Sharing sends an egg's
+ *  place in the log as `seq`, and import keeps it, so the same egg pulled and
+ *  imported has the same. */
+function eggKey(line: Line, r: EggRecord): string {
+  return `${line.seq}|${sameEggKey(r)}`;
+}
+
 function emulate(input: string, out: string): void {
   const lines = readLines(input);
   const eggs: unknown[] = [];
@@ -306,19 +312,25 @@ function emulate(input: string, out: string): void {
   let silent = 0;
   // A pull and an import of the same cook's results file, pooled, hold the
   // eggs that were shared twice: the first line of each is kept, so put the
-  // pull first and its tier wins.
+  // pull first and its tier wins. It is from the owner's file, and trusted,
+  // if any copy of it was.
   let twice = 0;
   const seen = new Set<string>();
+  const exported = new Set<string>();
+  const vouched = new Set<string>();
+  for (const line of lines) {
+    const r = parseRecord(line.record);
+    if (r === null) continue;
+    if (line.source === 'export') exported.add(eggKey(line, r));
+    if (line.trusted === true) vouched.add(eggKey(line, r));
+  }
   const start = freshCalibration(1, 1);
   const alphaMin = ALPHA_DEFAULT * Math.exp(ALPHA_REL_SD * Z_GRID[0]);
   const alphaMax = ALPHA_DEFAULT * Math.exp(ALPHA_REL_SD * Z_GRID[Z_GRID.length - 1]);
   for (const line of lines) {
     const r = parseRecord(line.record);
     if (r === null || r.uid === null) { refused += 1; continue; }
-    // Its place too: two eggs alike in every field, cooked the same day, are
-    // two eggs. Sharing sends an egg's place in the log as `seq`, and import
-    // keeps it, so the same egg pulled and imported has the same.
-    const key = `${line.seq}|${sameEggKey(r)}`;
+    const key = eggKey(line, r);
     if (seen.has(key)) { twice += 1; continue; }
     seen.add(key);
     if (!recordTeaches(r)) { silent += 1; continue; }
@@ -346,7 +358,8 @@ function emulate(input: string, out: string): void {
       });
     }
     eggs.push({
-      uid: r.uid, tier: line.tier, trusted: line.trusted === true, seq: line.seq, day: r.day, app: r.app, model: r.model,
+      uid: r.uid, tier: line.tier, trusted: vouched.has(key), ...(exported.has(key) ? { source: 'export' } : {}),
+      seq: line.seq, day: r.day, app: r.app, model: r.model,
       cook_s: t, level: r.level, logYolkTarget: logYolkTarget(r.level),
       yolk: r.yolk, white: r.white === null ? null : ['runny', 'tender', 'firm'].indexOf(r.white),
       probe: r.probe === null ? null : r.probe.centre_C,

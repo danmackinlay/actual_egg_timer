@@ -50,6 +50,14 @@ def test_a_trusted_cook_counts_once_whatever_its_tier(tmp_path):
     assert set(np.array(plain.uid)[plain.trusted]) == {marked}
 
     mine = next(c for c in cooks if c != marked)
+    # Listed, but every egg pulled from the live store: anyone who learned
+    # the ID could have posted them, so the list alone trusts nothing.
+    listed = data.load(str(path), {mine})
+    assert set(np.array(listed.uid)[listed.trusted]) == {marked}
+    for e in raw["eggs"]:
+        if e["uid"] == mine:
+            e["source"] = "export"
+    path.write_text(json.dumps(raw))
     eggs = data.load(str(path), {mine})
     assert set(np.array(eggs.uid)[eggs.trusted]) == {mine, marked}
     w = model.tier_weights(eggs, open_power=0.5, open_cap=1.0)
