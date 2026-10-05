@@ -350,11 +350,11 @@ function isPlainObject(v: unknown): v is Record<string, unknown> {
   return v !== null && typeof v === 'object' && !Array.isArray(v);
 }
 
-export function encodeKept(k: Kept, pop: Population = activePopulation()): string {
+export function encodeKept(k: Kept, pop: Population = activePopulation(), model = MODEL_ID): string {
   const stored: StoredV4 = {
     v: 4,
     p: pop.id,
-    m: MODEL_ID,
+    m: model,
     base: k.base === null ? null : storedPosterior(k.base),
     cal: storedPosterior(k.calibration),
     folded: k.folded,
@@ -475,15 +475,17 @@ function parseJSON(raw: string | null): unknown {
  *
  * Pure, so the tests can walk every path without a browser.
  */
-export function decodeKept(v4raw: string | null, pop: Population = activePopulation()): Decoded {
-  const decoded = decodeParts(v4raw, pop);
+export function decodeKept(
+  v4raw: string | null, pop: Population = activePopulation(), model = MODEL_ID,
+): Decoded {
+  const decoded = decodeParts(v4raw, pop, model);
   const start = priorStart(pop);
   decoded.kept.calibration.start = { ...start };
   if (decoded.kept.base !== null) decoded.kept.base.start = { ...start };
   return decoded;
 }
 
-function decodeParts(v4raw: string | null, pop: Population): Decoded {
+function decodeParts(v4raw: string | null, pop: Population, model: string): Decoded {
   const obj = parseJSON(v4raw);
   if (obj === null || typeof obj !== 'object' || (obj as { v?: unknown }).v !== 4) {
     return { kept: freshKept(pop), path: 'fresh', loses: v4raw !== null && v4raw !== '' };
@@ -511,7 +513,7 @@ function decodeParts(v4raw: string | null, pop: Population): Decoded {
     };
   }
   const { log, stored, unread } = read;
-  if (baseLost || cal === null || !foldedOk || drawnFrom !== pop.id || foldedUnder !== MODEL_ID || read.moved) {
+  if (baseLost || cal === null || !foldedOk || drawnFrom !== pop.id || foldedUnder !== model || read.moved) {
     return {
       kept: { base: base, calibration: startOf(base, pop), folded: 0, log: log, unread: unread, stored: stored },
       path: 'rebuild',
@@ -548,9 +550,22 @@ let last: LiveFold | null = null;
  *  writes (`current`): every tab writes the whole store, so a tab that wrote
  *  back what it loaded would undo every egg another tab logged since. */
 let seen: string | null = null;
+/** The model this page folds under: `MODEL_ID`, unless a test loads a
+ *  second page as another build would be (`loadCalibration`). */
+let modelId = MODEL_ID;
+/**
+ * Whether this page may write the store as it folds. False once it has taken
+ * up a store it would not have written - another build's, folded under
+ * another model or drawn from another population, or one another tab
+ * emptied - and true again at this page's own next change: an egg logged, an
+ * answer given, everything forgotten. Until then it folds in memory and
+ * writes nothing, so that two builds open in two tabs never answer each
+ * other's every write with one of their own.
+ */
+let ours = true;
 
 function save(): void {
-  writeStorage(KEY, encodeKept(kept));
+  writeStorage(KEY, encodeKept(kept, activePopulation(), modelId));
   // Read back rather than assumed: a write that failed (no room, no storage)
   // leaves the store as it was, which is then not another tab's.
   seen = readStorage(KEY);
@@ -571,14 +586,30 @@ function current(): boolean {
  * calibration the page already holds, so every holder of the reference sees
  * it. A fold under way lands on nothing, and the drain goes round again on
  * what is there now. The egg on screen keeps its chance of a second answer
- * only if the other tab left the log exactly as this one had it.
+ * only if the other tab left it where it was.
+ *
+ * Nothing is written back, whatever the store turned out to be: what this
+ * page makes of it is written with its own next change, and not before. A
+ * page that wrote back every store it could not use as it was would answer
+ * another build's every write with one of its own, and the other build
+ * would answer in kind, for as long as both were open.
+ *
+ * What this page has folded is kept, not replayed, when the store needs a
+ * replay only because another build folded it (`rebuild`) and the eggs this
+ * page folded are still the first in the log: its posterior is still this
+ * build's replay of them, and only the eggs after need folding.
  */
 function adopt(raw: string | null): void {
-  const decoded = decodeKept(raw);
+  const decoded = decodeKept(raw, activePopulation(), modelId);
   if (decoded.loses && raw !== null) keepUnread(raw);
   const had = kept;
-  assign(had.calibration, decoded.kept.calibration);
-  kept = { ...decoded.kept, calibration: had.calibration };
+  const next = decoded.kept;
+  if (keepsFolds(had, decoded)) {
+    kept = { ...next, base: had.base, calibration: had.calibration, folded: had.folded };
+  } else {
+    assign(had.calibration, next.calibration);
+    kept = { ...next, calibration: had.calibration };
+  }
   generation += 1;
   if (live >= 0 && !sameRecord(kept.log[live], had.log[live])) live = -1;
   if (last !== null) {
@@ -588,7 +619,20 @@ function adopt(raw: string | null): void {
       ? { ...last, record: r } : null;
   }
   seen = raw;
-  if (decoded.path !== 'loaded') save();
+  ours = decoded.path === 'loaded';
+}
+
+/** Whether a store taken up can keep what this page has folded: a store
+ *  that would be replayed, or is behind this page, over the same eggs this
+ *  page folded, from the prior. */
+function keepsFolds(had: Kept, decoded: Decoded): boolean {
+  const next = decoded.kept;
+  if (decoded.path !== 'rebuild' && !(decoded.path === 'loaded' && next.folded < had.folded)) return false;
+  if (had.base !== null || next.base !== null || next.log.length < had.folded) return false;
+  for (let i = 0; i < had.folded; i++) {
+    if (!sameRecord(next.log[i], had.log[i])) return false;
+  }
+  return true;
 }
 
 function sameRecord(a: EggRecord | undefined, b: EggRecord | undefined): boolean {
@@ -607,12 +651,14 @@ export function calibrationStoredElsewhere(key: string | null): boolean {
  *  returns is the one the app solves with, and it is folded into IN PLACE as
  *  eggs are learned, so the caller's reference stays current. If the posterior
  *  is behind the log, call `learn()` to catch it up. */
-export function loadCalibration(): Calibration {
+export function loadCalibration(model = MODEL_ID): Calibration {
+  modelId = model;
+  ours = true;
   // Whatever came before the log goes now, rather than sitting in storage
   // being neither read nor collected.
   for (const key of SUPERSEDED_KEYS) removeStorage(key);
   const raw = readStorage(KEY);
-  const decoded = decodeKept(raw);
+  const decoded = decodeKept(raw, activePopulation(), modelId);
   // Kept aside BEFORE anything is written over it.
   if (decoded.loses && raw !== null) keepUnread(raw);
   kept = decoded.kept;
@@ -694,6 +740,7 @@ export function keptState(): Kept {
 export function logEgg(r: EggRecord): number {
   current();
   kept.log.push(r);
+  ours = true;
   save();
   return kept.log.length - 1;
 }
@@ -741,7 +788,7 @@ async function drainLog(): Promise<void> {
     const r = k.log[index];
     if (!recordTeaches(r)) {
       k.folded += 1;
-      save();
+      if (ours) save();
       continue;
     }
     // The surface is centred where the posterior stands BEFORE this egg - see
@@ -760,7 +807,7 @@ async function drainLog(): Promise<void> {
       live = -1;
       last = { index: index, record: r, grid: grid, before: before };
     }
-    save();
+    if (ours) save();
   }
 }
 
@@ -807,6 +854,7 @@ export async function recordSecondAnswer(
     if (answer.yolkWord !== undefined) r.yolkWord = answer.yolkWord;
     if (answer.white !== undefined) r.white = answer.white;
     if (answer.probe !== undefined) r.probe = answer.probe;
+    ours = true;
     save();
     await learn(index);
     return true;
@@ -819,6 +867,7 @@ export async function recordSecondAnswer(
   const again = copyCalibration(o.before);
   foldRecord(again, r, o.grid);
   assign(kept.calibration, again);
+  ours = true;
   save();
   return true;
 }
@@ -834,6 +883,7 @@ export function clearCalibration(): Calibration {
   last = null;
   removeStorage(KEY);
   seen = null;
+  ours = true;
   removeStorage(UNREAD_KEY);
   removeStorage(UNREAD_COOK_KEY);
   for (const key of SUPERSEDED_KEYS) removeStorage(key);

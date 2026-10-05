@@ -519,6 +519,62 @@ test('3d. another tab\'s egg is taken up, not written over', () => {
   assert.equal(calib.eggsLogged, 0);
 });
 
+test('3e. two builds in two tabs: neither writes back the store it takes up, so the writing stops', async () => {
+  storage.clear();
+  const KEY = 'aet.calibration.v4';
+  const NEWER = '2026-10-e99';
+  // A second page, a newer build's: the same code under another model, as
+  // the service worker leaves an old window on the build it opened with.
+  const newer = await import(new URL('../src/ui/calibration.js?tab=newer', import.meta.url).href) as
+    typeof import('../src/ui/calibration.js');
+  // This page logs two eggs. Unanswered, so they fold nothing and build no
+  // surface, and the test runs in milliseconds.
+  loadCalibration();
+  logEgg(solvedRecord(0.3, null));
+  logEgg(solvedRecord(0.5, null));
+  await learn();
+  // The newer build opens: it replays the log under its own model and writes.
+  newer.loadCalibration(NEWER);
+  await newer.learn();
+  assert.equal((JSON.parse(storage.get(KEY) as string) as { m: string }).m, NEWER);
+  // The browser tells each page whenever the other writes, and each page
+  // folds whatever is behind when it hears, as app.ts does.
+  const pages = [
+    { heard: calibrationStoredElsewhere, learn: learn, behind: eggsBehind },
+    { heard: newer.calibrationStoredElsewhere, learn: newer.learn, behind: newer.eggsBehind },
+  ];
+  const listen = async (rounds: number): Promise<number> => {
+    let writes = 0;
+    let text = storage.get(KEY);
+    for (let round = 0; round < rounds; round++) {
+      const p = pages[round % 2];
+      if (p.heard(KEY) && p.behind() > 0) await p.learn();
+      if (storage.get(KEY) !== text) {
+        writes += 1;
+        text = storage.get(KEY);
+      }
+    }
+    return writes;
+  };
+  assert.equal(await listen(8), 0, 'taking up the other build\'s store writes nothing');
+  assert.equal(keptState().log.length, 2);
+  assert.equal(keptState().folded, 2, 'what this page folded is kept, not replayed');
+  // A page's own change is written, under its own model, and taken up by the
+  // other without a write back; the other folds only the egg that is new.
+  logEgg(solvedRecord(0.6, null));
+  const written = storage.get(KEY);
+  assert.equal((JSON.parse(written as string) as { m: string }).m, MODEL_ID);
+  assert.equal(newer.calibrationStoredElsewhere(KEY), true);
+  assert.equal(newer.eggsBehind(), 1, 'one egg to fold, not the whole log again');
+  await newer.learn();
+  assert.equal(storage.get(KEY), written, 'folded in memory, not written');
+  assert.equal(newer.keptState().log.length, 3);
+  assert.equal(await listen(8), 0);
+  // And the store is this build's, as it wrote it: the new egg still to fold.
+  const back = decodeKept(storage.get(KEY) as string);
+  assert.deepEqual([back.path, back.kept.folded, back.kept.log.length], ['loaded', 2, 3]);
+});
+
 // --------------------------------------------------------------------------
 // 4. The pull
 // --------------------------------------------------------------------------
