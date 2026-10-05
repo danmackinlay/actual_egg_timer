@@ -248,6 +248,15 @@ Kept here so a new session can pick up without this conversation.
        through only when none of it can be reached (bb1cc9d). Open for the
        owner: show the probe field even when the probe setting is off (it
        does now)?
+1d. [ ] **The QA agent's second pass** (REVIEW-0.4.x.md, "Second pass"),
+       on three branches merged by the session that sent them: `qa2-tabs`
+       (the two-tab write loop, a start-time ID per record, boil memory
+       across tabs, a timeout on the send, the rollback claim),
+       `qa2-attest` (iOS waits only on no reply, 429 and 5xx, and gives up
+       after a bound), `qa2-words` (frozen word cuts, screen-reader groups,
+       large text, sous-vide ticks, `-seedEggs`, `tools/eggs.ts`). OWNER:
+       should the shown odds describe the asked-for word instead of "just
+       right"?
 2. [x] **Optional server polish** (0ab1eee): a refused attestation echoes library
        error text ("PEM routines::…"); return a generic message.
 3. [ ] **The owner's phone session** (section A above, PLAN.md items 7-15)
