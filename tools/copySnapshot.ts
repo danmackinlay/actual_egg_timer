@@ -202,14 +202,23 @@ function matchesAny(text: string, templates: string[]): boolean {
   return templates.some((t) => templateRegExp(t, false).test(text));
 }
 
-/** Whether `text` is the words between two placeholders of a template, as a
- *  text node of their own. The redesign's setup sentence draws each
- *  placeholder as a button, so what is left between them - ", " and "." in
- *  English - is a text node that belongs to the drafted template without
- *  matching it whole. */
+/** Whether `text` is the words between two placeholders of a template, or
+ *  either side of a link in it, as a text node of their own. The redesign's
+ *  setup sentence draws each placeholder as a button, so what is left between
+ *  them - ", " and "." in English - is a text node that belongs to the
+ *  drafted template without matching it whole; and Help draws a
+ *  `[label](https://…)` as a link, so the words after it are a node too. */
 function isPieceOfAny(text: string, templates: string[]): boolean {
-  return templates.some((t) => t.split(/\{[A-Za-z][A-Za-z0-9_]*\}/)
+  return templates.some((t) => t.split(/\{[A-Za-z][A-Za-z0-9_]*\}|\[[^\]]*\]\([^)]*\)/)
     .some((piece) => piece.trim() !== '' && piece.trim() === text));
+}
+
+/** Whether a string is a value rather than words: a stat's number, the "--"
+ *  before the first solve, or an attribute whose value is one ("probeReading
+ *  placeholder=64", the peak the probe's field starts from). */
+function isValue(text: string): boolean {
+  const at = text.indexOf('=');
+  return !/[A-Za-z]{3,}/.test(at >= 0 && /^\S+ [a-z-]+=/.test(text) ? text.slice(at + 1) : text);
 }
 
 function compareDraft(beforePath: string, afterPath: string, draftName: string | undefined): void {
@@ -239,16 +248,25 @@ function compareDraft(beforePath: string, afterPath: string, draftName: string |
   const failures: string[] = [];
   const appeared: string[] = [];
   const vanished: string[] = [];
+  // The old wording of a drafted rewrite, for the pieces of it a link left
+  // as nodes of their own, which `applyDraft` cannot rewrite whole.
+  const rewrittenFrom = rows.flatMap((d) => (d.before === null || d.after === null ? [] : Object.values(d.before)));
   for (const [key, text] of is) {
     if (was.has(key)) continue;
     if (matchesAny(text, added) || isPieceOfAny(text, added)) appeared.push(text);
+    // A value, not a word, newly on a screen: a field shown in more states.
+    else if (isValue(text)) appeared.push(text);
     else failures.push(`new, and not drafted: "${text}"`);
   }
   for (const [key, text] of was) {
     if (is.has(key)) continue;
     // A value, not a word: a stat's number, or the "--" before the first
     // solve. The redesign moved or dropped stats, and a number is not copy.
-    if (!/[A-Za-z]{3,}/.test(text)) {
+    if (isValue(text)) {
+      vanished.push(text);
+      continue;
+    }
+    if (isPieceOfAny(text, rewrittenFrom) || isPieceOfAny(text, retired)) {
       vanished.push(text);
       continue;
     }
