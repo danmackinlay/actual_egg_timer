@@ -572,6 +572,10 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     nothing yet commits the egg to either; the timer should take the
     change and re-plan from what has already happened. It needs real
     interface design, so it waits for 0.5. 6 October 2026.
+    Added the same day: the egg in cross-section (52) stays on that
+    screen all the time. While the settings are chosen it previews the
+    yolk and white they aim for; when the timer starts it goes back to
+    raw and cooks along with it.
 92. **The yolk question names the yolk; the white question asks about the
     white next to the yolk; the probe sits below them** (the owner,
     testing 0.4). "Too soft / Just right / Too firm" throws bits away and
