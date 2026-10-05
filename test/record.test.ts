@@ -35,7 +35,7 @@ import {
 import { CookSetup } from '../src/core/protocol.js';
 import {
   APP_VERSION, Cooked, calibrationStoredElsewhere, clearCalibration, decodeKept, eggRecordFor, eggsBehind, encodeKept,
-  exportResults, keptState, learn, loadCalibration, logEgg, recordSecondAnswer,
+  exportResults, keptState, learn, loadCalibration, logEgg, overlay, recordSecondAnswer,
 } from '../src/ui/calibration.js';
 import {
   Machine, advance, beginCooling, restoreMachine, staleMachine, startCold, startHot, PULL_GRACE_SECONDS,
@@ -307,6 +307,27 @@ test('3a2. a newer build\'s record is skipped and kept in its place, and comes b
   const tail = JSON.parse(written) as Record<string, unknown>;
   tail['unread'] = [{ at: 7, record: newer }, { at: 'x', record: newer }];
   assert.deepEqual(decodeKept(JSON.stringify(tail)).kept.unread, [{ at: 2, record: newer }]);
+});
+
+test('3a2b. a later build\'s added fields are written back, not dropped', async () => {
+  storage.clear();
+  const a = solvedRecord(0.3, null);
+  const later = { ...a, addedLater: { by: 'a later build' }, egg: { ...a.egg, shellColour: 'brown' } };
+  const k = { base: null, calibration: freshCalibration(32, 3), folded: 0, log: [a] };
+  const stored = JSON.parse(encodeKept(k)) as Record<string, unknown>;
+  stored['log'] = [later];
+  storage.set('aet.calibration.v4', JSON.stringify(stored));
+  loadCalibration();
+  // This build writes the store: an egg of its own, and the first one's
+  // answer, which it can still take while the egg is unfolded.
+  logEgg(solvedRecord(0.4, null));
+  assert.ok(await recordSecondAnswer(1, { white: 'firm' }));
+  const log = (JSON.parse(storage.get('aet.calibration.v4') as string) as { log: Record<string, unknown>[] }).log;
+  assert.deepEqual(log[0], later, 'written back as stored, at every depth');
+  assert.equal(log[1]['white'], 'firm');
+  assert.equal('addedLater' in log[1], false, 'an egg made here is as this build makes it');
+  assert.deepEqual(overlay({ x: 1, o: { y: 2, z: 3 } }, { o: { y: 5 }, w: [1] }), { x: 1, o: { y: 5, z: 3 }, w: [1] });
+  assert.deepEqual(overlay([1], { a: 1 }), { a: 1 });
 });
 
 test('3a3. a posterior folded under another model is replayed', () => {

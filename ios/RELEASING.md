@@ -344,6 +344,21 @@ lapses, the distribution certificate goes with it.
 
 ---
 
+## Never roll back past 0.4
+
+Once a 0.4 build has written a phone's log, a 0.3 build must not run on it
+again, and the same goes for the web: no Netlify rollback to a 0.3 deploy,
+and no older TestFlight build offered to testers. Both versions keep the log
+under the same key, `aet.calibration.v4` (`calibration.v4` on iOS), and 0.3
+writes every record back with only the fields it knows, so the first egg it
+logs strips 0.4's `model` and `forecast` from every record before it; 0.3
+also has no place for a record it cannot read, so one costs it the whole
+log. 0.3 cannot be patched. From 0.4 on, a build writes back every field it
+does not know as it found it (`overlay`), so rolling 0.5 back to 0.4 is safe
+in this respect.
+
+---
+
 ## What this is instead of
 
 **Free provisioning (a Personal Team) is not an option here**, and not merely

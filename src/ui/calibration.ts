@@ -84,6 +84,12 @@ export interface Kept {
    *  as they were stored and written back, where they sat in the log, and
    *  folded by nothing here. Absent when there are none. */
   unread?: Unread[];
+  /** Each record of `log` as it was stored, by index, for the ones read from
+   *  storage; a record made here has none. A record is written back as
+   *  stored with what this build knows laid over it (`overlay`), so a field
+   *  a later build added - "fields may be ADDED within v1" - is not lost
+   *  when this one saves. Absent when there are none. */
+  stored?: unknown[];
 }
 
 /** A record this build cannot read, and its place in the whole log: `at` is
@@ -249,7 +255,7 @@ interface StoredV4 {
   base: StoredPosterior | null;
   cal: StoredPosterior;
   folded: number;
-  log: EggRecord[];
+  log: unknown[];
   /** Absent when there are none. */
   unread?: Unread[];
 }
@@ -324,6 +330,23 @@ function readPosterior(raw: unknown): Calibration | null {
   return { posterior: { particles: particles, weights: weights, rng: s.rng }, eggsLogged: s.n };
 }
 
+/**
+ * A value as stored with what this build knows laid over it: every field this
+ * build reads comes from `known`, at every depth, and every field it does not
+ * is kept from `stored`, where it was. `known` itself where either is not an
+ * object.
+ */
+export function overlay(stored: unknown, known: unknown): unknown {
+  if (!isPlainObject(stored) || !isPlainObject(known)) return known;
+  const out: Record<string, unknown> = { ...stored };
+  for (const key of Object.keys(known)) out[key] = overlay(stored[key], known[key]);
+  return out;
+}
+
+function isPlainObject(v: unknown): v is Record<string, unknown> {
+  return v !== null && typeof v === 'object' && !Array.isArray(v);
+}
+
 export function encodeKept(k: Kept, pop: Population = activePopulation()): string {
   const stored: StoredV4 = {
     v: 4,
@@ -332,7 +355,7 @@ export function encodeKept(k: Kept, pop: Population = activePopulation()): strin
     base: k.base === null ? null : storedPosterior(k.base),
     cal: storedPosterior(k.calibration),
     folded: k.folded,
-    log: k.log,
+    log: k.stored === undefined ? k.log : k.log.map((r, i) => overlay(k.stored?.[i], r)),
   };
   if (k.unread !== undefined && k.unread.length > 0) stored.unread = k.unread;
   return JSON.stringify(stored);
@@ -379,11 +402,14 @@ function readUnread(raw: unknown): Unread[] {
  * become unreadable, or readable - in which case what the posterior absorbed
  * is no longer the log, and it is replayed. Null when the log is not a list.
  */
-function readLog(rawLog: unknown, rawUnread: unknown): { log: EggRecord[]; unread: Unread[]; moved: boolean } | null {
+function readLog(
+  rawLog: unknown, rawUnread: unknown,
+): { log: EggRecord[]; stored: unknown[]; unread: Unread[]; moved: boolean } | null {
   if (!Array.isArray(rawLog)) return null;
   const listed = rawLog as unknown[];
   const held = readUnread(rawUnread);
   const log: EggRecord[] = [];
+  const stored: unknown[] = [];
   const unread: Unread[] = [];
   let moved = false;
   let li = 0;
@@ -394,13 +420,14 @@ function readLog(rawLog: unknown, rawUnread: unknown): { log: EggRecord[]; unrea
     const r = parseRecord(raw);
     if (r !== null) {
       log.push(r);
+      stored.push(raw);
       if (fromHeld) moved = true;
     } else {
       unread.push({ at: at, record: raw });
       if (!fromHeld) moved = true;
     }
   }
-  return { log: log, unread: unread, moved: moved };
+  return { log: log, stored: stored, unread: unread, moved: moved };
 }
 
 function parseJSON(raw: string | null): unknown {
@@ -480,10 +507,10 @@ function decodeParts(v4raw: string | null, pop: Population): Decoded {
       loses: true,
     };
   }
-  const { log, unread } = read;
+  const { log, stored, unread } = read;
   if (baseLost || cal === null || !foldedOk || drawnFrom !== pop.id || foldedUnder !== MODEL_ID || read.moved) {
     return {
-      kept: { base: base, calibration: startOf(base, pop), folded: 0, log: log, unread: unread },
+      kept: { base: base, calibration: startOf(base, pop), folded: 0, log: log, unread: unread, stored: stored },
       path: 'rebuild',
       loses: false,
     };
@@ -496,7 +523,7 @@ function decodeParts(v4raw: string | null, pop: Population): Decoded {
     };
   }
   return {
-    kept: { base: base, calibration: cal, folded: folded as number, log: log, unread: unread },
+    kept: { base: base, calibration: cal, folded: folded as number, log: log, unread: unread, stored: stored },
     path: 'loaded',
     loses: false,
   };

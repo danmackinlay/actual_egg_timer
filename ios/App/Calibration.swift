@@ -36,6 +36,12 @@ struct Kept: Sendable {
     /// they were stored and written back, where they sat in the log, and
     /// folded by nothing here.
     var unread: [Unread] = []
+    /// Each record of `log` as it was stored, by index, for the ones read from
+    /// storage; a record made here has none. A record is written back as
+    /// stored with what this build knows laid over it (`overlay`), so a field
+    /// a later build added is not lost when this one saves. The web's
+    /// `Kept.stored`.
+    var stored: [JSONValue] = []
 }
 
 /// "Export my results" as the share sheet takes it: a file, written when the
@@ -106,6 +112,17 @@ enum JSONValue: Codable, Equatable, Sendable {
     }
 }
 
+/// A value as stored with what this build knows laid over it: every field
+/// this build reads comes from `known`, at every depth, and every field it
+/// does not is kept from `stored`, where it was. `known` itself where either
+/// is not an object. The web's `overlay`.
+func overlay(_ stored: JSONValue, _ known: JSONValue) -> JSONValue {
+    guard case .object(let s) = stored, case .object(let k) = known else { return known }
+    var out = s
+    for (key, value) in k { out[key] = overlay(s[key] ?? .null, value) }
+    return .object(out)
+}
+
 enum Calibrations {
     /// The posterior, the base under it, and the log. v4: a particle of six
     /// numbers. Nothing before it is read: no build older than this one left
@@ -172,7 +189,7 @@ enum Calibrations {
         var w: [Double]
     }
 
-    private struct StoredV4: Encodable {
+    private struct StoredV4<Record: Encodable>: Encodable {
         var v = 4
         /// The population the posterior was drawn from (E7).
         var p: String
@@ -181,7 +198,7 @@ enum Calibrations {
         var base: StoredPosterior?
         var cal: StoredPosterior
         var folded: Int
-        var log: [EggRecord]
+        var log: [Record]
         /// Omitted when there are none.
         var unread: [Unread]?
     }
@@ -257,8 +274,11 @@ enum Calibrations {
     /// together in their places, then every record this build reads in `log`
     /// and every one it cannot in `unread`, with its place. `moved` says the
     /// split differs from the stored one, so the posterior is replayed.
-    private static func readLog(_ listed: [JSONValue], _ held: [Unread]) -> (log: [EggRecord], unread: [Unread], moved: Bool) {
+    private static func readLog(
+        _ listed: [JSONValue], _ held: [Unread]
+    ) -> (log: [EggRecord], stored: [JSONValue], unread: [Unread], moved: Bool) {
         var log: [EggRecord] = []
+        var stored: [JSONValue] = []
         var unread: [Unread] = []
         var moved = false
         var li = 0
@@ -276,6 +296,7 @@ enum Calibrations {
             }
             if let r = record(raw) {
                 log.append(r)
+                stored.append(raw)
                 if fromHeld { moved = true }
             } else {
                 unread.append(Unread(at: at, record: raw))
@@ -283,7 +304,7 @@ enum Calibrations {
             }
             at += 1
         }
-        return (log, unread, moved)
+        return (log, stored, unread, moved)
     }
 
     private static func columns(_ c: Calibration) -> StoredPosterior {
@@ -327,13 +348,37 @@ enum Calibrations {
     }
 
     static func save(_ k: Kept) {
-        let stored = StoredV4(
-            p: population.id, base: k.base.map(columns), cal: columns(k.calibration), folded: k.folded,
-            log: k.log, unread: k.unread.isEmpty ? nil : k.unread
-        )
-        if let data = try? JSONEncoder().encode(stored) {
+        let base = k.base.map(columns)
+        let cal = columns(k.calibration)
+        let unread = k.unread.isEmpty ? nil : k.unread
+        let data: Data?
+        if let log = overlaid(k) {
+            data = try? JSONEncoder().encode(StoredV4(
+                p: population.id, base: base, cal: cal, folded: k.folded, log: log, unread: unread))
+        } else {
+            data = try? JSONEncoder().encode(StoredV4(
+                p: population.id, base: base, cal: cal, folded: k.folded, log: k.log, unread: unread))
+        }
+        if let data {
             UserDefaults.standard.set(data, forKey: key)
         }
+    }
+
+    /// The log as it is written: each record read from storage as it was
+    /// stored, with what this build knows laid over it. Nil if a record will
+    /// not go through `JSONValue`, which every record does.
+    private static func overlaid(_ k: Kept) -> [JSONValue]? {
+        guard !k.stored.isEmpty else { return nil }
+        var out: [JSONValue] = []
+        out.reserveCapacity(k.log.count)
+        let encoder = JSONEncoder()
+        let decoder = JSONDecoder()
+        for (i, r) in k.log.enumerated() {
+            guard let data = try? encoder.encode(r),
+                  let known = try? decoder.decode(JSONValue.self, from: data) else { return nil }
+            out.append(i < k.stored.count ? overlay(k.stored[i], known) : known)
+        }
+        return out
     }
 
     /// What is in storage, made safe to fold on top of. Every damaged part is
@@ -383,17 +428,17 @@ enum Calibrations {
             let sound = cal ?? base
             return (Kept(base: sound, calibration: start(sound), folded: 0, log: []), false, true)
         }
-        let (log, unread, moved) = readLog(stored.log, stored.unread)
+        let (log, raws, unread, moved) = readLog(stored.log, stored.unread)
         guard !parts.baseDamaged, parts.base == nil || base != nil,
               let cal, let folded = parts.folded, folded >= 0,
               (parts.p ?? literaturePopulation.id) == population.id,
               parts.m == modelID, !moved else {
-            return (Kept(base: base, calibration: start(base), folded: 0, log: log, unread: unread), false, false)
+            return (Kept(base: base, calibration: start(base), folded: 0, log: log, unread: unread, stored: raws), false, false)
         }
         if folded > log.count {
             return (Kept(base: cal, calibration: cal, folded: 0, log: []), false, true)
         }
-        return (Kept(base: base, calibration: cal, folded: folded, log: log, unread: unread), true, false)
+        return (Kept(base: base, calibration: cal, folded: folded, log: log, unread: unread, stored: raws), true, false)
     }
 
     /// The stored copies kept aside, oldest first.
