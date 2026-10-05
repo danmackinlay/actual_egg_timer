@@ -39,7 +39,7 @@ is also the password.
    attested one, and DECISIONS 85 gives open results zero weight. The ID is
    shown on screen and cooks are asked to email it.
    - Fix: an attested record always wins; write it and delete the open one.
-4. DONE f11ddf6 (only an imported results file's lines, or a pulled egg whose twin in the file is, are trusted; `DECISIONS.md` 82's wording predates this, see the OWNER question under Security): **✔ The owner's trusted list trusts the ID, not the record**
+4. DONE f11ddf6 (only an imported results file's lines, or a pulled egg whose twin in the file is, are trusted; OWNER: `DECISIONS.md` 82 says an egg under a listed ID counts in full whatever tier it came in, and now that holds only for your own results file: amend 82, or decide otherwise?): **✔ The owner's trusted list trusts the ID, not the record**
    (`tools/eggsImport.ts:68-79`). Anyone who learns one of your IDs can post
    open records that get full weight in the fit. Trust only lines from your
    own export file.
@@ -98,13 +98,13 @@ Verified as written: off by default, nothing is sent on a fresh install in
 either app, the field list matches the record one for one, and the server
 keeps no address. These don't hold up:
 
-- **"Deletes every result"** in the summary: it reaches only the IDs this
+- DONE a4cc834 (the summary now says every result that device or browser sent); OWNER: (should Settings list the older IDs in `uids` and `deleting`, so a cook can email for them too? That is a wording draft in both apps.) **"Deletes every result"** in the summary: it reaches only the IDs this
   device holds. Settings shows only the current ID, so a cook can't email for
   the older ones in `uids`/`deleting`.
-- **Web results are now zero-weight** (DECISIONS 85), yet web cooks are still
+- OWNER: (ask web cooks to share at all while their results count for nothing, and nudge their time? Either the `share` wording changes in a draft, or web sharing and its nudge go until web results count.) **Web results are now zero-weight** (DECISIONS 85), yet web cooks are still
   asked to share "to learn faster" and still get the ±10 s nudge. Either the
   wording or the collection should change.
-- **"They leave my computer too":** `emulate` output and the documented
+- DONE ca8f334 (a pull deletes `all.jsonl` and `emulated.json` beside it; `fit/README.md` says to emulate again): **"They leave my computer too":** `emulate` output and the documented
   `cat pulled imported > all.jsonl` keep `uid`, `day` and `seq` after a pull
   removes them.
 - DONE a4a5cf1: **iOS can still send an attestation after sharing is turned off,** because
@@ -112,24 +112,24 @@ keeps no address. These don't hold up:
   (`ios/App/Sharing.swift:285-305`). A delete running alongside can also be
   undone by it writing the attest record back.
 - **Small inaccuracies:**
-  - "sometimes moves the time": it moves 20 times in 21.
-  - The App Attest key goes when you delete, not "when its last result does".
-  - The hourly `HEAD sw.js` checks are a periodic contact the page doesn't
+  - DONE a4cc834: "sometimes moves the time": it moves 20 times in 21.
+  - DONE a4cc834: The App Attest key goes when you delete, not "when its last result does".
+  - DONE a4cc834 (it looks when the page comes back into view, at most once an hour, so "at most once an hour"): The hourly `HEAD sw.js` checks are a periodic contact the page doesn't
     mention.
-  - iPhone backups survive "delete the app".
-  - The page's list of what stays on the phone omits `sharing.attest.v1`.
+  - DONE a4cc834: iPhone backups survive "delete the app".
+  - DONE a4cc834: The page's list of what stays on the phone omits `sharing.attest.v1`.
 
 ## Decision logic
 
-- **The time is not strictly monotone between profile points.** The reviewer
+- OWNER: (DECISIONS 84 says the time is monotone in the level. Make it so between points too, with a running maximum over the hundredths since the point below, at up to four more solves per slider move in both apps; or reword DECISIONS 84, the `reach.ts` header and INFERENCE §8 to "monotone at the profile points, and within about a second between them"? Not re-run here.) **The time is not strictly monotone between profile points.** The reviewer
   reproduced it: 0.61 → 716.1 s, then 0.62 → 715.2 s, falling at most about
   1 s. The header in `src/core/reach.ts:47-51` and INFERENCE §8 claim it is
   monotone. Either fix it (a running minimum per slider position) or correct
   the claim; test 12 covers only four cases.
-- **The apps price the advice at different levels:** web at
+- NOT A BUG (on the web, `recompute` runs `applyAnswer` before anything is drawn, which sets `settings.doneness` to the answer's level whenever it snapped, and `answerAt` answers at the level it was given otherwise, so on the idle screen, the only one `renderAdvice` prices, `settings.doneness` is `answer.level`; the ticket is made from the same): **The apps price the advice at different levels:** web at
   `settings.doneness` (`src/ui/app.ts:501`), iOS at `answer.level`. After a
   snap the web's ticket target can disagree with its own solution.
-- **On iOS, after a pot change, the old pot's dots stay** under the thumb with
+- NOT A BUG (deliberate: `Planner.Held` keeps the last shading for the second a new pot's surface takes, so a stepper tap does not blank it and bring it back; the web blanks instead. OWNER only if the two should match): **On iOS, after a pot change, the old pot's dots stay** under the thumb with
   no warning until the new profile arrives.
 - **Checked by running and found sound:** the profile endpoints, empty and
   one-point profiles, warning against odds (no disagreements in 150 runs),
@@ -138,17 +138,17 @@ keeps no address. These don't hold up:
 
 ## Parity
 
-- **Web "+" on an emptied field jumps to the minimum.** Clear the weight,
+- DONE 07d1a12 (checked in a browser): **Web "+" on an emptied field jumps to the minimum.** Clear the weight,
   press +, and the egg is 25 g, which counts as a measured egg. Only the probe
   and room fields have a `StepRule` (`src/ui/stepper.ts:56`). This rests on
   the HTML spec; it wasn't driven in a browser.
-- **iOS "+" after a typed off-grid weight skips a step** (58.3 → 59.0, where
+- DONE 86ce71d (checked on the simulator): **iOS "+" after a typed off-grid weight skips a step** (58.3 → 59.0, where
   the web goes to 58.5).
-- **iOS keeps the "You asked for" line** in the language and units from when
+- DONE 6829df2: **iOS keeps the "You asked for" line** in the language and units from when
   the cook started.
-- **iOS records `appVersion` "0.4.0"** with no build number, so the fit can't
+- DONE 80150cb ("0.4.0+3"): **iOS records `appVersion` "0.4.0"** with no build number, so the fit can't
   tell builds apart.
-- **iOS decodes `sharing.v1` all or nothing,** so a damaged store loses the
+- DONE 80150cb (checked on the simulator: a damaged store still deleted its pending ID): **iOS decodes `sharing.v1` all or nothing,** so a damaged store loses the
   pending deletions. The web salvages each readable ID.
 
 ## Bloat and factoring
@@ -157,38 +157,38 @@ The main problem: logic both apps must agree on sits outside core,
 unfixtured and hand-twinned. Several of the bugs above came from that. Ranked
 by payoff:
 
-1. **✔ `decided()` is written twice:** `src/ui/app.ts:353` and
+1. OWNER: (not low-risk before 0.4 ships: moving the choice into core touches both apps' main solve path and needs new fixtures. After 0.4?) **✔ `decided()` is written twice:** `src/ui/app.ts:353` and
    `ios/App/Planner+Solve.swift:165`. DECISIONS 84 had to land as two
    commits, and the advice-level split above crept in here. Make it one core
    `decideAnswer(...)` and fixture it.
-2. **Egg-record assembly** (`src/ui/calibration.ts:171-237` against
+2. OWNER: (after 0.4, as 1. The `pulledBy` against `outAt` difference is not a drift in behaviour: iOS sets `outAt` only at the cook's tap, so both record a measured pull exactly when the cook tapped after the start.) **Egg-record assembly** (`src/ui/calibration.ts:171-237` against
    `ios/App/Cook.swift:280-341`) is your training data, and is already
    drifting (`pulledBy` against `outAt`). Move it to a core `recordFor(facts)`.
-3. **The sharing state machine** (`turnedOn`, `forgotten`, `deletionAsked`,
+3. OWNER: (after 0.4, as 1; the decode difference is fixed in 80150cb.) **The sharing state machine** (`turnedOn`, `forgotten`, `deletionAsked`,
    `reconciled`, `advances`) is pure and has no fixtures, and the iOS decode
    difference above is the first drift. Move it to `src/core/share.ts`; the
    server can then share `isUid`.
-4. **The decode decision** (fresh / rebuild / rebased / loaded) lives in each
+4. OWNER: (after 0.4, as 1.) **The decode decision** (fresh / rebuild / rebased / loaded) lives in each
    app, and the Swift copy has no tests.
-5. **God files:**
+5. OWNER: (after 0.4; a split of `app.ts` and `calibration.ts` is not low-risk now.) **God files:**
    - `src/ui/app.ts` is 1483 lines with about 20 module-level `let`s.
    - `src/ui/calibration.ts` (933 lines) mixes `APP_VERSION`, record
      building, the storage format and the grid caches. iOS already splits the
      caches out as `DecisionGrids`.
-6. **`oddsProfile`** (`src/core/reach.ts:189-292`) uses closures over mutable
+6. OWNER: (after 0.4: rewriting it without closures means new fixtures for the profile both apps ship.) **`oddsProfile`** (`src/core/reach.ts:189-292`) uses closures over mutable
    maps, which breaks core invariant 2. Its two bisections are copy-pasted.
 7. **Smaller:**
-   - `tools/shape-study/results*.json`: about 5.4k lines committed twice; keep
+   - OWNER: (they are `results.json` and `results-quick.json`, a full run and a quick one, not one file twice: delete the quick one, or minify both?) `tools/shape-study/results*.json`: about 5.4k lines committed twice; keep
      one, minified.
-   - The `fit/` pytest suite runs nowhere, though the fit writes
+   - OWNER: (it passes, 7 tests, with `uv run --project fit pytest -q fit/tests`; adding it to CI puts uv, JAX and NumPyro in the workflow. Add it?) The `fit/` pytest suite runs nowhere, though the fit writes
      `fixtures/population.json`, which both apps ship.
-   - `vercel.json` hand-duplicates the CSP and isn't deployed.
-   - `WORKLIST.md` and `FOLLOWUP.md` are closed records.
-   - `test/decide.test.ts` re-implements `answerAt`.
-   - 43 drafts are compiled on every build.
-   - The CLAUDE.md advice "`rm -rf dist/test` first if a test file was
+   - OWNER: (delete it, or keep it as the second host?) `vercel.json` hand-duplicates the CSP and isn't deployed.
+   - OWNER: (move them to LOGBOOK.md, or delete them?) `WORKLIST.md` and `FOLLOWUP.md` are closed records.
+   - DONE eac10c9: `test/decide.test.ts` re-implements `answerAt`.
+   - OWNER: (`tools/copyDraft.ts` registers them, so they compile with everything else; build time only. Leave, or move finished drafts out of the build?) 43 drafts are compiled on every build.
+   - OWNER: (true: `npm test` starts with `rm -rf dist`. CLAUDE.md is yours to change; this session did not.) The CLAUDE.md advice "`rm -rf dist/test` first if a test file was
      deleted" is stale: `npm test` already runs `rm -rf dist`.
-   - A handful of exports are used only in their own file.
+   - OWNER: (not named in the review, so not traced here; for the factoring after 0.4?) A handful of exports are used only in their own file.
 
 **Found fine:** the CBOR and DER parsing, the attestation checks, preview
 stores kept separate from production's, no import cycles, every copy key
