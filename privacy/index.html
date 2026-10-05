@@ -66,7 +66,7 @@
   egg you cook: how it was cooked and how you said it came out, with a
   random ID in place of your name. Turn it off and nothing more is sent,
   but what was already sent stays. <em>Delete shared results</em>, in the
-  same place, deletes every result that was.</p>
+  same place, deletes every result that device or browser sent.</p>
   <p>Sharing came with version 0.4. If your app has no <em>Sharing
   results</em> in Settings, it is an earlier version, and it sends nothing
   at all.</p>
@@ -85,7 +85,8 @@
     <li>how long your water took to boil, for each amount you have timed;</li>
     <li>if you have turned sharing on: whether it is on, your random ID
     and any you used before (so that deleting reaches all of them), and how
-    many of your results have been sent.</li>
+    many of your results have been sent; on iPhone, also the name of the key
+    the app signs with (below) and whether Apple has confirmed it.</li>
   </ul>
   <p>On iPhone, these are kept in the app’s own storage on the phone. If you
   back up your iPhone, the backup includes them, as it does any app’s data.
@@ -143,8 +144,8 @@
   <em>Start learning again</em>, the app uses a new one, and your next
   results count as a new person’s.</p>
   <p><strong>The time may move a few seconds.</strong> While sharing is on,
-  the app sometimes moves the time it gives you by up to ten seconds either
-  way, small enough to stay within “just right”. Results from people who
+  the app moves the time it gives you by up to ten seconds either way, chosen
+  at random for each egg, small enough to stay within “just right”. Results from people who
   all follow the app’s usual times say nothing about other times. A few
   seconds either side shows what happens near them. A small
   <em>Learning</em> mark beside the time says so while sharing is on.</p>
@@ -175,7 +176,7 @@
   <p><strong>How long.</strong> For as long as I use them to work out the
   app’s starting guesses: until you delete them, or until I stop making the
   app, when I delete them all. The App Attest details for a random ID go
-  when its last result does.</p>
+  when you delete its results.</p>
   <!-- The local copy (DECISIONS.md 75): `npm run eggs -- pull <file>`
        writes the whole store to one file, overwriting it, so each pull is a
        fresh snapshot and a deletion on the server reaches the local copy at
@@ -225,7 +226,9 @@
     You’ll find it in Settings, under <em>Sharing results</em>, as
     <em>Your random ID</em>, and you can select it and copy it.</li>
     <li><strong>On your device:</strong> on iPhone, delete the app, and
-    everything it kept goes with it. On the web, clear this site’s data in
+    everything it kept on the phone goes with it. A backup of the phone
+    made before then still holds a copy, until that backup is deleted or
+    replaced. On the web, clear this site’s data in
     your browser’s settings. Delete what you sent first, because once the
     app and its random ID are gone, I cannot tell which results were
     yours.</li>
@@ -311,7 +314,9 @@
     <li>Beyond the website loading itself, neither app connects to
     anything but this site, and then only to send or delete your results
     when you share. The one exception is App Attest, when the iPhone app
-    first sends (above).</li>
+    first sends (above). While the website is open, it also asks this site,
+    at most once an hour, whether there is a newer version of itself; that
+    asks for one of the site’s own files and sends nothing about you.</li>
   </ul>
   <p>Both apps have links, in Help and to the code, that open in your
   browser only when you follow one.</p>
