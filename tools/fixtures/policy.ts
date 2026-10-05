@@ -1,7 +1,8 @@
 /**
  * fixtures/policy.json: the decisions above the physics - snapping, the
  * refusal verdict, texture bands, the calibration grid's geometry, the bounds
- * and defaults, both size-class tables, the phase rule.
+ * and defaults, both size-class tables, the phase rule, and what a sender
+ * makes of the sharing endpoint's answer.
  */
 
 import { SIZE_CLASSES, US_SIZE_CLASSES, SizeClass, sizeTableFor } from '../../src/core/geometry.js';
@@ -10,9 +11,10 @@ import {
   LIMITS, SLIDER_STEPS, PARTICLE_COUNT as POLICY_PARTICLES, CALIBRATION_SEED, DEFAULTS, DEFAULT_EGG_MASS_KG,
   DEFAULT_TIME_TO_BOIL_S, START_TEMP_PRESETS_C, BoilMemory, CALIBRATION_ALPHA_HIGH, CALIBRATION_ALPHA_LOW,
   COOLING_SECONDS, PULL_GRACE_SECONDS, ROOM_EGG_FROM_C, SLOW_HOB_EVERY_S, SLOW_HOB_EXTRA_S,
-  SLOW_HOB_WHEN_LEFT_S, WHITE_BAND_BELOW_C, YOLK_BAND_BELOW_C, ambientFor, anchorNear, anchorReachable, calibrationGrid,
+  SLOW_HOB_WHEN_LEFT_S, SHARE_WAIT_S, SHARE_WAIT_TRIES, WHITE_BAND_BELOW_C, YOLK_BAND_BELOW_C, ambientFor,
+  anchorNear, anchorReachable, calibrationGrid,
   carrySizeIndex, estimateTimeToBoil, phaseAt, rememberBoil, snapDown, snapUp, targetPeakYolk_C, textureFor,
-  textureNoteKeys, verdictFor, roomInUse, startTempPreset_C,
+  textureNoteKeys, verdictFor, roomInUse, shareGivesUp, shareReply, startTempPreset_C,
 } from '../../src/core/policy.js';
 
 /* The decisions above the physics. None of it is expensive, so the cases
@@ -82,7 +84,7 @@ function sizeClassRow(c: SizeClass): { key: string; mass_kg: number } {
 }
 
 export const policyFixture = {
-  about: 'The decisions above the physics: snapping, the refusal verdict, texture bands, the calibration grid\'s geometry, the bounds and defaults, both size-class tables, the phase rule. src/core/policy.ts.',
+  about: 'The decisions above the physics: snapping, the refusal verdict, texture bands, the calibration grid\'s geometry, the bounds and defaults, both size-class tables, the phase rule, a sharing sender\'s reading of the endpoint\'s answer. src/core/policy.ts.',
   slider: {
     steps: SLIDER_STEPS,
     cases: SNAP_LEVELS.map((level) => ({
@@ -221,6 +223,20 @@ export const policyFixture = {
   }))),
   limits: LIMITS,
   calibration: { particles: POLICY_PARTICLES, seed: CALIBRATION_SEED },
+  /* What a sender makes of the endpoint's answer, and when it stops waiting:
+   * every status class's edges, and both bounds either side. */
+  share: {
+    waitTries: SHARE_WAIT_TRIES,
+    wait_s: SHARE_WAIT_S,
+    replies: [100, 199, 200, 201, 202, 204, 299, 301, 304, 399, 400, 401, 403, 404, 405, 407, 408, 409, 413,
+      415, 428, 429, 430, 451, 499, 500, 502, 503, 504, 511, 599, 600].map((status) => ({
+      status: status,
+      reply: shareReply(status),
+    })),
+    givesUp: [0, 1, 4, 5, 6, 50].flatMap((tries) => [
+      -1, 0, 3600, SHARE_WAIT_S - 1, SHARE_WAIT_S, SHARE_WAIT_S + 1, 30 * 24 * 3600,
+    ].map((waited_s) => ({ tries: tries, waited_s: waited_s, givesUp: shareGivesUp(tries, waited_s) }))),
+  },
   phase: {
     coolingSeconds: COOLING_SECONDS,
     pullGraceSeconds: PULL_GRACE_SECONDS,

@@ -613,3 +613,56 @@ export function phaseAt(d: Deadlines, now_s: number): Phase {
   if (d.coolEnd_s === null) return 'DONE';
   return now_s < d.coolEnd_s ? 'COOLING' : 'DONE';
 }
+
+/* ------------------------------------------------------ sharing's replies */
+
+/**
+ * What an answer from the collection endpoint (`server/eggs.ts`) means to the
+ * app that sent a result or an attestation (`src/ui/share.ts`, iOS's
+ * `Sharing.swift`):
+ *
+ * - `kept`: 201 kept, 200 already kept.
+ * - `busy`: 408, 429 or any 5xx - the server, or something in front of it,
+ *   is overloaded, limited or down, and the same request may well be taken
+ *   later. Wait, and ask again on a later run, within `shareGivesUp`.
+ * - `refused`: anything else, for good. 400 and 413 are the server's own
+ *   refusals; a 403, 404, 405 or 415 is a moved route, a firewall or a proxy
+ *   in the way, which asking again will not change. Waiting on one would stop
+ *   everything behind it, the open results included, and say nothing; so the
+ *   result is passed over, and an attestation given up (the phone sends
+ *   open).
+ *
+ * No answer at all - offline, a timeout - is the caller's, and is not one of
+ * these: it waits, and is not counted, since nothing else can get through
+ * either, and nothing was learned.
+ */
+export type ShareReply = 'kept' | 'busy' | 'refused';
+
+export function shareReply(status: number): ShareReply {
+  if (status === 200 || status === 201) return 'kept';
+  if (status === 408 || status === 429 || (status >= 500 && status <= 599)) return 'busy';
+  return 'refused';
+}
+
+/**
+ * How long a step waits on busy answers before it gives up: a result is then
+ * passed over, as if refused, and an attestation, or a signature the phone
+ * could not make, given up for the id, which then sends open - as a phone
+ * that lost its key does. So nothing waits for good.
+ *
+ * Both bounds must be met. Three days outlasts the outages that pass - a
+ * deploy gone wrong, a provider's bad day, Apple's service down - including
+ * one that waits a weekend for the owner to fix it. Five busy answers, each
+ * from its own run, keep a phone opened once in a while from giving up on
+ * the first busy answer after days asleep. Only busy answers count (no
+ * answer does not), and the count starts again for each result.
+ */
+export const SHARE_WAIT_TRIES = 5;
+export const SHARE_WAIT_S = 3 * 24 * 60 * 60;
+
+/** Whether a step that has had `tries` busy answers, the first `waited_s`
+ *  ago, stops waiting. A negative wait is a clock set back since: the start
+ *  cannot be trusted, and the tries alone decide. */
+export function shareGivesUp(tries: number, waited_s: number): boolean {
+  return tries >= SHARE_WAIT_TRIES && (waited_s >= SHARE_WAIT_S || waited_s < 0);
+}

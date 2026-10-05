@@ -414,3 +414,26 @@ struct PhaseConformance {
         try expectClose(slowHobEveryS, slowHob.num("every_s"), "slowHobEveryS")
     }
 }
+
+@Suite("What a sharing sender makes of the endpoint's answer matches the reference implementation")
+struct ShareReplyConformance {
+    @Test("every status's reading, and the bounds on waiting")
+    func cases() throws {
+        let share = try Fixtures.object("policy.json", "share")
+        #expect(Double(shareWaitTries) == (try share.num("waitTries")), "shareWaitTries")
+        try expectClose(shareWaitS, share.num("wait_s"), "shareWaitS")
+        for c in try share.rows("replies") {
+            let status = Int(try c.num("status"))
+            let want = try c.value(ShareReply.self, "reply")
+            #expect(shareReply(status) == want, "shareReply(\(status))")
+        }
+        for c in try share.rows("givesUp") {
+            let tries = Int(try c.num("tries"))
+            let waitedS = try c.num("waited_s")
+            #expect(
+                shareGivesUp(tries: tries, waitedS: waitedS) == (try c.flag("givesUp")),
+                "shareGivesUp(\(tries), \(waitedS))"
+            )
+        }
+    }
+}

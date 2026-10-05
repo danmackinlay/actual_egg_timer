@@ -19,7 +19,8 @@
  *   fixtures/policy.json       the decisions above the physics - snapping, the
  *                              refusal verdict, texture bands, the calibration
  *                              grid's geometry, the bounds and defaults, both
- *                              size-class tables, the phase rule
+ *                              size-class tables, the phase rule, what a
+ *                              sharing sender makes of the endpoint's answer
  *   fixtures/sousvide.json     the isothermal limit: no pan, no ramp, no
  *                              cooling, and an answer in hours
  *   fixtures/sousvideCopy.json which words say the sous-vide answer

@@ -688,3 +688,34 @@ public func deadlineToRing(
     if authorized == true && scheduled.contains(deadline) { return nil }
     return deadline
 }
+
+// MARK: - Sharing's replies
+
+/// What an answer from the collection endpoint means to the app that sent a
+/// result or an attestation (`shareReply` in policy.ts, whose comment has the
+/// reasons): kept (200, 201); busy (408, 429, any 5xx), so wait and ask again
+/// on a later run, within `shareGivesUp`; or refused for good (anything
+/// else), so the result is passed over and an attestation given up. No
+/// answer at all is the caller's: it waits, uncounted.
+public enum ShareReply: String, Sendable {
+    case kept, busy, refused
+}
+
+public func shareReply(_ status: Int) -> ShareReply {
+    if status == 200 || status == 201 { return .kept }
+    if status == 408 || status == 429 || (500...599).contains(status) { return .busy }
+    return .refused
+}
+
+/// How long a step waits on busy answers before giving up: at least this
+/// many busy answers, each from its own run, and at least this long since the
+/// first. Why these: `SHARE_WAIT_TRIES` in policy.ts.
+public let shareWaitTries = 5
+public let shareWaitS = 3.0 * 24 * 60 * 60
+
+/// Whether a step that has had `tries` busy answers, the first `waitedS` ago,
+/// stops waiting. A negative wait is a clock set back since: the tries alone
+/// decide.
+public func shareGivesUp(tries: Int, waitedS: Double) -> Bool {
+    tries >= shareWaitTries && (waitedS >= shareWaitS || waitedS < 0)
+}
