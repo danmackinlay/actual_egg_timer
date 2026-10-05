@@ -76,7 +76,7 @@ import {
   buildClauses, liveSetupFacts, redrawSentence, renderCookSetup, renderSentence,
 } from './sentence.js';
 import {
-  buildTicks, labelTicks, renderBracket, renderDonenessReading, renderDonenessScale,
+  buildTicks, labelTicks, renderBareScale, renderDonenessReading, renderDonenessScale,
 } from './slider.js';
 import { Ticket, restoreTicket, withTimeToBoil } from './ticket.js';
 import { Learning, renderCalibNote, renderLearned, wireExport, wireForget } from './learned.js';
@@ -746,7 +746,7 @@ function renderSousVide(now_ms: number): void {
   page().directionText.textContent = '';
   page().whiteRisk.hidden = true;
   page().readout.style.minHeight = '';
-  renderBracket(null);
+  renderBareScale();
   showInfo(page().oddsInfo, false);
   showInfo(page().sublineInfo, false);
   showInfo(page().hintInfo, false);
