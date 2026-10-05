@@ -200,3 +200,55 @@ change at review time, in the widget bundle, was a trailing blank line.
 
 The two multi-tab fixes and the raw-JSON write-back: they're the ones that
 lose a cook's data.
+
+## Second pass (the owner's QA agent, 6 October 2026)
+
+Verdicts on the first pass: 2, 3, 4, 6, the server hardening and the small
+fixes hold; the two NOT A BUG calls hold; 1 and 5 hold only in part.
+
+### Fix before 0.4 ships
+
+- **Two builds in two tabs rewrite each other's store forever**
+  (`src/ui/calibration.ts:591`). Taking up another tab's store writes back
+  unless it decoded cleanly; a tab on an older `MODEL_ID` decodes the newer
+  store as "rebuild" and writes its own, and the other answers in kind
+  (reproduced: `m` alternating e9/e10, `folded` stuck at 0, `learn()` each
+  round). The service worker keeps old windows on old builds, so any
+  `MODEL_ID` bump with two tabs open triggers it. Fix: never write while
+  taking up another tab's store; write only on this tab's own next change.
+- **iOS waits forever on most errors** (`ios/App/Sharing.swift:351`): every
+  reply but 200, 201, 400 or 409, and every signing error but a lost key,
+  waits for the next run with no limit, so a 403/404/413/415 stops all iOS
+  sharing silently, open results included. Fix: wait only on no reply, 429
+  and 5xx; give up after an age or a number of runs.
+
+### Next
+
+- **A second answer can be dropped silently:** if the other tab learns from
+  the egg first, `recordSecondAnswer` returns false and the cook is thanked
+  anyway. Leave learning from an egg to the tab that logged it.
+- **A logged egg can count twice:** records carry no ID or start time to
+  dedupe on, and nothing listens for the cook-in-progress key. Give each
+  record the start time as an ID (fixes this and the one above).
+- **Boil memory and settings** are not covered: "Forget everything" is
+  still undone by another tab's next measured boil.
+- **The lock is held across a `fetch` with no timeout:** a stalled POST
+  blocks deletions in every tab.
+- **Rollback claim:** top-level store fields are still dropped by an older
+  build, so `ios/RELEASING.md`'s "rolling 0.5 back to 0.4 is safe" says too
+  much.
+
+### The yolk words (DECISIONS 92)
+
+- **Freeze the word cuts:** they are derived from `DONENESS_ANCHORS` at run
+  time (`src/core/infer.ts:173`), so moving an anchor would rescore every
+  stored word. Literals, with a test tying them to today's anchors.
+- **The odds no cook answers for any more:** the odds and outcome wording
+  describe "just right"; the word's band is about twice as wide, so the fit
+  cannot check the shown odds against answers. OWNER.
+- **Two buttons read "Runny" to a screen reader;** neither row is grouped
+  with its question (`index.html:543`, iOS `FeedbackPanel`). `role="group"`
+  with `aria-labelledby`; a container label on iOS.
+- Smaller: iOS's five words may clip at the largest text sizes; the web
+  leaves struck-through ticks in sous-vide; `-seedEggs` seeds only old-style
+  answers; `tools/eggs.ts` re-implements the word probit it imports.
