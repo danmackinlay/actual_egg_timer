@@ -13,7 +13,7 @@
  * (`readInputs`). The field stays typeable, and its own arrow keys still step.
  * A field given a rule of its own (`setStepRule`: the probe reading and the
  * room, the `feedback2` draft) steps by that instead, from its placeholder
- * when it is empty.
+ * when it is empty. Any other field, emptied, does not step at all.
  *
  * The glyphs are drawn in CSS, so the markup holds no words; each button's
  * name to a screen reader is "Less: {label}" or "More: {label}", with the
@@ -54,6 +54,9 @@ function stepOnce(input: HTMLInputElement, up: boolean): boolean {
     if (input.disabled || (typed === '' && input.placeholder === '') || !Number.isFinite(from)) return false;
     input.value = String(rule(from, up));
   } else {
+    // An emptied field is the cook's to type: the browser would step it from
+    // zero, so + would put the smallest egg there, as if it had been weighed.
+    if (input.value.trim() === '') return false;
     try {
       if (up) input.stepUp();
       else input.stepDown();
