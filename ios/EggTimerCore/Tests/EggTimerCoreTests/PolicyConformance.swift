@@ -40,6 +40,25 @@ struct SliderConformance {
     }
 }
 
+@Suite("Which tick words can be reached matches the reference implementation")
+struct ReachableWordsConformance {
+    @Test("anchorReachable, every case")
+    func cases() throws {
+        for c in try Fixtures.list("policy.json", "reachableWords") {
+            let softest = try c.num("softest")
+            let hardest = try c.num("hardest")
+            let want = try #require(c["reachable"] as? [Bool], "reachable")
+            #expect(want.count == donenessAnchors.count)
+            for i in donenessAnchors.indices {
+                #expect(
+                    anchorReachable(i, softest: softest, hardest: hardest) == want[i],
+                    "anchorReachable(\(i), \(softest), \(hardest))"
+                )
+            }
+        }
+    }
+}
+
 @Suite("The refusal verdict matches the reference implementation")
 struct VerdictConformance {
     /// A Solution carrying only the fields the verdict reads. The fixture cases

@@ -64,7 +64,9 @@ struct DonenessControl: View {
     }
 
     /// The five doneness words, each under the level it names, as the web's
-    /// ticks are. The ends are held inside the track.
+    /// ticks are. The ends are held inside the track. A word is struck
+    /// through, as on the web, only where the pan cannot deliver any of it:
+    /// none of its positions lies outside the stripes (`anchorReachable`).
     private var ticks: some View {
         GeometryReader { geo in
             let inset = thumbInset
@@ -72,12 +74,14 @@ struct DonenessControl: View {
             ZStack(alignment: .topLeading) {
                 ForEach(donenessAnchors.indices, id: \.self) { i in
                     let anchor = donenessAnchors[i]
+                    let blocked = tickBlocked(i)
+                    let word = Text(tr(anchor.key)).strikethrough(blocked).opacity(blocked ? 0.5 : 1)
                     if i == 0 {
-                        Text(tr(anchor.key)).frame(maxWidth: .infinity, alignment: .leading)
+                        word.frame(maxWidth: .infinity, alignment: .leading)
                     } else if i == donenessAnchors.count - 1 {
-                        Text(tr(anchor.key)).frame(maxWidth: .infinity, alignment: .trailing)
+                        word.frame(maxWidth: .infinity, alignment: .trailing)
                     } else {
-                        Text(tr(anchor.key))
+                        word
                             .fixedSize()
                             .position(x: inset + CGFloat(anchor.level) * span, y: 8)
                     }
@@ -88,6 +92,16 @@ struct DonenessControl: View {
         .appFont(.caption2)
         .foregroundStyle(.secondary)
         .accessibilityHidden(true)
+    }
+
+    /// Whether the word at `index` is out of the pan's reach: over the
+    /// stripes the track draws (`OddsTrack`), so never before a solution or in
+    /// sous-vide, where there are none.
+    private func tickBlocked(_ index: Int) -> Bool {
+        guard !planner.isSousVide, let solution = planner.solution else { return false }
+        let softest = solution.whiteSets ? solution.softestLevel : 1
+        let hardest = solution.whiteSets ? solution.hardestLevel : 0
+        return !anchorReachable(index, softest: softest, hardest: hardest)
     }
 
     /// At the end of the slider's heading: the peak yolk the level asks for,

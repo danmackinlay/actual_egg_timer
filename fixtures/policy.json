@@ -341,6 +341,239 @@
       }
     ]
   },
+  "reachableWords": [
+    {
+      "softest": 0,
+      "hardest": 1,
+      "reachable": [
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "softest": 0.05,
+      "hardest": 1,
+      "reachable": [
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "softest": 0.09,
+      "hardest": 1,
+      "reachable": [
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "softest": 0.11,
+      "hardest": 1,
+      "reachable": [
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "softest": 0.1100001,
+      "hardest": 1,
+      "reachable": [
+        false,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "softest": 0.12,
+      "hardest": 1,
+      "reachable": [
+        false,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "softest": 0.3,
+      "hardest": 1,
+      "reachable": [
+        false,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "softest": 0.315,
+      "hardest": 1,
+      "reachable": [
+        false,
+        false,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "softest": 0.32,
+      "hardest": 1,
+      "reachable": [
+        false,
+        false,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "softest": 0.52,
+      "hardest": 1,
+      "reachable": [
+        false,
+        false,
+        false,
+        true,
+        true
+      ]
+    },
+    {
+      "softest": 0.8,
+      "hardest": 1,
+      "reachable": [
+        false,
+        false,
+        false,
+        true,
+        true
+      ]
+    },
+    {
+      "softest": 0.81,
+      "hardest": 1,
+      "reachable": [
+        false,
+        false,
+        false,
+        false,
+        true
+      ]
+    },
+    {
+      "softest": 0.82,
+      "hardest": 1,
+      "reachable": [
+        false,
+        false,
+        false,
+        false,
+        true
+      ]
+    },
+    {
+      "softest": 1,
+      "hardest": 1,
+      "reachable": [
+        false,
+        false,
+        false,
+        false,
+        true
+      ]
+    },
+    {
+      "softest": 0,
+      "hardest": 0.82,
+      "reachable": [
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "softest": 0,
+      "hardest": 0.81,
+      "reachable": [
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "softest": 0,
+      "hardest": 0.8,
+      "reachable": [
+        true,
+        true,
+        true,
+        true,
+        false
+      ]
+    },
+    {
+      "softest": 0,
+      "hardest": 0.515,
+      "reachable": [
+        true,
+        true,
+        true,
+        false,
+        false
+      ]
+    },
+    {
+      "softest": 0.42,
+      "hardest": 0.5,
+      "reachable": [
+        false,
+        false,
+        true,
+        false,
+        false
+      ]
+    },
+    {
+      "softest": 0.2,
+      "hardest": 0.25,
+      "reachable": [
+        false,
+        true,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "softest": 1,
+      "hardest": 0,
+      "reachable": [
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  ],
   "verdict": [
     {
       "reachable": true,

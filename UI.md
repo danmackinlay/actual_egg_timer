@@ -287,7 +287,9 @@ works. Colour alone is a level at 3/10 or better; dots mark levels the pan
 delivers but gets right fewer than 3 times in 10 so far, which can be
 chosen and are warned of; stripes mark what the pan cannot deliver, which
 cannot. No dots before the first egg that taught something. A tick word is
-struck through (web) only over the stripes. The strip is bare before the
+struck through, in both apps, only when every position it names is under the
+stripes (`anchorReachable`): after a runny white the floor moves to about
+0.05-0.09, which is still Runny, so Runny stays. The strip is bare before the
 first answer and in sous-vide.
 
 **Nothing jumps.** While idle the direction keeps two lines' room and centres

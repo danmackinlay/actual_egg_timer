@@ -6,7 +6,7 @@
  * track shows - none once a cook is running - is the caller's to say.
  */
 
-import { anchorNear } from '../core/policy.js';
+import { anchorNear, anchorReachable } from '../core/policy.js';
 import { DONENESS_ANCHORS, Solution } from '../core/solve.js';
 import { OddsProfile, shadingOf } from '../core/reach.js';
 import { Outcome } from '../core/outcome.js';
@@ -64,13 +64,11 @@ export function renderDonenessScale(
   placeBand(page().donenessUnlikelyHard, warning ? odds.hardest ?? 0 : 0, warning ? odds.physicalHardest : 0);
   renderBracket(bracket);
 
-  // A word is struck through only where the pan cannot deliver it.
+  // A word is struck through only where the pan cannot deliver any of it.
   const ticks = page().donenessTicks.children;
   for (let i = 0; i < ticks.length; i += 1) {
-    const anchor = DONENESS_ANCHORS[i];
-    if (anchor === undefined) continue;
-    const blocked = anchor.level < softest - 0.005 || anchor.level > hardest + 0.005;
-    ticks[i].classList.toggle('blocked', blocked);
+    if (DONENESS_ANCHORS[i] === undefined) continue;
+    ticks[i].classList.toggle('blocked', !anchorReachable(i, softest, hardest));
   }
 }
 

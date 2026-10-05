@@ -203,6 +203,22 @@ export function anchorNear(level: number): DonenessAnchor {
   return best;
 }
 
+/** Whether the word of the anchor at `index` names any position the slider
+ *  can rest on between `softest` and `hardest`: the positions from
+ *  `snapUp(softest)` to `snapDown(hardest)`, each read as `anchorNear` reads
+ *  it. A word is struck through on the track only when it names none of
+ *  them. Not `anchor.level < softest`: after a runny white the softest
+ *  level is a little above 0, still Runny, and Runny can still be chosen. */
+export function anchorReachable(index: number, softest: number, hardest: number): boolean {
+  const key = DONENESS_ANCHORS[index].key;
+  const lo = Math.round(snapUp(softest) * SLIDER_STEPS);
+  const hi = Math.round(snapDown(hardest) * SLIDER_STEPS);
+  for (let p = lo; p <= hi; p++) {
+    if (anchorNear(p / SLIDER_STEPS).key === key) return true;
+  }
+  return false;
+}
+
 /** Peak yolk temperature the slider is asking for, interpolated between the
  *  anchors. The dose scale is logarithmic precisely so that this is linear in
  *  temperature, so a straight interpolation is right - and it costs nothing,

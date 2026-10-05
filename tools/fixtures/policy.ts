@@ -5,12 +5,12 @@
  */
 
 import { SIZE_CLASSES, US_SIZE_CLASSES, SizeClass, sizeTableFor } from '../../src/core/geometry.js';
-import { Solution } from '../../src/core/solve.js';
+import { DONENESS_ANCHORS, Solution } from '../../src/core/solve.js';
 import {
   LIMITS, SLIDER_STEPS, PARTICLE_COUNT as POLICY_PARTICLES, CALIBRATION_SEED, DEFAULTS, DEFAULT_EGG_MASS_KG,
   DEFAULT_TIME_TO_BOIL_S, START_TEMP_PRESETS_C, BoilMemory, CALIBRATION_ALPHA_HIGH, CALIBRATION_ALPHA_LOW,
   COOLING_SECONDS, PULL_GRACE_SECONDS, ROOM_EGG_FROM_C, SLOW_HOB_EVERY_S, SLOW_HOB_EXTRA_S,
-  SLOW_HOB_WHEN_LEFT_S, WHITE_BAND_BELOW_C, YOLK_BAND_BELOW_C, ambientFor, anchorNear, calibrationGrid,
+  SLOW_HOB_WHEN_LEFT_S, WHITE_BAND_BELOW_C, YOLK_BAND_BELOW_C, ambientFor, anchorNear, anchorReachable, calibrationGrid,
   carrySizeIndex, estimateTimeToBoil, phaseAt, rememberBoil, snapDown, snapUp, targetPeakYolk_C, textureFor,
   textureNoteKeys, verdictFor, roomInUse, startTempPreset_C,
 } from '../../src/core/policy.js';
@@ -93,6 +93,20 @@ export const policyFixture = {
       targetPeakYolk_C: targetPeakYolk_C(level),
     })),
   },
+  /* Which tick words can be reached between a softest and a hardest level:
+   * the soft end after a runny white (a floor at 0.05-0.09, still Runny), each
+   * word's edges - 0.11 is Runny's last position and 0.12 Soft's first, 0.80
+   * Fudgy's last and 0.81 Hard's first - and
+   * a pan whose white never sets (softest 1, hardest 0). */
+  reachableWords: [
+    [0, 1], [0.05, 1], [0.09, 1], [0.11, 1], [0.1100001, 1], [0.12, 1], [0.3, 1], [0.315, 1], [0.32, 1],
+    [0.52, 1], [0.8, 1], [0.81, 1], [0.82, 1], [1, 1], [0, 0.82], [0, 0.81], [0, 0.8], [0, 0.515],
+    [0.42, 0.5], [0.2, 0.25], [1, 0],
+  ].map(([softest, hardest]) => ({
+    softest: softest,
+    hardest: hardest,
+    reachable: DONENESS_ANCHORS.map((_, i) => anchorReachable(i, softest, hardest)),
+  })),
   verdict: VERDICT_CASES.map((c) => {
     const v = verdictFor(verdictCase(c.reachable, c.whiteSets, c.softest, c.hardest), c.level);
     return {

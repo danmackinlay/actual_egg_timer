@@ -184,6 +184,23 @@ public func anchorNear(_ level: Double) -> DonenessAnchor {
     return best
 }
 
+/// Whether the word of the anchor at `index` names any position the slider
+/// can rest on between `softest` and `hardest`: the positions from
+/// `snapUp(softest)` to `snapDown(hardest)`, each read as `anchorNear` reads
+/// it. A word is struck through on the track only when it names none of
+/// them. Not `anchor.level < softest`: after a runny white the softest
+/// level is a little above 0, still Runny, and Runny can still be chosen.
+public func anchorReachable(_ index: Int, softest: Double, hardest: Double) -> Bool {
+    let key = donenessAnchors[index].key
+    let lo = Int((snapUp(softest) * sliderSteps).rounded())
+    let hi = Int((snapDown(hardest) * sliderSteps).rounded())
+    guard lo <= hi else { return false }
+    for p in lo...hi where anchorNear(Double(p) / sliderSteps).key == key {
+        return true
+    }
+    return false
+}
+
 /// Peak yolk temperature the slider is asking for, interpolated between the
 /// anchors. The dose scale is logarithmic precisely so that this is linear in
 /// temperature, so a straight interpolation is right - and it costs nothing,

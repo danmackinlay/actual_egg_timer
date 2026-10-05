@@ -11,7 +11,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
-  LIMITS, clamp, isWithin, SLIDER_STEPS, snapUp, snapDown, anchorNear,
+  LIMITS, clamp, isWithin, SLIDER_STEPS, snapUp, snapDown, anchorNear, anchorReachable,
   targetPeakYolk_C, verdictFor, textureFor, textureNoteKeys, calibrationGrid, DEFAULTS,
   DEFAULT_EGG_MASS_KG, DEFAULT_TIME_TO_BOIL_S, START_TEMP_PRESETS_C, ambientFor, roomInUse, startTempPreset_C,
   rememberBoil, estimateTimeToBoil, hasBoilMemory, volumeKey, BoilMemory, carrySizeIndex,
@@ -442,6 +442,29 @@ test('7e. a scaled estimate is still held to the credible range', () => {
 test('7f. the volume key is stable to one decimal place', () => {
   assert.equal(volumeKey(2), volumeKey(2.04), 'a wobble in litres is the same pan');
   assert.notEqual(volumeKey(2), volumeKey(2.5));
+});
+
+test('7g. a tick word is struck through only when none of its positions can be reached', () => {
+  const reach = (softest: number, hardest: number): boolean[] => DONENESS_ANCHORS.map(
+    (_, i) => anchorReachable(i, softest, hardest),
+  );
+  // After a runny white the floor moves to 0.05-0.09, which is still Runny.
+  assert.deepEqual(reach(0.07, 1), [true, true, true, true, true]);
+  // Runny's last position is 0.11, the midpoint with Soft, where a tie goes
+  // to the softer word; past it Runny is gone.
+  assert.deepEqual(reach(0.11, 1), [true, true, true, true, true]);
+  assert.deepEqual(reach(0.115, 1), [false, true, true, true, true]);
+  // At the hard end the midpoint is 0.81, which in binary sits a hair
+  // nearer Hard; 0.80 is Fudgy's last position.
+  assert.deepEqual(reach(0, 0.80), [true, true, true, true, false]);
+  assert.deepEqual(reach(0, 0.81), [true, true, true, true, true]);
+  // A pan whose white never sets reaches nothing.
+  assert.deepEqual(reach(1, 0), [false, false, false, false, false]);
+  for (let p = 0; p <= SLIDER_STEPS; p++) {
+    const level = p / SLIDER_STEPS;
+    const named = DONENESS_ANCHORS.indexOf(anchorNear(level));
+    assert.equal(anchorReachable(named, level, level), true, `the word at ${level} names it`);
+  }
 });
 
 function close(actual: number, expected: number, tol: number, what: string): void {
