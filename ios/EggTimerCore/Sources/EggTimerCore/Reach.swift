@@ -19,7 +19,8 @@ import Foundation
 /// its points are decided from the hard end, each held under the time of the
 /// point above it - a running minimum, the projection of the per-level choices
 /// onto schedules that never fall as the level rises - and a level between
-/// two points is held between their times (`envelopeBounds`). The reasons,
+/// two points is held between their times (`envelopeBounds`): monotone at
+/// the points, and within about a second of it between them. The reasons,
 /// and the measurements, are in src/core/reach.ts, which this is held to by
 /// fixtures/reach.json.
 

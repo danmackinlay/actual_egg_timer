@@ -46,9 +46,11 @@
  * hard end to the soft, each held under the time of the point above it, and
  * each point keeps the time it was given (`cookTime_s`). A level between two
  * points, as the slider is on a drag, is held between those two points'
- * times (`envelopeBounds`), which is the running minimum where the choice
- * moves one way between them and keeps the whole slider monotone where it
- * does not. A drag costs what it did: its own decision, and a look-up. What
+ * times (`envelopeBounds`). So the time is monotone at the points, and
+ * within about a second of it between them: the choice can dip inside the
+ * bounds, as 0.61's 716.1 s against 0.62's 715.2 s does (REVIEW-0.4.x, and
+ * DECISIONS.md 84, which accepts it). A drag costs what it did: its own
+ * decision, and a look-up. What
  * the sampling misses is a dip in the choices narrower than the step between
  * points; the time it gives there is within one step's change of the
  * choice, a few seconds. A bisection point is held between its neighbours,

@@ -39,7 +39,7 @@ is also the password.
    attested one, and DECISIONS 85 gives open results zero weight. The ID is
    shown on screen and cooks are asked to email it.
    - Fix: an attested record always wins; write it and delete the open one.
-4. DONE f11ddf6 (only an imported results file's lines, or a pulled egg whose twin in the file is, are trusted; OWNER: `DECISIONS.md` 82 says an egg under a listed ID counts in full whatever tier it came in, and now that holds only for your own results file: amend 82, or decide otherwise?): **✔ The owner's trusted list trusts the ID, not the record**
+4. DONE f11ddf6 (only an imported results file's lines, or a pulled egg whose twin in the file is, are trusted; ANSWERED: DECISIONS 82 amended to match. Was OWNER: `DECISIONS.md` 82 says an egg under a listed ID counts in full whatever tier it came in, and now that holds only for your own results file: amend 82, or decide otherwise?): **✔ The owner's trusted list trusts the ID, not the record**
    (`tools/eggsImport.ts:68-79`). Anyone who learns one of your IDs can post
    open records that get full weight in the fit. Trust only lines from your
    own export file.
@@ -59,7 +59,7 @@ is also the password.
 
 ## Security, the rest
 
-- OWNER: (a separate delete secret, kept on the device and never shown, means an emailed request can no longer be checked against anything but the ID, and a lost device can no longer delete; or keep the ID as the only key and record the risk in DECISIONS. Which?) **✔ Knowing the ID is enough to DELETE** (`server/eggs.ts:188`). Guessing
+- ANSWERED DECISIONS 86 (the ID stays the only key; the risk recorded). Was OWNER: (a separate delete secret, kept on the device and never shown, means an emailed request can no longer be checked against anything but the ID, and a lost device can no longer delete; or keep the ID as the only key and record the risk in DECISIONS. Which?) **✔ Knowing the ID is enough to DELETE** (`server/eggs.ts:188`). Guessing
   isn't a risk (122 bits), but the ID is displayed and emailed. Either add a
   separate delete secret that is never shown, or record the risk in
   DECISIONS.
@@ -74,7 +74,7 @@ is also the password.
   - DONE 0ab1eee: A missing `Content-Length` lets the body be read whole before the size
     check (✔ `server/eggs.ts:106`).
   - DONE 0ab1eee: The attestation error text echoes Node/OpenSSL messages to the client.
-  - OWNER: (a4a5cf1 now gives up on the key explicitly, so the phone sends open rather than failing silently. To stay attested it needs either a new random ID when the key is lost, which splits one cook in two for the fit, or the server letting an ID take a second key, which lets anyone with a genuine iPhone and someone else's ID post attested results under it. Which, if either?) On iOS, a phone restored from backup loses its Secure Enclave key,
+  - ANSWERED DECISIONS 87 (accepted: a restored phone sends unverified). Was OWNER: (a4a5cf1 now gives up on the key explicitly, so the phone sends open rather than failing silently. To stay attested it needs either a new random ID when the key is lost, which splits one cook in two for the fit, or the server letting an ID take a second key, which lets anyone with a genuine iPhone and someone else's ID post attested results under it. Which, if either?) On iOS, a phone restored from backup loses its Secure Enclave key,
     swallows `invalidKey`, and is refused a new key (409), so it stays
     open-tier for good.
   - DONE 99d23a1 (a refused attestation more than a day old is made again with a new key, once per refusal): An attestation posted more than 3 days late fails against the leaf
@@ -82,13 +82,13 @@ is also the password.
   - DONE 71b2525: `tools/devServer.ts` listens on every interface and crashes on a bad `%`
     in a URL.
 - **Needs checking in the Netlify dashboard, not the repo:**
-  - DONE 0ab1eee for future deploys (a production deploy that Netlify says is not the published one opens its own store); OWNER: (the deploys already built between those commits run their own code: delete them in the dashboard?) Deploys built between commits `00186b1` and `2850f40` used the site-wide
+  - DONE 0ab1eee for future deploys (a production deploy that Netlify says is not the published one opens its own store); ANSWERED DECISIONS 89 (the owner deletes them in the dashboard). Was OWNER: (the deploys already built between those commits run their own code: delete them in the dashboard?) Deploys built between commits `00186b1` and `2850f40` used the site-wide
     store. Their permalinks still run that code and can write to the live
     store. Delete those deploys, or open the live store only when
     `context.deploy.published` is true.
-  - OWNER: (Netlify's rate-limiting page lists only "per domain and IP" for every plan and "per domain" as Enterprise, though its Functions API reference allows `['ip']`; whether `['ip']` alone is accepted on this plan needs a deploy and a look at the deploy log. Try it?) `aggregateBy: ['ip','domain']` gives every permalink domain its own
+  - ANSWERED DECISIONS 89 (kept as is: `['ip','domain']` is the only grouping the free plan offers, and a deploy's own address no longer reaches the live store). Was OWNER: (Netlify's rate-limiting page lists only "per domain and IP" for every plan and "per domain" as Enterprise, though its Functions API reference allows `['ip']`; whether `['ip']` alone is accepted on this plan needs a deploy and a look at the deploy log. Try it?) `aggregateBy: ['ip','domain']` gives every permalink domain its own
     rate-limit bucket. Aggregate by `ip` only.
-  - OWNER: (dashboard) Whether deploy previews build for fork PRs, since the repo is public.
+  - ANSWERED DECISIONS 89 (previews stay for this repository's branches; fork PRs off or approval-only, in the dashboard). Was OWNER: (dashboard) Whether deploy previews build for fork PRs, since the repo is public.
   - OWNER: (dashboard; the privacy page already says Netlify's request logs keep the address, the time and the path, which names the ID on a delete) What Netlify's own logs keep: they probably link IP and User-Agent to
     `/api/eggs/<uid>`.
 
@@ -98,10 +98,10 @@ Verified as written: off by default, nothing is sent on a fresh install in
 either app, the field list matches the record one for one, and the server
 keeps no address. These don't hold up:
 
-- DONE a4cc834 (the summary now says every result that device or browser sent); OWNER: (should Settings list the older IDs in `uids` and `deleting`, so a cook can email for them too? That is a wording draft in both apps.) **"Deletes every result"** in the summary: it reaches only the IDs this
+- DONE a4cc834 (the summary now says every result that device or browser sent); ANSWERED DECISIONS 88 (no). Was OWNER: (should Settings list the older IDs in `uids` and `deleting`, so a cook can email for them too? That is a wording draft in both apps.) **"Deletes every result"** in the summary: it reaches only the IDs this
   device holds. Settings shows only the current ID, so a cook can't email for
   the older ones in `uids`/`deleting`.
-- OWNER: (ask web cooks to share at all while their results count for nothing, and nudge their time? Either the `share` wording changes in a draft, or web sharing and its nudge go until web results count.) **Web results are now zero-weight** (DECISIONS 85), yet web cooks are still
+- ANSWERED DECISIONS 85, amended (keep web sharing and its nudge; web results are collected as a measure of their own quality). Was OWNER: (ask web cooks to share at all while their results count for nothing, and nudge their time? Either the `share` wording changes in a draft, or web sharing and its nudge go until web results count.) **Web results are now zero-weight** (DECISIONS 85), yet web cooks are still
   asked to share "to learn faster" and still get the ±10 s nudge. Either the
   wording or the collection should change.
 - DONE ca8f334 (a pull deletes `all.jsonl` and `emulated.json` beside it; `fit/README.md` says to emulate again): **"They leave my computer too":** `emulate` output and the documented
@@ -121,7 +121,7 @@ keeps no address. These don't hold up:
 
 ## Decision logic
 
-- OWNER: (DECISIONS 84 says the time is monotone in the level. Make it so between points too, with a running maximum over the hundredths since the point below, at up to four more solves per slider move in both apps; or reword DECISIONS 84, the `reach.ts` header and INFERENCE §8 to "monotone at the profile points, and within about a second between them"? Not re-run here.) **The time is not strictly monotone between profile points.** The reviewer
+- DONE (reworded: DECISIONS 84 amended, the `reach.ts` and `Reach.swift` headers, INFERENCE §8). Was OWNER: (DECISIONS 84 says the time is monotone in the level. Make it so between points too, with a running maximum over the hundredths since the point below, at up to four more solves per slider move in both apps; or reword DECISIONS 84, the `reach.ts` header and INFERENCE §8 to "monotone at the profile points, and within about a second between them"? Not re-run here.) **The time is not strictly monotone between profile points.** The reviewer
   reproduced it: 0.61 → 716.1 s, then 0.62 → 715.2 s, falling at most about
   1 s. The header in `src/core/reach.ts:47-51` and INFERENCE §8 claim it is
   monotone. Either fix it (a running minimum per slider position) or correct
@@ -157,38 +157,38 @@ The main problem: logic both apps must agree on sits outside core,
 unfixtured and hand-twinned. Several of the bugs above came from that. Ranked
 by payoff:
 
-1. OWNER: (not low-risk before 0.4 ships: moving the choice into core touches both apps' main solve path and needs new fixtures. After 0.4?) **✔ `decided()` is written twice:** `src/ui/app.ts:353` and
+1. ANSWERED DECISIONS 90 (0.5 or later). Was OWNER: (not low-risk before 0.4 ships: moving the choice into core touches both apps' main solve path and needs new fixtures. After 0.4?) **✔ `decided()` is written twice:** `src/ui/app.ts:353` and
    `ios/App/Planner+Solve.swift:165`. DECISIONS 84 had to land as two
    commits, and the advice-level split above crept in here. Make it one core
    `decideAnswer(...)` and fixture it.
-2. OWNER: (after 0.4, as 1. The `pulledBy` against `outAt` difference is not a drift in behaviour: iOS sets `outAt` only at the cook's tap, so both record a measured pull exactly when the cook tapped after the start.) **Egg-record assembly** (`src/ui/calibration.ts:171-237` against
+2. ANSWERED DECISIONS 90 (0.5 or later). Was OWNER: (after 0.4, as 1. The `pulledBy` against `outAt` difference is not a drift in behaviour: iOS sets `outAt` only at the cook's tap, so both record a measured pull exactly when the cook tapped after the start.) **Egg-record assembly** (`src/ui/calibration.ts:171-237` against
    `ios/App/Cook.swift:280-341`) is your training data, and is already
    drifting (`pulledBy` against `outAt`). Move it to a core `recordFor(facts)`.
-3. OWNER: (after 0.4, as 1; the decode difference is fixed in 80150cb.) **The sharing state machine** (`turnedOn`, `forgotten`, `deletionAsked`,
+3. ANSWERED DECISIONS 90 (0.5 or later). Was OWNER: (after 0.4, as 1; the decode difference is fixed in 80150cb.) **The sharing state machine** (`turnedOn`, `forgotten`, `deletionAsked`,
    `reconciled`, `advances`) is pure and has no fixtures, and the iOS decode
    difference above is the first drift. Move it to `src/core/share.ts`; the
    server can then share `isUid`.
-4. OWNER: (after 0.4, as 1.) **The decode decision** (fresh / rebuild / rebased / loaded) lives in each
+4. ANSWERED DECISIONS 90 (0.5 or later). Was OWNER: (after 0.4, as 1.) **The decode decision** (fresh / rebuild / rebased / loaded) lives in each
    app, and the Swift copy has no tests.
-5. OWNER: (after 0.4; a split of `app.ts` and `calibration.ts` is not low-risk now.) **God files:**
+5. ANSWERED DECISIONS 90 (0.5 or later). Was OWNER: (after 0.4; a split of `app.ts` and `calibration.ts` is not low-risk now.) **God files:**
    - `src/ui/app.ts` is 1483 lines with about 20 module-level `let`s.
    - `src/ui/calibration.ts` (933 lines) mixes `APP_VERSION`, record
      building, the storage format and the grid caches. iOS already splits the
      caches out as `DecisionGrids`.
-6. OWNER: (after 0.4: rewriting it without closures means new fixtures for the profile both apps ship.) **`oddsProfile`** (`src/core/reach.ts:189-292`) uses closures over mutable
+6. ANSWERED DECISIONS 90 (0.5 or later). Was OWNER: (after 0.4: rewriting it without closures means new fixtures for the profile both apps ship.) **`oddsProfile`** (`src/core/reach.ts:189-292`) uses closures over mutable
    maps, which breaks core invariant 2. Its two bisections are copy-pasted.
 7. **Smaller:**
-   - OWNER: (they are `results.json` and `results-quick.json`, a full run and a quick one, not one file twice: delete the quick one, or minify both?) `tools/shape-study/results*.json`: about 5.4k lines committed twice; keep
+   - ANSWERED DECISIONS 90 (0.5 or later). Was OWNER: (they are `results.json` and `results-quick.json`, a full run and a quick one, not one file twice: delete the quick one, or minify both?) `tools/shape-study/results*.json`: about 5.4k lines committed twice; keep
      one, minified.
-   - OWNER: (it passes, 7 tests, with `uv run --project fit pytest -q fit/tests`; adding it to CI puts uv, JAX and NumPyro in the workflow. Add it?) The `fit/` pytest suite runs nowhere, though the fit writes
+   - ANSWERED DECISIONS 90 (0.5 or later). Was OWNER: (it passes, 7 tests, with `uv run --project fit pytest -q fit/tests`; adding it to CI puts uv, JAX and NumPyro in the workflow. Add it?) The `fit/` pytest suite runs nowhere, though the fit writes
      `fixtures/population.json`, which both apps ship.
-   - OWNER: (delete it, or keep it as the second host?) `vercel.json` hand-duplicates the CSP and isn't deployed.
-   - OWNER: (move them to LOGBOOK.md, or delete them?) `WORKLIST.md` and `FOLLOWUP.md` are closed records.
+   - ANSWERED DECISIONS 90 (0.5 or later). Was OWNER: (delete it, or keep it as the second host?) `vercel.json` hand-duplicates the CSP and isn't deployed.
+   - ANSWERED DECISIONS 90 (0.5 or later). Was OWNER: (move them to LOGBOOK.md, or delete them?) `WORKLIST.md` and `FOLLOWUP.md` are closed records.
    - DONE eac10c9: `test/decide.test.ts` re-implements `answerAt`.
-   - OWNER: (`tools/copyDraft.ts` registers them, so they compile with everything else; build time only. Leave, or move finished drafts out of the build?) 43 drafts are compiled on every build.
-   - OWNER: (true: `npm test` starts with `rm -rf dist`. CLAUDE.md is yours to change; this session did not.) The CLAUDE.md advice "`rm -rf dist/test` first if a test file was
+   - ANSWERED DECISIONS 90 (0.5 or later). Was OWNER: (`tools/copyDraft.ts` registers them, so they compile with everything else; build time only. Leave, or move finished drafts out of the build?) 43 drafts are compiled on every build.
+   - ANSWERED DECISIONS 90 (0.5 or later). Was OWNER: (true: `npm test` starts with `rm -rf dist`. CLAUDE.md is yours to change; this session did not.) The CLAUDE.md advice "`rm -rf dist/test` first if a test file was
      deleted" is stale: `npm test` already runs `rm -rf dist`.
-   - OWNER: (not named in the review, so not traced here; for the factoring after 0.4?) A handful of exports are used only in their own file.
+   - ANSWERED DECISIONS 90 (0.5 or later). Was OWNER: (not named in the review, so not traced here; for the factoring after 0.4?) A handful of exports are used only in their own file.
 
 **Found fine:** the CBOR and DER parsing, the attestation checks, preview
 stores kept separate from production's, no import cycles, every copy key

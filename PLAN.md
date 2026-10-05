@@ -196,6 +196,16 @@ Waiting on someone else: the Czech review (F5), by the owner's friend.
   rule (`src/ui/feedback.ts`, "beforeReload"); iOS now does when the egg is
   the last in the log and not yet shared.
 
+- **The after-egg questions name the yolk** (`DECISIONS.md` 92), for 0.4:
+  the cook says which yolk they got (Runny to Hard), the white is asked
+  about next to the yolk, and the probe reading moves below the two
+  answers. Being built on a branch; then the owner, on a phone.
+
+- **0.5: one screen for setting up and boiling** (`DECISIONS.md` 91): the
+  setup and the timer merged, so the start, the egg and the pot can be
+  changed early in a cook and the time re-planned from what has happened.
+  Needs interface design first.
+
 - **Dim the time while it is recalculated**, the owner's idea (5 October
   2026), not wanted yet: while a newer answer is on its way, the time and its
   subline dim slightly, back to full when the final answer (and the odds'

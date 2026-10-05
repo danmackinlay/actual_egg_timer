@@ -232,6 +232,19 @@ Kept here so a new session can pick up without this conversation.
        raw-JSON write-back, the ID that is also the password), then security,
        the privacy page against the code, data safety, decision logic,
        parity, bloat. Tick each item in that file with its commit.
+1b. [x] (6 October) **The review's OWNER items answered**: DECISIONS
+       82 amended, 84 amended (reworded), 85 amended (web sharing stays, as
+       a quality signal), 86-90. Left for the owner in the Netlify
+       dashboard: delete the deploys built between `00186b1` and
+       `2850f40`; turn fork-PR previews off or approval-only; after the
+       next deploy, find the rate-limit rule accepted in the deploy log's
+       post-processing stage; what Netlify's own logs keep (review, item
+       "What Netlify's own logs keep").
+1c. [ ] **The after-egg questions** (DECISIONS 92), on a branch: the yolk
+       named (Runny-Hard) in core, the fit, the server, the privacy page
+       and both apps; the white next to the yolk; the probe below them.
+       Then the owner on a phone. Also: why a new install could not offer
+       runny (being looked into).
 2. [x] **Optional server polish** (0ab1eee): a refused attestation echoes library
        error text ("PEM routines::…"); return a generic message.
 3. [ ] **The owner's phone session** (section A above, PLAN.md items 7-15)

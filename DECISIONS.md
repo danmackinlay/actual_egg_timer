@@ -476,6 +476,10 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     `npm run eggs -- pull` and `import` mark the lines, and the fit reads
     the list again. The published population counts trusted eggs and names
     no one. Built `6910cbd` (the tools) and `a9c5ac8` (the fit).
+    Amended 6 October 2026 (REVIEW-0.4.x; `f11ddf6`): an ID on the list
+    is not enough, since anyone who learns it could post at full weight
+    under it. A result counts in full only if it is in a results file the
+    owner exported and imported, or is the pulled twin of one that is.
 83. **Only what the pan cannot deliver refuses; low odds warn.** Testing
     0.4.0 on a phone (58 g from the fridge, into boiling water, an ice bath,
     little learned), the owner could not move the thumb left of jammy,
@@ -504,6 +508,10 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     runny-white cost is unchanged. Before the pot's profile lands, and
     before the first egg, nothing changes. 5 October 2026. Built `22eadb5`
     (core, Swift), web `ffba100`, iOS `2a3d7b7`, on the `monotone` branch.
+    Amended 6 October 2026 (REVIEW-0.4.x, "agreed"): monotone at the
+    profile's points, and within about a second of it between them, where
+    the choice can dip inside its bounds (0.61 at 716.1 s, 0.62 at 715.2 s).
+    Exact would cost up to four more solves a drag; not worth it.
 85. **Web and other unattested results get no weight in the population fit,
     for now** ("If not, let's weight them 0 for now"). The owner would give
     them 0.25 if bad results could be pinned on particular bad actors. They
@@ -514,3 +522,66 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     later, and any ID removed, by re-running the fit. The fit's default is
     `--open-power 0`; trusted IDs (82) and attested results count in full.
     5 October 2026.
+    Amended 6 October 2026: the web keeps asking to share, and keeps its
+    nudge ("that would give us no signal of the quality of the web
+    sharing data"). Web results are collected now as a measure of their
+    own quality - how well they agree with attested ones, ID by ID - and
+    may be given weight later, once that is known.
+86. **Knowing a random ID is enough to delete its results** ("agreed").
+    A separate delete secret, kept on the device and never shown, would
+    stop an emailed request or a lost device from deleting anything. The
+    risk is that someone who learns an ID can delete that person's
+    results; IDs are 122 random bits, shown only in that person's own
+    Settings, and deleting is that person's right in any case.
+    6 October 2026; REVIEW-0.4.x.
+87. **A phone restored from a backup sends unverified** ("Accepted"). The
+    App Attest key does not survive a restore, and the server refuses a
+    second key for an ID. The phone keeps its random ID and sends without
+    App Attest from then on (since `a4a5cf1`, explicitly), so its results
+    weigh as the web's do (85). A new ID would split one person in two for
+    the fit; a second key per ID could be claimed by anyone with an iPhone
+    and someone else's ID. 6 October 2026; REVIEW-0.4.x.
+88. **Settings shows only the current random ID** ("an open and shut
+    privacy non-problem"). A device can hold older IDs it has stopped
+    using; "Delete shared results" deletes under every one of them, and an
+    ID nobody can see cannot be tied back to anyone. 6 October 2026.
+89. **Netlify: per-address rate limit as it is; old deploys deleted;
+    previews kept.** The function keeps `aggregateBy: ['ip', 'domain']`,
+    the only grouping Netlify's free plan offers; the owner checks the
+    deploy log's post-processing stage for the rule after the next deploy.
+    A deploy's own address cannot reach the live store since `0ab1eee`,
+    so a separate count per address costs nothing there. The owner deletes
+    the deploys built between `00186b1` and `2850f40` in the dashboard.
+    Deploy previews stay on for branches of this repository (the owner's
+    own testing, e.g. PR #2); only previews for pull requests from other
+    people's forks are turned off, or set to need approval, since they run
+    a stranger's code on this site. 6 October 2026.
+90. **The review's refactors go to 0.5** ("you want to do this in 0.5 or
+    later?" - yes): the time decision, record assembly, the sharing state
+    machine and the decode decision moved into core with fixtures; `app.ts`
+    and `calibration.ts` split; `oddsProfile` without closures; and the
+    tidy-ups (the shape study's quick results, `vercel.json`, WORKLIST and
+    FOLLOWUP, finished drafts, the fit's tests in CI). 0.4 ships without
+    them. 6 October 2026.
+91. **One screen for setting up and boiling, with changes allowed after
+    the start: 0.5** (testing 0.4 on a phone after a reinstall, the owner
+    started an egg set to "into boiling water" when it had gone into cold
+    water, and had no way to say so). The setup and the timer screens show
+    much the same: the sentence and the time. Early in a cook, the start
+    (cold or boiling water), the egg and the pot can still change, since
+    nothing yet commits the egg to either; the timer should take the
+    change and re-plan from what has already happened. It needs real
+    interface design, so it waits for 0.5. 6 October 2026.
+92. **The yolk question names the yolk; the white question asks about the
+    white next to the yolk; the probe sits below them** (the owner,
+    testing 0.4). "Too soft / Just right / Too firm" throws bits away and
+    fails when the yolk wanted could not be chosen: the owner wanted
+    runny, a new install would not offer it, the yolk came out runny, and
+    no answer said so. The cook names the yolk they got, in the slider's
+    words (Runny, Soft, Jammy, Fudgy, Hard), whatever was asked for. The
+    white next to the shell is nearly always set, so the white question
+    asks about the white next to the yolk. The thermometer reading is not
+    offered as a question; it is a field below the yolk and white
+    answers. Proposed for 0.4, so shared results start in this form;
+    older answers are kept and fitted as they were. 6 October 2026.
+

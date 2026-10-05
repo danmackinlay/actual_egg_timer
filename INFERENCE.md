@@ -765,7 +765,11 @@ their two times (`envelopeBounds`), so a drag costs its own decision and a
 look-up, as before; the odds, the bracket and the direction are read at the
 time held. The profile's step is 0.05, so a dip in the choices narrower than
 that is missed: just firmer than the jump at 0.36 above, 0.36-0.39 are held
-up to 0.40's 427 s from their own 422-426 s. Until the profile lands a level
+up to 0.40's 427 s from their own 422-426 s. Between two points the time is
+held inside their bounds but not ordered: the review found 0.61 at 716.1 s
+and 0.62 at 715.2 s, so the slider is monotone at the points and within about
+a second of it between them, which the owner accepts (amending 84) rather
+than four more solves a drag. Until the profile lands a level
 keeps its own choice; before the first egg the literature's times already
 rise with the level and nothing is held.
 
