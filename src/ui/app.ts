@@ -22,8 +22,8 @@ import {
 } from '../core/units.js';
 import { Solution, logYolkTarget } from '../core/solve.js';
 import {
-  BoilMemory, DEFAULTS, SLIDER_STEPS, SLOW_HOB_EVERY_S, SLOW_HOB_EXTRA_S, SLOW_HOB_WHEN_LEFT_S, Verdict,
-  ambientFor, coolingSecondsFor, probeMomentFor, roomInUse, startTempPreset_C, targetPeakYolk_C, textureFor,
+  BoilMemory, DEFAULTS, SLIDER_STEPS, SLOW_HOB_EVERY_S, SLOW_HOB_EXTRA_S, SLOW_HOB_WHEN_LEFT_S,
+  ambientFor, anchorNear, coolingSecondsFor, probeMomentFor, roomInUse, startTempPreset_C, targetPeakYolk_C, textureFor,
   textureNoteKeys,
 } from '../core/policy.js';
 import {
@@ -48,7 +48,7 @@ import {
   loadCook, loadSettings, rememberTimeToBoil, saveCook, saveSettings, storedCookText,
 } from './store.js';
 import { sousVideCopy } from './sousvide.js';
-import { directionKey, refusalKey, whiteAtRisk } from '../core/wording.js';
+import { directionKey, warningKey, whiteAtRisk } from '../core/wording.js';
 import { activeLocale, applyCopy, loadCopy, t, tRef } from './copy.js';
 import { midSentence } from '../core/copy.js';
 import {
@@ -132,8 +132,9 @@ let decisionHandle = 0;
 let profile: OddsProfile | null = null;
 /** Profiles asked for and not yet in, by key, so each lands once. */
 const profilesAsked = new Set<string>();
-/** Set when the requested doneness had to be clamped; empty otherwise. */
-let refusal = '';
+/** The warning line while idle: a refusal when the requested doneness had to
+ *  be moved, or the level's low odds (`warningKey`); empty otherwise. */
+let idleWarning = '';
 /** What the running cook is, frozen at the moment it started (ticket.ts). */
 let ticket: Ticket | null = null;
 let ticker: Ticker | null = null;
@@ -311,13 +312,17 @@ function startModeNow(): UiStartMode {
 
 /* ------------------------------------------------------------------ copy */
 
-/** The refusal, in words. Which refusal, and which words teach it, are
- *  core's (`verdictWithOdds`, `refusalKey`); the arguments are this app's. */
-function refusalText(v: Verdict): string {
-  const ref = refusalKey(v, settings.cooling);
+/** The warning line, in words: a refusal, or the level's low odds. Which,
+ *  and which words say it, are core's (`answerAt`, `warningKey`); the
+ *  arguments are this app's. The low odds name the level the slider rests
+ *  on, a word standing alone before the colon. */
+function warningText(answer: LevelAnswer): string {
+  const v = answer.verdict;
+  const ref = warningKey(v, answer.lowOdds, settings.cooling);
   if (ref === null) return '';
   return tRef(ref, {
     limit: midSentence(t(v.limit.key), activeLocale()), water: show('water', settings.waterLitres),
+    doneness: t(anchorNear(answer.level).key),
   });
 }
 
@@ -438,13 +443,13 @@ function askForProfile(inputs: DecisionInputs): void {
   });
 }
 
-/** Take the answer up: show the refusal, and move the slider if the answer
- *  says it must. Idle only - once the egg is in the water the controls are
+/** Take the answer up: show its warning, and move the slider if the answer
+ *  says it must (only out of the stripes). Idle only - once the egg is in the water the controls are
  *  gone and there is nothing to snap, so a call mid-cook takes nothing up:
  *  it neither moves `settings.doneness` nor writes it. */
 function applyAnswer(answer: LevelAnswer): Solution {
   if (machine.phase !== 'IDLE') return answer.solution;
-  refusal = refusalText(answer.verdict);
+  idleWarning = warningText(answer);
   const snapTo = answer.verdict.snapTo;
   if (snapTo !== null && snapTo !== settings.doneness) {
     settings.doneness = snapTo;
@@ -572,11 +577,11 @@ function renderIdle(now_ms: number): void {
 
   page().statBoil.textContent = show('boilingPoint', boilingPoint_C());
   page().note.textContent = textureNote(sol);
-  // The warning line carries a refusal while idle. It is advice about the
-  // slider: popping "jammy isn't reachable" onto the screen while the egg is
-  // already in the water would be advice about a control the user cannot
-  // reach.
-  const warning = refusal;
+  // The warning line carries a refusal or the level's low odds while idle.
+  // It is advice about the slider: popping "jammy isn't reachable" onto the
+  // screen while the egg is already in the water would be advice about a
+  // control the user cannot reach.
+  const warning = idleWarning;
   renderDonenessReading(settings.doneness, { peakYolk_C: sol.result.peakYolk_C });
   renderDonenessScale(sol, sol.whiteSets ? profile : null, sol.whiteSets ? outcome : null);
   renderReadout(now_ms, sol, warning);
@@ -808,7 +813,7 @@ function recompute(): void {
   // No pan, no solve. The sous-vide answer comes from src/core/sousvide.ts and
   // needs none of this.
   if (isSousVide()) {
-    refusal = '';
+    idleWarning = '';
     decision = null;
     outcome = null;
     profile = null;

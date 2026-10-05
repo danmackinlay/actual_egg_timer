@@ -54,22 +54,22 @@ export function renderDonenessScale(
   page().donenessBlockedSoft.style.width = `${percent(softest)}%`;
   page().donenessBlockedHard.style.width = `${percent(1 - hardest)}%`;
 
-  // The odds at each level, relative to the best level's, and the levels the
-  // pan can deliver but the odds do not offer yet (reach.ts).
+  // The odds at each level, relative to the best level's, and dots over the
+  // levels the pan can deliver but gets right fewer than 3 times in 10 so far
+  // (reach.ts, `lowOddsAt`). The slider rests on the dots, and says so; only
+  // the stripes move it.
   renderOddsBand(odds);
-  const offeredSoft = odds !== null && odds.softest !== null ? odds.softest : softest;
-  const offeredHard = odds !== null && odds.hardest !== null ? odds.hardest : hardest;
-  const refusing = odds !== null && odds.softest !== null && odds.hardest !== null;
-  placeBand(page().donenessUnlikelySoft, refusing ? odds.physicalSoftest : 0, refusing ? offeredSoft : 0);
-  placeBand(page().donenessUnlikelyHard, refusing ? offeredHard : 0, refusing ? odds.physicalHardest : 0);
+  const warning = odds !== null && odds.softest !== null && odds.hardest !== null;
+  placeBand(page().donenessUnlikelySoft, warning ? odds.physicalSoftest : 0, warning ? odds.softest ?? 0 : 0);
+  placeBand(page().donenessUnlikelyHard, warning ? odds.hardest ?? 0 : 0, warning ? odds.physicalHardest : 0);
   renderBracket(bracket);
 
+  // A word is struck through only where the pan cannot deliver it.
   const ticks = page().donenessTicks.children;
   for (let i = 0; i < ticks.length; i += 1) {
     const anchor = DONENESS_ANCHORS[i];
     if (anchor === undefined) continue;
-    const blocked = anchor.level < Math.max(softest, offeredSoft) - 0.005
-      || anchor.level > Math.min(hardest, offeredHard) + 0.005;
+    const blocked = anchor.level < softest - 0.005 || anchor.level > hardest + 0.005;
     ticks[i].classList.toggle('blocked', blocked);
   }
 }
