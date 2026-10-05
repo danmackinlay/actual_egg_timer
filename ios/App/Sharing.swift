@@ -44,7 +44,16 @@ final class Sharing {
         /// again rather than attested again.
         var attestation: String?
         var status: Status
+        /// When Apple made `attestation`. Its certificate is good for a few
+        /// days, so one posted later is refused; absent in what an earlier
+        /// build kept.
+        var madeAt: Date?
     }
+
+    /// How old an attestation may be and still be refused for itself: one
+    /// older is refused for its certificate's date, most likely, and the
+    /// phone makes a new key and tries again.
+    private static let attestationFresh: TimeInterval = 24 * 60 * 60
 
     private(set) var state = State()
     @ObservationIgnored private var attest: Attest?
@@ -316,6 +325,7 @@ final class Sharing {
                 let made = try await service.attestKey(keyId, clientDataHash: hash).base64EncodedString()
                 guard gen == generation else { return .later }
                 a.attestation = made
+                a.madeAt = .now
                 saveAttest(a)
             }
             let body = try JSONEncoder().encode(["uid": uid, "keyId": keyId, "attestation": a.attestation ?? ""])
@@ -323,6 +333,12 @@ final class Sharing {
             guard gen == generation else { return .later }
             if status == 200 || status == 201 {
                 a.status = .attested
+            } else if status == 400, a.madeAt.map({ Date.now.timeIntervalSince($0) > Self.attestationFresh }) ?? true {
+                // Posted days after Apple made it - the phone was offline -
+                // and refused, most likely for its certificate's date: a new
+                // key, attested now, on the next run.
+                saveAttest(Attest(uid: uid, keyId: nil, attestation: nil, status: .pending))
+                return .later
             } else if status == 400 || status == 409 {
                 a.status = .failed
             } else {
