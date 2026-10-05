@@ -555,9 +555,13 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     so a separate count per address costs nothing there. The owner deletes
     the deploys built between `00186b1` and `2850f40` in the dashboard.
     Deploy previews stay on for branches of this repository (the owner's
-    own testing, e.g. PR #2); only previews for pull requests from other
-    people's forks are turned off, or set to need approval, since they run
-    a stranger's code on this site. 6 October 2026.
+    own testing, e.g. PR #2). A pull request from someone else's fork of
+    this public repository would build a preview running their code,
+    which could open the site-wide store; the project's sensitive
+    variable policy is set to "Require approval" (Project configuration,
+    Environment variables, Project policies), so such a build waits for
+    the owner to accept or reject it. Read its changes to
+    `netlify/functions/` and `server/` before accepting. 6 October 2026.
 90. **The review's refactors go to 0.5** ("you want to do this in 0.5 or
     later?" - yes): the time decision, record assembly, the sharing state
     machine and the decode decision moved into core with fixtures; `app.ts`

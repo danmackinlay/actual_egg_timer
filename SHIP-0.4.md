@@ -236,7 +236,7 @@ Kept here so a new session can pick up without this conversation.
        82 amended, 84 amended (reworded), 85 amended (web sharing stays, as
        a quality signal), 86-90. Left for the owner in the Netlify
        dashboard: delete the deploys built between `00186b1` and
-       `2850f40`; turn fork-PR previews off or approval-only; after the
+       `2850f40`; fork-PR previews need approval (done: the sensitive variable policy is "Require approval"); after the
        next deploy, find the rate-limit rule accepted in the deploy log's
        post-processing stage; what Netlify's own logs keep (review, item
        "What Netlify's own logs keep").
