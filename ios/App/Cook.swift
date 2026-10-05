@@ -277,7 +277,7 @@ final class Cook {
     /// The pull is MEASURED when the cook tapped out of PULL (`pulledOut`) -
     /// `pulledBy: .cook`, at the tap, as the web app records it - and ASSUMED
     /// when the grace simply ran out: `.timeout`, at the scheduled time.
-    func eggRecord(yolk: Feedback?, white: WhiteReport? = nil, probe: ProbeReading? = nil) -> EggRecord? {
+    func eggRecord(yolk: YolkWord?, white: WhiteReport? = nil, probe: ProbeReading? = nil) -> EggRecord? {
         guard let startedAt, pullAt != nil, let ticket else { return nil }
         let scheduled = cookSeconds
         let measured = outAt.map { $0.timeIntervalSince(startedAt) }.flatMap { $0 > 0 ? $0 : nil }
@@ -304,13 +304,16 @@ final class Cook {
             pulledS: measured ?? scheduled,
             pulledBy: measured == nil ? .timeout : .cook,
             cooledS: ticket.cooling == .counter ? 0 : coolFor,
-            yolk: yolk,
+            // The yolk the cook got (DECISIONS.md 92); the old answer against
+            // the level is never written now.
+            yolk: nil,
+            yolkWord: yolk,
             white: white,
             probe: probe,
             forecast: ticket.forecast,
             lang: ticket.lang,
             // What kind of English the answers were given in: the fit
-            // can then tell a 1750 "Too rear" from a modern "Too soft".
+            // can then tell a 1750 "Rear" from a modern "Runny".
             register: registerOf(ticket.lang),
             units: ticket.units
         )
@@ -428,6 +431,25 @@ final class Cook {
         Task { await readBackAlarms() }
         pushActivity(force: true)
     }
+
+    #if DEBUG
+    /// A debug build's `-uiScreen done` (Screenshots.swift): the cook just
+    /// started, moved back in time so that the eggs came out on time and the
+    /// cooling ended a moment ago. The questions after an egg, without
+    /// waiting for one.
+    func skipToDone() {
+        guard let startedAt, let pullAt, let ticket else { return }
+        let cooking = pullAt.timeIntervalSince(startedAt)
+        let cooled = ticket.cooling == .counter ? 0 : coolFor
+        let start = Date.now.addingTimeInterval(-(cooking + cooled + 2))
+        self.startedAt = start
+        self.pullAt = start.addingTimeInterval(cooking)
+        outAt = self.pullAt
+        coolDoneAt = ticket.cooling == .counter ? nil : self.pullAt?.addingTimeInterval(cooled)
+        provisional = false
+        persist()
+    }
+    #endif
 
     func cancel() {
         generation &+= 1

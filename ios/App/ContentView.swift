@@ -172,6 +172,16 @@ struct ContentView: View {
         case "heating":
             guard cook.phase == .idle else { return }
             model.eggsIn()
+        case "done":
+            guard cook.phase == .idle else { return }
+            model.eggsIn()
+            Task {
+                // Once the cook has started, which waits on a solve.
+                for _ in 0..<50 where cook.phase == .idle {
+                    try? await Task.sleep(for: .milliseconds(200))
+                }
+                cook.skipToDone()
+            }
         default:
             if scene.hasPrefix("clause-"), let clause = Clause(rawValue: String(scene.dropFirst(7))) {
                 openClause = clause

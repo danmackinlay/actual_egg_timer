@@ -2,9 +2,8 @@ import SwiftUI
 import EggTimerCore
 import EggTimerCopy
 
-/// Under the controls, in every phase: the one slot for a longer line, the
-/// hint and the button that move the cook on, and, while a cook runs, the
-/// once-only offer of the thermometer.
+/// Under the controls, in every phase: the one slot for a longer line, and
+/// the hint and the button that move the cook on.
 ///
 /// A function of the clock, like the readout: the egg screen's `TimelineView`
 /// hands over the date it drew for, and the phase at that date.
@@ -23,7 +22,6 @@ struct PhaseActions: View {
         VStack(spacing: 18) {
             slot
             action
-            if phase != .idle && phase != .done { probeOffer }
         }
     }
 
@@ -231,39 +229,6 @@ struct PhaseActions: View {
                 return tr("readout.alarm.failed")
             }
             return tr("readout.alarm.set", ["time": .text(timeOfDay(cook.pullAt ?? .now, withSeconds: true))])
-        }
-    }
-
-    // MARK: - The thermometer
-
-    /// Offered once, while a cook is running, to a cook whose cooling ends at
-    /// the yolk's peak. Either answer puts it away for good; the setting stays
-    /// in the controls.
-    @ViewBuilder
-    private var probeOffer: some View {
-        if !planner.probeAsked, cook.ticket?.probeMoment == true {
-            VStack(spacing: 10) {
-                Text(tr("probe.offer"))
-                    .appFont(.footnote)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                HStack(spacing: 10) {
-                    Button {
-                        planner.answerProbeOffer(true)
-                        cook.probeSettingChanged()
-                    } label: {
-                        Text(tr("probe.offer.yes")).frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(.bordered)
-                    Button {
-                        planner.answerProbeOffer(false)
-                    } label: {
-                        Text(tr("probe.offer.no")).frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(.bordered)
-                }
-            }
-            .frame(maxWidth: .infinity)
         }
     }
 }

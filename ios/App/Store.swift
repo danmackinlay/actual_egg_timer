@@ -39,7 +39,7 @@ enum SettingsStore {
         planner.restoreUnits(readChosenUnits(store.string(forKey: "unitsChosen")))
         // The probe thermometer, the same way: its own keys, and off when
         // they are absent.
-        planner.restoreProbe(on: store.bool(forKey: "probe"), asked: store.bool(forKey: "probeAsked"))
+        planner.restoreProbe(on: store.bool(forKey: "probe"))
         // The measured room, absent until set: not measured.
         planner.restoreRoom(store.object(forKey: "roomC") == nil ? nil : store.double(forKey: "roomC"))
         guard store.object(forKey: "doneness") != nil else { return }
@@ -94,7 +94,6 @@ enum SettingsStore {
         // The cook's choice, not the system on screen: absent until they make
         // one, so a default can still follow the phone.
         store.set(planner.probe, forKey: "probe")
-        store.set(planner.probeAsked, forKey: "probeAsked")
         if let room = planner.roomC {
             store.set(room, forKey: "roomC")
         } else {

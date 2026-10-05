@@ -107,8 +107,8 @@ struct SettingsView: View {
                     .labelsHidden()
                 }
 
-                // The probe thermometer. Off by default; offered once during a
-                // cook, and changed here.
+                // The probe thermometer. Off by default, and changed here; the
+                // reading's field after a cook is there either way.
                 Section {
                     InfoRow("controls.thermometer", more: [tr("controls.thermometer.more")])
                     Toggle(tr("controls.thermometer.ask"), isOn: Binding(

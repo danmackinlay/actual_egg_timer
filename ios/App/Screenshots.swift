@@ -10,6 +10,10 @@ import EggTimerCore
 /// - `-uiScreen clause-egg`, `clause-from`, `clause-start`, `clause-cooling`:
 ///   open that clause's choice under the sentence.
 /// - `-uiScreen heating`: start a cook, as a tap on Start would.
+/// - `-uiScreen done`: start a cook and move it back in time, so its cooling
+///   ended a moment ago and the eggs came out on time: the questions after
+///   an egg (`Cook.skipToDone`). With `-noAlarmPrompt YES`, so no alarm is
+///   set for a moment already past.
 /// - `-noAlarmPrompt YES`: answer the notification question with no, without
 ///   asking, so the system's alert is not in the picture.
 /// - `-seedEggs right,right,right`: on a fresh install, write that many eggs

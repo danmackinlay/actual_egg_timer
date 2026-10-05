@@ -138,7 +138,7 @@ final class AppModel {
     /// they come. The first writes the egg down, before anything is learned
     /// from it; the second folds the same egg again from the posterior before
     /// it - or, after a relaunch, replays the log (`resumeAnswers`).
-    func answer(yolk: Feedback?, white: WhiteReport?, probe: ProbeReading? = nil) {
+    func answer(yolk: YolkWord?, white: WhiteReport?, probe: ProbeReading? = nil) {
         if planner.answers != nil {
             Task { await planner.secondAnswer(yolk: yolk, white: white, probe: probe) }
             return

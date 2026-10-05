@@ -11,7 +11,7 @@ extension Planner {
     /// then folds it again on the next launch, rather than losing it. The
     /// record carries the egg and pan the cook was RUN with, off the ticket.
     func record(_ egg: EggRecord) async {
-        answers = Answers(yolk: egg.yolk, white: egg.white, probe: egg.probe)
+        answers = Answers(yolk: egg.yolkWord, white: egg.white, probe: egg.probe)
         folded = nil
         liveIndex = kept.log.count
         kept.log.append(egg)
@@ -29,14 +29,16 @@ extension Planner {
     /// replay of the log makes whichever order the taps came in. Refused, and
     /// nothing written, when that is no longer possible - which is what keeps
     /// the log and the posterior one thing. The web app's `recordSecondAnswer`.
-    func secondAnswer(yolk: Feedback?, white: WhiteReport?, probe: ProbeReading? = nil) async {
+    func secondAnswer(yolk: YolkWord?, white: WhiteReport?, probe: ProbeReading? = nil) async {
         guard var given = answers, let index = liveIndex ?? folded?.index ?? resumedIndex,
               index == kept.log.count - 1 else { return }
         if yolk != nil, given.yolk != nil { return }
         if white != nil, given.white != nil { return }
         if probe != nil, given.probe != nil { return }
         var egg = kept.log[index]
-        if let yolk { egg.yolk = yolk; given.yolk = yolk }
+        // A record holds one yolk answer: never a word beside an old one.
+        if yolk != nil, egg.yolk != nil { return }
+        if let yolk { egg.yolkWord = yolk; given.yolk = yolk }
         if let white { egg.white = white; given.white = white }
         if let probe { egg.probe = probe; given.probe = probe }
         if kept.folded <= index {
@@ -99,12 +101,15 @@ extension Planner {
     func resumeAnswers(_ cooked: EggRecord) {
         guard answers == nil, let index = kept.log.indices.last else { return }
         let last = kept.log[index]
+        // Answered the old way, on a build before the five yolk words: its
+        // yolk question is not the one on screen, so it stays as answered.
+        guard last.yolk == nil else { return }
         var bare = last
-        bare.yolk = nil
+        bare.yolkWord = nil
         bare.white = nil
         bare.probe = nil
         guard bare == cooked else { return }
-        answers = Answers(yolk: last.yolk, white: last.white, probe: last.probe)
+        answers = Answers(yolk: last.yolkWord, white: last.white, probe: last.probe)
         folded = nil
         // Not folded yet (the fold is caught up on launch): a later answer is
         // written in and folded with it. Folded already: replayed.

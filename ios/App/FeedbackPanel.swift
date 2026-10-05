@@ -3,10 +3,11 @@ import EggTimerCore
 import EggTimerCopy
 
 /// At Done: the two questions, both always on screen and neither required
-/// (INFERENCE.md section 3), and above them the probe reading when this cook
-/// asks for one. Three answers each is not a poor interface for a rating
-/// - it is the whole measurement: ordinal feedback is worth one to two bits
-/// per egg, and a number out of ten would collect precision that is not
+/// (INFERENCE.md section 3) - the yolk the cook got, in the slider's own five
+/// words, and the white next to it (DECISIONS.md 92) - and under them the
+/// probe reading, optional too, whenever this cook had a moment to probe.
+/// Ordered words are not a poor interface for a rating - they are the whole
+/// measurement: a number out of ten would collect precision that is not
 /// there. There is no Skip button: an unanswered question is recorded as
 /// skipped when the next cook starts.
 struct FeedbackPanel: View {
@@ -33,7 +34,6 @@ struct FeedbackPanel: View {
                     .foregroundStyle(.secondary)
                     .monospacedDigit()
             } else {
-                probeEntry
                 if let target = targetLine {
                     Text(target)
                         .appFont(.subheadline)
@@ -42,20 +42,20 @@ struct FeedbackPanel: View {
                 }
                 Text(tr("feedback.ask"))
                     .appFont(.headline)
-                HStack(spacing: 10) {
-                    yolkButton(tr("feedback.tooSoft"), .tooSoft)
-                    yolkButton(tr("feedback.justRight"), .justRight)
-                    yolkButton(tr("feedback.tooFirm"), .tooHard)
-                }
+                    .multilineTextAlignment(.center)
+                yolkWords
 
                 Text(tr("feedback.white.ask"))
                     .appFont(.headline)
+                    .multilineTextAlignment(.center)
                     .padding(.top, 4)
                 HStack(spacing: 10) {
                     whiteButton(tr("feedback.white.runny"), .runny)
                     whiteButton(tr("feedback.white.tender"), .tender)
                     whiteButton(tr("feedback.white.firm"), .firm)
                 }
+
+                probeEntry
 
                 Text(tr("feedback.optional"))
                     .appFont(.caption)
@@ -75,19 +75,23 @@ struct FeedbackPanel: View {
 
     // MARK: - The thermometer
 
-    /// The reading, at DONE: typed in the cook's units, refused with the range
-    /// it should be in when no believable kitchen could have made it, and
-    /// otherwise folded into the egg with whatever else has been said.
+    /// The reading, at DONE, under the two questions, whenever the cooling
+    /// ended at the yolk's peak, with the probe setting on or off: typed in
+    /// the cook's units, refused with the range it should be in when no
+    /// believable kitchen could have made it, and otherwise folded into the
+    /// egg with whatever else has been said. Optional, like the questions.
     @ViewBuilder
     private var probeEntry: some View {
-        if cook.asksForProbe {
+        if cook.ticket?.probeMoment == true {
             let given = planner.answers?.probe
             VStack(spacing: 8) {
-                Text(tr("probe.now"))
+                Text(tr("probe.ask"))
                     .appFont(.headline)
-                Text(tr("probe.hint"))
+                    .multilineTextAlignment(.center)
+                Text(tr("probe.how"))
                     .appFont(.caption)
                     .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
                 // The − and + step in whole degrees from the peak the cook was
                 // started at, which the empty field shows greyed; the button
                 // goes under them, since the three do not fit one line.
@@ -105,7 +109,7 @@ struct FeedbackPanel: View {
                         .multilineTextAlignment(.center)
                 }
             }
-            .padding(.bottom, 6)
+            .padding(.top, 4)
         }
     }
 
@@ -128,9 +132,32 @@ struct FeedbackPanel: View {
 
     // MARK: - The two questions
 
-    private func yolkButton(_ label: String, _ value: Feedback) -> some View {
+    /// The five yolk words, the slider's own (`donenessAnchors`, whose order
+    /// is `YolkWord`'s), side by side; when the text is too large for one
+    /// row, three over two, so no word is cut.
+    private var yolkWords: some View {
+        let words = YolkWord.allCases
+        return ViewThatFits(in: .horizontal) {
+            HStack(spacing: 6) {
+                ForEach(words.indices, id: \.self) { i in yolkButton(i) }
+            }
+            VStack(spacing: 8) {
+                HStack(spacing: 6) {
+                    ForEach(0..<3, id: \.self) { i in yolkButton(i) }
+                }
+                HStack(spacing: 6) {
+                    ForEach(3..<words.count, id: \.self) { i in yolkButton(i) }
+                }
+            }
+        }
+    }
+
+    private func yolkButton(_ index: Int) -> some View {
+        let value = YolkWord.allCases[index]
         let given = planner.answers?.yolk
-        return answerButton(label, chosen: given == value, answered: given != nil) {
+        return answerButton(
+            tr(donenessAnchors[index].key), chosen: given == value, answered: given != nil, tight: true
+        ) {
             model.answer(yolk: value, white: nil)
         }
     }
@@ -143,12 +170,20 @@ struct FeedbackPanel: View {
     }
 
     /// The answer given stays legible, filled; its row goes out of reach.
+    /// `tight` is for the five yolk words: one line each, never truncated,
+    /// so that a row that cannot hold them all is left for two rows.
     @ViewBuilder
     private func answerButton(
-        _ label: String, chosen: Bool, answered: Bool, action: @escaping () -> Void
+        _ label: String, chosen: Bool, answered: Bool, tight: Bool = false, action: @escaping () -> Void
     ) -> some View {
+        // A bordered button pads its label by about 12 pt a side, which leaves
+        // five words a phone's width only at the smallest text; the yolk
+        // words give back most of it, as the web's do.
         let text = Text(label)
             .appFont(.subheadline)
+            .lineLimit(1)
+            .fixedSize(horizontal: tight, vertical: false)
+            .padding(.horizontal, tight ? -8 : 0)
             .frame(maxWidth: .infinity)
         if chosen {
             Button(action: action) { text.onAccent() }

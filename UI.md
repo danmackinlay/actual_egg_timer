@@ -116,13 +116,26 @@ two apps cannot disagree:
 |---|---|---|---|---|
 | Idle | `readout.phase.total` | `readout.sub.coldAssumes` / `coldGuesses` / `standing` / `hot` | `action.hint.cold` / `hotStanding` / `hotBoiling` / `whiteNeverSets` | `action.startHeating` / `eggsIn` |
 | Heating | `readout.phase.heating` | `readout.sub.heating` (elapsed, expected boil) | `action.hint.heating` (with its (i)) / `heatingStanding` | `action.fullBoil` |
-| Cooking | `readout.phase.cookingBoiling` / `cookingHeatOff` | `readout.sub.cookingCold` / `cookingHot` | `action.hint.cookingBoiling` / `cookingStanding` | none; the probe offer, once |
+| Cooking | `readout.phase.cookingBoiling` / `cookingHeatOff` | `readout.sub.cookingCold` / `cookingHot` | `action.hint.cookingBoiling` / `cookingStanding` | none |
 | Pull | `readout.phase.pull` | `readout.sub.pull` | `action.hint.pull`, none on the counter | the pull button, naming the cooling (`pulledKey`) |
 | Cooling (ice, tap) | `readout.phase.coolingIce` / `coolingTap` | `readout.sub.coolingPeak` / `coolingProbe` | none | none |
-| Done | `readout.phase.done` | `readout.sub.doneCold` / `doneHot` | none | `action.startAgain`; the probe reading if asked for, and the two questions |
+| Done | `readout.phase.done` | `readout.sub.doneCold` / `doneHot` | none | `action.startAgain`; the two questions, and under them the probe reading |
 
 Cancel is under every running phase. A counter rest has no cooling phase:
 the pull runs out into Done. The cooling counts down to the yolk's peak.
+
+**The questions after an egg** (`DECISIONS.md` 92), on one panel at Done,
+none required: what the cook asked for (`feedback.target`); "How was the
+yolk?" with the slider's own five words as the answers, side by side
+(`doneness.runny` to `doneness.hard`; one row on a phone at the default
+text size, three over two when the text is made larger, web and iOS); "And
+the white next to the yolk?" with Runny / Tender / Firm; and under them,
+whenever the cooling ended at the yolk's peak, "Do you have a probe
+thermometer?" with how to take the reading and the field, the reading
+refused with the range it should be in when no kitchen could have made it
+(`probe.refused`). The probe is not offered while the egg cooks. The
+setting in Settings still has the alarm and the line under the cooling
+countdown ask for the reading, and offers the room temperature.
 
 **While a cook runs**, straight under the time: the setup sentence the cook
 was started with, as plain text with nothing to tap, and under it one small

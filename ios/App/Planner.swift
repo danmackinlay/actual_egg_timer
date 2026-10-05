@@ -142,32 +142,22 @@ final class Planner {
     // MARK: - The thermometer
 
     /// "I have a probe thermometer": when the cooling ends, ask for one reading
-    /// from the middle of the egg. Off until the cook says so.
+    /// from the middle of the egg - the alarm says so, and the line under the
+    /// cooling countdown - and offer a room temperature. Off until the cook
+    /// says so. The reading's field after a cook is there whatever this is
+    /// (DECISIONS.md 92).
     private(set) var probe = false
-    /// Whether the once-only offer during a cook has been answered, either
-    /// way. The setting stays in the controls; the offer does not come back.
-    private(set) var probeAsked = false
 
-    /// The setting, from the controls. Changing it is saying so. It brings a
-    /// measured room into the model, or takes it out (`roomInUseC`), so the
-    /// pot is solved again.
+    /// The setting, from the controls. It brings a measured room into the
+    /// model, or takes it out (`roomInUseC`), so the pot is solved again.
     func setProbe(_ on: Bool) {
         probe = on
-        probeAsked = true
         changed()
     }
 
-    /// The answer to the offer made during a cook.
-    func answerProbeOffer(_ yes: Bool) {
-        probeAsked = true
-        if yes { probe = true }
-        SettingsStore.save(self)
-    }
-
     /// Restore from storage without saving it straight back.
-    func restoreProbe(on: Bool, asked: Bool) {
+    func restoreProbe(on: Bool) {
         probe = on
-        probeAsked = asked
     }
 
     /// The room as the cook measured it, C, or nil for not measured, when a
@@ -329,7 +319,8 @@ final class Planner {
     var profilesAsked = Set<String>()
 
     struct Answers: Sendable {
-        var yolk: Feedback?
+        /// The yolk the cook got, in the slider's words (DECISIONS.md 92).
+        var yolk: YolkWord?
         var white: WhiteReport?
         /// A probe reading at the middle, when the cooling ended.
         var probe: ProbeReading?

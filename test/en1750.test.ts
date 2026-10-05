@@ -153,9 +153,12 @@ test('1g. the long s only in the title, and the title reads without it', () => {
   assert.equal(title.replace(/ſ/g, 's'), render(EN, TITLE_KEY));
 });
 
-test('1h. the answers keep their meaning: three, distinct, and the soft one says rear', () => {
-  const yolk = ['feedback.tooSoft', 'feedback.justRight', 'feedback.tooFirm'].map((k) => render(PERIOD, k));
-  assert.deepEqual(yolk, ['Too rear', 'As was desired', 'Too hard']);
+test('1h. the answers keep their meaning: the yolk in the slider\'s five words, the runny one rear', () => {
+  // The yolk the cook got (DECISIONS.md 92) is answered in the ticks' own
+  // words, five and distinct; the white's three are distinct too.
+  const yolk = ['doneness.runny', 'doneness.soft', 'doneness.jammy', 'doneness.fudgy', 'doneness.hard']
+    .map((k) => render(PERIOD, k));
+  assert.deepEqual(yolk, ['Rear', 'Soft', 'Thick', 'Firm', 'Hard']);
   const white = ['feedback.white.runny', 'feedback.white.tender', 'feedback.white.firm'].map((k) => render(PERIOD, k));
   assert.equal(new Set(white).size, 3);
 });
