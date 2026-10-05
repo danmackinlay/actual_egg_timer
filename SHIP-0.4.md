@@ -248,7 +248,7 @@ Kept here so a new session can pick up without this conversation.
        through only when none of it can be reached (bb1cc9d). Open for the
        owner: show the probe field even when the probe setting is off (it
        does now)?
-1d. [ ] **The QA agent's second pass** (REVIEW-0.4.x.md, "Second pass"),
+1d. [x] (merged 293963d) **The QA agent's second pass** (REVIEW-0.4.x.md, "Second pass"),
        on three branches merged by the session that sent them: `qa2-tabs`
        (the two-tab write loop, a start-time ID per record, boil memory
        across tabs, a timeout on the send, the rollback claim),

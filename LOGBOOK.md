@@ -4444,3 +4444,32 @@ at the default size until the label gave back 8 pt. A simulated tap while
 a scroll is still coasting stops the scroll and taps nothing, so wait
 before tapping after a swipe. On the web, `.pair--five > button` lost to
 `button.fb`'s font size on order alone; the rule needed the class.
+
+## 6 October 2026: the QA agent's second pass, actioned
+
+The owner's QA agent reviewed the first pass (REVIEW-0.4.x.md, "Second
+pass"). Three branches, merged into `0.4.x`:
+
+- `qa2-attest` (`37ab0be`..`d1641b0`): one rule in core, `shareReply` and
+  `shareGivesUp`, fixtured, for both senders. No reply, 403, 404, 408, 429
+  and 5xx wait; anything else about the record is final. Waiting gives up
+  after five busy answers on separate runs and three days, and the iPhone
+  then sends without App Attest. 403 and 404 first counted as final, which
+  would have dropped everything queued during a bad deploy.
+- `qa2-words` (`7264b3d`..`9d98535`): the word cuts frozen as literals,
+  tied to today's anchors by a test; each answer row a labelled group for
+  screen readers; the rows wrap at the accessibility text sizes on iOS,
+  where five words had pushed the panel off both edges; sous-vide clears
+  the previous pan's ticks on the web; `-seedEggs` seeds yolk words;
+  `tools/eggs.ts` uses core's bands. The odds shown are "just right"
+  (0.21 for a fresh jammy egg) where the cook now answers a word (Jammy
+  0.32): an owner question, for 0.5.
+- `qa2-tabs` (`dfacf1c`..`62623b5`): a tab taking up another's store never
+  writes it back (two builds in two tabs had rewritten each other's store
+  forever); records carry `id`, the start time, kept on the device and
+  never sent, so a logged egg is counted once and learned from only by the
+  tab that logged it; boil times and settings are re-read and listened
+  for; sends and deletes time out after 20 s; RELEASING.md says what a
+  rollback keeps. iOS records carry no `id`: one app, one process.
+
+345 TypeScript tests and 132 Swift after the merges; the iOS build passes.
