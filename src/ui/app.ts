@@ -31,7 +31,7 @@ import {
   decisionInputs, nudgeSeconds,
 } from '../core/decide.js';
 import {
-  LevelAnswer, OddsProfile, adviceWanted, answerAt, pricedChanges, protocolAdvice,
+  LevelAnswer, OddsProfile, adviceWanted, answerAt, envelopeBounds, pricedChanges, protocolAdvice,
 } from '../core/reach.js';
 import { MassFrom, forecastOf } from '../core/record.js';
 import { Outcome, predictOutcome } from '../core/outcome.js';
@@ -344,6 +344,11 @@ function answerFor(timeToBoil_s: number, level: number, odds: OddsProfile | null
  * The surface does not depend on the slider, so a drag is answered from the one
  * already built, and the time never jumps between the mean solve's and the
  * chosen one mid-drag. It changes once, when a new pot's surface lands.
+ *
+ * Once the pot's odds profile is in too, the time is held by it, so a softer
+ * level never gets a later time than a firmer one (`envelopeBounds`,
+ * DECISIONS.md 84). Until then a level has its own choice, and the time can
+ * move once more when the profile lands.
  */
 function decided(
   answer: LevelAnswer, timeToBoil_s: number,
@@ -357,9 +362,10 @@ function decided(
     return { solution: answer.solution, decision: null, outcome: null, nudge_s: 0 };
   }
   // The odds at every level follow the surface, in the worker.
-  if (cachedOddsProfile(inputs, calib) === null) askForProfile(inputs);
+  const odds = cachedOddsProfile(inputs, calib);
+  if (odds === null) askForProfile(inputs);
   const logTarget = logYolkTarget(answer.level);
-  const d = decide(calib, grid, answer.solution, logTarget);
+  const d = decide(calib, grid, answer.solution, logTarget, envelopeBounds(odds, answer.level));
   // The nudge moves the chosen time, where one is chosen, for a cook who is
   // sharing (E8); the time shown, the time started and the outcome under it
   // are all at the nudged time.
