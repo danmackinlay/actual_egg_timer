@@ -45,8 +45,8 @@ import { renderShare, wireShare } from './shareView.js';
 import {
   LIMITS, Limit, START_TEMP_PRESETS_C, Settings, UiStartMode, clampNumber,
   clearBoilMemory, clearCook, estimateTimeToBoil, hasBoilMemory, loadBoilMemory,
-  cookStoredElsewhere, loadCook, loadSettings, rememberTimeToBoil, saveCook, saveSettings, storedCookAnswered,
-  storedCookText,
+  boilStoredElsewhere, cookStoredElsewhere, loadCook, loadSettings, rememberTimeToBoil, saveCook, saveSettings,
+  settingsStoredElsewhere, storedCookAnswered, storedCookText,
 } from './store.js';
 import { sousVideCopy } from './sousvide.js';
 import { directionKey, warningKey, whiteAtRisk } from '../core/wording.js';
@@ -524,7 +524,7 @@ function renderMute(): void {
 function onToggleMute(): void {
   settings.muted = !settings.muted;
   setMuted(settings.muted);
-  saveSettings(settings);
+  writeSettings();
   renderMute();
 }
 
@@ -893,8 +893,35 @@ function scheduleSave(): void {
   if (saveHandle !== 0) return;
   saveHandle = window.setTimeout(() => {
     saveHandle = 0;
-    saveSettings(settings);
+    writeSettings();
   }, 250);
+}
+
+/** Write the settings, with whatever another tab wrote since taken up
+ *  first (store.ts), and show what was taken up. */
+function writeSettings(): void {
+  const next = saveSettings(settings);
+  if (next !== settings) takeUpSettings(next);
+}
+
+/** Settings another tab changed, taken up: the controls, the units, the
+ *  sound and the words follow, and an idle page is solved again. A cook
+ *  under way is described by its ticket, never by the controls. */
+function takeUpSettings(next: Settings): void {
+  const before = effectiveLanguage(settings.language);
+  Object.assign(settings, next);
+  useUnits(settings.unitsChosen);
+  setMuted(settings.muted);
+  applySettingsToDom();
+  renderMute();
+  const tag = effectiveLanguage(settings.language);
+  if (tag !== before || tag !== activeLocale()) {
+    const asked = ++languageAsked;
+    void loadCopy(tag).then(() => {
+      if (asked === languageAsked) relabel();
+    });
+  }
+  if (machine.phase === 'IDLE') recompute();
 }
 
 /** Write now, for the paths that must not lose the setting: starting a cook,
@@ -904,7 +931,7 @@ function saveNow(): void {
     window.clearTimeout(saveHandle);
     saveHandle = 0;
   }
-  saveSettings(settings);
+  writeSettings();
 }
 
 /* ------------------------------------------------------------ calibration */
@@ -950,6 +977,15 @@ function storedElsewhere(key: string | null): void {
   if (cookStoredElsewhere(key) && machine.phase === 'DONE' && storedCookAnswered(machine.startedAt_ms)
     && answeredElsewhere()) {
     render(Date.now());
+  }
+  const nextSettings = settingsStoredElsewhere(key, settings);
+  if (nextSettings !== null) takeUpSettings(nextSettings);
+  // The pans: another tab's measured boil, or its "Forget everything".
+  const pans = boilStoredElsewhere(key);
+  if (pans !== null) {
+    boilMemory = pans;
+    renderLearned(learning());
+    if (machine.phase === 'IDLE') recompute();
   }
   const calibration = calibrationStoredElsewhere(key);
   const sharing = shareStoredElsewhere(key);

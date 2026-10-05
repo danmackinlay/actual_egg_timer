@@ -14,7 +14,8 @@ import assert from 'node:assert/strict';
 
 import { sizeClassesFor } from '../src/core/geometry.js';
 import {
-  DEFAULT_SETTINGS, Settings, loadCook, loadSettings, saveCook, saveSettings,
+  DEFAULT_SETTINGS, Settings, boilStoredElsewhere, clearBoilMemory, loadBoilMemory, loadCook, loadSettings,
+  rememberTimeToBoil, saveCook, saveSettings, settingsStoredElsewhere,
 } from '../src/ui/store.js';
 
 /** localStorage, in memory, as in record.test.ts: the store reads
@@ -132,4 +133,53 @@ test('the live site\'s cook, and junk, are never a crash', () => {
     storage.set(COOK_KEY, junk);
     assert.equal(loadCook(), null, junk);
   }
+});
+
+test('another tab\'s settings are taken up: what this page changed stays its own, the rest is theirs', () => {
+  freshPage();
+  const mine = loadSettings(classes);
+  // Another tab, loaded earlier, changes the altitude and turns the sound off.
+  const theirs = { ...DEFAULT_SETTINGS, altitude_m: 900, muted: true };
+  storage.set(SETTINGS_KEY, JSON.stringify(theirs));
+  // This page, before it hears, moves the slider and saves.
+  mine.doneness = 0.8;
+  const saved = saveSettings(mine);
+  assert.deepEqual([saved.altitude_m, saved.muted, saved.doneness], [900, true, 0.8]);
+  const stored = JSON.parse(storage.get(SETTINGS_KEY) ?? '{}') as Settings;
+  assert.deepEqual([stored.altitude_m, stored.muted, stored.doneness], [900, true, 0.8], 'nothing undone');
+  // The page's storage event: taken up once, keeping a change not yet saved.
+  saved.eggCount = 3;
+  storage.set(SETTINGS_KEY, JSON.stringify({ ...stored, cooling: 'tap' }));
+  assert.equal(settingsStoredElsewhere('aet.boil.v1', saved), null);
+  const heard = settingsStoredElsewhere(SETTINGS_KEY, saved);
+  assert.deepEqual([heard?.cooling, heard?.eggCount, heard?.altitude_m], ['tap', 3, 900]);
+  assert.equal(settingsStoredElsewhere(SETTINGS_KEY, saved), null, 'once');
+});
+
+test('a sous-vide on screen stays this page\'s when another tab saves a pan', () => {
+  freshPage();
+  saveSettings(settingsWith({ startMode: 'cold' }));
+  const mine = settingsWith({ startMode: 'sous' });
+  storage.set(SETTINGS_KEY, JSON.stringify({ ...DEFAULT_SETTINGS, startMode: 'hot' }));
+  const saved = saveSettings(mine);
+  assert.equal(saved.startMode, 'sous');
+  assert.equal(JSON.parse(storage.get(SETTINGS_KEY) ?? '{}').startMode, 'hot', 'the other tab\'s pan, the last saved');
+});
+
+test('"Forget everything" in another tab is not undone by this one\'s next measured boil', () => {
+  storage.clear();
+  const BOIL_KEY = 'aet.boil.v1';
+  let memory = loadBoilMemory();
+  memory = rememberTimeToBoil(memory, 2, 600);
+  assert.equal(boilStoredElsewhere(BOIL_KEY), null, 'its own write is nothing new');
+  // Another tab forgets every pan; this one has not heard, and times a boil.
+  storage.delete(BOIL_KEY);
+  memory = rememberTimeToBoil(memory, 1.5, 420);
+  assert.deepEqual(Object.keys(JSON.parse(storage.get(BOIL_KEY) ?? '{}') as object), Object.keys(memory));
+  assert.equal(Object.keys(memory).length, 1, 'only the pan timed since');
+  // And when it hears, it follows.
+  storage.delete(BOIL_KEY);
+  assert.deepEqual(boilStoredElsewhere(null), {});
+  assert.equal(boilStoredElsewhere(BOIL_KEY), null);
+  clearBoilMemory();
 });
