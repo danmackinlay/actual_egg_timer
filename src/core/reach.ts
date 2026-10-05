@@ -1,7 +1,7 @@
 /**
  * The odds at every level the slider offers, and what follows from them:
- * which levels are offered at all, how the track is shaded, and when the app
- * says how to make a cook more reliable.
+ * which levels the app warns of, how the track is shaded, and when the app
+ * says how to make an egg more reliable.
  *
  * THE PROFILE. `decide` computes the odds of the time: that is one level. The profile is the
  * same number for every level the pot can deliver, computed exactly as the app
@@ -15,8 +15,9 @@
  * white allows, rounded up; the firmest the pan reaches, rounded down), every
  * PROFILE_STEP positions between them, and - once an egg has taught something
  * and some level reaches REACH_ODDS - a bisection on the slider's own grid
- * (1/SLIDER_STEPS) at each end of the reachable range, so the edge the slider
- * snaps to is a level whose odds were computed, not interpolated. Between
+ * (1/SLIDER_STEPS) at each end of the range at 3/10 or better, so the level
+ * where the warning starts is one whose odds were computed, not
+ * interpolated. Between
  * points the track's shading is interpolated linearly; the odds are smooth in
  * the level, and the step is under a degree of peak yolk.
  *
@@ -27,22 +28,22 @@
  * thread, after the pot's decision surface, and keep one per pot and
  * posterior, like the surface.
  *
- * REACHABILITY. The softest and firmest levels offered are the softest and
- * firmest whose odds are at least REACH_ODDS (3/10, the owner's number) -
- * not whatever the mean solve can reach, which would let the app offer a
- * level it then gives 0/10.
- * Physical impossibility still wins: the profile only has points the pan can
- * deliver, so the odds can narrow the range and never widen it. Levels inside
- * the range whose odds dip below the threshold are not refused; only the ends
- * move.
+ * THE WARNING. A level whose odds are under REACH_ODDS (3/10, the owner's
+ * number) is not refused: the slider rests there, and the app says the odds
+ * are low (`lowOddsAt`). The levels it warns of are those softer than the
+ * softest level with odds of at least 3/10, and firmer than the firmest -
+ * the dots on the track. Only what the pan cannot deliver at all is refused
+ * (`verdictFor`, the stripes), and the slider moves out of it. Dips under
+ * 3/10 inside the range are not warned of; only the ends are, as only the
+ * ends are dotted. Until 5 October 2026 the ends were a wall the slider
+ * snapped back to (DECISIONS.md 20, amended by 83).
  *
- * WHEN NOTHING REACHES 3/10 the physical limits stand, with no refusal from
- * the odds at all. That is the fresh install: before any egg the prior is
- * honestly unsure, every level reads about 2/10, and refusing on that would
- * refuse a cook for being new. It is also written as a rule of its own - no
- * odds-based refusal before the first egg that taught something - so that no
- * pot whose prior odds happen to cross 3/10 somewhere can refuse a new cook
- * either. Physical limits are the whole rule until then.
+ * WHEN NOTHING REACHES 3/10 there is no warning at all, and no dots. That is
+ * the fresh install: before any egg the prior is honestly unsure, every level
+ * reads about 2/10, and warning on that would warn a cook for being new. It
+ * is also written as a rule of its own - no odds-based warning before the
+ * first egg that taught something - so that no pot whose prior odds happen to
+ * cross 3/10 somewhere can warn a new cook either.
  *
  * Pure, like the rest of `src/core/`.
  */
@@ -54,10 +55,10 @@ import { DoseGrid } from './doseGrid.js';
 import { decide, oddsInTenths } from './decide.js';
 import { Calibration, calibrationDoneness, calibrationParams } from './record.js';
 import {
-  LIMITS, SLIDER_STEPS, START_TEMP_PRESETS_C, Verdict, anchorNear, snapDown, snapUp, verdictFor,
+  LIMITS, SLIDER_STEPS, START_TEMP_PRESETS_C, Verdict, snapDown, snapUp, verdictFor,
 } from './policy.js';
 
-/** The odds a level must reach to be offered: 3/10, the owner's number. */
+/** The odds under which a level is warned of: 3/10, the owner's number. */
 export const REACH_ODDS = 0.3;
 
 /** Slider positions between profile points: 5, so a point every 0.05 of the
@@ -81,8 +82,9 @@ export interface OddsProfile {
   physicalSoftest: number;
   physicalHardest: number;
   /** The softest and firmest levels with odds of at least REACH_ODDS, or null
-   *  when the odds refuse nothing: before the first egg, or when no level
-   *  reaches it. Both null or both set. */
+   *  when the odds warn of nothing: before the first egg, or when no level
+   *  reaches it. Both null or both set. Outside them, and inside the physical
+   *  edges, is what the track dots and the app warns of. */
   softest: number | null;
   hardest: number | null;
 }
@@ -112,7 +114,7 @@ export function oddsAtLevel(
 }
 
 /**
- * The odds at every level the pot can deliver, and the range they allow. See
+ * The odds at every level the pot can deliver, and where they reach 3/10. See
  * the header for which levels, and why.
  *
  * `grid` is this pot's decision surface (`decisionGridRequest`), built for
@@ -193,83 +195,57 @@ export function oddsProfile(c: Calibration, egg: Egg, setup: CookSetup, grid: Do
   };
 }
 
-/* ------------------------------------------------------------ the verdict */
+/* ------------------------------------------------------------ the warning */
 
 /**
- * `verdictFor`, with the range the odds allow.
- *
- * A level the pan cannot deliver is refused for the physical reason, as it
- * always was, and that sentence stands - it says what to change - but the
- * slider goes to the nearer end of the range the odds allow, and the sentence
- * names that end. A level the pan can deliver but the odds do not allow is
- * refused as `unlikelySoft` or `unlikelyHard`. With no profile, or one that
- * refuses nothing, this is `verdictFor`.
+ * Whether the app warns that `level` comes out right fewer than 3 times in
+ * 10 so far: true when the profile has a range at 3/10 or better and the
+ * level is softer than its softest or firmer than its firmest. False with no
+ * profile, or one that warns of nothing (the header, "when nothing reaches
+ * 3/10"). It moves nothing: what the pan cannot deliver is `verdictFor`'s.
  */
-export function verdictWithOdds(sol: Solution, level: number, profile: OddsProfile | null): Verdict {
-  const v = verdictFor(sol, level);
-  if (profile === null || profile.softest === null || profile.hardest === null) return v;
-  const softest = profile.softest;
-  const hardest = profile.hardest;
-  const wanted = v.wanted;
-
-  if (v.kind === 'whiteNeverSets') return v;
-  if (v.kind === 'tooSoftForWhite') {
-    const to = Math.max(v.snapTo ?? level, softest);
-    const limit = anchorNear(to);
-    return { ...v, limit: limit, snapTo: to > level ? to : null, worthSaying: limit.key !== wanted.key };
-  }
-  if (v.kind === 'harderThanPanReaches') {
-    const to = Math.min(v.snapTo ?? level, hardest);
-    const limit = anchorNear(to);
-    return { ...v, limit: limit, snapTo: to < level ? to : null, worthSaying: limit.key !== wanted.key };
-  }
-  if (level < softest) {
-    const limit = anchorNear(softest);
-    return {
-      kind: 'unlikelySoft', wanted: wanted, limit: limit, snapTo: softest,
-      worthSaying: limit.key !== wanted.key,
-    };
-  }
-  if (level > hardest) {
-    const limit = anchorNear(hardest);
-    return {
-      kind: 'unlikelyHard', wanted: wanted, limit: limit, snapTo: hardest,
-      worthSaying: limit.key !== wanted.key,
-    };
-  }
-  return v;
+export function lowOddsAt(profile: OddsProfile | null, level: number): boolean {
+  if (profile === null || profile.softest === null || profile.hardest === null) return false;
+  return level < profile.softest || level > profile.hardest;
 }
 
 /* ------------------------------------------------------------- the answer */
 
-/** A solve, the verdict on it, and the level it is for. */
+/** A solve, the verdict on it, the level it is for, and whether the odds
+ *  there are warned of. */
 export interface LevelAnswer {
   solution: Solution;
   verdict: Verdict;
   /** The level the solution is for: the one asked, or the one it snapped to. */
   level: number;
+  /** `lowOddsAt` that level. */
+  lowOdds: boolean;
 }
 
 /**
- * Solve for a level, judge it with the odds' range, and, when the verdict
- * moves the slider, solve again at the level it moves to - so the numbers on
- * screen are for the cook on offer rather than for one that was refused. The
- * retry is kept only if it reaches.
+ * Solve for a level, judge it (`verdictFor`: only what the pan cannot deliver
+ * moves the slider), and, when the verdict moves the slider, solve again at
+ * the level it moves to - so the numbers on screen are for the egg on offer
+ * rather than for one that was refused. The retry is kept only if it
+ * reaches. Then whether the odds at the level answered are warned of.
  *
- * `snapRetry` is false for a cook already under way: its target is frozen,
- * so a solve at a snapped level would answer for an egg nobody is cooking.
+ * `snapRetry` is false for an egg already in the water: its target is
+ * frozen, so a solve at a snapped level would answer for an egg nobody is
+ * cooking.
  */
 export function answerAt(
   c: Calibration, egg: Egg, setup: CookSetup, level: number, profile: OddsProfile | null, snapRetry: boolean,
 ): LevelAnswer {
   const params = calibrationParams(c);
   const solution = solveCookTime(egg, setup, params, calibrationDoneness(c, level));
-  const verdict = verdictWithOdds(solution, level, profile);
+  const verdict = verdictFor(solution, level);
   if (snapRetry && verdict.snapTo !== null) {
     const retry = solveCookTime(egg, setup, params, calibrationDoneness(c, verdict.snapTo));
-    if (retry.reachable) return { solution: retry, verdict: verdict, level: verdict.snapTo };
+    if (retry.reachable) {
+      return { solution: retry, verdict: verdict, level: verdict.snapTo, lowOdds: lowOddsAt(profile, verdict.snapTo) };
+    }
   }
-  return { solution: solution, verdict: verdict, level: level };
+  return { solution: solution, verdict: verdict, level: level, lowOdds: lowOddsAt(profile, level) };
 }
 
 /* ------------------------------------------------------------ the shading */

@@ -88,7 +88,7 @@ struct ReachConformance {
 
     /// The solve, the verdict and the retry at the level it snaps to, for each
     /// profile's pot, with the profile as the fixture has it.
-    @Test("the answer at a level, and its snap-and-retry")
+    @Test("the answer at a level, its snap-and-retry, and its warning")
     func answers() throws {
         let byName = try posteriorsByName(Fixtures.list("decide.json", "posteriors"))
         let profiles = try Fixtures.list("reach.json", "profiles")
@@ -111,24 +111,15 @@ struct ReachConformance {
             #expect(try a.verdict.kind.rawValue == row.str("kind"), "\(label) kind")
             #expect(try a.verdict.snapTo == row.optionalNum("snapTo"), "\(label) snapTo")
             #expect(try a.level == row.num("answeredLevel"), "\(label) level")
+            #expect(try a.lowOdds == row.flag("lowOdds"), "\(label) lowOdds")
             #expect(try a.solution.reachable == row.flag("reachable"), "\(label) reachable")
             try expectClose(a.solution.result.cookTimeS, row.num("cookTime_s"), "\(label) cook time")
         }
     }
 
-    @Test("the verdict, with and without the odds' range")
-    func verdicts() throws {
-        let result = CookResult(
-            cookTimeS: 400, peakYolkC: 65, peakYolkTimeS: 500, yolkAtPullC: 60, yolkDoseMin: 1,
-            whiteDoseMin: 1, peakWhiteC: 80
-        )
-        func solution(_ name: String) -> Solution {
-            Solution(
-                result: result, reachable: name == "reachable", minCookTimeS: 300,
-                softestLevel: 0.1, hardestLevel: 0.9, whiteSets: name != "never"
-            )
-        }
-        for row in try Fixtures.list("reach.json", "verdicts") {
+    @Test("the warning, with and without a range at 3/10")
+    func lowOdds() throws {
+        for row in try Fixtures.list("reach.json", "lowOdds") {
             var profile: OddsProfile?
             if let range = row["range"] as? [String: Any] {
                 profile = try OddsProfile(
@@ -137,14 +128,8 @@ struct ReachConformance {
                 )
             }
             let level = try row.num("level")
-            let name = try row.str("solution")
-            let v = verdictWithOdds(solution(name), level: level, profile: profile)
-            let label = "\(name) at \(level), \(String(describing: row["range"]))"
-            #expect(try v.kind.rawValue == row.str("kind"), "\(label) kind")
-            #expect(try v.wanted.key == row.str("wanted"), "\(label) wanted")
-            #expect(try v.limit.key == row.str("limit"), "\(label) limit")
-            #expect(try v.snapTo == row.optionalNum("snapTo"), "\(label) snapTo")
-            #expect(try v.worthSaying == row.flag("worthSaying"), "\(label) worthSaying")
+            let label = "\(level), \(String(describing: row["range"]))"
+            #expect(try lowOddsAt(profile, level: level) == row.flag("lowOdds"), "\(label)")
         }
     }
 

@@ -235,14 +235,11 @@ export function targetPeakYolk_C(level: number): number {
  *  - `whiteNeverSets`       the water falls past what the white needs while the
  *                           egg is still in it. Nothing on the slider is on
  *                           offer, so there is nowhere to snap to.
- *  - `unlikelySoft`         the pan can deliver it, but it would hit the mark
- *                           less than 3 times in 10 (`verdictWithOdds`,
- *                           reach.ts). Snap UP to the softest level that does.
- *  - `unlikelyHard`         the same at the firm end. Snap DOWN.
+ *
+ * A level the pan can deliver is never refused, however low its odds: those
+ * are warned of instead (`lowOddsAt`, reach.ts; DECISIONS.md 83).
  */
-export type RefusalKind =
-  | 'none' | 'tooSoftForWhite' | 'harderThanPanReaches' | 'whiteNeverSets'
-  | 'unlikelySoft' | 'unlikelyHard';
+export type RefusalKind = 'none' | 'tooSoftForWhite' | 'harderThanPanReaches' | 'whiteNeverSets';
 
 export interface Verdict {
   kind: RefusalKind;

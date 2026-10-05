@@ -1,20 +1,23 @@
 import Foundation
 
 /// The odds at every level the slider offers, and what follows from them:
-/// which levels are offered at all, how the track is shaded, and when the app
-/// says how to make a cook more reliable.
+/// which levels the app warns of, how the track is shaded, and when the app
+/// says how to make an egg more reliable.
 ///
 /// A profile point is the odds the app computes when the slider sits at that
 /// level - the mean solve there, decided on the pot's decision surface - so
 /// the two cannot disagree. The levels are the two physical edges on the
 /// slider's grid, every `profileStep` positions between them, and, once an egg
 /// has taught something and a level reaches `reachOdds`, a bisection on the
-/// slider's own grid at each end of the reachable range. With no level at
-/// 3/10, or before the first egg, the odds refuse nothing and the physical
-/// limits stand. The reasons, and the measurements, are in src/core/reach.ts,
-/// which this is held to by fixtures/reach.json.
+/// slider's own grid at each end of the range at 3/10 or better. Outside that
+/// range, and inside the physical edges, the app warns that the level comes
+/// out right fewer than 3 times in 10 so far; it never refuses it, and only
+/// what the pan cannot deliver moves the slider (DECISIONS.md 83). With no
+/// level at 3/10, or before the first egg, nothing is warned of. The reasons,
+/// and the measurements, are in src/core/reach.ts, which this is held to by
+/// fixtures/reach.json.
 
-/// The odds a level must reach to be offered: 3/10, the owner's number.
+/// The odds under which a level is warned of: 3/10, the owner's number.
 public let reachOdds = 0.3
 
 /// Slider positions between profile points.
@@ -40,7 +43,8 @@ public struct OddsProfile: Sendable, Equatable {
     public let physicalSoftest: Double
     public let physicalHardest: Double
     /// The softest and firmest levels at `reachOdds` or better, or nil when the
-    /// odds refuse nothing. Both nil or both set.
+    /// odds warn of nothing. Both nil or both set. Outside them, and inside the
+    /// physical edges, is what the track dots and the app warns of.
     public let softest: Double?
     public let hardest: Double?
 
@@ -81,7 +85,7 @@ func oddsAtLevel(
     return decide(c, grid: grid, solution: sol, logNominalTarget: logTarget).odds
 }
 
-/// The odds at every level the pot can deliver, and the range they allow.
+/// The odds at every level the pot can deliver, and where they reach 3/10.
 /// `grid` is this pot's decision surface, for the same calibration.
 public func oddsProfile(_ c: Calibration, egg: Egg, setup: CookSetup, grid: DoseGrid) -> OddsProfile {
     let edge = solveCookTime(
@@ -153,71 +157,40 @@ public func oddsProfile(_ c: Calibration, egg: Egg, setup: CookSetup, grid: Dose
     )
 }
 
-// MARK: - The verdict
+// MARK: - The warning
 
-/// `verdictFor`, with the range the odds allow. A level the pan cannot
-/// deliver keeps its physical reason, and snaps to the nearer end of the odds'
-/// range; one it can deliver but the odds do not allow is `unlikelySoft` or
-/// `unlikelyHard`. With no profile, or one that refuses nothing, this is
-/// `verdictFor`.
-public func verdictWithOdds(_ sol: Solution, level: Double, profile: OddsProfile?) -> Verdict {
-    let v = verdictFor(sol, level: level)
-    guard let profile, let softest = profile.softest, let hardest = profile.hardest else { return v }
-    let wanted = v.wanted
-
-    switch v.kind {
-    case .whiteNeverSets:
-        return v
-    case .tooSoftForWhite:
-        let to = max(v.snapTo ?? level, softest)
-        let limit = anchorNear(to)
-        return Verdict(
-            kind: v.kind, wanted: wanted, limit: limit, snapTo: to > level ? to : nil,
-            worthSaying: limit.key != wanted.key
-        )
-    case .harderThanPanReaches:
-        let to = min(v.snapTo ?? level, hardest)
-        let limit = anchorNear(to)
-        return Verdict(
-            kind: v.kind, wanted: wanted, limit: limit, snapTo: to < level ? to : nil,
-            worthSaying: limit.key != wanted.key
-        )
-    default:
-        break
-    }
-    if level < softest {
-        let limit = anchorNear(softest)
-        return Verdict(
-            kind: .unlikelySoft, wanted: wanted, limit: limit, snapTo: softest,
-            worthSaying: limit.key != wanted.key
-        )
-    }
-    if level > hardest {
-        let limit = anchorNear(hardest)
-        return Verdict(
-            kind: .unlikelyHard, wanted: wanted, limit: limit, snapTo: hardest,
-            worthSaying: limit.key != wanted.key
-        )
-    }
-    return v
+/// Whether the app warns that `level` comes out right fewer than 3 times in
+/// 10 so far: true when the profile has a range at 3/10 or better and the
+/// level is softer than its softest or firmer than its firmest. False with no
+/// profile, or one that warns of nothing. It moves nothing: what the pan
+/// cannot deliver is `verdictFor`'s.
+public func lowOddsAt(_ profile: OddsProfile?, level: Double) -> Bool {
+    guard let profile, let softest = profile.softest, let hardest = profile.hardest else { return false }
+    return level < softest || level > hardest
 }
 
 // MARK: - The answer
 
-/// A solve, the verdict on it, and the level it is for.
+/// A solve, the verdict on it, the level it is for, and whether the odds there
+/// are warned of.
 public struct LevelAnswer: Sendable {
     public let solution: Solution
     public let verdict: Verdict
     /// The level the solution is for: the one asked, or the one it snapped to.
     public let level: Double
+    /// `lowOddsAt` that level.
+    public let lowOdds: Bool
 }
 
-/// Solve for a level, judge it with the odds' range, and, when the verdict
-/// moves the slider, solve again at the level it moves to, so the numbers on
-/// screen are for the cook on offer. The retry is kept only if it reaches.
+/// Solve for a level, judge it (`verdictFor`: only what the pan cannot deliver
+/// moves the slider), and, when the verdict moves the slider, solve again at
+/// the level it moves to, so the numbers on screen are for the egg on offer.
+/// The retry is kept only if it reaches. Then whether the odds at the level
+/// answered are warned of.
 ///
-/// `snapRetry` is false for a cook already under way: its target is frozen,
-/// so a solve at a snapped level would answer for an egg nobody is cooking.
+/// `snapRetry` is false for an egg already in the water: its target is
+/// frozen, so a solve at a snapped level would answer for an egg nobody is
+/// cooking.
 public func answerAt(
     _ c: Calibration, egg: Egg, setup: CookSetup, level: Double, profile: OddsProfile?, snapRetry: Bool
 ) -> LevelAnswer {
@@ -225,14 +198,18 @@ public func answerAt(
     let solution = solveCookTime(
         egg: egg, setup: setup, params: params, doneness: calibrationDoneness(c, level: level)
     )
-    let verdict = verdictWithOdds(solution, level: level, profile: profile)
+    let verdict = verdictFor(solution, level: level)
     if snapRetry, let snapTo = verdict.snapTo {
         let retry = solveCookTime(
             egg: egg, setup: setup, params: params, doneness: calibrationDoneness(c, level: snapTo)
         )
-        if retry.reachable { return LevelAnswer(solution: retry, verdict: verdict, level: snapTo) }
+        if retry.reachable {
+            return LevelAnswer(
+                solution: retry, verdict: verdict, level: snapTo, lowOdds: lowOddsAt(profile, level: snapTo)
+            )
+        }
     }
-    return LevelAnswer(solution: solution, verdict: verdict, level: level)
+    return LevelAnswer(solution: solution, verdict: verdict, level: level, lowOdds: lowOddsAt(profile, level: level))
 }
 
 // MARK: - The shading

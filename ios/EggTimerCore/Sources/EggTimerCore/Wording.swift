@@ -18,11 +18,6 @@ public func refusalKey(_ v: Verdict, cooling: Cooling) -> CopyRef? {
     case .none: return nil
     case .whiteNeverSets: return CopyRef("refusal.whiteNeverSets")
     case .harderThanPanReaches: return CopyRef("refusal.harderThanPan")
-    case .unlikelySoft, .unlikelyHard:
-        return CopyRef(
-            v.kind == .unlikelySoft ? "refusal.unlikelySoft" : "refusal.unlikelyHard",
-            ["hits": (reachOdds * 10).rounded(), "of": 10]
-        )
     case .tooSoftForWhite:
         switch cooling {
         case .counter: return CopyRef("refusal.counter")
@@ -30,6 +25,18 @@ public func refusalKey(_ v: Verdict, cooling: Cooling) -> CopyRef? {
         case .ice: return CopyRef("refusal.ice")
         }
     }
+}
+
+/// The warning line while idle: the refusal, when there is one worth saying,
+/// since it says what to change; otherwise, when the level on screen is one the
+/// odds warn of (`lowOddsAt`), that it comes out right fewer than 3 times in 10
+/// so far. The app adds `doneness`, the word for the level on screen. One line,
+/// not two: a slider just moved out of the stripes says why it moved, and the
+/// next answer there carries the warning.
+public func warningKey(_ v: Verdict, lowOdds: Bool, cooling: Cooling) -> CopyRef? {
+    if let refusal = refusalKey(v, cooling: cooling) { return refusal }
+    guard lowOdds else { return nil }
+    return CopyRef("warn.lowOdds", ["hits": (reachOdds * 10).rounded(), "of": 10])
 }
 
 // MARK: - The outcome

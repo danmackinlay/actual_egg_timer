@@ -4,10 +4,11 @@
     "directionLikely": 0.5,
     "whiteRisk": 0.2
   },
-  "refusal": [
+  "warning": [
     {
       "kind": "none",
       "worthSaying": true,
+      "lowOdds": false,
       "cooling": "ice",
       "key": null,
       "args": null
@@ -15,6 +16,7 @@
     {
       "kind": "none",
       "worthSaying": true,
+      "lowOdds": false,
       "cooling": "tap",
       "key": null,
       "args": null
@@ -22,13 +24,48 @@
     {
       "kind": "none",
       "worthSaying": true,
+      "lowOdds": false,
       "cooling": "counter",
       "key": null,
       "args": null
     },
     {
       "kind": "none",
+      "worthSaying": true,
+      "lowOdds": true,
+      "cooling": "ice",
+      "key": "warn.lowOdds",
+      "args": {
+        "hits": 3,
+        "of": 10
+      }
+    },
+    {
+      "kind": "none",
+      "worthSaying": true,
+      "lowOdds": true,
+      "cooling": "tap",
+      "key": "warn.lowOdds",
+      "args": {
+        "hits": 3,
+        "of": 10
+      }
+    },
+    {
+      "kind": "none",
+      "worthSaying": true,
+      "lowOdds": true,
+      "cooling": "counter",
+      "key": "warn.lowOdds",
+      "args": {
+        "hits": 3,
+        "of": 10
+      }
+    },
+    {
+      "kind": "none",
       "worthSaying": false,
+      "lowOdds": false,
       "cooling": "ice",
       "key": null,
       "args": null
@@ -36,6 +73,7 @@
     {
       "kind": "none",
       "worthSaying": false,
+      "lowOdds": false,
       "cooling": "tap",
       "key": null,
       "args": null
@@ -43,13 +81,48 @@
     {
       "kind": "none",
       "worthSaying": false,
+      "lowOdds": false,
       "cooling": "counter",
       "key": null,
       "args": null
+    },
+    {
+      "kind": "none",
+      "worthSaying": false,
+      "lowOdds": true,
+      "cooling": "ice",
+      "key": "warn.lowOdds",
+      "args": {
+        "hits": 3,
+        "of": 10
+      }
+    },
+    {
+      "kind": "none",
+      "worthSaying": false,
+      "lowOdds": true,
+      "cooling": "tap",
+      "key": "warn.lowOdds",
+      "args": {
+        "hits": 3,
+        "of": 10
+      }
+    },
+    {
+      "kind": "none",
+      "worthSaying": false,
+      "lowOdds": true,
+      "cooling": "counter",
+      "key": "warn.lowOdds",
+      "args": {
+        "hits": 3,
+        "of": 10
+      }
     },
     {
       "kind": "tooSoftForWhite",
       "worthSaying": true,
+      "lowOdds": false,
       "cooling": "ice",
       "key": "refusal.ice",
       "args": {}
@@ -57,6 +130,7 @@
     {
       "kind": "tooSoftForWhite",
       "worthSaying": true,
+      "lowOdds": false,
       "cooling": "tap",
       "key": "refusal.tap",
       "args": {}
@@ -64,6 +138,31 @@
     {
       "kind": "tooSoftForWhite",
       "worthSaying": true,
+      "lowOdds": false,
+      "cooling": "counter",
+      "key": "refusal.counter",
+      "args": {}
+    },
+    {
+      "kind": "tooSoftForWhite",
+      "worthSaying": true,
+      "lowOdds": true,
+      "cooling": "ice",
+      "key": "refusal.ice",
+      "args": {}
+    },
+    {
+      "kind": "tooSoftForWhite",
+      "worthSaying": true,
+      "lowOdds": true,
+      "cooling": "tap",
+      "key": "refusal.tap",
+      "args": {}
+    },
+    {
+      "kind": "tooSoftForWhite",
+      "worthSaying": true,
+      "lowOdds": true,
       "cooling": "counter",
       "key": "refusal.counter",
       "args": {}
@@ -71,6 +170,7 @@
     {
       "kind": "tooSoftForWhite",
       "worthSaying": false,
+      "lowOdds": false,
       "cooling": "ice",
       "key": null,
       "args": null
@@ -78,6 +178,7 @@
     {
       "kind": "tooSoftForWhite",
       "worthSaying": false,
+      "lowOdds": false,
       "cooling": "tap",
       "key": null,
       "args": null
@@ -85,13 +186,48 @@
     {
       "kind": "tooSoftForWhite",
       "worthSaying": false,
+      "lowOdds": false,
       "cooling": "counter",
       "key": null,
       "args": null
     },
     {
+      "kind": "tooSoftForWhite",
+      "worthSaying": false,
+      "lowOdds": true,
+      "cooling": "ice",
+      "key": "warn.lowOdds",
+      "args": {
+        "hits": 3,
+        "of": 10
+      }
+    },
+    {
+      "kind": "tooSoftForWhite",
+      "worthSaying": false,
+      "lowOdds": true,
+      "cooling": "tap",
+      "key": "warn.lowOdds",
+      "args": {
+        "hits": 3,
+        "of": 10
+      }
+    },
+    {
+      "kind": "tooSoftForWhite",
+      "worthSaying": false,
+      "lowOdds": true,
+      "cooling": "counter",
+      "key": "warn.lowOdds",
+      "args": {
+        "hits": 3,
+        "of": 10
+      }
+    },
+    {
       "kind": "harderThanPanReaches",
       "worthSaying": true,
+      "lowOdds": false,
       "cooling": "ice",
       "key": "refusal.harderThanPan",
       "args": {}
@@ -99,6 +235,7 @@
     {
       "kind": "harderThanPanReaches",
       "worthSaying": true,
+      "lowOdds": false,
       "cooling": "tap",
       "key": "refusal.harderThanPan",
       "args": {}
@@ -106,6 +243,31 @@
     {
       "kind": "harderThanPanReaches",
       "worthSaying": true,
+      "lowOdds": false,
+      "cooling": "counter",
+      "key": "refusal.harderThanPan",
+      "args": {}
+    },
+    {
+      "kind": "harderThanPanReaches",
+      "worthSaying": true,
+      "lowOdds": true,
+      "cooling": "ice",
+      "key": "refusal.harderThanPan",
+      "args": {}
+    },
+    {
+      "kind": "harderThanPanReaches",
+      "worthSaying": true,
+      "lowOdds": true,
+      "cooling": "tap",
+      "key": "refusal.harderThanPan",
+      "args": {}
+    },
+    {
+      "kind": "harderThanPanReaches",
+      "worthSaying": true,
+      "lowOdds": true,
       "cooling": "counter",
       "key": "refusal.harderThanPan",
       "args": {}
@@ -113,6 +275,7 @@
     {
       "kind": "harderThanPanReaches",
       "worthSaying": false,
+      "lowOdds": false,
       "cooling": "ice",
       "key": null,
       "args": null
@@ -120,6 +283,7 @@
     {
       "kind": "harderThanPanReaches",
       "worthSaying": false,
+      "lowOdds": false,
       "cooling": "tap",
       "key": null,
       "args": null
@@ -127,13 +291,48 @@
     {
       "kind": "harderThanPanReaches",
       "worthSaying": false,
+      "lowOdds": false,
       "cooling": "counter",
       "key": null,
       "args": null
     },
     {
+      "kind": "harderThanPanReaches",
+      "worthSaying": false,
+      "lowOdds": true,
+      "cooling": "ice",
+      "key": "warn.lowOdds",
+      "args": {
+        "hits": 3,
+        "of": 10
+      }
+    },
+    {
+      "kind": "harderThanPanReaches",
+      "worthSaying": false,
+      "lowOdds": true,
+      "cooling": "tap",
+      "key": "warn.lowOdds",
+      "args": {
+        "hits": 3,
+        "of": 10
+      }
+    },
+    {
+      "kind": "harderThanPanReaches",
+      "worthSaying": false,
+      "lowOdds": true,
+      "cooling": "counter",
+      "key": "warn.lowOdds",
+      "args": {
+        "hits": 3,
+        "of": 10
+      }
+    },
+    {
       "kind": "whiteNeverSets",
       "worthSaying": true,
+      "lowOdds": false,
       "cooling": "ice",
       "key": "refusal.whiteNeverSets",
       "args": {}
@@ -141,6 +340,7 @@
     {
       "kind": "whiteNeverSets",
       "worthSaying": true,
+      "lowOdds": false,
       "cooling": "tap",
       "key": "refusal.whiteNeverSets",
       "args": {}
@@ -148,6 +348,31 @@
     {
       "kind": "whiteNeverSets",
       "worthSaying": true,
+      "lowOdds": false,
+      "cooling": "counter",
+      "key": "refusal.whiteNeverSets",
+      "args": {}
+    },
+    {
+      "kind": "whiteNeverSets",
+      "worthSaying": true,
+      "lowOdds": true,
+      "cooling": "ice",
+      "key": "refusal.whiteNeverSets",
+      "args": {}
+    },
+    {
+      "kind": "whiteNeverSets",
+      "worthSaying": true,
+      "lowOdds": true,
+      "cooling": "tap",
+      "key": "refusal.whiteNeverSets",
+      "args": {}
+    },
+    {
+      "kind": "whiteNeverSets",
+      "worthSaying": true,
+      "lowOdds": true,
       "cooling": "counter",
       "key": "refusal.whiteNeverSets",
       "args": {}
@@ -155,6 +380,7 @@
     {
       "kind": "whiteNeverSets",
       "worthSaying": false,
+      "lowOdds": false,
       "cooling": "ice",
       "key": null,
       "args": null
@@ -162,6 +388,7 @@
     {
       "kind": "whiteNeverSets",
       "worthSaying": false,
+      "lowOdds": false,
       "cooling": "tap",
       "key": null,
       "args": null
@@ -169,111 +396,43 @@
     {
       "kind": "whiteNeverSets",
       "worthSaying": false,
+      "lowOdds": false,
       "cooling": "counter",
       "key": null,
       "args": null
     },
     {
-      "kind": "unlikelySoft",
-      "worthSaying": true,
+      "kind": "whiteNeverSets",
+      "worthSaying": false,
+      "lowOdds": true,
       "cooling": "ice",
-      "key": "refusal.unlikelySoft",
+      "key": "warn.lowOdds",
       "args": {
         "hits": 3,
         "of": 10
       }
     },
     {
-      "kind": "unlikelySoft",
-      "worthSaying": true,
+      "kind": "whiteNeverSets",
+      "worthSaying": false,
+      "lowOdds": true,
       "cooling": "tap",
-      "key": "refusal.unlikelySoft",
+      "key": "warn.lowOdds",
       "args": {
         "hits": 3,
         "of": 10
       }
     },
     {
-      "kind": "unlikelySoft",
-      "worthSaying": true,
+      "kind": "whiteNeverSets",
+      "worthSaying": false,
+      "lowOdds": true,
       "cooling": "counter",
-      "key": "refusal.unlikelySoft",
+      "key": "warn.lowOdds",
       "args": {
         "hits": 3,
         "of": 10
       }
-    },
-    {
-      "kind": "unlikelySoft",
-      "worthSaying": false,
-      "cooling": "ice",
-      "key": null,
-      "args": null
-    },
-    {
-      "kind": "unlikelySoft",
-      "worthSaying": false,
-      "cooling": "tap",
-      "key": null,
-      "args": null
-    },
-    {
-      "kind": "unlikelySoft",
-      "worthSaying": false,
-      "cooling": "counter",
-      "key": null,
-      "args": null
-    },
-    {
-      "kind": "unlikelyHard",
-      "worthSaying": true,
-      "cooling": "ice",
-      "key": "refusal.unlikelyHard",
-      "args": {
-        "hits": 3,
-        "of": 10
-      }
-    },
-    {
-      "kind": "unlikelyHard",
-      "worthSaying": true,
-      "cooling": "tap",
-      "key": "refusal.unlikelyHard",
-      "args": {
-        "hits": 3,
-        "of": 10
-      }
-    },
-    {
-      "kind": "unlikelyHard",
-      "worthSaying": true,
-      "cooling": "counter",
-      "key": "refusal.unlikelyHard",
-      "args": {
-        "hits": 3,
-        "of": 10
-      }
-    },
-    {
-      "kind": "unlikelyHard",
-      "worthSaying": false,
-      "cooling": "ice",
-      "key": null,
-      "args": null
-    },
-    {
-      "kind": "unlikelyHard",
-      "worthSaying": false,
-      "cooling": "tap",
-      "key": null,
-      "args": null
-    },
-    {
-      "kind": "unlikelyHard",
-      "worthSaying": false,
-      "cooling": "counter",
-      "key": null,
-      "args": null
     }
   ],
   "outcome": [

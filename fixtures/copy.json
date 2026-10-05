@@ -267,31 +267,21 @@
     },
     {
       "locale": "en-x-1750",
-      "key": "refusal.unlikelySoft",
-      "args": {
-        "hits": 3,
-        "of": 10,
-        "limit": "jammy"
-      },
-      "text": "The softest in which I hitherto succeed at least 3 times in 10: jammy."
-    },
-    {
-      "locale": "en-x-1750",
-      "key": "refusal.unlikelyHard",
-      "args": {
-        "hits": 3,
-        "of": 10,
-        "limit": "fudgy"
-      },
-      "text": "The firmest in which I hitherto succeed at least 3 times in 10: fudgy."
-    },
-    {
-      "locale": "en-x-1750",
       "key": "refusal.ice",
       "args": {
         "limit": "soft"
       },
       "text": "Any shorter, and the white is yet raw. Softest attainable for this egg: soft."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "warn.lowOdds",
+      "args": {
+        "doneness": "Soft",
+        "hits": 3,
+        "of": 10
+      },
+      "text": "Soft: in this I have hitherto succeeded fewer than 3 times in 10."
     },
     {
       "locale": "en-x-1750",
@@ -1868,31 +1858,21 @@
     },
     {
       "locale": "en",
-      "key": "refusal.unlikelySoft",
-      "args": {
-        "hits": 3,
-        "of": 10,
-        "limit": "jammy"
-      },
-      "text": "The softest I get right at least 3 times in 10, so far: jammy."
-    },
-    {
-      "locale": "en",
-      "key": "refusal.unlikelyHard",
-      "args": {
-        "hits": 3,
-        "of": 10,
-        "limit": "fudgy"
-      },
-      "text": "The firmest I get right at least 3 times in 10, so far: fudgy."
-    },
-    {
-      "locale": "en",
       "key": "refusal.ice",
       "args": {
         "limit": "soft"
       },
       "text": "Any shorter and the white is still raw. Softest possible for this egg: soft."
+    },
+    {
+      "locale": "en",
+      "key": "warn.lowOdds",
+      "args": {
+        "doneness": "Soft",
+        "hits": 3,
+        "of": 10
+      },
+      "text": "Soft: I get this right fewer than 3 times in 10 so far."
     },
     {
       "locale": "en",

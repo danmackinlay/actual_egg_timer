@@ -1,5 +1,5 @@
 /**
- * fixtures/reach.json: the odds at every level, the verdict with them, the
+ * fixtures/reach.json: the odds at every level, the warning they give, the
  * answer at a level, the shading, the advice.
  */
 
@@ -8,17 +8,16 @@ import { Calibration } from '../../src/core/record.js';
 import { decisionInputs } from '../../src/core/decide.js';
 import {
   ADVICE_BELOW_TENTHS, ADVICE_GAIN, ADVICE_MARGIN_TENTHS, OddsProfile, PROFILE_STEP, REACH_ODDS,
-  SHADE_BEST_MIN, adviceWanted, answerAt, oddsNear, oddsProfile, pricedChanges, protocolAdvice, shadingOf,
-  unpricedAdvice, verdictWithOdds,
+  SHADE_BEST_MIN, adviceWanted, answerAt, lowOddsAt, oddsNear, oddsProfile, pricedChanges, protocolAdvice,
+  shadingOf, unpricedAdvice,
 } from '../../src/core/reach.js';
-import { Solution } from '../../src/core/solve.js';
 
 
 import { DECIDE_EGG, DECIDE_SETUP, coarseDecisionGrid, decidePosteriors } from './decide.js';
 import { referenceSetup } from '../common.js';
 
-/* The odds at every level, the range they allow, the verdict with that range,
- * the shading and the advice (src/core/reach.ts). A profile is a solve and a
+/* The odds at every level, the range at 3/10 or better, the warning outside
+ * it, the shading and the advice (src/core/reach.ts). A profile is a solve and a
  * decision per level, so both apps must walk the same levels in the same
  * order and land on the same ends. The surfaces are coarse, as decide.json's
  * is, and built per pot from the production spec; the posteriors are
@@ -30,8 +29,8 @@ const REACH_CASES: { posterior: string; setup: CookSetup }[] = [
   { posterior: 'learned', setup: referenceSetup({ timeToBoil_s: 480, eggCount: 2, cooling: 'counter' }) },
 ];
 
-/* The answer at a level (`answerAt`): the solve, the verdict, and the retry
- * at the level it snaps to. Each profile's pot is asked at levels inside and
+/* The answer at a level (`answerAt`): the solve, the verdict, the retry at
+ * the level it snaps to, and the warning there. Each profile's pot is asked at levels inside and
  * outside its range, with and without its odds, and with the retry on and off. */
 const reachAnswers: unknown[] = [];
 
@@ -47,7 +46,7 @@ const reachProfiles = REACH_CASES.map((rc, index) => {
         const a = answerAt(c, DECIDE_EGG, rc.setup, level, withOdds ? profile : null, snapRetry);
         reachAnswers.push({
           profile: index, withOdds: withOdds, level: level, snapRetry: snapRetry,
-          kind: a.verdict.kind, snapTo: a.verdict.snapTo, answeredLevel: a.level,
+          kind: a.verdict.kind, snapTo: a.verdict.snapTo, answeredLevel: a.level, lowOdds: a.lowOdds,
           reachable: a.solution.reachable, cookTime_s: a.solution.result.cookTime_s,
         });
       }
@@ -65,36 +64,18 @@ const reachProfiles = REACH_CASES.map((rc, index) => {
   };
 });
 
-const REACH_VERDICT_SOLUTIONS: { name: string; sol: Solution }[] = (() => {
-  const result = {
-    cookTime_s: 400, peakYolk_C: 65, peakYolkTime_s: 500, yolkAtPull_C: 60, yolkDose_min: 1,
-    whiteDose_min: 1, peakWhite_C: 80,
-  };
-  const base = { result: result, minCookTime_s: 300, softestLevel: 0.1, hardestLevel: 0.9 };
-  return [
-    { name: 'reachable', sol: { ...base, reachable: true, whiteSets: true } },
-    { name: 'tooSoft', sol: { ...base, reachable: false, whiteSets: true } },
-    { name: 'never', sol: { ...base, reachable: false, whiteSets: false } },
-  ];
-})();
 const REACH_RANGES: ({ softest: number | null; hardest: number | null } | null)[] = [
   null, { softest: null, hardest: null }, { softest: 0.3, hardest: 0.8 }, { softest: 0.1, hardest: 0.9 },
   { softest: 0.23, hardest: 0.63 },
 ];
-const reachVerdicts: unknown[] = [];
-for (const s of REACH_VERDICT_SOLUTIONS) {
-  for (const range of REACH_RANGES) {
-    for (const level of [0, 0.05, 0.2, 0.3, 0.5, 0.8, 0.85, 0.95, 1]) {
-      const profile: OddsProfile | null = range === null ? null : {
-        points: [], best: 0.6, physicalSoftest: 0.1, physicalHardest: 0.9,
-        softest: range.softest, hardest: range.hardest,
-      };
-      const v = verdictWithOdds(s.sol, level, profile);
-      reachVerdicts.push({
-        solution: s.name, range: range, level: level,
-        kind: v.kind, wanted: v.wanted.key, limit: v.limit.key, snapTo: v.snapTo, worthSaying: v.worthSaying,
-      });
-    }
+const reachLowOdds: unknown[] = [];
+for (const range of REACH_RANGES) {
+  for (const level of [0, 0.05, 0.2, 0.23, 0.3, 0.5, 0.63, 0.8, 0.85, 0.95, 1]) {
+    const profile: OddsProfile | null = range === null ? null : {
+      points: [], best: 0.6, physicalSoftest: 0.1, physicalHardest: 0.9,
+      softest: range.softest, hardest: range.hardest,
+    };
+    reachLowOdds.push({ range: range, level: level, lowOdds: lowOddsAt(profile, level) });
   }
 }
 
@@ -112,7 +93,7 @@ const ADVICE_PROFILE: OddsProfile = {
 };
 
 export const reachFixture = {
-  about: 'The odds at every level, the range they allow, the verdict with it, the shading and the advice. src/core/reach.ts.',
+  about: 'The odds at every level, the range at 3/10 or better, the warning outside it, the shading and the advice. src/core/reach.ts.',
   constants: {
     reachOdds: REACH_ODDS,
     profileStep: PROFILE_STEP,
@@ -131,7 +112,7 @@ export const reachFixture = {
     return { profile: profile, shading: shadingOf(profile) };
   }),
   answers: reachAnswers,
-  verdicts: reachVerdicts,
+  lowOdds: reachLowOdds,
   adviceWanted: [0, 3, 4, 5, 6, 7, 8].flatMap((tenths) => [null, 0.62, 0.8, 0.84].map((best) => ({
     tenths: tenths, best: best,
     wanted: adviceWanted(tenths, best === null ? null : { ...ADVICE_PROFILE, best: best }),

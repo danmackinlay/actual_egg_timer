@@ -647,6 +647,13 @@ white-bound 0/10 above: the slider offers the levels whose odds are at least
   white is still raw") and snaps to the odds' end; a level it can deliver but
   the odds do not allow is refused as `unlikelySoft` / `unlikelyHard`. Dips
   under 3/10 inside the range are not refused; only the ends move.
+  **Amended 5 October 2026** (`DECISIONS.md` 83): nothing the pan can deliver
+  is refused any more. A level outside the range at 3/10 or better stays
+  where it was asked and is warned of (`lowOddsAt`, `warn.lowOdds`); a level
+  the pan cannot deliver snaps to the physical edge, not the odds' end, and
+  is warned of there if that edge is under 3/10. The `unlikely*` verdicts are
+  gone. The range is now where the warning starts, and the rest of this
+  section reads with "warned of" for "refused".
 - **When no level reaches 3/10, the physical limits stand**, with no refusal
   from the odds. That is the fresh install: under the prior every level reads
   about 2/10 (0.12-0.26 across the pots in `npm run decide -- reach`), and

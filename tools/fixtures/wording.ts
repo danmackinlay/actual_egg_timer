@@ -12,7 +12,7 @@ import { Phase, RefusalKind, Verdict, anchorNear } from '../../src/core/policy.j
 import { Cooling, HeatAfterBoil, StartMode } from '../../src/core/protocol.js';
 import { EggFrom } from '../../src/core/record.js';
 import {
-  DIRECTION_LIKELY, clauseKeys, directionKey, phaseKeys, rangeWords, refusalKey, whiteAtRisk,
+  DIRECTION_LIKELY, clauseKeys, directionKey, phaseKeys, rangeWords, warningKey, whiteAtRisk,
 } from '../../src/core/wording.js';
 import { WHITE_RISK } from '../../src/core/outcome.js';
 
@@ -21,9 +21,7 @@ const STARTS: StartMode[] = ['hot', 'cold'];
 const AFTER: HeatAfterBoil[] = ['hold', 'off'];
 const COOLINGS: Cooling[] = ['ice', 'tap', 'counter'];
 const FROMS: EggFrom[] = ['fridge', 'room', 'custom'];
-const KINDS: RefusalKind[] = [
-  'none', 'tooSoftForWhite', 'harderThanPanReaches', 'whiteNeverSets', 'unlikelySoft', 'unlikelyHard',
-];
+const KINDS: RefusalKind[] = ['none', 'tooSoftForWhite', 'harderThanPanReaches', 'whiteNeverSets'];
 const LEANS: Lean[] = ['soft', 'firm', 'balanced'];
 
 export function wordingFixture(): Record<string, unknown> {
@@ -34,16 +32,18 @@ export function wordingFixture(): Record<string, unknown> {
     return key;
   };
 
-  const refusal = KINDS.flatMap((kind) => [true, false].flatMap((worthSaying) => COOLINGS.map((cooling) => {
-    const v: Verdict = {
-      kind: kind, wanted: anchorNear(0.4), limit: anchorNear(0.6), snapTo: null, worthSaying: worthSaying,
-    };
-    const ref = refusalKey(v, cooling);
-    return {
-      kind: kind, worthSaying: worthSaying, cooling: cooling,
-      key: known(ref?.key ?? null), args: ref?.args ?? null,
-    };
-  })));
+  const warning = KINDS.flatMap((kind) => [true, false].flatMap((worthSaying) => [false, true].flatMap(
+    (lowOdds) => COOLINGS.map((cooling) => {
+      const v: Verdict = {
+        kind: kind, wanted: anchorNear(0.4), limit: anchorNear(0.6), snapTo: null, worthSaying: worthSaying,
+      };
+      const ref = warningKey(v, lowOdds, cooling);
+      return {
+        kind: kind, worthSaying: worthSaying, lowOdds: lowOdds, cooling: cooling,
+        key: known(ref?.key ?? null), args: ref?.args ?? null,
+      };
+    }),
+  )));
 
   const outcome = [0, DIRECTION_LIKELY - 1e-9, DIRECTION_LIKELY, 0.9].flatMap((pJustRight) => LEANS.flatMap(
     (lean) => [0, WHITE_RISK - 1e-9, WHITE_RISK].flatMap((pWhiteRunny) => [[0.1, 0.12], [0.2, 0.7]].map(
@@ -97,7 +97,7 @@ export function wordingFixture(): Record<string, unknown> {
   return {
     about: 'Which catalogue key each part of the screen says, from the facts of the cook. src/core/wording.ts.',
     constants: { directionLikely: DIRECTION_LIKELY, whiteRisk: WHITE_RISK },
-    refusal: refusal,
+    warning: warning,
     outcome: outcome,
     phase: phase,
     clauses: clauses,

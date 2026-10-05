@@ -407,6 +407,25 @@ pressed, or named alone where there is no room for a verb; the `press`
 draft, with its en-US and 1750 twins. "Tap" for the kitchen fitting went
 earlier (`DECISIONS.md` 57).
 
+**Low odds are a warning, not a wall: `warn`** (5 October 2026,
+`DECISIONS.md` 83). The slider no longer stops at the softest level the
+app gets right 3 times in 10, so the two sentences that named where it had
+stopped are retired, and one warning names the level the thumb rests on.
+The doneness word stands alone before the colon, capitalised as on the
+ticks, so it is never lower-cased into running grammar. It shows in the
+warning line while idle, unless a refusal is worth saying there, and the
+advice link stays under it. No en-US entry. `tools/drafts/warn.ts`, on
+`ab5cd22`.
+
+| key | before | after |
+|---|---|---|
+| `refusal.unlikelySoft` | The softest I get right at least {hits} times in {of}, so far: {limit}. | (retired) |
+| `refusal.unlikelyHard` | The firmest I get right at least {hits} times in {of}, so far: {limit}. | (retired) |
+| `warn.lowOdds` | (new) | {doneness}: I get this right fewer than {hits} times in {of} so far. |
+
+The 1750 twin: "{doneness}: in this I have hitherto succeeded fewer than
+{hits} times in {of}."
+
 ## 4. Units
 
 **One setting: Metric or Imperial.** Its default comes from the platform:

@@ -84,9 +84,8 @@
     "refusal.harderThanPan": { "text": "With the heat withdrawn, this quantity of water ({water}) grows cool before the yolk arrives there. Firmest attainable: {limit}. Add more water, or keep it boiling." },
     "refusal.counter": { "text": "An egg left in the open air does not cease to cook because it has ceased to boil. Softest attainable: {limit}. In iced water it might be left softer." },
     "refusal.tap": { "text": "Water from the pump cools the egg too slowly to arrest the yolk. Softest attainable: {limit}. In iced water it might be left a little softer." },
-    "refusal.unlikelySoft": { "text": "The softest in which I hitherto succeed at least {hits} times in {of}: {limit}." },
-    "refusal.unlikelyHard": { "text": "The firmest in which I hitherto succeed at least {hits} times in {of}: {limit}." },
     "refusal.ice": { "text": "Any shorter, and the white is yet raw. Softest attainable for this egg: {limit}." },
+    "warn.lowOdds": { "text": "{doneness}: in this I have hitherto succeeded fewer than {hits} times in {of}." },
 
     "action.startHeating": { "text": "Set it on the fire" },
     "action.eggsIn": { "text": "In with the eggs" },

@@ -26,7 +26,7 @@ import { REACH_ODDS } from './reach.js';
  * `refusal.harderThanPan`, `water`.
  *
  * The DECISION (which refusal, where the slider goes, whether the gap is
- * worth a sentence) is `verdictWithOdds`; this is only which words teach it.
+ * worth a sentence) is `verdictFor`; this is only which words teach it.
  * A yolk too soft for the white is blamed on the cooling the cook chose.
  */
 export function refusalKey(v: Verdict, cooling: Cooling): CopyRef | null {
@@ -35,16 +35,27 @@ export function refusalKey(v: Verdict, cooling: Cooling): CopyRef | null {
     case 'none': return null;
     case 'whiteNeverSets': return { key: 'refusal.whiteNeverSets', args: {} };
     case 'harderThanPanReaches': return { key: 'refusal.harderThanPan', args: {} };
-    // The pan could, but the odds say it would rarely come out right.
-    case 'unlikelySoft':
-    case 'unlikelyHard':
-      return {
-        key: v.kind === 'unlikelySoft' ? 'refusal.unlikelySoft' : 'refusal.unlikelyHard',
-        args: { hits: Math.round(REACH_ODDS * 10), of: 10 },
-      };
     case 'tooSoftForWhite':
       return { key: cooling === 'counter' ? 'refusal.counter' : cooling === 'tap' ? 'refusal.tap' : 'refusal.ice', args: {} };
   }
+}
+
+/**
+ * The warning line while idle: the refusal, when there is one worth saying,
+ * since it says what to change; otherwise, when the level on screen is one
+ * the odds warn of (`lowOddsAt`, reach.ts), that it comes out right fewer
+ * than 3 times in 10 so far. The app adds `doneness`, the word for the level
+ * on screen, which stands alone before the colon (LANGUAGE.md section 5).
+ *
+ * One line, not two: a slider just moved out of the stripes onto a level the
+ * odds warn of says why it moved, and the dots under the thumb say the rest.
+ * The next answer there, the slider no longer moving, carries the warning.
+ */
+export function warningKey(v: Verdict, lowOdds: boolean, cooling: Cooling): CopyRef | null {
+  const refusal = refusalKey(v, cooling);
+  if (refusal !== null) return refusal;
+  if (!lowOdds) return null;
+  return { key: 'warn.lowOdds', args: { hits: Math.round(REACH_ODDS * 10), of: 10 } };
 }
 
 /* ------------------------------------------------------------ the outcome */

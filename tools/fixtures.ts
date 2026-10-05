@@ -166,7 +166,7 @@ const counts = [
   `${recordFixture.replay.log.length} replayed eggs`,
   `${decideFixture.specs.length} decision surfaces and ${decideFixture.cases.length} decisions`,
   `${outcomeFixture.cases.reduce((n, c) => n + c.at.length, 0)} outcomes`,
-  `${reachFixture.profiles.length} odds profiles, ${reachFixture.verdicts.length} verdicts with odds and ${reachFixture.advice.length} advice setups`,
+  `${reachFixture.profiles.length} odds profiles, ${reachFixture.lowOdds.length} warnings and ${reachFixture.advice.length} advice setups`,
   `${(probeJson['updates'] as unknown[]).length} probe folds`,
   `${(probeJson['solved'] as unknown[]).length} probe cooks`,
   `${(languageJson['transitions'] as unknown[]).length} language moves`,

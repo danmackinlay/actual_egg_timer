@@ -3,14 +3,16 @@
  * (src/core/reach.ts).
  *
  * The claims: a profile point IS the odds the app computes at that level, so the
- * two cannot disagree; a fresh install is refused nothing the pan can deliver;
- * once an egg has taught something the slider's ends are the softest and
- * firmest levels at 3/10 or better, found on the slider's own grid, and never
- * outside the physical limits; when nothing reaches 3/10 the physical limits
- * stand; and a counter rest asked for soft is refused for the physical reason
- * and lands where the odds are at least 3/10; and at the far left the slider
- * rests on the level the time and the bracket are for, whose middle leaves the
- * thumb only by the lean the white asks for once a time is chosen.
+ * two cannot disagree; a fresh install is warned of nothing; once an egg has
+ * taught something the range at 3/10 or better is found on the slider's own
+ * grid, never outside the physical limits, and a level outside it stays where
+ * it was asked and is warned of; when nothing reaches 3/10 nothing is warned
+ * of; a counter rest asked for soft is refused for the physical reason and
+ * lands on the physical edge, warned of if its odds are low; at the far left
+ * the slider rests on the level the time and the bracket are for, whose
+ * middle leaves the thumb only by the lean the white asks for once a time is
+ * chosen; and the owner's own egg goes to soft and says so. Only the stripes
+ * move the slider (DECISIONS.md 83).
  *
  * The fixture (`fixtures/reach.json`) pins the arithmetic for the Swift port.
  *
@@ -22,18 +24,18 @@ import assert from 'node:assert/strict';
 
 import { decide, oddsInTenths } from '../src/core/decide.js';
 import { DoseGrid } from '../src/core/doseGrid.js';
-import { createPrior } from '../src/core/infer.js';
+import { createPrior, updatePosterior } from '../src/core/infer.js';
 import { eggFromMass } from '../src/core/geometry.js';
 import { CookSetup } from '../src/core/protocol.js';
 import { Solution, logYolkTarget, solveCookTime } from '../src/core/solve.js';
 import { CALIBRATION_SEED, anchorNear, snapUp, verdictFor } from '../src/core/policy.js';
 import { Calibration, calibrationDoneness, calibrationParams } from '../src/core/record.js';
 import {
-  ADVICE_BELOW_TENTHS, AdviceFacts, OddsProfile, REACH_ODDS, adviceWanted, oddsAtLevel, oddsNear,
-  answerAt, oddsProfile, pricedChanges, protocolAdvice, shadingOf, unpricedAdvice, verdictWithOdds,
+  ADVICE_BELOW_TENTHS, AdviceFacts, OddsProfile, REACH_ODDS, adviceWanted, lowOddsAt, oddsAtLevel, oddsNear,
+  answerAt, oddsProfile, pricedChanges, protocolAdvice, shadingOf, unpricedAdvice,
 } from '../src/core/reach.js';
 import { predictOutcome } from '../src/core/outcome.js';
-import { directionKey, whiteAtRisk } from '../src/core/wording.js';
+import { directionKey, warningKey, whiteAtRisk } from '../src/core/wording.js';
 import { appSetup, gridFor, knowing } from '../tools/common.js';
 
 const EGG = eggFromMass(0.068);
@@ -42,21 +44,14 @@ const SETUP = appSetup();
 const COUNTER = appSetup({ cooling: 'counter' });
 const PARTICLES = 400;
 
-/** What the app does at a level, verdict and snap and all, with the profile's
- *  range or without it. */
+/** What the app does at a level, verdict and snap and warning and all, with
+ *  the profile or without it. */
 function appAt(c: Calibration, grid: DoseGrid, setup: CookSetup, level: number, profile: OddsProfile | null) {
-  const params = calibrationParams(c);
-  let sol: Solution = solveCookTime(EGG, setup, params, calibrationDoneness(c, level));
-  const v = verdictWithOdds(sol, level, profile);
-  let at = level;
-  if (v.snapTo !== null) {
-    const retry = solveCookTime(EGG, setup, params, calibrationDoneness(c, v.snapTo));
-    if (retry.reachable) {
-      sol = retry;
-      at = v.snapTo;
-    }
-  }
-  return { verdict: v, level: at, decision: decide(c, grid, sol, logYolkTarget(at)) };
+  const a = answerAt(c, EGG, setup, level, profile, true);
+  return {
+    verdict: a.verdict, level: a.level, lowOdds: a.lowOdds,
+    decision: decide(c, grid, a.solution, logYolkTarget(a.level)),
+  };
 }
 
 const FRESH: Calibration = { posterior: createPrior(PARTICLES, CALIBRATION_SEED), eggsLogged: 0 };
@@ -76,7 +71,7 @@ test('1. a profile point is the odds the app shows at that level', () => {
   assert.equal(p.best, Math.max(...p.points.map((q) => q.odds)));
 });
 
-test('2. a fresh install is refused nothing the pan can deliver, at any level', () => {
+test('2. a fresh install is warned of nothing, at any level', () => {
   for (const setup of [SETUP, COUNTER]) {
     const grid = gridFor(FRESH, EGG, setup);
     const p = oddsProfile(FRESH, EGG, setup, grid);
@@ -84,8 +79,10 @@ test('2. a fresh install is refused nothing the pan can deliver, at any level', 
     assert.equal(p.hardest, null);
     assert.ok(p.best > 0.1 && p.best < REACH_ODDS + 0.05, `best ${p.best}`);
     for (const level of [0, 0.22, 0.41, 0.62, 1]) {
+      const a = answerAt(FRESH, EGG, setup, level, p, true);
       const sol = solveCookTime(EGG, setup, calibrationParams(FRESH), calibrationDoneness(FRESH, level));
-      assert.deepEqual(verdictWithOdds(sol, level, p), verdictFor(sol, level));
+      assert.deepEqual(a.verdict, verdictFor(sol, level));
+      assert.equal(a.lowOdds, false, `level ${level}`);
     }
     // And still shaded, relative to the best level.
     const shades = shadingOf(p);
@@ -94,14 +91,14 @@ test('2. a fresh install is refused nothing the pan can deliver, at any level', 
   }
 });
 
-test('3. after eggs, the ends are the softest and firmest levels at 3/10 or better, on the slider\'s grid', () => {
+test('3. after eggs, the range at 3/10 or better is on the slider\'s grid, and outside it the slider stays and warns', () => {
   const grid = gridFor(WHITE_BOUND, EGG, SETUP);
   const p = oddsProfile(WHITE_BOUND, EGG, SETUP, grid);
   assert.ok(p.softest !== null && p.hardest !== null);
   const softest = p.softest as number;
   const hardest = p.hardest as number;
-  console.log(`# white-bound cook: physical ${p.physicalSoftest}-${p.physicalHardest}, offered ${softest}-${hardest}, best ${oddsInTenths(p.best)}/10`);
-  assert.ok(softest > p.physicalSoftest, 'the odds narrow the soft end here');
+  console.log(`# white-bound cook: physical ${p.physicalSoftest}-${p.physicalHardest}, 3/10 or better ${softest}-${hardest}, best ${oddsInTenths(p.best)}/10`);
+  assert.ok(softest > p.physicalSoftest, 'the odds are low at the soft end here');
   assert.ok(softest >= p.physicalSoftest && hardest <= p.physicalHardest, 'never outside the physical limits');
   assert.equal(Math.round(softest * 100) / 100, softest);
   assert.ok(oddsAtLevel(WHITE_BOUND, EGG, SETUP, grid, softest) >= REACH_ODDS);
@@ -109,20 +106,33 @@ test('3. after eggs, the ends are the softest and firmest levels at 3/10 or bett
   if (hardest < p.physicalHardest) {
     assert.ok(oddsAtLevel(WHITE_BOUND, EGG, SETUP, grid, hardest + 0.01) < REACH_ODDS);
   }
-  // The app, asked for anything softer, lands on the end, and says 3/10 or better.
-  for (const level of [0, 0.1, softest - 0.01]) {
+  // Asked for a level the pan delivers but under 3/10: the slider stays, the
+  // answer is for that level, and it is warned of.
+  for (const level of [p.physicalSoftest, softest - 0.01]) {
     const a = appAt(WHITE_BOUND, grid, SETUP, level, p);
-    assert.equal(a.level, softest, `asked ${level}`);
-    assert.ok(a.decision.oddsTenths >= 3, `asked ${level}: ${a.decision.oddsTenths}/10`);
-    assert.ok(a.verdict.kind === 'unlikelySoft' || a.verdict.kind === 'tooSoftForWhite', a.verdict.kind);
+    assert.equal(a.verdict.kind, 'none', `asked ${level}`);
+    assert.equal(a.level, level, `asked ${level}`);
+    assert.equal(a.lowOdds, true, `asked ${level}`);
+    assert.ok(a.decision.odds < REACH_ODDS, `asked ${level}: ${a.decision.odds}`);
+    assert.equal(warningKey(a.verdict, a.lowOdds, 'ice')?.key, 'warn.lowOdds');
   }
-  // Inside the range nothing moves.
-  const inside = appAt(WHITE_BOUND, grid, SETUP, 0.62, p);
-  assert.equal(inside.verdict.kind, 'none');
-  assert.equal(inside.level, 0.62);
+  // Asked for less than the pan delivers: refused, and moved to the physical
+  // edge, not to the odds' - where it is warned of too.
+  const stripes = appAt(WHITE_BOUND, grid, SETUP, 0, p);
+  assert.equal(stripes.verdict.kind, 'tooSoftForWhite');
+  assert.equal(stripes.level, p.physicalSoftest);
+  assert.equal(stripes.lowOdds, true);
+  // Inside the range nothing moves, and nothing is said.
+  for (const level of [softest, 0.62]) {
+    const inside = appAt(WHITE_BOUND, grid, SETUP, level, p);
+    assert.equal(inside.verdict.kind, 'none');
+    assert.equal(inside.level, level);
+    assert.equal(inside.lowOdds, false);
+    assert.equal(warningKey(inside.verdict, inside.lowOdds, 'ice'), null);
+  }
 });
 
-test('4. when no level reaches 3/10, the physical limits stand', () => {
+test('4. when no level reaches 3/10, nothing is warned of', () => {
   // The prior's spread, after an egg that taught nothing that narrowed it.
   const unsure: Calibration = { posterior: createPrior(PARTICLES, CALIBRATION_SEED), eggsLogged: 1 };
   const grid = gridFor(unsure, EGG, SETUP);
@@ -131,25 +141,30 @@ test('4. when no level reaches 3/10, the physical limits stand', () => {
   assert.equal(p.softest, null);
   assert.equal(p.hardest, null);
   for (const level of [0, 0.22, 1]) {
+    const a = answerAt(unsure, EGG, SETUP, level, p, true);
     const sol = solveCookTime(EGG, SETUP, calibrationParams(unsure), calibrationDoneness(unsure, level));
-    assert.deepEqual(verdictWithOdds(sol, level, p), verdictFor(sol, level));
+    assert.deepEqual(a.verdict, verdictFor(sol, level));
+    assert.equal(a.lowOdds, false);
   }
 });
 
-test('5. a counter rest asked for soft: refused for the physical reason, and landed at 3/10 or better', () => {
+test('5. a counter rest asked for soft: refused for the physical reason, landed on the physical edge, and warned of if the odds there are low', () => {
   const c = knowing({ particles: PARTICLES, eggsLogged: 4, white: 0.1 });
   const grid = gridFor(c, EGG, COUNTER);
   const p = oddsProfile(c, EGG, COUNTER, grid);
   assert.ok(p.softest !== null);
   const a = appAt(c, grid, COUNTER, 0.22, p);
-  console.log(`# counter, soft asked: physical ${p.physicalSoftest}, offered from ${p.softest}, landed ${a.level} at ${a.decision.oddsTenths}/10 (${a.verdict.kind}, "${a.verdict.limit.key}")`);
+  console.log(`# counter, soft asked: physical ${p.physicalSoftest}, 3/10 from ${p.softest}, landed ${a.level} at ${a.decision.oddsTenths}/10 (${a.verdict.kind}, "${a.verdict.limit.key}", low odds ${a.lowOdds})`);
   assert.equal(a.verdict.kind, 'tooSoftForWhite');
-  assert.equal(a.level, Math.max(snapUp(p.physicalSoftest), p.softest as number));
+  assert.equal(a.level, snapUp(p.physicalSoftest));
   assert.equal(a.verdict.limit.key, anchorNear(a.level).key);
-  assert.ok(a.decision.oddsTenths >= 3);
+  assert.equal(a.lowOdds, a.level < (p.softest as number));
+  // The refusal is said, when it is worth saying, before the warning.
+  const key = warningKey(a.verdict, a.lowOdds, 'counter')?.key ?? null;
+  assert.equal(key, a.verdict.worthSaying ? 'refusal.counter' : a.lowOdds ? 'warn.lowOdds' : null);
 });
 
-test('6. the verdict, on hand-made ranges: each refusal and where it snaps', () => {
+test('6. the warning and the verdict, on hand-made ranges', () => {
   const profile: OddsProfile = {
     points: [], best: 0.6, physicalSoftest: 0.1, physicalHardest: 0.9, softest: 0.3, hardest: 0.8,
   };
@@ -162,43 +177,32 @@ test('6. the verdict, on hand-made ranges: each refusal and where it snaps', () 
   };
   const reachable: Solution = { ...base, reachable: true, whiteSets: true };
   const tooSoft: Solution = { ...base, reachable: false, whiteSets: true };
-  const never: Solution = { ...base, reachable: false, whiteSets: false };
 
-  const soft = verdictWithOdds(reachable, 0.2, profile);
-  assert.equal(soft.kind, 'unlikelySoft');
-  assert.equal(soft.snapTo, 0.3);
-  assert.equal(soft.limit.key, 'doneness.soft');
-  assert.equal(soft.worthSaying, false, 'asked soft, landed on a level still called soft');
+  // The ends of the range are not warned of; past them, at either end, is.
+  assert.deepEqual(
+    [0.1, 0.2, 0.29, 0.3, 0.5, 0.8, 0.81, 0.9].map((level) => lowOddsAt(profile, level)),
+    [true, true, true, false, false, false, true, true],
+  );
+  // Nothing is warned of with no profile, or one with no range.
+  assert.equal(lowOddsAt(null, 0.2), false);
+  assert.equal(lowOddsAt({ ...profile, softest: null, hardest: null }, 0.2), false);
 
-  const hard = verdictWithOdds(reachable, 1, profile);
-  assert.equal(hard.kind, 'unlikelyHard');
-  assert.equal(hard.snapTo, 0.8);
-  assert.equal(hard.limit.key, 'doneness.fudgy');
-  assert.equal(hard.worthSaying, true);
-
-  assert.equal(verdictWithOdds(reachable, 0.5, profile).kind, 'none');
-  assert.equal(verdictWithOdds(reachable, 0.3, profile).kind, 'none');
-  assert.equal(verdictWithOdds(reachable, 0.8, profile).kind, 'none');
-
-  // Physically too soft: the physical reason, the odds' end.
-  const physical = verdictWithOdds(tooSoft, 0.05, profile);
-  assert.equal(physical.kind, 'tooSoftForWhite');
-  assert.equal(physical.snapTo, 0.3);
-  assert.equal(physical.worthSaying, true);
+  // The verdict is the pan's alone: a deliverable level under 3/10 is not
+  // refused, and a level too soft for the white goes to the physical edge.
+  assert.equal(verdictFor(reachable, 0.2).kind, 'none');
+  assert.equal(verdictFor(reachable, 0.2).snapTo, null);
   assert.equal(verdictFor(tooSoft, 0.05).snapTo, 0.1);
 
-  // Physically too firm (heat off): the pan's reason, the odds' end.
-  const capped = verdictWithOdds({ ...tooSoft, hardestLevel: 0.9 }, 0.95, profile);
-  assert.equal(capped.kind, 'harderThanPanReaches');
-  assert.equal(capped.snapTo, 0.8);
-
-  // Nothing to snap to stays nothing to snap to; no profile is verdictFor.
-  assert.deepEqual(verdictWithOdds(never, 0.4, profile), verdictFor(never, 0.4));
-  assert.deepEqual(verdictWithOdds(reachable, 0.05, null), verdictFor(reachable, 0.05));
-  assert.deepEqual(
-    verdictWithOdds(reachable, 0.05, { ...profile, softest: null, hardest: null }),
-    verdictFor(reachable, 0.05),
-  );
+  // The words: the refusal when worth saying, else the warning, else nothing.
+  const none = verdictFor(reachable, 0.2);
+  assert.deepEqual(warningKey(none, true, 'ice'), { key: 'warn.lowOdds', args: { hits: 3, of: 10 } });
+  assert.equal(warningKey(none, false, 'ice'), null);
+  const refused = verdictFor(tooSoft, 0.05);
+  assert.equal(refused.worthSaying, false, 'runny asked, still runny where it lands');
+  assert.equal(warningKey(refused, true, 'ice')?.key, 'warn.lowOdds');
+  const said = { ...refused, worthSaying: true };
+  assert.equal(warningKey(said, true, 'tap')?.key, 'refusal.tap');
+  assert.equal(warningKey(said, false, 'counter')?.key, 'refusal.counter');
 });
 
 test('7. the shading is relative to the best level, and empty with nothing to shade', () => {
@@ -310,4 +314,38 @@ test('10. the far left: the slider rests on the level the time and the bracket a
   assert.ok(o.levelMedian > a.level + 0.03, `the lean moves it right: ${o.levelMedian}`);
   assert.equal(o.lean, 'firm');
   assert.ok(directionKey(o) === 'outcome.likely.firm' || directionKey(o) === 'outcome.miss.firm', directionKey(o));
+});
+
+test('11. the owner\'s egg: 58 g from the fridge into boiling water and an ice bath, after a little learned, goes to soft and says so', () => {
+  // One egg: soft asked, the yolk just right and the white runny. That puts
+  // 3/10 at jammy, as on the owner's phone (5 October 2026).
+  const egg = eggFromMass(0.058);
+  const post = createPrior(PARTICLES, CALIBRATION_SEED);
+  const first: Calibration = { posterior: post, eggsLogged: 0 };
+  const asked = solveCookTime(egg, SETUP, calibrationParams(first), calibrationDoneness(first, 0.22));
+  updatePosterior(post, gridFor(first, egg, SETUP), asked.result.cookTime_s, logYolkTarget(0.22), 0, 'runny');
+  const c: Calibration = { posterior: post, eggsLogged: 1 };
+  const grid = gridFor(c, egg, SETUP);
+  const p = oddsProfile(c, egg, SETUP, grid);
+  const soft = 0.22;
+  const a = answerAt(c, egg, SETUP, soft, p, true);
+  const jammy = answerAt(c, egg, SETUP, 0.41, p, true);
+  const d = decide(c, grid, a.solution, logYolkTarget(a.level));
+  const o = predictOutcome(c.posterior, grid, d.cookTime_s, logYolkTarget(a.level));
+  const dj = decide(c, grid, jammy.solution, logYolkTarget(jammy.level));
+  console.log(`# 58 g, fridge, boiling, ice, one egg: physical ${p.physicalSoftest}, 3/10 from ${p.softest}; soft ${d.oddsTenths}/10 at ${d.cookTime_s.toFixed(0)} s, bracket ${o.levelLow.toFixed(2)}-${o.levelHigh.toFixed(2)}, ${directionKey(o)}; jammy ${dj.oddsTenths}/10 at ${dj.cookTime_s.toFixed(0)} s`);
+  assert.ok(p.softest !== null && p.softest > soft, `3/10 from ${p.softest}`);
+  assert.equal(anchorNear(p.softest).key, 'doneness.jammy');
+  assert.ok(p.physicalSoftest <= soft);
+  assert.equal(a.verdict.kind, 'none');
+  assert.equal(a.level, soft, 'the slider stays at soft');
+  assert.equal(a.lowOdds, true);
+  assert.equal(warningKey(a.verdict, a.lowOdds, 'ice')?.key, 'warn.lowOdds');
+  // The answer is for soft: its mean solve is sooner than jammy's. After a
+  // runny white the time chosen there leans late, to set the white, and the
+  // bracket and the sentence say where that puts the yolk.
+  assert.ok(a.solution.result.cookTime_s < jammy.solution.result.cookTime_s, 'the solve is for soft');
+  assert.equal(o.lean, 'firm');
+  assert.ok(o.levelMedian > soft);
+  assert.ok(directionKey(o) === 'outcome.miss.firm' || directionKey(o) === 'outcome.likely.firm', directionKey(o));
 });

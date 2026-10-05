@@ -215,16 +215,14 @@ public func targetPeakYolkC(_ level: Double) -> Double {
 ///  - `whiteNeverSets`       the water falls past what the white needs while the
 ///                           egg is still in it. Nothing on the slider is on
 ///                           offer, so there is nowhere to snap to.
+///
+/// A level the pan can deliver is never refused, however low its odds: those
+/// are warned of instead (`lowOddsAt`, Reach.swift; DECISIONS.md 83).
 public enum RefusalKind: String, Sendable {
     case none
     case tooSoftForWhite
     case harderThanPanReaches
     case whiteNeverSets
-    /// The pan can deliver it, but it would hit the mark less than 3 times in
-    /// 10 (`verdictWithOdds`, Reach.swift). Snap UP.
-    case unlikelySoft
-    /// The same at the firm end. Snap DOWN.
-    case unlikelyHard
 }
 
 public struct Verdict: Sendable {

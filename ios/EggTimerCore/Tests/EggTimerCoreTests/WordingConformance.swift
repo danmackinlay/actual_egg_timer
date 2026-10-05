@@ -13,18 +13,19 @@ struct WordingConformance {
         #expect(try whiteRisk == c.num("whiteRisk"))
     }
 
-    @Test("the refusal's key")
-    func refusal() throws {
-        for row in try Fixtures.list("wording.json", "refusal") {
+    @Test("the warning line's key: a refusal, or low odds")
+    func warning() throws {
+        for row in try Fixtures.list("wording.json", "warning") {
             let kind = try row.value(RefusalKind.self, "kind")
             let worthSaying = try row.flag("worthSaying")
+            let lowOdds = try row.flag("lowOdds")
             let cooling = try row.value(Cooling.self, "cooling")
             let v = Verdict(
                 kind: kind, wanted: anchorNear(0.4), limit: anchorNear(0.6), snapTo: nil,
                 worthSaying: worthSaying
             )
-            let ref = refusalKey(v, cooling: cooling)
-            let label = "\(kind) \(worthSaying) \(cooling.rawValue)"
+            let ref = warningKey(v, lowOdds: lowOdds, cooling: cooling)
+            let label = "\(kind) \(worthSaying) \(lowOdds) \(cooling.rawValue)"
             #expect(try ref?.key == row.optionalStr("key"), "\(label) key")
             let args = (row["args"] as? [String: NSNumber])?.mapValues(\.doubleValue)
             #expect(ref?.args == args, "\(label) args")

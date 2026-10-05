@@ -102,7 +102,7 @@ Recorded in `7e142e0` and `b7a5e31`. The design they belong to is
     ("softest possible") comes from the odds, not the mean solve, and the
     shading is relative to the best level, so a fresh install still shows
     where the pan works. Recorded `69cff74`; built `ade3223`, `3d11469`,
-    `1f6f00b`.
+    `1f6f00b`. Amended by 83: under 3/10 is warned of, not refused.
 21. **The fresh install's odds stay on screen, with an (i) saying why they
     start low.** Recorded `69cff74`; built `3d11469`. Changed by 27.
 22. **No time of day zero-pads its hour**, in either app, in any locale:
@@ -476,3 +476,17 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     `npm run eggs -- pull` and `import` mark the lines, and the fit reads
     the list again. The published population counts trusted eggs and names
     no one. Built `6910cbd` (the tools) and `a9c5ac8` (the fit).
+83. **Only what the pan cannot deliver refuses; low odds warn.** Testing
+    0.4.0 on a phone (58 g from the fridge, into boiling water, an ice bath,
+    little learned), the owner could not move the thumb left of jammy,
+    though the dotted track looked draggable: "is a soft yolk just
+    impossible?" It was not; it was under 3/10 so far. Amends 20: the
+    stripes, the levels the pan cannot deliver, still move the slider out of
+    them, but a dotted level, one the pan delivers and gets right fewer than
+    3 times in 10 so far, can be chosen. The threshold stays at 3/10 and now
+    drives the warning and the colour instead of a wall: the slider rests
+    there, the time, the direction and the bracket are for that level, and
+    the warning line says "Soft: I get this right fewer than 3 times in 10
+    so far." The advice link stays. No warning and no dots before the first
+    egg that taught something, as before. 5 October 2026; the `warn` draft;
+    built on the `warn-low-odds` branch.
