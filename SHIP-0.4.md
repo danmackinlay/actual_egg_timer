@@ -222,3 +222,34 @@ so is the label's **Not Linked** (74).
 - [ ] **Never roll the Netlify site back below 0.4** once results are
       stored: the 0.3 page says nothing leaves the device. Fix forward.
 - [ ] Afterwards: `0.3.x` is cut from `v0.3.4-alpha.1` only if 0.3 needs a fix.
+
+## Handover: what is left, in order (5 October 2026)
+
+Kept here so a new session can pick up without this conversation.
+
+1. [ ] **Action `REVIEW-0.4.x.md`** (the owner's adversarial review, committed
+       on this branch): first "Fix before 0.4 ships" (multi-tab writes, the
+       raw-JSON write-back, the ID that is also the password), then security,
+       the privacy page against the code, data safety, decision logic,
+       parity, bloat. Tick each item in that file with its commit.
+2. [ ] **Optional server polish**: a refused attestation echoes library
+       error text ("PEM routines::…"); return a generic message.
+3. [ ] **The owner's phone session** (section A above, PLAN.md items 7-15)
+       on a fresh `npm run ios:archive` build, or the web on the deploy
+       preview, https://deploy-preview-2--actualeggtimer.netlify.app (draft
+       PR danmackinlay/actual_egg_timer#2: keep it open, never merge it).
+4. [ ] **App Store paperwork** (section B): App Privacy (Other Data Types +
+       Device ID, App Functionality, Not Linked, not tracking); TestFlight
+       Test Information; review notes for 0.4 (external services: opt-in
+       sharing to this site on Netlify, Apple App Attest). Optionally tick
+       App Attest on the App ID.
+5. [ ] **Release, on the owner's word** (section E): docs, the privacy
+       page's date, merge `main` into `0.4.x` then `0.4.x` into `main`, tag
+       `v0.4.0-alpha.1`, push with `--follow-tags`, a live POST and DELETE
+       through the real endpoint, then the iOS upload (`npm run ios:archive`;
+       upload from Xcode's Organizer if `-exportArchive` cannot use the
+       account), then TestFlight review.
+
+Known state: the endpoint was exercised on the deploy preview on 5 October
+(every check passed, rate limit included); unattested results have weight 0
+(DECISIONS.md 85); the owner's trusted ids go in `fit/trusted.local.txt`.
