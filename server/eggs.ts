@@ -8,8 +8,10 @@
  *   POST   /api/attest      { "uid", "keyId", "attestation" }  an iPhone's key
  *
  * An egg is kept at `records/<tier>/<uid>/<seq>.json`, written only if that
- * key is new, and only if the other tier does not already hold it: a retry
- * is harmless, one egg is one copy, and nothing is ever overwritten. The tier is
+ * key is new: a retry is harmless, one egg is one copy, and nothing is ever
+ * overwritten. An open copy is not written where an attested one is, and an
+ * attested copy replaces an open one, which anyone who knows the id could
+ * have posted. The tier is
  * `attested` when the egg came with an App Attest assertion that verifies
  * against the key attested for its id in Apple's production environment, and
  * `open` otherwise - the web app, any iPhone that cannot attest, and a
@@ -173,16 +175,24 @@ async function postEgg(req: Request, store: Store, opts: Options): Promise<Respo
   if (record === null) return refuse(400, 'not a record');
   if (!isUid(record.uid)) return refuse(400, 'uid');
   const tier = await tierOf(store, record.uid, body, req, opts);
-  // One copy of an egg, whichever tier kept it first. A retry can land in the
-  // other tier: as open when its assertion no longer counts up, or as
-  // attested when the phone's attestation went through only after the first
-  // try was kept, with the answer lost on the way back.
-  const other: Tier = tier === 'open' ? 'attested' : 'open';
-  if (await store.get(recordKey(other, record.uid, seq)) !== null) {
-    return json(200, { tier: other, stored: false });
+  // One copy of an egg, and an attested copy wins. A retry can land in the
+  // other tier: as open when its assertion no longer counts up, and then the
+  // attested copy stands; or as attested when the phone's attestation went
+  // through only after the first try was kept, with the answer lost on the
+  // way back. Then, and whenever an open copy is there first - anyone who
+  // knows a cook's id can post open copies under it - the attested copy is
+  // written and the open one deleted, so an open copy can never bury an
+  // attested one.
+  if (tier === 'open') {
+    if (await store.get(recordKey('attested', record.uid, seq)) !== null) {
+      return json(200, { tier: 'attested', stored: false });
+    }
+    const stored = await store.set(recordKey('open', record.uid, seq), JSON.stringify(record), true);
+    return json(stored ? 201 : 200, { tier: 'open', stored: stored });
   }
-  const stored = await store.set(recordKey(tier, record.uid, seq), JSON.stringify(record), true);
-  return json(stored ? 201 : 200, { tier: tier, stored: stored });
+  const stored = await store.set(recordKey('attested', record.uid, seq), JSON.stringify(record), true);
+  await store.delete(recordKey('open', record.uid, seq));
+  return json(stored ? 201 : 200, { tier: 'attested', stored: stored });
 }
 
 async function deleteEggs(uid: string, store: Store): Promise<Response> {

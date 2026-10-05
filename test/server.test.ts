@@ -127,12 +127,15 @@ test('4. an iPhone from TestFlight or the App Store attests once, and its eggs g
     'x-egg-assertion': Buffer.from(makeAssertion(P.leafPrivateKey, new TextEncoder().encode(body), 5)).toString('base64'),
   });
   assert.equal((await send(store, forged)).body['tier'], 'open');
-  // The other way: an egg kept as open, then sent again once the phone has
-  // attested (the first answer lost on the way back), is not kept twice.
+  // The other way: an egg kept as open - sent again once the phone has
+  // attested, the first answer lost on the way back, or posted first by
+  // anyone who knows the id - is replaced by the attested copy, so an open
+  // copy cannot bury it. Still one copy.
   await store.set(recordKey('open', P.uid, 7), '{}', true);
   const later = JSON.stringify({ seq: 7, record: egg(P.uid) });
-  assert.deepEqual(await send(store, signed(later, 6)), { status: 200, body: { tier: 'open', stored: false } });
-  assert.equal(store.blobs.has(recordKey('attested', P.uid, 7)), false);
+  assert.deepEqual(await send(store, signed(later, 6)), { status: 201, body: { tier: 'attested', stored: true } });
+  assert.equal(store.blobs.has(recordKey('open', P.uid, 7)), false);
+  assert.equal(store.blobs.has(recordKey('attested', P.uid, 7)), true);
   // An assertion for an id with no key: open.
   const nokey = JSON.stringify({ seq: 0, record: egg(UID) });
   assert.equal((await send(store, signed(nokey, 9))).body['tier'], 'open');
