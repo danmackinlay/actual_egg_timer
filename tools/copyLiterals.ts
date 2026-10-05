@@ -149,6 +149,7 @@ const NOT_COPY: Record<string, string> = {
   soft: 'debug launch argument value',
   right: 'debug launch argument value',
   firm: 'debug launch argument value',
+  got: 'debug launch argument value',
   // the face of 1750 (ios/App/PeriodFace.swift)
   IM_FELL_English_Roman: 'font name',
   IM_FELL_English_Italic: 'font name',

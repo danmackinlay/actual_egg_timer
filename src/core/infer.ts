@@ -65,9 +65,7 @@
  */
 
 import { ALPHA_DEFAULT, ALPHA_REL_SD, Z_WHITE, Z_YOLK } from './constants.js';
-import {
-  DONENESS_ANCHORS, ModelParams, WHITE_DOSE_TARGET, YOLK_DOSE_HARD, YOLK_DOSE_RUNNY,
-} from './solve.js';
+import { ModelParams, WHITE_DOSE_TARGET } from './solve.js';
 import { erfc, normalCdf } from './sphere.js';
 import {
   DoseGrid, lookupLogYolkDose, lookupLogWhiteDose, lookupPeakYolk_C, cookTimeForLogYolkDose,
@@ -164,22 +162,21 @@ export function withUnrelatedWord(p: number): number {
  * between two adjacent anchors (`anchorNear`). The slider is linear in log
  * dose, so that is also the midpoint of their log doses. Nothing new is
  * chosen here: the words, their places and the dose scale are the slider's
- * own (solve.ts). About -0.795, 0.149, 1.069 and 2.427: Soft and Jammy are
- * each about 0.93 decades wide and Fudgy 1.36, against the 0.56 of the old
- * "just right".
+ * own (solve.ts). Soft and Jammy are each about 0.93 decades wide and Fudgy
+ * 1.36, against the 0.56 of the old "just right".
+ *
+ * FROZEN, as literals: every stored yolk word is scored against these, so
+ * they are what a word MEANT when the cook tapped it. They are today's
+ * anchors' midpoints to the last bit, and a test holds them there (test
+ * 1h in test/infer.test.ts), so moving an anchor in `DONENESS_ANCHORS`
+ * fails it rather than silently rescoring every word already given. Whoever
+ * moves one decides then: keep these and let the slider's words and the
+ * answers' bands part, or move these too and bump `MODEL_ID` so the stored
+ * words are refolded under the new meaning.
  */
-export const YOLK_WORD_CUTS: number[] = yolkWordCuts();
-
-function yolkWordCuts(): number[] {
-  const lo = Math.log10(YOLK_DOSE_RUNNY);
-  const hi = Math.log10(YOLK_DOSE_HARD);
-  const cuts: number[] = [];
-  for (let i = 0; i + 1 < DONENESS_ANCHORS.length; i++) {
-    const edge = 0.5 * (DONENESS_ANCHORS[i].level + DONENESS_ANCHORS[i + 1].level);
-    cuts.push(lo + (hi - lo) * edge);
-  }
-  return cuts;
-}
+export const YOLK_WORD_CUTS: number[] = [
+  -0.7948033966179053, 0.1486189016043269, 1.0690308998699196, 2.4266385973116686,
+];
 
 /**
  * The noise scale's prior: lognormal, median NOISE_MEDIAN decades of yolk dose.
@@ -449,16 +446,23 @@ export function yolkProbit(
  *  moves the cook's words as it moved their "just right": a cook with a
  *  positive offset likes a firmer yolk, and calls a given yolk softer. */
 export function yolkWordProbit(grid: DoseGrid, p: Particle, cookTime_s: number): number[] {
-  const latent = lookupLogYolkDose(grid, p.alpha_m2s, cookTime_s) - p.logDoseOffset;
+  return yolkWordBands(lookupLogYolkDose(grid, p.alpha_m2s, cookTime_s) - p.logDoseOffset, p.noise);
+}
+
+/** The ordered probit itself: the five yolk words' probabilities, runny to
+ *  hard, for a latent log dose (delivered, less the taste offset) seen
+ *  through a Gaussian of sd `noise`, against `YOLK_WORD_CUTS`. The filter
+ *  scores with it, and the simulated cooks (tools/eggs.ts) answer with it. */
+export function yolkWordBands(latent: number, noise: number): number[] {
   const out: number[] = new Array<number>(5);
   let below = 0.0;
   for (let k = 0; k < 4; k++) {
-    const upTo = normalCdf((YOLK_WORD_CUTS[k] - latent) / p.noise);
+    const upTo = normalCdf((YOLK_WORD_CUTS[k] - latent) / noise);
     const pk = upTo - below;
     out[k] = pk > 0.0 ? pk : 0.0;
     below = upTo;
   }
-  out[4] = normalCdf((latent - YOLK_WORD_CUTS[3]) / p.noise);
+  out[4] = normalCdf((latent - YOLK_WORD_CUTS[3]) / noise);
   return out;
 }
 

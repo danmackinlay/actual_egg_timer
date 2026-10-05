@@ -16,12 +16,15 @@ import EggTimerCore
 ///   set for a moment already past.
 /// - `-noAlarmPrompt YES`: answer the notification question with no, without
 ///   asking, so the system's alert is not in the picture.
-/// - `-seedEggs right,right,right`: on a fresh install, write that many eggs
-///   into the log through the app's own store, each cooked at the level and
-///   setup on screen and answered `right`, `soft` or `firm` about the yolk,
-///   and fold them (`Planner.seed`). A learned state without cooking. An
-///   answer about the white follows a slash: `right/runny`, `soft/tender`,
-///   `firm/firm`.
+/// - `-seedEggs got-jammy,got-soft,right,soft`: on a fresh install, write
+///   that many eggs into the log through the app's own store, each cooked at
+///   the level and setup on screen, and fold them (`Planner.seed`). A
+///   learned state without cooking. `got-` and one of the five words is the
+///   yolk the cook got, as the app asks now (DECISIONS.md 92): `got-runny`
+///   to `got-hard`. `right`, `soft` or `firm` alone is the answer builds
+///   before it asked, against the level, so a log can hold some of each and
+///   both are scored. An answer about the white follows a slash:
+///   `got-jammy/firm`, `right/runny`, `soft/tender`.
 /// - `-uiScreen direction-info`: open the direction's (i).
 /// - `-uiLanguage en-x-1750`: read in that catalogue, as a pick in the
 ///   picker would, before the first frame (`LanguageChoice.start`).
@@ -40,20 +43,38 @@ enum Screenshots {
     static var language: String? { UserDefaults.standard.string(forKey: "uiLanguage") }
     static var noAlarmPrompt: Bool { UserDefaults.standard.bool(forKey: "noAlarmPrompt") }
     static var sectionAhead: Double { UserDefaults.standard.double(forKey: "sectionAhead") }
-    static var seedEggs: [(yolk: Feedback, white: WhiteReport?)] {
+    static var seedEggs: [SeedAnswer] {
         guard let list = UserDefaults.standard.string(forKey: "seedEggs") else { return [] }
         return list.split(separator: ",").compactMap { entry in
-            // Split at the slash, or at anything else that is not a letter.
-            let words = entry.split { !$0.isLetter }
-            let yolk: Feedback? = switch words.first.map(String.init) {
-            case "right": .justRight
-            case "soft": .tooSoft
-            case "firm": .tooHard
-            default: nil
+            // Split at the dash and the slash, or at anything else that is
+            // not a letter.
+            var words = entry.split { !$0.isLetter }.map(String.init)
+            var answer = SeedAnswer()
+            if words.first == "got" {
+                guard words.count > 1, let word = YolkWord(rawValue: words[1]) else { return nil }
+                answer.yolkWord = word
+                words.removeFirst(2)
+            } else {
+                switch words.first {
+                case "right": answer.yolk = .justRight
+                case "soft": answer.yolk = .tooSoft
+                case "firm": answer.yolk = .tooHard
+                default: return nil
+                }
+                words.removeFirst()
             }
-            guard let yolk else { return nil }
-            return (yolk: yolk, white: words.count > 1 ? WhiteReport(rawValue: String(words[1])) : nil)
+            answer.white = words.first.flatMap(WhiteReport.init(rawValue:))
+            return answer
         }
     }
+}
+
+/// One seeded egg's answers: the yolk the cook got in the five words, or the
+/// answer against the level that builds before DECISIONS.md 92 gave, never
+/// both; and the white, if given.
+struct SeedAnswer {
+    var yolk: Feedback?
+    var yolkWord: YolkWord?
+    var white: WhiteReport?
 }
 #endif

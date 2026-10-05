@@ -129,17 +129,13 @@ func withUnrelatedWord(_ p: Double) -> Double {
 
 /// The four cutpoints between the five yolk words, log10 nominal yolk dose,
 /// softest first: where the slider's word changes, the midpoint between two
-/// adjacent anchors (`anchorNear`). See src/core/infer.ts.
-public let yolkWordCuts: [Double] = {
-    let lo = log10(yolkDoseRunny)
-    let hi = log10(yolkDoseHard)
-    var cuts: [Double] = []
-    for i in 0..<(donenessAnchors.count - 1) {
-        let edge = 0.5 * (donenessAnchors[i].level + donenessAnchors[i + 1].level)
-        cuts.append(lo + (hi - lo) * edge)
-    }
-    return cuts
-}()
+/// adjacent anchors (`anchorNear`). Frozen as literals: every stored yolk word
+/// is scored against them, so moving an anchor must not rescore those words
+/// unseen. `CalibrationTests.yolkWordCutsFrozen` and test/infer.test.ts
+/// hold them to today's anchors. See src/core/infer.ts.
+public let yolkWordCuts: [Double] = [
+    -0.7948033966179053, 0.1486189016043269, 1.0690308998699196, 2.4266385973116686,
+]
 
 /// The noise scale's prior: lognormal, median `noiseMedian` decades of yolk
 /// dose. 0.20 gives "just right" 0.81 at the band's centre and 0.093 one
@@ -309,16 +305,22 @@ func yolkProbit(
 /// share: the delivered log dose less the taste offset, against
 /// `yolkWordCuts`, through the particle's noise.
 func yolkWordProbit(_ grid: DoseGrid, _ p: Particle, _ cookTimeS: Double) -> [Double] {
-    let latent = lookupLogYolkDose(grid, p.alphaM2s, cookTimeS) - p.logDoseOffset
+    yolkWordBands(lookupLogYolkDose(grid, p.alphaM2s, cookTimeS) - p.logDoseOffset, p.noise)
+}
+
+/// The ordered probit itself: the five yolk words' probabilities, runny to
+/// hard, for a latent log dose seen through a Gaussian of sd `noise`, against
+/// `yolkWordCuts`. See src/core/infer.ts.
+func yolkWordBands(_ latent: Double, _ noise: Double) -> [Double] {
     var out = [Double](repeating: 0.0, count: 5)
     var below = 0.0
     for k in 0..<4 {
-        let upTo = normalCdf((yolkWordCuts[k] - latent) / p.noise)
+        let upTo = normalCdf((yolkWordCuts[k] - latent) / noise)
         let pk = upTo - below
         out[k] = pk > 0.0 ? pk : 0.0
         below = upTo
     }
-    out[4] = normalCdf((latent - yolkWordCuts[3]) / p.noise)
+    out[4] = normalCdf((latent - yolkWordCuts[3]) / noise)
     return out
 }
 

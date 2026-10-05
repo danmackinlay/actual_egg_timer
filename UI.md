@@ -128,8 +128,11 @@ the pull runs out into Done. The cooling counts down to the yolk's peak.
 none required: what the cook asked for (`feedback.target`); "How was the
 yolk?" with the slider's own five words as the answers, side by side
 (`doneness.runny` to `doneness.hard`; one row on a phone at the default
-text size, three over two when the text is made larger, web and iOS); "And
-the white next to the yolk?" with Runny / Tender / Firm; and under them,
+text size, three over two when the text is made larger, and fewer a row
+again at the largest sizes, never a word cut, web and iOS); "And the white
+next to the yolk?" with Runny / Tender / Firm, which on iOS break the same
+way; each row is a group named by its question for a screen reader; and
+under them,
 whenever the cooling ended at the yolk's peak, "Do you have a probe
 thermometer?" with how to take the reading and the field, the reading
 refused with the range it should be in when no kitchen could have made it

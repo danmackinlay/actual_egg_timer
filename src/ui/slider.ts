@@ -72,6 +72,21 @@ export function renderDonenessScale(
   }
 }
 
+/** The bare track, as iOS draws it in sous-vide (`OddsTrack`): no stripes,
+ *  no odds, no dots, no bracket and no word struck through. There is no pan,
+ *  and the bath delivers every level; without this the last pan's scale
+ *  stayed on the track under the bath's answer. */
+export function renderBareScale(): void {
+  page().donenessBlockedSoft.style.width = '0%';
+  page().donenessBlockedHard.style.width = '0%';
+  renderOddsBand(null);
+  placeBand(page().donenessUnlikelySoft, 0, 0);
+  placeBand(page().donenessUnlikelyHard, 0, 0);
+  renderBracket(null);
+  const ticks = page().donenessTicks.children;
+  for (let i = 0; i < ticks.length; i += 1) ticks[i].classList.remove('blocked');
+}
+
 /** The likely range of the yolk under the track, from the outcome's 10% to
  *  its 90% point, with a mark at its middle; and the same in words for a
  *  screen reader, each end as the nearest doneness word. Nothing without an
