@@ -170,12 +170,13 @@ struct FeedbackPanel: View {
 
     /// What this cook was started for, over the yolk question, so the answer
     /// is graded against it: "You asked for: jammy, peak yolk 65 °C". From
-    /// the ticket, in the units it was set up in, never the slider now.
+    /// the ticket's level and peak, never the slider now, in the language and
+    /// units on screen now, as the web's `renderTarget` says it.
     private var targetLine: String? {
         guard let ticket = cook.ticket else { return nil }
         return tr("feedback.target", [
-            "doneness": .text(midSentence(ticket.doneness, locale: Copy.activeLocale)),
-            "yolk": .text(showIn(ticket.units, .temperature, ticket.peakYolkC)),
+            "doneness": .text(midSentence(tr(anchorNear(ticket.level).key), locale: Copy.activeLocale)),
+            "yolk": .text(planner.show(.temperature, ticket.peakYolkC)),
         ])
     }
 
