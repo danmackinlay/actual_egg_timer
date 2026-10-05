@@ -15,7 +15,9 @@ import EggTimerCore
 /// - `-seedEggs right,right,right`: on a fresh install, write that many eggs
 ///   into the log through the app's own store, each cooked at the level and
 ///   setup on screen and answered `right`, `soft` or `firm` about the yolk,
-///   and fold them (`Planner.seed`). A learned state without cooking.
+///   and fold them (`Planner.seed`). A learned state without cooking. An
+///   answer about the white follows a slash: `right/runny`, `soft/tender`,
+///   `firm/firm`.
 /// - `-uiScreen direction-info`: open the direction's (i).
 /// - `-uiLanguage en-x-1750`: read in that catalogue, as a pick in the
 ///   picker would, before the first frame (`LanguageChoice.start`).
@@ -34,15 +36,19 @@ enum Screenshots {
     static var language: String? { UserDefaults.standard.string(forKey: "uiLanguage") }
     static var noAlarmPrompt: Bool { UserDefaults.standard.bool(forKey: "noAlarmPrompt") }
     static var sectionAhead: Double { UserDefaults.standard.double(forKey: "sectionAhead") }
-    static var seedEggs: [Feedback] {
+    static var seedEggs: [(yolk: Feedback, white: WhiteReport?)] {
         guard let list = UserDefaults.standard.string(forKey: "seedEggs") else { return [] }
-        return list.split(separator: ",").compactMap { word in
-            switch word.trimmingCharacters(in: .whitespaces) {
+        return list.split(separator: ",").compactMap { entry in
+            // Split at the slash, or at anything else that is not a letter.
+            let words = entry.split { !$0.isLetter }
+            let yolk: Feedback? = switch words.first.map(String.init) {
             case "right": .justRight
             case "soft": .tooSoft
             case "firm": .tooHard
             default: nil
             }
+            guard let yolk else { return nil }
+            return (yolk: yolk, white: words.count > 1 ? WhiteReport(rawValue: String(words[1])) : nil)
         }
     }
 }

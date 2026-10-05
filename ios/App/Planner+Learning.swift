@@ -197,9 +197,10 @@ extension Planner {
     /// Debug builds only (Screenshots.swift, `-seedEggs`): write eggs into
     /// the log through the app's own store, as if each had been cooked at the
     /// level and setup on screen, at its mean time, and answered as given
-    /// about the yolk; then fold them, as a relaunch folds eggs it finds
-    /// unfolded. Only into an empty log, so a relaunch does not seed twice.
-    func seed(_ answers: [Feedback]) {
+    /// about the yolk and, where given, the white; then fold them, as a
+    /// relaunch folds eggs it finds unfolded. Only into an empty log, so a
+    /// relaunch does not seed twice.
+    func seed(_ answers: [(yolk: Feedback, white: WhiteReport?)]) {
         guard kept.log.isEmpty, !answers.isEmpty, !isSousVide else { return }
         let solved = solveCookTime(
             egg: egg, setup: setup, params: calibrationParams(calibration),
@@ -216,7 +217,7 @@ extension Planner {
                 ),
                 level: doneness, recommendedS: seconds, pulledS: seconds, pulledBy: .cook,
                 cooledS: cooling == .counter ? 0 : coolingSecondsFor(solved.result),
-                yolk: answer, lang: "en", units: .metric
+                yolk: answer.yolk, white: answer.white, lang: "en", units: .metric
             ))
         }
         Calibrations.save(kept)
