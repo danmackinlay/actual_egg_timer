@@ -7,11 +7,13 @@
  *
  *   npm run build:site && npm run build && node dist/tools/devServer.js
  *
- * PORT sets the port (8888). Every egg kept, and every deletion, is printed;
- * nothing is written to disk, and everything goes with the process.
+ * PORT sets the port (8888). It listens on this machine only (127.0.0.1),
+ * which the simulator reaches as localhost. Every egg kept, and every
+ * deletion, is printed; nothing is written to disk, and everything goes with
+ * the process.
  */
 
-import { createServer } from 'node:http';
+import { IncomingMessage, ServerResponse, createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { extname, join, normalize } from 'node:path';
 import { handle } from '../server/eggs.js';
@@ -28,7 +30,13 @@ const TYPES: Record<string, string> = {
 };
 
 async function staticFile(path: string): Promise<{ body: Buffer; type: string } | null> {
-  const clean = normalize(decodeURIComponent(path)).replace(/^(\.\.[/\\])+/, '');
+  let decoded: string;
+  try {
+    decoded = decodeURIComponent(path);
+  } catch {
+    return null; // a stray %: no such file
+  }
+  const clean = normalize(decoded).replace(/^(\.\.[/\\])+/, '');
   for (const candidate of [clean, join(clean, 'index.html')]) {
     try {
       const body = await readFile(join(ROOT, candidate));
@@ -40,7 +48,15 @@ async function staticFile(path: string): Promise<{ body: Buffer; type: string } 
   return null;
 }
 
-createServer(async (req, res) => {
+createServer((req, res) => {
+  serve(req, res).catch((error: unknown) => {
+    console.error('dev server:', error instanceof Error ? error.message : String(error));
+    if (!res.headersSent) res.writeHead(500);
+    res.end();
+  });
+}).listen(PORT, '127.0.0.1', () => console.log(`site and endpoint on http://localhost:${PORT}`));
+
+async function serve(req: IncomingMessage, res: ServerResponse): Promise<void> {
   const url = new URL(req.url ?? '/', `http://localhost:${PORT}`);
   if (url.pathname.startsWith('/api/')) {
     const chunks: Buffer[] = [];
@@ -68,4 +84,4 @@ createServer(async (req, res) => {
   }
   res.writeHead(200, { 'content-type': file.type, 'cache-control': 'no-store' });
   res.end(file.body);
-}).listen(PORT, () => console.log(`site and endpoint on http://localhost:${PORT}`));
+}
