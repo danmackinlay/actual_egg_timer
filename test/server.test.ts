@@ -9,7 +9,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { MAX_BODY_BYTES, MAX_SEQ, Options, Store, countedTier, handle, keyKey, recordKey } from '../server/eggs.js';
+import { MAX_BODY_BYTES, MAX_SEQ, MAX_STRING, Options, Store, countedTier, handle, keyKey, recordKey } from '../server/eggs.js';
 import { MemoryStore } from '../server/memoryStore.js';
 import { EggRecord } from '../src/core/record.js';
 import { recordAt } from '../tools/common.js';
@@ -25,7 +25,9 @@ function egg(uid: string | null = UID, over: Partial<EggRecord> = {}): EggRecord
 
 function post(path: string, body: unknown, headers: Record<string, string> = {}): Request {
   const text = typeof body === 'string' ? body : JSON.stringify(body);
-  return new Request(SITE + path, { method: 'POST', body: text, headers: headers });
+  return new Request(SITE + path, {
+    method: 'POST', body: text, headers: { 'content-type': 'application/json', ...headers },
+  });
 }
 
 async function send(store: Store, req: Request): Promise<{ status: number; body: Record<string, unknown> }> {
@@ -64,10 +66,29 @@ test('2. what a phone would refuse, the server refuses', async () => {
     ['an array', [egg()], 400],
     ['not JSON', '{"seq": 0, "record"', 400],
     ['too big', 'x'.repeat(MAX_BODY_BYTES + 1), 413],
+    ['a long string', { seq: 0, record: egg(UID, { appVersion: 'x'.repeat(MAX_STRING + 1) }) }, 413],
   ];
   for (const [why, body, status] of refused) {
     assert.equal((await send(store, post('/api/eggs', body))).status, status, why);
   }
+  // Not JSON by its type: a page elsewhere could post that through its
+  // visitors' browsers without asking.
+  for (const type of ['text/plain', 'application/x-www-form-urlencoded', '']) {
+    const plain = post('/api/eggs', { seq: 0, record: egg() }, { 'content-type': type });
+    assert.equal((await send(store, plain)).status, 415, type);
+  }
+  assert.equal((await send(store, post('/api/eggs', { seq: 0, record: egg() }, {
+    'content-type': 'Application/JSON; charset=utf-8',
+  }))).status, 201, 'a parameter and capitals are fine');
+  store.blobs.clear();
+  // No declared length: read only to the cap.
+  const stream = new ReadableStream<Uint8Array>({
+    pull(c) { c.enqueue(new Uint8Array(4096).fill(0x20)); },
+  });
+  const endless = new Request(SITE + '/api/eggs', {
+    method: 'POST', body: stream, headers: { 'content-type': 'application/json' }, duplex: 'half',
+  } as RequestInit);
+  assert.equal((await send(store, endless)).status, 413);
   assert.equal(store.blobs.size, 0, 'nothing written');
   assert.equal((await handle(new Request(SITE + '/api/eggs'), store)).status, 405);
   assert.equal((await handle(new Request(SITE + '/api/nothing'), store)).status, 404);

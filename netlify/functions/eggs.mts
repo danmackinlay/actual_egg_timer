@@ -15,7 +15,7 @@ import { Store, handle } from '../../server/eggs.js';
 /** What Netlify tells a function about the deploy it runs in (Functions 2.0's
  *  second argument). Only the context is read. */
 interface FunctionContext {
-  deploy?: { context?: string };
+  deploy?: { context?: string; published?: boolean };
 }
 
 /** The store for this deploy. Production, and only production, gets the
@@ -26,9 +26,13 @@ interface FunctionContext {
  *  preview or branch deploy on it would read, write and delete the live
  *  results; those get a store scoped to their own deploy instead, which
  *  starts empty and goes with the deploy. A missing context counts as not
- *  production. */
+ *  production. So does an earlier production deploy, reached at its own
+ *  permalink, which Netlify says is not the published one: it runs that
+ *  deploy's code, which must not write to the live store once newer code
+ *  has replaced it. A context with no word either way counts as published,
+ *  so that a runtime without the field still writes where it should. */
 function blobs(context: FunctionContext | undefined): Store {
-  const live = context?.deploy?.context === 'production';
+  const live = context?.deploy?.context === 'production' && context.deploy.published !== false;
   const store = live
     ? getStore({ name: 'eggs', consistency: 'strong' })
     : getDeployStore({ name: 'eggs', consistency: 'strong' });

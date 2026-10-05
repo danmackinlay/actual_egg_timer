@@ -32,12 +32,13 @@ test('the function, through the Blobs client: keep once, list, delete', async ()
   })).toString('base64');
   try {
     const post = (seq: number, context = PRODUCTION) => eggs(new Request(`${SITE}/api/eggs`, {
-      method: 'POST', body: JSON.stringify({ seq: seq, record: { ...recordAt(0.41, 412, 0, null), uid: UID } }),
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ seq: seq, record: { ...recordAt(0.41, 412, 0, null), uid: UID } }),
     }), context);
     assert.equal((await post(0)).status, 201);
     assert.equal((await post(0)).status, 200, 'the conditional write says it did not write');
     assert.equal((await post(1)).status, 201);
-    const del = (context = PRODUCTION) => eggs(new Request(`${SITE}/api/eggs/${UID}`, { method: 'DELETE' }), context);
+    const del = (context: { deploy: { context: string; published?: boolean } } = PRODUCTION) => eggs(new Request(`${SITE}/api/eggs/${UID}`, { method: 'DELETE' }), context);
     assert.deepEqual(await (await del()).json(), { deleted: 2 });
     assert.deepEqual(await (await del()).json(), { deleted: 0 }, 'gone at once');
     assert.equal((await post(0)).status, 201, 'and can be sent again');
@@ -46,6 +47,12 @@ test('the function, through the Blobs client: keep once, list, delete', async ()
     assert.equal((await post(0, PREVIEW)).status, 201, 'new to the preview\'s store');
     assert.deepEqual(await (await del(PREVIEW)).json(), { deleted: 1 });
     assert.deepEqual(await (await del()).json(), { deleted: 1 }, 'production kept its own');
+    // An earlier production deploy, at its permalink, is not the published
+    // one: it does not reach the live store either.
+    const OLD = { deploy: { context: 'production', published: false } };
+    assert.equal((await post(0)).status, 201);
+    assert.deepEqual(await (await del(OLD)).json(), { deleted: 0 }, 'not the live store');
+    assert.deepEqual(await (await del({ deploy: { context: 'production', published: true } })).json(), { deleted: 1 });
   } finally {
     delete (globalThis as { netlifyBlobsContext?: string }).netlifyBlobsContext;
     await server.stop();

@@ -57,6 +57,15 @@ export type Tier = 'attested' | 'open';
  *  6 KB of base64. */
 export const MAX_BODY_BYTES = 16384;
 
+/** The largest record kept, as JSON: a record is about 750 bytes, with every
+ *  answer and a forecast. A cap, so that free ids cannot fill the store with
+ *  long strings in the fields the loader takes as any text. */
+export const MAX_RECORD_BYTES = 2048;
+
+/** The longest string anywhere in a record: an app version, a population or
+ *  model name, a language tag are all far shorter. */
+export const MAX_STRING = 64;
+
 /** Eggs one id may send: an egg a day for over a decade. A cap, so that one
  *  id cannot fill the store; `seq` is checked against it. */
 export const MAX_SEQ = 5000;
@@ -103,12 +112,48 @@ function refuse(status: number, why: string): Response {
 }
 
 /** The body, if it is not too big: by its declared length first, so a large
- *  one is refused before it is read, and by what was read in case it lied. */
+ *  one is refused before it is read, and then as it is read, so one that
+ *  lied, or declared nothing, is stopped at the cap rather than read whole. */
 async function bodyOf(req: Request): Promise<Uint8Array | null> {
   const declared = Number(req.headers.get('content-length') ?? '0');
   if (declared > MAX_BODY_BYTES) return null;
-  const body = new Uint8Array(await req.arrayBuffer());
-  return body.length > MAX_BODY_BYTES ? null : body;
+  if (req.body === null) return new Uint8Array(0);
+  const reader = req.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.length;
+    if (total > MAX_BODY_BYTES) {
+      await reader.cancel();
+      return null;
+    }
+    chunks.push(value);
+  }
+  const body = new Uint8Array(total);
+  let at = 0;
+  for (const c of chunks) {
+    body.set(c, at);
+    at += c.length;
+  }
+  return body;
+}
+
+/** Whether the body says it is JSON. Both apps say so; a page elsewhere can
+ *  make a visitor's browser post `text/plain` without asking first, and that
+ *  is refused (415), so no other site can post through its visitors. */
+function saysJson(req: Request): boolean {
+  const type = (req.headers.get('content-type') ?? '').split(';')[0].trim().toLowerCase();
+  return type === 'application/json';
+}
+
+/** Whether every string in a value is at most `MAX_STRING` long. */
+function shortStrings(v: unknown): boolean {
+  if (typeof v === 'string') return v.length <= MAX_STRING;
+  if (Array.isArray(v)) return v.every(shortStrings);
+  if (v !== null && typeof v === 'object') return Object.values(v).every(shortStrings);
+  return true;
 }
 
 function parseJson(bytes: Uint8Array): unknown {
@@ -162,6 +207,7 @@ async function tierOf(store: Store, uid: string, body: Uint8Array, req: Request,
 }
 
 async function postEgg(req: Request, store: Store, opts: Options): Promise<Response> {
+  if (!saysJson(req)) return refuse(415, 'application/json');
   const body = await bodyOf(req);
   if (body === null) return refuse(413, 'too big');
   const parsed = parseJson(body);
@@ -174,6 +220,7 @@ async function postEgg(req: Request, store: Store, opts: Options): Promise<Respo
   const record = parseRecord(o['record']);
   if (record === null) return refuse(400, 'not a record');
   if (!isUid(record.uid)) return refuse(400, 'uid');
+  if (JSON.stringify(record).length > MAX_RECORD_BYTES || !shortStrings(record)) return refuse(413, 'record too big');
   const tier = await tierOf(store, record.uid, body, req, opts);
   // One copy of an egg, and an attested copy wins. A retry can land in the
   // other tier: as open when its assertion no longer counts up, and then the
@@ -211,6 +258,7 @@ async function deleteEggs(uid: string, store: Store): Promise<Response> {
 /* ---------------------------------------------------------------- attest */
 
 async function postAttest(req: Request, store: Store, opts: Options): Promise<Response> {
+  if (!saysJson(req)) return refuse(415, 'application/json');
   const body = await bodyOf(req);
   if (body === null) return refuse(413, 'too big');
   const parsed = parseJson(body);
@@ -235,7 +283,9 @@ async function postAttest(req: Request, store: Store, opts: Options): Promise<Re
       environment: k.environment, category: k.category, bundleVersion: k.bundleVersion,
     };
   } catch (error) {
-    if (error instanceof AttestError) return refuse(400, `attestation: ${error.message}`);
+    // Which check failed is not said: the library's own words (OpenSSL's,
+    // say) are no business of the caller's.
+    if (error instanceof AttestError) return refuse(400, 'attestation refused');
     throw error;
   }
   if (await store.set(keyKey(uid), JSON.stringify(key), true)) return json(201, { environment: key.environment });
