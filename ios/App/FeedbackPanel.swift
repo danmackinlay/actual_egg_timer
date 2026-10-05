@@ -44,6 +44,7 @@ struct FeedbackPanel: View {
                     .appFont(.headline)
                     .multilineTextAlignment(.center)
                 yolkWords
+                    .answerRow(tr("feedback.ask"))
 
                 Text(tr("feedback.white.ask"))
                     .appFont(.headline)
@@ -54,6 +55,7 @@ struct FeedbackPanel: View {
                     whiteButton(tr("feedback.white.tender"), .tender)
                     whiteButton(tr("feedback.white.firm"), .firm)
                 }
+                .answerRow(tr("feedback.white.ask"))
 
                 probeEntry
 
@@ -217,5 +219,15 @@ struct FeedbackPanel: View {
 
     private var tunedLine: String {
         tr("learned.tuned", ["eggs": .int(planner.eggsLogged)])
+    }
+}
+
+private extension View {
+    /// A row of answers as one group named by its question, as the web's
+    /// `role="group"` with `aria-labelledby`: both rows have a Runny, and
+    /// VoiceOver says which question it is in as it enters the row.
+    func answerRow(_ question: String) -> some View {
+        accessibilityElement(children: .contain)
+            .accessibilityLabel(question)
     }
 }

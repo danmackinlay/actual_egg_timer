@@ -540,7 +540,9 @@
       <!-- The yolk the cook got, in the slider's own words, whatever was
            asked for. -->
       <p id="feedbackAsk" data-copy="feedback.ask"></p>
-      <div class="pair pair--five">
+      <!-- Each row is a group named by its question, so a screen reader
+           says which "Runny" it is on. -->
+      <div class="pair pair--five" role="group" aria-labelledby="feedbackAsk">
         <button type="button" class="fb" data-yolk="runny" data-copy="doneness.runny"></button>
         <button type="button" class="fb" data-yolk="soft" data-copy="doneness.soft"></button>
         <button type="button" class="fb" data-yolk="jammy" data-copy="doneness.jammy"></button>
@@ -548,7 +550,7 @@
         <button type="button" class="fb" data-yolk="hard" data-copy="doneness.hard"></button>
       </div>
       <p id="whiteAsk" data-copy="feedback.white.ask"></p>
-      <div class="pair">
+      <div class="pair" role="group" aria-labelledby="whiteAsk">
         <button type="button" class="wb" data-white="runny" data-copy="feedback.white.runny"></button>
         <button type="button" class="wb" data-white="tender" data-copy="feedback.white.tender"></button>
         <button type="button" class="wb" data-white="firm" data-copy="feedback.white.firm"></button>
