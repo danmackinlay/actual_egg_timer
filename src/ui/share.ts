@@ -19,17 +19,24 @@
  *   reaches what was sent before a forget, under an id the page no longer
  *   holds. `deleting`: ids whose deletion the server has not yet confirmed,
  *   asked again at every load until it does.
+ * - `busy`: how many busy answers the egg at `sent` has had, and
+ *   `busySince`, when the first came (epoch ms; null when none has).
  *
  * WHEN AN EGG GOES: once it is final - when the cook has moved on from it,
- * so no answer can be added - one at a time, in order. A refused egg (400,
- * 413) is passed over, since it will never be taken; anything else stops the
- * run until the next one (a load, a new egg, sharing turned on, the browser
- * back online).
+ * so no answer can be added - one at a time, in order. What the answer means
+ * is core's `shareReply`. A refused egg (400, 413, and a 403, 404 or 415 from
+ * a moved route or something in the way) is passed over, since asking again
+ * will not change it. No answer, or a busy one (408, 429, 5xx), stops the run
+ * until the next (a load, a new egg, sharing turned on, the browser back
+ * online); but an egg that has had busy answers for long enough
+ * (`shareGivesUp`) is passed over too, so that one egg cannot hold up the
+ * rest for good.
  *
  * The states are pure functions of the last (`turnedOn` and the rest), for
  * the tests; the module keeps the current one and writes it through.
  */
 
+import { shareGivesUp, shareReply } from '../core/policy.js';
 import { EggRecord } from '../core/record.js';
 import { readStorage, writeStorage } from './store.js';
 
@@ -42,9 +49,13 @@ export interface ShareState {
   seq: number;
   uids: string[];
   deleting: string[];
+  busy: number;
+  busySince: number | null;
 }
 
-export const FRESH_SHARE: ShareState = { on: false, uid: null, sent: 0, seq: 0, uids: [], deleting: [] };
+export const FRESH_SHARE: ShareState = {
+  on: false, uid: null, sent: 0, seq: 0, uids: [], deleting: [], busy: 0, busySince: null,
+};
 
 /** How the page reaches the endpoint: a status for each call, or a throw
  *  when the network does not answer. */
@@ -106,6 +117,9 @@ export function readShare(raw: string | null): ShareState {
     seq: uid === null ? 0 : count(r['seq']),
     uids: uids,
     deleting: ids(r['deleting']),
+    busy: uid === null ? 0 : count(r['busy']),
+    busySince: uid !== null && typeof r['busySince'] === 'number' && Number.isFinite(r['busySince'])
+      ? r['busySince'] : null,
   };
 }
 
@@ -113,7 +127,7 @@ export function readShare(raw: string | null): ShareState {
 export function turnedOn(s: ShareState, mint: () => string = newUid): ShareState {
   if (s.uid !== null) return { ...s, on: true };
   const uid = mint();
-  return { ...s, on: true, uid: uid, sent: 0, seq: 0, uids: [...s.uids, uid] };
+  return { ...s, on: true, uid: uid, sent: 0, seq: 0, uids: [...s.uids, uid], busy: 0, busySince: null };
 }
 
 /** Sharing turned off: nothing is deleted; that is the other button. */
@@ -124,9 +138,9 @@ export function turnedOff(s: ShareState): ShareState {
 /** The cook forgot everything: the log is empty, and the next egg is a new
  *  cook's, under a new id. The old id stays in `uids` for deletion. */
 export function forgotten(s: ShareState, mint: () => string = newUid): ShareState {
-  if (!s.on) return { ...s, uid: null, sent: 0, seq: 0 };
+  if (!s.on) return { ...s, uid: null, sent: 0, seq: 0, busy: 0, busySince: null };
   const uid = mint();
-  return { ...s, uid: uid, sent: 0, seq: 0, uids: [...s.uids, uid] };
+  return { ...s, uid: uid, sent: 0, seq: 0, uids: [...s.uids, uid], busy: 0, busySince: null };
 }
 
 /** "Delete what I've sent": sharing goes off, every id this browser has used
@@ -134,19 +148,26 @@ export function forgotten(s: ShareState, mint: () => string = newUid): ShareStat
 export function deletionAsked(s: ShareState): ShareState {
   const deleting = [...s.deleting];
   for (const uid of s.uids) if (!deleting.includes(uid)) deleting.push(uid);
-  return { on: false, uid: null, sent: 0, seq: 0, uids: [], deleting: deleting };
+  return { ...FRESH_SHARE, deleting: deleting };
 }
 
 /** A log shorter than what was sent has been dropped and begun again (a
  *  damaged log, `decodeKept`): what it holds now is new. */
 export function reconciled(s: ShareState, logLength: number): ShareState {
-  return s.sent > logLength ? { ...s, sent: 0 } : s;
+  return s.sent > logLength ? { ...s, sent: 0, busy: 0, busySince: null } : s;
 }
 
-/** Whether the endpoint's answer moves the cursor on: kept (201), already
- *  kept (200), or refused for good (400, 413). */
-export function advances(status: number): boolean {
-  return status === 200 || status === 201 || status === 400 || status === 413;
+/** The egg at the cursor answered: whether the cursor moves on, and the state
+ *  with it. Kept or refused, it does; busy, it waits - counted, unless it has
+ *  waited long enough, when it is passed over as if refused. `now` is epoch
+ *  ms. */
+export function answered(s: ShareState, status: number, now: number): { next: ShareState; moved: boolean } {
+  if (shareReply(status) === 'busy') {
+    const since = s.busySince ?? now;
+    const busy = s.busy + 1;
+    if (!shareGivesUp(busy, (now - since) / 1000)) return { next: { ...s, busy: busy, busySince: since }, moved: false };
+  }
+  return { next: { ...s, sent: s.sent + 1, seq: s.seq + 1, busy: 0, busySince: null }, moved: true };
 }
 
 /* ---------------------------------------------------------------- state */
@@ -164,6 +185,7 @@ export interface ShareHost {
 let state: ShareState = { ...FRESH_SHARE };
 let host: ShareHost | null = null;
 let transport: Transport = fetchTransport;
+let clock: () => number = Date.now;
 /** Bumped by every change of id, so a send in flight for an old one lands
  *  on nothing. */
 let generation = 0;
@@ -226,9 +248,10 @@ export function shareState(): Readonly<ShareState> {
 
 /** Read what is stored, against the log as it now is, and remember who to
  *  ask. Once, at boot, after the calibration is loaded. */
-export function loadShare(h: ShareHost, t: Transport = fetchTransport): ShareState {
+export function loadShare(h: ShareHost, t: Transport = fetchTransport, now: () => number = Date.now): ShareState {
   host = h;
   transport = t;
+  clock = now;
   seen = readStorage(KEY);
   state = reconciled(readShare(seen), h.log().length);
   return state;
@@ -288,11 +311,13 @@ async function sendOne(): Promise<boolean> {
     return false;
   }
   const now = current();
-  if (gen !== generation || !advances(status)) return false;
+  if (gen !== generation) return false;
   // Another tab may have sent the same egg meanwhile and moved on: then
   // there is nothing to move, and the next is looked at afresh.
-  if (now.sent === s.sent && now.seq === s.seq) save({ ...now, sent: now.sent + 1, seq: now.seq + 1 });
-  return true;
+  if (now.sent !== s.sent || now.seq !== s.seq) return true;
+  const { next, moved } = answered(now, status, clock());
+  save(next);
+  return moved;
 }
 
 /** "Delete what I've sent", confirmed: off, and every id asked for - after
