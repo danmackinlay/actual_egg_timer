@@ -150,6 +150,7 @@ struct RecordConformance {
             let record = decodeRecord(c["record"] as Any)
             #expect((record != nil) == valid, "\(why): valid should be \(valid)")
             guard let record else { continue }
+            #expect(try record.id.map(Double.init) == c.optionalNum("id"), "\(why): id")
             let yolk = try c.optionalNum("yolk")
             #expect(record.yolk.map { Double($0.rawValue) } == yolk, "\(why): yolk")
             #expect(record.yolkWord?.rawValue == c["yolkWord"] as? String, "\(why): yolk word")

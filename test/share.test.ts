@@ -92,7 +92,9 @@ function page(log: EggRecord[], final = log.length) {
   return h;
 }
 
-const LOG: EggRecord[] = [0, 1, 2].map((i) => ({ ...recordAt(0.41, 400 + i, 0, null), day: `2026-10-0${i + 1}` }));
+const LOG: EggRecord[] = [0, 1, 2].map((i) => ({
+  ...recordAt(0.41, 400 + i, 0, null), day: `2026-10-0${i + 1}`, id: 1759700000000 + i,
+}));
 
 test('4. turning sharing on sends the log so far, in order, each copy carrying the id', async () => {
   storage.clear();
@@ -107,6 +109,8 @@ test('4. turning sharing on sends the log so far, in order, each copy carrying t
   assert.deepEqual(t.posts.map((p) => (p['record'] as EggRecord).day), ['2026-10-01', '2026-10-02']);
   for (const p of t.posts) assert.equal((p['record'] as EggRecord).uid, uid);
   assert.equal(LOG[0].uid, null, 'the log keeps no id');
+  for (const p of t.posts) assert.equal('id' in (p['record'] as object), false, 'the moment it started stays here');
+  assert.equal(LOG[0].id, 1759700000000, 'and stays in the log');
   assert.equal(JSON.parse(storage.get('aet.share.v1') ?? '{}').sent, 2, 'written through');
 });
 

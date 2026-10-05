@@ -42,13 +42,17 @@ test('1. an egg is kept once, in the open tier, as the loader reads it', async (
   const kept = JSON.parse(store.blobs.get(recordKey('open', UID, 0)) ?? 'null') as Record<string, unknown>;
   assert.equal(kept['uid'], UID);
   assert.equal(kept['extra'], undefined, 'exactly the known fields');
+  // The moment a cook started is never kept, whoever sends it.
+  assert.equal((await send(store, post('/api/eggs', { seq: 9, record: egg(UID, { id: 1759700000123 }) }))).status, 201);
+  assert.equal('id' in (JSON.parse(store.blobs.get(recordKey('open', UID, 9)) ?? 'null') as object), false);
+  assert.equal('id' in kept, false);
   assert.equal(recordKey('open', UID, 0), `records/open/${UID}/000000.json`);
   // A retry is harmless, and nothing is overwritten.
   const again = await send(store, post('/api/eggs', { seq: 0, record: egg(UID, { yolk: 1 }) }));
   assert.deepEqual(again, { status: 200, body: { tier: 'open', stored: false } });
   assert.equal(JSON.parse(store.blobs.get(recordKey('open', UID, 0)) ?? 'null').yolk, 0);
   assert.equal((await send(store, post('/api/eggs', { seq: 1, record: egg() }))).status, 201);
-  assert.deepEqual(await store.list(`records/open/${UID}/`), [recordKey('open', UID, 0), recordKey('open', UID, 1)]);
+  assert.deepEqual(await store.list(`records/open/${UID}/`), [recordKey('open', UID, 0), recordKey('open', UID, 1), recordKey('open', UID, 9)]);
 });
 
 test('2. what a phone would refuse, the server refuses', async () => {

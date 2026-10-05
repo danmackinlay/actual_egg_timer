@@ -183,6 +183,7 @@ export function eggRecordFor(
     v: RECORD_VERSION,
     uid: null,
     day: localDay(m.startedAt_ms),
+    id: Math.round(m.startedAt_ms),
     app: 'web',
     appVersion: APP_VERSION,
     prior: activePopulation().id,

@@ -283,6 +283,14 @@ held to `EggTimerCore/Record.swift` by `fixtures/record.json`.
   `null`, so every older record is read unchanged, and a record carrying both
   is refused. `forecast.yolkWord` is the five words' probabilities at "Eggs
   in", absent or `null` on a forecast from before them.
+- **`id`** (6 October 2026) is the moment the cook started, in whole
+  milliseconds since 1970 UTC: which cook the egg was. The web app writes it,
+  so that two tabs showing one cook, or a cook written down twice, make one
+  egg, and only the tab that wrote an egg down learns from it; the iPhone app
+  runs one cook at a time and writes none. Absent reads as `null`. It stays
+  on the device: sharing sends the record without it, and the server drops
+  it from whatever it is sent (`sharedRecord`), because a start time to the
+  millisecond says far more about a cook than `day` does.
 - **The white is always asked** since E2, so `null` is a skip. E1 asked only
   sometimes and carried a `whiteOffered` flag to tell "not asked" from
   "skipped"; with nothing of E1's kept, the flag went on 28 September, and a

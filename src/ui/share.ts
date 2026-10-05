@@ -30,7 +30,7 @@
  * the tests; the module keeps the current one and writes it through.
  */
 
-import { EggRecord } from '../core/record.js';
+import { EggRecord, sharedRecord } from '../core/record.js';
 import { readStorage, writeStorage } from './store.js';
 
 const KEY = 'aet.share.v1';
@@ -280,7 +280,7 @@ async function sendOne(): Promise<boolean> {
   const final = Math.min(h.finalCount(), log.length);
   if (!s.on || s.uid === null || s.sent >= final) return false;
   const gen = generation;
-  const body = JSON.stringify({ seq: s.seq, record: { ...log[s.sent], uid: s.uid } });
+  const body = JSON.stringify({ seq: s.seq, record: sharedRecord(log[s.sent], s.uid) });
   let status: number;
   try {
     status = await transport.post(body);
