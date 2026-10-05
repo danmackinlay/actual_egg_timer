@@ -6,8 +6,9 @@ import { eggFromMass } from '../../src/core/geometry.js';
 import { GridSpec, buildRequestedGrid, cookTimeForLogYolkDose, lookupLogWhiteDose, lookupLogYolkDose } from '../../src/core/doseGrid.js';
 import {
   Feedback, FEEDBACK_BAND, KERNEL_DISCOUNT, NOISE_LOG_SD, NOISE_MEDIAN, UNRELATED, WHITE_FIRM_GAP_LOG_SD,
-  WHITE_FIRM_GAP_MEDIAN, WHITE_OFFSET_SD, WhiteReport, answerLikelihood, createPrior, effectiveSampleSize,
-  posteriorMeanWhiteOffset, posteriorParams, predictCookTime, updatePosterior,
+  WHITE_FIRM_GAP_MEDIAN, WHITE_OFFSET_SD, WhiteReport, YOLK_WORD_CUTS, YolkWord, answerLikelihood, createPrior,
+  effectiveSampleSize, posteriorMeanWhiteOffset, posteriorParams, predictCookTime, updatePosterior,
+  yolkWordProbabilities, yolkWordProbit,
 } from '../../src/core/infer.js';
 import { CookSetup } from '../../src/core/protocol.js';
 
@@ -116,6 +117,37 @@ const updates = FEEDBACK_SEQUENCE.map((feedback, i) => {
   };
 });
 
+/* The same filter, from the same prior, told the yolk the cook got in five
+ * words (DECISIONS.md 92): every word, both ends, a word with no white and a
+ * white with no word, at times from runny to past hard on this surface, so
+ * each band is scored where it is likely and where it is not. Each step
+ * writes the first particle's five probabilities and the posterior
+ * predictive of the five, before the fold. */
+const WORD_SEQUENCE: (YolkWord | null)[] = ['soft', 'jammy', 'runny', 'fudgy', 'jammy', null, 'hard', 'soft', 'jammy'];
+const WORD_WHITES: (WhiteReport | null)[] = ['tender', 'firm', 'runny', 'firm', null, 'tender', 'firm', null, 'firm'];
+const WORD_TIMES_S = [360, 420, 330, 520, 410, 380, 640, 350, 430];
+const wordPosterior = createPrior(PARTICLE_COUNT, PRIOR_SEED);
+const wordUpdates = WORD_SEQUENCE.map((word, i) => {
+  const cookTime_s = WORD_TIMES_S[i];
+  const white = WORD_WHITES[i];
+  const firstProbit = yolkWordProbit(CALIB_GRID, wordPosterior.particles[0], cookTime_s);
+  const predictive = yolkWordProbabilities(wordPosterior, CALIB_GRID, cookTime_s);
+  const firstLikelihood = answerLikelihood(
+    CALIB_GRID, wordPosterior.particles[0], cookTime_s, NOMINAL_TARGET, null, white, null, word,
+  );
+  updatePosterior(wordPosterior, CALIB_GRID, cookTime_s, NOMINAL_TARGET, null, white, null, word);
+  return {
+    cookTime_s: cookTime_s,
+    logNominalTarget: NOMINAL_TARGET,
+    yolkWord: word,
+    white: white,
+    firstProbit: firstProbit,
+    predictive: predictive,
+    firstLikelihood: firstLikelihood,
+    after: readout(wordPosterior),
+  };
+});
+
 /* One more fold, from a deliberately degenerate particle set, so that the
  * resample after a WHITE-ONLY answer is executed from a known starting point,
  * rather than only wherever the sequence above happens to cross the threshold.
@@ -199,6 +231,7 @@ export const calibrationFixture = {
     whiteFirmGapMedian: WHITE_FIRM_GAP_MEDIAN,
     whiteFirmGapLogSd: WHITE_FIRM_GAP_LOG_SD,
     kernelDiscount: KERNEL_DISCOUNT,
+    yolkWordCuts: YOLK_WORD_CUTS.slice(),
   },
   whiteResample: WHITE_RESAMPLE_CASE,
   prior: {
@@ -207,4 +240,5 @@ export const calibrationFixture = {
     ...prior,
   },
   updates: updates,
+  wordUpdates: wordUpdates,
 };

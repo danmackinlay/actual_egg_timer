@@ -38,7 +38,7 @@ struct WordingConformance {
             let lean = try row.value(Lean.self, "lean")
             let o = try Outcome(
                 pTooSoft: 0, pJustRight: row.num("pJustRight"), pTooFirm: 0, pWhiteRunny: row.num("pWhiteRunny"),
-                pWhiteTender: 1 - row.num("pWhiteRunny"), pWhiteFirm: 0,
+                pWhiteTender: 1 - row.num("pWhiteRunny"), pWhiteFirm: 0, pYolkWord: nil,
                 levelLow: row.num("levelLow"), levelMedian: row.num("levelLow"), levelHigh: row.num("levelHigh"),
                 lean: lean
             )

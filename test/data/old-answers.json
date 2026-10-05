@@ -1,0 +1,1015 @@
+{
+ "about": "A log answered the old way (yolk too soft / just right / too firm, -1/0/1), and the posterior its replay made under the likelihood before the five yolk words (DECISIONS.md 92), at bb1cc9d: 64 particles from seed 20260926, on calibrationGrid at 7 x 9. Written once by that code and never regenerated; test/record.test.ts 2h replays the log under the code now and asks for these numbers bit for bit.",
+ "start": {
+  "count": 64,
+  "seed": 20260926
+ },
+ "grid": {
+  "alphaCount": 7,
+  "timeCount": 9
+ },
+ "log": [
+  {
+   "v": 1,
+   "uid": null,
+   "day": "2026-09-26",
+   "app": "web",
+   "appVersion": "0.2.0",
+   "prior": "2026-09",
+   "model": "2026-10-e8",
+   "egg": {
+    "mass_g": 62,
+    "massFrom": "class",
+    "sizeTable": "eu"
+   },
+   "setup": {
+    "startMode": "hot",
+    "eggStart_C": 4,
+    "eggFrom": "fridge",
+    "ambient_C": 20,
+    "boiling_C": 100,
+    "timeToBoil_s": 0,
+    "timeToBoilFrom": "remembered",
+    "cooling": "ice",
+    "afterBoil": "hold",
+    "waterLitres": 2,
+    "eggCount": 4
+   },
+   "level": 0.3,
+   "recommended_s": 415.05859375,
+   "nudge_s": 0,
+   "pulled_s": 422.30859375,
+   "pulledBy": "cook",
+   "cooled_s": 180,
+   "yolk": -1,
+   "white": "runny",
+   "probe": null,
+   "forecast": {
+    "cook_s": 415.05859375,
+    "yolk": [
+     0.25,
+     0.5,
+     0.25
+    ],
+    "white": [
+     0.375,
+     0.5,
+     0.125
+    ]
+   },
+   "lang": "en",
+   "register": "modern",
+   "units": "metric"
+  },
+  {
+   "v": 1,
+   "uid": null,
+   "day": "2026-09-26",
+   "app": "ios",
+   "appVersion": "0.2.0",
+   "prior": "2026-09",
+   "model": "2026-10-e8",
+   "egg": {
+    "mass_g": 68.5,
+    "massFrom": "scale",
+    "sizeTable": null
+   },
+   "setup": {
+    "startMode": "cold",
+    "eggStart_C": 4,
+    "eggFrom": "fridge",
+    "ambient_C": 20,
+    "boiling_C": 100,
+    "timeToBoil_s": 512.4,
+    "timeToBoilFrom": "measured",
+    "cooling": "ice",
+    "afterBoil": "hold",
+    "waterLitres": 2,
+    "eggCount": 4
+   },
+   "level": 0.45,
+   "recommended_s": 705.234375,
+   "nudge_s": 0,
+   "pulled_s": 705.234375,
+   "pulledBy": "timeout",
+   "cooled_s": 180,
+   "yolk": 0,
+   "white": null,
+   "probe": null,
+   "forecast": null,
+   "lang": "en",
+   "register": "modern",
+   "units": "metric"
+  },
+  {
+   "v": 1,
+   "uid": null,
+   "day": "2026-09-26",
+   "app": "web",
+   "appVersion": "0.2.0",
+   "prior": "2026-09",
+   "model": "2026-10-e8",
+   "egg": {
+    "mass_g": 58,
+    "massFrom": "class",
+    "sizeTable": "eu"
+   },
+   "setup": {
+    "startMode": "hot",
+    "eggStart_C": 20,
+    "eggFrom": "room",
+    "ambient_C": 20,
+    "boiling_C": 100,
+    "timeToBoil_s": 0,
+    "timeToBoilFrom": "default",
+    "cooling": "ice",
+    "afterBoil": "hold",
+    "waterLitres": 2,
+    "eggCount": 4
+   },
+   "level": 0.5,
+   "recommended_s": 382.7197265625,
+   "nudge_s": 0,
+   "pulled_s": 382.7197265625,
+   "pulledBy": "timeout",
+   "cooled_s": 180,
+   "yolk": null,
+   "white": null,
+   "probe": null,
+   "forecast": null,
+   "lang": "en",
+   "register": "modern",
+   "units": "metric"
+  },
+  {
+   "v": 1,
+   "uid": null,
+   "day": "2026-09-26",
+   "app": "web",
+   "appVersion": "0.2.0",
+   "prior": "2026-09",
+   "model": "2026-10-e8",
+   "egg": {
+    "mass_g": 55.3,
+    "massFrom": "girth",
+    "sizeTable": null
+   },
+   "setup": {
+    "startMode": "hot",
+    "eggStart_C": 8,
+    "eggFrom": "custom",
+    "ambient_C": 20,
+    "boiling_C": 100,
+    "timeToBoil_s": 0,
+    "timeToBoilFrom": "remembered",
+    "cooling": "tap",
+    "afterBoil": "hold",
+    "waterLitres": 2,
+    "eggCount": 4
+   },
+   "level": 0.4,
+   "recommended_s": 386.2158203125,
+   "nudge_s": 0,
+   "pulled_s": 417.7158203125,
+   "pulledBy": "cook",
+   "cooled_s": 180,
+   "yolk": 1,
+   "white": null,
+   "probe": null,
+   "forecast": null,
+   "lang": "en",
+   "register": "modern",
+   "units": "metric"
+  },
+  {
+   "v": 1,
+   "uid": null,
+   "day": "2026-09-26",
+   "app": "ios",
+   "appVersion": "0.2.0",
+   "prior": "2026-09",
+   "model": "2026-10-e8",
+   "egg": {
+    "mass_g": 67.3,
+    "massFrom": "class",
+    "sizeTable": "us"
+   },
+   "setup": {
+    "startMode": "hot",
+    "eggStart_C": 20,
+    "eggFrom": "room",
+    "ambient_C": 20,
+    "boiling_C": 100,
+    "timeToBoil_s": 0,
+    "timeToBoilFrom": "remembered",
+    "cooling": "counter",
+    "afterBoil": "hold",
+    "waterLitres": 2,
+    "eggCount": 4
+   },
+   "level": 0.62,
+   "recommended_s": 275.21484375,
+   "nudge_s": 0,
+   "pulled_s": 275.21484375,
+   "pulledBy": "timeout",
+   "cooled_s": 0,
+   "yolk": 0,
+   "white": null,
+   "probe": null,
+   "forecast": null,
+   "lang": "en",
+   "register": "modern",
+   "units": "metric"
+  },
+  {
+   "v": 1,
+   "uid": null,
+   "day": "2026-09-26",
+   "app": "web",
+   "appVersion": "0.2.0",
+   "prior": "2026-09",
+   "model": "2026-10-e8",
+   "egg": {
+    "mass_g": 60.2,
+    "massFrom": "width",
+    "sizeTable": null
+   },
+   "setup": {
+    "startMode": "cold",
+    "eggStart_C": 4,
+    "eggFrom": "fridge",
+    "ambient_C": 20,
+    "boiling_C": 100,
+    "timeToBoil_s": 430,
+    "timeToBoilFrom": "measured",
+    "cooling": "ice",
+    "afterBoil": "off",
+    "waterLitres": 1.5,
+    "eggCount": 2
+   },
+   "level": 0.5,
+   "recommended_s": 676.25,
+   "nudge_s": 0,
+   "pulled_s": 678.25,
+   "pulledBy": "cook",
+   "cooled_s": 180,
+   "yolk": -1,
+   "white": "tender",
+   "probe": null,
+   "forecast": null,
+   "lang": "en",
+   "register": "modern",
+   "units": "metric"
+  },
+  {
+   "v": 1,
+   "uid": null,
+   "day": "2026-09-26",
+   "app": "ios",
+   "appVersion": "0.2.0",
+   "prior": "2026-09",
+   "model": "2026-10-e8",
+   "egg": {
+    "mass_g": 68,
+    "massFrom": "class",
+    "sizeTable": "eu"
+   },
+   "setup": {
+    "startMode": "hot",
+    "eggStart_C": 4,
+    "eggFrom": "fridge",
+    "ambient_C": 20,
+    "boiling_C": 100,
+    "timeToBoil_s": 0,
+    "timeToBoilFrom": "remembered",
+    "cooling": "ice",
+    "afterBoil": "hold",
+    "waterLitres": 2,
+    "eggCount": 4
+   },
+   "level": 0.22,
+   "recommended_s": 422.9248046875,
+   "nudge_s": 0,
+   "pulled_s": 462.9248046875,
+   "pulledBy": "cook",
+   "cooled_s": 180,
+   "yolk": null,
+   "white": "tender",
+   "probe": null,
+   "forecast": null,
+   "lang": "en",
+   "register": "modern",
+   "units": "metric"
+  },
+  {
+   "v": 1,
+   "uid": null,
+   "day": "2026-09-26",
+   "app": "web",
+   "appVersion": "0.2.0",
+   "prior": "2026-09",
+   "model": "2026-10-e8",
+   "egg": {
+    "mass_g": 63,
+    "massFrom": "scale",
+    "sizeTable": null
+   },
+   "setup": {
+    "startMode": "hot",
+    "eggStart_C": 4,
+    "eggFrom": "fridge",
+    "ambient_C": 20,
+    "boiling_C": 100,
+    "timeToBoil_s": 0,
+    "timeToBoilFrom": "remembered",
+    "cooling": "ice",
+    "afterBoil": "hold",
+    "waterLitres": 2,
+    "eggCount": 4
+   },
+   "level": 0.62,
+   "recommended_s": 497.216796875,
+   "nudge_s": 0,
+   "pulled_s": 502.216796875,
+   "pulledBy": "cook",
+   "cooled_s": 180,
+   "yolk": 1,
+   "white": "firm",
+   "probe": null,
+   "forecast": null,
+   "lang": "en",
+   "register": "modern",
+   "units": "metric"
+  },
+  {
+   "v": 1,
+   "uid": null,
+   "day": "2026-09-26",
+   "app": "ios",
+   "appVersion": "0.2.0",
+   "prior": "2026-09",
+   "model": "2026-10-e8",
+   "egg": {
+    "mass_g": 68,
+    "massFrom": "scale",
+    "sizeTable": null
+   },
+   "setup": {
+    "startMode": "hot",
+    "eggStart_C": 4,
+    "eggFrom": "fridge",
+    "ambient_C": 20,
+    "boiling_C": 100,
+    "timeToBoil_s": 0,
+    "timeToBoilFrom": "remembered",
+    "cooling": "ice",
+    "afterBoil": "hold",
+    "waterLitres": 2,
+    "eggCount": 4
+   },
+   "level": 0.41,
+   "recommended_s": 467.5,
+   "nudge_s": 0,
+   "pulled_s": 470.5,
+   "pulledBy": "cook",
+   "cooled_s": 183,
+   "yolk": 0,
+   "white": null,
+   "probe": {
+    "centre_C": 66.01692180620901,
+    "after_s": 183
+   },
+   "forecast": null,
+   "lang": "en",
+   "register": "modern",
+   "units": "metric"
+  },
+  {
+   "v": 1,
+   "uid": null,
+   "day": "2026-09-26",
+   "app": "web",
+   "appVersion": "0.2.0",
+   "prior": "2026-09",
+   "model": "2026-10-e8",
+   "egg": {
+    "mass_g": 58,
+    "massFrom": "class",
+    "sizeTable": "eu"
+   },
+   "setup": {
+    "startMode": "hot",
+    "eggStart_C": 4,
+    "eggFrom": "fridge",
+    "ambient_C": 20,
+    "boiling_C": 100,
+    "timeToBoil_s": 0,
+    "timeToBoilFrom": "remembered",
+    "cooling": "tap",
+    "afterBoil": "hold",
+    "waterLitres": 2,
+    "eggCount": 4
+   },
+   "level": 0.3,
+   "recommended_s": 390.5859375,
+   "nudge_s": 0,
+   "pulled_s": 390.5859375,
+   "pulledBy": "timeout",
+   "cooled_s": 180,
+   "yolk": null,
+   "white": null,
+   "probe": {
+    "centre_C": 60.91178347370178,
+    "after_s": 180
+   },
+   "forecast": null,
+   "lang": "en",
+   "register": "modern",
+   "units": "metric"
+  }
+ ],
+ "final": {
+  "eggsLogged": 9,
+  "rng": 1415748495,
+  "weights": [
+   0.00007180919827468992,
+   0.01679842481856419,
+   0.016728943860464363,
+   0.016331383195753404,
+   0.01604694564500813,
+   0.016355861529547187,
+   0.016944868978050306,
+   0.017007316449136542,
+   0.016877501975617108,
+   0.015285733584456325,
+   0.012827456349926197,
+   0.014808720388065685,
+   0.013343285130369186,
+   0.01401557231923098,
+   0.01335104016950539,
+   0.01440445401021878,
+   0.015265211999317267,
+   0.015825546344806613,
+   0.015136504580391119,
+   0.015284060210292391,
+   0.015029297012473094,
+   0.013639611005134254,
+   0.013731016562554073,
+   0.01694863077340586,
+   0.016971974586673936,
+   0.01701042290265159,
+   0.01598660568386203,
+   0.0157741249951621,
+   0.016313873969109285,
+   0.01613346396613927,
+   0.015530552232547644,
+   0.015155057989206185,
+   0.016020104709861732,
+   0.01649315748749889,
+   0.015633291854260895,
+   0.016939488907931764,
+   0.016998873565870702,
+   0.016799297315151684,
+   0.015093378342208584,
+   0.016451296845568664,
+   0.01689489825179619,
+   0.016443805141161952,
+   0.015806611885021596,
+   0.01672558523025968,
+   0.01582451600805141,
+   0.016113728786856563,
+   0.015737609725469705,
+   0.01626798947917324,
+   0.016993910477121954,
+   0.0169976044223167,
+   0.016992999911900016,
+   0.015879297770286568,
+   0.015847061224480256,
+   0.015962960287921737,
+   0.01640779722826458,
+   0.014941253693914256,
+   0.015191557859874381,
+   0.01617123513607315,
+   0.012680353329737161,
+   0.017009618742116053,
+   0.017000290777362367,
+   0.016997401345462976,
+   0.016754174010813815,
+   0.01699357783029575
+  ],
+  "particles": [
+   {
+    "alpha_m2s": 1.5159969525164498e-7,
+    "logDoseOffset": -0.1327780376714381,
+    "tauAirScale": 1.0322398502339138,
+    "noise": 0.5680023106302747,
+    "whiteOffset": 0.012702257349762616,
+    "whiteFirmGap": 1.227012892620496
+   },
+   {
+    "alpha_m2s": 1.655449804654675e-7,
+    "logDoseOffset": 0.07191664480732214,
+    "tauAirScale": 0.8761129440588455,
+    "noise": 0.40643281433205136,
+    "whiteOffset": 0.9303103063141301,
+    "whiteFirmGap": 1.3985429916665755
+   },
+   {
+    "alpha_m2s": 1.6543294207200119e-7,
+    "logDoseOffset": 0.0710617990535525,
+    "tauAirScale": 0.8803622881859842,
+    "noise": 0.4066384735215462,
+    "whiteOffset": 0.9250114078704783,
+    "whiteFirmGap": 1.407963641127371
+   },
+   {
+    "alpha_m2s": 1.6496056533411612e-7,
+    "logDoseOffset": 0.012950334276604086,
+    "tauAirScale": 0.8575821435801398,
+    "noise": 0.4347912407225906,
+    "whiteOffset": 0.8434995389916339,
+    "whiteFirmGap": 1.2836114756223398
+   },
+   {
+    "alpha_m2s": 1.6470380903933373e-7,
+    "logDoseOffset": 0.02269941915143253,
+    "tauAirScale": 0.8491990816790729,
+    "noise": 0.43399160711296175,
+    "whiteOffset": 0.827075352056455,
+    "whiteFirmGap": 1.2572016867371292
+   },
+   {
+    "alpha_m2s": 1.675579205175046e-7,
+    "logDoseOffset": 0.08228287317388157,
+    "tauAirScale": 0.8938795962781068,
+    "noise": 0.42733041837317987,
+    "whiteOffset": 1.115659077698289,
+    "whiteFirmGap": 1.4722999028320252
+   },
+   {
+    "alpha_m2s": 1.6667808725045812e-7,
+    "logDoseOffset": 0.07069901599980001,
+    "tauAirScale": 0.8941656603142674,
+    "noise": 0.4287223830367989,
+    "whiteOffset": 1.0611102937505088,
+    "whiteFirmGap": 1.4550378485705626
+   },
+   {
+    "alpha_m2s": 1.6618689297745933e-7,
+    "logDoseOffset": 0.062050697524337804,
+    "tauAirScale": 0.9071409636699361,
+    "noise": 0.44238421423862095,
+    "whiteOffset": 1.032637695204372,
+    "whiteFirmGap": 1.4735670500431661
+   },
+   {
+    "alpha_m2s": 1.668483565614288e-7,
+    "logDoseOffset": 0.07066364131126664,
+    "tauAirScale": 0.9006755791979253,
+    "noise": 0.43825903419793705,
+    "whiteOffset": 1.0629180746727218,
+    "whiteFirmGap": 1.4329068444235469
+   },
+   {
+    "alpha_m2s": 1.6840061411886387e-7,
+    "logDoseOffset": 0.016444155890376573,
+    "tauAirScale": 0.8258182715477216,
+    "noise": 0.4360884753859364,
+    "whiteOffset": 1.1271157024938319,
+    "whiteFirmGap": 1.336172669287288
+   },
+   {
+    "alpha_m2s": 1.6975460545918934e-7,
+    "logDoseOffset": 0.02333868181142978,
+    "tauAirScale": 0.8131048386563593,
+    "noise": 0.4321750468414459,
+    "whiteOffset": 1.21521945923591,
+    "whiteFirmGap": 1.3445396800172555
+   },
+   {
+    "alpha_m2s": 1.6869911914823548e-7,
+    "logDoseOffset": 0.025048623784371626,
+    "tauAirScale": 0.8319243010269941,
+    "noise": 0.4339984105242384,
+    "whiteOffset": 1.1402977194304549,
+    "whiteFirmGap": 1.3417359664473394
+   },
+   {
+    "alpha_m2s": 1.6949764363304013e-7,
+    "logDoseOffset": 0.030601200557614713,
+    "tauAirScale": 0.8204605173280952,
+    "noise": 0.42160720314952216,
+    "whiteOffset": 1.207214809653339,
+    "whiteFirmGap": 1.3764085796187078
+   },
+   {
+    "alpha_m2s": 1.6914732328218707e-7,
+    "logDoseOffset": 0.016784481633606824,
+    "tauAirScale": 0.8206692675045114,
+    "noise": 0.432217338255349,
+    "whiteOffset": 1.1660670965342623,
+    "whiteFirmGap": 1.3439743926852605
+   },
+   {
+    "alpha_m2s": 1.6949371310550882e-7,
+    "logDoseOffset": 0.0420603782370678,
+    "tauAirScale": 0.824568156791353,
+    "noise": 0.42873095932989747,
+    "whiteOffset": 1.201197867753921,
+    "whiteFirmGap": 1.32746898920828
+   },
+   {
+    "alpha_m2s": 1.6893349631719896e-7,
+    "logDoseOffset": 0.026935998690227607,
+    "tauAirScale": 0.8308149257709184,
+    "noise": 0.4298434322438794,
+    "whiteOffset": 1.1567198027539138,
+    "whiteFirmGap": 1.329908198907188
+   },
+   {
+    "alpha_m2s": 1.6841407448413914e-7,
+    "logDoseOffset": 0.016668973901852888,
+    "tauAirScale": 0.8395545490982814,
+    "noise": 0.43601278923152287,
+    "whiteOffset": 1.104381969140863,
+    "whiteFirmGap": 1.3418940563619233
+   },
+   {
+    "alpha_m2s": 1.6801859125040392e-7,
+    "logDoseOffset": 0.013526580884581694,
+    "tauAirScale": 0.83967867449454,
+    "noise": 0.4303607489216907,
+    "whiteOffset": 1.1008222695323604,
+    "whiteFirmGap": 1.369742545484343
+   },
+   {
+    "alpha_m2s": 1.6849710274406442e-7,
+    "logDoseOffset": 0.013756302120066833,
+    "tauAirScale": 0.8179286655595022,
+    "noise": 0.43708883707218515,
+    "whiteOffset": 1.1384218546170506,
+    "whiteFirmGap": 1.3374600918878607
+   },
+   {
+    "alpha_m2s": 1.684017141003031e-7,
+    "logDoseOffset": 0.014941453730079957,
+    "tauAirScale": 0.8308262546130596,
+    "noise": 0.4357941850868039,
+    "whiteOffset": 1.1120997044546828,
+    "whiteFirmGap": 1.3362926813034188
+   },
+   {
+    "alpha_m2s": 1.685645653723205e-7,
+    "logDoseOffset": 0.019377109667507848,
+    "tauAirScale": 0.8309465859354876,
+    "noise": 0.4289655827323071,
+    "whiteOffset": 1.155106305283742,
+    "whiteFirmGap": 1.3583660771447585
+   },
+   {
+    "alpha_m2s": 1.6934577059918658e-7,
+    "logDoseOffset": 0.028648891473108853,
+    "tauAirScale": 0.8225824236213655,
+    "noise": 0.42287891998391836,
+    "whiteOffset": 1.1958459138185042,
+    "whiteFirmGap": 1.351403543142927
+   },
+   {
+    "alpha_m2s": 1.69298165745873e-7,
+    "logDoseOffset": 0.02879096574603694,
+    "tauAirScale": 0.8196976352113207,
+    "noise": 0.4318078422883353,
+    "whiteOffset": 1.1793513676273508,
+    "whiteFirmGap": 1.3300545983848773
+   },
+   {
+    "alpha_m2s": 1.666664294091283e-7,
+    "logDoseOffset": 0.0840311325076632,
+    "tauAirScale": 0.8727678439813831,
+    "noise": 0.4325680216450477,
+    "whiteOffset": 1.0730851265402774,
+    "whiteFirmGap": 1.2393491805429637
+   },
+   {
+    "alpha_m2s": 1.6596573180197524e-7,
+    "logDoseOffset": 0.07957856070692801,
+    "tauAirScale": 0.8758740083027736,
+    "noise": 0.4410031374820071,
+    "whiteOffset": 1.0215410743093,
+    "whiteFirmGap": 1.2235919881367496
+   },
+   {
+    "alpha_m2s": 1.663014895815032e-7,
+    "logDoseOffset": 0.08946347365359746,
+    "tauAirScale": 0.8713274403451314,
+    "noise": 0.43584667338891847,
+    "whiteOffset": 1.066555339573768,
+    "whiteFirmGap": 1.2286756761363027
+   },
+   {
+    "alpha_m2s": 1.6789077291001646e-7,
+    "logDoseOffset": 0.07670519037666748,
+    "tauAirScale": 0.8415401964603229,
+    "noise": 0.4552768110047552,
+    "whiteOffset": 1.077456800815101,
+    "whiteFirmGap": 1.1568875870833757
+   },
+   {
+    "alpha_m2s": 1.6805778162014462e-7,
+    "logDoseOffset": 0.0888483042449749,
+    "tauAirScale": 0.8438543227062796,
+    "noise": 0.4429595708232177,
+    "whiteOffset": 1.1079905457174881,
+    "whiteFirmGap": 1.1705566789609203
+   },
+   {
+    "alpha_m2s": 1.675994744121883e-7,
+    "logDoseOffset": 0.0817503092547335,
+    "tauAirScale": 0.8545985474962349,
+    "noise": 0.4442629426469279,
+    "whiteOffset": 1.0722724877871206,
+    "whiteFirmGap": 1.18992484532657
+   },
+   {
+    "alpha_m2s": 1.6776622214971882e-7,
+    "logDoseOffset": 0.08901196651856762,
+    "tauAirScale": 0.8558017955285192,
+    "noise": 0.43964945885582074,
+    "whiteOffset": 1.082864315637125,
+    "whiteFirmGap": 1.1820163463654638
+   },
+   {
+    "alpha_m2s": 1.6823467486276093e-7,
+    "logDoseOffset": 0.08998834355631284,
+    "tauAirScale": 0.8495770799871237,
+    "noise": 0.4414077366120671,
+    "whiteOffset": 1.1155789765237893,
+    "whiteFirmGap": 1.1731924910980283
+   },
+   {
+    "alpha_m2s": 1.6848527634346597e-7,
+    "logDoseOffset": 0.08228555662981782,
+    "tauAirScale": 0.8431736786392757,
+    "noise": 0.44456467294945445,
+    "whiteOffset": 1.1265004384475503,
+    "whiteFirmGap": 1.1844114970971193
+   },
+   {
+    "alpha_m2s": 1.6786310273014203e-7,
+    "logDoseOffset": 0.08541711029359246,
+    "tauAirScale": 0.855471948214207,
+    "noise": 0.44502456253423384,
+    "whiteOffset": 1.0821484876029253,
+    "whiteFirmGap": 1.1829123287075527
+   },
+   {
+    "alpha_m2s": 1.6741255121503615e-7,
+    "logDoseOffset": 0.07335890233457525,
+    "tauAirScale": 0.852269451483554,
+    "noise": 0.4585948406631855,
+    "whiteOffset": 1.0510268666909308,
+    "whiteFirmGap": 1.160278550680409
+   },
+   {
+    "alpha_m2s": 1.681616873256091e-7,
+    "logDoseOffset": 0.07870152965183437,
+    "tauAirScale": 0.8359159145228358,
+    "noise": 0.45082302218997733,
+    "whiteOffset": 1.0920616011923123,
+    "whiteFirmGap": 1.1637650380062852
+   },
+   {
+    "alpha_m2s": 1.6585413692019567e-7,
+    "logDoseOffset": 0.08466800298374771,
+    "tauAirScale": 0.8913907332858564,
+    "noise": 0.3898260620072812,
+    "whiteOffset": 1.1432718487217957,
+    "whiteFirmGap": 1.4076179371781579
+   },
+   {
+    "alpha_m2s": 1.6644687540803536e-7,
+    "logDoseOffset": 0.08461474328669627,
+    "tauAirScale": 0.8878887949168869,
+    "noise": 0.3749420505191771,
+    "whiteOffset": 1.1781917152608958,
+    "whiteFirmGap": 1.4145612864866053
+   },
+   {
+    "alpha_m2s": 1.6554649449079393e-7,
+    "logDoseOffset": 0.07882630020544644,
+    "tauAirScale": 0.8885035901520495,
+    "noise": 0.3899256180304379,
+    "whiteOffset": 1.1109072610676805,
+    "whiteFirmGap": 1.373569816756258
+   },
+   {
+    "alpha_m2s": 1.6403104820631564e-7,
+    "logDoseOffset": 0.02938393376778169,
+    "tauAirScale": 0.9294464165181651,
+    "noise": 0.4233039123094661,
+    "whiteOffset": 0.7809896053524052,
+    "whiteFirmGap": 1.2443348663752312
+   },
+   {
+    "alpha_m2s": 1.6508400100766647e-7,
+    "logDoseOffset": 0.033099385332666736,
+    "tauAirScale": 0.9106603505061691,
+    "noise": 0.421007011065985,
+    "whiteOffset": 0.8463509461325915,
+    "whiteFirmGap": 1.228535218094834
+   },
+   {
+    "alpha_m2s": 1.6680953533427303e-7,
+    "logDoseOffset": 0.08320105293594865,
+    "tauAirScale": 0.8902929960600792,
+    "noise": 0.41225384119640845,
+    "whiteOffset": 0.9889765238519154,
+    "whiteFirmGap": 1.31761283768222
+   },
+   {
+    "alpha_m2s": 1.6746666935835263e-7,
+    "logDoseOffset": 0.09702547126946941,
+    "tauAirScale": 0.8922159538580527,
+    "noise": 0.40248627142880555,
+    "whiteOffset": 1.0472531043388467,
+    "whiteFirmGap": 1.3494231184292063
+   },
+   {
+    "alpha_m2s": 1.6803310576767087e-7,
+    "logDoseOffset": 0.1022379725629087,
+    "tauAirScale": 0.8841657526482131,
+    "noise": 0.3979559217371571,
+    "whiteOffset": 1.0695243574872544,
+    "whiteFirmGap": 1.3260703750074676
+   },
+   {
+    "alpha_m2s": 1.6711571962914154e-7,
+    "logDoseOffset": 0.08313470198191486,
+    "tauAirScale": 0.8942627817798597,
+    "noise": 0.4099408294785454,
+    "whiteOffset": 1.0071388014865168,
+    "whiteFirmGap": 1.3430227516066546
+   },
+   {
+    "alpha_m2s": 1.6801938364022612e-7,
+    "logDoseOffset": 0.11226761304072908,
+    "tauAirScale": 0.8849539731092941,
+    "noise": 0.40116290947266187,
+    "whiteOffset": 1.0804502935583622,
+    "whiteFirmGap": 1.3187029614038264
+   },
+   {
+    "alpha_m2s": 1.6778347469836023e-7,
+    "logDoseOffset": 0.10438530467788451,
+    "tauAirScale": 0.8911008307019465,
+    "noise": 0.4039474569457792,
+    "whiteOffset": 1.053361929898732,
+    "whiteFirmGap": 1.3071061651945937
+   },
+   {
+    "alpha_m2s": 1.680851869650702e-7,
+    "logDoseOffset": 0.10167088794266625,
+    "tauAirScale": 0.8791059895798887,
+    "noise": 0.4053565105194665,
+    "whiteOffset": 1.0716512523446815,
+    "whiteFirmGap": 1.3227830771051101
+   },
+   {
+    "alpha_m2s": 1.6764358828595475e-7,
+    "logDoseOffset": 0.10895845065446666,
+    "tauAirScale": 0.8843451258367105,
+    "noise": 0.40084647772389426,
+    "whiteOffset": 1.0587117876663437,
+    "whiteFirmGap": 1.3037386028295075
+   },
+   {
+    "alpha_m2s": 1.6607282661814038e-7,
+    "logDoseOffset": 0.06833880138776476,
+    "tauAirScale": 0.8645991768978941,
+    "noise": 0.3951564682302926,
+    "whiteOffset": 1.0062515904403204,
+    "whiteFirmGap": 1.3455888315305327
+   },
+   {
+    "alpha_m2s": 1.6645575909606187e-7,
+    "logDoseOffset": 0.07563478372116346,
+    "tauAirScale": 0.8688636806254645,
+    "noise": 0.3865305935372799,
+    "whiteOffset": 1.0233658618266945,
+    "whiteFirmGap": 1.3441851668843148
+   },
+   {
+    "alpha_m2s": 1.6606729902414343e-7,
+    "logDoseOffset": 0.06628685590034497,
+    "tauAirScale": 0.8685190204527086,
+    "noise": 0.3906898728099291,
+    "whiteOffset": 0.9964445095233576,
+    "whiteFirmGap": 1.315748346554612
+   },
+   {
+    "alpha_m2s": 1.6797682955809845e-7,
+    "logDoseOffset": 0.08819254749088347,
+    "tauAirScale": 0.819859949954475,
+    "noise": 0.39181449709432004,
+    "whiteOffset": 1.1476821200082838,
+    "whiteFirmGap": 1.2835363495128722
+   },
+   {
+    "alpha_m2s": 1.6800197626820903e-7,
+    "logDoseOffset": 0.081496962586851,
+    "tauAirScale": 0.8349938615037984,
+    "noise": 0.3956161396484903,
+    "whiteOffset": 1.142544477050527,
+    "whiteFirmGap": 1.2987718705235478
+   },
+   {
+    "alpha_m2s": 1.679100636394512e-7,
+    "logDoseOffset": 0.0724192153473399,
+    "tauAirScale": 0.8289683340303347,
+    "noise": 0.39696662331231736,
+    "whiteOffset": 1.135635684407791,
+    "whiteFirmGap": 1.3202703054332332
+   },
+   {
+    "alpha_m2s": 1.6750477548230045e-7,
+    "logDoseOffset": 0.07787098488802889,
+    "tauAirScale": 0.8263468578845201,
+    "noise": 0.397964900823118,
+    "whiteOffset": 1.1110925924256216,
+    "whiteFirmGap": 1.2738795095757545
+   },
+   {
+    "alpha_m2s": 1.686189209765135e-7,
+    "logDoseOffset": 0.08340154739745537,
+    "tauAirScale": 0.8178744395769454,
+    "noise": 0.3916871146304917,
+    "whiteOffset": 1.1734029032972961,
+    "whiteFirmGap": 1.2869706991842131
+   },
+   {
+    "alpha_m2s": 1.6846187370334178e-7,
+    "logDoseOffset": 0.08503530374959313,
+    "tauAirScale": 0.8234165760545923,
+    "noise": 0.3931534646850682,
+    "whiteOffset": 1.1686289558631273,
+    "whiteFirmGap": 1.2879172239059322
+   },
+   {
+    "alpha_m2s": 1.6773270737073648e-7,
+    "logDoseOffset": 0.07246497498868361,
+    "tauAirScale": 0.8239804134350925,
+    "noise": 0.40263001774719054,
+    "whiteOffset": 1.126150780667809,
+    "whiteFirmGap": 1.2933368515919614
+   },
+   {
+    "alpha_m2s": 1.6277711289324684e-7,
+    "logDoseOffset": 0.04163459696284607,
+    "tauAirScale": 0.9013498764891951,
+    "noise": 0.42856111286474097,
+    "whiteOffset": 0.8317113864243328,
+    "whiteFirmGap": 1.344646043599371
+   },
+   {
+    "alpha_m2s": 1.6622767941280857e-7,
+    "logDoseOffset": 0.028008523935348695,
+    "tauAirScale": 0.9770716995935927,
+    "noise": 0.40998554639141643,
+    "whiteOffset": 0.9920696928475475,
+    "whiteFirmGap": 1.4873278847455536
+   },
+   {
+    "alpha_m2s": 1.6643637052444115e-7,
+    "logDoseOffset": 0.03506862710799305,
+    "tauAirScale": 0.981550686742588,
+    "noise": 0.40439384017283736,
+    "whiteOffset": 1.0101536908241295,
+    "whiteFirmGap": 1.516123006335791
+   },
+   {
+    "alpha_m2s": 1.6645713990740458e-7,
+    "logDoseOffset": 0.02537607080624977,
+    "tauAirScale": 0.9810064950806306,
+    "noise": 0.4092729112831841,
+    "whiteOffset": 0.9952362174190497,
+    "whiteFirmGap": 1.5327475493195846
+   },
+   {
+    "alpha_m2s": 1.6707206717826484e-7,
+    "logDoseOffset": 0.04341659534796176,
+    "tauAirScale": 0.9538711147291419,
+    "noise": 0.3939360409411605,
+    "whiteOffset": 1.080934802177651,
+    "whiteFirmGap": 1.5120522670826013
+   },
+   {
+    "alpha_m2s": 1.6648140418151768e-7,
+    "logDoseOffset": 0.03080758145999861,
+    "tauAirScale": 0.9756186112074091,
+    "noise": 0.4076133608476645,
+    "whiteOffset": 1.0171033773072646,
+    "whiteFirmGap": 1.4908461994295368
+   }
+  ]
+ }
+}

@@ -23,8 +23,10 @@ import { referenceSetup } from '../common.js';
  * Two things are pinned. First, which records a loader TRUSTS: a canonical
  * record, the variations version skew allows, and one breakage per rule, so a
  * port that forgets a check - or adds one - disagrees on a named case. Second,
- * the replay: a log of eight eggs from both apps - answered either way or not
- * at all, pulled by the cook or by the clock, one with a probe reading - folded
+ * the replay: a log of fifteen eggs from both apps - answered either way or not
+ * at all, pulled by the cook or by the clock, some with a probe reading, the
+ * first ten in the old three yolk answers and the last five in the five yolk
+ * words (DECISIONS.md 92) - folded
  * from a fresh prior with every particle and weight written out after each
  * egg, and the tail of the same log folded again from the state after the second
  * egg, which is what a phone whose damaged log was dropped starts from.
@@ -56,12 +58,14 @@ interface EggSpec {
   pulledBy: EggRecord['pulledBy'];
   late_s: number;
   yolk: EggRecord['yolk'];
+  /** The yolk the cook got, in five words (DECISIONS.md 92); none if absent. */
+  yolkWord?: EggRecord['yolkWord'];
   white: EggRecord['white'];
   /** A probe reading, as degrees off the peak the literature values
    *  predict for this cook, so the fixture reads where a real one would. */
   probeOff_C?: number;
   /** What the app said at "Eggs in", as answer probabilities; none if absent. */
-  forecast?: { yolk: number[]; white: number[] };
+  forecast?: { yolk: number[]; white: number[]; yolkWord?: number[] };
 }
 
 /* Realistic cooks: each recommended time is what the solver says for that egg
@@ -107,10 +111,11 @@ function recordOf(e: EggSpec): EggRecord {
     pulledBy: e.pulledBy,
     cooled_s: setup.cooling === 'counter' ? 0 : probe !== null ? coolingSecondsFor(solved) : COOLING_SECONDS,
     yolk: e.yolk,
+    yolkWord: e.yolkWord ?? null,
     white: e.white,
     probe: probe,
     forecast: e.forecast === undefined ? null : {
-      cook_s: recommended, yolk: e.forecast.yolk, white: e.forecast.white,
+      cook_s: recommended, yolk: e.forecast.yolk, white: e.forecast.white, yolkWord: e.forecast.yolkWord ?? null,
     },
     lang: 'en',
     register: 'modern',
@@ -176,6 +181,34 @@ const REPLAY_LOG: EggRecord[] = [
   recordOf({
     app: 'web', mass_g: 58, massFrom: 'class', eggFrom: 'fridge', over: { cooling: 'tap' },
     level: 0.3, pulledBy: 'timeout', late_s: 0, yolk: null, white: null, probeOff_C: -1.5,
+  }),
+  // From here the cook names the yolk they got (DECISIONS.md 92). Every egg
+  // above folds exactly as it did before the five words.
+  // Soft asked for, runny got, a runny white: the owner's egg.
+  recordOf({
+    app: 'ios', mass_g: 58, massFrom: 'class', eggFrom: 'fridge', over: {},
+    level: 0.22, pulledBy: 'cook', late_s: -12, yolk: null, yolkWord: 'runny', white: 'runny',
+    forecast: { yolk: [0.25, 0.5, 0.25], white: [0.375, 0.5, 0.125], yolkWord: [0.125, 0.5, 0.25, 0.0625, 0.0625] },
+  }),
+  // Jammy asked for and got, with a probe reading.
+  recordOf({
+    app: 'web', mass_g: 66, massFrom: 'scale', eggFrom: 'fridge', over: {},
+    level: 0.41, pulledBy: 'cook', late_s: 2, yolk: null, yolkWord: 'jammy', white: 'firm', probeOff_C: 0.5,
+  }),
+  // Fudgy asked for, hard got, a cold start; the white skipped.
+  recordOf({
+    app: 'web', mass_g: 63, massFrom: 'scale', eggFrom: 'fridge', over: { startMode: 'cold', timeToBoil_s: 450 },
+    level: 0.62, pulledBy: 'timeout', late_s: 0, yolk: null, yolkWord: 'hard', white: null,
+  }),
+  // The yolk alone, soft, at hard: the far end of the scale.
+  recordOf({
+    app: 'ios', mass_g: 70, massFrom: 'scale', eggFrom: 'fridge', over: {},
+    level: 1.0, pulledBy: 'cook', late_s: 0, yolk: null, yolkWord: 'soft', white: null,
+  }),
+  // And fudgy, at jammy.
+  recordOf({
+    app: 'web', mass_g: 62, massFrom: 'class', eggFrom: 'fridge', over: {},
+    level: 0.41, pulledBy: 'cook', late_s: 20, yolk: null, yolkWord: 'fudgy', white: 'tender',
   }),
 ];
 
@@ -333,6 +366,38 @@ const RECORD_CASES: { why: string; mutate: Mutation }[] = [
   { why: 'negative cooling', mutate: (r) => { r['cooled_s'] = -1; } },
   { why: 'a yolk answer out of range', mutate: (r) => { r['yolk'] = 2; } },
   { why: 'a yolk answer as a word', mutate: (r) => { r['yolk'] = 'soft'; } },
+  { why: 'the yolk the cook got (DECISIONS.md 92)', mutate: (r) => { r['yolk'] = null; r['yolkWord'] = 'runny'; } },
+  { why: 'each of the five yolk words, hard', mutate: (r) => { delete r['yolk']; r['yolkWord'] = 'hard'; } },
+  { why: 'a fudgy yolk', mutate: (r) => { r['yolk'] = null; r['yolkWord'] = 'fudgy'; } },
+  { why: 'the yolk word skipped', mutate: (r) => { r['yolk'] = null; r['yolkWord'] = null; } },
+  { why: 'both yolk answers at once', mutate: (r) => { r['yolkWord'] = 'soft'; } },
+  { why: 'a yolk word nobody offers', mutate: (r) => { r['yolk'] = null; r['yolkWord'] = 'medium'; } },
+  { why: 'a yolk word as a number', mutate: (r) => { r['yolk'] = null; r['yolkWord'] = 2; } },
+  { why: 'a yolk word in capitals', mutate: (r) => { r['yolk'] = null; r['yolkWord'] = 'Jammy'; } },
+  {
+    why: 'a forecast of the five yolk words',
+    mutate: (r) => {
+      r['forecast'] = {
+        cook_s: 400, yolk: [0.2, 0.6, 0.2], white: [0.3, 0.5, 0.2], yolkWord: [0.0625, 0.25, 0.5, 0.125, 0.0625],
+      };
+    },
+  },
+  {
+    why: 'a forecast of the yolk words as null',
+    mutate: (r) => { r['forecast'] = { cook_s: 400, yolk: [0.2, 0.6, 0.2], white: [0.3, 0.5, 0.2], yolkWord: null }; },
+  },
+  {
+    why: 'a forecast of four yolk words',
+    mutate: (r) => {
+      r['forecast'] = { cook_s: 400, yolk: [0.2, 0.6, 0.2], white: [0.3, 0.5, 0.2], yolkWord: [0.25, 0.25, 0.25, 0.25] };
+    },
+  },
+  {
+    why: 'a forecast of yolk words that does not sum to one',
+    mutate: (r) => {
+      r['forecast'] = { cook_s: 400, yolk: [0.2, 0.6, 0.2], white: [0.3, 0.5, 0.2], yolkWord: [0.2, 0.2, 0.2, 0.2, 0.1] };
+    },
+  },
   { why: 'a white answer nobody offers', mutate: (r) => { r['white'] = 'rubbery'; } },
   { why: 'the two-level white E1 logged, gone with D1', mutate: (r) => { r['white'] = 'set'; } },
   { why: 'a probe reading (E4)', mutate: (r) => { r['probe'] = { centre_C: 61.3, after_s: 187 }; } },
@@ -358,6 +423,7 @@ const recordCases = RECORD_CASES.map((c) => {
     record: record,
     valid: parsed !== null,
     yolk: parsed === null ? null : parsed.yolk,
+    yolkWord: parsed === null ? null : parsed.yolkWord,
     white: parsed === null ? null : parsed.white,
     probe: parsed === null ? null : parsed.probe,
     model: parsed === null ? null : parsed.model,
@@ -370,6 +436,7 @@ recordCases.push({
   record: [CANONICAL] as unknown as Record<string, unknown>,
   valid: parseRecord([CANONICAL]) !== null,
   yolk: null,
+  yolkWord: null,
   white: null,
   probe: null,
   model: null,

@@ -181,6 +181,46 @@ struct InferenceConformance {
         }
     }
 
+    /// The same filter told the yolk the cook got, in five words (DECISIONS.md
+    /// 92), from the same prior: the first particle's five probabilities, the
+    /// posterior predictive, the first particle's likelihood, and the set.
+    @Test("every five-word update: one particle's five, the predictive, and the whole set")
+    func wordUpdates() throws {
+        let c = try loadCalibration()
+        let grid = try doseGrid(c.gridJSON, egg: c.egg, setup: c.setup)
+        let priorJSON = try c.file.object("prior")
+        var post = try createPrior(
+            count: Int(priorJSON.num("count")),
+            seed: Int32(priorJSON.num("seed"))
+        )
+        for (i, step) in try c.file.rows("wordUpdates").enumerated() {
+            let word = try step.optionalValue(YolkWord.self, "yolkWord")
+            let white = try step.optionalValue(WhiteReport.self, "white")
+            let target = try step.num("logNominalTarget")
+            let cookTimeS = try step.num("cookTime_s")
+            let probit = yolkWordProbit(grid, post.particles[0], cookTimeS)
+            for (k, p) in try step.numbers("firstProbit").enumerated() {
+                expectClose(probit[k], p, "word update \(i): the first particle's word \(k)")
+            }
+            let predictive = yolkWordProbabilities(post, grid, cookTimeS)
+            for (k, p) in try step.numbers("predictive").enumerated() {
+                expectClose(predictive[k], p, "word update \(i): the predictive's word \(k)")
+            }
+            try expectClose(
+                answerLikelihood(grid, post.particles[0], cookTimeS, target, yolk: nil, white: white, yolkWord: word),
+                step.num("firstLikelihood"), "word update \(i): the first particle's likelihood"
+            )
+            updatePosterior(
+                &post, grid: grid, cookTimeS: cookTimeS, logNominalTarget: target,
+                yolk: nil, white: white, yolkWord: word
+            )
+            try expectPosterior(
+                post, step.object("after"), "word update \(i) (\(word?.rawValue ?? "-") / \(white?.rawValue ?? "-"))",
+                grid, target
+            )
+        }
+    }
+
     /// A white-only answer resampling from a known starting point: a set the
     /// reference sharpened until it sat just above the threshold.
     @Test("a white answer that degenerates the set resamples identically")
@@ -217,5 +257,8 @@ struct InferenceConformance {
         try expectClose(whiteFirmGapMedian, l.num("whiteFirmGapMedian"), "WHITE_FIRM_GAP_MEDIAN")
         try expectClose(whiteFirmGapLogSd, l.num("whiteFirmGapLogSd"), "WHITE_FIRM_GAP_LOG_SD")
         try expectClose(kernelDiscount, l.num("kernelDiscount"), "KERNEL_DISCOUNT")
+        let cuts = try l.numbers("yolkWordCuts")
+        #expect(cuts.count == yolkWordCuts.count, "four cutpoints between five words")
+        for k in cuts.indices { expectClose(yolkWordCuts[k], cuts[k], "YOLK_WORD_CUTS[\(k)]") }
     }
 }

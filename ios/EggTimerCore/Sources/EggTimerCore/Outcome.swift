@@ -45,6 +45,11 @@ public struct Outcome: Sendable, Codable, Equatable {
     public let pWhiteRunny: Double
     public let pWhiteTender: Double
     public let pWhiteFirm: Double
+    /// P(the cook names the yolk runny / soft / jammy / fudgy / hard): the
+    /// question asked since DECISIONS.md 92. No screen reads them; a record
+    /// keeps them as the forecast. Nil only on an outcome a running cook kept
+    /// from a build before them.
+    public let pYolkWord: [Double]?
     /// The 10%, 50% and 90% points of the delivered yolk doneness, on the
     /// slider's scale, clamped to [0, 1]. No taste offset.
     public let levelLow: Double
@@ -141,6 +146,7 @@ public func predictOutcome(
         pWhiteRunny: runny,
         pWhiteTender: tender,
         pWhiteFirm: whiteFirm,
+        pYolkWord: yolkWordProbabilities(post, grid, cookTimeS),
         levelLow: level(levelLowQ),
         levelMedian: level(0.5),
         levelHigh: level(levelHighQ),

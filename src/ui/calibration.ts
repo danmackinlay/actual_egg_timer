@@ -215,6 +215,7 @@ export function eggRecordFor(
     pulledBy: measured ? 'cook' : 'timeout',
     cooled_s: m.cooling === 'counter' ? 0 : m.cool_s,
     yolk: yolk,
+    yolkWord: null,
     white: white,
     probe: probe,
     forecast: c.forecast,

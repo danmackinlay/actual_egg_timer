@@ -9,7 +9,10 @@
  *
  * THE ANSWERS. P(too soft), P(just right), P(too firm) for the yolk and
  * P(runny), P(tender), P(firm) for the white: the posterior predictive of what
- * the cook will say,
+ * the cook will say, and, since the cook names the yolk they got
+ * (DECISIONS.md 92), the five yolk words' too. The decision, the odds and the
+ * lean still read the miss around the level asked for, which is what the
+ * first three are,
  * through the probit the filter learns with, unrelated share included - the
  * same numbers `yolkAnswerProbabilities` and `whiteAnswerProbabilities` give,
  * and the same parts `hitOdds` is made of. They are calibrated against what
@@ -66,7 +69,9 @@
  */
 
 import { DoseGrid, lookupLogYolkDose } from './doseGrid.js';
-import { Posterior, whiteAnswerProbabilities, yolkAnswerProbabilities } from './infer.js';
+import {
+  Posterior, whiteAnswerProbabilities, yolkAnswerProbabilities, yolkWordProbabilities,
+} from './infer.js';
 import { normalCdf } from './sphere.js';
 import { YOLK_DOSE_HARD, YOLK_DOSE_RUNNY } from './solve.js';
 
@@ -104,6 +109,11 @@ export interface Outcome {
   pWhiteRunny: number;
   pWhiteTender: number;
   pWhiteFirm: number;
+  /** P(the cook names the yolk runny / soft / jammy / fudgy / hard): the
+   *  question the cook is asked (DECISIONS.md 92). Sum to 1. No screen reads
+   *  them; a record keeps them as the forecast. Null only on an outcome a
+   *  cook carried from a build before them (the web's `restoreOutcome`). */
+  pYolkWord: number[] | null;
   /** The 10%, 50% and 90% points of the delivered yolk doneness, on the
    *  slider's scale, clamped to [0, 1]. No taste offset: see the header. */
   levelLow: number;
@@ -178,6 +188,7 @@ export function predictOutcome(
     pWhiteRunny: runny,
     pWhiteTender: tender,
     pWhiteFirm: whiteFirm,
+    pYolkWord: yolkWordProbabilities(post, grid, cookTime_s),
     levelLow: level(LEVEL_LOW_Q),
     levelMedian: level(0.5),
     levelHigh: level(LEVEL_HIGH_Q),

@@ -79,7 +79,7 @@ function solvedRecord(
       eggCount: setup.eggCount,
     },
     level: level, recommended_s: t, nudge_s: 0, pulled_s: t + 4, pulledBy: 'cook',
-    cooled_s: 180, yolk: yolk, white: null, probe: null,
+    cooled_s: 180, yolk: yolk, yolkWord: null, white: null, probe: null,
     forecast: null,
     lang: 'en', register: 'modern', units: 'metric',
   };
@@ -136,6 +136,29 @@ test('1c. the white\'s three answers load, a skip loads, and nothing else does',
   assert.equal(parseRecord({ ...base, white: 'set' }), null, 'E1\'s two-level answer, gone with D1');
 });
 
+test('1c2. the five yolk words load, a skip loads, and a record never holds both yolk answers', () => {
+  const base = solvedRecord(0.3, null);
+  for (const word of ['runny', 'soft', 'jammy', 'fudgy', 'hard']) {
+    const r = parseRecord({ ...base, yolkWord: word });
+    assert.equal(r?.yolkWord, word, word);
+    assert.equal(r?.yolk, null);
+  }
+  assert.equal(parseRecord({ ...base, yolkWord: null })?.yolkWord, null, 'skipped');
+  const old = parseRecord(solvedRecord(0.3, -1) as unknown as Record<string, unknown>);
+  assert.equal(old?.yolkWord, null, 'an old record has none, absent or null');
+  assert.equal(parseRecord({ ...base, yolkWord: 'medium' }), null, 'not a yolk word');
+  assert.equal(parseRecord({ ...base, yolkWord: 'Jammy' }), null, 'a key, not a word on screen');
+  assert.equal(parseRecord({ ...base, yolkWord: 2 }), null, 'not an index');
+  assert.equal(parseRecord({ ...solvedRecord(0.3, 0), yolkWord: 'jammy' }), null, 'both at once');
+  // The forecast of the five: kept when there are five that sum to one,
+  // absent on a forecast from before them.
+  const f = { cook_s: 400, yolk: [0.2, 0.6, 0.2], white: [0.3, 0.5, 0.2] };
+  assert.equal(parseRecord({ ...base, forecast: f })?.forecast?.yolkWord, null);
+  const five = [0.0625, 0.25, 0.5, 0.125, 0.0625];
+  assert.deepEqual(parseRecord({ ...base, forecast: { ...f, yolkWord: five } })?.forecast?.yolkWord, five);
+  assert.equal(parseRecord({ ...base, forecast: { ...f, yolkWord: [0.5, 0.5] } }), null);
+});
+
 test('1d. one bad record refuses the whole log', () => {
   const good = solvedRecord(0.4, 0);
   assert.equal(parseLog([good, good])?.length, 2);
@@ -183,6 +206,30 @@ test('2a. a replay is the egg-by-egg fold, and leaves its start alone', () => {
   assertIdentical(replay(start, log, COARSE), c, 'replay');
   assertIdentical(start, untouched, 'start');
   assert.equal(c.eggsLogged, 4, 'a white alone is an egg the model learned from');
+});
+
+test('2a2. a log answered the old way replays to the posterior it made before the five yolk words', () => {
+  // test/data/old-answers.json was written once by the code before DECISIONS.md
+  // 92 and is never regenerated: an old log must fold to the same bits.
+  const pinned = JSON.parse(readFileSync('test/data/old-answers.json', 'utf8')) as {
+    start: { count: number; seed: number };
+    grid: { alphaCount: number; timeCount: number };
+    log: unknown[];
+    final: { eggsLogged: number; rng: number; weights: number[]; particles: Calibration['posterior']['particles'] };
+  };
+  const log = parseLog(pinned.log);
+  assert.ok(log !== null && log.length === 10);
+  assert.ok(log.every((r) => r.yolkWord === null) && log.some((r) => r.yolk !== null), 'the old answers');
+  const grid = (alphaCentre: number, cookTime_s: number): GridSpec => ({
+    ...calibrationGrid(alphaCentre, cookTime_s),
+    alphaCount: pinned.grid.alphaCount, timeCount: pinned.grid.timeCount,
+  });
+  const now = replay(freshCalibration(pinned.start.count, pinned.start.seed), log, grid);
+  const then: Calibration = {
+    posterior: { particles: pinned.final.particles, weights: pinned.final.weights, rng: pinned.final.rng },
+    eggsLogged: pinned.final.eggsLogged,
+  };
+  assertIdentical(now, then, 'old log, new code');
 });
 
 test('2b. an unanswered egg folds nothing and builds no surface', () => {
@@ -543,7 +590,9 @@ test('4b5. a nudged cook is recorded as the time recommended and the nudge, apar
 
 test('4b4. the record keeps what the app said at Eggs in, and names the model that said it', () => {
   const m = beginCooling(pulled(startHot(T0, 400, 'ice', 0.4)), T0 + 402_000);
-  const forecast = { cook_s: 400, yolk: [0.25, 0.5, 0.25], white: [0.125, 0.375, 0.5] };
+  const forecast = {
+    cook_s: 400, yolk: [0.25, 0.5, 0.25], white: [0.125, 0.375, 0.5], yolkWord: [0.0625, 0.25, 0.5, 0.125, 0.0625],
+  };
   const r = eggRecordFor({ ...COOKED, forecast: forecast }, m, 0);
   assert.deepEqual(r.forecast, forecast);
   assert.equal(r.model, MODEL_ID);

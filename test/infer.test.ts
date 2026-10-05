@@ -17,19 +17,19 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
-  FEEDBACK_BAND, NOISE_MEDIAN, UNRELATED, Feedback, Particle, Posterior, WhiteReport,
-  answerLikelihood, createPrior, posteriorAlphaRelSd, posteriorMeanOffset,
+  FEEDBACK_BAND, NOISE_MEDIAN, UNRELATED, Feedback, Particle, Posterior, WhiteReport, YOLK_WORDS,
+  YOLK_WORD_CUTS, YolkWord, answerLikelihood, createPrior, posteriorAlphaRelSd, posteriorMeanOffset,
   posteriorMeanWhiteOffset, posteriorParams, updatePosterior, whiteAnswerProbabilities,
-  yolkAnswerProbabilities,
+  yolkAnswerProbabilities, yolkWordProbabilities,
 } from '../src/core/infer.js';
 import { DoseGrid, buildDoseGrid, lookupLogWhiteDose, lookupLogYolkDose } from '../src/core/doseGrid.js';
 import {
-  DEFAULT_PARAMS, ModelParams, WHITE_DOSE_TARGET, donenessFromSlider, logYolkTarget, simulate,
+  DEFAULT_PARAMS, DONENESS_ANCHORS, ModelParams, WHITE_DOSE_TARGET, donenessFromSlider, logYolkTarget, simulate,
   solveCookTime,
 } from '../src/core/solve.js';
 import { eggFromMass } from '../src/core/geometry.js';
 import { Z_WHITE, Z_YOLK } from '../src/core/constants.js';
-import { CALIBRATION_SEED, PARTICLE_COUNT, calibrationGrid } from '../src/core/policy.js';
+import { CALIBRATION_SEED, PARTICLE_COUNT, anchorNear, calibrationGrid } from '../src/core/policy.js';
 import {
   Calibration, EggRecord, calibrationDoneness, calibrationParams, freshCalibration, replay,
 } from '../src/core/record.js';
@@ -140,6 +140,81 @@ test('1d. no answer can kill a particle: every likelihood is at least the unrela
   for (const l of [-5, 5]) {
     for (const v of whiteProbs(c, particleAtWhite(c, l))) assert.ok(v >= floor - 1e-15);
   }
+});
+
+/** The five yolk words' likelihoods for a particle, unrelated share in. */
+function wordProbs(c: ReturnType<typeof cookAt>, p: Particle): number[] {
+  return YOLK_WORDS.map(
+    (w) => answerLikelihood(c.grid, p, c.cookTime_s, c.logNominalTarget, null, null, null, w),
+  );
+}
+
+/** A particle whose delivered log yolk dose, less its taste, is `x`. */
+function particleDelivering(c: ReturnType<typeof cookAt>, x: number, over: Partial<Particle> = {}): Particle {
+  const delivered = lookupLogYolkDose(c.grid, DEFAULT_PARAMS.alpha_m2s, c.cookTime_s);
+  return particle({ ...over, logDoseOffset: delivered - x });
+}
+
+test('1g. the five yolk words are a distribution, and no word scores under the unrelated fifth', () => {
+  const c = cookAt(0.41);
+  for (const x of [-4, -1.3, -0.795, 0, 0.149, 1.07, 2.43, 3.3, 7]) {
+    const probs = wordProbs(c, particleDelivering(c, x));
+    const s = probs.reduce((a, b) => a + b, 0);
+    assert.ok(Math.abs(s - 1) < 1e-12, `words at ${x}: ${s}`);
+    for (const v of probs) assert.ok(v >= UNRELATED / 5 - 1e-15, `floor at ${x}`);
+  }
+});
+
+test('1h. the words are the slider\'s: each cut is where anchorNear changes word, and each anchor names itself', () => {
+  assert.deepEqual(YOLK_WORDS.map((w) => `doneness.${w}`), DONENESS_ANCHORS.map((a) => a.key));
+  assert.equal(YOLK_WORD_CUTS.length, 4);
+  for (let i = 0; i < 4; i++) {
+    const edge = 0.5 * (DONENESS_ANCHORS[i].level + DONENESS_ANCHORS[i + 1].level);
+    assert.ok(Math.abs(YOLK_WORD_CUTS[i] - logYolkTarget(edge)) < 1e-12, `cut ${i}`);
+    assert.equal(anchorNear(edge - 1e-6).key, DONENESS_ANCHORS[i].key);
+    assert.equal(anchorNear(edge + 1e-6).key, DONENESS_ANCHORS[i + 1].key);
+  }
+  // A particle with no taste offset that delivers an anchor's own dose most
+  // likely names that anchor's word.
+  const c = cookAt(0.41);
+  for (let i = 0; i < DONENESS_ANCHORS.length; i++) {
+    const probs = wordProbs(c, particleDelivering(c, logYolkTarget(DONENESS_ANCHORS[i].level)));
+    assert.equal(probs.indexOf(Math.max(...probs)), i, `${YOLK_WORDS[i]}: ${probs.map((p) => p.toFixed(2))}`);
+  }
+  // On a cut, the words either side of it are a coin flip.
+  const edge = wordProbs(c, particleDelivering(c, YOLK_WORD_CUTS[1]));
+  assert.ok(Math.abs(edge[1] - edge[2]) < 1e-5, `on the soft | jammy cut: ${edge}`);
+});
+
+test('1i. the taste offset moves the words: a cook who likes it firmer calls the same yolk softer', () => {
+  const c = cookAt(0.41);
+  const plain = particleAtYolk(c, 0);
+  const firmer = { ...plain, logDoseOffset: plain.logDoseOffset + 0.5 };
+  const a = wordProbs(c, plain);
+  const b = wordProbs(c, firmer);
+  const mean = (ps: number[]): number => ps.reduce((acc, p, k) => acc + p * k, 0);
+  assert.ok(mean(b) < mean(a), `${mean(b)} against ${mean(a)}`);
+});
+
+test('1j. soft asked for and runny got: the next soft egg goes longer; runny asked for and got: nearly not', () => {
+  const answer = (level: number, word: YolkWord): number => {
+    const c = cookAt(level);
+    const post = createPrior(PARTICLE_COUNT, CALIBRATION_SEED);
+    const before = posteriorParams(post).alpha_m2s;
+    updatePosterior(post, c.grid, c.cookTime_s, c.logNominalTarget, null, null, null, word);
+    return posteriorParams(post).alpha_m2s / before;
+  };
+  // A runny yolk where soft was meant says the heat got in slower.
+  const softGotRunny = answer(0.22, 'runny');
+  assert.ok(softGotRunny < 0.97, `alpha x${softGotRunny}`);
+  // A soft yolk where soft was meant leaves the time-scale nearly alone.
+  const softGotSoft = answer(0.22, 'soft');
+  assert.ok(Math.abs(softGotSoft - 1) < Math.abs(softGotRunny - 1), `alpha x${softGotSoft}`);
+  // Predicted, the cook's own asked-for word is the likeliest answer at the prior.
+  const c = cookAt(0.41);
+  const predicted = yolkWordProbabilities(createPrior(PARTICLE_COUNT, CALIBRATION_SEED), c.grid, c.cookTime_s);
+  assert.ok(Math.abs(predicted.reduce((a, b) => a + b, 0) - 1) < 1e-12);
+  assert.equal(predicted.indexOf(Math.max(...predicted)), 2, `jammy: ${predicted.map((p) => p.toFixed(2))}`);
 });
 
 test('1f. the white\'s noise is the yolk\'s, in degrees', () => {
@@ -374,7 +449,7 @@ function softRecord(cal: Calibration, level: number, yolk: Feedback | null, whit
       waterLitres: 2, eggCount: 2,
     },
     level: level, recommended_s: t, nudge_s: 0, pulled_s: t, pulledBy: 'timeout', cooled_s: 180,
-    yolk: yolk, white: white, probe: null, forecast: null, lang: 'en', register: 'modern', units: 'metric',
+    yolk: yolk, yolkWord: null, white: white, probe: null, forecast: null, lang: 'en', register: 'modern', units: 'metric',
   };
 }
 

@@ -45,6 +45,12 @@ struct OutcomeConformance {
                 try expectClose(o.pWhiteRunny, expected.num("pWhiteRunny"), "\(label) runny")
                 try expectClose(o.pWhiteTender, expected.num("pWhiteTender"), "\(label) tender")
                 try expectClose(o.pWhiteFirm, expected.num("pWhiteFirm"), "\(label) white firm")
+                let words = try expected.numbers("pYolkWord")
+                let got = try #require(o.pYolkWord, "\(label) yolk words")
+                #expect(got.count == words.count, "\(label) five yolk words")
+                for k in words.indices {
+                    expectClose(got[k], words[k], "\(label) yolk word \(k)")
+                }
                 try expectClose(o.levelLow, expected.num("levelLow"), "\(label) level low")
                 try expectClose(o.levelMedian, expected.num("levelMedian"), "\(label) level median")
                 try expectClose(o.levelHigh, expected.num("levelHigh"), "\(label) level high")

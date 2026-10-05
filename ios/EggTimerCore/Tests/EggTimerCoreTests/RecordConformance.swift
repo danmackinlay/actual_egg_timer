@@ -152,6 +152,7 @@ struct RecordConformance {
             guard let record else { continue }
             let yolk = try c.optionalNum("yolk")
             #expect(record.yolk.map { Double($0.rawValue) } == yolk, "\(why): yolk")
+            #expect(record.yolkWord?.rawValue == c["yolkWord"] as? String, "\(why): yolk word")
             #expect(record.white?.rawValue == c["white"] as? String, "\(why): white")
             // The probe reading: the same number, and the same "when".
             let probe = c["probe"] as? [String: Any]
@@ -168,6 +169,7 @@ struct RecordConformance {
                 #expect(try read.cookS == forecast.num("cook_s"), "\(why): forecast time")
                 #expect(read.yolk == forecast["yolk"] as? [Double], "\(why): forecast yolk")
                 #expect(read.white == forecast["white"] as? [Double], "\(why): forecast white")
+                #expect(read.yolkWord == forecast["yolkWord"] as? [Double], "\(why): forecast yolk words")
             }
         }
     }
@@ -222,13 +224,14 @@ struct RecordConformance {
                 "probe written, as null when there is none"
             )
             #expect(object?["yolk"] != nil, "yolk written")
+            #expect(object?["yolkWord"] != nil, "yolk word written, as null when there is none")
         }
     }
 }
 
 @Suite("Replay")
 struct ReplayConformance {
-    @Test("a ten-egg log, egg by egg, every particle")
+    @Test("a fifteen-egg log, old answers and five yolk words, egg by egg, every particle")
     func stepByStep() throws {
         let steps = try Fixtures.list("record.json", "replay.steps")
         let log = try fixtureLog()
@@ -282,7 +285,7 @@ struct ReplayConformance {
             let surface = buildRequestedGrid(gridRequestFor(c, r, grid: grid))
             // The first answer alone - whichever it was - folded and stored.
             var first = r
-            if r.yolk != nil { first.white = nil }
+            if r.yolk != nil || r.yolkWord != nil { first.white = nil }
             foldRecord(&c, first, grid: surface)
             c = try throughJSON(c)
             // The second answer arrives later: the egg is folded again from

@@ -33,9 +33,9 @@ function aTicket(): Ticket {
     nudge_s: -7,
     outcome: {
       pTooSoft: 0.2, pJustRight: 0.6, pTooFirm: 0.2, pWhiteRunny: 0.05, pWhiteTender: 0.25, pWhiteFirm: 0.7,
-      levelLow: 0.3, levelMedian: 0.4, levelHigh: 0.5, lean: 'balanced',
+      pYolkWord: [0.05, 0.25, 0.5, 0.15, 0.05], levelLow: 0.3, levelMedian: 0.4, levelHigh: 0.5, lean: 'balanced',
     },
-    forecast: { cook_s: 412.5, yolk: [0.2, 0.6, 0.2], white: [0.05, 0.25, 0.7] },
+    forecast: { cook_s: 412.5, yolk: [0.2, 0.6, 0.2], white: [0.05, 0.25, 0.7], yolkWord: [0.05, 0.25, 0.5, 0.15, 0.05] },
     peakYolk_C: 66,
     lang: 'en',
     probeMoment: true,

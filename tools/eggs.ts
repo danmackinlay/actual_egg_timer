@@ -290,7 +290,8 @@ function simulateCooks(out: string, truthOut: string, cooks: number, seed: numbe
         },
         level: level, recommended_s: solved.result.cookTime_s, nudge_s: nudge, pulled_s: time, pulledBy: 'cook',
         cooled_s: kitchen.setup.cooling === 'counter' ? 0 : coolingSecondsFor(solved.result),
-        yolk: yolk, white: white, probe: probe && probe.centre_C <= kitchen.setup.boiling_C ? probe : null,
+        yolk: yolk, yolkWord: null, white: white,
+        probe: probe && probe.centre_C <= kitchen.setup.boiling_C ? probe : null,
         forecast: null, lang: 'en', register: 'modern', units: 'metric',
       };
       if (parseRecord(record) === null) throw new Error('a simulated record does not read');

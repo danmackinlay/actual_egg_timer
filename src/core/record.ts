@@ -35,8 +35,8 @@ import {
 } from './solve.js';
 import { DoseGrid, GridPolicy, GridRequest, buildRequestedGrid } from './doseGrid.js';
 import {
-  Feedback, LITERATURE_POPULATION, Particle, Population, Posterior, WhiteReport, createPrior,
-  posteriorMeanWhiteOffset, posteriorParams, updatePosterior,
+  Feedback, LITERATURE_POPULATION, Particle, Population, Posterior, WhiteReport, YOLK_WORDS, YolkWord,
+  createPrior, posteriorMeanWhiteOffset, posteriorParams, updatePosterior,
 } from './infer.js';
 import { PriorStart, priorStart } from './population.js';
 import { calibrationGrid } from './policy.js';
@@ -59,13 +59,15 @@ export const RECORD_VERSION = 1;
  *  has moved on (DECISIONS.md 37); a replay can only say what the current code
  *  would have said. '2026-10-e6' is E5's likelihood and decision, with the
  *  forecast kept; '2026-10-e8' adds the nudge, +-10 s for a cook who is
- *  sharing (DECISIONS.md 61). Records from before E6 carry none.
+ *  sharing (DECISIONS.md 61); '2026-10-e9' asks the cook which yolk they got,
+ *  in five words, and forecasts those five (DECISIONS.md 92). Records from
+ *  before E6 carry none.
  *
  *  It is also what tells a stored posterior it is out of date: both apps
  *  keep it beside the posterior (the store's `m`) and replay the log when it
  *  differs, so the posterior is always what THIS code makes of the log. A
  *  change to the physics changes the likelihood, so it changes this too. */
-export const MODEL_ID = '2026-10-e8';
+export const MODEL_ID = '2026-10-e9';
 
 /** Where the egg's mass came from. A size class is a 10 g bucket, worth about
  *  +-24 s; a scale is a gram. The fit reads this as egg-level noise. */
@@ -118,10 +120,15 @@ export interface Forecast {
    *  screen at "Eggs in". A cold start's boil tap re-solves the cook after
    *  that, and `recommended_s` is the re-solved time, so the two can differ. */
   cook_s: number;
-  /** P(too soft), P(just right), P(too firm). */
+  /** P(too soft), P(just right), P(too firm): the miss around the level
+   *  asked for, which the time was chosen on. */
   yolk: number[];
   /** P(runny), P(tender), P(firm). */
   white: number[];
+  /** P(runny), P(soft), P(jammy), P(fudgy), P(hard): the yolk the cook will
+   *  say they got, which is the question asked since DECISIONS.md 92. Null
+   *  (or absent) on a forecast made before then. */
+  yolkWord: number[] | null;
 }
 
 /** The forecast a ticket keeps: the outcome on screen at "Eggs in", and the
@@ -131,6 +138,7 @@ export function forecastOf(o: Outcome, cook_s: number): Forecast {
     cook_s: cook_s,
     yolk: [o.pTooSoft, o.pJustRight, o.pTooFirm],
     white: [o.pWhiteRunny, o.pWhiteTender, o.pWhiteFirm],
+    yolkWord: o.pYolkWord === null ? null : o.pYolkWord.slice(),
   };
 }
 
@@ -198,9 +206,14 @@ export interface EggRecord {
   pulledBy: PulledBy;
   /** The counted cooling the app ran, s; 0 on the counter, where there is none. */
   cooled_s: number;
-  /** The yolk answer, or null when the question was on screen and the cook
-   *  moved on without answering. */
+  /** The yolk answer the cook gave before DECISIONS.md 92 - too soft, just
+   *  right or too firm, against `level` - or null. No app writes one now:
+   *  a record from before keeps it, and it is scored as it was. */
   yolk: Feedback | null;
+  /** The yolk the cook got, in the slider's words (DECISIONS.md 92), or null
+   *  when the question was on screen and the cook moved on without answering,
+   *  or on a record from before it. Never set beside `yolk`. */
+  yolkWord: YolkWord | null;
   /** The white answer: runny, tender or firm, or null when the question was
    *  on screen and the cook moved on without answering. It is always asked. */
   white: WhiteReport | null;
@@ -268,9 +281,14 @@ function isObject(v: unknown): v is Record<string, unknown> {
 
 /** Three probabilities that sum to one, as a forecast's answers are. */
 function threeAnswers(v: unknown): v is number[] {
-  if (!Array.isArray(v) || v.length !== 3) return false;
+  return answersOf(v, 3);
+}
+
+/** `count` probabilities that sum to one. */
+function answersOf(v: unknown, count: number): v is number[] {
+  if (!Array.isArray(v) || v.length !== count) return false;
   let sum = 0.0;
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < count; i++) {
     const p: unknown = v[i];
     if (!isFiniteNumber(p) || p < 0 || p > 1) return false;
     sum += p;
@@ -282,8 +300,10 @@ function threeAnswers(v: unknown): v is number[] {
  *  doubles add up to, far below any probability that means something. */
 const FORECAST_SUM_TOLERANCE = 1e-6;
 
-/** A forecast, or null if it is not one: a positive time and two sets of
- *  three probabilities. A fresh object with exactly the known fields. */
+/** A forecast, or null if it is not one: a positive time, two sets of
+ *  three probabilities and, from DECISIONS.md 92, five for the yolk's words,
+ *  which an older forecast lacks. A fresh object with exactly the known
+ *  fields. */
 export function parseForecast(raw: unknown): Forecast | null {
   if (!isObject(raw)) return null;
   const t = raw['cook_s'];
@@ -291,7 +311,12 @@ export function parseForecast(raw: unknown): Forecast | null {
   const yolk = raw['yolk'];
   const white = raw['white'];
   if (!threeAnswers(yolk) || !threeAnswers(white)) return null;
-  return { cook_s: t, yolk: [yolk[0], yolk[1], yolk[2]], white: [white[0], white[1], white[2]] };
+  const words = raw['yolkWord'] ?? null;
+  if (words !== null && !answersOf(words, 5)) return null;
+  return {
+    cook_s: t, yolk: [yolk[0], yolk[1], yolk[2]], white: [white[0], white[1], white[2]],
+    yolkWord: words === null ? null : [words[0], words[1], words[2], words[3], words[4]],
+  };
 }
 
 /** The coolest thing this cook's egg ever touched, C: the fridge, the room or
@@ -325,8 +350,9 @@ function probePossible(s: RecordSetup, centre_C: number): boolean {
  * accepted under `v: 1`. Fields may be ADDED within v1 but never removed or
  * reinterpreted once a record has left the owner's devices, so unknown
  * fields are ignored here, and the nullable fields (`uid`, `egg.sizeTable`,
- * `yolk`, `white`, `probe`, and E6's `model` and `forecast`) may be absent and
- * read as null - which is also
+ * `yolk`, `white`, `probe`, E6's `model` and `forecast`, and DECISIONS.md
+ * 92's `yolkWord` and `forecast.yolkWord`) may be absent and read as null -
+ * which is also
  * what Swift's Codable does, and the fixtures hold the two to it.
  *
  * Returns a fresh object with exactly the known fields, so what is folded is
@@ -377,6 +403,11 @@ export function parseRecord(raw: unknown): EggRecord | null {
 
   const yolk = raw['yolk'] ?? null;
   if (yolk !== null && yolk !== -1 && yolk !== 0 && yolk !== 1) return null;
+  // The yolk the cook got (DECISIONS.md 92). One yolk answer or none: a
+  // record that says both was not written by either app.
+  const yolkWord = raw['yolkWord'] ?? null;
+  if (yolkWord !== null && !oneOf(yolkWord, YOLK_WORDS)) return null;
+  if (yolk !== null && yolkWord !== null) return null;
   const white = raw['white'] ?? null;
   if (white !== null && white !== 'runny' && white !== 'tender' && white !== 'firm') return null;
 
@@ -431,6 +462,7 @@ export function parseRecord(raw: unknown): EggRecord | null {
     pulledBy: raw['pulledBy'],
     cooled_s: raw['cooled_s'],
     yolk: yolk as Feedback | null,
+    yolkWord: yolkWord,
     white: white as WhiteReport | null,
     probe: probe,
     forecast: forecast,
@@ -539,7 +571,7 @@ export function calibrationDoneness(c: Calibration, level: number): Doneness {
  *  a record - the cook, the recommendation and the pull are data for the fit -
  *  but it moves no particle and does not count as an egg the model learned from. */
 export function recordTeaches(r: EggRecord): boolean {
-  return r.yolk !== null || r.white !== null || r.probe !== null;
+  return r.yolk !== null || r.yolkWord !== null || r.white !== null || r.probe !== null;
 }
 
 /** The egg the fold sees. */
@@ -595,7 +627,7 @@ export function foldRecord(c: Calibration, r: EggRecord, grid: DoseGrid): void {
   if (!recordTeaches(r)) return;
   updatePosterior(
     c.posterior, grid, recordCookTime_s(r), logYolkTarget(r.level), r.yolk, r.white,
-    r.probe === null ? null : r.probe.centre_C,
+    r.probe === null ? null : r.probe.centre_C, r.yolkWord,
   );
   c.eggsLogged += 1;
 }

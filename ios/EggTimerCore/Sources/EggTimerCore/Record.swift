@@ -32,7 +32,7 @@ public let recordVersion = 1
 /// Also what tells a stored posterior it is out of date: both apps keep it
 /// beside the posterior (the store's `m`) and replay the log when it differs.
 /// A change to the physics changes the likelihood, so it changes this too.
-public let modelID = "2026-10-e8"
+public let modelID = "2026-10-e9"
 
 /// Where the egg's mass came from. A size class is a 10 g bucket, worth about
 /// +-24 s; a scale is a gram.
@@ -181,20 +181,43 @@ public struct Forecast: Sendable, Codable, Equatable {
     /// The cook time the forecast was made for, s from egg in: the time on
     /// screen at "Eggs in", before any boil tap re-solved it.
     public var cookS: Double
-    /// P(too soft), P(just right), P(too firm).
+    /// P(too soft), P(just right), P(too firm): the miss around the level
+    /// asked for, which the time was chosen on.
     public var yolk: [Double]
     /// P(runny), P(tender), P(firm).
     public var white: [Double]
+    /// P(runny) ... P(hard), the yolk the cook will say they got
+    /// (DECISIONS.md 92). Nil (or absent) on a forecast from before then.
+    public var yolkWord: [Double]?
 
-    public init(cookS: Double, yolk: [Double], white: [Double]) {
+    public init(cookS: Double, yolk: [Double], white: [Double], yolkWord: [Double]? = nil) {
         self.cookS = cookS
         self.yolk = yolk
         self.white = white
+        self.yolkWord = yolkWord
     }
 
     enum CodingKeys: String, CodingKey {
         case cookS = "cook_s"
-        case yolk, white
+        case yolk, white, yolkWord
+    }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        cookS = try c.decode(Double.self, forKey: .cookS)
+        yolk = try c.decode([Double].self, forKey: .yolk)
+        white = try c.decode([Double].self, forKey: .white)
+        yolkWord = try c.decodeIfPresent([Double].self, forKey: .yolkWord)
+    }
+
+    /// `yolkWord` is written as null rather than omitted, as every nullable
+    /// field in the record is.
+    public func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(cookS, forKey: .cookS)
+        try c.encode(yolk, forKey: .yolk)
+        try c.encode(white, forKey: .white)
+        try c.encode(yolkWord, forKey: .yolkWord)
     }
 }
 
@@ -204,7 +227,8 @@ public func forecastOf(_ o: Outcome, cookS: Double) -> Forecast {
     Forecast(
         cookS: cookS,
         yolk: [o.pTooSoft, o.pJustRight, o.pTooFirm],
-        white: [o.pWhiteRunny, o.pWhiteTender, o.pWhiteFirm]
+        white: [o.pWhiteRunny, o.pWhiteTender, o.pWhiteFirm],
+        yolkWord: o.pYolkWord
     )
 }
 
@@ -213,7 +237,12 @@ private let forecastSumTolerance = 1e-6
 
 /// Three probabilities that sum to one, as a forecast's answers are.
 private func threeAnswers(_ v: [Double]) -> Bool {
-    guard v.count == 3 else { return false }
+    answers(v, count: 3)
+}
+
+/// `count` probabilities that sum to one.
+private func answers(_ v: [Double], count: Int) -> Bool {
+    guard v.count == count else { return false }
     var sum = 0.0
     for p in v {
         guard p.isFinite, p >= 0, p <= 1 else { return false }
@@ -222,10 +251,12 @@ private func threeAnswers(_ v: [Double]) -> Bool {
     return abs(sum - 1.0) <= forecastSumTolerance
 }
 
-/// Whether a forecast is one: a positive time and two sets of three
-/// probabilities. `parseForecast`'s rules.
+/// Whether a forecast is one: a positive time, two sets of three
+/// probabilities and, when there are any, five for the yolk's words.
+/// `parseForecast`'s rules.
 public func validForecast(_ f: Forecast) -> Bool {
     f.cookS.isFinite && f.cookS > 0 && threeAnswers(f.yolk) && threeAnswers(f.white)
+        && (f.yolkWord.map { answers($0, count: 5) } ?? true)
 }
 
 public struct EggRecord: Sendable, Codable, Equatable {
@@ -248,8 +279,13 @@ public struct EggRecord: Sendable, Codable, Equatable {
     public var pulledS: Double
     public var pulledBy: PulledBy
     public var cooledS: Double
-    /// Nil when the question was on screen and the cook moved on.
+    /// The yolk answer given before DECISIONS.md 92, against `level`, or nil.
+    /// No app writes one now; a record from before keeps it.
     public var yolk: Feedback?
+    /// The yolk the cook got, in the slider's words (DECISIONS.md 92), or nil
+    /// when the question was on screen and the cook moved on, or on a record
+    /// from before it. Never set beside `yolk`.
+    public var yolkWord: YolkWord?
     /// Nil when the question was on screen and the cook moved on; it is
     /// always asked.
     public var white: WhiteReport?
@@ -266,7 +302,7 @@ public struct EggRecord: Sendable, Codable, Equatable {
         uid: String? = nil, day: String, app: AppName, appVersion: String,
         prior: String = literaturePopulation.id, model: String? = modelID, egg: RecordEgg, setup: RecordSetup,
         level: Double, recommendedS: Double, nudgeS: Double = 0, pulledS: Double, pulledBy: PulledBy,
-        cooledS: Double, yolk: Feedback?, white: WhiteReport? = nil,
+        cooledS: Double, yolk: Feedback? = nil, yolkWord: YolkWord? = nil, white: WhiteReport? = nil,
         probe: ProbeReading? = nil, forecast: Forecast? = nil,
         lang: String = "en", register: String = "modern", units: Units = .metric
     ) {
@@ -286,6 +322,7 @@ public struct EggRecord: Sendable, Codable, Equatable {
         self.pulledBy = pulledBy
         self.cooledS = cooledS
         self.yolk = yolk
+        self.yolkWord = yolkWord
         self.white = white
         self.probe = probe
         self.forecast = forecast
@@ -301,7 +338,7 @@ public struct EggRecord: Sendable, Codable, Equatable {
         case pulledS = "pulled_s"
         case pulledBy
         case cooledS = "cooled_s"
-        case yolk, white, probe, forecast, lang, register, units
+        case yolk, yolkWord, white, probe, forecast, lang, register, units
     }
 
     /// Nullable fields may be absent and read as nil, which is what the
@@ -324,6 +361,7 @@ public struct EggRecord: Sendable, Codable, Equatable {
         pulledBy = try c.decode(PulledBy.self, forKey: .pulledBy)
         cooledS = try c.decode(Double.self, forKey: .cooledS)
         yolk = try c.decodeIfPresent(Feedback.self, forKey: .yolk)
+        yolkWord = try c.decodeIfPresent(YolkWord.self, forKey: .yolkWord)
         white = try c.decodeIfPresent(WhiteReport.self, forKey: .white)
         probe = try c.decodeIfPresent(ProbeReading.self, forKey: .probe)
         forecast = try c.decodeIfPresent(Forecast.self, forKey: .forecast)
@@ -353,6 +391,7 @@ public struct EggRecord: Sendable, Codable, Equatable {
         try c.encode(pulledBy, forKey: .pulledBy)
         try c.encode(cooledS, forKey: .cooledS)
         try c.encode(yolk, forKey: .yolk)
+        try c.encode(yolkWord, forKey: .yolkWord)
         try c.encode(white, forKey: .white)
         try c.encode(probe, forKey: .probe)
         try c.encode(forecast, forKey: .forecast)
@@ -415,6 +454,8 @@ public func validRecord(_ r: EggRecord) -> Bool {
     guard isDay(r.day), !r.appVersion.isEmpty, !r.prior.isEmpty else { return false }
     if let model = r.model, model.isEmpty { return false }
     if let forecast = r.forecast, !validForecast(forecast) { return false }
+    // One yolk answer or none (DECISIONS.md 92).
+    if r.yolk != nil && r.yolkWord != nil { return false }
     guard r.egg.massG.isFinite, r.egg.massG > 0 else { return false }
     // A class names its carton; nothing else has one.
     guard (r.egg.massFrom == .sizeClass) == (r.egg.sizeTable != nil) else { return false }
@@ -496,7 +537,7 @@ public func calibrationDoneness(_ c: Calibration, level: Double) -> Doneness {
 /// unanswered egg is still a record, but it moves no particle and is not an egg
 /// the model learned from.
 public func recordTeaches(_ r: EggRecord) -> Bool {
-    r.yolk != nil || r.white != nil || r.probe != nil
+    r.yolk != nil || r.yolkWord != nil || r.white != nil || r.probe != nil
 }
 
 func recordEggOf(_ r: EggRecord) -> Egg {
@@ -542,7 +583,7 @@ public func foldRecord(_ c: inout Calibration, _ r: EggRecord, grid: DoseGrid) {
     updatePosterior(
         &c.posterior, grid: grid, cookTimeS: recordCookTimeS(r),
         logNominalTarget: logYolkTarget(r.level), yolk: r.yolk, white: r.white,
-        probeC: r.probe?.centreC
+        probeC: r.probe?.centreC, yolkWord: r.yolkWord
     )
     c.eggsLogged += 1
 }

@@ -29,11 +29,36 @@ import Foundation
 /// more; fixtures/calibration.json and fixtures/record.json hold the two
 /// together particle by particle.
 
-/// What the cook reports about the YOLK after eating the egg.
+/// What the cook reported about the YOLK before DECISIONS.md 92, against the
+/// level asked for. No app asks it now; a record that holds one is scored as
+/// it always was.
 public enum Feedback: Int, Sendable, Codable {
     case tooSoft = -1
     case justRight = 0
     case tooHard = 1
+}
+
+/// What the cook reports about the YOLK after eating the egg (DECISIONS.md
+/// 92): the yolk they got, in the slider's own words, whatever they asked for.
+/// Each is the doneness anchor of the same place in `donenessAnchors`, softest
+/// first, so `index` is its place.
+public enum YolkWord: String, Sendable, Codable, CaseIterable {
+    case runny
+    case soft
+    case jammy
+    case fudgy
+    case hard
+
+    /// The word's place, 0 (runny) to 4 (hard).
+    public var index: Int {
+        switch self {
+        case .runny: return 0
+        case .soft: return 1
+        case .jammy: return 2
+        case .fudgy: return 3
+        case .hard: return 4
+        }
+    }
 }
 
 /// What the cook reports about the WHITE: three answers.
@@ -95,6 +120,26 @@ public let unrelated = 0.05
 func withUnrelated(_ p: Double) -> Double {
     (1.0 - unrelated) * p + unrelated / 3.0
 }
+
+/// The same for one of the five yolk words: the unrelated share spread evenly
+/// over five answers. No yolk word scores below `unrelated / 5`.
+func withUnrelatedWord(_ p: Double) -> Double {
+    (1.0 - unrelated) * p + unrelated / 5.0
+}
+
+/// The four cutpoints between the five yolk words, log10 nominal yolk dose,
+/// softest first: where the slider's word changes, the midpoint between two
+/// adjacent anchors (`anchorNear`). See src/core/infer.ts.
+public let yolkWordCuts: [Double] = {
+    let lo = log10(yolkDoseRunny)
+    let hi = log10(yolkDoseHard)
+    var cuts: [Double] = []
+    for i in 0..<(donenessAnchors.count - 1) {
+        let edge = 0.5 * (donenessAnchors[i].level + donenessAnchors[i + 1].level)
+        cuts.append(lo + (hi - lo) * edge)
+    }
+    return cuts
+}()
 
 /// The noise scale's prior: lognormal, median `noiseMedian` decades of yolk
 /// dose. 0.20 gives "just right" 0.81 at the band's centre and 0.093 one
@@ -260,6 +305,38 @@ func yolkProbit(
     return [soft, right > 0.0 ? right : 0.0, firm]
 }
 
+/// Runny to hard, the five yolk words, for one particle, before the unrelated
+/// share: the delivered log dose less the taste offset, against
+/// `yolkWordCuts`, through the particle's noise.
+func yolkWordProbit(_ grid: DoseGrid, _ p: Particle, _ cookTimeS: Double) -> [Double] {
+    let latent = lookupLogYolkDose(grid, p.alphaM2s, cookTimeS) - p.logDoseOffset
+    var out = [Double](repeating: 0.0, count: 5)
+    var below = 0.0
+    for k in 0..<4 {
+        let upTo = normalCdf((yolkWordCuts[k] - latent) / p.noise)
+        let pk = upTo - below
+        out[k] = pk > 0.0 ? pk : 0.0
+        below = upTo
+    }
+    out[4] = normalCdf((latent - yolkWordCuts[3]) / p.noise)
+    return out
+}
+
+/// Posterior predictive probabilities of the five yolk words, unrelated share
+/// included.
+func yolkWordProbabilities(_ post: Posterior, _ grid: DoseGrid, _ cookTimeS: Double) -> [Double] {
+    var out = [Double](repeating: 0.0, count: 5)
+    var total = 0.0
+    for i in 0..<post.particles.count {
+        let probs = yolkWordProbit(grid, post.particles[i], cookTimeS)
+        let w = post.weights[i]
+        for k in 0..<5 { out[k] += w * withUnrelatedWord(probs[k]) }
+        total += w
+    }
+    for k in 0..<5 { out[k] = total <= 0.0 ? 1.0 / 5.0 : out[k] / total }
+    return out
+}
+
 /// Runny, tender, firm, for one particle, before the unrelated share.
 func whiteProbit(_ grid: DoseGrid, _ p: Particle, _ cookTimeS: Double) -> [Double] {
     let latent = lookupLogWhiteDose(grid, p.alphaM2s, cookTimeS) - (logWhiteTarget + p.whiteOffset)
@@ -305,16 +382,22 @@ public func probeLikelihood(
 }
 
 /// The likelihood of one egg's answers under one particle: the product of the
-/// yolk's, the white's and the thermometer's, any of which may be missing.
+/// yolk's, the white's and the thermometer's, any of which may be missing. The
+/// yolk is `yolkWord`, the yolk the cook got (DECISIONS.md 92), or on a record
+/// from before it `yolk`, scored exactly as it was.
 public func answerLikelihood(
     _ grid: DoseGrid, _ p: Particle, _ cookTimeS: Double, _ logNominalTarget: Double,
-    yolk: Feedback?, white: WhiteReport?, probeC: Double? = nil
+    yolk: Feedback?, white: WhiteReport?, probeC: Double? = nil, yolkWord: YolkWord? = nil
 ) -> Double {
     var l = 1.0
     if let probeC { l *= probeLikelihood(grid, p, cookTimeS, probeC) }
     if let yolk {
         let probs = yolkProbit(grid, p, cookTimeS, logNominalTarget)
         l *= withUnrelated(probs[yolk.rawValue + 1])
+    }
+    if let yolkWord {
+        let probs = yolkWordProbit(grid, p, cookTimeS)
+        l *= withUnrelatedWord(probs[yolkWord.index])
     }
     if let white {
         let probs = whiteProbit(grid, p, cookTimeS)
@@ -343,15 +426,15 @@ public func effectiveSampleSize(_ post: Posterior) -> Double {
 public func updatePosterior(
     _ post: inout Posterior, grid: DoseGrid,
     cookTimeS: Double, logNominalTarget: Double, yolk: Feedback?, white: WhiteReport?,
-    probeC: Double? = nil
+    probeC: Double? = nil, yolkWord: YolkWord? = nil
 ) {
-    if yolk == nil && white == nil && probeC == nil { return }
+    if yolk == nil && white == nil && probeC == nil && yolkWord == nil { return }
     let n = post.particles.count
     var total = 0.0
     for i in 0..<n {
         post.weights[i] *= answerLikelihood(
             grid, post.particles[i], cookTimeS, logNominalTarget, yolk: yolk, white: white,
-            probeC: probeC
+            probeC: probeC, yolkWord: yolkWord
         )
         total += post.weights[i]
     }

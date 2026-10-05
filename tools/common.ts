@@ -91,7 +91,7 @@ export function recordAt(
       waterLitres: setup.waterLitres, eggCount: setup.eggCount,
     },
     level: level, recommended_s: t, nudge_s: 0, pulled_s: t, pulledBy: 'timeout', cooled_s: 180,
-    yolk: yolk, white: white, probe: null, forecast: null, lang: 'en', register: 'modern', units: 'metric',
+    yolk: yolk, yolkWord: null, white: white, probe: null, forecast: null, lang: 'en', register: 'modern', units: 'metric',
   };
 }
 

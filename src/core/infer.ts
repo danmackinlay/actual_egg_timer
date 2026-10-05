@@ -4,8 +4,8 @@
  * The model's constants are literature-derived, and the carryover term has no
  * published measurement behind it at all. Rather than guess better, make the
  * uncertainty explicit and let the cook's own eggs resolve it: after each cook
- * they may say how the yolk was ("too soft", "just right", "too firm") and how
- * the white was ("runny", "tender", "firm"), and we update a posterior.
+ * they may say how the yolk was (runny, soft, jammy, fudgy or hard) and how
+ * the white next to it was (runny, tender or firm), and we update a posterior.
  *
  * METHOD: sequential Monte Carlo (a particle filter), NOT variational
  * inference. VI buys scalability in high dimensions at the cost of gradients,
@@ -21,9 +21,14 @@
  * posterior over egg temperature.
  *
  * THE LIKELIHOOD (INFERENCE.md section 3) is an ordered probit. For the
- * yolk, the latent quantity is the delivered log10 dose minus the one the cook
- * wanted; the answer says which side of two cutpoints, at -+FEEDBACK_BAND, it
- * fell, seen through a Gaussian whose sd is the cook's own `noise`. A particle
+ * yolk, since DECISIONS.md 92, the cook names the yolk they got in the
+ * slider's own five words, and the latent is the delivered log10 dose less
+ * the cook's taste offset; the answer says which of five bands it fell in,
+ * cut where the slider's word changes (`YOLK_WORD_CUTS`). Before that the
+ * cook said too soft, just right or too firm, and those answers are still
+ * scored as they were: the latent less the dose the cook wanted, cut at
+ * -+FEEDBACK_BAND. Either way it is seen through a Gaussian whose sd is the
+ * cook's own `noise`. A particle
  * just outside the band is then a little wrong rather than exactly as wrong as
  * one a decade away - more information per answer, and no cliff for the filter
  * to fall over. A small `UNRELATED` share of every answer is uniform over the
@@ -60,15 +65,36 @@
  */
 
 import { ALPHA_DEFAULT, ALPHA_REL_SD, Z_WHITE, Z_YOLK } from './constants.js';
-import { ModelParams, WHITE_DOSE_TARGET } from './solve.js';
+import {
+  DONENESS_ANCHORS, ModelParams, WHITE_DOSE_TARGET, YOLK_DOSE_HARD, YOLK_DOSE_RUNNY,
+} from './solve.js';
 import { erfc, normalCdf } from './sphere.js';
 import {
   DoseGrid, lookupLogYolkDose, lookupLogWhiteDose, lookupPeakYolk_C, cookTimeForLogYolkDose,
   cookTimeForLogWhiteDose,
 } from './doseGrid.js';
 
-/** What the cook reports about the YOLK after eating the egg. */
+/** What the cook reported about the YOLK before DECISIONS.md 92, against the
+ *  level they asked for. No app asks it now; a record that holds one is
+ *  scored as it always was. */
 export type Feedback = -1 | 0 | 1; // too soft | just right | too firm
+
+/**
+ * What the cook reports about the YOLK after eating the egg (DECISIONS.md
+ * 92): the yolk they got, in the slider's own words, whatever they asked
+ * for. Each is the doneness anchor of the same place in `DONENESS_ANCHORS`
+ * (`doneness.runny` ... `doneness.hard`), and covers the levels that
+ * anchor's word names.
+ */
+export type YolkWord = 'runny' | 'soft' | 'jammy' | 'fudgy' | 'hard';
+
+/** The five, softest first: the order of `DONENESS_ANCHORS`. */
+export const YOLK_WORDS: YolkWord[] = ['runny', 'soft', 'jammy', 'fudgy', 'hard'];
+
+/** A yolk word's place, 0 (runny) to 4 (hard). */
+export function yolkWordIndex(w: YolkWord): number {
+  return w === 'runny' ? 0 : w === 'soft' ? 1 : w === 'jammy' ? 2 : w === 'fudgy' ? 3 : 4;
+}
 
 /**
  * What the cook reports about the WHITE.
@@ -123,6 +149,36 @@ export const UNRELATED = 0.05;
  *  the cook gives that answer, whatever the egg did. */
 export function withUnrelated(p: number): number {
   return (1.0 - UNRELATED) * p + UNRELATED / 3.0;
+}
+
+/** The same for one of the five yolk words: the unrelated share spread
+ *  evenly over five answers, so that the five still sum to one. No yolk word
+ *  scores below UNRELATED / 5. */
+export function withUnrelatedWord(p: number): number {
+  return (1.0 - UNRELATED) * p + UNRELATED / 5.0;
+}
+
+/**
+ * The four cutpoints between the five yolk words, log10 nominal yolk dose,
+ * softest first: where the slider's word changes, which is the midpoint
+ * between two adjacent anchors (`anchorNear`). The slider is linear in log
+ * dose, so that is also the midpoint of their log doses. Nothing new is
+ * chosen here: the words, their places and the dose scale are the slider's
+ * own (solve.ts). About -0.795, 0.149, 1.069 and 2.427: Soft and Jammy are
+ * each about 0.93 decades wide and Fudgy 1.36, against the 0.56 of the old
+ * "just right".
+ */
+export const YOLK_WORD_CUTS: number[] = yolkWordCuts();
+
+function yolkWordCuts(): number[] {
+  const lo = Math.log10(YOLK_DOSE_RUNNY);
+  const hi = Math.log10(YOLK_DOSE_HARD);
+  const cuts: number[] = [];
+  for (let i = 0; i + 1 < DONENESS_ANCHORS.length; i++) {
+    const edge = 0.5 * (DONENESS_ANCHORS[i].level + DONENESS_ANCHORS[i + 1].level);
+    cuts.push(lo + (hi - lo) * edge);
+  }
+  return cuts;
 }
 
 /**
@@ -387,6 +443,25 @@ export function yolkProbit(
   return [soft, right > 0.0 ? right : 0.0, firm];
 }
 
+/** Probabilities of the five yolk words, runny to hard, for one particle,
+ *  before the unrelated share: the delivered log dose, less the particle's
+ *  taste offset, against `YOLK_WORD_CUTS`, through its noise. The offset
+ *  moves the cook's words as it moved their "just right": a cook with a
+ *  positive offset likes a firmer yolk, and calls a given yolk softer. */
+export function yolkWordProbit(grid: DoseGrid, p: Particle, cookTime_s: number): number[] {
+  const latent = lookupLogYolkDose(grid, p.alpha_m2s, cookTime_s) - p.logDoseOffset;
+  const out: number[] = new Array<number>(5);
+  let below = 0.0;
+  for (let k = 0; k < 4; k++) {
+    const upTo = normalCdf((YOLK_WORD_CUTS[k] - latent) / p.noise);
+    const pk = upTo - below;
+    out[k] = pk > 0.0 ? pk : 0.0;
+    below = upTo;
+  }
+  out[4] = normalCdf((latent - YOLK_WORD_CUTS[3]) / p.noise);
+  return out;
+}
+
 /** Probabilities of runny, tender and firm for one particle, before the
  *  unrelated share. */
 export function whiteProbit(grid: DoseGrid, p: Particle, cookTime_s: number): [number, number, number] {
@@ -411,16 +486,26 @@ function yolkIndex(f: Feedback): number {
  * The yolk and white are probabilities and the reading is a density, per
  * degree; each particle is scored on the same reading, so the units cancel in
  * the normalisation.
+ *
+ * The yolk is `yolkWord`, the yolk the cook got (DECISIONS.md 92), or on a
+ * record from before it `yolk`, against the level asked for. A record holds
+ * at most one (`parseRecord`); the old answer's arithmetic is exactly what
+ * it was, so an old log replays to the same posterior.
  */
 export function answerLikelihood(
   grid: DoseGrid, p: Particle, cookTime_s: number, logNominalTarget: number,
   yolk: Feedback | null, white: WhiteReport | null, probe_C: number | null = null,
+  yolkWord: YolkWord | null = null,
 ): number {
   let l = 1.0;
   if (probe_C !== null) l *= probeLikelihood(grid, p, cookTime_s, probe_C);
   if (yolk !== null) {
     const probs = yolkProbit(grid, p, cookTime_s, logNominalTarget);
     l *= withUnrelated(probs[yolkIndex(yolk)]);
+  }
+  if (yolkWord !== null) {
+    const probs = yolkWordProbit(grid, p, cookTime_s);
+    l *= withUnrelatedWord(probs[yolkWordIndex(yolkWord)]);
   }
   if (white !== null) {
     const probs = whiteProbit(grid, p, cookTime_s);
@@ -453,13 +538,14 @@ export function effectiveSampleSize(post: Posterior): number {
 export function updatePosterior(
   post: Posterior, grid: DoseGrid, cookTime_s: number, logNominalTarget: number,
   yolk: Feedback | null, white: WhiteReport | null, probe_C: number | null = null,
+  yolkWord: YolkWord | null = null,
 ): void {
-  if (yolk === null && white === null && probe_C === null) return;
+  if (yolk === null && white === null && probe_C === null && yolkWord === null) return;
   const n = post.particles.length;
   let total = 0.0;
   for (let i = 0; i < n; i++) {
     post.weights[i] *= answerLikelihood(
-      grid, post.particles[i], cookTime_s, logNominalTarget, yolk, white, probe_C,
+      grid, post.particles[i], cookTime_s, logNominalTarget, yolk, white, probe_C, yolkWord,
     );
     total += post.weights[i];
   }
@@ -492,6 +578,21 @@ export function yolkAnswerProbabilities(
     total += w;
   }
   for (let k = 0; k < 3; k++) out[k] = total <= 0.0 ? 1.0 / 3.0 : out[k] / total;
+  return out;
+}
+
+/** Posterior predictive probabilities of the five yolk words, runny to hard,
+ *  unrelated share included: what the cook will say the yolk was. */
+export function yolkWordProbabilities(post: Posterior, grid: DoseGrid, cookTime_s: number): number[] {
+  const out: number[] = [0.0, 0.0, 0.0, 0.0, 0.0];
+  let total = 0.0;
+  for (let i = 0; i < post.particles.length; i++) {
+    const probs = yolkWordProbit(grid, post.particles[i], cookTime_s);
+    const w = post.weights[i];
+    for (let k = 0; k < 5; k++) out[k] += w * withUnrelatedWord(probs[k]);
+    total += w;
+  }
+  for (let k = 0; k < 5; k++) out[k] = total <= 0.0 ? 1.0 / 5.0 : out[k] / total;
   return out;
 }
 

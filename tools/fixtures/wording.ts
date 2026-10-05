@@ -50,7 +50,7 @@ export function wordingFixture(): Record<string, unknown> {
       ([levelLow, levelHigh]) => {
         const o: Outcome = {
           pTooSoft: 0, pJustRight: pJustRight, pTooFirm: 0,
-          pWhiteRunny: pWhiteRunny, pWhiteTender: 1 - pWhiteRunny, pWhiteFirm: 0,
+          pWhiteRunny: pWhiteRunny, pWhiteTender: 1 - pWhiteRunny, pWhiteFirm: 0, pYolkWord: null,
           levelLow: levelLow, levelMedian: levelLow, levelHigh: levelHigh, lean: lean,
         };
         const range = rangeWords(o);

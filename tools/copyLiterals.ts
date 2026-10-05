@@ -198,7 +198,7 @@ const NOT_COPY: Record<string, string> = {
   'audio engine: {}': 'log message, never shown',
   'audio session: {}': 'log message, never shown',
   'ringing for {}: no notification holds it': 'log message, never shown',
-  '2026-10-e8': 'record model id, never shown',
+  '2026-10-e9': 'record model id, never shown',
   '2026-09': 'the literature population\'s id, never shown',
   population: 'bundle resource name (Calibration.swift)',
   'sharing.v1': 'UserDefaults key (Sharing.swift)',

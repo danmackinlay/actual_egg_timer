@@ -114,6 +114,12 @@ Too soft / just right / too hard stays as it is: five levels were considered and
 are too many at breakfast (`DECISIONS.md` 4). The white gets runny / tender / firm. The
 comment in `infer.ts` declines a third level because it would need an unmeasured
 ceiling; pooled, the ceiling is a learned cutpoint like any other.
+**Changed by `DECISIONS.md` 92 (6 October 2026):** the cook names the yolk
+they got in the slider's own five words, and the white question asks about
+the white next to the yolk. The words are the ones the cook has just read
+on the slider, so five is not too many after all, and three answers relative
+to the target threw information away and had nothing to say when the yolk
+wanted could not be chosen. The scoring is below, under "Built".
 
 **The white is always OFFERED, and the model no longer decides whether to ask.**
 The September gate measurement showed that suppressing the question discards
@@ -147,7 +153,38 @@ three new ones.
 - **The unrelated share** is 5%, uniform over the three answers: no likelihood
   falls below 0.017.
 - **The yolk's cutpoints** sit at -+`FEEDBACK_BAND` (0.28 decades), so the probit
-  keeps the old band's meaning.
+  keeps the old band's meaning. Since `DECISIONS.md` 92 this is how a record
+  from before scores, and only that, and how the decision scores a miss (§8).
+- **The yolk the cook got, in five words** (`DECISIONS.md` 92;
+  `yolkWordProbit`, `YOLK_WORD_CUTS`). The same latent, the delivered log
+  yolk dose, now less only the particle's taste offset, since the answer no
+  longer depends on what was asked for. It is cut into five bands, Runny,
+  Soft, Jammy, Fudgy and Hard, at the four places the slider's word changes:
+  the midpoint between adjacent anchors (`anchorNear`, `DONENESS_ANCHORS`),
+  which on a scale linear in log dose is the midpoint of their log nominal
+  doses. That is -0.795, 0.149, 1.069 and 2.427 decades (slider levels 0.11,
+  0.315, 0.515, 0.81), so Soft and Jammy are each about 0.93 decades wide and
+  Fudgy 1.36, against the 0.56 of the old "just right"; Runny and Hard run
+  on to the ends. No new constant: the words, their places and the dose scale
+  are the slider's own. The taste offset shifts every cut together, as it
+  shifted the old band, so a cook who likes a firmer yolk calls a given yolk
+  softer. The noise is the same particle's `noise`, and the unrelated share
+  is the same 5%, spread evenly over the five answers rather than three, so
+  the five still sum to one and no word scores below 0.01 (`withUnrelatedWord`).
+  A record holds the old answer or the new, never both. **Old records keep
+  their -1 / 0 / 1 and are scored exactly as before**: the old arithmetic is
+  untouched, and `test/record.test.ts` 2a2 replays a log answered the old way
+  against a posterior pinned by the code before the change
+  (`test/data/old-answers.json`), bit for bit. The decision still scores a
+  candidate time by the three-way miss around the asked-for level
+  (`decide.ts`, `yolk[0] + yolk[2]`), and the odds and the lean read it too:
+  the five words are for learning, and for the forecast a record keeps.
+- **The white next to the yolk.** The white has always been scored at
+  `YOLK_RADIUS_FRAC`, the innermost white, the last to set (`simulate`, the
+  grid, `whiteProbit` and the runny-white cost all read it there). Since
+  `DECISIONS.md` 92 the question names that place, "the white next to the
+  yolk", so the cook is asked about the point the model scores, not about
+  the white next to the shell, which is nearly always set.
 - **The white offset** (E3) shifts the runny | tender cutpoint from
   `WHITE_DOSE_TARGET`; prior sd 0.5 decades.
 - **The tender | firm cutpoint** is a gap above it, lognormal, median **1.08
@@ -226,9 +263,10 @@ held to `EggTimerCore/Record.swift` by `fixtures/record.json`.
   "level": 0.22,
   "recommended_s": 399, "nudge_s": 0, "pulled_s": 412, "pulledBy": "cook",
   "cooled_s": 180,
-  "yolk": -1, "white": null,
+  "yolk": null, "yolkWord": "runny", "white": null,
   "probe": null,
-  "forecast": { "cook_s": 399, "yolk": [0.21, 0.55, 0.24], "white": [0.04, 0.31, 0.65] },
+  "forecast": { "cook_s": 399, "yolk": [0.21, 0.55, 0.24], "white": [0.04, 0.31, 0.65],
+                "yolkWord": [0.18, 0.52, 0.27, 0.02, 0.01] },
   "lang": "en", "register": "modern", "units": "metric"
 }
 ```
@@ -237,6 +275,14 @@ held to `EggTimerCore/Record.swift` by `fixtures/record.json`.
   `null` is still a record, because the cook, the recommendation and the actual
   pull time are data too. An egg finished and never answered about is logged
   when the cook starts again.
+- **`yolkWord`** (`DECISIONS.md` 92, 6 October 2026) is the yolk the cook got,
+  `runny`, `soft`, `jammy`, `fudgy` or `hard` - the slider's words as keys,
+  whatever the cook read them as - or `null`, a skip. Since then the apps
+  write it and leave `yolk` null; `yolk`, -1 / 0 / 1 against `level`, is the
+  answer from before, kept as it was and scored as it was. Absent reads as
+  `null`, so every older record is read unchanged, and a record carrying both
+  is refused. `forecast.yolkWord` is the five words' probabilities at "Eggs
+  in", absent or `null` on a forecast from before them.
 - **The white is always asked** since E2, so `null` is a skip. E1 asked only
   sometimes and carried a `whiteOffered` flag to tell "not asked" from
   "skipped"; with nothing of E1's kept, the flag went on 28 September, and a
@@ -337,8 +383,9 @@ base and the posterior together.
 does, so every record carries `appVersion` and a loader accepts any of them under
 `v: 1`. Within v1, fields may be ADDED but never removed or reinterpreted: a
 loader ignores fields it does not know, and the nullable fields (`uid`,
-`egg.sizeTable`, `yolk`, `white`, `probe`) may be absent and read as `null`. A
-new field must say what its absence means. A different `v` is refused.
+`egg.sizeTable`, `yolk`, `yolkWord`, `white`, `probe`, `forecast.yolkWord`)
+may be absent and read as `null`. A new field must say what its absence
+means. A different `v` is refused.
 
 ## 5. The thermometer
 
@@ -734,7 +781,8 @@ likely; `appliedNudge` takes it only where a time is chosen; both apps draw
 it at launch and after each cook and apply it while sharing is on, so the
 time shown, the time started and the outcome under it agree, and a boil
 tap's re-solve carries it with the lean. The record keeps `recommended_s`
-and `nudge_s` apart, and `MODEL_ID` names the policy (`2026-10-e8`). The
+and `nudge_s` apart, and `MODEL_ID` names the policy (`2026-10-e8`; since
+the five yolk words, `2026-10-e9`). The
 Learning mark (the `learning` draft) says so while it is on.
 
 What it costs was measured before it shipped, and "at no cost to the cook"
