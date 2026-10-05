@@ -243,12 +243,17 @@ fixes hold; the two NOT A BUG calls hold; 1 and 5 hold only in part.
 - **Freeze the word cuts:** they are derived from `DONENESS_ANCHORS` at run
   time (`src/core/infer.ts:173`), so moving an anchor would rescore every
   stored word. Literals, with a test tying them to today's anchors.
+  DONE 7264b3d
 - **The odds no cook answers for any more:** the odds and outcome wording
   describe "just right"; the word's band is about twice as wide, so the fit
   cannot check the shown odds against answers. OWNER.
 - **Two buttons read "Runny" to a screen reader;** neither row is grouped
   with its question (`index.html:543`, iOS `FeedbackPanel`). `role="group"`
-  with `aria-labelledby`; a container label on iOS.
+  with `aria-labelledby`; a container label on iOS. DONE cb8cbb0 (iOS by
+  code review: no accessibility tree could be read here)
 - Smaller: iOS's five words may clip at the largest text sizes; the web
   leaves struck-through ticks in sous-vide; `-seedEggs` seeds only old-style
   answers; `tools/eggs.ts` re-implements the word probit it imports.
+  DONE: the clipping dcb7071 (it clipped: at AX5 the row pushed the whole
+  panel past the screen); sous-vide 98e53f2; `-seedEggs` fc8680e;
+  `tools/eggs.ts` 5f8d46e.
