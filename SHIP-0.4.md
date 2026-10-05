@@ -21,7 +21,7 @@ turns on a page that says what it collects.
 - [ ] **The English of 1750 in IM FELL English**, both apps (`DECISIONS.md`
       65, 66).
 - [ ] **The privacy page**, which speaks in your name (section B rewrites it).
-- [ ] **The open tier's weight** (`COLLECTIVE.md` §4): with no attested eggs,
+- [x] (DECISIONS.md 85: no weight for now, kept for later) **The open tier's weight** (`COLLECTIVE.md` §4): with no attested eggs,
       web eggs get no weight in the fit at all. Floor, or as built?
 
 ## B. Privacy — the page, the law, the stores' questionnaires

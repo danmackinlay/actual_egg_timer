@@ -178,9 +178,12 @@ its absence means.
   lag) are learned; carryover and size scaling stay at the physics until data
   reach them (`INFERENCE.md` §2). Per cook: a time-scale multiplier, a taste
   offset, a white cutpoint, a firm gap and a noise scale, heavy-tailed.
-- **The tiers**: open-tier eggs enter under a likelihood raised to 0.5, and
-  the open tier's effective weight is capped at the attested tier's
-  (`DECISIONS.md` 2).
+- **The tiers**: open-tier results (the web, and anything unattested) are
+  kept but get **no weight** in the fit for now (`DECISIONS.md` 85; the
+  default `--open-power 0`). They cannot be tied to a person: an id is free
+  to make, so one bad actor can be many ids. The machinery for a weight is
+  kept: a likelihood raised to `--open-power`, capped at the attested tier's
+  total (`DECISIONS.md` 2), with the per-id log score (37) as the screen.
 - **The owner's trusted IDs** (`DECISIONS.md` 82): the owner vouches for
   their own random IDs, and every result under one counts at the attested
   tier's full weight whatever tier it came in - a build from Xcode is open
@@ -315,7 +318,7 @@ block.
 - The consent text, the badge and the deletion words, on a phone (the `share`
   and `learning` drafts).
 - The privacy page, which speaks in the owner's name.
-- With no attested eggs the open tier's cap gives it no weight in the fit at
-  all: `DECISIONS.md` 2 read literally. The first real fit may want a floor.
+- The open tier has no weight for now (`DECISIONS.md` 85); every open
+  result is kept, so it can be given one later, screened per id.
   The owner's own results no longer wait on it: their trusted IDs count in
   full, and lift the cap for the rest (`DECISIONS.md` 82).

@@ -115,7 +115,7 @@ def main() -> None:
     f.add_argument("--truth", help="the simulation's truth, for recovery and the oracle's score")
     f.add_argument("--id", help="the population's id; fit-<date> by default")
     f.add_argument("--holdout", type=float, default=0.2)
-    f.add_argument("--open-power", type=float, default=0.5)
+    f.add_argument("--open-power", type=float, default=0.0)
     f.add_argument("--open-cap", type=float, default=1.0)
     f.add_argument("--warmup", type=int, default=600)
     f.add_argument("--samples", type=int, default=600)

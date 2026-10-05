@@ -167,7 +167,7 @@ def arrays(eggs: Eggs, weight: np.ndarray) -> dict:
     }
 
 
-def fit(eggs: Eggs, open_power: float = 0.5, open_cap: float = 1.0, warmup: int = 600,
+def fit(eggs: Eggs, open_power: float = 0.0, open_cap: float = 1.0, warmup: int = 600,
         samples: int = 600, chains: int = 2, seed: int = 0) -> dict:
     """NUTS over the globals and every cook's effects. Returns the draws."""
     from jax import random

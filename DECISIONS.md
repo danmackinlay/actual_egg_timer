@@ -504,3 +504,13 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     runny-white cost is unchanged. Before the pot's profile lands, and
     before the first egg, nothing changes. 5 October 2026. Built `22eadb5`
     (core, Swift), web `ffba100`, iOS `2a3d7b7`, on the `monotone` branch.
+85. **Web and other unattested results get no weight in the population fit,
+    for now** ("If not, let's weight them 0 for now"). The owner would give
+    them 0.25 if bad results could be pinned on particular bad actors. They
+    can be only in part: results group by their random ID, and the per-ID
+    log score (37) flags an ID that answers wildly, but an ID costs nothing
+    to make and no address is kept, so one bad actor can be many IDs with a
+    few results each. Every open result is kept, so a weight can be given
+    later, and any ID removed, by re-running the fit. The fit's default is
+    `--open-power 0`; trusted IDs (82) and attested results count in full.
+    5 October 2026.
