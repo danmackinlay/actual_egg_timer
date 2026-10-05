@@ -234,6 +234,12 @@ for disclosing data collected by Apple", Apple's App Privacy Details page).
 
 ### 1. Bump the build number
 
+**`npm run ios:archive` does steps 1-3 and 5 in one go** (`tools/iosArchive.mjs`):
+it adds one to `CURRENT_PROJECT_VERSION`, regenerates, archives, checks that the
+archive carries the new number and the time-sensitive entitlement, and commits
+that one line of `project.yml`. A failed archive puts the number back. Upload
+the result as in step 4. The manual steps below are what it does.
+
 `CURRENT_PROJECT_VERSION` in `ios/project.yml`. A build string can be uploaded
 exactly once; re-using one is rejected **after** the whole archive-and-upload
 cycle, which is a slow way to discover a one-line edit.
