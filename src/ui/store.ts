@@ -309,6 +309,22 @@ export function clearCook(): void {
   removeStorage(COOK_KEY);
 }
 
+/** Whether a change of storage (the page's `storage` event; a null key is
+ *  a tab that cleared it all) may have touched the cook in progress. */
+export function cookStoredElsewhere(key: string | null): boolean {
+  return key === null || key === COOK_KEY;
+}
+
+/** Whether the cook written down is the one started at `startedAt_ms`, with
+ *  its egg written down with an answer: by another tab, if not by this one. */
+export function storedCookAnswered(startedAt_ms: number): boolean {
+  const raw = parseObject(readStorage(COOK_KEY));
+  if (raw === null || raw['answers'] !== 'beforeReload') return false;
+  const machine = raw['machine'];
+  return machine !== null && typeof machine === 'object'
+    && (machine as Record<string, unknown>)['startedAt_ms'] === startedAt_ms;
+}
+
 /** The cook as stored, for keeping aside one this build cannot read. */
 export function storedCookText(): string | null {
   return readStorage(COOK_KEY);

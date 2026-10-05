@@ -564,6 +564,14 @@ let modelId = MODEL_ID;
  * other's every write with one of their own.
  */
 let ours = true;
+/**
+ * The eggs another tab wrote down while this page was open, by `id`. Only
+ * the page that wrote an egg down folds it while it is the newest in the
+ * log: that page holds what a second answer to it needs (`last`), and a
+ * page that folded it first would leave that answer nowhere to go. Once
+ * another egg follows it, no second answer can come, and any page folds it.
+ */
+let elsewhere = new Set<number>();
 
 function save(): void {
   writeStorage(KEY, encodeKept(kept, activePopulation(), modelId));
@@ -612,10 +620,19 @@ function adopt(raw: string | null): void {
     kept = { ...next, calibration: had.calibration };
   }
   generation += 1;
-  if (live >= 0 && !sameRecord(kept.log[live], had.log[live])) live = -1;
+  const known = new Set<number>();
+  for (const r of had.log) {
+    const id = idOf(r);
+    if (id !== null) known.add(id);
+  }
+  for (const r of kept.log) {
+    const id = idOf(r);
+    if (id !== null && !known.has(id)) elsewhere.add(id);
+  }
+  if (live >= 0 && !sameEgg(kept.log[live], had.log[live])) live = -1;
   if (last !== null) {
     const r = kept.log[last.index];
-    last = r !== undefined && sameRecord(r, last.record)
+    last = r !== undefined && sameEgg(r, last.record)
       && kept.log.length === last.index + 1 && kept.folded === last.index + 1
       ? { ...last, record: r } : null;
   }
@@ -640,6 +657,19 @@ function sameRecord(a: EggRecord | undefined, b: EggRecord | undefined): boolean
   return a !== undefined && b !== undefined && JSON.stringify(a) === JSON.stringify(b);
 }
 
+/** The same egg: the same cook, by `id`, whatever answers another tab has
+ *  added to it since; the same record, for one written before ids. */
+function sameEgg(a: EggRecord | undefined, b: EggRecord | undefined): boolean {
+  if (a === undefined || b === undefined) return false;
+  const id = idOf(a);
+  return id !== null && idOf(b) !== null ? id === idOf(b) : sameRecord(a, b);
+}
+
+/** The cook a record is of, or null for one written before ids. */
+function idOf(r: EggRecord): number | null {
+  return r.id ?? null;
+}
+
 /** Another tab changed storage (the page's `storage` event, whose key is
  *  null when a tab cleared it all): taken up now, if it touched the store.
  *  Says whether it did, so the page can redraw and fold what is behind. */
@@ -655,6 +685,7 @@ export function calibrationStoredElsewhere(key: string | null): boolean {
 export function loadCalibration(model = MODEL_ID): Calibration {
   modelId = model;
   ours = true;
+  elsewhere = new Set<number>();
   // Whatever came before the log goes now, rather than sitting in storage
   // being neither read nor collected.
   for (const key of SUPERSEDED_KEYS) removeStorage(key);
@@ -737,13 +768,28 @@ export function keptState(): Kept {
 
 /** Write one egg down, before anything is learned from it: a reload between the
  *  answer and the fold then refolds it on load rather than losing it or folding
- *  it twice. Returns its index in the log. */
+ *  it twice. Returns its index in the log. An egg already written down - the
+ *  same cook, by `id`, from another tab or from this one - is not written
+ *  again: its index is returned, and an answer given with it is a later
+ *  answer to that egg (`recordSecondAnswer`). */
 export function logEgg(r: EggRecord): number {
-  current();
+  const at = eggLogged(idOf(r));
+  if (at >= 0) return at;
   kept.log.push(r);
   ours = true;
   save();
   return kept.log.length - 1;
+}
+
+/** Where the cook that started at `id` is in the log, with whatever another
+ *  tab wrote since taken up first; -1 if it is not there, or has no id. */
+export function eggLogged(id: number | null): number {
+  current();
+  if (id === null) return -1;
+  for (let i = kept.log.length - 1; i >= 0; i--) {
+    if (idOf(kept.log[i]) === id) return i;
+  }
+  return -1;
 }
 
 /** What folding the live egg leaves behind: the surface its answers were
@@ -787,6 +833,9 @@ async function drainLog(): Promise<void> {
     const gen = generation;
     const index = k.folded;
     const r = k.log[index];
+    // Another tab's newest egg is that tab's to fold (`elsewhere`).
+    const id = idOf(r);
+    if (index === k.log.length - 1 && id !== null && elsewhere.has(id)) return;
     if (!recordTeaches(r)) {
       k.folded += 1;
       if (ours) save();
@@ -833,11 +882,18 @@ function assign(into: Calibration, from: Calibration): void {
  * has, the egg is folded AGAIN from the calibration as it stood before it,
  * against the same surface - so the posterior is what a replay of the log will
  * make, whichever order the answers came in. Refused, and nothing is written,
- * when that is no longer possible: another egg has been logged since, or the
- * page was reloaded and the surface is gone. Writing an answer the posterior
- * does not hold would break the one invariant the log exists for.
+ * when that is no longer possible: another egg has been logged since, the
+ * question was answered already, or the surface is gone - the page was
+ * reloaded, or another tab wrote the egg down and folded it. Writing an
+ * answer the posterior does not hold would break the one invariant the log
+ * exists for.
  *
- * Returns whether the answer was taken.
+ * An egg another tab wrote down and has not yet folded takes the answer:
+ * written into its record, and folded by that tab with the rest
+ * (`elsewhere`).
+ *
+ * Returns whether the answer was taken; the caller says nothing was kept
+ * when it was not.
  */
 export async function recordSecondAnswer(
   index: number, answer: { yolkWord?: YolkWord; white?: WhiteReport; probe?: ProbeReading },
@@ -845,7 +901,7 @@ export async function recordSecondAnswer(
   const had = kept.log[index];
   // Another tab's store first: the answer is written only to the egg it was
   // given for, and only if no other egg has been logged since.
-  if (current() && !sameRecord(kept.log[index], had)) return false;
+  if (current() && !sameEgg(kept.log[index], had)) return false;
   const r = kept.log[index];
   if (r === undefined || index !== kept.log.length - 1) return false;
   if (answer.yolkWord !== undefined && (r.yolkWord !== null || r.yolk !== null)) return false;
@@ -885,6 +941,7 @@ export function clearCalibration(): Calibration {
   removeStorage(KEY);
   seen = null;
   ours = true;
+  elsewhere = new Set<number>();
   removeStorage(UNREAD_KEY);
   removeStorage(UNREAD_COOK_KEY);
   for (const key of SUPERSEDED_KEYS) removeStorage(key);

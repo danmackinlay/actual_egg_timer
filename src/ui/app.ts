@@ -45,7 +45,8 @@ import { renderShare, wireShare } from './shareView.js';
 import {
   LIMITS, Limit, START_TEMP_PRESETS_C, Settings, UiStartMode, clampNumber,
   clearBoilMemory, clearCook, estimateTimeToBoil, hasBoilMemory, loadBoilMemory,
-  loadCook, loadSettings, rememberTimeToBoil, saveCook, saveSettings, storedCookText,
+  cookStoredElsewhere, loadCook, loadSettings, rememberTimeToBoil, saveCook, saveSettings, storedCookAnswered,
+  storedCookText,
 } from './store.js';
 import { sousVideCopy } from './sousvide.js';
 import { directionKey, warningKey, whiteAtRisk } from '../core/wording.js';
@@ -81,7 +82,7 @@ import {
 import { Ticket, restoreTicket, withTimeToBoil } from './ticket.js';
 import { Learning, renderCalibNote, renderLearned, wireExport, wireForget } from './learned.js';
 import {
-  answersNow, forgetAnswers, keptAnswers, pickedUpAfterReload, probePending, probeWanted,
+  answeredElsewhere, answersNow, forgetAnswers, keptAnswers, pickedUpAfterReload, probePending, probeWanted,
   renderProbe, renderTarget, resumeAnswers, wireFeedback,
 } from './feedback.js';
 import { phaseView } from './phaseView.js';
@@ -944,6 +945,12 @@ function drawShare(): void {
  * not folded them, and the time on screen moves with what was learned.
  */
 function storedElsewhere(key: string | null): void {
+  // The egg on screen answered about in another tab showing the same cook:
+  // that tab wrote it down, so this one asks no more about it.
+  if (cookStoredElsewhere(key) && machine.phase === 'DONE' && storedCookAnswered(machine.startedAt_ms)
+    && answeredElsewhere()) {
+    render(Date.now());
+  }
   const calibration = calibrationStoredElsewhere(key);
   const sharing = shareStoredElsewhere(key);
   if (!calibration && !sharing) return;
@@ -1401,6 +1408,7 @@ export function boot(): void {
     calib: () => calib,
     persist: persistCook,
     learned: () => renderLearned(learning()),
+    redraw: () => render(Date.now()),
   });
 
   renderCalibNote(learning());

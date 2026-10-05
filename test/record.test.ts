@@ -575,6 +575,45 @@ test('3e. two builds in two tabs: neither writes back the store it takes up, so 
   assert.deepEqual([back.path, back.kept.folded, back.kept.log.length], ['loaded', 2, 3]);
 });
 
+test('3f. one cook in two tabs is one egg, folded by the tab that wrote it down', async () => {
+  storage.clear();
+  const KEY = 'aet.calibration.v4';
+  const T = 1759700000123;
+  const other = await import(new URL('../src/ui/calibration.js?tab=same-cook', import.meta.url).href) as
+    typeof import('../src/ui/calibration.js');
+  const calib = loadCalibration();
+  other.loadCalibration();
+  // This tab writes the egg down with the yolk.
+  const index = logEgg({ ...solvedRecord(0.4, 0), id: T });
+  // The other tab hears, and leaves the egg to this one.
+  assert.equal(other.calibrationStoredElsewhere(KEY), true);
+  await other.learn();
+  assert.equal(other.keptState().folded, 0, 'another tab\'s newest egg is that tab\'s to fold');
+  // The cook answers the white in the other tab, which shows the same cook:
+  // the same egg, not a second one, and the answer is written into it.
+  assert.equal(other.eggLogged(T), 0);
+  assert.equal(other.logEgg({ ...solvedRecord(0.4, null), id: T, white: 'firm' }), 0);
+  assert.equal(other.keptState().log.length, 1, 'one cook, one egg');
+  assert.equal(await other.recordSecondAnswer(0, { white: 'firm' }), true);
+  // This tab folds the egg with both answers, and can still take a third.
+  await learn(index);
+  assert.equal(calib.eggsLogged, 1);
+  assert.deepEqual([keptState().log[0].yolk, keptState().log[0].white], [0, 'firm']);
+  assert.equal(other.calibrationStoredElsewhere(KEY), true);
+  assert.equal(await other.recordSecondAnswer(0, { probe: { centre_C: 60, after_s: null } }), false,
+    'refused where it cannot be folded, and nothing written');
+  assert.equal(decodeKept(storage.get(KEY) as string).kept.log[0].probe, null);
+  assert.equal(await recordSecondAnswer(0, { probe: { centre_C: 60, after_s: null } }), true);
+  // What this tab holds is what a replay of the log makes.
+  const stored = decodeKept(storage.get(KEY) as string).kept;
+  assert.equal(stored.folded, 1);
+  assertIdentical(calib, replay(freshCalibration(PARTICLE_COUNT, CALIBRATION_SEED), stored.log), 'three answers, two tabs');
+  // "Start again" in either tab logs nothing more.
+  assert.equal(other.logEgg({ ...solvedRecord(0.4, null), id: T }), 0);
+  assert.equal(logEgg({ ...solvedRecord(0.4, null), id: T }), 0);
+  assert.equal(decodeKept(storage.get(KEY) as string).kept.log.length, 1);
+});
+
 // --------------------------------------------------------------------------
 // 4. The pull
 // --------------------------------------------------------------------------

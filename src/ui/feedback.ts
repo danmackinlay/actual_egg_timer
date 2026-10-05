@@ -14,7 +14,7 @@ import { WhiteReport, YOLK_WORDS, YolkWord } from '../core/infer.js';
 import { ProbeReading, recordCookTime_s, recordProbe_C } from '../core/record.js';
 import { nudgeFrom, parse, stepPast } from '../core/units.js';
 import {
-  Calibration, calibrationParams, eggRecordFor, learn, logEgg, recordSecondAnswer,
+  Calibration, calibrationParams, eggLogged, eggRecordFor, learn, logEgg, recordSecondAnswer,
 } from './calibration.js';
 import { activeLocale, t } from './copy.js';
 import { page } from './dom.js';
@@ -91,6 +91,8 @@ export interface FeedbackHost {
   persist(): void;
   /** Redraw what has been learned, once a fold lands. */
   learned(): void;
+  /** Redraw the cook's screen: the questions go when no more can be taken. */
+  redraw(): void;
 }
 
 let host: FeedbackHost | null = null;
@@ -151,13 +153,38 @@ function foldAnswer(yolk: YolkWord | null, white: WhiteReport | null, probe: Pro
     h.learned();
   };
 
+  // An answer that could not be kept is not thanked for: the questions go,
+  // as they do after a reload, since no more could be kept either.
+  const taken = (kept: boolean): void => {
+    if (kept) {
+      thanks();
+      return;
+    }
+    if (stillHere()) {
+      answers = { kind: 'beforeReload' };
+      h.persist();
+      h.redraw();
+    }
+    h.learned();
+  };
+  const second = yolk !== null ? { yolkWord: yolk } : white !== null ? { white: white }
+    : probe !== null ? { probe: probe } : {};
+
   const a = answers;
   if (a.kind !== 'live') {
-    const index = logEgg(eggRecordFor(cooked, machine, yolk, white, probe));
+    const record = eggRecordFor(cooked, machine, yolk, white, probe);
+    // Another tab showing this cook may have written it down first: then
+    // this is a later answer to that egg, not a second egg.
+    const earlier = eggLogged(record.id ?? null);
+    const index = earlier >= 0 ? earlier : logEgg(record);
     answers = { kind: 'live', yolk: yolk, white: white, probe: probe, index: index };
     // Written down with the log, not after the fold: a reload between the two
     // would otherwise offer the questions again, and log the egg twice.
     h.persist();
+    if (earlier >= 0) {
+      void recordSecondAnswer(index, second).then(taken);
+      return;
+    }
     // The surface is built in a worker, so the page stays live while it is -
     // which means the cook can have moved on by the time it lands.
     void learn(index).then(thanks);
@@ -166,9 +193,16 @@ function foldAnswer(yolk: YolkWord | null, white: WhiteReport | null, probe: Pro
   if (yolk !== null) a.yolk = yolk;
   if (white !== null) a.white = white;
   if (probe !== null) a.probe = probe;
-  const second = yolk !== null ? { yolkWord: yolk } : white !== null ? { white: white }
-    : probe !== null ? { probe: probe } : {};
-  void recordSecondAnswer(a.index, second).then(thanks);
+  void recordSecondAnswer(a.index, second).then(taken);
+}
+
+/** The cook on screen was answered about in another tab, which wrote its egg
+ *  down: nothing is asked here any more, as after a reload, and "Start
+ *  again" logs nothing more. Only before anything is said here. */
+export function answeredElsewhere(): boolean {
+  if (answers.kind !== 'none') return false;
+  answers = { kind: 'beforeReload' };
+  return true;
 }
 
 /* ------------------------------------------------------------ thermometer */
