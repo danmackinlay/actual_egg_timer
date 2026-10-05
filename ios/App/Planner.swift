@@ -238,9 +238,11 @@ final class Planner {
     /// against: after a relaunch the questions are not offered again, and the
     /// one left unanswered stays a skip in the record.
     var answers: Answers?
-    /// Why the requested doneness was refused, in words, or empty. The point is
-    /// to teach the constraint rather than merely to block the control.
-    var refusal = ""
+    /// The warning line while idle, in words, or empty: why the requested
+    /// doneness was refused, the point being to teach the constraint rather
+    /// than merely to block the control; or else that the level on screen
+    /// comes out right fewer than 3 times in 10 so far (`warningKey`).
+    var warning = ""
     /// The choice behind the time on screen: the odds, and how far it leaned
     /// from the mean solve. Nil until this pot's decision surface has been
     /// built, and on the sous-vide screen.

@@ -2,15 +2,18 @@ import Foundation
 import EggTimerCore
 import EggTimerCopy
 
-// MARK: - Refusals, in words
+// MARK: - The warning line, in words
 
-/// The refusal, in words. Which refusal, and which words teach it, are core's
-/// (`verdictWithOdds`, `refusalKey`); the arguments are this app's, and they
-/// quote the pan the answer was computed for.
-func refusalText(_ v: Verdict, setup: CookSetup, water: String) -> String {
-    guard let ref = refusalKey(v, cooling: setup.cooling) else { return "" }
+/// The warning line, in words: a refusal, or the level's low odds. Which, and
+/// which words say it, are core's (`answerAt`, `warningKey`); the arguments are
+/// this app's, and they quote the pan the answer was computed for. The low
+/// odds name the level the slider rests on, a word standing alone before the
+/// colon.
+func warningText(_ v: Verdict, lowOdds: Bool, level: Double, setup: CookSetup, water: String) -> String {
+    guard let ref = warningKey(v, lowOdds: lowOdds, cooling: setup.cooling) else { return "" }
     return tr(ref, [
         "limit": .text(midSentence(tr(v.limit.key), locale: Copy.activeLocale)), "water": .text(water),
+        "doneness": .text(tr(anchorNear(level).key)),
     ])
 }
 

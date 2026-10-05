@@ -30,7 +30,8 @@ struct PhaseActions: View {
     // MARK: - The slot
 
     /// The one place for a longer line (UI.md section 2). While idle: the
-    /// refusal, or the sous-vide warning, or, before anything is learned, the
+    /// refusal or the level's low odds, or the sous-vide warning, or, before
+    /// anything is learned, the
     /// first-egg welcome; and under low odds, the way to Help, which is one
     /// short line and goes under whichever is there.
     @ViewBuilder
@@ -40,8 +41,8 @@ struct PhaseActions: View {
                 if let sousVide {
                     Text(sousVide.warn)
                         .foregroundStyle(.orange)
-                } else if !planner.refusal.isEmpty {
-                    Text(planner.refusal)
+                } else if !planner.warning.isEmpty {
+                    Text(planner.warning)
                         .foregroundStyle(.orange)
                 } else if planner.eggsLogged == 0 && !planner.hasBoilMemory {
                     Text(tr("idle.welcome"))

@@ -9,8 +9,9 @@ import EggTimerCore
 ///    orange runny, golden jammy, pale yellow hard (`Palette`, the web's
 ///    `--yolk-*`) - strong where this pan hits the mark most often, faint
 ///    where it rarely does, so it reads in grey as well as in colour;
-///  - dots over the levels the pan can deliver but the odds do not offer yet
-///    (under 3/10, once an egg has taught something);
+///  - dots over the levels the pan can deliver but gets right fewer than 3
+///    times in 10 so far (once an egg has taught something), which the slider
+///    rests on and the warning line names;
 ///  - diagonal stripes over the levels the pan cannot deliver at all, as the
 ///    web app has always drawn them.
 ///
@@ -20,8 +21,8 @@ import EggTimerCore
 ///
 /// Levels map to the thumb's centre, which travels the slider's width less a
 /// thumb at each end; the caller insets the strip to match, as the web's
-/// track is inset by half a thumb. Decorative: the direction and the refusal
-/// say the same in words.
+/// track is inset by half a thumb. Decorative: the direction and the warning
+/// line say the same in words.
 struct OddsTrack: View {
     /// Nil before the first answer, and in sous-vide: the bare track.
     let solution: Solution?

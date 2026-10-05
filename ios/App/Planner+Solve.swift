@@ -73,7 +73,7 @@ extension Planner {
             task?.cancel()
             task = nil
             solution = nil
-            refusal = ""
+            warning = ""
             decision = nil
             outcome = nil
             oddsProfile = nil
@@ -255,7 +255,10 @@ extension Planner {
             calibration, egg: egg, setup: setup, level: level, profile: profile, snapRetry: snapRetry
         )
         #endif
-        return Answer(solution: a.solution, verdict: a.verdict, setup: setup, level: a.level, profile: profile)
+        return Answer(
+            solution: a.solution, verdict: a.verdict, lowOdds: a.lowOdds, setup: setup, level: a.level,
+            profile: profile
+        )
     }
 
     /// Solve for a snapshot of the inputs. The odds at every level, if this
@@ -368,7 +371,10 @@ extension Planner {
         appliedNudgeS = answer.decision == nil ? 0 : answer.nudgeS
         oddsProfile = answer.profile
         advice = answer.advice
-        refusal = refusalText(answer.verdict, setup: answer.setup, water: show(.water, answer.setup.waterLitres))
+        warning = warningText(
+            answer.verdict, lowOdds: answer.lowOdds, level: answer.level, setup: answer.setup,
+            water: show(.water, answer.setup.waterLitres)
+        )
         hold()
         if snap, let snapTo = answer.verdict.snapTo, snapTo != doneness {
             applying = true
@@ -380,9 +386,13 @@ extension Planner {
 
     private struct Answer: Sendable {
         var solution: Solution
-        /// Why it was refused, if it was, and where the slider must go.
+        /// Why it was refused, if it was, and where the slider must go: only
+        /// out of what the pan cannot deliver.
         var verdict: Verdict
-        /// The setup this answer is about, so the refusal can quote the pan
+        /// Whether the level answered comes out right fewer than 3 times in
+        /// 10 so far (`lowOddsAt`): the dots, which the slider rests on.
+        var lowOdds: Bool
+        /// The setup this answer is about, so the warning can quote the pan
         /// the answer was computed for rather than whatever is current.
         var setup: CookSetup
         /// The level the solution is for: the one asked, or the one it snapped to.
@@ -394,8 +404,8 @@ extension Planner {
         /// The nudge the chosen time took (`appliedNudge`).
         var nudgeS: Double = 0
         /// The odds at every level for this pot and posterior (Reach.swift),
-        /// once worked out: the verdict read its range, and the track is
-        /// shaded by it.
+        /// once worked out: the warning reads its range, and the track is
+        /// shaded and dotted by it.
         var profile: OddsProfile? = nil
         /// What to say under low odds, as catalogue keys; empty for nothing.
         var advice: [String] = []
