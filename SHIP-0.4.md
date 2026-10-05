@@ -240,11 +240,14 @@ Kept here so a new session can pick up without this conversation.
        next deploy, find the rate-limit rule accepted in the deploy log's
        post-processing stage; what Netlify's own logs keep (review, item
        "What Netlify's own logs keep").
-1c. [ ] **The after-egg questions** (DECISIONS 92), on a branch: the yolk
+1c. [x] (built, merged 7f3ce89; the owner judges it on a phone with item 3) **The after-egg questions** (DECISIONS 92): the yolk
        named (Runny-Hard) in core, the fit, the server, the privacy page
        and both apps; the white next to the yolk; the probe below them.
-       Then the owner on a phone. Also: why a new install could not offer
-       runny (being looked into).
+       Runny was not offered because builds 2 and 3 predate DECISIONS 83
+       and the phone had learned from an egg; the Runny tick is now struck
+       through only when none of it can be reached (bb1cc9d). Open for the
+       owner: show the probe field even when the probe setting is off (it
+       does now)?
 2. [x] **Optional server polish** (0ab1eee): a refused attestation echoes library
        error text ("PEM routines::…"); return a generic message.
 3. [ ] **The owner's phone session** (section A above, PLAN.md items 7-15)
