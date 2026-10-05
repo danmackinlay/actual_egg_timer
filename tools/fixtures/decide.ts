@@ -192,6 +192,15 @@ export const decideFixture = {
       // As if an egg had taught something: the choice itself, whatever the count.
       chosen_s: chooseCookTime(pz.post, DECIDE_GRID, target, c.meanCookTime_s),
       decision: d,
+      // The same, held under a time sooner than its choice and over one later
+      // (the envelope's bounds, reach.ts): held where a time is chosen, and
+      // not where the mean solve's stands.
+      held: [
+        { lo_s: 0, hi_s: d.cookTime_s - 15 }, { lo_s: d.cookTime_s + 15, hi_s: d.cookTime_s + 40 },
+      ].map((bounds) => {
+        const h = decideAt(pz.post, pz.eggsLogged, DECIDE_GRID, c.meanCookTime_s, c.applies, target, bounds);
+        return { bounds: bounds, cookTime_s: h.cookTime_s, odds: h.odds };
+      }),
       // The mean solve at this level, moved to the decided time.
       level: c.level,
       decided: decideSolutionRow(decidedSolution(

@@ -218,16 +218,35 @@ public func oddsInTenths(_ odds: Double) -> Int {
     Int((odds * 10.0).rounded())
 }
 
+/// Where the monotone envelope holds a level's time, s: no sooner than `loS`,
+/// no later than `hiS` (`envelopeBounds`, Reach.swift). `loS` is 0 and `hiS`
+/// infinite where nothing holds that side.
+public struct TimeBounds: Sendable, Equatable {
+    public let loS: Double
+    public let hiS: Double
+
+    public init(loS: Double, hiS: Double) {
+        self.loS = loS
+        self.hiS = hiS
+    }
+}
+
 /// Decide, from the parts. The time is chosen when `applies` and at least one
-/// egg has taught something; otherwise it is `meanCookTimeS`.
+/// egg has taught something; otherwise it is `meanCookTimeS`. A chosen time is
+/// then held within `bounds`, so a softer level is never given a later time
+/// than a firmer one (DECISIONS.md 84), and the odds are read at the time held.
 public func decideAt(
     _ post: Posterior, eggsLogged: Int, grid: DoseGrid, meanCookTimeS: Double, applies: Bool,
-    logNominalTarget: Double
+    logNominalTarget: Double, bounds: TimeBounds? = nil
 ) -> Decision {
     let chosen = applies && eggsLogged > 0
-    let t = chosen
+    var t = chosen
         ? chooseCookTime(post, grid, logNominalTarget, aroundS: meanCookTimeS)
         : meanCookTimeS
+    if chosen, let bounds {
+        if t > bounds.hiS { t = bounds.hiS }
+        if t < bounds.loS { t = bounds.loS }
+    }
     let odds = hitOdds(post, grid, t, logNominalTarget)
     return Decision(
         cookTimeS: t,
@@ -238,13 +257,15 @@ public func decideAt(
     )
 }
 
-/// Decide for a mean solve at `logNominalTarget`: the level the verdict left.
+/// Decide for a mean solve at `logNominalTarget`: the level the verdict left,
+/// held within `bounds` (`envelopeBounds` at that level).
 public func decide(
-    _ c: Calibration, grid: DoseGrid, solution sol: Solution, logNominalTarget: Double
+    _ c: Calibration, grid: DoseGrid, solution sol: Solution, logNominalTarget: Double,
+    bounds: TimeBounds? = nil
 ) -> Decision {
     decideAt(
         c.posterior, eggsLogged: c.eggsLogged, grid: grid, meanCookTimeS: sol.result.cookTimeS,
-        applies: decisionApplies(sol), logNominalTarget: logNominalTarget
+        applies: decisionApplies(sol), logNominalTarget: logNominalTarget, bounds: bounds
     )
 }
 

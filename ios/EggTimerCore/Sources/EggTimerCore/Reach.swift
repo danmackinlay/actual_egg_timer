@@ -13,7 +13,13 @@ import Foundation
 /// range, and inside the physical edges, the app warns that the level comes
 /// out right fewer than 3 times in 10 so far; it never refuses it, and only
 /// what the pan cannot deliver moves the slider (DECISIONS.md 83). With no
-/// level at 3/10, or before the first egg, nothing is warned of. The reasons,
+/// level at 3/10, or before the first egg, nothing is warned of.
+///
+/// The profile also holds the time monotone in the level (DECISIONS.md 84):
+/// its points are decided from the hard end, each held under the time of the
+/// point above it - a running minimum, the projection of the per-level choices
+/// onto schedules that never fall as the level rises - and a level between
+/// two points is held between their times (`envelopeBounds`). The reasons,
 /// and the measurements, are in src/core/reach.ts, which this is held to by
 /// fixtures/reach.json.
 
@@ -23,12 +29,16 @@ public let reachOdds = 0.3
 /// Slider positions between profile points.
 public let profileStep = 5
 
+/// One point of the profile: a slider level, the time the app gives there
+/// (after the envelope), and the odds of that time.
 public struct LevelOdds: Sendable, Equatable {
     public let level: Double
+    public let cookTimeS: Double
     public let odds: Double
 
-    public init(level: Double, odds: Double) {
+    public init(level: Double, cookTimeS: Double, odds: Double) {
         self.level = level
+        self.cookTimeS = cookTimeS
         self.odds = odds
     }
 }
@@ -73,16 +83,44 @@ private func positionDown(_ level: Double) -> Int {
     Int((snapDown(level) * sliderSteps).rounded())
 }
 
-/// The odds the app shows when the slider sits at `level`, a level the pan can
-/// deliver: the mean solve there, decided on `grid`.
-func oddsAtLevel(
-    _ c: Calibration, egg: Egg, setup: CookSetup, grid: DoseGrid, level: Double
-) -> Double {
+/// How close a level must be to a point to be that point: the slider's levels
+/// are hundredths, which neither language holds exactly.
+private let sameLevel = 1e-9
+
+/// Where the envelope holds the time at `level`: no sooner than the time of the
+/// nearest point at or below it, no later than the time of the nearest point
+/// at or above it. At a point, both are that point's time. Nil with no
+/// profile, or one with no points: the level keeps its own choice.
+public func envelopeBounds(_ profile: OddsProfile?, level: Double) -> TimeBounds? {
+    guard let profile, !profile.points.isEmpty else { return nil }
+    var lo = 0.0
+    var hi = Double.infinity
+    for p in profile.points {
+        if p.level <= level + sameLevel { lo = p.cookTimeS }
+        if p.level >= level - sameLevel && hi == Double.infinity { hi = p.cookTimeS }
+    }
+    return TimeBounds(loS: lo, hiS: hi)
+}
+
+/// The decision the app makes when the slider sits at `level`, a level the pan
+/// can deliver: the mean solve there, decided on `grid`, held within `bounds`.
+private func decisionAtLevel(
+    _ c: Calibration, egg: Egg, setup: CookSetup, grid: DoseGrid, level: Double, bounds: TimeBounds?
+) -> Decision {
     let sol = solveCookTime(
         egg: egg, setup: setup, params: calibrationParams(c), doneness: calibrationDoneness(c, level: level)
     )
-    let logTarget = logYolkTarget(level)
-    return decide(c, grid: grid, solution: sol, logNominalTarget: logTarget).odds
+    return decide(c, grid: grid, solution: sol, logNominalTarget: logYolkTarget(level), bounds: bounds)
+}
+
+/// The odds the app shows when the slider sits at `level`, with `profile` - the
+/// pot's, or nil before it is built - holding its time.
+func oddsAtLevel(
+    _ c: Calibration, egg: Egg, setup: CookSetup, grid: DoseGrid, level: Double, profile: OddsProfile?
+) -> Double {
+    decisionAtLevel(
+        c, egg: egg, setup: setup, grid: grid, level: level, bounds: envelopeBounds(profile, level: level)
+    ).odds
 }
 
 /// The odds at every level the pot can deliver, and where they reach 3/10.
@@ -101,11 +139,12 @@ public func oddsProfile(_ c: Calibration, egg: Egg, setup: CookSetup, grid: Dose
     }
 
     var odds: [Int: Double] = [:]
-    func at(_ position: Int) -> Double {
-        if let known = odds[position] { return known }
-        let p = oddsAtLevel(c, egg: egg, setup: setup, grid: grid, level: levelOf(position))
-        odds[position] = p
-        return p
+    var times: [Int: Double] = [:]
+    func decideHere(_ position: Int, _ bounds: TimeBounds) -> Double {
+        let d = decisionAtLevel(c, egg: egg, setup: setup, grid: grid, level: levelOf(position), bounds: bounds)
+        odds[position] = d.odds
+        times[position] = d.cookTimeS
+        return d.odds
     }
 
     var positions = [lo]
@@ -115,10 +154,37 @@ public func oddsProfile(_ c: Calibration, egg: Egg, setup: CookSetup, grid: Dose
         k += profileStep
     }
     if hi > lo { positions.append(hi) }
+    // The envelope: from the hard end, each point held under the one above it.
+    var above = Double.infinity
+    for position in positions.reversed() {
+        _ = decideHere(position, TimeBounds(loS: 0.0, hiS: above))
+        above = times[position]!
+    }
     var best = 0.0
     for k in positions {
-        let p = at(k)
+        let p = odds[k]!
         if p > best { best = p }
+    }
+
+    // A point the bisection adds is held between the nearest points known on
+    // either side, so it moves no time already given.
+    func at(_ position: Int) -> Double {
+        if let known = odds[position] { return known }
+        var below = 0.0
+        var over = Double.infinity
+        var belowAt = -1
+        var overAt = Int(sliderSteps) + 1
+        for (k, t) in times {
+            if k < position && k > belowAt {
+                belowAt = k
+                below = t
+            }
+            if k > position && k < overAt {
+                overAt = k
+                over = t
+            }
+        }
+        return decideHere(position, TimeBounds(loS: below, hiS: over))
     }
 
     var softest: Double?
@@ -149,7 +215,9 @@ public func oddsProfile(_ c: Calibration, egg: Egg, setup: CookSetup, grid: Dose
         hardest = levelOf(h)
     }
 
-    let points = odds.keys.sorted().map { LevelOdds(level: levelOf($0), odds: odds[$0]!) }
+    let points = odds.keys.sorted().map {
+        LevelOdds(level: levelOf($0), cookTimeS: times[$0]!, odds: odds[$0]!)
+    }
     for point in points where point.odds > best { best = point.odds }
     return OddsProfile(
         points: points, best: best, physicalSoftest: levelOf(lo), physicalHardest: levelOf(hi),

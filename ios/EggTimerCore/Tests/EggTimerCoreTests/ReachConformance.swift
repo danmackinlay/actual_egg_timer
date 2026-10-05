@@ -11,7 +11,9 @@ import Foundation
 
 private func profileOf(_ json: [String: Any]) throws -> OddsProfile {
     try OddsProfile(
-        points: json.rows("points").map { try LevelOdds(level: $0.num("level"), odds: $0.num("odds")) },
+        points: json.rows("points").map {
+            try LevelOdds(level: $0.num("level"), cookTimeS: $0.num("cookTime_s"), odds: $0.num("odds"))
+        },
         best: json.num("best"),
         physicalSoftest: json.num("physicalSoftest"), physicalHardest: json.num("physicalHardest"),
         softest: json.optionalNum("softest"), hardest: json.optionalNum("hardest")
@@ -65,6 +67,7 @@ struct ReachConformance {
             #expect(p.points.count == expected.points.count, "\(label) points")
             for (a, b) in zip(p.points, expected.points) {
                 expectClose(a.level, b.level, "\(label) level")
+                expectClose(a.cookTimeS, b.cookTimeS, "\(label) time at \(b.level)")
                 expectClose(a.odds, b.odds, "\(label) odds at \(b.level)")
             }
             expectClose(p.best, expected.best, "\(label) best")
@@ -82,6 +85,29 @@ struct ReachConformance {
             for near in try row.rows("near") {
                 let level = try near.num("level")
                 try expectClose(oddsNear(p, level: level), near.num("odds"), "\(label) near \(level)")
+            }
+            // The envelope: the bounds at a level, and the time the app gives
+            // there, decided within them. No bound above is null in JSON.
+            for env in try row.rows("envelope") {
+                let level = try env.num("level")
+                let bounds = envelopeBounds(p, level: level)
+                if let expectedBounds = env["bounds"] as? [String: Any] {
+                    let b = try #require(bounds, "\(label) bounds at \(level)")
+                    try expectClose(b.loS, expectedBounds.num("lo_s"), "\(label) lo at \(level)")
+                    if let hi = try expectedBounds.optionalNum("hi_s") {
+                        expectClose(b.hiS, hi, "\(label) hi at \(level)")
+                    } else {
+                        #expect(b.hiS == .infinity, "\(label) hi at \(level)")
+                    }
+                } else {
+                    #expect(bounds == nil, "\(label) bounds at \(level)")
+                }
+                let a = answerAt(c, egg: egg, setup: setup, level: level, profile: p, snapRetry: true)
+                let d = decide(
+                    c, grid: grid, solution: a.solution, logNominalTarget: logYolkTarget(a.level),
+                    bounds: envelopeBounds(p, level: a.level)
+                )
+                try expectClose(d.cookTimeS, env.num("held_s"), "\(label) time held at \(level)")
             }
         }
     }

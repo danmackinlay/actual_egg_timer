@@ -7,9 +7,9 @@
  * same number for every level the pot can deliver, computed exactly as the app
  * computes it when the slider sits there: the mean solve at that level
  * (`solveCookTime`, with the white's target where the eggs have put it), then
- * the decision on this pot's decision surface (`decide`), and its odds. So a
- * profile point and the decision at that level can never disagree - they are
- * one computation.
+ * the decision on this pot's decision surface (`decide`), held by the
+ * envelope below, and its odds. So a profile point and the decision at that
+ * level can never disagree - they are one computation.
  *
  * Which levels. The two physical edges on the slider's grid (the softest the
  * white allows, rounded up; the firmest the pan reaches, rounded down), every
@@ -27,6 +27,41 @@
  * `npm run decide -- reach` measures it; the apps build it off the main
  * thread, after the pot's decision surface, and keep one per pot and
  * posterior, like the surface.
+ *
+ * THE ENVELOPE. Each level's time is chosen against that level's own
+ * target, so the choices need not keep their order: after a runny white the
+ * white's weight pushes the time chosen at soft past the one chosen at jammy
+ * (500 s against 428 s, test/reach.test.ts 11), and asking for a softer egg
+ * would give a firmer one. The owner wants the time monotone in the level
+ * (DECISIONS.md 84). So the time a level is given is the smallest of its own
+ * choice and every firmer level's: a running minimum from the hard end. That
+ * is the projection of the per-level choices onto the time schedules that
+ * never fall as the level rises - each level is capped at the next firmer
+ * level's time, and nothing else moves. Where the cap binds, the level takes
+ * the firmer level's time, and its odds, the bracket and the sentence are
+ * read at that time.
+ *
+ * The profile is where the choices at other levels are already made, so the
+ * envelope is built there and nowhere else: the points are decided from the
+ * hard end to the soft, each held under the time of the point above it, and
+ * each point keeps the time it was given (`cookTime_s`). A level between two
+ * points, as the slider is on a drag, is held between those two points'
+ * times (`envelopeBounds`), which is the running minimum where the choice
+ * moves one way between them and keeps the whole slider monotone where it
+ * does not. A drag costs what it did: its own decision, and a look-up. What
+ * the sampling misses is a dip in the choices narrower than the step between
+ * points; the time it gives there is within one step's change of the
+ * choice, a few seconds. A bisection point is held between its neighbours,
+ * so it changes no time the profile already gave.
+ *
+ * Until the profile is built - the first moments with a new pot - a level
+ * has its own choice, as it had before 5 October 2026, and the time can move
+ * once when the profile lands. Before the first egg nothing is held: the time
+ * is the literature's, which rises with the level already.
+ *
+ * The deeper fix is a loss that knows the levels are ordered - a miss by one
+ * band cheaper than a miss by two - so that the choices come out monotone by
+ * themselves. It is left for later (INFERENCE.md section 8).
  *
  * THE WARNING. A level whose odds are under REACH_ODDS (3/10, the owner's
  * number) is not refused: the slider rests there, and the app says the odds
@@ -52,7 +87,7 @@ import { Egg } from './geometry.js';
 import { CookSetup } from './protocol.js';
 import { Solution, logYolkTarget, solveCookTime } from './solve.js';
 import { DoseGrid } from './doseGrid.js';
-import { decide, oddsInTenths } from './decide.js';
+import { Decision, TimeBounds, decide, oddsInTenths } from './decide.js';
 import { Calibration, calibrationDoneness, calibrationParams } from './record.js';
 import {
   LIMITS, SLIDER_STEPS, START_TEMP_PRESETS_C, Verdict, snapDown, snapUp, verdictFor,
@@ -65,10 +100,11 @@ export const REACH_ODDS = 0.3;
  *  track, 21 across the whole of it. */
 export const PROFILE_STEP = 5;
 
-/** One point of the profile: a slider level and the odds the app would show
- *  there. */
+/** One point of the profile: a slider level, the time the app gives there
+ *  (after the envelope), and the odds of that time. */
 export interface LevelOdds {
   level: number;
+  cookTime_s: number;
   odds: number;
 }
 
@@ -103,14 +139,44 @@ function positionDown(level: number): number {
   return Math.round(snapDown(level) * SLIDER_STEPS);
 }
 
-/** The odds the app shows when the slider sits at `level` and the level is one
- *  the pan can deliver: the mean solve there, decided on `grid`. */
-export function oddsAtLevel(
-  c: Calibration, egg: Egg, setup: CookSetup, grid: DoseGrid, level: number,
-): number {
+/** How close a level must be to a point to be that point: the slider's
+ *  levels are hundredths, which neither language holds exactly. */
+const SAME_LEVEL = 1e-9;
+
+/**
+ * Where the envelope holds the time at `level`: no sooner than the time of
+ * the nearest point at or below it, no later than the time of the nearest
+ * point at or above it (the header, "the envelope"). At a point, both are
+ * that point's time. Null with no profile, or one with no points: the level
+ * keeps its own choice.
+ */
+export function envelopeBounds(profile: OddsProfile | null, level: number): TimeBounds | null {
+  if (profile === null || profile.points.length === 0) return null;
+  let lo = 0.0;
+  let hi = Number.POSITIVE_INFINITY;
+  for (const p of profile.points) {
+    if (p.level <= level + SAME_LEVEL) lo = p.cookTime_s;
+    if (p.level >= level - SAME_LEVEL && hi === Number.POSITIVE_INFINITY) hi = p.cookTime_s;
+  }
+  return { lo_s: lo, hi_s: hi };
+}
+
+/** The decision the app makes when the slider sits at `level` and the level is
+ *  one the pan can deliver: the mean solve there, decided on `grid`, held
+ *  within `bounds`. */
+function decisionAtLevel(
+  c: Calibration, egg: Egg, setup: CookSetup, grid: DoseGrid, level: number, bounds: TimeBounds | null,
+): Decision {
   const sol = solveCookTime(egg, setup, calibrationParams(c), calibrationDoneness(c, level));
-  const logTarget = logYolkTarget(level);
-  return decide(c, grid, sol, logTarget).odds;
+  return decide(c, grid, sol, logYolkTarget(level), bounds);
+}
+
+/** The odds the app shows when the slider sits at `level`, with `profile` - the
+ *  pot's, or null before it is built - holding its time. */
+export function oddsAtLevel(
+  c: Calibration, egg: Egg, setup: CookSetup, grid: DoseGrid, level: number, profile: OddsProfile | null,
+): number {
+  return decisionAtLevel(c, egg, setup, grid, level, envelopeBounds(profile, level)).odds;
 }
 
 /**
@@ -132,12 +198,12 @@ export function oddsProfile(c: Calibration, egg: Egg, setup: CookSetup, grid: Do
   }
 
   const odds = new Map<number, number>();
-  const at = (position: number): number => {
-    const known = odds.get(position);
-    if (known !== undefined) return known;
-    const p = oddsAtLevel(c, egg, setup, grid, levelOf(position));
-    odds.set(position, p);
-    return p;
+  const times = new Map<number, number>();
+  const decideHere = (position: number, bounds: TimeBounds | null): number => {
+    const d = decisionAtLevel(c, egg, setup, grid, levelOf(position), bounds);
+    odds.set(position, d.odds);
+    times.set(position, d.cookTime_s);
+    return d.odds;
   };
 
   const positions: number[] = [lo];
@@ -145,11 +211,39 @@ export function oddsProfile(c: Calibration, egg: Egg, setup: CookSetup, grid: Do
     positions.push(k);
   }
   if (hi > lo) positions.push(hi);
+  // The envelope: from the hard end, each point held under the one above it.
+  let above = Number.POSITIVE_INFINITY;
+  for (let i = positions.length - 1; i >= 0; i--) {
+    decideHere(positions[i], { lo_s: 0.0, hi_s: above });
+    above = times.get(positions[i]) as number;
+  }
   let best = 0;
   for (const k of positions) {
-    const p = at(k);
+    const p = odds.get(k) as number;
     if (p > best) best = p;
   }
+
+  // A point the bisection adds is held between the nearest points known on
+  // either side, so it moves no time already given.
+  const at = (position: number): number => {
+    const known = odds.get(position);
+    if (known !== undefined) return known;
+    let below = 0.0;
+    let over = Number.POSITIVE_INFINITY;
+    let belowAt = -1;
+    let overAt = SLIDER_STEPS + 1;
+    for (const [k, t] of times) {
+      if (k < position && k > belowAt) {
+        belowAt = k;
+        below = t;
+      }
+      if (k > position && k < overAt) {
+        overAt = k;
+        over = t;
+      }
+    }
+    return decideHere(position, { lo_s: below, hi_s: over });
+  };
 
   let softest: number | null = null;
   let hardest: number | null = null;
@@ -185,7 +279,9 @@ export function oddsProfile(c: Calibration, egg: Egg, setup: CookSetup, grid: Do
   }
 
   const keys = Array.from(odds.keys()).sort((a, b) => a - b);
-  const points: LevelOdds[] = keys.map((k) => ({ level: levelOf(k), odds: odds.get(k) as number }));
+  const points: LevelOdds[] = keys.map((k) => ({
+    level: levelOf(k), cookTime_s: times.get(k) as number, odds: odds.get(k) as number,
+  }));
   for (const point of points) {
     if (point.odds > best) best = point.odds;
   }

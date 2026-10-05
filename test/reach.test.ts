@@ -11,8 +11,9 @@
  * lands on the physical edge, warned of if its odds are low; at the far left
  * the slider rests on the level the time and the bracket are for, whose
  * middle leaves the thumb only by the lean the white asks for once a time is
- * chosen; and the owner's own egg goes to soft and says so. Only the stripes
- * move the slider (DECISIONS.md 83).
+ * chosen; the owner's own egg goes to soft and says so; and the time never
+ * falls as the level rises (DECISIONS.md 84). Only the stripes move the
+ * slider (DECISIONS.md 83).
  *
  * The fixture (`fixtures/reach.json`) pins the arithmetic for the Swift port.
  *
@@ -25,13 +26,13 @@ import assert from 'node:assert/strict';
 import { decide, oddsInTenths } from '../src/core/decide.js';
 import { DoseGrid } from '../src/core/doseGrid.js';
 import { createPrior, updatePosterior } from '../src/core/infer.js';
-import { eggFromMass } from '../src/core/geometry.js';
+import { Egg, eggFromMass } from '../src/core/geometry.js';
 import { CookSetup } from '../src/core/protocol.js';
 import { Solution, logYolkTarget, solveCookTime } from '../src/core/solve.js';
 import { CALIBRATION_SEED, anchorNear, snapUp, verdictFor } from '../src/core/policy.js';
 import { Calibration, calibrationDoneness, calibrationParams } from '../src/core/record.js';
 import {
-  ADVICE_BELOW_TENTHS, AdviceFacts, OddsProfile, REACH_ODDS, adviceWanted, lowOddsAt, oddsAtLevel, oddsNear,
+  ADVICE_BELOW_TENTHS, AdviceFacts, OddsProfile, REACH_ODDS, adviceWanted, envelopeBounds, lowOddsAt, oddsAtLevel, oddsNear,
   answerAt, oddsProfile, pricedChanges, protocolAdvice, shadingOf, unpricedAdvice,
 } from '../src/core/reach.js';
 import { predictOutcome } from '../src/core/outcome.js';
@@ -45,12 +46,13 @@ const COUNTER = appSetup({ cooling: 'counter' });
 const PARTICLES = 400;
 
 /** What the app does at a level, verdict and snap and warning and all, with
- *  the profile or without it. */
+ *  the profile or without it: the time held by the profile's envelope, as the
+ *  apps hold it. */
 function appAt(c: Calibration, grid: DoseGrid, setup: CookSetup, level: number, profile: OddsProfile | null) {
   const a = answerAt(c, EGG, setup, level, profile, true);
   return {
     verdict: a.verdict, level: a.level, lowOdds: a.lowOdds,
-    decision: decide(c, grid, a.solution, logYolkTarget(a.level)),
+    decision: decide(c, grid, a.solution, logYolkTarget(a.level), envelopeBounds(profile, a.level)),
   };
 }
 
@@ -65,8 +67,10 @@ test('1. a profile point is the odds the app shows at that level', () => {
   assert.ok(p.points.length >= 21, `${p.points.length} points`);
   for (let i = 1; i < p.points.length; i++) assert.ok(p.points[i].level > p.points[i - 1].level);
   for (const point of p.points) {
-    assert.equal(appAt(WHITE_BOUND, grid, SETUP, point.level, null).decision.odds, point.odds, `level ${point.level}`);
-    assert.equal(oddsAtLevel(WHITE_BOUND, EGG, SETUP, grid, point.level), point.odds);
+    const d = appAt(WHITE_BOUND, grid, SETUP, point.level, p).decision;
+    assert.equal(d.odds, point.odds, `level ${point.level}`);
+    assert.equal(d.cookTime_s, point.cookTime_s, `level ${point.level}`);
+    assert.equal(oddsAtLevel(WHITE_BOUND, EGG, SETUP, grid, point.level, p), point.odds);
   }
   assert.equal(p.best, Math.max(...p.points.map((q) => q.odds)));
 });
@@ -101,10 +105,10 @@ test('3. after eggs, the range at 3/10 or better is on the slider\'s grid, and o
   assert.ok(softest > p.physicalSoftest, 'the odds are low at the soft end here');
   assert.ok(softest >= p.physicalSoftest && hardest <= p.physicalHardest, 'never outside the physical limits');
   assert.equal(Math.round(softest * 100) / 100, softest);
-  assert.ok(oddsAtLevel(WHITE_BOUND, EGG, SETUP, grid, softest) >= REACH_ODDS);
-  assert.ok(oddsAtLevel(WHITE_BOUND, EGG, SETUP, grid, softest - 0.01) < REACH_ODDS);
+  assert.ok(oddsAtLevel(WHITE_BOUND, EGG, SETUP, grid, softest, p) >= REACH_ODDS);
+  assert.ok(oddsAtLevel(WHITE_BOUND, EGG, SETUP, grid, softest - 0.01, p) < REACH_ODDS);
   if (hardest < p.physicalHardest) {
-    assert.ok(oddsAtLevel(WHITE_BOUND, EGG, SETUP, grid, hardest + 0.01) < REACH_ODDS);
+    assert.ok(oddsAtLevel(WHITE_BOUND, EGG, SETUP, grid, hardest + 0.01, p) < REACH_ODDS);
   }
   // Asked for a level the pan delivers but under 3/10: the slider stays, the
   // answer is for that level, and it is warned of.
@@ -207,7 +211,10 @@ test('6. the warning and the verdict, on hand-made ranges', () => {
 
 test('7. the shading is relative to the best level, and empty with nothing to shade', () => {
   const p: OddsProfile = {
-    points: [{ level: 0, odds: 0.025 }, { level: 0.5, odds: 0.5 }, { level: 1, odds: 0.25 }],
+    points: [
+      { level: 0, cookTime_s: 300, odds: 0.025 }, { level: 0.5, cookTime_s: 400, odds: 0.5 },
+      { level: 1, cookTime_s: 500, odds: 0.25 },
+    ],
     best: 0.5, physicalSoftest: 0, physicalHardest: 1, softest: 0.5, hardest: 0.5,
   };
   assert.deepEqual(shadingOf(p).map((s) => s.strength), [0.05, 1, 0.5]);
@@ -246,7 +253,10 @@ test('8. advice: when it is offered, and what it says for which setup', () => {
 
   // Kept only where the change's own profile raises this level's odds.
   const ice: OddsProfile = {
-    points: [{ level: 0, odds: 0.5 }, { level: 0.5, odds: 0.7 }, { level: 1, odds: 0.3 }],
+    points: [
+      { level: 0, cookTime_s: 300, odds: 0.5 }, { level: 0.5, cookTime_s: 400, odds: 0.7 },
+      { level: 1, cookTime_s: 500, odds: 0.3 },
+    ],
     best: 0.7, physicalSoftest: 0, physicalHardest: 1, softest: 0, hardest: 1,
   };
   assert.equal(oddsNear(ice, 0.25), 0.6);
@@ -301,10 +311,11 @@ test('10. the far left: the slider rests on the level the time and the bracket a
   // of the thumb by what that costs the yolk, and the sentence says firm.
   const c = knowing({ particles: PARTICLES, eggsLogged: 3 });
   const grid = gridFor(c, EGG, cold);
-  const a = answerAt(c, EGG, cold, 0, oddsProfile(c, EGG, cold, grid), true);
+  const coldProfile = oddsProfile(c, EGG, cold, grid);
+  const a = answerAt(c, EGG, cold, 0, coldProfile, true);
   assert.equal(a.level, a.verdict.snapTo ?? 0);
   const target = logYolkTarget(a.level);
-  const d = decide(c, grid, a.solution, target);
+  const d = decide(c, grid, a.solution, target, envelopeBounds(coldProfile, a.level));
   const o = predictOutcome(c.posterior, grid, d.cookTime_s, target);
   const unleaned = predictOutcome(c.posterior, grid, d.meanCookTime_s, target);
   console.log(`# three eggs, cold, asked 0: slider at ${a.level} (${a.verdict.kind}), ${d.meanCookTime_s.toFixed(0)} s -> ${d.cookTime_s.toFixed(0)} s, bracket ${o.levelLow.toFixed(3)}/${o.levelMedian.toFixed(3)}/${o.levelHigh.toFixed(3)}; unleaned middle ${unleaned.levelMedian.toFixed(3)}; runny white ${unleaned.pWhiteRunny.toFixed(2)} -> ${o.pWhiteRunny.toFixed(2)}; ${directionKey(o)}`);
@@ -330,10 +341,18 @@ test('11. the owner\'s egg: 58 g from the fridge into boiling water and an ice b
   const soft = 0.22;
   const a = answerAt(c, egg, SETUP, soft, p, true);
   const jammy = answerAt(c, egg, SETUP, 0.41, p, true);
-  const d = decide(c, grid, a.solution, logYolkTarget(a.level));
+  const own = decide(c, grid, a.solution, logYolkTarget(a.level));
+  const d = decide(c, grid, a.solution, logYolkTarget(a.level), envelopeBounds(p, a.level));
   const o = predictOutcome(c.posterior, grid, d.cookTime_s, logYolkTarget(a.level));
-  const dj = decide(c, grid, jammy.solution, logYolkTarget(jammy.level));
-  console.log(`# 58 g, fridge, boiling, ice, one egg: physical ${p.physicalSoftest}, 3/10 from ${p.softest}; soft ${d.oddsTenths}/10 at ${d.cookTime_s.toFixed(0)} s, bracket ${o.levelLow.toFixed(2)}-${o.levelHigh.toFixed(2)}, ${directionKey(o)}; jammy ${dj.oddsTenths}/10 at ${dj.cookTime_s.toFixed(0)} s`);
+  const ownJammy = decide(c, grid, jammy.solution, logYolkTarget(jammy.level));
+  const dj = decide(c, grid, jammy.solution, logYolkTarget(jammy.level), envelopeBounds(p, jammy.level));
+  console.log(`# 58 g, fridge, boiling, ice, one egg: physical ${p.physicalSoftest}, 3/10 from ${p.softest}; soft ${d.oddsTenths}/10 at ${d.cookTime_s.toFixed(0)} s (its own choice ${own.cookTime_s.toFixed(0)} s), bracket ${o.levelLow.toFixed(2)}-${o.levelHigh.toFixed(2)}, ${directionKey(o)}; jammy ${dj.oddsTenths}/10 at ${dj.cookTime_s.toFixed(0)} s (its own ${ownJammy.cookTime_s.toFixed(0)} s)`);
+  // Soft's own choice, against its own target, is later than jammy's: the
+  // white's weight. The envelope gives it no later than jammy's
+  // (DECISIONS.md 84), and jammy, which nothing firmer undercuts, keeps its own.
+  assert.ok(own.cookTime_s > ownJammy.cookTime_s + 30, 'unheld, soft would be the firmer egg');
+  assert.ok(d.cookTime_s <= dj.cookTime_s, `soft ${d.cookTime_s} against jammy ${dj.cookTime_s}`);
+  assert.equal(dj.cookTime_s, ownJammy.cookTime_s);
   assert.ok(p.softest !== null && p.softest > soft, `3/10 from ${p.softest}`);
   assert.equal(anchorNear(p.softest).key, 'doneness.jammy');
   assert.ok(p.physicalSoftest <= soft);
@@ -342,10 +361,85 @@ test('11. the owner\'s egg: 58 g from the fridge into boiling water and an ice b
   assert.equal(a.lowOdds, true);
   assert.equal(warningKey(a.verdict, a.lowOdds, 'ice')?.key, 'warn.lowOdds');
   // The answer is for soft: its mean solve is sooner than jammy's. After a
-  // runny white the time chosen there leans late, to set the white, and the
-  // bracket and the sentence say where that puts the yolk.
+  // runny white the time is jammy's, and the bracket and the sentence say
+  // where that puts the yolk.
   assert.ok(a.solution.result.cookTime_s < jammy.solution.result.cookTime_s, 'the solve is for soft');
   assert.equal(o.lean, 'firm');
   assert.ok(o.levelMedian > soft);
   assert.ok(directionKey(o) === 'outcome.miss.firm' || directionKey(o) === 'outcome.likely.firm', directionKey(o));
+});
+
+/** Every slider position the pan delivers, from soft to hard, with the time the
+ *  app gives there (held by the profile, as the apps hold it). */
+function timesAcross(c: Calibration, egg: Egg, setup: CookSetup): { profile: OddsProfile; times: [number, number][] } {
+  const grid = gridFor(c, egg, setup);
+  const profile = oddsProfile(c, egg, setup, grid);
+  const times: [number, number][] = [];
+  const lo = Math.round(profile.physicalSoftest * 100);
+  const hi = Math.round(profile.physicalHardest * 100);
+  for (let k = lo; k <= hi; k++) {
+    const a = answerAt(c, egg, setup, k / 100, profile, true);
+    const d = decide(c, grid, a.solution, logYolkTarget(a.level), envelopeBounds(profile, a.level));
+    times.push([a.level, d.cookTime_s]);
+  }
+  return { profile, times };
+}
+
+function assertMonotone(name: string, profile: OddsProfile, times: [number, number][]): void {
+  for (let i = 1; i < profile.points.length; i++) {
+    assert.ok(profile.points[i].cookTime_s >= profile.points[i - 1].cookTime_s,
+      `${name}: the profile's time falls at ${profile.points[i].level}`);
+  }
+  for (let i = 1; i < times.length; i++) {
+    assert.ok(times[i][1] >= times[i - 1][1],
+      `${name}: ${times[i - 1][1].toFixed(1)} s at ${times[i - 1][0]}, ${times[i][1].toFixed(1)} s at ${times[i][0]}`);
+  }
+}
+
+test('12. the time never falls as the level rises: across the slider, for the owner\'s egg, a white-bound cook, a fresh install and a counter rest', () => {
+  // The owner's egg (test 11): one egg, soft asked, the white runny.
+  const egg58 = eggFromMass(0.058);
+  const post = createPrior(PARTICLES, CALIBRATION_SEED);
+  const first: Calibration = { posterior: post, eggsLogged: 0 };
+  const asked = solveCookTime(egg58, SETUP, calibrationParams(first), calibrationDoneness(first, 0.22));
+  updatePosterior(post, gridFor(first, egg58, SETUP), asked.result.cookTime_s, logYolkTarget(0.22), 0, 'runny');
+  const owners: Calibration = { posterior: post, eggsLogged: 1 };
+  const cases: [string, Calibration, Egg, CookSetup][] = [
+    ['the owner\'s egg', owners, egg58, SETUP],
+    ['white-bound', WHITE_BOUND, EGG, SETUP],
+    ['three eggs, counter', knowing({ particles: PARTICLES, eggsLogged: 3 }), EGG, COUNTER],
+    ['fresh', FRESH, EGG, SETUP],
+  ];
+  let fresh: [number, number][] = [];
+  for (const [name, c, egg, setup] of cases) {
+    const { profile, times } = timesAcross(c, egg, setup);
+    assert.ok(times.length > 10, `${name}: ${times.length} levels`);
+    assertMonotone(name, profile, times);
+    console.log(`# ${name}: ${times.filter((_, i) => i % 10 === 0).map(([l, t]) => `${l}:${t.toFixed(0)}`).join(' ')}`);
+    if (c === FRESH) fresh = times;
+  }
+  // A fresh install is monotone as it was: the literature's times, held by
+  // nothing, rise with the level by themselves.
+  for (const [level, t] of fresh) {
+    const sol = solveCookTime(EGG, SETUP, calibrationParams(FRESH), calibrationDoneness(FRESH, level));
+    assert.equal(t, sol.result.cookTime_s, `fresh at ${level}`);
+  }
+});
+
+test('13. the envelope\'s bounds: a point holds its own time, a level between two is held between theirs, and nothing holds a level with no profile', () => {
+  const p: OddsProfile = {
+    points: [
+      { level: 0.2, cookTime_s: 400, odds: 0.1 }, { level: 0.25, cookTime_s: 410, odds: 0.3 },
+      { level: 0.3, cookTime_s: 430, odds: 0.5 },
+    ],
+    best: 0.5, physicalSoftest: 0.2, physicalHardest: 0.3, softest: 0.25, hardest: 0.3,
+  };
+  assert.deepEqual(envelopeBounds(p, 0.25), { lo_s: 410, hi_s: 410 });
+  assert.deepEqual(envelopeBounds(p, 0.27), { lo_s: 410, hi_s: 430 });
+  assert.deepEqual(envelopeBounds(p, 0.29 + 1e-12), { lo_s: 410, hi_s: 430 });
+  assert.deepEqual(envelopeBounds(p, 0.3 - 1e-12), { lo_s: 430, hi_s: 430 }, 'a hundredth not held exactly is still the point');
+  assert.deepEqual(envelopeBounds(p, 0.1), { lo_s: 0, hi_s: 400 });
+  assert.deepEqual(envelopeBounds(p, 0.4), { lo_s: 430, hi_s: Number.POSITIVE_INFINITY });
+  assert.equal(envelopeBounds(null, 0.25), null);
+  assert.equal(envelopeBounds({ ...p, points: [] }, 0.25), null);
 });

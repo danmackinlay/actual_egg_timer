@@ -114,6 +114,17 @@ struct DecideConformance {
             #expect(try d.chosen == expected.flag("chosen"), "\(label) chosen")
             try expectClose(d.odds, expected.num("odds"), "\(label) odds")
             #expect(try d.oddsTenths == Int(expected.num("oddsTenths")), "\(label) tenths")
+            for held in try row.rows("held") {
+                let b = try held.object("bounds")
+                let bounds = try TimeBounds(loS: b.num("lo_s"), hiS: b.num("hi_s"))
+                let h = try decideAt(
+                    post, eggsLogged: Int(row.num("eggsLogged")), grid: grid,
+                    meanCookTimeS: row.num("meanCookTime_s"), applies: row.flag("applies"),
+                    logNominalTarget: target, bounds: bounds
+                )
+                try expectClose(h.cookTimeS, held.num("cookTime_s"), "\(label) held time")
+                try expectClose(h.odds, held.num("odds"), "\(label) held odds")
+            }
 
             let c = try Calibration(posterior: post, eggsLogged: Int(row.num("eggsLogged")))
             let g = try file.object("grid")

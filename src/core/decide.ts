@@ -326,19 +326,38 @@ export function oddsInTenths(odds: number): number {
   return Math.round(odds * 10);
 }
 
+/** Where the monotone envelope holds a level's time, s: no sooner than
+ *  `lo_s`, no later than `hi_s`. reach.ts says where they come from
+ *  (`envelopeBounds`); `lo_s` is 0 and `hi_s` infinite where nothing holds
+ *  that side. */
+export interface TimeBounds {
+  lo_s: number;
+  hi_s: number;
+}
+
 /**
  * Decide, from the parts: the time, and the odds there.
  *
  * The time is chosen when `applies` - there is a cook to choose for - and at
  * least one egg has taught something (see the header); otherwise it is
  * `meanCookTime_s`, and only the odds are read there.
+ *
+ * A chosen time is then held within `bounds`, where the pot's odds profile
+ * gives them, so that a softer level is never given a later time than a
+ * firmer one (reach.ts, "the envelope"; DECISIONS.md 84). The odds are read
+ * at the time held. The literature's time is never moved: before the first
+ * egg it is already monotone in the level (test/reach.test.ts).
  */
 export function decideAt(
   post: Posterior, eggsLogged: number, grid: DoseGrid, meanCookTime_s: number, applies: boolean,
-  logNominalTarget: number,
+  logNominalTarget: number, bounds: TimeBounds | null = null,
 ): Decision {
   const chosen = applies && eggsLogged > 0;
-  const t = chosen ? chooseCookTime(post, grid, logNominalTarget, meanCookTime_s) : meanCookTime_s;
+  let t = chosen ? chooseCookTime(post, grid, logNominalTarget, meanCookTime_s) : meanCookTime_s;
+  if (chosen && bounds !== null) {
+    if (t > bounds.hi_s) t = bounds.hi_s;
+    if (t < bounds.lo_s) t = bounds.lo_s;
+  }
   const odds = hitOdds(post, grid, t, logNominalTarget);
   return {
     cookTime_s: t,
@@ -350,12 +369,12 @@ export function decideAt(
 }
 
 /** Decide for a mean solve at `logNominalTarget` - the level the verdict left,
- *  after any snap. */
+ *  after any snap - held within `bounds` (`envelopeBounds` at that level). */
 export function decide(
-  c: Calibration, grid: DoseGrid, sol: Solution, logNominalTarget: number,
+  c: Calibration, grid: DoseGrid, sol: Solution, logNominalTarget: number, bounds: TimeBounds | null = null,
 ): Decision {
   return decideAt(
-    c.posterior, c.eggsLogged, grid, sol.result.cookTime_s, decisionApplies(sol), logNominalTarget,
+    c.posterior, c.eggsLogged, grid, sol.result.cookTime_s, decisionApplies(sol), logNominalTarget, bounds,
   );
 }
 

@@ -5,10 +5,11 @@
 
 import { CookSetup } from '../../src/core/protocol.js';
 import { Calibration } from '../../src/core/record.js';
-import { decisionInputs } from '../../src/core/decide.js';
+import { decide, decisionInputs } from '../../src/core/decide.js';
+import { logYolkTarget } from '../../src/core/solve.js';
 import {
   ADVICE_BELOW_TENTHS, ADVICE_GAIN, ADVICE_MARGIN_TENTHS, OddsProfile, PROFILE_STEP, REACH_ODDS,
-  SHADE_BEST_MIN, adviceWanted, answerAt, lowOddsAt, oddsNear, oddsProfile, pricedChanges, protocolAdvice,
+  SHADE_BEST_MIN, adviceWanted, answerAt, envelopeBounds, lowOddsAt, oddsNear, oddsProfile, pricedChanges, protocolAdvice,
   shadingOf, unpricedAdvice,
 } from '../../src/core/reach.js';
 
@@ -61,6 +62,20 @@ const reachProfiles = REACH_CASES.map((rc, index) => {
     profile: profile,
     shading: shadingOf(profile),
     near: [0, 0.13, 0.41, 0.625, 0.99, 1].map((level) => ({ level: level, odds: oddsNear(profile, level) })),
+    // The envelope (DECISIONS.md 84): the bounds at a level - at a point,
+    // between two, outside them all, a hundredth not held exactly - and the
+    // time the app gives there, its answer decided within them. No bound
+    // above is null: JSON has no infinity.
+    envelope: [0, 0.05, 0.13, 0.22, 0.29 + 1e-12, 0.41, 0.625, 0.99, 1].map((level) => {
+      const bounds = envelopeBounds(profile, level);
+      const a = answerAt(c, DECIDE_EGG, rc.setup, level, profile, true);
+      return {
+        level: level,
+        bounds: bounds === null ? null
+          : { lo_s: bounds.lo_s, hi_s: Number.isFinite(bounds.hi_s) ? bounds.hi_s : null },
+        held_s: decide(c, g.grid, a.solution, logYolkTarget(a.level), envelopeBounds(profile, a.level)).cookTime_s,
+      };
+    }),
   };
 });
 
@@ -88,7 +103,10 @@ const ADVICE_SETUPS: { setup: CookSetup; eggFromClass: boolean; startAssumed: bo
   { setup: referenceSetup({ afterBoil: 'off', waterLitres: 12 }), eggFromClass: false, startAssumed: true },
 ];
 const ADVICE_PROFILE: OddsProfile = {
-  points: [{ level: 0, odds: 0.5 }, { level: 0.5, odds: 0.7 }, { level: 1, odds: 0.3 }],
+  points: [
+    { level: 0, cookTime_s: 300, odds: 0.5 }, { level: 0.5, cookTime_s: 400, odds: 0.7 },
+    { level: 1, cookTime_s: 500, odds: 0.3 },
+  ],
   best: 0.7, physicalSoftest: 0, physicalHardest: 1, softest: 0, hardest: 1,
 };
 
@@ -106,7 +124,10 @@ export const reachFixture = {
   // The shading either side of SHADE_BEST_MIN: none below it.
   shading: [SHADE_BEST_MIN - 0.001, SHADE_BEST_MIN, 0.3].map((best) => {
     const profile: OddsProfile = {
-      points: [{ level: 0, odds: best / 2 }, { level: 0.5, odds: best }, { level: 1, odds: 0 }],
+      points: [
+        { level: 0, cookTime_s: 300, odds: best / 2 }, { level: 0.5, cookTime_s: 400, odds: best },
+        { level: 1, cookTime_s: 500, odds: 0 },
+      ],
       best: best, physicalSoftest: 0, physicalHardest: 1, softest: null, hardest: null,
     };
     return { profile: profile, shading: shadingOf(profile) };
