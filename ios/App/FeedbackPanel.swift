@@ -50,7 +50,7 @@ struct FeedbackPanel: View {
                     .appFont(.headline)
                     .multilineTextAlignment(.center)
                     .padding(.top, 4)
-                HStack(spacing: 10) {
+                AnswerRows(spacing: 10, rowSpacing: 8) {
                     whiteButton(tr("feedback.white.runny"), .runny)
                     whiteButton(tr("feedback.white.tender"), .tender)
                     whiteButton(tr("feedback.white.firm"), .firm)
@@ -136,21 +136,10 @@ struct FeedbackPanel: View {
 
     /// The five yolk words, the slider's own (`donenessAnchors`, whose order
     /// is `YolkWord`'s), side by side; when the text is too large for one
-    /// row, three over two, so no word is cut.
+    /// row, in as few rows as hold them, so no word is cut (`AnswerRows`).
     private var yolkWords: some View {
-        let words = YolkWord.allCases
-        return ViewThatFits(in: .horizontal) {
-            HStack(spacing: 6) {
-                ForEach(words.indices, id: \.self) { i in yolkButton(i) }
-            }
-            VStack(spacing: 8) {
-                HStack(spacing: 6) {
-                    ForEach(0..<3, id: \.self) { i in yolkButton(i) }
-                }
-                HStack(spacing: 6) {
-                    ForEach(3..<words.count, id: \.self) { i in yolkButton(i) }
-                }
-            }
+        AnswerRows(spacing: 6, rowSpacing: 8) {
+            ForEach(YolkWord.allCases.indices, id: \.self) { i in yolkButton(i) }
         }
     }
 
@@ -172,8 +161,7 @@ struct FeedbackPanel: View {
     }
 
     /// The answer given stays legible, filled; its row goes out of reach.
-    /// `tight` is for the five yolk words: one line each, never truncated,
-    /// so that a row that cannot hold them all is left for two rows.
+    /// One line each: `AnswerRows` never gives a button less than its word.
     @ViewBuilder
     private func answerButton(
         _ label: String, chosen: Bool, answered: Bool, tight: Bool = false, action: @escaping () -> Void
@@ -184,7 +172,6 @@ struct FeedbackPanel: View {
         let text = Text(label)
             .appFont(.subheadline)
             .lineLimit(1)
-            .fixedSize(horizontal: tight, vertical: false)
             .padding(.horizontal, tight ? -8 : 0)
             .frame(maxWidth: .infinity)
         if chosen {
@@ -219,6 +206,73 @@ struct FeedbackPanel: View {
 
     private var tunedLine: String {
         tr("learned.tuned", ["eggs": .int(planner.eggsLogged)])
+    }
+}
+
+/// A row of answer buttons that breaks into as few rows as hold them, each
+/// button at least as wide as its word, as the web's grid does: all on one
+/// row while they fit, then three over two, and so on to one a row. The
+/// buttons on a row share its width, equally while that leaves each its
+/// word. Without it, a row of words that cannot shrink pushed the whole
+/// panel past the screen's edge at the largest text sizes.
+struct AnswerRows: Layout {
+    var spacing: CGFloat
+    var rowSpacing: CGFloat
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let ideal = subviews.map { $0.sizeThatFits(.unspecified) }
+        let width = proposal.width ?? (ideal.map(\.width).reduce(0, +) + spacing * CGFloat(max(subviews.count - 1, 0)))
+        let rows = rows(ideal.map(\.width), width)
+        let heights = rows.map { row in row.map { ideal[$0].height }.max() ?? 0 }
+        return CGSize(width: width, height: heights.reduce(0, +) + rowSpacing * CGFloat(max(rows.count - 1, 0)))
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        let ideal = subviews.map { $0.sizeThatFits(.unspecified) }
+        var y = bounds.minY
+        for row in rows(ideal.map(\.width), bounds.width) {
+            let widths = shares(row.map { ideal[$0].width }, bounds.width)
+            let height = row.map { ideal[$0].height }.max() ?? 0
+            var x = bounds.minX
+            for (k, i) in row.enumerated() {
+                subviews[i].place(
+                    at: CGPoint(x: x, y: y), proposal: ProposedViewSize(width: widths[k], height: height)
+                )
+                x += widths[k] + spacing
+            }
+            y += height + rowSpacing
+        }
+    }
+
+    /// The fewest rows that hold the buttons in order, as even as can be,
+    /// the longer rows first: five are 5, then 3 + 2, 2 + 2 + 1, and so on.
+    private func rows(_ widths: [CGFloat], _ width: CGFloat) -> [[Int]] {
+        let n = widths.count
+        guard n > 0 else { return [] }
+        for count in 1...n {
+            var rows: [[Int]] = []
+            var start = 0
+            for r in 0..<count {
+                let size = n / count + (r < n % count ? 1 : 0)
+                rows.append(Array(start..<(start + size)))
+                start += size
+            }
+            let fits = rows.allSatisfy { row in
+                row.map { widths[$0] }.reduce(0, +) + spacing * CGFloat(row.count - 1) <= width
+            }
+            if fits { return rows }
+        }
+        return (0..<n).map { [$0] }
+    }
+
+    /// One row's buttons' widths: equal if that leaves each its word, and
+    /// otherwise each its word and an equal share of what is left.
+    private func shares(_ ideal: [CGFloat], _ width: CGFloat) -> [CGFloat] {
+        let free = width - spacing * CGFloat(ideal.count - 1)
+        let equal = free / CGFloat(ideal.count)
+        if ideal.allSatisfy({ $0 <= equal }) { return ideal.map { _ in equal } }
+        let extra = max(0, free - ideal.reduce(0, +)) / CGFloat(ideal.count)
+        return ideal.map { min($0 + extra, free) }
     }
 }
 
