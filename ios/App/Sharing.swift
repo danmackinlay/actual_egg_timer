@@ -14,8 +14,10 @@ import EggTimerCore
 /// the id (`clientDataHash = SHA256(uid)`), and posts the attestation; every
 /// egg then carries an assertion - the key's signature over the body sent -
 /// and the server files it in the attested tier. A phone that cannot attest
-/// (a simulator, an old phone, Apple's service down, a refusal) sends anyway,
-/// to the open tier. Nothing here ever stops an egg.
+/// (a simulator, an old phone, a refusal) sends anyway, to the open tier.
+/// One that cannot attest yet (offline, Apple's service or the server busy)
+/// waits and tries again on the next run, rather than send its whole log
+/// open for good because of a passing failure.
 @MainActor
 @Observable
 final class Sharing {
@@ -236,14 +238,27 @@ final class Sharing {
             guard s.on, let uid = s.uid, s.sent < final else { return }
             let gen = generation
             if attestedFor != uid {
-                keyId = await attestedKey(for: uid)
-                attestedFor = uid
+                let key = await attestedKey(for: uid, generation: gen)
                 guard gen == generation else { return }
+                switch key {
+                case .key(let id): keyId = id
+                case .open: keyId = nil
+                // Not yet: the run stops, and the next one tries again.
+                case .later: return
+                }
+                attestedFor = uid
             }
             var copy = log[s.sent]
             copy.uid = uid
             guard let body = try? Self.body(seq: s.seq, record: copy) else { return }
-            let assertion = await assertion(keyId: keyId, body: body)
+            var assertion: String?
+            if let signing = keyId {
+                switch await self.assertion(keyId: signing, body: body, uid: uid, generation: gen) {
+                case .key(let a): assertion = a
+                case .open: keyId = nil
+                case .later: return
+                }
+            }
             guard gen == generation else { return }
             guard let status = await Self.send("POST", "api/eggs", body: body, assertion: assertion) else { return }
             guard gen == generation, Self.advances(status) else { return }
@@ -265,53 +280,83 @@ final class Sharing {
 
     // MARK: - App Attest
 
-    /// This id's attested key, attesting it if it has not been; nil when the
-    /// phone cannot, or the server would not take it - the open tier.
-    private func attestedKey(for uid: String) async -> String? {
+    /// What App Attest gave: a key (or an assertion), the open tier for good
+    /// - the phone cannot attest, or the server will not take its key - or
+    /// not yet, a passing failure, so the run stops and the next one tries
+    /// again.
+    enum Attested {
+        case key(String)
+        case open
+        case later
+    }
+
+    /// This id's attested key, attesting it if it has not been. Nothing is
+    /// kept or sent once the generation has moved on - sharing turned off,
+    /// or everything deleted, while Apple was answering - so a deletion
+    /// cannot be undone by an attestation landing after it.
+    private func attestedKey(for uid: String, generation gen: Int) async -> Attested {
         let service = DCAppAttestService.shared
-        guard service.isSupported else { return nil }
+        guard service.isSupported else { return .open }
         var a = attest?.uid == uid ? attest! : Attest(uid: uid, keyId: nil, attestation: nil, status: .pending)
         switch a.status {
-        case .attested: return a.keyId
-        case .failed: return nil
+        case .attested: return a.keyId.map(Attested.key) ?? .open
+        case .failed: return .open
         case .pending: break
         }
         do {
             if a.keyId == nil {
-                a.keyId = try await service.generateKey()
+                let made = try await service.generateKey()
+                guard gen == generation else { return .later }
+                a.keyId = made
                 saveAttest(a)
             }
-            guard let keyId = a.keyId else { return nil }
+            guard let keyId = a.keyId else { return .open }
             if a.attestation == nil {
                 let hash = Data(SHA256.hash(data: Data(uid.utf8)))
-                a.attestation = try await service.attestKey(keyId, clientDataHash: hash).base64EncodedString()
+                let made = try await service.attestKey(keyId, clientDataHash: hash).base64EncodedString()
+                guard gen == generation else { return .later }
+                a.attestation = made
                 saveAttest(a)
             }
             let body = try JSONEncoder().encode(["uid": uid, "keyId": keyId, "attestation": a.attestation ?? ""])
-            guard let status = await Self.send("POST", "api/attest", body: body) else { return nil }
+            guard let status = await Self.send("POST", "api/attest", body: body) else { return .later }
+            guard gen == generation else { return .later }
             if status == 200 || status == 201 {
                 a.status = .attested
             } else if status == 400 || status == 409 {
                 a.status = .failed
             } else {
-                return nil
+                // Busy, or limited (429, 5xx): the next run.
+                return .later
             }
         } catch let error as DCError where error.code == .serverUnavailable {
             // Apple's service is busy: try again on the next run.
-            return nil
+            return .later
         } catch {
+            guard gen == generation else { return .later }
             a.status = .failed
         }
         saveAttest(a)
-        return a.status == .attested ? a.keyId : nil
+        return a.status == .attested ? a.keyId.map(Attested.key) ?? .open : .open
     }
 
-    /// The key's signature over this body, base64, or nil: no key, or the
-    /// phone would not sign. Either way the egg still goes.
-    private func assertion(keyId: String?, body: Data) async -> String? {
-        guard let keyId else { return nil }
+    /// The key's signature over this body, base64. A key the phone no longer
+    /// holds (`invalidKey`) is given up on for this id, which then sends open;
+    /// anything else waits for the next run.
+    private func assertion(keyId: String, body: Data, uid: String, generation gen: Int) async -> Attested {
         let hash = Data(SHA256.hash(data: body))
-        return try? await DCAppAttestService.shared.generateAssertion(keyId, clientDataHash: hash).base64EncodedString()
+        do {
+            let a = try await DCAppAttestService.shared.generateAssertion(keyId, clientDataHash: hash)
+            return .key(a.base64EncodedString())
+        } catch let error as DCError where error.code == .invalidKey {
+            if gen == generation, var a = attest, a.uid == uid {
+                a.status = .failed
+                saveAttest(a)
+            }
+            return .open
+        } catch {
+            return .later
+        }
     }
 
     // MARK: - Deleting
