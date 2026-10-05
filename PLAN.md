@@ -10,7 +10,7 @@ population a prior is drawn from (E6-E8, `COLLECTIVE.md`) are built in
 both, on this branch, not on `main` and not deployed. The web app (`src/`) and the iOS app (`ios/`) carry
 the same model, refusals, particle filter and choice of time, the same
 catalogue of words in two Englishes (Phase F but for Czech), and the same
-layout (`UI.md`). `npm test` runs 321 tests, all passing (5b pins E3's known
+layout (`UI.md`). `npm test` runs 322 tests, all passing (5b pins E3's known
 limit). `npm run validate` passes 29/29, and `swift test` passes 128 tests
 in 33 suites. **Pushed on 29 September** at `5ff6940`, the owner's
 call: Netlify serves it at actualeggtimer.netlify.app, and the first run of
@@ -156,6 +156,20 @@ The one queue. Nothing else in the documents waits on the owner.
     the model changes. `npm run eggs -- import` reads an exported file for
     the fit, and the fit gives your own random IDs full weight once they
     are in `fit/trusted.local.txt` (`fit/README.md` says how).
+14. **A soft yolk can be chosen again, on a phone** (5 October 2026,
+    `DECISIONS.md` 83), the **`warn`** draft in both apps. With your setup
+    (58 g from the fridge, boiling water, an ice bath, a little learned),
+    the thumb goes left of jammy onto the dots, and the time, the sentence
+    under it and the bracket follow; the line under the setup says "Soft: I
+    get this right fewer than 3 times in 10 so far." (1750: "Soft: in this
+    I have hitherto succeeded fewer than 3 times in 10."), with the
+    reliability link under it. Only the stripes still push the thumb back.
+    The old line, "The softest I get right at least 3 times in 10, so far:
+    jammy.", is gone. Worth a look while you are there: on the simulator,
+    after one egg answered too soft at jammy, soft came out only 10-12 s
+    shorter than jammy, with the bracket from soft to fudgy and "probably
+    too firm", because the time leans late to set the white (decision 80);
+    the warning now says why.
 
 Waiting on someone else: the Czech review (F5), by the owner's friend.
 
@@ -284,8 +298,11 @@ checked, fixed or deleted. Start the QA pass here.
   pull and done screens in their words, and the direction mid-cook; the
   lower half of Settings and Help's reliability section with advice in it;
   a Live Activity cancelled mid-start.
-- **The unlikelySoft and unlikelyHard sentences** have not been seen on a
-  screen in either app.
+- **The low-odds warning at the firm end** (`warn.lowOdds` with "Hard")
+  has not been seen on a screen; the soft end was, in both apps, on 5
+  October. The unlikelySoft/Hard sentences it replaced are retired. The
+  copy-snapshot harness drives fresh installs only, so it never shows the
+  warning.
 - **The Lock Screen and the Dynamic Island**: the card ending as the cooling
   does, the 1750 alarms and their 110-character body on a real notification,
   the Live Activity in 1750, and "my guess until you tap Full rolling boil"

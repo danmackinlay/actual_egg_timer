@@ -67,7 +67,8 @@ them out differently.
   yolk, shaded by the odds, with the five doneness words at their levels and
   the bracket under it (§8). Then the texture note.
 - **The setup sentence** (§5), and the open clause's panel under it.
-- **The slot**: a refusal, or the sous-vide warning, or (web) a reloaded
+- **The slot**: a refusal, or a level's low odds (`warn.lowOdds`, §8), or
+  the sous-vide warning, or (web) a reloaded
   cook's warning; failing those, before anything is learned, the first-egg
   welcome (`idle.welcome`). Under low odds the link "How to make this more
   reliable →" goes under whichever is there and opens Help at its
@@ -260,18 +261,31 @@ runny white costs three, `DECISIONS.md` 7), and the mark sits right of the
 thumb by what that costs the yolk: at the far left of a cold start after
 three good eggs, the thumb at 0.06 and the mark at 0.14, 16 s later. The
 direction says so (`outcome.miss.firm` or `.likely.firm`). The slider never
-rests on the stripes or the dots: asked for
-less than the pan or the odds offer, it moves to the softest level offered,
-which is the level the time and the bracket are for (test/reach.test.ts 10).
+rests on the stripes: asked for less than the pan can deliver, it moves to
+the softest level the pan delivers, which is the level the time and the
+bracket are for (test/reach.test.ts 10). It does rest on the dots
+(`DECISIONS.md` 83): there the time, the direction and the bracket are for
+the level asked, and the warning line says `warn.lowOdds`, "Soft: I get
+this right fewer than 3 times in 10 so far." (the word is the level the
+thumb is on). A refusal worth saying takes the line instead, as the slider
+moves out of the stripes; the next answer there carries the warning. The
+advice link stays under it. After a runny white or a yolk too soft, the
+time at a dotted level can lean late enough that the bracket sits mostly
+firmer than the thumb (test/reach.test.ts 11: one egg soft with a runny
+white, soft asked, 0/10, the bracket 0.50-0.82); the direction and the
+bracket say so, and the warning says why.
 
 **The track is a yolk** (`DECISIONS.md` 31): deep orange at runny, golden at
 jammy, pale yellow at hard (web `--yolk-runny`, `--yolk-jammy`,
 `--yolk-hard`; iOS `Palette.yolkRunny`, `yolkJammy`, `yolkHard`), deeper in
 the light scheme. The odds are its opacity: each level's odds over the best
 level's, so a fresh install at 2/10 everywhere still shows where the pan
-works. Dots mark levels the pan delivers but the odds do not offer; stripes
-mark what the pan cannot deliver. The strip is bare before the first answer
-and in sous-vide.
+works. Colour alone is a level at 3/10 or better; dots mark levels the pan
+delivers but gets right fewer than 3 times in 10 so far, which can be
+chosen and are warned of; stripes mark what the pan cannot deliver, which
+cannot. No dots before the first egg that taught something. A tick word is
+struck through (web) only over the stripes. The strip is bare before the
+first answer and in sous-vide.
 
 **Nothing jumps.** While idle the direction keeps two lines' room and centres
 a one-line sentence in it, so a drag that changes the sentence does not move

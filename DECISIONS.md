@@ -488,5 +488,6 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     there, the time, the direction and the bracket are for that level, and
     the warning line says "Soft: I get this right fewer than 3 times in 10
     so far." The advice link stays. No warning and no dots before the first
-    egg that taught something, as before. 5 October 2026; the `warn` draft;
-    built on the `warn-low-odds` branch.
+    egg that taught something, as before. 5 October 2026; the `warn` draft.
+    Built `36eb766` (core, Swift, the draft), web `fd6e2cc`, iOS
+    `5adebf9`, on the `warn-low-odds` branch.

@@ -4227,3 +4227,53 @@ Left: the web still offers no question after a reload (its panel's rule);
 iOS now resumes the questions when the egg is last in the log and not yet
 shared, replaying the log for an egg already folded. `MODEL_ID` did not
 change with the counter's physics on 3 October.
+
+## 5 October 2026: low odds warn; only the stripes refuse
+
+The owner, testing 0.4.0 on a phone (58 g from the fridge, into boiling
+water, an ice bath, little learned): the thumb would not go left of jammy
+though the dotted track looked draggable - "is a soft yolk just
+impossible?" The dots were levels the pan delivers but the odds put under
+3/10, and since 27 September (decision 20) the slider snapped back out of
+them to the softest level at 3/10, saying "The softest I get right at least
+3 times in 10, so far: jammy." The owner's decision 83: only the stripes
+refuse; the dots can be chosen, with an honest warning.
+
+Core (`36eb766`): `verdictWithOdds` and the `unlikelySoft`/`unlikelyHard`
+verdicts are gone. `answerAt` judges with `verdictFor` alone, so it snaps
+only to the physical edge, and returns `lowOdds`, from `lowOddsAt`: outside
+the profile's range at 3/10 or better, which is null before the first egg
+that taught something, so a fresh install is warned of nothing, as it was
+refused nothing. `warningKey` picks the line: a refusal worth saying, else
+`warn.lowOdds`. Swift ported, fixtures regenerated (`reach.json` now pins
+`lowOdds` and each answer's warning; `wording.json` the line's key over
+every verdict, worth-saying flag, warning and cooling). The `warn` draft
+retires the two sentences and adds "{doneness}: I get this right fewer than
+{hits} times in {of} so far.", the word standing alone before the colon;
+1750 "{doneness}: in this I have hitherto succeeded fewer than {hits} times
+in {of}." `copyLiterals --since ab5cd22 warn` passes; `copySnapshot compare
+--draft warn` passes with nothing new or gone, and the plain compare is
+identical in all 172 states, since the harness drives only fresh installs.
+Web `fd6e2cc`, iOS `5adebf9`. The web no longer strikes through a tick word
+over the dots.
+
+Driven in both apps at 58 g, fridge, boiling water, ice, with one egg
+answered too soft at jammy (web: through `logEgg`; iOS: `-seedEggs soft`):
+dots from runny to 0.34, jammy 7:46 in both. Dragged to soft, the thumb
+stays: 7:36 on the web at 0.22 (7:34-7:35 on iOS), "It might miss, and if
+so, probably too firm.", the bracket soft to fudgy, and the warning. At the
+far left the web says "Runny: …". With the air, a drag into the stripes
+ends at their edge (0.52, 7:09 in both); on iOS the thumb moved there when
+the finger lifted, so `YolkSlider`'s released still holds; the line was the
+counter's refusal on iOS and, after the profile landed, the warning on the
+web. Screenshots `warn-web-*.png`, `warn-ios-*.png` in the session's
+scratchpad.
+
+What the owner will see at soft is worth knowing: after an egg too soft, or
+a runny white, the chosen time at a dotted level leans late to set the
+white (a runny white costs three, decision 7), so soft can come out barely
+shorter than jammy, or even longer. `test/reach.test.ts` 11, one egg
+answered soft with a runny white: soft 0/10 at 500 s against jammy's 428 s
+(4/10), the bracket
+0.50-0.82. Nothing hides that now: the direction, the bracket and the
+warning all say it.
