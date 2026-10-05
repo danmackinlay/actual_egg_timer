@@ -8,7 +8,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
-  FRESH_SHARE, ShareState, Transport, answered, deleteSent, deletionAsked, forgetShare, forgotten,
+  FRESH_SHARE, REQUEST_TIMEOUT_MS, ShareState, Transport, answered, fetchWithin, deleteSent, deletionAsked, forgetShare, forgotten,
   loadShare, newUid, readShare, reconciled, retryDeletes, sendFinal, setSharing, shareState, shareStoredElsewhere, turnedOff,
   turnedOn,
 } from '../src/ui/share.js';
@@ -125,7 +125,9 @@ function page(log: EggRecord[], final = log.length) {
   return h;
 }
 
-const LOG: EggRecord[] = [0, 1, 2].map((i) => ({ ...recordAt(0.41, 400 + i, 0, null), day: `2026-10-0${i + 1}` }));
+const LOG: EggRecord[] = [0, 1, 2].map((i) => ({
+  ...recordAt(0.41, 400 + i, 0, null), day: `2026-10-0${i + 1}`, id: 1759700000000 + i,
+}));
 
 test('4. turning sharing on sends the log so far, in order, each copy carrying the id', async () => {
   storage.clear();
@@ -140,6 +142,8 @@ test('4. turning sharing on sends the log so far, in order, each copy carrying t
   assert.deepEqual(t.posts.map((p) => (p['record'] as EggRecord).day), ['2026-10-01', '2026-10-02']);
   for (const p of t.posts) assert.equal((p['record'] as EggRecord).uid, uid);
   assert.equal(LOG[0].uid, null, 'the log keeps no id');
+  for (const p of t.posts) assert.equal('id' in (p['record'] as object), false, 'the moment it started stays here');
+  assert.equal(LOG[0].id, 1759700000000, 'and stays in the log');
   assert.equal(JSON.parse(storage.get('aet.share.v1') ?? '{}').sent, 2, 'written through');
 });
 
@@ -262,4 +266,18 @@ test('9. two tabs sending the same egg move the cursor once', async () => {
   release(200);
   await sending;
   assert.deepEqual([shareState().sent, shareState().seq], [1, 1], 'not 2: the other tab already moved it');
+});
+
+test('10. a request the server never answers is given up, so the lock it holds is let go', async () => {
+  assert.ok(REQUEST_TIMEOUT_MS > 0 && REQUEST_TIMEOUT_MS <= 30000);
+  let signal: AbortSignal | null = null;
+  const stalled = (_url: string, init: RequestInit): Promise<Response> => new Promise((_resolve, reject) => {
+    signal = init.signal ?? null;
+    init.signal?.addEventListener('abort', () => { reject(new Error('aborted')); });
+  });
+  await assert.rejects(fetchWithin('/api/eggs', { method: 'POST' }, 5, stalled), /aborted/);
+  assert.equal((signal as AbortSignal | null)?.aborted, true);
+  // One that answers in time is answered, and its timer is cleared.
+  const quick = async (): Promise<Response> => new Response(null, { status: 201 });
+  assert.equal((await fetchWithin('/api/eggs', {}, 5, quick)).status, 201);
 });

@@ -37,7 +37,7 @@
  */
 
 import { shareGivesUp, shareReply } from '../core/policy.js';
-import { EggRecord } from '../core/record.js';
+import { EggRecord, sharedRecord } from '../core/record.js';
 import { readStorage, writeStorage } from './store.js';
 
 const KEY = 'aet.share.v1';
@@ -65,11 +65,33 @@ export interface Transport {
 }
 
 export const fetchTransport: Transport = {
-  post: async (body) => (await fetch('/api/eggs', {
+  post: async (body) => (await fetchWithin('/api/eggs', {
     method: 'POST', headers: { 'content-type': 'application/json' }, body: body,
   })).status,
-  remove: async (uid) => (await fetch(`/api/eggs/${uid}`, { method: 'DELETE' })).status,
+  remove: async (uid) => (await fetchWithin(`/api/eggs/${uid}`, { method: 'DELETE' })).status,
 };
+
+/** How long a send or a deletion waits for the server. Each holds the lock
+ *  every tab's sends and deletions take turns under (`exclusive`), so one
+ *  that stalled would hold up a deletion asked for in any tab for as long as
+ *  the browser left it hanging. A request given up is asked again at the
+ *  next run, which the server takes once (a resent egg is a 200). */
+export const REQUEST_TIMEOUT_MS = 20000;
+
+/** `fetch`, given up after `ms`: a throw then, as when the network does not
+ *  answer. */
+export async function fetchWithin(
+  url: string, init: RequestInit, ms = REQUEST_TIMEOUT_MS,
+  f: (url: string, init: RequestInit) => Promise<Response> = (u, i) => fetch(u, i),
+): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => { controller.abort(); }, ms);
+  try {
+    return await f(url, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
 /* ------------------------------------------------------------------ ids */
 
@@ -303,7 +325,7 @@ async function sendOne(): Promise<boolean> {
   const final = Math.min(h.finalCount(), log.length);
   if (!s.on || s.uid === null || s.sent >= final) return false;
   const gen = generation;
-  const body = JSON.stringify({ seq: s.seq, record: { ...log[s.sent], uid: s.uid } });
+  const body = JSON.stringify({ seq: s.seq, record: sharedRecord(log[s.sent], s.uid) });
   let status: number;
   try {
     status = await transport.post(body);

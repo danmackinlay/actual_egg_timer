@@ -186,6 +186,15 @@ export interface EggRecord {
   uid: string | null;
   /** The local date the cook started, YYYY-MM-DD. A day, not a timestamp. */
   day: string;
+  /** Which cook this egg was: the moment it started, in whole milliseconds
+   *  since 1970 UTC. Two tabs showing one cook, or a cook written down twice,
+   *  make one egg, not two, and only the page that wrote an egg down learns
+   *  from it (src/ui/calibration.ts). Kept on the device and never sent
+   *  (`sharedRecord`): to the millisecond, it says far more about the cook
+   *  than `day` does. Null, or absent, on a record from before it and on
+   *  the iPhone app's, which runs one cook at a time and has no need of it;
+   *  `parseRecord` leaves it out then, as Swift's encoder does. */
+  id?: number | null;
   app: AppName;
   appVersion: string;
   prior: string;
@@ -349,7 +358,7 @@ function probePossible(s: RecordSetup, centre_C: number): boolean {
  * does, so records from different app versions coexist. Any `appVersion` is
  * accepted under `v: 1`. Fields may be ADDED within v1 but never removed or
  * reinterpreted once a record has left the owner's devices, so unknown
- * fields are ignored here, and the nullable fields (`uid`, `egg.sizeTable`,
+ * fields are ignored here, and the nullable fields (`uid`, `id`, `egg.sizeTable`,
  * `yolk`, `white`, `probe`, E6's `model` and `forecast`, and DECISIONS.md
  * 92's `yolkWord` and `forecast.yolkWord`) may be absent and read as null -
  * which is also
@@ -365,6 +374,9 @@ export function parseRecord(raw: unknown): EggRecord | null {
   const uid = raw['uid'] ?? null;
   if (uid !== null && !nonEmptyString(uid)) return null;
   if (!isDay(raw['day'])) return null;
+  // A moment, in whole milliseconds: what both apps' integers hold exactly.
+  const id = raw['id'] ?? null;
+  if (id !== null && !(typeof id === 'number' && Number.isSafeInteger(id) && id > 0)) return null;
   if (!oneOf(raw['app'], ['web', 'ios'] as const)) return null;
   if (!nonEmptyString(raw['appVersion']) || !nonEmptyString(raw['prior'])) return null;
   const model = raw['model'] ?? null;
@@ -445,7 +457,7 @@ export function parseRecord(raw: unknown): EggRecord | null {
   const forecast = rawForecast === null ? null : parseForecast(rawForecast);
   if (rawForecast !== null && forecast === null) return null;
 
-  return {
+  const out: EggRecord = {
     v: RECORD_VERSION,
     uid: uid,
     day: raw['day'],
@@ -470,6 +482,19 @@ export function parseRecord(raw: unknown): EggRecord | null {
     register: raw['register'],
     units: raw['units'],
   };
+  // Absent when there is none, as Swift writes it, so a record from before
+  // it is written back exactly as it was.
+  if (id !== null) out.id = id;
+  return out;
+}
+
+/** A record as sharing sends it, and as the server keeps it: under the
+ *  cook's random id, and without `id`, the moment the cook started, which
+ *  never leaves the device (privacy/index.html). */
+export function sharedRecord(r: EggRecord, uid: string | null): EggRecord {
+  const out: EggRecord = { ...r, uid: uid };
+  delete out.id;
+  return out;
 }
 
 /** Every record, or null if any one of them fails. A log is folded in order, so

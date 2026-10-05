@@ -208,7 +208,7 @@ fixes hold; the two NOT A BUG calls hold; 1 and 5 hold only in part.
 
 ### Fix before 0.4 ships
 
-- **Two builds in two tabs rewrite each other's store forever**
+- DONE dfacf1c: **Two builds in two tabs rewrite each other's store forever**
   (`src/ui/calibration.ts:591`). Taking up another tab's store writes back
   unless it decoded cleanly; a tab on an older `MODEL_ID` decodes the newer
   store as "rebuild" and writes its own, and the other answers in kind
@@ -224,17 +224,17 @@ fixes hold; the two NOT A BUG calls hold; 1 and 5 hold only in part.
 
 ### Next
 
-- **A second answer can be dropped silently:** if the other tab learns from
+- DONE edd4413 (only the tab that wrote an egg down folds it while it is newest; an answer refused is not thanked, and the questions go): **A second answer can be dropped silently:** if the other tab learns from
   the egg first, `recordSecondAnswer` returns false and the cook is thanked
   anyway. Leave learning from an egg to the tab that logged it.
-- **A logged egg can count twice:** records carry no ID or start time to
+- DONE 9e84f1c, edd4413 (`id`, the start in ms, kept on the device and never sent; a tab showing a cook answered elsewhere stops asking): **A logged egg can count twice:** records carry no ID or start time to
   dedupe on, and nothing listens for the cook-in-progress key. Give each
   record the start time as an ID (fixes this and the one above).
-- **Boil memory and settings** are not covered: "Forget everything" is
+- DONE 74114eb: **Boil memory and settings** are not covered: "Forget everything" is
   still undone by another tab's next measured boil.
-- **The lock is held across a `fetch` with no timeout:** a stalled POST
+- DONE cf1424e (20 s): **The lock is held across a `fetch` with no timeout:** a stalled POST
   blocks deletions in every tab.
-- **Rollback claim:** top-level store fields are still dropped by an older
+- DONE e118e32: **Rollback claim:** top-level store fields are still dropped by an older
   build, so `ios/RELEASING.md`'s "rolling 0.5 back to 0.4 is safe" says too
   much.
 

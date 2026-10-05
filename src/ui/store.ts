@@ -165,12 +165,26 @@ function oneOf<T extends string>(value: unknown, allowed: readonly T[], fallback
  *  place (`saveSettings`). Read with the settings, and kept up by every save
  *  of a pan, so a save need not read storage back to find it. */
 let lastPanStart: StartMode = 'cold';
+/** The settings as this page last read or wrote them, as stored. Anything
+ *  else found there was written by another tab, and is taken up before this
+ *  page writes (`takenUp`): every page writes them whole, so a page that
+ *  wrote back what it loaded would undo every change another tab made. */
+let settingsSeen: string | null = null;
+/** The size table the settings were read against (`loadSettings`). */
+let settingsClasses: SizeClass[] = [];
 
 /** `classes` is the table the app is showing now, which need not be the one
  *  the record was saved against. */
 export function loadSettings(classes: SizeClass[]): Settings {
-  const raw = parseObject(readStorage(SETTINGS_KEY));
+  settingsClasses = classes;
+  settingsSeen = readStorage(SETTINGS_KEY);
+  const raw = parseObject(settingsSeen);
   lastPanStart = storedPanStart(raw);
+  return readSettings(raw, classes);
+}
+
+/** Settings as stored, each one checked, the defaults for anything missing. */
+function readSettings(raw: Record<string, unknown> | null, classes: SizeClass[]): Settings {
   if (raw === null) return { ...DEFAULT_SETTINGS };
   const d = DEFAULT_SETTINGS;
   return {
@@ -182,7 +196,7 @@ export function loadSettings(classes: SizeClass[]): Settings {
     altitude_m: clampNumber(raw['altitude_m'], LIMITS.altitude_m, d.altitude_m),
     // Only a pan comes back. A stored 'sous', from before it stopped being
     // saved, is read as the default, because nothing recorded the pan before it.
-    startMode: lastPanStart,
+    startMode: storedPanStart(raw),
     afterBoil: oneOf(raw['afterBoil'], ['hold', 'off'] as const, d.afterBoil),
     cooling: oneOf(raw['cooling'], ['ice', 'tap', 'counter'] as const, d.cooling),
     waterLitres: clampNumber(raw['waterLitres'], LIMITS.waterLitres, d.waterLitres),
@@ -211,9 +225,59 @@ export function loadLanguage(): LanguageState {
  *  choice. It is still a choice for as long as the page is open; what is saved
  *  in its place is whatever pan was saved before it, cold or hot, so a reload
  *  comes back to the last pan the cook used. `loadSettings` comes first. */
-export function saveSettings(settings: Settings): void {
-  if (settings.startMode !== 'sous') lastPanStart = settings.startMode;
-  writeStorage(SETTINGS_KEY, JSON.stringify({ ...settings, startMode: lastPanStart }));
+export function saveSettings(settings: Settings): Settings {
+  const next = takenUp(settings);
+  if (next.startMode !== 'sous') lastPanStart = next.startMode;
+  writeStorage(SETTINGS_KEY, JSON.stringify({ ...next, startMode: lastPanStart }));
+  // Read back: a write that failed leaves the store as it was, which is then
+  // not another tab's.
+  settingsSeen = readStorage(SETTINGS_KEY);
+  return next;
+}
+
+/**
+ * The settings with what another tab wrote since this page last read or
+ * wrote them taken up: each setting this page has not changed since then
+ * becomes the other tab's, and each one it has changed stays its own. The
+ * settings given, as they are, when no other tab wrote; what is written is
+ * what comes back, so the page shows it.
+ */
+function takenUp(ours: Settings): Settings {
+  const text = readStorage(SETTINGS_KEY);
+  if (text === settingsSeen) return ours;
+  const baseRaw = parseObject(settingsSeen);
+  const theirRaw = parseObject(text);
+  const base = readSettings(baseRaw, settingsClasses);
+  const theirs = readSettings(theirRaw, settingsClasses);
+  const next: Settings = { ...ours };
+  const into = next as unknown as Record<string, unknown>;
+  for (const key of Object.keys(ours) as (keyof Settings)[]) {
+    if (key !== 'startMode' && sameSetting(ours[key], base[key])) into[key] = theirs[key];
+  }
+  // The pan: a sous-vide on screen is this page's alone and never written,
+  // and the pan under it is whichever was saved last.
+  const pan = ours.startMode === 'sous' ? lastPanStart : ours.startMode;
+  if (pan === storedPanStart(baseRaw)) {
+    lastPanStart = storedPanStart(theirRaw);
+    if (ours.startMode !== 'sous') next.startMode = lastPanStart;
+  }
+  return next;
+}
+
+function sameSetting(a: unknown, b: unknown): boolean {
+  return JSON.stringify(a) === JSON.stringify(b);
+}
+
+/** Another tab changed storage (the page's `storage` event; a null key is a
+ *  tab that cleared it all): the settings with what it wrote taken up
+ *  (`takenUp`), or null if it did not touch them. */
+export function settingsStoredElsewhere(key: string | null, ours: Settings): Settings | null {
+  if (key !== null && key !== SETTINGS_KEY) return null;
+  const text = readStorage(SETTINGS_KEY);
+  if (text === settingsSeen) return null;
+  const next = takenUp(ours);
+  settingsSeen = text;
+  return next;
 }
 
 /** The pan method in a stored record: cold or hot, and cold for anything else,
@@ -228,8 +292,19 @@ function storedPanStart(raw: Record<string, unknown> | null): StartMode {
  *  is core policy, re-exported above. What is left here is getting them in and
  *  out of localStorage, and refusing to load a value that is not a boil. */
 
+/** The pans as this page last read or wrote them, as stored: anything else
+ *  there is another tab's, taken up before this page writes, so that a
+ *  "Forget everything" in another tab is not undone by this one's next
+ *  measured boil. */
+let boilSeen: string | null = null;
+
 export function loadBoilMemory(): BoilMemory {
-  const raw = parseObject(readStorage(BOIL_KEY));
+  boilSeen = readStorage(BOIL_KEY);
+  return readBoilMemory(boilSeen);
+}
+
+function readBoilMemory(text: string | null): BoilMemory {
+  const raw = parseObject(text);
   const out: BoilMemory = {};
   if (raw === null) return out;
   for (const key of Object.keys(raw)) {
@@ -244,16 +319,31 @@ export function loadBoilMemory(): BoilMemory {
 export function rememberTimeToBoil(
   memory: BoilMemory, litres: number, seconds: number,
 ): BoilMemory {
-  const updated = rememberBoil(memory, clampLitres(litres), seconds);
-  if (updated === memory) return memory;
+  // Blended into the pans as stored now, if another tab changed them.
+  const text = readStorage(BOIL_KEY);
+  const now = text === boilSeen ? memory : readBoilMemory(text);
+  const updated = rememberBoil(now, clampLitres(litres), seconds);
+  if (updated === now) return now;
   writeStorage(BOIL_KEY, JSON.stringify(updated));
+  boilSeen = readStorage(BOIL_KEY);
   return updated;
+}
+
+/** Another tab changed storage: the pans as it left them, or null if it did
+ *  not touch them. */
+export function boilStoredElsewhere(key: string | null): BoilMemory | null {
+  if (key !== null && key !== BOIL_KEY) return null;
+  const text = readStorage(BOIL_KEY);
+  if (text === boilSeen) return null;
+  boilSeen = text;
+  return readBoilMemory(text);
 }
 
 /** Forget every measured pan. Paired with the calibration reset: someone
  *  taking their learning back usually means the whole kitchen. */
 export function clearBoilMemory(): void {
   removeStorage(BOIL_KEY);
+  boilSeen = null;
 }
 
 function clampLitres(litres: number): number {
@@ -307,6 +397,22 @@ export function loadCook(): StoredCook | null {
 
 export function clearCook(): void {
   removeStorage(COOK_KEY);
+}
+
+/** Whether a change of storage (the page's `storage` event; a null key is
+ *  a tab that cleared it all) may have touched the cook in progress. */
+export function cookStoredElsewhere(key: string | null): boolean {
+  return key === null || key === COOK_KEY;
+}
+
+/** Whether the cook written down is the one started at `startedAt_ms`, with
+ *  its egg written down with an answer: by another tab, if not by this one. */
+export function storedCookAnswered(startedAt_ms: number): boolean {
+  const raw = parseObject(readStorage(COOK_KEY));
+  if (raw === null || raw['answers'] !== 'beforeReload') return false;
+  const machine = raw['machine'];
+  return machine !== null && typeof machine === 'object'
+    && (machine as Record<string, unknown>)['startedAt_ms'] === startedAt_ms;
 }
 
 /** The cook as stored, for keeping aside one this build cannot read. */

@@ -266,6 +266,11 @@ public struct EggRecord: Sendable, Codable, Equatable {
     public var uid: String?
     /// The local date the cook started, YYYY-MM-DD.
     public var day: String
+    /// Which cook this egg was: the moment it started, in whole milliseconds
+    /// since 1970 UTC. The web app writes it, so that two tabs never count one
+    /// egg twice; this app runs one cook at a time and writes none, and one is
+    /// never sent. See src/core/record.ts.
+    public var id: Int?
     public var app: AppName
     public var appVersion: String
     public var prior: String
@@ -299,7 +304,7 @@ public struct EggRecord: Sendable, Codable, Equatable {
     public var units: Units
 
     public init(
-        uid: String? = nil, day: String, app: AppName, appVersion: String,
+        uid: String? = nil, day: String, id: Int? = nil, app: AppName, appVersion: String,
         prior: String = literaturePopulation.id, model: String? = modelID, egg: RecordEgg, setup: RecordSetup,
         level: Double, recommendedS: Double, nudgeS: Double = 0, pulledS: Double, pulledBy: PulledBy,
         cooledS: Double, yolk: Feedback? = nil, yolkWord: YolkWord? = nil, white: WhiteReport? = nil,
@@ -309,6 +314,7 @@ public struct EggRecord: Sendable, Codable, Equatable {
         v = recordVersion
         self.uid = uid
         self.day = day
+        self.id = id
         self.app = app
         self.appVersion = appVersion
         self.prior = prior
@@ -332,7 +338,7 @@ public struct EggRecord: Sendable, Codable, Equatable {
     }
 
     enum CodingKeys: String, CodingKey {
-        case v, uid, day, app, appVersion, prior, model, egg, setup, level
+        case v, uid, day, id, app, appVersion, prior, model, egg, setup, level
         case recommendedS = "recommended_s"
         case nudgeS = "nudge_s"
         case pulledS = "pulled_s"
@@ -348,6 +354,7 @@ public struct EggRecord: Sendable, Codable, Equatable {
         v = try c.decode(Int.self, forKey: .v)
         uid = try c.decodeIfPresent(String.self, forKey: .uid)
         day = try c.decode(String.self, forKey: .day)
+        id = try c.decodeIfPresent(Int.self, forKey: .id)
         app = try c.decode(AppName.self, forKey: .app)
         appVersion = try c.decode(String.self, forKey: .appVersion)
         prior = try c.decode(String.self, forKey: .prior)
@@ -372,12 +379,15 @@ public struct EggRecord: Sendable, Codable, Equatable {
 
     /// Nulls are written, not omitted: the schema says `"white": null`, and a
     /// record read by something other than this app should not have to know
-    /// that a missing key means the same thing.
+    /// that a missing key means the same thing. The one exception is `id`,
+    /// written only when there is one: a record this app sends then carries
+    /// no `id` at all, as the privacy page says.
     public func encode(to encoder: Encoder) throws {
         var c = encoder.container(keyedBy: CodingKeys.self)
         try c.encode(v, forKey: .v)
         try c.encode(uid, forKey: .uid)
         try c.encode(day, forKey: .day)
+        try c.encodeIfPresent(id, forKey: .id)
         try c.encode(app, forKey: .app)
         try c.encode(appVersion, forKey: .appVersion)
         try c.encode(prior, forKey: .prior)
@@ -452,6 +462,8 @@ public func validRecord(_ r: EggRecord) -> Bool {
     guard r.v == recordVersion else { return false }
     if let uid = r.uid, uid.isEmpty { return false }
     guard isDay(r.day), !r.appVersion.isEmpty, !r.prior.isEmpty else { return false }
+    // A moment, in whole milliseconds, within what a double holds exactly.
+    if let id = r.id, id <= 0 || id > 9_007_199_254_740_991 { return false }
     if let model = r.model, model.isEmpty { return false }
     if let forecast = r.forecast, !validForecast(forecast) { return false }
     // One yolk answer or none (DECISIONS.md 92).

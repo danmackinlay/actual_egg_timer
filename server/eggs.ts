@@ -28,7 +28,7 @@
  */
 
 import { createHash } from 'node:crypto';
-import { parseRecord } from '../src/core/record.js';
+import { parseRecord, sharedRecord } from '../src/core/record.js';
 import { AttestError, countsAsGenuine, verifyAssertion, verifyAttestation } from './appAttest.js';
 
 /** The store, as much of it as this needs. */
@@ -220,8 +220,11 @@ async function postEgg(req: Request, store: Store, opts: Options): Promise<Respo
   if (typeof seq !== 'number' || !Number.isInteger(seq) || seq < 0 || seq >= MAX_SEQ) {
     return refuse(400, 'seq');
   }
-  const record = parseRecord(o['record']);
-  if (record === null) return refuse(400, 'not a record');
+  const read = parseRecord(o['record']);
+  if (read === null) return refuse(400, 'not a record');
+  // Never kept, whoever sent it: the moment the cook started stays on the
+  // device that wrote it (`sharedRecord`).
+  const record = sharedRecord(read, read.uid);
   if (!isUid(record.uid)) return refuse(400, 'uid');
   if (JSON.stringify(record).length > MAX_RECORD_BYTES || !shortStrings(record)) return refuse(413, 'record too big');
   const tier = await tierOf(store, record.uid, body, req, opts);
