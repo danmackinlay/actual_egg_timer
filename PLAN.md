@@ -10,7 +10,7 @@ population a prior is drawn from (E6-E8, `COLLECTIVE.md`) are built in
 both, on this branch, not on `main` and not deployed. The web app (`src/`) and the iOS app (`ios/`) carry
 the same model, refusals, particle filter and choice of time, the same
 catalogue of words in two Englishes (Phase F but for Czech), and the same
-layout (`UI.md`). `npm test` runs 322 tests, all passing (5b pins E3's known
+layout (`UI.md`). `npm test` runs 324 tests, all passing (5b pins E3's known
 limit). `npm run validate` passes 29/29, and `swift test` passes 128 tests
 in 33 suites. **Pushed on 29 September** at `5ff6940`, the owner's
 call: Netlify serves it at actualeggtimer.netlify.app, and the first run of
@@ -169,7 +169,16 @@ The one queue. Nothing else in the documents waits on the owner.
     after one egg answered too soft at jammy, soft came out only 10-12 s
     shorter than jammy, with the bracket from soft to fudgy and "probably
     too firm", because the time leans late to set the white (decision 80);
-    the warning now says why.
+    the warning now says why. Since item 15 it is never later than jammy.
+15. **The time never rises as the thumb moves softer, on a phone** (5
+    October 2026, `DECISIONS.md` 84), both apps, no new words. With your
+    setup and one egg answered soft with a runny white, soft was 500 s and
+    jammy 428 s; now everything from soft to just under jammy shows the
+    same time, about jammy's (7:02 on the simulator and the web), with
+    "probably too firm" and the warning, and the time rises from there.
+    Drag from hard to the left edge and watch the time only fall or hold.
+    The time can step once, a second or so after a new pot, when its odds
+    arrive.
 
 Waiting on someone else: the Czech review (F5), by the owner's friend.
 

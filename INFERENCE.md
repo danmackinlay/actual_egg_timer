@@ -750,6 +750,30 @@ point and a ninth. The owner chose +-10 s knowing it (`DECISIONS.md` 61),
 and the Learning mark's (i) says an egg may come out a little softer or
 firmer.
 
+**Monotone in the level (5 October 2026, `DECISIONS.md` 84).** The loss is
+relative to each level's own target, so nothing makes the chosen times keep
+the levels' order. Where the white binds they do not: after one egg answered
+soft with a runny white (58 g, fridge, boiling, ice), soft chose 500 s and
+jammy 428 s, because at soft the yolk part of the loss is lost either way and
+the white's 3x steers. The owner wants the time never to fall as the level
+rises. `oddsProfile` (`src/core/reach.ts`) already decides every level, so it
+decides them from the hard end and holds each point under the time of the
+point above: a running minimum, which is the projection of the per-level
+choices onto non-decreasing schedules - each level capped at the next firmer
+level's time. A level between two points, as on a drag, is held between
+their two times (`envelopeBounds`), so a drag costs its own decision and a
+look-up, as before; the odds, the bracket and the direction are read at the
+time held. The profile's step is 0.05, so a dip in the choices narrower than
+that is missed: just firmer than the jump at 0.36 above, 0.36-0.39 are held
+up to 0.40's 427 s from their own 422-426 s. Until the profile lands a level
+keeps its own choice; before the first egg the literature's times already
+rise with the level and nothing is held.
+
+The deeper fix is a loss that knows the levels are ordered - a miss by one
+band cheaper than a miss by two, so that being given jammy when soft was
+asked costs less than a hard yolk - under which the choices could come out
+monotone by themselves. Left for later.
+
 Not built: any per-cook loss.
 
 ## 9. The fit

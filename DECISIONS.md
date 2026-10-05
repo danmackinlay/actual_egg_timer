@@ -491,3 +491,16 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     egg that taught something, as before. 5 October 2026; the `warn` draft.
     Built `36eb766` (core, Swift, the draft), web `fd6e2cc`, iOS
     `5adebf9`, on the `warn-low-odds` branch.
+84. **The time never falls as the doneness rises** ("yes, I want it
+    monotone"). Each level's time was chosen against that level's own
+    target, so after a runny white soft's time leant past jammy's (58 g
+    from the fridge, boiling water, ice, one egg soft with a runny white:
+    soft 500 s, jammy 428 s), and asking for softer gave a firmer egg. Now
+    a level is given the smallest of its own choice and every firmer
+    level's - a running minimum from the hard end, built in the odds
+    profile - so soft there takes 427 s, the time of the softest firmer
+    level whose choice is sooner. Amends 80: the soft end still leans late
+    to set the white, but never past a firmer level's time. The 3×
+    runny-white cost is unchanged. Before the pot's profile lands, and
+    before the first egg, nothing changes. 5 October 2026. Built `22eadb5`
+    (core, Swift), web `ffba100`, iOS `2a3d7b7`, on the `monotone` branch.

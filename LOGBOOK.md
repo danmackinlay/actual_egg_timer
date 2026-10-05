@@ -4277,3 +4277,60 @@ answered soft with a runny white: soft 0/10 at 500 s against jammy's 428 s
 (4/10), the bracket
 0.50-0.82. Nothing hides that now: the direction, the bracket and the
 warning all say it.
+
+## 5 October 2026: the time is monotone in the level
+
+The last entry ended on it: after a runny white the time chosen at a dotted
+level leant past the time chosen at jammy, so asking for a softer egg gave
+a firmer one. The owner: "yes, I want it monotone" (decision 84).
+
+The choice is per level, against that level's own target (decision 7's
+loss), and nothing in it keeps the levels' order. What was built is the
+simple projection: a level gets the smallest of its own choice and every
+firmer level's, a running minimum from the hard end. The odds profile
+already decides every level the pan delivers, once per pot and posterior,
+so it is built there (`22eadb5`): the profile's points are decided from the
+hard end, each held under the point above it, and each keeps its time; the
+bisection's points are held between their neighbours, so they move no time
+already given; a level between points, as on a drag, is held between the
+two points' times (`envelopeBounds`). `decide` takes the bounds. A drag
+costs what it did; the profile costs what it did (20 points, about 0.5 s in
+node for this pot). Web `ffba100`, iOS `2a3d7b7`. Until the profile lands
+nothing is held, and before the first egg the literature's times rise with
+the level by themselves (test 12 checks it at every position).
+
+Test 11's setup, 58 g from the fridge, boiling water, ice, one egg answered
+soft with a runny white, on the production surface (time, odds, bracket):
+
+| level | before | after |
+|---|---|---|
+| 0.17 | 495 s, 0/10, 0.48-0.80 | 427 s, 1/10, 0.20-0.53 |
+| 0.22 soft | 500 s, 0/10, 0.50-0.82 | 427 s, 1/10, 0.20-0.53 |
+| 0.30 | 469 s, 1/10, 0.38-0.70 | 427 s, 2/10, 0.20-0.53 |
+| 0.35 | 473 s, 1/10, 0.40-0.72 | 427 s, 3/10, 0.20-0.53 |
+| 0.36 | 422 s, 3/10, 0.18-0.50 | 427 s, 3/10, 0.20-0.53 |
+| 0.37 | 423 s, 4/10, 0.18-0.51 | 427 s, 3/10, 0.20-0.53 |
+| 0.40 | 427 s, 4/10 | 427 s, 4/10 |
+| 0.41 jammy | 428 s, 4/10 | 428 s, 4/10 |
+| 0.62 fudgy | 473 s, 5/10 | 473 s, 5/10 |
+| 1 hard | 580 s, 5/10 | 580 s, 5/10 |
+
+The own choices jump twice, at 0.28 (497 to 471 s) and at 0.36 (473 to
+422 s), as the yolk's part of the loss takes over from the white's. The
+profile's step is 0.05, so the dip just after 0.36 is between points 0.35
+and 0.40: 0.35 is held under 0.40's 427 s, and 0.36-0.39, whose own choices
+are 422-426 s, are held up to it, 1-5 s later than they chose, and 0.37
+reads 3/10 where it read 4/10. That is the price of not deciding every
+hundredth (four times the profile's cost); the 3/10 line moves from 0.36 to
+0.37. The deeper fix, a loss in which a miss by one band costs less than a
+miss by two, is left for later (INFERENCE.md section 8).
+
+Driven in both apps with that egg (web: the log seeded into storage and
+folded by the page; iOS: `-seedEggs right/runny`, which `3b1285d` teaches a
+white answer). Web, the slider stepped down by hundredths from 0.60: 7:49,
+..., 7:10 at 0.41, 7:08, 7:07, 7:05, 7:04, 7:03, then 7:02 from 0.35 to
+the left edge; up to hard, 9:42; never a rise going softer. iOS, dragged:
+7:19 at about 0.46, 7:07, 7:02, 7:02 at the left edge, with "It might miss,
+and if so, probably too firm." and the warning at soft. The apps' posterior
+is the page's own fold of the record, so its times differ from the table's
+by a few seconds.

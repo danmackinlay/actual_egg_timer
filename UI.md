@@ -270,10 +270,13 @@ this right fewer than 3 times in 10 so far." (the word is the level the
 thumb is on). A refusal worth saying takes the line instead, as the slider
 moves out of the stripes; the next answer there carries the warning. The
 advice link stays under it. After a runny white or a yolk too soft, the
-time at a dotted level can lean late enough that the bracket sits mostly
-firmer than the thumb (test/reach.test.ts 11: one egg soft with a runny
-white, soft asked, 0/10, the bracket 0.50-0.82); the direction and the
-bracket say so, and the warning says why.
+time at a dotted level leans late, but never past a firmer level's
+(`DECISIONS.md` 84): the time never rises as the thumb moves softer, and
+where the white binds the soft end takes the time of the first level firmer
+whose own choice is sooner (test/reach.test.ts 11: one egg soft with a runny
+white, soft asked, jammy's 427 s, 1/10, the bracket 0.20-0.53; it chose 500
+s with the bracket 0.50-0.82 before). The direction and the bracket say
+where that puts the yolk, and the warning says why.
 
 **The track is a yolk** (`DECISIONS.md` 31): deep orange at runny, golden at
 jammy, pale yellow at hard (web `--yolk-runny`, `--yolk-jammy`,
@@ -290,7 +293,8 @@ first answer and in sous-vide.
 **Nothing jumps.** While idle the direction keeps two lines' room and centres
 a one-line sentence in it, so a drag that changes the sentence does not move
 the slider. While a new pot's surface is on its way, the readout keeps its
-last height. The white's line can still appear mid-drag near the soft end.
+last height. The time can move once more when the pot's odds profile lands
+after the surface, where it holds a soft level's time under a firmer one's. The white's line can still appear mid-drag near the soft end.
 
 **The slider** is described by the bracket too (web
 `aria-describedby="donenessRange"`). Its value to a screen reader is
