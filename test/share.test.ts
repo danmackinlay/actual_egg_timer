@@ -8,7 +8,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
-  FRESH_SHARE, ShareState, Transport, advances, deleteSent, deletionAsked, forgetShare, forgotten,
+  FRESH_SHARE, REQUEST_TIMEOUT_MS, ShareState, Transport, advances, fetchWithin, deleteSent, deletionAsked, forgetShare, forgotten,
   loadShare, newUid, readShare, reconciled, retryDeletes, sendFinal, setSharing, shareState, shareStoredElsewhere, turnedOff,
   turnedOn,
 } from '../src/ui/share.js';
@@ -218,4 +218,18 @@ test('9. two tabs sending the same egg move the cursor once', async () => {
   release(200);
   await sending;
   assert.deepEqual([shareState().sent, shareState().seq], [1, 1], 'not 2: the other tab already moved it');
+});
+
+test('10. a request the server never answers is given up, so the lock it holds is let go', async () => {
+  assert.ok(REQUEST_TIMEOUT_MS > 0 && REQUEST_TIMEOUT_MS <= 30000);
+  let signal: AbortSignal | null = null;
+  const stalled = (_url: string, init: RequestInit): Promise<Response> => new Promise((_resolve, reject) => {
+    signal = init.signal ?? null;
+    init.signal?.addEventListener('abort', () => { reject(new Error('aborted')); });
+  });
+  await assert.rejects(fetchWithin('/api/eggs', { method: 'POST' }, 5, stalled), /aborted/);
+  assert.equal((signal as AbortSignal | null)?.aborted, true);
+  // One that answers in time is answered, and its timer is cleared.
+  const quick = async (): Promise<Response> => new Response(null, { status: 201 });
+  assert.equal((await fetchWithin('/api/eggs', {}, 5, quick)).status, 201);
 });
