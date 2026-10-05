@@ -92,9 +92,11 @@ struct CountValue: View {
 /// never parsed back over the stored value. A comma is the decimal point on
 /// half the world's keyboards (`parseTyped`).
 ///
-/// The stepper steps the displayed value on the measure's grid, as
-/// `StepperValue` does, and repeats while held. A step ends the typing, so
-/// the field shows the number stepped to rather than what was half typed.
+/// The stepper steps to the next point of the measure's grid strictly past
+/// the stored value, as the web's `stepUp` does, so a typed 58.3 g goes up to
+/// 58.5, not from the 58.5 the field rounds it to on to 59. It repeats while
+/// held. A step ends the typing, so the field shows the number stepped to
+/// rather than what was half typed.
 struct MeasureField: View {
     let label: String
     let measure: Measure
@@ -119,10 +121,11 @@ struct MeasureField: View {
                     }
                 Text(tr(measure.unitKey))
                     .foregroundStyle(.secondary)
-                Stepper(label, value: measured(measure, Binding(
-                    get: { value },
-                    set: { focused = false; set($0) }
-                )), in: measure.bounds ?? 0...0, step: measure.step)
+                Stepper(label) {
+                    step(up: true)
+                } onDecrement: {
+                    step(up: false)
+                }
                     .labelsHidden()
                     .accessibilityValue(spoken)
             }
@@ -131,6 +134,17 @@ struct MeasureField: View {
         .onChange(of: value) { if !focused { text = shown } }
         .onChange(of: measure) { text = shown }
         .onChange(of: focused) { if !focused { text = shown } }
+    }
+
+    /// One press: the next point of the step's grid past the stored value,
+    /// in the measure's unit, inside its bounds.
+    private func step(up: Bool) {
+        focused = false
+        let k = fromSI(measure.unit, value) * measure.stepDen / measure.stepNum
+        let n = up ? (k + 1e-9).rounded(.down) + 1 : (k - 1e-9).rounded(.up) - 1
+        var next = n * measure.stepNum / measure.stepDen
+        if let b = measure.bounds { next = min(b.upperBound, max(b.lowerBound, next)) }
+        if let si = parse(measure, next) { set(si) }
     }
 
     /// The stored value as VoiceOver says it, with its unit: "58.5 g".
