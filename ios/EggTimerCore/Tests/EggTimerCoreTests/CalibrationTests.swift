@@ -261,4 +261,18 @@ struct InferenceConformance {
         #expect(cuts.count == yolkWordCuts.count, "four cutpoints between five words")
         for k in cuts.indices { expectClose(yolkWordCuts[k], cuts[k], "YOLK_WORD_CUTS[\(k)]") }
     }
+
+    /// The cuts are literals so that stored words keep their meaning; this
+    /// fails when an anchor moves, so whoever moves one chooses what the
+    /// stored words mean then (src/core/infer.ts, `YOLK_WORD_CUTS`).
+    @Test("the frozen yolk word cuts are today's anchors' midpoints")
+    func yolkWordCutsFrozen() {
+        let lo = log10(yolkDoseRunny)
+        let hi = log10(yolkDoseHard)
+        #expect(yolkWordCuts.count == donenessAnchors.count - 1)
+        for i in 0..<(donenessAnchors.count - 1) {
+            let edge = 0.5 * (donenessAnchors[i].level + donenessAnchors[i + 1].level)
+            #expect(abs(yolkWordCuts[i] - (lo + (hi - lo) * edge)) < 1e-12, "cut \(i)")
+        }
+    }
 }

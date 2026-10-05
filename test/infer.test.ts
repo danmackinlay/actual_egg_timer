@@ -170,7 +170,13 @@ test('1h. the words are the slider\'s: each cut is where anchorNear changes word
   assert.equal(YOLK_WORD_CUTS.length, 4);
   for (let i = 0; i < 4; i++) {
     const edge = 0.5 * (DONENESS_ANCHORS[i].level + DONENESS_ANCHORS[i + 1].level);
-    assert.ok(Math.abs(YOLK_WORD_CUTS[i] - logYolkTarget(edge)) < 1e-12, `cut ${i}`);
+    // The cuts are frozen literals, so that a stored word keeps its meaning.
+    // If an anchor moved, this fails: choose whether the stored words keep
+    // the old cuts or are refolded under new ones (infer.ts, YOLK_WORD_CUTS).
+    assert.ok(
+      Math.abs(YOLK_WORD_CUTS[i] - logYolkTarget(edge)) < 1e-12,
+      `cut ${i}: ${YOLK_WORD_CUTS[i]} is frozen, but the anchors now put it at ${logYolkTarget(edge)}`,
+    );
     assert.equal(anchorNear(edge - 1e-6).key, DONENESS_ANCHORS[i].key);
     assert.equal(anchorNear(edge + 1e-6).key, DONENESS_ANCHORS[i + 1].key);
   }
