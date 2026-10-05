@@ -400,3 +400,21 @@ already has.
   `build/export`) and deliver it with Apple's Transporter app.
 - **Piping `xcodebuild` into `head`.** It kills the upload when the pipe
   closes. Send the output to a file.
+
+## App Review's information request (October 2026)
+
+Review may ask for a screen recording **from a physical device** (a simulator
+recording is refused) plus written answers: purpose and audience, setup
+instructions, external services, regional differences, regulated material.
+What worked:
+
+- Record with iOS's own Screen Recording (Control Center), starting before
+  the app opens. Set Auto-Lock to Never first, or the phone sleeps mid-take.
+  A boiling-water start at Soft needs no egg and runs about six minutes; a
+  second clip for the alarm and the feedback is fine.
+- **App Store Connect's upload refuses `.MOV` / `.MP4` in capitals**, the way
+  the iPhone names them. Rename to a lowercase extension and it is accepted.
+- Paste the written answers into the reply and into App Review Information →
+  Notes, so they travel with later submissions. Before 0.4 the external
+  services answer is "none, no network"; from 0.4 it names opt-in sharing to
+  this site (Netlify) and Apple's App Attest.
