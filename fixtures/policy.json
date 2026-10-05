@@ -2547,12 +2547,16 @@
         "reply": "refused"
       },
       {
-        "status": 403,
+        "status": 402,
         "reply": "refused"
       },
       {
+        "status": 403,
+        "reply": "busy"
+      },
+      {
         "status": 404,
-        "reply": "refused"
+        "reply": "busy"
       },
       {
         "status": 405,
@@ -2576,6 +2580,10 @@
       },
       {
         "status": 415,
+        "reply": "refused"
+      },
+      {
+        "status": 422,
         "reply": "refused"
       },
       {

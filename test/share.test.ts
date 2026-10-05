@@ -67,8 +67,8 @@ test('3. on, off, forget, delete: the id lives as long as the log it sends', () 
   assert.equal(reconciled({ ...s, sent: 5 }, 2).sent, 0, 'a dropped log begins again');
   assert.equal(reconciled({ ...s, sent: 2 }, 5).sent, 2);
   assert.deepEqual(
-    [200, 201, 400, 413, 403, 404, 415, 429, 500, 503].map((status) => answered(s, status, 0).moved),
-    [true, true, true, true, true, true, true, false, false, false],
+    [200, 201, 400, 409, 413, 415, 422, 403, 404, 429, 500, 503].map((status) => answered(s, status, 0).moved),
+    [true, true, true, true, true, true, true, false, false, false, false, false],
   );
 });
 
@@ -152,18 +152,19 @@ test('5. a refused egg is passed over; a busy server or none stops the run until
   t.post = fake(['offline']).post;
   await sendFinal();
   assert.deepEqual([shareState().sent, shareState().busy], [0, 1], 'offline: try again later, not counted');
-  const ok = fake([404, 201, 200]);
+  const ok = fake([415, 201, 200]);
   loadShare(page(LOG), ok);
   await sendFinal();
-  assert.deepEqual([shareState().sent, shareState().seq], [3, 3], 'refused (a moved route), kept, already kept: all done with');
+  assert.deepEqual([shareState().sent, shareState().seq], [3, 3], 'refused (not JSON), kept, already kept: all done with');
   await sendFinal();
   assert.equal(ok.posts.length, 3, 'nothing is sent twice');
 });
 
-test('5b. an egg the server stays busy for is passed over in the end, and the rest go', async () => {
+test('5b. an egg the server stays busy for, or out of reach, is passed over in the end, and the rest go', async () => {
   storage.clear();
   let clock = 1e12;
-  const t = fake([503, 503, 503, 503, 503, 201, 201]);
+  // Down, then a bad deploy (404), then a firewall (403): all waited on.
+  const t = fake([503, 404, 404, 403, 503, 201, 201]);
   loadShare(page(LOG), t, () => clock);
   await setSharing(true);
   for (let run = 1; run < 5; run++) {

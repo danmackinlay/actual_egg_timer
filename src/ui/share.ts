@@ -24,11 +24,11 @@
  *
  * WHEN AN EGG GOES: once it is final - when the cook has moved on from it,
  * so no answer can be added - one at a time, in order. What the answer means
- * is core's `shareReply`. A refused egg (400, 413, and a 403, 404 or 415 from
- * a moved route or something in the way) is passed over, since asking again
- * will not change it. No answer, or a busy one (408, 429, 5xx), stops the run
- * until the next (a load, a new egg, sharing turned on, the browser back
- * online); but an egg that has had busy answers for long enough
+ * is core's `shareReply`. A refused egg (400, 413, 415, any 4xx about the
+ * request itself) is passed over, since asking again will not change it. No
+ * answer, or a busy one (5xx, 429, 408, and a 403 or 404 from a bad deploy
+ * or something in the way), stops the run until the next (a load, a new
+ * egg, sharing turned on, the browser back online); but an egg that has had busy answers for long enough
  * (`shareGivesUp`) is passed over too, so that one egg cannot hold up the
  * rest for good.
  *

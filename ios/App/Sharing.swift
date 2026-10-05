@@ -384,7 +384,8 @@ final class Sharing {
                 a.busy = nil
                 a.busySince = nil
             case .busy:
-                // Busy, or limited (408, 429, 5xx): the next run, for a while.
+                // Busy, limited or out of reach (403, 404, 408, 429, 5xx):
+                // the next run, for a while.
                 return waited(a)
             case .refused:
                 if status == 400, a.madeAt.map({ Date.now.timeIntervalSince($0) > Self.attestationFresh }) ?? true {
@@ -394,9 +395,9 @@ final class Sharing {
                     saveAttest(Attest(uid: uid, keyId: nil, attestation: nil, status: .pending))
                     return .later
                 }
-                // Refused (400), another key for this id (409), or a refusal
-                // from something in the way (403, 404, 415, ...), which no
-                // retry changes: open, so the eggs still go.
+                // Refused (400), another key for this id (409), or another
+                // refusal of the request itself (413, 415, 422, ...), which
+                // no retry changes: open, so the eggs still go.
                 a.status = .failed
             }
         } catch let error as DCError where error.code == .serverUnavailable {

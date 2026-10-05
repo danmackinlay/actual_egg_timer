@@ -622,15 +622,19 @@ export function phaseAt(d: Deadlines, now_s: number): Phase {
  * `Sharing.swift`):
  *
  * - `kept`: 201 kept, 200 already kept.
- * - `busy`: 408, 429 or any 5xx - the server, or something in front of it,
- *   is overloaded, limited or down, and the same request may well be taken
- *   later. Wait, and ask again on a later run, within `shareGivesUp`.
- * - `refused`: anything else, for good. 400 and 413 are the server's own
- *   refusals; a 403, 404, 405 or 415 is a moved route, a firewall or a proxy
- *   in the way, which asking again will not change. Waiting on one would stop
- *   everything behind it, the open results included, and say nothing; so the
- *   result is passed over, and an attestation given up (the phone sends
- *   open).
+ * - `busy`: 403, 404, 408, 429 or any 5xx - an answer about the way to the
+ *   server, not about what was sent. The server is overloaded, limited or
+ *   down, or a bad deploy, a firewall or a proxy is in the way (403, 404),
+ *   and the same request may well be taken once that is put right. Wait,
+ *   and ask again on a later run; `shareGivesUp` bounds it, so an answer
+ *   that never changes cannot stop the queue for good.
+ * - `refused`: anything else, for good: an answer about the request itself.
+ *   400 (not a record; an attestation refused), 409 (another key for this
+ *   id), 413 (too big), 415 (not JSON), 422, and any other 4xx; and anything
+ *   that is neither kept nor an error (a 1xx, another 2xx, a 3xx). The same
+ *   request would be refused again, so the result is passed over at once,
+ *   and an attestation given up (the phone sends open), and the rest of the
+ *   queue moves.
  *
  * No answer at all - offline, a timeout - is the caller's, and is not one of
  * these: it waits, and is not counted, since nothing else can get through
@@ -640,7 +644,9 @@ export type ShareReply = 'kept' | 'busy' | 'refused';
 
 export function shareReply(status: number): ShareReply {
   if (status === 200 || status === 201) return 'kept';
-  if (status === 408 || status === 429 || (status >= 500 && status <= 599)) return 'busy';
+  if (status === 403 || status === 404 || status === 408 || status === 429 || (status >= 500 && status <= 599)) {
+    return 'busy';
+  }
   return 'refused';
 }
 

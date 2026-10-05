@@ -693,17 +693,19 @@ public func deadlineToRing(
 
 /// What an answer from the collection endpoint means to the app that sent a
 /// result or an attestation (`shareReply` in policy.ts, whose comment has the
-/// reasons): kept (200, 201); busy (408, 429, any 5xx), so wait and ask again
-/// on a later run, within `shareGivesUp`; or refused for good (anything
-/// else), so the result is passed over and an attestation given up. No
-/// answer at all is the caller's: it waits, uncounted.
+/// reasons): kept (200, 201); busy (403, 404, 408, 429, any 5xx - an answer
+/// about the way to the server, not about what was sent), so wait and ask
+/// again on a later run, within `shareGivesUp`; or refused for good
+/// (anything else - 400, 409, 413, 415, 422, any other 4xx - an answer about
+/// the request itself), so the result is passed over and an attestation
+/// given up. No answer at all is the caller's: it waits, uncounted.
 public enum ShareReply: String, Sendable {
     case kept, busy, refused
 }
 
 public func shareReply(_ status: Int) -> ShareReply {
     if status == 200 || status == 201 { return .kept }
-    if status == 408 || status == 429 || (500...599).contains(status) { return .busy }
+    if [403, 404, 408, 429].contains(status) || (500...599).contains(status) { return .busy }
     return .refused
 }
 

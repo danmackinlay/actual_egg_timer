@@ -39,9 +39,10 @@ Each is settled here unless §6 lists it as the owner's.
     only if new, so a retry is harmless and nothing is overwritten (append
     only). 201 stored, 200 already had it, 400 refused, 413 too big, 415
     not JSON, 429 rate-limited. What a sender makes of an answer is
-    `shareReply` in `src/core/policy.ts`: it waits only on no answer, 408,
-    429 or a 5xx, and on those for at most five tries and three days
-    (`shareGivesUp`); anything else, it skips the egg.
+    `shareReply` in `src/core/policy.ts`: it waits on no answer, and on an
+    answer about the way to the server (403, 404, 408, 429, a 5xx) for at
+    most five tries and three days (`shareGivesUp`); an answer about the
+    request itself (400, 409, 413, 415, any other 4xx) skips the egg.
   - `DELETE /api/eggs/<uid>` - every record under the id in both tiers, and
     its key. 200 with the count, also when there was nothing.
   - `POST /api/attest` - `{ uid, keyId, attestation }` from iOS (below).
