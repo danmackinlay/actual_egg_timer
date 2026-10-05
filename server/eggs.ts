@@ -58,8 +58,11 @@ export type Tier = 'attested' | 'open';
 export const MAX_BODY_BYTES = 16384;
 
 /** The largest record kept, as JSON: a record is about 750 bytes, with every
- *  answer and a forecast. A cap, so that free ids cannot fill the store with
- *  long strings in the fields the loader takes as any text. */
+ *  answer and a forecast, the five yolk words' included (DECISIONS.md 92), and
+ *  about 1.4 KB with every string at MAX_STRING and every number at full
+ *  precision. A cap, so that free ids cannot fill the store with long strings
+ *  in the fields the loader takes as any text. The yolk word itself is one of
+ *  five, so the loader caps it. */
 export const MAX_RECORD_BYTES = 2048;
 
 /** The longest string anywhere in a record: an app version, a population or

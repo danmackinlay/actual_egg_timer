@@ -86,6 +86,15 @@ its absence means.
 - `uid` stays null on the device. The copy that is sent carries the cook's id;
   the log keeps no id, so forgetting the id never touches the log.
 
+Two more since, under `DECISIONS.md` 92 (6 October 2026), the same way:
+`yolkWord`, the yolk the cook got in the slider's five words (`runny` to
+`hard`), which the apps write in place of `yolk`, and `forecast.yolkWord`,
+the five words' probabilities. Both are null, or absent, on a record from
+before; `yolk` is kept on those and scored as it was. The server takes them
+through `parseRecord` like every other field, which refuses a record with
+both yolk answers or a word that is not one of the five
+(`test/server.test.ts` 7). `MODEL_ID` is `2026-10-e9` from then.
+
 ### The cook's id, consent and deletion (E6)
 
 - **Off by default**, in Settings, with the consent text on screen beside the

@@ -9,7 +9,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { MAX_BODY_BYTES, MAX_SEQ, MAX_STRING, Options, Store, countedTier, handle, keyKey, recordKey } from '../server/eggs.js';
+import { MAX_BODY_BYTES, MAX_RECORD_BYTES, MAX_SEQ, MAX_STRING, Options, Store, countedTier, handle, keyKey, recordKey } from '../server/eggs.js';
 import { MemoryStore } from '../server/memoryStore.js';
 import { EggRecord } from '../src/core/record.js';
 import { recordAt } from '../tools/common.js';
@@ -189,4 +189,49 @@ test('6. the tier a kept record counts in, for the fit: attested only under a ke
   assert.equal(countedTier('attested', { environment: 'development' }), 'open', 'filed before the rule, or by hand');
   assert.equal(countedTier('attested', null), 'open', 'no key left to vouch for it');
   assert.equal(countedTier('open', { environment: 'production' }), 'open', 'an unsigned egg stays open');
+});
+
+test('7. the yolk the cook got (DECISIONS.md 92) is kept, and capped like everything else', async () => {
+  const store = new MemoryStore();
+  const five = [0.0625, 0.25, 0.5, 0.125, 0.0625];
+  const forecast = { cook_s: 412, yolk: [0.25, 0.5, 0.25], white: [0.125, 0.375, 0.5], yolkWord: five };
+  const named = egg(UID, { yolk: null, yolkWord: 'runny', forecast: forecast });
+  assert.equal((await send(store, post('/api/eggs', { seq: 0, record: named }))).status, 201);
+  const kept = JSON.parse(store.blobs.get(recordKey('open', UID, 0)) ?? 'null') as Record<string, unknown>;
+  assert.equal(kept['yolkWord'], 'runny');
+  assert.equal(kept['yolk'], null);
+  assert.deepEqual((kept['forecast'] as Record<string, unknown>)['yolkWord'], five);
+  // An older app's record has no yolk word, and is kept with null.
+  assert.equal((await send(store, post('/api/eggs', { seq: 1, record: egg() }))).status, 201);
+  assert.equal(JSON.parse(store.blobs.get(recordKey('open', UID, 1)) ?? 'null').yolkWord, null);
+  // What no app writes is refused: both yolk answers, a word nobody offers,
+  // a word as long text, five probabilities that are not.
+  const refused: [string, Partial<EggRecord> | Record<string, unknown>][] = [
+    ['both yolk answers', { yolk: 0, yolkWord: 'jammy' }],
+    ['a word nobody offers', { yolk: null, yolkWord: 'medium' }],
+    ['a long word', { yolk: null, yolkWord: 'jammy'.repeat(20) }],
+    ['four yolk words', { forecast: { ...forecast, yolkWord: [0.25, 0.25, 0.25, 0.25] } }],
+  ];
+  for (const [why, over] of refused) {
+    const status = (await send(store, post('/api/eggs', { seq: 2, record: { ...egg(), ...over } }))).status;
+    assert.equal(status, 400, why);
+  }
+  // The longest record the loader takes - every string at its cap, every
+  // number at full precision, every answer and all eleven forecast numbers -
+  // is well inside the record cap.
+  const x = 'x'.repeat(MAX_STRING);
+  const third = (a: number, b: number): number[] => [a, b, 1 - a - b];
+  const words = [0.0123456789012345, 0.2123456789012345, 0.5123456789012345, 0.2506172839506173];
+  words.push(1 - words.reduce((s, v) => s + v, 0));
+  const longest = {
+    ...egg(UID, { yolk: null, yolkWord: 'jammy' }), appVersion: x, prior: x, model: x, lang: x, register: x,
+    level: 0.41234567890123456, recommended_s: 412.12345678901234, pulled_s: 419.12345678901234,
+    cooled_s: 183.12345678901234, probe: { centre_C: 64.12, after_s: 183.12345678901234 },
+    forecast: {
+      cook_s: 412.12345678901234, yolk: third(0.1234567890123456, 0.7531234567890123),
+      white: third(0.0123456789012345, 0.4876543210987655), yolkWord: words,
+    },
+  };
+  assert.ok(JSON.stringify(longest).length < MAX_RECORD_BYTES * 0.75, `${JSON.stringify(longest).length} bytes`);
+  assert.equal((await send(store, post('/api/eggs', { seq: 3, record: longest }))).status, 201);
 });
