@@ -1021,8 +1021,19 @@ body[data-phase="PULL"] #readout { animation: flash 1s steps(2, end) infinite; }
   color: var(--fg);
   font-weight: 600;
 }
-#whiteAsk { margin-top: 14px; }
+#whiteAsk, #probeAsk { margin-top: 14px; }
 .pair { display: flex; gap: 8px; }
+/* Five yolk words side by side: each word is five letters at most (the
+   slider's tick budget), so they share a phone's width at a size a thumb
+   can hit, the gap and the padding giving way first. A column is never
+   narrower than its word, so with the text made larger the row breaks in
+   two rather than cutting a word. */
+.pair--five {
+  display: grid; gap: 4px;
+  grid-template-columns: repeat(auto-fit, minmax(3.6em, 1fr));
+  font-size: 0.9375rem;
+}
+.pair--five > button.fb { min-width: 0; padding-left: 2px; padding-right: 2px; font-size: inherit; }
 button.fb, button.wb {
   min-height: 52px;
   font-size: 1rem;
@@ -1044,13 +1055,10 @@ button.fb[aria-pressed="true"], button.wb[aria-pressed="true"] {
   text-align: center; margin: 8px 0 0; min-height: 1.1em; font-size: 0.8125rem; color: var(--dim);
 }
 
-/* ---- the thermometer ---- */
-#probeOffer { margin-top: 10px; text-align: center; }
-#probeOffer .hint { margin: 0 0 8px; font-size: 0.875rem; color: var(--dim); }
-#probeOffer button { margin-top: 0; }
-#probeEntry { margin-bottom: 14px; text-align: center; }
-#probeNow { margin: 0 0 4px; font-size: 0.9375rem; color: var(--fg); font-weight: 600; }
-#probeHint, #probeNote { margin: 0 0 8px; font-size: 0.875rem; color: var(--dim); min-height: 1.1em; }
+/* ---- the thermometer, under the two questions ---- */
+#probeEntry { text-align: center; }
+#probeAsk { margin-bottom: 4px; font-size: 0.9375rem; color: var(--fg); font-weight: 600; }
+#probeHow, #probeNote { margin: 0 0 8px; font-size: 0.875rem; color: var(--dim); min-height: 1.1em; }
 .probe__row { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px; }
 .probe__row > button { width: auto; margin-top: 0; padding: 10px 16px; }
 

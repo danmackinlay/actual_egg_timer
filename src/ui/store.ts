@@ -65,9 +65,6 @@ export interface Settings {
   /** "I have a probe thermometer": ask for a reading at the middle of
    *  the egg when the cooling ends. Off until the cook says so. */
   probe: boolean;
-  /** Whether the once-only offer has been answered, either way. The setting
-   *  itself stays in the controls; the offer does not come back. */
-  probeAsked: boolean;
   /** The room as the cook measured it, C, or null for not measured, when a
    *  room is assumed. Offered, and counted, only while `probe` is on
    *  (`roomInUse`); kept while it is off, for when it comes back on. */
@@ -100,7 +97,6 @@ export const DEFAULT_SETTINGS: Settings = {
   unitsChosen: null,
   language: FRESH_LANGUAGE,
   probe: false,
-  probeAsked: false,
   room_C: null,
 };
 
@@ -196,7 +192,6 @@ export function loadSettings(classes: SizeClass[]): Settings {
     unitsChosen: readChosenUnits(raw['unitsChosen']),
     language: readLanguageState(raw['language'], LANGUAGES),
     probe: raw['probe'] === true,
-    probeAsked: raw['probeAsked'] === true,
     // Absent from every settings record before 5 October 2026: not measured.
     room_C: typeof raw['room_C'] === 'number' && Number.isFinite(raw['room_C'])
       ? clamp(raw['room_C'], LIMITS.room_C) : null,

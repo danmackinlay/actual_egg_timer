@@ -674,7 +674,7 @@ function renderReadout(now_ms: number, sol: Solution, warning: string): void {
   const said = answersNow().kind;
   page().feedback.hidden = machine.phase !== 'DONE' || said === 'beforeReload';
   if (!page().feedback.hidden && said !== 'live') renderCalibNote(learning());
-  renderProbe(machine, ticket, !settings.probeAsked, pending);
+  renderProbe(machine, ticket);
   if (!page().feedback.hidden) renderTarget(ticket, machine.targetLevel);
 
   page().phaseLabel.textContent = view.label;
@@ -960,17 +960,6 @@ function storedElsewhere(key: string | null): void {
 
 /* ------------------------------------------------------------ thermometer */
 
-/** The cook's answer to the offer. Either way it is not made again; the
- *  setting stays in the controls. */
-function onProbeOffer(yes: boolean): void {
-  settings.probeAsked = true;
-  if (yes) settings.probe = true;
-  page().probeSetting.checked = settings.probe;
-  page().roomField.hidden = !settings.probe;
-  saveNow();
-  render(Date.now());
-}
-
 /* -------------------------------------------------------------- language */
 
 /** The picker, and the line under the Imperial option that says the English
@@ -1077,8 +1066,6 @@ function readInputs(source: EventTarget | null): void {
   }
   settings.eggCount = Math.round(clampNumber(page().eggCount.value, LIMITS.eggCount, settings.eggCount));
   settings.doneness = clampNumber(page().doneness.value, LIMITS.doneness, settings.doneness);
-  // Ticking the box is saying so: the offer has its answer.
-  if (page().probeSetting.checked !== settings.probe) settings.probeAsked = true;
   settings.probe = page().probeSetting.checked;
   // The room, measured: an emptied field is "not measured", and the room is
   // assumed again. Read only when it is the one being edited (`readField`).
@@ -1404,8 +1391,6 @@ export function boot(): void {
   wireSteppers();
   setStepRule(page().roomTemp, (value, up) => stepPast(measure('roomTemp'), value, up));
   wireViews();
-  page().probeOfferYes.addEventListener('click', () => onProbeOffer(true));
-  page().probeOfferNo.addEventListener('click', () => onProbeOffer(false));
   setMuted(settings.muted);
   renderMute();
   renderVersion();

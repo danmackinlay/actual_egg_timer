@@ -1,7 +1,8 @@
 /**
- * The questions at DONE - how was the yolk, how was the white - and the probe
- * reading: what has been said about the egg on screen, and writing it
- * down for the calibration to learn from.
+ * The questions at DONE - which yolk the cook got, in the slider's own five
+ * words, and how the white next to it was (DECISIONS.md 92) - and under them
+ * the probe reading: what has been said about the egg on screen, and writing
+ * it down for the calibration to learn from.
  *
  * The model is calibrated against the literature, not against this kitchen.
  * Asking once per egg is what closes that gap.
@@ -9,7 +10,7 @@
 
 import { anchorNear, plausibleProbeRange_C } from '../core/policy.js';
 import { midSentence } from '../core/copy.js';
-import { Feedback, WhiteReport } from '../core/infer.js';
+import { WhiteReport, YOLK_WORDS, YolkWord } from '../core/infer.js';
 import { ProbeReading, recordCookTime_s, recordProbe_C } from '../core/record.js';
 import { nudgeFrom, parse, stepPast } from '../core/units.js';
 import {
@@ -45,7 +46,7 @@ export type Answers =
   | { kind: 'none'; reloaded: boolean }
   | {
     kind: 'live';
-    yolk: Feedback | null; white: WhiteReport | null; probe: ProbeReading | null; index: number;
+    yolk: YolkWord | null; white: WhiteReport | null; probe: ProbeReading | null; index: number;
   }
   | { kind: 'beforeReload' };
 
@@ -124,7 +125,7 @@ function resetRows(): void {
  * The readout is left describing the egg that was eaten; the recalibrated model
  * shows up on the next "Start again".
  */
-function onAnswer(yolk: Feedback | null, white: WhiteReport | null, pressed: HTMLButtonElement): void {
+function onAnswer(yolk: YolkWord | null, white: WhiteReport | null, pressed: HTMLButtonElement): void {
   const a = answers;
   if (a.kind === 'live' && ((yolk !== null && a.yolk !== null) || (white !== null && a.white !== null))) return;
   if (host === null || host.ticket() === null) return;
@@ -134,7 +135,7 @@ function onAnswer(yolk: Feedback | null, white: WhiteReport | null, pressed: HTM
 
 /** Write the egg down with its first answer, or fold a later one into it -
  *  a yolk, a white or a probe reading, whichever came. */
-function foldAnswer(yolk: Feedback | null, white: WhiteReport | null, probe: ProbeReading | null): void {
+function foldAnswer(yolk: YolkWord | null, white: WhiteReport | null, probe: ProbeReading | null): void {
   const h = host;
   const cooked = h === null ? null : h.ticket();
   if (h === null || cooked === null) return;
@@ -165,15 +166,17 @@ function foldAnswer(yolk: Feedback | null, white: WhiteReport | null, probe: Pro
   if (yolk !== null) a.yolk = yolk;
   if (white !== null) a.white = white;
   if (probe !== null) a.probe = probe;
-  const second = yolk !== null ? { yolk: yolk } : white !== null ? { white: white }
+  const second = yolk !== null ? { yolkWord: yolk } : white !== null ? { white: white }
     : probe !== null ? { probe: probe } : {};
   void recordSecondAnswer(a.index, second).then(thanks);
 }
 
 /* ------------------------------------------------------------ thermometer */
 
-/** Whether this cook will ask for a probe reading when its cooling ends:
- *  `probeOn` is the cook's setting. */
+/** Whether this cook will ask for a probe reading when its cooling ends - the
+ *  "have the probe ready" line and the spoken prompt: `probeOn` is the
+ *  cook's setting. The field itself is there whatever the setting
+ *  (`probeOffered`). */
 export function probeWanted(probeOn: boolean, ticket: Ticket | null): boolean {
   return probeOn && ticket !== null && ticket.probeMoment;
 }
@@ -184,16 +187,17 @@ export function probePending(machine: Machine, wanted: boolean): boolean {
   return machine.phase === 'DONE' && wanted && (a.kind === 'none' || (a.kind === 'live' && a.probe === null));
 }
 
-/** The once-only offer during a cook, and the reading at DONE. `offerOpen`
- *  is whether the offer has yet to be answered. */
-export function renderProbe(
-  machine: Machine, ticket: Ticket | null, offerOpen: boolean, pending: boolean,
-): void {
-  const running = machine.phase === 'HEATING' || machine.phase === 'COOKING'
-    || machine.phase === 'PULL' || machine.phase === 'COOLING';
-  page().probeOffer.hidden = !(running && offerOpen && ticket !== null && ticket.probeMoment);
-  // Asked for until it is given, and left showing what was given.
-  const visible = pending || (machine.phase === 'DONE' && page().probeReading.disabled);
+/** Whether the reading's field is under the questions: whenever the cook has
+ *  a moment to probe, the cooling having ended at the yolk's peak, with the
+ *  probe setting on or off (DECISIONS.md 92). It is optional, like them. */
+export function probeOffered(ticket: Ticket | null): boolean {
+  return ticket !== null && ticket.probeMoment;
+}
+
+/** The reading's field at DONE, under the two questions, whenever this cook
+ *  had a moment to probe; it shows what was given once it is. */
+export function renderProbe(machine: Machine, ticket: Ticket | null): void {
+  const visible = machine.phase === 'DONE' && probeOffered(ticket);
   page().probeEntry.hidden = !visible;
   // The − and + start from the peak the cook was started at, shown greyed in
   // the empty field: a suggestion, never taken as a reading until stepped or
@@ -275,8 +279,9 @@ export function wireFeedback(h: FeedbackHost): void {
   const fbButtons = page().feedback.querySelectorAll<HTMLButtonElement>('button.fb');
   for (let i = 0; i < fbButtons.length; i++) {
     fbButtons[i].addEventListener('click', () => {
-      const raw = Number(fbButtons[i].dataset['fb']);
-      onAnswer((raw === -1 ? -1 : raw === 1 ? 1 : 0) as Feedback, null, fbButtons[i]);
+      const raw = fbButtons[i].dataset['yolk'];
+      const word = YOLK_WORDS.find((w) => w === raw);
+      if (word !== undefined) onAnswer(word, null, fbButtons[i]);
     });
   }
 

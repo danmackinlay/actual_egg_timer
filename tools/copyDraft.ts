@@ -66,6 +66,7 @@ import { boiling } from './drafts/boiling.js';
 import { feedback2 } from './drafts/feedback2.js';
 import { exportDraft } from './drafts/export.js';
 import { warn } from './drafts/warn.js';
+import { afteregg } from './drafts/afteregg.js';
 
 export type Templates = Record<string, string>;
 
@@ -147,6 +148,7 @@ export const DRAFTS: Record<string, Draft> = {
   feedback2,
   export: exportDraft,
   warn,
+  afteregg,
 };
 
 /** The draft most recently applied, the last in `DRAFTS`: what a proof checks

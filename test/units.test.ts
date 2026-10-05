@@ -306,7 +306,7 @@ test('5b. the record says which system the cook was reading, and stays SI', () =
     },
   };
   const m = advance(startHot(1_750_000_000_000, 400, 'ice', 0.4), 1_750_000_500_000).machine;
-  const r = eggRecordFor(cooked, m, 0);
+  const r = eggRecordFor(cooked, m, 'jammy');
   assert.equal(r.units, 'imperial');
   assert.equal(r.egg.mass_g, 68);
   assert.equal(r.setup.eggStart_C, 4);

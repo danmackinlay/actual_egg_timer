@@ -138,7 +138,7 @@ const learned = {
 const cookThrough = [
   click('#primary'), advance(400), click('#primary'), advance(60), toPull,
   click('#primary'), toCoolEnd,
-  click('button.fb[data-fb="-1"]'), learned,
+  click('button.fb[data-yolk="soft"]'), learned,
   click('button.wb[data-white="runny"]'), learned,
   click('#primary'),
 ];
@@ -203,7 +203,7 @@ const SCENARIOS = [
     name: 'hot soft, tap, white question',
     settings: { muted: true, startMode: 'hot', cooling: 'tap', doneness: 0.22 },
     steps: [click('#primary'), advance(30), toPull, click('#primary'), toCoolEnd,
-      click('button.fb[data-fb="1"]'), learned,
+      click('button.fb[data-yolk="fudgy"]'), learned,
       click('button.wb[data-white="firm"]'), learned, click('#primary')],
   },
   {
@@ -218,20 +218,20 @@ const SCENARIOS = [
     settings: { muted: true, startMode: 'hot' },
     steps: [click('#primary'), toPull, click('#primary'), toCoolEnd,
       click('button.wb[data-white="firm"]'), learned,
-      click('button.fb[data-fb="0"]'), learned, click('#primary')],
+      click('button.fb[data-yolk="jammy"]'), learned, click('#primary')],
   },
   {
     name: 'hot runny, white question',
     settings: { muted: true, startMode: 'hot', doneness: 0 },
     steps: [click('#primary'), toPull, click('#primary'), toCoolEnd,
-      click('button.fb[data-fb="0"]'), learned,
+      click('button.fb[data-yolk="jammy"]'), learned,
       click('button.wb[data-white="runny"]'), learned],
   },
   {
     name: 'hot counter',
     settings: { muted: true, startMode: 'hot', cooling: 'counter', doneness: 0.62 },
     steps: [click('#primary'), advance(30), toPull, click('#primary'),
-      click('button.fb[data-fb="0"]'), learned, click('#primary')],
+      click('button.fb[data-yolk="jammy"]'), learned, click('#primary')],
   },
   {
     name: 'cold standing, through',

@@ -265,11 +265,11 @@ test('3b. a cook read in 1750 is recorded as 1750: lang and register both', () =
     },
   });
   const m = advance(startHot(1_750_000_000_000, 400, 'ice', 0.4), 1_750_000_500_000).machine;
-  const period = eggRecordFor(cooked(PERIOD_LANGUAGE), m, -1);
+  const period = eggRecordFor(cooked(PERIOD_LANGUAGE), m, 'soft');
   assert.equal(period.lang, PERIOD_LANGUAGE);
   assert.equal(period.register, '1750');
   assert.notEqual(parseRecord(period), null);
-  const modern = eggRecordFor(cooked('en'), m, -1);
+  const modern = eggRecordFor(cooked('en'), m, 'soft');
   assert.equal(modern.lang, 'en');
   assert.equal(modern.register, 'modern');
 });

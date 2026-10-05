@@ -25,7 +25,7 @@ import {
   parseLog, parseRecord, recordCookTime_s, recordMass_g, replay,
   RESULTS_FILE_VERSION, jsonString, resultsFile, resultsFileName,
 } from '../src/core/record.js';
-import { LITERATURE_POPULATION } from '../src/core/infer.js';
+import { LITERATURE_POPULATION, YolkWord } from '../src/core/infer.js';
 import { calibrationGrid, PARTICLE_COUNT, CALIBRATION_SEED } from '../src/core/policy.js';
 import { createPrior, updatePosterior } from '../src/core/infer.js';
 import { eggFromMass } from '../src/core/geometry.js';
@@ -433,18 +433,20 @@ test('3b. eggs answered in either order with a reload between: bit-identical to 
   assert.equal(calib.eggsLogged, 0);
 
   // Then the app's own path, on real 21 x 32 surfaces: the yolk then the white;
-  // the white alone; nothing; the white then the yolk.
-  const answers: { first: { yolk?: -1 | 0 | 1; white?: 'runny' | 'tender' | 'firm' };
-    second: { yolk?: -1 | 0 | 1; white?: 'runny' | 'tender' | 'firm' } | null }[] = [
-    { first: { yolk: -1 }, second: { white: 'runny' } },
+  // the white alone; nothing; the white then the yolk. The yolk is the yolk
+  // the cook got (DECISIONS.md 92).
+  const answers: { first: { yolkWord?: YolkWord; white?: 'runny' | 'tender' | 'firm' };
+    second: { yolkWord?: YolkWord; white?: 'runny' | 'tender' | 'firm' } | null }[] = [
+    { first: { yolkWord: 'runny' }, second: { white: 'runny' } },
     { first: { white: 'tender' }, second: null },
     { first: {}, second: null },
-    { first: { white: 'firm' }, second: { yolk: 1 } },
+    { first: { white: 'firm' }, second: { yolkWord: 'fudgy' } },
   ];
   const levels = [0.22, 0.3, 0.5, 0.55];
   for (let i = 0; i < answers.length; i++) {
     const a = answers[i];
-    const r = solvedRecord(levels[i], a.first.yolk ?? null, 60 + 3 * i);
+    const r = solvedRecord(levels[i], null, 60 + 3 * i);
+    r.yolkWord = a.first.yolkWord ?? null;
     r.white = a.first.white ?? null;
     const index = logEgg(r);
     await learn(index);
@@ -452,13 +454,13 @@ test('3b. eggs answered in either order with a reload between: bit-identical to 
     calib = loadCalibration(); // a reload: everything back from storage
     // After a reload the surface is gone, and a late answer is refused rather
     // than written down unfolded.
-    assert.equal(await recordSecondAnswer(index, { yolk: 0 }), false, `egg ${i}: nothing after a reload`);
+    assert.equal(await recordSecondAnswer(index, { yolkWord: 'jammy' }), false, `egg ${i}: nothing after a reload`);
   }
   assert.equal(eggsBehind(), 0);
   const log = keptState().log;
   assert.equal(log.length, 4);
-  assert.deepEqual(log.map((r) => [r.yolk, r.white]),
-    [[-1, 'runny'], [null, 'tender'], [null, null], [1, 'firm']]);
+  assert.deepEqual(log.map((r) => [r.yolk, r.yolkWord, r.white]),
+    [[null, 'runny', 'runny'], [null, null, 'tender'], [null, null, null], [null, 'fudgy', 'firm']]);
 
   const rebuilt = replay(freshCalibration(PARTICLE_COUNT, CALIBRATION_SEED), log);
   assertIdentical(calib, rebuilt, 'incremental vs replay');
@@ -538,10 +540,13 @@ test('4a. the cook\'s tap out of PULL is recorded as a measured pull', () => {
   const tapped = beginCooling(m, T0 + 409_500);
   assert.equal(tapped.pulledBy, 'cook');
   assert.equal(tapped.outAt_ms, T0 + 409_500);
-  const r = eggRecordFor(COOKED, tapped, 0);
+  const r = eggRecordFor(COOKED, tapped, 'jammy');
   assert.equal(r.pulled_s, 409.5);
   assert.equal(r.pulledBy, 'cook');
   assert.equal(r.recommended_s, 400);
+  // The yolk the cook got (DECISIONS.md 92), and never the old answer.
+  assert.equal(r.yolkWord, 'jammy');
+  assert.equal(r.yolk, null);
   assert.notEqual(parseRecord(r), null);
 });
 
@@ -558,21 +563,21 @@ test('4b. a pull nobody confirmed is recorded as assumed, at the scheduled time'
 
 test('4b2. a class names its carton, and a weighed egg names none', () => {
   const m = beginCooling(pulled(startHot(T0, 400, 'ice', 0.4)), T0 + 402_000);
-  const us = eggRecordFor({ ...COOKED, egg: eggFromMass(0.0602), massFrom: 'class', sizeTable: 'us' }, m, 0);
+  const us = eggRecordFor({ ...COOKED, egg: eggFromMass(0.0602), massFrom: 'class', sizeTable: 'us' }, m, 'jammy');
   assert.equal(us.egg.sizeTable, 'us');
   assert.equal(us.egg.mass_g, 60.2);
   assert.notEqual(parseRecord(us), null);
-  const weighed = eggRecordFor({ ...COOKED, sizeTable: 'us' }, m, 0);
+  const weighed = eggRecordFor({ ...COOKED, sizeTable: 'us' }, m, 'jammy');
   assert.equal(weighed.egg.sizeTable, null, 'a scale has no carton, whatever the region');
   assert.equal(parseRecord({ ...us, egg: { ...us.egg, sizeTable: null } }), null);
 });
 
 test('4b3. the time to boil says whether this cook measured it', () => {
   const m = beginCooling(pulled(startHot(T0, 400, 'ice', 0.4)), T0 + 402_000);
-  assert.equal(eggRecordFor(COOKED, m, 0).setup.timeToBoilFrom, 'default');
-  assert.equal(eggRecordFor({ ...COOKED, boilRemembered: true }, m, 0).setup.timeToBoilFrom, 'remembered');
+  assert.equal(eggRecordFor(COOKED, m, 'jammy').setup.timeToBoilFrom, 'default');
+  assert.equal(eggRecordFor({ ...COOKED, boilRemembered: true }, m, 'jammy').setup.timeToBoilFrom, 'remembered');
   const cold = { ...COOKED, setup: appSetup({ startMode: 'cold', timeToBoil_s: 431.5 }) };
-  const r = eggRecordFor(cold, m, 0);
+  const r = eggRecordFor(cold, m, 'jammy');
   assert.equal(r.setup.timeToBoilFrom, 'measured');
   assert.equal(r.setup.timeToBoil_s, 431.5);
 });
@@ -581,7 +586,7 @@ test('4b5. a nudged cook is recorded as the time recommended and the nudge, apar
   // The machine runs the nudged time; the record splits it, and scores an
   // egg nobody pulled at the time that actually ran.
   const m = advance(pulled(startHot(T0, 393, 'ice', 0.4)), T0 + 500_000).machine;
-  const r = eggRecordFor({ ...COOKED, nudge_s: -7 }, m, 0);
+  const r = eggRecordFor({ ...COOKED, nudge_s: -7 }, m, 'jammy');
   assert.equal(r.recommended_s, 400);
   assert.equal(r.nudge_s, -7);
   assert.equal(recordCookTime_s(r), 393);
@@ -593,11 +598,11 @@ test('4b4. the record keeps what the app said at Eggs in, and names the model th
   const forecast = {
     cook_s: 400, yolk: [0.25, 0.5, 0.25], white: [0.125, 0.375, 0.5], yolkWord: [0.0625, 0.25, 0.5, 0.125, 0.0625],
   };
-  const r = eggRecordFor({ ...COOKED, forecast: forecast }, m, 0);
+  const r = eggRecordFor({ ...COOKED, forecast: forecast }, m, 'jammy');
   assert.deepEqual(r.forecast, forecast);
   assert.equal(r.model, MODEL_ID);
   assert.deepEqual(parseRecord(JSON.parse(JSON.stringify(r))), r);
-  const before = eggRecordFor(COOKED, m, 0);
+  const before = eggRecordFor(COOKED, m, 'jammy');
   assert.equal(before.forecast, null, 'started before the odds were known');
   assert.notEqual(parseRecord(before), null);
 });

@@ -23,7 +23,7 @@ import { Egg, SizeTable } from '../core/geometry.js';
 import { CookSetup } from '../core/protocol.js';
 import { Doneness, ModelParams } from '../core/solve.js';
 import { DoseGrid, GridRequest } from '../core/doseGrid.js';
-import { Feedback, LITERATURE_POPULATION, Particle, Population, WhiteReport } from '../core/infer.js';
+import { LITERATURE_POPULATION, Particle, Population, WhiteReport, YolkWord } from '../core/infer.js';
 import { priorStart } from '../core/population.js';
 import { DecisionInputs } from '../core/decide.js';
 import { OddsProfile } from '../core/reach.js';
@@ -175,7 +175,7 @@ function localDay(ms: number): string {
  * assumption.
  */
 export function eggRecordFor(
-  c: Cooked, m: Machine, yolk: Feedback | null, white: WhiteReport | null = null,
+  c: Cooked, m: Machine, yolk: YolkWord | null, white: WhiteReport | null = null,
   probe: ProbeReading | null = null,
 ): EggRecord {
   const measured = m.pulledBy === 'cook' && m.outAt_ms > m.startedAt_ms;
@@ -214,8 +214,10 @@ export function eggRecordFor(
     pulled_s: measured ? (m.outAt_ms - m.startedAt_ms) / 1000 : m.cookTime_s,
     pulledBy: measured ? 'cook' : 'timeout',
     cooled_s: m.cooling === 'counter' ? 0 : m.cool_s,
-    yolk: yolk,
-    yolkWord: null,
+    // The yolk the cook got (DECISIONS.md 92). The old answer against the
+    // level is never written now; a record from before keeps it.
+    yolk: null,
+    yolkWord: yolk,
     white: white,
     probe: probe,
     forecast: c.forecast,
@@ -790,7 +792,7 @@ function assign(into: Calibration, from: Calibration): void {
  * Returns whether the answer was taken.
  */
 export async function recordSecondAnswer(
-  index: number, answer: { yolk?: Feedback; white?: WhiteReport; probe?: ProbeReading },
+  index: number, answer: { yolkWord?: YolkWord; white?: WhiteReport; probe?: ProbeReading },
 ): Promise<boolean> {
   const had = kept.log[index];
   // Another tab's store first: the answer is written only to the egg it was
@@ -798,11 +800,11 @@ export async function recordSecondAnswer(
   if (current() && !sameRecord(kept.log[index], had)) return false;
   const r = kept.log[index];
   if (r === undefined || index !== kept.log.length - 1) return false;
-  if (answer.yolk !== undefined && r.yolk !== null) return false;
+  if (answer.yolkWord !== undefined && (r.yolkWord !== null || r.yolk !== null)) return false;
   if (answer.white !== undefined && r.white !== null) return false;
   if (answer.probe !== undefined && r.probe !== null) return false;
   if (kept.folded <= index) {
-    if (answer.yolk !== undefined) r.yolk = answer.yolk;
+    if (answer.yolkWord !== undefined) r.yolkWord = answer.yolkWord;
     if (answer.white !== undefined) r.white = answer.white;
     if (answer.probe !== undefined) r.probe = answer.probe;
     save();
@@ -811,7 +813,7 @@ export async function recordSecondAnswer(
   }
   const o = last;
   if (o === null || o.index !== index || o.record !== r || kept.folded !== index + 1) return false;
-  if (answer.yolk !== undefined) r.yolk = answer.yolk;
+  if (answer.yolkWord !== undefined) r.yolkWord = answer.yolkWord;
   if (answer.white !== undefined) r.white = answer.white;
   if (answer.probe !== undefined) r.probe = answer.probe;
   const again = copyCalibration(o.before);
