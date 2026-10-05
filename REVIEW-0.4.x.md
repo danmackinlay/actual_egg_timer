@@ -216,7 +216,7 @@ fixes hold; the two NOT A BUG calls hold; 1 and 5 hold only in part.
   round). The service worker keeps old windows on old builds, so any
   `MODEL_ID` bump with two tabs open triggers it. Fix: never write while
   taking up another tab's store; write only on this tab's own next change.
-- **iOS waits forever on most errors** (`ios/App/Sharing.swift:351`): every
+- DONE 37ab0be, 3ab60bf, 78d4e36 (both apps; wait on no answer, 408, 429 and 5xx, for five busy answers and three days, then skip the egg, or send open): **iOS waits forever on most errors** (`ios/App/Sharing.swift:351`): every
   reply but 200, 201, 400 or 409, and every signing error but a lost key,
   waits for the next run with no limit, so a 403/404/413/415 stops all iOS
   sharing silently, open results included. Fix: wait only on no reply, 429
