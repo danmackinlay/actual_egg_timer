@@ -12,7 +12,7 @@ is also the password.
 
 ## Fix before 0.4 ships
 
-1. **✔ A second web tab silently deletes eggs and undoes privacy actions.**
+1. DONE fcd622e: **✔ A second web tab silently deletes eggs and undoes privacy actions.**
    Neither `src/ui/calibration.ts:517` nor `share.ts` `save()` re-reads
    storage before writing; each writes back whatever that tab loaded at boot.
    Nothing listens for `storage` events. Two consequences:
@@ -23,7 +23,7 @@ is also the password.
      until the server confirms".
    - Fix: re-read and merge before each write, and add a `storage` listener;
      `navigator.locks` around the read-modify-write would make it airtight.
-2. **✔ An old 0.3 build damages a 0.4 store.** Both branches use the same key,
+2. DONE 70ea0d3 (both apps keep each record's stored JSON and lay what they know over it; the rollback warning is in `ios/RELEASING.md`): **✔ An old 0.3 build damages a 0.4 store.** Both branches use the same key,
    `aet.calibration.v4`. 0.3's `parseRecord` returns "exactly the known
    fields" (`src/core/record.ts:335`), so on its first save 0.3 rewrites every
    record without `model` or `forecast`, contradicting the record's own
@@ -34,22 +34,22 @@ is also the password.
    - 0.3 can't be patched, so a rollback (Netlify, or an old TestFlight
      build) is unsafe once 0.4 has written; that belongs in
      `ios/RELEASING.md`.
-3. **✔ Anyone with a cook's ID can bury their attested results**
+3. DONE dd4aeeb: **✔ Anyone with a cook's ID can bury their attested results**
    (`server/eggs.ts:180-183`). An open copy at `(uid, seq)` blocks the
    attested one, and DECISIONS 85 gives open results zero weight. The ID is
    shown on screen and cooks are asked to email it.
    - Fix: an attested record always wins; write it and delete the open one.
-4. **✔ The owner's trusted list trusts the ID, not the record**
+4. DONE f11ddf6 (only an imported results file's lines, or a pulled egg whose twin in the file is, are trusted; `DECISIONS.md` 82's wording predates this, see the OWNER question under Security): **✔ The owner's trusted list trusts the ID, not the record**
    (`tools/eggsImport.ts:68-79`). Anyone who learns one of your IDs can post
    open records that get full weight in the fit. Trust only lines from your
    own export file.
-5. **iOS sends a whole backlog unsigned after a brief attestation failure**
+5. DONE a4a5cf1: **iOS sends a whole backlog unsigned after a brief attestation failure**
    (`ios/App/Sharing.swift:238-242, 296-301`). `attestedFor` is set even when
    attestation failed for a passing reason (offline, 429, Apple unavailable),
    and `assertion()` swallows errors with `try?`. Finding 3 then keeps those
    eggs open for good.
    - Fix: while attestation is still pending, stop the run and retry later.
-6. **✔ iOS can show the low-odds warning on the last good level.**
+6. DONE 1584d4e: **✔ iOS can show the low-odds warning on the last good level.**
    `ios/App/YolkSlider.swift:73` computes `k*0.01`, which is one ulp above
    `k/100` for k = 35, 41, 47, 57, 69, 70, 82, 83, 94, 95. `lowOddsAt`
    compares strictly, so a thumb dragged onto `hardest` warns. The off-grid
@@ -59,37 +59,37 @@ is also the password.
 
 ## Security, the rest
 
-- **✔ Knowing the ID is enough to DELETE** (`server/eggs.ts:188`). Guessing
+- OWNER: (a separate delete secret, kept on the device and never shown, means an emailed request can no longer be checked against anything but the ID, and a lost device can no longer delete; or keep the ID as the only key and record the risk in DECISIONS. Which?) **✔ Knowing the ID is enough to DELETE** (`server/eggs.ts:188`). Guessing
   isn't a risk (122 bits), but the ID is displayed and emailed. Either add a
   separate delete secret that is never shown, or record the risk in
   DECISIONS.
-- **✔ No content-type check.** A `text/plain` POST is a "simple" cross-origin
+- DONE 0ab1eee: **✔ No content-type check.** A `text/plain` POST is a "simple" cross-origin
   request, so any web page can make its visitors' browsers post junk, getting
   round the per-address rate limit. Return 415 for anything that isn't JSON.
-- **Storage and cost can be filled:** IDs cost nothing to make, and
+- DONE 0ab1eee (2 KB, and 64 characters a string; a record is about 750 bytes): **Storage and cost can be filled:** IDs cost nothing to make, and
   `appVersion`, `prior`, `model`, `lang` and `register` have no length cap, so
   a blob can be about 16 KB. Cap the stored JSON at about 2 KB and each string
   field.
 - **Smaller ones:**
-  - A missing `Content-Length` lets the body be read whole before the size
+  - DONE 0ab1eee: A missing `Content-Length` lets the body be read whole before the size
     check (✔ `server/eggs.ts:106`).
-  - The attestation error text echoes Node/OpenSSL messages to the client.
-  - On iOS, a phone restored from backup loses its Secure Enclave key,
+  - DONE 0ab1eee: The attestation error text echoes Node/OpenSSL messages to the client.
+  - OWNER: (a4a5cf1 now gives up on the key explicitly, so the phone sends open rather than failing silently. To stay attested it needs either a new random ID when the key is lost, which splits one cook in two for the fit, or the server letting an ID take a second key, which lets anyone with a genuine iPhone and someone else's ID post attested results under it. Which, if either?) On iOS, a phone restored from backup loses its Secure Enclave key,
     swallows `invalidKey`, and is refused a new key (409), so it stays
     open-tier for good.
-  - An attestation posted more than 3 days late fails against the leaf
+  - DONE 99d23a1 (a refused attestation more than a day old is made again with a new key, once per refusal): An attestation posted more than 3 days late fails against the leaf
     certificate's validity and is marked failed permanently.
-  - `tools/devServer.ts` listens on every interface and crashes on a bad `%`
+  - DONE 71b2525: `tools/devServer.ts` listens on every interface and crashes on a bad `%`
     in a URL.
 - **Needs checking in the Netlify dashboard, not the repo:**
-  - Deploys built between commits `00186b1` and `2850f40` used the site-wide
+  - DONE 0ab1eee for future deploys (a production deploy that Netlify says is not the published one opens its own store); OWNER: (the deploys already built between those commits run their own code: delete them in the dashboard?) Deploys built between commits `00186b1` and `2850f40` used the site-wide
     store. Their permalinks still run that code and can write to the live
     store. Delete those deploys, or open the live store only when
     `context.deploy.published` is true.
-  - `aggregateBy: ['ip','domain']` gives every permalink domain its own
+  - OWNER: (Netlify's rate-limiting page lists only "per domain and IP" for every plan and "per domain" as Enterprise, though its Functions API reference allows `['ip']`; whether `['ip']` alone is accepted on this plan needs a deploy and a look at the deploy log. Try it?) `aggregateBy: ['ip','domain']` gives every permalink domain its own
     rate-limit bucket. Aggregate by `ip` only.
-  - Whether deploy previews build for fork PRs, since the repo is public.
-  - What Netlify's own logs keep: they probably link IP and User-Agent to
+  - OWNER: (dashboard) Whether deploy previews build for fork PRs, since the repo is public.
+  - OWNER: (dashboard; the privacy page already says Netlify's request logs keep the address, the time and the path, which names the ID on a delete) What Netlify's own logs keep: they probably link IP and User-Agent to
     `/api/eggs/<uid>`.
 
 ## Privacy page against the code
@@ -107,7 +107,7 @@ keeps no address. These don't hold up:
 - **"They leave my computer too":** `emulate` output and the documented
   `cat pulled imported > all.jsonl` keep `uid`, `day` and `seq` after a pull
   removes them.
-- **iOS can still send an attestation after sharing is turned off,** because
+- DONE a4a5cf1: **iOS can still send an attestation after sharing is turned off,** because
   there is no generation check after Apple returns
   (`ios/App/Sharing.swift:285-305`). A delete running alongside can also be
   undone by it writing the attest record back.

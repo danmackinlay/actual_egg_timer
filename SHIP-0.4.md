@@ -232,7 +232,7 @@ Kept here so a new session can pick up without this conversation.
        raw-JSON write-back, the ID that is also the password), then security,
        the privacy page against the code, data safety, decision logic,
        parity, bloat. Tick each item in that file with its commit.
-2. [ ] **Optional server polish**: a refused attestation echoes library
+2. [x] **Optional server polish** (0ab1eee): a refused attestation echoes library
        error text ("PEM routines::…"); return a generic message.
 3. [ ] **The owner's phone session** (section A above, PLAN.md items 7-15)
        on a fresh `npm run ios:archive` build, or the web on the deploy
