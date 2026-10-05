@@ -109,6 +109,8 @@ const NOT_COPY: Record<string, string> = {
   model: 'results file field name',
   stored: 'results file field name',
   unread: 'results file field name',
+  '{}+{}': 'the app version a record carries: version, plus, build number',
+  '^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$': 'the pattern of a random ID, as the server takes one',
   null: 'JSON null, in the results file',
   '"': 'JSON punctuation, in the results file',
   '\\"': 'JSON escape, in the results file',

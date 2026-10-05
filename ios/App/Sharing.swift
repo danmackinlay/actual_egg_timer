@@ -31,6 +31,8 @@ final class Sharing {
         var seq = 0
         var uids: [String] = []
         var deleting: [String] = []
+
+        enum CodingKeys: String, CodingKey { case on, uid, sent, seq, uids, deleting }
     }
 
     /// An id's attested key: made, attested by Apple, and taken by the server
@@ -54,6 +56,11 @@ final class Sharing {
     /// older is refused for its certificate's date, most likely, and the
     /// phone makes a new key and tries again.
     private static let attestationFresh: TimeInterval = 24 * 60 * 60
+
+    nonisolated static func isUid(_ s: String) -> Bool {
+        s.range(of: "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                options: .regularExpression) != nil
+    }
 
     private(set) var state = State()
     @ObservationIgnored private var attest: Attest?
@@ -398,5 +405,32 @@ final class Sharing {
                 save(next)
             }
         }
+    }
+}
+
+/// What is kept, read field by field, as the web's `readShare` reads it:
+/// anything damaged reads as off, and every id that can be read is kept, so
+/// a deletion still pending is not lost with the rest.
+extension Sharing.State {
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        func ids(_ key: CodingKeys) -> [String] {
+            ((try? c.decode([JSONValue].self, forKey: key)) ?? []).compactMap {
+                if case .string(let s) = $0, Sharing.isUid(s) { return s }
+                return nil
+            }
+        }
+        func count(_ key: CodingKeys) -> Int { max(0, (try? c.decode(Int.self, forKey: key)) ?? 0) }
+        let uid = (try? c.decode(String.self, forKey: .uid)).flatMap { Sharing.isUid($0) ? $0 : nil }
+        var uids = ids(.uids)
+        if let uid, !uids.contains(uid) { uids.append(uid) }
+        self.init(
+            on: ((try? c.decode(Bool.self, forKey: .on)) ?? false) && uid != nil,
+            uid: uid,
+            sent: uid == nil ? 0 : count(.sent),
+            seq: uid == nil ? 0 : count(.seq),
+            uids: uids,
+            deleting: ids(.deleting)
+        )
     }
 }

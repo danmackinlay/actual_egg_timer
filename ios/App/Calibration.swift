@@ -141,9 +141,15 @@ enum Calibrations {
     private static let unreadKept = 3
 
     /// Carried on every record: the web app deploys on push and this one ships
-    /// when a build does, and the fit has to know which version said what.
-    static let appVersion: String =
-        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "unknown"
+    /// when a build does, and the fit has to know which version said what -
+    /// down to the build, since TestFlight ships several of one version:
+    /// "0.4.0+3", the build after a plus as semantic versioning writes it.
+    static let appVersion: String = {
+        let info = Bundle.main.infoDictionary
+        let version = info?["CFBundleShortVersionString"] as? String ?? "unknown"
+        guard let build = info?["CFBundleVersion"] as? String, !build.isEmpty else { return version }
+        return "\(version)+\(build)"
+    }()
 
     /// The population a new cook's prior is drawn from (E7; Population.swift):
     /// `fixtures/population.json` from the repo, bundled, which is the
