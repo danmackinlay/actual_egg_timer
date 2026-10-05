@@ -4374,3 +4374,73 @@ Things that cost an hour: the simulator's `UserDefaults` plist takes a key
 with a dot only escaped, `plutil -insert 'sharing\.v1'`, since plutil reads
 the dot as a path. The fit's pytest suite passes (7) with
 `uv run --project fit pytest -q fit/tests`; nothing runs it.
+
+## 6 October 2026: the questions after an egg name the yolk (DECISIONS.md 92)
+
+On the branch `after-egg`, from `0e796aa`. The owner, testing 0.4: "too
+soft / just right / too firm is throwing away bits", and it had nothing to
+say when the yolk wanted could not be chosen and came out runny anyway.
+
+The ticks first (`bb1cc9d`). After one egg with a runny white the slider's
+floor moves to about 0.05-0.09, still Runny, yet the Runny tick was struck
+through, because the test was `anchor.level < softest`. `anchorReachable`,
+in core and fixtured, asks whether any position the slider can rest on
+between `snapUp(softest)` and `snapDown(hardest)` is named by that word,
+as `anchorNear` names it; iOS now strikes its ticks by it too. The
+midpoints are not exact ties in binary: 0.11 goes to Runny, as `anchorNear`
+breaks ties softer, but 0.81 is a hair nearer Hard.
+
+The inference (`67bc66d`). A five-band ordered probit on the same latent,
+the delivered log yolk dose less the taste offset, cut where the slider's
+word changes: the midpoints between adjacent anchors, which on a scale
+linear in log dose are the midpoints of their log nominal doses, -0.795,
+0.149, 1.069 and 2.427 decades (levels 0.11, 0.315, 0.515, 0.81). Soft and
+Jammy are each about 0.93 decades wide, Fudgy 1.36, against the 0.56 of the
+old "just right". The same noise; the same 5% unrelated share, spread over
+five answers so they still sum to one (the floor falls from 0.017 to 0.01).
+The record gains `yolkWord` and the forecast its five probabilities, both
+null when absent; a record with both yolk answers is refused. Old records
+score exactly as before: `test/data/old-answers.json` is a ten-egg log
+answered the old way and the posterior the code before the change made of
+it, which `test/record.test.ts` 2a2 asks for bit for bit; the replay
+fixture's first ten steps are unchanged, and five eggs answered in words
+follow them. The decision keeps its three-way miss around the level asked
+for, and so do the odds and the lean. `MODEL_ID` 2026-10-e9, so every
+stored posterior is replayed once, to the same bits.
+
+The server takes the new fields through `parseRecord`; the longest record
+the loader takes is about 1.4 KB, inside the 2 KB cap (`9e156e5`, with the
+privacy page and `COLLECTIVE.md`). The fit (`1676676`): the model and the
+scorer gain the five-word probit, held to `infer.ts` to the digit by the
+re-emulated sample; an old answer is scored by the three-way probit and
+nothing else. Checked on 400 simulated cooks (2,578 answered eggs, 163 of
+them the old way, the rest in words; open eggs at no weight, so 772
+attested eggs fit): `mu_z` 0.663 +- 0.050 for 0.600, the white's lag 0.175
++- 0.067 for 0.250, every global inside its 90% interval but the white's
+spread between cooks (0.15 for 0.30). Held out, the fitted population scores
+-0.581 per yolk word against the truth's own -0.574 and the literature's
+-0.614, and -0.597 per old yolk answer against -0.598 and -0.804. A word
+answer is one of five, so the same log score carries more.
+
+The words (`a67e329` web, `1c91378` iOS): the `afteregg` draft. The yolk's
+buttons are the ticks' own keys, `doneness.runny` to `doneness.hard`, whose
+five-character budget lets five share a phone's width; "And the white next
+to the yolk?"; the probe offer during a cook goes, and under the two
+questions, whenever the cooling ended at the peak, "Do you have a probe
+thermometer?" and "Push it into the middle of the yolk now and tell me the
+highest number you see.", the field and its refusal as before. "Each of
+these is optional." Help's aside said "too soft, just right and too firm".
+Proved by `copyLiterals --since 1676676 afteregg` and `copySnapshot compare
+--draft afteregg`, after `aab4ce3` taught the latter the words either side
+of a link and a field's number. Driven: the web at 375 px (one row; at
+320 px too; two rows at 125% text), and iOS on the iPhone 17 simulator
+with the new `-uiScreen done` (one row at the default and at XXL text,
+three over two at accessibility sizes), a reading of 20 refused and 64
+taken, the record `yolkWord: jammy`, `white: tender`, `model: 2026-10-e9`.
+
+Things that cost an hour: a bordered SwiftUI button pads its label about
+12 pt a side, so `ViewThatFits` put five words on two rows on an iPhone 17
+at the default size until the label gave back 8 pt. A simulated tap while
+a scroll is still coasting stops the scroll and taps nothing, so wait
+before tapping after a swipe. On the web, `.pair--five > button` lost to
+`button.fb`'s font size on order alone; the rule needed the class.

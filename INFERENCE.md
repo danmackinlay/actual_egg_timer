@@ -910,6 +910,16 @@ whole pipe, and its check on simulated cooks.
   and the time-scale's a sixth too wide. The predictive does not suffer -
   that is what the held-out scores say - but the spreads are not to be read
   as facts about cooks.
+- **Checked again with the five yolk words** (6 October 2026, `DECISIONS.md`
+  92): 400 simulated cooks, a quarter answering their first two eggs the
+  old way and the rest in words; 2,578 answered eggs, 772 of them attested,
+  the open tier at no weight. `mu_z` 0.663 +- 0.050 for 0.600 and the lag
+  0.175 +- 0.067 for 0.250, every global inside its 90% interval but the
+  white's spread between cooks (0.15 for 0.30). Held out, -0.581 per yolk
+  word against the truth's -0.574 and the literature's -0.614, and -0.597
+  per old answer against -0.598 and -0.804. The two yolk questions are
+  scored apart, since a score over five answers and one over three are not
+  on one scale.
 - **The tiers with no attested eggs**: `DECISIONS.md` 2 read literally caps
   the open tier at zero, so the first fit, if every egg comes from the web,
   learns nothing. `--open-cap` changes it; the choice is the owner's

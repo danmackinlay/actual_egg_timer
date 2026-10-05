@@ -10,9 +10,9 @@ population a prior is drawn from (E6-E8, `COLLECTIVE.md`) are built in
 both, on this branch, not on `main` and not deployed. The web app (`src/`) and the iOS app (`ios/`) carry
 the same model, refusals, particle filter and choice of time, the same
 catalogue of words in two Englishes (Phase F but for Czech), and the same
-layout (`UI.md`). `npm test` runs 328 tests, all passing (5b pins E3's known
-limit). `npm run validate` passes 29/29, and `swift test` passes 128 tests
-in 33 suites. **Pushed on 29 September** at `5ff6940`, the owner's
+layout (`UI.md`). `npm test` runs 336 tests, all passing (5b pins E3's known
+limit). `npm run validate` passes 29/29, `swift test` passes 130 tests
+in 34 suites, and the fit's pytest 9. **Pushed on 29 September** at `5ff6940`, the owner's
 call: Netlify serves it at actualeggtimer.netlify.app, and the first run of
 `.github/workflows/verify.yml` passed. The iOS app runs from Xcode on the owner's
 phone and has cooked real eggs; the first TestFlight build, 0.3.1 (1), was
@@ -199,7 +199,13 @@ Waiting on someone else: the Czech review (F5), by the owner's friend.
 - **The after-egg questions name the yolk** (`DECISIONS.md` 92), for 0.4:
   the cook says which yolk they got (Runny to Hard), the white is asked
   about next to the yolk, and the probe reading moves below the two
-  answers. Being built on a branch; then the owner, on a phone.
+  answers. Built on the branch `after-egg` (`LOGBOOK.md`, 6 October): the
+  five-word probit and the record's `yolkWord` in both cores, the server,
+  the fit, both apps' panels and the `afteregg` draft, and the ticks struck
+  through only when no position of their word can be reached. Waiting on the
+  owner, on a phone: the five words and the probe field's two lines, and
+  whether the field should show when the probe setting is off (it does
+  now, whenever the cooling ends at the peak).
 
 - **0.5: one screen for setting up and boiling** (`DECISIONS.md` 91): the
   setup and the timer merged, so the start, the egg and the pot can be
@@ -309,7 +315,8 @@ checked, fixed or deleted. Start the QA pass here.
 - **iOS, by hand.** Nothing in these was tapped, in a simulator or on a
   phone: the units menu, the steppers in displayed units and a typed value's
   round trip; the pull button, both questions and the second answer's
-  refold; the probe offer, typing a reading, its refusal and the "Probe it
+  refold, and the five yolk words, typing a probe reading and its refusal
+  (tapped in the simulator on 6 October, `-uiScreen done`); the "Probe it
   now" notification; the clause links, Done, the (i)s opening, the Forget
   confirmation, the advice link into Help, setting a weight, and Weighed
   going back to the last weighed mass; a drag on `YolkSlider` by a finger

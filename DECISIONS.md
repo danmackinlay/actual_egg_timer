@@ -31,7 +31,9 @@ Recorded in `7e142e0` and `b7a5e31`. The design they belong to is
 4. **Three yolk answers, not five, and every answer is optional.** A skip is
    recorded as a skip. This decision has a statistical cost, and the cost is
    accepted rather than engineered away. Built with E2 (`e7035c3`,
-   `4e8e619`).
+   `4e8e619`). Changed by 92: the cook names the yolk they got in the
+   slider's five words; the old three answers are kept and scored as
+   they were.
 5. **"Tender" stands, for now.** Slightly odd, not pathological, and no
    picture could do better. Revisit if real cooks stumble on it; the record
    will show whether the middle answer is used. Built with E2.
@@ -584,4 +586,8 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     offered as a question; it is a field below the yolk and white
     answers. Proposed for 0.4, so shared results start in this form;
     older answers are kept and fitted as they were. 6 October 2026.
+    Built `bb1cc9d` (the ticks), `67bc66d` (core, Swift, the record),
+    `9e156e5` (the server, the privacy page), `1676676` (the fit),
+    `a67e329` (web, the `afteregg` draft), `1c91378` (iOS) and `aab4ce3`
+    (the proof), on the `after-egg` branch.
 

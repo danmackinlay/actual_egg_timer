@@ -426,6 +426,27 @@ advice link stays under it. No en-US entry. `tools/drafts/warn.ts`, on
 The 1750 twin: "{doneness}: in this I have hitherto succeeded fewer than
 {hits} times in {of}."
 
+**The questions after an egg: `afteregg`** (6 October 2026, `DECISIONS.md`
+92). The cook names the yolk they got in the slider's own words, so the
+yolk's answers are the ticks' keys, `doneness.runny` to `doneness.hard`,
+unchanged but for a note; their five-character budget is what lets five
+share a phone's width. The white question names the white the model
+scores. The probe is no longer offered during a cook: its reading is a
+field under the questions, with a question and a line of its own, "now"
+standing for the offer's "when I ask". No en-US entry.
+`tools/drafts/afteregg.ts`, on `1676676`; its header has the 1750 twins.
+
+| key | before | after |
+|---|---|---|
+| `feedback.tooSoft`, `.justRight`, `.tooFirm` | Too soft / Just right / Too firm | (retired; the yolk's answers are the doneness words) |
+| `feedback.white.ask` | And the white? | And the white next to the yolk? |
+| `feedback.optional` | Both questions are optional. | Each of these is optional. |
+| `probe.offer`, `.offer.yes`, `.offer.no` | Do you have a probe thermometer? If so, when I ask, … / Yes / No thanks | (retired) |
+| `probe.now`, `probe.hint` | Push the probe to the middle / Tell me the highest number you see. | (retired) |
+| `probe.ask` | (new) | Do you have a probe thermometer? |
+| `probe.how` | (new) | Push it into the middle of the yolk now and tell me the highest number you see. |
+| `help.learn.aside` | … for too soft, just right and too firm. … | … for the yolk you got, runny to hard, and the white next to it. … |
+
 ## 4. Units
 
 **One setting: Metric or Imperial.** Its default comes from the platform:
