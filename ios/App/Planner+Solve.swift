@@ -158,14 +158,20 @@ extension Planner {
     /// rather than solved at its mean, and what to say if the odds there are
     /// low. Off the main actor, like the solve: a decision is a few thousand
     /// probits. Profiles not yet worked out - this pot's, and those of the
-    /// changes the advice would price - are listed in `missing`.
+    /// changes the advice would price - are listed in `missing`. Once this
+    /// pot's profile is in, the time is held by it, so a softer level never
+    /// gets a later time than a firmer one (`envelopeBounds`, DECISIONS.md
+    /// 84); until then a level has its own choice.
     private nonisolated static func decided(
         _ answer: Answer, grid: DoseGrid, _ snapshot: InputSnapshot
     ) async -> Answer {
         let egg = snapshot.egg
         let calibration = snapshot.calibration
         let target = logYolkTarget(answer.level)
-        let d = decide(calibration, grid: grid, solution: answer.solution, logNominalTarget: target)
+        let d = decide(
+            calibration, grid: grid, solution: answer.solution, logNominalTarget: target,
+            bounds: envelopeBounds(answer.profile, level: answer.level)
+        )
         var chosen = answer
         // The nudge moves the chosen time, where one is chosen, for a cook who
         // is sharing (E8); the time shown, the time started and the outcome
