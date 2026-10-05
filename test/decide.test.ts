@@ -44,6 +44,7 @@ import {
   Calibration, EggRecord, calibrationDoneness, calibrationParams, copyCalibration, foldRecord,
   freshCalibration, gridRequestFor, replay,
 } from '../src/core/record.js';
+import { answerAt } from '../src/core/reach.js';
 import { appSetup, gridFor, knowing, recordAt } from '../tools/common.js';
 
 // --------------------------------------------------------------------------
@@ -55,17 +56,11 @@ const EGG = eggFromMass(0.068);
 const SETUP = appSetup();
 const LEVELS = [0.22, 0.41, 0.62, 0.85, 1.0];
 
-/** What the apps do: the mean solve, the verdict, a snap if there is one, and
- *  the level the solve is for. */
+/** What the apps do (`answerAt`): the mean solve, the verdict, a snap if
+ *  there is one, and the level the solve is for. */
 function meanSolve(c: Calibration, level: number, setup = SETUP): { sol: Solution; level: number } {
-  const params = calibrationParams(c);
-  const sol = solveCookTime(EGG, setup, params, calibrationDoneness(c, level));
-  const v = verdictFor(sol, level);
-  if (v.snapTo !== null) {
-    const retry = solveCookTime(EGG, setup, params, calibrationDoneness(c, v.snapTo));
-    if (retry.reachable) return { sol: retry, level: v.snapTo };
-  }
-  return { sol: sol, level: level };
+  const a = answerAt(c, EGG, setup, level, null, true);
+  return { sol: a.solution, level: a.level };
 }
 
 function decideFor(c: Calibration, grid: DoseGrid, level: number, setup = SETUP): Decision {
