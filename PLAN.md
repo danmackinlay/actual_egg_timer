@@ -10,7 +10,7 @@ population a prior is drawn from (E6-E8, `COLLECTIVE.md`) are built in
 both, on this branch, not on `main` and not deployed. The web app (`src/`) and the iOS app (`ios/`) carry
 the same model, refusals, particle filter and choice of time, the same
 catalogue of words in two Englishes (Phase F but for Czech), and the same
-layout (`UI.md`). `npm test` runs 324 tests, all passing (5b pins E3's known
+layout (`UI.md`). `npm test` runs 328 tests, all passing (5b pins E3's known
 limit). `npm run validate` passes 29/29, and `swift test` passes 128 tests
 in 33 suites. **Pushed on 29 September** at `5ff6940`, the owner's
 call: Netlify serves it at actualeggtimer.netlify.app, and the first run of
@@ -27,7 +27,9 @@ These counts are the only ones in the documents. If you want a number, run
 
 1. **The owner's reviews** (the queue below).
 2. **An adversarial QA pass** against this baseline, starting from the QA
-   list below.
+   list below. The owner's review of the 0.4 line, `REVIEW-0.4.x.md`, is
+   actioned item by item; what is left there
+   is marked OWNER, the owner's questions.
 3. **F5, Czech**, when the owner's friend can review it.
 4. **E6-E8**, the collective part: built, on this branch, `0.4.x`
    (`COLLECTIVE.md`; the owner's answers are `DECISIONS.md` 58-61), kept up

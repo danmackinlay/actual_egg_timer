@@ -4334,3 +4334,43 @@ the left edge; up to hard, 9:42; never a rise going softer. iOS, dragged:
 and if so, probably too firm." and the warning at soft. The apps' posterior
 is the page's own fold of the record, so its times differ from the table's
 by a few seconds.
+
+## 5 October 2026: the 0.4 review, actioned
+
+`REVIEW-0.4.x.md` worked through on the branch `review-fixes`, from
+`4f66bb0`; every item is ticked in that file with its commit, or marked
+NOT A BUG with why, or OWNER with the question.
+
+Data first. A second web tab now reads the log and the sharing state again
+before each change and takes up what another tab wrote, and a `storage`
+listener takes it up at once (`fcd622e`); each send and each round of
+deletions holds a `navigator.locks` lock, so a deletion cannot land in the
+middle of a send. Both apps write each record back as it was stored with
+what they know laid over it (`overlay`, `70ea0d3`), so a field a later
+build adds survives an earlier one's save; 0.3 does strip them and cannot
+be patched, so `ios/RELEASING.md` now says never to roll back past 0.4.
+
+The server: an attested copy of an egg replaces an open one at the same
+place, which anyone with the ID could otherwise post first (`dd4aeeb`); 415
+for anything not JSON, the body read only to the cap, a record capped at
+2 KB and its strings at 64 characters, a refused attestation that says only
+"attestation refused", and an earlier production deploy at its permalink
+kept off the live store (`0ab1eee`). The fit trusts the owner's results
+file, not an ID (`f11ddf6`). iOS waits on a passing attestation failure
+instead of sending its backlog open, and keeps nothing from App Attest once
+sharing is off or deleted (`a4a5cf1`); an attestation refused a day or more
+after it was made is made again with a new key (`99d23a1`).
+
+The rest: the iPhone slider's levels are k / 100, and `lowOddsAt` has the
+envelope's 1e-9 slack (`1584d4e`, fixtured); the privacy page corrected in
+five places (`a4cc834`); a pull deletes the files built from the last one
+(`ca8f334`); + and - in both apps step to the next grid point past the
+value, and leave an emptied web field alone (`07d1a12`, `86ce71d`); iOS
+says "You asked for" in today's language and units (`6829df2`), records
+carry the build ("0.4.0+3"), and a damaged `sharing.v1` keeps its IDs
+(`80150cb`).
+
+Things that cost an hour: the simulator's `UserDefaults` plist takes a key
+with a dot only escaped, `plutil -insert 'sharing\.v1'`, since plutil reads
+the dot as a path. The fit's pytest suite passes (7) with
+`uv run --project fit pytest -q fit/tests`; nothing runs it.
