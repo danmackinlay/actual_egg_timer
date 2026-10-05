@@ -353,9 +353,27 @@ under the same key, `aet.calibration.v4` (`calibration.v4` on iOS), and 0.3
 writes every record back with only the fields it knows, so the first egg it
 logs strips 0.4's `model` and `forecast` from every record before it; 0.3
 also has no place for a record it cannot read, so one costs it the whole
-log. 0.3 cannot be patched. From 0.4 on, a build writes back every field it
-does not know as it found it (`overlay`), so rolling 0.5 back to 0.4 is safe
-in this respect.
+log. 0.3 cannot be patched.
+
+From 0.4 on, rolling back one version loses no egg, and that is all it
+promises. A build writes back every field of a RECORD it does not know as it
+found it (`overlay`), and keeps a record it cannot read at all in its place
+(`unread`), so 0.4 running after 0.5 keeps every egg 0.5 logged, with
+everything 0.5 wrote in it. What is not safe:
+
+- **The store around the log** is written from the fields the build knows
+  (`v`, `p`, `m`, `base`, `cal`, `folded`, `log`, `unread`), so a top-level
+  field 0.5 adds to it is dropped by 0.4's first write. So is anything 0.5
+  adds to the settings, the pans, the sharing state or the cook in progress,
+  each of which is written whole from what the build knows.
+- **A store of a later version** (`v` above 4) is not read at all: it is
+  kept aside and exported with the results, and 0.4 starts a fresh log.
+- **A newer model** (`m`) is replayed under the older one, and again when
+  the newer build comes back: no egg is lost, but the posterior is the older
+  model's while the older build runs.
+
+So a release that adds anything outside a record's own fields says here,
+before it ships, whether the version before it may still run after it.
 
 ---
 
