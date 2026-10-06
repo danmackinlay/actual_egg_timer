@@ -91,7 +91,7 @@ export function renderBareScale(): void {
  *  its 90% point, with a mark at its middle; and the same in words for a
  *  screen reader, each end as the nearest doneness word. Nothing without an
  *  outcome: no decision yet, no white, sous-vide, or a cook under way. */
-export function renderBracket(o: Outcome | null): void {
+function renderBracket(o: Outcome | null): void {
   page().donenessBracket.hidden = o === null;
   if (o === null) {
     page().donenessRange.textContent = '';

@@ -3,7 +3,7 @@
  * choosing when a new build may take over.
  *
  * Taking over reloads the page, and a reloaded page cannot ring: the alarm
- * lives in the old page's audio context (app.ts, restoreCook). So a new build
+ * lives in the old page's audio context (cook.ts, restoreCook). So a new build
  * never takes over while a cook runs. When none is, it takes over at once if
  * the cook has not touched the page since it loaded (a reload, or the app
  * just opened), and otherwise waits until the page is out of sight, so the

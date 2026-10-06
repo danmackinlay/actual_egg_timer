@@ -1,6 +1,6 @@
 /**
  * One job for the grid worker, run wherever it is run: in the worker
- * (`gridWorker.ts`) or, when there is none, on the page (`calibration.ts`).
+ * (`gridWorker.ts`) or, when there is none, on the page (`offThread.ts`).
  * One function, so the two cannot build different things - and a job that
  * throws throws in both, for the caller to reject on.
  */

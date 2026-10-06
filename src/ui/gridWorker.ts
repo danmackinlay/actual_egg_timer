@@ -13,8 +13,8 @@
  * solve and a decision per level: most of a second, and never on the page.
  *
  * Zero dependencies and no bundler: this is compiled by the same `tsc` as
- * everything else, lands beside `calibration.js` in `dist/src/ui/`, and is
- * started as a module worker, so it imports the core exactly as the page does.
+ * everything else, lands beside `offThread.js` in `dist/src/ui/`, and is
+ * started by it as a module worker, so it imports the core exactly as the page does.
  * The request is plain data and so is the surface, so both cross by structured
  * clone, which copies doubles bit for bit: a surface built here is the surface
  * the page would have built.

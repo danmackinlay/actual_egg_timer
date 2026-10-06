@@ -6,7 +6,7 @@
  *
  * A file that cannot be fetched or read leaves the literature's in its
  * place. The posterior remembers which population it was drawn from
- * (calibration.ts), so a page that fell back replays its eggs from the
+ * (calibrationStore.ts), so a page that fell back replays its eggs from the
  * literature, and the next page that reads the file replays them back: both
  * correct, and each a few seconds of the worker's time per egg.
  */

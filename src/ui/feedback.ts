@@ -14,8 +14,9 @@ import { WhiteReport, YOLK_WORDS, YolkWord } from '../core/infer.js';
 import { ProbeReading, probeReadingFor, recordCookTime_s } from '../core/record.js';
 import { nudgeFrom, parse, stepPast } from '../core/units.js';
 import {
-  Calibration, calibrationParams, eggLogged, eggRecordFor, learn, logEgg, recordSecondAnswer,
+  Calibration, calibrationParams, eggLogged, learn, logEgg, recordSecondAnswer,
 } from './calibration.js';
+import { eggRecordFor } from './eggRecord.js';
 import { activeLocale, t } from './copy.js';
 import { page } from './dom.js';
 import { Machine } from './machine.js';
@@ -224,7 +225,7 @@ export function probePending(machine: Machine, wanted: boolean): boolean {
 /** Whether the reading's field is under the questions: whenever the cook has
  *  a moment to probe, the cooling having ended at the yolk's peak, with the
  *  probe setting on or off (DECISIONS.md 92). It is optional, like them. */
-export function probeOffered(ticket: Ticket | null): boolean {
+function probeOffered(ticket: Ticket | null): boolean {
   return ticket !== null && ticket.probeMoment;
 }
 

@@ -23,7 +23,7 @@ import {
 } from '../src/core/language.js';
 import { eggFromMass } from '../src/core/geometry.js';
 import { parseRecord } from '../src/core/record.js';
-import { Cooked, eggRecordFor } from '../src/ui/calibration.js';
+import { Cooked, eggRecordFor } from '../src/ui/eggRecord.js';
 import { advance, startHot } from '../src/ui/machine.js';
 
 type Entry = Record<string, unknown>;

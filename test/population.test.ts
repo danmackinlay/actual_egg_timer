@@ -2,7 +2,7 @@
  * The population a prior is drawn from (E7; src/core/population.ts): the
  * literature's is the default prior, a fitted one moves where a new cook
  * starts, and a posterior drawn from one population is replayed from the
- * next (src/ui/calibration.ts).
+ * next (src/ui/calibrationStore.ts).
  */
 
 import test from 'node:test';
@@ -14,7 +14,7 @@ import { LITERATURE_START, parsePopulation, priorStart } from '../src/core/popul
 import { calibrationDoneness, calibrationParams, freshCalibration } from '../src/core/record.js';
 import { DEFAULT_PARAMS, WHITE_DOSE_TARGET, donenessFromSlider } from '../src/core/solve.js';
 import { CALIBRATION_SEED } from '../src/core/policy.js';
-import { decodeKept, encodeKept } from '../src/ui/calibration.js';
+import { decodeKept, encodeKept } from '../src/ui/calibrationStore.js';
 import { recordAt } from '../tools/common.js';
 
 const SHIFTED: Population = {
