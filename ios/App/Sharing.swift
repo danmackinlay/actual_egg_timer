@@ -6,8 +6,10 @@ import EggTimerCore
 /// Sharing (E6; INFERENCE.md section 7, COLLECTIVE.md section 1): a cook who
 /// turns it on sends every egg in the log to the collection endpoint, the
 /// ones from before it was on included (DECISIONS.md 59), and can delete
-/// everything this phone has sent. The web app's `src/ui/share.ts`, rule for
-/// rule; what it keeps and why is said there.
+/// everything this phone has sent. What it keeps, and how each step moves it,
+/// is core's (`ShareState`, `src/core/share.ts`), which the web moves alike;
+/// this holds it, writes it through and does the talking, as the web's
+/// `src/ui/share.ts` does.
 ///
 /// What iOS adds is App Attest (DECISIONS.md 60). When an id first sends, the
 /// phone makes a key in its Secure Enclave and has Apple attest it, bound to
@@ -25,22 +27,6 @@ import EggTimerCore
 @Observable
 final class Sharing {
     static let shared = Sharing()
-
-    /// What is kept, as the web keeps it (`ShareState` in share.ts).
-    struct State: Codable, Equatable {
-        var on = false
-        var uid: String?
-        var sent = 0
-        var seq = 0
-        var uids: [String] = []
-        var deleting: [String] = []
-        /// How many busy answers the egg at `sent` has had, and when the
-        /// first came.
-        var busy = 0
-        var busySince: Date?
-
-        enum CodingKeys: String, CodingKey { case on, uid, sent, seq, uids, deleting, busy, busySince }
-    }
 
     /// An id's attested key: made, attested by Apple, and taken by the server
     /// - or given up on, for this id.
@@ -69,12 +55,7 @@ final class Sharing {
     /// phone makes a new key and tries again.
     private static let attestationFresh: TimeInterval = 24 * 60 * 60
 
-    nonisolated static func isUid(_ s: String) -> Bool {
-        s.range(of: "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
-                options: .regularExpression) != nil
-    }
-
-    private(set) var state = State()
+    private(set) var state = ShareState()
     @ObservationIgnored private var attest: Attest?
 
     /// What sharing needs of the planner, read when it needs it.
@@ -128,84 +109,37 @@ final class Sharing {
         return http.statusCode
     }
 
-    // MARK: - States: share.ts's, rule for rule
+    // MARK: - Ids and time
 
+    /// A random version 4 UUID, lower case, as the server takes it.
     nonisolated static func newUid() -> String { UUID().uuidString.lowercased() }
 
-    static func turnedOn(_ s: State, mint: () -> String = newUid) -> State {
-        var next = s
-        next.on = true
-        if next.uid == nil {
-            let uid = mint()
-            next.uid = uid
-            next.sent = 0
-            next.seq = 0
-            next.uids.append(uid)
-            next.busy = 0
-            next.busySince = nil
-        }
-        return next
-    }
-
-    static func forgotten(_ s: State, mint: () -> String = newUid) -> State {
-        var next = s
-        next.sent = 0
-        next.seq = 0
-        next.busy = 0
-        next.busySince = nil
-        if s.on {
-            let uid = mint()
-            next.uid = uid
-            next.uids.append(uid)
-        } else {
-            next.uid = nil
-        }
-        return next
-    }
-
-    static func deletionAsked(_ s: State) -> State {
-        var deleting = s.deleting
-        for uid in s.uids where !deleting.contains(uid) { deleting.append(uid) }
-        return State(on: false, uid: nil, sent: 0, seq: 0, uids: [], deleting: deleting)
-    }
-
-    static func reconciled(_ s: State, logCount: Int) -> State {
-        var next = s
-        if next.sent > logCount {
-            next.sent = 0
-            next.busy = 0
-            next.busySince = nil
-        }
-        return next
-    }
-
-    /// The egg at the cursor answered: whether the cursor moves on, and the
-    /// state with it (share.ts's `answered`). Kept or refused, it does; busy,
-    /// it waits - counted, unless it has waited long enough, when it is
-    /// passed over as if refused, so that one egg cannot hold up the rest.
-    static func answered(_ s: State, status: Int, now: Date) -> (next: State, moved: Bool) {
-        var next = s
-        if shareReply(status) == .busy {
-            let since = s.busySince ?? now
-            let busy = s.busy + 1
-            if !shareGivesUp(tries: busy, waitedS: now.timeIntervalSince(since)) {
-                next.busy = busy
-                next.busySince = since
-                return (next, false)
-            }
-        }
-        next.sent += 1
-        next.seq += 1
-        next.busy = 0
-        next.busySince = nil
-        return (next, true)
-    }
+    /// Now, as core counts it: epoch ms.
+    private static func nowMs() -> Double { Date.now.timeIntervalSince1970 * 1000 }
 
     // MARK: - Kept
 
-    private func save(_ next: State) {
+    /// What is kept, as `sharing.v1` has always held it: the JSON the web
+    /// stores, but with `busySince` a `Date` as JSONEncoder wrote one (seconds
+    /// since 2001), where core counts epoch ms, and with no key for an absent
+    /// value. Read back by core's `readShareState`, which keeps every id it can
+    /// from a damaged copy, so a deletion still pending is not lost with the
+    /// rest.
+    private static func stored(_ s: ShareState) -> Data? {
+        var o = s.jsonObject.filter { !($0.value is NSNull) }
+        if let ms = s.busySince { o["busySince"] = ms / 1000 - Date.timeIntervalBetween1970AndReferenceDate }
+        return try? JSONSerialization.data(withJSONObject: o)
+    }
+
+    private static func read(_ data: Data?) -> ShareState {
+        var s = readShareState(data.flatMap { try? JSONSerialization.jsonObject(with: $0) })
+        s.busySince = s.busySince.map { ($0 + Date.timeIntervalBetween1970AndReferenceDate) * 1000 }
+        return s
+    }
+
+    private func save(_ next: ShareState) {
         state = next
-        if let data = try? JSONEncoder().encode(next) {
+        if let data = Self.stored(next) {
             UserDefaults.standard.set(data, forKey: Self.stateKey)
         }
     }
@@ -225,10 +159,7 @@ final class Sharing {
     func start(host: Host) {
         self.host = host
         let defaults = UserDefaults.standard
-        let read = defaults.data(forKey: Self.stateKey).flatMap { try? JSONDecoder().decode(State.self, from: $0) }
-        var s = read ?? State()
-        if s.uid == nil { s.on = false }
-        state = Self.reconciled(s, logCount: host.log().count)
+        state = reconciled(Self.read(defaults.data(forKey: Self.stateKey)), logLength: host.log().count)
         attest = defaults.data(forKey: Self.attestKey).flatMap { try? JSONDecoder().decode(Attest.self, from: $0) }
         resume()
     }
@@ -245,13 +176,7 @@ final class Sharing {
     func setSharing(_ on: Bool) {
         guard on != state.on else { return }
         generation &+= 1
-        var next = state
-        if on {
-            next = Self.turnedOn(state)
-        } else {
-            next.on = false
-        }
-        save(next)
+        save(on ? turnedOn(state, fresh: Self.newUid()) : turnedOff(state))
         if on { sendFinal() }
     }
 
@@ -259,7 +184,7 @@ final class Sharing {
     /// is a new cook's, under a new id and, when it sends, a new key.
     func forget() {
         generation &+= 1
-        save(Self.forgotten(state))
+        save(forgotten(state, fresh: Self.newUid()))
     }
 
     // MARK: - Sending
@@ -287,8 +212,8 @@ final class Sharing {
         while true {
             let s = state
             let log = host.log()
-            let final = min(host.finalCount(), log.count)
-            guard s.on, let uid = s.uid, s.sent < final else { return }
+            guard let at = nextToSend(s, finalCount: host.finalCount(), logLength: log.count),
+                  let uid = s.uid else { return }
             let gen = generation
             if attestedFor != uid {
                 let key = await attestedKey(for: uid, generation: gen)
@@ -301,7 +226,7 @@ final class Sharing {
                 }
                 attestedFor = uid
             }
-            var copy = log[s.sent]
+            var copy = log[at]
             copy.uid = uid
             guard let body = try? Self.body(seq: s.seq, record: copy) else { return }
             var assertion: String?
@@ -317,9 +242,9 @@ final class Sharing {
             // through either. The next run tries again, uncounted.
             guard let status = await Self.send("POST", "api/eggs", body: body, assertion: assertion) else { return }
             guard gen == generation else { return }
-            let (next, moved) = Self.answered(state, status: status, now: .now)
-            save(next)
-            guard moved else { return }
+            let answer = answered(state, status: status, now: Self.nowMs())
+            save(answer.next)
+            guard answer.moved else { return }
         }
     }
 
@@ -469,7 +394,7 @@ final class Sharing {
     /// any egg already on its way has landed.
     func deleteSent() async {
         generation &+= 1
-        save(Self.deletionAsked(state))
+        save(deletionAsked(state))
         saveAttest(nil)
         await run?.value
         await retryDeletes()
@@ -479,42 +404,7 @@ final class Sharing {
     func retryDeletes() async {
         for uid in state.deleting {
             guard let status = await Self.send("DELETE", "api/eggs/\(uid)") else { return }
-            // 400 is an id the server will never hold: as done as a 200.
-            if status == 200 || status == 400 {
-                var next = state
-                next.deleting.removeAll { $0 == uid }
-                save(next)
-            }
+            if deletionDone(status) { save(deletionConfirmed(state, uid: uid)) }
         }
-    }
-}
-
-/// What is kept, read field by field, as the web's `readShare` reads it:
-/// anything damaged reads as off, and every id that can be read is kept, so
-/// a deletion still pending is not lost with the rest.
-extension Sharing.State {
-    init(from decoder: Decoder) throws {
-        let c = try decoder.container(keyedBy: CodingKeys.self)
-        func ids(_ key: CodingKeys) -> [String] {
-            ((try? c.decode([JSONValue].self, forKey: key)) ?? []).compactMap {
-                if case .string(let s) = $0, Sharing.isUid(s) { return s }
-                return nil
-            }
-        }
-        func count(_ key: CodingKeys) -> Int { max(0, (try? c.decode(Int.self, forKey: key)) ?? 0) }
-        let uid = (try? c.decode(String.self, forKey: .uid)).flatMap { Sharing.isUid($0) ? $0 : nil }
-        let busySince = uid == nil ? nil : try? c.decode(Date.self, forKey: .busySince)
-        var uids = ids(.uids)
-        if let uid, !uids.contains(uid) { uids.append(uid) }
-        self.init(
-            on: ((try? c.decode(Bool.self, forKey: .on)) ?? false) && uid != nil,
-            uid: uid,
-            sent: uid == nil ? 0 : count(.sent),
-            seq: uid == nil ? 0 : count(.seq),
-            uids: uids,
-            deleting: ids(.deleting),
-            busy: uid == nil ? 0 : count(.busy),
-            busySince: busySince
-        )
     }
 }

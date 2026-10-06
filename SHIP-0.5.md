@@ -35,10 +35,17 @@ core's exports.
       fixtures, the Swift twin, `fit/` and `npm run sbc` with it.
       `INFERENCE.md` §2 already says so. The one item here that changes
       what a cook is told.
-- [ ] **A2. One `decideAnswer`** (`DECISIONS.md` 90; `REVIEW-0.4.x.md`,
+- [x] **A2. One `decideAnswer`** (`DECISIONS.md` 90; `REVIEW-0.4.x.md`,
       Bloat 1). `decided()` is written twice (`src/ui/app.ts`,
       `ios/App/Planner+Solve.swift`); `DECISIONS.md` 84 had to land as two
       commits. One core function, fixtured.
+      Done: `decideAnswer` in `reach.ts` and `Reach.swift` (the decision held
+      by the envelope, the nudge, the solve and the outcome at the time
+      given, the level, whether advice is wanted); both apps call it, and
+      both price the advice at its level. `reach.json` pins it for each
+      profile's pot, the owner's egg (83, 84) and a white that never sets;
+      `test/reach.test.ts` 14. The differences between the two copies are
+      in `LOGBOOK.md`, 6 October 2026.
 - [x] **A3. One `recordFor`** (Bloat 2). Egg-record assembly
       (`src/ui/calibration.ts`, `ios/App/Cook.swift`) is the fit's
       training data, and is twinned by hand. One core function from the
@@ -52,23 +59,42 @@ core's exports.
       `loadDecision(StoreRead)` in `src/core/record.ts` and `Record.swift`,
       25 cases in `record.json`; each app reads its store apart and keeps
       what core decides. Checked before the switch: the web's whole decode
-      over 41479 stores, and iOS's decision over every one of 4320 reads.
-- [ ] **A5. The sharing state machine in core** (Bloat 3): `turnedOn`,
+      over 41479 stores, and iOS's decision over every one of 4320 reads. `f531e4d`.
+- [x] **A5. The sharing state machine in core** (Bloat 3): `turnedOn`,
       `forgotten`, `deletionAsked`, `reconciled`, `advances`, into
       `src/core/share.ts` with fixtures; the server shares `isUid`.
+      Done: `src/core/share.ts` and `Share.swift` hold the state, its
+      defensive read, every transition (`answered` is "advances"),
+      `nextToSend` and the deletion answer; `fixtures/share.json` has 374
+      moves from 119 states. A new id and the time are passed in. Both apps
+      and `server/eggs.ts` call it; `shareReply` and `shareGivesUp` stay in
+      `policy.ts`, since an iPhone's attestation uses them too. Stored
+      shapes unchanged: iOS still keeps `busySince` as a `Date` and
+      converts at its storage.
 - [ ] **A6. `oddsProfile` without closures** (Bloat 6): core invariant 2,
       and its two copy-pasted bisections made one. The profile both apps
       ship is fixtured again, and must not move.
-- [ ] **A7. The certainty word, in core** (`DECISIONS.md` 93). From the
+- [x] **A7. The certainty word, in core** (`DECISIONS.md` 93). From the
       predicted spread of the five yolk words at the chosen time: *very
       certain* when 9 times in 10 it is the word asked for; *a ballpark*
       when 9 times in 10 it is that word or a neighbour; *a wild guess*
       when wider. With it, the 90% interval in words ("between Soft and
       Fudgy"), the most likely word, and a likely time range. Core and its
       fixtures only: no words on screen until D.
-- [ ] **A8. The fit's tests in CI** (Bloat 7): `uv run --project fit
+      *Built:* `certaintyAt` in `src/core/certainty.ts` and
+      `Certainty.swift`, `fixtures/certainty.json`, `npm run decide --
+      certainty`. The word asked is the slider's (`anchorNear`); the
+      interval's tie-break is the most mass, then the softer. The time
+      range is the right cook time's 90% interval (`predictCookTime` at 5%
+      and 95%): **the owner's to confirm** (`INFERENCE.md` §8, "How sure,
+      in words", has the alternatives). A fresh install is never very
+      certain: a wild guess at Runny, Soft and Jammy, a ballpark at Fudgy
+      and Hard (58 g, fridge, boiling, ice).
+- [x] **A8. The fit's tests in CI** (Bloat 7): `uv run --project fit
       pytest -q fit/tests` in `.github/workflows/verify.yml`, since the
-      fit writes `fixtures/population.json`, which both apps ship.
+      fit writes `fixtures/population.json`, which both apps ship. A third
+      job, `fit`, on Linux with `astral-sh/setup-uv@v10`; 9 tests, 22 s
+      locally. Not yet seen run on GitHub: CI runs on a push.
 - [x] **A9. Version `0.5.0-alpha.1`**, in `package.json`, `APP_VERSION`
       and `MARKETING_VERSION`, so a record made by a 0.5 build says so.
 
@@ -90,6 +116,7 @@ core's exports.
       made now); where the egg in cross-section sits, previewing the aim
       while setting up and going back to raw at the start. Owner's call
       before any of C2 is built.
+      Drafted for the owner: `design/one-screen.md`, its §6 the questions.
 - [ ] **C2. Core for it**, as C1 settles: the re-plan of a running cook
       from its observed events and a changed setup; the cross-section's
       preview of the aimed-for egg. TypeScript, fixtures, Swift.

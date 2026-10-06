@@ -29,8 +29,11 @@
  *                              a loader trusts, and a replayed log
  *   fixtures/decide.json       decision surfaces and the time chosen on one
  *   fixtures/outcome.json      the predicted outcome at the chosen time
+ *   fixtures/certainty.json    how sure, in words: the word asked, the class,
+ *                              the 90% interval and the time range
  *   fixtures/reach.json        the odds at every level, the verdict with them,
- *                              the answer at a level, the shading, the advice
+ *                              the answer at a level and with its time
+ *                              decided, the shading, the advice
  *   fixtures/wording.json      which key each part of the screen says
  *   fixtures/copy.json         the catalogues rendered, and the plural rule of
  *                              every language at its edges
@@ -39,6 +42,8 @@
  *                              locale, and a pseudo-Czech catalogue in cs-CZ
  *   fixtures/probe.json        the probe reading
  *   fixtures/language.json     the switch into the English of 1750 and out
+ *   fixtures/share.json        sharing's state: what a stored copy reads as,
+ *                              and every move from every reachable state
  *   fixtures/prior.json        a prior drawn from a population (E7), and the
  *                              population files a reader refuses
  *
@@ -60,18 +65,21 @@ import { sousvideCopyFixture } from './fixtures/sousvideCopy.js';
 import { recordFixture } from './fixtures/record.js';
 import { decideFixture } from './fixtures/decide.js';
 import { outcomeFixture } from './fixtures/outcome.js';
+import { certaintyFixture } from './fixtures/certainty.js';
 import { reachFixture } from './fixtures/reach.js';
 import { copyFixture } from './fixtures/copy.js';
 import { formatFixture } from './fixtures/format.js';
 import { unitsFixture } from './fixtures/units.js';
 import { probeFixture } from './fixtures/probe.js';
 import { languageFixture } from './fixtures/language.js';
+import { shareFixture } from './fixtures/share.js';
 import { wordingFixture } from './fixtures/wording.js';
 import { priorFixture } from './fixtures/population.js';
 
 const unitsJson = unitsFixture(english);
 const probeJson = probeFixture();
 const languageJson = languageFixture();
+const shareJson = shareFixture();
 
 mkdirSync('fixtures', { recursive: true });
 const written: Record<string, unknown> = {
@@ -86,12 +94,14 @@ const written: Record<string, unknown> = {
   prior: priorFixture,
   decide: decideFixture,
   outcome: outcomeFixture,
+  certainty: certaintyFixture,
   reach: reachFixture,
   copy: copyFixture,
   format: formatFixture,
   units: unitsJson,
   probe: probeJson,
   language: languageJson,
+  share: shareJson,
   wording: wordingFixture(),
 };
 /**
@@ -167,9 +177,11 @@ const counts = [
   `${recordFixture.replay.log.length} replayed eggs`,
   `${decideFixture.specs.length} decision surfaces and ${decideFixture.cases.length} decisions`,
   `${outcomeFixture.cases.reduce((n, c) => n + c.at.length, 0)} outcomes`,
-  `${reachFixture.profiles.length} odds profiles, ${reachFixture.lowOdds.length} warnings and ${reachFixture.advice.length} advice setups`,
+  `${certaintyFixture.spreads.length + certaintyFixture.cases.length} certainty readings`,
+  `${reachFixture.profiles.length} odds profiles, ${reachFixture.profiles.reduce((n, p) => n + p.decided.length, reachFixture.owner.decided.length + reachFixture.neverSets.decided.length)} decided answers, ${reachFixture.lowOdds.length} warnings and ${reachFixture.advice.length} advice setups`,
   `${(probeJson['updates'] as unknown[]).length} probe folds`,
   `${(probeJson['solved'] as unknown[]).length} probe cooks`,
   `${(languageJson['transitions'] as unknown[]).length} language moves`,
+  `${shareJson.transitions.length} sharing moves`,
 ];
 console.log(`fixtures/*.json written: ${counts.join(', ')}`);

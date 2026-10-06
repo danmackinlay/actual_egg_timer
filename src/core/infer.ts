@@ -817,9 +817,12 @@ export interface CookTimePrediction {
  * still being learned. No screen shows it; a deliberate nudge on the
  * recommendation, if one is built, would read it here (decide.ts). Times are
  * found on the grid, so they are clamped to its span.
+ *
+ * `lowQ` and `highQ` move the interval's ends: the certainty's likely time
+ * range reads a 90% interval here (certainty.ts).
  */
 export function predictCookTime(
-  post: Posterior, grid: DoseGrid, logNominalTarget: number,
+  post: Posterior, grid: DoseGrid, logNominalTarget: number, lowQ = 0.1, highQ = 0.9,
 ): CookTimePrediction {
   const n = post.particles.length;
   const rows: { t: number; w: number }[] = new Array<{ t: number; w: number }>(n);
@@ -831,9 +834,9 @@ export function predictCookTime(
   }
   rows.sort((a, b) => a.t - b.t);
   return {
-    low_s: weightedQuantile(rows, 0.1),
+    low_s: weightedQuantile(rows, lowQ),
     median_s: weightedQuantile(rows, 0.5),
-    high_s: weightedQuantile(rows, 0.9),
+    high_s: weightedQuantile(rows, highQ),
   };
 }
 

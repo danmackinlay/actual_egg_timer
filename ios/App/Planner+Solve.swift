@@ -154,44 +154,34 @@ extension Planner {
         askForProfiles(chosen.missing, calibration: calibration)
     }
 
-    /// The answer, with its time chosen from the whole posterior (Decide.swift)
-    /// rather than solved at its mean, and what to say if the odds there are
-    /// low. Off the main actor, like the solve: a decision is a few thousand
-    /// probits. Profiles not yet worked out - this pot's, and those of the
-    /// changes the advice would price - are listed in `missing`. Once this
-    /// pot's profile is in, the time is held by it, so a softer level never
-    /// gets a later time than a firmer one (`envelopeBounds`, DECISIONS.md
-    /// 84); until then a level has its own choice.
+    /// The answer, with its time decided by core (`decideAnswer`, Reach.swift),
+    /// and what to say if the odds there are low. Off the main actor, like the
+    /// solve: a decision is a few thousand probits. Profiles not yet worked
+    /// out - this pot's, and those of the changes the advice would price - are
+    /// listed in `missing`. Once this pot's profile is in, the time is held by
+    /// it, so a softer level never gets a later time than a firmer one
+    /// (DECISIONS.md 84); until then a level has its own choice.
     private nonisolated static func decided(
         _ answer: Answer, grid: DoseGrid, _ snapshot: InputSnapshot
     ) async -> Answer {
         let egg = snapshot.egg
         let calibration = snapshot.calibration
-        let target = logYolkTarget(answer.level)
-        let d = decide(
-            calibration, grid: grid, solution: answer.solution, logNominalTarget: target,
-            bounds: envelopeBounds(answer.profile, level: answer.level)
-        )
-        var chosen = answer
         // The nudge moves the chosen time, where one is chosen, for a cook who
         // is sharing (E8); the time shown, the time started and the outcome
         // under it are all at the nudged time.
-        let nudge = appliedNudge(answer.solution, nudgeS: snapshot.nudgeS)
-        chosen.solution = decidedSolution(
-            egg: egg, setup: answer.setup, params: calibrationParams(calibration),
-            solution: answer.solution, decision: d, nudgeS: nudge
+        let d = decideAnswer(
+            calibration, egg: egg, setup: answer.setup, grid: grid, solution: answer.solution,
+            level: answer.level, profile: answer.profile, nudgeS: snapshot.nudgeS
         )
-        chosen.decision = d
-        chosen.nudgeS = nudge
-        // What the egg at that time will be like: about 2 ms beside the
-        // decision's 13-16, so it goes with it (INFERENCE.md section 8).
-        chosen.outcome = predictOutcome(calibration.posterior, grid, d.cookTimeS + nudge, target)
+        var chosen = answer
+        chosen.solution = d.solution
+        chosen.decision = d.decision
+        chosen.nudgeS = d.nudgeS
+        chosen.outcome = d.outcome
         if answer.profile == nil {
             chosen.missing.append(decisionInputs(calibration, egg: egg, setup: answer.setup))
         }
-        guard answer.solution.whiteSets, EggTimerCore.adviceWanted(d.oddsTenths, profile: answer.profile) else {
-            return chosen
-        }
+        guard d.adviceWanted else { return chosen }
         var priced: [(key: String, profile: OddsProfile)] = []
         for change in pricedChanges(answer.setup) {
             let changed = decisionInputs(calibration, egg: egg, setup: change.setup)
@@ -202,7 +192,7 @@ extension Planner {
             }
         }
         chosen.advice = protocolAdvice(
-            answer.setup, facts: snapshot.facts, level: answer.level, odds: d.odds, priced: priced
+            answer.setup, facts: snapshot.facts, level: d.level, odds: d.decision.odds, priced: priced
         )
         return chosen
     }
