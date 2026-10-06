@@ -173,10 +173,13 @@ answer did not make. Waiting on the owner.
       "delete it we can add vercel later if needed"), with README §10's
       Vercel lines, `netlify.toml`'s note and `tools/precache.mjs`'s.
 - [ ] `WORKLIST.md` and `FOLLOWUP.md`, closed records: move to `LOGBOOK.md`,
-      or delete?
+      or delete? Decided 7 October 2026: kept until the owner has reviewed
+      `tidy2` (FOLLOWUP §5, §4.2), then deleted, with their citations
+      fixed; `LOGBOOK.md` records what came of them.
 - [ ] Finished drafts compiled on every build: leave, or move out?
-- [ ] `CLAUDE.md`'s "`rm -rf dist/test` first if a test file was deleted"
+- [x] `CLAUDE.md`'s "`rm -rf dist/test` first if a test file was deleted"
       is stale (`npm test` starts with `rm -rf dist`): the owner's file.
+      Deleted at the owner's word, 7 October 2026.
 - [ ] Exports used only in their own file: trace and trim, with B.
       `src/ui/` done with B: eight values no other file imports are no
       longer exported (`resultsKept`, `shellPoint`, `SECTION_BOX`,

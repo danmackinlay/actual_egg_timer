@@ -14,7 +14,7 @@ things stand is `PLAN.md`; which document holds what is its last section.
   the session that sent them verifies and merges to local `main`.
 - **One gate: `npm run verify`** (the type checks, `npm test`, the Swift copy
   lint, fresh fixtures, `swift test`). Run it before every commit that
-  touches code; `rm -rf dist/test` first if a test file was deleted.
+  touches code.
   CI also runs `npm run ios:build` (the app and widget for the simulator,
   unsigned; about a minute, so not in `verify`): run it too before a commit
   that touches `ios/App`, `ios/Shared`, `ios/Widget` or `project.yml`.
