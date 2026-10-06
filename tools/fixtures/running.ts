@@ -8,9 +8,13 @@ import {
   PULL_GRACE_SECONDS, SLOW_HOB_EVERY_S, SLOW_HOB_EXTRA_S, SLOW_HOB_WHEN_LEFT_S,
 } from '../../src/core/policy.js';
 import { oddsProfile } from '../../src/core/reach.js';
+import { WhiteReport, YolkWord } from '../../src/core/infer.js';
+import { LITERATURE_POPULATION } from '../../src/core/infer.js';
+import { ProbeReading, recordFor } from '../../src/core/record.js';
 import {
-  CookChoices, CookPlan, CookSurface, RunningCook, SLOW_HOB_MAX_STEPS, cookSetupOf, corrected, eventsDue,
-  latestStart_s, readRunningCook, replan, startCook, startCorrected, withBoil, withOut,
+  CookChoices, CookPlan, CookSurface, RecordContext, RunningCook, SLOW_HOB_MAX_STEPS, boilToRemember,
+  cookEnding, cookFactsFor, cookSetupOf, corrected, eventsDue, latestStart_s, readRunningCook, replan, startCook,
+  startCorrected, withBoil, withOut,
 } from '../../src/core/running.js';
 
 import { calibrationOf, coarseDecisionGrid, decidePosteriors } from './decide.js';
@@ -288,6 +292,22 @@ function planJson(p: CookPlan) {
 
 const plans: unknown[] = [];
 
+/* The record of each plan's egg (`cookFactsFor`, then `recordFor`), by each
+ * app in turn, with no answer, both answers, or both and a probe reading. */
+const ANSWERS: { yolkWord: YolkWord | null; white: WhiteReport | null; probe: ProbeReading | null }[] = [
+  { yolkWord: null, white: null, probe: null },
+  { yolkWord: 'jammy', white: 'firm', probe: null },
+  { yolkWord: 'fudgy', white: 'tender', probe: { centre_C: 66.4, after_s: 180 } },
+];
+
+function contextFor(cook: RunningCook, i: number): RecordContext {
+  const web = i % 2 === 0;
+  return {
+    app: web ? 'web' : 'ios', appVersion: '0.5.0-alpha.1', prior: LITERATURE_POPULATION.id, day: '2026-10-07',
+    id: web ? cook.id_ms : null,
+  };
+}
+
 /** Plan a case and write it down; its plan, for the cases after it. */
 function plan(pc: PlanCase): CookPlan {
   const c = calibrationOf(named(pc.posterior));
@@ -311,8 +331,21 @@ function plan(pc: PlanCase): CookPlan {
     plan: planJson(p),
     outs: (pc.outs ?? []).map((t) => ({ now_s: t, events: withOut(pc.cook, p, t).events })),
     dues: (pc.dues ?? []).map((t) => ({ now_s: t, events: eventsDue(pc.cook, p, t) })),
+    ...recordOf(pc.cook, p, pc.now_s, plans.length),
   });
   return p;
+}
+
+/** The record of a plan's egg, the boil it remembers, and how it ends. */
+function recordOf(cook: RunningCook, p: CookPlan, now_s: number, i: number) {
+  const ctx = contextFor(cook, i);
+  const a = ANSWERS[i % ANSWERS.length];
+  return {
+    context: ctx, answers: a,
+    record: recordFor(cookFactsFor(cook, p, ctx, a.yolkWord, a.white, a.probe)),
+    boil: boilToRemember(cook),
+    ending: cookEnding(cook, p, now_s),
+  };
 }
 
 /** The cook with these events written down. */
@@ -426,6 +459,26 @@ const S = START_S;
   plan({ note: 'heating for six hours', posterior: 'prior', cook: cookOf({ level: 0.62 }), leanHint_s: 0, now_s: S + 6 * 3600, surface: 'none' });
 }
 
+/* What the boil memory learns (`boilToRemember`): a tap the cook watched for,
+ * and one told to watch for too late to trust. */
+const remembers: { note: string; cook: RunningCook }[] = [];
+{
+  const cold = cookOf();
+  const hot = cookOf({ startMode: 'hot' });
+  const remember = (note: string, cook: RunningCook): void => { remembers.push({ note: note, cook: cook }); };
+  remember('no tap', cold);
+  remember('a tap on a cook begun cold', withBoil(cold, S + 512));
+  remember('a tap, the water corrected after it', withBoil(corrected(cold, { ...cold.choices, waterLitres: 3 }, S + 100), S + 600));
+  remember('a boiling start: nothing timed', hot);
+  remember('boiling corrected to cold before the water could have boiled, then a tap', withBoil(corrected(hot, { ...hot.choices, startMode: 'cold' }, S + 240), S + 520));
+  remember('boiling corrected to cold at the time this water takes, then a tap', withBoil(corrected(hot, { ...hot.choices, startMode: 'cold' }, S + 480), S + 700));
+  remember('boiling corrected to cold after it, then a tap: used, not remembered', withBoil(corrected(hot, { ...hot.choices, startMode: 'cold' }, S + 480.5), S + 700));
+  remember('a tap, then corrected to boiling: unread, not remembered', corrected(withBoil(cold, S + 512), { ...cold.choices, startMode: 'hot' }, S + 600));
+  remember('the start corrected four minutes earlier, then a tap', withBoil(startCorrected(cold, S - 240, S + 10) as RunningCook, S + 500));
+  remember('the start corrected ten minutes earlier, then a tap: not remembered', withBoil(startCorrected(cold, S - 600, S + 10) as RunningCook, S + 500));
+  remember('no pans remembered: the default time', withBoil(corrected(startCook(START_MS, { ...BASE_CHOICES, startMode: 'hot' }, 0, {}, 'metric', 'en'), BASE_CHOICES, S + 470), S + 900));
+}
+
 export const runningFixture = {
   about: 'A running cook: its egg and pot, the moves the cook makes, a stored cook read back, and the plan derived from it. src/core/running.ts.',
   constants: {
@@ -436,4 +489,5 @@ export const runningFixture = {
   moves: moves,
   reads: reads,
   plans: plans,
+  remembers: remembers.map((r) => ({ note: r.note, cook: r.cook, boil: boilToRemember(r.cook) })),
 };

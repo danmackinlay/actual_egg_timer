@@ -578,3 +578,70 @@ public func eventsDue(_ cook: RunningCook, plan: CookPlan, nowS: Double) -> Cook
     if pulled != nil, cooled == nil, let end = d.coolEndS, nowS >= end { cooled = end }
     return CookEvents(boilAtS: cook.events.boilAtS, pulled: pulled, cooledAtS: cooled)
 }
+
+// MARK: - The record, the memory
+
+/// What an app adds to a cook's facts: which app and build, the prior's
+/// population, the local day the cook started, and the record's id (none on
+/// iOS).
+public struct RecordContext: Sendable, Equatable {
+    public var app: AppName
+    public var appVersion: String
+    public var prior: String
+    public var day: String
+    public var id: Int?
+
+    public init(app: AppName, appVersion: String, prior: String, day: String, id: Int?) {
+        self.app = app
+        self.appVersion = appVersion
+        self.prior = prior
+        self.day = day
+        self.id = id
+    }
+}
+
+/// The facts `recordFor` makes the record of, from the cook as last corrected
+/// and its plan, with whichever answers have been given.
+public func cookFactsFor(
+    _ cook: RunningCook, plan: CookPlan, context ctx: RecordContext, yolkWord: YolkWord?, white: WhiteReport?,
+    probe: ProbeReading?
+) -> CookFacts {
+    let pulled = cook.events.pulled
+    return CookFacts(
+        app: ctx.app, appVersion: ctx.appVersion, prior: ctx.prior, day: ctx.day, id: ctx.id,
+        massKg: plan.egg.massKg, massFrom: cook.choices.massFrom, sizeTable: cook.choices.sizeTable,
+        setup: plan.setup, eggFrom: cook.choices.eggFrom, boilRemembered: cook.boilRemembered,
+        level: plan.level, cookS: plan.cookTimeS, nudgeS: plan.nudgeS,
+        outS: pulled?.by == .cook ? pulled.map { $0.outS - cook.startedAtS } : nil,
+        coolS: plan.coolS, yolkWord: yolkWord, white: white, probe: probe, forecast: plan.forecast,
+        lang: cook.lang, units: cook.units
+    )
+}
+
+/// A measured time to a rolling boil, for the boil memory.
+public struct BoilToRemember: Sendable, Equatable {
+    public let litres: Double
+    public let seconds: Double
+}
+
+/// What the boil memory learns from this cook, written when it ends: the tap
+/// on a cold start, unless the cook was told to watch for it only after the
+/// water could already have boiled.
+public func boilToRemember(_ cook: RunningCook) -> BoilToRemember? {
+    let ch = cook.choices
+    guard ch.startMode == .cold, let tap = cook.events.boilAtS else { return nil }
+    let watched = cook.coldSinceS ?? cook.startedAtS
+    if watched - cook.startedAtS > estimateTimeToBoil(cook.boilMemory, litres: ch.waterLitres) { return nil }
+    return BoilToRemember(litres: ch.waterLitres, seconds: tap - cook.startedAtS)
+}
+
+/// What a cook leaves when it ends, by Cancel or by Start again: the boil to
+/// remember, and whether it was cooked through and so is an egg to log.
+public struct CookEnding: Sendable, Equatable {
+    public let boil: BoilToRemember?
+    public let finished: Bool
+}
+
+public func cookEnding(_ cook: RunningCook, plan: CookPlan, nowS: Double) -> CookEnding {
+    CookEnding(boil: boilToRemember(cook), finished: phaseAt(plan.deadlines, nowS: nowS) == .done)
+}

@@ -11,17 +11,20 @@ import Foundation
 
 /// Two JSON values, as JSONSerialization gives them, equal: numbers exactly,
 /// since a cook's fields are stored values and no arithmetic, or to within
-/// `ulps` of the larger; a missing key and JSON's null alike.
-func sameJSON(_ a: Any?, _ b: Any?, ulps: Double = 0) -> Bool {
+/// `ulps` of the larger, or `relative` of the larger (absolute below 1); a
+/// missing key and JSON's null alike.
+func sameJSON(_ a: Any?, _ b: Any?, ulps: Double = 0, relative: Double = 0) -> Bool {
     let aNull = a == nil || a is NSNull
     let bNull = b == nil || b is NSNull
     if aNull || bNull { return aNull && bNull }
     if let x = a as? [String: Any], let y = b as? [String: Any] {
-        for key in Set(x.keys).union(y.keys) where !sameJSON(x[key], y[key], ulps: ulps) { return false }
+        for key in Set(x.keys).union(y.keys) where !sameJSON(x[key], y[key], ulps: ulps, relative: relative) {
+            return false
+        }
         return true
     }
     if let x = a as? [Any], let y = b as? [Any] {
-        return x.count == y.count && zip(x, y).allSatisfy { sameJSON($0, $1, ulps: ulps) }
+        return x.count == y.count && zip(x, y).allSatisfy { sameJSON($0, $1, ulps: ulps, relative: relative) }
     }
     if let x = a as? String, let y = b as? String { return x == y }
     if let x = a as? NSNumber, let y = b as? NSNumber {
@@ -29,7 +32,8 @@ func sameJSON(_ a: Any?, _ b: Any?, ulps: Double = 0) -> Bool {
         let yb = CFGetTypeID(y) == CFBooleanGetTypeID()
         if xb || yb { return xb && yb && x.boolValue == y.boolValue }
         let (u, v) = (x.doubleValue, y.doubleValue)
-        return u == v || abs(u - v) <= ulps * max(abs(u), abs(v)).ulp
+        let scale = max(abs(u), abs(v))
+        return u == v || abs(u - v) <= ulps * scale.ulp || abs(u - v) <= relative * max(scale, 1)
     }
     return false
 }
@@ -172,7 +176,49 @@ struct RunningConformance {
                     eventsDue(cook, plan: plan, nowS: t), due.object("events"), "\(note): due at \(t - cook.startedAtS)"
                 )
             }
+            // The record, the boil remembered, and how the cook ends.
+            let ctx = try row.object("context")
+            let answers = try row.object("answers")
+            let probe = try (answers["probe"] as? [String: Any]).map {
+                ProbeReading(centreC: try $0.num("centre_C"), afterS: try $0.optionalNum("after_s"))
+            }
+            let record = try recordFor(cookFactsFor(
+                cook, plan: plan,
+                context: RecordContext(
+                    app: ctx.value(AppName.self, "app"), appVersion: ctx.str("appVersion"), prior: ctx.str("prior"),
+                    day: ctx.str("day"), id: ctx.optionalNum("id").map { Int($0) }
+                ),
+                yolkWord: answers.optionalValue(YolkWord.self, "yolkWord"),
+                white: answers.optionalValue(WhiteReport.self, "white"), probe: probe
+            ))
+            let written = try JSONSerialization.jsonObject(with: JSONEncoder().encode(record))
+            #expect(sameJSON(written, row["record"], relative: conformanceTolerance), "\(note): the record")
+            try expectBoil(boilToRemember(cook), row["boil"], "\(note): the boil remembered")
+            let ending = cookEnding(cook, plan: plan, nowS: now)
+            let expectedEnding = try row.object("ending")
+            try expectBoil(ending.boil, expectedEnding["boil"], "\(note): the boil at the end")
+            #expect(try ending.finished == expectedEnding.flag("finished"), "\(note): finished")
         }
+    }
+
+    @Test("what the boil memory learns from a cook, and what it does not")
+    func remembers() throws {
+        let rows = try Fixtures.list("running.json", "remembers")
+        #expect(rows.count >= 8)
+        for row in rows {
+            let note = try row.str("note")
+            try expectBoil(boilToRemember(runningCookOf(row["cook"], note)), row["boil"], note)
+        }
+    }
+}
+
+private func expectBoil(_ b: BoilToRemember?, _ json: Any?, _ what: String) throws {
+    if let j = json as? [String: Any] {
+        let boil = try #require(b, "\(what): nothing remembered")
+        try expectClose(boil.litres, j.num("litres"), "\(what): litres")
+        try expectClose(boil.seconds, j.num("seconds"), "\(what): seconds")
+    } else {
+        #expect(b == nil, "\(what): remembered")
     }
 }
 

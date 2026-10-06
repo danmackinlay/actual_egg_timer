@@ -40,8 +40,10 @@ import { DoseGrid } from './doseGrid.js';
 import { DecidedAnswer, LevelAnswer, OddsProfile, answerAt, decideAnswer, lowOddsAt } from './reach.js';
 import { CertaintyReading, certaintyAt } from './certainty.js';
 import { predictOutcome } from './outcome.js';
+import { WhiteReport, YolkWord } from './infer.js';
 import {
-  Calibration, EggFrom, Forecast, MassFrom, PulledBy, Units, calibrationParams, forecastOf,
+  AppName, Calibration, CookFacts, EggFrom, Forecast, MassFrom, ProbeReading, PulledBy, Units, calibrationParams,
+  forecastOf,
 } from './record.js';
 
 /* ------------------------------------------------------------- the types */
@@ -633,4 +635,94 @@ export function eventsDue(cook: RunningCook, plan: CookPlan, now_s: number): Coo
   }
   if (pulled !== null && cooled === null && d.coolEnd_s !== null && now_s >= d.coolEnd_s) cooled = d.coolEnd_s;
   return { boilAt_s: cook.events.boilAt_s, pulled: pulled, cooledAt_s: cooled };
+}
+
+/* ------------------------------------------------- the record, the memory */
+
+/** What an app adds to a cook's facts: which app and build wrote the
+ *  record, the population the prior came from, the local day the cook
+ *  started (`startedAt_s`, as corrected, in the app's time zone) and the
+ *  record's id - the web's `id_ms`, none on iOS. */
+export interface RecordContext {
+  app: AppName;
+  appVersion: string;
+  prior: string;
+  day: string;
+  id: number | null;
+}
+
+/**
+ * The facts `recordFor` makes the record of, from the cook as last corrected
+ * and its plan, with whichever answers have been given (DECISIONS.md 97, 8):
+ * the egg, the pot with the time to boil in force, the level it ran at, the
+ * cook time that ran and the nudge in it, the pull the cook tapped, the
+ * cooling as it ran, and what the app said for that cook at that time. The
+ * format does not change (DECISIONS.md 81).
+ */
+export function cookFactsFor(
+  cook: RunningCook, plan: CookPlan, ctx: RecordContext, yolkWord: YolkWord | null, white: WhiteReport | null,
+  probe: ProbeReading | null,
+): CookFacts {
+  const pulled = cook.events.pulled;
+  return {
+    app: ctx.app,
+    appVersion: ctx.appVersion,
+    prior: ctx.prior,
+    day: ctx.day,
+    id: ctx.id,
+    mass_kg: plan.egg.mass_kg,
+    massFrom: cook.choices.massFrom,
+    sizeTable: cook.choices.sizeTable,
+    setup: plan.setup,
+    eggFrom: cook.choices.eggFrom,
+    boilRemembered: cook.boilRemembered,
+    level: plan.level,
+    cook_s: plan.cookTime_s,
+    nudge_s: plan.nudge_s,
+    out_s: pulled !== null && pulled.by === 'cook' ? pulled.out_s - cook.startedAt_s : null,
+    cool_s: plan.cool_s,
+    yolkWord: yolkWord,
+    white: white,
+    probe: probe,
+    forecast: plan.forecast,
+    lang: cook.lang,
+    units: cook.units,
+  };
+}
+
+/** A measured time to a rolling boil, for the boil memory. */
+export interface BoilToRemember {
+  litres: number;
+  seconds: number;
+}
+
+/**
+ * What the boil memory learns from this cook, written when it ends rather
+ * than at the tap, so it is the cook as last corrected (DECISIONS.md 97, 9):
+ * the tap on a cold start, for the water as corrected - or nothing. Not a tap
+ * the cook was told to watch for only after the water could already have
+ * boiled - corrected from boiling to cold, or the start corrected earlier,
+ * past the time this water was remembered to take - since it may have
+ * boiled before the cook noticed: that tap is used for this cook, and not
+ * remembered. `rememberBoil` refuses what is not a credible time, as ever.
+ */
+export function boilToRemember(cook: RunningCook): BoilToRemember | null {
+  const ch = cook.choices;
+  const tap = cook.events.boilAt_s;
+  if (ch.startMode !== 'cold' || tap === null) return null;
+  const watched = cook.coldSince_s === null ? cook.startedAt_s : cook.coldSince_s;
+  if (watched - cook.startedAt_s > estimateTimeToBoil(cook.boilMemory, ch.waterLitres)) return null;
+  return { litres: ch.waterLitres, seconds: tap - cook.startedAt_s };
+}
+
+/** What a cook leaves when it ends, by Cancel or by Start again: the boil to
+ *  remember, and whether it was cooked through - Done by `plan` at `now_s` -
+ *  and so is an egg to log if no answer has logged it. */
+export interface CookEnding {
+  boil: BoilToRemember | null;
+  finished: boolean;
+}
+
+export function cookEnding(cook: RunningCook, plan: CookPlan, now_s: number): CookEnding {
+  return { boil: boilToRemember(cook), finished: phaseAt(plan.deadlines, now_s) === 'DONE' };
 }

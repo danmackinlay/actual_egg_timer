@@ -14,9 +14,11 @@ import { SIZE_CLASSES } from '../src/core/geometry.js';
 import { PULL_GRACE_SECONDS, SLOW_HOB_EXTRA_S, START_TEMP_PRESETS_C, phaseAt } from '../src/core/policy.js';
 import { T_ROOM_C } from '../src/core/constants.js';
 import { decisionInputs } from '../src/core/decide.js';
+import { recordFor } from '../src/core/record.js';
 import {
-  CookChoices, CookPlan, CookSurface, RunningCook, cookSetupOf, corrected, eventsDue, latestStart_s,
-  readRunningCook, replan, startCook, startCorrected, withBoil, withOut,
+  CookChoices, CookPlan, CookSurface, RecordContext, RunningCook, boilToRemember, cookEnding, cookFactsFor,
+  cookSetupOf, corrected, eventsDue, latestStart_s, readRunningCook, replan, startCook, startCorrected, withBoil,
+  withOut,
 } from '../src/core/running.js';
 import { gridFor, knowing } from '../tools/common.js';
 
@@ -250,4 +252,45 @@ test('12. after the pull, a correction changes what the time did to the egg, not
   const counter = corrected(done, { ...CHOICES, startMode: 'hot', cooling: 'counter' }, end + 1000);
   assert.equal(planned(counter, end + 1000).deadlines.coolEnd_s, null);
   assert.equal(eventsDue(counter, planned(counter, end + 1000), end + 2000).cooledAt_s, done.events.cooledAt_s);
+});
+
+test('13. the record is the cook as last corrected, at the time that ran', () => {
+  const ctx: RecordContext = { app: 'web', appVersion: '0.5.0-alpha.1', prior: '2026-09', day: '2026-10-07', id: START_MS };
+  const tapped = withBoil(cookOf({}, 5), S + 500);
+  const p = planned(tapped, S + 600);
+  const end = p.deadlines.cookEnd_s;
+  const out = withOut(tapped, p, end + 6);
+  const cooled = { ...out, events: eventsDue(out, planned(out, end + 6), end + 1000) };
+  const firmer = corrected(cooled, { ...CHOICES, level: 0.62 }, end + 1000);
+  const q = planned(firmer, end + 1000);
+  const r = recordFor(cookFactsFor(firmer, q, ctx, 'fudgy', 'firm', null));
+  assert.equal(r.level, 0.62, 'the level as corrected');
+  assert.ok(Math.abs(r.recommended_s + r.nudge_s - (end - S)) < 1e-6, 'the time that ran, not re-solved');
+  assert.equal(r.nudge_s, 5);
+  assert.deepEqual([r.pulledBy, r.pulled_s], ['cook', end + 6 - S]);
+  assert.equal(r.setup.timeToBoil_s, 500, 'the measured ramp');
+  assert.equal(r.setup.timeToBoilFrom, 'measured');
+  assert.ok(r.forecast !== null && r.forecast.cook_s === q.cookTime_s, 'the forecast for this cook at that time');
+  assert.equal(r.cooled_s, (cooled.events.cooledAt_s as number) - (end + 6));
+  assert.equal(r.id, START_MS);
+  // On iOS, no id.
+  assert.equal('id' in recordFor(cookFactsFor(firmer, q, { ...ctx, app: 'ios', id: null }, null, null, null)), false);
+  // Ended: the boil it measured, and an egg to log.
+  assert.deepEqual(cookEnding(firmer, q, end + 1000), { boil: { litres: 2, seconds: 500 }, finished: true });
+  assert.equal(cookEnding(tapped, p, S + 600).finished, false, 'cancelled while it cooks');
+});
+
+test('14. the boil memory learns the tap the cook was watching for, and only that', () => {
+  const cold = cookOf();
+  assert.deepEqual(boilToRemember(withBoil(cold, S + 512)), { litres: 2, seconds: 512 });
+  assert.equal(boilToRemember(cold), null);
+  const hot = cookOf({ startMode: 'hot' });
+  assert.equal(boilToRemember(hot), null);
+  const early = withBoil(corrected(hot, CHOICES, S + 300), S + 520);
+  assert.deepEqual(boilToRemember(early), { litres: 2, seconds: 520 }, 'told cold before it could have boiled');
+  const late = withBoil(corrected(hot, CHOICES, S + 481), S + 700);
+  assert.equal(boilToRemember(late), null, 'told cold after the 480 s this water takes: used, not remembered');
+  assert.equal(planned(late, S + 700).setup.timeToBoil_s, 700, 'but the cook runs on it');
+  const unread = corrected(withBoil(cold, S + 512), { ...CHOICES, startMode: 'hot' }, S + 600);
+  assert.equal(boilToRemember(unread), null);
 });

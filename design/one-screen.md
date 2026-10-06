@@ -359,6 +359,17 @@ The functions, all pure and fixtured:
 - `boilToRemember(cook): { litres, seconds } | null`: written to the boil
   memory when the cook ends, not at the tap, so it is the cook as last
   corrected (§7, 9).
+
+  *As built (C2).* Both are in `running.ts`, beside the plan they read,
+  rather than in `record.ts`, which `running.ts` imports. `cookFactsFor`
+  takes a `RecordContext` (app, build, prior, the local day of the start as
+  corrected, and the id: `id_ms` on the web, none on iOS) and the answers.
+  `boilToRemember` refuses a tap the cook was told to watch for only after
+  this water's remembered time to boil: corrected from boiling to cold that
+  late (`coldSince_s`), or with the start corrected that much earlier, since
+  the water may have boiled unseen in both. `cookEnding(cook, plan, now_s)`
+  is what Cancel and Start again leave: the boil to remember, and whether the
+  cook was Done, so an egg to log if no answer has logged it.
 - `readRunningCook(raw): RunningCook | null`: the defensive read, whole or
   nothing, as `restoreTicket` is now.
 - `previewSection(egg, setup, params, cookTime_s, whiteTarget_min)` in
@@ -450,7 +461,8 @@ commit each):
    owner's boiling → cold; cold → boiling before the tap and with a tap; an
    earlier start with a tap; overdue; a correction while cooling; one after
    Done; a heat-off pot whose white never sets.
-3. `cookFactsFor` and `boilToRemember` (`record.ts`, `Record.swift`).
+3. `cookFactsFor` and `boilToRemember` (built in `running.ts`,
+   `Running.swift`, beside the plan they read).
 4. `previewSection` (`section.ts`, `Section.swift`).
 
 **The web**, each step driven before the next:
