@@ -28,8 +28,21 @@
 import { Egg, SizeTable, eggFromMass } from './geometry.js';
 import { CookSetup, Cooling, HeatAfterBoil, StartMode } from './protocol.js';
 import { boilingPointAtAltitude } from './thermo.js';
-import { BoilMemory, ambientFor, hasBoilMemory, startTempPreset_C } from './policy.js';
-import { EggFrom, MassFrom, PulledBy, Units } from './record.js';
+import {
+  BoilMemory, Deadlines, PULL_GRACE_SECONDS, SLOW_HOB_EVERY_S, SLOW_HOB_EXTRA_S, SLOW_HOB_WHEN_LEFT_S,
+  ambientFor, coolingSecondsFor, estimateTimeToBoil, hasBoilMemory, phaseAt, probeMomentFor, startTempPreset_C,
+} from './policy.js';
+import { Solution, logYolkTarget } from './solve.js';
+import {
+  DecisionInputs, appliedNudge, carriedSolution, decisionApplies, decisionInputs, solutionAt,
+} from './decide.js';
+import { DoseGrid } from './doseGrid.js';
+import { DecidedAnswer, LevelAnswer, OddsProfile, answerAt, decideAnswer, lowOddsAt } from './reach.js';
+import { CertaintyReading, certaintyAt } from './certainty.js';
+import { predictOutcome } from './outcome.js';
+import {
+  Calibration, EggFrom, Forecast, MassFrom, PulledBy, Units, calibrationParams, forecastOf,
+} from './record.js';
 
 /* ------------------------------------------------------------- the types */
 
@@ -109,6 +122,12 @@ export interface RunningCook {
    *  was told it was cold only after the water could have boiled is used for
    *  the cook and not remembered (`boilToRemember`, DECISIONS.md 97). */
   coldSince_s: number | null;
+  /** When the choices or the start were last corrected, a clock time; null
+   *  until they are. Nothing observed before it said the egg was out, so a
+   *  plan never puts the pull before it (`replan`): a correction that makes
+   *  the egg overdue makes the pull then, and a plan made again later - a
+   *  reload, a surface landing - puts it there again, not at its own now. */
+  correctedAt_s: number | null;
 }
 
 /* ----------------------------------------------------- the egg and the pot */
@@ -170,6 +189,7 @@ export function startCook(
     lang: lang,
     boilRemembered: hasBoilMemory(boilMemory),
     coldSince_s: choices.startMode === 'cold' ? start : null,
+    correctedAt_s: null,
   };
 }
 
@@ -190,7 +210,7 @@ export function corrected(cook: RunningCook, choices: CookChoices, now_s: number
   if (choices.startMode === 'cold') {
     since = cook.choices.startMode === 'cold' && cook.coldSince_s !== null ? cook.coldSince_s : now_s;
   }
-  return { ...cook, choices: choices, coldSince_s: since };
+  return { ...cook, choices: choices, coldSince_s: since, correctedAt_s: now_s };
 }
 
 /** The latest the start can be corrected to at `now_s`: now, or the first
@@ -209,7 +229,7 @@ export function latestStart_s(cook: RunningCook, now_s: number): number {
  *  is later than `latestStart_s`, or not a time. */
 export function startCorrected(cook: RunningCook, startedAt_s: number, now_s: number): RunningCook | null {
   if (!Number.isFinite(startedAt_s) || startedAt_s > latestStart_s(cook, now_s)) return null;
-  return { ...cook, startedAt_s: startedAt_s };
+  return { ...cook, startedAt_s: startedAt_s, correctedAt_s: now_s };
 }
 
 /* ------------------------------------------------------- the stored cook */
@@ -309,6 +329,7 @@ export function readRunningCook(raw: unknown): RunningCook | null {
   const lang = raw['lang'];
   const remembered = raw['boilRemembered'];
   const since = raw['coldSince_s'];
+  const correctedAt = raw['correctedAt_s'];
   if (!isNumber(id) || !(id > 0)) return null;
   if (!isNumber(start) || !(start > 0)) return null;
   const choices = readChoices(raw['choices']);
@@ -322,8 +343,294 @@ export function readRunningCook(raw: unknown): RunningCook | null {
   if (typeof lang !== 'string' || lang === '') return null;
   if (typeof remembered !== 'boolean') return null;
   if (since !== null && !isNumber(since)) return null;
+  if (correctedAt !== null && (!isNumber(correctedAt) || correctedAt < start)) return null;
   return {
     id_ms: id, startedAt_s: start, choices: choices, events: events, nudge_s: nudge, boilMemory: memory,
-    units: units, lang: lang, boilRemembered: remembered, coldSince_s: since,
+    units: units, lang: lang, boilRemembered: remembered, coldSince_s: since, correctedAt_s: correctedAt,
   };
+}
+
+/* ---------------------------------------------------------------- the plan */
+
+/** A pot's decision surface, as the app built it off the main thread, with
+ *  the inputs it was built for and the pot's odds profile if that is in. */
+export interface CookSurface {
+  inputs: DecisionInputs;
+  grid: DoseGrid;
+  profile: OddsProfile | null;
+}
+
+/** Everything derived from a cook. Never stored as truth. */
+export interface CookPlan {
+  egg: Egg;
+  /** The pot, with the time to boil in force: the tap, the remembered one,
+   *  or the slow hob's. */
+  setup: CookSetup;
+  /** A cold start still heating: the time to boil is a guess. */
+  provisional: boolean;
+  /** The guess lengthened by the slow hob's rule: it moves with the clock,
+   *  so its pot asks for no surface, and the time is the carried one. */
+  lengthened: boolean;
+  /** The inputs whose surface this plan reads, and so the one the app asks
+   *  for when it is not in; null while lengthened. */
+  inputs: DecisionInputs | null;
+  /** The mean solve at the yolk wanted, its verdict, the level it is for (the
+   *  one wanted, or the one it snapped to), and the warning there. */
+  answer: LevelAnswer;
+  /** The level the cook runs at: `answer.level`. */
+  level: number;
+  /** The solve, read at `cookTime_s`. */
+  solution: Solution;
+  /** The answer decided on this pot's surface; null until it is in. */
+  decided: DecidedAnswer | null;
+  /** How far the time leans from the mean solve's, s, and the nudge in it:
+   *  the decided ones, or, until the surface is in, the lean carried
+   *  (`leanHint_s`) and the cook's nudge, where a time is chosen. */
+  lean_s: number;
+  nudge_s: number;
+  /** Egg in to the pull, s: the pull's due time once it has happened; else
+   *  the plan's, but never before now. */
+  cookTime_s: number;
+  /** The plan's own pull had passed when it was made, so the pull is now. */
+  overdue: boolean;
+  /** The counted cooling, s from the egg out to its end. */
+  cool_s: number;
+  probeMoment: boolean;
+  /** What `phaseAt` reads. */
+  deadlines: Deadlines;
+  /** While provisional, when the slow hob's rule next lengthens the guess:
+   *  the app plans again then. Null otherwise. */
+  slowHobAt_s: number | null;
+  /** How sure, at the cook time, and what the record keeps as said: both
+   *  need this pot's surface, and are null until it is in. */
+  certainty: CertaintyReading | null;
+  forecast: Forecast | null;
+}
+
+/** Whether two decision surfaces' inputs are the same pot, egg and
+ *  posterior: every number equal. */
+export function sameDecisionInputs(a: DecisionInputs, b: DecisionInputs): boolean {
+  const ea = a.egg;
+  const eb = b.egg;
+  const sa = a.setup;
+  const sb = b.setup;
+  return ea.radius_m === eb.radius_m && ea.minorDiameter_m === eb.minorDiameter_m
+    && ea.mass_kg === eb.mass_kg && ea.volume_m3 === eb.volume_m3
+    && sa.startMode === sb.startMode && (sa.afterBoil ?? 'hold') === (sb.afterBoil ?? 'hold')
+    && sa.eggStart_C === sb.eggStart_C && sa.ambient_C === sb.ambient_C && sa.boiling_C === sb.boiling_C
+    && sa.timeToBoil_s === sb.timeToBoil_s && sa.cooling === sb.cooling
+    && sa.waterLitres === sb.waterLitres && sa.eggCount === sb.eggCount
+    && a.params.alpha_m2s === b.params.alpha_m2s && a.params.tauAirScale === b.params.tauAirScale
+    && a.whiteDose_min === b.whiteDose_min;
+}
+
+/** The most lengthenings one plan works through, so a plan's cost is
+ *  bounded however long the pan has heated. A hob would have to be hours
+ *  slow to reach it. */
+export const SLOW_HOB_MAX_STEPS = 100;
+
+/**
+ * The plan for a cook at `now_s`, under calibration `c`. `now_s` is read by
+ * the slow hob's rule alone.
+ *
+ * THE TIME TO BOIL. On a cold start, the tap if there is one: the measured
+ * ramp. Otherwise the remembered one for the water (the memory as it was at
+ * the start), and while the cook is still heating, the SLOW HOB'S RULE, as a
+ * function of how long it has heated: whenever the pull would come within
+ * SLOW_HOB_WHEN_LEFT_S, and SLOW_HOB_EVERY_S after the last lengthening (the
+ * start counting as one), the guess becomes the time heated so far plus
+ * SLOW_HOB_EXTRA_S. That is the revision both apps made on their tick, made
+ * here from the start each time, so a plan is a function of the cook and the
+ * clock alone. Where a lengthening would fire again at once - the egg would
+ * be done before the water boils - the guess creeps with the clock in steps of
+ * SLOW_HOB_EVERY_S, as the tick's would, without a solve per step. A hot start
+ * never times its pan: the remembered time is carried for the record only.
+ * A pull ends the heating, read or not.
+ *
+ * THE TIME. The mean solve at the yolk wanted (`answerAt`, snapping out of
+ * the stripes as at setup), then, if `surface` is this pot's, the time
+ * decided on it (`decideAnswer`), with the cook's nudge; until it is in, the
+ * mean solve leaned by `leanHint_s` and nudged (`carriedSolution`), which is
+ * the time the app was showing. A pot whose guess the slow hob lengthened
+ * moves with the clock and is never decided: the app would build a surface
+ * every few minutes for a guess.
+ *
+ * THE PULL. Once pulled, the pull's due time: corrections then change only
+ * what that time did to the egg. Before, the plan's time, but never before
+ * the cook last told it something - the last correction, or the boil tap -
+ * since nothing before that said the egg was out: a correction that puts the
+ * pull in the past makes it the moment of the correction, and `overdue` says
+ * so. That moment is stored, not `now_s`, so a plan made again later (a
+ * reload, a surface landing) rings for the same pull, and a plan made after
+ * an ordinary pull's grace ran out finds it as it was. While provisional the
+ * deadline is a guess and is not held; `phaseAt` reads Heating whatever it
+ * says.
+ *
+ * THE COOLING. To the yolk's peak for the cook time that ran
+ * (`coolingSecondsFor`), from the egg out - the cook's tap, or the grace
+ * running out - and once ended, as it ran. A correction that ends it in the
+ * past ends it at the correction.
+ *
+ * HOW SURE, AND WHAT THE RECORD SAYS WAS SAID: `certaintyAt` and the outcome
+ * at the cook time, on this pot's surface.
+ */
+export function replan(
+  cook: RunningCook, c: Calibration, surface: CookSurface | null, leanHint_s: number, now_s: number,
+): CookPlan {
+  const ch = cook.choices;
+  const e = cook.events;
+  const start = cook.startedAt_s;
+  const pulled = e.pulled;
+  const cold = ch.startMode === 'cold';
+  const boilAt = e.boilAt_s;
+  const tapped = cold && boilAt !== null;
+  const provisional = cold && boilAt === null && pulled === null;
+  const params = calibrationParams(c);
+  const carry = leanHint_s + cook.nudge_s;
+
+  let ramp = tapped ? boilAt - start : estimateTimeToBoil(cook.boilMemory, ch.waterLitres);
+  let pot = cookSetupOf(ch, ramp);
+  let answer = answerAt(c, pot.egg, pot.setup, ch.level, null, true);
+  let lengthened = false;
+  let slowHobAt: number | null = null;
+
+  if (provisional) {
+    const heated = now_s - start;
+    let last = 0.0;
+    for (let step = 0; ; step++) {
+      const t = carriedSolution(pot.egg, pot.setup, params, answer.solution, carry).result.cookTime_s;
+      const next = last + SLOW_HOB_EVERY_S;
+      const due = t - SLOW_HOB_WHEN_LEFT_S;
+      const creeping = !(due > next);
+      const fire = creeping ? next : due;
+      if (!(heated > fire) || step >= SLOW_HOB_MAX_STEPS) {
+        slowHobAt = start + fire;
+        break;
+      }
+      // Creeping: once every SLOW_HOB_EVERY_S from `next`, up to the last
+      // before now.
+      last = creeping ? next + SLOW_HOB_EVERY_S * (Math.ceil((heated - next) / SLOW_HOB_EVERY_S) - 1) : fire;
+      ramp = last + SLOW_HOB_EXTRA_S;
+      lengthened = true;
+      pot = cookSetupOf(ch, ramp);
+      answer = answerAt(c, pot.egg, pot.setup, ch.level, null, true);
+    }
+  }
+
+  const inputs = lengthened ? null : decisionInputs(c, pot.egg, pot.setup);
+  const s = inputs !== null && surface !== null && sameDecisionInputs(surface.inputs, inputs) ? surface : null;
+  const profile = s === null ? null : s.profile;
+  answer = { ...answer, lowOdds: lowOddsAt(profile, answer.level) };
+
+  let decided: DecidedAnswer | null = null;
+  let planned: Solution;
+  let lean: number;
+  let nudge: number;
+  if (s !== null) {
+    decided = decideAnswer(c, pot.egg, pot.setup, s.grid, answer.solution, answer.level, profile, cook.nudge_s);
+    planned = decided.solution;
+    lean = decided.decision.cookTime_s - decided.decision.meanCookTime_s;
+    nudge = decided.nudge_s;
+  } else {
+    planned = carriedSolution(pot.egg, pot.setup, params, answer.solution, carry);
+    lean = decisionApplies(answer.solution) ? leanHint_s : 0;
+    nudge = appliedNudge(answer.solution, cook.nudge_s);
+  }
+
+  // The latest the cook told the plan something: a correction, or the tap.
+  let told = cook.correctedAt_s;
+  if (tapped && (told === null || boilAt > told)) told = boilAt;
+  let cookTime = planned.result.cookTime_s;
+  let overdue = false;
+  if (pulled !== null) {
+    cookTime = pulled.due_s - start;
+  } else if (!provisional && told !== null && start + cookTime < told) {
+    cookTime = told - start;
+    overdue = true;
+  }
+  const cookEnd = pulled !== null ? pulled.due_s : overdue ? told as number : start + cookTime;
+  const ran = solutionAt(pot.egg, pot.setup, params, planned, cookTime);
+
+  let cool = coolingSecondsFor(ran.result);
+  let coolEnd: number | null = null;
+  if (ch.cooling !== 'counter') {
+    const out = pulled !== null ? pulled.out_s : cookEnd + PULL_GRACE_SECONDS;
+    if (pulled !== null && e.cooledAt_s !== null) {
+      coolEnd = e.cooledAt_s;
+      cool = e.cooledAt_s - out;
+    } else {
+      coolEnd = out + cool;
+      const at = cook.correctedAt_s;
+      if (pulled !== null && at !== null && coolEnd < at) {
+        coolEnd = at;
+        cool = at - out;
+      }
+    }
+  }
+
+  let certainty: CertaintyReading | null = null;
+  let forecast: Forecast | null = null;
+  if (s !== null) {
+    const outcome = decided !== null && cookTime === decided.solution.result.cookTime_s
+      ? decided.outcome
+      : predictOutcome(c.posterior, s.grid, cookTime, logYolkTarget(answer.level));
+    forecast = forecastOf(outcome, cookTime);
+    certainty = certaintyAt(c.posterior, s.grid, cookTime, answer.level);
+  }
+
+  return {
+    egg: pot.egg,
+    setup: pot.setup,
+    provisional: provisional,
+    lengthened: lengthened,
+    inputs: inputs,
+    answer: answer,
+    level: answer.level,
+    solution: ran,
+    decided: decided,
+    lean_s: lean,
+    nudge_s: nudge,
+    cookTime_s: cookTime,
+    overdue: overdue,
+    cool_s: cool,
+    probeMoment: probeMomentFor(ran.result, ch.cooling),
+    deadlines: {
+      cookEnd_s: cookEnd,
+      coolEnd_s: coolEnd,
+      provisional: provisional,
+      outAt_s: pulled !== null && pulled.by === 'cook' ? pulled.out_s : null,
+    },
+    slowHobAt_s: slowHobAt,
+    certainty: certainty,
+    forecast: forecast,
+  };
+}
+
+/** The cook's tap out of the pull at `now_s` ("they're in the ice bath"):
+ *  taken only while `plan` says Pull, and the pull it records is the one
+ *  that rang. Otherwise the cook as it was. */
+export function withOut(cook: RunningCook, plan: CookPlan, now_s: number): RunningCook {
+  if (cook.events.pulled !== null || phaseAt(plan.deadlines, now_s) !== 'PULL') return cook;
+  return {
+    ...cook,
+    events: { ...cook.events, pulled: { due_s: plan.deadlines.cookEnd_s, out_s: now_s, by: 'cook' } },
+  };
+}
+
+/**
+ * The events the clock alone decides, as of `now_s`, from the plan that
+ * rang: the grace run out (the pull, by `timeout`, out at the grace's end) and
+ * the counted cooling ended. The app writes them down the first time it sees
+ * them past - a phone asleep through the pull writes them on waking - and
+ * plans again. The cook's own events are returned as they were.
+ */
+export function eventsDue(cook: RunningCook, plan: CookPlan, now_s: number): CookEvents {
+  const d = plan.deadlines;
+  let pulled = cook.events.pulled;
+  let cooled = cook.events.cooledAt_s;
+  if (pulled === null && !d.provisional && now_s >= d.cookEnd_s + PULL_GRACE_SECONDS) {
+    pulled = { due_s: d.cookEnd_s, out_s: d.cookEnd_s + PULL_GRACE_SECONDS, by: 'timeout' };
+  }
+  if (pulled !== null && cooled === null && d.coolEnd_s !== null && now_s >= d.coolEnd_s) cooled = d.coolEnd_s;
+  return { boilAt_s: cook.events.boilAt_s, pulled: pulled, cooledAt_s: cooled };
 }

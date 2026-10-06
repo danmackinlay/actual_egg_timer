@@ -5,9 +5,15 @@
 
 import { SIZE_CLASSES, US_SIZE_CLASSES } from '../../src/core/geometry.js';
 import {
-  CookChoices, RunningCook, cookSetupOf, corrected, latestStart_s, readRunningCook, startCook, startCorrected,
-  withBoil,
+  PULL_GRACE_SECONDS, SLOW_HOB_EVERY_S, SLOW_HOB_EXTRA_S, SLOW_HOB_WHEN_LEFT_S,
+} from '../../src/core/policy.js';
+import { oddsProfile } from '../../src/core/reach.js';
+import {
+  CookChoices, CookPlan, CookSurface, RunningCook, SLOW_HOB_MAX_STEPS, cookSetupOf, corrected, eventsDue,
+  latestStart_s, readRunningCook, replan, startCook, startCorrected, withBoil, withOut,
 } from '../../src/core/running.js';
+
+import { calibrationOf, coarseDecisionGrid, decidePosteriors } from './decide.js';
 
 /* The egg and the pot (`cookSetupOf`) for choices across every branch: a
  * class off each carton and a measured egg, each egg start with and without
@@ -198,6 +204,8 @@ const REFUSED: { note: string; path: string[]; value: unknown }[] = [
   { note: 'remembered as a number', path: ['boilRemembered'], value: 1 },
   { note: 'no cold-since field', path: ['coldSince_s'], value: undefined },
   { note: 'cold since a string', path: ['coldSince_s'], value: 'start' },
+  { note: 'no corrected field', path: ['correctedAt_s'], value: undefined },
+  { note: 'corrected before the start', path: ['correctedAt_s'], value: START_S - 1 },
 ];
 
 const rawReads: { note: string; raw: unknown }[] = [
@@ -214,9 +222,218 @@ const rawReads: { note: string; raw: unknown }[] = [
 ];
 const reads = rawReads.map((r) => ({ note: r.note, raw: r.raw, cook: readRunningCook(r.raw) }));
 
+/* ----------------------------------------------------------------- plans */
+
+/* The plan (`replan`) across a cook's phases, cold and hot, each kind of
+ * correction, and the moves that need one (`withOut`, `eventsDue`). A plan
+ * on a surface is planned twice, as an app plans: once with none, which says
+ * which surface it wants (`inputs`), and once on that surface, built coarse
+ * as decide.json's is. A surface for another pot - the start's, after the
+ * boil tap made a new one - is passed as the other cook whose pot it is, and
+ * must not be read. The posteriors are decide.json's. */
+
+type SurfaceAsk = 'none' | 'own' | 'profile' | { of: RunningCook; now_s: number };
+
+interface PlanCase {
+  note: string;
+  posterior: string;
+  cook: RunningCook;
+  leanHint_s: number;
+  now_s: number;
+  surface: SurfaceAsk;
+  outs?: number[];
+  dues?: number[];
+}
+
+function named(posterior: string) {
+  const pz = decidePosteriors.find((x) => x.name === posterior);
+  if (pz === undefined) throw new Error(posterior);
+  return pz;
+}
+
+function surfaceFor(posterior: string, of: RunningCook, hint: number, now_s: number, profile: boolean): CookSurface {
+  const c = calibrationOf(named(posterior));
+  const inputs = replan(of, c, null, hint, now_s).inputs;
+  if (inputs === null) throw new Error('a lengthened plan has no surface');
+  const g = coarseDecisionGrid(inputs);
+  return {
+    inputs: inputs, grid: g.grid,
+    profile: profile ? oddsProfile(c, inputs.egg, inputs.setup, g.grid) : null,
+  };
+}
+
+function planJson(p: CookPlan) {
+  const d = p.decided;
+  return {
+    egg: { mass_kg: p.egg.mass_kg }, setup: p.setup, provisional: p.provisional, lengthened: p.lengthened,
+    inputs: p.inputs === null ? null : { params: p.inputs.params, whiteDose_min: p.inputs.whiteDose_min },
+    answer: {
+      level: p.answer.level, kind: p.answer.verdict.kind, snapTo: p.answer.verdict.snapTo,
+      lowOdds: p.answer.lowOdds, cookTime_s: p.answer.solution.result.cookTime_s,
+    },
+    level: p.level,
+    solution: {
+      reachable: p.solution.reachable, whiteSets: p.solution.whiteSets, cookTime_s: p.solution.result.cookTime_s,
+      peakYolk_C: p.solution.result.peakYolk_C, peakYolkTime_s: p.solution.result.peakYolkTime_s,
+    },
+    decided: d === null ? null : {
+      level: d.level, cookTime_s: d.solution.result.cookTime_s, decision: d.decision, nudge_s: d.nudge_s,
+      adviceWanted: d.adviceWanted,
+    },
+    lean_s: p.lean_s, nudge_s: p.nudge_s, cookTime_s: p.cookTime_s, overdue: p.overdue, cool_s: p.cool_s,
+    probeMoment: p.probeMoment, deadlines: p.deadlines, slowHobAt_s: p.slowHobAt_s,
+    certainty: p.certainty, forecast: p.forecast,
+  };
+}
+
+const plans: unknown[] = [];
+
+/** Plan a case and write it down; its plan, for the cases after it. */
+function plan(pc: PlanCase): CookPlan {
+  const c = calibrationOf(named(pc.posterior));
+  const ask = pc.surface;
+  let surface: CookSurface | null = null;
+  if (ask === 'own' || ask === 'profile') {
+    surface = surfaceFor(pc.posterior, pc.cook, pc.leanHint_s, pc.now_s, ask === 'profile');
+  } else if (ask !== 'none') {
+    surface = surfaceFor(pc.posterior, ask.of, pc.leanHint_s, ask.now_s, false);
+  }
+  const p = replan(pc.cook, c, surface, pc.leanHint_s, pc.now_s);
+  const g = surface === null ? null : coarseDecisionGrid(surface.inputs);
+  plans.push({
+    note: pc.note, posterior: pc.posterior, eggsLogged: c.eggsLogged, cook: pc.cook,
+    leanHint_s: pc.leanHint_s, now_s: pc.now_s,
+    surface: surface === null || g === null ? null : {
+      of: typeof ask === 'object' ? { cook: ask.of, now_s: ask.now_s } : null,
+      grid: { tauAirScale: g.tauAirScale, ...g.spec },
+      profile: surface.profile,
+    },
+    plan: planJson(p),
+    outs: (pc.outs ?? []).map((t) => ({ now_s: t, events: withOut(pc.cook, p, t).events })),
+    dues: (pc.dues ?? []).map((t) => ({ now_s: t, events: eventsDue(pc.cook, p, t) })),
+  });
+  return p;
+}
+
+/** The cook with these events written down. */
+function withEvents(cook: RunningCook, events: RunningCook['events']): RunningCook {
+  return { ...cook, events: events };
+}
+
+const S = START_S;
+{
+  // A cold start, through every phase, with its surfaces as they land.
+  const c0 = cookOf({}, 6);
+  plan({ note: 'cold, heating, before any egg, no surface yet', posterior: 'prior', cook: c0, leanHint_s: 0, now_s: S + 60, surface: 'none' });
+  const heating = plan({ note: 'cold, heating, on its surface', posterior: 'learned', cook: c0, leanHint_s: 0, now_s: S + 60, surface: 'own' });
+  const hint = heating.lean_s;
+  const hinted = plan({ note: 'cold, heating, the hint carried before the surface lands', posterior: 'learned', cook: c0, leanHint_s: hint, now_s: S + 60, surface: 'none', dues: [S + 2000] });
+  const hob = hinted.slowHobAt_s as number;
+  plan({ note: 'cold, heating, just before the slow hob fires', posterior: 'learned', cook: c0, leanHint_s: hint, now_s: hob - 0.5, surface: 'own' });
+  const once = plan({
+    note: 'cold, heating, the slow hob lengthens the guess once: the surface is not its pot\'s', posterior: 'learned',
+    cook: c0, leanHint_s: hint, now_s: hob + 1, surface: { of: c0, now_s: S + 60 },
+  });
+  plan({ note: 'cold, heating, a slow hob over and over', posterior: 'learned', cook: c0, leanHint_s: hint, now_s: (once.slowHobAt_s as number) + 700, surface: 'none' });
+
+  const tapped = withBoil(c0, S + 532.5);
+  plan({ note: "cold, tapped, cooking: the start's surface is not this pot's", posterior: 'learned', cook: tapped, leanHint_s: hint, now_s: S + 600, surface: { of: c0, now_s: S + 60 } });
+  const cooking = plan({ note: 'cold, tapped, cooking on its own surface', posterior: 'learned', cook: tapped, leanHint_s: hint, now_s: S + 600, surface: 'own' });
+  const end = cooking.deadlines.cookEnd_s;
+  const inPull = plan({
+    note: "cold, in the pull's grace", posterior: 'learned', cook: tapped, leanHint_s: hint, now_s: end + 5, surface: 'own',
+    outs: [end - 1, end + 8, end + PULL_GRACE_SECONDS + 1],
+    dues: [end + 5, end + PULL_GRACE_SECONDS - 0.001, end + PULL_GRACE_SECONDS, end + 2000],
+  });
+  const outByCook = withEvents(tapped, withOut(tapped, inPull, end + 8).events);
+  const cooling = plan({ note: 'cold, out by the cook, cooling', posterior: 'learned', cook: outByCook, leanHint_s: hint, now_s: end + 40, surface: 'own', outs: [end + 41], dues: [end + 40, end + 400] });
+  const coolEnd = cooling.deadlines.coolEnd_s as number;
+  const done = withEvents(outByCook, eventsDue(outByCook, cooling, coolEnd + 1));
+  plan({ note: 'cold, done', posterior: 'learned', cook: done, leanHint_s: hint, now_s: coolEnd + 60, surface: 'own' });
+  const timedOut = withEvents(tapped, eventsDue(tapped, inPull, end + PULL_GRACE_SECONDS));
+  plan({ note: 'cold, out when the grace ran out, cooling', posterior: 'learned', cook: timedOut, leanHint_s: hint, now_s: end + 30, surface: 'own' });
+
+  // An earlier start, with the tap: the measured ramp grows.
+  const earlier = startCorrected(tapped, S - 120, S + 600) as RunningCook;
+  plan({ note: 'the start corrected two minutes earlier, after the tap', posterior: 'learned', cook: earlier, leanHint_s: hint, now_s: S + 600, surface: 'own' });
+
+  // Corrections of the egg, mid-cook.
+  plan({ note: 'a heavier egg, after the tap', posterior: 'learned', cook: corrected(tapped, { ...tapped.choices, mass_kg: 0.076 }, S + 600), leanHint_s: hint, now_s: S + 600, surface: 'own' });
+  // Cold to hot after the tap: the tap is unread, and the hot egg is overdue.
+  const toHot = corrected(tapped, { ...tapped.choices, startMode: 'hot' }, S + 600);
+  const overdueHot = plan({ note: 'cold corrected to boiling after the tap: overdue, the pull is now', posterior: 'learned', cook: toHot, leanHint_s: hint, now_s: S + 600, surface: 'own', dues: [S + 619, S + 620] });
+  const pulledNow = withEvents(toHot, eventsDue(toHot, overdueHot, S + 620));
+  plan({ note: 'the overdue pull ran out its grace', posterior: 'learned', cook: pulledNow, leanHint_s: hint, now_s: S + 625, surface: 'own' });
+  plan({ note: 'and back to cold: the tap read again, the pull kept', posterior: 'learned', cook: corrected(pulledNow, tapped.choices, S + 630), leanHint_s: hint, now_s: S + 630, surface: 'own' });
+  // Cold to hot before the tap: heating ends at once.
+  plan({ note: 'cold corrected to boiling before the tap', posterior: 'learned', cook: corrected(c0, { ...c0.choices, startMode: 'hot' }, S + 200), leanHint_s: hint, now_s: S + 200, surface: 'own' });
+
+  // A correction while the egg cools: the cook time stands, the cooling moves.
+  plan({ note: 'a lighter egg while it cools', posterior: 'learned', cook: corrected(outByCook, { ...outByCook.choices, mass_kg: 0.048 }, end + 40), leanHint_s: hint, now_s: end + 40, surface: 'own' });
+  plan({ note: 'a lighter egg late in the cooling: it ends now', posterior: 'learned', cook: corrected(outByCook, { ...outByCook.choices, mass_kg: 0.048 }, coolEnd - 2), leanHint_s: hint, now_s: coolEnd - 2, surface: 'own' });
+  plan({ note: 'ice corrected to the counter while it cools: done', posterior: 'learned', cook: corrected(outByCook, { ...outByCook.choices, cooling: 'counter' }, end + 40), leanHint_s: hint, now_s: end + 40, surface: 'own', dues: [end + 41] });
+  // After Done: the record changes, the times do not.
+  plan({ note: 'firmer wanted, after Done', posterior: 'learned', cook: corrected(done, { ...done.choices, level: 0.62 }, end + 600), leanHint_s: hint, now_s: end + 600, surface: 'own' });
+  const counterDone = corrected(done, { ...done.choices, cooling: 'counter' }, end + 600);
+  plan({ note: 'the counter, after Done: the cooling kept, unread', posterior: 'learned', cook: counterDone, leanHint_s: hint, now_s: end + 600, surface: 'own' });
+  plan({ note: 'and back to ice: the cooling read again', posterior: 'learned', cook: corrected(counterDone, done.choices, end + 610), leanHint_s: hint, now_s: end + 610, surface: 'own' });
+}
+{
+  // A hot start, nudged, with its odds profile.
+  const h0 = cookOf({ startMode: 'hot' }, -7);
+  const cooking = plan({ note: 'hot, cooking, on its surface and profile', posterior: 'learned', cook: h0, leanHint_s: 0, now_s: S + 60, surface: 'profile' });
+  const end = cooking.deadlines.cookEnd_s;
+  const hint = cooking.lean_s;
+  plan({ note: 'hot, cooking, before any egg', posterior: 'prior', cook: h0, leanHint_s: 0, now_s: S + 60, surface: 'own' });
+  const pull = plan({ note: "hot, in the pull's grace", posterior: 'learned', cook: h0, leanHint_s: hint, now_s: end + 3, surface: 'own', outs: [end + 3] });
+  const out = withEvents(h0, withOut(h0, pull, end + 3).events);
+  const cooling = plan({ note: 'hot, out at once, cooling', posterior: 'learned', cook: out, leanHint_s: hint, now_s: end + 10, surface: 'own' });
+  plan({ note: 'hot, done', posterior: 'learned', cook: withEvents(out, eventsDue(out, cooling, cooling.deadlines.coolEnd_s as number)), leanHint_s: hint, now_s: end + 400, surface: 'own' });
+
+  // The owner's case: boiling corrected to cold after the start.
+  const owner = corrected(h0, { ...h0.choices, startMode: 'cold' }, S + 240);
+  plan({ note: "the owner's case: boiling corrected to cold, back to heating", posterior: 'learned', cook: owner, leanHint_s: hint, now_s: S + 240, surface: 'own' });
+  plan({ note: "the owner's case, then the tap", posterior: 'learned', cook: withBoil(owner, S + 560), leanHint_s: hint, now_s: S + 560, surface: 'own' });
+
+  // A lighter egg makes it overdue; back within the grace, and it is not.
+  const lighter = corrected(h0, { ...h0.choices, mass_kg: 0.048 }, end - 20);
+  const overdue = plan({ note: 'a lighter egg: overdue, the pull is now', posterior: 'learned', cook: lighter, leanHint_s: hint, now_s: end - 20, surface: 'own', dues: [end - 1, end] });
+  plan({ note: 'the lighter egg undone within the grace: cooking again', posterior: 'learned', cook: corrected(lighter, h0.choices, end - 10), leanHint_s: hint, now_s: end - 10, surface: 'own' });
+  const ranOut = withEvents(lighter, eventsDue(lighter, overdue, end));
+  plan({ note: 'the lighter egg undone after the grace ran out: the pull stands', posterior: 'learned', cook: corrected(ranOut, h0.choices, end + 5), leanHint_s: hint, now_s: end + 5, surface: 'own' });
+
+  // On the counter: nothing counted, done at the out.
+  const counter = cookOf({ startMode: 'hot', cooling: 'counter' });
+  const cp = plan({ note: 'hot, on the counter, cooking', posterior: 'learned', cook: counter, leanHint_s: 0, now_s: S + 60, surface: 'own' });
+  const cEnd = cp.deadlines.cookEnd_s;
+  plan({ note: 'hot, on the counter, out: done', posterior: 'learned', cook: withEvents(counter, withOut(counter, cp, cEnd + 4).events), leanHint_s: 0, now_s: cEnd + 30, surface: 'own', dues: [cEnd + 30] });
+}
+{
+  // A pot whose white never sets: the heat off under a quarter litre and
+  // twelve eggs. The longest this pan gives, and nothing to choose.
+  const never = cookOf({ startMode: 'hot', afterBoil: 'off', waterLitres: 0.25, eggCount: 12 }, 5);
+  plan({ note: 'the heat off, a white that never sets', posterior: 'learned', cook: never, leanHint_s: 3, now_s: S + 30, surface: 'own' });
+  plan({ note: 'the same, before its surface', posterior: 'learned', cook: never, leanHint_s: 3, now_s: S + 30, surface: 'none' });
+  // The heat off, cold, tapped early: hard is out of reach, and the level
+  // snaps down as it would at setup.
+  const offHard = withBoil(cookOf({ afterBoil: 'off', level: 0.95 }), S + 250);
+  plan({ note: 'the heat off, a quick boil: hard out of reach, the level snapped down', posterior: 'learned', cook: offHard, leanHint_s: 0, now_s: S + 300, surface: 'own' });
+  // A runny egg on a very slow hob: done before the water boils, so the
+  // guess creeps with the clock.
+  const creep = cookOf({ mass_kg: 0.048, level: 0 });
+  plan({ note: 'a small runny egg on a slow hob: the guess creeps', posterior: 'learned', cook: creep, leanHint_s: 0, now_s: S + 1234.5, surface: 'none' });
+  // The cap on lengthenings.
+  plan({ note: 'heating for six hours', posterior: 'prior', cook: cookOf({ level: 0.62 }), leanHint_s: 0, now_s: S + 6 * 3600, surface: 'none' });
+}
+
 export const runningFixture = {
-  about: 'A running cook: its egg and pot, the moves the cook makes, and a stored cook read back. src/core/running.ts.',
+  about: 'A running cook: its egg and pot, the moves the cook makes, a stored cook read back, and the plan derived from it. src/core/running.ts.',
+  constants: {
+    slowHobWhenLeft_s: SLOW_HOB_WHEN_LEFT_S, slowHobExtra_s: SLOW_HOB_EXTRA_S, slowHobEvery_s: SLOW_HOB_EVERY_S,
+    slowHobMaxSteps: SLOW_HOB_MAX_STEPS, pullGrace_s: PULL_GRACE_SECONDS,
+  },
   setups: setups,
   moves: moves,
   reads: reads,
+  plans: plans,
 };

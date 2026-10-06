@@ -255,6 +255,9 @@ export interface RunningCook {
   /** Since when the choices have said a cold start: the start, or the
    *  moment of a correction to cold; null while they say boiling (C2). */
   coldSince_s: number | null;
+  /** When the choices or the start were last corrected; null until they
+   *  are. The plan never puts the pull before it (C2). */
+  correctedAt_s: number | null;
 }
 
 /** Everything derived. Never stored as truth. */
@@ -262,14 +265,21 @@ export interface CookPlan {
   egg: Egg;
   setup: CookSetup;              // with the ramp in force
   provisional: boolean;          // the ramp is a guess
+  lengthened: boolean;           // the guess, lengthened by the slow hob (C2)
+  inputs: DecisionInputs | null; // the surface this plan wants (C2)
+  answer: LevelAnswer;           // the mean solve, its verdict (C2)
   level: number;                 // after a snap out of the stripes
-  solution: Solution;
+  solution: Solution;            // read at cookTime_s
   decided: DecidedAnswer | null; // null until this pot's surface is in
+  lean_s: number;                // the lean and nudge in the time (C2)
+  nudge_s: number;
   cookTime_s: number;            // pulled.due if pulled; else the plan's,
-                                 // never before now
+                                 // never before the last correction or tap
+  overdue: boolean;              // it was, so the pull is then (C2)
   cool_s: number;                // cooledAt - out once cooled
   probeMoment: boolean;
   deadlines: Deadlines;          // for phaseAt, unchanged
+  slowHobAt_s: number | null;    // when to plan again while heating (C2)
   certainty: CertaintyReading | null;
   forecast: Forecast | null;
 }
@@ -289,6 +299,42 @@ The functions, all pure and fixtured:
   today's interim. After that come the pull (the event, or the plan's time
   clamped to now), the cooling (`coolingSecondsFor`, `probeMomentFor`),
   `Deadlines`, and `certaintyAt` and `forecastOf` at the cook time.
+
+  *As built (C2)*, where the code asked for more than the paragraph above:
+  - **The surface comes with its inputs**: `replan(cook, c, surface,
+    leanHint_s, now_s)`, `surface` a `CookSurface` (`inputs`, `grid`,
+    `profile`) or null. Core reads it only when its inputs are this pot's
+    (`sameDecisionInputs`), and the plan's `inputs` say which surface it
+    wants, so the app asks for that one and plans again when it lands. An
+    app cannot know the pot before planning, since the slow hob's ramp is
+    found by solving.
+  - **The slow hob's rule** is today's tick made a function of the time
+    heated: whenever the carried time would pull within 45 s, and 10 s after
+    the last lengthening (the start counting as one), the guess becomes the
+    time heated plus 60 s. `slowHobAt_s` says when it next fires, and the app
+    plans again then. Where it would fire again at once (the egg is done
+    before the water boils), the guess creeps in 10-s steps without a solve
+    per step; at most 100 lengthenings a plan. A lengthened guess moves with
+    the clock, so its pot asks for no surface (`inputs` null) and its time is
+    the carried one: building a surface a few minutes for a guess, which
+    would then move the hint and the guess with it, buys nothing.
+  - **The pull is never before the last thing the cook told the plan**, the
+    last correction (`correctedAt_s`, a new field) or the boil tap, rather
+    than never before `now_s`: a plan made again in the grace (a reload, a
+    surface landing) must ring for the same pull, and one made after an
+    ordinary pull's grace ran out (a phone asleep) must find it where it
+    was. The cooling's end is held the same way. A tap that comes after the
+    plan's pull pulls the egg at the tap, with its grace; today's machine
+    dated that pull in the past and went straight through to Done.
+  - **The level snaps** out of the stripes, as at setup (`answerAt` with the
+    retry), where today's mid-cook re-solve kept the target frozen and
+    answered an unreachable one with the shortest cook that sets the white,
+    carrying no lean. With the slider on screen mid-cook, the plan is the
+    one setup would make for this pot.
+  - **How sure, and the forecast**, are read at the cook time on this pot's
+    surface, and null until it is in. After the boil tap that is the measured
+    pot's, so the record's forecast is the one for the cook that ran
+    (DECISIONS.md 97, 8), not the one at the start as today.
 - `eventsDue(cook, plan, now_s): CookEvents`: the events the clock alone
   decides, namely the grace run out (`pulled`, by `timeout`) and the cooling
   ended. The app writes them down the first time it sees them past. A

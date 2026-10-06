@@ -252,6 +252,7 @@ const NOT_COPY: Record<string, string> = {
   by: 'stored running cook field (Running.swift)',
   choices: 'stored running cook field (Running.swift)',
   coldSince_s: 'stored running cook field (Running.swift)',
+  correctedAt_s: 'stored running cook field (Running.swift)',
   cooledAt_s: 'stored running cook field (Running.swift)',
   customStart_C: 'stored running cook field (Running.swift)',
   due_s: 'stored running cook field (Running.swift)',
