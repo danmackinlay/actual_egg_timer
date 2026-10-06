@@ -29,6 +29,8 @@
 
 import { createHash } from 'node:crypto';
 import { parseRecord, sharedRecord } from '../src/core/record.js';
+// A cook's id, as both apps read one.
+import { isUid } from '../src/core/share.js';
 import { AttestError, countsAsGenuine, verifyAssertion, verifyAttestation } from './appAttest.js';
 
 /** The store, as much of it as this needs. */
@@ -75,13 +77,6 @@ export const MAX_SEQ = 5000;
 
 /** The header an iPhone's assertion comes in, base64. */
 export const ASSERTION_HEADER = 'x-egg-assertion';
-
-/** A cook's id: a version 4 UUID, in lower case, as both apps make it. */
-const UID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
-
-export function isUid(v: unknown): v is string {
-  return typeof v === 'string' && UID.test(v);
-}
 
 /** Where an egg is kept: the sequence number zero-padded, so a listing sorts
  *  in the order the cook sent them. */

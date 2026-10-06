@@ -284,7 +284,7 @@ struct SettingsView: View {
 
     /// The web's `renderShare`: deleting, deleted, nothing yet, or how many
     /// have gone and how many wait.
-    private func shareNote(_ s: Sharing.State) -> String? {
+    private func shareNote(_ s: ShareState) -> String? {
         if !s.deleting.isEmpty { return tr("share.deleting") }
         if deletedHere && !s.on { return tr("share.deleted") }
         guard s.on else { return nil }

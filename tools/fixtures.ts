@@ -42,6 +42,8 @@
  *                              locale, and a pseudo-Czech catalogue in cs-CZ
  *   fixtures/probe.json        the probe reading
  *   fixtures/language.json     the switch into the English of 1750 and out
+ *   fixtures/share.json        sharing's state: what a stored copy reads as,
+ *                              and every move from every reachable state
  *   fixtures/prior.json        a prior drawn from a population (E7), and the
  *                              population files a reader refuses
  *
@@ -70,12 +72,14 @@ import { formatFixture } from './fixtures/format.js';
 import { unitsFixture } from './fixtures/units.js';
 import { probeFixture } from './fixtures/probe.js';
 import { languageFixture } from './fixtures/language.js';
+import { shareFixture } from './fixtures/share.js';
 import { wordingFixture } from './fixtures/wording.js';
 import { priorFixture } from './fixtures/population.js';
 
 const unitsJson = unitsFixture(english);
 const probeJson = probeFixture();
 const languageJson = languageFixture();
+const shareJson = shareFixture();
 
 mkdirSync('fixtures', { recursive: true });
 const written: Record<string, unknown> = {
@@ -97,6 +101,7 @@ const written: Record<string, unknown> = {
   units: unitsJson,
   probe: probeJson,
   language: languageJson,
+  share: shareJson,
   wording: wordingFixture(),
 };
 /**
@@ -177,5 +182,6 @@ const counts = [
   `${(probeJson['updates'] as unknown[]).length} probe folds`,
   `${(probeJson['solved'] as unknown[]).length} probe cooks`,
   `${(languageJson['transitions'] as unknown[]).length} language moves`,
+  `${shareJson.transitions.length} sharing moves`,
 ];
 console.log(`fixtures/*.json written: ${counts.join(', ')}`);
