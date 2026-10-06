@@ -30,7 +30,8 @@
  *   fixtures/decide.json       decision surfaces and the time chosen on one
  *   fixtures/outcome.json      the predicted outcome at the chosen time
  *   fixtures/reach.json        the odds at every level, the verdict with them,
- *                              the answer at a level, the shading, the advice
+ *                              the answer at a level and with its time
+ *                              decided, the shading, the advice
  *   fixtures/wording.json      which key each part of the screen says
  *   fixtures/copy.json         the catalogues rendered, and the plural rule of
  *                              every language at its edges
@@ -167,7 +168,7 @@ const counts = [
   `${recordFixture.replay.log.length} replayed eggs`,
   `${decideFixture.specs.length} decision surfaces and ${decideFixture.cases.length} decisions`,
   `${outcomeFixture.cases.reduce((n, c) => n + c.at.length, 0)} outcomes`,
-  `${reachFixture.profiles.length} odds profiles, ${reachFixture.lowOdds.length} warnings and ${reachFixture.advice.length} advice setups`,
+  `${reachFixture.profiles.length} odds profiles, ${reachFixture.profiles.reduce((n, p) => n + p.decided.length, reachFixture.owner.decided.length + reachFixture.neverSets.decided.length)} decided answers, ${reachFixture.lowOdds.length} warnings and ${reachFixture.advice.length} advice setups`,
   `${(probeJson['updates'] as unknown[]).length} probe folds`,
   `${(probeJson['solved'] as unknown[]).length} probe cooks`,
   `${(languageJson['transitions'] as unknown[]).length} language moves`,

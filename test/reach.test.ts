@@ -13,7 +13,10 @@
  * middle leaves the thumb only by the lean the white asks for once a time is
  * chosen; the owner's own egg goes to soft and says so; and the time never
  * falls as the level rises (DECISIONS.md 84). Only the stripes move the
- * slider (DECISIONS.md 83).
+ * slider (DECISIONS.md 83). What the screen shows at a level is one function,
+ * `decideAnswer`, which both apps call: the decision held by the envelope,
+ * the nudge where a time is chosen, the solve and the outcome at the time
+ * given, and whether advice is wanted.
  *
  * The fixture (`fixtures/reach.json`) pins the arithmetic for the Swift port.
  *
@@ -33,7 +36,7 @@ import { CALIBRATION_SEED, anchorNear, snapUp, verdictFor } from '../src/core/po
 import { Calibration, calibrationDoneness, calibrationParams } from '../src/core/record.js';
 import {
   ADVICE_BELOW_TENTHS, AdviceFacts, OddsProfile, REACH_ODDS, adviceWanted, envelopeBounds, lowOddsAt, oddsAtLevel, oddsNear,
-  answerAt, oddsProfile, pricedChanges, protocolAdvice, shadingOf, unpricedAdvice,
+  answerAt, decideAnswer, oddsProfile, pricedChanges, protocolAdvice, shadingOf, unpricedAdvice,
 } from '../src/core/reach.js';
 import { predictOutcome } from '../src/core/outcome.js';
 import { directionKey, warningKey, whiteAtRisk } from '../src/core/wording.js';
@@ -47,12 +50,12 @@ const PARTICLES = 400;
 
 /** What the app does at a level, verdict and snap and warning and all, with
  *  the profile or without it: the time held by the profile's envelope, as the
- *  apps hold it. */
+ *  apps hold it (`decideAnswer`, with no nudge). */
 function appAt(c: Calibration, grid: DoseGrid, setup: CookSetup, level: number, profile: OddsProfile | null) {
   const a = answerAt(c, EGG, setup, level, profile, true);
   return {
     verdict: a.verdict, level: a.level, lowOdds: a.lowOdds,
-    decision: decide(c, grid, a.solution, logYolkTarget(a.level), envelopeBounds(profile, a.level)),
+    decision: decideAnswer(c, EGG, setup, grid, a.solution, a.level, profile, 0).decision,
   };
 }
 
@@ -383,7 +386,7 @@ function timesAcross(c: Calibration, egg: Egg, setup: CookSetup): { profile: Odd
   const hi = Math.round(profile.physicalHardest * 100);
   for (let k = lo; k <= hi; k++) {
     const a = answerAt(c, egg, setup, k / 100, profile, true);
-    const d = decide(c, grid, a.solution, logYolkTarget(a.level), envelopeBounds(profile, a.level));
+    const d = decideAnswer(c, egg, setup, grid, a.solution, a.level, profile, 0).decision;
     times.push([a.level, d.cookTime_s]);
   }
   return { profile, times };
@@ -446,4 +449,58 @@ test('13. the envelope\'s bounds: a point holds its own time, a level between tw
   assert.deepEqual(envelopeBounds(p, 0.4), { lo_s: 430, hi_s: Number.POSITIVE_INFINITY });
   assert.equal(envelopeBounds(null, 0.25), null);
   assert.equal(envelopeBounds({ ...p, points: [] }, 0.25), null);
+});
+
+test('14. one decided answer for both apps: the soft yolk chosen again and held under jammy\'s time, the nudge where a time is chosen, and no advice where the white never sets', () => {
+  // The owner's egg (test 11).
+  const egg = eggFromMass(0.058);
+  const post = createPrior(PARTICLES, CALIBRATION_SEED);
+  const first: Calibration = { posterior: post, eggsLogged: 0 };
+  const asked = solveCookTime(egg, SETUP, calibrationParams(first), calibrationDoneness(first, 0.22));
+  updatePosterior(post, gridFor(first, egg, SETUP), asked.result.cookTime_s, logYolkTarget(0.22), 0, 'runny');
+  const c: Calibration = { posterior: post, eggsLogged: 1 };
+  const grid = gridFor(c, egg, SETUP);
+  const p = oddsProfile(c, egg, SETUP, grid);
+  const soft = answerAt(c, egg, SETUP, 0.22, p, true);
+  const jammy = answerAt(c, egg, SETUP, 0.41, p, true);
+  const d = decideAnswer(c, egg, SETUP, grid, soft.solution, soft.level, p, 0);
+  const dj = decideAnswer(c, egg, SETUP, grid, jammy.solution, jammy.level, p, 0);
+  // DECISIONS.md 83: soft is warned of and decided at soft, not moved.
+  assert.equal(soft.lowOdds, true);
+  assert.equal(d.level, 0.22);
+  // DECISIONS.md 84: its own choice is later than jammy's; the time it is
+  // given is not.
+  const own = decide(c, grid, soft.solution, logYolkTarget(0.22));
+  assert.ok(own.cookTime_s > dj.decision.cookTime_s, 'unheld, soft would be the firmer egg');
+  assert.ok(d.decision.cookTime_s <= dj.decision.cookTime_s, `${d.decision.cookTime_s} against ${dj.decision.cookTime_s}`);
+  // Without the profile, the level keeps its own choice.
+  assert.equal(decideAnswer(c, egg, SETUP, grid, soft.solution, soft.level, null, 0).decision.cookTime_s, own.cookTime_s);
+  // The solve and the outcome are at the time given; the advice is wanted
+  // as the odds there say.
+  assert.equal(d.nudge_s, 0);
+  assert.equal(d.solution.result.cookTime_s, d.decision.cookTime_s);
+  assert.equal(d.solution.whiteSets, soft.solution.whiteSets);
+  assert.deepEqual(d.outcome, predictOutcome(c.posterior, grid, d.decision.cookTime_s, logYolkTarget(0.22)));
+  assert.equal(d.adviceWanted, adviceWanted(d.decision.oddsTenths, p));
+  assert.equal(d.adviceWanted, true, `${d.decision.oddsTenths}/10 at soft`);
+  // Nudged: the decision is the same, and the time shown, the solve and the
+  // outcome move with the nudge.
+  const n = decideAnswer(c, egg, SETUP, grid, soft.solution, soft.level, p, -7);
+  assert.deepEqual(n.decision, d.decision);
+  assert.equal(n.nudge_s, -7);
+  assert.equal(n.solution.result.cookTime_s, d.decision.cookTime_s - 7);
+  assert.deepEqual(n.outcome, predictOutcome(c.posterior, grid, d.decision.cookTime_s - 7, logYolkTarget(0.22)));
+
+  // The heat off under a third of a litre and twelve eggs: the white never
+  // sets, so the mean solve's time stands, unnudged, with no advice.
+  const never = appSetup({ eggCount: 12, afterBoil: 'off', waterLitres: 0.3 });
+  const learned = knowing({ particles: PARTICLES, eggsLogged: 3 });
+  const neverGrid = gridFor(learned, EGG, never);
+  const a = answerAt(learned, EGG, never, 0.41, null, true);
+  assert.equal(a.solution.whiteSets, false);
+  const dn = decideAnswer(learned, EGG, never, neverGrid, a.solution, a.level, null, -7);
+  assert.equal(dn.decision.chosen, false);
+  assert.equal(dn.nudge_s, 0);
+  assert.equal(dn.solution, a.solution);
+  assert.equal(dn.adviceWanted, false);
 });

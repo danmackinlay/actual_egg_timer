@@ -23,6 +23,11 @@ import Foundation
 /// the points, and within about a second of it between them. The reasons,
 /// and the measurements, are in src/core/reach.ts, which this is held to by
 /// fixtures/reach.json.
+///
+/// What the screen shows at a level, once the pot's surface is built, is
+/// `decideAnswer`: the decision held by the envelope, the nudge, the solve
+/// and the outcome at the time given, and whether advice is wanted. Both
+/// apps call it; until 6 October 2026 each wrote it out for itself.
 
 /// The odds under which a level is warned of: 3/10, the owner's number.
 public let reachOdds = 0.3
@@ -394,4 +399,56 @@ public func protocolAdvice(
         keys.append(change.key)
     }
     return keys
+}
+
+// MARK: - The decided answer
+
+/// The answer at a level, with its time decided on the pot's surface: what
+/// the screen shows, and what a cook started now carries. Both apps' one
+/// copy of it (REVIEW-0.4.x, "Bloat and factoring" 1).
+public struct DecidedAnswer: Sendable {
+    /// The level decided for: the answer's (`LevelAnswer.level`), after any
+    /// snap. The advice is priced here, with `decision.odds`.
+    public let level: Double
+    /// The mean solve, re-read at the decided time with the nudge in it
+    /// (`decidedSolution`): its verdict and limits are the mean solve's.
+    public let solution: Solution
+    /// The time decided, before the nudge, and its odds.
+    public let decision: Decision
+    /// What the egg at the nudged time will be like, on the same surface.
+    public let outcome: Outcome
+    /// The nudge the time took (`appliedNudge`): all of it where a time is
+    /// chosen for, none where the solver's own answer stands.
+    public let nudgeS: Double
+    /// Whether the odds are low enough to offer advice (`adviceWanted`, with
+    /// the profile), and the white sets, so there is a cook to advise on.
+    public let adviceWanted: Bool
+}
+
+/// Decide an answer: the time for `sol`, the mean solve at `level` (an
+/// `answerAt`'s solution and level), on `grid`, this pot's decision surface;
+/// held within the envelope of `profile`, or by nothing while it is nil
+/// (DECISIONS.md 84); then moved by `nudgeS`, the nudge the app drew, where
+/// a time is chosen for (E8). The solve is re-read at the time given and the
+/// outcome predicted there. A level the odds warn of is decided at that level
+/// like any other (DECISIONS.md 83).
+public func decideAnswer(
+    _ c: Calibration, egg: Egg, setup: CookSetup, grid: DoseGrid, solution sol: Solution, level: Double,
+    profile: OddsProfile?, nudgeS: Double
+) -> DecidedAnswer {
+    let target = logYolkTarget(level)
+    let d = decide(
+        c, grid: grid, solution: sol, logNominalTarget: target, bounds: envelopeBounds(profile, level: level)
+    )
+    let nudge = appliedNudge(sol, nudgeS: nudgeS)
+    return DecidedAnswer(
+        level: level,
+        solution: decidedSolution(
+            egg: egg, setup: setup, params: calibrationParams(c), solution: sol, decision: d, nudgeS: nudge
+        ),
+        decision: d,
+        outcome: predictOutcome(c.posterior, grid, d.cookTimeS + nudge, target),
+        nudgeS: nudge,
+        adviceWanted: sol.whiteSets && adviceWanted(d.oddsTenths, profile: profile)
+    )
 }

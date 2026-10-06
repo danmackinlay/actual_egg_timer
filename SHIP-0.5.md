@@ -35,10 +35,17 @@ core's exports.
       fixtures, the Swift twin, `fit/` and `npm run sbc` with it.
       `INFERENCE.md` §2 already says so. The one item here that changes
       what a cook is told.
-- [ ] **A2. One `decideAnswer`** (`DECISIONS.md` 90; `REVIEW-0.4.x.md`,
+- [x] **A2. One `decideAnswer`** (`DECISIONS.md` 90; `REVIEW-0.4.x.md`,
       Bloat 1). `decided()` is written twice (`src/ui/app.ts`,
       `ios/App/Planner+Solve.swift`); `DECISIONS.md` 84 had to land as two
       commits. One core function, fixtured.
+      Done: `decideAnswer` in `reach.ts` and `Reach.swift` (the decision held
+      by the envelope, the nudge, the solve and the outcome at the time
+      given, the level, whether advice is wanted); both apps call it, and
+      both price the advice at its level. `reach.json` pins it for each
+      profile's pot, the owner's egg (83, 84) and a white that never sets;
+      `test/reach.test.ts` 14. The differences between the two copies are
+      in `LOGBOOK.md`, 6 October 2026.
 - [ ] **A3. One `recordFor`** (Bloat 2). Egg-record assembly
       (`src/ui/calibration.ts`, `ios/App/Cook.swift`) is the fit's
       training data, and is twinned by hand. One core function from the

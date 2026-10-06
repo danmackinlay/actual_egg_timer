@@ -27,14 +27,13 @@ import {
   textureNoteKeys,
 } from '../core/policy.js';
 import {
-  Decision, DecisionInputs, appliedNudge, carriedSolution, decide, decidedSolution, decisionApplies,
-  decisionInputs, nudgeSeconds,
+  Decision, DecisionInputs, carriedSolution, decisionApplies, decisionInputs, nudgeSeconds,
 } from '../core/decide.js';
 import {
-  LevelAnswer, OddsProfile, adviceWanted, answerAt, envelopeBounds, pricedChanges, protocolAdvice,
+  DecidedAnswer, LevelAnswer, OddsProfile, answerAt, decideAnswer, pricedChanges, protocolAdvice,
 } from '../core/reach.js';
 import { MassFrom, forecastOf } from '../core/record.js';
-import { Outcome, predictOutcome } from '../core/outcome.js';
+import { Outcome } from '../core/outcome.js';
 import {
   APP_VERSION, Calibration, cachedDecisionGrid, cachedOddsProfile, calibrationDoneness, calibrationParams,
   clearCalibration, decisionGrid, decisionKey, eggRecordFor, eggsBehind, keepUnreadCook, keptState, learn,
@@ -121,6 +120,11 @@ let decision: Decision | null = null;
  *  Read at the decided time on the same surface, whenever `decision` is, and
  *  null whenever it is. */
 let outcome: Outcome | null = null;
+/** The whole of the answer on screen as core decided it (`decideAnswer`),
+ *  whose parts `solution`, `decision` and `outcome` are: the advice reads
+ *  the level it was decided at and whether it is wanted. Null whenever
+ *  `decision` is. */
+let chosen: DecidedAnswer | null = null;
 /** The readout's height, px, the last time it was drawn idle with a decision
  *  in: what it holds while the next one is on its way (`renderOdds`). */
 let settledReadout_px = 0;
@@ -338,9 +342,9 @@ function answerFor(timeToBoil_s: number, level: number, odds: OddsProfile | null
 }
 
 /**
- * The time chosen for an answer (src/core/decide.ts), if this pot's
- * decision surface has been built - and if it has not, the mean solve's time,
- * with the surface asked for once the inputs settle.
+ * The answer with its time decided (core `decideAnswer`), if this pot's
+ * decision surface has been built - and if it has not, null, so the mean
+ * solve's time stands, with the surface asked for once the inputs settle.
  *
  * The surface does not depend on the slider, so a drag is answered from the one
  * already built, and the time never jumps between the mean solve's and the
@@ -351,34 +355,22 @@ function answerFor(timeToBoil_s: number, level: number, odds: OddsProfile | null
  * DECISIONS.md 84). Until then a level has its own choice, and the time can
  * move once more when the profile lands.
  */
-function decided(
-  answer: LevelAnswer, timeToBoil_s: number,
-): { solution: Solution; decision: Decision | null; outcome: Outcome | null; nudge_s: number } {
+function decided(answer: LevelAnswer, timeToBoil_s: number): DecidedAnswer | null {
   const egg = currentEgg();
   const setup = buildSetup(timeToBoil_s);
   const inputs = decisionInputs(calib, egg, setup);
   const grid = cachedDecisionGrid(inputs);
   if (grid === null) {
     askForDecision(inputs);
-    return { solution: answer.solution, decision: null, outcome: null, nudge_s: 0 };
+    return null;
   }
   // The odds at every level follow the surface, in the worker.
   const odds = cachedOddsProfile(inputs, calib);
   if (odds === null) askForProfile(inputs);
-  const logTarget = logYolkTarget(answer.level);
-  const d = decide(calib, grid, answer.solution, logTarget, envelopeBounds(odds, answer.level));
   // The nudge moves the chosen time, where one is chosen, for a cook who is
-  // sharing (E8); the time shown, the time started and the outcome under it
-  // are all at the nudged time.
-  const nudge = appliedNudge(answer.solution, nudgeNow());
-  return {
-    solution: decidedSolution(egg, setup, calibrationParams(calib), answer.solution, d, nudge),
-    decision: d,
-    // What that time will give, on the same surface: about 2 ms beside the
-    // decision's 13-16, so it runs here with it rather than in the worker.
-    outcome: predictOutcome(calib.posterior, grid, d.cookTime_s + nudge, logTarget),
-    nudge_s: nudge,
-  };
+  // sharing (E8). The outcome is read on the same surface: about 2 ms beside
+  // the decision's 13-16, so it runs here with it rather than in the worker.
+  return decideAnswer(calib, egg, setup, grid, answer.solution, answer.level, odds, nudgeNow());
 }
 
 /* -------------------------------------------------------------- the nudge */
@@ -486,9 +478,8 @@ function textureNote(sol: Solution): string {
 let adviceShown = '';
 function renderAdvice(): void {
   let keys: string[] = [];
-  const wanted = machine.phase === 'IDLE' && !isSousVide() && decision !== null && solution !== null
-    && solution.whiteSets && adviceWanted(decision.oddsTenths, profile);
-  if (wanted && decision !== null) {
+  const wanted = machine.phase === 'IDLE' && !isSousVide() && chosen !== null && chosen.adviceWanted;
+  if (wanted && chosen !== null) {
     const inputs = currentInputs(timeToBoil_s());
     const priced: { key: string; profile: OddsProfile }[] = [];
     for (const change of pricedChanges(inputs.setup)) {
@@ -499,7 +490,7 @@ function renderAdvice(): void {
     }
     keys = protocolAdvice(
       inputs.setup, { eggFromClass: massFrom() === 'class', startAssumed: settings.startTempMode === 'room' },
-      settings.doneness, decision.odds, priced,
+      chosen.level, chosen.decision.odds, priced,
     );
   }
   page().advice.hidden = !wanted;
@@ -821,6 +812,7 @@ function recompute(): void {
   // needs none of this.
   if (isSousVide()) {
     idleWarning = '';
+    chosen = null;
     decision = null;
     outcome = null;
     profile = null;
@@ -831,10 +823,10 @@ function recompute(): void {
   profile = cachedOddsProfile(currentInputs(boil), calib);
   const answer = answerFor(boil, settings.doneness, profile);
   applyAnswer(answer);
-  const chosen = decided(answer, boil);
-  solution = chosen.solution;
-  decision = chosen.decision;
-  outcome = chosen.outcome;
+  chosen = decided(answer, boil);
+  solution = chosen?.solution ?? answer.solution;
+  decision = chosen?.decision ?? null;
+  outcome = chosen?.outcome ?? null;
   render(Date.now());
 }
 
@@ -1233,10 +1225,10 @@ function onPrimary(): void {
     applyAnswer(answer);
     // The time on screen is the one started: the chosen one if this pot's
     // surface is in, and the mean solve's if the cook was quicker than it.
-    const chosen = decided(answer, boil);
-    solution = chosen.solution;
-    decision = chosen.decision;
-    outcome = chosen.outcome;
+    chosen = decided(answer, boil);
+    solution = chosen?.solution ?? answer.solution;
+    decision = chosen?.decision ?? null;
+    outcome = chosen?.outcome ?? null;
     const target = settings.doneness;
     const cook = solution.result.cookTime_s;
     // A cook started here is this tab's own, whatever happened before it.
@@ -1252,7 +1244,7 @@ function onPrimary(): void {
       units: unitSystem(),
       lang: activeLocale(),
       lean_s: decision === null ? 0 : decision.cookTime_s - decision.meanCookTime_s,
-      nudge_s: chosen.nudge_s,
+      nudge_s: chosen?.nudge_s ?? 0,
       outcome: decision === null ? null : outcome,
       // What the app says now, as the record keeps it (DECISIONS.md 37).
       forecast: decision === null || outcome === null ? null : forecastOf(outcome, cook),
