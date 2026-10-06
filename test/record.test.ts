@@ -104,6 +104,28 @@ function assertIdentical(a: Calibration, b: Calibration, label: string): void {
   }
 }
 
+/** As assertIdentical, to a relative 1e-9, for numbers pinned on another
+ *  machine: Linux's libm and macOS's differ in the last bit of exp and log,
+ *  so a file written on one replays a few ulps off on the other. A change of
+ *  likelihood moves a weight or a resampled particle by far more. */
+function assertClose(a: Calibration, b: Calibration, label: string): void {
+  const close = (x: number, y: number): boolean => Math.abs(x - y) <= 1e-9 * Math.max(Math.abs(x), Math.abs(y), 1e-300);
+  assert.equal(a.eggsLogged, b.eggsLogged, `${label}: eggs`);
+  assert.equal(a.posterior.rng, b.posterior.rng, `${label}: rng`);
+  assert.equal(a.posterior.particles.length, b.posterior.particles.length);
+  for (let i = 0; i < a.posterior.particles.length; i++) {
+    const p = a.posterior.particles[i];
+    const q = b.posterior.particles[i];
+    assert.ok(close(p.alpha_m2s, q.alpha_m2s), `${label}: alpha ${i}`);
+    assert.ok(close(p.logDoseOffset, q.logDoseOffset), `${label}: offset ${i}`);
+    assert.ok(close(p.tauAirScale, q.tauAirScale), `${label}: tauAir ${i}`);
+    assert.ok(close(p.noise, q.noise), `${label}: noise ${i}`);
+    assert.ok(close(p.whiteOffset, q.whiteOffset), `${label}: white offset ${i}`);
+    assert.ok(close(p.whiteFirmGap, q.whiteFirmGap), `${label}: firm gap ${i}`);
+    assert.ok(close(a.posterior.weights[i], b.posterior.weights[i]), `${label}: weight ${i}`);
+  }
+}
+
 // --------------------------------------------------------------------------
 // 1. What a loader trusts
 // --------------------------------------------------------------------------
@@ -209,8 +231,9 @@ test('2a. a replay is the egg-by-egg fold, and leaves its start alone', () => {
 });
 
 test('2a2. a log answered the old way replays to the posterior it made before the five yolk words', () => {
-  // test/data/old-answers.json was written once by the code before DECISIONS.md
-  // 92 and is never regenerated: an old log must fold to the same bits.
+  // test/data/old-answers.json was written once, on arm64 macOS, by the code
+  // before DECISIONS.md 92 and is never regenerated: an old log must fold to
+  // the same bits there, and to within rounding on any other machine.
   const pinned = JSON.parse(readFileSync('test/data/old-answers.json', 'utf8')) as {
     start: { count: number; seed: number };
     grid: { alphaCount: number; timeCount: number };
@@ -229,7 +252,10 @@ test('2a2. a log answered the old way replays to the posterior it made before th
     posterior: { particles: pinned.final.particles, weights: pinned.final.weights, rng: pinned.final.rng },
     eggsLogged: pinned.final.eggsLogged,
   };
-  assertIdentical(now, then, 'old log, new code');
+  // Bit for bit where the file was written (arm64 macOS); within a few ulps
+  // elsewhere, as on CI's Linux.
+  if (process.platform === 'darwin' && process.arch === 'arm64') assertIdentical(now, then, 'old log, new code');
+  else assertClose(now, then, 'old log, new code');
 });
 
 test('2b. an unanswered egg folds nothing and builds no surface', () => {
