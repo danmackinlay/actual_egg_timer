@@ -58,9 +58,11 @@ core's exports.
       when wider. With it, the 90% interval in words ("between Soft and
       Fudgy"), the most likely word, and a likely time range. Core and its
       fixtures only: no words on screen until D.
-- [ ] **A8. The fit's tests in CI** (Bloat 7): `uv run --project fit
+- [x] **A8. The fit's tests in CI** (Bloat 7): `uv run --project fit
       pytest -q fit/tests` in `.github/workflows/verify.yml`, since the
-      fit writes `fixtures/population.json`, which both apps ship.
+      fit writes `fixtures/population.json`, which both apps ship. A third
+      job, `fit`, on Linux with `astral-sh/setup-uv@v10`; 9 tests, 22 s
+      locally. Not yet seen run on GitHub: CI runs on a push.
 - [x] **A9. Version `0.5.0-alpha.1`**, in `package.json`, `APP_VERSION`
       and `MARKETING_VERSION`, so a record made by a 0.5 build says so.
 
