@@ -48,9 +48,14 @@ core's exports.
 - [ ] **A5. The sharing state machine in core** (Bloat 3): `turnedOn`,
       `forgotten`, `deletionAsked`, `reconciled`, `advances`, into
       `src/core/share.ts` with fixtures; the server shares `isUid`.
-- [ ] **A6. `oddsProfile` without closures** (Bloat 6): core invariant 2,
+- [x] **A6. `oddsProfile` without closures** (Bloat 6): core invariant 2,
       and its two copy-pasted bisections made one. The profile both apps
-      ship is fixtured again, and must not move.
+      ship is fixtured again, and must not move. Done: the points decided
+      so far are a plain `ProfileWork` (three arrays in position order)
+      handed to top-level `decidePoint`, `oddsAtPosition` and `reachEnd`,
+      the one bisection, used for each end; `Reach.swift` the same, with
+      `inout`. Every fixture byte-identical, and 375 profiles (31 with a
+      hard-end bisection) identical with the same decision count.
 - [ ] **A7. The certainty word, in core** (`DECISIONS.md` 93). From the
       predicted spread of the five yolk words at the chosen time: *very
       certain* when 9 times in 10 it is the word asked for; *a ballpark*

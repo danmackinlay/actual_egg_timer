@@ -182,6 +182,60 @@ export function oddsAtLevel(
 }
 
 /**
+ * A profile being built: the pot it is for, and the points decided on it so
+ * far, as three arrays kept in order of slider position. Plain data, handed
+ * to the functions below rather than closed over, so that both languages
+ * build it the same way (core invariant 2).
+ */
+interface ProfileWork {
+  c: Calibration;
+  egg: Egg;
+  setup: CookSetup;
+  grid: DoseGrid;
+  positions: number[];
+  times: number[];
+  odds: number[];
+}
+
+/** Decide the point at `position`, held within `bounds`; keep it in `w`, in
+ *  order; and return its odds. */
+function decidePoint(w: ProfileWork, position: number, bounds: TimeBounds): number {
+  const d = decisionAtLevel(w.c, w.egg, w.setup, w.grid, levelOf(position), bounds);
+  let i = w.positions.length;
+  while (i > 0 && w.positions[i - 1] > position) i -= 1;
+  w.positions.splice(i, 0, position);
+  w.times.splice(i, 0, d.cookTime_s);
+  w.odds.splice(i, 0, d.odds);
+  return d.odds;
+}
+
+/** The odds at `position`: a point already decided, or one decided now, held
+ *  between the nearest points known on either side, so that it moves no time
+ *  the profile already gave. */
+function oddsAtPosition(w: ProfileWork, position: number): number {
+  let i = 0;
+  while (i < w.positions.length && w.positions[i] < position) i += 1;
+  if (i < w.positions.length && w.positions[i] === position) return w.odds[i];
+  const below = i > 0 ? w.times[i - 1] : 0.0;
+  const over = i < w.positions.length ? w.times[i] : Number.POSITIVE_INFINITY;
+  return decidePoint(w, position, { lo_s: below, hi_s: over });
+}
+
+/** One end of the range at REACH_ODDS or better, by bisection on the slider's
+ *  grid between `reaches`, a position at or over it, and `short`, a position
+ *  under it on either side: the position at or over it next to one under. */
+function reachEnd(w: ProfileWork, reaches: number, short: number): number {
+  let r = reaches;
+  let s = short;
+  while (Math.abs(s - r) > 1) {
+    const mid = Math.floor((r + s) / 2);
+    if (oddsAtPosition(w, mid) >= REACH_ODDS) r = mid;
+    else s = mid;
+  }
+  return r;
+}
+
+/**
  * The odds at every level the pot can deliver, and where they reach 3/10. See
  * the header for which levels, and why.
  *
@@ -199,93 +253,44 @@ export function oddsProfile(c: Calibration, egg: Egg, setup: CookSetup, grid: Do
     };
   }
 
-  const odds = new Map<number, number>();
-  const times = new Map<number, number>();
-  const decideHere = (position: number, bounds: TimeBounds | null): number => {
-    const d = decisionAtLevel(c, egg, setup, grid, levelOf(position), bounds);
-    odds.set(position, d.odds);
-    times.set(position, d.cookTime_s);
-    return d.odds;
-  };
-
   const positions: number[] = [lo];
   for (let k = (Math.floor(lo / PROFILE_STEP) + 1) * PROFILE_STEP; k < hi; k += PROFILE_STEP) {
     positions.push(k);
   }
   if (hi > lo) positions.push(hi);
   // The envelope: from the hard end, each point held under the one above it.
+  const w: ProfileWork = { c: c, egg: egg, setup: setup, grid: grid, positions: [], times: [], odds: [] };
   let above = Number.POSITIVE_INFINITY;
   for (let i = positions.length - 1; i >= 0; i--) {
-    decideHere(positions[i], { lo_s: 0.0, hi_s: above });
-    above = times.get(positions[i]) as number;
+    decidePoint(w, positions[i], { lo_s: 0.0, hi_s: above });
+    above = w.times[0];
   }
+  // Before any bisection, w holds exactly these positions, in this order.
+  const gridOdds = w.odds.slice();
   let best = 0;
-  for (const k of positions) {
-    const p = odds.get(k) as number;
-    if (p > best) best = p;
+  for (let i = 0; i < gridOdds.length; i++) {
+    if (gridOdds[i] > best) best = gridOdds[i];
   }
-
-  // A point the bisection adds is held between the nearest points known on
-  // either side, so it moves no time already given.
-  const at = (position: number): number => {
-    const known = odds.get(position);
-    if (known !== undefined) return known;
-    let below = 0.0;
-    let over = Number.POSITIVE_INFINITY;
-    let belowAt = -1;
-    let overAt = SLIDER_STEPS + 1;
-    for (const [k, t] of times) {
-      if (k < position && k > belowAt) {
-        belowAt = k;
-        below = t;
-      }
-      if (k > position && k < overAt) {
-        overAt = k;
-        over = t;
-      }
-    }
-    return decideHere(position, { lo_s: below, hi_s: over });
-  };
 
   let softest: number | null = null;
   let hardest: number | null = null;
   if (c.eggsLogged > 0 && best >= REACH_ODDS) {
     let first = 0;
-    while (at(positions[first]) < REACH_ODDS) first += 1;
+    while (gridOdds[first] < REACH_ODDS) first += 1;
     let last = positions.length - 1;
-    while (at(positions[last]) < REACH_ODDS) last -= 1;
-
-    // The softest: the first position at or over the threshold, found by
-    // bisection between the last point under it and the first point over.
-    let s = positions[first];
-    if (first > 0) {
-      let under = positions[first - 1];
-      while (s - under > 1) {
-        const mid = Math.floor((under + s) / 2);
-        if (at(mid) >= REACH_ODDS) s = mid;
-        else under = mid;
-      }
-    }
-    // The firmest, the same way from the other end.
-    let h = positions[last];
-    if (last < positions.length - 1) {
-      let over = positions[last + 1];
-      while (over - h > 1) {
-        const mid = Math.floor((h + over) / 2);
-        if (at(mid) >= REACH_ODDS) h = mid;
-        else over = mid;
-      }
-    }
+    while (gridOdds[last] < REACH_ODDS) last -= 1;
+    // The softest first, then the firmest: a point the first bisection adds
+    // holds the second's.
+    const s = first > 0 ? reachEnd(w, positions[first], positions[first - 1]) : positions[first];
+    const h = last < positions.length - 1 ? reachEnd(w, positions[last], positions[last + 1]) : positions[last];
     softest = levelOf(s);
     hardest = levelOf(h);
   }
 
-  const keys = Array.from(odds.keys()).sort((a, b) => a - b);
-  const points: LevelOdds[] = keys.map((k) => ({
-    level: levelOf(k), cookTime_s: times.get(k) as number, odds: odds.get(k) as number,
-  }));
-  for (const point of points) {
-    if (point.odds > best) best = point.odds;
+  const points: LevelOdds[] = [];
+  for (let i = 0; i < w.positions.length; i++) {
+    points.push({ level: levelOf(w.positions[i]), cookTime_s: w.times[i], odds: w.odds[i] });
+    if (w.odds[i] > best) best = w.odds[i];
   }
   return {
     points: points, best: best, physicalSoftest: levelOf(lo), physicalHardest: levelOf(hi),

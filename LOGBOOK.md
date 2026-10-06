@@ -4496,3 +4496,23 @@ mildly overconfident (12-13.6% of true values in the outer tenth, worst
 for `tauAirScale` and the white), uniform at 4000. `tauAirScale` is never
 learned: every grid is built at its posterior mean, so no particle's value
 enters the likelihood and its mean only drifts with resampling.
+
+## 6 October 2026: `oddsProfile` without closures (SHIP-0.5 A6)
+
+`oddsProfile` kept its points in two maps that two closures wrote to,
+against core invariant 2, and its two bisections were one written twice.
+Now the points decided so far are plain data, `ProfileWork` (the pot, and
+three arrays kept in slider-position order), handed to three top-level
+functions: `decidePoint`, `oddsAtPosition` (a point known, or decided
+between its known neighbours) and `reachEnd`, one bisection given a
+position at 3/10 or better and one under it, on either side. The softest
+end is still found before the firmest, so a point the first adds holds
+the second as before. `Reach.swift` mirrors it, with `inout`.
+
+It moves nothing: `npm run fixtures` left every fixture byte-identical;
+a scratch run of 375 profiles (cooks of every taste and spread, five pots,
+and surfaces cut short so that 31 of them bisect at the hard end, which
+no fixture does) gave identical JSON before and after; and the decisions
+made, counted in `decisionAtLevel`, are the same: 21, 23 and 13 for
+`fixtures/reach.json`'s three profiles, 294 across `test/reach.test.ts`,
+4081 across the 375.
