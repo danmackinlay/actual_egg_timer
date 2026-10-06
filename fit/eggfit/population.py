@@ -7,7 +7,8 @@ lognormal or normal per particle dimension (infer.ts `createPrior`), so each
 dimension is summarised by its median and a robust spread - half the width
 of its central 68% - which matches a Gaussian's sd and is not inflated by the
 Student-t tails the fit gives cooks. The taste's centre is 0, by the fit's
-convention; carryover is not learned, and stays at the literature's.
+convention. The counter's carryover is not a particle dimension
+(DECISIONS.md 95): the apps hold it at 1.0, and the file has no spread for it.
 """
 
 from __future__ import annotations
@@ -42,14 +43,12 @@ def new_cooks(draws: dict, per_draw: int = 40, seed: int = 1) -> dict:
 
 
 def population(draws: dict, constants: dict, pid: str, source: dict, settings: dict) -> dict:
-    lit = constants["literature"]
     a0 = constants["alphaDefault"]
     sz = constants["alphaRelSd"]
     new = new_cooks(draws)
     prior = {
         "alpha_m2s": {"median": a0 * math.exp(sz * float(np.median(new["z"]))), "logSd": sz * robust_sd(new["z"])},
         "logDoseOffset": {"mean": 0.0, "sd": robust_sd(new["taste"])},
-        "tauAirScale": lit["tauAirScale"],
         "noise": {"median": math.exp(float(np.median(new["log_noise"]))), "logSd": robust_sd(new["log_noise"])},
         "whiteOffset": {"mean": float(np.median(new["white"])), "sd": robust_sd(new["white"])},
         "whiteFirmGap": {"median": math.exp(float(np.median(new["log_gap"]))), "logSd": robust_sd(new["log_gap"])},

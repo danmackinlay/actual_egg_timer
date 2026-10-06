@@ -88,7 +88,6 @@ private func expectCalibration(_ c: Calibration, _ expected: [String: Any], _ la
         let b = want.posterior.particles[i]
         expectClose(a.alphaM2s, b.alphaM2s, "\(label) particle \(i) alpha")
         expectClose(a.logDoseOffset, b.logDoseOffset, "\(label) particle \(i) offset")
-        expectClose(a.tauAirScale, b.tauAirScale, "\(label) particle \(i) tauAirScale")
         expectClose(a.noise, b.noise, "\(label) particle \(i) noise")
         expectClose(a.whiteOffset, b.whiteOffset, "\(label) particle \(i) white offset")
         expectClose(a.whiteFirmGap, b.whiteFirmGap, "\(label) particle \(i) firm gap")
@@ -105,7 +104,6 @@ private func identical(_ a: Calibration, _ b: Calibration) -> Bool {
         let q = b.posterior.particles[i]
         if p.alphaM2s.bitPattern != q.alphaM2s.bitPattern
             || p.logDoseOffset.bitPattern != q.logDoseOffset.bitPattern
-            || p.tauAirScale.bitPattern != q.tauAirScale.bitPattern
             || p.noise.bitPattern != q.noise.bitPattern
             || p.whiteOffset.bitPattern != q.whiteOffset.bitPattern
             || p.whiteFirmGap.bitPattern != q.whiteFirmGap.bitPattern
@@ -136,14 +134,14 @@ private func throughJSON(_ c: Calibration) throws -> Calibration {
     let columns = Columns(
         n: c.eggsLogged, rng: p.rng,
         a: p.particles.map(\.alphaM2s), o: p.particles.map(\.logDoseOffset),
-        t: p.particles.map(\.tauAirScale), sd: p.particles.map(\.noise),
+        t: p.particles.map { _ in 1.0 }, sd: p.particles.map(\.noise),
         wo: p.particles.map(\.whiteOffset), wg: p.particles.map(\.whiteFirmGap), w: p.weights
     )
     let back = try JSONDecoder().decode(Columns.self, from: JSONEncoder().encode(columns))
     var particles = [Particle]()
     for i in 0..<back.a.count {
         particles.append(Particle(
-            alphaM2s: back.a[i], logDoseOffset: back.o[i], tauAirScale: back.t[i],
+            alphaM2s: back.a[i], logDoseOffset: back.o[i],
             noise: back.sd[i], whiteOffset: back.wo[i], whiteFirmGap: back.wg[i]
         ))
     }

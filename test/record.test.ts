@@ -29,7 +29,7 @@ import {
   Feedback, LITERATURE_POPULATION, Particle, WhiteReport, YolkWord, answerLikelihood, yolkProbit,
 } from '../src/core/infer.js';
 import { calibrationGrid, PARTICLE_COUNT, CALIBRATION_SEED } from '../src/core/policy.js';
-import { createPrior, updatePosterior } from '../src/core/infer.js';
+import { createPrior, posteriorParams, updatePosterior } from '../src/core/infer.js';
 import { eggFromMass } from '../src/core/geometry.js';
 import {
   DEFAULT_PARAMS, donenessFromSlider, logYolkTarget, solveCookTime,
@@ -102,7 +102,6 @@ function assertIdentical(a: Calibration, b: Calibration, label: string): void {
     const q = b.posterior.particles[i];
     assert.ok(Object.is(p.alpha_m2s, q.alpha_m2s), `${label}: alpha ${i}`);
     assert.ok(Object.is(p.logDoseOffset, q.logDoseOffset), `${label}: offset ${i}`);
-    assert.ok(Object.is(p.tauAirScale, q.tauAirScale), `${label}: tauAir ${i}`);
     assert.ok(Object.is(p.noise, q.noise), `${label}: noise ${i}`);
     assert.ok(Object.is(p.whiteOffset, q.whiteOffset), `${label}: white offset ${i}`);
     assert.ok(Object.is(p.whiteFirmGap, q.whiteFirmGap), `${label}: firm gap ${i}`);
@@ -338,10 +337,11 @@ test('2d. an egg is scored at the pull when the cook said when, and at the sched
     );
     assertIdentical(viaRecord, { posterior: direct, eggsLogged: 1 }, r.pulledBy);
   }
-  // And it matters: 25 s late is a different posterior.
+  // And it matters: 25 s late is a different posterior. Its mean, not one
+  // weight: a fold that resamples leaves every weight at 1/64 either way.
   const a = replay(freshCalibration(64, 7), [measured], COARSE);
   const b = replay(freshCalibration(64, 7), [assumed], COARSE);
-  assert.notEqual(a.posterior.weights[0], b.posterior.weights[0]);
+  assert.notEqual(posteriorParams(a.posterior).alpha_m2s, posteriorParams(b.posterior).alpha_m2s);
 });
 
 // --------------------------------------------------------------------------

@@ -53,7 +53,7 @@ interface Candidate {
 
 const CANDIDATES: Candidate[] = [
   { key: 'logAlpha', priorSd: ALPHA_REL_SD, step: 0.01, why: 'ALPHA_REL_SD' },
-  { key: 'logTauAir', priorSd: 0.35, step: 0.02, why: 'PRIOR_TAU_AIR_LOG_SD in infer.ts' },
+  { key: 'logTauAir', priorSd: 0.35, step: 0.02, why: 'the prior infer.ts had until DECISIONS.md 95 held it at 1.0' },
   { key: 'zYolk_K', priorSd: 0.07, step: 0.02, why: 'Vega CI 4.54-4.80 K read as 95%' },
   { key: 'zWhite_K', priorSd: 0.2, step: 0.02, why: 'Weijers 430-490 kJ/mol -> 4.87-5.55 K; judgement' },
   { key: 'whiteRadiusFrac', priorSd: 0.03, step: 0.005, why: 'yolk 28-38% of volume' },

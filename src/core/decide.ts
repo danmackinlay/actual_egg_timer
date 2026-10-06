@@ -1,7 +1,7 @@
 /**
  * Deciding, not just estimating (INFERENCE.md section 8).
  *
- * Why not solve at the posterior MEAN of the time-scale and `tauAirScale`,
+ * Why not solve at the posterior MEAN of the time-scale,
  * with the white's cutpoint moved by the mean white offset? Three things are
  * wrong with that. The learned yolk taste offset never reaches the
  * recommendation - only the part of a "too soft" answer the posterior happens
@@ -38,7 +38,7 @@
  * time-scale for every candidate time, for the setup on screen. The offsets
  * and the noise are additive in log dose, so only the time-scale needs the
  * physics: a dose grid over (alpha, time) for the current egg and pot, with
- * `tauAirScale` held at its posterior mean as every grid in this repo holds it.
+ * `tauAirScale` at 1.0, where the apps hold it (DECISIONS.md 95).
  * The grid does not depend on the slider. It spans every level this pot can
  * deliver, from a little before the white sets to a little past the hardest
  * yolk, so a cook dragging the slider is answered from one grid, with no

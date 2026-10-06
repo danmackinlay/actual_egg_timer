@@ -322,7 +322,7 @@ function simulateCooks(out: string, truthOut: string, cooks: number, seed: numbe
 /* ---------------------------------------------------------------- emulate */
 
 /** A particle for the likelihood checks: off-centre in every dimension. */
-const CHECK_PARTICLE = { logDoseOffset: 0.05, tauAirScale: 1, noise: 0.23, whiteOffset: 0.1, whiteFirmGap: 0.9 };
+const CHECK_PARTICLE = { logDoseOffset: 0.05, noise: 0.23, whiteOffset: 0.1, whiteFirmGap: 0.9 };
 const CHECK_Z = [-1.0, 0.0, 1.3];
 const CHECKED_EGGS = 12;
 

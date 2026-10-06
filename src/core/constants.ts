@@ -164,7 +164,8 @@ export const TAU_STANDING_SCALE = 1.0;
  *  Bi = h*R/k ~ 0.6, so the shell is neither clamped nor at the egg's mean,
  *  and the boundary is Newton's law at the shell itself (protocol.ts).
  *  What is not still air - a draught, an extractor fan, an egg cup - is the
- *  kitchen, and `tauAirScale` carries it. */
+ *  kitchen, which `tauAirScale` would carry; the apps hold it at 1.0
+ *  (DECISIONS.md 95). */
 export const H_AIR = 15.0;
 
 /** Water an egg carries out of the pan on its shell, kg per m^2 of shell:

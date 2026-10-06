@@ -88,8 +88,8 @@ nothing in the record or the UI names one.
 **Per cook (2, plus a reliability).** A yolk *taste* offset, and a white
 *cutpoint* - what this person means by "runny". And a noise scale, §6.
 
-The present particle - `alpha`, taste offset, `tauAirScale` - is already most of
-this. The dimension it lacks is the white lag, which is the second-strongest
+The present particle - `alpha`, taste offset, `tauAirScale` (until 0.5) - is
+already most of this. The dimension it lacks is the white lag, which is the second-strongest
 direction in the data and is held at a constant. Both real eggs in `LOGBOOK.md`
 came out with a runny white at a soft target, which is what holding it wrong
 looks like.
@@ -146,7 +146,7 @@ egg. This is what `UNRELATED` is already standing in for.
 **Built (E2 and E3, 27 September).** `src/core/infer.ts`, held to
 `EggTimerCore/Infer.swift` by `fixtures/calibration.json`. The particle has six
 numbers: the time-scale (`alpha`), the yolk taste offset, `tauAirScale`, and
-three new ones.
+three new ones. (Five from 0.5: `tauAirScale` left it, held at 1.0, §2.)
 
 - **The noise scale** is a particle dimension, lognormal, median **0.20
   decades** of yolk dose, log sd 0.5. Chosen where the old likelihood described
@@ -468,7 +468,7 @@ point.
   (47.6-81.7 C for the default egg at jammy).
 - **The peak comes off the dose grid**, as the doses do: `peakYolk_C` per
   (alpha, cook time) cell, interpolated bilinearly, within 0.1 C of a direct
-  simulation. The grid is built at the posterior's mean `tauAirScale`, so on
+  simulation. The grid is built at one `tauAirScale` (1.0 since 0.5, §2), so on
   the counter a reading would load everything onto alpha; the counter is not
   offered the probe (below).
 - **One fold per egg**: the reading is a third optional input beside the two
@@ -668,7 +668,7 @@ and the same pot, the two apps choose the same time to 1e-12. What settled:
   calibration numbers live; `test/decideOdds.test.ts` runs a smaller copy.
 - **The surface.** Only the time-scale needs the physics - the offsets and the
   noise are additive in log dose - so a decision needs one dose grid per pot,
-  with `tauAirScale` at its posterior mean, spanning every level the pot can
+  with `tauAirScale` at 1.0 (§2), spanning every level the pot can
   deliver and 120 s beyond: 13 rows x 10 s, 0.4-0.7 s to build in node (1.3 s
   with the heat off), within 0.2 s of a fine grid's choice on boiling pots. The
   slider is not part of what it is built from, so a drag never waits for one.

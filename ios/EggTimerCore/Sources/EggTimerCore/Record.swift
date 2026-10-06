@@ -32,7 +32,7 @@ public let recordVersion = 1
 /// Also what tells a stored posterior it is out of date: both apps keep it
 /// beside the posterior (the store's `m`) and replay the log when it differs.
 /// A change to the physics changes the likelihood, so it changes this too.
-public let modelID = "2026-10-e9"
+public let modelID = "2026-10-e10"
 
 /// Where the egg's mass came from. A size class is a 10 g bucket, worth about
 /// +-24 s; a scale is a gram.
@@ -641,11 +641,12 @@ public func freshCalibration(count: Int, seed: Int32, population: Population = l
 
 /// Parameters to solve with: the prior's centre until an egg has taught
 /// anything - the literature values, for the literature - and the posterior
-/// mean after.
+/// mean after. The counter's carryover is the physics' throughout
+/// (DECISIONS.md 95).
 public func calibrationParams(_ c: Calibration) -> ModelParams {
     if c.eggsLogged == 0 {
         guard let start = c.start else { return .default }
-        return ModelParams(alphaM2s: start.alphaM2s, tauAirScale: start.tauAirScale)
+        return ModelParams(alphaM2s: start.alphaM2s, tauAirScale: ModelParams.default.tauAirScale)
     }
     return posteriorParams(c.posterior)
 }

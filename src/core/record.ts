@@ -61,14 +61,16 @@ export const RECORD_VERSION = 1;
  *  would have said. '2026-10-e6' is E5's likelihood and decision, with the
  *  forecast kept; '2026-10-e8' adds the nudge, +-10 s for a cook who is
  *  sharing (DECISIONS.md 61); '2026-10-e9' asks the cook which yolk they got,
- *  in five words, and forecasts those five (DECISIONS.md 92). Records from
- *  before E6 carry none.
+ *  in five words, and forecasts those five (DECISIONS.md 92); '2026-10-e10'
+ *  holds the counter's carryover at 1.0 instead of carrying it in the
+ *  particle (DECISIONS.md 95), which draws another prior from the same seed.
+ *  Records from before E6 carry none.
  *
  *  It is also what tells a stored posterior it is out of date: both apps
  *  keep it beside the posterior (the store's `m`) and replay the log when it
  *  differs, so the posterior is always what THIS code makes of the log. A
  *  change to the physics changes the likelihood, so it changes this too. */
-export const MODEL_ID = '2026-10-e9';
+export const MODEL_ID = '2026-10-e10';
 
 /** Where the egg's mass came from. A size class is a 10 g bucket, worth about
  *  +-24 s; a scale is a gram. The fit reads this as egg-level noise. */
@@ -678,7 +680,7 @@ export function copyCalibration(c: Calibration): Calibration {
   for (let i = 0; i < n; i++) {
     const p = c.posterior.particles[i];
     particles[i] = {
-      alpha_m2s: p.alpha_m2s, logDoseOffset: p.logDoseOffset, tauAirScale: p.tauAirScale,
+      alpha_m2s: p.alpha_m2s, logDoseOffset: p.logDoseOffset,
       noise: p.noise, whiteOffset: p.whiteOffset, whiteFirmGap: p.whiteFirmGap,
     };
     weights[i] = c.posterior.weights[i];
@@ -692,12 +694,13 @@ export function copyCalibration(c: Calibration): Calibration {
 }
 
 /** Parameters to solve with. Before any egg this is the prior's centre - the
- *  population's median time-scale and carryover, which for the literature are
- *  the literature values - so calibration is purely additive. */
+ *  population's median time-scale, which for the literature is the
+ *  literature value - so calibration is purely additive. The counter's
+ *  carryover is the physics' throughout (DECISIONS.md 95). */
 export function calibrationParams(c: Calibration): ModelParams {
   if (c.eggsLogged === 0) {
     if (c.start === undefined) return DEFAULT_PARAMS;
-    return { alpha_m2s: c.start.alpha_m2s, tauAirScale: c.start.tauAirScale };
+    return { alpha_m2s: c.start.alpha_m2s, tauAirScale: DEFAULT_PARAMS.tauAirScale };
   }
   return posteriorParams(c.posterior);
 }

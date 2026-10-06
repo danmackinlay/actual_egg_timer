@@ -62,7 +62,7 @@ function cookAt(level: number): { grid: DoseGrid; cookTime_s: number; logNominal
 
 function particle(over: Partial<Particle> = {}): Particle {
   return {
-    alpha_m2s: DEFAULT_PARAMS.alpha_m2s, logDoseOffset: 0, tauAirScale: 1,
+    alpha_m2s: DEFAULT_PARAMS.alpha_m2s, logDoseOffset: 0,
     noise: NOISE_MEDIAN, whiteOffset: 0, whiteFirmGap: 1.08, ...over,
   };
 }
@@ -466,9 +466,13 @@ function nextTimes(cal: Calibration): { soft: number; jammy: number; softWhiteBo
   return { soft: soft.result.cookTime_s, jammy: jammy.result.cookTime_s, softWhiteBound: !soft.reachable };
 }
 
-/** Two eggs at soft, white runny, from a fresh prior, on the app's own grid. */
+/** Two eggs at soft, white runny, from a fresh prior, on the app's own grid.
+ *  At 4000 particles (DECISIONS.md 94): at the app's 1000, how far jammy
+ *  moves against soft (5b) is 0.38-1.14 from seed to seed, and a test of
+ *  it on one seed tests the seed; at 4000, 0.69-0.85. */
+const TWO_RUNNY_PARTICLES = 4 * PARTICLE_COUNT;
 const twoRunny = (() => {
-  const start = freshCalibration(PARTICLE_COUNT, CALIBRATION_SEED);
+  const start = freshCalibration(TWO_RUNNY_PARTICLES, CALIBRATION_SEED);
   const out: Record<'whiteOnly' | 'withYolk', { before: ReturnType<typeof nextTimes>; after: ReturnType<typeof nextTimes>; cal: Calibration }> =
     {} as never;
   for (const kind of ['whiteOnly', 'withYolk'] as const) {

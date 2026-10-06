@@ -786,16 +786,16 @@
         "words": {
           "asked": 0,
           "certainty": "ballpark",
-          "pAsked": 0.7091177944667398,
-          "pNear": 0.9210091212091501,
+          "pAsked": 0.6690442507612371,
+          "pNear": 0.9116275319710363,
           "from": 0,
           "to": 1,
-          "pInterval": 0.9210091212091501,
+          "pInterval": 0.9116275319710363,
           "mostLikely": 0
         },
         "time": {
-          "low_s": 325.12018461426123,
-          "high_s": 480.6211696655555
+          "low_s": 324.87863083575576,
+          "high_s": 460.27261887387795
         }
       }
     },
@@ -808,16 +808,16 @@
         "words": {
           "asked": 1,
           "certainty": "ballpark",
-          "pAsked": 0.38577427425768895,
-          "pNear": 0.916260712685479,
+          "pAsked": 0.3673016091433054,
+          "pNear": 0.9089363542027048,
           "from": 0,
           "to": 2,
-          "pInterval": 0.916260712685479,
+          "pInterval": 0.9089363542027048,
           "mostLikely": 1
         },
         "time": {
-          "low_s": 357.5623345227905,
-          "high_s": 511.34906512854286
+          "low_s": 351.3513854683515,
+          "high_s": 509.3219744460839
         }
       }
     },
@@ -830,16 +830,16 @@
         "words": {
           "asked": 2,
           "certainty": "wildGuess",
-          "pAsked": 0.3713766758885262,
-          "pNear": 0.8847517337204169,
+          "pAsked": 0.3684169388345657,
+          "pNear": 0.8605941747271808,
           "from": 0,
           "to": 3,
-          "pInterval": 0.968375425961093,
+          "pInterval": 0.9691114067409368,
           "mostLikely": 2
         },
         "time": {
-          "low_s": 395.6237659584258,
-          "high_s": 551.790475473772
+          "low_s": 388.75964519609624,
+          "high_s": 563.7711189991933
         }
       }
     },
@@ -851,17 +851,17 @@
       "reading": {
         "words": {
           "asked": 3,
-          "certainty": "ballpark",
-          "pAsked": 0.49624410429657323,
-          "pNear": 0.9094074539258971,
-          "from": 2,
+          "certainty": "wildGuess",
+          "pAsked": 0.5185625805435821,
+          "pNear": 0.8843005179016407,
+          "from": 1,
           "to": 4,
-          "pInterval": 0.9094074539258971,
+          "pInterval": 0.9760607714432158,
           "mostLikely": 3
         },
         "time": {
-          "low_s": 442.45530414142195,
-          "high_s": 617.1004005998657
+          "low_s": 434.8165403679559,
+          "high_s": 630.4647079519236
         }
       }
     },
@@ -874,16 +874,16 @@
         "words": {
           "asked": 4,
           "certainty": "ballpark",
-          "pAsked": 0.7726751314168363,
-          "pNear": 0.9638741277465901,
+          "pAsked": 0.7659802187406421,
+          "pNear": 0.9536354536178696,
           "from": 3,
           "to": 4,
-          "pInterval": 0.9638741277465901,
+          "pInterval": 0.9536354536178696,
           "mostLikely": 4
         },
         "time": {
-          "low_s": 545.8427960270456,
-          "high_s": 758.01457082669
+          "low_s": 534.9432914177123,
+          "high_s": 766.1132812497635
         }
       }
     },
@@ -891,21 +891,21 @@
       "posterior": "learned",
       "note": "a runny white at soft",
       "level": 0.22,
-      "cookTime_s": 425.56470402225307,
+      "cookTime_s": 431.1874584801342,
       "reading": {
         "words": {
           "asked": 1,
           "certainty": "ballpark",
-          "pAsked": 0.8281221750195925,
-          "pNear": 0.9782527021867526,
+          "pAsked": 0.7834569404006262,
+          "pNear": 0.9782674284286506,
           "from": 1,
           "to": 2,
-          "pInterval": 0.9275046848928591,
+          "pInterval": 0.9313912733405755,
           "mostLikely": 1
         },
         "time": {
-          "low_s": 408.3866737055905,
-          "high_s": 434.66711541646873
+          "low_s": 408.084477020584,
+          "high_s": 450.7611374422595
         }
       }
     },
@@ -913,21 +913,21 @@
       "posterior": "learned",
       "note": "the same cook at jammy",
       "level": 0.41,
-      "cookTime_s": 468.58086667285033,
+      "cookTime_s": 470.02248745227575,
       "reading": {
         "words": {
           "asked": 2,
           "certainty": "ballpark",
-          "pAsked": 0.8318550587639175,
-          "pNear": 0.9774171113268666,
+          "pAsked": 0.8236877468464019,
+          "pNear": 0.9724182419450834,
           "from": 1,
           "to": 2,
-          "pInterval": 0.9064877106502954,
+          "pInterval": 0.9083260972634793,
           "mostLikely": 2
         },
         "time": {
-          "low_s": 452.07499182934043,
-          "high_s": 481.3114790931468
+          "low_s": 451.67104092683076,
+          "high_s": 490.3873507206845
         }
       }
     },
@@ -935,21 +935,21 @@
       "posterior": "consistent",
       "note": "three jammy eggs just right",
       "level": 0.41,
-      "cookTime_s": 464.50215042025275,
+      "cookTime_s": 461.41981747253067,
       "reading": {
         "words": {
           "asked": 2,
           "certainty": "veryCertain",
-          "pAsked": 0.9137737301847145,
-          "pNear": 0.9799482644709341,
+          "pAsked": 0.9118299369089061,
+          "pNear": 0.9799039652376216,
           "from": 2,
           "to": 2,
-          "pInterval": 0.9137737301847145,
+          "pInterval": 0.9118299369089061,
           "mostLikely": 2
         },
         "time": {
-          "low_s": 450.6558015068913,
-          "high_s": 476.2085190763355
+          "low_s": 451.31053410632376,
+          "high_s": 473.0325737266867
         }
       }
     },
@@ -957,21 +957,21 @@
       "posterior": "consistent",
       "note": "the same cook between the words: Jammy asked",
       "level": 0.47,
-      "cookTime_s": 479.6112387276207,
+      "cookTime_s": 476.3929507803192,
       "reading": {
         "words": {
           "asked": 2,
           "certainty": "ballpark",
-          "pAsked": 0.7953956275332493,
-          "pNear": 0.9799625789979698,
+          "pAsked": 0.8121779575679969,
+          "pNear": 0.9799472099299812,
           "from": 2,
           "to": 3,
-          "pInterval": 0.967233435836782,
+          "pInterval": 0.9650212052000942,
           "mostLikely": 2
         },
         "time": {
-          "low_s": 465.1841926034285,
-          "high_s": 491.61934331275916
+          "low_s": 465.86031204320534,
+          "high_s": 488.30680667453635
         }
       }
     },
@@ -979,21 +979,21 @@
       "posterior": "consistent",
       "note": "the same cook at fudgy",
       "level": 0.62,
-      "cookTime_s": 519.4933630750988,
+      "cookTime_s": 516.0456053872203,
       "reading": {
         "words": {
           "asked": 3,
           "certainty": "veryCertain",
-          "pAsked": 0.9428839278080244,
-          "pNear": 0.9799587862858977,
+          "pAsked": 0.9382120943828764,
+          "pNear": 0.9799217644442707,
           "from": 3,
           "to": 3,
-          "pInterval": 0.9428839278080244,
+          "pInterval": 0.9382120943828764,
           "mostLikely": 3
         },
         "time": {
-          "low_s": 503.7794438722449,
-          "high_s": 532.4942869667757
+          "low_s": 504.60846799434876,
+          "high_s": 528.8919427085602
         }
       }
     },
@@ -1001,21 +1001,21 @@
       "posterior": "firmer",
       "note": "a cook the model knows, who likes a firmer yolk",
       "level": 0.41,
-      "cookTime_s": 475.30986565257444,
+      "cookTime_s": 474.5067522646075,
       "reading": {
         "words": {
           "asked": 2,
           "certainty": "ballpark",
-          "pAsked": 0.8591750274544979,
-          "pNear": 0.979586855226362,
+          "pAsked": 0.8496377490831402,
+          "pNear": 0.9782692693806568,
           "from": 1,
           "to": 2,
-          "pInterval": 0.9238244528248463,
+          "pInterval": 0.9244840655991808,
           "mostLikely": 2
         },
         "time": {
-          "low_s": 461.43923158406324,
-          "high_s": 488.8913210563078
+          "low_s": 461.22469954183543,
+          "high_s": 489.91811410140144
         }
       }
     },
@@ -1023,21 +1023,21 @@
       "posterior": "firmer",
       "note": "the same cook at fudgy",
       "level": 0.62,
-      "cookTime_s": 531.5238175971522,
+      "cookTime_s": 530.6168131273347,
       "reading": {
         "words": {
           "asked": 3,
           "certainty": "veryCertain",
-          "pAsked": 0.9126819741866524,
-          "pNear": 0.9796742902558798,
+          "pAsked": 0.9017485863096516,
+          "pNear": 0.978691321536903,
           "from": 3,
           "to": 3,
-          "pInterval": 0.9126819741866524,
+          "pInterval": 0.9017485863096516,
           "mostLikely": 3
         },
         "time": {
-          "low_s": 516.1971835545955,
-          "high_s": 546.7519864981841
+          "low_s": 515.921730606733,
+          "high_s": 547.9175278428193
         }
       }
     },
@@ -1045,21 +1045,21 @@
       "posterior": "firmer",
       "note": "the same cook at hard",
       "level": 1,
-      "cookTime_s": 655.4944982752293,
+      "cookTime_s": 654.4881139649272,
       "reading": {
         "words": {
           "asked": 4,
           "certainty": "veryCertain",
-          "pAsked": 0.9556817865713847,
-          "pNear": 0.9699847517960327,
+          "pAsked": 0.9517783968897048,
+          "pNear": 0.9698347830231149,
           "from": 4,
           "to": 4,
-          "pInterval": 0.9556817865713847,
+          "pInterval": 0.9517783968897048,
           "mostLikely": 4
         },
         "time": {
-          "low_s": 636.9889145083471,
-          "high_s": 674.4049654534501
+          "low_s": 636.4419328708937,
+          "high_s": 675.9673827329789
         }
       }
     }

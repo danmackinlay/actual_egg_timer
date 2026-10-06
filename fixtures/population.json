@@ -11,10 +11,6 @@
       "mean": 0,
       "sd": 0.22
     },
-    "tauAirScale": {
-      "median": 1,
-      "logSd": 0.35
-    },
     "noise": {
       "median": 0.2,
       "logSd": 0.5

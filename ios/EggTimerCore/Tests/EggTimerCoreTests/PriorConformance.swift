@@ -27,8 +27,7 @@ struct PriorConformance {
             #expect(try pop.whiteOffset.mean == expected.object("whiteOffset").num("mean"), "\(name) white")
             let start = try row.object("start")
             #expect(try priorStart(pop) == PriorStart(
-                alphaM2s: start.num("alpha_m2s"), tauAirScale: start.num("tauAirScale"),
-                whiteOffset: start.num("whiteOffset")
+                alphaM2s: start.num("alpha_m2s"), whiteOffset: start.num("whiteOffset")
             ), "\(name) start")
             let c = freshCalibration(count: count, seed: seed, population: pop)
             let params = try row.object("params")
@@ -41,7 +40,6 @@ struct PriorConformance {
                 let q = c.posterior.particles[i]
                 try expectClose(q.alphaM2s, p.num("alpha_m2s"), "\(name) particle \(i) alpha")
                 try expectClose(q.logDoseOffset, p.num("logDoseOffset"), "\(name) particle \(i) taste")
-                try expectClose(q.tauAirScale, p.num("tauAirScale"), "\(name) particle \(i) tauAir")
                 try expectClose(q.noise, p.num("noise"), "\(name) particle \(i) noise")
                 try expectClose(q.whiteOffset, p.num("whiteOffset"), "\(name) particle \(i) white")
                 try expectClose(q.whiteFirmGap, p.num("whiteFirmGap"), "\(name) particle \(i) gap")

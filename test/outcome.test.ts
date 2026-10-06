@@ -90,7 +90,9 @@ test('the level range keeps the noise: it is wider than the particles alone, and
     for (const r of rows) { acc += r.w; if (acc >= x) return r.t; }
     return rows[rows.length - 1].t;
   };
-  assert.ok(o.levelHigh - o.levelLow > 1.2 * (q(0.9) - q(0.1)), `${o.levelLow}-${o.levelHigh} against ${q(0.1)}-${q(0.9)}`);
+  // About 1.2 times as wide here, from seed to seed 1.12-1.36 at 400
+  // particles and 1.17-1.24 at 4000 (LOGBOOK.md, 6 October 2026).
+  assert.ok(o.levelHigh - o.levelLow > 1.1 * (q(0.9) - q(0.1)), `${o.levelLow}-${o.levelHigh} against ${q(0.1)}-${q(0.9)}`);
   // With next to no noise the mixture is the particles, and its points are
   // theirs, to within the step between neighbouring particles.
   const quiet: Posterior = { ...post, particles: post.particles.map((p) => ({ ...p, noise: 1e-6 })) };

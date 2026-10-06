@@ -72,7 +72,7 @@ actor DecisionGrids {
         for (p, w) in zip(post.particles, post.weights) {
             a += w * p.alphaM2s
             b += w * p.logDoseOffset
-            d += w * (p.noise + p.tauAirScale)
+            d += w * p.noise
             e += w * (p.whiteOffset + p.whiteFirmGap)
         }
         return "\(key(inputs))#\(c.eggsLogged)|\(post.rng)|\(post.particles.count)|\(a)|\(b)|\(d)|\(e)"
