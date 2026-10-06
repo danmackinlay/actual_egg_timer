@@ -232,8 +232,8 @@ export interface Pulled { due_s: number; out_s: number; by: PulledBy; }
 export interface CookEvents {
   boilAt_s: number | null;      // Full rolling boil
   pulled: Pulled | null;
-  cooledAt_s: number | null;    // the counted cooling ended (or, on the
-                                // counter, the pull's out)
+  cooledAt_s: number | null;    // the counted cooling ended; never written
+                                // on the counter (C2: see below)
 }
 
 export interface RunningCook {
@@ -252,6 +252,9 @@ export interface RunningCook {
   units: Units;
   lang: string;
   boilRemembered: boolean;
+  /** Since when the choices have said a cold start: the start, or the
+   *  moment of a correction to cold; null while they say boiling (C2). */
+  coldSince_s: number | null;
 }
 
 /** Everything derived. Never stored as truth. */
@@ -291,9 +294,20 @@ The functions, all pure and fixtured:
   ended. The app writes them down the first time it sees them past. A
   phone asleep through the pull writes them on waking, from the same plan
   that rang.
-- `startCook`, `withBoil`, `withOut`, `corrected(cook, choices)`,
-  `startCorrected(cook, startedAt_s)`: the transitions. The last refuses
-  a start after now or after the first event.
+- `startCook`, `withBoil`, `withOut`, `corrected(cook, choices, now_s)`,
+  `startCorrected(cook, startedAt_s, now_s)`: the transitions. The last
+  refuses a start after now or after the first event (`latestStart_s`, the
+  limit the start's panel shows), an unread one included: changing back
+  would read it.
+
+  *As built (C2).* A correction takes the time it was made, for one thing
+  only: `coldSince_s`, since when the choices have said cold, which is how
+  `boilToRemember` tells a tap the cook was watching for from one after a
+  boiling-to-cold correction made too late (DECISIONS.md 97). On the
+  counter nothing is counted, so `cooledAt_s` is never written there:
+  `phaseAt` already reads the pull's end as Done, and a cooling corrected
+  from the counter to ice after the pull then counts from the out, rather
+  than reading the out as a cooling of no length.
 - `cookFactsFor(cook, plan, …): CookFacts`, for `recordFor`, with the
   level, setup and cook time as last corrected.
 - `boilToRemember(cook): { litres, seconds } | null`: written to the boil
