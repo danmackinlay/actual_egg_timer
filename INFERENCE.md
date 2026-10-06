@@ -676,7 +676,10 @@ and the same pot, the two apps choose the same time to 1e-12. What settled:
   where another shows 7/10. Against the exact posterior (importance sampling
   from the prior on the same surfaces, `npm run posterior -- reference`) the
   filter is right on average to 0.3 s and 1.7 points of odds, with its upper
-  tails a little short.
+  tails a little short. Simulation-based calibration (`npm run sbc`) finds
+  the same: at 1000 particles 12-13.6% of true values fall in the posterior's
+  outer tenth, where 10% should, because the seed's noise is counted as
+  overconfidence; at 4000 it is 10-11.6% and uniform.
 - **"Still learning"** is the 80% interval of the right cook time wider than
   +-15 s (`DECISIONS.md` 9), read at the level on screen; per particle the
   right time is the later of the yolk's centre and the white's cutpoint

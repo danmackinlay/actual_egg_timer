@@ -1,12 +1,13 @@
 /**
  * Is the filter sampling the right posterior? (INFERENCE.md section 8, "the
- * resample"; test/record.test.ts 2a3.)
+ * resample"; test/record.test.ts 2a3; test/sbc.test.ts.)
  *
  * A particle filter is a random algorithm. Resampling and the kernel's draws
  * are discontinuous in the weights, so a last-bit difference in `exp` (Linux's
  * libm against macOS's) can send the particles down another path: an equally
  * good sample of the same posterior, and a different set of numbers. What can
- * be checked is the DISTRIBUTION the particles are drawn from.
+ * be checked is the DISTRIBUTION the particles are drawn from, and this tool
+ * measures it three ways.
  *
  *   npm run posterior -- noise [seeds] [particles]
  *       the spread across seeds of what the app would show after a realistic
@@ -20,15 +21,21 @@
  *   npm run posterior -- reference
  *       rewrites test/data/old-answers-posterior.json, which test 2a3 checks
  *       the filter against. See `writeReference`.
+ *   npm run sbc [replications] [particles]
+ *       simulation-based calibration (Talts et al. 2018). See `sbc`.
  */
 
 import { readFileSync, writeFileSync } from 'node:fs';
 import { ALPHA_DEFAULT } from '../src/core/constants.js';
 import { decide, decideAt, decisionGridRequest, decisionInputs } from '../src/core/decide.js';
-import { DoseGrid, GridPolicy, buildRequestedGrid } from '../src/core/doseGrid.js';
+import {
+  DoseGrid, GridPolicy, buildRequestedGrid, lookupLogWhiteDose, lookupLogYolkDose, lookupPeakYolk_C,
+} from '../src/core/doseGrid.js';
 import { eggFromMass } from '../src/core/geometry.js';
 import {
-  Particle, Posterior, WhiteReport, YolkWord, answerLikelihood, createPrior,
+  Feedback, PROBE_HANDLING_MEAN_C, PROBE_INSTRUMENT_SD_C, PROBE_UNRELATED, PROBE_UNRELATED_SPAN_C, Particle,
+  Posterior, WhiteReport, YOLK_WORDS, YolkWord, answerLikelihood, createPrior, whiteProbit,
+  withUnrelated, withUnrelatedWord, yolkProbit, yolkWordProbit,
 } from '../src/core/infer.js';
 import { PARTICLE_COUNT, calibrationGrid } from '../src/core/policy.js';
 import { answerAt, envelopeBounds, oddsProfile } from '../src/core/reach.js';
@@ -37,7 +44,7 @@ import {
   recordCookTime_s, recordMass_g, recordTeaches, replay,
 } from '../src/core/record.js';
 import { DEFAULT_PARAMS, donenessFromSlider, logYolkTarget, solveCookTime } from '../src/core/solve.js';
-import { appSetup, gridFor } from './common.js';
+import { appSetup, draw, gridFor, rng } from './common.js';
 
 /* ------------------------------------------------------------ the old log */
 
@@ -400,14 +407,250 @@ function noise(seeds: number, particles: number): void {
   }
 }
 
+/* ------------------------------------------------------------------ SBC */
+
+/**
+ * Simulation-based calibration (Talts, Betancourt, Simpson, Vehtari and
+ * Gelman 2018). Draw a cook from the prior; cook a few eggs; let the cook
+ * answer through the model's own likelihood, unrelated share and all; run the
+ * filter on the answers; and ask where the true value falls in the
+ * posterior: its posterior CDF, the weighted share of particles below it. If
+ * the filter samples the true posterior, that number is uniform on [0, 1]
+ * over replications, for every parameter and every function of them.
+ * Too many near 0 and 1 is a posterior too narrow; a hump in the middle, too
+ * wide; a slope, a bias.
+ *
+ * The exact posterior (`exactPosterior`, from SBC_EXACT_DRAWS prior draws) is
+ * run beside the filter on the same answers, as the control: it is uniform by
+ * construction, up to its own Monte Carlo error, so where it passes and the
+ * filter does not, the filter is at fault and not the harness.
+ */
+export interface SbcScenario {
+  name: string;
+  eggs: { level: number; mass_g: number; kind: 'word' | 'old' | 'probe' }[];
+}
+
+export const SBC_SCENARIOS: SbcScenario[] = [
+  {
+    name: 'five eggs, yolk word and white',
+    eggs: [
+      { level: 0.41, mass_g: 62, kind: 'word' }, { level: 0.22, mass_g: 58, kind: 'word' },
+      { level: 0.62, mass_g: 68, kind: 'word' }, { level: 0.41, mass_g: 55.3, kind: 'word' },
+      { level: 0.3, mass_g: 63, kind: 'word' },
+    ],
+  },
+  {
+    name: 'three old answers and white, then a probe',
+    eggs: [
+      { level: 0.41, mass_g: 62, kind: 'old' }, { level: 0.22, mass_g: 68, kind: 'old' },
+      { level: 0.62, mass_g: 58, kind: 'old' }, { level: 0.41, mass_g: 60.2, kind: 'probe' },
+    ],
+  },
+];
+
+/** What SBC ranks: the six particle dimensions and two combinations the
+ *  answers pin harder than any one dimension - the yolk's and the white's
+ *  latent at the first egg's time. */
+export const SBC_QUANTITIES = [
+  'alpha', 'taste', 'tauAir', 'noise', 'white', 'firmGap', 'yolkLatent', 'whiteLatent',
+] as const;
+
+type Quantity = typeof SBC_QUANTITIES[number];
+
+function quantities(p: Particle, g: DoseGrid, t: number): Record<Quantity, number> {
+  return {
+    alpha: p.alpha_m2s, taste: p.logDoseOffset, tauAir: p.tauAirScale, noise: p.noise,
+    white: p.whiteOffset, firmGap: p.whiteFirmGap,
+    yolkLatent: lookupLogYolkDose(g, p.alpha_m2s, t) - p.logDoseOffset,
+    whiteLatent: lookupLogWhiteDose(g, p.alpha_m2s, t) - p.whiteOffset,
+  };
+}
+
+/** A standard normal from two uniforms. */
+function normalOf(u: () => number): number {
+  return Math.sqrt(-2.0 * Math.log(Math.max(u(), 1e-12))) * Math.cos(2.0 * Math.PI * u());
+}
+
+/** A probe reading as the likelihood says one is made: the peak, less an
+ *  exponential handling error, plus the instrument's; or, PROBE_UNRELATED of
+ *  the time, anything across PROBE_UNRELATED_SPAN_C around it. */
+function probeReading(peak_C: number, u: () => number): number {
+  if (u() < PROBE_UNRELATED) return peak_C + PROBE_UNRELATED_SPAN_C * (u() - 0.5);
+  const h = -PROBE_HANDLING_MEAN_C * Math.log(Math.max(1.0 - u(), 1e-12));
+  return peak_C - h + PROBE_INSTRUMENT_SD_C * normalOf(u);
+}
+
+const FEEDBACKS: Feedback[] = [-1, 0, 1];
+const WHITES: WhiteReport[] = ['runny', 'tender', 'firm'];
+
+/** The records a cook `truth` would make, answering through the model. */
+function simulateAnswers(scenario: SbcScenario, base: EggRecord[], surfaces: DoseGrid[], truth: Particle, u: () => number): EggRecord[] {
+  return base.map((r, k) => {
+    const g = surfaces[k];
+    const t = recordCookTime_s(r);
+    const kind = scenario.eggs[k].kind;
+    if (kind === 'probe') {
+      return { ...r, white: null, probe: { centre_C: probeReading(lookupPeakYolk_C(g, truth.alpha_m2s, t), u), after_s: 180 } };
+    }
+    const white = WHITES[draw(whiteProbit(g, truth, t).map(withUnrelated), u())];
+    if (kind === 'old') {
+      const yolk = FEEDBACKS[draw(yolkProbit(g, truth, t, logYolkTarget(r.level)).map(withUnrelated), u())];
+      return { ...r, yolk: yolk, yolkWord: null, white: white };
+    }
+    const word = YOLK_WORDS[draw(yolkWordProbit(g, truth, t).map(withUnrelatedWord), u())];
+    return { ...r, yolk: null, yolkWord: word, white: white };
+  });
+}
+
+/** The posterior CDF at `x` of quantity `q`: the weighted share below it. */
+function cdfAt(post: Posterior, g: DoseGrid, t: number, q: Quantity, x: number): number {
+  let below = 0.0;
+  let total = 0.0;
+  for (let i = 0; i < post.particles.length; i++) {
+    const v = quantities(post.particles[i], g, t)[q];
+    const w = post.weights[i];
+    total += w;
+    if (v < x) below += w;
+    else if (v === x) below += 0.5 * w;
+  }
+  return below / total;
+}
+
+export interface SbcResult {
+  scenario: string;
+  replications: number;
+  /** Per quantity: the posterior CDF at the truth, one per replication. */
+  filter: Record<Quantity, number[]>;
+  exact: Record<Quantity, number[]> | null;
+}
+
+export const SBC_EXACT_DRAWS = 20_000;
+
+/** Run one scenario: `replications` cooks from `seed`, the filter at
+ *  `particles`, and the exact posterior beside it unless `exact` is false. */
+export function sbc(scenario: SbcScenario, replications: number, particles: number, seed: number, exact = true): SbcResult {
+  const base = scenario.eggs.map((e) => wordRecord(e.level, e.mass_g, null, null));
+  const fresh = freshCalibration(1, 1);
+  const surfaces = base.map((r) => buildRequestedGrid(gridRequestFor(fresh, r, COARSE_GRID)));
+  const t0 = recordCookTime_s(base[0]);
+  const empty = (): Record<Quantity, number[]> => Object.fromEntries(SBC_QUANTITIES.map((q) => [q, [] as number[]])) as unknown as Record<Quantity, number[]>;
+  const out: SbcResult = { scenario: scenario.name, replications: replications, filter: empty(), exact: exact ? empty() : null };
+  const u = rng(seed);
+  for (let n = 0; n < replications; n++) {
+    const truth = createPrior(1, seedOf(3 * n) ^ seed).particles[0];
+    const log = simulateAnswers(scenario, base, surfaces, truth, u);
+    const c = foldOnSurfaces(freshCalibration(particles, seedOf(3 * n + 1) ^ seed), log, surfaces);
+    const truthQ = quantities(truth, surfaces[0], t0);
+    for (const q of SBC_QUANTITIES) out.filter[q].push(cdfAt(c.posterior, surfaces[0], t0, q, truthQ[q]));
+    if (out.exact !== null) {
+      const ex = exactPosterior(SBC_EXACT_DRAWS, seedOf(3 * n + 2) ^ seed, log, surfaces);
+      for (const q of SBC_QUANTITIES) out.exact[q].push(cdfAt(ex, surfaces[0], t0, q, truthQ[q]));
+    }
+  }
+  return out;
+}
+
+/* Uniformity. */
+
+/** The regularised upper incomplete gamma Q(a, x), for the chi-square's p. */
+function gammaQ(a: number, x: number): number {
+  if (x <= 0) return 1;
+  const lnGammaA = lnGamma(a);
+  if (x < a + 1) {
+    let sum = 1 / a;
+    let term = sum;
+    for (let n = 1; n < 500; n++) { term *= x / (a + n); sum += term; if (term < sum * 1e-15) break; }
+    return 1 - sum * Math.exp(-x + a * Math.log(x) - lnGammaA);
+  }
+  let b = x + 1 - a;
+  let c = 1 / 1e-300;
+  let d = 1 / b;
+  let h = d;
+  for (let i = 1; i < 500; i++) {
+    const an = -i * (i - a);
+    b += 2;
+    d = an * d + b; if (Math.abs(d) < 1e-300) d = 1e-300;
+    c = b + an / c; if (Math.abs(c) < 1e-300) c = 1e-300;
+    d = 1 / d;
+    const del = d * c;
+    h *= del;
+    if (Math.abs(del - 1) < 1e-15) break;
+  }
+  return Math.exp(-x + a * Math.log(x) - lnGammaA) * h;
+}
+
+function lnGamma(x: number): number {
+  const g = [76.18009172947146, -86.50532032941677, 24.01409824083091, -1.231739572450155, 0.1208650973866179e-2, -0.5395239384953e-5];
+  let y = x;
+  const tmp = x + 5.5 - (x + 0.5) * Math.log(x + 5.5);
+  let ser = 1.000000000190015;
+  for (const c of g) ser += c / ++y;
+  return -tmp + Math.log(2.5066282746310005 * ser / x);
+}
+
+export const SBC_BINS = 10;
+
+/** Chi-square of the counts in SBC_BINS equal bins, and its p-value. */
+export function chiSquare(us: number[]): { stat: number; p: number; counts: number[] } {
+  const counts = new Array<number>(SBC_BINS).fill(0);
+  for (const x of us) counts[Math.min(SBC_BINS - 1, Math.floor(x * SBC_BINS))]++;
+  const e = us.length / SBC_BINS;
+  let stat = 0;
+  for (const o of counts) stat += (o - e) * (o - e) / e;
+  return { stat: stat, p: gammaQ((SBC_BINS - 1) / 2, stat / 2), counts: counts };
+}
+
+/** Kolmogorov-Smirnov against the uniform, and its asymptotic p-value. */
+export function ksUniform(us: number[]): { d: number; p: number } {
+  const s = [...us].sort((a, b) => a - b);
+  const n = s.length;
+  let d = 0;
+  for (let i = 0; i < n; i++) d = Math.max(d, (i + 1) / n - s[i], s[i] - i / n);
+  const lambda = (Math.sqrt(n) + 0.12 + 0.11 / Math.sqrt(n)) * d;
+  let p = 0;
+  for (let k = 1; k <= 100; k++) p += 2 * (k % 2 === 1 ? 1 : -1) * Math.exp(-2 * k * k * lambda * lambda);
+  return { d: d, p: Math.min(1, Math.max(0, p)) };
+}
+
+/** The share of posterior CDFs in the outer tenth (below 0.05 or above
+ *  0.95): 0.10 when calibrated; more is too narrow, less too wide. */
+export function outerShare(us: number[]): number {
+  return us.filter((x) => x < 0.05 || x > 0.95).length / us.length;
+}
+
+function reportSbc(r: SbcResult): void {
+  console.log(`\n${r.scenario}: ${r.replications} cooks`);
+  console.log('  quantity      filter: chi2 p   KS p    outer  mean   counts by tenth          | exact: chi2 p  KS p   outer');
+  for (const q of SBC_QUANTITIES) {
+    const f = r.filter[q];
+    const c = chiSquare(f);
+    const k = ksUniform(f);
+    const m = f.reduce((s, x) => s + x, 0) / f.length;
+    let line = `  ${q.padEnd(12)}  ${c.p.toFixed(4).padStart(13)} ${k.p.toFixed(4).padStart(7)}  ${outerShare(f).toFixed(3)}  ${m.toFixed(3)}  ${c.counts.join(' ').padEnd(24)}`;
+    if (r.exact !== null) {
+      const e = r.exact[q];
+      line += ` | ${chiSquare(e).p.toFixed(4).padStart(13)} ${ksUniform(e).p.toFixed(4).padStart(6)}  ${outerShare(e).toFixed(3)}`;
+    }
+    console.log(line);
+  }
+}
+
 /* ------------------------------------------------------------------ main */
 
 if (process.argv[1]?.endsWith('posterior.js')) {
   const [mode, a, b] = process.argv.slice(2);
   if (mode === 'noise') noise(Number(a ?? 50), Number(b ?? PARTICLE_COUNT));
   else if (mode === 'reference') writeReference();
-  else {
-    console.error('usage: npm run posterior -- noise [seeds] [particles] | reference');
+  else if (mode === 'sbc') {
+    const reps = Number(a ?? 1000);
+    const particles = Number(b ?? PARTICLE_COUNT);
+    for (const s of SBC_SCENARIOS) {
+      const t0 = Date.now();
+      reportSbc(sbc(s, reps, particles, 0x5bc));
+      console.log(`  ${((Date.now() - t0) / 1000).toFixed(0)} s`);
+    }
+  } else {
+    console.error('usage: npm run posterior -- noise [seeds] [particles] | reference | sbc [replications] [particles]');
     process.exit(2);
   }
 }
