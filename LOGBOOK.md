@@ -4762,3 +4762,57 @@ levels near those edges by 20-90 s. On the counter the times above it are
 7 s longer, the carryover's own share: those surfaces were built at a
 learned 1.071, now 1.0. In `fixtures/certainty.json` one case went from a
 ballpark to a wild guess, and the likely times by up to 20 s.
+
+## 6 October 2026: the web's two god files split (SHIP-0.5 B1, B2)
+
+A move in both: no behaviour, core, fixture, store, copy or iOS change.
+Every web module still imports in Node without a page (`test/views.test.ts`),
+and there are no import cycles in `src/`.
+
+`src/ui/calibration.ts` (1092 lines) became six, by what each holds:
+
+- `version.ts`: `APP_VERSION`.
+- `eggRecord.ts`: `Cooked` and `eggRecordFor`, the web's facts for core's
+  `recordFor`, and `localDay`.
+- `calibrationStore.ts`: `Kept`, the v4 format, `encodeKept` and
+  `decodeKept` (core's `loadDecision` deciding), `overlay`, the keys, and
+  the copies kept aside of what this build could not read.
+- `offThread.ts`: the grid worker and its fallback on the page.
+- `decisionGrids.ts`: the decision surfaces and odds profiles, built and
+  kept a handful at a time, as iOS's `DecisionGrids.swift`.
+- `calibration.ts`: what is left, the state that folds the log, takes up
+  another tab's store, answers a second time and exports the results.
+
+`src/ui/app.ts` (1526 lines, some twenty module-level `let`s) became eight:
+
+- `state.ts`: the page's state, one object (`state`: the settings, the
+  pans, the posterior, the machine, the answer on screen, the ticket), and
+  what it derives: the egg, the pot, how the cook starts, the time to boil.
+- `answer.ts`: `answerFor`, `decided`, the nudge, the surfaces and profiles
+  asked of the worker, and the re-solve of a cook under way (`retime`).
+- `update.ts`: a change taken up: `recompute` and `applyAnswer`, the
+  settings saved, a language, `relabel`, another tab's writes, "Forget
+  everything", the sharing count.
+- `render.ts`: the egg page drawn from the state, idle, running and
+  sous-vide, with the mute and the version.
+- `controls.ts`: the controls and Settings written from the settings.
+- `input.ts`: the controls read back (`onInput`), the units, the mute.
+- `cook.ts`: the primary button, the ticker, Cancel, and `restoreCook`.
+- `app.ts`: `boot()`.
+
+Each module's own bookkeeping (timers, what was last drawn, the worker's
+pending asks) is one object at its top. The call graph had one loop that
+crosses modules - a surface or profile landing re-solves the page, which
+asks for surfaces - so `boot()` hands `recompute` to `answer.ts`
+(`whenAnswerLands`) instead of `answer.ts` importing it. Checked by a
+script that compared every function of the old `app.ts` with its new copy,
+the holders' names mapped back to the old variables: the only differences
+are local names for `state.settings` and the like, and the three small
+functions that wrap a holder (`drawNudge`, `forgetDrawnWords`,
+`whenAnswerLands`).
+
+Left as it was: `ios/EggTimerCore/Sources/EggTimerCore/Policy.swift` names
+`onTick` in `src/ui/app.ts`; it is in `cook.ts` now (no iOS change in a
+web move).
+
+Not verified by driving the web app.

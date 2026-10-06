@@ -386,13 +386,15 @@ Each has my recommendation first, then the alternative.
 fixtures (`tools/fixtures/`), `fixtures/*.json`, and
 `ios/EggTimerCore/Sources/EggTimerCore/` with conformance tests.
 
-**The web (C3)**, after B1 splits `app.ts`:
+**The web (C3)**, on the modules B1 split `app.ts` into (`src/ui/app.ts`
+lists them):
 
 - `index.html`, `styles.css`: `#cookSetup` and `#setup` become one block,
   the egg beside the sentence in every phase; the slider's folded line; the
   certainty line where `#direction` is; Settings and Help kept mid-cook.
-- `app.ts` (or what B1 leaves): one render path instead of `renderIdle`
-  and `renderRunning`; a re-plan on any change mid-cook; the preview.
+- `render.ts`: one render path instead of `renderIdle` and
+  `renderRunning`, and the preview; `cook.ts` and `update.ts`: a re-plan
+  on any change mid-cook.
 - `machine.ts`: the re-plan transition. `ticket.ts`: a ticket from a
   corrected setup. `sentence.ts`: clauses that lock by `openAfterStart`.
   `slider.ts`: the folded state and the past levels. `eggSection.ts`: the

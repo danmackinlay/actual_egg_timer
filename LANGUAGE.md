@@ -805,7 +805,7 @@ whole catalogue is for their review (`DECISIONS.md` 17).
   here touches the units.
 - **The web** stores the state in its settings, loads the catalogue the
   cook last read before painting, and redraws every word in place when it
-  changes (`relabel` in `app.ts`); a page switched in place and the same
+  changes (`relabel` in `src/ui/update.ts`); a page switched in place and the same
   page loaded fresh were compared word for word and label for label.
   `<html lang>` is `en-x-1750`. The record's `lang` is the catalogue tag,
   `en-x-1750`, and its `register` is `1750` (`registerOf`).

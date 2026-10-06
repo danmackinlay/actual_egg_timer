@@ -365,7 +365,7 @@ export function wordLog(): EggRecord[] {
 }
 
 /** What the web app shows at jammy for CHECK_EGG after this calibration: the
- *  decision surface, the odds profile and its envelope (src/ui/app.ts,
+ *  decision surface, the odds profile and its envelope (src/ui/answer.ts,
  *  `decided`). */
 function appDecision(c: Calibration): { time_s: number; meanTime_s: number; odds: number; tenths: number } {
   const grid = buildRequestedGrid(decisionGridRequest(decisionInputs(c, CHECK_EGG, CHECK_SETUP)));

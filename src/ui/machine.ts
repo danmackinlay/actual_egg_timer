@@ -267,7 +267,7 @@ export function restoreMachine(raw: unknown, now_ms: number): Machine | null {
 
 /** A stored machine run on to `now_ms`, however long ago it was, or null if
  *  it does not read: for a cook too old to pick back up, whose egg may still
- *  be one to log (app.ts, `restoreCook`). */
+ *  be one to log (cook.ts, `restoreCook`). */
 export function staleMachine(raw: unknown, now_ms: number): Machine | null {
   let m = readMachine(raw);
   if (m === null) return null;

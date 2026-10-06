@@ -111,9 +111,20 @@ core's exports.
 
 ## B. The god files split (after A2-A5, and after merging `0.4.x`)
 
-- [ ] **B1. `src/ui/app.ts`** (about 1500 lines, some 20 module-level
+- [x] **B1. `src/ui/app.ts`** (about 1500 lines, some 20 module-level
       `let`s) into modules by what they hold. No behaviour change; checked
       by driving the web app.
+      Done, a move: `state.ts` (the page's state in one object, and the
+      egg, pot and time to boil it derives), `answer.ts` (the solve, the
+      decided time, the nudge, the worker asked), `update.ts` (a change
+      taken up: `recompute`, saving, language, other tabs, forgetting),
+      `render.ts` (the egg page drawn), `controls.ts` and `input.ts` (the
+      form written and read), `cook.ts` (the cook, its ticker, a reload);
+      `app.ts` is `boot()`, 126 lines. Each module's own bookkeeping is one
+      object at its top; no import cycles in `src/`, and the one call back
+      up (a surface landed re-solves) is handed to `answer.ts` at boot.
+      Every function compared against the old one with the state names
+      mapped back. Not yet driven.
 - [x] **B2. `src/ui/calibration.ts`**: `APP_VERSION`, the storage format
       and the grid caches apart (iOS already has `DecisionGrids`), with
       what A3 and A4 leave of record building.
@@ -123,6 +134,7 @@ core's exports.
       worker and its fallback), `decisionGrids.ts` (the surface and profile
       caches); `calibration.ts` keeps the state that folds the log, its
       tabs and its export, 426 lines. No behaviour, fixture or store change.
+      `5633510`.
 
 ## C. One screen for setting up and boiling (`DECISIONS.md` 91)
 

@@ -29,7 +29,7 @@ const BOIL_KEY = 'aet.boil.v1';
 type StartTempMode = 'fridge' | 'room' | 'custom';
 
 /** The Start control offers one more option than the solver understands.
- *  'sous' never reaches core: see buildSetup in app.ts. */
+ *  'sous' never reaches core: see buildSetup in state.ts. */
 export type UiStartMode = StartMode | 'sous';
 
 export interface Settings {

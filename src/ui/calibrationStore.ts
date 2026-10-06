@@ -415,7 +415,7 @@ export function keepUnread(raw: string): void {
   }
 }
 
-/** A cook in progress this build could not read (app.ts, `restoreCook`), the
+/** A cook in progress this build could not read (cook.ts, `restoreCook`), the
  *  newest one, kept as stored: its egg may be one nothing else holds. */
 const UNREAD_COOK_KEY = 'aet.cook.unread';
 

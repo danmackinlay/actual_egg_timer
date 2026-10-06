@@ -610,7 +610,7 @@ test('3e. two builds in two tabs: neither writes back the store it takes up, so 
   await newer.learn();
   assert.equal((JSON.parse(storage.get(KEY) as string) as { m: string }).m, NEWER);
   // The browser tells each page whenever the other writes, and each page
-  // folds whatever is behind when it hears, as app.ts does.
+  // folds whatever is behind when it hears, as update.ts does.
   const pages = [
     { heard: calibrationStoredElsewhere, learn: learn, behind: eggsBehind },
     { heard: newer.calibrationStoredElsewhere, learn: newer.learn, behind: newer.eggsBehind },
