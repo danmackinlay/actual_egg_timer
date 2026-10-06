@@ -225,7 +225,7 @@ export function probePending(machine: Machine, wanted: boolean): boolean {
 /** Whether the reading's field is under the questions: whenever the cook has
  *  a moment to probe, the cooling having ended at the yolk's peak, with the
  *  probe setting on or off (DECISIONS.md 92). It is optional, like them. */
-export function probeOffered(ticket: Ticket | null): boolean {
+function probeOffered(ticket: Ticket | null): boolean {
   return ticket !== null && ticket.probeMoment;
 }
 

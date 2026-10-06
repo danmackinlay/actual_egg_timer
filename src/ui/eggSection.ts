@@ -45,7 +45,7 @@ const OUTLINE_POINTS = 72;
 
 /** The shell at parameter `t` (0 to the right, pi/2 up, toward the pointed
  *  end), relative to the yolk's centre, y up. */
-export function shellPoint(t: number): [number, number] {
+function shellPoint(t: number): [number, number] {
   return [
     HALF_WIDTH * Math.cos(t) * (1.0 - TAPER * Math.sin(t)),
     HALF_LENGTH * Math.sin(t) + YOLK_DROP,
@@ -70,7 +70,7 @@ export function ringPoints(x: number): [number, number][] {
 }
 
 /** The drawing's bounds, y up: the shell's extent, and a hair for its line. */
-export const SECTION_BOX = (() => {
+const SECTION_BOX = (() => {
   let left = 0, right = 0, top = 0, bottom = 0;
   for (const [px, py] of ringPoints(1.0)) {
     left = Math.min(left, px);
@@ -83,7 +83,7 @@ export const SECTION_BOX = (() => {
 })();
 
 /** An outline as SVG path data, y flipped to SVG's downward axis. */
-export function pathData(points: [number, number][]): string {
+function pathData(points: [number, number][]): string {
   let d = '';
   for (let i = 0; i < points.length; i++) {
     d += `${i === 0 ? 'M' : 'L'}${points[i][0].toFixed(4)} ${(-points[i][1]).toFixed(4)}`;
@@ -125,7 +125,7 @@ function hex(c: Rgb): string {
 }
 
 /** The yolk at a slider level, as the track draws it. */
-export function yolkAt(level: number, p: SectionPalette): Rgb {
+function yolkAt(level: number, p: SectionPalette): Rgb {
   if (level <= YOLK_JAMMY_AT) return mix(p.yolkRunny, p.yolkJammy, Math.max(0, level) / YOLK_JAMMY_AT);
   return mix(p.yolkJammy, p.yolkHard, (Math.min(1, level) - YOLK_JAMMY_AT) / (1 - YOLK_JAMMY_AT));
 }

@@ -124,7 +124,7 @@ core's exports.
       object at its top; no import cycles in `src/`, and the one call back
       up (a surface landed re-solves) is handed to `answer.ts` at boot.
       Every function compared against the old one with the state names
-      mapped back. Not yet driven.
+      mapped back. Not yet driven. `3dcb123`.
 - [x] **B2. `src/ui/calibration.ts`**: `APP_VERSION`, the storage format
       and the grid caches apart (iOS already has `DecisionGrids`), with
       what A3 and A4 leave of record building.
@@ -176,6 +176,13 @@ answer did not make. Waiting on the owner.
 - [ ] `CLAUDE.md`'s "`rm -rf dist/test` first if a test file was deleted"
       is stale (`npm test` starts with `rm -rf dist`): the owner's file.
 - [ ] Exports used only in their own file: trace and trim, with B.
+      `src/ui/` done with B: eight values no other file imports are no
+      longer exported (`resultsKept`, `shellPoint`, `SECTION_BOX`,
+      `pathData`, `yolkAt`, `probeOffered`, `fetchTransport`,
+      `renderBracket`). Kept: `heatAt` and `parseHex`, which
+      `tools/egg-section.html` imports; `serve`, which `sw.js` calls; and
+      the types that name an exported function's argument or result.
+      `src/core/`, `tools/` and `server/` not traced.
 
 ## Open for the owner
 

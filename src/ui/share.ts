@@ -30,7 +30,7 @@ export interface Transport {
   remove(uid: string): Promise<number>;
 }
 
-export const fetchTransport: Transport = {
+const fetchTransport: Transport = {
   post: async (body) => (await fetchWithin('/api/eggs', {
     method: 'POST', headers: { 'content-type': 'application/json' }, body: body,
   })).status,

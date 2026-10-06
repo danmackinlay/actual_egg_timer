@@ -217,7 +217,7 @@ export function loadCalibration(model = MODEL_ID): Calibration {
 
 /** How many results there are to export: every record, read or not, and
  *  every copy kept aside. */
-export function resultsKept(): number {
+function resultsKept(): number {
   return kept.log.length + (kept.unread?.length ?? 0) + keptAside().length;
 }
 
