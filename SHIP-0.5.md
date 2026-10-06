@@ -3,7 +3,8 @@
 The worklist for the 0.5 line: what the owner has sent to 0.5
 (`DECISIONS.md` 90, 91, 93, 95), in the order it can be built. Begun
 6 October 2026 on `claude/0-5-version-foundations-277a7b`, forked from
-`0.4.x` at `8972a05`; version `0.5.0-alpha.1`. 0.4 ships without any of
+`0.4.x` at `8972a05`, which became `0.5.x` on 7 October (`DECISIONS.md`
+97); version `0.5.0-alpha.1`. 0.4 ships without any of
 it. Tick each item in the same commit as the work, with what was done; the
 next commit that touches this file adds its hash.
 

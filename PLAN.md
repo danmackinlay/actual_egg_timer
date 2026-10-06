@@ -4,7 +4,7 @@ The state of the build, what is next, and what waits on whom. Updated in the
 same commit as the work it describes. History is `LOGBOOK.md`; the rules for
 working here are `CLAUDE.md`; the last section says where everything else is.
 
-**Where things stand, 6 October 2026, on the 0.5 line** (forked from
+**Where things stand, 7 October 2026, on `0.5.x`** (forked from
 `0.4.x` at `8972a05`; its worklist is `SHIP-0.5.md`). Both apps are complete for one
 cook and learning, and now for many: opt-in sharing, the nudge and the
 population a prior is drawn from (E6-E8, `COLLECTIVE.md`) are built in
@@ -43,9 +43,10 @@ These counts are the only ones in the documents. If you want a number, run
 5. **0.5**, on this line: `SHIP-0.5.md`. The foundations are built (A,
    B): the counter's carryover held at 1.0 (`DECISIONS.md` 95), the
    review's refactors into core (90), the certainty word's arithmetic
-   (93), the web's god files split; both apps driven after them. Next is
-   the one screen (91), once the owner has answered its design,
-   `design/one-screen.md`, with certainty in words on it (93). `0.4.x` is
+   (93), the web's god files split; both apps driven after them. The one
+   screen's design is answered (`DECISIONS.md` 96, 97; `design/one-
+   screen.md`): next is its core, the running cook (C2), then both apps,
+   with certainty in words on it (93). `0.4.x` is
    merged in as it moves.
 
 Throughout: cook real eggs, and the two measurements in README §11.3.
