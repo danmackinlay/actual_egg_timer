@@ -257,7 +257,11 @@ rather than repaired. With the observations kept, a model change is a replay.
 
 **Built (E1, 26 September).** One record per egg, stored on the device beside
 the posterior; uploaded only under §7. The reference is `src/core/record.ts`,
-held to `EggTimerCore/Record.swift` by `fixtures/record.json`.
+held to `EggTimerCore/Record.swift` by `fixtures/record.json`. Both apps make
+a record the same way, in core (`recordFor`, 6 October 2026): each gathers
+the cook's facts - what was frozen at "Eggs in", the time that ran, when the
+cook tapped out of PULL, the answers - and core assembles the record, so the
+fit's training data cannot drift between the two.
 
 ```json
 {

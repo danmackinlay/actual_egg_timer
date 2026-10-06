@@ -39,10 +39,14 @@ core's exports.
       Bloat 1). `decided()` is written twice (`src/ui/app.ts`,
       `ios/App/Planner+Solve.swift`); `DECISIONS.md` 84 had to land as two
       commits. One core function, fixtured.
-- [ ] **A3. One `recordFor`** (Bloat 2). Egg-record assembly
+- [x] **A3. One `recordFor`** (Bloat 2). Egg-record assembly
       (`src/ui/calibration.ts`, `ios/App/Cook.swift`) is the fit's
       training data, and is twinned by hand. One core function from the
-      cook's facts, fixtured.
+      cook's facts, fixtured. Done: `recordFor(CookFacts)` and
+      `probeReadingFor` in `src/core/record.ts` and `Record.swift`, 32
+      cases and 8 probe whens in `record.json`; each app gathers its facts
+      and calls them. Checked before the switch against each app's old
+      copy: the same record, the web's to the character.
 - [ ] **A4. The decode decision in core** (Bloat 4): fresh, rebuild,
       rebased or loaded, today in each app and untested in Swift.
 - [ ] **A5. The sharing state machine in core** (Bloat 3): `turnedOn`,

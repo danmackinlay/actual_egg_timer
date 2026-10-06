@@ -7,8 +7,9 @@ import { eggFromMass } from '../../src/core/geometry.js';
 import { CookSetup } from '../../src/core/protocol.js';
 import { GridSpec, buildRequestedGrid } from '../../src/core/doseGrid.js';
 import {
-  Calibration, EggRecord, MODEL_ID, RECORD_VERSION, calibrationDoneness, copyCalibration,
-  foldRecord, freshCalibration, gridRequestFor, parseRecord, recordCookTime_s, recordMass_g,
+  Calibration, CookFacts, EggRecord, MODEL_ID, RECORD_VERSION, calibrationDoneness, copyCalibration,
+  foldRecord, freshCalibration, gridRequestFor, parseRecord, probeReadingFor, recordCookTime_s, recordFor,
+  recordMass_g,
   recordProbe_C, recordTeaches, replay, RESULTS_FILE_VERSION, ResultsMeta, resultsFile, resultsFileName,
 } from '../../src/core/record.js';
 import { LITERATURE_POPULATION } from '../../src/core/infer.js';
@@ -471,6 +472,96 @@ const RESULTS_CASES: { meta: ResultsMeta; stored: string | null; unread: string[
   },
 ];
 
+/* The record made from a cook's facts (`recordFor`): what both apps write
+ * down, for every branch - the boil tapped or not, a pull tapped late, on
+ * time, early or not at all, each cooling, a probe reading or none, the
+ * answers given or not, a measured room (DECISIONS.md 79), the web's `id`
+ * and iOS's none. Sous-vide runs no cook in either app, so it makes no
+ * record. Each case is a change to one base cook. */
+const FACTS_BASE: CookFacts = {
+  app: 'web', appVersion: '0.5.0-alpha.1', prior: LITERATURE_POPULATION.id, day: '2026-10-06',
+  id: 1759737600123, mass_kg: 0.0624449999, massFrom: 'scale', sizeTable: null,
+  setup: referenceSetup({ timeToBoil_s: 480, afterBoil: 'hold' }), eggFrom: 'fridge', boilRemembered: true, level: 0.41,
+  cook_s: 402.75, nudge_s: 0, out_s: 409.517, cool_s: 187.25,
+  yolkWord: null, white: null, probe: null, forecast: null, lang: 'en', units: 'metric',
+};
+const FORECAST_FIVE = {
+  cook_s: 402.75, yolk: [0.25, 0.5, 0.25], white: [0.125, 0.375, 0.5], yolkWord: [0.0625, 0.25, 0.5, 0.125, 0.0625],
+};
+/** The pot with no word of what the burner did, as an older ticket has it. */
+function noBurner(): CookSetup {
+  const s = referenceSetup({});
+  delete s.afterBoil;
+  return s;
+}
+const FACTS_CASES: { why: string; over: Partial<CookFacts> }[] = [
+  { why: 'a hot start on a remembered pan, tapped out late, from the web', over: {} },
+  { why: 'from iOS, which keeps no id', over: { app: 'ios', appVersion: '0.5.0+1', id: null } },
+  { why: 'a hot start on a pan nobody timed', over: { boilRemembered: false } },
+  {
+    why: 'a cold start, its boil tapped: measured whatever was remembered',
+    over: { setup: referenceSetup({ startMode: 'cold', timeToBoil_s: 512.4 }), boilRemembered: false, cook_s: 912.5 },
+  },
+  {
+    why: 'a cold start with the heat off',
+    over: {
+      setup: referenceSetup({ startMode: 'cold', timeToBoil_s: 431.5, afterBoil: 'off', waterLitres: 1.5 }),
+      cook_s: 870.25, out_s: 871,
+    },
+  },
+  { why: 'a pot that does not say what the burner did: held', over: { setup: noBurner() } },
+  { why: 'pulled when the alarm went: tapped on time', over: { out_s: 402.75 } },
+  { why: 'tapped before the schedule', over: { out_s: 395.5 } },
+  { why: 'nobody tapped: the grace ran out', over: { out_s: null } },
+  { why: 'a tap at egg-in measures nothing', over: { out_s: 0 } },
+  { why: 'under the tap', over: { setup: referenceSetup({ cooling: 'tap' }), cool_s: 240.5 } },
+  { why: 'rested on the counter: no counted cooling', over: { setup: referenceSetup({ cooling: 'counter' }), out_s: null } },
+  { why: 'rested on the counter, tapped out', over: { setup: referenceSetup({ cooling: 'counter' }) } },
+  { why: 'nudged later', over: { nudge_s: 10, cook_s: 412.75 } },
+  { why: 'nudged sooner, and nobody tapped', over: { nudge_s: -7, cook_s: 395.75, out_s: null } },
+  { why: 'the yolk the cook got and the white', over: { yolkWord: 'jammy', white: 'firm' } },
+  { why: 'the yolk alone', over: { yolkWord: 'runny' } },
+  { why: 'the white alone', over: { white: 'tender' } },
+  { why: 'a probe reading alone', over: { probe: { centre_C: 64.13, after_s: 11.983 } } },
+  { why: 'a probe reading with no when', over: { probe: { centre_C: 63.99, after_s: null }, yolkWord: 'soft' } },
+  { why: 'what the app said at Eggs in', over: { forecast: FORECAST_FIVE, yolkWord: 'fudgy', white: 'runny' } },
+  {
+    why: 'a forecast from before the five yolk words',
+    over: { forecast: { cook_s: 402.75, yolk: [0.25, 0.5, 0.25], white: [0.125, 0.375, 0.5], yolkWord: null } },
+  },
+  { why: 'a European class', over: { massFrom: 'class', sizeTable: 'eu', mass_kg: 0.068 } },
+  { why: 'an American class', over: { massFrom: 'class', sizeTable: 'us', mass_kg: 0.0602 } },
+  { why: 'a class with no carton named: the European', over: { massFrom: 'class', sizeTable: null, mass_kg: 0.058 } },
+  { why: 'weighed, with a carton on file: none named', over: { massFrom: 'scale', sizeTable: 'us' } },
+  { why: 'measured round the middle', over: { massFrom: 'girth', mass_kg: 0.0553017 } },
+  { why: 'measured across', over: { massFrom: 'width', mass_kg: 0.06849999 } },
+  {
+    why: 'a measured room, and an egg left out in it (DECISIONS.md 79)',
+    over: { setup: referenceSetup({ eggStart_C: 23.5, ambient_C: 23.5 }), eggFrom: 'room' },
+  },
+  { why: 'a typed egg temperature', over: { setup: referenceSetup({ eggStart_C: 8 }), eggFrom: 'custom' } },
+  { why: 'read in the English of 1750, in Imperial', over: { lang: 'en-x-1750', units: 'imperial' } },
+  { why: 'the far end of the slider', over: { level: 1, out_s: null } },
+];
+const factsCases = FACTS_CASES.map((c) => {
+  const facts: CookFacts = { ...FACTS_BASE, ...c.over };
+  const record = recordFor(facts);
+  if (parseRecord(JSON.parse(JSON.stringify(record))) === null) {
+    throw new Error(`recordFor made a record no loader reads: ${c.why}`);
+  }
+  return { why: c.why, facts: facts, record: record };
+});
+
+/* A probe reading's "when" (`probeReadingFor`), against a measured pull and
+ * an assumed one: after the moment scored as the pull, at it, before it,
+ * and with no counted cooling. A reading typed in F. */
+const PROBE_F_IN_C = (147.3 - 32) * 5 / 9;
+const probeWhen = [recordFor(FACTS_BASE), recordFor({ ...FACTS_BASE, out_s: null })].flatMap(
+  (r) => [null, 600.5, recordCookTime_s(r), 405].map((coolEnd_s) => ({
+    record: r, centre_C: PROBE_F_IN_C, coolEnd_s: coolEnd_s, probe: probeReadingFor(r, PROBE_F_IN_C, coolEnd_s),
+  })),
+);
+
 export const recordFixture = {
   about: 'The record (INFERENCE.md section 4): which records a loader trusts, and a replayed log. src/core/record.ts.',
   version: RECORD_VERSION,
@@ -483,6 +574,10 @@ export const recordFixture = {
   // A probe reading, typed in F and carried in C.
   probeRounding: [147.2, 147.3, 150.1, 139.9, 180.5, 212].map((f) => (f - 32) * 5 / 9)
     .concat([64.005, 58.8849999, 61.3]).map((c) => ({ centre_C: c, record_C: recordProbe_C(c) })),
+  // What both apps write down for a cook (`recordFor`), and a probe
+  // reading's when (`probeReadingFor`).
+  made: factsCases,
+  probeWhen: probeWhen,
   resultsFile: {
     version: RESULTS_FILE_VERSION,
     names: ['2026-10-05', '2027-01-31'].map((day) => ({ day: day, name: resultsFileName(day) })),

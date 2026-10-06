@@ -4496,3 +4496,34 @@ mildly overconfident (12-13.6% of true values in the outer tenth, worst
 for `tauAirScale` and the white), uniform at 4000. `tauAirScale` is never
 learned: every grid is built at its posterior mean, so no particle's value
 enters the likelihood and its mean only drifts with resampling.
+
+## 6 October 2026: one record, made in core (SHIP-0.5 A3)
+
+Both apps assembled an egg's record by hand, the web in `eggRecordFor`
+(`src/ui/calibration.ts`) and iOS in `Cook.eggRecord`, and the probe
+reading's "when" twice more (`feedback.ts`, `Cook.probeReading`). Now core
+does it: `recordFor(CookFacts)` and `probeReadingFor` in
+`src/core/record.ts`, twinned in `Record.swift`, with 32 cooks and 8 probe
+whens in `fixtures/record.json` (each branch: boil tapped or not, a tap
+late, on time, early, at egg-in or none, each cooling, the answers and a
+probe or not, a measured room, the web's `id` and iOS's none). Each app
+gathers its facts and calls them.
+
+Checked before the switch, by a test written for it and then removed: on
+the web, the old `eggRecordFor` against `recordFor` over 3969 ticket,
+machine and answer combinations, identical to the character (key order
+included, so a stored record is written as before); on iOS, the old body
+over the fixture's facts, identical field for field, probe whens too.
+
+The differences found: none that a cook can make. The web read the
+cooling off the machine and iOS off the ticket's pot; the two are set
+together at "Eggs in" and never move, and core reads the pot. Test 4b
+had paired a counter machine with an ice ticket, which only a test can
+do; it now gives both the counter. The `pulledBy` against `outAt`
+difference is not one (REVIEW-0.4.x.md, Bloat 2): iOS sets `outAt` only
+at the cook's tap, as the web sets `pulledBy: 'cook'`. Sous-vide runs no
+cook in either app, so it makes no record. iOS's debug `-seedEggs` still
+writes its own records, old-style answers included, on purpose.
+
+Not verified by driving either app: a cook logged after the switch, on
+the web and on the simulator, should read as before in the export.

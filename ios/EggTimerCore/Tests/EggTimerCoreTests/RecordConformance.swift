@@ -24,6 +24,29 @@ private func decodeRecord(_ json: Any) -> EggRecord? {
     return record
 }
 
+/// A fixture value through JSON into its Codable shape; nil for null.
+private func decoded<T: Decodable>(_ type: T.Type, _ any: Any?) throws -> T? {
+    guard let any, !(any is NSNull) else { return nil }
+    let data = try JSONSerialization.data(withJSONObject: any, options: [.fragmentsAllowed])
+    return try JSONDecoder().decode(T.self, from: data)
+}
+
+/// A cook's facts as the fixture writes them.
+private func cookFacts(_ j: [String: Any]) throws -> CookFacts {
+    try CookFacts(
+        app: j.value(AppName.self, "app"), appVersion: j.str("appVersion"), prior: j.str("prior"),
+        day: j.str("day"), id: j.optionalNum("id").map { Int($0) },
+        massKg: j.num("mass_kg"), massFrom: j.value(MassFrom.self, "massFrom"),
+        sizeTable: j.optionalValue(SizeTable.self, "sizeTable"), setup: cookSetup(j.object("setup")),
+        eggFrom: j.value(EggFrom.self, "eggFrom"), boilRemembered: j.flag("boilRemembered"),
+        level: j.num("level"), cookS: j.num("cook_s"), nudgeS: j.num("nudge_s"), outS: j.optionalNum("out_s"),
+        coolS: j.num("cool_s"), yolkWord: j.optionalValue(YolkWord.self, "yolkWord"),
+        white: j.optionalValue(WhiteReport.self, "white"),
+        probe: decoded(ProbeReading.self, j["probe"]), forecast: decoded(Forecast.self, j["forecast"]),
+        lang: j.str("lang"), units: j.value(Units.self, "units")
+    )
+}
+
 private func fixtureLog() throws -> [EggRecord] {
     let rows = try #require(Fixtures.node("record.json", "replay.log") as? [Any], "no replay log")
     try #require(!rows.isEmpty, "an empty replay log")
@@ -172,6 +195,33 @@ struct RecordConformance {
                 #expect(read.white == forecast["white"] as? [Double], "\(why): forecast white")
                 #expect(read.yolkWord == forecast["yolkWord"] as? [Double], "\(why): forecast yolk words")
             }
+        }
+    }
+
+    /// What both apps write down for a cook: the same record from the same
+    /// facts, field for field, with `id` written only when there is one.
+    @Test("the record made from a cook's facts, case by case")
+    func made() throws {
+        for c in try Fixtures.list("record.json", "made") {
+            let why = try c.str("why")
+            let made = try recordFor(cookFacts(c.object("facts")))
+            let want = try #require(try decoded(EggRecord.self, c["record"]), "\(why): no record")
+            #expect(made == want, "\(why)")
+            #expect(validRecord(made), "\(why): a record the loader reads")
+            let written = try JSONSerialization.jsonObject(with: JSONEncoder().encode(made)) as? [String: Any]
+            let expected = try c.object("record")
+            #expect((written?["id"] == nil) == (expected["id"] == nil), "\(why): id")
+        }
+    }
+
+    @Test("a probe reading's when, from the end of the counted cooling")
+    func probeWhen() throws {
+        for c in try Fixtures.list("record.json", "probeWhen") {
+            let record = try #require(try decoded(EggRecord.self, c["record"]))
+            let coolEnd = try c.optionalNum("coolEnd_s")
+            let read = try probeReadingFor(record, centreC: c.num("centre_C"), coolEndS: coolEnd)
+            let want = try #require(try decoded(ProbeReading.self, c["probe"]))
+            #expect(read == want, "cooling ended at \(String(describing: coolEnd))")
         }
     }
 

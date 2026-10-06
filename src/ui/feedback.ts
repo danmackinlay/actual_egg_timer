@@ -11,7 +11,7 @@
 import { anchorNear, plausibleProbeRange_C } from '../core/policy.js';
 import { midSentence } from '../core/copy.js';
 import { WhiteReport, YOLK_WORDS, YolkWord } from '../core/infer.js';
-import { ProbeReading, recordCookTime_s, recordProbe_C } from '../core/record.js';
+import { ProbeReading, probeReadingFor, recordCookTime_s } from '../core/record.js';
 import { nudgeFrom, parse, stepPast } from '../core/units.js';
 import {
   Calibration, calibrationParams, eggLogged, eggRecordFor, learn, logEgg, recordSecondAnswer,
@@ -267,9 +267,9 @@ function onProbeSave(): void {
   if (typed === '') return;
   const machine = host.machine();
   const reading_C = parse(measure('probeTemp'), Number(typed));
-  const scoredAt_s = recordCookTime_s(eggRecordFor(cooked, machine, null));
+  const record = eggRecordFor(cooked, machine, null);
   const [low, high] = plausibleProbeRange_C(
-    cooked.egg, cooked.setup, calibrationParams(host.calib()), scoredAt_s,
+    cooked.egg, cooked.setup, calibrationParams(host.calib()), recordCookTime_s(record),
   );
   if (reading_C === null || reading_C < low || reading_C > high) {
     page().probeNote.textContent = t('probe.refused', {
@@ -279,11 +279,9 @@ function onProbeSave(): void {
   }
   // When it was asked for: the end of the counted cooling, from the moment
   // the record scores as the pull.
-  const asked_s = (machine.coolEnd_ms - machine.startedAt_ms) / 1000 - scoredAt_s;
-  const probe: ProbeReading = {
-    centre_C: recordProbe_C(reading_C),
-    after_s: machine.coolEnd_ms > 0 && asked_s >= 0 ? asked_s : null,
-  };
+  const probe = probeReadingFor(
+    record, reading_C, machine.coolEnd_ms > 0 ? (machine.coolEnd_ms - machine.startedAt_ms) / 1000 : null,
+  );
   page().probeReading.disabled = true;
   disableSteppers(page().probeReading, true);
   page().probeSave.disabled = true;

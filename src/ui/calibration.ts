@@ -29,13 +29,12 @@ import { DecisionInputs } from '../core/decide.js';
 import { OddsProfile } from '../core/reach.js';
 import { CALIBRATION_SEED, PARTICLE_COUNT, calibrationGrid } from '../core/policy.js';
 import {
-  Calibration, EggFrom, EggRecord, Forecast, MODEL_ID, MassFrom, ProbeReading, RECORD_VERSION,
+  Calibration, CookFacts, EggFrom, EggRecord, Forecast, MODEL_ID, MassFrom, ProbeReading,
   calibrationDoneness as donenessOf, calibrationParams as paramsOf, copyCalibration, foldRecord,
-  freshCalibration as freshFrom, gridRequestFor, parseRecord, recordMass_g, recordTeaches,
+  freshCalibration as freshFrom, gridRequestFor, parseRecord, recordFor, recordTeaches,
   resultsFile, resultsFileName,
 } from '../core/record.js';
 import { UnitSystem } from '../core/units.js';
-import { registerOf } from '../core/language.js';
 import { Machine } from './machine.js';
 import { Job, runJob } from './runJob.js';
 import { activePopulation } from './population.js';
@@ -164,66 +163,44 @@ function localDay(ms: number): string {
   return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
 }
 
-/**
- * The record of one egg, from the cook that was started and the machine that
- * ran it, with whichever answers have been given so far, and the probe reading
- * if there is one.
- *
- * `pulled_s` is the cook's own tap out of PULL when there was one. When the
- * grace ran out instead, nobody said when the egg came out, and the record says
- * so: `pulledBy: 'timeout'`, with the scheduled time standing in as an
- * assumption.
- */
+/** The record of one egg (`recordFor`, in core), from the cook that was
+ *  started and the machine that ran it, with whichever answers have been
+ *  given so far, and the probe reading if there is one. */
 export function eggRecordFor(
   c: Cooked, m: Machine, yolk: YolkWord | null, white: WhiteReport | null = null,
   probe: ProbeReading | null = null,
 ): EggRecord {
-  const measured = m.pulledBy === 'cook' && m.outAt_ms > m.startedAt_ms;
+  return recordFor(cookFactsOf(c, m, yolk, white, probe));
+}
+
+/** The facts `recordFor` makes the record of (core), off the ticket and the
+ *  machine. The pull was the cook's only when they tapped out of PULL. */
+function cookFactsOf(
+  c: Cooked, m: Machine, yolk: YolkWord | null, white: WhiteReport | null = null,
+  probe: ProbeReading | null = null,
+): CookFacts {
   return {
-    v: RECORD_VERSION,
-    uid: null,
-    day: localDay(m.startedAt_ms),
-    id: Math.round(m.startedAt_ms),
     app: 'web',
     appVersion: APP_VERSION,
     prior: activePopulation().id,
-    model: MODEL_ID,
-    egg: {
-      mass_g: recordMass_g(c.egg.mass_kg),
-      massFrom: c.massFrom,
-      sizeTable: c.massFrom === 'class' ? c.sizeTable ?? 'eu' : null,
-    },
-    setup: {
-      startMode: c.setup.startMode,
-      eggStart_C: c.setup.eggStart_C,
-      eggFrom: c.eggFrom,
-      ambient_C: c.setup.ambient_C,
-      boiling_C: c.setup.boiling_C,
-      timeToBoil_s: c.setup.timeToBoil_s,
-      timeToBoilFrom: c.setup.startMode === 'cold' ? 'measured'
-        : c.boilRemembered ? 'remembered' : 'default',
-      cooling: c.setup.cooling,
-      afterBoil: c.setup.afterBoil ?? 'hold',
-      waterLitres: c.setup.waterLitres,
-      eggCount: c.setup.eggCount,
-    },
+    day: localDay(m.startedAt_ms),
+    id: Math.round(m.startedAt_ms),
+    mass_kg: c.egg.mass_kg,
+    massFrom: c.massFrom,
+    sizeTable: c.sizeTable,
+    setup: c.setup,
+    eggFrom: c.eggFrom,
+    boilRemembered: c.boilRemembered,
     level: m.targetLevel,
-    // The machine ran the nudged time; the record splits it into what was
-    // recommended and what was added on purpose (INFERENCE.md section 4).
-    recommended_s: m.cookTime_s - c.nudge_s,
+    cook_s: m.cookTime_s,
     nudge_s: c.nudge_s,
-    pulled_s: measured ? (m.outAt_ms - m.startedAt_ms) / 1000 : m.cookTime_s,
-    pulledBy: measured ? 'cook' : 'timeout',
-    cooled_s: m.cooling === 'counter' ? 0 : m.cool_s,
-    // The yolk the cook got (DECISIONS.md 92). The old answer against the
-    // level is never written now; a record from before keeps it.
-    yolk: null,
+    out_s: m.pulledBy === 'cook' ? (m.outAt_ms - m.startedAt_ms) / 1000 : null,
+    cool_s: m.cool_s,
     yolkWord: yolk,
     white: white,
     probe: probe,
     forecast: c.forecast,
     lang: c.lang,
-    register: registerOf(c.lang),
     units: c.units,
   };
 }

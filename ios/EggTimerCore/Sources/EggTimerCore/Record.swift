@@ -422,6 +422,127 @@ public func recordProbeC(_ centreC: Double) -> Double {
     (centreC * 100).rounded() / 100
 }
 
+// MARK: - The making
+
+/// What an app knows about one cook when it writes its egg down: what was
+/// frozen at "Eggs in", how the cook went, and whichever answers have been
+/// given so far. SI, every time in s from egg-in. Both apps make a record from
+/// these and nothing else (`recordFor`). See src/core/record.ts.
+public struct CookFacts: Sendable, Equatable {
+    public var app: AppName
+    public var appVersion: String
+    /// The population the cook's prior was drawn from: the record's `prior`.
+    public var prior: String
+    /// The local date the cook started, YYYY-MM-DD, by the app's clock.
+    public var day: String
+    /// The moment the cook started, whole ms since 1970 UTC: the web keeps
+    /// one; this app, which runs one cook at a time, passes nil.
+    public var id: Int?
+    public var massKg: Double
+    public var massFrom: MassFrom
+    /// The cook's carton, read only for a class: none named is the European.
+    public var sizeTable: SizeTable?
+    /// The pot as the cook ran it, with the time to boil it measured, if it did.
+    public var setup: CookSetup
+    public var eggFrom: EggFrom
+    /// Whether a measured pan was on file at "Eggs in"; read on a hot start.
+    public var boilRemembered: Bool
+    /// The doneness the cook was RUN at.
+    public var level: Double
+    /// The cook time that ran, egg-in to the scheduled pull, nudge and all.
+    public var cookS: Double
+    public var nudgeS: Double
+    /// When the cook tapped out of PULL, or nil when the grace ran out.
+    public var outS: Double?
+    /// How long the counted cooling ran; read only off the counter.
+    public var coolS: Double
+    public var yolkWord: YolkWord?
+    public var white: WhiteReport?
+    public var probe: ProbeReading?
+    public var forecast: Forecast?
+    public var lang: String
+    public var units: Units
+
+    public init(
+        app: AppName, appVersion: String, prior: String, day: String, id: Int?,
+        massKg: Double, massFrom: MassFrom, sizeTable: SizeTable?, setup: CookSetup, eggFrom: EggFrom,
+        boilRemembered: Bool, level: Double, cookS: Double, nudgeS: Double, outS: Double?, coolS: Double,
+        yolkWord: YolkWord?, white: WhiteReport?, probe: ProbeReading?, forecast: Forecast?,
+        lang: String, units: Units
+    ) {
+        self.app = app
+        self.appVersion = appVersion
+        self.prior = prior
+        self.day = day
+        self.id = id
+        self.massKg = massKg
+        self.massFrom = massFrom
+        self.sizeTable = sizeTable
+        self.setup = setup
+        self.eggFrom = eggFrom
+        self.boilRemembered = boilRemembered
+        self.level = level
+        self.cookS = cookS
+        self.nudgeS = nudgeS
+        self.outS = outS
+        self.coolS = coolS
+        self.yolkWord = yolkWord
+        self.white = white
+        self.probe = probe
+        self.forecast = forecast
+        self.lang = lang
+        self.units = units
+    }
+}
+
+/// The record of one egg, from its facts: the pull MEASURED when the cook
+/// tapped out of PULL after egg-in, ASSUMED at the scheduled time when the
+/// grace ran out; the time that ran split into what was recommended and the
+/// nudge; never the old yolk answer (DECISIONS.md 92); `id` only when there
+/// is one. See src/core/record.ts.
+public func recordFor(_ f: CookFacts) -> EggRecord {
+    let measured = f.outS.flatMap { $0 > 0 ? $0 : nil }
+    let s = f.setup
+    let boilFrom: TimeToBoilFrom = s.startMode == .cold ? .measured : f.boilRemembered ? .remembered : .default
+    return EggRecord(
+        day: f.day,
+        id: f.id,
+        app: f.app,
+        appVersion: f.appVersion,
+        prior: f.prior,
+        model: modelID,
+        egg: RecordEgg(
+            massG: recordMassG(massKg: f.massKg),
+            massFrom: f.massFrom,
+            sizeTable: f.massFrom == .sizeClass ? f.sizeTable ?? .eu : nil
+        ),
+        setup: RecordSetup(setup: s, eggFrom: f.eggFrom, timeToBoilFrom: boilFrom),
+        level: f.level,
+        recommendedS: f.cookS - f.nudgeS,
+        nudgeS: f.nudgeS,
+        pulledS: measured ?? f.cookS,
+        pulledBy: measured == nil ? .timeout : .cook,
+        cooledS: s.cooling == .counter ? 0 : f.coolS,
+        yolk: nil,
+        yolkWord: f.yolkWord,
+        white: f.white,
+        probe: f.probe,
+        forecast: f.forecast,
+        lang: f.lang,
+        register: registerOf(f.lang),
+        units: f.units
+    )
+}
+
+/// A probe reading as the record carries it: the centre to a hundredth of a
+/// degree, and when it was asked for - the end of the counted cooling,
+/// `coolEndS` from egg-in - as seconds after the moment `r` scores as the
+/// pull; nil for when if there was no counted cooling or it ended before then.
+public func probeReadingFor(_ r: EggRecord, centreC: Double, coolEndS: Double?) -> ProbeReading {
+    let asked = coolEndS.map { $0 - recordCookTimeS(r) }
+    return ProbeReading(centreC: recordProbeC(centreC), afterS: asked.flatMap { $0 >= 0 ? $0 : nil })
+}
+
 // MARK: - Validation
 
 /// The coolest thing this cook's egg ever touched, C.
