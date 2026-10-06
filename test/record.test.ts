@@ -719,7 +719,8 @@ test('4b. a pull nobody confirmed is recorded as assumed, at the scheduled time'
   const timedOut = advance(m, m.pulledAt_ms + PULL_GRACE_SECONDS * 1000).machine;
   assert.equal(timedOut.phase, 'DONE');
   assert.equal(timedOut.pulledBy, 'timeout');
-  const r = eggRecordFor(COOKED, timedOut, null);
+  // The ticket's pot and the machine are set together, so both rest on the counter.
+  const r = eggRecordFor({ ...COOKED, setup: appSetup({ cooling: 'counter' }) }, timedOut, null);
   assert.equal(r.pulledBy, 'timeout');
   assert.equal(r.pulled_s, 400);
   assert.equal(r.cooled_s, 0);

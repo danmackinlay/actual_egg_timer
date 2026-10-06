@@ -571,9 +571,11 @@ public struct CookTimePrediction: Sendable {
 /// The posterior over the right cook time for a nominal doneness, as a median
 /// and an 80% credible interval: for each particle, the LATER of the time its
 /// yolk reaches the middle of "just right" and the time its white reaches its
-/// own runny | tender cutpoint. See src/core/infer.ts.
+/// own runny | tender cutpoint. See src/core/infer.ts. `lowQ` and `highQ`
+/// move the interval's ends; the certainty's time range reads 90% here.
 public func predictCookTime(
-    _ post: Posterior, _ grid: DoseGrid, _ logNominalTarget: Double
+    _ post: Posterior, _ grid: DoseGrid, _ logNominalTarget: Double,
+    lowQ: Double = 0.1, highQ: Double = 0.9
 ) -> CookTimePrediction {
     let n = post.particles.count
     var times = [Double](repeating: 0.0, count: n)
@@ -593,8 +595,8 @@ public func predictCookTime(
     }
     return CookTimePrediction(
         medianS: weightedQuantile(order, times, post.weights, 0.5),
-        lowS: weightedQuantile(order, times, post.weights, 0.1),
-        highS: weightedQuantile(order, times, post.weights, 0.9)
+        lowS: weightedQuantile(order, times, post.weights, lowQ),
+        highS: weightedQuantile(order, times, post.weights, highQ)
     )
 }
 

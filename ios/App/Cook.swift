@@ -273,67 +273,45 @@ final class Cook {
 
     /// This egg as a record (INFERENCE.md section 4), with whichever answers
     /// have been given - nil for one nobody gave - or nil when there is no cook.
-    ///
-    /// The pull is MEASURED when the cook tapped out of PULL (`pulledOut`) -
-    /// `pulledBy: .cook`, at the tap, as the web app records it - and ASSUMED
-    /// when the grace simply ran out: `.timeout`, at the scheduled time.
+    /// Made in EggTimerCore (`recordFor`), as the web makes it, from this
+    /// cook's facts: the pull is the cook's when they tapped out of PULL
+    /// (`pulledOut`), and the scheduled time when the grace simply ran out.
     func eggRecord(yolk: YolkWord?, white: WhiteReport? = nil, probe: ProbeReading? = nil) -> EggRecord? {
         guard let startedAt, pullAt != nil, let ticket else { return nil }
-        let scheduled = cookSeconds
-        let measured = outAt.map { $0.timeIntervalSince(startedAt) }.flatMap { $0 > 0 ? $0 : nil }
-        return EggRecord(
-            day: Self.day(startedAt),
+        return recordFor(CookFacts(
             app: .ios,
             appVersion: Calibrations.appVersion,
             prior: Calibrations.population.id,
-            egg: RecordEgg(
-                massG: recordMassG(massKg: ticket.egg.massKg),
-                massFrom: ticket.massFrom,
-                sizeTable: ticket.massFrom == .sizeClass ? ticket.sizeTable ?? .eu : nil
-            ),
-            setup: RecordSetup(
-                setup: ticket.setup,
-                eggFrom: ticket.startTemp,
-                timeToBoilFrom: Self.timeToBoilFrom(ticket)
-            ),
+            day: Self.day(startedAt),
+            // One cook at a time here: no `id` (src/core/record.ts).
+            id: nil,
+            massKg: ticket.egg.massKg,
+            massFrom: ticket.massFrom,
+            sizeTable: ticket.sizeTable,
+            setup: ticket.setup,
+            eggFrom: ticket.startTemp,
+            boilRemembered: ticket.boilRemembered,
             level: ticket.level,
-            // The cook ran the nudged time; the record splits it into what
-            // was recommended and what was added on purpose.
-            recommendedS: scheduled - ticket.nudgeS,
+            cookS: cookSeconds,
             nudgeS: ticket.nudgeS,
-            pulledS: measured ?? scheduled,
-            pulledBy: measured == nil ? .timeout : .cook,
-            cooledS: ticket.cooling == .counter ? 0 : coolFor,
-            // The yolk the cook got (DECISIONS.md 92); the old answer against
-            // the level is never written now.
-            yolk: nil,
+            outS: outAt.map { $0.timeIntervalSince(startedAt) },
+            coolS: coolFor,
             yolkWord: yolk,
             white: white,
             probe: probe,
             forecast: ticket.forecast,
             lang: ticket.lang,
-            // What kind of English the answers were given in: the fit
-            // can then tell a 1750 "Rear" from a modern "Runny".
-            register: registerOf(ticket.lang),
             units: ticket.units
-        )
+        ))
     }
 
-    /// A probe reading typed at DONE, as the record carries it: in C, and when
-    /// it was asked for - the end of the counted cooling - from the moment the
-    /// record scores as the pull. Nil when there is no cook.
+    /// A probe reading typed at DONE, as the record carries it
+    /// (`probeReadingFor`): in C, and when it was asked for - the end of the
+    /// counted cooling - from the moment the record scores as the pull. Nil
+    /// when there is no cook.
     func probeReading(centreC: Double) -> ProbeReading? {
         guard let startedAt, let record = eggRecord(yolk: nil) else { return nil }
-        let asked = coolDoneAt.map { $0.timeIntervalSince(startedAt) - recordCookTimeS(record) }
-        return ProbeReading(centreC: recordProbeC(centreC), afterS: asked.flatMap { $0 >= 0 ? $0 : nil })
-    }
-
-    /// Where the solve's time to boil came from. A cold start cannot finish
-    /// without the boil being tapped, so it is always measured. A hot start
-    /// cooked on the remembered pan or the default guess.
-    private static func timeToBoilFrom(_ ticket: Ticket) -> TimeToBoilFrom {
-        if ticket.setup.startMode == .cold { return .measured }
-        return ticket.boilRemembered ? .remembered : .default
+        return probeReadingFor(record, centreC: centreC, coolEndS: coolDoneAt.map { $0.timeIntervalSince(startedAt) })
     }
 
     /// The local calendar day a cook started on, YYYY-MM-DD. A day, not a

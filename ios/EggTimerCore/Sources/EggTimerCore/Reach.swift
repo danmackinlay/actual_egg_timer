@@ -23,6 +23,11 @@ import Foundation
 /// the points, and within about a second of it between them. The reasons,
 /// and the measurements, are in src/core/reach.ts, which this is held to by
 /// fixtures/reach.json.
+///
+/// What the screen shows at a level, once the pot's surface is built, is
+/// `decideAnswer`: the decision held by the envelope, the nudge, the solve
+/// and the outcome at the time given, and whether advice is wanted. Both
+/// apps call it; until 6 October 2026 each wrote it out for itself.
 
 /// The odds under which a level is warned of: 3/10, the owner's number.
 public let reachOdds = 0.3
@@ -124,6 +129,56 @@ func oddsAtLevel(
     ).odds
 }
 
+/// A profile being built: the pot it is for, and the points decided on it so
+/// far, as three arrays kept in order of slider position. Plain data, handed
+/// to the functions below rather than closed over (core invariant 2).
+private struct ProfileWork {
+    let c: Calibration
+    let egg: Egg
+    let setup: CookSetup
+    let grid: DoseGrid
+    var positions: [Int] = []
+    var times: [Double] = []
+    var odds: [Double] = []
+}
+
+/// Decide the point at `position`, held within `bounds`; keep it in `w`, in
+/// order; and return its odds.
+private func decidePoint(_ w: inout ProfileWork, _ position: Int, _ bounds: TimeBounds) -> Double {
+    let d = decisionAtLevel(w.c, egg: w.egg, setup: w.setup, grid: w.grid, level: levelOf(position), bounds: bounds)
+    var i = w.positions.count
+    while i > 0 && w.positions[i - 1] > position { i -= 1 }
+    w.positions.insert(position, at: i)
+    w.times.insert(d.cookTimeS, at: i)
+    w.odds.insert(d.odds, at: i)
+    return d.odds
+}
+
+/// The odds at `position`: a point already decided, or one decided now, held
+/// between the nearest points known on either side, so that it moves no time
+/// the profile already gave.
+private func oddsAtPosition(_ w: inout ProfileWork, _ position: Int) -> Double {
+    var i = 0
+    while i < w.positions.count && w.positions[i] < position { i += 1 }
+    if i < w.positions.count && w.positions[i] == position { return w.odds[i] }
+    let below = i > 0 ? w.times[i - 1] : 0.0
+    let over = i < w.positions.count ? w.times[i] : Double.infinity
+    return decidePoint(&w, position, TimeBounds(loS: below, hiS: over))
+}
+
+/// One end of the range at `reachOdds` or better, by bisection on the slider's
+/// grid between `reaches`, a position at or over it, and `short`, a position
+/// under it on either side: the position at or over it next to one under.
+private func reachEnd(_ w: inout ProfileWork, reaches: Int, short: Int) -> Int {
+    var r = reaches
+    var s = short
+    while abs(s - r) > 1 {
+        let mid = (r + s) / 2
+        if oddsAtPosition(&w, mid) >= reachOdds { r = mid } else { s = mid }
+    }
+    return r
+}
+
 /// The odds at every level the pot can deliver, and where they reach 3/10.
 /// `grid` is this pot's decision surface, for the same calibration.
 public func oddsProfile(_ c: Calibration, egg: Egg, setup: CookSetup, grid: DoseGrid) -> OddsProfile {
@@ -139,15 +194,6 @@ public func oddsProfile(_ c: Calibration, egg: Egg, setup: CookSetup, grid: Dose
         )
     }
 
-    var odds: [Int: Double] = [:]
-    var times: [Int: Double] = [:]
-    func decideHere(_ position: Int, _ bounds: TimeBounds) -> Double {
-        let d = decisionAtLevel(c, egg: egg, setup: setup, grid: grid, level: levelOf(position), bounds: bounds)
-        odds[position] = d.odds
-        times[position] = d.cookTimeS
-        return d.odds
-    }
-
     var positions = [lo]
     var k = (lo / profileStep + 1) * profileStep
     while k < hi {
@@ -156,70 +202,38 @@ public func oddsProfile(_ c: Calibration, egg: Egg, setup: CookSetup, grid: Dose
     }
     if hi > lo { positions.append(hi) }
     // The envelope: from the hard end, each point held under the one above it.
+    var w = ProfileWork(c: c, egg: egg, setup: setup, grid: grid)
     var above = Double.infinity
-    for position in positions.reversed() {
-        _ = decideHere(position, TimeBounds(loS: 0.0, hiS: above))
-        above = times[position]!
+    for i in stride(from: positions.count - 1, through: 0, by: -1) {
+        _ = decidePoint(&w, positions[i], TimeBounds(loS: 0.0, hiS: above))
+        above = w.times[0]
     }
+    // Before any bisection, w holds exactly these positions, in this order.
+    let gridOdds = w.odds
     var best = 0.0
-    for k in positions {
-        let p = odds[k]!
-        if p > best { best = p }
-    }
-
-    // A point the bisection adds is held between the nearest points known on
-    // either side, so it moves no time already given.
-    func at(_ position: Int) -> Double {
-        if let known = odds[position] { return known }
-        var below = 0.0
-        var over = Double.infinity
-        var belowAt = -1
-        var overAt = Int(sliderSteps) + 1
-        for (k, t) in times {
-            if k < position && k > belowAt {
-                belowAt = k
-                below = t
-            }
-            if k > position && k < overAt {
-                overAt = k
-                over = t
-            }
-        }
-        return decideHere(position, TimeBounds(loS: below, hiS: over))
-    }
+    for p in gridOdds where p > best { best = p }
 
     var softest: Double?
     var hardest: Double?
     if c.eggsLogged > 0 && best >= reachOdds {
         var first = 0
-        while at(positions[first]) < reachOdds { first += 1 }
+        while gridOdds[first] < reachOdds { first += 1 }
         var last = positions.count - 1
-        while at(positions[last]) < reachOdds { last -= 1 }
-
-        var s = positions[first]
-        if first > 0 {
-            var under = positions[first - 1]
-            while s - under > 1 {
-                let mid = (under + s) / 2
-                if at(mid) >= reachOdds { s = mid } else { under = mid }
-            }
-        }
-        var h = positions[last]
-        if last < positions.count - 1 {
-            var over = positions[last + 1]
-            while over - h > 1 {
-                let mid = (h + over) / 2
-                if at(mid) >= reachOdds { h = mid } else { over = mid }
-            }
-        }
+        while gridOdds[last] < reachOdds { last -= 1 }
+        // The softest first, then the firmest: a point the first bisection adds
+        // holds the second's.
+        let s = first > 0 ? reachEnd(&w, reaches: positions[first], short: positions[first - 1]) : positions[first]
+        let h = last < positions.count - 1
+            ? reachEnd(&w, reaches: positions[last], short: positions[last + 1]) : positions[last]
         softest = levelOf(s)
         hardest = levelOf(h)
     }
 
-    let points = odds.keys.sorted().map {
-        LevelOdds(level: levelOf($0), cookTimeS: times[$0]!, odds: odds[$0]!)
+    var points: [LevelOdds] = []
+    for i in 0..<w.positions.count {
+        points.append(LevelOdds(level: levelOf(w.positions[i]), cookTimeS: w.times[i], odds: w.odds[i]))
+        if w.odds[i] > best { best = w.odds[i] }
     }
-    for point in points where point.odds > best { best = point.odds }
     return OddsProfile(
         points: points, best: best, physicalSoftest: levelOf(lo), physicalHardest: levelOf(hi),
         softest: softest, hardest: hardest
@@ -394,4 +408,56 @@ public func protocolAdvice(
         keys.append(change.key)
     }
     return keys
+}
+
+// MARK: - The decided answer
+
+/// The answer at a level, with its time decided on the pot's surface: what
+/// the screen shows, and what a cook started now carries. Both apps' one
+/// copy of it (REVIEW-0.4.x, "Bloat and factoring" 1).
+public struct DecidedAnswer: Sendable {
+    /// The level decided for: the answer's (`LevelAnswer.level`), after any
+    /// snap. The advice is priced here, with `decision.odds`.
+    public let level: Double
+    /// The mean solve, re-read at the decided time with the nudge in it
+    /// (`decidedSolution`): its verdict and limits are the mean solve's.
+    public let solution: Solution
+    /// The time decided, before the nudge, and its odds.
+    public let decision: Decision
+    /// What the egg at the nudged time will be like, on the same surface.
+    public let outcome: Outcome
+    /// The nudge the time took (`appliedNudge`): all of it where a time is
+    /// chosen for, none where the solver's own answer stands.
+    public let nudgeS: Double
+    /// Whether the odds are low enough to offer advice (`adviceWanted`, with
+    /// the profile), and the white sets, so there is a cook to advise on.
+    public let adviceWanted: Bool
+}
+
+/// Decide an answer: the time for `sol`, the mean solve at `level` (an
+/// `answerAt`'s solution and level), on `grid`, this pot's decision surface;
+/// held within the envelope of `profile`, or by nothing while it is nil
+/// (DECISIONS.md 84); then moved by `nudgeS`, the nudge the app drew, where
+/// a time is chosen for (E8). The solve is re-read at the time given and the
+/// outcome predicted there. A level the odds warn of is decided at that level
+/// like any other (DECISIONS.md 83).
+public func decideAnswer(
+    _ c: Calibration, egg: Egg, setup: CookSetup, grid: DoseGrid, solution sol: Solution, level: Double,
+    profile: OddsProfile?, nudgeS: Double
+) -> DecidedAnswer {
+    let target = logYolkTarget(level)
+    let d = decide(
+        c, grid: grid, solution: sol, logNominalTarget: target, bounds: envelopeBounds(profile, level: level)
+    )
+    let nudge = appliedNudge(sol, nudgeS: nudgeS)
+    return DecidedAnswer(
+        level: level,
+        solution: decidedSolution(
+            egg: egg, setup: setup, params: calibrationParams(c), solution: sol, decision: d, nudgeS: nudge
+        ),
+        decision: d,
+        outcome: predictOutcome(c.posterior, grid, d.cookTimeS + nudge, target),
+        nudgeS: nudge,
+        adviceWanted: sol.whiteSets && adviceWanted(d.oddsTenths, profile: profile)
+    )
 }

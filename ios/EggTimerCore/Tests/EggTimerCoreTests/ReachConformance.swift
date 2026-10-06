@@ -11,7 +11,8 @@ import Foundation
 
 private func profileOf(_ json: [String: Any]) throws -> OddsProfile {
     try OddsProfile(
-        points: json.rows("points").map {
+        // Empty where the white never sets: no level to give odds on.
+        points: json.rows("points", mayBeEmpty: true).map {
             try LevelOdds(level: $0.num("level"), cookTimeS: $0.num("cookTime_s"), odds: $0.num("odds"))
         },
         best: json.num("best"),
@@ -140,6 +141,71 @@ struct ReachConformance {
             #expect(try a.lowOdds == row.flag("lowOdds"), "\(label) lowOdds")
             #expect(try a.solution.reachable == row.flag("reachable"), "\(label) reachable")
             try expectClose(a.solution.result.cookTimeS, row.num("cookTime_s"), "\(label) cook time")
+        }
+    }
+
+    /// The answer with its time decided (`decideAnswer`), as both apps show
+    /// it: for each profile's pot, the owner's egg (DECISIONS.md 83 and 84)
+    /// and a pot whose white never sets. The profile is the fixture's, so this
+    /// holds the decision alone; `profiles()` holds the profile.
+    @Test("the decided answer: the envelope, the nudge, the outcome and the advice")
+    func decided() throws {
+        let file = try Fixtures.load("reach.json")
+        var byName = try posteriorsByName(Fixtures.list("decide.json", "posteriors"))
+        let owner = try file.object("owner")
+        for (name, post) in try posteriorsByName([owner.object("posterior")]) { byName[name] = post }
+        var pots: [(label: String, row: [String: Any], posterior: String)] = []
+        for (i, row) in try file.rows("profiles").enumerated() {
+            pots.append((label: "profile \(i)", row: row, posterior: try row.str("posterior")))
+        }
+        pots.append((label: "owner", row: owner, posterior: "owner"))
+        pots.append((label: "never sets", row: try file.object("neverSets"), posterior: try file.object("neverSets").str("posterior")))
+        for pot in pots {
+            let post = try #require(byName[pot.posterior], "\(pot.label): no posterior")
+            let c = try Calibration(posterior: post, eggsLogged: Int(pot.row.num("eggsLogged")))
+            let egg = try Geometry.eggFromMass(pot.row.object("egg").num("mass_kg"))
+            let setup = try cookSetup(pot.row.object("setup"))
+            let grid = try doseGrid(pot.row.object("grid"), egg: egg, setup: setup)
+            let profile = try profileOf(pot.row.object("profile"))
+            for row in try pot.row.rows("decided") {
+                let asked = try row.num("asked")
+                let withOdds = try row.flag("withOdds")
+                let drawn = try row.num("drawn_s")
+                let label = "\(pot.label) at \(asked), odds \(withOdds), nudge \(drawn)"
+                let odds = withOdds ? profile : nil
+                let a = answerAt(c, egg: egg, setup: setup, level: asked, profile: odds, snapRetry: true)
+                #expect(try a.level == row.num("answeredLevel"), "\(label) answered level")
+                #expect(try a.lowOdds == row.flag("lowOdds"), "\(label) low odds")
+                let own = decide(c, grid: grid, solution: a.solution, logNominalTarget: logYolkTarget(a.level))
+                try expectClose(own.cookTimeS, row.num("own_s"), "\(label) own choice")
+                let d = decideAnswer(
+                    c, egg: egg, setup: setup, grid: grid, solution: a.solution, level: a.level,
+                    profile: odds, nudgeS: drawn
+                )
+                #expect(try d.level == row.num("level"), "\(label) level")
+                let sol = try row.object("solution")
+                #expect(try d.solution.reachable == sol.flag("reachable"), "\(label) reachable")
+                #expect(try d.solution.whiteSets == sol.flag("whiteSets"), "\(label) white sets")
+                try expectClose(d.solution.result.cookTimeS, sol.num("cookTime_s"), "\(label) time shown")
+                try expectClose(d.solution.result.peakYolkC, sol.num("peakYolk_C"), "\(label) peak yolk")
+                let dec = try row.object("decision")
+                try expectClose(d.decision.cookTimeS, dec.num("cookTime_s"), "\(label) time decided")
+                try expectClose(d.decision.meanCookTimeS, dec.num("meanCookTime_s"), "\(label) mean time")
+                #expect(try d.decision.chosen == dec.flag("chosen"), "\(label) chosen")
+                try expectClose(d.decision.odds, dec.num("odds"), "\(label) odds")
+                #expect(try d.decision.oddsTenths == Int(dec.num("oddsTenths")), "\(label) tenths")
+                let o = try row.object("outcome")
+                try expectClose(d.outcome.pTooSoft, o.num("pTooSoft"), "\(label) too soft")
+                try expectClose(d.outcome.pJustRight, o.num("pJustRight"), "\(label) just right")
+                try expectClose(d.outcome.pTooFirm, o.num("pTooFirm"), "\(label) too firm")
+                try expectClose(d.outcome.pWhiteRunny, o.num("pWhiteRunny"), "\(label) runny")
+                try expectClose(d.outcome.levelLow, o.num("levelLow"), "\(label) level low")
+                try expectClose(d.outcome.levelMedian, o.num("levelMedian"), "\(label) level median")
+                try expectClose(d.outcome.levelHigh, o.num("levelHigh"), "\(label) level high")
+                #expect(try d.outcome.lean.rawValue == o.str("lean"), "\(label) lean")
+                #expect(try d.nudgeS == row.num("nudge_s"), "\(label) nudge taken")
+                #expect(try d.adviceWanted == row.flag("adviceWanted"), "\(label) advice wanted")
+            }
         }
     }
 

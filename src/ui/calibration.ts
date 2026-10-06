@@ -29,13 +29,12 @@ import { DecisionInputs } from '../core/decide.js';
 import { OddsProfile } from '../core/reach.js';
 import { CALIBRATION_SEED, PARTICLE_COUNT, calibrationGrid } from '../core/policy.js';
 import {
-  Calibration, EggFrom, EggRecord, Forecast, MODEL_ID, MassFrom, ProbeReading, RECORD_VERSION,
+  Calibration, CookFacts, EggFrom, EggRecord, Forecast, LoadPath, MODEL_ID, MassFrom, ProbeReading,
   calibrationDoneness as donenessOf, calibrationParams as paramsOf, copyCalibration, foldRecord,
-  freshCalibration as freshFrom, gridRequestFor, parseRecord, recordMass_g, recordTeaches,
+  freshCalibration as freshFrom, gridRequestFor, loadDecision, parseRecord, recordFor, recordTeaches,
   resultsFile, resultsFileName,
 } from '../core/record.js';
 import { UnitSystem } from '../core/units.js';
-import { registerOf } from '../core/language.js';
 import { Machine } from './machine.js';
 import { Job, runJob } from './runJob.js';
 import { activePopulation } from './population.js';
@@ -164,66 +163,44 @@ function localDay(ms: number): string {
   return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
 }
 
-/**
- * The record of one egg, from the cook that was started and the machine that
- * ran it, with whichever answers have been given so far, and the probe reading
- * if there is one.
- *
- * `pulled_s` is the cook's own tap out of PULL when there was one. When the
- * grace ran out instead, nobody said when the egg came out, and the record says
- * so: `pulledBy: 'timeout'`, with the scheduled time standing in as an
- * assumption.
- */
+/** The record of one egg (`recordFor`, in core), from the cook that was
+ *  started and the machine that ran it, with whichever answers have been
+ *  given so far, and the probe reading if there is one. */
 export function eggRecordFor(
   c: Cooked, m: Machine, yolk: YolkWord | null, white: WhiteReport | null = null,
   probe: ProbeReading | null = null,
 ): EggRecord {
-  const measured = m.pulledBy === 'cook' && m.outAt_ms > m.startedAt_ms;
+  return recordFor(cookFactsOf(c, m, yolk, white, probe));
+}
+
+/** The facts `recordFor` makes the record of (core), off the ticket and the
+ *  machine. The pull was the cook's only when they tapped out of PULL. */
+function cookFactsOf(
+  c: Cooked, m: Machine, yolk: YolkWord | null, white: WhiteReport | null = null,
+  probe: ProbeReading | null = null,
+): CookFacts {
   return {
-    v: RECORD_VERSION,
-    uid: null,
-    day: localDay(m.startedAt_ms),
-    id: Math.round(m.startedAt_ms),
     app: 'web',
     appVersion: APP_VERSION,
     prior: activePopulation().id,
-    model: MODEL_ID,
-    egg: {
-      mass_g: recordMass_g(c.egg.mass_kg),
-      massFrom: c.massFrom,
-      sizeTable: c.massFrom === 'class' ? c.sizeTable ?? 'eu' : null,
-    },
-    setup: {
-      startMode: c.setup.startMode,
-      eggStart_C: c.setup.eggStart_C,
-      eggFrom: c.eggFrom,
-      ambient_C: c.setup.ambient_C,
-      boiling_C: c.setup.boiling_C,
-      timeToBoil_s: c.setup.timeToBoil_s,
-      timeToBoilFrom: c.setup.startMode === 'cold' ? 'measured'
-        : c.boilRemembered ? 'remembered' : 'default',
-      cooling: c.setup.cooling,
-      afterBoil: c.setup.afterBoil ?? 'hold',
-      waterLitres: c.setup.waterLitres,
-      eggCount: c.setup.eggCount,
-    },
+    day: localDay(m.startedAt_ms),
+    id: Math.round(m.startedAt_ms),
+    mass_kg: c.egg.mass_kg,
+    massFrom: c.massFrom,
+    sizeTable: c.sizeTable,
+    setup: c.setup,
+    eggFrom: c.eggFrom,
+    boilRemembered: c.boilRemembered,
     level: m.targetLevel,
-    // The machine ran the nudged time; the record splits it into what was
-    // recommended and what was added on purpose (INFERENCE.md section 4).
-    recommended_s: m.cookTime_s - c.nudge_s,
+    cook_s: m.cookTime_s,
     nudge_s: c.nudge_s,
-    pulled_s: measured ? (m.outAt_ms - m.startedAt_ms) / 1000 : m.cookTime_s,
-    pulledBy: measured ? 'cook' : 'timeout',
-    cooled_s: m.cooling === 'counter' ? 0 : m.cool_s,
-    // The yolk the cook got (DECISIONS.md 92). The old answer against the
-    // level is never written now; a record from before keeps it.
-    yolk: null,
+    out_s: m.pulledBy === 'cook' ? (m.outAt_ms - m.startedAt_ms) / 1000 : null,
+    cool_s: m.cool_s,
     yolkWord: yolk,
     white: white,
     probe: probe,
     forecast: c.forecast,
     lang: c.lang,
-    register: registerOf(c.lang),
     units: c.units,
   };
 }
@@ -375,9 +352,6 @@ export function encodeKept(k: Kept, pop: Population = activePopulation(), model 
 
 /** What loading found, for the caller that has to write it back and for the
  *  tests that check each path. */
-type LoadPath =
-  | 'fresh' | 'loaded' | 'rebased' | 'rebuild';
-
 interface Decoded {
   kept: Kept;
   path: LoadPath;
@@ -454,30 +428,15 @@ function parseJSON(raw: string | null): unknown {
 /**
  * What is in storage, made safe to fold on top of.
  *
- * Every damaged part is refused, never read around, and what is refused depends
- * on what can still be trusted:
- *
- *  - no v4 that can be read: `fresh`, the prior.
- *  - the posterior damaged, the log good: `rebuild`. The log is the truth, so
- *    the posterior is set back to its start and every record is folded again.
- *  - a record that does not read (a newer build's, most likely): skipped and
- *    kept, in its place (`readLog`), and the rest replayed - `rebuild` - if
- *    that changed what the posterior should hold.
- *  - the log not a list at all: `rebased`. Its records cannot be folded, but
- *    what they taught is in the posterior, which is sound - so it becomes the
- *    base, and the log starts again empty.
- *  - a posterior that has absorbed more records than the log holds: also
- *    `rebased`, for the same reason.
- *  - a base that is damaged: dropped, and the log replayed from the prior.
- *  - a posterior drawn from another population than `pop` (E7: a release
- *    shipped a new one), or folded under another model (`MODEL_ID`, the
- *    store's `m`): `rebuild`, from a prior drawn from `pop` - "a model change
- *    is a replay" (INFERENCE.md section 4). A base cannot be replayed, so one
- *    stays as it is.
- *
- * `fresh` from a store that held something, and `rebased`, say `loses`: the
- * caller keeps the stored text aside before writing over it, so nothing a
- * build cannot read is ever lost (DECISIONS.md 81).
+ * The store is read apart here, part by part; what to keep of it is core's
+ * `loadDecision` (src/core/record.ts), iOS's too, whose header has every path:
+ * `fresh`, `rebuild`, `rebased` or `loaded`. Every damaged part is refused,
+ * never read around; a record that does not read (a newer build's, most
+ * likely) is skipped and kept, in its place (`readLog`); a posterior drawn
+ * from another population than `pop` or folded under another model is
+ * replayed. `loses` says the caller is to keep the stored text aside before
+ * writing over it, so nothing a build cannot read is ever lost
+ * (DECISIONS.md 81).
  *
  * The calibration and the base come back starting at `pop`'s centre
  * (`priorStart`): the start is not stored, since it is the population's.
@@ -496,51 +455,38 @@ export function decodeKept(
 
 function decodeParts(v4raw: string | null, pop: Population, model: string): Decoded {
   const obj = parseJSON(v4raw);
-  if (obj === null || typeof obj !== 'object' || (obj as { v?: unknown }).v !== 4) {
-    return { kept: freshKept(pop), path: 'fresh', loses: v4raw !== null && v4raw !== '' };
-  }
-  const s = obj as Partial<Record<keyof StoredV4, unknown>>;
-  const drawnFrom = typeof s.p === 'string' ? s.p : LITERATURE_POPULATION.id;
-  const foldedUnder = typeof s.m === 'string' ? s.m : null;
-  let base: Calibration | null = null;
-  let baseLost = false;
-  if (s.base !== null) {
-    base = readPosterior(s.base);
-    baseLost = base === null;
-  }
-  const cal = readPosterior(s.cal);
-  const read = readLog(s.log, s.unread);
+  const v4 = obj !== null && typeof obj === 'object' && (obj as { v?: unknown }).v === 4;
+  const s = (v4 ? obj : {}) as Partial<Record<keyof StoredV4, unknown>>;
+  // A base the store leaves out is read as a damaged one; this app always
+  // writes one, null when there is none.
+  const base = v4 && s.base !== null ? readPosterior(s.base) : null;
+  const cal = v4 ? readPosterior(s.cal) : null;
+  const read = v4 ? readLog(s.log, s.unread) : null;
   const folded = s.folded;
-  const foldedOk = typeof folded === 'number' && Number.isInteger(folded) && folded >= 0;
-
-  if (read === null) {
-    const sound = cal ?? base;
-    return {
-      kept: { base: sound, calibration: startOf(sound, pop), folded: 0, log: [] },
-      path: 'rebased',
-      loses: true,
-    };
-  }
-  const { log, stored, unread } = read;
-  if (baseLost || cal === null || !foldedOk || drawnFrom !== pop.id || foldedUnder !== model || read.moved) {
-    return {
-      kept: { base: base, calibration: startOf(base, pop), folded: 0, log: log, unread: unread, stored: stored },
-      path: 'rebuild',
-      loses: false,
-    };
-  }
-  if ((folded as number) > log.length) {
-    return {
-      kept: { base: cal, calibration: copyCalibration(cal), folded: 0, log: [] },
-      path: 'rebased',
-      loses: true,
-    };
-  }
-  return {
-    kept: { base: base, calibration: cal, folded: folded as number, log: log, unread: unread, stored: stored },
-    path: 'loaded',
-    loses: false,
+  const d = loadDecision({
+    stored: v4raw !== null && v4raw !== '',
+    v4: v4,
+    base: !v4 || s.base === null ? null : base === null ? 'damaged' : 'sound',
+    posterior: cal !== null,
+    folded: typeof folded === 'number' && Number.isInteger(folded) && folded >= 0 ? folded : null,
+    records: read === null ? null : read.log.length,
+    moved: read !== null && read.moved,
+    population: typeof s.p === 'string' ? s.p : LITERATURE_POPULATION.id,
+    model: typeof s.m === 'string' ? s.m : null,
+  }, pop.id, model);
+  const keptBase = d.base === 'stored' ? base : d.base === 'posterior' ? cal : null;
+  const kept: Kept = {
+    base: keptBase,
+    calibration: d.calibration === 'posterior' && cal !== null ? cal : startOf(keptBase, pop),
+    folded: d.folded,
+    log: [],
   };
+  if (d.log && read !== null) {
+    kept.log = read.log;
+    kept.unread = read.unread;
+    kept.stored = read.stored;
+  }
+  return { kept: kept, path: d.path, loses: d.loses };
 }
 
 /* ------------------------------------------------------------- the state */

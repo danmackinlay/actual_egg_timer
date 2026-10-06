@@ -1,17 +1,21 @@
 /**
- * Sharing on the web (src/ui/share.ts; COLLECTIVE.md section 1): the id, the
- * cursor into the log, sending what is final and only that, and deleting
- * everything this browser has sent, under every id it has used.
+ * Sharing (src/core/share.ts, and the web's src/ui/share.ts; COLLECTIVE.md
+ * section 1): the id, the cursor into the log, sending what is final and only
+ * that, and deleting everything this browser has sent, under every id it has
+ * used. fixtures/share.json holds iOS to the same moves.
  */
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
-  FRESH_SHARE, REQUEST_TIMEOUT_MS, ShareState, Transport, answered, fetchWithin, deleteSent, deletionAsked, forgetShare, forgotten,
-  loadShare, newUid, readShare, reconciled, retryDeletes, sendFinal, setSharing, shareState, shareStoredElsewhere, turnedOff,
-  turnedOn,
+  REQUEST_TIMEOUT_MS, Transport, fetchWithin, deleteSent, forgetShare, loadShare, newUid, readShare, retryDeletes,
+  sendFinal, setSharing, shareState, shareStoredElsewhere,
 } from '../src/ui/share.js';
+import {
+  FRESH_SHARE, ShareState, answered, deletionAsked, deletionConfirmed, deletionDone, forgotten, isUid, nextToSend,
+  reconciled, turnedOff, turnedOn,
+} from '../src/core/share.js';
 import { EggRecord } from '../src/core/record.js';
 import { recordAt } from '../tools/common.js';
 
@@ -26,8 +30,6 @@ const storage = new Map<string, string>();
 
 const A = '11111111-1111-4111-8111-111111111111';
 const B = '22222222-2222-4222-8222-222222222222';
-let minted = 0;
-const mint = (): string => [A, B][minted++ % 2];
 
 test('1. an id is a version 4 UUID in lower case, from random bytes and nothing else', () => {
   const uid = newUid();
@@ -51,15 +53,14 @@ test('2. what storage holds is read defensively, and every readable id is kept',
 });
 
 test('3. on, off, forget, delete: the id lives as long as the log it sends', () => {
-  minted = 0;
-  let s: ShareState = turnedOn(FRESH_SHARE, mint);
+  let s: ShareState = turnedOn(FRESH_SHARE, A);
   assert.deepEqual([s.on, s.uid, s.uids], [true, A, [A]]);
   s = { ...s, sent: 4, seq: 4 };
-  s = turnedOn(turnedOff(s), mint);
-  assert.deepEqual([s.uid, s.sent, s.uids], [A, 4, [A]], 'off and on again: the same cook');
-  s = forgotten(s, mint);
+  s = turnedOn(turnedOff(s), B);
+  assert.deepEqual([s.uid, s.sent, s.uids], [A, 4, [A]], 'off and on again: the same cook, and the new id unused');
+  s = forgotten(s, B);
   assert.deepEqual([s.on, s.uid, s.sent, s.seq, s.uids], [true, B, 0, 0, [A, B]], 'a forget is a new cook');
-  const off = forgotten(turnedOff({ ...s, sent: 2 }), mint);
+  const off = forgotten(turnedOff({ ...s, sent: 2 }), A);
   assert.deepEqual([off.uid, off.sent, off.uids], [null, 0, [A, B]], 'off: the next id is made when it goes on');
   const gone = deletionAsked(s);
   assert.deepEqual(gone, { ...FRESH_SHARE, deleting: [A, B] });
@@ -70,11 +71,17 @@ test('3. on, off, forget, delete: the id lives as long as the log it sends', () 
     [200, 201, 400, 409, 413, 415, 422, 403, 404, 429, 500, 503].map((status) => answered(s, status, 0).moved),
     [true, true, true, true, true, true, true, false, false, false, false, false],
   );
+  assert.deepEqual([nextToSend(s, 3, 3), nextToSend(s, 3, 0), nextToSend(turnedOff(s), 3, 3)], [0, null, null]);
+  assert.deepEqual([200, 400, 404, 500].map(deletionDone), [true, true, false, false]);
+  assert.deepEqual(deletionConfirmed(gone, A).deleting, [B]);
+  const lettered = 'abcdef01-2345-4789-abcd-ef0123456789';
+  assert.deepEqual([A, lettered, lettered.toUpperCase(), 'nobody', 7, null].map((v) => isUid(v)),
+    [true, true, false, false, false, false]);
 });
 
 test('3b. a busy server is waited on, counted, and given up on after five busy answers and three days', () => {
   const DAY = 24 * 3600 * 1000;
-  let s: ShareState = { ...turnedOn(FRESH_SHARE, () => A), sent: 2, seq: 7 };
+  let s: ShareState = { ...turnedOn(FRESH_SHARE, A), sent: 2, seq: 7 };
   const at = [0, 1, 2, 2.9, 3.5].map((d) => 1e12 + d * DAY);
   for (const now of at.slice(0, 4)) {
     const r = answered(s, 503, now);
@@ -95,7 +102,7 @@ test('3b. a busy server is waited on, counted, and given up on after five busy a
   assert.equal(answered({ ...s, busySince: at[4] - DAY }, 500, at[4]).moved, false, 'four, then a fifth only a day on');
   assert.deepEqual(answered({ ...s, busy: 3 }, 201, at[4]).next.busy, 0, 'kept: the count starts again');
   assert.deepEqual(reconciled({ ...s, sent: 9 }, 2).busy, 0, 'a new log, a new count');
-  assert.deepEqual(forgotten(s, () => B).busySince, null, 'a new cook, a new count');
+  assert.deepEqual(forgotten(s, B).busySince, null, 'a new cook, a new count');
 });
 
 /** A transport that records what it was sent and answers from a script. */
