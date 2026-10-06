@@ -569,6 +569,11 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     tidy-ups (the shape study's quick results, `vercel.json`, WORKLIST and
     FOLLOWUP, finished drafts, the fit's tests in CI). 0.4 ships without
     them. 6 October 2026.
+    Built on the 0.5 line (`SHIP-0.5.md` A2-A6, A8, B): `2b4db15`
+    (`decideAnswer`), `18b428a` (`recordFor`), `f531e4d`
+    (`loadDecision`), `f8c9e74` (sharing's state), `37de3ab`
+    (`oddsProfile`), `0ac5c80` (the fit in CI), `5633510` and `3dcb123`
+    (the split). The tidy-ups' choices are still the owner's.
 91. **One screen for setting up and boiling, with changes allowed after
     the start: 0.5** (testing 0.4 on a phone after a reinstall, the owner
     started an egg set to "into boiling water" when it had gone into cold
@@ -613,6 +618,8 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     Jammy."), and a likely time range. The 3/10 warning, the lean line and
     the ticks' colours are restated in these terms. Built with the one
     screen (91). 0.4 keeps today's odds. 6 October 2026.
+    Its arithmetic built in core, no words yet: `781bfa8` (`SHIP-0.5.md`
+    A7).
 94. **The apps keep 1000 particles** ("let's not raise the particle count
     for the users. That is costly. we can raise it in testing if that is
     reassuring"). At 1000 the chosen time moves 2-3 s with the seed and
@@ -630,5 +637,24 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     taste offset. In 0.5 it leaves the particle and the population fit and
     is held at 1.0; that changes the stored posterior, so `MODEL_ID` moves
     and stored posteriors are replayed. `INFERENCE.md` §2 is corrected now.
-    6 October 2026.
+    6 October 2026. Built `97a51cd` (`SHIP-0.5.md` A1).
+96. **Every change after the start is a correction; everything stays
+    open** (the owner, answering `design/one-screen.md`: "they should be
+    able to change everything in principle", "leave the displays as
+    similar as possible between pre-cooking and cooking"; of the
+    correction, "we want this one"; "agreed"). Every setting can still be
+    changed once a cook has started, and every change says "it was always
+    like this": the whole cook is re-planned from its start under the new
+    setup, keeping the start time and what the cook observed (the boil
+    tap, the pull). Changing it back gives back the old plan exactly. A
+    setting not yet in force (the yolk wanted, the cooling) only
+    re-plans the future; after the pull a change corrects the record. So
+    a cook is its start, its setup and its observed events, and the plan
+    is derived from them each time rather than frozen at "Eggs in"; the
+    setting-by-setting table of when each locks is dropped. The egg in
+    cross-section shows the live egg, and while the cook's finger is on a
+    control, the egg those settings aim for. Turning the heat off at a
+    moment ("heat off now") is not a correction and is not in 0.5; it may
+    come later as an event, a button like Full rolling boil, not a
+    setting. Supersedes the draft's questions 1 and 2. 7 October 2026.
 
