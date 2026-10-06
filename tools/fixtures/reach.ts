@@ -1,20 +1,26 @@
 /**
  * fixtures/reach.json: the odds at every level, the warning they give, the
- * answer at a level, the shading, the advice.
+ * answer at a level and with its time decided, the shading, the advice.
  */
 
 import { CookSetup } from '../../src/core/protocol.js';
-import { Calibration } from '../../src/core/record.js';
+import { Egg, eggFromMass } from '../../src/core/geometry.js';
+import { createPrior, updatePosterior } from '../../src/core/infer.js';
+import { Calibration, calibrationDoneness, calibrationParams } from '../../src/core/record.js';
 import { decide, decisionInputs } from '../../src/core/decide.js';
-import { logYolkTarget } from '../../src/core/solve.js';
+import { DoseGrid } from '../../src/core/doseGrid.js';
+import { logYolkTarget, solveCookTime } from '../../src/core/solve.js';
 import {
   ADVICE_BELOW_TENTHS, ADVICE_GAIN, ADVICE_MARGIN_TENTHS, OddsProfile, PROFILE_STEP, REACH_ODDS,
-  SHADE_BEST_MIN, adviceWanted, answerAt, envelopeBounds, lowOddsAt, oddsNear, oddsProfile, pricedChanges, protocolAdvice,
-  shadingOf, unpricedAdvice,
+  SHADE_BEST_MIN, adviceWanted, answerAt, decideAnswer, envelopeBounds, lowOddsAt, oddsNear, oddsProfile,
+  pricedChanges, protocolAdvice, shadingOf, unpricedAdvice,
 } from '../../src/core/reach.js';
 
 
-import { DECIDE_EGG, DECIDE_SETUP, coarseDecisionGrid, decidePosteriors } from './decide.js';
+import {
+  DECIDE_EGG, DECIDE_PARTICLES, DECIDE_SEED, DECIDE_SETUP, coarseDecisionGrid, decidePosteriors,
+} from './decide.js';
+import { particleRows } from './shared.js';
 import { referenceSetup } from '../common.js';
 
 /* The odds at every level, the range at 3/10 or better, the warning outside
@@ -35,12 +41,49 @@ const REACH_CASES: { posterior: string; setup: CookSetup }[] = [
  * outside its range, with and without its odds, and with the retry on and off. */
 const reachAnswers: unknown[] = [];
 
+/* The answer with its time decided (`decideAnswer`), as both apps show it:
+ * at levels across each pot, without the profile and with it, and nudged
+ * where the profile is in. Each row is the answer at the level asked
+ * (`answerAt`, snapping on), then the decision on it. */
+const DECIDED_LEVELS = [0, 0.05, 0.13, 0.22, 0.41, 0.62, 0.95, 1];
+const DECIDED_VARIANTS = [
+  { withOdds: false, nudge_s: 0 }, { withOdds: true, nudge_s: 0 }, { withOdds: true, nudge_s: -7 },
+];
+
+function decidedRow(
+  c: Calibration, egg: Egg, setup: CookSetup, grid: DoseGrid, profile: OddsProfile, level: number,
+  withOdds: boolean, nudge_s: number,
+) {
+  const odds = withOdds ? profile : null;
+  const a = answerAt(c, egg, setup, level, odds, true);
+  const d = decideAnswer(c, egg, setup, grid, a.solution, a.level, odds, nudge_s);
+  return {
+    withOdds: withOdds, asked: level, drawn_s: nudge_s,
+    answeredLevel: a.level, lowOdds: a.lowOdds,
+    // The level's own choice, held by nothing: where the envelope binds, the
+    // time decided differs from it.
+    own_s: decide(c, grid, a.solution, logYolkTarget(a.level)).cookTime_s,
+    level: d.level,
+    solution: {
+      reachable: d.solution.reachable, whiteSets: d.solution.whiteSets,
+      cookTime_s: d.solution.result.cookTime_s, peakYolk_C: d.solution.result.peakYolk_C,
+    },
+    decision: d.decision,
+    outcome: d.outcome,
+    nudge_s: d.nudge_s,
+    adviceWanted: d.adviceWanted,
+  };
+}
+
 const reachProfiles = REACH_CASES.map((rc, index) => {
   const pz = decidePosteriors.find((x) => x.name === rc.posterior);
   if (pz === undefined) throw new Error(rc.posterior);
   const c: Calibration = { posterior: pz.post, eggsLogged: pz.eggsLogged };
   const g = coarseDecisionGrid(decisionInputs(c, DECIDE_EGG, rc.setup));
   const profile = oddsProfile(c, DECIDE_EGG, rc.setup, g.grid);
+  const decided = DECIDED_LEVELS.flatMap((level) => DECIDED_VARIANTS.map((v) => decidedRow(
+    c, DECIDE_EGG, rc.setup, g.grid, profile, level, v.withOdds, v.nudge_s,
+  )));
   for (const withOdds of [false, true]) {
     for (const level of [0, 0.05, 0.41, 0.95, 1]) {
       for (const snapRetry of [true, false]) {
@@ -76,8 +119,62 @@ const reachProfiles = REACH_CASES.map((rc, index) => {
         held_s: decide(c, g.grid, a.solution, logYolkTarget(a.level), envelopeBounds(profile, a.level)).cookTime_s,
       };
     }),
+    decided: decided,
   };
 });
+
+/* The owner's egg (DECISIONS.md 83 and 84; test/reach.test.ts 11): 58 g
+ * from the fridge into boiling water and an ice bath, after one egg asked
+ * soft that came out just right with a runny white. Soft is under 3/10 and
+ * is chosen anyway, the slider resting there (83); its own choice is later
+ * than jammy's, and the time decided there is no later than jammy's (84).
+ * Every slider position from the softest the white allows to fudgy, so the
+ * time is seen never to fall as the level rises. */
+const OWNER_EGG = eggFromMass(0.058);
+const ownerDecided = (() => {
+  const post = createPrior(DECIDE_PARTICLES, DECIDE_SEED);
+  const first: Calibration = { posterior: post, eggsLogged: 0 };
+  const firstGrid = coarseDecisionGrid(decisionInputs(first, OWNER_EGG, DECIDE_SETUP)).grid;
+  const asked = solveCookTime(OWNER_EGG, DECIDE_SETUP, calibrationParams(first), calibrationDoneness(first, 0.22));
+  updatePosterior(post, firstGrid, asked.result.cookTime_s, logYolkTarget(0.22), 0, 'runny');
+  const c: Calibration = { posterior: post, eggsLogged: 1 };
+  const g = coarseDecisionGrid(decisionInputs(c, OWNER_EGG, DECIDE_SETUP));
+  const profile = oddsProfile(c, OWNER_EGG, DECIDE_SETUP, g.grid);
+  const levels: number[] = [];
+  for (let k = Math.round(profile.physicalSoftest * 100); k <= 62; k++) levels.push(k / 100);
+  return {
+    eggsLogged: c.eggsLogged,
+    posterior: { name: 'owner', weights: post.weights, particles: particleRows(post) },
+    egg: { mass_kg: OWNER_EGG.mass_kg },
+    setup: DECIDE_SETUP,
+    grid: { tauAirScale: g.tauAirScale, ...g.spec },
+    profile: profile,
+    decided: levels.map((level) => decidedRow(c, OWNER_EGG, DECIDE_SETUP, g.grid, profile, level, true, 0)),
+  };
+})();
+
+/* A pot whose white never sets - the heat off under a third of a litre and
+ * twelve eggs - after eggs that taught something: no cook to choose for, so
+ * the mean solve's time stands, the nudge is not taken, and there is no
+ * advice to give. */
+const NEVER_SETS_SETUP = referenceSetup({ timeToBoil_s: 480, eggCount: 12, afterBoil: 'off', waterLitres: 0.3 });
+const neverSets = (() => {
+  const pz = decidePosteriors[1];
+  const c: Calibration = { posterior: pz.post, eggsLogged: pz.eggsLogged };
+  const g = coarseDecisionGrid(decisionInputs(c, DECIDE_EGG, NEVER_SETS_SETUP));
+  const profile = oddsProfile(c, DECIDE_EGG, NEVER_SETS_SETUP, g.grid);
+  return {
+    posterior: pz.name,
+    eggsLogged: pz.eggsLogged,
+    egg: { mass_kg: DECIDE_EGG.mass_kg },
+    setup: NEVER_SETS_SETUP,
+    grid: { tauAirScale: g.tauAirScale, ...g.spec },
+    profile: profile,
+    decided: [0, 0.41, 1].flatMap((level) => DECIDED_VARIANTS.map((v) => decidedRow(
+      c, DECIDE_EGG, NEVER_SETS_SETUP, g.grid, profile, level, v.withOdds, v.nudge_s,
+    ))),
+  };
+})();
 
 const REACH_RANGES: ({ softest: number | null; hardest: number | null } | null)[] = [
   null, { softest: null, hardest: null }, { softest: 0.3, hardest: 0.8 }, { softest: 0.1, hardest: 0.9 },
@@ -113,7 +210,7 @@ const ADVICE_PROFILE: OddsProfile = {
 };
 
 export const reachFixture = {
-  about: 'The odds at every level, the range at 3/10 or better, the warning outside it, the shading and the advice. src/core/reach.ts.',
+  about: 'The odds at every level, the range at 3/10 or better, the warning outside it, the answer with its time decided, the shading and the advice. src/core/reach.ts.',
   constants: {
     reachOdds: REACH_ODDS,
     profileStep: PROFILE_STEP,
@@ -123,6 +220,8 @@ export const reachFixture = {
     shadeBestMin: SHADE_BEST_MIN,
   },
   profiles: reachProfiles,
+  owner: ownerDecided,
+  neverSets: neverSets,
   // The shading either side of SHADE_BEST_MIN: none below it.
   shading: [SHADE_BEST_MIN - 0.001, SHADE_BEST_MIN, 0.3].map((best) => {
     const profile: OddsProfile = {

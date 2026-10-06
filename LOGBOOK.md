@@ -4496,3 +4496,51 @@ mildly overconfident (12-13.6% of true values in the outer tenth, worst
 for `tauAirScale` and the white), uniform at 4000. `tauAirScale` is never
 learned: every grid is built at its posterior mean, so no particle's value
 enters the likelihood and its mean only drifts with resampling.
+
+## 6 October 2026: one decided answer (SHIP-0.5 A2)
+
+The time on screen was decided twice, by `decided()` in `src/ui/app.ts`
+and in `ios/App/Planner+Solve.swift` (REVIEW-0.4.x, "Bloat and factoring"
+1). Now core's `decideAnswer` (`reach.ts`, `Reach.swift`) does it once:
+the decision held by the profile's envelope, the nudge where a time is
+chosen, the solve and the outcome at the time given, the level it was
+decided at, and whether advice is wanted. Each app still finds the
+surface and the profiles in its own caches, and prices the advice's
+changes itself (`protocolAdvice`), since those lookups are asynchronous.
+
+Where the two copies differed:
+
+- **The level the advice is priced at.** The web priced the changes at
+  `settings.doneness`, iOS at `answer.level`. REVIEW-0.4.x found them
+  equal on the idle screen, and they are, except where a snap's retry did
+  not reach: `applyAnswer` then moves `settings.doneness` to the snap
+  while the answer, its odds included, stay at the level asked, so the
+  web compared a change's odds at one level with the screen's at another.
+  Kept iOS's: both now price at `decideAnswer`'s `level`, the level the
+  odds are for. The one change on either screen, and only in that case.
+- **Whether advice is wanted.** The web worked it out at render from its
+  module state, iOS inside `decided()`; the same rule (the white sets, and
+  `adviceWanted` at the decision's tenths and the pot's profile). Now
+  core's `adviceWanted` field; the web reads it, iOS gates the priced
+  look-ups on it. iOS's `Planner.adviceWanted`, which shows the link, is
+  still read from its state, by the same rule.
+- **Which profile holds the time.** The web looked it up inside
+  `decided()`, iOS used the one its solve was given. The same profile,
+  for the same inputs; each app keeps its own look-up, and passes it in.
+- **No surface yet.** The web's `decided()` returned the mean solve with
+  no nudge; iOS did not call it. It now returns null on the web, and the
+  mean solve stands, as before.
+
+Pinned: `fixtures/reach.json` gains `decided` rows for each profile's pot
+(eight levels; without the profile, with it, and nudged 7 s short), the
+owner's egg (58 g, one soft egg with a runny white, every position from
+the softest the white allows to 0.62) and a pot whose white never sets;
+`ReachConformance` holds Swift to them. On the owner's egg soft is 1/10,
+warned of and decided at soft (DECISIONS.md 83), and its own choice,
+505 s, is held to 427 s, under jammy's 430 s (84). `test/reach.test.ts` 14 says the
+same in TypeScript; tests 11 and 12 now go through `decideAnswer`. No
+other fixture moved.
+
+Not verified: either app driven. The web's low-odds link and Help's list,
+and iOS's, should be looked at after a cook that teaches something, and
+the time shown and started compared with 0.4's on the same pot.
