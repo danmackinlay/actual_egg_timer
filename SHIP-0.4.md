@@ -254,9 +254,8 @@ Kept here so a new session can pick up without this conversation.
        across tabs, a timeout on the send, the rollback claim),
        `qa2-attest` (iOS waits only on no reply, 429 and 5xx, and gives up
        after a bound), `qa2-words` (frozen word cuts, screen-reader groups,
-       large text, sous-vide ticks, `-seedEggs`, `tools/eggs.ts`). OWNER:
-       should the shown odds describe the asked-for word instead of "just
-       right"?
+       large text, sous-vide ticks, `-seedEggs`, `tools/eggs.ts`). The odds
+       question is answered by DECISIONS 93 (0.5).
 2. [x] **Optional server polish** (0ab1eee): a refused attestation echoes library
        error text ("PEM routines::…"); return a generic message.
 3. [ ] **The owner's phone session** (section A above, PLAN.md items 7-15)

@@ -207,6 +207,12 @@ Waiting on someone else: the Czech review (F5), by the owner's friend.
   whether the field should show when the probe setting is off (it does
   now, whenever the cooling ends at the peak).
 
+- **0.5: certainty in words** (`DECISIONS.md` 93): "very certain",
+  "ballpark" or "wild guess" from the predicted spread of the five yolk
+  words, with the 90% interval in those words (and a time range) on a
+  tap; replaces the "just right" odds, the 3/10 warning's terms and the
+  lean line. With the one screen below.
+
 - **0.5: one screen for setting up and boiling** (`DECISIONS.md` 91): the
   setup and the timer merged, so the start, the egg and the pot can be
   changed early in a cook and the time re-planned from what has happened.

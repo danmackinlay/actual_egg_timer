@@ -598,4 +598,19 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     `9e156e5` (the server, the privacy page), `1676676` (the fit),
     `a67e329` (web, the `afteregg` draft), `1c91378` (iOS) and `aab4ce3`
     (the proof), on the `after-egg` branch.
+93. **0.5 says how sure it is in words; the numbers are a tap away**
+    ("two-sided interval communication under uncertainty... switch our
+    communication to 'Very certain, ballpark, wild guess'... if they tap
+    that word, we can overlay it with the... 90% interval"). Since 92 the
+    cook answers with a yolk word, while the screen still shows the chance
+    of "just right", a narrower event (0.21 against 0.32 for Jammy, a fresh
+    jammy egg): the two no longer talk about the same thing. In 0.5 the
+    main line is a certainty word read from the predicted spread of the
+    five yolk words at the chosen time: very certain when 9 times in 10 it
+    is the word asked for; a ballpark when 9 times in 10 it is that word
+    or a neighbour; a wild guess when wider. A tap shows the interval in
+    the cook's words ("9 times in 10: between Soft and Fudgy. Most likely
+    Jammy."), and a likely time range. The 3/10 warning, the lean line and
+    the ticks' colours are restated in these terms. Built with the one
+    screen (91). 0.4 keeps today's odds. 6 October 2026.
 

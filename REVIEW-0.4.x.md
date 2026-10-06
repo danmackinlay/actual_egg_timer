@@ -246,7 +246,7 @@ fixes hold; the two NOT A BUG calls hold; 1 and 5 hold only in part.
   DONE 7264b3d
 - **The odds no cook answers for any more:** the odds and outcome wording
   describe "just right"; the word's band is about twice as wide, so the fit
-  cannot check the shown odds against answers. OWNER.
+  cannot check the shown odds against answers. ANSWERED DECISIONS 93 (0.5: certainty words, the interval on a tap).
 - **Two buttons read "Runny" to a screen reader;** neither row is grouped
   with its question (`index.html:543`, iOS `FeedbackPanel`). `role="group"`
   with `aria-labelledby`; a container label on iOS. DONE cb8cbb0 (iOS by
