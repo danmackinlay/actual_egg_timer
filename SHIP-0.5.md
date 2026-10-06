@@ -186,7 +186,23 @@ answer did not make. Waiting on the owner.
 
 ## Open for the owner
 
-1. **C1**, the one screen's design.
-2. **E**, the tidy-ups' choices.
-3. **The branch.** By `DECISIONS.md` 64 the 0.5 line is `0.5.x`. This
+**State, 6 October 2026.** A and B are built and merged on this line; both
+apps were driven after them (`LOGBOOK.md`, the iOS simulator against a 0.4
+build installed under it, and the web), and nothing failed. C2 onward waits
+on the first item below.
+
+1. **C1**, the one screen's design: `design/one-screen.md` ends with its
+   numbered questions, each with a recommendation.
+2. **A7's time range**: the right cook time's 90% interval, as built, or
+   one of the alternatives in `INFERENCE.md` §8, "How sure, in words". A
+   fresh install is never "very certain" (a wild guess at Runny to Jammy);
+   one learned egg makes Hard very certain.
+3. **A2's one change**: where a snap's retry does not reach, the web priced
+   the advice at the level asked; both apps now price it at the level the
+   odds are for, as iOS did.
+4. **A1's tolerance**: one Swift case, the decide fixture's "firmer", now
+   holds whole-cook doses to 1e-11 rather than 1e-12 (libm's last bit,
+   compounded through a cook); every other stays at 1e-12.
+5. **E**, the tidy-ups' choices.
+6. **The branch.** By `DECISIONS.md` 64 the 0.5 line is `0.5.x`. This
    working branch can become it, once the owner says so.
