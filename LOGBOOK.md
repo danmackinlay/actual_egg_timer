@@ -4496,3 +4496,33 @@ mildly overconfident (12-13.6% of true values in the outer tenth, worst
 for `tauAirScale` and the white), uniform at 4000. `tauAirScale` is never
 learned: every grid is built at its posterior mean, so no particle's value
 enters the likelihood and its mean only drifts with resampling.
+
+## 6 October 2026: sharing's state in core (SHIP-0.5 A5)
+
+The sharing state machine was written twice, in `src/ui/share.ts` and
+`ios/App/Sharing.swift`, with no fixtures; the first drift between them
+was iOS reading a damaged `sharing.v1` all or nothing (`80150cb`). Now
+`src/core/share.ts` and `Share.swift` hold the kept state, its defensive
+read (`readShareState`), every step (`turnedOn`, `turnedOff`, `forgotten`,
+`deletionAsked`, `reconciled`, `answered`, which the review called
+"advances", `deletionConfirmed`), which egg goes next (`nextToSend`), which
+answer ends a deletion (`deletionDone`), and `isUid`, which the server now
+imports instead of keeping its own. A new id and the time are the caller's:
+the steps take the id, not a function that makes one. `fixtures/share.json`
+holds Swift to every move from every state within one move of six
+starting points (374 moves), the stored copies read, and the ids.
+`shareReply` and `shareGivesUp` stay in `policy.ts`: an iPhone's
+attestation is answered by them too, and it is not sharing's state.
+
+What stays in each app: storage, the timers, the network, the web's tabs
+(a tab taking up another's store never writes it back; the lock; the
+generation) and iOS's App Attest (a phone restored from a backup sends
+open, DECISIONS.md 87). Where the copies differed, and what was kept:
+iOS stores `busySince` as a `Date` (JSONEncoder's seconds since 2001) and
+leaves out a key with no value, where the web stores epoch ms and null.
+Both stored shapes are kept, so neither key moves; core counts epoch ms,
+and iOS converts at its storage. iOS's read went through JSONDecoder,
+which, like the web, takes neither 1 as true nor true as a count; core
+now reads JSON booleans strictly in Swift as well, and the fixture has
+those cases. iOS turned a state with no id off a second time after
+reading it; the read already does. Not yet checked by driving either app.

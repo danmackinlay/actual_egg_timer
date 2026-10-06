@@ -45,9 +45,17 @@ core's exports.
       cook's facts, fixtured.
 - [ ] **A4. The decode decision in core** (Bloat 4): fresh, rebuild,
       rebased or loaded, today in each app and untested in Swift.
-- [ ] **A5. The sharing state machine in core** (Bloat 3): `turnedOn`,
+- [x] **A5. The sharing state machine in core** (Bloat 3): `turnedOn`,
       `forgotten`, `deletionAsked`, `reconciled`, `advances`, into
       `src/core/share.ts` with fixtures; the server shares `isUid`.
+      Done: `src/core/share.ts` and `Share.swift` hold the state, its
+      defensive read, every transition (`answered` is "advances"),
+      `nextToSend` and the deletion answer; `fixtures/share.json` has 374
+      moves from 119 states. A new id and the time are passed in. Both apps
+      and `server/eggs.ts` call it; `shareReply` and `shareGivesUp` stay in
+      `policy.ts`, since an iPhone's attestation uses them too. Stored
+      shapes unchanged: iOS still keeps `busySince` as a `Date` and
+      converts at its storage.
 - [ ] **A6. `oddsProfile` without closures** (Bloat 6): core invariant 2,
       and its two copy-pasted bisections made one. The profile both apps
       ship is fixtured again, and must not move.

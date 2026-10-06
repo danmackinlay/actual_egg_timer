@@ -57,6 +57,7 @@ anything both apps must agree on lives here, not in either app.
 | `wording.ts` | which catalogue key each part of the screen says | `phaseKeys`, `refusalKey`, `directionKey`, `clauseKeys` | `Wording.swift` | `wording.json`, `sousvideCopy.json` |
 | `units.ts` | Metric and Imperial: steps, bounds, the round trip | `measureFor`, `display`, `parse`, `quantityText` | `Units.swift` | `units.json` |
 | `language.ts` | the switch into the English of 1750 | `languageAfterFlip`, `languageAfterPick` | `Language.swift` | `language.json` |
+| `share.ts` | sharing's kept state: an id, a stored copy read defensively, each step (on, off, forget, delete, an answer) | `readShareState`, `turnedOn`, `answered`, `nextToSend`, `isUid` (the server's too) | `Share.swift` | `share.json` |
 | `copy.ts`, `format.ts` | the catalogue's renderer; numbers and times by locale | `render`, `pluralCategory`, `formatNumber`, `formatTimeOfDay` | `EggTimerCopy`: `Copy.swift`, `Format.swift` | `copy.json`, `format.json` |
 
 The Swift core leaves out what no app calls (`DECISIONS.md` 41): the
@@ -284,7 +285,9 @@ would rather not wait.
 
 ### It can share, if the cook says so
 
-`Sharing.swift` is the web's `src/ui/share.ts`, rule for rule (E6;
+`Sharing.swift` does what the web's `src/ui/share.ts` does, over the same
+state in core (`Share.swift`, `src/core/share.ts`: what is kept, how each step
+moves it, and how a damaged copy is read) (E6;
 INFERENCE.md §7, COLLECTIVE.md §1): off until the cook turns it on in
 Settings, where the consent sits beside the switch; then every final egg in
 the log, the ones from before included, goes to the endpoint on the web app's

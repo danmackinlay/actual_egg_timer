@@ -582,7 +582,8 @@ faster. You can turn it off, and delete what you sent, whenever you like."*
   iPhone that cannot attest. The attestation is bound to the id
   (`clientDataHash = SHA256(uid)`) instead of a server challenge
   (`server/appAttest.ts`, tested on Apple's own sample).
-- **The apps** (`src/ui/share.ts`, `ios/App/Sharing.swift`) keep the id, a
+- **The apps** (`src/ui/share.ts`, `ios/App/Sharing.swift`, over core's
+  `src/core/share.ts`) keep the id, a
   cursor into the log and every id used, beside the log; the log itself keeps
   no id, and the copy sent carries it. On turning sharing on the log so far
   goes (`DECISIONS.md` 59), then each egg once it is final, in order. "Start
