@@ -36,9 +36,12 @@ import {
 } from '../src/core/solve.js';
 import { CookSetup } from '../src/core/protocol.js';
 import {
-  APP_VERSION, Cooked, calibrationStoredElsewhere, clearCalibration, decodeKept, eggRecordFor, eggsBehind, encodeKept,
-  exportResults, keptState, learn, loadCalibration, logEgg, overlay, recordSecondAnswer,
+  calibrationStoredElsewhere, clearCalibration, eggsBehind, exportResults, keptState, learn, loadCalibration, logEgg,
+  recordSecondAnswer,
 } from '../src/ui/calibration.js';
+import { decodeKept, encodeKept, overlay } from '../src/ui/calibrationStore.js';
+import { Cooked, eggRecordFor } from '../src/ui/eggRecord.js';
+import { APP_VERSION } from '../src/ui/version.js';
 import {
   Machine, advance, beginCooling, restoreMachine, staleMachine, startCold, startHot, PULL_GRACE_SECONDS,
 } from '../src/ui/machine.js';

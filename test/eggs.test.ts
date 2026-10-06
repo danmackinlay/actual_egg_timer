@@ -32,7 +32,7 @@ function log(): EggRecord[] {
     recordAt(0.45, 420, 1, 'firm')];
 }
 
-/** A store as the apps keep one (src/ui/calibration.ts `encodeKept`), less
+/** A store as the apps keep one (src/ui/calibrationStore.ts `encodeKept`), less
  *  the posterior the import never reads. */
 function store(records: unknown[], unread: { at: number; record: unknown }[] = []): string {
   return JSON.stringify({ v: 4, p: LITERATURE_POPULATION.id, m: MODEL_ID, base: null, cal: null, folded: 0,

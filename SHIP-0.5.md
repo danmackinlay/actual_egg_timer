@@ -114,9 +114,15 @@ core's exports.
 - [ ] **B1. `src/ui/app.ts`** (about 1500 lines, some 20 module-level
       `let`s) into modules by what they hold. No behaviour change; checked
       by driving the web app.
-- [ ] **B2. `src/ui/calibration.ts`**: `APP_VERSION`, the storage format
+- [x] **B2. `src/ui/calibration.ts`**: `APP_VERSION`, the storage format
       and the grid caches apart (iOS already has `DecisionGrids`), with
       what A3 and A4 leave of record building.
+      Done, a move: `version.ts` (`APP_VERSION`), `eggRecord.ts` (the
+      cook's facts for `recordFor`), `calibrationStore.ts` (`Kept`, the v4
+      format, `decodeKept`, the copies kept aside), `offThread.ts` (the
+      worker and its fallback), `decisionGrids.ts` (the surface and profile
+      caches); `calibration.ts` keeps the state that folds the log, its
+      tabs and its export, 426 lines. No behaviour, fixture or store change.
 
 ## C. One screen for setting up and boiling (`DECISIONS.md` 91)
 

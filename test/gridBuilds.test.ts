@@ -1,5 +1,5 @@
 /**
- * The web app's surface and odds builds (`src/ui/calibration.ts`) when a build
+ * The web app's surface and odds builds (`src/ui/decisionGrids.ts`) when a build
  * throws: WORKLIST 2.3's path. A build that throws must reject, not hang, and
  * must leave no trace, so the same pot can be asked again. Before 5005798 a
  * throw on the main thread left the promise pending and the key in
@@ -17,7 +17,7 @@ import assert from 'node:assert/strict';
 import { DecisionInputs } from '../src/core/decide.js';
 import { PARTICLE_COUNT, CALIBRATION_SEED } from '../src/core/policy.js';
 import { freshCalibration } from '../src/core/record.js';
-import { decisionGrid, oddsProfileFor } from '../src/ui/calibration.js';
+import { decisionGrid, oddsProfileFor } from '../src/ui/decisionGrids.js';
 import { eggFromMass } from '../src/core/geometry.js';
 import { appSetup } from '../tools/common.js';
 

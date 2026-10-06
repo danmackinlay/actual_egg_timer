@@ -23,7 +23,7 @@ import {
   UnitSystem, chooseUnits, display, displayText, effectiveUnits, fromSI, measureFor, parse,
   nudgeFrom, readChosenUnits, regionalUnits, shownDecimals, sizeClassLabel, stepPast, toSI,
 } from '../src/core/units.js';
-import { eggRecordFor, Cooked } from '../src/ui/calibration.js';
+import { eggRecordFor, Cooked } from '../src/ui/eggRecord.js';
 import { startHot, advance } from '../src/ui/machine.js';
 import { parseRecord } from '../src/core/record.js';
 
