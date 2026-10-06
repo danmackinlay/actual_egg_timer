@@ -15,7 +15,8 @@
  *
  *   fixtures/core.json         pure functions: the sphere, geometry, boiling
  *   fixtures/scenarios.json    whole cooks, solved end to end
- *   fixtures/section.json      the egg in cross-section, a tick at a time
+ *   fixtures/section.json      the egg in cross-section, a tick at a time, and
+ *                              the egg the settings aim for
  *   fixtures/policy.json       the decisions above the physics - snapping, the
  *                              refusal verdict, texture bands, the calibration
  *                              grid's geometry, the bounds and defaults, both

@@ -375,6 +375,16 @@ The functions, all pure and fixtured:
 - `previewSection(egg, setup, params, cookTime_s, whiteTarget_min)` in
   `section.ts` (§5).
 
+  *As built (C2):* `previewSection(egg, setup, params, cookTime_s,
+  peakYolkTime_s, whiteTarget_min)`, the peak's time handed in from the
+  solve the screen already has rather than found by a second simulation.
+  Where the centre peaked while the egg was still in the water (a heat-off
+  pan that ran out), it shows the egg as it came out. It is the live egg's
+  last frame exactly. One thing for the owner to see on a phone: the yolk's
+  dose is not all in at its peak (the slider's level counts the whole
+  carryover), so at the peak a jammy (0.41) yolk reads 0.34 on the slider's
+  scale, and a fudgy (0.62) one about 0.55.
+
 `phaseAt`, `answerAt`, `decideAnswer`, `carriedSolution`, `certaintyAt`,
 `recordFor`, `createSection` and `advanceSection` are used as they are.
 

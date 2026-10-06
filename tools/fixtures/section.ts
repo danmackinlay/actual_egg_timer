@@ -5,9 +5,9 @@
 
 import { eggFromMass } from '../../src/core/geometry.js';
 import { CookSetup } from '../../src/core/protocol.js';
-import { DEFAULT_PARAMS, WHITE_DOSE_TARGET } from '../../src/core/solve.js';
+import { DEFAULT_PARAMS, WHITE_DOSE_TARGET, donenessFromSlider, solveCookTime } from '../../src/core/solve.js';
 import {
-  SECTION_WHITE_SAMPLES, SECTION_YOLK_SAMPLES, advanceSection, createSection, sectionView,
+  SECTION_WHITE_SAMPLES, SECTION_YOLK_SAMPLES, advanceSection, createSection, previewSection, sectionView,
 } from '../../src/core/section.js';
 import { appSetup } from '../common.js';
 
@@ -48,8 +48,19 @@ const CASES: Case[] = [
   },
 ];
 
+/* The egg the settings aim for (`previewSection`): the solve's time and peak,
+ * at the levels across the slider, in each thing it cools in, and a heat-off
+ * pan whose centre peaks before the egg comes out. */
+const PREVIEWS: { name: string; setup: CookSetup; level: number }[] = [
+  { name: 'hot start, ice bath, jammy', setup: appSetup(), level: 0.41 },
+  { name: 'hot start, ice bath, runny', setup: appSetup(), level: 0.05 },
+  { name: 'cold start, cold tap, fudgy', setup: appSetup({ startMode: 'cold', cooling: 'tap' }), level: 0.62 },
+  { name: 'hot start, on the counter, hard', setup: appSetup({ cooling: 'counter' }), level: 1 },
+  { name: 'heat off, little water, many eggs', setup: appSetup({ afterBoil: 'off', waterLitres: 0.5, eggCount: 8 }), level: 1 },
+];
+
 export const sectionFixture = {
-  about: 'The egg in cross-section, carried forward a tick at a time: each ring\'s temperature, dose and how set, at each tick. src/core/section.ts.',
+  about: 'The egg in cross-section, carried forward a tick at a time: each ring\'s temperature, dose and how set, at each tick; and the egg the settings aim for. src/core/section.ts.',
   egg: { mass_kg: EGG.mass_kg },
   params: DEFAULT_PARAMS,
   samples: { yolk: SECTION_YOLK_SAMPLES, white: SECTION_WHITE_SAMPLES },
@@ -83,6 +94,18 @@ export const sectionFixture = {
           }),
         };
       }),
+    };
+  }),
+  previews: PREVIEWS.map((p, i) => {
+    const sol = solveCookTime(EGG, p.setup, DEFAULT_PARAMS, donenessFromSlider(p.level));
+    const target = i % 2 === 0 ? WHITE_DOSE_TARGET : MOVED_WHITE_TARGET;
+    const view = previewSection(
+      EGG, p.setup, DEFAULT_PARAMS, sol.result.cookTime_s, sol.result.peakYolkTime_s, target,
+    );
+    return {
+      name: p.name, setup: p.setup, cookTime_s: sol.result.cookTime_s, peakYolkTime_s: sol.result.peakYolkTime_s,
+      peakYolk_C: sol.result.peakYolk_C, whiteTarget_min: target,
+      temperature_C: view.temperature_C, set: view.set,
     };
   }),
 };

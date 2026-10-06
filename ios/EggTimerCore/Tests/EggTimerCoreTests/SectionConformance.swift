@@ -73,4 +73,30 @@ struct SectionConformance {
             }
         }
     }
+
+    @Test("the egg the settings aim for, at the yolk's peak")
+    func previews() throws {
+        let file = try Fixtures.load("section.json")
+        let egg = try Geometry.eggFromMass(file.object("egg").num("mass_kg"))
+        let paramsJSON = try file.object("params")
+        let params = try ModelParams(
+            alphaM2s: paramsJSON.num("alpha_m2s"), tauAirScale: paramsJSON.num("tauAirScale")
+        )
+        let rows = try file.rows("previews")
+        #expect(rows.count >= 4)
+        for p in rows {
+            let name = try p.str("name")
+            let view = try previewSection(
+                egg: egg, setup: cookSetup(p.object("setup")), params: params, cookTimeS: p.num("cookTime_s"),
+                peakYolkTimeS: p.num("peakYolkTime_s"), whiteTargetMin: p.num("whiteTarget_min")
+            )
+            let temperature = try p.numbers("temperature_C")
+            let set = try p.numbers("set")
+            #expect(view.temperatureC.count == temperature.count, "\(name)")
+            for i in 0..<temperature.count {
+                expectClose(view.temperatureC[i], temperature[i], "\(name): temperature[\(i)]")
+                expectClose(view.set[i], set[i], "\(name): set[\(i)]")
+            }
+        }
+    }
 }

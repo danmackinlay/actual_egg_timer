@@ -9,7 +9,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
-  SECTION_YOLK_SAMPLES, SECTION_WHITE_SAMPLES, advanceSection, createSection, sectionView,
+  SECTION_YOLK_SAMPLES, SECTION_WHITE_SAMPLES, advanceSection, createSection, previewSection, sectionView,
 } from '../src/core/section.js';
 import { eggFromMass } from '../src/core/geometry.js';
 import { coolingTemperature } from '../src/core/protocol.js';
@@ -129,4 +129,24 @@ test('section 6. once out, the shell follows what the egg cools in', () => {
   // A later, different time out cannot rewrite the one already crossed.
   advanceSection(s, EGG, setup, DEFAULT_PARAMS, 470, 450);
   assert.equal(s.outAt_s, 400);
+});
+
+test("section 7. the egg the settings aim for is the live egg's last frame: the yolk's peak", () => {
+  for (const [setup, level] of [[appSetup(), 0.41], [appSetup({ startMode: 'cold', cooling: 'tap' }), 0.62]] as const) {
+    const sol = solveCookTime(EGG, setup, DEFAULT_PARAMS, donenessFromSlider(level));
+    const r = sol.result;
+    const aimed = previewSection(EGG, setup, DEFAULT_PARAMS, r.cookTime_s, r.peakYolkTime_s, WHITE_DOSE_TARGET);
+    assert.equal(aimed.temperature_C[CENTRE], r.peakYolk_C, 'the centre at its peak');
+    // The live egg, carried a tick at a time to the same moment, is the same egg.
+    const live = createSection(EGG, setup, DEFAULT_PARAMS);
+    for (let t = 7.3; t < r.peakYolkTime_s; t += 7.3) {
+      advanceSection(live, EGG, setup, DEFAULT_PARAMS, t, t >= r.cookTime_s ? r.cookTime_s : null);
+    }
+    advanceSection(live, EGG, setup, DEFAULT_PARAMS, r.peakYolkTime_s, r.cookTime_s);
+    assert.deepEqual(sectionView(live, WHITE_DOSE_TARGET), aimed);
+    // The yolk's dose is not all in at the peak: the slider's level is the
+    // whole carryover's, so the centre reads a little softer than asked.
+    assert.ok(aimed.set[CENTRE] < level && aimed.set[CENTRE] > level - 0.1);
+    assert.equal(aimed.set[SHELL], 1, 'the white set at the shell');
+  }
 });
