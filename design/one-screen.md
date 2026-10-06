@@ -343,13 +343,12 @@ cook, today's included.
 - **A reload mid-cook (web).** Read `aet.cook.v3`, `replan` with the hint,
   write any `eventsDue`, and ask for the surface. The alarm cannot sound
   until a gesture, as now (`readout.restored`).
-- **The web's second tab.** Today a tab does not take up a cook another tab
-  started; it re-reads only an answer at Done. With one stored cook and a
-  pure plan, a tab takes up any write to `aet.cook.v3` (a start, an edit,
-  an event, a cancel) and re-derives the plan, so two tabs always show the
-  same cook (§7, 23). If two edits race, the last write wins, and each write
-  is the whole cook. The record's id is `id_ms`, never corrected, so one
-  cook in two tabs is still one egg.
+- **The web's second tab** (§7, 23, answered: as today). A tab runs the
+  cook it started and does not take up a cook another tab started or
+  edited; it re-reads only an answer at Done. The stored cook is the one
+  key, so a reload restores whichever tab wrote it last, as now; the
+  record's id is `id_ms`, never corrected, so a cook logged from two tabs
+  is still one egg.
 - **iOS notifications.** On any plan whose deadlines moved,
   `Alarm.schedule` cancels and re-adds the pull and cooled alarms (the
   pull's line names the cooling, so a change of cooling moves it too), and
@@ -474,6 +473,10 @@ and the track's shading are restated in the same terms (§7, 13-17).
 
 ## 7. Questions for the owner
 
+**Answered, 7 October 2026 (`DECISIONS.md` 96 and 97).** The owner took
+every recommendation below but 23, where today's behaviour stays: each tab
+runs what it started. What follows is kept as asked, for the record.
+
 Each has my recommendation first, and the alternative after "Or".
 
 1. ~~Corrections only~~ **Answered by 96**: every change is a correction,
@@ -536,7 +539,7 @@ Each has my recommendation first, and the alternative after "Or".
     the start ("boiling since 7:50").
 22. **A correction also changes the settings**, so the next cook starts from
     what was done, not from the mistake. Or leave the settings as they were.
-23. **One cook per browser.** A tab takes up a cook started or changed in
+23. *(Answered the other way: each tab runs what it started.)* **One cook per browser.** A tab takes up a cook started or changed in
     another. Or keep today's: each tab runs what it started.
 24. **A 0.4 cook running at the upgrade is kept aside, not converted**
     (alpha, 48). Or convert it, which the stored ticket mostly allows,

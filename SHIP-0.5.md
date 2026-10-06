@@ -138,7 +138,7 @@ core's exports.
 
 ## C. One screen for setting up and boiling (`DECISIONS.md` 91)
 
-- [ ] **C1. The design, for the owner**: what the one screen shows before
+- [x] **C1. The design, for the owner**: what the one screen shows before
       the start and while the egg cooks; which settings stay open after
       the start, and until when; what "re-plan from what has happened"
       means for each (a correction of how the cook began, against a change
@@ -151,8 +151,9 @@ core's exports.
       after the pull too, when it corrects the record; the displays as
       alike as possible before and during; the egg live, and aimed-for
       while a control is touched; "heat off now" later, as an event. Its
-      §4 is the state model that follows; its §7 the questions still open
-      (5, 6, 8-17, 19-24).
+      §4 is the state model that follows. `DECISIONS.md` 97 answered the
+      rest of its §7: every recommendation, but each tab runs the cook it
+      started, as today (23).
 - [ ] **C2. Core for it** (`design/one-screen.md` §4): a cook is its start,
       its setup and its observed events, and everything else is derived.
       In `src/core/running.ts` and its Swift twin, fixtured: the types
@@ -196,7 +197,9 @@ answer did not make. Waiting on the owner.
       or delete? Decided 7 October 2026: kept until the owner has reviewed
       `tidy2` (FOLLOWUP §5, §4.2), then deleted, with their citations
       fixed; `LOGBOOK.md` records what came of them.
-- [ ] Finished drafts compiled on every build: leave, or move out?
+- [x] Finished drafts compiled on every build: leave, or move out? Left
+      (the owner, 7 October 2026): each imports only `copyDraft.ts`'s
+      types, so they cost build time, and a change only if `Draft` does.
 - [x] `CLAUDE.md`'s "`rm -rf dist/test` first if a test file was deleted"
       is stale (`npm test` starts with `rm -rf dist`): the owner's file.
       Deleted at the owner's word, 7 October 2026.
@@ -211,21 +214,12 @@ answer did not make. Waiting on the owner.
 
 ## Open for the owner
 
-**State, 6 October 2026.** A and B are built and merged on this line; both
-apps were driven after them (`LOGBOOK.md`, the iOS simulator against a 0.4
-build installed under it, and the web), and nothing failed. C2 onward waits
-on the first item below.
+**State, 7 October 2026.** A and B are built and merged on this line, and
+both apps were driven after them (`LOGBOOK.md`); nothing failed. The
+design (C1) is answered (`DECISIONS.md` 96, 97), so C2 can start.
 
-1. **C1**, the one screen's design: `DECISIONS.md` 96 answered its core;
-   `design/one-screen.md` §7 has the questions still open, each with a
-   recommendation.
-2. **A7's time range**: the right cook time's 90% interval, as built, or
-   one of the alternatives in `INFERENCE.md` §8, "How sure, in words". A
-   fresh install is never "very certain" (a wild guess at Runny to Jammy);
-   one learned egg makes Hard very certain.
-3. **A2's one change**: where a snap's retry does not reach, the web priced
-   the advice at the level asked; both apps now price it at the level the
-   odds are for, as iOS did.
-4. **E**, the tidy-ups' choices.
-5. **The branch.** By `DECISIONS.md` 64 the 0.5 line is `0.5.x`. This
-   working branch can become it, once the owner says so.
+1. **A7's time range** stays as built, the right cook time's 90%
+   interval, until real eggs say how it reads (the owner: "will only have
+   a good sense for this from empirical evidence").
+2. **E**: `WORKLIST.md` and `FOLLOWUP.md` go after the owner's `tidy2`
+   review.

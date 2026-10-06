@@ -657,4 +657,26 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     moment ("heat off now") is not a correction and is not in 0.5; it may
     come later as an event, a button like Full rolling boil, not a
     setting. Supersedes the draft's questions 1 and 2. 7 October 2026.
-
+97. **The one screen's remaining questions: the recommendations, but each
+    tab keeps its own cook** ("Your recommendations all look fine. I would
+    like you to accept them all except where one accrues substantially
+    more maintenance burden than the alternative"). `design/one-screen.md`
+    §7 as recommended: a change applies at once, unconfirmed; one that
+    makes the egg overdue goes to the pull and rings, and changing it back
+    within the grace cancels that; the record's forecast is the corrected
+    cook's, with no new field; the boil memory learns at the end, and not
+    from a tap after a boiling-to-cold correction; the aimed-for egg is one
+    egg at the yolk's peak, shown at idle and while a control is held mid-
+    cook; the certainty word under the time, its interval in place on a
+    press, one 90% interval for the words and the bracket, the lean line
+    retired, the 3/10 warning restated as a wild guess, the shading the
+    chance of the word asked; the start time corrected in the start clause;
+    an event's own time not correctable in 0.5; a correction updates the
+    settings for the next cook; a 0.4 cook running at the upgrade kept
+    aside, not converted ("choose what is least burdensome"). The one
+    exception is question 23: each tab runs the cook it started, as today
+    ("sharing across tabs is counter-intuitive"), which costs nothing new.
+    Also answered: A2's advice priced at the level the odds are for
+    ("seems fine"); the finished copy drafts stay compiled; this line
+    becomes `0.5.x`; A7's time range stays as built until real eggs show
+    how it reads. 7 October 2026.
