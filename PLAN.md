@@ -427,5 +427,6 @@ checked, fixed or deleted. Start the QA pass here.
 | `WORKLIST.md` | the review of 28 September 2026, worked through |
 | `FOLLOWUP.md` | QA's worklist after it, 29 September 2026, worked through; `tidy2` waits on the owner |
 | `SHIP-0.5.md` | the 0.5 line's worklist: foundations in core, the one screen, certainty in words, ticked as it lands |
+| `design/one-screen.md` | C1: the one screen's design, for the owner to decide point by point (§6) |
 | `COLLECTIVE.md` | E6-E8, the collective part: the choices made to build `INFERENCE.md` §6-§9, and the work, ticked as it lands |
 | `fit/README.md` | the population fit (E7): pulling the eggs, fitting, scoring, publishing |

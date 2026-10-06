@@ -1,5 +1,5 @@
-# The gate, on every push and pull request, as two jobs that run side by
-# side. `npm run verify` locally is both of them but the iOS build.
+# The gate, on every push and pull request, as three jobs that run side by
+# side. `npm run verify` locally is the first two but the iOS build.
 #
 # web, on Linux (quick to start): the type checks, the tests and the Swift
 # copy lint.
@@ -12,7 +12,11 @@
 # TypeScript on x86 Linux differs from arm64 macOS, where they are made, in
 # the last digit of some (seen 4 October 2026).
 #
-# The actions are @v5, which run on Node 24; @v4 ran on Node 20, which GitHub
+# fit, on Linux: the population fit's tests (`fit/`, Python under uv),
+# since the fit writes `fixtures/population.json`, which both apps ship.
+# Its tests read only files committed under `fit/tests`.
+#
+# The actions are @v5 (setup-uv @v10), which run on Node 24; @v4 ran on Node 20, which GitHub
 # retires. The Node the project itself runs is `.node-version`.
 name: verify
 
@@ -48,3 +52,10 @@ jobs:
       - run: cd ios/EggTimerCore && swift test
       - run: brew install xcodegen
       - run: npm run ios:build
+
+  fit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v10
+      - run: uv run --project fit pytest -q fit/tests

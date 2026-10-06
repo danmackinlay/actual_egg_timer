@@ -4497,6 +4497,125 @@ for `tauAirScale` and the white), uniform at 4000. `tauAirScale` is never
 learned: every grid is built at its posterior mean, so no particle's value
 enters the likelihood and its mean only drifts with resampling.
 
+## 6 October 2026: one decided answer (SHIP-0.5 A2)
+
+The time on screen was decided twice, by `decided()` in `src/ui/app.ts`
+and in `ios/App/Planner+Solve.swift` (REVIEW-0.4.x, "Bloat and factoring"
+1). Now core's `decideAnswer` (`reach.ts`, `Reach.swift`) does it once:
+the decision held by the profile's envelope, the nudge where a time is
+chosen, the solve and the outcome at the time given, the level it was
+decided at, and whether advice is wanted. Each app still finds the
+surface and the profiles in its own caches, and prices the advice's
+changes itself (`protocolAdvice`), since those lookups are asynchronous.
+
+Where the two copies differed:
+
+- **The level the advice is priced at.** The web priced the changes at
+  `settings.doneness`, iOS at `answer.level`. REVIEW-0.4.x found them
+  equal on the idle screen, and they are, except where a snap's retry did
+  not reach: `applyAnswer` then moves `settings.doneness` to the snap
+  while the answer, its odds included, stay at the level asked, so the
+  web compared a change's odds at one level with the screen's at another.
+  Kept iOS's: both now price at `decideAnswer`'s `level`, the level the
+  odds are for. The one change on either screen, and only in that case.
+- **Whether advice is wanted.** The web worked it out at render from its
+  module state, iOS inside `decided()`; the same rule (the white sets, and
+  `adviceWanted` at the decision's tenths and the pot's profile). Now
+  core's `adviceWanted` field; the web reads it, iOS gates the priced
+  look-ups on it. iOS's `Planner.adviceWanted`, which shows the link, is
+  still read from its state, by the same rule.
+- **Which profile holds the time.** The web looked it up inside
+  `decided()`, iOS used the one its solve was given. The same profile,
+  for the same inputs; each app keeps its own look-up, and passes it in.
+- **No surface yet.** The web's `decided()` returned the mean solve with
+  no nudge; iOS did not call it. It now returns null on the web, and the
+  mean solve stands, as before.
+
+Pinned: `fixtures/reach.json` gains `decided` rows for each profile's pot
+(eight levels; without the profile, with it, and nudged 7 s short), the
+owner's egg (58 g, one soft egg with a runny white, every position from
+the softest the white allows to 0.62) and a pot whose white never sets;
+`ReachConformance` holds Swift to them. On the owner's egg soft is 1/10,
+warned of and decided at soft (DECISIONS.md 83), and its own choice,
+505 s, is held to 427 s, under jammy's 430 s (84). `test/reach.test.ts` 14 says the
+same in TypeScript; tests 11 and 12 now go through `decideAnswer`. No
+other fixture moved.
+
+Not verified: either app driven. The web's low-odds link and Help's list,
+and iOS's, should be looked at after a cook that teaches something, and
+the time shown and started compared with 0.4's on the same pot.
+
+## 6 October 2026: how sure, in words, in core (SHIP-0.5 A7)
+
+`DECISIONS.md` 93's arithmetic, without a screen: `certaintyAt` in
+`src/core/certainty.ts` and `Certainty.swift`, held by
+`fixtures/certainty.json` (every slider position's word, fifteen spreads
+written to hit each class's edge from both sides, the ends and the
+tie-breaks, and thirteen readings from decide.json's posteriors and
+outcome.json's). It reads the five yolk words' predictive the outcome
+already has; nothing new is learned or computed. The word asked is the
+slider's word (`anchorNear`), which is also the band the level's nominal
+dose falls in; the 90% interval is the narrowest run of words holding 0.9,
+the most mass on a tie of width, the softer on a tie of that. The time
+range is the right cook time's 90% interval, `predictCookTime` given
+quantile arguments (5% and 95%) where it had 10% and 90% fixed: the
+owner's call, with the alternatives in `INFERENCE.md` §8.
+
+What a fresh install is told (`npm run decide -- certainty`: 58 g from
+the fridge, boiling water, ice, 1000 particles, the time held by the
+profile as the apps hold it):
+
+| word | time | class | P(asked) | with neighbours | 90% in words | time range |
+|---|---|---|---|---|---|---|
+| Runny | 336 s | wild guess | 0.64 | 0.88 | Runny to Jammy | 278-426 s |
+| Soft | 379 s | wild guess | 0.33 | 0.87 | Runny to Fudgy | 308-458 s |
+| Jammy | 419 s | wild guess | 0.32 | 0.85 | Runny to Fudgy | 341-507 s |
+| Fudgy | 468 s | a ballpark | 0.46 | 0.9002 | Jammy to Hard | 381-566 s |
+| Hard | 577 s | a ballpark | 0.78 | 0.96 | Fudgy to Hard | 470-698 s |
+
+So very certain is never reachable before the first egg; Fudgy's ballpark
+is 0.9002 with its neighbours, a hair over the line, so a slightly
+different egg or pot can make it a wild guess. After eggs called
+Jammy: one makes Hard very certain (0.94) and the rest ballparks; three add
+Fudgy (0.90); ten make Soft, Jammy, Fudgy and Hard very certain (0.92-0.96)
+and leave Runny a ballpark (0.88). The unrelated share caps any word at
+0.96. On 300 simulated cooks x 8 eggs, answering in words: very certain on
+0% of first eggs, 13% of second, 52% of eighth; wild guesses 68% of first
+eggs, then 15-18%. The classes keep their promise (very certain: the word
+came out 93%; a ballpark: it or a neighbour 97%), the 90% interval in words
+held the word 93-96% at every egg, and the time range held the cook's own
+right time 89-94%, 169 s wide at the first egg and 52 s by the eighth.
+
+## 6 October 2026: sharing's state in core (SHIP-0.5 A5)
+
+The sharing state machine was written twice, in `src/ui/share.ts` and
+`ios/App/Sharing.swift`, with no fixtures; the first drift between them
+was iOS reading a damaged `sharing.v1` all or nothing (`80150cb`). Now
+`src/core/share.ts` and `Share.swift` hold the kept state, its defensive
+read (`readShareState`), every step (`turnedOn`, `turnedOff`, `forgotten`,
+`deletionAsked`, `reconciled`, `answered`, which the review called
+"advances", `deletionConfirmed`), which egg goes next (`nextToSend`), which
+answer ends a deletion (`deletionDone`), and `isUid`, which the server now
+imports instead of keeping its own. A new id and the time are the caller's:
+the steps take the id, not a function that makes one. `fixtures/share.json`
+holds Swift to every move from every state within one move of six
+starting points (374 moves), the stored copies read, and the ids.
+`shareReply` and `shareGivesUp` stay in `policy.ts`: an iPhone's
+attestation is answered by them too, and it is not sharing's state.
+
+What stays in each app: storage, the timers, the network, the web's tabs
+(a tab taking up another's store never writes it back; the lock; the
+generation) and iOS's App Attest (a phone restored from a backup sends
+open, DECISIONS.md 87). Where the copies differed, and what was kept:
+iOS stores `busySince` as a `Date` (JSONEncoder's seconds since 2001) and
+leaves out a key with no value, where the web stores epoch ms and null.
+Both stored shapes are kept, so neither key moves; core counts epoch ms,
+and iOS converts at its storage. iOS's read went through JSONDecoder,
+which, like the web, takes neither 1 as true nor true as a count; core
+now reads JSON booleans strictly in Swift as well, and the fixture has
+those cases. iOS turned a state with no id off a second time after
+reading it; the read already does. Not yet checked by driving either app.
+
 ## 6 October 2026: `oddsProfile` without closures (SHIP-0.5 A6)
 
 `oddsProfile` kept its points in two maps that two closures wrote to,

@@ -582,7 +582,8 @@ faster. You can turn it off, and delete what you sent, whenever you like."*
   iPhone that cannot attest. The attestation is bound to the id
   (`clientDataHash = SHA256(uid)`) instead of a server challenge
   (`server/appAttest.ts`, tested on Apple's own sample).
-- **The apps** (`src/ui/share.ts`, `ios/App/Sharing.swift`) keep the id, a
+- **The apps** (`src/ui/share.ts`, `ios/App/Sharing.swift`, over core's
+  `src/core/share.ts`) keep the id, a
   cursor into the log and every id used, beside the log; the log itself keeps
   no id, and the copy sent carries it. On turning sharing on the log so far
   goes (`DECISIONS.md` 59), then each egg once it is final, in order. "Start
@@ -860,6 +861,72 @@ asked costs less than a hard yolk - under which the choices could come out
 monotone by themselves. Left for later.
 
 Not built: any per-cook loss.
+
+**How sure, in words (6 October 2026, `DECISIONS.md` 93; SHIP-0.5 A7).**
+Core only: no screen shows it until the `certainty` draft (SHIP-0.5 D1).
+`certaintyAt` in `src/core/certainty.ts`, held to
+`EggTimerCore/Certainty.swift` by `fixtures/certainty.json`, takes what the
+outcome takes - the posterior, the surface, the time on screen - and the
+level that time is for, and reads the five yolk words' posterior predictive
+there (`yolkWordProbabilities`, the record's `forecast.yolkWord`, unrelated
+share included). As built:
+
+- **The word asked** is the slider's word: the anchor nearest the level
+  (`anchorNear`), as the heading shows it. The anchors' midpoints are the
+  cuts between the answers (`YOLK_WORD_CUTS`), so it is also the band the
+  level's nominal dose falls in. An exact tie goes softer, as `anchorNear`
+  has it: the slider's 0.11 reads Runny. Its 0.81 reads Hard, because its
+  two gaps differ in the last bit.
+- **The class.** *Very certain* when P(the word asked) is at least 0.9;
+  *a ballpark* when it and its neighbours hold at least 0.9 (one neighbour
+  at Runny and at Hard); *a wild guess* otherwise. The unrelated share caps
+  a word at 0.96.
+- **The 90% interval in words**: the narrowest run of adjacent words
+  holding at least 0.9; among runs equally narrow, the one holding more; on
+  an exact tie, the softer. It need not contain the word asked. **The most
+  likely word**: the largest, the softer on a tie.
+- **The likely time range**: the 90% credible interval of the right cook
+  time for the level, `predictCookTime` read at 5% and 95% - per particle,
+  the later of the time its yolk reaches the middle of the level (taste
+  offset included) and the time its white reaches its runny | tender cut,
+  as "still learning" reads it at 80%. It is how sure the timer is of the
+  time itself, and it narrows as it learns, as the words do: 166 s wide on a
+  fresh install at jammy (58 g), 56 s after one egg, 27 s after ten.
+  **This is the owner's choice**, and it is one function and two constants
+  (`likelyTimeRange`, `TIME_RANGE_LOW_Q`, `TIME_RANGE_HIGH_Q`). Not chosen:
+  (a) the span of times over which the most likely word stays the word
+  asked - it says how much slack the word has, not how sure the timer is,
+  never narrows below the word's own width (about 45 s at jammy), can be
+  empty where the word asked is never the most likely, and needs a scan of
+  the predictive over the surface on every drag; (b) the times at which
+  P(the word asked) stays within some share of its best - the same meaning
+  and cost, with a share no one has chosen; (c) "still learning"'s own 80%
+  interval - cheaper by nothing, and an 80% range beside "9 times in 10" in
+  words; (d) the outcome's level range turned into times - that is the
+  egg's spread at one time, which the words already say.
+
+What a fresh install is told at each word (`npm run decide -- certainty`;
+58 g from the fridge, boiling water, ice, 1000 particles, the time held by
+the pot's profile as the apps hold it):
+
+| word | time | class | P(asked) | with neighbours | 90% in words | time range |
+|---|---|---|---|---|---|---|
+| Runny | 336 s | wild guess | 0.64 | 0.88 | Runny to Jammy | 278-426 s |
+| Soft | 379 s | wild guess | 0.33 | 0.87 | Runny to Fudgy | 308-458 s |
+| Jammy | 419 s | wild guess | 0.32 | 0.85 | Runny to Fudgy | 341-507 s |
+| Fudgy | 468 s | a ballpark | 0.46 | 0.9002 | Jammy to Hard | 381-566 s |
+| Hard | 577 s | a ballpark | 0.78 | 0.96 | Fudgy to Hard | 470-698 s |
+
+Very certain is never reachable on a fresh install. It is after eggs: one
+egg called Jammy makes Hard very certain and every other word a ballpark;
+three make Fudgy very certain too; ten make every word but Runny very
+certain (0.92-0.96), Runny a ballpark at 0.88. On 300 simulated cooks x 8
+eggs answering in words, spread over the five words: very certain 0% of
+first eggs, 13% of second, 52% of eighth; wild guesses fall from 68% to
+15-18% from the second egg on, and stay there. The classes keep their promise: of eggs called very certain, the
+word asked came out 93%; of ballparks, it or a neighbour 97%. The 90%
+interval held the word 93-96% at every egg (whole words make it a little
+wide), and the time range held the cook's own right time 89-94%.
 
 ## 9. The fit
 

@@ -22,7 +22,7 @@ import { logYolkTarget } from '../../src/core/solve.js';
 
 const outcomeConsistent = createPrior(DECIDE_PARTICLES, DECIDE_SEED);
 for (const t of [464, 462, 463]) updatePosterior(outcomeConsistent, DECIDE_GRID, t, logYolkTarget(0.41), 0, 'firm');
-const outcomePosteriors = [...decidePosteriors, { name: 'consistent', eggsLogged: 3, post: outcomeConsistent }];
+export const outcomePosteriors = [...decidePosteriors, { name: 'consistent', eggsLogged: 3, post: outcomeConsistent }];
 
 const OUTCOME_CASES: { posterior: string; level: number; note: string }[] = [
   { posterior: 'prior', level: 0.41, note: 'fresh install, jammy' },

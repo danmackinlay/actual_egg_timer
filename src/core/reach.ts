@@ -65,6 +65,15 @@
  * band cheaper than a miss by two - so that the choices come out monotone by
  * themselves. It is left for later (INFERENCE.md section 8).
  *
+ * THE DECIDED ANSWER. What the screen shows for the slider's level, once
+ * the pot's decision surface is built, is one function, `decideAnswer`, which
+ * both apps call: the time decided at the level answered (`answerAt`), held
+ * by the envelope where the profile is in, moved by the nudge where a time is
+ * chosen, the solve re-read there, the outcome there, and whether the odds
+ * there are low enough to point the cook at Help. Until 6 October 2026 each
+ * app wrote it out for itself, and DECISIONS.md 84 had to land twice
+ * (REVIEW-0.4.x, "Bloat and factoring" 1).
+ *
  * THE WARNING. A level whose odds are under REACH_ODDS (3/10, the owner's
  * number) is not refused: the slider rests there, and the app says the odds
  * are low (`lowOddsAt`). The levels it warns of are those softer than the
@@ -89,7 +98,10 @@ import { Egg } from './geometry.js';
 import { CookSetup } from './protocol.js';
 import { Solution, logYolkTarget, solveCookTime } from './solve.js';
 import { DoseGrid } from './doseGrid.js';
-import { Decision, TimeBounds, decide, oddsInTenths } from './decide.js';
+import {
+  Decision, TimeBounds, appliedNudge, decide, decidedSolution, oddsInTenths,
+} from './decide.js';
+import { Outcome, predictOutcome } from './outcome.js';
 import { Calibration, calibrationDoneness, calibrationParams } from './record.js';
 import {
   LIMITS, SLIDER_STEPS, START_TEMP_PRESETS_C, Verdict, snapDown, snapUp, verdictFor,
@@ -491,4 +503,56 @@ export function protocolAdvice(
     if (oddsNear(change.profile, level) - odds >= ADVICE_GAIN) keys.push(change.key);
   }
   return keys;
+}
+
+/* ------------------------------------------------------ the decided answer */
+
+/** The answer at a level, with its time decided on the pot's surface: what
+ *  the screen shows, and what a cook started now carries. */
+export interface DecidedAnswer {
+  /** The level decided for: the answer's (`LevelAnswer.level`), after any
+   *  snap. The advice is priced here, with `decision.odds`. */
+  level: number;
+  /** The mean solve, re-read at the decided time with the nudge in it
+   *  (`decidedSolution`): its verdict and limits are the mean solve's. */
+  solution: Solution;
+  /** The time decided, before the nudge, and its odds. */
+  decision: Decision;
+  /** What the egg at the nudged time will be like, on the same surface. */
+  outcome: Outcome;
+  /** The nudge the time took (`appliedNudge`): all of it where a time is
+   *  chosen for, none where the solver's own answer stands. */
+  nudge_s: number;
+  /** Whether the odds are low enough to offer advice (`adviceWanted`, with
+   *  `profile`), and the white sets, so there is a cook to advise on. */
+  adviceWanted: boolean;
+}
+
+/**
+ * Decide an answer: the time for `sol`, the mean solve at `level` (an
+ * `answerAt`'s solution and level), on `grid`, this pot's decision surface;
+ * held within the envelope of `profile`, the pot's odds profile, or by
+ * nothing while it is null (DECISIONS.md 84); then moved by `nudge_s`, the
+ * nudge the app drew, where a time is chosen for (E8). The solve is re-read
+ * at the time given and the outcome predicted there, so the time shown, the
+ * time started and the bracket under it agree.
+ *
+ * A level the odds warn of is decided at that level like any other
+ * (DECISIONS.md 83): the warning is `answerAt`'s, and moves nothing here.
+ */
+export function decideAnswer(
+  c: Calibration, egg: Egg, setup: CookSetup, grid: DoseGrid, sol: Solution, level: number,
+  profile: OddsProfile | null, nudge_s: number,
+): DecidedAnswer {
+  const target = logYolkTarget(level);
+  const d = decide(c, grid, sol, target, envelopeBounds(profile, level));
+  const nudge = appliedNudge(sol, nudge_s);
+  return {
+    level: level,
+    solution: decidedSolution(egg, setup, calibrationParams(c), sol, d, nudge),
+    decision: d,
+    outcome: predictOutcome(c.posterior, grid, d.cookTime_s + nudge, target),
+    nudge_s: nudge,
+    adviceWanted: sol.whiteSets && adviceWanted(d.oddsTenths, profile),
+  };
 }
