@@ -36,7 +36,7 @@ const LEFT_OUT = new Set([
 
 const WORKER = 'app/src/ui/serviceWorker.js';
 
-const HOST_SETTINGS = ['netlify.toml', 'vercel.json'];
+const HOST_SETTINGS = ['netlify.toml'];
 
 /** Every file under `dir`, as a path from `site` with forward slashes,
  *  less hidden ones (a .DS_Store copied in with the artwork). */

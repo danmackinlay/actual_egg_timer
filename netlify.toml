@@ -106,7 +106,3 @@
     Referrer-Policy = "strict-origin-when-cross-origin"
     Permissions-Policy = "screen-wake-lock=(self), camera=(), microphone=(), geolocation=(), payment=(), usb=()"
 
-# vercel.json sets no cache headers, and needs none: Vercel sends this same
-# "public, max-age=0, must-revalidate" for static files by default, and purges
-# its edge per deploy. Do not add an immutable rule there either. It does
-# carry the security headers above, in its own format; keep the two alike.

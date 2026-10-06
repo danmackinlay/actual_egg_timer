@@ -16,7 +16,6 @@ dist/
 node_modules/
 _site/
 .netlify/
-.vercel/
 
 # Swift package build products
 .build/

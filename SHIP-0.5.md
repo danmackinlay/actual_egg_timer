@@ -168,8 +168,10 @@ answer did not make. Waiting on the owner.
 
 - [ ] `tools/shape-study/results-quick.json` beside `results.json`: delete
       the quick run, or minify both?
-- [ ] `vercel.json`: delete it, or keep it as the second host (its CSP is a
-      hand copy of `netlify.toml`'s)?
+- [x] `vercel.json`: delete it, or keep it as the second host (its CSP is a
+      hand copy of `netlify.toml`'s)? Deleted (the owner, 7 October 2026:
+      "delete it we can add vercel later if needed"), with README §10's
+      Vercel lines, `netlify.toml`'s note and `tools/precache.mjs`'s.
 - [ ] `WORKLIST.md` and `FOLLOWUP.md`, closed records: move to `LOGBOOK.md`,
       or delete?
 - [ ] Finished drafts compiled on every build: leave, or move out?

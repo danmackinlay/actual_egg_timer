@@ -904,30 +904,29 @@ npm run serve:dev  # _site/ and the sharing endpoint, on a store in memory, on :
 ```
 
 Node version is pinned in `.node-version`, which nvm, fnm and Netlify all read,
-so a Netlify build compiles on the same Node the tests ran on. Vercel offers only
-20.x, 22.x and 24.x — it does not carry a 26 — so `engines.node` is a range
-rather than a pin, and Vercel takes its newest. The range is a statement about
-the APIs this uses (`node:test`, ES2022), not a tested claim: 26 is what runs
-here, and what `.github/workflows/verify.yml` runs `npm run verify` on - the
-type checks, the tests, fixtures identical to a fresh `npm run fixtures`, and
-the Swift core against them.
+so a Netlify build compiles on the same Node the tests ran on. `engines.node` is
+a range rather than a pin, a statement about the APIs this uses (`node:test`,
+ES2022), not a tested claim: 26 is what runs here, and what
+`.github/workflows/verify.yml` runs `npm run verify` on - the type checks, the
+tests, fixtures identical to a fresh `npm run fixtures`, and the Swift core
+against them.
 
-There is nothing else to configure. `netlify.toml` and `vercel.json` each carry
-the two settings their host needs, and the build is `tsc` plus a few `cp`s — no
-bundler, no environment variables, no secrets. The one exception is the
-endpoint that receives shared eggs (E6; `INFERENCE.md` §7), a Netlify function
-(`netlify/functions/eggs.mts`) that Netlify bundles from source on deploy and
-backs with its Blobs store; `@netlify/blobs` is its one runtime dependency, and
-the apps have none. On Vercel the site works and sharing does not, since
-nothing there answers `/api/eggs`; the apps keep the eggs and retry. Because
-nothing is bundled, nothing is hashed: `dist/` and `copy/` keep their filenames
-from one deploy to the next, so they are served to be revalidated on every load
-rather than cached for a year, and a returning browser never runs last month's
-scripts against this month's page. `netlify.toml` says why. The built site also has a
-service worker: `tools/precache.mjs` writes `sw.js`, listing every file with
-its SHA-256, and once a browser has it the app opens with no signal, from one
-build kept whole. A new build takes over only between cooks
-(`src/ui/offline.ts`), and deleting `sw.js` takes the worker out.
+There is nothing else to configure. `netlify.toml` carries the settings the host
+needs, and the build is `tsc` plus a few `cp`s — no bundler, no environment
+variables, no secrets. The one exception is the endpoint that receives shared
+eggs (E6; `INFERENCE.md` §7), a Netlify function (`netlify/functions/eggs.mts`)
+that Netlify bundles from source on deploy and backs with its Blobs store;
+`@netlify/blobs` is its one runtime dependency, and the apps have none. Another
+host would serve the site, but nothing there would answer `/api/eggs`, so
+sharing would wait until the endpoint was ported; the apps keep the eggs and
+retry. Because nothing is bundled, nothing is hashed: `dist/` and `copy/` keep
+their filenames from one deploy to the next, so they are served to be
+revalidated on every load rather than cached for a year, and a returning browser
+never runs last month's scripts against this month's page. `netlify.toml` says
+why. The built site also has a service worker: `tools/precache.mjs` writes
+`sw.js`, listing every file with its SHA-256, and once a browser has it the app
+opens with no signal, from one build kept whole. A new build takes over only
+between cooks (`src/ui/offline.ts`), and deleting `sw.js` takes the worker out.
 
 `src/core/` has zero dependencies, no DOM, no `Date`, no I/O and no `async`. It is plain
 interfaces and top-level functions with explicit loops, which is deliberate: it is meant
