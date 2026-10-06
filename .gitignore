@@ -11,6 +11,9 @@ xcuserdata/
 # Swift Package Manager
 .swiftpm/
 
+# The shape study's runs, made again by tools/shape-study/RESULTS.md's commands
+tools/shape-study/results*.json
+
 # Build output
 dist/
 node_modules/

@@ -166,7 +166,9 @@ python3 tools/shape-study/report.py      # prints the tables below
 
 It needs numpy and scipy, and no npm packages. It writes `results.json`
 (`results-quick.json` with `--quick`). `report.py` reads both; the quick run
-feeds the mesh-convergence line.
+feeds the mesh-convergence line. Neither is committed (the owner, 7 October
+2026): each is made again by the commands above, and the tables below are
+what they gave.
 
 ## Tables
 

@@ -166,8 +166,10 @@ core's exports.
 `DECISIONS.md` 90 sends these to 0.5; each was asked as a choice the
 answer did not make. Waiting on the owner.
 
-- [ ] `tools/shape-study/results-quick.json` beside `results.json`: delete
-      the quick run, or minify both?
+- [x] `tools/shape-study/results-quick.json` beside `results.json`: delete
+      the quick run, or minify both? Both deleted and ignored (the owner, 7
+      October 2026: each is made again by the study, ~2.5 min and ~20 s);
+      `RESULTS.md` keeps the tables they gave.
 - [x] `vercel.json`: delete it, or keep it as the second host (its CSP is a
       hand copy of `netlify.toml`'s)? Deleted (the owner, 7 October 2026:
       "delete it we can add vercel later if needed"), with README §10's
