@@ -46,12 +46,20 @@ core's exports.
       profile's pot, the owner's egg (83, 84) and a white that never sets;
       `test/reach.test.ts` 14. The differences between the two copies are
       in `LOGBOOK.md`, 6 October 2026.
-- [ ] **A3. One `recordFor`** (Bloat 2). Egg-record assembly
+- [x] **A3. One `recordFor`** (Bloat 2). Egg-record assembly
       (`src/ui/calibration.ts`, `ios/App/Cook.swift`) is the fit's
       training data, and is twinned by hand. One core function from the
-      cook's facts, fixtured.
-- [ ] **A4. The decode decision in core** (Bloat 4): fresh, rebuild,
-      rebased or loaded, today in each app and untested in Swift.
+      cook's facts, fixtured. Done: `recordFor(CookFacts)` and
+      `probeReadingFor` in `src/core/record.ts` and `Record.swift`, 32
+      cases and 8 probe whens in `record.json`; each app gathers its facts
+      and calls them. Checked before the switch against each app's old
+      copy: the same record, the web's to the character. `18b428a`.
+- [x] **A4. The decode decision in core** (Bloat 4): fresh, rebuild,
+      rebased or loaded, today in each app and untested in Swift. Done:
+      `loadDecision(StoreRead)` in `src/core/record.ts` and `Record.swift`,
+      25 cases in `record.json`; each app reads its store apart and keeps
+      what core decides. Checked before the switch: the web's whole decode
+      over 41479 stores, and iOS's decision over every one of 4320 reads. `f531e4d`.
 - [x] **A5. The sharing state machine in core** (Bloat 3): `turnedOn`,
       `forgotten`, `deletionAsked`, `reconciled`, `advances`, into
       `src/core/share.ts` with fixtures; the server shares `isUid`.

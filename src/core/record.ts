@@ -41,6 +41,7 @@ import {
 import { PriorStart, priorStart } from './population.js';
 import { calibrationGrid } from './policy.js';
 import { Outcome } from './outcome.js';
+import { registerOf } from './language.js';
 
 /** The schema version. A loader refuses any other: a record from a later
  *  schema means something this code does not know how to fold. */
@@ -249,6 +250,141 @@ export function recordMass_g(mass_kg: number): number {
  *  shows tenths; a hundredth keeps a Fahrenheit tenth distinct. */
 export function recordProbe_C(centre_C: number): number {
   return Math.round(centre_C * 100) / 100;
+}
+
+/* ------------------------------------------------------------- the making */
+
+/* WHO MAKES A RECORD. Both apps, from the same facts, through `recordFor`:
+ * the record is the fit's training data, and two hand copies of how it is
+ * assembled had begun to drift in how they read the same cook. Each app
+ * gathers its facts - off the web's ticket and machine, off iOS's ticket and
+ * dates - and says nothing else; fixtures/record.json holds the two to one
+ * answer for every branch. The facts carry no clock: the day and the start
+ * are read by the app, which knows the time zone. */
+
+/**
+ * What an app knows about one cook when it writes its egg down: what was
+ * frozen at "Eggs in", how the cook went, and whichever answers have been
+ * given so far. SI, and every time in s from egg-in.
+ */
+export interface CookFacts {
+  app: AppName;
+  appVersion: string;
+  /** The population the cook's prior was drawn from: the record's `prior`. */
+  prior: string;
+  /** The local date the cook started, YYYY-MM-DD, by the app's clock. */
+  day: string;
+  /** The moment the cook started, whole ms since 1970 UTC, which the web
+   *  keeps so that one cook in two tabs is one egg; null on iOS, which runs
+   *  one cook at a time. The record has no `id` then. */
+  id: number | null;
+  /** The egg as the solver was told it. */
+  mass_kg: number;
+  massFrom: MassFrom;
+  /** The cook's carton, read only when `massFrom` is a class: none named
+   *  is the European one. */
+  sizeTable: SizeTable | null;
+  /** The pot as the cook ran it, with the time to boil this cook measured,
+   *  if it did. */
+  setup: CookSetup;
+  eggFrom: EggFrom;
+  /** Whether a measured pan was on file at "Eggs in". Read only on a hot
+   *  start, which never times its own pan; a finished cold start has. */
+  boilRemembered: boolean;
+  /** The doneness the cook was RUN at, [0, 1]. */
+  level: number;
+  /** The cook time that ran, egg-in to the scheduled pull: what was
+   *  recommended, with the nudge in it. */
+  cook_s: number;
+  /** The nudge in that time, which the record keeps apart. */
+  nudge_s: number;
+  /** When the cook tapped out of PULL, or null when nobody did and the
+   *  grace ran out. A tap at or before egg-in measures nothing. */
+  out_s: number | null;
+  /** How long the counted cooling ran from the pull: read only off the
+   *  counter, where there is none. */
+  cool_s: number;
+  yolkWord: YolkWord | null;
+  white: WhiteReport | null;
+  probe: ProbeReading | null;
+  /** What the app said at "Eggs in", or null. */
+  forecast: Forecast | null;
+  /** The catalogue the cook was reading: the record's `lang`, and through
+   *  it `register`. */
+  lang: string;
+  units: Units;
+}
+
+/**
+ * The record of one egg, from its facts.
+ *
+ * The pull is MEASURED when the cook tapped out of PULL after egg-in -
+ * `pulledBy: 'cook'`, at the tap - and ASSUMED when the grace ran out:
+ * `pulledBy: 'timeout'`, at the scheduled time. The time that ran is split
+ * into what was recommended and the nudge added on purpose (INFERENCE.md
+ * section 4). The old yolk answer against the level is never written now
+ * (DECISIONS.md 92). `id` is written only when there is one, where the web
+ * has always written it, so a record is stored as it was before.
+ */
+export function recordFor(f: CookFacts): EggRecord {
+  const measured = f.out_s !== null && f.out_s > 0;
+  const s = f.setup;
+  const r: EggRecord = {
+    v: RECORD_VERSION,
+    uid: null,
+    day: f.day,
+    id: f.id,
+    app: f.app,
+    appVersion: f.appVersion,
+    prior: f.prior,
+    model: MODEL_ID,
+    egg: {
+      mass_g: recordMass_g(f.mass_kg),
+      massFrom: f.massFrom,
+      sizeTable: f.massFrom === 'class' ? f.sizeTable ?? 'eu' : null,
+    },
+    setup: {
+      startMode: s.startMode,
+      eggStart_C: s.eggStart_C,
+      eggFrom: f.eggFrom,
+      ambient_C: s.ambient_C,
+      boiling_C: s.boiling_C,
+      timeToBoil_s: s.timeToBoil_s,
+      timeToBoilFrom: s.startMode === 'cold' ? 'measured' : f.boilRemembered ? 'remembered' : 'default',
+      cooling: s.cooling,
+      afterBoil: s.afterBoil ?? 'hold',
+      waterLitres: s.waterLitres,
+      eggCount: s.eggCount,
+    },
+    level: f.level,
+    recommended_s: f.cook_s - f.nudge_s,
+    nudge_s: f.nudge_s,
+    pulled_s: measured ? f.out_s as number : f.cook_s,
+    pulledBy: measured ? 'cook' : 'timeout',
+    cooled_s: s.cooling === 'counter' ? 0 : f.cool_s,
+    yolk: null,
+    yolkWord: f.yolkWord,
+    white: f.white,
+    probe: f.probe,
+    forecast: f.forecast,
+    lang: f.lang,
+    register: registerOf(f.lang),
+    units: f.units,
+  };
+  if (f.id === null) delete r.id;
+  return r;
+}
+
+/**
+ * A probe reading as the record carries it: the centre to a hundredth of a
+ * degree, and when it was asked for - the end of the counted cooling,
+ * `coolEnd_s` from egg-in - as seconds after the moment `r` scores as the
+ * pull. Null for when, if there was no counted cooling or it ended before
+ * that moment.
+ */
+export function probeReadingFor(r: EggRecord, centre_C: number, coolEnd_s: number | null): ProbeReading {
+  const asked = coolEnd_s === null ? null : coolEnd_s - recordCookTime_s(r);
+  return { centre_C: recordProbe_C(centre_C), after_s: asked !== null && asked >= 0 ? asked : null };
 }
 
 /* ------------------------------------------------------------- validation */
@@ -678,6 +814,109 @@ export function replay(
     foldRecord(c, r, buildRequestedGrid(gridRequestFor(c, r, grid)));
   }
   return c;
+}
+
+/* ----------------------------------------------------------- the store, read */
+
+/* WHAT A LAUNCH MAKES OF THE STORE. Each app keeps the posterior, the base
+ * under it and the log in a store of its own (the web's localStorage, iOS's
+ * UserDefaults) and reads it apart in its own way: that is I/O, and stays in
+ * the app. What it then does with what it read is the same decision in both,
+ * and lives here: `loadDecision`, a pure function of the parts and of this
+ * build's population and model. Every damaged part is refused, never read
+ * around; a log is never written over (DECISIONS.md 81): a record this build
+ * cannot read is set aside in its place and kept, a store it cannot use whole
+ * is kept aside as stored before anything replaces it (`loses`), and a store
+ * folded under another model or drawn from another population is replayed. */
+
+/** What a launch found: `fresh`, nothing to use, so the prior; `rebuild`,
+ *  the log good and the posterior not this build's to use, so the log is
+ *  folded again; `rebased`, the log unusable and what it taught kept as the
+ *  base, the log starting again empty; `loaded`, everything as stored. */
+export type LoadPath = 'fresh' | 'rebuild' | 'rebased' | 'loaded';
+
+/** What an app read from its store, part by part. */
+export interface StoreRead {
+  /** Whether anything was stored at all: a text that is not empty. */
+  stored: boolean;
+  /** Whether it is a store of this format, v4, that can be taken apart. */
+  v4: boolean;
+  /** The base under the posterior: null where the store has none, else
+   *  whether it read whole. */
+  base: 'sound' | 'damaged' | null;
+  /** Whether the posterior read whole. */
+  posterior: boolean;
+  /** How many records the posterior says it has absorbed, or null if that
+   *  is not a whole number from zero. */
+  folded: number | null;
+  /** How many records of the log this build reads, or null when the log is
+   *  not a list. */
+  records: number | null;
+  /** Whether the records this build reads differ from the ones stored as
+   *  read: one has become unreadable, or one set aside readable again. */
+  moved: boolean;
+  /** The population the posterior was drawn from; the literature's when the
+   *  store does not say, as every store from before E7 was. */
+  population: string;
+  /** The model it was folded under, or null when the store does not say. */
+  model: string | null;
+}
+
+/** What to keep, in the parts that were read. */
+export interface LoadDecision {
+  path: LoadPath;
+  /** Whether keeping this loses something the store held - a log, or a
+   *  store this build cannot read at all - so the stored text is to be kept
+   *  aside, as stored, before anything is written over it. */
+  loses: boolean;
+  /** The base: the stored base, the stored posterior, or none (null). */
+  base: 'stored' | 'posterior' | null;
+  /** The calibration: the stored posterior as it is, or `start` - a copy of
+   *  the base, or the prior where there is none - for the log to be folded
+   *  onto again. */
+  calibration: 'posterior' | 'start';
+  /** How many records of the kept log the calibration has absorbed. */
+  folded: number;
+  /** Whether the log as read is kept, with every record set aside in its
+   *  place; when not, the log starts again empty. */
+  log: boolean;
+}
+
+/**
+ * What a launch does with the store it read, for a build that draws its
+ * prior from `population` and folds under `model`:
+ *
+ *  - no v4 that can be read: `fresh`, the prior; lost, if anything was there.
+ *  - the log not a list: `rebased`. Its records cannot be folded, but what
+ *    they taught is in the posterior, which becomes the base - or the base,
+ *    if the posterior is damaged too.
+ *  - the posterior damaged, the base damaged, the count damaged, another
+ *    population, another model or none, or a record that changed sides:
+ *    `rebuild`, the log folded again from the base, or the prior. A base
+ *    cannot be replayed, so a sound one stays as it is.
+ *  - a posterior that has absorbed more records than the log holds:
+ *    `rebased`, on that posterior.
+ *  - otherwise `loaded`.
+ */
+export function loadDecision(read: StoreRead, population: string, model: string): LoadDecision {
+  if (!read.v4) {
+    return { path: 'fresh', loses: read.stored, base: null, calibration: 'start', folded: 0, log: false };
+  }
+  if (read.records === null) {
+    const base = read.posterior ? 'posterior' : read.base === 'sound' ? 'stored' : null;
+    return { path: 'rebased', loses: true, base: base, calibration: 'start', folded: 0, log: false };
+  }
+  const base = read.base === 'sound' ? 'stored' : null;
+  if (
+    read.base === 'damaged' || !read.posterior || read.folded === null
+    || read.population !== population || read.model !== model || read.moved
+  ) {
+    return { path: 'rebuild', loses: false, base: base, calibration: 'start', folded: 0, log: true };
+  }
+  if (read.folded > read.records) {
+    return { path: 'rebased', loses: true, base: 'posterior', calibration: 'start', folded: 0, log: false };
+  }
+  return { path: 'loaded', loses: false, base: base, calibration: 'posterior', folded: read.folded, log: true };
 }
 
 /* ---------------------------------------------------------- the results file */

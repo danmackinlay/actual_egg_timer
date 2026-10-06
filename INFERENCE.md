@@ -257,7 +257,11 @@ rather than repaired. With the observations kept, a model change is a replay.
 
 **Built (E1, 26 September).** One record per egg, stored on the device beside
 the posterior; uploaded only under §7. The reference is `src/core/record.ts`,
-held to `EggTimerCore/Record.swift` by `fixtures/record.json`.
+held to `EggTimerCore/Record.swift` by `fixtures/record.json`. Both apps make
+a record the same way, in core (`recordFor`, 6 October 2026): each gathers
+the cook's facts - what was frozen at "Eggs in", the time that ran, when the
+cook tapped out of PULL, the answers - and core assembles the record, so the
+fit's training data cannot drift between the two.
 
 ```json
 {
@@ -395,7 +399,10 @@ log leaves behind (the `rebased` path above).
 the base and the log. A damaged log - one bad record refuses the lot, because a
 hole would change what every later egg is scored against - cannot be folded, but
 what it taught is in the posterior, which is sound, so the posterior becomes the
-new base and the log starts again empty. "Forget everything" clears the log, the
+new base and the log starts again empty. What a launch keeps of its store -
+`fresh`, `rebuild`, `rebased` or `loaded` - is one decision in core for both
+apps (`loadDecision`, 6 October 2026), each app reading its own store apart
+and core deciding from the parts. "Forget everything" clears the log, the
 base and the posterior together.
 
 **Version skew.** The web app deploys on push and the iOS app ships when a build

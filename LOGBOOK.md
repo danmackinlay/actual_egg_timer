@@ -4635,3 +4635,60 @@ no fixture does) gave identical JSON before and after; and the decisions
 made, counted in `decisionAtLevel`, are the same: 21, 23 and 13 for
 `fixtures/reach.json`'s three profiles, 294 across `test/reach.test.ts`,
 4081 across the 375.
+
+## 6 October 2026: one record, made in core (SHIP-0.5 A3)
+
+Both apps assembled an egg's record by hand, the web in `eggRecordFor`
+(`src/ui/calibration.ts`) and iOS in `Cook.eggRecord`, and the probe
+reading's "when" twice more (`feedback.ts`, `Cook.probeReading`). Now core
+does it: `recordFor(CookFacts)` and `probeReadingFor` in
+`src/core/record.ts`, twinned in `Record.swift`, with 32 cooks and 8 probe
+whens in `fixtures/record.json` (each branch: boil tapped or not, a tap
+late, on time, early, at egg-in or none, each cooling, the answers and a
+probe or not, a measured room, the web's `id` and iOS's none). Each app
+gathers its facts and calls them.
+
+Checked before the switch, by a test written for it and then removed: on
+the web, the old `eggRecordFor` against `recordFor` over 3969 ticket,
+machine and answer combinations, identical to the character (key order
+included, so a stored record is written as before); on iOS, the old body
+over the fixture's facts, identical field for field, probe whens too.
+
+The differences found: none that a cook can make. The web read the
+cooling off the machine and iOS off the ticket's pot; the two are set
+together at "Eggs in" and never move, and core reads the pot. Test 4b
+had paired a counter machine with an ice ticket, which only a test can
+do; it now gives both the counter. The `pulledBy` against `outAt`
+difference is not one (REVIEW-0.4.x.md, Bloat 2): iOS sets `outAt` only
+at the cook's tap, as the web sets `pulledBy: 'cook'`. Sous-vide runs no
+cook in either app, so it makes no record. iOS's debug `-seedEggs` still
+writes its own records, old-style answers included, on purpose.
+
+Not verified by driving either app: a cook logged after the switch, on
+the web and on the simulator, should read as before in the export.
+
+## 6 October 2026: what a launch keeps, decided in core (SHIP-0.5 A4)
+
+What each app does with its stored calibration and log at launch -
+`fresh`, `rebuild`, `rebased` or `loaded`, and whether the stored text is
+kept aside first - was decided in each app (`decodeParts` on the web,
+`Calibrations.decode` on iOS, which had no tests). Now the decision is
+core's: `loadDecision(StoreRead, population, model)` in
+`src/core/record.ts` and `Record.swift`, 25 cases in
+`fixtures/record.json`. Each app still reads its own store apart (the
+I/O) into a `StoreRead`, and keeps what the decision says. DECISIONS.md 81
+holds as before: nothing is written over unread, a record that does not
+read is set aside in its place, a model or population change replays.
+
+Checked before the switch, by tests written for it and then removed: the
+web's old decode against the new over 41479 stores (every path; the kept
+state, the path and `loses` identical), and iOS's old decision, reduced to
+what it read, against `loadDecision` over all 4320 combinations.
+
+One difference found and kept: a store with no `base` key at all. The web
+reads it as a damaged base (a rebuild); iOS as no base. Neither app ever
+meets the other's store - the web writes `base: null`, iOS leaves the key
+out - so each keeps its reading, in the app, where the store is read.
+
+Not verified by driving either app: a launch on an existing store should
+load it without a replay, and one after a model change should replay.
