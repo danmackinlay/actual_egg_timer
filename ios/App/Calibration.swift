@@ -187,7 +187,11 @@ enum Calibrations {
         var rng: Int32
         var a: [Double]
         var o: [Double]
-        var t: [Double]
+        /// The counter's carryover, which left the particle in 0.5
+        /// (DECISIONS.md 95): written as 1.0 for every particle, so a build
+        /// from before 0.5 still reads the store (and replays it, its model
+        /// not being this one), and never read. The web's `STORED_TAU_AIR`.
+        var t: [Double]?
         /// The noise scale, the white offset and the tender | firm gap.
         var sd: [Double]
         var wo: [Double]
@@ -317,7 +321,7 @@ enum Calibrations {
         let p = c.posterior.particles
         return StoredPosterior(
             n: c.eggsLogged, rng: c.posterior.rng,
-            a: p.map(\.alphaM2s), o: p.map(\.logDoseOffset), t: p.map(\.tauAirScale),
+            a: p.map(\.alphaM2s), o: p.map(\.logDoseOffset), t: p.map { _ in 1.0 },
             sd: p.map(\.noise), wo: p.map(\.whiteOffset), wg: p.map(\.whiteFirmGap),
             w: c.posterior.weights
         )
@@ -325,18 +329,17 @@ enum Calibrations {
 
     /// A posterior, or nil if any part of it is damaged. A half-valid posterior
     /// is worse than none: a single NaN weight would poison every solve from
-    /// then on. Same rules as the web app's: alpha, tauAirScale, the noise and
-    /// the firm gap strictly positive (a zero noise divides by zero in the
-    /// probit), weights non-negative, the two offsets anything finite.
+    /// then on. Same rules as the web app's: alpha, the noise and the firm gap
+    /// strictly positive (a zero noise divides by zero in the probit), weights
+    /// non-negative, the two offsets anything finite; `t` not read.
     private static func calibration(_ s: StoredPosterior?) -> Calibration? {
         guard let s else { return nil }
         let a = s.a
         guard
             s.n >= 0, !a.isEmpty,
-            [s.o.count, s.t.count, s.sd.count, s.wo.count, s.wg.count, s.w.count].allSatisfy({ $0 == a.count }),
+            [s.o.count, s.sd.count, s.wo.count, s.wg.count, s.w.count].allSatisfy({ $0 == a.count }),
             a.allSatisfy({ $0.isFinite && $0 > 0 }),
             s.o.allSatisfy(\.isFinite),
-            s.t.allSatisfy({ $0.isFinite && $0 > 0 }),
             s.sd.allSatisfy({ $0.isFinite && $0 > 0 }),
             s.wo.allSatisfy(\.isFinite),
             s.wg.allSatisfy({ $0.isFinite && $0 > 0 }),
@@ -346,7 +349,7 @@ enum Calibrations {
         particles.reserveCapacity(a.count)
         for i in 0..<a.count {
             particles.append(Particle(
-                alphaM2s: a[i], logDoseOffset: s.o[i], tauAirScale: s.t[i],
+                alphaM2s: a[i], logDoseOffset: s.o[i],
                 noise: s.sd[i], whiteOffset: s.wo[i], whiteFirmGap: s.wg[i]
             ))
         }

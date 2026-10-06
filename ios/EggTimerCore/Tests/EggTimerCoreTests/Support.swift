@@ -10,6 +10,17 @@ import Foundation
 /// (see ScenarioTests.swift for the headroom there).
 let conformanceTolerance = 1e-12
 
+/// A whole cook's accumulated dose, where the two libms' last bits are
+/// compounded. One ulp of difference in one mode's per-step decay factor,
+/// carried through the ~1300 steps of a cook, is ~1.5e-13 of the peak
+/// temperature, and a dose is exponential in it (ln 10 / z, 0.5 per degree
+/// for the yolk): ~5e-12. That is what the decide fixture's `firmer`
+/// posterior met when DECISIONS.md 95 drew it again, at a time-scale where
+/// the peak agreed to 1.5e-13 and the doses to 2-5e-12; at the neighbouring
+/// 1.69935809e-7 both agree to 1e-14 (LOGBOOK.md, 6 October 2026). Still
+/// eight orders tighter than anything that would change an answer.
+let wholeCookDoseTolerance = 1e-11
+
 /// The one comparison every conformance suite makes: relative to the expected
 /// value, or absolute below 1.
 func expectClose(
@@ -46,7 +57,7 @@ func posterior(_ json: [String: Any], rng: Int32? = nil) throws -> Posterior {
     let particles = try json.rows("particles").map {
         try Particle(
             alphaM2s: $0.num("alpha_m2s"), logDoseOffset: $0.num("logDoseOffset"),
-            tauAirScale: $0.num("tauAirScale"), noise: $0.num("noise"),
+            noise: $0.num("noise"),
             whiteOffset: $0.num("whiteOffset"), whiteFirmGap: $0.num("whiteFirmGap")
         )
     }

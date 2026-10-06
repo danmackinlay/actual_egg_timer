@@ -9,7 +9,7 @@ import Foundation
 /// the white was ("runny", "tender", "firm"), and we update a posterior.
 ///
 /// METHOD: sequential Monte Carlo (a particle filter), NOT variational
-/// inference. There are six uncertain scalars here and a cached forward model,
+/// inference. There are five uncertain scalars here and a cached forward model,
 /// so particles give the exact posterior predictive with none of the machinery.
 ///
 /// THE LIKELIHOOD (INFERENCE.md section 3) is an ordered probit. For the
@@ -74,7 +74,6 @@ public struct Particle: Sendable, Codable, Equatable {
     /// units. Stored as an OFFSET rather than an absolute target so it carries
     /// across different slider positions.
     public var logDoseOffset: Double
-    public var tauAirScale: Double
     /// The sd of the Gaussian every yolk answer is seen through, log10 yolk dose.
     public var noise: Double
     /// Additive shift on the white's runny | tender cutpoint, log10 white dose.
@@ -83,12 +82,11 @@ public struct Particle: Sendable, Codable, Equatable {
     public var whiteFirmGap: Double
 
     public init(
-        alphaM2s: Double, logDoseOffset: Double, tauAirScale: Double,
+        alphaM2s: Double, logDoseOffset: Double,
         noise: Double, whiteOffset: Double, whiteFirmGap: Double
     ) {
         self.alphaM2s = alphaM2s
         self.logDoseOffset = logDoseOffset
-        self.tauAirScale = tauAirScale
         self.noise = noise
         self.whiteOffset = whiteOffset
         self.whiteFirmGap = whiteFirmGap
@@ -161,9 +159,6 @@ let logWhiteTarget = log10(whiteDoseTarget)
 private let whiteNoisePerYolk = Constants.zYolk / Constants.zWhite
 
 private let priorOffsetSd = 0.22
-/// Wide because kitchens differ, not because the physics is in doubt: a
-/// draught, an egg cup, a wetter shell. infer.ts has the numbers.
-private let priorTauAirLogSd = 0.35
 
 // MARK: - Deterministic RNG, so calibration is reproducible and portable
 
@@ -225,19 +220,17 @@ public struct Population: Sendable, Equatable {
     public var id: String
     public var alphaM2s: LogNormal
     public var logDoseOffset: Normal
-    public var tauAirScale: LogNormal
     public var noise: LogNormal
     public var whiteOffset: Normal
     public var whiteFirmGap: LogNormal
 
     public init(
-        id: String, alphaM2s: LogNormal, logDoseOffset: Normal, tauAirScale: LogNormal,
+        id: String, alphaM2s: LogNormal, logDoseOffset: Normal,
         noise: LogNormal, whiteOffset: Normal, whiteFirmGap: LogNormal
     ) {
         self.id = id
         self.alphaM2s = alphaM2s
         self.logDoseOffset = logDoseOffset
-        self.tauAirScale = tauAirScale
         self.noise = noise
         self.whiteOffset = whiteOffset
         self.whiteFirmGap = whiteFirmGap
@@ -245,12 +238,12 @@ public struct Population: Sendable, Equatable {
 }
 
 /// The literature's population: the prior every cook drew from before E7,
-/// number for number.
+/// number for number, less the carryover, which left the particle in 0.5
+/// (DECISIONS.md 95).
 public let literaturePopulation = Population(
     id: "2026-09",
     alphaM2s: LogNormal(median: Constants.alphaDefault, logSd: Constants.alphaRelSD),
     logDoseOffset: Normal(mean: 0.0, sd: priorOffsetSd),
-    tauAirScale: LogNormal(median: 1.0, logSd: priorTauAirLogSd),
     noise: LogNormal(median: noiseMedian, logSd: noiseLogSd),
     whiteOffset: Normal(mean: 0.0, sd: whiteOffsetSd),
     whiteFirmGap: LogNormal(median: whiteFirmGapMedian, logSd: whiteFirmGapLogSd)
@@ -258,8 +251,8 @@ public let literaturePopulation = Population(
 
 // MARK: - Prior
 
-/// Six draws per particle, always in this order, in the prior and in every
-/// resample: alpha, taste offset, tauAirScale, noise, white offset, firm gap.
+/// Five draws per particle, always in this order, in the prior and in every
+/// resample: alpha, taste offset, noise, white offset, firm gap.
 /// From the literature's population unless another is given.
 public func createPrior(count: Int, seed: Int32, population pop: Population = literaturePopulation) -> Posterior {
     var particles = [Particle]()
@@ -273,14 +266,12 @@ public func createPrior(count: Int, seed: Int32, population pop: Population = li
         let c = gaussian(state); state = c.state
         let d = gaussian(state); state = d.state
         let e = gaussian(state); state = e.state
-        let f = gaussian(state); state = f.state
         particles.append(Particle(
             alphaM2s: pop.alphaM2s.median * exp(pop.alphaM2s.logSd * a.value),
             logDoseOffset: pop.logDoseOffset.mean + pop.logDoseOffset.sd * b.value,
-            tauAirScale: pop.tauAirScale.median * exp(pop.tauAirScale.logSd * c.value),
-            noise: pop.noise.median * exp(pop.noise.logSd * d.value),
-            whiteOffset: pop.whiteOffset.mean + pop.whiteOffset.sd * e.value,
-            whiteFirmGap: pop.whiteFirmGap.median * exp(pop.whiteFirmGap.logSd * f.value)
+            noise: pop.noise.median * exp(pop.noise.logSd * c.value),
+            whiteOffset: pop.whiteOffset.mean + pop.whiteOffset.sd * d.value,
+            whiteFirmGap: pop.whiteFirmGap.median * exp(pop.whiteFirmGap.logSd * e.value)
         ))
     }
     return Posterior(particles: particles, weights: weights, rng: state)
@@ -459,10 +450,10 @@ public func updatePosterior(
 public let kernelDiscount = 0.98
 private let kernelShrink = (3.0 * kernelDiscount - 1.0) / (2.0 * kernelDiscount)
 private let kernelSpread = (1.0 - kernelShrink * kernelShrink).squareRoot()
-private let kernelDims = 6
+private let kernelDims = 5
 
 private func kernelCoords(_ p: Particle) -> [Double] {
-    [log(p.alphaM2s), p.logDoseOffset, log(p.tauAirScale), log(p.noise), p.whiteOffset, log(p.whiteFirmGap)]
+    [log(p.alphaM2s), p.logDoseOffset, log(p.noise), p.whiteOffset, log(p.whiteFirmGap)]
 }
 
 /// Lower-triangular Cholesky factor; a pivot that is not positive gets a zero
@@ -483,7 +474,7 @@ private func cholesky(_ cov: [[Double]]) -> [[Double]] {
     return L
 }
 
-/// Systematic resampling, then Liu and West's kernel. The same six normal draws
+/// Systematic resampling, then Liu and West's kernel. The same five normal draws
 /// per particle, in the same order, as the TypeScript.
 private func resample(_ post: inout Posterior) {
     let n = post.particles.count
@@ -538,8 +529,8 @@ private func resample(_ post: inout Posterior) {
             y[k] = kernelShrink * q[k] + (1.0 - kernelShrink) * mean[k] + kernelSpread * noise
         }
         next.append(Particle(
-            alphaM2s: exp(y[0]), logDoseOffset: y[1], tauAirScale: exp(y[2]),
-            noise: exp(y[3]), whiteOffset: y[4], whiteFirmGap: exp(y[5])
+            alphaM2s: exp(y[0]), logDoseOffset: y[1],
+            noise: exp(y[2]), whiteOffset: y[3], whiteFirmGap: exp(y[4])
         ))
     }
     for i in 0..<n {
@@ -551,14 +542,14 @@ private func resample(_ post: inout Posterior) {
 
 // MARK: - Readout
 
+/// The parameters to solve with: the posterior mean time-scale, and the
+/// counter's carryover at the physics (DECISIONS.md 95).
 public func posteriorParams(_ post: Posterior) -> ModelParams {
     var alpha = 0.0
-    var tauAir = 0.0
     for i in 0..<post.particles.count {
         alpha += post.weights[i] * post.particles[i].alphaM2s
-        tauAir += post.weights[i] * post.particles[i].tauAirScale
     }
-    return ModelParams(alphaM2s: alpha, tauAirScale: tauAir)
+    return ModelParams(alphaM2s: alpha, tauAirScale: ModelParams.default.tauAirScale)
 }
 
 /// The posterior mean of the white offset: where the runny | tender cutpoint

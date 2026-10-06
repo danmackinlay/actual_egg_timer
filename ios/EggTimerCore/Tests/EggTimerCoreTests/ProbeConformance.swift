@@ -98,7 +98,6 @@ struct ProbeConformance {
             for k in 0..<particles.count {
                 try expectClose(post.particles[k].alphaM2s, particles[k].num("alpha_m2s"), "update \(i) particle \(k) alpha")
                 try expectClose(post.particles[k].logDoseOffset, particles[k].num("logDoseOffset"), "update \(i) particle \(k) offset")
-                try expectClose(post.particles[k].tauAirScale, particles[k].num("tauAirScale"), "update \(i) particle \(k) tau")
                 try expectClose(post.particles[k].noise, particles[k].num("noise"), "update \(i) particle \(k) noise")
                 try expectClose(post.particles[k].whiteOffset, particles[k].num("whiteOffset"), "update \(i) particle \(k) white")
                 try expectClose(post.particles[k].whiteFirmGap, particles[k].num("whiteFirmGap"), "update \(i) particle \(k) gap")

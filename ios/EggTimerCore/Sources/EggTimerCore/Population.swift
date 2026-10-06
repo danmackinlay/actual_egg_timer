@@ -8,44 +8,43 @@ import Foundation
 /// the iOS app bundles it. Every field read here is checked, and anything else
 /// in the file is the fit's own record and ignored. Before any egg the app
 /// solves at the population's centre (`PriorStart`), which for the literature
-/// is exactly the literature's values.
+/// is exactly the literature's values. A file from before 0.5 has a spread for
+/// the carryover too (`tauAirScale`), which is ignored like the rest
+/// (DECISIONS.md 95).
 
 /// Where a calibration that has learned nothing solves: the population's
 /// centre.
 public struct PriorStart: Sendable, Equatable {
     public var alphaM2s: Double
-    public var tauAirScale: Double
     /// The white's runny | tender cutpoint, decades of white dose above
     /// `whiteDoseTarget`.
     public var whiteOffset: Double
 
-    public init(alphaM2s: Double, tauAirScale: Double, whiteOffset: Double) {
+    public init(alphaM2s: Double, whiteOffset: Double) {
         self.alphaM2s = alphaM2s
-        self.tauAirScale = tauAirScale
         self.whiteOffset = whiteOffset
     }
 }
 
 public func priorStart(_ p: Population) -> PriorStart {
-    PriorStart(alphaM2s: p.alphaM2s.median, tauAirScale: p.tauAirScale.median, whiteOffset: p.whiteOffset.mean)
+    PriorStart(alphaM2s: p.alphaM2s.median, whiteOffset: p.whiteOffset.mean)
 }
 
 /// The literature's start: the literature's values exactly.
 public let literatureStart = priorStart(literaturePopulation)
 
-/// The file's shape: an id, and the six spreads under `prior`.
+/// The file's shape: an id, and the five spreads under `prior`.
 private struct PopulationFile: Decodable {
     struct Prior: Decodable {
         var alphaM2s: LogNormal
         var logDoseOffset: Normal
-        var tauAirScale: LogNormal
         var noise: LogNormal
         var whiteOffset: Normal
         var whiteFirmGap: LogNormal
 
         enum CodingKeys: String, CodingKey {
             case alphaM2s = "alpha_m2s"
-            case logDoseOffset, tauAirScale, noise, whiteOffset, whiteFirmGap
+            case logDoseOffset, noise, whiteOffset, whiteFirmGap
         }
     }
     var id: String
@@ -66,10 +65,10 @@ private func valid(_ n: Normal) -> Bool {
 public func parsePopulation(_ data: Data) -> Population? {
     guard let f = try? JSONDecoder().decode(PopulationFile.self, from: data), !f.id.isEmpty else { return nil }
     let p = f.prior
-    guard valid(p.alphaM2s), valid(p.logDoseOffset), valid(p.tauAirScale), valid(p.noise),
+    guard valid(p.alphaM2s), valid(p.logDoseOffset), valid(p.noise),
           valid(p.whiteOffset), valid(p.whiteFirmGap) else { return nil }
     return Population(
-        id: f.id, alphaM2s: p.alphaM2s, logDoseOffset: p.logDoseOffset, tauAirScale: p.tauAirScale,
+        id: f.id, alphaM2s: p.alphaM2s, logDoseOffset: p.logDoseOffset,
         noise: p.noise, whiteOffset: p.whiteOffset, whiteFirmGap: p.whiteFirmGap
     )
 }

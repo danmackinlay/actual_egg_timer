@@ -22,8 +22,9 @@ export interface ModelParams {
    *  since only tau = R^2/alpha is identifiable. */
   alpha_m2s: number;
   /** Multiplier on the egg's cooling time constant on the counter
-   *  (airTimeConstant): the kitchen's draughts and surfaces. Only identifiable
-   *  if the user actually varies the cooling protocol. */
+   *  (airTimeConstant): the kitchen's draughts and surfaces. The apps hold it
+   *  at 1.0 and do not learn it (DECISIONS.md 95); the tools vary it to see
+   *  what it would move. */
   tauAirScale: number;
 }
 

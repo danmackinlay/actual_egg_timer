@@ -448,18 +448,18 @@ export const SBC_SCENARIOS: SbcScenario[] = [
   },
 ];
 
-/** What SBC ranks: the six particle dimensions and two combinations the
+/** What SBC ranks: the five particle dimensions and two combinations the
  *  answers pin harder than any one dimension - the yolk's and the white's
  *  latent at the first egg's time. */
 export const SBC_QUANTITIES = [
-  'alpha', 'taste', 'tauAir', 'noise', 'white', 'firmGap', 'yolkLatent', 'whiteLatent',
+  'alpha', 'taste', 'noise', 'white', 'firmGap', 'yolkLatent', 'whiteLatent',
 ] as const;
 
 type Quantity = typeof SBC_QUANTITIES[number];
 
 function quantities(p: Particle, g: DoseGrid, t: number): Record<Quantity, number> {
   return {
-    alpha: p.alpha_m2s, taste: p.logDoseOffset, tauAir: p.tauAirScale, noise: p.noise,
+    alpha: p.alpha_m2s, taste: p.logDoseOffset, noise: p.noise,
     white: p.whiteOffset, firmGap: p.whiteFirmGap,
     yolkLatent: lookupLogYolkDose(g, p.alpha_m2s, t) - p.logDoseOffset,
     whiteLatent: lookupLogWhiteDose(g, p.alpha_m2s, t) - p.whiteOffset,

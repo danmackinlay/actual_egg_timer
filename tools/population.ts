@@ -6,7 +6,7 @@
  *
  * writes the literature's: the prior every cook drew from before E7, number
  * for number. The fit (fit/, `eggfit publish`) writes a fitted one in the
- * same shape - `id`, and the six spreads under `prior` - with its own record
+ * same shape - `id`, and the five spreads under `prior` - with its own record
  * of what it was fitted from beside them, which the apps ignore. Nothing else
  * writes this file, and `npm run fixtures` never touches it: it is the fit's
  * output, not the TypeScript's.
@@ -31,7 +31,6 @@ const file = {
   prior: {
     alpha_m2s: p.alpha_m2s,
     logDoseOffset: p.logDoseOffset,
-    tauAirScale: p.tauAirScale,
     noise: p.noise,
     whiteOffset: p.whiteOffset,
     whiteFirmGap: p.whiteFirmGap,

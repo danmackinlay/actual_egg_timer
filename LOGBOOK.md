@@ -4496,3 +4496,61 @@ mildly overconfident (12-13.6% of true values in the outer tenth, worst
 for `tauAirScale` and the white), uniform at 4000. `tauAirScale` is never
 learned: every grid is built at its posterior mean, so no particle's value
 enters the likelihood and its mean only drifts with resampling.
+
+## 6 October 2026: the counter's carryover held at 1.0 (DECISIONS.md 95, SHIP-0.5 A1)
+
+`tauAirScale` left the particle in both cores: five dimensions, five draws
+per particle in the prior and in the kernel, so the same seed draws another
+prior, and `MODEL_ID` is `2026-10-e10`, which replays every stored
+posterior. `calibrationParams` and `posteriorParams` give it as 1.0, so
+every surface is built there. `ModelParams.tauAirScale` stays, as the
+physics' knob the tools turn (`npm run probe`, `npm run rank`).
+
+Kept readable, both ways. The population file has five spreads; one with a
+carryover spread (a cached older file) reads, the spread ignored
+(`fixtures/prior.json`, "before 0.5"). The stores (`aet.calibration.v4`,
+iOS `calibration.v4`) keep their key and their format (`DECISIONS.md` 81):
+`t` is still written, 1.0 for every particle, so a 0.4 build in another
+tab, or after a downgrade, still reads the posterior (and replays it); this
+build never reads `t`, and reads a store without it. A store from before,
+with a learned `t` and a base, is replayed and its base kept
+(`test/population.test.ts` 5). Records carry no particles, so `parseRecord`
+and what the server holds are untouched. The fit no longer passes the
+carryover through (`fit/eggfit`), and `fit/tests/emulated-sample.json` was
+written again by `npm run eggs -- simulate ... 6` and `emulate`: only the
+literature's carryover and the records' `model` changed.
+`fixtures/population.json` rewritten by `npm run population -- literature`.
+
+Measured. Test 2a3 passes against the reference written before the change,
+which was kept: nothing it summarises depends on the carryover, so a
+filter and a prior without it should sample the same posterior, and do.
+`npm run sbc` (1000 cooks, 1000 particles), outer tenth before / after:
+five-word cooks alpha 11.1 / 14.2%, taste 12.5 / 12.2, noise 12.6 / 14.0,
+white 11.3 / 13.7, firm gap 13.6 / 13.3, the yolk latent 10.6 / 11.3, the
+white latent 12.6 / 12.0 (and the carryover, gone, was 14.3); old answers
+with a probe 11.1-13.2% before, 10.9-12.9% after (the carryover was 14.5).
+The same mild overconfidence at 1000 particles (`DECISIONS.md` 94), moved
+about by the new random stream; the exact posterior beside it stays at
+8.7-11.7%.
+
+Three tests had been passing on one seed, and the new stream moved them.
+Infer 5b (a runny white moves jammy about as far as soft): with the yolk
+answered, jammy moved 0.85 of soft at the old seed and 0.59 at the new,
+against a floor of 0.6; over 16 seeds at 1000 particles it was 0.38-1.14
+before and 0.53-0.86 after, so the test tested the seed. It now runs at
+4000 particles (0.69-0.85 over 10 seeds). Outcome's "the level range keeps
+the noise" asked for 1.2 times the particles' own spread, about the mean
+itself (1.12-1.36 over 20 seeds at 400 particles, 1.17-1.24 at 4000): now
+1.1. Record 2d compared one weight, which a resample sets to 1/64 either
+way; it compares the posterior mean now.
+
+Swift: the decide fixture's `firmer` cook now has a time-scale
+(1.6993580976467873e-7) at which the two cores' simulations part at 1.5e-13
+in peak yolk and 2-5e-12 in the doses, against 1e-14 at 1.69935809e-7: one
+ulp in a mode's per-step decay, carried through the cook, made exponential
+by the dose. Doses of whole cooks in `DecideConformance` are held to 1e-11
+(`wholeCookDoseTolerance`, Support.swift); everything else stays at 1e-12.
+
+Not verified: either app driven. The web and the iPhone should each
+replay their log once on the first launch (the store's `m` changes), and
+the times move as a reseed moves them, a few seconds.

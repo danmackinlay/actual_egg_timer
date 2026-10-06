@@ -239,6 +239,8 @@ interface StoredPosterior {
   n: number;
   a: number[];
   o: number[];
+  /** The counter's carryover, which left the particle in 0.5 (DECISIONS.md
+   *  95): written as STORED_TAU_AIR for every particle and never read. */
   t: number[];
   /** The noise scale, the white offset and the tender | firm gap. */
   sd: number[];
@@ -264,6 +266,12 @@ interface StoredV4 {
   unread?: Unread[];
 }
 
+/** What `t` holds. A build from before 0.5 refuses a posterior without the
+ *  column, and with it reads this store as it always did, and replays it
+ *  (its `MODEL_ID` is not this one's): so it is written, at the physics'
+ *  value, and the store's format does not change (DECISIONS.md 81). */
+const STORED_TAU_AIR = 1.0;
+
 function storedPosterior(c: Calibration): StoredPosterior {
   const p = c.posterior.particles;
   const s: StoredPosterior = {
@@ -272,7 +280,7 @@ function storedPosterior(c: Calibration): StoredPosterior {
   for (let i = 0; i < p.length; i++) {
     s.a.push(p[i].alpha_m2s);
     s.o.push(p[i].logDoseOffset);
-    s.t.push(p[i].tauAirScale);
+    s.t.push(STORED_TAU_AIR);
     s.sd.push(p[i].noise);
     s.wo.push(p[i].whiteOffset);
     s.wg.push(p[i].whiteFirmGap);
@@ -308,13 +316,13 @@ function readPosterior(raw: unknown): Calibration | null {
   const s = raw as Partial<StoredPosterior>;
   if (!Array.isArray(s.a) || s.a.length === 0) return null;
   const n = s.a.length;
-  // alpha, tauAirScale, the noise scale and the firm gap are strictly
-  // positive - a zero noise divides by zero in the probit; a weight may be zero
-  // but never negative; the two offsets are log-dose shifts and may be anything
-  // finite. Same rules as ios/App/Calibration.swift.
+  // alpha, the noise scale and the firm gap are strictly positive - a zero
+  // noise divides by zero in the probit; a weight may be zero but never
+  // negative; the two offsets are log-dose shifts and may be anything finite.
+  // `t` is not read (STORED_TAU_AIR). Same rules as ios/App/Calibration.swift.
   if (
     !numberArray(s.a, n, 0, true) || !numberArray(s.o, n, -Infinity, false)
-    || !numberArray(s.t, n, 0, true) || !numberArray(s.sd, n, 0, true)
+    || !numberArray(s.sd, n, 0, true)
     || !numberArray(s.wo, n, -Infinity, false) || !numberArray(s.wg, n, 0, true)
     || !numberArray(s.w, n, 0, false)
   ) {
@@ -326,7 +334,7 @@ function readPosterior(raw: unknown): Calibration | null {
   const weights: number[] = new Array<number>(n);
   for (let i = 0; i < n; i++) {
     particles[i] = {
-      alpha_m2s: s.a[i], logDoseOffset: s.o[i], tauAirScale: s.t[i],
+      alpha_m2s: s.a[i], logDoseOffset: s.o[i],
       noise: s.sd[i], whiteOffset: s.wo[i], whiteFirmGap: s.wg[i],
     };
     weights[i] = s.w[i];
@@ -1090,7 +1098,7 @@ function posteriorPrint(c: Calibration): string {
     const w = post.weights[i];
     a += w * p.alpha_m2s;
     b += w * p.logDoseOffset;
-    d += w * (p.noise + p.tauAirScale);
+    d += w * p.noise;
     e += w * (p.whiteOffset + p.whiteFirmGap);
   }
   return `${c.eggsLogged}|${post.rng}|${post.particles.length}|${a}|${b}|${d}|${e}`;

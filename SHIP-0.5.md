@@ -29,12 +29,18 @@ Each is behaviour-preserving for the cook unless it says otherwise: the
 moved logic is fixtured from TypeScript, and both apps call it through
 core's exports.
 
-- [ ] **A1. The counter's carryover fixed at 1.0** (`DECISIONS.md` 95).
+- [x] **A1. The counter's carryover fixed at 1.0** (`DECISIONS.md` 95).
       `tauAirScale` leaves the particle and the population fit and is held
       at 1.0; `MODEL_ID` moves, so stored posteriors are replayed; the
       fixtures, the Swift twin, `fit/` and `npm run sbc` with it.
       `INFERENCE.md` §2 already says so. The one item here that changes
       what a cook is told.
+      *Done:* five particle dimensions in both cores, five draws in the
+      prior and the kernel; `MODEL_ID` `2026-10-e10`; the population file
+      has five spreads (an older one with a carryover still reads); the
+      store's `t` column is still written, at 1.0, and never read, so the
+      key and its format stay (`DECISIONS.md` 81); the fit and its sample;
+      `npm run sbc` ranks seven quantities. `LOGBOOK.md`, 6 October 2026.
 - [ ] **A2. One `decideAnswer`** (`DECISIONS.md` 90; `REVIEW-0.4.x.md`,
       Bloat 1). `decided()` is written twice (`src/ui/app.ts`,
       `ios/App/Planner+Solve.swift`); `DECISIONS.md` 84 had to land as two

@@ -104,7 +104,6 @@ struct InferenceConformance {
         for i in 0..<particles.count {
             try expectClose(post.particles[i].alphaM2s, particles[i].num("alpha_m2s"), "\(label) particle \(i) alpha")
             try expectClose(post.particles[i].logDoseOffset, particles[i].num("logDoseOffset"), "\(label) particle \(i) offset")
-            try expectClose(post.particles[i].tauAirScale, particles[i].num("tauAirScale"), "\(label) particle \(i) tauAirScale")
             try expectClose(post.particles[i].noise, particles[i].num("noise"), "\(label) particle \(i) noise")
             try expectClose(post.particles[i].whiteOffset, particles[i].num("whiteOffset"), "\(label) particle \(i) white offset")
             try expectClose(post.particles[i].whiteFirmGap, particles[i].num("whiteFirmGap"), "\(label) particle \(i) firm gap")

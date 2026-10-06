@@ -9,7 +9,7 @@
  *
  * METHOD: sequential Monte Carlo (a particle filter), NOT variational
  * inference. VI buys scalability in high dimensions at the cost of gradients,
- * an optimiser, and an approximation gap. There are six uncertain scalars
+ * an optimiser, and an approximation gap. There are five uncertain scalars
  * here and a cached forward model, so particles give the exact posterior
  * predictive with none of that machinery, in a few hundred lines of array
  * arithmetic that port to Swift unchanged.
@@ -56,8 +56,10 @@
  *    records. Scored against a FIXED target it would push that error into
  *    alpha; with the white offset, whatever the white does that alpha cannot
  *    explain has somewhere to go.
- *  - tauAirScale is only identifiable if the cook actually varies the cooling
- *    protocol. Otherwise it stays at its prior, which is the correct behaviour.
+ *  - The counter's carryover (`tauAirScale`, the multiplier on its time
+ *    constant) is not learned: it is held at 1.0 (DECISIONS.md 95). Only
+ *    counter-rested cooks could inform it, every dose grid is built at one
+ *    value of it, and their answers mostly teach alpha and the taste offset.
  *  - The noise scale is learned from how consistent a cook's answers are, which
  *    takes many eggs. Until then it sits near its prior, which is chosen (see
  *    NOISE_MEDIAN) so that one answer near the band carries what a hard
@@ -65,7 +67,7 @@
  */
 
 import { ALPHA_DEFAULT, ALPHA_REL_SD, Z_WHITE, Z_YOLK } from './constants.js';
-import { ModelParams, WHITE_DOSE_TARGET } from './solve.js';
+import { DEFAULT_PARAMS, ModelParams, WHITE_DOSE_TARGET } from './solve.js';
 import { erfc, normalCdf } from './sphere.js';
 import {
   DoseGrid, lookupLogYolkDose, lookupLogWhiteDose, lookupPeakYolk_C, cookTimeForLogYolkDose,
@@ -108,7 +110,6 @@ export interface Particle {
    *  units. Stored as an OFFSET rather than an absolute target so it carries
    *  across different slider positions. */
   logDoseOffset: number;
-  tauAirScale: number;
   /** The sd of the Gaussian every yolk answer is seen through, log10 yolk dose
    *  units: how sharply this cook tells one yolk from the next. The white's is
    *  the same scale in degrees (`WHITE_NOISE_PER_YOLK`). */
@@ -315,12 +316,6 @@ const LOG_WHITE_TARGET = Math.log10(WHITE_DOSE_TARGET);
 const WHITE_NOISE_PER_YOLK = Z_YOLK / Z_WHITE;
 
 const PRIOR_OFFSET_SD = 0.22;
-/** Wide because kitchens differ, not because the physics is in doubt: still
- *  air on a counter is textbook (H_AIR, to ~10%), but a draught of 0.3-1 m/s
- *  shortens the time constant by 17-40%, an egg cup or a tea towel lengthens
- *  it, and the shell may carry half or twice the water assumed. One sd (x0.70
- *  to x1.42) moves the reference counter peak by 1.1-1.2 C. README section 8. */
-const PRIOR_TAU_AIR_LOG_SD = 0.35;
 
 /* ---- deterministic RNG, so calibration is reproducible and portable ---- */
 
@@ -374,20 +369,19 @@ export interface Population {
   id: string;
   alpha_m2s: LogNormal;
   logDoseOffset: Normal;
-  tauAirScale: LogNormal;
   noise: LogNormal;
   whiteOffset: Normal;
   whiteFirmGap: LogNormal;
 }
 
 /** The literature's population: the prior every cook drew from before E7,
- *  number for number, so a prior drawn from it is bit-identical to the old
- *  one. '2026-09' is the id E1's records gave it. */
+ *  number for number, less the carryover, which left the particle in 0.5
+ *  (DECISIONS.md 95; a prior drawn from it is not the old one, and
+ *  `MODEL_ID` says so). '2026-09' is the id E1's records gave it. */
 export const LITERATURE_POPULATION: Population = {
   id: '2026-09',
   alpha_m2s: { median: ALPHA_DEFAULT, logSd: ALPHA_REL_SD },
   logDoseOffset: { mean: 0.0, sd: PRIOR_OFFSET_SD },
-  tauAirScale: { median: 1.0, logSd: PRIOR_TAU_AIR_LOG_SD },
   noise: { median: NOISE_MEDIAN, logSd: NOISE_LOG_SD },
   whiteOffset: { mean: 0.0, sd: WHITE_OFFSET_SD },
   whiteFirmGap: { median: WHITE_FIRM_GAP_MEDIAN, logSd: WHITE_FIRM_GAP_LOG_SD },
@@ -395,9 +389,9 @@ export const LITERATURE_POPULATION: Population = {
 
 /* ---- prior ---- */
 
-/** Six draws per particle, always in this order, in the prior and in every
- *  resample: alpha, taste offset, tauAirScale, noise, white offset, firm gap.
- *  From the literature's population unless another is given. */
+/** Five draws per particle, always in this order, in the prior and in every
+ *  resample: alpha, taste offset, noise, white offset, firm gap. From the
+ *  literature's population unless another is given. */
 export function createPrior(count: number, seed: number, pop: Population = LITERATURE_POPULATION): Posterior {
   const particles: Particle[] = new Array<Particle>(count);
   const weights: number[] = new Array<number>(count);
@@ -409,14 +403,12 @@ export function createPrior(count: number, seed: number, pop: Population = LITER
     const c = gaussian(state); state = c.state;
     const d = gaussian(state); state = d.state;
     const e = gaussian(state); state = e.state;
-    const f = gaussian(state); state = f.state;
     particles[i] = {
       alpha_m2s: pop.alpha_m2s.median * Math.exp(pop.alpha_m2s.logSd * a.value),
       logDoseOffset: pop.logDoseOffset.mean + pop.logDoseOffset.sd * b.value,
-      tauAirScale: pop.tauAirScale.median * Math.exp(pop.tauAirScale.logSd * c.value),
-      noise: pop.noise.median * Math.exp(pop.noise.logSd * d.value),
-      whiteOffset: pop.whiteOffset.mean + pop.whiteOffset.sd * e.value,
-      whiteFirmGap: pop.whiteFirmGap.median * Math.exp(pop.whiteFirmGap.logSd * f.value),
+      noise: pop.noise.median * Math.exp(pop.noise.logSd * c.value),
+      whiteOffset: pop.whiteOffset.mean + pop.whiteOffset.sd * d.value,
+      whiteFirmGap: pop.whiteFirmGap.median * Math.exp(pop.whiteFirmGap.logSd * e.value),
     };
     weights[i] = 1.0 / count;
   }
@@ -635,25 +627,24 @@ export function whiteAnswerProbabilities(
  *
  * Liu and West's kernel keeps the posterior's mean and covariance through the
  * resample. In coordinates where every dimension is additive - log alpha, the
- * taste offset, log tauAirScale, log noise, the white offset, log firm gap -
+ * taste offset, log noise, the white offset, log firm gap -
  * each resampled particle is shrunk toward the weighted mean by KERNEL_SHRINK
  * and moved by a draw from the weighted covariance, scaled by KERNEL_SPREAD, so
  * that a^2 + h^2 = 1 and nothing is added or lost. The draw is correlated as
  * the posterior is, through its Cholesky factor, so the combination the answers
- * pinned stays pinned. The same six normal draws per particle as before, in the
- * same order, so the random stream advances exactly as it did.
+ * pinned stays pinned. One normal draw per dimension per particle, in the
+ * prior's order.
  */
 export const KERNEL_DISCOUNT = 0.98;
 const KERNEL_SHRINK = (3.0 * KERNEL_DISCOUNT - 1.0) / (2.0 * KERNEL_DISCOUNT);
 const KERNEL_SPREAD = Math.sqrt(1.0 - KERNEL_SHRINK * KERNEL_SHRINK);
 
-const KERNEL_DIMS = 6;
+const KERNEL_DIMS = 5;
 
 /** A particle in the kernel's coordinates: every dimension additive. */
 function kernelCoords(p: Particle): number[] {
   return [
-    Math.log(p.alpha_m2s), p.logDoseOffset, Math.log(p.tauAirScale),
-    Math.log(p.noise), p.whiteOffset, Math.log(p.whiteFirmGap),
+    Math.log(p.alpha_m2s), p.logDoseOffset, Math.log(p.noise), p.whiteOffset, Math.log(p.whiteFirmGap),
   ];
 }
 
@@ -737,10 +728,9 @@ function resample(post: Posterior): void {
     next[i] = {
       alpha_m2s: Math.exp(y[0]),
       logDoseOffset: y[1],
-      tauAirScale: Math.exp(y[2]),
-      noise: Math.exp(y[3]),
-      whiteOffset: y[4],
-      whiteFirmGap: Math.exp(y[5]),
+      noise: Math.exp(y[2]),
+      whiteOffset: y[3],
+      whiteFirmGap: Math.exp(y[4]),
     };
   }
   for (let i = 0; i < n; i++) {
@@ -752,14 +742,14 @@ function resample(post: Posterior): void {
 
 /* ---- readout ---- */
 
+/** The parameters to solve with: the posterior mean time-scale, and the
+ *  counter's carryover at the physics (DECISIONS.md 95). */
 export function posteriorParams(post: Posterior): ModelParams {
   let alpha = 0.0;
-  let tauAir = 0.0;
   for (let i = 0; i < post.particles.length; i++) {
     alpha += post.weights[i] * post.particles[i].alpha_m2s;
-    tauAir += post.weights[i] * post.particles[i].tauAirScale;
   }
-  return { alpha_m2s: alpha, tauAirScale: tauAir };
+  return { alpha_m2s: alpha, tauAirScale: DEFAULT_PARAMS.tauAirScale };
 }
 
 export function posteriorMeanOffset(post: Posterior): number {

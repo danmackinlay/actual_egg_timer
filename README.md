@@ -436,8 +436,8 @@ on what happens afterwards:
 The last row is a perfectly insulated egg, the true adiabatic limit, where the centre
 simply reaches the mean temperature the egg left the water with. The counter takes 8.6 °C
 of that and the ice bath 19. **Still air is slow cooling, not a lid**, and because it is
-cooling, how fast it cools matters: one prior sd of the kitchen's multiplier
-(`tauAirScale`, §9) moves this peak by 1.1-1.2 °C. So the counter is not guessed. It is
+cooling, how fast it cools matters: the kitchen's multiplier at x0.70 or x1.42
+(`tauAirScale`, §9; held at 1.0 by the app) moves this peak by 1.1-1.2 °C. So the counter is not guessed. It is
 textbook heat transfer — free convection from a sphere and radiation from the shell
 (`H_AIR`, §6), the latent heat of the water the egg carries out (`WET_SHELL_KG_M2`), and
 Newton's law applied at the shell itself rather than at the egg's mean (§8). An
@@ -721,7 +721,8 @@ egg's mean, with one fixed 2030 s time constant for every egg and a dry shell. A
 an independent finite-volume solution that was between 0.7 °C too cold and 0.8 °C too
 hot in peak yolk, depending on the cook, before the wet shell's 0.5-0.8 °C; together, up
 to 1.5 °C too hot. Now it is within 0.25 °C everywhere tried. What remains open is not
-the physics but the kitchen, which `tauAirScale` carries: a draught of 0.3 m/s takes
+the physics but the kitchen, which `tauAirScale` would carry (the app holds it at 1.0,
+§9): a draught of 0.3 m/s takes
 0.6 °C off the reference peak and 1 m/s takes 1.7; a stone counter may conduct more
 through the contact than wood, up to 0.8 °C at a generous estimate; an egg cup or a tea
 towel slows it. The air cell (below), and the egg's own water leaving through the
@@ -845,22 +846,24 @@ app will tell you what it costs.
 
 ### Calibrating against your own eggs
 
-Two parameters are meant to be learned, not asserted:
+One physical parameter is learned, not asserted:
 
 - `alpha_m2s` — absorbs everything about *how fast heat gets to the middle*: your eggs'
   composition, the shape error, the Dirichlet approximation, the yolk's extra
   insulation.
-- `tauAirScale` — a multiplier on the counter's time constant (`airTimeConstant`, from
-  `H_AIR`), absorbing what still air on a counter does not describe: a draught, an
-  extractor fan, a stone counter, an egg cup. It is **only identifiable if you actually
-  vary the cooling protocol**; cook every egg in an ice bath and there is nothing in your
-  data to learn it from.
+
+A second, `tauAirScale` — a multiplier on the counter's time constant
+(`airTimeConstant`, from `H_AIR`), absorbing what still air on a counter does not
+describe: a draught, an extractor fan, a stone counter, an egg cup — is **held at 1.0**
+from 0.5 (`DECISIONS.md` 95). Only cooks rested on the counter could inform it, every
+dose grid is built at one value of it, and their answers mostly teach `alpha` and the
+taste offset, so learning it properly would cost a third grid axis for little. The tools
+(`npm run probe`, `npm run rank`) still vary it to show what it would move.
 
 To calibrate: cook eggs, and after each one record whether the result was softer or
 harder than you asked for. Ordinal feedback is enough — you do not need a thermocouple,
 and a judgement of "too soft" is far more reliable than a guess at a temperature. Vary
-one thing at a time, and include at least a few cooks with a *different* cooling step if
-you want `tauAirScale` to mean anything. The app does this for you: after every cook
+one thing at a time. The app does this for you: after every cook
 it asks how the yolk was, and the answer goes into a particle filter
 (`src/core/infer.ts`); from the first egg on, the next time is chosen over that whole
 posterior, not its mean (`src/core/decide.ts`, INFERENCE.md §8). It asks about
@@ -1221,9 +1224,10 @@ answers are recorded here rather than deleted, because each one was a plausible 
 
 ### 11.5 Known software gaps
 
-- **`tauAirScale` is only identifiable if you vary the cooling method.** Cook every egg
-  with an ice bath and it will sit at its prior forever — which is correct behaviour, not
-  a bug, but it means the carryover model never improves unless you deliberately mix.
+- **The carryover is not learned.** `tauAirScale` is held at 1.0 (`DECISIONS.md` 95):
+  the counter's cooling is the textbook's still air, and a draughty kitchen's eggs rested
+  on the counter come out a little softer than the model thinks, with nothing in the app
+  to learn it. Their answers go into the time-scale and the taste instead.
 - **The white has its own offset, and a runny white still moves the time-scale.**
   Since E2 and E3 (`src/core/infer.ts`, INFERENCE.md §3) every answer goes through an
   ordered probit with a learned noise scale, and the white - runny, tender or firm,

@@ -31,8 +31,8 @@ private func expectSolution(_ s: Solution, _ json: [String: Any], _ label: Strin
     #expect(s.reachable == reachable, "\(label) reachable")
     try expectClose(s.result.cookTimeS, json.num("cookTime_s"), "\(label) cook time")
     try expectClose(s.result.peakYolkC, json.num("peakYolk_C"), "\(label) peak yolk")
-    try expectClose(s.result.yolkDoseMin, json.num("yolkDose_min"), "\(label) yolk dose")
-    try expectClose(s.result.whiteDoseMin, json.num("whiteDose_min"), "\(label) white dose")
+    try expectClose(s.result.yolkDoseMin, json.num("yolkDose_min"), "\(label) yolk dose", tolerance: wholeCookDoseTolerance)
+    try expectClose(s.result.whiteDoseMin, json.num("whiteDose_min"), "\(label) white dose", tolerance: wholeCookDoseTolerance)
 }
 
 @Suite("Decide")

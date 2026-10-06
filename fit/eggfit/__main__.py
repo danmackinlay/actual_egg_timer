@@ -39,12 +39,10 @@ def truth_population(truth: dict, constants: dict) -> dict:
              "log_s0": np.full(1, math.log(t["noiseMedian"])), "sig_s": np.full(1, t["noiseLogSd"]),
              "log_g0": np.full(1, math.log(t["gapMedian"])), "sig_g": np.full(1, t["gapLogSd"])}
     new = population.new_cooks(draws, per_draw=n)
-    lit = constants["literature"]
     a0, sz = constants["alphaDefault"], constants["alphaRelSd"]
     return {"id": "truth", "prior": {
         "alpha_m2s": {"median": a0 * math.exp(sz * float(np.median(new["z"]))), "logSd": sz * population.robust_sd(new["z"])},
         "logDoseOffset": {"mean": 0.0, "sd": population.robust_sd(new["taste"])},
-        "tauAirScale": lit["tauAirScale"],
         "noise": {"median": math.exp(float(np.median(new["log_noise"]))), "logSd": population.robust_sd(new["log_noise"])},
         "whiteOffset": {"mean": float(np.median(new["white"])), "sd": population.robust_sd(new["white"])},
         "whiteFirmGap": {"median": math.exp(float(np.median(new["log_gap"]))), "logSd": population.robust_sd(new["log_gap"])},

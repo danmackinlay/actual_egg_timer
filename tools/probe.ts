@@ -118,7 +118,7 @@ console.log();
 /* ------------------------------------ what it cannot see: the carryover */
 
 const peakAfter = peakCounter.peakYolkTime_s - COOK_S;
-const TAU_SD = 0.35; // PRIOR_TAU_AIR_LOG_SD in infer.ts
+const TAU_SD = 0.35; // the carryover's prior until DECISIONS.md 95 held it at 1.0
 const slow = reading('counter', { ...THETA0, logTauAir: TAU_SD }, 0, peakAfter);
 const fast = reading('counter', { ...THETA0, logTauAir: -TAU_SD }, 0, peakAfter);
 const byTau = (slow - fast) / 2;

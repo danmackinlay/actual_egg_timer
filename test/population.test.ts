@@ -1,6 +1,6 @@
 /**
  * The population a prior is drawn from (E7; src/core/population.ts): the
- * literature's is the old prior exactly, a fitted one moves where a new cook
+ * literature's is the default prior, a fitted one moves where a new cook
  * starts, and a posterior drawn from one population is replayed from the
  * next (src/ui/calibration.ts).
  */
@@ -21,28 +21,36 @@ const SHIFTED: Population = {
   id: 'test-shifted',
   alpha_m2s: { median: 1.81e-7, logSd: 0.071 },
   logDoseOffset: { mean: 0.0, sd: 0.13 },
-  tauAirScale: { median: 1.12, logSd: 0.3 },
   noise: { median: 0.17, logSd: 0.42 },
   whiteOffset: { mean: 0.21, sd: 0.33 },
   whiteFirmGap: { median: 0.97, logSd: 0.31 },
 };
 
-test('1. the published file reads, and the literature is the old prior exactly', () => {
+test('1. the published file reads, and the literature is the default prior', () => {
   const published = parsePopulation(JSON.parse(readFileSync('fixtures/population.json', 'utf8')));
   assert.notEqual(published, null);
   const a = createPrior(200, CALIBRATION_SEED);
   const b = createPrior(200, CALIBRATION_SEED, LITERATURE_POPULATION);
   assert.deepEqual(a, b);
-  assert.deepEqual(LITERATURE_START, { alpha_m2s: DEFAULT_PARAMS.alpha_m2s, tauAirScale: DEFAULT_PARAMS.tauAirScale, whiteOffset: 0 });
+  assert.deepEqual(LITERATURE_START, { alpha_m2s: DEFAULT_PARAMS.alpha_m2s, whiteOffset: 0 });
   const c = freshCalibration(64, 7);
   assert.deepEqual(calibrationParams(c), DEFAULT_PARAMS, 'before any egg, the literature values');
   assert.deepEqual(calibrationDoneness(c, 0.22), donenessFromSlider(0.22));
 });
 
+test('1b. a population file from before 0.5, with a spread for the carryover, reads as one without', () => {
+  // The web may hold an old file in its cache (DECISIONS.md 95).
+  const file = { id: 'x', prior: { ...SHIFTED, id: undefined } };
+  const old = { id: 'x', prior: { ...SHIFTED, id: undefined, tauAirScale: { median: 1.12, logSd: 0.3 } } };
+  assert.deepEqual(parsePopulation(old), parsePopulation(file));
+  assert.notEqual(parsePopulation(old), null);
+});
+
 test('2. a fitted population moves the prior and where a new cook starts', () => {
   const c = freshCalibration(4000, 11, SHIFTED);
   assert.deepEqual(c.start, priorStart(SHIFTED));
-  assert.deepEqual(calibrationParams(c), { alpha_m2s: 1.81e-7, tauAirScale: 1.12 });
+  // The carryover stays at the physics whatever the population (DECISIONS.md 95).
+  assert.deepEqual(calibrationParams(c), { alpha_m2s: 1.81e-7, tauAirScale: 1.0 });
   assert.equal(calibrationDoneness(c, 0.22).whiteDose_min, WHITE_DOSE_TARGET * 10 ** 0.21);
   // The particles are drawn from it: the medians and spreads come back.
   const logs = c.posterior.particles.map((p) => Math.log(p.alpha_m2s));
@@ -90,4 +98,34 @@ test('4. a posterior from another population is replayed; one from this one is k
   delete old['p'];
   assert.equal(decodeKept(JSON.stringify(old), LITERATURE_POPULATION).path, 'loaded');
   assert.equal(decodeKept(JSON.stringify(old), SHIFTED).path, 'rebuild');
+});
+
+test('5. a store from before 0.5, its carryover in every particle, is replayed, and its base kept', () => {
+  // Before DECISIONS.md 95 every particle carried `t`, learned or not. This
+  // build reads the store as it was, ignores `t`, and replays the log under
+  // its own model; a base cannot be replayed, and is kept as it is, less `t`.
+  const log = [recordAt(0.41, 470, 0, 'tender')];
+  const base = freshCalibration(64, 5);
+  base.eggsLogged = 2;
+  const kept = { base: base, calibration: freshCalibration(64, 3), folded: 1, log: log };
+  kept.calibration.eggsLogged = 3;
+  const stored = JSON.parse(encodeKept(kept, LITERATURE_POPULATION, '2026-10-e9')) as Record<string, Record<string, number[]>>;
+  // What this build writes: `t` at 1.0 for every particle, so a build from
+  // before 0.5 still reads it.
+  assert.deepEqual(stored['cal']['t'], new Array<number>(64).fill(1.0));
+  // What a build from before 0.5 wrote.
+  stored['cal']['t'] = stored['cal']['t'].map((_, i) => 0.7 + 0.01 * i);
+  stored['base']['t'] = stored['base']['t'].map((_, i) => 1.3 - 0.01 * i);
+  const read = decodeKept(JSON.stringify(stored), LITERATURE_POPULATION);
+  assert.equal(read.path, 'rebuild');
+  assert.equal(read.loses, false);
+  assert.equal(read.kept.log.length, 1);
+  assert.notEqual(read.kept.base, null);
+  assert.deepEqual(read.kept.base?.posterior.particles, base.posterior.particles);
+  assert.equal(read.kept.base?.eggsLogged, 2);
+  // And a store with no `t` at all is read the same way.
+  delete stored['cal']['t'];
+  delete stored['base']['t'];
+  const without = decodeKept(JSON.stringify(stored), LITERATURE_POPULATION);
+  assert.deepEqual(without.kept.base?.posterior.particles, base.posterior.particles);
 });

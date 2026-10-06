@@ -9,9 +9,12 @@
  * this needs is checked here, and anything else in the file - the fit's
  * summary, its covariance, when and from what it was made - is the fit's
  * own record and ignored, so the fit can say more without a change here.
+ * A file written before 0.5 has a spread for the carryover too
+ * (`tauAirScale`), which is ignored like the rest.
  *
  * BEFORE ANY EGG the app solves at the population's own centre: its median
- * time-scale and carryover scale, and its mean white offset (`PriorStart`).
+ * time-scale and its mean white offset (`PriorStart`), with the counter's
+ * carryover at the physics, as always (DECISIONS.md 95).
  * For the literature that is exactly the literature's values, as it always
  * was; for a fitted population it is where everyone's eggs put a new cook,
  * which is the point of pooling them. A calibration carries it from the
@@ -29,7 +32,6 @@ export type { Population } from './infer.js';
  *  centre. */
 export interface PriorStart {
   alpha_m2s: number;
-  tauAirScale: number;
   /** The white's runny | tender cutpoint, decades of white dose above
    *  `WHITE_DOSE_TARGET`. */
   whiteOffset: number;
@@ -38,7 +40,6 @@ export interface PriorStart {
 export function priorStart(p: Population): PriorStart {
   return {
     alpha_m2s: p.alpha_m2s.median,
-    tauAirScale: p.tauAirScale.median,
     whiteOffset: p.whiteOffset.mean,
   };
 }
@@ -82,15 +83,11 @@ export function parsePopulation(raw: unknown): Population | null {
   if (!isObject(prior)) return null;
   const alpha = logNormal(prior['alpha_m2s']);
   const taste = normal(prior['logDoseOffset']);
-  const tauAir = logNormal(prior['tauAirScale']);
   const noise = logNormal(prior['noise']);
   const white = normal(prior['whiteOffset']);
   const gap = logNormal(prior['whiteFirmGap']);
-  if (alpha === null || taste === null || tauAir === null || noise === null || white === null || gap === null) {
+  if (alpha === null || taste === null || noise === null || white === null || gap === null) {
     return null;
   }
-  return {
-    id: id, alpha_m2s: alpha, logDoseOffset: taste, tauAirScale: tauAir, noise: noise,
-    whiteOffset: white, whiteFirmGap: gap,
-  };
+  return { id: id, alpha_m2s: alpha, logDoseOffset: taste, noise: noise, whiteOffset: white, whiteFirmGap: gap };
 }

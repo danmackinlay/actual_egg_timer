@@ -9,9 +9,9 @@ thermometer owners are what test the convention (section 5).
 PER COOK, heavy-tailed (Student-t, 4 degrees of freedom), so a cluster of
 odd cooks is absorbed as outlying cooks rather than moving the centre: a
 time-scale `z`, a taste offset, a white cutpoint (the lag plus what this cook
-calls runny), and lognormal noise and firm gap - the app's particle, less
-carryover, which stays at the physics until cooks vary their cooling enough
-to reach it (section 2).
+calls runny), and lognormal noise and firm gap - the app's particle, which
+since 0.5 has no carryover: the apps hold it at the physics (DECISIONS.md 95,
+section 2).
 
 THE LIKELIHOOD is the app's own (src/core/infer.ts): the ordered probit for
 the yolk and the white, each with the 5% unrelated share, and the probe's

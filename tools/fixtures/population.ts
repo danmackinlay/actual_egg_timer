@@ -23,7 +23,6 @@ const SHIFTED: Population = {
   id: 'test-shifted',
   alpha_m2s: { median: 1.81e-7, logSd: 0.071 },
   logDoseOffset: { mean: 0.0, sd: 0.13 },
-  tauAirScale: { median: 1.12, logSd: 0.3 },
   noise: { median: 0.17, logSd: 0.42 },
   whiteOffset: { mean: 0.21, sd: 0.33 },
   whiteFirmGap: { median: 0.97, logSd: 0.31 },
@@ -59,14 +58,14 @@ const REFUSED: { why: string; mutate: Mutation }[] = [
   { why: 'no noise', mutate: (f) => { delete prior(f)['noise']; } },
   { why: 'a zero median', mutate: (f) => { prior(f)['alpha_m2s']['median'] = 0; } },
   { why: 'a negative median', mutate: (f) => { prior(f)['whiteFirmGap']['median'] = -1; } },
-  { why: 'a zero spread', mutate: (f) => { prior(f)['tauAirScale']['logSd'] = 0; } },
+  { why: 'a zero spread', mutate: (f) => { prior(f)['whiteFirmGap']['logSd'] = 0; } },
   { why: 'a zero sd', mutate: (f) => { prior(f)['whiteOffset']['sd'] = 0; } },
   { why: 'a mean as a string', mutate: (f) => { prior(f)['logDoseOffset']['mean'] = '0'; } },
   { why: 'a lognormal written as a normal', mutate: (f) => { prior(f)['noise'] = { mean: 0.2, sd: 0.5 }; } },
 ];
 
 export const priorFixture = {
-  about: 'E7: a prior drawn from a population - the published one (fixtures/population.json), the literature\'s and one shifted every way - and the population files a reader refuses. src/core/population.ts.',
+  about: 'E7: a prior drawn from a population - the published one (fixtures/population.json), the literature\'s, one shifted every way and the literature\'s as a file from before 0.5 wrote it - and the population files a reader refuses. src/core/population.ts.',
   count: PRIOR_COUNT,
   seed: PRIOR_SEED,
   literatureId: LITERATURE_POPULATION.id,
@@ -74,6 +73,9 @@ export const priorFixture = {
     drawn('published', published),
     drawn('literature', fileOf(LITERATURE_POPULATION)),
     drawn('shifted', { ...fileOf(SHIFTED), fitted: '2026-11-01', covariance: [[1, 0], [0, 1]] }),
+    // A file from before 0.5, with a spread for the carryover, which left the
+    // particle (DECISIONS.md 95): read, and the spread ignored.
+    drawn('before 0.5', { id: LITERATURE_POPULATION.id, prior: { ...fileOf(LITERATURE_POPULATION)['prior'] as object, tauAirScale: { median: 1, logSd: 0.35 } } }),
   ],
   refused: REFUSED.map((r) => {
     const f = JSON.parse(JSON.stringify(fileOf(SHIFTED))) as Record<string, unknown>;

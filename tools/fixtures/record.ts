@@ -252,7 +252,7 @@ for (let i = 0; i < replayState.posterior.weights.length; i++) {
     const b = other.posterior.particles[i];
     if (other.posterior.weights[i] !== replayState.posterior.weights[i]
       || b.alpha_m2s !== a.alpha_m2s || b.logDoseOffset !== a.logDoseOffset
-      || b.tauAirScale !== a.tauAirScale || b.noise !== a.noise
+      || b.noise !== a.noise
       || b.whiteOffset !== a.whiteOffset || b.whiteFirmGap !== a.whiteFirmGap
       || other.posterior.rng !== replayState.posterior.rng) {
       throw new Error('replay disagrees with the egg-by-egg fold');

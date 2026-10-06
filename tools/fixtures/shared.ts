@@ -18,7 +18,6 @@ export function particleRows(post: ReturnType<typeof createPrior>) {
   return post.particles.map((p) => ({
     alpha_m2s: p.alpha_m2s,
     logDoseOffset: p.logDoseOffset,
-    tauAirScale: p.tauAirScale,
     noise: p.noise,
     whiteOffset: p.whiteOffset,
     whiteFirmGap: p.whiteFirmGap,
