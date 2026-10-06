@@ -4544,3 +4544,44 @@ other fixture moved.
 Not verified: either app driven. The web's low-odds link and Help's list,
 and iOS's, should be looked at after a cook that teaches something, and
 the time shown and started compared with 0.4's on the same pot.
+
+## 6 October 2026: how sure, in words, in core (SHIP-0.5 A7)
+
+`DECISIONS.md` 93's arithmetic, without a screen: `certaintyAt` in
+`src/core/certainty.ts` and `Certainty.swift`, held by
+`fixtures/certainty.json` (every slider position's word, fifteen spreads
+written to hit each class's edge from both sides, the ends and the
+tie-breaks, and thirteen readings from decide.json's posteriors and
+outcome.json's). It reads the five yolk words' predictive the outcome
+already has; nothing new is learned or computed. The word asked is the
+slider's word (`anchorNear`), which is also the band the level's nominal
+dose falls in; the 90% interval is the narrowest run of words holding 0.9,
+the most mass on a tie of width, the softer on a tie of that. The time
+range is the right cook time's 90% interval, `predictCookTime` given
+quantile arguments (5% and 95%) where it had 10% and 90% fixed: the
+owner's call, with the alternatives in `INFERENCE.md` §8.
+
+What a fresh install is told (`npm run decide -- certainty`: 58 g from
+the fridge, boiling water, ice, 1000 particles, the time held by the
+profile as the apps hold it):
+
+| word | time | class | P(asked) | with neighbours | 90% in words | time range |
+|---|---|---|---|---|---|---|
+| Runny | 336 s | wild guess | 0.64 | 0.88 | Runny to Jammy | 278-426 s |
+| Soft | 379 s | wild guess | 0.33 | 0.87 | Runny to Fudgy | 308-458 s |
+| Jammy | 419 s | wild guess | 0.32 | 0.85 | Runny to Fudgy | 341-507 s |
+| Fudgy | 468 s | a ballpark | 0.46 | 0.9002 | Jammy to Hard | 381-566 s |
+| Hard | 577 s | a ballpark | 0.78 | 0.96 | Fudgy to Hard | 470-698 s |
+
+So very certain is never reachable before the first egg; Fudgy's ballpark
+is 0.9002 with its neighbours, a hair over the line, so a slightly
+different egg or pot can make it a wild guess. After eggs called
+Jammy: one makes Hard very certain (0.94) and the rest ballparks; three add
+Fudgy (0.90); ten make Soft, Jammy, Fudgy and Hard very certain (0.92-0.96)
+and leave Runny a ballpark (0.88). The unrelated share caps any word at
+0.96. On 300 simulated cooks x 8 eggs, answering in words: very certain on
+0% of first eggs, 13% of second, 52% of eighth; wild guesses 68% of first
+eggs, then 15-18%. The classes keep their promise (very certain: the word
+came out 93%; a ballpark: it or a neighbour 97%), the 90% interval in words
+held the word 93-96% at every egg, and the time range held the cook's own
+right time 89-94%, 169 s wide at the first egg and 52 s by the eighth.

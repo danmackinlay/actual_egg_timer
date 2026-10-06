@@ -58,13 +58,22 @@ core's exports.
 - [ ] **A6. `oddsProfile` without closures** (Bloat 6): core invariant 2,
       and its two copy-pasted bisections made one. The profile both apps
       ship is fixtured again, and must not move.
-- [ ] **A7. The certainty word, in core** (`DECISIONS.md` 93). From the
+- [x] **A7. The certainty word, in core** (`DECISIONS.md` 93). From the
       predicted spread of the five yolk words at the chosen time: *very
       certain* when 9 times in 10 it is the word asked for; *a ballpark*
       when 9 times in 10 it is that word or a neighbour; *a wild guess*
       when wider. With it, the 90% interval in words ("between Soft and
       Fudgy"), the most likely word, and a likely time range. Core and its
       fixtures only: no words on screen until D.
+      *Built:* `certaintyAt` in `src/core/certainty.ts` and
+      `Certainty.swift`, `fixtures/certainty.json`, `npm run decide --
+      certainty`. The word asked is the slider's (`anchorNear`); the
+      interval's tie-break is the most mass, then the softer. The time
+      range is the right cook time's 90% interval (`predictCookTime` at 5%
+      and 95%): **the owner's to confirm** (`INFERENCE.md` §8, "How sure,
+      in words", has the alternatives). A fresh install is never very
+      certain: a wild guess at Runny, Soft and Jammy, a ballpark at Fudgy
+      and Hard (58 g, fridge, boiling, ice).
 - [x] **A8. The fit's tests in CI** (Bloat 7): `uv run --project fit
       pytest -q fit/tests` in `.github/workflows/verify.yml`, since the
       fit writes `fixtures/population.json`, which both apps ship. A third
