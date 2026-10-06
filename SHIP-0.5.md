@@ -82,6 +82,7 @@ core's exports.
       made now); where the egg in cross-section sits, previewing the aim
       while setting up and going back to raw at the start. Owner's call
       before any of C2 is built.
+      Drafted for the owner: `design/one-screen.md`, its §6 the questions.
 - [ ] **C2. Core for it**, as C1 settles: the re-plan of a running cook
       from its observed events and a changed setup; the cross-section's
       preview of the aimed-for egg. TypeScript, fixtures, Swift.
