@@ -29,6 +29,8 @@
  *                              a loader trusts, and a replayed log
  *   fixtures/decide.json       decision surfaces and the time chosen on one
  *   fixtures/outcome.json      the predicted outcome at the chosen time
+ *   fixtures/certainty.json    how sure, in words: the word asked, the class,
+ *                              the 90% interval and the time range
  *   fixtures/reach.json        the odds at every level, the verdict with them,
  *                              the answer at a level, the shading, the advice
  *   fixtures/wording.json      which key each part of the screen says
@@ -60,6 +62,7 @@ import { sousvideCopyFixture } from './fixtures/sousvideCopy.js';
 import { recordFixture } from './fixtures/record.js';
 import { decideFixture } from './fixtures/decide.js';
 import { outcomeFixture } from './fixtures/outcome.js';
+import { certaintyFixture } from './fixtures/certainty.js';
 import { reachFixture } from './fixtures/reach.js';
 import { copyFixture } from './fixtures/copy.js';
 import { formatFixture } from './fixtures/format.js';
@@ -86,6 +89,7 @@ const written: Record<string, unknown> = {
   prior: priorFixture,
   decide: decideFixture,
   outcome: outcomeFixture,
+  certainty: certaintyFixture,
   reach: reachFixture,
   copy: copyFixture,
   format: formatFixture,
@@ -167,6 +171,7 @@ const counts = [
   `${recordFixture.replay.log.length} replayed eggs`,
   `${decideFixture.specs.length} decision surfaces and ${decideFixture.cases.length} decisions`,
   `${outcomeFixture.cases.reduce((n, c) => n + c.at.length, 0)} outcomes`,
+  `${certaintyFixture.spreads.length + certaintyFixture.cases.length} certainty readings`,
   `${reachFixture.profiles.length} odds profiles, ${reachFixture.lowOdds.length} warnings and ${reachFixture.advice.length} advice setups`,
   `${(probeJson['updates'] as unknown[]).length} probe folds`,
   `${(probeJson['solved'] as unknown[]).length} probe cooks`,

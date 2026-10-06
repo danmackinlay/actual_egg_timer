@@ -6,7 +6,7 @@
  * Run: npm run decide            (all of it, several minutes)
  *      npm run decide -- cost    (one section: cost, accuracy, lean, odds,
  *                                 learning, runny, reach, advice, outcome,
- *                                 nudge)
+ *                                 nudge, certainty)
  *
  * Read-only. Nothing in src/ is touched. The numbers it prints are the ones in
  * INFERENCE.md section 8 and LOGBOOK.md, 28 September 2026; the
@@ -19,15 +19,17 @@ import {
 } from '../src/core/decide.js';
 import { DoseGrid, buildDoseGrid, buildRequestedGrid, cookTimeForLogYolkDose } from '../src/core/doseGrid.js';
 import {
-  Feedback, FEEDBACK_BAND, Particle, WhiteReport, answerLikelihood, createPrior,
+  Feedback, FEEDBACK_BAND, Particle, WhiteReport, YOLK_WORDS, answerLikelihood, createPrior, yolkWordBands,
+  withUnrelatedWord,
   posteriorMeanOffset, posteriorParams, predictCookTime, updatePosterior, whiteProbit, yolkProbit,
 } from '../src/core/infer.js';
 import { ALPHA_DEFAULT } from '../src/core/constants.js';
 import { eggFromMass, Egg } from '../src/core/geometry.js';
 import { CookSetup } from '../src/core/protocol.js';
 import { Solution, logYolkTarget } from '../src/core/solve.js';
-import { LevelOdds, OddsProfile, answerAt, oddsProfile } from '../src/core/reach.js';
+import { LevelOdds, OddsProfile, answerAt, envelopeBounds, oddsProfile } from '../src/core/reach.js';
 import { predictOutcome } from '../src/core/outcome.js';
+import { CERTAINTY_MASS, CertaintyReading, certaintyAt } from '../src/core/certainty.js';
 import { cookTimeForLogWhiteDose, lookupLogYolkDose } from '../src/core/doseGrid.js';
 import { UNRELATED } from '../src/core/infer.js';
 import { sliderFromYolkDose } from '../src/core/solve.js';
@@ -542,6 +544,111 @@ if (run('outcome')) {
         + `runny ${o.pWhiteRunny.toFixed(2)}; level ${o.levelLow.toFixed(2)}-${o.levelHigh.toFixed(2)} (median ${o.levelMedian.toFixed(2)}), ${o.lean}; `
         + `decision ${dm.toFixed(1)} ms, outcome ${om.toFixed(1)} ms`);
     }
+  }
+}
+
+/* ------------------------------------------------------- how sure, in words */
+
+if (run('certainty')) {
+  // DECISIONS.md 93, SHIP-0.5 A7: the certainty word, the 90% interval in
+  // words and the likely time range (src/core/certainty.ts). First what a
+  // cook is told at each word on the owner's setup - 58 g from the fridge,
+  // into boiling water, an ice bath - on the production surface and particle
+  // count, fresh and after eggs answered in words; then whether the words and
+  // the time range are calibrated, against simulated cooks answering in words.
+  const egg58 = eggFromMass(0.058);
+  const word = (k: number): string => YOLK_WORDS[k];
+  const describe = (r: CertaintyReading): string => {
+    const w = r.words;
+    const span = w.from === w.to ? word(w.from) : `${word(w.from)}-${word(w.to)}`;
+    return `${w.certainty} (asked ${word(w.asked)} ${w.pAsked.toFixed(2)}, with neighbours ${w.pNear.toFixed(2)}); `
+      + `90%: ${span} (${w.pInterval.toFixed(2)}), most likely ${word(w.mostLikely)}; `
+      + `time ${r.time.low_s.toFixed(0)}-${r.time.high_s.toFixed(0)} s`;
+  };
+  console.log('\n== certainty: what a cook is told at each word (58 g, fridge, boiling, ice; 1000 particles)');
+  // Eggs answered in words: a 68 g egg at the literature's jammy, called Jammy.
+  const jammy = (): EggRecord => ({ ...recordAt(0.41, lit464, null, 'firm'), yolkWord: 'jammy' });
+  const cals: [string, Calibration][] = [
+    ['fresh install', PRIOR],
+    ['one egg called jammy', replay(PRIOR, [jammy()])],
+    ['three eggs called jammy', replay(PRIOR, [jammy(), jammy(), jammy()])],
+    ['ten eggs called jammy', replay(PRIOR, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map(() => jammy()))],
+  ];
+  for (const [name, c] of cals) {
+    // As the apps do it: the answer at the level, its time held by the pot's
+    // odds profile (DECISIONS.md 84).
+    const grid = buildRequestedGrid(decisionGridRequest(decisionInputs(c, egg58, SETUP)));
+    const profile = oddsProfile(c, egg58, SETUP, grid);
+    console.log(`${name}:`);
+    for (const level of [0, 0.22, 0.41, 0.62, 1.0]) {
+      const a = answerAt(c, egg58, SETUP, level, profile, true);
+      const d = decide(c, grid, a.solution, logYolkTarget(a.level), envelopeBounds(profile, a.level));
+      const snapped = a.level === level ? '' : ` (snapped to ${a.level})`;
+      console.log(`  ${level}${snapped}: ${d.cookTime_s.toFixed(0)} s, ${d.oddsTenths}/10: `
+        + `${describe(certaintyAt(c.posterior, grid, d.cookTime_s, a.level))}`);
+    }
+  }
+
+  const COOKS = 300;
+  const EGGS = 8;
+  console.log(`\n== certainty: against simulated cooks answering in words (${COOKS} cooks x ${EGGS} eggs, 1000 particles, 58 g)`);
+  const grid = buildDoseGrid(egg58, SETUP, 1, { alphaMin: ALPHA_DEFAULT * CALIBRATION_ALPHA_LOW, alphaMax: ALPHA_DEFAULT * CALIBRATION_ALPHA_HIGH, alphaCount: 17, timeMin_s: 150, timeMax_s: 850, timeCount: 71 });
+  const random = rng(20261006);
+  const truths = createPrior(COOKS, 20261006 ^ 0x2545f49).particles;
+  const levels = [0, 0.22, 0.41, 0.62, 1.0];
+  interface Row { n: number; very: number; ballpark: number; wild: number; inWords: number; asked: number; pAsked: number; inTime: number; width: number }
+  const byEgg: Row[] = [];
+  // Of the eggs given each class, how often the word asked came out, and it
+  // or a neighbour.
+  const byClass: Record<string, { n: number; asked: number; near: number }> = {
+    veryCertain: { n: 0, asked: 0, near: 0 }, ballpark: { n: 0, asked: 0, near: 0 }, wildGuess: { n: 0, asked: 0, near: 0 },
+  };
+  const whites: WhiteReport[] = ['runny', 'tender', 'firm'];
+  for (let k = 0; k < truths.length; k++) {
+    const truth = truths[k];
+    const cal: Calibration = { posterior: createPrior(1000, 1 + Math.floor(random() * 2147483646)), eggsLogged: 0 };
+    const level = levels[k % levels.length];
+    for (let e = 0; e < EGGS; e++) {
+      const m = meanSolve(cal, egg58, SETUP, level);
+      const target = logYolkTarget(m.level);
+      const t = decide(cal, grid, m.sol, target).cookTime_s;
+      const r = certaintyAt(cal.posterior, grid, t, m.level);
+      // What the truth says at t, unrelated share included, and its own
+      // right time as `predictCookTime` defines a particle's.
+      const bands = yolkWordBands(lookupLogYolkDose(grid, truth.alpha_m2s, t) - truth.logDoseOffset, truth.noise);
+      const got = draw(bands.map(withUnrelatedWord), random());
+      const white = draw(whites.map((a) => answerLikelihood(grid, truth, t, target, null, a)), random());
+      const right = predictCookTime({ particles: [truth], weights: [1], rng: 1 }, grid, target).median_s;
+      byEgg[e] ??= { n: 0, very: 0, ballpark: 0, wild: 0, inWords: 0, asked: 0, pAsked: 0, inTime: 0, width: 0 };
+      const row = byEgg[e];
+      row.n += 1;
+      if (r.words.certainty === 'veryCertain') row.very += 1;
+      else if (r.words.certainty === 'ballpark') row.ballpark += 1;
+      else row.wild += 1;
+      row.inWords += got >= r.words.from && got <= r.words.to ? 1 : 0;
+      row.asked += got === r.words.asked ? 1 : 0;
+      row.pAsked += r.words.pAsked;
+      row.inTime += right >= r.time.low_s && right <= r.time.high_s ? 1 : 0;
+      row.width += r.time.high_s - r.time.low_s;
+      const cls = byClass[r.words.certainty];
+      cls.n += 1;
+      cls.asked += got === r.words.asked ? 1 : 0;
+      cls.near += Math.abs(got - r.words.asked) <= 1 ? 1 : 0;
+      updatePosterior(cal.posterior, grid, t, target, null, whites[white], null, YOLK_WORDS[got]);
+      cal.eggsLogged += 1;
+    }
+  }
+  const pc = (x: number, n: number): string => `${(100 * x / n).toFixed(0)}%`;
+  console.log('by egg: very certain / ballpark / wild guess; the word inside the 90% interval; '
+    + 'the word asked, predicted -> got; the right time inside the range, and its mean width');
+  byEgg.forEach((r, i) => {
+    console.log(`  ${i}: ${pc(r.very, r.n)} / ${pc(r.ballpark, r.n)} / ${pc(r.wild, r.n)}; in words ${pc(r.inWords, r.n)}; `
+      + `asked ${pc(r.pAsked, r.n)} -> ${pc(r.asked, r.n)}; in time ${pc(r.inTime, r.n)}, ${(r.width / r.n).toFixed(0)} s`);
+  });
+  for (const [name, c] of Object.entries(byClass)) {
+    if (c.n === 0) continue;
+    console.log(`  ${name}: ${c.n} eggs; the word asked ${pc(c.asked, c.n)}, it or a neighbour ${pc(c.near, c.n)} `
+      + `(the class promises ${CERTAINTY_MASS * 100}% of one or the other)`);
   }
 }
 
