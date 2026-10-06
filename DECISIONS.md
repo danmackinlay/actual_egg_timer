@@ -613,4 +613,11 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     Jammy."), and a likely time range. The 3/10 warning, the lean line and
     the ticks' colours are restated in these terms. Built with the one
     screen (91). 0.4 keeps today's odds. 6 October 2026.
+94. **The apps keep 1000 particles** ("let's not raise the particle count
+    for the users. That is costly. we can raise it in testing if that is
+    reassuring"). At 1000 the chosen time moves 2-3 s with the seed and
+    the shown odds about 0.05, and the filter is mildly overconfident; at
+    4000 the simulation-based calibration is uniform, which shows the
+    filter samples the right posterior and the rest is Monte Carlo error.
+    Tests and `npm run sbc` may run at any count. 6 October 2026.
 
