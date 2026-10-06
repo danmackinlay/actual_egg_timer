@@ -145,10 +145,28 @@ core's exports.
       made now); where the egg in cross-section sits, previewing the aim
       while setting up and going back to raw at the start. Owner's call
       before any of C2 is built.
-      Drafted for the owner: `design/one-screen.md`, its §6 the questions.
-- [ ] **C2. Core for it**, as C1 settles: the re-plan of a running cook
-      from its observed events and a changed setup; the cross-section's
-      preview of the aimed-for egg. TypeScript, fixtures, Swift.
+      `design/one-screen.md`. `DECISIONS.md` 96 settled its core: every
+      change after the start is a correction, re-planned from the start
+      with the start time and observed events kept; everything stays open,
+      after the pull too, when it corrects the record; the displays as
+      alike as possible before and during; the egg live, and aimed-for
+      while a control is touched; "heat off now" later, as an event. Its
+      §4 is the state model that follows; its §7 the questions still open
+      (5, 6, 8-17, 19-24).
+- [ ] **C2. Core for it** (`design/one-screen.md` §4): a cook is its start,
+      its setup and its observed events, and everything else is derived.
+      In `src/core/running.ts` and its Swift twin, fixtured: the types
+      (`CookChoices`, `CookEvents`, `RunningCook`, `CookPlan`);
+      `cookSetupOf`, the one assembly of the solver's egg and pot (today
+      `buildSetup` and `Planner.setup`); the transitions, with a corrected
+      start refused after now or the first event; `replan` (the ramp from
+      the tap, the memory or the slow hob's rule at `now`, the decided time
+      on the pot's surface, the pull clamped to now, the cooling, the
+      deadlines for `phaseAt`, the certainty and forecast); `eventsDue`;
+      `cookFactsFor` and `boilToRemember`; `readRunningCook`; and
+      `previewSection` in `section.ts`. Then each app on it, state first
+      with no visible change: `aet.cook.v3` and `cookInProgress.v2`, a 0.4
+      cook kept aside (`DECISIONS.md` 81).
 - [ ] **C3. Both apps**, screen by screen, checked by driving them;
       `UI.md` rewritten as built.
 
@@ -191,8 +209,9 @@ apps were driven after them (`LOGBOOK.md`, the iOS simulator against a 0.4
 build installed under it, and the web), and nothing failed. C2 onward waits
 on the first item below.
 
-1. **C1**, the one screen's design: `design/one-screen.md` ends with its
-   numbered questions, each with a recommendation.
+1. **C1**, the one screen's design: `DECISIONS.md` 96 answered its core;
+   `design/one-screen.md` §7 has the questions still open, each with a
+   recommendation.
 2. **A7's time range**: the right cook time's 90% interval, as built, or
    one of the alternatives in `INFERENCE.md` §8, "How sure, in words". A
    fresh install is never "very certain" (a wild guess at Runny to Jammy);
