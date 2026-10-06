@@ -200,9 +200,6 @@ on the first item below.
 3. **A2's one change**: where a snap's retry does not reach, the web priced
    the advice at the level asked; both apps now price it at the level the
    odds are for, as iOS did.
-4. **A1's tolerance**: one Swift case, the decide fixture's "firmer", now
-   holds whole-cook doses to 1e-11 rather than 1e-12 (libm's last bit,
-   compounded through a cook); every other stays at 1e-12.
-5. **E**, the tidy-ups' choices.
-6. **The branch.** By `DECISIONS.md` 64 the 0.5 line is `0.5.x`. This
+4. **E**, the tidy-ups' choices.
+5. **The branch.** By `DECISIONS.md` 64 the 0.5 line is `0.5.x`. This
    working branch can become it, once the owner says so.
