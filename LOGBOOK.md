@@ -4762,3 +4762,58 @@ levels near those edges by 20-90 s. On the counter the times above it are
 7 s longer, the carryover's own share: those surfaces were built at a
 learned 1.071, now 1.0. In `fixtures/certainty.json` one case went from a
 ballpark to a wild guess, and the likely times by up to 20 s.
+
+## 6 October 2026: the A-items driven on the iOS simulator
+
+QA, on one simulator (iPhone Air, iOS 27.0), a debug build of `0.4.x` at
+`8972a05` and then this line at `3257feb` installed over it, same bundle id.
+Every setup below is 58 g from the fridge into boiling water, 0.25 L, one
+egg, sea level, set by launch arguments (`-start hot -sizeIndex 1 -doneness
+… -cooling …`).
+
+- **A fresh install** shows the same eight times in both builds, to the
+  second: runny 5:43, soft 6:26, jammy 7:06, fudgy 7:56, hard 9:45 with ice;
+  on the counter 4:50 (jammy, held at the softest the white allows), 5:11
+  (fudgy), 7:06 (hard). The same lines, warnings and links; the brackets'
+  ends a point or two apart. The counter's times did not move on a fresh
+  install.
+- **The upgrade** (A1, A4). 0.4 was seeded with one egg (`soft/runny` at
+  jammy) and cooked one through `-uiScreen done` (jammy, firm, probe 65 °C);
+  sharing on against `npm run serve:dev`, two results sent. On 0.5's first
+  launch `calibration.v4` was written again: `m` 2026-10-e9 to e10, `folded`
+  2, the log's two records equal as JSON, every `t` 1.0 (0.4's mean 1.02),
+  no base, nothing set aside, no other key changed. On the second launch the
+  stored bytes were identical (the log's key order, which a JSONEncoder
+  dictionary draws afresh in each process, included), so it was not written
+  again. `sharing.v1` was unchanged: on, the same id, two sent.
+- **The learned screen** (A2), sharing off in both: runny (held at 0.08)
+  7:44 to 7:38, soft 7:46 to 7:40, jammy 8:19 to 8:16, fudgy 9:12 to 9:13,
+  hard 11:19 both; counter 6:49 to 6:44 twice, hard 8:27 both. The warnings
+  (runny with ice, fudgy on the counter) and Help's list for them the same.
+  Jammy and fudgy with ice went from "It could come out too soft or too
+  firm" to "Probably just right": the log replayed under each core
+  (`oddsProfile`, the tools' grid) puts the odds there at 0.48 and 0.49 in
+  0.4 and 0.56 and 0.56 in 0.5, up 0.06-0.08 at every level, the replay's
+  movement and not A2's.
+- **A cook logged on 0.5** (A3): the record has 0.4's 22 keys with the same
+  shapes, `model` 2026-10-e10, `appVersion` 0.5.0+3, no `id`; folded to 3
+  without a replay. The export's top-level keys are 0.4's.
+- **Sharing** (A5): turned off and on, it kept its id and sent the third
+  egg as `000002`; "Delete shared results" deleted three blobs on the
+  server and left the state empty and off, with "Deleted: the server has
+  nothing this device sent."
+
+- **Back to 0.4** over it, afterwards: 0.4 replayed the three records
+  (`m` e10 to e9, `folded` 3, the log equal), nothing set aside.
+
+Two things that cost time and are not the app's. The simulator tool's short
+tap mostly does not flip the Share results switch on iOS 27, in 0.4 as in
+0.5 (one of eight took); a 0.15 s press or a drag does. And the prefs
+plist on disk lags the app by a few seconds: read it after terminating the
+app.
+
+One debug-only oddity: `-uiScreen done` starts the cook before the decision
+surface is built, so its time is the mean solve (6:54 at 0.08, where the
+screen, once settled, says 7:38), and the record's `recommended_s` is that.
+A cook started by a tap starts at the time on screen (7:04, after the third
+egg).
