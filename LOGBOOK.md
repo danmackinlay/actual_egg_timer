@@ -4473,3 +4473,26 @@ pass"). Three branches, merged into `0.4.x`:
   rollback keeps. iOS records carry no `id`: one app, one process.
 
 345 TypeScript tests and 132 Swift after the merges; the iOS build passes.
+
+## 6 October 2026: the posterior tested as a distribution
+
+CI's Linux job failed test 2a2, which asked for the particles of a pinned
+replay bit for bit (above, the entry on the five yolk words): Linux and
+arm64 macOS differ in the last bit, and resampling and the Metropolis
+step are discontinuous in the weights, so a one-ulp difference sends the
+particles down another, equally valid path. The owner: test that the
+filter samples the right posterior, not that floats match. Now
+(`1613fb4`, `0ea77aa`): 2a2 pins the old three-answer likelihood itself
+to 1e-12; 2a3 folds the old log under 60 seeds and holds its summaries
+within 5 standard errors of a 400-seed reference and of the exact
+posterior by importance sampling (`npm run posterior -- reference`);
+`npm run sbc` runs simulation-based calibration (2.5 min) and
+`test/sbc.test.ts` a small one (2 s).
+
+What it measured, at the app's 1000 particles (58 g, fridge, boiling,
+ice, jammy): the chosen time moves 2-3 s (sd) with the seed, the shown
+odds about 0.05-0.06, so 4/10 to 7/10 on reseed alone; the filter is
+mildly overconfident (12-13.6% of true values in the outer tenth, worst
+for `tauAirScale` and the white), uniform at 4000. `tauAirScale` is never
+learned: every grid is built at its posterior mean, so no particle's value
+enters the likelihood and its mean only drifts with resampling.

@@ -10,7 +10,7 @@ population a prior is drawn from (E6-E8, `COLLECTIVE.md`) are built in
 both, on this branch, not on `main` and not deployed. The web app (`src/`) and the iOS app (`ios/`) carry
 the same model, refusals, particle filter and choice of time, the same
 catalogue of words in two Englishes (Phase F but for Czech), and the same
-layout (`UI.md`). `npm test` runs 345 tests, all passing (5b pins E3's known
+layout (`UI.md`). `npm test` runs 348 tests, all passing (5b pins E3's known
 limit). `npm run validate` passes 29/29, `swift test` passes 132 tests
 in 35 suites, and the fit's pytest 9. **Pushed on 29 September** at `5ff6940`, the owner's
 call: Netlify serves it at actualeggtimer.netlify.app, and the first run of
