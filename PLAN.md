@@ -4,7 +4,8 @@ The state of the build, what is next, and what waits on whom. Updated in the
 same commit as the work it describes. History is `LOGBOOK.md`; the rules for
 working here are `CLAUDE.md`; the last section says where everything else is.
 
-**Where things stand, 3 October 2026, on the `0.4.x` branch.** Both apps are complete for one
+**Where things stand, 6 October 2026, on the 0.5 line** (forked from
+`0.4.x` at `8972a05`; its worklist is `SHIP-0.5.md`). Both apps are complete for one
 cook and learning, and now for many: opt-in sharing, the nudge and the
 population a prior is drawn from (E6-E8, `COLLECTIVE.md`) are built in
 both, on this branch, not on `main` and not deployed. The web app (`src/`) and the iOS app (`ios/`) carry
@@ -38,6 +39,11 @@ These counts are the only ones in the documents. If you want a number, run
    0.4; two `OWNER` marks left to answer, `SHIP-0.4.md` B), and the
    endpoint (`netlify/functions/eggs.mts`, Netlify Blobs).
    It is version 0.4.0-alpha.1 here; `main` releases small things meanwhile.
+
+5. **0.5**, on this line: `SHIP-0.5.md`, the foundations in core first
+   (`DECISIONS.md` 90, 95, and 93's arithmetic), then the one screen once
+   the owner has its design (91), with certainty in words on it (93).
+   `0.4.x` is merged in as it moves.
 
 Throughout: cook real eggs, and the two measurements in README §11.3.
 
@@ -207,23 +213,11 @@ Waiting on someone else: the Czech review (F5), by the owner's friend.
   whether the field should show when the probe setting is off (it does
   now, whenever the cooling ends at the peak).
 
-- **0.5: the counter's carryover fixed at 1.0** (`DECISIONS.md` 95):
-  `tauAirScale` out of the particle and the fit, `MODEL_ID` moved, stored
-  posteriors replayed; fixtures and the Swift twin with it.
-
-- **0.5: certainty in words** (`DECISIONS.md` 93): "very certain",
-  "ballpark" or "wild guess" from the predicted spread of the five yolk
-  words, with the 90% interval in those words (and a time range) on a
-  tap; replaces the "just right" odds, the 3/10 warning's terms and the
-  lean line. With the one screen below.
-
-- **0.5: one screen for setting up and boiling** (`DECISIONS.md` 91): the
-  setup and the timer merged, so the start, the egg and the pot can be
-  changed early in a cook and the time re-planned from what has happened.
-  The egg in cross-section is always on that screen: while setting up it
-  shows the yolk and white the settings aim for, as a preview; at the
-  start it goes back to raw and then cooks along with the timer. Needs
-  interface design first.
+- **0.5** (`SHIP-0.5.md`): the counter's carryover fixed at 1.0
+  (`DECISIONS.md` 95); the review's refactors into core (90); certainty in
+  words, "very certain", "ballpark" or "wild guess", with the 90% interval
+  on a tap (93); one screen for setting up and boiling, the egg in
+  cross-section always on it (91), which needs interface design first.
 
 - **Dim the time while it is recalculated**, the owner's idea (5 October
   2026), not wanted yet: while a newer answer is on its way, the time and its
@@ -432,5 +426,6 @@ checked, fixed or deleted. Start the QA pass here.
 | `LOGBOOK.md` | the record: what was verified, measured and learned, by date |
 | `WORKLIST.md` | the review of 28 September 2026, worked through |
 | `FOLLOWUP.md` | QA's worklist after it, 29 September 2026, worked through; `tidy2` waits on the owner |
+| `SHIP-0.5.md` | the 0.5 line's worklist: foundations in core, the one screen, certainty in words, ticked as it lands |
 | `COLLECTIVE.md` | E6-E8, the collective part: the choices made to build `INFERENCE.md` §6-§9, and the work, ticked as it lands |
 | `fit/README.md` | the population fit (E7): pulling the eggs, fitting, scoring, publishing |
