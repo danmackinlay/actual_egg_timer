@@ -9605,6 +9605,562 @@
       }
     }
   ],
+  "load": {
+    "population": "this-population",
+    "model": "this-model",
+    "cases": [
+      {
+        "why": "nothing stored",
+        "read": {
+          "stored": false,
+          "v4": false,
+          "base": null,
+          "posterior": false,
+          "folded": null,
+          "records": null,
+          "moved": false,
+          "population": "2026-09",
+          "model": null
+        },
+        "decision": {
+          "path": "fresh",
+          "loses": false,
+          "base": null,
+          "calibration": "start",
+          "folded": 0,
+          "log": false
+        }
+      },
+      {
+        "why": "a store that is not v4, or not JSON: kept aside",
+        "read": {
+          "stored": true,
+          "v4": false,
+          "base": null,
+          "posterior": false,
+          "folded": null,
+          "records": null,
+          "moved": false,
+          "population": "2026-09",
+          "model": null
+        },
+        "decision": {
+          "path": "fresh",
+          "loses": true,
+          "base": null,
+          "calibration": "start",
+          "folded": 0,
+          "log": false
+        }
+      },
+      {
+        "why": "loaded, two of three folded",
+        "read": {
+          "stored": true,
+          "v4": true,
+          "base": null,
+          "posterior": true,
+          "folded": 2,
+          "records": 3,
+          "moved": false,
+          "population": "this-population",
+          "model": "this-model"
+        },
+        "decision": {
+          "path": "loaded",
+          "loses": false,
+          "base": null,
+          "calibration": "posterior",
+          "folded": 2,
+          "log": true
+        }
+      },
+      {
+        "why": "loaded, every record folded",
+        "read": {
+          "stored": true,
+          "v4": true,
+          "base": null,
+          "posterior": true,
+          "folded": 3,
+          "records": 3,
+          "moved": false,
+          "population": "this-population",
+          "model": "this-model"
+        },
+        "decision": {
+          "path": "loaded",
+          "loses": false,
+          "base": null,
+          "calibration": "posterior",
+          "folded": 3,
+          "log": true
+        }
+      },
+      {
+        "why": "loaded, an empty log",
+        "read": {
+          "stored": true,
+          "v4": true,
+          "base": null,
+          "posterior": true,
+          "folded": 0,
+          "records": 0,
+          "moved": false,
+          "population": "this-population",
+          "model": "this-model"
+        },
+        "decision": {
+          "path": "loaded",
+          "loses": false,
+          "base": null,
+          "calibration": "posterior",
+          "folded": 0,
+          "log": true
+        }
+      },
+      {
+        "why": "loaded on a base",
+        "read": {
+          "stored": true,
+          "v4": true,
+          "base": "sound",
+          "posterior": true,
+          "folded": 2,
+          "records": 3,
+          "moved": false,
+          "population": "this-population",
+          "model": "this-model"
+        },
+        "decision": {
+          "path": "loaded",
+          "loses": false,
+          "base": "stored",
+          "calibration": "posterior",
+          "folded": 2,
+          "log": true
+        }
+      },
+      {
+        "why": "the log not a list: the posterior becomes the base",
+        "read": {
+          "stored": true,
+          "v4": true,
+          "base": null,
+          "posterior": true,
+          "folded": 2,
+          "records": null,
+          "moved": false,
+          "population": "this-population",
+          "model": "this-model"
+        },
+        "decision": {
+          "path": "rebased",
+          "loses": true,
+          "base": "posterior",
+          "calibration": "start",
+          "folded": 0,
+          "log": false
+        }
+      },
+      {
+        "why": "the log not a list on a base: the posterior still",
+        "read": {
+          "stored": true,
+          "v4": true,
+          "base": "sound",
+          "posterior": true,
+          "folded": 2,
+          "records": null,
+          "moved": false,
+          "population": "this-population",
+          "model": "this-model"
+        },
+        "decision": {
+          "path": "rebased",
+          "loses": true,
+          "base": "posterior",
+          "calibration": "start",
+          "folded": 0,
+          "log": false
+        }
+      },
+      {
+        "why": "the log not a list, the posterior damaged: the base",
+        "read": {
+          "stored": true,
+          "v4": true,
+          "base": "sound",
+          "posterior": false,
+          "folded": 2,
+          "records": null,
+          "moved": false,
+          "population": "this-population",
+          "model": "this-model"
+        },
+        "decision": {
+          "path": "rebased",
+          "loses": true,
+          "base": "stored",
+          "calibration": "start",
+          "folded": 0,
+          "log": false
+        }
+      },
+      {
+        "why": "the log not a list, nothing sound: the prior",
+        "read": {
+          "stored": true,
+          "v4": true,
+          "base": "damaged",
+          "posterior": false,
+          "folded": 2,
+          "records": null,
+          "moved": false,
+          "population": "this-population",
+          "model": "this-model"
+        },
+        "decision": {
+          "path": "rebased",
+          "loses": true,
+          "base": null,
+          "calibration": "start",
+          "folded": 0,
+          "log": false
+        }
+      },
+      {
+        "why": "the log not a list, another model: still rebased",
+        "read": {
+          "stored": true,
+          "v4": true,
+          "base": null,
+          "posterior": true,
+          "folded": 2,
+          "records": null,
+          "moved": false,
+          "population": "this-population",
+          "model": "another-model"
+        },
+        "decision": {
+          "path": "rebased",
+          "loses": true,
+          "base": "posterior",
+          "calibration": "start",
+          "folded": 0,
+          "log": false
+        }
+      },
+      {
+        "why": "the posterior damaged: the log again from the prior",
+        "read": {
+          "stored": true,
+          "v4": true,
+          "base": null,
+          "posterior": false,
+          "folded": 2,
+          "records": 3,
+          "moved": false,
+          "population": "this-population",
+          "model": "this-model"
+        },
+        "decision": {
+          "path": "rebuild",
+          "loses": false,
+          "base": null,
+          "calibration": "start",
+          "folded": 0,
+          "log": true
+        }
+      },
+      {
+        "why": "the posterior damaged on a base: the log again from the base",
+        "read": {
+          "stored": true,
+          "v4": true,
+          "base": "sound",
+          "posterior": false,
+          "folded": 2,
+          "records": 3,
+          "moved": false,
+          "population": "this-population",
+          "model": "this-model"
+        },
+        "decision": {
+          "path": "rebuild",
+          "loses": false,
+          "base": "stored",
+          "calibration": "start",
+          "folded": 0,
+          "log": true
+        }
+      },
+      {
+        "why": "the base damaged: dropped, and the log again from the prior",
+        "read": {
+          "stored": true,
+          "v4": true,
+          "base": "damaged",
+          "posterior": true,
+          "folded": 2,
+          "records": 3,
+          "moved": false,
+          "population": "this-population",
+          "model": "this-model"
+        },
+        "decision": {
+          "path": "rebuild",
+          "loses": false,
+          "base": null,
+          "calibration": "start",
+          "folded": 0,
+          "log": true
+        }
+      },
+      {
+        "why": "the count damaged",
+        "read": {
+          "stored": true,
+          "v4": true,
+          "base": null,
+          "posterior": true,
+          "folded": null,
+          "records": 3,
+          "moved": false,
+          "population": "this-population",
+          "model": "this-model"
+        },
+        "decision": {
+          "path": "rebuild",
+          "loses": false,
+          "base": null,
+          "calibration": "start",
+          "folded": 0,
+          "log": true
+        }
+      },
+      {
+        "why": "drawn from another population",
+        "read": {
+          "stored": true,
+          "v4": true,
+          "base": null,
+          "posterior": true,
+          "folded": 2,
+          "records": 3,
+          "moved": false,
+          "population": "another-population",
+          "model": "this-model"
+        },
+        "decision": {
+          "path": "rebuild",
+          "loses": false,
+          "base": null,
+          "calibration": "start",
+          "folded": 0,
+          "log": true
+        }
+      },
+      {
+        "why": "folded under another model",
+        "read": {
+          "stored": true,
+          "v4": true,
+          "base": null,
+          "posterior": true,
+          "folded": 2,
+          "records": 3,
+          "moved": false,
+          "population": "this-population",
+          "model": "another-model"
+        },
+        "decision": {
+          "path": "rebuild",
+          "loses": false,
+          "base": null,
+          "calibration": "start",
+          "folded": 0,
+          "log": true
+        }
+      },
+      {
+        "why": "from before the model was kept",
+        "read": {
+          "stored": true,
+          "v4": true,
+          "base": null,
+          "posterior": true,
+          "folded": 2,
+          "records": 3,
+          "moved": false,
+          "population": "this-population",
+          "model": null
+        },
+        "decision": {
+          "path": "rebuild",
+          "loses": false,
+          "base": null,
+          "calibration": "start",
+          "folded": 0,
+          "log": true
+        }
+      },
+      {
+        "why": "another model, on a base: the base stays",
+        "read": {
+          "stored": true,
+          "v4": true,
+          "base": "sound",
+          "posterior": true,
+          "folded": 2,
+          "records": 3,
+          "moved": false,
+          "population": "this-population",
+          "model": "another-model"
+        },
+        "decision": {
+          "path": "rebuild",
+          "loses": false,
+          "base": "stored",
+          "calibration": "start",
+          "folded": 0,
+          "log": true
+        }
+      },
+      {
+        "why": "a record changed sides: replayed",
+        "read": {
+          "stored": true,
+          "v4": true,
+          "base": null,
+          "posterior": true,
+          "folded": 2,
+          "records": 3,
+          "moved": true,
+          "population": "this-population",
+          "model": "this-model"
+        },
+        "decision": {
+          "path": "rebuild",
+          "loses": false,
+          "base": null,
+          "calibration": "start",
+          "folded": 0,
+          "log": true
+        }
+      },
+      {
+        "why": "a posterior ahead of its log: rebased on it",
+        "read": {
+          "stored": true,
+          "v4": true,
+          "base": null,
+          "posterior": true,
+          "folded": 4,
+          "records": 3,
+          "moved": false,
+          "population": "this-population",
+          "model": "this-model"
+        },
+        "decision": {
+          "path": "rebased",
+          "loses": true,
+          "base": "posterior",
+          "calibration": "start",
+          "folded": 0,
+          "log": false
+        }
+      },
+      {
+        "why": "ahead of an empty log",
+        "read": {
+          "stored": true,
+          "v4": true,
+          "base": null,
+          "posterior": true,
+          "folded": 1,
+          "records": 0,
+          "moved": false,
+          "population": "this-population",
+          "model": "this-model"
+        },
+        "decision": {
+          "path": "rebased",
+          "loses": true,
+          "base": "posterior",
+          "calibration": "start",
+          "folded": 0,
+          "log": false
+        }
+      },
+      {
+        "why": "ahead, on a base: the posterior becomes the base",
+        "read": {
+          "stored": true,
+          "v4": true,
+          "base": "sound",
+          "posterior": true,
+          "folded": 4,
+          "records": 3,
+          "moved": false,
+          "population": "this-population",
+          "model": "this-model"
+        },
+        "decision": {
+          "path": "rebased",
+          "loses": true,
+          "base": "posterior",
+          "calibration": "start",
+          "folded": 0,
+          "log": false
+        }
+      },
+      {
+        "why": "ahead, and a record changed sides: replayed first",
+        "read": {
+          "stored": true,
+          "v4": true,
+          "base": null,
+          "posterior": true,
+          "folded": 4,
+          "records": 3,
+          "moved": true,
+          "population": "this-population",
+          "model": "this-model"
+        },
+        "decision": {
+          "path": "rebuild",
+          "loses": false,
+          "base": null,
+          "calibration": "start",
+          "folded": 0,
+          "log": true
+        }
+      },
+      {
+        "why": "ahead, and another model: replayed first",
+        "read": {
+          "stored": true,
+          "v4": true,
+          "base": null,
+          "posterior": true,
+          "folded": 4,
+          "records": 3,
+          "moved": false,
+          "population": "this-population",
+          "model": "another-model"
+        },
+        "decision": {
+          "path": "rebuild",
+          "loses": false,
+          "base": null,
+          "calibration": "start",
+          "folded": 0,
+          "log": true
+        }
+      }
+    ]
+  },
   "resultsFile": {
     "version": 1,
     "names": [

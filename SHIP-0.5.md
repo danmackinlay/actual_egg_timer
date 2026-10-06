@@ -46,9 +46,13 @@ core's exports.
       `probeReadingFor` in `src/core/record.ts` and `Record.swift`, 32
       cases and 8 probe whens in `record.json`; each app gathers its facts
       and calls them. Checked before the switch against each app's old
-      copy: the same record, the web's to the character.
-- [ ] **A4. The decode decision in core** (Bloat 4): fresh, rebuild,
-      rebased or loaded, today in each app and untested in Swift.
+      copy: the same record, the web's to the character. `18b428a`.
+- [x] **A4. The decode decision in core** (Bloat 4): fresh, rebuild,
+      rebased or loaded, today in each app and untested in Swift. Done:
+      `loadDecision(StoreRead)` in `src/core/record.ts` and `Record.swift`,
+      25 cases in `record.json`; each app reads its store apart and keeps
+      what core decides. Checked before the switch: the web's whole decode
+      over 41479 stores, and iOS's decision over every one of 4320 reads.
 - [ ] **A5. The sharing state machine in core** (Bloat 3): `turnedOn`,
       `forgotten`, `deletionAsked`, `reconciled`, `advances`, into
       `src/core/share.ts` with fixtures; the server shares `isUid`.

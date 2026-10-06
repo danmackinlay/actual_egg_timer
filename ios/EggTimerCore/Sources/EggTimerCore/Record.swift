@@ -735,6 +735,121 @@ public func replay(
     return c
 }
 
+// MARK: - The store, read
+
+// What a launch makes of the store (DECISIONS.md 81): each app reads its
+// store apart its own way, which is I/O; what it then keeps is this one
+// decision. See src/core/record.ts.
+
+/// What a launch found: nothing to use (`fresh`), a log to fold again
+/// (`rebuild`), a log that cannot be used and what it taught kept as the base
+/// (`rebased`), or everything as stored (`loaded`).
+public enum LoadPath: String, Sendable {
+    case fresh, rebuild, rebased, loaded
+}
+
+/// A stored base, read: whole, or not.
+public enum StoredBase: String, Sendable {
+    case sound, damaged
+}
+
+/// What an app read from its store, part by part.
+public struct StoreRead: Sendable, Equatable {
+    /// Whether anything was stored at all.
+    public var stored: Bool
+    /// Whether it is a v4 store that can be taken apart.
+    public var v4: Bool
+    /// The base under the posterior: nil where the store has none.
+    public var base: StoredBase?
+    /// Whether the posterior read whole.
+    public var posterior: Bool
+    /// How many records the posterior has absorbed, or nil if that is not a
+    /// whole number from zero.
+    public var folded: Int?
+    /// How many records of the log this build reads, or nil when the log is
+    /// not a list.
+    public var records: Int?
+    /// Whether the records this build reads differ from the ones stored as read.
+    public var moved: Bool
+    /// The population the posterior was drawn from; the literature's when
+    /// the store does not say.
+    public var population: String
+    /// The model it was folded under, or nil when the store does not say.
+    public var model: String?
+
+    public init(
+        stored: Bool, v4: Bool, base: StoredBase?, posterior: Bool, folded: Int?, records: Int?,
+        moved: Bool, population: String, model: String?
+    ) {
+        self.stored = stored
+        self.v4 = v4
+        self.base = base
+        self.posterior = posterior
+        self.folded = folded
+        self.records = records
+        self.moved = moved
+        self.population = population
+        self.model = model
+    }
+}
+
+/// Where the kept base comes from.
+public enum KeptBase: String, Sendable {
+    case stored, posterior
+}
+
+/// Where the kept calibration comes from: the stored posterior as it is, or
+/// a copy of the base - the prior where there is none - to fold the log onto.
+public enum KeptCalibration: String, Sendable {
+    case posterior, start
+}
+
+/// What to keep, in the parts that were read.
+public struct LoadDecision: Sendable, Equatable {
+    public var path: LoadPath
+    /// Whether the stored text is to be kept aside, as stored, before
+    /// anything is written over it.
+    public var loses: Bool
+    /// The base: the stored one, the stored posterior, or none.
+    public var base: KeptBase?
+    public var calibration: KeptCalibration
+    /// How many records of the kept log the calibration has absorbed.
+    public var folded: Int
+    /// Whether the log as read is kept, with every record set aside in its
+    /// place; when not, it starts again empty.
+    public var log: Bool
+
+    public init(path: LoadPath, loses: Bool, base: KeptBase?, calibration: KeptCalibration, folded: Int, log: Bool) {
+        self.path = path
+        self.loses = loses
+        self.base = base
+        self.calibration = calibration
+        self.folded = folded
+        self.log = log
+    }
+}
+
+/// What a launch does with the store it read, for a build that draws its
+/// prior from `population` and folds under `model`. See src/core/record.ts.
+public func loadDecision(_ read: StoreRead, population: String, model: String) -> LoadDecision {
+    guard read.v4 else {
+        return LoadDecision(path: .fresh, loses: read.stored, base: nil, calibration: .start, folded: 0, log: false)
+    }
+    guard let records = read.records else {
+        let base: KeptBase? = read.posterior ? .posterior : read.base == .sound ? .stored : nil
+        return LoadDecision(path: .rebased, loses: true, base: base, calibration: .start, folded: 0, log: false)
+    }
+    let base: KeptBase? = read.base == .sound ? .stored : nil
+    guard read.base != .damaged, read.posterior, let folded = read.folded,
+          read.population == population, read.model == model, !read.moved else {
+        return LoadDecision(path: .rebuild, loses: false, base: base, calibration: .start, folded: 0, log: true)
+    }
+    if folded > records {
+        return LoadDecision(path: .rebased, loses: true, base: .posterior, calibration: .start, folded: 0, log: false)
+    }
+    return LoadDecision(path: .loaded, loses: false, base: base, calibration: .posterior, folded: folded, log: true)
+}
+
 // MARK: - The results file
 
 // "Export my results" (DECISIONS.md 81): the store exactly as stored, spliced

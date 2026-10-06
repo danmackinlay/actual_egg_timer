@@ -29,9 +29,9 @@ import { DecisionInputs } from '../core/decide.js';
 import { OddsProfile } from '../core/reach.js';
 import { CALIBRATION_SEED, PARTICLE_COUNT, calibrationGrid } from '../core/policy.js';
 import {
-  Calibration, CookFacts, EggFrom, EggRecord, Forecast, MODEL_ID, MassFrom, ProbeReading,
+  Calibration, CookFacts, EggFrom, EggRecord, Forecast, LoadPath, MODEL_ID, MassFrom, ProbeReading,
   calibrationDoneness as donenessOf, calibrationParams as paramsOf, copyCalibration, foldRecord,
-  freshCalibration as freshFrom, gridRequestFor, parseRecord, recordFor, recordTeaches,
+  freshCalibration as freshFrom, gridRequestFor, loadDecision, parseRecord, recordFor, recordTeaches,
   resultsFile, resultsFileName,
 } from '../core/record.js';
 import { UnitSystem } from '../core/units.js';
@@ -344,9 +344,6 @@ export function encodeKept(k: Kept, pop: Population = activePopulation(), model 
 
 /** What loading found, for the caller that has to write it back and for the
  *  tests that check each path. */
-type LoadPath =
-  | 'fresh' | 'loaded' | 'rebased' | 'rebuild';
-
 interface Decoded {
   kept: Kept;
   path: LoadPath;
@@ -423,30 +420,15 @@ function parseJSON(raw: string | null): unknown {
 /**
  * What is in storage, made safe to fold on top of.
  *
- * Every damaged part is refused, never read around, and what is refused depends
- * on what can still be trusted:
- *
- *  - no v4 that can be read: `fresh`, the prior.
- *  - the posterior damaged, the log good: `rebuild`. The log is the truth, so
- *    the posterior is set back to its start and every record is folded again.
- *  - a record that does not read (a newer build's, most likely): skipped and
- *    kept, in its place (`readLog`), and the rest replayed - `rebuild` - if
- *    that changed what the posterior should hold.
- *  - the log not a list at all: `rebased`. Its records cannot be folded, but
- *    what they taught is in the posterior, which is sound - so it becomes the
- *    base, and the log starts again empty.
- *  - a posterior that has absorbed more records than the log holds: also
- *    `rebased`, for the same reason.
- *  - a base that is damaged: dropped, and the log replayed from the prior.
- *  - a posterior drawn from another population than `pop` (E7: a release
- *    shipped a new one), or folded under another model (`MODEL_ID`, the
- *    store's `m`): `rebuild`, from a prior drawn from `pop` - "a model change
- *    is a replay" (INFERENCE.md section 4). A base cannot be replayed, so one
- *    stays as it is.
- *
- * `fresh` from a store that held something, and `rebased`, say `loses`: the
- * caller keeps the stored text aside before writing over it, so nothing a
- * build cannot read is ever lost (DECISIONS.md 81).
+ * The store is read apart here, part by part; what to keep of it is core's
+ * `loadDecision` (src/core/record.ts), iOS's too, whose header has every path:
+ * `fresh`, `rebuild`, `rebased` or `loaded`. Every damaged part is refused,
+ * never read around; a record that does not read (a newer build's, most
+ * likely) is skipped and kept, in its place (`readLog`); a posterior drawn
+ * from another population than `pop` or folded under another model is
+ * replayed. `loses` says the caller is to keep the stored text aside before
+ * writing over it, so nothing a build cannot read is ever lost
+ * (DECISIONS.md 81).
  *
  * The calibration and the base come back starting at `pop`'s centre
  * (`priorStart`): the start is not stored, since it is the population's.
@@ -465,51 +447,38 @@ export function decodeKept(
 
 function decodeParts(v4raw: string | null, pop: Population, model: string): Decoded {
   const obj = parseJSON(v4raw);
-  if (obj === null || typeof obj !== 'object' || (obj as { v?: unknown }).v !== 4) {
-    return { kept: freshKept(pop), path: 'fresh', loses: v4raw !== null && v4raw !== '' };
-  }
-  const s = obj as Partial<Record<keyof StoredV4, unknown>>;
-  const drawnFrom = typeof s.p === 'string' ? s.p : LITERATURE_POPULATION.id;
-  const foldedUnder = typeof s.m === 'string' ? s.m : null;
-  let base: Calibration | null = null;
-  let baseLost = false;
-  if (s.base !== null) {
-    base = readPosterior(s.base);
-    baseLost = base === null;
-  }
-  const cal = readPosterior(s.cal);
-  const read = readLog(s.log, s.unread);
+  const v4 = obj !== null && typeof obj === 'object' && (obj as { v?: unknown }).v === 4;
+  const s = (v4 ? obj : {}) as Partial<Record<keyof StoredV4, unknown>>;
+  // A base the store leaves out is read as a damaged one; this app always
+  // writes one, null when there is none.
+  const base = v4 && s.base !== null ? readPosterior(s.base) : null;
+  const cal = v4 ? readPosterior(s.cal) : null;
+  const read = v4 ? readLog(s.log, s.unread) : null;
   const folded = s.folded;
-  const foldedOk = typeof folded === 'number' && Number.isInteger(folded) && folded >= 0;
-
-  if (read === null) {
-    const sound = cal ?? base;
-    return {
-      kept: { base: sound, calibration: startOf(sound, pop), folded: 0, log: [] },
-      path: 'rebased',
-      loses: true,
-    };
-  }
-  const { log, stored, unread } = read;
-  if (baseLost || cal === null || !foldedOk || drawnFrom !== pop.id || foldedUnder !== model || read.moved) {
-    return {
-      kept: { base: base, calibration: startOf(base, pop), folded: 0, log: log, unread: unread, stored: stored },
-      path: 'rebuild',
-      loses: false,
-    };
-  }
-  if ((folded as number) > log.length) {
-    return {
-      kept: { base: cal, calibration: copyCalibration(cal), folded: 0, log: [] },
-      path: 'rebased',
-      loses: true,
-    };
-  }
-  return {
-    kept: { base: base, calibration: cal, folded: folded as number, log: log, unread: unread, stored: stored },
-    path: 'loaded',
-    loses: false,
+  const d = loadDecision({
+    stored: v4raw !== null && v4raw !== '',
+    v4: v4,
+    base: !v4 || s.base === null ? null : base === null ? 'damaged' : 'sound',
+    posterior: cal !== null,
+    folded: typeof folded === 'number' && Number.isInteger(folded) && folded >= 0 ? folded : null,
+    records: read === null ? null : read.log.length,
+    moved: read !== null && read.moved,
+    population: typeof s.p === 'string' ? s.p : LITERATURE_POPULATION.id,
+    model: typeof s.m === 'string' ? s.m : null,
+  }, pop.id, model);
+  const keptBase = d.base === 'stored' ? base : d.base === 'posterior' ? cal : null;
+  const kept: Kept = {
+    base: keptBase,
+    calibration: d.calibration === 'posterior' && cal !== null ? cal : startOf(keptBase, pop),
+    folded: d.folded,
+    log: [],
   };
+  if (d.log && read !== null) {
+    kept.log = read.log;
+    kept.unread = read.unread;
+    kept.stored = read.stored;
+  }
+  return { kept: kept, path: d.path, loses: d.loses };
 }
 
 /* ------------------------------------------------------------- the state */

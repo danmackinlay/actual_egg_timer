@@ -387,64 +387,66 @@ enum Calibrations {
         return out
     }
 
-    /// What is in storage, made safe to fold on top of. Every damaged part is
-    /// refused, never read around - the same paths as the web app's
-    /// `decodeKept`:
-    ///
-    ///  - no v4 that can be read: the prior.
-    ///  - the posterior damaged, the log good: the posterior goes back to its
-    ///    start and the whole log is folded again.
-    ///  - a record that does not read (a newer build's, most likely): skipped
-    ///    and kept in its place (`readLog`), and the rest replayed if that
-    ///    changed what the posterior should hold.
-    ///  - the log not a list: what it taught is in the posterior, which is
-    ///    sound, so that becomes the new base and the log starts again empty.
-    ///  - a posterior ahead of its log: the same.
-    ///  - a damaged base: dropped, and the log replayed from the prior.
-    ///  - a posterior drawn from another population (E7: a release shipped a
-    ///    new one), or folded under another model (`modelID`, the store's
-    ///    `m`): the log replayed from a prior drawn from this population - "a
-    ///    model change is a replay". A base cannot be replayed, and stays.
-    ///
-    /// A store that held something this build is about to write over - one it
-    /// cannot read at all, or a log it has to drop - is kept aside first, as
-    /// stored (`unreadKey`), so no build loses what another wrote.
+    /// What is in storage, made safe to fold on top of. The store is read
+    /// apart here, part by part; what to keep of it is EggTimerCore's
+    /// `loadDecision`, the web's too, whose header has every path. Every
+    /// damaged part is refused, never read around; a record this build cannot
+    /// read is skipped and kept in its place (`readLog`); a store this build
+    /// is about to write over and cannot use whole is kept aside first, as
+    /// stored (`unreadKey`), so no build loses what another wrote; and a
+    /// posterior folded under another model or drawn from another population
+    /// is replayed - "a model change is a replay".
     ///
     /// Whatever comes back starts at this population's centre: the start is
     /// the population's, not stored.
     static func load() -> Kept {
         let raw = UserDefaults.standard.data(forKey: key)
-        var (kept, loaded, loses) = decode(raw)
+        var (kept, path, loses) = decode(raw)
         if loses, let raw { keepUnread(String(decoding: raw, as: UTF8.self)) }
         let start = priorStart(population)
         kept.calibration.start = start
         kept.base?.start = start
-        if !loaded { save(kept) }
+        if path != .loaded { save(kept) }
         return kept
     }
 
-    private static func decode(_ v4: Data?) -> (Kept, loaded: Bool, loses: Bool) {
+    private static func decode(_ v4: Data?) -> (Kept, path: LoadPath, loses: Bool) {
         let decoder = JSONDecoder()
-        guard let v4, let parts = try? decoder.decode(StoredParts.self, from: v4), parts.v == 4 else {
-            return (freshKept(), false, v4.map { !$0.isEmpty } ?? false)
+        let parts = v4.flatMap { try? decoder.decode(StoredParts.self, from: $0) }.flatMap { $0.v == 4 ? $0 : nil }
+        let base = calibration(parts?.base)
+        let cal = calibration(parts?.cal)
+        // A base the store leaves out is none: this app leaves it out when
+        // there is none. (The web, which writes null, reads it as damaged.)
+        let baseRead: StoredBase? = parts.flatMap { p in
+            p.baseDamaged || (p.base != nil && base == nil) ? .damaged : base != nil ? .sound : nil
         }
-        let base = calibration(parts.base)
-        let cal = calibration(parts.cal)
-        guard let stored = try? decoder.decode(StoredLog.self, from: v4) else {
-            let sound = cal ?? base
-            return (Kept(base: sound, calibration: start(sound), folded: 0, log: []), false, true)
+        let read = parts == nil ? nil
+            : v4.flatMap { try? decoder.decode(StoredLog.self, from: $0) }.map { readLog($0.log, $0.unread) }
+        let d = loadDecision(
+            StoreRead(
+                stored: v4.map { !$0.isEmpty } ?? false, v4: parts != nil, base: baseRead,
+                posterior: cal != nil, folded: parts?.folded.flatMap { $0 >= 0 ? $0 : nil },
+                records: read?.log.count, moved: read?.moved ?? false,
+                population: parts?.p ?? literaturePopulation.id, model: parts?.m
+            ),
+            population: population.id, model: modelID
+        )
+        let keptBase: Calibration? = switch d.base {
+        case .stored: base
+        case .posterior: cal
+        case nil: nil
         }
-        let (log, raws, unread, moved) = readLog(stored.log, stored.unread)
-        guard !parts.baseDamaged, parts.base == nil || base != nil,
-              let cal, let folded = parts.folded, folded >= 0,
-              (parts.p ?? literaturePopulation.id) == population.id,
-              parts.m == modelID, !moved else {
-            return (Kept(base: base, calibration: start(base), folded: 0, log: log, unread: unread, stored: raws), false, false)
+        var kept = Kept(
+            base: keptBase,
+            calibration: d.calibration == .posterior ? cal ?? start(keptBase) : start(keptBase),
+            folded: d.folded, log: []
+        )
+        if d.log, let read {
+            kept.log = read.log
+            kept.unread = read.unread
+            kept.stored = read.stored
         }
-        if folded > log.count {
-            return (Kept(base: cal, calibration: cal, folded: 0, log: []), false, true)
-        }
-        return (Kept(base: base, calibration: cal, folded: folded, log: log, unread: unread, stored: raws), true, false)
+        return (kept, d.path, d.loses)
     }
 
     /// The stored copies kept aside, oldest first.

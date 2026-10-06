@@ -816,6 +816,109 @@ export function replay(
   return c;
 }
 
+/* ----------------------------------------------------------- the store, read */
+
+/* WHAT A LAUNCH MAKES OF THE STORE. Each app keeps the posterior, the base
+ * under it and the log in a store of its own (the web's localStorage, iOS's
+ * UserDefaults) and reads it apart in its own way: that is I/O, and stays in
+ * the app. What it then does with what it read is the same decision in both,
+ * and lives here: `loadDecision`, a pure function of the parts and of this
+ * build's population and model. Every damaged part is refused, never read
+ * around; a log is never written over (DECISIONS.md 81): a record this build
+ * cannot read is set aside in its place and kept, a store it cannot use whole
+ * is kept aside as stored before anything replaces it (`loses`), and a store
+ * folded under another model or drawn from another population is replayed. */
+
+/** What a launch found: `fresh`, nothing to use, so the prior; `rebuild`,
+ *  the log good and the posterior not this build's to use, so the log is
+ *  folded again; `rebased`, the log unusable and what it taught kept as the
+ *  base, the log starting again empty; `loaded`, everything as stored. */
+export type LoadPath = 'fresh' | 'rebuild' | 'rebased' | 'loaded';
+
+/** What an app read from its store, part by part. */
+export interface StoreRead {
+  /** Whether anything was stored at all: a text that is not empty. */
+  stored: boolean;
+  /** Whether it is a store of this format, v4, that can be taken apart. */
+  v4: boolean;
+  /** The base under the posterior: null where the store has none, else
+   *  whether it read whole. */
+  base: 'sound' | 'damaged' | null;
+  /** Whether the posterior read whole. */
+  posterior: boolean;
+  /** How many records the posterior says it has absorbed, or null if that
+   *  is not a whole number from zero. */
+  folded: number | null;
+  /** How many records of the log this build reads, or null when the log is
+   *  not a list. */
+  records: number | null;
+  /** Whether the records this build reads differ from the ones stored as
+   *  read: one has become unreadable, or one set aside readable again. */
+  moved: boolean;
+  /** The population the posterior was drawn from; the literature's when the
+   *  store does not say, as every store from before E7 was. */
+  population: string;
+  /** The model it was folded under, or null when the store does not say. */
+  model: string | null;
+}
+
+/** What to keep, in the parts that were read. */
+export interface LoadDecision {
+  path: LoadPath;
+  /** Whether keeping this loses something the store held - a log, or a
+   *  store this build cannot read at all - so the stored text is to be kept
+   *  aside, as stored, before anything is written over it. */
+  loses: boolean;
+  /** The base: the stored base, the stored posterior, or none (null). */
+  base: 'stored' | 'posterior' | null;
+  /** The calibration: the stored posterior as it is, or `start` - a copy of
+   *  the base, or the prior where there is none - for the log to be folded
+   *  onto again. */
+  calibration: 'posterior' | 'start';
+  /** How many records of the kept log the calibration has absorbed. */
+  folded: number;
+  /** Whether the log as read is kept, with every record set aside in its
+   *  place; when not, the log starts again empty. */
+  log: boolean;
+}
+
+/**
+ * What a launch does with the store it read, for a build that draws its
+ * prior from `population` and folds under `model`:
+ *
+ *  - no v4 that can be read: `fresh`, the prior; lost, if anything was there.
+ *  - the log not a list: `rebased`. Its records cannot be folded, but what
+ *    they taught is in the posterior, which becomes the base - or the base,
+ *    if the posterior is damaged too.
+ *  - the posterior damaged, the base damaged, the count damaged, another
+ *    population, another model or none, or a record that changed sides:
+ *    `rebuild`, the log folded again from the base, or the prior. A base
+ *    cannot be replayed, so a sound one stays as it is.
+ *  - a posterior that has absorbed more records than the log holds:
+ *    `rebased`, on that posterior.
+ *  - otherwise `loaded`.
+ */
+export function loadDecision(read: StoreRead, population: string, model: string): LoadDecision {
+  if (!read.v4) {
+    return { path: 'fresh', loses: read.stored, base: null, calibration: 'start', folded: 0, log: false };
+  }
+  if (read.records === null) {
+    const base = read.posterior ? 'posterior' : read.base === 'sound' ? 'stored' : null;
+    return { path: 'rebased', loses: true, base: base, calibration: 'start', folded: 0, log: false };
+  }
+  const base = read.base === 'sound' ? 'stored' : null;
+  if (
+    read.base === 'damaged' || !read.posterior || read.folded === null
+    || read.population !== population || read.model !== model || read.moved
+  ) {
+    return { path: 'rebuild', loses: false, base: base, calibration: 'start', folded: 0, log: true };
+  }
+  if (read.folded > read.records) {
+    return { path: 'rebased', loses: true, base: 'posterior', calibration: 'start', folded: 0, log: false };
+  }
+  return { path: 'loaded', loses: false, base: base, calibration: 'posterior', folded: read.folded, log: true };
+}
+
 /* ---------------------------------------------------------- the results file */
 
 /* EXPORT. "Export my results", in Settings, saves everything a device keeps

@@ -8,7 +8,8 @@ import { CookSetup } from '../../src/core/protocol.js';
 import { GridSpec, buildRequestedGrid } from '../../src/core/doseGrid.js';
 import {
   Calibration, CookFacts, EggRecord, MODEL_ID, RECORD_VERSION, calibrationDoneness, copyCalibration,
-  foldRecord, freshCalibration, gridRequestFor, parseRecord, probeReadingFor, recordCookTime_s, recordFor,
+  StoreRead, foldRecord, freshCalibration, gridRequestFor, loadDecision, parseRecord, probeReadingFor,
+  recordCookTime_s, recordFor,
   recordMass_g,
   recordProbe_C, recordTeaches, replay, RESULTS_FILE_VERSION, ResultsMeta, resultsFile, resultsFileName,
 } from '../../src/core/record.js';
@@ -562,6 +563,52 @@ const probeWhen = [recordFor(FACTS_BASE), recordFor({ ...FACTS_BASE, out_s: null
   })),
 );
 
+/* What a launch makes of the store it read (`loadDecision`; DECISIONS.md
+ * 81): every path, and which wins where two apply. The build's own
+ * population and model are named here, not taken from the code, so a new
+ * `MODEL_ID` does not move these. Each case is a change to a sound store of
+ * three records, two folded. */
+const LOAD_POPULATION = 'this-population';
+const LOAD_MODEL = 'this-model';
+const SOUND_STORE: StoreRead = {
+  stored: true, v4: true, base: null, posterior: true, folded: 2, records: 3, moved: false,
+  population: LOAD_POPULATION, model: LOAD_MODEL,
+};
+const NOT_A_STORE: Partial<StoreRead> = {
+  v4: false, base: null, posterior: false, folded: null, records: null, population: LITERATURE_POPULATION.id, model: null,
+};
+const LOAD_CASES: { why: string; over: Partial<StoreRead> }[] = [
+  { why: 'nothing stored', over: { ...NOT_A_STORE, stored: false } },
+  { why: 'a store that is not v4, or not JSON: kept aside', over: { ...NOT_A_STORE } },
+  { why: 'loaded, two of three folded', over: {} },
+  { why: 'loaded, every record folded', over: { folded: 3 } },
+  { why: 'loaded, an empty log', over: { folded: 0, records: 0 } },
+  { why: 'loaded on a base', over: { base: 'sound' } },
+  { why: 'the log not a list: the posterior becomes the base', over: { records: null } },
+  { why: 'the log not a list on a base: the posterior still', over: { records: null, base: 'sound' } },
+  { why: 'the log not a list, the posterior damaged: the base', over: { records: null, posterior: false, base: 'sound' } },
+  { why: 'the log not a list, nothing sound: the prior', over: { records: null, posterior: false, base: 'damaged' } },
+  { why: 'the log not a list, another model: still rebased', over: { records: null, model: 'another-model' } },
+  { why: 'the posterior damaged: the log again from the prior', over: { posterior: false } },
+  { why: 'the posterior damaged on a base: the log again from the base', over: { posterior: false, base: 'sound' } },
+  { why: 'the base damaged: dropped, and the log again from the prior', over: { base: 'damaged' } },
+  { why: 'the count damaged', over: { folded: null } },
+  { why: 'drawn from another population', over: { population: 'another-population' } },
+  { why: 'folded under another model', over: { model: 'another-model' } },
+  { why: 'from before the model was kept', over: { model: null } },
+  { why: 'another model, on a base: the base stays', over: { model: 'another-model', base: 'sound' } },
+  { why: 'a record changed sides: replayed', over: { moved: true } },
+  { why: 'a posterior ahead of its log: rebased on it', over: { folded: 4 } },
+  { why: 'ahead of an empty log', over: { folded: 1, records: 0 } },
+  { why: 'ahead, on a base: the posterior becomes the base', over: { folded: 4, base: 'sound' } },
+  { why: 'ahead, and a record changed sides: replayed first', over: { folded: 4, moved: true } },
+  { why: 'ahead, and another model: replayed first', over: { folded: 4, model: 'another-model' } },
+];
+const loadCases = LOAD_CASES.map((c) => {
+  const read: StoreRead = { ...SOUND_STORE, ...c.over };
+  return { why: c.why, read: read, decision: loadDecision(read, LOAD_POPULATION, LOAD_MODEL) };
+});
+
 export const recordFixture = {
   about: 'The record (INFERENCE.md section 4): which records a loader trusts, and a replayed log. src/core/record.ts.',
   version: RECORD_VERSION,
@@ -578,6 +625,9 @@ export const recordFixture = {
   // reading's when (`probeReadingFor`).
   made: factsCases,
   probeWhen: probeWhen,
+  // What a launch makes of the store it read (`loadDecision`), for a build
+  // of this population and model.
+  load: { population: LOAD_POPULATION, model: LOAD_MODEL, cases: loadCases },
   resultsFile: {
     version: RESULTS_FILE_VERSION,
     names: ['2026-10-05', '2027-01-31'].map((day) => ({ day: day, name: resultsFileName(day) })),

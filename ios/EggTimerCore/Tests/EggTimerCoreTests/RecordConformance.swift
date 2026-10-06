@@ -225,6 +225,32 @@ struct RecordConformance {
         }
     }
 
+    /// What a launch makes of its store: the decision the app's own
+    /// `Calibrations.load` takes, every path, held to the TypeScript's.
+    @Test("what a launch makes of the store it read, case by case")
+    func load() throws {
+        let section = try Fixtures.object("record.json", "load")
+        let population = try section.str("population")
+        let model = try section.str("model")
+        for c in try Fixtures.list("record.json", "load.cases") {
+            let why = try c.str("why")
+            let r = try c.object("read")
+            let read = try StoreRead(
+                stored: r.flag("stored"), v4: r.flag("v4"), base: r.optionalValue(StoredBase.self, "base"),
+                posterior: r.flag("posterior"), folded: r.optionalNum("folded").map { Int($0) },
+                records: r.optionalNum("records").map { Int($0) }, moved: r.flag("moved"),
+                population: r.str("population"), model: r.optionalStr("model")
+            )
+            let d = try c.object("decision")
+            let want = try LoadDecision(
+                path: d.value(LoadPath.self, "path"), loses: d.flag("loses"),
+                base: d.optionalValue(KeptBase.self, "base"), calibration: d.value(KeptCalibration.self, "calibration"),
+                folded: Int(d.num("folded")), log: d.flag("log")
+            )
+            #expect(loadDecision(read, population: population, model: model) == want, "\(why)")
+        }
+    }
+
     @Test("masses round to a hundredth of a gram")
     func massRounding() throws {
         for c in try Fixtures.list("record.json", "massRounding") {
