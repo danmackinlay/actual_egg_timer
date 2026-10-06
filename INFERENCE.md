@@ -173,9 +173,11 @@ three new ones.
   the five still sum to one and no word scores below 0.01 (`withUnrelatedWord`).
   A record holds the old answer or the new, never both. **Old records keep
   their -1 / 0 / 1 and are scored exactly as before**: the old arithmetic is
-  untouched, and `test/record.test.ts` 2a2 replays a log answered the old way
-  against a posterior pinned by the code before the change
-  (`test/data/old-answers.json`), bit for bit. The decision still scores a
+  untouched: `test/record.test.ts` 2a2 holds `yolkProbit` and
+  `answerLikelihood` to the numbers the code before the change gave
+  (`test/data/old-answers-likelihood.json`), to rounding, and 2a3 holds the
+  posterior a log answered the old way makes (`test/data/old-answers.json`)
+  to the exact one, in distribution (below, "the seed"). The decision still scores a
   candidate time by the three-way miss around the asked-for level
   (`decide.ts`, `yolk[0] + yolk[2]`), and the odds and the lean read it too:
   the five words are for learning, and for the forecast a record keeps.
@@ -664,6 +666,17 @@ and the same pot, the two apps choose the same time to 1e-12. What settled:
   4-6 points low from the fourth egg (LOGBOOK.md, 28 September). With the
   kernel, Phase C's recovery is egg 2, 12.2 s short, sd 3.0%; the answers'
   calibration 1.3%; and one probe reading keeps the time-scale at 2.6-2.8%.
+- **The seed.** The filter is random, and a last-bit difference in `exp`
+  between two machines can send its resample down another path, so what is
+  tested is the distribution it samples, never its particles
+  (`tools/posterior.ts`). After the ten-egg logs of `npm run posterior --
+  noise`, replayed as the app replays them, the jammy time chosen for a 58 g
+  egg moves with the seed by an sd of 2.8 s at 1000 particles (4.9 s at 250,
+  1.6 s at 4000), and the odds by 0.05 (0.11, 0.03): one seed shows 4/10
+  where another shows 7/10. Against the exact posterior (importance sampling
+  from the prior on the same surfaces, `npm run posterior -- reference`) the
+  filter is right on average to 0.3 s and 1.7 points of odds, with its upper
+  tails a little short.
 - **"Still learning"** is the 80% interval of the right cook time wider than
   +-15 s (`DECISIONS.md` 9), read at the level on screen; per particle the
   right time is the later of the yolk's centre and the white's cutpoint

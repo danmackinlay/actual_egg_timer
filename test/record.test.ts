@@ -19,13 +19,15 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
-import { GridSpec, buildRequestedGrid } from '../src/core/doseGrid.js';
+import { DoseGrid, GridSpec, buildRequestedGrid } from '../src/core/doseGrid.js';
 import {
   Calibration, EggRecord, MODEL_ID, copyCalibration, foldRecord, freshCalibration, gridRequestFor,
   parseLog, parseRecord, recordCookTime_s, recordMass_g, replay,
   RESULTS_FILE_VERSION, jsonString, resultsFile, resultsFileName,
 } from '../src/core/record.js';
-import { LITERATURE_POPULATION, YolkWord } from '../src/core/infer.js';
+import {
+  Feedback, LITERATURE_POPULATION, Particle, WhiteReport, YolkWord, answerLikelihood, yolkProbit,
+} from '../src/core/infer.js';
 import { calibrationGrid, PARTICLE_COUNT, CALIBRATION_SEED } from '../src/core/policy.js';
 import { createPrior, updatePosterior } from '../src/core/infer.js';
 import { eggFromMass } from '../src/core/geometry.js';
@@ -41,6 +43,10 @@ import {
   Machine, advance, beginCooling, restoreMachine, staleMachine, startCold, startHot, PULL_GRACE_SECONDS,
 } from '../src/ui/machine.js';
 import { appSetup } from '../tools/common.js';
+import {
+  OLD_POSTERIOR_FILE, PosteriorReference, SUMMARY_KEYS, Summary, decisionSurface, fixedSurfaces, foldOnSurfaces, oldLog,
+  seedOf, spread, summarise,
+} from '../tools/posterior.js';
 
 // --------------------------------------------------------------------------
 // shared
@@ -101,28 +107,6 @@ function assertIdentical(a: Calibration, b: Calibration, label: string): void {
     assert.ok(Object.is(p.whiteOffset, q.whiteOffset), `${label}: white offset ${i}`);
     assert.ok(Object.is(p.whiteFirmGap, q.whiteFirmGap), `${label}: firm gap ${i}`);
     assert.ok(Object.is(a.posterior.weights[i], b.posterior.weights[i]), `${label}: weight ${i}`);
-  }
-}
-
-/** As assertIdentical, to a relative 1e-9, for numbers pinned on another
- *  machine: Linux's libm and macOS's differ in the last bit of exp and log,
- *  so a file written on one replays a few ulps off on the other. A change of
- *  likelihood moves a weight or a resampled particle by far more. */
-function assertClose(a: Calibration, b: Calibration, label: string): void {
-  const close = (x: number, y: number): boolean => Math.abs(x - y) <= 1e-9 * Math.max(Math.abs(x), Math.abs(y), 1e-300);
-  assert.equal(a.eggsLogged, b.eggsLogged, `${label}: eggs`);
-  assert.equal(a.posterior.rng, b.posterior.rng, `${label}: rng`);
-  assert.equal(a.posterior.particles.length, b.posterior.particles.length);
-  for (let i = 0; i < a.posterior.particles.length; i++) {
-    const p = a.posterior.particles[i];
-    const q = b.posterior.particles[i];
-    assert.ok(close(p.alpha_m2s, q.alpha_m2s), `${label}: alpha ${i}`);
-    assert.ok(close(p.logDoseOffset, q.logDoseOffset), `${label}: offset ${i}`);
-    assert.ok(close(p.tauAirScale, q.tauAirScale), `${label}: tauAir ${i}`);
-    assert.ok(close(p.noise, q.noise), `${label}: noise ${i}`);
-    assert.ok(close(p.whiteOffset, q.whiteOffset), `${label}: white offset ${i}`);
-    assert.ok(close(p.whiteFirmGap, q.whiteFirmGap), `${label}: firm gap ${i}`);
-    assert.ok(close(a.posterior.weights[i], b.posterior.weights[i]), `${label}: weight ${i}`);
   }
 }
 
@@ -230,32 +214,91 @@ test('2a. a replay is the egg-by-egg fold, and leaves its start alone', () => {
   assert.equal(c.eggsLogged, 4, 'a white alone is an egg the model learned from');
 });
 
-test('2a2. a log answered the old way replays to the posterior it made before the five yolk words', () => {
-  // test/data/old-answers.json was written once, on arm64 macOS, by the code
-  // before DECISIONS.md 92 and is never regenerated: an old log must fold to
-  // the same bits there, and to within rounding on any other machine.
-  const pinned = JSON.parse(readFileSync('test/data/old-answers.json', 'utf8')) as {
-    start: { count: number; seed: number };
-    grid: { alphaCount: number; timeCount: number };
-    log: unknown[];
-    final: { eggsLogged: number; rng: number; weights: number[]; particles: Calibration['posterior']['particles'] };
+test('2a2. an old answer is scored as it was before the five yolk words, to rounding', () => {
+  // The three old yolk answers' arithmetic, pinned by the code before
+  // DECISIONS.md 92 (bb1cc9d) on a synthetic surface, so no physics and no
+  // sampling stand between the numbers and the claim. The file says how.
+  const pinned = JSON.parse(readFileSync('test/data/old-answers-likelihood.json', 'utf8')) as {
+    grid: DoseGrid; particles: Particle[]; times: number[]; targets: number[];
+    yolks: (Feedback | null)[]; whites: (WhiteReport | null)[]; probes: (number | null)[];
+    probit: number[]; likelihood: number[];
   };
-  const log = parseLog(pinned.log);
-  assert.ok(log !== null && log.length === 10);
+  // Rounding, not a change of likelihood: Linux's exp and macOS's may differ
+  // in the last bit, and nothing here amplifies that past a few ulps.
+  const close = (x: number, y: number): boolean => Math.abs(x - y) <= 1e-12 * Math.max(Math.abs(x), Math.abs(y));
+  let i = 0;
+  let j = 0;
+  for (const p of pinned.particles) {
+    for (const t of pinned.times) {
+      for (const g of pinned.targets) {
+        const probs = yolkProbit(pinned.grid, p, t, g);
+        for (let k = 0; k < 3; k++, i++) {
+          assert.ok(close(probs[k], pinned.probit[i]), `yolkProbit ${i}: ${probs[k]} against ${pinned.probit[i]}`);
+        }
+        for (const y of pinned.yolks) {
+          for (const w of pinned.whites) {
+            if (y === null && w === null) continue;
+            for (const probe of pinned.probes) {
+              const l = answerLikelihood(pinned.grid, p, t, g, y, w, probe);
+              assert.ok(close(l, pinned.likelihood[j]), `answerLikelihood ${j}: ${l} against ${pinned.likelihood[j]}`);
+              j++;
+            }
+          }
+        }
+      }
+    }
+  }
+  assert.equal(i, pinned.probit.length);
+  assert.equal(j, pinned.likelihood.length);
+});
+
+test('2a3. the old log makes the right posterior: the filter against the exact one, in distribution', () => {
+  // A particle filter is random: resampling is discontinuous in the weights,
+  // so a last-bit difference in exp can send the particles down another,
+  // equally good path, and a posterior pinned particle by particle on one
+  // machine is not the one another makes. What is checked is what the
+  // particles are a sample OF. The old answers' log is folded on fixed
+  // surfaces under SEEDS seeds the reference never used, and each summary -
+  // the time-scale's and the taste's mean and 10/50/90% points, the white
+  // offset's mean, the jammy time chosen and its odds - is averaged over
+  // them. That average must sit within Z standard errors of two things:
+  // the same filter's average over the reference's seeds, which fails on any
+  // change to what the filter does; and the EXACT posterior's (importance
+  // sampling from the prior, no filter), which says the filter samples the
+  // right posterior. The error is the seed-to-seed sd the reference measured,
+  // over the root of the seeds. The seed-to-seed spread is held too: a filter
+  // grown noisier is wrong even when it is right on average. None of it
+  // fails on rounding. `npm run posterior -- reference` rewrites the
+  // reference, and tools/posterior.ts says when.
+  const ref = JSON.parse(readFileSync(OLD_POSTERIOR_FILE, 'utf8')) as PosteriorReference;
+  assert.equal(ref.filter.particles, PARTICLE_COUNT, 'the reference was made at another particle count: rewrite it');
+  const SEEDS = 60;
+  const Z = 5;
+  const log = oldLog();
   assert.ok(log.every((r) => r.yolkWord === null) && log.some((r) => r.yolk !== null), 'the old answers');
-  const grid = (alphaCentre: number, cookTime_s: number): GridSpec => ({
-    ...calibrationGrid(alphaCentre, cookTime_s),
-    alphaCount: pinned.grid.alphaCount, timeCount: pinned.grid.timeCount,
-  });
-  const now = replay(freshCalibration(pinned.start.count, pinned.start.seed), log, grid);
-  const then: Calibration = {
-    posterior: { particles: pinned.final.particles, weights: pinned.final.weights, rng: pinned.final.rng },
-    eggsLogged: pinned.final.eggsLogged,
-  };
-  // Bit for bit where the file was written (arm64 macOS); within a few ulps
-  // elsewhere, as on CI's Linux.
-  if (process.platform === 'darwin' && process.arch === 'arm64') assertIdentical(now, then, 'old log, new code');
-  else assertClose(now, then, 'old log, new code');
+  const surfaces = fixedSurfaces(log);
+  const ds = decisionSurface();
+  const rows: Summary[] = [];
+  for (let k = 0; k < SEEDS; k++) {
+    const c = foldOnSurfaces(freshCalibration(PARTICLE_COUNT, seedOf(ref.filter.seeds + k)), log, surfaces);
+    assert.equal(c.eggsLogged, 9);
+    rows.push(summarise(c.posterior, ds));
+  }
+  const now = spread(rows);
+  for (const key of SUMMARY_KEYS) {
+    const sd = ref.filter.sd[key];
+    const asBefore = sd * Math.sqrt(1 / SEEDS + 1 / ref.filter.seeds);
+    const fromBefore = now.mean[key] - ref.filter.mean[key];
+    assert.ok(Math.abs(fromBefore) <= Z * asBefore,
+      `${key}: ${now.mean[key]} against the filter's ${ref.filter.mean[key]}, ${(fromBefore / asBefore).toFixed(1)} se`);
+    const exactSe = Math.hypot(sd / Math.sqrt(SEEDS), ref.exact.se[key]);
+    const fromExact = now.mean[key] - ref.exact.value[key];
+    assert.ok(Math.abs(fromExact) <= Z * exactSe,
+      `${key}: ${now.mean[key]} against the exact ${ref.exact.value[key]}, ${(fromExact / exactSe).toFixed(1)} se`);
+    // The sd of 60 normal draws is within about 9% of the true one; 1.6 is
+    // more than six of those, and room for tails heavier than normal.
+    assert.ok(now.sd[key] <= 1.6 * sd, `${key}: sd ${now.sd[key]} from seed to seed against ${sd}`);
+  }
 });
 
 test('2b. an unanswered egg folds nothing and builds no surface', () => {

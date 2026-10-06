@@ -19,6 +19,7 @@
     "rank": "tsc && node dist/tools/rank.js",
     "probe": "tsc && node dist/tools/probe.js",
     "decide": "tsc && node dist/tools/decide.js",
+    "posterior": "tsc && node dist/tools/posterior.js",
     "copy:literals": "tsc && node dist/tools/copyLiterals.js",
     "copy:snapshot": "tsc && node dist/tools/copySnapshot.js",
     "fixtures:check": "npm run fixtures && git diff --exit-code -- fixtures/ && test -z \"$(git ls-files --others --exclude-standard -- fixtures/)\"",
