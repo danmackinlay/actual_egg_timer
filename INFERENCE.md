@@ -63,6 +63,15 @@ able to say in what proportion.
 counter-rested cooks inform it) and *size scaling* (only a spread of sizes).
 Where the data does not reach, they sit at the physics.
 
+*Correction, 6 October 2026 (`DECISIONS.md` 95):* as built, carryover is
+not learned at all. `tauAirScale` is a particle dimension, but every dose
+grid is built at its posterior mean, so no particle's own value reaches the
+likelihood; its mean drifts only with resampling, which the
+simulation-based calibration shows (`npm run sbc`). Learning it would need a
+third grid axis, or a simulation per particle, for counter-rested cooks
+alone, and their yolk and white answers mostly teach alpha and the taste
+offset. In 0.5 it leaves the particle and is fixed at 1.0.
+
 **Pinned at the literature.** `Z_YOLK`, `Z_WHITE`, `YOLK_RADIUS_FRAC`, the start
 and boil temperatures as entered. They keep their place in README §6 as the
 prior's documentation.

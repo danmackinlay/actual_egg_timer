@@ -620,4 +620,15 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     4000 the simulation-based calibration is uniform, which shows the
     filter samples the right posterior and the rest is Monte Carlo error.
     Tests and `npm run sbc` may run at any count. 6 October 2026.
+95. **The counter's carryover is fixed at 1.0, not learned: 0.5** ("fix
+    it at 1.0 in 0.5"). `tauAirScale` scales `H_AIR` on the counter. It
+    is a particle dimension, but every dose grid is built at its posterior
+    mean, so the answers never inform it; its mean only drifts with
+    resampling, the worst-calibrated quantity in `npm run sbc`. Learning it
+    properly costs a third grid axis or a simulation per particle for
+    counter-rested cooks only, and their answers mostly teach alpha and the
+    taste offset. In 0.5 it leaves the particle and the population fit and
+    is held at 1.0; that changes the stored posterior, so `MODEL_ID` moves
+    and stored posteriors are replayed. `INFERENCE.md` §2 is corrected now.
+    6 October 2026.
 

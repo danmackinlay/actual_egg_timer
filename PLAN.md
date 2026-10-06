@@ -207,6 +207,10 @@ Waiting on someone else: the Czech review (F5), by the owner's friend.
   whether the field should show when the probe setting is off (it does
   now, whenever the cooling ends at the peak).
 
+- **0.5: the counter's carryover fixed at 1.0** (`DECISIONS.md` 95):
+  `tauAirScale` out of the particle and the fit, `MODEL_ID` moved, stored
+  posteriors replayed; fixtures and the Swift twin with it.
+
 - **0.5: certainty in words** (`DECISIONS.md` 93): "very certain",
   "ballpark" or "wild guess" from the predicted spread of the five yolk
   words, with the 90% interval in those words (and a time range) on a
