@@ -622,7 +622,7 @@ public func phaseAt(_ d: Deadlines, nowS: Double) -> Phase {
 //
 // It lives in the core rather than in the app so it can be tested headlessly,
 // as `phaseAt` is. It is not a transliteration: the web app has no
-// notifications, so it rings at every deadline (`src/ui/app.ts`, `onTick`)
+// notifications, so it rings at every deadline (`src/ui/cook.ts`, `onTick`)
 // and has nothing to decide.
 
 /// A moment the cook is told about. The probe moment is not a third one:
