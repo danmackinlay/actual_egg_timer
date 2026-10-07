@@ -23,30 +23,54 @@ struct CookActivity: ActivityAttributes {
         /// reached the boil yet. The widget says so rather than implying a
         /// precision it has not got.
         var provisional: Bool
+        /// What is being cooked, as the plan now has it. In the state, not
+        /// the attributes, so that a plan made again - the boil tapped, a
+        /// slow hob, and later a correction - updates the card in place.
+        /// Nil in a state an older build pushed, whose attributes have it.
+        var cook: Description? = nil
     }
 
-    /// Fixed for the life of the cook: what was asked for, not what is left.
-    var doneness: String
-    /// The peak yolk temperature and the egg's mass, already in the cook's
-    /// units with the unit attached ("65 °C", "2.4 oz"). The widget has no
-    /// physics and no units table, so it is handed the words, not the numbers.
-    var peakYolk: String
-    var eggMass: String
+    /// The cook the card describes: what was asked for, not what is left.
+    struct Description: Codable, Hashable {
+        var doneness: String
+        /// The peak yolk temperature and the egg's mass, already in the
+        /// cook's units with the unit attached ("65 °C", "2.4 oz"). The widget
+        /// has no physics and no units table, so it is handed the words, not
+        /// the numbers.
+        var peakYolk: String
+        var eggMass: String
+        /// The cooling the cook chose, `Cooling`'s raw value: `ice`, `tap` or
+        /// `counter`. The pull line names it (`pullLineKey`, in
+        /// EggTimerCopy). A String, since this file cannot see EggTimerCore; nil
+        /// for an older card that named none, which reads as the ice bath.
+        var cooling: String?
+    }
+
+    /// The catalogue the cook was started in, `en` or `en-x-1750`: fixed for
+    /// the life of the card. The widget cannot read the app's settings, so
+    /// the activity carries its language as it carries its units. Optional,
+    /// so an activity begun by an older build decodes, as English.
+    var lang: String? = nil
+
+    // A card begun by a build before the description moved into the state
+    // carried it here, fixed for the card's life. Read only for such a card,
+    // which a cook kept aside at an upgrade may leave on the Lock Screen
+    // until it ends (`description(_:)`); this build writes none of them.
+    var doneness: String? = nil
+    var peakYolk: String? = nil
+    var eggMass: String? = nil
+    var cooling: String? = nil
+
     // No odds: mid-cook nothing on the Lock Screen can change what the cook
     // does, so it says nothing rather than spend the room on them. A key an
     // older build wrote is ignored when an activity decodes.
 
-    /// The cooling the cook chose, `Cooling`'s raw value: `ice`, `tap` or
-    /// `counter`. The pull line names it (`pullLineKey`, in EggTimerCopy). A
-    /// String, since this file cannot see EggTimerCore; optional, so an activity begun by an
-    /// older build decodes, as the ice bath.
-    var cooling: String? = nil
-
-    /// The catalogue the cook was started in, `en` or `en-x-1750`. The
-    /// widget cannot read the app's settings, so the activity carries its
-    /// language as it carries its units. Optional, so an activity begun by
-    /// an older build decodes, as English.
-    var lang: String? = nil
+    /// The description to show: the state's, or an older card's own.
+    func description(_ state: ContentState) -> Description {
+        state.cook ?? Description(
+            doneness: doneness ?? "", peakYolk: peakYolk ?? "", eggMass: eggMass ?? "", cooling: cooling
+        )
+    }
 
     enum Stage: String, Codable, Hashable {
         case heating

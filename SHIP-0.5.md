@@ -192,7 +192,7 @@ core's exports.
       (`earliestStart_s`); the aimed-for egg at the end of the cooling;
       §4's design findings (2.4-2.6). `7900a83`, `feff7de`, `c10dbe2`,
       `0de8ba6`, `87d71e3`; each review heading says what was done.
-- [ ] **C2, the apps on it**: each app on `running.ts`, state first with
+- [x] **C2, the apps on it**: each app on `running.ts`, state first with
       no visible change: `aet.cook.v3` and `cookInProgress.v2`, a 0.4 cook
       read once from the old key, kept aside and the key deleted, its iOS
       notifications kept (`DECISIONS.md` 81, review 2.6); a stored cook
@@ -201,7 +201,14 @@ core's exports.
         step 5, "As built"; `LOGBOOK.md`, 7 October 2026). The "still in
         the water?" question (`askIfStillIn`) has no words yet and cannot
         arise without a correction: it comes with edits mid-cook.
-  - [ ] iOS.
+  - [x] *iOS's state*: `5695df8`, `8ff47e2`, `97f4fba`, `00f3b51`.
+        `Cook.swift` holds a `RunningCook` under `cookInProgress.v2`
+        (JSONEncoder, to the bit), planned by `replan` on an event, a
+        surface, `slowHobAt_s` or a launch; `eventsDue`, `cookFactsFor`,
+        `cookEnding` and `cookTooOld` as written; the Live Activity's
+        description in its `ContentState`; a later probe reading scored
+        against the record logged at the answer. Driven on the simulator
+        (`LOGBOOK.md`, 7 October 2026).
 - [ ] **C3. Both apps**, screen by screen, checked by driving them;
       `UI.md` rewritten as built.
 

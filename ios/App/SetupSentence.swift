@@ -120,7 +120,7 @@ struct ClauseText {
 }
 
 /// What the sentence says, whichever cook it is about: the one on the
-/// controls, or the one in the pan (`Cook.Ticket`). The web's `SetupFacts`.
+/// controls, or the one in the pan (`RunningCook`). The web's `SetupFacts`.
 struct SetupFacts {
     /// The egg's mass as the size menu or the scale says it, with its unit.
     var mass: String
@@ -145,23 +145,24 @@ struct SetupFacts {
         cooling = planner.cooling
     }
 
-    /// The setup a cook was started with, from its ticket and not the
+    /// The setup of the cook in the pan, from its choices and not the
     /// controls: what the cook promised, in the units they set it up in. A
     /// class egg is named as its class's mass, as the size menu names it,
     /// when the carton still has a class of that mass; otherwise it is the
     /// egg's own.
-    @MainActor init(_ ticket: Cook.Ticket, planner: Planner) {
-        let system = ticket.units
+    @MainActor init(_ cook: RunningCook, plan: CookPlan, planner: Planner) {
+        let system = cook.units
         units = system
-        let byClass = ticket.massFrom == .sizeClass
-            ? planner.sizeClasses.first { abs($0.massKg * 1000 - ticket.eggGrams) < 1e-9 }
+        let grams = plan.egg.massKg * 1000
+        let byClass = cook.choices.massFrom == .sizeClass
+            ? planner.sizeClasses.first { abs($0.massKg * 1000 - grams) < 1e-9 }
             : nil
-        mass = byClass.map { classMass($0, units: system) } ?? showIn(system, .mass, ticket.eggGrams)
-        from = ticket.startTemp
-        customC = ticket.setup.eggStartC
-        start = ticket.coldStart ? .cold : .hot
-        heatOff = ticket.setup.afterBoil == .off
-        cooling = ticket.cooling
+        mass = byClass.map { classMass($0, units: system) } ?? showIn(system, .mass, grams)
+        from = cook.choices.eggFrom
+        customC = plan.setup.eggStartC
+        start = cook.choices.startMode == .cold ? .cold : .hot
+        heatOff = cook.choices.afterBoil == .off
+        cooling = cook.choices.cooling
     }
 }
 
@@ -205,15 +206,16 @@ func clauseTexts(_ f: SetupFacts) -> [Clause: ClauseText] {
 /// The cook in the pan, once the controls are gone: the
 /// setup sentence it was started with, so a forgetful cook can see what they
 /// promised, and under it what the sentence does not say, the doneness and
-/// the peak yolk. From the ticket, never the controls. Plain prose: nothing in
+/// the peak yolk. From the cook and its plan, never the controls. Plain prose: nothing in
 /// it can change a cook under way, so nothing in it is a link. Sous-vide never
 /// runs a cook, so it never shows this.
 struct CookSentence: View {
-    let ticket: Cook.Ticket
+    let running: RunningCook
+    let plan: CookPlan
     let planner: Planner
 
     var body: some View {
-        let facts = SetupFacts(ticket, planner: planner)
+        let facts = SetupFacts(running, plan: plan, planner: planner)
         let texts = clauseTexts(facts)
         VStack(alignment: .leading, spacing: 6) {
             Text(tr("setup.sentence", [
@@ -226,8 +228,8 @@ struct CookSentence: View {
             // In the system the egg was set up in, which the controls cannot
             // have changed since.
             Text(tr("cook.summary", [
-                "doneness": .text(midSentence(ticket.doneness, locale: Copy.activeLocale)),
-                "yolk": .text(showIn(facts.units, .temperature, ticket.peakYolkC)),
+                "doneness": .text(midSentence(tr(anchorNear(plan.level).key), locale: Copy.activeLocale)),
+                "yolk": .text(showIn(facts.units, .temperature, plan.solution.result.peakYolkC)),
             ]))
             .appFont(.footnote)
             .foregroundStyle(.secondary)

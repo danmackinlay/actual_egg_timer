@@ -125,8 +125,9 @@ struct ReadoutView: View {
     /// While idle it is the choice on screen's, and blank until this pot's
     /// surface lands. The sentence holds two lines, the most any of them
     /// takes, so a drag that changes it does not move the slider. Once a cook
-    /// is running the direction and the white's line are what they were at
-    /// "Eggs in"; the (i), which is about the slider, goes with the slider.
+    /// is running the direction and the white's line are its plan's, on its
+    /// pot's surface (held while a new pot's is built); the (i), which is
+    /// about the slider, goes with the slider.
     /// Never where the white never sets: there is no cook to say anything
     /// about.
     ///
@@ -137,9 +138,9 @@ struct ReadoutView: View {
     @ViewBuilder
     private var direction: some View {
         let idle = phase == .idle
-        // While idle, the choice on screen's; once a cook is running, what it
-        // was at "Eggs in".
-        let o = idle ? planner.heldOutcome : cook.ticket?.outcome
+        // While idle, the choice on screen's; once a cook is running, its
+        // plan's.
+        let o = idle ? planner.heldOutcome : cook.outcome
         VStack(spacing: 2) {
             HStack(alignment: .center, spacing: 2) {
                 ZStack {

@@ -22,12 +22,8 @@ final class AppModel {
     func appear() {
         // Install the notification delegate before anything can fire.
         Alarm.shared.activate()
-        // The machine cannot solve for itself. A cold start needs a fresh
-        // answer twice: when the boil is tapped, and whenever a slow hob
-        // forces the estimate out.
-        cook.resolveCookTime = { [planner] seconds, level, lean, nudge in
-            await planner.cookResult(timeToBoilS: seconds, level: level, leanS: lean, nudgeS: nudge)
-        }
+        // Every plan of a running cook reads the calibration as it stands.
+        cook.calibration = { [planner] in planner.calibration }
         // Whether the cooling's alarm asks for a probe reading.
         cook.probeWanted = { [planner] in planner.probe }
         // The planner's own stored state, read here rather than in its
@@ -39,18 +35,21 @@ final class AppModel {
         planner.seed(Screenshots.seedEggs)
         Perf.drive(planner)
         #endif
-        // After the solver is wired, so a restored cold start can revise
-        // straight away rather than waiting for the next attempt. A cook too
-        // old to pick up, finished and never answered about, is still an egg,
-        // logged as "Start again" would have logged it.
+        // After the calibration is loaded, which the restored cook's plan
+        // reads. A cook too old to pick up leaves what Start again would: a
+        // pan it timed is remembered, and an egg finished and never answered
+        // about is still logged.
         if let dropped = cook.restoreIfNeeded() {
-            planner.logUnanswered(dropped)
+            if let boil = dropped.boil { planner.rememberBoil(boil) }
+            if let egg = dropped.egg { planner.logUnanswered(egg) }
         }
         // Sharing, if the cook turned it on (Sharing.swift): every egg in the
-        // log is final but the one on screen, whose answers may still come.
+        // log is final but the stored cook's, until Start again or until it is
+        // too old to pick back up (`openEggId`), so the server never has an
+        // egg that can still change.
         Sharing.shared.start(host: Sharing.Host(
             log: { [planner] in planner.kept.log },
-            finalCount: { [planner] in planner.kept.log.count - (planner.answers == nil ? 0 : 1) }
+            finalCount: { [planner, cook] in planner.kept.log.count - (cook.eggOpen(at: .now) ? 1 : 0) }
         ))
         // A finished cook answered before the relaunch keeps its open
         // questions open, if its egg is still the last in the log and has not
@@ -67,16 +66,17 @@ final class AppModel {
     }
 
     /// Which words the readout says in a phase: core's `phaseKeys`, from the
-    /// cook's ticket while one runs and from the controls while idle.
+    /// running cook's plan while one runs and from the controls while idle.
     func keys(_ phase: Phase) -> PhaseKeys {
-        let setup = cook.ticket?.setup
+        let plan = cook.plan
+        let setup = plan?.setup
         return phaseKeys(PhaseFacts(
             phase: phase,
             startMode: setup?.startMode ?? (planner.coldStart ? .cold : .hot),
             afterBoil: setup?.afterBoil ?? (planner.heatOff ? .off : .hold),
             cooling: setup?.cooling ?? planner.cooling,
-            whiteSets: planner.solution?.whiteSets ?? true,
-            boilKnown: planner.hasBoilMemory,
+            whiteSets: plan?.solution.whiteSets ?? planner.solution?.whiteSets ?? true,
+            boilKnown: cook.running?.boilRemembered ?? planner.hasBoilMemory,
             probeWanted: cook.asksForProbe
         ))
     }
@@ -88,42 +88,52 @@ final class AppModel {
         Task { await startCook() }
     }
 
-    /// "Eggs in": start a cook on the answer to the inputs as they stand.
+    /// "Eggs in": start a cook on the inputs as they stand.
     ///
     /// `planner.solution` is what is on screen, and for the coalesce and the
     /// solve after any change it still answers the previous inputs - so this
     /// asks for the current one, which is the same answer unless an input has
-    /// just moved. Nothing awaits between that answer landing and `cook.start(...)`
-    /// taking it, so the ticket and the start are read off the inputs it was
-    /// solved for, including a slider the answer has just snapped. They used
-    /// to be read at two different moments - the ticket in the tap, the start
-    /// mode in a task after it - and a picker change landing between the two
-    /// ran a cold start's heating phase under a ticket that said hot.
+    /// just moved. Nothing awaits between that answer landing and the choices
+    /// being read, so the cook is the inputs it was solved for, including a
+    /// slider the answer has just snapped. They used to be read at two
+    /// different moments - the cook in the tap, the start mode in a task after
+    /// it - and a picker change landing between the two ran a cold start's
+    /// heating phase under a cook that said hot.
     private func startCook() async {
         let current = await planner.currentSolution()
         starting = false
         guard cook.phase == .idle, let solution = current, solution.whiteSets else { return }
         await cook.start(
-            cookSeconds: solution.result.cookTimeS,
-            assumedBoilS: planner.timeToBoilS,
-            coldStart: planner.coldStart,
-            ticket: Cook.Ticket(planner: planner, solution: solution)
+            choices: planner.choices,
+            // The nudge drawn for this cook, while sharing is on (E8).
+            nudgeS: planner.nudgeS,
+            boilMemory: planner.boilMemory,
+            units: planner.units,
+            lang: Copy.activeLocale,
+            // The lean of the time on screen, while its surface is found.
+            leanHintS: planner.decision?.leanS ?? 0
         )
     }
 
-    /// Cancel, from any running phase: the idle screen solves again for the
-    /// inputs as they stand.
+    /// Cancel, from any running phase: a pan the cook timed is remembered
+    /// (`cookEnding`), and the idle screen solves again for the inputs as
+    /// they stand.
     func cancel() {
+        if let boil = cook.ending()?.boil { planner.rememberBoil(boil) }
         cook.cancel()
         planner.redrawNudge()
         planner.refresh()
     }
 
-    /// "Start again", at Done. An egg nobody answered about is still logged;
-    /// it folds nothing.
+    /// "Start again", at Done: what the cook leaves (`cookEnding`). A pan it
+    /// timed is remembered, and an egg cooked through that nobody answered
+    /// about is still logged; it folds nothing.
     func startAgain() {
-        if !cook.feedbackGiven, let egg = cook.eggRecord(yolk: nil) {
-            planner.logUnanswered(egg)
+        if let ending = cook.ending() {
+            if let boil = ending.boil { planner.rememberBoil(boil) }
+            if ending.finished, !cook.feedbackGiven, let egg = cook.eggRecord(yolk: nil) {
+                planner.logUnanswered(egg)
+            }
         }
         cook.cancel()
         planner.endEgg()
@@ -132,6 +142,16 @@ final class AppModel {
         planner.refresh()
         // The egg just finished is final now: no answer can be added to it.
         Sharing.shared.sendFinal()
+    }
+
+    /// This egg's record, for scoring a probe reading against: once it has
+    /// been answered, the record written then, the log's last (nothing is
+    /// logged while a cook is stored), and never one made again from a
+    /// plan. A plan made after the egg's own fold - at a relaunch at Done -
+    /// reads a posterior that already holds the egg, so a record from it is
+    /// not what was cooked to. Before an answer, the cook's own.
+    func liveRecord() -> EggRecord? {
+        cook.feedbackGiven ? planner.kept.log.last : cook.eggRecord(yolk: nil)
     }
 
     /// One answer, about the yolk, the white or the probe, in whichever order

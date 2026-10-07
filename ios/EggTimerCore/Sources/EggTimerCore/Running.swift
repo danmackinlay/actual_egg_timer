@@ -420,6 +420,134 @@ public func readRunningCook(_ raw: Any?) -> RunningCook? {
     )
 }
 
+// MARK: - Stored to the bit
+
+// The cook in the web's stored shape, for JSONEncoder and JSONDecoder (Swift
+// only: the web's JSON.parse is exact). JSONSerialization reads a 17-digit
+// double back an ulp off, and an ulp in the mass is another decision
+// surface's key, so a cook stored through it rebuilt its surface on every
+// relaunch; JSONEncoder writes each double's shortest round-trip form and
+// JSONDecoder reads it back to the bit. Absent values are written as JSON's
+// null, as the web writes them. Decoding checks the shape only: a decoded
+// cook is still read through `readRunningCook(cook.jsonObject)`, which is
+// exact, since nothing in between is text.
+
+extension CookChoices: Codable {
+    private enum CodingKeys: String, CodingKey {
+        case massKg = "mass_kg", massFrom, sizeTable, eggFrom, customStartC = "customStart_C"
+        case roomC = "room_C", startMode, afterBoil, cooling, waterLitres, eggCount
+        case altitudeM = "altitude_m", level
+    }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(
+            massKg: try c.decode(Double.self, forKey: .massKg),
+            massFrom: try c.decode(MassFrom.self, forKey: .massFrom),
+            sizeTable: try c.decodeIfPresent(SizeTable.self, forKey: .sizeTable),
+            eggFrom: try c.decode(EggFrom.self, forKey: .eggFrom),
+            customStartC: try c.decode(Double.self, forKey: .customStartC),
+            roomC: try c.decodeIfPresent(Double.self, forKey: .roomC),
+            startMode: try c.decode(StartMode.self, forKey: .startMode),
+            afterBoil: try c.decode(HeatAfterBoil.self, forKey: .afterBoil),
+            cooling: try c.decode(Cooling.self, forKey: .cooling),
+            waterLitres: try c.decode(Double.self, forKey: .waterLitres),
+            eggCount: try c.decode(Double.self, forKey: .eggCount),
+            altitudeM: try c.decode(Double.self, forKey: .altitudeM),
+            level: try c.decode(Double.self, forKey: .level)
+        )
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(massKg, forKey: .massKg)
+        try c.encode(massFrom, forKey: .massFrom)
+        try c.encode(sizeTable, forKey: .sizeTable)
+        try c.encode(eggFrom, forKey: .eggFrom)
+        try c.encode(customStartC, forKey: .customStartC)
+        try c.encode(roomC, forKey: .roomC)
+        try c.encode(startMode, forKey: .startMode)
+        try c.encode(afterBoil, forKey: .afterBoil)
+        try c.encode(cooling, forKey: .cooling)
+        try c.encode(waterLitres, forKey: .waterLitres)
+        try c.encode(eggCount, forKey: .eggCount)
+        try c.encode(altitudeM, forKey: .altitudeM)
+        try c.encode(level, forKey: .level)
+    }
+}
+
+extension Pulled: Codable {
+    private enum CodingKeys: String, CodingKey {
+        case dueS = "due_s", outS = "out_s", by, confirmed
+    }
+}
+
+extension CookEvents: Codable {
+    private enum CodingKeys: String, CodingKey {
+        case boilAtS = "boilAt_s", pulled, cooledAtS = "cooledAt_s", rangAtS = "rangAt_s"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(
+            boilAtS: try c.decodeIfPresent(Double.self, forKey: .boilAtS),
+            pulled: try c.decodeIfPresent(Pulled.self, forKey: .pulled),
+            cooledAtS: try c.decodeIfPresent(Double.self, forKey: .cooledAtS),
+            rangAtS: try c.decodeIfPresent(Double.self, forKey: .rangAtS)
+        )
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(boilAtS, forKey: .boilAtS)
+        try c.encode(pulled, forKey: .pulled)
+        try c.encode(cooledAtS, forKey: .cooledAtS)
+        try c.encode(rangAtS, forKey: .rangAtS)
+    }
+}
+
+extension RunningCook: Codable {
+    private enum CodingKeys: String, CodingKey {
+        case idMs = "id_ms", startedAtS = "startedAt_s", choices, events, nudgeS = "nudge_s", boilMemory
+        case units, lang, boilRemembered, coldSinceS = "coldSince_s", firstHotAtS = "firstHotAt_s"
+        case correctedAtS = "correctedAt_s"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(
+            idMs: try c.decode(Double.self, forKey: .idMs),
+            startedAtS: try c.decode(Double.self, forKey: .startedAtS),
+            choices: try c.decode(CookChoices.self, forKey: .choices),
+            events: try c.decode(CookEvents.self, forKey: .events),
+            nudgeS: try c.decode(Double.self, forKey: .nudgeS),
+            boilMemory: try c.decode(BoilMemory.self, forKey: .boilMemory),
+            units: try c.decode(Units.self, forKey: .units),
+            lang: try c.decode(String.self, forKey: .lang),
+            boilRemembered: try c.decode(Bool.self, forKey: .boilRemembered),
+            coldSinceS: try c.decodeIfPresent(Double.self, forKey: .coldSinceS),
+            firstHotAtS: try c.decodeIfPresent(Double.self, forKey: .firstHotAtS),
+            correctedAtS: try c.decodeIfPresent(Double.self, forKey: .correctedAtS)
+        )
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(idMs, forKey: .idMs)
+        try c.encode(startedAtS, forKey: .startedAtS)
+        try c.encode(choices, forKey: .choices)
+        try c.encode(events, forKey: .events)
+        try c.encode(nudgeS, forKey: .nudgeS)
+        try c.encode(boilMemory, forKey: .boilMemory)
+        try c.encode(units, forKey: .units)
+        try c.encode(lang, forKey: .lang)
+        try c.encode(boilRemembered, forKey: .boilRemembered)
+        try c.encode(coldSinceS, forKey: .coldSinceS)
+        try c.encode(firstHotAtS, forKey: .firstHotAtS)
+        try c.encode(correctedAtS, forKey: .correctedAtS)
+    }
+}
+
 // MARK: - The plan
 
 /// A pot's decision surface, as the app built it off the main thread, with

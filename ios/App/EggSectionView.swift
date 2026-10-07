@@ -16,8 +16,9 @@ import EggTimerCore
 /// It says nothing the sentence and the clock do not, so it has no words and
 /// VoiceOver passes over it.
 struct EggSectionView: View {
-    let cook: Cook
-    let ticket: Cook.Ticket
+    /// The cook in the pan, and its plan: the egg and the water it has been in.
+    let running: RunningCook
+    let plan: CookPlan
     let calibration: Calibration
     /// The instant the `TimelineView` drew for.
     let now: Date
@@ -36,46 +37,45 @@ struct EggSectionView: View {
     /// The section at `now`: in the water until the cook said the eggs were
     /// out, or until the grace ran out with nobody saying, and on through the
     /// carryover after. At the posterior mean, the egg the countdown times.
-    private func sectionNow() -> SectionView? {
-        guard let startedAt = cook.startedAt, let pullAt = cook.pullAt else { return nil }
+    private func sectionNow() -> SectionView {
         #if DEBUG
-        let clock = now.addingTimeInterval(Screenshots.sectionAhead)
+        let clock = now.addingTimeInterval(Screenshots.sectionAhead).timeIntervalSince1970
         #else
-        let clock = now
+        let clock = now.timeIntervalSince1970
         #endif
-        let assumedOut = pullAt.addingTimeInterval(pullGraceSeconds)
-        let out = cook.outAt ?? (clock >= assumedOut ? assumedOut : nil)
-        let outS = out.map { $0.timeIntervalSince(startedAt) }
-        let nowS = clock.timeIntervalSince(startedAt)
+        let start = running.startedAtS
+        let assumedOut = plan.deadlines.cookEndS + pullGraceSeconds
+        let out = running.events.pulled?.outS ?? (clock >= assumedOut ? assumedOut : nil)
+        let outS = out.map { $0 - start }
+        let nowS = clock - start
         return cache.view(
-            ticket: ticket, startedAt: startedAt,
+            egg: plan.egg, setup: plan.setup, startedAtS: start,
             params: calibrationParams(calibration),
             toS: outS.map { min(nowS, $0 + Constants.carryoverWindow) } ?? nowS,
             outAtS: outS,
-            whiteTargetMin: calibrationDoneness(calibration, level: ticket.level).whiteDoseMin
+            whiteTargetMin: calibrationDoneness(calibration, level: plan.level).whiteDoseMin
         )
     }
 }
 
 /// The section carried forward between ticks, so each second costs two steps
-/// rather than a replay. A new ticket - a start, the boil tapped, a slow hob, a
-/// restore - replays it from t = 0, since the water it has been in changed.
+/// rather than a replay. A new egg, water or start - the boil tapped, a slow
+/// hob, a restore - replays it from t = 0, since the water it has been in
+/// changed.
 @MainActor
 private final class SectionCache {
     private var section: EggSection?
-    private var ticket: Cook.Ticket?
-    private var startedAt: Date?
+    private var key: (egg: Egg, setup: CookSetup, startedAtS: Double)?
 
     func view(
-        ticket: Cook.Ticket, startedAt: Date, params: ModelParams,
+        egg: Egg, setup: CookSetup, startedAtS: Double, params: ModelParams,
         toS: Double, outAtS: Double?, whiteTargetMin: Double
     ) -> SectionView {
-        if section == nil || self.ticket != ticket || self.startedAt != startedAt {
-            section = EggSection(egg: ticket.egg, setup: ticket.setup, params: params)
-            self.ticket = ticket
-            self.startedAt = startedAt
+        if section == nil || key?.egg != egg || key?.setup != setup || key?.startedAtS != startedAtS {
+            section = EggSection(egg: egg, setup: setup, params: params)
+            key = (egg, setup, startedAtS)
         }
-        section!.advance(egg: ticket.egg, setup: ticket.setup, params: params, toS: toS, outAtS: outAtS)
+        section!.advance(egg: egg, setup: setup, params: params, toS: toS, outAtS: outAtS)
         return section!.view(whiteTargetMin: whiteTargetMin)
     }
 }

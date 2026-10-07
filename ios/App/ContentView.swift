@@ -80,7 +80,7 @@ struct ContentView: View {
                     if outerPhase == .idle {
                         DonenessControl(planner: planner, thumbInset: $thumbInset)
                         setup
-                    } else if let ticket = cook.ticket {
+                    } else if let running = cook.running, let plan = cook.plan {
                         // The cook in the pan, where the controls were: the
                         // first thing under the time, and never pushed down
                         // by the probe offer or the two questions at Done.
@@ -90,13 +90,13 @@ struct ContentView: View {
                         HStack(alignment: .center, spacing: 14) {
                             TimelineView(.periodic(from: .now, by: tick)) { context in
                                 EggSectionView(
-                                    cook: cook, ticket: ticket,
+                                    running: running, plan: plan,
                                     calibration: planner.calibration, now: context.date
                                 )
                             }
                             .id(tick)
                             .frame(width: 120, height: 156)
-                            CookSentence(ticket: ticket, planner: planner)
+                            CookSentence(running: running, plan: plan, planner: planner)
                         }
                     }
                     TimelineView(.periodic(from: .now, by: tick)) { context in

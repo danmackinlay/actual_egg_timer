@@ -12,7 +12,7 @@ both, on this branch, not on `main` and not deployed. The web app (`src/`) and t
 the same model, refusals, particle filter and choice of time, the same
 catalogue of words in two Englishes (Phase F but for Czech), and the same
 layout (`UI.md`). `npm test` runs 369 tests, all passing (5b pins E3's known
-limit). `npm run validate` passes 29/29, `swift test` passes 151 tests
+limit). `npm run validate` passes 29/29, `swift test` passes 152 tests
 in 38 suites, and the fit's pytest 9. **Pushed on 29 September** at `5ff6940`, the owner's
 call: Netlify serves it at actualeggtimer.netlify.app, and the first run of
 `.github/workflows/verify.yml` passed. The iOS app runs from Xcode on the owner's
@@ -47,9 +47,9 @@ These counts are the only ones in the documents. If you want a number, run
    screen's design is answered (`DECISIONS.md` 96, 97; `design/one-
    screen.md`), and its core, the running cook, is built (C2,
    `src/core/running.ts`), with the red-team review of it applied
-   (`design/one-screen-review.md`, `DECISIONS.md` 98). The web's state is
-   on it (`aet.cook.v3`; `design/one-screen.md` §4, step 5): next is iOS on
-   it, then the one screen in both, with certainty in words on it (93). `0.4.x` is
+   (`design/one-screen-review.md`, `DECISIONS.md` 98). Both apps' state is
+   on it (`aet.cook.v3`, `cookInProgress.v2`; `design/one-screen.md` §4):
+   next is the one screen in both, with certainty in words on it (93). `0.4.x` is
    merged in as it moves.
 
 Throughout: cook real eggs, and the two measurements in README §11.3.

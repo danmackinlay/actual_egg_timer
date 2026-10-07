@@ -128,6 +128,39 @@ struct RunningConformance {
         }
     }
 
+    @Test("a stored cook through JSONEncoder and JSONDecoder comes back to the bit, in the web's shape")
+    func storedToTheBit() throws {
+        var cooks = try Fixtures.list("running.json", "reads").compactMap { readRunningCook($0["raw"]) }
+        #expect(cooks.count >= 10)
+        // And each again with doubles of 17 significant digits in its fields,
+        // which is what JSONSerialization read back an ulp off.
+        var draw = SplitMix(seed: 20261007)
+        for base in cooks {
+            var cook = base
+            cook.startedAtS += draw.next()
+            cook.idMs = (cook.startedAtS * 1000).rounded()
+            cook.choices.massKg = 0.04 + 0.04 * draw.next()
+            cook.choices.waterLitres = 0.2 + 3 * draw.next()
+            cook.choices.level = draw.next()
+            cook.choices.altitudeM = 2000 * draw.next()
+            cook.nudgeS = 20 * draw.next() - 10
+            cook.boilMemory = ["\(cook.choices.waterLitres)": 300 + 600 * draw.next()]
+            if cook.events.boilAtS != nil { cook.events.boilAtS = cook.startedAtS + 400 + draw.next() }
+            cooks.append(cook)
+        }
+        for cook in cooks {
+            let data = try JSONEncoder().encode(cook)
+            let back = try JSONDecoder().decode(RunningCook.self, from: data)
+            #expect(back == cook)
+            // What the app reads through: the same cook, nothing in between
+            // being text.
+            #expect(readRunningCook(back.jsonObject) == cook)
+            // The web's keys and nulls: what JSONSerialization makes of it is
+            // the cook's own JSON, to its last bit but one.
+            #expect(sameJSON(try JSONSerialization.jsonObject(with: data), cook.jsonObject, ulps: 4))
+        }
+    }
+
     @Test("the constants")
     func constants() throws {
         let c = try Fixtures.object("running.json", "constants")
@@ -351,5 +384,20 @@ private func expectPlan(_ p: CookPlan, _ json: [String: Any], start: Double, _ n
         }
     } else {
         #expect(p.forecast == nil, "\(note): forecast")
+    }
+}
+
+/// A fixed stream of doubles in [0, 1) with every bit of the mantissa used:
+/// SplitMix64, for draws a test can repeat.
+private struct SplitMix {
+    var state: UInt64
+    init(seed: UInt64) { state = seed }
+    mutating func next() -> Double {
+        state &+= 0x9E37_79B9_7F4A_7C15
+        var z = state
+        z = (z ^ (z >> 30)) &* 0xBF58_476D_1CE4_E5B9
+        z = (z ^ (z >> 27)) &* 0x94D0_49BB_1331_11EB
+        z ^= z >> 31
+        return Double(z >> 11) / Double(UInt64(1) << 53)
     }
 }
