@@ -121,11 +121,7 @@ struct PhaseActions: View {
                 // Invariant 6: tapping at first bubbles under-measures the boil
                 // by 15-25%, so the button names the thing to wait for.
                 Button {
-                    Task {
-                        if let measured = await cook.recordBoil() {
-                            planner.rememberBoil(seconds: measured)
-                        }
-                    }
+                    cook.boil()
                 } label: {
                     Text(tr(model.keys(.heating).action ?? "action.fullBoil")).frame(maxWidth: .infinity).onAccent()
                 }
@@ -185,7 +181,7 @@ struct PhaseActions: View {
                         // The web's hint: what the hob must do until the pull.
                         Text(model.keys(.cooking).hint.map {
                             tr($0, ["boiling": .text(planner.show(
-                                .temperature, cook.ticket?.setup.boilingC ?? planner.boilingC
+                                .temperature, cook.plan?.setup.boilingC ?? planner.boilingC
                             ))])
                         } ?? "")
                         // Whether the alarm is really set: iOS's own line,

@@ -233,22 +233,18 @@ extension Planner {
     /// `nonisolated async` is what takes it off the main actor; no inner
     /// `Task` of any kind, since an unstructured task does not inherit the
     /// caller's cancellation. The caller (`recompute()`) drops a superseded
-    /// answer by its question number.
-    ///
-    /// `snapRetry` is false for a cook already under way: the target is frozen,
-    /// so re-solving at a snapped position would answer for an egg nobody is
-    /// cooking.
+    /// answer by its question number. A running cook is planned by core
+    /// (`replan`, Cook.swift), not here.
     private nonisolated static func solve(
-        egg: Egg, setup: CookSetup, level: Double, calibration: Calibration, snapRetry: Bool = true,
-        profile: OddsProfile? = nil
+        egg: Egg, setup: CookSetup, level: Double, calibration: Calibration, profile: OddsProfile? = nil
     ) async -> Answer {
         #if DEBUG
         let a = Perf.time(.answerAt) { answerAt(
-            calibration, egg: egg, setup: setup, level: level, profile: profile, snapRetry: snapRetry
+            calibration, egg: egg, setup: setup, level: level, profile: profile, snapRetry: true
         ) }
         #else
         let a = answerAt(
-            calibration, egg: egg, setup: setup, level: level, profile: profile, snapRetry: snapRetry
+            calibration, egg: egg, setup: setup, level: level, profile: profile, snapRetry: true
         )
         #endif
         return Answer(
@@ -268,48 +264,6 @@ extension Planner {
         )
     }
 
-    /// Re-solve a cook already under way, for a corrected time to boil.
-    ///
-    /// The doneness is the one the cook was STARTED at, and nothing here may
-    /// move it - not the slider, and not the answer. The idle path would snap:
-    /// a measured ramp that made the requested doneness unreachable would
-    /// quietly re-time the pan for a different egg while the slider, the stored
-    /// setting and the captured ticket all still described the one asked for.
-    ///
-    /// `snapRetry: false` is what makes that true rather than merely intended:
-    /// an unreachable target answers with the furthest this pan goes, which is
-    /// the only cook on offer, instead of with a cook at a target nobody chose.
-    ///
-    /// `leanS` is how far the choice leaned from the mean solve at "Eggs in".
-    /// A new ramp is a new pot, whose decision surface is a second or more
-    /// away with the egg already in the water, so the lean is carried instead
-    /// (`carriedSolution`); test/decide.test.ts measures what that costs.
-    ///
-    /// The nudge (E8) is carried with the lean, so the egg comes out when the
-    /// record says. Where the new ramp leaves no time to choose, neither is
-    /// carried, and `nudged` says so, for the record.
-    ///
-    /// The answer is the whole cook: its time, and the peak the cooling
-    /// counts to.
-    func cookResult(
-        timeToBoilS: Double, level: Double, leanS: Double, nudgeS: Double
-    ) async -> (result: CookResult, nudged: Bool)? {
-        let setup = setup(timeToBoilS: timeToBoilS)
-        let answer = await Self.solve(
-            egg: egg, setup: setup, level: level, calibration: calibration, snapRetry: false
-        )
-        let carried = carriedSolution(
-            egg: egg, setup: setup, params: calibrationParams(calibration),
-            solution: answer.solution, leanS: leanS + nudgeS
-        )
-        // The numbers on screen follow the cook; the refusal does not. A
-        // refusal is advice about a control that is no longer on screen.
-        solution = carried
-        // A pan with a measured or pushed-out ramp is not the idle question.
-        answered = nil
-        return (carried.result, decisionApplies(answer.solution))
-    }
-
     /// The solution for the inputs as they stand NOW, solving for them first
     /// if the one on screen is not yet theirs. Nil for sous-vide, where there
     /// is no pan to solve for.
@@ -324,7 +278,7 @@ extension Planner {
     /// answer on screen is stale.
     ///
     /// Applied like any other answer, so a snap moves the slider before the
-    /// caller reads the level for its ticket. Loops only if the inputs move
+    /// caller reads the choices for its cook. Loops only if the inputs move
     /// again while it solves.
     func currentSolution() async -> Solution? {
         while true {
@@ -412,10 +366,9 @@ extension Planner {
 
     /// Re-solve for the inputs as they stand.
     ///
-    /// Needed after a cancel. A cold start's boil tap re-solves with the
-    /// MEASURED ramp and leaves that answer in `solution`; without this, the
-    /// idle screen goes on showing the cook that was just abandoned, which
-    /// reads as a Cancel button that did not work.
+    /// Needed when a cook ends: a new nudge is drawn, and a pan timed by the
+    /// cook just ended is remembered, so the idle screen's time is not the
+    /// one it showed before the cook.
     func refresh() {
         recompute()
     }

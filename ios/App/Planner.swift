@@ -260,7 +260,7 @@ final class Planner {
     /// keys in the order shown; empty when there is nothing to say.
     var advice: [String] = []
     /// What the direction, the white's line and the bracket are about, and what
-    /// a cook started now carries on its ticket: the choice on screen's outcome,
+    /// a cook started now is timed by: the choice on screen's outcome,
     /// once this pot's surface has landed. Nil before that, where the white
     /// never sets, and in sous-vide.
     var shownOutcome: Outcome? {
@@ -346,7 +346,7 @@ final class Planner {
     /// Bumped by every `recompute()`: which question the inputs are asking.
     var asked = 0
     /// Which question `solution` answers, or nil when it answers none of them -
-    /// a mid-cook re-solve, or nothing yet. `solution` is current only when
+    /// nothing yet. `solution` is current only when
     /// this equals `asked`; between an input change and the coalesced solve
     /// landing, it is the answer to the PREVIOUS inputs.
     var answered: Int?
@@ -400,20 +400,23 @@ final class Planner {
 
     // MARK: - Derived setup
 
-    var egg: Egg { Geometry.eggFromMass(eggMassG / 1000.0) }
-
-    var eggStartC: Double {
-        switch startTemp {
-        case .fridge: startTempPresetC(.fridge, roomC: roomInUseC)
-        case .room: startTempPresetC(.room, roomC: roomInUseC)
-        case .custom: customStartC
-        }
+    /// The cook as the controls choose it, in SI: core's `CookChoices`, which
+    /// a cook started now holds as its own (the web's `choicesOf`). Sous-vide
+    /// is neither start, and says hot here; nothing starts one.
+    var choices: CookChoices {
+        CookChoices(
+            massKg: eggMassG / 1000, massFrom: massFrom, sizeTable: sizeTable, eggFrom: startTemp,
+            customStartC: customStartC, roomC: roomInUseC, startMode: coldStart ? .cold : .hot,
+            afterBoil: heatOff ? .off : .hold, cooling: cooling, waterLitres: waterLitres,
+            eggCount: Double(eggCount), altitudeM: altitudeM, level: doneness
+        )
     }
 
-    /// The room, as far as the model is concerned: the room as measured, with
-    /// the probe on; otherwise an egg that has been sitting out IS the room,
-    /// and a fridge egg says nothing (`ambientFor`, core policy).
-    var ambientC: Double { ambientFor(eggStartC: eggStartC, roomC: roomInUseC) }
+    /// The egg and the pot the solver is told, from core (`cookSetupOf`), with
+    /// this pan's remembered time to boil: the one assembly both apps share.
+    var pot: CookPot { cookSetupOf(choices, timeToBoilS: timeToBoilS) }
+
+    var egg: Egg { pot.egg }
 
     var boilingC: Double { Thermo.boilingPointAtAltitude(altitudeM) }
 
@@ -427,23 +430,7 @@ final class Planner {
 
     var hasBoilMemory: Bool { EggTimerCore.hasBoilMemory(boilMemory) }
 
-    var setup: CookSetup {
-        setup(timeToBoilS: timeToBoilS)
-    }
-
-    func setup(timeToBoilS: Double) -> CookSetup {
-        CookSetup(
-            startMode: coldStart ? .cold : .hot,
-            eggStartC: eggStartC,
-            ambientC: ambientC,
-            boilingC: boilingC,
-            timeToBoilS: timeToBoilS,
-            cooling: cooling,
-            waterLitres: waterLitres,
-            afterBoil: heatOff ? .off : .hold,
-            eggCount: Double(eggCount)
-        )
-    }
+    var setup: CookSetup { pot.setup }
 
     /// The label moves with the finger; the numbers follow when the solve lands.
     var label: String { tr(anchorNear(doneness).key) }
@@ -469,11 +456,12 @@ final class Planner {
 
     // MARK: - Measuring the boil
 
-    /// Record a measured time to a rolling boil and remember it for this
-    /// volume. Blended with whatever was already known, so one odd run - lid
-    /// off, pan half empty - does not dominate.
-    func rememberBoil(seconds: Double) {
-        boilMemory = EggTimerCore.rememberBoil(boilMemory, litres: waterLitres, seconds: seconds)
+    /// Remember a measured time to a rolling boil for its volume, when a
+    /// cook ends (`cookEnding`): the cook as last corrected, not the tap.
+    /// Blended with whatever was already known, so one odd run - lid off, pan
+    /// half empty - does not dominate.
+    func rememberBoil(_ boil: BoilToRemember) {
+        boilMemory = EggTimerCore.rememberBoil(boilMemory, litres: boil.litres, seconds: boil.seconds)
         BoilMemories.save(boilMemory)
     }
 }

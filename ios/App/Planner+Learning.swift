@@ -9,7 +9,7 @@ extension Planner {
     ///
     /// Written down FIRST, before any arithmetic: an app killed during the fold
     /// then folds it again on the next launch, rather than losing it. The
-    /// record carries the egg and pan the cook was RUN with, off the ticket.
+    /// record carries the egg and pan the cook was RUN with, off its plan.
     func record(_ egg: EggRecord) async {
         answers = Answers(yolk: egg.yolkWord, white: egg.white, probe: egg.probe)
         folded = nil
@@ -108,7 +108,13 @@ extension Planner {
         bare.yolkWord = nil
         bare.white = nil
         bare.probe = nil
-        guard bare == cooked else { return }
+        // Nor the forecast: the cook is planned again at the relaunch, before
+        // its pot's surface is built again, and under the posterior this egg
+        // has since moved, so what it says it said is not the same numbers.
+        bare.forecast = nil
+        var plain = cooked
+        plain.forecast = nil
+        guard bare == plain else { return }
         answers = Answers(yolk: last.yolkWord, white: last.white, probe: last.probe)
         folded = nil
         // Not folded yet (the fold is caught up on launch): a later answer is

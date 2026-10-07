@@ -6,20 +6,30 @@ import EggTimerCore
 ///
 ///     IDLE -> HEATING -> COOKING -> PULL -> COOLING -> DONE
 ///
-/// Every deadline is an absolute `Date` and every phase is DERIVED from the
-/// current time rather than counted down. A tick that stops - because the app
-/// was backgrounded, the screen locked, or the phone was busy - therefore
-/// cannot make the egg wrong: the next time anything asks, the answer is
-/// computed from the clock.
+/// A cook is core's `RunningCook`: its start, its choices and what it
+/// observed (the boil tapped, the pull, the cooling ended), as clock times
+/// (design/one-screen.md section 3 and 4). Everything else is its plan
+/// (`replan`), derived from those and never stored as truth: the time to
+/// boil in force, the pull, the cooling's end, the record. Every phase is
+/// DERIVED from the plan's deadlines and the current time (`phaseAt`) rather
+/// than counted down. A tick that stops - because the app was backgrounded,
+/// the screen locked, or the phone was busy - therefore cannot make the egg
+/// wrong: the next time anything asks, the answer is computed from the clock.
+///
+/// The plan is made again only when something it reads changes: the cook
+/// (a tap, an event the clock decided), its pot's decision surface landing,
+/// the slow hob's next lengthening (`slowHobAtS`), or a launch. Never every
+/// tick. A plan is about a dozen solves, so it is made off the main actor,
+/// and only the plan of the cook as it now stands is taken.
 ///
 /// Nothing here drives the display. Redrawing a countdown is the view's job and
 /// SwiftUI has a mechanism for it (`TimelineView`); a counter bumped here to
 /// force a redraw does NOT work under `@Observable`, because a property the
 /// view never reads creates no dependency - which is exactly the bug that used
 /// to leave the on-screen clock frozen while the alarm underneath it was
-/// perfectly correct. The ticker below exists only to revise a slow hob, to
-/// push Live Activity stage changes, and to ring for a deadline no
-/// notification holds.
+/// perfectly correct. The ticker below exists only to write the events the
+/// clock decides (`eventsDue`), to plan again when the slow hob says, to push
+/// Live Activity changes, and to ring for a deadline no notification holds.
 ///
 /// HEATING exists only on a cold start, where t = 0 is the moment the egg goes
 /// into the cold pan - the same t = 0 the physics core uses, so the one
@@ -29,118 +39,25 @@ import EggTimerCore
 @Observable
 @MainActor
 final class Cook {
-    /// What is being cooked, captured at "Eggs in". The inputs disappear off
-    /// screen once a cook starts, and the Lock Screen has no access to them at
-    /// all, so the description travels with the cook rather than being read
-    /// back out of the controls.
-    struct Ticket: Equatable, Codable {
-        var doneness: String
-        var peakYolkC: Double
-        /// The doneness level that target came from, so a mid-cook re-solve can
-        /// answer for the cook in the pan rather than for the slider.
-        var level: Double
-        /// The egg and the pan this cook was run with.
-        ///
-        /// Frozen here, and updated only when the ramp is actually measured.
-        /// Read off the planner when the cook answers, the time to boil would
-        /// come from the blended memory rather than from THIS cook's measured
-        /// ramp, and the dose grid the posterior is updated against would
-        /// describe a pan that never cooked this egg.
-        var egg: Egg
-        var setup: CookSetup
-        /// Where the egg's mass came from, and whose carton if it was a class -
-        /// for the record. No carton for a weighed egg.
-        var massFrom: MassFrom
-        var sizeTable: SizeTable?
-        /// Where the egg came from - the fridge, the room or the cook's own
-        /// number - for the record and the sentence shown while the cook runs.
-        var startTemp: EggFrom
-        /// Whether a measured pan was on file at "Eggs in" - what a hot start,
-        /// which never times its own pan, cooked on.
-        var boilRemembered: Bool
-        /// The system the cook was reading at "Eggs in", for the record and the
-        /// Lock Screen. Everything above is SI whatever it says.
-        var units: UnitSystem
-        /// The language the cook was reading at "Eggs in", for the record: the
-        /// catalogue's tag.
-        var lang: String
-        /// How far the choice leaned from the mean solve at "Eggs in", s,
-        /// carried onto a mid-cook re-solve. Zero when the time was not chosen.
-        var leanS: Double
-        /// The nudge the time took at "Eggs in" (E8): seconds added on purpose
-        /// to the time chosen, for a cook who is sharing, carried onto a
-        /// mid-cook re-solve with the lean. Zero when there was none, or when
-        /// a re-solve left no time to choose and carried neither.
-        var nudgeS: Double
-
-        /// What the egg was expected to be like at "Eggs in": the direction
-        /// and the white's line, shown for the whole cook as the web shows
-        /// them. Nil when the cook was started before they were known.
-        var outcome: Outcome?
-        /// What the app said at "Eggs in", as the record keeps it: every
-        /// answer's probability and the time it was for (DECISIONS.md 37).
-        /// Nil when the cook was started before the odds were known.
-        var forecast: Forecast?
-
-        /// How long the counted cooling runs from the pull, s: to the moment the
-        /// yolk's centre peaks, for this cook (`coolingSecondsFor`).
-        var coolS: Double
-        /// Whether this cook has a moment to probe at: a counted cooling that
-        /// ends at the peak (`probeMomentFor`).
-        var probeMoment: Bool
-
-        /// Read off the egg and the pan, not stored beside them.
-        var eggGrams: Double { egg.massKg * 1000 }
-        var cooling: Cooling { setup.cooling }
-        var coldStart: Bool { setup.startMode == .cold }
-
-        /// The Lock Screen's description of this cook, in its own units and
-        /// its own language.
-        var activity: CookActivity {
-            let system = units
-            return CookActivity(
-                doneness: doneness,
-                peakYolk: showIn(system, .temperature, peakYolkC),
-                eggMass: showIn(system, .mass, eggGrams),
-                cooling: cooling.rawValue,
-                lang: lang
-            )
-        }
-
-        /// The same cook, against a time to boil that is now known rather than
-        /// guessed.
-        func withTimeToBoil(_ seconds: Double) -> Ticket {
-            var next = self
-            next.setup.timeToBoilS = seconds
-            return next
-        }
-
-        /// The same cook, re-solved: the cooling counts to the peak the new
-        /// solve puts after the pull, and the nudge stands only if the re-solve
-        /// carried it.
-        func withResolved(_ result: CookResult, nudged: Bool) -> Ticket {
-            var next = self
-            next.coolS = coolingSecondsFor(result)
-            next.probeMoment = probeMomentFor(result, cooling: cooling)
-            if !nudged { next.nudgeS = 0 }
-            return next
-        }
-    }
-
-    private(set) var startedAt: Date?
-    private(set) var pullAt: Date?
-    private(set) var coolDoneAt: Date?
-    /// When the cook said the eggs came out - the tap out of PULL - or nil
-    /// while nobody has. The web app's `outAt_ms`, and a MEASURED pull in the
-    /// record where the grace running out is only an assumed one.
-    private(set) var outAt: Date?
-    private(set) var ticket: Ticket?
-
-    /// How much of the cook is currently believed to be the heating ramp, s.
-    /// Zero on a hot start, where no ramp is on the clock.
-    private(set) var assumedBoilS: Double = 0
-    /// True on a cold start until the boil is tapped.
-    private(set) var provisional = false
+    /// The cook in the pan, or nil while idle.
+    private(set) var running: RunningCook?
+    /// Its plan, or nil until the first one is made.
+    private(set) var plan: CookPlan?
+    /// The cook `plan` was made for. The events the clock decides are written
+    /// only from a plan of the cook as it now stands.
+    private var plannedFor: RunningCook?
+    /// What the egg at the plan's time will be like - the direction and the
+    /// white's line - on its pot's surface; the last one shown while a new
+    /// pot's surface is built, so a boil tap does not blank it for the second
+    /// that takes.
+    private(set) var outcome: Outcome?
+    /// The last lean decided on a surface, s: the interim while a surface is
+    /// built again after a relaunch. A cache, never truth.
+    private var leanHintS: Double = 0
+    /// The decision surface the plan reads, when it is the plan's pot's
+    /// (`CookPlan.inputs`), and the inputs one has been asked for.
+    private var surface: CookSurface?
+    private var surfaceAsked: DecisionInputs?
 
     /// nil until the question has been asked and answered. The prompt is on
     /// screen for a second or two, and during that second the app must not
@@ -156,8 +73,9 @@ final class Cook {
     /// has been delivered is no longer pending but did its job, so it stays.
     /// Whatever is not in here, the app rings itself (`ringIfDue`).
     private var alarmCovers: Set<RingDeadline> = []
-    /// The deadlines the app has rung for this cook: each rings once.
-    private var rung: Set<RingDeadline> = []
+    /// The deadlines the app has rung for this cook, each with the time it
+    /// rang for: each rings once, and again only if the plan moves it.
+    private var rung: [RingDeadline: Double] = [:]
     /// One report per egg, and it has to outlive the view.
     ///
     /// This was `@State` on ContentView, so a relaunch inside the hour that
@@ -167,15 +85,9 @@ final class Cook {
     /// thought they were answering once.
     private(set) var feedbackGiven = false
 
-    /// Re-solve for a time to boil, answering with the cook it now is - its
-    /// total time, and the peak the cooling counts to. The machine cannot solve
-    /// for itself and should not try: this is set by the view, which owns the
-    /// inputs. Returning nil leaves the deadline alone.
-    ///
-    /// Takes the level the cook is being RUN at, so a corrected ramp re-times
-    /// the egg in the pan instead of whatever the slider now says, and the lean
-    /// the choice made at "Eggs in", which the re-solve carries.
-    var resolveCookTime: ((Double, Double, Double, Double) async -> (result: CookResult, nudged: Bool)?)?
+    /// The calibration as it stands, which every plan reads. Set by the
+    /// model, which owns the planner.
+    var calibration: () -> Calibration = { Calibrations.fresh() }
 
     /// Whether the cook has said they have a probe thermometer, read when
     /// the alarms are scheduled: the cooling's alarm then asks for the reading.
@@ -183,8 +95,11 @@ final class Cook {
     var probeWanted: (() -> Bool)?
 
     private var ticker: Task<Void, Never>?
-    private var lastRevise: Date?
-    private var pushedStage: CookActivity.Stage?
+    /// The plan being made, if one is, and whether the cook changed since it
+    /// was asked for.
+    private var planning: Task<Void, Never>?
+    private var planAgain = false
+    private var pushed: CookActivity.ContentState?
     /// Whether the card has been ended for this cook, which happens once, at
     /// done: there is no done stage to push.
     private var activityFinished = false
@@ -194,11 +109,9 @@ final class Cook {
     ///
     /// Every method below that awaits is holding values it read BEFORE the
     /// await, and the user can press Cancel during it. Without this guard, a
-    /// cancel that lands while `recordBoil` or the slow-hob revision is waiting
-    /// on a solve gets overwritten the moment the solve returns: `setDeadlines`
-    /// writes `pullAt` back from a captured `startedAt`, and since `phase` keys
-    /// off `pullAt`, the app springs back to a cook the user had just stopped.
-    /// That is not hypothetical - it is what "cancel doesn't reset" looks like.
+    /// plan or a surface that lands after a cancel would bring back the cook
+    /// the user had just stopped. That is not hypothetical - it is what
+    /// "cancel doesn't reset" looks like.
     private var generation = 0
 
     /// The last Live Activity call made. Each new one waits for it, so the
@@ -225,13 +138,6 @@ final class Cook {
 
     var phase: Phase { phase(at: .now) }
 
-    /// How long the cooling counts once the eggs are out, s: to the yolk's
-    /// peak for this cook, or the flat fallback when there is no cook.
-    var coolFor: TimeInterval { ticket?.coolS ?? coolingSeconds }
-
-    /// Whether this cook will ask for a probe reading when its cooling ends.
-    var asksForProbe: Bool { ticket?.probeMoment == true && probeWanted?() == true }
-
     /// The phase at a given instant.
     ///
     /// Takes the clock rather than reading it, so one render sees ONE time. A
@@ -241,67 +147,65 @@ final class Cook {
     /// described the next. `TimelineView` already hands the view a date; this
     /// is what it is for.
     func phase(at now: Date) -> Phase {
-        // A cook is its START, its DEADLINE and its ticket, or it is nothing.
-        // Keying off `pullAt` alone would let a half-written state read as a
-        // running cook: anything that set a deadline without a start - a late
-        // async continuation, a partial restore - would resurrect a timer the
-        // user had cancelled. Requiring all three makes that unrepresentable
-        // rather than merely unlikely, which is the right guarantee for a
-        // Cancel button.
-        guard let pullAt, startedAt != nil, ticket != nil else { return .idle }
-        // The ORDER of the remaining tests is core policy, so the two apps
-        // cannot disagree about it. See `phaseAt`. The
-        // cook's tap out of PULL (`outAt`) is core's too.
-        return phaseAt(
-            Deadlines(
-                cookEndS: pullAt.timeIntervalSince1970,
-                coolEndS: coolDoneAt?.timeIntervalSince1970,
-                provisional: provisional,
-                outAtS: outAt?.timeIntervalSince1970
-            ),
-            nowS: now.timeIntervalSince1970
-        )
+        // A cook is a running cook AND its plan, or it is nothing: a plan left
+        // by a late continuation after a cancel cannot resurrect a timer.
+        guard running != nil, let plan else { return .idle }
+        return phaseAt(plan.deadlines, nowS: now.timeIntervalSince1970)
     }
 
-    /// The cook time actually used, egg-in to egg-out. This is what the
-    /// calibration is told, and it is derived from the two dates rather than
-    /// remembered separately, so a cold start's revisions are already in it.
-    var cookSeconds: TimeInterval {
-        guard let startedAt, let pullAt else { return 0 }
-        return pullAt.timeIntervalSince(startedAt)
+    // MARK: - Read off the plan
+
+    var startedAt: Date? { running.map { Date(timeIntervalSince1970: $0.startedAtS) } }
+    var pullAt: Date? { plan.map { Date(timeIntervalSince1970: $0.deadlines.cookEndS) } }
+    var coolDoneAt: Date? { plan?.deadlines.coolEndS.map { Date(timeIntervalSince1970: $0) } }
+    /// When the egg came out: the cook's tap out of PULL, or the grace
+    /// running out (an assumed pull), or nil while it is in.
+    var outAt: Date? { running?.events.pulled.map { Date(timeIntervalSince1970: $0.outS) } }
+
+    /// How long the counted cooling runs once the eggs are out, s: to the
+    /// yolk's peak for this cook, or the flat fallback when there is no cook.
+    var coolFor: TimeInterval { plan?.coolS ?? coolingSeconds }
+
+    /// Whether this cook will ask for a probe reading when its cooling ends.
+    var asksForProbe: Bool { plan?.probeMoment == true && probeWanted?() == true }
+
+    /// The cook time, egg-in to egg-out: the pull's, once there is one.
+    var cookSeconds: TimeInterval { plan?.cookTimeS ?? 0 }
+
+    /// How much of the cook the plan takes to be the heating ramp, s: the
+    /// tap, the remembered pan or the slow hob's guess. Zero on a hot start,
+    /// where no ramp is on the clock.
+    var assumedBoilS: Double {
+        guard let setup = plan?.setup, setup.startMode == .cold else { return 0 }
+        return setup.timeToBoilS
     }
+
+    var secondsToPull: TimeInterval { max(0, (pullAt ?? .now).timeIntervalSinceNow) }
+    var secondsToCoolDone: TimeInterval { max(0, (coolDoneAt ?? .now).timeIntervalSinceNow) }
+    /// Seconds of cooking after the boil is reached - the number every recipe
+    /// quotes, and the only part of a cold start comparable to one.
+    var secondsAfterBoil: TimeInterval { cookSeconds - assumedBoilS }
 
     /// This egg as a record (INFERENCE.md section 4), with whichever answers
-    /// have been given - nil for one nobody gave - or nil when there is no cook.
-    /// Made in EggTimerCore (`recordFor`), as the web makes it, from this
-    /// cook's facts: the pull is the cook's when they tapped out of PULL
-    /// (`pulledOut`), and the scheduled time when the grace simply ran out.
+    /// have been given - nil for one nobody gave - or nil when there is no
+    /// cook: core's `cookFactsFor` and `recordFor`, from the cook as it stands
+    /// and its plan, as the web makes it.
     func eggRecord(yolk: YolkWord?, white: WhiteReport? = nil, probe: ProbeReading? = nil) -> EggRecord? {
-        guard let startedAt, pullAt != nil, let ticket else { return nil }
-        return recordFor(CookFacts(
-            app: .ios,
-            appVersion: Calibrations.appVersion,
-            prior: Calibrations.population.id,
-            day: Self.day(startedAt),
+        guard let running, let plan else { return nil }
+        return Self.record(running, plan, yolk: yolk, white: white, probe: probe)
+    }
+
+    private static func record(
+        _ cook: RunningCook, _ plan: CookPlan, yolk: YolkWord?, white: WhiteReport?, probe: ProbeReading?
+    ) -> EggRecord {
+        recordFor(cookFactsFor(
+            cook, plan: plan,
             // One cook at a time here: no `id` (src/core/record.ts).
-            id: nil,
-            massKg: ticket.egg.massKg,
-            massFrom: ticket.massFrom,
-            sizeTable: ticket.sizeTable,
-            setup: ticket.setup,
-            eggFrom: ticket.startTemp,
-            boilRemembered: ticket.boilRemembered,
-            level: ticket.level,
-            cookS: cookSeconds,
-            nudgeS: ticket.nudgeS,
-            outS: outAt.map { $0.timeIntervalSince(startedAt) },
-            coolS: coolFor,
-            yolkWord: yolk,
-            white: white,
-            probe: probe,
-            forecast: ticket.forecast,
-            lang: ticket.lang,
-            units: ticket.units
+            context: RecordContext(
+                app: .ios, appVersion: Calibrations.appVersion, prior: Calibrations.population.id,
+                day: day(Date(timeIntervalSince1970: cook.startedAtS)), id: nil
+            ),
+            yolkWord: yolk, white: white, probe: probe
         ))
     }
 
@@ -310,8 +214,24 @@ final class Cook {
     /// counted cooling - from the moment the record scores as the pull. Nil
     /// when there is no cook.
     func probeReading(centreC: Double) -> ProbeReading? {
-        guard let startedAt, let record = eggRecord(yolk: nil) else { return nil }
-        return probeReadingFor(record, centreC: centreC, coolEndS: coolDoneAt.map { $0.timeIntervalSince(startedAt) })
+        guard let running, let record = eggRecord(yolk: nil) else { return nil }
+        return probeReadingFor(
+            record, centreC: centreC, coolEndS: plan?.deadlines.coolEndS.map { $0 - running.startedAtS }
+        )
+    }
+
+    /// What the cook leaves if it ends now (`cookEnding`): the boil to
+    /// remember, and whether it was cooked through. Nil when there is none.
+    func ending(at now: Date = .now) -> CookEnding? {
+        guard let running, let plan else { return nil }
+        return cookEnding(running, plan: plan, nowS: now.timeIntervalSince1970)
+    }
+
+    /// Whether this cook's egg is in the log and still open to correction:
+    /// answered, and the stored cook not too old to pick back up
+    /// (`openEggId`). Sharing holds it back; every other egg is final.
+    func eggOpen(at now: Date) -> Bool {
+        feedbackGiven && openEggId(running, plan: plan, nowS: now.timeIntervalSince1970) != nil
     }
 
     /// The local calendar day a cook started on, YYYY-MM-DD. A day, not a
@@ -321,33 +241,39 @@ final class Cook {
         return String(format: "%04d-%02d-%02d", c.year ?? 0, c.month ?? 0, c.day ?? 0)
     }
 
-    var secondsToPull: TimeInterval { max(0, (pullAt ?? .now).timeIntervalSinceNow) }
-    var secondsToCoolDone: TimeInterval { max(0, (coolDoneAt ?? .now).timeIntervalSinceNow) }
-    /// Seconds of cooking after the boil is reached - the number every recipe
-    /// quotes, and the only part of a cold start comparable to one.
-    var secondsAfterBoil: TimeInterval {
-        guard let startedAt, let pullAt else { return 0 }
-        return pullAt.timeIntervalSince(startedAt) - assumedBoilS
-    }
-
     // MARK: - Driving the cook
 
+    /// "Eggs in": a cook with these choices, the nudge it drew (none when
+    /// sharing is off), the pans as remembered now, and the lean the time on
+    /// screen took. The first plan reads the surface the screen chose on,
+    /// when it is built, so the egg is timed as the screen said.
     func start(
-        cookSeconds: Double, assumedBoilS: Double, coldStart: Bool, ticket: Ticket
+        choices: CookChoices, nudgeS: Double, boilMemory: BoilMemory, units: UnitSystem, lang: String,
+        leanHintS: Double
     ) async {
         generation &+= 1
         let gen = generation
-        let now = Date.now
-        startedAt = now
-        self.ticket = ticket
-        self.assumedBoilS = coldStart ? assumedBoilS : 0
-        provisional = coldStart
-        lastRevise = nil
-        pushedStage = nil
-        activityFinished = false
-        alarmCovers = []
-        rung = []
-        setDeadlines(from: now, cookSeconds: cookSeconds, cooling: ticket.cooling)
+        reset()
+        let cook = startCook(
+            nowMs: Date.now.timeIntervalSince1970 * 1000, choices: choices, nudgeS: nudgeS,
+            boilMemory: boilMemory, units: units, lang: lang
+        )
+        running = cook
+        self.leanHintS = leanHintS
+        persist()
+
+        // The surface the time on screen was chosen on, and its odds at every
+        // level, if they are built: the same decision the screen made.
+        let c = calibration()
+        let pot = cookSetupOf(choices, timeToBoilS: estimateTimeToBoil(boilMemory, litres: choices.waterLitres))
+        let inputs = decisionInputs(c, egg: pot.egg, setup: pot.setup)
+        if let grid = await DecisionGrids.shared.cached(inputs) {
+            let profile = await DecisionGrids.shared.cachedProfile(inputs, c)
+            guard gen == generation else { return }
+            surface = CookSurface(inputs: inputs, grid: grid, profile: profile)
+        }
+        await planNow()
+        guard gen == generation, plan != nil else { return }
 
         let authorized = await Alarm.shared.authorize()
         guard gen == generation else { return }
@@ -356,58 +282,43 @@ final class Cook {
         await readBackAlarms()
         guard gen == generation else { return }
 
-        if let state = activityState {
-            let attributes = ticket.activity
+        if let state = activityState(at: .now), let plan {
+            let attributes = Self.attributes(cook, plan)
             await activity { await LiveActivity.start(attributes, state: state) }.value
             guard gen == generation else { return }
-            pushedStage = state.stage
+            pushed = state
         }
         startTicking()
     }
 
     /// "Full rolling boil": the time to boil stops being a guess. Tapping at
     /// first bubbles under-measures the boil by 15-25%, which is why the button
-    /// says what it says.
-    /// Returns the measured seconds, so the caller can remember this pan.
-    @discardableResult
-    func recordBoil() async -> Double? {
-        guard phase == .heating, let startedAt, let ticket else { return nil }
-        let gen = generation
-        let measured = Date.now.timeIntervalSince(startedAt)
-        guard let (result, nudged) = await resolveCookTime?(measured, ticket.level, ticket.leanS, ticket.nudgeS)
-        else { return nil }
-        // Cancelled while the solve was running: there is no cook to correct.
-        guard gen == generation else { return nil }
-        assumedBoilS = measured
-        provisional = false
-        // The pan that actually cooked this egg. The calibration is told about
-        // the measured ramp, not the blend that was guessed at "Eggs in"; and
-        // the cooling counts to the peak this solve puts after the pull.
-        self.ticket = ticket.withTimeToBoil(measured).withResolved(result, nudged: nudged)
-        setDeadlines(from: startedAt, cookSeconds: result.cookTimeS, cooling: ticket.cooling)
-        if alarmAuthorized == true { scheduleAlarms() }
-        await readBackAlarms()
-        guard gen == generation else { return nil }
-        pushActivity(force: true)
-        return measured
+    /// says what it says. Remembered for this pan when the cook ends
+    /// (`cookEnding`), not now: by then it is the cook as last corrected.
+    func boil() {
+        guard let running, phase == .heating else { return }
+        let next = withBoil(running, nowS: Date.now.timeIntervalSince1970)
+        guard next != running else { return }
+        change(to: next)
     }
 
     /// "They're in the ice bath", "they're under the tap", "they're out": the
-    /// cook's tap out of PULL, mirroring the web machine's `beginCooling`. The
-    /// cooling is timed from the tap rather than from the end of the grace, and
-    /// the tap is what the record calls a measured pull.
+    /// cook's tap out of PULL, mirroring the web's. The cooling is timed from
+    /// the tap rather than from the end of the grace, and the tap is what the
+    /// record calls a measured pull.
     func pulledOut() {
-        let now = Date.now
-        guard phase(at: now) == .pull, let ticket else { return }
+        guard let running, let plan else { return }
+        let next = withOut(running, plan: plan, nowS: Date.now.timeIntervalSince1970)
+        guard next != running else { return }
         Ringer.shared.stop()
-        outAt = now
-        coolDoneAt = ticket.cooling == .counter ? nil : now.addingTimeInterval(coolFor)
+        change(to: next)
+    }
+
+    /// The cook replaced by what it now is: stored, and planned again.
+    private func change(to next: RunningCook) {
+        running = next
         persist()
-        // The pull alarm has been and gone; this puts the cooled one at the
-        // cooling's new end.
-        if alarmAuthorized == true { scheduleAlarms() }
-        Task { await readBackAlarms() }
-        pushActivity(force: true)
+        replanSoon()
     }
 
     #if DEBUG
@@ -416,16 +327,21 @@ final class Cook {
     /// cooling ended a moment ago. The questions after an egg, without
     /// waiting for one.
     func skipToDone() {
-        guard let startedAt, let pullAt, let ticket else { return }
-        let cooking = pullAt.timeIntervalSince(startedAt)
-        let cooled = ticket.cooling == .counter ? 0 : coolFor
-        let start = Date.now.addingTimeInterval(-(cooking + cooled + 2))
-        self.startedAt = start
-        self.pullAt = start.addingTimeInterval(cooking)
-        outAt = self.pullAt
-        coolDoneAt = ticket.cooling == .counter ? nil : self.pullAt?.addingTimeInterval(cooled)
-        provisional = false
-        persist()
+        guard var cook = running, let plan else { return }
+        let cooking = plan.cookTimeS
+        let cooled = cook.choices.cooling == .counter ? 0 : plan.coolS
+        let start = Date.now.timeIntervalSince1970 - (cooking + cooled + 2)
+        let shift = start - cook.startedAtS
+        cook.idMs = (cook.idMs + shift * 1000).rounded()
+        cook.startedAtS = start
+        cook.coldSinceS = cook.coldSinceS.map { $0 + shift }
+        cook.firstHotAtS = cook.firstHotAtS.map { $0 + shift }
+        let out = start + cooking
+        cook.events = CookEvents(
+            pulled: Pulled(dueS: out, outS: out, by: .cook, confirmed: true),
+            cooledAtS: cook.choices.cooling == .counter ? nil : out + cooled
+        )
+        change(to: cook)
     }
     #endif
 
@@ -436,22 +352,28 @@ final class Cook {
         activity { await LiveActivity.endAll() }
         ticker?.cancel()
         ticker = nil
-        startedAt = nil
-        pullAt = nil
-        coolDoneAt = nil
-        outAt = nil
-        ticket = nil
-        assumedBoilS = 0
-        provisional = false
+        running = nil
+        reset()
+        persist()
+    }
+
+    /// Everything one cook held, gone: what a start and a cancel share.
+    private func reset() {
+        plan = nil
+        plannedFor = nil
+        outcome = nil
+        leanHintS = 0
+        surface = nil
+        surfaceAsked = nil
+        planning = nil
+        planAgain = false
         pendingAlarms = 0
         alarmCovers = []
-        rung = []
+        rung = [:]
         alarmAuthorized = nil
         feedbackGiven = false
-        pushedStage = nil
+        pushed = nil
         activityFinished = false
-        lastRevise = nil
-        persist()
     }
 
     /// Record that this egg has been reported on. Idempotent by construction:
@@ -463,21 +385,162 @@ final class Cook {
         persist()
     }
 
-    private func setDeadlines(from origin: Date, cookSeconds: Double, cooling: Cooling) {
-        let pull = origin.addingTimeInterval(cookSeconds)
-        pullAt = pull
-        outAt = nil
-        // Resting on the counter has no cooling step to time: the egg is simply
-        // out, and the carryover is the point rather than something to wait out.
-        coolDoneAt = cooling == .counter
-            ? nil
-            : pull.addingTimeInterval(pullGraceSeconds + coolFor)
-        persist()
+    // MARK: - The plan
+
+    /// What a plan is made from, read on the main actor for a plan off it.
+    private struct PlanInput: Sendable {
+        let cook: RunningCook
+        let calibration: Calibration
+        let surface: CookSurface?
+        let leanHintS: Double
+        let nowS: Double
+    }
+
+    private struct Made: Sendable {
+        let plan: CookPlan
+        let outcome: Outcome?
+    }
+
+    private func planInput() -> PlanInput? {
+        guard let running else { return nil }
+        return PlanInput(
+            cook: running, calibration: calibration(), surface: surface, leanHintS: leanHintS,
+            nowS: Date.now.timeIntervalSince1970
+        )
+    }
+
+    /// The plan, and what the egg at its time will be like on its pot's
+    /// surface: the decided outcome when the plan keeps the decided time,
+    /// otherwise the one at the plan's time.
+    private nonisolated static func made(_ i: PlanInput) -> Made {
+        let p = replan(i.cook, i.calibration, surface: i.surface, leanHintS: i.leanHintS, nowS: i.nowS)
+        var outcome: Outcome?
+        if let d = p.decided, let s = i.surface {
+            outcome = p.cookTimeS == d.solution.result.cookTimeS
+                ? d.outcome
+                : predictOutcome(i.calibration.posterior, s.grid, p.cookTimeS, logYolkTarget(p.level))
+        }
+        return Made(plan: p, outcome: outcome)
+    }
+
+    /// Plan the cook as it stands, off the main actor: one plan at a time,
+    /// and once more if the cook changed while it was made.
+    private func replanSoon() {
+        if planning != nil {
+            planAgain = true
+            return
+        }
+        let gen = generation
+        planning = Task { [weak self] in
+            while true {
+                guard let self, gen == self.generation, let input = self.planInput() else { return }
+                self.planAgain = false
+                let made = await Task.detached(priority: .userInitiated) { Self.made(input) }.value
+                guard gen == self.generation else { return }
+                if self.running == input.cook { self.adopt(made, for: input.cook) }
+                if !self.planAgain {
+                    self.planning = nil
+                    return
+                }
+            }
+        }
+    }
+
+    /// Plan the cook as it stands, and wait for it.
+    private func planNow() async {
+        replanSoon()
+        await planning?.value
+    }
+
+    /// A new plan taken: the alarms follow its deadlines when they moved, the
+    /// surface it wants is asked for, and the card is told.
+    private func adopt(_ made: Made, for cook: RunningCook) {
+        let next = made.plan
+        let before = plan?.deadlines
+        plan = next
+        plannedFor = cook
+        if let o = made.outcome { outcome = o }
+        if next.decided != nil, next.leanS != leanHintS {
+            leanHintS = next.leanS
+            persist()
+        }
+        if let before, Self.moved(before, next.deadlines) {
+            // A deadline rung for and since moved rings again at its new time.
+            rung = rung.filter { Self.same($0.value, Self.at($0.key, next.deadlines)) }
+            if alarmAuthorized == true {
+                alarmCovers = []
+                scheduleAlarms()
+                Task { await readBackAlarms() }
+            }
+        }
+        askForSurface(next.inputs)
+        pushActivity()
+    }
+
+    /// When a deadline is, s.
+    private static func at(_ deadline: RingDeadline, _ d: Deadlines) -> Double? {
+        deadline == .pull ? d.cookEndS : d.coolEndS
+    }
+
+    /// Two deadlines the same, to the millisecond: the same pull planned
+    /// again, from its own due time, can come back a few ulps off.
+    private static func same(_ a: Double?, _ b: Double?) -> Bool {
+        switch (a, b) {
+        case (nil, nil): true
+        case let (x?, y?): abs(x - y) < 1e-3
+        default: false
+        }
+    }
+
+    private static func moved(_ a: Deadlines, _ b: Deadlines) -> Bool {
+        !same(a.cookEndS, b.cookEndS) || !same(a.coolEndS, b.coolEndS)
+    }
+
+    /// Build the decision surface a plan wants, off the main actor, and plan
+    /// again when it lands, and again when its odds at every level do (as
+    /// the idle screen takes them).
+    private func askForSurface(_ inputs: DecisionInputs?) {
+        guard let inputs, surfaceAsked != inputs else { return }
+        if let s = surface, s.inputs == inputs, s.profile != nil { return }
+        surfaceAsked = inputs
+        let gen = generation
+        let c = calibration()
+        Task { [weak self] in
+            let grid = await DecisionGrids.shared.grid(inputs)
+            guard let self, gen == self.generation, self.plan?.inputs == inputs else {
+                self?.dropAsked(inputs, gen)
+                return
+            }
+            let cached = await DecisionGrids.shared.cachedProfile(inputs, c)
+            guard gen == self.generation else { return }
+            if self.surface?.inputs != inputs || (cached != nil && self.surface?.profile == nil) {
+                self.surface = CookSurface(inputs: inputs, grid: grid, profile: cached)
+                self.replanSoon()
+            }
+            guard cached == nil else {
+                self.dropAsked(inputs, gen)
+                return
+            }
+            let profile = await DecisionGrids.shared.profile(inputs, c)
+            guard gen == self.generation else { return }
+            self.dropAsked(inputs, gen)
+            guard self.plan?.inputs == inputs, self.surface?.inputs == inputs else { return }
+            self.surface = CookSurface(inputs: inputs, grid: grid, profile: profile)
+            self.replanSoon()
+        }
+    }
+
+    private func dropAsked(_ inputs: DecisionInputs, _ gen: Int) {
+        if gen == generation, surfaceAsked == inputs { surfaceAsked = nil }
     }
 
     // MARK: - Surviving a relaunch
 
-    /// Everything needed to pick a cook back up, as absolute dates.
+    /// What is stored: the cook, whether it has been answered about, and the
+    /// last decided lean (design/one-screen.md section 4). Through JSONEncoder
+    /// and JSONDecoder, which give every double back to the bit: the
+    /// JSONSerialization path read a 17-digit double back an ulp off, and an
+    /// ulp in the mass is another surface's key.
     ///
     /// The alarm is already with the system and the Live Activity is already on
     /// the Lock Screen, so a force-quit or a crash leaves BOTH of them counting
@@ -485,33 +548,37 @@ final class Cook {
     /// while the Lock Screen says four minutes left is the worst thing an egg
     /// timer can do: it makes the user distrust the alarm that was, in fact,
     /// perfectly correct.
-    private struct Saved: Codable {
-        var startedAt: Date
-        var pullAt: Date
-        var coolDoneAt: Date?
-        var assumedBoilS: Double
-        var provisional: Bool
+    private struct Stored: Codable {
+        var cook: RunningCook
         var feedbackGiven: Bool
-        /// The cook's tap out of PULL, or nil while nobody has made it.
-        var outAt: Date?
-        var ticket: Ticket
+        var leanHintS: Double
+
+        private enum CodingKeys: String, CodingKey {
+            case cook, feedbackGiven, leanHintS = "leanHint_s"
+        }
     }
 
-    private static let savedKey = "cookInProgress"
+    private static let savedKey = "cookInProgress.v2"
+    /// Where 0.4 kept its cook, in a shape this build does not read.
+    private static let oldKey = "cookInProgress"
 
     private func persist() {
-        guard let startedAt, let pullAt, let ticket else {
+        guard let running else {
             UserDefaults.standard.removeObject(forKey: Self.savedKey)
             return
         }
-        let saved = Saved(
-            startedAt: startedAt, pullAt: pullAt, coolDoneAt: coolDoneAt,
-            assumedBoilS: assumedBoilS, provisional: provisional,
-            feedbackGiven: feedbackGiven, outAt: outAt, ticket: ticket
-        )
-        if let data = try? JSONEncoder().encode(saved) {
+        let stored = Stored(cook: running, feedbackGiven: feedbackGiven, leanHintS: leanHintS)
+        if let data = try? JSONEncoder().encode(stored) {
             UserDefaults.standard.set(data, forKey: Self.savedKey)
         }
+    }
+
+    /// What a cook too old to pick back up leaves for the caller: the boil to
+    /// remember, and its egg if it was cooked through and never answered
+    /// about, to log as "Start again" would have.
+    struct Dropped {
+        var boil: BoilToRemember?
+        var egg: EggRecord?
     }
 
     /// Pick up a cook that was running when the app was last closed.
@@ -522,50 +589,71 @@ final class Cook {
     /// effects in `init` runs on instances that are then thrown away, starting
     /// tickers nobody will ever cancel.
     ///
-    /// Returns the egg of a cook that is too old to pick up but finished and
-    /// never answered about, for the caller to log as unanswered: it was still
-    /// cooked, and the cook, the recommendation and the pull are data for the
-    /// fit, as at "Start again".
-    @discardableResult
-    func restoreIfNeeded() -> EggRecord? {
-        guard startedAt == nil else { return nil }
-        guard let data = UserDefaults.standard.data(forKey: Self.savedKey) else { return nil }
+    /// Planned here, on the main actor, before the screen's first answer, so
+    /// a relaunch never shows idle for a moment over a running cook; dropped
+    /// when that plan says it is too old (`cookTooOld`); and the events the
+    /// clock decided while the app was away are written at once.
+    func restoreIfNeeded() -> Dropped? {
+        guard running == nil else { return nil }
+        let defaults = UserDefaults.standard
+        // A cook 0.4 was running at the upgrade: kept aside as stored, with
+        // the results (DECISIONS.md 81, 97), not converted, and the key
+        // deleted, so it is read once. Its notifications and its card are
+        // left alone: they are still right for the egg in the pot, and
+        // nothing else times it now (design/one-screen-review.md 2.6).
+        if let old = defaults.data(forKey: Self.oldKey) {
+            Calibrations.keepUnreadCook(old)
+            defaults.removeObject(forKey: Self.oldKey)
+        }
+        guard let data = defaults.data(forKey: Self.savedKey) else { return nil }
         // A cook this build cannot read whole is not patched; it is kept
-        // aside, as stored, and exported with the results (DECISIONS.md 81):
-        // another build wrote it, and its egg may be one nothing else holds.
-        guard let saved = try? JSONDecoder().decode(Saved.self, from: data) else {
+        // aside, as stored, and exported with the results (DECISIONS.md 81).
+        // Nothing then knows what its alarms and its card are for, so they go.
+        guard let stored = try? JSONDecoder().decode(Stored.self, from: data),
+              let cook = readRunningCook(stored.cook.jsonObject) else {
             Calibrations.keepUnreadCook(data)
-            UserDefaults.standard.removeObject(forKey: Self.savedKey)
+            defaults.removeObject(forKey: Self.savedKey)
+            Alarm.shared.cancel()
+            activity { await LiveActivity.endAll() }
             return nil
         }
 
-        startedAt = saved.startedAt
-        pullAt = saved.pullAt
-        coolDoneAt = saved.coolDoneAt
-        assumedBoilS = saved.assumedBoilS
-        provisional = saved.provisional
-        feedbackGiven = saved.feedbackGiven
-        outAt = saved.outAt
-        ticket = saved.ticket
-
-        // An egg an hour past the end of its cooling step has been eaten or
-        // thrown out. Either way nobody wants yesterday's timer on screen -
-        // but an egg that was cooked through and never answered about is
-        // still logged, as "Start again" would have logged it.
-        let ends = saved.coolDoneAt ?? saved.pullAt
-        guard Date.now < ends.addingTimeInterval(3600) else {
-            let egg = !saved.feedbackGiven && phase(at: .now) == .done ? eggRecord(yolk: nil) : nil
-            startedAt = nil
-            pullAt = nil
-            coolDoneAt = nil
-            assumedBoilS = 0
-            provisional = false
-            feedbackGiven = false
-            outAt = nil
-            ticket = nil
-            UserDefaults.standard.removeObject(forKey: Self.savedKey)
-            return egg
+        let now = Date.now.timeIntervalSince1970
+        let input = PlanInput(
+            cook: cook, calibration: calibration(), surface: nil, leanHintS: stored.leanHintS, nowS: now
+        )
+        var made = Self.made(input)
+        // An egg an hour past its end has been eaten or thrown out, and one
+        // still heating two hours on was abandoned. Either way nobody wants
+        // yesterday's timer on screen - but an egg that was cooked through
+        // and never answered about is still logged, as "Start again" would
+        // have logged it, and a pan timed is still remembered.
+        if cookTooOld(made.plan, nowS: now) {
+            defaults.removeObject(forKey: Self.savedKey)
+            let ending = cookEnding(cook, plan: made.plan, nowS: now)
+            let egg = !stored.feedbackGiven && ending.finished
+                ? Self.record(cook, made.plan, yolk: nil, white: nil, probe: nil)
+                : nil
+            return Dropped(boil: ending.boil, egg: egg)
         }
+
+        var restored = cook
+        // What the clock decided while the app was away, from the plan that
+        // rang.
+        let due = eventsDue(cook, plan: made.plan, nowS: now)
+        if due != cook.events {
+            restored.events = due
+            made = Self.made(PlanInput(
+                cook: restored, calibration: input.calibration, surface: nil, leanHintS: stored.leanHintS, nowS: now
+            ))
+        }
+        generation &+= 1
+        reset()
+        running = restored
+        feedbackGiven = stored.feedbackGiven
+        leanHintS = stored.leanHintS
+        persist()
+        adopt(made, for: restored)
 
         // The alarms were handed to the system at absolute dates and are still
         // pending; read the count back rather than assuming it.
@@ -584,11 +672,11 @@ final class Cook {
             // while the Lock Screen shows nothing is the same broken promise in
             // the other direction. A cook that is already finished gets none:
             // there is nothing left to count down to.
-            if phase != .done, let state = activityState {
-                let attributes = saved.ticket.activity
+            if phase != .done, let state = activityState(at: .now), let plan {
+                let attributes = Self.attributes(restored, plan)
                 await activity { await LiveActivity.start(attributes, state: state) }.value
                 guard gen == generation else { return }
-                pushedStage = state.stage
+                pushed = state
             }
         }
         startTicking()
@@ -596,10 +684,9 @@ final class Cook {
     }
 
     private func scheduleAlarms() {
-        guard let pullAt else { return }
+        guard let pullAt, let running else { return }
         Alarm.shared.schedule(
-            pullAt: pullAt, coolDoneAt: coolDoneAt, probe: asksForProbe,
-            cooling: ticket?.cooling ?? .ice
+            pullAt: pullAt, coolDoneAt: coolDoneAt, probe: asksForProbe, cooling: running.choices.cooling
         )
     }
 
@@ -620,21 +707,23 @@ final class Cook {
     }
 
     /// Ring for a deadline no notification holds, while the app is on screen:
-    /// what makes "keep the app open" true. See `deadlineToRing`.
+    /// what makes "keep the app open" true. See `deadlineToRing`. Whenever
+    /// the phase enters Pull at a pull no notification holds, it rings.
     private func ringIfDue() {
-        guard let pullAt else { return }
+        guard let plan else { return }
         let now = Date.now
+        let d = plan.deadlines
         guard let due = deadlineToRing(
             phase: phase(at: now),
             nowS: now.timeIntervalSince1970,
-            pullS: pullAt.timeIntervalSince1970,
-            cooledS: coolDoneAt?.timeIntervalSince1970,
+            pullS: d.cookEndS,
+            cooledS: d.coolEndS,
             authorized: alarmAuthorized,
             scheduled: alarmCovers,
-            rung: rung,
+            rung: Set(rung.keys),
             onScreenSinceS: Ringer.shared.onScreenSince?.timeIntervalSince1970
         ) else { return }
-        rung.insert(due)
+        rung[due] = Self.at(due, d)
         Ringer.shared.ring(due)
     }
 
@@ -654,110 +743,86 @@ final class Cook {
             while !Task.isCancelled {
                 try? await Task.sleep(for: .milliseconds(250))
                 guard let self else { return }
-                await self.reviseIfHobIsSlow()
-                self.pushActivity(force: false)
-                self.ringIfDue()
+                self.tick()
                 if self.phase == .done { return }
             }
         }
     }
 
-    private func reviseIfHobIsSlow() async {
-        guard phase == .heating, let startedAt, let ticket else { return }
-        guard secondsToPull < slowHobWhenLeftS else { return }
-        let now = Date.now
-        if let lastRevise, now.timeIntervalSince(lastRevise) < slowHobEveryS { return }
-        lastRevise = now
-
-        let gen = generation
-        let assumed = now.timeIntervalSince(startedAt) + slowHobExtraS
-        guard let (result, nudged) = await resolveCookTime?(assumed, ticket.level, ticket.leanS, ticket.nudgeS)
-        else { return }
-        guard gen == generation else { return }
-        assumedBoilS = assumed
-        self.ticket = ticket.withTimeToBoil(assumed).withResolved(result, nudged: nudged)
-        setDeadlines(from: startedAt, cookSeconds: result.cookTimeS, cooling: ticket.cooling)
-        if alarmAuthorized == true { scheduleAlarms() }
-        pushActivity(force: true)
+    /// One tick: the events the clock has decided, written the first time
+    /// they are past, from the plan of the cook as it stands; the slow hob's
+    /// next lengthening; the card; and the ring.
+    private func tick() {
+        guard let running, let plan, plannedFor == running else {
+            pushActivity()
+            ringIfDue()
+            return
+        }
+        let now = Date.now.timeIntervalSince1970
+        let due = eventsDue(running, plan: plan, nowS: now)
+        if due != running.events {
+            var next = running
+            next.events = due
+            change(to: next)
+        } else if let at = plan.slowHobAtS, now >= at, planning == nil {
+            replanSoon()
+        }
+        pushActivity()
+        ringIfDue()
     }
 
     // MARK: - Live Activity
 
+    /// The card's description of this cook, in its own units and its own
+    /// language, from the plan it starts on.
+    private static func attributes(_ cook: RunningCook, _ plan: CookPlan) -> CookActivity {
+        CookActivity(
+            doneness: tr(anchorNear(plan.level).key, in: cook.lang),
+            peakYolk: showIn(cook.units, .temperature, plan.solution.result.peakYolkC),
+            eggMass: showIn(cook.units, .mass, plan.egg.massKg * 1000),
+            cooling: cook.choices.cooling.rawValue,
+            lang: cook.lang
+        )
+    }
+
     /// What the Lock Screen should be showing. Each stage hands over its own
     /// span, so the system can draw the countdown without asking again.
-    private var activityState: CookActivity.ContentState? {
-        guard let startedAt, let pullAt else { return nil }
-        switch phase {
+    private func activityState(at now: Date) -> CookActivity.ContentState? {
+        guard let running, let plan else { return nil }
+        let d = plan.deadlines
+        let start = Date(timeIntervalSince1970: running.startedAtS)
+        let pull = Date(timeIntervalSince1970: d.cookEndS)
+        switch phase(at: now) {
         case .idle, .done:
             return nil
         case .heating:
-            return .init(stage: .heating, began: startedAt, ends: pullAt, provisional: true)
+            return .init(stage: .heating, began: start, ends: pull, provisional: true)
         case .cooking:
-            return .init(stage: .cooking, began: startedAt, ends: pullAt, provisional: false)
+            return .init(stage: .cooking, began: start, ends: pull, provisional: false)
         case .pull:
-            return .init(
-                stage: .pull, began: pullAt,
-                ends: pullAt.addingTimeInterval(pullGraceSeconds), provisional: false
-            )
+            return .init(stage: .pull, began: pull, ends: pull.addingTimeInterval(pullGraceSeconds), provisional: false)
         case .cooling:
-            let from = outAt ?? pullAt.addingTimeInterval(pullGraceSeconds)
-            return .init(
-                stage: .cooling, began: from,
-                ends: coolDoneAt ?? from, provisional: false
-            )
+            let from = outAt ?? pull.addingTimeInterval(pullGraceSeconds)
+            return .init(stage: .cooling, began: from, ends: coolDoneAt ?? from, provisional: false)
         }
     }
 
-    /// Push only when the stage changes, or when a deadline has actually moved.
-    /// The countdown itself needs no help: the system draws it from the dates.
+    /// Push only when what the card shows has changed: its stage, or a
+    /// deadline that actually moved. The countdown itself needs no help: the
+    /// system draws it from the dates.
     ///
     /// At done the card ends at once (`LiveActivity.endAll`), once per cook -
     /// including a card left from before a relaunch that restored a cook
     /// already done.
-    private func pushActivity(force: Bool) {
-        if phase == .done {
-            guard force || !activityFinished else { return }
+    private func pushActivity() {
+        if running != nil, phase == .done {
+            guard !activityFinished else { return }
             activityFinished = true
             activity { await LiveActivity.endAll() }
             return
         }
-        guard let state = activityState else { return }
-        guard force || state.stage != pushedStage else { return }
-        pushedStage = state.stage
+        guard let state = activityState(at: .now), state != pushed else { return }
+        pushed = state
         activity { await LiveActivity.update(state) }
-    }
-}
-
-extension Cook.Ticket {
-    /// Everything the cook is, frozen at "Eggs in", off the planner as it
-    /// stands and the solution being started. The calibration learns from this
-    /// and from nothing else, so a slider left somewhere different afterwards
-    /// cannot rewrite what was cooked.
-    @MainActor
-    init(planner: Planner, solution: Solution) {
-        self.init(
-            doneness: planner.label,
-            peakYolkC: solution.result.peakYolkC,
-            level: planner.doneness,
-            egg: planner.egg,
-            setup: planner.setup,
-            massFrom: planner.massFrom,
-            sizeTable: planner.sizeTable,
-            startTemp: planner.startTemp,
-            boilRemembered: planner.hasBoilMemory,
-            units: planner.units,
-            lang: Copy.activeLocale,
-            // The choice on screen, if it has been made: the time started IS
-            // the chosen one, and a mid-cook re-solve carries its lean.
-            leanS: planner.decision?.leanS ?? 0,
-            nudgeS: planner.decision == nil ? 0 : planner.appliedNudgeS,
-            outcome: planner.shownOutcome,
-            // What the app says now, as the record keeps it: wherever a
-            // decision has been made, as the web's ticket has it.
-            forecast: planner.outcome.map { forecastOf($0, cookS: solution.result.cookTimeS) },
-            // The cooling counts to the yolk's peak for this cook.
-            coolS: coolingSecondsFor(solution.result),
-            probeMoment: probeMomentFor(solution.result, cooling: planner.cooling)
-        )
     }
 }

@@ -96,6 +96,9 @@ const NOT_COPY: Record<string, string> = {
   'calibration.v4': 'UserDefaults key',
   'calibration.v4.unread': 'UserDefaults key',
   'cookInProgress.unread': 'UserDefaults key',
+  // the running cook as stored (Cook.swift; design/one-screen.md section 4)
+  'cookInProgress.v2': 'UserDefaults key',
+  leanHint_s: 'stored cook field name',
   // the results file (Record.swift, `resultsFile`; DECISIONS.md 81): JSON
   // written to a file, never on a screen
   'actual-egg-timer-results-{}.json': 'results file name: the share sheet shows it as a file name',
