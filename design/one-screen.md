@@ -20,7 +20,10 @@ the first draft of this file in `DECISIONS.md` 96:
 
 So a cook is its start, its setup and its observed events, and everything
 else is derived from them each time. §3 is that model, §4 is the state that
-carries it in both apps, and §7 holds the questions still open. Proposed
+carries it in both apps, and §7 holds the questions still open. The
+red-team review of §3 and §4 (`design/one-screen-review.md`) is applied
+here and in core as `DECISIONS.md` 98 settled it (marked "review" and its
+finding's number where it changed the text). Proposed
 words are placeholders for a named draft (`onescreen` for the screen,
 `certainty` for D1), to be judged on a phone.
 
@@ -505,15 +508,39 @@ settings keys do not change: `CookChoices` is read from them
 it goes where `DECISIONS.md` 81 already sends one: kept aside as stored
 (`keepUnreadCook`, `Calibrations.keepUnreadCook`), exported with the
 results, and the screen opens idle. It is not converted (§7, 24): this is
-alpha (48), and the window is one cook long. On iOS the same path also
-cancels the pending alarms and ends the card, since they would otherwise
-ring for a cook the app has dropped. That is worth doing for any unreadable
-cook, today's included.
+alpha (48), and the window is one cook long.
+
+With the key bumped, nothing would read the old key (review 2.6): the web
+reads only `COOK_KEY` (`store.ts`) and iOS only `savedKey` (`Cook.swift`),
+so the 0.4 value would sit in storage for good. So each app reads the 0.4
+key (`aet.cook.v2`, `cookInProgress`) once at launch, keeps what it finds
+aside and deletes the key, as `store.ts` already drops `aet.cook.v1`.
+
+The alarms differ by why the cook is unread. iOS updates apps in the
+background, and the update kills the app, but the pending notifications
+and the card's countdown survive it and are still right for the egg in the
+pot. So for a cook kept aside from the 0.4 key, iOS keeps the
+notifications still ahead of now (and the card until it ends): cancelling
+them would leave that cook with no timer at all. Only a damaged cook under
+the current key has its pending alarms cancelled and its card ended, since
+nothing then knows what they ring for. The 0.4 path that logs a finished,
+unanswered egg (`cook.ts`, `restoreCook`) goes with the old key, which
+costs at most one egg.
 
 ### How an edit is followed
 
 - **Every edit**, on either app, is one step: replace the cook (setup,
   start or an event), store it, `replan`, redraw. Nothing else is held.
+- **When an edit is committed** (review 2.4). Not at every step of a drag:
+  each would stamp `correctedAt_s`, plan again (25 to 55 ms in Node, more
+  on a phone), reschedule the iOS alarms, push the Live Activity and write
+  the settings, and a drag that passed through an overdue level would ring
+  mid-drag. A slider or a held − or + commits on release; a tap that is
+  not held commits after §5's 1.5-s settle, or at once when another
+  control is touched. While the finger is down the screen shows the
+  aimed-for egg (§5) from a plan of the settings under the finger, which
+  stores nothing and rings nothing. Overdue is decided only on commit, by
+  the plan of the committed cook.
 - **A reload mid-cook (web).** Read `aet.cook.v3`, `replan` with the hint,
   drop it if `cookTooOld`, else write any `eventsDue`, and ask for the
   surface. The alarm cannot sound until a gesture, as now
@@ -524,6 +551,22 @@ cook, today's included.
   key, so a reload restores whichever tab wrote it last, as now; the
   record's id is `id_ms`, never corrected, so a cook logged from two tabs
   is still one egg.
+
+  Three consequences (review 2.5). *The controls read the cook.* While a
+  cook runs, a tab's controls show and write `cook.choices`, never the
+  settings. A correction still writes the settings for the next cook (§7,
+  22), and another tab takes that up, but a settings event that arrives
+  mid-cook touches only what the cook does not hold, the units, the
+  language and the mute; today's `takeUpSettings` calls
+  `applySettingsToDom()` whatever the phase, which would show tab A's
+  correction in tab B and, with the controls writing the cook, make it B's.
+  *One id, two cooks.* Both tabs write the stored cook on every correction
+  and every `eventsDue`, so a reload can pick up the other tab's cook, and
+  two tabs can then run the same id with different corrections. `logEgg`
+  keeps the first record for an id today, which may be the uncorrected one:
+  it should keep the last-corrected record for an id instead, replacing
+  the one logged (the refold of §4's record section). *Which eggs are
+  final* is the stored cook's id, not the tab's (below).
 - **iOS notifications.** On any plan whose deadlines moved,
   `Alarm.schedule` cancels and re-adds the pull and cooled alarms (the
   pull's line names the cooling, so a change of cooling moves it too), and
@@ -586,7 +629,8 @@ commit each):
 5. The state, with no visible change and no edits mid-cook yet:
    - `state.ts`: `ticket` and `machine` become `cook` and `plan`, and
      `buildSetup`/`currentEgg` become `cookSetupOf(choicesOf(…))`.
-   - `store.ts`: `aet.cook.v3`.
+   - `store.ts`: `aet.cook.v3`; `aet.cook.v2` read once, kept aside and
+     deleted.
    - `cook.ts`: `onPrimary`, `onTick` and `restoreCook` written as events
      and `eventsDue`.
    - `machine.ts` shrinks to what `phaseAt` does not cover
@@ -602,9 +646,11 @@ commit each):
    (no phase hides the controls), `render.ts` (one render path),
    `eggSection.ts` (the two readings).
 7. Edits mid-cook: `input.ts`, `controls.ts`, `sentence.ts` and `slider.ts`
-   write the cook's choices; the start's time panel; Settings mid-cook;
-   `update.ts`'s `storedElsewhere` takes up a cook; `calibration.ts`
-   refolds a corrected egg.
+   write the cook's choices, committed on release or after the settle; the
+   start's time panel; Settings mid-cook; `update.ts`'s `takeUpSettings`
+   touches only units, language and mute while a cook runs;
+   `calibration.ts` refolds a corrected egg, and `logEgg` keeps the
+   last-corrected record for an id.
 
 **iOS**, the same order:
 
@@ -613,7 +659,9 @@ commit each):
    become events and `replan`. `Planner.swift` gets its setup from core.
    `Planner+Solve.swift` solves for the running cook, in place of
    `resolveCookTime`. Also `AppModel.swift` (`eggsIn`), `Calibration.swift`
-   (the unread cook also cancels alarms and the card), `EggSectionView.swift`
+   (the 0.4 key read once, kept aside and deleted, its notifications still
+   ahead of now kept; a damaged cook under `cookInProgress.v2` also cancels
+   alarms and the card), `EggSectionView.swift`
    (its cache keyed on the cook, not the ticket) and `FeedbackPanel.swift`.
 9. `ios/Shared/CookActivity.swift`, `LiveActivity.swift`,
    `ios/Widget/CookLiveActivity.swift`: the description into the state.
