@@ -118,7 +118,7 @@ struct FeedbackPanel: View {
     private func saveProbe() {
         guard let plan = cook.plan, planner.answers?.probe == nil else { return }
         let reading = parseTyped(probeText).flatMap { parse(planner.measure(.probeTemp), $0) }
-        guard let scored = cook.eggRecord(yolk: nil).map(recordCookTimeS) else { return }
+        guard let scored = model.liveRecord().map(recordCookTimeS) else { return }
         let range = planner.probeRange(egg: plan.egg, setup: plan.setup, cookTimeS: scored)
         guard let reading, reading >= range.low, reading <= range.high else {
             probeNote = tr("probe.refused", [
@@ -127,7 +127,7 @@ struct FeedbackPanel: View {
             ])
             return
         }
-        guard let probe = cook.probeReading(centreC: reading) else { return }
+        guard let probe = cook.probeReading(centreC: reading, against: model.liveRecord()) else { return }
         probeNote = planner.show(.probeTemp, reading)
         model.answer(yolk: nil, white: nil, probe: probe)
     }

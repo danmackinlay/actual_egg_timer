@@ -144,6 +144,16 @@ final class AppModel {
         Sharing.shared.sendFinal()
     }
 
+    /// This egg's record, for scoring a probe reading against: once it has
+    /// been answered, the record written then, the log's last (nothing is
+    /// logged while a cook is stored), and never one made again from a
+    /// plan. A plan made after the egg's own fold - at a relaunch at Done -
+    /// reads a posterior that already holds the egg, so a record from it is
+    /// not what was cooked to. Before an answer, the cook's own.
+    func liveRecord() -> EggRecord? {
+        cook.feedbackGiven ? planner.kept.log.last : cook.eggRecord(yolk: nil)
+    }
+
     /// One answer, about the yolk, the white or the probe, in whichever order
     /// they come. The first writes the egg down, before anything is learned
     /// from it; the second folds the same egg again from the posterior before

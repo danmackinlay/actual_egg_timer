@@ -212,9 +212,10 @@ final class Cook {
     /// A probe reading typed at DONE, as the record carries it
     /// (`probeReadingFor`): in C, and when it was asked for - the end of the
     /// counted cooling - from the moment the record scores as the pull. Nil
-    /// when there is no cook.
-    func probeReading(centreC: Double) -> ProbeReading? {
-        guard let running, let record = eggRecord(yolk: nil) else { return nil }
+    /// when there is no cook. Scored against `record` when one is given: the
+    /// egg's record as written at its first answer (`AppModel.liveRecord`).
+    func probeReading(centreC: Double, against given: EggRecord? = nil) -> ProbeReading? {
+        guard let running, let record = given ?? eggRecord(yolk: nil) else { return nil }
         return probeReadingFor(
             record, centreC: centreC, coolEndS: plan?.deadlines.coolEndS.map { $0 - running.startedAtS }
         )
