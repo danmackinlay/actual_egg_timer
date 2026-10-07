@@ -275,13 +275,11 @@
     },
     {
       "locale": "en-x-1750",
-      "key": "warn.lowOdds",
+      "key": "warn.wildGuess",
       "args": {
-        "doneness": "Soft",
-        "hits": 3,
-        "of": 10
+        "doneness": "Soft"
       },
-      "text": "Soft: in this I have hitherto succeeded fewer than 3 times in 10."
+      "text": "Soft: hitherto a guess at hazard."
     },
     {
       "locale": "en-x-1750",
@@ -717,6 +715,35 @@
         "value": "Sous-vide 136 °F"
       },
       "text": "Egg from: Sous-vide 136 °F, to be altered"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "certainty.interval",
+      "args": {
+        "hits": 9,
+        "of": 10,
+        "from": "Soft",
+        "to": "Fudgy"
+      },
+      "text": "In 9 trials of 10: Soft to Fudgy."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "certainty.interval.one",
+      "args": {
+        "hits": 9,
+        "of": 10,
+        "word": "Jammy"
+      },
+      "text": "In 9 trials of 10: Jammy."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "certainty.mostLikely",
+      "args": {
+        "word": "Fudgy"
+      },
+      "text": "Most probably: Fudgy."
     },
     {
       "locale": "en-x-1750",
@@ -1866,13 +1893,11 @@
     },
     {
       "locale": "en",
-      "key": "warn.lowOdds",
+      "key": "warn.wildGuess",
       "args": {
-        "doneness": "Soft",
-        "hits": 3,
-        "of": 10
+        "doneness": "Soft"
       },
-      "text": "Soft: I get this right fewer than 3 times in 10 so far."
+      "text": "Soft: a wild guess so far."
     },
     {
       "locale": "en",
@@ -2308,6 +2333,35 @@
         "value": "Sous-vide 136 °F"
       },
       "text": "Egg from: Sous-vide 136 °F, change"
+    },
+    {
+      "locale": "en",
+      "key": "certainty.interval",
+      "args": {
+        "hits": 9,
+        "of": 10,
+        "from": "Soft",
+        "to": "Fudgy"
+      },
+      "text": "9 times in 10: Soft to Fudgy."
+    },
+    {
+      "locale": "en",
+      "key": "certainty.interval.one",
+      "args": {
+        "hits": 9,
+        "of": 10,
+        "word": "Jammy"
+      },
+      "text": "9 times in 10: Jammy."
+    },
+    {
+      "locale": "en",
+      "key": "certainty.mostLikely",
+      "args": {
+        "word": "Fudgy"
+      },
+      "text": "Most likely: Fudgy."
     },
     {
       "locale": "en",

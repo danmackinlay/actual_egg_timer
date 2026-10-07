@@ -19,7 +19,7 @@
  * cooks SAY, as the odds are.
  *
  * THE LEVEL. How firm the yolk will actually be, as a range on the slider:
- * the 10%, 50% and 90% points of the delivered log yolk dose, mapped through
+ * the 5%, 50% and 95% points of the delivered log yolk dose, mapped through
  * `sliderFromYolkDose`. Each particle delivers its own time-scale's dose,
  * read off the surface, and around it a Gaussian of its own `noise` - the
  * learned egg-to-egg scatter the likelihood sees every answer through. So the
@@ -45,8 +45,8 @@
  * look the same to it.
  *
  * CLAMPED to [0, 1], the slider's ends. `levelLow` at 0 means at least one
- * egg in ten comes out softer than the runniest level the slider offers - a
- * raw yolk. `levelHigh` at 1 means at least one in ten comes out at or past
+ * egg in twenty comes out softer than the runniest level the slider offers - a
+ * raw yolk. `levelHigh` at 1 means at least one in twenty comes out at or past
  * the hardest one; at hard itself that is half the eggs, and the range says
  * nothing about how far past.
  *
@@ -79,10 +79,13 @@ import { YOLK_DOSE_HARD, YOLK_DOSE_RUNNY } from './solve.js';
  *  outcome leans that way: three misses in five. See the header. */
 export const LEAN_RATIO = 1.5;
 
-/** The quantiles the level range is read at: an 80% interval, as the cook
- *  time's is (`predictCookTime`). */
-export const LEVEL_LOW_Q = 0.1;
-export const LEVEL_HIGH_Q = 0.9;
+/** The quantiles the level range is read at: a 90% interval, the one the
+ *  certainty's words state (`CERTAINTY_MASS`, certainty.ts), so the bracket
+ *  under the slider and "9 times in 10" are the same nine eggs in ten
+ *  (DECISIONS.md 97; design/one-screen.md section 7, 14). It was 80% until
+ *  the `certainty` draft. */
+export const LEVEL_LOW_Q = 0.05;
+export const LEVEL_HIGH_Q = 0.95;
 
 /** P(runny) at or above which the white is a risk: one egg in five. Both
  *  apps give the white a line of its own from here (wording.ts, which has the
@@ -114,7 +117,7 @@ export interface Outcome {
    *  them; a record keeps them as the forecast. Null only on an outcome a
    *  cook carried from a build before them (the web's `restoreOutcome`). */
   pYolkWord: number[] | null;
-  /** The 10%, 50% and 90% points of the delivered yolk doneness, on the
+  /** The 5%, 50% and 95% points of the delivered yolk doneness, on the
    *  slider's scale, clamped to [0, 1]. No taste offset: see the header. */
   levelLow: number;
   levelMedian: number;

@@ -8,11 +8,13 @@
 import { readFileSync } from 'node:fs';
 
 import { Lean, Outcome } from '../../src/core/outcome.js';
+import { Certainty, wordCertainty } from '../../src/core/certainty.js';
 import { Phase, RefusalKind, Verdict, anchorNear } from '../../src/core/policy.js';
 import { Cooling, HeatAfterBoil, StartMode } from '../../src/core/protocol.js';
 import { EggFrom } from '../../src/core/record.js';
 import {
-  DIRECTION_LIKELY, clauseKeys, directionKey, phaseKeys, rangeWords, warningKey, whiteAtRisk,
+  DIRECTION_LIKELY, certaintyKey, clauseKeys, directionKey, intervalWords, mostLikelyShown, mostLikelyWords,
+  phaseKeys, rangeWords, warningKey, whiteAtRisk,
 } from '../../src/core/wording.js';
 import { WHITE_RISK } from '../../src/core/outcome.js';
 
@@ -23,6 +25,16 @@ const COOLINGS: Cooling[] = ['ice', 'tap', 'counter'];
 const FROMS: EggFrom[] = ['fridge', 'room', 'custom'];
 const KINDS: RefusalKind[] = ['none', 'tooSoftForWhite', 'harderThanPanReaches', 'whiteNeverSets'];
 const LEANS: Lean[] = ['soft', 'firm', 'balanced'];
+const CLASSES: Certainty[] = ['veryCertain', 'ballpark', 'wildGuess'];
+/** Spreads of the five words, runny to hard, each read against every word
+ *  asked: one word holding 9 in 10, a ballpark around jammy, a pot that runs
+ *  firm, and a fresh install's width. */
+const SPREADS: number[][] = [
+  [0.01, 0.01, 0.94, 0.03, 0.01],
+  [0.03, 0.2, 0.68, 0.07, 0.02],
+  [0.01, 0.02, 0.1, 0.27, 0.6],
+  [0.12, 0.25, 0.32, 0.22, 0.09],
+];
 
 export function wordingFixture(): Record<string, unknown> {
   const messages = (JSON.parse(readFileSync('copy/en.json', 'utf8')) as { messages: Record<string, unknown> })
@@ -63,6 +75,25 @@ export function wordingFixture(): Record<string, unknown> {
     )),
   ));
 
+  // The line under the time, and what pressing it opens: the class's key,
+  // the interval and the most likely word, and whether "most likely" shows
+  // unpressed. The words are doneness keys, checked like any other.
+  const certainty = {
+    keys: CLASSES.map((c) => ({ certainty: c, key: known(certaintyKey(c)) })),
+    words: SPREADS.flatMap((p) => [0, 1, 2, 3, 4].map((asked) => {
+      const w = wordCertainty(p, asked);
+      const interval = intervalWords(w);
+      const likely = mostLikelyWords(w);
+      known(interval.key);
+      known(likely.key);
+      for (const word of Object.values(interval.words).concat(Object.values(likely.words))) known(word);
+      return {
+        p: p, asked: asked, certainty: w.certainty, key: certaintyKey(w.certainty),
+        interval: interval, mostLikely: likely, mostLikelyShown: mostLikelyShown(w),
+      };
+    })),
+  };
+
   // The three flags each read in one phase only: each is false once, with
   // the other two true, so a flag read in the wrong place shows.
   const flags: [boolean, boolean, boolean][] = [[false, true, true], [true, false, true], [true, true, false]];
@@ -99,6 +130,7 @@ export function wordingFixture(): Record<string, unknown> {
     constants: { directionLikely: DIRECTION_LIKELY, whiteRisk: WHITE_RISK },
     warning: warning,
     outcome: outcome,
+    certainty: certainty,
     phase: phase,
     clauses: clauses,
   };

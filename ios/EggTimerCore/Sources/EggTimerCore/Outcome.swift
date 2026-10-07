@@ -5,7 +5,7 @@ import Foundation
 ///
 /// The odds say how often the cook will call the egg right; this says which
 /// way the rest go. The three yolk answers and a runny white, as the cook
-/// would give them, unrelated share included; the 10%, 50% and 90% points of
+/// would give them, unrelated share included; the 5%, 50% and 95% points of
 /// the delivered yolk doneness on the slider's scale, from each particle's
 /// time-scale and its own egg-to-egg noise, WITHOUT the taste offset, clamped
 /// to [0, 1]; and which way a miss leans, at a ratio of 1.5. The reasons are
@@ -15,9 +15,10 @@ import Foundation
 /// outcome leans that way: three misses in five.
 public let leanRatio = 1.5
 
-/// The quantiles the level range is read at: an 80% interval.
-public let levelLowQ = 0.1
-public let levelHighQ = 0.9
+/// The quantiles the level range is read at: a 90% interval, the one the
+/// certainty's words state (`certaintyMass`).
+public let levelLowQ = 0.05
+public let levelHighQ = 0.95
 
 /// P(runny) at or above which the white is a risk: one egg in five. Both
 /// apps' line for the white shows from here.
@@ -50,7 +51,7 @@ public struct Outcome: Sendable, Codable, Equatable {
     /// keeps them as the forecast. Nil only on an outcome a running cook kept
     /// from a build before them.
     public let pYolkWord: [Double]?
-    /// The 10%, 50% and 90% points of the delivered yolk doneness, on the
+    /// The 5%, 50% and 95% points of the delivered yolk doneness, on the
     /// slider's scale, clamped to [0, 1]. No taste offset.
     public let levelLow: Double
     public let levelMedian: Double

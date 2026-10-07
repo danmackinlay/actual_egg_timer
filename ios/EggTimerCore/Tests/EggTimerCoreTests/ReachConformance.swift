@@ -2,8 +2,8 @@ import Testing
 import Foundation
 @testable import EggTimerCore
 
-/// The odds at every level, the range they allow, the verdict with it, the
-/// shading and the advice, against `fixtures/reach.json`.
+/// The odds and the certainty at every level, the range they allow, the
+/// verdict with it, the shading and the advice, against `fixtures/reach.json`.
 ///
 /// A profile is a solve and a decision per level, and both apps must walk the
 /// same levels in the same order and land on the same ends of the range, or
@@ -13,9 +13,12 @@ private func profileOf(_ json: [String: Any]) throws -> OddsProfile {
     try OddsProfile(
         // Empty where the white never sets: no level to give odds on.
         points: json.rows("points", mayBeEmpty: true).map {
-            try LevelOdds(level: $0.num("level"), cookTimeS: $0.num("cookTime_s"), odds: $0.num("odds"))
+            try LevelOdds(
+                level: $0.num("level"), cookTimeS: $0.num("cookTime_s"), odds: $0.num("odds"),
+                pAsked: $0.num("pAsked"), certainty: $0.value(Certainty.self, "certainty")
+            )
         },
-        best: json.num("best"),
+        best: json.num("best"), bestAsked: json.num("bestAsked"),
         physicalSoftest: json.num("physicalSoftest"), physicalHardest: json.num("physicalHardest"),
         softest: json.optionalNum("softest"), hardest: json.optionalNum("hardest")
     )
@@ -26,7 +29,6 @@ struct ReachConformance {
     @Test("the constants")
     func constants() throws {
         let c = try Fixtures.object("reach.json", "constants")
-        #expect(try reachOdds == c.num("reachOdds"))
         #expect(try profileStep == Int(c.num("profileStep")))
         #expect(try adviceBelowTenths == Int(c.num("adviceBelowTenths")))
         #expect(try adviceMarginTenths == Int(c.num("adviceMarginTenths")))
@@ -34,7 +36,7 @@ struct ReachConformance {
         #expect(try shadeBestMin == c.num("shadeBestMin"))
     }
 
-    @Test("no shading when the best odds are under a tenth")
+    @Test("no shading when the best chance is under a twentieth")
     func shadingThreshold() throws {
         for row in try Fixtures.list("reach.json", "shading") {
             let profile = try profileOf(row.object("profile"))
@@ -42,17 +44,17 @@ struct ReachConformance {
             // Empty for the profile under a tenth, which is the point; the
             // count is compared first, so an empty list is still checked.
             let expected = try row.rows("shading", mayBeEmpty: true)
-            #expect(shades.count == expected.count, "best \(profile.best)")
+            #expect(shades.count == expected.count, "best \(profile.bestAsked)")
             for (a, b) in zip(shades, expected) {
-                try expectClose(a.level, b.num("level"), "best \(profile.best) level")
-                try expectClose(a.strength, b.num("strength"), "best \(profile.best) strength")
+                try expectClose(a.level, b.num("level"), "best \(profile.bestAsked) level")
+                try expectClose(a.strength, b.num("strength"), "best \(profile.bestAsked) strength")
             }
         }
     }
 
     /// Every profile in the fixture. The package builds `-O` even for tests,
     /// so a profile's couple of dozen solves are quick.
-    @Test("the odds at every level, the range, and the shading")
+    @Test("the odds and the certainty at every level, the range, and the shading")
     func profiles() throws {
         let byName = try posteriorsByName(Fixtures.list("decide.json", "posteriors"))
         for (i, row) in try Fixtures.list("reach.json", "profiles").enumerated() {
@@ -70,8 +72,11 @@ struct ReachConformance {
                 expectClose(a.level, b.level, "\(label) level")
                 expectClose(a.cookTimeS, b.cookTimeS, "\(label) time at \(b.level)")
                 expectClose(a.odds, b.odds, "\(label) odds at \(b.level)")
+                expectClose(a.pAsked, b.pAsked, "\(label) P(asked) at \(b.level)")
+                #expect(a.certainty == b.certainty, "\(label) certainty at \(b.level)")
             }
             expectClose(p.best, expected.best, "\(label) best")
+            expectClose(p.bestAsked, expected.bestAsked, "\(label) best P(asked)")
             expectClose(p.physicalSoftest, expected.physicalSoftest, "\(label) physical softest")
             expectClose(p.physicalHardest, expected.physicalHardest, "\(label) physical hardest")
             #expect(p.softest == expected.softest, "\(label) softest")
@@ -148,7 +153,7 @@ struct ReachConformance {
     /// it: for each profile's pot, the owner's egg (DECISIONS.md 83 and 84)
     /// and a pot whose white never sets. The profile is the fixture's, so this
     /// holds the decision alone; `profiles()` holds the profile.
-    @Test("the decided answer: the envelope, the nudge, the outcome and the advice")
+    @Test("the decided answer: the envelope, the nudge, the outcome, the certainty and the advice")
     func decided() throws {
         let file = try Fixtures.load("reach.json")
         var byName = try posteriorsByName(Fixtures.list("decide.json", "posteriors"))
@@ -203,13 +208,25 @@ struct ReachConformance {
                 try expectClose(d.outcome.levelMedian, o.num("levelMedian"), "\(label) level median")
                 try expectClose(d.outcome.levelHigh, o.num("levelHigh"), "\(label) level high")
                 #expect(try d.outcome.lean.rawValue == o.str("lean"), "\(label) lean")
+                let cr = try row.object("certainty")
+                let w = try cr.object("words")
+                #expect(try d.certainty.words.asked == Int(w.num("asked")), "\(label) asked")
+                #expect(try d.certainty.words.certainty.rawValue == w.str("certainty"), "\(label) certainty")
+                try expectClose(d.certainty.words.pAsked, w.num("pAsked"), "\(label) P(asked)")
+                try expectClose(d.certainty.words.pNear, w.num("pNear"), "\(label) P(near)")
+                #expect(try d.certainty.words.from == Int(w.num("from")), "\(label) from")
+                #expect(try d.certainty.words.to == Int(w.num("to")), "\(label) to")
+                #expect(try d.certainty.words.mostLikely == Int(w.num("mostLikely")), "\(label) most likely")
+                let tr = try cr.object("time")
+                try expectClose(d.certainty.time.lowS, tr.num("low_s"), "\(label) time low")
+                try expectClose(d.certainty.time.highS, tr.num("high_s"), "\(label) time high")
                 #expect(try d.nudgeS == row.num("nudge_s"), "\(label) nudge taken")
                 #expect(try d.adviceWanted == row.flag("adviceWanted"), "\(label) advice wanted")
             }
         }
     }
 
-    @Test("the warning, with and without a range at 3/10")
+    @Test("the warning, with and without a range that is not a wild guess")
     func lowOdds() throws {
         for row in try Fixtures.list("reach.json", "lowOdds") {
             var profile: OddsProfile?

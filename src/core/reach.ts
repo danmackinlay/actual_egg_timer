@@ -1,7 +1,10 @@
 /**
  * The odds at every level the slider offers, and what follows from them:
  * which levels the app warns of, how the track is shaded, and when the app
- * says how to make an egg more reliable.
+ * says how to make an egg more reliable. Since the `certainty` draft
+ * (DECISIONS.md 93 and 97) the warning and the shading read how sure the
+ * app is in words (certainty.ts) at each level's time, and the odds of
+ * "just right" are left to the advice and to the time chosen.
  *
  * THE PROFILE. `decide` computes the odds of the time: that is one level. The profile is the
  * same number for every level the pot can deliver, computed exactly as the app
@@ -14,12 +17,18 @@
  * Which levels. The two physical edges on the slider's grid (the softest the
  * white allows, rounded up; the firmest the pan reaches, rounded down), every
  * PROFILE_STEP positions between them, and - once an egg has taught something
- * and some level reaches REACH_ODDS - a bisection on the slider's own grid
- * (1/SLIDER_STEPS) at each end of the range at 3/10 or better, so the level
- * where the warning starts is one whose odds were computed, not
- * interpolated. Between
- * points the track's shading is interpolated linearly; the odds are smooth in
- * the level, and the step is under a degree of peak yolk.
+ * and some level is not a wild guess - a bisection on the slider's own grid
+ * (1/SLIDER_STEPS) at each end of the range that is not, so the level where
+ * the warning starts is one whose certainty was computed, not interpolated.
+ * Between points the track's shading is interpolated linearly; the step is
+ * under a degree of peak yolk.
+ *
+ * Each point also reads the five yolk words' spread at its time
+ * (`yolkWordProbabilities`, one pass over the particles) against the word
+ * asked there (`askedWord`): the chance of that word, which shades the
+ * track, and `certaintyAt`'s class, which dots it. The word asked is a step
+ * function of the level, so both jump where the slider's word changes; the
+ * shading is interpolated across the jump like any other change.
  *
  * What it costs. One point is a mean solve (tens of milliseconds, several
  * times that with the heat off) and a decision (a few ms before the first egg,
@@ -74,22 +83,24 @@
  * app wrote it out for itself, and DECISIONS.md 84 had to land twice
  * (REVIEW-0.4.x, "Bloat and factoring" 1).
  *
- * THE WARNING. A level whose odds are under REACH_ODDS (3/10, the owner's
- * number) is not refused: the slider rests there, and the app says the odds
- * are low (`lowOddsAt`). The levels it warns of are those softer than the
- * softest level with odds of at least 3/10, and firmer than the firmest -
- * the dots on the track. Only what the pan cannot deliver at all is refused
- * (`verdictFor`, the stripes), and the slider moves out of it. Dips under
- * 3/10 inside the range are not warned of; only the ends are, as only the
- * ends are dotted. Until 5 October 2026 the ends were a wall the slider
- * snapped back to (DECISIONS.md 20, amended by 83).
+ * THE WARNING. A level that is a wild guess at its time (`certaintyAt`'s
+ * class: the word asked and its neighbours together under 9 times in 10) is
+ * not refused: the slider rests there, and the app says it is a wild guess
+ * so far (`lowOddsAt`, whose name is older than the rule). The levels it
+ * warns of are those softer than the softest level that is not a wild guess,
+ * and firmer than the firmest - the dots on the track. Only what the pan
+ * cannot deliver at all is refused (`verdictFor`, the stripes), and the
+ * slider moves out of it. A wild guess inside the range is not warned of;
+ * only the ends are, as only the ends are dotted. Until 5 October 2026 the
+ * ends were a wall the slider snapped back to (DECISIONS.md 20, amended by
+ * 83); until the `certainty` draft they were where the odds of "just right"
+ * fell under 3/10 (DECISIONS.md 97, design/one-screen.md section 7, 16).
  *
- * WHEN NOTHING REACHES 3/10 there is no warning at all, and no dots. That is
- * the fresh install: before any egg the prior is honestly unsure, every level
- * reads about 2/10, and warning on that would warn a cook for being new. It
- * is also written as a rule of its own - no odds-based warning before the
- * first egg that taught something - so that no pot whose prior odds happen to
- * cross 3/10 somewhere can warn a new cook either.
+ * WHEN EVERY LEVEL IS A WILD GUESS there is no warning at all, and no dots:
+ * there is no surer level to point to. And there is none before the first
+ * egg that taught something, whatever the classes say: a fresh install is a
+ * ballpark at fudgy and hard and a wild guess softer (INFERENCE.md section 8),
+ * and dotting the soft half would warn a cook for being new.
  *
  * Pure, like the rest of `src/core/`.
  */
@@ -101,39 +112,47 @@ import { DoseGrid } from './doseGrid.js';
 import {
   Decision, TimeBounds, appliedNudge, decide, decidedSolution, oddsInTenths,
 } from './decide.js';
+import { yolkWordProbabilities } from './infer.js';
 import { Outcome, predictOutcome } from './outcome.js';
+import { Certainty, CertaintyReading, askedWord, certaintyAt, wordCertainty } from './certainty.js';
 import { Calibration, calibrationDoneness, calibrationParams } from './record.js';
 import {
   LIMITS, SLIDER_STEPS, START_TEMP_PRESETS_C, Verdict, snapDown, snapUp, verdictFor,
 } from './policy.js';
 
-/** The odds under which a level is warned of: 3/10, the owner's number. */
-export const REACH_ODDS = 0.3;
 
 /** Slider positions between profile points: 5, so a point every 0.05 of the
  *  track, 21 across the whole of it. */
 export const PROFILE_STEP = 5;
 
 /** One point of the profile: a slider level, the time the app gives there
- *  (after the envelope), and the odds of that time. */
+ *  (after the envelope), the odds of that time, and how sure the app is
+ *  there in words. */
 export interface LevelOdds {
   level: number;
   cookTime_s: number;
   odds: number;
+  /** P(the word asked at this level) at its time: what the shading reads. */
+  pAsked: number;
+  /** `certaintyAt`'s class at this level's time: a wild guess is dotted at
+   *  the ends. */
+  certainty: Certainty;
 }
 
 export interface OddsProfile {
   /** Sorted by level, from `physicalSoftest` to `physicalHardest`. Empty when
    *  the white never sets: there is no level to give odds on. */
   points: LevelOdds[];
-  /** The best odds of any point: what the shading is relative to. */
+  /** The best odds of any point: what the advice is measured against. */
   best: number;
+  /** The best `pAsked` of any point: what the shading is relative to. */
+  bestAsked: number;
   /** The physical edges, on the slider's grid. */
   physicalSoftest: number;
   physicalHardest: number;
-  /** The softest and firmest levels with odds of at least REACH_ODDS, or null
-   *  when the odds warn of nothing: before the first egg, or when no level
-   *  reaches it. Both null or both set. Outside them, and inside the physical
+  /** The softest and firmest levels that are not a wild guess, or null when
+   *  nothing is warned of: before the first egg, or when every level is a
+   *  wild guess. Both null or both set. Outside them, and inside the physical
    *  edges, is what the track dots and the app warns of. */
   softest: number | null;
   hardest: number | null;
@@ -195,9 +214,9 @@ export function oddsAtLevel(
 
 /**
  * A profile being built: the pot it is for, and the points decided on it so
- * far, as three arrays kept in order of slider position. Plain data, handed
- * to the functions below rather than closed over, so that both languages
- * build it the same way (core invariant 2).
+ * far, as arrays kept in order of slider position. Plain data, handed to the
+ * functions below rather than closed over, so that both languages build it
+ * the same way (core invariant 2).
  */
 interface ProfileWork {
   c: Calibration;
@@ -207,49 +226,63 @@ interface ProfileWork {
   positions: number[];
   times: number[];
   odds: number[];
+  pAsked: number[];
+  certainty: Certainty[];
 }
 
-/** Decide the point at `position`, held within `bounds`; keep it in `w`, in
- *  order; and return its odds. */
-function decidePoint(w: ProfileWork, position: number, bounds: TimeBounds): number {
-  const d = decisionAtLevel(w.c, w.egg, w.setup, w.grid, levelOf(position), bounds);
+/** Whether a class is surer than a wild guess: a level the track does not
+ *  dot. */
+function surerThanGuess(c: Certainty): boolean {
+  return c !== 'wildGuess';
+}
+
+/** Decide the point at `position`, held within `bounds`; read how sure the
+ *  app is at the time decided; keep both in `w`, in order; and return
+ *  whether it is surer than a wild guess. */
+function decidePoint(w: ProfileWork, position: number, bounds: TimeBounds): boolean {
+  const level = levelOf(position);
+  const d = decisionAtLevel(w.c, w.egg, w.setup, w.grid, level, bounds);
+  const sure = wordCertainty(yolkWordProbabilities(w.c.posterior, w.grid, d.cookTime_s), askedWord(level));
   let i = w.positions.length;
   while (i > 0 && w.positions[i - 1] > position) i -= 1;
   w.positions.splice(i, 0, position);
   w.times.splice(i, 0, d.cookTime_s);
   w.odds.splice(i, 0, d.odds);
-  return d.odds;
+  w.pAsked.splice(i, 0, sure.pAsked);
+  w.certainty.splice(i, 0, sure.certainty);
+  return surerThanGuess(sure.certainty);
 }
 
-/** The odds at `position`: a point already decided, or one decided now, held
- *  between the nearest points known on either side, so that it moves no time
- *  the profile already gave. */
-function oddsAtPosition(w: ProfileWork, position: number): number {
+/** Whether `position` is surer than a wild guess: a point already decided,
+ *  or one decided now, held between the nearest points known on either side,
+ *  so that it moves no time the profile already gave. */
+function surerAtPosition(w: ProfileWork, position: number): boolean {
   let i = 0;
   while (i < w.positions.length && w.positions[i] < position) i += 1;
-  if (i < w.positions.length && w.positions[i] === position) return w.odds[i];
+  if (i < w.positions.length && w.positions[i] === position) return surerThanGuess(w.certainty[i]);
   const below = i > 0 ? w.times[i - 1] : 0.0;
   const over = i < w.positions.length ? w.times[i] : Number.POSITIVE_INFINITY;
   return decidePoint(w, position, { lo_s: below, hi_s: over });
 }
 
-/** One end of the range at REACH_ODDS or better, by bisection on the slider's
- *  grid between `reaches`, a position at or over it, and `short`, a position
- *  under it on either side: the position at or over it next to one under. */
+/** One end of the range that is not a wild guess, by bisection on the
+ *  slider's grid between `reaches`, a position surer than a wild guess, and
+ *  `short`, a wild guess on either side: the surer position next to one
+ *  that is not. */
 function reachEnd(w: ProfileWork, reaches: number, short: number): number {
   let r = reaches;
   let s = short;
   while (Math.abs(s - r) > 1) {
     const mid = Math.floor((r + s) / 2);
-    if (oddsAtPosition(w, mid) >= REACH_ODDS) r = mid;
+    if (surerAtPosition(w, mid)) r = mid;
     else s = mid;
   }
   return r;
 }
 
 /**
- * The odds at every level the pot can deliver, and where they reach 3/10. See
- * the header for which levels, and why.
+ * The odds and the certainty at every level the pot can deliver, and the
+ * range that is not a wild guess. See the header for which levels, and why.
  *
  * `grid` is this pot's decision surface (`decisionGridRequest`), built for
  * the same calibration, egg and setup.
@@ -260,7 +293,7 @@ export function oddsProfile(c: Calibration, egg: Egg, setup: CookSetup, grid: Do
   const hi = positionDown(edge.hardestLevel);
   if (!edge.whiteSets || hi < lo) {
     return {
-      points: [], best: 0, physicalSoftest: levelOf(lo), physicalHardest: levelOf(hi),
+      points: [], best: 0, bestAsked: 0, physicalSoftest: levelOf(lo), physicalHardest: levelOf(hi),
       softest: null, hardest: null,
     };
   }
@@ -271,26 +304,29 @@ export function oddsProfile(c: Calibration, egg: Egg, setup: CookSetup, grid: Do
   }
   if (hi > lo) positions.push(hi);
   // The envelope: from the hard end, each point held under the one above it.
-  const w: ProfileWork = { c: c, egg: egg, setup: setup, grid: grid, positions: [], times: [], odds: [] };
+  const w: ProfileWork = {
+    c: c, egg: egg, setup: setup, grid: grid, positions: [], times: [], odds: [], pAsked: [], certainty: [],
+  };
   let above = Number.POSITIVE_INFINITY;
   for (let i = positions.length - 1; i >= 0; i--) {
     decidePoint(w, positions[i], { lo_s: 0.0, hi_s: above });
     above = w.times[0];
   }
   // Before any bisection, w holds exactly these positions, in this order.
-  const gridOdds = w.odds.slice();
-  let best = 0;
-  for (let i = 0; i < gridOdds.length; i++) {
-    if (gridOdds[i] > best) best = gridOdds[i];
+  const gridSure: boolean[] = [];
+  let anySure = false;
+  for (let i = 0; i < w.certainty.length; i++) {
+    gridSure.push(surerThanGuess(w.certainty[i]));
+    if (gridSure[i]) anySure = true;
   }
 
   let softest: number | null = null;
   let hardest: number | null = null;
-  if (c.eggsLogged > 0 && best >= REACH_ODDS) {
+  if (c.eggsLogged > 0 && anySure) {
     let first = 0;
-    while (gridOdds[first] < REACH_ODDS) first += 1;
+    while (!gridSure[first]) first += 1;
     let last = positions.length - 1;
-    while (gridOdds[last] < REACH_ODDS) last -= 1;
+    while (!gridSure[last]) last -= 1;
     // The softest first, then the firmest: a point the first bisection adds
     // holds the second's.
     const s = first > 0 ? reachEnd(w, positions[first], positions[first - 1]) : positions[first];
@@ -300,12 +336,19 @@ export function oddsProfile(c: Calibration, egg: Egg, setup: CookSetup, grid: Do
   }
 
   const points: LevelOdds[] = [];
+  let best = 0;
+  let bestAsked = 0;
   for (let i = 0; i < w.positions.length; i++) {
-    points.push({ level: levelOf(w.positions[i]), cookTime_s: w.times[i], odds: w.odds[i] });
+    points.push({
+      level: levelOf(w.positions[i]), cookTime_s: w.times[i], odds: w.odds[i],
+      pAsked: w.pAsked[i], certainty: w.certainty[i],
+    });
     if (w.odds[i] > best) best = w.odds[i];
+    if (w.pAsked[i] > bestAsked) bestAsked = w.pAsked[i];
   }
   return {
-    points: points, best: best, physicalSoftest: levelOf(lo), physicalHardest: levelOf(hi),
+    points: points, best: best, bestAsked: bestAsked,
+    physicalSoftest: levelOf(lo), physicalHardest: levelOf(hi),
     softest: softest, hardest: hardest,
   };
 }
@@ -313,11 +356,13 @@ export function oddsProfile(c: Calibration, egg: Egg, setup: CookSetup, grid: Do
 /* ------------------------------------------------------------ the warning */
 
 /**
- * Whether the app warns that `level` comes out right fewer than 3 times in
- * 10 so far: true when the profile has a range at 3/10 or better and the
- * level is softer than its softest or firmer than its firmest. False with no
- * profile, or one that warns of nothing (the header, "when nothing reaches
- * 3/10"). It moves nothing: what the pan cannot deliver is `verdictFor`'s.
+ * Whether the app warns that `level` is a wild guess so far - a dotted level:
+ * true when the profile has a range that is not a wild guess and the level is
+ * softer than its softest or firmer than its firmest. False with no profile,
+ * or one that warns of nothing (the header, "when every level is a wild
+ * guess"). It moves nothing: what the pan cannot deliver is `verdictFor`'s.
+ * The name is older than the rule: until the `certainty` draft the dots were
+ * the levels under 3/10.
  */
 export function lowOddsAt(profile: OddsProfile | null, level: number): boolean {
   if (profile === null || profile.softest === null || profile.hardest === null) return false;
@@ -366,26 +411,29 @@ export function answerAt(
 
 /* ------------------------------------------------------------ the shading */
 
-/** How strongly the track is shaded at a level: its odds over the best
- *  level's, 0 to 1. Relative, so a fresh install at 2/10 everywhere still
- *  shows where this pan works best. */
+/** How strongly the track is shaded at a level: the chance of the word asked
+ *  there, over the best level's (DECISIONS.md 97; design/one-screen.md
+ *  section 7, 17), 0 to 1. Relative, so a fresh install, never very certain
+ *  anywhere, still shows where this pan works best. Until the `certainty`
+ *  draft it was the odds of "just right". */
 export interface Shade {
   level: number;
   strength: number;
 }
 
-/** The best odds below which the track is not shaded at all: odds nowhere
- *  worth a tenth (they round to 0/10), so there is no "where it works best" to
- *  show. */
+/** The best chance below which the track is not shaded at all: a chance
+ *  nowhere worth a twentieth, so there is no "where it works best" to show.
+ *  Five words share every egg, so on a real pot the best is never under a
+ *  fifth; this is for a profile with nothing in it. */
 export const SHADE_BEST_MIN = 0.05;
 
 /** The shading's stops, one per profile point. Empty when there is nothing to
- *  shade: no points, or best odds under SHADE_BEST_MIN. */
+ *  shade: no points, or a best chance under SHADE_BEST_MIN. */
 export function shadingOf(profile: OddsProfile): Shade[] {
-  if (!(profile.best >= SHADE_BEST_MIN)) return [];
+  if (!(profile.bestAsked >= SHADE_BEST_MIN)) return [];
   return profile.points.map((p) => ({
     level: p.level,
-    strength: Math.min(1, Math.max(0, p.odds / profile.best)),
+    strength: Math.min(1, Math.max(0, p.pAsked / profile.bestAsked)),
   }));
 }
 
@@ -520,6 +568,9 @@ export interface DecidedAnswer {
   decision: Decision;
   /** What the egg at the nudged time will be like, on the same surface. */
   outcome: Outcome;
+  /** How sure the app is of the egg at the nudged time, in words, and the
+   *  likely time range (`certaintyAt`): the line under the time. */
+  certainty: CertaintyReading;
   /** The nudge the time took (`appliedNudge`): all of it where a time is
    *  chosen for, none where the solver's own answer stands. */
   nudge_s: number;
@@ -534,8 +585,8 @@ export interface DecidedAnswer {
  * held within the envelope of `profile`, the pot's odds profile, or by
  * nothing while it is null (DECISIONS.md 84); then moved by `nudge_s`, the
  * nudge the app drew, where a time is chosen for (E8). The solve is re-read
- * at the time given and the outcome predicted there, so the time shown, the
- * time started and the bracket under it agree.
+ * at the time given and the outcome and the certainty read there, so the
+ * time shown, the time started, the words under it and the bracket agree.
  *
  * A level the odds warn of is decided at that level like any other
  * (DECISIONS.md 83): the warning is `answerAt`'s, and moves nothing here.
@@ -552,6 +603,7 @@ export function decideAnswer(
     solution: decidedSolution(egg, setup, calibrationParams(c), sol, d, nudge),
     decision: d,
     outcome: predictOutcome(c.posterior, grid, d.cookTime_s + nudge, target),
+    certainty: certaintyAt(c.posterior, grid, d.cookTime_s + nudge, level),
     nudge_s: nudge,
     adviceWanted: sol.whiteSets && adviceWanted(d.oddsTenths, profile),
   };

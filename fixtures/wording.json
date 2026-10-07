@@ -34,33 +34,24 @@
       "worthSaying": true,
       "lowOdds": true,
       "cooling": "ice",
-      "key": "warn.lowOdds",
-      "args": {
-        "hits": 3,
-        "of": 10
-      }
+      "key": "warn.wildGuess",
+      "args": {}
     },
     {
       "kind": "none",
       "worthSaying": true,
       "lowOdds": true,
       "cooling": "tap",
-      "key": "warn.lowOdds",
-      "args": {
-        "hits": 3,
-        "of": 10
-      }
+      "key": "warn.wildGuess",
+      "args": {}
     },
     {
       "kind": "none",
       "worthSaying": true,
       "lowOdds": true,
       "cooling": "counter",
-      "key": "warn.lowOdds",
-      "args": {
-        "hits": 3,
-        "of": 10
-      }
+      "key": "warn.wildGuess",
+      "args": {}
     },
     {
       "kind": "none",
@@ -91,33 +82,24 @@
       "worthSaying": false,
       "lowOdds": true,
       "cooling": "ice",
-      "key": "warn.lowOdds",
-      "args": {
-        "hits": 3,
-        "of": 10
-      }
+      "key": "warn.wildGuess",
+      "args": {}
     },
     {
       "kind": "none",
       "worthSaying": false,
       "lowOdds": true,
       "cooling": "tap",
-      "key": "warn.lowOdds",
-      "args": {
-        "hits": 3,
-        "of": 10
-      }
+      "key": "warn.wildGuess",
+      "args": {}
     },
     {
       "kind": "none",
       "worthSaying": false,
       "lowOdds": true,
       "cooling": "counter",
-      "key": "warn.lowOdds",
-      "args": {
-        "hits": 3,
-        "of": 10
-      }
+      "key": "warn.wildGuess",
+      "args": {}
     },
     {
       "kind": "tooSoftForWhite",
@@ -196,33 +178,24 @@
       "worthSaying": false,
       "lowOdds": true,
       "cooling": "ice",
-      "key": "warn.lowOdds",
-      "args": {
-        "hits": 3,
-        "of": 10
-      }
+      "key": "warn.wildGuess",
+      "args": {}
     },
     {
       "kind": "tooSoftForWhite",
       "worthSaying": false,
       "lowOdds": true,
       "cooling": "tap",
-      "key": "warn.lowOdds",
-      "args": {
-        "hits": 3,
-        "of": 10
-      }
+      "key": "warn.wildGuess",
+      "args": {}
     },
     {
       "kind": "tooSoftForWhite",
       "worthSaying": false,
       "lowOdds": true,
       "cooling": "counter",
-      "key": "warn.lowOdds",
-      "args": {
-        "hits": 3,
-        "of": 10
-      }
+      "key": "warn.wildGuess",
+      "args": {}
     },
     {
       "kind": "harderThanPanReaches",
@@ -301,33 +274,24 @@
       "worthSaying": false,
       "lowOdds": true,
       "cooling": "ice",
-      "key": "warn.lowOdds",
-      "args": {
-        "hits": 3,
-        "of": 10
-      }
+      "key": "warn.wildGuess",
+      "args": {}
     },
     {
       "kind": "harderThanPanReaches",
       "worthSaying": false,
       "lowOdds": true,
       "cooling": "tap",
-      "key": "warn.lowOdds",
-      "args": {
-        "hits": 3,
-        "of": 10
-      }
+      "key": "warn.wildGuess",
+      "args": {}
     },
     {
       "kind": "harderThanPanReaches",
       "worthSaying": false,
       "lowOdds": true,
       "cooling": "counter",
-      "key": "warn.lowOdds",
-      "args": {
-        "hits": 3,
-        "of": 10
-      }
+      "key": "warn.wildGuess",
+      "args": {}
     },
     {
       "kind": "whiteNeverSets",
@@ -406,33 +370,24 @@
       "worthSaying": false,
       "lowOdds": true,
       "cooling": "ice",
-      "key": "warn.lowOdds",
-      "args": {
-        "hits": 3,
-        "of": 10
-      }
+      "key": "warn.wildGuess",
+      "args": {}
     },
     {
       "kind": "whiteNeverSets",
       "worthSaying": false,
       "lowOdds": true,
       "cooling": "tap",
-      "key": "warn.lowOdds",
-      "args": {
-        "hits": 3,
-        "of": 10
-      }
+      "key": "warn.wildGuess",
+      "args": {}
     },
     {
       "kind": "whiteNeverSets",
       "worthSaying": false,
       "lowOdds": true,
       "cooling": "counter",
-      "key": "warn.lowOdds",
-      "args": {
-        "hits": 3,
-        "of": 10
-      }
+      "key": "warn.wildGuess",
+      "args": {}
     }
   ],
   "outcome": [
@@ -1589,6 +1544,639 @@
       }
     }
   ],
+  "certainty": {
+    "keys": [
+      {
+        "certainty": "veryCertain",
+        "key": "certainty.veryCertain"
+      },
+      {
+        "certainty": "ballpark",
+        "key": "certainty.ballpark"
+      },
+      {
+        "certainty": "wildGuess",
+        "key": "certainty.wildGuess"
+      }
+    ],
+    "words": [
+      {
+        "p": [
+          0.01,
+          0.01,
+          0.94,
+          0.03,
+          0.01
+        ],
+        "asked": 0,
+        "certainty": "wildGuess",
+        "key": "certainty.wildGuess",
+        "interval": {
+          "key": "certainty.interval.one",
+          "args": {
+            "hits": 9,
+            "of": 10
+          },
+          "words": {
+            "word": "doneness.jammy"
+          }
+        },
+        "mostLikely": {
+          "key": "certainty.mostLikely",
+          "args": {},
+          "words": {
+            "word": "doneness.jammy"
+          }
+        },
+        "mostLikelyShown": true
+      },
+      {
+        "p": [
+          0.01,
+          0.01,
+          0.94,
+          0.03,
+          0.01
+        ],
+        "asked": 1,
+        "certainty": "ballpark",
+        "key": "certainty.ballpark",
+        "interval": {
+          "key": "certainty.interval.one",
+          "args": {
+            "hits": 9,
+            "of": 10
+          },
+          "words": {
+            "word": "doneness.jammy"
+          }
+        },
+        "mostLikely": {
+          "key": "certainty.mostLikely",
+          "args": {},
+          "words": {
+            "word": "doneness.jammy"
+          }
+        },
+        "mostLikelyShown": true
+      },
+      {
+        "p": [
+          0.01,
+          0.01,
+          0.94,
+          0.03,
+          0.01
+        ],
+        "asked": 2,
+        "certainty": "veryCertain",
+        "key": "certainty.veryCertain",
+        "interval": {
+          "key": "certainty.interval.one",
+          "args": {
+            "hits": 9,
+            "of": 10
+          },
+          "words": {
+            "word": "doneness.jammy"
+          }
+        },
+        "mostLikely": {
+          "key": "certainty.mostLikely",
+          "args": {},
+          "words": {
+            "word": "doneness.jammy"
+          }
+        },
+        "mostLikelyShown": false
+      },
+      {
+        "p": [
+          0.01,
+          0.01,
+          0.94,
+          0.03,
+          0.01
+        ],
+        "asked": 3,
+        "certainty": "ballpark",
+        "key": "certainty.ballpark",
+        "interval": {
+          "key": "certainty.interval.one",
+          "args": {
+            "hits": 9,
+            "of": 10
+          },
+          "words": {
+            "word": "doneness.jammy"
+          }
+        },
+        "mostLikely": {
+          "key": "certainty.mostLikely",
+          "args": {},
+          "words": {
+            "word": "doneness.jammy"
+          }
+        },
+        "mostLikelyShown": true
+      },
+      {
+        "p": [
+          0.01,
+          0.01,
+          0.94,
+          0.03,
+          0.01
+        ],
+        "asked": 4,
+        "certainty": "wildGuess",
+        "key": "certainty.wildGuess",
+        "interval": {
+          "key": "certainty.interval.one",
+          "args": {
+            "hits": 9,
+            "of": 10
+          },
+          "words": {
+            "word": "doneness.jammy"
+          }
+        },
+        "mostLikely": {
+          "key": "certainty.mostLikely",
+          "args": {},
+          "words": {
+            "word": "doneness.jammy"
+          }
+        },
+        "mostLikelyShown": true
+      },
+      {
+        "p": [
+          0.03,
+          0.2,
+          0.68,
+          0.07,
+          0.02
+        ],
+        "asked": 0,
+        "certainty": "wildGuess",
+        "key": "certainty.wildGuess",
+        "interval": {
+          "key": "certainty.interval",
+          "args": {
+            "hits": 9,
+            "of": 10
+          },
+          "words": {
+            "from": "doneness.soft",
+            "to": "doneness.fudgy"
+          }
+        },
+        "mostLikely": {
+          "key": "certainty.mostLikely",
+          "args": {},
+          "words": {
+            "word": "doneness.jammy"
+          }
+        },
+        "mostLikelyShown": true
+      },
+      {
+        "p": [
+          0.03,
+          0.2,
+          0.68,
+          0.07,
+          0.02
+        ],
+        "asked": 1,
+        "certainty": "ballpark",
+        "key": "certainty.ballpark",
+        "interval": {
+          "key": "certainty.interval",
+          "args": {
+            "hits": 9,
+            "of": 10
+          },
+          "words": {
+            "from": "doneness.soft",
+            "to": "doneness.fudgy"
+          }
+        },
+        "mostLikely": {
+          "key": "certainty.mostLikely",
+          "args": {},
+          "words": {
+            "word": "doneness.jammy"
+          }
+        },
+        "mostLikelyShown": true
+      },
+      {
+        "p": [
+          0.03,
+          0.2,
+          0.68,
+          0.07,
+          0.02
+        ],
+        "asked": 2,
+        "certainty": "ballpark",
+        "key": "certainty.ballpark",
+        "interval": {
+          "key": "certainty.interval",
+          "args": {
+            "hits": 9,
+            "of": 10
+          },
+          "words": {
+            "from": "doneness.soft",
+            "to": "doneness.fudgy"
+          }
+        },
+        "mostLikely": {
+          "key": "certainty.mostLikely",
+          "args": {},
+          "words": {
+            "word": "doneness.jammy"
+          }
+        },
+        "mostLikelyShown": false
+      },
+      {
+        "p": [
+          0.03,
+          0.2,
+          0.68,
+          0.07,
+          0.02
+        ],
+        "asked": 3,
+        "certainty": "wildGuess",
+        "key": "certainty.wildGuess",
+        "interval": {
+          "key": "certainty.interval",
+          "args": {
+            "hits": 9,
+            "of": 10
+          },
+          "words": {
+            "from": "doneness.soft",
+            "to": "doneness.fudgy"
+          }
+        },
+        "mostLikely": {
+          "key": "certainty.mostLikely",
+          "args": {},
+          "words": {
+            "word": "doneness.jammy"
+          }
+        },
+        "mostLikelyShown": true
+      },
+      {
+        "p": [
+          0.03,
+          0.2,
+          0.68,
+          0.07,
+          0.02
+        ],
+        "asked": 4,
+        "certainty": "wildGuess",
+        "key": "certainty.wildGuess",
+        "interval": {
+          "key": "certainty.interval",
+          "args": {
+            "hits": 9,
+            "of": 10
+          },
+          "words": {
+            "from": "doneness.soft",
+            "to": "doneness.fudgy"
+          }
+        },
+        "mostLikely": {
+          "key": "certainty.mostLikely",
+          "args": {},
+          "words": {
+            "word": "doneness.jammy"
+          }
+        },
+        "mostLikelyShown": true
+      },
+      {
+        "p": [
+          0.01,
+          0.02,
+          0.1,
+          0.27,
+          0.6
+        ],
+        "asked": 0,
+        "certainty": "wildGuess",
+        "key": "certainty.wildGuess",
+        "interval": {
+          "key": "certainty.interval",
+          "args": {
+            "hits": 9,
+            "of": 10
+          },
+          "words": {
+            "from": "doneness.jammy",
+            "to": "doneness.hard"
+          }
+        },
+        "mostLikely": {
+          "key": "certainty.mostLikely",
+          "args": {},
+          "words": {
+            "word": "doneness.hard"
+          }
+        },
+        "mostLikelyShown": true
+      },
+      {
+        "p": [
+          0.01,
+          0.02,
+          0.1,
+          0.27,
+          0.6
+        ],
+        "asked": 1,
+        "certainty": "wildGuess",
+        "key": "certainty.wildGuess",
+        "interval": {
+          "key": "certainty.interval",
+          "args": {
+            "hits": 9,
+            "of": 10
+          },
+          "words": {
+            "from": "doneness.jammy",
+            "to": "doneness.hard"
+          }
+        },
+        "mostLikely": {
+          "key": "certainty.mostLikely",
+          "args": {},
+          "words": {
+            "word": "doneness.hard"
+          }
+        },
+        "mostLikelyShown": true
+      },
+      {
+        "p": [
+          0.01,
+          0.02,
+          0.1,
+          0.27,
+          0.6
+        ],
+        "asked": 2,
+        "certainty": "wildGuess",
+        "key": "certainty.wildGuess",
+        "interval": {
+          "key": "certainty.interval",
+          "args": {
+            "hits": 9,
+            "of": 10
+          },
+          "words": {
+            "from": "doneness.jammy",
+            "to": "doneness.hard"
+          }
+        },
+        "mostLikely": {
+          "key": "certainty.mostLikely",
+          "args": {},
+          "words": {
+            "word": "doneness.hard"
+          }
+        },
+        "mostLikelyShown": true
+      },
+      {
+        "p": [
+          0.01,
+          0.02,
+          0.1,
+          0.27,
+          0.6
+        ],
+        "asked": 3,
+        "certainty": "ballpark",
+        "key": "certainty.ballpark",
+        "interval": {
+          "key": "certainty.interval",
+          "args": {
+            "hits": 9,
+            "of": 10
+          },
+          "words": {
+            "from": "doneness.jammy",
+            "to": "doneness.hard"
+          }
+        },
+        "mostLikely": {
+          "key": "certainty.mostLikely",
+          "args": {},
+          "words": {
+            "word": "doneness.hard"
+          }
+        },
+        "mostLikelyShown": true
+      },
+      {
+        "p": [
+          0.01,
+          0.02,
+          0.1,
+          0.27,
+          0.6
+        ],
+        "asked": 4,
+        "certainty": "wildGuess",
+        "key": "certainty.wildGuess",
+        "interval": {
+          "key": "certainty.interval",
+          "args": {
+            "hits": 9,
+            "of": 10
+          },
+          "words": {
+            "from": "doneness.jammy",
+            "to": "doneness.hard"
+          }
+        },
+        "mostLikely": {
+          "key": "certainty.mostLikely",
+          "args": {},
+          "words": {
+            "word": "doneness.hard"
+          }
+        },
+        "mostLikelyShown": false
+      },
+      {
+        "p": [
+          0.12,
+          0.25,
+          0.32,
+          0.22,
+          0.09
+        ],
+        "asked": 0,
+        "certainty": "wildGuess",
+        "key": "certainty.wildGuess",
+        "interval": {
+          "key": "certainty.interval",
+          "args": {
+            "hits": 9,
+            "of": 10
+          },
+          "words": {
+            "from": "doneness.runny",
+            "to": "doneness.fudgy"
+          }
+        },
+        "mostLikely": {
+          "key": "certainty.mostLikely",
+          "args": {},
+          "words": {
+            "word": "doneness.jammy"
+          }
+        },
+        "mostLikelyShown": true
+      },
+      {
+        "p": [
+          0.12,
+          0.25,
+          0.32,
+          0.22,
+          0.09
+        ],
+        "asked": 1,
+        "certainty": "wildGuess",
+        "key": "certainty.wildGuess",
+        "interval": {
+          "key": "certainty.interval",
+          "args": {
+            "hits": 9,
+            "of": 10
+          },
+          "words": {
+            "from": "doneness.runny",
+            "to": "doneness.fudgy"
+          }
+        },
+        "mostLikely": {
+          "key": "certainty.mostLikely",
+          "args": {},
+          "words": {
+            "word": "doneness.jammy"
+          }
+        },
+        "mostLikelyShown": true
+      },
+      {
+        "p": [
+          0.12,
+          0.25,
+          0.32,
+          0.22,
+          0.09
+        ],
+        "asked": 2,
+        "certainty": "wildGuess",
+        "key": "certainty.wildGuess",
+        "interval": {
+          "key": "certainty.interval",
+          "args": {
+            "hits": 9,
+            "of": 10
+          },
+          "words": {
+            "from": "doneness.runny",
+            "to": "doneness.fudgy"
+          }
+        },
+        "mostLikely": {
+          "key": "certainty.mostLikely",
+          "args": {},
+          "words": {
+            "word": "doneness.jammy"
+          }
+        },
+        "mostLikelyShown": false
+      },
+      {
+        "p": [
+          0.12,
+          0.25,
+          0.32,
+          0.22,
+          0.09
+        ],
+        "asked": 3,
+        "certainty": "wildGuess",
+        "key": "certainty.wildGuess",
+        "interval": {
+          "key": "certainty.interval",
+          "args": {
+            "hits": 9,
+            "of": 10
+          },
+          "words": {
+            "from": "doneness.runny",
+            "to": "doneness.fudgy"
+          }
+        },
+        "mostLikely": {
+          "key": "certainty.mostLikely",
+          "args": {},
+          "words": {
+            "word": "doneness.jammy"
+          }
+        },
+        "mostLikelyShown": true
+      },
+      {
+        "p": [
+          0.12,
+          0.25,
+          0.32,
+          0.22,
+          0.09
+        ],
+        "asked": 4,
+        "certainty": "wildGuess",
+        "key": "certainty.wildGuess",
+        "interval": {
+          "key": "certainty.interval",
+          "args": {
+            "hits": 9,
+            "of": 10
+          },
+          "words": {
+            "from": "doneness.runny",
+            "to": "doneness.fudgy"
+          }
+        },
+        "mostLikely": {
+          "key": "certainty.mostLikely",
+          "args": {},
+          "words": {
+            "word": "doneness.jammy"
+          }
+        },
+        "mostLikelyShown": true
+      }
+    ]
+  },
   "phase": [
     {
       "phase": "IDLE",

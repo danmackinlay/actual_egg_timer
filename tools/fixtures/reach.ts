@@ -1,6 +1,7 @@
 /**
- * fixtures/reach.json: the odds at every level, the warning they give, the
- * answer at a level and with its time decided, the shading, the advice.
+ * fixtures/reach.json: the odds and the certainty at every level, the
+ * warning they give, the answer at a level and with its time decided, the
+ * shading, the advice.
  */
 
 import { CookSetup } from '../../src/core/protocol.js';
@@ -11,7 +12,7 @@ import { decide, decisionInputs } from '../../src/core/decide.js';
 import { DoseGrid } from '../../src/core/doseGrid.js';
 import { logYolkTarget, solveCookTime } from '../../src/core/solve.js';
 import {
-  ADVICE_BELOW_TENTHS, ADVICE_GAIN, ADVICE_MARGIN_TENTHS, OddsProfile, PROFILE_STEP, REACH_ODDS,
+  ADVICE_BELOW_TENTHS, ADVICE_GAIN, ADVICE_MARGIN_TENTHS, LevelOdds, OddsProfile, PROFILE_STEP,
   SHADE_BEST_MIN, adviceWanted, answerAt, decideAnswer, envelopeBounds, lowOddsAt, oddsNear, oddsProfile,
   pricedChanges, protocolAdvice, shadingOf, unpricedAdvice,
 } from '../../src/core/reach.js';
@@ -23,8 +24,9 @@ import {
 import { particleRows } from './shared.js';
 import { referenceSetup } from '../common.js';
 
-/* The odds at every level, the range at 3/10 or better, the warning outside
- * it, the shading and the advice (src/core/reach.ts). A profile is a solve and a
+/* The odds and the certainty at every level, the range that is not a wild
+ * guess, the warning outside it, the shading and the advice
+ * (src/core/reach.ts). A profile is a solve and a
  * decision per level, so both apps must walk the same levels in the same
  * order and land on the same ends. The surfaces are coarse, as decide.json's
  * is, and built per pot from the production spec; the posteriors are
@@ -70,6 +72,7 @@ function decidedRow(
     },
     decision: d.decision,
     outcome: d.outcome,
+    certainty: d.certainty,
     nudge_s: d.nudge_s,
     adviceWanted: d.adviceWanted,
   };
@@ -125,9 +128,10 @@ const reachProfiles = REACH_CASES.map((rc, index) => {
 
 /* The owner's egg (DECISIONS.md 83 and 84; test/reach.test.ts 11): 58 g
  * from the fridge into boiling water and an ice bath, after one egg asked
- * soft that came out just right with a runny white. Soft is under 3/10 and
- * is chosen anyway, the slider resting there (83); its own choice is later
- * than jammy's, and the time decided there is no later than jammy's (84).
+ * soft that came out just right with a runny white. Soft was under 3/10 and
+ * is chosen anyway, the slider resting there (83), a ballpark since the
+ * `certainty` draft; its own choice is later than jammy's, and the time
+ * decided there is no later than jammy's (84).
  * Every slider position from the softest the white allows to fudgy, so the
  * time is seen never to fall as the level rises. */
 const OWNER_EGG = eggFromMass(0.058);
@@ -186,7 +190,7 @@ for (const range of REACH_RANGES) {
   // that steps by multiplying puts them: still the end, not past it.
   for (const level of [0, 0.05, 0.2, 0.23, 0.3, 35 * 0.01, 0.5, 0.63, 70 * 0.01, 0.8, 0.85, 0.95, 1]) {
     const profile: OddsProfile | null = range === null ? null : {
-      points: [], best: 0.6, physicalSoftest: 0.1, physicalHardest: 0.9,
+      points: [], best: 0.6, bestAsked: 0.6, physicalSoftest: 0.1, physicalHardest: 0.9,
       softest: range.softest, hardest: range.hardest,
     };
     reachLowOdds.push({ range: range, level: level, lowOdds: lowOddsAt(profile, level) });
@@ -201,18 +205,20 @@ const ADVICE_SETUPS: { setup: CookSetup; eggFromClass: boolean; startAssumed: bo
   { setup: referenceSetup({ eggStart_C: 5, afterBoil: 'off', waterLitres: 8 }), eggFromClass: false, startAssumed: true },
   { setup: referenceSetup({ afterBoil: 'off', waterLitres: 12 }), eggFromClass: false, startAssumed: true },
 ];
+/** A point made by hand: the odds the advice reads, and a chance of the word
+ *  asked and a class it does not. */
+function handPoint(level: number, cookTime_s: number, odds: number, pAsked: number): LevelOdds {
+  return { level: level, cookTime_s: cookTime_s, odds: odds, pAsked: pAsked, certainty: 'ballpark' };
+}
+
 const ADVICE_PROFILE: OddsProfile = {
-  points: [
-    { level: 0, cookTime_s: 300, odds: 0.5 }, { level: 0.5, cookTime_s: 400, odds: 0.7 },
-    { level: 1, cookTime_s: 500, odds: 0.3 },
-  ],
-  best: 0.7, physicalSoftest: 0, physicalHardest: 1, softest: 0, hardest: 1,
+  points: [handPoint(0, 300, 0.5, 0.6), handPoint(0.5, 400, 0.7, 0.9), handPoint(1, 500, 0.3, 0.5)],
+  best: 0.7, bestAsked: 0.9, physicalSoftest: 0, physicalHardest: 1, softest: 0, hardest: 1,
 };
 
 export const reachFixture = {
-  about: 'The odds at every level, the range at 3/10 or better, the warning outside it, the answer with its time decided, the shading and the advice. src/core/reach.ts.',
+  about: 'The odds and the certainty at every level, the range that is not a wild guess, the warning outside it, the answer with its time decided, the shading and the advice. src/core/reach.ts.',
   constants: {
-    reachOdds: REACH_ODDS,
     profileStep: PROFILE_STEP,
     adviceBelowTenths: ADVICE_BELOW_TENTHS,
     adviceMarginTenths: ADVICE_MARGIN_TENTHS,
@@ -222,14 +228,13 @@ export const reachFixture = {
   profiles: reachProfiles,
   owner: ownerDecided,
   neverSets: neverSets,
-  // The shading either side of SHADE_BEST_MIN: none below it.
+  // The shading either side of SHADE_BEST_MIN: none below it. The odds run
+  // against the chance of the word asked, so a shading read off the odds
+  // shows.
   shading: [SHADE_BEST_MIN - 0.001, SHADE_BEST_MIN, 0.3].map((best) => {
     const profile: OddsProfile = {
-      points: [
-        { level: 0, cookTime_s: 300, odds: best / 2 }, { level: 0.5, cookTime_s: 400, odds: best },
-        { level: 1, cookTime_s: 500, odds: 0 },
-      ],
-      best: best, physicalSoftest: 0, physicalHardest: 1, softest: null, hardest: null,
+      points: [handPoint(0, 300, 0.2, best / 2), handPoint(0.5, 400, 0, best), handPoint(1, 500, 0.4, 0)],
+      best: 0.4, bestAsked: best, physicalSoftest: 0, physicalHardest: 1, softest: null, hardest: null,
     };
     return { profile: profile, shading: shadingOf(profile) };
   }),

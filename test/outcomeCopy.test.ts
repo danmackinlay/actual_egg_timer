@@ -16,7 +16,11 @@ import { readFileSync } from 'node:fs';
 
 import { Lean, Outcome } from '../src/core/outcome.js';
 import { WHITE_RISK } from '../src/core/outcome.js';
-import { DIRECTION_LIKELY, directionKey, rangeWords, whiteAtRisk } from '../src/core/wording.js';
+import { Certainty, wordCertainty } from '../src/core/certainty.js';
+import {
+  DIRECTION_LIKELY, certaintyKey, directionKey, intervalWords, mostLikelyShown, mostLikelyWords, rangeWords,
+  whiteAtRisk,
+} from '../src/core/wording.js';
 import { restoreOutcome } from '../src/ui/outcome.js';
 
 const MESSAGES = (JSON.parse(readFileSync('copy/en.json', 'utf8')) as { messages: Record<string, unknown> }).messages;
@@ -41,6 +45,39 @@ test('the direction: "probably just right" from one half, and the lean decides t
   for (const [right, lean, key] of cases) {
     assert.equal(directionKey(outcome({ pJustRight: right, lean: lean })), key, `${right} ${lean}`);
     assert.ok(key in MESSAGES, `${key} is not in copy/en.json`);
+  }
+});
+
+test('the line under the time: one key per class, each in the catalogue', () => {
+  const cases: [Certainty, string][] = [
+    ['veryCertain', 'certainty.veryCertain'], ['ballpark', 'certainty.ballpark'], ['wildGuess', 'certainty.wildGuess'],
+  ];
+  for (const [c, key] of cases) {
+    assert.equal(certaintyKey(c), key);
+    assert.ok(key in MESSAGES, `${key} is not in copy/en.json`);
+  }
+});
+
+test('the interval in the slider\'s words, 9 times in 10, one word when one word holds it; most likely, shown unpressed only when not the word asked', () => {
+  // A fresh jammy egg: wide, most likely the word asked.
+  const fresh = wordCertainty([0.12, 0.25, 0.32, 0.22, 0.09], 2);
+  assert.deepEqual(intervalWords(fresh), {
+    key: 'certainty.interval', args: { hits: 9, of: 10 }, words: { from: 'doneness.runny', to: 'doneness.fudgy' },
+  });
+  assert.deepEqual(mostLikelyWords(fresh), { key: 'certainty.mostLikely', args: {}, words: { word: 'doneness.jammy' } });
+  assert.equal(mostLikelyShown(fresh), false);
+  // Very certain: one word holds 9 in 10.
+  const sure = wordCertainty([0.01, 0.01, 0.94, 0.03, 0.01], 2);
+  assert.deepEqual(intervalWords(sure), {
+    key: 'certainty.interval.one', args: { hits: 9, of: 10 }, words: { word: 'doneness.jammy' },
+  });
+  // Soft asked on a pot that runs firm: most likely jammy, shown unpressed.
+  const firm = wordCertainty([0.03, 0.2, 0.68, 0.07, 0.02], 1);
+  assert.equal(firm.certainty, 'ballpark');
+  assert.deepEqual(mostLikelyWords(firm).words, { word: 'doneness.jammy' });
+  assert.equal(mostLikelyShown(firm), true);
+  for (const key of ['certainty.interval', 'certainty.interval.one', 'certainty.mostLikely']) {
+    assert.ok(key in MESSAGES, key);
   }
 });
 

@@ -12894,123 +12894,170 @@
             {
               "level": 0,
               "cookTime_s": 427.09287612262324,
-              "odds": 0.025443367384835762
+              "odds": 0.025443367384835762,
+              "pAsked": 0.06032522305045454,
+              "certainty": "wildGuess"
             },
             {
               "level": 0.05,
               "cookTime_s": 427.09287612262324,
-              "odds": 0.03884330438007384
+              "odds": 0.03884330438007384,
+              "pAsked": 0.06032522305045454,
+              "certainty": "wildGuess"
             },
             {
               "level": 0.1,
               "cookTime_s": 427.09287612262324,
-              "odds": 0.08427303093917654
+              "odds": 0.08427303093917654,
+              "pAsked": 0.06032522305045454,
+              "certainty": "wildGuess"
+            },
+            {
+              "level": 0.11,
+              "cookTime_s": 427.09287612262324,
+              "odds": 0.10262154619686278,
+              "pAsked": 0.06032522305045454,
+              "certainty": "wildGuess"
+            },
+            {
+              "level": 0.12,
+              "cookTime_s": 427.09287612262324,
+              "odds": 0.12588371199551185,
+              "pAsked": 0.8210903291375433,
+              "certainty": "ballpark"
             },
             {
               "level": 0.15,
               "cookTime_s": 427.09287612262324,
-              "odds": 0.22831751595081035
-            },
-            {
-              "level": 0.16,
-              "cookTime_s": 427.09287612262324,
-              "odds": 0.2700759503485684
-            },
-            {
-              "level": 0.17,
-              "cookTime_s": 427.09287612262324,
-              "odds": 0.31290527454372613
+              "odds": 0.22831751595081035,
+              "pAsked": 0.8210903291375433,
+              "certainty": "ballpark"
             },
             {
               "level": 0.2,
               "cookTime_s": 427.09287612262324,
-              "odds": 0.44375378588862635
+              "odds": 0.44375378588862635,
+              "pAsked": 0.8210903291375433,
+              "certainty": "ballpark"
             },
             {
               "level": 0.25,
               "cookTime_s": 437.30335156992464,
-              "odds": 0.5059476968453629
+              "odds": 0.5059476968453629,
+              "pAsked": 0.6768733876078068,
+              "certainty": "ballpark"
             },
             {
               "level": 0.3,
               "cookTime_s": 447.22586970717657,
-              "odds": 0.5630872819401417
+              "odds": 0.5630872819401417,
+              "pAsked": 0.4469940231387328,
+              "certainty": "ballpark"
             },
             {
               "level": 0.35,
               "cookTime_s": 457.15494522500205,
-              "odds": 0.6028381101804503
+              "odds": 0.6028381101804503,
+              "pAsked": 0.7087807730427632,
+              "certainty": "ballpark"
             },
             {
               "level": 0.4,
               "cookTime_s": 467.8433093100391,
-              "odds": 0.6219671956037834
+              "odds": 0.6219671956037834,
+              "pAsked": 0.8175024592689208,
+              "certainty": "ballpark"
             },
             {
               "level": 0.45,
               "cookTime_s": 479.4429642727579,
-              "odds": 0.6283965151267064
+              "odds": 0.6283965151267064,
+              "pAsked": 0.7821654999015191,
+              "certainty": "ballpark"
             },
             {
               "level": 0.5,
               "cookTime_s": 491.9146272378217,
-              "odds": 0.6301639838356251
+              "odds": 0.6301639838356251,
+              "pAsked": 0.5616912831339739,
+              "certainty": "ballpark"
             },
             {
               "level": 0.55,
               "cookTime_s": 505.15279772770486,
-              "odds": 0.6310673827258934
+              "odds": 0.6310673827258934,
+              "pAsked": 0.6649036687640119,
+              "certainty": "ballpark"
             },
             {
               "level": 0.6,
               "cookTime_s": 518.7645290299407,
-              "odds": 0.6319327879421008
+              "odds": 0.6319327879421008,
+              "pAsked": 0.8446411006045123,
+              "certainty": "ballpark"
             },
             {
               "level": 0.65,
               "cookTime_s": 532.7642590597446,
-              "odds": 0.632977538035771
+              "odds": 0.632977538035771,
+              "pAsked": 0.9033926780523671,
+              "certainty": "veryCertain"
             },
             {
               "level": 0.7,
               "cookTime_s": 547.3471226672557,
-              "odds": 0.6343074453432929
+              "odds": 0.6343074453432929,
+              "pAsked": 0.8967450574618306,
+              "certainty": "ballpark"
             },
             {
               "level": 0.75,
               "cookTime_s": 562.3509660346522,
-              "odds": 0.6358221765213027
+              "odds": 0.6358221765213027,
+              "pAsked": 0.8022600990886348,
+              "certainty": "ballpark"
             },
             {
               "level": 0.8,
               "cookTime_s": 577.8254790821766,
-              "odds": 0.6375340954360619
+              "odds": 0.6375340954360619,
+              "pAsked": 0.5490953438475451,
+              "certainty": "ballpark"
             },
             {
               "level": 0.85,
               "cookTime_s": 593.8158097846522,
-              "odds": 0.6394520686766878
+              "odds": 0.6394520686766878,
+              "pAsked": 0.6957422273495901,
+              "certainty": "ballpark"
             },
             {
               "level": 0.9,
               "cookTime_s": 610.545126039637,
-              "odds": 0.6416323595863207
+              "odds": 0.6416323595863207,
+              "pAsked": 0.863286546893359,
+              "certainty": "ballpark"
             },
             {
               "level": 0.95,
               "cookTime_s": 627.8896397900577,
-              "odds": 0.6439944189976243
+              "odds": 0.6439944189976243,
+              "pAsked": 0.9224282492094874,
+              "certainty": "veryCertain"
             },
             {
               "level": 1,
               "cookTime_s": 645.9283971576435,
-              "odds": 0.646532064998354
+              "odds": 0.646532064998354,
+              "pAsked": 0.9406504307553947,
+              "certainty": "veryCertain"
             }
           ],
           "best": 0.646532064998354,
+          "bestAsked": 0.9406504307553947,
           "physicalSoftest": 0,
           "physicalHardest": 1,
-          "softest": 0.17,
+          "softest": 0.12,
           "hardest": 1
         }
       },
