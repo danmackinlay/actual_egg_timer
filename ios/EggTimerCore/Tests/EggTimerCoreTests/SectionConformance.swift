@@ -74,7 +74,7 @@ struct SectionConformance {
         }
     }
 
-    @Test("the egg the settings aim for, at the yolk's peak")
+    @Test("the egg the settings aim for, as eaten")
     func previews() throws {
         let file = try Fixtures.load("section.json")
         let egg = try Geometry.eggFromMass(file.object("egg").num("mass_kg"))
@@ -88,7 +88,7 @@ struct SectionConformance {
             let name = try p.str("name")
             let view = try previewSection(
                 egg: egg, setup: cookSetup(p.object("setup")), params: params, cookTimeS: p.num("cookTime_s"),
-                peakYolkTimeS: p.num("peakYolkTime_s"), whiteTargetMin: p.num("whiteTarget_min")
+                whiteTargetMin: p.num("whiteTarget_min")
             )
             let temperature = try p.numbers("temperature_C")
             let set = try p.numbers("set")

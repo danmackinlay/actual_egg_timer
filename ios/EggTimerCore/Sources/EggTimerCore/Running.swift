@@ -56,11 +56,15 @@ public struct Pulled: Sendable, Equatable {
     public var dueS: Double
     public var outS: Double
     public var by: PulledBy
+    /// Whether the egg is known to have come out then: a cook's tap always; a
+    /// pull by `timeout` only once the cook says it stands (`pullStands`).
+    public var confirmed: Bool
 
-    public init(dueS: Double, outS: Double, by: PulledBy) {
+    public init(dueS: Double, outS: Double, by: PulledBy, confirmed: Bool) {
         self.dueS = dueS
         self.outS = outS
         self.by = by
+        self.confirmed = confirmed
     }
 }
 
@@ -71,11 +75,15 @@ public struct CookEvents: Sendable, Equatable {
     public var pulled: Pulled?
     /// The counted cooling ended. Never written on the counter.
     public var cooledAtS: Double?
+    /// The pull rang, the egg still in: held by a plan the cook did not
+    /// cause, cleared by anything the cook tells the plan after it.
+    public var rangAtS: Double?
 
-    public init(boilAtS: Double? = nil, pulled: Pulled? = nil, cooledAtS: Double? = nil) {
+    public init(boilAtS: Double? = nil, pulled: Pulled? = nil, cooledAtS: Double? = nil, rangAtS: Double? = nil) {
         self.boilAtS = boilAtS
         self.pulled = pulled
         self.cooledAtS = cooledAtS
+        self.rangAtS = rangAtS
     }
 
     /// A cook with nothing observed yet.
@@ -101,6 +109,10 @@ public struct RunningCook: Sendable, Equatable {
     /// Since when the choices have said a cold start; nil while they say
     /// boiling (`boilToRemember`).
     public var coldSinceS: Double?
+    /// The first moment the choices said a boiling start: the start for a
+    /// cook begun hot, the first correction to boiling for one begun cold;
+    /// nil if they never have (`boilToRemember`).
+    public var firstHotAtS: Double?
     /// When the choices or the start were last corrected; nil until they
     /// are. A plan never puts the pull before it (`replan`).
     public var correctedAtS: Double?
@@ -108,7 +120,7 @@ public struct RunningCook: Sendable, Equatable {
     public init(
         idMs: Double, startedAtS: Double, choices: CookChoices, events: CookEvents, nudgeS: Double,
         boilMemory: BoilMemory, units: Units, lang: String, boilRemembered: Bool, coldSinceS: Double?,
-        correctedAtS: Double?
+        firstHotAtS: Double?, correctedAtS: Double?
     ) {
         self.idMs = idMs
         self.startedAtS = startedAtS
@@ -120,6 +132,7 @@ public struct RunningCook: Sendable, Equatable {
         self.lang = lang
         self.boilRemembered = boilRemembered
         self.coldSinceS = coldSinceS
+        self.firstHotAtS = firstHotAtS
         self.correctedAtS = correctedAtS
     }
 
@@ -128,7 +141,7 @@ public struct RunningCook: Sendable, Equatable {
     public var jsonObject: [String: Any] {
         let c = choices
         let pulled: Any = events.pulled.map {
-            ["due_s": $0.dueS, "out_s": $0.outS, "by": $0.by.rawValue] as [String: Any]
+            ["due_s": $0.dueS, "out_s": $0.outS, "by": $0.by.rawValue, "confirmed": $0.confirmed] as [String: Any]
         } ?? NSNull()
         return [
             "id_ms": idMs,
@@ -143,7 +156,7 @@ public struct RunningCook: Sendable, Equatable {
             ] as [String: Any],
             "events": [
                 "boilAt_s": events.boilAtS ?? NSNull(), "pulled": pulled,
-                "cooledAt_s": events.cooledAtS ?? NSNull(),
+                "cooledAt_s": events.cooledAtS ?? NSNull(), "rangAt_s": events.rangAtS ?? NSNull(),
             ] as [String: Any],
             "nudge_s": nudgeS,
             "boilMemory": boilMemory,
@@ -151,6 +164,7 @@ public struct RunningCook: Sendable, Equatable {
             "lang": lang,
             "boilRemembered": boilRemembered,
             "coldSince_s": coldSinceS ?? NSNull(),
+            "firstHotAt_s": firstHotAtS ?? NSNull(),
             "correctedAt_s": correctedAtS ?? NSNull(),
         ]
     }
@@ -204,7 +218,8 @@ public func startCook(
     return RunningCook(
         idMs: nowMs.rounded(), startedAtS: start, choices: choices, events: .none, nudgeS: nudgeS,
         boilMemory: boilMemory, units: units, lang: lang, boilRemembered: hasBoilMemory(boilMemory),
-        coldSinceS: choices.startMode == .cold ? start : nil, correctedAtS: nil
+        coldSinceS: choices.startMode == .cold ? start : nil, firstHotAtS: choices.startMode == .hot ? start : nil,
+        correctedAtS: nil
     )
 }
 
@@ -220,7 +235,8 @@ public func withBoil(_ cook: RunningCook, nowS: Double) -> RunningCook {
 }
 
 /// A correction at `nowS`: the choices replaced. The start and the events are
-/// kept.
+/// kept, but for a pull that rang; after the pull, the level the egg was
+/// pulled at is kept (the slider only previews).
 public func corrected(_ cook: RunningCook, choices: CookChoices, nowS: Double) -> RunningCook {
     var since: Double?
     if choices.startMode == .cold {
@@ -232,6 +248,9 @@ public func corrected(_ cook: RunningCook, choices: CookChoices, nowS: Double) -
     }
     var next = cook
     next.choices = choices
+    if cook.events.pulled != nil { next.choices.level = cook.choices.level }
+    if cook.firstHotAtS == nil, choices.startMode == .hot { next.firstHotAtS = nowS }
+    next.events.rangAtS = nil
     next.coldSinceS = since
     next.correctedAtS = nowS
     return next
@@ -248,13 +267,42 @@ public func latestStartS(_ cook: RunningCook, nowS: Double) -> Double {
     return latest
 }
 
+/// The earliest the start can be corrected to: the most the app takes for a
+/// time to boil before Start was pressed (`idMs`), fixed at the press.
+public func earliestStartS(_ cook: RunningCook) -> Double {
+    cook.idMs / 1000 - Limits.timeToBoilS.upperBound
+}
+
 /// The start corrected to `startedAtS` at `nowS`, or nil: refused when it is
-/// later than `latestStartS`, or not a time.
+/// later than `latestStartS`, earlier than `earliestStartS`, or not a time.
 public func startCorrected(_ cook: RunningCook, startedAtS: Double, nowS: Double) -> RunningCook? {
     if !startedAtS.isFinite || startedAtS > latestStartS(cook, nowS: nowS) { return nil }
+    if startedAtS < earliestStartS(cook) { return nil }
     var next = cook
     next.startedAtS = startedAtS
+    next.events.rangAtS = nil
     next.correctedAtS = nowS
+    return next
+}
+
+/// The cook's answer when a plan asks (`askIfStillIn`), at `nowS`: the egg is
+/// still in the water. The pull the clock assumed is dropped, with its
+/// cooling, and the cook is planned again as told now.
+public func stillIn(_ cook: RunningCook, nowS: Double) -> RunningCook {
+    guard let p = cook.events.pulled, p.by == .timeout, !p.confirmed else { return cook }
+    var next = cook
+    next.events.pulled = nil
+    next.events.cooledAtS = nil
+    next.events.rangAtS = nil
+    next.correctedAtS = nowS
+    return next
+}
+
+/// The other answer: the egg came out when the clock assumed. The pull stands.
+public func pullStands(_ cook: RunningCook) -> RunningCook {
+    guard let p = cook.events.pulled, !p.confirmed else { return cook }
+    var next = cook
+    next.events.pulled?.confirmed = true
     return next
 }
 
@@ -324,14 +372,18 @@ private func readEvents(_ raw: Any?, startS: Double) -> CookEvents? {
         guard let p = r["pulled"] as? [String: Any],
               let due = finite(p["due_s"]), due >= startS,
               let out = finite(p["out_s"]), out >= due,
-              let by = (p["by"] as? String).flatMap(PulledBy.init(rawValue:)) else { return nil }
-        pulled = Pulled(dueS: due, outS: out, by: by)
+              let by = (p["by"] as? String).flatMap(PulledBy.init(rawValue:)),
+              isJSONBool(p["confirmed"]), let confirmed = p["confirmed"] as? Bool,
+              by == .timeout || confirmed else { return nil }
+        pulled = Pulled(dueS: due, outS: out, by: by, confirmed: confirmed)
     }
     guard let cooled = numberOrNull(r["cooledAt_s"]) else { return nil }
     if let c = cooled {
         guard let pulled, c >= pulled.outS else { return nil }
     }
-    return CookEvents(boilAtS: boil, pulled: pulled, cooledAtS: cooled)
+    guard let rang = numberOrNull(r["rangAt_s"]) else { return nil }
+    if let at = rang, at < startS { return nil }
+    return CookEvents(boilAtS: boil, pulled: pulled, cooledAtS: cooled, rangAtS: rang)
 }
 
 private func readBoilMemory(_ raw: Any?) -> BoilMemory? {
@@ -358,11 +410,13 @@ public func readRunningCook(_ raw: Any?) -> RunningCook? {
           let lang = r["lang"] as? String, !lang.isEmpty,
           isJSONBool(r["boilRemembered"]), let remembered = r["boilRemembered"] as? Bool,
           let since = numberOrNull(r["coldSince_s"]),
+          let firstHot = numberOrNull(r["firstHotAt_s"]),
           let correctedAt = numberOrNull(r["correctedAt_s"]) else { return nil }
     if let at = correctedAt, at < start { return nil }
     return RunningCook(
         idMs: id, startedAtS: start, choices: choices, events: events, nudgeS: nudge, boilMemory: memory,
-        units: units, lang: lang, boilRemembered: remembered, coldSinceS: since, correctedAtS: correctedAt
+        units: units, lang: lang, boilRemembered: remembered, coldSinceS: since, firstHotAtS: firstHot,
+        correctedAtS: correctedAt
     )
 }
 
@@ -398,10 +452,13 @@ public struct CookPlan: Sendable {
     public let nudgeS: Double
     public let cookTimeS: Double
     public let overdue: Bool
+    public let askIfStillIn: Bool
     public let coolS: Double
     public let probeMoment: Bool
     public let deadlines: Deadlines
     public let slowHobAtS: Double?
+    /// When the cook is too old to pick back up (`cookTooOld`).
+    public let tooOldAtS: Double
     public let certainty: CertaintyReading?
     public let forecast: Forecast?
 }
@@ -414,6 +471,22 @@ public func sameDecisionInputs(_ a: DecisionInputs, _ b: DecisionInputs) -> Bool
 
 /// The most lengthenings one plan works through.
 public let slowHobMaxSteps = 100
+
+/// How long past its end a cook is still worth picking back up, s.
+public let restoreWindowS = 3600.0
+
+/// Whether a stored cook is too old to pick back up at `nowS`, from its plan.
+public func cookTooOld(_ plan: CookPlan, nowS: Double) -> Bool {
+    nowS > plan.tooOldAtS
+}
+
+/// The id of the egg still open to correction: the stored running cook's,
+/// until it is too old to pick back up; nil when there is none. Every other
+/// logged egg is final.
+public func openEggId(_ cook: RunningCook?, plan: CookPlan?, nowS: Double) -> Double? {
+    guard let cook, let plan, !cookTooOld(plan, nowS: nowS) else { return nil }
+    return cook.idMs
+}
 
 /// The plan for a cook at `nowS`, under calibration `c`. `nowS` is read by
 /// the slow hob's rule alone. See `replan` in `src/core/running.ts`.
@@ -430,7 +503,10 @@ public func replan(
     let params = calibrationParams(c)
     let carry = leanHintS + cook.nudgeS
 
-    var ramp = tapAt.map { $0 - start } ?? estimateTimeToBoil(cook.boilMemory, litres: ch.waterLitres)
+    // A tap after a late correction to cold runs on the remembered time,
+    // unless no pan was remembered (review 1.2).
+    var ramp = estimateTimeToBoil(cook.boilMemory, litres: ch.waterLitres)
+    if let tap = tapAt, !(cook.boilRemembered && tappedAfterLateCold(cook)) { ramp = tap - start }
     var pot = cookSetupOf(ch, timeToBoilS: ramp)
     var answer = answerAt(c, egg: pot.egg, setup: pot.setup, level: ch.level, profile: nil, snapRetry: true)
     var lengthened = false
@@ -438,9 +514,12 @@ public func replan(
 
     if provisional {
         let heated = nowS - start
+        let most = Limits.timeToBoilS.upperBound
         var last = 0.0
         var step = 0
         while true {
+            // No longer than the most the app takes for a time to boil.
+            if !(ramp < most) { break }
             let t = carriedSolution(
                 egg: pot.egg, setup: pot.setup, params: params, solution: answer.solution, leanS: carry
             ).result.cookTimeS
@@ -455,7 +534,7 @@ public func replan(
             // Creeping: once every slowHobEveryS from `next`, up to the last
             // before now.
             last = creeping ? next + slowHobEveryS * (((heated - next) / slowHobEveryS).rounded(.up) - 1) : fire
-            ramp = last + slowHobExtraS
+            ramp = last + slowHobExtraS < most ? last + slowHobExtraS : most
             lengthened = true
             pot = cookSetupOf(ch, timeToBoilS: ramp)
             answer = answerAt(c, egg: pot.egg, setup: pot.setup, level: ch.level, profile: nil, snapRetry: true)
@@ -497,22 +576,28 @@ public func replan(
     var told = cook.correctedAtS
     if let tapAt, told.map({ tapAt > $0 }) ?? true { told = tapAt }
     var cookTime = planned.result.cookTimeS
+    var cookEnd = start + cookTime
     var overdue = false
     if let pulled {
         cookTime = pulled.dueS - start
+        cookEnd = pulled.dueS
     } else if !provisional, let told, start + cookTime < told {
         cookTime = told - start
+        cookEnd = told
         overdue = true
     }
-    let cookEnd: Double
-    if let pulled {
-        cookEnd = pulled.dueS
-    } else if overdue, let told {
-        cookEnd = told
-    } else {
-        cookEnd = start + cookTime
+    if pulled == nil, !provisional, let rang = e.rangAtS {
+        cookTime = rang - start
+        cookEnd = rang
     }
     let ran = solutionAt(egg: pot.egg, setup: pot.setup, params: params, solution: planned, cookTimeS: cookTime)
+
+    // A pull the clock assumed, and a correction since that would, without
+    // it, pull later or heat again: ask, rather than land in the cooling.
+    var ask = false
+    if let pulled, pulled.by == .timeout, !pulled.confirmed, let at = cook.correctedAtS, at >= pulled.outS {
+        ask = (cold && e.boilAtS == nil) || start + planned.result.cookTimeS > pulled.dueS
+    }
 
     var cool = coolingSecondsFor(ran.result)
     var coolEnd: Double?
@@ -522,14 +607,12 @@ public func replan(
             coolEnd = cooled
             cool = cooled - out
         } else {
-            var end = out + cool
-            if pulled != nil, let at = cook.correctedAtS, end < at {
-                end = at
-                cool = at - out
-            }
-            coolEnd = end
+            coolEnd = out + cool
         }
     }
+
+    let ended = coolEnd ?? pulled?.outS ?? cookEnd + pullGraceSeconds
+    let tooOld = provisional ? start + Limits.timeToBoilS.upperBound : ended + restoreWindowS
 
     var certainty: CertaintyReading?
     var forecast: Forecast?
@@ -547,13 +630,13 @@ public func replan(
     return CookPlan(
         egg: pot.egg, setup: pot.setup, provisional: provisional, lengthened: lengthened, inputs: inputs,
         answer: answer, level: answer.level, solution: ran, decided: decided, leanS: lean, nudgeS: nudge,
-        cookTimeS: cookTime, overdue: overdue, coolS: cool,
+        cookTimeS: cookTime, overdue: overdue, askIfStillIn: ask, coolS: cool,
         probeMoment: probeMomentFor(ran.result, cooling: ch.cooling),
         deadlines: Deadlines(
             cookEndS: cookEnd, coolEndS: coolEnd, provisional: provisional,
             outAtS: pulled?.by == .cook ? pulled?.outS : nil
         ),
-        slowHobAtS: slowHobAt, certainty: certainty, forecast: forecast
+        slowHobAtS: slowHobAt, tooOldAtS: tooOld, certainty: certainty, forecast: forecast
     )
 }
 
@@ -562,21 +645,24 @@ public func replan(
 public func withOut(_ cook: RunningCook, plan: CookPlan, nowS: Double) -> RunningCook {
     if cook.events.pulled != nil || phaseAt(plan.deadlines, nowS: nowS) != .pull { return cook }
     var next = cook
-    next.events.pulled = Pulled(dueS: plan.deadlines.cookEndS, outS: nowS, by: .cook)
+    next.events.pulled = Pulled(dueS: plan.deadlines.cookEndS, outS: nowS, by: .cook, confirmed: true)
     return next
 }
 
 /// The events the clock alone decides, as of `nowS`, from the plan that rang:
-/// the grace run out and the counted cooling ended.
+/// the pull rang, the grace ran out (unconfirmed) and the counted cooling
+/// ended.
 public func eventsDue(_ cook: RunningCook, plan: CookPlan, nowS: Double) -> CookEvents {
     let d = plan.deadlines
     var pulled = cook.events.pulled
     var cooled = cook.events.cooledAtS
+    var rang = cook.events.rangAtS
+    if pulled == nil, rang == nil, !d.provisional, nowS >= d.cookEndS { rang = d.cookEndS }
     if pulled == nil, !d.provisional, nowS >= d.cookEndS + pullGraceSeconds {
-        pulled = Pulled(dueS: d.cookEndS, outS: d.cookEndS + pullGraceSeconds, by: .timeout)
+        pulled = Pulled(dueS: d.cookEndS, outS: d.cookEndS + pullGraceSeconds, by: .timeout, confirmed: false)
     }
     if pulled != nil, cooled == nil, let end = d.coolEndS, nowS >= end { cooled = end }
-    return CookEvents(boilAtS: cook.events.boilAtS, pulled: pulled, cooledAtS: cooled)
+    return CookEvents(boilAtS: cook.events.boilAtS, pulled: pulled, cooledAtS: cooled, rangAtS: rang)
 }
 
 // MARK: - The record, the memory
@@ -630,9 +716,25 @@ public struct BoilToRemember: Sendable, Equatable {
 public func boilToRemember(_ cook: RunningCook) -> BoilToRemember? {
     let ch = cook.choices
     guard ch.startMode == .cold, let tap = cook.events.boilAtS else { return nil }
-    let watched = cook.coldSinceS ?? cook.startedAtS
+    let watched = watchedFromS(cook, tap: tap)
     if watched - cook.startedAtS > estimateTimeToBoil(cook.boilMemory, litres: ch.waterLitres) { return nil }
     return BoilToRemember(litres: ch.waterLitres, seconds: tap - cook.startedAtS)
+}
+
+/// When the cook began watching for the boil tapped at `tap`: when Start was
+/// pressed, for a tap before the choices first said boiling; otherwise when
+/// they last said cold.
+private func watchedFromS(_ cook: RunningCook, tap: Double) -> Double {
+    if let hot = cook.firstHotAtS, tap >= hot { return cook.coldSinceS ?? cook.startedAtS }
+    return cook.idMs / 1000
+}
+
+/// Whether the boil was tapped after a correction from boiling to cold made
+/// later than this water's remembered time to boil.
+private func tappedAfterLateCold(_ cook: RunningCook) -> Bool {
+    guard let tap = cook.events.boilAtS, let hot = cook.firstHotAtS, tap >= hot else { return false }
+    let remembered = estimateTimeToBoil(cook.boilMemory, litres: cook.choices.waterLitres)
+    return watchedFromS(cook, tap: tap) - cook.startedAtS > remembered
 }
 
 /// What a cook leaves when it ends, by Cancel or by Start again: the boil to

@@ -11,9 +11,9 @@ population a prior is drawn from (E6-E8, `COLLECTIVE.md`) are built in
 both, on this branch, not on `main` and not deployed. The web app (`src/`) and the iOS app (`ios/`) carry
 the same model, refusals, particle filter and choice of time, the same
 catalogue of words in two Englishes (Phase F but for Czech), and the same
-layout (`UI.md`). `npm test` runs 356 tests, all passing (5b pins E3's known
-limit). `npm run validate` passes 29/29, `swift test` passes 144 tests
-in 37 suites, and the fit's pytest 9. **Pushed on 29 September** at `5ff6940`, the owner's
+layout (`UI.md`). `npm test` runs 379 tests, all passing (5b pins E3's known
+limit). `npm run validate` passes 29/29, `swift test` passes 151 tests
+in 38 suites, and the fit's pytest 9. **Pushed on 29 September** at `5ff6940`, the owner's
 call: Netlify serves it at actualeggtimer.netlify.app, and the first run of
 `.github/workflows/verify.yml` passed. The iOS app runs from Xcode on the owner's
 phone and has cooked real eggs; the first TestFlight build, 0.3.1 (1), was
@@ -46,7 +46,8 @@ These counts are the only ones in the documents. If you want a number, run
    (93), the web's god files split; both apps driven after them. The one
    screen's design is answered (`DECISIONS.md` 96, 97; `design/one-
    screen.md`), and its core, the running cook, is built (C2,
-   `src/core/running.ts`): next is each app on it, then the one screen in
+   `src/core/running.ts`), with the red-team review of it applied
+   (`design/one-screen-review.md`, `DECISIONS.md` 98): next is each app on it, then the one screen in
    both, with certainty in words on it (93). `0.4.x` is
    merged in as it moves.
 

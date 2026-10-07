@@ -1,19 +1,23 @@
 /**
  * A running cook: its start, its choices and what it observed
- * (design/one-screen.md section 3 and 4; DECISIONS.md 96 and 97).
+ * (design/one-screen.md section 3 and 4; DECISIONS.md 96, 97 and 98).
  *
  * A cook is three things, and everything else is derived from them each time:
  *
  * - THE START: when the egg went in, a clock time the cook can correct ("I
- *   put them in two minutes ago"), never after now or after the first event.
+ *   put them in two minutes ago"), never after now or after the first event,
+ *   nor two hours before Start was pressed.
  * - THE CHOICES: what the sentence, the slider and Settings' pot rows say
  *   (`CookChoices`), the same value the idle screen edits. Every change after
  *   the start is a CORRECTION ("it was always like this"): it replaces the
  *   choices, and the whole cook is planned again from its start.
  * - THE EVENTS: what the cook observed or the clock decided - the boil
- *   tapped, the pull, the end of the counted cooling - each a clock time,
- *   never re-derived, and kept even when a correction makes it unread, so
- *   that changing a setting back gives back the old plan exactly.
+ *   tapped, the pull ringing, the pull, the end of the counted cooling - each
+ *   a clock time, never re-derived, and kept even when a correction makes it
+ *   unread, so that changing a setting back gives back the old plan exactly.
+ *   A pull the clock decided (the grace ran out) stays open to correction
+ *   until the cook says it stands; the pull ringing holds only until the cook
+ *   tells the plan something new.
  *
  * What is derived (the ramp in force, the solve, the decided time, the
  * deadlines `phaseAt` reads, the cooling, how sure, the record's facts) is the
@@ -29,7 +33,7 @@ import { Egg, SizeTable, eggFromMass } from './geometry.js';
 import { CookSetup, Cooling, HeatAfterBoil, StartMode } from './protocol.js';
 import { boilingPointAtAltitude } from './thermo.js';
 import {
-  BoilMemory, Deadlines, PULL_GRACE_SECONDS, SLOW_HOB_EVERY_S, SLOW_HOB_EXTRA_S, SLOW_HOB_WHEN_LEFT_S,
+  BoilMemory, Deadlines, LIMITS, PULL_GRACE_SECONDS, SLOW_HOB_EVERY_S, SLOW_HOB_EXTRA_S, SLOW_HOB_WHEN_LEFT_S,
   ambientFor, coolingSecondsFor, estimateTimeToBoil, hasBoilMemory, phaseAt, probeMomentFor, startTempPreset_C,
 } from './policy.js';
 import { Solution, logYolkTarget } from './solve.js';
@@ -81,6 +85,11 @@ export interface Pulled {
   due_s: number;
   out_s: number;
   by: PulledBy;
+  /** Whether the egg is known to have come out then. A cook's tap is an
+   *  observation, written true. A pull by `timeout` is the clock's
+   *  assumption, not something the cook saw, so it stays open to correction
+   *  (`askIfStillIn`) until the cook says it stands (`pullStands`). */
+  confirmed: boolean;
 }
 
 /** What was observed, as clock times. Never re-derived; kept when a
@@ -92,17 +101,23 @@ export interface CookEvents {
   /** The counted cooling ended. Never written on the counter, where nothing
    *  is counted. */
   cooledAt_s: number | null;
+  /** The pull rang: the plan's pull, the first time the clock passed it with
+   *  the egg still in (`eventsDue`). A plan the cook did not cause - a
+   *  surface landing, an egg folded in another tab - keeps it, so a pull
+   *  already due never moves or rings twice. Anything the cook tells the plan
+   *  after it (a correction, the start, `stillIn`) clears it. */
+  rangAt_s: number | null;
 }
 
 /** A cook with nothing observed yet. */
-export const NO_EVENTS: CookEvents = { boilAt_s: null, pulled: null, cooledAt_s: null };
+export const NO_EVENTS: CookEvents = { boilAt_s: null, pulled: null, cooledAt_s: null, rangAt_s: null };
 
 export interface RunningCook {
   /** When Start was pressed, whole ms since 1970: the record's id on the
    *  web. Never corrected, so a cook logged from two tabs is one egg. */
   id_ms: number;
-  /** When the egg went in: correctable, never after now or the first event
-   *  (`startCorrected`). */
+  /** When the egg went in: correctable, never after now or the first event,
+   *  nor two hours before Start was pressed (`startCorrected`). */
   startedAt_s: number;
   choices: CookChoices;
   events: CookEvents;
@@ -124,6 +139,12 @@ export interface RunningCook {
    *  was told it was cold only after the water could have boiled is used for
    *  the cook and not remembered (`boilToRemember`, DECISIONS.md 97). */
   coldSince_s: number | null;
+  /** The first moment the choices said a boiling start, a clock time: the
+   *  start for a cook begun hot, the first correction to boiling for one
+   *  begun cold, and null if they never have. A tap made before it was made
+   *  in the cold the cook began with, so a stray cold -> hot -> cold after it
+   *  does not stop it being remembered (review 2.2). */
+  firstHotAt_s: number | null;
   /** When the choices or the start were last corrected, a clock time; null
    *  until they are. Nothing observed before it said the egg was out, so a
    *  plan never puts the pull before it (`replan`): a correction that makes
@@ -191,6 +212,7 @@ export function startCook(
     lang: lang,
     boilRemembered: hasBoilMemory(boilMemory),
     coldSince_s: choices.startMode === 'cold' ? start : null,
+    firstHotAt_s: choices.startMode === 'hot' ? start : null,
     correctedAt_s: null,
   };
 }
@@ -206,18 +228,31 @@ export function withBoil(cook: RunningCook, now_s: number): RunningCook {
 }
 
 /** A correction at `now_s`: the choices replaced, as if they had always been
- *  these. The start and the events are kept. */
+ *  these. The start and the events are kept, but for a pull that rang: the
+ *  plan is made afresh from what the cook says now. After the pull the yolk
+ *  wanted is not corrected: it was not a mistake, so the record keeps the
+ *  level the egg was pulled at, and the slider only previews (DECISIONS.md
+ *  98). */
 export function corrected(cook: RunningCook, choices: CookChoices, now_s: number): RunningCook {
   let since: number | null = null;
   if (choices.startMode === 'cold') {
     since = cook.choices.startMode === 'cold' && cook.coldSince_s !== null ? cook.coldSince_s : now_s;
   }
-  return { ...cook, choices: choices, coldSince_s: since, correctedAt_s: now_s };
+  const firstHot = cook.firstHotAt_s === null && choices.startMode === 'hot' ? now_s : cook.firstHotAt_s;
+  const next = cook.events.pulled === null ? choices : { ...choices, level: cook.choices.level };
+  return {
+    ...cook, choices: next, events: { ...cook.events, rangAt_s: null }, coldSince_s: since, firstHotAt_s: firstHot,
+    correctedAt_s: now_s,
+  };
 }
 
 /** The latest the start can be corrected to at `now_s`: now, or the first
  *  event, whichever is sooner. An event the choices do not read (a boil tap
- *  on a cook corrected to boiling) still counts: changing back reads it. */
+ *  on a cook corrected to boiling) still counts: changing back reads it, and
+ *  would read a boil before the egg went in. So a cook who pressed Start as
+ *  the pan went on, tapped the boil, put the eggs in then and corrects to
+ *  boiling cannot move the start past that tap, and the start's panel has
+ *  to say so with the limit (design/one-screen.md section 3). */
 export function latestStart_s(cook: RunningCook, now_s: number): number {
   let latest = now_s;
   const e = cook.events;
@@ -227,11 +262,43 @@ export function latestStart_s(cook: RunningCook, now_s: number): number {
   return latest;
 }
 
+/** The earliest the start can be corrected to: the most the app takes for a
+ *  time to boil (`LIMITS.timeToBoil_s`, two hours) before Start was pressed
+ *  (`id_ms`). No egg boils that long, and a cold start that has heated that
+ *  long is abandoned (`tooOldAt_s`); it also keeps a typing slip - a start
+ *  in 1970 - out of the plan. Fixed at the press, so the limit the start's
+ *  panel shows does not move with the clock. */
+export function earliestStart_s(cook: RunningCook): number {
+  return cook.id_ms / 1000 - LIMITS.timeToBoil_s.hi;
+}
+
 /** The start corrected to `startedAt_s` at `now_s`, or null: refused when it
- *  is later than `latestStart_s`, or not a time. */
+ *  is later than `latestStart_s`, earlier than `earliestStart_s`, or not a
+ *  time. */
 export function startCorrected(cook: RunningCook, startedAt_s: number, now_s: number): RunningCook | null {
   if (!Number.isFinite(startedAt_s) || startedAt_s > latestStart_s(cook, now_s)) return null;
-  return { ...cook, startedAt_s: startedAt_s, correctedAt_s: now_s };
+  if (startedAt_s < earliestStart_s(cook)) return null;
+  return { ...cook, startedAt_s: startedAt_s, events: { ...cook.events, rangAt_s: null }, correctedAt_s: now_s };
+}
+
+/** The cook's answer when a plan asks (`askIfStillIn`), at `now_s`: the egg
+ *  is still in the water. The pull the clock assumed is dropped, with the
+ *  cooling it began, and the cook planned again as told now: a pull already
+ *  past is now, and rings. Otherwise - no pull the clock assumed, or one the
+ *  cook said stands - the cook as it was. */
+export function stillIn(cook: RunningCook, now_s: number): RunningCook {
+  const p = cook.events.pulled;
+  if (p === null || p.by !== 'timeout' || p.confirmed) return cook;
+  return { ...cook, events: { ...cook.events, pulled: null, cooledAt_s: null, rangAt_s: null }, correctedAt_s: now_s };
+}
+
+/** The other answer: the egg came out when the clock assumed. The pull
+ *  stands, the correction applies to the record, and the plan does not ask
+ *  again. */
+export function pullStands(cook: RunningCook): RunningCook {
+  const p = cook.events.pulled;
+  if (p === null || p.confirmed) return cook;
+  return { ...cook, events: { ...cook.events, pulled: { ...p, confirmed: true } } };
 }
 
 /* ------------------------------------------------------- the stored cook */
@@ -282,13 +349,15 @@ function readChoices(raw: unknown): CookChoices | null {
 }
 
 /** The events, or null if any is damaged, or before the start, or out of
- *  order: a pull out before it was due, a cooling ended without a pull or
- *  before the egg came out. */
+ *  order: a pull out before it was due, a cook's own tap unconfirmed, a
+ *  cooling ended without a pull or before the egg came out, a pull that rang
+ *  before the start. */
 function readEvents(raw: unknown, start_s: number): CookEvents | null {
   if (!isObject(raw)) return null;
   const boil = raw['boilAt_s'];
   const pulledRaw = raw['pulled'];
   const cooled = raw['cooledAt_s'];
+  const rang = raw['rangAt_s'];
   if (boil !== null && (!isNumber(boil) || boil < start_s)) return null;
   let pulled: Pulled | null = null;
   if (pulledRaw !== null) {
@@ -296,12 +365,15 @@ function readEvents(raw: unknown, start_s: number): CookEvents | null {
     const due = pulledRaw['due_s'];
     const out = pulledRaw['out_s'];
     const by = pulledRaw['by'];
+    const confirmed = pulledRaw['confirmed'];
     if (!isNumber(due) || due < start_s || !isNumber(out) || out < due) return null;
     if (by !== 'cook' && by !== 'timeout') return null;
-    pulled = { due_s: due, out_s: out, by: by };
+    if (typeof confirmed !== 'boolean' || (by === 'cook' && !confirmed)) return null;
+    pulled = { due_s: due, out_s: out, by: by, confirmed: confirmed };
   }
   if (cooled !== null && (!isNumber(cooled) || pulled === null || cooled < pulled.out_s)) return null;
-  return { boilAt_s: boil, pulled: pulled, cooledAt_s: cooled };
+  if (rang !== null && (!isNumber(rang) || rang < start_s)) return null;
+  return { boilAt_s: boil, pulled: pulled, cooledAt_s: cooled, rangAt_s: rang };
 }
 
 /** The pans as remembered, or null if any is not a time. */
@@ -331,6 +403,7 @@ export function readRunningCook(raw: unknown): RunningCook | null {
   const lang = raw['lang'];
   const remembered = raw['boilRemembered'];
   const since = raw['coldSince_s'];
+  const firstHot = raw['firstHotAt_s'];
   const correctedAt = raw['correctedAt_s'];
   if (!isNumber(id) || !(id > 0)) return null;
   if (!isNumber(start) || !(start > 0)) return null;
@@ -345,10 +418,12 @@ export function readRunningCook(raw: unknown): RunningCook | null {
   if (typeof lang !== 'string' || lang === '') return null;
   if (typeof remembered !== 'boolean') return null;
   if (since !== null && !isNumber(since)) return null;
+  if (firstHot !== null && !isNumber(firstHot)) return null;
   if (correctedAt !== null && (!isNumber(correctedAt) || correctedAt < start)) return null;
   return {
     id_ms: id, startedAt_s: start, choices: choices, events: events, nudge_s: nudge, boilMemory: memory,
-    units: units, lang: lang, boilRemembered: remembered, coldSince_s: since, correctedAt_s: correctedAt,
+    units: units, lang: lang, boilRemembered: remembered, coldSince_s: since, firstHotAt_s: firstHot,
+    correctedAt_s: correctedAt,
   };
 }
 
@@ -390,19 +465,32 @@ export interface CookPlan {
    *  (`leanHint_s`) and the cook's nudge, where a time is chosen. */
   lean_s: number;
   nudge_s: number;
-  /** Egg in to the pull, s: the pull's due time once it has happened; else
-   *  the plan's, but never before now. */
+  /** Egg in to the pull, s: the pull's due time once it has happened, or
+   *  the pull that rang; else the plan's, but never before the last thing
+   *  the cook told it (the last correction or the boil tap). */
   cookTime_s: number;
-  /** The plan's own pull had passed when it was made, so the pull is now. */
+  /** The plan's own pull had passed when the cook last told it something,
+   *  so the pull is then. */
   overdue: boolean;
+  /** The pull is one the clock assumed (the grace ran out), and a correction
+   *  since would, without it, put the pull later, or back to heating: the app
+   *  asks whether the egg is still in the water, and answers with `stillIn`
+   *  or `pullStands`. Until it is answered the pull stands. */
+  askIfStillIn: boolean;
   /** The counted cooling, s from the egg out to its end. */
   cool_s: number;
   probeMoment: boolean;
   /** What `phaseAt` reads. */
   deadlines: Deadlines;
   /** While provisional, when the slow hob's rule next lengthens the guess:
-   *  the app plans again then. Null otherwise. */
+   *  the app plans again then. Null otherwise, and once the guess is the
+   *  most the app takes for a time to boil. */
   slowHobAt_s: number | null;
+  /** When the cook is too old to pick back up (`cookTooOld`): an hour past
+   *  its end (the cooling's, or the out's on the counter), or, still
+   *  heating, when the pan has heated for the most the app takes for a time
+   *  to boil, which abandons it. */
+  tooOldAt_s: number;
   /** How sure, at the cook time, and what the record keeps as said: both
    *  need this pot's surface, and are null until it is in. */
   certainty: CertaintyReading | null;
@@ -431,12 +519,40 @@ export function sameDecisionInputs(a: DecisionInputs, b: DecisionInputs): boolea
  *  slow to reach it. */
 export const SLOW_HOB_MAX_STEPS = 100;
 
+/** How long past its end a cook is still worth picking back up, s: an egg
+ *  an hour past its cooling has been eaten or thrown out. Today's web
+ *  `RESTORE_WINDOW_MS` and iOS's bound, now one rule (`cookTooOld`). */
+export const RESTORE_WINDOW_S = 3600;
+
+/** Whether a stored cook is too old to pick back up at `now_s`, from its
+ *  plan: both apps drop it then, rather than restore a timer for an egg
+ *  that is no longer on the hob or the counter. */
+export function cookTooOld(plan: CookPlan, now_s: number): boolean {
+  return now_s > plan.tooOldAt_s;
+}
+
+/**
+ * The id of the egg still open to correction (design/one-screen.md section
+ * 4, review 2.1): the stored running cook's, `cook` with its `plan`, until
+ * it is too old to pick back up; null when there is none. Every other egg
+ * in the log is final, whichever tab asks, and may be sent; this one becomes
+ * final at Start again, which stores another cook, or when it is too old.
+ */
+export function openEggId(cook: RunningCook | null, plan: CookPlan | null, now_s: number): number | null {
+  if (cook === null || plan === null || cookTooOld(plan, now_s)) return null;
+  return cook.id_ms;
+}
+
 /**
  * The plan for a cook at `now_s`, under calibration `c`. `now_s` is read by
  * the slow hob's rule alone.
  *
  * THE TIME TO BOIL. On a cold start, the tap if there is one: the measured
- * ramp. Otherwise the remembered one for the water (the memory as it was at
+ * ramp - but not a tap after a correction from boiling to cold made later
+ * than this water's remembered time to boil, which may have come long after
+ * the water boiled unseen: that cook runs on the remembered time, and on the
+ * tap only when no pan was remembered (DECISIONS.md 98). Otherwise the
+ * remembered one for the water (the memory as it was at
  * the start), and while the cook is still heating, the SLOW HOB'S RULE, as a
  * function of how long it has heated: whenever the pull would come within
  * SLOW_HOB_WHEN_LEFT_S, and SLOW_HOB_EVERY_S after the last lengthening (the
@@ -445,7 +561,10 @@ export const SLOW_HOB_MAX_STEPS = 100;
  * here from the start each time, so a plan is a function of the cook and the
  * clock alone. Where a lengthening would fire again at once - the egg would
  * be done before the water boils - the guess creeps with the clock in steps of
- * SLOW_HOB_EVERY_S, as the tick's would, without a solve per step. A hot start
+ * SLOW_HOB_EVERY_S, as the tick's would, without a solve per step. It stops
+ * at the most the app takes for a time to boil (`LIMITS.timeToBoil_s`, two
+ * hours): a pan still not boiling then is a cook abandoned (`tooOldAt_s`),
+ * not one to plan again every few seconds for ever (review 1.3). A hot start
  * never times its pan: the remembered time is carried for the record only.
  * A pull ends the heating, read or not.
  *
@@ -464,14 +583,22 @@ export const SLOW_HOB_MAX_STEPS = 100;
  * pull in the past makes it the moment of the correction, and `overdue` says
  * so. That moment is stored, not `now_s`, so a plan made again later (a
  * reload, a surface landing) rings for the same pull, and a plan made after
- * an ordinary pull's grace ran out finds it as it was. While provisional the
- * deadline is a guess and is not held; `phaseAt` reads Heating whatever it
- * says.
+ * an ordinary pull's grace ran out finds it as it was. Once the pull has rung
+ * (`rangAt_s`) it is held there until the cook tells the plan something new,
+ * so a plan the cook did not cause - a surface landing - never moves a pull
+ * already due. While provisional the deadline is a guess and is not held;
+ * `phaseAt` reads Heating whatever it says.
+ *
+ * A PULL THE CLOCK ASSUMED. A pull by `timeout` is not something the cook saw.
+ * A correction since it that would, without it, pull later (or heat again)
+ * leaves the pull standing and sets `askIfStillIn`: the app asks, and the
+ * answer is `stillIn` or `pullStands`. A cook's own tap is never asked about.
  *
  * THE COOLING. To the yolk's peak for the cook time that ran
  * (`coolingSecondsFor`), from the egg out - the cook's tap, or the grace
- * running out - and once ended, as it ran. A correction that ends it in the
- * past ends it at the correction.
+ * running out - and once ended, as it ran. A correction whose counted end has
+ * already passed is Done at once, with the counted time: the cooling is not
+ * stretched to the correction.
  *
  * HOW SURE, AND WHAT THE RECORD SAYS WAS SAID: `certaintyAt` and the outcome
  * at the cook time, on this pot's surface.
@@ -490,7 +617,8 @@ export function replan(
   const params = calibrationParams(c);
   const carry = leanHint_s + cook.nudge_s;
 
-  let ramp = tapped ? boilAt - start : estimateTimeToBoil(cook.boilMemory, ch.waterLitres);
+  const measured = tapped && !(cook.boilRemembered && tappedAfterLateCold(cook));
+  let ramp = measured ? boilAt - start : estimateTimeToBoil(cook.boilMemory, ch.waterLitres);
   let pot = cookSetupOf(ch, ramp);
   let answer = answerAt(c, pot.egg, pot.setup, ch.level, null, true);
   let lengthened = false;
@@ -498,8 +626,12 @@ export function replan(
 
   if (provisional) {
     const heated = now_s - start;
+    const most = LIMITS.timeToBoil_s.hi;
     let last = 0.0;
     for (let step = 0; ; step++) {
+      // No longer than the most the app takes for a time to boil: past that
+      // the cook is abandoned (`tooOldAt_s`), not lengthened for ever.
+      if (!(ramp < most)) break;
       const t = carriedSolution(pot.egg, pot.setup, params, answer.solution, carry).result.cookTime_s;
       const next = last + SLOW_HOB_EVERY_S;
       const due = t - SLOW_HOB_WHEN_LEFT_S;
@@ -512,7 +644,7 @@ export function replan(
       // Creeping: once every SLOW_HOB_EVERY_S from `next`, up to the last
       // before now.
       last = creeping ? next + SLOW_HOB_EVERY_S * (Math.ceil((heated - next) / SLOW_HOB_EVERY_S) - 1) : fire;
-      ramp = last + SLOW_HOB_EXTRA_S;
+      ramp = last + SLOW_HOB_EXTRA_S < most ? last + SLOW_HOB_EXTRA_S : most;
       lengthened = true;
       pot = cookSetupOf(ch, ramp);
       answer = answerAt(c, pot.egg, pot.setup, ch.level, null, true);
@@ -543,15 +675,30 @@ export function replan(
   let told = cook.correctedAt_s;
   if (tapped && (told === null || boilAt > told)) told = boilAt;
   let cookTime = planned.result.cookTime_s;
+  let cookEnd = start + cookTime;
   let overdue = false;
   if (pulled !== null) {
     cookTime = pulled.due_s - start;
+    cookEnd = pulled.due_s;
   } else if (!provisional && told !== null && start + cookTime < told) {
     cookTime = told - start;
+    cookEnd = told;
     overdue = true;
   }
-  const cookEnd = pulled !== null ? pulled.due_s : overdue ? told as number : start + cookTime;
+  const rang = e.rangAt_s;
+  if (pulled === null && !provisional && rang !== null) {
+    cookTime = rang - start;
+    cookEnd = rang;
+  }
   const ran = solutionAt(pot.egg, pot.setup, params, planned, cookTime);
+
+  // A pull the clock assumed, and a correction since that would, without it,
+  // pull later or heat again: ask, rather than land in the cooling.
+  let ask = false;
+  if (pulled !== null && pulled.by === 'timeout' && !pulled.confirmed
+    && cook.correctedAt_s !== null && cook.correctedAt_s >= pulled.out_s) {
+    ask = (cold && boilAt === null) || start + planned.result.cookTime_s > pulled.due_s;
+  }
 
   let cool = coolingSecondsFor(ran.result);
   let coolEnd: number | null = null;
@@ -562,13 +709,11 @@ export function replan(
       cool = e.cooledAt_s - out;
     } else {
       coolEnd = out + cool;
-      const at = cook.correctedAt_s;
-      if (pulled !== null && at !== null && coolEnd < at) {
-        coolEnd = at;
-        cool = at - out;
-      }
     }
   }
+
+  const ended = coolEnd !== null ? coolEnd : pulled !== null ? pulled.out_s : cookEnd + PULL_GRACE_SECONDS;
+  const tooOld = provisional ? start + LIMITS.timeToBoil_s.hi : ended + RESTORE_WINDOW_S;
 
   let certainty: CertaintyReading | null = null;
   let forecast: Forecast | null = null;
@@ -594,6 +739,7 @@ export function replan(
     nudge_s: nudge,
     cookTime_s: cookTime,
     overdue: overdue,
+    askIfStillIn: ask,
     cool_s: cool,
     probeMoment: probeMomentFor(ran.result, ch.cooling),
     deadlines: {
@@ -603,6 +749,7 @@ export function replan(
       outAt_s: pulled !== null && pulled.by === 'cook' ? pulled.out_s : null,
     },
     slowHobAt_s: slowHobAt,
+    tooOldAt_s: tooOld,
     certainty: certainty,
     forecast: forecast,
   };
@@ -615,26 +762,31 @@ export function withOut(cook: RunningCook, plan: CookPlan, now_s: number): Runni
   if (cook.events.pulled !== null || phaseAt(plan.deadlines, now_s) !== 'PULL') return cook;
   return {
     ...cook,
-    events: { ...cook.events, pulled: { due_s: plan.deadlines.cookEnd_s, out_s: now_s, by: 'cook' } },
+    events: {
+      ...cook.events, pulled: { due_s: plan.deadlines.cookEnd_s, out_s: now_s, by: 'cook', confirmed: true },
+    },
   };
 }
 
 /**
  * The events the clock alone decides, as of `now_s`, from the plan that
- * rang: the grace run out (the pull, by `timeout`, out at the grace's end) and
- * the counted cooling ended. The app writes them down the first time it sees
- * them past - a phone asleep through the pull writes them on waking - and
- * plans again. The cook's own events are returned as they were.
+ * rang: the pull rang, the grace ran out (the pull, by `timeout`, out at the
+ * grace's end and unconfirmed) and the counted cooling ended. The app writes
+ * them down the first time it sees them past - a phone asleep through the
+ * pull writes them on waking - and plans again. The cook's own events are
+ * returned as they were.
  */
 export function eventsDue(cook: RunningCook, plan: CookPlan, now_s: number): CookEvents {
   const d = plan.deadlines;
   let pulled = cook.events.pulled;
   let cooled = cook.events.cooledAt_s;
+  let rang = cook.events.rangAt_s;
+  if (pulled === null && rang === null && !d.provisional && now_s >= d.cookEnd_s) rang = d.cookEnd_s;
   if (pulled === null && !d.provisional && now_s >= d.cookEnd_s + PULL_GRACE_SECONDS) {
-    pulled = { due_s: d.cookEnd_s, out_s: d.cookEnd_s + PULL_GRACE_SECONDS, by: 'timeout' };
+    pulled = { due_s: d.cookEnd_s, out_s: d.cookEnd_s + PULL_GRACE_SECONDS, by: 'timeout', confirmed: false };
   }
   if (pulled !== null && cooled === null && d.coolEnd_s !== null && now_s >= d.coolEnd_s) cooled = d.coolEnd_s;
-  return { boilAt_s: cook.events.boilAt_s, pulled: pulled, cooledAt_s: cooled };
+  return { boilAt_s: cook.events.boilAt_s, pulled: pulled, cooledAt_s: cooled, rangAt_s: rang };
 }
 
 /* ------------------------------------------------- the record, the memory */
@@ -703,16 +855,38 @@ export interface BoilToRemember {
  * the cook was told to watch for only after the water could already have
  * boiled - corrected from boiling to cold, or the start corrected earlier,
  * past the time this water was remembered to take - since it may have
- * boiled before the cook noticed: that tap is used for this cook, and not
- * remembered. `rememberBoil` refuses what is not a credible time, as ever.
+ * boiled before the cook noticed: that tap is used for this cook (or, after
+ * a late correction to cold, the remembered time is: `replan`), and not
+ * remembered. A tap made before the choices first said boiling was made in
+ * the cold the cook began with, and a stray cold -> hot -> cold after it does
+ * not change that (review 2.2). `rememberBoil` refuses what is not a credible
+ * time, as ever.
  */
 export function boilToRemember(cook: RunningCook): BoilToRemember | null {
   const ch = cook.choices;
   const tap = cook.events.boilAt_s;
   if (ch.startMode !== 'cold' || tap === null) return null;
-  const watched = cook.coldSince_s === null ? cook.startedAt_s : cook.coldSince_s;
-  if (watched - cook.startedAt_s > estimateTimeToBoil(cook.boilMemory, ch.waterLitres)) return null;
+  if (watchedFrom_s(cook, tap) - cook.startedAt_s > estimateTimeToBoil(cook.boilMemory, ch.waterLitres)) return null;
   return { litres: ch.waterLitres, seconds: tap - cook.startedAt_s };
+}
+
+/** When the cook began watching for the boil tapped at `tap`: when Start was
+ *  pressed (`id_ms`), for a tap in the cold the cook began with - before the
+ *  choices first said boiling - and otherwise when they last said cold. */
+function watchedFrom_s(cook: RunningCook, tap: number): number {
+  if (cook.firstHotAt_s === null || tap < cook.firstHotAt_s) return cook.id_ms / 1000;
+  return cook.coldSince_s === null ? cook.startedAt_s : cook.coldSince_s;
+}
+
+/** Whether the boil was tapped after a correction from boiling to cold made
+ *  later than this water's remembered time to boil (review 1.2): the water
+ *  may have boiled unseen long before the tap. */
+function tappedAfterLateCold(cook: RunningCook): boolean {
+  const tap = cook.events.boilAt_s;
+  const hot = cook.firstHotAt_s;
+  if (tap === null || hot === null || tap < hot) return false;
+  const remembered = estimateTimeToBoil(cook.boilMemory, cook.choices.waterLitres);
+  return watchedFrom_s(cook, tap) - cook.startedAt_s > remembered;
 }
 
 /** What a cook leaves when it ends, by Cancel or by Start again: the boil to
