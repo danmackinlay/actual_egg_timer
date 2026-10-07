@@ -197,6 +197,12 @@ core's exports.
       read once from the old key, kept aside and the key deleted, its iOS
       notifications kept (`DECISIONS.md` 81, review 2.6); a stored cook
       dropped by `cookTooOld`, and sharing holding back only `openEggId`.
+      *iOS done* (`5695df8`, `8ff47e2`, `97f4fba`; the web is the other
+      half): `Cook.swift` holds a `RunningCook` under `cookInProgress.v2`
+      (JSONEncoder, to the bit), planned by `replan` on an event, a surface,
+      `slowHobAt_s` or a launch; `eventsDue`, `cookFactsFor`, `cookEnding`
+      and `cookTooOld` as written; the Live Activity's description in its
+      `ContentState`. Driven on the simulator (`LOGBOOK.md`, 7 October 2026).
 - [ ] **C3. Both apps**, screen by screen, checked by driving them;
       `UI.md` rewritten as built.
 

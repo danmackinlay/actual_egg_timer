@@ -5016,3 +5016,65 @@ fixture case changed its answer by that rule (a lighter egg undone after
 its own first pull had also passed: nothing to ask, the egg as done either
 way) and its note with it. The two new cases are appended last, since the
 fixture's records vary with their position.
+
+## 7 October 2026: iOS's state on the running cook (SHIP-0.5 C2, the apps)
+
+`Cook.swift` holds core's `RunningCook` under `cookInProgress.v2` and its
+plan from `replan`; `Ticket`, `Saved`, `resolveCookTime`,
+`Planner.cookResult` and the slow hob's tick are gone. Four commits:
+`5695df8` (core, Swift only: `RunningCook` Codable in the web's shape, so
+the store goes through JSONEncoder and comes back to the bit; the test
+round-trips every readable fixture cook and each again with 17-digit
+doubles), `8ff47e2` (the state), `97f4fba` (the Live Activity's
+description into `ContentState`), `00f3b51` (a probe reading after the
+answer scored against the logged record). No words changed.
+
+**Driven** on an iPhone 17 Pro simulator (iOS 26.5), debug builds,
+screenshots kept with the session. A cold start, 48 g, 0.25 L: heating
+8:55; Full rolling boil at 0:25 went to Cooking, "alarm set for
+19:11:06"; terminated and relaunched mid-cook: the same 19:11:06, the
+stored doubles unchanged; the pull notification fired at 19:11:06, "In
+the ice bath" went to Cooling (the stored cook: `rangAt_s`, the pull
+`by: cook`); the phone locked through the cooling: the Lock Screen card
+counted it down, "Cooling done" fired, and on waking `cooledAt_s` was
+written and the card ended; Done showed 0:25 + 4:59; answered Runny;
+relaunched at Done: the yolk answer kept, the white still open; Start
+again cleared the store. A tap at 0:25 is under `LIMITS.timeToBoil_s.lo`
+(30 s), so nothing was remembered, as before; a second cold cook tapped
+at 1:30 and Cancelled remembered 90 s for the pan (`cookEnding`). The
+card went Heating to Cooking in place after a tap, with the plan's
+description. A hot start: 19:26:51 before and after a relaunch; Cancel
+logged nothing. `-uiScreen done`, then Start again, logged the
+unanswered egg. **The upgrade**: 0.4 built at `8972a05` from a scratch
+worktree (since removed), a hot cook started on it (pull 19:27:04), this
+build installed over it: the app opened idle, `cookInProgress` was gone
+and its bytes were in `cookInProgress.unread`, and 0.4's pull
+notification fired at 19:27:04.
+
+**What changed on purpose.** The boil is remembered when the cook ends
+(Cancel, Start again, or dropped as too old), not at the tap
+(`DECISIONS.md` 97). The direction, the peak yolk and the Lock Screen's
+description follow the plan, so a tap moves them (65 to 64 °C in one
+cook); the direction is held while the new pot's surface builds. A cook
+started before its pot's surface was built settles on it when it lands,
+rather than keeping the mean for the whole cook. Sharing holds back only
+the stored cook's answered egg, until Start again or `cookTooOld`. Too
+old is `cookTooOld`'s, two hours still heating included.
+
+**Seen, and left.** A plan made again after the egg's own answer has
+been folded reads a posterior that holds that egg: relaunched at Done
+after "Runny" at runny, "You asked for" and the sentence's peak went
+from 59 to 55 °C and the direction changed (a "Jammy" at jammy moved
+nothing). No record is made from such a plan: only unanswered eggs are
+logged from the plan, and the probe now scores against the logged
+record; `resumeAnswers` compares without the forecast, which the
+relaunch plans again. The display at Done is the one-screen step's, as
+on the web. Also left: the "Still in the water?" question
+(`askIfStillIn`) has no words yet; a damaged `cookInProgress.v2` was not
+driven (the simulator cannot write into the app's defaults from outside).
+
+**Things that cost time.** On iOS 26.5 the simulator's display froze
+after a Lock and an unlock (the status bar clock stopped; taps still
+landed); a `simctl shutdown`/`boot` cleared it, and doubled as a
+relaunch test. The prefs plist on disk lags the app by several seconds
+after a terminate, as before.

@@ -356,20 +356,26 @@ signing, which needs the Apple Developer Program — see **Signing** below.
 Unsigned simulator builds carry no entitlement and fall back silently to the
 default level, which is the right failure: quieter, never wrong.
 
-`Cook.swift` holds the state, and holds it as **absolute dates**: every phase is
-derived from `Date.now` rather than counted down, so a ticker that stops —
+`Cook.swift` holds the state: core's `RunningCook` (`Running.swift`), its start,
+its choices and what it observed, as clock times, and the plan `replan` derives
+from them, made again only on an event, a surface landing, the slow hob's
+`slowHobAt_s` or a launch. Every phase is derived from the plan's deadlines and
+the clock (`phaseAt`) rather than counted down, so a ticker that stops —
 backgrounded, locked, or simply busy — cannot make the egg wrong. The ticker
-counts nothing down: it revises a slow hob's estimate, pushes the Live
-Activity's stage changes, and rings for a deadline no notification holds; the
-screen redraws from its own `TimelineView`. This is the native form of the same discipline the web
+counts nothing down: it writes the events the clock decides (`eventsDue`), plans
+again when the slow hob says, pushes the Live Activity's changes, and rings for
+a deadline no notification holds; the screen redraws from its own `TimelineView`. This is the native form of the same discipline the web
 app uses when it recomputes from timestamps on `visibilitychange`.
 
-A cook in progress is written to `UserDefaults` and restored on launch. Without
-that, a force-quit or a crash leaves the alarm with the system and the Live
-Activity on the Lock Screen while the app itself reopens to an idle screen —
+A cook in progress is written to `UserDefaults` (`cookInProgress.v2`, through
+JSONEncoder so every double comes back to the bit) and restored on launch.
+Without that, a force-quit or a crash leaves the alarm with the system and the
+Live Activity on the Lock Screen while the app itself reopens to an idle screen —
 which teaches the user to distrust an alarm that was, in fact, perfectly
-correct. Anything more than an hour past the end of its cooling step is dropped
-instead of restored; that egg has been eaten.
+correct. A cook core calls too old (`cookTooOld`: an hour past its end, or two
+hours still heating) is dropped instead of restored; that egg has been eaten. A
+0.4 cook (`cookInProgress`) is kept aside with the results, its notifications
+left to ring.
 
 ## The Live Activity
 
@@ -382,7 +388,9 @@ Every countdown is `Text(timerInterval:)`, drawn and ticked by the system from
 two absolute dates. Nothing in the widget runs once a second and nothing in the
 app has to wake up to keep it honest — the same trick as scheduling the alarm at
 an absolute date, applied to the display. The app pushes a new state only when
-the **stage** changes.
+what the card shows changes: the **stage**, a deadline that moved, or the cook's
+description, which is in the state so a plan made again updates the card in
+place.
 
 Three things cost time here and are worth writing down:
 

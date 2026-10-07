@@ -47,7 +47,7 @@ These counts are the only ones in the documents. If you want a number, run
    screen's design is answered (`DECISIONS.md` 96, 97; `design/one-
    screen.md`), and its core, the running cook, is built (C2,
    `src/core/running.ts`), with the red-team review of it applied
-   (`design/one-screen-review.md`, `DECISIONS.md` 98): next is each app on it, then the one screen in
+   (`design/one-screen-review.md`, `DECISIONS.md` 98); iOS's state is on it, the web's next, then the one screen in
    both, with certainty in words on it (93). `0.4.x` is
    merged in as it moves.
 
