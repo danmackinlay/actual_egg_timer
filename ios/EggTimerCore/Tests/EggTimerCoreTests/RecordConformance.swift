@@ -43,7 +43,8 @@ private func cookFacts(_ j: [String: Any]) throws -> CookFacts {
         coolS: j.num("cool_s"), yolkWord: j.optionalValue(YolkWord.self, "yolkWord"),
         white: j.optionalValue(WhiteReport.self, "white"),
         probe: decoded(ProbeReading.self, j["probe"]), forecast: decoded(Forecast.self, j["forecast"]),
-        lang: j.str("lang"), units: j.value(Units.self, "units")
+        lang: j.str("lang"), units: j.value(Units.self, "units"),
+        boilTapped: j["boilTapped"] as? Bool
     )
 }
 

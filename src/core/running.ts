@@ -590,8 +590,8 @@ export function openEggId(cook: RunningCook | null, plan: CookPlan | null, now_s
  * `phaseAt` reads Heating whatever it says.
  *
  * A PULL THE CLOCK ASSUMED. A pull by `timeout` is not something the cook saw.
- * A correction since it that would, without it, pull later (or heat again)
- * leaves the pull standing and sets `askIfStillIn`: the app asks, and the
+ * A correction since it that would, without it, pull after the correction
+ * itself (or heat again) leaves the pull standing and sets `askIfStillIn`: the app asks, and the
  * answer is `stillIn` or `pullStands`. A cook's own tap is never asked about.
  *
  * THE COOLING. To the yolk's peak for the cook time that ran
@@ -697,7 +697,10 @@ export function replan(
   let ask = false;
   if (pulled !== null && pulled.by === 'timeout' && !pulled.confirmed
     && cook.correctedAt_s !== null && cook.correctedAt_s >= pulled.out_s) {
-    ask = (cold && boilAt === null) || start + planned.result.cookTime_s > pulled.due_s;
+    // Only a correction that leaves the egg still to cook at the moment it
+    // was made is worth asking about: one that moves the pull a few seconds
+    // later, still in the past, leaves the egg as done whether in or out.
+    ask = (cold && boilAt === null) || start + planned.result.cookTime_s > cook.correctedAt_s;
   }
 
   let cool = coolingSecondsFor(ran.result);
@@ -828,6 +831,7 @@ export function cookFactsFor(
     setup: plan.setup,
     eggFrom: cook.choices.eggFrom,
     boilRemembered: cook.boilRemembered,
+    boilTapped: cook.events.boilAt_s !== null && !(cook.boilRemembered && tappedAfterLateCold(cook)),
     level: plan.level,
     cook_s: plan.cookTime_s,
     nudge_s: plan.nudge_s,

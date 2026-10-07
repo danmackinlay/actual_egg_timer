@@ -7195,7 +7195,7 @@
           "ambient_C": 20,
           "boiling_C": 99.99690682934772,
           "timeToBoil_s": 480,
-          "timeToBoilFrom": "measured",
+          "timeToBoilFrom": "remembered",
           "cooling": "ice",
           "afterBoil": "hold",
           "waterLitres": 2,
@@ -7413,7 +7413,7 @@
           "ambient_C": 20,
           "boiling_C": 99.99690682934772,
           "timeToBoil_s": 480,
-          "timeToBoilFrom": "measured",
+          "timeToBoilFrom": "remembered",
           "cooling": "ice",
           "afterBoil": "hold",
           "waterLitres": 2,
@@ -7606,7 +7606,7 @@
           "ambient_C": 20,
           "boiling_C": 99.99690682934772,
           "timeToBoil_s": 480,
-          "timeToBoilFrom": "measured",
+          "timeToBoilFrom": "remembered",
           "cooling": "ice",
           "afterBoil": "hold",
           "waterLitres": 2,
@@ -7827,7 +7827,7 @@
           "ambient_C": 20,
           "boiling_C": 99.99690682934772,
           "timeToBoil_s": 480,
-          "timeToBoilFrom": "measured",
+          "timeToBoilFrom": "remembered",
           "cooling": "ice",
           "afterBoil": "hold",
           "waterLitres": 2,
@@ -8054,7 +8054,7 @@
           "ambient_C": 20,
           "boiling_C": 99.99690682934772,
           "timeToBoil_s": 704.7600794048565,
-          "timeToBoilFrom": "measured",
+          "timeToBoilFrom": "remembered",
           "cooling": "ice",
           "afterBoil": "hold",
           "waterLitres": 2,
@@ -8214,7 +8214,7 @@
           "ambient_C": 20,
           "boiling_C": 99.99690682934772,
           "timeToBoil_s": 1521.7229700298565,
-          "timeToBoilFrom": "measured",
+          "timeToBoilFrom": "remembered",
           "cooling": "ice",
           "afterBoil": "hold",
           "waterLitres": 2,
@@ -14372,7 +14372,7 @@
           "ambient_C": 20,
           "boiling_C": 99.99690682934772,
           "timeToBoil_s": 480,
-          "timeToBoilFrom": "measured",
+          "timeToBoilFrom": "remembered",
           "cooling": "ice",
           "afterBoil": "hold",
           "waterLitres": 2,
@@ -14856,7 +14856,7 @@
           "ambient_C": 20,
           "boiling_C": 99.99690682934772,
           "timeToBoil_s": 480,
-          "timeToBoilFrom": "measured",
+          "timeToBoilFrom": "remembered",
           "cooling": "ice",
           "afterBoil": "hold",
           "waterLitres": 2,
@@ -15097,7 +15097,7 @@
           "ambient_C": 20,
           "boiling_C": 99.99690682934772,
           "timeToBoil_s": 480,
-          "timeToBoilFrom": "measured",
+          "timeToBoilFrom": "remembered",
           "cooling": "ice",
           "afterBoil": "hold",
           "waterLitres": 2,
@@ -15646,7 +15646,7 @@
       }
     },
     {
-      "note": "the lighter egg undone after the grace ran out: the pull stands, and the app asks whether it is still in",
+      "note": "the lighter egg undone after the grace ran out and after its first pull: the pull stands, nothing to ask",
       "posterior": "learned",
       "eggsLogged": 3,
       "cook": {
@@ -15758,7 +15758,7 @@
         "nudge_s": -7,
         "cookTime_s": 443.0568222999573,
         "overdue": false,
-        "askIfStillIn": true,
+        "askIfStillIn": false,
         "cool_s": 189,
         "probeMoment": true,
         "deadlines": {
@@ -16863,7 +16863,7 @@
           "ambient_C": 20,
           "boiling_C": 99.99690682934772,
           "timeToBoil_s": 480,
-          "timeToBoilFrom": "measured",
+          "timeToBoilFrom": "remembered",
           "cooling": "ice",
           "afterBoil": "hold",
           "waterLitres": 2,
@@ -17101,7 +17101,7 @@
           "ambient_C": 20,
           "boiling_C": 99.99690682934772,
           "timeToBoil_s": 480,
-          "timeToBoilFrom": "measured",
+          "timeToBoilFrom": "remembered",
           "cooling": "ice",
           "afterBoil": "hold",
           "waterLitres": 2,
@@ -17346,7 +17346,7 @@
           "ambient_C": 20,
           "boiling_C": 99.99690682934772,
           "timeToBoil_s": 480,
-          "timeToBoilFrom": "measured",
+          "timeToBoilFrom": "remembered",
           "cooling": "ice",
           "afterBoil": "hold",
           "waterLitres": 2,
@@ -19592,7 +19592,7 @@
           "ambient_C": 20,
           "boiling_C": 99.99690682934772,
           "timeToBoil_s": 1293.037109375,
-          "timeToBoilFrom": "measured",
+          "timeToBoilFrom": "remembered",
           "cooling": "ice",
           "afterBoil": "hold",
           "waterLitres": 2,
@@ -19750,7 +19750,7 @@
           "ambient_C": 20,
           "boiling_C": 99.99690682934772,
           "timeToBoil_s": 7200,
-          "timeToBoilFrom": "measured",
+          "timeToBoilFrom": "remembered",
           "cooling": "ice",
           "afterBoil": "hold",
           "waterLitres": 2,
@@ -19910,7 +19910,7 @@
           "ambient_C": 20,
           "boiling_C": 99.99690682934772,
           "timeToBoil_s": 7200,
-          "timeToBoilFrom": "measured",
+          "timeToBoilFrom": "remembered",
           "cooling": "ice",
           "afterBoil": "hold",
           "waterLitres": 2,
@@ -20071,7 +20071,7 @@
           "ambient_C": 20,
           "boiling_C": 99.99690682934772,
           "timeToBoil_s": 7200,
-          "timeToBoilFrom": "measured",
+          "timeToBoilFrom": "remembered",
           "cooling": "ice",
           "afterBoil": "hold",
           "waterLitres": 2,
@@ -20228,7 +20228,7 @@
           "ambient_C": 20,
           "boiling_C": 99.99690682934772,
           "timeToBoil_s": 7151.3623046875,
-          "timeToBoilFrom": "measured",
+          "timeToBoilFrom": "remembered",
           "cooling": "ice",
           "afterBoil": "hold",
           "waterLitres": 2,
@@ -20425,6 +20425,491 @@
       "ending": {
         "boil": null,
         "finished": true
+      }
+    },
+    {
+      "note": "the grace ran out, then ice corrected to tap water: nothing to ask",
+      "posterior": "learned",
+      "eggsLogged": 3,
+      "cook": {
+        "id_ms": 1791363600000,
+        "startedAt_s": 1791363600,
+        "choices": {
+          "mass_kg": 0.068,
+          "massFrom": "class",
+          "sizeTable": "eu",
+          "eggFrom": "fridge",
+          "customStart_C": 12,
+          "room_C": null,
+          "startMode": "hot",
+          "afterBoil": "hold",
+          "cooling": "tap",
+          "waterLitres": 2,
+          "eggCount": 2,
+          "altitude_m": 0,
+          "level": 0.41
+        },
+        "events": {
+          "boilAt_s": null,
+          "pulled": {
+            "due_s": 1791364061.3740234,
+            "out_s": 1791364081.3740234,
+            "by": "timeout",
+            "confirmed": false
+          },
+          "cooledAt_s": null,
+          "rangAt_s": null
+        },
+        "nudge_s": -7,
+        "boilMemory": {
+          "2.0": 480,
+          "3.0": 610
+        },
+        "units": "metric",
+        "lang": "en",
+        "boilRemembered": true,
+        "coldSince_s": null,
+        "firstHotAt_s": 1791363600,
+        "correctedAt_s": 1791364091.3740234
+      },
+      "leanHint_s": 0,
+      "now_s": 1791364091.3740234,
+      "surface": {
+        "of": null,
+        "grid": {
+          "tauAirScale": 1,
+          "alphaMin": 1.009520895453128e-7,
+          "alphaMax": 2.776182462496102e-7,
+          "alphaCount": 7,
+          "timeMin_s": 253.10546875,
+          "timeMax_s": 773.10546875,
+          "timeCount": 27
+        },
+        "profile": null
+      },
+      "plan": {
+        "egg": {
+          "mass_kg": 0.068
+        },
+        "setup": {
+          "startMode": "hot",
+          "afterBoil": "hold",
+          "eggStart_C": 4,
+          "ambient_C": 20,
+          "boiling_C": 99.99690682934772,
+          "timeToBoil_s": 480,
+          "cooling": "tap",
+          "waterLitres": 2,
+          "eggCount": 2
+        },
+        "provisional": false,
+        "lengthened": false,
+        "inputs": {
+          "params": { "alpha_m2s": 1.6825348257552135e-7, "tauAirScale": 1 },
+          "whiteDose_min": 0.05938185524001569
+        },
+        "answer": {
+          "level": 0.41,
+          "kind": "none",
+          "snapTo": null,
+          "lowOdds": false,
+          "cookTime_s": 460.5078125
+        },
+        "level": 0.41,
+        "solution": {
+          "reachable": true,
+          "whiteSets": true,
+          "cookTime_s": 461.3740234375,
+          "peakYolk_C": 64.6135108950242,
+          "peakYolkTime_s": 658
+        },
+        "decided": {
+          "level": 0.41,
+          "cookTime_s": 455.54947876479685,
+          "decision": {
+            "cookTime_s": 462.54947876479685,
+            "meanCookTime_s": 460.5078125,
+            "chosen": true,
+            "odds": 0.6239393817456221,
+            "oddsTenths": 6
+          },
+          "nudge_s": -7,
+          "adviceWanted": false
+        },
+        "lean_s": 2.041666264796845,
+        "nudge_s": -7,
+        "cookTime_s": 461.3740234375,
+        "overdue": false,
+        "askIfStillIn": false,
+        "cool_s": 197,
+        "probeMoment": true,
+        "deadlines": {
+          "cookEnd_s": 1791364061.3740234,
+          "coolEnd_s": 1791364278.3740234,
+          "provisional": false,
+          "outAt_s": null
+        },
+        "slowHobAt_s": null,
+        "tooOldAt_s": 1791367878.3740234,
+        "certainty": {
+          "words": {
+            "asked": 2,
+            "certainty": "ballpark",
+            "pAsked": 0.826383036676338,
+            "pNear": 0.9725122383139516,
+            "from": 1,
+            "to": 2,
+            "pInterval": 0.9119412523280546,
+            "mostLikely": 2
+          },
+          "time": {
+            "low_s": 443.34907447062506,
+            "high_s": 481.9317322610186
+          }
+        },
+        "forecast": {
+          "cook_s": 461.3740234375,
+          "yolk": [
+            0.18262033750952247,
+            0.6474530390540417,
+            0.16992662343643605
+          ],
+          "white": [
+            0.037911705643355616,
+            0.28990877362404527,
+            0.6721795207325991
+          ],
+          "yolkWord": [
+            0.01730955189548471,
+            0.08555821565171666,
+            0.826383036676338,
+            0.06057098598589709,
+            0.010178209790564196
+          ]
+        }
+      },
+      "outs": [],
+      "dues": [],
+      "open": 1791363600000,
+      "context": {
+        "app": "ios",
+        "appVersion": "0.5.0-alpha.1",
+        "prior": "2026-09",
+        "day": "2026-10-07",
+        "id": null
+      },
+      "answers": {
+        "yolkWord": null,
+        "white": null,
+        "probe": null
+      },
+      "record": {
+        "v": 1,
+        "uid": null,
+        "day": "2026-10-07",
+        "app": "ios",
+        "appVersion": "0.5.0-alpha.1",
+        "prior": "2026-09",
+        "model": "2026-10-e10",
+        "egg": {
+          "mass_g": 68,
+          "massFrom": "class",
+          "sizeTable": "eu"
+        },
+        "setup": {
+          "startMode": "hot",
+          "eggStart_C": 4,
+          "eggFrom": "fridge",
+          "ambient_C": 20,
+          "boiling_C": 99.99690682934772,
+          "timeToBoil_s": 480,
+          "timeToBoilFrom": "remembered",
+          "cooling": "tap",
+          "afterBoil": "hold",
+          "waterLitres": 2,
+          "eggCount": 2
+        },
+        "level": 0.41,
+        "recommended_s": 468.3740234375,
+        "nudge_s": -7,
+        "pulled_s": 461.3740234375,
+        "pulledBy": "timeout",
+        "cooled_s": 197,
+        "yolk": null,
+        "yolkWord": null,
+        "white": null,
+        "probe": null,
+        "forecast": {
+          "cook_s": 461.3740234375,
+          "yolk": [
+            0.18262033750952247,
+            0.6474530390540417,
+            0.16992662343643605
+          ],
+          "white": [
+            0.037911705643355616,
+            0.28990877362404527,
+            0.6721795207325991
+          ],
+          "yolkWord": [
+            0.01730955189548471,
+            0.08555821565171666,
+            0.826383036676338,
+            0.06057098598589709,
+            0.010178209790564196
+          ]
+        },
+        "lang": "en",
+        "register": "modern",
+        "units": "metric"
+      },
+      "boil": null,
+      "ending": {
+        "boil": null,
+        "finished": false
+      }
+    },
+    {
+      "note": "the grace ran out, then a much heavier egg: the app asks",
+      "posterior": "learned",
+      "eggsLogged": 3,
+      "cook": {
+        "id_ms": 1791363600000,
+        "startedAt_s": 1791363600,
+        "choices": {
+          "mass_kg": 0.08800000000000001,
+          "massFrom": "class",
+          "sizeTable": "eu",
+          "eggFrom": "fridge",
+          "customStart_C": 12,
+          "room_C": null,
+          "startMode": "hot",
+          "afterBoil": "hold",
+          "cooling": "ice",
+          "waterLitres": 2,
+          "eggCount": 2,
+          "altitude_m": 0,
+          "level": 0.41
+        },
+        "events": {
+          "boilAt_s": null,
+          "pulled": {
+            "due_s": 1791364061.3740234,
+            "out_s": 1791364081.3740234,
+            "by": "timeout",
+            "confirmed": false
+          },
+          "cooledAt_s": null,
+          "rangAt_s": null
+        },
+        "nudge_s": -7,
+        "boilMemory": {
+          "2.0": 480,
+          "3.0": 610
+        },
+        "units": "metric",
+        "lang": "en",
+        "boilRemembered": true,
+        "coldSince_s": null,
+        "firstHotAt_s": 1791363600,
+        "correctedAt_s": 1791364091.3740234
+      },
+      "leanHint_s": 0,
+      "now_s": 1791364091.3740234,
+      "surface": {
+        "of": null,
+        "grid": {
+          "tauAirScale": 1,
+          "alphaMin": 1.009520895453128e-7,
+          "alphaMax": 2.776182462496102e-7,
+          "alphaCount": 7,
+          "timeMin_s": 319.53125,
+          "timeMax_s": 879.53125,
+          "timeCount": 29
+        },
+        "profile": null
+      },
+      "plan": {
+        "egg": {
+          "mass_kg": 0.08800000000000001
+        },
+        "setup": {
+          "startMode": "hot",
+          "afterBoil": "hold",
+          "eggStart_C": 4,
+          "ambient_C": 20,
+          "boiling_C": 99.99690682934772,
+          "timeToBoil_s": 480,
+          "cooling": "ice",
+          "waterLitres": 2,
+          "eggCount": 2
+        },
+        "provisional": false,
+        "lengthened": false,
+        "inputs": {
+          "params": { "alpha_m2s": 1.6825348257552135e-7, "tauAirScale": 1 },
+          "whiteDose_min": 0.05938185524001569
+        },
+        "answer": {
+          "level": 0.41,
+          "kind": "none",
+          "snapTo": null,
+          "lowOdds": false,
+          "cookTime_s": 552.2802734375
+        },
+        "level": 0.41,
+        "solution": {
+          "reachable": true,
+          "whiteSets": true,
+          "cookTime_s": 461.3740234375,
+          "peakYolk_C": 57.0839752123939,
+          "peakYolkTime_s": 698
+        },
+        "decided": {
+          "level": 0.41,
+          "cookTime_s": 547.0683172826855,
+          "decision": {
+            "cookTime_s": 554.0683172826855,
+            "meanCookTime_s": 552.2802734375,
+            "chosen": true,
+            "odds": 0.6254258520729762,
+            "oddsTenths": 6
+          },
+          "nudge_s": -7,
+          "adviceWanted": false
+        },
+        "lean_s": 1.7880438451854843,
+        "nudge_s": -7,
+        "cookTime_s": 461.3740234375,
+        "overdue": false,
+        "askIfStillIn": true,
+        "cool_s": 237,
+        "probeMoment": true,
+        "deadlines": {
+          "cookEnd_s": 1791364061.3740234,
+          "coolEnd_s": 1791364318.3740234,
+          "provisional": false,
+          "outAt_s": null
+        },
+        "slowHobAt_s": null,
+        "tooOldAt_s": 1791367918.3740234,
+        "certainty": {
+          "words": {
+            "asked": 2,
+            "certainty": "wildGuess",
+            "pAsked": 0.012459991085869695,
+            "pNear": 0.2762668897530978,
+            "from": 0,
+            "to": 1,
+            "pInterval": 0.9674465191375303,
+            "mostLikely": 0
+          },
+          "time": {
+            "low_s": 532.7062483303234,
+            "high_s": 578.2529210742723
+          }
+        },
+        "forecast": {
+          "cook_s": 461.3740234375,
+          "yolk": [
+            0.9653589903965889,
+            0.017799424198276653,
+            0.01684158540513466
+          ],
+          "white": [
+            0.3380478834906388,
+            0.4723005521619494,
+            0.18965156434741173
+          ],
+          "yolkWord": [
+            0.7137318507361463,
+            0.253714668401384,
+            0.012459991085869695,
+            0.010092230265844099,
+            0.010001259510756404
+          ]
+        }
+      },
+      "outs": [],
+      "dues": [],
+      "open": 1791363600000,
+      "context": {
+        "app": "web",
+        "appVersion": "0.5.0-alpha.1",
+        "prior": "2026-09",
+        "day": "2026-10-07",
+        "id": 1791363600000
+      },
+      "answers": {
+        "yolkWord": "jammy",
+        "white": "firm",
+        "probe": null
+      },
+      "record": {
+        "v": 1,
+        "uid": null,
+        "day": "2026-10-07",
+        "id": 1791363600000,
+        "app": "web",
+        "appVersion": "0.5.0-alpha.1",
+        "prior": "2026-09",
+        "model": "2026-10-e10",
+        "egg": {
+          "mass_g": 88,
+          "massFrom": "class",
+          "sizeTable": "eu"
+        },
+        "setup": {
+          "startMode": "hot",
+          "eggStart_C": 4,
+          "eggFrom": "fridge",
+          "ambient_C": 20,
+          "boiling_C": 99.99690682934772,
+          "timeToBoil_s": 480,
+          "timeToBoilFrom": "remembered",
+          "cooling": "ice",
+          "afterBoil": "hold",
+          "waterLitres": 2,
+          "eggCount": 2
+        },
+        "level": 0.41,
+        "recommended_s": 468.3740234375,
+        "nudge_s": -7,
+        "pulled_s": 461.3740234375,
+        "pulledBy": "timeout",
+        "cooled_s": 237,
+        "yolk": null,
+        "yolkWord": "jammy",
+        "white": "firm",
+        "probe": null,
+        "forecast": {
+          "cook_s": 461.3740234375,
+          "yolk": [
+            0.9653589903965889,
+            0.017799424198276653,
+            0.01684158540513466
+          ],
+          "white": [
+            0.3380478834906388,
+            0.4723005521619494,
+            0.18965156434741173
+          ],
+          "yolkWord": [
+            0.7137318507361463,
+            0.253714668401384,
+            0.012459991085869695,
+            0.010092230265844099,
+            0.010001259510756404
+          ]
+        },
+        "lang": "en",
+        "register": "modern",
+        "units": "metric"
+      },
+      "boil": null,
+      "ending": {
+        "boil": null,
+        "finished": false
       }
     }
   ],

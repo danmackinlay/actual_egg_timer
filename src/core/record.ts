@@ -81,7 +81,8 @@ export type EggFrom = 'fridge' | 'room' | 'custom';
 
 /** Where the solve's time to boil came from. `measured` is this cook's own boil
  *  tap, and every finished cold start has one, because neither app leaves
- *  HEATING without it. A hot start never times the pan, so it cooks on the
+ *  HEATING without it; but a tap after a late correction to cold is not
+ *  trusted, and that cook runs on the `remembered` pan (`DECISIONS.md` 98). A hot start never times the pan, so it cooks on the
  *  `remembered` pan, or on the `default` guess when no pan has ever been
  *  measured. With the heat off, records from before 27 September took the
  *  pan's whole cooling curve from this number (the standing method's pan
@@ -293,6 +294,11 @@ export interface CookFacts {
   /** Whether a measured pan was on file at "Eggs in". Read only on a hot
    *  start, which never times its own pan; a finished cold start has. */
   boilRemembered: boolean;
+  /** On a cold start, whether this cook's own boil tap set its time to boil.
+   *  Absent is true, as on every cold start before 0.5; false when the tap
+   *  came after a late correction to cold and the remembered pan was used
+   *  (`DECISIONS.md` 98). Not read on a hot start. */
+  boilTapped?: boolean;
   /** The doneness the cook was RUN at, [0, 1]. */
   level: number;
   /** The cook time that ran, egg-in to the scheduled pull: what was
@@ -352,7 +358,8 @@ export function recordFor(f: CookFacts): EggRecord {
       ambient_C: s.ambient_C,
       boiling_C: s.boiling_C,
       timeToBoil_s: s.timeToBoil_s,
-      timeToBoilFrom: s.startMode === 'cold' ? 'measured' : f.boilRemembered ? 'remembered' : 'default',
+      timeToBoilFrom: s.startMode === 'cold' && f.boilTapped !== false
+        ? 'measured' : f.boilRemembered ? 'remembered' : 'default',
       cooling: s.cooling,
       afterBoil: s.afterBoil ?? 'hold',
       waterLitres: s.waterLitres,

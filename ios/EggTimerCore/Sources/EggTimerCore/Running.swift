@@ -593,10 +593,12 @@ public func replan(
     let ran = solutionAt(egg: pot.egg, setup: pot.setup, params: params, solution: planned, cookTimeS: cookTime)
 
     // A pull the clock assumed, and a correction since that would, without
-    // it, pull later or heat again: ask, rather than land in the cooling.
+    // it, pull after the correction or heat again: ask, rather than land in
+    // the cooling.
     var ask = false
     if let pulled, pulled.by == .timeout, !pulled.confirmed, let at = cook.correctedAtS, at >= pulled.outS {
-        ask = (cold && e.boilAtS == nil) || start + planned.result.cookTimeS > pulled.dueS
+        // Only a correction that leaves the egg still to cook when it was made.
+        ask = (cold && e.boilAtS == nil) || start + planned.result.cookTimeS > at
     }
 
     var cool = coolingSecondsFor(ran.result)
@@ -700,7 +702,8 @@ public func cookFactsFor(
         level: plan.level, cookS: plan.cookTimeS, nudgeS: plan.nudgeS,
         outS: pulled?.by == .cook ? pulled.map { $0.outS - cook.startedAtS } : nil,
         coolS: plan.coolS, yolkWord: yolkWord, white: white, probe: probe, forecast: plan.forecast,
-        lang: cook.lang, units: cook.units
+        lang: cook.lang, units: cook.units,
+        boilTapped: cook.events.boilAtS != nil && !(cook.boilRemembered && tappedAfterLateCold(cook))
     )
 }
 

@@ -500,6 +500,10 @@ const FACTS_CASES: { why: string; over: Partial<CookFacts> }[] = [
   { why: 'from iOS, which keeps no id', over: { app: 'ios', appVersion: '0.5.0+1', id: null } },
   { why: 'a hot start on a pan nobody timed', over: { boilRemembered: false } },
   {
+    why: 'a cold start tapped after a late correction to cold: the remembered pan',
+    over: { setup: referenceSetup({ startMode: 'cold', timeToBoil_s: 480 }), boilTapped: false, cook_s: 912.5 },
+  },
+  {
     why: 'a cold start, its boil tapped: measured whatever was remembered',
     over: { setup: referenceSetup({ startMode: 'cold', timeToBoil_s: 512.4 }), boilRemembered: false, cook_s: 912.5 },
   },

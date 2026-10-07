@@ -478,7 +478,7 @@ const S = START_S;
   const overdue = plan({ note: 'a lighter egg: overdue, the pull is now', posterior: 'learned', cook: lighter, leanHint_s: hint, now_s: end - 20, surface: 'own', dues: [end - 1, end] });
   plan({ note: 'the lighter egg undone within the grace: cooking again', posterior: 'learned', cook: corrected(lighter, h0.choices, end - 10), leanHint_s: hint, now_s: end - 10, surface: 'own' });
   const ranOut = withEvents(lighter, eventsDue(lighter, overdue, end));
-  plan({ note: 'the lighter egg undone after the grace ran out: the pull stands, and the app asks whether it is still in', posterior: 'learned', cook: corrected(ranOut, h0.choices, end + 5), leanHint_s: hint, now_s: end + 5, surface: 'own' });
+  plan({ note: 'the lighter egg undone after the grace ran out and after its first pull: the pull stands, nothing to ask', posterior: 'learned', cook: corrected(ranOut, h0.choices, end + 5), leanHint_s: hint, now_s: end + 5, surface: 'own' });
 
   // On the counter: nothing counted, done at the out.
   const counter = cookOf({ startMode: 'hot', cooling: 'counter' });
@@ -536,6 +536,16 @@ const S = START_S;
   const lp = replan(longAgo, calibrationOf(named('learned')), null, 0, S + 1);
   const ranOut = withEvents(longAgo, eventsDue(longAgo, lp, S + 5 * 3600));
   plan({ note: 'a cook left at Done for five hours: too old, its egg final', posterior: 'learned', cook: ranOut, leanHint_s: 0, now_s: S + 5 * 3600, surface: 'none' });
+
+  // A small correction after the grace ran out moves the pull a little,
+  // still before the correction: nothing to ask, the pull stands. A much
+  // heavier egg leaves it still to cook: ask. Last, so no case before them
+  // moves.
+  const late = cookOf({ startMode: 'hot' }, -7);
+  const lateEnd = replan(late, calibrationOf(named('learned')), null, 0, S + 1).deadlines.cookEnd_s;
+  const lateOut = withEvents(late, eventsDue(late, replan(late, calibrationOf(named('learned')), null, 0, lateEnd + 21), lateEnd + 21));
+  plan({ note: 'the grace ran out, then ice corrected to tap water: nothing to ask', posterior: 'learned', cook: corrected(lateOut, { ...late.choices, cooling: 'tap' }, lateEnd + 30), leanHint_s: 0, now_s: lateEnd + 30, surface: 'own' });
+  plan({ note: 'the grace ran out, then a much heavier egg: the app asks', posterior: 'learned', cook: corrected(lateOut, { ...late.choices, mass_kg: late.choices.mass_kg + 0.02 }, lateEnd + 30), leanHint_s: 0, now_s: lateEnd + 30, surface: 'own' });
 }
 
 /* What the boil memory learns (`boilToRemember`): a tap the cook watched for,

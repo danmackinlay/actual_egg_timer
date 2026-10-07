@@ -447,6 +447,9 @@ public struct CookFacts: Sendable, Equatable {
     public var eggFrom: EggFrom
     /// Whether a measured pan was on file at "Eggs in"; read on a hot start.
     public var boilRemembered: Bool
+    /// On a cold start, whether its own boil tap set its time to boil; nil is
+    /// true. False after a late correction to cold (DECISIONS.md 98).
+    public var boilTapped: Bool?
     /// The doneness the cook was RUN at.
     public var level: Double
     /// The cook time that ran, egg-in to the scheduled pull, nudge and all.
@@ -468,8 +471,9 @@ public struct CookFacts: Sendable, Equatable {
         massKg: Double, massFrom: MassFrom, sizeTable: SizeTable?, setup: CookSetup, eggFrom: EggFrom,
         boilRemembered: Bool, level: Double, cookS: Double, nudgeS: Double, outS: Double?, coolS: Double,
         yolkWord: YolkWord?, white: WhiteReport?, probe: ProbeReading?, forecast: Forecast?,
-        lang: String, units: Units
+        lang: String, units: Units, boilTapped: Bool? = nil
     ) {
+        self.boilTapped = boilTapped
         self.app = app
         self.appVersion = appVersion
         self.prior = prior
@@ -503,7 +507,8 @@ public struct CookFacts: Sendable, Equatable {
 public func recordFor(_ f: CookFacts) -> EggRecord {
     let measured = f.outS.flatMap { $0 > 0 ? $0 : nil }
     let s = f.setup
-    let boilFrom: TimeToBoilFrom = s.startMode == .cold ? .measured : f.boilRemembered ? .remembered : .default
+    let boilFrom: TimeToBoilFrom = s.startMode == .cold && f.boilTapped != false
+        ? .measured : f.boilRemembered ? .remembered : .default
     return EggRecord(
         day: f.day,
         id: f.id,

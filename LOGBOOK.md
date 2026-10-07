@@ -4998,3 +4998,21 @@ time left from it.
 
 `npm test` 379 (was 371), `swift test` 151 tests in 38 suites (the
 conformance suites check the new fields; no new suites).
+
+## 7 October 2026: two of the review's loose ends, in the running cook
+
+Left open by the review's fixes (above) and closed here. A cold start
+planned on the remembered pan after a late correction to cold (review 1.2)
+now records `timeToBoilFrom: 'remembered'`, not `'measured'`: `CookFacts`
+gains an optional `boilTapped`, absent meaning true, so a record from
+either app as built today is unchanged; 17 of the running fixture's
+records now say `remembered`, every one a cold start with no trusted tap.
+Nothing in the fit reads the field yet. And the app asks "still in the
+water?" only when the correction leaves the egg still to cook at the
+moment it is made, not whenever the pull moves later: ice corrected to tap
+water after the grace ran out, which moved the pull a few seconds but still
+before the correction, no longer asks; a much heavier egg still does. One
+fixture case changed its answer by that rule (a lighter egg undone after
+its own first pull had also passed: nothing to ask, the egg as done either
+way) and its note with it. The two new cases are appended last, since the
+fixture's records vary with their position.
