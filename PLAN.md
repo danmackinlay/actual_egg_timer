@@ -45,8 +45,9 @@ These counts are the only ones in the documents. If you want a number, run
    review's refactors into core (90), the certainty word's arithmetic
    (93), the web's god files split; both apps driven after them. The one
    screen's design is answered (`DECISIONS.md` 96, 97; `design/one-
-   screen.md`): next is its core, the running cook (C2), then both apps,
-   with certainty in words on it (93). `0.4.x` is
+   screen.md`), and its core, the running cook, is built (C2,
+   `src/core/running.ts`): next is each app on it, then the one screen in
+   both, with certainty in words on it (93). `0.4.x` is
    merged in as it moves.
 
 Throughout: cook real eggs, and the two measurements in README §11.3.

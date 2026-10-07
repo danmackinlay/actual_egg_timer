@@ -4896,3 +4896,60 @@ is not announced; it was so before the split.
 
 Not checked: two tabs, the probe and room fields, sous-vide, a reload
 mid-cook.
+
+## 7 October 2026: a running cook in core (SHIP-0.5 C2, core)
+
+`src/core/running.ts` and `Running.swift`, as `design/one-screen.md` §4
+has them, in four commits (`8eb9b3c`, `3618071`, `a05f5fd`, `1c2a557`):
+the types, `cookSetupOf`, the moves and `readRunningCook`; `replan` and
+`eventsDue` with the slow hob's rule; `cookFactsFor`, `boilToRemember` and
+`cookEnding`; `previewSection` in `section.ts`. No screen, store or
+behaviour of either app changed: the apps take it up next.
+
+**`cookSetupOf` against both apps' assembly**, before relying on it, as A3
+did for records (throwaway, not committed). The web's
+`buildSetup`/`currentEgg` over 20000 random settings: the same setup every
+time, key order included (the decision cache is keyed by its JSON); the
+egg the same but for a measured egg, made from its mass rather than its
+width, an ulp off on 457 draws (2%). A line-for-line copy of iOS's
+`Planner.egg`/`setup(timeToBoilS:)` over 20000: identical.
+
+**`replan` with nothing corrected, against the web's machine and ticket**
+(throwaway): 300 simulated cooks (196 cold, 104 hot; three posteriors;
+193 started on their pot's surface, 95 of those nudged), today's path
+(`onPrimary`, `onTick` every 200 ms, `retime`, `recordBoil`,
+`beginCooling`, `advance`) beside the new one (`replan` at the start, at
+the tap, at each `slowHobAt_s`, `withOut`, `eventsDue`). At the start: the
+deadline the same to 2.4e-7 s (the epoch second's last bit) in all 300,
+the forecast identical in all 193. Through the cook:
+
+- 200 cooks with nothing out of the ordinary, and 22 whose hob was slow
+  (the guess lengthened, then the tap): the phase the same at every one of
+  800,000 ticks, the pull, the cooling's end and the record's cook time,
+  nudge, cooling, probe moment and puller the same to 2.4e-7 s.
+- 53 cooks whose tap came after the re-solved pull (the sample's ramps run
+  to 2.2 times the remembered one): today's machine dated that pull in the
+  past and went through an expired grace to Done; the plan pulls at the
+  tap, with its grace (§4, "As built").
+- 25 cooks whose measured ramp left the yolk wanted out of reach: the plan
+  snaps the level as setup does and carries the lean onto it, where today's
+  re-solve kept the target and answered with the shortest cook that sets
+  the white, carrying nothing. The pull moved by up to 149 s; most by a few.
+
+The slow hob's guess while heating steps on a lattice anchored at the
+start, where the tick's is anchored at its 200-ms ticks, so a creeping
+guess can sit up to one step (10 s) apart; it is a guess, and the tap ends
+it either way.
+
+**Things that cost time.** A plan that clamped the pull to `now`, as §4 first
+said, re-rang the pull on every later plan in the grace, and a phone that
+slept through the pull woke to a cook time of an hour: the pull is now held
+at the last correction or the tap, which are stored. JSONSerialization
+writes 0.068 as 0.068000000000000005 and reads it back an ulp off, so a
+Swift round trip of a stored cook is held to 4 ulps, not to the bit; for
+the app, an ulp in the mass is a different decision surface's key.
+
+`swift test` gains the `Running` suite (6 tests) and a preview test in
+`Section`; `npm test` gains `test/running.test.ts` (14) and one in
+`section.test.ts`. `npm run fixtures` takes about 25 s longer, for the
+plans' coarse surfaces.
