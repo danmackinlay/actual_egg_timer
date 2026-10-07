@@ -819,3 +819,32 @@ test('4d. a cook too old to pick back up is still an egg: run on to DONE, by the
   assert.equal(phaseAt(heating.plan.deadlines, later), 'HEATING');
   assert.equal(cookEnding(heating.cook, heating.plan, later).finished, false);
 });
+
+test('4e. the same egg logged again keeps its facts as last corrected, and the answers already given', async () => {
+  storage.clear();
+  loadCalibration();
+  const cook = cookOf();
+  const plan = replan(cook, C4, null, 0, S0);
+  const first = eggRecordFor(cook, plan, 'jammy');
+  assert.equal(logEgg(first), 0);
+  // The same cook, its record made again from another tab's plan: another
+  // forecast, no answer. The answer stays; the rest is the newer record.
+  const again = { ...eggRecordFor(cook, plan, null), cooled_s: first.cooled_s + 10 };
+  assert.equal(logEgg(again), 0);
+  const kept = keptState().log;
+  assert.equal(kept.length, 1);
+  assert.equal(kept[0].yolkWord, 'jammy');
+  assert.equal(kept[0].cooled_s, again.cooled_s);
+  assert.equal(logEgg(again), 0, 'once kept, nothing changes');
+  // One already folded is folded again, from the prior: the posterior is the
+  // log's replay.
+  await learn();
+  assert.equal(keptState().folded, 1);
+  const corrected = { ...again, cooled_s: again.cooled_s + 30 };
+  logEgg(corrected);
+  assert.equal(keptState().folded, 0, 'to be folded again');
+  await learn();
+  assert.equal(keptState().folded, 1);
+  assertIdentical(keptState().calibration, replay(freshCalibration(PARTICLE_COUNT, CALIBRATION_SEED), keptState().log),
+    'the corrected egg, folded once');
+});

@@ -666,6 +666,9 @@ commit each):
    - **Settings another tab writes** leave a running tab's controls alone
      (step 7's rule, taken here because the cook no longer reads them); they
      are drawn again at Cancel or Start again.
+   - **`logEgg`** replaces the facts of an egg already logged under the same
+     id, keeping its answers, and when that egg was folded, folds the log
+     again from where it starts (review 2.5; step 7 listed it).
    - **On screen**, as the plan now says: the direction line comes in when
      the cook's surface lands, even mid-cook, and is held while a new pot's
      is built; the line under the sentence and "You asked for" read the

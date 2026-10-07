@@ -81,7 +81,7 @@ export function freshKept(pop: Population = activePopulation()): Kept {
 }
 
 /** Where a replay starts: the base if there is one, the prior if not. */
-function startOf(base: Calibration | null, pop: Population = activePopulation()): Calibration {
+export function startOf(base: Calibration | null, pop: Population = activePopulation()): Calibration {
   return base === null ? freshCalibration(pop) : copyCalibration(base);
 }
 
