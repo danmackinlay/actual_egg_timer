@@ -18,7 +18,9 @@
  * each with an outer edge, a temperature and how set it is.
  */
 
-import { YOLK_RADIUS_FRAC, Z_YOLK, TREF_YOLK_C, Z_WHITE, TREF_WHITE_C, DT_SIM } from './constants.js';
+import {
+  YOLK_RADIUS_FRAC, Z_YOLK, TREF_YOLK_C, Z_WHITE, TREF_WHITE_C, DT_SIM, CARRYOVER_WINDOW,
+} from './constants.js';
 import { Egg } from './geometry.js';
 import {
   CookSetup, bathTemperature, coolingTemperature, initialSurfaceTemperature,
@@ -175,18 +177,17 @@ export function sectionView(s: EggSection, whiteTarget_min: number): SectionView
 
 /**
  * The egg the settings aim for (design/one-screen.md section 5; DECISIONS.md
- * 97): one egg, at the posterior mean (`params`), cooked for `cookTime_s` and
- * shown at the yolk centre's peak, `peakYolkTime_s` (the solve's), which is
- * Done. A set layer never unsets, so that is the egg as eaten, and a cook on
- * time watches the live egg grow into it. Where the centre peaked while the
- * egg was still in the water - a heat-off pan that ran out - it is the egg as
- * it came out. About 1,600 steps: once per solve, not per frame.
+ * 98): one egg, at the posterior mean (`params`), cooked for `cookTime_s` and
+ * shown at the end of the cooling, the egg as eaten: carried through the
+ * whole carryover (`CARRYOVER_WINDOW`), as `simulate` counts it, so the yolk
+ * reads the level the slider asked for. At the yolk centre's peak, which is
+ * Done, the dose is not all in: a jammy (0.41) yolk read 0.34 there. About
+ * 2,700 steps for a soft-boiled egg: once per solve, not per frame.
  */
 export function previewSection(
-  egg: Egg, setup: CookSetup, params: ModelParams, cookTime_s: number, peakYolkTime_s: number,
-  whiteTarget_min: number,
+  egg: Egg, setup: CookSetup, params: ModelParams, cookTime_s: number, whiteTarget_min: number,
 ): SectionView {
   const s = createSection(egg, setup, params);
-  advanceSection(s, egg, setup, params, peakYolkTime_s > cookTime_s ? peakYolkTime_s : cookTime_s, cookTime_s);
+  advanceSection(s, egg, setup, params, cookTime_s + CARRYOVER_WINDOW, cookTime_s);
   return sectionView(s, whiteTarget_min);
 }

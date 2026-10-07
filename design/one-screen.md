@@ -464,15 +464,19 @@ The functions, all pure and fixtured:
 - `previewSection(egg, setup, params, cookTime_s, whiteTarget_min)` in
   `section.ts` (§5).
 
-  *As built (C2):* `previewSection(egg, setup, params, cookTime_s,
-  peakYolkTime_s, whiteTarget_min)`, the peak's time handed in from the
-  solve the screen already has rather than found by a second simulation.
-  Where the centre peaked while the egg was still in the water (a heat-off
-  pan that ran out), it shows the egg as it came out. It is the live egg's
-  last frame exactly. One thing for the owner to see on a phone: the yolk's
-  dose is not all in at its peak (the slider's level counts the whole
-  carryover), so at the peak a jammy (0.41) yolk reads 0.34 on the slider's
-  scale, and a fudgy (0.62) one about 0.55.
+  *As built (C2), then after the review:* C2 built `previewSection(egg,
+  setup, params, cookTime_s, peakYolkTime_s, whiteTarget_min)`, the egg at
+  the yolk's peak, and found that the yolk's dose is not all in there (the
+  slider's level counts the whole carryover): a jammy (0.41) yolk read 0.34
+  on the slider's scale, a fudgy (0.62) one about 0.55. `DECISIONS.md` 98
+  moved it to the end of the cooling, the egg as eaten: `previewSection(egg,
+  setup, params, cookTime_s, whiteTarget_min)` carries it through the whole
+  carryover (`CARRYOVER_WINDOW`, 900 s past the pull), as `simulate` counts
+  it, so the yolk reads the level asked (jammy 0.41 reads 0.41: 0.412 for
+  the tests' 68 g egg, against the 0.34 at the peak). It is no longer the
+  live egg's last frame at Done, which is the peak: a live egg carried on
+  that far is the same egg (`test/section.test.ts` 7). About 2,700 steps
+  for a soft-boiled egg, once per solve.
 
 `phaseAt`, `answerAt`, `decideAnswer`, `carriedSolution`, `certaintyAt`,
 `recordFor`, `createSection` and `advanceSection` are used as they are.
@@ -635,13 +639,16 @@ rewritten as built.
   choice in a clause's panel), that moment is all there is, so I propose
   about 1.5 s, then back to the live egg (§7, 19). The aimed-for egg is
   `previewSection` at the plan's time for the settings under the finger:
-  `createSection`, then `advanceSection` to the solve's `peakYolkTime_s`
-  with the egg out at the cook time, then `sectionView`. That is about
-  1,600 steps, a few milliseconds, once per solve rather than per frame.
-- **Which moment it shows.** I propose the yolk's peak, which is Done:
-  since a set layer never unsets, that is the egg as eaten, and it is the
-  live egg's last frame. A cook on time sees the live egg grow into the
-  picture they aimed for (§7, 10).
+  `createSection`, then `advanceSection` through the whole carryover with
+  the egg out at the cook time, then `sectionView`. That is about 2,700
+  steps, a few milliseconds, once per solve rather than per frame.
+- **Which moment it shows.** The end of the cooling, the egg as eaten,
+  with the whole carryover in, so the yolk reads the level asked
+  (`DECISIONS.md` 98). I first proposed the yolk's peak, which is Done and
+  the live egg's last frame, but the dose is not all in there: a jammy
+  yolk read 0.34 at its peak. A cook on time sees the live egg grow toward
+  the picture they aimed for, and the last few hundredths come in on the
+  plate.
 - **At idle** there is no live egg. I propose it shows the aimed-for egg at
   rest, as 91 asked, and goes back to raw at the start (§7, 19).
 - **It has no words**, as now. The certainty line and the sentence say what

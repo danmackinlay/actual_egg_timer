@@ -48,9 +48,10 @@ const CASES: Case[] = [
   },
 ];
 
-/* The egg the settings aim for (`previewSection`): the solve's time and peak,
- * at the levels across the slider, in each thing it cools in, and a heat-off
- * pan whose centre peaks before the egg comes out. */
+/* The egg the settings aim for (`previewSection`): the solve's time, the egg
+ * as eaten at the end of the cooling, at the levels across the slider, in
+ * each thing it cools in, and a heat-off pan whose centre peaks before the
+ * egg comes out. */
 const PREVIEWS: { name: string; setup: CookSetup; level: number }[] = [
   { name: 'hot start, ice bath, jammy', setup: appSetup(), level: 0.41 },
   { name: 'hot start, ice bath, runny', setup: appSetup(), level: 0.05 },
@@ -99,12 +100,9 @@ export const sectionFixture = {
   previews: PREVIEWS.map((p, i) => {
     const sol = solveCookTime(EGG, p.setup, DEFAULT_PARAMS, donenessFromSlider(p.level));
     const target = i % 2 === 0 ? WHITE_DOSE_TARGET : MOVED_WHITE_TARGET;
-    const view = previewSection(
-      EGG, p.setup, DEFAULT_PARAMS, sol.result.cookTime_s, sol.result.peakYolkTime_s, target,
-    );
+    const view = previewSection(EGG, p.setup, DEFAULT_PARAMS, sol.result.cookTime_s, target);
     return {
-      name: p.name, setup: p.setup, cookTime_s: sol.result.cookTime_s, peakYolkTime_s: sol.result.peakYolkTime_s,
-      peakYolk_C: sol.result.peakYolk_C, whiteTarget_min: target,
+      name: p.name, setup: p.setup, cookTime_s: sol.result.cookTime_s, level: p.level, whiteTarget_min: target,
       temperature_C: view.temperature_C, set: view.set,
     };
   }),

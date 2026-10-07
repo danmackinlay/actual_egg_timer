@@ -136,17 +136,12 @@ public struct SectionView: Sendable {
 }
 
 /// The egg the settings aim for: one egg, at the posterior mean, cooked for
-/// `cookTimeS` and shown at the yolk centre's peak, `peakYolkTimeS`, or as it
-/// came out where the centre peaked in the water. See `previewSection` in
-/// `src/core/section.ts`.
+/// `cookTimeS` and shown at the end of the cooling, the egg as eaten, with
+/// the whole carryover in. See `previewSection` in `src/core/section.ts`.
 public func previewSection(
-    egg: Egg, setup: CookSetup, params: ModelParams, cookTimeS: Double, peakYolkTimeS: Double,
-    whiteTargetMin: Double
+    egg: Egg, setup: CookSetup, params: ModelParams, cookTimeS: Double, whiteTargetMin: Double
 ) -> SectionView {
     var s = EggSection(egg: egg, setup: setup, params: params)
-    s.advance(
-        egg: egg, setup: setup, params: params, toS: peakYolkTimeS > cookTimeS ? peakYolkTimeS : cookTimeS,
-        outAtS: cookTimeS
-    )
+    s.advance(egg: egg, setup: setup, params: params, toS: cookTimeS + Constants.carryoverWindow, outAtS: cookTimeS)
     return s.view(whiteTargetMin: whiteTargetMin)
 }

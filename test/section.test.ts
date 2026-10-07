@@ -14,7 +14,7 @@ import {
 import { eggFromMass } from '../src/core/geometry.js';
 import { coolingTemperature } from '../src/core/protocol.js';
 import {
-  DEFAULT_PARAMS, WHITE_DOSE_TARGET, donenessFromSlider, simulate, solveCookTime,
+  DEFAULT_PARAMS, WHITE_DOSE_TARGET, donenessFromSlider, simulate, sliderFromYolkDose, solveCookTime,
 } from '../src/core/solve.js';
 import { CARRYOVER_WINDOW, DT_SIM, YOLK_RADIUS_FRAC } from '../src/core/constants.js';
 import { appSetup } from '../tools/common.js';
@@ -131,22 +131,33 @@ test('section 6. once out, the shell follows what the egg cools in', () => {
   assert.equal(s.outAt_s, 400);
 });
 
-test("section 7. the egg the settings aim for is the live egg's last frame: the yolk's peak", () => {
-  for (const [setup, level] of [[appSetup(), 0.41], [appSetup({ startMode: 'cold', cooling: 'tap' }), 0.62]] as const) {
+test('section 7. the egg the settings aim for is the egg as eaten: the yolk at the level asked', () => {
+  const cases = [
+    [appSetup(), 0.41], [appSetup({ startMode: 'cold', cooling: 'tap' }), 0.62], [appSetup({ cooling: 'counter' }), 0.62],
+  ] as const;
+  for (const [setup, level] of cases) {
     const sol = solveCookTime(EGG, setup, DEFAULT_PARAMS, donenessFromSlider(level));
     const r = sol.result;
-    const aimed = previewSection(EGG, setup, DEFAULT_PARAMS, r.cookTime_s, r.peakYolkTime_s, WHITE_DOSE_TARGET);
-    assert.equal(aimed.temperature_C[CENTRE], r.peakYolk_C, 'the centre at its peak');
-    // The live egg, carried a tick at a time to the same moment, is the same egg.
+    const aimed = previewSection(EGG, setup, DEFAULT_PARAMS, r.cookTime_s, WHITE_DOSE_TARGET);
+    // The whole carryover is in, as the solve counts it (which stops a
+    // little short, once the dose rate is a millionth of its peak): the
+    // centre reads the level the solve found, the one asked to within its
+    // second.
+    assert.ok(Math.abs(aimed.set[CENTRE] - sliderFromYolkDose(r.yolkDose_min)) < 1e-4, `${level}`);
+    assert.ok(Math.abs(aimed.set[CENTRE] - level) < 0.02, `${level}: ${aimed.set[CENTRE]}`);
+    // The live egg, carried a tick at a time through the cooling, is the same egg.
+    const end = r.cookTime_s + CARRYOVER_WINDOW;
     const live = createSection(EGG, setup, DEFAULT_PARAMS);
-    for (let t = 7.3; t < r.peakYolkTime_s; t += 7.3) {
+    for (let t = 7.3; t < end; t += 7.3) {
       advanceSection(live, EGG, setup, DEFAULT_PARAMS, t, t >= r.cookTime_s ? r.cookTime_s : null);
     }
-    advanceSection(live, EGG, setup, DEFAULT_PARAMS, r.peakYolkTime_s, r.cookTime_s);
+    advanceSection(live, EGG, setup, DEFAULT_PARAMS, end, r.cookTime_s);
     assert.deepEqual(sectionView(live, WHITE_DOSE_TARGET), aimed);
-    // The yolk's dose is not all in at the peak: the slider's level is the
-    // whole carryover's, so the centre reads a little softer than asked.
-    assert.ok(aimed.set[CENTRE] < level && aimed.set[CENTRE] > level - 0.1);
+    // At the yolk's peak, which is Done, the dose is not all in: softer than
+    // asked, which is why the aimed-for egg is not shown there (DECISIONS.md 98).
+    const peak = createSection(EGG, setup, DEFAULT_PARAMS);
+    advanceSection(peak, EGG, setup, DEFAULT_PARAMS, r.peakYolkTime_s, r.cookTime_s);
+    assert.ok(sectionView(peak, WHITE_DOSE_TARGET).set[CENTRE] < aimed.set[CENTRE] - 0.03);
     assert.equal(aimed.set[SHELL], 1, 'the white set at the shell');
   }
 });
