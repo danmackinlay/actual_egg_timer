@@ -5,7 +5,8 @@
  * A cook is three things, and everything else is derived from them each time:
  *
  * - THE START: when the egg went in, a clock time the cook can correct ("I
- *   put them in two minutes ago"), never after now or after the first event.
+ *   put them in two minutes ago"), never after now or after the first event,
+ *   nor two hours before Start was pressed.
  * - THE CHOICES: what the sentence, the slider and Settings' pot rows say
  *   (`CookChoices`), the same value the idle screen edits. Every change after
  *   the start is a CORRECTION ("it was always like this"): it replaces the
@@ -32,7 +33,7 @@ import { Egg, SizeTable, eggFromMass } from './geometry.js';
 import { CookSetup, Cooling, HeatAfterBoil, StartMode } from './protocol.js';
 import { boilingPointAtAltitude } from './thermo.js';
 import {
-  BoilMemory, Deadlines, PULL_GRACE_SECONDS, SLOW_HOB_EVERY_S, SLOW_HOB_EXTRA_S, SLOW_HOB_WHEN_LEFT_S,
+  BoilMemory, Deadlines, LIMITS, PULL_GRACE_SECONDS, SLOW_HOB_EVERY_S, SLOW_HOB_EXTRA_S, SLOW_HOB_WHEN_LEFT_S,
   ambientFor, coolingSecondsFor, estimateTimeToBoil, hasBoilMemory, phaseAt, probeMomentFor, startTempPreset_C,
 } from './policy.js';
 import { Solution, logYolkTarget } from './solve.js';
@@ -115,8 +116,8 @@ export interface RunningCook {
   /** When Start was pressed, whole ms since 1970: the record's id on the
    *  web. Never corrected, so a cook logged from two tabs is one egg. */
   id_ms: number;
-  /** When the egg went in: correctable, never after now or the first event
-   *  (`startCorrected`). */
+  /** When the egg went in: correctable, never after now or the first event,
+   *  nor two hours before Start was pressed (`startCorrected`). */
   startedAt_s: number;
   choices: CookChoices;
   events: CookEvents;
@@ -247,7 +248,11 @@ export function corrected(cook: RunningCook, choices: CookChoices, now_s: number
 
 /** The latest the start can be corrected to at `now_s`: now, or the first
  *  event, whichever is sooner. An event the choices do not read (a boil tap
- *  on a cook corrected to boiling) still counts: changing back reads it. */
+ *  on a cook corrected to boiling) still counts: changing back reads it, and
+ *  would read a boil before the egg went in. So a cook who pressed Start as
+ *  the pan went on, tapped the boil, put the eggs in then and corrects to
+ *  boiling cannot move the start past that tap, and the start's panel has
+ *  to say so with the limit (design/one-screen.md section 3). */
 export function latestStart_s(cook: RunningCook, now_s: number): number {
   let latest = now_s;
   const e = cook.events;
@@ -257,10 +262,22 @@ export function latestStart_s(cook: RunningCook, now_s: number): number {
   return latest;
 }
 
+/** The earliest the start can be corrected to: the most the app takes for a
+ *  time to boil (`LIMITS.timeToBoil_s`, two hours) before Start was pressed
+ *  (`id_ms`). No egg boils that long, and a cold start that has heated that
+ *  long is abandoned (`tooOldAt_s`); it also keeps a typing slip - a start
+ *  in 1970 - out of the plan. Fixed at the press, so the limit the start's
+ *  panel shows does not move with the clock. */
+export function earliestStart_s(cook: RunningCook): number {
+  return cook.id_ms / 1000 - LIMITS.timeToBoil_s.hi;
+}
+
 /** The start corrected to `startedAt_s` at `now_s`, or null: refused when it
- *  is later than `latestStart_s`, or not a time. */
+ *  is later than `latestStart_s`, earlier than `earliestStart_s`, or not a
+ *  time. */
 export function startCorrected(cook: RunningCook, startedAt_s: number, now_s: number): RunningCook | null {
   if (!Number.isFinite(startedAt_s) || startedAt_s > latestStart_s(cook, now_s)) return null;
+  if (startedAt_s < earliestStart_s(cook)) return null;
   return { ...cook, startedAt_s: startedAt_s, events: { ...cook.events, rangAt_s: null }, correctedAt_s: now_s };
 }
 
@@ -466,8 +483,14 @@ export interface CookPlan {
   /** What `phaseAt` reads. */
   deadlines: Deadlines;
   /** While provisional, when the slow hob's rule next lengthens the guess:
-   *  the app plans again then. Null otherwise. */
+   *  the app plans again then. Null otherwise, and once the guess is the
+   *  most the app takes for a time to boil. */
   slowHobAt_s: number | null;
+  /** When the cook is too old to pick back up (`cookTooOld`): an hour past
+   *  its end (the cooling's, or the out's on the counter), or, still
+   *  heating, when the pan has heated for the most the app takes for a time
+   *  to boil, which abandons it. */
+  tooOldAt_s: number;
   /** How sure, at the cook time, and what the record keeps as said: both
    *  need this pot's surface, and are null until it is in. */
   certainty: CertaintyReading | null;
@@ -496,6 +519,30 @@ export function sameDecisionInputs(a: DecisionInputs, b: DecisionInputs): boolea
  *  slow to reach it. */
 export const SLOW_HOB_MAX_STEPS = 100;
 
+/** How long past its end a cook is still worth picking back up, s: an egg
+ *  an hour past its cooling has been eaten or thrown out. Today's web
+ *  `RESTORE_WINDOW_MS` and iOS's bound, now one rule (`cookTooOld`). */
+export const RESTORE_WINDOW_S = 3600;
+
+/** Whether a stored cook is too old to pick back up at `now_s`, from its
+ *  plan: both apps drop it then, rather than restore a timer for an egg
+ *  that is no longer on the hob or the counter. */
+export function cookTooOld(plan: CookPlan, now_s: number): boolean {
+  return now_s > plan.tooOldAt_s;
+}
+
+/**
+ * The id of the egg still open to correction (design/one-screen.md section
+ * 4, review 2.1): the stored running cook's, `cook` with its `plan`, until
+ * it is too old to pick back up; null when there is none. Every other egg
+ * in the log is final, whichever tab asks, and may be sent; this one becomes
+ * final at Start again, which stores another cook, or when it is too old.
+ */
+export function openEggId(cook: RunningCook | null, plan: CookPlan | null, now_s: number): number | null {
+  if (cook === null || plan === null || cookTooOld(plan, now_s)) return null;
+  return cook.id_ms;
+}
+
 /**
  * The plan for a cook at `now_s`, under calibration `c`. `now_s` is read by
  * the slow hob's rule alone.
@@ -514,7 +561,10 @@ export const SLOW_HOB_MAX_STEPS = 100;
  * here from the start each time, so a plan is a function of the cook and the
  * clock alone. Where a lengthening would fire again at once - the egg would
  * be done before the water boils - the guess creeps with the clock in steps of
- * SLOW_HOB_EVERY_S, as the tick's would, without a solve per step. A hot start
+ * SLOW_HOB_EVERY_S, as the tick's would, without a solve per step. It stops
+ * at the most the app takes for a time to boil (`LIMITS.timeToBoil_s`, two
+ * hours): a pan still not boiling then is a cook abandoned (`tooOldAt_s`),
+ * not one to plan again every few seconds for ever (review 1.3). A hot start
  * never times its pan: the remembered time is carried for the record only.
  * A pull ends the heating, read or not.
  *
@@ -576,8 +626,12 @@ export function replan(
 
   if (provisional) {
     const heated = now_s - start;
+    const most = LIMITS.timeToBoil_s.hi;
     let last = 0.0;
     for (let step = 0; ; step++) {
+      // No longer than the most the app takes for a time to boil: past that
+      // the cook is abandoned (`tooOldAt_s`), not lengthened for ever.
+      if (!(ramp < most)) break;
       const t = carriedSolution(pot.egg, pot.setup, params, answer.solution, carry).result.cookTime_s;
       const next = last + SLOW_HOB_EVERY_S;
       const due = t - SLOW_HOB_WHEN_LEFT_S;
@@ -590,7 +644,7 @@ export function replan(
       // Creeping: once every SLOW_HOB_EVERY_S from `next`, up to the last
       // before now.
       last = creeping ? next + SLOW_HOB_EVERY_S * (Math.ceil((heated - next) / SLOW_HOB_EVERY_S) - 1) : fire;
-      ramp = last + SLOW_HOB_EXTRA_S;
+      ramp = last + SLOW_HOB_EXTRA_S < most ? last + SLOW_HOB_EXTRA_S : most;
       lengthened = true;
       pot = cookSetupOf(ch, ramp);
       answer = answerAt(c, pot.egg, pot.setup, ch.level, null, true);
@@ -658,6 +712,9 @@ export function replan(
     }
   }
 
+  const ended = coolEnd !== null ? coolEnd : pulled !== null ? pulled.out_s : cookEnd + PULL_GRACE_SECONDS;
+  const tooOld = provisional ? start + LIMITS.timeToBoil_s.hi : ended + RESTORE_WINDOW_S;
+
   let certainty: CertaintyReading | null = null;
   let forecast: Forecast | null = null;
   if (s !== null) {
@@ -692,6 +749,7 @@ export function replan(
       outAt_s: pulled !== null && pulled.by === 'cook' ? pulled.out_s : null,
     },
     slowHobAt_s: slowHobAt,
+    tooOldAt_s: tooOld,
     certainty: certainty,
     forecast: forecast,
   };

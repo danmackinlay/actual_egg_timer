@@ -12,15 +12,15 @@ import assert from 'node:assert/strict';
 
 import { SIZE_CLASSES } from '../src/core/geometry.js';
 import {
-  PULL_GRACE_SECONDS, SLOW_HOB_EXTRA_S, START_TEMP_PRESETS_C, coolingSecondsFor, phaseAt,
+  LIMITS, PULL_GRACE_SECONDS, SLOW_HOB_EXTRA_S, START_TEMP_PRESETS_C, coolingSecondsFor, phaseAt,
 } from '../src/core/policy.js';
 import { T_ROOM_C } from '../src/core/constants.js';
 import { decisionInputs } from '../src/core/decide.js';
 import { recordFor } from '../src/core/record.js';
 import {
-  CookChoices, CookPlan, CookSurface, RecordContext, RunningCook, boilToRemember, cookEnding, cookFactsFor,
-  cookSetupOf, corrected, eventsDue, latestStart_s, pullStands, readRunningCook, replan, startCook, startCorrected,
-  stillIn, withBoil, withOut,
+  CookChoices, CookPlan, CookSurface, RESTORE_WINDOW_S, RecordContext, RunningCook, boilToRemember, cookEnding,
+  cookFactsFor, cookSetupOf, cookTooOld, corrected, earliestStart_s, eventsDue, latestStart_s, openEggId, pullStands,
+  readRunningCook, replan, startCook, startCorrected, stillIn, withBoil, withOut,
 } from '../src/core/running.js';
 import { gridFor, knowing } from '../tools/common.js';
 
@@ -436,4 +436,53 @@ test('19. review 2.2: a tap made before a stray cold -> hot -> cold is still rem
   const earlier = withBoil(startCorrected(cookOf(), S - 600, S + 10) as RunningCook, S + 500);
   assert.equal(boilToRemember(earlier), null);
   assert.equal(boilToRemember(corrected(corrected(earlier, { ...CHOICES, startMode: 'hot' }, S + 600), CHOICES, S + 610)), null);
+});
+
+test('20. review 1.3: a cook left heating stops lengthening, and is abandoned; the one rule for too old', () => {
+  const most = LIMITS.timeToBoil_s.hi;
+  const cold = cookOf();
+  // The review's call: a cold start never tapped, twelve hours on.
+  const q = replan(cold, C, null, 0, S + 12 * 3600);
+  assert.equal(phaseAt(q.deadlines, S + 12 * 3600), 'HEATING', 'a plan is still a plan');
+  assert.equal(q.setup.timeToBoil_s, most, 'not 43,252 s');
+  assert.equal(q.slowHobAt_s, null, 'nothing more to lengthen');
+  assert.equal(q.tooOldAt_s, S + most);
+  assert.equal(cookTooOld(q, S + 12 * 3600), true);
+  // On the way: lengthened up to the most, then no further.
+  const before = replan(cold, C, null, 0, S + most - 100);
+  assert.ok(before.setup.timeToBoil_s < most && before.slowHobAt_s !== null);
+  const near = replan(cold, C, null, 0, S + most - 30);
+  assert.deepEqual([near.setup.timeToBoil_s, near.slowHobAt_s], [most, null]);
+  assert.equal(cookTooOld(near, S + most - 30), false);
+  assert.equal(cookTooOld(near, S + most), false);
+  assert.equal(cookTooOld(near, S + most + 1), true);
+  // A cook that ran: too old an hour after its end - the cooling's, or the out's on the counter.
+  const hot = cookOf({ startMode: 'hot' });
+  const p = planned(hot, S + 1);
+  assert.equal(p.tooOldAt_s, (p.deadlines.coolEnd_s as number) + RESTORE_WINDOW_S);
+  const counter = cookOf({ startMode: 'hot', cooling: 'counter' });
+  const cp = planned(counter, S + 1);
+  assert.equal(cp.tooOldAt_s, cp.deadlines.cookEnd_s + PULL_GRACE_SECONDS + RESTORE_WINDOW_S);
+  const out = withOut(counter, cp, cp.deadlines.cookEnd_s + 4);
+  assert.equal(planned(out, cp.deadlines.cookEnd_s + 5).tooOldAt_s, cp.deadlines.cookEnd_s + 4 + RESTORE_WINDOW_S);
+});
+
+test('21. review 2.1: the open egg is the stored cook\'s, until Start again or it is too old', () => {
+  const hot = cookOf({ startMode: 'hot' });
+  const p = planned(hot, S + 1);
+  assert.equal(openEggId(hot, p, S + 1), START_MS);
+  assert.equal(openEggId(hot, p, p.tooOldAt_s), START_MS);
+  assert.equal(openEggId(hot, p, p.tooOldAt_s + 1), null, 'too old: final');
+  assert.equal(openEggId(null, null, S + 1), null, 'nothing stored: every egg final');
+});
+
+test('22. review 3: the start has a lower bound, two hours before Start was pressed', () => {
+  const cold = cookOf();
+  assert.equal(earliestStart_s(cold), S - LIMITS.timeToBoil_s.hi);
+  assert.equal(startCorrected(cold, 1, S + 10), null, 'the review\'s call: 1970 is refused');
+  assert.equal(startCorrected(cold, S - LIMITS.timeToBoil_s.hi, S + 10)?.startedAt_s, S - LIMITS.timeToBoil_s.hi);
+  assert.equal(startCorrected(cold, S - LIMITS.timeToBoil_s.hi - 0.5, S + 10), null);
+  // Fixed at the press: a start already corrected does not move it.
+  const earlier = startCorrected(cold, S - 3600, S + 10) as RunningCook;
+  assert.equal(earliestStart_s(earlier), earliestStart_s(cold));
 });

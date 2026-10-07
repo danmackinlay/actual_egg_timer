@@ -267,10 +267,17 @@ public func latestStartS(_ cook: RunningCook, nowS: Double) -> Double {
     return latest
 }
 
+/// The earliest the start can be corrected to: the most the app takes for a
+/// time to boil before Start was pressed (`idMs`), fixed at the press.
+public func earliestStartS(_ cook: RunningCook) -> Double {
+    cook.idMs / 1000 - Limits.timeToBoilS.upperBound
+}
+
 /// The start corrected to `startedAtS` at `nowS`, or nil: refused when it is
-/// later than `latestStartS`, or not a time.
+/// later than `latestStartS`, earlier than `earliestStartS`, or not a time.
 public func startCorrected(_ cook: RunningCook, startedAtS: Double, nowS: Double) -> RunningCook? {
     if !startedAtS.isFinite || startedAtS > latestStartS(cook, nowS: nowS) { return nil }
+    if startedAtS < earliestStartS(cook) { return nil }
     var next = cook
     next.startedAtS = startedAtS
     next.events.rangAtS = nil
@@ -450,6 +457,8 @@ public struct CookPlan: Sendable {
     public let probeMoment: Bool
     public let deadlines: Deadlines
     public let slowHobAtS: Double?
+    /// When the cook is too old to pick back up (`cookTooOld`).
+    public let tooOldAtS: Double
     public let certainty: CertaintyReading?
     public let forecast: Forecast?
 }
@@ -462,6 +471,22 @@ public func sameDecisionInputs(_ a: DecisionInputs, _ b: DecisionInputs) -> Bool
 
 /// The most lengthenings one plan works through.
 public let slowHobMaxSteps = 100
+
+/// How long past its end a cook is still worth picking back up, s.
+public let restoreWindowS = 3600.0
+
+/// Whether a stored cook is too old to pick back up at `nowS`, from its plan.
+public func cookTooOld(_ plan: CookPlan, nowS: Double) -> Bool {
+    nowS > plan.tooOldAtS
+}
+
+/// The id of the egg still open to correction: the stored running cook's,
+/// until it is too old to pick back up; nil when there is none. Every other
+/// logged egg is final.
+public func openEggId(_ cook: RunningCook?, plan: CookPlan?, nowS: Double) -> Double? {
+    guard let cook, let plan, !cookTooOld(plan, nowS: nowS) else { return nil }
+    return cook.idMs
+}
 
 /// The plan for a cook at `nowS`, under calibration `c`. `nowS` is read by
 /// the slow hob's rule alone. See `replan` in `src/core/running.ts`.
@@ -489,9 +514,12 @@ public func replan(
 
     if provisional {
         let heated = nowS - start
+        let most = Limits.timeToBoilS.upperBound
         var last = 0.0
         var step = 0
         while true {
+            // No longer than the most the app takes for a time to boil.
+            if !(ramp < most) { break }
             let t = carriedSolution(
                 egg: pot.egg, setup: pot.setup, params: params, solution: answer.solution, leanS: carry
             ).result.cookTimeS
@@ -506,7 +534,7 @@ public func replan(
             // Creeping: once every slowHobEveryS from `next`, up to the last
             // before now.
             last = creeping ? next + slowHobEveryS * (((heated - next) / slowHobEveryS).rounded(.up) - 1) : fire
-            ramp = last + slowHobExtraS
+            ramp = last + slowHobExtraS < most ? last + slowHobExtraS : most
             lengthened = true
             pot = cookSetupOf(ch, timeToBoilS: ramp)
             answer = answerAt(c, egg: pot.egg, setup: pot.setup, level: ch.level, profile: nil, snapRetry: true)
@@ -583,6 +611,9 @@ public func replan(
         }
     }
 
+    let ended = coolEnd ?? pulled?.outS ?? cookEnd + pullGraceSeconds
+    let tooOld = provisional ? start + Limits.timeToBoilS.upperBound : ended + restoreWindowS
+
     var certainty: CertaintyReading?
     var forecast: Forecast?
     if let s {
@@ -605,7 +636,7 @@ public func replan(
             cookEndS: cookEnd, coolEndS: coolEnd, provisional: provisional,
             outAtS: pulled?.by == .cook ? pulled?.outS : nil
         ),
-        slowHobAtS: slowHobAt, certainty: certainty, forecast: forecast
+        slowHobAtS: slowHobAt, tooOldAtS: tooOld, certainty: certainty, forecast: forecast
     )
 }
 

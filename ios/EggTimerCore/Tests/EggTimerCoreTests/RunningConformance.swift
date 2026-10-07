@@ -103,6 +103,7 @@ struct RunningConformance {
             } else {
                 let now = try move.num("now")
                 try expectClose(latestStartS(cook, nowS: now), row.num("latest_s"), "\(note): latest start")
+                try expectClose(earliestStartS(cook), row.num("earliest_s"), "\(note): earliest start")
                 after = startCorrected(cook, startedAtS: try move.optionalNum("start") ?? .nan, nowS: now)
             }
             #expect(sameJSON(after?.jsonObject, row["after"]), "\(note)")
@@ -135,6 +136,7 @@ struct RunningConformance {
         #expect(try slowHobEveryS == c.num("slowHobEvery_s"))
         #expect(try slowHobMaxSteps == Int(c.num("slowHobMaxSteps")))
         #expect(try pullGraceSeconds == c.num("pullGrace_s"))
+        #expect(try restoreWindowS == c.num("restoreWindow_s"))
     }
 
     /// Every plan, made as the app makes it: with no surface, which says the
@@ -169,6 +171,7 @@ struct RunningConformance {
             }
             let plan = replan(cook, c, surface: surface, leanHintS: hint, nowS: now)
             try expectPlan(plan, row.object("plan"), start: cook.startedAtS, note)
+            #expect(try openEggId(cook, plan: plan, nowS: now) == row.optionalNum("open"), "\(note): the open egg")
             for out in try row.rows("outs", mayBeEmpty: true) {
                 let t = try out.num("now_s")
                 let after = withOut(cook, plan: plan, nowS: t)
@@ -322,6 +325,7 @@ private func expectPlan(_ p: CookPlan, _ json: [String: Any], start: Double, _ n
     #expect(try p.deadlines.provisional == dl.flag("provisional"), "\(note): deadlines provisional")
     expectTime(p.deadlines.outAtS, try dl.optionalNum("outAt_s"), start: start, "\(note): out")
     expectTime(p.slowHobAtS, try json.optionalNum("slowHobAt_s"), start: start, "\(note): slow hob")
+    expectTime(p.tooOldAtS, try json.num("tooOldAt_s"), start: start, "\(note): too old")
     if let cj = json["certainty"] as? [String: Any] {
         let c = try #require(p.certainty, "\(note): no certainty")
         let w = try cj.object("words")

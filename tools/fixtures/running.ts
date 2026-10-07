@@ -12,9 +12,9 @@ import { WhiteReport, YolkWord } from '../../src/core/infer.js';
 import { LITERATURE_POPULATION } from '../../src/core/infer.js';
 import { ProbeReading, recordFor } from '../../src/core/record.js';
 import {
-  CookChoices, CookPlan, CookSurface, RecordContext, RunningCook, SLOW_HOB_MAX_STEPS, boilToRemember,
-  cookEnding, cookFactsFor, cookSetupOf, corrected, eventsDue, latestStart_s, pullStands, readRunningCook, replan,
-  startCook, startCorrected, stillIn, withBoil, withOut,
+  CookChoices, CookPlan, CookSurface, RESTORE_WINDOW_S, RecordContext, RunningCook, SLOW_HOB_MAX_STEPS,
+  boilToRemember, cookEnding, cookFactsFor, cookSetupOf, corrected, earliestStart_s, eventsDue, latestStart_s,
+  openEggId, pullStands, readRunningCook, replan, startCook, startCorrected, stillIn, withBoil, withOut,
 } from '../../src/core/running.js';
 
 import { calibrationOf, coarseDecisionGrid, decidePosteriors } from './decide.js';
@@ -138,6 +138,10 @@ const MOVES: { note: string; cook: RunningCook; move: Move }[] = [
   { note: 'the start after the pull was due: refused', cook: { ...hot, events: { ...hot.events, pulled: { due_s: START_S + 380, out_s: START_S + 400, by: 'timeout', confirmed: false } } }, move: { start: START_S + 390, now: START_S + 500 } },
   { note: 'the start earlier, after the cooling ended', cook: cooled, move: { start: START_S - 30, now: START_S + 1200 } },
   { note: 'a start that is not a time: refused', cook: cold, move: { start: Number.NaN, now: START_S + 200 } },
+  { note: 'the start two hours before Start was pressed: the earliest taken', cook: cold, move: { start: START_S - 7200, now: START_S + 200 } },
+  { note: 'the start before that: refused', cook: cold, move: { start: START_S - 7200.5, now: START_S + 200 } },
+  { note: 'the start in 1970: refused', cook: cold, move: { start: 1, now: START_S + 10 } },
+  { note: 'the earliest fixed at the press, after an earlier start', cook: startCorrected(cold, START_S - 3600, START_S + 10) as RunningCook, move: { start: START_S - 7300, now: START_S + 200 } },
   { note: 'the boil tapped on a cook corrected to cold', cook: corrected(hot, { ...hot.choices, startMode: 'cold' }, START_S + 100), move: { boil: START_S + 500 } },
 ];
 
@@ -156,7 +160,7 @@ const moves = MOVES.map((m) => {
   if ('stands' in move) return { note: m.note, cook: m.cook, move: { stands: true }, after: pullStands(m.cook) };
   return {
     note: m.note, cook: m.cook, move: { start: timeJson(move.start), now: move.now },
-    latest_s: latestStart_s(m.cook, move.now), after: startCorrected(m.cook, move.start, move.now),
+    latest_s: latestStart_s(m.cook, move.now), earliest_s: earliestStart_s(m.cook), after: startCorrected(m.cook, move.start, move.now),
   };
 });
 
@@ -320,7 +324,7 @@ function planJson(p: CookPlan) {
       adviceWanted: d.adviceWanted,
     },
     lean_s: p.lean_s, nudge_s: p.nudge_s, cookTime_s: p.cookTime_s, overdue: p.overdue, askIfStillIn: p.askIfStillIn, cool_s: p.cool_s,
-    probeMoment: p.probeMoment, deadlines: p.deadlines, slowHobAt_s: p.slowHobAt_s,
+    probeMoment: p.probeMoment, deadlines: p.deadlines, slowHobAt_s: p.slowHobAt_s, tooOldAt_s: p.tooOldAt_s,
     certainty: p.certainty, forecast: p.forecast,
   };
 }
@@ -366,6 +370,7 @@ function plan(pc: PlanCase): CookPlan {
     plan: planJson(p),
     outs: (pc.outs ?? []).map((t) => ({ now_s: t, events: withOut(pc.cook, p, t).events })),
     dues: (pc.dues ?? []).map((t) => ({ now_s: t, events: eventsDue(pc.cook, p, t) })),
+    open: openEggId(pc.cook, p, pc.now_s),
     ...recordOf(pc.cook, p, pc.now_s, plans.length),
   });
   return p;
@@ -520,7 +525,17 @@ const S = START_S;
   const creep = cookOf({ mass_kg: 0.048, level: 0 });
   plan({ note: 'a small runny egg on a slow hob: the guess creeps', posterior: 'learned', cook: creep, leanHint_s: 0, now_s: S + 1234.5, surface: 'none' });
   // The cap on lengthenings.
-  plan({ note: 'heating for six hours', posterior: 'prior', cook: cookOf({ level: 0.62 }), leanHint_s: 0, now_s: S + 6 * 3600, surface: 'none' });
+  plan({ note: 'heating for six hours: the guess at the most, nothing more to lengthen, abandoned', posterior: 'prior', cook: cookOf({ level: 0.62 }), leanHint_s: 0, now_s: S + 6 * 3600, surface: 'none' });
+  // Review 1.3's call: a cold start never tapped, twelve hours on; and just
+  // short of the most, where the guess reaches it.
+  plan({ note: 'a cold start never tapped, twelve hours on: abandoned', posterior: 'learned', cook: cookOf(), leanHint_s: 0, now_s: S + 12 * 3600, surface: 'none' });
+  plan({ note: 'heating just short of two hours: the guess at the most, not yet abandoned', posterior: 'learned', cook: cookOf(), leanHint_s: 0, now_s: S + 7170, surface: 'none' });
+  plan({ note: 'heating a little before that: still lengthening', posterior: 'learned', cook: cookOf(), leanHint_s: 0, now_s: S + 7100, surface: 'none' });
+  // A cook done long ago: too old, so its egg is final (review 2.1).
+  const longAgo = cookOf({ startMode: 'hot', cooling: 'tap' });
+  const lp = replan(longAgo, calibrationOf(named('learned')), null, 0, S + 1);
+  const ranOut = withEvents(longAgo, eventsDue(longAgo, lp, S + 5 * 3600));
+  plan({ note: 'a cook left at Done for five hours: too old, its egg final', posterior: 'learned', cook: ranOut, leanHint_s: 0, now_s: S + 5 * 3600, surface: 'none' });
 }
 
 /* What the boil memory learns (`boilToRemember`): a tap the cook watched for,
@@ -552,7 +567,7 @@ export const runningFixture = {
   about: 'A running cook: its egg and pot, the moves the cook makes, a stored cook read back, and the plan derived from it. src/core/running.ts.',
   constants: {
     slowHobWhenLeft_s: SLOW_HOB_WHEN_LEFT_S, slowHobExtra_s: SLOW_HOB_EXTRA_S, slowHobEvery_s: SLOW_HOB_EVERY_S,
-    slowHobMaxSteps: SLOW_HOB_MAX_STEPS, pullGrace_s: PULL_GRACE_SECONDS,
+    slowHobMaxSteps: SLOW_HOB_MAX_STEPS, pullGrace_s: PULL_GRACE_SECONDS, restoreWindow_s: RESTORE_WINDOW_S,
   },
   setups: setups,
   moves: moves,

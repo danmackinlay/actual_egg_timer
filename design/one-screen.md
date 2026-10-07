@@ -139,7 +139,19 @@ back restores it.
 - **A start corrected to after an event.** The start must stay before the
   first event and not later than now. A later start than that is refused
   in the start's panel, with its limit shown, as a typed mass is clamped
-  (`LIMITS`).
+  (`LIMITS`). An event the setup no longer reads still counts, and the
+  panel has to say why: a cook who pressed Start as the pan went on,
+  tapped Full rolling boil, put the eggs in then and corrects to boiling
+  cannot move the start past that tap, because changing back to cold would
+  read a boil before the egg went in. The start can go to the tap itself,
+  no further; the panel names the tap as the limit, so the cook does not
+  read the refusal as a fault.
+- **A start corrected too early.** Nor can the start go more than two
+  hours (`LIMITS.timeToBoil_s.hi`) before Start was pressed: no egg boils
+  that long, a cold start that has heated that long is abandoned, and it
+  keeps a slip (a start in 1970, which the first build took) out of the
+  plan. The limit is fixed at the press, so it does not move with the
+  clock (review 3).
 - **A start corrected earlier, with a boil tap.** The measured ramp is the
   tap minus the start, so it grows. That is the point of the correction.
 
@@ -177,7 +189,9 @@ back restores it.
   tap is never asked about (`DECISIONS.md` 98).
 - **After Start again.** The egg is final: logged, and sent if sharing is
   on. Nothing changes it any more. The cook can correct anything until
-  then.
+  then. A cook left at Done with no Start again (the tab closed, the phone
+  put down) becomes final when it is too old to pick back up, an hour past
+  its end (§4, review 2.1).
 
 ### When a correction makes the egg overdue
 
@@ -310,6 +324,7 @@ export interface CookPlan {
   probeMoment: boolean;
   deadlines: Deadlines;          // for phaseAt, unchanged
   slowHobAt_s: number | null;    // when to plan again while heating (C2)
+  tooOldAt_s: number;            // too old to pick back up (review 1.3)
   certainty: CertaintyReading | null;
   forecast: Forecast | null;
 }
@@ -348,6 +363,22 @@ The functions, all pure and fixtured:
     the clock, so its pot asks for no surface (`inputs` null) and its time is
     the carried one: building a surface a few minutes for a guess, which
     would then move the hint and the guess with it, buys nothing.
+  - **The slow hob stops at two hours** (review 1.3): the guess is never
+    lengthened past `LIMITS.timeToBoil_s.hi` (7,200 s, the most the app takes
+    for a time to boil), and then `slowHobAt_s` is null. A cook still
+    heating at two hours is abandoned: the first build lengthened it for
+    ever, planning every 10 s (a 12-hour-old cook took 280 ms a plan).
+  - **When a cook is too old to pick back up** is one rule in core, from
+    the plan and the clock: `tooOldAt_s` (a plan field) and
+    `cookTooOld(plan, now_s)`. An hour (`RESTORE_WINDOW_S`, today's web
+    `RESTORE_WINDOW_MS` and iOS's bound) past the cook's end, the cooling's
+    or, on the counter, the out's; or, still heating, two hours after the
+    start. `readRunningCook`'s callers plan the stored cook and drop it when
+    it is too old, so both apps drop it at the same moment, and an egg left
+    at Done becomes final then (2.1, below). In the creeping regime the
+    plan's own pull can be behind the clock while still heating, as today's
+    tick's was; `phaseAt` reads Heating, and a "time left" must not be shown
+    from it.
   - **The pull is never before the last thing the cook told the plan**, the
     last correction (`correctedAt_s`, a new field) or the boil tap, rather
     than never before `now_s`: a plan made again in the grace (a reload, a
@@ -393,7 +424,9 @@ The functions, all pure and fixtured:
   `startCorrected(cook, startedAt_s, now_s)`: the transitions. The last
   refuses a start after now or after the first event (`latestStart_s`, the
   limit the start's panel shows), an unread one included: changing back
-  would read it.
+  would read it. After the review it also refuses one more than two hours
+  before Start was pressed (`earliestStart_s`, §3), and `stillIn` and
+  `pullStands` answer a plan that asks (above).
 
   *As built (C2).* A correction takes the time it was made, for one thing
   only: `coldSince_s`, since when the choices have said cold, which is how
@@ -426,7 +459,8 @@ The functions, all pure and fixtured:
   is what Cancel and Start again leave: the boil to remember, and whether the
   cook was Done, so an egg to log if no answer has logged it.
 - `readRunningCook(raw): RunningCook | null`: the defensive read, whole or
-  nothing, as `restoreTicket` is now.
+  nothing, as `restoreTicket` is now. It has no age check of its own: its
+  caller plans the cook and asks `cookTooOld` (review 1.3).
 - `previewSection(egg, setup, params, cookTime_s, whiteTarget_min)` in
   `section.ts` (§5).
 
@@ -477,8 +511,9 @@ cook, today's included.
 - **Every edit**, on either app, is one step: replace the cook (setup,
   start or an event), store it, `replan`, redraw. Nothing else is held.
 - **A reload mid-cook (web).** Read `aet.cook.v3`, `replan` with the hint,
-  write any `eventsDue`, and ask for the surface. The alarm cannot sound
-  until a gesture, as now (`readout.restored`).
+  drop it if `cookTooOld`, else write any `eventsDue`, and ask for the
+  surface. The alarm cannot sound until a gesture, as now
+  (`readout.restored`).
 - **The web's second tab** (§7, 23, answered: as today). A tab runs the
   cook it started and does not take up a cook another tab started or
   edited; it re-reads only an answer at Done. The stored cook is the one
@@ -509,8 +544,20 @@ it from the posterior before it, when that is still possible: the same
 conditions as `recordSecondAnswer` (no egg logged since, this page made the
 fold), with a new surface for the new setup. Otherwise the log is replayed
 from the prior, the path a model change already takes (`loadDecision`'s
-rebuild). Nothing is sent before Start again, so the server never sees an
-uncorrected egg.
+rebuild).
+
+**Which eggs are final** (review 2.1). An egg is final unless its id is the
+stored running cook's, whichever tab asks: `openEggId(cook, plan, now_s)`
+is that id, or null, and sharing sends only the others. The open egg
+becomes final at Start again, which stores another cook, or when the cook
+is too old to pick back up (`cookTooOld`, an hour past its end), which
+covers the usual ending, the tab closed at Done. Today's `finalEggs`
+(`update.ts`) held back only the egg on screen in the tab whose answers
+were live, so another tab, or this one after a reload, sent the open egg,
+and a later correction changed the local log but not what the server had.
+On iOS, which keeps no record id, the same rule reads as: the egg of the
+stored cook is not sent until it is too old or Start again. So the server
+never sees an egg that can still be corrected.
 
 ### The refactor, in order
 
@@ -539,7 +586,9 @@ commit each):
    - `cook.ts`: `onPrimary`, `onTick` and `restoreCook` written as events
      and `eventsDue`.
    - `machine.ts` shrinks to what `phaseAt` does not cover
-     (`coolingStartsIn_s`), and `ticket.ts` goes.
+     (`coolingStartsIn_s`), and `ticket.ts` goes. `RESTORE_WINDOW_MS` goes
+     with it, for core's `cookTooOld`; `update.ts`'s `finalEggs` reads
+     `openEggId`.
    - `answer.ts` loses `resolveDuring`/`retime`. `eggRecord.ts` calls
      `cookFactsFor`. `feedback.ts` and `phaseView.ts` read the cook and
      plan.
