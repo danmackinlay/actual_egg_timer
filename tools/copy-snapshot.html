@@ -106,8 +106,14 @@ function snap(name) {
   };
 }
 
-function storedMachine() {
-  return JSON.parse(localStorage.getItem('aet.cook.v2')).machine;
+/** The running cook's deadlines, epoch ms, read from the app in the frame:
+ *  they are its plan's (src/core/running.ts), derived, not stored. The
+ *  module is the frame's own instance, imported by the same URL. */
+async function deadlines() {
+  const url = new URL('../dist/src/ui/state.js', location.href).href;
+  const m = await win().eval(`import(${JSON.stringify(url)})`);
+  const d = m.state.plan.deadlines;
+  return { cookEnd_ms: d.cookEnd_s * 1000, coolEnd_ms: d.coolEnd_s === null ? 0 : d.coolEnd_s * 1000 };
 }
 
 /* ------------------------------------------------------------------ steps */
@@ -115,10 +121,10 @@ function storedMachine() {
 const click = (sel) => ({ name: `click ${sel}`, run: async () => { doc().querySelector(sel).click(); await sleep(60); } });
 const advance = (s) => ({ name: `+${s}s`, run: async () => { win().__now += s * 1000; await sleep(500); } });
 const wait = (ms) => ({ name: `wait ${ms}`, run: async () => { await sleep(ms); } });
-const toPull = { name: 'to pull', run: async () => { win().__now = storedMachine().cookEnd_ms + 3000; await sleep(500); } };
+const toPull = { name: 'to pull', run: async () => { win().__now = (await deadlines()).cookEnd_ms + 3000; await sleep(500); } };
 /** A countdown left at exactly `s` seconds, for the spoken forms. */
-const toLeft = (s) => ({ name: `${s}s left`, run: async () => { win().__now = storedMachine().cookEnd_ms - s * 1000; await sleep(500); } });
-const toCoolEnd = { name: 'to cool end', run: async () => { win().__now = storedMachine().coolEnd_ms + 1000; await sleep(500); } };
+const toLeft = (s) => ({ name: `${s}s left`, run: async () => { win().__now = (await deadlines()).cookEnd_ms - s * 1000; await sleep(500); } });
+const toCoolEnd = { name: 'to cool end', run: async () => { win().__now = (await deadlines()).coolEnd_ms + 1000; await sleep(500); } };
 const reopen = { name: 'reload', run: async () => { await openApp(win().__now); } };
 /** Wait until the feedback fold is done: no note says "learning…". */
 const learned = {

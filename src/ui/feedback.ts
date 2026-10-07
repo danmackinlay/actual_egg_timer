@@ -8,7 +8,8 @@
  * Asking once per egg is what closes that gap.
  */
 
-import { anchorNear, plausibleProbeRange_C } from '../core/policy.js';
+import { Phase, anchorNear, plausibleProbeRange_C } from '../core/policy.js';
+import { CookPlan, RunningCook } from '../core/running.js';
 import { midSentence } from '../core/copy.js';
 import { WhiteReport, YOLK_WORDS, YolkWord } from '../core/infer.js';
 import { ProbeReading, probeReadingFor, recordCookTime_s } from '../core/record.js';
@@ -19,10 +20,8 @@ import {
 import { eggRecordFor } from './eggRecord.js';
 import { activeLocale, t } from './copy.js';
 import { page } from './dom.js';
-import { Machine } from './machine.js';
 import { disableSteppers, setStepRule } from './stepper.js';
 import { KeptAnswers } from './store.js';
-import { Ticket } from './ticket.js';
 import { measure, show } from './units.js';
 
 /**
@@ -85,8 +84,11 @@ export function forgetAnswers(): void {
 /** What the questions need of the cook on screen, read when they need it: a
  *  fold lands seconds later, when the cook may have moved on. */
 export interface FeedbackHost {
-  machine(): Machine;
-  ticket(): Ticket | null;
+  /** The running cook and its plan, null while idle. */
+  cook(): RunningCook | null;
+  plan(): CookPlan | null;
+  /** The phase of the cook on screen now. */
+  phase(): Phase;
   calib(): Calibration;
   /** Write the cook down (`persistCook`). */
   persist(): void;
@@ -131,7 +133,7 @@ function resetRows(): void {
 function onAnswer(yolk: YolkWord | null, white: WhiteReport | null, pressed: HTMLButtonElement): void {
   const a = answers;
   if (a.kind === 'live' && ((yolk !== null && a.yolk !== null) || (white !== null && a.white !== null))) return;
-  if (host === null || host.ticket() === null) return;
+  if (host === null || host.cook() === null) return;
   settleRow(yolk !== null ? 'button.fb' : 'button.wb', pressed);
   foldAnswer(yolk, white, null);
 }
@@ -140,15 +142,12 @@ function onAnswer(yolk: YolkWord | null, white: WhiteReport | null, pressed: HTM
  *  a yolk, a white or a probe reading, whichever came. */
 function foldAnswer(yolk: YolkWord | null, white: WhiteReport | null, probe: ProbeReading | null): void {
   const h = host;
-  const cooked = h === null ? null : h.ticket();
-  if (h === null || cooked === null) return;
+  const cooked = h === null ? null : h.cook();
+  const plan = h === null ? null : h.plan();
+  if (h === null || cooked === null || plan === null) return;
   page().calibNote.textContent = t('feedback.learning');
-  const machine = h.machine();
-  const cookStarted = machine.startedAt_ms;
-  const stillHere = (): boolean => {
-    const now = h.machine();
-    return now.phase === 'DONE' && now.startedAt_ms === cookStarted;
-  };
+  const cookStarted = cooked.id_ms;
+  const stillHere = (): boolean => h.phase() === 'DONE' && h.cook()?.id_ms === cookStarted;
   const thanks = (): void => {
     if (stillHere()) page().calibNote.textContent = t('feedback.thanks');
     h.learned();
@@ -173,7 +172,7 @@ function foldAnswer(yolk: YolkWord | null, white: WhiteReport | null, probe: Pro
 
   const a = answers;
   if (a.kind !== 'live') {
-    const record = eggRecordFor(cooked, machine, yolk, white, probe);
+    const record = eggRecordFor(cooked, plan, yolk, white, probe);
     // Another tab showing this cook may have written it down first: then
     // this is a later answer to that egg, not a second egg.
     const earlier = eggLogged(record.id ?? null);
@@ -212,45 +211,46 @@ export function answeredElsewhere(): boolean {
  *  "have the probe ready" line and the spoken prompt: `probeOn` is the
  *  cook's setting. The field itself is there whatever the setting
  *  (`probeOffered`). */
-export function probeWanted(probeOn: boolean, ticket: Ticket | null): boolean {
-  return probeOn && ticket !== null && ticket.probeMoment;
+export function probeWanted(probeOn: boolean, plan: CookPlan | null): boolean {
+  return probeOn && plan !== null && plan.probeMoment;
 }
 
 /** Whether the probe is asked for NOW: the egg is done, and no reading yet. */
-export function probePending(machine: Machine, wanted: boolean): boolean {
+export function probePending(phase: Phase, wanted: boolean): boolean {
   const a = answers;
-  return machine.phase === 'DONE' && wanted && (a.kind === 'none' || (a.kind === 'live' && a.probe === null));
+  return phase === 'DONE' && wanted && (a.kind === 'none' || (a.kind === 'live' && a.probe === null));
 }
 
 /** Whether the reading's field is under the questions: whenever the cook has
  *  a moment to probe, the cooling having ended at the yolk's peak, with the
  *  probe setting on or off (DECISIONS.md 92). It is optional, like them. */
-function probeOffered(ticket: Ticket | null): boolean {
-  return ticket !== null && ticket.probeMoment;
+function probeOffered(plan: CookPlan | null): boolean {
+  return plan !== null && plan.probeMoment;
 }
 
 /** The reading's field at DONE, under the two questions, whenever this cook
  *  had a moment to probe; it shows what was given once it is. */
-export function renderProbe(machine: Machine, ticket: Ticket | null): void {
-  const visible = machine.phase === 'DONE' && probeOffered(ticket);
+export function renderProbe(phase: Phase, plan: CookPlan | null): void {
+  const visible = phase === 'DONE' && probeOffered(plan);
   page().probeEntry.hidden = !visible;
-  // The − and + start from the peak the cook was started at, shown greyed in
+  // The − and + start from the peak of the cook that ran, shown greyed in
   // the empty field: a suggestion, never taken as a reading until stepped or
   // typed. Plain digits, as the field holds them.
-  if (visible && ticket !== null) {
-    page().probeReading.placeholder = String(nudgeFrom(measure('probeTemp'), ticket.peakYolk_C));
+  if (visible && plan !== null) {
+    page().probeReading.placeholder = String(nudgeFrom(measure('probeTemp'), plan.solution.result.peakYolk_C));
   }
 }
 
-/** What the cook on screen was started for, over the yolk question, so the
+/** What the cook on screen was cooked for, over the yolk question, so the
  *  answer is graded against it: "You asked for: jammy, peak yolk 65 °C".
- *  From the ticket and the doneness it was started at, never the slider now. */
-export function renderTarget(ticket: Ticket | null, targetLevel: number): void {
-  page().feedbackTarget.hidden = ticket === null;
-  if (ticket === null) return;
+ *  From the plan - the level the cook ran at, and the peak of the time that
+ *  ran - never the slider now. */
+export function renderTarget(plan: CookPlan | null): void {
+  page().feedbackTarget.hidden = plan === null;
+  if (plan === null) return;
   page().feedbackTarget.textContent = t('feedback.target', {
-    doneness: midSentence(t(anchorNear(targetLevel).key), activeLocale()),
-    yolk: show('temperature', ticket.peakYolk_C),
+    doneness: midSentence(t(anchorNear(plan.level).key), activeLocale()),
+    yolk: show('temperature', plan.solution.result.peakYolk_C),
   });
 }
 
@@ -261,16 +261,16 @@ export function renderTarget(ticket: Ticket | null, targetLevel: number): void {
  * has been said about it, one fold per egg.
  */
 function onProbeSave(): void {
-  const cooked = host === null ? null : host.ticket();
-  if (host === null || cooked === null || page().probeReading.disabled) return;
+  const cooked = host === null ? null : host.cook();
+  const plan = host === null ? null : host.plan();
+  if (host === null || cooked === null || plan === null || page().probeReading.disabled) return;
   if (answers.kind === 'live' && answers.probe !== null) return;
   const typed = page().probeReading.value.trim();
   if (typed === '') return;
-  const machine = host.machine();
   const reading_C = parse(measure('probeTemp'), Number(typed));
-  const record = eggRecordFor(cooked, machine, null);
+  const record = eggRecordFor(cooked, plan, null);
   const [low, high] = plausibleProbeRange_C(
-    cooked.egg, cooked.setup, calibrationParams(host.calib()), recordCookTime_s(record),
+    plan.egg, plan.setup, calibrationParams(host.calib()), recordCookTime_s(record),
   );
   if (reading_C === null || reading_C < low || reading_C > high) {
     page().probeNote.textContent = t('probe.refused', {
@@ -280,9 +280,8 @@ function onProbeSave(): void {
   }
   // When it was asked for: the end of the counted cooling, from the moment
   // the record scores as the pull.
-  const probe = probeReadingFor(
-    record, reading_C, machine.coolEnd_ms > 0 ? (machine.coolEnd_ms - machine.startedAt_ms) / 1000 : null,
-  );
+  const coolEnd = plan.deadlines.coolEnd_s;
+  const probe = probeReadingFor(record, reading_C, coolEnd !== null ? coolEnd - cooked.startedAt_s : null);
   page().probeReading.disabled = true;
   disableSteppers(page().probeReading, true);
   page().probeSave.disabled = true;

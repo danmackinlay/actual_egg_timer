@@ -35,10 +35,10 @@ import { shareState } from './share.js';
 import { renderBareScale, renderDonenessReading, renderDonenessScale } from './slider.js';
 import { sousVideCopy } from './sousvide.js';
 import {
-  boilingPoint_C, currentEgg, isSousVide, learning, massFrom, sizeClasses, startModeNow, state, timeToBoil_s,
+  boilingPoint_C, currentEgg, isSousVide, learning, massFrom, phaseNow, sizeClasses, startModeNow, state,
+  timeToBoil_s,
 } from './state.js';
 import { estimateTimeToBoil, hasBoilMemory } from './store.js';
-import { Ticket } from './ticket.js';
 import { show } from './units.js';
 import { APP_VERSION } from './version.js';
 
@@ -52,11 +52,16 @@ const drawn = {
   /** The advice's keys, as listed. */
   advice: '',
   /** The egg in cross-section under the running cook (src/core/section.ts),
-   *  carried forward each tick, and the ticket it was started from: a new
-   *  ticket - a start, a boil tapped, a slow hob, a reload - replays it from
-   *  t = 0, since the water it has been in has changed. */
+   *  carried forward each tick, and the cook, egg and pot it was started
+   *  from: a new one - a start, a boil tapped, a slow hob, a reload - replays
+   *  it from t = 0, since the water it has been in has changed. */
   section: null as EggSection | null,
-  sectionTicket: null as Ticket | null,
+  sectionFor: '',
+  /** What the running cook's direction line last said, and for which cook:
+   *  held while a new pot's surface is on its way (the boil tapped), as the
+   *  line held what it said at the start before, rather than blanking. */
+  outcome: null as Outcome | null,
+  outcomeFor: 0,
 };
 
 /** The words drawn only when they change, to be drawn again: a new
@@ -84,7 +89,7 @@ function textureNote(sol: Solution): string {
 function renderAdvice(): void {
   const chosen = state.chosen;
   let keys: string[] = [];
-  const wanted = state.machine.phase === 'IDLE' && !isSousVide() && chosen !== null && chosen.adviceWanted;
+  const wanted = state.cook === null && !isSousVide() && chosen !== null && chosen.adviceWanted;
   if (wanted && chosen !== null) {
     const inputs = currentInputs(timeToBoil_s());
     const priced: { key: string; profile: OddsProfile }[] = [];
@@ -130,7 +135,7 @@ function setPrimary(label: string, hint: string, visible: boolean): void {
  *  welcome. The way to Help under low odds is a short link, and goes under
  *  either. */
 function renderWelcome(warning: string): void {
-  page().welcome.hidden = !(state.machine.phase === 'IDLE' && !isSousVide() && warning === ''
+  page().welcome.hidden = !(state.cook === null && !isSousVide() && warning === ''
     && state.calib.eggsLogged === 0 && !hasBoilMemory(state.boilMemory));
 }
 
@@ -140,7 +145,7 @@ function renderWelcome(warning: string): void {
  *  it (styles.css) and drawn again when the cook ends. */
 export function render(now_ms: number): void {
   renderLearning();
-  if (state.machine.phase === 'IDLE') renderIdle(now_ms);
+  if (state.cook === null) renderIdle(now_ms);
   else renderRunning(now_ms);
 }
 
@@ -148,7 +153,7 @@ export function render(now_ms: number): void {
  *  on, since the time may then be nudged - and never in sous-vide, which has
  *  no time to nudge. */
 function renderLearning(): void {
-  const on = shareState().on && !(state.machine.phase === 'IDLE' && isSousVide());
+  const on = shareState().on && !(state.cook === null && isSousVide());
   page().learning.hidden = !on;
   showInfo(page().learningInfo, on);
 }
@@ -161,7 +166,7 @@ function renderIdle(now_ms: number): void {
   // for a hot-start solve it would discard nor leaves half of that answer on
   // screen beside its own.
   renderSentence(liveSetupFacts(state.settings, sizeClasses, currentEgg()));
-  renderCookSetup(null, state.machine.targetLevel, sizeClasses);
+  renderCookSetup(null, null, sizeClasses);
   if (isSousVide()) {
     renderSousVide(now_ms);
     return;
@@ -190,15 +195,15 @@ function renderIdle(now_ms: number): void {
 /** The cook under way, five times a second: the readout, and nothing of the
  *  controls. */
 function renderRunning(now_ms: number): void {
-  renderCookSetup(state.ticket, state.machine.targetLevel, sizeClasses);
-  const sol = state.solution;
-  if (sol === null) return;
+  const plan = state.plan;
+  renderCookSetup(state.cook, plan, sizeClasses);
+  if (plan === null) return;
   // The warning line carries a restored cook's warning while it runs - the
   // opposite of a refusal, it only exists mid-cook. Only while the cook is
   // still in flight: at DONE the egg is out and "keep this tab open" is
   // advice about a deadline that has already passed.
-  const warning = pickedUpAfterReload() && state.machine.phase !== 'DONE' ? t('readout.restored') : '';
-  renderReadout(now_ms, sol, warning);
+  const warning = pickedUpAfterReload() && phaseNow(now_ms) !== 'DONE' ? t('readout.restored') : '';
+  renderReadout(now_ms, plan.solution, warning);
   renderSection(now_ms);
   showInfo(page().sublineInfo, false);
   renderOdds();
@@ -209,40 +214,43 @@ function renderRunning(now_ms: number): void {
 /** The egg in cross-section, as it is now: carried forward to the clock, in
  *  the water until the cook said it was out (or the grace ran out), and on
  *  through the carryover after. At the posterior mean, the same egg the
- *  countdown times. */
+ *  countdown times, in the pot its plan has now. */
 function renderSection(now_ms: number): void {
-  const k = state.ticket;
-  if (k === null) return;
-  const machine = state.machine;
+  const cook = state.cook;
+  const plan = state.plan;
+  if (cook === null || plan === null) return;
   const params = calibrationParams(state.calib);
-  if (drawn.section === null || drawn.sectionTicket !== k) {
-    drawn.section = createSection(k.egg, k.setup, params);
-    drawn.sectionTicket = k;
+  const key = JSON.stringify([cook.id_ms, cook.startedAt_s, plan.egg, plan.setup]);
+  if (drawn.section === null || drawn.sectionFor !== key) {
+    drawn.section = createSection(plan.egg, plan.setup, params);
+    drawn.sectionFor = key;
     buildEggSection(page().eggSection, drawn.section.outer);
   }
   const section = drawn.section;
-  const out_s = machine.outAt_ms > 0 ? (machine.outAt_ms - machine.startedAt_ms) / 1000 : null;
-  const now_s = (now_ms - machine.startedAt_ms) / 1000;
+  const pulled = cook.events.pulled;
+  const out_s = pulled === null ? null : pulled.out_s - cook.startedAt_s;
+  const now_s = now_ms / 1000 - cook.startedAt_s;
   advanceSection(
-    section, k.egg, k.setup, params,
+    section, plan.egg, plan.setup, params,
     out_s === null ? now_s : Math.min(now_s, out_s + CARRYOVER_WINDOW), out_s,
   );
-  const view = sectionView(section, calibrationDoneness(state.calib, machine.targetLevel).whiteDose_min);
+  const view = sectionView(section, calibrationDoneness(state.calib, plan.level).whiteDose_min);
   paintEggSection(page().eggSection, ringFills(view, readPalette(page().body)));
 }
 
 /** The readout, the buttons under it and the questions at DONE, idle or not,
  *  and the warning line with `warning` in it. */
 function renderReadout(now_ms: number, sol: Solution, warning: string): void {
-  const { settings, machine, ticket } = state;
-  page().body.dataset['phase'] = machine.phase;
+  const { settings, cook, plan } = state;
+  const phase = phaseNow(now_ms);
+  page().body.dataset['phase'] = phase;
   page().body.dataset['start'] = startModeNow();
   page().warn.textContent = warning;
   page().warn.hidden = warning === '';
 
-  const wanted = probeWanted(settings.probe, ticket);
-  const pending = probePending(machine, wanted);
-  const view = phaseView(machine, ticket, now_ms, {
+  const wanted = probeWanted(settings.probe, plan);
+  const pending = probePending(phase, wanted);
+  const view = phaseView(cook, plan, now_ms, {
     cookTime_s: sol.result.cookTime_s,
     whiteSets: sol.whiteSets,
     controls: {
@@ -264,23 +272,23 @@ function renderReadout(now_ms: number, sol: Solution, warning: string): void {
   // until the cook moves on, answered or not; a reload after an answer puts
   // them away, since the second could no longer be folded.
   const said = answersNow().kind;
-  page().feedback.hidden = machine.phase !== 'DONE' || said === 'beforeReload';
+  page().feedback.hidden = phase !== 'DONE' || said === 'beforeReload';
   if (!page().feedback.hidden && said !== 'live') renderCalibNote(learning());
-  renderProbe(machine, ticket);
-  if (!page().feedback.hidden) renderTarget(ticket, machine.targetLevel);
+  renderProbe(phase, plan);
+  if (!page().feedback.hidden) renderTarget(plan);
 
   page().phaseLabel.textContent = view.label;
   page().digits.textContent = view.digits;
   page().sublineText.textContent = view.subline;
   // The full rolling boil has an (i) that says what it looks like.
-  showInfo(page().hintInfo, machine.phase === 'HEATING');
+  showInfo(page().hintInfo, phase === 'HEATING');
 
   // The live region carries a coarse announcement, not a per-second one: the
   // ticking digits are aria-hidden, so a screen reader hears the phase and the
   // minute rather than being flooded once a second.
   const announcement = t('spoken.announcement', { label: view.label, spoken: view.spoken });
   const minute = view.digits.split(':')[0];
-  const key = `${machine.phase}|${minute}`;
+  const key = `${phase}|${minute}`;
   if (key !== drawn.announced) {
     drawn.announced = key;
     page().announce.textContent = announcement;
@@ -292,9 +300,10 @@ function renderReadout(now_ms: number, sol: Solution, warning: string): void {
  *  what I learn from (src/core/wording.ts). While idle they are the choice on
  *  screen's, and blank until this pot's surface lands - the direction's line
  *  keeps its height, so nothing moves when they arrive. Once a cook is running
- *  the direction and the white's line are what they were at "Eggs in"; the
- *  (i), which is about the slider, goes with the slider. Never where the white
- *  never sets: there is no cook to say anything about.
+ *  the direction and the white's line are its plan's, decided on its pot's
+ *  surface, and held while a new pot's is on its way; the (i), which is about
+ *  the slider, goes with the slider. Never where the white never sets: there
+ *  is no cook to say anything about.
  *
  *  There is no play-safe suggestion under the direction, and no "still
  *  learning" line: the slider and the bracket already show the one, and "I
@@ -302,14 +311,20 @@ function renderReadout(now_ms: number, sol: Solution, warning: string): void {
  *  speeds it up is the last paragraph of the (i). */
 function renderOdds(): void {
   let o: Outcome | null = null;
-  if (state.machine.phase === 'IDLE') {
+  if (state.cook === null) {
     if (state.decision !== null && state.solution !== null && state.solution.whiteSets) o = state.outcome;
-  } else if (state.ticket !== null) {
-    o = state.ticket.outcome;
+  } else if (state.plan !== null) {
+    const id = state.cook.id_ms;
+    const now = state.plan.decided === null ? null : state.plan.decided.outcome;
+    if (now !== null || drawn.outcomeFor !== id) {
+      drawn.outcome = now;
+      drawn.outcomeFor = id;
+    }
+    o = state.plan.solution.whiteSets ? drawn.outcome : null;
   }
   page().directionText.textContent = o === null ? '' : t(directionKey(o));
   page().whiteRisk.hidden = o === null || !whiteAtRisk(o);
-  showInfo(page().oddsInfo, state.machine.phase === 'IDLE' && o !== null);
+  showInfo(page().oddsInfo, state.cook === null && o !== null);
 
   // While a new pot's surface is on its way the lines above are blank, and
   // the readout would shrink and grow back a second later, moving the
@@ -317,7 +332,7 @@ function renderOdds(): void {
   // the height it had when the lines were last all there. Measured only
   // while idle: reading the height forces a layout, and a running cook, drawn
   // five times a second, has no choice to keep still.
-  if (state.machine.phase !== 'IDLE') {
+  if (state.cook !== null) {
     page().readout.style.minHeight = '';
   } else if (state.decision === null) {
     page().readout.style.minHeight = drawn.readout_px > 0 ? `${drawn.readout_px}px` : '';
@@ -343,7 +358,7 @@ function renderSousVide(now_ms: number): void {
   showInfo(page().sublineInfo, false);
   showInfo(page().hintInfo, false);
   renderAdvice();
-  page().body.dataset['phase'] = state.machine.phase;
+  page().body.dataset['phase'] = 'IDLE';
   page().body.dataset['start'] = state.settings.startMode;
 
   const egg = currentEgg();

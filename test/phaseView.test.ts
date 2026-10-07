@@ -5,8 +5,8 @@
  * Which keys it says is core's (`phaseKeys`, pinned for both apps by
  * fixtures/wording.json); these tests hold the web to those keys, and to the
  * arguments it fills them with - above all that a running cook is described
- * by its ticket and its machine, never by the controls, which a second tab
- * may have changed since "Eggs in".
+ * by its own choices and its plan (src/core/running.ts), never by the
+ * controls, which a second tab may have changed since "Eggs in".
  *
  * Zero dependencies: node:test + node:assert/strict only.
  */
@@ -15,25 +15,30 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
-import { eggFromMass } from '../src/core/geometry.js';
+import { SIZE_CLASSES } from '../src/core/geometry.js';
 import { parseCatalogue } from '../src/core/copy.js';
+import { PULL_GRACE_SECONDS } from '../src/core/policy.js';
+import {
+  CookChoices, CookPlan, RunningCook, eventsDue, replan, startCook, withBoil, withOut,
+} from '../src/core/running.js';
 import { phaseKeys } from '../src/core/wording.js';
 import { forceFormatLocale, t, useCatalogue } from '../src/ui/copy.js';
 import { formatClock, spokenClock } from '../src/ui/countdown.js';
-import { advance, beginCooling, idleMachine, recordBoil, startCold, startHot } from '../src/ui/machine.js';
 import { ReadoutFacts, phaseView } from '../src/ui/phaseView.js';
-import { Ticket } from '../src/ui/ticket.js';
 import { show, useUnits } from '../src/ui/units.js';
+import { knowing } from '../tools/common.js';
 
 useCatalogue(parseCatalogue(JSON.parse(readFileSync('copy/en.json', 'utf8'))));
 forceFormatLocale('en-GB');
 useUnits('metric');
 
 const T0 = Date.UTC(2026, 8, 29, 12, 0, 0);
+const S = T0 / 1000;
+const C = knowing({ particles: 200, eggsLogged: 0 });
 
-/** The controls say a hot start at altitude with the heat off; the ticket, a
+/** The controls say a hot start at altitude with the heat off; the cook, a
  *  cold start at sea level with the heat held. Whatever the screen says while
- *  the cook runs must be the ticket's. */
+ *  the cook runs must be the cook's. */
 function facts(over: Partial<ReadoutFacts> = {}): ReadoutFacts {
   return {
     cookTime_s: 720,
@@ -48,21 +53,23 @@ function facts(over: Partial<ReadoutFacts> = {}): ReadoutFacts {
   };
 }
 
-function coldTicket(): Ticket {
-  return {
-    egg: eggFromMass(0.06), massFrom: 'class', sizeTable: 'eu', eggFrom: 'fridge', boilRemembered: false,
-    setup: {
-      startMode: 'cold', afterBoil: 'hold', eggStart_C: 4, ambient_C: 20, boiling_C: 100,
-      timeToBoil_s: 480, cooling: 'ice', waterLitres: 2, eggCount: 2,
-    },
-    logNominalTarget: 0.9, units: 'metric', lean_s: 0, nudge_s: 0, outcome: null, forecast: null, peakYolk_C: 66, lang: 'en',
-    probeMoment: true,
-  };
+const CHOICES: CookChoices = {
+  mass_kg: SIZE_CLASSES[1].mass_kg, massFrom: 'class', sizeTable: 'eu', eggFrom: 'fridge', customStart_C: 12,
+  room_C: null, startMode: 'cold', afterBoil: 'hold', cooling: 'ice', waterLitres: 2, eggCount: 2,
+  altitude_m: 0, level: 0.4,
+};
+
+function cookOf(over: Partial<CookChoices> = {}): RunningCook {
+  return startCook(T0, { ...CHOICES, ...over }, 0, { '2.0': 480 }, 'metric', 'en');
+}
+
+function planOf(cook: RunningCook, now_s: number): CookPlan {
+  return replan(cook, C, null, 0, now_s);
 }
 
 test('idle: the controls\' pot, in the words phaseKeys chose', () => {
   const cold = facts({ controls: { ...facts().controls, startMode: 'cold', afterBoil: 'hold' } });
-  const v = phaseView(idleMachine('ice'), null, T0, cold);
+  const v = phaseView(null, null, T0, cold);
   const keys = phaseKeys({
     phase: 'IDLE', startMode: 'cold', afterBoil: 'hold', cooling: 'tap', whiteSets: true, boilKnown: false,
     probeWanted: false,
@@ -78,57 +85,66 @@ test('idle: the controls\' pot, in the words phaseKeys chose', () => {
 });
 
 test('idle: a hot start has no ramp, and a white that never sets offers nothing to start', () => {
-  const v = phaseView(idleMachine('ice'), null, T0, facts({ whiteSets: false }));
+  const v = phaseView(null, null, T0, facts({ whiteSets: false }));
   assert.equal(v.primary, t('action.eggsIn'));
   assert.equal(v.primaryDisabled, true);
   assert.equal(v.hint, t('action.hint.whiteNeverSets'));
 });
 
-test('a cold start heating: counts down to the pull on the ticket\'s pot, and can be cancelled', () => {
-  const m = startCold(T0, 900, 480, 'ice', 0.4);
-  const now = T0 + 60_000;
-  const v = phaseView(m, coldTicket(), now, facts());
+test('a cold start heating: counts down to the plan\'s pull on the cook\'s pot, and can be cancelled', () => {
+  const cook = cookOf();
+  const now_s = S + 60;
+  const plan = planOf(cook, now_s);
+  const v = phaseView(cook, plan, now_s * 1000, facts());
   assert.equal(v.label, t('readout.phase.heating'));
-  assert.equal(v.digits, formatClock(840));
+  assert.equal(v.digits, formatClock(plan.deadlines.cookEnd_s - now_s));
   assert.equal(v.subline, t('readout.sub.heating', { elapsed: formatClock(60), boil: formatClock(480) }));
   assert.equal(v.primary, t('action.fullBoil'));
-  assert.equal(v.hint, t('action.hint.heating'), 'the ticket holds the heat; the controls\' "off" is not read');
+  assert.equal(v.hint, t('action.hint.heating'), 'the cook holds the heat; the controls\' "off" is not read');
   assert.equal(v.secondaryVisible, true);
 });
 
-test('cooking: the boiling point is the ticket\'s, not the controls\'', () => {
-  const boiled = recordBoil(startCold(T0, 900, 480, 'ice', 0.4), T0 + 500_000, 910);
-  const v = phaseView(boiled, coldTicket(), T0 + 600_000, facts());
+test('cooking: the time to boil is the tap, the boiling point the cook\'s, not the controls\'', () => {
+  const tapped = withBoil(cookOf(), S + 500);
+  const plan = planOf(tapped, S + 500);
+  const now_s = S + 600;
+  const v = phaseView(tapped, plan, now_s * 1000, facts());
   assert.equal(v.label, t('readout.phase.cookingBoiling'));
-  assert.equal(v.hint, t('action.hint.cookingBoiling', { boiling: show('temperature', 100) }));
+  assert.equal(v.digits, formatClock(plan.cookTime_s - 600));
+  assert.equal(v.subline, t('readout.sub.cookingCold', {
+    boil: formatClock(500), after: formatClock(plan.cookTime_s - 500),
+  }));
+  assert.equal(v.hint, t('action.hint.cookingBoiling', { boiling: show('temperature', plan.setup.boiling_C) }));
   assert.equal(v.primary, null, 'no button while it cooks');
   assert.equal(v.secondaryVisible, true);
 });
 
 test('the pull, the cooling and done', () => {
-  const hot: Ticket = { ...coldTicket(), setup: { ...coldTicket().setup, startMode: 'hot' } };
-  const m = startHot(T0, 600, 'ice', 0.4);
-  const pull = advance(m, T0 + 601_000).machine;
-  assert.equal(pull.phase, 'PULL');
-  const atPull = phaseView(pull, hot, T0 + 603_000, facts());
+  const hot = cookOf({ startMode: 'hot' });
+  const plan = planOf(hot, S);
+  const pull_s = plan.deadlines.cookEnd_s;
+  const atPull = phaseView(hot, plan, (pull_s + 3) * 1000, facts());
   assert.equal(atPull.label, t('readout.phase.pull'));
   assert.equal(atPull.digits, `+${formatClock(3)}`, 'counted from the deadline, not from when the tab noticed');
   assert.equal(atPull.primary, t('action.pulled.ice'));
+  assert.equal(atPull.hint, t('action.hint.pull', { seconds: Math.ceil(PULL_GRACE_SECONDS - 3) }));
 
-  const cooling = beginCooling(pull, T0 + 605_000);
-  assert.equal(cooling.phase, 'COOLING');
-  const cool = phaseView(cooling, hot, T0 + 605_000, facts({ probeWanted: true }));
+  const out = withOut(hot, plan, pull_s + 5);
+  const cooling = planOf(out, pull_s + 5);
+  const cool = phaseView(out, cooling, (pull_s + 5) * 1000, facts({ probeWanted: true }));
   assert.equal(cool.label, t('readout.phase.coolingIce'));
+  assert.equal(cool.digits, formatClock(cooling.cool_s));
   assert.equal(cool.subline, t('readout.sub.coolingProbe'));
   assert.equal(cool.secondaryVisible, true);
 
-  const done = advance(cooling, T0 + 3_600_000).machine;
-  assert.equal(done.phase, 'DONE');
-  const plain = phaseView(done, hot, T0 + 3_600_000, facts());
-  assert.equal(plain.digits, formatClock(600));
-  assert.equal(plain.subline, t('readout.sub.doneHot', { boil: formatClock(0), cooking: formatClock(600) }));
+  const end_s = (cooling.deadlines.coolEnd_s ?? 0) + 1;
+  const done = { ...out, events: eventsDue(out, cooling, end_s) };
+  const finished = planOf(done, end_s);
+  const plain = phaseView(done, finished, end_s * 1000, facts());
+  assert.equal(plain.digits, formatClock(finished.cookTime_s));
+  assert.equal(plain.subline, t('readout.sub.doneHot', { boil: formatClock(0), cooking: formatClock(finished.cookTime_s) }));
   assert.equal(plain.spoken, t('spoken.done'));
   assert.equal(plain.primary, t('action.startAgain'));
   assert.equal(plain.secondaryVisible, false, 'a finished cook has nothing to cancel');
-  assert.equal(phaseView(done, hot, T0 + 3_600_000, facts({ probePending: true })).spoken, t('spoken.probe'));
+  assert.equal(phaseView(done, finished, end_s * 1000, facts({ probePending: true })).spoken, t('spoken.probe'));
 });

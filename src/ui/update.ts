@@ -10,6 +10,7 @@ import { LevelAnswer } from '../core/reach.js';
 import { warningKey } from '../core/wording.js';
 import { midSentence } from '../core/copy.js';
 import { LanguageState, effectiveLanguage } from '../core/language.js';
+import { CookPlan, openEggId, replan } from '../core/running.js';
 import { answerFor, currentInputs, decided } from './answer.js';
 import {
   calibrationStoredElsewhere, clearCalibration, eggsBehind, keptState, learn,
@@ -18,18 +19,18 @@ import { applyLanguageToDom, applySettingsToDom, applyUnitsToDom } from './contr
 import { activeLocale, applyCopy, loadCopy, t, tRef } from './copy.js';
 import { cachedOddsProfile } from './decisionGrids.js';
 import { page } from './dom.js';
-import { answeredElsewhere, answersNow } from './feedback.js';
+import { answeredElsewhere } from './feedback.js';
 import { labelInfoButtons } from './info.js';
 import { renderCalibNote, renderLearned } from './learned.js';
 import { forgetDrawnWords, render, renderMute, renderVersion } from './render.js';
 import { forgetShare, shareState, shareStoredElsewhere } from './share.js';
 import { renderShare } from './shareView.js';
 import { labelTicks } from './slider.js';
-import { isSousVide, learning, state, timeToBoil_s } from './state.js';
+import { isSousVide, learning, phaseNow, state, timeToBoil_s } from './state.js';
 import { labelSteppers } from './stepper.js';
 import {
   Settings, boilStoredElsewhere, clearBoilMemory, cookStoredElsewhere, saveSettings, settingsStoredElsewhere,
-  storedCookAnswered,
+  storedCook, storedCookAnswered, storedCookText,
 } from './store.js';
 import { setMuted } from './clock.js';
 import { show, useUnits } from './units.js';
@@ -65,7 +66,7 @@ function warningText(answer: LevelAnswer): string {
  *  gone and there is nothing to snap, so a call mid-cook takes nothing up:
  *  it neither moves `settings.doneness` nor writes it. */
 export function applyAnswer(answer: LevelAnswer): Solution {
-  if (state.machine.phase !== 'IDLE') return answer.solution;
+  if (state.cook !== null) return answer.solution;
   state.idleWarning = warningText(answer);
   const snapTo = answer.verdict.snapTo;
   if (snapTo !== null && snapTo !== state.settings.doneness) {
@@ -78,11 +79,10 @@ export function applyAnswer(answer: LevelAnswer): Solution {
 
 /** Solve for what is on screen and take the answer up. Idle only: mid-cook
  *  it only redraws, since the controls describe the next cook, not this one
- *  (a second tab may have changed them). Every mid-cook solve goes through
- *  `resolveDuring` instead, which keeps the ticket's pot and the target the
- *  cook was started at. */
+ *  (a second tab may have changed them). A running cook is planned by core's
+ *  `replan`, from its own choices (cook.ts). */
 export function recompute(): void {
-  if (state.machine.phase !== 'IDLE') {
+  if (state.cook !== null) {
     render(Date.now());
     return;
   }
@@ -138,16 +138,18 @@ export function writeSettings(): void {
   if (next !== state.settings) takeUpSettings(next);
 }
 
-/** Settings another tab changed, taken up: the controls, the units, the
- *  sound and the words follow, and an idle page is solved again. A cook
- *  under way is described by its ticket, never by the controls. */
+/** Settings another tab changed, taken up: the units, the sound and the
+ *  words follow, and an idle page's controls follow and it is solved again.
+ *  A cook under way is described by its own choices, never by the settings
+ *  (DECISIONS.md 97): while one runs, the controls are left as they are, and
+ *  show the settings again when it ends (`reset`). */
 function takeUpSettings(next: Settings): void {
   const settings = state.settings;
   const before = effectiveLanguage(settings.language);
   Object.assign(settings, next);
   useUnits(settings.unitsChosen);
   setMuted(settings.muted);
-  applySettingsToDom();
+  if (state.cook === null) applySettingsToDom();
   renderMute();
   const tag = effectiveLanguage(settings.language);
   if (tag !== before || tag !== activeLocale()) {
@@ -156,7 +158,7 @@ function takeUpSettings(next: Settings): void {
       if (asked === pending.languageAsked) relabel();
     });
   }
-  if (state.machine.phase === 'IDLE') recompute();
+  if (state.cook === null) recompute();
 }
 
 /** Write now, for the paths that must not lose the setting: starting a cook,
@@ -206,7 +208,7 @@ function relabel(): void {
   // Drawn only when what they say changes, so they are told it has.
   forgetDrawnWords();
   renderCalibNote(learning());
-  if (state.machine.phase === 'IDLE') recompute();
+  if (state.cook === null) recompute();
   else render(Date.now());
 }
 
@@ -225,10 +227,41 @@ export function forgetAll(): void {
 
 /* ---------------------------------------------------------------- sharing */
 
-/** How many of the log's eggs are final: all of them, unless the last is the
- *  egg on screen, whose answers may still come (share.ts). */
+/** The stored cook's plan, for whether it is too old: this tab's own, or
+ *  one made for another tab's cook, kept for as long as the stored text is
+ *  the same (how old a cook may get does not move with the clock). */
+const storedPlan = { text: null as string | null, plan: null as CookPlan | null };
+
+/** The egg still open to correction (core `openEggId`, review 2.1): the
+ *  stored running cook's, whichever tab wrote it, until it is too old to
+ *  pick back up; null when there is none. */
+function openEgg(now_s: number): number | null {
+  const cook = storedCook();
+  if (cook === null) return null;
+  let plan: CookPlan;
+  if (state.cook !== null && state.plan !== null && state.cook.id_ms === cook.id_ms) {
+    plan = state.plan;
+  } else {
+    const text = storedCookText();
+    if (storedPlan.text !== text || storedPlan.plan === null) {
+      storedPlan.text = text;
+      storedPlan.plan = replan(cook, state.calib, null, 0, now_s);
+    }
+    plan = storedPlan.plan;
+  }
+  return openEggId(cook, plan, now_s);
+}
+
+/** How many of the log's eggs are final, from its start (share.ts): all of
+ *  them but the stored running cook's, whichever tab asks, which can still be
+ *  answered and corrected until Start again or until it is too old
+ *  (`openEggId`, design/one-screen.md section 4, "Which eggs are final"). */
 export function finalEggs(): number {
-  return keptState().log.length - (answersNow().kind === 'live' ? 1 : 0);
+  const log = keptState().log;
+  const open = openEgg(Date.now() / 1000);
+  if (open === null) return log.length;
+  const at = log.findIndex((r) => (r.id ?? null) === open);
+  return at < 0 ? log.length : at;
 }
 
 /** The Settings section, with how many final eggs are still to go. */
@@ -245,7 +278,8 @@ export function drawShare(): void {
 export function storedElsewhere(key: string | null): void {
   // The egg on screen answered about in another tab showing the same cook:
   // that tab wrote it down, so this one asks no more about it.
-  if (cookStoredElsewhere(key) && state.machine.phase === 'DONE' && storedCookAnswered(state.machine.startedAt_ms)
+  if (cookStoredElsewhere(key) && state.cook !== null && phaseNow(Date.now()) === 'DONE'
+    && storedCookAnswered(state.cook.id_ms)
     && answeredElsewhere()) {
     render(Date.now());
   }
@@ -256,18 +290,18 @@ export function storedElsewhere(key: string | null): void {
   if (pans !== null) {
     state.boilMemory = pans;
     renderLearned(learning());
-    if (state.machine.phase === 'IDLE') recompute();
+    if (state.cook === null) recompute();
   }
   const calibration = calibrationStoredElsewhere(key);
   const sharing = shareStoredElsewhere(key);
   if (!calibration && !sharing) return;
   renderCalibNote(learning());
   drawShare();
-  if (state.machine.phase === 'IDLE') recompute();
+  if (state.cook === null) recompute();
   if (calibration && eggsBehind() > 0) {
     void learn().then(() => {
       renderCalibNote(learning());
-      if (state.machine.phase === 'IDLE') recompute();
+      if (state.cook === null) recompute();
     });
   }
 }

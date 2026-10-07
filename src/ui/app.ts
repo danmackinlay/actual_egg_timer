@@ -17,24 +17,23 @@
  */
 
 import { stepPast } from '../core/units.js';
-import { resolveDuring, whenAnswerLands } from './answer.js';
+import { whenAnswerLands, whenCookSurfaceLands } from './answer.js';
 import { eggsBehind, exportResults, keptState, learn, loadCalibration } from './calibration.js';
 import { setMuted } from './clock.js';
 import { applyConstantsToDom, applySettingsToDom, buildSizeOptions } from './controls.js';
-import { onPrimary, persistCook, reset, restoreCook } from './cook.js';
+import { onPrimary, persistCook, replanCook, reset, restoreCook } from './cook.js';
 import { bindDom, el, page } from './dom.js';
 import { wireFeedback } from './feedback.js';
 import { wireInfoButtons } from './info.js';
 import { onInput, onToggleMute } from './input.js';
 import { renderCalibNote, renderLearned, wireExport, wireForget } from './learned.js';
-import { idleMachine } from './machine.js';
 import { startOffline } from './offline.js';
 import { render, renderMute, renderVersion } from './render.js';
 import { buildClauses } from './sentence.js';
 import { loadShare, retryDeletes, sendFinal, shareState } from './share.js';
 import { wireShare } from './shareView.js';
 import { buildTicks } from './slider.js';
-import { learning, sizeClasses, state } from './state.js';
+import { learning, phaseNow, sizeClasses, state } from './state.js';
 import { setStepRule, wireSteppers } from './stepper.js';
 import { loadBoilMemory, loadSettings } from './store.js';
 import { measure, useUnits } from './units.js';
@@ -47,10 +46,10 @@ export function boot(): void {
   useUnits(state.settings.unitsChosen);
   state.boilMemory = loadBoilMemory();
   state.calib = loadCalibration();
-  state.machine = idleMachine(state.settings.cooling);
   // A surface or a profile the screen wants, landed: the idle page is
-  // solved again with it.
+  // solved again with it, or the running cook planned again.
   whenAnswerLands(recompute);
+  whenCookSurfaceLands(replanCook);
 
   buildSizeOptions();
   buildTicks();
@@ -83,8 +82,9 @@ export function boot(): void {
   renderVersion();
 
   wireFeedback({
-    machine: () => state.machine,
-    ticket: () => state.ticket,
+    cook: () => state.cook,
+    plan: () => state.plan,
+    phase: () => phaseNow(Date.now()),
     calib: () => state.calib,
     persist: persistCook,
     learned: () => renderLearned(learning()),
@@ -94,8 +94,8 @@ export function boot(): void {
   renderCalibNote(learning());
   restoreCook();
   // Sharing, if the cook turned it on: every egg in the log is final but the
-  // one on screen, whose answers may still come. A deletion not yet confirmed
-  // is asked again first.
+  // stored running cook's, which may still be answered or corrected
+  // (`finalEggs`). A deletion not yet confirmed is asked again first.
   // Turning sharing on or off moves the time by the nudge, so the egg page
   // is solved again with the section redrawn.
   wireShare(() => { drawShare(); recompute(); });
@@ -104,23 +104,20 @@ export function boot(): void {
   void retryDeletes().then(sendFinal);
   window.addEventListener('online', () => { void retryDeletes().then(sendFinal); });
   window.addEventListener('storage', (event) => { storedElsewhere(event.key); });
-  // A cook picked back up is described by its ticket, never by the
-  // controls, which another tab may have changed since "Eggs in".
-  if (state.machine.phase === 'IDLE') recompute();
-  else if (state.ticket !== null) {
-    state.solution = resolveDuring(state.ticket, state.ticket.setup.timeToBoil_s);
-    render(Date.now());
-  }
+  // A cook picked back up is described by its own choices and its plan,
+  // never by the controls, which another tab may have changed since.
+  if (state.cook === null) recompute();
+  else render(Date.now());
   // Eggs written down but not yet folded - a reload mid-fold, or a posterior
   // that had to be rebuilt from the log - are folded now, off the main thread.
   // The app runs on what it had until they land.
   if (eggsBehind() > 0) {
     void learn().then(() => {
       renderCalibNote(learning());
-      if (state.machine.phase === 'IDLE') recompute();
+      if (state.cook === null) recompute();
     });
   }
   // The app opens with no signal, from the last build it kept; a newer one
   // takes over only between cooks (offline.ts).
-  startOffline(() => state.machine.phase === 'IDLE');
+  startOffline(() => state.cook === null);
 }

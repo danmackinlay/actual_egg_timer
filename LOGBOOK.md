@@ -5016,3 +5016,68 @@ fixture case changed its answer by that rule (a lighter egg undone after
 its own first pull had also passed: nothing to ask, the egg as done either
 way) and its note with it. The two new cases are appended last, since the
 fixture's records vary with their position.
+
+## 7 October 2026: the web on the running cook (SHIP-0.5 C2, the web's state)
+
+`245f1c8` and `eddcd9d`, as `design/one-screen.md` step 5 has it ("As
+built"): the web's state is a `RunningCook` under `aet.cook.v3` and its
+plan; `ticket.ts` is gone and `machine.ts` keeps one function. No word
+changed. `npm test` 369 (was 379: the ticket's tests and the machine's
+deadline arithmetic went, the replacements test the running cook), `swift
+test` 151, unchanged.
+
+**Driven**, `devServer` from this worktree in the in-app browser on a fresh
+origin, `Date.now` shifted from the console (inspection only):
+
+- A cold start, 68 g jammy from the fridge: 11:17 at the start, as on 6
+  October. Full rolling boil at 8:14: Keep it boiling, 3:10 to go, the time
+  decided on the measured pot's surface once it landed (lean 0 on the
+  prior). The pull, the grace run out (`pulled` by `timeout`, unconfirmed),
+  the cooling, Done; Fudgy answered: the record has the web's `id`, model
+  `2026-10-e10`, the forecast for the 684 s that ran, `timeToBoilFrom`
+  `measured`.
+- A reload at Done: restored at Done, the questions put away
+  (`beforeReload`). Start again: idle, nothing logged twice.
+- A second cold start, sharing on against the local endpoint: the boil at
+  5:01, the cook's tap out of the pull (`by: cook`), Done, Jammy answered.
+  At Done the egg stayed unsent in this tab and in a second tab opened on
+  it (`sent` 1, the old egg only); Start again sent it (201) and only then
+  remembered the boil, 300.8 s (`cookEnding`).
+- A hot start, a reload mid-cook: the countdown went on, "After the
+  reload…" shown, Cancel there; Cancel cleared the stored cook.
+- Two tabs: A started a hot 68 g cook; B changed the egg to 58 g and the
+  start to cold and started its own. A kept its cook and its sentence, its
+  settings took up B's but its hidden controls did not; Cancel in A left
+  B's stored cook alone and drew A's controls from the settings.
+- A 0.4 cook (0.4's machine and ticket, written under `aet.cook.v2` in the
+  console) on load: kept aside as stored (`aet.cook.unread`), the key
+  deleted, the page idle.
+- A slow hob: the guess lengthened (5:01, then 8:49, 14:20, 24:20 to
+  boil), still Heating, no alarm. The boil tapped at 23:24, after the pull
+  the measured ramp gives: Pull at once, and the alarm rang (75 beeps
+  scheduled), then Done rang (50).
+- A cook stored three hours ago, reloaded: dropped as too old, its
+  finished unanswered egg logged (`timeout`) and sent.
+
+The copy snapshot (`tools/copy-snapshot.html`, which now reads the
+deadlines from the app's plan) against `2a43487`: 172 states each, no key
+changed; what differs is the plan's doing. The direction line now comes
+in mid-cook when the cook's surface lands (the harness starts before it
+does, so 0.4 never showed one); after the boil the time is decided on the
+measured pot (4:58 to go became 5:13, the peak 64 to 65 °C), so the eggs
+recorded, and the times of the cooks after them, differ; and a reload after
+an answer reads the peak on the posterior as it then stands.
+
+**Seen, not changed.** The service worker does not register in the in-app
+browser on a new port ("An unknown error occurred when fetching the
+script"): the same on `2a43487`'s build under a plain static server, so it
+is the browser, not this build. In the slow hob's creeping regime the
+readout shows 0:00 to go while heating, as the tick's did; the one screen
+should not show a time left from it (§4). With the shifted clock a second
+tab sees a cook in its future and runs it as cooking; only an artefact of
+the console.
+
+**Left for the one screen.** The "still in the water?" question
+(`askIfStillIn`) needs words, and arises only from a correction. A cook
+left at Done becomes final an hour later, but nothing sends it until the
+next send.

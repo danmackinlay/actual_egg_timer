@@ -1,17 +1,16 @@
 /**
- * The cooking state machine, and the phase rule it has to agree with.
+ * A cook as the web runs it (src/ui/cook.ts): core's running cook planned at
+ * the start, planned again only when something new is known - an event the
+ * clock decided (`eventsDue`), the slow hob's moment, the boil tapped, the egg
+ * out - and its phase read from the plan and the clock (`phaseAt`) on every
+ * tick, the alarm ringing as it enters Pull. `tick` below is that loop, without
+ * the page; what is checked is the timeline it walks.
  *
- * `machine.ts` drives a cook by advancing through states and firing events at
- * the boundaries; `phaseAt` in the core states the same timeline as a pure
- * function of the clock, and the iOS app derives its phase from that. Those are
- * two descriptions of one cook, and the tests below are what stops them being
- * two different cooks.
- *
- * The counter-rest case is the regression: iOS checked for a cooling deadline
- * before checking the pull grace, so a cook with no cooling step fell from
- * COOKING straight to DONE. "Out of the water — now" never appeared, the grace
- * never ran, and the pull notification still fired at a screen that already
- * said Done.
+ * The counter-rest case is the old regression: iOS checked for a cooling
+ * deadline before checking the pull grace, so a cook with no cooling step fell
+ * from COOKING straight to DONE. "Out of the water — now" never appeared, the
+ * grace never ran, and the pull notification still fired at a screen that
+ * already said Done.
  *
  * Zero dependencies: node:test + node:assert/strict only.
  */
@@ -19,230 +18,160 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
+import { SIZE_CLASSES } from '../src/core/geometry.js';
+import { PULL_GRACE_SECONDS, Phase, phaseAt } from '../src/core/policy.js';
+import { Cooling, StartMode } from '../src/core/protocol.js';
 import {
-  Machine, Phase, advance, beginCooling, coolingStartsIn_s, idleMachine, recordBoil, restoreMachine,
-  reviseProvisional, secondsAfterBoil, secondsToPull, startCold, startHot,
-  COOLING_SECONDS, PULL_GRACE_SECONDS, RESTORE_WINDOW_MS,
-} from '../src/ui/machine.js';
-import {
-  COOLING_SECONDS as CORE_COOLING, PULL_GRACE_SECONDS as CORE_GRACE, phaseAt,
-} from '../src/core/policy.js';
-import { Cooling } from '../src/core/protocol.js';
+  CookChoices, CookPlan, RunningCook, eventsDue, replan, startCook, withBoil, withOut,
+} from '../src/core/running.js';
+import { coolingStartsIn_s } from '../src/ui/machine.js';
+import { knowing } from '../tools/common.js';
 
-const T0 = 1_700_000_000_000;
-const COOK_S = 600;
+const C = knowing({ particles: 200, eggsLogged: 0 });
+const T0 = 1_791_363_600_000;
+const S = T0 / 1000;
 
-/** Walk the machine forward to `now_ms`, applying every transition it asks for
- *  along the way - which is what the ticker does. */
-function walk(start: Machine, now_ms: number): Machine {
-  let m = start;
-  for (let i = 0; i < 16; i++) {
-    const step = advance(m, now_ms);
-    if (step.machine === m) return m;
-    m = step.machine;
+const CHOICES: CookChoices = {
+  mass_kg: SIZE_CLASSES[2].mass_kg, massFrom: 'class', sizeTable: 'eu', eggFrom: 'fridge', customStart_C: 12,
+  room_C: null, startMode: 'hot', afterBoil: 'hold', cooling: 'ice', waterLitres: 2, eggCount: 2,
+  altitude_m: 0, level: 0.41,
+};
+
+function cookOf(startMode: StartMode, cooling: Cooling): RunningCook {
+  return startCook(T0, { ...CHOICES, startMode: startMode, cooling: cooling }, 0, { '2.0': 480 }, 'metric', 'en');
+}
+
+/** A cook under way, as the page holds it, and what it has rung for. */
+interface Running {
+  cook: RunningCook;
+  plan: CookPlan;
+  phase: Phase;
+  rang: Phase[];
+  plans: number;
+}
+
+function begin(cook: RunningCook, now_s: number): Running {
+  const plan = replan(cook, C, null, 0, now_s);
+  return { cook: cook, plan: plan, phase: phaseAt(plan.deadlines, now_s), rang: [], plans: 1 };
+}
+
+/** Plan again, now, with the events the clock has decided written down. */
+function planNow(r: Running, now_s: number): void {
+  r.plan = replan(r.cook, C, null, 0, now_s);
+  r.plans += 1;
+  const due = eventsDue(r.cook, r.plan, now_s);
+  if (JSON.stringify(due) !== JSON.stringify(r.cook.events)) {
+    r.cook = { ...r.cook, events: due };
+    r.plan = replan(r.cook, C, null, 0, now_s);
+    r.plans += 1;
   }
-  throw new Error('machine did not settle');
 }
 
-/** The same cook as the core sees it. */
-function corePhase(m: Machine, now_ms: number): Phase {
-  const coolEnd_s = m.cooling === 'counter'
-    ? null
-    : (m.cookEnd_ms / 1000) + PULL_GRACE_SECONDS + COOLING_SECONDS;
-  return phaseAt(
-    { cookEnd_s: m.cookEnd_ms / 1000, coolEnd_s: coolEnd_s, provisional: m.provisional, outAt_s: null },
-    now_ms / 1000,
-  ) as Phase;
+/** One tick of the page's ticker (`onTick` and `notice`, cook.ts). */
+function tick(r: Running, now_s: number): void {
+  const slow = r.plan.slowHobAt_s !== null && now_s >= r.plan.slowHobAt_s;
+  if (slow || JSON.stringify(eventsDue(r.cook, r.plan, now_s)) !== JSON.stringify(r.cook.events)) planNow(r, now_s);
+  const phase = phaseAt(r.plan.deadlines, now_s);
+  if (phase !== r.phase && (phase === 'PULL' || phase === 'DONE')) r.rang.push(phase);
+  r.phase = phase;
+}
+
+/** Run `r` to `until_s`, a tick a second. */
+function runTo(r: Running, from_s: number, until_s: number): Running {
+  for (let t = from_s; t <= until_s; t += 1) tick(r, t);
+  return r;
 }
 
 // --------------------------------------------------------------------------
-// 1. The constants are one set of constants
-// --------------------------------------------------------------------------
-
-test('1. the cooling step and the pull grace come from the core', () => {
-  assert.equal(COOLING_SECONDS, CORE_COOLING);
-  assert.equal(PULL_GRACE_SECONDS, CORE_GRACE);
-});
-
-// --------------------------------------------------------------------------
-// 2. The timeline, against the rule the iOS app derives from
+// 1. The timeline
 // --------------------------------------------------------------------------
 
 for (const cooling of ['ice', 'tap', 'counter'] as Cooling[]) {
-  test(`2. advancing a ${cooling} cook walks the phases the core rule states`, () => {
-    const start = startHot(T0, COOK_S, cooling, 0.41);
-    const offsets = [
-      0, 1, 599, 599.999, 600, 600.001, 619, 619.999, 620, 620.001,
-      700, 799, 799.999, 800, 800.001, 10000,
-    ];
-    for (const offset of offsets) {
-      const now = T0 + offset * 1000;
-      const m = walk(start, now);
-      assert.equal(
-        m.phase, corePhase(m, now),
-        `${cooling} at +${offset}s: machine says ${m.phase}, the core rule says ${corePhase(m, now)}`,
-      );
-    }
+  test(`1. a ${cooling} cook passes through PULL for the whole grace, and rings once for it and once at Done`, () => {
+    const r = begin(cookOf('hot', cooling), S);
+    assert.equal(r.phase, 'COOKING');
+    const pull = r.plan.deadlines.cookEnd_s;
+    runTo(r, S, Math.ceil(pull));
+    assert.equal(r.phase, 'PULL', `${cooling} skipped the pull`);
+    runTo(r, Math.ceil(pull) + 1, Math.ceil(pull + PULL_GRACE_SECONDS) - 1);
+    assert.equal(r.phase, 'PULL', `${cooling} left PULL early`);
+    runTo(r, Math.ceil(pull + PULL_GRACE_SECONDS), Math.ceil(pull + PULL_GRACE_SECONDS));
+    assert.equal(r.phase, cooling === 'counter' ? 'DONE' : 'COOLING', 'the grace runs out into the cooling, or Done');
+    assert.equal(r.cook.events.pulled?.by, 'timeout', 'nobody said: the clock assumed the pull');
+    runTo(r, Math.ceil(pull + PULL_GRACE_SECONDS) + 1, S + 3600);
+    assert.equal(r.phase, 'DONE');
+    assert.deepEqual(r.rang, ['PULL', 'DONE']);
+    assert.ok(r.plans <= 8, `planned ${r.plans} times in an hour of ticks, never every tick`);
+    if (cooling !== 'counter') assert.notEqual(r.cook.events.cooledAt_s, null, 'the cooling ended, written down');
   });
 }
 
-test('2b. every cook passes through PULL, cooling step or not', () => {
-  // The bug, stated as an invariant. A counter rest has no cooling deadline,
-  // and that is not a reason to skip telling someone to take the eggs out.
+test('1b. the cook\'s tap out of PULL starts the cooling from the tap', () => {
+  const r = begin(cookOf('hot', 'ice'), S);
+  const pull = r.plan.deadlines.cookEnd_s;
+  runTo(r, S, Math.ceil(pull) + 4);
+  const out = Math.ceil(pull) + 5;
+  r.cook = withOut(r.cook, r.plan, out);
+  planNow(r, out);
+  tick(r, out);
+  assert.equal(r.phase, 'COOLING');
+  assert.equal(r.cook.events.pulled?.by, 'cook');
+  assert.equal(r.plan.deadlines.coolEnd_s, out + r.plan.cool_s);
+  const counter = begin(cookOf('hot', 'counter'), S);
+  runTo(counter, S, Math.ceil(pull) + 4);
+  counter.cook = withOut(counter.cook, counter.plan, out);
+  planNow(counter, out);
+  tick(counter, out);
+  assert.equal(counter.phase, 'DONE', 'on the counter, out is Done');
+  assert.deepEqual(counter.rang, ['PULL', 'DONE']);
+});
+
+test('1c. "cooling starts on its own" is promised only where the grace runs out into COOLING', () => {
   for (const cooling of ['ice', 'tap', 'counter'] as Cooling[]) {
-    const start = startHot(T0, COOK_S, cooling, 0.41);
-    const atPull = walk(start, T0 + COOK_S * 1000);
-    assert.equal(atPull.phase, 'PULL', `${cooling} skipped the pull`);
-
-    // And it lasts the whole grace period rather than being a single instant.
-    const nearlyOver = walk(start, T0 + (COOK_S + PULL_GRACE_SECONDS - 0.001) * 1000);
-    assert.equal(nearlyOver.phase, 'PULL', `${cooling} left PULL early`);
-  }
-});
-
-test('2c. a counter rest finishes at the pull; the others cool first', () => {
-  const afterGrace = (cooling: Cooling): Phase =>
-    walk(startHot(T0, COOK_S, cooling, 0.41), T0 + (COOK_S + PULL_GRACE_SECONDS) * 1000).phase;
-  assert.equal(afterGrace('counter'), 'DONE', 'there is no cooling step to time on the counter');
-  assert.equal(afterGrace('ice'), 'COOLING');
-  assert.equal(afterGrace('tap'), 'COOLING');
-});
-
-test('2e. "cooling starts on its own" is promised only where the grace runs out into COOLING', () => {
-  // The web's PULL hint reads this. Not on a counter rest, where the grace
-  // runs out into DONE and nothing starts.
-  for (const cooling of ['ice', 'tap', 'counter'] as Cooling[]) {
-    const pull = walk(startHot(T0, COOK_S, cooling, 0.41), T0 + COOK_S * 1000);
-    assert.equal(pull.phase, 'PULL');
-    const promised = coolingStartsIn_s(pull, T0 + (COOK_S + 5.5) * 1000);
-    const atGrace = walk(pull, T0 + (COOK_S + PULL_GRACE_SECONDS) * 1000).phase;
-    if (cooling === 'counter') {
-      assert.equal(promised, null, 'a counter rest has no cooling to start');
-      assert.equal(atGrace, 'DONE');
-    } else {
-      assert.equal(promised, Math.ceil(PULL_GRACE_SECONDS - 5.5), `${cooling}: whole seconds left`);
-      assert.equal(atGrace, 'COOLING', `${cooling}: the cooling does start on its own`);
-    }
-    assert.equal(coolingStartsIn_s(pull, T0 + (COOK_S + PULL_GRACE_SECONDS + 3) * 1000),
-      cooling === 'counter' ? null : 0, `${cooling}: never negative`);
-  }
-  assert.equal(coolingStartsIn_s(startHot(T0, COOK_S, 'ice', 0.41), T0), null, 'only in PULL');
-});
-
-test('2d. the pull and the done events each fire exactly once', () => {
-  for (const cooling of ['ice', 'counter'] as Cooling[]) {
-    let m = startHot(T0, COOK_S, cooling, 0.41);
-    const events: string[] = [];
-    for (let t = 0; t <= 900; t += 1) {
-      const step = advance(m, T0 + t * 1000);
-      m = step.machine;
-      if (step.event !== 'none') events.push(step.event);
-    }
-    assert.deepEqual(
-      events, ['pull', 'done'],
-      `${cooling} fired ${JSON.stringify(events)}`,
-    );
+    const r = begin(cookOf('hot', cooling), S);
+    const d = r.plan.deadlines;
+    const promised = coolingStartsIn_s(d, cooling, d.cookEnd_s + 5.5);
+    if (cooling === 'counter') assert.equal(promised, null, 'a counter rest has no cooling to start');
+    else assert.equal(promised, Math.ceil(PULL_GRACE_SECONDS - 5.5), `${cooling}: whole seconds left`);
+    assert.equal(coolingStartsIn_s(d, cooling, d.cookEnd_s - 1), null, 'only in PULL');
+    assert.equal(coolingStartsIn_s(d, cooling, d.cookEnd_s + PULL_GRACE_SECONDS + 3), null, 'not once it has');
   }
 });
 
 // --------------------------------------------------------------------------
-// 3. A cold start's provisional deadline
+// 2. A cold start
 // --------------------------------------------------------------------------
 
-test('3. a cold start is HEATING until the boil is tapped, however long that takes', () => {
-  const m = startCold(T0, COOK_S, 480, 'ice', 0.41);
-  assert.equal(m.phase, 'HEATING');
-  // Well past the provisional deadline: still heating, because the deadline was
-  // a guess and nothing has measured the pan yet.
-  assert.equal(walk(m, T0 + 5000 * 1000).phase, 'HEATING');
+test('2. a cold start is HEATING until the boil is tapped, however slow the hob, and rings nothing', () => {
+  const r = begin(cookOf('cold', 'ice'), S);
+  assert.equal(r.phase, 'HEATING');
+  const guessed = r.plan.deadlines.cookEnd_s;
+  runTo(r, S, S + 1500);
+  assert.equal(r.phase, 'HEATING');
+  assert.deepEqual(r.rang, []);
+  assert.ok(r.plan.lengthened, 'the slow hob lengthened the guess');
+  assert.ok(r.plan.deadlines.cookEnd_s > guessed);
+  assert.ok(r.plans < 150, `planned ${r.plans} times in 1500 ticks: at the slow hob's moments, not every tick`);
 });
 
-test('3b. tapping the boil fixes the deadline from the original start', () => {
-  const started = startCold(T0, COOK_S, 480, 'ice', 0.41);
-  const measured = 520;
-  const resolved = 640;
-  const m = recordBoil(started, T0 + measured * 1000, resolved);
-  assert.equal(m.phase, 'COOKING');
-  assert.equal(m.provisional, false);
-  assert.equal(m.assumedBoil_s, measured);
-  // The deadline runs from eggs-in, not from the tap: t = 0 is the same t = 0
-  // the physics uses, so the ramp is already inside cookTime_s.
-  assert.equal(m.cookEnd_ms, T0 + resolved * 1000);
-  assert.equal(secondsAfterBoil(m), resolved - measured);
-});
+test('2b. the tap fixes the time to boil from the start; a tap after the plan\'s pull pulls at once', () => {
+  const r = begin(cookOf('cold', 'ice'), S);
+  runTo(r, S, S + 420);
+  r.cook = withBoil(r.cook, S + 420);
+  planNow(r, S + 420);
+  tick(r, S + 420);
+  assert.equal(r.phase, 'COOKING');
+  assert.equal(r.plan.setup.timeToBoil_s, 420, 'the ramp is the tap less the start');
+  assert.equal(r.plan.provisional, false);
 
-test('3c. revising a slow hob moves the deadline and nothing else', () => {
-  const started = startCold(T0, COOK_S, 480, 'ice', 0.41);
-  const m = reviseProvisional(started, 700, 560);
-  assert.equal(m.phase, 'HEATING');
-  assert.equal(m.provisional, true, 'a revision is still a guess');
-  assert.equal(m.targetLevel, started.targetLevel, 'a revision may not move the target');
-  assert.equal(secondsToPull(m, T0), 700);
-});
-
-test('3d. the target a cook is run at is fixed when it starts', () => {
-  // Everything that can happen to a cook in flight, and none of it may change
-  // what the cook is for.
-  const started = startCold(T0, COOK_S, 480, 'ice', 0.62);
-  const revised = reviseProvisional(started, 700, 560);
-  const boiled = recordBoil(revised, T0 + 560 * 1000, 720);
-  const pulled = walk(boiled, T0 + 720 * 1000);
-  const cooled = beginCooling(pulled, T0 + 740 * 1000);
-  for (const m of [revised, boiled, pulled, cooled]) {
-    assert.equal(m.targetLevel, 0.62);
-  }
-});
-
-// --------------------------------------------------------------------------
-// 4. Transitions refuse to fire out of order
-// --------------------------------------------------------------------------
-
-test('4. the transitions are no-ops from the wrong phase', () => {
-  const idle = idleMachine('ice');
-  assert.equal(recordBoil(idle, T0, 600), idle, 'nothing to record a boil against');
-  assert.equal(reviseProvisional(idle, 600, 500), idle);
-  assert.equal(beginCooling(idle, T0), idle);
-
-  const cooking = startHot(T0, COOK_S, 'ice', 0.41);
-  assert.equal(recordBoil(cooking, T0, 600), cooking, 'a hot start has no boil to tap');
-  assert.equal(beginCooling(cooking, T0), cooking, 'the egg is still in the water');
-});
-
-// --------------------------------------------------------------------------
-// 5. Restoring a cook
-// --------------------------------------------------------------------------
-
-test('5. a cook survives the round trip through storage', () => {
-  const m = startCold(T0, COOK_S, 480, 'tap', 0.62);
-  const back = restoreMachine(JSON.parse(JSON.stringify(m)), T0 + 60_000);
-  assert.deepEqual(back, m);
-});
-
-test('5b. a half-written record restores as nothing at all', () => {
-  const m = startHot(T0, COOK_S, 'ice', 0.41);
-  const now = T0 + 60_000;
-  assert.equal(restoreMachine(null, now), null);
-  assert.equal(restoreMachine('a cook', now), null);
-  assert.equal(restoreMachine({}, now), null);
-  assert.equal(restoreMachine(idleMachine('ice'), now), null, 'an idle machine is not a cook');
-  // A deadline with no start would resurrect a cancelled timer: it reads as
-  // running without ever having been started.
-  assert.equal(restoreMachine({ ...m, startedAt_ms: 0 }, now), null);
-  assert.equal(restoreMachine({ ...m, cookEnd_ms: 0 }, now), null);
-  assert.equal(restoreMachine({ ...m, phase: 'BOILING' }, now), null);
-  assert.equal(restoreMachine({ ...m, cooling: 'freezer' }, now), null);
-  assert.equal(restoreMachine({ ...m, cookTime_s: 'ages' }, now), null);
-  assert.equal(restoreMachine({ ...m, targetLevel: NaN }, now), null);
-});
-
-test('5c. a cook nobody came back to is not restored', () => {
-  const m = startHot(T0, COOK_S, 'ice', 0.41);
-  const ends = m.cookEnd_ms + (PULL_GRACE_SECONDS + COOLING_SECONDS) * 1000;
-  const cooled = walk(m, ends);
-  const stored = JSON.parse(JSON.stringify(cooled));
-  assert.notEqual(restoreMachine(stored, ends + RESTORE_WINDOW_MS - 1000), null);
-  assert.equal(
-    restoreMachine(stored, ends + RESTORE_WINDOW_MS + 1000), null,
-    'an egg an hour past its cooling step has been eaten or thrown out',
-  );
+  // A hob so slow the egg would be done before it boiled: the tap comes after
+  // the pull the measured ramp gives, so the pull is the tap, with its grace.
+  const slow = begin(cookOf('cold', 'ice'), S);
+  runTo(slow, S, S + 1400);
+  slow.cook = withBoil(slow.cook, S + 1400);
+  planNow(slow, S + 1400);
+  tick(slow, S + 1400);
+  assert.equal(slow.phase, 'PULL');
+  assert.equal(slow.plan.deadlines.cookEnd_s, S + 1400);
+  assert.deepEqual(slow.rang, ['PULL'], 'and it rings');
 });

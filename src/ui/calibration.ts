@@ -29,7 +29,7 @@ import {
   gridRequestFor, recordTeaches, resultsFile, resultsFileName,
 } from '../core/record.js';
 import {
-  Decoded, Kept, decodeKept, encodeKept, freshKept, keepUnread, keptAside, readKeptText, removeEverything,
+  Decoded, Kept, decodeKept, encodeKept, freshKept, keepUnread, keptAside, readKeptText, removeEverything, startOf,
   removeSuperseded, touchesKept, writeKeptText,
 } from './calibrationStore.js';
 import { localDay } from './eggRecord.js';
@@ -245,19 +245,48 @@ export function keptState(): Kept {
   return kept;
 }
 
-/** Write one egg down, before anything is learned from it: a reload between the
- *  answer and the fold then refolds it on load rather than losing it or folding
- *  it twice. Returns its index in the log. An egg already written down - the
- *  same cook, by `id`, from another tab or from this one - is not written
- *  again: its index is returned, and an answer given with it is a later
- *  answer to that egg (`recordSecondAnswer`). */
+/**
+ * Write one egg down, before anything is learned from it: a reload between the
+ * answer and the fold then refolds it on load rather than losing it or folding
+ * it twice. Returns its index in the log.
+ *
+ * An egg already written down - the same cook, by `id`, from another tab or
+ * from this one - is not written twice. The record given is the cook as last
+ * corrected, so its facts replace the ones logged (review 2.5: two tabs can
+ * run one id with different corrections), with the answers already in the
+ * log kept as they are; an answer given with it is a later answer to that
+ * egg (`recordSecondAnswer`). When that changes an egg already folded, the
+ * posterior no longer holds the log, and the log is folded again from where
+ * it starts (`base`, or the prior), the path a model change takes; the caller
+ * then `learn`s, as after any egg logged.
+ */
 export function logEgg(r: EggRecord): number {
   const at = eggLogged(idOf(r));
-  if (at >= 0) return at;
-  kept.log.push(r);
+  if (at < 0) {
+    kept.log.push(r);
+    ours = true;
+    save();
+    return kept.log.length - 1;
+  }
+  const had = kept.log[at];
+  const next: EggRecord = { ...r, yolk: had.yolk, yolkWord: had.yolkWord, white: had.white, probe: had.probe };
+  if (sameRecord(next, had)) return at;
+  kept.log[at] = next;
+  if (at < kept.folded) refoldFromStart();
   ours = true;
   save();
-  return kept.log.length - 1;
+  return at;
+}
+
+/** The posterior taken back to where the log's replay starts, with nothing
+ *  folded, so the drain folds the whole log again. A fold under way lands on
+ *  nothing, and no second answer can refold what it held. */
+function refoldFromStart(): void {
+  assign(kept.calibration, startOf(kept.base));
+  kept.folded = 0;
+  generation += 1;
+  live = -1;
+  last = null;
 }
 
 /** Where the cook that started at `id` is in the log, with whatever another

@@ -1,29 +1,29 @@
 /**
  * What the readout says in each phase, as text: the words `phaseKeys` chooses
  * (src/core/wording.ts), rendered with this app's arguments - its clock, its
- * units. Pure: it reads the machine, the ticket and the clock it is given,
- * and writes nothing, so a test can ask it what any moment of a cook says.
+ * units. Pure: it reads the running cook, its plan and the clock it is
+ * given, and writes nothing, so a test can ask it what any moment of a cook
+ * says.
  */
 
 import { Cooling, HeatAfterBoil } from '../core/protocol.js';
+import { phaseAt } from '../core/policy.js';
+import { CookPlan, RunningCook } from '../core/running.js';
 import { phaseKeys } from '../core/wording.js';
 import { t } from './copy.js';
 import { formatClock, spokenClock } from './countdown.js';
-import {
-  Machine, coolingStartsIn_s, secondsAfterBoil, secondsHeating, secondsToCool, secondsToPull,
-} from './machine.js';
+import { coolingStartsIn_s } from './machine.js';
 import { UiStartMode } from './store.js';
-import { Ticket } from './ticket.js';
 import { show } from './units.js';
 
-/** What the readout needs besides the machine, the ticket and the clock. */
+/** What the readout needs besides the cook, its plan and the clock. */
 export interface ReadoutFacts {
   /** The solve on screen: its time, which is the one shown while idle, and
    *  whether the white sets at all, so there is a cook to start. */
   cookTime_s: number;
   whiteSets: boolean;
   /** The pot on the controls. Read only while idle, or for anything the
-   *  running cook's ticket does not say. */
+   *  running cook does not say. */
   controls: {
     startMode: UiStartMode;
     afterBoil: HeatAfterBoil;
@@ -65,28 +65,33 @@ export interface PhaseView {
   secondaryVisible: boolean;
 }
 
-/** The readout at `now_ms`. While a cook runs, everything describes the
- *  ticket's pot and the machine's cooling, not the controls: a second tab may
+/** The readout at `now_ms`, for the running cook `cook` with its `plan`, or
+ *  the controls while both are null. While a cook runs, everything describes
+ *  its own choices and its plan's pot, not the controls: a second tab may
  *  have changed those. */
 export function phaseView(
-  machine: Machine, ticket: Ticket | null, now_ms: number, facts: ReadoutFacts,
+  cook: RunningCook | null, plan: CookPlan | null, now_ms: number, facts: ReadoutFacts,
 ): PhaseView {
-  const idle = machine.phase === 'IDLE';
-  const running = !idle && ticket !== null ? ticket.setup : null;
-  const startMode = running?.startMode ?? facts.controls.startMode;
-  const boiling_C = running?.boiling_C ?? facts.controls.boiling_C;
-  const standing = (running === null ? facts.controls.afterBoil : running.afterBoil) === 'off';
-  const cookTime_s = idle ? facts.cookTime_s : machine.cookTime_s;
+  const now_s = now_ms / 1000;
+  const run = cook !== null && plan !== null ? { cook: cook, plan: plan } : null;
+  const phase = run === null ? 'IDLE' : phaseAt(run.plan.deadlines, now_s);
+  const idle = run === null;
+  const startMode = run?.cook.choices.startMode ?? facts.controls.startMode;
+  const boiling_C = run?.plan.setup.boiling_C ?? facts.controls.boiling_C;
+  const standing = (run === null ? facts.controls.afterBoil : run.cook.choices.afterBoil) === 'off';
+  const cooling = run === null ? facts.controls.cooling : run.cook.choices.cooling;
+  const cookTime_s = run === null ? facts.cookTime_s : run.plan.cookTime_s;
   // How much of the clock the ramp takes: all of the time to boil on a cold
-  // start, none of it otherwise. Once a cold start is under way the machine
-  // carries the time to boil: the guess, the revision, the measurement.
-  const boil_s = startMode !== 'cold' ? 0 : idle ? facts.controls.timeToBoil_s : machine.assumedBoil_s;
+  // start, none of it otherwise. Once a cold start is under way its plan
+  // carries the time to boil: the guess, the slow hob's, the measurement.
+  const boil_s = startMode !== 'cold' ? 0 : run === null ? facts.controls.timeToBoil_s : run.plan.setup.timeToBoil_s;
+  const toPull = run === null ? 0 : run.plan.deadlines.cookEnd_s - now_s;
 
   // Which words: core's (`phaseKeys`). The arguments are this app's.
   const keys = phaseKeys({
-    phase: machine.phase, startMode: startMode === 'cold' ? 'cold' : 'hot',
+    phase: phase, startMode: startMode === 'cold' ? 'cold' : 'hot',
     afterBoil: standing ? 'off' : 'hold',
-    cooling: idle ? facts.controls.cooling : machine.cooling,
+    cooling: cooling,
     whiteSets: facts.whiteSets, boilKnown: facts.boilKnown, probeWanted: facts.probeWanted,
   });
   let digits = '';
@@ -94,33 +99,32 @@ export function phaseView(
   let spoken = '';
   let hintArgs = {};
 
-  if (machine.phase === 'IDLE') {
+  if (run === null) {
     digits = formatClock(cookTime_s);
     subline = t(keys.subline, { boil: formatClock(boil_s), water: show('water', facts.controls.waterLitres) });
     spoken = t('spoken.total', { time: spokenClock(cookTime_s) });
     hintArgs = { time: formatClock(cookTime_s) };
-  } else if (machine.phase === 'HEATING') {
-    digits = formatClock(secondsToPull(machine, now_ms));
+  } else if (phase === 'HEATING') {
+    digits = formatClock(toPull);
     subline = t(keys.subline, {
-      elapsed: formatClock(secondsHeating(machine, now_ms)), boil: formatClock(machine.assumedBoil_s),
+      elapsed: formatClock(now_s - run.cook.startedAt_s), boil: formatClock(boil_s),
     });
-    spoken = t('spoken.heating', { time: spokenClock(secondsToPull(machine, now_ms)) });
-  } else if (machine.phase === 'COOKING') {
-    digits = formatClock(secondsToPull(machine, now_ms));
-    subline = t(keys.subline, {
-      boil: formatClock(machine.assumedBoil_s), after: formatClock(secondsAfterBoil(machine)),
-    });
-    spoken = t('spoken.cooking', { time: spokenClock(secondsToPull(machine, now_ms)) });
+    spoken = t('spoken.heating', { time: spokenClock(toPull) });
+  } else if (phase === 'COOKING') {
+    digits = formatClock(toPull);
+    subline = t(keys.subline, { boil: formatClock(boil_s), after: formatClock(cookTime_s - boil_s) });
+    spoken = t('spoken.cooking', { time: spokenClock(toPull) });
     hintArgs = { boiling: show('temperature', boiling_C) };
-  } else if (machine.phase === 'PULL') {
-    digits = `+${formatClock((now_ms - machine.pulledAt_ms) / 1000)}`;
+  } else if (phase === 'PULL') {
+    digits = `+${formatClock(-toPull)}`;
     subline = t(keys.subline);
     spoken = t('spoken.pull');
-    hintArgs = { seconds: coolingStartsIn_s(machine, now_ms) ?? 0 };
-  } else if (machine.phase === 'COOLING') {
-    digits = formatClock(secondsToCool(machine, now_ms));
+    hintArgs = { seconds: coolingStartsIn_s(run.plan.deadlines, cooling, now_s) ?? 0 };
+  } else if (phase === 'COOLING') {
+    const toCool = (run.plan.deadlines.coolEnd_s ?? now_s) - now_s;
+    digits = formatClock(toCool);
     subline = t(keys.subline);
-    spoken = t('spoken.cooling', { time: spokenClock(secondsToCool(machine, now_ms)) });
+    spoken = t('spoken.cooling', { time: spokenClock(toCool) });
   } else {
     digits = formatClock(cookTime_s);
     subline = t(keys.subline, { boil: formatClock(boil_s), cooking: formatClock(cookTime_s - boil_s) });
@@ -134,6 +138,6 @@ export function phaseView(
     primary: keys.action === null ? null : t(keys.action),
     primaryDisabled: idle && !facts.whiteSets,
     hint: keys.hint === null ? '' : t(keys.hint, hintArgs),
-    secondaryVisible: !idle && machine.phase !== 'DONE',
+    secondaryVisible: !idle && phase !== 'DONE',
   };
 }

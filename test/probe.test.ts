@@ -37,10 +37,9 @@ import {
   freshCalibration, gridRequestFor, parseRecord, recordProbe_C, recordTeaches, replay,
 } from '../src/core/record.js';
 import { LITERATURE_POPULATION } from '../src/core/infer.js';
-import {
-  advance, beginCooling, recordBoil, restoreMachine, startCold, startHot, PULL_GRACE_SECONDS,
-} from '../src/ui/machine.js';
-import { appSetup } from '../tools/common.js';
+import { PULL_GRACE_SECONDS } from '../src/core/policy.js';
+import { RunningCook, eventsDue, replan, startCook, withBoil, withOut } from '../src/core/running.js';
+import { appSetup, knowing } from '../tools/common.js';
 
 // --------------------------------------------------------------------------
 // shared
@@ -341,23 +340,41 @@ test('4c. the entry range holds every reading a kitchen could make, and not a ty
 // 5. the machine counts to the peak
 // --------------------------------------------------------------------------
 
-test('5a. the machine counts its cooling for as long as the cook said, and a re-solve moves it', () => {
-  const m = startHot(1_000_000, 400, 'ice', JAMMY, 191);
-  const pulled = advance(m, 1_000_000 + 400_000).machine;
-  const cooling = beginCooling(pulled, 1_000_000 + 405_000);
-  assert.equal(cooling.coolEnd_ms, 1_000_000 + 405_000 + 191_000);
-  const cold = startCold(0, 900, 480, 'tap', JAMMY, 200);
-  assert.equal(recordBoil(cold, 500_000, 910, 207).cool_s, 207);
-  assert.equal(recordBoil(cold, 500_000, 910).cool_s, 200, 'unchanged unless the re-solve says');
+/** A cook as the app runs one (src/core/running.ts), on a 68 g egg. */
+function runningCook(startMode: 'cold' | 'hot', cooling: 'ice' | 'tap'): RunningCook {
+  return startCook(1_000_000, {
+    mass_kg: 0.068, massFrom: 'class', sizeTable: 'eu', eggFrom: 'fridge', customStart_C: 12, room_C: null,
+    startMode: startMode, afterBoil: 'hold', cooling: cooling, waterLitres: 2, eggCount: 2, altitude_m: 0,
+    level: JAMMY,
+  }, 0, { '2.0': 480 }, 'metric', 'en');
+}
+
+test('5a. the cooling counts to the peak of the time that ran, from the egg out, and the boil moves it', () => {
+  const c = knowing({ particles: 50, eggsLogged: 0 });
+  const hot = runningCook('hot', 'ice');
+  const plan = replan(hot, c, null, 0, 1000);
+  assert.equal(plan.cool_s, coolingSecondsFor(plan.solution.result));
+  const pull = plan.deadlines.cookEnd_s;
+  const out = withOut(hot, plan, pull + 5);
+  assert.equal(replan(out, c, null, 0, pull + 5).deadlines.coolEnd_s, pull + 5 + plan.cool_s);
   // Timed out rather than tapped: the same length from the end of the grace.
-  const timedOut = advance(pulled, 1_000_000 + (400 + PULL_GRACE_SECONDS) * 1000).machine;
-  assert.equal(timedOut.coolEnd_ms, 1_000_000 + (400 + PULL_GRACE_SECONDS + 191) * 1000);
+  const late = pull + PULL_GRACE_SECONDS;
+  const timedOut = { ...hot, events: eventsDue(hot, plan, late) };
+  assert.equal(timedOut.events.pulled?.by, 'timeout');
+  assert.equal(replan(timedOut, c, null, 0, late).deadlines.coolEnd_s, late + plan.cool_s);
+  // A cold start's tap re-solves the cook, and the peak, and the cooling with it.
+  const cold = runningCook('cold', 'tap');
+  const tapped = replan(withBoil(cold, 1000 + 700), c, null, 0, 1700);
+  assert.equal(tapped.cool_s, coolingSecondsFor(tapped.solution.result));
+  assert.notEqual(tapped.cool_s, replan(cold, c, null, 0, 1000).cool_s);
 });
 
-test('5b. a stored cook keeps its own cooling, and one without it is refused', () => {
-  const m = startHot(Date.now() - 10_000, 400, 'ice', JAMMY, 191);
-  const stored = JSON.parse(JSON.stringify(m)) as Record<string, unknown>;
-  assert.equal(restoreMachine(stored, Date.now())?.cool_s, 191);
-  delete stored['cool_s'];
-  assert.equal(restoreMachine(stored, Date.now()), null);
+test('5b. a cooling that has ended is kept as it ran', () => {
+  const c = knowing({ particles: 50, eggsLogged: 0 });
+  const hot = runningCook('hot', 'ice');
+  const plan = replan(hot, c, null, 0, 1000);
+  const pull = plan.deadlines.cookEnd_s;
+  const out = withOut(hot, plan, pull + 5);
+  const ended = { ...out, events: { ...out.events, cooledAt_s: pull + 5 + 150 } };
+  assert.equal(replan(ended, c, null, 0, pull + 400).cool_s, 150);
 });

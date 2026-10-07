@@ -197,6 +197,11 @@ core's exports.
       read once from the old key, kept aside and the key deleted, its iOS
       notifications kept (`DECISIONS.md` 81, review 2.6); a stored cook
       dropped by `cookTooOld`, and sharing holding back only `openEggId`.
+  - [x] *The web's state*: `245f1c8`, `eddcd9d` (`design/one-screen.md`
+        step 5, "As built"; `LOGBOOK.md`, 7 October 2026). The "still in
+        the water?" question (`askIfStillIn`) has no words yet and cannot
+        arise without a correction: it comes with edits mid-cook.
+  - [ ] iOS.
 - [ ] **C3. Both apps**, screen by screen, checked by driving them;
       `UI.md` rewritten as built.
 

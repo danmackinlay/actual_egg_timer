@@ -1,7 +1,7 @@
 /**
  * The setup sentence: the egg's setup as one line of prose whose clauses are
  * the buttons that open its choices, and, once a cook is running, the same
- * sentence as plain prose from the cook's ticket.
+ * sentence as plain prose from the cook's own choices.
  */
 
 import { Egg, SizeClass } from '../core/geometry.js';
@@ -10,12 +10,12 @@ import { SOUS_VIDE_BATH_C } from '../core/sousvide.js';
 import { sizeClassLabel } from '../core/units.js';
 import { anchorNear } from '../core/policy.js';
 import { EggFrom } from '../core/record.js';
+import { CookPlan, RunningCook } from '../core/running.js';
 import { Clause, ClauseKeys, clauseKeys } from '../core/wording.js';
 import { midSentence } from '../core/copy.js';
 import { activeLocale, t } from './copy.js';
 import { el, page } from './dom.js';
 import { Settings, UiStartMode } from './store.js';
-import { Ticket } from './ticket.js';
 import { show, unitSystem } from './units.js';
 
 const CLAUSE_PANELS: Record<Clause, string> = {
@@ -33,7 +33,7 @@ function panelFor(clause: Clause): HTMLElement {
 }
 
 /** What the sentence says, whichever cook it is about: the one on the
- *  controls (`liveSetupFacts`), or the one in the pan (`ticketSetupFacts`). */
+ *  controls (`liveSetupFacts`), or the one in the pan (`runningSetupFacts`). */
 export interface SetupFacts {
   /** The egg's mass as the size menu or the scale says it, with its unit. */
   mass: string;
@@ -67,19 +67,20 @@ export function liveSetupFacts(settings: Settings, classes: SizeClass[], egg: Eg
   };
 }
 
-/** The setup a cook was started with, from its ticket and not the controls:
- *  what the cook promised, whatever the controls say later. A class egg is
- *  named as its class's mass, as the size menu names it, when this page's
+/** The setup of the cook under way, from its own choices and not the
+ *  controls: what the cook said, whatever the controls say later. A class egg
+ *  is named as its class's mass, as the size menu names it, when this page's
  *  carton still has a class of that mass; otherwise it is the egg's own. */
-function ticketSetupFacts(k: Ticket, classes: SizeClass[]): SetupFacts {
-  const index = k.massFrom === 'class' ? classes.findIndex((c) => c.mass_kg === k.egg.mass_kg) : -1;
+function runningSetupFacts(cook: RunningCook, plan: CookPlan, classes: SizeClass[]): SetupFacts {
+  const ch = cook.choices;
+  const index = ch.massFrom === 'class' ? classes.findIndex((c) => c.mass_kg === ch.mass_kg) : -1;
   return {
-    mass: index >= 0 ? classMass(classes, index) : show('mass', k.egg.mass_kg * 1000),
-    eggFrom: k.eggFrom,
-    customStart_C: k.setup.eggStart_C,
-    startMode: k.setup.startMode,
-    standing: k.setup.afterBoil === 'off',
-    cooling: k.setup.cooling,
+    mass: index >= 0 ? classMass(classes, index) : show('mass', plan.egg.mass_kg * 1000),
+    eggFrom: ch.eggFrom,
+    customStart_C: plan.setup.eggStart_C,
+    startMode: ch.startMode,
+    standing: ch.afterBoil === 'off',
+    cooling: ch.cooling,
   };
 }
 
@@ -167,25 +168,23 @@ export function redrawSentence(): void {
   sentenceShown = '';
 }
 
-/** The cook in the pan, once the controls are gone: the
- *  setup sentence it was started with, so a forgetful cook can see what they
- *  promised, as plain prose - nothing in it can change a cook under way, so
- *  nothing in it is a button - and under it what the sentence does not say,
- *  the doneness and the peak yolk it was started at. From the ticket, never
- *  the controls; `k` is null while idle, which hides it. `targetLevel` is the
- *  doneness the cook was started at. Sous-vide never runs a cook, so it never
+/** The cook in the pan, once the controls are gone: its setup sentence, so a
+ *  forgetful cook can see what they said, as plain prose - nothing in it can
+ *  change a cook under way yet, so nothing in it is a button - and under it
+ *  what the sentence does not say, the doneness the cook runs at and the peak
+ *  yolk of its time. From the cook and its plan, never the controls; both are
+ *  null while idle, which hides it. Sous-vide never runs a cook, so it never
  *  shows this. */
-export function renderCookSetup(k: Ticket | null, targetLevel: number, classes: SizeClass[]): void {
-  page().cookSetup.hidden = k === null;
-  if (k === null) return;
-  const texts = clauseTexts(ticketSetupFacts(k, classes));
+export function renderCookSetup(cook: RunningCook | null, plan: CookPlan | null, classes: SizeClass[]): void {
+  page().cookSetup.hidden = cook === null || plan === null;
+  if (cook === null || plan === null) return;
+  const texts = clauseTexts(runningSetupFacts(cook, plan, classes));
   page().cookSentence.textContent = t('setup.sentence', {
     egg: texts.egg.text, from: texts.from.text, start: texts.start.text, cooling: texts.cooling.text,
   });
-  // The peak yolk the cook was started with.
   page().cookDoneness.textContent = t('cook.summary', {
-    doneness: midSentence(t(anchorNear(targetLevel).key), activeLocale()),
-    yolk: show('temperature', k.peakYolk_C),
+    doneness: midSentence(t(anchorNear(plan.level).key), activeLocale()),
+    yolk: show('temperature', plan.solution.result.peakYolk_C),
   });
 }
 

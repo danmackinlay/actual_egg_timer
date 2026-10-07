@@ -13,9 +13,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { sizeClassesFor } from '../src/core/geometry.js';
+import { RunningCook, startCook, withBoil } from '../src/core/running.js';
+import { choicesOf } from '../src/ui/state.js';
 import {
-  DEFAULT_SETTINGS, Settings, boilStoredElsewhere, clearBoilMemory, loadBoilMemory, loadCook, loadSettings,
-  rememberTimeToBoil, saveCook, saveSettings, settingsStoredElsewhere,
+  DEFAULT_SETTINGS, Settings, boilStoredElsewhere, clearBoilMemory, clearCook, loadBoilMemory, loadCook,
+  loadSettings, rememberTimeToBoil, saveCook, saveSettings, settingsStoredElsewhere, storedCook, storedCookAnswered,
+  storedCookText, takeOldCook,
 } from '../src/ui/store.js';
 
 /** localStorage, in memory, as in record.test.ts: the store reads
@@ -30,7 +33,8 @@ const storage = new Map<string, string>();
 };
 
 const SETTINGS_KEY = 'aet.settings.v1';
-const COOK_KEY = 'aet.cook.v2';
+const COOK_KEY = 'aet.cook.v3';
+const OLD_COOK_KEY = 'aet.cook.v2';
 const classes = sizeClassesFor('eu');
 
 /** A page opened on this storage: as boot() does, the settings are read
@@ -105,33 +109,88 @@ test('choosing sous-vide still works within the session', () => {
   assert.equal(settings.startMode, 'sous');
 });
 
-test('a cook comes back with whether its egg was written down', () => {
+/** A running cook, as core starts one (src/core/running.ts), the boil
+ *  tapped. */
+function aCook(id_ms = 1_791_363_600_000): RunningCook {
+  const choices = choicesOf({ ...DEFAULT_SETTINGS, sizeIndex: 2 }, 'GB');
+  return withBoil(startCook(id_ms, choices, -3, { '2.0': 480 }, 'metric', 'en'), id_ms / 1000 + 500);
+}
+
+test('a cook comes back whole, with whether its egg was written down and the lean last decided', () => {
   storage.clear();
-  const machine = { phase: 'DONE' };
-  const ticket = { lang: 'en' };
-  saveCook(machine, ticket, 'beforeReload');
-  assert.deepEqual(loadCook(), { machine: machine, ticket: ticket, answers: 'beforeReload' });
-  saveCook(machine, ticket, 'none');
+  const cook = aCook();
+  saveCook(cook, 'beforeReload', 12.5);
+  assert.deepEqual(loadCook(), { cook: cook, answers: 'beforeReload', leanHint_s: 12.5 });
+  saveCook(cook, 'none', 0);
   assert.equal(loadCook()?.answers, 'none');
+  assert.deepEqual(storedCook(), cook, 'whichever tab wrote it');
+  assert.equal(storedCookAnswered(cook.id_ms), false);
+  saveCook(cook, 'beforeReload', 0);
+  assert.equal(storedCookAnswered(cook.id_ms), true);
+  assert.equal(storedCookAnswered(cook.id_ms + 1), false, 'another cook');
 });
 
-test('a cook kept before `answers` is dropped, never read as unanswered', () => {
+test('a cook kept without `answers` or the lean is refused, never read as unanswered', () => {
   // Read as unanswered, an egg already in the log would be logged again.
   storage.clear();
-  storage.set(COOK_KEY, JSON.stringify({ machine: { phase: 'DONE' }, ticket: null, feedbackGiven: true }));
+  const cook = aCook();
+  storage.set(COOK_KEY, JSON.stringify({ cook: cook, leanHint_s: 0, feedbackGiven: true }));
   assert.equal(loadCook(), null);
-  storage.set(COOK_KEY, JSON.stringify({ machine: { phase: 'DONE' }, ticket: null, answers: 'live' }));
+  storage.set(COOK_KEY, JSON.stringify({ cook: cook, answers: 'live', leanHint_s: 0 }));
   assert.equal(loadCook(), null, 'only what saveCook writes');
+  storage.set(COOK_KEY, JSON.stringify({ cook: cook, answers: 'none' }));
+  assert.equal(loadCook(), null, 'without the lean');
+  storage.set(COOK_KEY, JSON.stringify({ cook: { ...cook, startedAt_s: 'then' }, answers: 'none', leanHint_s: 0 }));
+  assert.equal(loadCook(), null, 'a cook that does not read (`readRunningCook`)');
 });
 
-test('the live site\'s cook, and junk, are never a crash', () => {
+test('Cancel forgets the stored cook only if it is this tab\'s', () => {
   storage.clear();
+  const mine = aCook();
+  const theirs = aCook(mine.id_ms + 60_000);
+  saveCook(theirs, 'none', 0);
+  clearCook(mine.id_ms);
+  assert.deepEqual(storedCook(), theirs, 'another tab started a cook since: it stays');
+  clearCook(theirs.id_ms);
+  assert.equal(storedCookText(), null);
+  storage.set(COOK_KEY, '{');
+  clearCook(mine.id_ms);
+  assert.equal(storedCookText(), null, 'junk goes');
+});
+
+test('the 0.4 cook is read once, as stored, and its key deleted; the live site\'s is dropped', () => {
+  storage.clear();
+  // 0.4's shape (`aet.cook.v2`): a machine and a ticket.
+  const old = JSON.stringify({ machine: { phase: 'COOKING', startedAt_ms: 1 }, ticket: { lang: 'en' }, answers: 'none' });
+  storage.set(OLD_COOK_KEY, old);
+  assert.equal(loadCook(), null, 'never read as a running cook');
+  assert.equal(takeOldCook(), old);
+  assert.equal(storage.has(OLD_COOK_KEY), false, 'deleted');
+  assert.equal(takeOldCook(), null, 'once');
   storage.set('aet.cook.v1', JSON.stringify({ machine: { phase: 'COOKING' }, feedbackGiven: false }));
   assert.equal(loadCook(), null);
   assert.equal(storage.has('aet.cook.v1'), false, 'the superseded key is removed');
-  for (const junk of ['{', 'null', '[]', '"cook"', JSON.stringify({ machine: 3, answers: 'none' })]) {
+});
+
+test('the settings as a cook\'s choices: the carton\'s class or the measured egg, the pan, the room with the probe', () => {
+  const eu = choicesOf({ ...DEFAULT_SETTINGS, sizeIndex: 2, doneness: 0.62 }, 'GB');
+  assert.deepEqual([eu.mass_kg, eu.massFrom, eu.sizeTable, eu.level], [sizeClassesFor('GB')[2].mass_kg, 'class', 'eu', 0.62]);
+  const us = choicesOf({ ...DEFAULT_SETTINGS, sizeIndex: 2 }, 'US');
+  assert.deepEqual([us.mass_kg, us.sizeTable], [sizeClassesFor('US')[2].mass_kg, 'us']);
+  const measured = choicesOf({ ...DEFAULT_SETTINGS, sizeIndex: -1, customMinor_mm: 44, measuredBy: 'girth' }, 'GB');
+  assert.deepEqual([measured.massFrom, measured.sizeTable], ['girth', null]);
+  assert.ok(measured.mass_kg > 0.05 && measured.mass_kg < 0.08);
+  assert.equal(choicesOf({ ...DEFAULT_SETTINGS, startMode: 'sous' }, 'GB').startMode, 'hot', 'sous-vide is a hot pan to the solver');
+  assert.equal(choicesOf({ ...DEFAULT_SETTINGS, room_C: 26 }, 'GB').room_C, null, 'the room counts only with the probe on');
+  assert.equal(choicesOf({ ...DEFAULT_SETTINGS, room_C: 26, probe: true }, 'GB').room_C, 26);
+});
+
+test('junk under the cook\'s key is never a crash', () => {
+  storage.clear();
+  for (const junk of ['{', 'null', '[]', '"cook"', JSON.stringify({ cook: 3, answers: 'none', leanHint_s: 0 })]) {
     storage.set(COOK_KEY, junk);
     assert.equal(loadCook(), null, junk);
+    assert.equal(storedCook(), null, junk);
   }
 });
 
