@@ -1,26 +1,22 @@
 /**
  * The answer for the pot on screen: the solve (core `answerAt`), the time
  * decided on the pot's decision surface (core `decideAnswer`), the nudge,
- * and asking the worker for the surfaces and odds profiles the screen wants.
- * And the re-solve of a cook already under way, for a corrected time to boil.
+ * and asking the worker for the surfaces and odds profiles the screen wants -
+ * the idle pot's, and the one a running cook's plan wants (`replan`, in
+ * core, re-plans a cook under way; cook.ts).
  *
  * Deciding and acting are two steps: nothing here moves the controls or
  * draws anything. Taking an answer up is update.ts's.
  */
 
-import { Solution } from '../core/solve.js';
-import { probeMomentFor } from '../core/policy.js';
-import {
-  DecisionInputs, carriedSolution, decisionApplies, decisionInputs, nudgeSeconds,
-} from '../core/decide.js';
+import { DecisionInputs, decisionInputs, nudgeSeconds } from '../core/decide.js';
 import { DecidedAnswer, LevelAnswer, OddsProfile, answerAt, decideAnswer, pricedChanges } from '../core/reach.js';
-import { calibrationParams } from './calibration.js';
+import { CookSurface, sameDecisionInputs } from '../core/running.js';
 import {
   cachedDecisionGrid, cachedOddsProfile, decisionGrid, decisionKey, oddsProfileFor, profileKey,
 } from './decisionGrids.js';
 import { shareState } from './share.js';
-import { buildSetup, currentEgg, isSousVide, state, timeToBoil_s } from './state.js';
-import { Ticket, withTimeToBoil } from './ticket.js';
+import { idlePot, isSousVide, state, timeToBoil_s } from './state.js';
 
 /** What is waiting on the worker, and what to do when it lands. */
 const asking = {
@@ -31,21 +27,31 @@ const asking = {
   /** Re-solve the idle page (`recompute`, update.ts), which solves with this
    *  module and so is handed in by `boot()` rather than imported. */
   landed: (): void => {},
+  /** Plan the running cook again (cook.ts), when a surface or a profile its
+   *  plan wants lands. */
+  cookLanded: (): void => {},
 };
 
-/** What to do when a surface or a profile the screen still wants lands. */
+/** What to do when a surface or a profile the idle screen still wants
+ *  lands. */
 export function whenAnswerLands(recompute: () => void): void {
   asking.landed = recompute;
+}
+
+/** What to do when a surface or a profile the running cook's plan wants
+ *  lands. */
+export function whenCookSurfaceLands(replanCook: () => void): void {
+  asking.cookLanded = replanCook;
 }
 
 /* --------------------------------------------------------------- solving */
 
 /** Solve for the given inputs (core `answerAt`). Pure apart from reading
  *  `settings`: it moves nothing and writes nothing. Deciding and acting are
- *  two steps, and only the idle path takes the second, so a slow hob cannot
- *  move the user's doneness mid-cook. */
+ *  two steps, and only the idle path takes the second. */
 export function answerFor(timeToBoil_s: number, level: number, odds: OddsProfile | null): LevelAnswer {
-  return answerAt(state.calib, currentEgg(), buildSetup(timeToBoil_s), level, odds, true);
+  const pot = idlePot(timeToBoil_s);
+  return answerAt(state.calib, pot.egg, pot.setup, level, odds, true);
 }
 
 /**
@@ -63,8 +69,7 @@ export function answerFor(timeToBoil_s: number, level: number, odds: OddsProfile
  * move once more when the profile lands.
  */
 export function decided(answer: LevelAnswer, timeToBoil_s: number): DecidedAnswer | null {
-  const egg = currentEgg();
-  const setup = buildSetup(timeToBoil_s);
+  const { egg, setup } = idlePot(timeToBoil_s);
   const inputs = decisionInputs(state.calib, egg, setup);
   const grid = cachedDecisionGrid(inputs);
   if (grid === null) {
@@ -93,8 +98,9 @@ export function drawNudge(): void {
 }
 
 /** The nudge the time takes now: the draw while sharing is on, and none
- *  while it is off - the consent covers it, and nothing else does. */
-function nudgeNow(): number {
+ *  while it is off - the consent covers it, and nothing else does. A cook
+ *  started now keeps it (`startCook`). */
+export function nudgeNow(): number {
   return shareState().on ? nudge.draw : 0;
 }
 
@@ -111,9 +117,8 @@ function askForDecision(inputs: DecisionInputs): void {
     asking.decisionHandle = 0;
     const key = decisionKey(inputs);
     decisionGrid(inputs).then(() => {
-      if (state.machine.phase !== 'IDLE' || isSousVide()) return;
-      const now = decisionKey(decisionInputs(state.calib, currentEgg(), buildSetup(timeToBoil_s())));
-      if (now === key) asking.landed();
+      if (state.cook !== null || isSousVide()) return;
+      if (decisionKey(currentInputs(timeToBoil_s())) === key) asking.landed();
     }, (error: unknown) => console.warn('decision surface failed', error));
   }, DECISION_SETTLE_MS);
 }
@@ -121,7 +126,8 @@ function askForDecision(inputs: DecisionInputs): void {
 /** The pot on screen as a decision's inputs: what its surface and its odds
  *  profile are keyed by. */
 export function currentInputs(timeToBoil_s: number): DecisionInputs {
-  return decisionInputs(state.calib, currentEgg(), buildSetup(timeToBoil_s));
+  const { egg, setup } = idlePot(timeToBoil_s);
+  return decisionInputs(state.calib, egg, setup);
 }
 
 /** The profiles the screen wants now: this pot's, and those of the changes
@@ -146,7 +152,11 @@ export function askForProfile(inputs: DecisionInputs): void {
   // is asked for again the next time the screen wants it.
   oddsProfileFor(inputs, state.calib).then(() => {
     asking.profiles.delete(key);
-    if (state.machine.phase !== 'IDLE' || isSousVide()) return;
+    if (cookWants(inputs)) {
+      asking.cookLanded();
+      return;
+    }
+    if (state.cook !== null || isSousVide()) return;
     if (wantedProfileKeys().has(key)) asking.landed();
   }, (error: unknown) => {
     asking.profiles.delete(key);
@@ -156,40 +166,31 @@ export function askForProfile(inputs: DecisionInputs): void {
 
 /* ------------------------------------------------------- a cook under way */
 
-/** Re-solve a cook already under way, for a corrected time to boil.
- *
- *  The doneness is whatever the cook was STARTED at, and nothing here moves it
- *  - not the slider, and not the answer. The egg is in the water and the
- *  controls are gone, so a snapped re-solve would describe a cook nobody is
- *  having; an unreachable target answers with the furthest this pan goes, which
- *  is the only cook on offer. The refusal is left alone for the same reason:
- *  it is advice about a control the user cannot reach. */
-export function resolveDuring(t: Ticket, timeToBoil_s: number): Solution {
-  // The ticket's egg and pot, never the controls': a second tab may have
-  // changed those since "Eggs in".
-  const { egg, setup } = withTimeToBoil(t, timeToBoil_s);
-  // Through `answerAt`, as every solve is, with no snap retry: the target is
-  // frozen, so a retry would answer for an egg nobody is cooking. iOS's
-  // `cookResult` asks the same.
-  const mean = answerAt(state.calib, egg, setup, state.machine.targetLevel, null, false).solution;
-  // Leaned as far as the choice leaned at "Eggs in": the new ramp is a new pot,
-  // whose surface is a second away with the egg already in (`carriedSolution`).
-  // The nudge is carried with it, so the egg comes out when the record says.
-  return carriedSolution(egg, setup, calibrationParams(state.calib), mean, t.lean_s + t.nudge_s);
+/** Whether the running cook's plan reads the surface for `inputs`. */
+function cookWants(inputs: DecisionInputs): boolean {
+  const wanted = state.plan === null ? null : state.plan.inputs;
+  return wanted !== null && sameDecisionInputs(wanted, inputs);
 }
 
-/** Take a new time to boil into the cook under way - the slow hob's guess, or
- *  the boil the cook tapped: re-solve it (`resolveDuring`), and patch the ramp
- *  into the frozen ticket rather than rebuilding it from the live controls,
- *  which another tab may have changed. Whether the cook has a moment to probe
- *  at moves with the solve. Returns the solve, for the machine's deadlines. */
-export function retime(k: Ticket, boil_s: number): Solution {
-  const sol = resolveDuring(k, boil_s);
-  const moved = withTimeToBoil(k, boil_s);
-  state.solution = sol;
-  // Where the new ramp leaves no time to choose, neither the lean nor the
-  // nudge was carried (`carriedSolution`), and the record must not say it was.
-  const carried = decisionApplies(sol) ? moved.nudge_s : 0;
-  state.ticket = { ...moved, nudge_s: carried, probeMoment: probeMomentFor(sol.result, moved.setup.cooling) };
-  return sol;
+/** The surface for `inputs` as far as it is in: the grid, with the odds
+ *  profile if that is in too; null until the grid is. */
+export function surfaceFor(inputs: DecisionInputs | null): CookSurface | null {
+  if (inputs === null) return null;
+  const grid = cachedDecisionGrid(inputs);
+  if (grid === null) return null;
+  return { inputs: inputs, grid: grid, profile: cachedOddsProfile(inputs, state.calib) };
+}
+
+/** Ask the worker for what the running cook's plan wants and has not got -
+ *  its pot's surface, then the odds profile on it - and plan the cook again
+ *  as each lands, if it still wants it. A new pot mid-cook (the boil tapped)
+ *  is asked for at once: the egg is already in the water. */
+export function askForCookSurface(inputs: DecisionInputs): void {
+  if (cachedDecisionGrid(inputs) === null) {
+    decisionGrid(inputs).then(() => {
+      if (cookWants(inputs)) asking.cookLanded();
+    }, (error: unknown) => console.warn('decision surface failed', error));
+    return;
+  }
+  if (cachedOddsProfile(inputs, state.calib) === null) askForProfile(inputs);
 }

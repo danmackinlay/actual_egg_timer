@@ -143,10 +143,14 @@ countdown ask for the reading, and offers the room temperature.
 **While a cook runs**, straight under the time: the setup sentence the cook
 was started with, as plain text with nothing to tap, and under it one small
 line with what the sentence does not say (`cook.summary`: the doneness and
-the peak yolk). Both come from the ticket, never from the controls, in the
-units the cook was set up in. What was said under the time at "Eggs in"
-stays for the whole cook and comes back after a reload or relaunch. Settings,
-Help and the slider are put away.
+the peak yolk). Both come from the running cook (`src/core/running.ts`): the
+sentence from its own choices, the doneness and the peak from its plan, the
+time that ran; never from the controls, in the units the cook was set up in.
+What is said under the time is the plan's, decided on the cook's pot: it
+comes in when that pot's surface lands, and a new pot's (the boil tapped)
+replaces it when it lands; the web holds the line it had meanwhile, and after
+a reload it comes back with the surface. Settings, Help and the slider are
+put away.
 
 To the left of the sentence, so it costs the column no height of its own,
 **the egg in cross-section** (`DECISIONS.md` 52; web `src/ui/eggSection.ts`,

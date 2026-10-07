@@ -23,9 +23,10 @@ import {
   UnitSystem, chooseUnits, display, displayText, effectiveUnits, fromSI, measureFor, parse,
   nudgeFrom, readChosenUnits, regionalUnits, shownDecimals, sizeClassLabel, stepPast, toSI,
 } from '../src/core/units.js';
-import { eggRecordFor, Cooked } from '../src/ui/eggRecord.js';
-import { startHot, advance } from '../src/ui/machine.js';
+import { eggRecordFor } from '../src/ui/eggRecord.js';
 import { parseRecord } from '../src/core/record.js';
+import { replan, startCook } from '../src/core/running.js';
+import { knowing } from '../tools/common.js';
 
 const EN = parseCatalogue(JSON.parse(readFileSync('copy/en.json', 'utf8')));
 
@@ -297,16 +298,12 @@ test('5a. a size class shows its own mass in either system, and keeps its region
 });
 
 test('5b. the record says which system the cook was reading, and stays SI', () => {
-  const cooked: Cooked = {
-    egg: eggFromMass(0.068), massFrom: 'class', sizeTable: 'us', eggFrom: 'fridge',
-    boilRemembered: false, units: 'imperial', lang: 'en', forecast: null, nudge_s: 0,
-    setup: {
-      startMode: 'hot', afterBoil: 'hold', eggStart_C: 4, ambient_C: 20, boiling_C: 100,
-      timeToBoil_s: 480, cooling: 'ice', waterLitres: 2, eggCount: 2,
-    },
-  };
-  const m = advance(startHot(1_750_000_000_000, 400, 'ice', 0.4), 1_750_000_500_000).machine;
-  const r = eggRecordFor(cooked, m, 'jammy');
+  const cook = startCook(1_750_000_000_000, {
+    mass_kg: 0.068, massFrom: 'class', sizeTable: 'us', eggFrom: 'fridge', customStart_C: 12, room_C: null,
+    startMode: 'hot', afterBoil: 'hold', cooling: 'ice', waterLitres: 2, eggCount: 2, altitude_m: 0, level: 0.4,
+  }, 0, {}, 'imperial', 'en');
+  const plan = replan(cook, knowing({ particles: 50, eggsLogged: 0 }), null, 0, 1_750_000_500);
+  const r = eggRecordFor(cook, plan, 'jammy');
   assert.equal(r.units, 'imperial');
   assert.equal(r.egg.mass_g, 68);
   assert.equal(r.setup.eggStart_C, 4);

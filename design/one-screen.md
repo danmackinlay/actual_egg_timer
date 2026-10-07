@@ -642,6 +642,37 @@ commit each):
      plan.
    - The tests `machine`, `ticket`, `store` and `phaseView` are rewritten
      to match.
+
+   *As built (web, 7 October 2026).* As listed, with `ticket.ts` and its
+   test gone, `machine.ts` down to `coolingStartsIn_s`, and the records in
+   `test/record.test.ts`, `probe`, `units` and `en1750` made from a running
+   cook. Where the code asked for more:
+   - **`state.ts`** holds `cook`, `plan` and `leanHint_s`; `choicesOf(settings,
+     region)` is pure, and `idlePot`/`currentEgg` are `cookSetupOf` of it.
+     The phase is `phaseNow`, `phaseAt` on the plan.
+   - **`cook.ts`** plans at the start (on the idle pot's surface, so the time
+     started is the time shown), at the tap, at the egg out, at an event
+     `eventsDue` writes, at `slowHobAt_s`, when the plan's surface or profile
+     lands (`answer.ts`'s `askForCookSurface`), and at a reload; a tick only
+     reads the phase. The alarm rings on entering Pull, however it was
+     entered (`notice`). The boil is remembered at Cancel, Start again, and
+     a stored cook dropped as too old, from `cookEnding`.
+   - **Cancel and Start again forget the stored cook only if it is this
+     tab's** (`clearCook(id_ms)`): another tab's, written since, stays the
+     open egg.
+   - **`finalEggs`** holds back the stored cook's egg and anything logged
+     after it (sharing counts a prefix of the log); another tab's stored cook
+     is planned once per stored text for `cookTooOld`.
+   - **Settings another tab writes** leave a running tab's controls alone
+     (step 7's rule, taken here because the cook no longer reads them); they
+     are drawn again at Cancel or Start again.
+   - **On screen**, as the plan now says: the direction line comes in when
+     the cook's surface lands, even mid-cook, and is held while a new pot's
+     is built; the line under the sentence and "You asked for" read the
+     plan's level and the peak of the time that ran, on the calibration as
+     it stands (a reload after an answer can show a peak a degree off the
+     one shown before it). `tools/copy-snapshot.html` reads the deadlines
+     from the app's plan, since they are no longer stored.
 6. One layout: `index.html` (`#cookSetup` folded into `#setup`), `styles.css`
    (no phase hides the controls), `render.ts` (one render path),
    `eggSection.ts` (the two readings).

@@ -6,28 +6,27 @@
  * asking the user to stopwatch it elsewhere, which is the one measurement the
  * model cannot guess and the user cannot be bothered to take separately.
  *
- * While a cook is running the inputs are hidden (styles.css), so everything on
- * screen describes the cook that was started, not one the user is composing.
- * That is what lets the machine's deadlines and the solver's readout be
- * derived from the same settings without reconciling them mid-cook.
+ * While idle the controls are the cook to be: the settings, read as core's
+ * `CookChoices` (`choicesOf`). Once a cook is running it is core's
+ * `RunningCook` (src/core/running.ts): its start, its own choices and what it
+ * observed, with everything else - the deadlines, the time, the record -
+ * derived as its `CookPlan`. A running cook is described by its own choices,
+ * never by the settings, which another tab may have changed since
+ * (DECISIONS.md 97).
  */
 
-import {
-  Egg, eggFromMass, eggFromMinorDiameter, sizeClassesFor, sizeTableFor,
-} from '../core/geometry.js';
+import { Egg, eggFromMinorDiameter, sizeClassesFor, sizeTableFor } from '../core/geometry.js';
 import { boilingPointAtAltitude } from '../core/thermo.js';
-import { CookSetup, StartMode } from '../core/protocol.js';
 import { Solution } from '../core/solve.js';
-import { BoilMemory, ambientFor, roomInUse, startTempPreset_C } from '../core/policy.js';
+import { BoilMemory, Phase, phaseAt, roomInUse } from '../core/policy.js';
 import { Decision } from '../core/decide.js';
 import { DecidedAnswer, OddsProfile } from '../core/reach.js';
 import { MassFrom } from '../core/record.js';
 import { Outcome } from '../core/outcome.js';
+import { CookChoices, CookPlan, CookPot, RunningCook, cookSetupOf } from '../core/running.js';
 import { Calibration } from './calibration.js';
 import { Learning } from './learned.js';
-import { Machine } from './machine.js';
 import { Settings, UiStartMode, estimateTimeToBoil } from './store.js';
-import { Ticket } from './ticket.js';
 import { REGION } from './units.js';
 
 /** The carton's size classes, by the browser's region (`REGION`, in units.ts)
@@ -36,9 +35,6 @@ import { REGION } from './units.js';
  *  index is read against it, and keeps its name if the region has changed
  *  since it was saved. */
 export const sizeClasses = sizeClassesFor(REGION);
-/** The same table by name, for the record: a Large is 68 g in one and 60.2 g in
- *  the other. */
-export const sizeTable = sizeTableFor(REGION);
 
 /** What the page holds: the setup, what has been learned, the cook under way
  *  and the answer on screen. */
@@ -49,7 +45,7 @@ interface PageState {
    *  user's own eggs actually turn out. Before any feedback this is the prior
    *  mean, i.e. the literature values. */
   calib: Calibration;
-  machine: Machine;
+  /** The solve behind the time on screen while idle. */
   solution: Solution | null;
   /** The choice behind the time on screen while idle: the odds, and how
    *  far it leaned from the mean solve. Null until the
@@ -73,34 +69,78 @@ interface PageState {
   /** The warning line while idle: a refusal when the requested doneness had to
    *  be moved, or the level's low odds (`warningKey`); empty otherwise. */
   idleWarning: string;
-  /** What the running cook is, frozen at the moment it started (ticket.ts). */
-  ticket: Ticket | null;
+  /** The cook under way (src/core/running.ts): its start, its choices and
+   *  what it observed, as stored under `aet.cook.v3`; null while idle. */
+  cook: RunningCook | null;
+  /** Everything derived from `cook` (`replan`), planned again only when
+   *  something new is known - an event, a surface landing, the slow hob's
+   *  moment, a reload - never on every tick. Null exactly when `cook` is. */
+  plan: CookPlan | null;
+  /** The lean last decided for the cook under way, s: the interim a plan
+   *  carries while its pot's surface is being built (`carriedSolution`). A
+   *  cache, stored with the cook, never truth. */
+  leanHint_s: number;
 }
 
-/** The page's state. The first four are read from storage by `boot()`
+/** The page's state. The first three are read from storage by `boot()`
  *  (app.ts), not when this module is imported, so a test can import it. */
 export const state: PageState = {
   settings: null!,
   boilMemory: null!,
   calib: null!,
-  machine: null!,
   solution: null,
   decision: null,
   outcome: null,
   chosen: null,
   profile: null,
   idleWarning: '',
-  ticket: null,
+  cook: null,
+  plan: null,
+  leanHint_s: 0,
 };
 
 /* --------------------------------------------------------------- physics */
 
+/** The settings as core's choices: the cook the controls describe, for the
+ *  carton of `region` (`sizeClassesFor`). The egg is its size class's mass, or
+ *  the measured egg's, from its width; the room counts only with the probe on
+ *  (`roomInUse`). Sous-vide is answered by src/core/sousvide.ts and starts no
+ *  cook, so as far as the cook solver is concerned it is an egg going into
+ *  water already hot. Pure, so a test can ask it. */
+export function choicesOf(settings: Settings, region: string | null): CookChoices {
+  const classes = sizeClassesFor(region);
+  const byClass = settings.sizeIndex >= 0 && settings.sizeIndex < classes.length;
+  return {
+    mass_kg: byClass ? classes[settings.sizeIndex].mass_kg : eggFromMinorDiameter(settings.customMinor_mm / 1000).mass_kg,
+    massFrom: byClass ? 'class' : settings.measuredBy,
+    sizeTable: byClass ? sizeTableFor(region) : null,
+    eggFrom: settings.startTempMode,
+    customStart_C: settings.customStart_C,
+    room_C: roomInUse(settings.probe, settings.room_C),
+    startMode: settings.startMode === 'cold' ? 'cold' : 'hot',
+    afterBoil: settings.afterBoil,
+    cooling: settings.cooling,
+    waterLitres: settings.waterLitres,
+    eggCount: settings.eggCount,
+    altitude_m: settings.altitude_m,
+    level: settings.doneness,
+  };
+}
+
+/** The cook the controls describe, as core's choices. */
+export function idleChoices(): CookChoices {
+  return choicesOf(state.settings, REGION);
+}
+
+/** The egg and the pot the controls describe, for a time to a rolling boil:
+ *  core's `cookSetupOf`, the one assembly both apps and a running cook share. */
+export function idlePot(timeToBoil_s: number): CookPot {
+  return cookSetupOf(idleChoices(), timeToBoil_s);
+}
+
+/** The egg the controls describe. */
 export function currentEgg(): Egg {
-  const settings = state.settings;
-  if (settings.sizeIndex < 0 || settings.sizeIndex >= sizeClasses.length) {
-    return eggFromMinorDiameter(settings.customMinor_mm / 1000);
-  }
-  return eggFromMass(sizeClasses[settings.sizeIndex].mass_kg);
+  return idlePot(timeToBoil_s()).egg;
 }
 
 /** Which input the egg on screen came from: the size class, or whichever of the
@@ -108,8 +148,7 @@ export function currentEgg(): Egg {
  *  this is the only place the difference survives - and it is the egg-level
  *  noise the fit needs (a class is a 10 g bucket; a scale is a gram). */
 export function massFrom(): MassFrom {
-  if (state.settings.sizeIndex >= 0 && state.settings.sizeIndex < sizeClasses.length) return 'class';
-  return state.settings.measuredBy;
+  return idleChoices().massFrom;
 }
 
 /** The room as the cook measured it, while it counts, or null to assume one
@@ -118,74 +157,34 @@ export function room_C(): number | null {
   return roomInUse(state.settings.probe, state.settings.room_C);
 }
 
-function eggStart_C(): number {
-  if (state.settings.startTempMode === 'custom') return state.settings.customStart_C;
-  return startTempPreset_C(state.settings.startTempMode, room_C());
-}
-
-/** The room, as far as the model is concerned. The rule - a measured room is
- *  the room; otherwise an egg that has been sitting out IS the room, and a
- *  fridge egg says nothing - is core policy. */
-function ambient_C(): number {
-  return ambientFor(eggStart_C(), room_C());
-}
-
 export function boilingPoint_C(): number {
   return boilingPointAtAltitude(state.settings.altitude_m);
-}
-
-/** What the solver is told. The Start control has three positions; the model
- *  has two. Sous-vide is answered by src/core/sousvide.ts instead, so as far as
- *  the cook solver is concerned it is an egg going into water already hot. */
-function coreStartMode(): StartMode {
-  return state.settings.startMode === 'cold' ? 'cold' : 'hot';
 }
 
 export function isSousVide(): boolean {
   return state.settings.startMode === 'sous';
 }
 
-/** What the solver is told about the POT. The egg is a separate argument
- *  everywhere the core takes both, so there is no mass here to keep in step. */
-export function buildSetup(timeToBoil_s: number): CookSetup {
-  const settings = state.settings;
-  return {
-    startMode: coreStartMode(),
-    afterBoil: settings.afterBoil,
-    eggStart_C: eggStart_C(),
-    ambient_C: ambient_C(),
-    boiling_C: boilingPoint_C(),
-    timeToBoil_s: timeToBoil_s,
-    cooling: settings.cooling,
-    waterLitres: settings.waterLitres,
-    eggCount: settings.eggCount,
-  };
-}
-
-/** Time to a rolling boil, s - the pan's one measured number, and the one
- *  thing the solver needs that the settings do not hold.
- *
- *  Before a cook it is remembered or guessed. Once a cold start is under way
- *  the machine carries it: the guess, then the revision if the hob is slow,
- *  then the measurement when the boil is tapped. It is the length of a cold
- *  start's ramp and nothing more. A hot start never times it and the physics
+/** Time to a rolling boil on the controls' pot, remembered or guessed, s: the
+ *  pan's one measured number, and the one thing the solver needs that the
+ *  settings do not hold. A running cook's is its plan's - the guess, the slow
+ *  hob's, or the tap - never this. A hot start never times it and the physics
  *  never reads it there - with the heat off the pan's cooling comes from the
  *  water volume (see panTimeConstant) - but the setup still carries the
  *  remembered value, so the record can say which pan was assumed. */
 export function timeToBoil_s(): number {
-  if (state.machine.phase !== 'IDLE' && startModeNow() === 'cold') return state.machine.assumedBoil_s;
   return estimateTimeToBoil(state.boilMemory, state.settings.waterLitres);
 }
 
-/** The pot of the cook under way: the ticket's, frozen at "Eggs in", and never
- *  the controls', which another tab may have changed since. Null while idle. */
-function runningSetup(): CookSetup | null {
-  return state.machine.phase !== 'IDLE' && state.ticket !== null ? state.ticket.setup : null;
+/** The phase of the cook on screen at `now_ms`: idle, or what core's
+ *  `phaseAt` reads from the running cook's plan. */
+export function phaseNow(now_ms: number): Phase {
+  return state.plan === null ? 'IDLE' : phaseAt(state.plan.deadlines, now_ms / 1000);
 }
 
 /** How the cook on screen starts: the running cook's, or the controls'. */
 export function startModeNow(): UiStartMode {
-  return runningSetup()?.startMode ?? state.settings.startMode;
+  return state.cook?.choices.startMode ?? state.settings.startMode;
 }
 
 /** What has been learned, as it stands now, for learned.ts to say. */

@@ -28,7 +28,13 @@ import {
 import {
   Feedback, LITERATURE_POPULATION, Particle, WhiteReport, YolkWord, answerLikelihood, yolkProbit,
 } from '../src/core/infer.js';
-import { calibrationGrid, PARTICLE_COUNT, CALIBRATION_SEED } from '../src/core/policy.js';
+import {
+  BoilMemory, calibrationGrid, PARTICLE_COUNT, CALIBRATION_SEED, PULL_GRACE_SECONDS, phaseAt,
+} from '../src/core/policy.js';
+import {
+  CookChoices, CookPlan, RunningCook, cookEnding, cookTooOld, eventsDue, readRunningCook, replan, startCook, withBoil,
+  withOut,
+} from '../src/core/running.js';
 import { createPrior, posteriorParams, updatePosterior } from '../src/core/infer.js';
 import { eggFromMass } from '../src/core/geometry.js';
 import {
@@ -40,12 +46,9 @@ import {
   recordSecondAnswer,
 } from '../src/ui/calibration.js';
 import { decodeKept, encodeKept, overlay } from '../src/ui/calibrationStore.js';
-import { Cooked, eggRecordFor } from '../src/ui/eggRecord.js';
+import { eggRecordFor } from '../src/ui/eggRecord.js';
 import { APP_VERSION } from '../src/ui/version.js';
-import {
-  Machine, advance, beginCooling, restoreMachine, staleMachine, startCold, startHot, PULL_GRACE_SECONDS,
-} from '../src/ui/machine.js';
-import { appSetup } from '../tools/common.js';
+import { appSetup, gridFor, knowing } from '../tools/common.js';
 import {
   OLD_POSTERIOR_FILE, PosteriorReference, SUMMARY_KEYS, Summary, decisionSurface, fixedSurfaces, foldOnSurfaces, oldLog,
   seedOf, spread, summarise,
@@ -687,30 +690,39 @@ test('3f. one cook in two tabs is one egg, folded by the tab that wrote it down'
 });
 
 // --------------------------------------------------------------------------
-// 4. The pull
+// 4. The pull, and the rest of the record, from a running cook
 // --------------------------------------------------------------------------
 
 const T0 = 1_750_000_000_000;
-const COOKED: Cooked = {
-  egg: eggFromMass(0.062), massFrom: 'scale', sizeTable: null, setup: appSetup(), eggFrom: 'fridge',
-  boilRemembered: false, units: 'metric', lang: 'en', forecast: null, nudge_s: 0,
+const S0 = T0 / 1000;
+const C4 = knowing({ particles: 200, eggsLogged: 0 });
+const CHOICES: CookChoices = {
+  mass_kg: 0.062, massFrom: 'scale', sizeTable: null, eggFrom: 'fridge', customStart_C: 12, room_C: null,
+  startMode: 'hot', afterBoil: 'hold', cooling: 'ice', waterLitres: 2, eggCount: 2, altitude_m: 0, level: 0.4,
 };
 
-function pulled(m: Machine): Machine {
-  return advance(m, m.cookEnd_ms).machine;
+function cookOf(over: Partial<CookChoices> = {}, nudge_s = 0, memory: BoilMemory = {}): RunningCook {
+  return startCook(T0, { ...CHOICES, ...over }, nudge_s, memory, 'metric', 'en');
+}
+
+/** The cook planned at `now_s`, with what the clock decided by then. */
+function ranTo(cook: RunningCook, now_s: number): { cook: RunningCook; plan: CookPlan } {
+  const plan = replan(cook, C4, null, 0, now_s);
+  const next = { ...cook, events: eventsDue(cook, plan, now_s) };
+  return { cook: next, plan: replan(next, C4, null, 0, now_s) };
 }
 
 test('4a. the cook\'s tap out of PULL is recorded as a measured pull', () => {
-  const m = pulled(startHot(T0, 400, 'ice', 0.4));
-  assert.equal(m.phase, 'PULL');
-  assert.equal(m.pulledBy, null);
-  const tapped = beginCooling(m, T0 + 409_500);
-  assert.equal(tapped.pulledBy, 'cook');
-  assert.equal(tapped.outAt_ms, T0 + 409_500);
-  const r = eggRecordFor(COOKED, tapped, 'jammy');
-  assert.equal(r.pulled_s, 409.5);
+  const cook = cookOf();
+  const plan = replan(cook, C4, null, 0, S0);
+  const pull = plan.deadlines.cookEnd_s;
+  const tapped = withOut(cook, plan, pull + 9.5);
+  assert.equal(tapped.events.pulled?.by, 'cook');
+  const r = eggRecordFor(tapped, replan(tapped, C4, null, 0, pull + 9.5), 'jammy');
+  assert.ok(Math.abs(r.pulled_s - (plan.cookTime_s + 9.5)) < 1e-6);
   assert.equal(r.pulledBy, 'cook');
-  assert.equal(r.recommended_s, 400);
+  assert.ok(Math.abs(r.recommended_s - plan.cookTime_s) < 0.06);
+  assert.equal(r.id, T0, 'the record\'s id is when Start was pressed');
   // The yolk the cook got (DECISIONS.md 92), and never the old answer.
   assert.equal(r.yolkWord, 'jammy');
   assert.equal(r.yolk, null);
@@ -718,87 +730,92 @@ test('4a. the cook\'s tap out of PULL is recorded as a measured pull', () => {
 });
 
 test('4b. a pull nobody confirmed is recorded as assumed, at the scheduled time', () => {
-  const m = pulled(startHot(T0, 400, 'counter', 0.6));
-  const timedOut = advance(m, m.pulledAt_ms + PULL_GRACE_SECONDS * 1000).machine;
-  assert.equal(timedOut.phase, 'DONE');
-  assert.equal(timedOut.pulledBy, 'timeout');
-  // The ticket's pot and the machine are set together, so both rest on the counter.
-  const r = eggRecordFor({ ...COOKED, setup: appSetup({ cooling: 'counter' }) }, timedOut, null);
+  const cook = cookOf({ cooling: 'counter', level: 0.6 });
+  const plan = replan(cook, C4, null, 0, S0);
+  const after = ranTo(cook, plan.deadlines.cookEnd_s + PULL_GRACE_SECONDS);
+  assert.equal(phaseAt(after.plan.deadlines, plan.deadlines.cookEnd_s + PULL_GRACE_SECONDS), 'DONE');
+  const r = eggRecordFor(after.cook, after.plan, null);
   assert.equal(r.pulledBy, 'timeout');
-  assert.equal(r.pulled_s, 400);
+  assert.ok(Math.abs(r.pulled_s - plan.cookTime_s) < 0.06);
   assert.equal(r.cooled_s, 0);
 });
 
 test('4b2. a class names its carton, and a weighed egg names none', () => {
-  const m = beginCooling(pulled(startHot(T0, 400, 'ice', 0.4)), T0 + 402_000);
-  const us = eggRecordFor({ ...COOKED, egg: eggFromMass(0.0602), massFrom: 'class', sizeTable: 'us' }, m, 'jammy');
-  assert.equal(us.egg.sizeTable, 'us');
-  assert.equal(us.egg.mass_g, 60.2);
-  assert.notEqual(parseRecord(us), null);
-  const weighed = eggRecordFor({ ...COOKED, sizeTable: 'us' }, m, 'jammy');
-  assert.equal(weighed.egg.sizeTable, null, 'a scale has no carton, whatever the region');
-  assert.equal(parseRecord({ ...us, egg: { ...us.egg, sizeTable: null } }), null);
+  const us = cookOf({ mass_kg: 0.0602, massFrom: 'class', sizeTable: 'us' });
+  const r = eggRecordFor(us, replan(us, C4, null, 0, S0), 'jammy');
+  assert.equal(r.egg.sizeTable, 'us');
+  assert.equal(r.egg.mass_g, 60.2);
+  assert.notEqual(parseRecord(r), null);
+  const weighed = cookOf({ sizeTable: 'us' });
+  assert.equal(eggRecordFor(weighed, replan(weighed, C4, null, 0, S0), 'jammy').egg.sizeTable, null,
+    'a scale has no carton, whatever the region');
+  assert.equal(parseRecord({ ...r, egg: { ...r.egg, sizeTable: null } }), null);
 });
 
 test('4b3. the time to boil says whether this cook measured it', () => {
-  const m = beginCooling(pulled(startHot(T0, 400, 'ice', 0.4)), T0 + 402_000);
-  assert.equal(eggRecordFor(COOKED, m, 'jammy').setup.timeToBoilFrom, 'default');
-  assert.equal(eggRecordFor({ ...COOKED, boilRemembered: true }, m, 'jammy').setup.timeToBoilFrom, 'remembered');
-  const cold = { ...COOKED, setup: appSetup({ startMode: 'cold', timeToBoil_s: 431.5 }) };
-  const r = eggRecordFor(cold, m, 'jammy');
+  const plain = cookOf();
+  assert.equal(eggRecordFor(plain, replan(plain, C4, null, 0, S0), 'jammy').setup.timeToBoilFrom, 'default');
+  const known = cookOf({}, 0, { '2.0': 450 });
+  assert.equal(eggRecordFor(known, replan(known, C4, null, 0, S0), 'jammy').setup.timeToBoilFrom, 'remembered');
+  const cold = withBoil(cookOf({ startMode: 'cold' }), S0 + 431.5);
+  const r = eggRecordFor(cold, replan(cold, C4, null, 0, S0 + 431.5), 'jammy');
   assert.equal(r.setup.timeToBoilFrom, 'measured');
   assert.equal(r.setup.timeToBoil_s, 431.5);
 });
 
 test('4b5. a nudged cook is recorded as the time recommended and the nudge, apart', () => {
-  // The machine runs the nudged time; the record splits it, and scores an
-  // egg nobody pulled at the time that actually ran.
-  const m = advance(pulled(startHot(T0, 393, 'ice', 0.4)), T0 + 500_000).machine;
-  const r = eggRecordFor({ ...COOKED, nudge_s: -7 }, m, 'jammy');
-  assert.equal(r.recommended_s, 400);
+  // The plan runs the nudged time; the record splits it, and scores an egg
+  // nobody pulled at the time that actually ran.
+  const cook = cookOf({}, -7);
+  const plan = replan(cook, C4, null, 0, S0);
+  const r = eggRecordFor(cook, plan, 'jammy');
   assert.equal(r.nudge_s, -7);
-  assert.equal(recordCookTime_s(r), 393);
+  assert.ok(Math.abs(recordCookTime_s(r) - plan.cookTime_s) < 0.06);
+  assert.ok(Math.abs(r.recommended_s - (plan.cookTime_s + 7)) < 0.06);
   assert.notEqual(parseRecord(r), null);
 });
 
-test('4b4. the record keeps what the app said at Eggs in, and names the model that said it', () => {
-  const m = beginCooling(pulled(startHot(T0, 400, 'ice', 0.4)), T0 + 402_000);
-  const forecast = {
-    cook_s: 400, yolk: [0.25, 0.5, 0.25], white: [0.125, 0.375, 0.5], yolkWord: [0.0625, 0.25, 0.5, 0.125, 0.0625],
-  };
-  const r = eggRecordFor({ ...COOKED, forecast: forecast }, m, 'jammy');
-  assert.deepEqual(r.forecast, forecast);
+test('4b4. the record keeps what the app said for the cook that ran, and names the model that said it', () => {
+  const cook = cookOf();
+  const interim = replan(cook, C4, null, 0, S0);
+  const before = eggRecordFor(cook, interim, 'jammy');
+  assert.equal(before.forecast, null, 'no surface in, nothing said');
+  assert.notEqual(parseRecord(before), null);
+  const inputs = interim.inputs;
+  assert.ok(inputs !== null);
+  const surface = { inputs: inputs, grid: gridFor(C4, inputs.egg, inputs.setup), profile: null };
+  const plan = replan(cook, C4, surface, 0, S0);
+  const r = eggRecordFor(cook, plan, 'jammy');
+  assert.ok(plan.forecast !== null);
+  assert.deepEqual(r.forecast, plan.forecast);
   assert.equal(r.model, MODEL_ID);
   assert.deepEqual(parseRecord(JSON.parse(JSON.stringify(r))), r);
-  const before = eggRecordFor(COOKED, m, 'jammy');
-  assert.equal(before.forecast, null, 'started before the odds were known');
-  assert.notEqual(parseRecord(before), null);
 });
 
-test('4c. a stored cook keeps who pulled it, and one that does not say is refused', () => {
-  const m = beginCooling(pulled(startHot(T0, 400, 'ice', 0.4)), T0 + 405_000);
-  const old = JSON.parse(JSON.stringify(m)) as Record<string, unknown>;
-  delete old['pulledBy'];
-  delete old['outAt_ms'];
-  assert.equal(restoreMachine(old, T0 + 500_000), null);
-  const same = restoreMachine(JSON.parse(JSON.stringify(m)), T0 + 500_000);
-  assert.equal(same?.pulledBy, 'cook');
-  assert.equal(same?.outAt_ms, T0 + 405_000);
+test('4c. a stored cook keeps who pulled it: read back, the same record', () => {
+  const cook = cookOf();
+  const plan = replan(cook, C4, null, 0, S0);
+  const out = withOut(cook, plan, plan.deadlines.cookEnd_s + 5);
+  const back = readRunningCook(JSON.parse(JSON.stringify(out)));
+  assert.ok(back !== null);
+  const later = plan.deadlines.cookEnd_s + 60;
+  assert.deepEqual(
+    eggRecordFor(back, replan(back, C4, null, 0, later), null), eggRecordFor(out, replan(out, C4, null, 0, later), null),
+  );
 });
 
 test('4d. a cook too old to pick back up is still an egg: run on to DONE, by the clock', () => {
-  const m = startHot(T0, 400, 'ice', 0.4);
-  const raw = JSON.parse(JSON.stringify(m)) as unknown;
-  const later = T0 + 3 * 3600_000;
-  assert.equal(restoreMachine(raw, later), null, 'not picked back up');
-  const stale = staleMachine(raw, later);
-  assert.equal(stale?.phase, 'DONE');
-  assert.equal(stale?.pulledBy, 'timeout');
-  const r = eggRecordFor(COOKED, stale as Machine, null);
+  const later = S0 + 3 * 3600;
+  const stale = ranTo(cookOf(), later);
+  assert.equal(cookTooOld(stale.plan, later), true, 'not picked back up');
+  assert.equal(cookEnding(stale.cook, stale.plan, later).finished, true);
+  const r = eggRecordFor(stale.cook, stale.plan, null);
   assert.equal(r.pulledBy, 'timeout');
-  assert.equal(r.pulled_s, 400);
+  assert.ok(Math.abs(r.pulled_s - stale.plan.cookTime_s) < 0.06);
   assert.equal(r.yolk, null);
   assert.notEqual(parseRecord(r), null);
   // A cold start nobody said was boiling never cooked anything it could time.
-  assert.equal(staleMachine(JSON.parse(JSON.stringify(startCold(T0, 900, 480, 'ice', 0.4))), later)?.phase, 'HEATING');
+  const heating = ranTo(cookOf({ startMode: 'cold' }), later);
+  assert.equal(phaseAt(heating.plan.deadlines, later), 'HEATING');
+  assert.equal(cookEnding(heating.cook, heating.plan, later).finished, false);
 });

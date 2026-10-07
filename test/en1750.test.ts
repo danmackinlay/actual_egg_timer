@@ -21,10 +21,10 @@ import {
   DEFAULT_LANGUAGE, FRESH_LANGUAGE, LanguageState, PERIOD_LANGUAGE, effectiveLanguage, isModernEnglish,
   isPeriod, languageAfterFlip, languageAfterPick, readLanguageState, registerOf,
 } from '../src/core/language.js';
-import { eggFromMass } from '../src/core/geometry.js';
 import { parseRecord } from '../src/core/record.js';
-import { Cooked, eggRecordFor } from '../src/ui/eggRecord.js';
-import { advance, startHot } from '../src/ui/machine.js';
+import { CookChoices, replan, startCook } from '../src/core/running.js';
+import { eggRecordFor } from '../src/ui/eggRecord.js';
+import { knowing } from '../tools/common.js';
 
 type Entry = Record<string, unknown>;
 interface CatalogueJson { locale: string; messages: Record<string, Entry> }
@@ -259,20 +259,20 @@ test('3a. the record\'s register follows the language', () => {
 });
 
 test('3b. a cook read in 1750 is recorded as 1750: lang and register both', () => {
-  const cooked = (lang: string): Cooked => ({
-    egg: eggFromMass(0.068), massFrom: 'class', sizeTable: 'eu', eggFrom: 'fridge',
-    boilRemembered: false, units: 'imperial', lang: lang, forecast: null, nudge_s: 0,
-    setup: {
-      startMode: 'hot', afterBoil: 'hold', eggStart_C: 4, ambient_C: 20, boiling_C: 100,
-      timeToBoil_s: 480, cooling: 'ice', waterLitres: 2, eggCount: 2,
-    },
-  });
-  const m = advance(startHot(1_750_000_000_000, 400, 'ice', 0.4), 1_750_000_500_000).machine;
-  const period = eggRecordFor(cooked(PERIOD_LANGUAGE), m, 'soft');
+  const choices: CookChoices = {
+    mass_kg: 0.068, massFrom: 'class', sizeTable: 'eu', eggFrom: 'fridge', customStart_C: 12, room_C: null,
+    startMode: 'hot', afterBoil: 'hold', cooling: 'ice', waterLitres: 2, eggCount: 2, altitude_m: 0, level: 0.4,
+  };
+  const C = knowing({ particles: 50, eggsLogged: 0 });
+  const recorded = (lang: string) => {
+    const cook = startCook(1_750_000_000_000, choices, 0, {}, 'imperial', lang);
+    return eggRecordFor(cook, replan(cook, C, null, 0, 1_750_000_500), 'soft');
+  };
+  const period = recorded(PERIOD_LANGUAGE);
   assert.equal(period.lang, PERIOD_LANGUAGE);
   assert.equal(period.register, '1750');
   assert.notEqual(parseRecord(period), null);
-  const modern = eggRecordFor(cooked('en'), m, 'soft');
+  const modern = recorded('en');
   assert.equal(modern.lang, 'en');
   assert.equal(modern.register, 'modern');
 });

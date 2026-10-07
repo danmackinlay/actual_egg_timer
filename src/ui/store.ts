@@ -15,12 +15,16 @@ import { StartMode, Cooling, HeatAfterBoil } from '../core/protocol.js';
 import {
   BoilMemory, DEFAULTS, LIMITS, Limit, carrySizeIndex, clamp, isWithin, rememberBoil,
 } from '../core/policy.js';
+import { RunningCook, readRunningCook } from '../core/running.js';
 
 export type { Limit } from '../core/policy.js';
 export { LIMITS, START_TEMP_PRESETS_C, estimateTimeToBoil, hasBoilMemory } from '../core/policy.js';
 
 const SETTINGS_KEY = 'aet.settings.v1';
-const COOK_KEY = 'aet.cook.v2';
+const COOK_KEY = 'aet.cook.v3';
+/** The cook as 0.4 stores it, a machine and a ticket: read once, kept aside
+ *  as stored and deleted (`takeOldCook`), never converted (DECISIONS.md 97). */
+const OLD_COOK_KEY = 'aet.cook.v2';
 /** The cook as the live site of 19 September stores it: a shape the ticket
  *  does not read. Dropped, not migrated. */
 const SUPERSEDED_COOK_KEY = 'aet.cook.v1';
@@ -29,7 +33,7 @@ const BOIL_KEY = 'aet.boil.v1';
 type StartTempMode = 'fridge' | 'room' | 'custom';
 
 /** The Start control offers one more option than the solver understands.
- *  'sous' never reaches core: see buildSetup in state.ts. */
+ *  'sous' never reaches core: see choicesOf in state.ts. */
 export type UiStartMode = StartMode | 'sous';
 
 export interface Settings {
@@ -353,20 +357,22 @@ function clampLitres(litres: number): number {
 /* ------------------------------------------------------------ the cook */
 
 /**
- * A cook in progress, so a reload does not lose the egg.
+ * A cook in progress, so a reload does not lose the egg
+ * (design/one-screen.md section 4, "What is stored").
  *
- * The machine is built out of absolute epoch deadlines, so writing it down is
- * all a reload needs.
+ * A running cook is its start, its choices and its events, all clock times
+ * (src/core/running.ts), so writing it down is all a reload needs: the plan
+ * is derived from it again. With it, whether its egg has been written down,
+ * and the lean last decided, the interim while its surface is rebuilt.
  *
  * The alarm is a timer in this tab and dies with it, so unlike iOS there is no
- * notification still counting down to contradict. What is restored is the
- * state and the ticket; whether it is still worth restoring is
- * `restoreMachine`'s business (machine.ts).
+ * notification still counting down to contradict. Whether a cook is still
+ * worth restoring is core's `cookTooOld`, asked of its plan by the caller.
  */
-interface StoredCook {
-  machine: unknown;
-  ticket: unknown;
+export interface StoredCook {
+  cook: RunningCook;
   answers: KeptAnswers;
+  leanHint_s: number;
 }
 
 /** Whether the egg has been written down with an answer, as a cook keeps it
@@ -374,29 +380,49 @@ interface StoredCook {
  *  answered before a reload, which is what it is when it is read back. */
 export type KeptAnswers = 'none' | 'beforeReload';
 
-export function saveCook(machine: unknown, ticket: unknown, answers: KeptAnswers): void {
-  writeStorage(COOK_KEY, JSON.stringify({ machine: machine, ticket: ticket, answers: answers }));
+export function saveCook(cook: RunningCook, answers: KeptAnswers, leanHint_s: number): void {
+  writeStorage(COOK_KEY, JSON.stringify({ cook: cook, answers: answers, leanHint_s: leanHint_s }));
 }
 
-/** The cook written down, or null. One without a known `answers` is dropped
- *  rather than read as unanswered, which would log its egg a second time. */
+/** The cook written down, whole, or null: none, or one this build cannot
+ *  read (`readRunningCook`), which the caller keeps aside (`storedCookText`).
+ *  One without a known `answers` is refused rather than read as unanswered,
+ *  which would log its egg a second time. */
 export function loadCook(): StoredCook | null {
   removeStorage(SUPERSEDED_COOK_KEY);
   const raw = parseObject(readStorage(COOK_KEY));
   if (raw === null) return null;
-  const machine = raw['machine'];
-  if (machine === null || typeof machine !== 'object') return null;
+  const cook = readRunningCook(raw['cook']);
+  if (cook === null) return null;
   const answers = raw['answers'];
   if (answers !== 'none' && answers !== 'beforeReload') return null;
-  return {
-    machine: machine,
-    ticket: raw['ticket'] ?? null,
-    answers: answers,
-  };
+  const hint = raw['leanHint_s'];
+  if (typeof hint !== 'number' || !Number.isFinite(hint)) return null;
+  return { cook: cook, answers: answers, leanHint_s: hint };
 }
 
-export function clearCook(): void {
+/** Forget the cook written down, if it is the one started at `id_ms`: a
+ *  cook another tab started and wrote since is that tab's, and stays. */
+export function clearCook(id_ms: number): void {
+  const raw = parseObject(readStorage(COOK_KEY));
+  const cook = raw === null ? null : raw['cook'];
+  const stored = cook !== null && typeof cook === 'object' ? (cook as Record<string, unknown>)['id_ms'] : undefined;
+  if (raw === null || stored === undefined || stored === id_ms) removeStorage(COOK_KEY);
+}
+
+/** Forget whatever is written down: a cook this build cannot read, once
+ *  kept aside. */
+export function dropStoredCook(): void {
   removeStorage(COOK_KEY);
+}
+
+/** The cook as 0.4 wrote it (`aet.cook.v2`), as stored, or null: read once
+ *  and deleted, so the caller keeps it aside (DECISIONS.md 81, 97; review
+ *  2.6). Nothing else reads that key. */
+export function takeOldCook(): string | null {
+  const text = readStorage(OLD_COOK_KEY);
+  removeStorage(OLD_COOK_KEY);
+  return text;
 }
 
 /** Whether a change of storage (the page's `storage` event; a null key is
@@ -405,14 +431,19 @@ export function cookStoredElsewhere(key: string | null): boolean {
   return key === null || key === COOK_KEY;
 }
 
-/** Whether the cook written down is the one started at `startedAt_ms`, with
- *  its egg written down with an answer: by another tab, if not by this one. */
-export function storedCookAnswered(startedAt_ms: number): boolean {
+/** The stored cook as it is now, whichever tab wrote it, or null: what
+ *  sharing holds back (`openEggId`). */
+export function storedCook(): RunningCook | null {
+  return loadCook()?.cook ?? null;
+}
+
+/** Whether the cook written down is the one started at `id_ms`, with its
+ *  egg written down with an answer: by another tab, if not by this one. */
+export function storedCookAnswered(id_ms: number): boolean {
   const raw = parseObject(readStorage(COOK_KEY));
   if (raw === null || raw['answers'] !== 'beforeReload') return false;
-  const machine = raw['machine'];
-  return machine !== null && typeof machine === 'object'
-    && (machine as Record<string, unknown>)['startedAt_ms'] === startedAt_ms;
+  const cook = raw['cook'];
+  return cook !== null && typeof cook === 'object' && (cook as Record<string, unknown>)['id_ms'] === id_ms;
 }
 
 /** The cook as stored, for keeping aside one this build cannot read. */
