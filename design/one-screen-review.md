@@ -46,6 +46,8 @@ who pulled the egg at the notification without opening the app needs the
 opposite answer, so the app has to ask rather than guess. Or keep it as
 built, and have the screen say the pull is fixed once it has passed.
 
+Actioned: the first, as `DECISIONS.md` 98 chose: a timeout pull is written unconfirmed, a correction since it that would pull later (or heat again) sets the plan's `askIfStillIn` with the pull standing, and `stillIn` / `pullStands` answer it; the call above now asks, then heats again or stays in Cooling (`test/running.test.ts` 15, `running.json`), `7900a83`.
+
 ### 1.2 A boil tapped late overcooks the owner's case
 
 Confirmed. When a boiling → cold correction comes after the water has
@@ -69,6 +71,8 @@ the tap carry a time ("boiling since 7:50", a placeholder), which reverses
 made later than this water's remembered time to boil, plan on the remembered
 time rather than the tap.
 
+Actioned: the second, as `DECISIONS.md` 98 chose: such a cook runs on the remembered time (on the tap only when no pan is remembered), and the tap is still not remembered; boiling corrected to cold at 500 s then tapped at 540, 600 or 640 s pulls at 676 s every time, and a tap after that pulls at the tap (`test/running.test.ts` 18), `feff7de`.
+
 ### 1.3 A cook left in Heating never ends
 
 Confirmed. A cold start never tapped, planned 12 hours on:
@@ -90,6 +94,8 @@ abandoned. Give core the rule for when a cook is too old to pick back up, as
 a pure function of the plan and the clock, so both apps drop it at the same
 moment. 2.1 needs the same rule.
 
+Actioned: the slow hob stops at 7,200 s (`slowHobAt_s` then null), and the plan's `tooOldAt_s` with `cookTooOld` is the one rule: two hours from the start while heating, an hour (`RESTORE_WINDOW_S`) past the cooling's or the out's end otherwise; the 12-hour call now plans a 7,200 s guess, nothing to lengthen, too old (`test/running.test.ts` 20), `c10dbe2`.
+
 ## 2. Correct before building
 
 ### 2.1 An egg can be sent before Start again
@@ -108,6 +114,8 @@ again never comes, and closing the tab at Done is the usual ending.
 whichever tab asks. The open egg becomes final at Start again, or when the
 cook is too old to pick back up (1.3).
 
+Actioned: as written, in `design/one-screen.md` §3 and §4 ("Which eggs are final") and in core as `openEggId(cook, plan, now_s)`, the stored cook's id until `cookTooOld` (`test/running.test.ts` 21); `finalEggs` moves onto it with the web's step 5, `c10dbe2`.
+
 ### 2.2 A change undone can stop the boil time being remembered
 
 Confirmed. Boil tapped at 500 s, then a stray cold → hot → cold at 600 s and
@@ -122,6 +130,8 @@ most.
 **Fix.** Also keep the first moment after the start that the choices said
 boiling, and remember any tap made before it.
 
+Actioned: as written, `firstHotAt_s` (the start for a cook begun hot); a tap before it is watched from the press of Start, so the call above now remembers 500 s after the stray change too; test 3 keeps `coldSince_s`'s "cold again only now", which is still true, and now asserts the tap kept (`test/running.test.ts` 3, 19), `feff7de`.
+
 ### 2.3 A change after the pull rewrites what was not a mistake
 
 - **The slider at Done.** Confirmed. Level 0.41 → 0.1 leaves the cook time
@@ -135,6 +145,8 @@ boiling, and remember any tap made before it.
   cooling "at the correction" (`running.ts:564`) records a ten-minute ice
   bath. **Fix:** a cooling corrected after its end would have passed
   takes the counted time and is Done at once.
+
+Actioned: both, as `DECISIONS.md` 98 chose: after the pull `corrected` keeps the level in force at the pull, so the slider at Done leaves the record as it was, and the counter corrected to ice ten minutes on records the counted cooling (209 s here) and is Done at once (`test/running.test.ts` 16), `7900a83`.
 
 ### 2.4 Every step of a drag is a correction
 
@@ -151,6 +163,8 @@ A drag that passes through an overdue level rings the alarm mid-drag.
 
 **Fix.** Commit on release, or after §5's 1.5-s settle for a tap. Show the
 aimed-for egg while the finger is down, and decide overdue only on commit.
+
+Actioned: as written, in `design/one-screen.md` §4 ("When an edit is committed") and step 7; nothing in core, `87d71e3`.
 
 ### 2.5 Each tab keeping its own cook (§7, 23)
 
@@ -171,6 +185,8 @@ aimed-for egg while the finger is down, and decide overdue only on commit.
   corrections. `logEgg` keeps the first record per id, which may be the
   uncorrected one.
 
+Actioned: step 7's take-up text deleted; §4 says a running cook's controls read `cook.choices` and a settings event mid-cook touches only units, language and mute; and `logEgg` should keep the last-corrected record for an id (the web's step 7), `87d71e3`.
+
 ### 2.6 The 0.4 cook at the upgrade
 
 - **Nothing reads the old key.** With the key bumped, the web reads only
@@ -188,6 +204,8 @@ aimed-for egg while the finger is down, and decide overdue only on commit.
   current key. The 0.4 path that logs a finished, unanswered egg
   (`cook.ts:231`) is lost as well, which costs at most one egg.
 
+Actioned: both, in `design/one-screen.md` §4 ("What is stored") and steps 5 and 8: each app reads the 0.4 key once, keeps it aside and deletes it; iOS keeps that cook's notifications still ahead of now and cancels only for a damaged cook under the current key, `87d71e3`.
+
 ## 3. Minor
 
 - **A surface landing can move a pull that has rung.** Across pots, the
@@ -203,6 +221,8 @@ aimed-for egg while the finger is down, and decide overdue only on commit.
   The start's panel has to say why.
 - **Stale wording.** The comment on `cookTime_s` (`running.ts:393`) still
   says "never before now"; the rule as built is the last correction or tap.
+
+Actioned: all three. A pull that has rung is written (`rangAt_s`) and held by a plan the cook did not cause, so a surface landing in the grace keeps it (`test/running.test.ts` 17), and the comment on `cookTime_s` says the last correction or tap, `7900a83`; the start's lower bound is two hours (`LIMITS.timeToBoil_s.hi`) before Start was pressed, so the 1970 call is refused, and `latestStart_s` and `design/one-screen.md` §3 say why the panel stops at an unread tap (test 22), `c10dbe2`.
 
 ## 4. What holds
 
@@ -220,6 +240,8 @@ aimed-for egg while the finger is down, and decide overdue only on commit.
 On the aimed-for egg (at the yolk's peak, or at the end of the cooling),
 nothing here bears on the choice, except that after the pull the aimed-for
 egg cannot show anything new (2.3).
+
+Actioned: these still hold (`test/running.test.ts` 7 to 11 unchanged but for the new fields). The aimed-for egg is now the egg at the end of the cooling (`DECISIONS.md` 98): `previewSection` carries it through the whole carryover, and a jammy (0.41) yolk reads 0.41 (0.412 for the 68 g egg here) where it read 0.34 at the peak, `0de8ba6`.
 
 ---
 

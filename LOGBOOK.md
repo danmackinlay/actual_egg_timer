@@ -4953,3 +4953,48 @@ the app, an ulp in the mass is a different decision surface's key.
 `Section`; `npm test` gains `test/running.test.ts` (14) and one in
 `section.test.ts`. `npm run fixtures` takes about 25 s longer, for the
 plans' coarse surfaces.
+
+## 7 October 2026: the red-team review applied to the running cook (SHIP-0.5 C2)
+
+`design/one-screen-review.md`, as `DECISIONS.md` 98 settled it, in core and
+design only: no screen, storage key or app behaviour changed. Five commits
+(`7900a83`, `feff7de`, `c10dbe2`, `0de8ba6`, `87d71e3`); each review
+heading now ends with what was done. Each finding has a test in
+`test/running.test.ts` (15 to 22) that runs the review's appendix call and
+asserts the corrected result, and cases in `fixtures/running.json` (now 28
+setups, 34 moves, 70 reads, 57 plans, 14 boils remembered) hold Swift to
+it.
+
+- **The pull.** A pull the clock assumed is written unconfirmed; a
+  correction since it that would pull later asks (`askIfStillIn`), and
+  `stillIn` or `pullStands` answers. The owner's case 30 s after the alarm
+  now asks instead of landing in Cooling. After the pull the level is
+  kept, and a cooling corrected past its counted end is Done at once (the
+  counter corrected to ice ten minutes on records 209 s, not 600). A pull
+  that has rung is written (`rangAt_s`) and held, so a surface landing in
+  the grace no longer moves it.
+- **The boil tap.** A tap after a correction to cold made later than the
+  remembered time to boil runs on the remembered time: boiling corrected
+  to cold at 500 s, tapped at 540, 600 or 640 s, pulls at 676 s each time,
+  where it pulled at 707, 738 and 760 s. A tap before a stray cold → hot
+  → cold is remembered (`firstHotAt_s`).
+- **Age.** The slow hob stops at 7,200 s; the 12-hour cook plans a 7,200 s
+  guess with nothing to lengthen, where it planned a 43,252 s one every
+  10 s. `tooOldAt_s` and `cookTooOld` are the one rule for too old (two
+  hours heating, or an hour past the end), `openEggId` the egg still open,
+  `earliestStart_s` the start's lower bound (two hours before the press;
+  1970 is refused).
+- **The aimed-for egg** is the egg at the end of the cooling, through the
+  whole carryover: a jammy (0.41) yolk reads 0.41 (0.412 for the tests'
+  68 g egg), where it read 0.34 at the peak; fudgy 0.62 reads 0.62.
+
+**Left as it is.** A cook that runs on the remembered time after a late
+tap (1.2) records `timeToBoilFrom: 'measured'`, since `recordFor` names
+every cold start so; the format allows `remembered`, but changing what
+`recordFor` writes is a record change, not this item's. In the slow hob's
+creeping regime the plan's pull can sit behind the clock while heating, as
+the tick's did; the cap ends it at two hours, and §4 says not to show a
+time left from it.
+
+`npm test` 379 (was 371), `swift test` 151 tests in 38 suites (the
+conformance suites check the new fields; no new suites).

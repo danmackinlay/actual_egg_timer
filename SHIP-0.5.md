@@ -179,9 +179,24 @@ core's exports.
       no surface, the pull held at the last correction or tap
       (`correctedAt_s`) rather than at now, `coldSince_s` for the boil
       memory, no `cooledAt` on the counter.
+- [x] **C2, the review applied** (`design/one-screen-review.md`,
+      `DECISIONS.md` 98), core and design only, no screen or storage key
+      changed: a timeout pull asks whether the egg is still in the water
+      (`askIfStillIn`, `stillIn`, `pullStands`); a late boil tap after a
+      late correction to cold runs on the remembered time; the slow hob
+      stops at two hours and one rule says when a cook is too old
+      (`tooOldAt_s`, `cookTooOld`), with the open egg (`openEggId`); a tap
+      before a stray cold → hot → cold is remembered (`firstHotAt_s`);
+      after the pull the level is kept and a cooling past its end is Done;
+      a pull that rang is held (`rangAt_s`); the start's lower bound
+      (`earliestStart_s`); the aimed-for egg at the end of the cooling;
+      §4's design findings (2.4-2.6). `7900a83`, `feff7de`, `c10dbe2`,
+      `0de8ba6`, `87d71e3`; each review heading says what was done.
 - [ ] **C2, the apps on it**: each app on `running.ts`, state first with
       no visible change: `aet.cook.v3` and `cookInProgress.v2`, a 0.4 cook
-      kept aside (`DECISIONS.md` 81).
+      read once from the old key, kept aside and the key deleted, its iOS
+      notifications kept (`DECISIONS.md` 81, review 2.6); a stored cook
+      dropped by `cookTooOld`, and sharing holding back only `openEggId`.
 - [ ] **C3. Both apps**, screen by screen, checked by driving them;
       `UI.md` rewritten as built.
 
