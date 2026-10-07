@@ -15,7 +15,8 @@
  *
  *   fixtures/core.json         pure functions: the sphere, geometry, boiling
  *   fixtures/scenarios.json    whole cooks, solved end to end
- *   fixtures/section.json      the egg in cross-section, a tick at a time
+ *   fixtures/section.json      the egg in cross-section, a tick at a time, and
+ *                              the egg the settings aim for
  *   fixtures/policy.json       the decisions above the physics - snapping, the
  *                              refusal verdict, texture bands, the calibration
  *                              grid's geometry, the bounds and defaults, both
@@ -46,6 +47,8 @@
  *                              and every move from every reachable state
  *   fixtures/prior.json        a prior drawn from a population (E7), and the
  *                              population files a reader refuses
+ *   fixtures/running.json      a running cook: its egg and pot, its moves, and
+ *                              a stored one read back
  *
  * fixtures/population.json is NOT written here: it is the fit's output, the
  * population both apps draw from (tools/population.ts, fit/). prior.json
@@ -75,6 +78,7 @@ import { languageFixture } from './fixtures/language.js';
 import { shareFixture } from './fixtures/share.js';
 import { wordingFixture } from './fixtures/wording.js';
 import { priorFixture } from './fixtures/population.js';
+import { runningFixture } from './fixtures/running.js';
 
 const unitsJson = unitsFixture(english);
 const probeJson = probeFixture();
@@ -103,6 +107,7 @@ const written: Record<string, unknown> = {
   language: languageJson,
   share: shareJson,
   wording: wordingFixture(),
+  running: runningFixture,
 };
 /**
  * A particle set that repeats one earlier in the same file - an update that
@@ -183,5 +188,6 @@ const counts = [
   `${(probeJson['solved'] as unknown[]).length} probe cooks`,
   `${(languageJson['transitions'] as unknown[]).length} language moves`,
   `${shareJson.transitions.length} sharing moves`,
+  `${runningFixture.setups.length} cook setups, ${runningFixture.moves.length} cook moves and ${runningFixture.reads.length} stored cooks`,
 ];
 console.log(`fixtures/*.json written: ${counts.join(', ')}`);

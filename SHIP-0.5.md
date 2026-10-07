@@ -155,7 +155,7 @@ core's exports.
       §4 is the state model that follows. `DECISIONS.md` 97 answered the
       rest of its §7: every recommendation, but each tab runs the cook it
       started, as today (23).
-- [ ] **C2. Core for it** (`design/one-screen.md` §4): a cook is its start,
+- [x] **C2. Core for it** (`design/one-screen.md` §4): a cook is its start,
       its setup and its observed events, and everything else is derived.
       In `src/core/running.ts` and its Swift twin, fixtured: the types
       (`CookChoices`, `CookEvents`, `RunningCook`, `CookPlan`);
@@ -166,9 +166,22 @@ core's exports.
       on the pot's surface, the pull clamped to now, the cooling, the
       deadlines for `phaseAt`, the certainty and forecast); `eventsDue`;
       `cookFactsFor` and `boilToRemember`; `readRunningCook`; and
-      `previewSection` in `section.ts`. Then each app on it, state first
-      with no visible change: `aet.cook.v3` and `cookInProgress.v2`, a 0.4
-      cook kept aside (`DECISIONS.md` 81).
+      `previewSection` in `section.ts`.
+      *Done*, core only, no screen changed: `8eb9b3c`, `3618071`,
+      `a05f5fd`, `1c2a557`. `fixtures/running.json` (28 setups, 20 moves,
+      59 stored cooks, 41 plans with their records, 11 boils remembered)
+      and five previews in `section.json`, held in Swift at 1e-12.
+      `cookSetupOf` checked against both apps' assembly over 20000 settings
+      each; `replan` with nothing corrected against the web's machine and
+      ticket over 300 simulated cooks (`LOGBOOK.md`, 7 October 2026). Where
+      the code asked for more than §4 said, it is written there ("As built
+      (C2)"): the surface passed with its inputs, a lengthened guess asking
+      no surface, the pull held at the last correction or tap
+      (`correctedAt_s`) rather than at now, `coldSince_s` for the boil
+      memory, no `cooledAt` on the counter.
+- [ ] **C2, the apps on it**: each app on `running.ts`, state first with
+      no visible change: `aet.cook.v3` and `cookInProgress.v2`, a 0.4 cook
+      kept aside (`DECISIONS.md` 81).
 - [ ] **C3. Both apps**, screen by screen, checked by driving them;
       `UI.md` rewritten as built.
 

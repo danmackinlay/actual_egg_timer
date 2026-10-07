@@ -172,3 +172,21 @@ export function sectionView(s: EggSection, whiteTarget_min: number): SectionView
   }
   return { x: s.x, yolk: s.yolk, outer: s.outer, temperature_C: temperature, set: set };
 }
+
+/**
+ * The egg the settings aim for (design/one-screen.md section 5; DECISIONS.md
+ * 97): one egg, at the posterior mean (`params`), cooked for `cookTime_s` and
+ * shown at the yolk centre's peak, `peakYolkTime_s` (the solve's), which is
+ * Done. A set layer never unsets, so that is the egg as eaten, and a cook on
+ * time watches the live egg grow into it. Where the centre peaked while the
+ * egg was still in the water - a heat-off pan that ran out - it is the egg as
+ * it came out. About 1,600 steps: once per solve, not per frame.
+ */
+export function previewSection(
+  egg: Egg, setup: CookSetup, params: ModelParams, cookTime_s: number, peakYolkTime_s: number,
+  whiteTarget_min: number,
+): SectionView {
+  const s = createSection(egg, setup, params);
+  advanceSection(s, egg, setup, params, peakYolkTime_s > cookTime_s ? peakYolkTime_s : cookTime_s, cookTime_s);
+  return sectionView(s, whiteTarget_min);
+}

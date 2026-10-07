@@ -232,8 +232,8 @@ export interface Pulled { due_s: number; out_s: number; by: PulledBy; }
 export interface CookEvents {
   boilAt_s: number | null;      // Full rolling boil
   pulled: Pulled | null;
-  cooledAt_s: number | null;    // the counted cooling ended (or, on the
-                                // counter, the pull's out)
+  cooledAt_s: number | null;    // the counted cooling ended; never written
+                                // on the counter (C2: see below)
 }
 
 export interface RunningCook {
@@ -252,6 +252,12 @@ export interface RunningCook {
   units: Units;
   lang: string;
   boilRemembered: boolean;
+  /** Since when the choices have said a cold start: the start, or the
+   *  moment of a correction to cold; null while they say boiling (C2). */
+  coldSince_s: number | null;
+  /** When the choices or the start were last corrected; null until they
+   *  are. The plan never puts the pull before it (C2). */
+  correctedAt_s: number | null;
 }
 
 /** Everything derived. Never stored as truth. */
@@ -259,14 +265,21 @@ export interface CookPlan {
   egg: Egg;
   setup: CookSetup;              // with the ramp in force
   provisional: boolean;          // the ramp is a guess
+  lengthened: boolean;           // the guess, lengthened by the slow hob (C2)
+  inputs: DecisionInputs | null; // the surface this plan wants (C2)
+  answer: LevelAnswer;           // the mean solve, its verdict (C2)
   level: number;                 // after a snap out of the stripes
-  solution: Solution;
+  solution: Solution;            // read at cookTime_s
   decided: DecidedAnswer | null; // null until this pot's surface is in
+  lean_s: number;                // the lean and nudge in the time (C2)
+  nudge_s: number;
   cookTime_s: number;            // pulled.due if pulled; else the plan's,
-                                 // never before now
+                                 // never before the last correction or tap
+  overdue: boolean;              // it was, so the pull is then (C2)
   cool_s: number;                // cooledAt - out once cooled
   probeMoment: boolean;
   deadlines: Deadlines;          // for phaseAt, unchanged
+  slowHobAt_s: number | null;    // when to plan again while heating (C2)
   certainty: CertaintyReading | null;
   forecast: Forecast | null;
 }
@@ -286,23 +299,91 @@ The functions, all pure and fixtured:
   today's interim. After that come the pull (the event, or the plan's time
   clamped to now), the cooling (`coolingSecondsFor`, `probeMomentFor`),
   `Deadlines`, and `certaintyAt` and `forecastOf` at the cook time.
+
+  *As built (C2)*, where the code asked for more than the paragraph above:
+  - **The surface comes with its inputs**: `replan(cook, c, surface,
+    leanHint_s, now_s)`, `surface` a `CookSurface` (`inputs`, `grid`,
+    `profile`) or null. Core reads it only when its inputs are this pot's
+    (`sameDecisionInputs`), and the plan's `inputs` say which surface it
+    wants, so the app asks for that one and plans again when it lands. An
+    app cannot know the pot before planning, since the slow hob's ramp is
+    found by solving.
+  - **The slow hob's rule** is today's tick made a function of the time
+    heated: whenever the carried time would pull within 45 s, and 10 s after
+    the last lengthening (the start counting as one), the guess becomes the
+    time heated plus 60 s. `slowHobAt_s` says when it next fires, and the app
+    plans again then. Where it would fire again at once (the egg is done
+    before the water boils), the guess creeps in 10-s steps without a solve
+    per step; at most 100 lengthenings a plan. A lengthened guess moves with
+    the clock, so its pot asks for no surface (`inputs` null) and its time is
+    the carried one: building a surface a few minutes for a guess, which
+    would then move the hint and the guess with it, buys nothing.
+  - **The pull is never before the last thing the cook told the plan**, the
+    last correction (`correctedAt_s`, a new field) or the boil tap, rather
+    than never before `now_s`: a plan made again in the grace (a reload, a
+    surface landing) must ring for the same pull, and one made after an
+    ordinary pull's grace ran out (a phone asleep) must find it where it
+    was. The cooling's end is held the same way. A tap that comes after the
+    plan's pull pulls the egg at the tap, with its grace; today's machine
+    dated that pull in the past and went straight through to Done.
+  - **The level snaps** out of the stripes, as at setup (`answerAt` with the
+    retry), where today's mid-cook re-solve kept the target frozen and
+    answered an unreachable one with the shortest cook that sets the white,
+    carrying no lean. With the slider on screen mid-cook, the plan is the
+    one setup would make for this pot.
+  - **How sure, and the forecast**, are read at the cook time on this pot's
+    surface, and null until it is in. After the boil tap that is the measured
+    pot's, so the record's forecast is the one for the cook that ran
+    (DECISIONS.md 97, 8), not the one at the start as today.
 - `eventsDue(cook, plan, now_s): CookEvents`: the events the clock alone
   decides, namely the grace run out (`pulled`, by `timeout`) and the cooling
   ended. The app writes them down the first time it sees them past. A
   phone asleep through the pull writes them on waking, from the same plan
   that rang.
-- `startCook`, `withBoil`, `withOut`, `corrected(cook, choices)`,
-  `startCorrected(cook, startedAt_s)`: the transitions. The last refuses
-  a start after now or after the first event.
+- `startCook`, `withBoil`, `withOut`, `corrected(cook, choices, now_s)`,
+  `startCorrected(cook, startedAt_s, now_s)`: the transitions. The last
+  refuses a start after now or after the first event (`latestStart_s`, the
+  limit the start's panel shows), an unread one included: changing back
+  would read it.
+
+  *As built (C2).* A correction takes the time it was made, for one thing
+  only: `coldSince_s`, since when the choices have said cold, which is how
+  `boilToRemember` tells a tap the cook was watching for from one after a
+  boiling-to-cold correction made too late (DECISIONS.md 97). On the
+  counter nothing is counted, so `cooledAt_s` is never written there:
+  `phaseAt` already reads the pull's end as Done, and a cooling corrected
+  from the counter to ice after the pull then counts from the out, rather
+  than reading the out as a cooling of no length.
 - `cookFactsFor(cook, plan, …): CookFacts`, for `recordFor`, with the
   level, setup and cook time as last corrected.
 - `boilToRemember(cook): { litres, seconds } | null`: written to the boil
   memory when the cook ends, not at the tap, so it is the cook as last
   corrected (§7, 9).
+
+  *As built (C2).* Both are in `running.ts`, beside the plan they read,
+  rather than in `record.ts`, which `running.ts` imports. `cookFactsFor`
+  takes a `RecordContext` (app, build, prior, the local day of the start as
+  corrected, and the id: `id_ms` on the web, none on iOS) and the answers.
+  `boilToRemember` refuses a tap the cook was told to watch for only after
+  this water's remembered time to boil: corrected from boiling to cold that
+  late (`coldSince_s`), or with the start corrected that much earlier, since
+  the water may have boiled unseen in both. `cookEnding(cook, plan, now_s)`
+  is what Cancel and Start again leave: the boil to remember, and whether the
+  cook was Done, so an egg to log if no answer has logged it.
 - `readRunningCook(raw): RunningCook | null`: the defensive read, whole or
   nothing, as `restoreTicket` is now.
 - `previewSection(egg, setup, params, cookTime_s, whiteTarget_min)` in
   `section.ts` (§5).
+
+  *As built (C2):* `previewSection(egg, setup, params, cookTime_s,
+  peakYolkTime_s, whiteTarget_min)`, the peak's time handed in from the
+  solve the screen already has rather than found by a second simulation.
+  Where the centre peaked while the egg was still in the water (a heat-off
+  pan that ran out), it shows the egg as it came out. It is the live egg's
+  last frame exactly. One thing for the owner to see on a phone: the yolk's
+  dose is not all in at its peak (the slider's level counts the whole
+  carryover), so at the peak a jammy (0.41) yolk reads 0.34 on the slider's
+  scale, and a fudgy (0.62) one about 0.55.
 
 `phaseAt`, `answerAt`, `decideAnswer`, `carriedSolution`, `certaintyAt`,
 `recordFor`, `createSection` and `advanceSection` are used as they are.
@@ -390,7 +471,8 @@ commit each):
    owner's boiling → cold; cold → boiling before the tap and with a tap; an
    earlier start with a tap; overdue; a correction while cooling; one after
    Done; a heat-off pot whose white never sets.
-3. `cookFactsFor` and `boilToRemember` (`record.ts`, `Record.swift`).
+3. `cookFactsFor` and `boilToRemember` (built in `running.ts`,
+   `Running.swift`, beside the plan they read).
 4. `previewSection` (`section.ts`, `Section.swift`).
 
 **The web**, each step driven before the next:

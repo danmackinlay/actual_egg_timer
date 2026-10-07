@@ -134,3 +134,19 @@ public struct SectionView: Sendable {
     public let temperatureC: [Double]
     public let set: [Double]
 }
+
+/// The egg the settings aim for: one egg, at the posterior mean, cooked for
+/// `cookTimeS` and shown at the yolk centre's peak, `peakYolkTimeS`, or as it
+/// came out where the centre peaked in the water. See `previewSection` in
+/// `src/core/section.ts`.
+public func previewSection(
+    egg: Egg, setup: CookSetup, params: ModelParams, cookTimeS: Double, peakYolkTimeS: Double,
+    whiteTargetMin: Double
+) -> SectionView {
+    var s = EggSection(egg: egg, setup: setup, params: params)
+    s.advance(
+        egg: egg, setup: setup, params: params, toS: peakYolkTimeS > cookTimeS ? peakYolkTimeS : cookTimeS,
+        outAtS: cookTimeS
+    )
+    return s.view(whiteTargetMin: whiteTargetMin)
+}
