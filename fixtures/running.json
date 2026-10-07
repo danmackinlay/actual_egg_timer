@@ -1013,7 +1013,8 @@
         "events": {
           "boilAt_s": null,
           "pulled": null,
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -1050,7 +1051,8 @@
         "events": {
           "boilAt_s": 1791364132.5,
           "pulled": null,
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -1087,7 +1089,8 @@
         "events": {
           "boilAt_s": 1791364132.5,
           "pulled": null,
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -1124,7 +1127,8 @@
         "events": {
           "boilAt_s": 1791364132.5,
           "pulled": null,
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -1161,7 +1165,8 @@
         "events": {
           "boilAt_s": null,
           "pulled": null,
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": -7,
         "boilMemory": {
@@ -1198,7 +1203,8 @@
         "events": {
           "boilAt_s": null,
           "pulled": null,
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": -7,
         "boilMemory": {
@@ -1237,9 +1243,11 @@
           "pulled": {
             "due_s": 1791364451.2,
             "out_s": 1791364458.9,
-            "by": "cook"
+            "by": "cook",
+            "confirmed": true
           },
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -1278,9 +1286,11 @@
           "pulled": {
             "due_s": 1791364451.2,
             "out_s": 1791364458.9,
-            "by": "cook"
+            "by": "cook",
+            "confirmed": true
           },
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -1317,7 +1327,8 @@
         "events": {
           "boilAt_s": null,
           "pulled": null,
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -1354,7 +1365,8 @@
         "events": {
           "boilAt_s": null,
           "pulled": null,
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -1391,7 +1403,8 @@
         "events": {
           "boilAt_s": null,
           "pulled": null,
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": -7,
         "boilMemory": {
@@ -1443,7 +1456,8 @@
         "events": {
           "boilAt_s": null,
           "pulled": null,
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": -7,
         "boilMemory": {
@@ -1480,7 +1494,8 @@
         "events": {
           "boilAt_s": 1791364132.5,
           "pulled": null,
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -1532,7 +1547,8 @@
         "events": {
           "boilAt_s": 1791364132.5,
           "pulled": null,
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -1569,7 +1585,8 @@
         "events": {
           "boilAt_s": 1791364132.5,
           "pulled": null,
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -1621,7 +1638,8 @@
         "events": {
           "boilAt_s": 1791364132.5,
           "pulled": null,
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -1658,7 +1676,8 @@
         "events": {
           "boilAt_s": 1791364132.5,
           "pulled": null,
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -1710,7 +1729,8 @@
         "events": {
           "boilAt_s": 1791364132.5,
           "pulled": null,
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -1725,7 +1745,7 @@
       }
     },
     {
-      "note": "a correction after the cooling ended keeps every event",
+      "note": "a correction after the cooling ended keeps every event, and the level the egg was pulled at",
       "cook": {
         "id_ms": 1791363600000,
         "startedAt_s": 1791363600,
@@ -1749,9 +1769,11 @@
           "pulled": {
             "due_s": 1791364451.2,
             "out_s": 1791364458.9,
-            "by": "cook"
+            "by": "cook",
+            "confirmed": true
           },
-          "cooledAt_s": 1791364631.9
+          "cooledAt_s": 1791364631.9,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -1798,16 +1820,18 @@
           "waterLitres": 2,
           "eggCount": 2,
           "altitude_m": 0,
-          "level": 0.62
+          "level": 0.41
         },
         "events": {
           "boilAt_s": 1791364132.5,
           "pulled": {
             "due_s": 1791364451.2,
             "out_s": 1791364458.9,
-            "by": "cook"
+            "by": "cook",
+            "confirmed": true
           },
-          "cooledAt_s": 1791364631.9
+          "cooledAt_s": 1791364631.9,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -1819,6 +1843,767 @@
         "boilRemembered": true,
         "coldSince_s": 1791363600,
         "correctedAt_s": 1791364700
+      }
+    },
+    {
+      "note": "the level, before the pull: corrected",
+      "cook": {
+        "id_ms": 1791363600000,
+        "startedAt_s": 1791363600,
+        "choices": {
+          "mass_kg": 0.068,
+          "massFrom": "class",
+          "sizeTable": "eu",
+          "eggFrom": "fridge",
+          "customStart_C": 12,
+          "room_C": null,
+          "startMode": "cold",
+          "afterBoil": "hold",
+          "cooling": "ice",
+          "waterLitres": 2,
+          "eggCount": 2,
+          "altitude_m": 0,
+          "level": 0.41
+        },
+        "events": {
+          "boilAt_s": 1791364132.5,
+          "pulled": null,
+          "cooledAt_s": null,
+          "rangAt_s": null
+        },
+        "nudge_s": 0,
+        "boilMemory": {
+          "2.0": 480,
+          "3.0": 610
+        },
+        "units": "metric",
+        "lang": "en",
+        "boilRemembered": true,
+        "coldSince_s": 1791363600,
+        "correctedAt_s": null
+      },
+      "move": {
+        "correct": {
+          "mass_kg": 0.068,
+          "massFrom": "class",
+          "sizeTable": "eu",
+          "eggFrom": "fridge",
+          "customStart_C": 12,
+          "room_C": null,
+          "startMode": "cold",
+          "afterBoil": "hold",
+          "cooling": "ice",
+          "waterLitres": 2,
+          "eggCount": 2,
+          "altitude_m": 0,
+          "level": 0.62
+        },
+        "now": 1791364200
+      },
+      "after": {
+        "id_ms": 1791363600000,
+        "startedAt_s": 1791363600,
+        "choices": {
+          "mass_kg": 0.068,
+          "massFrom": "class",
+          "sizeTable": "eu",
+          "eggFrom": "fridge",
+          "customStart_C": 12,
+          "room_C": null,
+          "startMode": "cold",
+          "afterBoil": "hold",
+          "cooling": "ice",
+          "waterLitres": 2,
+          "eggCount": 2,
+          "altitude_m": 0,
+          "level": 0.62
+        },
+        "events": {
+          "boilAt_s": 1791364132.5,
+          "pulled": null,
+          "cooledAt_s": null,
+          "rangAt_s": null
+        },
+        "nudge_s": 0,
+        "boilMemory": {
+          "2.0": 480,
+          "3.0": 610
+        },
+        "units": "metric",
+        "lang": "en",
+        "boilRemembered": true,
+        "coldSince_s": 1791363600,
+        "correctedAt_s": 1791364200
+      }
+    },
+    {
+      "note": "a correction after the pull rang: planned afresh",
+      "cook": {
+        "id_ms": 1791363600000,
+        "startedAt_s": 1791363600,
+        "choices": {
+          "mass_kg": 0.068,
+          "massFrom": "class",
+          "sizeTable": "eu",
+          "eggFrom": "fridge",
+          "customStart_C": 12,
+          "room_C": null,
+          "startMode": "hot",
+          "afterBoil": "hold",
+          "cooling": "ice",
+          "waterLitres": 2,
+          "eggCount": 2,
+          "altitude_m": 0,
+          "level": 0.41
+        },
+        "events": {
+          "boilAt_s": null,
+          "pulled": null,
+          "cooledAt_s": null,
+          "rangAt_s": 1791363980
+        },
+        "nudge_s": -7,
+        "boilMemory": {
+          "2.0": 480,
+          "3.0": 610
+        },
+        "units": "metric",
+        "lang": "en",
+        "boilRemembered": true,
+        "coldSince_s": null,
+        "correctedAt_s": null
+      },
+      "move": {
+        "correct": {
+          "mass_kg": 0.076,
+          "massFrom": "class",
+          "sizeTable": "eu",
+          "eggFrom": "fridge",
+          "customStart_C": 12,
+          "room_C": null,
+          "startMode": "hot",
+          "afterBoil": "hold",
+          "cooling": "ice",
+          "waterLitres": 2,
+          "eggCount": 2,
+          "altitude_m": 0,
+          "level": 0.41
+        },
+        "now": 1791363985
+      },
+      "after": {
+        "id_ms": 1791363600000,
+        "startedAt_s": 1791363600,
+        "choices": {
+          "mass_kg": 0.076,
+          "massFrom": "class",
+          "sizeTable": "eu",
+          "eggFrom": "fridge",
+          "customStart_C": 12,
+          "room_C": null,
+          "startMode": "hot",
+          "afterBoil": "hold",
+          "cooling": "ice",
+          "waterLitres": 2,
+          "eggCount": 2,
+          "altitude_m": 0,
+          "level": 0.41
+        },
+        "events": {
+          "boilAt_s": null,
+          "pulled": null,
+          "cooledAt_s": null,
+          "rangAt_s": null
+        },
+        "nudge_s": -7,
+        "boilMemory": {
+          "2.0": 480,
+          "3.0": 610
+        },
+        "units": "metric",
+        "lang": "en",
+        "boilRemembered": true,
+        "coldSince_s": null,
+        "correctedAt_s": 1791363985
+      }
+    },
+    {
+      "note": "the start corrected after the pull rang: planned afresh",
+      "cook": {
+        "id_ms": 1791363600000,
+        "startedAt_s": 1791363600,
+        "choices": {
+          "mass_kg": 0.068,
+          "massFrom": "class",
+          "sizeTable": "eu",
+          "eggFrom": "fridge",
+          "customStart_C": 12,
+          "room_C": null,
+          "startMode": "hot",
+          "afterBoil": "hold",
+          "cooling": "ice",
+          "waterLitres": 2,
+          "eggCount": 2,
+          "altitude_m": 0,
+          "level": 0.41
+        },
+        "events": {
+          "boilAt_s": null,
+          "pulled": null,
+          "cooledAt_s": null,
+          "rangAt_s": 1791363980
+        },
+        "nudge_s": -7,
+        "boilMemory": {
+          "2.0": 480,
+          "3.0": 610
+        },
+        "units": "metric",
+        "lang": "en",
+        "boilRemembered": true,
+        "coldSince_s": null,
+        "correctedAt_s": null
+      },
+      "move": {
+        "start": 1791363540,
+        "now": 1791363985
+      },
+      "latest_s": 1791363985,
+      "after": {
+        "id_ms": 1791363600000,
+        "startedAt_s": 1791363540,
+        "choices": {
+          "mass_kg": 0.068,
+          "massFrom": "class",
+          "sizeTable": "eu",
+          "eggFrom": "fridge",
+          "customStart_C": 12,
+          "room_C": null,
+          "startMode": "hot",
+          "afterBoil": "hold",
+          "cooling": "ice",
+          "waterLitres": 2,
+          "eggCount": 2,
+          "altitude_m": 0,
+          "level": 0.41
+        },
+        "events": {
+          "boilAt_s": null,
+          "pulled": null,
+          "cooledAt_s": null,
+          "rangAt_s": null
+        },
+        "nudge_s": -7,
+        "boilMemory": {
+          "2.0": 480,
+          "3.0": 610
+        },
+        "units": "metric",
+        "lang": "en",
+        "boilRemembered": true,
+        "coldSince_s": null,
+        "correctedAt_s": 1791363985
+      }
+    },
+    {
+      "note": "still in the water: the pull the clock assumed dropped, with its cooling",
+      "cook": {
+        "id_ms": 1791363600000,
+        "startedAt_s": 1791363600,
+        "choices": {
+          "mass_kg": 0.068,
+          "massFrom": "class",
+          "sizeTable": "eu",
+          "eggFrom": "fridge",
+          "customStart_C": 12,
+          "room_C": null,
+          "startMode": "cold",
+          "afterBoil": "hold",
+          "cooling": "ice",
+          "waterLitres": 2,
+          "eggCount": 2,
+          "altitude_m": 0,
+          "level": 0.41
+        },
+        "events": {
+          "boilAt_s": null,
+          "pulled": {
+            "due_s": 1791363980,
+            "out_s": 1791364000,
+            "by": "timeout",
+            "confirmed": false
+          },
+          "cooledAt_s": 1791364190,
+          "rangAt_s": null
+        },
+        "nudge_s": -7,
+        "boilMemory": {
+          "2.0": 480,
+          "3.0": 610
+        },
+        "units": "metric",
+        "lang": "en",
+        "boilRemembered": true,
+        "coldSince_s": 1791364300,
+        "correctedAt_s": 1791364300
+      },
+      "move": {
+        "stillIn": 1791364303
+      },
+      "after": {
+        "id_ms": 1791363600000,
+        "startedAt_s": 1791363600,
+        "choices": {
+          "mass_kg": 0.068,
+          "massFrom": "class",
+          "sizeTable": "eu",
+          "eggFrom": "fridge",
+          "customStart_C": 12,
+          "room_C": null,
+          "startMode": "cold",
+          "afterBoil": "hold",
+          "cooling": "ice",
+          "waterLitres": 2,
+          "eggCount": 2,
+          "altitude_m": 0,
+          "level": 0.41
+        },
+        "events": {
+          "boilAt_s": null,
+          "pulled": null,
+          "cooledAt_s": null,
+          "rangAt_s": null
+        },
+        "nudge_s": -7,
+        "boilMemory": {
+          "2.0": 480,
+          "3.0": 610
+        },
+        "units": "metric",
+        "lang": "en",
+        "boilRemembered": true,
+        "coldSince_s": 1791364300,
+        "correctedAt_s": 1791364303
+      }
+    },
+    {
+      "note": "still in, after the cook tapped out: kept",
+      "cook": {
+        "id_ms": 1791363600000,
+        "startedAt_s": 1791363600,
+        "choices": {
+          "mass_kg": 0.068,
+          "massFrom": "class",
+          "sizeTable": "eu",
+          "eggFrom": "fridge",
+          "customStart_C": 12,
+          "room_C": null,
+          "startMode": "cold",
+          "afterBoil": "hold",
+          "cooling": "ice",
+          "waterLitres": 2,
+          "eggCount": 2,
+          "altitude_m": 0,
+          "level": 0.41
+        },
+        "events": {
+          "boilAt_s": 1791364132.5,
+          "pulled": {
+            "due_s": 1791364451.2,
+            "out_s": 1791364458.9,
+            "by": "cook",
+            "confirmed": true
+          },
+          "cooledAt_s": 1791364631.9,
+          "rangAt_s": null
+        },
+        "nudge_s": 0,
+        "boilMemory": {
+          "2.0": 480,
+          "3.0": 610
+        },
+        "units": "metric",
+        "lang": "en",
+        "boilRemembered": true,
+        "coldSince_s": 1791363600,
+        "correctedAt_s": null
+      },
+      "move": {
+        "stillIn": 1791364700
+      },
+      "after": {
+        "id_ms": 1791363600000,
+        "startedAt_s": 1791363600,
+        "choices": {
+          "mass_kg": 0.068,
+          "massFrom": "class",
+          "sizeTable": "eu",
+          "eggFrom": "fridge",
+          "customStart_C": 12,
+          "room_C": null,
+          "startMode": "cold",
+          "afterBoil": "hold",
+          "cooling": "ice",
+          "waterLitres": 2,
+          "eggCount": 2,
+          "altitude_m": 0,
+          "level": 0.41
+        },
+        "events": {
+          "boilAt_s": 1791364132.5,
+          "pulled": {
+            "due_s": 1791364451.2,
+            "out_s": 1791364458.9,
+            "by": "cook",
+            "confirmed": true
+          },
+          "cooledAt_s": 1791364631.9,
+          "rangAt_s": null
+        },
+        "nudge_s": 0,
+        "boilMemory": {
+          "2.0": 480,
+          "3.0": 610
+        },
+        "units": "metric",
+        "lang": "en",
+        "boilRemembered": true,
+        "coldSince_s": 1791363600,
+        "correctedAt_s": null
+      }
+    },
+    {
+      "note": "still in, nothing pulled: kept",
+      "cook": {
+        "id_ms": 1791363600000,
+        "startedAt_s": 1791363600,
+        "choices": {
+          "mass_kg": 0.068,
+          "massFrom": "class",
+          "sizeTable": "eu",
+          "eggFrom": "fridge",
+          "customStart_C": 12,
+          "room_C": null,
+          "startMode": "cold",
+          "afterBoil": "hold",
+          "cooling": "ice",
+          "waterLitres": 2,
+          "eggCount": 2,
+          "altitude_m": 0,
+          "level": 0.41
+        },
+        "events": {
+          "boilAt_s": 1791364132.5,
+          "pulled": null,
+          "cooledAt_s": null,
+          "rangAt_s": null
+        },
+        "nudge_s": 0,
+        "boilMemory": {
+          "2.0": 480,
+          "3.0": 610
+        },
+        "units": "metric",
+        "lang": "en",
+        "boilRemembered": true,
+        "coldSince_s": 1791363600,
+        "correctedAt_s": null
+      },
+      "move": {
+        "stillIn": 1791364200
+      },
+      "after": {
+        "id_ms": 1791363600000,
+        "startedAt_s": 1791363600,
+        "choices": {
+          "mass_kg": 0.068,
+          "massFrom": "class",
+          "sizeTable": "eu",
+          "eggFrom": "fridge",
+          "customStart_C": 12,
+          "room_C": null,
+          "startMode": "cold",
+          "afterBoil": "hold",
+          "cooling": "ice",
+          "waterLitres": 2,
+          "eggCount": 2,
+          "altitude_m": 0,
+          "level": 0.41
+        },
+        "events": {
+          "boilAt_s": 1791364132.5,
+          "pulled": null,
+          "cooledAt_s": null,
+          "rangAt_s": null
+        },
+        "nudge_s": 0,
+        "boilMemory": {
+          "2.0": 480,
+          "3.0": 610
+        },
+        "units": "metric",
+        "lang": "en",
+        "boilRemembered": true,
+        "coldSince_s": 1791363600,
+        "correctedAt_s": null
+      }
+    },
+    {
+      "note": "the pull the clock assumed stands",
+      "cook": {
+        "id_ms": 1791363600000,
+        "startedAt_s": 1791363600,
+        "choices": {
+          "mass_kg": 0.068,
+          "massFrom": "class",
+          "sizeTable": "eu",
+          "eggFrom": "fridge",
+          "customStart_C": 12,
+          "room_C": null,
+          "startMode": "hot",
+          "afterBoil": "hold",
+          "cooling": "ice",
+          "waterLitres": 2,
+          "eggCount": 2,
+          "altitude_m": 0,
+          "level": 0.41
+        },
+        "events": {
+          "boilAt_s": null,
+          "pulled": {
+            "due_s": 1791363980,
+            "out_s": 1791364000,
+            "by": "timeout",
+            "confirmed": false
+          },
+          "cooledAt_s": 1791364190,
+          "rangAt_s": 1791363980
+        },
+        "nudge_s": -7,
+        "boilMemory": {
+          "2.0": 480,
+          "3.0": 610
+        },
+        "units": "metric",
+        "lang": "en",
+        "boilRemembered": true,
+        "coldSince_s": null,
+        "correctedAt_s": null
+      },
+      "move": {
+        "stands": true
+      },
+      "after": {
+        "id_ms": 1791363600000,
+        "startedAt_s": 1791363600,
+        "choices": {
+          "mass_kg": 0.068,
+          "massFrom": "class",
+          "sizeTable": "eu",
+          "eggFrom": "fridge",
+          "customStart_C": 12,
+          "room_C": null,
+          "startMode": "hot",
+          "afterBoil": "hold",
+          "cooling": "ice",
+          "waterLitres": 2,
+          "eggCount": 2,
+          "altitude_m": 0,
+          "level": 0.41
+        },
+        "events": {
+          "boilAt_s": null,
+          "pulled": {
+            "due_s": 1791363980,
+            "out_s": 1791364000,
+            "by": "timeout",
+            "confirmed": true
+          },
+          "cooledAt_s": 1791364190,
+          "rangAt_s": 1791363980
+        },
+        "nudge_s": -7,
+        "boilMemory": {
+          "2.0": 480,
+          "3.0": 610
+        },
+        "units": "metric",
+        "lang": "en",
+        "boilRemembered": true,
+        "coldSince_s": null,
+        "correctedAt_s": null
+      }
+    },
+    {
+      "note": "still in, after the pull was said to stand: kept",
+      "cook": {
+        "id_ms": 1791363600000,
+        "startedAt_s": 1791363600,
+        "choices": {
+          "mass_kg": 0.068,
+          "massFrom": "class",
+          "sizeTable": "eu",
+          "eggFrom": "fridge",
+          "customStart_C": 12,
+          "room_C": null,
+          "startMode": "hot",
+          "afterBoil": "hold",
+          "cooling": "ice",
+          "waterLitres": 2,
+          "eggCount": 2,
+          "altitude_m": 0,
+          "level": 0.41
+        },
+        "events": {
+          "boilAt_s": null,
+          "pulled": {
+            "due_s": 1791363980,
+            "out_s": 1791364000,
+            "by": "timeout",
+            "confirmed": true
+          },
+          "cooledAt_s": 1791364190,
+          "rangAt_s": 1791363980
+        },
+        "nudge_s": -7,
+        "boilMemory": {
+          "2.0": 480,
+          "3.0": 610
+        },
+        "units": "metric",
+        "lang": "en",
+        "boilRemembered": true,
+        "coldSince_s": null,
+        "correctedAt_s": null
+      },
+      "move": {
+        "stillIn": 1791364300
+      },
+      "after": {
+        "id_ms": 1791363600000,
+        "startedAt_s": 1791363600,
+        "choices": {
+          "mass_kg": 0.068,
+          "massFrom": "class",
+          "sizeTable": "eu",
+          "eggFrom": "fridge",
+          "customStart_C": 12,
+          "room_C": null,
+          "startMode": "hot",
+          "afterBoil": "hold",
+          "cooling": "ice",
+          "waterLitres": 2,
+          "eggCount": 2,
+          "altitude_m": 0,
+          "level": 0.41
+        },
+        "events": {
+          "boilAt_s": null,
+          "pulled": {
+            "due_s": 1791363980,
+            "out_s": 1791364000,
+            "by": "timeout",
+            "confirmed": true
+          },
+          "cooledAt_s": 1791364190,
+          "rangAt_s": 1791363980
+        },
+        "nudge_s": -7,
+        "boilMemory": {
+          "2.0": 480,
+          "3.0": 610
+        },
+        "units": "metric",
+        "lang": "en",
+        "boilRemembered": true,
+        "coldSince_s": null,
+        "correctedAt_s": null
+      }
+    },
+    {
+      "note": "the pull stands, the cook tapped out: kept",
+      "cook": {
+        "id_ms": 1791363600000,
+        "startedAt_s": 1791363600,
+        "choices": {
+          "mass_kg": 0.068,
+          "massFrom": "class",
+          "sizeTable": "eu",
+          "eggFrom": "fridge",
+          "customStart_C": 12,
+          "room_C": null,
+          "startMode": "cold",
+          "afterBoil": "hold",
+          "cooling": "ice",
+          "waterLitres": 2,
+          "eggCount": 2,
+          "altitude_m": 0,
+          "level": 0.41
+        },
+        "events": {
+          "boilAt_s": 1791364132.5,
+          "pulled": {
+            "due_s": 1791364451.2,
+            "out_s": 1791364458.9,
+            "by": "cook",
+            "confirmed": true
+          },
+          "cooledAt_s": 1791364631.9,
+          "rangAt_s": null
+        },
+        "nudge_s": 0,
+        "boilMemory": {
+          "2.0": 480,
+          "3.0": 610
+        },
+        "units": "metric",
+        "lang": "en",
+        "boilRemembered": true,
+        "coldSince_s": 1791363600,
+        "correctedAt_s": null
+      },
+      "move": {
+        "stands": true
+      },
+      "after": {
+        "id_ms": 1791363600000,
+        "startedAt_s": 1791363600,
+        "choices": {
+          "mass_kg": 0.068,
+          "massFrom": "class",
+          "sizeTable": "eu",
+          "eggFrom": "fridge",
+          "customStart_C": 12,
+          "room_C": null,
+          "startMode": "cold",
+          "afterBoil": "hold",
+          "cooling": "ice",
+          "waterLitres": 2,
+          "eggCount": 2,
+          "altitude_m": 0,
+          "level": 0.41
+        },
+        "events": {
+          "boilAt_s": 1791364132.5,
+          "pulled": {
+            "due_s": 1791364451.2,
+            "out_s": 1791364458.9,
+            "by": "cook",
+            "confirmed": true
+          },
+          "cooledAt_s": 1791364631.9,
+          "rangAt_s": null
+        },
+        "nudge_s": 0,
+        "boilMemory": {
+          "2.0": 480,
+          "3.0": 610
+        },
+        "units": "metric",
+        "lang": "en",
+        "boilRemembered": true,
+        "coldSince_s": 1791363600,
+        "correctedAt_s": null
       }
     },
     {
@@ -1844,7 +2629,8 @@
         "events": {
           "boilAt_s": null,
           "pulled": null,
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -1883,7 +2669,8 @@
         "events": {
           "boilAt_s": null,
           "pulled": null,
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -1920,7 +2707,8 @@
         "events": {
           "boilAt_s": null,
           "pulled": null,
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -1959,7 +2747,8 @@
         "events": {
           "boilAt_s": null,
           "pulled": null,
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -1996,7 +2785,8 @@
         "events": {
           "boilAt_s": null,
           "pulled": null,
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -2039,7 +2829,8 @@
         "events": {
           "boilAt_s": 1791364132.5,
           "pulled": null,
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -2078,7 +2869,8 @@
         "events": {
           "boilAt_s": 1791364132.5,
           "pulled": null,
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -2115,7 +2907,8 @@
         "events": {
           "boilAt_s": 1791364132.5,
           "pulled": null,
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -2158,7 +2951,8 @@
         "events": {
           "boilAt_s": 1791364132.5,
           "pulled": null,
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -2203,9 +2997,11 @@
           "pulled": {
             "due_s": 1791363980,
             "out_s": 1791364000,
-            "by": "timeout"
+            "by": "timeout",
+            "confirmed": false
           },
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": -7,
         "boilMemory": {
@@ -2250,9 +3046,11 @@
           "pulled": {
             "due_s": 1791364451.2,
             "out_s": 1791364458.9,
-            "by": "cook"
+            "by": "cook",
+            "confirmed": true
           },
-          "cooledAt_s": 1791364631.9
+          "cooledAt_s": 1791364631.9,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -2293,9 +3091,11 @@
           "pulled": {
             "due_s": 1791364451.2,
             "out_s": 1791364458.9,
-            "by": "cook"
+            "by": "cook",
+            "confirmed": true
           },
-          "cooledAt_s": 1791364631.9
+          "cooledAt_s": 1791364631.9,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -2332,7 +3132,8 @@
         "events": {
           "boilAt_s": null,
           "pulled": null,
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -2375,7 +3176,8 @@
         "events": {
           "boilAt_s": null,
           "pulled": null,
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": -7,
         "boilMemory": {
@@ -2412,7 +3214,8 @@
         "events": {
           "boilAt_s": 1791364100,
           "pulled": null,
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": -7,
         "boilMemory": {
@@ -2451,7 +3254,8 @@
         "events": {
           "boilAt_s": null,
           "pulled": null,
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -2485,7 +3289,8 @@
         "events": {
           "boilAt_s": null,
           "pulled": null,
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -2522,7 +3327,8 @@
         "events": {
           "boilAt_s": null,
           "pulled": null,
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": -7,
         "boilMemory": {
@@ -2556,7 +3362,8 @@
         "events": {
           "boilAt_s": null,
           "pulled": null,
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": -7,
         "boilMemory": {
@@ -2593,7 +3400,8 @@
         "events": {
           "boilAt_s": 1791364132.5,
           "pulled": null,
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -2627,7 +3435,8 @@
         "events": {
           "boilAt_s": 1791364132.5,
           "pulled": null,
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -2666,9 +3475,11 @@
           "pulled": {
             "due_s": 1791364451.2,
             "out_s": 1791364458.9,
-            "by": "cook"
+            "by": "cook",
+            "confirmed": true
           },
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -2704,9 +3515,11 @@
           "pulled": {
             "due_s": 1791364451.2,
             "out_s": 1791364458.9,
-            "by": "cook"
+            "by": "cook",
+            "confirmed": true
           },
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -2745,9 +3558,11 @@
           "pulled": {
             "due_s": 1791364451.2,
             "out_s": 1791364458.9,
-            "by": "cook"
+            "by": "cook",
+            "confirmed": true
           },
-          "cooledAt_s": 1791364631.9
+          "cooledAt_s": 1791364631.9,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -2783,9 +3598,11 @@
           "pulled": {
             "due_s": 1791364451.2,
             "out_s": 1791364458.9,
-            "by": "cook"
+            "by": "cook",
+            "confirmed": true
           },
-          "cooledAt_s": 1791364631.9
+          "cooledAt_s": 1791364631.9,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -2824,9 +3641,11 @@
           "pulled": {
             "due_s": 1791363980,
             "out_s": 1791364000,
-            "by": "timeout"
+            "by": "timeout",
+            "confirmed": false
           },
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": -7,
         "boilMemory": {
@@ -2862,9 +3681,11 @@
           "pulled": {
             "due_s": 1791363980,
             "out_s": 1791364000,
-            "by": "timeout"
+            "by": "timeout",
+            "confirmed": false
           },
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": -7,
         "boilMemory": {
@@ -2901,7 +3722,8 @@
         "events": {
           "boilAt_s": null,
           "pulled": null,
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 3,
         "boilMemory": {},
@@ -2932,7 +3754,8 @@
         "events": {
           "boilAt_s": null,
           "pulled": null,
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 3,
         "boilMemory": {},
@@ -2966,7 +3789,8 @@
         "events": {
           "boilAt_s": 1791364132.5,
           "pulled": null,
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -3000,7 +3824,8 @@
         "events": {
           "boilAt_s": 1791364132.5,
           "pulled": null,
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -3037,7 +3862,8 @@
         "events": {
           "boilAt_s": 1791364100,
           "pulled": null,
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": -7,
         "boilMemory": {
@@ -3071,7 +3897,8 @@
         "events": {
           "boilAt_s": 1791364100,
           "pulled": null,
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": -7,
         "boilMemory": {
@@ -3083,6 +3910,245 @@
         "boilRemembered": true,
         "coldSince_s": 1791363700,
         "correctedAt_s": 1791363700
+      }
+    },
+    {
+      "note": "the grace ran out, the pull unconfirmed, the cooling ended",
+      "raw": {
+        "id_ms": 1791363600000,
+        "startedAt_s": 1791363600,
+        "choices": {
+          "mass_kg": 0.068,
+          "massFrom": "class",
+          "sizeTable": "eu",
+          "eggFrom": "fridge",
+          "customStart_C": 12,
+          "room_C": null,
+          "startMode": "hot",
+          "afterBoil": "hold",
+          "cooling": "ice",
+          "waterLitres": 2,
+          "eggCount": 2,
+          "altitude_m": 0,
+          "level": 0.41
+        },
+        "events": {
+          "boilAt_s": null,
+          "pulled": {
+            "due_s": 1791363980,
+            "out_s": 1791364000,
+            "by": "timeout",
+            "confirmed": false
+          },
+          "cooledAt_s": 1791364190,
+          "rangAt_s": 1791363980
+        },
+        "nudge_s": -7,
+        "boilMemory": {
+          "2.0": 480,
+          "3.0": 610
+        },
+        "units": "metric",
+        "lang": "en",
+        "boilRemembered": true,
+        "coldSince_s": null,
+        "correctedAt_s": null
+      },
+      "cook": {
+        "id_ms": 1791363600000,
+        "startedAt_s": 1791363600,
+        "choices": {
+          "mass_kg": 0.068,
+          "massFrom": "class",
+          "sizeTable": "eu",
+          "eggFrom": "fridge",
+          "customStart_C": 12,
+          "room_C": null,
+          "startMode": "hot",
+          "afterBoil": "hold",
+          "cooling": "ice",
+          "waterLitres": 2,
+          "eggCount": 2,
+          "altitude_m": 0,
+          "level": 0.41
+        },
+        "events": {
+          "boilAt_s": null,
+          "pulled": {
+            "due_s": 1791363980,
+            "out_s": 1791364000,
+            "by": "timeout",
+            "confirmed": false
+          },
+          "cooledAt_s": 1791364190,
+          "rangAt_s": 1791363980
+        },
+        "nudge_s": -7,
+        "boilMemory": {
+          "2.0": 480,
+          "3.0": 610
+        },
+        "units": "metric",
+        "lang": "en",
+        "boilRemembered": true,
+        "coldSince_s": null,
+        "correctedAt_s": null
+      }
+    },
+    {
+      "note": "the pull the clock assumed, said to stand",
+      "raw": {
+        "id_ms": 1791363600000,
+        "startedAt_s": 1791363600,
+        "choices": {
+          "mass_kg": 0.068,
+          "massFrom": "class",
+          "sizeTable": "eu",
+          "eggFrom": "fridge",
+          "customStart_C": 12,
+          "room_C": null,
+          "startMode": "hot",
+          "afterBoil": "hold",
+          "cooling": "ice",
+          "waterLitres": 2,
+          "eggCount": 2,
+          "altitude_m": 0,
+          "level": 0.41
+        },
+        "events": {
+          "boilAt_s": null,
+          "pulled": {
+            "due_s": 1791363980,
+            "out_s": 1791364000,
+            "by": "timeout",
+            "confirmed": true
+          },
+          "cooledAt_s": 1791364190,
+          "rangAt_s": 1791363980
+        },
+        "nudge_s": -7,
+        "boilMemory": {
+          "2.0": 480,
+          "3.0": 610
+        },
+        "units": "metric",
+        "lang": "en",
+        "boilRemembered": true,
+        "coldSince_s": null,
+        "correctedAt_s": null
+      },
+      "cook": {
+        "id_ms": 1791363600000,
+        "startedAt_s": 1791363600,
+        "choices": {
+          "mass_kg": 0.068,
+          "massFrom": "class",
+          "sizeTable": "eu",
+          "eggFrom": "fridge",
+          "customStart_C": 12,
+          "room_C": null,
+          "startMode": "hot",
+          "afterBoil": "hold",
+          "cooling": "ice",
+          "waterLitres": 2,
+          "eggCount": 2,
+          "altitude_m": 0,
+          "level": 0.41
+        },
+        "events": {
+          "boilAt_s": null,
+          "pulled": {
+            "due_s": 1791363980,
+            "out_s": 1791364000,
+            "by": "timeout",
+            "confirmed": true
+          },
+          "cooledAt_s": 1791364190,
+          "rangAt_s": 1791363980
+        },
+        "nudge_s": -7,
+        "boilMemory": {
+          "2.0": 480,
+          "3.0": 610
+        },
+        "units": "metric",
+        "lang": "en",
+        "boilRemembered": true,
+        "coldSince_s": null,
+        "correctedAt_s": null
+      }
+    },
+    {
+      "note": "the pull rang, the egg still in",
+      "raw": {
+        "id_ms": 1791363600000,
+        "startedAt_s": 1791363600,
+        "choices": {
+          "mass_kg": 0.068,
+          "massFrom": "class",
+          "sizeTable": "eu",
+          "eggFrom": "fridge",
+          "customStart_C": 12,
+          "room_C": null,
+          "startMode": "hot",
+          "afterBoil": "hold",
+          "cooling": "ice",
+          "waterLitres": 2,
+          "eggCount": 2,
+          "altitude_m": 0,
+          "level": 0.41
+        },
+        "events": {
+          "boilAt_s": null,
+          "pulled": null,
+          "cooledAt_s": null,
+          "rangAt_s": 1791363980
+        },
+        "nudge_s": -7,
+        "boilMemory": {
+          "2.0": 480,
+          "3.0": 610
+        },
+        "units": "metric",
+        "lang": "en",
+        "boilRemembered": true,
+        "coldSince_s": null,
+        "correctedAt_s": null
+      },
+      "cook": {
+        "id_ms": 1791363600000,
+        "startedAt_s": 1791363600,
+        "choices": {
+          "mass_kg": 0.068,
+          "massFrom": "class",
+          "sizeTable": "eu",
+          "eggFrom": "fridge",
+          "customStart_C": 12,
+          "room_C": null,
+          "startMode": "hot",
+          "afterBoil": "hold",
+          "cooling": "ice",
+          "waterLitres": 2,
+          "eggCount": 2,
+          "altitude_m": 0,
+          "level": 0.41
+        },
+        "events": {
+          "boilAt_s": null,
+          "pulled": null,
+          "cooledAt_s": null,
+          "rangAt_s": 1791363980
+        },
+        "nudge_s": -7,
+        "boilMemory": {
+          "2.0": 480,
+          "3.0": 610
+        },
+        "units": "metric",
+        "lang": "en",
+        "boilRemembered": true,
+        "coldSince_s": null,
+        "correctedAt_s": null
       }
     },
     {
@@ -3116,9 +4182,11 @@
             "pulled": {
               "due_s": 1791364451.2,
               "out_s": 1791364458.9,
-              "by": "cook"
+              "by": "cook",
+              "confirmed": true
             },
-            "cooledAt_s": null
+            "cooledAt_s": null,
+            "rangAt_s": null
           },
           "nudge_s": 0,
           "boilMemory": {
@@ -3163,9 +4231,11 @@
           "pulled": {
             "due_s": 1791364451.2,
             "out_s": 1791364458.9,
-            "by": "cook"
+            "by": "cook",
+            "confirmed": true
           },
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -3205,9 +4275,11 @@
           "pulled": {
             "due_s": 1791364451.2,
             "out_s": 1791364458.9,
-            "by": "cook"
+            "by": "cook",
+            "confirmed": true
           },
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -3247,9 +4319,11 @@
           "pulled": {
             "due_s": 1791364451.2,
             "out_s": 1791364458.9,
-            "by": "cook"
+            "by": "cook",
+            "confirmed": true
           },
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -3274,9 +4348,11 @@
           "pulled": {
             "due_s": 1791364451.2,
             "out_s": 1791364458.9,
-            "by": "cook"
+            "by": "cook",
+            "confirmed": true
           },
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -3302,9 +4378,11 @@
           "pulled": {
             "due_s": 1791364451.2,
             "out_s": 1791364458.9,
-            "by": "cook"
+            "by": "cook",
+            "confirmed": true
           },
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -3343,9 +4421,11 @@
           "pulled": {
             "due_s": 1791364451.2,
             "out_s": 1791364458.9,
-            "by": "cook"
+            "by": "cook",
+            "confirmed": true
           },
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -3385,9 +4465,11 @@
           "pulled": {
             "due_s": 1791364451.2,
             "out_s": 1791364458.9,
-            "by": "cook"
+            "by": "cook",
+            "confirmed": true
           },
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -3427,9 +4509,11 @@
           "pulled": {
             "due_s": 1791364451.2,
             "out_s": 1791364458.9,
-            "by": "cook"
+            "by": "cook",
+            "confirmed": true
           },
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -3469,9 +4553,11 @@
           "pulled": {
             "due_s": 1791364451.2,
             "out_s": 1791364458.9,
-            "by": "cook"
+            "by": "cook",
+            "confirmed": true
           },
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -3511,9 +4597,11 @@
           "pulled": {
             "due_s": 1791364451.2,
             "out_s": 1791364458.9,
-            "by": "cook"
+            "by": "cook",
+            "confirmed": true
           },
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -3553,9 +4641,11 @@
           "pulled": {
             "due_s": 1791364451.2,
             "out_s": 1791364458.9,
-            "by": "cook"
+            "by": "cook",
+            "confirmed": true
           },
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -3595,9 +4685,11 @@
           "pulled": {
             "due_s": 1791364451.2,
             "out_s": 1791364458.9,
-            "by": "cook"
+            "by": "cook",
+            "confirmed": true
           },
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -3637,9 +4729,11 @@
           "pulled": {
             "due_s": 1791364451.2,
             "out_s": 1791364458.9,
-            "by": "cook"
+            "by": "cook",
+            "confirmed": true
           },
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -3679,9 +4773,11 @@
           "pulled": {
             "due_s": 1791364451.2,
             "out_s": 1791364458.9,
-            "by": "cook"
+            "by": "cook",
+            "confirmed": true
           },
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -3720,9 +4816,11 @@
           "pulled": {
             "due_s": 1791364451.2,
             "out_s": 1791364458.9,
-            "by": "cook"
+            "by": "cook",
+            "confirmed": true
           },
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -3762,9 +4860,11 @@
           "pulled": {
             "due_s": 1791364451.2,
             "out_s": 1791364458.9,
-            "by": "cook"
+            "by": "cook",
+            "confirmed": true
           },
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -3804,9 +4904,11 @@
           "pulled": {
             "due_s": 1791364451.2,
             "out_s": 1791364458.9,
-            "by": "cook"
+            "by": "cook",
+            "confirmed": true
           },
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -3845,9 +4947,11 @@
           "pulled": {
             "due_s": 1791364451.2,
             "out_s": 1791364458.9,
-            "by": "cook"
+            "by": "cook",
+            "confirmed": true
           },
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -3887,9 +4991,11 @@
           "pulled": {
             "due_s": 1791364451.2,
             "out_s": 1791364458.9,
-            "by": "cook"
+            "by": "cook",
+            "confirmed": true
           },
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -3929,9 +5035,11 @@
           "pulled": {
             "due_s": 1791364451.2,
             "out_s": 1791364458.9,
-            "by": "cook"
+            "by": "cook",
+            "confirmed": true
           },
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -3971,9 +5079,11 @@
           "pulled": {
             "due_s": 1791364451.2,
             "out_s": 1791364458.9,
-            "by": "cook"
+            "by": "cook",
+            "confirmed": true
           },
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -4013,9 +5123,11 @@
           "pulled": {
             "due_s": 1791364451.2,
             "out_s": 1791364458.9,
-            "by": "cook"
+            "by": "cook",
+            "confirmed": true
           },
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -4055,9 +5167,11 @@
           "pulled": {
             "due_s": 1791364451.2,
             "out_s": 1791364458.9,
-            "by": "cook"
+            "by": "cook",
+            "confirmed": true
           },
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -4097,9 +5211,11 @@
           "pulled": {
             "due_s": 1791364451.2,
             "out_s": 1791364458.9,
-            "by": "cook"
+            "by": "cook",
+            "confirmed": true
           },
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -4172,9 +5288,11 @@
           "pulled": {
             "due_s": 1791364451.2,
             "out_s": 1791364458.9,
-            "by": "cook"
+            "by": "cook",
+            "confirmed": true
           },
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -4214,9 +5332,11 @@
           "pulled": {
             "due_s": 1791364451.2,
             "out_s": 1791364458.9,
-            "by": "cook"
+            "by": "cook",
+            "confirmed": true
           },
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -4255,9 +5375,11 @@
           "pulled": {
             "due_s": 1791364451.2,
             "out_s": 1791364458.9,
-            "by": "cook"
+            "by": "cook",
+            "confirmed": true
           },
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -4295,7 +5417,8 @@
         "events": {
           "boilAt_s": 1791364132.5,
           "pulled": [],
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -4335,9 +5458,11 @@
           "pulled": {
             "due_s": 1791363595,
             "out_s": 1791364458.9,
-            "by": "cook"
+            "by": "cook",
+            "confirmed": true
           },
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -4377,9 +5502,11 @@
           "pulled": {
             "due_s": 1791364451.2,
             "out_s": 1791364451,
-            "by": "cook"
+            "by": "cook",
+            "confirmed": true
           },
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -4419,9 +5546,273 @@
           "pulled": {
             "due_s": 1791364451.2,
             "out_s": 1791364458.9,
-            "by": null
+            "by": null,
+            "confirmed": true
+          },
+          "cooledAt_s": null,
+          "rangAt_s": null
+        },
+        "nudge_s": 0,
+        "boilMemory": {
+          "2.0": 480,
+          "3.0": 610
+        },
+        "units": "metric",
+        "lang": "en",
+        "boilRemembered": true,
+        "coldSince_s": 1791363600,
+        "correctedAt_s": null
+      },
+      "cook": null
+    },
+    {
+      "note": "a pull neither confirmed nor not",
+      "raw": {
+        "id_ms": 1791363600000,
+        "startedAt_s": 1791363600,
+        "choices": {
+          "mass_kg": 0.068,
+          "massFrom": "class",
+          "sizeTable": "eu",
+          "eggFrom": "fridge",
+          "customStart_C": 12,
+          "room_C": null,
+          "startMode": "cold",
+          "afterBoil": "hold",
+          "cooling": "ice",
+          "waterLitres": 2,
+          "eggCount": 2,
+          "altitude_m": 0,
+          "level": 0.41
+        },
+        "events": {
+          "boilAt_s": 1791364132.5,
+          "pulled": {
+            "due_s": 1791364451.2,
+            "out_s": 1791364458.9,
+            "by": "cook"
+          },
+          "cooledAt_s": null,
+          "rangAt_s": null
+        },
+        "nudge_s": 0,
+        "boilMemory": {
+          "2.0": 480,
+          "3.0": 610
+        },
+        "units": "metric",
+        "lang": "en",
+        "boilRemembered": true,
+        "coldSince_s": 1791363600,
+        "correctedAt_s": null
+      },
+      "cook": null
+    },
+    {
+      "note": "a pull confirmed as a number",
+      "raw": {
+        "id_ms": 1791363600000,
+        "startedAt_s": 1791363600,
+        "choices": {
+          "mass_kg": 0.068,
+          "massFrom": "class",
+          "sizeTable": "eu",
+          "eggFrom": "fridge",
+          "customStart_C": 12,
+          "room_C": null,
+          "startMode": "cold",
+          "afterBoil": "hold",
+          "cooling": "ice",
+          "waterLitres": 2,
+          "eggCount": 2,
+          "altitude_m": 0,
+          "level": 0.41
+        },
+        "events": {
+          "boilAt_s": 1791364132.5,
+          "pulled": {
+            "due_s": 1791364451.2,
+            "out_s": 1791364458.9,
+            "by": "cook",
+            "confirmed": 1
+          },
+          "cooledAt_s": null,
+          "rangAt_s": null
+        },
+        "nudge_s": 0,
+        "boilMemory": {
+          "2.0": 480,
+          "3.0": 610
+        },
+        "units": "metric",
+        "lang": "en",
+        "boilRemembered": true,
+        "coldSince_s": 1791363600,
+        "correctedAt_s": null
+      },
+      "cook": null
+    },
+    {
+      "note": "the cook's own tap, unconfirmed",
+      "raw": {
+        "id_ms": 1791363600000,
+        "startedAt_s": 1791363600,
+        "choices": {
+          "mass_kg": 0.068,
+          "massFrom": "class",
+          "sizeTable": "eu",
+          "eggFrom": "fridge",
+          "customStart_C": 12,
+          "room_C": null,
+          "startMode": "cold",
+          "afterBoil": "hold",
+          "cooling": "ice",
+          "waterLitres": 2,
+          "eggCount": 2,
+          "altitude_m": 0,
+          "level": 0.41
+        },
+        "events": {
+          "boilAt_s": 1791364132.5,
+          "pulled": {
+            "due_s": 1791364451.2,
+            "out_s": 1791364458.9,
+            "by": "cook",
+            "confirmed": false
+          },
+          "cooledAt_s": null,
+          "rangAt_s": null
+        },
+        "nudge_s": 0,
+        "boilMemory": {
+          "2.0": 480,
+          "3.0": 610
+        },
+        "units": "metric",
+        "lang": "en",
+        "boilRemembered": true,
+        "coldSince_s": 1791363600,
+        "correctedAt_s": null
+      },
+      "cook": null
+    },
+    {
+      "note": "no rang field",
+      "raw": {
+        "id_ms": 1791363600000,
+        "startedAt_s": 1791363600,
+        "choices": {
+          "mass_kg": 0.068,
+          "massFrom": "class",
+          "sizeTable": "eu",
+          "eggFrom": "fridge",
+          "customStart_C": 12,
+          "room_C": null,
+          "startMode": "cold",
+          "afterBoil": "hold",
+          "cooling": "ice",
+          "waterLitres": 2,
+          "eggCount": 2,
+          "altitude_m": 0,
+          "level": 0.41
+        },
+        "events": {
+          "boilAt_s": 1791364132.5,
+          "pulled": {
+            "due_s": 1791364451.2,
+            "out_s": 1791364458.9,
+            "by": "cook",
+            "confirmed": true
           },
           "cooledAt_s": null
+        },
+        "nudge_s": 0,
+        "boilMemory": {
+          "2.0": 480,
+          "3.0": 610
+        },
+        "units": "metric",
+        "lang": "en",
+        "boilRemembered": true,
+        "coldSince_s": 1791363600,
+        "correctedAt_s": null
+      },
+      "cook": null
+    },
+    {
+      "note": "rang before the start",
+      "raw": {
+        "id_ms": 1791363600000,
+        "startedAt_s": 1791363600,
+        "choices": {
+          "mass_kg": 0.068,
+          "massFrom": "class",
+          "sizeTable": "eu",
+          "eggFrom": "fridge",
+          "customStart_C": 12,
+          "room_C": null,
+          "startMode": "cold",
+          "afterBoil": "hold",
+          "cooling": "ice",
+          "waterLitres": 2,
+          "eggCount": 2,
+          "altitude_m": 0,
+          "level": 0.41
+        },
+        "events": {
+          "boilAt_s": 1791364132.5,
+          "pulled": {
+            "due_s": 1791364451.2,
+            "out_s": 1791364458.9,
+            "by": "cook",
+            "confirmed": true
+          },
+          "cooledAt_s": null,
+          "rangAt_s": 1791363599
+        },
+        "nudge_s": 0,
+        "boilMemory": {
+          "2.0": 480,
+          "3.0": 610
+        },
+        "units": "metric",
+        "lang": "en",
+        "boilRemembered": true,
+        "coldSince_s": 1791363600,
+        "correctedAt_s": null
+      },
+      "cook": null
+    },
+    {
+      "note": "rang as a string",
+      "raw": {
+        "id_ms": 1791363600000,
+        "startedAt_s": 1791363600,
+        "choices": {
+          "mass_kg": 0.068,
+          "massFrom": "class",
+          "sizeTable": "eu",
+          "eggFrom": "fridge",
+          "customStart_C": 12,
+          "room_C": null,
+          "startMode": "cold",
+          "afterBoil": "hold",
+          "cooling": "ice",
+          "waterLitres": 2,
+          "eggCount": 2,
+          "altitude_m": 0,
+          "level": 0.41
+        },
+        "events": {
+          "boilAt_s": 1791364132.5,
+          "pulled": {
+            "due_s": 1791364451.2,
+            "out_s": 1791364458.9,
+            "by": "cook",
+            "confirmed": true
+          },
+          "cooledAt_s": null,
+          "rangAt_s": "then"
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -4458,7 +5849,8 @@
         },
         "events": {
           "boilAt_s": 1791364132.5,
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -4496,7 +5888,8 @@
         "events": {
           "boilAt_s": 1791364132.5,
           "pulled": null,
-          "cooledAt_s": 1791364631.9
+          "cooledAt_s": 1791364631.9,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -4536,9 +5929,11 @@
           "pulled": {
             "due_s": 1791364451.2,
             "out_s": 1791364458.9,
-            "by": "cook"
+            "by": "cook",
+            "confirmed": true
           },
-          "cooledAt_s": 1791364458
+          "cooledAt_s": 1791364458,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -4578,9 +5973,11 @@
           "pulled": {
             "due_s": 1791364451.2,
             "out_s": 1791364458.9,
-            "by": "cook"
+            "by": "cook",
+            "confirmed": true
           },
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": null,
         "boilMemory": {
@@ -4620,9 +6017,11 @@
           "pulled": {
             "due_s": 1791364451.2,
             "out_s": 1791364458.9,
-            "by": "cook"
+            "by": "cook",
+            "confirmed": true
           },
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": [
@@ -4661,9 +6060,11 @@
           "pulled": {
             "due_s": 1791364451.2,
             "out_s": 1791364458.9,
-            "by": "cook"
+            "by": "cook",
+            "confirmed": true
           },
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -4703,9 +6104,11 @@
           "pulled": {
             "due_s": 1791364451.2,
             "out_s": 1791364458.9,
-            "by": "cook"
+            "by": "cook",
+            "confirmed": true
           },
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -4745,9 +6148,11 @@
           "pulled": {
             "due_s": 1791364451.2,
             "out_s": 1791364458.9,
-            "by": "cook"
+            "by": "cook",
+            "confirmed": true
           },
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -4787,9 +6192,11 @@
           "pulled": {
             "due_s": 1791364451.2,
             "out_s": 1791364458.9,
-            "by": "cook"
+            "by": "cook",
+            "confirmed": true
           },
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -4829,9 +6236,11 @@
           "pulled": {
             "due_s": 1791364451.2,
             "out_s": 1791364458.9,
-            "by": "cook"
+            "by": "cook",
+            "confirmed": true
           },
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -4871,9 +6280,11 @@
           "pulled": {
             "due_s": 1791364451.2,
             "out_s": 1791364458.9,
-            "by": "cook"
+            "by": "cook",
+            "confirmed": true
           },
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -4912,9 +6323,11 @@
           "pulled": {
             "due_s": 1791364451.2,
             "out_s": 1791364458.9,
-            "by": "cook"
+            "by": "cook",
+            "confirmed": true
           },
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -4954,9 +6367,11 @@
           "pulled": {
             "due_s": 1791364451.2,
             "out_s": 1791364458.9,
-            "by": "cook"
+            "by": "cook",
+            "confirmed": true
           },
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -4995,9 +6410,11 @@
           "pulled": {
             "due_s": 1791364451.2,
             "out_s": 1791364458.9,
-            "by": "cook"
+            "by": "cook",
+            "confirmed": true
           },
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -5037,9 +6454,11 @@
           "pulled": {
             "due_s": 1791364451.2,
             "out_s": 1791364458.9,
-            "by": "cook"
+            "by": "cook",
+            "confirmed": true
           },
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -5078,9 +6497,11 @@
           "pulled": {
             "due_s": 1791364451.2,
             "out_s": 1791364458.9,
-            "by": "cook"
+            "by": "cook",
+            "confirmed": true
           },
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -5121,7 +6542,8 @@
         "events": {
           "boilAt_s": null,
           "pulled": null,
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 6,
         "boilMemory": {
@@ -5178,6 +6600,7 @@
         "nudge_s": 6,
         "cookTime_s": 683.265625,
         "overdue": false,
+        "askIfStillIn": false,
         "cool_s": 181,
         "probeMoment": true,
         "deadlines": {
@@ -5277,7 +6700,8 @@
         "events": {
           "boilAt_s": null,
           "pulled": null,
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 6,
         "boilMemory": {
@@ -5358,6 +6782,7 @@
         "nudge_s": 6,
         "cookTime_s": 689.7600794048565,
         "overdue": false,
+        "askIfStillIn": false,
         "cool_s": 182,
         "probeMoment": true,
         "deadlines": {
@@ -5509,7 +6934,8 @@
         "events": {
           "boilAt_s": null,
           "pulled": null,
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 6,
         "boilMemory": {
@@ -5566,6 +6992,7 @@
         "nudge_s": 6,
         "cookTime_s": 689.7600794048565,
         "overdue": false,
+        "askIfStillIn": false,
         "cool_s": 182,
         "probeMoment": true,
         "deadlines": {
@@ -5585,7 +7012,8 @@
           "events": {
             "boilAt_s": null,
             "pulled": null,
-            "cooledAt_s": null
+            "cooledAt_s": null,
+            "rangAt_s": null
           }
         }
       ],
@@ -5680,7 +7108,8 @@
         "events": {
           "boilAt_s": null,
           "pulled": null,
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 6,
         "boilMemory": {
@@ -5761,6 +7190,7 @@
         "nudge_s": 6,
         "cookTime_s": 689.7600794048565,
         "overdue": false,
+        "askIfStillIn": false,
         "cool_s": 182,
         "probeMoment": true,
         "deadlines": {
@@ -5912,7 +7342,8 @@
         "events": {
           "boilAt_s": null,
           "pulled": null,
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 6,
         "boilMemory": {
@@ -5950,7 +7381,8 @@
             "events": {
               "boilAt_s": null,
               "pulled": null,
-              "cooledAt_s": null
+              "cooledAt_s": null,
+              "rangAt_s": null
             },
             "nudge_s": 6,
             "boilMemory": {
@@ -6014,6 +7446,7 @@
         "nudge_s": 6,
         "cookTime_s": 809.5012903423565,
         "overdue": false,
+        "askIfStillIn": false,
         "cool_s": 180,
         "probeMoment": true,
         "deadlines": {
@@ -6113,7 +7546,8 @@
         "events": {
           "boilAt_s": null,
           "pulled": null,
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 6,
         "boilMemory": {
@@ -6167,6 +7601,7 @@
         "nudge_s": 6,
         "cookTime_s": 1270.9856653423565,
         "overdue": false,
+        "askIfStillIn": false,
         "cool_s": 159,
         "probeMoment": true,
         "deadlines": {
@@ -6271,7 +7706,8 @@
         "events": {
           "boilAt_s": 1791364132.5,
           "pulled": null,
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 6,
         "boilMemory": {
@@ -6309,7 +7745,8 @@
             "events": {
               "boilAt_s": null,
               "pulled": null,
-              "cooledAt_s": null
+              "cooledAt_s": null,
+              "rangAt_s": null
             },
             "nudge_s": 6,
             "boilMemory": {
@@ -6376,6 +7813,7 @@
         "nudge_s": 6,
         "cookTime_s": 716.8548059673565,
         "overdue": false,
+        "askIfStillIn": false,
         "cool_s": 182,
         "probeMoment": true,
         "deadlines": {
@@ -6481,7 +7919,8 @@
         "events": {
           "boilAt_s": 1791364132.5,
           "pulled": null,
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 6,
         "boilMemory": {
@@ -6562,6 +8001,7 @@
         "nudge_s": 6,
         "cookTime_s": 717.1456958271497,
         "overdue": false,
+        "askIfStillIn": false,
         "cool_s": 182,
         "probeMoment": true,
         "deadlines": {
@@ -6719,7 +8159,8 @@
         "events": {
           "boilAt_s": 1791364132.5,
           "pulled": null,
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 6,
         "boilMemory": {
@@ -6800,6 +8241,7 @@
         "nudge_s": 6,
         "cookTime_s": 717.1456958271497,
         "overdue": false,
+        "askIfStillIn": false,
         "cool_s": 182,
         "probeMoment": true,
         "deadlines": {
@@ -6852,7 +8294,8 @@
           "events": {
             "boilAt_s": 1791364132.5,
             "pulled": null,
-            "cooledAt_s": null
+            "cooledAt_s": null,
+            "rangAt_s": null
           }
         },
         {
@@ -6862,9 +8305,11 @@
             "pulled": {
               "due_s": 1791364317.145696,
               "out_s": 1791364325.145696,
-              "by": "cook"
+              "by": "cook",
+              "confirmed": true
             },
-            "cooledAt_s": null
+            "cooledAt_s": null,
+            "rangAt_s": null
           }
         },
         {
@@ -6872,7 +8317,8 @@
           "events": {
             "boilAt_s": 1791364132.5,
             "pulled": null,
-            "cooledAt_s": null
+            "cooledAt_s": null,
+            "rangAt_s": null
           }
         }
       ],
@@ -6882,7 +8328,8 @@
           "events": {
             "boilAt_s": 1791364132.5,
             "pulled": null,
-            "cooledAt_s": null
+            "cooledAt_s": null,
+            "rangAt_s": 1791364317.145696
           }
         },
         {
@@ -6890,7 +8337,8 @@
           "events": {
             "boilAt_s": 1791364132.5,
             "pulled": null,
-            "cooledAt_s": null
+            "cooledAt_s": null,
+            "rangAt_s": 1791364317.145696
           }
         },
         {
@@ -6900,9 +8348,11 @@
             "pulled": {
               "due_s": 1791364317.145696,
               "out_s": 1791364337.145696,
-              "by": "timeout"
+              "by": "timeout",
+              "confirmed": false
             },
-            "cooledAt_s": null
+            "cooledAt_s": null,
+            "rangAt_s": 1791364317.145696
           }
         },
         {
@@ -6912,9 +8362,11 @@
             "pulled": {
               "due_s": 1791364317.145696,
               "out_s": 1791364337.145696,
-              "by": "timeout"
+              "by": "timeout",
+              "confirmed": false
             },
-            "cooledAt_s": 1791364519.145696
+            "cooledAt_s": 1791364519.145696,
+            "rangAt_s": 1791364317.145696
           }
         }
       ],
@@ -7036,9 +8488,11 @@
           "pulled": {
             "due_s": 1791364317.145696,
             "out_s": 1791364325.145696,
-            "by": "cook"
+            "by": "cook",
+            "confirmed": true
           },
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 6,
         "boilMemory": {
@@ -7119,6 +8573,7 @@
         "nudge_s": 6,
         "cookTime_s": 717.1456959247589,
         "overdue": false,
+        "askIfStillIn": false,
         "cool_s": 182,
         "probeMoment": true,
         "deadlines": {
@@ -7173,9 +8628,11 @@
             "pulled": {
               "due_s": 1791364317.145696,
               "out_s": 1791364325.145696,
-              "by": "cook"
+              "by": "cook",
+              "confirmed": true
             },
-            "cooledAt_s": null
+            "cooledAt_s": null,
+            "rangAt_s": null
           }
         }
       ],
@@ -7187,9 +8644,11 @@
             "pulled": {
               "due_s": 1791364317.145696,
               "out_s": 1791364325.145696,
-              "by": "cook"
+              "by": "cook",
+              "confirmed": true
             },
-            "cooledAt_s": null
+            "cooledAt_s": null,
+            "rangAt_s": null
           }
         },
         {
@@ -7199,9 +8658,11 @@
             "pulled": {
               "due_s": 1791364317.145696,
               "out_s": 1791364325.145696,
-              "by": "cook"
+              "by": "cook",
+              "confirmed": true
             },
-            "cooledAt_s": 1791364507.145696
+            "cooledAt_s": 1791364507.145696,
+            "rangAt_s": null
           }
         }
       ],
@@ -7316,9 +8777,11 @@
           "pulled": {
             "due_s": 1791364317.145696,
             "out_s": 1791364325.145696,
-            "by": "cook"
+            "by": "cook",
+            "confirmed": true
           },
-          "cooledAt_s": 1791364507.145696
+          "cooledAt_s": 1791364507.145696,
+          "rangAt_s": null
         },
         "nudge_s": 6,
         "boilMemory": {
@@ -7399,6 +8862,7 @@
         "nudge_s": 6,
         "cookTime_s": 717.1456959247589,
         "overdue": false,
+        "askIfStillIn": false,
         "cool_s": 182,
         "probeMoment": true,
         "deadlines": {
@@ -7559,9 +9023,11 @@
           "pulled": {
             "due_s": 1791364317.145696,
             "out_s": 1791364337.145696,
-            "by": "timeout"
+            "by": "timeout",
+            "confirmed": false
           },
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": 1791364317.145696
         },
         "nudge_s": 6,
         "boilMemory": {
@@ -7642,6 +9108,7 @@
         "nudge_s": 6,
         "cookTime_s": 717.1456959247589,
         "overdue": false,
+        "askIfStillIn": false,
         "cool_s": 182,
         "probeMoment": true,
         "deadlines": {
@@ -7805,7 +9272,8 @@
         "events": {
           "boilAt_s": 1791364132.5,
           "pulled": null,
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 6,
         "boilMemory": {
@@ -7886,6 +9354,7 @@
         "nudge_s": 6,
         "cookTime_s": 782.7019955850686,
         "overdue": false,
+        "askIfStillIn": false,
         "cool_s": 181,
         "probeMoment": true,
         "deadlines": {
@@ -8044,7 +9513,8 @@
         "events": {
           "boilAt_s": 1791364132.5,
           "pulled": null,
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 6,
         "boilMemory": {
@@ -8125,6 +9595,7 @@
         "nudge_s": 6,
         "cookTime_s": 748.741983335363,
         "overdue": false,
+        "askIfStillIn": false,
         "cool_s": 196,
         "probeMoment": true,
         "deadlines": {
@@ -8282,7 +9753,8 @@
         "events": {
           "boilAt_s": 1791364132.5,
           "pulled": null,
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 6,
         "boilMemory": {
@@ -8363,6 +9835,7 @@
         "nudge_s": 6,
         "cookTime_s": 600,
         "overdue": true,
+        "askIfStillIn": false,
         "cool_s": 166,
         "probeMoment": true,
         "deadlines": {
@@ -8416,7 +9889,8 @@
           "events": {
             "boilAt_s": 1791364132.5,
             "pulled": null,
-            "cooledAt_s": null
+            "cooledAt_s": null,
+            "rangAt_s": 1791364200
           }
         },
         {
@@ -8426,9 +9900,11 @@
             "pulled": {
               "due_s": 1791364200,
               "out_s": 1791364220,
-              "by": "timeout"
+              "by": "timeout",
+              "confirmed": false
             },
-            "cooledAt_s": null
+            "cooledAt_s": null,
+            "rangAt_s": 1791364200
           }
         }
       ],
@@ -8544,9 +10020,11 @@
           "pulled": {
             "due_s": 1791364200,
             "out_s": 1791364220,
-            "by": "timeout"
+            "by": "timeout",
+            "confirmed": false
           },
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": 1791364200
         },
         "nudge_s": 6,
         "boilMemory": {
@@ -8627,6 +10105,7 @@
         "nudge_s": 6,
         "cookTime_s": 600,
         "overdue": false,
+        "askIfStillIn": false,
         "cool_s": 166,
         "probeMoment": true,
         "deadlines": {
@@ -8754,7 +10233,7 @@
       }
     },
     {
-      "note": "and back to cold: the tap read again, the pull kept",
+      "note": "and back to cold: the tap read again, the pull kept, and the app asks whether it is still in",
       "posterior": "learned",
       "eggsLogged": 3,
       "cook": {
@@ -8780,9 +10259,11 @@
           "pulled": {
             "due_s": 1791364200,
             "out_s": 1791364220,
-            "by": "timeout"
+            "by": "timeout",
+            "confirmed": false
           },
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 6,
         "boilMemory": {
@@ -8863,6 +10344,7 @@
         "nudge_s": 6,
         "cookTime_s": 600,
         "overdue": false,
+        "askIfStillIn": true,
         "cool_s": 200,
         "probeMoment": true,
         "deadlines": {
@@ -9015,7 +10497,8 @@
         "events": {
           "boilAt_s": null,
           "pulled": null,
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 6,
         "boilMemory": {
@@ -9096,6 +10579,7 @@
         "nudge_s": 6,
         "cookTime_s": 476.0568223427141,
         "overdue": false,
+        "askIfStillIn": false,
         "cool_s": 184,
         "probeMoment": true,
         "deadlines": {
@@ -9255,9 +10739,11 @@
           "pulled": {
             "due_s": 1791364317.145696,
             "out_s": 1791364325.145696,
-            "by": "cook"
+            "by": "cook",
+            "confirmed": true
           },
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 6,
         "boilMemory": {
@@ -9338,6 +10824,7 @@
         "nudge_s": 6,
         "cookTime_s": 717.1456959247589,
         "overdue": false,
+        "askIfStillIn": false,
         "cool_s": 132,
         "probeMoment": true,
         "deadlines": {
@@ -9472,7 +10959,7 @@
       }
     },
     {
-      "note": "a lighter egg late in the cooling: it ends now",
+      "note": "a lighter egg late in the cooling: its counted end passed, so Done at once",
       "posterior": "learned",
       "eggsLogged": 3,
       "cook": {
@@ -9498,9 +10985,11 @@
           "pulled": {
             "due_s": 1791364317.145696,
             "out_s": 1791364325.145696,
-            "by": "cook"
+            "by": "cook",
+            "confirmed": true
           },
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 6,
         "boilMemory": {
@@ -9581,11 +11070,12 @@
         "nudge_s": 6,
         "cookTime_s": 717.1456959247589,
         "overdue": false,
-        "cool_s": 180,
+        "askIfStillIn": false,
+        "cool_s": 132,
         "probeMoment": true,
         "deadlines": {
           "cookEnd_s": 1791364317.145696,
-          "coolEnd_s": 1791364505.145696,
+          "coolEnd_s": 1791364457.145696,
           "provisional": false,
           "outAt_s": 1791364325.145696
         },
@@ -9672,7 +11162,7 @@
         "nudge_s": 6,
         "pulled_s": 725.1456959247589,
         "pulledBy": "cook",
-        "cooled_s": 180,
+        "cooled_s": 132,
         "yolk": null,
         "yolkWord": "jammy",
         "white": "firm",
@@ -9740,9 +11230,11 @@
           "pulled": {
             "due_s": 1791364317.145696,
             "out_s": 1791364325.145696,
-            "by": "cook"
+            "by": "cook",
+            "confirmed": true
           },
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 6,
         "boilMemory": {
@@ -9823,6 +11315,7 @@
         "nudge_s": 6,
         "cookTime_s": 717.1456959247589,
         "overdue": false,
+        "askIfStillIn": false,
         "cool_s": 423,
         "probeMoment": false,
         "deadlines": {
@@ -9878,9 +11371,11 @@
             "pulled": {
               "due_s": 1791364317.145696,
               "out_s": 1791364325.145696,
-              "by": "cook"
+              "by": "cook",
+              "confirmed": true
             },
-            "cooledAt_s": null
+            "cooledAt_s": null,
+            "rangAt_s": null
           }
         }
       ],
@@ -9976,7 +11471,7 @@
       }
     },
     {
-      "note": "firmer wanted, after Done",
+      "note": "firmer wanted after Done: the level the egg was pulled at kept",
       "posterior": "learned",
       "eggsLogged": 3,
       "cook": {
@@ -9995,16 +11490,18 @@
           "waterLitres": 2,
           "eggCount": 2,
           "altitude_m": 0,
-          "level": 0.62
+          "level": 0.41
         },
         "events": {
           "boilAt_s": 1791364132.5,
           "pulled": {
             "due_s": 1791364317.145696,
             "out_s": 1791364325.145696,
-            "by": "cook"
+            "by": "cook",
+            "confirmed": true
           },
-          "cooledAt_s": 1791364507.145696
+          "cooledAt_s": 1791364507.145696,
+          "rangAt_s": null
         },
         "nudge_s": 6,
         "boilMemory": {
@@ -10054,13 +11551,13 @@
           "whiteDose_min": 0.05938185524001569
         },
         "answer": {
-          "level": 0.62,
+          "level": 0.41,
           "kind": "none",
           "snapTo": null,
           "lowOdds": false,
-          "cookTime_s": 764.66796875
+          "cookTime_s": 707.8564453125
         },
-        "level": 0.62,
+        "level": 0.41,
         "solution": {
           "reachable": true,
           "whiteSets": true,
@@ -10069,22 +11566,23 @@
           "peakYolkTime_s": 899
         },
         "decided": {
-          "level": 0.62,
-          "cookTime_s": 771.0783384452402,
+          "level": 0.41,
+          "cookTime_s": 717.1456958271497,
           "decision": {
-            "cookTime_s": 765.0783384452402,
-            "meanCookTime_s": 764.66796875,
+            "cookTime_s": 711.1456958271497,
+            "meanCookTime_s": 707.8564453125,
             "chosen": true,
-            "odds": 0.6497789515645305,
+            "odds": 0.6294756165942276,
             "oddsTenths": 6
           },
           "nudge_s": 6,
           "adviceWanted": false
         },
-        "lean_s": 0.41036969524020606,
+        "lean_s": 3.289250514649666,
         "nudge_s": 6,
         "cookTime_s": 717.1456959247589,
         "overdue": false,
+        "askIfStillIn": false,
         "cool_s": 182,
         "probeMoment": true,
         "deadlines": {
@@ -10096,26 +11594,26 @@
         "slowHobAt_s": null,
         "certainty": {
           "words": {
-            "asked": 3,
+            "asked": 2,
             "certainty": "ballpark",
-            "pAsked": 0.11164817401409671,
-            "pNear": 0.9352200982620439,
+            "pAsked": 0.8132825519276518,
+            "pNear": 0.9742061052960675,
             "from": 2,
             "to": 3,
             "pInterval": 0.9249307259417485,
             "mostLikely": 2
           },
           "time": {
-            "low_s": 746.2945646044955,
-            "high_s": 788.1975392630648
+            "low_s": 691.724969226625,
+            "high_s": 729.1257871185462
           }
         },
         "forecast": {
           "cook_s": 717.1456959247589,
           "yolk": [
-            0.9319757848764868,
-            0.04862412949249759,
-            0.019400085631016133
+            0.10280691850473382,
+            0.5858993979491696,
+            0.31129368354609704
           ],
           "white": [
             0.03223453113536043,
@@ -10171,7 +11669,7 @@
           "waterLitres": 2,
           "eggCount": 2
         },
-        "level": 0.62,
+        "level": 0.41,
         "recommended_s": 711.1456959247589,
         "nudge_s": 6,
         "pulled_s": 725.1456959247589,
@@ -10184,9 +11682,9 @@
         "forecast": {
           "cook_s": 717.1456959247589,
           "yolk": [
-            0.9319757848764868,
-            0.04862412949249759,
-            0.019400085631016133
+            0.10280691850473382,
+            0.5858993979491696,
+            0.31129368354609704
           ],
           "white": [
             0.03223453113536043,
@@ -10244,9 +11742,11 @@
           "pulled": {
             "due_s": 1791364317.145696,
             "out_s": 1791364325.145696,
-            "by": "cook"
+            "by": "cook",
+            "confirmed": true
           },
-          "cooledAt_s": 1791364507.145696
+          "cooledAt_s": 1791364507.145696,
+          "rangAt_s": null
         },
         "nudge_s": 6,
         "boilMemory": {
@@ -10327,6 +11827,7 @@
         "nudge_s": 6,
         "cookTime_s": 717.1456959247589,
         "overdue": false,
+        "askIfStillIn": false,
         "cool_s": 423,
         "probeMoment": false,
         "deadlines": {
@@ -10487,9 +11988,11 @@
           "pulled": {
             "due_s": 1791364317.145696,
             "out_s": 1791364325.145696,
-            "by": "cook"
+            "by": "cook",
+            "confirmed": true
           },
-          "cooledAt_s": 1791364507.145696
+          "cooledAt_s": 1791364507.145696,
+          "rangAt_s": null
         },
         "nudge_s": 6,
         "boilMemory": {
@@ -10570,6 +12073,7 @@
         "nudge_s": 6,
         "cookTime_s": 717.1456959247589,
         "overdue": false,
+        "askIfStillIn": false,
         "cool_s": 182,
         "probeMoment": true,
         "deadlines": {
@@ -10733,7 +12237,8 @@
         "events": {
           "boilAt_s": null,
           "pulled": null,
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": -7,
         "boilMemory": {
@@ -10937,6 +12442,7 @@
         "nudge_s": -7,
         "cookTime_s": 463.0568223427141,
         "overdue": false,
+        "askIfStillIn": false,
         "cool_s": 186,
         "probeMoment": true,
         "deadlines": {
@@ -11089,7 +12595,8 @@
         "events": {
           "boilAt_s": null,
           "pulled": null,
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": -7,
         "boilMemory": {
@@ -11170,6 +12677,7 @@
         "nudge_s": -7,
         "cookTime_s": 457.00390625,
         "overdue": false,
+        "askIfStillIn": false,
         "cool_s": 184,
         "probeMoment": true,
         "deadlines": {
@@ -11321,7 +12829,8 @@
         "events": {
           "boilAt_s": null,
           "pulled": null,
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": -7,
         "boilMemory": {
@@ -11402,6 +12911,7 @@
         "nudge_s": -7,
         "cookTime_s": 463.0568223427141,
         "overdue": false,
+        "askIfStillIn": false,
         "cool_s": 186,
         "probeMoment": true,
         "deadlines": {
@@ -11456,9 +12966,11 @@
             "pulled": {
               "due_s": 1791364063.0568223,
               "out_s": 1791364066.0568223,
-              "by": "cook"
+              "by": "cook",
+              "confirmed": true
             },
-            "cooledAt_s": null
+            "cooledAt_s": null,
+            "rangAt_s": null
           }
         }
       ],
@@ -11575,9 +13087,11 @@
           "pulled": {
             "due_s": 1791364063.0568223,
             "out_s": 1791364066.0568223,
-            "by": "cook"
+            "by": "cook",
+            "confirmed": true
           },
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": -7,
         "boilMemory": {
@@ -11658,6 +13172,7 @@
         "nudge_s": -7,
         "cookTime_s": 463.0568222999573,
         "overdue": false,
+        "askIfStillIn": false,
         "cool_s": 186,
         "probeMoment": true,
         "deadlines": {
@@ -11811,9 +13326,11 @@
           "pulled": {
             "due_s": 1791364063.0568223,
             "out_s": 1791364066.0568223,
-            "by": "cook"
+            "by": "cook",
+            "confirmed": true
           },
-          "cooledAt_s": 1791364252.0568223
+          "cooledAt_s": 1791364252.0568223,
+          "rangAt_s": null
         },
         "nudge_s": -7,
         "boilMemory": {
@@ -11894,6 +13411,7 @@
         "nudge_s": -7,
         "cookTime_s": 463.0568222999573,
         "overdue": false,
+        "askIfStillIn": false,
         "cool_s": 186,
         "probeMoment": true,
         "deadlines": {
@@ -12046,7 +13564,8 @@
         "events": {
           "boilAt_s": null,
           "pulled": null,
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": -7,
         "boilMemory": {
@@ -12127,6 +13646,7 @@
         "nudge_s": -7,
         "cookTime_s": 676.7600794048565,
         "overdue": false,
+        "askIfStillIn": false,
         "cool_s": 184,
         "probeMoment": true,
         "deadlines": {
@@ -12284,7 +13804,8 @@
         "events": {
           "boilAt_s": 1791364160,
           "pulled": null,
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": -7,
         "boilMemory": {
@@ -12365,6 +13886,7 @@
         "nudge_s": -7,
         "cookTime_s": 718.8988493246783,
         "overdue": false,
+        "askIfStillIn": false,
         "cool_s": 184,
         "probeMoment": true,
         "deadlines": {
@@ -12523,7 +14045,8 @@
         "events": {
           "boilAt_s": null,
           "pulled": null,
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": -7,
         "boilMemory": {
@@ -12604,6 +14127,7 @@
         "nudge_s": -7,
         "cookTime_s": 443.0568222999573,
         "overdue": true,
+        "askIfStillIn": false,
         "cool_s": 136,
         "probeMoment": true,
         "deadlines": {
@@ -12657,7 +14181,8 @@
           "events": {
             "boilAt_s": null,
             "pulled": null,
-            "cooledAt_s": null
+            "cooledAt_s": null,
+            "rangAt_s": 1791364043.0568223
           }
         },
         {
@@ -12667,9 +14192,11 @@
             "pulled": {
               "due_s": 1791364043.0568223,
               "out_s": 1791364063.0568223,
-              "by": "timeout"
+              "by": "timeout",
+              "confirmed": false
             },
-            "cooledAt_s": null
+            "cooledAt_s": null,
+            "rangAt_s": 1791364043.0568223
           }
         }
       ],
@@ -12776,7 +14303,8 @@
         "events": {
           "boilAt_s": null,
           "pulled": null,
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": -7,
         "boilMemory": {
@@ -12857,6 +14385,7 @@
         "nudge_s": -7,
         "cookTime_s": 463.0568223427141,
         "overdue": false,
+        "askIfStillIn": false,
         "cool_s": 186,
         "probeMoment": true,
         "deadlines": {
@@ -12991,7 +14520,7 @@
       }
     },
     {
-      "note": "the lighter egg undone after the grace ran out: the pull stands",
+      "note": "the lighter egg undone after the grace ran out: the pull stands, and the app asks whether it is still in",
       "posterior": "learned",
       "eggsLogged": 3,
       "cook": {
@@ -13017,9 +14546,11 @@
           "pulled": {
             "due_s": 1791364043.0568223,
             "out_s": 1791364063.0568223,
-            "by": "timeout"
+            "by": "timeout",
+            "confirmed": false
           },
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": -7,
         "boilMemory": {
@@ -13100,6 +14631,7 @@
         "nudge_s": -7,
         "cookTime_s": 443.0568222999573,
         "overdue": false,
+        "askIfStillIn": true,
         "cool_s": 189,
         "probeMoment": true,
         "deadlines": {
@@ -13251,7 +14783,8 @@
         "events": {
           "boilAt_s": null,
           "pulled": null,
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -13332,6 +14865,7 @@
         "nudge_s": 0,
         "cookTime_s": 438.0419921875,
         "overdue": false,
+        "askIfStillIn": false,
         "cool_s": 444,
         "probeMoment": false,
         "deadlines": {
@@ -13486,9 +15020,11 @@
           "pulled": {
             "due_s": 1791364038.0419922,
             "out_s": 1791364042.0419922,
-            "by": "cook"
+            "by": "cook",
+            "confirmed": true
           },
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -13569,6 +15105,7 @@
         "nudge_s": 0,
         "cookTime_s": 438.0419921875,
         "overdue": false,
+        "askIfStillIn": false,
         "cool_s": 444,
         "probeMoment": false,
         "deadlines": {
@@ -13624,9 +15161,11 @@
             "pulled": {
               "due_s": 1791364038.0419922,
               "out_s": 1791364042.0419922,
-              "by": "cook"
+              "by": "cook",
+              "confirmed": true
             },
-            "cooledAt_s": null
+            "cooledAt_s": null,
+            "rangAt_s": null
           }
         }
       ],
@@ -13715,6 +15254,2396 @@
       }
     },
     {
+      "note": "the counter corrected to ice ten minutes after the out: the counted time, Done at once",
+      "posterior": "learned",
+      "eggsLogged": 3,
+      "cook": {
+        "id_ms": 1791363600000,
+        "startedAt_s": 1791363600,
+        "choices": {
+          "mass_kg": 0.068,
+          "massFrom": "class",
+          "sizeTable": "eu",
+          "eggFrom": "fridge",
+          "customStart_C": 12,
+          "room_C": null,
+          "startMode": "hot",
+          "afterBoil": "hold",
+          "cooling": "ice",
+          "waterLitres": 2,
+          "eggCount": 2,
+          "altitude_m": 0,
+          "level": 0.41
+        },
+        "events": {
+          "boilAt_s": null,
+          "pulled": {
+            "due_s": 1791364038.0419922,
+            "out_s": 1791364042.0419922,
+            "by": "cook",
+            "confirmed": true
+          },
+          "cooledAt_s": null,
+          "rangAt_s": null
+        },
+        "nudge_s": 0,
+        "boilMemory": {
+          "2.0": 480,
+          "3.0": 610
+        },
+        "units": "metric",
+        "lang": "en",
+        "boilRemembered": true,
+        "coldSince_s": null,
+        "correctedAt_s": 1791364642.0419922
+      },
+      "leanHint_s": 0,
+      "now_s": 1791364642.0419922,
+      "surface": {
+        "of": null,
+        "grid": {
+          "tauAirScale": 1,
+          "alphaMin": 1.009520895453128e-7,
+          "alphaMax": 2.776182462496102e-7,
+          "alphaCount": 7,
+          "timeMin_s": 253.9794921875,
+          "timeMax_s": 773.9794921875,
+          "timeCount": 27
+        },
+        "profile": null
+      },
+      "plan": {
+        "egg": {
+          "mass_kg": 0.068
+        },
+        "setup": {
+          "startMode": "hot",
+          "afterBoil": "hold",
+          "eggStart_C": 4,
+          "ambient_C": 20,
+          "boiling_C": 99.99690682934772,
+          "timeToBoil_s": 480,
+          "cooling": "ice",
+          "waterLitres": 2,
+          "eggCount": 2
+        },
+        "provisional": false,
+        "lengthened": false,
+        "inputs": {
+          "params": { "alpha_m2s": 1.6825348257552135e-7, "tauAirScale": 1 },
+          "whiteDose_min": 0.05938185524001569
+        },
+        "answer": {
+          "level": 0.41,
+          "kind": "none",
+          "snapTo": null,
+          "lowOdds": false,
+          "cookTime_s": 468.3740234375
+        },
+        "level": 0.41,
+        "solution": {
+          "reachable": true,
+          "whiteSets": true,
+          "cookTime_s": 438.0419921875,
+          "peakYolk_C": 61.97340881064162,
+          "peakYolkTime_s": 628.5
+        },
+        "decided": {
+          "level": 0.41,
+          "cookTime_s": 470.0568223427141,
+          "decision": {
+            "cookTime_s": 470.0568223427141,
+            "meanCookTime_s": 468.3740234375,
+            "chosen": true,
+            "odds": 0.6239611571441052,
+            "oddsTenths": 6
+          },
+          "nudge_s": 0,
+          "adviceWanted": false
+        },
+        "lean_s": 1.6827989052140992,
+        "nudge_s": 0,
+        "cookTime_s": 438.0419921875,
+        "overdue": false,
+        "askIfStillIn": false,
+        "cool_s": 190,
+        "probeMoment": true,
+        "deadlines": {
+          "cookEnd_s": 1791364038.0419922,
+          "coolEnd_s": 1791364232.0419922,
+          "provisional": false,
+          "outAt_s": 1791364042.0419922
+        },
+        "slowHobAt_s": null,
+        "certainty": {
+          "words": {
+            "asked": 2,
+            "certainty": "ballpark",
+            "pAsked": 0.281488884181809,
+            "pNear": 0.9556287509939891,
+            "from": 1,
+            "to": 2,
+            "pInterval": 0.9425092426936619,
+            "mostLikely": 1
+          },
+          "time": {
+            "low_s": 451.64960463493117,
+            "high_s": 490.40205774495917
+          }
+        },
+        "forecast": {
+          "cook_s": 438.0419921875,
+          "yolk": [
+            0.8422826712214391,
+            0.13300510522696993,
+            0.024712223551591306
+          ],
+          "white": [
+            0.12043915022116577,
+            0.37016770072656935,
+            0.509393149052265
+          ],
+          "yolkWord": [
+            0.03434361102233629,
+            0.6610203585118529,
+            0.281488884181809,
+            0.013119508300327262,
+            0.010027637983675038
+          ]
+        }
+      },
+      "outs": [],
+      "dues": [
+        {
+          "now_s": 1791364643.0419922,
+          "events": {
+            "boilAt_s": null,
+            "pulled": {
+              "due_s": 1791364038.0419922,
+              "out_s": 1791364042.0419922,
+              "by": "cook",
+              "confirmed": true
+            },
+            "cooledAt_s": 1791364232.0419922,
+            "rangAt_s": null
+          }
+        }
+      ],
+      "context": {
+        "app": "web",
+        "appVersion": "0.5.0-alpha.1",
+        "prior": "2026-09",
+        "day": "2026-10-07",
+        "id": 1791363600000
+      },
+      "answers": {
+        "yolkWord": null,
+        "white": null,
+        "probe": null
+      },
+      "record": {
+        "v": 1,
+        "uid": null,
+        "day": "2026-10-07",
+        "id": 1791363600000,
+        "app": "web",
+        "appVersion": "0.5.0-alpha.1",
+        "prior": "2026-09",
+        "model": "2026-10-e10",
+        "egg": {
+          "mass_g": 68,
+          "massFrom": "class",
+          "sizeTable": "eu"
+        },
+        "setup": {
+          "startMode": "hot",
+          "eggStart_C": 4,
+          "eggFrom": "fridge",
+          "ambient_C": 20,
+          "boiling_C": 99.99690682934772,
+          "timeToBoil_s": 480,
+          "timeToBoilFrom": "remembered",
+          "cooling": "ice",
+          "afterBoil": "hold",
+          "waterLitres": 2,
+          "eggCount": 2
+        },
+        "level": 0.41,
+        "recommended_s": 438.0419921875,
+        "nudge_s": 0,
+        "pulled_s": 442.0419921875,
+        "pulledBy": "cook",
+        "cooled_s": 190,
+        "yolk": null,
+        "yolkWord": null,
+        "white": null,
+        "probe": null,
+        "forecast": {
+          "cook_s": 438.0419921875,
+          "yolk": [
+            0.8422826712214391,
+            0.13300510522696993,
+            0.024712223551591306
+          ],
+          "white": [
+            0.12043915022116577,
+            0.37016770072656935,
+            0.509393149052265
+          ],
+          "yolkWord": [
+            0.03434361102233629,
+            0.6610203585118529,
+            0.281488884181809,
+            0.013119508300327262,
+            0.010027637983675038
+          ]
+        },
+        "lang": "en",
+        "register": "modern",
+        "units": "metric"
+      },
+      "boil": null,
+      "ending": {
+        "boil": null,
+        "finished": true
+      }
+    },
+    {
+      "note": "the grace ran out, then the owner's case: the app asks whether it is still in",
+      "posterior": "learned",
+      "eggsLogged": 3,
+      "cook": {
+        "id_ms": 1791363600000,
+        "startedAt_s": 1791363600,
+        "choices": {
+          "mass_kg": 0.068,
+          "massFrom": "class",
+          "sizeTable": "eu",
+          "eggFrom": "fridge",
+          "customStart_C": 12,
+          "room_C": null,
+          "startMode": "cold",
+          "afterBoil": "hold",
+          "cooling": "ice",
+          "waterLitres": 2,
+          "eggCount": 2,
+          "altitude_m": 0,
+          "level": 0.41
+        },
+        "events": {
+          "boilAt_s": null,
+          "pulled": {
+            "due_s": 1791364063.0568223,
+            "out_s": 1791364083.0568223,
+            "by": "timeout",
+            "confirmed": false
+          },
+          "cooledAt_s": null,
+          "rangAt_s": null
+        },
+        "nudge_s": -7,
+        "boilMemory": {
+          "2.0": 480,
+          "3.0": 610
+        },
+        "units": "metric",
+        "lang": "en",
+        "boilRemembered": true,
+        "coldSince_s": 1791364093.0568223,
+        "correctedAt_s": 1791364093.0568223
+      },
+      "leanHint_s": 1.6827989052140992,
+      "now_s": 1791364093.0568223,
+      "surface": {
+        "of": null,
+        "grid": {
+          "tauAirScale": 1,
+          "alphaMin": 1.009520895453128e-7,
+          "alphaMax": 2.776182462496102e-7,
+          "alphaCount": 7,
+          "timeMin_s": 480.3515625,
+          "timeMax_s": 980.3515625,
+          "timeCount": 26
+        },
+        "profile": null
+      },
+      "plan": {
+        "egg": {
+          "mass_kg": 0.068
+        },
+        "setup": {
+          "startMode": "cold",
+          "afterBoil": "hold",
+          "eggStart_C": 4,
+          "ambient_C": 20,
+          "boiling_C": 99.99690682934772,
+          "timeToBoil_s": 480,
+          "cooling": "ice",
+          "waterLitres": 2,
+          "eggCount": 2
+        },
+        "provisional": false,
+        "lengthened": false,
+        "inputs": {
+          "params": { "alpha_m2s": 1.6825348257552135e-7, "tauAirScale": 1 },
+          "whiteDose_min": 0.05938185524001569
+        },
+        "answer": {
+          "level": 0.41,
+          "kind": "none",
+          "snapTo": null,
+          "lowOdds": false,
+          "cookTime_s": 680.76171875
+        },
+        "level": 0.41,
+        "solution": {
+          "reachable": true,
+          "whiteSets": true,
+          "cookTime_s": 463.0568222999573,
+          "peakYolk_C": 42.27374890293496,
+          "peakYolkTime_s": 680
+        },
+        "decided": {
+          "level": 0.41,
+          "cookTime_s": 676.7600794048565,
+          "decision": {
+            "cookTime_s": 683.7600794048565,
+            "meanCookTime_s": 680.76171875,
+            "chosen": true,
+            "odds": 0.6308393990456433,
+            "oddsTenths": 6
+          },
+          "nudge_s": -7,
+          "adviceWanted": false
+        },
+        "lean_s": 2.9983606548564694,
+        "nudge_s": -7,
+        "cookTime_s": 463.0568222999573,
+        "overdue": false,
+        "askIfStillIn": true,
+        "cool_s": 217,
+        "probeMoment": true,
+        "deadlines": {
+          "cookEnd_s": 1791364063.0568223,
+          "coolEnd_s": 1791364300.0568223,
+          "provisional": false,
+          "outAt_s": null
+        },
+        "slowHobAt_s": null,
+        "certainty": {
+          "words": {
+            "asked": 2,
+            "certainty": "wildGuess",
+            "pAsked": 0.01000032276318194,
+            "pNear": 0.030008355440230283,
+            "from": 0,
+            "to": 0,
+            "pInterval": 0.9599916445383286,
+            "mostLikely": 0
+          },
+          "time": {
+            "low_s": 664.7821052719064,
+            "high_s": 702.2577979427024
+          }
+        },
+        "forecast": {
+          "cook_s": 463.0568222999573,
+          "yolk": [
+            0.9666664805523474,
+            0.01666683134272546,
+            0.016666688104927295
+          ],
+          "white": [
+            0.9666328556412062,
+            0.016699740694351005,
+            0.01666740366444295
+          ],
+          "yolkWord": [
+            0.9599916445383286,
+            0.010008023285878088,
+            0.01000032276318194,
+            0.010000009391170253,
+            0.01000000002144144
+          ]
+        }
+      },
+      "outs": [],
+      "dues": [
+        {
+          "now_s": 1791364094.0568223,
+          "events": {
+            "boilAt_s": null,
+            "pulled": {
+              "due_s": 1791364063.0568223,
+              "out_s": 1791364083.0568223,
+              "by": "timeout",
+              "confirmed": false
+            },
+            "cooledAt_s": null,
+            "rangAt_s": null
+          }
+        }
+      ],
+      "context": {
+        "app": "ios",
+        "appVersion": "0.5.0-alpha.1",
+        "prior": "2026-09",
+        "day": "2026-10-07",
+        "id": null
+      },
+      "answers": {
+        "yolkWord": "jammy",
+        "white": "firm",
+        "probe": null
+      },
+      "record": {
+        "v": 1,
+        "uid": null,
+        "day": "2026-10-07",
+        "app": "ios",
+        "appVersion": "0.5.0-alpha.1",
+        "prior": "2026-09",
+        "model": "2026-10-e10",
+        "egg": {
+          "mass_g": 68,
+          "massFrom": "class",
+          "sizeTable": "eu"
+        },
+        "setup": {
+          "startMode": "cold",
+          "eggStart_C": 4,
+          "eggFrom": "fridge",
+          "ambient_C": 20,
+          "boiling_C": 99.99690682934772,
+          "timeToBoil_s": 480,
+          "timeToBoilFrom": "measured",
+          "cooling": "ice",
+          "afterBoil": "hold",
+          "waterLitres": 2,
+          "eggCount": 2
+        },
+        "level": 0.41,
+        "recommended_s": 470.0568222999573,
+        "nudge_s": -7,
+        "pulled_s": 463.0568222999573,
+        "pulledBy": "timeout",
+        "cooled_s": 217,
+        "yolk": null,
+        "yolkWord": "jammy",
+        "white": "firm",
+        "probe": null,
+        "forecast": {
+          "cook_s": 463.0568222999573,
+          "yolk": [
+            0.9666664805523474,
+            0.01666683134272546,
+            0.016666688104927295
+          ],
+          "white": [
+            0.9666328556412062,
+            0.016699740694351005,
+            0.01666740366444295
+          ],
+          "yolkWord": [
+            0.9599916445383286,
+            0.010008023285878088,
+            0.01000032276318194,
+            0.010000009391170253,
+            0.01000000002144144
+          ]
+        },
+        "lang": "en",
+        "register": "modern",
+        "units": "metric"
+      },
+      "boil": null,
+      "ending": {
+        "boil": null,
+        "finished": false
+      }
+    },
+    {
+      "note": "still in the water: heating again",
+      "posterior": "learned",
+      "eggsLogged": 3,
+      "cook": {
+        "id_ms": 1791363600000,
+        "startedAt_s": 1791363600,
+        "choices": {
+          "mass_kg": 0.068,
+          "massFrom": "class",
+          "sizeTable": "eu",
+          "eggFrom": "fridge",
+          "customStart_C": 12,
+          "room_C": null,
+          "startMode": "cold",
+          "afterBoil": "hold",
+          "cooling": "ice",
+          "waterLitres": 2,
+          "eggCount": 2,
+          "altitude_m": 0,
+          "level": 0.41
+        },
+        "events": {
+          "boilAt_s": null,
+          "pulled": null,
+          "cooledAt_s": null,
+          "rangAt_s": null
+        },
+        "nudge_s": -7,
+        "boilMemory": {
+          "2.0": 480,
+          "3.0": 610
+        },
+        "units": "metric",
+        "lang": "en",
+        "boilRemembered": true,
+        "coldSince_s": 1791364093.0568223,
+        "correctedAt_s": 1791364096.0568223
+      },
+      "leanHint_s": 1.6827989052140992,
+      "now_s": 1791364096.0568223,
+      "surface": {
+        "of": null,
+        "grid": {
+          "tauAirScale": 1,
+          "alphaMin": 1.009520895453128e-7,
+          "alphaMax": 2.776182462496102e-7,
+          "alphaCount": 7,
+          "timeMin_s": 480.3515625,
+          "timeMax_s": 980.3515625,
+          "timeCount": 26
+        },
+        "profile": null
+      },
+      "plan": {
+        "egg": {
+          "mass_kg": 0.068
+        },
+        "setup": {
+          "startMode": "cold",
+          "afterBoil": "hold",
+          "eggStart_C": 4,
+          "ambient_C": 20,
+          "boiling_C": 99.99690682934772,
+          "timeToBoil_s": 480,
+          "cooling": "ice",
+          "waterLitres": 2,
+          "eggCount": 2
+        },
+        "provisional": true,
+        "lengthened": false,
+        "inputs": {
+          "params": { "alpha_m2s": 1.6825348257552135e-7, "tauAirScale": 1 },
+          "whiteDose_min": 0.05938185524001569
+        },
+        "answer": {
+          "level": 0.41,
+          "kind": "none",
+          "snapTo": null,
+          "lowOdds": false,
+          "cookTime_s": 680.76171875
+        },
+        "level": 0.41,
+        "solution": {
+          "reachable": true,
+          "whiteSets": true,
+          "cookTime_s": 676.7600794048565,
+          "peakYolk_C": 64.30959132294416,
+          "peakYolkTime_s": 861
+        },
+        "decided": {
+          "level": 0.41,
+          "cookTime_s": 676.7600794048565,
+          "decision": {
+            "cookTime_s": 683.7600794048565,
+            "meanCookTime_s": 680.76171875,
+            "chosen": true,
+            "odds": 0.6308393990456433,
+            "oddsTenths": 6
+          },
+          "nudge_s": -7,
+          "adviceWanted": false
+        },
+        "lean_s": 2.9983606548564694,
+        "nudge_s": -7,
+        "cookTime_s": 676.7600794048565,
+        "overdue": false,
+        "askIfStillIn": false,
+        "cool_s": 184,
+        "probeMoment": true,
+        "deadlines": {
+          "cookEnd_s": 1791364276.7600794,
+          "coolEnd_s": 1791364480.7600794,
+          "provisional": true,
+          "outAt_s": null
+        },
+        "slowHobAt_s": 1791364230.4445176,
+        "certainty": {
+          "words": {
+            "asked": 2,
+            "certainty": "ballpark",
+            "pAsked": 0.8047067173327881,
+            "pNear": 0.9713830459738587,
+            "from": 1,
+            "to": 2,
+            "pInterval": 0.9320131338939736,
+            "mostLikely": 2
+          },
+          "time": {
+            "low_s": 664.7821052719064,
+            "high_s": 702.2577979427024
+          }
+        },
+        "forecast": {
+          "cook_s": 676.7600794048565,
+          "yolk": [
+            0.2654062994528451,
+            0.6341291665713843,
+            0.10046453397577068
+          ],
+          "white": [
+            0.05373282960894505,
+            0.32963817549244007,
+            0.616628994898615
+          ],
+          "yolkWord": [
+            0.01848166671918867,
+            0.12730641656118544,
+            0.8047067173327881,
+            0.039369912079885126,
+            0.010135287306952923
+          ]
+        }
+      },
+      "outs": [],
+      "dues": [],
+      "context": {
+        "app": "web",
+        "appVersion": "0.5.0-alpha.1",
+        "prior": "2026-09",
+        "day": "2026-10-07",
+        "id": 1791363600000
+      },
+      "answers": {
+        "yolkWord": "fudgy",
+        "white": "tender",
+        "probe": {
+          "centre_C": 66.4,
+          "after_s": 180
+        }
+      },
+      "record": {
+        "v": 1,
+        "uid": null,
+        "day": "2026-10-07",
+        "id": 1791363600000,
+        "app": "web",
+        "appVersion": "0.5.0-alpha.1",
+        "prior": "2026-09",
+        "model": "2026-10-e10",
+        "egg": {
+          "mass_g": 68,
+          "massFrom": "class",
+          "sizeTable": "eu"
+        },
+        "setup": {
+          "startMode": "cold",
+          "eggStart_C": 4,
+          "eggFrom": "fridge",
+          "ambient_C": 20,
+          "boiling_C": 99.99690682934772,
+          "timeToBoil_s": 480,
+          "timeToBoilFrom": "measured",
+          "cooling": "ice",
+          "afterBoil": "hold",
+          "waterLitres": 2,
+          "eggCount": 2
+        },
+        "level": 0.41,
+        "recommended_s": 683.7600794048565,
+        "nudge_s": -7,
+        "pulled_s": 676.7600794048565,
+        "pulledBy": "timeout",
+        "cooled_s": 184,
+        "yolk": null,
+        "yolkWord": "fudgy",
+        "white": "tender",
+        "probe": {
+          "centre_C": 66.4,
+          "after_s": 180
+        },
+        "forecast": {
+          "cook_s": 676.7600794048565,
+          "yolk": [
+            0.2654062994528451,
+            0.6341291665713843,
+            0.10046453397577068
+          ],
+          "white": [
+            0.05373282960894505,
+            0.32963817549244007,
+            0.616628994898615
+          ],
+          "yolkWord": [
+            0.01848166671918867,
+            0.12730641656118544,
+            0.8047067173327881,
+            0.039369912079885126,
+            0.010135287306952923
+          ]
+        },
+        "lang": "en",
+        "register": "modern",
+        "units": "metric"
+      },
+      "boil": null,
+      "ending": {
+        "boil": null,
+        "finished": false
+      }
+    },
+    {
+      "note": "out when the clock said: the pull stands, corrected to cold",
+      "posterior": "learned",
+      "eggsLogged": 3,
+      "cook": {
+        "id_ms": 1791363600000,
+        "startedAt_s": 1791363600,
+        "choices": {
+          "mass_kg": 0.068,
+          "massFrom": "class",
+          "sizeTable": "eu",
+          "eggFrom": "fridge",
+          "customStart_C": 12,
+          "room_C": null,
+          "startMode": "cold",
+          "afterBoil": "hold",
+          "cooling": "ice",
+          "waterLitres": 2,
+          "eggCount": 2,
+          "altitude_m": 0,
+          "level": 0.41
+        },
+        "events": {
+          "boilAt_s": null,
+          "pulled": {
+            "due_s": 1791364063.0568223,
+            "out_s": 1791364083.0568223,
+            "by": "timeout",
+            "confirmed": true
+          },
+          "cooledAt_s": null,
+          "rangAt_s": null
+        },
+        "nudge_s": -7,
+        "boilMemory": {
+          "2.0": 480,
+          "3.0": 610
+        },
+        "units": "metric",
+        "lang": "en",
+        "boilRemembered": true,
+        "coldSince_s": 1791364093.0568223,
+        "correctedAt_s": 1791364093.0568223
+      },
+      "leanHint_s": 1.6827989052140992,
+      "now_s": 1791364096.0568223,
+      "surface": {
+        "of": null,
+        "grid": {
+          "tauAirScale": 1,
+          "alphaMin": 1.009520895453128e-7,
+          "alphaMax": 2.776182462496102e-7,
+          "alphaCount": 7,
+          "timeMin_s": 480.3515625,
+          "timeMax_s": 980.3515625,
+          "timeCount": 26
+        },
+        "profile": null
+      },
+      "plan": {
+        "egg": {
+          "mass_kg": 0.068
+        },
+        "setup": {
+          "startMode": "cold",
+          "afterBoil": "hold",
+          "eggStart_C": 4,
+          "ambient_C": 20,
+          "boiling_C": 99.99690682934772,
+          "timeToBoil_s": 480,
+          "cooling": "ice",
+          "waterLitres": 2,
+          "eggCount": 2
+        },
+        "provisional": false,
+        "lengthened": false,
+        "inputs": {
+          "params": { "alpha_m2s": 1.6825348257552135e-7, "tauAirScale": 1 },
+          "whiteDose_min": 0.05938185524001569
+        },
+        "answer": {
+          "level": 0.41,
+          "kind": "none",
+          "snapTo": null,
+          "lowOdds": false,
+          "cookTime_s": 680.76171875
+        },
+        "level": 0.41,
+        "solution": {
+          "reachable": true,
+          "whiteSets": true,
+          "cookTime_s": 463.0568222999573,
+          "peakYolk_C": 42.27374890293496,
+          "peakYolkTime_s": 680
+        },
+        "decided": {
+          "level": 0.41,
+          "cookTime_s": 676.7600794048565,
+          "decision": {
+            "cookTime_s": 683.7600794048565,
+            "meanCookTime_s": 680.76171875,
+            "chosen": true,
+            "odds": 0.6308393990456433,
+            "oddsTenths": 6
+          },
+          "nudge_s": -7,
+          "adviceWanted": false
+        },
+        "lean_s": 2.9983606548564694,
+        "nudge_s": -7,
+        "cookTime_s": 463.0568222999573,
+        "overdue": false,
+        "askIfStillIn": false,
+        "cool_s": 217,
+        "probeMoment": true,
+        "deadlines": {
+          "cookEnd_s": 1791364063.0568223,
+          "coolEnd_s": 1791364300.0568223,
+          "provisional": false,
+          "outAt_s": null
+        },
+        "slowHobAt_s": null,
+        "certainty": {
+          "words": {
+            "asked": 2,
+            "certainty": "wildGuess",
+            "pAsked": 0.01000032276318194,
+            "pNear": 0.030008355440230283,
+            "from": 0,
+            "to": 0,
+            "pInterval": 0.9599916445383286,
+            "mostLikely": 0
+          },
+          "time": {
+            "low_s": 664.7821052719064,
+            "high_s": 702.2577979427024
+          }
+        },
+        "forecast": {
+          "cook_s": 463.0568222999573,
+          "yolk": [
+            0.9666664805523474,
+            0.01666683134272546,
+            0.016666688104927295
+          ],
+          "white": [
+            0.9666328556412062,
+            0.016699740694351005,
+            0.01666740366444295
+          ],
+          "yolkWord": [
+            0.9599916445383286,
+            0.010008023285878088,
+            0.01000032276318194,
+            0.010000009391170253,
+            0.01000000002144144
+          ]
+        }
+      },
+      "outs": [],
+      "dues": [],
+      "context": {
+        "app": "ios",
+        "appVersion": "0.5.0-alpha.1",
+        "prior": "2026-09",
+        "day": "2026-10-07",
+        "id": null
+      },
+      "answers": {
+        "yolkWord": null,
+        "white": null,
+        "probe": null
+      },
+      "record": {
+        "v": 1,
+        "uid": null,
+        "day": "2026-10-07",
+        "app": "ios",
+        "appVersion": "0.5.0-alpha.1",
+        "prior": "2026-09",
+        "model": "2026-10-e10",
+        "egg": {
+          "mass_g": 68,
+          "massFrom": "class",
+          "sizeTable": "eu"
+        },
+        "setup": {
+          "startMode": "cold",
+          "eggStart_C": 4,
+          "eggFrom": "fridge",
+          "ambient_C": 20,
+          "boiling_C": 99.99690682934772,
+          "timeToBoil_s": 480,
+          "timeToBoilFrom": "measured",
+          "cooling": "ice",
+          "afterBoil": "hold",
+          "waterLitres": 2,
+          "eggCount": 2
+        },
+        "level": 0.41,
+        "recommended_s": 470.0568222999573,
+        "nudge_s": -7,
+        "pulled_s": 463.0568222999573,
+        "pulledBy": "timeout",
+        "cooled_s": 217,
+        "yolk": null,
+        "yolkWord": null,
+        "white": null,
+        "probe": null,
+        "forecast": {
+          "cook_s": 463.0568222999573,
+          "yolk": [
+            0.9666664805523474,
+            0.01666683134272546,
+            0.016666688104927295
+          ],
+          "white": [
+            0.9666328556412062,
+            0.016699740694351005,
+            0.01666740366444295
+          ],
+          "yolkWord": [
+            0.9599916445383286,
+            0.010008023285878088,
+            0.01000032276318194,
+            0.010000009391170253,
+            0.01000000002144144
+          ]
+        },
+        "lang": "en",
+        "register": "modern",
+        "units": "metric"
+      },
+      "boil": null,
+      "ending": {
+        "boil": null,
+        "finished": false
+      }
+    },
+    {
+      "note": "the grace ran out, then a heavier egg: the app asks",
+      "posterior": "learned",
+      "eggsLogged": 3,
+      "cook": {
+        "id_ms": 1791363600000,
+        "startedAt_s": 1791363600,
+        "choices": {
+          "mass_kg": 0.076,
+          "massFrom": "class",
+          "sizeTable": "eu",
+          "eggFrom": "fridge",
+          "customStart_C": 12,
+          "room_C": null,
+          "startMode": "hot",
+          "afterBoil": "hold",
+          "cooling": "ice",
+          "waterLitres": 2,
+          "eggCount": 2,
+          "altitude_m": 0,
+          "level": 0.41
+        },
+        "events": {
+          "boilAt_s": null,
+          "pulled": {
+            "due_s": 1791364063.0568223,
+            "out_s": 1791364083.0568223,
+            "by": "timeout",
+            "confirmed": false
+          },
+          "cooledAt_s": null,
+          "rangAt_s": null
+        },
+        "nudge_s": -7,
+        "boilMemory": {
+          "2.0": 480,
+          "3.0": 610
+        },
+        "units": "metric",
+        "lang": "en",
+        "boilRemembered": true,
+        "coldSince_s": null,
+        "correctedAt_s": 1791364093.0568223
+      },
+      "leanHint_s": 1.6827989052140992,
+      "now_s": 1791364093.0568223,
+      "surface": {
+        "of": null,
+        "grid": {
+          "tauAirScale": 1,
+          "alphaMin": 1.009520895453128e-7,
+          "alphaMax": 2.776182462496102e-7,
+          "alphaCount": 7,
+          "timeMin_s": 281.07421875,
+          "timeMax_s": 821.07421875,
+          "timeCount": 28
+        },
+        "profile": null
+      },
+      "plan": {
+        "egg": {
+          "mass_kg": 0.076
+        },
+        "setup": {
+          "startMode": "hot",
+          "afterBoil": "hold",
+          "eggStart_C": 4,
+          "ambient_C": 20,
+          "boiling_C": 99.99690682934772,
+          "timeToBoil_s": 480,
+          "cooling": "ice",
+          "waterLitres": 2,
+          "eggCount": 2
+        },
+        "provisional": false,
+        "lengthened": false,
+        "inputs": {
+          "params": { "alpha_m2s": 1.6825348257552135e-7, "tauAirScale": 1 },
+          "whiteDose_min": 0.05938185524001569
+        },
+        "answer": {
+          "level": 0.41,
+          "kind": "none",
+          "snapTo": null,
+          "lowOdds": false,
+          "cookTime_s": 503.3349609375
+        },
+        "level": 0.41,
+        "solution": {
+          "reachable": true,
+          "whiteSets": true,
+          "cookTime_s": 463.0568222999573,
+          "peakYolk_C": 61.18933904573902,
+          "peakYolkTime_s": 669.5
+        },
+        "decided": {
+          "level": 0.41,
+          "cookTime_s": 497.6026451823153,
+          "decision": {
+            "cookTime_s": 504.6026451823153,
+            "meanCookTime_s": 503.3349609375,
+            "chosen": true,
+            "odds": 0.6246475630937467,
+            "oddsTenths": 6
+          },
+          "nudge_s": -7,
+          "adviceWanted": false
+        },
+        "lean_s": 1.2676842448153138,
+        "nudge_s": -7,
+        "cookTime_s": 463.0568222999573,
+        "overdue": false,
+        "askIfStillIn": true,
+        "cool_s": 206,
+        "probeMoment": true,
+        "deadlines": {
+          "cookEnd_s": 1791364063.0568223,
+          "coolEnd_s": 1791364289.0568223,
+          "provisional": false,
+          "outAt_s": null
+        },
+        "slowHobAt_s": null,
+        "certainty": {
+          "words": {
+            "asked": 2,
+            "certainty": "ballpark",
+            "pAsked": 0.14892845749395225,
+            "pNear": 0.9431841313383945,
+            "from": 1,
+            "to": 2,
+            "pInterval": 0.9314594583310216,
+            "mostLikely": 1
+          },
+          "time": {
+            "low_s": 485.000427865607,
+            "high_s": 526.5761096667029
+          }
+        },
+        "forecast": {
+          "cook_s": 463.0568222999573,
+          "yolk": [
+            0.906897071693939,
+            0.07213487109401655,
+            0.020968057212045244
+          ],
+          "white": [
+            0.15097634919609565,
+            0.3724153523480889,
+            0.4766082984558158
+          ],
+          "yolkWord": [
+            0.04679747659423746,
+            0.7825310008370694,
+            0.14892845749395225,
+            0.01172467300737295,
+            0.010018392067368001
+          ]
+        }
+      },
+      "outs": [],
+      "dues": [],
+      "context": {
+        "app": "web",
+        "appVersion": "0.5.0-alpha.1",
+        "prior": "2026-09",
+        "day": "2026-10-07",
+        "id": 1791363600000
+      },
+      "answers": {
+        "yolkWord": "jammy",
+        "white": "firm",
+        "probe": null
+      },
+      "record": {
+        "v": 1,
+        "uid": null,
+        "day": "2026-10-07",
+        "id": 1791363600000,
+        "app": "web",
+        "appVersion": "0.5.0-alpha.1",
+        "prior": "2026-09",
+        "model": "2026-10-e10",
+        "egg": {
+          "mass_g": 76,
+          "massFrom": "class",
+          "sizeTable": "eu"
+        },
+        "setup": {
+          "startMode": "hot",
+          "eggStart_C": 4,
+          "eggFrom": "fridge",
+          "ambient_C": 20,
+          "boiling_C": 99.99690682934772,
+          "timeToBoil_s": 480,
+          "timeToBoilFrom": "remembered",
+          "cooling": "ice",
+          "afterBoil": "hold",
+          "waterLitres": 2,
+          "eggCount": 2
+        },
+        "level": 0.41,
+        "recommended_s": 470.0568222999573,
+        "nudge_s": -7,
+        "pulled_s": 463.0568222999573,
+        "pulledBy": "timeout",
+        "cooled_s": 206,
+        "yolk": null,
+        "yolkWord": "jammy",
+        "white": "firm",
+        "probe": null,
+        "forecast": {
+          "cook_s": 463.0568222999573,
+          "yolk": [
+            0.906897071693939,
+            0.07213487109401655,
+            0.020968057212045244
+          ],
+          "white": [
+            0.15097634919609565,
+            0.3724153523480889,
+            0.4766082984558158
+          ],
+          "yolkWord": [
+            0.04679747659423746,
+            0.7825310008370694,
+            0.14892845749395225,
+            0.01172467300737295,
+            0.010018392067368001
+          ]
+        },
+        "lang": "en",
+        "register": "modern",
+        "units": "metric"
+      },
+      "boil": null,
+      "ending": {
+        "boil": null,
+        "finished": false
+      }
+    },
+    {
+      "note": "still in, the heavier egg: its pull later",
+      "posterior": "learned",
+      "eggsLogged": 3,
+      "cook": {
+        "id_ms": 1791363600000,
+        "startedAt_s": 1791363600,
+        "choices": {
+          "mass_kg": 0.076,
+          "massFrom": "class",
+          "sizeTable": "eu",
+          "eggFrom": "fridge",
+          "customStart_C": 12,
+          "room_C": null,
+          "startMode": "hot",
+          "afterBoil": "hold",
+          "cooling": "ice",
+          "waterLitres": 2,
+          "eggCount": 2,
+          "altitude_m": 0,
+          "level": 0.41
+        },
+        "events": {
+          "boilAt_s": null,
+          "pulled": null,
+          "cooledAt_s": null,
+          "rangAt_s": null
+        },
+        "nudge_s": -7,
+        "boilMemory": {
+          "2.0": 480,
+          "3.0": 610
+        },
+        "units": "metric",
+        "lang": "en",
+        "boilRemembered": true,
+        "coldSince_s": null,
+        "correctedAt_s": 1791364096.0568223
+      },
+      "leanHint_s": 1.6827989052140992,
+      "now_s": 1791364096.0568223,
+      "surface": {
+        "of": null,
+        "grid": {
+          "tauAirScale": 1,
+          "alphaMin": 1.009520895453128e-7,
+          "alphaMax": 2.776182462496102e-7,
+          "alphaCount": 7,
+          "timeMin_s": 281.07421875,
+          "timeMax_s": 821.07421875,
+          "timeCount": 28
+        },
+        "profile": null
+      },
+      "plan": {
+        "egg": {
+          "mass_kg": 0.076
+        },
+        "setup": {
+          "startMode": "hot",
+          "afterBoil": "hold",
+          "eggStart_C": 4,
+          "ambient_C": 20,
+          "boiling_C": 99.99690682934772,
+          "timeToBoil_s": 480,
+          "cooling": "ice",
+          "waterLitres": 2,
+          "eggCount": 2
+        },
+        "provisional": false,
+        "lengthened": false,
+        "inputs": {
+          "params": { "alpha_m2s": 1.6825348257552135e-7, "tauAirScale": 1 },
+          "whiteDose_min": 0.05938185524001569
+        },
+        "answer": {
+          "level": 0.41,
+          "kind": "none",
+          "snapTo": null,
+          "lowOdds": false,
+          "cookTime_s": 503.3349609375
+        },
+        "level": 0.41,
+        "solution": {
+          "reachable": true,
+          "whiteSets": true,
+          "cookTime_s": 497.6026451823153,
+          "peakYolk_C": 64.10012274894191,
+          "peakYolkTime_s": 698
+        },
+        "decided": {
+          "level": 0.41,
+          "cookTime_s": 497.6026451823153,
+          "decision": {
+            "cookTime_s": 504.6026451823153,
+            "meanCookTime_s": 503.3349609375,
+            "chosen": true,
+            "odds": 0.6246475630937467,
+            "oddsTenths": 6
+          },
+          "nudge_s": -7,
+          "adviceWanted": false
+        },
+        "lean_s": 1.2676842448153138,
+        "nudge_s": -7,
+        "cookTime_s": 497.6026451823153,
+        "overdue": false,
+        "askIfStillIn": false,
+        "cool_s": 200,
+        "probeMoment": true,
+        "deadlines": {
+          "cookEnd_s": 1791364097.6026452,
+          "coolEnd_s": 1791364317.6026452,
+          "provisional": false,
+          "outAt_s": null
+        },
+        "slowHobAt_s": null,
+        "certainty": {
+          "words": {
+            "asked": 2,
+            "certainty": "ballpark",
+            "pAsked": 0.7888198509519482,
+            "pNear": 0.9707159621631668,
+            "from": 1,
+            "to": 2,
+            "pInterval": 0.9310190629631716,
+            "mostLikely": 2
+          },
+          "time": {
+            "low_s": 485.000427865607,
+            "high_s": 526.5761096667029
+          }
+        },
+        "forecast": {
+          "cook_s": 497.6026451823153,
+          "yolk": [
+            0.29078922155802395,
+            0.6093242043101635,
+            0.0998865741318128
+          ],
+          "white": [
+            0.03536302968795731,
+            0.28093125857326,
+            0.6837057117387829
+          ],
+          "yolkWord": [
+            0.019163977041757714,
+            0.14219921201122346,
+            0.7888198509519482,
+            0.03969689919999523,
+            0.010120060795075596
+          ]
+        }
+      },
+      "outs": [],
+      "dues": [
+        {
+          "now_s": 1791364097.0568223,
+          "events": {
+            "boilAt_s": null,
+            "pulled": null,
+            "cooledAt_s": null,
+            "rangAt_s": null
+          }
+        }
+      ],
+      "context": {
+        "app": "ios",
+        "appVersion": "0.5.0-alpha.1",
+        "prior": "2026-09",
+        "day": "2026-10-07",
+        "id": null
+      },
+      "answers": {
+        "yolkWord": "fudgy",
+        "white": "tender",
+        "probe": {
+          "centre_C": 66.4,
+          "after_s": 180
+        }
+      },
+      "record": {
+        "v": 1,
+        "uid": null,
+        "day": "2026-10-07",
+        "app": "ios",
+        "appVersion": "0.5.0-alpha.1",
+        "prior": "2026-09",
+        "model": "2026-10-e10",
+        "egg": {
+          "mass_g": 76,
+          "massFrom": "class",
+          "sizeTable": "eu"
+        },
+        "setup": {
+          "startMode": "hot",
+          "eggStart_C": 4,
+          "eggFrom": "fridge",
+          "ambient_C": 20,
+          "boiling_C": 99.99690682934772,
+          "timeToBoil_s": 480,
+          "timeToBoilFrom": "remembered",
+          "cooling": "ice",
+          "afterBoil": "hold",
+          "waterLitres": 2,
+          "eggCount": 2
+        },
+        "level": 0.41,
+        "recommended_s": 504.6026451823153,
+        "nudge_s": -7,
+        "pulled_s": 497.6026451823153,
+        "pulledBy": "timeout",
+        "cooled_s": 200,
+        "yolk": null,
+        "yolkWord": "fudgy",
+        "white": "tender",
+        "probe": {
+          "centre_C": 66.4,
+          "after_s": 180
+        },
+        "forecast": {
+          "cook_s": 497.6026451823153,
+          "yolk": [
+            0.29078922155802395,
+            0.6093242043101635,
+            0.0998865741318128
+          ],
+          "white": [
+            0.03536302968795731,
+            0.28093125857326,
+            0.6837057117387829
+          ],
+          "yolkWord": [
+            0.019163977041757714,
+            0.14219921201122346,
+            0.7888198509519482,
+            0.03969689919999523,
+            0.010120060795075596
+          ]
+        },
+        "lang": "en",
+        "register": "modern",
+        "units": "metric"
+      },
+      "boil": null,
+      "ending": {
+        "boil": null,
+        "finished": false
+      }
+    },
+    {
+      "note": "the grace ran out, then a lighter egg: nothing asked",
+      "posterior": "learned",
+      "eggsLogged": 3,
+      "cook": {
+        "id_ms": 1791363600000,
+        "startedAt_s": 1791363600,
+        "choices": {
+          "mass_kg": 0.048,
+          "massFrom": "class",
+          "sizeTable": "eu",
+          "eggFrom": "fridge",
+          "customStart_C": 12,
+          "room_C": null,
+          "startMode": "hot",
+          "afterBoil": "hold",
+          "cooling": "ice",
+          "waterLitres": 2,
+          "eggCount": 2,
+          "altitude_m": 0,
+          "level": 0.41
+        },
+        "events": {
+          "boilAt_s": null,
+          "pulled": {
+            "due_s": 1791364063.0568223,
+            "out_s": 1791364083.0568223,
+            "by": "timeout",
+            "confirmed": false
+          },
+          "cooledAt_s": null,
+          "rangAt_s": null
+        },
+        "nudge_s": -7,
+        "boilMemory": {
+          "2.0": 480,
+          "3.0": 610
+        },
+        "units": "metric",
+        "lang": "en",
+        "boilRemembered": true,
+        "coldSince_s": null,
+        "correctedAt_s": 1791364093.0568223
+      },
+      "leanHint_s": 1.6827989052140992,
+      "now_s": 1791364093.0568223,
+      "surface": {
+        "of": null,
+        "grid": {
+          "tauAirScale": 1,
+          "alphaMin": 1.009520895453128e-7,
+          "alphaMax": 2.776182462496102e-7,
+          "alphaCount": 7,
+          "timeMin_s": 181.435546875,
+          "timeMax_s": 641.435546875,
+          "timeCount": 24
+        },
+        "profile": null
+      },
+      "plan": {
+        "egg": {
+          "mass_kg": 0.048
+        },
+        "setup": {
+          "startMode": "hot",
+          "afterBoil": "hold",
+          "eggStart_C": 4,
+          "ambient_C": 20,
+          "boiling_C": 99.99690682934772,
+          "timeToBoil_s": 480,
+          "cooling": "ice",
+          "waterLitres": 2,
+          "eggCount": 2
+        },
+        "provisional": false,
+        "lengthened": false,
+        "inputs": {
+          "params": { "alpha_m2s": 1.6825348257552135e-7, "tauAirScale": 1 },
+          "whiteDose_min": 0.05938185524001569
+        },
+        "answer": {
+          "level": 0.41,
+          "kind": "none",
+          "snapTo": null,
+          "lowOdds": false,
+          "cookTime_s": 374.853515625
+        },
+        "level": 0.41,
+        "solution": {
+          "reachable": true,
+          "whiteSets": true,
+          "cookTime_s": 463.0568222999573,
+          "peakYolk_C": 73.57765314025603,
+          "peakYolkTime_s": 596.5
+        },
+        "decided": {
+          "level": 0.41,
+          "cookTime_s": 369.3908696003175,
+          "decision": {
+            "cookTime_s": 376.3908696003175,
+            "meanCookTime_s": 374.853515625,
+            "chosen": true,
+            "odds": 0.6212952521079707,
+            "oddsTenths": 6
+          },
+          "nudge_s": -7,
+          "adviceWanted": false
+        },
+        "lean_s": 1.537353975317501,
+        "nudge_s": -7,
+        "cookTime_s": 463.0568222999573,
+        "overdue": false,
+        "askIfStillIn": false,
+        "cool_s": 133,
+        "probeMoment": true,
+        "deadlines": {
+          "cookEnd_s": 1791364063.0568223,
+          "coolEnd_s": 1791364216.0568223,
+          "provisional": false,
+          "outAt_s": null
+        },
+        "slowHobAt_s": null,
+        "certainty": {
+          "words": {
+            "asked": 2,
+            "certainty": "wildGuess",
+            "pAsked": 0.0167797405336926,
+            "pNear": 0.5685864974000694,
+            "from": 3,
+            "to": 4,
+            "pInterval": 0.9615431170803561,
+            "mostLikely": 3
+          },
+          "time": {
+            "low_s": 361.2581809083258,
+            "high_s": 392.4498790992675
+          }
+        },
+        "forecast": {
+          "cook_s": 463.0568222999573,
+          "yolk": [
+            0.018903323822572437,
+            0.020371203281085094,
+            0.9607254728963426
+          ],
+          "white": [
+            0.0170701487152757,
+            0.02025235394489028,
+            0.962677497339834
+          ],
+          "yolkWord": [
+            0.010223003270791209,
+            0.011454139115160276,
+            0.0167797405336926,
+            0.5403526177512166,
+            0.4211904993291395
+          ]
+        }
+      },
+      "outs": [],
+      "dues": [],
+      "context": {
+        "app": "web",
+        "appVersion": "0.5.0-alpha.1",
+        "prior": "2026-09",
+        "day": "2026-10-07",
+        "id": 1791363600000
+      },
+      "answers": {
+        "yolkWord": null,
+        "white": null,
+        "probe": null
+      },
+      "record": {
+        "v": 1,
+        "uid": null,
+        "day": "2026-10-07",
+        "id": 1791363600000,
+        "app": "web",
+        "appVersion": "0.5.0-alpha.1",
+        "prior": "2026-09",
+        "model": "2026-10-e10",
+        "egg": {
+          "mass_g": 48,
+          "massFrom": "class",
+          "sizeTable": "eu"
+        },
+        "setup": {
+          "startMode": "hot",
+          "eggStart_C": 4,
+          "eggFrom": "fridge",
+          "ambient_C": 20,
+          "boiling_C": 99.99690682934772,
+          "timeToBoil_s": 480,
+          "timeToBoilFrom": "remembered",
+          "cooling": "ice",
+          "afterBoil": "hold",
+          "waterLitres": 2,
+          "eggCount": 2
+        },
+        "level": 0.41,
+        "recommended_s": 470.0568222999573,
+        "nudge_s": -7,
+        "pulled_s": 463.0568222999573,
+        "pulledBy": "timeout",
+        "cooled_s": 133,
+        "yolk": null,
+        "yolkWord": null,
+        "white": null,
+        "probe": null,
+        "forecast": {
+          "cook_s": 463.0568222999573,
+          "yolk": [
+            0.018903323822572437,
+            0.020371203281085094,
+            0.9607254728963426
+          ],
+          "white": [
+            0.0170701487152757,
+            0.02025235394489028,
+            0.962677497339834
+          ],
+          "yolkWord": [
+            0.010223003270791209,
+            0.011454139115160276,
+            0.0167797405336926,
+            0.5403526177512166,
+            0.4211904993291395
+          ]
+        },
+        "lang": "en",
+        "register": "modern",
+        "units": "metric"
+      },
+      "boil": null,
+      "ending": {
+        "boil": null,
+        "finished": false
+      }
+    },
+    {
+      "note": "hot, the interim plan, before its surface",
+      "posterior": "learned",
+      "eggsLogged": 3,
+      "cook": {
+        "id_ms": 1791363600000,
+        "startedAt_s": 1791363600,
+        "choices": {
+          "mass_kg": 0.068,
+          "massFrom": "class",
+          "sizeTable": "eu",
+          "eggFrom": "fridge",
+          "customStart_C": 12,
+          "room_C": null,
+          "startMode": "hot",
+          "afterBoil": "hold",
+          "cooling": "ice",
+          "waterLitres": 2,
+          "eggCount": 2,
+          "altitude_m": 0,
+          "level": 0.41
+        },
+        "events": {
+          "boilAt_s": null,
+          "pulled": null,
+          "cooledAt_s": null,
+          "rangAt_s": null
+        },
+        "nudge_s": -7,
+        "boilMemory": {
+          "2.0": 480,
+          "3.0": 610
+        },
+        "units": "metric",
+        "lang": "en",
+        "boilRemembered": true,
+        "coldSince_s": null,
+        "correctedAt_s": null
+      },
+      "leanHint_s": 0,
+      "now_s": 1791363601,
+      "surface": null,
+      "plan": {
+        "egg": {
+          "mass_kg": 0.068
+        },
+        "setup": {
+          "startMode": "hot",
+          "afterBoil": "hold",
+          "eggStart_C": 4,
+          "ambient_C": 20,
+          "boiling_C": 99.99690682934772,
+          "timeToBoil_s": 480,
+          "cooling": "ice",
+          "waterLitres": 2,
+          "eggCount": 2
+        },
+        "provisional": false,
+        "lengthened": false,
+        "inputs": {
+          "params": { "alpha_m2s": 1.6825348257552135e-7, "tauAirScale": 1 },
+          "whiteDose_min": 0.05938185524001569
+        },
+        "answer": {
+          "level": 0.41,
+          "kind": "none",
+          "snapTo": null,
+          "lowOdds": false,
+          "cookTime_s": 468.3740234375
+        },
+        "level": 0.41,
+        "solution": {
+          "reachable": true,
+          "whiteSets": true,
+          "cookTime_s": 461.3740234375,
+          "peakYolk_C": 64.07193617268209,
+          "peakYolkTime_s": 647.5
+        },
+        "decided": null,
+        "lean_s": 0,
+        "nudge_s": -7,
+        "cookTime_s": 461.3740234375,
+        "overdue": false,
+        "askIfStillIn": false,
+        "cool_s": 186,
+        "probeMoment": true,
+        "deadlines": {
+          "cookEnd_s": 1791364061.3740234,
+          "coolEnd_s": 1791364267.3740234,
+          "provisional": false,
+          "outAt_s": null
+        },
+        "slowHobAt_s": null,
+        "certainty": null,
+        "forecast": null
+      },
+      "outs": [],
+      "dues": [],
+      "context": {
+        "app": "ios",
+        "appVersion": "0.5.0-alpha.1",
+        "prior": "2026-09",
+        "day": "2026-10-07",
+        "id": null
+      },
+      "answers": {
+        "yolkWord": "jammy",
+        "white": "firm",
+        "probe": null
+      },
+      "record": {
+        "v": 1,
+        "uid": null,
+        "day": "2026-10-07",
+        "app": "ios",
+        "appVersion": "0.5.0-alpha.1",
+        "prior": "2026-09",
+        "model": "2026-10-e10",
+        "egg": {
+          "mass_g": 68,
+          "massFrom": "class",
+          "sizeTable": "eu"
+        },
+        "setup": {
+          "startMode": "hot",
+          "eggStart_C": 4,
+          "eggFrom": "fridge",
+          "ambient_C": 20,
+          "boiling_C": 99.99690682934772,
+          "timeToBoil_s": 480,
+          "timeToBoilFrom": "remembered",
+          "cooling": "ice",
+          "afterBoil": "hold",
+          "waterLitres": 2,
+          "eggCount": 2
+        },
+        "level": 0.41,
+        "recommended_s": 468.3740234375,
+        "nudge_s": -7,
+        "pulled_s": 461.3740234375,
+        "pulledBy": "timeout",
+        "cooled_s": 186,
+        "yolk": null,
+        "yolkWord": "jammy",
+        "white": "firm",
+        "probe": null,
+        "forecast": null,
+        "lang": "en",
+        "register": "modern",
+        "units": "metric"
+      },
+      "boil": null,
+      "ending": {
+        "boil": null,
+        "finished": false
+      }
+    },
+    {
+      "note": "the pull rang on the interim plan, then its surface landed: the pull held",
+      "posterior": "learned",
+      "eggsLogged": 3,
+      "cook": {
+        "id_ms": 1791363600000,
+        "startedAt_s": 1791363600,
+        "choices": {
+          "mass_kg": 0.068,
+          "massFrom": "class",
+          "sizeTable": "eu",
+          "eggFrom": "fridge",
+          "customStart_C": 12,
+          "room_C": null,
+          "startMode": "hot",
+          "afterBoil": "hold",
+          "cooling": "ice",
+          "waterLitres": 2,
+          "eggCount": 2,
+          "altitude_m": 0,
+          "level": 0.41
+        },
+        "events": {
+          "boilAt_s": null,
+          "pulled": null,
+          "cooledAt_s": null,
+          "rangAt_s": 1791364061.3740234
+        },
+        "nudge_s": -7,
+        "boilMemory": {
+          "2.0": 480,
+          "3.0": 610
+        },
+        "units": "metric",
+        "lang": "en",
+        "boilRemembered": true,
+        "coldSince_s": null,
+        "correctedAt_s": null
+      },
+      "leanHint_s": 0,
+      "now_s": 1791364064.3740234,
+      "surface": {
+        "of": null,
+        "grid": {
+          "tauAirScale": 1,
+          "alphaMin": 1.009520895453128e-7,
+          "alphaMax": 2.776182462496102e-7,
+          "alphaCount": 7,
+          "timeMin_s": 253.9794921875,
+          "timeMax_s": 773.9794921875,
+          "timeCount": 27
+        },
+        "profile": null
+      },
+      "plan": {
+        "egg": {
+          "mass_kg": 0.068
+        },
+        "setup": {
+          "startMode": "hot",
+          "afterBoil": "hold",
+          "eggStart_C": 4,
+          "ambient_C": 20,
+          "boiling_C": 99.99690682934772,
+          "timeToBoil_s": 480,
+          "cooling": "ice",
+          "waterLitres": 2,
+          "eggCount": 2
+        },
+        "provisional": false,
+        "lengthened": false,
+        "inputs": {
+          "params": { "alpha_m2s": 1.6825348257552135e-7, "tauAirScale": 1 },
+          "whiteDose_min": 0.05938185524001569
+        },
+        "answer": {
+          "level": 0.41,
+          "kind": "none",
+          "snapTo": null,
+          "lowOdds": false,
+          "cookTime_s": 468.3740234375
+        },
+        "level": 0.41,
+        "solution": {
+          "reachable": true,
+          "whiteSets": true,
+          "cookTime_s": 461.3740234375,
+          "peakYolk_C": 64.07193617268209,
+          "peakYolkTime_s": 647.5
+        },
+        "decided": {
+          "level": 0.41,
+          "cookTime_s": 463.0568223427141,
+          "decision": {
+            "cookTime_s": 470.0568223427141,
+            "meanCookTime_s": 468.3740234375,
+            "chosen": true,
+            "odds": 0.6239611571441052,
+            "oddsTenths": 6
+          },
+          "nudge_s": -7,
+          "adviceWanted": false
+        },
+        "lean_s": 1.6827989052140992,
+        "nudge_s": -7,
+        "cookTime_s": 461.3740234375,
+        "overdue": false,
+        "askIfStillIn": false,
+        "cool_s": 186,
+        "probeMoment": true,
+        "deadlines": {
+          "cookEnd_s": 1791364061.3740234,
+          "coolEnd_s": 1791364267.3740234,
+          "provisional": false,
+          "outAt_s": null
+        },
+        "slowHobAt_s": null,
+        "certainty": {
+          "words": {
+            "asked": 2,
+            "certainty": "ballpark",
+            "pAsked": 0.7675213235113922,
+            "pNear": 0.9700818551331506,
+            "from": 1,
+            "to": 2,
+            "pInterval": 0.9352935628175824,
+            "mostLikely": 2
+          },
+          "time": {
+            "low_s": 451.64960463493117,
+            "high_s": 490.40205774495917
+          }
+        },
+        "forecast": {
+          "cook_s": 461.3740234375,
+          "yolk": [
+            0.3342261618782387,
+            0.5817023382561948,
+            0.08407149986556689
+          ],
+          "white": [
+            0.04052015278886839,
+            0.29780468364240426,
+            0.6616751635687277
+          ],
+          "yolkWord": [
+            0.01981169970407416,
+            0.1677722393061901,
+            0.7675213235113922,
+            0.03478829231556821,
+            0.01010644516277601
+          ]
+        }
+      },
+      "outs": [
+        {
+          "now_s": 1791364065.3740234,
+          "events": {
+            "boilAt_s": null,
+            "pulled": {
+              "due_s": 1791364061.3740234,
+              "out_s": 1791364065.3740234,
+              "by": "cook",
+              "confirmed": true
+            },
+            "cooledAt_s": null,
+            "rangAt_s": 1791364061.3740234
+          }
+        }
+      ],
+      "dues": [
+        {
+          "now_s": 1791364066.3740234,
+          "events": {
+            "boilAt_s": null,
+            "pulled": null,
+            "cooledAt_s": null,
+            "rangAt_s": 1791364061.3740234
+          }
+        },
+        {
+          "now_s": 1791364081.3740234,
+          "events": {
+            "boilAt_s": null,
+            "pulled": {
+              "due_s": 1791364061.3740234,
+              "out_s": 1791364081.3740234,
+              "by": "timeout",
+              "confirmed": false
+            },
+            "cooledAt_s": null,
+            "rangAt_s": 1791364061.3740234
+          }
+        }
+      ],
+      "context": {
+        "app": "web",
+        "appVersion": "0.5.0-alpha.1",
+        "prior": "2026-09",
+        "day": "2026-10-07",
+        "id": 1791363600000
+      },
+      "answers": {
+        "yolkWord": "fudgy",
+        "white": "tender",
+        "probe": {
+          "centre_C": 66.4,
+          "after_s": 180
+        }
+      },
+      "record": {
+        "v": 1,
+        "uid": null,
+        "day": "2026-10-07",
+        "id": 1791363600000,
+        "app": "web",
+        "appVersion": "0.5.0-alpha.1",
+        "prior": "2026-09",
+        "model": "2026-10-e10",
+        "egg": {
+          "mass_g": 68,
+          "massFrom": "class",
+          "sizeTable": "eu"
+        },
+        "setup": {
+          "startMode": "hot",
+          "eggStart_C": 4,
+          "eggFrom": "fridge",
+          "ambient_C": 20,
+          "boiling_C": 99.99690682934772,
+          "timeToBoil_s": 480,
+          "timeToBoilFrom": "remembered",
+          "cooling": "ice",
+          "afterBoil": "hold",
+          "waterLitres": 2,
+          "eggCount": 2
+        },
+        "level": 0.41,
+        "recommended_s": 468.3740234375,
+        "nudge_s": -7,
+        "pulled_s": 461.3740234375,
+        "pulledBy": "timeout",
+        "cooled_s": 186,
+        "yolk": null,
+        "yolkWord": "fudgy",
+        "white": "tender",
+        "probe": {
+          "centre_C": 66.4,
+          "after_s": 180
+        },
+        "forecast": {
+          "cook_s": 461.3740234375,
+          "yolk": [
+            0.3342261618782387,
+            0.5817023382561948,
+            0.08407149986556689
+          ],
+          "white": [
+            0.04052015278886839,
+            0.29780468364240426,
+            0.6616751635687277
+          ],
+          "yolkWord": [
+            0.01981169970407416,
+            0.1677722393061901,
+            0.7675213235113922,
+            0.03478829231556821,
+            0.01010644516277601
+          ]
+        },
+        "lang": "en",
+        "register": "modern",
+        "units": "metric"
+      },
+      "boil": null,
+      "ending": {
+        "boil": null,
+        "finished": false
+      }
+    },
+    {
+      "note": "the pull rang, then a correction: planned afresh",
+      "posterior": "learned",
+      "eggsLogged": 3,
+      "cook": {
+        "id_ms": 1791363600000,
+        "startedAt_s": 1791363600,
+        "choices": {
+          "mass_kg": 0.076,
+          "massFrom": "class",
+          "sizeTable": "eu",
+          "eggFrom": "fridge",
+          "customStart_C": 12,
+          "room_C": null,
+          "startMode": "hot",
+          "afterBoil": "hold",
+          "cooling": "ice",
+          "waterLitres": 2,
+          "eggCount": 2,
+          "altitude_m": 0,
+          "level": 0.41
+        },
+        "events": {
+          "boilAt_s": null,
+          "pulled": null,
+          "cooledAt_s": null,
+          "rangAt_s": null
+        },
+        "nudge_s": -7,
+        "boilMemory": {
+          "2.0": 480,
+          "3.0": 610
+        },
+        "units": "metric",
+        "lang": "en",
+        "boilRemembered": true,
+        "coldSince_s": null,
+        "correctedAt_s": 1791364065.3740234
+      },
+      "leanHint_s": 0,
+      "now_s": 1791364065.3740234,
+      "surface": {
+        "of": null,
+        "grid": {
+          "tauAirScale": 1,
+          "alphaMin": 1.009520895453128e-7,
+          "alphaMax": 2.776182462496102e-7,
+          "alphaCount": 7,
+          "timeMin_s": 281.07421875,
+          "timeMax_s": 821.07421875,
+          "timeCount": 28
+        },
+        "profile": null
+      },
+      "plan": {
+        "egg": {
+          "mass_kg": 0.076
+        },
+        "setup": {
+          "startMode": "hot",
+          "afterBoil": "hold",
+          "eggStart_C": 4,
+          "ambient_C": 20,
+          "boiling_C": 99.99690682934772,
+          "timeToBoil_s": 480,
+          "cooling": "ice",
+          "waterLitres": 2,
+          "eggCount": 2
+        },
+        "provisional": false,
+        "lengthened": false,
+        "inputs": {
+          "params": { "alpha_m2s": 1.6825348257552135e-7, "tauAirScale": 1 },
+          "whiteDose_min": 0.05938185524001569
+        },
+        "answer": {
+          "level": 0.41,
+          "kind": "none",
+          "snapTo": null,
+          "lowOdds": false,
+          "cookTime_s": 503.3349609375
+        },
+        "level": 0.41,
+        "solution": {
+          "reachable": true,
+          "whiteSets": true,
+          "cookTime_s": 497.6026451823153,
+          "peakYolk_C": 64.10012274894191,
+          "peakYolkTime_s": 698
+        },
+        "decided": {
+          "level": 0.41,
+          "cookTime_s": 497.6026451823153,
+          "decision": {
+            "cookTime_s": 504.6026451823153,
+            "meanCookTime_s": 503.3349609375,
+            "chosen": true,
+            "odds": 0.6246475630937467,
+            "oddsTenths": 6
+          },
+          "nudge_s": -7,
+          "adviceWanted": false
+        },
+        "lean_s": 1.2676842448153138,
+        "nudge_s": -7,
+        "cookTime_s": 497.6026451823153,
+        "overdue": false,
+        "askIfStillIn": false,
+        "cool_s": 200,
+        "probeMoment": true,
+        "deadlines": {
+          "cookEnd_s": 1791364097.6026452,
+          "coolEnd_s": 1791364317.6026452,
+          "provisional": false,
+          "outAt_s": null
+        },
+        "slowHobAt_s": null,
+        "certainty": {
+          "words": {
+            "asked": 2,
+            "certainty": "ballpark",
+            "pAsked": 0.7888198509519482,
+            "pNear": 0.9707159621631668,
+            "from": 1,
+            "to": 2,
+            "pInterval": 0.9310190629631716,
+            "mostLikely": 2
+          },
+          "time": {
+            "low_s": 485.000427865607,
+            "high_s": 526.5761096667029
+          }
+        },
+        "forecast": {
+          "cook_s": 497.6026451823153,
+          "yolk": [
+            0.29078922155802395,
+            0.6093242043101635,
+            0.0998865741318128
+          ],
+          "white": [
+            0.03536302968795731,
+            0.28093125857326,
+            0.6837057117387829
+          ],
+          "yolkWord": [
+            0.019163977041757714,
+            0.14219921201122346,
+            0.7888198509519482,
+            0.03969689919999523,
+            0.010120060795075596
+          ]
+        }
+      },
+      "outs": [],
+      "dues": [],
+      "context": {
+        "app": "ios",
+        "appVersion": "0.5.0-alpha.1",
+        "prior": "2026-09",
+        "day": "2026-10-07",
+        "id": null
+      },
+      "answers": {
+        "yolkWord": null,
+        "white": null,
+        "probe": null
+      },
+      "record": {
+        "v": 1,
+        "uid": null,
+        "day": "2026-10-07",
+        "app": "ios",
+        "appVersion": "0.5.0-alpha.1",
+        "prior": "2026-09",
+        "model": "2026-10-e10",
+        "egg": {
+          "mass_g": 76,
+          "massFrom": "class",
+          "sizeTable": "eu"
+        },
+        "setup": {
+          "startMode": "hot",
+          "eggStart_C": 4,
+          "eggFrom": "fridge",
+          "ambient_C": 20,
+          "boiling_C": 99.99690682934772,
+          "timeToBoil_s": 480,
+          "timeToBoilFrom": "remembered",
+          "cooling": "ice",
+          "afterBoil": "hold",
+          "waterLitres": 2,
+          "eggCount": 2
+        },
+        "level": 0.41,
+        "recommended_s": 504.6026451823153,
+        "nudge_s": -7,
+        "pulled_s": 497.6026451823153,
+        "pulledBy": "timeout",
+        "cooled_s": 200,
+        "yolk": null,
+        "yolkWord": null,
+        "white": null,
+        "probe": null,
+        "forecast": {
+          "cook_s": 497.6026451823153,
+          "yolk": [
+            0.29078922155802395,
+            0.6093242043101635,
+            0.0998865741318128
+          ],
+          "white": [
+            0.03536302968795731,
+            0.28093125857326,
+            0.6837057117387829
+          ],
+          "yolkWord": [
+            0.019163977041757714,
+            0.14219921201122346,
+            0.7888198509519482,
+            0.03969689919999523,
+            0.010120060795075596
+          ]
+        },
+        "lang": "en",
+        "register": "modern",
+        "units": "metric"
+      },
+      "boil": null,
+      "ending": {
+        "boil": null,
+        "finished": false
+      }
+    },
+    {
       "note": "the heat off, a white that never sets",
       "posterior": "learned",
       "eggsLogged": 3,
@@ -13739,7 +17668,8 @@
         "events": {
           "boilAt_s": null,
           "pulled": null,
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 5,
         "boilMemory": {
@@ -13820,6 +17750,7 @@
         "nudge_s": 0,
         "cookTime_s": 1769.375,
         "overdue": false,
+        "askIfStillIn": false,
         "cool_s": 180,
         "probeMoment": false,
         "deadlines": {
@@ -13876,8 +17807,8 @@
         "id": 1791363600000
       },
       "answers": {
-        "yolkWord": null,
-        "white": null,
+        "yolkWord": "jammy",
+        "white": "firm",
         "probe": null
       },
       "record": {
@@ -13914,8 +17845,8 @@
         "pulledBy": "timeout",
         "cooled_s": 180,
         "yolk": null,
-        "yolkWord": null,
-        "white": null,
+        "yolkWord": "jammy",
+        "white": "firm",
         "probe": null,
         "forecast": {
           "cook_s": 1769.375,
@@ -13972,7 +17903,8 @@
         "events": {
           "boilAt_s": null,
           "pulled": null,
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 5,
         "boilMemory": {
@@ -14029,6 +17961,7 @@
         "nudge_s": 0,
         "cookTime_s": 1769.375,
         "overdue": false,
+        "askIfStillIn": false,
         "cool_s": 180,
         "probeMoment": false,
         "deadlines": {
@@ -14051,9 +17984,12 @@
         "id": null
       },
       "answers": {
-        "yolkWord": "jammy",
-        "white": "firm",
-        "probe": null
+        "yolkWord": "fudgy",
+        "white": "tender",
+        "probe": {
+          "centre_C": 66.4,
+          "after_s": 180
+        }
       },
       "record": {
         "v": 1,
@@ -14088,9 +18024,12 @@
         "pulledBy": "timeout",
         "cooled_s": 180,
         "yolk": null,
-        "yolkWord": "jammy",
-        "white": "firm",
-        "probe": null,
+        "yolkWord": "fudgy",
+        "white": "tender",
+        "probe": {
+          "centre_C": 66.4,
+          "after_s": 180
+        },
         "forecast": null,
         "lang": "en",
         "register": "modern",
@@ -14127,7 +18066,8 @@
         "events": {
           "boilAt_s": 1791363850,
           "pulled": null,
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -14208,6 +18148,7 @@
         "nudge_s": 0,
         "cookTime_s": 1187.1875,
         "overdue": false,
+        "askIfStillIn": false,
         "cool_s": 180,
         "probeMoment": false,
         "deadlines": {
@@ -14264,12 +18205,9 @@
         "id": 1791363600000
       },
       "answers": {
-        "yolkWord": "fudgy",
-        "white": "tender",
-        "probe": {
-          "centre_C": 66.4,
-          "after_s": 180
-        }
+        "yolkWord": null,
+        "white": null,
+        "probe": null
       },
       "record": {
         "v": 1,
@@ -14305,12 +18243,9 @@
         "pulledBy": "timeout",
         "cooled_s": 180,
         "yolk": null,
-        "yolkWord": "fudgy",
-        "white": "tender",
-        "probe": {
-          "centre_C": 66.4,
-          "after_s": 180
-        },
+        "yolkWord": null,
+        "white": null,
+        "probe": null,
         "forecast": {
           "cook_s": 1187.1875,
           "yolk": [
@@ -14372,7 +18307,8 @@
         "events": {
           "boilAt_s": null,
           "pulled": null,
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -14426,6 +18362,7 @@
         "nudge_s": 0,
         "cookTime_s": 1060.087890625,
         "overdue": false,
+        "askIfStillIn": false,
         "cool_s": 124,
         "probeMoment": true,
         "deadlines": {
@@ -14448,8 +18385,8 @@
         "id": null
       },
       "answers": {
-        "yolkWord": null,
-        "white": null,
+        "yolkWord": "jammy",
+        "white": "firm",
         "probe": null
       },
       "record": {
@@ -14485,8 +18422,8 @@
         "pulledBy": "timeout",
         "cooled_s": 124,
         "yolk": null,
-        "yolkWord": null,
-        "white": null,
+        "yolkWord": "jammy",
+        "white": "firm",
         "probe": null,
         "forecast": null,
         "lang": "en",
@@ -14524,7 +18461,8 @@
         "events": {
           "boilAt_s": null,
           "pulled": null,
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -14578,6 +18516,7 @@
         "nudge_s": 0,
         "cookTime_s": 3600,
         "overdue": false,
+        "askIfStillIn": false,
         "cool_s": 112,
         "probeMoment": true,
         "deadlines": {
@@ -14600,9 +18539,12 @@
         "id": 1791363600000
       },
       "answers": {
-        "yolkWord": "jammy",
-        "white": "firm",
-        "probe": null
+        "yolkWord": "fudgy",
+        "white": "tender",
+        "probe": {
+          "centre_C": 66.4,
+          "after_s": 180
+        }
       },
       "record": {
         "v": 1,
@@ -14638,9 +18580,12 @@
         "pulledBy": "timeout",
         "cooled_s": 112,
         "yolk": null,
-        "yolkWord": "jammy",
-        "white": "firm",
-        "probe": null,
+        "yolkWord": "fudgy",
+        "white": "tender",
+        "probe": {
+          "centre_C": 66.4,
+          "after_s": 180
+        },
         "forecast": null,
         "lang": "en",
         "register": "modern",
@@ -14677,7 +18622,8 @@
         "events": {
           "boilAt_s": null,
           "pulled": null,
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -14715,7 +18661,8 @@
         "events": {
           "boilAt_s": 1791364112,
           "pulled": null,
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -14756,7 +18703,8 @@
         "events": {
           "boilAt_s": 1791364200,
           "pulled": null,
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -14797,7 +18745,8 @@
         "events": {
           "boilAt_s": null,
           "pulled": null,
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -14835,7 +18784,8 @@
         "events": {
           "boilAt_s": 1791364120,
           "pulled": null,
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -14876,7 +18826,8 @@
         "events": {
           "boilAt_s": 1791364300,
           "pulled": null,
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -14917,7 +18868,8 @@
         "events": {
           "boilAt_s": 1791364300,
           "pulled": null,
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -14955,7 +18907,8 @@
         "events": {
           "boilAt_s": 1791364112,
           "pulled": null,
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -14993,7 +18946,8 @@
         "events": {
           "boilAt_s": 1791364100,
           "pulled": null,
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -15034,7 +18988,8 @@
         "events": {
           "boilAt_s": 1791364100,
           "pulled": null,
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {
@@ -15072,7 +19027,8 @@
         "events": {
           "boilAt_s": 1791364500,
           "pulled": null,
-          "cooledAt_s": null
+          "cooledAt_s": null,
+          "rangAt_s": null
         },
         "nudge_s": 0,
         "boilMemory": {},

@@ -96,6 +96,10 @@ struct RunningConformance {
                 after = withBoil(cook, nowS: try move.num("boil"))
             } else if let choices = move["correct"] as? [String: Any] {
                 after = corrected(cook, choices: try choicesOf(choices), nowS: try move.num("now"))
+            } else if move["stillIn"] != nil {
+                after = stillIn(cook, nowS: try move.num("stillIn"))
+            } else if move["stands"] != nil {
+                after = pullStands(cook)
             } else {
                 let now = try move.num("now")
                 try expectClose(latestStartS(cook, nowS: now), row.num("latest_s"), "\(note): latest start")
@@ -253,11 +257,14 @@ private func expectEvents(_ e: CookEvents, _ json: [String: Any], _ what: String
         expectTime(pulled.dueS, due, start: due - 1000, "\(what): due")
         expectTime(pulled.outS, try p.num("out_s"), start: due - 1000, "\(what): out")
         #expect(try pulled.by.rawValue == p.str("by"), "\(what): by")
+        #expect(try pulled.confirmed == p.flag("confirmed"), "\(what): confirmed")
     } else {
         #expect(e.pulled == nil, "\(what): pulled")
     }
     let cooled = try json.optionalNum("cooledAt_s")
     expectTime(e.cooledAtS, cooled, start: (cooled ?? 0) - 1000, "\(what): cooled")
+    let rang = try json.optionalNum("rangAt_s")
+    expectTime(e.rangAtS, rang, start: (rang ?? 0) - 1000, "\(what): rang")
 }
 
 private func expectPlan(_ p: CookPlan, _ json: [String: Any], start: Double, _ note: String) throws {
@@ -306,6 +313,7 @@ private func expectPlan(_ p: CookPlan, _ json: [String: Any], start: Double, _ n
     try expectClose(p.nudgeS, json.num("nudge_s"), "\(note): nudge")
     try expectClose(p.cookTimeS, json.num("cookTime_s"), "\(note): cook time")
     #expect(try p.overdue == json.flag("overdue"), "\(note): overdue")
+    #expect(try p.askIfStillIn == json.flag("askIfStillIn"), "\(note): ask if still in")
     try expectClose(p.coolS, json.num("cool_s"), "\(note): cooling")
     #expect(try p.probeMoment == json.flag("probeMoment"), "\(note): probe moment")
     let dl = try json.object("deadlines")

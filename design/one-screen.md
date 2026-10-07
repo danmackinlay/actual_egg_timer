@@ -157,7 +157,19 @@ back restores it.
   can already be due.
 - **After the pull.** The pull's event fixes the cook time; corrections
   change only what that time did to the egg. While the egg cools, the
-  cooling's end can move. After Done, only the record changes.
+  cooling's end can move; one corrected after its counted end would have
+  passed takes the counted time and is Done at once. After Done, only the
+  record changes. The yolk wanted is not corrected after the pull: it was
+  not a mistake, so the slider only previews and the record keeps the
+  level the egg was pulled at (`DECISIONS.md` 98).
+- **A pull the clock assumed.** When the grace runs out, the pull is the
+  clock's assumption, not something the cook saw (on iOS it is written
+  when the phone wakes). It stays open: a correction since it that would
+  pull later, or heat again (the owner's case after the alarm), leaves
+  the pull standing and asks whether the egg is still in the water. Still
+  in: the pull is dropped and the cook re-planned, as before the pull. Out:
+  the pull stands and the correction applies to the record. A cook's own
+  tap is never asked about (`DECISIONS.md` 98).
 - **After Start again.** The egg is final: logged, and sent if sharing is
   on. Nothing changes it any more. The cook can correct anything until
   then.
@@ -225,7 +237,11 @@ export interface CookChoices {
 }
 
 /** The pull: when it was due (the alarm), and when the egg came out. */
-export interface Pulled { due_s: number; out_s: number; by: PulledBy; }
+export interface Pulled {
+  due_s: number; out_s: number; by: PulledBy;
+  confirmed: boolean;           // a timeout pull the cook said stands; a
+                                // cook's tap always (review 1.1)
+}
 
 /** What was observed, as clock times. Never re-derived; kept when a
  *  correction makes one unread. */
@@ -234,6 +250,8 @@ export interface CookEvents {
   pulled: Pulled | null;
   cooledAt_s: number | null;    // the counted cooling ended; never written
                                 // on the counter (C2: see below)
+  rangAt_s: number | null;      // the pull rang, the egg still in: held
+                                // until the cook says something new (review 3)
 }
 
 export interface RunningCook {
@@ -273,9 +291,12 @@ export interface CookPlan {
   decided: DecidedAnswer | null; // null until this pot's surface is in
   lean_s: number;                // the lean and nudge in the time (C2)
   nudge_s: number;
-  cookTime_s: number;            // pulled.due if pulled; else the plan's,
-                                 // never before the last correction or tap
+  cookTime_s: number;            // pulled.due if pulled, or the pull that
+                                 // rang; else the plan's, never before the
+                                 // last correction or tap
   overdue: boolean;              // it was, so the pull is then (C2)
+  askIfStillIn: boolean;         // a timeout pull a correction would move
+                                 // later: ask (review 1.1)
   cool_s: number;                // cooledAt - out once cooled
   probeMoment: boolean;
   deadlines: Deadlines;          // for phaseAt, unchanged
@@ -323,9 +344,28 @@ The functions, all pure and fixtured:
     than never before `now_s`: a plan made again in the grace (a reload, a
     surface landing) must ring for the same pull, and one made after an
     ordinary pull's grace ran out (a phone asleep) must find it where it
-    was. The cooling's end is held the same way. A tap that comes after the
-    plan's pull pulls the egg at the tap, with its grace; today's machine
-    dated that pull in the past and went straight through to Done.
+    was. A tap that comes after the plan's pull pulls the egg at the tap,
+    with its grace; today's machine dated that pull in the past and went
+    straight through to Done.
+  - **A pull already due is held** (review 3): `eventsDue` writes
+    `rangAt_s` when the clock first passes the pull, and a plan holds it
+    there, so a surface landing (5 to 21 s apart from the interim, across
+    pots) or an egg folded in another tab never cuts the grace short or
+    rings twice. Anything the cook tells the plan after it (a correction,
+    the start, the answer below) clears it.
+  - **A pull the clock assumed asks** (review 1.1, `DECISIONS.md` 98):
+    the pull `eventsDue` writes when the grace runs out is `confirmed:
+    false`. A correction made since its out that would, without it, pull
+    later (or heat again) sets the plan's `askIfStillIn`, and the pull
+    stands until the app has an answer: `stillIn(cook, now_s)` drops the
+    pull and its cooling and re-plans as told now (a pull already past is
+    now, and rings); `pullStands(cook)` confirms it, and the plan does not
+    ask again. No words are in core: the app shows the question.
+  - **After the pull** (review 2.3): `corrected` keeps the level in force
+    at the pull, and a cooling whose counted end has passed by the
+    correction is Done at once with the counted time, where the first
+    build ended it at the correction (a counter corrected to ice ten
+    minutes on recorded a ten-minute ice bath).
   - **The level snaps** out of the stripes, as at setup (`answerAt` with the
     retry), where today's mid-cook re-solve kept the target frozen and
     answered an unreachable one with the shortest cook that sets the white,
@@ -336,8 +376,8 @@ The functions, all pure and fixtured:
     pot's, so the record's forecast is the one for the cook that ran
     (DECISIONS.md 97, 8), not the one at the start as today.
 - `eventsDue(cook, plan, now_s): CookEvents`: the events the clock alone
-  decides, namely the grace run out (`pulled`, by `timeout`) and the cooling
-  ended. The app writes them down the first time it sees them past. A
+  decides, namely the pull ringing (`rangAt_s`), the grace run out
+  (`pulled`, by `timeout`, unconfirmed) and the cooling ended. The app writes them down the first time it sees them past. A
   phone asleep through the pull writes them on waking, from the same plan
   that rang.
 - `startCook`, `withBoil`, `withOut`, `corrected(cook, choices, now_s)`,
