@@ -282,8 +282,8 @@ final class Cook {
         await readBackAlarms()
         guard gen == generation else { return }
 
-        if let state = activityState(at: .now), let plan {
-            let attributes = Self.attributes(cook, plan)
+        if let state = activityState(at: .now) {
+            let attributes = Self.attributes(cook)
             await activity { await LiveActivity.start(attributes, state: state) }.value
             guard gen == generation else { return }
             pushed = state
@@ -672,8 +672,8 @@ final class Cook {
             // while the Lock Screen shows nothing is the same broken promise in
             // the other direction. A cook that is already finished gets none:
             // there is nothing left to count down to.
-            if phase != .done, let state = activityState(at: .now), let plan {
-                let attributes = Self.attributes(restored, plan)
+            if phase != .done, let state = activityState(at: .now) {
+                let attributes = Self.attributes(restored)
                 await activity { await LiveActivity.start(attributes, state: state) }.value
                 guard gen == generation else { return }
                 pushed = state
@@ -773,15 +773,20 @@ final class Cook {
 
     // MARK: - Live Activity
 
-    /// The card's description of this cook, in its own units and its own
-    /// language, from the plan it starts on.
-    private static func attributes(_ cook: RunningCook, _ plan: CookPlan) -> CookActivity {
-        CookActivity(
+    /// The card's fixed part: the language the cook was started in.
+    private static func attributes(_ cook: RunningCook) -> CookActivity {
+        CookActivity(lang: cook.lang)
+    }
+
+    /// The card's description of this cook, from its plan, in its own units
+    /// and its own language: in each state pushed, so a plan made again
+    /// updates the card in place.
+    private static func description(_ cook: RunningCook, _ plan: CookPlan) -> CookActivity.Description {
+        CookActivity.Description(
             doneness: tr(anchorNear(plan.level).key, in: cook.lang),
             peakYolk: showIn(cook.units, .temperature, plan.solution.result.peakYolkC),
             eggMass: showIn(cook.units, .mass, plan.egg.massKg * 1000),
-            cooling: cook.choices.cooling.rawValue,
-            lang: cook.lang
+            cooling: cook.choices.cooling.rawValue
         )
     }
 
@@ -792,18 +797,22 @@ final class Cook {
         let d = plan.deadlines
         let start = Date(timeIntervalSince1970: running.startedAtS)
         let pull = Date(timeIntervalSince1970: d.cookEndS)
+        let cook = Self.description(running, plan)
         switch phase(at: now) {
         case .idle, .done:
             return nil
         case .heating:
-            return .init(stage: .heating, began: start, ends: pull, provisional: true)
+            return .init(stage: .heating, began: start, ends: pull, provisional: true, cook: cook)
         case .cooking:
-            return .init(stage: .cooking, began: start, ends: pull, provisional: false)
+            return .init(stage: .cooking, began: start, ends: pull, provisional: false, cook: cook)
         case .pull:
-            return .init(stage: .pull, began: pull, ends: pull.addingTimeInterval(pullGraceSeconds), provisional: false)
+            return .init(
+                stage: .pull, began: pull, ends: pull.addingTimeInterval(pullGraceSeconds), provisional: false,
+                cook: cook
+            )
         case .cooling:
             let from = outAt ?? pull.addingTimeInterval(pullGraceSeconds)
-            return .init(stage: .cooling, began: from, ends: coolDoneAt ?? from, provisional: false)
+            return .init(stage: .cooling, began: from, ends: coolDoneAt ?? from, provisional: false, cook: cook)
         }
     }
 
