@@ -680,3 +680,21 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     ("seems fine"); the finished copy drafts stay compiled; this line
     becomes `0.5.x`; A7's time range stays as built until real eggs show
     how it reads. 7 October 2026.
+98. **The red-team review's choices, under 97's rule**
+    (`design/one-screen-review.md`; 97: "accept them all except where one
+    accrues substantially more maintenance burden than the alternative").
+    A pull the clock assumed (the grace ran out) is not an observation: it
+    stays correctable, and a correction that would move it later asks
+    whether the egg is still in the water (review 1.1; the alternative
+    left the owner's own case uncorrectable once the alarm had rung). A
+    boil tapped after a boiling-to-cold correction made later than the
+    pot's remembered time to boil is planned on the remembered time, and
+    on the tap only when nothing is remembered (1.2; a tap that carries
+    its own time is the more burdensome alternative, and would reverse
+    97's answer to question 21). After the pull the slider only previews:
+    the yolk asked for was not a mistake, so it is not corrected (2.3;
+    narrows 96 for that one setting). The aimed-for egg is the egg at the
+    end of the cooling, the egg as eaten, not at the yolk's peak, where a
+    jammy yolk (0.41) reads 0.34 (97's question 10, answered again on what
+    C2 measured). The review's other findings are fixes, not choices.
+    7 October 2026.
