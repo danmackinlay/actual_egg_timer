@@ -593,6 +593,19 @@ fold), with a new surface for the new setup. Otherwise the log is replayed
 from the prior, the path a model change already takes (`loadDecision`'s
 rebuild).
 
+**Never from its own outcome** (found moving the web, 7 October 2026). A
+plan made for a cook after its own answer has been folded reads a
+posterior that already knows how that egg came out: on the web, a reload
+at Done moved "peak yolk 65 °C" to 69 °C. Such a plan may be drawn, but no
+record is ever made or replaced from it: the forecast it would carry would
+score the model against an answer it had already learned from. A
+correction at Done therefore plans the corrected cook on the posterior
+*before* this egg (the fold's own starting point, which the refold above
+already needs), and the screen at Done shows the cook as it ran, not as
+re-planned on the newer posterior. Today neither app re-logs an answered
+egg, so no record has been affected; the rule binds C3, where corrections
+after the pull arrive.
+
 **Which eggs are final** (review 2.1). An egg is final unless its id is the
 stored running cook's, whichever tab asks: `openEggId(cook, plan, now_s)`
 is that id, or null, and sharing sends only the others. The open egg
