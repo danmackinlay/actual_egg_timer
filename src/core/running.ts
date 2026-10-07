@@ -138,6 +138,12 @@ export interface RunningCook {
    *  was told it was cold only after the water could have boiled is used for
    *  the cook and not remembered (`boilToRemember`, DECISIONS.md 97). */
   coldSince_s: number | null;
+  /** The first moment the choices said a boiling start, a clock time: the
+   *  start for a cook begun hot, the first correction to boiling for one
+   *  begun cold, and null if they never have. A tap made before it was made
+   *  in the cold the cook began with, so a stray cold -> hot -> cold after it
+   *  does not stop it being remembered (review 2.2). */
+  firstHotAt_s: number | null;
   /** When the choices or the start were last corrected, a clock time; null
    *  until they are. Nothing observed before it said the egg was out, so a
    *  plan never puts the pull before it (`replan`): a correction that makes
@@ -205,6 +211,7 @@ export function startCook(
     lang: lang,
     boilRemembered: hasBoilMemory(boilMemory),
     coldSince_s: choices.startMode === 'cold' ? start : null,
+    firstHotAt_s: choices.startMode === 'hot' ? start : null,
     correctedAt_s: null,
   };
 }
@@ -230,9 +237,11 @@ export function corrected(cook: RunningCook, choices: CookChoices, now_s: number
   if (choices.startMode === 'cold') {
     since = cook.choices.startMode === 'cold' && cook.coldSince_s !== null ? cook.coldSince_s : now_s;
   }
+  const firstHot = cook.firstHotAt_s === null && choices.startMode === 'hot' ? now_s : cook.firstHotAt_s;
   const next = cook.events.pulled === null ? choices : { ...choices, level: cook.choices.level };
   return {
-    ...cook, choices: next, events: { ...cook.events, rangAt_s: null }, coldSince_s: since, correctedAt_s: now_s,
+    ...cook, choices: next, events: { ...cook.events, rangAt_s: null }, coldSince_s: since, firstHotAt_s: firstHot,
+    correctedAt_s: now_s,
   };
 }
 
@@ -377,6 +386,7 @@ export function readRunningCook(raw: unknown): RunningCook | null {
   const lang = raw['lang'];
   const remembered = raw['boilRemembered'];
   const since = raw['coldSince_s'];
+  const firstHot = raw['firstHotAt_s'];
   const correctedAt = raw['correctedAt_s'];
   if (!isNumber(id) || !(id > 0)) return null;
   if (!isNumber(start) || !(start > 0)) return null;
@@ -391,10 +401,12 @@ export function readRunningCook(raw: unknown): RunningCook | null {
   if (typeof lang !== 'string' || lang === '') return null;
   if (typeof remembered !== 'boolean') return null;
   if (since !== null && !isNumber(since)) return null;
+  if (firstHot !== null && !isNumber(firstHot)) return null;
   if (correctedAt !== null && (!isNumber(correctedAt) || correctedAt < start)) return null;
   return {
     id_ms: id, startedAt_s: start, choices: choices, events: events, nudge_s: nudge, boilMemory: memory,
-    units: units, lang: lang, boilRemembered: remembered, coldSince_s: since, correctedAt_s: correctedAt,
+    units: units, lang: lang, boilRemembered: remembered, coldSince_s: since, firstHotAt_s: firstHot,
+    correctedAt_s: correctedAt,
   };
 }
 
@@ -489,7 +501,11 @@ export const SLOW_HOB_MAX_STEPS = 100;
  * the slow hob's rule alone.
  *
  * THE TIME TO BOIL. On a cold start, the tap if there is one: the measured
- * ramp. Otherwise the remembered one for the water (the memory as it was at
+ * ramp - but not a tap after a correction from boiling to cold made later
+ * than this water's remembered time to boil, which may have come long after
+ * the water boiled unseen: that cook runs on the remembered time, and on the
+ * tap only when no pan was remembered (DECISIONS.md 98). Otherwise the
+ * remembered one for the water (the memory as it was at
  * the start), and while the cook is still heating, the SLOW HOB'S RULE, as a
  * function of how long it has heated: whenever the pull would come within
  * SLOW_HOB_WHEN_LEFT_S, and SLOW_HOB_EVERY_S after the last lengthening (the
@@ -551,7 +567,8 @@ export function replan(
   const params = calibrationParams(c);
   const carry = leanHint_s + cook.nudge_s;
 
-  let ramp = tapped ? boilAt - start : estimateTimeToBoil(cook.boilMemory, ch.waterLitres);
+  const measured = tapped && !(cook.boilRemembered && tappedAfterLateCold(cook));
+  let ramp = measured ? boilAt - start : estimateTimeToBoil(cook.boilMemory, ch.waterLitres);
   let pot = cookSetupOf(ch, ramp);
   let answer = answerAt(c, pot.egg, pot.setup, ch.level, null, true);
   let lengthened = false;
@@ -780,16 +797,38 @@ export interface BoilToRemember {
  * the cook was told to watch for only after the water could already have
  * boiled - corrected from boiling to cold, or the start corrected earlier,
  * past the time this water was remembered to take - since it may have
- * boiled before the cook noticed: that tap is used for this cook, and not
- * remembered. `rememberBoil` refuses what is not a credible time, as ever.
+ * boiled before the cook noticed: that tap is used for this cook (or, after
+ * a late correction to cold, the remembered time is: `replan`), and not
+ * remembered. A tap made before the choices first said boiling was made in
+ * the cold the cook began with, and a stray cold -> hot -> cold after it does
+ * not change that (review 2.2). `rememberBoil` refuses what is not a credible
+ * time, as ever.
  */
 export function boilToRemember(cook: RunningCook): BoilToRemember | null {
   const ch = cook.choices;
   const tap = cook.events.boilAt_s;
   if (ch.startMode !== 'cold' || tap === null) return null;
-  const watched = cook.coldSince_s === null ? cook.startedAt_s : cook.coldSince_s;
-  if (watched - cook.startedAt_s > estimateTimeToBoil(cook.boilMemory, ch.waterLitres)) return null;
+  if (watchedFrom_s(cook, tap) - cook.startedAt_s > estimateTimeToBoil(cook.boilMemory, ch.waterLitres)) return null;
   return { litres: ch.waterLitres, seconds: tap - cook.startedAt_s };
+}
+
+/** When the cook began watching for the boil tapped at `tap`: when Start was
+ *  pressed (`id_ms`), for a tap in the cold the cook began with - before the
+ *  choices first said boiling - and otherwise when they last said cold. */
+function watchedFrom_s(cook: RunningCook, tap: number): number {
+  if (cook.firstHotAt_s === null || tap < cook.firstHotAt_s) return cook.id_ms / 1000;
+  return cook.coldSince_s === null ? cook.startedAt_s : cook.coldSince_s;
+}
+
+/** Whether the boil was tapped after a correction from boiling to cold made
+ *  later than this water's remembered time to boil (review 1.2): the water
+ *  may have boiled unseen long before the tap. */
+function tappedAfterLateCold(cook: RunningCook): boolean {
+  const tap = cook.events.boilAt_s;
+  const hot = cook.firstHotAt_s;
+  if (tap === null || hot === null || tap < hot) return false;
+  const remembered = estimateTimeToBoil(cook.boilMemory, cook.choices.waterLitres);
+  return watchedFrom_s(cook, tap) - cook.startedAt_s > remembered;
 }
 
 /** What a cook leaves when it ends, by Cancel or by Start again: the boil to

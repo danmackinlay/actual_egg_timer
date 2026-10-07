@@ -73,14 +73,20 @@ test('3. a correction keeps the start and the events, and says since when the co
   assert.equal(tapped.coldSince_s, S, 'cold from the start');
   const heavier = corrected(tapped, { ...CHOICES, mass_kg: 0.076 }, S + 600);
   assert.deepEqual([heavier.startedAt_s, heavier.events, heavier.coldSince_s], [S, tapped.events, S]);
+  assert.equal(tapped.firstHotAt_s, null, 'never said boiling');
   const boiling = corrected(tapped, { ...CHOICES, startMode: 'hot' }, S + 600);
   assert.equal(boiling.events.boilAt_s, S + 500, 'the tap is kept, unread');
   assert.equal(boiling.coldSince_s, null);
+  assert.equal(boiling.firstHotAt_s, S + 600);
   const back = corrected(boiling, CHOICES, S + 610);
   assert.equal(back.events.boilAt_s, S + 500);
   assert.equal(back.coldSince_s, S + 610, 'told cold again only now');
+  assert.equal(back.firstHotAt_s, S + 600, 'but the tap came before the choices first said boiling (review 2.2)');
+  assert.deepEqual(boilToRemember(back), boilToRemember(tapped), 'so changing back gives back the boil memory too');
+  assert.equal(corrected(corrected(back, { ...CHOICES, startMode: 'hot' }, S + 620), CHOICES, S + 630).firstHotAt_s, S + 600);
   const owner = corrected(cookOf({ startMode: 'hot' }), CHOICES, S + 240);
   assert.equal(owner.coldSince_s, S + 240, "the owner's case: boiling corrected to cold");
+  assert.equal(owner.firstHotAt_s, S, 'begun boiling');
 });
 
 test('4. the start is corrected to no later than now or the first event, an unread one included', () => {
@@ -296,7 +302,8 @@ test('14. the boil memory learns the tap the cook was watching for, and only tha
   assert.deepEqual(boilToRemember(early), { litres: 2, seconds: 520 }, 'told cold before it could have boiled');
   const late = withBoil(corrected(hot, CHOICES, S + 481), S + 700);
   assert.equal(boilToRemember(late), null, 'told cold after the 480 s this water takes: used, not remembered');
-  assert.equal(planned(late, S + 700).setup.timeToBoil_s, 700, 'but the cook runs on it');
+  assert.equal(planned(late, S + 700).setup.timeToBoil_s, 480, 'and the cook runs on the remembered time (review 1.2)');
+  assert.equal(planned(early, S + 520).setup.timeToBoil_s, 520, 'a tap the cook watched for is the ramp');
   const unread = corrected(withBoil(cold, S + 512), { ...CHOICES, startMode: 'hot' }, S + 600);
   assert.equal(boilToRemember(unread), null);
 });
@@ -388,4 +395,45 @@ test('17. review 3: a plan the cook did not cause never moves a pull already due
   // What the cook says after it plans afresh.
   assert.equal(corrected(rung, hot.choices, at + 4).events.rangAt_s, null);
   assert.equal(startCorrected(rung, S - 10, at + 4)?.events.rangAt_s, null);
+});
+
+test('18. review 1.2: a boil tapped after a late correction to cold runs on the remembered time', () => {
+  // As the review ran it: a cold start tapped late runs on the tap, as ever.
+  const plain = [480, 540, 600, 720].map((tap) => replan(withBoil(cookOf(), S + tap), C, null, 0, S + tap).cookTime_s);
+  assert.ok(plain[0] < plain[1] && plain[1] < plain[2] && plain[2] < plain[3], `${plain.join(', ')}: later each time`);
+  // The owner's case: boiling corrected to cold at 500 s, past the 480 s this
+  // water takes; the water really boiled at 480 s. However late the tap, the
+  // pull is where a tap at 480 s puts it.
+  const hot = cookOf({ startMode: 'hot' });
+  const owner = corrected(hot, CHOICES, S + 500);
+  const at480 = plain[0];
+  for (const tap of [540, 600, 640]) {
+    const p = replan(withBoil(owner, S + tap), C, null, 0, S + tap);
+    assert.equal(p.setup.timeToBoil_s, 480);
+    assert.equal(p.cookTime_s, at480, `tapped at ${tap} s`);
+    assert.equal(boilToRemember(withBoil(owner, S + tap)), null, 'and still not remembered');
+  }
+  // A tap after that pull pulls at the tap, with its grace.
+  const veryLate = replan(withBoil(owner, S + 720), C, null, 0, S + 720);
+  assert.deepEqual([veryLate.cookTime_s, veryLate.overdue], [720, true]);
+  // Nothing remembered: the tap is all there is.
+  const unknown = corrected(startCook(START_MS, { ...CHOICES, startMode: 'hot' }, 0, {}, 'metric', 'en'), CHOICES, S + 2000);
+  assert.equal(replan(withBoil(unknown, S + 2100), C, null, 0, S + 2100).setup.timeToBoil_s, 2100);
+  // Corrected to cold in time: the tap is the measured ramp.
+  assert.equal(replan(withBoil(corrected(hot, CHOICES, S + 240), S + 600), C, null, 0, S + 600).setup.timeToBoil_s, 600);
+});
+
+test('19. review 2.2: a tap made before a stray cold -> hot -> cold is still remembered', () => {
+  const t = withBoil(cookOf(), S + 500);
+  assert.deepEqual(boilToRemember(t), { litres: 2, seconds: 500 });
+  const stray = corrected(corrected(t, { ...CHOICES, startMode: 'hot' }, S + 600), CHOICES, S + 610);
+  assert.deepEqual(boilToRemember(stray), { litres: 2, seconds: 500 });
+  assert.equal(planned(stray, S + 610).setup.timeToBoil_s, 500, 'and the cook runs on it');
+  // A stray before the tap, made after the water could have boiled: as before.
+  const before = withBoil(corrected(corrected(cookOf(), { ...CHOICES, startMode: 'hot' }, S + 500), CHOICES, S + 510), S + 600);
+  assert.equal(boilToRemember(before), null);
+  // The start corrected earlier than this water takes: not remembered, stray or not.
+  const earlier = withBoil(startCorrected(cookOf(), S - 600, S + 10) as RunningCook, S + 500);
+  assert.equal(boilToRemember(earlier), null);
+  assert.equal(boilToRemember(corrected(corrected(earlier, { ...CHOICES, startMode: 'hot' }, S + 600), CHOICES, S + 610)), null);
 });

@@ -1025,6 +1025,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "move": {
@@ -1063,6 +1064,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       }
     },
@@ -1101,6 +1103,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "move": {
@@ -1139,6 +1142,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       }
     },
@@ -1177,6 +1181,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": null,
+        "firstHotAt_s": 1791363600,
         "correctedAt_s": null
       },
       "move": {
@@ -1215,6 +1220,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": null,
+        "firstHotAt_s": 1791363600,
         "correctedAt_s": null
       }
     },
@@ -1258,6 +1264,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "move": {
@@ -1301,6 +1308,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       }
     },
@@ -1339,6 +1347,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "move": {
@@ -1377,6 +1386,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       }
     },
@@ -1415,6 +1425,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": null,
+        "firstHotAt_s": 1791363600,
         "correctedAt_s": null
       },
       "move": {
@@ -1468,6 +1479,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363840,
+        "firstHotAt_s": 1791363600,
         "correctedAt_s": 1791363840
       }
     },
@@ -1506,6 +1518,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "move": {
@@ -1559,6 +1572,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": null,
+        "firstHotAt_s": 1791364200,
         "correctedAt_s": 1791364200
       }
     },
@@ -1597,6 +1611,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "move": {
@@ -1650,6 +1665,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": 1791364200
       }
     },
@@ -1688,6 +1704,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": null,
+        "firstHotAt_s": 1791364200,
         "correctedAt_s": 1791364200
       },
       "move": {
@@ -1741,7 +1758,101 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791364210,
+        "firstHotAt_s": 1791364200,
         "correctedAt_s": 1791364210
+      }
+    },
+    {
+      "note": "boiling a second time: first said boiling at the first",
+      "cook": {
+        "id_ms": 1791363600000,
+        "startedAt_s": 1791363600,
+        "choices": {
+          "mass_kg": 0.068,
+          "massFrom": "class",
+          "sizeTable": "eu",
+          "eggFrom": "fridge",
+          "customStart_C": 12,
+          "room_C": null,
+          "startMode": "cold",
+          "afterBoil": "hold",
+          "cooling": "ice",
+          "waterLitres": 2,
+          "eggCount": 2,
+          "altitude_m": 0,
+          "level": 0.41
+        },
+        "events": {
+          "boilAt_s": 1791364132.5,
+          "pulled": null,
+          "cooledAt_s": null,
+          "rangAt_s": null
+        },
+        "nudge_s": 0,
+        "boilMemory": {
+          "2.0": 480,
+          "3.0": 610
+        },
+        "units": "metric",
+        "lang": "en",
+        "boilRemembered": true,
+        "coldSince_s": 1791364210,
+        "firstHotAt_s": 1791364200,
+        "correctedAt_s": 1791364210
+      },
+      "move": {
+        "correct": {
+          "mass_kg": 0.068,
+          "massFrom": "class",
+          "sizeTable": "eu",
+          "eggFrom": "fridge",
+          "customStart_C": 12,
+          "room_C": null,
+          "startMode": "hot",
+          "afterBoil": "hold",
+          "cooling": "ice",
+          "waterLitres": 2,
+          "eggCount": 2,
+          "altitude_m": 0,
+          "level": 0.41
+        },
+        "now": 1791364220
+      },
+      "after": {
+        "id_ms": 1791363600000,
+        "startedAt_s": 1791363600,
+        "choices": {
+          "mass_kg": 0.068,
+          "massFrom": "class",
+          "sizeTable": "eu",
+          "eggFrom": "fridge",
+          "customStart_C": 12,
+          "room_C": null,
+          "startMode": "hot",
+          "afterBoil": "hold",
+          "cooling": "ice",
+          "waterLitres": 2,
+          "eggCount": 2,
+          "altitude_m": 0,
+          "level": 0.41
+        },
+        "events": {
+          "boilAt_s": 1791364132.5,
+          "pulled": null,
+          "cooledAt_s": null,
+          "rangAt_s": null
+        },
+        "nudge_s": 0,
+        "boilMemory": {
+          "2.0": 480,
+          "3.0": 610
+        },
+        "units": "metric",
+        "lang": "en",
+        "boilRemembered": true,
+        "coldSince_s": null,
+        "firstHotAt_s": 1791364200,
+        "correctedAt_s": 1791364220
       }
     },
     {
@@ -1784,6 +1895,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "move": {
@@ -1842,6 +1954,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": 1791364700
       }
     },
@@ -1880,6 +1993,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "move": {
@@ -1933,6 +2047,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": 1791364200
       }
     },
@@ -1971,6 +2086,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": null,
+        "firstHotAt_s": 1791363600,
         "correctedAt_s": null
       },
       "move": {
@@ -2024,6 +2140,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": null,
+        "firstHotAt_s": 1791363600,
         "correctedAt_s": 1791363985
       }
     },
@@ -2062,6 +2179,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": null,
+        "firstHotAt_s": 1791363600,
         "correctedAt_s": null
       },
       "move": {
@@ -2102,6 +2220,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": null,
+        "firstHotAt_s": 1791363600,
         "correctedAt_s": 1791363985
       }
     },
@@ -2145,6 +2264,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791364300,
+        "firstHotAt_s": 1791363600,
         "correctedAt_s": 1791364300
       },
       "move": {
@@ -2183,6 +2303,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791364300,
+        "firstHotAt_s": 1791363600,
         "correctedAt_s": 1791364303
       }
     },
@@ -2226,6 +2347,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "move": {
@@ -2269,6 +2391,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       }
     },
@@ -2307,6 +2430,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "move": {
@@ -2345,6 +2469,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       }
     },
@@ -2388,6 +2513,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": null,
+        "firstHotAt_s": 1791363600,
         "correctedAt_s": null
       },
       "move": {
@@ -2431,6 +2557,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": null,
+        "firstHotAt_s": 1791363600,
         "correctedAt_s": null
       }
     },
@@ -2474,6 +2601,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": null,
+        "firstHotAt_s": 1791363600,
         "correctedAt_s": null
       },
       "move": {
@@ -2517,6 +2645,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": null,
+        "firstHotAt_s": 1791363600,
         "correctedAt_s": null
       }
     },
@@ -2560,6 +2689,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "move": {
@@ -2603,6 +2733,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       }
     },
@@ -2641,6 +2772,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "move": {
@@ -2681,6 +2813,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": 1791363800
       }
     },
@@ -2719,6 +2852,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "move": {
@@ -2759,6 +2893,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": 1791363800
       }
     },
@@ -2797,6 +2932,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "move": {
@@ -2841,6 +2977,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "move": {
@@ -2881,6 +3018,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": 1791364300
       }
     },
@@ -2919,6 +3057,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "move": {
@@ -2963,6 +3102,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": null,
+        "firstHotAt_s": 1791364200,
         "correctedAt_s": 1791364200
       },
       "move": {
@@ -3012,6 +3152,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": null,
+        "firstHotAt_s": 1791363600,
         "correctedAt_s": null
       },
       "move": {
@@ -3061,6 +3202,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "move": {
@@ -3106,6 +3248,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": 1791364800
       }
     },
@@ -3144,6 +3287,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "move": {
@@ -3188,6 +3332,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363700,
+        "firstHotAt_s": 1791363600,
         "correctedAt_s": 1791363700
       },
       "move": {
@@ -3226,6 +3371,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363700,
+        "firstHotAt_s": 1791363600,
         "correctedAt_s": 1791363700
       }
     }
@@ -3266,6 +3412,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "cook": {
@@ -3301,6 +3448,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       }
     },
@@ -3339,6 +3487,7 @@
         "lang": "en-x-1750",
         "boilRemembered": true,
         "coldSince_s": null,
+        "firstHotAt_s": 1791363600,
         "correctedAt_s": null
       },
       "cook": {
@@ -3374,6 +3523,7 @@
         "lang": "en-x-1750",
         "boilRemembered": true,
         "coldSince_s": null,
+        "firstHotAt_s": 1791363600,
         "correctedAt_s": null
       }
     },
@@ -3412,6 +3562,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "cook": {
@@ -3447,6 +3598,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       }
     },
@@ -3490,6 +3642,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "cook": {
@@ -3530,6 +3683,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       }
     },
@@ -3573,6 +3727,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "cook": {
@@ -3613,6 +3768,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       }
     },
@@ -3656,6 +3812,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": null,
+        "firstHotAt_s": 1791363600,
         "correctedAt_s": null
       },
       "cook": {
@@ -3696,6 +3853,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": null,
+        "firstHotAt_s": 1791363600,
         "correctedAt_s": null
       }
     },
@@ -3731,6 +3889,7 @@
         "lang": "cs",
         "boilRemembered": false,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "cook": {
@@ -3763,6 +3922,7 @@
         "lang": "cs",
         "boilRemembered": false,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       }
     },
@@ -3801,6 +3961,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": null,
+        "firstHotAt_s": 1791364200,
         "correctedAt_s": 1791364200
       },
       "cook": {
@@ -3836,6 +3997,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": null,
+        "firstHotAt_s": 1791364200,
         "correctedAt_s": 1791364200
       }
     },
@@ -3874,6 +4036,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363700,
+        "firstHotAt_s": 1791363600,
         "correctedAt_s": 1791363700
       },
       "cook": {
@@ -3909,6 +4072,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363700,
+        "firstHotAt_s": 1791363600,
         "correctedAt_s": 1791363700
       }
     },
@@ -3952,6 +4116,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": null,
+        "firstHotAt_s": 1791363600,
         "correctedAt_s": null
       },
       "cook": {
@@ -3992,6 +4157,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": null,
+        "firstHotAt_s": 1791363600,
         "correctedAt_s": null
       }
     },
@@ -4035,6 +4201,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": null,
+        "firstHotAt_s": 1791363600,
         "correctedAt_s": null
       },
       "cook": {
@@ -4075,6 +4242,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": null,
+        "firstHotAt_s": 1791363600,
         "correctedAt_s": null
       }
     },
@@ -4113,6 +4281,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": null,
+        "firstHotAt_s": 1791363600,
         "correctedAt_s": null
       },
       "cook": {
@@ -4148,6 +4317,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": null,
+        "firstHotAt_s": 1791363600,
         "correctedAt_s": null
       }
     },
@@ -4197,6 +4367,7 @@
           "lang": "en",
           "boilRemembered": true,
           "coldSince_s": 1791363600,
+          "firstHotAt_s": null,
           "correctedAt_s": null
         }
       ],
@@ -4246,6 +4417,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "cook": null
@@ -4290,6 +4462,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "cook": null
@@ -4334,6 +4507,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "cook": null
@@ -4363,6 +4537,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "cook": null
@@ -4393,6 +4568,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "cook": null
@@ -4436,6 +4612,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "cook": null
@@ -4480,6 +4657,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "cook": null
@@ -4524,6 +4702,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "cook": null
@@ -4568,6 +4747,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "cook": null
@@ -4612,6 +4792,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "cook": null
@@ -4656,6 +4837,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "cook": null
@@ -4700,6 +4882,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "cook": null
@@ -4744,6 +4927,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "cook": null
@@ -4788,6 +4972,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "cook": null
@@ -4831,6 +5016,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "cook": null
@@ -4875,6 +5061,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "cook": null
@@ -4919,6 +5106,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "cook": null
@@ -4962,6 +5150,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "cook": null
@@ -5006,6 +5195,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "cook": null
@@ -5050,6 +5240,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "cook": null
@@ -5094,6 +5285,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "cook": null
@@ -5138,6 +5330,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "cook": null
@@ -5182,6 +5375,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "cook": null
@@ -5226,6 +5420,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "cook": null
@@ -5259,6 +5454,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "cook": null
@@ -5303,6 +5499,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "cook": null
@@ -5347,6 +5544,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "cook": null
@@ -5390,6 +5588,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "cook": null
@@ -5429,6 +5628,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "cook": null
@@ -5473,6 +5673,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "cook": null
@@ -5517,6 +5718,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "cook": null
@@ -5561,6 +5763,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "cook": null
@@ -5604,6 +5807,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "cook": null
@@ -5648,6 +5852,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "cook": null
@@ -5692,6 +5897,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "cook": null
@@ -5735,6 +5941,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "cook": null
@@ -5779,6 +5986,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "cook": null
@@ -5823,6 +6031,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "cook": null
@@ -5861,6 +6070,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "cook": null
@@ -5900,6 +6110,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "cook": null
@@ -5944,6 +6155,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "cook": null
@@ -5988,6 +6200,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "cook": null
@@ -6031,6 +6244,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "cook": null
@@ -6075,6 +6289,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "cook": null
@@ -6119,6 +6334,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "cook": null
@@ -6163,6 +6379,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "cook": null
@@ -6207,6 +6424,7 @@
         "lang": "",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "cook": null
@@ -6251,6 +6469,7 @@
         "lang": "en",
         "boilRemembered": 1,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "cook": null
@@ -6294,6 +6513,7 @@
         "units": "metric",
         "lang": "en",
         "boilRemembered": true,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "cook": null
@@ -6338,6 +6558,96 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": "start",
+        "firstHotAt_s": null,
+        "correctedAt_s": null
+      },
+      "cook": null
+    },
+    {
+      "note": "no first-hot field",
+      "raw": {
+        "id_ms": 1791363600000,
+        "startedAt_s": 1791363600,
+        "choices": {
+          "mass_kg": 0.068,
+          "massFrom": "class",
+          "sizeTable": "eu",
+          "eggFrom": "fridge",
+          "customStart_C": 12,
+          "room_C": null,
+          "startMode": "cold",
+          "afterBoil": "hold",
+          "cooling": "ice",
+          "waterLitres": 2,
+          "eggCount": 2,
+          "altitude_m": 0,
+          "level": 0.41
+        },
+        "events": {
+          "boilAt_s": 1791364132.5,
+          "pulled": {
+            "due_s": 1791364451.2,
+            "out_s": 1791364458.9,
+            "by": "cook",
+            "confirmed": true
+          },
+          "cooledAt_s": null,
+          "rangAt_s": null
+        },
+        "nudge_s": 0,
+        "boilMemory": {
+          "2.0": 480,
+          "3.0": 610
+        },
+        "units": "metric",
+        "lang": "en",
+        "boilRemembered": true,
+        "coldSince_s": 1791363600,
+        "correctedAt_s": null
+      },
+      "cook": null
+    },
+    {
+      "note": "first hot as a boolean",
+      "raw": {
+        "id_ms": 1791363600000,
+        "startedAt_s": 1791363600,
+        "choices": {
+          "mass_kg": 0.068,
+          "massFrom": "class",
+          "sizeTable": "eu",
+          "eggFrom": "fridge",
+          "customStart_C": 12,
+          "room_C": null,
+          "startMode": "cold",
+          "afterBoil": "hold",
+          "cooling": "ice",
+          "waterLitres": 2,
+          "eggCount": 2,
+          "altitude_m": 0,
+          "level": 0.41
+        },
+        "events": {
+          "boilAt_s": 1791364132.5,
+          "pulled": {
+            "due_s": 1791364451.2,
+            "out_s": 1791364458.9,
+            "by": "cook",
+            "confirmed": true
+          },
+          "cooledAt_s": null,
+          "rangAt_s": null
+        },
+        "nudge_s": 0,
+        "boilMemory": {
+          "2.0": 480,
+          "3.0": 610
+        },
+        "units": "metric",
+        "lang": "en",
+        "boilRemembered": true,
+        "coldSince_s": 1791363600,
+        "firstHotAt_s": true,
         "correctedAt_s": null
       },
       "cook": null
@@ -6381,7 +6691,8 @@
         "units": "metric",
         "lang": "en",
         "boilRemembered": true,
-        "coldSince_s": 1791363600
+        "coldSince_s": 1791363600,
+        "firstHotAt_s": null
       },
       "cook": null
     },
@@ -6425,6 +6736,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": 1791363599
       },
       "cook": null
@@ -6469,6 +6781,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null,
         "ticket": {
           "old": true
@@ -6512,6 +6825,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       }
     }
@@ -6554,6 +6868,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "leanHint_s": 0,
@@ -6712,6 +7027,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "leanHint_s": 0,
@@ -6946,6 +7262,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "leanHint_s": 2.9983606548564694,
@@ -7120,6 +7437,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "leanHint_s": 2.9983606548564694,
@@ -7354,6 +7672,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "leanHint_s": 2.9983606548564694,
@@ -7393,6 +7712,7 @@
             "lang": "en",
             "boilRemembered": true,
             "coldSince_s": 1791363600,
+            "firstHotAt_s": null,
             "correctedAt_s": null
           },
           "now_s": 1791363660
@@ -7558,6 +7878,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "leanHint_s": 2.9983606548564694,
@@ -7718,6 +8039,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "leanHint_s": 2.9983606548564694,
@@ -7757,6 +8079,7 @@
             "lang": "en",
             "boilRemembered": true,
             "coldSince_s": 1791363600,
+            "firstHotAt_s": null,
             "correctedAt_s": null
           },
           "now_s": 1791363660
@@ -7931,6 +8254,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "leanHint_s": 2.9983606548564694,
@@ -8171,6 +8495,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "leanHint_s": 2.9983606548564694,
@@ -8503,6 +8828,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "leanHint_s": 2.9983606548564694,
@@ -8792,6 +9118,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "leanHint_s": 2.9983606548564694,
@@ -9038,6 +9365,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "leanHint_s": 2.9983606548564694,
@@ -9284,6 +9612,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": 1791364200
       },
       "leanHint_s": 2.9983606548564694,
@@ -9525,6 +9854,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": 1791364200
       },
       "leanHint_s": 2.9983606548564694,
@@ -9765,6 +10095,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": null,
+        "firstHotAt_s": 1791364200,
         "correctedAt_s": 1791364200
       },
       "leanHint_s": 2.9983606548564694,
@@ -10035,6 +10366,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": null,
+        "firstHotAt_s": 1791364200,
         "correctedAt_s": 1791364200
       },
       "leanHint_s": 2.9983606548564694,
@@ -10274,6 +10606,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791364230,
+        "firstHotAt_s": 1791364200,
         "correctedAt_s": 1791364230
       },
       "leanHint_s": 2.9983606548564694,
@@ -10466,9 +10799,15 @@
         "register": "modern",
         "units": "metric"
       },
-      "boil": null,
+      "boil": {
+        "litres": 2,
+        "seconds": 532.5
+      },
       "ending": {
-        "boil": null,
+        "boil": {
+          "litres": 2,
+          "seconds": 532.5
+        },
         "finished": false
       }
     },
@@ -10509,6 +10848,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": null,
+        "firstHotAt_s": 1791363800,
         "correctedAt_s": 1791363800
       },
       "leanHint_s": 2.9983606548564694,
@@ -10754,6 +11094,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": 1791364357.145696
       },
       "leanHint_s": 2.9983606548564694,
@@ -11000,6 +11341,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": 1791364505.145696
       },
       "leanHint_s": 2.9983606548564694,
@@ -11245,6 +11587,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": 1791364357.145696
       },
       "leanHint_s": 2.9983606548564694,
@@ -11512,6 +11855,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": 1791364917.145696
       },
       "leanHint_s": 2.9983606548564694,
@@ -11757,6 +12101,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": 1791364917.145696
       },
       "leanHint_s": 2.9983606548564694,
@@ -12003,6 +12348,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": 1791364927.145696
       },
       "leanHint_s": 2.9983606548564694,
@@ -12249,6 +12595,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": null,
+        "firstHotAt_s": 1791363600,
         "correctedAt_s": null
       },
       "leanHint_s": 0,
@@ -12607,6 +12954,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": null,
+        "firstHotAt_s": 1791363600,
         "correctedAt_s": null
       },
       "leanHint_s": 0,
@@ -12841,6 +13189,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": null,
+        "firstHotAt_s": 1791363600,
         "correctedAt_s": null
       },
       "leanHint_s": 1.6827989052140992,
@@ -13102,6 +13451,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": null,
+        "firstHotAt_s": 1791363600,
         "correctedAt_s": null
       },
       "leanHint_s": 1.6827989052140992,
@@ -13341,6 +13691,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": null,
+        "firstHotAt_s": 1791363600,
         "correctedAt_s": null
       },
       "leanHint_s": 1.6827989052140992,
@@ -13576,6 +13927,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363840,
+        "firstHotAt_s": 1791363600,
         "correctedAt_s": 1791363840
       },
       "leanHint_s": 1.6827989052140992,
@@ -13816,6 +14168,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363840,
+        "firstHotAt_s": 1791363600,
         "correctedAt_s": 1791363840
       },
       "leanHint_s": 1.6827989052140992,
@@ -14021,6 +14374,483 @@
       }
     },
     {
+      "note": "boiling corrected to cold after the water could have boiled, then a tap: the remembered time",
+      "posterior": "learned",
+      "eggsLogged": 3,
+      "cook": {
+        "id_ms": 1791363600000,
+        "startedAt_s": 1791363600,
+        "choices": {
+          "mass_kg": 0.068,
+          "massFrom": "class",
+          "sizeTable": "eu",
+          "eggFrom": "fridge",
+          "customStart_C": 12,
+          "room_C": null,
+          "startMode": "cold",
+          "afterBoil": "hold",
+          "cooling": "ice",
+          "waterLitres": 2,
+          "eggCount": 2,
+          "altitude_m": 0,
+          "level": 0.41
+        },
+        "events": {
+          "boilAt_s": 1791364200,
+          "pulled": null,
+          "cooledAt_s": null,
+          "rangAt_s": null
+        },
+        "nudge_s": -7,
+        "boilMemory": {
+          "2.0": 480,
+          "3.0": 610
+        },
+        "units": "metric",
+        "lang": "en",
+        "boilRemembered": true,
+        "coldSince_s": 1791364100,
+        "firstHotAt_s": 1791363600,
+        "correctedAt_s": 1791364100
+      },
+      "leanHint_s": 1.6827989052140992,
+      "now_s": 1791364200,
+      "surface": {
+        "of": null,
+        "grid": {
+          "tauAirScale": 1,
+          "alphaMin": 1.009520895453128e-7,
+          "alphaMax": 2.776182462496102e-7,
+          "alphaCount": 7,
+          "timeMin_s": 480.3515625,
+          "timeMax_s": 980.3515625,
+          "timeCount": 26
+        },
+        "profile": null
+      },
+      "plan": {
+        "egg": {
+          "mass_kg": 0.068
+        },
+        "setup": {
+          "startMode": "cold",
+          "afterBoil": "hold",
+          "eggStart_C": 4,
+          "ambient_C": 20,
+          "boiling_C": 99.99690682934772,
+          "timeToBoil_s": 480,
+          "cooling": "ice",
+          "waterLitres": 2,
+          "eggCount": 2
+        },
+        "provisional": false,
+        "lengthened": false,
+        "inputs": {
+          "params": { "alpha_m2s": 1.6825348257552135e-7, "tauAirScale": 1 },
+          "whiteDose_min": 0.05938185524001569
+        },
+        "answer": {
+          "level": 0.41,
+          "kind": "none",
+          "snapTo": null,
+          "lowOdds": false,
+          "cookTime_s": 680.76171875
+        },
+        "level": 0.41,
+        "solution": {
+          "reachable": true,
+          "whiteSets": true,
+          "cookTime_s": 676.7600794048565,
+          "peakYolk_C": 64.30959132294416,
+          "peakYolkTime_s": 861
+        },
+        "decided": {
+          "level": 0.41,
+          "cookTime_s": 676.7600794048565,
+          "decision": {
+            "cookTime_s": 683.7600794048565,
+            "meanCookTime_s": 680.76171875,
+            "chosen": true,
+            "odds": 0.6308393990456433,
+            "oddsTenths": 6
+          },
+          "nudge_s": -7,
+          "adviceWanted": false
+        },
+        "lean_s": 2.9983606548564694,
+        "nudge_s": -7,
+        "cookTime_s": 676.7600794048565,
+        "overdue": false,
+        "askIfStillIn": false,
+        "cool_s": 184,
+        "probeMoment": true,
+        "deadlines": {
+          "cookEnd_s": 1791364276.7600794,
+          "coolEnd_s": 1791364480.7600794,
+          "provisional": false,
+          "outAt_s": null
+        },
+        "slowHobAt_s": null,
+        "certainty": {
+          "words": {
+            "asked": 2,
+            "certainty": "ballpark",
+            "pAsked": 0.8047067173327881,
+            "pNear": 0.9713830459738587,
+            "from": 1,
+            "to": 2,
+            "pInterval": 0.9320131338939736,
+            "mostLikely": 2
+          },
+          "time": {
+            "low_s": 664.7821052719064,
+            "high_s": 702.2577979427024
+          }
+        },
+        "forecast": {
+          "cook_s": 676.7600794048565,
+          "yolk": [
+            0.2654062994528451,
+            0.6341291665713843,
+            0.10046453397577068
+          ],
+          "white": [
+            0.05373282960894505,
+            0.32963817549244007,
+            0.616628994898615
+          ],
+          "yolkWord": [
+            0.01848166671918867,
+            0.12730641656118544,
+            0.8047067173327881,
+            0.039369912079885126,
+            0.010135287306952923
+          ]
+        }
+      },
+      "outs": [],
+      "dues": [],
+      "context": {
+        "app": "ios",
+        "appVersion": "0.5.0-alpha.1",
+        "prior": "2026-09",
+        "day": "2026-10-07",
+        "id": null
+      },
+      "answers": {
+        "yolkWord": "jammy",
+        "white": "firm",
+        "probe": null
+      },
+      "record": {
+        "v": 1,
+        "uid": null,
+        "day": "2026-10-07",
+        "app": "ios",
+        "appVersion": "0.5.0-alpha.1",
+        "prior": "2026-09",
+        "model": "2026-10-e10",
+        "egg": {
+          "mass_g": 68,
+          "massFrom": "class",
+          "sizeTable": "eu"
+        },
+        "setup": {
+          "startMode": "cold",
+          "eggStart_C": 4,
+          "eggFrom": "fridge",
+          "ambient_C": 20,
+          "boiling_C": 99.99690682934772,
+          "timeToBoil_s": 480,
+          "timeToBoilFrom": "measured",
+          "cooling": "ice",
+          "afterBoil": "hold",
+          "waterLitres": 2,
+          "eggCount": 2
+        },
+        "level": 0.41,
+        "recommended_s": 683.7600794048565,
+        "nudge_s": -7,
+        "pulled_s": 676.7600794048565,
+        "pulledBy": "timeout",
+        "cooled_s": 184,
+        "yolk": null,
+        "yolkWord": "jammy",
+        "white": "firm",
+        "probe": null,
+        "forecast": {
+          "cook_s": 676.7600794048565,
+          "yolk": [
+            0.2654062994528451,
+            0.6341291665713843,
+            0.10046453397577068
+          ],
+          "white": [
+            0.05373282960894505,
+            0.32963817549244007,
+            0.616628994898615
+          ],
+          "yolkWord": [
+            0.01848166671918867,
+            0.12730641656118544,
+            0.8047067173327881,
+            0.039369912079885126,
+            0.010135287306952923
+          ]
+        },
+        "lang": "en",
+        "register": "modern",
+        "units": "metric"
+      },
+      "boil": null,
+      "ending": {
+        "boil": null,
+        "finished": false
+      }
+    },
+    {
+      "note": "the same, tapped after the pull the remembered time gives: the pull at the tap",
+      "posterior": "learned",
+      "eggsLogged": 3,
+      "cook": {
+        "id_ms": 1791363600000,
+        "startedAt_s": 1791363600,
+        "choices": {
+          "mass_kg": 0.068,
+          "massFrom": "class",
+          "sizeTable": "eu",
+          "eggFrom": "fridge",
+          "customStart_C": 12,
+          "room_C": null,
+          "startMode": "cold",
+          "afterBoil": "hold",
+          "cooling": "ice",
+          "waterLitres": 2,
+          "eggCount": 2,
+          "altitude_m": 0,
+          "level": 0.41
+        },
+        "events": {
+          "boilAt_s": 1791364320,
+          "pulled": null,
+          "cooledAt_s": null,
+          "rangAt_s": null
+        },
+        "nudge_s": -7,
+        "boilMemory": {
+          "2.0": 480,
+          "3.0": 610
+        },
+        "units": "metric",
+        "lang": "en",
+        "boilRemembered": true,
+        "coldSince_s": 1791364100,
+        "firstHotAt_s": 1791363600,
+        "correctedAt_s": 1791364100
+      },
+      "leanHint_s": 1.6827989052140992,
+      "now_s": 1791364320,
+      "surface": {
+        "of": null,
+        "grid": {
+          "tauAirScale": 1,
+          "alphaMin": 1.009520895453128e-7,
+          "alphaMax": 2.776182462496102e-7,
+          "alphaCount": 7,
+          "timeMin_s": 480.3515625,
+          "timeMax_s": 980.3515625,
+          "timeCount": 26
+        },
+        "profile": null
+      },
+      "plan": {
+        "egg": {
+          "mass_kg": 0.068
+        },
+        "setup": {
+          "startMode": "cold",
+          "afterBoil": "hold",
+          "eggStart_C": 4,
+          "ambient_C": 20,
+          "boiling_C": 99.99690682934772,
+          "timeToBoil_s": 480,
+          "cooling": "ice",
+          "waterLitres": 2,
+          "eggCount": 2
+        },
+        "provisional": false,
+        "lengthened": false,
+        "inputs": {
+          "params": { "alpha_m2s": 1.6825348257552135e-7, "tauAirScale": 1 },
+          "whiteDose_min": 0.05938185524001569
+        },
+        "answer": {
+          "level": 0.41,
+          "kind": "none",
+          "snapTo": null,
+          "lowOdds": false,
+          "cookTime_s": 680.76171875
+        },
+        "level": 0.41,
+        "solution": {
+          "reachable": true,
+          "whiteSets": true,
+          "cookTime_s": 720,
+          "peakYolk_C": 67.85627470331504,
+          "peakYolkTime_s": 898
+        },
+        "decided": {
+          "level": 0.41,
+          "cookTime_s": 676.7600794048565,
+          "decision": {
+            "cookTime_s": 683.7600794048565,
+            "meanCookTime_s": 680.76171875,
+            "chosen": true,
+            "odds": 0.6308393990456433,
+            "oddsTenths": 6
+          },
+          "nudge_s": -7,
+          "adviceWanted": false
+        },
+        "lean_s": 2.9983606548564694,
+        "nudge_s": -7,
+        "cookTime_s": 720,
+        "overdue": true,
+        "askIfStillIn": false,
+        "cool_s": 178,
+        "probeMoment": true,
+        "deadlines": {
+          "cookEnd_s": 1791364320,
+          "coolEnd_s": 1791364518,
+          "provisional": false,
+          "outAt_s": null
+        },
+        "slowHobAt_s": null,
+        "certainty": {
+          "words": {
+            "asked": 2,
+            "certainty": "ballpark",
+            "pAsked": 0.2510590443776116,
+            "pNear": 0.9757572231029548,
+            "from": 2,
+            "to": 3,
+            "pInterval": 0.9561070315662374,
+            "mostLikely": 3
+          },
+          "time": {
+            "low_s": 664.7821052719064,
+            "high_s": 702.2577979427024
+          }
+        },
+        "forecast": {
+          "cook_s": 720,
+          "yolk": [
+            0.032836566474897896,
+            0.10481453383946157,
+            0.8623488996856408
+          ],
+          "white": [
+            0.018833479519495405,
+            0.0699155016651202,
+            0.9112510188153852
+          ],
+          "yolkWord": [
+            0.012249849382045493,
+            0.019650191536717255,
+            0.2510590443776116,
+            0.7050479871886258,
+            0.011992927515000022
+          ]
+        }
+      },
+      "outs": [],
+      "dues": [],
+      "context": {
+        "app": "web",
+        "appVersion": "0.5.0-alpha.1",
+        "prior": "2026-09",
+        "day": "2026-10-07",
+        "id": 1791363600000
+      },
+      "answers": {
+        "yolkWord": "fudgy",
+        "white": "tender",
+        "probe": {
+          "centre_C": 66.4,
+          "after_s": 180
+        }
+      },
+      "record": {
+        "v": 1,
+        "uid": null,
+        "day": "2026-10-07",
+        "id": 1791363600000,
+        "app": "web",
+        "appVersion": "0.5.0-alpha.1",
+        "prior": "2026-09",
+        "model": "2026-10-e10",
+        "egg": {
+          "mass_g": 68,
+          "massFrom": "class",
+          "sizeTable": "eu"
+        },
+        "setup": {
+          "startMode": "cold",
+          "eggStart_C": 4,
+          "eggFrom": "fridge",
+          "ambient_C": 20,
+          "boiling_C": 99.99690682934772,
+          "timeToBoil_s": 480,
+          "timeToBoilFrom": "measured",
+          "cooling": "ice",
+          "afterBoil": "hold",
+          "waterLitres": 2,
+          "eggCount": 2
+        },
+        "level": 0.41,
+        "recommended_s": 727,
+        "nudge_s": -7,
+        "pulled_s": 720,
+        "pulledBy": "timeout",
+        "cooled_s": 178,
+        "yolk": null,
+        "yolkWord": "fudgy",
+        "white": "tender",
+        "probe": {
+          "centre_C": 66.4,
+          "after_s": 180
+        },
+        "forecast": {
+          "cook_s": 720,
+          "yolk": [
+            0.032836566474897896,
+            0.10481453383946157,
+            0.8623488996856408
+          ],
+          "white": [
+            0.018833479519495405,
+            0.0699155016651202,
+            0.9112510188153852
+          ],
+          "yolkWord": [
+            0.012249849382045493,
+            0.019650191536717255,
+            0.2510590443776116,
+            0.7050479871886258,
+            0.011992927515000022
+          ]
+        },
+        "lang": "en",
+        "register": "modern",
+        "units": "metric"
+      },
+      "boil": null,
+      "ending": {
+        "boil": null,
+        "finished": false
+      }
+    },
+    {
       "note": "a lighter egg: overdue, the pull is now",
       "posterior": "learned",
       "eggsLogged": 3,
@@ -14057,6 +14887,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": null,
+        "firstHotAt_s": 1791363600,
         "correctedAt_s": 1791364043.0568223
       },
       "leanHint_s": 1.6827989052140992,
@@ -14208,8 +15039,8 @@
         "id": null
       },
       "answers": {
-        "yolkWord": "jammy",
-        "white": "firm",
+        "yolkWord": null,
+        "white": null,
         "probe": null
       },
       "record": {
@@ -14245,8 +15076,8 @@
         "pulledBy": "timeout",
         "cooled_s": 136,
         "yolk": null,
-        "yolkWord": "jammy",
-        "white": "firm",
+        "yolkWord": null,
+        "white": null,
         "probe": null,
         "forecast": {
           "cook_s": 443.0568222999573,
@@ -14315,6 +15146,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": null,
+        "firstHotAt_s": 1791363600,
         "correctedAt_s": 1791364053.0568223
       },
       "leanHint_s": 1.6827989052140992,
@@ -14442,12 +15274,9 @@
         "id": 1791363600000
       },
       "answers": {
-        "yolkWord": "fudgy",
-        "white": "tender",
-        "probe": {
-          "centre_C": 66.4,
-          "after_s": 180
-        }
+        "yolkWord": "jammy",
+        "white": "firm",
+        "probe": null
       },
       "record": {
         "v": 1,
@@ -14483,12 +15312,9 @@
         "pulledBy": "timeout",
         "cooled_s": 186,
         "yolk": null,
-        "yolkWord": "fudgy",
-        "white": "tender",
-        "probe": {
-          "centre_C": 66.4,
-          "after_s": 180
-        },
+        "yolkWord": "jammy",
+        "white": "firm",
+        "probe": null,
         "forecast": {
           "cook_s": 463.0568223427141,
           "yolk": [
@@ -14561,6 +15387,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": null,
+        "firstHotAt_s": 1791363600,
         "correctedAt_s": 1791364068.0568223
       },
       "leanHint_s": 1.6827989052140992,
@@ -14688,9 +15515,12 @@
         "id": null
       },
       "answers": {
-        "yolkWord": null,
-        "white": null,
-        "probe": null
+        "yolkWord": "fudgy",
+        "white": "tender",
+        "probe": {
+          "centre_C": 66.4,
+          "after_s": 180
+        }
       },
       "record": {
         "v": 1,
@@ -14725,9 +15555,12 @@
         "pulledBy": "timeout",
         "cooled_s": 189,
         "yolk": null,
-        "yolkWord": null,
-        "white": null,
-        "probe": null,
+        "yolkWord": "fudgy",
+        "white": "tender",
+        "probe": {
+          "centre_C": 66.4,
+          "after_s": 180
+        },
         "forecast": {
           "cook_s": 443.0568222999573,
           "yolk": [
@@ -14795,6 +15628,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": null,
+        "firstHotAt_s": 1791363600,
         "correctedAt_s": null
       },
       "leanHint_s": 0,
@@ -14922,8 +15756,8 @@
         "id": 1791363600000
       },
       "answers": {
-        "yolkWord": "jammy",
-        "white": "firm",
+        "yolkWord": null,
+        "white": null,
         "probe": null
       },
       "record": {
@@ -14960,8 +15794,8 @@
         "pulledBy": "timeout",
         "cooled_s": 0,
         "yolk": null,
-        "yolkWord": "jammy",
-        "white": "firm",
+        "yolkWord": null,
+        "white": null,
         "probe": null,
         "forecast": {
           "cook_s": 438.0419921875,
@@ -15035,6 +15869,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": null,
+        "firstHotAt_s": 1791363600,
         "correctedAt_s": null
       },
       "leanHint_s": 0,
@@ -15177,12 +16012,9 @@
         "id": null
       },
       "answers": {
-        "yolkWord": "fudgy",
-        "white": "tender",
-        "probe": {
-          "centre_C": 66.4,
-          "after_s": 180
-        }
+        "yolkWord": "jammy",
+        "white": "firm",
+        "probe": null
       },
       "record": {
         "v": 1,
@@ -15217,12 +16049,9 @@
         "pulledBy": "cook",
         "cooled_s": 0,
         "yolk": null,
-        "yolkWord": "fudgy",
-        "white": "tender",
-        "probe": {
-          "centre_C": 66.4,
-          "after_s": 180
-        },
+        "yolkWord": "jammy",
+        "white": "firm",
+        "probe": null,
         "forecast": {
           "cook_s": 438.0419921875,
           "yolk": [
@@ -15295,6 +16124,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": null,
+        "firstHotAt_s": 1791363600,
         "correctedAt_s": 1791364642.0419922
       },
       "leanHint_s": 0,
@@ -15437,9 +16267,12 @@
         "id": 1791363600000
       },
       "answers": {
-        "yolkWord": null,
-        "white": null,
-        "probe": null
+        "yolkWord": "fudgy",
+        "white": "tender",
+        "probe": {
+          "centre_C": 66.4,
+          "after_s": 180
+        }
       },
       "record": {
         "v": 1,
@@ -15475,9 +16308,12 @@
         "pulledBy": "cook",
         "cooled_s": 190,
         "yolk": null,
-        "yolkWord": null,
-        "white": null,
-        "probe": null,
+        "yolkWord": "fudgy",
+        "white": "tender",
+        "probe": {
+          "centre_C": 66.4,
+          "after_s": 180
+        },
         "forecast": {
           "cook_s": 438.0419921875,
           "yolk": [
@@ -15550,6 +16386,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791364093.0568223,
+        "firstHotAt_s": 1791363600,
         "correctedAt_s": 1791364093.0568223
       },
       "leanHint_s": 1.6827989052140992,
@@ -15692,8 +16529,8 @@
         "id": null
       },
       "answers": {
-        "yolkWord": "jammy",
-        "white": "firm",
+        "yolkWord": null,
+        "white": null,
         "probe": null
       },
       "record": {
@@ -15729,8 +16566,8 @@
         "pulledBy": "timeout",
         "cooled_s": 217,
         "yolk": null,
-        "yolkWord": "jammy",
-        "white": "firm",
+        "yolkWord": null,
+        "white": null,
         "probe": null,
         "forecast": {
           "cook_s": 463.0568222999573,
@@ -15799,6 +16636,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791364093.0568223,
+        "firstHotAt_s": 1791363600,
         "correctedAt_s": 1791364096.0568223
       },
       "leanHint_s": 1.6827989052140992,
@@ -15926,12 +16764,9 @@
         "id": 1791363600000
       },
       "answers": {
-        "yolkWord": "fudgy",
-        "white": "tender",
-        "probe": {
-          "centre_C": 66.4,
-          "after_s": 180
-        }
+        "yolkWord": "jammy",
+        "white": "firm",
+        "probe": null
       },
       "record": {
         "v": 1,
@@ -15967,12 +16802,9 @@
         "pulledBy": "timeout",
         "cooled_s": 184,
         "yolk": null,
-        "yolkWord": "fudgy",
-        "white": "tender",
-        "probe": {
-          "centre_C": 66.4,
-          "after_s": 180
-        },
+        "yolkWord": "jammy",
+        "white": "firm",
+        "probe": null,
         "forecast": {
           "cook_s": 676.7600794048565,
           "yolk": [
@@ -16045,6 +16877,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791364093.0568223,
+        "firstHotAt_s": 1791363600,
         "correctedAt_s": 1791364093.0568223
       },
       "leanHint_s": 1.6827989052140992,
@@ -16172,9 +17005,12 @@
         "id": null
       },
       "answers": {
-        "yolkWord": null,
-        "white": null,
-        "probe": null
+        "yolkWord": "fudgy",
+        "white": "tender",
+        "probe": {
+          "centre_C": 66.4,
+          "after_s": 180
+        }
       },
       "record": {
         "v": 1,
@@ -16209,9 +17045,12 @@
         "pulledBy": "timeout",
         "cooled_s": 217,
         "yolk": null,
-        "yolkWord": null,
-        "white": null,
-        "probe": null,
+        "yolkWord": "fudgy",
+        "white": "tender",
+        "probe": {
+          "centre_C": 66.4,
+          "after_s": 180
+        },
         "forecast": {
           "cook_s": 463.0568222999573,
           "yolk": [
@@ -16284,6 +17123,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": null,
+        "firstHotAt_s": 1791363600,
         "correctedAt_s": 1791364093.0568223
       },
       "leanHint_s": 1.6827989052140992,
@@ -16411,8 +17251,8 @@
         "id": 1791363600000
       },
       "answers": {
-        "yolkWord": "jammy",
-        "white": "firm",
+        "yolkWord": null,
+        "white": null,
         "probe": null
       },
       "record": {
@@ -16449,8 +17289,8 @@
         "pulledBy": "timeout",
         "cooled_s": 206,
         "yolk": null,
-        "yolkWord": "jammy",
-        "white": "firm",
+        "yolkWord": null,
+        "white": null,
         "probe": null,
         "forecast": {
           "cook_s": 463.0568222999573,
@@ -16519,6 +17359,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": null,
+        "firstHotAt_s": 1791363600,
         "correctedAt_s": 1791364096.0568223
       },
       "leanHint_s": 1.6827989052140992,
@@ -16656,12 +17497,9 @@
         "id": null
       },
       "answers": {
-        "yolkWord": "fudgy",
-        "white": "tender",
-        "probe": {
-          "centre_C": 66.4,
-          "after_s": 180
-        }
+        "yolkWord": "jammy",
+        "white": "firm",
+        "probe": null
       },
       "record": {
         "v": 1,
@@ -16696,12 +17534,9 @@
         "pulledBy": "timeout",
         "cooled_s": 200,
         "yolk": null,
-        "yolkWord": "fudgy",
-        "white": "tender",
-        "probe": {
-          "centre_C": 66.4,
-          "after_s": 180
-        },
+        "yolkWord": "jammy",
+        "white": "firm",
+        "probe": null,
         "forecast": {
           "cook_s": 497.6026451823153,
           "yolk": [
@@ -16774,6 +17609,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": null,
+        "firstHotAt_s": 1791363600,
         "correctedAt_s": 1791364093.0568223
       },
       "leanHint_s": 1.6827989052140992,
@@ -16901,9 +17737,12 @@
         "id": 1791363600000
       },
       "answers": {
-        "yolkWord": null,
-        "white": null,
-        "probe": null
+        "yolkWord": "fudgy",
+        "white": "tender",
+        "probe": {
+          "centre_C": 66.4,
+          "after_s": 180
+        }
       },
       "record": {
         "v": 1,
@@ -16939,9 +17778,12 @@
         "pulledBy": "timeout",
         "cooled_s": 133,
         "yolk": null,
-        "yolkWord": null,
-        "white": null,
-        "probe": null,
+        "yolkWord": "fudgy",
+        "white": "tender",
+        "probe": {
+          "centre_C": 66.4,
+          "after_s": 180
+        },
         "forecast": {
           "cook_s": 463.0568222999573,
           "yolk": [
@@ -17009,6 +17851,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": null,
+        "firstHotAt_s": 1791363600,
         "correctedAt_s": null
       },
       "leanHint_s": 0,
@@ -17078,8 +17921,8 @@
         "id": null
       },
       "answers": {
-        "yolkWord": "jammy",
-        "white": "firm",
+        "yolkWord": null,
+        "white": null,
         "probe": null
       },
       "record": {
@@ -17115,8 +17958,8 @@
         "pulledBy": "timeout",
         "cooled_s": 186,
         "yolk": null,
-        "yolkWord": "jammy",
-        "white": "firm",
+        "yolkWord": null,
+        "white": null,
         "probe": null,
         "forecast": null,
         "lang": "en",
@@ -17166,6 +18009,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": null,
+        "firstHotAt_s": 1791363600,
         "correctedAt_s": null
       },
       "leanHint_s": 0,
@@ -17332,12 +18176,9 @@
         "id": 1791363600000
       },
       "answers": {
-        "yolkWord": "fudgy",
-        "white": "tender",
-        "probe": {
-          "centre_C": 66.4,
-          "after_s": 180
-        }
+        "yolkWord": "jammy",
+        "white": "firm",
+        "probe": null
       },
       "record": {
         "v": 1,
@@ -17373,12 +18214,9 @@
         "pulledBy": "timeout",
         "cooled_s": 186,
         "yolk": null,
-        "yolkWord": "fudgy",
-        "white": "tender",
-        "probe": {
-          "centre_C": 66.4,
-          "after_s": 180
-        },
+        "yolkWord": "jammy",
+        "white": "firm",
+        "probe": null,
         "forecast": {
           "cook_s": 461.3740234375,
           "yolk": [
@@ -17446,6 +18284,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": null,
+        "firstHotAt_s": 1791363600,
         "correctedAt_s": 1791364065.3740234
       },
       "leanHint_s": 0,
@@ -17573,9 +18412,12 @@
         "id": null
       },
       "answers": {
-        "yolkWord": null,
-        "white": null,
-        "probe": null
+        "yolkWord": "fudgy",
+        "white": "tender",
+        "probe": {
+          "centre_C": 66.4,
+          "after_s": 180
+        }
       },
       "record": {
         "v": 1,
@@ -17610,9 +18452,12 @@
         "pulledBy": "timeout",
         "cooled_s": 200,
         "yolk": null,
-        "yolkWord": null,
-        "white": null,
-        "probe": null,
+        "yolkWord": "fudgy",
+        "white": "tender",
+        "probe": {
+          "centre_C": 66.4,
+          "after_s": 180
+        },
         "forecast": {
           "cook_s": 497.6026451823153,
           "yolk": [
@@ -17680,6 +18525,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": null,
+        "firstHotAt_s": 1791363600,
         "correctedAt_s": null
       },
       "leanHint_s": 3,
@@ -17807,8 +18653,8 @@
         "id": 1791363600000
       },
       "answers": {
-        "yolkWord": "jammy",
-        "white": "firm",
+        "yolkWord": null,
+        "white": null,
         "probe": null
       },
       "record": {
@@ -17845,8 +18691,8 @@
         "pulledBy": "timeout",
         "cooled_s": 180,
         "yolk": null,
-        "yolkWord": "jammy",
-        "white": "firm",
+        "yolkWord": null,
+        "white": null,
         "probe": null,
         "forecast": {
           "cook_s": 1769.375,
@@ -17915,6 +18761,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": null,
+        "firstHotAt_s": 1791363600,
         "correctedAt_s": null
       },
       "leanHint_s": 3,
@@ -17984,12 +18831,9 @@
         "id": null
       },
       "answers": {
-        "yolkWord": "fudgy",
-        "white": "tender",
-        "probe": {
-          "centre_C": 66.4,
-          "after_s": 180
-        }
+        "yolkWord": "jammy",
+        "white": "firm",
+        "probe": null
       },
       "record": {
         "v": 1,
@@ -18024,12 +18868,9 @@
         "pulledBy": "timeout",
         "cooled_s": 180,
         "yolk": null,
-        "yolkWord": "fudgy",
-        "white": "tender",
-        "probe": {
-          "centre_C": 66.4,
-          "after_s": 180
-        },
+        "yolkWord": "jammy",
+        "white": "firm",
+        "probe": null,
         "forecast": null,
         "lang": "en",
         "register": "modern",
@@ -18078,6 +18919,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "leanHint_s": 0,
@@ -18205,9 +19047,12 @@
         "id": 1791363600000
       },
       "answers": {
-        "yolkWord": null,
-        "white": null,
-        "probe": null
+        "yolkWord": "fudgy",
+        "white": "tender",
+        "probe": {
+          "centre_C": 66.4,
+          "after_s": 180
+        }
       },
       "record": {
         "v": 1,
@@ -18243,9 +19088,12 @@
         "pulledBy": "timeout",
         "cooled_s": 180,
         "yolk": null,
-        "yolkWord": null,
-        "white": null,
-        "probe": null,
+        "yolkWord": "fudgy",
+        "white": "tender",
+        "probe": {
+          "centre_C": 66.4,
+          "after_s": 180
+        },
         "forecast": {
           "cook_s": 1187.1875,
           "yolk": [
@@ -18319,6 +19167,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "leanHint_s": 0,
@@ -18385,8 +19234,8 @@
         "id": null
       },
       "answers": {
-        "yolkWord": "jammy",
-        "white": "firm",
+        "yolkWord": null,
+        "white": null,
         "probe": null
       },
       "record": {
@@ -18422,8 +19271,8 @@
         "pulledBy": "timeout",
         "cooled_s": 124,
         "yolk": null,
-        "yolkWord": "jammy",
-        "white": "firm",
+        "yolkWord": null,
+        "white": null,
         "probe": null,
         "forecast": null,
         "lang": "en",
@@ -18473,6 +19322,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "leanHint_s": 0,
@@ -18539,12 +19389,9 @@
         "id": 1791363600000
       },
       "answers": {
-        "yolkWord": "fudgy",
-        "white": "tender",
-        "probe": {
-          "centre_C": 66.4,
-          "after_s": 180
-        }
+        "yolkWord": "jammy",
+        "white": "firm",
+        "probe": null
       },
       "record": {
         "v": 1,
@@ -18580,12 +19427,9 @@
         "pulledBy": "timeout",
         "cooled_s": 112,
         "yolk": null,
-        "yolkWord": "fudgy",
-        "white": "tender",
-        "probe": {
-          "centre_C": 66.4,
-          "after_s": 180
-        },
+        "yolkWord": "jammy",
+        "white": "firm",
+        "probe": null,
         "forecast": null,
         "lang": "en",
         "register": "modern",
@@ -18634,6 +19478,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "boil": null
@@ -18673,6 +19518,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": null
       },
       "boil": {
@@ -18715,6 +19561,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": 1791363700
       },
       "boil": {
@@ -18757,6 +19604,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": null,
+        "firstHotAt_s": 1791363600,
         "correctedAt_s": null
       },
       "boil": null
@@ -18796,6 +19644,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363840,
+        "firstHotAt_s": 1791363600,
         "correctedAt_s": 1791363840
       },
       "boil": {
@@ -18838,6 +19687,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791364080,
+        "firstHotAt_s": 1791363600,
         "correctedAt_s": 1791364080
       },
       "boil": {
@@ -18880,6 +19730,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791364080.5,
+        "firstHotAt_s": 1791363600,
         "correctedAt_s": 1791364080.5
       },
       "boil": null
@@ -18919,6 +19770,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": null,
+        "firstHotAt_s": 1791364200,
         "correctedAt_s": 1791364200
       },
       "boil": null
@@ -18958,6 +19810,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": 1791363610
       },
       "boil": {
@@ -19000,6 +19853,7 @@
         "lang": "en",
         "boilRemembered": true,
         "coldSince_s": 1791363600,
+        "firstHotAt_s": null,
         "correctedAt_s": 1791363610
       },
       "boil": null
@@ -19036,12 +19890,136 @@
         "lang": "en",
         "boilRemembered": false,
         "coldSince_s": 1791364070,
+        "firstHotAt_s": 1791363600,
         "correctedAt_s": 1791364070
       },
       "boil": {
         "litres": 2,
         "seconds": 900
       }
+    },
+    {
+      "note": "a tap, then a stray cold -> hot -> cold: still remembered",
+      "cook": {
+        "id_ms": 1791363600000,
+        "startedAt_s": 1791363600,
+        "choices": {
+          "mass_kg": 0.068,
+          "massFrom": "class",
+          "sizeTable": "eu",
+          "eggFrom": "fridge",
+          "customStart_C": 12,
+          "room_C": null,
+          "startMode": "cold",
+          "afterBoil": "hold",
+          "cooling": "ice",
+          "waterLitres": 2,
+          "eggCount": 2,
+          "altitude_m": 0,
+          "level": 0.41
+        },
+        "events": {
+          "boilAt_s": 1791364100,
+          "pulled": null,
+          "cooledAt_s": null,
+          "rangAt_s": null
+        },
+        "nudge_s": 0,
+        "boilMemory": {
+          "2.0": 480,
+          "3.0": 610
+        },
+        "units": "metric",
+        "lang": "en",
+        "boilRemembered": true,
+        "coldSince_s": 1791364210,
+        "firstHotAt_s": 1791364200,
+        "correctedAt_s": 1791364210
+      },
+      "boil": {
+        "litres": 2,
+        "seconds": 500
+      }
+    },
+    {
+      "note": "a stray cold -> hot -> cold past the time this water takes, then a tap: not remembered",
+      "cook": {
+        "id_ms": 1791363600000,
+        "startedAt_s": 1791363600,
+        "choices": {
+          "mass_kg": 0.068,
+          "massFrom": "class",
+          "sizeTable": "eu",
+          "eggFrom": "fridge",
+          "customStart_C": 12,
+          "room_C": null,
+          "startMode": "cold",
+          "afterBoil": "hold",
+          "cooling": "ice",
+          "waterLitres": 2,
+          "eggCount": 2,
+          "altitude_m": 0,
+          "level": 0.41
+        },
+        "events": {
+          "boilAt_s": 1791364200,
+          "pulled": null,
+          "cooledAt_s": null,
+          "rangAt_s": null
+        },
+        "nudge_s": 0,
+        "boilMemory": {
+          "2.0": 480,
+          "3.0": 610
+        },
+        "units": "metric",
+        "lang": "en",
+        "boilRemembered": true,
+        "coldSince_s": 1791364110,
+        "firstHotAt_s": 1791364100,
+        "correctedAt_s": 1791364110
+      },
+      "boil": null
+    },
+    {
+      "note": "the start corrected ten minutes earlier, a tap, then a stray: not remembered",
+      "cook": {
+        "id_ms": 1791363600000,
+        "startedAt_s": 1791363000,
+        "choices": {
+          "mass_kg": 0.068,
+          "massFrom": "class",
+          "sizeTable": "eu",
+          "eggFrom": "fridge",
+          "customStart_C": 12,
+          "room_C": null,
+          "startMode": "cold",
+          "afterBoil": "hold",
+          "cooling": "ice",
+          "waterLitres": 2,
+          "eggCount": 2,
+          "altitude_m": 0,
+          "level": 0.41
+        },
+        "events": {
+          "boilAt_s": 1791364100,
+          "pulled": null,
+          "cooledAt_s": null,
+          "rangAt_s": null
+        },
+        "nudge_s": 0,
+        "boilMemory": {
+          "2.0": 480,
+          "3.0": 610
+        },
+        "units": "metric",
+        "lang": "en",
+        "boilRemembered": true,
+        "coldSince_s": 1791364210,
+        "firstHotAt_s": 1791364200,
+        "correctedAt_s": 1791364210
+      },
+      "boil": null
     }
   ]
 }

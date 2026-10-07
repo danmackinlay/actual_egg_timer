@@ -152,7 +152,12 @@ back restores it.
   of the time heating so far (`SLOW_HOB_*`).
 - **Boiling → cold (the owner's case).** The cook is back in Heating. The
   countdown is a guess again until Full rolling boil, and always later than
-  before.
+  before. When the correction comes later than this water's remembered
+  time to boil, the water may already have boiled, and a tap then would
+  record a ramp too long by the delay (a jammy egg a minute over for a
+  correction two minutes late). That cook is planned on the remembered
+  time to boil, and on the tap only when nothing is remembered; the tap is
+  not remembered either way (`DECISIONS.md` 98).
 - **Cold → boiling, before the tap.** Heating ends at once, and the pull
   can already be due.
 - **After the pull.** The pull's event fixes the cook time; corrections
@@ -273,6 +278,10 @@ export interface RunningCook {
   /** Since when the choices have said a cold start: the start, or the
    *  moment of a correction to cold; null while they say boiling (C2). */
   coldSince_s: number | null;
+  /** The first moment the choices said boiling: the start for a cook
+   *  begun hot, else the first correction to hot; null if never (review
+   *  2.2). */
+  firstHotAt_s: number | null;
   /** When the choices or the start were last corrected; null until they
    *  are. The plan never puts the pull before it (C2). */
   correctedAt_s: number | null;
@@ -407,7 +416,13 @@ The functions, all pure and fixtured:
   `boilToRemember` refuses a tap the cook was told to watch for only after
   this water's remembered time to boil: corrected from boiling to cold that
   late (`coldSince_s`), or with the start corrected that much earlier, since
-  the water may have boiled unseen in both. `cookEnding(cook, plan, now_s)`
+  the water may have boiled unseen in both. After the review (2.2) it also
+  keeps `firstHotAt_s`, the first moment the choices said boiling: a tap
+  made before it was made in the cold the cook began with, watched from
+  the press of Start (`id_ms`), so a stray cold → hot → cold after the tap
+  no longer drops it, and changing back gives back the boil memory too. The
+  same test, a tap after a correction to cold made too late, has `replan`
+  run that cook on the remembered time (1.2, above). `cookEnding(cook, plan, now_s)`
   is what Cancel and Start again leave: the boil to remember, and whether the
   cook was Done, so an egg to log if no answer has logged it.
 - `readRunningCook(raw): RunningCook | null`: the defensive read, whole or

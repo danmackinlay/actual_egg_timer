@@ -259,6 +259,7 @@ const NOT_COPY: Record<string, string> = {
   due_s: 'stored running cook field (Running.swift)',
   eggFrom: 'stored running cook field (Running.swift)',
   events: 'stored running cook field (Running.swift)',
+  firstHotAt_s: 'stored running cook field (Running.swift)',
   id_ms: 'stored running cook field (Running.swift)',
   lang: 'stored running cook field (Running.swift)',
   level: 'stored running cook field (Running.swift)',

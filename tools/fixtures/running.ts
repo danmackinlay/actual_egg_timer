@@ -118,6 +118,7 @@ const MOVES: { note: string; cook: RunningCook; move: Move }[] = [
   { note: 'cold corrected to boiling: no longer cold', cook: tapped, move: { correct: { ...tapped.choices, startMode: 'hot' }, now: START_S + 600 } },
   { note: 'cold kept cold, a heavier egg: cold since the start still', cook: tapped, move: { correct: { ...tapped.choices, mass_kg: 0.076 }, now: START_S + 600 } },
   { note: 'corrected back to cold: cold from the second correction', cook: corrected(tapped, { ...tapped.choices, startMode: 'hot' }, START_S + 600), move: { correct: tapped.choices, now: START_S + 610 } },
+  { note: 'boiling a second time: first said boiling at the first', cook: corrected(corrected(tapped, { ...tapped.choices, startMode: 'hot' }, START_S + 600), tapped.choices, START_S + 610), move: { correct: { ...tapped.choices, startMode: 'hot' }, now: START_S + 620 } },
   { note: 'a correction after the cooling ended keeps every event, and the level the egg was pulled at', cook: cooled, move: { correct: { ...cooled.choices, level: 0.62, cooling: 'tap' }, now: START_S + 1100 } },
   { note: 'the level, before the pull: corrected', cook: tapped, move: { correct: { ...tapped.choices, level: 0.62 }, now: START_S + 600 } },
   { note: 'a correction after the pull rang: planned afresh', cook: rung, move: { correct: { ...hot.choices, mass_kg: 0.076 }, now: START_S + 385 } },
@@ -240,6 +241,8 @@ const REFUSED: { note: string; path: string[]; value: unknown }[] = [
   { note: 'remembered as a number', path: ['boilRemembered'], value: 1 },
   { note: 'no cold-since field', path: ['coldSince_s'], value: undefined },
   { note: 'cold since a string', path: ['coldSince_s'], value: 'start' },
+  { note: 'no first-hot field', path: ['firstHotAt_s'], value: undefined },
+  { note: 'first hot as a boolean', path: ['firstHotAt_s'], value: true },
   { note: 'no corrected field', path: ['correctedAt_s'], value: undefined },
   { note: 'corrected before the start', path: ['correctedAt_s'], value: START_S - 1 },
 ];
@@ -459,6 +462,11 @@ const S = START_S;
   const owner = corrected(h0, { ...h0.choices, startMode: 'cold' }, S + 240);
   plan({ note: "the owner's case: boiling corrected to cold, back to heating", posterior: 'learned', cook: owner, leanHint_s: hint, now_s: S + 240, surface: 'own' });
   plan({ note: "the owner's case, then the tap", posterior: 'learned', cook: withBoil(owner, S + 560), leanHint_s: hint, now_s: S + 560, surface: 'own' });
+  // Corrected to cold later than this water takes to boil (review 1.2): the
+  // tap may be long after the boil, so the remembered time is the ramp.
+  const lateCold = corrected(h0, { ...h0.choices, startMode: 'cold' }, S + 500);
+  plan({ note: 'boiling corrected to cold after the water could have boiled, then a tap: the remembered time', posterior: 'learned', cook: withBoil(lateCold, S + 600), leanHint_s: hint, now_s: S + 600, surface: 'own' });
+  plan({ note: 'the same, tapped after the pull the remembered time gives: the pull at the tap', posterior: 'learned', cook: withBoil(lateCold, S + 720), leanHint_s: hint, now_s: S + 720, surface: 'own' });
 
   // A lighter egg makes it overdue; back within the grace, and it is not.
   const lighter = corrected(h0, { ...h0.choices, mass_kg: 0.048 }, end - 20);
@@ -533,6 +541,11 @@ const remembers: { note: string; cook: RunningCook }[] = [];
   remember('the start corrected four minutes earlier, then a tap', withBoil(startCorrected(cold, S - 240, S + 10) as RunningCook, S + 500));
   remember('the start corrected ten minutes earlier, then a tap: not remembered', withBoil(startCorrected(cold, S - 600, S + 10) as RunningCook, S + 500));
   remember('no pans remembered: the default time', withBoil(corrected(startCook(START_MS, { ...BASE_CHOICES, startMode: 'hot' }, 0, {}, 'metric', 'en'), BASE_CHOICES, S + 470), S + 900));
+  const t = withBoil(cold, S + 500);
+  const stray = corrected(corrected(t, { ...cold.choices, startMode: 'hot' }, S + 600), cold.choices, S + 610);
+  remember('a tap, then a stray cold -> hot -> cold: still remembered', stray);
+  remember('a stray cold -> hot -> cold past the time this water takes, then a tap: not remembered', withBoil(corrected(corrected(cold, { ...cold.choices, startMode: 'hot' }, S + 500), cold.choices, S + 510), S + 600));
+  remember('the start corrected ten minutes earlier, a tap, then a stray: not remembered', corrected(corrected(withBoil(startCorrected(cold, S - 600, S + 10) as RunningCook, S + 500), { ...cold.choices, startMode: 'hot' }, S + 600), cold.choices, S + 610));
 }
 
 export const runningFixture = {

@@ -109,6 +109,10 @@ public struct RunningCook: Sendable, Equatable {
     /// Since when the choices have said a cold start; nil while they say
     /// boiling (`boilToRemember`).
     public var coldSinceS: Double?
+    /// The first moment the choices said a boiling start: the start for a
+    /// cook begun hot, the first correction to boiling for one begun cold;
+    /// nil if they never have (`boilToRemember`).
+    public var firstHotAtS: Double?
     /// When the choices or the start were last corrected; nil until they
     /// are. A plan never puts the pull before it (`replan`).
     public var correctedAtS: Double?
@@ -116,7 +120,7 @@ public struct RunningCook: Sendable, Equatable {
     public init(
         idMs: Double, startedAtS: Double, choices: CookChoices, events: CookEvents, nudgeS: Double,
         boilMemory: BoilMemory, units: Units, lang: String, boilRemembered: Bool, coldSinceS: Double?,
-        correctedAtS: Double?
+        firstHotAtS: Double?, correctedAtS: Double?
     ) {
         self.idMs = idMs
         self.startedAtS = startedAtS
@@ -128,6 +132,7 @@ public struct RunningCook: Sendable, Equatable {
         self.lang = lang
         self.boilRemembered = boilRemembered
         self.coldSinceS = coldSinceS
+        self.firstHotAtS = firstHotAtS
         self.correctedAtS = correctedAtS
     }
 
@@ -159,6 +164,7 @@ public struct RunningCook: Sendable, Equatable {
             "lang": lang,
             "boilRemembered": boilRemembered,
             "coldSince_s": coldSinceS ?? NSNull(),
+            "firstHotAt_s": firstHotAtS ?? NSNull(),
             "correctedAt_s": correctedAtS ?? NSNull(),
         ]
     }
@@ -212,7 +218,8 @@ public func startCook(
     return RunningCook(
         idMs: nowMs.rounded(), startedAtS: start, choices: choices, events: .none, nudgeS: nudgeS,
         boilMemory: boilMemory, units: units, lang: lang, boilRemembered: hasBoilMemory(boilMemory),
-        coldSinceS: choices.startMode == .cold ? start : nil, correctedAtS: nil
+        coldSinceS: choices.startMode == .cold ? start : nil, firstHotAtS: choices.startMode == .hot ? start : nil,
+        correctedAtS: nil
     )
 }
 
@@ -242,6 +249,7 @@ public func corrected(_ cook: RunningCook, choices: CookChoices, nowS: Double) -
     var next = cook
     next.choices = choices
     if cook.events.pulled != nil { next.choices.level = cook.choices.level }
+    if cook.firstHotAtS == nil, choices.startMode == .hot { next.firstHotAtS = nowS }
     next.events.rangAtS = nil
     next.coldSinceS = since
     next.correctedAtS = nowS
@@ -395,11 +403,13 @@ public func readRunningCook(_ raw: Any?) -> RunningCook? {
           let lang = r["lang"] as? String, !lang.isEmpty,
           isJSONBool(r["boilRemembered"]), let remembered = r["boilRemembered"] as? Bool,
           let since = numberOrNull(r["coldSince_s"]),
+          let firstHot = numberOrNull(r["firstHotAt_s"]),
           let correctedAt = numberOrNull(r["correctedAt_s"]) else { return nil }
     if let at = correctedAt, at < start { return nil }
     return RunningCook(
         idMs: id, startedAtS: start, choices: choices, events: events, nudgeS: nudge, boilMemory: memory,
-        units: units, lang: lang, boilRemembered: remembered, coldSinceS: since, correctedAtS: correctedAt
+        units: units, lang: lang, boilRemembered: remembered, coldSinceS: since, firstHotAtS: firstHot,
+        correctedAtS: correctedAt
     )
 }
 
@@ -468,7 +478,10 @@ public func replan(
     let params = calibrationParams(c)
     let carry = leanHintS + cook.nudgeS
 
-    var ramp = tapAt.map { $0 - start } ?? estimateTimeToBoil(cook.boilMemory, litres: ch.waterLitres)
+    // A tap after a late correction to cold runs on the remembered time,
+    // unless no pan was remembered (review 1.2).
+    var ramp = estimateTimeToBoil(cook.boilMemory, litres: ch.waterLitres)
+    if let tap = tapAt, !(cook.boilRemembered && tappedAfterLateCold(cook)) { ramp = tap - start }
     var pot = cookSetupOf(ch, timeToBoilS: ramp)
     var answer = answerAt(c, egg: pot.egg, setup: pot.setup, level: ch.level, profile: nil, snapRetry: true)
     var lengthened = false
@@ -672,9 +685,25 @@ public struct BoilToRemember: Sendable, Equatable {
 public func boilToRemember(_ cook: RunningCook) -> BoilToRemember? {
     let ch = cook.choices
     guard ch.startMode == .cold, let tap = cook.events.boilAtS else { return nil }
-    let watched = cook.coldSinceS ?? cook.startedAtS
+    let watched = watchedFromS(cook, tap: tap)
     if watched - cook.startedAtS > estimateTimeToBoil(cook.boilMemory, litres: ch.waterLitres) { return nil }
     return BoilToRemember(litres: ch.waterLitres, seconds: tap - cook.startedAtS)
+}
+
+/// When the cook began watching for the boil tapped at `tap`: when Start was
+/// pressed, for a tap before the choices first said boiling; otherwise when
+/// they last said cold.
+private func watchedFromS(_ cook: RunningCook, tap: Double) -> Double {
+    if let hot = cook.firstHotAtS, tap >= hot { return cook.coldSinceS ?? cook.startedAtS }
+    return cook.idMs / 1000
+}
+
+/// Whether the boil was tapped after a correction from boiling to cold made
+/// later than this water's remembered time to boil.
+private func tappedAfterLateCold(_ cook: RunningCook) -> Bool {
+    guard let tap = cook.events.boilAtS, let hot = cook.firstHotAtS, tap >= hot else { return false }
+    let remembered = estimateTimeToBoil(cook.boilMemory, litres: cook.choices.waterLitres)
+    return watchedFromS(cook, tap: tap) - cook.startedAtS > remembered
 }
 
 /// What a cook leaves when it ends, by Cancel or by Start again: the boil to
