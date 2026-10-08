@@ -1343,6 +1343,25 @@ scenario('grace-correction', 'onescreen review 3: a lighter egg 15 s into the pu
   run.note('Pull kept, nothing rung again, Cooling at the grace’s first end');
 });
 
+
+scenario('done-note-as-ran', 'onescreen review 2.2: Runny at Done, relaunched: the texture note reads the cook as it ran', async (run) => {
+  await started(run, [...HOT, '-uiDo', 'out@pull+2,answer:runny@cooled+5']);
+  const cooling = await toCooling(run, 2);
+  let i = await run.step(cooling.cooled + 1);
+  await run.until(/^phase DONE$/, { from: i, what: 'Done' });
+  i = await run.step(cooling.cooled + 5);
+  await run.until(/^log 1 folded 1 /, { from: i, what: 'Runny folded' });
+  const notes = (lines) => lines.filter((l) => l.text.startsWith('note ')).map((l) => l.text.slice(5));
+  const was = notes(await quiet(run, 'note ')).at(-1);
+  run.terminate();
+  const r = await relaunched(run, cooling.cooled + 60);
+  run.check(r.restore.startsWith('restore DONE'), r.restore);
+  // Not the blank before the first plan.
+  const now = notes((await quiet(run, 'note ')).slice(run.launched)).filter((n) => n !== '');
+  run.check(now.length > 0 && now.every((n) => n === was), `the note ${JSON.stringify(now)} for "${was}"`);
+  run.note(`"${was}" kept across the relaunch`);
+});
+
 // ------------------------------------------------------------------- main
 
 /// A new device's first launches are many seconds slow while the system

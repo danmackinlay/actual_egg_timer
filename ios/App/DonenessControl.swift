@@ -196,7 +196,10 @@ struct SliderReading {
             words = whiteSets && before ? cook.heldCertainty?.words : nil
             peakYolkC = ran?.peakYolkC ?? plan.solution.result.peakYolkC
             level = ran?.level ?? plan.level
-            noteSolution = plan.solution
+            // The note too, once the egg is out (`Cook.ranSolution`, onescreen
+            // review 2.2): beside the peak, not from a plan made since on a
+            // posterior that has folded this egg's answer.
+            noteSolution = ran != nil ? cook.ranSolution ?? plan.solution : plan.solution
             // A change in hand: the heading and the texture are its own
             // (the readout keeps the committed plan's time).
             if let aim = model.edits.aim {

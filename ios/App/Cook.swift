@@ -191,6 +191,13 @@ final class Cook {
     /// the egg is out: what "You asked for" and the sentence say.
     var shownLevel: Double? { asRan?.level ?? plan?.level }
     var shownPeakYolkC: Double? { asRan?.peakYolkC ?? plan?.solution.result.peakYolkC }
+    /// The solve as the cook ran, once the egg is out (core `solutionAsRan`):
+    /// the plan's pot at the time that ran, on the parameters it ran under,
+    /// so what Done says of the egg beside the peak - the texture note - is
+    /// never redrawn from a posterior that has folded this egg's own answer
+    /// (onescreen review 2.2). Nil before the pull, and until the plan as it
+    /// ran is had; worked out with each plan.
+    private(set) var ranSolution: Solution?
     /// Whether the cooling ended at the yolk's peak, as it ran.
     var shownProbeMoment: Bool { asRan?.probeMoment ?? plan?.probeMoment ?? false }
 
@@ -610,6 +617,7 @@ final class Cook {
         outcome = nil
         heldCertainty = nil
         heldProfile = nil
+        ranSolution = nil
         leanHintS = 0
         surface = nil
         surfaceAsked = nil
@@ -650,6 +658,8 @@ final class Cook {
     private struct Made: Sendable {
         let plan: CookPlan
         let outcome: Outcome?
+        /// The solve as the cook ran, once the egg is out (`solutionAsRan`).
+        let ran: Solution?
     }
 
     private func planInput() -> PlanInput? {
@@ -673,7 +683,10 @@ final class Cook {
                 ? d.outcome
                 : predictOutcome(i.calibration.posterior, s.grid, p.cookTimeS, logYolkTarget(p.level))
         }
-        return Made(plan: p, outcome: outcome)
+        // As it ran, with the plan as it ran kept as `adopt` keeps it: one
+        // simulation here, off the main actor, rather than in a draw.
+        let ran = asRanShown(keepAsRan(i.cook, plan: p), plan: p).map { solutionAsRan(p, ran: $0) }
+        return Made(plan: p, outcome: outcome, ran: ran)
     }
 
     /// Plan the cook as it stands, off the main actor: one plan at a time,
@@ -749,6 +762,7 @@ final class Cook {
         ))
         #endif
         if let o = made.outcome { outcome = o }
+        ranSolution = made.ran
         if next.decided != nil {
             heldCertainty = next.certainty
             // This pot's own, or none until it lands after the surface.
