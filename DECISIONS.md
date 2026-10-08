@@ -632,3 +632,22 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     and stored posteriors are replayed. `INFERENCE.md` §2 is corrected now.
     6 October 2026.
 
+Decided by the owner, 9 October 2026:
+
+(96 to 99 were taken on the `0.5.x` line, and are in its copy of this file.)
+
+100. **An older build leaves a newer one's stores alone** ("yes please", to
+    the guard as proposed). `ios/RELEASING.md` said why: 0.4 writes the
+    store around the log, the settings, the pans, the sharing state and
+    the cook whole from the fields it knows, so 0.4 running after 0.5 drops
+    what 0.5 added. Each build marks what it stored with its version
+    (`aet.newest` on the web, `newestVersion` on iOS, written before
+    anything else); a build that finds a newer build's mark writes none of
+    the app's stores, logs and learns from no egg and shares nothing for the
+    rest of the session, says so in one line at the top of the screen, and
+    still times the egg. The order is semantic versioning's, core's
+    `writerCheck` (`fixtures/newer.json`); iOS marks with
+    `MARKETING_VERSION`, without the pre-release. Built on `0.4.x`, so every
+    release from 0.4 on carries it: `bc294b1` (core), `36d46cd` (web),
+    `c2a156f` (iOS), `93e9ab3` (the `newer` draft), on the
+    `0.4.x-newer-version-guard` branch. 0.3 cannot be given it.

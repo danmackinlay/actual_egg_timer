@@ -4496,3 +4496,27 @@ mildly overconfident (12-13.6% of true values in the outer tenth, worst
 for `tauAirScale` and the white), uniform at 4000. `tauAirScale` is never
 learned: every grid is built at its posterior mean, so no particle's value
 enters the likelihood and its mean only drifts with resampling.
+
+## 9 October 2026: an older build leaves a newer one's stores alone (DECISIONS.md 100)
+
+On `0.4.x`, so every release from 0.4 on has it. Core's `writerCheck`
+(`src/core/newer.ts`, Swift `Newer.swift`, `fixtures/newer.json`) orders
+versions as semantic versioning does and says whether a build writes or
+leaves the stores alone. The web keeps the mark under `aet.newest` and
+checks it in `writeStorage` and `removeStorage`, the one door every store
+goes through, so a newer tab opened since is seen at the next write even
+before its `storage` event; iOS's app had UserDefaults writes in seven
+files, now all through `Stores.set` and `Stores.remove`. Read-only also
+logs no egg, sends nothing, and puts away the questions after an egg, the
+sharing switch and Start learning again. The `newer` draft is the line.
+
+Driven on a simulator of its own (iPhone 17, iOS 26.5, deleted after):
+first launch wrote `newestVersion` 0.4.0; with 0.5.0 and a key 0.4 does not
+know written into the container's plist, the line showed at the top of the
+egg and of Settings (in 1750 too), a cook run to Done (`-uiScreen done`,
+`-seedEggs`) showed no questions, and the plist was byte for byte the same
+after three launches; with 0.3.0 there, the line did not show and the mark
+became 0.4.0. iOS's app has no unit-test target, so the app's half is held
+by the drive and core's by the fixture.
+
+355 TypeScript tests and 135 Swift; the iOS build passes.
