@@ -1172,6 +1172,35 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
     },
   },
 
+  'start-again-corrected': {
+    what: 'onescreen review 1.2: a correction at Done, then Start again at once, logs and keeps the corrected egg',
+    run: async (h) => {
+      const tab = await h.ctx.open(STOPPED);
+      let s = await start(tab, 'hot');
+      await tab.until('(await window.__e2e.snap()).decided', 'the pot planned');
+      s = await tab.snap();
+      await tab.shiftTo(deadlines(s).cookEnd_s + 2);
+      await tab.phase('PULL');
+      await tab.click('#primary');
+      s = await tab.phase('COOLING');
+      await tab.shiftTo(deadlines(s).coolEnd_s + 2);
+      await tab.phase('DONE');
+      await tab.click('.fb[data-yolk="jammy"]');
+      await tab.until('(await window.__e2e.snap()).eggsLogged === 1', 'Jammy folded');
+      const first = JSON.stringify((await tab.snap()).log[0].egg);
+      await later(tab);
+      // A clause tapped, then Start again while the change is still settling.
+      await pick(tab, '#size', '3');
+      await tab.click('#primary');
+      await tab.until(`await (async () => { const s = await window.__e2e.snap(); return s.phase === 'IDLE' && s.stored === null
+        && s.log.length === 1 && JSON.stringify(s.log[0].egg) !== ${JSON.stringify(first)}; })()`,
+      'the corrected egg logged, then the cook forgotten');
+      s = await tab.snap();
+      check(s.log[0].yolkWord === 'jammy', `the answer kept: ${s.log[0].yolkWord}`);
+      return `logged ${first} became ${JSON.stringify(s.log[0].egg)}, Jammy kept, then forgotten`;
+    },
+  },
+
   'hot-start': {
     what: 'a hot start: in, the pull, out, the cooling, Done, Start again logs the unanswered egg',
     run: async (h) => {
