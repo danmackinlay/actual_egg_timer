@@ -384,6 +384,13 @@ async function drag(tab: Tab, levels: number[], release = false, press = true): 
     if (${release}) { p('pointerup'); e.dispatchEvent(new Event('change', { bubbles: true })); } })()`);
 }
 
+/** A − or + tapped, not held: pressed and let go at once. */
+async function press(tab: Tab, selector: string): Promise<void> {
+  await tab.eval(`(() => { const e = document.querySelector(${JSON.stringify(selector)});
+    const p = (type) => e.dispatchEvent(new PointerEvent(type, { bubbles: true, button: 0, pointerId: 1, isPrimary: true }));
+    p('pointerdown'); p('pointerup'); })()`);
+}
+
 /** A menu's option chosen, as a tap does (no finger held: it settles). */
 async function pick(tab: Tab, selector: string, value: string): Promise<void> {
   await tab.eval(`(() => { const e = document.querySelector(${JSON.stringify(selector)});
@@ -712,6 +719,47 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
       s = await tab.phase('PULL');
       check((await tab.osc()).length >= base + 75, 'rang on release');
       return 'held through runny: no ring, the aim drawn; back and released: nothing; released runny: Pull, rang';
+    },
+  },
+
+  'start-time': {
+    what: 'C3 step 3: the start corrected in its clause, a minute at a time, and stopped with its reason at now, the boil pressed, and two hours back',
+    run: async (h) => {
+      const tab = await h.ctx.open('/');
+      let s = await start(tab, 'cold');
+      const id_s = (s.cook?.id_ms ?? 0) / 1000;
+      const start0 = s.cook?.startedAt_s ?? 0;
+      await tab.shift(150);
+      await tab.click('#sentence .clause[aria-controls="panelStart"]');
+      const clock = await tab.eval<string>("document.getElementById('startedAt').textContent");
+      const clause = await tab.eval<string>("document.querySelector('#sentence .clause[aria-controls=\"panelStart\"]').textContent");
+      check(clause.includes(clock) && clock !== '', `the clause says when: "${clause}", "${clock}"`);
+      // + three times, a tap each: the third goes no further than now.
+      for (let i = 0; i < 3; i++) await press(tab, '#startedAtMore');
+      const limit = await tab.eval<string>("document.getElementById('startedAtLimit').textContent");
+      const now = await tab.eval<string>("(async () => (await window.__e2e.ui('copy')).t('controls.startedAt.latestNow'))()");
+      check(limit === now, `the reason at now: "${limit}"`);
+      s = await corrected(tab, null);
+      const late = (s.cook?.startedAt_s ?? 0) - start0;
+      check(late > 145 && late < 160, `in at now: ${late.toFixed(1)} s later`);
+      // The boil pressed, then + again: no later than the press.
+      await tab.shift(240);
+      s = await boil(tab);
+      const tap = s.cook?.events.boilAt_s ?? 0;
+      await tab.shift(60);
+      for (let i = 0; i < 5; i++) await press(tab, '#startedAtMore');
+      const atBoil = await tab.eval<string>("document.getElementById('startedAtLimit').textContent");
+      check(atBoil.includes(await tab.eval<string>(`(async () => (await window.__e2e.ui('copy')).timeOfDay(${tap * 1000}))()`)),
+        `the reason at the boil names its time: "${atBoil}"`);
+      s = await corrected(tab, s.cook?.correctedAt_s ?? null);
+      check(s.cook?.startedAt_s === tap, `in at the press: ${(s.cook?.startedAt_s ?? 0) - tap}`);
+      // − all the way back, by the keyboard: two hours before Start was pressed.
+      await tab.eval(`(() => { const b = document.getElementById('startedAtLess');
+        for (let i = 0; i < 140; i++) b.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 0 })); })()`);
+      const early = await tab.eval<string>("document.getElementById('startedAtLimit').textContent");
+      s = await corrected(tab, s.cook?.correctedAt_s ?? null);
+      check(near(s.cook?.startedAt_s ?? 0, id_s - 7200, 1e-6), `two hours back: ${((s.cook?.startedAt_s ?? 0) - id_s).toFixed(1)} s`);
+      return `"${clause}"; "${limit}"; "${atBoil}"; "${early}"`;
     },
   },
 

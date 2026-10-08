@@ -224,6 +224,17 @@
           <input type="radio" name="startMode" id="startSous" value="sous">
           <label for="startSous" id="startSousLabel"></label>
         </div>
+        <!-- While a cook runs, when the eggs went in, as the start clause says
+             it: corrected a minute at a time (design/one-screen.md section 7,
+             20), no earlier and no later than the cook allows (core
+             earliestStart_s, latestStart_s), and the line under it says why
+             when a press goes no further. The − and + are drawn by CSS and
+             named by the code from the label. -->
+        <div class="prow" id="startedAtField" hidden>
+          <label for="startedAt" data-copy="controls.startedAt"></label>
+          <span class="unit"><button type="button" class="step step--less" id="startedAtLess" data-for="startedAt" data-up="0"></button><output id="startedAt" class="startedat"></output><button type="button" class="step step--more" id="startedAtMore" data-for="startedAt" data-up="1"></button></span>
+        </div>
+        <p class="hint" id="startedAtLimit" aria-live="polite" hidden></p>
       </div>
 
       <div class="panel pan-only" id="panelCooling" role="group" aria-labelledby="lblCooling" hidden>

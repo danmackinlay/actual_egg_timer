@@ -30,11 +30,14 @@
  * are written to the settings, for the next cook (design section 7, 22).
  */
 
-import { CookChoices, RunningCook, corrected, replan, sameChoices } from '../core/running.js';
+import {
+  CookChoices, RunningCook, corrected, earliestStart_s, latestStart_s, replan, sameChoices, startCorrected,
+} from '../core/running.js';
 import { targetPeakYolk_C } from '../core/policy.js';
 import { surfaceFor } from './answer.js';
 import { calibrationParams } from './calibration.js';
 import { correctCook } from './cook.js';
+import { t, timeOfDay } from './copy.js';
 import { cookShown } from './feedback.js';
 import { page } from './dom.js';
 import { nowMs } from './now.js';
@@ -43,6 +46,7 @@ import { choicesOf, state } from './state.js';
 import { Settings } from './store.js';
 import { REGION } from './units.js';
 import { saveNow } from './update.js';
+import { pressAndHold } from './stepper.js';
 
 /** How long a tap's change settles before it is committed, and how long the
  *  aimed-for egg stays after the last change, ms (design section 5). */
@@ -98,6 +102,8 @@ export function startEdits(): void {
   clearTimers();
   edit.previewedLevel = false;
   edit.base = { ...state.controls };
+  state.controlsStart_s = state.cook === null ? null : state.cook.startedAt_s;
+  showStartLimit(null);
   edit.pending = false;
   edit.group = null;
   dropAim();
@@ -108,6 +114,8 @@ export function endEdits(): void {
   clearTimers();
   edit.previewedLevel = false;
   edit.base = null;
+  state.controlsStart_s = null;
+  showStartLimit(null);
   edit.pending = false;
   edit.group = null;
   edit.down = null;
@@ -177,6 +185,8 @@ function choicesInHand(cook: RunningCook, base: Settings): { choices: CookChoice
  *  98), the egg that level aims for in this pot, so it is planned as if not
  *  yet pulled. */
 function cookInHand(cook: RunningCook, choices: CookChoices, now_s: number): RunningCook {
+  const start = state.controlsStart_s;
+  if (start !== null && start !== cook.startedAt_s) cook = startCorrected(cook, start, now_s) ?? cook;
   if (cook.events.pulled !== null && choices.level !== cook.choices.level) {
     return {
       ...cook, choices: choices, correctedAt_s: null,
@@ -231,7 +241,10 @@ export function commitEdit(): void {
     edit.base.doneness = base.doneness;
     edit.previewedLevel = true;
   }
-  if (!sameChoices(choices, cook.choices)) correctCook(choices);
+  const start = state.controlsStart_s !== null && state.controlsStart_s !== cook.startedAt_s ? state.controlsStart_s : null;
+  if (start !== null || !sameChoices(choices, cook.choices)) correctCook(choices, start);
+  // The start as the cook now has it: a correction refused leaves the cook's.
+  state.controlsStart_s = state.cook === null ? null : state.cook.startedAt_s;
   if (touched.length > 0) {
     const settings = state.settings as unknown as Record<string, unknown>;
     for (const k of touched) settings[k] = state.controls[k];
@@ -291,4 +304,67 @@ export function wireEdits(): void {
   document.addEventListener('pointerdown', onPointerDown, true);
   window.addEventListener('pointerup', onPointerUp, true);
   window.addEventListener('pointercancel', onPointerUp, true);
+}
+
+/* ------------------------------------------------------------- the start */
+
+/** Where the start's − and + stopped, for the line under them. */
+type StartLimit = 'now' | 'boil' | 'pull' | 'earliest';
+
+/** Which of the cook's limits `latest` is: the boil pressed, the pull, or
+ *  now (`latestStart_s`). */
+function latestLimit(cook: RunningCook, latest: number): StartLimit {
+  const e = cook.events;
+  if (e.boilAt_s !== null && e.boilAt_s === latest) return 'boil';
+  if ((e.pulled !== null && e.pulled.due_s === latest) || (e.cooledAt_s !== null && e.cooledAt_s === latest)) return 'pull';
+  return 'now';
+}
+
+/** The line under the start's time: why a press went no further, or nothing. */
+function showStartLimit(limit: { kind: StartLimit; at_s: number } | null): void {
+  const line = page().startedAtLimit;
+  line.hidden = limit === null;
+  if (limit === null) {
+    line.textContent = '';
+    return;
+  }
+  const time = timeOfDay(limit.at_s * 1000);
+  const key = limit.kind === 'earliest' ? 'controls.startedAt.earliest'
+    : limit.kind === 'boil' ? 'controls.startedAt.latestBoil'
+      : limit.kind === 'pull' ? 'controls.startedAt.latestPull' : 'controls.startedAt.latestNow';
+  line.textContent = t(key, { time: time });
+}
+
+/** The start a minute earlier or later, as far as the cook allows (core
+ *  `earliestStart_s`, `latestStart_s`): a correction in hand like any other,
+ *  and committed the same way. Whether it moved. */
+function stepStart(up: boolean): boolean {
+  const cook = state.cook;
+  const from = state.controlsStart_s;
+  if (cook === null || edit.base === null || from === null) return false;
+  const now_s = nowMs() / 1000;
+  const earliest = earliestStart_s(cook);
+  const latest = latestStart_s(cook, now_s);
+  let next = from + (up ? 60 : -60);
+  let limit: { kind: StartLimit; at_s: number } | null = null;
+  if (next >= latest) {
+    next = latest;
+    limit = { kind: latestLimit(cook, latest), at_s: latest };
+  }
+  if (next <= earliest) {
+    next = earliest;
+    limit = { kind: 'earliest', at_s: earliest };
+  }
+  showStartLimit(limit);
+  if (next === from) return false;
+  state.controlsStart_s = next;
+  page().startedAt.textContent = timeOfDay(next * 1000);
+  cookControlsChanged(page().startedAt);
+  return true;
+}
+
+/** The start's − and +, once at boot. */
+export function wireStartTime(): void {
+  pressAndHold(page().startedAtLess, () => stepStart(false));
+  pressAndHold(page().startedAtMore, () => stepStart(true));
 }

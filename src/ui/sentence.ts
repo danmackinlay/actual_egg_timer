@@ -46,6 +46,9 @@ export interface SetupFacts {
   /** The heat goes off at the boil. */
   standing: boolean;
   cooling: Cooling;
+  /** When the eggs went in, as a time of day, while a cook runs: the start
+   *  clause says it, and its panel corrects it. Null while idle. */
+  startedAt: string | null;
 }
 
 /** The mass of a size class as the size menu shows it, in the units on
@@ -57,7 +60,9 @@ function classMass(classes: SizeClass[], index: number): string {
 
 /** The setup on the controls: `settings` (the controls', `state.controls`)
  *  read against this page's carton, with `egg` the egg they describe. */
-export function liveSetupFacts(settings: Settings, classes: SizeClass[], egg: Egg): SetupFacts {
+export function liveSetupFacts(
+  settings: Settings, classes: SizeClass[], egg: Egg, startedAt: string | null = null,
+): SetupFacts {
   const byClass = settings.sizeIndex >= 0 && settings.sizeIndex < classes.length;
   return {
     mass: byClass ? classMass(classes, settings.sizeIndex) : show('mass', egg.mass_kg * 1000),
@@ -66,14 +71,26 @@ export function liveSetupFacts(settings: Settings, classes: SizeClass[], egg: Eg
     startMode: settings.startMode,
     standing: settings.afterBoil === 'off',
     cooling: settings.cooling,
+    startedAt: startedAt,
   };
 }
+
+/** The start clause while a cook runs: the same words with when the eggs
+ *  went in ("into cold water at 7:42"), the time the panel corrects
+ *  (design/one-screen.md section 7, 20). */
+const START_AT: Record<string, string> = {
+  'setup.start.cold': 'setup.start.coldAt',
+  'setup.start.coldStanding': 'setup.start.coldStandingAt',
+  'setup.start.hot': 'setup.start.hotAt',
+  'setup.start.hotStanding': 'setup.start.hotStandingAt',
+};
 
 /** What each clause says, and what a screen reader hears for it: its heading
  *  and the option chosen, as the choice itself shows them ("Egg: 68 g"). */
 function clauseTexts(f: SetupFacts): Record<Clause, { text: string; label: string; value: string }> {
   const args = {
     mass: f.mass, temp: show('eggTemp', f.customStart_C), bath: show('temperature', SOUS_VIDE_BATH_C),
+    time: f.startedAt ?? '',
   };
   const keys = clauseKeys({
     eggFrom: f.eggFrom, startMode: f.startMode === 'cold' ? 'cold' : 'hot', sousVide: f.startMode === 'sous',
@@ -82,10 +99,12 @@ function clauseTexts(f: SetupFacts): Record<Clause, { text: string; label: strin
   const words = (k: ClauseKeys, own: string) => ({
     text: t(k.text, args), label: t(k.label), value: k.value === null ? own : t(k.value, args),
   });
+  const start = f.startedAt !== null && START_AT[keys.start.text] !== undefined
+    ? { ...keys.start, text: START_AT[keys.start.text] } : keys.start;
   return {
     egg: words(keys.egg, args.mass),
     from: words(keys.from, args.temp),
-    start: words(keys.start, ''),
+    start: words(start, ''),
     cooling: words(keys.cooling, ''),
   };
 }

@@ -459,7 +459,9 @@ button.info[aria-expanded="true"]::before { background: var(--fg); color: var(--
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   column-gap: 14px;
-  align-items: center;
+  /* From the top, so a sentence that gains a line (the start's time, at the
+     start) moves nothing above it or beside it. */
+  align-items: start;
 }
 #setup > .egg-section { grid-column: 1; grid-row: 1; }
 #setup > #sentence { grid-column: 2; grid-row: 1; }
@@ -608,6 +610,26 @@ button.step--more::before { content: "+"; }
 button.step:active { background: var(--line); }
 .unit:has(button.step) { gap: 4px; }
 .unit:has(button.step) input[type="number"] { width: 4rem; padding-inline: 8px; }
+/* When the eggs went in, mid-cook: a time of day between its − and +, read
+   like a number field but not typed in. The clock's face in 1750 too. */
+output.startedat {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 5.5rem;
+  min-height: 46px;
+  padding: 0 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--fg);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+html[lang$="-x-1750"] output.startedat {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-feature-settings: normal;
+}
+#startedAtField + .hint { margin-top: 6px; }
 /* The unit after the +, in a column of its own, so the rows' − and + line up. */
 .unit:has(button.step) > span:last-child { min-width: 1.75em; margin-left: 2px; }
 /* A count has no unit; it keeps the unit's room, so its − and + line up too. */

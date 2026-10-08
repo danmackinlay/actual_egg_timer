@@ -14,6 +14,7 @@ import { setMuted } from './clock.js';
 import { applyUnitsToDom, labelMeasuredOption, labelStartTemps, syncMeasurements } from './controls.js';
 import { page, radioValue } from './dom.js';
 import { renderMute } from './render.js';
+import { timeOfDay } from './copy.js';
 import { cookControlsChanged } from './edit.js';
 import { liveSetupFacts, renderSentence } from './sentence.js';
 import { renderDonenessReading } from './slider.js';
@@ -152,7 +153,8 @@ export function onInput(event: Event): void {
   renderDonenessReading(shown.doneness, isSousVide() ? { bath_C: SOUS_VIDE_BATH_C } : { peakYolk_C: targetPeakYolk_C(shown.doneness) });
   page().statBoil.textContent = show('boilingPoint', boilingPoint_C());
   page().body.dataset['start'] = shown.startMode;
-  renderSentence(liveSetupFacts(shown, sizeClasses, currentEgg()));
+  const start = state.controlsStart_s;
+  renderSentence(liveSetupFacts(shown, sizeClasses, currentEgg(), start === null ? null : timeOfDay(start * 1000)));
   // A running cook is corrected, in time (edit.ts); the idle screen is solved
   // again.
   if (state.cook !== null) cookControlsChanged(target);

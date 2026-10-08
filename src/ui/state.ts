@@ -91,6 +91,10 @@ interface PageState {
    *  and rings nothing: the level, its peak yolk and the solve, null until
    *  that plan is made. Null when no correction is in hand. */
   aim: { level: number; peakYolk_C: number; solution: Solution | null } | null;
+  /** When the eggs went in, as the controls show it while a cook runs: the
+   *  cook's start, or a correction to it in hand (edit.ts), epoch s. Null
+   *  while idle. */
+  controlsStart_s: number | null;
 }
 
 /** The page's state. The first three are read from storage by `boot()`
@@ -110,6 +114,7 @@ export const state: PageState = {
   plan: null,
   leanHint_s: 0,
   aim: null,
+  controlsStart_s: null,
 };
 
 /* --------------------------------------------------------------- physics */

@@ -20,7 +20,7 @@ import { Phase } from '../core/policy.js';
 import { WhiteReport, YolkWord } from '../core/infer.js';
 import {
   CookChoices, CookEvents, CookPlan, RunningCook, cookEnding, cookStillOpen, cookTooOld, corrected, eventsDue,
-  keepAsRan, replan, sameChoices, startCook, withBoil, withOut,
+  keepAsRan, replan, sameChoices, startCook, startCorrected, withBoil, withOut,
 } from '../core/running.js';
 import { answerFor, askForCookSurface, currentInputs, decided, drawNudge, nudgeNow, surfaceFor } from './answer.js';
 import { learn, logEgg } from './calibration.js';
@@ -235,22 +235,27 @@ function armPullFor(cook: RunningCook, plan: CookPlan): void {
 }
 
 /**
- * A correction committed (edit.ts; DECISIONS.md 96 to 98): the cook's choices
- * replaced (`corrected`), and the cook planned again from its start, written
+ * A correction committed (edit.ts; DECISIONS.md 96 to 98): the start (when the
+ * eggs went in) and the cook's choices replaced (`startCorrected`,
+ * `corrected`), and the cook planned again from its start, written
  * down, and drawn. Overdue is decided here, by the plan of the corrected cook:
  * a pull now in the past is the moment of the correction, and rings now
  * (`notice`). A correction that puts the pull back in the future before the
  * egg was seen to come out - changed back within the grace - cancels it:
  * nothing was observed, so the alarm stops, and the new pull will ring.
  */
-export function correctCook(choices: CookChoices): void {
+export function correctCook(choices: CookChoices, startedAt_s: number | null): void {
   if (state.cook === null || written.closed) return;
   const now = nowMs();
   const now_s = now / 1000;
   takeUpStored();
-  const cook = state.cook;
-  if (sameChoices(choices, cook.choices)) return;
-  state.cook = corrected(cook, choices, now_s);
+  let cook = state.cook;
+  // The start, when the eggs went in, as told (`startCorrected`): refused,
+  // and the cook as it was, outside the limits the start's panel shows.
+  if (startedAt_s !== null && startedAt_s !== cook.startedAt_s) cook = startCorrected(cook, startedAt_s, now_s) ?? cook;
+  if (!sameChoices(choices, cook.choices)) cook = corrected(cook, choices, now_s);
+  if (cook === state.cook) return;
+  state.cook = cook;
   afterCorrection(now);
 }
 

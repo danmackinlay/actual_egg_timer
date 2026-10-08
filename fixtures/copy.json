@@ -633,6 +633,30 @@
     },
     {
       "locale": "en-x-1750",
+      "key": "controls.startedAt.latestBoil",
+      "args": {
+        "time": "7:50"
+      },
+      "text": "I cannot make it later than 7:50, when you told me the water boiled in earnest."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "controls.startedAt.latestPull",
+      "args": {
+        "time": "7:52"
+      },
+      "text": "I cannot make it later than 7:52, when the eggs were due out of the water."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "controls.startedAt.earliest",
+      "args": {
+        "time": "5:42"
+      },
+      "text": "I cannot make it earlier than 5:42, two hours before I began to keep the time."
+    },
+    {
+      "locale": "en-x-1750",
       "key": "help.unsure.sousVide",
       "args": {
         "floor": "140 °F"
@@ -706,6 +730,38 @@
         "bath": "136 °F"
       },
       "text": "sous-vide at 136 °F"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "setup.start.coldAt",
+      "args": {
+        "time": "7:42"
+      },
+      "text": "set in cold water at 7:42 and brought to the boil"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "setup.start.coldStandingAt",
+      "args": {
+        "time": "7:42"
+      },
+      "text": "set in cold water at 7:42, boiled, the fire out, lid on"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "setup.start.hotAt",
+      "args": {
+        "time": "7:42"
+      },
+      "text": "put into boiling water at 7:42"
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "setup.start.hotStandingAt",
+      "args": {
+        "time": "7:42"
+      },
+      "text": "put into boiling water at 7:42, the fire out and the lid on"
     },
     {
       "locale": "en-x-1750",
@@ -2260,6 +2316,30 @@
     },
     {
       "locale": "en",
+      "key": "controls.startedAt.latestBoil",
+      "args": {
+        "time": "7:50"
+      },
+      "text": "I can’t move it later than 7:50, when you pressed Full rolling boil."
+    },
+    {
+      "locale": "en",
+      "key": "controls.startedAt.latestPull",
+      "args": {
+        "time": "7:52"
+      },
+      "text": "I can’t move it later than 7:52, when the eggs were due out."
+    },
+    {
+      "locale": "en",
+      "key": "controls.startedAt.earliest",
+      "args": {
+        "time": "5:42"
+      },
+      "text": "I can’t move it earlier than 5:42, two hours before I started timing."
+    },
+    {
+      "locale": "en",
       "key": "help.unsure.sousVide",
       "args": {
         "floor": "140 °F"
@@ -2333,6 +2413,38 @@
         "bath": "136 °F"
       },
       "text": "sous-vide at 136 °F"
+    },
+    {
+      "locale": "en",
+      "key": "setup.start.coldAt",
+      "args": {
+        "time": "7:42"
+      },
+      "text": "into cold water at 7:42, brought to the boil"
+    },
+    {
+      "locale": "en",
+      "key": "setup.start.coldStandingAt",
+      "args": {
+        "time": "7:42"
+      },
+      "text": "into cold water at 7:42, to the boil, heat off, lid on"
+    },
+    {
+      "locale": "en",
+      "key": "setup.start.hotAt",
+      "args": {
+        "time": "7:42"
+      },
+      "text": "into boiling water at 7:42"
+    },
+    {
+      "locale": "en",
+      "key": "setup.start.hotStandingAt",
+      "args": {
+        "time": "7:42"
+      },
+      "text": "into boiling water at 7:42, heat off and lid on"
     },
     {
       "locale": "en",
