@@ -45,7 +45,7 @@ import {
   calibrationStoredElsewhere, clearCalibration, eggsBehind, exportResults, keptState, learn, loadCalibration, logEgg,
   recordSecondAnswer,
 } from '../src/ui/calibration.js';
-import { decodeKept, encodeKept, overlay } from '../src/ui/calibrationStore.js';
+import { decodeKept, encodeKept, keepUnreadCook, keptAside, overlay } from '../src/ui/calibrationStore.js';
 import { eggRecordFor } from '../src/ui/eggRecord.js';
 import { APP_VERSION } from '../src/ui/version.js';
 import { appSetup, gridFor, knowing } from '../tools/common.js';
@@ -491,6 +491,25 @@ test('3a4. a store this build cannot read is kept aside before it is written ove
   clearCalibration();
   assert.equal(storage.has('aet.calibration.v4.unread'), false, 'Start learning again deletes them too');
   assert.equal(exportResults(null, Date.UTC(2026, 9, 5, 12)), null, 'nothing to export');
+});
+
+test('3a5. every unread cook is kept, two found at one boot included, and exported (review 3)', () => {
+  storage.clear();
+  loadCalibration();
+  // One kept by an earlier build, alone, as it kept the newest.
+  storage.set('aet.cook.unread', '{"machine":{"phase":"COOKING"}}');
+  keepUnreadCook('{"cook":{"id_ms":1}}');
+  keepUnreadCook('{damaged');
+  keepUnreadCook('{damaged');
+  assert.deepEqual(JSON.parse(storage.get('aet.cook.unread') as string),
+    ['{"machine":{"phase":"COOKING"}}', '{"cook":{"id_ms":1}}', '{damaged'], 'each once, oldest first');
+  assert.deepEqual(keptAside(), ['{"machine":{"phase":"COOKING"}}', '{"cook":{"id_ms":1}}', '{damaged']);
+  const exported = exportResults(null, Date.UTC(2026, 9, 8, 12));
+  assert.ok(exported !== null);
+  const file = JSON.parse(exported.text) as { unread: unknown[] };
+  assert.equal(file.unread.length, 3);
+  clearCalibration();
+  assert.equal(storage.has('aet.cook.unread'), false, 'Start learning again deletes them too');
 });
 
 test('3b. eggs answered in either order with a reload between: bit-identical to a replay', async () => {

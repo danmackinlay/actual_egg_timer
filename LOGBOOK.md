@@ -5308,3 +5308,69 @@ nothing past an open question. Until then a refused record is not made: the
 web leaves the answer row pressable and logs nothing at Start again, iOS
 logs nothing, where both logged `forecast: null`. `takeOldCooks` can find
 two old cooks, and the unread slot keeps one (review 3's "one slot").
+
+## 8 October 2026: the running-cook review's web findings (SHIP-0.5 C2)
+
+`design/running-cook-review.md`'s web findings, one commit each, no word
+changed and core untouched: `80044ea` (2.1), `7a35bf3` (2.4), `527fc91`
+(1.3), `b9741c0` (2.2), `783adf7` (2.3), `9c9b51a` (1.2), `0baa2bc` (1.1),
+`f214855`, `450236c` and `0174dcd` (§3). `npm test` 381 (was 378: the two
+tabs' events taken up, the time heated while the slow hob creeps, the
+unread cooks kept), `swift test` 155, unchanged.
+
+**Driven**, each call of the review's appendix before (the merge base's
+build, served from a copy) and after (this branch's `npm run build:site`,
+`python3 -m http.server` on its own port), in the in-app browser, `Date.now`
+wrapped from the console and `createOscillator` counted, a focus event as a
+tab coming back; a cook at Done staged by moving the stored cook's times
+back, then a reload:
+
+- **1.1.** Before: 25 s past the pull, Cooling, a `timeout` pull written,
+  0 oscillators. After: the tap schedules the pull's 75 beeps 454 s ahead on
+  the audio clock (the pull); 25 s past it, 75 more at once, Cooling; a jump
+  past the cooling, 75 (the pull), not Done's 50; Done in its turn, 50.
+- **1.2**, on the real clock, `aet.boil.v1 = { "2.0": 30 }`. Before: B's
+  surface landed, the stored `boilAt_s` went null, A reloaded to Heating
+  and Full rolling boil. After: B went to Cooking on A's tap, the tap stayed
+  stored, A reloaded to Cooking 7:26; A's tap out at the pull stood when B
+  looked 30 s past it.
+- **1.3.** Before: a finished, unanswered cook three hours old, reloaded:
+  idle, nothing logged (the core fix had stopped `forecast: null`, and the
+  egg went with it). After: logged with its forecast once the surface was
+  built (`cook_s` 461.4), the stored cook cleared then. Runny pressed 163 ms
+  after a reload at Done: held, "learning…", logged with its forecast and
+  folded when the surface landed.
+- **2.1/§3.** Before: a cold start never tapped, ticks of 299 to 395 ms
+  from 30 minutes, the clock at 0:00 while heating. After: a creeping tick
+  44 to 45 ms; the clock 15:03, 16:43, … counting up with "… so far · about
+  … to boil" under it.
+- **2.2.** Before: Heating at 4 h, still stored. After: Heating at
+  7,100 s, idle at 7,210 s, nothing stored.
+- **2.3.** Before: Tender taken three hours on (`white: "tender"`). After:
+  not taken, the questions gone; a focus then ended the cook, nothing logged
+  twice. A second tab at Done on the same cook put its questions away when
+  the first pressed Start again (which logged the unanswered egg, with its
+  forecast); a Jammy pressed in it logged nothing and wrote nothing back.
+- **2.4.** Before: Runny, reload: "jammy · peak yolk 65 °C" became 58 °C.
+  After: 65 °C after the reload; `asRan` stored with the pull.
+- **Parity.** A probe of 64 °C after Jammy, scored against the logged record
+  and folded (`centre_C` 64, `after_s` 203).
+
+**Choices made.** Two tabs on one id are one cook, so what either saw is
+taken up by the other (the earliest tap, the cook's pull over the clock's),
+and the lean, a cache, is written beside the stored cook without writing
+the cook; a different cook is still never taken up. A cook another tab
+clears mid-cook keeps running here, as `DECISIONS.md` 97 has it, and is
+written again at its next own change; only at Done does a cook no longer
+stored become final here. At Done the ticker is stopped, so a cook too old
+there ends when the page is next shown or focused. A finished egg whose
+surface is not yet in keeps the stored cook until it is logged, so a page
+closed in that second picks it back up rather than losing it. A probe
+reading held for the surface stays in its field; one pending at Start
+again in that second is not logged.
+
+**Left.** The "still in the water?" question has no screen yet; while a
+plan asks, nothing rings, no pull is scheduled and the cooling's clock
+stops at 0:00. The white's risk line at Done still reads the plan now, not
+the plan as it ran. iOS's findings are its own (1.4, and its part of 1.3,
+2.1 to 2.4).

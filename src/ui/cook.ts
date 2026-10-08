@@ -10,45 +10,155 @@
  * out, an event the clock decided (`eventsDue`), a surface landing, the slow
  * hob's moment (`slowHobAt_s`), a reload - and never on every tick, since a
  * plan costs tens of milliseconds, and a slow hob's hundreds. The phase is
- * read from the plan and the clock (`phaseAt`) every tick, and the alarm
- * rings whenever it enters Pull.
+ * read from the plan and the clock (`phaseAt`) every tick. The pull's alarm
+ * is scheduled ahead on the audio clock by every plan (`setPullAlarm`), and
+ * rung by the tick on any move out of Heating or Cooking past the pull that
+ * this tab has not rung (`notice`).
  */
 
 import { Phase } from '../core/policy.js';
+import { WhiteReport, YolkWord } from '../core/infer.js';
 import {
-  CookEvents, CookPlan, RunningCook, cookEnding, cookTooOld, eventsDue, replan, startCook, withBoil, withOut,
+  CookEvents, CookPlan, RunningCook, cookEnding, cookStillOpen, cookTooOld, eventsDue, keepAsRan, replan, startCook,
+  withBoil, withOut,
 } from '../core/running.js';
 import { answerFor, askForCookSurface, currentInputs, decided, drawNudge, nudgeNow, surfaceFor } from './answer.js';
 import { learn, logEgg } from './calibration.js';
 import { keepUnreadCook } from './calibrationStore.js';
 import {
-  Ticker, blip, keepScreenAwake, primeAudio, releaseScreen, ringAlarm, startTicker, stopAlarm,
+  Ticker, blip, keepScreenAwake, primeAudio, pullSounding, releaseScreen, ringAlarm, setPullAlarm, startTicker,
+  stopAlarm,
 } from './clock.js';
 import { applySettingsToDom } from './controls.js';
 import { activeLocale } from './copy.js';
-import { cachedOddsProfile } from './decisionGrids.js';
+import { cachedOddsProfile, decisionGrid } from './decisionGrids.js';
 import { eggRecordFor } from './eggRecord.js';
-import { answersNow, forgetAnswers, keptAnswers, resumeAnswers } from './feedback.js';
+import {
+  answeredElsewhere, answersNow, forgetAnswers, heldAnswers, keptAnswers, putAway, resumeAnswers, retryHeld,
+} from './feedback.js';
 import { render } from './render.js';
 import { sendFinal } from './share.js';
 import { idleChoices, phaseNow, state, timeToBoil_s } from './state.js';
 import {
-  clearCook, dropStoredCook, loadCook, rememberTimeToBoil, saveCook, storedCookText, takeOldCooks,
+  clearCook, cookStoredElsewhere, dropStoredCook, loadCook, readStoredCook, rememberTimeToBoil, saveCook,
+  saveLeanHint, storedCookText, takeOldCooks, takeUpEvents,
 } from './store.js';
 import { unitSystem } from './units.js';
 import { applyAnswer, drawShare, recompute } from './update.js';
 
 /** The ticker, while a cook runs, and the phase it last saw, so the alarm
- *  rings once as the cook enters Pull, and the cook finishes once. */
+ *  rings once as the cook passes the pull, and the cook finishes once; and
+ *  whether this tab has rung the pull for this cook. */
 const clock = {
   ticker: null as Ticker | null,
   phase: 'IDLE' as Phase,
+  pullRung: false,
 };
 
-/** Write the cook down as it is now, or forget it once there is none. */
+/**
+ * This tab's cook as written down (running-cook review 1.2, 2.3).
+ *
+ * - `text`: the stored cook's text as this tab last read or wrote it; any
+ *   other text there is another tab's write, taken up before this tab plans
+ *   or writes (`takeUpStored`).
+ * - `cook`: this cook as stored then, as JSON. A tab writes its cook only
+ *   when it differs - something this cook was told or saw: a tap, an event
+ *   the clock decided, the plan as it ran kept, an answer - never after a
+ *   plan alone (a surface landing, the slow hob's moment), which would write
+ *   a copy lacking what another tab on the same cook saw since.
+ * - `closed`: the egg is final - by the clock, or another tab ended it or
+ *   stored another - and nothing more is written or logged for it (2.3).
+ * - `works`: whether a write reads back, which storage that is off or full
+ *   does not, so the stored cook can say nothing about this one.
+ */
+const written = {
+  text: null as string | null,
+  cook: null as string | null,
+  closed: false,
+  works: true,
+};
+
+/** Write the cook down as it is now, after taking up what another tab wrote
+ *  for it since, so nothing it saw is written over. Never once it is closed. */
 export function persistCook(): void {
-  if (state.cook === null) return;
+  if (state.cook === null || written.closed) return;
+  // Taken up here too: a write from the answers comes between plans. The
+  // plan follows at once.
+  if (takeUpStored()) queueMicrotask(replanCook);
   saveCook(state.cook, keptAnswers(), state.leanHint_s);
+  written.text = storedCookText();
+  written.cook = JSON.stringify(state.cook);
+  written.works = written.text !== null;
+}
+
+/** This tab's own cook again, written down from scratch: a cook started, or
+ *  one picked back up, `text` as stored with `cook` read from it. */
+function freshWrites(text: string | null, cook: RunningCook | null): void {
+  written.text = text;
+  written.cook = cook === null ? null : JSON.stringify(cook);
+  written.closed = false;
+  written.works = true;
+}
+
+/**
+ * What another tab wrote for this cook since this tab last read or wrote it,
+ * taken up (`takeUpEvents`, review 1.2): the boil it saw tapped, the egg out,
+ * the cooling ended, the plan as it ran, and an answer that logged the egg
+ * (`beforeReload` never goes back to `none`). Another cook, or none, is left
+ * alone (DECISIONS.md 97). Whether this tab's cook changed, to be planned again.
+ */
+function takeUpStored(): boolean {
+  const cook = state.cook;
+  if (cook === null || written.closed) return false;
+  const text = storedCookText();
+  if (text === written.text) return false;
+  written.text = text;
+  const stored = readStoredCook(text);
+  if (stored === null || stored.cook.id_ms !== cook.id_ms) return false;
+  written.cook = JSON.stringify(stored.cook);
+  // That tab wrote the egg down with an answer: this one asks no more.
+  if (stored.answers === 'beforeReload') answeredElsewhere();
+  const next = takeUpEvents(cook, stored.cook);
+  if (next === cook) return false;
+  state.cook = next;
+  return true;
+}
+
+/**
+ * Whether the egg on screen is still open to answers (core `cookStillOpen`,
+ * running-cook review 2.3): it is the stored cook, and not too old. When it
+ * is not - Start again or Cancel in another tab, another cook stored, an hour
+ * past its end - it is final, maybe sent: the questions go, as after a
+ * reload, and nothing more is logged or written for it. Asked before any
+ * answer is taken, and when another tab writes the cook.
+ */
+export function cookOpen(): boolean {
+  const cook = state.cook;
+  const plan = state.plan;
+  if (cook === null || plan === null || written.closed) return false;
+  const storedId = written.works ? (loadCook()?.cook.id_ms ?? null) : cook.id_ms;
+  if (cookStillOpen(cook, plan, storedId, Date.now() / 1000)) return true;
+  written.closed = true;
+  putAway();
+  return false;
+}
+
+/** Another tab changed storage (the `storage` event; a null key cleared it
+ *  all). At DONE, whether this egg is still open: if not, its questions go.
+ *  Otherwise what that tab saw of this cook is taken up at once, so a tab
+ *  leaves Heating when another taps the boil (review 1.2). */
+export function cookElsewhere(key: string | null): void {
+  if (!cookStoredElsewhere(key) || state.cook === null) return;
+  const now = Date.now();
+  if (phaseNow(now) === 'DONE' && !written.closed && !cookOpen()) {
+    render(now);
+    return;
+  }
+  if (takeUpStored()) {
+    planNow(now / 1000);
+    notice(now);
+  }
+  render(now);
 }
 
 /**
@@ -56,14 +166,17 @@ export function persistCook(): void {
  * planned once on the surface the last plan wanted, and again if this one
  * wants another that is already built (a pot is known only once planned,
  * since the slow hob's ramp is found by solving). Whatever it wants and has
- * not got is asked for, and lands through `replanCook`.
+ * not got is asked for, and lands through `replanCook`. The slow hob's rule
+ * starts where the last plan got to (`before.slowHob`, running-cook review
+ * 2.1), which core takes only when it fits, so a creeping plan is one solve.
  */
 function planFor(cook: RunningCook, leanHint_s: number, now_s: number, before: CookPlan | null): CookPlan {
   const guess = before === null ? null : before.inputs;
-  let plan = replan(cook, state.calib, surfaceFor(guess), leanHint_s, now_s);
+  const hint = before === null ? null : before.slowHob;
+  let plan = replan(cook, state.calib, surfaceFor(guess), leanHint_s, now_s, hint);
   if (plan.inputs !== null && plan.decided === null) {
     const s = surfaceFor(plan.inputs);
-    if (s !== null) plan = replan(cook, state.calib, s, leanHint_s, now_s);
+    if (s !== null) plan = replan(cook, state.calib, s, leanHint_s, now_s, hint);
   }
   return plan;
 }
@@ -81,22 +194,40 @@ function plannedWithEvents(
   return { cook: next, plan: planFor(next, leanHint_s, now_s, plan) };
 }
 
-/** Take up a cook and its plan: the lean it decided, kept as the interim for
- *  the next pot; the surface it wants and has not got, asked for; and the
- *  cook written down. */
+/** Take up a cook and its plan: the plan as it ran kept, from the first plan
+ *  on the pot's surface once the egg is out (`keepAsRan`, running-cook review
+ *  1.3, 2.4), which the record and Done read from then on; the lean it
+ *  decided, kept as the interim for the next pot; the surface it wants and
+ *  has not got, asked for; and the cook written down if it changed, or else
+ *  only the lean beside it (`written`). */
 function takeUp(cook: RunningCook, plan: CookPlan): void {
-  state.cook = cook;
+  state.cook = keepAsRan(cook, plan);
   state.plan = plan;
-  if (plan.decided !== null) state.leanHint_s = plan.lean_s;
+  const lean = plan.decided !== null ? plan.lean_s : state.leanHint_s;
+  const leanMoved = lean !== state.leanHint_s;
+  state.leanHint_s = lean;
   if (plan.inputs !== null && (plan.decided === null || surfaceFor(plan.inputs)?.profile === null)) {
     askForCookSurface(plan.inputs);
   }
-  persistCook();
+  // The pull's beeps, ahead on the audio clock, for the pull this plan sets:
+  // none while the time to boil is a guess (the plan reads Heating whatever
+  // it says), once the egg is out or the pull has rung here, or while the
+  // plan asks whether the egg is still in.
+  const d = plan.deadlines;
+  const pullDue = !d.provisional && state.cook.events.pulled === null && !plan.askIfStillIn && !clock.pullRung;
+  setPullAlarm(pullDue ? d.cookEnd_s * 1000 : null);
+  if (JSON.stringify(state.cook) !== written.cook) {
+    persistCook();
+  } else if (leanMoved && !written.closed) {
+    saveLeanHint(state.cook.id_ms, lean);
+    written.text = storedCookText();
+  }
 }
 
-/** Plan the running cook again, now. */
+/** Plan the running cook again, now, with what another tab saw of it. */
 function planNow(now_s: number): void {
   if (state.cook === null) return;
+  takeUpStored();
   const next = plannedWithEvents(state.cook, state.leanHint_s, now_s, state.plan);
   takeUp(next.cook, next.plan);
 }
@@ -105,38 +236,78 @@ function sameEvents(a: CookEvents, b: CookEvents): boolean {
   return JSON.stringify(a) === JSON.stringify(b);
 }
 
-/** A surface or a profile the running cook's plan wanted, landed. */
+/** A surface or a profile the running cook's plan wanted, landed: an answer
+ *  held for want of it is made now. */
 export function replanCook(): void {
   if (state.cook === null) return;
   const now = Date.now();
   planNow(now / 1000);
   notice(now);
+  retryHeld();
   render(now);
 }
 
-/** Ring as the cook enters Pull, and finish it as it enters Done, whatever
- *  brought it there: the clock, a plan, a tap. */
+/**
+ * Ring the pull on any move from Heating or Cooking past it - to Pull, or
+ * straight to Cooling or Done, as a tab woken after the grace finds it
+ * (running-cook review 1.1) - that this tab has not rung, unless the cook
+ * tapped the egg out (another tab's tap, taken up); and finish the cook as it
+ * enters Done, whatever brought it there: the clock, a plan, a tap. Nothing
+ * rings while the plan asks whether the egg is still in the water.
+ */
 function notice(now_ms: number): void {
   const phase = phaseNow(now_ms);
   const was = clock.phase;
   clock.phase = phase;
-  if (phase === was) return;
-  if (phase === 'PULL') ringAlarm(true);
-  if (phase === 'DONE') finishCook();
+  if (phase === was || state.cook === null || state.plan === null || state.plan.askIfStillIn) return;
+  const passed = (was === 'HEATING' || was === 'COOKING')
+    && (phase === 'PULL' || phase === 'COOLING' || phase === 'DONE');
+  const out = state.cook.events.pulled;
+  let rang = false;
+  if (passed && !clock.pullRung && (out === null || out.by === 'timeout')) {
+    clock.pullRung = true;
+    rang = true;
+    // Already sounding if it was scheduled ahead and its time has come on
+    // the audio clock; otherwise now.
+    if (!pullSounding()) ringAlarm(true);
+  }
+  // Done rings too, unless the pull has only just: the egg may still be in.
+  if (phase === 'DONE') finishCook(!rang);
 }
 
 function onTick(): void {
   const now = Date.now();
   const now_s = now / 1000;
-  const cook = state.cook;
   const plan = state.plan;
-  if (cook !== null && plan !== null) {
-    // The slow hob's moment, or an event the clock has decided: plan again.
+  if (state.cook !== null && plan !== null) {
+    // What another tab saw of this cook, if its storage event has not come
+    // (a tab woken from a freeze), the slow hob's moment, or an event the
+    // clock has decided: plan again.
+    const theirs = takeUpStored();
+    const cook = state.cook;
     const slow = plan.slowHobAt_s !== null && now_s >= plan.slowHobAt_s;
-    if (slow || !sameEvents(eventsDue(cook, plan, now_s), cook.events)) planNow(now_s);
+    if (theirs || slow || !sameEvents(eventsDue(cook, plan, now_s), cook.events)) planNow(now_s);
+    // Too old to pick back up (a pan heated for two hours and never tapped,
+    // or an hour past the end): it ends as Cancel ends it, with its events
+    // written first, as a reload would (running-cook review 2.2).
+    if (endIfTooOld(now_s)) return;
   }
   notice(now);
   render(now);
+}
+
+/** End the cook on screen as Cancel does if it is too old (`cookTooOld`), by
+ *  the plan the page holds; whether it did. */
+function endIfTooOld(now_s: number): boolean {
+  if (state.plan === null || !cookTooOld(state.plan, now_s)) return false;
+  reset();
+  return true;
+}
+
+/** The page is looked at again (shown, focused): the ticker, which stops at
+ *  DONE, is not there to see a cook at DONE become too old. */
+export function lookAgain(): void {
+  endIfTooOld(Date.now() / 1000);
 }
 
 function startTicking(): void {
@@ -151,32 +322,80 @@ function stopTicking(): void {
 }
 
 /** The egg is done: ring, then stop repainting and let the screen sleep. */
-function finishCook(): void {
-  ringAlarm(false);
+function finishCook(ring: boolean): void {
+  if (ring) ringAlarm(false);
   stopTicking();
   releaseScreen();
 }
 
-/** What a cook leaves when it ends (`cookEnding`): the time to boil it
- *  measured, remembered now that the cook is as last corrected; and its egg,
- *  if it was cooked through and nothing has logged it. */
-function endCook(cook: RunningCook, plan: CookPlan, now_s: number, answered: boolean): void {
+/** How many times a record waiting on its pot's surface asks for one: the
+ *  posterior can move while it is built (another egg folded), and the plan
+ *  then wants another. */
+const RECORD_TRIES = 3;
+
+/**
+ * What a cook leaves when it ends (`cookEnding`): the time to boil it
+ * measured, remembered now that the cook is as last corrected; and its egg,
+ * if it was cooked through and nothing has logged it, with any answer held
+ * for it (feedback.ts, `held`). Then `ended`, once the egg is logged or
+ * there is none: the stored cook is forgotten only then, so a page closed
+ * while the record waits on its surface picks the egg back up at the next
+ * load rather than losing it.
+ */
+function endCook(cook: RunningCook, plan: CookPlan, now_s: number, answered: boolean, ended: () => void): void {
   const ending = cookEnding(cook, plan, now_s);
   if (ending.boil !== null) {
     state.boilMemory = rememberTimeToBoil(state.boilMemory, ending.boil.litres, ending.boil.seconds);
   }
   // An egg finished and never answered about is still an egg: the cook, the
-  // recommendation and the pull are data for the fit. It folds nothing.
-  if (ending.finished && !answered) {
-    // Null when nothing says what the app said for it (`cookFactsFor`
-    // refused: no surface yet): nothing is logged rather than an egg with no
-    // forecast (running-cook review 1.3).
-    const record = eggRecordFor(cook, plan, null);
-    if (record !== null) {
-      logEgg(record);
-      void learn();
-    }
+  // recommendation and the pull are data for the fit.
+  if (!ending.finished || answered) {
+    ended();
+    return;
   }
+  const held = heldAnswers();
+  logFinished(cook, plan, now_s, held.yolk, held.white, ended, RECORD_TRIES);
+}
+
+/**
+ * Log a finished egg from its plan as it ran, or from a plan on its pot's
+ * surface (running-cook review 1.3): never from a plan with no surface, which
+ * would write no forecast, and never dropped for want of one. A cook ended
+ * before its surface is in - a reload at DONE, or one dropped as too old -
+ * asks the worker for the surface its plan wants, plans on it, keeps the
+ * plan as it ran and logs. The calibration it is planned on is the one
+ * before this egg: nothing of this egg has been folded.
+ */
+function logFinished(
+  cook: RunningCook, plan: CookPlan, now_s: number, yolk: YolkWord | null, white: WhiteReport | null,
+  ended: () => void, tries: number,
+): void {
+  const ran = keepAsRan(cook, plan);
+  const record = eggRecordFor(ran, plan, yolk, white);
+  if (record !== null) {
+    logEgg(record);
+    void learn();
+    ended();
+    return;
+  }
+  const inputs = plan.inputs;
+  // Left stored, for the next load to log, if the surface cannot be had.
+  if (inputs === null || tries <= 0) return;
+  decisionGrid(inputs).then(() => {
+    const onIt = replan(cook, state.calib, surfaceFor(inputs), 0, now_s);
+    logFinished(cook, onIt, now_s, yolk, white, ended, tries - 1);
+  }, (error: unknown) => console.warn('the surface for an egg’s record failed', error));
+}
+
+/** The cook started at `id_ms` has ended and its egg, if any, is logged:
+ *  forget it, and send what is now final. After the page has booted, since
+ *  this can run inside `restoreCook`. */
+function forgetEnded(id_ms: number): void {
+  clearCook(id_ms);
+  queueMicrotask(() => {
+    drawShare();
+    void sendFinal();
+  });
 }
 
 /** Cancel, and "Start again" at DONE. */
@@ -187,23 +406,25 @@ export function reset(): void {
   const cook = state.cook;
   const plan = state.plan;
   if (cook !== null && plan !== null) {
-    endCook(cook, plan, Date.now() / 1000, answersNow().kind !== 'none');
-    clearCook(cook.id_ms);
+    const id = cook.id_ms;
+    endCook(cook, plan, Date.now() / 1000, answersNow().kind !== 'none', () => forgetEnded(id));
   }
   forgetAnswers();
   state.cook = null;
   state.plan = null;
   state.leanHint_s = 0;
   clock.phase = 'IDLE';
+  clock.pullRung = false;
+  setPullAlarm(null);
   // The controls were left alone while the cook ran (another tab may have
   // changed the settings meanwhile): they show the settings again.
   applySettingsToDom();
   // A new cook, a new nudge.
   drawNudge();
   recompute();
-  // The egg just finished is final now: no answer can be added to it.
+  // The egg just finished is final once it is forgotten (`forgetEnded`): no
+  // answer can be added to it.
   drawShare();
-  void sendFinal();
 }
 
 export function onPrimary(): void {
@@ -226,6 +447,8 @@ export function onPrimary(): void {
     const chosen = decided(answer, boil);
     // A cook started here is this tab's own, whatever happened before it.
     forgetAnswers();
+    freshWrites(null, null);
+    clock.pullRung = false;
     state.cook = startCook(now, idleChoices(), nudgeNow(), { ...state.boilMemory }, unitSystem(), activeLocale());
     // The lean the time on screen took, carried until the plan decides its
     // own: the plan on this pot's surface is the time that was on screen.
@@ -298,12 +521,16 @@ export function restoreCook(): void {
   const now_s = now / 1000;
   const back = plannedWithEvents(stored.cook, stored.leanHint_s, now_s, null);
   if (cookTooOld(back.plan, now_s)) {
-    endCook(back.cook, back.plan, now_s, stored.answers !== 'none');
-    clearCook(back.cook.id_ms);
+    // Its egg, if finished and unanswered, is logged on its pot's surface,
+    // built first: nothing of the surface survives a reload (review 1.3).
+    const id = back.cook.id_ms;
+    endCook(back.cook, back.plan, now_s, stored.answers !== 'none', () => forgetEnded(id));
     return;
   }
   state.leanHint_s = stored.leanHint_s;
   resumeAnswers(stored.answers);
+  freshWrites(text, stored.cook);
+  clock.pullRung = false;
   takeUp(back.cook, back.plan);
   clock.phase = phaseNow(now);
   if (clock.phase !== 'DONE') {

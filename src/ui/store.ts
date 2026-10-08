@@ -15,7 +15,7 @@ import { StartMode, Cooling, HeatAfterBoil } from '../core/protocol.js';
 import {
   BoilMemory, DEFAULTS, LIMITS, Limit, carrySizeIndex, clamp, isWithin, rememberBoil,
 } from '../core/policy.js';
-import { RunningCook, readRunningCook } from '../core/running.js';
+import { CookAsRan, CookEvents, Pulled, RunningCook, readRunningCook } from '../core/running.js';
 
 export type { Limit } from '../core/policy.js';
 export { LIMITS, START_TEMP_PRESETS_C, estimateTimeToBoil, hasBoilMemory } from '../core/policy.js';
@@ -392,7 +392,12 @@ export function saveCook(cook: RunningCook, answers: KeptAnswers, leanHint_s: nu
  *  which would log its egg a second time. */
 export function loadCook(): StoredCook | null {
   removeStorage(SUPERSEDED_COOK_KEY);
-  const raw = parseObject(readStorage(COOK_KEY));
+  return readStoredCook(readStorage(COOK_KEY));
+}
+
+/** A stored cook's text read as `loadCook` reads it. */
+export function readStoredCook(text: string | null): StoredCook | null {
+  const raw = parseObject(text);
   if (raw === null) return null;
   const cook = readRunningCook(raw['cook']);
   if (cook === null) return null;
@@ -444,13 +449,67 @@ export function storedCook(): RunningCook | null {
   return loadCook()?.cook ?? null;
 }
 
-/** Whether the cook written down is the one started at `id_ms`, with its
- *  egg written down with an answer: by another tab, if not by this one. */
-export function storedCookAnswered(id_ms: number): boolean {
+/** The lean last decided, a cache, written beside the stored cook if it is
+ *  the one started at `id_ms`, without writing the cook: a plan alone never
+ *  writes a tab's copy of the cook over another's (running-cook review 1.2). */
+export function saveLeanHint(id_ms: number, leanHint_s: number): void {
   const raw = parseObject(readStorage(COOK_KEY));
-  if (raw === null || raw['answers'] !== 'beforeReload') return false;
+  if (raw === null || raw['leanHint_s'] === leanHint_s) return;
   const cook = raw['cook'];
-  return cook !== null && typeof cook === 'object' && (cook as Record<string, unknown>)['id_ms'] === id_ms;
+  if (cook === null || typeof cook !== 'object' || (cook as Record<string, unknown>)['id_ms'] !== id_ms) return;
+  writeStorage(COOK_KEY, JSON.stringify({ ...raw, leanHint_s: leanHint_s }));
+}
+
+/**
+ * `ours` with what another tab wrote for the same cook taken up (running-cook
+ * review 1.2): what it saw in the one pan that this tab has not. The two are
+ * one cook, the same id, so neither copy corrects the other, and the events
+ * are each the earliest seen: the boil tapped first; a pull by the cook over
+ * one the clock assumed (`timeout`), and of two alike the earlier; the
+ * cooling's end of the pull kept; the pull that rang, if it rang under the
+ * boil kept; and the plan as it ran, if it is of the pull kept. `ours`, the
+ * same object, when there is nothing to take up, and always for another
+ * cook: a tab never takes up a cook another tab started (DECISIONS.md 97).
+ * Taken up both ways, two tabs end with the same events.
+ */
+export function takeUpEvents(ours: RunningCook, theirs: RunningCook): RunningCook {
+  if (theirs.id_ms !== ours.id_ms) return ours;
+  const a = ours.events;
+  const b = theirs.events;
+  const boil = earlier(a.boilAt_s, b.boilAt_s);
+  const pulled = betterPull(a.pulled, b.pulled);
+  const cooled = earlier(
+    samePull(pulled, a.pulled) ? a.cooledAt_s : null, samePull(pulled, b.pulled) ? b.cooledAt_s : null,
+  );
+  const rang = earlier(a.boilAt_s === boil ? a.rangAt_s : null, b.boilAt_s === boil ? b.rangAt_s : null);
+  const events: CookEvents = { boilAt_s: boil, pulled: pulled, cooledAt_s: cooled, rangAt_s: rang };
+  // The plan as it ran is of one pull's cook time, and of the cook as last
+  // corrected: ours if it still is, else theirs if it is.
+  const fits = (r: CookAsRan | null): boolean => r !== null && pulled !== null
+    && r.cook_s === pulled.due_s - ours.startedAt_s && r.correctedAt_s === ours.correctedAt_s;
+  const asRan = fits(ours.asRan) ? ours.asRan : fits(theirs.asRan) ? theirs.asRan : null;
+  if (JSON.stringify(events) === JSON.stringify(a) && asRan === ours.asRan) return ours;
+  return { ...ours, events: events, asRan: asRan };
+}
+
+function earlier(a: number | null, b: number | null): number | null {
+  if (a === null) return b;
+  if (b === null) return a;
+  return Math.min(a, b);
+}
+
+function samePull(a: Pulled | null, b: Pulled | null): boolean {
+  return JSON.stringify(a) === JSON.stringify(b);
+}
+
+/** The pull to keep of two: the cook's tap over the clock's assumption, and
+ *  of two alike the earlier out, then the earlier due. */
+function betterPull(a: Pulled | null, b: Pulled | null): Pulled | null {
+  if (a === null) return b;
+  if (b === null) return a;
+  if (a.by !== b.by) return a.by === 'cook' ? a : b;
+  if (a.out_s !== b.out_s) return a.out_s < b.out_s ? a : b;
+  return a.due_s <= b.due_s ? a : b;
 }
 
 /** The cook as stored, for keeping aside one this build cannot read. */

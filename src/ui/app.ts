@@ -21,7 +21,9 @@ import { whenAnswerLands, whenCookSurfaceLands } from './answer.js';
 import { eggsBehind, exportResults, keptState, learn, loadCalibration } from './calibration.js';
 import { setMuted } from './clock.js';
 import { applyConstantsToDom, applySettingsToDom, buildSizeOptions } from './controls.js';
-import { onPrimary, persistCook, replanCook, reset, restoreCook } from './cook.js';
+import {
+  cookElsewhere, cookOpen, lookAgain, onPrimary, persistCook, replanCook, reset, restoreCook,
+} from './cook.js';
 import { bindDom, el, page } from './dom.js';
 import { wireFeedback } from './feedback.js';
 import { wireInfoButtons } from './info.js';
@@ -89,6 +91,7 @@ export function boot(): void {
     persist: persistCook,
     learned: () => renderLearned(learning()),
     redraw: () => render(Date.now()),
+    open: cookOpen,
   });
 
   renderCalibNote(learning());
@@ -103,7 +106,14 @@ export function boot(): void {
   drawShare();
   void retryDeletes().then(sendFinal);
   window.addEventListener('online', () => { void retryDeletes().then(sendFinal); });
-  window.addEventListener('storage', (event) => { storedElsewhere(event.key); });
+  window.addEventListener('storage', (event) => {
+    storedElsewhere(event.key);
+    cookElsewhere(event.key);
+  });
+  // A cook left at DONE an hour or more ends when the page is next looked at.
+  document.addEventListener('visibilitychange', lookAgain);
+  window.addEventListener('focus', lookAgain);
+  window.addEventListener('pageshow', lookAgain);
   // A cook picked back up is described by its own choices and its plan,
   // never by the controls, which another tab may have changed since.
   if (state.cook === null) recompute();

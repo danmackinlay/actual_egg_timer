@@ -104,6 +104,23 @@ test('a cold start heating: counts down to the plan\'s pull on the cook\'s pot, 
   assert.equal(v.secondaryVisible, true);
 });
 
+test('a slow hob: once the guess is lengthened, the time heated counts up, never a time left (review 3)', () => {
+  const cook = cookOf();
+  for (const heated of [900, 1000, 1500]) {
+    const now_s = S + heated;
+    const plan = planOf(cook, now_s);
+    assert.equal(plan.lengthened, true, `lengthened by ${heated} s`);
+    const v = phaseView(cook, plan, now_s * 1000, facts());
+    assert.equal(v.label, t('readout.phase.heating'));
+    assert.equal(v.digits, formatClock(heated), 'the time heated, not the pull the clock is chasing');
+    assert.equal(v.subline, t('readout.sub.heating', {
+      elapsed: formatClock(heated), boil: formatClock(plan.setup.timeToBoil_s),
+    }));
+    assert.equal(v.spoken, v.subline, 'no "left" spoken either');
+    assert.notEqual(v.digits, formatClock(0));
+  }
+});
+
 test('cooking: the time to boil is the tap, the boiling point the cook\'s, not the controls\'', () => {
   const tapped = withBoil(cookOf(), S + 500);
   const plan = planOf(tapped, S + 500);
