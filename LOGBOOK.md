@@ -5833,3 +5833,42 @@ broke the scripts' reading of the plan's.
 **Left**: screenshots of each phase in both Englishes and at the largest
 text size are for the owner on a phone. While the question is open the
 white's line and the slider read the corrected plan, as the web's do.
+
+## 9 October 2026: iOS's segmented controls in the face of 1750
+
+In the English of 1750 every word on iOS was in IM FELL but the segments
+of the six segmented pickers (the start, the cooling and where the egg
+comes from under the sentence; units, language and after the boil in
+Settings), which UIKit draws in the system face. Now they are in the
+face's roman, with its features, so the long s comes as elsewhere
+("Englifh"); in modern English they are the system's, as before.
+
+**How.** `.segmented()` (`PeriodFace.swift`) replaces
+`.pickerStyle(.segmented)`. UIKit takes a segment's font only from the
+control's appearance, and a control takes that once, when it is made, so
+the modifier sets `UISegmentedControl.appearance()` for the language on
+screen before the control is made, and makes the language the control's
+identity (`.id`): a change of language makes new controls, in the new
+face, in place of those on screen, the language picker itself included.
+Back in modern English the appearance is cleared, and the selected
+segment is the system's medium again.
+
+**The size is UIKit's, 13 pt, at every Dynamic Type size.** Measured on
+iOS 27 by reading the labels inside the controls, extra small to the
+largest accessibility size: UIKit's segments never grow (they shrink to
+fit, to 0.53), so the face's do not either. Next to text at the
+accessibility sizes they are small in both Englishes.
+
+**Checked**: the labels' fonts read from the running app in both
+languages, at launch and after a switch each way on Settings and under
+the sentence (a debug `-uiDo set:language=<tag>`, as the picker's tap);
+screenshots of each screen with segments, before and after, in both
+Englishes, at the default and the largest text size.
+
+**Still in the system face in 1750**, all UIKit's own: the navigation
+bar's title, the egg size's menu (its button and its list), the menu the
+bar's two buttons fold into at the largest text sizes, the share sheet,
+and the system's alerts. The bar's buttons are already in the face. The
+bar's title and the size menu's button could take the face only through
+views of the app's own in their place, not through an appearance, which
+the bar, made once, would not take until a relaunch: for the owner.

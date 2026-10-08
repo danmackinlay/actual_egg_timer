@@ -263,7 +263,7 @@ struct ClausePanel: View {
                         .tag(StartChoice.sousVide)
                 }
             }
-            .pickerStyle(.segmented)
+            .segmented()
             if let edits, let start = edits.shownStart { startedAt(edits, start) }
         case .cooling:
             Picker(tr("controls.cooling"), selection: $planner.cooling) {
@@ -271,7 +271,7 @@ struct ClausePanel: View {
                 Text(tr("controls.cooling.tap")).tag(Cooling.tap)
                 Text(tr("controls.cooling.counter")).tag(Cooling.counter)
             }
-            .pickerStyle(.segmented)
+            .segmented()
         }
     }
 
@@ -350,7 +350,7 @@ struct ClausePanel: View {
                 Text(tr("controls.eggFrom.room")).tag(EggFrom.room)
                 Text(tr("controls.eggFrom.custom")).tag(EggFrom.custom)
             }
-            .pickerStyle(.segmented)
+            .segmented()
             if planner.startTemp == .custom {
                 StepperRow(
                     label: tr("controls.eggTemp"), measure: planner.measure(.eggTemp),
