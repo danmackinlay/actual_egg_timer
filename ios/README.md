@@ -428,31 +428,48 @@ wraps around it.
 
 Every read of the time a cook depends on goes through `App/AppClock.swift`. A
 Release build is the system's clock and nothing else. A Debug build takes
-`-clockSpeed 60` (cook time sixty times as fast), `-clockOffset -900` (shifted,
-s) and `-clockEpoch <epoch s>` (where the speed counts from); passing the same
-three at every launch carries the clock on through a relaunch, and a larger
-offset wakes the app past a deadline. Under it the notifications fire at the
-scaled interval, and the Lock Screen card, which the system counts on its own
+`-clockAt <epoch s>` (cook time at launch) and `-clockSpeed` (60 runs it sixty
+times as fast; 0 freezes it), or the older `-clockOffset -900` and
+`-clockEpoch <epoch s>`, which passed the same at every launch carry one fast
+clock through a relaunch. A clock so launched can be stepped while the app
+runs: a line `<n> <at> <speed>` written to `Library/Caches/aet.clock` in the
+app's container moves cook time to `at` and runs it on at `speed`, and the
+debug log says `clock <n> …` once it has. Under a running clock the
+notifications fire at the scaled interval; under a frozen one, which reaches
+no deadline by itself, a day later than that, so they stay pending and cover
+their deadlines. The Lock Screen card, which the system counts on its own
 clock, gets the real moments the deadlines come: it reaches zero with the app
-but counts real seconds (8:00 to go reads 0:08 at ×60). Sharing sends nothing,
-and a record made under it carries ` (debug clock)` after its `appVersion` and
-is never sent, nor anything logged after it, until Forget everything.
+but counts real seconds (8:00 to go reads 0:08 at ×60). Sharing sends
+nothing, and a record made under it carries ` (debug clock)` after its
+`appVersion` and is never sent, nor anything logged after it, until Forget
+everything.
 
 ```sh
-npm run ios:e2e                    # every scenario, about five minutes
+npm run ios:e2e                    # every scenario, about three and a half minutes
 npm run ios:e2e -- relaunch-*      # some; --list names them
 ```
 
 `tools/iosE2e.mjs` builds Debug, makes a simulator of its own, and for each
 scenario installs afresh, drives the app by launch argument (`-uiScreen
-heating`, `-uiDo boil@300,out@pull+3,again@cooled+5`, `-uiAnswer`; the taps of
+heating`, `-uiDo boil@300,out@pull+3,again@cooled+5`; the taps of
 `App/Screenshots.swift`, never screen coordinates), terminates and relaunches
 it, and asserts on the debug log (`Library/Caches/aet.log`: phases, plans,
-the stored cook, the egg log, alarms scheduled and read back, rings, cards) and
-on the prefs plist through plistlib. It deletes the device at the end. Not in
-`npm run verify` (it needs Xcode and a simulator) nor in CI: at ×60 half a
-second of a slow runner is half a minute of cook, and it has not been run on
-GitHub's runners.
+the stored cook, the egg log, alarms scheduled, read back and delivered,
+rings, cards, and `settled` when the cook has nothing under way) and on the
+prefs plist through plistlib. It deletes the device at the end.
+
+The clock is frozen at every moment a scenario checks, and stepped from one
+to the next: launched 14 s into the pull's 20-s grace, the app is 14 s into
+it however long the launch took. The script waits for the log to say what
+happened, never for the host's seconds to pass, so a slow or loaded machine
+takes longer and checks the same; a wait's timeout (`AET_E2E_WAIT`, 60 s)
+only says when to give up. Moments the clock was stepped to are checked to a
+millisecond, a deadline planned again at a relaunch to a second. Notifications
+are checked as scheduled, for which cook time, and pending; one scenario
+(`asleep`) leaves one to the system, at ×1 with the app killed, and gives it
+15 s past its moment to be delivered. Not in `npm run verify` (it needs Xcode
+and a simulator); CI runs it after the iOS build, `ios-e2e` in
+`.github/workflows/verify.yml`, not yet blocking.
 
 ## Signing
 

@@ -125,6 +125,10 @@ final class Alarm: NSObject, UNUserNotificationCenterDelegate {
             Screenshots.log("pending \(r.identifier) at \(at.map { String(Int($0.timeIntervalSince1970)) } ?? "-")")
         }
         if pending.isEmpty { Screenshots.log("pending none") }
+        // And those the system has delivered and still shows, which the
+        // scripted checks read to see one fire.
+        let delivered = await centre.deliveredNotifications().map(\.request.identifier).filter { ours[$0] != nil }
+        Screenshots.log("delivered [\(delivered.sorted().joined(separator: ","))]")
         #endif
         return Set(pending.compactMap { ours[$0.identifier] })
     }
@@ -135,7 +139,7 @@ final class Alarm: NSObject, UNUserNotificationCenterDelegate {
         let seconds = AppClock.realInterval(until: date)
         guard seconds > 0 else { return }
         #if DEBUG
-        Screenshots.log("scheduled \(id) at \(Int(date.timeIntervalSince1970)) in \(String(format: "%.2f", seconds))")
+        Screenshots.log("scheduled \(id) at \(date.timeIntervalSince1970) in \(String(format: "%.2f", seconds))")
         #endif
 
         let content = UNMutableNotificationContent()

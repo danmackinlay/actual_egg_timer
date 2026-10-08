@@ -74,7 +74,7 @@ enum LiveActivity {
         for activity in Activity<CookActivity>.activities {
             let s = activity.content.state
             Screenshots.log(
-                "\(when) activity \(activity.activityState) \(s.stage.rawValue) ends \(Int(AppClock.app(s.ends).timeIntervalSince1970))"
+                "\(when) activity \(activity.activityState) \(s.stage.rawValue) ends \(Int(AppClock.fromReal(s.ends).timeIntervalSince1970.rounded()))"
             )
         }
     }

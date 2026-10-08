@@ -347,6 +347,10 @@ final class Cook {
         choices: CookChoices, nudgeS: Double, boilMemory: BoilMemory, units: UnitSystem, lang: String,
         leanHintS: Double
     ) async {
+        #if DEBUG
+        busy += 1
+        defer { busy -= 1; logIfSettled() }
+        #endif
         generation &+= 1
         let gen = generation
         reset()
@@ -571,6 +575,9 @@ final class Cook {
                 if self.running == input.cook { self.adopt(made, for: input.cook) }
                 if !self.planAgain {
                     self.planning = nil
+                    #if DEBUG
+                    self.logIfSettled()
+                    #endif
                     return
                 }
             }
@@ -599,8 +606,9 @@ final class Cook {
         let before = plan?.deadlines
         #if DEBUG
         Screenshots.log(
-            "plan pull \(Int(next.deadlines.cookEndS)) cooled \(next.deadlines.coolEndS.map { String(Int($0)) } ?? "-")"
+            "plan pull \(next.deadlines.cookEndS) cooled \(next.deadlines.coolEndS.map { String($0) } ?? "-")"
                 + " lengthened \(next.lengthened) surface \(next.decided != nil)"
+                + " next \(next.slowHobAtS.map { String($0) } ?? "-")"
         )
         #endif
         plan = next
@@ -686,6 +694,9 @@ final class Cook {
 
     private func dropAsked(_ inputs: DecisionInputs, _ gen: Int) {
         if gen == generation, surfaceAsked == inputs { surfaceAsked = nil }
+        #if DEBUG
+        logIfSettled()
+        #endif
     }
 
     // MARK: - Surviving a relaunch
@@ -850,7 +861,13 @@ final class Cook {
         // again from the restored plan, and read the count back rather than
         // assuming it.
         let gen = generation
+        #if DEBUG
+        busy += 1
+        #endif
         Task {
+            #if DEBUG
+            defer { busy -= 1; logIfSettled() }
+            #endif
             // A cancel while either of these is awaited ends this cook; what
             // they return is then about a cook that no longer exists.
             let authorized = await Alarm.shared.authorize()
@@ -879,6 +896,9 @@ final class Cook {
                 guard gen == generation else { return }
                 pushed = state
             }
+            #if DEBUG
+            Screenshots.log("restored")
+            #endif
         }
         startTicking()
         return nil
@@ -903,6 +923,10 @@ final class Cook {
     /// A cancel while the system is asked leaves the answer unread: it is
     /// about a cook that no longer exists.
     private func readBackAlarms() async {
+        #if DEBUG
+        busy += 1
+        defer { busy -= 1; logIfSettled() }
+        #endif
         let gen = generation
         let held = await Alarm.shared.pendingDeadlines()
         guard gen == generation else { return }
@@ -968,7 +992,9 @@ final class Cook {
     /// ring.
     private func tick() {
         #if DEBUG
-        logPhase()
+        // Once the tick has done what the phase asks, so a script that waits
+        // for the phase and then for `settled` sees what it set going.
+        defer { logPhase() }
         #endif
         // Too old to pick back up, by the plan held: ended as Start again
         // ends it, here as at a relaunch (running-cook review 2.2).
@@ -998,18 +1024,31 @@ final class Cook {
     /// The phase last written to the debug log.
     @ObservationIgnored private var loggedPhase: Phase?
 
-    /// The phase, to the debug log when it changes.
+    /// How many starts, restores and alarm read-backs are under way.
+    @ObservationIgnored private var busy = 0
+
+    /// Nothing under way - no plan being made, no surface being built, no
+    /// start, restore or read-back - to the debug log: what the scripted
+    /// checks wait for before they move the clock on.
+    private func logIfSettled() {
+        guard planning == nil, surfaceAsked == nil, busy == 0 else { return }
+        Screenshots.log("settled")
+    }
+
+    /// The phase, to the debug log when it changes, and whether that left
+    /// the cook settled.
     private func logPhase() {
         let now = phase
         guard now != loggedPhase else { return }
         loggedPhase = now
         Screenshots.log("phase \(now.rawValue)")
+        logIfSettled()
     }
 
     /// A card pushed, to the debug log, its end in cook time.
     private static func logCard(_ what: String, _ s: CookActivity.ContentState) {
         Screenshots.log(
-            "activity \(what) \(s.stage.rawValue) ends \(Int(AppClock.app(s.ends).timeIntervalSince1970))"
+            "activity \(what) \(s.stage.rawValue) ends \(Int(AppClock.fromReal(s.ends).timeIntervalSince1970.rounded()))"
                 + " up \(s.countsUp == true)"
         )
     }
