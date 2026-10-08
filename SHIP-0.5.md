@@ -254,7 +254,15 @@ core's exports.
       snapshot (`db9fec3`); `npm run e2e`, fourteen scenarios on the built
       site and the local endpoint, the review's cases among them (1.1, 1.2,
       2.2, 2.3, 2.4), each passing on this build. Not in `verify` (a
-      minute, and Chrome); CI left alone.
+      minute, and Chrome).
+      *Stepped by moment* (8 October 2026): every web scenario on a
+      stopped clock (`?clock=0`, `aetClock.set`, `?at=<ISO>`), stepped to
+      the moments it checks and waiting for the page to settle, not for a
+      time; the alarm counted as scheduled. 28 of 28 three times quiet and
+      three times loaded (every core busy, pages throttled x6), where the
+      old harness failed three. `npm run e2e` is a CI job on Linux,
+      `continue-on-error` until it has passed there (`LOGBOOK.md`,
+      8 October 2026).
       iOS's: one clock (`ios/App/AppClock.swift`), which a Debug build
       runs fast or shifted by launch argument and a Release build does not
       have (`e823d20`); `npm run ios:e2e`, 16 scenarios on a simulator of

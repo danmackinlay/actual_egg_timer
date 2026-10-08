@@ -951,7 +951,8 @@ time and its limits, Settings' water, two tabs' own cooks), a correction at
 Done and the slider there, and "still in the water?". `npm run e2e -- reload two-tabs` runs
 those named; `node dist/tools/e2e.js --list` lists them; `E2E_DEBUG=1` prints
 the page's text when one fails. The whole suite takes about two minutes, so
-it is not in `npm run verify`.
+it is not in `npm run verify`; CI runs it as a job of its own on Linux
+(`.github/workflows/verify.yml`, `e2e`), not yet failing the workflow.
 
 What makes it take seconds is the development clock (`src/ui/now.ts`),
 through which every read of the time in `src/ui/` goes. On a page served

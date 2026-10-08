@@ -1,4 +1,4 @@
-# The gate, on every push and pull request, as three jobs that run side by
+# The gate, on every push and pull request, as four jobs that run side by
 # side. `npm run verify` locally is the first two but the iOS build.
 #
 # web, on Linux (quick to start): the type checks, the tests and the Swift
@@ -15,6 +15,15 @@
 # fit, on Linux: the population fit's tests (`fit/`, Python under uv),
 # since the fit writes `fixtures/population.json`, which both apps ship.
 # Its tests read only files committed under `fit/tests`.
+#
+# e2e, on Linux: `npm run e2e`, the web app driven end to end in headless
+# Chrome (the image's google-chrome, which tools/chrome.ts finds; run
+# without its sandbox under CI). Every scenario steps a stopped development
+# clock to the moments it checks, so a slow runner sees what a fast one does
+# (README §9, "Checking the web app end to end"). It is new and was not run
+# on GitHub before it was added, so it does not fail the workflow
+# (`continue-on-error`): its result shows on the run, and once it has passed
+# there the line comes out and it gates like the rest.
 #
 # The actions are @v5 (setup-uv @v10), which run on Node 24; @v4 ran on Node 20, which GitHub
 # retires. The Node the project itself runs is `.node-version`.
@@ -59,3 +68,19 @@ jobs:
       - uses: actions/checkout@v5
       - uses: astral-sh/setup-uv@v10
       - run: uv run --project fit pytest -q fit/tests
+
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .node-version
+      - run: npm ci
+      - run: google-chrome --version
+      # A scenario that fails prints the page's text.
+      - run: npm run e2e
+        env:
+          E2E_DEBUG: '1'
