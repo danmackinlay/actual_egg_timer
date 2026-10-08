@@ -813,6 +813,9 @@ scenario('still-in-yes', 'C3 step 4: a correction after the grace ran out asks "
     `nothing scheduled while it asks: ${JSON.stringify(scheduled(after.lines))}`);
   const card = lastCard(after.lines);
   run.check(card?.stage === 'pull', `the card shows the pull while it asks: ${card?.stage}`);
+  // No caveat about the pull it doubts (onescreen review 3).
+  const white = (await quiet(run, 'white ')).filter((l) => l.text.startsWith('white ')).at(-1);
+  run.check(white?.text === 'white false', `the white's line under the question: ${white?.text}`);
   // The cooling's counted end passes under the question: nothing.
   let i = await run.step(plan0.pull + 640);
   await sleep(1000);

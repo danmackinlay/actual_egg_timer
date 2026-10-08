@@ -223,7 +223,10 @@ struct ReadoutView: View {
     /// while idle, the plan's while the egg is in, and once it is out the
     /// forecast as it ran (`Cook.asRan`), not a plan made since on a
     /// posterior that has learned from this egg.
+    /// Never under "Are the eggs still in the water?": not a caveat about the
+    /// pull the question doubts (onescreen review 3).
     private func whiteRunny(_ o: Outcome?) -> Bool {
+        if asking { return false }
         if phase != .idle, let ran = cook.asRan { return forecastWhiteAtRisk(ran.forecast) }
         return o.map(whiteAtRisk) ?? false
     }
