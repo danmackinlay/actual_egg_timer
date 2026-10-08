@@ -39,10 +39,10 @@ struct ContentView: View {
 
     var body: some View {
         // One clock read for everything outside the timelines. `cook.phase(at:)`
-        // takes the instant rather than sampling `Date.now` itself, so a phase
+        // takes the instant rather than sampling the clock itself, so a phase
         // boundary cannot land between two reads and leave the label describing
         // one phase while the button below it describes the next.
-        let outerPhase = cook.phase(at: .now)
+        let outerPhase = cook.phase(at: AppClock.now)
         // The English of 1750: read here, so this body depends on it and
         // a change of language redraws the page in place.
         let period = isPeriod(Copy.activeLocale)
@@ -57,6 +57,9 @@ struct ContentView: View {
         // the timelines' identity, so a change of it starts them afresh on the
         // new schedule with a fresh date, rather than on a date up to a minute old.
         let tick: TimeInterval = outerPhase == .idle && sousVide == nil ? 60 : 1
+        // The timelines run on the system's clock; each date they hand over
+        // is read in cook time (`AppClock`), which a debug build can run fast.
+        let every = AppClock.period(tick)
 
         return NavigationStack(path: $path) {
             ScrollView {
@@ -68,11 +71,12 @@ struct ContentView: View {
                     // TimelineView is what redraws them: it asks for a new body
                     // once a `tick`, and hands over the date it drew for -
                     // which is the date the phase is computed from.
-                    TimelineView(.periodic(from: .now, by: tick)) { context in
-                        let phase = cook.phase(at: context.date)
+                    TimelineView(.periodic(from: AppClock.system, by: every)) { context in
+                        let now = AppClock.app(context.date)
+                        let phase = cook.phase(at: now)
                         ReadoutView(
-                            model: model, phase: phase, now: context.date,
-                            sousVide: sousVideAt(context.date, sousVide, phase: phase),
+                            model: model, phase: phase, now: now,
+                            sousVide: sousVideAt(now, sousVide, phase: phase),
                             certaintyOpen: $certaintyOpen
                         )
                     }
@@ -88,10 +92,10 @@ struct ContentView: View {
                         // height of its own (DECISIONS.md 52), on the clock
                         // as the readout is.
                         HStack(alignment: .center, spacing: 14) {
-                            TimelineView(.periodic(from: .now, by: tick)) { context in
+                            TimelineView(.periodic(from: AppClock.system, by: every)) { context in
                                 EggSectionView(
                                     running: running, plan: plan,
-                                    calibration: planner.calibration, now: context.date
+                                    calibration: planner.calibration, now: AppClock.app(context.date)
                                 )
                             }
                             .id(tick)
@@ -99,12 +103,13 @@ struct ContentView: View {
                             CookSentence(running: running, plan: plan, planner: planner)
                         }
                     }
-                    TimelineView(.periodic(from: .now, by: tick)) { context in
-                        let phase = cook.phase(at: context.date)
+                    TimelineView(.periodic(from: AppClock.system, by: every)) { context in
+                        let now = AppClock.app(context.date)
+                        let phase = cook.phase(at: now)
                         VStack(spacing: 18) {
                             PhaseActions(
-                                model: model, phase: phase, now: context.date,
-                                sousVide: sousVideAt(context.date, sousVide, phase: phase)
+                                model: model, phase: phase, now: now,
+                                sousVide: sousVideAt(now, sousVide, phase: phase)
                             )
                             // Inside the TimelineView for the same reason as
                             // the readout: reaching DONE changes no stored
@@ -167,6 +172,8 @@ struct ContentView: View {
     #if DEBUG
     /// The screen a debug build was launched onto (Screenshots.swift).
     private func showScreenshotScene() {
+        // The taps a script asked for, as each comes due.
+        Screenshots.drive(model)
         // A cook restored at Done, answered as soon as asked: before its
         // pot's surface is built again, with `-uiAnswerAfter 0`.
         if Screenshots.scene != "done", cook.phase == .done, let answer = Screenshots.answer {

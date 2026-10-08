@@ -26,7 +26,8 @@ import UIKit.UIGestureRecognizerSubclass
 final class Ringer {
     static let shared = Ringer()
 
-    /// When the app last came on screen; nil while it is in the background.
+    /// When the app last came on screen, in cook time (`AppClock`); nil while
+    /// it is in the background.
     /// A deadline that passed before this is not rung (see `deadlineToRing`).
     private(set) var onScreenSince: Date?
 
@@ -41,7 +42,7 @@ final class Ringer {
     private static let sampleRate = 44_100.0
 
     private init() {
-        onScreenSince = UIApplication.shared.applicationState == .background ? nil : .now
+        onScreenSince = UIApplication.shared.applicationState == .background ? nil : AppClock.now
         let centre = NotificationCenter.default
         // Foreground and background rather than active and inactive: a system
         // prompt, Control Centre or a banner makes the app inactive while it is
@@ -49,7 +50,7 @@ final class Ringer {
         centre.addObserver(
             forName: UIApplication.willEnterForegroundNotification, object: nil, queue: .main
         ) { _ in
-            MainActor.assumeIsolated { Ringer.shared.onScreenSince = .now }
+            MainActor.assumeIsolated { Ringer.shared.onScreenSince = AppClock.now }
         }
         centre.addObserver(
             forName: UIApplication.didEnterBackgroundNotification, object: nil, queue: .main

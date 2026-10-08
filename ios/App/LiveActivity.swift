@@ -59,7 +59,8 @@ enum LiveActivity {
     /// at the upgrade, which nothing will update again. Until then it shows
     /// what it showed, beside the notifications still pending for it.
     static func endAtTheirEnds() async {
-        let now = Date.now
+        // The card's dates are the system's (`AppClock.real`).
+        let now = AppClock.system
         for activity in Activity<CookActivity>.activities {
             let ends = activity.content.state.ends
             await activity.end(nil, dismissalPolicy: ends > now ? .after(ends) : .immediate)
@@ -67,13 +68,13 @@ enum LiveActivity {
     }
 
     #if DEBUG
-    /// Every card the system holds for the app, its state, stage and end,
-    /// to the debug log (`Screenshots.log`).
+    /// Every card the system holds for the app, its state, stage and end
+    /// (in cook time), to the debug log (`Screenshots.log`).
     static func logAll(_ when: String) {
         for activity in Activity<CookActivity>.activities {
             let s = activity.content.state
             Screenshots.log(
-                "\(when) activity \(activity.activityState) \(s.stage.rawValue) ends \(Int(s.ends.timeIntervalSince1970))"
+                "\(when) activity \(activity.activityState) \(s.stage.rawValue) ends \(Int(AppClock.app(s.ends).timeIntervalSince1970))"
             )
         }
     }

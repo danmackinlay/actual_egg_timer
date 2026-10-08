@@ -59,7 +59,7 @@ final class AppModel {
         // egg that can still change.
         Sharing.shared.start(host: Sharing.Host(
             log: { [planner] in planner.kept.log },
-            finalCount: { [planner, cook] in planner.kept.log.count - (cook.eggOpen(at: .now) ? 1 : 0) }
+            finalCount: { [planner, cook] in planner.kept.log.count - (cook.eggOpen(at: AppClock.now) ? 1 : 0) }
         ))
         // A finished cook answered before the relaunch keeps its open
         // questions open, if its egg is still the last in the log and has not

@@ -39,25 +39,42 @@ import EggTimerCore
 /// - `-shareServer http://localhost:8888`: send what sharing sends there
 ///   rather than to the live site (`Sharing.server`), for `npm run
 ///   serve:dev`.
+/// - `-clockSpeed 60`, `-clockOffset -900`, `-clockEpoch 1791234567`: the
+///   app's clock run fast, shifted, or both (`AppClock`), so a whole cook
+///   takes seconds; passed again at every launch, the same three carry the
+///   clock on through a relaunch. Sharing sends nothing under it.
 /// - `-cookAgo 7190`: with `-uiScreen heating`, the cook once started moved
 ///   back that many seconds, every time in it (`Cook.moveBack`): a slow hob
-///   past its guesses, or a cook about to be too old, on screen.
+///   past its guesses, or a cook about to be too old, on screen. The cook
+///   moved, not the clock: `-clockOffset` moves the clock instead, which
+///   needs a cook stored to move past.
 /// - `-doneAgo 3590`: with `-uiScreen done`, the cooling ended that many
 ///   seconds ago rather than 2.
 /// - `-uiAnswer jammy`, `jammy/tender`, `/firm`: at Done, answer the yolk,
 ///   the white or both, as the buttons would (`AppModel.answer`), after
-///   `-uiAnswerAfter 5` seconds (default 3), so a simulator nobody taps can
-///   answer; with no `-uiScreen`, a cook restored at Done is answered so.
+///   `-uiAnswerAfter 5` seconds (default 3; the system's seconds, not cook
+///   time), so a simulator nobody taps can answer; with no `-uiScreen`, a
+///   cook restored at Done is answered so.
+/// - `-uiDo boil@470,out@pull+3,again@cooled+5`: tap, each once, when the
+///   cook's clock reaches a moment of the cook (`drive`): `boil` (Full
+///   rolling boil), `out` (the egg out at the pull), `cancel`, `again`
+///   (Start again), `answer:jammy/tender` (as `-uiAnswer`). The moment is
+///   seconds after the start, or after `boil` (the boil tapped), `pull` or
+///   `cooled` (the plan's deadlines), the cook as restored included. What
+///   the scripted checks tap with, in place of the screen's layout.
 /// - `-provisionalAlarms YES`: ask for quiet notifications, which the system
 ///   grants with no prompt, so the alarms are scheduled and read back on a
 ///   simulator nobody taps.
 ///
-/// `log` writes a line with the clock in epoch seconds to standard error and
-/// to `Library/Caches/aet.log` in the app's container: the alarms read back
-/// and the Live Activities seen.
+/// `log` writes a line with the clock in epoch seconds, cook time, to
+/// standard error and to `Library/Caches/aet.log` in the app's container:
+/// the phases, each plan, the stored cook and the log as written, the
+/// alarms scheduled, cancelled and read back, the rings, the Live
+/// Activities pushed and seen, and the taps of `-uiDo`, which the scripted
+/// checks read (`tools/iosE2e.mjs`).
 enum Screenshots {
     static func log(_ line: String) {
-        let text = Data("AET \(Int(Date.now.timeIntervalSince1970)) \(line)\n".utf8)
+        let text = Data("AET \(Int(AppClock.now.timeIntervalSince1970)) \(line)\n".utf8)
         FileHandle.standardError.write(text)
         // And appended to Library/Caches/aet.log in the app's container, which
         // a simulator's host reads (`simctl get_app_container … data`).
@@ -113,6 +130,92 @@ enum Screenshots {
             }
             answer.white = words.first.flatMap(WhiteReport.init(rawValue:))
             return answer
+        }
+    }
+}
+
+extension Screenshots {
+    /// One tap of `-uiDo`: what, with its argument, and when.
+    struct Action {
+        let raw: String
+        let name: String
+        let arg: String?
+        let anchor: String
+        let afterS: Double
+
+        /// The moment it is due, epoch s, cook time; nil until it can be.
+        func due(_ cook: RunningCook, _ plan: CookPlan) -> Double? {
+            let base: Double?
+            switch anchor {
+            case "start": base = cook.startedAtS
+            case "boil": base = cook.events.boilAtS
+            case "pull": base = plan.deadlines.cookEndS
+            case "cooled": base = plan.deadlines.coolEndS ?? plan.deadlines.cookEndS + pullGraceSeconds
+            default: base = nil
+            }
+            return base.map { $0 + afterS }
+        }
+    }
+
+    /// `-uiDo`'s taps, in order; one that does not read is left out.
+    static var actions: [Action] {
+        guard let list = UserDefaults.standard.string(forKey: "uiDo") else { return [] }
+        return list.split(separator: ",").compactMap { entry in
+            let parts = entry.split(separator: "@", maxSplits: 1).map(String.init)
+            let what = parts[0].split(separator: ":", maxSplits: 1).map(String.init)
+            var anchor = "start", after = 0.0
+            if parts.count > 1 {
+                let when = parts[1]
+                if let s = Double(when) {
+                    after = s
+                } else if let sign = when.firstIndex(where: { $0 == "+" || $0 == "-" }) {
+                    anchor = String(when[..<sign])
+                    guard let s = Double(when[sign...]) else { return nil }
+                    after = s
+                } else {
+                    anchor = when
+                }
+            }
+            return Action(
+                raw: String(entry), name: what[0], arg: what.count > 1 ? what[1] : nil, anchor: anchor, afterS: after
+            )
+        }
+    }
+
+    /// Tap `-uiDo`'s taps as each comes due, on the cook's clock.
+    @MainActor
+    static func drive(_ model: AppModel) {
+        let all = actions
+        guard !all.isEmpty else { return }
+        Task { @MainActor in
+            var left = all
+            while !left.isEmpty {
+                try? await AppClock.sleep(0.25)
+                guard let running = model.cook.running, let plan = model.cook.plan else { continue }
+                let now = AppClock.now.timeIntervalSince1970
+                guard let i = left.firstIndex(where: { $0.due(running, plan).map { now >= $0 } ?? false }) else {
+                    continue
+                }
+                let action = left.remove(at: i)
+                log("action \(action.raw)")
+                tap(action, model)
+            }
+        }
+    }
+
+    @MainActor
+    private static func tap(_ action: Action, _ model: AppModel) {
+        switch action.name {
+        case "boil": model.cook.boil()
+        case "out": model.cook.pulledOut()
+        case "cancel": model.cancel()
+        case "again": model.startAgain()
+        case "answer":
+            let parts = (action.arg ?? "").split(separator: "/", omittingEmptySubsequences: false).map(String.init)
+            model.answer(
+                yolk: YolkWord(rawValue: parts[0]), white: parts.count > 1 ? WhiteReport(rawValue: parts[1]) : nil
+            )
+        default: log("action unknown \(action.name)")
         }
     }
 }
