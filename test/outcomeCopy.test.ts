@@ -121,7 +121,7 @@ test('an outcome carried with a cook comes back whole, or not at all', () => {
 });
 
 test('the direction\'s (i) and what it opens are in the catalogue, and the suggestion is not', () => {
-  for (const key of ['outcome.info', 'outcome.bracket', 'outcome.why', 'outcome.learning']) {
+  for (const key of ['outcome.bracket', 'outcome.why', 'outcome.learning']) {
     assert.ok(key in MESSAGES, key);
   }
   for (const key of ['outcome.safe.firm', 'outcome.safe.soft', 'outcome.safe.firmer', 'outcome.safe.softer']) {

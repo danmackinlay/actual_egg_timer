@@ -25,7 +25,8 @@ import EggTimerCore
 ///   before it asked, against the level, so a log can hold some of each and
 ///   both are scored. An answer about the white follows a slash:
 ///   `got-jammy/firm`, `right/runny`, `soft/tender`.
-/// - `-uiScreen direction-info`: open the direction's (i).
+/// - `-uiScreen certainty-open`: open what the certainty line under the time
+///   says when pressed.
 /// - `-uiLanguage en-x-1750`: read in that catalogue, as a pick in the
 ///   picker would, before the first frame (`LanguageChoice.start`).
 /// - `-sectionAhead 540`: draw the egg in cross-section as it will be that

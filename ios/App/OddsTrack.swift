@@ -4,14 +4,15 @@ import EggTimerCore
 /// The strip under the doneness slider: where this pan works.
 ///
 /// Three things, the web app's track in the same order:
-///  - the odds at each level, relative to the best level's (`shadingOf`), as
-///    the opacity of a band whose hue is the yolk's at that level - deep
-///    orange runny, golden jammy, pale yellow hard (`Palette`, the web's
-///    `--yolk-*`) - strong where this pan hits the mark most often, faint
-///    where it rarely does, so it reads in grey as well as in colour;
-///  - dots over the levels the pan can deliver but gets right fewer than 3
-///    times in 10 so far (once an egg has taught something), which the slider
-///    rests on and the warning line names;
+///  - the chance of the word asked at each level, relative to the best
+///    level's (`shadingOf`), as the opacity of a band whose hue is the yolk's
+///    at that level - deep orange runny, golden jammy, pale yellow hard
+///    (`Palette`, the web's `--yolk-*`) - strong where this pan most often
+///    gives the yolk the slider names, faint where it seldom does, so it
+///    reads in grey as well as in colour;
+///  - dots over the levels the pan can deliver but that are a wild guess so
+///    far, softer or firmer than every level that is not (once an egg has
+///    taught something), which the slider rests on and the warning line names;
 ///  - diagonal stripes over the levels the pan cannot deliver at all, as the
 ///    web app has always drawn them.
 ///
@@ -21,8 +22,8 @@ import EggTimerCore
 ///
 /// Levels map to the thumb's centre, which travels the slider's width less a
 /// thumb at each end; the caller insets the strip to match, as the web's
-/// track is inset by half a thumb. Decorative: the direction and the warning
-/// line say the same in words.
+/// track is inset by half a thumb. Decorative: the certainty line and the
+/// warning line say the same in words.
 struct OddsTrack: View {
     /// Nil before the first answer, and in sous-vide: the bare track.
     let solution: Solution?
@@ -42,7 +43,8 @@ struct OddsTrack: View {
             let hardest = solution.whiteSets ? solution.hardestLevel : 0
             func x(_ level: Double) -> CGFloat { CGFloat(min(1, max(0, level))) * w }
 
-            // The odds, stop by stop between the profile's points.
+            // The chance of the word asked, stop by stop between the
+            // profile's points.
             if let profile, solution.whiteSets {
                 let shades = shadingOf(profile)
                 if let first = shades.first, let last = shades.last, last.level > first.level {
@@ -62,7 +64,7 @@ struct OddsTrack: View {
                         )
                     )
                 }
-                // Deliverable, but under 3/10 so far: dots.
+                // Deliverable, but a wild guess so far: dots.
                 if let s = profile.softest, let hd = profile.hardest {
                     dots(context, from: x(profile.physicalSoftest), to: x(s), height: h)
                     dots(context, from: x(hd), to: x(profile.physicalHardest), height: h)
@@ -108,7 +110,8 @@ struct OddsTrack: View {
 }
 
 /// The bracket under the track (UI.md section 8): the yolk's likely range,
-/// from the outcome's 10% point to its 90%, open at the top so it cups the
+/// from the outcome's 5% point to its 95%, the 90% the certainty's words
+/// state, open at the top so it cups the
 /// track, with a short mark at its median. The foreground at 70%, not the
 /// accent and not the yolk, so it reads in both schemes and never covers the
 /// shading. Inset as the track is. VoiceOver reads it as `outcome.range`.

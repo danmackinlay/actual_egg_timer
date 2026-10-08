@@ -115,9 +115,14 @@ struct HelpView: View {
         }
     }
 
+    /// How sure I am: the gist, then what the direction's (i) said until the
+    /// certainty draft, then the aside. The certainty line's link opens here.
     private var odds: some View {
         section(.odds) {
             para(tr("help.odds.p1"))
+            para(tr("outcome.bracket"))
+            para(tr("outcome.why"))
+            para(tr("outcome.learning"))
             aside(tr("help.odds.aside"))
         }
     }

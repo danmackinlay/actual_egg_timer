@@ -175,7 +175,7 @@ const NOT_COPY: Record<string, string> = {
   '{}://{}': 'URL built from parts',
   'eggtimer-clause': 'URL scheme, never shown',
   'clause-': 'view identifier prefix',
-  'direction-info': 'view identifier',
+  'certainty-open': 'view identifier',
   heating: 'view identifier',
   done: 'view identifier',
   help: 'view identifier',

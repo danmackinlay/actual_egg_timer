@@ -230,8 +230,8 @@ final class Planner {
     var answers: Answers?
     /// The warning line while idle, in words, or empty: why the requested
     /// doneness was refused, the point being to teach the constraint rather
-    /// than merely to block the control; or else that the level on screen
-    /// comes out right fewer than 3 times in 10 so far (`warningKey`).
+    /// than merely to block the control; or else that the level on screen is
+    /// a wild guess so far, a dotted one (`warningKey`).
     var warning = ""
     /// The choice behind the time on screen: the odds, and how far it leaned
     /// from the mean solve. Nil until this pot's decision surface has been
@@ -243,9 +243,13 @@ final class Planner {
     /// until then the physical limits are the whole rule.
     var oddsProfile: OddsProfile?
     /// What the egg at the chosen time will be like (`predictOutcome`, read at
-    /// the decided time on the decision's own surface): the direction, the
-    /// white's line and the bracket. Nil whenever `decision` is.
+    /// the decided time on the decision's own surface): the white's line and
+    /// the bracket. Nil whenever `decision` is.
     var outcome: Outcome?
+    /// How sure I am of the time on screen (`certaintyAt`, read with the
+    /// outcome): the line under the time and what pressing it opens. Nil
+    /// whenever `decision` is.
+    var certainty: CertaintyReading?
     /// This launch's nudge (E8, DECISIONS.md 61): a whole number of seconds
     /// from -10 to +10, drawn at launch and again after each cook, so the
     /// time on screen holds still while the cook looks at it.
@@ -259,13 +263,18 @@ final class Planner {
     /// Under low odds, what would make this cook more reliable, as catalogue
     /// keys in the order shown; empty when there is nothing to say.
     var advice: [String] = []
-    /// What the direction, the white's line and the bracket are about, and what
-    /// a cook started now is timed by: the choice on screen's outcome,
+    /// What the white's line and the bracket are about, and what a cook
+    /// started now is timed by: the choice on screen's outcome,
     /// once this pot's surface has landed. Nil before that, where the white
     /// never sets, and in sous-vide.
     var shownOutcome: Outcome? {
         guard !isSousVide, decision != nil, solution?.whiteSets == true else { return nil }
         return outcome
+    }
+    /// How sure I am of the choice on screen, under the same conditions.
+    var shownCertainty: CertaintyReading? {
+        guard !isSousVide, decision != nil, solution?.whiteSets == true else { return nil }
+        return certainty
     }
     /// Whether the odds on screen are low enough to point the cook at Help
     /// (`adviceWanted` in Reach.swift): under 5/10, or 3/10 short of the best
@@ -285,6 +294,7 @@ final class Planner {
     struct Held {
         var profile: OddsProfile?
         var outcome: Outcome?
+        var certainty: CertaintyReading?
         var adviceWanted = false
     }
     var held = Held()
@@ -294,6 +304,7 @@ final class Planner {
         if let p = oddsProfile { held.profile = p }
         if decision != nil {
             held.outcome = shownOutcome
+            held.certainty = shownCertainty
             held.adviceWanted = adviceWanted
         }
     }
@@ -304,9 +315,11 @@ final class Planner {
 
     /// The track's shading: this pot's odds, or the last shown until they land.
     var shownProfile: OddsProfile? { oddsProfile ?? (holding ? held.profile : nil) }
-    /// The direction and the bracket: this pot's, or the last shown until its
-    /// surface lands.
+    /// The white's line and the bracket: this pot's, or the last shown until
+    /// its surface lands.
     var heldOutcome: Outcome? { decision != nil ? shownOutcome : (holding ? held.outcome : nil) }
+    /// The line under the time, likewise.
+    var heldCertainty: CertaintyReading? { decision != nil ? shownCertainty : (holding ? held.certainty : nil) }
     /// The low-odds link, likewise.
     var shownAdviceWanted: Bool { decision != nil ? adviceWanted : (holding && held.adviceWanted) }
 
