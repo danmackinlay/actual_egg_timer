@@ -1412,6 +1412,7 @@ export function boot(): void {
   // Before anything is written: whether a newer build has run here, and the
   // mark brought up to this one if not (DECISIONS.md 100).
   claimStorage(APP_VERSION, leaveStoresAlone);
+  page().newerNote.hidden = !storageReadOnly();
   settings = loadSettings(sizeClasses);
   useUnits(settings.unitsChosen);
   boilMemory = loadBoilMemory();
@@ -1497,12 +1498,14 @@ let booted = false;
 
 /**
  * A newer build has run in this browser, found at boot or told of later:
- * what this page stores is left alone from now on (store.ts). The timer runs
- * as before; the questions after an egg, sharing and "Start learning again"
- * go, since nothing they do could be kept.
+ * what this page stores is left alone from now on (store.ts). The line at
+ * the top of every view says so. The timer runs as before; the questions
+ * after an egg, sharing and "Start learning again" go, since nothing they do
+ * could be kept.
  */
 function leaveStoresAlone(): void {
   if (!booted) return;
+  page().newerNote.hidden = false;
   render(Date.now());
   drawShare();
   renderCalibNote(learning());

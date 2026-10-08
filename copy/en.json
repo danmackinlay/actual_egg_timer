@@ -376,6 +376,8 @@
     "colophon.lede": { "surface": "body", "apps": ["web", "ios"], "text": "I work out each time from how heat gets into an egg." },
     "colophon.link": { "surface": "body", "apps": ["web", "ios"], "text": "The code and the science" },
     "colophon.tail": { "surface": "body", "apps": ["web", "ios"], "text": "are open for anyone to check." },
-    "colophon.version": { "surface": "label", "apps": ["web", "ios"], "note": "The last line of Settings, under the colophon: which version of the app this is, so that someone writing in can say which. {version} is the number, shown whole in a fixed-width face and selectable, to copy: on the web the release, such as 0.4.0-alpha.1; on iOS the App Store version and, in brackets, the build, such as 0.4.0 (2).", "text": "Version {version}", "example": { "version": "0.4.0-alpha.1" } }
+    "colophon.version": { "surface": "label", "apps": ["web", "ios"], "note": "The last line of Settings, under the colophon: which version of the app this is, so that someone writing in can say which. {version} is the number, shown whole in a fixed-width face and selectable, to copy: on the web the release, such as 0.4.0-alpha.1; on iOS the App Store version and, in brackets, the build, such as 0.4.0 (2).", "text": "Version {version}", "example": { "version": "0.4.0-alpha.1" } },
+
+    "newer.note": { "surface": "body", "apps": ["web", "ios"], "note": "At the top of every screen, and only when a newer version of the app has run on this device and this older one is open (DECISIONS.md 100). It still times eggs but writes nothing: it keeps no setting, logs and learns from no egg, and sends nothing. Updating is the fix in both apps; on the web a reload brings the newest version.", "text": "A newer edition of this app saved your results. Until you update this one, I’ll time your eggs but won’t save or learn anything." }
   }
 }

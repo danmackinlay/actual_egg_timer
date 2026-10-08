@@ -379,6 +379,7 @@
     "activity.note.estimate": { "text": "my conjecture, till you tell me it boils" },
     "activity.note.heating": { "text": "upon the fire" },
     "activity.note.cooking": { "text": "until the eggs are taken out" },
-    "activity.note.cooling": { "text": "the yolk cooks still" }
+    "activity.note.cooling": { "text": "the yolk cooks still" },
+    "newer.note": { "text": "A later edition of this work has kept your results. Until you procure it, I shall time your eggs, but shall neither keep nor learn any thing." }
   }
 }

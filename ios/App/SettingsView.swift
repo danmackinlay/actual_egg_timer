@@ -29,6 +29,11 @@ struct SettingsView: View {
 
     var body: some View {
         Form {
+            // The egg screen's line, again where the settings that will not
+            // be kept are changed (`Stores`, DECISIONS.md 100).
+            if Stores.readOnly {
+                Section { NewerNote() }
+            }
             Section {
                 InfoRow(name: about("controls.units"), more: [tr("controls.units.more.ios")]) {
                     Text(tr("controls.units"))

@@ -61,6 +61,11 @@ struct ContentView: View {
         return NavigationStack(path: $path) {
             ScrollView {
                 VStack(spacing: 22) {
+                    // A newer version has run on this phone, and this one
+                    // leaves every store alone (`Stores`, DECISIONS.md 100):
+                    // said first, before a setting is changed that will not
+                    // be kept.
+                    if Stores.readOnly { NewerNote() }
                     if outerPhase == .idle && period { titlePage }
                     // The readout and the action are functions of the CLOCK,
                     // not of any stored property, so nothing the observation
@@ -231,4 +236,17 @@ struct ContentView: View {
 
 #Preview {
     ContentView()
+}
+
+/// A newer version of the app has run on this phone, and this one leaves
+/// every store alone (`Stores`, DECISIONS.md 100): the line that says so, at
+/// the top of the egg screen and of Settings, in the warning's colour.
+struct NewerNote: View {
+    var body: some View {
+        Text(tr("newer.note"))
+            .appFont(.footnote)
+            .foregroundStyle(.orange)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .fixedSize(horizontal: false, vertical: true)
+    }
 }

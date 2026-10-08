@@ -447,6 +447,17 @@ standing for the offer's "when I ask". No en-US entry.
 | `probe.how` | (new) | Push it into the middle of the yolk now and tell me the highest number you see. |
 | `help.learn.aside` | … for too soft, just right and too firm. … | … for the yolk you got, runny to hard, and the white next to it. … |
 
+**An older build after a newer one: `newer`** (9 October 2026,
+`DECISIONS.md` 100). One new key, `newer.note`, at the top of every screen
+when a newer version of the app has run on the device and this one writes
+nothing: "A newer edition of this app saved your results. Until you update
+this one, I’ll time your eggs but won’t save or learn anything." No
+"version" or "store": "edition" is the plain word, and the 1750 colophon's
+already. The 1750 twin: "A later edition of this work has kept your
+results. Until you procure it, I shall time your eggs, but shall neither
+keep nor learn any thing." No en-US entry. `tools/drafts/newer.ts`, on
+`c2a156f`.
+
 ## 4. Units
 
 **One setting: Metric or Imperial.** Its default comes from the platform:

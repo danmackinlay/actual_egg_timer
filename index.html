@@ -66,6 +66,12 @@
     <button type="button" id="mute" class="mute" aria-pressed="false" data-copy="readout.mute.on"></button>
   </header>
 
+  <!-- Shown only when a newer version of the app has run in this browser
+       and this page leaves every store alone (src/ui/store.ts,
+       DECISIONS.md 100): at the top of every view, so it is read before a
+       setting is changed that will not be kept. -->
+  <p id="newerNote" role="status" hidden data-copy="newer.note"></p>
+
   <!-- The title page, after the Dictionary's, heading the egg's page in
        the English of 1750 only (styles.css). Its long s is drawn, and the
        aria-label that applyCopy gives it reads without. -->
