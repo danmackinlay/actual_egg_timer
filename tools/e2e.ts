@@ -1316,6 +1316,34 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
     },
   },
 
+  'change-kept-on-hide': {
+    what: 'onescreen review 3: a change still settling is committed when the page goes, and two changes commit apart by keyboard too',
+    run: async (h) => {
+      const tab = await h.ctx.open(STOPPED);
+      await start(tab, 'hot');
+      await tab.until('(await window.__e2e.snap()).decided', 'the pot planned');
+      await tab.shift(30);
+      await pick(tab, '#size', '3');
+      await tab.reload();
+      let s = await tab.phase('COOKING');
+      check(s.cook?.choices.mass_kg !== 0.068 && s.cook?.correctedAt_s !== null, `reloaded: ${s.cook?.choices.mass_kg}`);
+      const saved = JSON.parse((await tab.storage('aet.settings.v1')) ?? '{}') as { sizeIndex?: number };
+      check(saved.sizeIndex === 3, `the next cook's egg: ${saved.sizeIndex}`);
+      // Two changes in a row with no pointer, as a keyboard makes them.
+      await later(tab);
+      const w0 = (await tab.writes()).length;
+      await pick(tab, '#size', '1');
+      await tab.click('#coolTap');
+      await tab.until("JSON.parse(localStorage.getItem('aet.cook.v4')).cook.choices.cooling === 'tap'", 'the second committed');
+      await tab.settle();
+      const cooks = (await tab.writes()).slice(w0).filter((w) => w.key === 'aet.cook.v4')
+        .map((w) => (JSON.parse(w.value) as { cook: Cook }).cook.choices);
+      const firstAlone = cooks.some((c) => c.mass_kg !== s.cook?.choices.mass_kg && c.cooling === 'ice');
+      check(firstAlone, `the first committed without the second: ${JSON.stringify(cooks.map((c) => [c.mass_kg, c.cooling]))}`);
+      return `the size kept across a reload; then ${cooks.length} writes, the first change alone first`;
+    },
+  },
+
   'hot-start': {
     what: 'a hot start: in, the pull, out, the cooling, Done, Start again logs the unanswered egg',
     run: async (h) => {

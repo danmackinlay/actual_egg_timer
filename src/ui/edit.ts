@@ -16,7 +16,11 @@
  * - after a tap's settle (`SETTLE_MS`, about 1.5 s, design section 5) for
  *   anything else - a choice in a clause's panel, a − or + pressed once, a
  *   number typed - the settle starting again with each change;
- * - at once when another control is touched, or the primary button pressed.
+ * - at once when another control is touched, or the primary button pressed:
+ *   the change in hand alone, as it was before the other control's, whether a
+ *   finger or the keyboard moves on (onescreen review 3);
+ * - and when the page is hidden or goes (`pagehide`, `visibilitychange`), so
+ *   a reload or a closed tab inside the settle loses nothing.
  *
  * Overdue is decided only on commit, by the plan of the committed cook
  * (cook.ts, `correctCook`). The aimed-for egg stays for a settle after the
@@ -73,6 +77,13 @@ const FIELDS: { settings: (keyof Settings)[]; choices: (keyof CookChoices)[] }[]
   { settings: ['doneness'], choices: ['level'] },
 ];
 
+/** The controls and the start as the change in hand left them: what is
+ *  committed, without it, when another control's change comes. */
+interface InHand {
+  controls: Settings;
+  start: number | null;
+}
+
 /** The correction in hand, and the gesture making it. */
 const edit = {
   /** The controls as last drawn from the cook, or committed: a field that
@@ -83,6 +94,8 @@ const edit = {
   /** The control the change in hand came from, so touching another commits
    *  it. */
   group: null as Element | null,
+  /** The controls as the change in hand left them, before another's. */
+  inHand: null as InHand | null,
   /** A finger down on a control: when (real ms), on which, and whether it
    *  is the slider. */
   down: null as { at: number; group: Element; slider: boolean } | null,
@@ -106,6 +119,7 @@ export function startEdits(): void {
   showStartLimit(null);
   edit.pending = false;
   edit.group = null;
+  edit.inHand = null;
   dropAim();
 }
 
@@ -118,6 +132,7 @@ export function endEdits(): void {
   showStartLimit(null);
   edit.pending = false;
   edit.group = null;
+  edit.inHand = null;
   edit.down = null;
   dropAim();
 }
@@ -142,9 +157,13 @@ function groupOf(target: EventTarget | null): Element | null {
 export function cookControlsChanged(source: EventTarget | null): void {
   if (state.cook === null || edit.base === null) return;
   const group = groupOf(source);
-  if (edit.pending && edit.group !== null && group !== null && group !== edit.group) commitEdit();
+  // Another control's change, with no finger down to have committed the one
+  // in hand first (the keyboard): that one is committed as it was, without
+  // this, which then settles in its turn.
+  if (edit.pending && edit.group !== null && group !== null && group !== edit.group) commitEdit(edit.inHand);
   edit.pending = true;
   edit.group = group;
+  edit.inHand = { controls: { ...state.controls }, start: state.controlsStart_s };
   edit.changed = performance.now();
   if (edit.release !== 0) {
     window.clearTimeout(edit.release);
@@ -165,15 +184,18 @@ function settleThenCommit(): void {
   }, SETTLE_MS);
 }
 
-/** The choices the controls say, laid over the cook's own: each field the
- *  cook changed (against `base`), and the cook's for the rest. */
-function choicesInHand(cook: RunningCook, base: Settings): { choices: CookChoices; touched: (keyof Settings)[] } {
-  const now = choicesOf(state.controls, REGION);
+/** The choices `controls` say (the controls on screen, unless given), laid
+ *  over the cook's own: each field the cook changed (against `base`), and the
+ *  cook's for the rest. */
+function choicesInHand(
+  cook: RunningCook, base: Settings, controls: Settings = state.controls,
+): { choices: CookChoices; touched: (keyof Settings)[] } {
+  const now = choicesOf(controls, REGION);
   const next: CookChoices = { ...cook.choices };
   const into = next as unknown as Record<string, unknown>;
   const touched: (keyof Settings)[] = [];
   for (const f of FIELDS) {
-    if (f.settings.every((k) => state.controls[k] === base[k])) continue;
+    if (f.settings.every((k) => controls[k] === base[k])) continue;
     touched.push(...f.settings);
     for (const c of f.choices) into[c] = now[c];
   }
@@ -221,9 +243,11 @@ function previewNow(): void {
  * pull the level is not corrected (DECISIONS.md 98): the slider only
  * previewed, and goes back to the level the egg was pulled at; nothing is
  * written for it. The aimed-for egg stays until a settle after the last
- * change.
+ * change. `upTo`, the controls as the change in hand left them, commits that
+ * change alone when another control's has already come (the keyboard), so
+ * two changes are two commits however they are made.
  */
-export function commitEdit(): void {
+export function commitEdit(upTo: InHand | null = null): void {
   if (edit.settle !== 0) {
     window.clearTimeout(edit.settle);
     edit.settle = 0;
@@ -233,21 +257,27 @@ export function commitEdit(): void {
   if (!edit.pending || cook === null || base === null) return;
   edit.pending = false;
   edit.group = null;
-  let { choices, touched } = choicesInHand(cook, base);
-  edit.base = { ...state.controls };
+  edit.inHand = null;
+  const controls = upTo === null ? state.controls : upTo.controls;
+  const startInHand = upTo === null ? state.controlsStart_s : upTo.start;
+  let { choices, touched } = choicesInHand(cook, base, controls);
+  edit.base = { ...controls };
   if (cook.events.pulled !== null && choices.level !== cook.choices.level) {
     choices = { ...choices, level: cook.choices.level };
     touched = touched.filter((k) => k !== 'doneness');
     edit.base.doneness = base.doneness;
     edit.previewedLevel = true;
   }
-  const start = state.controlsStart_s !== null && state.controlsStart_s !== cook.startedAt_s ? state.controlsStart_s : null;
+  const start = startInHand !== null && startInHand !== cook.startedAt_s ? startInHand : null;
   if (start !== null || !sameChoices(choices, cook.choices)) correctCook(choices, start);
   // The start as the cook now has it: a correction refused leaves the cook's.
-  state.controlsStart_s = state.cook === null ? null : state.cook.startedAt_s;
+  // Unless the change come since is the start's own.
+  if (upTo === null || state.controlsStart_s === upTo.start) {
+    state.controlsStart_s = state.cook === null ? null : state.cook.startedAt_s;
+  }
   if (touched.length > 0) {
     const settings = state.settings as unknown as Record<string, unknown>;
-    for (const k of touched) settings[k] = state.controls[k];
+    for (const k of touched) settings[k] = controls[k];
     saveNow();
   }
   letAimGo();
@@ -299,11 +329,16 @@ function onPointerUp(): void {
   else settleThenCommit();
 }
 
-/** The gestures, watched on the whole page, once at boot. */
+/** The gestures, watched on the whole page, once at boot; and the page
+ *  going, which commits a change still settling (onescreen review 3). */
 export function wireEdits(): void {
   document.addEventListener('pointerdown', onPointerDown, true);
   window.addEventListener('pointerup', onPointerUp, true);
   window.addEventListener('pointercancel', onPointerUp, true);
+  window.addEventListener('pagehide', () => commitEdit());
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') commitEdit();
+  });
 }
 
 /* ------------------------------------------------------------- the start */
