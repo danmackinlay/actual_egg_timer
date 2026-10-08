@@ -71,7 +71,8 @@ them out differently.
 - **The slot**: a refusal, or a dotted level's wild guess (`warn.wildGuess`, §8), or
   the sous-vide warning, or (web) a reloaded
   cook's warning; failing those, before anything is learned, the first-egg
-  welcome (`idle.welcome`). Under low odds the link "How to make this more
+  welcome (`idle.welcome`). Under a wild guess that a change of setup
+  would make surer (§8, "the advice") the link "How to make this more
   reliable →" goes under whichever is there and opens Help at its
   reliability section, which lists the changes that would help this setup
   (`advice.*`).
@@ -275,27 +276,32 @@ white-bound ends: the softest levels on a fresh install, the counter's
 softest, a cold start's soft. It is not lower because a fresh install at
 soft reads 0.17 on the reference pot, and that is the prior's width.
 
-**The bracket** runs under the track from `levelLow` to `levelHigh`, the 5%
-and 95% points (the 90% the certainty's words state; 10% and 90% until the
-`certainty` draft), with a
-short mark at `levelMedian`, in the foreground colour at 70%: not the accent,
-not the yolk, and below the track, so it never covers the shading. A screen
-reader hears "Likely yolk: Soft to Fudgy" (`outcome.range`, `.range.one` when
-both ends are nearest one word; the words stand alone after a colon,
-`LANGUAGE.md` §5). It is not drawn before the pot's surface lands, where the
-white never sets, in sous-vide, or once a cook runs; its room is kept, so
-nothing under it moves. On a fresh install it runs from runny to fudgy; after
-three consistent eggs it is about the thumb's width. Its ends are the yolk
-the egg is, without the cook's taste, so they need not be the certainty
-line's words, which are what the cook will call it.
+**The bracket** is the certainty line's 90% interval, drawn (core's
+`wordBracket`; `DECISIONS.md` 97, question 14: one interval for the words and
+the bracket). Each of the five words has a band on the slider, the levels
+whose nearest word it is, from the midpoint with the word below to the
+midpoint with the word above (0, 0.11, 0.315, 0.515, 0.81, 1), which is
+where the slider's own word changes. The bracket runs from the outer edge of
+the interval's first word's band to the outer edge of its last's, so it
+always lies inside the track, and its short mark sits at the most likely
+word's place on the slider, under that word's tick (Runny's and Hard's are
+the track's ends). So "9 times in 10: Runny to Fudgy." is drawn from 0 to
+0.81, marked at Jammy, and "9 times in 10: Fudgy." from 0.515 to 0.81. It
+is whole words wide, and moves a word at a time. In the foreground colour
+at 70%: not the accent, not the yolk, and below the track, so it never
+covers the shading. A screen reader hears the same words, "Likely yolk:
+Runny to Fudgy" (`outcome.range`, `.range.one` when the interval is one
+word; the words stand alone after a colon, `LANGUAGE.md` §5). It is not
+drawn before the pot's surface lands, where the white never sets, in
+sous-vide, or once a cook runs; its room is kept, so nothing under it moves.
+It is not clamped to what the pan delivers: on a counter rest its soft end
+can lie over the stripes, since a cook can still call that egg Soft. Until
+the `certainty` draft's follow-up (8 October 2026) it was the outcome's
+level range, the egg without the cook's taste, and could name other words
+than the line's; that range is kept in core (`levelLow`, `levelHigh`) for
+`npm run decide -- outcome`, and nothing on screen reads it.
 
-It is the egg at the time on screen, so its mark is the thumb only when that
-time does not lean. Before the first egg nothing leans and the mark is the
-thumb. After it, at the soft end, the time leans later so the white sets (a
-runny white costs three, `DECISIONS.md` 7), and the mark sits right of the
-thumb by what that costs the yolk: at the far left of a cold start after
-three good eggs, the thumb at 0.06 and the mark at 0.14, 16 s later. The
-certainty line's "Most likely" says so. The slider never
+The slider never
 rests on the stripes: asked for less than the pan can deliver, it moves to
 the softest level the pan delivers, which is the level the time and the
 bracket are for (test/reach.test.ts 10). It does rest on the dots
@@ -309,8 +315,8 @@ time at a dotted level leans late, but never past a firmer level's
 (`DECISIONS.md` 84): the time never rises as the thumb moves softer, and
 where the white binds the soft end takes the time of the first level firmer
 whose own choice is sooner (test/reach.test.ts 11: one egg soft with a runny
-white, soft asked, jammy's 427 s, 1/10, the bracket 0.20-0.53; it chose 500
-s with the bracket 0.50-0.82 before). "Most likely" and the bracket say
+white, soft asked, jammy's 427 s, 1/10, the level range 0.20-0.53, which was
+the bracket then; it chose 500 s with 0.50-0.82 before). "Most likely" and the bracket say
 where that puts the yolk. Since the `certainty` draft that egg's soft is a
 ballpark, soft or a neighbour 9 times in 10, so it is no longer dotted.
 
@@ -332,6 +338,28 @@ struck through, in both apps, only when every position it names is under the
 stripes (`anchorReachable`): after a runny white the floor moves to about
 0.05-0.09, which is still Runny, so Runny stays. The strip is bare before the
 first answer and in sous-vide.
+
+**The advice** (`reach.ts`, "when to advise"; the `certainty` draft's
+follow-up, 8 October 2026). "How to make this more reliable →"
+(`advice.toggle`) shows under the warning slot while idle when the word
+asked is a wild guess at the time on screen and a change of setup the model
+can price makes it surer: ice for a counter rest, twice the water with the
+heat off, each priced on its own pot's odds profile, and kept when it
+raises the chance of the word asked at the level by a twentieth
+(`ADVICE_GAIN`) or more over the chance on screen. The chance, not the
+class: a profile point carries both, but only the chance can be read
+between two points (between those that ask the same word, `askedNear`).
+The link waits for the changed pots' profiles, which the app asks for
+behind it, so it can come a moment after the time. It opens Help at "Getting
+reliable eggs", whose "For your current settings" lists those changes and,
+under any wild guess, the two the model cannot price (the fridge, the
+scale), which never bring the link on their own. On the model a fresh
+install never gets it: its wild guesses are the prior's width, which no
+setup narrows (on the counter, ice makes the word asked less likely, not
+more). One egg called runny on a counter rest does: there ice raises the
+word asked from 0.10 to 0.38 at the soft end (test/reach.test.ts 9). Until
+the follow-up it showed when the odds of "just right" were under 5/10 or
+3/10 short of the best level's, which nothing on screen shows.
 
 **Nothing jumps.** While idle the certainty line keeps two lines' room, the
 word and "Most likely", and centres what it has in it, so a drag that

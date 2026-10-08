@@ -897,6 +897,21 @@ share included). As built:
   holding at least 0.9; among runs equally narrow, the one holding more; on
   an exact tie, the softer. It need not contain the word asked. **The most
   likely word**: the largest, the softer on a tie.
+- **The bracket under the slider** is that interval, drawn (`wordBracket`;
+  `DECISIONS.md` 97, question 14): from the outer edge of its first word's
+  band on the slider (the anchors' midpoints, the same cuts as above) to
+  the outer edge of its last's, marked at the most likely word, which is
+  always inside the interval (a word outside a run holding 0.9 holds at
+  most 0.1). Until 8 October 2026 it was the outcome's level range, the
+  egg without the taste offset, so it could name other words than these.
+- **The advice** (reach.ts, "when to advise"): looked for at a wild guess,
+  and shown where a change the model prices (ice for a counter rest, more
+  water with the heat off) raises P(the word asked) at the level by 0.05
+  on that change's own profile, read between its points that ask the same
+  word. It replaced the odds of "just right" under 5/10 or 3/10 short of
+  the best. A fresh install's wild guesses are the prior's width, which no
+  setup narrows, so it is never advised; one egg on a counter called
+  runny makes ice worth 0.28 at the soft end (test/reach.test.ts 9).
 - **The likely time range**: the 90% credible interval of the right cook
   time for the level, `predictCookTime` read at 5% and 95% - per particle,
   the later of the time its yolk reaches the middle of the level (taste

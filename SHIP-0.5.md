@@ -236,6 +236,12 @@ core's exports.
       Driven in both apps and both Englishes (`LOGBOOK.md`, 8 October
       2026); `UI.md` §8 is the readout as built. Waiting on the owner, on
       a phone (`PLAN.md`).
+      *Follow-up* (8 October 2026): `f8ad320` draws the bracket from the
+      words' own interval (`wordBracket`: the outer edges of its first and
+      last words' bands, marked at the most likely word), so the slider
+      and the line name the same words; `73efbb4` shows the advice link
+      at a wild guess a priced change makes surer (the chance of the word
+      asked up by 0.05), not under 5/10 odds. No words changed: no draft.
 
 ## E. Tidy-ups sent to 0.5 without a choice made
 
