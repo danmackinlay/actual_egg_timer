@@ -25,7 +25,7 @@ import {
   CookChoices, CookPlan, CookSurface, RESTORE_WINDOW_S, RecordContext, RunningCook, asRanCorrected, asRanCurrent,
   asRanShown, keepAsRan, boilToRemember, cookEnding,
   cookFactsFor, cookSetupOf, cookStillOpen, cookTooOld, corrected, earliestStart_s, eventsDue, latestStart_s, openEggId, pullStands,
-  readRunningCook, replan, slowHobHintFits, startCook, startCorrected, stillIn, withBoil, withOut,
+  readRunningCook, replan, slowHobHintFits, solutionAsRan, startCook, startCorrected, stillIn, withBoil, withOut,
 } from '../src/core/running.js';
 import { gridFor, knowing } from '../tools/common.js';
 
@@ -318,7 +318,7 @@ test('13. the record is the cook as last corrected, at the time that ran', () =>
   // On iOS, no id.
   assert.equal('id' in recordFor(factsOf(firmer, q, { ...ctx, app: 'ios', id: null }, null, null, null)), false);
   // Ended: the boil it measured, and an egg to log.
-  assert.deepEqual(cookEnding(firmer, q, end + 1000), { boil: { litres: 2, seconds: 500 }, finished: true });
+  assert.deepEqual(cookEnding(firmer, q, end + 1000), { boil: { litres: 2, seconds: 500 }, finished: true, remake: false });
   assert.equal(cookEnding(tapped, p, S + 600).finished, false, 'cancelled while it cooks');
 });
 
@@ -422,9 +422,22 @@ test('17. review 3: a plan the cook did not cause never moves a pull already due
   // Written once, and the grace runs out on it.
   assert.equal(eventsDue(rung, landed, at + 5).rangAt_s, at);
   assert.equal(eventsDue(rung, landed, at + PULL_GRACE_SECONDS).pulled?.due_s, at);
-  // What the cook says after it plans afresh.
-  assert.equal(corrected(rung, hot.choices, at + 4).events.rangAt_s, null);
-  assert.equal(startCorrected(rung, S - 10, at + 4)?.events.rangAt_s, null);
+  // What the cook says after it (onescreen review 3): the ring kept while
+  // the corrected pull is still due, so the grace ends where it began;
+  // undone, and cleared, when the pull moves past the correction.
+  const lighter = corrected(rung, { ...hot.choices, mass_kg: 0.048 }, at + 4);
+  assert.equal(lighter.events.rangAt_s, at);
+  const held = planned(lighter, at + 4);
+  assert.deepEqual([held.deadlines.cookEnd_s, phaseAt(held.deadlines, at + 4)], [at, 'PULL']);
+  assert.equal(eventsDue(lighter, held, at + PULL_GRACE_SECONDS).pulled?.out_s, at + PULL_GRACE_SECONDS);
+  assert.equal(startCorrected(rung, S - 10, at + 4)?.events.rangAt_s, at);
+  const heavier = corrected(rung, { ...hot.choices, mass_kg: 0.076 }, at + 4);
+  const later = planned(heavier, at + 4);
+  assert.ok(later.deadlines.cookEnd_s > at + 4, 'a heavier egg: the pull later than the correction');
+  assert.equal(phaseAt(later.deadlines, at + 4), 'COOKING');
+  assert.equal(eventsDue(heavier, later, at + 5).rangAt_s, null, 'the ring cleared');
+  const cold = corrected(rung, { ...hot.choices, startMode: 'cold' }, at + 4);
+  assert.equal(eventsDue(cold, planned(cold, at + 4), at + 5).rangAt_s, null, 'heating again: the ring cleared');
 });
 
 test('18. review 1.2: a boil tapped after a late correction to cold runs on the remembered time', () => {
@@ -737,4 +750,47 @@ test('26b. review 2.4: Done and the record show the cook as it ran, whatever a l
   assert.equal(asRanCurrent(fixed), true);
   assert.deepEqual(fixed.asRan, keepAsRan({ ...corr, asRan: null }, planned(corr, due + 1200)).asRan, 'planned on C');
   assert.notEqual(fixed.asRan?.peakYolk_C, ran.peakYolk_C, 'a lighter egg peaks lower');
+  // What Done says beside the peak reads the cook as it ran too (onescreen
+  // review 2.2), and an ending with a stale record makes it again first (1.2).
+  const sol = solutionAsRan(after, ran);
+  assert.equal(sol.result.peakYolk_C, ran.peakYolk_C, 'the solve as it ran peaks where the cook did');
+  assert.notEqual(sol.result.peakYolk_C, after.solution.result.peakYolk_C);
+  assert.equal(solutionAsRan(planned(done, due + 1000), ran).result.peakYolk_C, ran.peakYolk_C);
+  assert.equal(cookEnding(corr, after, due + 1200).remake, true);
+  assert.equal(cookEnding(fixed, after, due + 1200).remake, false);
+  assert.equal(cookEnding(done, after, due + 1200).remake, false);
+});
+
+test('28. onescreen review 2.1: a correction after Done keeps it Done, and corrects only the record', () => {
+  const counter = cookOf({ startMode: 'hot', cooling: 'counter' });
+  const p = planned(counter, S + 1);
+  const due = p.deadlines.cookEnd_s;
+  const out = withOut(counter, p, due + 2);
+  assert.equal(phaseAt(planned(out, due + 2).deadlines, due + 2), 'DONE', 'on the counter, Done at the out');
+  // A minute on, the cooling corrected to ice: Done, with an ice bath to the
+  // correction, not a cooling started again behind an answer.
+  const ice = corrected(out, { ...counter.choices, cooling: 'ice' }, due + 62);
+  assert.equal(ice.events.cooledAt_s, due + 62);
+  const q = planned(ice, due + 63);
+  assert.equal(phaseAt(q.deadlines, due + 63), 'DONE');
+  assert.equal(q.cool_s, 60);
+  assert.deepEqual(eventsDue(ice, q, due + 900), ice.events, 'nothing more written');
+  // Ten minutes on: the counted time, written down as such.
+  const late = corrected(out, { ...counter.choices, cooling: 'tap' }, due + 602);
+  const r = planned(late, due + 603);
+  assert.equal(phaseAt(r.deadlines, due + 603), 'DONE');
+  assert.equal(r.cool_s, coolingSecondsFor(r.solution.result));
+  const written = eventsDue(late, r, due + 603);
+  assert.equal(written.cooledAt_s, (out.events.pulled?.out_s ?? 0) + r.cool_s);
+  assert.equal(planned({ ...late, events: written }, due + 604).cool_s, r.cool_s, 'and planned again, the same');
+  // A cooling that ended as counted stays as it ran.
+  const hot = cookOf({ startMode: 'hot' });
+  const hp = planned(hot, S + 1);
+  const hOut = withOut(hot, hp, hp.deadlines.cookEnd_s + 2);
+  const cooling = planned(hOut, hp.deadlines.cookEnd_s + 3);
+  const done = { ...hOut, events: eventsDue(hOut, cooling, (cooling.deadlines.coolEnd_s ?? 0) + 1) };
+  const lighter = corrected(done, { ...hot.choices, mass_kg: 0.048 }, (cooling.deadlines.coolEnd_s ?? 0) + 30);
+  const lp = planned(lighter, (cooling.deadlines.coolEnd_s ?? 0) + 30);
+  assert.equal(phaseAt(lp.deadlines, (cooling.deadlines.coolEnd_s ?? 0) + 30), 'DONE');
+  assert.equal(lp.deadlines.coolEnd_s, done.events.cooledAt_s);
 });

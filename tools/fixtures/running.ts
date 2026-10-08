@@ -14,8 +14,8 @@ import { Calibration, ProbeReading, recordFor } from '../../src/core/record.js';
 import {
   CookChoices, CookPlan, CookSurface, RESTORE_WINDOW_S, RecordContext, RunningCook, SLOW_HOB_MAX_STEPS, SlowHobHint,
   asRanCorrected, asRanCurrent, asRanShown, boilToRemember, cookEnding, cookStillOpen, cookFactsFor, cookSetupOf, corrected,
-  earliestStart_s, eventsDue, keepAsRan, latestStart_s, openEggId, pullStands, readRunningCook, replan, startCook,
-  startCorrected, stillIn, withBoil, withOut,
+  earliestStart_s, eventsDue, keepAsRan, latestStart_s, openEggId, pullStands, readRunningCook, replan, solutionAsRan,
+  startCook, startCorrected, stillIn, withBoil, withOut,
 } from '../../src/core/running.js';
 
 import { calibrationOf, coarseDecisionGrid, decidePosteriors } from './decide.js';
@@ -121,6 +121,8 @@ const MOVES: { note: string; cook: RunningCook; move: Move }[] = [
   { note: 'corrected back to cold: cold from the second correction', cook: corrected(tapped, { ...tapped.choices, startMode: 'hot' }, START_S + 600), move: { correct: tapped.choices, now: START_S + 610 } },
   { note: 'boiling a second time: first said boiling at the first', cook: corrected(corrected(tapped, { ...tapped.choices, startMode: 'hot' }, START_S + 600), tapped.choices, START_S + 610), move: { correct: { ...tapped.choices, startMode: 'hot' }, now: START_S + 620 } },
   { note: 'a correction after the cooling ended keeps every event, and the level the egg was pulled at', cook: cooled, move: { correct: { ...cooled.choices, level: 0.62, cooling: 'tap' }, now: START_S + 1100 } },
+  { note: 'done on the counter, corrected to ice: the cooling ended by the correction at the latest', cook: { ...cookOf({ cooling: 'counter' }), events: pulled.events }, move: { correct: { ...cooled.choices, cooling: 'ice' }, now: START_S + 900 } },
+  { note: 'done on the counter, another correction: nothing ended', cook: { ...cookOf({ cooling: 'counter' }), events: pulled.events }, move: { correct: { ...cooled.choices, cooling: 'counter', mass_kg: 0.076 }, now: START_S + 900 } },
   { note: 'the level, before the pull: corrected', cook: tapped, move: { correct: { ...tapped.choices, level: 0.62 }, now: START_S + 600 } },
   { note: 'a correction after the pull rang: planned afresh', cook: rung, move: { correct: { ...hot.choices, mass_kg: 0.076 }, now: START_S + 385 } },
   { note: 'the start corrected after the pull rang: planned afresh', cook: rung, move: { start: START_S - 60, now: START_S + 385 } },
@@ -416,10 +418,20 @@ function plan(pc: PlanCase): CookPlan {
     asRan: {
       current: asRanCurrent(pc.cook), kept: keepAsRan(pc.cook, p).asRan, shown: asRanShown(pc.cook, p),
       corrected: correctedAsRan(pc.cook, c, surface, pc.now_s),
+      solution: solutionShown(pc.cook, p),
     },
     ...recordOf(pc.cook, p, pc.now_s, plans.length),
   });
   return p;
+}
+
+/** The solve as it ran (`solutionAsRan`) of what Done shows, where it shows
+ *  one: the peaks and whether the white sets, which the texture note reads. */
+function solutionShown(cook: RunningCook, p: CookPlan) {
+  const ran = asRanShown(cook, p);
+  if (ran === null) return null;
+  const sol = solutionAsRan(p, ran);
+  return { peakYolk_C: sol.result.peakYolk_C, peakWhite_C: sol.result.peakWhite_C, whiteSets: sol.whiteSets };
 }
 
 /** `asRanCorrected` on the plan's calibration and surface: its plan as it
@@ -664,6 +676,38 @@ const S = START_S;
   const again = asRanCorrected(corr, learned, surfaceFor('learned', corr, 0, due + 1001, false), due + 1001);
   if (again === null) throw new Error('not planned again');
   plan({ note: 'corrected, planned again on the calibration before this egg: its record from that', posterior: 'learned', cook: again, leanHint_s: 0, now_s: due + 1002, surface: 'none' });
+}
+
+{
+  // The onescreen review (9 October 2026). Last, so no case before them moves.
+  const learned = calibrationOf(named('learned'));
+  // 2.1: Done on the counter, then the cooling corrected to ice a minute on:
+  // Done kept, the ice bath ended by the correction; ten minutes on, the
+  // counted time.
+  const counter = cookOf({ startMode: 'hot', cooling: 'counter' });
+  const cp = replan(counter, learned, null, 0, S + 1);
+  const cEnd = cp.deadlines.cookEnd_s;
+  const out = withEvents(counter, withOut(counter, cp, cEnd + 2).events);
+  plan({ note: 'done on the counter, then ice a minute after the out: Done kept, the ice bath to the correction', posterior: 'learned', cook: corrected(out, { ...counter.choices, cooling: 'ice' }, cEnd + 62), leanHint_s: 0, now_s: cEnd + 63, surface: 'own', dues: [cEnd + 64, cEnd + 900] });
+  plan({ note: 'done on the counter, then running water ten minutes on: the counted time, written down', posterior: 'learned', cook: corrected(out, { ...counter.choices, cooling: 'tap' }, cEnd + 602), leanHint_s: 0, now_s: cEnd + 603, surface: 'own', dues: [cEnd + 603] });
+  // An ended ice bath, then a lighter egg: never longer than counted.
+  const ice = cookOf({ startMode: 'hot' });
+  const ip = replan(ice, learned, null, 0, S + 1);
+  const iOut = withEvents(ice, withOut(ice, ip, ip.deadlines.cookEnd_s + 2).events);
+  const iCool = replan(iOut, learned, null, 0, ip.deadlines.cookEnd_s + 3);
+  const iDone = withEvents(iOut, eventsDue(iOut, iCool, (iCool.deadlines.coolEnd_s as number) + 1));
+  plan({ note: 'the ice bath ended, then a much lighter egg: the cooling as it ran', posterior: 'learned', cook: corrected(iDone, { ...ice.choices, mass_kg: 0.04 }, (iCool.deadlines.coolEnd_s as number) + 30), leanHint_s: 0, now_s: (iCool.deadlines.coolEnd_s as number) + 31, surface: 'own' });
+  // Review 3: a correction in the grace. A lighter egg leaves the pull due:
+  // the pull that rang, held, its grace's end kept. A heavier one moves it
+  // past the correction: the ring undone. Back to cold, unwatched: heating.
+  const h = cookOf({ startMode: 'hot' }, -7);
+  const hp = replan(h, learned, null, 0, S + 1);
+  const hEnd = hp.deadlines.cookEnd_s;
+  const rung = withEvents(h, eventsDue(h, hp, hEnd + 1));
+  plan({ note: 'the pull rang, then a lighter egg in the grace: the pull held, its grace kept', posterior: 'learned', cook: corrected(rung, { ...h.choices, mass_kg: 0.048 }, hEnd + 15), leanHint_s: 0, now_s: hEnd + 15, surface: 'own', dues: [hEnd + 16, hEnd + PULL_GRACE_SECONDS] });
+  plan({ note: 'the pull rang, then a heavier egg in the grace: the ring undone, the pull later', posterior: 'learned', cook: corrected(rung, { ...h.choices, mass_kg: 0.076 }, hEnd + 15), leanHint_s: 0, now_s: hEnd + 15, surface: 'own', dues: [hEnd + 16] });
+  plan({ note: 'the pull rang, then corrected to cold: heating, the ring undone', posterior: 'learned', cook: corrected(rung, { ...h.choices, startMode: 'cold' }, hEnd + 15), leanHint_s: 0, now_s: hEnd + 15, surface: 'own', dues: [hEnd + 16] });
+  plan({ note: 'the pull rang, then the start a minute earlier: still due, the pull held', posterior: 'learned', cook: startCorrected(rung, S - 60, hEnd + 10) as RunningCook, leanHint_s: 0, now_s: hEnd + 10, surface: 'own', dues: [hEnd + 11] });
 }
 
 /* What the boil memory learns (`boilToRemember`): a tap the cook watched for,

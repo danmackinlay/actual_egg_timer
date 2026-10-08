@@ -287,8 +287,11 @@ public func withBoil(_ cook: RunningCook, nowS: Double) -> RunningCook {
 }
 
 /// A correction at `nowS`: the choices replaced. The start and the events are
-/// kept, but for a pull that rang; after the pull, the level the egg was
-/// pulled at is kept (the slider only previews).
+/// kept, a pull that rang included (the plan undoes it if the correction moves
+/// the pull past now); after the pull, the level the egg was pulled at is kept
+/// (the slider only previews). Done on the counter and corrected to a counted
+/// cooling: that cooling ended here at the latest, so Done stays Done
+/// (onescreen review 2.1).
 public func corrected(_ cook: RunningCook, choices: CookChoices, nowS: Double) -> RunningCook {
     var since: Double?
     if choices.startMode == .cold {
@@ -302,7 +305,10 @@ public func corrected(_ cook: RunningCook, choices: CookChoices, nowS: Double) -
     next.choices = choices
     if cook.events.pulled != nil { next.choices.level = cook.choices.level }
     if cook.firstHotAtS == nil, choices.startMode == .hot { next.firstHotAtS = nowS }
-    next.events.rangAtS = nil
+    let e = cook.events
+    if e.pulled != nil, e.cooledAtS == nil, cook.choices.cooling == .counter, choices.cooling != .counter {
+        next.events.cooledAtS = nowS
+    }
     next.coldSinceS = since
     next.correctedAtS = nowS
     return next
@@ -326,13 +332,13 @@ public func earliestStartS(_ cook: RunningCook) -> Double {
 }
 
 /// The start corrected to `startedAtS` at `nowS`, or nil: refused when it is
-/// later than `latestStartS`, earlier than `earliestStartS`, or not a time.
+/// later than `latestStartS`, earlier than `earliestStartS`, or not a time. A
+/// pull that rang is kept, as by `corrected`.
 public func startCorrected(_ cook: RunningCook, startedAtS: Double, nowS: Double) -> RunningCook? {
     if !startedAtS.isFinite || startedAtS > latestStartS(cook, nowS: nowS) { return nil }
     if startedAtS < earliestStartS(cook) { return nil }
     var next = cook
     next.startedAtS = startedAtS
-    next.events.rangAtS = nil
     next.correctedAtS = nowS
     return next
 }
@@ -980,9 +986,14 @@ public func replan(
         cookEnd = told
         overdue = true
     }
+    // The pull that rang, held, unless the cook has told the plan something
+    // since that puts the pull after that moment (onescreen review 3).
     if pulled == nil, !provisional, let rang = e.rangAtS {
-        cookTime = rang - start
-        cookEnd = rang
+        let undone = told.map { $0 > rang && start + planned.result.cookTimeS > $0 } ?? false
+        if !undone {
+            cookTime = rang - start
+            cookEnd = rang
+        }
     }
     let ran = solutionAt(egg: pot.egg, setup: pot.setup, params: params, solution: planned, cookTimeS: cookTime)
 
@@ -1000,8 +1011,13 @@ public func replan(
     if ch.cooling != .counter {
         let out = pulled?.outS ?? cookEnd + pullGraceSeconds
         if pulled != nil, let cooled = e.cooledAtS {
-            coolEnd = cooled
-            cool = cooled - out
+            // As it ran; but a cooling a correction ended (Done on the
+            // counter), not yet written down as counted, ends at the counted
+            // time if that is sooner.
+            let stamped = cooled == cook.correctedAtS && out + cool < cooled
+            let end = stamped ? out + cool : cooled
+            coolEnd = end
+            cool = end - out
         } else {
             coolEnd = out + cool
         }
@@ -1049,7 +1065,8 @@ public func withOut(_ cook: RunningCook, plan: CookPlan, nowS: Double) -> Runnin
 
 /// The events the clock alone decides, as of `nowS`, from the plan that rang:
 /// the pull rang, the grace ran out (unconfirmed) and the counted cooling
-/// ended.
+/// ended. A ring the plan no longer holds is cleared, and a cooling a
+/// correction ended after its counted end is written down at that end.
 public func eventsDue(_ cook: RunningCook, plan: CookPlan, nowS: Double) -> CookEvents {
     // While the plan asks whether the egg is still in, the clock decides
     // nothing (running-cook review 3).
@@ -1058,11 +1075,13 @@ public func eventsDue(_ cook: RunningCook, plan: CookPlan, nowS: Double) -> Cook
     var pulled = cook.events.pulled
     var cooled = cook.events.cooledAtS
     var rang = cook.events.rangAtS
+    if pulled == nil, let r = rang, d.provisional || d.cookEndS != r { rang = nil }
     if pulled == nil, rang == nil, !d.provisional, nowS >= d.cookEndS { rang = d.cookEndS }
     if pulled == nil, !d.provisional, nowS >= d.cookEndS + pullGraceSeconds {
         pulled = Pulled(dueS: d.cookEndS, outS: d.cookEndS + pullGraceSeconds, by: .timeout, confirmed: false)
     }
     if pulled != nil, cooled == nil, let end = d.coolEndS, nowS >= end { cooled = end }
+    if pulled != nil, let c = cooled, let end = d.coolEndS, end < c { cooled = end }
     return CookEvents(boilAtS: cook.events.boilAtS, pulled: pulled, cooledAtS: cooled, rangAtS: rang)
 }
 
@@ -1104,6 +1123,24 @@ public func asRanCurrent(_ cook: RunningCook) -> Bool {
 public func asRanShown(_ cook: RunningCook, plan: CookPlan) -> CookAsRan? {
     if cook.asRan != nil { return asRanCurrent(cook) ? cook.asRan : nil }
     return asRanOf(cook, plan)
+}
+
+/// The solve as the cook ran (onescreen review 2.2), for what Done says of the
+/// egg beside the peak (the texture note): the plan's egg and pot at the cook
+/// time that ran, on the parameters it ran under, so a plan made on a
+/// posterior that has folded this egg's answer never moves it. `plan.solution`
+/// itself when the plan is on those parameters at that time.
+public func solutionAsRan(_ plan: CookPlan, ran: CookAsRan) -> Solution {
+    if let p = plan.inputs?.params, p.alphaM2s == ran.params.alphaM2s, p.tauAirScale == ran.params.tauAirScale,
+       plan.cookTimeS == ran.cookS {
+        return plan.solution
+    }
+    let sol = plan.solution
+    return Solution(
+        result: simulate(egg: plan.egg, setup: plan.setup, params: ran.params, cookTimeS: ran.cookS),
+        reachable: sol.reachable, minCookTimeS: sol.minCookTimeS,
+        softestLevel: sol.softestLevel, hardestLevel: sol.hardestLevel, whiteSets: sol.whiteSets
+    )
 }
 
 /// A correction after the pull, as it ran: the corrected cook planned on
@@ -1227,10 +1264,17 @@ private func tappedAfterLateCold(_ cook: RunningCook) -> Bool {
 public struct CookEnding: Sendable, Equatable {
     public let boil: BoilToRemember?
     public let finished: Bool
+    /// The record must be made again before the cook is forgotten (onescreen
+    /// review 1.2): corrected after the pull, its plan as it ran not yet
+    /// planned again (`asRanCurrent`). Make it (`asRanCorrected` on the
+    /// calibration before this egg), log it in place of the egg logged, then
+    /// forget the cook and send.
+    public let remake: Bool
 }
 
 public func cookEnding(_ cook: RunningCook, plan: CookPlan, nowS: Double) -> CookEnding {
     CookEnding(
-        boil: boilToRemember(cook), finished: !plan.askIfStillIn && phaseAt(plan.deadlines, nowS: nowS) == .done
+        boil: boilToRemember(cook), finished: !plan.askIfStillIn && phaseAt(plan.deadlines, nowS: nowS) == .done,
+        remake: cook.events.pulled != nil && cook.asRan != nil && !asRanCurrent(cook)
     )
 }

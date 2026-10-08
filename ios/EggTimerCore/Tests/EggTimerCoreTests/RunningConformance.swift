@@ -253,6 +253,15 @@ struct RunningConformance {
             #expect(try asRanCurrent(cook) == ran.flag("current"), "\(note): as it ran, current")
             expectAsRan(keepAsRan(cook, plan: plan).asRan, ran["kept"], "\(note): as it ran, kept")
             expectAsRan(asRanShown(cook, plan: plan), ran["shown"], "\(note): as it ran, shown")
+            if let sj = ran["solution"] as? [String: Any] {
+                let shown = try #require(asRanShown(cook, plan: plan), "\(note): nothing shown as it ran")
+                let sol = solutionAsRan(plan, ran: shown)
+                try expectClose(sol.result.peakYolkC, sj.num("peakYolk_C"), "\(note): as it ran, peak yolk")
+                try expectClose(sol.result.peakWhiteC, sj.num("peakWhite_C"), "\(note): as it ran, peak white")
+                #expect(try sol.whiteSets == sj.flag("whiteSets"), "\(note): as it ran, white sets")
+            } else {
+                #expect(asRanShown(cook, plan: plan) == nil, "\(note): shown as it ran")
+            }
             let again = asRanCorrected(cook, before: c, surface: surface, nowS: now)
             if let j = ran["corrected"] as? [String: Any] {
                 let a = try #require(again, "\(note): planned again")
@@ -265,6 +274,7 @@ struct RunningConformance {
             let expectedEnding = try row.object("ending")
             try expectBoil(ending.boil, expectedEnding["boil"], "\(note): the boil at the end")
             #expect(try ending.finished == expectedEnding.flag("finished"), "\(note): finished")
+            #expect(try ending.remake == expectedEnding.flag("remake"), "\(note): made again first")
         }
     }
 
