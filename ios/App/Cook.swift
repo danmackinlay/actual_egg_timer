@@ -523,7 +523,7 @@ final class Cook {
 
     private func persist() {
         guard let startedAt, let pullAt, let ticket else {
-            UserDefaults.standard.removeObject(forKey: Self.savedKey)
+            Stores.remove(Self.savedKey)
             return
         }
         let saved = Saved(
@@ -532,7 +532,7 @@ final class Cook {
             feedbackGiven: feedbackGiven, outAt: outAt, ticket: ticket
         )
         if let data = try? JSONEncoder().encode(saved) {
-            UserDefaults.standard.set(data, forKey: Self.savedKey)
+            Stores.set(data, forKey: Self.savedKey)
         }
     }
 
@@ -557,7 +557,7 @@ final class Cook {
         // another build wrote it, and its egg may be one nothing else holds.
         guard let saved = try? JSONDecoder().decode(Saved.self, from: data) else {
             Calibrations.keepUnreadCook(data)
-            UserDefaults.standard.removeObject(forKey: Self.savedKey)
+            Stores.remove(Self.savedKey)
             return nil
         }
 
@@ -585,7 +585,7 @@ final class Cook {
             feedbackGiven = false
             outAt = nil
             ticket = nil
-            UserDefaults.standard.removeObject(forKey: Self.savedKey)
+            Stores.remove(Self.savedKey)
             return egg
         }
 

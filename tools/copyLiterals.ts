@@ -134,6 +134,7 @@ const NOT_COPY: Record<string, string> = {
   roomC: 'UserDefaults key',
   unitsChosen: 'UserDefaults key',
   languageState: 'UserDefaults key',
+  newestVersion: 'UserDefaults key: the newest version that has run (DECISIONS.md 100)',
   flip: 'notification userInfo key',
   unitsFlipped: 'notification name',
   s: 'string format suffix, never shown',

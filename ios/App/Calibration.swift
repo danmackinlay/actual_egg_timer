@@ -366,7 +366,7 @@ enum Calibrations {
                 p: population.id, base: base, cal: cal, folded: k.folded, log: k.log, unread: unread))
         }
         if let data {
-            UserDefaults.standard.set(data, forKey: key)
+            Stores.set(data, forKey: key)
         }
     }
 
@@ -457,7 +457,7 @@ enum Calibrations {
     private static func keepUnread(_ raw: String) {
         var copies = unreadCopies().filter { $0 != raw }
         copies.append(raw)
-        UserDefaults.standard.set(Array(copies.suffix(unreadKept)), forKey: unreadKey)
+        Stores.set(Array(copies.suffix(unreadKept)), forKey: unreadKey)
     }
 
     /// A cook in progress this build could not read (Cook.swift), the newest
@@ -465,7 +465,7 @@ enum Calibrations {
     private static let unreadCookKey = "cookInProgress.unread"
 
     static func keepUnreadCook(_ data: Data) {
-        UserDefaults.standard.set(String(decoding: data, as: UTF8.self), forKey: unreadCookKey)
+        Stores.set(String(decoding: data, as: UTF8.self), forKey: unreadCookKey)
     }
 
     /// Every copy kept aside, the stores first, then the cook.
@@ -504,8 +504,8 @@ enum Calibrations {
     /// otherwise undone only by deleting the app, and the honest thing is to
     /// let someone take it back.
     static func reset() {
-        UserDefaults.standard.removeObject(forKey: key)
-        UserDefaults.standard.removeObject(forKey: unreadKey)
-        UserDefaults.standard.removeObject(forKey: unreadCookKey)
+        Stores.remove(key)
+        Stores.remove(unreadKey)
+        Stores.remove(unreadCookKey)
     }
 }

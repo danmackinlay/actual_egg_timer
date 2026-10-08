@@ -8,6 +8,59 @@ import EggTimerCore
 /// likes would let two equidistant pans give the two apps different answers.
 /// This file applies the rules; it does not decide them.
 
+/// The newest version of the app that has run on this phone, and whether
+/// this one may write (DECISIONS.md 100).
+///
+/// An older build writes what it stores whole, from the fields it knows, and
+/// drops what a newer build added there. So the mark holds the newest
+/// `MARKETING_VERSION` that has run, and a build that finds a newer one
+/// writes nothing at all until it is quit: no setting, pan, cook, result,
+/// copy kept aside, language or sharing state. It still times the egg, and
+/// says so at the top of the screen and in Settings. Whether it may write is
+/// core's `writerCheck`.
+///
+/// Every write the app makes to UserDefaults goes through `set` and
+/// `remove`, so the guard holds for all of them; reads go straight to
+/// UserDefaults. `claim` runs first thing at launch, before anything is
+/// written, and writes this build's version as the mark when it may write.
+/// The mark is never removed: "Start learning again" keeps it.
+enum Stores {
+    /// Under its own key, never changed: a newer build must find it.
+    static let markKey = "newestVersion"
+
+    /// Set once, at launch, before the first view; read on the main actor.
+    nonisolated(unsafe) private(set) static var readOnly = false
+
+    /// The version this build marks with: the App Store version alone, which
+    /// is package.json's without the pre-release (core's `Newer.swift`).
+    static var mine: String {
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "unknown"
+    }
+
+    /// Compare the mark with this build, and bring it up to this build if
+    /// this build may write. Says whether it may.
+    @discardableResult
+    static func claim(_ version: String = mine, in defaults: UserDefaults = .standard) -> WriterVerdict {
+        let mark = defaults.string(forKey: markKey)
+        let verdict = writerCheck(mark, version)
+        readOnly = verdict == .readOnly
+        if verdict == .write, mark != version, parseVersion(version) != nil {
+            defaults.set(version, forKey: markKey)
+        }
+        return verdict
+    }
+
+    static func set(_ value: Any?, forKey key: String, in defaults: UserDefaults = .standard) {
+        guard !readOnly else { return }
+        defaults.set(value, forKey: key)
+    }
+
+    static func remove(_ key: String, in defaults: UserDefaults = .standard) {
+        guard !readOnly else { return }
+        defaults.removeObject(forKey: key)
+    }
+}
+
 /// Where a boil memory is kept. How the numbers combine is `rememberBoil` and
 /// `estimateTimeToBoil` in the core.
 enum BoilMemories {
@@ -18,13 +71,13 @@ enum BoilMemories {
     }
 
     static func save(_ memory: BoilMemory) {
-        UserDefaults.standard.set(memory, forKey: key)
+        Stores.set(memory, forKey: key)
     }
 
     /// Forget every measured pan. Paired with the calibration reset: someone
     /// taking their learning back usually means the whole kitchen.
     static func reset() {
-        UserDefaults.standard.removeObject(forKey: key)
+        Stores.remove(key)
     }
 }
 
@@ -71,7 +124,7 @@ enum SettingsStore {
 
     @MainActor
     static func save(_ planner: Planner) {
-        let store = UserDefaults.standard
+        let store = Guarded()
         store.set(planner.doneness, forKey: "doneness")
         store.set(planner.weighedMassG, forKey: "weighedMassG")
         store.set(Double(planner.sizeIndex), forKey: "sizeIndex")
@@ -97,12 +150,18 @@ enum SettingsStore {
         if let room = planner.roomC {
             store.set(room, forKey: "roomC")
         } else {
-            store.removeObject(forKey: "roomC")
+            store.remove("roomC")
         }
         if let chosen = planner.unitsChosen {
             store.set(chosen.rawValue, forKey: "unitsChosen")
         } else {
-            store.removeObject(forKey: "unitsChosen")
+            store.remove("unitsChosen")
         }
     }
+}
+
+/// UserDefaults' setter, through the guard (`Stores`), for a run of writes.
+private struct Guarded {
+    func set(_ value: Any?, forKey key: String) { Stores.set(value, forKey: key) }
+    func remove(_ key: String) { Stores.remove(key) }
 }

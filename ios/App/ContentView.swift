@@ -110,7 +110,9 @@ struct ContentView: View {
                             // the readout: reaching DONE changes no stored
                             // property, so nothing outside would redraw and
                             // the question would never appear.
-                            if phase == .done { FeedbackPanel(model: model) }
+                            // Not while a newer build's results are left
+                            // alone (`Stores`): no answer could be kept.
+                            if phase == .done && !Stores.readOnly { FeedbackPanel(model: model) }
                         }
                     }
                     .id(tick)
