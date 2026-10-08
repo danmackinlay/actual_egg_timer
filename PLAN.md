@@ -476,5 +476,6 @@ checked, fixed or deleted. Start the QA pass here.
 | `SHIP-0.5.md` | the 0.5 line's worklist: foundations in core, the one screen, certainty in words, ticked as it lands |
 | `design/one-screen.md` | C1: the one screen's design as `DECISIONS.md` 96 settled it, the state model behind it (§4), and the owner's open questions (§7) |
 | `design/running-cook-review.md` | C2: the red-team review of both apps on the running cook as built, `e9c4208` |
+| `design/onescreen-review.md` | C3: the red-team review of the one screen in both apps as built, `cf0d175` |
 | `COLLECTIVE.md` | E6-E8, the collective part: the choices made to build `INFERENCE.md` §6-§9, and the work, ticked as it lands |
 | `fit/README.md` | the population fit (E7): pulling the eggs, fitting, scoring, publishing |
