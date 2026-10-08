@@ -606,7 +606,11 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
       check(storedCook(s)?.choices.startMode === 'cold', 'the stored cook says cold');
       const settings = JSON.parse((await tab.storage('aet.settings.v1')) ?? '{}') as { startMode?: string };
       check(settings.startMode === 'cold', `the next cook's setting: ${settings.startMode}`);
-      return `Heating again; the pull ${(pull1 - pull0).toFixed(0)} s later; settings say cold`;
+      // Picked back up after a reload, as corrected.
+      await tab.reload();
+      s = await tab.phase('HEATING');
+      check(near(deadlines(s).cookEnd_s, pull1, 1e-6), `reloaded: ${(deadlines(s).cookEnd_s - pull1).toFixed(3)} s`);
+      return `Heating again; the pull ${(pull1 - pull0).toFixed(0)} s later; settings say cold; the same after a reload`;
     },
   },
 
@@ -947,6 +951,48 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
       await tab.until('(await window.__e2e.snap()).cook.asRan?.correctedAt_s === (await window.__e2e.snap()).cook.correctedAt_s',
         'the record made again for cold water');
       return `${yes}; out: ${s.phase}, the pull confirmed, the record corrected`;
+    },
+  },
+
+  'running-lines': {
+    what: 'C3 step 5: corrected to cold and left heating, the slow hob counts the time heated up; a correction the white never sets in says so',
+    run: async (h) => {
+      const tab = await h.ctx.open('/');
+      let s = await start(tab, 'hot');
+      await tab.until('(await window.__e2e.snap()).decided', 'the pot planned');
+      const start_s = s.cook?.startedAt_s ?? 0;
+      await tab.shift(300);
+      await tab.click('#startCold');
+      s = await corrected(tab, null);
+      check(s.phase === 'HEATING' && !s.lengthened, `Heating on the guess: ${s.phase}, ${s.lengthened}`);
+      await tab.shiftTo(start_s + 16 * 60);
+      await sleep(300);
+      s = await tab.phase('HEATING');
+      check(s.lengthened, 'the slow hob lengthened');
+      check(s.digits === '16:00' || s.digits === '16:01', `the time heated, counting up: ${s.digits}`);
+      const slow = `${s.digits}, "${s.subline}"`;
+      await tab.click('#secondary');
+      await tab.phase('IDLE');
+      // A boiling start with the heat off in a little water, one small egg:
+      // corrected to it mid-cook, the white never sets, and the slot says so.
+      await tab.click('#startHot');
+      s = await start(tab, 'hot');
+      await tab.click('#heatOff');
+      s = await corrected(tab, null);
+      await pick(tab, '#size', '0');
+      s = await corrected(tab, s.cook?.correctedAt_s ?? null);
+      await tab.eval(`(() => { const e = document.getElementById('eggCount'); e.value = '1';
+        e.dispatchEvent(new Event('input', { bubbles: true })); })()`);
+      s = await corrected(tab, s.cook?.correctedAt_s ?? null);
+      await tab.eval(`(() => { const e = document.getElementById('litres'); e.value = '0.5';
+        e.dispatchEvent(new Event('input', { bubbles: true })); })()`);
+      s = await corrected(tab, s.cook?.correctedAt_s ?? null);
+      await sleep(300);
+      const warn = await tab.eval<{ hidden: boolean; text: string }>(
+        "(() => { const w = document.getElementById('warn'); return { hidden: w.hidden, text: w.textContent }; })()");
+      const never = await tab.eval<string>("(async () => (await window.__e2e.ui('copy')).t('refusal.whiteNeverSets'))()");
+      check(!warn.hidden && warn.text === never, `the slot: "${warn.text}"`);
+      return `${slow}; heat off, 0.5 L, one small egg: "${warn.text}"`;
     },
   },
 

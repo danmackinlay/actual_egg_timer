@@ -19,7 +19,7 @@ import { Outcome } from '../core/outcome.js';
 import { CertaintyReading } from '../core/certainty.js';
 import {
   WordsRef, certaintyKey, forecastWhiteAtRisk, intervalWords, mostLikelyOpened, mostLikelyShown, mostLikelyWords,
-  whiteAtRisk,
+  refusalKey, whiteAtRisk,
 } from '../core/wording.js';
 import { asRanShown } from '../core/running.js';
 import { midSentence } from '../core/copy.js';
@@ -52,6 +52,7 @@ import { estimateTimeToBoil, hasBoilMemory } from './store.js';
 import { show } from './units.js';
 import { APP_VERSION } from './version.js';
 import { nowMs } from './now.js';
+import { warningText } from './update.js';
 
 /** What was last drawn, so the page draws only what changed. */
 const drawn = {
@@ -227,11 +228,19 @@ function renderRunning(now_ms: number): void {
   if (aim !== null) renderDonenessReading(aim.level, { peakYolk_C: aim.peakYolk_C });
   else renderDonenessReading(shown?.level ?? plan.level, { peakYolk_C: shown?.peakYolk_C ?? sol.result.peakYolk_C });
   renderDonenessScale(sol, sol.whiteSets ? reading.profile : null, sol.whiteSets ? reading.sure?.words ?? null : null);
-  // The warning line carries a restored cook's warning while it runs - the
-  // opposite of a refusal, it only exists mid-cook. Only while the cook is
-  // still in flight: at DONE the egg is out and "keep this tab open" is
-  // advice about a deadline that has already passed.
-  const warning = pickedUpAfterReload() && phaseNow(now_ms) !== 'DONE' ? t('readout.restored') : '';
+  // The warning line while a cook runs, until the pull: what the plan says
+  // of the level, as the idle screen says it (design/one-screen.md section
+  // 3: a correction that leaves the white unset gets the longest time this
+  // pan can give, and the slot says so), a refusal first. Then a restored
+  // cook's warning, the opposite of a refusal, which only exists mid-cook,
+  // and only while the cook is still in flight: at DONE the egg is out and
+  // "keep this tab open" is advice about a deadline that has already passed.
+  const phase = phaseNow(now_ms);
+  const before = phase === 'HEATING' || phase === 'COOKING';
+  const said = before ? warningText(plan.answer, cook.choices) : '';
+  const refusal = before && refusalKey(plan.answer.verdict, cook.choices.cooling) !== null;
+  const restored = pickedUpAfterReload() && phase !== 'DONE' ? t('readout.restored') : '';
+  const warning = refusal || restored === '' ? said : restored;
   renderReadout(now_ms, sol, warning);
   renderSection(now_ms);
   showInfo(page().sublineInfo, false);
@@ -481,7 +490,7 @@ function runningReading(now_ms: number): RunningReading {
  *  While idle they are the choice on screen's, and blank until this pot's
  *  surface lands: the line keeps two lines' height, so nothing moves when
  *  they arrive. Once a cook is running they are its plan's (`reading`). The
- *  way to Help goes with the controls: Help is not reachable mid-cook. Never
+ *  way to Help is there in every phase, as Help is. Never
  *  where the white never sets: there is no cook to say anything about. */
 function renderOdds(now_ms: number, reading: RunningReading | null = null): void {
   let o: Outcome | null = null;
@@ -540,7 +549,6 @@ function renderCertainty(sure: CertaintyReading | null): void {
   page().certaintyTime.textContent = t('certainty.time', {
     low: formatClock(sure.time.low_s), high: formatClock(sure.time.high_s),
   });
-  page().certaintyHelp.hidden = state.cook !== null;
 }
 
 /** The sous-vide readout: hold times from the isothermal limit, and the plain

@@ -5,6 +5,7 @@
  */
 
 import { Solution } from '../core/solve.js';
+import { Cooling } from '../core/protocol.js';
 import { anchorNear } from '../core/policy.js';
 import { LevelAnswer } from '../core/reach.js';
 import { warningKey } from '../core/wording.js';
@@ -47,14 +48,17 @@ const pending = {
 
 /** The warning line, in words: a refusal, or that the level is a wild guess. Which,
  *  and which words say it, are core's (`answerAt`, `warningKey`); the
- *  arguments are this app's. The warning names the level the slider rests
- *  on, a word standing alone before the colon. */
-function warningText(answer: LevelAnswer): string {
+ *  arguments are this app's, for `pot`: the settings', or a running cook's
+ *  own choices. The warning names the level the slider rests on, a word
+ *  standing alone before the colon. */
+export function warningText(
+  answer: LevelAnswer, pot: { cooling: Cooling; waterLitres: number } = state.settings,
+): string {
   const v = answer.verdict;
-  const ref = warningKey(v, answer.lowOdds, state.settings.cooling);
+  const ref = warningKey(v, answer.lowOdds, pot.cooling);
   if (ref === null) return '';
   return tRef(ref, {
-    limit: midSentence(t(v.limit.key), activeLocale()), water: show('water', state.settings.waterLitres),
+    limit: midSentence(t(v.limit.key), activeLocale()), water: show('water', pot.waterLitres),
     doneness: t(anchorNear(answer.level).key),
   });
 }
