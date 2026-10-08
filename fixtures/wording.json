@@ -392,15 +392,18 @@
   "outcome": [
     {
       "pWhiteRunny": 0,
-      "whiteAtRisk": false
+      "whiteAtRisk": false,
+      "forecastWhiteAtRisk": false
     },
     {
       "pWhiteRunny": 0.199999999,
-      "whiteAtRisk": false
+      "whiteAtRisk": false,
+      "forecastWhiteAtRisk": false
     },
     {
       "pWhiteRunny": 0.2,
-      "whiteAtRisk": true
+      "whiteAtRisk": true,
+      "forecastWhiteAtRisk": true
     }
   ],
   "range": [

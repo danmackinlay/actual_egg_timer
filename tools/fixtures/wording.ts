@@ -11,10 +11,10 @@ import { Outcome } from '../../src/core/outcome.js';
 import { Certainty, wordCertainty } from '../../src/core/certainty.js';
 import { Phase, RefusalKind, Verdict, anchorNear } from '../../src/core/policy.js';
 import { Cooling, HeatAfterBoil, StartMode } from '../../src/core/protocol.js';
-import { EggFrom } from '../../src/core/record.js';
+import { EggFrom, forecastOf } from '../../src/core/record.js';
 import {
   certaintyKey, clauseKeys, intervalWords, mostLikelyOpened, mostLikelyShown, mostLikelyWords, phaseKeys,
-  rangeWords, warningKey, whiteAtRisk,
+  forecastWhiteAtRisk, rangeWords, warningKey, whiteAtRisk,
 } from '../../src/core/wording.js';
 import { WHITE_RISK } from '../../src/core/outcome.js';
 
@@ -63,7 +63,10 @@ export function wordingFixture(): Record<string, unknown> {
       pWhiteRunny: pWhiteRunny, pWhiteTender: 1 - pWhiteRunny, pWhiteFirm: 0, pYolkWord: null,
       levelLow: 0.2, levelMedian: 0.2, levelHigh: 0.7, lean: 'balanced',
     };
-    return { pWhiteRunny: pWhiteRunny, whiteAtRisk: whiteAtRisk(o) };
+    return {
+      pWhiteRunny: pWhiteRunny, whiteAtRisk: whiteAtRisk(o),
+      forecastWhiteAtRisk: forecastWhiteAtRisk(forecastOf(o, 400)),
+    };
   });
 
   // The bracket in words: the certainty's interval, from five spreads that

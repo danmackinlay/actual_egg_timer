@@ -5374,3 +5374,19 @@ plan asks, nothing rings, no pull is scheduled and the cooling's clock
 stops at 0:00. The white's risk line at Done still reads the plan now, not
 the plan as it ran. iOS's findings are its own (1.4, and its part of 1.3,
 2.1 to 2.4).
+
+## 8 October 2026: Done's white line, as it ran (web)
+
+The one gap the web's review fixes left (`design/running-cook-review.md`
+2.4): at Done the line "The white might still be runny." read the plan as
+re-planned, not the cook as it ran. Core gains `forecastWhiteAtRisk`, the
+same threshold read from a forecast (`forecast.white[0]` is the outcome's
+`pWhiteRunny`), with its Swift twin and a row in `fixtures/wording.json`;
+the web draws the line from `asRanShown` once the egg is out. Driven on
+`serve:dev`, a cold start begun 15 minutes in the past so a reload sees the
+same clock: Done at 11:19, Runny yolk and Runny white answered and folded,
+reloaded. The screen kept "peak yolk 65 °C" (64.67 as ran) where the plan
+re-made on the new posterior says 56.50 °C; the white line hidden both as
+ran (0.082) and as re-planned (0.034), so this run could not show the line
+moving, and the threshold's equality is held by `test/outcomeCopy.test.ts`
+instead. iOS takes the same call in its own review fixes.

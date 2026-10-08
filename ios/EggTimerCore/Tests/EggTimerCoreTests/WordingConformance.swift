@@ -41,6 +41,8 @@ struct WordingConformance {
                 levelLow: 0.2, levelMedian: 0.2, levelHigh: 0.7, lean: .balanced
             )
             #expect(try whiteAtRisk(o) == row.flag("whiteAtRisk"), "\(o.pWhiteRunny) white")
+            let f = forecastOf(o, cookS: 400)
+            #expect(try forecastWhiteAtRisk(f) == row.flag("forecastWhiteAtRisk"), "\(o.pWhiteRunny) as ran")
         }
     }
 
