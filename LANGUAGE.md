@@ -1028,10 +1028,15 @@ every visitor.
 - **Old-style figures only**, whose 0 is an o: right in a sentence, wrong
   in a field. A number the cook types or steps keeps the system face, as
   the clock does.
-- **On iOS, what UIKit draws keeps the system face**: the navigation bar,
-  the segmented controls, a menu. So does the Live Activity, read at a
-  glance across a kitchen beside the system's clock; the widget bundles no
-  font. `ios/App/PeriodFace.swift` has the rest.
+- **On iOS, the segmented controls are in the face too** (since 9
+  October), at UIKit's own 13 pt, which does not grow with Dynamic Type
+  for any face; they change face with the language, in place. **What else
+  UIKit draws keeps the system face**: the navigation bar's title, the egg
+  size's menu (its button and its list), the menu the bar's buttons fold
+  into at the largest text sizes, the share sheet, and the system's
+  alerts. So does the Live Activity, read at a glance across a kitchen
+  beside the system's clock; the widget bundles no font.
+  `ios/App/PeriodFace.swift` has the rest.
 
 ## 7. Order
 

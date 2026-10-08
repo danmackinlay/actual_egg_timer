@@ -45,7 +45,7 @@ struct SettingsView: View {
                     Text(tr("controls.units.metric")).tag(UnitSystem.metric)
                     Text(tr("controls.units.imperial")).tag(UnitSystem.imperial)
                 }
-                .pickerStyle(.segmented)
+                .segmented()
                 .labelsHidden()
                 // The way into 1750 for a cook who starts in Imperial and so
                 // never makes the switch (LANGUAGE.md section 6): on any
@@ -70,7 +70,7 @@ struct SettingsView: View {
                     Text(tr("language.en")).tag(defaultLanguage)
                     Text(tr("language.en1750")).tag(periodLanguage)
                 }
-                .pickerStyle(.segmented)
+                .segmented()
                 .labelsHidden()
             }
 
@@ -111,7 +111,7 @@ struct SettingsView: View {
                         Text(tr("controls.afterTheBoil.keepBoiling")).tag(false)
                         Text(tr("controls.afterTheBoil.heatOff")).tag(true)
                     }
-                    .pickerStyle(.segmented)
+                    .segmented()
                     .labelsHidden()
                 }
 
