@@ -1323,6 +1323,26 @@ scenario('answered-pull-stands', 'onescreen review 2.1: a pull the clock assumed
   run.note('a correction after an answer confirms the pull the clock assumed');
 });
 
+
+scenario('grace-correction', 'onescreen review 3: a lighter egg 15 s into the pull keeps the pull that rang and its grace; nothing rings again', async (run) => {
+  const plan0 = await hotStarted(run, 'set:size=1@pull+15');
+  let i = await run.step(plan0.pull + 1);
+  await run.until(/^phase PULL$/, { from: i, what: 'phase PULL' });
+  await run.settled(i);
+  const rings = run.lines().filter((l) => /^ring /.test(l.text)).length;
+  const t = await tapAt(run, plan0.pull + 15, 'set');
+  const after = await corrected(run, t.i);
+  run.check(near(after.plan.pull, plan0.pull, EXACT), `the pull that rang: ${(after.plan.pull - plan0.pull).toFixed(3)} s`);
+  await sleep(1000);
+  run.check(!has(run.lines().slice(t.i), /^ring /), `rung again (${rings} before)`);
+  i = await run.step(plan0.pull + 21);
+  await run.until(/^phase COOLING$/, { from: i, what: 'Cooling at the grace’s end' });
+  const pulled = lastStored(run.lines())?.cook.events.pulled;
+  run.check(near(pulled?.due_s, plan0.pull, EXACT) && near(pulled?.out_s, plan0.pull + 20, EXACT),
+    `due at the pull that rang, out at its grace's end: ${JSON.stringify(pulled)}`);
+  run.note('Pull kept, nothing rung again, Cooling at the grace’s first end');
+});
+
 // ------------------------------------------------------------------- main
 
 /// A new device's first launches are many seconds slow while the system

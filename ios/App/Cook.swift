@@ -770,7 +770,15 @@ final class Cook {
                 if let cooled = next.deadlines.coolEndS { rung[.cooled] = cooled }
             }
             if alarmAuthorized == true {
-                alarmCovers = []
+                // A deadline past and not moved keeps what covered it: its
+                // notification has been delivered, and a correction in the
+                // pull's grace that holds the pull must not ring it again in
+                // the app (onescreen review 3).
+                let nowS = AppClock.now.timeIntervalSince1970
+                alarmCovers = alarmCovers.filter { d in
+                    guard let at = Self.at(d, next.deadlines) else { return false }
+                    return at <= nowS && Self.same(Self.at(d, before), at)
+                }
                 scheduleAlarms()
                 Task { await readBackAlarms() }
             }
