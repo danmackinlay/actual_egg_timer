@@ -15,6 +15,7 @@
  */
 
 import { Phase } from '../core/policy.js';
+import { WhiteReport, YolkWord } from '../core/infer.js';
 import {
   CookEvents, CookPlan, RunningCook, cookEnding, cookTooOld, eventsDue, keepAsRan, replan, startCook, withBoil,
   withOut,
@@ -27,9 +28,9 @@ import {
 } from './clock.js';
 import { applySettingsToDom } from './controls.js';
 import { activeLocale } from './copy.js';
-import { cachedOddsProfile } from './decisionGrids.js';
+import { cachedOddsProfile, decisionGrid } from './decisionGrids.js';
 import { eggRecordFor } from './eggRecord.js';
-import { answersNow, forgetAnswers, keptAnswers, resumeAnswers } from './feedback.js';
+import { answersNow, forgetAnswers, heldAnswers, keptAnswers, resumeAnswers, retryHeld } from './feedback.js';
 import { render } from './render.js';
 import { sendFinal } from './share.js';
 import { idleChoices, phaseNow, state, timeToBoil_s } from './state.js';
@@ -111,12 +112,14 @@ function sameEvents(a: CookEvents, b: CookEvents): boolean {
   return JSON.stringify(a) === JSON.stringify(b);
 }
 
-/** A surface or a profile the running cook's plan wanted, landed. */
+/** A surface or a profile the running cook's plan wanted, landed: an answer
+ *  held for want of it is made now. */
 export function replanCook(): void {
   if (state.cook === null) return;
   const now = Date.now();
   planNow(now / 1000);
   notice(now);
+  retryHeld();
   render(now);
 }
 
@@ -163,26 +166,74 @@ function finishCook(): void {
   releaseScreen();
 }
 
-/** What a cook leaves when it ends (`cookEnding`): the time to boil it
- *  measured, remembered now that the cook is as last corrected; and its egg,
- *  if it was cooked through and nothing has logged it. */
-function endCook(cook: RunningCook, plan: CookPlan, now_s: number, answered: boolean): void {
+/** How many times a record waiting on its pot's surface asks for one: the
+ *  posterior can move while it is built (another egg folded), and the plan
+ *  then wants another. */
+const RECORD_TRIES = 3;
+
+/**
+ * What a cook leaves when it ends (`cookEnding`): the time to boil it
+ * measured, remembered now that the cook is as last corrected; and its egg,
+ * if it was cooked through and nothing has logged it, with any answer held
+ * for it (feedback.ts, `held`). Then `ended`, once the egg is logged or
+ * there is none: the stored cook is forgotten only then, so a page closed
+ * while the record waits on its surface picks the egg back up at the next
+ * load rather than losing it.
+ */
+function endCook(cook: RunningCook, plan: CookPlan, now_s: number, answered: boolean, ended: () => void): void {
   const ending = cookEnding(cook, plan, now_s);
   if (ending.boil !== null) {
     state.boilMemory = rememberTimeToBoil(state.boilMemory, ending.boil.litres, ending.boil.seconds);
   }
   // An egg finished and never answered about is still an egg: the cook, the
-  // recommendation and the pull are data for the fit. It folds nothing.
-  if (ending.finished && !answered) {
-    // Null when nothing says what the app said for it (`cookFactsFor`
-    // refused: no surface yet): nothing is logged rather than an egg with no
-    // forecast (running-cook review 1.3).
-    const record = eggRecordFor(cook, plan, null);
-    if (record !== null) {
-      logEgg(record);
-      void learn();
-    }
+  // recommendation and the pull are data for the fit.
+  if (!ending.finished || answered) {
+    ended();
+    return;
   }
+  const held = heldAnswers();
+  logFinished(cook, plan, now_s, held.yolk, held.white, ended, RECORD_TRIES);
+}
+
+/**
+ * Log a finished egg from its plan as it ran, or from a plan on its pot's
+ * surface (running-cook review 1.3): never from a plan with no surface, which
+ * would write no forecast, and never dropped for want of one. A cook ended
+ * before its surface is in - a reload at DONE, or one dropped as too old -
+ * asks the worker for the surface its plan wants, plans on it, keeps the
+ * plan as it ran and logs. The calibration it is planned on is the one
+ * before this egg: nothing of this egg has been folded.
+ */
+function logFinished(
+  cook: RunningCook, plan: CookPlan, now_s: number, yolk: YolkWord | null, white: WhiteReport | null,
+  ended: () => void, tries: number,
+): void {
+  const ran = keepAsRan(cook, plan);
+  const record = eggRecordFor(ran, plan, yolk, white);
+  if (record !== null) {
+    logEgg(record);
+    void learn();
+    ended();
+    return;
+  }
+  const inputs = plan.inputs;
+  // Left stored, for the next load to log, if the surface cannot be had.
+  if (inputs === null || tries <= 0) return;
+  decisionGrid(inputs).then(() => {
+    const onIt = replan(cook, state.calib, surfaceFor(inputs), 0, now_s);
+    logFinished(cook, onIt, now_s, yolk, white, ended, tries - 1);
+  }, (error: unknown) => console.warn('the surface for an egg’s record failed', error));
+}
+
+/** The cook started at `id_ms` has ended and its egg, if any, is logged:
+ *  forget it, and send what is now final. After the page has booted, since
+ *  this can run inside `restoreCook`. */
+function forgetEnded(id_ms: number): void {
+  clearCook(id_ms);
+  queueMicrotask(() => {
+    drawShare();
+    void sendFinal();
+  });
 }
 
 /** Cancel, and "Start again" at DONE. */
@@ -193,8 +244,8 @@ export function reset(): void {
   const cook = state.cook;
   const plan = state.plan;
   if (cook !== null && plan !== null) {
-    endCook(cook, plan, Date.now() / 1000, answersNow().kind !== 'none');
-    clearCook(cook.id_ms);
+    const id = cook.id_ms;
+    endCook(cook, plan, Date.now() / 1000, answersNow().kind !== 'none', () => forgetEnded(id));
   }
   forgetAnswers();
   state.cook = null;
@@ -207,9 +258,9 @@ export function reset(): void {
   // A new cook, a new nudge.
   drawNudge();
   recompute();
-  // The egg just finished is final now: no answer can be added to it.
+  // The egg just finished is final once it is forgotten (`forgetEnded`): no
+  // answer can be added to it.
   drawShare();
-  void sendFinal();
 }
 
 export function onPrimary(): void {
@@ -304,8 +355,10 @@ export function restoreCook(): void {
   const now_s = now / 1000;
   const back = plannedWithEvents(stored.cook, stored.leanHint_s, now_s, null);
   if (cookTooOld(back.plan, now_s)) {
-    endCook(back.cook, back.plan, now_s, stored.answers !== 'none');
-    clearCook(back.cook.id_ms);
+    // Its egg, if finished and unanswered, is logged on its pot's surface,
+    // built first: nothing of the surface survives a reload (review 1.3).
+    const id = back.cook.id_ms;
+    endCook(back.cook, back.plan, now_s, stored.answers !== 'none', () => forgetEnded(id));
     return;
   }
   state.leanHint_s = stored.leanHint_s;

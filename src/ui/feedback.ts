@@ -74,12 +74,49 @@ export function pickedUpAfterReload(): boolean {
   return answers.kind === 'beforeReload' || (answers.kind === 'none' && answers.reloaded);
 }
 
+/**
+ * Answers given before anything says what the app said for this egg: the
+ * record refused (`cookFactsFor`, `noSurface`), as after a reload at DONE
+ * before the pot's surface is built again (running-cook review 1.3). Each is
+ * held, its row settled, and made the moment the cook is planned on its
+ * surface (`retryHeld`), or with the egg's record if the cook ends first
+ * (cook.ts, `endCook`): never thrown away, and never written with no
+ * forecast. The probe's reading stays in its field, and is read again.
+ */
+const held = {
+  yolk: null as YolkWord | null,
+  white: null as WhiteReport | null,
+  probe: false,
+};
+
+/** The answers held for the egg on screen (`held`). */
+export function heldAnswers(): { yolk: YolkWord | null; white: WhiteReport | null } {
+  return { yolk: held.yolk, white: held.white };
+}
+
 /** Nothing said, on a cook of this page's own, and both rows and the probe
  *  back to empty: for the next egg. */
 export function forgetAnswers(): void {
   answers = { kind: 'none', reloaded: false };
+  held.yolk = null;
+  held.white = null;
+  held.probe = false;
   resetRows();
   resetProbe();
+}
+
+/** The cook was planned again: any answer held for want of its surface is
+ *  made now, if it can be (`held`). */
+export function retryHeld(): void {
+  const yolk = held.yolk;
+  const white = held.white;
+  const probe = held.probe;
+  if (yolk === null && white === null && !probe) return;
+  held.yolk = null;
+  held.white = null;
+  held.probe = false;
+  if (yolk !== null || white !== null) foldAnswer(yolk, white, null);
+  if (probe) onProbeSave();
 }
 
 /** What the questions need of the cook on screen, read when they need it: a
@@ -175,10 +212,12 @@ function foldAnswer(yolk: YolkWord | null, white: WhiteReport | null, probe: Pro
   if (a.kind !== 'live') {
     const record = eggRecordFor(cooked, plan, yolk, white, probe);
     // Refused (`cookFactsFor`): nothing says yet what the app said for this
-    // egg. The answer is not taken, and the row can be pressed again.
+    // egg, which waits on the pot's surface. The answer is held, its row
+    // settled and "learning…" shown, until the cook is planned on it
+    // (`retryHeld`).
     if (record === null) {
-      page().calibNote.textContent = '';
-      resetRows();
+      if (yolk !== null) held.yolk = yolk;
+      if (white !== null) held.white = white;
       return;
     }
     // Another tab showing this cook may have written it down first: then
@@ -303,8 +342,13 @@ function onProbeSave(): void {
   if (typed === '') return;
   const reading_C = parse(measure('probeTemp'), Number(typed));
   const record = eggRecordFor(cooked, plan, null);
-  // Refused (`cookFactsFor`): not scored until the egg can be recorded.
-  if (record === null) return;
+  // Refused (`cookFactsFor`): not scored until the egg can be recorded. Held,
+  // the reading left in its field, and read again when it can be (`held`).
+  if (record === null) {
+    held.probe = true;
+    page().calibNote.textContent = t('feedback.learning');
+    return;
+  }
   const [low, high] = plausibleProbeRange_C(
     plan.egg, plan.setup, calibrationParams(host.calib()), recordCookTime_s(record),
   );
