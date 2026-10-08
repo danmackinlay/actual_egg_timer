@@ -244,6 +244,17 @@ core's exports.
         ended at its end (`7d7a964`), every unread cook kept (`de688d5`).
         Each driven before and after on the simulator, with launch arguments
         for it (`1eec910`; `LOGBOOK.md`, 8 October 2026). No word changed.
+- [x] **C2, the fast clock and the scripted checks** (web): the checks the
+      reviews made by hand, in a minute from one command. Every read of the
+      time in `src/ui/` goes through `now.ts`, which on `localhost` and
+      `127.0.0.1` only runs fast (`?clock=60`) or shifted (`?at=+7m40s`),
+      kept for the tab across a reload, the pull's beeps on the audio clock
+      following it, sharing off for any log it touched (`0e23b9b`);
+      headless Chrome over the DevTools protocol shared with the copy
+      snapshot (`db9fec3`); `npm run e2e`, fourteen scenarios on the built
+      site and the local endpoint, the review's cases among them (1.1, 1.2,
+      2.2, 2.3, 2.4), each passing on this build. Not in `verify` (a
+      minute, and Chrome); CI left alone. iOS's own is another item.
 - [ ] **C3. Both apps**, screen by screen, checked by driving them;
       `UI.md` rewritten as built.
 

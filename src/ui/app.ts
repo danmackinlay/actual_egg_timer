@@ -41,6 +41,7 @@ import { loadBoilMemory, loadSettings } from './store.js';
 import { measure, useUnits } from './units.js';
 import { drawShare, finalEggs, forgetAll, recompute, storedElsewhere } from './update.js';
 import { wireViews } from './views.js';
+import { nowMs } from './now.js';
 
 export function boot(): void {
   bindDom();
@@ -72,7 +73,7 @@ export function boot(): void {
   page().secondary.addEventListener('click', reset);
   page().mute.addEventListener('click', onToggleMute);
   wireForget(forgetAll);
-  wireExport(() => exportResults(shareState().uid, Date.now()));
+  wireExport(() => exportResults(shareState().uid, nowMs()));
   // Every (i) opens in place. They are buttons, so the keyboard reaches and
   // works them, and aria-expanded says which way they stand.
   wireInfoButtons();
@@ -86,11 +87,11 @@ export function boot(): void {
   wireFeedback({
     cook: () => state.cook,
     plan: () => state.plan,
-    phase: () => phaseNow(Date.now()),
+    phase: () => phaseNow(nowMs()),
     calib: () => state.calib,
     persist: persistCook,
     learned: () => renderLearned(learning()),
-    redraw: () => render(Date.now()),
+    redraw: () => render(nowMs()),
     open: cookOpen,
   });
 
@@ -117,7 +118,7 @@ export function boot(): void {
   // A cook picked back up is described by its own choices and its plan,
   // never by the controls, which another tab may have changed since.
   if (state.cook === null) recompute();
-  else render(Date.now());
+  else render(nowMs());
   // Eggs written down but not yet folded - a reload mid-fold, or a posterior
   // that had to be rebuilt from the log - are folded now, off the main thread.
   // The app runs on what it had until they land.

@@ -901,6 +901,7 @@ npm run serve      # static server on :8080, the repo root
 npm run build:site # the deployable tree, in _site/
 npm run serve:site # static server on :8080, _site/
 npm run serve:dev  # _site/ and the sharing endpoint, on a store in memory, on :8888
+npm run e2e        # the web app driven end to end in headless Chrome (below)
 ```
 
 Node version is pinned in `.node-version`, which nvm, fnm and Netlify all read,
@@ -931,6 +932,33 @@ between cooks (`src/ui/offline.ts`), and deleting `sw.js` takes the worker out.
 `src/core/` has zero dependencies, no DOM, no `Date`, no I/O and no `async`. It is plain
 interfaces and top-level functions with explicit loops, which is deliberate: it is meant
 to port to Swift essentially unchanged.
+
+### Checking the web app end to end
+
+`npm run e2e` builds the site, serves it with the sharing endpoint on a store
+in memory (`tools/devServer.ts`), and drives it in headless Chrome over the
+DevTools protocol, with nothing installed beyond Chrome itself
+(`tools/e2e.ts`, `tools/chrome.ts`; `CHROME` names the binary if it is not
+in the usual macOS place). Each scenario runs in a browser context of its
+own and asserts on the page and on what it stored: a cold cook at sixty
+times speed, a hot start, Cancel, a reload at every phase, a tab woken past
+the pull, two tabs on one cook, a cook too old, an egg made final, Done
+after an answer and a reload, a slow hob, an older build's cook kept aside,
+and sharing sending only final eggs. `npm run e2e -- reload two-tabs` runs
+those named; `node dist/tools/e2e.js --list` lists them; `E2E_DEBUG=1` prints
+the page's text when one fails. The whole suite takes about a minute, so it
+is not in `npm run verify`.
+
+What makes it take seconds is the development clock (`src/ui/now.ts`),
+through which every read of the time in `src/ui/` goes. On a page served
+from `localhost` or `127.0.0.1`, and nowhere else, `?clock=60` runs it sixty
+times fast, `?at=+7m40s` or `?at=-15m` sets it ahead or behind, and
+`?clock=off` puts it back; it is kept for the tab across a reload, a red
+mark in the corner shows it, and `aetClock.shift('+20m')` moves it from the
+console. The pull's beeps, scheduled ahead on the audio clock, follow it.
+While it is on, and in that browser until Forget everything, sharing sends
+nothing, so no egg cooked on it reaches a server. On the live site the clock
+is `Date.now()` (`test/now.test.ts`).
 
 ---
 

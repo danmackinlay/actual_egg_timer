@@ -27,10 +27,9 @@
  */
 
 import { spawn, ChildProcess } from 'node:child_process';
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { readFileSync, writeFileSync } from 'node:fs';
 
+import { Cdp, launchChrome, sleep, waitForHttp } from './chrome.js';
 import { Templates, applyDraft, draftFor, templateRegExp, withOverlays } from './copyDraft.js';
 
 interface Snapshot {
@@ -42,87 +41,18 @@ interface Snapshot {
   attrs: string[];
 }
 
-const CHROME = process.env['CHROME']
-  ?? '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
-
-const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms));
-
-async function waitForHttp(url: string): Promise<Response> {
-  for (let i = 0; i < 100; i++) {
-    try {
-      const res = await fetch(url);
-      if (res.ok) return res;
-    } catch {
-      /* not up yet */
-    }
-    await sleep(100);
-  }
-  throw new Error(`nothing answered at ${url}`);
-}
-
-/** One DevTools session on one page: send a command, get its result. */
-class Cdp {
-  private next = 1;
-  private pending = new Map<number, (value: unknown) => void>();
-  private ws: WebSocket;
-
-  private constructor(ws: WebSocket) {
-    this.ws = ws;
-    ws.addEventListener('message', (event) => {
-      const msg = JSON.parse(String(event.data)) as { id?: number; result?: unknown };
-      if (msg.id !== undefined) {
-        this.pending.get(msg.id)?.(msg.result);
-        this.pending.delete(msg.id);
-      }
-    });
-  }
-
-  static async open(url: string): Promise<Cdp> {
-    const ws = new WebSocket(url);
-    await new Promise<void>((resolve, reject) => {
-      ws.addEventListener('open', () => resolve());
-      ws.addEventListener('error', () => reject(new Error('DevTools socket failed')));
-    });
-    return new Cdp(ws);
-  }
-
-  send(method: string, params: object = {}): Promise<unknown> {
-    const id = this.next++;
-    this.ws.send(JSON.stringify({ id: id, method: method, params: params }));
-    return new Promise((resolve) => this.pending.set(id, resolve));
-  }
-
-  async evaluate(expression: string): Promise<unknown> {
-    const result = await this.send('Runtime.evaluate', { expression: expression, returnByValue: true }) as {
-      result?: { value?: unknown };
-    };
-    return result.result?.value;
-  }
-
-  close(): void {
-    this.ws.close();
-  }
-}
-
 async function capture(out: string): Promise<void> {
   const port = 8391 + Math.floor(Math.random() * 500);
   const debugPort = port + 1000;
-  const profile = mkdtempSync(join(tmpdir(), 'copy-snapshot-'));
   const children: ChildProcess[] = [];
+  let chrome: Awaited<ReturnType<typeof launchChrome>> | null = null;
   try {
     children.push(spawn('python3', ['-m', 'http.server', String(port), '--bind', '127.0.0.1'], {
       stdio: 'ignore',
     }));
     await waitForHttp(`http://127.0.0.1:${port}/index.html`);
 
-    children.push(spawn(CHROME, [
-      '--headless=new', '--disable-gpu', '--no-first-run', '--no-default-browser-check',
-      `--user-data-dir=${profile}`, `--remote-debugging-port=${debugPort}`,
-      // The page is driven, never looked at: a background tab must not be
-      // throttled into missing the ticks the harness waits for.
-      '--disable-background-timer-throttling', '--disable-renderer-backgrounding',
-      `http://127.0.0.1:${port}/tools/copy-snapshot.html`,
-    ], { stdio: 'ignore' }));
+    chrome = await launchChrome([`http://127.0.0.1:${port}/tools/copy-snapshot.html`], debugPort);
 
     const list = await (await waitForHttp(`http://127.0.0.1:${debugPort}/json`)).json() as {
       type: string; url: string; webSocketDebuggerUrl: string;
@@ -146,8 +76,7 @@ async function capture(out: string): Promise<void> {
     console.log(`${states.length} states -> ${out}`);
   } finally {
     for (const child of children) child.kill();
-    await sleep(300);
-    rmSync(profile, { recursive: true, force: true });
+    if (chrome !== null) await chrome.close();
   }
 }
 

@@ -45,6 +45,7 @@ import {
 } from './store.js';
 import { unitSystem } from './units.js';
 import { applyAnswer, drawShare, recompute } from './update.js';
+import { nowMs } from './now.js';
 
 /** The ticker, while a cook runs, and the phase it last saw, so the alarm
  *  rings once as the cook passes the pull, and the cook finishes once; and
@@ -137,7 +138,7 @@ export function cookOpen(): boolean {
   const plan = state.plan;
   if (cook === null || plan === null || written.closed) return false;
   const storedId = written.works ? (loadCook()?.cook.id_ms ?? null) : cook.id_ms;
-  if (cookStillOpen(cook, plan, storedId, Date.now() / 1000)) return true;
+  if (cookStillOpen(cook, plan, storedId, nowMs() / 1000)) return true;
   written.closed = true;
   putAway();
   return false;
@@ -149,7 +150,7 @@ export function cookOpen(): boolean {
  *  leaves Heating when another taps the boil (review 1.2). */
 export function cookElsewhere(key: string | null): void {
   if (!cookStoredElsewhere(key) || state.cook === null) return;
-  const now = Date.now();
+  const now = nowMs();
   if (phaseNow(now) === 'DONE' && !written.closed && !cookOpen()) {
     render(now);
     return;
@@ -240,7 +241,7 @@ function sameEvents(a: CookEvents, b: CookEvents): boolean {
  *  held for want of it is made now. */
 export function replanCook(): void {
   if (state.cook === null) return;
-  const now = Date.now();
+  const now = nowMs();
   planNow(now / 1000);
   notice(now);
   retryHeld();
@@ -276,7 +277,7 @@ function notice(now_ms: number): void {
 }
 
 function onTick(): void {
-  const now = Date.now();
+  const now = nowMs();
   const now_s = now / 1000;
   const plan = state.plan;
   if (state.cook !== null && plan !== null) {
@@ -307,7 +308,7 @@ function endIfTooOld(now_s: number): boolean {
 /** The page is looked at again (shown, focused): the ticker, which stops at
  *  DONE, is not there to see a cook at DONE become too old. */
 export function lookAgain(): void {
-  endIfTooOld(Date.now() / 1000);
+  endIfTooOld(nowMs() / 1000);
 }
 
 function startTicking(): void {
@@ -407,7 +408,7 @@ export function reset(): void {
   const plan = state.plan;
   if (cook !== null && plan !== null) {
     const id = cook.id_ms;
-    endCook(cook, plan, Date.now() / 1000, answersNow().kind !== 'none', () => forgetEnded(id));
+    endCook(cook, plan, nowMs() / 1000, answersNow().kind !== 'none', () => forgetEnded(id));
   }
   forgetAnswers();
   state.cook = null;
@@ -428,7 +429,7 @@ export function reset(): void {
 }
 
 export function onPrimary(): void {
-  const now = Date.now();
+  const now = nowMs();
   const now_s = now / 1000;
   stopAlarm();
   const phase = phaseNow(now);
@@ -517,7 +518,7 @@ export function restoreCook(): void {
     return;
   }
 
-  const now = Date.now();
+  const now = nowMs();
   const now_s = now / 1000;
   const back = plannedWithEvents(stored.cook, stored.leanHint_s, now_s, null);
   if (cookTooOld(back.plan, now_s)) {

@@ -25,6 +25,7 @@
  */
 
 import { BUILD_CACHE_PREFIX, TAKE_OVER } from './serviceWorker.js';
+import { nowMs } from './now.js';
 
 const LOOK_EVERY_MS = 60 * 60 * 1000;
 
@@ -70,10 +71,10 @@ export function startOffline(noCookRunning: () => boolean): void {
         if (installing.state === 'installed') offer();
       });
     });
-    let looked_ms = Date.now();
+    let looked_ms = nowMs();
     document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible' && Date.now() - looked_ms > LOOK_EVERY_MS) {
-        looked_ms = Date.now();
+      if (document.visibilityState === 'visible' && nowMs() - looked_ms > LOOK_EVERY_MS) {
+        looked_ms = nowMs();
         look(true);
       }
       offer();

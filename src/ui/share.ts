@@ -20,6 +20,7 @@ import {
   readShareState, reconciled, turnedOff, turnedOn,
 } from '../core/share.js';
 import { readStorage, writeStorage } from './store.js';
+import { devClockUsed, nowMs } from './now.js';
 
 const KEY = 'aet.share.v1';
 
@@ -99,7 +100,7 @@ export interface ShareHost {
 let state: ShareState = { ...FRESH_SHARE };
 let host: ShareHost | null = null;
 let transport: Transport = fetchTransport;
-let clock: () => number = Date.now;
+let clock: () => number = nowMs;
 /** Bumped by every change of id, so a send in flight for an old one lands
  *  on nothing. */
 let generation = 0;
@@ -162,7 +163,7 @@ export function shareState(): Readonly<ShareState> {
 
 /** Read what is stored, against the log as it now is, and remember who to
  *  ask. Once, at boot, after the calibration is loaded. */
-export function loadShare(h: ShareHost, t: Transport = fetchTransport, now: () => number = Date.now): ShareState {
+export function loadShare(h: ShareHost, t: Transport = fetchTransport, now: () => number = nowMs): ShareState {
   host = h;
   transport = t;
   clock = now;
@@ -211,7 +212,9 @@ async function sendRun(): Promise<void> {
 /** The next final egg, if there is one and sharing is on: whether to go on. */
 async function sendOne(): Promise<boolean> {
   const h = host;
-  if (h === null) return false;
+  // Never an egg cooked on the development clock, which runs only on this
+  // machine (now.ts): nothing goes from a log that may hold one.
+  if (h === null || devClockUsed()) return false;
   const s = current();
   const log = h.log();
   const at = nextToSend(s, h.finalCount(), log.length);
