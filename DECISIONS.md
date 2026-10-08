@@ -698,3 +698,14 @@ Decided by the owner, 5 October 2026, on the 0.4 line:
     jammy yolk (0.41) reads 0.34 (97's question 10, answered again on what
     C2 measured). The review's other findings are fixes, not choices.
     7 October 2026.
+99. **The boil time says no certainty of its own, and the time's two
+    lines sit closer** (the owner, 9 October 2026, on the one screen: "I
+    don't think we need a certainty word in the boil time estimate as well
+    as the certainty word"; "the learning about both is correlated"; two
+    lines, closer: "yes"). Under the time, the boil line says only "about
+    8:00 to boil", whether the time to boil is a guess or remembered (it
+    was "…, my guess" and "…, from what I've timed before"); the
+    certainty word below speaks for both. The two lines stay separate, so
+    the word is not read as the boil time's and its press target does not
+    move when the line wraps (1750, large text), but the space under the
+    digits and between the lines is tightened, in both apps.
