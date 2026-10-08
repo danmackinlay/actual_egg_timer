@@ -423,11 +423,27 @@ the follow-up it showed when the odds of "just right" were under 5/10 or
 3/10 short of the best level's, which nothing on screen shows.
 
 **Nothing jumps.** While idle the certainty line keeps two lines' room, the
-word and "Most likely", and centres what it has in it, so a drag that
-brings "Most likely" or takes it away does not move
-the slider. While a new pot's surface is on its way, the readout keeps its
+word and "Most likely", with the word at its top, so a drag that brings
+"Most likely" or takes it away moves neither the word nor the slider. While a new pot's surface is on its way, the readout keeps its
 last height. The time can move once more when the pot's odds profile lands
 after the surface, where it holds a soft level's time under a firmer one's. The white's line can still appear mid-drag near the soft end.
+
+**The time's two lines sit close** (`DECISIONS.md` 99, 9 October 2026).
+Under the digits, the boil line ("about 8:00 to boil", or the running
+phase's line) and then the certainty word are two lines, so the word is
+never read as the boil time's and its press target does not move when the
+boil line wraps, but with no room of their own between them. On the web
+(`styles.css`): the clock gives back the room under its baseline, which
+digits never use (`#bigtime` bottom margin -0.03em, about 3 px at a
+phone's 101-px digits; its line height stays 0.95); the boil line has no
+top margin (was 4 px); the certainty line no top margin (was 6 px), and
+its word sits at the top of its two lines' room, where it was centred. On a
+390-px screen the boil line's text now starts about 10 px under the
+digits' baseline (was 17), the certainty word's 32-px press target starts
+at the boil line's foot (was 16 px below it), and the readout is 13 px
+shorter idle. iOS matches it in its next step: the boil line about 10 pt
+under the digits' baseline, the word's target directly under it, the word
+at the top of its reserved room.
 
 **The slider** is described by the bracket too (web
 `aria-describedby="donenessRange"`). Its value to a screen reader is

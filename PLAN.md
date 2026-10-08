@@ -241,6 +241,7 @@ The one queue. Nothing else in the documents waits on the owner.
     the certainty line is when to take them out ("I think the right time
     to take the eggs out is between 7:48 and 7:51."); the cold "heat off"
     clause "into cold water at 7:42, heat off and lid on once it boils".
+    With it, the time's two lines sit closer under the digits (`UI.md` §8).
 
 Waiting on someone else: the Czech review (F5), by the owner's friend.
 

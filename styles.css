@@ -198,12 +198,15 @@ button.mute[aria-pressed="true"] {
   color: var(--dim);
 }
 
+/* The time's two lines sit close under the digits (DECISIONS.md 99): the
+   digits have no descenders, so the clock gives back the room under its
+   baseline, and the boil line follows with no gap of its own. */
 #bigtime {
   font-size: clamp(4rem, 26vw, 7.5rem);
   line-height: 0.95;
   font-weight: 650;
   letter-spacing: -0.03em;
-  margin: 2px 0 0;
+  margin: 2px 0 -0.03em;
 }
 
 #subline {
@@ -211,7 +214,7 @@ button.mute[aria-pressed="true"] {
   justify-content: center;
   align-items: center;
   flex-wrap: wrap;
-  margin: 4px 0 0;
+  margin: 0;
   min-height: 1.2em;
   font-size: 0.875rem;
   color: var(--dim);
@@ -220,12 +223,13 @@ button.mute[aria-pressed="true"] {
 /* How sure I am of the time, under it: a line of words the cook presses to
    open, in place, what it means (UI.md section 8); under it "most likely"
    when that is not the word asked; then the white's line. While idle the
-   line holds two lines' room, the word and "most likely", and sits in their
-   middle: so a drag that brings "most likely" or takes it away does not move
-   the slider under the thumb. The word is underlined, dotted in the accent
+   line holds two lines' room, the word and "most likely", the word at its
+   top, close under the boil line (DECISIONS.md 99): so a drag that brings
+   "most likely" or takes it away moves neither the word nor the slider under
+   the thumb. The word is underlined, dotted in the accent
    while closed and solid while open, as a link is: no chevron. */
 #certainty {
-  margin: 6px auto 0;
+  margin: 0 auto;
   max-width: 24rem;
   line-height: 1.35;
 }
@@ -233,7 +237,7 @@ body:not([data-start="sous"]) #certainty {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   min-height: 3.25rem;
 }
 button.disclose {
