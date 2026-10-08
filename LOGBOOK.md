@@ -5248,3 +5248,63 @@ listing the scale and ice); a fresh install into boiling water on the
 counter, soft asked (a wild guess, "Soft to Fudgy", no link). Seen: the
 bracket is not clamped to what the pan delivers, so on a counter rest its
 soft end lies over the stripes.
+
+## 8 October 2026: the running-cook review's core findings (SHIP-0.5 C2)
+
+`design/running-cook-review.md`'s findings in core, TypeScript first, then
+fixtures, then Swift: four commits (`94c2f69`, `3ecc07c`, `64c74ad`,
+`81b590a`), each review heading ending in what was done. The apps changed
+only where a core signature forced it. `npm test` 378 (was 372 at the
+merge base), `swift test` 155 in 38 suites (no new suites; the conformance
+suites check the new fields).
+
+- **The slow hob's hint (2.1).** `replan` takes the last plan's `slowHob`:
+  the last lengthening that did not creep, and what the rule read to get
+  there. A creeping step lands where the clock is, so it is never kept, and
+  it is always the rule's last step in a plan; a lengthening that did not
+  creep depends only on having heated past it, so the rule from the start
+  passes through the same doubles. Proved with a throwaway script on the
+  review's posterior (1,000 particles): at all 199 moments over 23 minutes,
+  and at every one of the 634 plans of a two-hour cook never tapped, the
+  plan with the hint `deepEqual` the plan from the start. Cost, Node on a
+  Mac: the two hours 202 s of CPU before, 52 s after; a plan from 15 minutes
+  on, median 320 ms (232 to 785) before, 85 ms (32 to 246) after. Before,
+  each creeping plan made `answerAt` once at the remembered time and again at
+  each of the seven lengthenings it replayed; after, once, at the new guess.
+  What is left is one solve on a long ramp, which costs more than at 480 s.
+  The test checks every fourth of the 199 moments and three later stretches,
+  since the plan from the start is the expensive half.
+- **The open question (3).** While a plan asks, nothing passes it: no
+  event written, not finished, and `phaseAt` reads Cooling where it would
+  read Done (`Deadlines.asking`). `policy.json`'s timelines gain the phase
+  while asking.
+- **The cook as it ran (1.3, 2.4).** `RunningCook.asRan`, kept by
+  `keepAsRan` from the first plan on the surface made after the pull:
+  level, cook time, nudge, forecast, peak yolk, probe moment, the model's
+  parameters, stamped with `correctedAt_s`. `cookFactsFor` now returns
+  `{ facts, refused }`; it reads the kept values first, a plan on its
+  surface second, and otherwise refuses (`noSurface`, `stale`). The review's
+  calls: relaunched three hours on with no surface, the record keeps its
+  forecast; answered runny and folded, the plan on the new posterior moves
+  the peak and `asRanShown` does not. Keys `aet.cook.v4` and
+  `cookInProgress.v3`; the earlier ones read once, kept aside, deleted.
+- **The tick and the open egg (2.2, 2.3).** `cookTooOld` documented as the
+  tick's call; `cookStillOpen` for a screen.
+
+**Things that cost time.** The snapshot is taken only from a plan made
+after the pull, not the one that rang: that plan's cook time is the solve's,
+and every later plan's is `due_s - startedAt_s`, which differs in the last
+bits of an epoch second (1.2e-7 s), enough for a correction's re-plan to
+make different facts from the uncorrected ones. So `withOut` keeps nothing,
+and the app keeps it from the plan it makes after writing the pull. A taste
+moved by a fold leaves the slow hob's hint valid: the rule never reads it.
+
+**Left for the apps** (the review's headings say which): pass `slowHob` to
+the next plan; run `keepAsRan` on every plan taken up and write the cook if
+it changed; draw Done from `asRanShown`; hold an answer while `cookFactsFor`
+refuses `noSurface`, and plan a too-old cook on its surface before logging
+it; ask `cookTooOld` on the tick and `cookStillOpen` before an answer; show
+nothing past an open question. Until then a refused record is not made: the
+web leaves the answer row pressable and logs nothing at Start again, iOS
+logs nothing, where both logged `forecast: null`. `takeOldCooks` can find
+two old cooks, and the unread slot keeps one (review 3's "one slot").

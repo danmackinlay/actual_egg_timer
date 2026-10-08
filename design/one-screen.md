@@ -481,6 +481,35 @@ The functions, all pure and fixtured:
   that far is the same egg (`test/section.test.ts` 7). About 2,700 steps
   for a soft-boiled egg, once per solve.
 
+*As built, after the running-cook review* (`design/running-cook-review.md`,
+8 October 2026; core only, the apps' part listed there):
+- **The slow hob's hint** (2.1): `replan(cook, c, surface, leanHint_s, now_s,
+  hint)`, `hint` the last plan's `slowHob`: the last lengthening that did not
+  creep, with everything the rule reads (the start, the choices, the
+  remembered time, the lean and nudge, the calibration's parameters and
+  white target). `slowHobHintFits` takes it only when each is the same to
+  the bit and the clock is past it; the plan is then the plan from the
+  start, to the bit, with one solve where a creeping plan made eight or nine.
+- **The cook as it ran** (1.3, 2.4): `RunningCook.asRan`, from the first
+  plan on the pot's surface made once the egg is pulled (`keepAsRan`, which
+  the app runs on every plan it takes up): the level, cook time, nudge,
+  forecast, peak yolk, probe moment and model parameters, stamped with the
+  cook's `correctedAt_s`. `cookFactsFor` reads the record's level, time,
+  nudge and forecast from it, or from a plan on its surface, and otherwise
+  returns `{ facts: null, refused }`: `'noSurface'` (plan on the surface
+  `plan.inputs` asks for, keep, ask again; an answer is held meanwhile) or
+  `'stale'` (a correction since: `asRanCorrected(cook, before, surface,
+  now_s)` plans it on the calibration before this egg). `asRanShown(cook,
+  plan)` is what Done draws, so a relaunch, a surface or this egg's own fold
+  never moves it. `stillIn` drops it with the pull.
+- **An open question** (review 3): while a plan asks, `eventsDue` writes
+  nothing, `cookEnding` is not finished, and `Deadlines.asking` makes
+  `phaseAt` read Cooling where it would read Done; too old an hour after the
+  question at the earliest.
+- **The tick and the open egg** (2.2, 2.3): `cookTooOld` is the tick's
+  call too, of the plan it holds; `cookStillOpen(cook, plan, storedId_ms,
+  now_s)` tells a screen its egg is no longer open with no second plan.
+
 `phaseAt`, `answerAt`, `decideAnswer`, `carriedSolution`, `certaintyAt`,
 `recordFor`, `createSection` and `advanceSection` are used as they are.
 
@@ -495,8 +524,14 @@ does at setup today.
 
 | | Key | Holds |
 |---|---|---|
-| web | `aet.cook.v3` (was `aet.cook.v2`) | `{ cook: RunningCook, answers: KeptAnswers, leanHint_s }` |
-| iOS | `cookInProgress.v2` (was `cookInProgress`) | `{ cook, feedbackGiven, leanHint_s }` |
+| web | `aet.cook.v4` (was `aet.cook.v3`, before it `aet.cook.v2`) | `{ cook: RunningCook, answers: KeptAnswers, leanHint_s }` |
+| iOS | `cookInProgress.v3` (was `cookInProgress.v2`, before it `cookInProgress`) | `{ cook, feedbackGiven, leanHint_s }` |
+
+*As built, after the running-cook review:* the cook gained `asRan` (1.3),
+so both keys moved on a version (`DECISIONS.md` 48); every earlier key is
+read once, kept aside and deleted, as the 0.4 key was, and iOS leaves the
+notifications of a cook from any of them alone, cancelling only for a
+damaged cook under the current key.
 
 `leanHint_s` is the last decided lean, used only as the interim while a
 surface is rebuilt after a reload. It is a cache and never truth. The
