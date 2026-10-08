@@ -54,10 +54,11 @@ export function renderDonenessScale(
   page().donenessBlockedSoft.style.width = `${percent(softest)}%`;
   page().donenessBlockedHard.style.width = `${percent(1 - hardest)}%`;
 
-  // The odds at each level, relative to the best level's, and dots over the
-  // levels the pan can deliver but gets right fewer than 3 times in 10 so far
-  // (reach.ts, `lowOddsAt`). The slider rests on the dots, and says so; only
-  // the stripes move it.
+  // The chance of the word asked at each level, relative to the best
+  // level's, and dots over the levels the pan can deliver but that are a wild
+  // guess so far, softer or firmer than every level that is not (reach.ts,
+  // `lowOddsAt`). The slider rests on the dots, and says so; only the
+  // stripes move it.
   renderOddsBand(odds);
   const warning = odds !== null && odds.softest !== null && odds.hardest !== null;
   placeBand(page().donenessUnlikelySoft, warning ? odds.physicalSoftest : 0, warning ? odds.softest ?? 0 : 0);
@@ -87,8 +88,9 @@ export function renderBareScale(): void {
   for (let i = 0; i < ticks.length; i += 1) ticks[i].classList.remove('blocked');
 }
 
-/** The likely range of the yolk under the track, from the outcome's 10% to
- *  its 90% point, with a mark at its middle; and the same in words for a
+/** The likely range of the yolk under the track, from the outcome's 5% to
+ *  its 95% point, the 90% the certainty's words state, with a mark at its
+ *  middle; and the same in words for a
  *  screen reader, each end as the nearest doneness word. Nothing without an
  *  outcome: no decision yet, no white, sous-vide, or a cook under way. */
 function renderBracket(o: Outcome | null): void {
@@ -119,10 +121,10 @@ function placeBand(band: HTMLElement, from: number, to: number): void {
   band.style.width = `${to > from ? percent(to) - percent(from) : 0}%`;
 }
 
-/** Shade the track by the odds (`shadingOf`): the band's hue is the yolk's,
- *  runny to hard (styles.css), and this masks it to an opacity that is the
- *  level's odds over the best level's, stop by stop between the profile's
- *  points, and clear outside them, where the stripes are. */
+/** Shade the track (`shadingOf`): the band's hue is the yolk's, runny to hard
+ *  (styles.css), and this masks it to an opacity that is the chance of the
+ *  word asked at the level over the best level's, stop by stop between the
+ *  profile's points, and clear outside them, where the stripes are. */
 function renderOddsBand(odds: OddsProfile | null): void {
   const shades = odds === null ? [] : shadingOf(odds);
   let mask = 'linear-gradient(transparent, transparent)';

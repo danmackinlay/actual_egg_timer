@@ -747,6 +747,15 @@
     },
     {
       "locale": "en-x-1750",
+      "key": "certainty.time",
+      "args": {
+        "low": "6:41",
+        "high": "8:27"
+      },
+      "text": "I judge the true time to lie between 6:41 and 8:27."
+    },
+    {
+      "locale": "en-x-1750",
       "key": "outcome.range",
       "args": {
         "low": "Soft",
@@ -2362,6 +2371,15 @@
         "word": "Fudgy"
       },
       "text": "Most likely: Fudgy."
+    },
+    {
+      "locale": "en",
+      "key": "certainty.time",
+      "args": {
+        "low": "6:41",
+        "high": "8:27"
+      },
+      "text": "I think the right time is between 6:41 and 8:27."
     },
     {
       "locale": "en",

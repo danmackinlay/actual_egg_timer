@@ -1,6 +1,6 @@
 /**
  * Drawing the egg page from the state: the controls' answer while idle (the
- * readout, the direction, the slider's shading, the advice and the welcome),
+ * readout, how sure I am, the slider's shading, the advice and the welcome),
  * the cook under way otherwise (the readout and the egg in cross-section),
  * the sous-vide screen, and the mute and the version.
  *
@@ -14,7 +14,10 @@ import { textureFor, textureNoteKeys } from '../core/policy.js';
 import { decisionInputs } from '../core/decide.js';
 import { OddsProfile, pricedChanges, protocolAdvice } from '../core/reach.js';
 import { Outcome } from '../core/outcome.js';
-import { directionKey, whiteAtRisk } from '../core/wording.js';
+import { CertaintyReading } from '../core/certainty.js';
+import {
+  WordsRef, certaintyKey, intervalWords, mostLikelyOpened, mostLikelyShown, mostLikelyWords, whiteAtRisk,
+} from '../core/wording.js';
 import { midSentence } from '../core/copy.js';
 import { EggSection, advanceSection, createSection, sectionView } from '../core/section.js';
 import { CARRYOVER_WINDOW } from '../core/constants.js';
@@ -22,6 +25,7 @@ import { askForProfile, currentInputs } from './answer.js';
 import { calibrationDoneness, calibrationParams } from './calibration.js';
 import { cachedOddsProfile } from './decisionGrids.js';
 import { activeLocale, t } from './copy.js';
+import { formatClock } from './countdown.js';
 import { page } from './dom.js';
 import { buildEggSection, paintEggSection, readPalette, ringFills } from './eggSection.js';
 import {
@@ -57,10 +61,11 @@ const drawn = {
    *  it from t = 0, since the water it has been in has changed. */
   section: null as EggSection | null,
   sectionFor: '',
-  /** What the running cook's direction line last said, and for which cook:
-   *  held while a new pot's surface is on its way (the boil tapped), as the
-   *  line held what it said at the start before, rather than blanking. */
+  /** What the running cook's certainty line and white's line last said, and
+   *  for which cook: held while a new pot's surface is on its way (the boil
+   *  tapped), rather than blanking. */
   outcome: null as Outcome | null,
+  certainty: null as CertaintyReading | null,
   outcomeFor: 0,
 };
 
@@ -187,7 +192,7 @@ function renderIdle(now_ms: number): void {
   renderReadout(now_ms, sol, warning);
   // "Based on history" has an (i) that says what history.
   showInfo(page().sublineInfo, state.settings.startMode === 'cold' && hasBoilMemory(state.boilMemory));
-  renderOdds();
+  renderOdds(now_ms);
   renderAdvice();
   renderWelcome(warning);
 }
@@ -206,7 +211,7 @@ function renderRunning(now_ms: number): void {
   renderReadout(now_ms, plan.solution, warning);
   renderSection(now_ms);
   showInfo(page().sublineInfo, false);
-  renderOdds();
+  renderOdds(now_ms);
   renderAdvice();
   page().welcome.hidden = true;
 }
@@ -295,36 +300,52 @@ function renderReadout(now_ms: number, sol: Solution, warning: string): void {
   }
 }
 
-/** Which way the egg is likely to miss, and the white's line, under the
- *  time, with one (i) that explains the bracket, how to play safe with it and
- *  what I learn from (src/core/wording.ts). While idle they are the choice on
- *  screen's, and blank until this pot's surface lands - the direction's line
- *  keeps its height, so nothing moves when they arrive. Once a cook is running
- *  the direction and the white's line are its plan's, decided on its pot's
- *  surface, and held while a new pot's is on its way; the (i), which is about
- *  the slider, goes with the slider. Never where the white never sets: there
- *  is no cook to say anything about.
+/** A key with its counts and its doneness words, rendered. */
+function words(ref: WordsRef): string {
+  const args: Record<string, string | number> = { ...ref.args };
+  for (const [name, key] of Object.entries(ref.words)) args[name] = t(key);
+  return t(ref.key, args);
+}
+
+/** How sure I am of the time on screen, under it (src/core/wording.ts, "How
+ *  sure, in words"; DECISIONS.md 93 and 97): the class as a line the cook
+ *  presses, which opens in place the 90% interval in the slider's words, the
+ *  most likely word, the likely time range and the way to Help. "Most
+ *  likely" shows under the line unpressed when it is not the word asked, and
+ *  is then not said again in what opens, nor after a one-word interval
+ *  (`mostLikelyOpened`). Then the white's line.
  *
- *  There is no play-safe suggestion under the direction, and no "still
- *  learning" line: the slider and the bracket already show the one, and "I
- *  can't call it yet" already says the other. What I learn from and what
- *  speeds it up is the last paragraph of the (i). */
-function renderOdds(): void {
+ *  While idle they are the choice on screen's, and blank until this pot's
+ *  surface lands: the line keeps two lines' height, so nothing moves when
+ *  they arrive. Once a cook is running they are its plan's, read on its
+ *  pot's surface and held while a new pot's is on its way, until the pull,
+ *  when the time they were about has passed (design/one-screen.md section 7,
+ *  12); the white's line stays to the end, as before. The way to Help goes
+ *  with the controls: Help is not reachable mid-cook. Never where the white
+ *  never sets: there is no cook to say anything about. */
+function renderOdds(now_ms: number): void {
   let o: Outcome | null = null;
+  let sure: CertaintyReading | null = null;
   if (state.cook === null) {
-    if (state.decision !== null && state.solution !== null && state.solution.whiteSets) o = state.outcome;
+    if (state.chosen !== null && state.solution !== null && state.solution.whiteSets) {
+      o = state.outcome;
+      sure = state.chosen.certainty;
+    }
   } else if (state.plan !== null) {
     const id = state.cook.id_ms;
     const now = state.plan.decided === null ? null : state.plan.decided.outcome;
     if (now !== null || drawn.outcomeFor !== id) {
       drawn.outcome = now;
+      drawn.certainty = state.plan.certainty;
       drawn.outcomeFor = id;
     }
+    const before = phaseNow(now_ms);
+    const pulled = before === 'PULL' || before === 'COOLING' || before === 'DONE';
     o = state.plan.solution.whiteSets ? drawn.outcome : null;
+    sure = state.plan.solution.whiteSets && !pulled ? drawn.certainty : null;
   }
-  page().directionText.textContent = o === null ? '' : t(directionKey(o));
+  renderCertainty(sure);
   page().whiteRisk.hidden = o === null || !whiteAtRisk(o);
-  showInfo(page().oddsInfo, state.cook === null && o !== null);
 
   // While a new pot's surface is on its way the lines above are blank, and
   // the readout would shrink and grow back a second later, moving the
@@ -343,18 +364,42 @@ function renderOdds(): void {
   }
 }
 
+/** The certainty line and what it opens, from `sure`, or nothing. */
+function renderCertainty(sure: CertaintyReading | null): void {
+  const word = page().certaintyWord;
+  word.hidden = sure === null;
+  page().certaintyMore.hidden = sure === null || word.getAttribute('aria-expanded') !== 'true';
+  if (sure === null) {
+    page().mostLikely.hidden = true;
+    return;
+  }
+  const w = sure.words;
+  word.textContent = t(certaintyKey(w.certainty));
+  const likely = words(mostLikelyWords(w));
+  const under = mostLikelyShown(w);
+  page().mostLikely.hidden = !under;
+  page().mostLikely.textContent = under ? likely : '';
+  page().certaintyInterval.textContent = words(intervalWords(w));
+  const opened = mostLikelyOpened(w);
+  page().certaintyLikely.hidden = !opened;
+  page().certaintyLikely.textContent = opened ? likely : '';
+  page().certaintyTime.textContent = t('certainty.time', {
+    low: formatClock(sure.time.low_s), high: formatClock(sure.time.high_s),
+  });
+  page().certaintyHelp.hidden = state.cook !== null;
+}
+
 /** The sous-vide readout: hold times from the isothermal limit, and the plain
  *  statement that you should have started yesterday. Idle only, after the
  *  sentence (`renderIdle`). */
 function renderSousVide(now_ms: number): void {
   // No pan, no choice, and no odds: the bath's answer is not a guess about a
-  // pan (the decision chooses pan times). So no direction, and no bracket
-  // either.
-  page().directionText.textContent = '';
+  // pan (the decision chooses pan times). So no certainty line, and no
+  // bracket either.
+  renderCertainty(null);
   page().whiteRisk.hidden = true;
   page().readout.style.minHeight = '';
   renderBareScale();
-  showInfo(page().oddsInfo, false);
   showInfo(page().sublineInfo, false);
   showInfo(page().hintInfo, false);
   renderAdvice();

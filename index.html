@@ -87,14 +87,24 @@
 
     <p id="subline"><span id="sublineText"></span><button type="button" id="sublineInfo" class="info" aria-expanded="false" aria-controls="sublineMore" data-name="readout.sub.coldAssumes.info" hidden></button></p>
     <p id="sublineMore" class="disclosed" hidden data-copy="readout.sub.coldAssumes.more"></p>
-    <!-- Which way the egg is likely to miss (src/ui/outcome.ts), with one
-         (i) at its end: what the bracket under the slider means and how to
-         play safe with it, why it starts wide, and what I learn from.
-         Then a line when a runny white is a real risk. Filled once the
-         choice is made; the direction keeps its line's height until then, so
-         nothing jumps when it lands. -->
-    <p id="direction"><span id="directionText"></span><button type="button" id="oddsInfo" class="info" aria-expanded="false" aria-controls="oddsWhy" data-name="outcome.info" hidden></button></p>
-    <div id="oddsWhy" class="disclosed" hidden><p data-copy="outcome.bracket"></p><p data-copy="outcome.why"></p><p data-copy="outcome.learning"></p></div>
+    <!-- How sure I am of the time on screen (src/core/wording.ts, "How sure,
+         in words"): a line the cook presses to open, in place, the 90%
+         interval in the slider's words, the most likely word, the likely
+         time range and the way to Help. "Most likely" shows under the line
+         unpressed when it is not the word asked, and then not again in what
+         opens. Then a line when a runny white is a real risk. Filled once
+         the choice is made; while idle the line keeps two lines' height, so
+         nothing jumps when it lands or when "most likely" comes and goes. -->
+    <div id="certainty">
+      <button type="button" id="certaintyWord" class="disclose" aria-expanded="false" aria-controls="certaintyMore" hidden></button>
+      <p id="mostLikely" hidden></p>
+    </div>
+    <div id="certaintyMore" class="disclosed" hidden>
+      <p id="certaintyInterval"></p>
+      <p id="certaintyLikely"></p>
+      <p id="certaintyTime"></p>
+      <p id="certaintyHelp"><a href="#help-odds" class="morelink" data-copy="certainty.help"></a></p>
+    </div>
     <p id="whiteRisk" data-copy="outcome.whiteRunny" hidden></p>
   </section>
 
@@ -490,6 +500,10 @@
     <section id="help-odds" aria-labelledby="helpOddsTitle">
       <h2 id="helpOddsTitle" data-copy="help.odds.title"></h2>
       <p data-copy="help.odds.p1"></p>
+      <!-- What the direction's (i) opened, until the certainty draft. -->
+      <p data-copy="outcome.bracket"></p>
+      <p data-copy="outcome.why"></p>
+      <p data-copy="outcome.learning"></p>
       <p class="aside" data-copy="help.odds.aside" data-copy-links></p>
     </section>
 
