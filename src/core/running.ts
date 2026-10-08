@@ -36,7 +36,7 @@ import {
   BoilMemory, Deadlines, LIMITS, PULL_GRACE_SECONDS, SLOW_HOB_EVERY_S, SLOW_HOB_EXTRA_S, SLOW_HOB_WHEN_LEFT_S,
   ambientFor, coolingSecondsFor, estimateTimeToBoil, hasBoilMemory, phaseAt, probeMomentFor, startTempPreset_C,
 } from './policy.js';
-import { Solution, logYolkTarget } from './solve.js';
+import { ModelParams, Solution, logYolkTarget } from './solve.js';
 import {
   DecisionInputs, appliedNudge, carriedSolution, decisionApplies, decisionInputs, solutionAt,
 } from './decide.js';
@@ -46,8 +46,8 @@ import { CertaintyReading, certaintyAt } from './certainty.js';
 import { predictOutcome } from './outcome.js';
 import { WhiteReport, YolkWord } from './infer.js';
 import {
-  AppName, Calibration, CookFacts, EggFrom, Forecast, MassFrom, ProbeReading, PulledBy, Units, calibrationParams,
-  forecastOf,
+  AppName, Calibration, CookFacts, EggFrom, Forecast, MassFrom, ProbeReading, PulledBy, Units, calibrationDoneness,
+  calibrationParams, forecastOf,
 } from './record.js';
 
 /* ------------------------------------------------------------- the types */
@@ -486,6 +486,9 @@ export interface CookPlan {
    *  the app plans again then. Null otherwise, and once the guess is the
    *  most the app takes for a time to boil. */
   slowHobAt_s: number | null;
+  /** While provisional, where the slow hob's rule got to, for the next plan
+   *  to start from (`replan`'s `hint`); null otherwise. */
+  slowHob: SlowHobHint | null;
   /** When the cook is too old to pick back up (`cookTooOld`): an hour past
    *  its end (the cooling's, or the out's on the counter), or, still
    *  heating, when the pan has heated for the most the app takes for a time
@@ -495,6 +498,80 @@ export interface CookPlan {
    *  need this pot's surface, and are null until it is in. */
   certainty: CertaintyReading | null;
   forecast: Forecast | null;
+}
+
+/**
+ * Where the slow hob's rule got to in one plan, and what it was worked out
+ * under (review 2.1): handed to the next plan (`replan`'s `hint`), which
+ * starts the rule there instead of replaying every lengthening from the
+ * remembered time to boil. The rule reads nothing but the start, the
+ * choices, the remembered time it starts from, the lean carried with the
+ * nudge, and the calibration's parameters and white target, so the hint
+ * keeps exactly those, and a plan takes it only when every one is the same
+ * to the bit (`slowHobHintFits`); otherwise it is ignored, never trusted.
+ *
+ * The place it keeps is the last lengthening that did not creep: one that
+ * fired because the pull would come within SLOW_HOB_WHEN_LEFT_S. Such a
+ * lengthening does not depend on the clock, only on having heated past it,
+ * so the rule worked from the start at any later moment passes through the
+ * same place, the same doubles, and a plan started there is the plan made
+ * from the start. A creeping step lands where the clock is, so it is never
+ * kept; it is always the rule's last step in a plan, and the next plan
+ * takes it again from the place before it.
+ */
+export interface SlowHobHint {
+  startedAt_s: number;
+  choices: CookChoices;
+  /** The remembered time to boil the rule starts from, s. */
+  fromRamp_s: number;
+  /** The lean carried and the cook's nudge, s, as `carriedSolution` takes
+   *  them. */
+  carry_s: number;
+  params: ModelParams;
+  /** The white's target, `calibrationDoneness`'s at any level. */
+  whiteDose_min: number;
+  /** The lengthenings to the place kept, its time heated (0 for none) and
+   *  the guess there. */
+  steps: number;
+  last_s: number;
+  ramp_s: number;
+  /** The carried cook time at `ramp_s`, s, so the next plan need not solve
+   *  for it; null when the guess was already the most and no plan needed it. */
+  carried_s: number | null;
+}
+
+/** Whether two cooks' choices are the same, every field to the bit. */
+export function sameChoices(a: CookChoices, b: CookChoices): boolean {
+  return a.mass_kg === b.mass_kg && a.massFrom === b.massFrom && a.sizeTable === b.sizeTable
+    && a.eggFrom === b.eggFrom && a.customStart_C === b.customStart_C && a.room_C === b.room_C
+    && a.startMode === b.startMode && a.afterBoil === b.afterBoil && a.cooling === b.cooling
+    && a.waterLitres === b.waterLitres && a.eggCount === b.eggCount && a.altitude_m === b.altitude_m
+    && a.level === b.level;
+}
+
+/**
+ * Whether the slow hob's `hint` may be taken for `cook` under calibration `c`
+ * with `leanHint_s`, at `now_s`: the cook still heating on a guess (a cold
+ * start, no tap, no pull); the same start and choices, to the bit; the same
+ * remembered time for its water; the same lean and nudge; the calibration's
+ * parameters and white target the same; and the clock past the place kept,
+ * so that the rule from the start would get there too. Anything else - a
+ * correction, a corrected start, the boil tapped, an egg folded, another
+ * lean - and the plan works the rule from the start, as with no hint.
+ */
+export function slowHobHintFits(
+  hint: SlowHobHint, cook: RunningCook, c: Calibration, leanHint_s: number, now_s: number,
+): boolean {
+  const ch = cook.choices;
+  const e = cook.events;
+  if (ch.startMode !== 'cold' || e.boilAt_s !== null || e.pulled !== null) return false;
+  if (hint.startedAt_s !== cook.startedAt_s || !sameChoices(hint.choices, ch)) return false;
+  if (hint.fromRamp_s !== estimateTimeToBoil(cook.boilMemory, ch.waterLitres)) return false;
+  if (hint.carry_s !== leanHint_s + cook.nudge_s) return false;
+  const p = calibrationParams(c);
+  if (hint.params.alpha_m2s !== p.alpha_m2s || hint.params.tauAirScale !== p.tauAirScale) return false;
+  if (hint.whiteDose_min !== calibrationDoneness(c, 1.0).whiteDose_min) return false;
+  return hint.steps === 0 || now_s - cook.startedAt_s > hint.last_s;
 }
 
 /** Whether two decision surfaces' inputs are the same pot, egg and
@@ -564,7 +641,12 @@ export function openEggId(cook: RunningCook | null, plan: CookPlan | null, now_s
  * SLOW_HOB_EVERY_S, as the tick's would, without a solve per step. It stops
  * at the most the app takes for a time to boil (`LIMITS.timeToBoil_s`, two
  * hours): a pan still not boiling then is a cook abandoned (`tooOldAt_s`),
- * not one to plan again every few seconds for ever (review 1.3). A hot start
+ * not one to plan again every few seconds for ever (review 1.3). Worked from
+ * the start, a creeping plan replayed every lengthening, eight solves from
+ * fifteen minutes on (review 2.1): `hint`, the last plan's `slowHob`, starts
+ * the rule where that plan got to when it fits this cook, lean and
+ * calibration (`slowHobHintFits`), and the plan is the same, to the bit, as
+ * the one worked from the start. A hot start
  * never times its pan: the remembered time is carried for the record only.
  * A pull ends the heating, read or not.
  *
@@ -605,6 +687,7 @@ export function openEggId(cook: RunningCook | null, plan: CookPlan | null, now_s
  */
 export function replan(
   cook: RunningCook, c: Calibration, surface: CookSurface | null, leanHint_s: number, now_s: number,
+  hint: SlowHobHint | null = null,
 ): CookPlan {
   const ch = cook.choices;
   const e = cook.events;
@@ -619,20 +702,50 @@ export function replan(
 
   const measured = tapped && !(cook.boilRemembered && tappedAfterLateCold(cook));
   let ramp = measured ? boilAt - start : estimateTimeToBoil(cook.boilMemory, ch.waterLitres);
+  const fromRamp = ramp;
+  // The slow hob's hint, taken only when it fits (`slowHobHintFits`): the rule
+  // starts where it got to, and its first place needs no solve.
+  const resume = provisional && hint !== null && slowHobHintFits(hint, cook, c, leanHint_s, now_s) ? hint : null;
+  if (resume !== null) ramp = resume.ramp_s;
   let pot = cookSetupOf(ch, ramp);
-  let answer = answerAt(c, pot.egg, pot.setup, ch.level, null, true);
+  // Null while the hint stands for it: solved only if the plan stops there.
+  let found: LevelAnswer | null = resume === null ? answerAt(c, pot.egg, pot.setup, ch.level, null, true) : null;
   let lengthened = false;
   let slowHobAt: number | null = null;
 
+  let slowHob: SlowHobHint | null = null;
   if (provisional) {
     const heated = now_s - start;
     const most = LIMITS.timeToBoil_s.hi;
     let last = 0.0;
-    for (let step = 0; ; step++) {
+    let step = 0;
+    // The carried time at `ramp`, when the hint gave it.
+    let known: number | null = null;
+    if (resume !== null) {
+      step = resume.steps;
+      last = resume.last_s;
+      known = resume.carried_s;
+      lengthened = step > 0;
+    }
+    // The place to keep: the last lengthening that did not creep (the hint).
+    let keptSteps = step;
+    let keptLast = last;
+    let keptRamp = ramp;
+    let keptCarried: number | null = null;
+    let crept = false;
+    for (; ; step++) {
       // No longer than the most the app takes for a time to boil: past that
       // the cook is abandoned (`tooOldAt_s`), not lengthened for ever.
       if (!(ramp < most)) break;
-      const t = carriedSolution(pot.egg, pot.setup, params, answer.solution, carry).result.cookTime_s;
+      let t: number;
+      if (known !== null) {
+        t = known;
+        known = null;
+      } else {
+        if (found === null) found = answerAt(c, pot.egg, pot.setup, ch.level, null, true);
+        t = carriedSolution(pot.egg, pot.setup, params, found.solution, carry).result.cookTime_s;
+      }
+      if (!crept && step === keptSteps) keptCarried = t;
       const next = last + SLOW_HOB_EVERY_S;
       const due = t - SLOW_HOB_WHEN_LEFT_S;
       const creeping = !(due > next);
@@ -647,14 +760,28 @@ export function replan(
       ramp = last + SLOW_HOB_EXTRA_S < most ? last + SLOW_HOB_EXTRA_S : most;
       lengthened = true;
       pot = cookSetupOf(ch, ramp);
-      answer = answerAt(c, pot.egg, pot.setup, ch.level, null, true);
+      found = answerAt(c, pot.egg, pot.setup, ch.level, null, true);
+      if (creeping) {
+        crept = true;
+      } else if (!crept) {
+        keptSteps = step + 1;
+        keptLast = last;
+        keptRamp = ramp;
+        keptCarried = null;
+      }
     }
+    slowHob = {
+      startedAt_s: start, choices: ch, fromRamp_s: fromRamp, carry_s: carry, params: params,
+      whiteDose_min: calibrationDoneness(c, 1.0).whiteDose_min,
+      steps: keptSteps, last_s: keptLast, ramp_s: keptRamp, carried_s: keptCarried,
+    };
   }
 
+  const mean = found !== null ? found : answerAt(c, pot.egg, pot.setup, ch.level, null, true);
   const inputs = lengthened ? null : decisionInputs(c, pot.egg, pot.setup);
   const s = inputs !== null && surface !== null && sameDecisionInputs(surface.inputs, inputs) ? surface : null;
   const profile = s === null ? null : s.profile;
-  answer = { ...answer, lowOdds: lowOddsAt(profile, answer.level) };
+  const answer: LevelAnswer = { ...mean, lowOdds: lowOddsAt(profile, mean.level) };
 
   let decided: DecidedAnswer | null = null;
   let planned: Solution;
@@ -752,6 +879,7 @@ export function replan(
       outAt_s: pulled !== null && pulled.by === 'cook' ? pulled.out_s : null,
     },
     slowHobAt_s: slowHobAt,
+    slowHob: slowHob,
     tooOldAt_s: tooOld,
     certainty: certainty,
     forecast: forecast,

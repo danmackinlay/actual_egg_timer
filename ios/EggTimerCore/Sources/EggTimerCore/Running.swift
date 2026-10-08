@@ -585,10 +585,69 @@ public struct CookPlan: Sendable {
     public let probeMoment: Bool
     public let deadlines: Deadlines
     public let slowHobAtS: Double?
+    /// While provisional, where the slow hob's rule got to, for the next plan
+    /// to start from (`replan`'s `hint`); nil otherwise.
+    public let slowHob: SlowHobHint?
     /// When the cook is too old to pick back up (`cookTooOld`).
     public let tooOldAtS: Double
     public let certainty: CertaintyReading?
     public let forecast: Forecast?
+}
+
+/// Where the slow hob's rule got to in one plan, and what it was worked out
+/// under (review 2.1): handed to the next plan, which starts the rule there.
+/// The place kept is the last lengthening that did not creep, which the rule
+/// from the start passes through at any later moment. See `SlowHobHint` in
+/// `src/core/running.ts`.
+public struct SlowHobHint: Sendable, Equatable {
+    public let startedAtS: Double
+    public let choices: CookChoices
+    /// The remembered time to boil the rule starts from, s.
+    public let fromRampS: Double
+    /// The lean carried and the cook's nudge, s.
+    public let carryS: Double
+    public let params: ModelParams
+    public let whiteDoseMin: Double
+    public let steps: Int
+    public let lastS: Double
+    public let rampS: Double
+    /// The carried cook time at `rampS`; nil when no plan needed it.
+    public let carriedS: Double?
+
+    public init(
+        startedAtS: Double, choices: CookChoices, fromRampS: Double, carryS: Double, params: ModelParams,
+        whiteDoseMin: Double, steps: Int, lastS: Double, rampS: Double, carriedS: Double?
+    ) {
+        self.startedAtS = startedAtS
+        self.choices = choices
+        self.fromRampS = fromRampS
+        self.carryS = carryS
+        self.params = params
+        self.whiteDoseMin = whiteDoseMin
+        self.steps = steps
+        self.lastS = lastS
+        self.rampS = rampS
+        self.carriedS = carriedS
+    }
+}
+
+/// Whether the slow hob's `hint` may be taken for `cook` under `c` with
+/// `leanHintS`, at `nowS`: still heating on a guess, the same start, choices,
+/// remembered time, lean and nudge, calibration parameters and white target,
+/// to the bit, and the clock past the place kept. Otherwise it is ignored.
+public func slowHobHintFits(
+    _ hint: SlowHobHint, _ cook: RunningCook, _ c: Calibration, leanHintS: Double, nowS: Double
+) -> Bool {
+    let ch = cook.choices
+    let e = cook.events
+    guard ch.startMode == .cold, e.boilAtS == nil, e.pulled == nil else { return false }
+    guard hint.startedAtS == cook.startedAtS, hint.choices == ch else { return false }
+    guard hint.fromRampS == estimateTimeToBoil(cook.boilMemory, litres: ch.waterLitres) else { return false }
+    guard hint.carryS == leanHintS + cook.nudgeS else { return false }
+    let p = calibrationParams(c)
+    guard hint.params.alphaM2s == p.alphaM2s, hint.params.tauAirScale == p.tauAirScale else { return false }
+    guard hint.whiteDoseMin == calibrationDoneness(c, level: 1.0).whiteDoseMin else { return false }
+    return hint.steps == 0 || nowS - cook.startedAtS > hint.lastS
 }
 
 /// Whether two decision surfaces' inputs are the same pot, egg and posterior:
@@ -619,7 +678,8 @@ public func openEggId(_ cook: RunningCook?, plan: CookPlan?, nowS: Double) -> Do
 /// The plan for a cook at `nowS`, under calibration `c`. `nowS` is read by
 /// the slow hob's rule alone. See `replan` in `src/core/running.ts`.
 public func replan(
-    _ cook: RunningCook, _ c: Calibration, surface: CookSurface?, leanHintS: Double, nowS: Double
+    _ cook: RunningCook, _ c: Calibration, surface: CookSurface?, leanHintS: Double, nowS: Double,
+    hint: SlowHobHint? = nil
 ) -> CookPlan {
     let ch = cook.choices
     let e = cook.events
@@ -635,22 +695,55 @@ public func replan(
     // unless no pan was remembered (review 1.2).
     var ramp = estimateTimeToBoil(cook.boilMemory, litres: ch.waterLitres)
     if let tap = tapAt, !(cook.boilRemembered && tappedAfterLateCold(cook)) { ramp = tap - start }
+    let fromRamp = ramp
+    // The slow hob's hint, taken only when it fits: the rule starts where it
+    // got to, and its first place needs no solve.
+    var resume: SlowHobHint?
+    if provisional, let hint, slowHobHintFits(hint, cook, c, leanHintS: leanHintS, nowS: nowS) { resume = hint }
+    if let resume { ramp = resume.rampS }
     var pot = cookSetupOf(ch, timeToBoilS: ramp)
-    var answer = answerAt(c, egg: pot.egg, setup: pot.setup, level: ch.level, profile: nil, snapRetry: true)
+    // Nil while the hint stands for it: solved only if the plan stops there.
+    var found: LevelAnswer? = resume == nil
+        ? answerAt(c, egg: pot.egg, setup: pot.setup, level: ch.level, profile: nil, snapRetry: true) : nil
     var lengthened = false
     var slowHobAt: Double?
+    var slowHob: SlowHobHint?
 
     if provisional {
         let heated = nowS - start
         let most = Limits.timeToBoilS.upperBound
         var last = 0.0
         var step = 0
+        var known: Double?
+        if let resume {
+            step = resume.steps
+            last = resume.lastS
+            known = resume.carriedS
+            lengthened = step > 0
+        }
+        // The place to keep: the last lengthening that did not creep.
+        var keptSteps = step
+        var keptLast = last
+        var keptRamp = ramp
+        var keptCarried: Double?
+        var crept = false
         while true {
             // No longer than the most the app takes for a time to boil.
             if !(ramp < most) { break }
-            let t = carriedSolution(
-                egg: pot.egg, setup: pot.setup, params: params, solution: answer.solution, leanS: carry
-            ).result.cookTimeS
+            let t: Double
+            if let k = known {
+                t = k
+                known = nil
+            } else {
+                let a = found ?? answerAt(
+                    c, egg: pot.egg, setup: pot.setup, level: ch.level, profile: nil, snapRetry: true
+                )
+                found = a
+                t = carriedSolution(
+                    egg: pot.egg, setup: pot.setup, params: params, solution: a.solution, leanS: carry
+                ).result.cookTimeS
+            }
+            if !crept, step == keptSteps { keptCarried = t }
             let next = last + slowHobEveryS
             let due = t - slowHobWhenLeftS
             let creeping = !(due > next)
@@ -665,18 +758,32 @@ public func replan(
             ramp = last + slowHobExtraS < most ? last + slowHobExtraS : most
             lengthened = true
             pot = cookSetupOf(ch, timeToBoilS: ramp)
-            answer = answerAt(c, egg: pot.egg, setup: pot.setup, level: ch.level, profile: nil, snapRetry: true)
+            found = answerAt(c, egg: pot.egg, setup: pot.setup, level: ch.level, profile: nil, snapRetry: true)
+            if creeping {
+                crept = true
+            } else if !crept {
+                keptSteps = step + 1
+                keptLast = last
+                keptRamp = ramp
+                keptCarried = nil
+            }
             step += 1
         }
+        slowHob = SlowHobHint(
+            startedAtS: start, choices: ch, fromRampS: fromRamp, carryS: carry, params: params,
+            whiteDoseMin: calibrationDoneness(c, level: 1.0).whiteDoseMin,
+            steps: keptSteps, lastS: keptLast, rampS: keptRamp, carriedS: keptCarried
+        )
     }
 
+    let mean = found ?? answerAt(c, egg: pot.egg, setup: pot.setup, level: ch.level, profile: nil, snapRetry: true)
     let inputs = lengthened ? nil : decisionInputs(c, egg: pot.egg, setup: pot.setup)
     var s: CookSurface?
     if let inputs, let surface, sameDecisionInputs(surface.inputs, inputs) { s = surface }
     let profile = s?.profile
-    answer = LevelAnswer(
-        solution: answer.solution, verdict: answer.verdict, level: answer.level,
-        lowOdds: lowOddsAt(profile, level: answer.level)
+    let answer = LevelAnswer(
+        solution: mean.solution, verdict: mean.verdict, level: mean.level,
+        lowOdds: lowOddsAt(profile, level: mean.level)
     )
 
     var decided: DecidedAnswer?
@@ -766,7 +873,7 @@ public func replan(
             cookEndS: cookEnd, coolEndS: coolEnd, provisional: provisional,
             outAtS: pulled?.by == .cook ? pulled?.outS : nil
         ),
-        slowHobAtS: slowHobAt, tooOldAtS: tooOld, certainty: certainty, forecast: forecast
+        slowHobAtS: slowHobAt, slowHob: slowHob, tooOldAtS: tooOld, certainty: certainty, forecast: forecast
     )
 }
 

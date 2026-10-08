@@ -202,7 +202,8 @@ struct RunningConformance {
                 let profile = try (s["profile"] as? [String: Any]).map { try profileOf($0) }
                 surface = CookSurface(inputs: inputs, grid: grid, profile: profile)
             }
-            let plan = replan(cook, c, surface: surface, leanHintS: hint, nowS: now)
+            let slowHob = try (row["hint"] as? [String: Any]).map { try slowHobHintOf($0) }
+            let plan = replan(cook, c, surface: surface, leanHintS: hint, nowS: now, hint: slowHob)
             try expectPlan(plan, row.object("plan"), start: cook.startedAtS, note)
             #expect(try openEggId(cook, plan: plan, nowS: now) == row.optionalNum("open"), "\(note): the open egg")
             for out in try row.rows("outs", mayBeEmpty: true) {
@@ -259,6 +260,37 @@ private func expectBoil(_ b: BoilToRemember?, _ json: Any?, _ what: String) thro
         try expectClose(boil.seconds, j.num("seconds"), "\(what): seconds")
     } else {
         #expect(b == nil, "\(what): remembered")
+    }
+}
+
+/// The slow hob's hint as the fixtures write one.
+private func slowHobHintOf(_ json: [String: Any]) throws -> SlowHobHint {
+    let params = try json.object("params")
+    return try SlowHobHint(
+        startedAtS: json.num("startedAt_s"), choices: choicesOf(json.object("choices")),
+        fromRampS: json.num("fromRamp_s"), carryS: json.num("carry_s"),
+        params: ModelParams(alphaM2s: params.num("alpha_m2s"), tauAirScale: params.num("tauAirScale")),
+        whiteDoseMin: json.num("whiteDose_min"), steps: Int(json.num("steps")), lastS: json.num("last_s"),
+        rampS: json.num("ramp_s"), carriedS: json.optionalNum("carried_s")
+    )
+}
+
+private func expectHint(_ h: SlowHobHint?, _ json: Any?, _ note: String) throws {
+    guard let j = json as? [String: Any] else {
+        #expect(h == nil, "\(note): no slow hob's hint")
+        return
+    }
+    let hint = try #require(h, "\(note): a slow hob's hint")
+    let want = try slowHobHintOf(j)
+    #expect(hint.steps == want.steps, "\(note): hint steps")
+    expectClose(hint.lastS, want.lastS, "\(note): hint's last")
+    expectClose(hint.rampS, want.rampS, "\(note): hint's ramp")
+    expectClose(hint.fromRampS, want.fromRampS, "\(note): hint's start")
+    expectClose(hint.carryS, want.carryS, "\(note): hint's carry")
+    switch (hint.carriedS, want.carriedS) {
+    case (nil, nil): break
+    case let (a?, b?): expectClose(a, b, "\(note): hint's carried time")
+    default: Issue.record("\(note): hint's carried time")
     }
 }
 
@@ -359,6 +391,7 @@ private func expectPlan(_ p: CookPlan, _ json: [String: Any], start: Double, _ n
     expectTime(p.deadlines.outAtS, try dl.optionalNum("outAt_s"), start: start, "\(note): out")
     expectTime(p.slowHobAtS, try json.optionalNum("slowHobAt_s"), start: start, "\(note): slow hob")
     expectTime(p.tooOldAtS, try json.num("tooOldAt_s"), start: start, "\(note): too old")
+    try expectHint(p.slowHob, json["slowHob"], note)
     if let cj = json["certainty"] as? [String: Any] {
         let c = try #require(p.certainty, "\(note): no certainty")
         let w = try cj.object("words")

@@ -20,7 +20,7 @@ import { recordFor } from '../src/core/record.js';
 import {
   CookChoices, CookPlan, CookSurface, RESTORE_WINDOW_S, RecordContext, RunningCook, boilToRemember, cookEnding,
   cookFactsFor, cookSetupOf, cookTooOld, corrected, earliestStart_s, eventsDue, latestStart_s, openEggId, pullStands,
-  readRunningCook, replan, startCook, startCorrected, stillIn, withBoil, withOut,
+  readRunningCook, replan, slowHobHintFits, startCook, startCorrected, stillIn, withBoil, withOut,
 } from '../src/core/running.js';
 import { gridFor, knowing } from '../tools/common.js';
 
@@ -485,4 +485,88 @@ test('22. review 3: the start has a lower bound, two hours before Start was pres
   // Fixed at the press: a start already corrected does not move it.
   const earlier = startCorrected(cold, S - 3600, S + 10) as RunningCook;
   assert.equal(earliestStart_s(earlier), earliestStart_s(cold));
+});
+
+/* ------------------------------------ design/running-cook-review.md's calls */
+
+test("23. review 2.1: the slow hob starts where the last plan got to, and the plan is the one from the start", () => {
+  const cold = cookOf();
+  // As the app plans: at the start, then whenever the clock passes
+  // slowHobAt_s, each plan handed the last one's place. The review's 199
+  // moments over the first 23 minutes: at each, a plan with that hint; at
+  // every fourth (all 199 in LOGBOOK.md, 8 October 2026), checked against
+  // the plan from the start, which costs eight solves a plan from 15 minutes.
+  let plan = replan(cold, C, null, 0, S + 1);
+  let checked = 0;
+  for (let i = 1; i <= 199; i++) {
+    const now = S + (23 * 60 * i) / 199;
+    while (plan.slowHobAt_s !== null && plan.slowHobAt_s < now) {
+      plan = replan(cold, C, null, 0, now, plan.slowHob);
+    }
+    const hinted = replan(cold, C, null, 0, now, plan.slowHob);
+    if (i % 4 === 3 || i === 199) {
+      assert.deepEqual(hinted, replan(cold, C, null, 0, now), `at ${now - S} s`);
+      checked++;
+    }
+  }
+  assert.equal(checked, 50);
+  assert.ok(plan.lengthened && plan.slowHob !== null && plan.slowHob.steps > 0, 'lengthened on the way');
+  // Later, to the two hours: a plan at a moment, then the plans after it
+  // with its hint, against the plan from the start (the whole two hours,
+  // plan by plan, is LOGBOOK.md's, 8 October 2026: 634 plans, every one equal).
+  for (const minutes of [40, 80, 119.5]) {
+    let p = replan(cold, C, null, 0, S + minutes * 60);
+    for (const later of [10.001, 25, 61]) {
+      const now = S + minutes * 60 + later;
+      const hinted = replan(cold, C, null, 0, now, p.slowHob);
+      assert.deepEqual(hinted, replan(cold, C, null, 0, now), `${minutes} min + ${later} s`);
+      p = hinted;
+    }
+  }
+  const end = replan(cold, C, null, 0, S + 7300);
+  assert.deepEqual([end.setup.timeToBoil_s, end.slowHobAt_s], [LIMITS.timeToBoil_s.hi, null]);
+  assert.deepEqual(replan(cold, C, null, 0, S + 7301, end.slowHob), replan(cold, C, null, 0, S + 7301));
+});
+
+test('24. review 2.1: a hint made under anything else is ignored, never trusted', () => {
+  const cold = cookOf();
+  const at = S + 20 * 60;
+  const hint = replan(cold, C, null, 0, at).slowHob;
+  assert.ok(hint !== null && hint.steps > 0);
+  assert.equal(slowHobHintFits(hint, cold, C, 0, at + 30), true);
+  const fresh = (cook: RunningCook, c = C, lean = 0, now = at + 30): void => {
+    assert.deepEqual(replan(cook, c, null, lean, now, hint), replan(cook, c, null, lean, now));
+  };
+  // Another egg, a corrected start, another lean or nudge, another pan
+  // remembered, another calibration, the boil tapped, or a moment before the
+  // place kept: each ignored.
+  const heavier = corrected(cold, { ...CHOICES, mass_kg: 0.076 }, at + 10);
+  assert.equal(slowHobHintFits(hint, heavier, C, 0, at + 30), false);
+  fresh(heavier);
+  const earlier = startCorrected(cold, S - 60, at + 10) as RunningCook;
+  assert.equal(slowHobHintFits(hint, earlier, C, 0, at + 30), false);
+  fresh(earlier);
+  assert.equal(slowHobHintFits(hint, cold, C, 2, at + 30), false);
+  fresh(cold, C, 2);
+  assert.equal(slowHobHintFits(hint, cookOf({}, 3), C, 0, at + 30), false);
+  const pan = { ...cold, boilMemory: { '2.0': 500 } };
+  assert.equal(slowHobHintFits(hint, pan, C, 0, at + 30), false);
+  fresh(pan);
+  const other = knowing({ particles: 200, eggsLogged: 5, taste: 0.1, alphaFactor: 1.05 });
+  assert.equal(slowHobHintFits(hint, cold, other, 0, at + 30), false);
+  fresh(cold, other);
+  // An egg folded that moved only the taste, which the rule never reads,
+  // keeps it: the guess is the same.
+  const tasted = knowing({ particles: 200, eggsLogged: 5, taste: -0.1 });
+  assert.equal(slowHobHintFits(hint, cold, tasted, 0, at + 30), true);
+  fresh(cold, tasted);
+  const tapped = withBoil(cold, at + 5);
+  assert.equal(slowHobHintFits(hint, tapped, C, 0, at + 30), false);
+  fresh(tapped);
+  assert.equal(slowHobHintFits(hint, cold, C, 0, S + hint.last_s), false, 'not past the place kept');
+  fresh(cold, C, 0, S + hint.last_s - 5);
+  // A correction that changes nothing the rule reads keeps it.
+  assert.equal(slowHobHintFits(hint, corrected(cold, { ...CHOICES }, at + 10), C, 0, at + 30), true);
+  // A hot start has no guess, and no hint.
+  assert.equal(replan(cookOf({ startMode: 'hot' }), C, null, 0, at).slowHob, null);
 });

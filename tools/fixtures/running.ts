@@ -12,7 +12,7 @@ import { WhiteReport, YolkWord } from '../../src/core/infer.js';
 import { LITERATURE_POPULATION } from '../../src/core/infer.js';
 import { ProbeReading, recordFor } from '../../src/core/record.js';
 import {
-  CookChoices, CookPlan, CookSurface, RESTORE_WINDOW_S, RecordContext, RunningCook, SLOW_HOB_MAX_STEPS,
+  CookChoices, CookPlan, CookSurface, RESTORE_WINDOW_S, RecordContext, RunningCook, SLOW_HOB_MAX_STEPS, SlowHobHint,
   boilToRemember, cookEnding, cookFactsFor, cookSetupOf, corrected, earliestStart_s, eventsDue, latestStart_s,
   openEggId, pullStands, readRunningCook, replan, startCook, startCorrected, stillIn, withBoil, withOut,
 } from '../../src/core/running.js';
@@ -286,6 +286,8 @@ interface PlanCase {
   surface: SurfaceAsk;
   outs?: number[];
   dues?: number[];
+  /** The slow hob's hint handed to the plan (review 2.1). */
+  hint?: SlowHobHint | null;
 }
 
 function named(posterior: string) {
@@ -324,7 +326,8 @@ function planJson(p: CookPlan) {
       adviceWanted: d.adviceWanted,
     },
     lean_s: p.lean_s, nudge_s: p.nudge_s, cookTime_s: p.cookTime_s, overdue: p.overdue, askIfStillIn: p.askIfStillIn, cool_s: p.cool_s,
-    probeMoment: p.probeMoment, deadlines: p.deadlines, slowHobAt_s: p.slowHobAt_s, tooOldAt_s: p.tooOldAt_s,
+    probeMoment: p.probeMoment, deadlines: p.deadlines, slowHobAt_s: p.slowHobAt_s, slowHob: p.slowHob,
+    tooOldAt_s: p.tooOldAt_s,
     certainty: p.certainty, forecast: p.forecast,
   };
 }
@@ -357,11 +360,15 @@ function plan(pc: PlanCase): CookPlan {
   } else if (ask !== 'none') {
     surface = surfaceFor(pc.posterior, ask.of, pc.leanHint_s, ask.now_s, false);
   }
-  const p = replan(pc.cook, c, surface, pc.leanHint_s, pc.now_s);
+  const hint = pc.hint ?? null;
+  const p = replan(pc.cook, c, surface, pc.leanHint_s, pc.now_s, hint);
+  if (hint !== null && JSON.stringify(p) !== JSON.stringify(replan(pc.cook, c, surface, pc.leanHint_s, pc.now_s))) {
+    throw new Error(`${pc.note}: the hint moved the plan`);
+  }
   const g = surface === null ? null : coarseDecisionGrid(surface.inputs);
   plans.push({
     note: pc.note, posterior: pc.posterior, eggsLogged: c.eggsLogged, cook: pc.cook,
-    leanHint_s: pc.leanHint_s, now_s: pc.now_s,
+    leanHint_s: pc.leanHint_s, now_s: pc.now_s, hint: hint,
     surface: surface === null || g === null ? null : {
       of: typeof ask === 'object' ? { cook: ask.of, now_s: ask.now_s } : null,
       grid: { tauAirScale: g.tauAirScale, ...g.spec },
@@ -546,6 +553,26 @@ const S = START_S;
   const lateOut = withEvents(late, eventsDue(late, replan(late, calibrationOf(named('learned')), null, 0, lateEnd + 21), lateEnd + 21));
   plan({ note: 'the grace ran out, then ice corrected to tap water: nothing to ask', posterior: 'learned', cook: corrected(lateOut, { ...late.choices, cooling: 'tap' }, lateEnd + 30), leanHint_s: 0, now_s: lateEnd + 30, surface: 'own' });
   plan({ note: 'the grace ran out, then a much heavier egg: the app asks', posterior: 'learned', cook: corrected(lateOut, { ...late.choices, mass_kg: late.choices.mass_kg + 0.02 }, lateEnd + 30), leanHint_s: 0, now_s: lateEnd + 30, surface: 'own' });
+}
+
+{
+  // The slow hob's hint (review 2.1): a plan started where the last one got
+  // to is the plan from the start; one made under anything else is ignored.
+  // Last, so no case before them moves.
+  const learned = calibrationOf(named('learned'));
+  const slow = cookOf();
+  const at = S + 1000;
+  const before = replan(slow, learned, null, 0, at);
+  const hint = before.slowHob;
+  plan({ note: 'a slow hob, the last plan\'s hint: the plan from the start', posterior: 'learned', cook: slow, leanHint_s: 0, now_s: at + 15, surface: 'none', hint: hint });
+  const next = replan(slow, learned, null, 0, at + 15, hint);
+  plan({ note: 'and the plan after it, with its hint', posterior: 'learned', cook: slow, leanHint_s: 0, now_s: at + 400, surface: 'none', hint: next.slowHob });
+  plan({ note: 'the hint at the moment it was made: nothing more to lengthen', posterior: 'learned', cook: slow, leanHint_s: 0, now_s: at, surface: 'none', hint: hint });
+  plan({ note: 'a hint for a lighter egg: ignored', posterior: 'learned', cook: corrected(slow, { ...slow.choices, mass_kg: 0.076 }, at + 10), leanHint_s: 0, now_s: at + 15, surface: 'none', hint: hint });
+  plan({ note: 'a hint made under another lean: ignored', posterior: 'learned', cook: slow, leanHint_s: 2, now_s: at + 15, surface: 'none', hint: hint });
+  plan({ note: 'a hint made under another calibration: ignored', posterior: 'prior', cook: slow, leanHint_s: 0, now_s: at + 15, surface: 'none', hint: hint });
+  plan({ note: 'a hint kept past the moment: ignored', posterior: 'learned', cook: slow, leanHint_s: 0, now_s: S + (hint as SlowHobHint).last_s - 1, surface: 'none', hint: hint });
+  plan({ note: 'a hint, the boil tapped since: ignored', posterior: 'learned', cook: withBoil(slow, at + 5), leanHint_s: 0, now_s: at + 15, surface: 'none', hint: hint });
 }
 
 /* What the boil memory learns (`boilToRemember`): a tap the cook watched for,
