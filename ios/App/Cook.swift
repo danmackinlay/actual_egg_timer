@@ -802,8 +802,9 @@ final class Cook {
         persist()
         adopt(made, for: restored)
 
-        // The alarms were handed to the system at absolute dates and are still
-        // pending; read the count back rather than assuming it.
+        // The alarms were handed to the system at absolute dates; set them
+        // again from the restored plan, and read the count back rather than
+        // assuming it.
         let gen = generation
         Task {
             // A cancel while either of these is awaited ends this cook; what
@@ -811,6 +812,12 @@ final class Cook {
             let authorized = await Alarm.shared.authorize()
             guard gen == generation else { return }
             alarmAuthorized = authorized
+            // The restored plan's, as `start()` sets them: the slow hob is a
+            // function of the clock, so the plan picked back up can pull at
+            // another moment than the one the notifications still pending
+            // were set for (running-cook review 1.4). A deadline past is not
+            // scheduled.
+            if authorized { scheduleAlarms() }
             await readBackAlarms()
             guard gen == generation else { return }
             // Re-establish the Lock Screen card. A cook can come back from a
