@@ -938,8 +938,8 @@ to port to Swift essentially unchanged.
 `npm run e2e` builds the site, serves it with the sharing endpoint on a store
 in memory (`tools/devServer.ts`), and drives it in headless Chrome over the
 DevTools protocol, with nothing installed beyond Chrome itself
-(`tools/e2e.ts`, `tools/chrome.ts`; `CHROME` names the binary if it is not
-in the usual macOS place). Each scenario runs in a browser context of its
+(`tools/e2e.ts`, `tools/chrome.ts`, which finds Chrome where macOS and
+Linux put it; `CHROME` names another binary). Each scenario runs in a browser context of its
 own and asserts on the page and on what it stored: a cold cook at sixty
 times speed, a hot start, Cancel, a reload at every phase, a tab woken past
 the pull, two tabs on one cook, a cook too old, an egg made final, Done
@@ -950,19 +950,40 @@ to cold, overdue and back, a drag that rings only on release, the start's
 time and its limits, Settings' water, two tabs' own cooks), a correction at
 Done and the slider there, and "still in the water?". `npm run e2e -- reload two-tabs` runs
 those named; `node dist/tools/e2e.js --list` lists them; `E2E_DEBUG=1` prints
-the page's text when one fails. The whole suite takes about a minute, so it
-is not in `npm run verify`.
+the page's text when one fails. The whole suite takes about two minutes, so
+it is not in `npm run verify`.
 
 What makes it take seconds is the development clock (`src/ui/now.ts`),
 through which every read of the time in `src/ui/` goes. On a page served
 from `localhost` or `127.0.0.1`, and nowhere else, `?clock=60` runs it sixty
-times fast, `?at=+7m40s` or `?at=-15m` sets it ahead or behind, and
-`?clock=off` puts it back; it is kept for the tab across a reload, a red
-mark in the corner shows it, and `aetClock.shift('+20m')` moves it from the
-console. The pull's beeps, scheduled ahead on the audio clock, follow it.
-While it is on, and in that browser until Forget everything, sharing sends
-nothing, so no egg cooked on it reaches a server. On the live site the clock
-is `Date.now()` (`test/now.test.ts`).
+times fast, `?clock=0` stops it, `?at=+7m40s` or `?at=-15m` sets it ahead or
+behind and `?at=2026-10-08T07:30:00Z` to a moment, and `?clock=off` puts it
+back; it is kept for the tab across a reload, a red mark in the corner shows
+it, and `aetClock.shift('+20m')`, `aetClock.set(moment)` and
+`aetClock.speed(x)` move it from the console. The pull's beeps, scheduled
+ahead on the audio clock, follow it. While it is on, and in that browser
+until Forget everything, sharing sends nothing, so no egg cooked on it
+reaches a server. On the live site the clock is `Date.now()`
+(`test/now.test.ts`).
+
+What makes it independent of the machine's speed is that the clock is
+stopped. A scenario steps it to the moment it means, tells the page to look
+again as a tab coming back does, and asserts, so a step 2 s past the pull
+lands 2 s past the pull however long the page takes to get there; at sixty
+times speed the pull's 20-s grace was a third of a real second, and a slow
+machine could miss it. The alarm is checked by the beeps scheduled on the
+audio clock and for when, never by waiting for them to play. One span is
+run: the last second before the cold cook's pull, at the real clock's
+speed, to see the beeps scheduled ahead sounding as the tick reaches the
+pull; the grace is its margin for a slow machine. A person's timers (a
+control's 1.5-s settle, a held key) stay real, and a scenario waits for the
+page to settle - no such timer pending, no worker job, no request - rather
+than for a fixed time; a wait for something that will come gives up after
+a minute, which is failure detection, not a measure. Two scenarios run off
+the stopped clock: the address check, and sharing, which sends nothing on
+the development clock and is checked on the real one. `E2E_CPU_THROTTLE=6`
+slows every page six times (DevTools' CPU throttling); with every core
+busy as well, the suite passes as it does on a quiet machine.
 
 ---
 

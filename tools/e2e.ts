@@ -10,17 +10,33 @@
  * It serves `_site/` with the sharing endpoint on a store in memory
  * (tools/devServer.ts), starts headless Chrome on a profile of its own
  * (tools/chrome.ts; CHROME names the binary) and opens each scenario in a
- * fresh browser context, so no scenario sees another's storage. Time is the
- * development clock (src/ui/now.ts): a scenario either runs fast
- * (`?clock=60`) or jumps (`aetClock.shift`), then tells the page to look
- * again with a `focus` event, as a tab coming back does. Sharing is checked
- * on the real clock, with the stored cook moved into the past, since nothing
- * is sent while the development clock is on.
+ * fresh browser context, so no scenario sees another's storage.
+ *
+ * Time is the development clock (src/ui/now.ts), stopped (`?clock=0`): a
+ * scenario steps it to the moment it means (`aetClock.shift`, `.set`), tells
+ * the page to look again with a `focus` event, as a tab coming back does, and
+ * asserts. So what it sees does not depend on how fast the machine is: a
+ * step past the pull lands where it was aimed whether the page took a
+ * millisecond or a second to get there. The one span run is the last second
+ * before a pull at the real clock's speed, to see the beeps scheduled ahead
+ * sound as the tick reaches the pull; the 20-s grace after it is that span's
+ * margin for a slow machine. The timers that are a person's, not the cook's
+ * (a control's settle, a held key), stay real: a scenario waits for the page
+ * to settle (`settle`: no timer of up to 5 s pending, no worker job, no
+ * request) rather than for a fixed time. Sharing is checked on the real clock,
+ * with the stored cook moved into the past, since nothing is sent while the
+ * development clock is on.
  *
  * Each page gets, before the app runs, a count of the oscillators made and
- * when each is set to start on the audio clock (`__osc`), and of what it
- * wrote to localStorage (`__writes`). An exception thrown in a page fails
- * its scenario.
+ * when each is set to start on the audio clock (`__osc`), of what it wrote to
+ * localStorage (`__writes`), of the requests it made (`__fetches`), and of
+ * what is pending (`__pending`). The alarm is checked by what was scheduled
+ * and for when, never by waiting for it to play. An exception thrown in a
+ * page fails its scenario.
+ *
+ * E2E_CPU_THROTTLE=<rate> slows every page's CPU that many times (DevTools'
+ * `Emulation.setCPUThrottlingRate`), to show the suite does not depend on
+ * the machine's speed; E2E_DEBUG=1 prints the page's text when one fails.
  */
 
 import { ChildProcess, spawn } from 'node:child_process';
@@ -30,6 +46,16 @@ import { Browser, Cdp, launchChrome, sleep, waitForHttp } from './chrome.js';
 const SITE_PORT = 9100 + Math.floor(Math.random() * 400);
 const DEBUG_PORT = SITE_PORT + 1000;
 const ORIGIN = `http://127.0.0.1:${SITE_PORT}`;
+
+/** Every page but those checking the address or sharing: the clock stopped. */
+const STOPPED = '/?clock=0';
+
+/** How long to wait for something that will come, real ms: failure
+ *  detection only, never a measure of anything, so long enough for a page
+ *  slowed six times on a loaded machine. */
+const WAIT_MS = 60_000;
+
+const THROTTLE = Number(process.env['E2E_CPU_THROTTLE'] ?? '1');
 
 /* ------------------------------------------------------------- the page */
 
@@ -49,6 +75,40 @@ const INSTRUMENT = `(() => {
       return o;
     };
   }
+  // What is pending: timers of up to 5 s (a person's: a settle, a solve
+  // coalesced, a repeat; not a request's timeout), worker jobs, requests.
+  const pending = { timeouts: new Set(), workers: 0, fetches: 0 };
+  window.__pending = pending;
+  const setT = window.setTimeout;
+  const clearT = window.clearTimeout;
+  window.setTimeout = function (f, ms, ...rest) {
+    if (typeof f !== 'function' || (ms ?? 0) > 5000) return setT.call(window, f, ms, ...rest);
+    const id = setT.call(window, function () { pending.timeouts.delete(id); return f.apply(this, arguments); }, ms, ...rest);
+    pending.timeouts.add(id);
+    return id;
+  };
+  window.clearTimeout = function (id) { pending.timeouts.delete(id); return clearT.call(window, id); };
+  const W = window.Worker;
+  if (W) {
+    window.Worker = class extends W {
+      constructor(...a) {
+        super(...a);
+        this.__n = 0;
+        this.addEventListener('message', () => { if (this.__n > 0) { this.__n -= 1; pending.workers -= 1; } });
+        this.addEventListener('error', () => { pending.workers -= this.__n; this.__n = 0; });
+      }
+      postMessage(...a) { this.__n += 1; pending.workers += 1; return super.postMessage(...a); }
+    };
+  }
+  const fetches = [];
+  window.__fetches = fetches;
+  const fetch0 = window.fetch;
+  window.fetch = function (input, init) {
+    const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+    fetches.push({ url: url, method: (init && init.method) || (typeof input === 'object' && input.method) || 'GET' });
+    pending.fetches += 1;
+    return fetch0.apply(window, arguments).finally(() => { pending.fetches -= 1; });
+  };
   const writes = [];
   window.__writes = writes;
   const set = Storage.prototype.setItem;
@@ -184,6 +244,7 @@ class Tab {
     await cdp.send('Emulation.setDeviceMetricsOverride', {
       width: 390, height: 844, deviceScaleFactor: 1, mobile: false,
     }, sessionId);
+    if (THROTTLE > 1) await cdp.send('Emulation.setCPUThrottlingRate', { rate: THROTTLE }, sessionId);
     await tab.goto(url);
     return tab;
   }
@@ -201,7 +262,7 @@ class Tab {
   }
 
   /** Wait for an expression to be truthy. */
-  async until(expression: string, what: string, ms = 20000): Promise<void> {
+  async until(expression: string, what: string, ms = WAIT_MS): Promise<void> {
     const end = Date.now() + ms;
     let last = '';
     while (Date.now() < end) {
@@ -247,21 +308,48 @@ class Tab {
     await this.eval("window.dispatchEvent(new Event('focus'))");
   }
 
+  /** Wait for the page to have done what it will: no timer of up to 5 s
+   *  pending, no worker job, no request, three looks running. What a fixed
+   *  sleep did, whatever the machine's speed. */
+  async settle(): Promise<void> {
+    const end = Date.now() + WAIT_MS;
+    let quiet = 0;
+    while (Date.now() < end) {
+      const busy = await this.eval<boolean>(
+        '(() => { const p = window.__pending; return p.timeouts.size + p.workers + p.fetches > 0; })()');
+      quiet = busy ? 0 : quiet + 1;
+      if (quiet >= 3) return;
+      await sleep(40);
+    }
+    const p = await this.eval<string>('JSON.stringify({ ...window.__pending, timeouts: window.__pending.timeouts.size })');
+    throw new Failure(`waited ${WAIT_MS / 1000} s for the page to settle: ${p}`);
+  }
+
   /** The development clock moved by `s` seconds, and the page told. */
   async shift(s: number): Promise<void> {
     await this.eval(`window.aetClock.shift(${s})`);
     await this.look();
   }
 
-  /** The development clock moved to `at_s`, a clock time, and the page told. */
+  /** The development clock set to `at_s`, a clock time, and the page told. */
   async shiftTo(at_s: number): Promise<void> {
-    await this.eval(`window.aetClock.shift(${at_s} - window.aetClock.now() / 1000)`);
+    await this.eval(`window.aetClock.set(${at_s * 1000})`);
     await this.look();
+  }
+
+  /** The page's time, ms. */
+  now(): Promise<number> {
+    return this.eval<number>('window.aetClock.now()');
+  }
+
+  /** The requests to the sharing endpoint this page has made. */
+  async sends(): Promise<number> {
+    return this.eval<number>("window.__fetches.filter((f) => f.url.includes('/api/eggs') && f.method !== 'GET').length");
   }
 
   /** Wait for the phase, and for the page to say it (a tick behind the
    *  clock at most); the label is checked against the phase's words. */
-  async phase(want: string, ms = 20000): Promise<Snap> {
+  async phase(want: string, ms = WAIT_MS): Promise<Snap> {
     await this.until(`await (async () => { const s = await window.__e2e.snap();
       return s.phase === ${JSON.stringify(want)} && (${LABEL_SAYS})(s); })()`, `phase ${want}`, ms);
     const s = await this.snap();
@@ -399,13 +487,25 @@ async function pick(tab: Tab, selector: string, value: string): Promise<void> {
     e.value = ${JSON.stringify(value)}; e.dispatchEvent(new Event('change', { bubbles: true })); })()`);
 }
 
-/** Wait for a correction to be committed: the stored cook's
- *  `correctedAt_s` moved on from `before`, and planned. */
-async function corrected(tab: Tab, before: number | null, ms = 6000): Promise<Snap> {
+/** Wait for a correction to be committed and planned: the stored cook's
+ *  `correctedAt_s` moved on from the last commit's (`after`, its snap; null
+ *  for the cook's first). A cook's corrections are a person's taps apart, so
+ *  each has its own stamp, which the record's remaking keys on: on a stopped
+ *  clock, step it between them (`later`). */
+async function corrected(tab: Tab, after: Snap | null, ms = WAIT_MS): Promise<Snap> {
+  const was = after === null ? null : storedCook(after)?.correctedAt_s ?? null;
+  if (was !== null && was === (await tab.now()) / 1000) {
+    throw new Failure('two corrections at one moment: no cook makes them; step the clock between them');
+  }
   await tab.until(`await (async () => { const s = await window.__e2e.snap(); const c = s.stored === null ? null : JSON.parse(s.stored).cook;
-    return c !== null && c.correctedAt_s !== ${JSON.stringify(before)} && s.cook.correctedAt_s === c.correctedAt_s; })()`,
+    return c !== null && c.correctedAt_s !== ${JSON.stringify(was)} && s.cook.correctedAt_s === c.correctedAt_s; })()`,
   'a correction committed', ms);
   return tab.snap();
+}
+
+/** A person's next tap, a few seconds on. */
+async function later(tab: Tab): Promise<void> {
+  await tab.shift(3);
 }
 
 function storedCook(s: Snap): Cook | null {
@@ -458,38 +558,59 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
   },
 
   'cold-cook': {
-    what: 'a cold cook at x60: boil, pull, cooling, Done, Jammy, Start again; the record and its forecast',
+    what: 'a cold cook: boil, pull, cooling, Done, Jammy, Start again; the beeps ahead at x1 and x60; the record and its forecast',
     run: async (h) => {
-      const tab = await h.ctx.open('/?clock=60');
+      const tab = await h.ctx.open(STOPPED);
       const real0 = Date.now();
       let s = await start(tab, 'cold');
       labelSays(s);
-      // Four minutes of heating, four real seconds.
-      await tab.until(`(await window.__e2e.snap()).now_ms > ${s.now_ms + 240_000}`, '4 min heated');
+      // Four minutes of heating.
+      await tab.shift(240);
       s = await boil(tab);
       labelSays(s);
       const d = deadlines(s);
-      // The pull's beeps, ahead on the audio clock, at x60: the last plan's.
+      // The pull's beeps, ahead on the audio clock: the last plan's, the
+      // cook's seconds ahead, a stopped clock's steps taken as seconds.
       const ahead = (await tab.osc()).filter(scheduledAhead).slice(-75);
       check(ahead.length === 75, `75 pull beeps scheduled ahead, ${ahead.length}`);
-      const first = ahead[0];
-      const want_s = (d.cookEnd_s * 1000 - first.page) / 1000 / 60;
-      check(near((first.at ?? 0) - first.made, want_s, 0.05),
-        `the pull ${want_s.toFixed(2)} s of audio ahead, ${((first.at ?? 0) - first.made).toFixed(2)}`);
-      const oscAtBoil = (await tab.osc()).length;
-      s = await tab.phase('PULL', 30000);
+      const lead = (o: Osc, speed: number): string | null => {
+        const want_s = (d.cookEnd_s * 1000 - o.page) / 1000 / speed;
+        const got_s = (o.at ?? 0) - o.made;
+        return near(got_s, want_s, 0.05) ? null : `the pull ${want_s.toFixed(2)} s of audio ahead at x${speed}, ${got_s.toFixed(2)}`;
+      };
+      const at1 = lead(ahead[0], 1);
+      check(at1 === null, at1 ?? '');
+      // At x60, a sixtieth of that: the clock run fast for an instant, the
+      // beeps it scheduled read, and the clock stopped at the moment again.
+      const fast = await tab.eval<Osc[]>(`(() => { const T = window.aetClock.now(); window.aetClock.speed(60);
+        const o = window.__osc.slice(-75); window.aetClock.speed(0); window.aetClock.set(T); return o; })()`);
+      check(fast.length === 75 && fast.every(scheduledAhead), `75 beeps ahead at x60: ${fast.filter(scheduledAhead).length}`);
+      const at60 = lead(fast[0], 60);
+      check(at60 === null, at60 ?? '');
+      // The last second before the pull, at the real clock's speed: the beeps
+      // ahead are sounding as the tick reaches the pull. The grace, 20 s of
+      // it, is the margin for a slow machine to see the pull and stop.
+      await tab.shiftTo(d.cookEnd_s - 1);
+      const oscAtRun = await tab.eval<number>('(() => { window.aetClock.speed(1); return window.__osc.length; })()');
+      await tab.phase('PULL');
+      const stopped_s = await tab.eval<number>('window.aetClock.speed(0) / 1000');
+      await tab.settle();
+      s = await tab.snap();
+      check(s.phase === 'PULL', `stopped in the pull's grace: ${s.phase}, ${(stopped_s - d.cookEnd_s).toFixed(1)} s past it`);
       labelSays(s);
       // Sounding on the audio clock as the pull came: nothing rung again.
-      check(s.osc === oscAtBoil, `the beeps ahead rang the pull: ${s.osc - oscAtBoil} more made`);
+      check(s.osc === oscAtRun, `the beeps ahead rang the pull: ${s.osc - oscAtRun} more made`);
       await tab.click('#primary');
       s = await tab.phase('COOLING');
       labelSays(s);
       const out = storedCook(s)?.events.pulled;
       check(out?.by === 'cook' && out.confirmed, `the cook's tap out stored: ${JSON.stringify(out)}`);
       const oscBeforeDone = (await tab.osc()).length;
-      s = await tab.phase('DONE', 30000);
+      await tab.shiftTo(deadlines(s).coolEnd_s + 1);
+      s = await tab.phase('DONE');
       labelSays(s);
-      await tab.until(`window.__osc.length >= ${oscBeforeDone + 50}`, "Done's 50 beeps");
+      await tab.settle();
+      check((await tab.osc()).length >= oscBeforeDone + 50, "Done's 50 beeps");
       check(s.feedback, 'the questions at Done');
       const cook = storedCook(s);
       await tab.click('.fb[data-yolk="jammy"]');
@@ -514,13 +635,14 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
   'one-layout': {
     what: 'C3 step 1: one layout from idle to Done; the slider, the sentence and the egg stay, and nothing moves at the start',
     run: async (h) => {
-      const tab = await h.ctx.open('/');
+      const tab = await h.ctx.open(STOPPED);
       await tab.until("(await window.__e2e.ui('state')).state.chosen !== null", 'the time decided');
+      await tab.settle();
       const idle = await layout(tab);
       check(idle.shown.every((x) => x.visible), `idle: ${JSON.stringify(idle.shown)}`);
       let s = await start(tab, 'cold');
       await tab.until('(await window.__e2e.snap()).deadlines !== null', 'planned');
-      await sleep(300);
+      await tab.settle();
       const heating = await layout(tab);
       check(heating.shown.every((x) => x.visible), `Heating: ${JSON.stringify(heating.shown)}`);
       check(heating.level === String(s.cook?.choices.level), `the slider at the cook's level: ${heating.level}`);
@@ -547,7 +669,7 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
   'egg-readings': {
     what: 'C3 step 2: the egg aimed for at idle (softer and firmer differ), the live egg from raw at the start, the egg as it ran at Done',
     run: async (h) => {
-      const tab = await h.ctx.open('/');
+      const tab = await h.ctx.open(STOPPED);
       const centre = async (): Promise<{ reading: string; fill: string }> => tab.eval(`(() => {
         const svg = document.getElementById('eggSection');
         return { reading: svg.dataset.egg ?? '', fill: svg.querySelector('path[data-ring="0"]')?.getAttribute('fill') ?? '' };
@@ -557,7 +679,7 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
         await tab.until(`await (async () => { const st = (await window.__e2e.ui('state')).state;
           return st.chosen !== null && st.chosen.level === st.settings.doneness
             && Math.abs(st.settings.doneness - ${level}) < 0.1; })()`, `level ${level} decided`);
-        await sleep(200);
+        await tab.settle();
         return centre();
       };
       const runny = await at(0.1);
@@ -567,7 +689,7 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
       await at(0.41);
       const aimed = await centre();
       let s = await start(tab, 'hot');
-      await sleep(300);
+      await tab.settle();
       const live = await centre();
       check(live.reading === 'live', `the cook reads live: ${live.reading}`);
       check(live.fill !== aimed.fill, `the live egg starts raw, not as aimed: ${live.fill}`);
@@ -580,7 +702,7 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
       check((await centre()).reading === 'live', 'cooling reads live');
       await tab.shiftTo(deadlines(s).coolEnd_s + 2);
       await tab.phase('DONE');
-      await sleep(300);
+      await tab.settle();
       const ran = await centre();
       check(ran.reading === 'ran', `Done reads the egg as it ran: ${ran.reading}`);
       return `idle runny ${runny.fill}, hard ${hard.fill}; start ${live.fill}; Done ${ran.fill}`;
@@ -590,7 +712,7 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
   'owner-case': {
     what: 'C3 step 3: boiling corrected to cold after Start, as the owner needed: back to Heating, the pull later, the settings follow',
     run: async (h) => {
-      const tab = await h.ctx.open('/');
+      const tab = await h.ctx.open(STOPPED);
       let s = await start(tab, 'hot');
       await tab.until('(await window.__e2e.snap()).decided', 'the pot planned');
       const pull0 = deadlines(await tab.snap()).cookEnd_s;
@@ -617,7 +739,7 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
   'cold-to-hot-after-tap': {
     what: 'C3 step 3: cold corrected to boiling after the boil was pressed: the tap kept, unread, the pot a boiling start',
     run: async (h) => {
-      const tab = await h.ctx.open('/');
+      const tab = await h.ctx.open(STOPPED);
       await start(tab, 'cold');
       await tab.shift(300);
       let s = await boil(tab);
@@ -639,24 +761,28 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
   'heavier-lighter': {
     what: 'C3 step 3: a heavier egg mid-cook pulls later, a lighter one sooner; each a correction, committed after the settle',
     run: async (h) => {
-      const tab = await h.ctx.open('/');
+      const tab = await h.ctx.open(STOPPED);
       let s = await start(tab, 'hot');
       await tab.until('(await window.__e2e.snap()).decided', 'the pot planned');
       const pull0 = deadlines(await tab.snap()).cookEnd_s;
       await tab.shift(30);
-      await pick(tab, '#size', '3');
-      // Nothing yet: a tap settles first.
-      s = await tab.snap();
-      check(s.cook?.correctedAt_s === null, 'committed before the settle');
+      // Nothing yet: a tap settles first. Read in the same task as the tap,
+      // so no timer can run between them, however slow the page.
+      const atTap = await tab.eval<number | null>(`(async () => { const st = (await window.__e2e.ui('state')).state;
+        const e = document.querySelector('#size'); e.value = '3'; e.dispatchEvent(new Event('change', { bubbles: true }));
+        return st.cook.correctedAt_s; })()`);
+      check(atTap === null, 'committed before the settle');
       s = await corrected(tab, null);
       const heavier = deadlines(s).cookEnd_s;
       check(heavier > pull0, `heavier, later: ${(heavier - pull0).toFixed(1)} s`);
+      await later(tab);
       await pick(tab, '#size', '1');
-      s = await corrected(tab, s.cook?.correctedAt_s ?? null);
+      s = await corrected(tab, s);
       const lighter = deadlines(s).cookEnd_s;
       check(lighter < pull0, `lighter, sooner: ${(lighter - pull0).toFixed(1)} s`);
+      await later(tab);
       await pick(tab, '#size', '2');
-      s = await corrected(tab, s.cook?.correctedAt_s ?? null);
+      s = await corrected(tab, s);
       await tab.until('(await window.__e2e.snap()).decided', 'planned on its pot');
       s = await tab.snap();
       check(near(deadlines(s).cookEnd_s, pull0, 1e-6), `back gives back: ${(deadlines(s).cookEnd_s - pull0).toFixed(6)} s`);
@@ -667,7 +793,7 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
   'overdue-and-back': {
     what: 'C3 step 3: a correction that makes the egg overdue rings at once; changed back within the grace, the pull is cancelled',
     run: async (h) => {
-      const tab = await h.ctx.open('/');
+      const tab = await h.ctx.open(STOPPED);
       await start(tab, 'hot');
       await tab.until('(await window.__e2e.snap()).decided', 'the pot planned');
       const pull0 = deadlines(await tab.snap()).cookEnd_s;
@@ -676,12 +802,12 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
       await pick(tab, '#size', '0');
       let s = await corrected(tab, null);
       s = await tab.phase('PULL');
-      await sleep(300);
+      await tab.settle();
       let osc = (await tab.osc()).slice(base);
       check(osc.length === 75 && (osc[0].at ?? 0) - osc[0].made < 0.1, `rang at once: ${osc.length}`);
       await tab.shift(5);
       await pick(tab, '#size', '2');
-      s = await corrected(tab, s.cook?.correctedAt_s ?? null);
+      s = await corrected(tab, s);
       s = await tab.phase('COOKING');
       const ev = storedCook(s)?.events;
       check(ev?.pulled === null && ev?.rangAt_s === null, `nothing observed: ${JSON.stringify(ev)}`);
@@ -689,7 +815,7 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
       base = (await tab.osc()).length;
       await tab.shiftTo(deadlines(s).cookEnd_s + 1);
       await tab.phase('PULL');
-      await sleep(300);
+      await tab.settle();
       osc = (await tab.osc()).slice(base);
       check(osc.length === 75, `the pull rings again at its time: ${osc.length}`);
       return 'overdue: Pull and 75 at once; back within the grace: Cooking, nothing written; the pull rang again';
@@ -699,7 +825,7 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
   'drag-no-ring': {
     what: 'C3 step 3: a drag through an overdue level rings nothing before release; the egg shows the aim while held',
     run: async (h) => {
-      const tab = await h.ctx.open('/');
+      const tab = await h.ctx.open(STOPPED);
       let s = await start(tab, 'hot');
       await tab.until('(await window.__e2e.snap()).decided', 'the pot planned');
       s = await tab.snap();
@@ -709,19 +835,23 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
       const base = (await tab.osc()).length;
       await drag(tab, [0.3, 0.1, 0]);
       await tab.until("document.getElementById('eggSection').dataset.egg === 'aim'", 'the aim while held');
+      // Held two seconds (a person's span, past every settle), and whatever
+      // the page had pending done.
       await sleep(2000);
+      await tab.settle();
       s = await tab.snap();
       check(s.phase === 'COOKING' && s.cook?.correctedAt_s === null, `held: ${s.phase}, corrected ${s.cook?.correctedAt_s}`);
       check((await tab.osc()).length === base, 'nothing rang while held');
       await drag(tab, [0.2, level], true, false);
-      await sleep(300);
+      await tab.settle();
       s = await tab.snap();
       check(s.phase === 'COOKING' && s.cook?.correctedAt_s === null, `released at the level it had: ${s.phase}`);
       check((await tab.osc()).length === base, 'nothing rang on release');
-      await tab.until("document.getElementById('eggSection').dataset.egg === 'live'", 'the live egg again', 4000);
+      const egg = await tab.eval<string>("document.getElementById('eggSection').dataset.egg");
+      check(egg === 'live', `the live egg again once the aim's settle is over: ${egg}`);
       // Released at an overdue level: it rings then.
       await drag(tab, [0], true);
-      s = await corrected(tab, null, 3000);
+      s = await corrected(tab, null);
       s = await tab.phase('PULL');
       check((await tab.osc()).length >= base + 75, 'rang on release');
       return 'held through runny: no ring, the aim drawn; back and released: nothing; released runny: Pull, rang';
@@ -731,7 +861,7 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
   'start-time': {
     what: 'C3 step 3: the start corrected in its clause, a minute at a time, and stopped with its reason at now, the boil pressed, and two hours back',
     run: async (h) => {
-      const tab = await h.ctx.open('/');
+      const tab = await h.ctx.open(STOPPED);
       let s = await start(tab, 'cold');
       const id_s = (s.cook?.id_ms ?? 0) / 1000;
       const start0 = s.cook?.startedAt_s ?? 0;
@@ -747,7 +877,7 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
       check(limit === now, `the reason at now: "${limit}"`);
       s = await corrected(tab, null);
       const late = (s.cook?.startedAt_s ?? 0) - start0;
-      check(late > 145 && late < 160, `in at now: ${late.toFixed(1)} s later`);
+      check(near(late, 150, 1e-6), `in at now, 150 s on: ${late.toFixed(1)} s later`);
       // The boil pressed, then + again: no later than the press.
       await tab.shift(240);
       s = await boil(tab);
@@ -757,13 +887,14 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
       const atBoil = await tab.eval<string>("document.getElementById('startedAtLimit').textContent");
       check(atBoil.includes(await tab.eval<string>(`(async () => (await window.__e2e.ui('copy')).timeOfDay(${tap * 1000}))()`)),
         `the reason at the boil names its time: "${atBoil}"`);
-      s = await corrected(tab, s.cook?.correctedAt_s ?? null);
+      s = await corrected(tab, s);
       check(s.cook?.startedAt_s === tap, `in at the press: ${(s.cook?.startedAt_s ?? 0) - tap}`);
       // − all the way back, by the keyboard: two hours before Start was pressed.
+      await later(tab);
       await tab.eval(`(() => { const b = document.getElementById('startedAtLess');
         for (let i = 0; i < 140; i++) b.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 0 })); })()`);
       const early = await tab.eval<string>("document.getElementById('startedAtLimit').textContent");
-      s = await corrected(tab, s.cook?.correctedAt_s ?? null);
+      s = await corrected(tab, s);
       check(near(s.cook?.startedAt_s ?? 0, id_s - 7200, 1e-6), `two hours back: ${((s.cook?.startedAt_s ?? 0) - id_s).toFixed(1)} s`);
       return `"${clause}"; "${limit}"; "${atBoil}"; "${early}"`;
     },
@@ -772,7 +903,7 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
   'settings-mid-cook': {
     what: 'C3 step 3: Settings is open while a cook runs; its water corrects the cook; the pull brings the egg back',
     run: async (h) => {
-      const tab = await h.ctx.open('/');
+      const tab = await h.ctx.open(STOPPED);
       let s = await start(tab, 'hot');
       await tab.until('(await window.__e2e.snap()).decided', 'the pot planned');
       const pull0 = deadlines(await tab.snap()).cookEnd_s;
@@ -796,11 +927,11 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
   },
 
   'two-tabs-own-cooks': {
-    what: 'review 2.5: a correction in one tab leaves another tab\'s cook and its controls alone (real clock)',
+    what: 'review 2.5: a correction in one tab leaves another tab\'s cook and its controls alone (both stopped at one moment)',
     run: async (h) => {
-      const a = await h.ctx.open('/');
+      const a = await h.ctx.open(STOPPED);
       await start(a, 'hot');
-      const b = await h.ctx.open('/');
+      const b = await h.ctx.open(`${STOPPED}&at=${new Date(await a.now()).toISOString()}`);
       await b.phase('COOKING');
       // B puts A's cook down and starts its own: two tabs, two cooks.
       await b.click('#secondary');
@@ -814,7 +945,7 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
       const sa = await corrected(a, null);
       check(sa.cook?.choices.mass_kg !== sb.cook?.choices.mass_kg, 'A corrected its egg');
       await b.until('JSON.parse(localStorage.getItem(\'aet.settings.v1\')).sizeIndex === 3', 'A\'s correction in the settings');
-      await sleep(500);
+      await b.settle();
       sb = await b.snap();
       check(sb.cook?.id_ms === idB, 'B runs its own cook');
       check(sb.cook?.choices.mass_kg === 0.068 && near(deadlines(sb).cookEnd_s, pullB, 1e-6), 'B\'s cook untouched');
@@ -833,7 +964,7 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
   'record-corrected-at-done': {
     what: 'C3 step 3: a correction at Done changes the record, planned on the calibration before this egg: changed back, the record is the first to the bit',
     run: async (h) => {
-      const tab = await h.ctx.open('/');
+      const tab = await h.ctx.open(STOPPED);
       let s = await start(tab, 'hot');
       await tab.until('(await window.__e2e.snap()).decided', 'the pot planned');
       s = await tab.snap();
@@ -855,8 +986,9 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
       check(heavier.yolkWord === 'runny', `the answer kept: ${heavier.yolkWord}`);
       check(heavier.recommended_s === first.recommended_s, 'the time that ran is the time that ran');
       check(JSON.stringify(heavier.forecast) !== JSON.stringify(first.forecast), 'the forecast is the heavier egg\'s');
+      await later(tab);
       await pick(tab, '#size', '2');
-      s = await corrected(tab, s.cook?.correctedAt_s ?? null);
+      s = await corrected(tab, s);
       await tab.until(`JSON.stringify((await window.__e2e.snap()).log[0].egg) === ${JSON.stringify(JSON.stringify(first.egg))}`,
         'the record back');
       await tab.until("(await window.__e2e.snap()).eggsLogged === 1 && (await window.__e2e.ui('calibration')).eggsBehind() === 0",
@@ -864,7 +996,7 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
       const back = (await tab.snap()).log[0];
       check(JSON.stringify(back.forecast) === JSON.stringify(first.forecast),
         `changed back, the forecast is the first, not one that knew Runny: ${JSON.stringify(back.forecast)} vs ${JSON.stringify(first.forecast)}`);
-      await sleep(300);
+      await tab.settle();
       const peak1 = await tab.eval<string>("document.getElementById('donenessPeak').textContent");
       check(peak1 === peak0, `Done shows the cook as it ran: "${peak1}" (was "${peak0}")`);
       return `heavier: a new forecast, the answer kept; back: the first forecast to the bit, "${peak1}"`;
@@ -874,7 +1006,7 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
   'slider-after-pull': {
     what: 'C3 step 3: after the pull the slider only previews: no correction, no record changed, and back to the level the egg ran at',
     run: async (h) => {
-      const tab = await h.ctx.open('/');
+      const tab = await h.ctx.open(STOPPED);
       let s = await start(tab, 'hot');
       await tab.until('(await window.__e2e.snap()).decided', 'the pot planned');
       s = await tab.snap();
@@ -891,7 +1023,9 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
       await drag(tab, [0.6, 0.9]);
       await tab.until("document.getElementById('eggSection').dataset.egg === 'aim'", 'the aim while held');
       await drag(tab, [0.9], true, false);
-      await tab.until("document.getElementById('eggSection').dataset.egg === 'ran'", 'the egg as it ran again', 5000);
+      await tab.settle();
+      const egg = await tab.eval<string>("document.getElementById('eggSection').dataset.egg");
+      check(egg === 'ran', `the egg as it ran again once the aim's settle is over: ${egg}`);
       s = await tab.snap();
       check(s.cook?.correctedAt_s === null, `no correction: ${s.cook?.correctedAt_s}`);
       check(JSON.stringify(s.log[0]) === first, 'the record as it was');
@@ -904,7 +1038,7 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
   'still-in-water': {
     what: 'C3 step 4: a correction after the grace ran out asks "still in the water?"; nothing past it rings or shows; each answer',
     run: async (h) => {
-      const tab = await h.ctx.open('/');
+      const tab = await h.ctx.open(STOPPED);
       const words = async (key: string): Promise<string> => tab.eval<string>(
         `(async () => (await window.__e2e.ui('copy')).t(${JSON.stringify(key)}))()`);
       const ask = await words('ask.stillIn');
@@ -928,7 +1062,7 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
       check(await tab.eval<boolean>("!document.getElementById('stillOut').hidden"), 'no, on screen');
       // The cooling's counted end passes under the question: nothing.
       await tab.shift(600);
-      await sleep(300);
+      await tab.settle();
       s = await tab.snap();
       check(s.phase === 'COOLING' && s.label === ask && !s.feedback, `nothing past the question: ${s.phase}, "${s.label}"`);
       check(storedCook(s)?.events.cooledAt_s === null, 'no cooling written');
@@ -957,7 +1091,7 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
   'running-lines': {
     what: 'C3 step 5: corrected to cold and left heating, the slow hob counts the time heated up; a correction the white never sets in says so',
     run: async (h) => {
-      const tab = await h.ctx.open('/');
+      const tab = await h.ctx.open(STOPPED);
       let s = await start(tab, 'hot');
       await tab.until('(await window.__e2e.snap()).decided', 'the pot planned');
       const start_s = s.cook?.startedAt_s ?? 0;
@@ -966,10 +1100,10 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
       s = await corrected(tab, null);
       check(s.phase === 'HEATING' && !s.lengthened, `Heating on the guess: ${s.phase}, ${s.lengthened}`);
       await tab.shiftTo(start_s + 16 * 60);
-      await sleep(300);
+      await tab.settle();
       s = await tab.phase('HEATING');
       check(s.lengthened, 'the slow hob lengthened');
-      check(s.digits === '16:00' || s.digits === '16:01', `the time heated, counting up: ${s.digits}`);
+      check(s.digits === '16:00', `the time heated, counting up: ${s.digits}`);
       const slow = `${s.digits}, "${s.subline}"`;
       await tab.click('#secondary');
       await tab.phase('IDLE');
@@ -977,17 +1111,21 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
       // corrected to it mid-cook, the white never sets, and the slot says so.
       await tab.click('#startHot');
       s = await start(tab, 'hot');
+      await later(tab);
       await tab.click('#heatOff');
       s = await corrected(tab, null);
+      await later(tab);
       await pick(tab, '#size', '0');
-      s = await corrected(tab, s.cook?.correctedAt_s ?? null);
+      s = await corrected(tab, s);
+      await later(tab);
       await tab.eval(`(() => { const e = document.getElementById('eggCount'); e.value = '1';
         e.dispatchEvent(new Event('input', { bubbles: true })); })()`);
-      s = await corrected(tab, s.cook?.correctedAt_s ?? null);
+      s = await corrected(tab, s);
+      await later(tab);
       await tab.eval(`(() => { const e = document.getElementById('litres'); e.value = '0.5';
         e.dispatchEvent(new Event('input', { bubbles: true })); })()`);
-      s = await corrected(tab, s.cook?.correctedAt_s ?? null);
-      await sleep(300);
+      s = await corrected(tab, s);
+      await tab.settle();
       const warn = await tab.eval<{ hidden: boolean; text: string }>(
         "(() => { const w = document.getElementById('warn'); return { hidden: w.hidden, text: w.textContent }; })()");
       const never = await tab.eval<string>("(async () => (await window.__e2e.ui('copy')).t('refusal.whiteNeverSets'))()");
@@ -999,7 +1137,7 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
   'hot-start': {
     what: 'a hot start: in, the pull, out, the cooling, Done, Start again logs the unanswered egg',
     run: async (h) => {
-      const tab = await h.ctx.open('/');
+      const tab = await h.ctx.open(STOPPED);
       let s = await start(tab, 'hot');
       labelSays(s);
       await tab.until('(await window.__e2e.snap()).decided', 'the pot planned');
@@ -1028,7 +1166,7 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
   cancel: {
     what: 'Cancel while heating and while cooking: nothing logged, the cook gone, the boil remembered',
     run: async (h) => {
-      const tab = await h.ctx.open('/');
+      const tab = await h.ctx.open(STOPPED);
       let s = await start(tab, 'cold');
       await tab.click('#secondary');
       s = await tab.phase('IDLE');
@@ -1041,7 +1179,7 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
       s = await tab.phase('IDLE');
       check(s.stored === null && s.log.length === 0, 'Cancel while cooking: nothing logged');
       const pans = JSON.parse((await tab.storage('aet.boil.v1')) ?? '{}') as Record<string, number>;
-      check(Object.values(pans).some((v) => near(v, 300, 3)), `the boil remembered at Cancel: ${JSON.stringify(pans)}`);
+      check(Object.values(pans).some((v) => near(v, 300, 1e-6)), `the boil remembered at Cancel: ${JSON.stringify(pans)}`);
       return `pans ${JSON.stringify(pans)}`;
     },
   },
@@ -1049,7 +1187,7 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
   reload: {
     what: 'a reload at Heating, Cooking, Pull, Cooling and Done: the same deadlines, nothing lost',
     run: async (h) => {
-      const tab = await h.ctx.open('/');
+      const tab = await h.ctx.open(STOPPED);
       await start(tab, 'cold');
       const notes: string[] = [];
       const again = async (where: string): Promise<Snap> => {
@@ -1097,7 +1235,7 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
   'woken-past-pull': {
     what: 'review 1.1: a tab woken 25 s past the pull rings it; one woken past the cooling rings the pull, not Done',
     run: async (h) => {
-      const tab = await h.ctx.open('/');
+      const tab = await h.ctx.open(STOPPED);
       await start(tab, 'cold');
       await tab.shift(470);
       let s = await boil(tab);
@@ -1111,7 +1249,7 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
       let base = osc.length;
       await tab.shiftTo(d.cookEnd_s + 25);
       s = await tab.phase('COOLING');
-      await sleep(300);
+      await tab.settle();
       osc = await tab.osc();
       const now = osc.slice(base);
       check(now.length === 75 && (now[0].at ?? 0) - now[0].made < 0.1, `75 rung at once, ${now.length}`);
@@ -1120,7 +1258,7 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
       base = osc.length;
       await tab.shiftTo(deadlines(s).coolEnd_s + 1);
       s = await tab.phase('DONE');
-      await sleep(300);
+      await tab.settle();
       const done = (await tab.osc()).length - base;
       check(done === 50, `Done's 50, ${done}`);
       // A second cook, woken straight past the cooling: the pull rings, not Done.
@@ -1132,7 +1270,7 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
       base = (await tab.osc()).length;
       await tab.shiftTo(deadlines(s).coolEnd_s + 600);
       s = await tab.phase('DONE');
-      await sleep(300);
+      await tab.settle();
       const rung = (await tab.osc()).length - base;
       check(rung === 75, `past the cooling: the pull's 75, not Done's 50: ${rung}`);
       return 'tap: 75 ahead; +25 s: 75 at once, Cooling; Done: 50; straight to Done: 75';
@@ -1140,21 +1278,22 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
   },
 
   'two-tabs': {
-    what: 'review 1.2: a second tab follows the first one\'s tap and writes nothing back over it (real clock)',
+    what: 'review 1.2: a second tab follows the first one\'s tap and writes nothing back over it (both stopped at one moment)',
     run: async (h) => {
-      const a = await h.ctx.open('/');
+      const a = await h.ctx.open(STOPPED);
       await start(a, 'cold');
-      const b = await h.ctx.open('/');
+      const b = await h.ctx.open(`${STOPPED}&at=${new Date(await a.now()).toISOString()}`);
       let sb = await b.phase('HEATING');
       check(storedCook(sb)?.id_ms === (await a.snap()).cook?.id_ms, 'B took up A\'s cook');
       await b.until('(await window.__e2e.snap()).deadlines !== null', 'B planned');
       await a.click('#primary');
       await a.phase('COOKING');
-      sb = await b.phase('COOKING', 5000);
-      // Both tabs' surfaces in, then a moment for anything B would write.
+      sb = await b.phase('COOKING');
+      // Both tabs' surfaces in, then all B would write written.
       await a.until('(await window.__e2e.snap()).decided', 'A planned on the measured pot');
       await b.until('(await window.__e2e.snap()).decided', 'B planned on the measured pot');
-      await sleep(1500);
+      await a.settle();
+      await b.settle();
       const stored = storedCook(await a.snap());
       check(stored?.events.boilAt_s !== null, 'the tap still stored');
       const bWrites = (await b.writes()).filter((w) => w.key === 'aet.cook.v4')
@@ -1170,7 +1309,7 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
   'too-old': {
     what: 'review 2.2: a cold start never tapped is ended at two hours, in the tab that runs it',
     run: async (h) => {
-      const tab = await h.ctx.open('/');
+      const tab = await h.ctx.open(STOPPED);
       let s = await start(tab, 'cold');
       const start_s = s.cook?.startedAt_s ?? 0;
       await tab.shiftTo(start_s + 7100);
@@ -1187,7 +1326,7 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
   'final-egg': {
     what: 'review 2.3: an egg final by the clock takes no more answers',
     run: async (h) => {
-      const tab = await h.ctx.open('/');
+      const tab = await h.ctx.open(STOPPED);
       let s = await start(tab, 'hot');
       await tab.until('(await window.__e2e.snap()).decided', 'the pot planned');
       s = await tab.snap();
@@ -1203,7 +1342,7 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
       const final1 = await tab.eval<number>("window.__e2e.ui('update').then((m) => m.finalEggs())");
       check(final1 === 1, `three hours on: ${final1} final`);
       await tab.click('.wb[data-white="tender"]');
-      await sleep(300);
+      await tab.settle();
       s = await tab.snap();
       check(s.log.length === 1 && s.log[0].white === null, `Tender not taken: ${s.log[0].white}`);
       check(!s.feedback, 'the questions put away');
@@ -1217,7 +1356,7 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
   'done-as-ran': {
     what: 'review 2.4: Done after an answer and a reload shows the cook as it ran',
     run: async (h) => {
-      const tab = await h.ctx.open('/');
+      const tab = await h.ctx.open(STOPPED);
       let s = await start(tab, 'hot');
       await tab.until('(await window.__e2e.snap()).decided', 'the pot planned');
       s = await tab.snap();
@@ -1252,19 +1391,19 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
   'slow-hob': {
     what: 'a slow hob: past the guess, the clock counts the time heated up, still Heating',
     run: async (h) => {
-      const tab = await h.ctx.open('/');
+      const tab = await h.ctx.open(STOPPED);
       let s = await start(tab, 'cold');
       const start_s = s.cook?.startedAt_s ?? 0;
       await tab.shiftTo(start_s + 16 * 60);
-      await sleep(300);
+      await tab.settle();
       s = await tab.phase('HEATING');
       check(s.lengthened, 'the plan lengthened');
       const first = s.digits;
-      check(first === '16:00' || first === '16:01', `the time heated, ${first}`);
+      check(first === '16:00', `the time heated, ${first}`);
       await tab.shift(65);
-      await sleep(300);
+      await tab.settle();
       s = await tab.snap();
-      check(s.phase === 'HEATING' && (s.digits === '17:05' || s.digits === '17:06'), `counting up: ${s.digits}`);
+      check(s.phase === 'HEATING' && s.digits === '17:05', `counting up: ${s.digits}`);
       return `${first}, then ${s.digits}; "${s.subline}"`;
     },
   },
@@ -1272,7 +1411,7 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
   'old-cooks': {
     what: 'a 0.4 cook under aet.cook.v2 and an earlier 0.5 one under v3: kept aside, the page idle',
     run: async (h) => {
-      const tab = await h.ctx.open('/');
+      const tab = await h.ctx.open(STOPPED);
       const v2 = JSON.stringify({ machine: { phase: 'COOKING' }, ticket: { startedAt: Date.now() - 60000 } });
       const v3 = JSON.stringify({ cook: { id_ms: Date.now() - 30000 }, answers: 'none' });
       await tab.eval(`localStorage.setItem('aet.cook.v2', ${JSON.stringify(v2)});
@@ -1310,7 +1449,8 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
       await tab.phase('DONE');
       await tab.click('.fb[data-yolk="jammy"]');
       await tab.until('(await window.__e2e.snap()).log.length === 1', 'Jammy logged');
-      await sleep(1500);
+      await tab.settle();
+      check((await tab.sends()) === 0, `nothing sent while the egg is open: ${await tab.sends()} requests`);
       check(h.posts().length === posts0, `nothing sent while the egg is open: ${h.posts().slice(posts0).join('; ')}`);
       await tab.click('#primary');
       await tab.phase('IDLE');
@@ -1324,7 +1464,7 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
   'dev-clock-shares-nothing': {
     what: 'nothing is sent from a log the development clock has touched, even with the clock off',
     run: async (h) => {
-      const tab = await h.ctx.open('/?at=-1m');
+      const tab = await h.ctx.open(`${STOPPED}&at=-1m`);
       await tab.click('#shareSetting');
       await tab.until("(await window.__e2e.ui('share')).shareState().on", 'sharing on');
       const posts0 = h.posts().length;
@@ -1337,9 +1477,12 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
       await tab.phase('DONE');
       await tab.click('#primary');
       await tab.until('(await window.__e2e.snap()).log.length === 1', 'the egg logged');
+      await tab.settle();
+      const before = await tab.sends();
       await tab.eval('window.aetClock.off()');
       await tab.reload();
-      await sleep(1500);
+      await tab.settle();
+      check(before === 0 && (await tab.sends()) === 0, `nothing sent: ${before} with the clock on, ${await tab.sends()} off`);
       check(h.posts().length === posts0, `nothing sent: ${h.posts().slice(posts0).join('; ')}`);
       return 'the egg logged, nothing sent, the clock on or off';
     },

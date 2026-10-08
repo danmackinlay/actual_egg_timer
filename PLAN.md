@@ -13,7 +13,8 @@ the same model, refusals, particle filter and choice of time, the same
 catalogue of words in two Englishes (Phase F but for Czech), and the same
 layout (`UI.md`). `npm test` runs 389 tests, all passing (5b pins E3's known
 limit); `npm run e2e` drives the web app through 28 scenarios in headless
-Chrome, all passing. `npm run validate` passes 29/29, `swift test` passes 155 tests
+Chrome, each stepping a stopped clock, all passing on a quiet machine and
+a loaded one. `npm run validate` passes 29/29, `swift test` passes 155 tests
 in 38 suites, and the fit's pytest 9. **Pushed on 29 September** at `5ff6940`, the owner's
 call: Netlify serves it at actualeggtimer.netlify.app, and the first run of
 `.github/workflows/verify.yml` passed. The iOS app runs from Xcode on the owner's
