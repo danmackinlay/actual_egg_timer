@@ -3,13 +3,33 @@
  *
  * Nothing here accumulates ticks. A backgrounded tab has its timers clamped to
  * once a minute or stopped outright, so every displayed value is derived from
- * `Date.now()` against an absolute deadline, and the display is reconciled on
- * `visibilitychange`. The audio alarm is scheduled ahead on the AudioContext
- * clock for the same reason: that clock keeps running when setInterval does not.
+ * the clock (`nowMs`, now.ts) against an absolute deadline, and the display
+ * is reconciled on `visibilitychange`. The audio alarm is scheduled ahead on
+ * the AudioContext clock for the same reason: that clock keeps running when
+ * setInterval does not.
  */
+
+import { clockSpeed, nowMs, onClockChange } from './now.js';
 
 /** Nominal tick, ms. Only affects how often we repaint, never the arithmetic. */
 const TICK_MS = 200;
+
+/** The tick, real ms: 200 on the real clock. On the development clock
+ *  (now.ts) it is 0.2 s of the cook's time, never under 16 ms, so at x60 a
+ *  tick is about a second of the cook and still sees the 20-s pull. */
+function tickMs(): number {
+  return Math.max(16, TICK_MS / clockSpeed());
+}
+
+/** The running ticker's way to take up a new speed, if one runs. */
+let ticking: (() => void) | null = null;
+
+// The development clock set (never on the live site): the tick takes up its
+// speed, and the pull's beeps are scheduled again for where it now is.
+onClockChange(() => {
+  if (ticking !== null) ticking();
+  armPull();
+});
 
 export interface Ticker {
   stop(): void;
@@ -18,7 +38,11 @@ export interface Ticker {
 /** Repaint on a timer, and again whenever the tab comes back to the foreground
  *  or the window is refocused, so a throttled tab snaps straight to the truth. */
 export function startTicker(onTick: () => void): Ticker {
-  const handle = window.setInterval(onTick, TICK_MS);
+  let handle = window.setInterval(onTick, tickMs());
+  ticking = (): void => {
+    window.clearInterval(handle);
+    handle = window.setInterval(onTick, tickMs());
+  };
   const reconcile = (): void => {
     onTick();
   };
@@ -28,6 +52,7 @@ export function startTicker(onTick: () => void): Ticker {
   return {
     stop(): void {
       window.clearInterval(handle);
+      ticking = null;
       document.removeEventListener('visibilitychange', reconcile);
       window.removeEventListener('focus', reconcile);
       window.removeEventListener('pageshow', reconcile);
@@ -215,7 +240,8 @@ function armPull(): void {
   pull.beeps = [];
   const ctx = audio;
   if (ctx === null || muted || pull.at_ms === null) return;
-  const ahead_s = (pull.at_ms - Date.now()) / 1000;
+  // Cook seconds ahead, on an audio clock that runs in real ones.
+  const ahead_s = (pull.at_ms - nowMs()) / 1000 / clockSpeed();
   if (ahead_s <= 0.05) return;
   pull.start = ctx.currentTime + ahead_s;
   pull.beeps = scheduleRing(ctx, pull.start, true);

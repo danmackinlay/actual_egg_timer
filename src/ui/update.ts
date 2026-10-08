@@ -33,6 +33,7 @@ import {
 } from './store.js';
 import { setMuted } from './clock.js';
 import { show, useUnits } from './units.js';
+import { forgetDevClockUse, nowMs } from './now.js';
 
 /** The writes and solves waiting to coalesce, and the language last asked for. */
 const pending = {
@@ -82,7 +83,7 @@ export function applyAnswer(answer: LevelAnswer): Solution {
  *  `replan`, from its own choices (cook.ts). */
 export function recompute(): void {
   if (state.cook !== null) {
-    render(Date.now());
+    render(nowMs());
     return;
   }
   // No pan, no solve. The sous-vide answer comes from src/core/sousvide.ts and
@@ -93,7 +94,7 @@ export function recompute(): void {
     state.decision = null;
     state.outcome = null;
     state.profile = null;
-    render(Date.now());
+    render(nowMs());
     return;
   }
   const boil = timeToBoil_s();
@@ -104,7 +105,7 @@ export function recompute(): void {
   state.solution = state.chosen?.solution ?? answer.solution;
   state.decision = state.chosen?.decision ?? null;
   state.outcome = state.chosen?.outcome ?? null;
-  render(Date.now());
+  render(nowMs());
 }
 
 /** Coalesce solves: a solve is tens of milliseconds, which is too long to run
@@ -208,7 +209,7 @@ function relabel(): void {
   forgetDrawnWords();
   renderCalibNote(learning());
   if (state.cook === null) recompute();
-  else render(Date.now());
+  else render(nowMs());
 }
 
 /* ------------------------------------------------------------ calibration */
@@ -216,6 +217,8 @@ function relabel(): void {
 /** Take it all back: the posterior and the pan. */
 export function forgetAll(): void {
   state.calib = clearCalibration();
+  // The log is gone, and with it any egg cooked on the development clock.
+  forgetDevClockUse();
   // The next egg is a new cook's, under a new id (share.ts).
   forgetShare();
   state.boilMemory = {};
@@ -257,7 +260,7 @@ function openEgg(now_s: number): number | null {
  *  (`openEggId`, design/one-screen.md section 4, "Which eggs are final"). */
 export function finalEggs(): number {
   const log = keptState().log;
-  const open = openEgg(Date.now() / 1000);
+  const open = openEgg(nowMs() / 1000);
   if (open === null) return log.length;
   const at = log.findIndex((r) => (r.id ?? null) === open);
   return at < 0 ? log.length : at;
