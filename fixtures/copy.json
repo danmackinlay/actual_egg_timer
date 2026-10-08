@@ -307,6 +307,14 @@
     },
     {
       "locale": "en-x-1750",
+      "key": "spoken.stillIn",
+      "args": {
+        "time": "1 minute 5 seconds"
+      },
+      "text": "Are the eggs yet in the water? They were due out 1 minute 5 seconds ago."
+    },
+    {
+      "locale": "en-x-1750",
       "key": "spoken.seconds",
       "args": {
         "seconds": 45
@@ -1987,6 +1995,14 @@
         "seconds": 17
       },
       "text": "cooling starts on its own in 17 s"
+    },
+    {
+      "locale": "en",
+      "key": "spoken.stillIn",
+      "args": {
+        "time": "1 minute 5 seconds"
+      },
+      "text": "Are the eggs still in the water? They were due out 1 minute 5 seconds ago."
     },
     {
       "locale": "en",

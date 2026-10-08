@@ -22,7 +22,7 @@ import { eggsBehind, exportResults, keptState, learn, loadCalibration } from './
 import { setMuted } from './clock.js';
 import { applyConstantsToDom, applySettingsToDom, buildSizeOptions } from './controls.js';
 import {
-  cookElsewhere, cookOpen, lookAgain, onPrimary, persistCook, replanCook, reset, restoreCook,
+  cookElsewhere, cookOpen, lookAgain, onPrimary, onStillOut, persistCook, replanCook, reset, restoreCook,
 } from './cook.js';
 import { bindDom, el, page } from './dom.js';
 import { wireFeedback } from './feedback.js';
@@ -76,6 +76,7 @@ export function boot(): void {
   wireStartTime();
   page().primary.addEventListener('click', onPrimary);
   page().secondary.addEventListener('click', reset);
+  page().stillOut.addEventListener('click', onStillOut);
   page().mute.addEventListener('click', onToggleMute);
   wireForget(forgetAll);
   wireExport(() => exportResults(shareState().uid, nowMs()));

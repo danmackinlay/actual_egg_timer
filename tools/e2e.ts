@@ -897,6 +897,59 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
     },
   },
 
+  'still-in-water': {
+    what: 'C3 step 4: a correction after the grace ran out asks "still in the water?"; nothing past it rings or shows; each answer',
+    run: async (h) => {
+      const tab = await h.ctx.open('/');
+      const words = async (key: string): Promise<string> => tab.eval<string>(
+        `(async () => (await window.__e2e.ui('copy')).t(${JSON.stringify(key)}))()`);
+      const ask = await words('ask.stillIn');
+      // The alarm rang and its grace ran out, unanswered: the clock assumed
+      // the egg came out. Then the cook says it went into cold water.
+      const asked = async (): Promise<Snap> => {
+        let s = await start(tab, 'hot');
+        await tab.until('(await window.__e2e.snap()).decided', 'the pot planned');
+        s = await tab.snap();
+        await tab.shiftTo(deadlines(s).cookEnd_s + 25);
+        s = await tab.phase('COOLING');
+        check(storedCook(s)?.events.pulled?.by === 'timeout', 'the clock assumed the pull');
+        await tab.click('#startCold');
+        await corrected(tab, null);
+        await tab.until(`(await window.__e2e.snap()).label === ${JSON.stringify(ask)}`, 'the question');
+        return tab.snap();
+      };
+      let s = await asked();
+      const osc0 = (await tab.osc()).length;
+      check(s.primary === await words('ask.stillIn.yes'), `yes: ${s.primary}`);
+      check(await tab.eval<boolean>("!document.getElementById('stillOut').hidden"), 'no, on screen');
+      // The cooling's counted end passes under the question: nothing.
+      await tab.shift(600);
+      await sleep(300);
+      s = await tab.snap();
+      check(s.phase === 'COOLING' && s.label === ask && !s.feedback, `nothing past the question: ${s.phase}, "${s.label}"`);
+      check(storedCook(s)?.events.cooledAt_s === null, 'no cooling written');
+      check((await tab.osc()).length === osc0, 'nothing rang');
+      await tab.click('#primary');
+      s = await tab.phase('HEATING');
+      check(storedCook(s)?.events.pulled === null, 'still in: the assumed pull dropped');
+      const yes = `still in: Heating again, "${s.primary}"`;
+      // Again, and the other answer.
+      await tab.click('#secondary');
+      await tab.phase('IDLE');
+      await tab.click('#startHot');
+      s = await asked();
+      await tab.click('#stillOut');
+      await tab.until(`(await window.__e2e.snap()).label !== ${JSON.stringify(ask)}`, 'the question answered');
+      s = await tab.snap();
+      const pulled = storedCook(s)?.events.pulled;
+      check(pulled?.by === 'timeout' && pulled.confirmed, `out: the pull stands, confirmed: ${JSON.stringify(pulled)}`);
+      check(s.phase === 'COOLING' || s.phase === 'DONE', `out: ${s.phase}`);
+      await tab.until('(await window.__e2e.snap()).cook.asRan?.correctedAt_s === (await window.__e2e.snap()).cook.correctedAt_s',
+        'the record made again for cold water');
+      return `${yes}; out: ${s.phase}, the pull confirmed, the record corrected`;
+    },
+  },
+
   'hot-start': {
     what: 'a hot start: in, the pull, out, the cooling, Done, Start again logs the unanswered egg',
     run: async (h) => {

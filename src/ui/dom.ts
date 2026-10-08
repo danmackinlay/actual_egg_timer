@@ -95,6 +95,7 @@ function findDom() {
     hintInfo: el<HTMLButtonElement>('hintInfo'),
     hintMore: el<HTMLParagraphElement>('hintMore'),
     secondary: el<HTMLButtonElement>('secondary'),
+    stillOut: el<HTMLButtonElement>('stillOut'),
     feedback: el<HTMLDivElement>('feedback'),
     calibNote: el<HTMLParagraphElement>('calibNote'),
     learnedNote: el<HTMLParagraphElement>('learnedNote'),

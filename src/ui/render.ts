@@ -390,13 +390,15 @@ function renderReadout(now_ms: number, sol: Solution, warning: string): void {
   page().primary.disabled = view.primaryDisabled;
   page().secondary.hidden = !view.secondaryVisible;
   if (view.secondaryVisible) page().secondary.textContent = t('action.cancel');
+  // "Still in the water?": the primary says yes, and this says no.
+  page().stillOut.hidden = !view.asking;
 
   // The model is calibrated against the literature, not against this kitchen.
   // Asking once per egg is what closes that gap. Both questions stay on screen
   // until the cook moves on, answered or not; a reload after an answer puts
   // them away, since the second could no longer be folded.
   const said = answersNow().kind;
-  page().feedback.hidden = phase !== 'DONE' || said === 'beforeReload';
+  page().feedback.hidden = phase !== 'DONE' || said === 'beforeReload' || view.asking;
   if (!page().feedback.hidden && said !== 'live') renderCalibNote(learning());
   renderProbe(phase, shown);
   if (!page().feedback.hidden) renderTarget(shown);
@@ -410,7 +412,8 @@ function renderReadout(now_ms: number, sol: Solution, warning: string): void {
   // The live region carries a coarse announcement, not a per-second one: the
   // ticking digits are aria-hidden, so a screen reader hears the phase and the
   // minute rather than being flooded once a second.
-  const announcement = t('spoken.announcement', { label: view.label, spoken: view.spoken });
+  // The question is its own announcement: it says what it asks.
+  const announcement = view.asking ? view.spoken : t('spoken.announcement', { label: view.label, spoken: view.spoken });
   const minute = view.digits.split(':')[0];
   const key = `${phase}|${minute}`;
   if (key !== drawn.announced) {

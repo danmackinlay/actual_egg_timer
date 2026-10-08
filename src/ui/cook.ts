@@ -20,7 +20,8 @@ import { Phase } from '../core/policy.js';
 import { WhiteReport, YolkWord } from '../core/infer.js';
 import {
   CookChoices, CookEvents, CookPlan, RunningCook, asRanCorrected, asRanCurrent, cookEnding, cookStillOpen, cookTooOld,
-  corrected, eventsDue, keepAsRan, replan, sameChoices, startCook, startCorrected, withBoil, withOut,
+  corrected, eventsDue, keepAsRan, pullStands, replan, sameChoices, startCook, startCorrected, stillIn, withBoil,
+  withOut,
 } from '../core/running.js';
 import { answerFor, askForCookSurface, currentInputs, decided, drawNudge, nudgeNow, surfaceFor } from './answer.js';
 import { calibrationBefore, eggLogged, learn, logEgg } from './calibration.js';
@@ -329,6 +330,18 @@ async function correctedAsRan(cook: RunningCook, now_s: number): Promise<{ cook:
   return next === null ? null : { cook: next, plan: replan(next, before, surface, 0, now_s) };
 }
 
+/** "Still in the water?" No: the egg came out when the clock assumed. The
+ *  pull stands, confirmed, the correction applies to the record, and the plan
+ *  does not ask again (`pullStands`). */
+export function onStillOut(): void {
+  const cook = state.cook;
+  const plan = state.plan;
+  if (cook === null || plan === null || !plan.askIfStillIn) return;
+  stopAlarm();
+  state.cook = pullStands(cook);
+  afterCorrection(nowMs());
+}
+
 /** Plan the running cook again, now, with what another tab saw of it. */
 function planNow(now_s: number): void {
   if (state.cook === null) return;
@@ -596,6 +609,17 @@ export function onPrimary(): void {
   const cook = state.cook;
   const plan = state.plan;
   if (cook === null || plan === null) return;
+
+  // "Still in the water?" Yes: the pull the clock assumed is dropped, and
+  // the cook planned again as told now; a pull already past is now, and
+  // rings, as if the egg had never been taken out.
+  if (plan.askIfStillIn) {
+    state.cook = stillIn(cook, now_s);
+    clock.pullRung = false;
+    clock.phase = 'COOKING';
+    afterCorrection(now);
+    return;
+  }
 
   if (phase === 'HEATING') {
     // The boil, observed. What it teaches the pan's memory is written when

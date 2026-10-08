@@ -114,6 +114,11 @@
     "action.hint.cookingStanding": { "surface": "body", "apps": ["web", "ios"], "text": "lid on until the eggs come out" },
     "action.hint.cookingBoiling": { "surface": "body", "apps": ["web", "ios"], "text": "at {boiling} until the eggs come out", "example": { "boiling": "212 °F" } },
     "action.hint.pull": { "surface": "body", "apps": ["web", "ios"], "text": "cooling starts on its own in {seconds} s", "example": { "seconds": 17 } },
+    "ask.stillIn": { "surface": "label", "apps": ["web"], "note": "In place of the phase label, when the alarm's grace ran out (so I assumed the eggs came out) and a correction since would cook them longer: I ask, since either could be true (DECISIONS.md 98).", "text": "Are the eggs still in the water?" },
+    "ask.stillIn.yes": { "surface": "button", "apps": ["web"], "note": "The answer to ask.stillIn that the eggs are still in: I time them again as corrected.", "text": "Yes, still in" },
+    "ask.stillIn.no": { "surface": "button", "apps": ["web"], "note": "The answer to ask.stillIn that the eggs came out when the alarm ended.", "text": "No, they’re out" },
+    "readout.sub.stillIn": { "surface": "body", "apps": ["web"], "note": "Under the time while ask.stillIn is asked: the time is how long since the eggs were due out.", "text": "since they were due out" },
+    "spoken.stillIn": { "surface": "a11y", "apps": ["web"], "note": "What a screen reader hears while ask.stillIn is asked. {time} is spoken, as spoken.minutesSeconds.", "text": "Are the eggs still in the water? They were due out {time} ago.", "example": { "time": "1 minute 5 seconds" } },
 
     "spoken.seconds": { "surface": "a11y", "apps": ["web"], "count": "seconds", "one": "{seconds} second", "other": "{seconds} seconds", "example": { "seconds": 45 } },
     "spoken.minutes": { "surface": "a11y", "apps": ["web"], "count": "minutes", "one": "{minutes} minute", "other": "{minutes} minutes", "example": { "minutes": 11 } },

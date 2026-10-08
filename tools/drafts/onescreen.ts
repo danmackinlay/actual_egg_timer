@@ -21,6 +21,13 @@
  *    of Full rolling boil (a cold start reads that as before the eggs went in
  *    if the start passes it, so the cook does not read the stop as a fault),
  *    the time the eggs were due out, or two hours before I started timing.
+ *  - When the alarm's grace ran out unanswered I assume the eggs came out,
+ *    and a correction since that would cook them longer asks, since either
+ *    could be true (DECISIONS.md 98): the question takes the phase label's
+ *    place, as plain as a person would ask it, the time below it is how long
+ *    since they were due out, and the two answers are buttons a cook can
+ *    press without reading the question again ("Yes, still in", "No,
+ *    they’re out"). A screen reader hears the question and the time in one.
  *
  * No `copy/en-US.json` entry: American English says all of it the same way.
  *
@@ -35,6 +42,11 @@
  *   controls.startedAt.latestBoil: I cannot make it later than {time}, when you told me the water boiled in earnest.
  *   controls.startedAt.latestPull: I cannot make it later than {time}, when the eggs were due out of the water.
  *   controls.startedAt.earliest: I cannot make it earlier than {time}, two hours before I began to keep the time.
+ *   ask.stillIn: Are the eggs yet in the water?
+ *   ask.stillIn.yes: Yes, they are yet in
+ *   ask.stillIn.no: No, they are out
+ *   readout.sub.stillIn: since they were due out of the water
+ *   spoken.stillIn: Are the eggs yet in the water? They were due out {time} ago.
  */
 
 import type { Draft, Drafted } from '../copyDraft.js';
@@ -98,6 +110,36 @@ const ONESCREEN_DRAFT: Drafted[] = [
     key: 'controls.startedAt.earliest', row: 'the start\'s panel: why − goes no further',
     before: null,
     after: { text: 'I can’t move it earlier than {time}, two hours before I started timing.' },
+    appsBefore: [], appsAfter: ['web'],
+  },
+  {
+    key: 'ask.stillIn', row: 'still in the water? (the phase label)',
+    before: null,
+    after: { text: 'Are the eggs still in the water?' },
+    appsBefore: [], appsAfter: ['web'],
+  },
+  {
+    key: 'ask.stillIn.yes', row: 'still in the water? (yes)',
+    before: null,
+    after: { text: 'Yes, still in' },
+    appsBefore: [], appsAfter: ['web'],
+  },
+  {
+    key: 'ask.stillIn.no', row: 'still in the water? (no)',
+    before: null,
+    after: { text: 'No, they’re out' },
+    appsBefore: [], appsAfter: ['web'],
+  },
+  {
+    key: 'readout.sub.stillIn', row: 'still in the water? (below the time)',
+    before: null,
+    after: { text: 'since they were due out' },
+    appsBefore: [], appsAfter: ['web'],
+  },
+  {
+    key: 'spoken.stillIn', row: 'still in the water? (to a screen reader)',
+    before: null,
+    after: { text: 'Are the eggs still in the water? They were due out {time} ago.' },
     appsBefore: [], appsAfter: ['web'],
   },
 ];
