@@ -68,6 +68,42 @@ struct PhaseActions: View {
 
     @ViewBuilder
     private var action: some View {
+        if phase != .idle, cook.plan?.askIfStillIn == true {
+            asking
+        } else {
+            phaseAction
+        }
+    }
+
+    /// "Are the eggs still in the water?" (`ReadoutView`): the two answers as
+    /// buttons a cook can press without reading the question again, yes the
+    /// primary; then Cancel. Nothing past the question is shown.
+    private var asking: some View {
+        VStack(spacing: 10) {
+            Button {
+                model.stillIn()
+            } label: {
+                Text(tr("ask.stillIn.yes")).frame(maxWidth: .infinity).onAccent()
+            }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.large)
+            Button {
+                model.stillOut()
+            } label: {
+                Text(tr("ask.stillIn.no")).frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.large)
+            Button(tr("action.cancel"), role: .destructive) {
+                model.cancel()
+            }
+            .buttonStyle(.bordered)
+            .frame(maxWidth: .infinity)
+        }
+    }
+
+    @ViewBuilder
+    private var phaseAction: some View {
         switch phase {
         case .idle where sousVide != nil:
             VStack(spacing: 8) {

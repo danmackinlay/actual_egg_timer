@@ -285,7 +285,7 @@ final class AppModel {
     /// corrected again, or has ended, before it lands.
     func refreshAsRan() async {
         guard let running = cook.running, running.events.pulled != nil, running.asRan != nil,
-              !asRanCurrent(running), !(cook.plan?.askIfStillIn ?? false) else { return }
+              !asRanCurrent(running) else { return }
         let logged = cook.feedbackGiven ? planner.kept.log.indices.last : nil
         let before = await planner.calibrationBefore(logged)
         let nowS = AppClock.now.timeIntervalSince1970

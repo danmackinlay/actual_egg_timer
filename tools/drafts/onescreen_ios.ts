@@ -9,6 +9,10 @@
  *    `clauseKeys` now names (`startedAt`), so both apps choose them alike.
  *  - The start's panel, "Eggs in at" with a − and a +, and the line under
  *    it that says why a press went no further.
+ *  - "Are the eggs still in the water?", its two answers and the line
+ *    below the time. Not `spoken.stillIn`: iOS's readout speaks no
+ *    `spoken.*` key, since VoiceOver reads the question, the time and the
+ *    line under it as they are shown, as it does in every phase.
  *  - The sentence and the slider stay on screen while the egg cooks, and
  *    the slider's heading says the peak yolk, so the line under the running
  *    cook's sentence (`cook.summary`), iOS's alone since `onescreen`, is
@@ -38,6 +42,10 @@ const ONESCREEN_IOS_DRAFT: Drafted[] = [
     'I can’t move it later than {time}, when the eggs were due out.'),
   shared('controls.startedAt.earliest', 'the start\'s panel: why − goes no further',
     'I can’t move it earlier than {time}, two hours before I started timing.'),
+  shared('ask.stillIn', 'still in the water? (the phase label)', 'Are the eggs still in the water?'),
+  shared('ask.stillIn.yes', 'still in the water? (yes)', 'Yes, still in'),
+  shared('ask.stillIn.no', 'still in the water? (no)', 'No, they’re out'),
+  shared('readout.sub.stillIn', 'still in the water? (below the time)', 'since they were due out'),
   {
     key: 'cook.summary', row: 'under the sentence while a cook runs (retired: the slider stays)',
     before: { text: '{doneness} · peak yolk {yolk}' },

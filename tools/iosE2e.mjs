@@ -785,6 +785,58 @@ scenario('slider-after-pull', 'C3 step 3: after the pull the slider only preview
   run.note(`dragged to 0.9 and let go: the aim drawn, no correction, the record as it was, the egg as it ran again`);
 });
 
+/// A hot cook whose pull's grace ran out unanswered, so the clock assumed
+/// the eggs came out, corrected 30 s after the pull to a cold start: the
+/// plan asks whether they are still in the water. The plan before, and the
+/// correction.
+async function asked(run, uiDo) {
+  const plan0 = await hotStarted(run, `set:start=cold@pull+30,${uiDo}`);
+  let i = await run.step(plan0.pull + 25);
+  await run.until(/^phase COOLING$/, { from: i, what: 'the grace run out' });
+  const pulled = lastStored(run.lines()).cook.events.pulled;
+  run.check(pulled?.by === 'timeout' && !pulled.confirmed, `the clock assumed the pull: ${JSON.stringify(pulled)}`);
+  const t = await tapAt(run, plan0.pull + 30, 'set');
+  const after = await corrected(run, t.i);
+  run.check(after.plan.asking, 'the plan asks');
+  return { plan0, after };
+}
+
+scenario('still-in-yes', 'C3 step 4: a correction after the grace ran out asks "still in the water?"; nothing past it; yes: timed again', async (run) => {
+  const { plan0, after } = await asked(run, 'stillIn@pull+700');
+  run.check(has(after.lines, /^alarms cancelled$/) && Object.keys(scheduled(after.lines)).length === 0,
+    `nothing scheduled while it asks: ${JSON.stringify(scheduled(after.lines))}`);
+  const card = lastCard(after.lines);
+  run.check(card?.stage === 'pull', `the card shows the pull while it asks: ${card?.stage}`);
+  // The cooling's counted end passes under the question: nothing.
+  let i = await run.step(plan0.pull + 640);
+  await sleep(1000);
+  let lines = run.lines().slice(i);
+  run.check(!has(lines, /^phase DONE$/) && !has(lines, /^ring /), 'nothing past the question');
+  run.check(lastStored(run.lines()).cook.events.cooledAt_s === null, 'no cooling written');
+  const t = await tapAt(run, plan0.pull + 700, 'stillIn');
+  const heating = await run.until(/^phase (HEATING|PULL)$/, { from: t.i, what: 'timed again' });
+  await run.settled(heating.i);
+  lines = run.lines().slice(t.i);
+  const cook = lastStored(lines)?.cook;
+  run.check(cook?.events.pulled === null, `still in: the assumed pull dropped: ${JSON.stringify(cook?.events.pulled)}`);
+  run.check(!lastPlan(lines).asking, 'the question answered');
+  run.note(`still in: ${heating.text}; the card ${card?.stage} while it asked`);
+});
+
+scenario('still-in-no', 'C3 step 4: "still in the water?" answered no: the pull stands, confirmed, and the record is made for cold water', async (run) => {
+  const { plan0 } = await asked(run, 'stillOut@pull+40');
+  const t = await tapAt(run, plan0.pull + 40, 'stillOut');
+  const out = await run.until(/^stored .*"confirmed":true/, { from: t.i, what: 'the pull confirmed' });
+  await run.settled(out.i);
+  const lines = run.lines().slice(t.i);
+  const cook = lastStored(run.lines())?.cook;
+  const pulled = cook?.events.pulled;
+  run.check(pulled?.by === 'timeout' && pulled.confirmed, `out: the pull stands, confirmed: ${JSON.stringify(pulled)}`);
+  run.check(cook?.choices.startMode === 'cold' && cook.asRan?.correctedAt_s === cook.correctedAt_s, 'as ran, for cold water');
+  run.check(!lastPlan(lines).asking, 'not asked again');
+  run.note(`out: ${phases(lines).at(-1) ?? 'COOLING'}, the pull confirmed, the record corrected`);
+});
+
 scenario('cold', 'a cold cook: boil, pull, cooling, Done, an answer, Start again', async (run) => {
   const cook = await started(run, ['-uiDo', `${TO_DONE},answer:jammy@cooled+20,again@cooled+40`]);
   const start = startOf(cook);

@@ -43,7 +43,7 @@ struct ReadoutView: View {
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
             } else {
-                Text(tr(model.keys(phase).label))
+                Text(asking ? tr("ask.stillIn") : tr(model.keys(phase).label))
                     .appFont(.caption, smallCaps: true)
                     .foregroundStyle(phase == .pull ? .orange : .secondary)
                     .multilineTextAlignment(.center)
@@ -230,12 +230,21 @@ struct ReadoutView: View {
         return lines
     }
 
+    /// The grace ran out unanswered, so I assumed the eggs came out, and a
+    /// correction since would cook them longer: the plan asks whether they
+    /// are still in the water (DECISIONS.md 98), the question in the phase
+    /// label's place, the time since they were due out under it, and
+    /// nothing past the question - not the cooling, nor Done - until it is
+    /// answered (`PhaseActions`).
+    private var asking: Bool { phase != .idle && cook.plan?.askIfStillIn == true }
+
     /// The web's clock face in every phase: the countdown (the time heated,
     /// counting up, once the slow hob has lengthened the guess), how late the
     /// pull is running while the eggs wait to come out, and at the end the
     /// time the egg was in the water.
     private var bigTime: String {
-        switch phase {
+        if asking { return "+" + clockString(max(0, now.timeIntervalSince(cook.pullAt ?? now))) }
+        return switch phase {
         case .idle: planner.solution.map { clockString($0.result.cookTimeS) } ?? "--:--"
         // Once the slow hob has lengthened the guess, the pull is a guess
         // that keeps moving and would read 0:00 while the water still heats
@@ -251,6 +260,7 @@ struct ReadoutView: View {
 
     /// The line under the clock: core's key, with this phase's arguments.
     private var subline: String {
+        if asking { return tr("readout.sub.stillIn") }
         let key = model.keys(phase).subline
         return switch phase {
         case .idle:

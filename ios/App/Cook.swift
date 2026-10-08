@@ -1203,6 +1203,17 @@ final class Cook {
         let start = Date(timeIntervalSince1970: running.startedAtS)
         let pull = Date(timeIntervalSince1970: d.cookEndS)
         let cook = Self.description(running, plan)
+        // While the plan asks whether the eggs are still in the water, the
+        // card shows the pull, "now", with the pull's line naming the
+        // cooling, not a cooling's countdown that may not be running: if
+        // they are still in, that is what to do. Until the question is
+        // answered, or the cook is too old.
+        if plan.askIfStillIn, phase(at: now) != .idle {
+            return .init(
+                stage: .pull, began: pull, ends: Date(timeIntervalSince1970: plan.tooOldAtS), provisional: false,
+                cook: cook
+            )
+        }
         switch phase(at: now) {
         case .idle, .done:
             return nil
