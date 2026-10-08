@@ -166,6 +166,8 @@ const NOT_COPY: Record<string, string> = {
   'launch+3s': 'debug log (Screenshots.log), never shown',
   'plan pull {} cooled {} lengthened {} surface {}': 'debug log (Screenshots.log), never shown',
   '{} activity {} {} ends {}': 'debug log (Screenshots.log), never shown',
+  'answer held': 'debug log (Screenshots.log), never shown',
+  'answer held made': 'debug log (Screenshots.log), never shown',
   // the face of 1750 (ios/App/PeriodFace.swift)
   IM_FELL_English_Roman: 'font name',
   IM_FELL_English_Italic: 'font name',

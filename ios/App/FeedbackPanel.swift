@@ -145,7 +145,7 @@ struct FeedbackPanel: View {
 
     private func yolkButton(_ index: Int) -> some View {
         let value = YolkWord.allCases[index]
-        let given = planner.answers?.yolk
+        let given = planner.answers?.yolk ?? model.held?.yolk
         return answerButton(
             tr(donenessAnchors[index].key), chosen: given == value, answered: given != nil, tight: true
         ) {
@@ -154,7 +154,7 @@ struct FeedbackPanel: View {
     }
 
     private func whiteButton(_ label: String, _ value: WhiteReport) -> some View {
-        let given = planner.answers?.white
+        let given = planner.answers?.white ?? model.held?.white
         return answerButton(label, chosen: given == value, answered: given != nil) {
             model.answer(yolk: nil, white: value)
         }

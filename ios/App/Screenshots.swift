@@ -47,7 +47,7 @@ import EggTimerCore
 /// - `-uiAnswer jammy`, `jammy/tender`, `/firm`: at Done, answer the yolk,
 ///   the white or both, as the buttons would (`AppModel.answer`), after
 ///   `-uiAnswerAfter 5` seconds (default 3), so a simulator nobody taps can
-///   answer.
+///   answer; with no `-uiScreen`, a cook restored at Done is answered so.
 /// - `-provisionalAlarms YES`: ask for quiet notifications, which the system
 ///   grants with no prompt, so the alarms are scheduled and read back on a
 ///   simulator nobody taps.

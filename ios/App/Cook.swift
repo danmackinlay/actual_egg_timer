@@ -211,13 +211,27 @@ final class Cook {
     /// it.
     func eggRecord(yolk: YolkWord?, white: WhiteReport? = nil, probe: ProbeReading? = nil) -> EggRecord? {
         guard let running, let plan else { return nil }
-        return Self.record(running, plan, yolk: yolk, white: white, probe: probe)
+        return Self.record(running, plan, yolk: yolk, white: white, probe: probe).record
     }
+
+    /// Whether core refuses this egg's record only for want of its pot's
+    /// surface: no plan as it ran kept, and no plan on the surface yet, which
+    /// a relaunch leaves for the second it takes to build (running-cook
+    /// review 1.3). An answer given then is held until it lands
+    /// (`AppModel.answer`), and the plan that lands calls `planTaken`.
+    var recordWaitsForSurface: Bool {
+        guard let running, let plan else { return false }
+        return Self.record(running, plan, yolk: nil, white: nil, probe: nil).refused == .noSurface
+    }
+
+    /// Called whenever a plan is taken: what an answer held for the surface
+    /// waits on. Set by the model.
+    var planTaken: (() -> Void)?
 
     private static func record(
         _ cook: RunningCook, _ plan: CookPlan, yolk: YolkWord?, white: WhiteReport?, probe: ProbeReading?
-    ) -> EggRecord? {
-        cookFactsFor(
+    ) -> (record: EggRecord?, refused: FactsRefused?) {
+        let made = cookFactsFor(
             cook, plan: plan,
             // One cook at a time here: no `id` (src/core/record.ts).
             context: RecordContext(
@@ -225,7 +239,45 @@ final class Cook {
                 day: day(Date(timeIntervalSince1970: cook.startedAtS)), id: nil
             ),
             yolkWord: yolk, white: white, probe: probe
-        ).facts.map(recordFor)
+        )
+        return (made.facts.map(recordFor), made.refused)
+    }
+
+    /// A finished egg nobody answered about, as a cook ends: what its record
+    /// is made from.
+    struct Unanswered {
+        let cook: RunningCook
+        let plan: CookPlan
+        let calibration: Calibration
+        let leanHintS: Double
+        let nowS: Double
+    }
+
+    /// The unanswered egg of the cook as it stands, if it ends now cooked
+    /// through and never answered about; nil otherwise.
+    func unanswered(at now: Date = .now) -> Unanswered? {
+        guard let running, let plan, !feedbackGiven,
+              cookEnding(running, plan: plan, nowS: now.timeIntervalSince1970).finished else { return nil }
+        return Unanswered(
+            cook: running, plan: plan, calibration: calibration(), leanHintS: leanHintS,
+            nowS: now.timeIntervalSince1970
+        )
+    }
+
+    /// An unanswered egg's record, never one with no forecast (running-cook
+    /// review 1.3): from the plan as it ran when kept, else from its plan on
+    /// its pot's surface, which is built here when the plan has none (a
+    /// relaunch, or a cook dropped as too old). Nil only when core refuses
+    /// it for another reason (a correction not yet planned as it ran).
+    static func unansweredRecord(_ u: Unanswered) async -> EggRecord? {
+        let first = record(u.cook, u.plan, yolk: nil, white: nil, probe: nil)
+        if let made = first.record { return made }
+        guard first.refused == .noSurface, let inputs = u.plan.inputs else { return nil }
+        let grid = await DecisionGrids.shared.grid(inputs)
+        let profile = await DecisionGrids.shared.cachedProfile(inputs, u.calibration)
+        let surface = CookSurface(inputs: inputs, grid: grid, profile: profile)
+        let again = replan(u.cook, u.calibration, surface: surface, leanHintS: u.leanHintS, nowS: u.nowS)
+        return record(keepAsRan(u.cook, plan: again), again, yolk: nil, white: nil, probe: nil).record
     }
 
     /// A probe reading typed at DONE, as the record carries it
@@ -539,6 +591,7 @@ final class Cook {
         }
         askForSurface(next.inputs)
         pushActivity()
+        planTaken?()
     }
 
     /// When a deadline is, s.
@@ -642,10 +695,10 @@ final class Cook {
 
     /// What a cook too old to pick back up leaves for the caller: the boil to
     /// remember, and its egg if it was cooked through and never answered
-    /// about, to log as "Start again" would have.
+    /// about, to log as "Start again" would have (`unansweredRecord`).
     struct Dropped {
         var boil: BoilToRemember?
-        var egg: EggRecord?
+        var egg: Unanswered?
     }
 
     /// Pick up a cook that was running when the app was last closed.
@@ -699,8 +752,12 @@ final class Cook {
         if cookTooOld(made.plan, nowS: now) {
             defaults.removeObject(forKey: Self.savedKey)
             let ending = cookEnding(cook, plan: made.plan, nowS: now)
+            // Its record is made on its pot's surface, which this plan,
+            // made at launch, has not got (running-cook review 1.3).
             let egg = !stored.feedbackGiven && ending.finished
-                ? Self.record(cook, made.plan, yolk: nil, white: nil, probe: nil)
+                ? Unanswered(
+                    cook: cook, plan: made.plan, calibration: input.calibration, leanHintS: stored.leanHintS, nowS: now
+                )
                 : nil
             return Dropped(boil: ending.boil, egg: egg)
         }

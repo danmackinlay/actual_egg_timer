@@ -163,6 +163,14 @@ struct ContentView: View {
     #if DEBUG
     /// The screen a debug build was launched onto (Screenshots.swift).
     private func showScreenshotScene() {
+        // A cook restored at Done, answered as soon as asked: before its
+        // pot's surface is built again, with `-uiAnswerAfter 0`.
+        if Screenshots.scene != "done", cook.phase == .done, let answer = Screenshots.answer {
+            Task {
+                try? await Task.sleep(for: .seconds(Screenshots.answerAfter))
+                model.answer(yolk: answer.yolk, white: answer.white)
+            }
+        }
         guard let scene = Screenshots.scene else { return }
         switch scene {
         case "settings": path = [.settings]
