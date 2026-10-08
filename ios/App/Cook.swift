@@ -457,12 +457,18 @@ final class Cook {
     /// before the egg was seen to come out - changed back within the grace -
     /// cancels it (`adopt`): nothing was observed. The alarms and the card
     /// follow the plan, as they follow any.
-    func correct(choices: CookChoices, startedAtS: Double?) {
+    ///
+    /// Once the egg has been `answered` about it came out: a pull the clock
+    /// assumed stands, confirmed (`pullStands`), so a correction at Done never
+    /// asks whether it is still in the water behind the questions (onescreen
+    /// review 2.1). A correction once Done keeps Done (core `corrected`).
+    func correct(choices: CookChoices, startedAtS: Double?, answered: Bool = false) {
         guard var c = running else { return }
         let now = AppClock.now.timeIntervalSince1970
         if let s = startedAtS, s != c.startedAtS { c = startCorrected(c, startedAtS: s, nowS: now) ?? c }
         if choices != c.choices { c = corrected(c, choices: choices, nowS: now) }
         guard c != running else { return }
+        if answered { c = pullStands(c) }
         change(to: c)
     }
 
@@ -755,6 +761,14 @@ final class Cook {
         if let before, Self.moved(before, next.deadlines) || wasAsking != next.askIfStillIn {
             // A deadline rung for and since moved rings again at its new time.
             rung = rung.filter { Self.same($0.value, Self.at($0.key, next.deadlines)) }
+            // But a cook already Done stays silent: a correction there
+            // corrects only the record, and the cooling's end it writes
+            // (Done on the counter, corrected to ice) is not one to ring
+            // (onescreen review 2.1).
+            if phaseAt(before, nowS: AppClock.now.timeIntervalSince1970) == .done, phaseNow == .done {
+                rung[.pull] = next.deadlines.cookEndS
+                if let cooled = next.deadlines.coolEndS { rung[.cooled] = cooled }
+            }
             if alarmAuthorized == true {
                 alarmCovers = []
                 scheduleAlarms()

@@ -323,7 +323,7 @@ final class AppModel {
     /// A correction committed (`Edits.commit`): the cook corrected
     /// (`Cook.correct`), and after the pull the record with it.
     func correct(_ choices: CookChoices, startedAtS: Double?) {
-        cook.correct(choices: choices, startedAtS: startedAtS)
+        cook.correct(choices: choices, startedAtS: startedAtS, answered: cook.feedbackGiven || held != nil)
         Task { await refreshAsRan() }
     }
 

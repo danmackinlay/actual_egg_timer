@@ -1274,6 +1274,55 @@ scenario('too-old-corrected', 'onescreen review 1.2: an answered egg corrected a
   run.note(`too old: the egg logged ${first.egg.mass_g} -> ${egg.egg.mass_g} g, then forgotten`);
 });
 
+
+scenario('done-stays-done', 'onescreen review 2.1: on the counter, Done at the out, Jammy, then the cooling corrected to ice: still Done, nothing rung, no alarm or card brought back', async (run) => {
+  await started(run, [...HOT, '-cooling', 'counter', '-uiDo', 'out@pull+2,answer:jammy@pull+60,set:cooling=ice@pull+70']);
+  const plan0 = lastPlan(run.lines());
+  let i = await run.step(plan0.pull + 1);
+  await run.until(/^phase PULL$/, { from: i, what: 'phase PULL' });
+  i = await run.step(plan0.pull + 2);
+  const done = await run.until(/^phase DONE$/, { from: i, what: 'Done at the out' });
+  await run.settled(done.i);
+  i = await run.step(plan0.pull + 60);
+  await run.until(/^log 1 folded 1 /, { from: i, what: 'Jammy folded' });
+  const t = await tapAt(run, plan0.pull + 70, 'set');
+  const after = await corrected(run, t.i);
+  run.check(after.cook?.choices.cooling === 'ice', `the cook says ${after.cook?.choices.cooling}`);
+  run.check(after.cook?.events.cooledAt_s !== null, `the cooling ended at the latest at the correction: ${after.cook?.events.cooledAt_s}`);
+  // On past where an ice bath from the out would have ended.
+  i = await run.step(plan0.pull + 400);
+  await sleep(1000);
+  const lines = run.lines().slice(t.i);
+  run.check(!has(lines, /^phase COOLING$/), 'never back to Cooling');
+  run.check(!has(lines, /^ring /), 'nothing rung');
+  run.check(!('cook.cool' in scheduled(lines)), `no cooling alarm: ${JSON.stringify(scheduled(lines))}`);
+  run.check(!has(lines, /^activity (start|update) /), 'no card brought back');
+  const egg = eggLog(run.lines()).last;
+  run.check(egg.yolkWord === 'jammy' && egg.cooled_s !== undefined && egg.cooled_s <= 68 + 1e-6,
+    `the record: ${egg.yolkWord}, an ice bath of ${egg.cooled_s} s`);
+  run.note(`Done kept; the record's ice bath ${egg.cooled_s?.toFixed?.(0)} s`);
+});
+
+scenario('answered-pull-stands', 'onescreen review 2.1: a pull the clock assumed, Jammy at Done, then cold water: the pull confirmed, nothing asked, still Done', async (run) => {
+  await started(run, [...HOT, '-uiDo', 'answer:jammy@cooled+5,set:start=cold@cooled+10']);
+  const plan0 = lastPlan(run.lines());
+  let i = await run.step(plan0.pull + 21);
+  await run.until(/^phase COOLING$/, { from: i, what: 'the grace run out' });
+  await run.settled(i);
+  const cooling = lastPlan(run.lines());
+  i = await run.step(cooling.cooled + 1);
+  await run.until(/^phase DONE$/, { from: i, what: 'Done' });
+  i = await run.step(cooling.cooled + 5);
+  await run.until(/^log 1 folded 1 /, { from: i, what: 'Jammy folded' });
+  const t = await tapAt(run, cooling.cooled + 10, 'set');
+  const after = await corrected(run, t.i);
+  run.check(!after.plan.asking, 'not asked whether the eggs are still in the water');
+  const pulled = after.cook?.events.pulled;
+  run.check(pulled?.by === 'timeout' && pulled.confirmed, `the pull stands, confirmed: ${JSON.stringify(pulled)}`);
+  run.check(!has(run.lines().slice(t.i), /^phase (HEATING|COOKING|PULL|COOLING)$/), 'still Done');
+  run.note('a correction after an answer confirms the pull the clock assumed');
+});
+
 // ------------------------------------------------------------------- main
 
 /// A new device's first launches are many seconds slow while the system
