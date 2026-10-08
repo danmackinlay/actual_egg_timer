@@ -1362,6 +1362,39 @@ scenario('done-note-as-ran', 'onescreen review 2.2: Runny at Done, relaunched: t
   run.note(`"${was}" kept across the relaunch`);
 });
 
+
+/// The certainty line as last logged: its word and the time range it opens.
+const certaintyNow = (lines) => {
+  const l = lines.filter((x) => x.text.startsWith('certainty ')).at(-1);
+  const m = l?.text.match(/^certainty (.*) \| (.*)$/);
+  return m ? { word: m[1], time: m[2] } : null;
+};
+
+scenario('certainty-mid-cook', 'onescreen review 2.3: once cooking, the range opened is when to take the eggs out, as times of day; under a lengthening slow hob it moves with the guess', async (run) => {
+  const before = EN['certainty.timeOut'].text.split('{low}')[0];
+  const idle = EN['certainty.time'].text.split('{low}')[0];
+  const plan0 = await hotStarted(run, 'set:start=cold@300');
+  let i = await run.step(run.t0 + 299);
+  await sleep(500);
+  const hot = certaintyNow(await quiet(run, 'certainty '));
+  run.check(hot?.time.startsWith(before), `five minutes in: "${hot?.time}"`);
+  const t = await tapAt(run, run.t0 + 300, 'set');
+  await corrected(run, t.i);
+  i = await run.step(run.t0 + 16 * 60);
+  let plan = await run.until(/^plan .* lengthened true/, { from: i, what: 'the slow hob lengthened' });
+  await run.settled(plan.i);
+  const a = certaintyNow(await quiet(run, 'certainty '));
+  // Four minutes on: the times are said to the minute.
+  i = await run.step(run.t0 + 20 * 60);
+  plan = await run.until(/^plan /, { from: i, what: 'planned again' });
+  await run.settled(plan.i);
+  const b = certaintyNow(await quiet(run, 'certainty '));
+  run.check(a?.time.startsWith(before) && b?.time.startsWith(before), `heated: "${a?.time}", "${b?.time}"`);
+  run.check(a && b && a.time !== b.time, 'the range moves with the guess');
+  run.check(!a?.time.startsWith(idle) || before === idle, 'not whole times');
+  run.note(`"${hot?.time}"; 16:00 "${a?.time}"; 20:00 "${b?.time}"`);
+});
+
 // ------------------------------------------------------------------- main
 
 /// A new device's first launches are many seconds slow while the system

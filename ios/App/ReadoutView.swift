@@ -237,14 +237,21 @@ struct ReadoutView: View {
     }
 
     /// What pressing the certainty line opens: the interval, "most likely"
-    /// when it is not already said, and the likely time range, m:ss as the
-    /// clock shows it.
+    /// when it is not already said, and the likely time range in the clock's
+    /// own terms (core `timeRangeWords`, onescreen review 2.3): while idle
+    /// whole times, m:ss as the clock shows them; once a cook runs, the times
+    /// of day to take the eggs out, not whole times under a clock counting
+    /// down, and for a reading held over a plan that has moved since (a slow
+    /// hob's lengthening guess) about the plan's time now.
     private func opened(_ sure: CertaintyReading) -> [String] {
         var lines = [rendered(intervalWords(sure.words))]
         if mostLikelyOpened(sure.words) { lines.append(rendered(mostLikelyWords(sure.words))) }
-        lines.append(tr("certainty.time", [
-            "low": .text(clockString(sure.time.lowS)), "high": .text(clockString(sure.time.highS)),
-        ]))
+        let running = phase == .idle ? nil : cook.running
+        let range = timeRangeWords(sure, startedAtS: running?.startedAtS, cookTimeS: cook.plan?.cookTimeS ?? 0)
+        let said = { (s: Double) in
+            range.ofDay ? timeOfDay(Date(timeIntervalSince1970: s)) : clockString(s)
+        }
+        lines.append(tr(range.key, ["low": .text(said(range.lowS)), "high": .text(said(range.highS))]))
         return lines
     }
 
