@@ -2,17 +2,25 @@
  * Headless Chrome over the DevTools protocol, with nothing but Node: a
  * process started on a profile of its own, and one socket to talk to it.
  * For tools/copySnapshot.ts (one page, driven by the page itself) and
- * tools/e2e.ts (pages driven from here). Set CHROME to Chrome's binary if it
- * is not in the usual macOS place.
+ * tools/e2e.ts (pages driven from here). Chrome is found where macOS and
+ * Linux (GitHub's runners among them) put it; CHROME names another binary.
+ * Under CI (the CI environment variable, which GitHub sets) Chrome runs
+ * without its sandbox, which a runner's container may not allow: the pages
+ * it opens are this repository's, served from this machine.
  */
 
 import { ChildProcess, spawn } from 'node:child_process';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-export const CHROME = process.env['CHROME']
-  ?? '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+const PLACES = [
+  '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+  '/usr/bin/google-chrome', '/usr/bin/google-chrome-stable', '/opt/google/chrome/chrome',
+  '/usr/bin/chromium', '/usr/bin/chromium-browser',
+];
+
+export const CHROME = process.env['CHROME'] ?? PLACES.find((p) => existsSync(p)) ?? PLACES[0];
 
 export const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms));
 
@@ -103,6 +111,7 @@ export interface Browser {
 }
 
 export async function launchChrome(args: string[], debugPort: number): Promise<Browser> {
+  if (!existsSync(CHROME)) throw new Error(`no Chrome at ${CHROME}; set CHROME to its binary`);
   const profile = mkdtempSync(join(tmpdir(), 'aet-chrome-'));
   const child: ChildProcess = spawn(CHROME, [
     '--headless=new', '--disable-gpu', '--no-first-run', '--no-default-browser-check',
@@ -111,6 +120,7 @@ export async function launchChrome(args: string[], debugPort: number): Promise<B
     // ticks it is waited on for.
     '--disable-background-timer-throttling', '--disable-renderer-backgrounding',
     '--disable-backgrounding-occluded-windows',
+    ...(process.env['CI'] !== undefined ? ['--no-sandbox'] : []),
     ...args,
   ], { stdio: 'ignore' });
   return {

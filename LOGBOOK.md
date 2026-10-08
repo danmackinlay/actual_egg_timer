@@ -5644,3 +5644,54 @@ tick, as `tooOldAt_s` says (about seven seconds of holding −). The advice
 link stays idle only. Screenshots of each phase, in both Englishes and
 the dark scheme, with the start's panel, the slider held, Settings and the
 question, are for the owner on a phone.
+
+## 8 October 2026: the web's checks step a stopped clock (SHIP-0.5 C2)
+
+`npm run e2e` no longer depends on how fast the machine is, and runs in CI.
+`4d242c7` (the clock), `fb6f11e` (Chrome on Linux), `d906691` (the
+scenarios), and the CI job.
+
+**Why.** The cold cook ran at x60, where the pull's 20-s grace is a third of
+a real second, and the other scenarios ran shifted at real speed and slept
+fixed times. Under load - all 18 cores running `yes`, each page throttled
+six times by DevTools' `Emulation.setCPUThrottlingRate` - the old harness
+failed three of 28: the cold cook missed the pull (Cooling by the time it
+looked), and the slow hob and the running lines read 16:02 where 16:00 was
+meant.
+
+**The mechanism.** The development clock stops (`?clock=0`,
+`aetClock.speed(0)`) and is set to a moment (`aetClock.set`, `?at=` taking an
+ISO time, so two tabs share one); a stopped clock's steps count as seconds
+for the tick and the beeps ahead. Every scenario but the address check and
+sharing's (which must be on the real clock) opens stopped, steps to the
+moment it means, dispatches `focus`, and asserts. The beeps are counted as
+scheduled on the audio clock, and for when. One span is run: the second
+before the cold cook's pull at x1, to see the beeps ahead taken as sounding
+when the tick reaches the pull; its margin is the grace. The x60 lead is
+read in an instant, the clock set back. Fixed sleeps became `settle`: the
+page instrumented for timers of up to 5 s, worker jobs and requests, and
+waited on until none is pending. A wait for something that will come gives
+up after a minute; it detects failure and measures nothing. Five checks
+tightened to the exact value the stopped clock gives (16:00, 17:05, 150 s,
+300 s), none loosened.
+
+**Runs.** Quiet: 121, 118 and 131 s. Loaded as above: 221, 195 and 207 s
+(another agent's 18 hogs overlapped the last two). 28 of 28 every time.
+
+**CI.** A fourth job in `.github/workflows/verify.yml`, `e2e`, on
+ubuntu-latest: `npm ci`, `google-chrome --version`, `npm run e2e` with
+`E2E_DEBUG=1`, 20 minutes at most. `tools/chrome.ts` finds
+`/usr/bin/google-chrome` and, with `CI` set, runs it without its sandbox.
+Not tried, since only a push runs it: whether the image's Chrome starts
+headless as configured, and whether its audio clock runs with no sound
+device (the cold cook's beeps-ahead check needs it to; Chrome is believed
+to fall back to a fake output that keeps time). So it is
+`continue-on-error: true`: it shows its result and fails nothing. Once it
+has passed on GitHub, that line comes out.
+
+Things that cost an hour: on a stopped clock two corrections committed at
+one moment share `correctedAt_s`, which is how the record's remaking knows
+it is current, so the second was taken as already made and the record never
+came back. No cook makes two at one moment; the harness now steps the clock
+a few seconds between a person's taps (`later`), and `corrected` refuses
+two at one moment by name.
