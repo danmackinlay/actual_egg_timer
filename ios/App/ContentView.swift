@@ -235,24 +235,16 @@ struct ContentView: View {
         let size = eggSize
         return VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .top, spacing: 14) {
-                if let running, let plan = cook.plan {
+                if running != nil || !planner.isSousVide {
                     TimelineView(.periodic(from: AppClock.system, by: every)) { context in
-                        EggSectionView(
-                            running: running, plan: plan,
-                            calibration: planner.calibration, now: AppClock.app(context.date)
-                        )
+                        let now = AppClock.app(context.date)
+                        EggSectionView(model: model, phase: cook.phase(at: now), now: now)
                     }
                     .id(tick)
                     .frame(width: size.width, height: size.height)
                     #if DEBUG
                     .logTop("egg")
                     #endif
-                } else if !planner.isSousVide {
-                    EggDrawing(view: nil)
-                        .frame(width: size.width, height: size.height)
-                        #if DEBUG
-                        .logTop("egg")
-                        #endif
                 }
                 SetupSentence(
                     planner: planner, open: $openClause, startedAt: running.map { Date(timeIntervalSince1970: $0.startedAtS) },

@@ -16,6 +16,10 @@ final class AppModel {
     /// True while "Eggs in" waits on a solve for the inputs as they now stand,
     /// so a second tap cannot start a second cook.
     private(set) var starting = false
+    /// The egg a change in hand aims for, while a control is held during a
+    /// cook and for a moment after (design/one-screen.md section 5): drawn
+    /// in place of the live egg. Nil otherwise.
+    var aimView: SectionView?
 
     /// The screen is up: wire the cook to the planner, read what was stored,
     /// and pick up a cook that was running.

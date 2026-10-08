@@ -234,7 +234,32 @@ extension Screenshots {
             model.answer(
                 yolk: YolkWord(rawValue: parts[0]), white: parts.count > 1 ? WhiteReport(rawValue: parts[1]) : nil
             )
+        case "set": set(action.arg ?? "", model.planner)
         default: log("action unknown \(action.name)")
+        }
+    }
+
+    /// `set:<control>=<value>`: one control changed as a tap on it would,
+    /// through the planner, so a change while a cook runs is a correction in
+    /// hand that settles before it is committed.
+    @MainActor
+    private static func set(_ arg: String, _ planner: Planner) {
+        let parts = arg.split(separator: "=", maxSplits: 1).map(String.init)
+        guard parts.count == 2 else { return log("action unknown set:\(arg)") }
+        let value = parts[1]
+        let number = Double(value) ?? .nan
+        switch parts[0] {
+        case "level": planner.doneness = number
+        case "size": planner.chooseSize(Int(number))
+        case "mass": planner.weigh(number)
+        case "from": if let v = EggFrom(rawValue: value) { planner.startTemp = v }
+        case "start": if let v = StartChoice(rawValue: value) { planner.start = v }
+        case "cooling": if let v = Cooling(rawValue: value) { planner.cooling = v }
+        case "heatOff": planner.heatOff = value == "1"
+        case "water": planner.waterLitres = number
+        case "eggs": planner.eggCount = Int(number)
+        case "altitude": planner.altitudeM = number
+        default: log("action unknown set:\(arg)")
         }
     }
 }

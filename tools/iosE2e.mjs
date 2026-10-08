@@ -480,6 +480,14 @@ async function stillLayout(run) {
   return layoutOf(await quiet(run, 'layout '));
 }
 
+/// The egg in cross-section once it has stopped changing: its reading
+/// (`aim`, `live`, `ran`) and how set its yolk is (EggSectionView).
+async function eggNow(run) {
+  const l = (await quiet(run, 'egg ')).filter((x) => x.text.startsWith('egg ')).at(-1);
+  const m = l?.text.match(/^egg (\w+) yolk ([\d.]+)$/);
+  return m ? { reading: m[1], yolk: Number(m[2]) } : { reading: l?.text ?? 'none', yolk: NaN };
+}
+
 /// Launch idle on a fresh install and wait for the time decided on its pot's
 /// surface and its odds, and the screen still.
 async function idle(run, args = []) {
@@ -507,6 +515,36 @@ scenario('one-layout', 'C3 step 1: one layout from idle to Done; the slider, the
   const phasesSeen = phases(run.lines());
   run.check(same(phasesSeen, ['HEATING', 'COOKING', 'PULL', 'COOLING', 'DONE']), `phases ${phasesSeen}`);
   run.note(`slider ${before.slider}, sentence ${before.sentence}, egg ${before.egg} pt, idle and Heating; Done ${done.slider}, ${done.sentence}`);
+});
+
+scenario('egg-readings', 'C3 step 2: the egg aimed for at idle (softer and firmer differ), live from raw at the start, as it ran at Done', async (run) => {
+  await idle(run, [...HOT, '-uiDo',
+    'set:level=0.1@launch+1,set:level=0.95@launch+2,set:level=0.41@launch+3,eggsIn@launch+4,out@pull+2']);
+  const at = async (s) => {
+    const i = await run.step(run.t0 + s);
+    await run.until(/^action set/, { from: i, what: `the level set at +${s} s` });
+    await run.until(/^answer \S+ decided true/, { from: i, what: 'decided' });
+    return eggNow(run);
+  };
+  const runny = await at(1);
+  const hard = await at(2);
+  const jammy = await at(3);
+  run.check(runny.reading === 'aim' && hard.reading === 'aim', `idle reads the aim: ${runny.reading}, ${hard.reading}`);
+  run.check(runny.yolk < jammy.yolk && jammy.yolk < hard.yolk, `aimed yolks ${runny.yolk}, ${jammy.yolk}, ${hard.yolk}`);
+  const i = await run.step(run.t0 + 4);
+  const cooking = await run.until(/^phase COOKING$/, { from: i, what: 'phase COOKING' });
+  await run.settled(cooking.i);
+  const live = await eggNow(run);
+  run.check(live.reading === 'live' && live.yolk < 0.01, `the cook reads live, from raw: ${live.reading} ${live.yolk}`);
+  run.t0 += 4;
+  const cooling = await toCooling(run, 2);
+  run.check((await eggNow(run)).reading === 'live', 'cooling reads live');
+  const j = await run.step(cooling.cooled + 1);
+  const done = await run.until(/^phase DONE$/, { from: j, what: 'phase DONE' });
+  await run.settled(done.i);
+  const ran = await eggNow(run);
+  run.check(ran.reading === 'ran', `Done reads the egg as it ran: ${ran.reading}`);
+  run.note(`idle aim yolk runny ${runny.yolk}, jammy ${jammy.yolk}, hard ${hard.yolk}; start ${live.yolk}; Done ${ran.yolk}`);
 });
 
 scenario('cold', 'a cold cook: boil, pull, cooling, Done, an answer, Start again', async (run) => {

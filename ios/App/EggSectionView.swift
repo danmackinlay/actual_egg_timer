@@ -1,10 +1,23 @@
 import SwiftUI
 import EggTimerCore
 
-/// The egg in cross-section, beside the running cook's sentence: how set each
-/// layer is, ring by ring, as the clock moves (`DECISIONS.md` 52). The web's
-/// is `src/ui/eggSection.ts`, and this draws the same egg: the same outline,
-/// the same rings and the same colours (`Palette`).
+/// The egg in cross-section, beside the setup sentence in every phase: how
+/// set each layer is, ring by ring (`DECISIONS.md` 52). The web's is
+/// `src/ui/eggSection.ts` and `render.ts`, and this draws the same egg: the
+/// same outline, the same rings and the same colours (`Palette`).
+///
+/// It has two readings (design/one-screen.md section 5; DECISIONS.md 91, 97
+/// and 98), which the debug log names as the web's drawing does:
+///
+/// - `aim`, the egg the settings on screen aim for, as eaten at the end of
+///   the cooling (`previewSection`), so the yolk reads the level asked: idle,
+///   the controls' egg at the time on screen; during a cook, while a control
+///   is held and for a moment after (`AppModel`'s edits), the egg the
+///   correction in hand would cook.
+/// - `live`, the egg in the water now, carried forward a tick at a time and
+///   replayed from raw when the cook's pot or start changes, on through the
+///   cooling; and at Done `ran`, the egg as it ran, eaten: the time that ran,
+///   to the egg out, with the model's parameters it ran under.
 ///
 /// The model's egg is a sphere (`EggSection`, in core); this one is drawn as
 /// an egg. Each ring is a closed outline, filled outermost first, so the one
@@ -16,83 +29,126 @@ import EggTimerCore
 /// It says nothing the sentence and the clock do not, so it has no words and
 /// VoiceOver passes over it.
 struct EggSectionView: View {
-    /// The cook in the pan, and its plan: the egg and the water it has been in.
-    let running: RunningCook
-    let plan: CookPlan
-    let calibration: Calibration
-    /// The instant the `TimelineView` drew for.
+    let model: AppModel
+    /// The phase and the instant the `TimelineView` drew for.
+    let phase: Phase
     let now: Date
 
     @State private var cache = SectionCache()
     @Environment(\.colorScheme) private var scheme
 
     var body: some View {
-        let view = sectionNow()
+        let (view, reading) = section()
         Canvas { context, size in
             EggOutline.draw(view, in: context, size: size, scheme: scheme)
         }
         .accessibilityHidden(true)
+        #if DEBUG
+        .onChange(of: Self.summary(view, reading), initial: true) { _, said in
+            Screenshots.log("egg \(said)")
+        }
+        #endif
     }
 
-    /// The section at `now`: in the water until the cook said the eggs were
-    /// out, or until the grace ran out with nobody saying, and on through the
-    /// carryover after. At the posterior mean, the egg the countdown times.
-    private func sectionNow() -> SectionView {
+    #if DEBUG
+    /// The reading and how set the yolk is, its rings' mean, for the log.
+    private static func summary(_ view: SectionView?, _ reading: EggReading) -> String {
+        guard let view else { return "\(reading.rawValue) none" }
+        let yolk = view.set.indices.filter { view.yolk[$0] }.map { view.set[$0] }
+        return String(format: "%@ yolk %.3f", reading.rawValue, yolk.isEmpty ? 0 : yolk.reduce(0, +) / Double(yolk.count))
+    }
+    #endif
+
+    /// What to draw, and which reading it is.
+    private func section() -> (SectionView?, EggReading) {
+        let planner = model.planner
+        let calibration = planner.calibration
+        guard phase != .idle, let running = model.cook.running, let plan = model.cook.plan else {
+            // Idle: the egg the controls aim for, at the time on screen.
+            guard !planner.isSousVide, let solution = planner.solution else { return (nil, .aim) }
+            let level = planner.doneness
+            return (cache.preview(
+                egg: planner.egg, setup: planner.setup, params: calibrationParams(calibration),
+                cookTimeS: solution.result.cookTimeS,
+                whiteTargetMin: calibrationDoneness(calibration, level: level).whiteDoseMin
+            ), .aim)
+        }
+        // A change in hand: the egg it aims for.
+        if let aim = model.aimView { return (aim, .aim) }
+        // Once the egg is out, under the model and at the level it ran with
+        // (`asRanShown`), not a posterior that has since learned from it.
+        let ran = asRanShown(running, plan: plan)
+        let params = ran?.params ?? calibrationParams(calibration)
+        let whiteTarget = calibrationDoneness(calibration, level: ran?.level ?? plan.level).whiteDoseMin
+        let start = running.startedAtS
+        if phase == .done, let pulled = running.events.pulled {
+            return (cache.preview(
+                egg: plan.egg, setup: plan.setup, params: params, cookTimeS: pulled.outS - start,
+                whiteTargetMin: whiteTarget
+            ), .ran)
+        }
         #if DEBUG
         let clock = now.addingTimeInterval(Screenshots.sectionAhead).timeIntervalSince1970
         #else
         let clock = now.timeIntervalSince1970
         #endif
-        let start = running.startedAtS
+        // In the water until the cook said the eggs were out, or until the
+        // grace ran out with nobody saying, and on through the carryover.
         let assumedOut = plan.deadlines.cookEndS + pullGraceSeconds
         let out = running.events.pulled?.outS ?? (clock >= assumedOut ? assumedOut : nil)
         let outS = out.map { $0 - start }
         let nowS = clock - start
-        // Once the egg is out, under the model and at the level it ran with
-        // (`asRanShown`), not a posterior that has since learned from it.
-        let ran = asRanShown(running, plan: plan)
-        return cache.view(
-            egg: plan.egg, setup: plan.setup, startedAtS: start,
-            params: ran?.params ?? calibrationParams(calibration),
+        return (cache.live(
+            egg: plan.egg, setup: plan.setup, startedAtS: start, params: params,
             toS: outS.map { min(nowS, $0 + Constants.carryoverWindow) } ?? nowS,
-            outAtS: outS,
-            whiteTargetMin: calibrationDoneness(calibration, level: ran?.level ?? plan.level).whiteDoseMin
-        )
+            outAtS: outS, whiteTargetMin: whiteTarget
+        ), .live)
     }
 }
 
-/// An egg in cross-section drawn as given, or the shell alone for none.
-struct EggDrawing: View {
-    let view: SectionView?
-    @Environment(\.colorScheme) private var scheme
-
-    var body: some View {
-        Canvas { context, size in
-            EggOutline.draw(view, in: context, size: size, scheme: scheme)
-        }
-        .accessibilityHidden(true)
-    }
+/// Which egg the drawing is (the web's `data-egg`).
+enum EggReading: String {
+    case aim, live, ran
 }
 
-/// The section carried forward between ticks, so each second costs two steps
-/// rather than a replay. A new egg, water or start - the boil tapped, a slow
-/// hob, a restore - replays it from t = 0, since the water it has been in
-/// changed.
+/// The live section carried forward between ticks, so each second costs two
+/// steps rather than a replay. A new egg, water, start or model - the boil
+/// tapped, a slow hob, a restore, a correction - replays it from t = 0, since
+/// the water it has been in changed. And the last preview worked out, which
+/// is a few thousand steps, so once for each thing it is of.
 @MainActor
-private final class SectionCache {
+final class SectionCache {
     private var section: EggSection?
-    private var key: (egg: Egg, setup: CookSetup, startedAtS: Double)?
+    private var key = ""
+    private var preview: SectionView?
+    private var previewKey = ""
 
-    func view(
+    func live(
         egg: Egg, setup: CookSetup, startedAtS: Double, params: ModelParams,
         toS: Double, outAtS: Double?, whiteTargetMin: Double
     ) -> SectionView {
-        if section == nil || key?.egg != egg || key?.setup != setup || key?.startedAtS != startedAtS {
+        let k = "\(egg)|\(setup)|\(startedAtS)|\(params)"
+        if section == nil || key != k {
             section = EggSection(egg: egg, setup: setup, params: params)
-            key = (egg, setup, startedAtS)
+            key = k
         }
         section!.advance(egg: egg, setup: setup, params: params, toS: toS, outAtS: outAtS)
         return section!.view(whiteTargetMin: whiteTargetMin)
+    }
+
+    /// `previewSection`, the egg as eaten for a pot, a time in the water and
+    /// a white's target.
+    func preview(
+        egg: Egg, setup: CookSetup, params: ModelParams, cookTimeS: Double, whiteTargetMin: Double
+    ) -> SectionView {
+        let k = "\(egg)|\(setup)|\(params)|\(cookTimeS)|\(whiteTargetMin)"
+        if let preview, previewKey == k { return preview }
+        let view = previewSection(
+            egg: egg, setup: setup, params: params, cookTimeS: cookTimeS, whiteTargetMin: whiteTargetMin
+        )
+        preview = view
+        previewKey = k
+        return view
     }
 }
 
