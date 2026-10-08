@@ -45,6 +45,12 @@ final class Alarm: NSObject, UNUserNotificationCenterDelegate {
         willPresent notification: UNNotification,
         withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
     ) {
+        #if DEBUG
+        if Screenshots.muteAudio {
+            completionHandler([.banner, .list])
+            return
+        }
+        #endif
         completionHandler([.banner, .sound, .list])
     }
 
@@ -146,6 +152,9 @@ final class Alarm: NSObject, UNUserNotificationCenterDelegate {
         content.title = title
         content.body = body
         content.sound = .default
+        #if DEBUG
+        if Screenshots.muteAudio { content.sound = nil }
+        #endif
         // An egg is time-sensitive in the literal sense the name was coined
         // for: thirty seconds late is a different egg. This level is what lets
         // the alarm through a Focus mode, and it is why the app carries the

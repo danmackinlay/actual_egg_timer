@@ -159,6 +159,7 @@ const NOT_COPY: Record<string, string> = {
   uiAnswer: 'debug launch argument',
   uiAnswerAfter: 'debug launch argument',
   provisionalAlarms: 'debug launch argument',
+  muteAudio: 'debug launch argument',
   '/': 'debug launch argument separator',
   'AET {} {}\n': 'debug log (Screenshots.log), never shown',
   'aet.log': 'debug log file name',

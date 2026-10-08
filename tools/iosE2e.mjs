@@ -144,7 +144,10 @@ class Run {
     rmSync(this.stepFile, { force: true });
     const prompt = alarms ? ['-provisionalAlarms', 'YES'] : ['-noAlarmPrompt', 'YES'];
     this.launched = this.lines().length;
-    simctl('launch', udid, BUNDLE, '-clockAt', String(at), '-clockSpeed', String(speed), ...prompt, ...args);
+    // Silent: the ring and the notifications' sound would otherwise play on
+    // the Mac's speakers (-muteAudio is debug-only, like the clock).
+    simctl('launch', udid, BUNDLE, '-clockAt', String(at), '-clockSpeed', String(speed), '-muteAudio', 'YES',
+      ...prompt, ...args);
   }
 
   terminate() {
