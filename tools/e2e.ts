@@ -1134,6 +1134,44 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
     },
   },
 
+  'two-tabs-correction': {
+    what: 'onescreen review 1.1: a second tab on the same cook never undoes the first one\'s correction with its own ring',
+    run: async (h) => {
+      const a = await h.ctx.open(STOPPED);
+      await start(a, 'hot');
+      await a.until('(await window.__e2e.snap()).decided', 'A planned');
+      const pull0 = deadlines(await a.snap()).cookEnd_s;
+      // B opened on the site, as a second visit: it takes up A's cook.
+      const b = await h.ctx.open(`${STOPPED}&at=${new Date(await a.now()).toISOString()}`);
+      await b.phase('COOKING');
+      await b.until('(await window.__e2e.snap()).decided', 'B planned');
+      await a.shift(60);
+      await b.shift(60);
+      // A minute in, A corrects the start to cold water (the owner's case).
+      await a.click('#sentence .clause[aria-controls="panelStart"]');
+      await a.click('#startCold');
+      let sa = await corrected(a, null);
+      check(sa.phase === 'HEATING', `A back to ${sa.phase}`);
+      const osc0 = (await a.osc()).length;
+      // B, which takes no correction, reaches its own pull and its grace runs out.
+      await b.shiftTo(pull0 + 25);
+      const sb = await b.phase('COOLING');
+      check(sb.cook?.events.pulled?.by === 'timeout', `B's own pull: ${JSON.stringify(sb.cook?.events.pulled)}`);
+      await a.shiftTo(pull0 + 25);
+      await a.settle();
+      sa = await a.snap();
+      check(sa.phase === 'HEATING', `A, corrected to cold, still heating: ${sa.phase} "${sa.label}"`);
+      check(sa.cook?.events.pulled === null && sa.cook?.events.rangAt_s === null,
+        `nothing B's clock decided taken up: ${JSON.stringify(sa.cook?.events)}`);
+      check((await a.osc()).length === osc0, `A rang nothing: ${(await a.osc()).length - osc0}`);
+      // A reload restores the corrected cook, not B's older copy.
+      await a.reload();
+      sa = await a.phase('HEATING');
+      check(storedCook(sa)?.choices.startMode === 'cold', `stored: ${storedCook(sa)?.choices.startMode}`);
+      return `B timed out in COOLING; A stayed HEATING, nothing taken up, nothing rung; A reloaded to HEATING, cold`;
+    },
+  },
+
   'hot-start': {
     what: 'a hot start: in, the pull, out, the cooling, Done, Start again logs the unanswered egg',
     run: async (h) => {

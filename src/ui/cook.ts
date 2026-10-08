@@ -42,7 +42,7 @@ import { render } from './render.js';
 import { sendFinal } from './share.js';
 import { idleChoices, phaseNow, settingsOfChoices, sizeClasses, state, timeToBoil_s } from './state.js';
 import {
-  clearCook, cookStoredElsewhere, dropStoredCook, loadCook, readStoredCook, rememberTimeToBoil, saveCook,
+  clearCook, cookStoredElsewhere, correctedLater, dropStoredCook, loadCook, readStoredCook, rememberTimeToBoil, saveCook,
   saveLeanHint, storedCookText, takeOldCooks, takeUpEvents,
 } from './store.js';
 import { unitSystem } from './units.js';
@@ -83,13 +83,23 @@ const written = {
 };
 
 /** Write the cook down as it is now, after taking up what another tab wrote
- *  for it since, so nothing it saw is written over. Never once it is closed. */
+ *  for it since, so nothing it saw is written over. Never once it is closed.
+ *  A copy of this cook another tab corrected later than this one stays the
+ *  copy stored (onescreen review 1.1), so a reload restores the latest
+ *  correction: what this tab saw in the pan is written into it instead
+ *  (`takeUpEvents`), and this tab runs on as it is (DECISIONS.md 97). */
 export function persistCook(): void {
   if (state.cook === null || written.closed) return;
   // Taken up here too: a write from the answers comes between plans. The
   // plan follows at once.
   if (takeUpStored()) queueMicrotask(replanCook);
-  saveCook(state.cook, keptAnswers(), state.leanHint_s);
+  const stored = readStoredCook(storedCookText());
+  if (stored !== null && stored.cook.id_ms === state.cook.id_ms && correctedLater(stored.cook, state.cook)) {
+    const answers = stored.answers === 'beforeReload' ? stored.answers : keptAnswers();
+    saveCook(takeUpEvents(stored.cook, state.cook), answers, stored.leanHint_s);
+  } else {
+    saveCook(state.cook, keptAnswers(), state.leanHint_s);
+  }
   written.text = storedCookText();
   written.cook = JSON.stringify(state.cook);
   written.works = written.text !== null;

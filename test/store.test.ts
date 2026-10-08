@@ -16,7 +16,7 @@ import { sizeClassesFor } from '../src/core/geometry.js';
 import { RunningCook, startCook, withBoil } from '../src/core/running.js';
 import { choicesOf } from '../src/ui/state.js';
 import {
-  DEFAULT_SETTINGS, Settings, boilStoredElsewhere, clearBoilMemory, clearCook, loadBoilMemory, loadCook,
+  DEFAULT_SETTINGS, Settings, boilStoredElsewhere, clearBoilMemory, clearCook, correctedLater, loadBoilMemory, loadCook,
   loadSettings, rememberTimeToBoil, saveCook, saveLeanHint, saveSettings, settingsStoredElsewhere, storedCook,
   storedCookText, takeOldCooks, takeUpEvents,
 } from '../src/ui/store.js';
@@ -169,6 +169,40 @@ test('two tabs on one cook take up each other\'s events, never a copy that lacks
   // Another cook is never taken up (DECISIONS.md 97).
   const other = aCook(start.id_ms + 60_000);
   assert.equal(takeUpEvents(untapped, other), untapped);
+});
+
+test('a copy with other corrections gives only what the cook saw, never what its clock decided (onescreen review 1.1)', () => {
+  const start = aCook();
+  const S = start.startedAt_s;
+  const due = S + 900;
+  // B, never corrected, rang its own pull and its grace ran out; A was
+  // corrected to a heavier egg at 600 s.
+  const corrected: RunningCook = { ...start, choices: { ...start.choices, mass_kg: 0.076 }, correctedAt_s: S + 600 };
+  const byClock: RunningCook = {
+    ...start,
+    events: {
+      ...start.events, rangAt_s: due, cooledAt_s: due + 220,
+      pulled: { due_s: due, out_s: due + 20, by: 'timeout', confirmed: false },
+    },
+  };
+  assert.equal(takeUpEvents(corrected, byClock), corrected, 'nothing B\'s clock decided, either way round');
+  assert.deepEqual(takeUpEvents(byClock, corrected).events, byClock.events);
+  // The cook's own tap out, and the boil, are taken from any copy; a
+  // cooling's end, which the plan decides, only from the same corrections.
+  const byCook: RunningCook = {
+    ...start,
+    events: { ...start.events, rangAt_s: due, cooledAt_s: due + 204, pulled: { due_s: due, out_s: due + 4, by: 'cook', confirmed: true } },
+  };
+  const took = takeUpEvents({ ...corrected, events: { ...corrected.events, boilAt_s: null } }, byCook).events;
+  assert.deepEqual(took, { boilAt_s: start.events.boilAt_s, pulled: byCook.events.pulled, cooledAt_s: null, rangAt_s: null });
+  // The same start and choices are the same plan, whenever corrected.
+  const back: RunningCook = { ...start, correctedAt_s: S + 610 };
+  assert.deepEqual(takeUpEvents(back, byClock).events, byClock.events);
+  // Which copy a reload restores: the one corrected last.
+  assert.equal(correctedLater(corrected, start), true);
+  assert.equal(correctedLater(start, corrected), false);
+  assert.equal(correctedLater(back, corrected), true);
+  assert.equal(correctedLater(start, start), false);
 });
 
 test('a cook kept without `answers` or the lean is refused, never read as unanswered', () => {
