@@ -19,11 +19,11 @@
 import { Phase } from '../core/policy.js';
 import { WhiteReport, YolkWord } from '../core/infer.js';
 import {
-  CookChoices, CookEvents, CookPlan, RunningCook, cookEnding, cookStillOpen, cookTooOld, corrected, eventsDue,
-  keepAsRan, replan, sameChoices, startCook, startCorrected, withBoil, withOut,
+  CookChoices, CookEvents, CookPlan, RunningCook, asRanCorrected, asRanCurrent, cookEnding, cookStillOpen, cookTooOld,
+  corrected, eventsDue, keepAsRan, replan, sameChoices, startCook, startCorrected, withBoil, withOut,
 } from '../core/running.js';
 import { answerFor, askForCookSurface, currentInputs, decided, drawNudge, nudgeNow, surfaceFor } from './answer.js';
-import { learn, logEgg } from './calibration.js';
+import { calibrationBefore, eggLogged, learn, logEgg } from './calibration.js';
 import { keepUnreadCook } from './calibrationStore.js';
 import {
   Ticker, blip, keepScreenAwake, primeAudio, pullSounding, releaseScreen, ringAlarm, setPullAlarm, startTicker,
@@ -32,7 +32,7 @@ import {
 import { applySettingsToDom } from './controls.js';
 import { commitEdit, endEdits, startEdits } from './edit.js';
 import { activeLocale } from './copy.js';
-import { cachedOddsProfile, decisionGrid } from './decisionGrids.js';
+import { cachedOddsProfile, decisionGrid, oddsProfileFor } from './decisionGrids.js';
 import { eggRecordFor } from './eggRecord.js';
 import {
   answeredElsewhere, answersNow, forgetAnswers, heldAnswers, keptAnswers, putAway, resumeAnswers, retryHeld,
@@ -278,6 +278,55 @@ function afterCorrection(now: number): void {
     startTicking();
   }
   render(now);
+  refreshAsRan();
+}
+
+/**
+ * A correction after the pull corrects the record (DECISIONS.md 96, 98): the
+ * plan as it ran is made again for the corrected cook, on the calibration
+ * before this egg (`calibrationBefore`, core `asRanCorrected`), never on one
+ * that has folded this egg's own answer (design/one-screen.md section 4,
+ * "Never from its own outcome"), on that calibration's surface and odds for
+ * the corrected pot, built off the main thread. Done shows it once it is in.
+ * An egg already logged has its record replaced from the same plan, its
+ * answers kept, and the log folded again from where it starts (`logEgg`); an
+ * answer held meanwhile (the record refused as stale) is made then. Dropped
+ * if the cook has been corrected again, or has ended, before it lands.
+ */
+function refreshAsRan(): void {
+  const cook = state.cook;
+  if (cook === null || cook.events.pulled === null || cook.asRan === null || asRanCurrent(cook) || written.closed) return;
+  const id = cook.id_ms;
+  const stamp = cook.correctedAt_s;
+  const stillThis = (): boolean => state.cook !== null && state.cook.id_ms === id && state.cook.correctedAt_s === stamp;
+  correctedAsRan(cook, nowMs() / 1000).then((r) => {
+    if (r === null || !stillThis() || state.cook === null) return;
+    state.cook = { ...state.cook, asRan: r.cook.asRan };
+    persistCook();
+    if (eggLogged(id) >= 0) {
+      const record = eggRecordFor(state.cook, r.plan, null, null, null);
+      if (record !== null) {
+        logEgg(record);
+        void learn();
+      }
+    }
+    retryHeld();
+    render(nowMs());
+  }, (error: unknown) => console.warn('the corrected egg’s record failed', error));
+}
+
+/** The cook corrected after its pull, its plan as it ran made again on the
+ *  calibration before this egg (`calibrationBefore`, `asRanCorrected`), with
+ *  that plan, for its record; null when there is no surface to make it on. */
+async function correctedAsRan(cook: RunningCook, now_s: number): Promise<{ cook: RunningCook; plan: CookPlan } | null> {
+  const before = await calibrationBefore(cook.id_ms);
+  const inputs = replan(cook, before, null, 0, now_s).inputs;
+  if (inputs === null) return null;
+  const grid = await decisionGrid(inputs);
+  const profile = await oddsProfileFor(inputs, before);
+  const surface = { inputs: inputs, grid: grid, profile: profile };
+  const next = asRanCorrected(cook, before, surface, now_s);
+  return next === null ? null : { cook: next, plan: replan(next, before, surface, 0, now_s) };
 }
 
 /** Plan the running cook again, now, with what another tab saw of it. */
@@ -439,6 +488,14 @@ function logFinished(
   const inputs = plan.inputs;
   // Left stored, for the next load to log, if the surface cannot be had.
   if (inputs === null || tries <= 0) return;
+  // Corrected after the pull, and its plan as it ran not yet made again:
+  // made now, on the calibration before this egg.
+  if (cook.asRan !== null && !asRanCurrent(cook)) {
+    correctedAsRan(cook, now_s).then((r) => {
+      if (r !== null) logFinished(r.cook, r.plan, now_s, yolk, white, ended, tries - 1);
+    }, (error: unknown) => console.warn('the corrected egg’s record failed', error));
+    return;
+  }
   decisionGrid(inputs).then(() => {
     const onIt = replan(cook, state.calib, surfaceFor(inputs), 0, now_s);
     logFinished(cook, onIt, now_s, yolk, white, ended, tries - 1);
@@ -607,6 +664,9 @@ export function restoreCook(): void {
   clock.pullRung = false;
   takeUp(back.cook, back.plan);
   showCookControls();
+  // A correction after the pull whose record was not yet made again when
+  // the page went: made now.
+  refreshAsRan();
   clock.phase = phaseNow(now);
   if (clock.phase !== 'DONE') {
     keepScreenAwake();

@@ -129,6 +129,8 @@ interface Cook {
 
 interface Rec {
   id?: number | null;
+  egg: unknown;
+  level: number;
   recommended_s: number;
   pulledBy: string;
   yolkWord: string | null;
@@ -821,6 +823,77 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
       const after = await b.eval<string>("document.getElementById('size').value");
       check(after === '3', `B, idle, shows the settings: ${after}`);
       return 'A corrected to size 3; B\'s cook and controls kept size 2; B idle shows 3';
+    },
+  },
+
+  'record-corrected-at-done': {
+    what: 'C3 step 3: a correction at Done changes the record, planned on the calibration before this egg: changed back, the record is the first to the bit',
+    run: async (h) => {
+      const tab = await h.ctx.open('/');
+      let s = await start(tab, 'hot');
+      await tab.until('(await window.__e2e.snap()).decided', 'the pot planned');
+      s = await tab.snap();
+      await tab.shiftTo(deadlines(s).cookEnd_s + 2);
+      await tab.phase('PULL');
+      await tab.click('#primary');
+      s = await tab.phase('COOLING');
+      await tab.shiftTo(deadlines(s).coolEnd_s + 2);
+      await tab.phase('DONE');
+      await tab.click('.fb[data-yolk="runny"]');
+      await tab.until('(await window.__e2e.snap()).eggsLogged === 1', 'Runny folded');
+      const first = (await tab.snap()).log[0];
+      const peak0 = await tab.eval<string>("document.getElementById('donenessPeak').textContent");
+      await pick(tab, '#size', '3');
+      s = await corrected(tab, null);
+      await tab.until(`JSON.stringify((await window.__e2e.snap()).log[0].egg) !== ${JSON.stringify(JSON.stringify(first.egg))}`,
+        'the record corrected');
+      const heavier = (await tab.snap()).log[0];
+      check(heavier.yolkWord === 'runny', `the answer kept: ${heavier.yolkWord}`);
+      check(heavier.recommended_s === first.recommended_s, 'the time that ran is the time that ran');
+      check(JSON.stringify(heavier.forecast) !== JSON.stringify(first.forecast), 'the forecast is the heavier egg\'s');
+      await pick(tab, '#size', '2');
+      s = await corrected(tab, s.cook?.correctedAt_s ?? null);
+      await tab.until(`JSON.stringify((await window.__e2e.snap()).log[0].egg) === ${JSON.stringify(JSON.stringify(first.egg))}`,
+        'the record back');
+      await tab.until("(await window.__e2e.snap()).eggsLogged === 1 && (await window.__e2e.ui('calibration')).eggsBehind() === 0",
+        'folded again');
+      const back = (await tab.snap()).log[0];
+      check(JSON.stringify(back.forecast) === JSON.stringify(first.forecast),
+        `changed back, the forecast is the first, not one that knew Runny: ${JSON.stringify(back.forecast)} vs ${JSON.stringify(first.forecast)}`);
+      await sleep(300);
+      const peak1 = await tab.eval<string>("document.getElementById('donenessPeak').textContent");
+      check(peak1 === peak0, `Done shows the cook as it ran: "${peak1}" (was "${peak0}")`);
+      return `heavier: a new forecast, the answer kept; back: the first forecast to the bit, "${peak1}"`;
+    },
+  },
+
+  'slider-after-pull': {
+    what: 'C3 step 3: after the pull the slider only previews: no correction, no record changed, and back to the level the egg ran at',
+    run: async (h) => {
+      const tab = await h.ctx.open('/');
+      let s = await start(tab, 'hot');
+      await tab.until('(await window.__e2e.snap()).decided', 'the pot planned');
+      s = await tab.snap();
+      const level = String(s.cook?.choices.level);
+      await tab.shiftTo(deadlines(s).cookEnd_s + 2);
+      await tab.phase('PULL');
+      await tab.click('#primary');
+      s = await tab.phase('COOLING');
+      await tab.shiftTo(deadlines(s).coolEnd_s + 2);
+      await tab.phase('DONE');
+      await tab.click('.fb[data-yolk="jammy"]');
+      await tab.until('(await window.__e2e.snap()).eggsLogged === 1', 'Jammy folded');
+      const first = JSON.stringify((await tab.snap()).log[0]);
+      await drag(tab, [0.6, 0.9]);
+      await tab.until("document.getElementById('eggSection').dataset.egg === 'aim'", 'the aim while held');
+      await drag(tab, [0.9], true, false);
+      await tab.until("document.getElementById('eggSection').dataset.egg === 'ran'", 'the egg as it ran again', 5000);
+      s = await tab.snap();
+      check(s.cook?.correctedAt_s === null, `no correction: ${s.cook?.correctedAt_s}`);
+      check(JSON.stringify(s.log[0]) === first, 'the record as it was');
+      const thumb = await tab.eval<string>("document.getElementById('doneness').value");
+      check(thumb === level, `the slider back at ${level}: ${thumb}`);
+      return `dragged to 0.9 and let go: aim drawn, no correction, the record as it was, the slider back at ${thumb}`;
     },
   },
 

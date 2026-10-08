@@ -300,6 +300,36 @@ export function eggLogged(id: number | null): number {
   return -1;
 }
 
+/**
+ * The calibration before the egg of the cook `id`, for a correction made
+ * after its pull (design/one-screen.md section 4, "Never from its own
+ * outcome"; core `asRanCorrected`): a plan made for that cook on a posterior
+ * that has folded its own answer would score the model against what it
+ * already learned from it. A copy, never the page's own.
+ *
+ * - Not in the log, or not folded yet: the calibration as it stands, which
+ *   has learned nothing from it.
+ * - Folded on this page, and the newest egg: the calibration this page held
+ *   before folding it (`last.before`), as a second answer refolds from.
+ * - Otherwise (a reload since, or another egg after it): the log replayed
+ *   from where it starts up to this egg, a surface per egg built off the
+ *   main thread, as a refold does.
+ */
+export async function calibrationBefore(id: number): Promise<Calibration> {
+  const at = eggLogged(id);
+  if (at < 0 || at >= kept.folded) return copyCalibration(kept.calibration);
+  const o = last;
+  if (o !== null && o.index === at && idOf(o.record) === id) return copyCalibration(o.before);
+  const c = startOf(kept.base);
+  const log = kept.log.slice(0, at);
+  for (const r of log) {
+    if (!recordTeaches(r)) continue;
+    const grid = await buildOffThread(gridRequestFor(c, r, calibrationGrid));
+    foldRecord(c, r, grid);
+  }
+  return c;
+}
+
 /** What folding the live egg leaves behind: the surface its answers were
  *  scored against and the calibration as it stood before them, so that a
  *  second answer can fold the egg again rather than on top of itself. */
