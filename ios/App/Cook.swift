@@ -705,6 +705,9 @@ final class Cook {
                 + " next \(next.slowHobAtS.map { String($0) } ?? "-")"
                 + " asking \(next.askIfStillIn) overdue \(next.overdue)"
         )
+        Screenshots.log(
+            "verdict \(next.answer.verdict.kind) white sets \(next.solution.whiteSets) cook \(next.cookTimeS)"
+        )
         #endif
         let wasAsking = plan?.askIfStillIn
         plan = next

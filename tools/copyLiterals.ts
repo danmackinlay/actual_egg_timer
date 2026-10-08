@@ -241,6 +241,10 @@ const NOT_COPY: Record<string, string> = {
   stillIn: 'debug launch argument value',
   stillOut: 'debug launch argument value',
   open: 'debug launch argument value',
+  'slot {}': 'debug log (Screenshots.log), never shown',
+  '{} {} | {}': 'debug log of the readout (Screenshots.log), never shown',
+  'readout {}': 'debug log (Screenshots.log), never shown',
+  'verdict {} white sets {} cook {}': 'debug log (Screenshots.log), never shown',
   // the face of 1750 (ios/App/PeriodFace.swift)
   IM_FELL_English_Roman: 'font name',
   IM_FELL_English_Italic: 'font name',

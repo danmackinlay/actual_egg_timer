@@ -59,6 +59,12 @@ struct ReadoutView: View {
                     .animation(.snappy, value: bigTime)
 
                 sublineLine
+                    #if DEBUG
+                    // What the readout says, for the scripted checks.
+                    .onChange(of: "\(phase.rawValue) \(bigTime) | \(subline)", initial: true) { _, said in
+                        Screenshots.log("readout \(said)")
+                    }
+                    #endif
                 certaintyLine
             }
         }

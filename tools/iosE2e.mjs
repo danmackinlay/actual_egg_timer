@@ -837,6 +837,36 @@ scenario('still-in-no', 'C3 step 4: "still in the water?" answered no: the pull 
   run.note(`out: ${phases(lines).at(-1) ?? 'COOLING'}, the pull confirmed, the record corrected`);
 });
 
+scenario('running-lines', 'C3 step 5: corrected to cold and left heating, the slow hob counts the time heated up, on the clock and the card', async (run) => {
+  await hotStarted(run, 'set:start=cold@300');
+  const t = await tapAt(run, run.t0 + 300, 'set');
+  const after = await corrected(run, t.i);
+  await run.until(/^phase HEATING$/, { from: t.i, what: 'Heating again' });
+  run.check(!after.plan.lengthened, 'on the guess at first');
+  const i = await run.step(run.t0 + 16 * 60);
+  const plan = await run.until(/^plan .* lengthened true/, { from: i, what: 'the slow hob lengthened' });
+  await run.settled(plan.i);
+  const said = await run.until(/^readout HEATING 16:00 \|/, { from: i, what: 'the time heated, counting up' });
+  const card = lastCard(run.lines().slice(i));
+  run.check(card?.stage === 'heating' && card.up, `the card counts up: ${card?.stage} ${card?.up}`);
+  run.note(said.text.slice('readout '.length));
+});
+
+scenario('white-unset', 'C3 step 5: a correction the white never sets in gets the longest time the pan can give, and the slot says so', async (run) => {
+  await hotStarted(run, 'set:heatOff=1@20,set:size=0@30,set:eggs=1@40,set:water=0.5@50');
+  let after;
+  for (const s of [20, 30, 40, 50]) {
+    const t = await tapAt(run, run.t0 + s, 'set');
+    after = await corrected(run, t.i);
+  }
+  const never = EN['refusal.whiteNeverSets'].text;
+  const slot = await run.until(/^slot /, { from: run.launched, what: 'the slot' });
+  const last = run.lines().filter((l) => l.text.startsWith('slot ')).at(-1);
+  run.check(last.text === `slot ${never}`, `the slot: "${last.text}"`);
+  run.check(slot, 'the slot says it');
+  run.note(`heat off, 0.5 L, one small egg: "${last.text.slice(5)}"`);
+});
+
 scenario('cold', 'a cold cook: boil, pull, cooling, Done, an answer, Start again', async (run) => {
   const cook = await started(run, ['-uiDo', `${TO_DONE},answer:jammy@cooled+20,again@cooled+40`]);
   const start = startOf(cook);
