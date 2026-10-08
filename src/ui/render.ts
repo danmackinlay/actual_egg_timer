@@ -16,8 +16,10 @@ import { OddsProfile, pricedChanges, protocolAdvice } from '../core/reach.js';
 import { Outcome } from '../core/outcome.js';
 import { CertaintyReading } from '../core/certainty.js';
 import {
-  WordsRef, certaintyKey, intervalWords, mostLikelyOpened, mostLikelyShown, mostLikelyWords, whiteAtRisk,
+  WordsRef, certaintyKey, forecastWhiteAtRisk, intervalWords, mostLikelyOpened, mostLikelyShown, mostLikelyWords,
+  whiteAtRisk,
 } from '../core/wording.js';
+import { asRanShown } from '../core/running.js';
 import { midSentence } from '../core/copy.js';
 import { EggSection, advanceSection, createSection, sectionView } from '../core/section.js';
 import { CARRYOVER_WINDOW } from '../core/constants.js';
@@ -334,6 +336,9 @@ function words(ref: WordsRef): string {
 function renderOdds(now_ms: number): void {
   let o: Outcome | null = null;
   let sure: CertaintyReading | null = null;
+  // Once the egg is out, the white's line is the cook's as it ran, not a
+  // plan made since, which may know how the egg came out (review 2.4).
+  let ranWhite: boolean | null = null;
   if (state.cook === null) {
     if (state.chosen !== null && state.solution !== null && state.solution.whiteSets) {
       o = state.outcome;
@@ -351,9 +356,11 @@ function renderOdds(now_ms: number): void {
     const pulled = before === 'PULL' || before === 'COOLING' || before === 'DONE';
     o = state.plan.solution.whiteSets ? drawn.outcome : null;
     sure = state.plan.solution.whiteSets && !pulled ? drawn.certainty : null;
+    const ran = pulled ? asRanShown(state.cook, state.plan) : null;
+    if (ran !== null) ranWhite = state.plan.solution.whiteSets && forecastWhiteAtRisk(ran.forecast);
   }
   renderCertainty(sure);
-  page().whiteRisk.hidden = o === null || !whiteAtRisk(o);
+  page().whiteRisk.hidden = ranWhite !== null ? !ranWhite : o === null || !whiteAtRisk(o);
 
   // While a new pot's surface is on its way the lines above are blank, and
   // the readout would shrink and grow back a second later, moving the

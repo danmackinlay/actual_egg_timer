@@ -18,9 +18,11 @@ import { readFileSync } from 'node:fs';
 
 import { Outcome } from '../src/core/outcome.js';
 import { WHITE_RISK } from '../src/core/outcome.js';
+import { forecastOf } from '../src/core/record.js';
 import { Certainty, wordCertainty } from '../src/core/certainty.js';
 import {
-  certaintyKey, intervalWords, mostLikelyOpened, mostLikelyShown, mostLikelyWords, rangeWords, whiteAtRisk,
+  certaintyKey, forecastWhiteAtRisk, intervalWords, mostLikelyOpened, mostLikelyShown, mostLikelyWords, rangeWords,
+  whiteAtRisk,
 } from '../src/core/wording.js';
 import { restoreOutcome } from '../src/ui/outcome.js';
 
@@ -76,6 +78,12 @@ test('the white gets its line from one in five, and not below', () => {
   assert.equal(whiteAtRisk(outcome({ pWhiteRunny: 0.17 })), false);
   assert.equal(whiteAtRisk(outcome({ pWhiteRunny: 0.02 })), false);
   assert.ok('outcome.whiteRunny' in MESSAGES);
+  // The same rule, read from a cook as it ran: the forecast's chance of a
+  // runny white is the outcome's (review 2.4).
+  for (const p of [0, 0.17, WHITE_RISK - 1e-9, WHITE_RISK, 0.45]) {
+    const o = outcome({ pWhiteRunny: p });
+    assert.equal(forecastWhiteAtRisk(forecastOf(o, 400)), whiteAtRisk(o), String(p));
+  }
 });
 
 test('the bracket says the certainty\'s interval: its first and last words, once when it is one', () => {

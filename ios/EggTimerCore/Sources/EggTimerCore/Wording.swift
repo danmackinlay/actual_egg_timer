@@ -101,6 +101,12 @@ public func whiteAtRisk(_ o: Outcome) -> Bool {
     o.pWhiteRunny >= whiteRisk
 }
 
+/// The same, for a cook as it ran: its forecast's chance of a runny white
+/// (`forecastOf`). Done reads this, not a plan made since.
+public func forecastWhiteAtRisk(_ f: Forecast) -> Bool {
+    f.white[0] >= whiteRisk
+}
+
 /// The bracket in the slider's words: a key and its arguments, each argument
 /// itself a doneness key for the caller to render: the certainty's 90%
 /// interval's first and last words, or its one word (`wordBracket` draws it).
