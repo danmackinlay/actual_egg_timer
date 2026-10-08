@@ -145,6 +145,8 @@ Actioned, in core: a running cook keeps the plan as it ran (`asRan`: level, cook
 
 Actioned, on the web: every plan taken up passes through `keepAsRan` and is written if it changed (`7a35bf3`). An answer refused for want of the surface is held, its row settled and "learning…" shown, and made when the cook is planned on the surface; a finished, unanswered egg ended before its surface is in (Start again, or a cook dropped as too old at a reload) asks the worker for the surface, plans on it, keeps the plan as it ran and logs, and the stored cook is forgotten only then (`527fc91`). Driven: a cook at Done moved back three hours and reloaded logged its egg with its forecast (`cook_s` 461.4, `pulledBy: timeout`), where the build before logged nothing; Runny pressed 163 ms after a reload at Done was held and logged with its forecast when the surface landed.
 
+Actioned, on iOS: every plan taken runs `keepAsRan` and stores the cook when it changed (`da1dfe5`). A first answer refused for want of the surface is held, shown as given, and made when the plan on the surface lands (`AppModel.answer`, `answerHeld`); an unanswered egg logged at Start again or dropped as too old at a relaunch is made from the plan as it ran, or else from its plan on the pot's surface built for it (`Cook.unansweredRecord`), then sent if final (`daa48b6`). Driven on the simulator, the stored cook's `asRan` cleared to stand for a pull made while the app was away: moved back three hours and relaunched, the egg was logged with its forecast (nothing logged before); relaunched at Done and answered at once, the answer was held about a second and logged with its forecast.
+
 ### 1.4 A relaunch while heating keeps the old alarms (iOS)
 
 Confirmed in core; the app's path read. `restoreIfNeeded` adopts the
@@ -170,6 +172,8 @@ the next lengthening moves a deadline.
 **Fix.** In the restore's task, `if authorized { scheduleAlarms() }`, as
 `start()` does (`:282`). It is idempotent, and a deadline already past is
 skipped.
+
+Actioned, as written: `21690b4`. Driven with provisional notifications (`-provisionalAlarms`): a cold cook moved back 640 s and relaunched planned a lengthened pull 546 s before the one still pending, which was left (before); after, the pending pull moved to the restored plan's.
 
 ## 2. Correct before building on it
 
@@ -206,6 +210,8 @@ Actioned, in core: `replan`'s optional `hint`, the last plan's `slowHob` (the la
 
 Actioned, on the web: `planFor` passes the last plan's `slowHob`, `80044ea`. Driven: a creeping tick 44 to 45 ms in the in-app browser, where it was 300 to 395 ms.
 
+Actioned, on iOS: each plan hands `plan?.slowHob` to `replan` (`Cook.made`), `da1dfe5`. Not timed on the simulator; a creeping cook planned every 10 s, as before.
+
 ### 2.2 A cook too old runs on, and its card with it (both apps)
 
 - **The web never ends it in the tab that runs it.** Confirmed. A cold
@@ -234,6 +240,8 @@ card kept aside).
 Actioned, the core part: `cookTooOld(plan, now_s)` is the tick's call, of the plan the tick holds (its `tooOldAt_s` moves only when the cook tells the plan something), documented so; the call above is too old at 7,200 s from a plan made at the start as from a fresh one (`test/running.test.ts` 27), `81b590a`. The apps' ticks and iOS's too-old branch are theirs.
 
 Actioned, on the web: the tick writes the events due, then asks `cookTooOld` of its plan and ends the cook as Cancel does; at Done, where the ticker has stopped, the page asks when it is next shown or focused. Driven with the call above: Heating to 7,100 s, idle at 7,210 s with nothing stored (Heating at 4 h, before). `b9741c0`.
+
+Actioned, on iOS: the tick asks `cookTooOld` of its plan and ends the cook as Start again does (alarms cancelled, card ended, an unanswered finished egg logged); the ticker keeps going at Done, every 5 s, for the hour; becoming active asks `cookStillOpen`; the relaunch's too-old branch cancels the alarms and ends the card. Driven: a heat moved back 7,185 s went idle at two hours (Heating, 0:00, "120:09 so far", before); relaunched three hours on, no notification pending and no card. `d79a434`.
 
 ### 2.3 An egg becomes final while its screen still takes answers (both apps)
 
@@ -267,6 +275,8 @@ Actioned, the core part: `openEggId` needs the stored cook's plan; `cookStillOpe
 
 Actioned, on the web: before any answer or reading, and on a `storage` event at Done, `cookStillOpen` with the stored cook's id; once false the questions go, nothing held is made, and nothing more is written or logged for that egg (where storage does not read back, the stored cook says nothing and the egg stays open). Driven with the call above: Tender three hours on was not taken (`white` stayed null) and the questions went; a focus then ended the cook (2.2). Another tab's Start again on the same cook put this tab's questions away at once, and a Jammy pressed after it logged nothing. `783adf7`.
 
+Actioned, on iOS: `cookStillOpen` (with the stored cook's id) before every answer and reading, before a held answer is made, and on becoming active; once false the cook is ended as Start again ends it, so the questions go and nothing more is logged for that egg. Driven: Done 3,590 s back, Runny sent at 20 s: idle at the hour, the egg logged unanswered and the Runny not taken (taken, before). `d79a434`.
+
 ### 2.4 Done after an answer shows the egg re-planned on that answer (both apps)
 
 Confirmed in the simulator; known and left by both apps' LOGBOOK entries
@@ -295,6 +305,8 @@ Actioned, in core: the cook's `asRan` (1.3) is what Done draws from, `asRanShown
 
 Actioned, on the web: "You asked for", the summary under the sentence, the probe's field and its placeholder, and the egg in cross-section's parameters read `asRanShown(cook, plan)`, else the plan (`feedback.ts` `cookShown`). Driven: Runny answered at Done and the page reloaded, "jammy · peak yolk 65 °C" stayed (58 °C before). `7a35bf3`.
 
+Actioned, on iOS: "You asked for", the sentence's level and peak, the probe's offer and its starting degree, the Live Activity's peak, the egg in cross-section's parameters and level, and the line about a runny white read `asRanShown`, else the plan (`Cook.asRan`). Driven: Runny answered at `-uiScreen done`, killed and relaunched: "jammy · peak yolk 65 °C", the egg as drawn and no runny-white line, and the white's question still open, since the record now matches (before: 58 °C, the egg redder, the runny-white line, and only "Thanks"). `e7e993e`.
+
 ## 3. Minor, parity, and for C3
 
 - **The question about a pull the clock assumed lets the cooling run out
@@ -315,6 +327,8 @@ Actioned, on the web: "You asked for", the summary under the sentence, the probe
   stays in Cooling with nothing written, and one asked after Done holds Done
   back (`test/running.test.ts` 25, `running.json`, `policy.json`),
   `3ecc07c`.
+  Actioned, on iOS: while a plan asks, no alarm is scheduled and the
+  pending ones are cancelled, `b780e47`.
 - **The countdown reads 0:00 while still heating** once the slow hob
   creeps (from about 16 minutes for this cook): iOS's big clock
   (`ReadoutView.swift:175`), the heating card counting to an end already
@@ -325,6 +339,11 @@ Actioned, on the web: "You asked for", the summary under the sentence, the probe
   time heated, and a screen reader hears the line under it ("15:03 so far
   · about 15:53 to boil", an existing key, so no draft); the cooling's
   countdown never goes below 0:00 (`test/phaseView.test.ts`), `f214855`.
+  Actioned, on iOS: while `plan.lengthened` the big clock shows the time
+  heated, and the Lock Screen card and Dynamic Island count up from the
+  start to when the guess gives out (`ContentState.countsUp`, optional, so
+  an older card decodes); no new words. Driven: a cook 1,200 s on read
+  20:29 and climbing. `2c9b7f1`.
 - **The upgrade is from 0.3, not 0.4.** `main` (0.3.4, live) writes the
   same keys, `aet.cook.v2` and `cookInProgress`, and the same alarm ids, so
   the cook kept aside will in practice be a 0.3 cook. It holds on iOS from
@@ -337,6 +356,13 @@ Actioned, on the web: "You asked for", the summary under the sentence, the probe
   it: it stays at its last stage, stale from its end plus 90 s, until the
   system's eight hours or the next Start. End each old activity at launch
   with a dismissal after its end, or say so in §4.
+  Actioned: when an old key is kept aside at launch, every card is ended
+  with a dismissal at its stage's end (at once if past); its
+  notifications are left. Driven: a heat 3 minutes from its pull moved to
+  `cookInProgress.v2` and relaunched: the card ended but still shown, the
+  notifications pending; after its end, no card, the pull's notification
+  fired and the cooling's pending (before: the card active, never ended).
+  `7d7a964`.
 - **One slot for an unread cook** (`aet.cook.unread`, and iOS's
   `cookInProgress.unread`): `restoreCook` keeps the old key's cook and
   then, in the same boot, an unreadable current one in the same slot, so
@@ -347,6 +373,9 @@ Actioned, on the web: "You asked for", the summary under the sentence, the probe
   Actioned, on the web: `aet.cook.unread` is a list, each text once, an
   earlier build's single text read as the first, all exported
   (`test/record.test.ts` 3a5), `450236c`.
+  Actioned, on iOS: `cookInProgress.unread` is a list in the same way.
+  Driven: two different old keys found at one launch beside a string in
+  the slot left a list of three. `de688d5`.
 - **Parity.** A probe reading on the web is scored against the record made
   from the plan now (`src/ui/feedback.ts:271`), on iOS against the record
   logged (`00f3b51`); the cook time is pinned at the pull, so the reading

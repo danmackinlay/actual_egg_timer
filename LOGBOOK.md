@@ -5374,3 +5374,79 @@ plan asks, nothing rings, no pull is scheduled and the cooling's clock
 stops at 0:00. The white's risk line at Done still reads the plan now, not
 the plan as it ran. iOS's findings are its own (1.4, and its part of 1.3,
 2.1 to 2.4).
+
+## 8 October 2026: the running-cook review's iOS findings (SHIP-0.5 C2)
+
+`design/running-cook-review.md`'s findings on iOS, each heading's
+"Actioned, on iOS" line naming its commit: the slow hob's hint and the
+plan as it ran kept (`da1dfe5`), Done drawn from it (`e7e993e`), no egg
+logged without its forecast (`daa48b6`), a cook no longer open ended on the
+tick, on becoming active and before an answer (`d79a434`), the restored
+plan's alarms (`21690b4`), none while a plan asks (`b780e47`), the time
+heated counting up (`2c9b7f1`), the card kept at the upgrade ended at its
+end (`7d7a964`), and every unread cook kept (`de688d5`). Core unchanged; no
+word changed (the count-up has no words). `0.5.x`, with the web's fixes,
+merged in.
+
+**Driven** on a simulator of its own (iPhone 17 Pro, iOS 26.5, deleted
+after), a Debug build, the stored cook staged by editing `cookInProgress.v3`
+in the app's plist and relaunching, as the review did. Nobody could tap it,
+so first `1eec910`: launch arguments to move a started cook back
+(`-cookAgo`), to set how long ago Done's cooling ended (`-doneAgo`), to
+answer at Done (`-uiAnswer`, `-uiAnswerAfter`, also for a cook restored at
+Done), and to be granted quiet notifications with no prompt
+(`-provisionalAlarms`), and a debug log of the plans, the alarms read back
+and the cards (`Library/Caches/aet.log` in the container). Each finding
+before (on `1eec910`) and after:
+
+- **2.4.** Before: Runny at `-uiScreen done`, killed, relaunched: "jammy ·
+  peak yolk 58 °C" (65 before the answer), the egg redder, "The white might
+  still be runny." under the time, and "Thanks" where the white's question
+  was. After: 65 °C, the same egg, no white line, the white's question still
+  open (the record made at the relaunch now matches the one logged).
+- **1.3.** Before: a Done cook moved back three hours: nothing logged.
+  After, with `asRan` cleared to stand for a pull made while the app was
+  away: logged with its forecast (`yolk` 0.391/0.227/0.382, the same as an
+  egg logged at Done). Relaunched at Done with the same clearing and Runny
+  sent at once: "answer held", then made about a second later with its
+  forecast.
+- **2.2.** Before: a heat moved back 7,180 s read Heating, 0:00, "120:09 so
+  far · about 120:00 to boil". After: idle at two hours, nothing stored.
+  Relaunched three hours on: no notification pending and no card.
+- **2.3.** Before: Done 3,590 s back, Runny at 20 s: logged, already final.
+  After: idle at the hour, the egg logged unanswered, the Runny not taken.
+- **1.4.** Before: a cold cook moved back 640 s and relaunched planned a
+  lengthened pull at …825 while the pending pull stayed at …371. After: the
+  pending pull moved to the restored plan's.
+- **§3.** The count-up: 20:29 and climbing 1,200 s into a cook never tapped,
+  the card's end the start plus two hours. The old card: a heat 3 minutes
+  from its pull moved to `cookInProgress.v2` and relaunched: before, the
+  card stayed active; after, ended but shown, the notifications pending, and
+  once its end had passed no card, the pull's notification delivered and
+  the cooling's still pending. The unread slot: two different old keys at
+  one launch beside a string a build before wrote: a list of three.
+
+**Choices made.** At Done the ticker goes on every 5 s (it stopped at Done),
+so a cook left open on screen ends at the hour without a foreground; the
+web asks when the page is next shown. A cook no longer open is ended as
+Start again ends it, on the tick, on becoming active and before an answer:
+an unanswered finished egg is logged then, as a relaunch would, and nothing
+more. A kept card ends at its stage's end, not that plus the grace. An
+answer held for the surface shows as given; a probe reading in that second
+does nothing until the record can be made, since it is scored against it.
+
+**Left.** iOS clears the stored cook at Start again and logs the unanswered
+egg once its surface is built, so a kill in that second loses it (the web
+keeps the stored cook until then). The too-old record is still made from
+the cook without the events due written (§3's parity, 1.2e-7 s). The slow
+hob's hint was not timed on the simulator. The Dynamic Island drew empty in
+this simulator, so the card was read from ActivityKit in the log, not seen.
+
+**Things that cost time.** The simulator panel was not granted, so nothing
+could be tapped: the system's notification prompt, once shown, survives an
+uninstall and needs a `simctl shutdown`/`boot`; always pass
+`-noAlarmPrompt YES` or `-provisionalAlarms YES`. `simctl launch
+--stdout`/`--stderr` to a path under the scratch directory wrote nothing,
+hence the log in the container. A pending interval notification's
+`nextTriggerDate()` is now plus the interval, so it drifts by the seconds
+since it was scheduled.

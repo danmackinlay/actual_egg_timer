@@ -362,9 +362,11 @@ from them, made again only on an event, a surface landing, the slow hob's
 `slowHobAt_s` or a launch. Every phase is derived from the plan's deadlines and
 the clock (`phaseAt`) rather than counted down, so a ticker that stops —
 backgrounded, locked, or simply busy — cannot make the egg wrong. The ticker
-counts nothing down: it writes the events the clock decides (`eventsDue`), plans
+counts nothing down: it ends a cook core calls too old (`cookTooOld`) as Start
+again would, writes the events the clock decides (`eventsDue`), plans
 again when the slow hob says, pushes the Live Activity's changes, and rings for
-a deadline no notification holds; the screen redraws from its own `TimelineView`. This is the native form of the same discipline the web
+a deadline no notification holds (at Done it goes on every 5 s, for the hour the
+egg stays open); the screen redraws from its own `TimelineView`. This is the native form of the same discipline the web
 app uses when it recomputes from timestamps on `visibilitychange`.
 
 A cook in progress is written to `UserDefaults` (`cookInProgress.v3`, through
@@ -374,11 +376,15 @@ are the cook as it ran whatever a later plan reads.
 Without that, a force-quit or a crash leaves the alarm with the system and the
 Live Activity on the Lock Screen while the app itself reopens to an idle screen —
 which teaches the user to distrust an alarm that was, in fact, perfectly
-correct. A cook core calls too old (`cookTooOld`: an hour past its end, or two
-hours still heating) is dropped instead of restored; that egg has been eaten. A
+correct. A restored cook's alarms are set again from its plan, since a slow hob
+planned later pulls at another moment. A cook core calls too old (`cookTooOld`:
+an hour past its end, or two hours still heating) is dropped instead of
+restored, its alarms cancelled and its card ended; that egg has been eaten, and
+if nobody answered about it, it is logged from its plan on its pot's surface. A
 cook an earlier build wrote (0.3's and 0.4's `cookInProgress`, an earlier 0.5
-build's `cookInProgress.v2`) is kept aside with the results, its notifications
-left to ring.
+build's `cookInProgress.v2`) is kept aside with the results
+(`cookInProgress.unread`, a list), its notifications left to ring and its card
+ended to go at its own end.
 
 ## The Live Activity
 
@@ -393,7 +399,8 @@ app has to wake up to keep it honest — the same trick as scheduling the alarm 
 an absolute date, applied to the display. The app pushes a new state only when
 what the card shows changes: the **stage**, a deadline that moved, or the cook's
 description, which is in the state so a plan made again updates the card in
-place.
+place. While the slow hob has lengthened the guess, the heating card counts the
+time heated up (`countsUp`) rather than down to a pull that keeps moving.
 
 Three things cost time here and are worth writing down:
 

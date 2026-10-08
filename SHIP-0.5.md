@@ -231,6 +231,19 @@ core's exports.
         unread cook kept (`450236c`), a later probe scored against the
         logged record (`0174dcd`). Each driven before and after
         (`LOGBOOK.md`, 8 October 2026). No word changed.
+  - [x] *iOS's findings*: the slow hob's hint passed and the cook as it
+        ran kept (2.1, `da1dfe5`); Done, the sentence, the card's peak and
+        the egg drawn from it (2.4, `e7e993e`); no egg logged without a
+        forecast nor dropped for want of one, an answer held until the
+        surface lands (1.3, `daa48b6`); the tick ends a cook too old, the
+        relaunch's too-old branch cancels the alarms and ends the card, and
+        a final egg takes no more answers (2.2, 2.3, `d79a434`); a relaunch
+        sets the restored plan's alarms (1.4, `21690b4`); and from §3, no
+        alarm while the plan asks (`b780e47`), the time heated counting up
+        on the clock and the card (`2c9b7f1`), the card kept at the upgrade
+        ended at its end (`7d7a964`), every unread cook kept (`de688d5`).
+        Each driven before and after on the simulator, with launch arguments
+        for it (`1eec910`; `LOGBOOK.md`, 8 October 2026). No word changed.
 - [ ] **C3. Both apps**, screen by screen, checked by driving them;
       `UI.md` rewritten as built.
 
