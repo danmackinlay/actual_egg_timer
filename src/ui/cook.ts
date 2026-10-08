@@ -56,14 +56,17 @@ export function persistCook(): void {
  * planned once on the surface the last plan wanted, and again if this one
  * wants another that is already built (a pot is known only once planned,
  * since the slow hob's ramp is found by solving). Whatever it wants and has
- * not got is asked for, and lands through `replanCook`.
+ * not got is asked for, and lands through `replanCook`. The slow hob's rule
+ * starts where the last plan got to (`before.slowHob`, running-cook review
+ * 2.1), which core takes only when it fits, so a creeping plan is one solve.
  */
 function planFor(cook: RunningCook, leanHint_s: number, now_s: number, before: CookPlan | null): CookPlan {
   const guess = before === null ? null : before.inputs;
-  let plan = replan(cook, state.calib, surfaceFor(guess), leanHint_s, now_s);
+  const hint = before === null ? null : before.slowHob;
+  let plan = replan(cook, state.calib, surfaceFor(guess), leanHint_s, now_s, hint);
   if (plan.inputs !== null && plan.decided === null) {
     const s = surfaceFor(plan.inputs);
-    if (s !== null) plan = replan(cook, state.calib, s, leanHint_s, now_s);
+    if (s !== null) plan = replan(cook, state.calib, s, leanHint_s, now_s, hint);
   }
   return plan;
 }
