@@ -267,6 +267,10 @@ export function correctCook(choices: CookChoices, startedAt_s: number | null): v
   if (startedAt_s !== null && startedAt_s !== cook.startedAt_s) cook = startCorrected(cook, startedAt_s, now_s) ?? cook;
   if (!sameChoices(choices, cook.choices)) cook = corrected(cook, choices, now_s);
   if (cook === state.cook) return;
+  // An egg answered about came out: a pull the clock assumed stands, so a
+  // correction at Done never asks whether it is still in the water, nor
+  // puts the questions away (onescreen review 2.1).
+  if (answersNow().kind !== 'none') cook = pullStands(cook);
   state.cook = cook;
   afterCorrection(now);
 }

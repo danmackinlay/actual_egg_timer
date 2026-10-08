@@ -1060,11 +1060,15 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
       const osc0 = (await tab.osc()).length;
       check(s.primary === await words('ask.stillIn.yes'), `yes: ${s.primary}`);
       check(await tab.eval<boolean>("!document.getElementById('stillOut').hidden"), 'no, on screen');
+      // Nothing past the question: not the white's line, a caveat about the
+      // pull it doubts (onescreen review 3).
+      check(await tab.eval<boolean>("document.getElementById('whiteRisk').hidden"), 'no white\'s line under the question');
       // The cooling's counted end passes under the question: nothing.
       await tab.shift(600);
       await tab.settle();
       s = await tab.snap();
       check(s.phase === 'COOLING' && s.label === ask && !s.feedback, `nothing past the question: ${s.phase}, "${s.label}"`);
+      check(await tab.eval<boolean>("document.getElementById('whiteRisk').hidden"), 'no white\'s line under the question, settled');
       check(storedCook(s)?.events.cooledAt_s === null, 'no cooling written');
       check((await tab.osc()).length === osc0, 'nothing rang');
       await tab.click('#primary');
@@ -1198,6 +1202,117 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
       s = await tab.snap();
       check(s.log[0].yolkWord === 'jammy', `the answer kept: ${s.log[0].yolkWord}`);
       return `logged ${first} became ${JSON.stringify(s.log[0].egg)}, Jammy kept, then forgotten`;
+    },
+  },
+
+  'done-stays-done': {
+    what: 'onescreen review 2.1: after Done and an answer, the cooling corrected to ice keeps Done, its questions and its silence',
+    run: async (h) => {
+      const tab = await h.ctx.open(STOPPED);
+      await tab.click('#coolCounter');
+      await tab.until("(await window.__e2e.ui('state')).state.settings.cooling === 'counter'", 'the counter chosen');
+      let s = await start(tab, 'hot');
+      await tab.until('(await window.__e2e.snap()).decided', 'the pot planned');
+      s = await tab.snap();
+      await tab.shiftTo(deadlines(s).cookEnd_s + 2);
+      await tab.phase('PULL');
+      await tab.click('#primary');
+      s = await tab.phase('DONE');
+      const out_s = storedCook(s)?.events.pulled?.out_s ?? 0;
+      await tab.shift(60);
+      await tab.click('.fb[data-yolk="jammy"]');
+      await tab.until('(await window.__e2e.snap()).eggsLogged === 1', 'Jammy folded');
+      await tab.settle();
+      const osc0 = (await tab.osc()).length;
+      await tab.shift(5);
+      await tab.click('#coolIce');
+      s = await corrected(tab, null);
+      await tab.settle();
+      s = await tab.snap();
+      check(s.phase === 'DONE' && s.feedback, `Done kept, the questions shown: ${s.phase} "${s.label}", ${s.feedback}`);
+      check((await tab.osc()).length === osc0, `nothing rang: ${(await tab.osc()).length - osc0}`);
+      const cooled = storedCook(s)?.events.cooledAt_s ?? null;
+      check(cooled !== null && cooled - out_s <= 65 + 1e-6, `the cooling ended by the correction: ${cooled === null ? null : cooled - out_s}`);
+      await tab.until('(await window.__e2e.snap()).log[0].cooled_s > 0', 'the record corrected');
+      const rec = (await tab.snap()).log[0] as Rec & { cooled_s: number };
+      check(rec.cooled_s <= 65 + 1e-6, `the record's ice bath no longer than till the correction: ${rec.cooled_s}`);
+      // The alarm's grace ran out, the cooling ended, Jammy answered; then
+      // corrected to cold water: an egg answered about came out, so the pull
+      // stands and nothing asks whether it is still in the water.
+      await tab.click('#primary');
+      await tab.phase('IDLE');
+      await tab.click('#coolIce');
+      s = await start(tab, 'hot');
+      await tab.until('(await window.__e2e.snap()).decided', 'the pot planned');
+      s = await tab.snap();
+      await tab.shiftTo(deadlines(s).cookEnd_s + 25);
+      s = await tab.phase('COOLING');
+      await tab.shiftTo(deadlines(s).coolEnd_s + 5);
+      await tab.phase('DONE');
+      await tab.click('.fb[data-yolk="jammy"]');
+      await tab.until('(await window.__e2e.snap()).eggsLogged === 2', 'Jammy folded');
+      await tab.shift(5);
+      await tab.click('#startCold');
+      s = await corrected(tab, null);
+      await tab.settle();
+      s = await tab.snap();
+      check(s.phase === 'DONE' && s.feedback, `answered, then cold: ${s.phase} "${s.label}", questions ${s.feedback}`);
+      check(storedCook(s)?.events.pulled?.confirmed === true, 'the pull stands');
+      return `Done kept; cooled ${(cooled ?? 0) - out_s} s; the record's ice bath ${rec.cooled_s.toFixed(1)} s; `
+        + 'answered, then cold: Done, the pull standing';
+    },
+  },
+
+  'done-note-as-ran': {
+    what: 'onescreen review 2.2: Done after an answer and a reload, the texture note is the cook as it ran',
+    run: async (h) => {
+      const tab = await h.ctx.open(STOPPED);
+      let s = await start(tab, 'hot');
+      await tab.until('(await window.__e2e.snap()).decided', 'the pot planned');
+      s = await tab.snap();
+      await tab.shiftTo(deadlines(s).cookEnd_s + 2);
+      await tab.phase('PULL');
+      await tab.click('#primary');
+      s = await tab.phase('COOLING');
+      await tab.shiftTo(deadlines(s).coolEnd_s + 2);
+      await tab.phase('DONE');
+      await tab.settle();
+      const note = "document.getElementById('note').textContent";
+      const before = await tab.eval<string>(note);
+      await tab.click('.fb[data-yolk="runny"]');
+      await tab.until('(await window.__e2e.snap()).eggsLogged === 1', 'Runny folded');
+      await tab.reload();
+      await tab.until('(await window.__e2e.snap()).decided', 'planned on the new posterior');
+      await tab.settle();
+      const after = await tab.eval<string>(note);
+      check(after === before, `"${before}" became "${after}"`);
+      return `"${after}" kept`;
+    },
+  },
+
+  'grace-correction': {
+    what: 'onescreen review 3: a correction in the grace that leaves the pull due keeps the grace\'s end and rings nothing more',
+    run: async (h) => {
+      const tab = await h.ctx.open(STOPPED);
+      await start(tab, 'hot');
+      await tab.until('(await window.__e2e.snap()).decided', 'the pot planned');
+      const pull0 = deadlines(await tab.snap()).cookEnd_s;
+      await tab.shiftTo(pull0 + 15);
+      let s = await tab.phase('PULL');
+      await tab.settle();
+      const osc0 = (await tab.osc()).length;
+      await pick(tab, '#size', '1');
+      s = await corrected(tab, null);
+      await tab.settle();
+      s = await tab.snap();
+      check(s.phase === 'PULL' && near(deadlines(s).cookEnd_s, pull0, 1e-6),
+        `a lighter egg in the grace: ${s.phase}, the pull ${(deadlines(s).cookEnd_s - pull0).toFixed(1)} s from the one that rang`);
+      check((await tab.osc()).length === osc0, `nothing rang again: ${(await tab.osc()).length - osc0}`);
+      await tab.shiftTo(pull0 + 21);
+      s = await tab.phase('COOLING');
+      const p = storedCook(s)?.events.pulled;
+      check(p?.by === 'timeout' && near(p.due_s, pull0, 1e-6), `the grace ended where it began: ${JSON.stringify(p)}`);
+      return `lighter at +15 s: Pull, the pull kept, nothing rung; +21 s: Cooling, due at the pull that rang`;
     },
   },
 
