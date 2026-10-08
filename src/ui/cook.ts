@@ -10,8 +10,10 @@
  * out, an event the clock decided (`eventsDue`), a surface landing, the slow
  * hob's moment (`slowHobAt_s`), a reload - and never on every tick, since a
  * plan costs tens of milliseconds, and a slow hob's hundreds. The phase is
- * read from the plan and the clock (`phaseAt`) every tick, and the alarm
- * rings whenever it enters Pull.
+ * read from the plan and the clock (`phaseAt`) every tick. The pull's alarm
+ * is scheduled ahead on the audio clock by every plan (`setPullAlarm`), and
+ * rung by the tick on any move out of Heating or Cooking past the pull that
+ * this tab has not rung (`notice`).
  */
 
 import { Phase } from '../core/policy.js';
@@ -24,7 +26,8 @@ import { answerFor, askForCookSurface, currentInputs, decided, drawNudge, nudgeN
 import { learn, logEgg } from './calibration.js';
 import { keepUnreadCook } from './calibrationStore.js';
 import {
-  Ticker, blip, keepScreenAwake, primeAudio, releaseScreen, ringAlarm, startTicker, stopAlarm,
+  Ticker, blip, keepScreenAwake, primeAudio, pullSounding, releaseScreen, ringAlarm, setPullAlarm, startTicker,
+  stopAlarm,
 } from './clock.js';
 import { applySettingsToDom } from './controls.js';
 import { activeLocale } from './copy.js';
@@ -44,10 +47,12 @@ import { unitSystem } from './units.js';
 import { applyAnswer, drawShare, recompute } from './update.js';
 
 /** The ticker, while a cook runs, and the phase it last saw, so the alarm
- *  rings once as the cook enters Pull, and the cook finishes once. */
+ *  rings once as the cook passes the pull, and the cook finishes once; and
+ *  whether this tab has rung the pull for this cook. */
 const clock = {
   ticker: null as Ticker | null,
   phase: 'IDLE' as Phase,
+  pullRung: false,
 };
 
 /**
@@ -204,6 +209,13 @@ function takeUp(cook: RunningCook, plan: CookPlan): void {
   if (plan.inputs !== null && (plan.decided === null || surfaceFor(plan.inputs)?.profile === null)) {
     askForCookSurface(plan.inputs);
   }
+  // The pull's beeps, ahead on the audio clock, for the pull this plan sets:
+  // none while the time to boil is a guess (the plan reads Heating whatever
+  // it says), once the egg is out or the pull has rung here, or while the
+  // plan asks whether the egg is still in.
+  const d = plan.deadlines;
+  const pullDue = !d.provisional && state.cook.events.pulled === null && !plan.askIfStillIn && !clock.pullRung;
+  setPullAlarm(pullDue ? d.cookEnd_s * 1000 : null);
   if (JSON.stringify(state.cook) !== written.cook) {
     persistCook();
   } else if (leanMoved && !written.closed) {
@@ -235,15 +247,32 @@ export function replanCook(): void {
   render(now);
 }
 
-/** Ring as the cook enters Pull, and finish it as it enters Done, whatever
- *  brought it there: the clock, a plan, a tap. */
+/**
+ * Ring the pull on any move from Heating or Cooking past it - to Pull, or
+ * straight to Cooling or Done, as a tab woken after the grace finds it
+ * (running-cook review 1.1) - that this tab has not rung, unless the cook
+ * tapped the egg out (another tab's tap, taken up); and finish the cook as it
+ * enters Done, whatever brought it there: the clock, a plan, a tap. Nothing
+ * rings while the plan asks whether the egg is still in the water.
+ */
 function notice(now_ms: number): void {
   const phase = phaseNow(now_ms);
   const was = clock.phase;
   clock.phase = phase;
-  if (phase === was) return;
-  if (phase === 'PULL') ringAlarm(true);
-  if (phase === 'DONE') finishCook();
+  if (phase === was || state.cook === null || state.plan === null || state.plan.askIfStillIn) return;
+  const passed = (was === 'HEATING' || was === 'COOKING')
+    && (phase === 'PULL' || phase === 'COOLING' || phase === 'DONE');
+  const out = state.cook.events.pulled;
+  let rang = false;
+  if (passed && !clock.pullRung && (out === null || out.by === 'timeout')) {
+    clock.pullRung = true;
+    rang = true;
+    // Already sounding if it was scheduled ahead and its time has come on
+    // the audio clock; otherwise now.
+    if (!pullSounding()) ringAlarm(true);
+  }
+  // Done rings too, unless the pull has only just: the egg may still be in.
+  if (phase === 'DONE') finishCook(!rang);
 }
 
 function onTick(): void {
@@ -293,8 +322,8 @@ function stopTicking(): void {
 }
 
 /** The egg is done: ring, then stop repainting and let the screen sleep. */
-function finishCook(): void {
-  ringAlarm(false);
+function finishCook(ring: boolean): void {
+  if (ring) ringAlarm(false);
   stopTicking();
   releaseScreen();
 }
@@ -385,6 +414,8 @@ export function reset(): void {
   state.plan = null;
   state.leanHint_s = 0;
   clock.phase = 'IDLE';
+  clock.pullRung = false;
+  setPullAlarm(null);
   // The controls were left alone while the cook ran (another tab may have
   // changed the settings meanwhile): they show the settings again.
   applySettingsToDom();
@@ -417,6 +448,7 @@ export function onPrimary(): void {
     // A cook started here is this tab's own, whatever happened before it.
     forgetAnswers();
     freshWrites(null, null);
+    clock.pullRung = false;
     state.cook = startCook(now, idleChoices(), nudgeNow(), { ...state.boilMemory }, unitSystem(), activeLocale());
     // The lean the time on screen took, carried until the plan decides its
     // own: the plan on this pot's surface is the time that was on screen.
@@ -498,6 +530,7 @@ export function restoreCook(): void {
   state.leanHint_s = stored.leanHint_s;
   resumeAnswers(stored.answers);
   freshWrites(text, stored.cook);
+  clock.pullRung = false;
   takeUp(back.cook, back.plan);
   clock.phase = phaseNow(now);
   if (clock.phase !== 'DONE') {

@@ -98,6 +98,7 @@ let muted = false;
 export function setMuted(value: boolean): void {
   muted = value;
   if (muted) stopAlarm();
+  else armPull();
 }
 
 function audioCtor(): AudioContextCtor | null {
@@ -143,33 +144,101 @@ function scheduleBeep(ctx: AudioContext, at: number, freq: number, length: numbe
 const BURST_PERIOD_S = 1.6;
 const BURSTS = 25;
 
+/** The alarm's beeps from `base` on the audio clock: two short, and a third
+ *  higher when it is urgent, every 1.6 s for ~40 s. */
+function scheduleRing(ctx: AudioContext, base: number, urgent: boolean): OscillatorNode[] {
+  const beeps: OscillatorNode[] = [];
+  for (let i = 0; i < BURSTS; i += 1) {
+    const at = base + i * BURST_PERIOD_S;
+    beeps.push(scheduleBeep(ctx, at, 880, 0.14));
+    beeps.push(scheduleBeep(ctx, at + 0.2, 880, 0.14));
+    if (urgent) beeps.push(scheduleBeep(ctx, at + 0.4, 1175, 0.2));
+  }
+  return beeps;
+}
+
 /** Ring until stopped (or for ~40 s, whichever comes first). Every beep is
  *  scheduled up front on the audio clock so the alarm still sounds if the tab
- *  is backgrounded when the deadline arrives. */
+ *  is backgrounded mid-ring. */
 export function ringAlarm(urgent: boolean): void {
   primeAudio();
   const ctx = audio;
   if (ctx === null || muted) return;
   stopAlarm();
-  const base = ctx.currentTime + 0.05;
-  for (let i = 0; i < BURSTS; i += 1) {
-    const at = base + i * BURST_PERIOD_S;
-    ringing.push(scheduleBeep(ctx, at, 880, 0.14));
-    ringing.push(scheduleBeep(ctx, at + 0.2, 880, 0.14));
-    if (urgent) ringing.push(scheduleBeep(ctx, at + 0.4, 1175, 0.2));
-  }
+  ringing = scheduleRing(ctx, ctx.currentTime + 0.05, urgent);
 }
 
-export function stopAlarm(): void {
-  for (let i = 0; i < ringing.length; i += 1) {
+function stopAll(beeps: OscillatorNode[]): void {
+  for (let i = 0; i < beeps.length; i += 1) {
     try {
-      ringing[i].stop();
-      ringing[i].disconnect();
+      beeps[i].stop();
+      beeps[i].disconnect();
     } catch {
       /* already stopped */
     }
   }
+}
+
+/** Silence the alarm, and the pull's beeps scheduled ahead (`setPullAlarm`),
+ *  which the next plan schedules again. */
+export function stopAlarm(): void {
+  stopAll(ringing);
   ringing = [];
+  stopAll(pull.beeps);
+  pull.beeps = [];
+}
+
+/**
+ * The pull's alarm, scheduled ahead on the audio clock (running-cook review
+ * 1.1): a tab hidden or throttled keeps its audio clock running when its
+ * timers do not, so the pull rings on time even if no tick sees it. `at_ms`
+ * is the pull's deadline by the wall clock, or null for none; each plan sets
+ * it, and the beeps are scheduled again only when it moves. Nothing is
+ * scheduled for a time already past, muted, or before the Start tap primed
+ * the audio.
+ */
+const pull = {
+  at_ms: null as number | null,
+  /** The beeps scheduled, and where on the audio clock they start. */
+  beeps: [] as OscillatorNode[],
+  start: 0,
+};
+
+export function setPullAlarm(at_ms: number | null): void {
+  if (at_ms === pull.at_ms && (at_ms === null || pull.beeps.length > 0)) return;
+  pull.at_ms = at_ms;
+  armPull();
+}
+
+function armPull(): void {
+  stopAll(pull.beeps);
+  pull.beeps = [];
+  const ctx = audio;
+  if (ctx === null || muted || pull.at_ms === null) return;
+  const ahead_s = (pull.at_ms - Date.now()) / 1000;
+  if (ahead_s <= 0.05) return;
+  pull.start = ctx.currentTime + ahead_s;
+  pull.beeps = scheduleRing(ctx, pull.start, true);
+}
+
+/**
+ * The tick has seen the pull: whether its beeps, scheduled ahead, are
+ * already sounding, in which case they ring on as the alarm. If they are not
+ * (the audio clock was suspended with the page, or nothing was scheduled)
+ * they are cancelled, for the caller to ring now.
+ */
+export function pullSounding(): boolean {
+  const ctx = audio;
+  const sounding = ctx !== null && pull.beeps.length > 0 && ctx.currentTime >= pull.start - 0.25;
+  if (sounding) {
+    stopAll(ringing);
+    ringing = pull.beeps;
+  } else {
+    stopAll(pull.beeps);
+  }
+  pull.beeps = [];
+  pull.at_ms = null;
+  return sounding;
 }
 
 /** A single short confirmation blip, for state changes that are not alarms. */
