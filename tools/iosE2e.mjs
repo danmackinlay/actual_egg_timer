@@ -666,7 +666,10 @@ scenario('overdue-and-back', 'C3 step 3: a correction that makes the egg overdue
   t = await tapAt(run, plan0.pull - 35, 'set');
   after = await corrected(run, t.i);
   await run.until(/^phase COOKING$/, { from: t.i, what: 'Cooking again' });
-  const ev = after.cook?.events;
+  // The ring the plan no longer holds, cleared by the clock's next look
+  // (core `eventsDue`; onescreen review 3).
+  const cleared = await run.until(/^stored .*"rangAt_s":null/, { from: t.i, what: 'the ring undone' });
+  const ev = lastStored(run.lines().slice(0, cleared.i + 1))?.cook.events;
   run.check(ev?.pulled === null && ev?.rangAt_s === null, `nothing observed: ${JSON.stringify(ev)}`);
   run.check(near(after.plan.pull, plan0.pull, 1), `the pull back: ${(after.plan.pull - plan0.pull).toFixed(1)} s`);
   run.check(near(scheduled(after.lines)['cook.pull'], after.plan.pull, EXACT), 'its alarm set again');
