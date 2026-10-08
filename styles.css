@@ -229,7 +229,7 @@ button.mute[aria-pressed="true"] {
   max-width: 24rem;
   line-height: 1.35;
 }
-body[data-phase="IDLE"]:not([data-start="sous"]) #certainty {
+body:not([data-start="sous"]) #certainty {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -448,18 +448,33 @@ button.info[aria-expanded="true"]::before { background: var(--fg); color: var(--
 /* The setup sentence: prose whose clauses are buttons. Underlined like a
    link a thumb can find, tinted while its choice is open. The line height
    gives each clause a target taller than the text. */
+/* The egg in cross-section on the left and the sentence beside it, so the
+   egg costs the column no height of its own (DECISIONS.md 52); the open
+   clause's choice under both. In sous-vide there is no egg to draw, and
+   the sentence has the row. */
 #setup {
   margin: 18px 0 0;
   padding: 14px 0 0;
   border-top: 1px solid var(--line);
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 14px;
+  /* From the top, so a sentence that gains a line (the start's time, at the
+     start) moves nothing above it or beside it. */
+  align-items: start;
 }
+#setup > .egg-section { grid-column: 1; grid-row: 1; }
+#setup > #sentence { grid-column: 2; grid-row: 1; }
+#setup > .panel { grid-column: 1 / -1; }
+body[data-start="sous"] #setup > #sentence { grid-column: 1 / -1; }
 #sentence {
   margin: 0;
   font-size: 1.1875rem;
   line-height: 1.9;
 }
-button.clause {
+.clause {
   display: inline;
+  cursor: pointer;
   width: auto;
   min-height: 0;
   margin: 0 -3px;
@@ -481,39 +496,21 @@ button.clause {
 }
 /* A clause and the punctuation after it break as one (sentence.ts). */
 .clause-wrap { white-space: nowrap; }
-.clause-wrap > button.clause { white-space: normal; }
-button.clause:hover { background: color-mix(in srgb, var(--accent) 12%, transparent); }
-button.clause[aria-expanded="true"] {
+.clause-wrap > .clause { white-space: normal; }
+.clause:hover { background: color-mix(in srgb, var(--accent) 12%, transparent); }
+.clause[aria-expanded="true"] {
   background: var(--accent);
   color: var(--accent-fg);
   text-decoration-color: transparent;
 }
 
-/* The cook in the pan, while it runs: the sentence it was started with, in
-   the idle sentence's face a size down and with nothing to tap, and under it
-   the doneness and the peak yolk. */
-#cookSetup {
-  margin: 22px 0 0;
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 14px;
-  align-items: center;
-}
-/* The egg in cross-section (src/ui/eggSection.ts), how set each layer is,
-   beside the sentence rather than above it, so it costs the column no
-   height of its own: the sentence runs to three lines or so anyway. */
+/* The egg in cross-section (src/ui/eggSection.ts), how set each layer is. */
 .egg-section {
   display: block;
-  height: 9.75rem;
-  width: 7.5rem;
+  height: 8.5rem;
+  width: 6.5rem;
 }
 .egg-section__shell { fill: none; stroke: var(--line); stroke-width: 1.5; }
-#cookSentence {
-  margin: 0;
-  font-size: 1.125rem;
-  line-height: 1.45;
-}
-#cookDoneness { margin: 4px 0 0; font-size: 0.875rem; color: var(--dim); }
 
 /* A clause's choice, opened in place under the sentence. */
 .panel {
@@ -613,6 +610,26 @@ button.step--more::before { content: "+"; }
 button.step:active { background: var(--line); }
 .unit:has(button.step) { gap: 4px; }
 .unit:has(button.step) input[type="number"] { width: 4rem; padding-inline: 8px; }
+/* When the eggs went in, mid-cook: a time of day between its − and +, read
+   like a number field but not typed in. The clock's face in 1750 too. */
+output.startedat {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 5.5rem;
+  min-height: 46px;
+  padding: 0 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--fg);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+html[lang$="-x-1750"] output.startedat {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-feature-settings: normal;
+}
+#startedAtField + .hint { margin-top: 6px; }
 /* The unit after the +, in a column of its own, so the rows' − and + line up. */
 .unit:has(button.step) > span:last-child { min-width: 1.75em; margin-left: 2px; }
 /* A count has no unit; it keeps the unit's room, so its − and + line up too. */
@@ -830,23 +847,25 @@ button.danger { color: var(--warn); border-color: color-mix(in srgb, var(--warn)
 /* ---------------------------------------------------------------- views */
 
 /* Settings and Help are pages of their own; the egg's parts, and the
-   button at the bottom, step aside while one is open. A running cook is
-   always the egg: the app never leaves the clock for a settings page. */
+   button at the bottom, step aside while one is open. In every phase
+   (design/one-screen.md section 2): while a cook runs, Settings' pot rows
+   correct it as the sentence does, and what does not belong to the cook -
+   what I have learned, and sharing - waits for it to end. */
 .page { display: none; }
-body[data-phase="IDLE"][data-view="settings"] #settings,
-body[data-phase="IDLE"][data-view="help"] #help { display: block; }
-body[data-phase="IDLE"]:not([data-view="egg"]) :is(#readout, #controls, #slot, #actions) { display: none; }
-body[data-phase="IDLE"]:not([data-view="egg"]) main {
+body[data-view="settings"] #settings,
+body[data-view="help"] #help { display: block; }
+body:not([data-view="egg"]) :is(#readout, #controls, #slot, #actions) { display: none; }
+body:not([data-view="egg"]) main {
   display: block;
   min-height: 0;
   padding-bottom: calc(32px + env(safe-area-inset-bottom));
 }
+body:not([data-phase="IDLE"]) :is(#learned, #share) { display: none; }
 
 #navBack { display: none; }
-body[data-phase="IDLE"]:not([data-view="egg"]) #navBack { display: inline-flex; }
-body[data-phase="IDLE"]:not([data-view="egg"]) #settingsLink,
-body[data-view="help"] #helpLink,
-body:not([data-phase="IDLE"]) :is(#settingsLink, #helpLink) { display: none; }
+body:not([data-view="egg"]) #navBack { display: inline-flex; }
+body:not([data-view="egg"]) #settingsLink,
+body[data-view="help"] #helpLink { display: none; }
 
 /* -------------------------------------------------------- the privacy page */
 
@@ -906,7 +925,7 @@ main.doc {
   font-display: swap;
 }
 .titlepage { display: none; }
-html[lang$="-x-1750"] body[data-phase="IDLE"][data-view="egg"] .titlepage { display: block; }
+html[lang$="-x-1750"] body[data-view="egg"] .titlepage { display: block; }
 /* Longhands, not the `font` shorthand, which would reset the features the
    title inherits. */
 .titlepage {
@@ -948,6 +967,10 @@ html[lang$="-x-1750"] input[type="number"] {
   padding: 20px 16px calc(14px + env(safe-area-inset-bottom));
 }
 #actions > * { max-width: 32rem; margin-left: auto; margin-right: auto; }
+/* At Done the bar carries the questions after an egg, too tall to stick over
+   the one screen's slider and sentence: it ends the page instead, as the
+   last thing in the column, scrolled to like the rest. */
+body[data-phase="DONE"] #actions { position: static; }
 
 #primaryHint {
   display: flex;
@@ -982,14 +1005,13 @@ button.secondary {
 
 /* ----------------------------------------------------------- running view */
 
-/* While a cook is under way the inputs are locked and out of the way: the
-   screen is a clock, one line, and one button. */
-body:not([data-phase="IDLE"]) #controls { display: none; }
-body:not([data-phase="IDLE"]) main { padding-top: 2vh; }
-/* Less the top bar's 6 px, which a column (main) adds rather than overlaps. */
-body:not([data-phase="IDLE"]) #readout { margin-top: calc(4vh - 6px); padding: 22px 16px 20px; }
-body:not([data-phase="IDLE"]) #bigtime { font-size: clamp(5rem, 32vw, 9rem); }
-body:not([data-phase="IDLE"]) #phaseLabel { font-size: 0.9375rem; color: var(--fg); font-weight: 600; }
+/* One layout from setup to Done (design/one-screen.md section 2): at the
+   start nothing moves and nothing goes; only the readout's words, its
+   colours and the button change. The phase label is the instruction, so it
+   reads in the foreground colour while a cook runs. */
+body:not([data-phase="IDLE"]) #phaseLabel { color: var(--fg); font-weight: 600; }
+/* Sous-vide starts no cook, so a running one cannot be corrected to it. */
+body:not([data-phase="IDLE"]) :is(#startSous, #startSousLabel) { display: none; }
 
 /* A control is shown when the answer depends on it.
  *

@@ -1,15 +1,17 @@
 /**
- * Drawing the egg page from the state: the controls' answer while idle (the
- * readout, how sure I am, the slider's shading, the advice and the welcome),
- * the cook under way otherwise (the readout and the egg in cross-section),
- * the sous-vide screen, and the mute and the version.
+ * Drawing the egg page from the state, one layout in every phase
+ * (design/one-screen.md section 2): the readout, how sure I am, the slider
+ * with its shading and bracket, the sentence with the egg in cross-section
+ * beside it, the slot and the buttons. While idle they are the controls'
+ * answer, with the advice and the welcome; while a cook runs, its plan's,
+ * from its own choices. Then the sous-vide screen, the mute and the version.
  *
  * Nothing here solves or saves; the one thing it asks for is the odds of the
  * changes the advice prices, which land through answer.ts.
  */
 
 import { SOUS_VIDE_BATH_C, sousVideEstimate } from '../core/sousvide.js';
-import { Solution } from '../core/solve.js';
+import { ModelParams, Solution } from '../core/solve.js';
 import { textureFor, textureNoteKeys } from '../core/policy.js';
 import { decisionInputs } from '../core/decide.js';
 import { OddsProfile, pricedChanges, protocolAdvice } from '../core/reach.js';
@@ -17,16 +19,18 @@ import { Outcome } from '../core/outcome.js';
 import { CertaintyReading } from '../core/certainty.js';
 import {
   WordsRef, certaintyKey, forecastWhiteAtRisk, intervalWords, mostLikelyOpened, mostLikelyShown, mostLikelyWords,
-  whiteAtRisk,
+  refusalKey, whiteAtRisk,
 } from '../core/wording.js';
 import { asRanShown } from '../core/running.js';
 import { midSentence } from '../core/copy.js';
-import { EggSection, advanceSection, createSection, sectionView } from '../core/section.js';
+import { EggSection, SectionView, advanceSection, createSection, previewSection, sectionView } from '../core/section.js';
+import { Egg } from '../core/geometry.js';
+import { CookSetup } from '../core/protocol.js';
 import { CARRYOVER_WINDOW } from '../core/constants.js';
-import { askForProfile, currentInputs } from './answer.js';
+import { askForProfile, currentInputs, surfaceFor } from './answer.js';
 import { calibrationDoneness, calibrationParams } from './calibration.js';
 import { cachedOddsProfile } from './decisionGrids.js';
-import { activeLocale, t } from './copy.js';
+import { activeLocale, t, timeOfDay } from './copy.js';
 import { formatClock } from './countdown.js';
 import { page } from './dom.js';
 import { buildEggSection, paintEggSection, readPalette, ringFills } from './eggSection.js';
@@ -36,17 +40,19 @@ import {
 import { showInfo } from './info.js';
 import { renderCalibNote } from './learned.js';
 import { phaseView } from './phaseView.js';
-import { liveSetupFacts, renderCookSetup, renderSentence } from './sentence.js';
+import { liveSetupFacts, renderSentence } from './sentence.js';
 import { shareState } from './share.js';
 import { renderBareScale, renderDonenessReading, renderDonenessScale } from './slider.js';
 import { sousVideCopy } from './sousvide.js';
 import {
-  boilingPoint_C, currentEgg, isSousVide, learning, massFrom, phaseNow, sizeClasses, startModeNow, state,
+  boilingPoint_C, currentEgg, idlePot, isSousVide, learning, massFrom, phaseNow, sizeClasses, startModeNow, state,
   timeToBoil_s,
 } from './state.js';
 import { estimateTimeToBoil, hasBoilMemory } from './store.js';
 import { show } from './units.js';
 import { APP_VERSION } from './version.js';
+import { nowMs } from './now.js';
+import { warningText } from './update.js';
 
 /** What was last drawn, so the page draws only what changed. */
 const drawn = {
@@ -57,17 +63,12 @@ const drawn = {
   announced: '',
   /** The advice's keys, as listed. */
   advice: '',
-  /** The egg in cross-section under the running cook (src/core/section.ts),
-   *  carried forward each tick, and the cook, egg and pot it was started
-   *  from: a new one - a start, a boil tapped, a slow hob, a reload - replays
-   *  it from t = 0, since the water it has been in has changed. */
-  section: null as EggSection | null,
-  sectionFor: '',
   /** What the running cook's certainty line and white's line last said, and
    *  for which cook: held while a new pot's surface is on its way (the boil
    *  tapped), rather than blanking. */
   outcome: null as Outcome | null,
   certainty: null as CertaintyReading | null,
+  profile: null as OddsProfile | null,
   outcomeFor: 0,
 };
 
@@ -151,12 +152,18 @@ function renderWelcome(warning: string): void {
     && state.calib.eggsLogged === 0 && !hasBoilMemory(state.boilMemory));
 }
 
-/** Draw the screen: the controls and the answer they give while idle, and
- *  the cook under way otherwise. The 200 ms ticker only ever draws a cook
- *  under way, so it never repaints the controls, which are put away beneath
- *  it (styles.css) and drawn again when the cook ends. */
+/** Draw the screen, one layout in every phase: the controls and the answer
+ *  they give while idle, and the cook under way otherwise, its controls
+ *  showing its own choices. The 200 ms ticker draws only a cook under way. */
 export function render(now_ms: number): void {
   renderLearning();
+  // The sentence, in every phase: the controls' (the settings, or the
+  // running cook's own choices).
+  const start = state.cook === null ? null : state.controlsStart_s;
+  renderSentence(liveSetupFacts(state.controls, sizeClasses, currentEgg(), start === null ? null : timeOfDay(start * 1000)));
+  // When the eggs went in, in the start's panel, while a cook runs.
+  page().startedAtField.hidden = start === null;
+  if (start !== null) page().startedAt.textContent = timeOfDay(start * 1000);
   if (state.cook === null) renderIdle(now_ms);
   else renderRunning(now_ms);
 }
@@ -177,8 +184,6 @@ function renderIdle(now_ms: number): void {
   // before any of the pan readout is computed or painted, so it neither pays
   // for a hot-start solve it would discard nor leaves half of that answer on
   // screen beside its own.
-  renderSentence(liveSetupFacts(state.settings, sizeClasses, currentEgg()));
-  renderCookSetup(null, null, sizeClasses);
   if (isSousVide()) {
     renderSousVide(now_ms);
     return;
@@ -202,54 +207,167 @@ function renderIdle(now_ms: number): void {
   renderOdds(now_ms);
   renderAdvice();
   renderWelcome(warning);
+  renderIdleSection(sol);
 }
 
-/** The cook under way, five times a second: the readout, and nothing of the
- *  controls. */
+/** The cook under way, five times a second, on the same layout as idle: the
+ *  readout, the slider's reading, shading and bracket from its plan, and the
+ *  egg in cross-section as it is now. */
 function renderRunning(now_ms: number): void {
+  const cook = state.cook;
   const plan = state.plan;
-  renderCookSetup(state.cook, plan, sizeClasses, cookShown(state.cook, plan));
-  if (plan === null) return;
-  // The warning line carries a restored cook's warning while it runs - the
-  // opposite of a refusal, it only exists mid-cook. Only while the cook is
-  // still in flight: at DONE the egg is out and "keep this tab open" is
-  // advice about a deadline that has already passed.
-  const warning = pickedUpAfterReload() && phaseNow(now_ms) !== 'DONE' ? t('readout.restored') : '';
-  renderReadout(now_ms, plan.solution, warning);
+  if (cook === null || plan === null) return;
+  const sol = plan.solution;
+  const shown = cookShown(cook, plan);
+  const reading = runningReading(now_ms);
+  page().statBoil.textContent = show('boilingPoint', boilingPoint_C());
+  // A correction in hand (edit.ts) has the slider's reading of its own,
+  // from a plan of the cook as it would be.
+  const aim = state.aim;
+  page().note.textContent = textureNote(aim?.solution ?? sol);
+  if (aim !== null) renderDonenessReading(aim.level, { peakYolk_C: aim.peakYolk_C });
+  else renderDonenessReading(shown?.level ?? plan.level, { peakYolk_C: shown?.peakYolk_C ?? sol.result.peakYolk_C });
+  renderDonenessScale(sol, sol.whiteSets ? reading.profile : null, sol.whiteSets ? reading.sure?.words ?? null : null);
+  // The warning line while a cook runs, until the pull: what the plan says
+  // of the level, as the idle screen says it (design/one-screen.md section
+  // 3: a correction that leaves the white unset gets the longest time this
+  // pan can give, and the slot says so), a refusal first. Then a restored
+  // cook's warning, the opposite of a refusal, which only exists mid-cook,
+  // and only while the cook is still in flight: at DONE the egg is out and
+  // "keep this tab open" is advice about a deadline that has already passed.
+  const phase = phaseNow(now_ms);
+  const before = phase === 'HEATING' || phase === 'COOKING';
+  const said = before ? warningText(plan.answer, cook.choices) : '';
+  const refusal = before && refusalKey(plan.answer.verdict, cook.choices.cooling) !== null;
+  const restored = pickedUpAfterReload() && phase !== 'DONE' ? t('readout.restored') : '';
+  const warning = refusal || restored === '' ? said : restored;
+  renderReadout(now_ms, sol, warning);
   renderSection(now_ms);
   showInfo(page().sublineInfo, false);
-  renderOdds(now_ms);
+  renderOdds(now_ms, reading);
   renderAdvice();
   page().welcome.hidden = true;
 }
 
-/** The egg in cross-section, as it is now: carried forward to the clock, in
- *  the water until the cook said it was out (or the grace ran out), and on
- *  through the carryover after. At the posterior mean, the same egg the
- *  countdown times, in the pot its plan has now. */
+/* -------------------------------------------- the egg in cross-section */
+
+/**
+ * The egg in cross-section has two readings (design/one-screen.md section 5;
+ * DECISIONS.md 97, 19, and 98), named on the drawing as `data-egg`:
+ *
+ * - `aim`: the egg the settings on screen aim for, at the end of the cooling,
+ *   the egg as eaten (`previewSection`): at idle, the controls' egg at the time
+ *   on screen; during a cook, while a control is held and for a moment after
+ *   (`heldAim`, edit.ts), the egg the correction in hand would cook.
+ * - `live`: the egg in the water now, carried forward a tick at a time
+ *   (`advanceSection`) and replayed from raw when the cook's pot or start
+ *   changes, on through the cooling.
+ * - `ran`: at Done, the egg as it ran, eaten: the time that ran, to the egg
+ *   out, with the model's parameters it ran under.
+ *
+ * A preview is one solve's worth of steps, so each is worked out only when
+ * what it is of changes.
+ */
+const egg = {
+  /** The rings the drawing has, as built (`buildEggSection`). */
+  built: '',
+  /** The live egg, and what it was started from. */
+  live: null as EggSection | null,
+  liveFor: '',
+  /** The last preview worked out, and what it was of. */
+  preview: null as SectionView | null,
+  previewFor: '',
+  /** What is painted now, so a tick paints only what moved. */
+  painted: '',
+  /** A preview another module holds on the drawing: the egg a correction in
+   *  hand aims for, while a control is held (edit.ts). */
+  held: null as SectionView | null,
+};
+
+/** Paint `view` on the drawing as `reading`. */
+function paintSection(view: SectionView, reading: 'aim' | 'live' | 'ran'): void {
+  const svg = page().eggSection;
+  const rings = JSON.stringify(view.outer);
+  if (rings !== egg.built) {
+    buildEggSection(svg, view.outer);
+    egg.built = rings;
+  }
+  paintEggSection(svg, ringFills(view, readPalette(page().body)));
+  svg.dataset['egg'] = reading;
+}
+
+/** The egg as eaten for a pot, a time in the water and a level
+ *  (`previewSection`), worked out once for each. */
+export function aimedEgg(
+  e: Egg, setup: CookSetup, params: ModelParams, cookTime_s: number, level: number,
+): SectionView {
+  const white = calibrationDoneness(state.calib, level).whiteDose_min;
+  const key = JSON.stringify([e, setup, params, cookTime_s, white]);
+  if (egg.preview === null || egg.previewFor !== key) {
+    egg.preview = previewSection(e, setup, params, cookTime_s, white);
+    egg.previewFor = key;
+  }
+  return egg.preview;
+}
+
+/** Hold a preview on the drawing (a control held mid-cook), or let it go
+ *  back to its own reading (null); drawn at once. */
+export function holdAim(view: SectionView | null): void {
+  egg.held = view;
+  egg.painted = '';
+  if (view !== null) paintSection(view, 'aim');
+  else render(nowMs());
+}
+
+/** The egg in cross-section while a cook runs: a preview held, or the egg
+ *  as it ran at Done, or the live egg. At the posterior mean, the same egg
+ *  the countdown times, in the pot its plan has now; once the egg is out,
+ *  with the model's parameters it ran under, so a fold of this egg's own
+ *  answer does not redraw it (review 2.4). */
 function renderSection(now_ms: number): void {
   const cook = state.cook;
   const plan = state.plan;
   if (cook === null || plan === null) return;
-  // Once the egg is out, with the model's parameters it ran under, so a fold
-  // of this egg's own answer does not redraw it (review 2.4).
-  const params = cookShown(cook, plan)?.params ?? calibrationParams(state.calib);
-  const key = JSON.stringify([cook.id_ms, cook.startedAt_s, plan.egg, plan.setup, params]);
-  if (drawn.section === null || drawn.sectionFor !== key) {
-    drawn.section = createSection(plan.egg, plan.setup, params);
-    drawn.sectionFor = key;
-    buildEggSection(page().eggSection, drawn.section.outer);
-  }
-  const section = drawn.section;
+  if (egg.held !== null) return;
+  const shown = cookShown(cook, plan);
+  const params = shown?.params ?? calibrationParams(state.calib);
+  const level = shown?.level ?? plan.level;
   const pulled = cook.events.pulled;
   const out_s = pulled === null ? null : pulled.out_s - cook.startedAt_s;
+  if (out_s !== null && phaseNow(now_ms) === 'DONE') {
+    const ran = aimedEgg(plan.egg, plan.setup, params, out_s, level);
+    const key = `ran|${egg.previewFor}`;
+    if (egg.painted !== key) {
+      paintSection(ran, 'ran');
+      egg.painted = key;
+    }
+    return;
+  }
+  const key = JSON.stringify([cook.id_ms, cook.startedAt_s, plan.egg, plan.setup, params]);
+  if (egg.live === null || egg.liveFor !== key) {
+    egg.live = createSection(plan.egg, plan.setup, params);
+    egg.liveFor = key;
+  }
   const now_s = now_ms / 1000 - cook.startedAt_s;
   advanceSection(
-    section, plan.egg, plan.setup, params,
+    egg.live, plan.egg, plan.setup, params,
     out_s === null ? now_s : Math.min(now_s, out_s + CARRYOVER_WINDOW), out_s,
   );
-  const view = sectionView(section, calibrationDoneness(state.calib, plan.level).whiteDose_min);
-  paintEggSection(page().eggSection, ringFills(view, readPalette(page().body)));
+  egg.painted = 'live';
+  paintSection(sectionView(egg.live, calibrationDoneness(state.calib, level).whiteDose_min), 'live');
+}
+
+/** The egg in cross-section while idle: the egg the controls aim for, at
+ *  the time on screen, as eaten (DECISIONS.md 91, 97 and 98). */
+function renderIdleSection(sol: Solution): void {
+  if (egg.held !== null) return;
+  const pot = idlePot(timeToBoil_s());
+  const level = state.chosen?.level ?? state.settings.doneness;
+  const view = aimedEgg(pot.egg, pot.setup, calibrationParams(state.calib), sol.result.cookTime_s, level);
+  const key = `aim|${egg.previewFor}`;
+  if (egg.painted === key) return;
+  paintSection(view, 'aim');
+  egg.painted = key;
 }
 
 /** The readout, the buttons under it and the questions at DONE, idle or not,
@@ -281,13 +399,15 @@ function renderReadout(now_ms: number, sol: Solution, warning: string): void {
   page().primary.disabled = view.primaryDisabled;
   page().secondary.hidden = !view.secondaryVisible;
   if (view.secondaryVisible) page().secondary.textContent = t('action.cancel');
+  // "Still in the water?": the primary says yes, and this says no.
+  page().stillOut.hidden = !view.asking;
 
   // The model is calibrated against the literature, not against this kitchen.
   // Asking once per egg is what closes that gap. Both questions stay on screen
   // until the cook moves on, answered or not; a reload after an answer puts
   // them away, since the second could no longer be folded.
   const said = answersNow().kind;
-  page().feedback.hidden = phase !== 'DONE' || said === 'beforeReload';
+  page().feedback.hidden = phase !== 'DONE' || said === 'beforeReload' || view.asking;
   if (!page().feedback.hidden && said !== 'live') renderCalibNote(learning());
   renderProbe(phase, shown);
   if (!page().feedback.hidden) renderTarget(shown);
@@ -301,7 +421,8 @@ function renderReadout(now_ms: number, sol: Solution, warning: string): void {
   // The live region carries a coarse announcement, not a per-second one: the
   // ticking digits are aria-hidden, so a screen reader hears the phase and the
   // minute rather than being flooded once a second.
-  const announcement = t('spoken.announcement', { label: view.label, spoken: view.spoken });
+  // The question is its own announcement: it says what it asks.
+  const announcement = view.asking ? view.spoken : t('spoken.announcement', { label: view.label, spoken: view.spoken });
   const minute = view.digits.split(':')[0];
   const key = `${phase}|${minute}`;
   if (key !== drawn.announced) {
@@ -317,6 +438,47 @@ function words(ref: WordsRef): string {
   return t(ref.key, args);
 }
 
+/** What a running cook's plan says of how sure, as drawn: its certainty
+ *  reading and outcome, and its pot's odds profile for the track's shading,
+ *  read on its pot's surface and held while a new pot's is on its way (the
+ *  boil tapped, a correction) rather than blanking, until the pull, when the
+ *  time they were about has passed (design/one-screen.md section 7, 12).
+ *  The white's line stays to the end; once the egg is out it is the cook's
+ *  as it ran, not a plan made since, which may know how the egg came out
+ *  (review 2.4). */
+interface RunningReading {
+  outcome: Outcome | null;
+  sure: CertaintyReading | null;
+  profile: OddsProfile | null;
+  ranWhite: boolean | null;
+}
+
+function runningReading(now_ms: number): RunningReading {
+  const cook = state.cook;
+  const plan = state.plan;
+  if (cook === null || plan === null) return { outcome: null, sure: null, profile: null, ranWhite: null };
+  const id = cook.id_ms;
+  const now = plan.decided === null ? null : plan.decided.outcome;
+  if (now !== null || drawn.outcomeFor !== id) {
+    drawn.outcome = now;
+    drawn.certainty = plan.certainty;
+    drawn.profile = surfaceFor(plan.inputs)?.profile ?? null;
+    drawn.outcomeFor = id;
+  }
+  // The profile lands after the surface: taken up when it does.
+  if (now !== null && drawn.profile === null) drawn.profile = surfaceFor(plan.inputs)?.profile ?? null;
+  const phase = phaseNow(now_ms);
+  const pulled = phase === 'PULL' || phase === 'COOLING' || phase === 'DONE';
+  const whiteSets = plan.solution.whiteSets;
+  const ran = pulled ? asRanShown(cook, plan) : null;
+  return {
+    outcome: whiteSets ? drawn.outcome : null,
+    sure: whiteSets && !pulled ? drawn.certainty : null,
+    profile: whiteSets && !pulled ? drawn.profile : null,
+    ranWhite: ran !== null ? whiteSets && forecastWhiteAtRisk(ran.forecast) : null,
+  };
+}
+
 /** How sure I am of the time on screen, under it (src/core/wording.ts, "How
  *  sure, in words"; DECISIONS.md 93 and 97): the class as a line the cook
  *  presses, which opens in place the 90% interval in the slider's words, the
@@ -327,37 +489,23 @@ function words(ref: WordsRef): string {
  *
  *  While idle they are the choice on screen's, and blank until this pot's
  *  surface lands: the line keeps two lines' height, so nothing moves when
- *  they arrive. Once a cook is running they are its plan's, read on its
- *  pot's surface and held while a new pot's is on its way, until the pull,
- *  when the time they were about has passed (design/one-screen.md section 7,
- *  12); the white's line stays to the end, as before. The way to Help goes
- *  with the controls: Help is not reachable mid-cook. Never where the white
- *  never sets: there is no cook to say anything about. */
-function renderOdds(now_ms: number): void {
+ *  they arrive. Once a cook is running they are its plan's (`reading`). The
+ *  way to Help is there in every phase, as Help is. Never
+ *  where the white never sets: there is no cook to say anything about. */
+function renderOdds(now_ms: number, reading: RunningReading | null = null): void {
   let o: Outcome | null = null;
   let sure: CertaintyReading | null = null;
-  // Once the egg is out, the white's line is the cook's as it ran, not a
-  // plan made since, which may know how the egg came out (review 2.4).
   let ranWhite: boolean | null = null;
   if (state.cook === null) {
     if (state.chosen !== null && state.solution !== null && state.solution.whiteSets) {
       o = state.outcome;
       sure = state.chosen.certainty;
     }
-  } else if (state.plan !== null) {
-    const id = state.cook.id_ms;
-    const now = state.plan.decided === null ? null : state.plan.decided.outcome;
-    if (now !== null || drawn.outcomeFor !== id) {
-      drawn.outcome = now;
-      drawn.certainty = state.plan.certainty;
-      drawn.outcomeFor = id;
-    }
-    const before = phaseNow(now_ms);
-    const pulled = before === 'PULL' || before === 'COOLING' || before === 'DONE';
-    o = state.plan.solution.whiteSets ? drawn.outcome : null;
-    sure = state.plan.solution.whiteSets && !pulled ? drawn.certainty : null;
-    const ran = pulled ? asRanShown(state.cook, state.plan) : null;
-    if (ran !== null) ranWhite = state.plan.solution.whiteSets && forecastWhiteAtRisk(ran.forecast);
+  } else {
+    const r = reading ?? runningReading(now_ms);
+    o = r.outcome;
+    sure = r.sure;
+    ranWhite = r.ranWhite;
   }
   renderCertainty(sure);
   page().whiteRisk.hidden = ranWhite !== null ? !ranWhite : o === null || !whiteAtRisk(o);
@@ -401,7 +549,6 @@ function renderCertainty(sure: CertaintyReading | null): void {
   page().certaintyTime.textContent = t('certainty.time', {
     low: formatClock(sure.time.low_s), high: formatClock(sure.time.high_s),
   });
-  page().certaintyHelp.hidden = state.cook !== null;
 }
 
 /** The sous-vide readout: hold times from the isothermal limit, and the plain

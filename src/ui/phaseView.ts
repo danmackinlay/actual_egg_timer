@@ -63,6 +63,9 @@ export interface PhaseView {
   /** Cancel is reachable in every phase of a cook under way, including one a
    *  reload lands in: a cook picked back up must be one you can put down. */
   secondaryVisible: boolean;
+  /** The plan asks whether the egg is still in the water (`askIfStillIn`):
+   *  the primary button says yes, and a second button no. */
+  asking: boolean;
 }
 
 /** The readout at `now_ms`, for the running cook `cook` with its `plan`, or
@@ -139,6 +142,25 @@ export function phaseView(
     subline = t(keys.subline, { boil: formatClock(boil_s), cooking: formatClock(cookTime_s - boil_s) });
     spoken = t(facts.probePending ? 'spoken.probe' : 'spoken.done');
   }
+  // A pull the clock assumed (the grace ran out), and a correction since
+  // that would pull later or heat again: the plan asks whether the egg is
+  // still in the water (DECISIONS.md 98, review 1.1), and nothing past the
+  // question is shown until it is answered (running-cook review 3): not the
+  // cooling, nor Done. The time is how long since the egg was due out.
+  if (run !== null && run.plan.askIfStillIn) {
+    const since = Math.max(0, now_s - run.plan.deadlines.cookEnd_s);
+    return {
+      label: t('ask.stillIn'),
+      digits: `+${formatClock(since)}`,
+      subline: t('readout.sub.stillIn'),
+      spoken: t('spoken.stillIn', { time: spokenClock(since) }),
+      primary: t('ask.stillIn.yes'),
+      primaryDisabled: false,
+      hint: '',
+      secondaryVisible: true,
+      asking: true,
+    };
+  }
   return {
     label: t(keys.label),
     digits: digits,
@@ -148,5 +170,6 @@ export function phaseView(
     primaryDisabled: idle && !facts.whiteSets,
     hint: keys.hint === null ? '' : t(keys.hint, hintArgs),
     secondaryVisible: !idle && phase !== 'DONE',
+    asking: false,
   };
 }

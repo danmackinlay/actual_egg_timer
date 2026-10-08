@@ -22,7 +22,7 @@ import { eggsBehind, exportResults, keptState, learn, loadCalibration } from './
 import { setMuted } from './clock.js';
 import { applyConstantsToDom, applySettingsToDom, buildSizeOptions } from './controls.js';
 import {
-  cookElsewhere, cookOpen, lookAgain, onPrimary, persistCook, replanCook, reset, restoreCook,
+  cookElsewhere, cookOpen, lookAgain, onPrimary, onStillOut, persistCook, replanCook, reset, restoreCook,
 } from './cook.js';
 import { bindDom, el, page } from './dom.js';
 import { wireFeedback } from './feedback.js';
@@ -41,11 +41,13 @@ import { loadBoilMemory, loadSettings } from './store.js';
 import { measure, useUnits } from './units.js';
 import { drawShare, finalEggs, forgetAll, recompute, storedElsewhere } from './update.js';
 import { wireViews } from './views.js';
+import { wireEdits, wireStartTime } from './edit.js';
 import { nowMs } from './now.js';
 
 export function boot(): void {
   bindDom();
   state.settings = loadSettings(sizeClasses);
+  state.controls = state.settings;
   useUnits(state.settings.unitsChosen);
   state.boilMemory = loadBoilMemory();
   state.calib = loadCalibration();
@@ -69,8 +71,12 @@ export function boot(): void {
     form.addEventListener('submit', (event) => event.preventDefault());
   }
 
+  // Corrections mid-cook: when a change in hand is committed (edit.ts).
+  wireEdits();
+  wireStartTime();
   page().primary.addEventListener('click', onPrimary);
   page().secondary.addEventListener('click', reset);
+  page().stillOut.addEventListener('click', onStillOut);
   page().mute.addEventListener('click', onToggleMute);
   wireForget(forgetAll);
   wireExport(() => exportResults(shareState().uid, nowMs()));

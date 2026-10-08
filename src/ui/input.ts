@@ -14,6 +14,8 @@ import { setMuted } from './clock.js';
 import { applyUnitsToDom, labelMeasuredOption, labelStartTemps, syncMeasurements } from './controls.js';
 import { page, radioValue } from './dom.js';
 import { renderMute } from './render.js';
+import { timeOfDay } from './copy.js';
+import { cookControlsChanged } from './edit.js';
 import { liveSetupFacts, renderSentence } from './sentence.js';
 import { renderDonenessReading } from './slider.js';
 import { boilingPoint_C, currentEgg, isSousVide, sizeClasses, state } from './state.js';
@@ -66,8 +68,10 @@ export function onToggleMute(): void {
   renderMute();
 }
 
+/** The controls read back into what they show (`state.controls`): the
+ *  settings while idle; while a cook runs, its correction in hand. */
 function readInputs(source: EventTarget | null): void {
-  const settings = state.settings;
+  const settings = state.controls;
   const sizeIndex = Number(page().size.value);
   settings.sizeIndex = Number.isFinite(sizeIndex) ? sizeIndex : DEFAULTS.sizeIndex;
 
@@ -119,7 +123,9 @@ function readInputs(source: EventTarget | null): void {
   page().customTempField.hidden = settings.startTempMode !== 'custom';
   syncMeasurements(source);
   labelMeasuredOption();
-  scheduleSave();
+  // While a cook runs the controls are its correction in hand, written to
+  // the settings when it is committed (edit.ts), not before.
+  if (state.cook === null) scheduleSave();
 }
 
 /** Every input and change on the egg's controls, its sentence and the
@@ -143,9 +149,14 @@ export function onInput(event: Event): void {
   // Instant feedback on what the eye is on while dragging or choosing - the
   // reading under the slider, the sentence, the boiling point beside the
   // altitude; the full solve (tens of milliseconds) follows and corrects them.
-  renderDonenessReading(state.settings.doneness, isSousVide() ? { bath_C: SOUS_VIDE_BATH_C } : { peakYolk_C: targetPeakYolk_C(state.settings.doneness) });
+  const shown = state.controls;
+  renderDonenessReading(shown.doneness, isSousVide() ? { bath_C: SOUS_VIDE_BATH_C } : { peakYolk_C: targetPeakYolk_C(shown.doneness) });
   page().statBoil.textContent = show('boilingPoint', boilingPoint_C());
-  page().body.dataset['start'] = state.settings.startMode;
-  renderSentence(liveSetupFacts(state.settings, sizeClasses, currentEgg()));
-  scheduleSolve();
+  page().body.dataset['start'] = shown.startMode;
+  const start = state.controlsStart_s;
+  renderSentence(liveSetupFacts(shown, sizeClasses, currentEgg(), start === null ? null : timeOfDay(start * 1000)));
+  // A running cook is corrected, in time (edit.ts); the idle screen is solved
+  // again.
+  if (state.cook !== null) cookControlsChanged(target);
+  else scheduleSolve();
 }

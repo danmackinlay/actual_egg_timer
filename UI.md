@@ -48,38 +48,105 @@ them out differently.
 
 ## 3. The screens
 
-**The egg, idle**, top to bottom:
+**The one screen** (the web since 8 October 2026; `DECISIONS.md` 91, 96 to
+98; `design/one-screen.md`). Setting up and boiling are one layout, from
+idle to Done: at the start nothing moves and nothing goes, and only the
+readout's words, its colours and the buttons change. iOS still has a setup
+screen and a timer screen (§9) until its own step. Top to bottom, in every
+phase:
 
 - Settings and Help at the top (web: links; iOS: the navigation bar, left and
-  right). The web's mute is at the top right, in every phase.
-- **The readout**: the total time, and one line under it for the method
-  (`readout.sub.coldAssumes` with its (i), `coldGuesses`, `standing` or
-  `hot`). With the heat off it says the lid is on, so the time is never read
-  without it. While sharing is on, a small **Learning** mark sits in the
-  panel's top corner with its (i) (`learning.badge`, E8, `DECISIONS.md` 58):
-  the time may be nudged a few seconds, and the (i), which opens under the
-  phase label, says so. Never in sous-vide.
+  right), in every phase. The web's mute is at the top right. While a cook
+  runs, Settings' pot rows correct it as the sentence does; what I have
+  learned and sharing wait for it to end.
+- **The readout**: the phase label (idle, "Total time"; while a cook runs,
+  the instruction), the time, and one line under it (the method while idle:
+  `readout.sub.coldAssumes` with its (i), `coldGuesses`, `standing` or
+  `hot`; with the heat off it says the lid is on, so the time is never read
+  without it). The clock is the same size in every phase. While sharing is
+  on, a small **Learning** mark sits in the panel's top corner with its (i)
+  (`learning.badge`, E8, `DECISIONS.md` 58): the time may be nudged a few
+  seconds, and the (i), which opens under the phase label, says so. Never
+  in sous-vide.
 - **How sure I am**: a line of words the cook presses, and the runny-white
-  line when it applies (§8).
+  line when it applies (§8). It keeps its room in every phase; it goes at
+  the pull, when the time it was about has passed.
 - **The doneness slider.** The heading reads `controls.doneness` at its start
   and the peak yolk at its end (`controls.doneness.peak`; in sous-vide the
   water, `controls.doneness.bath`), in the cook's units. The track is the
   yolk, shaded by how often each level gives the yolk it names, with the five
   doneness words at their levels and the bracket under it (§8). Then the
-  texture note.
-- **The setup sentence** (§5), and the open clause's panel under it.
-- **The slot**: a refusal, or a dotted level's wild guess (`warn.wildGuess`, §8), or
-  the sous-vide warning, or (web) a reloaded
-  cook's warning; failing those, before anything is learned, the first-egg
-  welcome (`idle.welcome`). Under a wild guess that a change of setup
-  would make surer (§8, "the advice") the link "How to make this more
-  reliable →" goes under whichever is there and opens Help at its
-  reliability section, which lists the changes that would help this setup
-  (`advice.*`).
-- The hint for the start, then **Start**: "Start heating" on a cold start,
-  "Eggs in" otherwise. In sous-vide it is dead, with the bath's hint above.
+  texture note. While a cook runs they are its plan's, until the pull for
+  the shading and the bracket.
+- **The egg in cross-section and the setup sentence** (§5), the egg on the
+  left so it costs the column no height of its own (`DECISIONS.md` 52), the
+  sentence beside it, from the top; the open clause's panel under both.
+  The egg is not drawn in sous-vide.
+- **The slot**: a refusal, or a dotted level's wild guess (`warn.wildGuess`,
+  §8), or the sous-vide warning, or (web) a reloaded cook's warning;
+  failing those, before anything is learned, the first-egg welcome
+  (`idle.welcome`). While a cook runs it says what its plan says of the
+  level until the pull, a refusal first (a correction that leaves the
+  white unset gets the longest time the pan can give), then a reloaded
+  cook's warning. Under a wild guess that a change of setup would make
+  surer (§8, "the advice") the link "How to make this more reliable →" goes
+  under whichever is there, while idle, and opens Help at its reliability
+  section, which lists the changes that would help this setup (`advice.*`).
+- The hint, then **the action**: "Start heating" on a cold start, "Eggs in"
+  otherwise, Full rolling boil, the pull, Start again (the table below). In
+  sous-vide it is dead, with the bath's hint above. Cancel under it while a
+  cook runs. At Done the bar carries the questions after an egg, so it ends
+  the page rather than sticking to the bottom of the screen.
 
-That is two controls and one sentence.
+**The egg in cross-section** (`DECISIONS.md` 52, 91, 97 and 98; web
+`src/ui/eggSection.ts` and `render.ts`, iOS `EggSectionView.swift`). An
+ovoid with a round yolk, drawn ring by ring, showing how set each layer is:
+the yolk in the slider track's colours, the white from a clear, faintly
+blue raw white to opaque. It is a picture of what the sentence and the time
+already say, so it has no words and a screen reader passes over it. It has
+two readings, which the web names on the drawing (`data-egg`):
+
+- **the egg aimed for** (`aim`): the egg the settings on screen aim for, as
+  eaten at the end of the cooling (`previewSection`), so the yolk reads the
+  level asked. Idle, always; during a cook, while a control is held and
+  for about 1.5 s after the last change.
+- **the live egg** (`live`): the egg in the water now, from raw at the
+  start, carried forward a tick at a time and replayed from raw when the
+  cook is corrected, through the cooling. At Done, **the egg as it ran**
+  (`ran`), eaten, with the parameters it ran under.
+
+**Corrections** (`DECISIONS.md` 96 to 98; web `src/ui/edit.ts`). After
+Start every clause of the sentence, the slider and Settings' pot rows stay
+open, showing the cook's own choices, never the settings (another tab's
+settings touch only the units, the language and the sound while a cook
+runs). A change is a correction, "it was always like this": the cook is
+planned again from its start. It is committed on release of the slider or
+of a − or + held long enough to repeat, after a 1.5-s settle for anything
+else (a choice, a tap, a number typed), and at once when another control
+is touched; until then the readout keeps its time, and the slider's
+heading and the egg show the change. A correction that puts the pull in the
+past makes it now, and rings; changed back within the 20-s grace, the pull
+is cancelled. After the pull the slider only previews, and springs back to
+the level the egg ran at; anything else corrects the record, planned on the
+calibration before this egg. A correction also changes the settings for
+the next cook.
+
+**The start's time.** While a cook runs the start clause says when the eggs
+went in ("into cold water at 7:42, brought to the boil"; the `*At` keys),
+and its panel has "Eggs in at" (`controls.startedAt`) with a − and a +, a
+minute at a time, no later than now, the press of Full rolling boil or the
+pull, no earlier than two hours before Start. When a press goes no further
+the line under it says why (`controls.startedAt.latestNow`, `.latestBoil`,
+`.latestPull`, `.earliest`). Sous-vide is not offered in the panel.
+
+**"Are the eggs still in the water?"** When the alarm's grace ran out
+unanswered I assume the eggs came out, and a correction since that would
+cook them longer asks (`ask.stillIn`, in the phase label's place; the time
+since they were due out; `readout.sub.stillIn`). The primary button is
+"Yes, still in" (`ask.stillIn.yes`): the cook is timed again as corrected,
+and a pull already past rings now. Under it "No, they’re out"
+(`ask.stillIn.no`): the pull stands and the correction goes to the record.
+Nothing past the question is shown or rung until it is answered.
 
 **Settings** (web `#settings`, which `#kitchen` still opens; iOS a pushed
 `Form`). Each row has its (i):
@@ -103,16 +170,17 @@ That is two controls and one sentence.
   does; and the privacy page.
 - The colophon, with its link.
 
-In sous-vide the settings that change nothing there are put away.
+In sous-vide the settings that change nothing there are put away. While a
+cook runs, what I've learned and sharing are put away until it ends.
 
 **Help** (web `#help`, iOS a pushed page) is the whole story (§7), with a
 contents list. `[label](https://…)` in the copy is a link; nothing else is
-parsed.
+parsed. Reachable in every phase.
 
-**Phase screens**: the phase label (the instruction), the time, one line
-under it, the slot, and the action bar. Which key each part says is core's
-`phaseKeys` (`src/core/wording.ts`, held by `fixtures/wording.json`), so the
-two apps cannot disagree:
+**The phases**: the phase label (the instruction), the time, one line
+under it, and the action. Which key each part says is core's `phaseKeys`
+(`src/core/wording.ts`, held by `fixtures/wording.json`), so the two apps
+cannot disagree:
 
 | Phase | Label | Line under the time | Hint | Action |
 |---|---|---|---|---|
@@ -122,9 +190,12 @@ two apps cannot disagree:
 | Pull | `readout.phase.pull` | `readout.sub.pull` | `action.hint.pull`, none on the counter | the pull button, naming the cooling (`pulledKey`) |
 | Cooling (ice, tap) | `readout.phase.coolingIce` / `coolingTap` | `readout.sub.coolingPeak` / `coolingProbe` | none | none |
 | Done | `readout.phase.done` | `readout.sub.doneCold` / `doneHot` | none | `action.startAgain`; the two questions, and under them the probe reading |
+| Still in? (web) | `ask.stillIn` | `readout.sub.stillIn` | none | `ask.stillIn.yes`, and `ask.stillIn.no` under it |
 
 Cancel is under every running phase. A counter rest has no cooling phase:
 the pull runs out into Done. The cooling counts down to the yolk's peak.
+While the slow hob has lengthened the guess the clock counts the time
+heated up, still Heating.
 
 **The questions after an egg** (`DECISIONS.md` 92), on one panel at Done,
 none required: what the cook asked for (`feedback.target`); "How was the
@@ -141,26 +212,6 @@ refused with the range it should be in when no kitchen could have made it
 (`probe.refused`). The probe is not offered while the egg cooks. The
 setting in Settings still has the alarm and the line under the cooling
 countdown ask for the reading, and offers the room temperature.
-
-**While a cook runs**, straight under the time: the setup sentence the cook
-was started with, as plain text with nothing to tap, and under it one small
-line with what the sentence does not say (`cook.summary`: the doneness and
-the peak yolk). Both come from the running cook (`src/core/running.ts`): the
-sentence from its own choices, the doneness and the peak from its plan, the
-time that ran; never from the controls, in the units the cook was set up in.
-What is said under the time is the plan's, decided on the cook's pot: it
-comes in when that pot's surface lands, and a new pot's (the boil tapped)
-replaces it when it lands; the web holds the line it had meanwhile, and after
-a reload it comes back with the surface. Settings, Help and the slider are
-put away.
-
-To the left of the sentence, so it costs the column no height of its own,
-**the egg in cross-section** (`DECISIONS.md` 52; web `src/ui/eggSection.ts`,
-iOS `EggSectionView.swift`). It is an ovoid with a round yolk, drawn ring by ring as it
-cooks, and shows how set each layer is: the yolk in the slider track's
-colours, the white from a clear, faintly blue raw white to opaque. It is a
-picture of what the sentence and the time already say, so it has no words
-and a screen reader passes over it.
 
 ## 4. The (i) component
 
@@ -205,7 +256,14 @@ there.
   water or sous-vide), and the cooling (ice, tap or counter).
 - **To a screen reader** each clause is a button named "{label}: {value},
   change" (`setup.clause`), expanded or collapsed. The web returns focus to
-  the clause after Done.
+  the clause after Done. On the web a clause is a span that is a button
+  (`role`, `tabindex`, Enter and Space), since a `<button>` is drawn as an
+  inline block, and beside the egg a clause that wrapped pushed the comma
+  after it to the end of its last line.
+- **While a cook runs** the sentence is the cook's own choices, and stays
+  tappable: a choice corrects the cook (§3). The start clause says when the
+  eggs went in (`setup.start.coldAt` and the rest), which its panel
+  corrects.
 - **Heat after the boil is not a clause.** It is a habit of a kitchen, tied
   to the water, and a fifth clause pushes the sentence onto a third line at
   390 px. The readout's line says "lid on" when it is set.
@@ -257,7 +315,7 @@ in the slider's words (`certainty.interval`, `.interval.one`: "9 times in 10:
 Runny to Fudgy."), "Most likely: Jammy." (`certainty.mostLikely`) unless it
 is already under the line or the interval is that one word
 (`mostLikelyOpened`), the likely time range (`certainty.time`, A7's, m:ss as
-the clock shows it) and, while idle, a link to Help's "How sure I am"
+the clock shows it) and a link to Help's "How sure I am"
 (`certainty.help`), which holds the three paragraphs the direction's (i)
 opened. "Most likely" also shows under the line, unpressed, whenever it is
 not the word asked (`mostLikelyShown`). A screen reader hears the line as a
@@ -293,7 +351,9 @@ covers the shading. A screen reader hears the same words, "Likely yolk:
 Runny to Fudgy" (`outcome.range`, `.range.one` when the interval is one
 word; the words stand alone after a colon, `LANGUAGE.md` §5). It is not
 drawn before the pot's surface lands, where the white never sets, in
-sous-vide, or once a cook runs; its room is kept, so nothing under it moves.
+sous-vide, or once the egg is pulled; its room is kept, so nothing under it
+moves. While a cook runs it is its plan's, held while a new pot's surface
+builds, as the line is.
 It is not clamped to what the pan delivers: on a counter rest its soft end
 can lie over the stripes, since a cook can still call that egg Soft. Until
 the `certainty` draft's follow-up (8 October 2026) it was the outcome's
@@ -393,9 +453,13 @@ the thumb when the finger lifts; the web's thumb moves at once.
 - **The open clause** has a solid accent fill on the web and an accent wash on
   iOS, where a link's text takes the tint. VoiceOver focus does not return to
   the clause after Done on iOS.
+- **The one screen** is the web's (8 October 2026); iOS keeps a setup
+  screen and a timer screen, the running sentence plain with `cook.summary`
+  under it, until its own step reuses the `onescreen` words.
 - **The action bar** on the web is opaque, fading in over its top 20 px, and
   stuck to the bottom of the page's column rather than fixed over it, so what
-  scrolls under it is hidden and the last line always scrolls clear.
+  scrolls under it is hidden and the last line always scrolls clear; at Done
+  it ends the page instead.
 - **The Lock Screen and Dynamic Island** are iOS's alone: the pull names the
   cooling, word for word as the alarm does, the card ends when the cooling
   does, and it carries no odds (`DECISIONS.md` 32, 33).

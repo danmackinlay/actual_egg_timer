@@ -119,7 +119,12 @@ function compare(beforePath: string, afterPath: string): void {
 function pool(states: Snapshot[], rewrite: (s: string) => string): Map<string, string> {
   const out = new Map<string, string>();
   for (const s of states) {
-    for (const text of [...s.texts, ...s.attrs, s.title]) {
+    // An attribute's words, whichever element bears them: the harness names
+    // an element without an id by its tag (a clause of the sentence was a
+    // <button> and is a <span role="button"> since the one screen), and a
+    // word is the same word on either.
+    const attrs = s.attrs.map((a) => a.replace(/^\S+ (?=[a-z-]+=)/, '* '));
+    for (const text of [...s.texts, ...attrs, s.title]) {
       const t = rewrite(text);
       out.set(t.replace(/[0-9]+/g, '0').replace(/\b0 ([A-Za-z]+?)s\b/g, '0 $1'), t);
     }
@@ -177,9 +182,9 @@ function compareDraft(beforePath: string, afterPath: string, draftName: string |
   // inserted words the draft's change in core moved (`argumentsMoved`).
   const draft = draftFor(draftName);
   const english = (JSON.parse(readFileSync('copy/en.json', 'utf8')) as { messages: Record<string, Templates> }).messages;
-  const moved = Object.keys(draft.argumentsMoved ?? {}).flatMap((key) => {
+  const moved = Object.keys({ ...draft.argumentsMoved, ...draft.redrawn }).flatMap((key) => {
     const entry = english[key] as Record<string, unknown> | undefined;
-    if (entry === undefined) throw new Error(`argumentsMoved names ${key}, which is not in copy/en.json`);
+    if (entry === undefined) throw new Error(`argumentsMoved or redrawn names ${key}, which is not in copy/en.json`);
     return ['text', 'zero', 'one', 'two', 'few', 'many', 'other']
       .map((c) => entry[c]).filter((t): t is string => typeof t === 'string').map((t) => t.replace(/\s+/g, ' '));
   });

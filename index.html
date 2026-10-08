@@ -46,8 +46,8 @@
      Three views, one page (UI.md): the egg, Settings and Help. The hash
      picks one (#settings, #help, #help-<section>), so the phone's back button
      works; src/ui/views.ts sets data-view from it (#kitchen, the old
-     address, still opens Settings). While a cook is running only
-     the egg is shown, whatever the hash says.
+     address, still opens Settings), in every phase: while a cook runs,
+     Settings' pot rows correct it.
 
      Every (i) is a button.info with aria-controls naming the paragraph it
      opens, which sits right after the line the (i) is on. data-label names
@@ -108,23 +108,10 @@
     <p id="whiteRisk" data-copy="outcome.whiteRunny" hidden></p>
   </section>
 
-  <!-- While a cook runs, the cook in the pan (src/ui/sentence.ts,
-       renderCookSetup): the setup sentence it was started with, as plain
-       prose with nothing to tap, and under it the doneness and the peak
-       yolk. From the cook's ticket, not the controls, which are put away. -->
-  <section id="cookSetup" hidden>
-    <!-- Beside it, the egg in cross-section (src/ui/eggSection.ts): how set
-         each layer is, or a tap away its temperature. A prototype, with no
-         words yet, so hidden from a screen reader. -->
-    <svg id="eggSection" class="egg-section" aria-hidden="true" focusable="false"></svg>
-    <div class="cook-setup__words">
-      <p id="cookSentence"></p>
-      <p id="cookDoneness"></p>
-    </div>
-  </section>
-
   <!-- ----------------------------------------------------------- the egg -->
-  <!-- Two controls and a sentence (UI.md section 3). Numeric bounds, steps,
+  <!-- Two controls and a sentence (UI.md section 3), the same in every phase
+       (design/one-screen.md section 2): while idle they are the settings,
+       and while a cook runs, its own choices. Numeric bounds, steps,
        units and the preset temperatures are filled in at boot from
        src/core/policy.ts and src/core/units.ts, in the cook's units, so the
        markup cannot disagree with the model. -->
@@ -163,8 +150,12 @@
     </div>
 
     <!-- The setup sentence. Its clauses are buttons, built by the app from
-         setup.* in the catalogue; each opens its choice below, in place. -->
+         setup.* in the catalogue; each opens its choice below, in place.
+         Beside it, the egg in cross-section (src/ui/eggSection.ts, UI.md
+         section 3): how set each layer is. A picture of what the sentence
+         and the time say, with no words, so hidden from a screen reader. -->
     <div id="setup">
+      <svg id="eggSection" class="egg-section pan-only" aria-hidden="true" focusable="false"></svg>
       <p id="sentence"></p>
 
       <div class="panel" id="panelEgg" role="group" aria-labelledby="lblEgg" hidden>
@@ -233,6 +224,17 @@
           <input type="radio" name="startMode" id="startSous" value="sous">
           <label for="startSous" id="startSousLabel"></label>
         </div>
+        <!-- While a cook runs, when the eggs went in, as the start clause says
+             it: corrected a minute at a time (design/one-screen.md section 7,
+             20), no earlier and no later than the cook allows (core
+             earliestStart_s, latestStart_s), and the line under it says why
+             when a press goes no further. The − and + are drawn by CSS and
+             named by the code from the label. -->
+        <div class="prow" id="startedAtField" hidden>
+          <label for="startedAt" data-copy="controls.startedAt"></label>
+          <span class="unit"><button type="button" class="step step--less" id="startedAtLess" data-for="startedAt" data-up="0"></button><output id="startedAt" class="startedat"></output><button type="button" class="step step--more" id="startedAtMore" data-for="startedAt" data-up="1"></button></span>
+        </div>
+        <p class="hint" id="startedAtLimit" aria-live="polite" hidden></p>
       </div>
 
       <div class="panel pan-only" id="panelCooling" role="group" aria-labelledby="lblCooling" hidden>
@@ -544,6 +546,8 @@
     <p id="primaryHint"><span id="primaryHintText"></span><button type="button" id="hintInfo" class="info" aria-expanded="false" aria-controls="hintMore" data-name="action.hint.heating.info" hidden></button></p>
     <p id="hintMore" class="disclosed" hidden data-copy="action.hint.heating.more"></p>
     <button type="button" id="primary" class="primary" data-copy="action.startHeating"></button>
+    <!-- "Still in the water?", the other answer: the primary says yes. -->
+    <button type="button" id="stillOut" class="secondary" hidden data-copy="ask.stillIn.no"></button>
     <button type="button" id="secondary" class="secondary" hidden data-copy="action.cancel"></button>
     <!-- Two questions, always both, and under them the thermometer reading,
          none required (INFERENCE.md section 3, DECISIONS.md 92). Each answer

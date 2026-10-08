@@ -19,32 +19,35 @@
 import { Phase } from '../core/policy.js';
 import { WhiteReport, YolkWord } from '../core/infer.js';
 import {
-  CookEvents, CookPlan, RunningCook, cookEnding, cookStillOpen, cookTooOld, eventsDue, keepAsRan, replan, startCook,
-  withBoil, withOut,
+  CookChoices, CookEvents, CookPlan, RunningCook, asRanCorrected, asRanCurrent, cookEnding, cookStillOpen, cookTooOld,
+  corrected, eventsDue, keepAsRan, pullStands, replan, sameChoices, startCook, startCorrected, stillIn, withBoil,
+  withOut,
 } from '../core/running.js';
 import { answerFor, askForCookSurface, currentInputs, decided, drawNudge, nudgeNow, surfaceFor } from './answer.js';
-import { learn, logEgg } from './calibration.js';
+import { calibrationBefore, eggLogged, learn, logEgg } from './calibration.js';
 import { keepUnreadCook } from './calibrationStore.js';
 import {
   Ticker, blip, keepScreenAwake, primeAudio, pullSounding, releaseScreen, ringAlarm, setPullAlarm, startTicker,
   stopAlarm,
 } from './clock.js';
 import { applySettingsToDom } from './controls.js';
+import { commitEdit, endEdits, startEdits } from './edit.js';
 import { activeLocale } from './copy.js';
-import { cachedOddsProfile, decisionGrid } from './decisionGrids.js';
+import { cachedOddsProfile, decisionGrid, oddsProfileFor } from './decisionGrids.js';
 import { eggRecordFor } from './eggRecord.js';
 import {
   answeredElsewhere, answersNow, forgetAnswers, heldAnswers, keptAnswers, putAway, resumeAnswers, retryHeld,
 } from './feedback.js';
 import { render } from './render.js';
 import { sendFinal } from './share.js';
-import { idleChoices, phaseNow, state, timeToBoil_s } from './state.js';
+import { idleChoices, phaseNow, settingsOfChoices, sizeClasses, state, timeToBoil_s } from './state.js';
 import {
   clearCook, cookStoredElsewhere, dropStoredCook, loadCook, readStoredCook, rememberTimeToBoil, saveCook,
   saveLeanHint, storedCookText, takeOldCooks, takeUpEvents,
 } from './store.js';
 import { unitSystem } from './units.js';
 import { applyAnswer, drawShare, recompute } from './update.js';
+import { showEgg } from './views.js';
 import { nowMs } from './now.js';
 
 /** The ticker, while a cook runs, and the phase it last saw, so the alarm
@@ -214,15 +217,129 @@ function takeUp(cook: RunningCook, plan: CookPlan): void {
   // none while the time to boil is a guess (the plan reads Heating whatever
   // it says), once the egg is out or the pull has rung here, or while the
   // plan asks whether the egg is still in.
-  const d = plan.deadlines;
-  const pullDue = !d.provisional && state.cook.events.pulled === null && !plan.askIfStillIn && !clock.pullRung;
-  setPullAlarm(pullDue ? d.cookEnd_s * 1000 : null);
+  armPullFor(state.cook, plan);
   if (JSON.stringify(state.cook) !== written.cook) {
     persistCook();
   } else if (leanMoved && !written.closed) {
     saveLeanHint(state.cook.id_ms, lean);
     written.text = storedCookText();
   }
+}
+
+/** The pull's beeps, ahead on the audio clock, for the pull `plan` sets:
+ *  none while the time to boil is a guess (the plan reads Heating whatever it
+ *  says), once the egg is out or the pull has rung here, or while the plan
+ *  asks whether the egg is still in. */
+function armPullFor(cook: RunningCook, plan: CookPlan): void {
+  const d = plan.deadlines;
+  const pullDue = !d.provisional && cook.events.pulled === null && !plan.askIfStillIn && !clock.pullRung;
+  setPullAlarm(pullDue ? d.cookEnd_s * 1000 : null);
+}
+
+/**
+ * A correction committed (edit.ts; DECISIONS.md 96 to 98): the start (when the
+ * eggs went in) and the cook's choices replaced (`startCorrected`,
+ * `corrected`), and the cook planned again from its start, written
+ * down, and drawn. Overdue is decided here, by the plan of the corrected cook:
+ * a pull now in the past is the moment of the correction, and rings now
+ * (`notice`). A correction that puts the pull back in the future before the
+ * egg was seen to come out - changed back within the grace - cancels it:
+ * nothing was observed, so the alarm stops, and the new pull will ring.
+ */
+export function correctCook(choices: CookChoices, startedAt_s: number | null): void {
+  if (state.cook === null || written.closed) return;
+  const now = nowMs();
+  const now_s = now / 1000;
+  takeUpStored();
+  let cook = state.cook;
+  // The start, when the eggs went in, as told (`startCorrected`): refused,
+  // and the cook as it was, outside the limits the start's panel shows.
+  if (startedAt_s !== null && startedAt_s !== cook.startedAt_s) cook = startCorrected(cook, startedAt_s, now_s) ?? cook;
+  if (!sameChoices(choices, cook.choices)) cook = corrected(cook, choices, now_s);
+  if (cook === state.cook) return;
+  state.cook = cook;
+  afterCorrection(now);
+}
+
+/** The cook was corrected: plan it, ring or stop as its pull says, and keep
+ *  the clock going if it is not Done. */
+function afterCorrection(now: number): void {
+  const cook = state.cook;
+  if (cook === null) return;
+  planNow(now / 1000);
+  const phase = phaseNow(now);
+  if ((phase === 'HEATING' || phase === 'COOKING') && clock.pullRung) {
+    clock.pullRung = false;
+    stopAlarm();
+    if (state.cook !== null && state.plan !== null) armPullFor(state.cook, state.plan);
+  }
+  notice(now);
+  if (phase !== 'DONE' && clock.ticker === null) {
+    keepScreenAwake();
+    startTicking();
+  }
+  render(now);
+  refreshAsRan();
+}
+
+/**
+ * A correction after the pull corrects the record (DECISIONS.md 96, 98): the
+ * plan as it ran is made again for the corrected cook, on the calibration
+ * before this egg (`calibrationBefore`, core `asRanCorrected`), never on one
+ * that has folded this egg's own answer (design/one-screen.md section 4,
+ * "Never from its own outcome"), on that calibration's surface and odds for
+ * the corrected pot, built off the main thread. Done shows it once it is in.
+ * An egg already logged has its record replaced from the same plan, its
+ * answers kept, and the log folded again from where it starts (`logEgg`); an
+ * answer held meanwhile (the record refused as stale) is made then. Dropped
+ * if the cook has been corrected again, or has ended, before it lands.
+ */
+function refreshAsRan(): void {
+  const cook = state.cook;
+  if (cook === null || cook.events.pulled === null || cook.asRan === null || asRanCurrent(cook) || written.closed) return;
+  const id = cook.id_ms;
+  const stamp = cook.correctedAt_s;
+  const stillThis = (): boolean => state.cook !== null && state.cook.id_ms === id && state.cook.correctedAt_s === stamp;
+  correctedAsRan(cook, nowMs() / 1000).then((r) => {
+    if (r === null || !stillThis() || state.cook === null) return;
+    state.cook = { ...state.cook, asRan: r.cook.asRan };
+    persistCook();
+    if (eggLogged(id) >= 0) {
+      const record = eggRecordFor(state.cook, r.plan, null, null, null);
+      if (record !== null) {
+        logEgg(record);
+        void learn();
+      }
+    }
+    retryHeld();
+    render(nowMs());
+  }, (error: unknown) => console.warn('the corrected egg’s record failed', error));
+}
+
+/** The cook corrected after its pull, its plan as it ran made again on the
+ *  calibration before this egg (`calibrationBefore`, `asRanCorrected`), with
+ *  that plan, for its record; null when there is no surface to make it on. */
+async function correctedAsRan(cook: RunningCook, now_s: number): Promise<{ cook: RunningCook; plan: CookPlan } | null> {
+  const before = await calibrationBefore(cook.id_ms);
+  const inputs = replan(cook, before, null, 0, now_s).inputs;
+  if (inputs === null) return null;
+  const grid = await decisionGrid(inputs);
+  const profile = await oddsProfileFor(inputs, before);
+  const surface = { inputs: inputs, grid: grid, profile: profile };
+  const next = asRanCorrected(cook, before, surface, now_s);
+  return next === null ? null : { cook: next, plan: replan(next, before, surface, 0, now_s) };
+}
+
+/** "Still in the water?" No: the egg came out when the clock assumed. The
+ *  pull stands, confirmed, the correction applies to the record, and the plan
+ *  does not ask again (`pullStands`). */
+export function onStillOut(): void {
+  const cook = state.cook;
+  const plan = state.plan;
+  if (cook === null || plan === null || !plan.askIfStillIn) return;
+  stopAlarm();
+  state.cook = pullStands(cook);
+  afterCorrection(nowMs());
 }
 
 /** Plan the running cook again, now, with what another tab saw of it. */
@@ -271,6 +388,8 @@ function notice(now_ms: number): void {
     // Already sounding if it was scheduled ahead and its time has come on
     // the audio clock; otherwise now.
     if (!pullSounding()) ringAlarm(true);
+    // The button that answers it is on the egg's page.
+    showEgg();
   }
   // Done rings too, unless the pull has only just: the egg may still be in.
   if (phase === 'DONE') finishCook(!rang);
@@ -382,6 +501,14 @@ function logFinished(
   const inputs = plan.inputs;
   // Left stored, for the next load to log, if the surface cannot be had.
   if (inputs === null || tries <= 0) return;
+  // Corrected after the pull, and its plan as it ran not yet made again:
+  // made now, on the calibration before this egg.
+  if (cook.asRan !== null && !asRanCurrent(cook)) {
+    correctedAsRan(cook, now_s).then((r) => {
+      if (r !== null) logFinished(r.cook, r.plan, now_s, yolk, white, ended, tries - 1);
+    }, (error: unknown) => console.warn('the corrected egg’s record failed', error));
+    return;
+  }
   decisionGrid(inputs).then(() => {
     const onIt = replan(cook, state.calib, surfaceFor(inputs), 0, now_s);
     logFinished(cook, onIt, now_s, yolk, white, ended, tries - 1);
@@ -399,8 +526,19 @@ function forgetEnded(id_ms: number): void {
   });
 }
 
+/** The controls show the running cook's own choices, never the settings
+ *  (review 2.5): at the start, where they are the same, and after a reload,
+ *  where another tab may have changed the settings since. */
+function showCookControls(): void {
+  if (state.cook === null) return;
+  state.controls = settingsOfChoices(state.settings, state.cook.choices, sizeClasses);
+  applySettingsToDom();
+  startEdits();
+}
+
 /** Cancel, and "Start again" at DONE. */
 export function reset(): void {
+  endEdits();
   stopAlarm();
   stopTicking();
   releaseScreen();
@@ -417,8 +555,9 @@ export function reset(): void {
   clock.phase = 'IDLE';
   clock.pullRung = false;
   setPullAlarm(null);
-  // The controls were left alone while the cook ran (another tab may have
-  // changed the settings meanwhile): they show the settings again.
+  // The controls showed the cook's own choices while it ran (another tab may
+  // have changed the settings meanwhile): they show the settings again.
+  state.controls = state.settings;
   applySettingsToDom();
   // A new cook, a new nudge.
   drawNudge();
@@ -429,6 +568,9 @@ export function reset(): void {
 }
 
 export function onPrimary(): void {
+  // A correction still settling is committed first: the button acts on the
+  // cook as the controls say it is.
+  if (state.cook !== null) commitEdit();
   const now = nowMs();
   const now_s = now / 1000;
   stopAlarm();
@@ -451,6 +593,7 @@ export function onPrimary(): void {
     freshWrites(null, null);
     clock.pullRung = false;
     state.cook = startCook(now, idleChoices(), nudgeNow(), { ...state.boilMemory }, unitSystem(), activeLocale());
+    showCookControls();
     // The lean the time on screen took, carried until the plan decides its
     // own: the plan on this pot's surface is the time that was on screen.
     state.leanHint_s = chosen === null ? 0 : chosen.decision.cookTime_s - chosen.decision.meanCookTime_s;
@@ -466,6 +609,17 @@ export function onPrimary(): void {
   const cook = state.cook;
   const plan = state.plan;
   if (cook === null || plan === null) return;
+
+  // "Still in the water?" Yes: the pull the clock assumed is dropped, and
+  // the cook planned again as told now; a pull already past is now, and
+  // rings, as if the egg had never been taken out.
+  if (plan.askIfStillIn) {
+    state.cook = stillIn(cook, now_s);
+    clock.pullRung = false;
+    clock.phase = 'COOKING';
+    afterCorrection(now);
+    return;
+  }
 
   if (phase === 'HEATING') {
     // The boil, observed. What it teaches the pan's memory is written when
@@ -533,6 +687,10 @@ export function restoreCook(): void {
   freshWrites(text, stored.cook);
   clock.pullRung = false;
   takeUp(back.cook, back.plan);
+  showCookControls();
+  // A correction after the pull whose record was not yet made again when
+  // the page went: made now.
+  refreshAsRan();
   clock.phase = phaseNow(now);
   if (clock.phase !== 'DONE') {
     keepScreenAwake();

@@ -68,6 +68,7 @@ import { exportDraft } from './drafts/export.js';
 import { warn } from './drafts/warn.js';
 import { afteregg } from './drafts/afteregg.js';
 import { certainty } from './drafts/certainty.js';
+import { onescreen } from './drafts/onescreen.js';
 
 export type Templates = Record<string, string>;
 
@@ -109,6 +110,14 @@ export interface Draft {
    *  rendering of these templates appear or vanish; nothing else about them
    *  may change. */
   argumentsMoved?: Record<string, string>;
+  /** Keys whose words did not change but which the app now draws in pieces
+   *  where it drew them whole, or whole where it drew them in pieces: the
+   *  one screen's sentence, plain prose while a cook ran and now its
+   *  clauses as buttons in every phase. As with `argumentsMoved`, the
+   *  snapshot proof lets a whole rendering of these templates appear or
+   *  vanish, and nothing else about them change: their pieces are the
+   *  strings they always were. The key, and why. */
+  redrawn?: Record<string, string>;
 }
 
 export const DRAFTS: Record<string, Draft> = {
@@ -157,6 +166,7 @@ export const DRAFTS: Record<string, Draft> = {
   warn,
   afteregg,
   certainty,
+  onescreen,
 };
 
 /** The draft most recently applied, the last in `DRAFTS`: what a proof checks

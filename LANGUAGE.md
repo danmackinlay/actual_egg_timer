@@ -476,6 +476,34 @@ keys whose words stand while the numbers behind them move).
 | `help.odds.p1` | … I tell you whether this one will probably come out as you asked, and if not, whether too soft or too firm. … | … Very certain means that 9 times in 10 you’ll get the yolk you asked for. A ballpark figure means … that yolk or the one next to it on the slider. Anything less sure is a wild guess. Press the words … |
 | `help.odds.aside` | Eight eggs out of ten … The stronger the shading on the slider, the surer I am of getting that doneness right. | Nine eggs out of ten … the more often you get the yolk you asked for. Dots mark the yolks that are still a wild guess. |
 
+**The one screen: `onescreen`** (8 October 2026, `DECISIONS.md` 91, 96 to
+98; `SHIP-0.5.md` C3), the web only for now: iOS adds its apps to these rows
+in its step. The sentence and the slider stay on screen while the egg
+cooks, so the summary line under the running cook's sentence is iOS's
+alone. While a cook runs the start clause says when the eggs went in, and
+its panel corrects that time, a minute at a time; when a − or + goes no
+further, the line under it says why in the first person. When the alarm's
+grace ran out and a correction since would cook the eggs longer, I ask
+whether they are still in the water. No en-US entry. `tools/drafts/onescreen.ts`,
+on `b314a4c`; its header has the 1750 twins ("set in cold water at {time}
+and brought to the boil", "The eggs put in at", "Are the eggs yet in the
+water?"). Proved with `copyLiterals --since b314a4c onescreen` and the
+snapshot compared with `--draft onescreen` (`LOGBOOK.md`, 8 October 2026).
+
+| key | before | after |
+|---|---|---|
+| `cook.summary` | {doneness} · peak yolk {yolk} (both apps) | the same, iOS only |
+| `setup.start.coldAt`, `.hotAt` | (new) | into cold water at {time}, brought to the boil / into boiling water at {time} |
+| `setup.start.coldStandingAt`, `.hotStandingAt` | (new) | into cold water at {time}, to the boil, heat off, lid on / into boiling water at {time}, heat off and lid on |
+| `controls.startedAt` | (new) | Eggs in at |
+| `controls.startedAt.latestNow` | (new) | I can’t move it later than now. |
+| `controls.startedAt.latestBoil` | (new) | I can’t move it later than {time}, when you pressed Full rolling boil. |
+| `controls.startedAt.latestPull` | (new) | I can’t move it later than {time}, when the eggs were due out. |
+| `controls.startedAt.earliest` | (new) | I can’t move it earlier than {time}, two hours before I started timing. |
+| `ask.stillIn`, `.yes`, `.no` | (new) | Are the eggs still in the water? / Yes, still in / No, they’re out |
+| `readout.sub.stillIn` | (new) | since they were due out |
+| `spoken.stillIn` | (new) | Are the eggs still in the water? They were due out {time} ago. |
+
 ## 4. Units
 
 **One setting: Metric or Imperial.** Its default comes from the platform:

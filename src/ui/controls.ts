@@ -10,7 +10,7 @@ import { SOUS_VIDE_BATH_C, SOUS_VIDE_MODEL_FLOOR_C } from '../core/sousvide.js';
 import { Measure, Quantity, displayText, nudgeFrom, sizeClassLabel } from '../core/units.js';
 import { SLIDER_STEPS, startTempPreset_C } from '../core/policy.js';
 import { languageOf } from '../core/format.js';
-import { activeLocale, t } from './copy.js';
+import { activeLocale, t, timeOfDay } from './copy.js';
 import { page, selectRadio } from './dom.js';
 import { liveSetupFacts, redrawSentence, renderSentence } from './sentence.js';
 import { currentEgg, room_C, sizeClasses, state } from './state.js';
@@ -79,7 +79,7 @@ function labelSizeOptions(): void {
 /** The measured egg's option carries its mass, as iOS's does, so choosing it
  *  says which egg comes back (D6). */
 export function labelMeasuredOption(): void {
-  const measured = eggFromMinorDiameter(state.settings.customMinor_mm / 1000);
+  const measured = eggFromMinorDiameter(state.controls.customMinor_mm / 1000);
   page().size.options[sizeClasses.length].textContent = t('controls.size.measured', {
     mass: show('mass', measured.mass_kg * 1000),
   });
@@ -101,9 +101,10 @@ export function applyConstantsToDom(): void {
 /** Everything on the form that has a unit: each input's step, bounds, unit
  *  and contents, the preset labels, and the size menu. Run at boot and again
  *  whenever the cook changes system, from the stored SI values - so switching
- *  back and forth never moves the egg. */
+ *  back and forth never moves the egg. The values are the controls' (a
+ *  running cook's own, `state.controls`). */
 export function applyUnitsToDom(): void {
-  const settings = state.settings;
+  const settings = state.controls;
   applyMeasure(page().measureMass, page().unitMass, measure('mass'));
   applyMeasure(page().measureGirth, page().unitGirth, measure('girth'));
   applyMeasure(page().measureMinor, page().unitMinor, measure('width'));
@@ -134,7 +135,8 @@ export function applyUnitsToDom(): void {
   });
   // The sentence's masses and temperatures are in the units too.
   redrawSentence();
-  renderSentence(liveSetupFacts(settings, sizeClasses, currentEgg()));
+  const start = state.controlsStart_s;
+  renderSentence(liveSetupFacts(settings, sizeClasses, currentEgg(), start === null ? null : timeOfDay(start * 1000)));
 }
 
 /** The presets are assumptions, and are labelled as such rather than baked
@@ -147,8 +149,10 @@ export function labelStartTemps(): void {
   });
 }
 
+/** Every control written from what the controls show (`state.controls`):
+ *  the settings while idle, a running cook's own choices while one runs. */
 export function applySettingsToDom(): void {
-  const settings = state.settings;
+  const settings = state.controls;
   page().size.value = String(settings.sizeIndex);
   applyUnitsToDom();
   selectRadio('startTemp', settings.startTempMode);

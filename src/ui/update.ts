@@ -5,6 +5,7 @@
  */
 
 import { Solution } from '../core/solve.js';
+import { Cooling } from '../core/protocol.js';
 import { anchorNear } from '../core/policy.js';
 import { LevelAnswer } from '../core/reach.js';
 import { warningKey } from '../core/wording.js';
@@ -47,14 +48,17 @@ const pending = {
 
 /** The warning line, in words: a refusal, or that the level is a wild guess. Which,
  *  and which words say it, are core's (`answerAt`, `warningKey`); the
- *  arguments are this app's. The warning names the level the slider rests
- *  on, a word standing alone before the colon. */
-function warningText(answer: LevelAnswer): string {
+ *  arguments are this app's, for `pot`: the settings', or a running cook's
+ *  own choices. The warning names the level the slider rests on, a word
+ *  standing alone before the colon. */
+export function warningText(
+  answer: LevelAnswer, pot: { cooling: Cooling; waterLitres: number } = state.settings,
+): string {
   const v = answer.verdict;
-  const ref = warningKey(v, answer.lowOdds, state.settings.cooling);
+  const ref = warningKey(v, answer.lowOdds, pot.cooling);
   if (ref === null) return '';
   return tRef(ref, {
-    limit: midSentence(t(v.limit.key), activeLocale()), water: show('water', state.settings.waterLitres),
+    limit: midSentence(t(v.limit.key), activeLocale()), water: show('water', pot.waterLitres),
     doneness: t(anchorNear(answer.level).key),
   });
 }
@@ -141,15 +145,28 @@ export function writeSettings(): void {
 /** Settings another tab changed, taken up: the units, the sound and the
  *  words follow, and an idle page's controls follow and it is solved again.
  *  A cook under way is described by its own choices, never by the settings
- *  (DECISIONS.md 97): while one runs, the controls are left as they are, and
- *  show the settings again when it ends (`reset`). */
+ *  (DECISIONS.md 97; review 2.5): while one runs, the settings are taken up
+ *  for the next cook, but its controls (`state.controls`) take only what the
+ *  cook does not hold - the units, the language and the sound - and show the
+ *  settings again when it ends (`reset`). */
 function takeUpSettings(next: Settings): void {
   const settings = state.settings;
   const before = effectiveLanguage(settings.language);
+  const unitsBefore = settings.unitsChosen;
   Object.assign(settings, next);
   useUnits(settings.unitsChosen);
   setMuted(settings.muted);
-  if (state.cook === null) applySettingsToDom();
+  if (state.cook === null) {
+    applySettingsToDom();
+  } else {
+    state.controls.unitsChosen = settings.unitsChosen;
+    state.controls.language = settings.language;
+    state.controls.muted = settings.muted;
+    if (settings.unitsChosen !== unitsBefore) {
+      applyUnitsToDom();
+      render(nowMs());
+    }
+  }
   renderMute();
   const tag = effectiveLanguage(settings.language);
   if (tag !== before || tag !== activeLocale()) {
@@ -177,7 +194,8 @@ export function saveNow(): void {
  * Take up a new language state: store it, and if the catalogue on screen
  * changes, fetch the new one and redraw every word in place. Nothing about the
  * egg changes, and the units are never touched from here: that rule runs one
- * way (LANGUAGE.md section 6). Only reachable while idle, since Settings is.
+ * way (LANGUAGE.md section 6). Settings is reachable in every phase, so it
+ * may come while a cook runs: its words are drawn again with the rest.
  */
 export function setLanguage(next: LanguageState): void {
   const before = effectiveLanguage(state.settings.language);

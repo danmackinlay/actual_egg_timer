@@ -82,7 +82,14 @@ function stepButton(input: HTMLInputElement, up: boolean): HTMLButtonElement {
   button.className = up ? 'step step--more' : 'step step--less';
   button.dataset['for'] = input.id;
   button.dataset['up'] = up ? '1' : '0';
+  pressAndHold(button, () => stepOnce(input, up));
+  return button;
+}
 
+/** A − or + button that steps once when pressed and, held, repeats and
+ *  speeds up, until `once` says it moved nothing: the numbers' own, and the
+ *  start's time of day mid-cook (edit.ts). Enter or Space step once. */
+export function pressAndHold(button: HTMLButtonElement, once: () => boolean): void {
   let timer = 0;
   let repeats = 0;
   const stop = (): void => {
@@ -92,7 +99,7 @@ function stepButton(input: HTMLInputElement, up: boolean): HTMLButtonElement {
   const repeat = (delay: number): void => {
     timer = window.setTimeout(() => {
       repeats += 1;
-      if (!stepOnce(input, up)) { stop(); return; }
+      if (!once()) { stop(); return; }
       repeat(repeats >= FAST_AFTER ? FAST_REPEAT_MS : REPEAT_MS);
     }, delay);
   };
@@ -104,7 +111,7 @@ function stepButton(input: HTMLInputElement, up: boolean): HTMLButtonElement {
     event.preventDefault();
     stop();
     repeats = 0;
-    if (stepOnce(input, up)) repeat(FIRST_REPEAT_MS);
+    if (once()) repeat(FIRST_REPEAT_MS);
   });
   for (const end of ['pointerup', 'pointerleave', 'pointercancel']) button.addEventListener(end, stop);
   // A long press is a hold, not a menu.
@@ -112,9 +119,8 @@ function stepButton(input: HTMLInputElement, up: boolean): HTMLButtonElement {
   // Enter or Space: a click with no pointer behind it. A pointer's own click
   // was already taken at pointerdown.
   button.addEventListener('click', (event) => {
-    if (event.detail === 0) stepOnce(input, up);
+    if (event.detail === 0) once();
   });
-  return button;
 }
 
 /** Put a − before and a + after every number marked `data-stepper`. */
