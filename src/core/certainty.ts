@@ -107,10 +107,14 @@ export interface TimeRange {
   high_s: number;
 }
 
-/** Everything a tap on the certainty word shows. */
+/** Everything a tap on the certainty word shows, and the cook time it was
+ *  read at, s from eggs in (the time on screen then), so a reading held over
+ *  a plan that has moved can say its range about the time now
+ *  (`timeRangeWords`). */
 export interface CertaintyReading {
   words: WordCertainty;
   time: TimeRange;
+  at_s: number;
 }
 
 /** Where the bracket under the slider is drawn, as slider levels: from
@@ -212,5 +216,6 @@ export function certaintyAt(
   return {
     words: wordCertainty(yolkWordProbabilities(post, grid, cookTime_s), askedWord(level)),
     time: likelyTimeRange(post, grid, logYolkTarget(level)),
+    at_s: cookTime_s,
   };
 }

@@ -11,11 +11,11 @@ population a prior is drawn from (E6-E8, `COLLECTIVE.md`) are built in
 both, on this branch, not on `main` and not deployed. The web app (`src/`) and the iOS app (`ios/`) carry
 the same model, refusals, particle filter and choice of time, the same
 catalogue of words in two Englishes (Phase F but for Czech), and the same
-layout (`UI.md`). `npm test` runs 389 tests, all passing (5b pins E3's known
-limit); `npm run e2e` drives the web app through 28 scenarios in headless
+layout (`UI.md`). `npm test` runs 392 tests, all passing (5b pins E3's known
+limit); `npm run e2e` drives the web app through 35 scenarios in headless
 Chrome and `npm run ios:e2e` the iOS app through 31 on a simulator, each
 stepping a stopped clock to the moment it checks, all passing on a quiet
-machine and a loaded one. `npm run validate` passes 29/29, `swift test` passes 155 tests
+machine and a loaded one. `npm run validate` passes 29/29, `swift test` passes 156 tests
 in 38 suites, and the fit's pytest 9. **Pushed on 29 September** at `5ff6940`, the owner's
 call: Netlify serves it at actualeggtimer.netlify.app, and the first run of
 `.github/workflows/verify.yml` passed. The iOS app runs from Xcode on the owner's
@@ -56,7 +56,9 @@ These counts are the only ones in the documents. If you want a number, run
    web's and iOS's findings fixed, before the one screen; certainty in words is the `certainty` draft (93, D1),
    for the owner on a phone. The one screen is built in both apps (C3,
    the `onescreen` draft and iOS's `onescreen_ios`, for the owner on a
-   phone). `0.4.x` is merged in as it moves.
+   phone), and red-teamed as built (`design/onescreen-review.md`): core's
+   and the web's findings fixed with the `tighten2` draft (`DECISIONS.md`
+   99), iOS's next on the same core. `0.4.x` is merged in as it moves.
 
 Throughout: cook real eggs, and the two measurements in README §11.3.
 
@@ -234,6 +236,14 @@ The one queue. Nothing else in the documents waits on the owner.
     pull the slider only previews and springs back. On iOS also: while "Are
     the eggs still in the water?" is open the Lock Screen card shows the
     pull, "now", with its line naming the cooling (`UI.md` §9).
+18. **The `tighten2` draft, on a phone** (9 October 2026; the one screen's
+    review, `design/onescreen-review.md`, and `DECISIONS.md` 99), the web
+    now and iOS in its next step: under the time, "about 8:00 to boil",
+    guessed or remembered; once the eggs cook, the time range opened under
+    the certainty line is when to take them out ("I think the right time
+    to take the eggs out is between 7:48 and 7:51."); the cold "heat off"
+    clause "into cold water at 7:42, heat off and lid on once it boils".
+    With it, the time's two lines sit closer under the digits (`UI.md` §8).
 
 Waiting on someone else: the Czech review (F5), by the owner's friend.
 

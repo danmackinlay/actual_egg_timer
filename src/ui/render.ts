@@ -19,9 +19,9 @@ import { Outcome } from '../core/outcome.js';
 import { CertaintyReading } from '../core/certainty.js';
 import {
   WordsRef, certaintyKey, forecastWhiteAtRisk, intervalWords, mostLikelyOpened, mostLikelyShown, mostLikelyWords,
-  refusalKey, whiteAtRisk,
+  refusalKey, timeRangeWords, whiteAtRisk,
 } from '../core/wording.js';
-import { asRanShown } from '../core/running.js';
+import { CookPlan, RunningCook, asRanShown, solutionAsRan } from '../core/running.js';
 import { midSentence } from '../core/copy.js';
 import { EggSection, SectionView, advanceSection, createSection, previewSection, sectionView } from '../core/section.js';
 import { Egg } from '../core/geometry.js';
@@ -86,6 +86,24 @@ function textureNote(sol: Solution): string {
   const parts: Record<string, string> = {};
   for (const [name, key] of Object.entries(note.parts)) parts[name] = t(key);
   return t(note.key, parts);
+}
+
+/** The solve the texture note reads while a cook runs: once the egg is out,
+ *  the cook as it ran (`solutionAsRan`, onescreen review 2.2), like the peak
+ *  and the white's line, so a plan made since on a posterior that has folded
+ *  this egg's own answer never moves it; until then, the plan's. Worked out
+ *  once for each. */
+const ranSolution = { key: '', solution: null as Solution | null };
+
+function solutionShown(cook: RunningCook, plan: CookPlan): Solution {
+  const ran = asRanShown(cook, plan);
+  if (ran === null) return plan.solution;
+  const key = JSON.stringify([plan.egg, plan.setup, plan.cookTime_s, plan.inputs?.params ?? null, ran.params, ran.cook_s]);
+  if (ranSolution.key !== key || ranSolution.solution === null) {
+    ranSolution.solution = solutionAsRan(plan, ran);
+    ranSolution.key = key;
+  }
+  return ranSolution.solution;
 }
 
 /** The way to Help (reach.ts, "when to advise"): a link, shown while idle
@@ -224,7 +242,7 @@ function renderRunning(now_ms: number): void {
   // A correction in hand (edit.ts) has the slider's reading of its own,
   // from a plan of the cook as it would be.
   const aim = state.aim;
-  page().note.textContent = textureNote(aim?.solution ?? sol);
+  page().note.textContent = textureNote(aim?.solution ?? solutionShown(cook, plan));
   if (aim !== null) renderDonenessReading(aim.level, { peakYolk_C: aim.peakYolk_C });
   else renderDonenessReading(shown?.level ?? plan.level, { peakYolk_C: shown?.peakYolk_C ?? sol.result.peakYolk_C });
   renderDonenessScale(sol, sol.whiteSets ? reading.profile : null, sol.whiteSets ? reading.sure?.words ?? null : null);
@@ -507,8 +525,13 @@ function renderOdds(now_ms: number, reading: RunningReading | null = null): void
     sure = r.sure;
     ranWhite = r.ranWhite;
   }
-  renderCertainty(sure);
-  page().whiteRisk.hidden = ranWhite !== null ? !ranWhite : o === null || !whiteAtRisk(o);
+  const cook = state.cook;
+  const plan = state.plan;
+  renderCertainty(sure, cook === null || plan === null ? null : { startedAt_s: cook.startedAt_s, cookTime_s: plan.cookTime_s });
+  // Nothing past "still in the water?": not a caveat about the pull it
+  // doubts (onescreen review 3).
+  const asking = state.cook !== null && state.plan !== null && state.plan.askIfStillIn;
+  page().whiteRisk.hidden = asking || (ranWhite !== null ? !ranWhite : o === null || !whiteAtRisk(o));
 
   // While a new pot's surface is on its way the lines above are blank, and
   // the readout would shrink and grow back a second later, moving the
@@ -527,8 +550,13 @@ function renderOdds(now_ms: number, reading: RunningReading | null = null): void
   }
 }
 
-/** The certainty line and what it opens, from `sure`, or nothing. */
-function renderCertainty(sure: CertaintyReading | null): void {
+/** The certainty line and what it opens, from `sure`, or nothing. While a
+ *  cook runs (`running`, its start and its plan's time now) the likely time
+ *  range is when to take the eggs out, as times of day, not whole times
+ *  under a clock counting down (core `timeRangeWords`, onescreen review 2.3). */
+function renderCertainty(
+  sure: CertaintyReading | null, running: { startedAt_s: number; cookTime_s: number } | null = null,
+): void {
   const word = page().certaintyWord;
   word.hidden = sure === null;
   page().certaintyMore.hidden = sure === null || word.getAttribute('aria-expanded') !== 'true';
@@ -546,9 +574,9 @@ function renderCertainty(sure: CertaintyReading | null): void {
   const opened = mostLikelyOpened(w);
   page().certaintyLikely.hidden = !opened;
   page().certaintyLikely.textContent = opened ? likely : '';
-  page().certaintyTime.textContent = t('certainty.time', {
-    low: formatClock(sure.time.low_s), high: formatClock(sure.time.high_s),
-  });
+  const range = timeRangeWords(sure, running);
+  const said = (s: number): string => (range.ofDay ? timeOfDay(s * 1000) : formatClock(s));
+  page().certaintyTime.textContent = t(range.key, { low: said(range.low_s), high: said(range.high_s) });
 }
 
 /** The sous-vide readout: hold times from the isothermal limit, and the plain

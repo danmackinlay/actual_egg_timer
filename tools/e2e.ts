@@ -1060,11 +1060,15 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
       const osc0 = (await tab.osc()).length;
       check(s.primary === await words('ask.stillIn.yes'), `yes: ${s.primary}`);
       check(await tab.eval<boolean>("!document.getElementById('stillOut').hidden"), 'no, on screen');
+      // Nothing past the question: not the white's line, a caveat about the
+      // pull it doubts (onescreen review 3).
+      check(await tab.eval<boolean>("document.getElementById('whiteRisk').hidden"), 'no white\'s line under the question');
       // The cooling's counted end passes under the question: nothing.
       await tab.shift(600);
       await tab.settle();
       s = await tab.snap();
       check(s.phase === 'COOLING' && s.label === ask && !s.feedback, `nothing past the question: ${s.phase}, "${s.label}"`);
+      check(await tab.eval<boolean>("document.getElementById('whiteRisk').hidden"), 'no white\'s line under the question, settled');
       check(storedCook(s)?.events.cooledAt_s === null, 'no cooling written');
       check((await tab.osc()).length === osc0, 'nothing rang');
       await tab.click('#primary');
@@ -1131,6 +1135,250 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
       const never = await tab.eval<string>("(async () => (await window.__e2e.ui('copy')).t('refusal.whiteNeverSets'))()");
       check(!warn.hidden && warn.text === never, `the slot: "${warn.text}"`);
       return `${slow}; heat off, 0.5 L, one small egg: "${warn.text}"`;
+    },
+  },
+
+  'two-tabs-correction': {
+    what: 'onescreen review 1.1: a second tab on the same cook never undoes the first one\'s correction with its own ring',
+    run: async (h) => {
+      const a = await h.ctx.open(STOPPED);
+      await start(a, 'hot');
+      await a.until('(await window.__e2e.snap()).decided', 'A planned');
+      const pull0 = deadlines(await a.snap()).cookEnd_s;
+      // B opened on the site, as a second visit: it takes up A's cook.
+      const b = await h.ctx.open(`${STOPPED}&at=${new Date(await a.now()).toISOString()}`);
+      await b.phase('COOKING');
+      await b.until('(await window.__e2e.snap()).decided', 'B planned');
+      await a.shift(60);
+      await b.shift(60);
+      // A minute in, A corrects the start to cold water (the owner's case).
+      await a.click('#sentence .clause[aria-controls="panelStart"]');
+      await a.click('#startCold');
+      let sa = await corrected(a, null);
+      check(sa.phase === 'HEATING', `A back to ${sa.phase}`);
+      const osc0 = (await a.osc()).length;
+      // B, which takes no correction, reaches its own pull and its grace runs out.
+      await b.shiftTo(pull0 + 25);
+      const sb = await b.phase('COOLING');
+      check(sb.cook?.events.pulled?.by === 'timeout', `B's own pull: ${JSON.stringify(sb.cook?.events.pulled)}`);
+      await a.shiftTo(pull0 + 25);
+      await a.settle();
+      sa = await a.snap();
+      check(sa.phase === 'HEATING', `A, corrected to cold, still heating: ${sa.phase} "${sa.label}"`);
+      check(sa.cook?.events.pulled === null && sa.cook?.events.rangAt_s === null,
+        `nothing B's clock decided taken up: ${JSON.stringify(sa.cook?.events)}`);
+      check((await a.osc()).length === osc0, `A rang nothing: ${(await a.osc()).length - osc0}`);
+      // A reload restores the corrected cook, not B's older copy.
+      await a.reload();
+      sa = await a.phase('HEATING');
+      check(storedCook(sa)?.choices.startMode === 'cold', `stored: ${storedCook(sa)?.choices.startMode}`);
+      return `B timed out in COOLING; A stayed HEATING, nothing taken up, nothing rung; A reloaded to HEATING, cold`;
+    },
+  },
+
+  'start-again-corrected': {
+    what: 'onescreen review 1.2: a correction at Done, then Start again at once, logs and keeps the corrected egg',
+    run: async (h) => {
+      const tab = await h.ctx.open(STOPPED);
+      let s = await start(tab, 'hot');
+      await tab.until('(await window.__e2e.snap()).decided', 'the pot planned');
+      s = await tab.snap();
+      await tab.shiftTo(deadlines(s).cookEnd_s + 2);
+      await tab.phase('PULL');
+      await tab.click('#primary');
+      s = await tab.phase('COOLING');
+      await tab.shiftTo(deadlines(s).coolEnd_s + 2);
+      await tab.phase('DONE');
+      await tab.click('.fb[data-yolk="jammy"]');
+      await tab.until('(await window.__e2e.snap()).eggsLogged === 1', 'Jammy folded');
+      const first = JSON.stringify((await tab.snap()).log[0].egg);
+      await later(tab);
+      // A clause tapped, then Start again while the change is still settling.
+      await pick(tab, '#size', '3');
+      await tab.click('#primary');
+      await tab.until(`await (async () => { const s = await window.__e2e.snap(); return s.phase === 'IDLE' && s.stored === null
+        && s.log.length === 1 && JSON.stringify(s.log[0].egg) !== ${JSON.stringify(first)}; })()`,
+      'the corrected egg logged, then the cook forgotten');
+      s = await tab.snap();
+      check(s.log[0].yolkWord === 'jammy', `the answer kept: ${s.log[0].yolkWord}`);
+      return `logged ${first} became ${JSON.stringify(s.log[0].egg)}, Jammy kept, then forgotten`;
+    },
+  },
+
+  'done-stays-done': {
+    what: 'onescreen review 2.1: after Done and an answer, the cooling corrected to ice keeps Done, its questions and its silence',
+    run: async (h) => {
+      const tab = await h.ctx.open(STOPPED);
+      await tab.click('#coolCounter');
+      await tab.until("(await window.__e2e.ui('state')).state.settings.cooling === 'counter'", 'the counter chosen');
+      let s = await start(tab, 'hot');
+      await tab.until('(await window.__e2e.snap()).decided', 'the pot planned');
+      s = await tab.snap();
+      await tab.shiftTo(deadlines(s).cookEnd_s + 2);
+      await tab.phase('PULL');
+      await tab.click('#primary');
+      s = await tab.phase('DONE');
+      const out_s = storedCook(s)?.events.pulled?.out_s ?? 0;
+      await tab.shift(60);
+      await tab.click('.fb[data-yolk="jammy"]');
+      await tab.until('(await window.__e2e.snap()).eggsLogged === 1', 'Jammy folded');
+      await tab.settle();
+      const osc0 = (await tab.osc()).length;
+      await tab.shift(5);
+      await tab.click('#coolIce');
+      s = await corrected(tab, null);
+      await tab.settle();
+      s = await tab.snap();
+      check(s.phase === 'DONE' && s.feedback, `Done kept, the questions shown: ${s.phase} "${s.label}", ${s.feedback}`);
+      check((await tab.osc()).length === osc0, `nothing rang: ${(await tab.osc()).length - osc0}`);
+      const cooled = storedCook(s)?.events.cooledAt_s ?? null;
+      check(cooled !== null && cooled - out_s <= 65 + 1e-6, `the cooling ended by the correction: ${cooled === null ? null : cooled - out_s}`);
+      await tab.until('(await window.__e2e.snap()).log[0].cooled_s > 0', 'the record corrected');
+      const rec = (await tab.snap()).log[0] as Rec & { cooled_s: number };
+      check(rec.cooled_s <= 65 + 1e-6, `the record's ice bath no longer than till the correction: ${rec.cooled_s}`);
+      // The alarm's grace ran out, the cooling ended, Jammy answered; then
+      // corrected to cold water: an egg answered about came out, so the pull
+      // stands and nothing asks whether it is still in the water.
+      await tab.click('#primary');
+      await tab.phase('IDLE');
+      await tab.click('#coolIce');
+      s = await start(tab, 'hot');
+      await tab.until('(await window.__e2e.snap()).decided', 'the pot planned');
+      s = await tab.snap();
+      await tab.shiftTo(deadlines(s).cookEnd_s + 25);
+      s = await tab.phase('COOLING');
+      await tab.shiftTo(deadlines(s).coolEnd_s + 5);
+      await tab.phase('DONE');
+      await tab.click('.fb[data-yolk="jammy"]');
+      await tab.until('(await window.__e2e.snap()).eggsLogged === 2', 'Jammy folded');
+      await tab.shift(5);
+      await tab.click('#startCold');
+      s = await corrected(tab, null);
+      await tab.settle();
+      s = await tab.snap();
+      check(s.phase === 'DONE' && s.feedback, `answered, then cold: ${s.phase} "${s.label}", questions ${s.feedback}`);
+      check(storedCook(s)?.events.pulled?.confirmed === true, 'the pull stands');
+      return `Done kept; cooled ${(cooled ?? 0) - out_s} s; the record's ice bath ${rec.cooled_s.toFixed(1)} s; `
+        + 'answered, then cold: Done, the pull standing';
+    },
+  },
+
+  'done-note-as-ran': {
+    what: 'onescreen review 2.2: Done after an answer and a reload, the texture note is the cook as it ran',
+    run: async (h) => {
+      const tab = await h.ctx.open(STOPPED);
+      let s = await start(tab, 'hot');
+      await tab.until('(await window.__e2e.snap()).decided', 'the pot planned');
+      s = await tab.snap();
+      await tab.shiftTo(deadlines(s).cookEnd_s + 2);
+      await tab.phase('PULL');
+      await tab.click('#primary');
+      s = await tab.phase('COOLING');
+      await tab.shiftTo(deadlines(s).coolEnd_s + 2);
+      await tab.phase('DONE');
+      await tab.settle();
+      const note = "document.getElementById('note').textContent";
+      const before = await tab.eval<string>(note);
+      await tab.click('.fb[data-yolk="runny"]');
+      await tab.until('(await window.__e2e.snap()).eggsLogged === 1', 'Runny folded');
+      await tab.reload();
+      await tab.until('(await window.__e2e.snap()).decided', 'planned on the new posterior');
+      await tab.settle();
+      const after = await tab.eval<string>(note);
+      check(after === before, `"${before}" became "${after}"`);
+      return `"${after}" kept`;
+    },
+  },
+
+  'certainty-mid-cook': {
+    what: 'onescreen review 2.3: once the cook runs, the likely time range is when to take them out, and moves with a slow hob',
+    run: async (h) => {
+      const tab = await h.ctx.open(STOPPED);
+      let s = await start(tab, 'hot');
+      await tab.until('(await window.__e2e.snap()).decided', 'the pot planned');
+      await tab.shift(300);
+      await tab.click('#certaintyWord');
+      await tab.settle();
+      const line = "document.getElementById('certaintyTime').textContent";
+      // The times of day the eggs come out between, from this plan's range.
+      const want = await tab.eval<string>(`(async () => { const st = (await window.__e2e.ui('state')).state;
+        const copy = await window.__e2e.ui('copy'); const r = st.plan.certainty.time; const t0 = st.cook.startedAt_s;
+        return copy.t('certainty.timeOut', { low: copy.timeOfDay((t0 + r.low_s) * 1000), high: copy.timeOfDay((t0 + r.high_s) * 1000) }); })()`);
+      const cooking = await tab.eval<string>(line);
+      check(cooking === want, `cooking, ${(await tab.snap()).digits} left: "${cooking}", want "${want}"`);
+      await tab.click('#secondary');
+      await tab.phase('IDLE');
+      // Cold and never tapped: the slow hob lengthens the guess.
+      await tab.click('#startCold');
+      s = await start(tab, 'cold');
+      await tab.until('(await window.__e2e.snap()).decided', 'the guessed pot planned');
+      const start_s = s.cook?.startedAt_s ?? 0;
+      await tab.shiftTo(start_s + 16 * 60);
+      await tab.settle();
+      s = await tab.phase('HEATING');
+      check(s.lengthened, 'the slow hob lengthened');
+      check(await tab.eval<boolean>("!document.getElementById('certaintyTime').closest('#certaintyMore').hidden"),
+        'the range shown');
+      const at16 = await tab.eval<string>(line);
+      await tab.shift(65);
+      // The ticker plans the slow hob's moment, a tick after the clock moves.
+      await tab.until(`${line} !== ${JSON.stringify(at16)}`, `the range to move with the guess from "${at16}"`);
+      const at17 = await tab.eval<string>(line);
+      return `cooking: "${cooking}"; heating 16:00: "${at16}"; 17:05: "${at17}"`;
+    },
+  },
+
+  'grace-correction': {
+    what: 'onescreen review 3: a correction in the grace that leaves the pull due keeps the grace\'s end and rings nothing more',
+    run: async (h) => {
+      const tab = await h.ctx.open(STOPPED);
+      await start(tab, 'hot');
+      await tab.until('(await window.__e2e.snap()).decided', 'the pot planned');
+      const pull0 = deadlines(await tab.snap()).cookEnd_s;
+      await tab.shiftTo(pull0 + 15);
+      let s = await tab.phase('PULL');
+      await tab.settle();
+      const osc0 = (await tab.osc()).length;
+      await pick(tab, '#size', '1');
+      s = await corrected(tab, null);
+      await tab.settle();
+      s = await tab.snap();
+      check(s.phase === 'PULL' && near(deadlines(s).cookEnd_s, pull0, 1e-6),
+        `a lighter egg in the grace: ${s.phase}, the pull ${(deadlines(s).cookEnd_s - pull0).toFixed(1)} s from the one that rang`);
+      check((await tab.osc()).length === osc0, `nothing rang again: ${(await tab.osc()).length - osc0}`);
+      await tab.shiftTo(pull0 + 21);
+      s = await tab.phase('COOLING');
+      const p = storedCook(s)?.events.pulled;
+      check(p?.by === 'timeout' && near(p.due_s, pull0, 1e-6), `the grace ended where it began: ${JSON.stringify(p)}`);
+      return `lighter at +15 s: Pull, the pull kept, nothing rung; +21 s: Cooling, due at the pull that rang`;
+    },
+  },
+
+  'change-kept-on-hide': {
+    what: 'onescreen review 3: a change still settling is committed when the page goes, and two changes commit apart by keyboard too',
+    run: async (h) => {
+      const tab = await h.ctx.open(STOPPED);
+      await start(tab, 'hot');
+      await tab.until('(await window.__e2e.snap()).decided', 'the pot planned');
+      await tab.shift(30);
+      await pick(tab, '#size', '3');
+      await tab.reload();
+      let s = await tab.phase('COOKING');
+      check(s.cook?.choices.mass_kg !== 0.068 && s.cook?.correctedAt_s !== null, `reloaded: ${s.cook?.choices.mass_kg}`);
+      const saved = JSON.parse((await tab.storage('aet.settings.v1')) ?? '{}') as { sizeIndex?: number };
+      check(saved.sizeIndex === 3, `the next cook's egg: ${saved.sizeIndex}`);
+      // Two changes in a row with no pointer, as a keyboard makes them.
+      await later(tab);
+      const w0 = (await tab.writes()).length;
+      await pick(tab, '#size', '1');
+      await tab.click('#coolTap');
+      await tab.until("JSON.parse(localStorage.getItem('aet.cook.v4')).cook.choices.cooling === 'tap'", 'the second committed');
+      await tab.settle();
+      const cooks = (await tab.writes()).slice(w0).filter((w) => w.key === 'aet.cook.v4')
+        .map((w) => (JSON.parse(w.value) as { cook: Cook }).cook.choices);
+      const firstAlone = cooks.some((c) => c.mass_kg !== s.cook?.choices.mass_kg && c.cooling === 'ice');
+      check(firstAlone, `the first committed without the second: ${JSON.stringify(cooks.map((c) => [c.mass_kg, c.cooling]))}`);
+      return `the size kept across a reload; then ${cooks.length} writes, the first change alone first`;
     },
   },
 

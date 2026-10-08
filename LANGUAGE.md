@@ -509,6 +509,30 @@ clauses. Proved with `copyLiterals --since ee5ffda onescreen_ios`.
 | `readout.sub.stillIn` | (new) | since they were due out |
 | `spoken.stillIn` | (new) | Are the eggs still in the water? They were due out {time} ago. |
 
+**The one screen's review: `tighten2`** (9 October 2026,
+`design/onescreen-review.md` 2.3 and 3, and the owner's `DECISIONS.md`
+99), both apps. The boil line under the time no longer says how sure it is
+of itself: the certainty line below speaks for both, so a guessed and a
+remembered time to boil read alike, and the two keys are one. Once the eggs
+cook, the likely time range is when to take them out, as times of day,
+where a range of whole times sat under a clock counting down (core's
+`timeRangeWords` chooses the key and the times). The cold "heat off" clause
+says the heat off as the boiling one does, as a sentence. No en-US entry.
+`tools/drafts/tighten2.ts`, on `83f7010`; its header has the 1750 twins
+("about {boil} to the boil", "set in cold water at {time}, lid on and fire
+out as it boils", "I judge the true time to take the eggs out to lie
+between {low} and {high}."). Proved with `copyLiterals --since 83f7010
+tighten2` and the snapshot compared with `--draft tighten2`, four captures
+of the base pooled against two of this build (`LOGBOOK.md`, 9 October
+2026).
+
+| key | before | after |
+|---|---|---|
+| `readout.sub.coldAssumes` | about {boil} to boil, from what I’ve timed before | about {boil} to boil |
+| `readout.sub.coldGuesses` | about {boil} to boil, my guess | (retired: `coldAssumes` says both) |
+| `setup.start.coldStandingAt` | into cold water at {time}, to the boil, heat off, lid on | into cold water at {time}, heat off and lid on once it boils |
+| `certainty.timeOut` | (new) | I think the right time to take the eggs out is between {low} and {high}. |
+
 ## 4. Units
 
 **One setting: Metric or Imperial.** Its default comes from the platform:

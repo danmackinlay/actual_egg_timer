@@ -1145,6 +1145,109 @@
       }
     ]
   },
+  "timeRange": [
+    {
+      "note": "idle: whole times",
+      "running": null,
+      "p": [
+        0.01,
+        0.01,
+        0.94,
+        0.03,
+        0.01
+      ],
+      "asked": 2,
+      "time": {
+        "low_s": 384.25,
+        "high_s": 561.5
+      },
+      "at_s": 452.75,
+      "words": {
+        "key": "certainty.time",
+        "low_s": 384.25,
+        "high_s": 561.5,
+        "ofDay": false
+      }
+    },
+    {
+      "note": "running, on the plan it was read on",
+      "running": {
+        "startedAt_s": 1791363600.125,
+        "cookTime_s": 452.75
+      },
+      "p": [
+        0.01,
+        0.01,
+        0.94,
+        0.03,
+        0.01
+      ],
+      "asked": 2,
+      "time": {
+        "low_s": 384.25,
+        "high_s": 561.5
+      },
+      "at_s": 452.75,
+      "words": {
+        "key": "certainty.timeOut",
+        "low_s": 1791363984.375,
+        "high_s": 1791364161.625,
+        "ofDay": true
+      }
+    },
+    {
+      "note": "running, held over a slow hob's lengthened guess",
+      "running": {
+        "startedAt_s": 1791363600.125,
+        "cookTime_s": 1013.5
+      },
+      "p": [
+        0.01,
+        0.01,
+        0.94,
+        0.03,
+        0.01
+      ],
+      "asked": 2,
+      "time": {
+        "low_s": 384.25,
+        "high_s": 561.5
+      },
+      "at_s": 452.75,
+      "words": {
+        "key": "certainty.timeOut",
+        "low_s": 1791364545.125,
+        "high_s": 1791364722.375,
+        "ofDay": true
+      }
+    },
+    {
+      "note": "running, held over a pot that pulls sooner",
+      "running": {
+        "startedAt_s": 1791363600.125,
+        "cookTime_s": 401
+      },
+      "p": [
+        0.01,
+        0.01,
+        0.94,
+        0.03,
+        0.01
+      ],
+      "asked": 2,
+      "time": {
+        "low_s": 384.25,
+        "high_s": 561.5
+      },
+      "at_s": 452.75,
+      "words": {
+        "key": "certainty.timeOut",
+        "low_s": 1791363932.625,
+        "high_s": 1791364109.875,
+        "ofDay": true
+      }
+    }
+  ],
   "phase": [
     {
       "phase": "IDLE",
@@ -1402,7 +1505,7 @@
       "boilKnown": false,
       "probeWanted": true,
       "label": "readout.phase.total",
-      "subline": "readout.sub.coldGuesses",
+      "subline": "readout.sub.coldAssumes",
       "action": "action.startHeating",
       "hint": "action.hint.cold"
     },
@@ -1441,7 +1544,7 @@
       "boilKnown": false,
       "probeWanted": true,
       "label": "readout.phase.total",
-      "subline": "readout.sub.coldGuesses",
+      "subline": "readout.sub.coldAssumes",
       "action": "action.startHeating",
       "hint": "action.hint.cold"
     },
@@ -1480,7 +1583,7 @@
       "boilKnown": false,
       "probeWanted": true,
       "label": "readout.phase.total",
-      "subline": "readout.sub.coldGuesses",
+      "subline": "readout.sub.coldAssumes",
       "action": "action.startHeating",
       "hint": "action.hint.cold"
     },
@@ -1519,7 +1622,7 @@
       "boilKnown": false,
       "probeWanted": true,
       "label": "readout.phase.total",
-      "subline": "readout.sub.coldGuesses",
+      "subline": "readout.sub.coldAssumes",
       "action": "action.startHeating",
       "hint": "action.hint.cold"
     },
@@ -1558,7 +1661,7 @@
       "boilKnown": false,
       "probeWanted": true,
       "label": "readout.phase.total",
-      "subline": "readout.sub.coldGuesses",
+      "subline": "readout.sub.coldAssumes",
       "action": "action.startHeating",
       "hint": "action.hint.cold"
     },
@@ -1597,7 +1700,7 @@
       "boilKnown": false,
       "probeWanted": true,
       "label": "readout.phase.total",
-      "subline": "readout.sub.coldGuesses",
+      "subline": "readout.sub.coldAssumes",
       "action": "action.startHeating",
       "hint": "action.hint.cold"
     },

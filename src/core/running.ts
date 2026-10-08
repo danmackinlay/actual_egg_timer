@@ -36,7 +36,7 @@ import {
   BoilMemory, Deadlines, LIMITS, PULL_GRACE_SECONDS, SLOW_HOB_EVERY_S, SLOW_HOB_EXTRA_S, SLOW_HOB_WHEN_LEFT_S,
   ambientFor, coolingSecondsFor, estimateTimeToBoil, hasBoilMemory, phaseAt, probeMomentFor, startTempPreset_C,
 } from './policy.js';
-import { ModelParams, Solution, logYolkTarget } from './solve.js';
+import { ModelParams, Solution, logYolkTarget, simulate } from './solve.js';
 import {
   DecisionInputs, appliedNudge, carriedSolution, decisionApplies, decisionInputs, solutionAt,
 } from './decide.js';
@@ -102,10 +102,12 @@ export interface CookEvents {
    *  is counted. */
   cooledAt_s: number | null;
   /** The pull rang: the plan's pull, the first time the clock passed it with
-   *  the egg still in (`eventsDue`). A plan the cook did not cause - a
-   *  surface landing, an egg folded in another tab - keeps it, so a pull
-   *  already due never moves or rings twice. Anything the cook tells the plan
-   *  after it (a correction, the start, `stillIn`) clears it. */
+   *  the egg still in (`eventsDue`). A plan keeps it - a surface landing, an
+   *  egg folded in another tab, or a correction that leaves the pull still
+   *  due - so a pull already due never moves or rings twice, and its grace
+   *  ends where it began (onescreen review 3). A correction that moves the
+   *  pull past the moment it was made, or back to heating, undoes it: the
+   *  plan reads it no more and `eventsDue` clears it. `stillIn` clears it. */
   rangAt_s: number | null;
 }
 
@@ -264,21 +266,32 @@ export function withBoil(cook: RunningCook, now_s: number): RunningCook {
 }
 
 /** A correction at `now_s`: the choices replaced, as if they had always been
- *  these. The start and the events are kept, but for a pull that rang: the
- *  plan is made afresh from what the cook says now. After the pull the yolk
- *  wanted is not corrected: it was not a mistake, so the record keeps the
- *  level the egg was pulled at, and the slider only previews (DECISIONS.md
- *  98). */
+ *  these. The start and the events are kept: a pull that rang stays rung
+ *  while the corrected pull is still due, and the plan undoes it otherwise
+ *  (`replan`). After the pull the yolk wanted is not corrected: it was not a
+ *  mistake, so the record keeps the level the egg was pulled at, and the
+ *  slider only previews (DECISIONS.md 98).
+ *
+ *  A correction once the cook is Done keeps it Done, and corrects only the
+ *  record (onescreen review 2.1). On the counter nothing is counted and the
+ *  egg is Done at the out, so a correction from the counter to a counted
+ *  cooling after the pull ends that cooling here at the latest
+ *  (`cooledAt_s`, the correction), and the plan takes the counted time if
+ *  it is sooner (`eventsDue` writes it down): the cooling never starts again
+ *  behind an answer. */
 export function corrected(cook: RunningCook, choices: CookChoices, now_s: number): RunningCook {
   let since: number | null = null;
   if (choices.startMode === 'cold') {
     since = cook.choices.startMode === 'cold' && cook.coldSince_s !== null ? cook.coldSince_s : now_s;
   }
   const firstHot = cook.firstHotAt_s === null && choices.startMode === 'hot' ? now_s : cook.firstHotAt_s;
-  const next = cook.events.pulled === null ? choices : { ...choices, level: cook.choices.level };
+  const e = cook.events;
+  const next = e.pulled === null ? choices : { ...choices, level: cook.choices.level };
+  const doneOnCounter = e.pulled !== null && e.cooledAt_s === null && cook.choices.cooling === 'counter'
+    && choices.cooling !== 'counter';
   return {
-    ...cook, choices: next, events: { ...cook.events, rangAt_s: null }, coldSince_s: since, firstHotAt_s: firstHot,
-    correctedAt_s: now_s,
+    ...cook, choices: next, events: doneOnCounter ? { ...e, cooledAt_s: now_s } : e, coldSince_s: since,
+    firstHotAt_s: firstHot, correctedAt_s: now_s,
   };
 }
 
@@ -310,11 +323,11 @@ export function earliestStart_s(cook: RunningCook): number {
 
 /** The start corrected to `startedAt_s` at `now_s`, or null: refused when it
  *  is later than `latestStart_s`, earlier than `earliestStart_s`, or not a
- *  time. */
+ *  time. A pull that rang is kept, as by `corrected`. */
 export function startCorrected(cook: RunningCook, startedAt_s: number, now_s: number): RunningCook | null {
   if (!Number.isFinite(startedAt_s) || startedAt_s > latestStart_s(cook, now_s)) return null;
   if (startedAt_s < earliestStart_s(cook)) return null;
-  return { ...cook, startedAt_s: startedAt_s, events: { ...cook.events, rangAt_s: null }, correctedAt_s: now_s };
+  return { ...cook, startedAt_s: startedAt_s, correctedAt_s: now_s };
 }
 
 /** The cook's answer when a plan asks (`askIfStillIn`), at `now_s`: the egg
@@ -757,10 +770,14 @@ export function cookStillOpen(cook: RunningCook, plan: CookPlan, storedId_ms: nu
  * so. That moment is stored, not `now_s`, so a plan made again later (a
  * reload, a surface landing) rings for the same pull, and a plan made after
  * an ordinary pull's grace ran out finds it as it was. Once the pull has rung
- * (`rangAt_s`) it is held there until the cook tells the plan something new,
- * so a plan the cook did not cause - a surface landing - never moves a pull
- * already due. While provisional the deadline is a guess and is not held;
- * `phaseAt` reads Heating whatever it says.
+ * (`rangAt_s`) it is held there, so a plan the cook did not cause - a surface
+ * landing - never moves a pull already due, and a correction in the grace that
+ * leaves the pull due (a lighter egg) keeps the grace's end and rings nothing
+ * more (onescreen review 3). A correction since the ring that puts the pull
+ * after the moment it was made undoes the ring: the plan's pull is later, out
+ * of Pull, and rings when it comes; `eventsDue` clears the ring. While
+ * provisional - corrected back to heating - the deadline is a guess and no
+ * ring is held; `phaseAt` reads Heating whatever it says.
  *
  * A PULL THE CLOCK ASSUMED. A pull by `timeout` is not something the cook saw.
  * A correction since it that would, without it, pull after the correction
@@ -775,8 +792,11 @@ export function cookStillOpen(cook: RunningCook, plan: CookPlan, storedId_ms: nu
  * THE COOLING. To the yolk's peak for the cook time that ran
  * (`coolingSecondsFor`), from the egg out - the cook's tap, or the grace
  * running out - and once ended, as it ran. A correction whose counted end has
- * already passed is Done at once, with the counted time: the cooling is not
- * stretched to the correction.
+ * already passed is Done at once, with the counted time, so the cooling is
+ * not stretched to the correction; and one after Done on the counter, which
+ * ends the cooling it brings at the correction (`corrected`), never takes the
+ * cook back to Cooling: the counted time if that is sooner, which
+ * `eventsDue` then writes down.
  *
  * HOW SURE, AND WHAT THE RECORD SAYS WAS SAID: `certaintyAt` and the outcome
  * at the cook time, on this pot's surface.
@@ -908,8 +928,11 @@ export function replan(
     cookEnd = told;
     overdue = true;
   }
+  // The pull that rang, held, unless the cook has told the plan something
+  // since that puts the pull after that moment: then the ring is undone.
   const rang = e.rangAt_s;
-  if (pulled === null && !provisional && rang !== null) {
+  const undone = rang !== null && told !== null && told > rang && start + planned.result.cookTime_s > told;
+  if (pulled === null && !provisional && rang !== null && !undone) {
     cookTime = rang - start;
     cookEnd = rang;
   }
@@ -931,8 +954,12 @@ export function replan(
   if (ch.cooling !== 'counter') {
     const out = pulled !== null ? pulled.out_s : cookEnd + PULL_GRACE_SECONDS;
     if (pulled !== null && e.cooledAt_s !== null) {
-      coolEnd = e.cooledAt_s;
-      cool = e.cooledAt_s - out;
+      // As it ran; but a cooling a correction ended (`corrected`, Done on the
+      // counter), not yet written down as counted, ends at the counted time
+      // if that is sooner.
+      const stamped = e.cooledAt_s === cook.correctedAt_s && out + cool < e.cooledAt_s;
+      coolEnd = stamped ? out + cool : e.cooledAt_s;
+      cool = coolEnd - out;
     } else {
       coolEnd = out + cool;
     }
@@ -1004,7 +1031,10 @@ export function withOut(cook: RunningCook, plan: CookPlan, now_s: number): Runni
  * grace's end and unconfirmed) and the counted cooling ended. The app writes
  * them down the first time it sees them past - a phone asleep through the
  * pull writes them on waking - and plans again. The cook's own events are
- * returned as they were. While the plan asks whether the egg is still in the
+ * returned as they were. A ring the plan no longer holds - a correction moved
+ * the pull later, or back to heating (`replan`) - is cleared, so the new pull
+ * rings in its turn; and a cooling a correction ended (`corrected`) after
+ * its counted end is written down at the counted end. While the plan asks whether the egg is still in the
  * water (`askIfStillIn`), nothing: the counted cooling does not run out
  * under an open question (running-cook review 3).
  */
@@ -1016,11 +1046,13 @@ export function eventsDue(cook: RunningCook, plan: CookPlan, now_s: number): Coo
   let pulled = cook.events.pulled;
   let cooled = cook.events.cooledAt_s;
   let rang = cook.events.rangAt_s;
+  if (pulled === null && rang !== null && (d.provisional || d.cookEnd_s !== rang)) rang = null;
   if (pulled === null && rang === null && !d.provisional && now_s >= d.cookEnd_s) rang = d.cookEnd_s;
   if (pulled === null && !d.provisional && now_s >= d.cookEnd_s + PULL_GRACE_SECONDS) {
     pulled = { due_s: d.cookEnd_s, out_s: d.cookEnd_s + PULL_GRACE_SECONDS, by: 'timeout', confirmed: false };
   }
   if (pulled !== null && cooled === null && d.coolEnd_s !== null && now_s >= d.coolEnd_s) cooled = d.coolEnd_s;
+  if (pulled !== null && cooled !== null && d.coolEnd_s !== null && d.coolEnd_s < cooled) cooled = d.coolEnd_s;
   return { boilAt_s: cook.events.boilAt_s, pulled: pulled, cooledAt_s: cooled, rangAt_s: rang };
 }
 
@@ -1079,6 +1111,24 @@ export function asRanCurrent(cook: RunningCook): boolean {
 export function asRanShown(cook: RunningCook, plan: CookPlan): CookAsRan | null {
   if (cook.asRan !== null) return asRanCurrent(cook) ? cook.asRan : null;
   return asRanOf(cook, plan);
+}
+
+/**
+ * The solve as the cook ran (onescreen review 2.2), for what Done says of the
+ * egg beside the peak (the texture note under the slider): the plan's egg and
+ * pot at the cook time that ran, on the model's parameters it ran under
+ * (`ran`, `asRanShown`'s), so a plan made since on a posterior that has folded
+ * this egg's own answer never moves it. `plan.solution` itself when the plan
+ * is on those parameters at that time, as before any fold; otherwise one
+ * simulation. Its peak yolk is `ran.peakYolk_C` to the bit.
+ */
+export function solutionAsRan(plan: CookPlan, ran: CookAsRan): Solution {
+  const p = plan.inputs === null ? null : plan.inputs.params;
+  if (p !== null && p.alpha_m2s === ran.params.alpha_m2s && p.tauAirScale === ran.params.tauAirScale
+    && plan.cookTime_s === ran.cook_s) {
+    return plan.solution;
+  }
+  return { ...plan.solution, result: simulate(plan.egg, plan.setup, ran.params, ran.cook_s) };
 }
 
 /**
@@ -1250,14 +1300,25 @@ function tappedAfterLateCold(cook: RunningCook): boolean {
 }
 
 /** What a cook leaves when it ends, by Cancel or by Start again: the boil to
- *  remember, and whether it was cooked through - Done by `plan` at `now_s`,
- *  and not while the plan asks whether the egg is still in the water - and
- *  so is an egg to log if no answer has logged it. */
+ *  remember; whether it was cooked through - Done by `plan` at `now_s`, and
+ *  not while the plan asks whether the egg is still in the water - and so is
+ *  an egg to log if no answer has logged it; and whether its record must be
+ *  made again first (onescreen review 1.2): corrected after the pull, its
+ *  plan as it ran not yet planned again (`asRanCurrent`), so the egg logged,
+ *  or the one about to be, is the uncorrected one. The app makes it
+ *  (`asRanCorrected` on the calibration before this egg), logs it in place of
+ *  any logged under its id, and only then forgets the cook: the egg is final,
+ *  and may be sent, once the cook is forgotten. */
 export interface CookEnding {
   boil: BoilToRemember | null;
   finished: boolean;
+  remake: boolean;
 }
 
 export function cookEnding(cook: RunningCook, plan: CookPlan, now_s: number): CookEnding {
-  return { boil: boilToRemember(cook), finished: !plan.askIfStillIn && phaseAt(plan.deadlines, now_s) === 'DONE' };
+  return {
+    boil: boilToRemember(cook),
+    finished: !plan.askIfStillIn && phaseAt(plan.deadlines, now_s) === 'DONE',
+    remake: cook.events.pulled !== null && cook.asRan !== null && !asRanCurrent(cook),
+  };
 }

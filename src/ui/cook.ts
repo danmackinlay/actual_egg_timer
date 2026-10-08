@@ -42,7 +42,7 @@ import { render } from './render.js';
 import { sendFinal } from './share.js';
 import { idleChoices, phaseNow, settingsOfChoices, sizeClasses, state, timeToBoil_s } from './state.js';
 import {
-  clearCook, cookStoredElsewhere, dropStoredCook, loadCook, readStoredCook, rememberTimeToBoil, saveCook,
+  clearCook, cookStoredElsewhere, correctedLater, dropStoredCook, loadCook, readStoredCook, rememberTimeToBoil, saveCook,
   saveLeanHint, storedCookText, takeOldCooks, takeUpEvents,
 } from './store.js';
 import { unitSystem } from './units.js';
@@ -83,13 +83,23 @@ const written = {
 };
 
 /** Write the cook down as it is now, after taking up what another tab wrote
- *  for it since, so nothing it saw is written over. Never once it is closed. */
+ *  for it since, so nothing it saw is written over. Never once it is closed.
+ *  A copy of this cook another tab corrected later than this one stays the
+ *  copy stored (onescreen review 1.1), so a reload restores the latest
+ *  correction: what this tab saw in the pan is written into it instead
+ *  (`takeUpEvents`), and this tab runs on as it is (DECISIONS.md 97). */
 export function persistCook(): void {
   if (state.cook === null || written.closed) return;
   // Taken up here too: a write from the answers comes between plans. The
   // plan follows at once.
   if (takeUpStored()) queueMicrotask(replanCook);
-  saveCook(state.cook, keptAnswers(), state.leanHint_s);
+  const stored = readStoredCook(storedCookText());
+  if (stored !== null && stored.cook.id_ms === state.cook.id_ms && correctedLater(stored.cook, state.cook)) {
+    const answers = stored.answers === 'beforeReload' ? stored.answers : keptAnswers();
+    saveCook(takeUpEvents(stored.cook, state.cook), answers, stored.leanHint_s);
+  } else {
+    saveCook(state.cook, keptAnswers(), state.leanHint_s);
+  }
   written.text = storedCookText();
   written.cook = JSON.stringify(state.cook);
   written.works = written.text !== null;
@@ -257,6 +267,10 @@ export function correctCook(choices: CookChoices, startedAt_s: number | null): v
   if (startedAt_s !== null && startedAt_s !== cook.startedAt_s) cook = startCorrected(cook, startedAt_s, now_s) ?? cook;
   if (!sameChoices(choices, cook.choices)) cook = corrected(cook, choices, now_s);
   if (cook === state.cook) return;
+  // An egg answered about came out: a pull the clock assumed stands, so a
+  // correction at Done never asks whether it is still in the water, nor
+  // puts the questions away (onescreen review 2.1).
+  if (answersNow().kind !== 'none') cook = pullStands(cook);
   state.cook = cook;
   afterCorrection(now);
 }
@@ -304,16 +318,22 @@ function refreshAsRan(): void {
     if (r === null || !stillThis() || state.cook === null) return;
     state.cook = { ...state.cook, asRan: r.cook.asRan };
     persistCook();
-    if (eggLogged(id) >= 0) {
-      const record = eggRecordFor(state.cook, r.plan, null, null, null);
-      if (record !== null) {
-        logEgg(record);
-        void learn();
-      }
-    }
+    relogCorrected(state.cook, r.plan);
     retryHeld();
     render(nowMs());
   }, (error: unknown) => console.warn('the corrected egg’s record failed', error));
+}
+
+/** The egg's record made again from `plan`, its plan as it ran corrected,
+ *  in place of the one logged under its id, its answers kept, and the log
+ *  folded again from where it starts (`logEgg`); nothing if it is not
+ *  logged. */
+function relogCorrected(cook: RunningCook, plan: CookPlan): void {
+  if (eggLogged(cook.id_ms) < 0) return;
+  const record = eggRecordFor(cook, plan, null, null, null);
+  if (record === null) return;
+  logEgg(record);
+  void learn();
 }
 
 /** The cook corrected after its pull, its plan as it ran made again on the
@@ -467,6 +487,14 @@ function endCook(cook: RunningCook, plan: CookPlan, now_s: number, answered: boo
   if (ending.boil !== null) {
     state.boilMemory = rememberTimeToBoil(state.boilMemory, ending.boil.litres, ending.boil.seconds);
   }
+  // Answered, then corrected after the pull, and its record not made again
+  // yet (onescreen review 1.2): made now and logged in place of the egg
+  // logged, before the cook is forgotten and the egg becomes final, so the
+  // egg kept and sent is the corrected one.
+  if (answered && ending.remake) {
+    remakeThenEnd(cook, now_s, ended, RECORD_TRIES);
+    return;
+  }
   // An egg finished and never answered about is still an egg: the cook, the
   // recommendation and the pull are data for the fit.
   if (!ending.finished || answered) {
@@ -513,6 +541,20 @@ function logFinished(
     const onIt = replan(cook, state.calib, surfaceFor(inputs), 0, now_s);
     logFinished(cook, onIt, now_s, yolk, white, ended, tries - 1);
   }, (error: unknown) => console.warn('the surface for an egg’s record failed', error));
+}
+
+/** An answered egg's record made again for its correction (`correctedAsRan`,
+ *  on the calibration before it) and logged in its place, then `ended`. Left
+ *  stored, for the next load to make, if it cannot be. */
+function remakeThenEnd(cook: RunningCook, now_s: number, ended: () => void, tries: number): void {
+  correctedAsRan(cook, now_s).then((r) => {
+    if (r === null) {
+      if (tries > 0) remakeThenEnd(cook, now_s, ended, tries - 1);
+      return;
+    }
+    relogCorrected(r.cook, r.plan);
+    ended();
+  }, (error: unknown) => console.warn('the corrected egg’s record failed', error));
 }
 
 /** The cook started at `id_ms` has ended and its egg, if any, is logged:

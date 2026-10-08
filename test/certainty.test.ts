@@ -29,6 +29,7 @@ import { anchorNear } from '../src/core/policy.js';
 import { ALPHA_DEFAULT } from '../src/core/constants.js';
 import { eggFromMass } from '../src/core/geometry.js';
 import { DONENESS_ANCHORS, logYolkTarget } from '../src/core/solve.js';
+import { timeRangeWords } from '../src/core/wording.js';
 import { appSetup, rng } from '../tools/common.js';
 
 const EGG = eggFromMass(0.068);
@@ -172,4 +173,18 @@ test('the reading is the model\'s own predictive and its right-time interval at 
   assert.equal(fresh.words.certainty, 'wildGuess');
   assert.notEqual(after.words.certainty, 'wildGuess');
   assert.ok(after.time.high_s - after.time.low_s < (fresh.time.high_s - fresh.time.low_s) / 2);
+});
+
+test('the time range in the clock\'s own terms: whole times idle, when to take them out once cooking (onescreen review 2.3)', () => {
+  const sure = {
+    words: wordCertainty([0.01, 0.01, 0.94, 0.03, 0.01], 2), time: { low_s: 384, high_s: 561 }, at_s: 452,
+  };
+  assert.deepEqual(timeRangeWords(sure, null), { key: 'certainty.time', low_s: 384, high_s: 561, ofDay: false });
+  const start = 1791363600;
+  // On the plan it was read on: the start plus the range.
+  assert.deepEqual(timeRangeWords(sure, { startedAt_s: start, cookTime_s: 452 }),
+    { key: 'certainty.timeOut', low_s: start + 384, high_s: start + 561, ofDay: true });
+  // Held over a slow hob's lengthened guess: it moves with the guess.
+  assert.deepEqual(timeRangeWords(sure, { startedAt_s: start, cookTime_s: 1000 }),
+    { key: 'certainty.timeOut', low_s: start + 932, high_s: start + 1109, ofDay: true });
 });

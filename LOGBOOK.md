@@ -5884,3 +5884,49 @@ before; the copy snapshot shares the flag), and a Debug build takes
 no volume (its engine, timing and stop are unchanged) and notifications
 carry no sound. Checked: `npm run e2e` 28 of 28, `npm run ios:e2e` 31 of 31,
 `npm run verify`, `npm run ios:build`.
+
+## 9 October 2026: the one screen's review, core and the web (SHIP-0.5 C3)
+
+`design/onescreen-review.md`'s findings for core and the web, each driven
+by a scenario that failed on `7f2ce93` and passes now (`npm run e2e`, 35,
+seven new), and the owner's `DECISIONS.md` 99. Each finding has its
+"Actioned" line there; `design/one-screen.md` §4 has the rules.
+
+- **Core** (`2e7c70e`): Done keeps Done (a correction from the counter after
+  the pull ends the cooling it brings at the correction, the counted end
+  if sooner); a correction in the grace keeps the ring while the pull is
+  still due, and undoes it when the pull moves past the correction;
+  `solutionAsRan`; `cookEnding(...).remake`. Then (`d0aa1a2`) the time
+  range in the clock's terms, `timeRangeWords`, and the boil line's one key.
+- **The web**: a second tab takes only the cook's own taps from a copy told
+  otherwise, and does not write an older-corrected copy over the stored one
+  (`5399c64`); Start again after a correction waits for the corrected record
+  (`038f5dc`); Done's note as it ran, the white's line not under the
+  question, an answer confirming an assumed pull (`1695522`); a change in
+  hand committed on `pagehide` and when hidden, two changes two commits by
+  keyboard too (`dbcc5d8`); the time's two lines closer (`bf227b3`).
+- **Words**: the `tighten2` draft (`LANGUAGE.md` §3), proved with
+  `copyLiterals --since 83f7010 tighten2` and `copySnapshot compare --draft
+  tighten2`.
+
+**Things that cost time.**
+- **The snapshot proof needs pooling, as before.** Two captures of the base
+  against two of this build failed on three certainty strings ("Most
+  likely: Fudgy.", a Jammy-to-Hard interval) that only the second capture
+  of this build had; two more base captures had them too (the hot counter
+  cook's certainty block, as a surface lands before or after a step). Four
+  base captures pooled against two pass.
+- **The ticker, not a look, plans the slow hob's moment.** A scenario that
+  steps the clock and reads the plan a settle later can read it a tick
+  early (the settle's quiet is 120 ms, the tick 200); wait for what will
+  change instead.
+- **A merged `0.5.x` mid-task**: the e2e runs before `83f7010` played the
+  alarm through the speakers; every run since is muted (`--mute-audio`).
+- **Partial commits without `git add -p`**: a hunk-picking patch applied
+  with `git apply --cached`, and `tools/e2e.ts` written with only the
+  scenarios a commit fixes, then restored; each commit was gated with the
+  rest stashed (`git stash push --keep-index -u`).
+
+Checked on the last commit: `npm run verify` (392 tests, `swift test` 156
+in 38 suites), `npm run build:site`, `npm run e2e` 35 of 35, `npm run
+ios:build`.

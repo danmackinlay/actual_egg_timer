@@ -12,7 +12,7 @@
  */
 
 import { CopyRef } from './copy.js';
-import { CERTAINTY_MASS, Certainty, WordCertainty } from './certainty.js';
+import { CERTAINTY_MASS, Certainty, CertaintyReading, WordCertainty } from './certainty.js';
 import { Outcome, WHITE_RISK } from './outcome.js';
 import { Phase, Verdict } from './policy.js';
 import { Cooling, HeatAfterBoil, StartMode } from './protocol.js';
@@ -124,6 +124,46 @@ export function mostLikelyOpened(w: WordCertainty): boolean {
   return !mostLikelyShown(w) && w.from !== w.to;
 }
 
+/** The likely time range as words take it (`timeRangeWords`): the key, and
+ *  its `low` and `high` either as cook times, s, to be shown as the clock
+ *  shows a time (m:ss), or, `ofDay`, as clock times, epoch s, to be shown as
+ *  times of day. */
+export interface TimeRangeWords {
+  key: string;
+  low_s: number;
+  high_s: number;
+  ofDay: boolean;
+}
+
+/**
+ * The likely time range in the clock's own terms (onescreen review 2.3).
+ * Before Start the clock shows the whole time, so the range is of whole
+ * times ("I think the right time is between 6:24 and 9:21."). Once a cook
+ * runs the clock counts down to the pull, and a range of whole times under
+ * it contradicts it, so the range is when to take the eggs out, as times of
+ * day: the start, `running.startedAt_s`, plus the range. A reading held over
+ * a plan it was not read on - a slow hob's lengthened guess, which has no
+ * surface of its own, or a pot whose surface is still being built - keeps
+ * its range about the plan's time now, `running.cookTime_s`: as far either
+ * side of it as of the time it was read at (`sure.at_s`), so it moves with
+ * the guess. On the plan it was read on it is the start plus the range,
+ * exactly.
+ */
+export function timeRangeWords(
+  sure: CertaintyReading, running: { startedAt_s: number; cookTime_s: number } | null,
+): TimeRangeWords {
+  const r = sure.time;
+  if (running === null) return { key: 'certainty.time', low_s: r.low_s, high_s: r.high_s, ofDay: false };
+  const start = running.startedAt_s;
+  if (running.cookTime_s === sure.at_s) {
+    return { key: 'certainty.timeOut', low_s: start + r.low_s, high_s: start + r.high_s, ofDay: true };
+  }
+  const now = start + running.cookTime_s;
+  return {
+    key: 'certainty.timeOut', low_s: now + (r.low_s - sure.at_s), high_s: now + (r.high_s - sure.at_s), ofDay: true,
+  };
+}
+
 /* ------------------------------------------------------------ the outcome */
 
 /**
@@ -182,7 +222,9 @@ export interface PhaseFacts {
   cooling: Cooling;
   /** Idle only: whether the white sets at all, so there is a cook to start. */
   whiteSets: boolean;
-  /** Idle only: whether this pan's time to boil is remembered, not guessed. */
+  /** Idle only: whether this pan's time to boil is remembered, not guessed.
+   *  Since DECISIONS.md 99 the line says the time alike either way, and the
+   *  apps show the (i) on whether it is remembered; read by nothing here. */
   boilKnown: boolean;
   /** Cooling only: whether the countdown ends in a probe reading. */
   probeWanted: boolean;
@@ -224,9 +266,9 @@ export function phaseKeys(f: PhaseFacts): PhaseKeys {
     case 'IDLE':
       return {
         label: 'readout.phase.total',
-        subline: cold
-          ? f.boilKnown ? 'readout.sub.coldAssumes' : 'readout.sub.coldGuesses'
-          : standing ? 'readout.sub.standing' : 'readout.sub.hot',
+        // The time to boil, guessed or remembered, says no certainty of its
+        // own: the certainty line below speaks for both (DECISIONS.md 99).
+        subline: cold ? 'readout.sub.coldAssumes' : standing ? 'readout.sub.standing' : 'readout.sub.hot',
         action: cold ? 'action.startHeating' : 'action.eggsIn',
         hint: !f.whiteSets
           ? 'action.hint.whiteNeverSets'
