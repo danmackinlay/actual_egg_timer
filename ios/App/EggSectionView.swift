@@ -48,12 +48,15 @@ struct EggSectionView: View {
         let out = running.events.pulled?.outS ?? (clock >= assumedOut ? assumedOut : nil)
         let outS = out.map { $0 - start }
         let nowS = clock - start
+        // Once the egg is out, under the model and at the level it ran with
+        // (`asRanShown`), not a posterior that has since learned from it.
+        let ran = asRanShown(running, plan: plan)
         return cache.view(
             egg: plan.egg, setup: plan.setup, startedAtS: start,
-            params: calibrationParams(calibration),
+            params: ran?.params ?? calibrationParams(calibration),
             toS: outS.map { min(nowS, $0 + Constants.carryoverWindow) } ?? nowS,
             outAtS: outS,
-            whiteTargetMin: calibrationDoneness(calibration, level: plan.level).whiteDoseMin
+            whiteTargetMin: calibrationDoneness(calibration, level: ran?.level ?? plan.level).whiteDoseMin
         )
     }
 }

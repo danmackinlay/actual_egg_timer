@@ -54,6 +54,31 @@ enum LiveActivity {
         }
     }
 
+    /// End every card to go when its own stage ends, or at once if that has
+    /// passed: a card an earlier build began for a cook this build kept aside
+    /// at the upgrade, which nothing will update again. Until then it shows
+    /// what it showed, beside the notifications still pending for it.
+    static func endAtTheirEnds() async {
+        let now = Date.now
+        for activity in Activity<CookActivity>.activities {
+            let ends = activity.content.state.ends
+            await activity.end(nil, dismissalPolicy: ends > now ? .after(ends) : .immediate)
+        }
+    }
+
+    #if DEBUG
+    /// Every card the system holds for the app, its state, stage and end,
+    /// to the debug log (`Screenshots.log`).
+    static func logAll(_ when: String) {
+        for activity in Activity<CookActivity>.activities {
+            let s = activity.content.state
+            Screenshots.log(
+                "\(when) activity \(activity.activityState) \(s.stage.rawValue) ends \(Int(s.ends.timeIntervalSince1970))"
+            )
+        }
+    }
+    #endif
+
     private static func content(
         _ state: CookActivity.ContentState
     ) -> ActivityContent<CookActivity.ContentState> {

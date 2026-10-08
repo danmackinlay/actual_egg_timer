@@ -55,6 +55,11 @@ final class Alarm: NSObject, UNUserNotificationCenterDelegate {
         // Screenshots of a phase (Screenshots.swift) run on a fresh simulator,
         // where the system would ask, and its alert would be in the picture.
         if Screenshots.noAlarmPrompt { return false }
+        // Quiet notifications, granted with no prompt, so a simulator nobody
+        // taps still holds the alarms to read back.
+        if Screenshots.provisionalAlarms {
+            return (try? await centre.requestAuthorization(options: [.alert, .sound, .provisional])) ?? false
+        }
         #endif
         let settings = await centre.notificationSettings()
         switch settings.authorizationStatus {
@@ -107,7 +112,14 @@ final class Alarm: NSObject, UNUserNotificationCenterDelegate {
     /// notification could satisfy.
     func pendingDeadlines() async -> Set<RingDeadline> {
         let ours: [String: RingDeadline] = [pullID: .pull, coolID: .cooled]
-        return Set(await centre.pendingNotificationRequests().compactMap { ours[$0.identifier] })
+        let pending = await centre.pendingNotificationRequests()
+        #if DEBUG
+        for r in pending {
+            let at = (r.trigger as? UNTimeIntervalNotificationTrigger)?.nextTriggerDate()
+            Screenshots.log("pending \(r.identifier) at \(at.map { String(Int($0.timeIntervalSince1970)) } ?? "-")")
+        }
+        #endif
+        return Set(pending.compactMap { ours[$0.identifier] })
     }
 
     private func request(id: String, at date: Date, title: String, body: String) {

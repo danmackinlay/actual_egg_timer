@@ -23,6 +23,12 @@ struct CookActivity: ActivityAttributes {
         /// reached the boil yet. The widget says so rather than implying a
         /// precision it has not got.
         var provisional: Bool
+        /// True while the slow hob has lengthened the guess: the card counts
+        /// the time heated up from `began`, the start, rather than down to a
+        /// pull that keeps moving, which would read 0:00 while the water
+        /// still heats; `ends` is then when the guess gives out. Nil in a
+        /// state an older build pushed.
+        var countsUp: Bool? = nil
         /// What is being cooked, as the plan now has it. In the state, not
         /// the attributes, so that a plan made again - the boil tapped, a
         /// slow hob, and later a correction - updates the card in place.

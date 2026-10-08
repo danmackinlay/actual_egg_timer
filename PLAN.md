@@ -49,8 +49,8 @@ These counts are the only ones in the documents. If you want a number, run
    `src/core/running.ts`), with the red-team review of it applied
    (`design/one-screen-review.md`, `DECISIONS.md` 98). Both apps' state is
    on it (`aet.cook.v4`, `cookInProgress.v3`; `design/one-screen.md` §4),
-   and red-teamed as built (`design/running-cook-review.md`): core's and the
-   web's findings fixed, iOS's next, before the one screen; certainty in words is the `certainty` draft (93, D1),
+   and red-teamed as built (`design/running-cook-review.md`): core's, the
+   web's and iOS's findings fixed, before the one screen; certainty in words is the `certainty` draft (93, D1),
    for the owner on a phone: next is the one screen in both (C3). `0.4.x` is
    merged in as it moves.
 

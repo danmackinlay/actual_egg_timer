@@ -562,6 +562,14 @@ nothing then knows what they ring for. The 0.4 path that logs a finished,
 unanswered egg (`cook.ts`, `restoreCook`) goes with the old key, which
 costs at most one egg.
 
+*As built on iOS, after the running-cook review (§3):* nothing would ever
+update or end the old card, so it sat at its last stage, stale, for the
+system's eight hours. When an old key is kept aside at launch, each card is
+ended with a dismissal at its own stage's end (at once if that has
+passed): it shows what it showed until then, beside the notifications
+still pending. The unread cooks are a list, each text once, so two old
+keys at one launch lose nothing.
+
 ### How an edit is followed
 
 - **Every edit**, on either app, is one step: replace the cook (setup,
@@ -623,10 +631,20 @@ costs at most one egg.
   `readBackAlarms` keeps the status line true. A deadline already past is
   not scheduled. The app is on screen when the cook edits, so `ringIfDue`
   rings it there, as it does for any deadline no notification holds.
+  *As built, after the running-cook review:* a relaunch schedules the
+  restored plan's alarms, as Start does, since a slow hob planned again
+  later pulls at another moment than the pending notifications (1.4); and
+  while a plan asks whether the egg is still in, none is scheduled and the
+  pending ones are cancelled (3).
 - **The Live Activity.** `pushActivity(force: true)` after each edit. With
   the description in `ContentState` (§4's table), a correction updates the
   card in place, including the owner's case, Cooking back to Heating. The
-  card still carries no odds or certainty (`DECISIONS.md` 32).
+  card still carries no odds or certainty (`DECISIONS.md` 32). *As built:*
+  while the slow hob has lengthened the guess, the card, like the big
+  clock, counts the time heated up from the start to when the guess gives
+  out (`ContentState.countsUp`), rather than down to a pull that keeps
+  moving (running-cook review 3); once the egg is out its peak is the cook
+  as it ran (`asRanShown`).
 - **Async solves.** Both apps already guard a solve that lands after a
   cancel (iOS's `generation`, the web's key checks). A surface or profile
   that lands mid-cook now re-plans the running cook when it is for the
@@ -773,6 +791,16 @@ commit each):
    ahead of now kept; a damaged cook under `cookInProgress.v2` also cancels
    alarms and the card), `EggSectionView.swift`
    (its cache keyed on the cook, not the ticket) and `FeedbackPanel.swift`.
+   *After the running-cook review (iOS, 8 October 2026):* each plan passes
+   the last one's `slowHob` and keeps the plan as it ran (`keepAsRan`,
+   stored when new); Done, the sentence, the probe's offer, the card's
+   peak and the egg's parameters read `asRanShown` once the egg is out
+   (2.4); an answer refused for want of the surface is held until the plan
+   on it lands, and an unanswered egg is logged from its plan on its pot's
+   surface, built for it when a relaunch left none (1.3); the tick asks
+   `cookTooOld` (and goes on every 5 s at Done, for the hour), becoming
+   active and every answer ask `cookStillOpen`, and a cook no longer open
+   is ended as Start again ends it (2.2, 2.3).
 9. `ios/Shared/CookActivity.swift`, `LiveActivity.swift`,
    `ios/Widget/CookLiveActivity.swift`: the description into the state.
    `npm run ios:build`.

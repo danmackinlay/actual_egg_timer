@@ -465,17 +465,31 @@ enum Calibrations {
         UserDefaults.standard.set(Array(copies.suffix(unreadKept)), forKey: unreadKey)
     }
 
-    /// A cook in progress this build could not read (Cook.swift), the newest
-    /// one, kept as stored: its egg may be one nothing else holds.
+    /// The cooks in progress this build could not read (Cook.swift), each
+    /// kept as stored, oldest first: an egg may be one nothing else holds. A
+    /// list, so two old keys found at one launch, or an unreadable cook
+    /// after an old one, lose nothing (running-cook review 3); a build
+    /// before kept one, as a string, which is read as the first.
     private static let unreadCookKey = "cookInProgress.unread"
 
-    static func keepUnreadCook(_ data: Data) {
-        UserDefaults.standard.set(String(decoding: data, as: UTF8.self), forKey: unreadCookKey)
+    private static func unreadCooks() -> [String] {
+        let d = UserDefaults.standard
+        if let list = d.stringArray(forKey: unreadCookKey) { return list }
+        return d.string(forKey: unreadCookKey).map { [$0] } ?? []
     }
 
-    /// Every copy kept aside, the stores first, then the cook.
+    /// Keep a cook this build cannot read with the others; the same text
+    /// twice is kept once.
+    static func keepUnreadCook(_ data: Data) {
+        let raw = String(decoding: data, as: UTF8.self)
+        var cooks = unreadCooks().filter { $0 != raw }
+        cooks.append(raw)
+        UserDefaults.standard.set(cooks, forKey: unreadCookKey)
+    }
+
+    /// Every copy kept aside, the stores first, then the cooks.
     private static func keptAside() -> [String] {
-        unreadCopies() + [UserDefaults.standard.string(forKey: unreadCookKey)].compactMap { $0 }
+        unreadCopies() + unreadCooks()
     }
 
     /// How many results there are to export: every record, read or not, and

@@ -206,7 +206,8 @@ func clauseTexts(_ f: SetupFacts) -> [Clause: ClauseText] {
 /// The cook in the pan, once the controls are gone: the
 /// setup sentence it was started with, so a forgetful cook can see what they
 /// promised, and under it what the sentence does not say, the doneness and
-/// the peak yolk. From the cook and its plan, never the controls. Plain prose: nothing in
+/// the peak yolk. From the cook and its plan (as it ran, once the egg is
+/// out), never the controls. Plain prose: nothing in
 /// it can change a cook under way, so nothing in it is a link. Sous-vide never
 /// runs a cook, so it never shows this.
 struct CookSentence: View {
@@ -217,6 +218,8 @@ struct CookSentence: View {
     var body: some View {
         let facts = SetupFacts(running, plan: plan, planner: planner)
         let texts = clauseTexts(facts)
+        // Once the egg is out, the cook as it ran (`asRanShown`).
+        let ran = asRanShown(running, plan: plan)
         VStack(alignment: .leading, spacing: 6) {
             Text(tr("setup.sentence", [
                 "egg": .text(texts[.egg]?.text ?? ""), "from": .text(texts[.from]?.text ?? ""),
@@ -228,8 +231,8 @@ struct CookSentence: View {
             // In the system the egg was set up in, which the controls cannot
             // have changed since.
             Text(tr("cook.summary", [
-                "doneness": .text(midSentence(tr(anchorNear(plan.level).key), locale: Copy.activeLocale)),
-                "yolk": .text(showIn(facts.units, .temperature, plan.solution.result.peakYolkC)),
+                "doneness": .text(midSentence(tr(anchorNear(ran?.level ?? plan.level).key), locale: Copy.activeLocale)),
+                "yolk": .text(showIn(facts.units, .temperature, ran?.peakYolkC ?? plan.solution.result.peakYolkC)),
             ]))
             .appFont(.footnote)
             .foregroundStyle(.secondary)

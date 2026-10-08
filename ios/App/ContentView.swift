@@ -147,9 +147,13 @@ struct ContentView: View {
             showScreenshotScene()
             #endif
         }
-        // Back in the foreground: whatever sharing owes, the web's "online".
+        // Back in the foreground: a cook no longer open is ended first, so
+        // its egg is final before sharing sends what it owes, the web's
+        // "online".
         .onChange(of: scenePhase) { _, now in
-            if now == .active { Sharing.shared.resume() }
+            guard now == .active else { return }
+            model.endIfNoLongerOpen()
+            Sharing.shared.resume()
         }
     }
 
@@ -163,6 +167,14 @@ struct ContentView: View {
     #if DEBUG
     /// The screen a debug build was launched onto (Screenshots.swift).
     private func showScreenshotScene() {
+        // A cook restored at Done, answered as soon as asked: before its
+        // pot's surface is built again, with `-uiAnswerAfter 0`.
+        if Screenshots.scene != "done", cook.phase == .done, let answer = Screenshots.answer {
+            Task {
+                try? await Task.sleep(for: .seconds(Screenshots.answerAfter))
+                model.answer(yolk: answer.yolk, white: answer.white)
+            }
+        }
         guard let scene = Screenshots.scene else { return }
         switch scene {
         case "settings": path = [.settings]
@@ -172,20 +184,32 @@ struct ContentView: View {
         case "heating":
             guard cook.phase == .idle else { return }
             model.eggsIn()
+            guard Screenshots.cookAgo > 0 else { return }
+            Task {
+                await startedCook()
+                cook.moveBack(Screenshots.cookAgo)
+            }
         case "done":
             guard cook.phase == .idle else { return }
             model.eggsIn()
             Task {
-                // Once the cook has started, which waits on a solve.
-                for _ in 0..<50 where cook.phase == .idle {
-                    try? await Task.sleep(for: .milliseconds(200))
-                }
-                cook.skipToDone()
+                await startedCook()
+                cook.skipToDone(ago: Screenshots.doneAgo)
+                guard let answer = Screenshots.answer else { return }
+                try? await Task.sleep(for: .seconds(Screenshots.answerAfter))
+                model.answer(yolk: answer.yolk, white: answer.white)
             }
         default:
             if scene.hasPrefix("clause-"), let clause = Clause(rawValue: String(scene.dropFirst(7))) {
                 openClause = clause
             }
+        }
+    }
+
+    /// Once the cook has started, which waits on a solve.
+    private func startedCook() async {
+        for _ in 0..<50 where cook.phase == .idle {
+            try? await Task.sleep(for: .milliseconds(200))
         }
     }
     #endif
