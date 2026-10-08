@@ -191,6 +191,13 @@ final class Cook {
     /// the egg is out: what "You asked for" and the sentence say.
     var shownLevel: Double? { asRan?.level ?? plan?.level }
     var shownPeakYolkC: Double? { asRan?.peakYolkC ?? plan?.solution.result.peakYolkC }
+    /// The solve as the cook ran, once the egg is out (core `solutionAsRan`):
+    /// the plan's pot at the time that ran, on the parameters it ran under,
+    /// so what Done says of the egg beside the peak - the texture note - is
+    /// never redrawn from a posterior that has folded this egg's own answer
+    /// (onescreen review 2.2). Nil before the pull, and until the plan as it
+    /// ran is had; worked out with each plan.
+    private(set) var ranSolution: Solution?
     /// Whether the cooling ended at the yolk's peak, as it ran.
     var shownProbeMoment: Bool { asRan?.probeMoment ?? plan?.probeMoment ?? false }
 
@@ -457,12 +464,18 @@ final class Cook {
     /// before the egg was seen to come out - changed back within the grace -
     /// cancels it (`adopt`): nothing was observed. The alarms and the card
     /// follow the plan, as they follow any.
-    func correct(choices: CookChoices, startedAtS: Double?) {
+    ///
+    /// Once the egg has been `answered` about it came out: a pull the clock
+    /// assumed stands, confirmed (`pullStands`), so a correction at Done never
+    /// asks whether it is still in the water behind the questions (onescreen
+    /// review 2.1). A correction once Done keeps Done (core `corrected`).
+    func correct(choices: CookChoices, startedAtS: Double?, answered: Bool = false) {
         guard var c = running else { return }
         let now = AppClock.now.timeIntervalSince1970
         if let s = startedAtS, s != c.startedAtS { c = startCorrected(c, startedAtS: s, nowS: now) ?? c }
         if choices != c.choices { c = corrected(c, choices: choices, nowS: now) }
         guard c != running else { return }
+        if answered { c = pullStands(c) }
         change(to: c)
     }
 
@@ -564,7 +577,12 @@ final class Cook {
     }
     #endif
 
-    func cancel() {
+    /// The cook ends: its alarms, its card and its ticker go, and it is
+    /// forgotten - but for `keepStored`, while its record is made again
+    /// before the egg is final (onescreen review 1.2): the model forgets it
+    /// then (`forgetStored`), and a kill in between finds it at the next
+    /// launch.
+    func cancel(keepStored: Bool = false) {
         #if DEBUG
         Screenshots.log("cook ended")
         #endif
@@ -576,7 +594,19 @@ final class Cook {
         ticker = nil
         running = nil
         reset()
-        persist()
+        if !keepStored { persist() }
+    }
+
+    /// The stored cook forgotten, if it is still the one started at `idMs`:
+    /// a cook kept stored while its record was made again (`cancel`), not a
+    /// new one started since.
+    static func forgetStored(idMs: Double) {
+        guard let data = UserDefaults.standard.data(forKey: savedKey),
+              let stored = try? JSONDecoder().decode(Stored.self, from: data), stored.cook.idMs == idMs else { return }
+        Stores.remove(savedKey)
+        #if DEBUG
+        Screenshots.log("stored none")
+        #endif
     }
 
     /// Everything one cook held, gone: what a start and a cancel share.
@@ -586,6 +616,7 @@ final class Cook {
         outcome = nil
         heldCertainty = nil
         heldProfile = nil
+        ranSolution = nil
         leanHintS = 0
         surface = nil
         surfaceAsked = nil
@@ -626,6 +657,8 @@ final class Cook {
     private struct Made: Sendable {
         let plan: CookPlan
         let outcome: Outcome?
+        /// The solve as the cook ran, once the egg is out (`solutionAsRan`).
+        let ran: Solution?
     }
 
     private func planInput() -> PlanInput? {
@@ -649,7 +682,10 @@ final class Cook {
                 ? d.outcome
                 : predictOutcome(i.calibration.posterior, s.grid, p.cookTimeS, logYolkTarget(p.level))
         }
-        return Made(plan: p, outcome: outcome)
+        // As it ran, with the plan as it ran kept as `adopt` keeps it: one
+        // simulation here, off the main actor, rather than in a draw.
+        let ran = asRanShown(keepAsRan(i.cook, plan: p), plan: p).map { solutionAsRan(p, ran: $0) }
+        return Made(plan: p, outcome: outcome, ran: ran)
     }
 
     /// Plan the cook as it stands, off the main actor: one plan at a time,
@@ -725,6 +761,7 @@ final class Cook {
         ))
         #endif
         if let o = made.outcome { outcome = o }
+        ranSolution = made.ran
         if next.decided != nil {
             heldCertainty = next.certainty
             // This pot's own, or none until it lands after the surface.
@@ -737,8 +774,24 @@ final class Cook {
         if let before, Self.moved(before, next.deadlines) || wasAsking != next.askIfStillIn {
             // A deadline rung for and since moved rings again at its new time.
             rung = rung.filter { Self.same($0.value, Self.at($0.key, next.deadlines)) }
+            // But a cook already Done stays silent: a correction there
+            // corrects only the record, and the cooling's end it writes
+            // (Done on the counter, corrected to ice) is not one to ring
+            // (onescreen review 2.1).
+            if phaseAt(before, nowS: AppClock.now.timeIntervalSince1970) == .done, phaseNow == .done {
+                rung[.pull] = next.deadlines.cookEndS
+                if let cooled = next.deadlines.coolEndS { rung[.cooled] = cooled }
+            }
             if alarmAuthorized == true {
-                alarmCovers = []
+                // A deadline past and not moved keeps what covered it: its
+                // notification has been delivered, and a correction in the
+                // pull's grace that holds the pull must not ring it again in
+                // the app (onescreen review 3).
+                let nowS = AppClock.now.timeIntervalSince1970
+                alarmCovers = alarmCovers.filter { d in
+                    guard let at = Self.at(d, next.deadlines) else { return false }
+                    return at <= nowS && Self.same(Self.at(d, before), at)
+                }
                 scheduleAlarms()
                 Task { await readBackAlarms() }
             }
@@ -857,11 +910,15 @@ final class Cook {
     }
 
     /// What a cook too old to pick back up leaves for the caller: the boil to
-    /// remember, and its egg if it was cooked through and never answered
-    /// about, to log as "Start again" would have (`unansweredRecord`).
+    /// remember; its egg if it was cooked through and never answered about,
+    /// to log as "Start again" would have (`unansweredRecord`); and the cook
+    /// itself when its answered egg's record must be made again first
+    /// (`cookEnding(...).remake`, onescreen review 1.2), stored until the
+    /// caller has made it (`forgetStored`).
     struct Dropped {
         var boil: BoilToRemember?
         var egg: Unanswered?
+        var remake: RunningCook?
     }
 
     /// Pick up a cook that was running when the app was last closed.
@@ -925,7 +982,11 @@ final class Cook {
         // and never answered about is still logged, as "Start again" would
         // have logged it, and a pan timed is still remembered.
         if cookTooOld(made.plan, nowS: now) {
-            Stores.remove(Self.savedKey)
+            let ending = cookEnding(cook, plan: made.plan, nowS: now)
+            // An answered egg corrected after its pull, its record not made
+            // again before the app went: kept stored until it is.
+            let remake = stored.feedbackGiven && ending.remake
+            if !remake { Stores.remove(Self.savedKey) }
             #if DEBUG
             Screenshots.log("restore too old")
             #endif
@@ -934,7 +995,6 @@ final class Cook {
             // (running-cook review 2.2).
             Alarm.shared.cancel()
             activity { await LiveActivity.endAll() }
-            let ending = cookEnding(cook, plan: made.plan, nowS: now)
             // Its record is made on its pot's surface, which this plan,
             // made at launch, has not got (running-cook review 1.3).
             let egg = !stored.feedbackGiven && ending.finished
@@ -942,7 +1002,7 @@ final class Cook {
                     cook: cook, plan: made.plan, calibration: input.calibration, leanHintS: stored.leanHintS, nowS: now
                 )
                 : nil
-            return Dropped(boil: ending.boil, egg: egg)
+            return Dropped(boil: ending.boil, egg: egg, remake: remake ? cook : nil)
         }
 
         var restored = cook

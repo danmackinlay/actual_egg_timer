@@ -441,9 +441,16 @@ its word sits at the top of its two lines' room, where it was centred. On a
 390-px screen the boil line's text now starts about 10 px under the
 digits' baseline (was 17), the certainty word's 32-px press target starts
 at the boil line's foot (was 16 px below it), and the readout is 13 px
-shorter idle. iOS matches it in its next step: the boil line about 10 pt
-under the digits' baseline, the word's target directly under it, the word
-at the top of its reserved room.
+shorter idle. iOS matches it (`ReadoutView`): the clock gives back the
+room its line keeps under the baseline for descenders (the 76-pt face's
+descender, about 18 pt) and keeps 10, so the boil line's frame starts 10
+pt under the digits' baseline (was about 24); the boil line and the
+certainty line sit with no gap (was 6 pt each), the word's target (4 pt
+of padding above and below it) directly under the boil line, and the word
+at the top of its two lines' room. The clock keeps its 76 pt at every
+text size, so at the largest the boil line, wrapping to two lines, is
+still 10 pt under it and the word under that. The idle readout is 20.5 pt
+shorter (the slider moved from 387 to 366.5 pt on an iPhone 17 Pro).
 
 **The slider** is described by the bracket too (web
 `aria-describedby="donenessRange"`). Its value to a screen reader is

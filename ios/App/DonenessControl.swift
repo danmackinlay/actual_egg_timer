@@ -26,16 +26,20 @@ struct DonenessControl: View {
     var body: some View {
         let r = SliderReading(model, phase: phase)
         VStack(alignment: .leading, spacing: 6) {
-            HStack(alignment: .firstTextBaseline, spacing: 12) {
-                Text(tr("controls.doneness"))
-                    .foregroundStyle(.secondary)
-                Spacer(minLength: 0)
-                Text(donenessPeak(r))
-                    .fontWeight(.semibold)
-                    .monospacedDigit()
-                    .multilineTextAlignment(.trailing)
-                    // The slider's value says it, with the word.
-                    .accessibilityHidden(true)
+            // On one line while both fit whole; at the largest text sizes the
+            // peak goes under the heading, rather than the heading breaking
+            // as "Done-" beside it, which read as the phase (onescreen
+            // review 3).
+            ViewThatFits(in: .horizontal) {
+                HStack(alignment: .firstTextBaseline, spacing: 12) {
+                    heading.fixedSize()
+                    Spacer(minLength: 0)
+                    peak(r).fixedSize()
+                }
+                VStack(alignment: .leading, spacing: 2) {
+                    heading.fixedSize(horizontal: false, vertical: true)
+                    peak(r).fixedSize(horizontal: false, vertical: true)
+                }
             }
             .appFont(.subheadline)
             // One track, the yolk's: the system's thumb on no track of its
@@ -78,6 +82,28 @@ struct DonenessControl: View {
                     .foregroundStyle(.secondary)
             }
         }
+        #if DEBUG
+        // The texture note, for the scripted checks.
+        .onChange(of: donenessNote(r), initial: true) { _, note in
+            Screenshots.log("note \(note)")
+        }
+        #endif
+    }
+
+    /// The slider's heading.
+    private var heading: some View {
+        Text(tr("controls.doneness"))
+            .foregroundStyle(.secondary)
+    }
+
+    /// The peak yolk the level asks for, across from the heading.
+    private func peak(_ r: SliderReading) -> some View {
+        Text(donenessPeak(r))
+            .fontWeight(.semibold)
+            .monospacedDigit()
+            .multilineTextAlignment(.trailing)
+            // The slider's value says it, with the word.
+            .accessibilityHidden(true)
     }
 
     /// The five doneness words, each under the level it names, as the web's
@@ -190,7 +216,10 @@ struct SliderReading {
             words = whiteSets && before ? cook.heldCertainty?.words : nil
             peakYolkC = ran?.peakYolkC ?? plan.solution.result.peakYolkC
             level = ran?.level ?? plan.level
-            noteSolution = plan.solution
+            // The note too, once the egg is out (`Cook.ranSolution`, onescreen
+            // review 2.2): beside the peak, not from a plan made since on a
+            // posterior that has folded this egg's answer.
+            noteSolution = ran != nil ? cook.ranSolution ?? plan.solution : plan.solution
             // A change in hand: the heading and the texture are its own
             // (the readout keeps the committed plan's time).
             if let aim = model.edits.aim {

@@ -5968,3 +5968,49 @@ the line shown) and `newer-version-tab`; `npm run ios:e2e` `newer-version`
 (the mark as a launch argument, since an edit of the plist can be undone
 by the system's cached copy: the line, Done, nothing stored; then the
 mark). 396 TypeScript tests, 158 Swift, e2e 30 of 30, ios:e2e 32 of 32.
+
+## 9 October 2026: the one screen's review on iOS (SHIP-0.5 C3)
+
+`design/onescreen-review.md`'s findings for iOS, on core's rules of
+`2e7c70e` and `d0aa1a2`, each driven by an `ios:e2e` scenario that fails on
+a build of `63d308d` with the new debug lines (`00fa50f`) and passes after;
+each finding has its "Actioned, on iOS" line there. Nothing in core or the
+web changed, and no word: the `tighten2` draft already had both apps' keys.
+
+- **The corrected egg is the one logged** (1.2, `cb18c4a`): Start again and
+  the too-old relaunch make an answered egg's stale record first
+  (`cookEnding(...).remake`), then forget the stored cook and send.
+- **Done stays Done, silent** (2.1, `11dff1d`): core's rule kept Done, but
+  iOS rang the cooling's end the correction wrote; and an answer's assumed
+  pull stands (`pullStands`).
+- **Nothing rung again in the grace** (3, `1c3e753`): the pull a
+  notification had rung was rung in the app once the cooling moved.
+- **Done's note as it ran** (2.2, `d171f2d`), **the time range as times of
+  day** (2.3, `9624b41`), **no white's line under the question**
+  (`ba5ef5f`), **a change in hand committed on leaving the screen**
+  (`41d453c`), **the start's limit spoken** (`68871b5`), **the slider's
+  heading whole at the largest text** (`757c2e7`), **the time's two lines
+  closer** (DECISIONS.md 99, `bebd5db`, `UI.md` §8).
+
+**Things that cost time.**
+- **`overdue-and-back` failed on `63d308d`**, intermittently (3 runs in 4 on
+  `0.5.x`): core now keeps a ring through a correction and lets the clock's
+  next look clear it, so the cook stored at the commit of a change back
+  still carries `rangAt_s` until the next tick. The scenario waits for the
+  cleared ring (`9e2574d`); 6 of 6 in a row since.
+- **The plist lags the log**: a check of the stored egg right after `stored
+  none` read a plist without it; such checks wait for what they check.
+- **A simulator kept for many runs stops writing preferences**: after
+  about 30 scenarios' installs on one kept device, every relaunch found
+  nothing stored (8 failures, all of restores and the plist). A reboot of
+  the device cleared it; `npm run ios:e2e` makes a new device each run, so
+  only `--keep` meets it.
+- **Times of day are said to the minute**: under the slow hob 65 s did not
+  move the range's minutes; the check steps four minutes.
+
+Checked on the merge with `0.5.x` (`a4f4c8b`): `npm run verify` (399
+tests, `swift test` 159 in 39 suites), `npm run ios:build`, `npm run
+ios:e2e` 40 of 40 in 370 s. Screenshots of the readout idle, heating and
+cooking, in both Englishes and at the largest text size, before and after,
+were taken for the comparison with the web's spacing; the owner judges it
+on a phone.

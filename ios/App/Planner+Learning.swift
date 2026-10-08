@@ -102,9 +102,13 @@ extension Planner {
     ///   (`folded.before`), as a second answer refolds from.
     /// - Otherwise (folded before a relaunch): the log replayed up to it, a
     ///   surface per egg, off the main actor.
+    ///
+    /// The first two are `calibrationBeforeAtHand`, which Start again reads
+    /// before `endEgg` lets go of what this process folded.
     func calibrationBefore(_ index: Int?) async -> Calibration {
-        guard let index, index < kept.folded else { return kept.calibration }
-        if let done = folded, done.index == index { return done.before }
+        if let atHand = calibrationBeforeAtHand(index) { return atHand }
+        // Not at hand: an egg in the log, folded before a relaunch.
+        guard let index else { return kept.calibration }
         var c = Calibrations.start(kept.base)
         for egg in kept.log[..<index] where recordTeaches(egg) {
             let request = gridRequestFor(c, egg)
@@ -112,6 +116,15 @@ extension Planner {
             foldRecord(&c, egg, grid: grid)
         }
         return c
+    }
+
+    /// `calibrationBefore` when it needs no replay: the calibration as it
+    /// stands for an egg not in the log or not folded yet, the one held
+    /// before folding it in this process; nil otherwise.
+    func calibrationBeforeAtHand(_ index: Int?) -> Calibration? {
+        guard let index, index < kept.folded else { return kept.calibration }
+        if let done = folded, done.index == index { return done.before }
+        return nil
     }
 
     /// The egg at `index` made again from its cook as corrected after the

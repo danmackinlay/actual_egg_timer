@@ -1,6 +1,8 @@
 import Foundation
 import Observation
+import UIKit
 import EggTimerCore
+import EggTimerCopy
 
 /// A control a correction can come from, for "another control touched", and
 /// the settings and the cook's choices each one makes. The web's `FIELDS`
@@ -310,6 +312,18 @@ final class Edits {
         if pending { commit() }
     }
 
+    /// The app leaves the screen (`scenePhase` no longer active): what is in
+    /// hand is committed now, so a kill from the app switcher inside the
+    /// settle loses nothing (onescreen review 3); a finger down then is gone.
+    func leaving() {
+        down = nil
+        guard pending else { return }
+        #if DEBUG
+        Screenshots.log("edit leaving")
+        #endif
+        commit()
+    }
+
     private func settleThenCommit() {
         settleTask?.cancel()
         let gen = generation
@@ -480,6 +494,16 @@ final class Edits {
         #if DEBUG
         if let limit { Screenshots.log("start limit \(limit.kind) \(limit.atS)") }
         #endif
+        // The line under the start says why it went no further; VoiceOver
+        // says it too, at each press it stops (the web's line is
+        // `aria-live`), since the value it reads has not changed.
+        if let limit {
+            let said = tr(limit.kind.key, ["time": .text(timeOfDay(Date(timeIntervalSince1970: limit.atS)))])
+            UIAccessibility.post(notification: .announcement, argument: said)
+            #if DEBUG
+            Screenshots.log("announce \(said)")
+            #endif
+        }
         guard next != from else { return false }
         startInHand = next
         controlsChanged(.startTime)

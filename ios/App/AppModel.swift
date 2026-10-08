@@ -55,12 +55,20 @@ final class AppModel {
         if let dropped = cook.restoreIfNeeded() {
             if let boil = dropped.boil { planner.rememberBoil(boil) }
             if let egg = dropped.egg { logUnanswered(egg) }
+            // Answered, corrected after the pull, and its record not made
+            // again before the app went: made now, before the egg is final.
+            if let stale = dropped.remake {
+                remakeThenEnd(stale, logged: planner.kept.log.indices.last, before: nil)
+            }
         }
         // A cook picked back up: its controls show its own choices, and
         // correct it (design/one-screen.md section 4, review 2.5).
         if let running = cook.running {
             planner.adopt(running.choices)
             edits.begin()
+            // A correction after the pull whose record was not made again
+            // before the app went: made now.
+            Task { await refreshAsRan() }
         }
         // An answer held for the pot's surface is made when a plan lands.
         cook.planTaken = { [weak self] in self?.answerHeld() }
@@ -72,7 +80,12 @@ final class AppModel {
         // egg that can still change.
         Sharing.shared.start(host: Sharing.Host(
             log: { [planner] in planner.kept.log },
-            finalCount: { [planner, cook] in planner.kept.log.count - (cook.eggOpen(at: AppClock.now) ? 1 : 0) }
+            finalCount: { [weak self, planner, cook] in
+                // Nor the egg whose record is being made again as its cook
+                // ends (`remakeThenEnd`).
+                let open = cook.eggOpen(at: AppClock.now) || (self?.remaking ?? 0) > 0
+                return planner.kept.log.count - (open ? 1 : 0)
+            }
         ))
         // A finished cook answered before the relaunch keeps its open
         // questions open, if its egg is still the last in the log and has not
@@ -155,22 +168,64 @@ final class AppModel {
 
     /// "Start again", at Done: what the cook leaves (`cookEnding`). A pan it
     /// timed is remembered, and an egg cooked through that nobody answered
-    /// about is still logged; it folds nothing.
+    /// about is still logged; it folds nothing. An answered egg corrected
+    /// after its pull whose record is not yet made again - a change still
+    /// settling is committed just above, so the usual case - has it made
+    /// first, in place of the egg logged, and only then is the cook
+    /// forgotten and the egg final (`remake`, onescreen review 1.2).
     func startAgain() {
         edits.touchedElsewhere()
         edits.end()
+        var stale: RunningCook?
         if let ending = cook.ending() {
             if let boil = ending.boil { planner.rememberBoil(boil) }
-            if let egg = cook.unanswered() { logUnanswered(egg) }
+            if ending.remake, cook.feedbackGiven, let running = cook.running {
+                stale = running
+            } else if let egg = cook.unanswered() {
+                logUnanswered(egg)
+            }
         }
+        // Read before `endEgg` lets go of what this process folded.
+        let logged = planner.kept.log.indices.last
+        let before = stale == nil ? nil : planner.calibrationBeforeAtHand(logged)
         held = nil
-        cook.cancel()
+        cook.cancel(keepStored: stale != nil)
         planner.endEgg()
         // A new cook, a new nudge.
         planner.redrawNudge()
         planner.refresh()
-        // The egg just finished is final now: no answer can be added to it.
-        Sharing.shared.sendFinal()
+        if let stale {
+            remakeThenEnd(stale, logged: logged, before: before)
+        } else {
+            // The egg just finished is final now: no answer can be added to it.
+            Sharing.shared.sendFinal()
+        }
+    }
+
+    /// How many ended cooks' records are being made again (`remakeThenEnd`):
+    /// their eggs are not final until they are.
+    private(set) var remaking = 0
+
+    /// An answered egg's record made again for its correction after the pull
+    /// (`correctedAsRan`, on `before`, the calibration before it, or worked
+    /// out here), logged in place of the egg at `logged`, its answers kept;
+    /// then the stored cook forgotten and what is final sent.
+    private func remakeThenEnd(_ stale: RunningCook, logged: Int?, before: Calibration?) {
+        remaking += 1
+        Task {
+            defer {
+                remaking -= 1
+                Cook.forgetStored(idMs: stale.idMs)
+                Sharing.shared.sendFinal()
+            }
+            let base: Calibration
+            if let before { base = before } else { base = await planner.calibrationBefore(logged) }
+            guard let made = await Self.correctedAsRan(stale, before: base) else { return }
+            #if DEBUG
+            Screenshots.log("as ran remade")
+            #endif
+            relogCorrected(made, logged: logged)
+        }
     }
 
     /// Back in the foreground, or about to take an answer: a cook that is no
@@ -268,7 +323,7 @@ final class AppModel {
     /// A correction committed (`Edits.commit`): the cook corrected
     /// (`Cook.correct`), and after the pull the record with it.
     func correct(_ choices: CookChoices, startedAtS: Double?) {
-        cook.correct(choices: choices, startedAtS: startedAtS)
+        cook.correct(choices: choices, startedAtS: startedAtS, answered: cook.feedbackGiven || held != nil)
         Task { await refreshAsRan() }
     }
 
@@ -286,10 +341,33 @@ final class AppModel {
     func refreshAsRan() async {
         guard let running = cook.running, running.events.pulled != nil, running.asRan != nil,
               !asRanCurrent(running) else { return }
+        #if DEBUG
+        // `-uiHoldAsRan YES`: never made in this launch, as if the app were
+        // killed before it landed (Screenshots.swift).
+        if Screenshots.holdAsRan { return }
+        #endif
         let logged = cook.feedbackGiven ? planner.kept.log.indices.last : nil
         let before = await planner.calibrationBefore(logged)
+        let made = await Self.correctedAsRan(running, before: before)
+        guard let made, let now = cook.running, now.idMs == running.idMs,
+              now.correctedAtS == running.correctedAtS else { return }
+        cook.keepCorrectedAsRan(made.cook)
+        #if DEBUG
+        Screenshots.log("as ran corrected")
+        #endif
+        relogCorrected(made, logged: logged)
+        answerHeld()
+    }
+
+    /// The cook corrected after its pull, its plan as it ran made again on
+    /// `before`, the calibration before this egg (core `asRanCorrected`), on
+    /// that calibration's surface and odds for the corrected pot, built off
+    /// the main actor; with that plan, for its record.
+    private static func correctedAsRan(
+        _ running: RunningCook, before: Calibration
+    ) async -> (cook: RunningCook, plan: CookPlan)? {
         let nowS = AppClock.now.timeIntervalSince1970
-        let made: (cook: RunningCook, plan: CookPlan)? = await Task.detached(priority: .userInitiated) {
+        return await Task.detached(priority: .userInitiated) {
             guard let inputs = replan(running, before, surface: nil, leanHintS: 0, nowS: nowS).inputs else { return nil }
             let grid = await DecisionGrids.shared.grid(inputs)
             let profile = await DecisionGrids.shared.profile(inputs, before)
@@ -297,19 +375,16 @@ final class AppModel {
             guard let next = asRanCorrected(running, before: before, surface: surface, nowS: nowS) else { return nil }
             return (next, replan(next, before, surface: surface, leanHintS: 0, nowS: nowS))
         }.value
-        guard let made, let now = cook.running, now.idMs == running.idMs,
-              now.correctedAtS == running.correctedAtS else { return }
-        cook.keepCorrectedAsRan(made.cook)
-        #if DEBUG
-        Screenshots.log("as ran corrected")
-        #endif
-        if let index = logged, index == planner.kept.log.indices.last {
-            let had = planner.kept.log[index]
-            if let record = Cook.recordOf(made.cook, made.plan, yolk: had.yolkWord, white: had.white, probe: had.probe) {
-                planner.replaceLogged(index, record)
-            }
+    }
+
+    /// The egg at `logged`, the log's last, its record made again from
+    /// `made`, its answers kept, and folded again (`Planner.replaceLogged`).
+    private func relogCorrected(_ made: (cook: RunningCook, plan: CookPlan), logged: Int?) {
+        guard let index = logged, index == planner.kept.log.indices.last else { return }
+        let had = planner.kept.log[index]
+        if let record = Cook.recordOf(made.cook, made.plan, yolk: had.yolkWord, white: had.white, probe: had.probe) {
+            planner.replaceLogged(index, record)
         }
-        answerHeld()
     }
 
     /// The answers given while the record waited for the pot's surface, made

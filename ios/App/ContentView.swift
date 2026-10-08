@@ -159,11 +159,15 @@ struct ContentView: View {
             showScreenshotScene()
             #endif
         }
-        // Back in the foreground: a cook no longer open is ended first, so
-        // its egg is final before sharing sends what it owes, the web's
-        // "online".
+        // Leaving the screen: a change in hand is committed, the web's
+        // `pagehide`. Back in the foreground: a cook no longer open is ended
+        // first, so its egg is final before sharing sends what it owes, the
+        // web's "online".
         .onChange(of: scenePhase) { _, now in
-            guard now == .active else { return }
+            guard now == .active else {
+                model.edits.leaving()
+                return
+            }
             model.endIfNoLongerOpen()
             Sharing.shared.resume()
         }

@@ -666,7 +666,10 @@ scenario('overdue-and-back', 'C3 step 3: a correction that makes the egg overdue
   t = await tapAt(run, plan0.pull - 35, 'set');
   after = await corrected(run, t.i);
   await run.until(/^phase COOKING$/, { from: t.i, what: 'Cooking again' });
-  const ev = after.cook?.events;
+  // The ring the plan no longer holds, cleared by the clock's next look
+  // (core `eventsDue`; onescreen review 3).
+  const cleared = await run.until(/^stored .*"rangAt_s":null/, { from: t.i, what: 'the ring undone' });
+  const ev = lastStored(run.lines().slice(0, cleared.i + 1))?.cook.events;
   run.check(ev?.pulled === null && ev?.rangAt_s === null, `nothing observed: ${JSON.stringify(ev)}`);
   run.check(near(after.plan.pull, plan0.pull, 1), `the pull back: ${(after.plan.pull - plan0.pull).toFixed(1)} s`);
   run.check(near(scheduled(after.lines)['cook.pull'], after.plan.pull, EXACT), 'its alarm set again');
@@ -715,6 +718,9 @@ scenario('start-time', 'C3 step 3: the start corrected a minute at a time, stopp
   const early = await run.until(/^start limit earliest /, { from: t.i, what: 'the limit two hours back' });
   after = await corrected(run, t.i);
   run.check(near(after.cook?.startedAt_s, id - 7200, EXACT), `two hours back: ${after.cook?.startedAt_s - id}`);
+  // Said to VoiceOver too, at each (onescreen review 3).
+  const said = run.lines().filter((l) => l.text.startsWith('announce ')).map((l) => l.text.slice(9));
+  run.check(said.length >= 3 && said[0] === EN['controls.startedAt.latestNow'].text, `announced: ${JSON.stringify(said)}`);
   run.note(`"${now.text}"; "${boil.text}"; "${early.text}"`);
 });
 
@@ -810,6 +816,9 @@ scenario('still-in-yes', 'C3 step 4: a correction after the grace ran out asks "
     `nothing scheduled while it asks: ${JSON.stringify(scheduled(after.lines))}`);
   const card = lastCard(after.lines);
   run.check(card?.stage === 'pull', `the card shows the pull while it asks: ${card?.stage}`);
+  // No caveat about the pull it doubts (onescreen review 3).
+  const white = (await quiet(run, 'white ')).filter((l) => l.text.startsWith('white ')).at(-1);
+  run.check(white?.text === 'white false', `the white's line under the question: ${white?.text}`);
   // The cooling's counted end passes under the question: nothing.
   let i = await run.step(plan0.pull + 640);
   await sleep(1000);
@@ -1215,6 +1224,203 @@ scenario('again-logs', 'Start again logs the unanswered egg before it clears the
   const prefs = await run.prefs((p) => p['calibration.v4']?.log?.length === 1 && !('cookInProgress.v3' in p));
   run.check(prefs['calibration.v4']?.log?.length === 1, 'the plist holds the egg');
   run.check(!('cookInProgress.v3' in prefs), 'and no cook');
+});
+
+// ------------------------------------- the one screen's review, on iOS
+
+/// A hot cook out 2 s into the pull, on to Done, and the answer `-uiDo`
+/// gives at the cooling's end + 5 s folded: the plan at Done and the egg
+/// logged then.
+async function answeredAtDone(run, uiDo) {
+  await hotStarted(run, ['out@pull+2,answer:jammy@cooled+5', uiDo].filter(Boolean).join(','));
+  const cooling = await toCooling(run, 2);
+  let i = await run.step(cooling.cooled + 1);
+  await run.until(/^phase DONE$/, { from: i, what: 'Done' });
+  i = await run.step(cooling.cooled + 5);
+  await run.until(/^log 1 folded 1 /, { from: i, what: 'Jammy folded' });
+  return { cooling, first: eggLog(run.lines()).last };
+}
+
+scenario('start-again-corrected', 'onescreen review 1.2: Jammy at Done, the egg corrected and Start again pressed while it settles: the corrected egg logged, then the cook forgotten', async (run) => {
+  const { cooling, first } = await answeredAtDone(run, 'set:size=3@cooled+10,again@cooled+12');
+  const t = await tapAt(run, cooling.cooled + 10, 'set');
+  const again = await tapAt(run, cooling.cooled + 12, 'again');
+  const gone = await run.until(/^stored none$/, { from: again.i, what: 'the cook forgotten' });
+  const lines = run.lines();
+  const committed = index(lines.slice(t.i), /^edit committed /) + t.i;
+  run.check(committed > again.i, 'committed by Start again, not by its settle (the host too slow to tell)');
+  const egg = eggLog(lines.slice(0, gone.i)).last;
+  run.check(egg.egg.mass_g !== first.egg.mass_g, `the egg logged corrected: ${first.egg.mass_g} -> ${egg.egg.mass_g} g`);
+  run.check(egg.yolkWord === 'jammy', `the answer kept: ${egg.yolkWord}`);
+  const prefs = await run.prefs((p) => !('cookInProgress.v3' in p) && p['calibration.v4']?.log?.[0]?.egg?.mass_g === egg.egg.mass_g);
+  const kept = prefs['calibration.v4']?.log;
+  run.check(kept?.length === 1 && kept[0].egg.mass_g === egg.egg.mass_g, `the plist's egg: ${kept?.[0]?.egg?.mass_g} g`);
+  run.note(`the egg logged ${first.egg.mass_g} -> ${egg.egg.mass_g} g, Jammy kept, then forgotten`);
+});
+
+scenario('too-old-corrected', 'onescreen review 1.2: an answered egg corrected at Done, killed before its record was made again, relaunched too old: the corrected egg logged', async (run) => {
+  // `-uiHoldAsRan YES`: the record is never made again in this launch, as if
+  // the app were killed before it landed.
+  const { cooling, first } = await answeredAtDone(run, '');
+  run.terminate();
+  await relaunched(run, cooling.cooled + 9, ['-uiHoldAsRan', 'YES', '-uiDo', 'set:size=3@cooled+10']);
+  const t = await tapAt(run, cooling.cooled + 10, 'set');
+  const c = await corrected(run, t.i);
+  run.check(!has(run.lines().slice(t.i), /^as ran corrected$/), 'the record not made again before the kill');
+  run.check(c.cook?.correctedAt_s !== null && eggLog(run.lines()).last.egg.mass_g === first.egg.mass_g, 'stored corrected, logged as it was');
+  run.terminate();
+  run.launch([], { at: cooling.cooled + 3700 });
+  const old = await run.until(/^restore too old$/, { from: run.launched, what: 'too old' });
+  const gone = await run.until(/^stored none$/, { from: old.i, what: 'the cook forgotten' });
+  const egg = eggLog(run.lines().slice(0, gone.i)).last;
+  run.check(egg.egg.mass_g !== first.egg.mass_g, `the egg logged corrected: ${first.egg.mass_g} -> ${egg.egg.mass_g} g`);
+  run.check(egg.yolkWord === 'jammy', `the answer kept: ${egg.yolkWord}`);
+  const prefs = await run.prefs((p) => !('cookInProgress.v3' in p) && p['calibration.v4']?.log?.[0]?.egg?.mass_g === egg.egg.mass_g);
+  run.check(prefs['calibration.v4']?.log?.[0]?.egg.mass_g === egg.egg.mass_g, 'the plist holds the corrected egg');
+  run.note(`too old: the egg logged ${first.egg.mass_g} -> ${egg.egg.mass_g} g, then forgotten`);
+});
+
+
+scenario('done-stays-done', 'onescreen review 2.1: on the counter, Done at the out, Jammy, then the cooling corrected to ice: still Done, nothing rung, no alarm or card brought back', async (run) => {
+  await started(run, [...HOT, '-cooling', 'counter', '-uiDo', 'out@pull+2,answer:jammy@pull+60,set:cooling=ice@pull+70']);
+  const plan0 = lastPlan(run.lines());
+  let i = await run.step(plan0.pull + 1);
+  await run.until(/^phase PULL$/, { from: i, what: 'phase PULL' });
+  i = await run.step(plan0.pull + 2);
+  const done = await run.until(/^phase DONE$/, { from: i, what: 'Done at the out' });
+  await run.settled(done.i);
+  i = await run.step(plan0.pull + 60);
+  await run.until(/^log 1 folded 1 /, { from: i, what: 'Jammy folded' });
+  const t = await tapAt(run, plan0.pull + 70, 'set');
+  const after = await corrected(run, t.i);
+  run.check(after.cook?.choices.cooling === 'ice', `the cook says ${after.cook?.choices.cooling}`);
+  run.check(after.cook?.events.cooledAt_s !== null, `the cooling ended at the latest at the correction: ${after.cook?.events.cooledAt_s}`);
+  // On past where an ice bath from the out would have ended.
+  i = await run.step(plan0.pull + 400);
+  await sleep(1000);
+  const lines = run.lines().slice(t.i);
+  run.check(!has(lines, /^phase COOLING$/), 'never back to Cooling');
+  run.check(!has(lines, /^ring /), 'nothing rung');
+  run.check(!('cook.cool' in scheduled(lines)), `no cooling alarm: ${JSON.stringify(scheduled(lines))}`);
+  run.check(!has(lines, /^activity (start|update) /), 'no card brought back');
+  const egg = eggLog(run.lines()).last;
+  run.check(egg.yolkWord === 'jammy' && egg.cooled_s !== undefined && egg.cooled_s <= 68 + 1e-6,
+    `the record: ${egg.yolkWord}, an ice bath of ${egg.cooled_s} s`);
+  run.note(`Done kept; the record's ice bath ${egg.cooled_s?.toFixed?.(0)} s`);
+});
+
+scenario('answered-pull-stands', 'onescreen review 2.1: a pull the clock assumed, Jammy at Done, then cold water: the pull confirmed, nothing asked, still Done', async (run) => {
+  await started(run, [...HOT, '-uiDo', 'answer:jammy@cooled+5,set:start=cold@cooled+10']);
+  const plan0 = lastPlan(run.lines());
+  let i = await run.step(plan0.pull + 21);
+  await run.until(/^phase COOLING$/, { from: i, what: 'the grace run out' });
+  await run.settled(i);
+  const cooling = lastPlan(run.lines());
+  i = await run.step(cooling.cooled + 1);
+  await run.until(/^phase DONE$/, { from: i, what: 'Done' });
+  i = await run.step(cooling.cooled + 5);
+  await run.until(/^log 1 folded 1 /, { from: i, what: 'Jammy folded' });
+  const t = await tapAt(run, cooling.cooled + 10, 'set');
+  const after = await corrected(run, t.i);
+  run.check(!after.plan.asking, 'not asked whether the eggs are still in the water');
+  const pulled = after.cook?.events.pulled;
+  run.check(pulled?.by === 'timeout' && pulled.confirmed, `the pull stands, confirmed: ${JSON.stringify(pulled)}`);
+  run.check(!has(run.lines().slice(t.i), /^phase (HEATING|COOKING|PULL|COOLING)$/), 'still Done');
+  run.note('a correction after an answer confirms the pull the clock assumed');
+});
+
+
+scenario('grace-correction', 'onescreen review 3: a lighter egg 15 s into the pull keeps the pull that rang and its grace; nothing rings again', async (run) => {
+  const plan0 = await hotStarted(run, 'set:size=1@pull+15');
+  let i = await run.step(plan0.pull + 1);
+  await run.until(/^phase PULL$/, { from: i, what: 'phase PULL' });
+  await run.settled(i);
+  const rings = run.lines().filter((l) => /^ring /.test(l.text)).length;
+  const t = await tapAt(run, plan0.pull + 15, 'set');
+  const after = await corrected(run, t.i);
+  run.check(near(after.plan.pull, plan0.pull, EXACT), `the pull that rang: ${(after.plan.pull - plan0.pull).toFixed(3)} s`);
+  await sleep(1000);
+  run.check(!has(run.lines().slice(t.i), /^ring /), `rung again (${rings} before)`);
+  i = await run.step(plan0.pull + 21);
+  await run.until(/^phase COOLING$/, { from: i, what: 'Cooling at the grace’s end' });
+  const pulled = lastStored(run.lines())?.cook.events.pulled;
+  run.check(near(pulled?.due_s, plan0.pull, EXACT) && near(pulled?.out_s, plan0.pull + 20, EXACT),
+    `due at the pull that rang, out at its grace's end: ${JSON.stringify(pulled)}`);
+  run.note('Pull kept, nothing rung again, Cooling at the grace’s first end');
+});
+
+
+scenario('done-note-as-ran', 'onescreen review 2.2: Runny at Done, relaunched: the texture note reads the cook as it ran', async (run) => {
+  await started(run, [...HOT, '-uiDo', 'out@pull+2,answer:runny@cooled+5']);
+  const cooling = await toCooling(run, 2);
+  let i = await run.step(cooling.cooled + 1);
+  await run.until(/^phase DONE$/, { from: i, what: 'Done' });
+  i = await run.step(cooling.cooled + 5);
+  await run.until(/^log 1 folded 1 /, { from: i, what: 'Runny folded' });
+  const notes = (lines) => lines.filter((l) => l.text.startsWith('note ')).map((l) => l.text.slice(5));
+  const was = notes(await quiet(run, 'note ')).at(-1);
+  run.terminate();
+  const r = await relaunched(run, cooling.cooled + 60);
+  run.check(r.restore.startsWith('restore DONE'), r.restore);
+  // Not the blank before the first plan.
+  const now = notes((await quiet(run, 'note ')).slice(run.launched)).filter((n) => n !== '');
+  run.check(now.length > 0 && now.every((n) => n === was), `the note ${JSON.stringify(now)} for "${was}"`);
+  run.note(`"${was}" kept across the relaunch`);
+});
+
+
+/// The certainty line as last logged: its word and the time range it opens.
+const certaintyNow = (lines) => {
+  const l = lines.filter((x) => x.text.startsWith('certainty ')).at(-1);
+  const m = l?.text.match(/^certainty (.*) \| (.*)$/);
+  return m ? { word: m[1], time: m[2] } : null;
+};
+
+scenario('certainty-mid-cook', 'onescreen review 2.3: once cooking, the range opened is when to take the eggs out, as times of day; under a lengthening slow hob it moves with the guess', async (run) => {
+  const before = EN['certainty.timeOut'].text.split('{low}')[0];
+  const idle = EN['certainty.time'].text.split('{low}')[0];
+  const plan0 = await hotStarted(run, 'set:start=cold@300');
+  let i = await run.step(run.t0 + 299);
+  await sleep(500);
+  const hot = certaintyNow(await quiet(run, 'certainty '));
+  run.check(hot?.time.startsWith(before), `five minutes in: "${hot?.time}"`);
+  const t = await tapAt(run, run.t0 + 300, 'set');
+  await corrected(run, t.i);
+  i = await run.step(run.t0 + 16 * 60);
+  let plan = await run.until(/^plan .* lengthened true/, { from: i, what: 'the slow hob lengthened' });
+  await run.settled(plan.i);
+  const a = certaintyNow(await quiet(run, 'certainty '));
+  // Four minutes on: the times are said to the minute.
+  i = await run.step(run.t0 + 20 * 60);
+  plan = await run.until(/^plan /, { from: i, what: 'planned again' });
+  await run.settled(plan.i);
+  const b = certaintyNow(await quiet(run, 'certainty '));
+  run.check(a?.time.startsWith(before) && b?.time.startsWith(before), `heated: "${a?.time}", "${b?.time}"`);
+  run.check(a && b && a.time !== b.time, 'the range moves with the guess');
+  run.check(!a?.time.startsWith(idle) || before === idle, 'not whole times');
+  run.note(`"${hot?.time}"; 16:00 "${a?.time}"; 20:00 "${b?.time}"`);
+});
+
+
+scenario('change-kept-on-hide', 'onescreen review 3: a change in hand when the app leaves the screen is committed; two changes are two commits', async (run) => {
+  await hotStarted(run, 'drag:0.3@30');
+  let t = await tapAt(run, run.t0 + 30, 'drag');
+  await run.until(/^edit level$/, { from: t.i, what: 'the change in hand' });
+  // Another app over it, as the app switcher or a call would.
+  simctl('launch', udid, 'com.apple.Preferences');
+  const c = await run.until(/^edit committed level /, { from: t.i, what: 'committed on leaving', timeoutS: 15 });
+  await run.until(/^stored .*"level":0\.3[,}]/, { from: c.i, what: 'the cook stored' });
+  const prefs = await run.prefs((p) => p.doneness === 0.3, 10);
+  run.check(prefs.doneness === 0.3, `the setting written: ${prefs.doneness}`);
+  run.terminate();
+  const r = await relaunched(run, run.t0 + 40, ['-uiDo', 'set:size=3@50,set:water=1@50']);
+  run.check(lastStored(r.lines)?.cook.choices.level === 0.3, 'relaunched with the change');
+  t = await tapAt(run, run.t0 + 50, 'set');
+  const first = await run.until(/^edit committed /, { from: t.i, what: 'the first change committed' });
+  const second = await run.until(/^edit committed /, { from: first.i + 1, what: 'the second change committed' });
+  run.check(/^edit committed mass /.test(first.text) && /^edit committed water /.test(second.text),
+    `two commits: "${first.text}", "${second.text}"`);
+  run.note('the slider held as the app left: committed, stored and written; size then water: two commits');
 });
 
 scenario('newer-version', "DECISIONS 100: a newer build's mark: the line, an egg timed to Done, answered and started again, and nothing stored; without it, the mark", async (run) => {

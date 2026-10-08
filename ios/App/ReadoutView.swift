@@ -25,6 +25,15 @@ struct ReadoutView: View {
     private var planner: Planner { model.planner }
     private var cook: Cook { model.cook }
 
+    /// The clock's size, pt: fixed, as the web's, at every text size.
+    private static let digits: CGFloat = 76
+    /// How far below the digits' baseline their line reaches, pt: the room
+    /// a descender would take, which digits never use.
+    private static let descender = -UIFont.systemFont(ofSize: digits, weight: .semibold).descender
+    /// From the digits' baseline to the top of the boil line, pt (the web's
+    /// 10 px on a 390-px screen).
+    private static let underBaseline: CGFloat = 10
+
     var body: some View {
         VStack(spacing: 6) {
             if let copy = sousVide {
@@ -52,20 +61,28 @@ struct ReadoutView: View {
                         .transition(.opacity)
                 }
 
-                Text(bigTime)
-                    .font(.system(size: 76, weight: .semibold, design: .rounded))
-                    .monospacedDigit()
-                    .contentTransition(.numericText())
-                    .animation(.snappy, value: bigTime)
+                // The time's two lines sit close under the digits
+                // (DECISIONS.md 99, UI.md section 8, as the web): the boil
+                // line about 10 pt under the digits' baseline, which digits
+                // never reach below, and the certainty word's press target
+                // directly under the boil line.
+                VStack(spacing: 0) {
+                    Text(bigTime)
+                        .font(.system(size: Self.digits, weight: .semibold, design: .rounded))
+                        .monospacedDigit()
+                        .contentTransition(.numericText())
+                        .animation(.snappy, value: bigTime)
+                        .padding(.bottom, Self.underBaseline - Self.descender)
 
-                sublineLine
-                    #if DEBUG
-                    // What the readout says, for the scripted checks.
-                    .onChange(of: "\(phase.rawValue) \(bigTime) | \(subline)", initial: true) { _, said in
-                        Screenshots.log("readout \(said)")
-                    }
-                    #endif
-                certaintyLine
+                    sublineLine
+                        #if DEBUG
+                        // What the readout says, for the scripted checks.
+                        .onChange(of: "\(phase.rawValue) \(bigTime) | \(subline)", initial: true) { _, said in
+                            Screenshots.log("readout \(said)")
+                        }
+                        #endif
+                    certaintyLine
+                }
             }
         }
         .frame(maxWidth: .infinity)
@@ -152,10 +169,11 @@ struct ReadoutView: View {
         case .pull, .cooling, .done: nil
         }
         VStack(spacing: 2) {
-            ZStack {
+            ZStack(alignment: .top) {
                 // Two lines' room in every phase, the word and "most
                 // likely", so nothing under it moves when they come or go,
-                // nor at the start.
+                // nor at the start; the word at its top, close under the
+                // boil line (DECISIONS.md 99).
                 Text(verbatim: " \n ").appFont(.subheadline).padding(.vertical, 4).hidden().accessibilityHidden(true)
                 if let sure {
                     VStack(spacing: 2) {
@@ -205,13 +223,28 @@ struct ReadoutView: View {
             }
         }
         .multilineTextAlignment(.center)
+        #if DEBUG
+        // What the line says, and what a press would open last (the time
+        // range), whether open or not; and whether the white's line shows:
+        // for the scripted checks.
+        .onChange(of: sure.map { "\(tr(certaintyKey($0.words.certainty))) | \(opened($0).last ?? "")" } ?? "none",
+                  initial: true) { _, said in
+            Screenshots.log("certainty \(said)")
+        }
+        .onChange(of: whiteRunny(o), initial: true) { _, shown in
+            Screenshots.log("white \(shown)")
+        }
+        #endif
     }
 
     /// Whether to say the white might still be runny: the choice on screen's
     /// while idle, the plan's while the egg is in, and once it is out the
     /// forecast as it ran (`Cook.asRan`), not a plan made since on a
     /// posterior that has learned from this egg.
+    /// Never under "Are the eggs still in the water?": not a caveat about the
+    /// pull the question doubts (onescreen review 3).
     private func whiteRunny(_ o: Outcome?) -> Bool {
+        if asking { return false }
         if phase != .idle, let ran = cook.asRan { return forecastWhiteAtRisk(ran.forecast) }
         return o.map(whiteAtRisk) ?? false
     }
@@ -225,14 +258,21 @@ struct ReadoutView: View {
     }
 
     /// What pressing the certainty line opens: the interval, "most likely"
-    /// when it is not already said, and the likely time range, m:ss as the
-    /// clock shows it.
+    /// when it is not already said, and the likely time range in the clock's
+    /// own terms (core `timeRangeWords`, onescreen review 2.3): while idle
+    /// whole times, m:ss as the clock shows them; once a cook runs, the times
+    /// of day to take the eggs out, not whole times under a clock counting
+    /// down, and for a reading held over a plan that has moved since (a slow
+    /// hob's lengthening guess) about the plan's time now.
     private func opened(_ sure: CertaintyReading) -> [String] {
         var lines = [rendered(intervalWords(sure.words))]
         if mostLikelyOpened(sure.words) { lines.append(rendered(mostLikelyWords(sure.words))) }
-        lines.append(tr("certainty.time", [
-            "low": .text(clockString(sure.time.lowS)), "high": .text(clockString(sure.time.highS)),
-        ]))
+        let running = phase == .idle ? nil : cook.running
+        let range = timeRangeWords(sure, startedAtS: running?.startedAtS, cookTimeS: cook.plan?.cookTimeS ?? 0)
+        let said = { (s: Double) in
+            range.ofDay ? timeOfDay(Date(timeIntervalSince1970: s)) : clockString(s)
+        }
+        lines.append(tr(range.key, ["low": .text(said(range.lowS)), "high": .text(said(range.highS))]))
         return lines
     }
 
