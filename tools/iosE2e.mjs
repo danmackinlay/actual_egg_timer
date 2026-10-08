@@ -1232,7 +1232,8 @@ scenario('newer-version', "DECISIONS 100: a newer build's mark: the line, an egg
   run.terminate();
   const lines = run.sinceLaunch();
   run.check(same(phases(lines), ['HEATING', 'COOKING', 'PULL', 'COOLING', 'DONE']), `the timer ran: ${phases(lines)}`);
-  run.check(!has(lines, /^log \d+ /), 'no egg logged');
+  // The log line says what a save would hold: never an egg.
+  run.check(!has(lines, /^log [1-9]/), 'no egg logged');
   // The plist lags the app by seconds: given them, there is still nothing.
   await sleep(5000);
   const stored = Object.keys(await run.prefs());

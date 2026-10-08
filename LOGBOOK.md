@@ -5908,3 +5908,17 @@ became 0.4.0. iOS's app has no unit-test target, so the app's half is held
 by the drive and core's by the fixture.
 
 355 TypeScript tests and 135 Swift; the iOS build passes.
+
+Ported to `0.5.x` the same day (`0.5.x-newer-version-guard`): the web's
+door covers 0.5's split stores (`calibrationStore.ts`, the running cook
+`aet.cook.v4` and the old cook keys, the unread lists) unchanged, and the
+development clock's `aet.devClock.used` now goes through it, written after
+the claim rather than as `now.ts` loads, which wrote before it; on iOS the
+writes 0.5 added (a correction's settings, `cookInProgress.v3`, the old cook
+keys, the unread cooks) go through `Stores`, and a logged egg's correction
+is refused while read-only. New checks: `npm run e2e` `newer-version` (no
+localStorage write through Done, Start again and a setting, no request,
+the line shown) and `newer-version-tab`; `npm run ios:e2e` `newer-version`
+(the mark as a launch argument, since an edit of the plist can be undone
+by the system's cached copy: the line, Done, nothing stored; then the
+mark). 396 TypeScript tests, 158 Swift, e2e 30 of 30, ios:e2e 32 of 32.
