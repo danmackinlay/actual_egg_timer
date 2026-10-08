@@ -36,6 +36,7 @@ import { localDay } from './eggRecord.js';
 import { buildOffThread } from './offThread.js';
 import { activePopulation } from './population.js';
 import { APP_VERSION } from './version.js';
+import { storageReadOnly } from './store.js';
 
 export type { Calibration } from '../core/record.js';
 
@@ -248,7 +249,9 @@ export function keptState(): Kept {
 /**
  * Write one egg down, before anything is learned from it: a reload between the
  * answer and the fold then refolds it on load rather than losing it or folding
- * it twice. Returns its index in the log.
+ * it twice. Returns its index in the log, or -1 while a newer build's
+ * stores are left alone (store.ts): then nothing is written down, so
+ * nothing is learned either.
  *
  * An egg already written down - the same cook, by `id`, from another tab or
  * from this one - is not written twice. The record given is the cook as last
@@ -261,6 +264,7 @@ export function keptState(): Kept {
  * then `learn`s, as after any egg logged.
  */
 export function logEgg(r: EggRecord): number {
+  if (storageReadOnly()) return -1;
   const at = eggLogged(idOf(r));
   if (at < 0) {
     kept.log.push(r);
@@ -436,6 +440,7 @@ function assign(into: Calibration, from: Calibration): void {
 export async function recordSecondAnswer(
   index: number, answer: { yolkWord?: YolkWord; white?: WhiteReport; probe?: ProbeReading },
 ): Promise<boolean> {
+  if (storageReadOnly()) return false;
   const had = kept.log[index];
   // Another tab's store first: the answer is written only to the egg it was
   // given for, and only if no other egg has been logged since.

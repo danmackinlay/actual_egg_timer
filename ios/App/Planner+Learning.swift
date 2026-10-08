@@ -11,6 +11,9 @@ extension Planner {
     /// then folds it again on the next launch, rather than losing it. The
     /// record carries the egg and pan the cook was RUN with, off its plan.
     func record(_ egg: EggRecord) async {
+        // A newer build's results are left alone (`Stores`): nothing is
+        // written down, so nothing is learned either.
+        guard !Stores.readOnly else { return }
         answers = Answers(yolk: egg.yolkWord, white: egg.white, probe: egg.probe)
         folded = nil
         liveIndex = kept.log.count
@@ -30,7 +33,7 @@ extension Planner {
     /// nothing written, when that is no longer possible - which is what keeps
     /// the log and the posterior one thing. The web app's `recordSecondAnswer`.
     func secondAnswer(yolk: YolkWord?, white: WhiteReport?, probe: ProbeReading? = nil) async {
-        guard var given = answers, let index = liveIndex ?? folded?.index ?? resumedIndex,
+        guard !Stores.readOnly, var given = answers, let index = liveIndex ?? folded?.index ?? resumedIndex,
               index == kept.log.count - 1 else { return }
         if yolk != nil, given.yolk != nil { return }
         if white != nil, given.white != nil { return }
@@ -117,7 +120,9 @@ extension Planner {
     /// from the calibration held before its fold when this process folded
     /// it, else from where the log's replay starts.
     func replaceLogged(_ index: Int, _ record: EggRecord) {
-        guard kept.log.indices.contains(index) else { return }
+        // Nothing this build logged, nor learned from, while a newer build's
+        // results are left alone (`Stores`).
+        guard !Stores.readOnly, kept.log.indices.contains(index) else { return }
         let had = kept.log[index]
         var next = record
         next.yolk = had.yolk
@@ -187,6 +192,7 @@ extension Planner {
     /// An egg finished and never answered about. Still a record - the cook, the
     /// recommendation and the pull are data for the fit - and it folds nothing.
     func logUnanswered(_ egg: EggRecord) {
+        guard !Stores.readOnly else { return }
         kept.log.append(egg)
         Calibrations.save(kept)
         Task { await drain() }

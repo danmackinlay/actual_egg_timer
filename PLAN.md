@@ -11,12 +11,12 @@ population a prior is drawn from (E6-E8, `COLLECTIVE.md`) are built in
 both, on this branch, not on `main` and not deployed. The web app (`src/`) and the iOS app (`ios/`) carry
 the same model, refusals, particle filter and choice of time, the same
 catalogue of words in two Englishes (Phase F but for Czech), and the same
-layout (`UI.md`). `npm test` runs 392 tests, all passing (5b pins E3's known
-limit); `npm run e2e` drives the web app through 35 scenarios in headless
-Chrome and `npm run ios:e2e` the iOS app through 31 on a simulator, each
+layout (`UI.md`). `npm test` runs 399 tests, all passing (5b pins E3's known
+limit); `npm run e2e` drives the web app through 37 scenarios in headless
+Chrome and `npm run ios:e2e` the iOS app through 32 on a simulator, each
 stepping a stopped clock to the moment it checks, all passing on a quiet
-machine and a loaded one. `npm run validate` passes 29/29, `swift test` passes 156 tests
-in 38 suites, and the fit's pytest 9. **Pushed on 29 September** at `5ff6940`, the owner's
+machine and a loaded one. `npm run validate` passes 29/29, `swift test` passes 159 tests
+in 39 suites, and the fit's pytest 9. **Pushed on 29 September** at `5ff6940`, the owner's
 call: Netlify serves it at actualeggtimer.netlify.app, and the first run of
 `.github/workflows/verify.yml` passed. The iOS app runs from Xcode on the owner's
 phone and has cooked real eggs; the first TestFlight build, 0.3.1 (1), was
@@ -244,6 +244,16 @@ The one queue. Nothing else in the documents waits on the owner.
     to take the eggs out is between 7:48 and 7:51."); the cold "heat off"
     clause "into cold water at 7:42, heat off and lid on once it boils".
     With it, the time's two lines sit closer under the digits (`UI.md` §8).
+19. **An older build leaves a newer one's results alone, on a phone** (9
+    October 2026, `DECISIONS.md` 100), the **`newer`** draft in both apps.
+    Install this build after a newer one (or, on the web, keep a tab of it
+    open while a newer one loads): at the top of the screen, and of
+    Settings, "A newer edition of this app saved your results. Until you
+    update this one, I’ll time your eggs but won’t save or learn
+    anything." (1750: "A later edition of this work has kept your results.
+    Until you procure it, I shall time your eggs, but shall neither keep
+    nor learn any thing."). The questions after an egg, the sharing
+    switch and Start learning again are gone while it shows.
 
 Waiting on someone else: the Czech review (F5), by the owner's friend.
 
@@ -252,6 +262,9 @@ Waiting on someone else: the Czech review (F5), by the owner's friend.
 - **What keeping the log cannot reach** (`DECISIONS.md` 81). A 0.3 build
   (`main`) still drops a log it cannot read whole and writes over it, so
   switching a device back to 0.3 can lose what 0.4 kept; export first.
+  From 0.4 on a build that finds a newer build's mark writes nothing at all
+  (`DECISIONS.md` 100; `ios/RELEASING.md`, "Never roll back past 0.4"), but
+  0.3 has no such guard and cannot be given one.
   `MODEL_ID` was not changed when the counter's physics was (`9d00f48`), so
   records from 3 October say `2026-10-e8` under two counters; every stored
   posterior is replayed once on this build regardless, since none says its
@@ -459,6 +472,12 @@ checked, fixed or deleted. Start the QA pass here.
   `package.json`'s, now `0.5.0-alpha.1`; iOS carries it without the
   pre-release tag. Each push the owner makes is a release, tagged
   `v<version>`.
+- **The newest version that has run is marked** (`DECISIONS.md` 100):
+  `aet.newest` on the web, `newestVersion` on iOS, a version string whose
+  format never changes. A build that finds a newer one there writes no
+  store, logs and learns from no egg and sends nothing for the rest of the
+  session, and says so at the top of the screen; it is core's `writerCheck`
+  (`src/core/newer.ts`), semantic versioning's order, `fixtures/newer.json`.
 - **Every constant has been checked against the primary literature.**
   `Z_WHITE` was corrected; `H_EFF` is known high and open (README §11.2).
 - **The alarm fires at `.timeSensitive`**, also in the foreground, with the

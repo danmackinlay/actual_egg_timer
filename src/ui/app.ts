@@ -37,15 +37,22 @@ import { wireShare } from './shareView.js';
 import { buildTicks } from './slider.js';
 import { learning, phaseNow, sizeClasses, state } from './state.js';
 import { setStepRule, wireSteppers } from './stepper.js';
-import { loadBoilMemory, loadSettings } from './store.js';
+import { claimStorage, loadBoilMemory, loadSettings, newerStoredElsewhere, storageReadOnly } from './store.js';
+import { APP_VERSION } from './version.js';
 import { measure, useUnits } from './units.js';
 import { drawShare, finalEggs, forgetAll, recompute, storedElsewhere } from './update.js';
 import { wireViews } from './views.js';
 import { wireEdits, wireStartTime } from './edit.js';
-import { nowMs } from './now.js';
+import { markDevClockUse, nowMs } from './now.js';
 
 export function boot(): void {
   bindDom();
+  // Before anything is written: whether a newer build has run here, and the
+  // mark brought up to this one if not (DECISIONS.md 100).
+  claimStorage(APP_VERSION, leaveStoresAlone);
+  page().newerNote.hidden = !storageReadOnly();
+  // The development clock's mark, for a clock set as the page loaded.
+  markDevClockUse();
   state.settings = loadSettings(sizeClasses);
   state.controls = state.settings;
   useUnits(state.settings.unitsChosen);
@@ -114,6 +121,10 @@ export function boot(): void {
   void retryDeletes().then(sendFinal);
   window.addEventListener('online', () => { void retryDeletes().then(sendFinal); });
   window.addEventListener('storage', (event) => {
+    // A newer build's tab has run: this page writes nothing from now on
+    // (`claimStorage`), and takes up nothing more either.
+    newerStoredElsewhere(event.key);
+    if (storageReadOnly()) return;
     storedElsewhere(event.key);
     cookElsewhere(event.key);
   });
@@ -137,4 +148,23 @@ export function boot(): void {
   // The app opens with no signal, from the last build it kept; a newer one
   // takes over only between cooks (offline.ts).
   startOffline(() => state.cook === null);
+  booted = true;
+}
+
+/** Whether `boot` has drawn the page, so a redraw has something to draw. */
+let booted = false;
+
+/**
+ * A newer build has run in this browser, found at boot or told of later:
+ * what this page stores is left alone from now on (store.ts). The line at
+ * the top of every view says so. The timer runs as before; the questions
+ * after an egg, sharing and "Start learning again" go, since nothing they do
+ * could be kept.
+ */
+function leaveStoresAlone(): void {
+  if (!booted) return;
+  page().newerNote.hidden = false;
+  render(nowMs());
+  drawShare();
+  renderCalibNote(learning());
 }

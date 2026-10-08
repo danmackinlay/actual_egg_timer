@@ -841,7 +841,7 @@ final class Cook {
 
     private func persist() {
         guard let running else {
-            UserDefaults.standard.removeObject(forKey: Self.savedKey)
+            Stores.remove(Self.savedKey)
             #if DEBUG
             Screenshots.log("stored none")
             #endif
@@ -849,7 +849,7 @@ final class Cook {
         }
         let stored = Stored(cook: running, feedbackGiven: feedbackGiven, leanHintS: leanHintS)
         if let data = try? JSONEncoder().encode(stored) {
-            UserDefaults.standard.set(data, forKey: Self.savedKey)
+            Stores.set(data, forKey: Self.savedKey)
             #if DEBUG
             Screenshots.log("stored \(String(decoding: data, as: UTF8.self))")
             #endif
@@ -891,7 +891,7 @@ final class Cook {
         for key in Self.oldKeys {
             guard let old = defaults.data(forKey: key) else { continue }
             Calibrations.keepUnreadCook(old)
-            defaults.removeObject(forKey: key)
+            Stores.remove(key)
             keptOld = true
             #if DEBUG
             Screenshots.log("restore kept aside \(key)")
@@ -905,7 +905,7 @@ final class Cook {
         guard let stored = try? JSONDecoder().decode(Stored.self, from: data),
               let cook = readRunningCook(stored.cook.jsonObject) else {
             Calibrations.keepUnreadCook(data)
-            defaults.removeObject(forKey: Self.savedKey)
+            Stores.remove(Self.savedKey)
             #if DEBUG
             Screenshots.log("restore unreadable")
             #endif
@@ -925,7 +925,7 @@ final class Cook {
         // and never answered about is still logged, as "Start again" would
         // have logged it, and a pan timed is still remembered.
         if cookTooOld(made.plan, nowS: now) {
-            defaults.removeObject(forKey: Self.savedKey)
+            Stores.remove(Self.savedKey)
             #if DEBUG
             Screenshots.log("restore too old")
             #endif

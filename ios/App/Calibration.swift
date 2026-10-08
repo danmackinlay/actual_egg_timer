@@ -369,7 +369,7 @@ enum Calibrations {
                 p: population.id, base: base, cal: cal, folded: k.folded, log: k.log, unread: unread))
         }
         if let data {
-            UserDefaults.standard.set(data, forKey: key)
+            Stores.set(data, forKey: key)
         }
         #if DEBUG
         let last = k.log.last.flatMap { try? JSONEncoder().encode($0) }.map { String(decoding: $0, as: UTF8.self) }
@@ -466,7 +466,7 @@ enum Calibrations {
     private static func keepUnread(_ raw: String) {
         var copies = unreadCopies().filter { $0 != raw }
         copies.append(raw)
-        UserDefaults.standard.set(Array(copies.suffix(unreadKept)), forKey: unreadKey)
+        Stores.set(Array(copies.suffix(unreadKept)), forKey: unreadKey)
     }
 
     /// The cooks in progress this build could not read (Cook.swift), each
@@ -488,7 +488,7 @@ enum Calibrations {
         let raw = String(decoding: data, as: UTF8.self)
         var cooks = unreadCooks().filter { $0 != raw }
         cooks.append(raw)
-        UserDefaults.standard.set(cooks, forKey: unreadCookKey)
+        Stores.set(cooks, forKey: unreadCookKey)
     }
 
     /// Every copy kept aside, the stores first, then the cooks.
@@ -527,8 +527,8 @@ enum Calibrations {
     /// otherwise undone only by deleting the app, and the honest thing is to
     /// let someone take it back.
     static func reset() {
-        UserDefaults.standard.removeObject(forKey: key)
-        UserDefaults.standard.removeObject(forKey: unreadKey)
-        UserDefaults.standard.removeObject(forKey: unreadCookKey)
+        Stores.remove(key)
+        Stores.remove(unreadKey)
+        Stores.remove(unreadCookKey)
     }
 }

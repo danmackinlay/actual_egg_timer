@@ -60,6 +60,7 @@ anything both apps must agree on lives here, not in either app.
 | `language.ts` | the switch into the English of 1750 | `languageAfterFlip`, `languageAfterPick` | `Language.swift` | `language.json` |
 | `running.ts` | a running cook: its start, its choices and what it observed; the egg and pot from the choices; the plan derived from them (the ramp, the slow hob, the time decided, the deadlines, the cooling, how sure); the record's facts and the boil to remember; each move the cook makes; a stored cook read defensively | `cookSetupOf`, `replan`, `eventsDue`, `startCook`, `withBoil`, `withOut`, `corrected`, `startCorrected`, `cookFactsFor`, `boilToRemember`, `readRunningCook` | `Running.swift` | `running.json` |
 | `share.ts` | sharing's kept state: an id, a stored copy read defensively, each step (on, off, forget, delete, an answer) | `readShareState`, `turnedOn`, `answered`, `nextToSend`, `isUid` (the server's too) | `Share.swift` | `share.json` |
+| `newer.ts` | which build may write: versions ordered, and the verdict on the newest-version mark (`DECISIONS.md` 100) | `compareVersions`, `writerCheck` | `Newer.swift` | `newer.json` |
 | `copy.ts`, `format.ts` | the catalogue's renderer; numbers and times by locale | `render`, `pluralCategory`, `formatNumber`, `formatTimeOfDay` | `EggTimerCopy`: `Copy.swift`, `Format.swift` | `copy.json`, `format.json` |
 
 The Swift core leaves out what no app calls (`DECISIONS.md` 41): the

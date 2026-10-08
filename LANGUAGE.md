@@ -508,6 +508,16 @@ clauses. Proved with `copyLiterals --since ee5ffda onescreen_ios`.
 | `ask.stillIn`, `.yes`, `.no` | (new) | Are the eggs still in the water? / Yes, still in / No, they’re out |
 | `readout.sub.stillIn` | (new) | since they were due out |
 | `spoken.stillIn` | (new) | Are the eggs still in the water? They were due out {time} ago. |
+**An older build after a newer one: `newer`** (9 October 2026,
+`DECISIONS.md` 100). One new key, `newer.note`, at the top of every screen
+when a newer version of the app has run on the device and this one writes
+nothing: "A newer edition of this app saved your results. Until you update
+this one, I’ll time your eggs but won’t save or learn anything." No
+"version" or "store": "edition" is the plain word, and the 1750 colophon's
+already. The 1750 twin: "A later edition of this work has kept your
+results. Until you procure it, I shall time your eggs, but shall neither
+keep nor learn any thing." No en-US entry. `tools/drafts/newer.ts`, on
+`c2a156f`.
 
 **The one screen's review: `tighten2`** (9 October 2026,
 `design/onescreen-review.md` 2.3 and 3, and the owner's `DECISIONS.md`
