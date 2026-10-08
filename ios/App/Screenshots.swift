@@ -35,7 +35,8 @@ import EggTimerCore
 ///   besides the taps below, `eggsIn` (Start, from idle; `launch` counts
 ///   from the launch), `set:<control>=<value>` (a control changed as a tap
 ///   would: `level`, `size`, `mass`, `from`, `start`, `cooling`, `heatOff`,
-///   `water`, `eggs`, `altitude`), `drag:<levels>` and `release` (the
+///   `water`, `eggs`, `altitude`, and `language`, a tag as the picker
+///   would pick it), `drag:<levels>` and `release` (the
 ///   slider held and moved, then let go), `start:+3` (the start's + or −
 ///   pressed so many times), `stillIn` and `stillOut` (the two answers to
 ///   "still in the water?"), `open:settings` or `open:clause-start`.
@@ -297,6 +298,7 @@ extension Screenshots {
         case "water": planner.waterLitres = number
         case "eggs": planner.eggCount = Int(number)
         case "altitude": planner.altitudeM = number
+        case "language": LanguageChoice.shared.pick(value)
         default: log("action unknown set:\(arg)")
         }
     }
