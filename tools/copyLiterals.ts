@@ -244,6 +244,7 @@ const NOT_COPY: Record<string, string> = {
   'slot {}': 'debug log (Screenshots.log), never shown',
   '{} {} | {}': 'debug log of the readout (Screenshots.log), never shown',
   'readout {}': 'debug log (Screenshots.log), never shown',
+  uiScrollAnchor: 'debug launch argument',
   'verdict {} white sets {} cook {}': 'debug log (Screenshots.log), never shown',
   // the face of 1750 (ios/App/PeriodFace.swift)
   IM_FELL_English_Roman: 'font name',

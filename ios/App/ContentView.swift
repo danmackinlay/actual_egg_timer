@@ -104,6 +104,11 @@ struct ContentView: View {
                 }
                 .padding(20)
             }
+            #if DEBUG
+            // `-uiScrollAnchor 0.7`: open scrolled that far down the page,
+            // for a screenshot at the largest text sizes.
+            .defaultScrollAnchor(Screenshots.scrollAnchor.map { UnitPoint(x: 0.5, y: $0) })
+            #endif
             .navigationTitle(tr("app.name"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

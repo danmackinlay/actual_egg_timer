@@ -29,6 +29,16 @@ import EggTimerCore
 ///   says when pressed.
 /// - `-uiLanguage en-x-1750`: read in that catalogue, as a pick in the
 ///   picker would, before the first frame (`LanguageChoice.start`).
+/// - `-uiScrollAnchor 0.7`: open the egg's page scrolled that far down, for
+///   a screenshot of what the largest text sizes push off the screen.
+/// - `-uiDo eggsIn@launch+1,set:size=3@30,drag:0.3/0.1@pull-60,release@pull-58`:
+///   besides the taps below, `eggsIn` (Start, from idle; `launch` counts
+///   from the launch), `set:<control>=<value>` (a control changed as a tap
+///   would: `level`, `size`, `mass`, `from`, `start`, `cooling`, `heatOff`,
+///   `water`, `eggs`, `altitude`), `drag:<levels>` and `release` (the
+///   slider held and moved, then let go), `start:+3` (the start's + or −
+///   pressed so many times), `stillIn` and `stillOut` (the two answers to
+///   "still in the water?"), `open:settings` or `open:clause-start`.
 /// - `-sectionAhead 540`: draw the egg in cross-section as it will be that
 ///   many seconds on in the cook as planned, the pull and its grace included;
 ///   with `-uiScreen heating`, a cook part done without waiting for it.
@@ -115,6 +125,10 @@ enum Screenshots {
     static var language: String? { UserDefaults.standard.string(forKey: "uiLanguage") }
     static var noAlarmPrompt: Bool { UserDefaults.standard.bool(forKey: "noAlarmPrompt") }
     static var sectionAhead: Double { UserDefaults.standard.double(forKey: "sectionAhead") }
+    static var scrollAnchor: Double? {
+        UserDefaults.standard.object(forKey: "uiScrollAnchor") == nil
+            ? nil : UserDefaults.standard.double(forKey: "uiScrollAnchor")
+    }
     static var seedEggs: [SeedAnswer] {
         guard let list = UserDefaults.standard.string(forKey: "seedEggs") else { return [] }
         return list.split(separator: ",").compactMap { entry in

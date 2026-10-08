@@ -107,6 +107,11 @@ struct DonenessControl: View {
         }
         .frame(height: 16)
         .appFont(.caption2)
+        // Each word sits under its level, so the words cannot grow past the
+        // room between levels: at the accessibility sizes they overlapped
+        // each other and the texture under them. VoiceOver hears the level
+        // as the slider's value.
+        .dynamicTypeSize(...DynamicTypeSize.xxLarge)
         .foregroundStyle(.secondary)
         .accessibilityHidden(true)
     }
