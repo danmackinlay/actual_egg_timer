@@ -1290,6 +1290,44 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
     },
   },
 
+  'certainty-mid-cook': {
+    what: 'onescreen review 2.3: once the cook runs, the likely time range is when to take them out, and moves with a slow hob',
+    run: async (h) => {
+      const tab = await h.ctx.open(STOPPED);
+      let s = await start(tab, 'hot');
+      await tab.until('(await window.__e2e.snap()).decided', 'the pot planned');
+      await tab.shift(300);
+      await tab.click('#certaintyWord');
+      await tab.settle();
+      const line = "document.getElementById('certaintyTime').textContent";
+      // The times of day the eggs come out between, from this plan's range.
+      const want = await tab.eval<string>(`(async () => { const st = (await window.__e2e.ui('state')).state;
+        const copy = await window.__e2e.ui('copy'); const r = st.plan.certainty.time; const t0 = st.cook.startedAt_s;
+        return copy.t('certainty.timeOut', { low: copy.timeOfDay((t0 + r.low_s) * 1000), high: copy.timeOfDay((t0 + r.high_s) * 1000) }); })()`);
+      const cooking = await tab.eval<string>(line);
+      check(cooking === want, `cooking, ${(await tab.snap()).digits} left: "${cooking}", want "${want}"`);
+      await tab.click('#secondary');
+      await tab.phase('IDLE');
+      // Cold and never tapped: the slow hob lengthens the guess.
+      await tab.click('#startCold');
+      s = await start(tab, 'cold');
+      await tab.until('(await window.__e2e.snap()).decided', 'the guessed pot planned');
+      const start_s = s.cook?.startedAt_s ?? 0;
+      await tab.shiftTo(start_s + 16 * 60);
+      await tab.settle();
+      s = await tab.phase('HEATING');
+      check(s.lengthened, 'the slow hob lengthened');
+      check(await tab.eval<boolean>("!document.getElementById('certaintyTime').closest('#certaintyMore').hidden"),
+        'the range shown');
+      const at16 = await tab.eval<string>(line);
+      await tab.shift(65);
+      await tab.settle();
+      const at17 = await tab.eval<string>(line);
+      check(at16 !== at17, `the range moves with the guess: "${at16}", then "${at17}"`);
+      return `cooking: "${cooking}"; heating 16:00: "${at16}"; 17:05: "${at17}"`;
+    },
+  },
+
   'grace-correction': {
     what: 'onescreen review 3: a correction in the grace that leaves the pull due keeps the grace\'s end and rings nothing more',
     run: async (h) => {

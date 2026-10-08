@@ -234,6 +234,13 @@ The one queue. Nothing else in the documents waits on the owner.
     pull the slider only previews and springs back. On iOS also: while "Are
     the eggs still in the water?" is open the Lock Screen card shows the
     pull, "now", with its line naming the cooling (`UI.md` §9).
+18. **The `tighten2` draft, on a phone** (9 October 2026; the one screen's
+    review, `design/onescreen-review.md`, and `DECISIONS.md` 99), the web
+    now and iOS in its next step: under the time, "about 8:00 to boil",
+    guessed or remembered; once the eggs cook, the time range opened under
+    the certainty line is when to take them out ("I think the right time
+    to take the eggs out is between 7:48 and 7:51."); the cold "heat off"
+    clause "into cold water at 7:42, heat off and lid on once it boils".
 
 Waiting on someone else: the Czech review (F5), by the owner's friend.
 

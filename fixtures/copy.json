@@ -178,15 +178,7 @@
       "args": {
         "boil": "6:40"
       },
-      "text": "about 6:40 to boil, as experience has shewn"
-    },
-    {
-      "locale": "en-x-1750",
-      "key": "readout.sub.coldGuesses",
-      "args": {
-        "boil": "8:00"
-      },
-      "text": "about 8:00 to boil, by conjecture"
+      "text": "about 6:40 to the boil"
     },
     {
       "locale": "en-x-1750",
@@ -753,7 +745,7 @@
       "args": {
         "time": "7:42"
       },
-      "text": "set in cold water at 7:42, boiled, the fire out, lid on"
+      "text": "set in cold water at 7:42, lid on and fire out as it boils"
     },
     {
       "locale": "en-x-1750",
@@ -817,6 +809,15 @@
         "high": "8:27"
       },
       "text": "I judge the true time to lie between 6:41 and 8:27."
+    },
+    {
+      "locale": "en-x-1750",
+      "key": "certainty.timeOut",
+      "args": {
+        "low": "7:48",
+        "high": "7:51"
+      },
+      "text": "I judge the true time to take the eggs out to lie between 7:48 and 7:51."
     },
     {
       "locale": "en-x-1750",
@@ -1860,15 +1861,7 @@
       "args": {
         "boil": "6:40"
       },
-      "text": "about 6:40 to boil, from what I’ve timed before"
-    },
-    {
-      "locale": "en",
-      "key": "readout.sub.coldGuesses",
-      "args": {
-        "boil": "8:00"
-      },
-      "text": "about 8:00 to boil, my guess"
+      "text": "about 6:40 to boil"
     },
     {
       "locale": "en",
@@ -2435,7 +2428,7 @@
       "args": {
         "time": "7:42"
       },
-      "text": "into cold water at 7:42, to the boil, heat off, lid on"
+      "text": "into cold water at 7:42, heat off and lid on once it boils"
     },
     {
       "locale": "en",
@@ -2499,6 +2492,15 @@
         "high": "8:27"
       },
       "text": "I think the right time is between 6:41 and 8:27."
+    },
+    {
+      "locale": "en",
+      "key": "certainty.timeOut",
+      "args": {
+        "low": "7:48",
+        "high": "7:51"
+      },
+      "text": "I think the right time to take the eggs out is between 7:48 and 7:51."
     },
     {
       "locale": "en",

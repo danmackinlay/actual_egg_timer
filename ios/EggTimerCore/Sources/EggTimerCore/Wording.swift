@@ -60,6 +60,36 @@ public struct WordsRef: Sendable, Equatable {
     public let words: [String: String]
 }
 
+/// The likely time range as words take it (`timeRangeWords`): the key, and
+/// `low` and `high` as cook times, s (m:ss), or, `ofDay`, clock times, epoch
+/// s, said as times of day.
+public struct TimeRangeWords: Sendable, Equatable {
+    public let key: String
+    public let lowS: Double
+    public let highS: Double
+    public let ofDay: Bool
+}
+
+/// The likely time range in the clock's own terms (onescreen review 2.3):
+/// before Start, whole times (`certainty.time`); once a cook runs, when to
+/// take the eggs out, as times of day (`certainty.timeOut`), the start plus
+/// the range, and for a reading held over a plan it was not read on (a slow
+/// hob's lengthened guess, a pot still building), as far either side of the
+/// plan's time now as of the time it was read at. wording.ts says why.
+public func timeRangeWords(_ sure: CertaintyReading, startedAtS: Double?, cookTimeS: Double) -> TimeRangeWords {
+    let r = sure.time
+    guard let start = startedAtS else {
+        return TimeRangeWords(key: "certainty.time", lowS: r.lowS, highS: r.highS, ofDay: false)
+    }
+    if cookTimeS == sure.atS {
+        return TimeRangeWords(key: "certainty.timeOut", lowS: start + r.lowS, highS: start + r.highS, ofDay: true)
+    }
+    let now = start + cookTimeS
+    return TimeRangeWords(
+        key: "certainty.timeOut", lowS: now + (r.lowS - sure.atS), highS: now + (r.highS - sure.atS), ofDay: true
+    )
+}
+
 /// The 90% interval in the slider's words: "9 times in 10: Soft to Fudgy.",
 /// or one word when one word holds it. `hits` in `of` is `certaintyMass`.
 public func intervalWords(_ w: WordCertainty) -> WordsRef {
@@ -174,9 +204,8 @@ public func phaseKeys(_ f: PhaseFacts) -> PhaseKeys {
     let standing = f.afterBoil == .off
     switch f.phase {
     case .idle:
-        let subline = cold
-            ? (f.boilKnown ? "readout.sub.coldAssumes" : "readout.sub.coldGuesses")
-            : (standing ? "readout.sub.standing" : "readout.sub.hot")
+        // The time to boil, guessed or remembered, alike (DECISIONS.md 99).
+        let subline = cold ? "readout.sub.coldAssumes" : (standing ? "readout.sub.standing" : "readout.sub.hot")
         let hint = !f.whiteSets
             ? "action.hint.whiteNeverSets"
             : cold ? "action.hint.cold" : standing ? "action.hint.hotStanding" : "action.hint.hotBoiling"

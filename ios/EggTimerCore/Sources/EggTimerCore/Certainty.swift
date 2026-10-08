@@ -45,10 +45,13 @@ public struct TimeRange: Sendable, Equatable {
     public let highS: Double
 }
 
-/// Everything a tap on the certainty word shows.
+/// Everything a tap on the certainty word shows, and the cook time it was
+/// read at, s from eggs in, so a reading held over a plan that has moved can
+/// say its range about the time now (`timeRangeWords`).
 public struct CertaintyReading: Sendable, Equatable {
     public let words: WordCertainty
     public let time: TimeRange
+    public let atS: Double
 }
 
 /// The word asked at a slider level: the place of `anchorNear(level)`.
@@ -151,6 +154,7 @@ public func certaintyAt(
 ) -> CertaintyReading {
     CertaintyReading(
         words: wordCertainty(yolkWordProbabilities(post, grid, cookTimeS), asked: askedWord(level)),
-        time: likelyTimeRange(post, grid, logYolkTarget(level))
+        time: likelyTimeRange(post, grid, logYolkTarget(level)),
+        atS: cookTimeS
     )
 }

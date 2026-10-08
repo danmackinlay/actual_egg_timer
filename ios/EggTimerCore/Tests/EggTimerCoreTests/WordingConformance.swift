@@ -83,6 +83,27 @@ struct WordingConformance {
         }
     }
 
+    @Test("the likely time range in the clock's own terms")
+    func timeRange() throws {
+        for row in try Fixtures.list("wording.json", "timeRange") {
+            let note = try row.str("note")
+            let t = try row.object("time")
+            let p = try #require(row["p"] as? [NSNumber], "\(note): p").map(\.doubleValue)
+            let sure = try CertaintyReading(
+                words: wordCertainty(p, asked: Int(row.num("asked"))),
+                time: TimeRange(lowS: t.num("low_s"), highS: t.num("high_s")), atS: row.num("at_s")
+            )
+            let running = row["running"] as? [String: Any]
+            let w = try timeRangeWords(
+                sure, startedAtS: running?.num("startedAt_s"), cookTimeS: running?.num("cookTime_s") ?? 0
+            )
+            let e = try row.object("words")
+            #expect(try w.key == e.str("key"), "\(note): key")
+            #expect(try w.lowS == e.num("low_s") && w.highS == e.num("high_s"), "\(note): \(w.lowS)-\(w.highS)")
+            #expect(try w.ofDay == e.flag("ofDay"), "\(note): of day")
+        }
+    }
+
     @Test("the readout's keys in every phase")
     func phase() throws {
         for row in try Fixtures.list("wording.json", "phase") {

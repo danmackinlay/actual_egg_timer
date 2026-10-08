@@ -83,6 +83,7 @@ struct CertaintyConformance {
             let time = try expected.object("time")
             try expectClose(r.time.lowS, time.num("low_s"), "\(label) time low")
             try expectClose(r.time.highS, time.num("high_s"), "\(label) time high")
+            #expect(try r.atS == expected.num("at_s"), "\(label) read at")
         }
     }
 }

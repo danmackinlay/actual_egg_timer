@@ -8,13 +8,13 @@
 import { readFileSync } from 'node:fs';
 
 import { Outcome } from '../../src/core/outcome.js';
-import { Certainty, wordCertainty } from '../../src/core/certainty.js';
+import { Certainty, CertaintyReading, wordCertainty } from '../../src/core/certainty.js';
 import { Phase, RefusalKind, Verdict, anchorNear } from '../../src/core/policy.js';
 import { Cooling, HeatAfterBoil, StartMode } from '../../src/core/protocol.js';
 import { EggFrom, forecastOf } from '../../src/core/record.js';
 import {
   certaintyKey, clauseKeys, intervalWords, mostLikelyOpened, mostLikelyShown, mostLikelyWords, phaseKeys,
-  forecastWhiteAtRisk, rangeWords, warningKey, whiteAtRisk,
+  forecastWhiteAtRisk, rangeWords, timeRangeWords, warningKey, whiteAtRisk,
 } from '../../src/core/wording.js';
 import { WHITE_RISK } from '../../src/core/outcome.js';
 
@@ -104,6 +104,21 @@ export function wordingFixture(): Record<string, unknown> {
     })),
   };
 
+  // The likely time range in the clock's own terms (onescreen review 2.3):
+  // idle, whole times; running, when to take the eggs out, on the plan the
+  // reading was read on and held over one that moved (a slow hob).
+  const sure: CertaintyReading = { words: wordCertainty(SPREADS[0], 2), time: { low_s: 384.25, high_s: 561.5 }, at_s: 452.75 };
+  const timeRange = [
+    { note: 'idle: whole times', running: null },
+    { note: 'running, on the plan it was read on', running: { startedAt_s: 1791363600.125, cookTime_s: 452.75 } },
+    { note: 'running, held over a slow hob\'s lengthened guess', running: { startedAt_s: 1791363600.125, cookTime_s: 1013.5 } },
+    { note: 'running, held over a pot that pulls sooner', running: { startedAt_s: 1791363600.125, cookTime_s: 401 } },
+  ].map((row) => {
+    const w = timeRangeWords(sure, row.running);
+    known(w.key);
+    return { ...row, p: SPREADS[0], asked: 2, time: sure.time, at_s: sure.at_s, words: w };
+  });
+
   // The three flags each read in one phase only: each is false once, with
   // the other two true, so a flag read in the wrong place shows.
   const flags: [boolean, boolean, boolean][] = [[false, true, true], [true, false, true], [true, true, false]];
@@ -147,6 +162,7 @@ export function wordingFixture(): Record<string, unknown> {
     outcome: outcome,
     range: range,
     certainty: certainty,
+    timeRange: timeRange,
     phase: phase,
     clauses: clauses,
   };

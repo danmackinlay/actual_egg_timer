@@ -19,7 +19,7 @@ import { Outcome } from '../core/outcome.js';
 import { CertaintyReading } from '../core/certainty.js';
 import {
   WordsRef, certaintyKey, forecastWhiteAtRisk, intervalWords, mostLikelyOpened, mostLikelyShown, mostLikelyWords,
-  refusalKey, whiteAtRisk,
+  refusalKey, timeRangeWords, whiteAtRisk,
 } from '../core/wording.js';
 import { CookPlan, RunningCook, asRanShown, solutionAsRan } from '../core/running.js';
 import { midSentence } from '../core/copy.js';
@@ -525,7 +525,9 @@ function renderOdds(now_ms: number, reading: RunningReading | null = null): void
     sure = r.sure;
     ranWhite = r.ranWhite;
   }
-  renderCertainty(sure);
+  const cook = state.cook;
+  const plan = state.plan;
+  renderCertainty(sure, cook === null || plan === null ? null : { startedAt_s: cook.startedAt_s, cookTime_s: plan.cookTime_s });
   // Nothing past "still in the water?": not a caveat about the pull it
   // doubts (onescreen review 3).
   const asking = state.cook !== null && state.plan !== null && state.plan.askIfStillIn;
@@ -548,8 +550,13 @@ function renderOdds(now_ms: number, reading: RunningReading | null = null): void
   }
 }
 
-/** The certainty line and what it opens, from `sure`, or nothing. */
-function renderCertainty(sure: CertaintyReading | null): void {
+/** The certainty line and what it opens, from `sure`, or nothing. While a
+ *  cook runs (`running`, its start and its plan's time now) the likely time
+ *  range is when to take the eggs out, as times of day, not whole times
+ *  under a clock counting down (core `timeRangeWords`, onescreen review 2.3). */
+function renderCertainty(
+  sure: CertaintyReading | null, running: { startedAt_s: number; cookTime_s: number } | null = null,
+): void {
   const word = page().certaintyWord;
   word.hidden = sure === null;
   page().certaintyMore.hidden = sure === null || word.getAttribute('aria-expanded') !== 'true';
@@ -567,9 +574,9 @@ function renderCertainty(sure: CertaintyReading | null): void {
   const opened = mostLikelyOpened(w);
   page().certaintyLikely.hidden = !opened;
   page().certaintyLikely.textContent = opened ? likely : '';
-  page().certaintyTime.textContent = t('certainty.time', {
-    low: formatClock(sure.time.low_s), high: formatClock(sure.time.high_s),
-  });
+  const range = timeRangeWords(sure, running);
+  const said = (s: number): string => (range.ofDay ? timeOfDay(s * 1000) : formatClock(s));
+  page().certaintyTime.textContent = t(range.key, { low: said(range.low_s), high: said(range.high_s) });
 }
 
 /** The sous-vide readout: hold times from the isothermal limit, and the plain
