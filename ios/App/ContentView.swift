@@ -81,8 +81,6 @@ struct ContentView: View {
                     }
                     .id(tick)
                     DonenessControl(model: model, phase: outerPhase, thumbInset: $thumbInset)
-                        // Not yet open to correction while a cook runs.
-                        .disabled(outerPhase != .idle)
                         #if DEBUG
                         .logTop("slider")
                         #endif
@@ -109,23 +107,36 @@ struct ContentView: View {
             .navigationTitle(tr("app.name"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                // A running cook is always the egg, as on the web.
-                if outerPhase == .idle {
-                    ToolbarItem(placement: .topBarLeading) {
-                        NavigationLink(value: Route.settings) { Text(tr("controls.settings")) }
-                    }
-                    ToolbarItem(placement: .topBarTrailing) {
-                        NavigationLink(value: Route.help(nil)) { Text(tr("help.link")) }
-                    }
+                // In every phase: Settings' pot rows correct a running cook.
+                ToolbarItem(placement: .topBarLeading) {
+                    NavigationLink(value: Route.settings) { Text(tr("controls.settings")) }
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    NavigationLink(value: Route.help(nil)) { Text(tr("help.link")) }
                 }
             }
             .navigationDestination(for: Route.self) { route in
                 switch route {
-                case .settings: SettingsView(planner: planner)
+                case .settings: SettingsView(planner: planner, cooking: cook.running != nil)
                 case .help(let section): HelpView(planner: planner, start: section)
                 }
             }
         }
+        // A − or + held while a cook runs is a correction committed on
+        // release, one tapped after its settle (`Edits`), here and in
+        // Settings.
+        .environment(\.editGesture, EditGesture { field, down in
+            if down { model.edits.fingerDown(field) } else { model.edits.fingerUp() }
+        })
+        // The pull brings the egg's page back, from Settings or Help.
+        .onChange(of: outerPhase == .pull) { _, pull in
+            if pull { path = [] }
+        }
+        #if DEBUG
+        .onChange(of: path) { _, now in
+            Screenshots.log("view \(now.last.map { "\($0)" } ?? "egg")")
+        }
+        #endif
         // 1750 is set in its period face, as on the web (`PeriodFace`):
         // here for whatever sets no style of its own, and through
         // `appFont` for whatever does. The clock keeps its own face.
@@ -157,6 +168,13 @@ struct ContentView: View {
     /// The screen a debug build was launched onto (Screenshots.swift).
     private func showScreenshotScene() {
         // The taps a script asked for, as each comes due.
+        Screenshots.open = { what in
+            if what == "settings" { path = [.settings] }
+            if what.hasPrefix("clause-"), let clause = Clause(rawValue: String(what.dropFirst(7))) {
+                model.edits.touchedElsewhere()
+                openClause = clause
+            }
+        }
         Screenshots.drive(model)
         // A cook restored at Done, answered as soon as asked: before its
         // pot's surface is built again, with `-uiAnswerAfter 0`.
@@ -247,16 +265,16 @@ struct ContentView: View {
                     #endif
                 }
                 SetupSentence(
-                    planner: planner, open: $openClause, startedAt: running.map { Date(timeIntervalSince1970: $0.startedAtS) },
-                    editable: phase == .idle
+                    planner: planner, open: $openClause,
+                    startedAt: running.flatMap { _ in model.edits.shownStart }.map { Date(timeIntervalSince1970: $0) },
+                    onTap: { model.edits.touchedElsewhere() }
                 )
                 #if DEBUG
                 .logTop("sentence")
                 #endif
             }
-            if let clause = openClause, phase == .idle,
-               !(planner.isSousVide && (clause == .from || clause == .cooling)) {
-                ClausePanel(planner: planner, clause: clause) {
+            if let clause = openClause, !(planner.isSousVide && (clause == .from || clause == .cooling)) {
+                ClausePanel(planner: planner, clause: clause, edits: running == nil ? nil : model.edits) {
                     withAnimation(.snappy) { openClause = nil }
                 }
                 .id(clause)

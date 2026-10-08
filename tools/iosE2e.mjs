@@ -277,15 +277,26 @@ with open(path, 'wb') as f:
 const num = (x) => (x === '-' ? null : Number(x));
 
 /// The last plan logged in these lines: { pull, cooled, lengthened,
-/// surface, next (when the slow hob lengthens it next) }, epoch s, exact.
+/// surface, next (when the slow hob lengthens it next), asking (whether the
+/// eggs are still in the water), overdue }, epoch s, exact.
 function lastPlan(lines) {
   const l = lines.filter((x) => x.text.startsWith('plan ')).at(-1);
   if (!l) return null;
-  const m = l.text.match(/^plan pull (\S+) cooled (\S+) lengthened (\w+) surface (\w+) next (\S+)$/);
+  const m = l.text.match(
+    /^plan pull (\S+) cooled (\S+) lengthened (\w+) surface (\w+) next (\S+) asking (\w+) overdue (\w+)$/,
+  );
   return {
     pull: Number(m[1]), cooled: num(m[2]), lengthened: m[3] === 'true', surface: m[4] === 'true',
-    next: num(m[5]), t: l.t,
+    next: num(m[5]), asking: m[6] === 'true', overdue: m[7] === 'true', t: l.t,
   };
+}
+
+/// The last Live Activity state pushed: { what, stage, ends, up, cook:
+/// [doneness, peak yolk, mass, cooling] }.
+function lastCard(lines) {
+  const l = lines.filter((x) => /^activity (start|update) /.test(x.text)).at(-1);
+  const m = l?.text.match(/^activity (\w+) (\w+) ends (\d+) up (\w+) cook (.*)$/);
+  return m ? { what: m[1], stage: m[2], ends: Number(m[3]), up: m[4] === 'true', cook: m[5].split('|'), t: l.t } : null;
 }
 
 /// The last cook stored in these lines, or null for none; undefined if
@@ -376,6 +387,10 @@ const index = (lines, re) => lines.findIndex((l) => re.test(l.text));
 const shown = (lines) =>
   lines.map((l) => l.text.match(/^shown peak ([\d.]+)/)).filter(Boolean).map((m) => Number(m[1]));
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+/// A value as JSON with every object's keys sorted: the app writes a
+/// record's keys in no fixed order.
+const canon = (v) => JSON.stringify(v, (_k, x) => (x && typeof x === 'object' && !Array.isArray(x)
+  ? Object.fromEntries(Object.entries(x).sort(([a], [b]) => a.localeCompare(b))) : x));
 const sorted = (a) => (a ? [...a].sort() : a);
 
 /// A hot start: the planner's stored inputs, which load only with a level.
@@ -545,6 +560,229 @@ scenario('egg-readings', 'C3 step 2: the egg aimed for at idle (softer and firme
   const ran = await eggNow(run);
   run.check(ran.reading === 'ran', `Done reads the egg as it ran: ${ran.reading}`);
   run.note(`idle aim yolk runny ${runny.yolk}, jammy ${jammy.yolk}, hard ${hard.yolk}; start ${live.yolk}; Done ${ran.yolk}`);
+});
+
+/// A correction committed (`edit committed`, after a tap's settle or on
+/// release) from line `from`: the cook as stored then, its plan once the
+/// cook has settled, and the lines since.
+async function corrected(run, from) {
+  const c = await run.until(/^edit committed /, { from, what: 'a correction committed' });
+  const stored = await run.until(/^stored /, { from: c.i, what: 'the corrected cook stored' });
+  const plan = await run.until(/^plan /, { from: stored.i, what: 'the corrected cook planned' });
+  await run.settled(plan.i);
+  const lines = run.lines().slice(c.i);
+  return { cook: lastStored(lines)?.cook, plan: lastPlan(lines), lines, i: c.i };
+}
+
+/// Step to `at`, where a `-uiDo` tap is due, and wait for it: its line.
+async function tapAt(run, at, what) {
+  const i = await run.step(at);
+  return run.until(new RegExp(`^action ${what}`), { from: i, what: `the tap ${what}` });
+}
+
+/// A hot cook started and planned on its pot's surface: its plan.
+async function hotStarted(run, uiDo) {
+  await started(run, [...HOT, '-uiDo', uiDo]);
+  return lastPlan(run.lines());
+}
+
+/// The words a key says in English, from the catalogue.
+const EN = JSON.parse(readFileSync('copy/en.json', 'utf8')).messages;
+
+scenario('owner-case', "C3 step 3: boiling corrected to cold, as the owner needed: Heating again, the pull later, the settings and the card follow", async (run) => {
+  const plan0 = await hotStarted(run, 'set:start=cold@60');
+  const card0 = lastCard(run.lines());
+  const tap = await tapAt(run, run.t0 + 60, 'set');
+  const after = await corrected(run, tap.i);
+  const phase = await run.until(/^phase HEATING$/, { from: tap.i, what: 'Heating again' });
+  run.check(phase, 'back to Heating');
+  run.check(after.cook?.choices.startMode === 'cold', `the cook says ${after.cook?.choices.startMode}`);
+  run.check(near(after.cook?.correctedAt_s, run.t0 + 60, EXACT), 'corrected at the moment of the tap');
+  run.check(after.plan.pull > plan0.pull + 60, `the pull later: ${(after.plan.pull - plan0.pull).toFixed(0)} s`);
+  run.check(near(scheduled(after.lines)['cook.pull'], after.plan.pull, EXACT), 'the pull rescheduled to the corrected plan');
+  const card = lastCard(after.lines);
+  run.check(card?.what === 'update' && card.stage === 'heating', `the card in place: ${card?.what} ${card?.stage} (was ${card0?.stage})`);
+  run.check(card && card0 && card.ends !== card0.ends, 'the card ends at the corrected pull');
+  const prefs = await run.prefs((p) => p.start === 'cold');
+  run.check(prefs.start === 'cold', `the next cook's setting: ${prefs.start}`);
+  run.terminate();
+  const r = await relaunched(run, run.t0 + 90);
+  run.check(r.restore.startsWith('restore HEATING'), r.restore);
+  run.check(near(r.plan.pull, after.plan.pull, REPLAN), `relaunched: ${(r.plan.pull - after.plan.pull).toFixed(3)} s`);
+  run.note(`the pull ${(after.plan.pull - plan0.pull).toFixed(0)} s later; card ${card0?.stage} -> ${card?.stage}`);
+});
+
+scenario('cold-to-hot-after-tap', 'C3 step 3: cold corrected to boiling after the boil was pressed: the tap kept, the pull sooner', async (run) => {
+  await started(run, ['-uiDo', 'boil@300,set:start=hot@boil+60']);
+  const was = await boiled(run);
+  const tap = lastStored(run.lines()).cook.events.boilAt_s;
+  const t = await tapAt(run, tap + 60, 'set');
+  const after = await corrected(run, t.i);
+  run.check(after.cook?.events.boilAt_s === tap, `the tap kept: ${after.cook?.events.boilAt_s - tap}`);
+  run.check(after.cook?.choices.startMode === 'hot', 'the cook says boiling');
+  run.check(after.plan.pull < was.pull, `a boiling start pulls sooner: ${(after.plan.pull - was.pull).toFixed(0)} s`);
+  run.note(`the pull ${(after.plan.pull - was.pull).toFixed(0)} s`);
+});
+
+scenario('heavier-lighter', 'C3 step 3: a heavier egg pulls later, a lighter sooner, each committed after the settle; back exactly', async (run) => {
+  const plan0 = await hotStarted(run, 'set:size=3@30,set:size=1@40,set:size=2@50');
+  let t = await tapAt(run, run.t0 + 30, 'set');
+  // Nothing yet: a tap settles first.
+  const edit = await run.until(/^edit mass$/, { from: t.i, what: 'the change in hand' });
+  run.check(!has(run.lines().slice(t.i, edit.i + 1), /^stored /), 'not committed before the settle');
+  let after = await corrected(run, t.i);
+  const heavier = after.plan.pull;
+  run.check(heavier > plan0.pull, `heavier, later: ${(heavier - plan0.pull).toFixed(1)} s`);
+  run.check(near(scheduled(after.lines)['cook.pull'], heavier, EXACT), 'the alarm follows');
+  t = await tapAt(run, run.t0 + 40, 'set');
+  after = await corrected(run, t.i);
+  const lighter = after.plan.pull;
+  run.check(lighter < plan0.pull, `lighter, sooner: ${(lighter - plan0.pull).toFixed(1)} s`);
+  t = await tapAt(run, run.t0 + 50, 'set');
+  after = await corrected(run, t.i);
+  run.check(after.plan.surface, 'planned on its pot');
+  run.check(near(after.plan.pull, plan0.pull, 1e-6), `back gives back: ${(after.plan.pull - plan0.pull).toFixed(6)} s`);
+  const card = lastCard(after.lines);
+  run.check(card && near(card.ends, Math.round(plan0.pull), 1), `the card back at the pull: ${card?.ends}`);
+  run.note(`heavier +${(heavier - plan0.pull).toFixed(1)} s, lighter ${(lighter - plan0.pull).toFixed(1)} s, back exactly`);
+});
+
+scenario('overdue-and-back', 'C3 step 3: a correction that makes the egg overdue rings at once; changed back within the grace, the pull is cancelled', async (run) => {
+  const plan0 = await hotStarted(run, '');
+  // The taps at moments of the cook as first planned, from its start: a tap
+  // anchored on the pull would follow the pull the first one moves. Set by
+  // relaunching on the stored cook, which takes its controls up again.
+  run.terminate();
+  const before = plan0.pull - run.t0;
+  await relaunched(run, run.t0 + 10, ['-uiDo', `set:size=0@${before - 40},set:size=2@${before - 35}`]);
+  let t = await tapAt(run, plan0.pull - 40, 'set');
+  let after = await corrected(run, t.i);
+  await run.until(/^phase PULL$/, { from: t.i, what: 'Pull at once' });
+  run.check(after.plan.overdue && near(after.plan.pull, plan0.pull - 40, EXACT), `the pull now: ${after.plan.pull - plan0.pull}`);
+  await run.until(/^ring pull$/, { from: t.i, what: 'rung at once' });
+  t = await tapAt(run, plan0.pull - 35, 'set');
+  after = await corrected(run, t.i);
+  await run.until(/^phase COOKING$/, { from: t.i, what: 'Cooking again' });
+  const ev = after.cook?.events;
+  run.check(ev?.pulled === null && ev?.rangAt_s === null, `nothing observed: ${JSON.stringify(ev)}`);
+  run.check(near(after.plan.pull, plan0.pull, 1), `the pull back: ${(after.plan.pull - plan0.pull).toFixed(1)} s`);
+  run.check(near(scheduled(after.lines)['cook.pull'], after.plan.pull, EXACT), 'its alarm set again');
+  run.note('overdue: Pull and a ring at once; back within the grace: Cooking, nothing written, the alarm set again');
+});
+
+scenario('drag-no-ring', 'C3 step 3: a drag through an overdue level rings nothing before release; the egg shows the aim while held', async (run) => {
+  const plan0 = await hotStarted(run, 'drag:0.3/0.1/0@pull-60,drag:0.2/0.41@pull-57,release@pull-56,drag:0@pull-50,release@pull-49');
+  const level = lastStored(run.lines()).cook.choices.level;
+  let t = await tapAt(run, plan0.pull - 60, 'drag');
+  // Held two seconds of the host's (a person's span, past every settle).
+  await sleep(2000);
+  const egg = await eggNow(run);
+  run.check(egg.reading === 'aim', `the aim while held: ${egg.reading}`);
+  let lines = run.lines().slice(t.i);
+  run.check(!has(lines, /^ring /) && !has(lines, /^edit committed/), 'held: nothing rung or committed');
+  await tapAt(run, plan0.pull - 57, 'drag');
+  t = await tapAt(run, plan0.pull - 56, 'release');
+  await run.until(/^edit committed/, { from: t.i, what: 'the release' });
+  await sleep(500);
+  lines = run.lines().slice(t.i);
+  run.check(!has(lines, /^stored /) && !has(lines, /^ring /), `released at the level it had (${level}): nothing`);
+  await tapAt(run, plan0.pull - 50, 'drag');
+  t = await tapAt(run, plan0.pull - 49, 'release');
+  const after = await corrected(run, t.i);
+  await run.until(/^ring pull$/, { from: t.i, what: 'rung on release' });
+  run.check(after.cook?.choices.level < 0.1, `the level corrected: ${after.cook?.choices.level}`);
+  run.note('held through runny: no ring, the aim drawn; back and released: nothing; released runny: rang');
+});
+
+scenario('start-time', 'C3 step 3: the start corrected a minute at a time, stopped with its reason at now, the boil pressed, and two hours back', async (run) => {
+  const cook = await started(run, ['-uiDo', 'start:+3@150,boil@240,start:+5@boil+60,start:-140@boil+70']);
+  const id = cook.cook.id_ms / 1000;
+  let t = await tapAt(run, run.t0 + 150, 'start');
+  const now = await run.until(/^start limit now /, { from: t.i, what: 'the limit at now' });
+  let after = await corrected(run, t.i);
+  run.check(near(after.cook?.startedAt_s, run.t0 + 150, EXACT), `in at now: ${after.cook?.startedAt_s - run.t0}`);
+  t = await tapAt(run, run.t0 + 390, 'boil');
+  await run.until(/^phase COOKING$/, { from: t.i, what: 'the boil' });
+  const tap = run.t0 + 390;
+  t = await tapAt(run, tap + 60, 'start');
+  const boil = await run.until(/^start limit boil /, { from: t.i, what: 'the limit at the boil' });
+  after = await corrected(run, t.i);
+  run.check(near(after.cook?.startedAt_s, tap, EXACT), `in at the press: ${after.cook?.startedAt_s - tap}`);
+  t = await tapAt(run, tap + 70, 'start');
+  const early = await run.until(/^start limit earliest /, { from: t.i, what: 'the limit two hours back' });
+  after = await corrected(run, t.i);
+  run.check(near(after.cook?.startedAt_s, id - 7200, EXACT), `two hours back: ${after.cook?.startedAt_s - id}`);
+  run.note(`"${now.text}"; "${boil.text}"; "${early.text}"`);
+});
+
+scenario('settings-mid-cook', "C3 step 3: Settings open while a cook runs; its water corrects the cook and the next cook's; the pull brings the egg back", async (run) => {
+  const plan0 = await hotStarted(run, 'open:settings@10,set:water=1@20');
+  let t = await tapAt(run, run.t0 + 10, 'open');
+  await run.until(/^view settings$/, { from: t.i, what: 'Settings open' });
+  t = await tapAt(run, run.t0 + 20, 'set');
+  const after = await corrected(run, t.i);
+  run.check(after.cook?.choices.waterLitres === 1, `the cook's water: ${after.cook?.choices.waterLitres}`);
+  run.check(after.plan.pull !== plan0.pull, `the pull moved: ${(after.plan.pull - plan0.pull).toFixed(1)} s`);
+  const prefs = await run.prefs((p) => p.waterLitres === 1);
+  run.check(prefs.waterLitres === 1, `the next cook's water: ${prefs.waterLitres}`);
+  run.check(prefs.eggCount === undefined || prefs.eggCount === 2, `only what changed written: eggs ${prefs.eggCount}`);
+  const i = await run.step(after.plan.pull + 1);
+  await run.until(/^phase PULL$/, { from: i, what: 'the pull' });
+  await run.until(/^view egg$/, { from: i, what: "the egg's page at the pull" });
+  run.note(`water 2 → 1 L: the pull ${(after.plan.pull - plan0.pull).toFixed(1)} s; the egg's page at the pull`);
+});
+
+scenario('record-corrected-at-done', 'C3 step 3: a correction at Done changes the record, planned on the calibration before this egg; back, the first to the bit', async (run) => {
+  await hotStarted(run, 'out@pull+2,answer:runny@cooled+5,set:size=3@cooled+10,set:size=2@cooled+20');
+  const cooling = await toCooling(run, 2);
+  let i = await run.step(cooling.cooled + 1);
+  await run.until(/^phase DONE$/, { from: i, what: 'Done' });
+  i = await run.step(cooling.cooled + 5);
+  await run.until(/^log 1 folded 1 /, { from: i, what: 'Runny folded' });
+  const first = eggLog(run.lines()).last;
+  const peak0 = shown(run.lines()).at(-1);
+  let t = await tapAt(run, cooling.cooled + 10, 'set');
+  await run.until(/^as ran corrected$/, { from: t.i, what: 'the record planned again' });
+  const changed = await run.until(/^log 1 folded 1 /, { from: t.i, what: 'the corrected egg folded again' });
+  const heavier = eggLog(run.lines().slice(0, changed.i + 1)).last;
+  run.check(heavier.yolkWord === 'runny', `the answer kept: ${heavier.yolkWord}`);
+  run.check(heavier.recommended_s === first.recommended_s, 'the time that ran is the time that ran');
+  run.check(canon(heavier.forecast) !== canon(first.forecast), "the forecast is the heavier egg's");
+  run.check(heavier.egg.mass_g !== first.egg.mass_g, `the egg corrected: ${heavier.egg.mass_g} g`);
+  t = await tapAt(run, cooling.cooled + 20, 'set');
+  await run.until(/^as ran corrected$/, { from: t.i, what: 'the record planned again' });
+  await run.until(/^log 1 folded 1 /, { from: t.i, what: 'folded again' });
+  const again = eggLog(run.lines()).last;
+  run.check(canon(again.forecast) === canon(first.forecast),
+    `back, the first forecast, not one that knew Runny: ${JSON.stringify(again.forecast)} vs ${JSON.stringify(first.forecast)}`);
+  run.check(canon(again) === canon(first), 'back, the record is the first to the bit');
+  const peak1 = shown(run.lines()).at(-1);
+  run.check(Math.abs(peak1 - peak0) < 0.01, `Done shows the cook as it ran: ${peak1} (was ${peak0})`);
+  run.note(`heavier: ${heavier.egg.mass_g} g, a new forecast, Runny kept; back: the first record to the bit, ${peak1} °C`);
+});
+
+scenario('slider-after-pull', 'C3 step 3: after the pull the slider only previews: no correction, the record as it was, back to its level', async (run) => {
+  await hotStarted(run, 'out@pull+2,answer:jammy@cooled+5,drag:0.6/0.9@cooled+10,release@cooled+12');
+  const cooling = await toCooling(run, 2);
+  let i = await run.step(cooling.cooled + 1);
+  await run.until(/^phase DONE$/, { from: i, what: 'Done' });
+  i = await run.step(cooling.cooled + 5);
+  await run.until(/^log 1 folded 1 /, { from: i, what: 'Jammy folded' });
+  const first = canon(eggLog(run.lines()).last);
+  const stored0 = lastStored(run.lines()).cook;
+  await tapAt(run, cooling.cooled + 10, 'drag');
+  const aim = await eggNow(run);
+  run.check(aim.reading === 'aim', `the aim while held: ${aim.reading}`);
+  const t = await tapAt(run, cooling.cooled + 12, 'release');
+  await run.until(/^edit committed/, { from: t.i, what: 'the release' });
+  // The aim's settle, then the egg as it ran again.
+  await run.until(/^egg ran /, { from: t.i, what: 'the egg as it ran again' });
+  const lines = run.lines().slice(t.i);
+  const stored = lastStored(run.lines()).cook;
+  run.check(stored.correctedAt_s === stored0.correctedAt_s && stored.choices.level === stored0.choices.level,
+    `no correction: ${stored.correctedAt_s}, level ${stored.choices.level}`);
+  run.check(!has(lines, /^log /) || canon(eggLog(lines).last) === first, 'the record as it was');
+  run.note(`dragged to 0.9 and let go: the aim drawn, no correction, the record as it was, the egg as it ran again`);
 });
 
 scenario('cold', 'a cold cook: boil, pull, cooling, Done, an answer, Start again', async (run) => {
@@ -824,7 +1062,7 @@ scenario('slow-hob', 'never boiled: the guess lengthens, the time heated counts 
   }
   const lines = run.lines();
   const card = lines.slice(lengthened.i).find((l) => /^activity update heating/.test(l.text));
-  run.check(card && / up true$/.test(card.text), `the card counts up: ${card?.text}`);
+  run.check(card && / up true /.test(card.text), `the card counts up: ${card?.text}`);
   const ends = Number(card?.text.match(/ends (\d+)/)?.[1]);
   run.check(near(ends, start + 7200, 1), `the card counts to two hours: ${ends - start}`);
   const creeping = lines.filter((l) => l.text.startsWith('plan ') && l.t >= start + 1000 && l.t <= start + 1100);

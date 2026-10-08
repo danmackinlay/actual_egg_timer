@@ -121,7 +121,7 @@ struct PhaseActions: View {
                 // Invariant 6: tapping at first bubbles under-measures the boil
                 // by 15-25%, so the button names the thing to wait for.
                 Button {
-                    cook.boil()
+                    model.boil()
                 } label: {
                     Text(tr(model.keys(.heating).action ?? "action.fullBoil")).frame(maxWidth: .infinity).onAccent()
                 }
@@ -152,7 +152,7 @@ struct PhaseActions: View {
                 // ever know, and the record calls it a measured pull. Without it
                 // the grace runs out and the pull is only assumed.
                 Button {
-                    cook.pulledOut()
+                    model.pulledOut()
                 } label: {
                     Text(tr(model.keys(.pull).action ?? pulledKey(.ice))).frame(maxWidth: .infinity).onAccent()
                 }

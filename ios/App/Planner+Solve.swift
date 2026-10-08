@@ -6,6 +6,12 @@ extension Planner {
 
     func changed() {
         guard !applying else { return }
+        // While a cook runs the controls are its own: a change is a
+        // correction in hand (`Edits`), neither saved nor solved for here.
+        if let onEdit {
+            onEdit()
+            return
+        }
         #if DEBUG
         Perf.input()
         #endif

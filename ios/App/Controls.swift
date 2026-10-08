@@ -4,6 +4,18 @@ import EggTimerCore
 /// The small controls the setup sentence's panels and Settings share: a stored
 /// SI value on a stepper or in a typed field, in the cook's units.
 
+/// What a − or + tells about the finger on it while a cook runs: down (true)
+/// and up (false), for its field, so a hold is committed on release and a
+/// tap after its settle (`Edits`). Set once, at the screen's root; nothing
+/// while idle.
+struct EditGesture {
+    var touch: (ControlField, Bool) -> Void = { _, _ in }
+}
+
+extension EnvironmentValues {
+    @Entry var editGesture = EditGesture()
+}
+
 /// A number as the cook typed it, or nil if it is not one. A comma is the
 /// decimal point on half the world's keyboards, and a stray space is not a
 /// mistake worth refusing.
@@ -30,6 +42,9 @@ struct StepperValue: View {
     let measure: Measure
     @Binding var value: Double
     let show: (Double) -> String
+    /// The control a correction from it is, while a cook runs.
+    var field: ControlField? = nil
+    @Environment(\.editGesture) private var gesture
 
     var body: some View {
         HStack(spacing: 10) {
@@ -41,7 +56,9 @@ struct StepperValue: View {
                 .monospacedDigit()
                 .lineLimit(1)
                 .fixedSize()
-            Stepper(label, value: measured(measure, $value), in: measure.bounds ?? 0...0, step: measure.step)
+            Stepper(label, value: measured(measure, $value), in: measure.bounds ?? 0...0, step: measure.step) { on in
+                if let field { gesture.touch(field, on) }
+            }
                 .labelsHidden()
                 .accessibilityValue(show(value))
         }
@@ -54,12 +71,13 @@ struct StepperRow: View {
     let measure: Measure
     @Binding var value: Double
     let show: (Double) -> String
+    var field: ControlField? = nil
 
     var body: some View {
         HStack {
             Text(label)
             Spacer(minLength: 8)
-            StepperValue(label: label, measure: measure, value: $value, show: show)
+            StepperValue(label: label, measure: measure, value: $value, show: show, field: field)
         }
     }
 }
@@ -71,6 +89,8 @@ struct CountValue: View {
     let label: String
     @Binding var value: Int
     let range: ClosedRange<Double>
+    var field: ControlField? = nil
+    @Environment(\.editGesture) private var gesture
 
     var body: some View {
         HStack(spacing: 10) {
@@ -78,7 +98,9 @@ struct CountValue: View {
                 .systemFigures()
                 .foregroundStyle(.secondary)
                 .monospacedDigit()
-            Stepper(label, value: $value, in: Int(range.lowerBound)...Int(range.upperBound))
+            Stepper(label, value: $value, in: Int(range.lowerBound)...Int(range.upperBound)) { on in
+                if let field { gesture.touch(field, on) }
+            }
                 .labelsHidden()
                 .accessibilityValue(countText(Double(value)))
         }
@@ -102,6 +124,8 @@ struct MeasureField: View {
     let measure: Measure
     let value: Double
     let set: (Double) -> Void
+    var field: ControlField? = nil
+    @Environment(\.editGesture) private var gesture
     @State private var text = ""
     @FocusState private var focused: Bool
 
@@ -125,6 +149,8 @@ struct MeasureField: View {
                     step(up: true)
                 } onDecrement: {
                     step(up: false)
+                } onEditingChanged: { on in
+                    if let field { gesture.touch(field, on) }
                 }
                     .labelsHidden()
                     .accessibilityValue(spoken)
@@ -195,6 +221,8 @@ struct NudgeField: View {
     var disabled = false
     /// When the typing ends, for a field that shows what was stored.
     var endEditing: () -> Void = {}
+    var field: ControlField? = nil
+    @Environment(\.editGesture) private var gesture
     @FocusState private var focused: Bool
 
     var body: some View {
@@ -215,6 +243,8 @@ struct NudgeField: View {
                 step(up: true)
             } onDecrement: {
                 step(up: false)
+            } onEditingChanged: { on in
+                if let field { gesture.touch(field, on) }
             }
             .labelsHidden()
             .disabled(disabled)
@@ -244,7 +274,7 @@ struct RoomField: View {
         let m = planner.measure(.roomTemp)
         NudgeField(
             label: tr("controls.room"), measure: m, text: $text, startSI: StartTempPresets.roomC,
-            endEditing: { text = shown }
+            endEditing: { text = shown }, field: .room
         )
             .onAppear { text = shown }
             .onChange(of: text) {

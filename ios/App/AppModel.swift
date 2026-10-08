@@ -13,6 +13,8 @@ import EggTimerCopy
 final class AppModel {
     let planner = Planner()
     let cook = Cook()
+    /// Corrections while a cook runs (`Edits`).
+    let edits = Edits()
     /// True while "Eggs in" waits on a solve for the inputs as they now stand,
     /// so a second tap cannot start a second cook.
     private(set) var starting = false
@@ -24,6 +26,7 @@ final class AppModel {
     /// The screen is up: wire the cook to the planner, read what was stored,
     /// and pick up a cook that was running.
     func appear() {
+        edits.model = self
         // Install the notification delegate before anything can fire.
         Alarm.shared.activate()
         // Every plan of a running cook reads the calibration as it stands.
@@ -52,6 +55,12 @@ final class AppModel {
         if let dropped = cook.restoreIfNeeded() {
             if let boil = dropped.boil { planner.rememberBoil(boil) }
             if let egg = dropped.egg { logUnanswered(egg) }
+        }
+        // A cook picked back up: its controls show its own choices, and
+        // correct it (design/one-screen.md section 4, review 2.5).
+        if let running = cook.running {
+            planner.adopt(running.choices)
+            edits.begin()
         }
         // An answer held for the pot's surface is made when a plan lands.
         cook.planTaken = { [weak self] in self?.answerHeld() }
@@ -117,6 +126,8 @@ final class AppModel {
         let current = await planner.currentSolution()
         starting = false
         guard cook.phase == .idle, let solution = current, solution.whiteSets else { return }
+        // The controls are the cook's from here: a change is a correction.
+        edits.begin()
         await cook.start(
             choices: planner.choices,
             // The nudge drawn for this cook, while sharing is on (E8).
@@ -133,6 +144,8 @@ final class AppModel {
     /// (`cookEnding`), and the idle screen solves again for the inputs as
     /// they stand.
     func cancel() {
+        edits.touchedElsewhere()
+        edits.end()
         if let boil = cook.ending()?.boil { planner.rememberBoil(boil) }
         held = nil
         cook.cancel()
@@ -144,6 +157,8 @@ final class AppModel {
     /// timed is remembered, and an egg cooked through that nobody answered
     /// about is still logged; it folds nothing.
     func startAgain() {
+        edits.touchedElsewhere()
+        edits.end()
         if let ending = cook.ending() {
             if let boil = ending.boil { planner.rememberBoil(boil) }
             if let egg = cook.unanswered() { logUnanswered(egg) }
@@ -213,11 +228,88 @@ final class AppModel {
             cook.recordFeedbackGiven()
             Task { await planner.record(egg) }
         } else if cook.recordWaitsForSurface {
+            // Its pot's surface not built yet, or a correction after the
+            // pull not yet planned as it ran (`refreshAsRan`).
             held = Planner.Answers(yolk: yolk, white: white, probe: probe)
             #if DEBUG
             Screenshots.log("answer held")
             #endif
         }
+    }
+
+    // MARK: - Buttons that move the cook on
+
+    /// Full rolling boil, the egg out, and the answers to "still in the
+    /// water?": a correction still settling is committed first, so the
+    /// button acts on the cook as the controls say it is.
+    func boil() {
+        edits.touchedElsewhere()
+        cook.boil()
+    }
+
+    func pulledOut() {
+        edits.touchedElsewhere()
+        cook.pulledOut()
+    }
+
+    func stillIn() {
+        edits.touchedElsewhere()
+        cook.answerStillIn()
+    }
+
+    func stillOut() {
+        edits.touchedElsewhere()
+        cook.answerOut()
+        Task { await refreshAsRan() }
+    }
+
+    // MARK: - Corrections
+
+    /// A correction committed (`Edits.commit`): the cook corrected
+    /// (`Cook.correct`), and after the pull the record with it.
+    func correct(_ choices: CookChoices, startedAtS: Double?) {
+        cook.correct(choices: choices, startedAtS: startedAtS)
+        Task { await refreshAsRan() }
+    }
+
+    /// A correction after the pull corrects the record (DECISIONS.md 96,
+    /// 98): the plan as it ran is made again for the corrected cook, on the
+    /// calibration before this egg (`Planner.calibrationBefore`, core
+    /// `asRanCorrected`), never on one that has folded this egg's own answer
+    /// (design/one-screen.md section 4, "Never from its own outcome"), on
+    /// that calibration's surface and odds for the corrected pot, built off
+    /// the main actor. Done shows it once it is in. An egg already logged
+    /// has its record replaced from the same plan, its answers kept, and is
+    /// folded again (`Planner.replaceLogged`); an answer held meanwhile (the
+    /// record refused as stale) is made then. Dropped if the cook has been
+    /// corrected again, or has ended, before it lands.
+    func refreshAsRan() async {
+        guard let running = cook.running, running.events.pulled != nil, running.asRan != nil,
+              !asRanCurrent(running), !(cook.plan?.askIfStillIn ?? false) else { return }
+        let logged = cook.feedbackGiven ? planner.kept.log.indices.last : nil
+        let before = await planner.calibrationBefore(logged)
+        let nowS = AppClock.now.timeIntervalSince1970
+        let made: (cook: RunningCook, plan: CookPlan)? = await Task.detached(priority: .userInitiated) {
+            guard let inputs = replan(running, before, surface: nil, leanHintS: 0, nowS: nowS).inputs else { return nil }
+            let grid = await DecisionGrids.shared.grid(inputs)
+            let profile = await DecisionGrids.shared.profile(inputs, before)
+            let surface = CookSurface(inputs: inputs, grid: grid, profile: profile)
+            guard let next = asRanCorrected(running, before: before, surface: surface, nowS: nowS) else { return nil }
+            return (next, replan(next, before, surface: surface, leanHintS: 0, nowS: nowS))
+        }.value
+        guard let made, let now = cook.running, now.idMs == running.idMs,
+              now.correctedAtS == running.correctedAtS else { return }
+        cook.keepCorrectedAsRan(made.cook)
+        #if DEBUG
+        Screenshots.log("as ran corrected")
+        #endif
+        if let index = logged, index == planner.kept.log.indices.last {
+            let had = planner.kept.log[index]
+            if let record = Cook.recordOf(made.cook, made.plan, yolk: had.yolkWord, white: had.white, probe: had.probe) {
+                planner.replaceLogged(index, record)
+            }
+        }
+        answerHeld()
     }
 
     /// The answers given while the record waited for the pot's surface, made

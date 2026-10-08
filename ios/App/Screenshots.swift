@@ -218,6 +218,10 @@ extension Screenshots {
         }
     }
 
+    /// `open:settings` pushes Settings, `open:clause-start` opens a
+    /// clause's choice, as a press on its link would (set by the screen).
+    @MainActor static var open: ((String) -> Void)?
+
     /// The clock at this launch, cook time: what `launch` counts from.
     static let launchedAtS = AppClock.now.timeIntervalSince1970
 
@@ -235,6 +239,26 @@ extension Screenshots {
                 yolk: YolkWord(rawValue: parts[0]), white: parts.count > 1 ? WhiteReport(rawValue: parts[1]) : nil
             )
         case "set": set(action.arg ?? "", model.planner)
+        case "drag":
+            // The finger down on the slider and moved through each level,
+            // a twentieth of a second apart; it stays down (`release`).
+            let levels = (action.arg ?? "").split(separator: "/").compactMap { Double($0) }
+            model.edits.fingerDown(.level, slider: true)
+            Task { @MainActor in
+                for level in levels {
+                    model.planner.doneness = level
+                    try? await Task.sleep(for: .milliseconds(50))
+                }
+            }
+        case "release": model.edits.fingerUp()
+        case "start":
+            // `start:+3`: the start's + pressed three times, or − for a
+            // minus; each a tap, so the correction settles.
+            let n = Int(action.arg ?? "") ?? 0
+            for _ in 0..<abs(n) { model.edits.stepStart(up: n > 0) }
+        case "stillIn": model.stillIn()
+        case "stillOut": model.stillOut()
+        case "open": open?(action.arg ?? "")
         default: log("action unknown \(action.name)")
         }
     }

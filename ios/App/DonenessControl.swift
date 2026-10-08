@@ -49,7 +49,12 @@ struct DonenessControl: View {
                 YolkSlider(
                     value: Binding(get: { planner.doneness }, set: { planner.doneness = $0 }),
                     range: Limits.doneness, step: 0.01,
-                    label: tr("controls.doneness"), valueText: donenessValue(r), inset: $thumbInset
+                    label: tr("controls.doneness"), valueText: donenessValue(r), inset: $thumbInset,
+                    onTouch: { down in
+                        // While a cook runs a drag is a correction committed
+                        // on release (`Edits`).
+                        if down { model.edits.fingerDown(.level, slider: true) } else { model.edits.fingerUp() }
+                    }
                 )
             }
             // Where the yolk will probably land, under the track: never in
@@ -181,6 +186,13 @@ struct SliderReading {
             peakYolkC = ran?.peakYolkC ?? plan.solution.result.peakYolkC
             level = ran?.level ?? plan.level
             noteSolution = plan.solution
+            // A change in hand: the heading and the texture are its own
+            // (the readout keeps the committed plan's time).
+            if let aim = model.edits.aim {
+                peakYolkC = aim.peakYolkC
+                level = aim.level
+                noteSolution = aim.solution ?? plan.solution
+            }
             return
         }
         sousVide = planner.isSousVide

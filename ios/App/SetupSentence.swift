@@ -27,6 +27,9 @@ struct SetupSentence: View {
     var startedAt: Date? = nil
     /// Whether a clause opens its choice.
     var editable = true
+    /// A clause pressed: another control than one with a change in hand,
+    /// which commits it (`Edits.touchedElsewhere`).
+    var onTap: () -> Void = {}
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     /// The scheme a clause's link uses. Never leaves the app.
@@ -46,6 +49,7 @@ struct SetupSentence: View {
                     return .systemAction
                 }
                 guard editable else { return .handled }
+                onTap()
                 withAnimation(.snappy) { open = open == clause ? nil : clause }
                 return .handled
             })
@@ -57,6 +61,8 @@ struct SetupSentence: View {
                             "label": .text(texts[clause]?.label ?? ""),
                             "value": .text(texts[clause]?.value ?? ""),
                         ])) {
+                            guard editable else { return }
+                            onTap()
                             open = open == clause ? nil : clause
                         }
                         .accessibilityValue(tr(open == clause ? "more.expanded" : "more.collapsed"))
@@ -197,6 +203,10 @@ func clauseTexts(_ f: SetupFacts) -> [Clause: ClauseText] {
 struct ClausePanel: View {
     @Bindable var planner: Planner
     let clause: Clause
+    /// While a cook runs, its corrections: the start's panel then has when
+    /// the eggs went in, and no sous-vide, which starts no cook. Nil while
+    /// idle.
+    var edits: Edits? = nil
     let done: () -> Void
     @State private var more = false
 
@@ -248,10 +258,13 @@ struct ClausePanel: View {
             Picker(tr("controls.start"), selection: $planner.start) {
                 Text(tr("controls.start.cold")).tag(StartChoice.cold)
                 Text(tr("controls.start.hot")).tag(StartChoice.hot)
-                Text(tr("controls.start.sousVide", ["bath": .text(planner.show(.temperature, sousVideBathC))]))
-                    .tag(StartChoice.sousVide)
+                if edits == nil {
+                    Text(tr("controls.start.sousVide", ["bath": .text(planner.show(.temperature, sousVideBathC))]))
+                        .tag(StartChoice.sousVide)
+                }
             }
             .pickerStyle(.segmented)
+            if let edits, let start = edits.shownStart { startedAt(edits, start) }
         case .cooling:
             Picker(tr("controls.cooling"), selection: $planner.cooling) {
                 Text(tr("controls.cooling.ice")).tag(Cooling.ice)
@@ -259,6 +272,40 @@ struct ClausePanel: View {
                 Text(tr("controls.cooling.counter")).tag(Cooling.counter)
             }
             .pickerStyle(.segmented)
+        }
+    }
+
+    /// When the eggs went in, while a cook runs (design/one-screen.md
+    /// section 7, 20): a − and a +, a minute at a time, no later than now,
+    /// the press of Full rolling boil or the pull, no earlier than two hours
+    /// before Start; when a press goes no further, the line under it says
+    /// why, and the time it stopped at.
+    private func startedAt(_ edits: Edits, _ start: Double) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Text(tr("controls.startedAt"))
+                Spacer(minLength: 8)
+                Text(timeOfDay(Date(timeIntervalSince1970: start)))
+                    .systemFigures()
+                    .monospacedDigit()
+                    .foregroundStyle(.secondary)
+                    .fixedSize()
+                Stepper(tr("controls.startedAt")) {
+                    edits.stepStart(up: true)
+                } onDecrement: {
+                    edits.stepStart(up: false)
+                } onEditingChanged: { on in
+                    if on { edits.fingerDown(.startTime) } else { edits.fingerUp() }
+                }
+                .labelsHidden()
+                .accessibilityValue(timeOfDay(Date(timeIntervalSince1970: start)))
+            }
+            .appFont(.subheadline)
+            if let limit = edits.startLimit {
+                Text(tr(limit.kind.key, ["time": .text(timeOfDay(Date(timeIntervalSince1970: limit.atS)))]))
+                    .appFont(.caption)
+                    .foregroundStyle(.secondary)
+            }
         }
     }
 
@@ -286,7 +333,7 @@ struct ClausePanel: View {
             }
             MeasureField(
                 label: tr("controls.measure.weight"), measure: planner.measure(.mass),
-                value: planner.eggMassG, set: { planner.weigh($0) }
+                value: planner.eggMassG, set: { planner.weigh($0) }, field: .mass
             )
         }
         .appFont(.subheadline)
@@ -307,7 +354,7 @@ struct ClausePanel: View {
             if planner.startTemp == .custom {
                 StepperRow(
                     label: tr("controls.eggTemp"), measure: planner.measure(.eggTemp),
-                    value: $planner.customStartC, show: { planner.show(.eggTemp, $0) }
+                    value: $planner.customStartC, show: { planner.show(.eggTemp, $0) }, field: .customStart
                 )
                 .appFont(.subheadline)
             }

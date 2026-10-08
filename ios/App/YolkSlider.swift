@@ -23,6 +23,9 @@ struct YolkSlider: UIViewRepresentable {
     let valueText: String
     /// Where the thumb's centre stops short of each end, pt: half a thumb.
     @Binding var inset: CGFloat
+    /// The finger comes down on the slider (true) and lifts (false): while a
+    /// cook runs, a drag is a correction committed on release (`Edits`).
+    var onTouch: ((Bool) -> Void)? = nil
 
     func makeUIView(context: Context) -> TracklessSlider {
         let slider = TracklessSlider()
@@ -31,6 +34,7 @@ struct YolkSlider: UIViewRepresentable {
         slider.step = Float(step)
         slider.value = Float(value)
         slider.addTarget(context.coordinator, action: #selector(Coordinator.changed(_:)), for: .valueChanged)
+        slider.addTarget(context.coordinator, action: #selector(Coordinator.pressed(_:)), for: .touchDown)
         slider.addTarget(
             context.coordinator, action: #selector(Coordinator.released(_:)),
             for: [.touchUpInside, .touchUpOutside, .touchCancel]
@@ -94,7 +98,12 @@ struct YolkSlider: UIViewRepresentable {
         /// on the stripes at the far left while the time and the bracket were
         /// for the level the slider had been moved to (LOGBOOK.md, 5 October
         /// 2026). The web's thumb goes there.
+        @objc func pressed(_ slider: TracklessSlider) {
+            parent.onTouch?(true)
+        }
+
         @objc func released(_ slider: TracklessSlider) {
+            parent.onTouch?(false)
             sent = nil
             if abs(Double(slider.value) - parent.value) > parent.step / 2 {
                 slider.value = Float(parent.value)

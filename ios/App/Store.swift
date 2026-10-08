@@ -69,6 +69,47 @@ enum SettingsStore {
         planner.cooling = Cooling(rawValue: store.string(forKey: "cooling") ?? "") ?? .ice
     }
 
+    /// Only the settings a correction changed, for the next cook
+    /// (design/one-screen.md section 7, 22): the rest stay as they were, and
+    /// a level the slider only previewed after the pull is never written.
+    ///
+    /// Settings never saved (a fresh install) are read only once the level
+    /// is (`load`), so then the whole controls are saved, with the level in
+    /// force, `level`.
+    @MainActor
+    static func save(_ planner: Planner, fields: Set<ControlField>, level: Double) {
+        let store = UserDefaults.standard
+        if store.object(forKey: "doneness") == nil {
+            save(planner)
+            store.set(level, forKey: "doneness")
+            return
+        }
+        for field in fields {
+            switch field {
+            case .level: store.set(planner.doneness, forKey: "doneness")
+            case .mass:
+                store.set(planner.weighedMassG, forKey: "weighedMassG")
+                store.set(Double(planner.sizeIndex), forKey: "sizeIndex")
+            case .eggFrom: store.set(planner.startTemp.rawValue, forKey: "startTemp")
+            case .customStart: store.set(planner.customStartC, forKey: "customStartC")
+            case .room:
+                store.set(planner.probe, forKey: "probe")
+                if let room = planner.roomC {
+                    store.set(room, forKey: "roomC")
+                } else {
+                    store.removeObject(forKey: "roomC")
+                }
+            case .start: if planner.start != .sousVide { store.set(planner.start.rawValue, forKey: "start") }
+            case .afterBoil: store.set(planner.heatOff, forKey: "heatOff")
+            case .cooling: store.set(planner.cooling.rawValue, forKey: "cooling")
+            case .water: store.set(planner.waterLitres, forKey: "waterLitres")
+            case .eggCount: store.set(Double(planner.eggCount), forKey: "eggCount")
+            case .altitude: store.set(planner.altitudeM, forKey: "altitudeM")
+            case .startTime: break
+            }
+        }
+    }
+
     @MainActor
     static func save(_ planner: Planner) {
         let store = UserDefaults.standard

@@ -13,6 +13,11 @@ import EggTimerCopy
 /// the signal to bring one back.
 struct SettingsView: View {
     @Bindable var planner: Planner
+    /// While a cook runs, the pot's rows - the altitude, the water, the eggs
+    /// in the pan, the heat after the boil, the probe and the room - are its
+    /// controls, and correct it as the sentence does; what I have learned
+    /// and sharing wait for it to end (design/one-screen.md, step 7).
+    var cooking = false
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     /// Forget asks first, in place, as the web's does: the button gives way to
     /// the question and its two answers.
@@ -74,7 +79,7 @@ struct SettingsView: View {
                     InfoRow("controls.altitude", more: [tr("controls.altitude.more")]) {
                         StepperValue(
                             label: tr("controls.altitude"), measure: planner.measure(.altitude),
-                            value: $planner.altitudeM, show: { planner.show(.altitude, $0) }
+                            value: $planner.altitudeM, show: { planner.show(.altitude, $0) }, field: .altitude
                         )
                     }
                     LabeledContent(tr("readout.stat.waterBoilsAt")) {
@@ -89,11 +94,14 @@ struct SettingsView: View {
                     InfoRow("controls.water", more: [tr("controls.water.more")]) {
                         StepperValue(
                             label: tr("controls.water"), measure: planner.measure(.water),
-                            value: $planner.waterLitres, show: { planner.show(.water, $0) }
+                            value: $planner.waterLitres, show: { planner.show(.water, $0) }, field: .water
                         )
                     }
                     InfoRow("controls.eggsInPan", more: [tr("controls.eggsInPan.more")]) {
-                        CountValue(label: tr("controls.eggsInPan"), value: $planner.eggCount, range: Limits.eggCount)
+                        CountValue(
+                            label: tr("controls.eggsInPan"), value: $planner.eggCount, range: Limits.eggCount,
+                            field: .eggCount
+                        )
                     }
                 }
 
@@ -131,9 +139,11 @@ struct SettingsView: View {
                 }
             }
 
-            learned
+            if !cooking {
+                learned
 
-            share
+                share
+            }
 
             Section {
                 Text(colophon)
