@@ -11,8 +11,8 @@ population a prior is drawn from (E6-E8, `COLLECTIVE.md`) are built in
 both, on this branch, not on `main` and not deployed. The web app (`src/`) and the iOS app (`ios/`) carry
 the same model, refusals, particle filter and choice of time, the same
 catalogue of words in two Englishes (Phase F but for Czech), and the same
-layout (`UI.md`). `npm test` runs 371 tests, all passing (5b pins E3's known
-limit). `npm run validate` passes 29/29, `swift test` passes 153 tests
+layout (`UI.md`). `npm test` runs 372 tests, all passing (5b pins E3's known
+limit). `npm run validate` passes 29/29, `swift test` passes 155 tests
 in 38 suites, and the fit's pytest 9. **Pushed on 29 September** at `5ff6940`, the owner's
 call: Netlify serves it at actualeggtimer.netlify.app, and the first run of
 `.github/workflows/verify.yml` passed. The iOS app runs from Xcode on the owner's
@@ -206,7 +206,11 @@ The one queue. Nothing else in the documents waits on the owner.
     on a cut is half one word; your soft egg of 5 October is a ballpark
     now and no longer dotted ("Most likely: Jammy." says where it lands);
     and the time range's wording, "I think the right time is between …",
-    for A7's range, which is yours to confirm.
+    for A7's range, which is yours to confirm. Since its follow-up (same
+    day) the bracket under the slider is the words' own interval, whole
+    words wide, and "How to make this more reliable" shows only at a wild
+    guess a change of setup makes surer: on the model a fresh install
+    never gets it (`UI.md` §8).
 
 Waiting on someone else: the Czech review (F5), by the owner's friend.
 

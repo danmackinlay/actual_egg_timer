@@ -3,8 +3,9 @@
  * which levels the app warns of, how the track is shaded, and when the app
  * says how to make an egg more reliable. Since the `certainty` draft
  * (DECISIONS.md 93 and 97) the warning and the shading read how sure the
- * app is in words (certainty.ts) at each level's time, and the odds of
- * "just right" are left to the advice and to the time chosen.
+ * app is in words (certainty.ts) at each level's time, and since its
+ * follow-up (8 October 2026) the advice does too: the odds of "just right"
+ * are left to the time chosen.
  *
  * THE PROFILE. `decide` computes the odds of the time: that is one level. The profile is the
  * same number for every level the pot can deliver, computed exactly as the app
@@ -78,8 +79,8 @@
  * the pot's decision surface is built, is one function, `decideAnswer`, which
  * both apps call: the time decided at the level answered (`answerAt`), held
  * by the envelope where the profile is in, moved by the nudge where a time is
- * chosen, the solve re-read there, the outcome there, and whether the odds
- * there are low enough to point the cook at Help. Until 6 October 2026 each
+ * chosen, the solve re-read there, the outcome and the certainty there, and
+ * whether the word asked is a wild guess there, so advice is looked for. Until 6 October 2026 each
  * app wrote it out for itself, and DECISIONS.md 84 had to land twice
  * (REVIEW-0.4.x, "Bloat and factoring" 1).
  *
@@ -110,7 +111,7 @@ import { CookSetup } from './protocol.js';
 import { Solution, logYolkTarget, solveCookTime } from './solve.js';
 import { DoseGrid } from './doseGrid.js';
 import {
-  Decision, TimeBounds, appliedNudge, decide, decidedSolution, oddsInTenths,
+  Decision, TimeBounds, appliedNudge, decide, decidedSolution,
 } from './decide.js';
 import { yolkWordProbabilities } from './infer.js';
 import { Outcome, predictOutcome } from './outcome.js';
@@ -143,7 +144,8 @@ export interface OddsProfile {
   /** Sorted by level, from `physicalSoftest` to `physicalHardest`. Empty when
    *  the white never sets: there is no level to give odds on. */
   points: LevelOdds[];
-  /** The best odds of any point: what the advice is measured against. */
+  /** The best odds of any point. The advice was measured against it until
+   *  8 October 2026; `npm run decide -- reach` still reports it. */
   best: number;
   /** The best `pAsked` of any point: what the shading is relative to. */
   bestAsked: number;
@@ -439,21 +441,35 @@ export function shadingOf(profile: OddsProfile): Shade[] {
 
 /* ------------------------------------------------------------ the advice */
 
-/** Below this many tenths, the chosen level's odds are low. */
-export const ADVICE_BELOW_TENTHS = 5;
-/** And this many tenths under the best level is a clear margin. */
-export const ADVICE_MARGIN_TENTHS = 3;
+/**
+ * WHEN TO ADVISE (DECISIONS.md 97; the `certainty` draft's follow-up, 8
+ * October 2026). The way to Help's advice shows when the word asked is a
+ * wild guess at the time on screen (`certaintyAt`'s class, `adviceWanted`)
+ * and a change of setup the model can price makes it surer: its profile,
+ * at the level on screen, gives the word asked a chance higher than the
+ * one on screen by ADVICE_GAIN or more (`protocolAdvice`'s `surer`). The
+ * chance, not the class: a profile's points carry both, but a class can
+ * only be read at a point, while the chance can be read between two points
+ * that ask the same word (`askedNear`), as the shading is. A change that
+ * lifts the chance by a twentieth at a wild guess is one the cook can feel.
+ *
+ * Until then the link showed when the odds of "just right" at the level
+ * were under 5/10 or 3/10 short of the best level's, and a change was
+ * offered when it raised those odds: nothing on screen shows them any more.
+ * The advice the model cannot price (the fridge, the scale) is listed with
+ * the changes that help, but does not bring the link on its own: the model
+ * cannot say it makes the egg surer.
+ */
 
-/** Whether the odds at the chosen level are low enough to offer advice: under
- *  5/10, or 3/10 or more under the best level's. */
-export function adviceWanted(oddsTenths: number, profile: OddsProfile | null): boolean {
-  if (oddsTenths < ADVICE_BELOW_TENTHS) return true;
-  if (profile === null) return false;
-  return oddsInTenths(profile.best) - oddsTenths >= ADVICE_MARGIN_TENTHS;
+/** Whether the word asked is unsure enough to look for advice: a wild
+ *  guess. The answer adds that the white sets (`DecidedAnswer`). */
+export function adviceWanted(c: Certainty): boolean {
+  return c === 'wildGuess';
 }
 
-/** How much a change must raise this level's odds to be worth saying: half a
- *  tenth, so it shows on screen and is not the arithmetic's last digits. */
+/** How much a change must raise the chance of the word asked at this level
+ *  to be worth saying: a twentieth, so it is a change a cook would notice
+ *  and not the arithmetic's last digits. */
 export const ADVICE_GAIN = 0.05;
 
 /** How far over the fridge preset an egg must start before "straight from the
@@ -520,37 +536,64 @@ export function unpricedAdvice(setup: CookSetup, facts: AdviceFacts): string[] {
   return keys;
 }
 
-/** A profile's odds at a level, interpolated between its points; 0 outside
- *  them, where that pot cannot deliver the level at all. */
-export function oddsNear(profile: OddsProfile, level: number): number {
+/** A profile's chance of the word asked at a level (`LevelOdds.pAsked`),
+ *  interpolated between its nearest points either side that ask the same
+ *  word, or the nearest such point where only one side has one; 0 outside
+ *  the profile, where that pot cannot deliver the level at all. Every word's
+ *  band between the profile's ends holds a point, so the chance is never
+ *  read off another word's. */
+export function askedNear(profile: OddsProfile, level: number): number {
   const pts = profile.points;
-  if (pts.length === 0 || level < pts[0].level || level > pts[pts.length - 1].level) return 0;
-  for (let i = 1; i < pts.length; i++) {
-    const a = pts[i - 1];
-    const b = pts[i];
-    if (level <= b.level) {
-      const span = b.level - a.level;
-      return span > 0 ? a.odds + (b.odds - a.odds) * ((level - a.level) / span) : b.odds;
-    }
+  if (pts.length === 0 || level < pts[0].level - SAME_LEVEL || level > pts[pts.length - 1].level + SAME_LEVEL) {
+    return 0;
   }
-  return pts[0].odds;
+  const word = askedWord(level);
+  let below = -1;
+  let above = -1;
+  for (let i = 0; i < pts.length; i++) {
+    if (askedWord(pts[i].level) !== word) continue;
+    if (pts[i].level <= level + SAME_LEVEL) below = i;
+    if (pts[i].level >= level - SAME_LEVEL && above < 0) above = i;
+  }
+  if (below < 0 && above < 0) return 0;
+  if (below < 0) return pts[above].pAsked;
+  if (above < 0) return pts[below].pAsked;
+  const a = pts[below];
+  const b = pts[above];
+  const span = b.level - a.level;
+  return span > 0 ? a.pAsked + (b.pAsked - a.pAsked) * ((level - a.level) / span) : a.pAsked;
+}
+
+/** What to say, and whether to show the way to it. */
+export interface ProtocolAdvice {
+  /** Catalogue keys in the order shown: the unpriced advice, then each
+   *  priced change that makes the word asked surer. */
+  keys: string[];
+  /** Whether a priced change makes it surer: the link shows (with
+   *  `adviceWanted`). */
+  surer: boolean;
 }
 
 /**
- * What to say under low odds, as catalogue keys in the order shown: the
- * unpriced advice, then each priced change whose profile raises the odds at
- * `level` by ADVICE_GAIN or more over `odds`, the odds on screen. A priced
- * change whose profile is not in yet is left out, and comes when it lands.
+ * What to say under a wild guess: the unpriced advice, then each priced
+ * change whose profile raises the chance of the word asked at `level` by
+ * ADVICE_GAIN or more over `pAsked`, the chance at the time on screen
+ * (`certaintyAt`'s). A priced change whose profile is not in yet is left
+ * out, and comes when it lands.
  */
 export function protocolAdvice(
-  setup: CookSetup, facts: AdviceFacts, level: number, odds: number,
+  setup: CookSetup, facts: AdviceFacts, level: number, pAsked: number,
   priced: { key: string; profile: OddsProfile }[],
-): string[] {
+): ProtocolAdvice {
   const keys = unpricedAdvice(setup, facts);
+  let surer = false;
   for (const change of priced) {
-    if (oddsNear(change.profile, level) - odds >= ADVICE_GAIN) keys.push(change.key);
+    if (askedNear(change.profile, level) - pAsked >= ADVICE_GAIN) {
+      keys.push(change.key);
+      surer = true;
+    }
   }
-  return keys;
+  return { keys: keys, surer: surer };
 }
 
 /* ------------------------------------------------------ the decided answer */
@@ -559,7 +602,8 @@ export function protocolAdvice(
  *  the screen shows, and what a cook started now carries. */
 export interface DecidedAnswer {
   /** The level decided for: the answer's (`LevelAnswer.level`), after any
-   *  snap. The advice is priced here, with `decision.odds`. */
+   *  snap. The advice is priced here, against the chance of the word asked
+   *  in `certainty`. */
   level: number;
   /** The mean solve, re-read at the decided time with the nudge in it
    *  (`decidedSolution`): its verdict and limits are the mean solve's. */
@@ -574,8 +618,9 @@ export interface DecidedAnswer {
   /** The nudge the time took (`appliedNudge`): all of it where a time is
    *  chosen for, none where the solver's own answer stands. */
   nudge_s: number;
-  /** Whether the odds are low enough to offer advice (`adviceWanted`, with
-   *  `profile`), and the white sets, so there is a cook to advise on. */
+  /** Whether the word asked is a wild guess (`adviceWanted`) and the white
+   *  sets, so there is a cook to advise on: the advice is looked for. The
+   *  link shows when `protocolAdvice` also finds a change that helps. */
   adviceWanted: boolean;
 }
 
@@ -598,13 +643,14 @@ export function decideAnswer(
   const target = logYolkTarget(level);
   const d = decide(c, grid, sol, target, envelopeBounds(profile, level));
   const nudge = appliedNudge(sol, nudge_s);
+  const certainty = certaintyAt(c.posterior, grid, d.cookTime_s + nudge, level);
   return {
     level: level,
     solution: decidedSolution(egg, setup, calibrationParams(c), sol, d, nudge),
     decision: d,
     outcome: predictOutcome(c.posterior, grid, d.cookTime_s + nudge, target),
-    certainty: certaintyAt(c.posterior, grid, d.cookTime_s + nudge, level),
+    certainty: certainty,
     nudge_s: nudge,
-    adviceWanted: sol.whiteSets && adviceWanted(d.oddsTenths, profile),
+    adviceWanted: sol.whiteSets && adviceWanted(certainty.words.certainty),
   };
 }

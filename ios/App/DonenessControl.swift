@@ -45,8 +45,8 @@ struct DonenessControl: View {
             // Its room is kept while it is away, so the words under it do not
             // move when it lands.
             Group {
-                if let bracket = planner.heldOutcome {
-                    YolkBracket(outcome: bracket)
+                if let sure = planner.heldCertainty {
+                    YolkBracket(words: sure.words)
                 } else {
                     Color.clear.frame(height: 9).accessibilityHidden(true)
                 }

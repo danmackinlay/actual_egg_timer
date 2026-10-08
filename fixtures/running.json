@@ -11922,7 +11922,7 @@
             "oddsTenths": 0
           },
           "nudge_s": 6,
-          "adviceWanted": true
+          "adviceWanted": false
         },
         "lean_s": 117.95833373520327,
         "nudge_s": 6,
@@ -12440,7 +12440,7 @@
             "oddsTenths": 0
           },
           "nudge_s": 6,
-          "adviceWanted": true
+          "adviceWanted": false
         },
         "lean_s": 117.95833373520327,
         "nudge_s": 6,
@@ -16042,7 +16042,7 @@
             "oddsTenths": 0
           },
           "nudge_s": 0,
-          "adviceWanted": true
+          "adviceWanted": false
         },
         "lean_s": 120,
         "nudge_s": 0,
@@ -16285,7 +16285,7 @@
             "oddsTenths": 0
           },
           "nudge_s": 0,
-          "adviceWanted": true
+          "adviceWanted": false
         },
         "lean_s": 120,
         "nudge_s": 0,

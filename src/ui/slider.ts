@@ -9,7 +9,7 @@
 import { anchorNear, anchorReachable } from '../core/policy.js';
 import { DONENESS_ANCHORS, Solution } from '../core/solve.js';
 import { OddsProfile, shadingOf } from '../core/reach.js';
-import { Outcome } from '../core/outcome.js';
+import { WordCertainty, wordBracket } from '../core/certainty.js';
 import { rangeWords } from '../core/wording.js';
 import { t } from './copy.js';
 import { page } from './dom.js';
@@ -43,11 +43,11 @@ export function renderDonenessReading(
  *  reach. If the white never sets there is nothing to offer, and the whole
  *  track says so.
  *
- *  `odds` shades the track and `bracket` draws the likely range under it;
- *  either is null when there is none to show (a cook under way, a white that
- *  never sets, or the odds not in yet). */
+ *  `odds` shades the track and `bracket`, the certainty's words, draws
+ *  their 90% interval under it; either is null when there is none to show
+ *  (a cook under way, a white that never sets, or the odds not in yet). */
 export function renderDonenessScale(
-  sol: Solution, odds: OddsProfile | null, bracket: Outcome | null,
+  sol: Solution, odds: OddsProfile | null, bracket: WordCertainty | null,
 ): void {
   const softest = sol.whiteSets ? sol.softestLevel : 1;
   const hardest = sol.whiteSets ? sol.hardestLevel : 0;
@@ -88,22 +88,23 @@ export function renderBareScale(): void {
   for (let i = 0; i < ticks.length; i += 1) ticks[i].classList.remove('blocked');
 }
 
-/** The likely range of the yolk under the track, from the outcome's 5% to
- *  its 95% point, the 90% the certainty's words state, with a mark at its
- *  middle; and the same in words for a
- *  screen reader, each end as the nearest doneness word. Nothing without an
- *  outcome: no decision yet, no white, sous-vide, or a cook under way. */
-function renderBracket(o: Outcome | null): void {
-  page().donenessBracket.hidden = o === null;
-  if (o === null) {
+/** The bracket under the track: the certainty's 90% interval in words,
+ *  drawn from the outer edge of its first word's band on the slider to the
+ *  outer edge of its last's, with a mark at the most likely word
+ *  (`wordBracket`); and the same words for a screen reader. Nothing without
+ *  a reading: no decision yet, no white, sous-vide, or a cook under way. */
+function renderBracket(w: WordCertainty | null): void {
+  page().donenessBracket.hidden = w === null;
+  if (w === null) {
     page().donenessRange.textContent = '';
     return;
   }
-  placeBand(page().donenessBracket, o.levelLow, o.levelHigh);
-  const span = o.levelHigh - o.levelLow;
-  const middle = span > 0 ? (o.levelMedian - o.levelLow) / span : 0.5;
+  const b = wordBracket(w);
+  placeBand(page().donenessBracket, b.low, b.high);
+  const span = b.high - b.low;
+  const middle = span > 0 ? (b.mark - b.low) / span : 0.5;
   page().donenessMedian.style.left = `${clampNumber(middle * 100, { lo: 0, hi: 100 }, 50)}%`;
-  const words = rangeWords(o);
+  const words = rangeWords(w);
   const args: Record<string, string> = {};
   for (const [name, key] of Object.entries(words.args)) args[name] = t(key);
   page().donenessRange.textContent = t(words.key, args);
