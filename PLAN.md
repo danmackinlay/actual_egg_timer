@@ -12,8 +12,8 @@ both, on this branch, not on `main` and not deployed. The web app (`src/`) and t
 the same model, refusals, particle filter and choice of time, the same
 catalogue of words in two Englishes (Phase F but for Czech), and the same
 layout (`UI.md`). `npm test` runs 396 tests, all passing (5b pins E3's known
-limit); `npm run e2e` drives the web app through 28 scenarios in headless
-Chrome and `npm run ios:e2e` the iOS app through 31 on a simulator, each
+limit); `npm run e2e` drives the web app through 30 scenarios in headless
+Chrome and `npm run ios:e2e` the iOS app through 32 on a simulator, each
 stepping a stopped clock to the moment it checks, all passing on a quiet
 machine and a loaded one. `npm run validate` passes 29/29, `swift test` passes 158 tests
 in 39 suites, and the fit's pytest 9. **Pushed on 29 September** at `5ff6940`, the owner's
