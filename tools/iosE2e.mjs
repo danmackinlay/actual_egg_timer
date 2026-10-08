@@ -718,6 +718,9 @@ scenario('start-time', 'C3 step 3: the start corrected a minute at a time, stopp
   const early = await run.until(/^start limit earliest /, { from: t.i, what: 'the limit two hours back' });
   after = await corrected(run, t.i);
   run.check(near(after.cook?.startedAt_s, id - 7200, EXACT), `two hours back: ${after.cook?.startedAt_s - id}`);
+  // Said to VoiceOver too, at each (onescreen review 3).
+  const said = run.lines().filter((l) => l.text.startsWith('announce ')).map((l) => l.text.slice(9));
+  run.check(said.length >= 3 && said[0] === EN['controls.startedAt.latestNow'].text, `announced: ${JSON.stringify(said)}`);
   run.note(`"${now.text}"; "${boil.text}"; "${early.text}"`);
 });
 

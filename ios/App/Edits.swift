@@ -1,6 +1,8 @@
 import Foundation
 import Observation
+import UIKit
 import EggTimerCore
+import EggTimerCopy
 
 /// A control a correction can come from, for "another control touched", and
 /// the settings and the cook's choices each one makes. The web's `FIELDS`
@@ -492,6 +494,16 @@ final class Edits {
         #if DEBUG
         if let limit { Screenshots.log("start limit \(limit.kind) \(limit.atS)") }
         #endif
+        // The line under the start says why it went no further; VoiceOver
+        // says it too, at each press it stops (the web's line is
+        // `aria-live`), since the value it reads has not changed.
+        if let limit {
+            let said = tr(limit.kind.key, ["time": .text(timeOfDay(Date(timeIntervalSince1970: limit.atS)))])
+            UIAccessibility.post(notification: .announcement, argument: said)
+            #if DEBUG
+            Screenshots.log("announce \(said)")
+            #endif
+        }
         guard next != from else { return false }
         startInHand = next
         controlsChanged(.startTime)
