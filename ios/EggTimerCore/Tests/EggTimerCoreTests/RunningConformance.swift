@@ -206,6 +206,12 @@ struct RunningConformance {
             let plan = replan(cook, c, surface: surface, leanHintS: hint, nowS: now, hint: slowHob)
             try expectPlan(plan, row.object("plan"), start: cook.startedAtS, note)
             #expect(try openEggId(cook, plan: plan, nowS: now) == row.optionalNum("open"), "\(note): the open egg")
+            let stillOpen = [
+                cookStillOpen(cook, plan: plan, storedIdMs: cook.idMs, nowS: now),
+                cookStillOpen(cook, plan: plan, storedIdMs: nil, nowS: now),
+                cookStillOpen(cook, plan: plan, storedIdMs: cook.idMs + 60000, nowS: now),
+            ]
+            #expect(stillOpen == (row["stillOpen"] as? [Bool]), "\(note): still open")
             for out in try row.rows("outs", mayBeEmpty: true) {
                 let t = try out.num("now_s")
                 let after = withOut(cook, plan: plan, nowS: t)

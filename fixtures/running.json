@@ -8498,6 +8498,11 @@
       "outs": [],
       "dues": [],
       "open": 1791363600000,
+      "stillOpen": [
+        true,
+        false,
+        false
+      ],
       "asRan": {
         "current": false,
         "kept": null,
@@ -8714,6 +8719,11 @@
       "outs": [],
       "dues": [],
       "open": 1791363600000,
+      "stillOpen": [
+        true,
+        false,
+        false
+      ],
       "asRan": {
         "current": false,
         "kept": null,
@@ -8941,6 +8951,11 @@
         }
       ],
       "open": 1791363600000,
+      "stillOpen": [
+        true,
+        false,
+        false
+      ],
       "asRan": {
         "current": false,
         "kept": null,
@@ -9160,6 +9175,11 @@
       "outs": [],
       "dues": [],
       "open": 1791363600000,
+      "stillOpen": [
+        true,
+        false,
+        false
+      ],
       "asRan": {
         "current": false,
         "kept": null,
@@ -9425,6 +9445,11 @@
       "outs": [],
       "dues": [],
       "open": 1791363600000,
+      "stillOpen": [
+        true,
+        false,
+        false
+      ],
       "asRan": {
         "current": false,
         "kept": null,
@@ -9580,6 +9605,11 @@
       "outs": [],
       "dues": [],
       "open": 1791363600000,
+      "stillOpen": [
+        true,
+        false,
+        false
+      ],
       "asRan": {
         "current": false,
         "kept": null,
@@ -9767,6 +9797,11 @@
       "outs": [],
       "dues": [],
       "open": 1791363600000,
+      "stillOpen": [
+        true,
+        false,
+        false
+      ],
       "asRan": {
         "current": false,
         "kept": null,
@@ -9964,6 +9999,11 @@
       "outs": [],
       "dues": [],
       "open": 1791363600000,
+      "stillOpen": [
+        true,
+        false,
+        false
+      ],
       "asRan": {
         "current": false,
         "kept": null,
@@ -10300,6 +10340,11 @@
         }
       ],
       "open": 1791363600000,
+      "stillOpen": [
+        true,
+        false,
+        false
+      ],
       "asRan": {
         "current": false,
         "kept": null,
@@ -10612,6 +10657,11 @@
         }
       ],
       "open": 1791363600000,
+      "stillOpen": [
+        true,
+        false,
+        false
+      ],
       "asRan": {
         "current": false,
         "kept": {
@@ -10957,6 +11007,11 @@
       "outs": [],
       "dues": [],
       "open": 1791363600000,
+      "stillOpen": [
+        true,
+        false,
+        false
+      ],
       "asRan": {
         "current": false,
         "kept": {
@@ -11303,6 +11358,11 @@
       "outs": [],
       "dues": [],
       "open": 1791363600000,
+      "stillOpen": [
+        true,
+        false,
+        false
+      ],
       "asRan": {
         "current": false,
         "kept": {
@@ -11649,6 +11709,11 @@
       "outs": [],
       "dues": [],
       "open": 1791363600000,
+      "stillOpen": [
+        true,
+        false,
+        false
+      ],
       "asRan": {
         "current": false,
         "kept": null,
@@ -11906,6 +11971,11 @@
       "outs": [],
       "dues": [],
       "open": 1791363600000,
+      "stillOpen": [
+        true,
+        false,
+        false
+      ],
       "asRan": {
         "current": false,
         "kept": null,
@@ -12186,6 +12256,11 @@
         }
       ],
       "open": 1791363600000,
+      "stillOpen": [
+        true,
+        false,
+        false
+      ],
       "asRan": {
         "current": false,
         "kept": null,
@@ -12448,6 +12523,11 @@
       "outs": [],
       "dues": [],
       "open": 1791363600000,
+      "stillOpen": [
+        true,
+        false,
+        false
+      ],
       "asRan": {
         "current": false,
         "kept": {
@@ -12787,6 +12867,11 @@
       "outs": [],
       "dues": [],
       "open": 1791363600000,
+      "stillOpen": [
+        true,
+        false,
+        false
+      ],
       "asRan": {
         "current": false,
         "kept": {
@@ -13128,6 +13213,11 @@
       "outs": [],
       "dues": [],
       "open": 1791363600000,
+      "stillOpen": [
+        true,
+        false,
+        false
+      ],
       "asRan": {
         "current": false,
         "kept": null,
@@ -13389,6 +13479,11 @@
       "outs": [],
       "dues": [],
       "open": 1791363600000,
+      "stillOpen": [
+        true,
+        false,
+        false
+      ],
       "asRan": {
         "current": false,
         "kept": {
@@ -13735,6 +13830,11 @@
       "outs": [],
       "dues": [],
       "open": 1791363600000,
+      "stillOpen": [
+        true,
+        false,
+        false
+      ],
       "asRan": {
         "current": false,
         "kept": {
@@ -14095,6 +14195,11 @@
         }
       ],
       "open": 1791363600000,
+      "stillOpen": [
+        true,
+        false,
+        false
+      ],
       "asRan": {
         "current": false,
         "kept": {
@@ -14447,6 +14552,11 @@
       "outs": [],
       "dues": [],
       "open": 1791363600000,
+      "stillOpen": [
+        true,
+        false,
+        false
+      ],
       "asRan": {
         "current": false,
         "kept": {
@@ -14792,6 +14902,11 @@
       "outs": [],
       "dues": [],
       "open": 1791363600000,
+      "stillOpen": [
+        true,
+        false,
+        false
+      ],
       "asRan": {
         "current": false,
         "kept": {
@@ -15138,6 +15253,11 @@
       "outs": [],
       "dues": [],
       "open": 1791363600000,
+      "stillOpen": [
+        true,
+        false,
+        false
+      ],
       "asRan": {
         "current": false,
         "kept": {
@@ -15654,6 +15774,11 @@
       "outs": [],
       "dues": [],
       "open": 1791363600000,
+      "stillOpen": [
+        true,
+        false,
+        false
+      ],
       "asRan": {
         "current": false,
         "kept": null,
@@ -15905,6 +16030,11 @@
       "outs": [],
       "dues": [],
       "open": 1791363600000,
+      "stillOpen": [
+        true,
+        false,
+        false
+      ],
       "asRan": {
         "current": false,
         "kept": null,
@@ -16170,6 +16300,11 @@
       ],
       "dues": [],
       "open": 1791363600000,
+      "stillOpen": [
+        true,
+        false,
+        false
+      ],
       "asRan": {
         "current": false,
         "kept": null,
@@ -16432,6 +16567,11 @@
       "outs": [],
       "dues": [],
       "open": 1791363600000,
+      "stillOpen": [
+        true,
+        false,
+        false
+      ],
       "asRan": {
         "current": false,
         "kept": {
@@ -16771,6 +16911,11 @@
       "outs": [],
       "dues": [],
       "open": 1791363600000,
+      "stillOpen": [
+        true,
+        false,
+        false
+      ],
       "asRan": {
         "current": false,
         "kept": {
@@ -17131,6 +17276,11 @@
       "outs": [],
       "dues": [],
       "open": 1791363600000,
+      "stillOpen": [
+        true,
+        false,
+        false
+      ],
       "asRan": {
         "current": false,
         "kept": null,
@@ -17387,6 +17537,11 @@
       "outs": [],
       "dues": [],
       "open": 1791363600000,
+      "stillOpen": [
+        true,
+        false,
+        false
+      ],
       "asRan": {
         "current": false,
         "kept": null,
@@ -17644,6 +17799,11 @@
       "outs": [],
       "dues": [],
       "open": 1791363600000,
+      "stillOpen": [
+        true,
+        false,
+        false
+      ],
       "asRan": {
         "current": false,
         "kept": null,
@@ -17894,6 +18054,11 @@
       "outs": [],
       "dues": [],
       "open": 1791363600000,
+      "stillOpen": [
+        true,
+        false,
+        false
+      ],
       "asRan": {
         "current": false,
         "kept": null,
@@ -18175,6 +18340,11 @@
         }
       ],
       "open": 1791363600000,
+      "stillOpen": [
+        true,
+        false,
+        false
+      ],
       "asRan": {
         "current": false,
         "kept": null,
@@ -18425,6 +18595,11 @@
       "outs": [],
       "dues": [],
       "open": 1791363600000,
+      "stillOpen": [
+        true,
+        false,
+        false
+      ],
       "asRan": {
         "current": false,
         "kept": null,
@@ -18681,6 +18856,11 @@
       "outs": [],
       "dues": [],
       "open": 1791363600000,
+      "stillOpen": [
+        true,
+        false,
+        false
+      ],
       "asRan": {
         "current": false,
         "kept": {
@@ -19021,6 +19201,11 @@
       "outs": [],
       "dues": [],
       "open": 1791363600000,
+      "stillOpen": [
+        true,
+        false,
+        false
+      ],
       "asRan": {
         "current": false,
         "kept": null,
@@ -19292,6 +19477,11 @@
         }
       ],
       "open": 1791363600000,
+      "stillOpen": [
+        true,
+        false,
+        false
+      ],
       "asRan": {
         "current": false,
         "kept": {
@@ -19646,6 +19836,11 @@
         }
       ],
       "open": 1791363600000,
+      "stillOpen": [
+        true,
+        false,
+        false
+      ],
       "asRan": {
         "current": false,
         "kept": {
@@ -20007,6 +20202,11 @@
         }
       ],
       "open": 1791363600000,
+      "stillOpen": [
+        true,
+        false,
+        false
+      ],
       "asRan": {
         "current": false,
         "kept": {
@@ -20366,6 +20566,11 @@
       "outs": [],
       "dues": [],
       "open": 1791363600000,
+      "stillOpen": [
+        true,
+        false,
+        false
+      ],
       "asRan": {
         "current": false,
         "kept": null,
@@ -20622,6 +20827,11 @@
       "outs": [],
       "dues": [],
       "open": 1791363600000,
+      "stillOpen": [
+        true,
+        false,
+        false
+      ],
       "asRan": {
         "current": false,
         "kept": {
@@ -20967,6 +21177,11 @@
       "outs": [],
       "dues": [],
       "open": 1791363600000,
+      "stillOpen": [
+        true,
+        false,
+        false
+      ],
       "asRan": {
         "current": false,
         "kept": {
@@ -21312,6 +21527,11 @@
         }
       ],
       "open": 1791363600000,
+      "stillOpen": [
+        true,
+        false,
+        false
+      ],
       "asRan": {
         "current": false,
         "kept": null,
@@ -21567,6 +21787,11 @@
       "outs": [],
       "dues": [],
       "open": 1791363600000,
+      "stillOpen": [
+        true,
+        false,
+        false
+      ],
       "asRan": {
         "current": false,
         "kept": {
@@ -21850,6 +22075,11 @@
       "outs": [],
       "dues": [],
       "open": 1791363600000,
+      "stillOpen": [
+        true,
+        false,
+        false
+      ],
       "asRan": {
         "current": false,
         "kept": null,
@@ -22080,6 +22310,11 @@
         }
       ],
       "open": 1791363600000,
+      "stillOpen": [
+        true,
+        false,
+        false
+      ],
       "asRan": {
         "current": false,
         "kept": null,
@@ -22331,6 +22566,11 @@
       "outs": [],
       "dues": [],
       "open": 1791363600000,
+      "stillOpen": [
+        true,
+        false,
+        false
+      ],
       "asRan": {
         "current": false,
         "kept": null,
@@ -22587,6 +22827,11 @@
       "outs": [],
       "dues": [],
       "open": 1791363600000,
+      "stillOpen": [
+        true,
+        false,
+        false
+      ],
       "asRan": {
         "current": false,
         "kept": null,
@@ -22780,6 +23025,11 @@
       "outs": [],
       "dues": [],
       "open": 1791363600000,
+      "stillOpen": [
+        true,
+        false,
+        false
+      ],
       "asRan": {
         "current": false,
         "kept": null,
@@ -22971,6 +23221,11 @@
       "outs": [],
       "dues": [],
       "open": 1791363600000,
+      "stillOpen": [
+        true,
+        false,
+        false
+      ],
       "asRan": {
         "current": false,
         "kept": null,
@@ -23198,6 +23453,11 @@
       "outs": [],
       "dues": [],
       "open": 1791363600000,
+      "stillOpen": [
+        true,
+        false,
+        false
+      ],
       "asRan": {
         "current": false,
         "kept": null,
@@ -23353,6 +23613,11 @@
       "outs": [],
       "dues": [],
       "open": null,
+      "stillOpen": [
+        false,
+        false,
+        false
+      ],
       "asRan": {
         "current": false,
         "kept": null,
@@ -23508,6 +23773,11 @@
       "outs": [],
       "dues": [],
       "open": null,
+      "stillOpen": [
+        false,
+        false,
+        false
+      ],
       "asRan": {
         "current": false,
         "kept": null,
@@ -23666,6 +23936,11 @@
       "outs": [],
       "dues": [],
       "open": 1791363600000,
+      "stillOpen": [
+        true,
+        false,
+        false
+      ],
       "asRan": {
         "current": false,
         "kept": null,
@@ -23821,6 +24096,11 @@
       "outs": [],
       "dues": [],
       "open": 1791363600000,
+      "stillOpen": [
+        true,
+        false,
+        false
+      ],
       "asRan": {
         "current": false,
         "kept": null,
@@ -23959,6 +24239,11 @@
       "outs": [],
       "dues": [],
       "open": null,
+      "stillOpen": [
+        false,
+        false,
+        false
+      ],
       "asRan": {
         "current": false,
         "kept": null,
@@ -24156,6 +24441,11 @@
       "outs": [],
       "dues": [],
       "open": 1791363600000,
+      "stillOpen": [
+        true,
+        false,
+        false
+      ],
       "asRan": {
         "current": false,
         "kept": {
@@ -24495,6 +24785,11 @@
       "outs": [],
       "dues": [],
       "open": 1791363600000,
+      "stillOpen": [
+        true,
+        false,
+        false
+      ],
       "asRan": {
         "current": false,
         "kept": {
@@ -24819,6 +25114,11 @@
       "outs": [],
       "dues": [],
       "open": 1791363600000,
+      "stillOpen": [
+        true,
+        false,
+        false
+      ],
       "asRan": {
         "current": false,
         "kept": null,
@@ -25002,6 +25302,11 @@
       "outs": [],
       "dues": [],
       "open": 1791363600000,
+      "stillOpen": [
+        true,
+        false,
+        false
+      ],
       "asRan": {
         "current": false,
         "kept": null,
@@ -25182,6 +25487,11 @@
       "outs": [],
       "dues": [],
       "open": 1791363600000,
+      "stillOpen": [
+        true,
+        false,
+        false
+      ],
       "asRan": {
         "current": false,
         "kept": null,
@@ -25362,6 +25672,11 @@
       "outs": [],
       "dues": [],
       "open": 1791363600000,
+      "stillOpen": [
+        true,
+        false,
+        false
+      ],
       "asRan": {
         "current": false,
         "kept": null,
@@ -25545,6 +25860,11 @@
       "outs": [],
       "dues": [],
       "open": 1791363600000,
+      "stillOpen": [
+        true,
+        false,
+        false
+      ],
       "asRan": {
         "current": false,
         "kept": null,
@@ -25725,6 +26045,11 @@
       "outs": [],
       "dues": [],
       "open": 1791363600000,
+      "stillOpen": [
+        true,
+        false,
+        false
+      ],
       "asRan": {
         "current": false,
         "kept": null,
@@ -25905,6 +26230,11 @@
       "outs": [],
       "dues": [],
       "open": 1791363600000,
+      "stillOpen": [
+        true,
+        false,
+        false
+      ],
       "asRan": {
         "current": false,
         "kept": null,
@@ -26066,6 +26396,11 @@
       "outs": [],
       "dues": [],
       "open": 1791363600000,
+      "stillOpen": [
+        true,
+        false,
+        false
+      ],
       "asRan": {
         "current": false,
         "kept": null,
@@ -26297,6 +26632,11 @@
         }
       ],
       "open": 1791363600000,
+      "stillOpen": [
+        true,
+        false,
+        false
+      ],
       "asRan": {
         "current": false,
         "kept": {
@@ -26593,6 +26933,11 @@
         }
       ],
       "open": 1791363600000,
+      "stillOpen": [
+        true,
+        false,
+        false
+      ],
       "asRan": {
         "current": false,
         "kept": null,
@@ -26732,6 +27077,11 @@
       "outs": [],
       "dues": [],
       "open": 1791363600000,
+      "stillOpen": [
+        true,
+        false,
+        false
+      ],
       "asRan": {
         "current": false,
         "kept": null,
@@ -26926,6 +27276,11 @@
       "outs": [],
       "dues": [],
       "open": 1791363600000,
+      "stillOpen": [
+        true,
+        false,
+        false
+      ],
       "asRan": {
         "current": false,
         "kept": {
@@ -27236,6 +27591,11 @@
       "outs": [],
       "dues": [],
       "open": null,
+      "stillOpen": [
+        false,
+        false,
+        false
+      ],
       "asRan": {
         "current": true,
         "kept": {
@@ -27579,6 +27939,11 @@
       "outs": [],
       "dues": [],
       "open": 1791363600000,
+      "stillOpen": [
+        true,
+        false,
+        false
+      ],
       "asRan": {
         "current": true,
         "kept": {
@@ -27947,6 +28312,11 @@
       "outs": [],
       "dues": [],
       "open": 1791363600000,
+      "stillOpen": [
+        true,
+        false,
+        false
+      ],
       "asRan": {
         "current": false,
         "kept": {
@@ -28169,6 +28539,11 @@
       "outs": [],
       "dues": [],
       "open": 1791363600000,
+      "stillOpen": [
+        true,
+        false,
+        false
+      ],
       "asRan": {
         "current": false,
         "kept": {
@@ -28364,6 +28739,11 @@
       "outs": [],
       "dues": [],
       "open": 1791363600000,
+      "stillOpen": [
+        true,
+        false,
+        false
+      ],
       "asRan": {
         "current": true,
         "kept": {

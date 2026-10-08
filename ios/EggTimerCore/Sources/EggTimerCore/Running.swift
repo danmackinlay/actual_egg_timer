@@ -811,7 +811,9 @@ public let slowHobMaxSteps = 100
 /// How long past its end a cook is still worth picking back up, s.
 public let restoreWindowS = 3600.0
 
-/// Whether a stored cook is too old to pick back up at `nowS`, from its plan.
+/// Whether a cook is too old to pick back up at `nowS`, from its plan. The
+/// tick asks it too, of the plan it holds, and ends the cook as Cancel would
+/// (running-cook review 2.2).
 public func cookTooOld(_ plan: CookPlan, nowS: Double) -> Bool {
     nowS > plan.tooOldAtS
 }
@@ -822,6 +824,14 @@ public func cookTooOld(_ plan: CookPlan, nowS: Double) -> Bool {
 public func openEggId(_ cook: RunningCook?, plan: CookPlan?, nowS: Double) -> Double? {
     guard let cook, let plan, !cookTooOld(plan, nowS: nowS) else { return nil }
     return cook.idMs
+}
+
+/// Whether the cook on a screen is still the egg open to correction: the
+/// stored cook is this one (`storedIdMs`, nil when nothing is stored) and it
+/// is not too old by this screen's plan. When not, the egg is final: end it as
+/// Start again does, or put its questions away, and log nothing more for it.
+public func cookStillOpen(_ cook: RunningCook, plan: CookPlan, storedIdMs: Double?, nowS: Double) -> Bool {
+    storedIdMs == cook.idMs && !cookTooOld(plan, nowS: nowS)
 }
 
 /// The plan for a cook at `nowS`, under calibration `c`. `nowS` is read by

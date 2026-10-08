@@ -24,7 +24,7 @@ import { WhiteReport, YolkWord } from '../src/core/infer.js';
 import {
   CookChoices, CookPlan, CookSurface, RESTORE_WINDOW_S, RecordContext, RunningCook, asRanCorrected, asRanCurrent,
   asRanShown, keepAsRan, boilToRemember, cookEnding,
-  cookFactsFor, cookSetupOf, cookTooOld, corrected, earliestStart_s, eventsDue, latestStart_s, openEggId, pullStands,
+  cookFactsFor, cookSetupOf, cookStillOpen, cookTooOld, corrected, earliestStart_s, eventsDue, latestStart_s, openEggId, pullStands,
   readRunningCook, replan, slowHobHintFits, startCook, startCorrected, stillIn, withBoil, withOut,
 } from '../src/core/running.js';
 import { gridFor, knowing } from '../tools/common.js';
@@ -504,6 +504,27 @@ test('21. review 2.1: the open egg is the stored cook\'s, until Start again or i
   assert.equal(openEggId(hot, p, p.tooOldAt_s), START_MS);
   assert.equal(openEggId(hot, p, p.tooOldAt_s + 1), null, 'too old: final');
   assert.equal(openEggId(null, null, S + 1), null, 'nothing stored: every egg final');
+});
+
+test('27. review 2.2 and 2.3: a cook too old ends from the tick; a screen knows its egg is no longer open', () => {
+  // 2.2's call: a cold start never tapped, the clock moved on. The plan the
+  // tick holds (made early) says too old at two hours, as a fresh one does.
+  const cold = cookOf();
+  const held = replan(cold, C, null, 0, S + 60);
+  for (const at of [7100, 7300, 14400]) {
+    assert.equal(cookTooOld(held, S + at), cookTooOld(replan(cold, C, null, 0, S + at), S + at), `${at} s`);
+  }
+  assert.deepEqual([cookTooOld(held, S + 7199), cookTooOld(held, S + 7201)], [false, true]);
+  // 2.3's call: at Done, answered; three hours on, the egg is final, and the
+  // screen holding it can tell without planning the stored cook.
+  const hot = cookOf({ startMode: 'hot' });
+  const p = planned(hot, S + 1);
+  const done = p.tooOldAt_s - 1;
+  assert.equal(cookStillOpen(hot, p, hot.id_ms, done), true);
+  assert.equal(cookStillOpen(hot, p, hot.id_ms, S + 3 * 3600), false, 'too old: final');
+  assert.equal(cookStillOpen(hot, p, null, done), false, 'Start again in another tab: nothing stored');
+  assert.equal(cookStillOpen(hot, p, hot.id_ms + 60_000, done), false, 'another cook stored');
+  assert.equal(cookStillOpen(hot, p, hot.id_ms, done), openEggId(hot, p, done) === hot.id_ms, 'as openEggId says');
 });
 
 test('22. review 3: the start has a lower bound, two hours before Start was pressed', () => {

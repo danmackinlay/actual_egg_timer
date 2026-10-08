@@ -13,7 +13,7 @@ import { LITERATURE_POPULATION } from '../../src/core/infer.js';
 import { Calibration, ProbeReading, recordFor } from '../../src/core/record.js';
 import {
   CookChoices, CookPlan, CookSurface, RESTORE_WINDOW_S, RecordContext, RunningCook, SLOW_HOB_MAX_STEPS, SlowHobHint,
-  asRanCorrected, asRanCurrent, asRanShown, boilToRemember, cookEnding, cookFactsFor, cookSetupOf, corrected,
+  asRanCorrected, asRanCurrent, asRanShown, boilToRemember, cookEnding, cookStillOpen, cookFactsFor, cookSetupOf, corrected,
   earliestStart_s, eventsDue, keepAsRan, latestStart_s, openEggId, pullStands, readRunningCook, replan, startCook,
   startCorrected, stillIn, withBoil, withOut,
 } from '../../src/core/running.js';
@@ -411,6 +411,8 @@ function plan(pc: PlanCase): CookPlan {
     outs: (pc.outs ?? []).map((t) => ({ now_s: t, events: withOut(pc.cook, p, t).events })),
     dues: (pc.dues ?? []).map((t) => ({ now_s: t, events: eventsDue(pc.cook, p, t) })),
     open: openEggId(pc.cook, p, pc.now_s),
+    stillOpen: [cookStillOpen(pc.cook, p, pc.cook.id_ms, pc.now_s), cookStillOpen(pc.cook, p, null, pc.now_s),
+      cookStillOpen(pc.cook, p, pc.cook.id_ms + 60000, pc.now_s)],
     asRan: {
       current: asRanCurrent(pc.cook), kept: keepAsRan(pc.cook, p).asRan, shown: asRanShown(pc.cook, p),
       corrected: correctedAsRan(pc.cook, c, surface, pc.now_s),

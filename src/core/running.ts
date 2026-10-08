@@ -672,9 +672,14 @@ export const SLOW_HOB_MAX_STEPS = 100;
  *  `RESTORE_WINDOW_MS` and iOS's bound, now one rule (`cookTooOld`). */
 export const RESTORE_WINDOW_S = 3600;
 
-/** Whether a stored cook is too old to pick back up at `now_s`, from its
- *  plan: both apps drop it then, rather than restore a timer for an egg
- *  that is no longer on the hob or the counter. */
+/** Whether a cook is too old to pick back up at `now_s`, from its plan:
+ *  both apps drop a stored one then, rather than restore a timer for an egg
+ *  that is no longer on the hob or the counter. The tick asks it too
+ *  (running-cook review 2.2), of the plan it holds: a cook running on screen
+ *  that is too old ends then as Cancel would end it (`cookEnding`: the boil
+ *  remembered, a finished unanswered egg logged), its alarms and card with
+ *  it. The plan the tick holds is enough: `tooOldAt_s` moves only with what
+ *  the cook tells the plan, which plans again. */
 export function cookTooOld(plan: CookPlan, now_s: number): boolean {
   return now_s > plan.tooOldAt_s;
 }
@@ -689,6 +694,21 @@ export function cookTooOld(plan: CookPlan, now_s: number): boolean {
 export function openEggId(cook: RunningCook | null, plan: CookPlan | null, now_s: number): number | null {
   if (cook === null || plan === null || cookTooOld(plan, now_s)) return null;
   return cook.id_ms;
+}
+
+/**
+ * Whether the cook on a screen is still the egg open to correction at
+ * `now_s` (running-cook review 2.3): the stored cook is this one - its id,
+ * `storedId_ms`, is this cook's (null when nothing is stored) - and it is not
+ * too old by this screen's plan. `openEggId` asks the same of the stored cook
+ * and its plan; this asks it of the screen's own, with no second plan. When
+ * it is not - Start again or Cancel in another tab, another cook stored, or
+ * an hour past the end - the egg is final: the screen ends it as Start again
+ * does, or at least puts its questions away, and logs or rewrites nothing
+ * more for it. iOS asks it on becoming active and before any answer.
+ */
+export function cookStillOpen(cook: RunningCook, plan: CookPlan, storedId_ms: number | null, now_s: number): boolean {
+  return storedId_ms === cook.id_ms && !cookTooOld(plan, now_s);
 }
 
 /**
