@@ -10,11 +10,12 @@ import {
 import { oddsProfile } from '../../src/core/reach.js';
 import { WhiteReport, YolkWord } from '../../src/core/infer.js';
 import { LITERATURE_POPULATION } from '../../src/core/infer.js';
-import { ProbeReading, recordFor } from '../../src/core/record.js';
+import { Calibration, ProbeReading, recordFor } from '../../src/core/record.js';
 import {
-  CookChoices, CookPlan, CookSurface, RESTORE_WINDOW_S, RecordContext, RunningCook, SLOW_HOB_MAX_STEPS,
-  boilToRemember, cookEnding, cookFactsFor, cookSetupOf, corrected, earliestStart_s, eventsDue, latestStart_s,
-  openEggId, pullStands, readRunningCook, replan, startCook, startCorrected, stillIn, withBoil, withOut,
+  CookChoices, CookPlan, CookSurface, RESTORE_WINDOW_S, RecordContext, RunningCook, SLOW_HOB_MAX_STEPS, SlowHobHint,
+  asRanCorrected, asRanCurrent, asRanShown, boilToRemember, cookEnding, cookStillOpen, cookFactsFor, cookSetupOf, corrected,
+  earliestStart_s, eventsDue, keepAsRan, latestStart_s, openEggId, pullStands, readRunningCook, replan, startCook,
+  startCorrected, stillIn, withBoil, withOut,
 } from '../../src/core/running.js';
 
 import { calibrationOf, coarseDecisionGrid, decidePosteriors } from './decide.js';
@@ -178,6 +179,19 @@ function withAt(raw: unknown, path: string[], value: unknown): unknown {
   return copy;
 }
 
+/** `cook` with the plan as it ran kept, from its plan at `now_s` on the
+ *  learned posterior's coarse surface (review 1.3). */
+function keptOf(cook: RunningCook, now_s: number): RunningCook {
+  const c = calibrationOf(named('learned'));
+  const inputs = replan(cook, c, null, 0, now_s).inputs;
+  if (inputs === null) throw new Error('no surface wanted');
+  const kept = keepAsRan(cook, replan(cook, c, { inputs: inputs, grid: coarseDecisionGrid(inputs).grid, profile: null }, 0, now_s));
+  if (kept.asRan === null) throw new Error('nothing kept');
+  return kept;
+}
+
+const keptCooled = keptOf(cooled, START_S + 1100);
+
 const READ_COOKS: { note: string; cook: RunningCook }[] = [
   { note: 'just started, cold', cook: cold },
   { note: 'hot, nudged, imperial, in the English of 1750', cook: { ...hot, units: 'imperial', lang: 'en-x-1750' } },
@@ -191,6 +205,8 @@ const READ_COOKS: { note: string; cook: RunningCook }[] = [
   { note: 'the grace ran out, the pull unconfirmed, the cooling ended', cook: timedOut },
   { note: 'the pull the clock assumed, said to stand', cook: pullStands(timedOut) },
   { note: 'the pull rang, the egg still in', cook: rung },
+  { note: 'cooled, with the plan as it ran kept', cook: keptCooled },
+  { note: 'the plan as it ran, then a correction: kept, stale', cook: corrected(keptCooled, { ...keptCooled.choices, mass_kg: 0.06 }, START_S + 1200) },
 ];
 
 const base = JSON.parse(JSON.stringify(pulled)) as unknown;
@@ -249,6 +265,19 @@ const REFUSED: { note: string; path: string[]; value: unknown }[] = [
   { note: 'first hot as a boolean', path: ['firstHotAt_s'], value: true },
   { note: 'no corrected field', path: ['correctedAt_s'], value: undefined },
   { note: 'corrected before the start', path: ['correctedAt_s'], value: START_S - 1 },
+  { note: 'no field for the plan as it ran (an earlier 0.5 build\'s cook)', path: ['asRan'], value: undefined },
+  { note: 'the plan as it ran, with no pull', path: ['events', 'pulled'], value: null },
+  { note: 'the plan as it ran, a list', path: ['asRan'], value: [] },
+  { note: 'the plan as it ran, no forecast', path: ['asRan', 'forecast'], value: null },
+  { note: 'the plan as it ran, a forecast that is not one', path: ['asRan', 'forecast', 'yolk'], value: [0.5, 0.6, 0.1] },
+  { note: 'the plan as it ran, a level past hard', path: ['asRan', 'level'], value: 1.5 },
+  { note: 'the plan as it ran, no cook time', path: ['asRan', 'cook_s'], value: 0 },
+  { note: 'the plan as it ran, a nudge that is a string', path: ['asRan', 'nudge_s'], value: '3' },
+  { note: 'the plan as it ran, no peak yolk', path: ['asRan', 'peakYolk_C'], value: undefined },
+  { note: 'the plan as it ran, the probe moment a number', path: ['asRan', 'probeMoment'], value: 1 },
+  { note: 'the plan as it ran, a diffusivity of zero', path: ['asRan', 'params', 'alpha_m2s'], value: 0 },
+  { note: 'the plan as it ran, no carryover scale', path: ['asRan', 'params', 'tauAirScale'], value: undefined },
+  { note: 'the plan as it ran, corrected before the start', path: ['asRan', 'correctedAt_s'], value: START_S - 1 },
 ];
 
 const rawReads: { note: string; raw: unknown }[] = [
@@ -257,8 +286,12 @@ const rawReads: { note: string; raw: unknown }[] = [
   { note: 'a list', raw: [base] },
   { note: 'a number', raw: 7 },
   ...REFUSED.map((r) => {
-    // "Cooled without a pull" is the cooled cook's, with its pull taken away.
-    const from = r.note === 'cooled without a pull' ? JSON.parse(JSON.stringify(cooled)) as unknown : base;
+    // "Cooled without a pull" is the cooled cook's, with its pull taken away;
+    // the plan as it ran's are a cook that keeps one.
+    const from = r.note === 'cooled without a pull' ? JSON.parse(JSON.stringify(cooled)) as unknown
+      : r.note === 'the plan as it ran, with no pull'
+        ? JSON.parse(JSON.stringify({ ...keptCooled, events: { ...keptCooled.events, cooledAt_s: null } })) as unknown
+        : r.note.startsWith('the plan as it ran') ? JSON.parse(JSON.stringify(keptCooled)) as unknown : base;
     return { note: r.note, raw: withAt(from, r.path, r.value) };
   }),
   { note: 'extra fields are ignored', raw: { ...(base as object), ticket: { old: true } } },
@@ -286,6 +319,8 @@ interface PlanCase {
   surface: SurfaceAsk;
   outs?: number[];
   dues?: number[];
+  /** The slow hob's hint handed to the plan (review 2.1). */
+  hint?: SlowHobHint | null;
 }
 
 function named(posterior: string) {
@@ -324,7 +359,8 @@ function planJson(p: CookPlan) {
       adviceWanted: d.adviceWanted,
     },
     lean_s: p.lean_s, nudge_s: p.nudge_s, cookTime_s: p.cookTime_s, overdue: p.overdue, askIfStillIn: p.askIfStillIn, cool_s: p.cool_s,
-    probeMoment: p.probeMoment, deadlines: p.deadlines, slowHobAt_s: p.slowHobAt_s, tooOldAt_s: p.tooOldAt_s,
+    probeMoment: p.probeMoment, deadlines: p.deadlines, slowHobAt_s: p.slowHobAt_s, slowHob: p.slowHob,
+    tooOldAt_s: p.tooOldAt_s,
     certainty: p.certainty, forecast: p.forecast,
   };
 }
@@ -357,11 +393,15 @@ function plan(pc: PlanCase): CookPlan {
   } else if (ask !== 'none') {
     surface = surfaceFor(pc.posterior, ask.of, pc.leanHint_s, ask.now_s, false);
   }
-  const p = replan(pc.cook, c, surface, pc.leanHint_s, pc.now_s);
+  const hint = pc.hint ?? null;
+  const p = replan(pc.cook, c, surface, pc.leanHint_s, pc.now_s, hint);
+  if (hint !== null && JSON.stringify(p) !== JSON.stringify(replan(pc.cook, c, surface, pc.leanHint_s, pc.now_s))) {
+    throw new Error(`${pc.note}: the hint moved the plan`);
+  }
   const g = surface === null ? null : coarseDecisionGrid(surface.inputs);
   plans.push({
     note: pc.note, posterior: pc.posterior, eggsLogged: c.eggsLogged, cook: pc.cook,
-    leanHint_s: pc.leanHint_s, now_s: pc.now_s,
+    leanHint_s: pc.leanHint_s, now_s: pc.now_s, hint: hint,
     surface: surface === null || g === null ? null : {
       of: typeof ask === 'object' ? { cook: ask.of, now_s: ask.now_s } : null,
       grid: { tauAirScale: g.tauAirScale, ...g.spec },
@@ -371,18 +411,34 @@ function plan(pc: PlanCase): CookPlan {
     outs: (pc.outs ?? []).map((t) => ({ now_s: t, events: withOut(pc.cook, p, t).events })),
     dues: (pc.dues ?? []).map((t) => ({ now_s: t, events: eventsDue(pc.cook, p, t) })),
     open: openEggId(pc.cook, p, pc.now_s),
+    stillOpen: [cookStillOpen(pc.cook, p, pc.cook.id_ms, pc.now_s), cookStillOpen(pc.cook, p, null, pc.now_s),
+      cookStillOpen(pc.cook, p, pc.cook.id_ms + 60000, pc.now_s)],
+    asRan: {
+      current: asRanCurrent(pc.cook), kept: keepAsRan(pc.cook, p).asRan, shown: asRanShown(pc.cook, p),
+      corrected: correctedAsRan(pc.cook, c, surface, pc.now_s),
+    },
     ...recordOf(pc.cook, p, pc.now_s, plans.length),
   });
   return p;
 }
 
-/** The record of a plan's egg, the boil it remembers, and how it ends. */
+/** `asRanCorrected` on the plan's calibration and surface: its plan as it
+ *  ran, or null when refused for want of the surface. */
+function correctedAsRan(cook: RunningCook, c: Calibration, surface: CookSurface | null, now_s: number) {
+  const r = asRanCorrected(cook, c, surface, now_s);
+  return r === null ? null : { asRan: r.asRan };
+}
+
+/** The record of a plan's egg (or why core refused it), the boil it
+ *  remembers, and how it ends. */
 function recordOf(cook: RunningCook, p: CookPlan, now_s: number, i: number) {
   const ctx = contextFor(cook, i);
   const a = ANSWERS[i % ANSWERS.length];
+  const made = cookFactsFor(cook, p, ctx, a.yolkWord, a.white, a.probe);
   return {
     context: ctx, answers: a,
-    record: recordFor(cookFactsFor(cook, p, ctx, a.yolkWord, a.white, a.probe)),
+    record: made.facts === null ? null : recordFor(made.facts),
+    refused: made.refused,
     boil: boilToRemember(cook),
     ending: cookEnding(cook, p, now_s),
   };
@@ -546,6 +602,68 @@ const S = START_S;
   const lateOut = withEvents(late, eventsDue(late, replan(late, calibrationOf(named('learned')), null, 0, lateEnd + 21), lateEnd + 21));
   plan({ note: 'the grace ran out, then ice corrected to tap water: nothing to ask', posterior: 'learned', cook: corrected(lateOut, { ...late.choices, cooling: 'tap' }, lateEnd + 30), leanHint_s: 0, now_s: lateEnd + 30, surface: 'own' });
   plan({ note: 'the grace ran out, then a much heavier egg: the app asks', posterior: 'learned', cook: corrected(lateOut, { ...late.choices, mass_kg: late.choices.mass_kg + 0.02 }, lateEnd + 30), leanHint_s: 0, now_s: lateEnd + 30, surface: 'own' });
+}
+
+{
+  // The slow hob's hint (review 2.1): a plan started where the last one got
+  // to is the plan from the start; one made under anything else is ignored.
+  // Last, so no case before them moves.
+  const learned = calibrationOf(named('learned'));
+  const slow = cookOf();
+  const at = S + 1000;
+  const before = replan(slow, learned, null, 0, at);
+  const hint = before.slowHob;
+  plan({ note: 'a slow hob, the last plan\'s hint: the plan from the start', posterior: 'learned', cook: slow, leanHint_s: 0, now_s: at + 15, surface: 'none', hint: hint });
+  const next = replan(slow, learned, null, 0, at + 15, hint);
+  plan({ note: 'and the plan after it, with its hint', posterior: 'learned', cook: slow, leanHint_s: 0, now_s: at + 400, surface: 'none', hint: next.slowHob });
+  plan({ note: 'the hint at the moment it was made: nothing more to lengthen', posterior: 'learned', cook: slow, leanHint_s: 0, now_s: at, surface: 'none', hint: hint });
+  plan({ note: 'a hint for a lighter egg: ignored', posterior: 'learned', cook: corrected(slow, { ...slow.choices, mass_kg: 0.076 }, at + 10), leanHint_s: 0, now_s: at + 15, surface: 'none', hint: hint });
+  plan({ note: 'a hint made under another lean: ignored', posterior: 'learned', cook: slow, leanHint_s: 2, now_s: at + 15, surface: 'none', hint: hint });
+  plan({ note: 'a hint made under another calibration: ignored', posterior: 'prior', cook: slow, leanHint_s: 0, now_s: at + 15, surface: 'none', hint: hint });
+  plan({ note: 'a hint kept past the moment: ignored', posterior: 'learned', cook: slow, leanHint_s: 0, now_s: S + (hint as SlowHobHint).last_s - 1, surface: 'none', hint: hint });
+  plan({ note: 'a hint, the boil tapped since: ignored', posterior: 'learned', cook: withBoil(slow, at + 5), leanHint_s: 0, now_s: at + 15, surface: 'none', hint: hint });
+}
+
+{
+  // Review 3's call: a question left open through the counted cooling. The
+  // clock writes nothing under it, the phase stays short of Done, and the
+  // egg is not finished. Last, so no case before them moves.
+  const learned = calibrationOf(named('learned'));
+  const hot = cookOf({ startMode: 'hot' });
+  const p = replan(hot, learned, null, 0, S + 1);
+  const due = p.deadlines.cookEnd_s;
+  const out = withEvents(hot, eventsDue(hot, p, due + 60));
+  const asked = corrected(out, { ...hot.choices, startMode: 'cold' }, due + 60);
+  const q = replan(asked, learned, null, 0, due + 60);
+  const end = q.deadlines.coolEnd_s as number;
+  plan({ note: 'a question left open past the counted cooling: nothing written, not Done', posterior: 'learned', cook: asked, leanHint_s: 0, now_s: end + 5, surface: 'own', dues: [end + 5, end + 4000] });
+  // Asked at Done: the cooling had ended, and the question still holds Done back.
+  const cooled = withEvents(out, eventsDue(out, replan(out, learned, null, 0, due + 60), due + 900));
+  plan({ note: 'a question asked after Done: Done held back until it is answered', posterior: 'learned', cook: corrected(cooled, { ...hot.choices, startMode: 'cold' }, due + 900), leanHint_s: 0, now_s: due + 901, surface: 'none', dues: [due + 902] });
+}
+
+{
+  // The cook as it ran (review 1.3, 2.4): the pull written on the interim
+  // plan, no surface yet; kept when the surface lands; a relaunch three hours
+  // on with no surface; a correction at Done, stale until planned again on
+  // the calibration before this egg. Last, so no case before them moves.
+  const learned = calibrationOf(named('learned'));
+  const hot = cookOf({ startMode: 'hot' }, -7);
+  const interim = replan(hot, learned, null, 0, S + 1);
+  const due = interim.deadlines.cookEnd_s;
+  const out = withEvents(hot, eventsDue(hot, interim, due + PULL_GRACE_SECONDS));
+  plan({ note: 'the grace ran out on the interim plan, then a reload with no surface: no record, nothing kept', posterior: 'learned', cook: out, leanHint_s: 0, now_s: due + 30, surface: 'none' });
+  plan({ note: 'its surface landed: the plan as it ran is kept from it', posterior: 'learned', cook: out, leanHint_s: 0, now_s: due + 31, surface: 'own' });
+  const kept = keptOf(out, due + 31);
+  const done = withEvents(kept, eventsDue(kept, replan(kept, learned, null, 0, due + 31), due + 900));
+  plan({ note: 'kept, relaunched three hours on with no surface: too old, its record from the cook as it ran', posterior: 'learned', cook: done, leanHint_s: 0, now_s: S + 3 * 3600, surface: 'none' });
+  plan({ note: 'kept, on another posterior: the cook as it ran all the same', posterior: 'prior', cook: done, leanHint_s: 0, now_s: due + 1000, surface: 'own' });
+  const corr = corrected(done, { ...done.choices, mass_kg: 0.062 }, due + 1000);
+  plan({ note: 'kept, then corrected at Done: stale, no record until planned again', posterior: 'learned', cook: corr, leanHint_s: 0, now_s: due + 1001, surface: 'own' });
+  plan({ note: 'kept, corrected, and no surface for the corrected pot', posterior: 'learned', cook: corr, leanHint_s: 0, now_s: due + 1001, surface: 'none' });
+  const again = asRanCorrected(corr, learned, surfaceFor('learned', corr, 0, due + 1001, false), due + 1001);
+  if (again === null) throw new Error('not planned again');
+  plan({ note: 'corrected, planned again on the calibration before this egg: its record from that', posterior: 'learned', cook: again, leanHint_s: 0, now_s: due + 1002, surface: 'none' });
 }
 
 /* What the boil memory learns (`boilToRemember`): a tap the cook watched for,

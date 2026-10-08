@@ -26,7 +26,7 @@ import {
 import { eggRecordFor } from '../src/ui/eggRecord.js';
 import { parseRecord } from '../src/core/record.js';
 import { replan, startCook } from '../src/core/running.js';
-import { knowing } from '../tools/common.js';
+import { gridFor, knowing } from '../tools/common.js';
 
 const EN = parseCatalogue(JSON.parse(readFileSync('copy/en.json', 'utf8')));
 
@@ -302,8 +302,13 @@ test('5b. the record says which system the cook was reading, and stays SI', () =
     mass_kg: 0.068, massFrom: 'class', sizeTable: 'us', eggFrom: 'fridge', customStart_C: 12, room_C: null,
     startMode: 'hot', afterBoil: 'hold', cooling: 'ice', waterLitres: 2, eggCount: 2, altitude_m: 0, level: 0.4,
   }, 0, {}, 'imperial', 'en');
-  const plan = replan(cook, knowing({ particles: 50, eggsLogged: 0 }), null, 0, 1_750_000_500);
-  const r = eggRecordFor(cook, plan, 'jammy');
+  const c = knowing({ particles: 50, eggsLogged: 0 });
+  // On its pot's surface: no record is made from a plan with none.
+  const inputs = replan(cook, c, null, 0, 1_750_000_500).inputs;
+  assert.ok(inputs !== null);
+  const surface = { inputs: inputs, grid: gridFor(c, inputs.egg, inputs.setup), profile: null };
+  const r = eggRecordFor(cook, replan(cook, c, surface, 0, 1_750_000_500), 'jammy');
+  assert.ok(r !== null);
   assert.equal(r.units, 'imperial');
   assert.equal(r.egg.mass_g, 68);
   assert.equal(r.setup.eggStart_C, 4);

@@ -38,10 +38,13 @@ function contextOf(cook: RunningCook): RecordContext {
 
 /** The record of one egg (`recordFor`, in core), from the cook and its plan,
  *  with whichever answers have been given so far, and the probe reading if
- *  there is one. */
+ *  there is one; null when core refuses the facts (`cookFactsFor`: no plan as
+ *  it ran and no surface, or one a correction has made stale), so no record
+ *  is ever made with no forecast. */
 export function eggRecordFor(
   cook: RunningCook, plan: CookPlan, yolk: YolkWord | null, white: WhiteReport | null = null,
   probe: ProbeReading | null = null,
-): EggRecord {
-  return recordFor(cookFactsFor(cook, plan, contextOf(cook), yolk, white, probe));
+): EggRecord | null {
+  const made = cookFactsFor(cook, plan, contextOf(cook), yolk, white, probe);
+  return made.facts === null ? null : recordFor(made.facts);
 }

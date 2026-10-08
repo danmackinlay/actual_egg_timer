@@ -188,8 +188,11 @@ final class Cook {
 
     /// This egg as a record (INFERENCE.md section 4), with whichever answers
     /// have been given - nil for one nobody gave - or nil when there is no
-    /// cook: core's `cookFactsFor` and `recordFor`, from the cook as it stands
-    /// and its plan, as the web makes it.
+    /// cook, or when core refuses its facts (`cookFactsFor`: no plan as it
+    /// ran kept and no surface yet, or one a correction has made stale), so
+    /// no record is made with no forecast: core's `cookFactsFor` and
+    /// `recordFor`, from the cook as it stands and its plan, as the web makes
+    /// it.
     func eggRecord(yolk: YolkWord?, white: WhiteReport? = nil, probe: ProbeReading? = nil) -> EggRecord? {
         guard let running, let plan else { return nil }
         return Self.record(running, plan, yolk: yolk, white: white, probe: probe)
@@ -197,8 +200,8 @@ final class Cook {
 
     private static func record(
         _ cook: RunningCook, _ plan: CookPlan, yolk: YolkWord?, white: WhiteReport?, probe: ProbeReading?
-    ) -> EggRecord {
-        recordFor(cookFactsFor(
+    ) -> EggRecord? {
+        cookFactsFor(
             cook, plan: plan,
             // One cook at a time here: no `id` (src/core/record.ts).
             context: RecordContext(
@@ -206,7 +209,7 @@ final class Cook {
                 day: day(Date(timeIntervalSince1970: cook.startedAtS)), id: nil
             ),
             yolkWord: yolk, white: white, probe: probe
-        ))
+        ).facts.map(recordFor)
     }
 
     /// A probe reading typed at DONE, as the record carries it
@@ -559,9 +562,12 @@ final class Cook {
         }
     }
 
-    private static let savedKey = "cookInProgress.v2"
-    /// Where 0.4 kept its cook, in a shape this build does not read.
-    private static let oldKey = "cookInProgress"
+    private static let savedKey = "cookInProgress.v3"
+    /// Where earlier builds kept their cook, in shapes this build does not
+    /// read: 0.3's and 0.4's (`cookInProgress`), and an earlier 0.5 build's,
+    /// without the plan as it ran (`cookInProgress.v2`, running-cook review
+    /// 1.3; DECISIONS.md 48).
+    private static let oldKeys = ["cookInProgress", "cookInProgress.v2"]
 
     private func persist() {
         guard let running else {
@@ -597,14 +603,15 @@ final class Cook {
     func restoreIfNeeded() -> Dropped? {
         guard running == nil else { return nil }
         let defaults = UserDefaults.standard
-        // A cook 0.4 was running at the upgrade: kept aside as stored, with
-        // the results (DECISIONS.md 81, 97), not converted, and the key
-        // deleted, so it is read once. Its notifications and its card are
-        // left alone: they are still right for the egg in the pot, and
+        // A cook an earlier build was running at the upgrade: kept aside as
+        // stored, with the results (DECISIONS.md 81, 97), not converted, and
+        // the key deleted, so it is read once. Its notifications and its card
+        // are left alone: they are still right for the egg in the pot, and
         // nothing else times it now (design/one-screen-review.md 2.6).
-        if let old = defaults.data(forKey: Self.oldKey) {
+        for key in Self.oldKeys {
+            guard let old = defaults.data(forKey: key) else { continue }
             Calibrations.keepUnreadCook(old)
-            defaults.removeObject(forKey: Self.oldKey)
+            defaults.removeObject(forKey: key)
         }
         guard let data = defaults.data(forKey: Self.savedKey) else { return nil }
         // A cook this build cannot read whole is not patched; it is kept

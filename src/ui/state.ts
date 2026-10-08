@@ -71,7 +71,7 @@ interface PageState {
    *  be moved, or the level's low odds (`warningKey`); empty otherwise. */
   idleWarning: string;
   /** The cook under way (src/core/running.ts): its start, its choices and
-   *  what it observed, as stored under `aet.cook.v3`; null while idle. */
+   *  what it observed, as stored under `aet.cook.v4`; null while idle. */
   cook: RunningCook | null;
   /** Everything derived from `cook` (`replan`), planned again only when
    *  something new is known - an event, a surface landing, the slow hob's

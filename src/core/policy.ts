@@ -588,6 +588,10 @@ export interface Deadlines {
    *  until they do. The tap ends the pull, and the cooling (whose deadline
    *  the app then times from the tap) starts there. */
   outAt_s: number | null;
+  /** The plan asks whether the egg is still in the water (`askIfStillIn`,
+   *  src/core/running.ts): nothing past the question, so the phase that
+   *  would be Done reads Cooling until it is answered. Absent is false. */
+  asking?: boolean;
 }
 
 /**
@@ -610,6 +614,9 @@ export function phaseAt(d: Deadlines, now_s: number): Phase {
   if (now_s < d.cookEnd_s) return 'COOKING';
   const out = d.outAt_s !== null && now_s >= d.outAt_s;
   if (now_s < d.cookEnd_s + PULL_GRACE_SECONDS && !out) return 'PULL';
+  // A question open about the pull: the egg may still be in the water, so
+  // the cook is not Done, and nothing rings or ends it, until it is answered.
+  if (d.asking === true) return 'COOLING';
   if (d.coolEnd_s === null) return 'DONE';
   return now_s < d.coolEnd_s ? 'COOLING' : 'DONE';
 }

@@ -268,6 +268,11 @@ export const policyFixture = {
         phase: phaseAt(
           { cookEnd_s: t.cookEnd_s, coolEnd_s: t.coolEnd_s, provisional: false, outAt_s: t.outAt_s }, now_s,
         ),
+        // A question open about a pull the clock assumed: never Done.
+        asking: phaseAt(
+          { cookEnd_s: t.cookEnd_s, coolEnd_s: t.coolEnd_s, provisional: false, outAt_s: t.outAt_s, asking: true },
+          now_s,
+        ),
       })),
     })),
   },

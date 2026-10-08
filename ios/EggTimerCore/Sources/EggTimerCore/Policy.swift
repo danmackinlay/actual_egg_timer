@@ -577,12 +577,17 @@ public struct Deadlines: Sendable {
     /// they do. The tap ends the pull, and the cooling (whose deadline the app
     /// then times from the tap) starts there.
     public let outAtS: Double?
+    /// The plan asks whether the egg is still in the water (`askIfStillIn`):
+    /// nothing past the question, so the phase that would be Done reads
+    /// Cooling until it is answered.
+    public let asking: Bool
 
-    public init(cookEndS: Double, coolEndS: Double?, provisional: Bool, outAtS: Double? = nil) {
+    public init(cookEndS: Double, coolEndS: Double?, provisional: Bool, outAtS: Double? = nil, asking: Bool = false) {
         self.cookEndS = cookEndS
         self.coolEndS = coolEndS
         self.provisional = provisional
         self.outAtS = outAtS
+        self.asking = asking
     }
 }
 
@@ -604,6 +609,8 @@ public func phaseAt(_ d: Deadlines, nowS: Double) -> Phase {
     if nowS < d.cookEndS { return .cooking }
     let out = d.outAtS.map { nowS >= $0 } ?? false
     if nowS < d.cookEndS + pullGraceSeconds && !out { return .pull }
+    // A question open about the pull: not Done until it is answered.
+    if d.asking { return .cooling }
     guard let coolEndS = d.coolEndS else { return .done }
     return nowS < coolEndS ? .cooling : .done
 }

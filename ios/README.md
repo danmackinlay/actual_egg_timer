@@ -367,14 +367,17 @@ again when the slow hob says, pushes the Live Activity's changes, and rings for
 a deadline no notification holds; the screen redraws from its own `TimelineView`. This is the native form of the same discipline the web
 app uses when it recomputes from timestamps on `visibilitychange`.
 
-A cook in progress is written to `UserDefaults` (`cookInProgress.v2`, through
-JSONEncoder so every double comes back to the bit) and restored on launch.
+A cook in progress is written to `UserDefaults` (`cookInProgress.v3`, through
+JSONEncoder so every double comes back to the bit) and restored on launch. From
+the pull it carries the plan as it ran (core's `asRan`), so the record and Done
+are the cook as it ran whatever a later plan reads.
 Without that, a force-quit or a crash leaves the alarm with the system and the
 Live Activity on the Lock Screen while the app itself reopens to an idle screen —
 which teaches the user to distrust an alarm that was, in fact, perfectly
 correct. A cook core calls too old (`cookTooOld`: an hour past its end, or two
 hours still heating) is dropped instead of restored; that egg has been eaten. A
-0.4 cook (`cookInProgress`) is kept aside with the results, its notifications
+cook an earlier build wrote (0.3's and 0.4's `cookInProgress`, an earlier 0.5
+build's `cookInProgress.v2`) is kept aside with the results, its notifications
 left to ring.
 
 ## The Live Activity

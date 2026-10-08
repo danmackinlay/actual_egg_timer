@@ -11,7 +11,7 @@ population a prior is drawn from (E6-E8, `COLLECTIVE.md`) are built in
 both, on this branch, not on `main` and not deployed. The web app (`src/`) and the iOS app (`ios/`) carry
 the same model, refusals, particle filter and choice of time, the same
 catalogue of words in two Englishes (Phase F but for Czech), and the same
-layout (`UI.md`). `npm test` runs 372 tests, all passing (5b pins E3's known
+layout (`UI.md`). `npm test` runs 378 tests, all passing (5b pins E3's known
 limit). `npm run validate` passes 29/29, `swift test` passes 155 tests
 in 38 suites, and the fit's pytest 9. **Pushed on 29 September** at `5ff6940`, the owner's
 call: Netlify serves it at actualeggtimer.netlify.app, and the first run of
@@ -48,7 +48,7 @@ These counts are the only ones in the documents. If you want a number, run
    screen.md`), and its core, the running cook, is built (C2,
    `src/core/running.ts`), with the red-team review of it applied
    (`design/one-screen-review.md`, `DECISIONS.md` 98). Both apps' state is
-   on it (`aet.cook.v3`, `cookInProgress.v2`; `design/one-screen.md` §4),
+   on it (`aet.cook.v4`, `cookInProgress.v3`; `design/one-screen.md` §4),
    and red-teamed as built (`design/running-cook-review.md`), whose §1 and
    §2 come first; certainty in words is the `certainty` draft (93, D1),
    for the owner on a phone: next is the one screen in both (C3). `0.4.x` is
@@ -411,7 +411,7 @@ checked, fixed or deleted. Start the QA pass here.
   the iOS simulator, not yet on a phone or on Netlify.
 - **Alpha: no stability promised, and no back-compat yet** (`DECISIONS.md`
   48). The site is public but not in wide use, so the storage formats
-  (`aet.settings.v1`, `aet.cook.v3`, `aet.calibration.v4`, `aet.boil.v1`,
+  (`aet.settings.v1`, `aet.cook.v4`, `aet.calibration.v4`, `aet.boil.v1`,
   `aet.share.v1`; iOS's `sharing.v1` and `sharing.attest.v1`; record v1) may
   change without a migration; bump the key's version so an old value is
   dropped rather than misread. Back-compat starts when the owner says the app

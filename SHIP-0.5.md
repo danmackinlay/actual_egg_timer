@@ -209,6 +209,15 @@ core's exports.
         description in its `ContentState`; a later probe reading scored
         against the record logged at the answer. Driven on the simulator
         (`LOGBOOK.md`, 7 October 2026).
+- [x] **C2, red-teamed as built** (`design/running-cook-review.md`), core's
+      findings: the slow hob starts where the last plan got to, the same plan
+      to the bit, one solve a plan (2.1, `94c2f69`); nothing passes an open
+      question about the pull (3, `3ecc07c`); the cook as it ran kept from
+      the pull, the record never made from a plan with no surface, Done drawn
+      from it (1.3, 2.4, `64c74ad`; `aet.cook.v4`, `cookInProgress.v3`); the
+      tick's too-old call and `cookStillOpen` (2.2, 2.3, `81b590a`). Each
+      review heading says what was done and what is left to the apps (1.1,
+      1.2, 1.4, and the apps' part of 1.3, 2.1 to 2.4).
 - [ ] **C3. Both apps**, screen by screen, checked by driving them;
       `UI.md` rewritten as built.
 

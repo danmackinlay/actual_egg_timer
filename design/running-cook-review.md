@@ -137,6 +137,8 @@ it before making the record (an answer can be held for the second it
 takes). Or keep the forecast in the stored cook as a cache, as
 `leanHint_s` is.
 
+Actioned, in core: a running cook keeps the plan as it ran (`asRan`: level, cook time, nudge, forecast, peak yolk, probe moment, the model's parameters) from the first plan on the pot's surface made once it is pulled (`keepAsRan`), and `cookFactsFor` takes the record's level, time, nudge and forecast from it, or from a plan on its surface, and otherwise refuses (`'noSurface'`, or `'stale'` after a correction) rather than write `forecast: null`; the call above, relaunched three hours on with no surface, logs the forecast kept (`test/running.test.ts` 26, `running.json`); the stored cook is `aet.cook.v4` and `cookInProgress.v3`, `64c74ad`. The apps' part (keep it on every plan, hold an answer until the surface lands, plan the too-old cook on its surface) is theirs.
+
 ### 1.4 A relaunch while heating keeps the old alarms (iOS)
 
 Confirmed in core; the app's path read. `restoreIfNeeded` adopts the
@@ -194,6 +196,8 @@ lengthened) as a hint, valid while the cook and calibration are the same,
 and the result is the same plan (§4 checks a fresh plan against the
 step-by-step one at 199 moments). Then one solve per plan, as 0.4.
 
+Actioned, in core: `replan`'s optional `hint`, the last plan's `slowHob` (the last lengthening that did not creep, and the start, choices, remembered time, lean and nudge, and calibration parameters and white target it was made under), taken only when `slowHobHintFits` finds each the same to the bit and the clock past it. The plan is the same to the bit at all 199 moments and at each of the 634 plans of the two-hour cook; a creeping plan makes one solve instead of eight or nine, 320 ms to 85 ms a plan (Node, 1,000 particles), 202 s to 52 s of CPU for the two hours (`test/running.test.ts` 23, 24, `running.json`), `94c2f69`. The apps pass `plan.slowHob` to their next plan.
+
 ### 2.2 A cook too old runs on, and its card with it (both apps)
 
 - **The web never ends it in the tab that runs it.** Confirmed. A cold
@@ -218,6 +222,8 @@ step-by-step one at 199 moments). Then one solve per plan, as 0.4.
 would; iOS's too-old branch also calls `Alarm.shared.cancel()` and
 `LiveActivity.endAll()` (it is always this build's own cook, never a 0.4
 card kept aside).
+
+Actioned, the core part: `cookTooOld(plan, now_s)` is the tick's call, of the plan the tick holds (its `tooOldAt_s` moves only when the cook tells the plan something), documented so; the call above is too old at 7,200 s from a plan made at the start as from a fresh one (`test/running.test.ts` 27), `81b590a`. The apps' ticks and iOS's too-old branch are theirs.
 
 ### 2.3 An egg becomes final while its screen still takes answers (both apps)
 
@@ -247,6 +253,8 @@ Start again does, or at least puts the questions away, as `beforeReload`
 does, and logs nothing more for it. iOS checks on becoming active and
 before any answer.
 
+Actioned, the core part: `openEggId` needs the stored cook's plan; `cookStillOpen(cook, plan, storedId_ms, now_s)` asks it of the screen's own cook and plan, with the stored cook's id (null when none is stored): false once another tab's Start again cleared it, another cook is stored, or it is too old (`test/running.test.ts` 27, `running.json`), `81b590a`. Putting the questions away is the apps'.
+
 ### 2.4 Done after an answer shows the egg re-planned on that answer (both apps)
 
 Confirmed in the simulator; known and left by both apps' LOGBOOK entries
@@ -271,6 +279,8 @@ answer (its level and cook time), or from the plan as it stood then, never
 planned again; the peak shown is stored with the cook, beside
 `leanHint_s`, so a relaunch shows the same.
 
+Actioned, in core: the cook's `asRan` (1.3) is what Done draws from, `asRanShown(cook, plan)`: the plan as it ran, kept, whatever a later plan reads; null only before it is kept (no surface yet) or after a correction not yet planned on the calibration before this egg (`asRanCorrected(cook, before, surface, now_s)`, DECISIONS.md 98's rule, the apps supplying that calibration). The call above, answered runny and folded: the plan on the new posterior moves the peak, `asRanShown` and the record do not (`test/running.test.ts` 26b), `64c74ad`. Drawing Done from it is the apps'.
+
 ## 3. Minor, parity, and for C3
 
 - **The question about a pull the clock assumed lets the cooling run out
@@ -284,6 +294,13 @@ planned again; the peak shown is stored with the cook, beside
   nothing past the question. (Neither app calls `corrected`,
   `startCorrected`, `stillIn` or `pullStands` yet, so this cannot happen
   in this build.)
+  Actioned: while a plan asks, `eventsDue` writes nothing, `cookEnding`
+  is not finished, and the deadlines say `asking`, so `phaseAt` reads
+  Cooling where it would read Done until the question is answered; the cook
+  is too old an hour after the question at the earliest. The call above now
+  stays in Cooling with nothing written, and one asked after Done holds Done
+  back (`test/running.test.ts` 25, `running.json`, `policy.json`),
+  `3ecc07c`.
 - **The countdown reads 0:00 while still heating** once the slow hob
   creeps (from about 16 minutes for this cook): iOS's big clock
   (`ReadoutView.swift:175`), the heating card counting to an end already

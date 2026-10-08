@@ -202,9 +202,16 @@ struct RunningConformance {
                 let profile = try (s["profile"] as? [String: Any]).map { try profileOf($0) }
                 surface = CookSurface(inputs: inputs, grid: grid, profile: profile)
             }
-            let plan = replan(cook, c, surface: surface, leanHintS: hint, nowS: now)
+            let slowHob = try (row["hint"] as? [String: Any]).map { try slowHobHintOf($0) }
+            let plan = replan(cook, c, surface: surface, leanHintS: hint, nowS: now, hint: slowHob)
             try expectPlan(plan, row.object("plan"), start: cook.startedAtS, note)
             #expect(try openEggId(cook, plan: plan, nowS: now) == row.optionalNum("open"), "\(note): the open egg")
+            let stillOpen = [
+                cookStillOpen(cook, plan: plan, storedIdMs: cook.idMs, nowS: now),
+                cookStillOpen(cook, plan: plan, storedIdMs: nil, nowS: now),
+                cookStillOpen(cook, plan: plan, storedIdMs: cook.idMs + 60000, nowS: now),
+            ]
+            #expect(stillOpen == (row["stillOpen"] as? [Bool]), "\(note): still open")
             for out in try row.rows("outs", mayBeEmpty: true) {
                 let t = try out.num("now_s")
                 let after = withOut(cook, plan: plan, nowS: t)
@@ -222,7 +229,7 @@ struct RunningConformance {
             let probe = try (answers["probe"] as? [String: Any]).map {
                 ProbeReading(centreC: try $0.num("centre_C"), afterS: try $0.optionalNum("after_s"))
             }
-            let record = try recordFor(cookFactsFor(
+            let made = try cookFactsFor(
                 cook, plan: plan,
                 context: RecordContext(
                     app: ctx.value(AppName.self, "app"), appVersion: ctx.str("appVersion"), prior: ctx.str("prior"),
@@ -230,9 +237,29 @@ struct RunningConformance {
                 ),
                 yolkWord: answers.optionalValue(YolkWord.self, "yolkWord"),
                 white: answers.optionalValue(WhiteReport.self, "white"), probe: probe
-            ))
-            let written = try JSONSerialization.jsonObject(with: JSONEncoder().encode(record))
-            #expect(sameJSON(written, row["record"], relative: conformanceTolerance), "\(note): the record")
+            )
+            if row["record"] is [String: Any] {
+                let facts = try #require(made.facts, "\(note): refused \(String(describing: made.refused))")
+                #expect(made.refused == nil, "\(note): refused")
+                let written = try JSONSerialization.jsonObject(with: JSONEncoder().encode(recordFor(facts)))
+                #expect(sameJSON(written, row["record"], relative: conformanceTolerance), "\(note): the record")
+            } else {
+                #expect(made.facts == nil, "\(note): a record from a plan core refuses")
+                #expect(try made.refused?.rawValue == row.str("refused"), "\(note): why refused")
+            }
+            // The cook as it ran: current, kept, shown, and planned again on
+            // the plan's calibration and surface.
+            let ran = try row.object("asRan")
+            #expect(try asRanCurrent(cook) == ran.flag("current"), "\(note): as it ran, current")
+            expectAsRan(keepAsRan(cook, plan: plan).asRan, ran["kept"], "\(note): as it ran, kept")
+            expectAsRan(asRanShown(cook, plan: plan), ran["shown"], "\(note): as it ran, shown")
+            let again = asRanCorrected(cook, before: c, surface: surface, nowS: now)
+            if let j = ran["corrected"] as? [String: Any] {
+                let a = try #require(again, "\(note): planned again")
+                expectAsRan(a.asRan, j["asRan"], "\(note): as it ran, planned again")
+            } else {
+                #expect(again == nil, "\(note): planned again without the surface")
+            }
             try expectBoil(boilToRemember(cook), row["boil"], "\(note): the boil remembered")
             let ending = cookEnding(cook, plan: plan, nowS: now)
             let expectedEnding = try row.object("ending")
@@ -259,6 +286,42 @@ private func expectBoil(_ b: BoilToRemember?, _ json: Any?, _ what: String) thro
         try expectClose(boil.seconds, j.num("seconds"), "\(what): seconds")
     } else {
         #expect(b == nil, "\(what): remembered")
+    }
+}
+
+/// The plan as it ran against the fixture's, nil and JSON's null alike.
+private func expectAsRan(_ a: CookAsRan?, _ json: Any?, _ what: String) {
+    #expect(sameJSON(a?.jsonObject, json, relative: conformanceTolerance), "\(what)")
+}
+
+/// The slow hob's hint as the fixtures write one.
+private func slowHobHintOf(_ json: [String: Any]) throws -> SlowHobHint {
+    let params = try json.object("params")
+    return try SlowHobHint(
+        startedAtS: json.num("startedAt_s"), choices: choicesOf(json.object("choices")),
+        fromRampS: json.num("fromRamp_s"), carryS: json.num("carry_s"),
+        params: ModelParams(alphaM2s: params.num("alpha_m2s"), tauAirScale: params.num("tauAirScale")),
+        whiteDoseMin: json.num("whiteDose_min"), steps: Int(json.num("steps")), lastS: json.num("last_s"),
+        rampS: json.num("ramp_s"), carriedS: json.optionalNum("carried_s")
+    )
+}
+
+private func expectHint(_ h: SlowHobHint?, _ json: Any?, _ note: String) throws {
+    guard let j = json as? [String: Any] else {
+        #expect(h == nil, "\(note): no slow hob's hint")
+        return
+    }
+    let hint = try #require(h, "\(note): a slow hob's hint")
+    let want = try slowHobHintOf(j)
+    #expect(hint.steps == want.steps, "\(note): hint steps")
+    expectClose(hint.lastS, want.lastS, "\(note): hint's last")
+    expectClose(hint.rampS, want.rampS, "\(note): hint's ramp")
+    expectClose(hint.fromRampS, want.fromRampS, "\(note): hint's start")
+    expectClose(hint.carryS, want.carryS, "\(note): hint's carry")
+    switch (hint.carriedS, want.carriedS) {
+    case (nil, nil): break
+    case let (a?, b?): expectClose(a, b, "\(note): hint's carried time")
+    default: Issue.record("\(note): hint's carried time")
     }
 }
 
@@ -356,9 +419,11 @@ private func expectPlan(_ p: CookPlan, _ json: [String: Any], start: Double, _ n
     expectTime(p.deadlines.cookEndS, try dl.num("cookEnd_s"), start: start, "\(note): cook end")
     expectTime(p.deadlines.coolEndS, try dl.optionalNum("coolEnd_s"), start: start, "\(note): cooling end")
     #expect(try p.deadlines.provisional == dl.flag("provisional"), "\(note): deadlines provisional")
+    #expect(try p.deadlines.asking == dl.flag("asking"), "\(note): deadlines asking")
     expectTime(p.deadlines.outAtS, try dl.optionalNum("outAt_s"), start: start, "\(note): out")
     expectTime(p.slowHobAtS, try json.optionalNum("slowHobAt_s"), start: start, "\(note): slow hob")
     expectTime(p.tooOldAtS, try json.num("tooOldAt_s"), start: start, "\(note): too old")
+    try expectHint(p.slowHob, json["slowHob"], note)
     if let cj = json["certainty"] as? [String: Any] {
         let c = try #require(p.certainty, "\(note): no certainty")
         let w = try cj.object("words")
