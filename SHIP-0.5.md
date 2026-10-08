@@ -244,6 +244,19 @@ core's exports.
         ended at its end (`7d7a964`), every unread cook kept (`de688d5`).
         Each driven before and after on the simulator, with launch arguments
         for it (`1eec910`; `LOGBOOK.md`, 8 October 2026). No word changed.
+- [ ] **The fast clock and the scripted checks**: the checks driven by hand
+      on a running cook (an eleven-minute cook, a relaunch mid-cook, a
+      phone asleep through the pull, an upgrade with a cook running) in
+      seconds, from one command, in each app.
+  - [ ] *The web's half.*
+  - [x] *iOS's half*: one clock (`ios/App/AppClock.swift`), which a Debug
+        build runs fast or shifted by launch argument and a Release build
+        does not have (`e823d20`); `npm run ios:e2e`, 16 scenarios on a
+        simulator of its own in about four and a half minutes, the running
+        cook review's cases among them (`fdc4dee`; `ios/README.md`, "The
+        fast clock and the scripted checks"). They found a cook just
+        started ended as no longer open when the app became active before
+        its first plan (`85f92f0`). Not in `verify` or CI.
 - [ ] **C3. Both apps**, screen by screen, checked by driving them;
       `UI.md` rewritten as built.
 
