@@ -254,6 +254,8 @@ const NOT_COPY: Record<string, string> = {
   none: 'debug log of the certainty line (Screenshots.log), never shown',
   'white {}': 'debug log (Screenshots.log), never shown',
   'note {}': 'debug log (Screenshots.log), never shown',
+  'as ran remade': 'debug log (Screenshots.log), never shown',
+  uiHoldAsRan: 'debug launch argument',
   // the face of 1750 (ios/App/PeriodFace.swift)
   IM_FELL_English_Roman: 'font name',
   IM_FELL_English_Italic: 'font name',

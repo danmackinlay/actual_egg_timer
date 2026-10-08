@@ -82,6 +82,9 @@ import EggTimerCore
 ///   layout.
 /// - `-muteAudio YES`: the ring at no volume and notifications without
 ///   sound, so a scripted run is silent (`npm run ios:e2e` always passes it).
+/// - `-uiHoldAsRan YES`: a correction after the pull is never planned as it
+///   ran in this launch, as if the app were killed before it landed: the
+///   stale cook a relaunch then finds (`AppModel.refreshAsRan`).
 /// - `-provisionalAlarms YES`: ask for quiet notifications, which the system
 ///   grants with no prompt, so the alarms are scheduled and read back on a
 ///   simulator nobody taps.
@@ -114,6 +117,11 @@ enum Screenshots {
     /// carry no sound, so a scripted run (`npm run ios:e2e`) is silent on the
     /// Mac's speakers; everything else about the ring and the alarms is as is.
     static var muteAudio: Bool { UserDefaults.standard.bool(forKey: "muteAudio") }
+    /// `-uiHoldAsRan YES`: a correction after the pull never has its record
+    /// made again in this launch (`AppModel.refreshAsRan`), as if the app were
+    /// killed before it landed, so a script can find the stale cook stored
+    /// at the next launch.
+    static var holdAsRan: Bool { UserDefaults.standard.bool(forKey: "uiHoldAsRan") }
     static var scene: String? { UserDefaults.standard.string(forKey: "uiScreen") }
     static var cookAgo: Double { UserDefaults.standard.double(forKey: "cookAgo") }
     static var doneAgo: Double {

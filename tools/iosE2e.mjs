@@ -1220,6 +1220,60 @@ scenario('again-logs', 'Start again logs the unanswered egg before it clears the
   run.check(!('cookInProgress.v3' in prefs), 'and no cook');
 });
 
+// ------------------------------------- the one screen's review, on iOS
+
+/// A hot cook out 2 s into the pull, on to Done, and the answer `-uiDo`
+/// gives at the cooling's end + 5 s folded: the plan at Done and the egg
+/// logged then.
+async function answeredAtDone(run, uiDo) {
+  await hotStarted(run, ['out@pull+2,answer:jammy@cooled+5', uiDo].filter(Boolean).join(','));
+  const cooling = await toCooling(run, 2);
+  let i = await run.step(cooling.cooled + 1);
+  await run.until(/^phase DONE$/, { from: i, what: 'Done' });
+  i = await run.step(cooling.cooled + 5);
+  await run.until(/^log 1 folded 1 /, { from: i, what: 'Jammy folded' });
+  return { cooling, first: eggLog(run.lines()).last };
+}
+
+scenario('start-again-corrected', 'onescreen review 1.2: Jammy at Done, the egg corrected and Start again pressed while it settles: the corrected egg logged, then the cook forgotten', async (run) => {
+  const { cooling, first } = await answeredAtDone(run, 'set:size=3@cooled+10,again@cooled+12');
+  const t = await tapAt(run, cooling.cooled + 10, 'set');
+  const again = await tapAt(run, cooling.cooled + 12, 'again');
+  const gone = await run.until(/^stored none$/, { from: again.i, what: 'the cook forgotten' });
+  const lines = run.lines();
+  const committed = index(lines.slice(t.i), /^edit committed /) + t.i;
+  run.check(committed > again.i, 'committed by Start again, not by its settle (the host too slow to tell)');
+  const egg = eggLog(lines.slice(0, gone.i)).last;
+  run.check(egg.egg.mass_g !== first.egg.mass_g, `the egg logged corrected: ${first.egg.mass_g} -> ${egg.egg.mass_g} g`);
+  run.check(egg.yolkWord === 'jammy', `the answer kept: ${egg.yolkWord}`);
+  const prefs = await run.prefs((p) => !('cookInProgress.v3' in p) && p['calibration.v4']?.log?.[0]?.egg?.mass_g === egg.egg.mass_g);
+  const kept = prefs['calibration.v4']?.log;
+  run.check(kept?.length === 1 && kept[0].egg.mass_g === egg.egg.mass_g, `the plist's egg: ${kept?.[0]?.egg?.mass_g} g`);
+  run.note(`the egg logged ${first.egg.mass_g} -> ${egg.egg.mass_g} g, Jammy kept, then forgotten`);
+});
+
+scenario('too-old-corrected', 'onescreen review 1.2: an answered egg corrected at Done, killed before its record was made again, relaunched too old: the corrected egg logged', async (run) => {
+  // `-uiHoldAsRan YES`: the record is never made again in this launch, as if
+  // the app were killed before it landed.
+  const { cooling, first } = await answeredAtDone(run, '');
+  run.terminate();
+  await relaunched(run, cooling.cooled + 9, ['-uiHoldAsRan', 'YES', '-uiDo', 'set:size=3@cooled+10']);
+  const t = await tapAt(run, cooling.cooled + 10, 'set');
+  const c = await corrected(run, t.i);
+  run.check(!has(run.lines().slice(t.i), /^as ran corrected$/), 'the record not made again before the kill');
+  run.check(c.cook?.correctedAt_s !== null && eggLog(run.lines()).last.egg.mass_g === first.egg.mass_g, 'stored corrected, logged as it was');
+  run.terminate();
+  run.launch([], { at: cooling.cooled + 3700 });
+  const old = await run.until(/^restore too old$/, { from: run.launched, what: 'too old' });
+  const gone = await run.until(/^stored none$/, { from: old.i, what: 'the cook forgotten' });
+  const egg = eggLog(run.lines().slice(0, gone.i)).last;
+  run.check(egg.egg.mass_g !== first.egg.mass_g, `the egg logged corrected: ${first.egg.mass_g} -> ${egg.egg.mass_g} g`);
+  run.check(egg.yolkWord === 'jammy', `the answer kept: ${egg.yolkWord}`);
+  const prefs = await run.prefs((p) => !('cookInProgress.v3' in p) && p['calibration.v4']?.log?.[0]?.egg?.mass_g === egg.egg.mass_g);
+  run.check(prefs['calibration.v4']?.log?.[0]?.egg.mass_g === egg.egg.mass_g, 'the plist holds the corrected egg');
+  run.note(`too old: the egg logged ${first.egg.mass_g} -> ${egg.egg.mass_g} g, then forgotten`);
+});
+
 // ------------------------------------------------------------------- main
 
 /// A new device's first launches are many seconds slow while the system

@@ -564,7 +564,12 @@ final class Cook {
     }
     #endif
 
-    func cancel() {
+    /// The cook ends: its alarms, its card and its ticker go, and it is
+    /// forgotten - but for `keepStored`, while its record is made again
+    /// before the egg is final (onescreen review 1.2): the model forgets it
+    /// then (`forgetStored`), and a kill in between finds it at the next
+    /// launch.
+    func cancel(keepStored: Bool = false) {
         #if DEBUG
         Screenshots.log("cook ended")
         #endif
@@ -576,7 +581,20 @@ final class Cook {
         ticker = nil
         running = nil
         reset()
-        persist()
+        if !keepStored { persist() }
+    }
+
+    /// The stored cook forgotten, if it is still the one started at `idMs`:
+    /// a cook kept stored while its record was made again (`cancel`), not a
+    /// new one started since.
+    static func forgetStored(idMs: Double) {
+        let defaults = UserDefaults.standard
+        guard let data = defaults.data(forKey: savedKey),
+              let stored = try? JSONDecoder().decode(Stored.self, from: data), stored.cook.idMs == idMs else { return }
+        defaults.removeObject(forKey: savedKey)
+        #if DEBUG
+        Screenshots.log("stored none")
+        #endif
     }
 
     /// Everything one cook held, gone: what a start and a cancel share.
@@ -857,11 +875,15 @@ final class Cook {
     }
 
     /// What a cook too old to pick back up leaves for the caller: the boil to
-    /// remember, and its egg if it was cooked through and never answered
-    /// about, to log as "Start again" would have (`unansweredRecord`).
+    /// remember; its egg if it was cooked through and never answered about,
+    /// to log as "Start again" would have (`unansweredRecord`); and the cook
+    /// itself when its answered egg's record must be made again first
+    /// (`cookEnding(...).remake`, onescreen review 1.2), stored until the
+    /// caller has made it (`forgetStored`).
     struct Dropped {
         var boil: BoilToRemember?
         var egg: Unanswered?
+        var remake: RunningCook?
     }
 
     /// Pick up a cook that was running when the app was last closed.
@@ -925,7 +947,11 @@ final class Cook {
         // and never answered about is still logged, as "Start again" would
         // have logged it, and a pan timed is still remembered.
         if cookTooOld(made.plan, nowS: now) {
-            defaults.removeObject(forKey: Self.savedKey)
+            let ending = cookEnding(cook, plan: made.plan, nowS: now)
+            // An answered egg corrected after its pull, its record not made
+            // again before the app went: kept stored until it is.
+            let remake = stored.feedbackGiven && ending.remake
+            if !remake { defaults.removeObject(forKey: Self.savedKey) }
             #if DEBUG
             Screenshots.log("restore too old")
             #endif
@@ -934,7 +960,6 @@ final class Cook {
             // (running-cook review 2.2).
             Alarm.shared.cancel()
             activity { await LiveActivity.endAll() }
-            let ending = cookEnding(cook, plan: made.plan, nowS: now)
             // Its record is made on its pot's surface, which this plan,
             // made at launch, has not got (running-cook review 1.3).
             let egg = !stored.feedbackGiven && ending.finished
@@ -942,7 +967,7 @@ final class Cook {
                     cook: cook, plan: made.plan, calibration: input.calibration, leanHintS: stored.leanHintS, nowS: now
                 )
                 : nil
-            return Dropped(boil: ending.boil, egg: egg)
+            return Dropped(boil: ending.boil, egg: egg, remake: remake ? cook : nil)
         }
 
         var restored = cook
