@@ -570,3 +570,40 @@ test('24. review 2.1: a hint made under anything else is ignored, never trusted'
   // A hot start has no guess, and no hint.
   assert.equal(replan(cookOf({ startMode: 'hot' }), C, null, 0, at).slowHob, null);
 });
+
+test('25. review 3: nothing passes an open question about the pull', () => {
+  // The review's call: a hot cook whose grace ran out while the phone
+  // slept, corrected to cold on waking, the question left unanswered past
+  // the counted cooling.
+  let hot = cookOf({ startMode: 'hot' });
+  const p = planned(hot, S + 1);
+  const due = p.deadlines.cookEnd_s;
+  hot = { ...hot, events: eventsDue(hot, p, due + 60) };
+  const c = corrected(hot, CHOICES, due + 60);
+  const q = planned(c, due + 60);
+  assert.equal(q.askIfStillIn, true);
+  assert.equal(q.deadlines.asking, true);
+  assert.equal(phaseAt(q.deadlines, due + 60), 'COOLING');
+  const end = q.deadlines.coolEnd_s as number;
+  // Past the counted cooling: nothing written, no Done, not finished.
+  assert.deepEqual(eventsDue(c, q, end + 5), c.events, 'no cooledAt_s');
+  const r = planned(c, end + 5);
+  assert.deepEqual([r.askIfStillIn, phaseAt(r.deadlines, end + 5)], [true, 'COOLING']);
+  assert.equal(phaseAt(r.deadlines, end + 3 * 3600), 'COOLING', 'however long it is left');
+  assert.equal(cookEnding(c, r, end + 5).finished, false, 'Start again logs nothing under it');
+  // Too old an hour after the question, at the latest the hour after its end.
+  assert.equal(r.tooOldAt_s, Math.max(end, due + 60) + RESTORE_WINDOW_S);
+  // Answered: still in heats again; out, and the cooling runs to Done.
+  assert.equal(phaseAt(planned(stillIn(c, end + 6), end + 6).deadlines, end + 6), 'HEATING');
+  const stands = pullStands(c);
+  const s = planned(stands, end + 6);
+  assert.deepEqual([s.askIfStillIn, s.deadlines.asking, phaseAt(s.deadlines, end + 6)], [false, false, 'DONE']);
+  assert.equal(eventsDue(stands, s, end + 6).cooledAt_s, end);
+  // Asked after Done, the cooling ended: Done is held back until it is answered.
+  const done = { ...hot, events: eventsDue(hot, planned(hot, due + 60), due + 900) };
+  assert.ok(done.events.cooledAt_s !== null);
+  const late = corrected(done, CHOICES, due + 900);
+  const l = planned(late, due + 901);
+  assert.deepEqual([l.askIfStillIn, phaseAt(l.deadlines, due + 901), cookEnding(late, l, due + 901).finished], [true, 'COOLING', false]);
+  assert.equal(l.tooOldAt_s, due + 900 + RESTORE_WINDOW_S);
+});

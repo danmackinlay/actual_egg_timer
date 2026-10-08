@@ -475,7 +475,9 @@ export interface CookPlan {
   /** The pull is one the clock assumed (the grace ran out), and a correction
    *  since would, without it, put the pull later, or back to heating: the app
    *  asks whether the egg is still in the water, and answers with `stillIn`
-   *  or `pullStands`. Until it is answered the pull stands. */
+   *  or `pullStands`. Until it is answered the pull stands, and nothing
+   *  passes the question: Cooling where it would be Done (`Deadlines.asking`),
+   *  no event written, not finished. */
   askIfStillIn: boolean;
   /** The counted cooling, s from the egg out to its end. */
   cool_s: number;
@@ -675,6 +677,11 @@ export function openEggId(cook: RunningCook | null, plan: CookPlan | null, now_s
  * A correction since it that would, without it, pull after the correction
  * itself (or heat again) leaves the pull standing and sets `askIfStillIn`: the app asks, and the
  * answer is `stillIn` or `pullStands`. A cook's own tap is never asked about.
+ * Until it is answered nothing passes the question (running-cook review 3):
+ * the deadlines say `asking`, so `phaseAt` reads Cooling where it would read
+ * Done (the pull standing, as the egg out, but not finished); `eventsDue`
+ * writes nothing; `cookEnding` is not finished; and the cook is too old an
+ * hour after the question, if that is later than an hour after its end.
  *
  * THE COOLING. To the yolk's peak for the cook time that ran
  * (`coolingSecondsFor`), from the egg out - the cook's tap, or the grace
@@ -842,7 +849,9 @@ export function replan(
     }
   }
 
-  const ended = coolEnd !== null ? coolEnd : pulled !== null ? pulled.out_s : cookEnd + PULL_GRACE_SECONDS;
+  let ended = coolEnd !== null ? coolEnd : pulled !== null ? pulled.out_s : cookEnd + PULL_GRACE_SECONDS;
+  // A question open has not ended the cook before it was asked.
+  if (ask && cook.correctedAt_s !== null && cook.correctedAt_s > ended) ended = cook.correctedAt_s;
   const tooOld = provisional ? start + LIMITS.timeToBoil_s.hi : ended + RESTORE_WINDOW_S;
 
   let certainty: CertaintyReading | null = null;
@@ -877,6 +886,7 @@ export function replan(
       coolEnd_s: coolEnd,
       provisional: provisional,
       outAt_s: pulled !== null && pulled.by === 'cook' ? pulled.out_s : null,
+      asking: ask,
     },
     slowHobAt_s: slowHobAt,
     slowHob: slowHob,
@@ -905,9 +915,14 @@ export function withOut(cook: RunningCook, plan: CookPlan, now_s: number): Runni
  * grace's end and unconfirmed) and the counted cooling ended. The app writes
  * them down the first time it sees them past - a phone asleep through the
  * pull writes them on waking - and plans again. The cook's own events are
- * returned as they were.
+ * returned as they were. While the plan asks whether the egg is still in the
+ * water (`askIfStillIn`), nothing: the counted cooling does not run out
+ * under an open question (running-cook review 3).
  */
 export function eventsDue(cook: RunningCook, plan: CookPlan, now_s: number): CookEvents {
+  // While the plan asks whether the egg is still in, the clock decides
+  // nothing: no ring, no cooling ended, no Done under an open question.
+  if (plan.askIfStillIn) return { ...cook.events };
   const d = plan.deadlines;
   let pulled = cook.events.pulled;
   let cooled = cook.events.cooledAt_s;
@@ -1022,13 +1037,14 @@ function tappedAfterLateCold(cook: RunningCook): boolean {
 }
 
 /** What a cook leaves when it ends, by Cancel or by Start again: the boil to
- *  remember, and whether it was cooked through - Done by `plan` at `now_s` -
- *  and so is an egg to log if no answer has logged it. */
+ *  remember, and whether it was cooked through - Done by `plan` at `now_s`,
+ *  and not while the plan asks whether the egg is still in the water - and
+ *  so is an egg to log if no answer has logged it. */
 export interface CookEnding {
   boil: BoilToRemember | null;
   finished: boolean;
 }
 
 export function cookEnding(cook: RunningCook, plan: CookPlan, now_s: number): CookEnding {
-  return { boil: boilToRemember(cook), finished: phaseAt(plan.deadlines, now_s) === 'DONE' };
+  return { boil: boilToRemember(cook), finished: !plan.askIfStillIn && phaseAt(plan.deadlines, now_s) === 'DONE' };
 }

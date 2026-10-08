@@ -575,6 +575,24 @@ const S = START_S;
   plan({ note: 'a hint, the boil tapped since: ignored', posterior: 'learned', cook: withBoil(slow, at + 5), leanHint_s: 0, now_s: at + 15, surface: 'none', hint: hint });
 }
 
+{
+  // Review 3's call: a question left open through the counted cooling. The
+  // clock writes nothing under it, the phase stays short of Done, and the
+  // egg is not finished. Last, so no case before them moves.
+  const learned = calibrationOf(named('learned'));
+  const hot = cookOf({ startMode: 'hot' });
+  const p = replan(hot, learned, null, 0, S + 1);
+  const due = p.deadlines.cookEnd_s;
+  const out = withEvents(hot, eventsDue(hot, p, due + 60));
+  const asked = corrected(out, { ...hot.choices, startMode: 'cold' }, due + 60);
+  const q = replan(asked, learned, null, 0, due + 60);
+  const end = q.deadlines.coolEnd_s as number;
+  plan({ note: 'a question left open past the counted cooling: nothing written, not Done', posterior: 'learned', cook: asked, leanHint_s: 0, now_s: end + 5, surface: 'own', dues: [end + 5, end + 4000] });
+  // Asked at Done: the cooling had ended, and the question still holds Done back.
+  const cooled = withEvents(out, eventsDue(out, replan(out, learned, null, 0, due + 60), due + 900));
+  plan({ note: 'a question asked after Done: Done held back until it is answered', posterior: 'learned', cook: corrected(cooled, { ...hot.choices, startMode: 'cold' }, due + 900), leanHint_s: 0, now_s: due + 901, surface: 'none', dues: [due + 902] });
+}
+
 /* What the boil memory learns (`boilToRemember`): a tap the cook watched for,
  * and one told to watch for too late to trust. */
 const remembers: { note: string; cook: RunningCook }[] = [];

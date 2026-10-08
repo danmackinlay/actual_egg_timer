@@ -388,6 +388,7 @@ private func expectPlan(_ p: CookPlan, _ json: [String: Any], start: Double, _ n
     expectTime(p.deadlines.cookEndS, try dl.num("cookEnd_s"), start: start, "\(note): cook end")
     expectTime(p.deadlines.coolEndS, try dl.optionalNum("coolEnd_s"), start: start, "\(note): cooling end")
     #expect(try p.deadlines.provisional == dl.flag("provisional"), "\(note): deadlines provisional")
+    #expect(try p.deadlines.asking == dl.flag("asking"), "\(note): deadlines asking")
     expectTime(p.deadlines.outAtS, try dl.optionalNum("outAt_s"), start: start, "\(note): out")
     expectTime(p.slowHobAtS, try json.optionalNum("slowHobAt_s"), start: start, "\(note): slow hob")
     expectTime(p.tooOldAtS, try json.num("tooOldAt_s"), start: start, "\(note): too old")

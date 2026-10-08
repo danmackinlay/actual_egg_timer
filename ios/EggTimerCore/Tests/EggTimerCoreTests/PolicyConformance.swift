@@ -399,6 +399,11 @@ struct PhaseConformance {
                 let what = "\(name) at \(nowS) s, boil not yet tapped:"
                     + " expected \(provisional), got \(guessing.rawValue)"
                 #expect(guessing.rawValue == provisional, "\(what)")
+                let asking = phaseAt(
+                    Deadlines(cookEndS: cookEndS, coolEndS: coolEndS, provisional: false, outAtS: outAtS, asking: true),
+                    nowS: nowS
+                )
+                #expect(try asking.rawValue == sample.str("asking"), "\(name) at \(nowS) s, asking")
             }
         }
     }

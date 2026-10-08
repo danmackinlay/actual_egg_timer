@@ -848,7 +848,9 @@ public func replan(
         }
     }
 
-    let ended = coolEnd ?? pulled?.outS ?? cookEnd + pullGraceSeconds
+    var ended = coolEnd ?? pulled?.outS ?? cookEnd + pullGraceSeconds
+    // A question open has not ended the cook before it was asked.
+    if ask, let at = cook.correctedAtS, at > ended { ended = at }
     let tooOld = provisional ? start + Limits.timeToBoilS.upperBound : ended + restoreWindowS
 
     var certainty: CertaintyReading?
@@ -871,7 +873,7 @@ public func replan(
         probeMoment: probeMomentFor(ran.result, cooling: ch.cooling),
         deadlines: Deadlines(
             cookEndS: cookEnd, coolEndS: coolEnd, provisional: provisional,
-            outAtS: pulled?.by == .cook ? pulled?.outS : nil
+            outAtS: pulled?.by == .cook ? pulled?.outS : nil, asking: ask
         ),
         slowHobAtS: slowHobAt, slowHob: slowHob, tooOldAtS: tooOld, certainty: certainty, forecast: forecast
     )
@@ -890,6 +892,9 @@ public func withOut(_ cook: RunningCook, plan: CookPlan, nowS: Double) -> Runnin
 /// the pull rang, the grace ran out (unconfirmed) and the counted cooling
 /// ended.
 public func eventsDue(_ cook: RunningCook, plan: CookPlan, nowS: Double) -> CookEvents {
+    // While the plan asks whether the egg is still in, the clock decides
+    // nothing (running-cook review 3).
+    if plan.askIfStillIn { return cook.events }
     let d = plan.deadlines
     var pulled = cook.events.pulled
     var cooled = cook.events.cooledAtS
@@ -983,5 +988,7 @@ public struct CookEnding: Sendable, Equatable {
 }
 
 public func cookEnding(_ cook: RunningCook, plan: CookPlan, nowS: Double) -> CookEnding {
-    CookEnding(boil: boilToRemember(cook), finished: phaseAt(plan.deadlines, nowS: nowS) == .done)
+    CookEnding(
+        boil: boilToRemember(cook), finished: !plan.askIfStillIn && phaseAt(plan.deadlines, nowS: nowS) == .done
+    )
 }

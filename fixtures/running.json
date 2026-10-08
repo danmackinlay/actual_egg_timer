@@ -7153,7 +7153,8 @@
           "cookEnd_s": 1791364283.265625,
           "coolEnd_s": 1791364484.265625,
           "provisional": true,
-          "outAt_s": null
+          "outAt_s": null,
+          "asking": false
         },
         "slowHobAt_s": 1791364238.265625,
         "slowHob": {
@@ -7365,7 +7366,8 @@
           "cookEnd_s": 1791364289.7600794,
           "coolEnd_s": 1791364491.7600794,
           "provisional": true,
-          "outAt_s": null
+          "outAt_s": null,
+          "asking": false
         },
         "slowHobAt_s": 1791364241.7617188,
         "slowHob": {
@@ -7605,7 +7607,8 @@
           "cookEnd_s": 1791364289.7600794,
           "coolEnd_s": 1791364491.7600794,
           "provisional": true,
-          "outAt_s": null
+          "outAt_s": null,
+          "asking": false
         },
         "slowHobAt_s": 1791364244.7600794,
         "slowHob": {
@@ -7833,7 +7836,8 @@
           "cookEnd_s": 1791364289.7600794,
           "coolEnd_s": 1791364491.7600794,
           "provisional": true,
-          "outAt_s": null
+          "outAt_s": null,
+          "asking": false
         },
         "slowHobAt_s": 1791364244.7600794,
         "slowHob": {
@@ -8120,7 +8124,8 @@
           "cookEnd_s": 1791364409.5012903,
           "coolEnd_s": 1791364609.5012903,
           "provisional": true,
-          "outAt_s": null
+          "outAt_s": null,
+          "asking": false
         },
         "slowHobAt_s": 1791364364.5012903,
         "slowHob": {
@@ -8305,7 +8310,8 @@
           "cookEnd_s": 1791364870.9856653,
           "coolEnd_s": 1791365049.9856653,
           "provisional": true,
-          "outAt_s": null
+          "outAt_s": null,
+          "asking": false
         },
         "slowHobAt_s": 1791365071.72297,
         "slowHob": {
@@ -8548,7 +8554,8 @@
           "cookEnd_s": 1791364316.854806,
           "coolEnd_s": 1791364518.854806,
           "provisional": false,
-          "outAt_s": null
+          "outAt_s": null,
+          "asking": false
         },
         "slowHobAt_s": null,
         "slowHob": null,
@@ -8741,7 +8748,8 @@
           "cookEnd_s": 1791364317.145696,
           "coolEnd_s": 1791364519.145696,
           "provisional": false,
-          "outAt_s": null
+          "outAt_s": null,
+          "asking": false
         },
         "slowHobAt_s": null,
         "slowHob": null,
@@ -8986,7 +8994,8 @@
           "cookEnd_s": 1791364317.145696,
           "coolEnd_s": 1791364519.145696,
           "provisional": false,
-          "outAt_s": null
+          "outAt_s": null,
+          "asking": false
         },
         "slowHobAt_s": null,
         "slowHob": null,
@@ -9323,7 +9332,8 @@
           "cookEnd_s": 1791364317.145696,
           "coolEnd_s": 1791364507.145696,
           "provisional": false,
-          "outAt_s": 1791364325.145696
+          "outAt_s": 1791364325.145696,
+          "asking": false
         },
         "slowHobAt_s": null,
         "slowHob": null,
@@ -9617,7 +9627,8 @@
           "cookEnd_s": 1791364317.145696,
           "coolEnd_s": 1791364507.145696,
           "provisional": false,
-          "outAt_s": 1791364325.145696
+          "outAt_s": 1791364325.145696,
+          "asking": false
         },
         "slowHobAt_s": null,
         "slowHob": null,
@@ -9868,7 +9879,8 @@
           "cookEnd_s": 1791364317.145696,
           "coolEnd_s": 1791364519.145696,
           "provisional": false,
-          "outAt_s": null
+          "outAt_s": null,
+          "asking": false
         },
         "slowHobAt_s": null,
         "slowHob": null,
@@ -10119,7 +10131,8 @@
           "cookEnd_s": 1791364262.7019956,
           "coolEnd_s": 1791364463.7019956,
           "provisional": false,
-          "outAt_s": null
+          "outAt_s": null,
+          "asking": false
         },
         "slowHobAt_s": null,
         "slowHob": null,
@@ -10365,7 +10378,8 @@
           "cookEnd_s": 1791364348.7419834,
           "coolEnd_s": 1791364564.7419834,
           "provisional": false,
-          "outAt_s": null
+          "outAt_s": null,
+          "asking": false
         },
         "slowHobAt_s": null,
         "slowHob": null,
@@ -10610,7 +10624,8 @@
           "cookEnd_s": 1791364200,
           "coolEnd_s": 1791364386,
           "provisional": false,
-          "outAt_s": null
+          "outAt_s": null,
+          "asking": false
         },
         "slowHobAt_s": null,
         "slowHob": null,
@@ -10885,7 +10900,8 @@
           "cookEnd_s": 1791364200,
           "coolEnd_s": 1791364386,
           "provisional": false,
-          "outAt_s": null
+          "outAt_s": null,
+          "asking": false
         },
         "slowHobAt_s": null,
         "slowHob": null,
@@ -11129,7 +11145,8 @@
           "cookEnd_s": 1791364200,
           "coolEnd_s": 1791364420,
           "provisional": false,
-          "outAt_s": null
+          "outAt_s": null,
+          "asking": true
         },
         "slowHobAt_s": null,
         "slowHob": null,
@@ -11375,7 +11392,8 @@
           "cookEnd_s": 1791364076.0568223,
           "coolEnd_s": 1791364280.0568223,
           "provisional": false,
-          "outAt_s": null
+          "outAt_s": null,
+          "asking": false
         },
         "slowHobAt_s": null,
         "slowHob": null,
@@ -11625,7 +11643,8 @@
           "cookEnd_s": 1791364317.145696,
           "coolEnd_s": 1791364457.145696,
           "provisional": false,
-          "outAt_s": 1791364325.145696
+          "outAt_s": 1791364325.145696,
+          "asking": false
         },
         "slowHobAt_s": null,
         "slowHob": null,
@@ -11876,7 +11895,8 @@
           "cookEnd_s": 1791364317.145696,
           "coolEnd_s": 1791364457.145696,
           "provisional": false,
-          "outAt_s": 1791364325.145696
+          "outAt_s": 1791364325.145696,
+          "asking": false
         },
         "slowHobAt_s": null,
         "slowHob": null,
@@ -12126,7 +12146,8 @@
           "cookEnd_s": 1791364317.145696,
           "coolEnd_s": null,
           "provisional": false,
-          "outAt_s": 1791364325.145696
+          "outAt_s": 1791364325.145696,
+          "asking": false
         },
         "slowHobAt_s": null,
         "slowHob": null,
@@ -12398,7 +12419,8 @@
           "cookEnd_s": 1791364317.145696,
           "coolEnd_s": 1791364507.145696,
           "provisional": false,
-          "outAt_s": 1791364325.145696
+          "outAt_s": 1791364325.145696,
+          "asking": false
         },
         "slowHobAt_s": null,
         "slowHob": null,
@@ -12648,7 +12670,8 @@
           "cookEnd_s": 1791364317.145696,
           "coolEnd_s": null,
           "provisional": false,
-          "outAt_s": 1791364325.145696
+          "outAt_s": 1791364325.145696,
+          "asking": false
         },
         "slowHobAt_s": null,
         "slowHob": null,
@@ -12899,7 +12922,8 @@
           "cookEnd_s": 1791364317.145696,
           "coolEnd_s": 1791364507.145696,
           "provisional": false,
-          "outAt_s": 1791364325.145696
+          "outAt_s": 1791364325.145696,
+          "asking": false
         },
         "slowHobAt_s": null,
         "slowHob": null,
@@ -13320,7 +13344,8 @@
           "cookEnd_s": 1791364063.0568223,
           "coolEnd_s": 1791364269.0568223,
           "provisional": false,
-          "outAt_s": null
+          "outAt_s": null,
+          "asking": false
         },
         "slowHobAt_s": null,
         "slowHob": null,
@@ -13560,7 +13585,8 @@
           "cookEnd_s": 1791364057.0039062,
           "coolEnd_s": 1791364261.0039062,
           "provisional": false,
-          "outAt_s": null
+          "outAt_s": null,
+          "asking": false
         },
         "slowHobAt_s": null,
         "slowHob": null,
@@ -13799,7 +13825,8 @@
           "cookEnd_s": 1791364063.0568223,
           "coolEnd_s": 1791364269.0568223,
           "provisional": false,
-          "outAt_s": null
+          "outAt_s": null,
+          "asking": false
         },
         "slowHobAt_s": null,
         "slowHob": null,
@@ -14065,7 +14092,8 @@
           "cookEnd_s": 1791364063.0568223,
           "coolEnd_s": 1791364252.0568223,
           "provisional": false,
-          "outAt_s": 1791364066.0568223
+          "outAt_s": 1791364066.0568223,
+          "asking": false
         },
         "slowHobAt_s": null,
         "slowHob": null,
@@ -14309,7 +14337,8 @@
           "cookEnd_s": 1791364063.0568223,
           "coolEnd_s": 1791364252.0568223,
           "provisional": false,
-          "outAt_s": 1791364066.0568223
+          "outAt_s": 1791364066.0568223,
+          "asking": false
         },
         "slowHobAt_s": null,
         "slowHob": null,
@@ -14549,7 +14578,8 @@
           "cookEnd_s": 1791364276.7600794,
           "coolEnd_s": 1791364480.7600794,
           "provisional": true,
-          "outAt_s": null
+          "outAt_s": null,
+          "asking": false
         },
         "slowHobAt_s": 1791364230.4445176,
         "slowHob": {
@@ -14819,7 +14849,8 @@
           "cookEnd_s": 1791364318.8988492,
           "coolEnd_s": 1791364522.8988492,
           "provisional": false,
-          "outAt_s": null
+          "outAt_s": null,
+          "asking": false
         },
         "slowHobAt_s": null,
         "slowHob": null,
@@ -15065,7 +15096,8 @@
           "cookEnd_s": 1791364276.7600794,
           "coolEnd_s": 1791364480.7600794,
           "provisional": false,
-          "outAt_s": null
+          "outAt_s": null,
+          "asking": false
         },
         "slowHobAt_s": null,
         "slowHob": null,
@@ -15304,7 +15336,8 @@
           "cookEnd_s": 1791364320,
           "coolEnd_s": 1791364518,
           "provisional": false,
-          "outAt_s": null
+          "outAt_s": null,
+          "asking": false
         },
         "slowHobAt_s": null,
         "slowHob": null,
@@ -15550,7 +15583,8 @@
           "cookEnd_s": 1791364043.0568223,
           "coolEnd_s": 1791364199.0568223,
           "provisional": false,
-          "outAt_s": null
+          "outAt_s": null,
+          "asking": false
         },
         "slowHobAt_s": null,
         "slowHob": null,
@@ -15813,7 +15847,8 @@
           "cookEnd_s": 1791364063.0568223,
           "coolEnd_s": 1791364269.0568223,
           "provisional": false,
-          "outAt_s": null
+          "outAt_s": null,
+          "asking": false
         },
         "slowHobAt_s": null,
         "slowHob": null,
@@ -16058,7 +16093,8 @@
           "cookEnd_s": 1791364043.0568223,
           "coolEnd_s": 1791364252.0568223,
           "provisional": false,
-          "outAt_s": null
+          "outAt_s": null,
+          "asking": false
         },
         "slowHobAt_s": null,
         "slowHob": null,
@@ -16303,7 +16339,8 @@
           "cookEnd_s": 1791364038.0419922,
           "coolEnd_s": null,
           "provisional": false,
-          "outAt_s": null
+          "outAt_s": null,
+          "asking": false
         },
         "slowHobAt_s": null,
         "slowHob": null,
@@ -16548,7 +16585,8 @@
           "cookEnd_s": 1791364038.0419922,
           "coolEnd_s": null,
           "provisional": false,
-          "outAt_s": 1791364042.0419922
+          "outAt_s": 1791364042.0419922,
+          "asking": false
         },
         "slowHobAt_s": null,
         "slowHob": null,
@@ -16807,7 +16845,8 @@
           "cookEnd_s": 1791364038.0419922,
           "coolEnd_s": 1791364232.0419922,
           "provisional": false,
-          "outAt_s": 1791364042.0419922
+          "outAt_s": 1791364042.0419922,
+          "asking": false
         },
         "slowHobAt_s": null,
         "slowHob": null,
@@ -17073,7 +17112,8 @@
           "cookEnd_s": 1791364063.0568223,
           "coolEnd_s": 1791364300.0568223,
           "provisional": false,
-          "outAt_s": null
+          "outAt_s": null,
+          "asking": true
         },
         "slowHobAt_s": null,
         "slowHob": null,
@@ -17327,7 +17367,8 @@
           "cookEnd_s": 1791364276.7600794,
           "coolEnd_s": 1791364480.7600794,
           "provisional": true,
-          "outAt_s": null
+          "outAt_s": null,
+          "asking": false
         },
         "slowHobAt_s": 1791364230.4445176,
         "slowHob": {
@@ -17597,7 +17638,8 @@
           "cookEnd_s": 1791364063.0568223,
           "coolEnd_s": 1791364300.0568223,
           "provisional": false,
-          "outAt_s": null
+          "outAt_s": null,
+          "asking": false
         },
         "slowHobAt_s": null,
         "slowHob": null,
@@ -17847,7 +17889,8 @@
           "cookEnd_s": 1791364063.0568223,
           "coolEnd_s": 1791364289.0568223,
           "provisional": false,
-          "outAt_s": null
+          "outAt_s": null,
+          "asking": true
         },
         "slowHobAt_s": null,
         "slowHob": null,
@@ -18087,7 +18130,8 @@
           "cookEnd_s": 1791364097.6026452,
           "coolEnd_s": 1791364317.6026452,
           "provisional": false,
-          "outAt_s": null
+          "outAt_s": null,
+          "asking": false
         },
         "slowHobAt_s": null,
         "slowHob": null,
@@ -18341,7 +18385,8 @@
           "cookEnd_s": 1791364063.0568223,
           "coolEnd_s": 1791364216.0568223,
           "provisional": false,
-          "outAt_s": null
+          "outAt_s": null,
+          "asking": false
         },
         "slowHobAt_s": null,
         "slowHob": null,
@@ -18563,7 +18608,8 @@
           "cookEnd_s": 1791364061.3740234,
           "coolEnd_s": 1791364267.3740234,
           "provisional": false,
-          "outAt_s": null
+          "outAt_s": null,
+          "asking": false
         },
         "slowHobAt_s": null,
         "slowHob": null,
@@ -18749,7 +18795,8 @@
           "cookEnd_s": 1791364061.3740234,
           "coolEnd_s": 1791364267.3740234,
           "provisional": false,
-          "outAt_s": null
+          "outAt_s": null,
+          "asking": false
         },
         "slowHobAt_s": null,
         "slowHob": null,
@@ -19028,7 +19075,8 @@
           "cookEnd_s": 1791364097.6026452,
           "coolEnd_s": 1791364317.6026452,
           "provisional": false,
-          "outAt_s": null
+          "outAt_s": null,
+          "asking": false
         },
         "slowHobAt_s": null,
         "slowHob": null,
@@ -19273,7 +19321,8 @@
           "cookEnd_s": 1791365369.375,
           "coolEnd_s": 1791365569.375,
           "provisional": false,
-          "outAt_s": null
+          "outAt_s": null,
+          "asking": false
         },
         "slowHobAt_s": null,
         "slowHob": null,
@@ -19489,7 +19538,8 @@
           "cookEnd_s": 1791365369.375,
           "coolEnd_s": 1791365569.375,
           "provisional": false,
-          "outAt_s": null
+          "outAt_s": null,
+          "asking": false
         },
         "slowHobAt_s": null,
         "slowHob": null,
@@ -19675,7 +19725,8 @@
           "cookEnd_s": 1791364787.1875,
           "coolEnd_s": 1791364987.1875,
           "provisional": false,
-          "outAt_s": null
+          "outAt_s": null,
+          "asking": false
         },
         "slowHobAt_s": null,
         "slowHob": null,
@@ -19900,7 +19951,8 @@
           "cookEnd_s": 1791364660.0878906,
           "coolEnd_s": 1791364804.0878906,
           "provisional": true,
-          "outAt_s": null
+          "outAt_s": null,
+          "asking": false
         },
         "slowHobAt_s": 1791364843.0371094,
         "slowHob": {
@@ -20084,7 +20136,8 @@
           "cookEnd_s": 1791367200,
           "coolEnd_s": 1791367340,
           "provisional": true,
-          "outAt_s": null
+          "outAt_s": null,
+          "asking": false
         },
         "slowHobAt_s": null,
         "slowHob": {
@@ -20269,7 +20322,8 @@
           "cookEnd_s": 1791367200,
           "coolEnd_s": 1791367341,
           "provisional": true,
-          "outAt_s": null
+          "outAt_s": null,
+          "asking": false
         },
         "slowHobAt_s": null,
         "slowHob": {
@@ -20459,7 +20513,8 @@
           "cookEnd_s": 1791367200,
           "coolEnd_s": 1791367341,
           "provisional": true,
-          "outAt_s": null
+          "outAt_s": null,
+          "asking": false
         },
         "slowHobAt_s": null,
         "slowHob": {
@@ -20644,7 +20699,8 @@
           "cookEnd_s": 1791367200,
           "coolEnd_s": 1791367341,
           "provisional": true,
-          "outAt_s": null
+          "outAt_s": null,
+          "asking": false
         },
         "slowHobAt_s": 1791370701.3623047,
         "slowHob": {
@@ -20836,7 +20892,8 @@
           "cookEnd_s": 1791364060.5078125,
           "coolEnd_s": 1791364276.5078125,
           "provisional": false,
-          "outAt_s": null
+          "outAt_s": null,
+          "asking": false
         },
         "slowHobAt_s": null,
         "slowHob": null,
@@ -21034,7 +21091,8 @@
           "cookEnd_s": 1791364061.3740234,
           "coolEnd_s": 1791364278.3740234,
           "provisional": false,
-          "outAt_s": null
+          "outAt_s": null,
+          "asking": false
         },
         "slowHobAt_s": null,
         "slowHob": null,
@@ -21278,7 +21336,8 @@
           "cookEnd_s": 1791364061.3740234,
           "coolEnd_s": 1791364318.3740234,
           "provisional": false,
-          "outAt_s": null
+          "outAt_s": null,
+          "asking": true
         },
         "slowHobAt_s": null,
         "slowHob": null,
@@ -21516,7 +21575,8 @@
           "cookEnd_s": 1791364605.024414,
           "coolEnd_s": 1791364796.024414,
           "provisional": true,
-          "outAt_s": null
+          "outAt_s": null,
+          "asking": false
         },
         "slowHobAt_s": 1791364621.3623047,
         "slowHob": {
@@ -21731,7 +21791,8 @@
           "cookEnd_s": 1791364816.538086,
           "coolEnd_s": 1791364996.538086,
           "provisional": true,
-          "outAt_s": null
+          "outAt_s": null,
+          "asking": false
         },
         "slowHobAt_s": 1791365001.3623047,
         "slowHob": {
@@ -21941,7 +22002,8 @@
           "cookEnd_s": 1791364594.5361328,
           "coolEnd_s": 1791364785.5361328,
           "provisional": true,
-          "outAt_s": null
+          "outAt_s": null,
+          "asking": false
         },
         "slowHobAt_s": 1791364601.3623047,
         "slowHob": {
@@ -22150,7 +22212,8 @@
           "cookEnd_s": 1791364632.1191406,
           "coolEnd_s": 1791364838.1191406,
           "provisional": true,
-          "outAt_s": null
+          "outAt_s": null,
+          "asking": false
         },
         "slowHobAt_s": 1791364616.040039,
         "slowHob": {
@@ -22366,7 +22429,8 @@
           "cookEnd_s": 1791364604.4023438,
           "coolEnd_s": 1791364795.4023438,
           "provisional": true,
-          "outAt_s": null
+          "outAt_s": null,
+          "asking": false
         },
         "slowHobAt_s": 1791364615.984375,
         "slowHob": {
@@ -22575,7 +22639,8 @@
           "cookEnd_s": 1791364602.4023438,
           "coolEnd_s": 1791364791.4023438,
           "provisional": true,
-          "outAt_s": null
+          "outAt_s": null,
+          "asking": false
         },
         "slowHobAt_s": 1791364623.4960938,
         "slowHob": {
@@ -22785,7 +22850,8 @@
           "cookEnd_s": 1791364526.3623047,
           "coolEnd_s": 1791364722.3623047,
           "provisional": true,
-          "outAt_s": null
+          "outAt_s": null,
+          "asking": false
         },
         "slowHobAt_s": 1791364481.3623047,
         "slowHob": {
@@ -23003,7 +23069,8 @@
           "cookEnd_s": 1791364605,
           "coolEnd_s": 1791364796,
           "provisional": false,
-          "outAt_s": null
+          "outAt_s": null,
+          "asking": false
         },
         "slowHobAt_s": null,
         "slowHob": null,
@@ -23077,6 +23144,470 @@
           "litres": 2,
           "seconds": 1005
         },
+        "finished": false
+      }
+    },
+    {
+      "note": "a question left open past the counted cooling: nothing written, not Done",
+      "posterior": "learned",
+      "eggsLogged": 3,
+      "cook": {
+        "id_ms": 1791363600000,
+        "startedAt_s": 1791363600,
+        "choices": {
+          "mass_kg": 0.068,
+          "massFrom": "class",
+          "sizeTable": "eu",
+          "eggFrom": "fridge",
+          "customStart_C": 12,
+          "room_C": null,
+          "startMode": "cold",
+          "afterBoil": "hold",
+          "cooling": "ice",
+          "waterLitres": 2,
+          "eggCount": 2,
+          "altitude_m": 0,
+          "level": 0.41
+        },
+        "events": {
+          "boilAt_s": null,
+          "pulled": {
+            "due_s": 1791364068.3740234,
+            "out_s": 1791364088.3740234,
+            "by": "timeout",
+            "confirmed": false
+          },
+          "cooledAt_s": null,
+          "rangAt_s": null
+        },
+        "nudge_s": 0,
+        "boilMemory": {
+          "2.0": 480,
+          "3.0": 610
+        },
+        "units": "metric",
+        "lang": "en",
+        "boilRemembered": true,
+        "coldSince_s": 1791364128.3740234,
+        "firstHotAt_s": 1791363600,
+        "correctedAt_s": 1791364128.3740234
+      },
+      "leanHint_s": 0,
+      "now_s": 1791364310.3740234,
+      "hint": null,
+      "surface": {
+        "of": null,
+        "grid": {
+          "tauAirScale": 1,
+          "alphaMin": 1.009520895453128e-7,
+          "alphaMax": 2.776182462496102e-7,
+          "alphaCount": 7,
+          "timeMin_s": 480.3515625,
+          "timeMax_s": 980.3515625,
+          "timeCount": 26
+        },
+        "profile": null
+      },
+      "plan": {
+        "egg": {
+          "mass_kg": 0.068
+        },
+        "setup": {
+          "startMode": "cold",
+          "afterBoil": "hold",
+          "eggStart_C": 4,
+          "ambient_C": 20,
+          "boiling_C": 99.99690682934772,
+          "timeToBoil_s": 480,
+          "cooling": "ice",
+          "waterLitres": 2,
+          "eggCount": 2
+        },
+        "provisional": false,
+        "lengthened": false,
+        "inputs": {
+          "params": { "alpha_m2s": 1.6825348257552135e-7, "tauAirScale": 1 },
+          "whiteDose_min": 0.05938185524001569
+        },
+        "answer": {
+          "level": 0.41,
+          "kind": "none",
+          "snapTo": null,
+          "lowOdds": false,
+          "cookTime_s": 680.76171875
+        },
+        "level": 0.41,
+        "solution": {
+          "reachable": true,
+          "whiteSets": true,
+          "cookTime_s": 468.3740234375,
+          "peakYolk_C": 42.89137787092139,
+          "peakYolkTime_s": 685
+        },
+        "decided": {
+          "level": 0.41,
+          "cookTime_s": 683.7600794048565,
+          "decision": {
+            "cookTime_s": 683.7600794048565,
+            "meanCookTime_s": 680.76171875,
+            "chosen": true,
+            "odds": 0.6308393990456433,
+            "oddsTenths": 6
+          },
+          "nudge_s": 0,
+          "adviceWanted": false
+        },
+        "lean_s": 2.9983606548564694,
+        "nudge_s": 0,
+        "cookTime_s": 468.3740234375,
+        "overdue": false,
+        "askIfStillIn": true,
+        "cool_s": 217,
+        "probeMoment": true,
+        "deadlines": {
+          "cookEnd_s": 1791364068.3740234,
+          "coolEnd_s": 1791364305.3740234,
+          "provisional": false,
+          "outAt_s": null,
+          "asking": true
+        },
+        "slowHobAt_s": null,
+        "slowHob": null,
+        "tooOldAt_s": 1791367905.3740234,
+        "certainty": {
+          "words": {
+            "asked": 2,
+            "certainty": "wildGuess",
+            "pAsked": 0.01000032276318194,
+            "pNear": 0.030008355440230283,
+            "from": 0,
+            "to": 0,
+            "pInterval": 0.9599916445383286,
+            "mostLikely": 0
+          },
+          "time": {
+            "low_s": 664.7821052719064,
+            "high_s": 702.2577979427024
+          }
+        },
+        "forecast": {
+          "cook_s": 468.3740234375,
+          "yolk": [
+            0.9666664805523474,
+            0.01666683134272546,
+            0.016666688104927295
+          ],
+          "white": [
+            0.9666328556412062,
+            0.016699740694351005,
+            0.01666740366444295
+          ],
+          "yolkWord": [
+            0.9599916445383286,
+            0.010008023285878088,
+            0.01000032276318194,
+            0.010000009391170253,
+            0.01000000002144144
+          ]
+        }
+      },
+      "outs": [],
+      "dues": [
+        {
+          "now_s": 1791364310.3740234,
+          "events": {
+            "boilAt_s": null,
+            "pulled": {
+              "due_s": 1791364068.3740234,
+              "out_s": 1791364088.3740234,
+              "by": "timeout",
+              "confirmed": false
+            },
+            "cooledAt_s": null,
+            "rangAt_s": null
+          }
+        },
+        {
+          "now_s": 1791368305.3740234,
+          "events": {
+            "boilAt_s": null,
+            "pulled": {
+              "due_s": 1791364068.3740234,
+              "out_s": 1791364088.3740234,
+              "by": "timeout",
+              "confirmed": false
+            },
+            "cooledAt_s": null,
+            "rangAt_s": null
+          }
+        }
+      ],
+      "open": 1791363600000,
+      "context": {
+        "app": "ios",
+        "appVersion": "0.5.0-alpha.1",
+        "prior": "2026-09",
+        "day": "2026-10-07",
+        "id": null
+      },
+      "answers": {
+        "yolkWord": "jammy",
+        "white": "firm",
+        "probe": null
+      },
+      "record": {
+        "v": 1,
+        "uid": null,
+        "day": "2026-10-07",
+        "app": "ios",
+        "appVersion": "0.5.0-alpha.1",
+        "prior": "2026-09",
+        "model": "2026-10-e10",
+        "egg": {
+          "mass_g": 68,
+          "massFrom": "class",
+          "sizeTable": "eu"
+        },
+        "setup": {
+          "startMode": "cold",
+          "eggStart_C": 4,
+          "eggFrom": "fridge",
+          "ambient_C": 20,
+          "boiling_C": 99.99690682934772,
+          "timeToBoil_s": 480,
+          "timeToBoilFrom": "remembered",
+          "cooling": "ice",
+          "afterBoil": "hold",
+          "waterLitres": 2,
+          "eggCount": 2
+        },
+        "level": 0.41,
+        "recommended_s": 468.3740234375,
+        "nudge_s": 0,
+        "pulled_s": 468.3740234375,
+        "pulledBy": "timeout",
+        "cooled_s": 217,
+        "yolk": null,
+        "yolkWord": "jammy",
+        "white": "firm",
+        "probe": null,
+        "forecast": {
+          "cook_s": 468.3740234375,
+          "yolk": [
+            0.9666664805523474,
+            0.01666683134272546,
+            0.016666688104927295
+          ],
+          "white": [
+            0.9666328556412062,
+            0.016699740694351005,
+            0.01666740366444295
+          ],
+          "yolkWord": [
+            0.9599916445383286,
+            0.010008023285878088,
+            0.01000032276318194,
+            0.010000009391170253,
+            0.01000000002144144
+          ]
+        },
+        "lang": "en",
+        "register": "modern",
+        "units": "metric"
+      },
+      "boil": null,
+      "ending": {
+        "boil": null,
+        "finished": false
+      }
+    },
+    {
+      "note": "a question asked after Done: Done held back until it is answered",
+      "posterior": "learned",
+      "eggsLogged": 3,
+      "cook": {
+        "id_ms": 1791363600000,
+        "startedAt_s": 1791363600,
+        "choices": {
+          "mass_kg": 0.068,
+          "massFrom": "class",
+          "sizeTable": "eu",
+          "eggFrom": "fridge",
+          "customStart_C": 12,
+          "room_C": null,
+          "startMode": "cold",
+          "afterBoil": "hold",
+          "cooling": "ice",
+          "waterLitres": 2,
+          "eggCount": 2,
+          "altitude_m": 0,
+          "level": 0.41
+        },
+        "events": {
+          "boilAt_s": null,
+          "pulled": {
+            "due_s": 1791364068.3740234,
+            "out_s": 1791364088.3740234,
+            "by": "timeout",
+            "confirmed": false
+          },
+          "cooledAt_s": 1791364273.3740234,
+          "rangAt_s": null
+        },
+        "nudge_s": 0,
+        "boilMemory": {
+          "2.0": 480,
+          "3.0": 610
+        },
+        "units": "metric",
+        "lang": "en",
+        "boilRemembered": true,
+        "coldSince_s": 1791364968.3740234,
+        "firstHotAt_s": 1791363600,
+        "correctedAt_s": 1791364968.3740234
+      },
+      "leanHint_s": 0,
+      "now_s": 1791364969.3740234,
+      "hint": null,
+      "surface": null,
+      "plan": {
+        "egg": {
+          "mass_kg": 0.068
+        },
+        "setup": {
+          "startMode": "cold",
+          "afterBoil": "hold",
+          "eggStart_C": 4,
+          "ambient_C": 20,
+          "boiling_C": 99.99690682934772,
+          "timeToBoil_s": 480,
+          "cooling": "ice",
+          "waterLitres": 2,
+          "eggCount": 2
+        },
+        "provisional": false,
+        "lengthened": false,
+        "inputs": {
+          "params": { "alpha_m2s": 1.6825348257552135e-7, "tauAirScale": 1 },
+          "whiteDose_min": 0.05938185524001569
+        },
+        "answer": {
+          "level": 0.41,
+          "kind": "none",
+          "snapTo": null,
+          "lowOdds": false,
+          "cookTime_s": 680.76171875
+        },
+        "level": 0.41,
+        "solution": {
+          "reachable": true,
+          "whiteSets": true,
+          "cookTime_s": 468.3740234375,
+          "peakYolk_C": 42.89137787092139,
+          "peakYolkTime_s": 685
+        },
+        "decided": null,
+        "lean_s": 0,
+        "nudge_s": 0,
+        "cookTime_s": 468.3740234375,
+        "overdue": false,
+        "askIfStillIn": true,
+        "cool_s": 185,
+        "probeMoment": true,
+        "deadlines": {
+          "cookEnd_s": 1791364068.3740234,
+          "coolEnd_s": 1791364273.3740234,
+          "provisional": false,
+          "outAt_s": null,
+          "asking": true
+        },
+        "slowHobAt_s": null,
+        "slowHob": null,
+        "tooOldAt_s": 1791368568.3740234,
+        "certainty": null,
+        "forecast": null
+      },
+      "outs": [],
+      "dues": [
+        {
+          "now_s": 1791364970.3740234,
+          "events": {
+            "boilAt_s": null,
+            "pulled": {
+              "due_s": 1791364068.3740234,
+              "out_s": 1791364088.3740234,
+              "by": "timeout",
+              "confirmed": false
+            },
+            "cooledAt_s": 1791364273.3740234,
+            "rangAt_s": null
+          }
+        }
+      ],
+      "open": 1791363600000,
+      "context": {
+        "app": "web",
+        "appVersion": "0.5.0-alpha.1",
+        "prior": "2026-09",
+        "day": "2026-10-07",
+        "id": 1791363600000
+      },
+      "answers": {
+        "yolkWord": "fudgy",
+        "white": "tender",
+        "probe": {
+          "centre_C": 66.4,
+          "after_s": 180
+        }
+      },
+      "record": {
+        "v": 1,
+        "uid": null,
+        "day": "2026-10-07",
+        "id": 1791363600000,
+        "app": "web",
+        "appVersion": "0.5.0-alpha.1",
+        "prior": "2026-09",
+        "model": "2026-10-e10",
+        "egg": {
+          "mass_g": 68,
+          "massFrom": "class",
+          "sizeTable": "eu"
+        },
+        "setup": {
+          "startMode": "cold",
+          "eggStart_C": 4,
+          "eggFrom": "fridge",
+          "ambient_C": 20,
+          "boiling_C": 99.99690682934772,
+          "timeToBoil_s": 480,
+          "timeToBoilFrom": "remembered",
+          "cooling": "ice",
+          "afterBoil": "hold",
+          "waterLitres": 2,
+          "eggCount": 2
+        },
+        "level": 0.41,
+        "recommended_s": 468.3740234375,
+        "nudge_s": 0,
+        "pulled_s": 468.3740234375,
+        "pulledBy": "timeout",
+        "cooled_s": 185,
+        "yolk": null,
+        "yolkWord": "fudgy",
+        "white": "tender",
+        "probe": {
+          "centre_C": 66.4,
+          "after_s": 180
+        },
+        "forecast": null,
+        "lang": "en",
+        "register": "modern",
+        "units": "metric"
+      },
+      "boil": null,
+      "ending": {
+        "boil": null,
         "finished": false
       }
     }
