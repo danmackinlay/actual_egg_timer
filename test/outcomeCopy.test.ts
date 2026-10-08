@@ -1,11 +1,13 @@
 /**
- * The outcome summary in words (src/core/wording.ts): which sentence each
- * outcome gets, when the white gets its line, the range in the slider's own
- * words, and a cook's outcome read back after a reload.
+ * The outcome and the certainty in words (src/core/wording.ts): which line
+ * each certainty class gets, the 90% interval and the most likely word in
+ * the slider's own words and when "most likely" shows unpressed, when the
+ * white gets its line, the bracket's range in words, and a cook's outcome
+ * read back after a reload.
  *
- * The numbers are core's and are tested in test/outcome.test.ts; this holds
- * the thresholds the web chose on top of them, at their edges, and checks
- * that every key chosen is in the catalogue.
+ * The numbers are core's and are tested in test/outcome.test.ts and
+ * test/certainty.test.ts; this holds the choice of words on top of them, and
+ * checks that every key chosen is in the catalogue.
  *
  * Zero dependencies: node:test + node:assert/strict only.
  */
@@ -14,12 +16,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
-import { Lean, Outcome } from '../src/core/outcome.js';
+import { Outcome } from '../src/core/outcome.js';
 import { WHITE_RISK } from '../src/core/outcome.js';
 import { Certainty, wordCertainty } from '../src/core/certainty.js';
 import {
-  DIRECTION_LIKELY, certaintyKey, directionKey, intervalWords, mostLikelyOpened, mostLikelyShown, mostLikelyWords,
-  rangeWords, whiteAtRisk,
+  certaintyKey, intervalWords, mostLikelyOpened, mostLikelyShown, mostLikelyWords, rangeWords, whiteAtRisk,
 } from '../src/core/wording.js';
 import { restoreOutcome } from '../src/ui/outcome.js';
 
@@ -31,22 +32,6 @@ function outcome(over: Partial<Outcome> = {}): Outcome {
     pYolkWord: null, levelLow: 0.35, levelMedian: 0.43, levelHigh: 0.51, lean: 'balanced', ...over,
   };
 }
-
-test('the direction: "probably just right" from one half, and the lean decides the rest', () => {
-  const cases: [number, Lean, string][] = [
-    [DIRECTION_LIKELY, 'balanced', 'outcome.likely'],
-    [0.77, 'firm', 'outcome.likely.firm'],
-    [0.56, 'soft', 'outcome.likely.soft'],
-    [DIRECTION_LIKELY - 1e-9, 'balanced', 'outcome.unsure'],
-    [0.21, 'balanced', 'outcome.unsure'],
-    [0.34, 'firm', 'outcome.miss.firm'],
-    [0.3, 'soft', 'outcome.miss.soft'],
-  ];
-  for (const [right, lean, key] of cases) {
-    assert.equal(directionKey(outcome({ pJustRight: right, lean: lean })), key, `${right} ${lean}`);
-    assert.ok(key in MESSAGES, `${key} is not in copy/en.json`);
-  }
-});
 
 test('the line under the time: one key per class, each in the catalogue', () => {
   const cases: [Certainty, string][] = [
@@ -79,7 +64,7 @@ test('the interval in the slider\'s words, 9 times in 10, one word when one word
   assert.deepEqual(mostLikelyWords(firm).words, { word: 'doneness.jammy' });
   assert.equal(mostLikelyShown(firm), true);
   assert.equal(mostLikelyOpened(firm), false, 'not said twice');
-  for (const key of ['certainty.interval', 'certainty.interval.one', 'certainty.mostLikely']) {
+  for (const key of ['certainty.interval', 'certainty.interval.one', 'certainty.mostLikely', 'certainty.time']) {
     assert.ok(key in MESSAGES, key);
   }
 });
@@ -120,11 +105,15 @@ test('an outcome carried with a cook comes back whole, or not at all', () => {
   assert.equal(restoreOutcome(partial), null);
 });
 
-test('the direction\'s (i) and what it opens are in the catalogue, and the suggestion is not', () => {
-  for (const key of ['outcome.bracket', 'outcome.why', 'outcome.learning']) {
+test('what the direction\'s (i) opened is in Help now, and the direction, its (i) and the suggestion are not in the catalogue', () => {
+  for (const key of ['outcome.bracket', 'outcome.why', 'outcome.learning', 'certainty.help']) {
     assert.ok(key in MESSAGES, key);
   }
-  for (const key of ['outcome.safe.firm', 'outcome.safe.soft', 'outcome.safe.firmer', 'outcome.safe.softer']) {
+  for (const key of [
+    'outcome.safe.firm', 'outcome.safe.soft', 'outcome.safe.firmer', 'outcome.safe.softer',
+    'outcome.likely', 'outcome.likely.firm', 'outcome.likely.soft', 'outcome.unsure', 'outcome.miss.firm',
+    'outcome.miss.soft', 'outcome.info', 'warn.lowOdds',
+  ]) {
     assert.ok(!(key in MESSAGES), `${key} is retired`);
   }
 });

@@ -59,15 +59,16 @@ them out differently.
   panel's top corner with its (i) (`learning.badge`, E8, `DECISIONS.md` 58):
   the time may be nudged a few seconds, and the (i), which opens under the
   phase label, says so. Never in sous-vide.
-- **The direction**: which way the egg is likely to miss, with its (i), and
-  the runny-white line when it applies (§8).
+- **How sure I am**: a line of words the cook presses, and the runny-white
+  line when it applies (§8).
 - **The doneness slider.** The heading reads `controls.doneness` at its start
   and the peak yolk at its end (`controls.doneness.peak`; in sous-vide the
   water, `controls.doneness.bath`), in the cook's units. The track is the
-  yolk, shaded by the odds, with the five doneness words at their levels and
-  the bracket under it (§8). Then the texture note.
+  yolk, shaded by how often each level gives the yolk it names, with the five
+  doneness words at their levels and the bracket under it (§8). Then the
+  texture note.
 - **The setup sentence** (§5), and the open clause's panel under it.
-- **The slot**: a refusal, or a level's low odds (`warn.lowOdds`, §8), or
+- **The slot**: a refusal, or a dotted level's wild guess (`warn.wildGuess`, §8), or
   the sous-vide warning, or (web) a reloaded
   cook's warning; failing those, before anything is learned, the first-egg
   welcome (`idle.welcome`). Under low odds the link "How to make this more
@@ -178,8 +179,9 @@ and a screen reader passes over it.
 - **Which controls have one**: only where the meaning does not fit in the
   label. Today: the egg, where it comes from, the start, the cooling, units,
   altitude, water, the number of eggs, heat after the boil, the probe,
-  language, Forget, the boil time under the readout, the heating hint, and the
-  direction.
+  language, Forget, the boil time under the readout and the heating hint.
+  The certainty line under the time opens in place the same way, from its
+  words rather than an (i) (§8).
 - **Short enough to read standing at the hob.** What depends on the setup, or
   runs longer than one control's meaning, goes to Help.
 
@@ -235,22 +237,37 @@ The owner's steer of 27 September, after using the first web preview
 
 ## 8. The prediction under the time
 
-**The direction.** A sentence under the time says which way the egg is likely
-to miss (`DECISIONS.md` 27). It comes from core: `predictOutcome` at the
-decided time on the decision's own surface (`INFERENCE.md` §8), and
-`directionKey` for the words (`src/core/wording.ts`, `fixtures/wording.json`).
+**How sure I am** (the `certainty` draft, 8 October 2026; `DECISIONS.md` 93
+and 97; `design/one-screen.md` §6). Below the time display, in the
+direction's old place, one of three words from core's `certaintyAt` at the
+time on screen (`src/core/certainty.ts`, `INFERENCE.md` §8, "How sure, in
+words"), carried by `decideAnswer` while idle and by the running cook's plan
+after: `certaintyKey` (`src/core/wording.ts`, `fixtures/wording.json`).
 
-| P(just right) | lean | key |
-|---|---|---|
-| ≥ 0.5 | balanced | `outcome.likely` |
-| ≥ 0.5 | firm / soft | `outcome.likely.firm` / `.soft` |
-| < 0.5 | balanced | `outcome.unsure` |
-| < 0.5 | firm / soft | `outcome.miss.firm` / `.soft` |
+| class | when | key | words |
+|---|---|---|---|
+| very certain | 9 times in 10 the word asked | `certainty.veryCertain` | Very certain |
+| a ballpark | 9 times in 10 that word or a neighbour | `certainty.ballpark` | A ballpark figure |
+| a wild guess | less sure | `certainty.wildGuess` | A wild guess |
 
-"Probably" is more likely than not, so 0.5 (`DIRECTION_LIKELY`); the lean is
-core's, a miss one way at least three times in five (`LEAN_RATIO`). A fresh
-install reads 0.21-0.30 and balanced at every level on the reference pot; one
-egg just right gives 0.56-0.58.
+The words are a button, underlined in the accent (dotted while closed, solid
+while open), that opens in place under it, as an (i) does: the 90% interval
+in the slider's words (`certainty.interval`, `.interval.one`: "9 times in 10:
+Runny to Fudgy."), "Most likely: Jammy." (`certainty.mostLikely`) unless it
+is already under the line or the interval is that one word
+(`mostLikelyOpened`), the likely time range (`certainty.time`, A7's, m:ss as
+the clock shows it) and, while idle, a link to Help's "How sure I am"
+(`certainty.help`), which holds the three paragraphs the direction's (i)
+opened. "Most likely" also shows under the line, unpressed, whenever it is
+not the word asked (`mostLikelyShown`). A screen reader hears the line as a
+button, Expanded or Collapsed. While a cook runs the line is the plan's,
+held while a new pot's surface builds, until the pull: then the time it was
+about has passed. No odds are shown or spoken anywhere; the direction, its
+lean and the odds of "just right" on screen are retired.
+
+On the reference pot a fresh install is a wild guess at runny to jammy and
+a ballpark at fudgy and hard; four eggs called jammy make fudgy and hard very
+certain.
 
 **The white's line**, `outcome.whiteRunny`, in the warning colour, shows from
 P(runny) 0.2 (`WHITE_RISK`), one egg in five. That is where it speaks at the
@@ -258,21 +275,19 @@ white-bound ends: the softest levels on a fresh install, the counter's
 softest, a cold start's soft. It is not lower because a fresh install at
 soft reads 0.17 on the reference pot, and that is the prior's width.
 
-**The direction's (i)**, "How sure I am" (`outcome.info`), shows only while
-idle, because it is about the slider. It opens three paragraphs: what the
-bracket is and how to play safe with it (`outcome.bracket`), why it starts
-wide (`outcome.why`), and what I learn from and what speeds it up
-(`outcome.learning`). No screen shows the odds as a number.
-
-**The bracket** runs under the track from `levelLow` to `levelHigh`, with a
+**The bracket** runs under the track from `levelLow` to `levelHigh`, the 5%
+and 95% points (the 90% the certainty's words state; 10% and 90% until the
+`certainty` draft), with a
 short mark at `levelMedian`, in the foreground colour at 70%: not the accent,
 not the yolk, and below the track, so it never covers the shading. A screen
 reader hears "Likely yolk: Soft to Fudgy" (`outcome.range`, `.range.one` when
 both ends are nearest one word; the words stand alone after a colon,
 `LANGUAGE.md` §5). It is not drawn before the pot's surface lands, where the
 white never sets, in sous-vide, or once a cook runs; its room is kept, so
-nothing under it moves. On a fresh install it runs from soft to fudgy; after
-three consistent eggs it is about the thumb's width.
+nothing under it moves. On a fresh install it runs from runny to fudgy; after
+three consistent eggs it is about the thumb's width. Its ends are the yolk
+the egg is, without the cook's taste, so they need not be the certainty
+line's words, which are what the cook will call it.
 
 It is the egg at the time on screen, so its mark is the thumb only when that
 time does not lean. Before the first egg nothing leans and the mark is the
@@ -280,14 +295,14 @@ thumb. After it, at the soft end, the time leans later so the white sets (a
 runny white costs three, `DECISIONS.md` 7), and the mark sits right of the
 thumb by what that costs the yolk: at the far left of a cold start after
 three good eggs, the thumb at 0.06 and the mark at 0.14, 16 s later. The
-direction says so (`outcome.miss.firm` or `.likely.firm`). The slider never
+certainty line's "Most likely" says so. The slider never
 rests on the stripes: asked for less than the pan can deliver, it moves to
 the softest level the pan delivers, which is the level the time and the
 bracket are for (test/reach.test.ts 10). It does rest on the dots
-(`DECISIONS.md` 83): there the time, the direction and the bracket are for
-the level asked, and the warning line says `warn.lowOdds`, "Soft: I get
-this right fewer than 3 times in 10 so far." (the word is the level the
-thumb is on). A refusal worth saying takes the line instead, as the slider
+(`DECISIONS.md` 83): there the time, the certainty line and the bracket are
+for the level asked, and the warning line says `warn.wildGuess`, "Soft: a
+wild guess so far." (the word is the level the thumb is on). A refusal
+worth saying takes the line instead, as the slider
 moves out of the stripes; the next answer there carries the warning. The
 advice link stays under it. After a runny white or a yolk too soft, the
 time at a dotted level leans late, but never past a firmer level's
@@ -295,25 +310,32 @@ time at a dotted level leans late, but never past a firmer level's
 where the white binds the soft end takes the time of the first level firmer
 whose own choice is sooner (test/reach.test.ts 11: one egg soft with a runny
 white, soft asked, jammy's 427 s, 1/10, the bracket 0.20-0.53; it chose 500
-s with the bracket 0.50-0.82 before). The direction and the bracket say
-where that puts the yolk, and the warning says why.
+s with the bracket 0.50-0.82 before). "Most likely" and the bracket say
+where that puts the yolk. Since the `certainty` draft that egg's soft is a
+ballpark, soft or a neighbour 9 times in 10, so it is no longer dotted.
 
 **The track is a yolk** (`DECISIONS.md` 31): deep orange at runny, golden at
 jammy, pale yellow at hard (web `--yolk-runny`, `--yolk-jammy`,
 `--yolk-hard`; iOS `Palette.yolkRunny`, `yolkJammy`, `yolkHard`), deeper in
-the light scheme. The odds are its opacity: each level's odds over the best
-level's, so a fresh install at 2/10 everywhere still shows where the pan
-works. Colour alone is a level at 3/10 or better; dots mark levels the pan
-delivers but gets right fewer than 3 times in 10 so far, which can be
-chosen and are warned of; stripes mark what the pan cannot deliver, which
-cannot. No dots before the first egg that taught something. A tick word is
+the light scheme. Its opacity is the chance of the word asked at each level,
+over the best level's (`shadingOf`; the odds of "just right" until the
+`certainty` draft), so a fresh install, never very certain, still shows
+where the pan works. The word asked changes at the cuts between words, and
+a level on a cut is half one word and half the next, so the shading dips
+there and is strongest at each word's middle. Colour alone is a level
+surer than a wild guess; dots mark levels the pan delivers but that are a
+wild guess so far, softer or firmer than every level that is not
+(`lowOddsAt`), which can be chosen and are warned of; stripes mark what the
+pan cannot deliver, which cannot. No dots before the first egg that taught
+something, nor when every level is a wild guess. A tick word is
 struck through, in both apps, only when every position it names is under the
 stripes (`anchorReachable`): after a runny white the floor moves to about
 0.05-0.09, which is still Runny, so Runny stays. The strip is bare before the
 first answer and in sous-vide.
 
-**Nothing jumps.** While idle the direction keeps two lines' room and centres
-a one-line sentence in it, so a drag that changes the sentence does not move
+**Nothing jumps.** While idle the certainty line keeps two lines' room, the
+word and "Most likely", and centres what it has in it, so a drag that
+brings "Most likely" or takes it away does not move
 the slider. While a new pot's surface is on its way, the readout keeps its
 last height. The time can move once more when the pot's odds profile lands
 after the surface, where it holds a soft level's time under a firmer one's. The white's line can still appear mid-drag near the soft end.
@@ -360,10 +382,10 @@ by `npm run copy:snapshot` (`tools/copySnapshot.ts`).
 What the cook sees on the reference setup (68 g, fridge, cold start, ice,
 jammy):
 
-| Log | Direction | Bracket |
+| Log | Certainty line | Bracket |
 |---|---|---|
-| Fresh install | `outcome.unsure` | Soft to Fudgy |
-| Three eggs just right | `outcome.likely` | about the thumb's width |
-| One egg too soft | `outcome.unsure`, and the time rises | wide |
+| Fresh install | A wild guess; 9 times in 10: Runny to Fudgy | Runny to Fudgy |
+| Four eggs called jammy | A ballpark figure at jammy; Very certain at fudgy and hard | about a word wide |
+| One egg called hard (into boiling water) | A wild guess at soft, dotted, with the warning; Most likely: Jammy | wide |
 
 What has not been seen on a phone is in `PLAN.md`'s QA list.

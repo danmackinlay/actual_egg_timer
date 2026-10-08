@@ -9,7 +9,7 @@ struct WordingConformance {
     @Test("the constants")
     func constants() throws {
         let c = try Fixtures.object("wording.json", "constants")
-        #expect(try directionLikely == c.num("directionLikely"))
+
         #expect(try whiteRisk == c.num("whiteRisk"))
     }
 
@@ -32,18 +32,16 @@ struct WordingConformance {
         }
     }
 
-    @Test("the outcome's direction, white line and range")
+    @Test("the outcome's white line and range")
     func outcome() throws {
         for row in try Fixtures.list("wording.json", "outcome") {
-            let lean = try row.value(Lean.self, "lean")
             let o = try Outcome(
-                pTooSoft: 0, pJustRight: row.num("pJustRight"), pTooFirm: 0, pWhiteRunny: row.num("pWhiteRunny"),
+                pTooSoft: 0, pJustRight: 0, pTooFirm: 0, pWhiteRunny: row.num("pWhiteRunny"),
                 pWhiteTender: 1 - row.num("pWhiteRunny"), pWhiteFirm: 0, pYolkWord: nil,
                 levelLow: row.num("levelLow"), levelMedian: row.num("levelLow"), levelHigh: row.num("levelHigh"),
-                lean: lean
+                lean: .balanced
             )
-            let label = "\(o.pJustRight) \(lean) \(o.pWhiteRunny)"
-            #expect(try directionKey(o) == row.str("direction"), "\(label) direction")
+            let label = "\(o.pWhiteRunny) \(o.levelLow)"
             #expect(try whiteAtRisk(o) == row.flag("whiteAtRisk"), "\(label) white")
             let range = try row.object("range")
             let args = try #require(range["args"] as? [String: String], "range \(row)")

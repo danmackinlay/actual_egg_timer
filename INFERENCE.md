@@ -786,7 +786,10 @@ surface, the chosen time and the nominal target - and returns:
   delivered level falls inside the 80% range for 81.1% of simulated eggs
   (8.2% under, 10.7% over), 78-83% at every egg from the first. The range is
   0.14-0.72 on a fresh install at jammy and 0.35-0.51 after three jammy eggs
-  just right.
+  just right. Since the `certainty` draft (8 October 2026) it is the 5%,
+  50% and 95% points, the 90% the certainty's words state: on 900 simulated
+  eggs (`test/outcome.test.ts`) 87.7% fell inside, 6.1% under and 6.2% over.
+  The figures above are the 80% range's.
 - **The lean**: 'soft' or 'firm' when one way of missing is more than 1.5
   times as likely as the other, 'balanced' between - a miss one way three
   times in five, the least that makes "if not, more likely a little firm"
@@ -870,7 +873,9 @@ monotone by themselves. Left for later.
 Not built: any per-cook loss.
 
 **How sure, in words (6 October 2026, `DECISIONS.md` 93; SHIP-0.5 A7).**
-Core only: no screen shows it until the `certainty` draft (SHIP-0.5 D1).
+On both screens since the `certainty` draft (SHIP-0.5 D1, 8 October 2026),
+where the odds profile also reads it at each level: the chance of the word
+asked shades the track, and a wild guess at either end is dotted (reach.ts).
 `certaintyAt` in `src/core/certainty.ts`, held to
 `EggTimerCore/Certainty.swift` by `fixtures/certainty.json`, takes what the
 outcome takes - the posterior, the surface, the time on screen - and the

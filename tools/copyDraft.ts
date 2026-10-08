@@ -67,6 +67,7 @@ import { feedback2 } from './drafts/feedback2.js';
 import { exportDraft } from './drafts/export.js';
 import { warn } from './drafts/warn.js';
 import { afteregg } from './drafts/afteregg.js';
+import { certainty } from './drafts/certainty.js';
 
 export type Templates = Record<string, string>;
 
@@ -102,6 +103,12 @@ export interface Draft {
   /** Keys whose ENTRY changed only in an example or a note, which render
    *  nothing: the key, and why. */
   exampleOnly: Record<string, string>;
+  /** Keys whose words did not change but whose inserted words did, because
+   *  the numbers behind them moved with the draft's change in core (the
+   *  bracket's quantiles, say): the key, and why. The snapshot proof lets a
+   *  rendering of these templates appear or vanish; nothing else about them
+   *  may change. */
+  argumentsMoved?: Record<string, string>;
 }
 
 export const DRAFTS: Record<string, Draft> = {
@@ -149,6 +156,7 @@ export const DRAFTS: Record<string, Draft> = {
   export: exportDraft,
   warn,
   afteregg,
+  certainty,
 };
 
 /** The draft most recently applied, the last in `DRAFTS`: what a proof checks

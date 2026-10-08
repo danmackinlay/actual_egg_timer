@@ -92,25 +92,9 @@ public func mostLikelyOpened(_ w: WordCertainty) -> Bool {
 
 // MARK: - The outcome
 
-/// P(just right) at or above which the yolk is "probably just right": more
-/// likely than not, and nothing less.
-public let directionLikely = 0.5
-
-/// The catalogue key of the direction sentence.
-public func directionKey(_ o: Outcome) -> String {
-    if o.pJustRight >= directionLikely {
-        switch o.lean {
-        case .firm: return "outcome.likely.firm"
-        case .soft: return "outcome.likely.soft"
-        case .balanced: return "outcome.likely"
-        }
-    }
-    switch o.lean {
-    case .firm: return "outcome.miss.firm"
-    case .soft: return "outcome.miss.soft"
-    case .balanced: return "outcome.unsure"
-    }
-}
+/// The direction ("Probably just right. If not, a little firm.") retired
+/// with the certainty draft (DECISIONS.md 97); the line under the time is
+/// `certaintyKey`'s.
 
 /// Whether the white gets its line.
 public func whiteAtRisk(_ o: Outcome) -> Bool {

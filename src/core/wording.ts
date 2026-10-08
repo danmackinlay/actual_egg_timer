@@ -13,7 +13,7 @@
 
 import { CopyRef } from './copy.js';
 import { CERTAINTY_MASS, Certainty, WordCertainty } from './certainty.js';
-import { Lean, Outcome, WHITE_RISK } from './outcome.js';
+import { Outcome, WHITE_RISK } from './outcome.js';
 import { Phase, Verdict, anchorNear } from './policy.js';
 import { Cooling, HeatAfterBoil, StartMode } from './protocol.js';
 import { EggFrom } from './record.js';
@@ -145,22 +145,6 @@ export function mostLikelyOpened(w: WordCertainty): boolean {
  * in words since DECISIONS.md 92, and "just right" is no longer what the
  * cook is asked.
  */
-
-/** P(just right) at or above which the yolk is "probably just right". */
-export const DIRECTION_LIKELY = 0.5;
-
-/** The catalogue key of the direction sentence. */
-export function directionKey(o: Outcome): string {
-  const lean: Lean = o.lean;
-  if (o.pJustRight >= DIRECTION_LIKELY) {
-    if (lean === 'firm') return 'outcome.likely.firm';
-    if (lean === 'soft') return 'outcome.likely.soft';
-    return 'outcome.likely';
-  }
-  if (lean === 'firm') return 'outcome.miss.firm';
-  if (lean === 'soft') return 'outcome.miss.soft';
-  return 'outcome.unsure';
-}
 
 /** Whether the white gets its line. */
 export function whiteAtRisk(o: Outcome): boolean {

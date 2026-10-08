@@ -447,6 +447,35 @@ standing for the offer's "when I ask". No en-US entry.
 | `probe.how` | (new) | Push it into the middle of the yolk now and tell me the highest number you see. |
 | `help.learn.aside` | … for too soft, just right and too firm. … | … for the yolk you got, runny to hard, and the white next to it. … |
 
+**How sure I am, in words: `certainty`** (8 October 2026, `DECISIONS.md`
+93 and 97; `SHIP-0.5.md` D1). The direction spoke of "just right", which
+the cook is no longer asked (92), so it retires, with its lean and its (i).
+Below the time display is one of the owner's three words, as a label the
+cook presses: "ballpark" gets its noun, and none has a full stop. Pressed,
+it opens the 90% interval with each word standing alone after a colon, "Most
+likely" unless it is already said, and the likely time range in the first
+person, as an estimate is said aloud. The three paragraphs the (i) opened
+move to Help word for word. No en-US entry. `tools/drafts/certainty.ts`, on
+`e9c4208`; its header has the 1750 twins ("Morally certain", "Near the
+mark", "A guess at hazard"). The bracket's words to a screen reader move
+with the bracket, now the 90% range (`argumentsMoved`, a draft's list of
+keys whose words stand while the numbers behind them move).
+
+| key | before | after |
+|---|---|---|
+| `certainty.veryCertain`, `.ballpark`, `.wildGuess` | (new) | Very certain / A ballpark figure / A wild guess |
+| `certainty.interval`, `.interval.one` | (new) | {hits} times in {of}: {from} to {to}. / {hits} times in {of}: {word}. |
+| `certainty.mostLikely` | (new) | Most likely: {word}. |
+| `certainty.time` | (new) | I think the right time is between {low} and {high}. |
+| `certainty.help` | (new) | More about how sure I am |
+| `warn.lowOdds` | {doneness}: I get this right fewer than {hits} times in {of} so far. | (retired) |
+| `warn.wildGuess` | (new) | {doneness}: a wild guess so far. |
+| `outcome.likely`, `.likely.firm`, `.likely.soft`, `.unsure`, `.miss.firm`, `.miss.soft` | Probably just right. … / It could come out too soft or too firm. I can’t tell yet. / It might miss, … | (retired) |
+| `outcome.info` | How sure I am | (retired: the (i) is gone) |
+| `outcome.bracket`, `.why`, `.learning` | in the direction’s (i) | the same words, in Help |
+| `help.odds.p1` | … I tell you whether this one will probably come out as you asked, and if not, whether too soft or too firm. … | … Very certain means that 9 times in 10 you’ll get the yolk you asked for. A ballpark figure means … that yolk or the one next to it on the slider. Anything less sure is a wild guess. Press the words … |
+| `help.odds.aside` | Eight eggs out of ten … The stronger the shading on the slider, the surer I am of getting that doneness right. | Nine eggs out of ten … the more often you get the yolk you asked for. Dots mark the yolks that are still a wild guess. |
+
 ## 4. Units
 
 **One setting: Metric or Imperial.** Its default comes from the platform:

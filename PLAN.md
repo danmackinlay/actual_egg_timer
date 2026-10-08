@@ -4,15 +4,15 @@ The state of the build, what is next, and what waits on whom. Updated in the
 same commit as the work it describes. History is `LOGBOOK.md`; the rules for
 working here are `CLAUDE.md`; the last section says where everything else is.
 
-**Where things stand, 7 October 2026, on `0.5.x`** (forked from
+**Where things stand, 8 October 2026, on `0.5.x`** (forked from
 `0.4.x` at `8972a05`; its worklist is `SHIP-0.5.md`). Both apps are complete for one
 cook and learning, and now for many: opt-in sharing, the nudge and the
 population a prior is drawn from (E6-E8, `COLLECTIVE.md`) are built in
 both, on this branch, not on `main` and not deployed. The web app (`src/`) and the iOS app (`ios/`) carry
 the same model, refusals, particle filter and choice of time, the same
 catalogue of words in two Englishes (Phase F but for Czech), and the same
-layout (`UI.md`). `npm test` runs 369 tests, all passing (5b pins E3's known
-limit). `npm run validate` passes 29/29, `swift test` passes 152 tests
+layout (`UI.md`). `npm test` runs 371 tests, all passing (5b pins E3's known
+limit). `npm run validate` passes 29/29, `swift test` passes 153 tests
 in 38 suites, and the fit's pytest 9. **Pushed on 29 September** at `5ff6940`, the owner's
 call: Netlify serves it at actualeggtimer.netlify.app, and the first run of
 `.github/workflows/verify.yml` passed. The iOS app runs from Xcode on the owner's
@@ -48,8 +48,9 @@ These counts are the only ones in the documents. If you want a number, run
    screen.md`), and its core, the running cook, is built (C2,
    `src/core/running.ts`), with the red-team review of it applied
    (`design/one-screen-review.md`, `DECISIONS.md` 98). Both apps' state is
-   on it (`aet.cook.v3`, `cookInProgress.v2`; `design/one-screen.md` §4):
-   next is the one screen in both, with certainty in words on it (93). `0.4.x` is
+   on it (`aet.cook.v3`, `cookInProgress.v2`; `design/one-screen.md` §4),
+   and so is certainty in words, the `certainty` draft (93, D1), for the
+   owner on a phone: next is the one screen in both (C3). `0.4.x` is
    merged in as it moves.
 
 Throughout: cook real eggs, and the two measurements in README §11.3.
@@ -194,6 +195,17 @@ The one queue. Nothing else in the documents waits on the owner.
     Drag from hard to the left edge and watch the time only fall or hold.
     The time can step once, a second or so after a new pot, when its odds
     arrive.
+16. **The `certainty` draft, on a phone** (8 October 2026, `DECISIONS.md`
+    93 and 97; `SHIP-0.5.md` D1), both apps and both Englishes: the line
+    below the time ("Very certain", "A ballpark figure", "A wild guess"),
+    what pressing it opens, "Most likely" under it, the warning on a
+    dotted level, and Help's "How sure I am". `LANGUAGE.md` §3 has the
+    table, `tools/drafts/certainty.ts` the 1750 twins. Three things to
+    judge with it: the shading now dips between the words, since a level
+    on a cut is half one word; your soft egg of 5 October is a ballpark
+    now and no longer dotted ("Most likely: Jammy." says where it lands);
+    and the time range's wording, "I think the right time is between …",
+    for A7's range, which is yours to confirm.
 
 Waiting on someone else: the Czech review (F5), by the owner's friend.
 
