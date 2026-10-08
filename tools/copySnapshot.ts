@@ -9,8 +9,8 @@
  *
  * `capture` serves the repo root, opens the harness page in headless Chrome
  * over the DevTools protocol and waits for it to finish. It needs Chrome; set
- * CHROME to its binary if it is not in the usual macOS place. It is not part of
- * `npm test` for that reason. Run before and after a change that should not
+ * CHROME to its binary if it is not where macOS or Linux put it. It is not
+ * part of `npm test` for that reason. Run before and after a change that should not
  * touch the words, it proves that no byte of what is rendered moved.
  *
  * `compare` exits non-zero on the first difference and says where it is.
