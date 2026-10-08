@@ -16,7 +16,7 @@ import { WhiteReport, YOLK_WORDS, YolkWord } from '../core/infer.js';
 import { ProbeReading, probeReadingFor, recordCookTime_s } from '../core/record.js';
 import { nudgeFrom, parse, stepPast } from '../core/units.js';
 import {
-  Calibration, calibrationParams, eggLogged, learn, logEgg, recordSecondAnswer,
+  Calibration, calibrationParams, eggLogged, keptState, learn, logEgg, recordSecondAnswer,
 } from './calibration.js';
 import { eggRecordFor } from './eggRecord.js';
 import { activeLocale, t } from './copy.js';
@@ -363,7 +363,10 @@ function onProbeSave(): void {
   const typed = page().probeReading.value.trim();
   if (typed === '') return;
   const reading_C = parse(measure('probeTemp'), Number(typed));
-  const record = eggRecordFor(cooked, plan, null);
+  // Scored against the egg's record as logged once an answer has logged it,
+  // as iOS does (running-cook review 3), and otherwise the record made now.
+  const logged = eggLogged(cooked.id_ms);
+  const record = logged >= 0 ? keptState().log[logged] : eggRecordFor(cooked, plan, null);
   // Refused (`cookFactsFor`): not scored until the egg can be recorded. Held,
   // the reading left in its field, and read again when it can be (`held`).
   if (record === null) {
@@ -371,9 +374,10 @@ function onProbeSave(): void {
     page().calibNote.textContent = t('feedback.learning');
     return;
   }
-  const [low, high] = plausibleProbeRange_C(
-    plan.egg, plan.setup, calibrationParams(host.calib()), recordCookTime_s(record),
-  );
+  // Bounded by the model the cook ran under, not one that has since folded
+  // this egg's own answer (2.4).
+  const params = cookShown(cooked, plan)?.params ?? calibrationParams(host.calib());
+  const [low, high] = plausibleProbeRange_C(plan.egg, plan.setup, params, recordCookTime_s(record));
   if (reading_C === null || reading_C < low || reading_C > high) {
     page().probeNote.textContent = t('probe.refused', {
       low: show('probeTemp', low), high: show('probeTemp', high),
