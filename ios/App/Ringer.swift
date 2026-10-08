@@ -97,6 +97,9 @@ final class Ringer {
            let burst = Self.burst(urgent: deadline == .pull, format: format) {
             engine.attach(player)
             engine.connect(player, to: engine.mainMixerNode, format: format)
+            #if DEBUG
+            if Screenshots.muteAudio { engine.mainMixerNode.outputVolume = 0 }
+            #endif
             do {
                 try engine.start()
                 player.scheduleBuffer(burst, at: nil, options: .loops)

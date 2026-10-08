@@ -120,6 +120,9 @@ export async function launchChrome(args: string[], debugPort: number): Promise<B
     // ticks it is waited on for.
     '--disable-background-timer-throttling', '--disable-renderer-backgrounding',
     '--disable-backgrounding-occluded-windows',
+    // The alarm's beeps are counted where they are scheduled, never heard:
+    // the audio still runs, but nothing reaches the machine's speakers.
+    '--mute-audio',
     ...(process.env['CI'] !== undefined ? ['--no-sandbox'] : []),
     ...args,
   ], { stdio: 'ignore' });

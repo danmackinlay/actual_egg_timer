@@ -10,10 +10,11 @@ import EggTimerCore
 /// this face at the size Dynamic Type gives that style. `Font.custom` turns
 /// on only the common ligatures, so the face is built from a descriptor that
 /// names its OpenType features. It has one weight, so a semibold is its
-/// roman, and no small capitals, so those are capitals a size down. What
-/// UIKit draws itself (the bar, a segmented control, a menu), the clock, a
-/// number the cook sets (`systemFigures`) and the Live Activity keep the
-/// system face.
+/// roman, and no small capitals, so those are capitals a size down. A
+/// segmented picker's segments are UIKit's, set through its appearance
+/// (`segmented`). What else UIKit draws itself (the bar's title, a menu),
+/// the clock, a number the cook sets (`systemFigures`) and the Live
+/// Activity keep the system face.
 enum PeriodFace {
     static let roman = "IM_FELL_English_Roman"
     static let italic = "IM_FELL_English_Italic"
@@ -24,14 +25,42 @@ enum PeriodFace {
         if let hit = fonts[key] { return hit }
         let traits = UITraitCollection(preferredContentSizeCategory: UIContentSizeCategory(size))
         let points = UIFont.preferredFont(forTextStyle: uiStyle(style), compatibleWith: traits).pointSize
-        let name = italic ? Self.italic : roman
+        let made = Font(uiFont(italic ? Self.italic : roman, points) as CTFont)
+        fonts[key] = made
+        return made
+    }
+
+    /// The face at a size, with its features on.
+    private static func uiFont(_ name: String, _ points: CGFloat) -> UIFont {
         // A wrong name, here or in UIAppFonts, would fall back to another
         // face without a word.
         assert(UIFont(name: name, size: points) != nil, "\(name) is not registered: see UIAppFonts in project.yml")
         let descriptor = UIFontDescriptor(fontAttributes: [.name: name, .featureSettings: features])
-        let made = Font(UIFont(descriptor: descriptor, size: points) as CTFont)
-        fonts[key] = made
-        return made
+        return UIFont(descriptor: descriptor, size: points)
+    }
+
+    /// UIKit's own size for a segment's title: 13 pt at every Dynamic Type
+    /// size, extra small to the largest accessibility size, as measured on
+    /// iOS 27 (its labels shrink to fit rather than grow). The face takes
+    /// the same, as it takes each text style's.
+    private static let segmentPoints: CGFloat = 13
+
+    /// Whether the segments' appearance is now the face's: the system's
+    /// until it is first set.
+    @MainActor private static var segmentsInPeriod = false
+
+    /// Every segmented control made from now on, in the face in 1750 and in
+    /// the system's otherwise, regular in both states, since the face has
+    /// one weight. An appearance reaches only a control made after it is
+    /// set; `segmented` makes one afresh when the language changes.
+    @MainActor
+    static func segments(period: Bool) {
+        guard period != segmentsInPeriod else { return }
+        segmentsInPeriod = period
+        let attributes: [NSAttributedString.Key: Any]? = period ? [.font: uiFont(roman, segmentPoints)] : nil
+        let proxy = UISegmentedControl.appearance()
+        proxy.setTitleTextAttributes(attributes, for: .normal)
+        proxy.setTitleTextAttributes(attributes, for: .selected)
     }
 
     private struct FontKey: Hashable {
@@ -106,6 +135,25 @@ extension View {
     /// around it: its figures line up, and its 0 is not an o.
     func systemFigures() -> some View {
         modifier(SystemFigures())
+    }
+
+    /// A picker as segments, in the face of the language on screen, in
+    /// place of `.pickerStyle(.segmented)`.
+    func segmented() -> some View {
+        modifier(Segmented())
+    }
+}
+
+/// UIKit draws the segments, so their face is the control's appearance,
+/// which a control takes once, when it is made (`PeriodFace.segments`). Set
+/// here, before the control below is made; and the language is the
+/// control's identity, so a change of it makes a new control, in the new
+/// face, in place of the one on screen.
+private struct Segmented: ViewModifier {
+    func body(content: Content) -> some View {
+        let period = isPeriod(Copy.activeLocale)
+        PeriodFace.segments(period: period)
+        return content.pickerStyle(.segmented).id(period)
     }
 }
 
