@@ -105,6 +105,15 @@ export function forgetAnswers(): void {
   resetProbe();
 }
 
+/** The egg on screen is final (cook.ts, `cookOpen`): its questions go, as
+ *  after a reload, and nothing held is made. */
+export function putAway(): void {
+  answers = { kind: 'beforeReload' };
+  held.yolk = null;
+  held.white = null;
+  held.probe = false;
+}
+
 /** The cook was planned again: any answer held for want of its surface is
  *  made now, if it can be (`held`). */
 export function retryHeld(): void {
@@ -134,6 +143,18 @@ export interface FeedbackHost {
   learned(): void;
   /** Redraw the cook's screen: the questions go when no more can be taken. */
   redraw(): void;
+  /** Whether the egg on screen is still open to answers (`cookOpen`): if
+   *  not, its questions have been put away (`putAway`). */
+  open(): boolean;
+}
+
+/** Whether an answer may be taken now: the egg is still open to them. If not
+ *  (final - another tab ended it, or an hour has passed), it is not taken,
+ *  and the questions go (running-cook review 2.3). */
+function mayAnswer(h: FeedbackHost): boolean {
+  if (h.open()) return true;
+  h.redraw();
+  return false;
 }
 
 let host: FeedbackHost | null = null;
@@ -171,7 +192,7 @@ function resetRows(): void {
 function onAnswer(yolk: YolkWord | null, white: WhiteReport | null, pressed: HTMLButtonElement): void {
   const a = answers;
   if (a.kind === 'live' && ((yolk !== null && a.yolk !== null) || (white !== null && a.white !== null))) return;
-  if (host === null || host.cook() === null) return;
+  if (host === null || host.cook() === null || !mayAnswer(host)) return;
   settleRow(yolk !== null ? 'button.fb' : 'button.wb', pressed);
   foldAnswer(yolk, white, null);
 }
@@ -182,7 +203,7 @@ function foldAnswer(yolk: YolkWord | null, white: WhiteReport | null, probe: Pro
   const h = host;
   const cooked = h === null ? null : h.cook();
   const plan = h === null ? null : h.plan();
-  if (h === null || cooked === null || plan === null) return;
+  if (h === null || cooked === null || plan === null || !mayAnswer(h)) return;
   page().calibNote.textContent = t('feedback.learning');
   const cookStarted = cooked.id_ms;
   const stillHere = (): boolean => h.phase() === 'DONE' && h.cook()?.id_ms === cookStarted;
@@ -338,6 +359,7 @@ function onProbeSave(): void {
   const plan = host === null ? null : host.plan();
   if (host === null || cooked === null || plan === null || page().probeReading.disabled) return;
   if (answers.kind === 'live' && answers.probe !== null) return;
+  if (!mayAnswer(host)) return;
   const typed = page().probeReading.value.trim();
   if (typed === '') return;
   const reading_C = parse(measure('probeTemp'), Number(typed));
