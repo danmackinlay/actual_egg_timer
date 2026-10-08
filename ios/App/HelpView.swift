@@ -1,7 +1,7 @@
 import SwiftUI
 import EggTimerCore
 
-/// A section of Help, which the low-odds link can open at.
+/// A section of Help, which a link on the main screen can open at.
 enum HelpSection: String, CaseIterable, Hashable, Identifiable {
     case how, learn, reliable, odds, unsure, sources
     var id: String { rawValue }
@@ -24,7 +24,7 @@ enum HelpSection: String, CaseIterable, Hashable, Identifiable {
 /// smaller aside that names the method and links it.
 struct HelpView: View {
     let planner: Planner
-    /// Where to open: the low-odds link opens at the reliability section,
+    /// Where to open: the advice link opens at the reliability section,
     /// whose top lists the changes that would help the setup on screen.
     var start: HelpSection?
 
@@ -86,7 +86,7 @@ struct HelpView: View {
     private var reliable: some View {
         section(.reliable) {
             para(tr("help.reliable.intro"))
-            // Under low odds: the changes that would help the setup on
+            // Under a wild guess: the changes that would help the setup on
             // screen, from `protocolAdvice` in the core's Reach.swift - the
             // same list the web shows here.
             if !planner.advice.isEmpty {

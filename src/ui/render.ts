@@ -85,15 +85,18 @@ function textureNote(sol: Solution): string {
   return t(note.key, parts);
 }
 
-/** The way to Help under low odds (reach.ts): a link, shown while idle when
- *  the odds at the level on screen are under 5/10 or 3/10 short of the best
- *  level's. It opens Help at its reliability section, whose top lists the
- *  changes that would help this setup: the model prices a counter rest and
+/** The way to Help (reach.ts, "when to advise"): a link, shown while idle
+ *  when the word asked is a wild guess and a change the model can price
+ *  makes it surer. It opens Help at its reliability section, whose top
+ *  lists what would help this setup: the model prices a counter rest and
  *  the heat off from their own pots' profiles, asked for here and shown when
- *  they land; the fridge and the scale it cannot price. */
+ *  they land, so the link comes when they do; the fridge and the scale it
+ *  cannot price, and they are listed under a wild guess whether the link
+ *  shows or not. */
 function renderAdvice(): void {
   const chosen = state.chosen;
   let keys: string[] = [];
+  let surer = false;
   const wanted = state.cook === null && !isSousVide() && chosen !== null && chosen.adviceWanted;
   if (wanted && chosen !== null) {
     const inputs = currentInputs(timeToBoil_s());
@@ -104,12 +107,14 @@ function renderAdvice(): void {
       if (p === null) askForProfile(changed);
       else priced.push({ key: change.key, profile: p });
     }
-    keys = protocolAdvice(
+    const advice = protocolAdvice(
       inputs.setup, { eggFromClass: massFrom() === 'class', startAssumed: state.settings.startTempMode === 'room' },
-      chosen.level, chosen.decision.odds, priced,
+      chosen.level, chosen.certainty.words.pAsked, priced,
     );
+    keys = advice.keys;
+    surer = advice.surer;
   }
-  page().advice.hidden = !wanted;
+  page().advice.hidden = !(wanted && surer);
   page().forYou.hidden = keys.length === 0;
   const shown = keys.join(' ');
   if (shown === drawn.advice) return;
@@ -137,8 +142,8 @@ function setPrimary(label: string, hint: string, visible: boolean): void {
 
 /** The one longer line under the egg while idle (UI.md section 3): a refusal
  *  if there is one, and otherwise, before anything has been learned, a
- *  welcome. The way to Help under low odds is a short link, and goes under
- *  either. */
+ *  welcome. The way to Help under a wild guess is a short link, and goes
+ *  under either. */
 function renderWelcome(warning: string): void {
   page().welcome.hidden = !(state.cook === null && !isSousVide() && warning === ''
     && state.calib.eggsLogged === 0 && !hasBoilMemory(state.boilMemory));

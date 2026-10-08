@@ -64,7 +64,8 @@ public struct OddsProfile: Sendable, Equatable {
     /// Sorted by level, from `physicalSoftest` to `physicalHardest`. Empty when
     /// the white never sets.
     public let points: [LevelOdds]
-    /// The best odds of any point: what the advice is measured against.
+    /// The best odds of any point. The advice was measured against it until
+    /// 8 October 2026.
     public let best: Double
     /// The best `pAsked` of any point: what the shading is relative to.
     public let bestAsked: Double
@@ -355,21 +356,20 @@ public func shadingOf(_ profile: OddsProfile) -> [Shade] {
 
 // MARK: - The advice
 
-/// Below this many tenths, the chosen level's odds are low.
-public let adviceBelowTenths = 5
-/// And this many tenths under the best level is a clear margin.
-public let adviceMarginTenths = 3
-/// How much a change must raise this level's odds to be worth saying.
+// When to advise (reach.ts, "WHEN TO ADVISE"): the word asked is a wild
+// guess at the time on screen, and a change the model can price raises the
+// chance of that word there by `adviceGain` or more.
+
+/// How much a change must raise the chance of the word asked at this level
+/// to be worth saying: a twentieth.
 public let adviceGain = 0.05
 /// How far over the fridge preset an egg must start before "straight from the
 /// fridge" is advice, C.
 private let fridgeMarginC = 1.0
 
-/// Whether the odds at the chosen level are low enough to offer advice.
-public func adviceWanted(_ oddsTenths: Int, profile: OddsProfile?) -> Bool {
-    if oddsTenths < adviceBelowTenths { return true }
-    guard let profile else { return false }
-    return oddsInTenths(profile.best) - oddsTenths >= adviceMarginTenths
+/// Whether the word asked is unsure enough to look for advice: a wild guess.
+public func adviceWanted(_ c: Certainty) -> Bool {
+    c == .wildGuess
 }
 
 /// What the setup alone does not say about the egg.
@@ -417,33 +417,55 @@ public func unpricedAdvice(_ setup: CookSetup, facts: AdviceFacts) -> [String] {
     return keys
 }
 
-/// A profile's odds at a level, interpolated; 0 outside its points.
-public func oddsNear(_ profile: OddsProfile, level: Double) -> Double {
+/// A profile's chance of the word asked at a level, interpolated between its
+/// nearest points either side that ask the same word, or the nearest such
+/// point where only one side has one; 0 outside the profile.
+public func askedNear(_ profile: OddsProfile, level: Double) -> Double {
     let pts = profile.points
-    guard let first = pts.first, let last = pts.last, level >= first.level, level <= last.level else {
+    guard let first = pts.first, let last = pts.last,
+          level >= first.level - sameLevel, level <= last.level + sameLevel else {
         return 0
     }
-    for i in 1..<max(pts.count, 1) {
-        let a = pts[i - 1]
-        let b = pts[i]
-        if level <= b.level {
-            let span = b.level - a.level
-            return span > 0 ? a.odds + (b.odds - a.odds) * ((level - a.level) / span) : b.odds
-        }
+    let word = askedWord(level)
+    var below = -1
+    var above = -1
+    for i in 0..<pts.count where askedWord(pts[i].level) == word {
+        if pts[i].level <= level + sameLevel { below = i }
+        if pts[i].level >= level - sameLevel && above < 0 { above = i }
     }
-    return first.odds
+    if below < 0 && above < 0 { return 0 }
+    if below < 0 { return pts[above].pAsked }
+    if above < 0 { return pts[below].pAsked }
+    let a = pts[below]
+    let b = pts[above]
+    let span = b.level - a.level
+    return span > 0 ? a.pAsked + (b.pAsked - a.pAsked) * ((level - a.level) / span) : a.pAsked
 }
 
-/// What to say under low odds, as catalogue keys in the order shown.
+/// What to say, and whether to show the way to it.
+public struct ProtocolAdvice: Sendable, Equatable {
+    /// Catalogue keys in the order shown: the unpriced advice, then each
+    /// priced change that makes the word asked surer.
+    public let keys: [String]
+    /// Whether a priced change makes it surer: the link shows (with
+    /// `adviceWanted`).
+    public let surer: Bool
+}
+
+/// What to say under a wild guess: the unpriced advice, then each priced
+/// change whose profile raises the chance of the word asked at `level` by
+/// `adviceGain` or more over `pAsked`, the chance at the time on screen.
 public func protocolAdvice(
-    _ setup: CookSetup, facts: AdviceFacts, level: Double, odds: Double,
+    _ setup: CookSetup, facts: AdviceFacts, level: Double, pAsked: Double,
     priced: [(key: String, profile: OddsProfile)]
-) -> [String] {
+) -> ProtocolAdvice {
     var keys = unpricedAdvice(setup, facts: facts)
-    for change in priced where oddsNear(change.profile, level: level) - odds >= adviceGain {
+    var surer = false
+    for change in priced where askedNear(change.profile, level: level) - pAsked >= adviceGain {
         keys.append(change.key)
+        surer = true
     }
-    return keys
+    return ProtocolAdvice(keys: keys, surer: surer)
 }
 
 // MARK: - The decided answer
@@ -453,7 +475,8 @@ public func protocolAdvice(
 /// copy of it (REVIEW-0.4.x, "Bloat and factoring" 1).
 public struct DecidedAnswer: Sendable {
     /// The level decided for: the answer's (`LevelAnswer.level`), after any
-    /// snap. The advice is priced here, with `decision.odds`.
+    /// snap. The advice is priced here, against the chance of the word asked
+    /// in `certainty`.
     public let level: Double
     /// The mean solve, re-read at the decided time with the nudge in it
     /// (`decidedSolution`): its verdict and limits are the mean solve's.
@@ -468,8 +491,9 @@ public struct DecidedAnswer: Sendable {
     /// The nudge the time took (`appliedNudge`): all of it where a time is
     /// chosen for, none where the solver's own answer stands.
     public let nudgeS: Double
-    /// Whether the odds are low enough to offer advice (`adviceWanted`, with
-    /// the profile), and the white sets, so there is a cook to advise on.
+    /// Whether the word asked is a wild guess (`adviceWanted`) and the white
+    /// sets, so there is a cook to advise on: the advice is looked for. The
+    /// link shows when `protocolAdvice` also finds a change that helps.
     public let adviceWanted: Bool
 }
 
@@ -489,6 +513,7 @@ public func decideAnswer(
         c, grid: grid, solution: sol, logNominalTarget: target, bounds: envelopeBounds(profile, level: level)
     )
     let nudge = appliedNudge(sol, nudgeS: nudgeS)
+    let certainty = certaintyAt(c.posterior, grid, d.cookTimeS + nudge, level: level)
     return DecidedAnswer(
         level: level,
         solution: decidedSolution(
@@ -496,8 +521,8 @@ public func decideAnswer(
         ),
         decision: d,
         outcome: predictOutcome(c.posterior, grid, d.cookTimeS + nudge, target),
-        certainty: certaintyAt(c.posterior, grid, d.cookTimeS + nudge, level: level),
+        certainty: certainty,
         nudgeS: nudge,
-        adviceWanted: sol.whiteSets && adviceWanted(d.oddsTenths, profile: profile)
+        adviceWanted: sol.whiteSets && adviceWanted(certainty.words.certainty)
     )
 }

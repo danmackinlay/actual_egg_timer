@@ -261,9 +261,14 @@ final class Planner {
     /// The nudge the time on screen took (`appliedNudge`): what a cook started
     /// now carries, and its record keeps apart from the time recommended.
     var appliedNudgeS: Double = 0
-    /// Under low odds, what would make this cook more reliable, as catalogue
-    /// keys in the order shown; empty when there is nothing to say.
+    /// Under a wild guess, what would make this cook more reliable, as
+    /// catalogue keys in the order shown; empty when there is nothing to say.
     var advice: [String] = []
+    /// Whether the way to Help's advice shows (Reach.swift, `protocolAdvice`):
+    /// the word asked is a wild guess at the time on screen, and a change the
+    /// model can price makes it surer. Never in sous-vide, or where the white
+    /// never sets (`DecidedAnswer.adviceWanted`).
+    var adviceShown = false
     /// What the white's line is about, and what a cook
     /// started now is timed by: the choice on screen's outcome,
     /// once this pot's surface has landed. Nil before that, where the white
@@ -277,17 +282,10 @@ final class Planner {
         guard !isSousVide, decision != nil, solution?.whiteSets == true else { return nil }
         return certainty
     }
-    /// Whether the odds on screen are low enough to point the cook at Help
-    /// (`adviceWanted` in Reach.swift): under 5/10, or 3/10 short of the best
-    /// level's. Never in sous-vide, or where the white never sets.
-    var adviceWanted: Bool {
-        guard !isSousVide, solution?.whiteSets == true, let d = decision else { return false }
-        return EggTimerCore.adviceWanted(d.oddsTenths, profile: oddsProfile)
-    }
 
     // MARK: - Held on screen
 
-    /// The shading, the outcome and the low-odds link as last shown, kept
+    /// The shading, the outcome and the advice link as last shown, kept
     /// while a new pot's surface is built (`hold()`), so a tap on a stepper
     /// does not blank them for the second that takes and bring them back.
     /// Display only: what a cook started now carries is `decision` and
@@ -296,7 +294,7 @@ final class Planner {
         var profile: OddsProfile?
         var outcome: Outcome?
         var certainty: CertaintyReading?
-        var adviceWanted = false
+        var adviceShown = false
     }
     var held = Held()
 
@@ -306,7 +304,7 @@ final class Planner {
         if decision != nil {
             held.outcome = shownOutcome
             held.certainty = shownCertainty
-            held.adviceWanted = adviceWanted
+            held.adviceShown = adviceShown
         }
     }
 
@@ -321,8 +319,10 @@ final class Planner {
     var heldOutcome: Outcome? { decision != nil ? shownOutcome : (holding ? held.outcome : nil) }
     /// The line under the time and the bracket, likewise.
     var heldCertainty: CertaintyReading? { decision != nil ? shownCertainty : (holding ? held.certainty : nil) }
-    /// The low-odds link, likewise.
-    var shownAdviceWanted: Bool { decision != nil ? adviceWanted : (holding && held.adviceWanted) }
+    /// The way to Help's advice, likewise.
+    var shownAdvice: Bool {
+        decision != nil ? (!isSousVide && adviceShown) : (holding && held.adviceShown)
+    }
 
     // MARK: - Bookkeeping
     //
