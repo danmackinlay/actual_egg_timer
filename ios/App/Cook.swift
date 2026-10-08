@@ -172,6 +172,22 @@ final class Cook {
     /// The cook time, egg-in to egg-out: the pull's, once there is one.
     var cookSeconds: TimeInterval { plan?.cookTimeS ?? 0 }
 
+    /// The plan as it ran, once the egg is out (`asRanShown`): what Done and
+    /// the cooling show, whatever a later plan on a newer posterior reads
+    /// (running-cook review 2.4). Nil before the pull, and until it is kept
+    /// with no surface yet; the plan is shown then.
+    var asRan: CookAsRan? {
+        guard let running, let plan else { return nil }
+        return asRanShown(running, plan: plan)
+    }
+
+    /// The level and the peak yolk the cook was planned to, as it ran once
+    /// the egg is out: what "You asked for" and the sentence say.
+    var shownLevel: Double? { asRan?.level ?? plan?.level }
+    var shownPeakYolkC: Double? { asRan?.peakYolkC ?? plan?.solution.result.peakYolkC }
+    /// Whether the cooling ended at the yolk's peak, as it ran.
+    var shownProbeMoment: Bool { asRan?.probeMoment ?? plan?.probeMoment ?? false }
+
     /// How much of the cook the plan takes to be the heating ramp, s: the
     /// tap, the remembered pan or the slow hob's guess. Zero on a hot start,
     /// where no ramp is on the clock.
@@ -834,9 +850,11 @@ final class Cook {
     /// and its own language: in each state pushed, so a plan made again
     /// updates the card in place.
     private static func description(_ cook: RunningCook, _ plan: CookPlan) -> CookActivity.Description {
-        CookActivity.Description(
-            doneness: tr(anchorNear(plan.level).key, in: cook.lang),
-            peakYolk: showIn(cook.units, .temperature, plan.solution.result.peakYolkC),
+        // Once the egg is out, as it ran (`asRanShown`).
+        let ran = asRanShown(cook, plan: plan)
+        return CookActivity.Description(
+            doneness: tr(anchorNear(ran?.level ?? plan.level).key, in: cook.lang),
+            peakYolk: showIn(cook.units, .temperature, ran?.peakYolkC ?? plan.solution.result.peakYolkC),
             eggMass: showIn(cook.units, .mass, plan.egg.massKg * 1000),
             cooling: cook.choices.cooling.rawValue
         )

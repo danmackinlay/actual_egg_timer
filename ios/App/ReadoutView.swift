@@ -200,7 +200,7 @@ struct ReadoutView: View {
                 .padding(.top, 4)
                 .transition(.opacity)
             }
-            if let o, whiteAtRisk(o) {
+            if whiteRunny(o) {
                 Text(tr("outcome.whiteRunny"))
                     .appFont(.footnote)
                     .foregroundStyle(.orange)
@@ -208,6 +208,15 @@ struct ReadoutView: View {
             }
         }
         .multilineTextAlignment(.center)
+    }
+
+    /// Whether to say the white might still be runny: the choice on screen's
+    /// while idle, the plan's while the egg is in, and once it is out the
+    /// forecast as it ran (`Cook.asRan`), not a plan made since on a
+    /// posterior that has learned from this egg.
+    private func whiteRunny(_ o: Outcome?) -> Bool {
+        if phase != .idle, let ran = cook.asRan { return ran.forecast.white[0] >= whiteRisk }
+        return o.map(whiteAtRisk) ?? false
     }
 
     /// A key with its counts and its doneness words, rendered.

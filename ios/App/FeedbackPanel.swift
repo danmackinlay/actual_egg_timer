@@ -84,7 +84,7 @@ struct FeedbackPanel: View {
     /// egg with whatever else has been said. Optional, like the questions.
     @ViewBuilder
     private var probeEntry: some View {
-        if cook.plan?.probeMoment == true {
+        if cook.shownProbeMoment {
             let given = planner.answers?.probe
             VStack(spacing: 8) {
                 Text(tr("probe.ask"))
@@ -99,7 +99,7 @@ struct FeedbackPanel: View {
                 // goes under them, since the three do not fit one line.
                 NudgeField(
                     label: tr("probe.entry"), measure: planner.measure(.probeTemp), text: $probeText,
-                    startSI: cook.plan?.solution.result.peakYolkC ?? 0, width: 96, disabled: given != nil
+                    startSI: cook.shownPeakYolkC ?? 0, width: 96, disabled: given != nil
                 )
                 Button(tr("probe.save")) { saveProbe() }
                     .buttonStyle(.bordered)
@@ -194,13 +194,15 @@ struct FeedbackPanel: View {
 
     /// What this cook was started for, over the yolk question, so the answer
     /// is graded against it: "You asked for: jammy, peak yolk 65 °C". From
-    /// the cook's plan, its level and peak, never the slider now, in the language and
-    /// units on screen now, as the web's `renderTarget` says it.
+    /// the cook as it ran, its level and peak (`Cook.asRan`), never the slider
+    /// now nor a plan made since on a posterior that has learned from this
+    /// egg, in the language and units on screen now, as the web's
+    /// `renderTarget` says it.
     private var targetLine: String? {
-        guard let plan = cook.plan else { return nil }
+        guard let level = cook.shownLevel, let peak = cook.shownPeakYolkC else { return nil }
         return tr("feedback.target", [
-            "doneness": .text(midSentence(tr(anchorNear(plan.level).key), locale: Copy.activeLocale)),
-            "yolk": .text(planner.show(.temperature, plan.solution.result.peakYolkC)),
+            "doneness": .text(midSentence(tr(anchorNear(level).key), locale: Copy.activeLocale)),
+            "yolk": .text(planner.show(.temperature, peak)),
         ])
     }
 
