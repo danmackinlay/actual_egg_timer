@@ -424,6 +424,36 @@ draws dashes where the digits should be — a countdown that tells you nothing. 
 the Lock Screen it therefore takes the width it needs first, and the description
 wraps around it.
 
+## The fast clock and the scripted checks
+
+Every read of the time a cook depends on goes through `App/AppClock.swift`. A
+Release build is the system's clock and nothing else. A Debug build takes
+`-clockSpeed 60` (cook time sixty times as fast), `-clockOffset -900` (shifted,
+s) and `-clockEpoch <epoch s>` (where the speed counts from); passing the same
+three at every launch carries the clock on through a relaunch, and a larger
+offset wakes the app past a deadline. Under it the notifications fire at the
+scaled interval, and the Lock Screen card, which the system counts on its own
+clock, gets the real moments the deadlines come: it reaches zero with the app
+but counts real seconds (8:00 to go reads 0:08 at ×60). Sharing sends nothing,
+and a record made under it carries ` (debug clock)` after its `appVersion` and
+is never sent, nor anything logged after it, until Forget everything.
+
+```sh
+npm run ios:e2e                    # every scenario, about five minutes
+npm run ios:e2e -- relaunch-*      # some; --list names them
+```
+
+`tools/iosE2e.mjs` builds Debug, makes a simulator of its own, and for each
+scenario installs afresh, drives the app by launch argument (`-uiScreen
+heating`, `-uiDo boil@300,out@pull+3,again@cooled+5`, `-uiAnswer`; the taps of
+`App/Screenshots.swift`, never screen coordinates), terminates and relaunches
+it, and asserts on the debug log (`Library/Caches/aet.log`: phases, plans,
+the stored cook, the egg log, alarms scheduled and read back, rings, cards) and
+on the prefs plist through plistlib. It deletes the device at the end. Not in
+`npm run verify` (it needs Xcode and a simulator) nor in CI: at ×60 half a
+second of a slow runner is half a minute of cook, and it has not been run on
+GitHub's runners.
+
 ## Signing
 
 The project is configured for the Apple Developer Program membership on this

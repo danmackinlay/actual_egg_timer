@@ -59,7 +59,7 @@ final class AppModel {
         // egg that can still change.
         Sharing.shared.start(host: Sharing.Host(
             log: { [planner] in planner.kept.log },
-            finalCount: { [planner, cook] in planner.kept.log.count - (cook.eggOpen(at: .now) ? 1 : 0) }
+            finalCount: { [planner, cook] in planner.kept.log.count - (cook.eggOpen(at: AppClock.now) ? 1 : 0) }
         ))
         // A finished cook answered before the relaunch keeps its open
         // questions open, if its egg is still the last in the log and has not
@@ -159,9 +159,10 @@ final class AppModel {
     /// longer the stored cook) is ended as Start again ends it, so its
     /// questions go and nothing more is logged for it; an unanswered egg
     /// cooked through is logged as Start again logs it (running-cook review
-    /// 2.2, 2.3).
+    /// 2.2, 2.3). A cook not yet planned - the moment after Eggs in - is
+    /// not judged: `stillOpen` is false without a plan.
     func endIfNoLongerOpen() {
-        guard cook.running != nil, !cook.stillOpen() else { return }
+        guard cook.running != nil, cook.plan != nil, !cook.stillOpen() else { return }
         startAgain()
     }
 

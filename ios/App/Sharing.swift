@@ -114,8 +114,10 @@ final class Sharing {
     /// A random version 4 UUID, lower case, as the server takes it.
     nonisolated static func newUid() -> String { UUID().uuidString.lowercased() }
 
-    /// Now, as core counts it: epoch ms.
-    private static func nowMs() -> Double { Date.now.timeIntervalSince1970 * 1000 }
+    /// Now, as core counts it: epoch ms. The system's clock, as every time
+    /// here is: sharing deals with the server and Apple, and sends nothing
+    /// under a debug build's altered clock (`AppClock`).
+    private static func nowMs() -> Double { AppClock.system.timeIntervalSince1970 * 1000 }
 
     // MARK: - Kept
 
@@ -206,7 +208,8 @@ final class Sharing {
     }
 
     private func sendRun() async {
-        guard let host else { return }
+        // Nothing goes under a debug build's altered clock (`AppClock`).
+        guard let host, !AppClock.altered else { return }
         var attestedFor: String?
         var keyId: String?
         while true {
@@ -214,6 +217,11 @@ final class Sharing {
             let log = host.log()
             guard let at = nextToSend(s, finalCount: host.finalCount(), logLength: log.count),
                   let uid = s.uid else { return }
+            // An egg recorded under a debug build's altered clock is never
+            // sent, nor anything after it: none is ever made by a Release
+            // build, and a debug install shares again after Forget
+            // everything.
+            guard !AppClock.marked(log[at].appVersion) else { return }
             let gen = generation
             if attestedFor != uid {
                 let key = await attestedKey(for: uid, generation: gen)
@@ -295,7 +303,7 @@ final class Sharing {
                 let made = try await service.attestKey(keyId, clientDataHash: hash).base64EncodedString()
                 guard gen == generation else { return .later }
                 a.attestation = made
-                a.madeAt = .now
+                a.madeAt = AppClock.system
                 saveAttest(a)
             }
             let body = try JSONEncoder().encode(["uid": uid, "keyId": keyId, "attestation": a.attestation ?? ""])
@@ -313,7 +321,7 @@ final class Sharing {
                 // the next run, for a while.
                 return waited(a)
             case .refused:
-                if status == 400, a.madeAt.map({ Date.now.timeIntervalSince($0) > Self.attestationFresh }) ?? true {
+                if status == 400, a.madeAt.map({ AppClock.system.timeIntervalSince($0) > Self.attestationFresh }) ?? true {
                     // Posted days after Apple made it - the phone was offline -
                     // and refused, most likely for its certificate's date: a
                     // new key, attested now, on the next run.
@@ -372,7 +380,7 @@ final class Sharing {
     /// is, must not stop its sharing for good.
     private func waited(_ attest: Attest) -> Attested {
         var a = attest
-        let now = Date.now
+        let now = AppClock.system
         let since = a.busySince ?? now
         let busy = (a.busy ?? 0) + 1
         if shareGivesUp(tries: busy, waitedS: now.timeIntervalSince(since)) {

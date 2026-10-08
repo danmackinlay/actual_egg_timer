@@ -100,6 +100,9 @@ final class Alarm: NSObject, UNUserNotificationCenterDelegate {
     }
 
     func cancel() {
+        #if DEBUG
+        Screenshots.log("alarms cancelled")
+        #endif
         centre.removePendingNotificationRequests(withIdentifiers: [pullID, coolID])
     }
 
@@ -114,17 +117,26 @@ final class Alarm: NSObject, UNUserNotificationCenterDelegate {
         let ours: [String: RingDeadline] = [pullID: .pull, coolID: .cooled]
         let pending = await centre.pendingNotificationRequests()
         #if DEBUG
+        // Its moment in cook time, though a pending interval trigger's
+        // `nextTriggerDate()` is now plus the interval, so it drifts by the
+        // time since it was scheduled: `scheduled` says when it fires.
         for r in pending {
-            let at = (r.trigger as? UNTimeIntervalNotificationTrigger)?.nextTriggerDate()
+            let at = (r.trigger as? UNTimeIntervalNotificationTrigger)?.nextTriggerDate().map(AppClock.app)
             Screenshots.log("pending \(r.identifier) at \(at.map { String(Int($0.timeIntervalSince1970)) } ?? "-")")
         }
+        if pending.isEmpty { Screenshots.log("pending none") }
         #endif
         return Set(pending.compactMap { ours[$0.identifier] })
     }
 
     private func request(id: String, at date: Date, title: String, body: String) {
-        let seconds = date.timeIntervalSinceNow
+        // The system's seconds to the moment: under a debug build's fast
+        // clock, the cook's interval scaled (`AppClock`).
+        let seconds = AppClock.realInterval(until: date)
         guard seconds > 0 else { return }
+        #if DEBUG
+        Screenshots.log("scheduled \(id) at \(Int(date.timeIntervalSince1970)) in \(String(format: "%.2f", seconds))")
+        #endif
 
         let content = UNMutableNotificationContent()
         content.title = title
@@ -144,6 +156,12 @@ final class Alarm: NSObject, UNUserNotificationCenterDelegate {
         // duration, and a clock that changes underneath it - a timezone, a
         // leap second, the user editing the time - must not move the egg.
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: seconds, repeats: false)
+        #if DEBUG
+        centre.add(UNNotificationRequest(identifier: id, content: content, trigger: trigger)) { error in
+            if let error { Screenshots.log("not scheduled \(id): \(error.localizedDescription)") }
+        }
+        #else
         centre.add(UNNotificationRequest(identifier: id, content: content, trigger: trigger))
+        #endif
     }
 }

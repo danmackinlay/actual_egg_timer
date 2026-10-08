@@ -131,7 +131,7 @@ struct DonenessControl: View {
     /// note.
     private var donenessNote: String {
         if planner.isSousVide {
-            return sousVideCopy(planner.sousVide, now: .now, units: planner.units).note
+            return sousVideCopy(planner.sousVide, now: AppClock.now, units: planner.units).note
         }
         guard let s = planner.solution else { return "" }
         return textureNote(peakYolkC: s.result.peakYolkC, peakWhiteC: s.result.peakWhiteC, whiteSets: s.whiteSets)

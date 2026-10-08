@@ -136,13 +136,13 @@ final class Cook {
     // (`pullGraceSeconds`, `coolingSeconds`), so the two apps cannot time the
     // same egg differently.
 
-    var phase: Phase { phase(at: .now) }
+    var phase: Phase { phase(at: AppClock.now) }
 
     /// The phase at a given instant.
     ///
     /// Takes the clock rather than reading it, so one render sees ONE time. A
     /// `body` pass reads the phase about ten times, so a phase that read
-    /// `Date.now` on every access could cross a boundary between two of those
+    /// the clock on every access could cross a boundary between two of those
     /// reads, and the label describe one phase while the button below it
     /// described the next. `TimelineView` already hands the view a date; this
     /// is what it is for.
@@ -196,8 +196,8 @@ final class Cook {
         return setup.timeToBoilS
     }
 
-    var secondsToPull: TimeInterval { max(0, (pullAt ?? .now).timeIntervalSinceNow) }
-    var secondsToCoolDone: TimeInterval { max(0, (coolDoneAt ?? .now).timeIntervalSinceNow) }
+    var secondsToPull: TimeInterval { max(0, pullAt.map { $0.timeIntervalSince(AppClock.now) } ?? 0) }
+    var secondsToCoolDone: TimeInterval { max(0, coolDoneAt.map { $0.timeIntervalSince(AppClock.now) } ?? 0) }
     /// Seconds of cooking after the boil is reached - the number every recipe
     /// quotes, and the only part of a cold start comparable to one.
     var secondsAfterBoil: TimeInterval { cookSeconds - assumedBoilS }
@@ -235,7 +235,7 @@ final class Cook {
             cook, plan: plan,
             // One cook at a time here: no `id` (src/core/record.ts).
             context: RecordContext(
-                app: .ios, appVersion: Calibrations.appVersion, prior: Calibrations.population.id,
+                app: .ios, appVersion: AppClock.mark(Calibrations.appVersion), prior: Calibrations.population.id,
                 day: day(Date(timeIntervalSince1970: cook.startedAtS)), id: nil
             ),
             yolkWord: yolk, white: white, probe: probe
@@ -255,7 +255,7 @@ final class Cook {
 
     /// The unanswered egg of the cook as it stands, if it ends now cooked
     /// through and never answered about; nil otherwise.
-    func unanswered(at now: Date = .now) -> Unanswered? {
+    func unanswered(at now: Date = AppClock.now) -> Unanswered? {
         guard let running, let plan, !feedbackGiven,
               cookEnding(running, plan: plan, nowS: now.timeIntervalSince1970).finished else { return nil }
         return Unanswered(
@@ -301,7 +301,7 @@ final class Cook {
 
     /// What the cook leaves if it ends now (`cookEnding`): the boil to
     /// remember, and whether it was cooked through. Nil when there is none.
-    func ending(at now: Date = .now) -> CookEnding? {
+    func ending(at now: Date = AppClock.now) -> CookEnding? {
         guard let running, let plan else { return nil }
         return cookEnding(running, plan: plan, nowS: now.timeIntervalSince1970)
     }
@@ -318,7 +318,7 @@ final class Cook {
     /// by the plan held. When it is not, its egg is final: the model ends it
     /// as Start again does, and nothing more is logged for it (running-cook
     /// review 2.3). False when there is no cook.
-    func stillOpen(at now: Date = .now) -> Bool {
+    func stillOpen(at now: Date = AppClock.now) -> Bool {
         guard let running, let plan else { return false }
         let stored = UserDefaults.standard.data(forKey: Self.savedKey)
             .flatMap { try? JSONDecoder().decode(Stored.self, from: $0) }
@@ -351,7 +351,7 @@ final class Cook {
         let gen = generation
         reset()
         let cook = startCook(
-            nowMs: Date.now.timeIntervalSince1970 * 1000, choices: choices, nudgeS: nudgeS,
+            nowMs: AppClock.now.timeIntervalSince1970 * 1000, choices: choices, nudgeS: nudgeS,
             boilMemory: boilMemory, units: units, lang: lang
         )
         running = cook
@@ -378,8 +378,11 @@ final class Cook {
         await readBackAlarms()
         guard gen == generation else { return }
 
-        if let state = activityState(at: .now) {
+        if let state = activityState(at: AppClock.now) {
             let attributes = Self.attributes(cook)
+            #if DEBUG
+            Self.logCard("start", state)
+            #endif
             await activity { await LiveActivity.start(attributes, state: state) }.value
             guard gen == generation else { return }
             pushed = state
@@ -393,7 +396,7 @@ final class Cook {
     /// (`cookEnding`), not now: by then it is the cook as last corrected.
     func boil() {
         guard let running, phase == .heating else { return }
-        let next = withBoil(running, nowS: Date.now.timeIntervalSince1970)
+        let next = withBoil(running, nowS: AppClock.now.timeIntervalSince1970)
         guard next != running else { return }
         change(to: next)
     }
@@ -404,7 +407,7 @@ final class Cook {
     /// record calls a measured pull.
     func pulledOut() {
         guard let running, let plan else { return }
-        let next = withOut(running, plan: plan, nowS: Date.now.timeIntervalSince1970)
+        let next = withOut(running, plan: plan, nowS: AppClock.now.timeIntervalSince1970)
         guard next != running else { return }
         Ringer.shared.stop()
         change(to: next)
@@ -426,7 +429,7 @@ final class Cook {
         guard var cook = running, let plan else { return }
         let cooking = plan.cookTimeS
         let cooled = cook.choices.cooling == .counter ? 0 : plan.coolS
-        let start = Date.now.timeIntervalSince1970 - (cooking + cooled + ago)
+        let start = AppClock.now.timeIntervalSince1970 - (cooking + cooled + ago)
         cook = Self.shifted(cook, by: start - cook.startedAtS)
         let out = start + cooking
         cook.events = CookEvents(
@@ -466,6 +469,9 @@ final class Cook {
     #endif
 
     func cancel() {
+        #if DEBUG
+        Screenshots.log("cook ended")
+        #endif
         generation &+= 1
         Alarm.shared.cancel()
         Ringer.shared.stop()
@@ -528,7 +534,7 @@ final class Cook {
         guard let running else { return nil }
         return PlanInput(
             cook: running, calibration: calibration(), surface: surface, leanHintS: leanHintS,
-            nowS: Date.now.timeIntervalSince1970, hint: plan?.slowHob
+            nowS: AppClock.now.timeIntervalSince1970, hint: plan?.slowHob
         )
     }
 
@@ -599,6 +605,13 @@ final class Cook {
         #endif
         plan = next
         plannedFor = cook
+        #if DEBUG
+        // What Done shows: the peak as it ran once kept, else this plan's.
+        Screenshots.log(String(
+            format: "shown peak %.2f level %.3f planned peak %.2f",
+            shownPeakYolkC ?? .nan, shownLevel ?? .nan, next.solution.result.peakYolkC
+        ))
+        #endif
         if let o = made.outcome { outcome = o }
         if next.decided != nil, next.leanS != leanHintS {
             leanHintS = next.leanS
@@ -709,11 +722,17 @@ final class Cook {
     private func persist() {
         guard let running else {
             UserDefaults.standard.removeObject(forKey: Self.savedKey)
+            #if DEBUG
+            Screenshots.log("stored none")
+            #endif
             return
         }
         let stored = Stored(cook: running, feedbackGiven: feedbackGiven, leanHintS: leanHintS)
         if let data = try? JSONEncoder().encode(stored) {
             UserDefaults.standard.set(data, forKey: Self.savedKey)
+            #if DEBUG
+            Screenshots.log("stored \(String(decoding: data, as: UTF8.self))")
+            #endif
         }
     }
 
@@ -754,6 +773,9 @@ final class Cook {
             Calibrations.keepUnreadCook(old)
             defaults.removeObject(forKey: key)
             keptOld = true
+            #if DEBUG
+            Screenshots.log("restore kept aside \(key)")
+            #endif
         }
         if keptOld { activity { await LiveActivity.endAtTheirEnds() } }
         guard let data = defaults.data(forKey: Self.savedKey) else { return nil }
@@ -764,12 +786,15 @@ final class Cook {
               let cook = readRunningCook(stored.cook.jsonObject) else {
             Calibrations.keepUnreadCook(data)
             defaults.removeObject(forKey: Self.savedKey)
+            #if DEBUG
+            Screenshots.log("restore unreadable")
+            #endif
             Alarm.shared.cancel()
             activity { await LiveActivity.endAll() }
             return nil
         }
 
-        let now = Date.now.timeIntervalSince1970
+        let now = AppClock.now.timeIntervalSince1970
         let input = PlanInput(
             cook: cook, calibration: calibration(), surface: nil, leanHintS: stored.leanHintS, nowS: now
         )
@@ -781,6 +806,9 @@ final class Cook {
         // have logged it, and a pan timed is still remembered.
         if cookTooOld(made.plan, nowS: now) {
             defaults.removeObject(forKey: Self.savedKey)
+            #if DEBUG
+            Screenshots.log("restore too old")
+            #endif
             // Always this build's own cook, so its alarms and its card are
             // this cook's, and there is nothing left for them to time
             // (running-cook review 2.2).
@@ -807,6 +835,9 @@ final class Cook {
                 cook: restored, calibration: input.calibration, surface: nil, leanHintS: stored.leanHintS, nowS: now
             ))
         }
+        #if DEBUG
+        Screenshots.log("restore \(phaseAt(made.plan.deadlines, nowS: now).rawValue) events written \(due != cook.events)")
+        #endif
         generation &+= 1
         reset()
         running = restored
@@ -839,8 +870,11 @@ final class Cook {
             // while the Lock Screen shows nothing is the same broken promise in
             // the other direction. A cook that is already finished gets none:
             // there is nothing left to count down to.
-            if phase != .done, let state = activityState(at: .now) {
+            if phase != .done, let state = activityState(at: AppClock.now) {
                 let attributes = Self.attributes(restored)
+                #if DEBUG
+                Self.logCard("start", state)
+                #endif
                 await activity { await LiveActivity.start(attributes, state: state) }.value
                 guard gen == generation else { return }
                 pushed = state
@@ -873,7 +907,7 @@ final class Cook {
         let held = await Alarm.shared.pendingDeadlines()
         guard gen == generation else { return }
         pendingAlarms = held.count
-        let now = Date.now
+        let now = AppClock.now
         let delivered = alarmCovers.filter { deadline in
             (deadline == .pull ? pullAt : coolDoneAt).map { $0 <= now } ?? false
         }
@@ -885,7 +919,7 @@ final class Cook {
     /// the phase enters Pull at a pull no notification holds, it rings.
     private func ringIfDue() {
         guard let plan else { return }
-        let now = Date.now
+        let now = AppClock.now
         let d = plan.deadlines
         guard let due = deadlineToRing(
             phase: phase(at: now),
@@ -898,6 +932,9 @@ final class Cook {
             onScreenSinceS: Ringer.shared.onScreenSince?.timeIntervalSince1970
         ) else { return }
         rung[due] = Self.at(due, d)
+        #if DEBUG
+        Screenshots.log("ring \(due.rawValue)")
+        #endif
         Ringer.shared.ring(due)
     }
 
@@ -918,7 +955,7 @@ final class Cook {
                 // At Done only the hour that keeps the egg open is left to
                 // watch for, so the tick slows down.
                 let done = self?.phase == .done
-                try? await Task.sleep(for: done ? .seconds(5) : .milliseconds(250))
+                try? await AppClock.sleep(done ? 5 : 0.25)
                 guard let self else { return }
                 self.tick()
             }
@@ -930,9 +967,12 @@ final class Cook {
     /// cook as it stands; the slow hob's next lengthening; the card; and the
     /// ring.
     private func tick() {
+        #if DEBUG
+        logPhase()
+        #endif
         // Too old to pick back up, by the plan held: ended as Start again
         // ends it, here as at a relaunch (running-cook review 2.2).
-        if running != nil, let plan, cookTooOld(plan, nowS: Date.now.timeIntervalSince1970) {
+        if running != nil, let plan, cookTooOld(plan, nowS: AppClock.now.timeIntervalSince1970) {
             tooOld?()
             return
         }
@@ -941,7 +981,7 @@ final class Cook {
             ringIfDue()
             return
         }
-        let now = Date.now.timeIntervalSince1970
+        let now = AppClock.now.timeIntervalSince1970
         let due = eventsDue(running, plan: plan, nowS: now)
         if due != running.events {
             var next = running
@@ -953,6 +993,27 @@ final class Cook {
         pushActivity()
         ringIfDue()
     }
+
+    #if DEBUG
+    /// The phase last written to the debug log.
+    @ObservationIgnored private var loggedPhase: Phase?
+
+    /// The phase, to the debug log when it changes.
+    private func logPhase() {
+        let now = phase
+        guard now != loggedPhase else { return }
+        loggedPhase = now
+        Screenshots.log("phase \(now.rawValue)")
+    }
+
+    /// A card pushed, to the debug log, its end in cook time.
+    private static func logCard(_ what: String, _ s: CookActivity.ContentState) {
+        Screenshots.log(
+            "activity \(what) \(s.stage.rawValue) ends \(Int(AppClock.app(s.ends).timeIntervalSince1970))"
+                + " up \(s.countsUp == true)"
+        )
+    }
+    #endif
 
     // MARK: - Live Activity
 
@@ -977,7 +1038,20 @@ final class Cook {
 
     /// What the Lock Screen should be showing. Each stage hands over its own
     /// span, so the system can draw the countdown without asking again.
+    ///
+    /// The system counts it on its own clock, so its dates are the moments
+    /// the cook's come (`AppClock.real`): the same dates, but under a debug
+    /// build's fast clock a countdown that reaches zero with the app's in
+    /// real seconds.
     private func activityState(at now: Date) -> CookActivity.ContentState? {
+        guard var state = cardState(at: now) else { return nil }
+        state.began = AppClock.real(state.began)
+        state.ends = AppClock.real(state.ends)
+        return state
+    }
+
+    /// The card's state in cook time.
+    private func cardState(at now: Date) -> CookActivity.ContentState? {
         guard let running, let plan else { return nil }
         let d = plan.deadlines
         let start = Date(timeIntervalSince1970: running.startedAtS)
@@ -1019,11 +1093,17 @@ final class Cook {
         if running != nil, phase == .done {
             guard !activityFinished else { return }
             activityFinished = true
+            #if DEBUG
+            Screenshots.log("activity end done")
+            #endif
             activity { await LiveActivity.endAll() }
             return
         }
-        guard let state = activityState(at: .now), state != pushed else { return }
+        guard let state = activityState(at: AppClock.now), state != pushed else { return }
         pushed = state
+        #if DEBUG
+        Self.logCard("update", state)
+        #endif
         activity { await LiveActivity.update(state) }
     }
 }

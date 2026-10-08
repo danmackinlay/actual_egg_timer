@@ -371,6 +371,10 @@ enum Calibrations {
         if let data {
             UserDefaults.standard.set(data, forKey: key)
         }
+        #if DEBUG
+        let last = k.log.last.flatMap { try? JSONEncoder().encode($0) }.map { String(decoding: $0, as: UTF8.self) }
+        Screenshots.log("log \(k.log.count) folded \(k.folded) last \(last ?? "-")")
+        #endif
     }
 
     /// The log as it is written: each record read from storage as it was
@@ -501,7 +505,7 @@ enum Calibrations {
     /// The results file (`resultsFile` in EggTimerCore): the store exactly as
     /// stored, the copies kept aside, and the sharing ID if there is one. Read
     /// from storage when it is asked for, so it is what is stored then.
-    static func exportText(uid: String?, now: Date = .now) -> String {
+    static func exportText(uid: String?, now: Date = AppClock.now) -> String {
         let iso = ISO8601DateFormatter()
         iso.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         let stored = UserDefaults.standard.data(forKey: key).map { String(decoding: $0, as: UTF8.self) }
@@ -513,7 +517,7 @@ enum Calibrations {
     }
 
     /// The results file's name, for the local day.
-    static func exportName(now: Date = .now) -> String {
+    static func exportName(now: Date = AppClock.now) -> String {
         let c = Calendar(identifier: .gregorian).dateComponents([.year, .month, .day], from: now)
         return resultsFileName(day: String(format: "%04d-%02d-%02d", c.year ?? 0, c.month ?? 0, c.day ?? 0))
     }

@@ -5527,3 +5527,52 @@ page draws a tick behind the clock. CI is left alone: the suite has not
 been run on GitHub's Linux runners, and `CHROME` would have to name their
 binary.
 
+## 8 October 2026: iOS's fast clock and scripted checks (SHIP-0.5 C)
+
+Every read of the time a cook depends on now goes through `AppClock`
+(`e823d20`): the cook's events, the plan's now, the phase, the timelines'
+dates, the ticker's waits, the Ringer's on-screen moment, the export's date.
+What stays on the system's clock says so (`AppClock.system`, `real`): a
+notification's interval, the card's dates, sharing's dealings with the
+server and Apple. A Debug build takes `-clockSpeed`, `-clockOffset` and
+`-clockEpoch`; a Release build compiles to `Date()` (built Release for the
+simulator: no `clockSpeed`, `uiDo` or `debug clock` string in the binary;
+the Debug dylib has them). `-cookAgo` and `-doneAgo` still move the cook,
+not the clock. The debug log gained what the checks read (the phase, what
+Done shows, the stored cook, each write of the egg log, alarms scheduled
+and cancelled, rings, cards pushed, the restore's path) and `-uiDo` the taps.
+
+**Choices.** The card under a fast clock gets the real moments its
+deadlines come, so it reaches zero with the app but counts real seconds:
+8:00 left reads 0:08 at ×60, never a countdown to a wrong moment. Sharing
+sends nothing while the clock is altered, and a record made under it is
+kept in the log, marked (`appVersion` ends ` (debug clock)`), rather than
+kept out, so the checks see the log as a cook makes it; sharing stops at a
+marked egg for good, so a debug install that ran fast shares again only
+after Forget everything. Launch arguments last one launch, so a script
+passes the clock's three again at each relaunch (the epoch fixed when it
+begins) and moves the offset to sleep past a deadline.
+
+**`npm run ios:e2e`** (`fdc4dee`): 16 scenarios, all passing, twice in a
+row on fresh devices (iPhone 17 Pro, iOS 27.0), 265-271 s each with the
+build cached; a build from a clean ios/build/e2e took 14 s more here. Each
+installs afresh; taps are launch arguments, never coordinates.
+
+**Found.** The first runs ended the cook that `-uiScreen heating` had just
+started in 3 of 16 scenarios: the move to active ran `endIfNoLongerOpen`,
+and `stillOpen` is false while the first plan is being made, so the cook
+was ended as Start again ends it. On a phone the same follows from the app
+going inactive and back in that tenth of a second after Eggs in. Fixed in
+one line, a cook with no plan yet is not judged (`85f92f0`).
+
+**Things that cost time.** A new simulator's first launch is seconds slow,
+minutes of cook at ×60, so the script launches once before the scenarios.
+The pull's 20 s are a third of a second at ×60, so the pull's relaunch
+runs at ×10 from just before it. A relaunch takes about half a second, half
+a minute of cook: a scenario aimed at a moment leaves a minute's margin.
+After a terminate the prefs plist took several seconds to catch up, as
+before; at ×60 the alarms of a cook in progress have fired by then, so the
+upgrade scenario runs at ×10. Renaming a key in the plist with the app
+terminated was read at the next launch (cfprefsd did not serve a stale copy).
+Not in CI: at ×60 half a second of a slow runner is half a minute of cook,
+and it has not been run on GitHub's runners.

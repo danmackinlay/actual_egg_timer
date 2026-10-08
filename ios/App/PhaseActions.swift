@@ -224,7 +224,7 @@ struct PhaseActions: View {
             guard cook.pendingAlarms > 0 else {
                 return tr("readout.alarm.failed")
             }
-            return tr("readout.alarm.set", ["time": .text(timeOfDay(cook.pullAt ?? .now, withSeconds: true))])
+            return tr("readout.alarm.set", ["time": .text(timeOfDay(cook.pullAt ?? AppClock.now, withSeconds: true))])
         }
     }
 }
