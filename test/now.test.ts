@@ -90,7 +90,9 @@ async function pageAt(hostname: string, search: string, kept: string | null): Pr
     setItem: (k: string, v: string) => { m.set(k, v); },
     removeItem: (k: string) => { m.delete(k); },
   }) as unknown as Storage;
-  const win: Record<string, unknown> = {};
+  // The store module (store.ts), which the mark is written through, reads
+  // `window.localStorage`.
+  const win: Record<string, unknown> = { localStorage: store(local) };
   const g = globalThis as Record<string, unknown>;
   g['window'] = win;
   g['location'] = { hostname: hostname, search: search, href: `https://${hostname}/${search}` };
@@ -117,6 +119,10 @@ test('6. the page on localhost: the clock asked for, its handle, and the log mar
   assert.equal(m.clockSpeed(), 60);
   assert.ok(m.nowMs() - Date.now() > 7_190_000);
   assert.equal(m.devClockUsed(), true);
+  // Marked once the app may write (app.ts, after `claimStorage`), not as the
+  // module loads (DECISIONS.md 100).
+  assert.equal(local.get('aet.devClock.used'), undefined);
+  m.markDevClockUse();
   assert.equal(local.get('aet.devClock.used'), '1');
   assert.ok(win['aetClock'] !== undefined);
 });

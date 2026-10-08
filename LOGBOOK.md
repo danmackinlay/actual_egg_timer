@@ -5930,3 +5930,41 @@ seven new), and the owner's `DECISIONS.md` 99. Each finding has its
 Checked on the last commit: `npm run verify` (392 tests, `swift test` 156
 in 38 suites), `npm run build:site`, `npm run e2e` 35 of 35, `npm run
 ios:build`.
+
+## 9 October 2026: an older build leaves a newer one's stores alone (DECISIONS.md 100)
+
+On `0.4.x`, so every release from 0.4 on has it. Core's `writerCheck`
+(`src/core/newer.ts`, Swift `Newer.swift`, `fixtures/newer.json`) orders
+versions as semantic versioning does and says whether a build writes or
+leaves the stores alone. The web keeps the mark under `aet.newest` and
+checks it in `writeStorage` and `removeStorage`, the one door every store
+goes through, so a newer tab opened since is seen at the next write even
+before its `storage` event; iOS's app had UserDefaults writes in seven
+files, now all through `Stores.set` and `Stores.remove`. Read-only also
+logs no egg, sends nothing, and puts away the questions after an egg, the
+sharing switch and Start learning again. The `newer` draft is the line.
+
+Driven on a simulator of its own (iPhone 17, iOS 26.5, deleted after):
+first launch wrote `newestVersion` 0.4.0; with 0.5.0 and a key 0.4 does not
+know written into the container's plist, the line showed at the top of the
+egg and of Settings (in 1750 too), a cook run to Done (`-uiScreen done`,
+`-seedEggs`) showed no questions, and the plist was byte for byte the same
+after three launches; with 0.3.0 there, the line did not show and the mark
+became 0.4.0. iOS's app has no unit-test target, so the app's half is held
+by the drive and core's by the fixture.
+
+355 TypeScript tests and 135 Swift; the iOS build passes.
+
+Ported to `0.5.x` the same day (`0.5.x-newer-version-guard`): the web's
+door covers 0.5's split stores (`calibrationStore.ts`, the running cook
+`aet.cook.v4` and the old cook keys, the unread lists) unchanged, and the
+development clock's `aet.devClock.used` now goes through it, written after
+the claim rather than as `now.ts` loads, which wrote before it; on iOS the
+writes 0.5 added (a correction's settings, `cookInProgress.v3`, the old cook
+keys, the unread cooks) go through `Stores`, and a logged egg's correction
+is refused while read-only. New checks: `npm run e2e` `newer-version` (no
+localStorage write through Done, Start again and a setting, no request,
+the line shown) and `newer-version-tab`; `npm run ios:e2e` `newer-version`
+(the mark as a launch argument, since an edit of the plist can be undone
+by the system's cached copy: the line, Done, nothing stored; then the
+mark). 396 TypeScript tests, 158 Swift, e2e 30 of 30, ios:e2e 32 of 32.

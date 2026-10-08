@@ -49,6 +49,8 @@
  *                              population files a reader refuses
  *   fixtures/running.json      a running cook: its egg and pot, its moves, and
  *                              a stored one read back
+ *   fixtures/newer.json        which build may write: versions compared, and
+ *                              the verdict on the newest-version mark
  *
  * fixtures/population.json is NOT written here: it is the fit's output, the
  * population both apps draw from (tools/population.ts, fit/). prior.json
@@ -79,11 +81,13 @@ import { shareFixture } from './fixtures/share.js';
 import { wordingFixture } from './fixtures/wording.js';
 import { priorFixture } from './fixtures/population.js';
 import { runningFixture } from './fixtures/running.js';
+import { newerFixture } from './fixtures/newer.js';
 
 const unitsJson = unitsFixture(english);
 const probeJson = probeFixture();
 const languageJson = languageFixture();
 const shareJson = shareFixture();
+const newerJson = newerFixture();
 
 mkdirSync('fixtures', { recursive: true });
 const written: Record<string, unknown> = {
@@ -108,6 +112,7 @@ const written: Record<string, unknown> = {
   share: shareJson,
   wording: wordingFixture(),
   running: runningFixture,
+  newer: newerJson,
 };
 /**
  * A particle set that repeats one earlier in the same file - an update that
@@ -189,5 +194,6 @@ const counts = [
   `${(languageJson['transitions'] as unknown[]).length} language moves`,
   `${shareJson.transitions.length} sharing moves`,
   `${runningFixture.setups.length} cook setups, ${runningFixture.moves.length} cook moves and ${runningFixture.reads.length} stored cooks`,
+  `${(newerJson['compare'] as unknown[]).length} version comparisons`,
 ];
 console.log(`fixtures/*.json written: ${counts.join(', ')}`);

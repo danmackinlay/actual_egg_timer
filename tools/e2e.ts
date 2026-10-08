@@ -1735,6 +1735,74 @@ const SCENARIOS: Record<string, { what: string; run: Scenario }> = {
       return 'the egg logged, nothing sent, the clock on or off';
     },
   },
+
+  'newer-version': {
+    what: 'DECISIONS 100: a newer build\'s mark: the line shown, an egg timed to Done and started again, and not one write or request',
+    run: async (h) => {
+      const tab = await h.ctx.open(STOPPED);
+      // What a newer build left: its mark, the settings with a field this
+      // build does not know, a store it never heard of, and a deletion
+      // still to ask for, which this build would send at once.
+      await tab.eval(`(() => {
+        localStorage.setItem('aet.newest', '9.0.0');
+        const s = JSON.parse(localStorage.getItem('aet.settings.v1') ?? '{}');
+        localStorage.setItem('aet.settings.v1', JSON.stringify({ ...s, addedLater: true }));
+        localStorage.setItem('aet.later.v1', 'a newer store');
+        localStorage.setItem('aet.share.v1', JSON.stringify({ on: false, uid: null,
+          uids: ['0b5e6c1e-1a2b-4c3d-8e9f-0123456789ab'], deleting: ['0b5e6c1e-1a2b-4c3d-8e9f-0123456789ab'] }));
+      })()`);
+      const dump = 'JSON.stringify(Object.keys(localStorage).sort().map((k) => [k, localStorage.getItem(k)]))';
+      const before = await tab.eval<string>(dump);
+      await tab.reload();
+      await tab.settle();
+      const line = await tab.eval<{ shown: boolean; text: string; want: string }>(`(async () => {
+        const el = document.getElementById('newerNote');
+        return { shown: !el.hidden && el.offsetHeight > 0, text: el.textContent,
+          want: (await window.__e2e.ui('copy')).t('newer.note') };
+      })()`);
+      check(line.shown && line.text === line.want && line.text !== '', `the line: ${JSON.stringify(line)}`);
+      // The timer still works, to Done; no questions; Start again.
+      let s = await start(tab, 'hot');
+      await tab.until('(await window.__e2e.snap()).decided', 'the pot planned');
+      s = await tab.snap();
+      await tab.shiftTo(deadlines(s).cookEnd_s + 2);
+      s = await tab.phase('PULL');
+      await tab.click('#primary');
+      s = await tab.phase('COOLING');
+      await tab.shiftTo(deadlines(s).coolEnd_s + 2);
+      s = await tab.phase('DONE');
+      check(!s.feedback, 'no questions after the egg');
+      await tab.click('#primary');
+      await tab.phase('IDLE');
+      await pick(tab, '#size', '3');
+      await tab.settle();
+      const writes = await tab.writes();
+      check(writes.length === 0, `not one write: ${writes.map((w) => w.key).join(', ')}`);
+      check((await tab.eval<string>(dump)) === before, 'every store as the newer build left it');
+      check((await tab.sends()) === 0, `nothing sent: ${await tab.sends()} requests`);
+      check((await tab.snap()).log.length === 0, 'no egg logged');
+      return `"${line.text.slice(0, 40)}…" shown; Done and Start again, a setting changed: 0 writes, 0 requests`;
+    },
+  },
+
+  'newer-version-tab': {
+    what: 'DECISIONS 100: a tab already open stops writing when a newer build\'s tab marks the storage',
+    run: async (h) => {
+      const a = await h.ctx.open(STOPPED);
+      check((await a.storage('aet.newest')) !== null, 'this build marked the storage first');
+      check(await a.eval<boolean>("document.getElementById('newerNote').hidden"), 'no line while this build is the newest');
+      const b = await h.ctx.open(STOPPED);
+      // A newer build's tab: the mark is all this build can see of it.
+      await b.eval("localStorage.setItem('aet.newest', '9.0.0')");
+      await a.until("!document.getElementById('newerNote').hidden", 'the line in the tab already open');
+      const n0 = (await a.writes()).length;
+      await pick(a, '#size', '3');
+      await a.settle();
+      const after = (await a.writes()).slice(n0);
+      check(after.length === 0, `not one write after: ${after.map((w) => w.key).join(', ')}`);
+      return `the open tab shows the line and writes nothing (${n0} writes before)`;
+    },
+  },
 };
 
 /* --------------------------------------------------------------- runner */

@@ -96,6 +96,9 @@ final class Sharing {
     private static func send(
         _ method: String, _ path: String, body: Data? = nil, assertion: String? = nil
     ) async -> Int? {
+        // Nothing goes out while a newer build's results are left alone
+        // (`Stores`): the state that records what was sent cannot be kept.
+        guard !Stores.readOnly else { return nil }
         var request = URLRequest(url: server.appending(path: path))
         request.httpMethod = method
         request.timeoutInterval = 20
@@ -142,16 +145,16 @@ final class Sharing {
     private func save(_ next: ShareState) {
         state = next
         if let data = Self.stored(next) {
-            UserDefaults.standard.set(data, forKey: Self.stateKey)
+            Stores.set(data, forKey: Self.stateKey)
         }
     }
 
     private func saveAttest(_ next: Attest?) {
         attest = next
         if let next, let data = try? JSONEncoder().encode(next) {
-            UserDefaults.standard.set(data, forKey: Self.attestKey)
+            Stores.set(data, forKey: Self.attestKey)
         } else {
-            UserDefaults.standard.removeObject(forKey: Self.attestKey)
+            Stores.remove(Self.attestKey)
         }
     }
 
@@ -169,6 +172,7 @@ final class Sharing {
     /// Whatever is owed, again: at launch, back in the foreground, after an
     /// egg is final.
     func resume() {
+        guard !Stores.readOnly else { return }
         Task {
             await retryDeletes()
             sendFinal()
@@ -176,7 +180,7 @@ final class Sharing {
     }
 
     func setSharing(_ on: Bool) {
-        guard on != state.on else { return }
+        guard !Stores.readOnly, on != state.on else { return }
         generation &+= 1
         save(on ? turnedOn(state, fresh: Self.newUid()) : turnedOff(state))
         if on { sendFinal() }
@@ -194,6 +198,7 @@ final class Sharing {
     /// Send every final egg not yet sent, one at a time. A call while a run
     /// is going asks it to go round again.
     func sendFinal() {
+        guard !Stores.readOnly else { return }
         if run != nil {
             again = true
             return
@@ -401,6 +406,7 @@ final class Sharing {
     /// "Delete what I've sent", confirmed: off, and every id asked for, after
     /// any egg already on its way has landed.
     func deleteSent() async {
+        guard !Stores.readOnly else { return }
         generation &+= 1
         save(deletionAsked(state))
         saveAttest(nil)

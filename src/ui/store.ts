@@ -16,6 +16,7 @@ import {
   BoilMemory, DEFAULTS, LIMITS, Limit, carrySizeIndex, clamp, isWithin, rememberBoil,
 } from '../core/policy.js';
 import { CookAsRan, CookEvents, Pulled, RunningCook, readRunningCook, sameChoices } from '../core/running.js';
+import { WriterVerdict, parseVersion, writerCheck } from '../core/newer.js';
 
 export type { Limit } from '../core/policy.js';
 export { LIMITS, START_TEMP_PRESETS_C, estimateTimeToBoil, hasBoilMemory } from '../core/policy.js';
@@ -116,7 +117,10 @@ export function readStorage(key: string): string | null {
   }
 }
 
+/** Every write the app makes, of every store, comes through here or through
+ *  `removeStorage`, so the guard below holds for all of them. */
 export function writeStorage(key: string, value: string): void {
+  if (!mayWrite()) return;
   try {
     window.localStorage.setItem(key, value);
   } catch {
@@ -125,11 +129,87 @@ export function writeStorage(key: string, value: string): void {
 }
 
 export function removeStorage(key: string): void {
+  if (!mayWrite()) return;
   try {
     window.localStorage.removeItem(key);
   } catch {
     /* nothing stored means nothing to remove. */
   }
+}
+
+/* ------------------------------------------------- the newest build's mark */
+
+/**
+ * The newest version of the app that has run in this browser
+ * (DECISIONS.md 100). An older build writes what it stores whole, from the
+ * fields it knows, and drops what a newer one added, so a build that finds a
+ * newer version here writes nothing at all for the rest of the page's life:
+ * no setting, pan, cook, result, sharing state or copy kept aside. It still
+ * times the egg. Whether it may write is core's `writerCheck`.
+ *
+ * The mark is written before anything else, and checked again before every
+ * write: a tab of a newer build opened since, or a tab that cleared the
+ * storage, is seen at this page's next write even if its `storage` event
+ * has not yet arrived. Never removed: "Start learning again" keeps it.
+ */
+const NEWEST_KEY = 'aet.newest';
+
+/** This build's version, once `claimStorage` has been called; until then
+ *  (tests, tools) every write goes through unguarded. */
+let mine: string | null = null;
+let readOnly = false;
+/** Told once, when this page stops writing. */
+let onReadOnly: (() => void) | null = null;
+
+/**
+ * Before anything is read for writing back, or written: compare the mark
+ * with this build, and write this build's version there if it is not older
+ * than what is there. Says what this page does with the stores from now on.
+ */
+export function claimStorage(version: string, readOnlyNow: (() => void) | null = null): WriterVerdict {
+  mine = version;
+  readOnly = false;
+  onReadOnly = readOnlyNow;
+  mayWrite();
+  return readOnly ? 'readOnly' : 'write';
+}
+
+/** Whether a newer build has run here since this page started: if so this
+ *  page writes nothing, sends nothing and learns nothing. */
+export function storageReadOnly(): boolean {
+  return readOnly;
+}
+
+/** The mark as stored, and this build's verdict on it; the mark brought up
+ *  to this build when it may write. */
+function mayWrite(): boolean {
+  if (mine === null) return true;
+  if (readOnly) return false;
+  const mark = readStorage(NEWEST_KEY);
+  if (writerCheck(mark, mine) === 'readOnly') {
+    readOnly = true;
+    if (onReadOnly !== null) onReadOnly();
+    return false;
+  }
+  if (mark !== mine && parseVersion(mine) !== null) {
+    try {
+      window.localStorage.setItem(NEWEST_KEY, mine);
+    } catch {
+      /* no storage: nothing else will be written either. */
+    }
+  }
+  return true;
+}
+
+/** Another tab changed storage (the page's `storage` event; a null key is a
+ *  tab that cleared it all): whether it was a newer build's, which this
+ *  page has now stopped writing for. */
+export function newerStoredElsewhere(key: string | null): boolean {
+  if (mine === null || readOnly || (key !== null && key !== NEWEST_KEY)) return false;
+  if (writerCheck(readStorage(NEWEST_KEY), mine) === 'write') return false;
+  readOnly = true;
+  if (onReadOnly !== null) onReadOnly();
+  return true;
 }
 
 function parseObject(raw: string | null): Record<string, unknown> | null {

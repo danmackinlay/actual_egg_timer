@@ -1423,6 +1423,37 @@ scenario('change-kept-on-hide', 'onescreen review 3: a change in hand when the a
   run.note('the slider held as the app left: committed, stored and written; size then water: two commits');
 });
 
+scenario('newer-version', "DECISIONS 100: a newer build's mark: the line, an egg timed to Done, answered and started again, and nothing stored; without it, the mark", async (run) => {
+  // A newer build's mark, as a launch argument, on a fresh install:
+  // UserDefaults reads it first, and an edit of the plist can be undone by
+  // the system's cached copy. Nothing at all may then be stored.
+  await started(run, ['-newestVersion', '9.0.0', '-uiDo', `${TO_DONE},answer:jammy@cooled+20,again@cooled+40`]);
+  run.check(has(run.sinceLaunch(), /^stores readOnly mark 9\.0\.0 /), 'read-only at launch');
+  await run.until(/^newer note$/, { from: run.launched, what: 'the line shown' });
+  const done = await toDone(run);
+  let i = await run.step(done.cooled + 20);
+  await run.until(/^action answer/, { from: i, what: 'the answer' });
+  i = await run.step(done.cooled + 40);
+  await run.until(/^stored none$/, { from: i, what: 'Start again' });
+  run.terminate();
+  const lines = run.sinceLaunch();
+  run.check(same(phases(lines), ['HEATING', 'COOKING', 'PULL', 'COOLING', 'DONE']), `the timer ran: ${phases(lines)}`);
+  // The log line says what a save would hold: never an egg.
+  run.check(!has(lines, /^log [1-9]/), 'no egg logged');
+  // The plist lags the app by seconds: given them, there is still nothing.
+  await sleep(5000);
+  const stored = Object.keys(await run.prefs());
+  run.check(stored.length === 0, `nothing stored: ${stored.join(', ')}`);
+  // The same install with no newer mark: this build marks it first.
+  run.launch();
+  const claimed = await run.until(/^stores /, { from: run.launched, what: 'the claim' });
+  run.check(/^stores write mark none /.test(claimed.text), `the claim: ${claimed.text}`);
+  const marked = await run.prefs((p) => typeof p.newestVersion === 'string');
+  run.check(/^\d+\.\d+\.\d+$/.test(marked.newestVersion ?? ''), `the mark: ${marked.newestVersion}`);
+  run.check(!has(run.sinceLaunch(), /^newer note$/), 'no line');
+  run.note(`the line shown; Done, answered, started again; nothing stored; then marked ${marked.newestVersion}`);
+});
+
 // ------------------------------------------------------------------- main
 
 /// A new device's first launches are many seconds slow while the system

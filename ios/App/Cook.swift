@@ -601,10 +601,9 @@ final class Cook {
     /// a cook kept stored while its record was made again (`cancel`), not a
     /// new one started since.
     static func forgetStored(idMs: Double) {
-        let defaults = UserDefaults.standard
-        guard let data = defaults.data(forKey: savedKey),
+        guard let data = UserDefaults.standard.data(forKey: savedKey),
               let stored = try? JSONDecoder().decode(Stored.self, from: data), stored.cook.idMs == idMs else { return }
-        defaults.removeObject(forKey: savedKey)
+        Stores.remove(savedKey)
         #if DEBUG
         Screenshots.log("stored none")
         #endif
@@ -895,7 +894,7 @@ final class Cook {
 
     private func persist() {
         guard let running else {
-            UserDefaults.standard.removeObject(forKey: Self.savedKey)
+            Stores.remove(Self.savedKey)
             #if DEBUG
             Screenshots.log("stored none")
             #endif
@@ -903,7 +902,7 @@ final class Cook {
         }
         let stored = Stored(cook: running, feedbackGiven: feedbackGiven, leanHintS: leanHintS)
         if let data = try? JSONEncoder().encode(stored) {
-            UserDefaults.standard.set(data, forKey: Self.savedKey)
+            Stores.set(data, forKey: Self.savedKey)
             #if DEBUG
             Screenshots.log("stored \(String(decoding: data, as: UTF8.self))")
             #endif
@@ -949,7 +948,7 @@ final class Cook {
         for key in Self.oldKeys {
             guard let old = defaults.data(forKey: key) else { continue }
             Calibrations.keepUnreadCook(old)
-            defaults.removeObject(forKey: key)
+            Stores.remove(key)
             keptOld = true
             #if DEBUG
             Screenshots.log("restore kept aside \(key)")
@@ -963,7 +962,7 @@ final class Cook {
         guard let stored = try? JSONDecoder().decode(Stored.self, from: data),
               let cook = readRunningCook(stored.cook.jsonObject) else {
             Calibrations.keepUnreadCook(data)
-            defaults.removeObject(forKey: Self.savedKey)
+            Stores.remove(Self.savedKey)
             #if DEBUG
             Screenshots.log("restore unreadable")
             #endif
@@ -987,7 +986,7 @@ final class Cook {
             // An answered egg corrected after its pull, its record not made
             // again before the app went: kept stored until it is.
             let remake = stored.feedbackGiven && ending.remake
-            if !remake { defaults.removeObject(forKey: Self.savedKey) }
+            if !remake { Stores.remove(Self.savedKey) }
             #if DEBUG
             Screenshots.log("restore too old")
             #endif
