@@ -41,6 +41,8 @@
  *   fixtures/language.json     the switch into the English of 1750 and out
  *   fixtures/prior.json        a prior drawn from a population (E7), and the
  *                              population files a reader refuses
+ *   fixtures/newer.json        which build may write: versions compared, and
+ *                              the verdict on the newest-version mark
  *
  * fixtures/population.json is NOT written here: it is the fit's output, the
  * population both apps draw from (tools/population.ts, fit/). prior.json
@@ -68,10 +70,12 @@ import { probeFixture } from './fixtures/probe.js';
 import { languageFixture } from './fixtures/language.js';
 import { wordingFixture } from './fixtures/wording.js';
 import { priorFixture } from './fixtures/population.js';
+import { newerFixture } from './fixtures/newer.js';
 
 const unitsJson = unitsFixture(english);
 const probeJson = probeFixture();
 const languageJson = languageFixture();
+const newerJson = newerFixture();
 
 mkdirSync('fixtures', { recursive: true });
 const written: Record<string, unknown> = {
@@ -93,6 +97,7 @@ const written: Record<string, unknown> = {
   probe: probeJson,
   language: languageJson,
   wording: wordingFixture(),
+  newer: newerJson,
 };
 /**
  * A particle set that repeats one earlier in the same file - an update that
@@ -171,5 +176,6 @@ const counts = [
   `${(probeJson['updates'] as unknown[]).length} probe folds`,
   `${(probeJson['solved'] as unknown[]).length} probe cooks`,
   `${(languageJson['transitions'] as unknown[]).length} language moves`,
+  `${(newerJson['compare'] as unknown[]).length} version comparisons`,
 ];
 console.log(`fixtures/*.json written: ${counts.join(', ')}`);
