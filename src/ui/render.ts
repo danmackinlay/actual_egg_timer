@@ -48,7 +48,7 @@ import {
   boilingPoint_C, currentEgg, idlePot, isSousVide, learning, massFrom, phaseNow, sizeClasses, startModeNow, state,
   timeToBoil_s,
 } from './state.js';
-import { estimateTimeToBoil, hasBoilMemory } from './store.js';
+import { estimateTimeToBoil, hasBoilMemory, storageReadOnly } from './store.js';
 import { show } from './units.js';
 import { APP_VERSION } from './version.js';
 import { nowMs } from './now.js';
@@ -407,7 +407,9 @@ function renderReadout(now_ms: number, sol: Solution, warning: string): void {
   // until the cook moves on, answered or not; a reload after an answer puts
   // them away, since the second could no longer be folded.
   const said = answersNow().kind;
-  page().feedback.hidden = phase !== 'DONE' || said === 'beforeReload' || view.asking;
+  // Nor while a newer build's results are left alone (store.ts): no answer
+  // could be kept.
+  page().feedback.hidden = phase !== 'DONE' || said === 'beforeReload' || view.asking || storageReadOnly();
   if (!page().feedback.hidden && said !== 'live') renderCalibNote(learning());
   renderProbe(phase, shown);
   if (!page().feedback.hidden) renderTarget(shown);

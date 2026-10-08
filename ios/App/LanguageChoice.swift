@@ -68,7 +68,7 @@ final class LanguageChoice {
 
     private static func write(_ state: LanguageState) {
         guard let data = try? JSONSerialization.data(withJSONObject: state.jsonObject) else { return }
-        UserDefaults.standard.set(data, forKey: key)
+        Stores.set(data, forKey: key)
     }
 }
 

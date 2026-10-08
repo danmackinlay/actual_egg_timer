@@ -19,7 +19,7 @@ import {
   ShareState, answered, deletionAsked, deletionConfirmed, deletionDone, FRESH_SHARE, forgotten, nextToSend,
   readShareState, reconciled, turnedOff, turnedOn,
 } from '../core/share.js';
-import { readStorage, writeStorage } from './store.js';
+import { readStorage, storageReadOnly, writeStorage } from './store.js';
 import { devClockUsed, nowMs } from './now.js';
 
 const KEY = 'aet.share.v1';
@@ -174,7 +174,7 @@ export function loadShare(h: ShareHost, t: Transport = fetchTransport, now: () =
 
 /** Sharing on or off. On sends the log so far; the promise is that run. */
 export function setSharing(on: boolean): Promise<void> {
-  if (on === current().on) return Promise.resolve();
+  if (storageReadOnly() || on === current().on) return Promise.resolve();
   generation += 1;
   save(on ? turnedOn(state, newUid()) : turnedOff(state));
   return on ? sendFinal() : Promise.resolve();
@@ -213,8 +213,9 @@ async function sendRun(): Promise<void> {
 async function sendOne(): Promise<boolean> {
   const h = host;
   // Never an egg cooked on the development clock, which runs only on this
-  // machine (now.ts): nothing goes from a log that may hold one.
-  if (h === null || devClockUsed()) return false;
+  // machine (now.ts): nothing goes from a log that may hold one. Nor
+  // anything while a newer build's results are left alone (store.ts).
+  if (h === null || devClockUsed() || storageReadOnly()) return false;
   const s = current();
   const log = h.log();
   const at = nextToSend(s, h.finalCount(), log.length);
@@ -241,6 +242,7 @@ async function sendOne(): Promise<boolean> {
  *  any egg already on its way has landed, so that it cannot arrive after the
  *  deletion and outlive it. */
 export async function deleteSent(): Promise<void> {
+  if (storageReadOnly()) return;
   generation += 1;
   save(deletionAsked(current()));
   if (pumping !== null) await pumping;
@@ -250,6 +252,7 @@ export async function deleteSent(): Promise<void> {
 /** Ask the server to delete every id it has not yet confirmed. At every
  *  load, and after the cook asks. */
 export function retryDeletes(): Promise<void> {
+  if (storageReadOnly()) return Promise.resolve();
   return exclusive(async () => {
     for (const uid of [...current().deleting]) {
       let status: number;

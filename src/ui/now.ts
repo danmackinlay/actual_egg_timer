@@ -36,6 +36,8 @@
  * solve's and the settings' coalescing, a request's timeout).
  */
 
+import { readStorage, removeStorage, writeStorage } from './store.js';
+
 export interface DevClock {
   /** The cook's seconds to the real second; 0 is stopped. */
   speed: number;
@@ -148,34 +150,32 @@ export function onClockChange(f: () => void): void {
 export function devClockUsed(): boolean {
   if (!onDevHost) return false;
   if (dev !== null) return true;
-  try {
-    return localStorage.getItem(USED_KEY) !== null;
-  } catch {
-    return false;
-  }
+  return readStorage(USED_KEY) !== null;
 }
 
 /** Forget everything: the log is gone, and with it the mark (unless the
  *  clock is still on). */
 export function forgetDevClockUse(): void {
   if (!onDevHost) return;
-  try {
-    localStorage.removeItem(USED_KEY);
-  } catch {
-    /* nothing kept */
-  }
+  removeStorage(USED_KEY);
   if (dev !== null) markUsed();
 }
 
+/** Through the store's one door (store.ts), so a page that leaves a newer
+ *  build's stores alone does not write this either; sharing reads the clock
+ *  itself while it is on. */
 function markUsed(): void {
-  try {
-    localStorage.setItem(USED_KEY, '1');
-  } catch {
-    /* sharing reads the clock itself while it is on */
-  }
+  writeStorage(USED_KEY, '1');
 }
 
-function setClock(next: DevClock | null): void {
+/** The mark, for a clock set when the page loaded: written by the app once
+ *  it may write (app.ts, after `claimStorage`), since this module loads, and
+ *  sets its clock, before anything has asked whether it may. */
+export function markDevClockUse(): void {
+  if (onDevHost && dev !== null) markUsed();
+}
+
+function setClock(next: DevClock | null, mark = true): void {
   dev = next === null ? null : orNone(next);
   try {
     if (dev === null) sessionStorage.removeItem(CLOCK_KEY);
@@ -183,7 +183,7 @@ function setClock(next: DevClock | null): void {
   } catch {
     /* kept for this page only */
   }
-  if (dev !== null) markUsed();
+  if (mark && dev !== null) markUsed();
   drawMark();
   for (const f of listeners) f();
 }
@@ -276,7 +276,7 @@ function boot(): void {
     history.replaceState(history.state, '', url.href);
   }
   (window as unknown as { aetClock: ClockHandle }).aetClock = handle();
-  if (clock !== null || stored !== null) setClock(clock);
+  if (clock !== null || stored !== null) setClock(clock, false);
 }
 
 boot();
