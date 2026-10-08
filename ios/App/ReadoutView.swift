@@ -205,6 +205,18 @@ struct ReadoutView: View {
             }
         }
         .multilineTextAlignment(.center)
+        #if DEBUG
+        // What the line says, and what a press would open last (the time
+        // range), whether open or not; and whether the white's line shows:
+        // for the scripted checks.
+        .onChange(of: sure.map { "\(tr(certaintyKey($0.words.certainty))) | \(opened($0).last ?? "")" } ?? "none",
+                  initial: true) { _, said in
+            Screenshots.log("certainty \(said)")
+        }
+        .onChange(of: whiteRunny(o), initial: true) { _, shown in
+            Screenshots.log("white \(shown)")
+        }
+        #endif
     }
 
     /// Whether to say the white might still be runny: the choice on screen's

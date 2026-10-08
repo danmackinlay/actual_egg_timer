@@ -78,6 +78,12 @@ struct DonenessControl: View {
                     .foregroundStyle(.secondary)
             }
         }
+        #if DEBUG
+        // The texture note, for the scripted checks.
+        .onChange(of: donenessNote(r), initial: true) { _, note in
+            Screenshots.log("note \(note)")
+        }
+        #endif
     }
 
     /// The five doneness words, each under the level it names, as the web's
