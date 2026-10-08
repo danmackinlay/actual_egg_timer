@@ -49,8 +49,9 @@ These counts are the only ones in the documents. If you want a number, run
    `src/core/running.ts`), with the red-team review of it applied
    (`design/one-screen-review.md`, `DECISIONS.md` 98). Both apps' state is
    on it (`aet.cook.v3`, `cookInProgress.v2`; `design/one-screen.md` §4),
-   and so is certainty in words, the `certainty` draft (93, D1), for the
-   owner on a phone: next is the one screen in both (C3). `0.4.x` is
+   and red-teamed as built (`design/running-cook-review.md`), whose §1 and
+   §2 come first; certainty in words is the `certainty` draft (93, D1),
+   for the owner on a phone: next is the one screen in both (C3). `0.4.x` is
    merged in as it moves.
 
 Throughout: cook real eggs, and the two measurements in README §11.3.
@@ -447,5 +448,6 @@ checked, fixed or deleted. Start the QA pass here.
 | `FOLLOWUP.md` | QA's worklist after it, 29 September 2026, worked through; `tidy2` waits on the owner |
 | `SHIP-0.5.md` | the 0.5 line's worklist: foundations in core, the one screen, certainty in words, ticked as it lands |
 | `design/one-screen.md` | C1: the one screen's design as `DECISIONS.md` 96 settled it, the state model behind it (§4), and the owner's open questions (§7) |
+| `design/running-cook-review.md` | C2: the red-team review of both apps on the running cook as built, `e9c4208` |
 | `COLLECTIVE.md` | E6-E8, the collective part: the choices made to build `INFERENCE.md` §6-§9, and the work, ticked as it lands |
 | `fit/README.md` | the population fit (E7): pulling the eggs, fitting, scoring, publishing |
