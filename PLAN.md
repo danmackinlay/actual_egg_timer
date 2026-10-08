@@ -13,7 +13,7 @@ the same model, refusals, particle filter and choice of time, the same
 catalogue of words in two Englishes (Phase F but for Czech), and the same
 layout (`UI.md`). `npm test` runs 399 tests, all passing (5b pins E3's known
 limit); `npm run e2e` drives the web app through 37 scenarios in headless
-Chrome and `npm run ios:e2e` the iOS app through 32 on a simulator, each
+Chrome and `npm run ios:e2e` the iOS app through 40 on a simulator, each
 stepping a stopped clock to the moment it checks, all passing on a quiet
 machine and a loaded one. `npm run validate` passes 29/29, `swift test` passes 159 tests
 in 39 suites, and the fit's pytest 9. **Pushed on 29 September** at `5ff6940`, the owner's
@@ -58,7 +58,7 @@ These counts are the only ones in the documents. If you want a number, run
    the `onescreen` draft and iOS's `onescreen_ios`, for the owner on a
    phone), and red-teamed as built (`design/onescreen-review.md`): core's
    and the web's findings fixed with the `tighten2` draft (`DECISIONS.md`
-   99), iOS's next on the same core. `0.4.x` is merged in as it moves.
+   99), and iOS's on the same core (9 October 2026). `0.4.x` is merged in as it moves.
 
 Throughout: cook real eggs, and the two measurements in README §11.3.
 
@@ -237,8 +237,8 @@ The one queue. Nothing else in the documents waits on the owner.
     the eggs still in the water?" is open the Lock Screen card shows the
     pull, "now", with its line naming the cooling (`UI.md` §9).
 18. **The `tighten2` draft, on a phone** (9 October 2026; the one screen's
-    review, `design/onescreen-review.md`, and `DECISIONS.md` 99), the web
-    now and iOS in its next step: under the time, "about 8:00 to boil",
+    review, `design/onescreen-review.md`, and `DECISIONS.md` 99), both
+    apps: under the time, "about 8:00 to boil",
     guessed or remembered; once the eggs cook, the time range opened under
     the certainty line is when to take them out ("I think the right time
     to take the eggs out is between 7:48 and 7:51."); the cold "heat off"

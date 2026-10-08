@@ -90,6 +90,8 @@ Actioned, in core: `cookEnding(...).remake`, true for a cook corrected after the
 
 Actioned, on the web: `endCook` (Start again, the reload's too-old path, the tick's) makes an answered egg's stale record again on the calibration before it, logs it in place of the logged egg with its answers, folds again, and only then forgets the cook; left stored for the next load if it cannot. Driven (`start-again-corrected`, the call above, Start again pressed while the change settled): the log's egg 68 g became 76 g, Jammy kept, then forgotten. `038f5dc`.
 
+Actioned, on iOS: Start again (which commits a change still settling first) and the relaunch's too-old path make an answered egg's stale record again on the calibration before it (at Start again the one this process folded from, read before `endEgg`), log it in place of the egg logged with its answers, and only then forget the stored cook and send; meanwhile the egg is not final to sharing, and the cook stays stored so a kill in between makes it at the next launch. A relaunch that picks a cook back up makes a stale record then, as the web does. Driven: `start-again-corrected` (the call above: 68 g became 76 g, Jammy kept, then forgotten; was 68 g) and `too-old-corrected` (the record held with `-uiHoldAsRan`, relaunched an hour on: 76 g; was 68 g). `cb18c4a`.
+
 ## 2. Correct before building on it
 
 ### 2.1 Done goes back to Cooling after an answer (both apps)
@@ -116,6 +118,8 @@ Actioned, in core: `corrected` ends the cooling a correction from the counter br
 
 Actioned, on the web: with core's rule the call above keeps Done, its questions and its silence; and an answered egg's pull the clock assumed is confirmed by a correction (`pullStands`), so a correction after an answer never asks "still in the water?" behind the questions. Driven (`done-stays-done`): Done, the questions, no beeps, the record's ice bath 65 s (was Cooling, 50 beeps, 214 s); and a timeout pull answered then corrected to cold: Done, the pull confirmed (it asked). `2e7c70e`, `1695522`.
 
+Actioned, on iOS: with core's rule iOS kept Done, ended its card and scheduled no cooling, but rang the cooling's end the correction wrote (no notification held it): a cook already Done now marks its deadlines rung on any plan that keeps it Done. A correction after an answer confirms an assumed pull (`pullStands`). Driven (`done-stays-done`, the call above): Done, nothing rung, no alarm or card, the record's ice bath 68 s (was rung); `answered-pull-stands`: a timeout pull, Jammy, then cold: Done, confirmed (was asked). `11dff1d`.
+
 ### 2.2 Done's texture note reads a plan that knows this egg's answer (both apps)
 
 Confirmed on both. The web: at Done, Runny answered, then the page reloaded.
@@ -136,6 +140,8 @@ Actioned, in core: `solutionAsRan(plan, ran)`, the plan's pot at the time that r
 
 Actioned, on the web: the note reads it once the egg is out; every other Done line already read the cook as it ran or nothing a fold moves. Driven (`done-note-as-ran`): "white set, yolk jammy" kept across the reload after Runny (was "yolk liquid"). `1695522`.
 
+Actioned, on iOS: the note reads `solutionAsRan` once the egg is out, worked out with each plan off the main actor (`Cook.ranSolution`); every other Done line already read the cook as it ran or nothing a fold moves (the peak, "You asked for", the white's line, the egg, the card, the readout's times). Driven (`done-note-as-ran`): "white set, yolk jammy" across the relaunch after Runny (was "yolk liquid"). `d171f2d`.
+
 ### 2.3 The certainty line's time range contradicts the clock mid-cook (both apps)
 
 Confirmed on the web; iOS by reading (`ReadoutView.swift:151`, the same held
@@ -154,6 +160,8 @@ Actioned, in core: `timeRangeWords(sure, running)` (`wording.ts`, twinned, `word
 
 Actioned, on the web, with the `tighten2` draft: "I think the right time to take the eggs out is between 8:25 and 8:28." five minutes into a hot cook (was "between 6:24 and 9:21" under 2:44 to go); at 16:00 and 17:05 heated, the times move with the guess (`certainty-mid-cook`). `d0aa1a2`.
 
+Actioned, on iOS: what the press opens says `timeRangeWords` (`certainty.timeOut` while a cook runs, as times of day). Driven (`certainty-mid-cook`): five minutes into a hot cook "…to take the eggs out is between 9:44 and 9:47."; corrected to cold and left heating, 16:00 "9:52 and 9:55", 20:00 "9:54 and 9:57" (was "between 10:02 and 12:49" at both; the times are said to the minute, so the check steps four minutes, not 65 s). `9624b41`.
+
 ## 3. Minor and parity
 
 - **A change in hand is lost to a reload or a kill within the settle.**
@@ -164,6 +172,7 @@ Actioned, on the web, with the `tighten2` draft: "I think the right time to take
   Actioned, on the web: committed on `pagehide` and on the page hidden;
   driven (`change-kept-on-hide`): reloaded at once, 76 g and settings size
   3. `dbcc5d8`.
+  Actioned, on iOS: committed when `scenePhase` leaves `.active` (`Edits.leaving`). Driven (`change-kept-on-hide`): the slider held at 0.3 as another app comes over it: committed, stored and written, kept across a kill (was never committed). `41d453c`.
 - **Two changes, two commits (parity).** Confirmed. On iOS a second
   control's change commits the first without it and lets the second settle
   (`edit committed mass`, then `edit committed water`). On the web, with no
@@ -174,6 +183,7 @@ Actioned, on the web, with the `tighten2` draft: "I think the right time to take
   commits the change in hand as it was before it, and the new one settles:
   two writes, the first with the size alone (`change-kept-on-hide`).
   `dbcc5d8`.
+  On iOS it already was so; checked in `change-kept-on-hide` (size then water: two commits, mass then water).
 - **A correction in the grace restarts the grace.** Confirmed on both. A
   lighter egg 15 s into the Pull makes the pull "now" again, so the grace
   runs to +35 s. iOS rings again; the web does not, and its beeps end at
@@ -187,20 +197,24 @@ Actioned, on the web, with the `tighten2` draft: "I think the right time to take
   needed nothing more. Driven (`grace-correction`): a lighter egg at +15 s
   stays in Pull with the pull and its grace, no new beeps, Cooling at +21 s
   due at the pull that rang. `2e7c70e`.
+  Actioned, on iOS: core's rule kept the pull, but the cooling's end moved, and on any moved deadline iOS forgot what the notifications had covered, so the pull its notification had rung was rung again in the app; a deadline past and not moved now keeps its cover. Driven (`grace-correction`): a lighter egg at +15 s: the pull that rang to the millisecond, nothing rung, Cooling at the grace's first end (was rung again). `1c3e753`. With core's rule the ring a change back within the grace undoes is cleared by the clock's next look, not at the commit, so `overdue-and-back` now waits for it (it failed on `63d308d`, intermittently by when the tick came; 6 of 6 since). `9e2574d`.
 - **The question shows the white's line.** Confirmed on both: "The white
   might still be runny." under "Are the eggs still in the water?", a caveat
   about a pull the question doubts. The web's notes say "nothing past it is
   shown".
   Actioned, on the web: hidden while the question is open
   (`still-in-water`). `1695522`.
+  Actioned, on iOS: hidden too (`still-in-yes`; was shown). `ba5ef5f`.
 - **iOS's start limit is silent to VoiceOver** (by reading,
   `SetupSentence.swift:304`). The web's line is `aria-live`, but iOS posts no
   announcement, and at the limit a press changes no value. iOS reads none of
   the web's `spoken.*` keys, `spoken.stillIn` among them. That was so
   before C3.
+  Actioned, on iOS: each press that stops posts the line as an announcement (`start-time` checks all three; was none). `68871b5`. iOS still reads no `spoken.*` key.
 - **Largest Dynamic Type (iOS, screenshot).** The question, its time and
   its line fit. The slider's heading breaks to "Done-" beside "peak", which
   at that size reads as the phase.
+  Actioned, on iOS: the heading and the peak stay on one line while both fit whole, and otherwise the peak goes under the heading (screenshots, both Englishes). `757c2e7`.
 - **Words.** "into cold water at {time}, to the boil, heat off, lid on"
   beside "into boiling water at {time}, heat off and lid on": the two
   standing clauses differ in form for one fact, and the first is a clipped

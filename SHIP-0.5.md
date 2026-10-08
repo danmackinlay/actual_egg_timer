@@ -325,7 +325,16 @@ core's exports.
         lines (`1695522`), a change in hand on leaving and two changes two
         commits (`dbcc5d8`); the `tighten2` draft and the time's two lines
         closer (`DECISIONS.md` 99; `d0aa1a2`, `bf227b3`). `npm run e2e`: 35
-        scenarios, 7 of them new. iOS's part follows, on the same core.
+        scenarios, 7 of them new. iOS's part, on the same core (9 October
+        2026): an ended cook's corrected egg logged and sent (`cb18c4a`),
+        Done kept silent after a correction and an answer's pull standing
+        (`11dff1d`), nothing rung again in the grace (`1c3e753`), Done's note
+        as it ran (`d171f2d`), the time range in the clock's terms
+        (`9624b41`), no white's line under the question (`ba5ef5f`), a change
+        in hand committed on leaving the screen (`41d453c`), the start's
+        limit spoken (`68871b5`), the slider's heading whole at the largest
+        text (`757c2e7`) and the time's two lines closer (`bebd5db`).
+        `npm run ios:e2e`: 40 scenarios, 8 of them new.
 
 ## D. Certainty in words, on screen (`DECISIONS.md` 93, with C)
 

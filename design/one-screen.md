@@ -542,6 +542,13 @@ The functions, all pure and fixtured:
   read on (`CertaintyReading.at_s`) keeps its range about the plan's time
   now, so it moves with a slow hob's guess.
 
+Both apps follow each rule as built (the web `1695522` and before; iOS
+`cb18c4a..bebd5db`, its notes in the review's "Actioned, on iOS" lines).
+On iOS a cook already Done marks its deadlines rung on any plan that keeps
+it Done, and a deadline past and not moved keeps the notification's cover
+when the alarms are scheduled again, so neither a cooling's end a
+correction wrote nor a pull its notification rang rings in the app.
+
 `phaseAt`, `answerAt`, `decideAnswer`, `carriedSolution`, `certaintyAt`,
 `recordFor`, `createSection` and `advanceSection` are used as they are.
 
