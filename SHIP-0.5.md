@@ -218,6 +218,19 @@ core's exports.
       tick's too-old call and `cookStillOpen` (2.2, 2.3, `81b590a`). Each
       review heading says what was done and what is left to the apps (1.1,
       1.2, 1.4, and the apps' part of 1.3, 2.1 to 2.4).
+  - [x] *The web's findings*: the slow hob's hint passed (2.1, `80044ea`);
+        the cook as it ran kept and Done drawn from it (2.4, `7a35bf3`); no
+        egg logged without a forecast nor dropped for want of one, an answer
+        held until the surface lands (1.3, `527fc91`); the tick ends a cook
+        too old (2.2, `b9741c0`); a final egg takes no more answers (2.3,
+        `783adf7`); a tab writes the cook only when its own changed, after
+        taking up another tab's events for the same id (1.2, `9c9b51a`);
+        the pull scheduled ahead on the audio clock, and rung on any move
+        past it this tab did not ring (1.1, `0baa2bc`); and from §3, the
+        time heated counting up while the slow hob creeps (`f214855`), every
+        unread cook kept (`450236c`), a later probe scored against the
+        logged record (`0174dcd`). Each driven before and after
+        (`LOGBOOK.md`, 8 October 2026). No word changed.
 - [ ] **C3. Both apps**, screen by screen, checked by driving them;
       `UI.md` rewritten as built.
 

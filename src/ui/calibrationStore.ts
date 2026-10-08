@@ -395,7 +395,13 @@ export function removeSuperseded(): void {
 /** The stored copies kept aside, oldest first. A side key that is itself
  *  not a list of texts is kept as one more text, not dropped. */
 function unreadCopies(): string[] {
-  const raw = readStorage(UNREAD_KEY);
+  return textsUnder(UNREAD_KEY);
+}
+
+/** The texts kept aside under `key`, oldest first: a list of texts, or one
+ *  text as an earlier build wrote it, which is not dropped. */
+function textsUnder(key: string): string[] {
+  const raw = readStorage(key);
   if (raw === null) return [];
   const list = parseJSON(raw);
   if (Array.isArray(list) && list.every((x) => typeof x === 'string')) return list as string[];
@@ -415,18 +421,28 @@ export function keepUnread(raw: string): void {
   }
 }
 
-/** A cook in progress this build could not read (cook.ts, `restoreCook`), the
- *  newest one, kept as stored: its egg may be one nothing else holds. */
+/** The cooks in progress this build could not read (cook.ts, `restoreCook`),
+ *  each kept as stored, oldest first: each one's egg may be one nothing else
+ *  holds, and a boot can find two at once - an old key's and an unreadable
+ *  current one (running-cook review 3). A list, as the calibration's copies
+ *  are; one text, as an earlier build kept the newest alone, is read as the
+ *  first. */
 const UNREAD_COOK_KEY = 'aet.cook.unread';
 
 export function keepUnreadCook(text: string): void {
-  writeStorage(UNREAD_COOK_KEY, text);
+  const cooks = textsUnder(UNREAD_COOK_KEY).filter((c) => c !== text);
+  cooks.push(text);
+  // Should storage be short of room, the oldest go first, never the newest.
+  for (let n = cooks.length; n >= 1; n--) {
+    writeStorage(UNREAD_COOK_KEY, JSON.stringify(cooks.slice(cooks.length - n)));
+    const now = textsUnder(UNREAD_COOK_KEY);
+    if (now.length > 0 && now[now.length - 1] === text) return;
+  }
 }
 
-/** Every copy kept aside, the stores first, then the cook. */
+/** Every copy kept aside, the stores first, then the cooks. */
 export function keptAside(): string[] {
-  const cook = readStorage(UNREAD_COOK_KEY);
-  return cook === null ? unreadCopies() : [...unreadCopies(), cook];
+  return [...unreadCopies(), ...textsUnder(UNREAD_COOK_KEY)];
 }
 
 /** The store and every copy kept aside, gone: the store first. */

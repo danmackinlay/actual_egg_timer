@@ -17,8 +17,8 @@ import { RunningCook, startCook, withBoil } from '../src/core/running.js';
 import { choicesOf } from '../src/ui/state.js';
 import {
   DEFAULT_SETTINGS, Settings, boilStoredElsewhere, clearBoilMemory, clearCook, loadBoilMemory, loadCook,
-  loadSettings, rememberTimeToBoil, saveCook, saveSettings, settingsStoredElsewhere, storedCook, storedCookAnswered,
-  storedCookText, takeOldCooks,
+  loadSettings, rememberTimeToBoil, saveCook, saveLeanHint, saveSettings, settingsStoredElsewhere, storedCook,
+  storedCookText, takeOldCooks, takeUpEvents,
 } from '../src/ui/store.js';
 
 /** localStorage, in memory, as in record.test.ts: the store reads
@@ -125,10 +125,50 @@ test('a cook comes back whole, with whether its egg was written down and the lea
   saveCook(cook, 'none', 0);
   assert.equal(loadCook()?.answers, 'none');
   assert.deepEqual(storedCook(), cook, 'whichever tab wrote it');
-  assert.equal(storedCookAnswered(cook.id_ms), false);
-  saveCook(cook, 'beforeReload', 0);
-  assert.equal(storedCookAnswered(cook.id_ms), true);
-  assert.equal(storedCookAnswered(cook.id_ms + 1), false, 'another cook');
+  saveLeanHint(cook.id_ms + 1, 4);
+  assert.equal(loadCook()?.leanHint_s, 0, 'the lean goes only beside its own cook');
+  saveLeanHint(cook.id_ms, 4);
+  assert.deepEqual(loadCook(), { cook: cook, answers: 'none', leanHint_s: 4 }, 'the cook as it was');
+});
+
+test('two tabs on one cook take up each other\'s events, never a copy that lacks them (review 1.2)', () => {
+  const start = aCook();
+  const untapped: RunningCook = { ...start, events: { ...start.events, boilAt_s: null } };
+  const S = start.startedAt_s;
+  // B never saw the tap: it takes A's, and A takes nothing from B.
+  assert.equal(takeUpEvents(untapped, start).events.boilAt_s, start.events.boilAt_s);
+  assert.equal(takeUpEvents(start, untapped), start, 'nothing to take up: the same object');
+  // Two taps: the first.
+  const later = withBoil(untapped, S + 520);
+  assert.equal(takeUpEvents(later, start).events.boilAt_s, S + 500);
+  // The cook's tap out over the clock's assumption, whichever tab has it,
+  // with the cooling's end of the pull kept.
+  const due = S + 900;
+  const byCook: RunningCook = {
+    ...start, events: { ...start.events, rangAt_s: due, pulled: { due_s: due, out_s: due + 4, by: 'cook', confirmed: true } },
+  };
+  const byClock: RunningCook = {
+    ...start,
+    events: {
+      ...start.events, rangAt_s: due, cooledAt_s: due + 220,
+      pulled: { due_s: due, out_s: due + 20, by: 'timeout', confirmed: false },
+    },
+  };
+  assert.deepEqual(takeUpEvents(byClock, byCook).events, byCook.events);
+  assert.equal(takeUpEvents(byCook, byClock), byCook);
+  const cooled = { ...byCook, events: { ...byCook.events, cooledAt_s: due + 204 } };
+  assert.deepEqual(takeUpEvents(byClock, cooled).events, cooled.events);
+  assert.deepEqual(takeUpEvents(untapped, cooled).events, cooled.events, 'all of it, at once');
+  // A pull that rang under a guessed boil is not taken up with the real one.
+  const rangOnGuess: RunningCook = { ...untapped, events: { ...untapped.events, rangAt_s: S + 700 } };
+  assert.equal(takeUpEvents(rangOnGuess, start).events.rangAt_s, null);
+  // Taken up both ways, the two copies agree.
+  for (const [x, y] of [[byClock, cooled], [rangOnGuess, start], [later, byClock]]) {
+    assert.deepEqual(takeUpEvents(x, y).events, takeUpEvents(y, x).events);
+  }
+  // Another cook is never taken up (DECISIONS.md 97).
+  const other = aCook(start.id_ms + 60_000);
+  assert.equal(takeUpEvents(untapped, other), untapped);
 });
 
 test('a cook kept without `answers` or the lean is refused, never read as unanswered', () => {

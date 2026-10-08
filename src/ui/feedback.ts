@@ -9,13 +9,14 @@
  */
 
 import { Phase, anchorNear, plausibleProbeRange_C } from '../core/policy.js';
-import { CookPlan, RunningCook } from '../core/running.js';
+import { CookPlan, RunningCook, asRanShown } from '../core/running.js';
+import { ModelParams } from '../core/solve.js';
 import { midSentence } from '../core/copy.js';
 import { WhiteReport, YOLK_WORDS, YolkWord } from '../core/infer.js';
 import { ProbeReading, probeReadingFor, recordCookTime_s } from '../core/record.js';
 import { nudgeFrom, parse, stepPast } from '../core/units.js';
 import {
-  Calibration, calibrationParams, eggLogged, learn, logEgg, recordSecondAnswer,
+  Calibration, calibrationParams, eggLogged, keptState, learn, logEgg, recordSecondAnswer,
 } from './calibration.js';
 import { eggRecordFor } from './eggRecord.js';
 import { activeLocale, t } from './copy.js';
@@ -73,12 +74,58 @@ export function pickedUpAfterReload(): boolean {
   return answers.kind === 'beforeReload' || (answers.kind === 'none' && answers.reloaded);
 }
 
+/**
+ * Answers given before anything says what the app said for this egg: the
+ * record refused (`cookFactsFor`, `noSurface`), as after a reload at DONE
+ * before the pot's surface is built again (running-cook review 1.3). Each is
+ * held, its row settled, and made the moment the cook is planned on its
+ * surface (`retryHeld`), or with the egg's record if the cook ends first
+ * (cook.ts, `endCook`): never thrown away, and never written with no
+ * forecast. The probe's reading stays in its field, and is read again.
+ */
+const held = {
+  yolk: null as YolkWord | null,
+  white: null as WhiteReport | null,
+  probe: false,
+};
+
+/** The answers held for the egg on screen (`held`). */
+export function heldAnswers(): { yolk: YolkWord | null; white: WhiteReport | null } {
+  return { yolk: held.yolk, white: held.white };
+}
+
 /** Nothing said, on a cook of this page's own, and both rows and the probe
  *  back to empty: for the next egg. */
 export function forgetAnswers(): void {
   answers = { kind: 'none', reloaded: false };
+  held.yolk = null;
+  held.white = null;
+  held.probe = false;
   resetRows();
   resetProbe();
+}
+
+/** The egg on screen is final (cook.ts, `cookOpen`): its questions go, as
+ *  after a reload, and nothing held is made. */
+export function putAway(): void {
+  answers = { kind: 'beforeReload' };
+  held.yolk = null;
+  held.white = null;
+  held.probe = false;
+}
+
+/** The cook was planned again: any answer held for want of its surface is
+ *  made now, if it can be (`held`). */
+export function retryHeld(): void {
+  const yolk = held.yolk;
+  const white = held.white;
+  const probe = held.probe;
+  if (yolk === null && white === null && !probe) return;
+  held.yolk = null;
+  held.white = null;
+  held.probe = false;
+  if (yolk !== null || white !== null) foldAnswer(yolk, white, null);
+  if (probe) onProbeSave();
 }
 
 /** What the questions need of the cook on screen, read when they need it: a
@@ -96,6 +143,18 @@ export interface FeedbackHost {
   learned(): void;
   /** Redraw the cook's screen: the questions go when no more can be taken. */
   redraw(): void;
+  /** Whether the egg on screen is still open to answers (`cookOpen`): if
+   *  not, its questions have been put away (`putAway`). */
+  open(): boolean;
+}
+
+/** Whether an answer may be taken now: the egg is still open to them. If not
+ *  (final - another tab ended it, or an hour has passed), it is not taken,
+ *  and the questions go (running-cook review 2.3). */
+function mayAnswer(h: FeedbackHost): boolean {
+  if (h.open()) return true;
+  h.redraw();
+  return false;
 }
 
 let host: FeedbackHost | null = null;
@@ -133,7 +192,7 @@ function resetRows(): void {
 function onAnswer(yolk: YolkWord | null, white: WhiteReport | null, pressed: HTMLButtonElement): void {
   const a = answers;
   if (a.kind === 'live' && ((yolk !== null && a.yolk !== null) || (white !== null && a.white !== null))) return;
-  if (host === null || host.cook() === null) return;
+  if (host === null || host.cook() === null || !mayAnswer(host)) return;
   settleRow(yolk !== null ? 'button.fb' : 'button.wb', pressed);
   foldAnswer(yolk, white, null);
 }
@@ -144,7 +203,7 @@ function foldAnswer(yolk: YolkWord | null, white: WhiteReport | null, probe: Pro
   const h = host;
   const cooked = h === null ? null : h.cook();
   const plan = h === null ? null : h.plan();
-  if (h === null || cooked === null || plan === null) return;
+  if (h === null || cooked === null || plan === null || !mayAnswer(h)) return;
   page().calibNote.textContent = t('feedback.learning');
   const cookStarted = cooked.id_ms;
   const stillHere = (): boolean => h.phase() === 'DONE' && h.cook()?.id_ms === cookStarted;
@@ -174,10 +233,12 @@ function foldAnswer(yolk: YolkWord | null, white: WhiteReport | null, probe: Pro
   if (a.kind !== 'live') {
     const record = eggRecordFor(cooked, plan, yolk, white, probe);
     // Refused (`cookFactsFor`): nothing says yet what the app said for this
-    // egg. The answer is not taken, and the row can be pressed again.
+    // egg, which waits on the pot's surface. The answer is held, its row
+    // settled and "learning…" shown, until the cook is planned on it
+    // (`retryHeld`).
     if (record === null) {
-      page().calibNote.textContent = '';
-      resetRows();
+      if (yolk !== null) held.yolk = yolk;
+      if (white !== null) held.white = white;
       return;
     }
     // Another tab showing this cook may have written it down first: then
@@ -214,12 +275,38 @@ export function answeredElsewhere(): boolean {
 
 /* ------------------------------------------------------------ thermometer */
 
+/**
+ * What the screen shows of the cook it was cooked for (running-cook review
+ * 2.4): the level, the peak yolk, whether the cooling ends at the peak (so a
+ * probe reading is asked for), and the model's parameters the egg is drawn
+ * with and a reading is bounded by. Once the egg is out, the plan as it ran
+ * (`asRanShown`), kept with the cook, so neither a reload, a surface landing
+ * nor this egg's own answer folded moves "You asked for"; until then, or
+ * with no surface yet, the plan as it is, on the calibration as it stands
+ * (`params` null).
+ */
+export interface CookShown {
+  level: number;
+  peakYolk_C: number;
+  probeMoment: boolean;
+  params: ModelParams | null;
+}
+
+export function cookShown(cook: RunningCook | null, plan: CookPlan | null): CookShown | null {
+  if (cook === null || plan === null) return null;
+  const ran = asRanShown(cook, plan);
+  if (ran !== null) {
+    return { level: ran.level, peakYolk_C: ran.peakYolk_C, probeMoment: ran.probeMoment, params: ran.params };
+  }
+  return { level: plan.level, peakYolk_C: plan.solution.result.peakYolk_C, probeMoment: plan.probeMoment, params: null };
+}
+
 /** Whether this cook will ask for a probe reading when its cooling ends - the
  *  "have the probe ready" line and the spoken prompt: `probeOn` is the
  *  cook's setting. The field itself is there whatever the setting
  *  (`probeOffered`). */
-export function probeWanted(probeOn: boolean, plan: CookPlan | null): boolean {
-  return probeOn && plan !== null && plan.probeMoment;
+export function probeWanted(probeOn: boolean, shown: CookShown | null): boolean {
+  return probeOn && shown !== null && shown.probeMoment;
 }
 
 /** Whether the probe is asked for NOW: the egg is done, and no reading yet. */
@@ -231,33 +318,33 @@ export function probePending(phase: Phase, wanted: boolean): boolean {
 /** Whether the reading's field is under the questions: whenever the cook has
  *  a moment to probe, the cooling having ended at the yolk's peak, with the
  *  probe setting on or off (DECISIONS.md 92). It is optional, like them. */
-function probeOffered(plan: CookPlan | null): boolean {
-  return plan !== null && plan.probeMoment;
+function probeOffered(shown: CookShown | null): boolean {
+  return shown !== null && shown.probeMoment;
 }
 
 /** The reading's field at DONE, under the two questions, whenever this cook
  *  had a moment to probe; it shows what was given once it is. */
-export function renderProbe(phase: Phase, plan: CookPlan | null): void {
-  const visible = phase === 'DONE' && probeOffered(plan);
+export function renderProbe(phase: Phase, shown: CookShown | null): void {
+  const visible = phase === 'DONE' && probeOffered(shown);
   page().probeEntry.hidden = !visible;
   // The − and + start from the peak of the cook that ran, shown greyed in
   // the empty field: a suggestion, never taken as a reading until stepped or
   // typed. Plain digits, as the field holds them.
-  if (visible && plan !== null) {
-    page().probeReading.placeholder = String(nudgeFrom(measure('probeTemp'), plan.solution.result.peakYolk_C));
+  if (visible && shown !== null) {
+    page().probeReading.placeholder = String(nudgeFrom(measure('probeTemp'), shown.peakYolk_C));
   }
 }
 
 /** What the cook on screen was cooked for, over the yolk question, so the
  *  answer is graded against it: "You asked for: jammy, peak yolk 65 °C".
- *  From the plan - the level the cook ran at, and the peak of the time that
- *  ran - never the slider now. */
-export function renderTarget(plan: CookPlan | null): void {
-  page().feedbackTarget.hidden = plan === null;
-  if (plan === null) return;
+ *  The cook as it ran (`cookShown`) - the level it ran at, and the peak of
+ *  the time that ran - never the slider now, nor a plan made since. */
+export function renderTarget(shown: CookShown | null): void {
+  page().feedbackTarget.hidden = shown === null;
+  if (shown === null) return;
   page().feedbackTarget.textContent = t('feedback.target', {
-    doneness: midSentence(t(anchorNear(plan.level).key), activeLocale()),
-    yolk: show('temperature', plan.solution.result.peakYolk_C),
+    doneness: midSentence(t(anchorNear(shown.level).key), activeLocale()),
+    yolk: show('temperature', shown.peakYolk_C),
   });
 }
 
@@ -272,15 +359,25 @@ function onProbeSave(): void {
   const plan = host === null ? null : host.plan();
   if (host === null || cooked === null || plan === null || page().probeReading.disabled) return;
   if (answers.kind === 'live' && answers.probe !== null) return;
+  if (!mayAnswer(host)) return;
   const typed = page().probeReading.value.trim();
   if (typed === '') return;
   const reading_C = parse(measure('probeTemp'), Number(typed));
-  const record = eggRecordFor(cooked, plan, null);
-  // Refused (`cookFactsFor`): not scored until the egg can be recorded.
-  if (record === null) return;
-  const [low, high] = plausibleProbeRange_C(
-    plan.egg, plan.setup, calibrationParams(host.calib()), recordCookTime_s(record),
-  );
+  // Scored against the egg's record as logged once an answer has logged it,
+  // as iOS does (running-cook review 3), and otherwise the record made now.
+  const logged = eggLogged(cooked.id_ms);
+  const record = logged >= 0 ? keptState().log[logged] : eggRecordFor(cooked, plan, null);
+  // Refused (`cookFactsFor`): not scored until the egg can be recorded. Held,
+  // the reading left in its field, and read again when it can be (`held`).
+  if (record === null) {
+    held.probe = true;
+    page().calibNote.textContent = t('feedback.learning');
+    return;
+  }
+  // Bounded by the model the cook ran under, not one that has since folded
+  // this egg's own answer (2.4).
+  const params = cookShown(cooked, plan)?.params ?? calibrationParams(host.calib());
+  const [low, high] = plausibleProbeRange_C(plan.egg, plan.setup, params, recordCookTime_s(record));
   if (reading_C === null || reading_C < low || reading_C > high) {
     page().probeNote.textContent = t('probe.refused', {
       low: show('probeTemp', low), high: show('probeTemp', high),

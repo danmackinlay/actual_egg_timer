@@ -105,11 +105,18 @@ export function phaseView(
     spoken = t('spoken.total', { time: spokenClock(cookTime_s) });
     hintArgs = { time: formatClock(cookTime_s) };
   } else if (phase === 'HEATING') {
-    digits = formatClock(toPull);
-    subline = t(keys.subline, {
-      elapsed: formatClock(now_s - run.cook.startedAt_s), boil: formatClock(boil_s),
-    });
-    spoken = t('spoken.heating', { time: spokenClock(toPull) });
+    const heated = formatClock(now_s - run.cook.startedAt_s);
+    subline = t(keys.subline, { elapsed: heated, boil: formatClock(boil_s) });
+    if (run.plan.lengthened) {
+      // The slow hob has lengthened the guess: the pull moves with the clock,
+      // so no time left is shown from it (it would read 0:00 while still
+      // heating, running-cook review 3), but the time heated, counting up.
+      digits = heated;
+      spoken = subline;
+    } else {
+      digits = formatClock(toPull);
+      spoken = t('spoken.heating', { time: spokenClock(toPull) });
+    }
   } else if (phase === 'COOKING') {
     digits = formatClock(toPull);
     subline = t(keys.subline, { boil: formatClock(boil_s), after: formatClock(cookTime_s - boil_s) });
@@ -121,7 +128,9 @@ export function phaseView(
     spoken = t('spoken.pull');
     hintArgs = { seconds: coolingStartsIn_s(run.plan.deadlines, cooling, now_s) ?? 0 };
   } else if (phase === 'COOLING') {
-    const toCool = (run.plan.deadlines.coolEnd_s ?? now_s) - now_s;
+    // Never past its end: a plan that asks whether the egg is still in holds
+    // Cooling there (running-cook review 3).
+    const toCool = Math.max(0, (run.plan.deadlines.coolEnd_s ?? now_s) - now_s);
     digits = formatClock(toCool);
     subline = t(keys.subline);
     spoken = t('spoken.cooling', { time: spokenClock(toCool) });
