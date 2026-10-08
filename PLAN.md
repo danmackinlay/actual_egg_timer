@@ -12,7 +12,7 @@ both, on this branch, not on `main` and not deployed. The web app (`src/`) and t
 the same model, refusals, particle filter and choice of time, the same
 catalogue of words in two Englishes (Phase F but for Czech), and the same
 layout (`UI.md`). `npm test` runs 387 tests, all passing (5b pins E3's known
-limit); `npm run e2e` drives the web app through 14 scenarios in headless
+limit); `npm run e2e` drives the web app through 28 scenarios in headless
 Chrome, all passing. `npm run validate` passes 29/29, `swift test` passes 155 tests
 in 38 suites, and the fit's pytest 9. **Pushed on 29 September** at `5ff6940`, the owner's
 call: Netlify serves it at actualeggtimer.netlify.app, and the first run of
@@ -52,8 +52,9 @@ These counts are the only ones in the documents. If you want a number, run
    on it (`aet.cook.v4`, `cookInProgress.v3`; `design/one-screen.md` §4),
    and red-teamed as built (`design/running-cook-review.md`): core's, the
    web's and iOS's findings fixed, before the one screen; certainty in words is the `certainty` draft (93, D1),
-   for the owner on a phone: next is the one screen in both (C3). `0.4.x` is
-   merged in as it moves.
+   for the owner on a phone. The web's one screen is built (C3, the
+   `onescreen` draft, for the owner on a phone); next is iOS's, reusing its
+   words. `0.4.x` is merged in as it moves.
 
 Throughout: cook real eggs, and the two measurements in README §11.3.
 
@@ -212,6 +213,21 @@ The one queue. Nothing else in the documents waits on the owner.
     words wide, and "How to make this more reliable" shows only at a wild
     guess a change of setup makes surer: on the model a fresh install
     never gets it (`UI.md` §8).
+17. **The `onescreen` draft and the one screen, on a phone** (8 October
+    2026, `DECISIONS.md` 91, 96 to 98; `SHIP-0.5.md` C3), the web for now.
+    One layout from setup to Done: start an egg and change anything - the
+    start clause (boiling to cold, your case), the egg, the slider,
+    Settings' water - and watch it re-plan; hold the slider and the egg
+    shows what you aim for. New words: the start clause with its time
+    ("into cold water at 7:42, brought to the boil"; with the heat off,
+    "…, to the boil, heat off, lid on", shorter than idle's to fit), "Eggs
+    in at" and the four reasons it stops, and "Are the eggs still in the
+    water?" with "Yes, still in" / "No, they’re out".
+    `tools/drafts/onescreen.ts` has every row and its 1750 twin; `UI.md`
+    §3 the screen. Things to judge with it: the clock keeps its idle size
+    while the egg cooks (nothing moves at the start); at Done the
+    questions are below the slider and sentence, scrolled to; after the
+    pull the slider only previews and springs back.
 
 Waiting on someone else: the Czech review (F5), by the owner's friend.
 

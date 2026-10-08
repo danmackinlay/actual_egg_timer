@@ -257,6 +257,23 @@ core's exports.
       minute, and Chrome); CI left alone. iOS's own is another item.
 - [ ] **C3. Both apps**, screen by screen, checked by driving them;
       `UI.md` rewritten as built.
+  - [x] *The web's one screen* (8 October 2026; `design/one-screen.md` steps
+        6 and 7, "As built"; `UI.md`): one layout from idle to Done, the
+        slider, the sentence and the egg in cross-section in every phase,
+        nothing moved at the start (`7f70147`); the egg aimed for at idle,
+        live during a cook, as it ran at Done, and aimed for while a
+        control is held (`b1403c6`); every clause, the slider and Settings'
+        pot rows correct the running cook, committed on release or after a
+        1.5-s settle, overdue decided on commit and undone within the grace
+        (`17511ed`); the start corrected in its clause with its limits and
+        their reasons (`520202c`); Settings and Help in every phase, another
+        tab's settings touching only units, language and sound (`7963760`);
+        a correction after the pull corrects the record on the calibration
+        before this egg, the slider there only previewing (`7554391`); "Are
+        the eggs still in the water?" (`ab34416`); the slot's warning from
+        the running plan (`1dd279f`). Words: the `onescreen` draft, web only
+        for now. `npm run e2e`: 28 scenarios, 15 of them new.
+  - [ ] *iOS's one screen*, reusing the `onescreen` words: steps 8 to 10.
 
 ## D. Certainty in words, on screen (`DECISIONS.md` 93, with C)
 

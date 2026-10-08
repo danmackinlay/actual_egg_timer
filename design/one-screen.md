@@ -780,6 +780,65 @@ commit each):
    `calibration.ts` refolds a corrected egg, and `logEgg` keeps the
    last-corrected record for an id.
 
+   *As built (web, 8 October 2026; `SHIP-0.5.md` C3, `LOGBOOK.md`).* Steps 6
+   and 7 as listed, in eight commits, each driven by `npm run e2e`. Where
+   it departs from the text above, or chose where the text was silent:
+   - **Nothing moves at the start** (§2), so the clock keeps its idle size
+     while the egg cooks (0.4 made it a third larger), the sentence and the
+     egg align from the top (the start clause gains its time), the certainty
+     line keeps its two lines' room in every phase, and the 1750 title page
+     stays. The summary line under the running sentence (`cook.summary`)
+     goes on the web: the slider's heading says the peak.
+   - **The clauses are spans that are buttons** (`role`, `tabindex`, Enter
+     and Space): a `<button>` is an inline block, and beside the egg a
+     clause that wraps pushed its comma to the far end of its last line.
+   - **At Done the action bar is not stuck** to the bottom: it carries the
+     questions after an egg, which would cover the slider and the sentence,
+     so it ends the page and is scrolled to.
+   - **The controls' own settings** (`state.controls`): the settings while
+     idle, a running cook's choices over a copy of them while one runs
+     (`settingsOfChoices`). A correction is the fields the cook changed on
+     them laid over the cook's choices (`src/ui/edit.ts`), so a field nobody
+     touched keeps the cook's value to the bit and changing back gives back
+     the old pull exactly; only those fields are written to the settings
+     (§7, 22), so another tab's settings for the rest survive.
+   - **When a change is committed** (§4): the slider on release, even a tap
+     on its track; a − or + on release if held long enough to repeat (400
+     ms, the stepper's first repeat), else after the settle; "another
+     control" is another slider, number, radio group, menu, clause, the
+     primary button or Cancel. The readout keeps the committed plan's time
+     while a change is in hand; the slider's heading and the egg show the
+     change's. Its plan reads the cook's surface only when the pot is the
+     same (a new level); a new pot is previewed on the interim time, as a
+     surface-less plan is.
+   - **The egg's readings** (§5): idle, the aim at the time on screen;
+     during a cook, live through the cooling; at Done, the egg as it ran,
+     eaten (`previewSection` to the egg out, with the parameters it ran
+     under), where §5 had the live egg's last frame, the yolk's peak.
+   - **After the pull the slider previews the egg its level aims for in this
+     pot**, planned as if not yet pulled, then springs back to the level the
+     egg ran at; nothing is corrected or written for it (2.3).
+   - **The start's panel** (§7, 20): "Eggs in at" with a − and +, a minute
+     a step; the line under it names the limit and its time when a press
+     goes no further. The start of a cold cook still heating moved two hours
+     back is a pan heated two hours, which `tooOldAt_s` abandons: the next
+     tick ends it as Cancel does. Bounded by holding − for about seven
+     seconds, so left as it is.
+   - **Settings mid-cook**: its pot rows (water, eggs, altitude, heat after
+     the boil, the probe and the room) are the cook's controls; what I have
+     learned and sharing wait for the cook to end; sous-vide is not offered
+     in the start's panel. The pull brings the egg's page back.
+   - **"Still in the water?"** takes the phase label's place, with the time
+     since the eggs were due out and the two answers as buttons (the primary
+     for yes); nothing past it is shown.
+   - **The record corrected after the pull** is planned on the calibration
+     before this egg (`calibrationBefore`): the copy the page kept when it
+     folded the egg, or the log replayed up to it, a surface per egg, when
+     a reload or a later egg has lost it.
+   - **The warning line** says what the running plan says of the level until
+     the pull, a refusal before a reloaded cook's warning; the advice link
+     stays idle only.
+
 **iOS**, the same order:
 
 8. `Cook.swift`: `Ticket` and `Saved` become `RunningCook` and
@@ -839,6 +898,10 @@ rewritten as built.
   rest, as 91 asked, and goes back to raw at the start (§7, 19).
 - **It has no words**, as now. The certainty line and the sentence say what
   it shows.
+
+*As built (web, 8 October 2026).* The drawing names its reading
+(`data-egg`: `aim`, `live`, `ran`); at Done it is the egg as it ran, eaten,
+not the live egg's last frame (step 7's notes, above).
 
 ## 6. Certainty on the screen
 

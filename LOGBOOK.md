@@ -5527,3 +5527,70 @@ page draws a tick behind the clock. CI is left alone: the suite has not
 been run on GitHub's Linux runners, and `CHROME` would have to name their
 binary.
 
+
+## 8 October 2026: the web's one screen (SHIP-0.5 C3)
+
+The web's setup and timer screens are one (`DECISIONS.md` 91, 96 to 98;
+`design/one-screen.md` steps 6 and 7, "As built"; `UI.md` §3), in eight
+commits, `7f70147..1dd279f`, each checked by new `npm run e2e` scenarios
+before the next: 28 scenarios now, 15 of them new, all passing in about two
+minutes; `npm run verify` passing at each commit. iOS is untouched.
+
+**What was driven**, by the scenarios: one layout from idle to Done with the
+slider, the sentence and the egg in every phase and nothing moved at the
+start; the egg aimed for at idle (runny and hard drawn apart), raw at the
+start, as it ran at Done; the owner's case (a boiling start corrected to
+cold a minute in: Heating again, the pull 213 s later, the next cook's
+setting cold, the same after a reload); cold corrected to boiling after the
+boil was pressed (the tap kept, the pull 125 s sooner); a heavier and a
+lighter egg (+34 s, −45 s, and back to the pull exactly); a correction that
+made the egg overdue (Pull, 75 beeps at once) undone 5 s into the grace
+(Cooking, nothing written, the pull ringing again at its time); a drag
+through runny held for two seconds (nothing rung or corrected, the aim
+drawn) and let go where it began (nothing), then let go at runny (Pull,
+rung); the start corrected in its clause (+ stopped at now, then at the
+boil pressed, naming its time; − by the keyboard to two hours back);
+Settings' water mid-cook (the cook and the next cook's water, and the
+egg's page back at the pull); a correction in one tab leaving another
+tab's cook and controls alone; a correction at Done after Runny (a new
+forecast, the answer kept) and back (the first forecast to the bit, where a
+plan on the folded posterior would differ); the slider at Done (aim drawn,
+nothing corrected, the record as it was, the thumb back); "still in the
+water?" after the grace ran out (nothing rung or written as the cooling's
+end passed under it; yes: Heating again; no: the pull confirmed and the
+record made again); and the slow hob counting up after a late correction
+to cold, with the slot's refusal for a correction the white never sets in.
+
+**Choices made**, each in `design/one-screen.md`'s "As built": the clock
+keeps its idle size; the clauses are spans that are buttons; at Done the
+action bar ends the page; a correction is the fields changed, laid over
+the cook's choices, and only they are written to the settings; a − or +
+held 400 ms commits on release; the readout keeps the committed time while
+a change is in hand; at Done the egg is drawn as eaten; after the pull the
+slider springs back; Settings mid-cook hides what I have learned and
+sharing; the record after the pull is planned on the copy the page kept
+before folding the egg, or on the log replayed up to it.
+
+**The words**: the `onescreen` draft, web only (`LANGUAGE.md` §3 has the
+table, `tools/drafts/onescreen.ts` the 1750 twins). `copyLiterals --since
+b314a4c onescreen` passes. The snapshot proof, `copySnapshot compare
+--draft onescreen`, passes on two captures of the base pooled against three
+of this build: the harness is not deterministic (two base captures under
+load differed in 66 of 172 states, against 12 when quiet), and one state
+differed every time, the idle screen just after Start again following a
+reload at Done, which lacked "Soft: a wild guess so far.". The harness
+waits for `#donenessPeak` to be filled before a step: on the base a
+restored cook at Done never filled it, so the reload waited out the 5-s
+loop and the pot's surface was in by Start again; on the one screen it is
+filled at once, the wait is 400 ms, and the surface is not. A capture with
+5 s added after the reload has the line. The harness was left as it is;
+the proof needed two tooling changes, made in step 1: an attribute's words
+are read whichever element bears them, and a draft can name a template it
+now draws in pieces (`redrawn`).
+
+**Left**: iOS's one screen (steps 8 to 10), reusing these words. The start
+of a cold cook still heating moved two hours back abandons it at the next
+tick, as `tooOldAt_s` says (about seven seconds of holding −). The advice
+link stays idle only. Screenshots of each phase, in both Englishes and
+the dark scheme, with the start's panel, the slider held, Settings and the
+question, are for the owner on a phone.
