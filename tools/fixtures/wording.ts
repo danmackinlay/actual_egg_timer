@@ -13,8 +13,8 @@ import { Phase, RefusalKind, Verdict, anchorNear } from '../../src/core/policy.j
 import { Cooling, HeatAfterBoil, StartMode } from '../../src/core/protocol.js';
 import { EggFrom } from '../../src/core/record.js';
 import {
-  DIRECTION_LIKELY, certaintyKey, clauseKeys, directionKey, intervalWords, mostLikelyShown, mostLikelyWords,
-  phaseKeys, rangeWords, warningKey, whiteAtRisk,
+  DIRECTION_LIKELY, certaintyKey, clauseKeys, directionKey, intervalWords, mostLikelyOpened, mostLikelyShown,
+  mostLikelyWords, phaseKeys, rangeWords, warningKey, whiteAtRisk,
 } from '../../src/core/wording.js';
 import { WHITE_RISK } from '../../src/core/outcome.js';
 
@@ -90,6 +90,7 @@ export function wordingFixture(): Record<string, unknown> {
       return {
         p: p, asked: asked, certainty: w.certainty, key: certaintyKey(w.certainty),
         interval: interval, mostLikely: likely, mostLikelyShown: mostLikelyShown(w),
+        mostLikelyOpened: mostLikelyOpened(w),
       };
     })),
   };

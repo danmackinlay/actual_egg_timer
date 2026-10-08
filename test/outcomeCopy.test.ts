@@ -18,8 +18,8 @@ import { Lean, Outcome } from '../src/core/outcome.js';
 import { WHITE_RISK } from '../src/core/outcome.js';
 import { Certainty, wordCertainty } from '../src/core/certainty.js';
 import {
-  DIRECTION_LIKELY, certaintyKey, directionKey, intervalWords, mostLikelyShown, mostLikelyWords, rangeWords,
-  whiteAtRisk,
+  DIRECTION_LIKELY, certaintyKey, directionKey, intervalWords, mostLikelyOpened, mostLikelyShown, mostLikelyWords,
+  rangeWords, whiteAtRisk,
 } from '../src/core/wording.js';
 import { restoreOutcome } from '../src/ui/outcome.js';
 
@@ -66,16 +66,19 @@ test('the interval in the slider\'s words, 9 times in 10, one word when one word
   });
   assert.deepEqual(mostLikelyWords(fresh), { key: 'certainty.mostLikely', args: {}, words: { word: 'doneness.jammy' } });
   assert.equal(mostLikelyShown(fresh), false);
+  assert.equal(mostLikelyOpened(fresh), true, 'in what opens, since not under the line');
   // Very certain: one word holds 9 in 10.
   const sure = wordCertainty([0.01, 0.01, 0.94, 0.03, 0.01], 2);
   assert.deepEqual(intervalWords(sure), {
     key: 'certainty.interval.one', args: { hits: 9, of: 10 }, words: { word: 'doneness.jammy' },
   });
+  assert.equal(mostLikelyOpened(sure), false, 'one word already says it');
   // Soft asked on a pot that runs firm: most likely jammy, shown unpressed.
   const firm = wordCertainty([0.03, 0.2, 0.68, 0.07, 0.02], 1);
   assert.equal(firm.certainty, 'ballpark');
   assert.deepEqual(mostLikelyWords(firm).words, { word: 'doneness.jammy' });
   assert.equal(mostLikelyShown(firm), true);
+  assert.equal(mostLikelyOpened(firm), false, 'not said twice');
   for (const key of ['certainty.interval', 'certainty.interval.one', 'certainty.mostLikely']) {
     assert.ok(key in MESSAGES, key);
   }

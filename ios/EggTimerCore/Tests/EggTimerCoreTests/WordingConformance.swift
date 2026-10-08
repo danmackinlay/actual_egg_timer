@@ -74,6 +74,7 @@ struct WordingConformance {
                 #expect(got.words == (e["words"] as? [String: String]), "\(label) \(name) words")
             }
             #expect(try mostLikelyShown(w) == row.flag("mostLikelyShown"), "\(label) shown")
+            #expect(try mostLikelyOpened(w) == row.flag("mostLikelyOpened"), "\(label) opened")
         }
     }
 

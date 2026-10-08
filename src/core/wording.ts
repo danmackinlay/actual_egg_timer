@@ -117,6 +117,13 @@ export function mostLikelyShown(w: WordCertainty): boolean {
   return w.mostLikely !== w.asked;
 }
 
+/** Whether "Most likely" is in what pressing the line opens: when it is not
+ *  already under the line, and the interval is more than one word. "9 times
+ *  in 10: Fudgy." already says the most likely word is Fudgy. */
+export function mostLikelyOpened(w: WordCertainty): boolean {
+  return !mostLikelyShown(w) && w.from !== w.to;
+}
+
 /* ------------------------------------------------------------ the outcome */
 
 /**

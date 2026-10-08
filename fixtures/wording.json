@@ -1588,7 +1588,8 @@
             "word": "doneness.jammy"
           }
         },
-        "mostLikelyShown": true
+        "mostLikelyShown": true,
+        "mostLikelyOpened": false
       },
       {
         "p": [
@@ -1618,7 +1619,8 @@
             "word": "doneness.jammy"
           }
         },
-        "mostLikelyShown": true
+        "mostLikelyShown": true,
+        "mostLikelyOpened": false
       },
       {
         "p": [
@@ -1648,7 +1650,8 @@
             "word": "doneness.jammy"
           }
         },
-        "mostLikelyShown": false
+        "mostLikelyShown": false,
+        "mostLikelyOpened": false
       },
       {
         "p": [
@@ -1678,7 +1681,8 @@
             "word": "doneness.jammy"
           }
         },
-        "mostLikelyShown": true
+        "mostLikelyShown": true,
+        "mostLikelyOpened": false
       },
       {
         "p": [
@@ -1708,7 +1712,8 @@
             "word": "doneness.jammy"
           }
         },
-        "mostLikelyShown": true
+        "mostLikelyShown": true,
+        "mostLikelyOpened": false
       },
       {
         "p": [
@@ -1739,7 +1744,8 @@
             "word": "doneness.jammy"
           }
         },
-        "mostLikelyShown": true
+        "mostLikelyShown": true,
+        "mostLikelyOpened": false
       },
       {
         "p": [
@@ -1770,7 +1776,8 @@
             "word": "doneness.jammy"
           }
         },
-        "mostLikelyShown": true
+        "mostLikelyShown": true,
+        "mostLikelyOpened": false
       },
       {
         "p": [
@@ -1801,7 +1808,8 @@
             "word": "doneness.jammy"
           }
         },
-        "mostLikelyShown": false
+        "mostLikelyShown": false,
+        "mostLikelyOpened": true
       },
       {
         "p": [
@@ -1832,7 +1840,8 @@
             "word": "doneness.jammy"
           }
         },
-        "mostLikelyShown": true
+        "mostLikelyShown": true,
+        "mostLikelyOpened": false
       },
       {
         "p": [
@@ -1863,7 +1872,8 @@
             "word": "doneness.jammy"
           }
         },
-        "mostLikelyShown": true
+        "mostLikelyShown": true,
+        "mostLikelyOpened": false
       },
       {
         "p": [
@@ -1894,7 +1904,8 @@
             "word": "doneness.hard"
           }
         },
-        "mostLikelyShown": true
+        "mostLikelyShown": true,
+        "mostLikelyOpened": false
       },
       {
         "p": [
@@ -1925,7 +1936,8 @@
             "word": "doneness.hard"
           }
         },
-        "mostLikelyShown": true
+        "mostLikelyShown": true,
+        "mostLikelyOpened": false
       },
       {
         "p": [
@@ -1956,7 +1968,8 @@
             "word": "doneness.hard"
           }
         },
-        "mostLikelyShown": true
+        "mostLikelyShown": true,
+        "mostLikelyOpened": false
       },
       {
         "p": [
@@ -1987,7 +2000,8 @@
             "word": "doneness.hard"
           }
         },
-        "mostLikelyShown": true
+        "mostLikelyShown": true,
+        "mostLikelyOpened": false
       },
       {
         "p": [
@@ -2018,7 +2032,8 @@
             "word": "doneness.hard"
           }
         },
-        "mostLikelyShown": false
+        "mostLikelyShown": false,
+        "mostLikelyOpened": true
       },
       {
         "p": [
@@ -2049,7 +2064,8 @@
             "word": "doneness.jammy"
           }
         },
-        "mostLikelyShown": true
+        "mostLikelyShown": true,
+        "mostLikelyOpened": false
       },
       {
         "p": [
@@ -2080,7 +2096,8 @@
             "word": "doneness.jammy"
           }
         },
-        "mostLikelyShown": true
+        "mostLikelyShown": true,
+        "mostLikelyOpened": false
       },
       {
         "p": [
@@ -2111,7 +2128,8 @@
             "word": "doneness.jammy"
           }
         },
-        "mostLikelyShown": false
+        "mostLikelyShown": false,
+        "mostLikelyOpened": true
       },
       {
         "p": [
@@ -2142,7 +2160,8 @@
             "word": "doneness.jammy"
           }
         },
-        "mostLikelyShown": true
+        "mostLikelyShown": true,
+        "mostLikelyOpened": false
       },
       {
         "p": [
@@ -2173,7 +2192,8 @@
             "word": "doneness.jammy"
           }
         },
-        "mostLikelyShown": true
+        "mostLikelyShown": true,
+        "mostLikelyOpened": false
       }
     ]
   },
