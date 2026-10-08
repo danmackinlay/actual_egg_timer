@@ -6,14 +6,16 @@ import Foundation
 ///
 /// A profile point is the odds the app computes when the slider sits at that
 /// level - the mean solve there, decided on the pot's decision surface - so
-/// the two cannot disagree. The levels are the two physical edges on the
-/// slider's grid, every `profileStep` positions between them, and, once an egg
-/// has taught something and a level reaches `reachOdds`, a bisection on the
-/// slider's own grid at each end of the range at 3/10 or better. Outside that
-/// range, and inside the physical edges, the app warns that the level comes
-/// out right fewer than 3 times in 10 so far; it never refuses it, and only
-/// what the pan cannot deliver moves the slider (DECISIONS.md 83). With no
-/// level at 3/10, or before the first egg, nothing is warned of.
+/// the two cannot disagree, and how sure the app is there in words: the
+/// chance of the word asked, which shades the track, and `certaintyAt`'s
+/// class, which dots it (DECISIONS.md 97). The levels are the two physical
+/// edges on the slider's grid, every `profileStep` positions between them,
+/// and, once an egg has taught something and a level is not a wild guess, a
+/// bisection on the slider's own grid at each end of the range that is not.
+/// Outside that range, and inside the physical edges, the app warns that the
+/// level is a wild guess so far; it never refuses it, and only what the pan
+/// cannot deliver moves the slider (DECISIONS.md 83). With every level a wild
+/// guess, or before the first egg, nothing is warned of.
 ///
 /// The profile also holds the time monotone in the level (DECISIONS.md 84):
 /// its points are decided from the hard end, each held under the time of the
@@ -25,27 +27,36 @@ import Foundation
 /// fixtures/reach.json.
 ///
 /// What the screen shows at a level, once the pot's surface is built, is
-/// `decideAnswer`: the decision held by the envelope, the nudge, the solve
-/// and the outcome at the time given, and whether advice is wanted. Both
-/// apps call it; until 6 October 2026 each wrote it out for itself.
-
-/// The odds under which a level is warned of: 3/10, the owner's number.
-public let reachOdds = 0.3
+/// `decideAnswer`: the decision held by the envelope, the nudge, the solve,
+/// the outcome and the certainty at the time given, and whether advice is
+/// wanted. Both apps call it; until 6 October 2026 each wrote it out for
+/// itself.
 
 /// Slider positions between profile points.
 public let profileStep = 5
 
 /// One point of the profile: a slider level, the time the app gives there
-/// (after the envelope), and the odds of that time.
+/// (after the envelope), the odds of that time, and how sure the app is there
+/// in words.
 public struct LevelOdds: Sendable, Equatable {
     public let level: Double
     public let cookTimeS: Double
     public let odds: Double
+    /// P(the word asked at this level) at its time: what the shading reads.
+    public let pAsked: Double
+    /// `certaintyAt`'s class at this level's time: a wild guess is dotted at
+    /// the ends.
+    public let certainty: Certainty
 
-    public init(level: Double, cookTimeS: Double, odds: Double) {
+    /// A point; a profile read back without its certainty (a fixture that
+    /// holds only the odds and times) takes a wild guess at no chance, which
+    /// neither the envelope nor the warning reads.
+    public init(level: Double, cookTimeS: Double, odds: Double, pAsked: Double = 0, certainty: Certainty = .wildGuess) {
         self.level = level
         self.cookTimeS = cookTimeS
         self.odds = odds
+        self.pAsked = pAsked
+        self.certainty = certainty
     }
 }
 
@@ -53,23 +64,26 @@ public struct OddsProfile: Sendable, Equatable {
     /// Sorted by level, from `physicalSoftest` to `physicalHardest`. Empty when
     /// the white never sets.
     public let points: [LevelOdds]
-    /// The best odds of any point: what the shading is relative to.
+    /// The best odds of any point: what the advice is measured against.
     public let best: Double
+    /// The best `pAsked` of any point: what the shading is relative to.
+    public let bestAsked: Double
     /// The physical edges, on the slider's grid.
     public let physicalSoftest: Double
     public let physicalHardest: Double
-    /// The softest and firmest levels at `reachOdds` or better, or nil when the
-    /// odds warn of nothing. Both nil or both set. Outside them, and inside the
-    /// physical edges, is what the track dots and the app warns of.
+    /// The softest and firmest levels that are not a wild guess, or nil when
+    /// nothing is warned of. Both nil or both set. Outside them, and inside
+    /// the physical edges, is what the track dots and the app warns of.
     public let softest: Double?
     public let hardest: Double?
 
     public init(
-        points: [LevelOdds], best: Double, physicalSoftest: Double, physicalHardest: Double,
+        points: [LevelOdds], best: Double, bestAsked: Double = 0, physicalSoftest: Double, physicalHardest: Double,
         softest: Double?, hardest: Double?
     ) {
         self.points = points
         self.best = best
+        self.bestAsked = bestAsked
         self.physicalSoftest = physicalSoftest
         self.physicalHardest = physicalHardest
         self.softest = softest
@@ -130,8 +144,8 @@ func oddsAtLevel(
 }
 
 /// A profile being built: the pot it is for, and the points decided on it so
-/// far, as three arrays kept in order of slider position. Plain data, handed
-/// to the functions below rather than closed over (core invariant 2).
+/// far, as arrays kept in order of slider position. Plain data, handed to the
+/// functions below rather than closed over (core invariant 2).
 private struct ProfileWork {
     let c: Calibration
     let egg: Egg
@@ -140,47 +154,60 @@ private struct ProfileWork {
     var positions: [Int] = []
     var times: [Double] = []
     var odds: [Double] = []
+    var pAsked: [Double] = []
+    var certainty: [Certainty] = []
 }
 
-/// Decide the point at `position`, held within `bounds`; keep it in `w`, in
-/// order; and return its odds.
-private func decidePoint(_ w: inout ProfileWork, _ position: Int, _ bounds: TimeBounds) -> Double {
-    let d = decisionAtLevel(w.c, egg: w.egg, setup: w.setup, grid: w.grid, level: levelOf(position), bounds: bounds)
+/// Whether a class is surer than a wild guess: a level the track does not dot.
+private func surerThanGuess(_ c: Certainty) -> Bool {
+    c != .wildGuess
+}
+
+/// Decide the point at `position`, held within `bounds`; read how sure the
+/// app is at the time decided; keep both in `w`, in order; and return whether
+/// it is surer than a wild guess.
+private func decidePoint(_ w: inout ProfileWork, _ position: Int, _ bounds: TimeBounds) -> Bool {
+    let level = levelOf(position)
+    let d = decisionAtLevel(w.c, egg: w.egg, setup: w.setup, grid: w.grid, level: level, bounds: bounds)
+    let sure = wordCertainty(yolkWordProbabilities(w.c.posterior, w.grid, d.cookTimeS), asked: askedWord(level))
     var i = w.positions.count
     while i > 0 && w.positions[i - 1] > position { i -= 1 }
     w.positions.insert(position, at: i)
     w.times.insert(d.cookTimeS, at: i)
     w.odds.insert(d.odds, at: i)
-    return d.odds
+    w.pAsked.insert(sure.pAsked, at: i)
+    w.certainty.insert(sure.certainty, at: i)
+    return surerThanGuess(sure.certainty)
 }
 
-/// The odds at `position`: a point already decided, or one decided now, held
-/// between the nearest points known on either side, so that it moves no time
-/// the profile already gave.
-private func oddsAtPosition(_ w: inout ProfileWork, _ position: Int) -> Double {
+/// Whether `position` is surer than a wild guess: a point already decided, or
+/// one decided now, held between the nearest points known on either side, so
+/// that it moves no time the profile already gave.
+private func surerAtPosition(_ w: inout ProfileWork, _ position: Int) -> Bool {
     var i = 0
     while i < w.positions.count && w.positions[i] < position { i += 1 }
-    if i < w.positions.count && w.positions[i] == position { return w.odds[i] }
+    if i < w.positions.count && w.positions[i] == position { return surerThanGuess(w.certainty[i]) }
     let below = i > 0 ? w.times[i - 1] : 0.0
     let over = i < w.positions.count ? w.times[i] : Double.infinity
     return decidePoint(&w, position, TimeBounds(loS: below, hiS: over))
 }
 
-/// One end of the range at `reachOdds` or better, by bisection on the slider's
-/// grid between `reaches`, a position at or over it, and `short`, a position
-/// under it on either side: the position at or over it next to one under.
+/// One end of the range that is not a wild guess, by bisection on the slider's
+/// grid between `reaches`, a position surer than a wild guess, and `short`, a
+/// wild guess on either side: the surer position next to one that is not.
 private func reachEnd(_ w: inout ProfileWork, reaches: Int, short: Int) -> Int {
     var r = reaches
     var s = short
     while abs(s - r) > 1 {
         let mid = (r + s) / 2
-        if oddsAtPosition(&w, mid) >= reachOdds { r = mid } else { s = mid }
+        if surerAtPosition(&w, mid) { r = mid } else { s = mid }
     }
     return r
 }
 
-/// The odds at every level the pot can deliver, and where they reach 3/10.
-/// `grid` is this pot's decision surface, for the same calibration.
+/// The odds and the certainty at every level the pot can deliver, and the
+/// range that is not a wild guess. `grid` is this pot's decision surface, for
+/// the same calibration.
 public func oddsProfile(_ c: Calibration, egg: Egg, setup: CookSetup, grid: DoseGrid) -> OddsProfile {
     let edge = solveCookTime(
         egg: egg, setup: setup, params: calibrationParams(c), doneness: calibrationDoneness(c, level: 1.0)
@@ -189,7 +216,7 @@ public func oddsProfile(_ c: Calibration, egg: Egg, setup: CookSetup, grid: Dose
     let hi = positionDown(edge.hardestLevel)
     if !edge.whiteSets || hi < lo {
         return OddsProfile(
-            points: [], best: 0, physicalSoftest: levelOf(lo), physicalHardest: levelOf(hi),
+            points: [], best: 0, bestAsked: 0, physicalSoftest: levelOf(lo), physicalHardest: levelOf(hi),
             softest: nil, hardest: nil
         )
     }
@@ -209,17 +236,20 @@ public func oddsProfile(_ c: Calibration, egg: Egg, setup: CookSetup, grid: Dose
         above = w.times[0]
     }
     // Before any bisection, w holds exactly these positions, in this order.
-    let gridOdds = w.odds
-    var best = 0.0
-    for p in gridOdds where p > best { best = p }
+    var gridSure: [Bool] = []
+    var anySure = false
+    for k in w.certainty {
+        gridSure.append(surerThanGuess(k))
+        if surerThanGuess(k) { anySure = true }
+    }
 
     var softest: Double?
     var hardest: Double?
-    if c.eggsLogged > 0 && best >= reachOdds {
+    if c.eggsLogged > 0 && anySure {
         var first = 0
-        while gridOdds[first] < reachOdds { first += 1 }
+        while !gridSure[first] { first += 1 }
         var last = positions.count - 1
-        while gridOdds[last] < reachOdds { last -= 1 }
+        while !gridSure[last] { last -= 1 }
         // The softest first, then the firmest: a point the first bisection adds
         // holds the second's.
         let s = first > 0 ? reachEnd(&w, reaches: positions[first], short: positions[first - 1]) : positions[first]
@@ -230,23 +260,29 @@ public func oddsProfile(_ c: Calibration, egg: Egg, setup: CookSetup, grid: Dose
     }
 
     var points: [LevelOdds] = []
+    var best = 0.0
+    var bestAsked = 0.0
     for i in 0..<w.positions.count {
-        points.append(LevelOdds(level: levelOf(w.positions[i]), cookTimeS: w.times[i], odds: w.odds[i]))
+        points.append(LevelOdds(
+            level: levelOf(w.positions[i]), cookTimeS: w.times[i], odds: w.odds[i],
+            pAsked: w.pAsked[i], certainty: w.certainty[i]
+        ))
         if w.odds[i] > best { best = w.odds[i] }
+        if w.pAsked[i] > bestAsked { bestAsked = w.pAsked[i] }
     }
     return OddsProfile(
-        points: points, best: best, physicalSoftest: levelOf(lo), physicalHardest: levelOf(hi),
+        points: points, best: best, bestAsked: bestAsked, physicalSoftest: levelOf(lo), physicalHardest: levelOf(hi),
         softest: softest, hardest: hardest
     )
 }
 
 // MARK: - The warning
 
-/// Whether the app warns that `level` comes out right fewer than 3 times in
-/// 10 so far: true when the profile has a range at 3/10 or better and the
-/// level is softer than its softest or firmer than its firmest. False with no
-/// profile, or one that warns of nothing. It moves nothing: what the pan
-/// cannot deliver is `verdictFor`'s.
+/// Whether the app warns that `level` is a wild guess so far - a dotted level:
+/// true when the profile has a range that is not a wild guess and the level is
+/// softer than its softest or firmer than its firmest. False with no profile,
+/// or one that warns of nothing. It moves nothing: what the pan cannot deliver
+/// is `verdictFor`'s. The name is older than the rule.
 public func lowOddsAt(_ profile: OddsProfile?, level: Double) -> Bool {
     guard let profile, let softest = profile.softest, let hardest = profile.hardest else { return false }
     // A level a hair off its end - 35 * 0.01 is not 35 / 100 - is that end.
@@ -298,22 +334,22 @@ public func answerAt(
 
 // MARK: - The shading
 
-/// How strongly the track is shaded at a level: its odds over the best
-/// level's, 0 to 1.
+/// How strongly the track is shaded at a level: the chance of the word asked
+/// there over the best level's (DECISIONS.md 97), 0 to 1.
 public struct Shade: Sendable, Equatable {
     public let level: Double
     public let strength: Double
 }
 
-/// The best odds below which the track is not shaded at all: odds nowhere
-/// worth a tenth, so there is no "where it works best" to show.
+/// The best chance below which the track is not shaded at all: there is no
+/// "where it works best" to show.
 public let shadeBestMin = 0.05
 
 /// The shading's stops, one per profile point; empty with nothing to shade.
 public func shadingOf(_ profile: OddsProfile) -> [Shade] {
-    guard profile.best >= shadeBestMin else { return [] }
+    guard profile.bestAsked >= shadeBestMin else { return [] }
     return profile.points.map {
-        Shade(level: $0.level, strength: min(1, max(0, $0.odds / profile.best)))
+        Shade(level: $0.level, strength: min(1, max(0, $0.pAsked / profile.bestAsked)))
     }
 }
 
@@ -426,6 +462,9 @@ public struct DecidedAnswer: Sendable {
     public let decision: Decision
     /// What the egg at the nudged time will be like, on the same surface.
     public let outcome: Outcome
+    /// How sure the app is of the egg at the nudged time, in words, and the
+    /// likely time range (`certaintyAt`): the line under the time.
+    public let certainty: CertaintyReading
     /// The nudge the time took (`appliedNudge`): all of it where a time is
     /// chosen for, none where the solver's own answer stands.
     public let nudgeS: Double
@@ -457,6 +496,7 @@ public func decideAnswer(
         ),
         decision: d,
         outcome: predictOutcome(c.posterior, grid, d.cookTimeS + nudge, target),
+        certainty: certaintyAt(c.posterior, grid, d.cookTimeS + nudge, level: level),
         nudgeS: nudge,
         adviceWanted: sol.whiteSets && adviceWanted(d.oddsTenths, profile: profile)
     )

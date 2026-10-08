@@ -759,6 +759,10 @@ Fudgy" puts inserted words inside running grammar, which `LANGUAGE.md` §3
 rules out, hence the colon. The bracket, the lean line, the 3/10 warning
 and the track's shading are restated in the same terms (§7, 13-17).
 
+As built in today's layout, the `certainty` draft (8 October 2026,
+`SHIP-0.5.md` D1): the words, the interval, "Most likely" and the time
+range are `UI.md` §8; the one screen (C3) keeps them where they are.
+
 ## 7. Questions for the owner
 
 **Answered, 7 October 2026 (`DECISIONS.md` 96 and 97).** The owner took

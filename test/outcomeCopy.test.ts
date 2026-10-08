@@ -1,11 +1,13 @@
 /**
- * The outcome summary in words (src/core/wording.ts): which sentence each
- * outcome gets, when the white gets its line, the range in the slider's own
- * words, and a cook's outcome read back after a reload.
+ * The outcome and the certainty in words (src/core/wording.ts): which line
+ * each certainty class gets, the 90% interval and the most likely word in
+ * the slider's own words and when "most likely" shows unpressed, when the
+ * white gets its line, the bracket's range in words, and a cook's outcome
+ * read back after a reload.
  *
- * The numbers are core's and are tested in test/outcome.test.ts; this holds
- * the thresholds the web chose on top of them, at their edges, and checks
- * that every key chosen is in the catalogue.
+ * The numbers are core's and are tested in test/outcome.test.ts and
+ * test/certainty.test.ts; this holds the choice of words on top of them, and
+ * checks that every key chosen is in the catalogue.
  *
  * Zero dependencies: node:test + node:assert/strict only.
  */
@@ -14,9 +16,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
-import { Lean, Outcome } from '../src/core/outcome.js';
+import { Outcome } from '../src/core/outcome.js';
 import { WHITE_RISK } from '../src/core/outcome.js';
-import { DIRECTION_LIKELY, directionKey, rangeWords, whiteAtRisk } from '../src/core/wording.js';
+import { Certainty, wordCertainty } from '../src/core/certainty.js';
+import {
+  certaintyKey, intervalWords, mostLikelyOpened, mostLikelyShown, mostLikelyWords, rangeWords, whiteAtRisk,
+} from '../src/core/wording.js';
 import { restoreOutcome } from '../src/ui/outcome.js';
 
 const MESSAGES = (JSON.parse(readFileSync('copy/en.json', 'utf8')) as { messages: Record<string, unknown> }).messages;
@@ -28,19 +33,39 @@ function outcome(over: Partial<Outcome> = {}): Outcome {
   };
 }
 
-test('the direction: "probably just right" from one half, and the lean decides the rest', () => {
-  const cases: [number, Lean, string][] = [
-    [DIRECTION_LIKELY, 'balanced', 'outcome.likely'],
-    [0.77, 'firm', 'outcome.likely.firm'],
-    [0.56, 'soft', 'outcome.likely.soft'],
-    [DIRECTION_LIKELY - 1e-9, 'balanced', 'outcome.unsure'],
-    [0.21, 'balanced', 'outcome.unsure'],
-    [0.34, 'firm', 'outcome.miss.firm'],
-    [0.3, 'soft', 'outcome.miss.soft'],
+test('the line under the time: one key per class, each in the catalogue', () => {
+  const cases: [Certainty, string][] = [
+    ['veryCertain', 'certainty.veryCertain'], ['ballpark', 'certainty.ballpark'], ['wildGuess', 'certainty.wildGuess'],
   ];
-  for (const [right, lean, key] of cases) {
-    assert.equal(directionKey(outcome({ pJustRight: right, lean: lean })), key, `${right} ${lean}`);
+  for (const [c, key] of cases) {
+    assert.equal(certaintyKey(c), key);
     assert.ok(key in MESSAGES, `${key} is not in copy/en.json`);
+  }
+});
+
+test('the interval in the slider\'s words, 9 times in 10, one word when one word holds it; most likely, shown unpressed only when not the word asked', () => {
+  // A fresh jammy egg: wide, most likely the word asked.
+  const fresh = wordCertainty([0.12, 0.25, 0.32, 0.22, 0.09], 2);
+  assert.deepEqual(intervalWords(fresh), {
+    key: 'certainty.interval', args: { hits: 9, of: 10 }, words: { from: 'doneness.runny', to: 'doneness.fudgy' },
+  });
+  assert.deepEqual(mostLikelyWords(fresh), { key: 'certainty.mostLikely', args: {}, words: { word: 'doneness.jammy' } });
+  assert.equal(mostLikelyShown(fresh), false);
+  assert.equal(mostLikelyOpened(fresh), true, 'in what opens, since not under the line');
+  // Very certain: one word holds 9 in 10.
+  const sure = wordCertainty([0.01, 0.01, 0.94, 0.03, 0.01], 2);
+  assert.deepEqual(intervalWords(sure), {
+    key: 'certainty.interval.one', args: { hits: 9, of: 10 }, words: { word: 'doneness.jammy' },
+  });
+  assert.equal(mostLikelyOpened(sure), false, 'one word already says it');
+  // Soft asked on a pot that runs firm: most likely jammy, shown unpressed.
+  const firm = wordCertainty([0.03, 0.2, 0.68, 0.07, 0.02], 1);
+  assert.equal(firm.certainty, 'ballpark');
+  assert.deepEqual(mostLikelyWords(firm).words, { word: 'doneness.jammy' });
+  assert.equal(mostLikelyShown(firm), true);
+  assert.equal(mostLikelyOpened(firm), false, 'not said twice');
+  for (const key of ['certainty.interval', 'certainty.interval.one', 'certainty.mostLikely', 'certainty.time']) {
+    assert.ok(key in MESSAGES, key);
   }
 });
 
@@ -80,11 +105,15 @@ test('an outcome carried with a cook comes back whole, or not at all', () => {
   assert.equal(restoreOutcome(partial), null);
 });
 
-test('the direction\'s (i) and what it opens are in the catalogue, and the suggestion is not', () => {
-  for (const key of ['outcome.info', 'outcome.bracket', 'outcome.why', 'outcome.learning']) {
+test('what the direction\'s (i) opened is in Help now, and the direction, its (i) and the suggestion are not in the catalogue', () => {
+  for (const key of ['outcome.bracket', 'outcome.why', 'outcome.learning', 'certainty.help']) {
     assert.ok(key in MESSAGES, key);
   }
-  for (const key of ['outcome.safe.firm', 'outcome.safe.soft', 'outcome.safe.firmer', 'outcome.safe.softer']) {
+  for (const key of [
+    'outcome.safe.firm', 'outcome.safe.soft', 'outcome.safe.firmer', 'outcome.safe.softer',
+    'outcome.likely', 'outcome.likely.firm', 'outcome.likely.soft', 'outcome.unsure', 'outcome.miss.firm',
+    'outcome.miss.soft', 'outcome.info', 'warn.lowOdds',
+  ]) {
     assert.ok(!(key in MESSAGES), `${key} is retired`);
   }
 });

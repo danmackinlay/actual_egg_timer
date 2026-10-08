@@ -244,6 +244,16 @@ function compareDraft(beforePath: string, afterPath: string, draftName: string |
   const is = pool(after, (s) => s);
   const added = rows.flatMap((d) => (d.after === null ? [] : Object.values(d.after)));
   const retired = rows.flatMap((d) => (d.before === null || d.after !== null ? [] : Object.values(d.before)));
+  // Templates whose words stand, read as the web renders them, whose
+  // inserted words the draft's change in core moved (`argumentsMoved`).
+  const draft = draftFor(draftName);
+  const english = (JSON.parse(readFileSync('copy/en.json', 'utf8')) as { messages: Record<string, Templates> }).messages;
+  const moved = Object.keys(draft.argumentsMoved ?? {}).flatMap((key) => {
+    const entry = english[key] as Record<string, unknown> | undefined;
+    if (entry === undefined) throw new Error(`argumentsMoved names ${key}, which is not in copy/en.json`);
+    return ['text', 'zero', 'one', 'two', 'few', 'many', 'other']
+      .map((c) => entry[c]).filter((t): t is string => typeof t === 'string').map((t) => t.replace(/\s+/g, ' '));
+  });
 
   const failures: string[] = [];
   const appeared: string[] = [];
@@ -254,6 +264,7 @@ function compareDraft(beforePath: string, afterPath: string, draftName: string |
   for (const [key, text] of is) {
     if (was.has(key)) continue;
     if (matchesAny(text, added) || isPieceOfAny(text, added)) appeared.push(text);
+    else if (matchesAny(text, moved)) appeared.push(text);
     // A value, not a word, newly on a screen: a field shown in more states.
     else if (isValue(text)) appeared.push(text);
     else failures.push(`new, and not drafted: "${text}"`);
@@ -276,7 +287,7 @@ function compareDraft(beforePath: string, afterPath: string, draftName: string |
       vanished.push(text);
       continue;
     }
-    if (matchesAny(text, retired)) vanished.push(text);
+    if (matchesAny(text, retired) || matchesAny(text, moved)) vanished.push(text);
     else failures.push(`gone, and not retired: "${text}"`);
   }
   // Every drafted rewrite the old build could show must have been shown by it,

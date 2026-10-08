@@ -12,11 +12,12 @@
  */
 
 import { CopyRef } from './copy.js';
-import { Lean, Outcome, WHITE_RISK } from './outcome.js';
+import { CERTAINTY_MASS, Certainty, WordCertainty } from './certainty.js';
+import { Outcome, WHITE_RISK } from './outcome.js';
 import { Phase, Verdict, anchorNear } from './policy.js';
 import { Cooling, HeatAfterBoil, StartMode } from './protocol.js';
 import { EggFrom } from './record.js';
-import { REACH_ODDS } from './reach.js';
+import { DONENESS_ANCHORS } from './solve.js';
 
 /* ----------------------------------------------------------- the refusal */
 
@@ -42,35 +43,90 @@ export function refusalKey(v: Verdict, cooling: Cooling): CopyRef | null {
 
 /**
  * The warning line while idle: the refusal, when there is one worth saying,
- * since it says what to change; otherwise, when the level on screen is one
- * the odds warn of (`lowOddsAt`, reach.ts), that it comes out right fewer
- * than 3 times in 10 so far. The app adds `doneness`, the word for the level
- * on screen, which stands alone before the colon (LANGUAGE.md section 5).
+ * since it says what to change; otherwise, when the level on screen is a
+ * dotted one (`lowOddsAt`, reach.ts: a wild guess, softer or firmer than
+ * every level that is not), that it is a wild guess so far. The app adds
+ * `doneness`, the word for the level on screen, which stands alone before
+ * the colon (LANGUAGE.md section 5).
  *
- * One line, not two: a slider just moved out of the stripes onto a level the
- * odds warn of says why it moved, and the dots under the thumb say the rest.
- * The next answer there, the slider no longer moving, carries the warning.
+ * One line, not two: a slider just moved out of the stripes onto a dotted
+ * level says why it moved, and the dots under the thumb say the rest. The
+ * next answer there, the slider no longer moving, carries the warning.
  */
 export function warningKey(v: Verdict, lowOdds: boolean, cooling: Cooling): CopyRef | null {
   const refusal = refusalKey(v, cooling);
   if (refusal !== null) return refusal;
   if (!lowOdds) return null;
-  return { key: 'warn.lowOdds', args: { hits: Math.round(REACH_ODDS * 10), of: 10 } };
+  return { key: 'warn.wildGuess', args: {} };
+}
+
+/* ---------------------------------------------------------- the certainty */
+
+/**
+ * HOW SURE, IN WORDS (DECISIONS.md 93 and 97; design/one-screen.md section 6).
+ * Under the time, where the direction was until the `certainty` draft: the
+ * class `certaintyAt` gives the time on screen, as a line the cook can
+ * press. Pressing it opens, in place, the 90% interval in the slider's words,
+ * the most likely word and the likely time range. "Most likely" also shows
+ * under the line, unpressed, when it is not the word asked: that is the one
+ * thing the class alone hides, a time that probably gives another yolk.
+ *
+ * The words of the interval and of the most likely word come back as
+ * doneness keys, for the app to render; each stands alone after a colon
+ * (LANGUAGE.md section 5). The interval's "9 times in 10" is CERTAINTY_MASS,
+ * as `hits` in `of`, so the words cannot say a number the class was not
+ * read at.
+ */
+
+/** The catalogue key of the line under the time. */
+export function certaintyKey(c: Certainty): string {
+  if (c === 'veryCertain') return 'certainty.veryCertain';
+  if (c === 'ballpark') return 'certainty.ballpark';
+  return 'certainty.wildGuess';
+}
+
+/** A key with its counts (`args`, as a `CopyRef`'s) and its inserted words
+ *  (`words`, each itself a doneness key for the caller to render). */
+export interface WordsRef {
+  key: string;
+  args: Readonly<Record<string, number>>;
+  words: Readonly<Record<string, string>>;
+}
+
+/** The 90% interval in the slider's words: "9 times in 10: Soft to Fudgy.",
+ *  or one word when one word holds it. `hits` in `of` is CERTAINTY_MASS. */
+export function intervalWords(w: WordCertainty): WordsRef {
+  const args = { hits: Math.round(CERTAINTY_MASS * 10), of: 10 };
+  if (w.from === w.to) {
+    return { key: 'certainty.interval.one', args: args, words: { word: DONENESS_ANCHORS[w.from].key } };
+  }
+  return {
+    key: 'certainty.interval', args: args,
+    words: { from: DONENESS_ANCHORS[w.from].key, to: DONENESS_ANCHORS[w.to].key },
+  };
+}
+
+/** "Most likely: Fudgy." */
+export function mostLikelyWords(w: WordCertainty): WordsRef {
+  return { key: 'certainty.mostLikely', args: {}, words: { word: DONENESS_ANCHORS[w.mostLikely].key } };
+}
+
+/** Whether "Most likely" shows under the line before it is pressed: only
+ *  when the most likely word is not the word asked. */
+export function mostLikelyShown(w: WordCertainty): boolean {
+  return w.mostLikely !== w.asked;
+}
+
+/** Whether "Most likely" is in what pressing the line opens: when it is not
+ *  already under the line, and the interval is more than one word. "9 times
+ *  in 10: Fudgy." already says the most likely word is Fudgy. */
+export function mostLikelyOpened(w: WordCertainty): boolean {
+  return !mostLikelyShown(w) && w.from !== w.to;
 }
 
 /* ------------------------------------------------------------ the outcome */
 
 /**
- * THE DIRECTION. "Probably just right" when the yolk is answered just right
- * at least half the time: "probably" means more likely than not, and nothing
- * less. Then a lean, when core gives one, as a second sentence of the same
- * message. Under half, the sentence leads with the miss, or says it cannot
- * call it when neither way is likelier (core's lean is 'balanced': a miss one
- * way less than three times in five). On the reference pot that is a fresh
- * install at every level (just right 0.21-0.30, balanced), and "probably just
- * right" from the first egg that taught something (0.56-0.58 after one egg
- * just right, 0.77 after three).
- *
  * THE WHITE. A line of its own when P(runny) is at least WHITE_RISK, one egg
  * in five. The chosen time already weighs a runny white three times a yolk
  * miss, so what is left above one in five is a white the time cannot fix
@@ -83,23 +139,12 @@ export function warningKey(v: Verdict, lowOdds: boolean, cooling: Cooling): Copy
  * THE RANGE. `levelLow` and `levelHigh` as the nearest doneness words, for a
  * screen reader: the bracket under the slider is drawn, and this is what it
  * says. The words stand alone after a colon (LANGUAGE.md section 5).
+ *
+ * The direction ("Probably just right. If not, a little firm.") and its lean
+ * retired with the `certainty` draft (DECISIONS.md 97): the yolk is answered
+ * in words since DECISIONS.md 92, and "just right" is no longer what the
+ * cook is asked.
  */
-
-/** P(just right) at or above which the yolk is "probably just right". */
-export const DIRECTION_LIKELY = 0.5;
-
-/** The catalogue key of the direction sentence. */
-export function directionKey(o: Outcome): string {
-  const lean: Lean = o.lean;
-  if (o.pJustRight >= DIRECTION_LIKELY) {
-    if (lean === 'firm') return 'outcome.likely.firm';
-    if (lean === 'soft') return 'outcome.likely.soft';
-    return 'outcome.likely';
-  }
-  if (lean === 'firm') return 'outcome.miss.firm';
-  if (lean === 'soft') return 'outcome.miss.soft';
-  return 'outcome.unsure';
-}
 
 /** Whether the white gets its line. */
 export function whiteAtRisk(o: Outcome): boolean {

@@ -4,11 +4,11 @@ import EggTimerCopy
 
 // MARK: - The warning line, in words
 
-/// The warning line, in words: a refusal, or the level's low odds. Which, and
-/// which words say it, are core's (`answerAt`, `warningKey`); the arguments are
-/// this app's, and they quote the pan the answer was computed for. The low
-/// odds name the level the slider rests on, a word standing alone before the
-/// colon.
+/// The warning line, in words: a refusal, or that the level is a wild guess.
+/// Which, and which words say it, are core's (`answerAt`, `warningKey`); the
+/// arguments are this app's, and they quote the pan the answer was computed
+/// for. The warning names the level the slider rests on, a word standing
+/// alone before the colon.
 func warningText(_ v: Verdict, lowOdds: Bool, level: Double, setup: CookSetup, water: String) -> String {
     guard let ref = warningKey(v, lowOdds: lowOdds, cooling: setup.cooling) else { return "" }
     return tr(ref, [

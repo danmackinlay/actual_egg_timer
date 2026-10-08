@@ -5143,3 +5143,66 @@ after a Lock and an unlock (the status bar clock stopped; taps still
 landed); a `simctl shutdown`/`boot` cleared it, and doubled as a
 relaunch test. The prefs plist on disk lags the app by several seconds
 after a terminate, as before.
+
+## 8 October 2026: how sure I am, in words, on both screens (SHIP-0.5 D1, the `certainty` draft)
+
+The direction ("Probably just right. If not, a little firm.") is gone from
+both apps, with its lean and its (i). Below the time display is one of
+the owner's three words from `certaintyAt` at the time on screen: "Very
+certain", "A ballpark figure", "A wild guess", a line the cook presses.
+It opens in place "9 times in 10: Runny to Fudgy.", "Most likely: Jammy."
+(unless already said), "I think the right time is between 10:02 and
+12:49." and, while idle, a link to Help, which now holds the (i)'s three
+paragraphs. "Most likely" also shows unpressed when it is not the word
+asked. While a cook runs the line is the plan's, held while a new pot's
+surface builds, until the pull. Commits `145441a`, `4668ff1` (core and
+Swift), `924a5ac` (web), `c5594c4` (iOS), and the draft's.
+
+**In core, TypeScript first.** The bracket is the 90% range (5% and 95%,
+was 10% and 90%), the same nine eggs in ten as the words; on 900 simulated
+eggs it held 87.7%, with 6.1% under and 6.2% over. Each odds-profile point
+also reads the five words' spread at its time: `pAsked`, the chance of the
+word asked, shades the track over the best level's (`bestAsked`), and
+`certaintyAt`'s class dots it: the dots are the wild guesses softer or
+firmer than every level that is not, bisected on the slider's grid as the
+3/10 ends were, none before the first egg, none when every level is a wild
+guess. `REACH_ODDS` went; `lowOddsAt` and `lowOdds` keep their names, so
+`running.ts` was not touched. `decideAnswer` carries the certainty. The
+wording is `certaintyKey`, `intervalWords`, `mostLikelyWords`,
+`mostLikelyShown` and `mostLikelyOpened`; `warningKey` says
+`warn.wildGuess`. Fixtures moved: `copy`, `outcome`, `reach`, `running`
+(only its profiles, which now carry the classes; one profile's soft end
+moved from 0.17 to 0.12) and `wording`.
+
+**Driven.** The web on my own dev server (port 8917) at 390 px, and iOS on
+a simulator of its own (iPhone 17 Pro, iOS 27.0), each in modern English
+and in 1750: a fresh install (a wild guess at jammy, the interval Runny to
+Fudgy, 10:02 to 12:49 on a cold start), four eggs called jammy (fudgy very
+certain, "9 times in 10: Fudgy."; at 0.10 a ballpark, "Most likely:
+Soft."), one egg called hard into boiling water (soft dotted, "A wild
+guess", "Most likely: Jammy.", "Soft: a wild guess so far."), and
+heating. The web's learned states were made by cooking through the page
+with `Date.now` stepped, as the copy-snapshot harness does; iOS's with
+`-seedEggs`. `-uiScreen certainty-open` opens the line.
+
+**Proved.** `node dist/tools/copyLiterals.js --since e9c4208 certainty`:
+only the drafted strings changed. `copySnapshot.js compare --draft
+certainty` against a capture at `e9c4208`: only the drafted strings, once
+the bracket's own words to a screen reader were allowed to move with it
+("Likely yolk: Soft to Fudgy" became "Runny to Fudgy" on a fresh jammy egg).
+That needed a field the proofs did not have: `argumentsMoved` in a draft,
+the keys whose words stand while the numbers behind them move, read only
+by the snapshot proof. A surface change (the (i)'s paragraphs to Help) is a
+row whose words are the same before and after, since `copyLiterals` counts
+a surface as words.
+
+**Seen, and left for the owner.** The shading by the chance of the word
+asked (17's choice) dips at each cut between words, because a level on a
+cut is half one word: on four learned eggs it reads 0.88 at 0.20, 0.57 at
+0.30 and 0.87 at 0.40, so the track looks banded rather than a smooth
+"where it works". And the owner's own egg of 5 October (soft asked, one
+egg with a runny white) is a ballpark at soft now, soft or a neighbour 9
+times in 10 because the time is held to jammy's, so it is no longer
+dotted or warned; "Most likely: Jammy." says where the yolk will land.
+The advice link under low odds still reads the odds of "just right",
+which nothing shows.

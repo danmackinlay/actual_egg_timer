@@ -217,27 +217,41 @@ button.mute[aria-pressed="true"] {
   color: var(--dim);
 }
 
-/* Which way the egg is likely to miss, with its (i), under the time; then
-   the white's line. While idle the direction
-   holds two lines, the most any of its sentences takes at 390 px, and sits in
-   their middle: so a drag that changes the sentence does not move the slider
-   under the thumb. Its (i) rides at the end of the sentence, wherever it
-   wraps. */
-#direction {
+/* How sure I am of the time, under it: a line of words the cook presses to
+   open, in place, what it means (UI.md section 8); under it "most likely"
+   when that is not the word asked; then the white's line. While idle the
+   line holds two lines' room, the word and "most likely", and sits in their
+   middle: so a drag that brings "most likely" or takes it away does not move
+   the slider under the thumb. The word is underlined, dotted in the accent
+   while closed and solid while open, as a link is: no chevron. */
+#certainty {
   margin: 6px auto 0;
   max-width: 24rem;
-  font-size: 0.9375rem;
-  font-weight: 600;
   line-height: 1.35;
-  text-wrap: balance;
 }
-body[data-phase="IDLE"]:not([data-start="sous"]) #direction {
+body[data-phase="IDLE"]:not([data-start="sous"]) #certainty {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   min-height: 3.25rem;
 }
-#directionText:empty { display: none; }
+button.disclose {
+  display: inline-block;
+  width: auto;
+  min-height: 32px;
+  padding: 2px 8px;
+  border: 0;
+  background: transparent;
+  color: var(--fg);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  text-decoration: underline dotted var(--accent);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 5px;
+}
+button.disclose[aria-expanded="true"] { text-decoration-style: solid; }
+#mostLikely { margin: 0; font-size: 0.875rem; color: var(--dim); }
 #whiteRisk { margin: 2px 0 0; font-size: 0.875rem; color: var(--warn); }
 
 /* ------------------------------------------------------------------- (i) */
@@ -289,8 +303,9 @@ button.info[aria-expanded="true"]::before { background: var(--fg); color: var(--
   border-radius: 0 8px 8px 0;
 }
 #readout .disclosed { margin-left: auto; margin-right: auto; max-width: 28rem; }
-#oddsWhy p { margin: 0; }
-#oddsWhy p + p { margin-top: 8px; }
+#certaintyMore p { margin: 0; }
+#certaintyMore p:not([hidden]) ~ p { margin-top: 8px; }
+#certaintyMore a.morelink { padding: 2px 0; }
 
 /* --------------------------------------------------------------- the egg */
 

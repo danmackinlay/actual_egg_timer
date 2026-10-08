@@ -2,7 +2,7 @@ import SwiftUI
 import EggTimerCore
 import EggTimerCopy
 
-/// The phase, the time, and the line under it; then the direction's slot.
+/// The phase, the time, and the line under it; then how sure I am.
 ///
 /// Sous-vide is answered honestly and separately: no cook to run, no clock
 /// to start, and a start time that has already been and gone. It branches
@@ -17,10 +17,13 @@ struct ReadoutView: View {
     /// What the sous-vide screen says at `now`, or nil for a pan and while a
     /// cook runs.
     let sousVide: SousVideCopy?
-    /// Whether the direction's (i) is open.
-    @Binding var directionInfoOpen: Bool
+    /// Whether the certainty line is open.
+    @Binding var certaintyOpen: Bool
     /// Whether the Learning mark's (i) is open.
     @State private var learningOpen = false
+    /// The running cook's certainty as last read, held while a new pot's
+    /// surface is built (the boil tapped), as the web holds it.
+    @State private var heldRunning: CertaintyReading?
 
     private var planner: Planner { model.planner }
     private var cook: Cook { model.cook }
@@ -59,8 +62,14 @@ struct ReadoutView: View {
                     .animation(.snappy, value: bigTime)
 
                 sublineLine
-                direction
+                certaintyLine
             }
+        }
+        .onChange(of: cook.plan?.certainty) { _, now in
+            if let now { heldRunning = now }
+        }
+        .onChange(of: phase == .idle) { _, idle in
+            if idle { heldRunning = nil }
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 22)
@@ -117,47 +126,79 @@ struct ReadoutView: View {
         }
     }
 
-    /// The direction's slot, beneath the time (UI.md section 8, the web's
-    /// `renderOdds`): which way the egg is likely to miss, with one (i), "How
-    /// sure I am", at its end; what the (i) opens; and a line when a runny
-    /// white is a real risk.
+    /// How sure I am of the time on screen, beneath it (UI.md section 8, the
+    /// web's `renderOdds`; DECISIONS.md 93 and 97): the class as a line the
+    /// cook presses, which opens in place the 90% interval in the slider's
+    /// words, "most likely" when it is not already said (`mostLikelyOpened`),
+    /// the likely time range and, while idle, the way to Help's "How sure I
+    /// am". "Most likely" shows under the line unpressed when it is not the
+    /// word asked (`mostLikelyShown`). Then a line when a runny white is a
+    /// real risk.
     ///
     /// While idle it is the choice on screen's, and blank until this pot's
-    /// surface lands. The sentence holds two lines, the most any of them
-    /// takes, so a drag that changes it does not move the slider. Once a cook
-    /// is running the direction and the white's line are its plan's, on its
-    /// pot's surface (held while a new pot's is built); the (i), which is
-    /// about the slider, goes with the slider.
-    /// Never where the white never sets: there is no cook to say anything
-    /// about.
-    ///
-    /// There is no play-safe suggestion under it, and no "still learning" line,
-    /// as on the web: the slider and the bracket already show the one, and "I
-    /// can't call it yet" already says the other. What I learn from is the last
-    /// paragraph of the (i).
+    /// surface lands; the line holds two lines' room, the word and "most
+    /// likely", so a drag that brings "most likely" or takes it away does not
+    /// move the slider. Once a cook is running it is its plan's, on its pot's
+    /// surface (held while a new pot's is built), until the pull, when the
+    /// time it was about has passed (design/one-screen.md section 7, 12); the
+    /// white's line stays to the end. Never where the white never sets: there
+    /// is no cook to say anything about.
     @ViewBuilder
-    private var direction: some View {
+    private var certaintyLine: some View {
         let idle = phase == .idle
         // While idle, the choice on screen's; once a cook is running, its
         // plan's.
         let o = idle ? planner.heldOutcome : cook.outcome
+        let sure: CertaintyReading? = switch phase {
+        case .idle: planner.heldCertainty
+        case .heating, .cooking: cook.plan?.solution.whiteSets == true ? (cook.plan?.certainty ?? heldRunning) : nil
+        case .pull, .cooling, .done: nil
+        }
         VStack(spacing: 2) {
-            HStack(alignment: .center, spacing: 2) {
-                ZStack {
-                    // Two lines' room while idle, one sentence centred in it.
-                    if idle { Text(verbatim: " \n ").hidden().accessibilityHidden(true) }
-                    Text(o.map { tr(directionKey($0)) } ?? "")
-                        .fixedSize(horizontal: false, vertical: true)
+            ZStack {
+                // Two lines' room while idle, the word and "most likely".
+                if idle {
+                    Text(verbatim: " \n ").appFont(.subheadline).padding(.vertical, 4).hidden().accessibilityHidden(true)
                 }
-                .appFont(.subheadline, weight: .semibold)
-                if idle && o != nil {
-                    InfoButton(expanded: $directionInfoOpen, name: tr("outcome.info"))
+                if let sure {
+                    VStack(spacing: 2) {
+                        Button {
+                            withAnimation(.snappy) { certaintyOpen.toggle() }
+                        } label: {
+                            Text(tr(certaintyKey(sure.words.certainty)))
+                                .underline(true, pattern: certaintyOpen ? .solid : .dot, color: Palette.accent)
+                                .appFont(.subheadline, weight: .semibold)
+                                .padding(.vertical, 4)
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityValue(tr(certaintyOpen ? "more.expanded" : "more.collapsed"))
+                        if mostLikelyShown(sure.words) {
+                            Text(rendered(mostLikelyWords(sure.words)))
+                                .appFont(.footnote)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
                 }
             }
-            if idle && o != nil && directionInfoOpen {
-                MoreText([tr("outcome.bracket"), tr("outcome.why"), tr("outcome.learning")])
-                    .padding(.top, 4)
-                    .transition(.opacity)
+            if let sure, certaintyOpen {
+                VStack(alignment: .leading, spacing: 0) {
+                    MoreText(opened(sure))
+                    if idle {
+                        NavigationLink(value: Route.help(.odds)) {
+                            HStack(spacing: 4) {
+                                Text(tr("certainty.help"))
+                                Image(systemName: "arrow.right")
+                                    .accessibilityHidden(true)
+                            }
+                            .appFont(.footnote, weight: .semibold)
+                        }
+                        .tint(Palette.accent)
+                        .padding(.top, 6)
+                    }
+                }
+                .padding(.top, 4)
+                .transition(.opacity)
             }
             if let o, whiteAtRisk(o) {
                 Text(tr("outcome.whiteRunny"))
@@ -167,6 +208,26 @@ struct ReadoutView: View {
             }
         }
         .multilineTextAlignment(.center)
+    }
+
+    /// A key with its counts and its doneness words, rendered.
+    private func rendered(_ ref: WordsRef) -> String {
+        var args: CopyArgs = [:]
+        for (name, value) in ref.args { args[name] = .number(value) }
+        for (name, key) in ref.words { args[name] = .text(tr(key)) }
+        return tr(ref.key, args)
+    }
+
+    /// What pressing the certainty line opens: the interval, "most likely"
+    /// when it is not already said, and the likely time range, m:ss as the
+    /// clock shows it.
+    private func opened(_ sure: CertaintyReading) -> [String] {
+        var lines = [rendered(intervalWords(sure.words))]
+        if mostLikelyOpened(sure.words) { lines.append(rendered(mostLikelyWords(sure.words))) }
+        lines.append(tr("certainty.time", [
+            "low": .text(clockString(sure.time.lowS)), "high": .text(clockString(sure.time.highS)),
+        ]))
+        return lines
     }
 
     /// The web's clock face in every phase: the countdown, how late the pull

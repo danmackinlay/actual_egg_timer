@@ -30,8 +30,8 @@ struct ContentView: View {
     /// than in the control, which leaves the screen while a cook runs, so the
     /// control comes back with the inset it had.
     @State private var thumbInset: CGFloat = 14
-    /// Whether the direction's (i) is open.
-    @State private var directionInfoOpen = false
+    /// Whether the certainty line under the time is open.
+    @State private var certaintyOpen = false
     @Environment(\.scenePhase) private var scenePhase
 
     private var planner: Planner { model.planner }
@@ -73,7 +73,7 @@ struct ContentView: View {
                         ReadoutView(
                             model: model, phase: phase, now: context.date,
                             sousVide: sousVideAt(context.date, sousVide, phase: phase),
-                            directionInfoOpen: $directionInfoOpen
+                            certaintyOpen: $certaintyOpen
                         )
                     }
                     .id(tick)
@@ -168,7 +168,7 @@ struct ContentView: View {
         case "settings": path = [.settings]
         case "help": path = [.help(nil)]
         case "help-reliable": path = [.help(.reliable)]
-        case "direction-info": directionInfoOpen = true
+        case "certainty-open": certaintyOpen = true
         case "heating":
             guard cook.phase == .idle else { return }
             model.eggsIn()

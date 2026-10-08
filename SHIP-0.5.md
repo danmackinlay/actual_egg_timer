@@ -214,12 +214,28 @@ core's exports.
 
 ## D. Certainty in words, on screen (`DECISIONS.md` 93, with C)
 
-- [ ] **D1. The `certainty` draft**: the three words, the interval line on
+- [x] **D1. The `certainty` draft**: the three words, the interval line on
       a tap ("9 times in 10: between Soft and Fudgy. Most likely Jammy."),
       the time range; the 3/10 warning, the lean line and the ticks'
       colours restated in these terms; "just right" odds retired. Both
       apps, en-US and 1750 twins, fitted to `test/data/surfaces.json`.
       The owner judges it on a phone.
+      *Built:* `145441a`, `4668ff1` (core, Swift, fixtures), `924a5ac`
+      (web), `c5594c4` (iOS) and the draft's commit
+      (`tools/drafts/certainty.ts`, both proofs). Below the time: "Very
+      certain", "A ballpark figure" or "A wild guess", pressed to open "9
+      times in 10: Runny to Fudgy.", "Most likely: Jammy." unless already
+      said, "I think the right time is between 10:02 and 12:49." and,
+      while idle, a link to Help, which holds the (i)'s paragraphs now.
+      "Most likely" shows unpressed when it is not the word asked; the
+      line goes at the pull. The bracket is the 90% range; the shading is
+      the chance of the word asked over the best level's; a dotted level
+      is a wild guess softer or firmer than every surer one, and the
+      warning says "Soft: a wild guess so far." No en-US entry was needed.
+      The direction, its (i) and the lean are retired; no odds are shown.
+      Driven in both apps and both Englishes (`LOGBOOK.md`, 8 October
+      2026); `UI.md` §8 is the readout as built. Waiting on the owner, on
+      a phone (`PLAN.md`).
 
 ## E. Tidy-ups sent to 0.5 without a choice made
 

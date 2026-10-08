@@ -9,11 +9,11 @@ struct WordingConformance {
     @Test("the constants")
     func constants() throws {
         let c = try Fixtures.object("wording.json", "constants")
-        #expect(try directionLikely == c.num("directionLikely"))
+
         #expect(try whiteRisk == c.num("whiteRisk"))
     }
 
-    @Test("the warning line's key: a refusal, or low odds")
+    @Test("the warning line's key: a refusal, or a wild guess")
     func warning() throws {
         for row in try Fixtures.list("wording.json", "warning") {
             let kind = try row.value(RefusalKind.self, "kind")
@@ -32,24 +32,47 @@ struct WordingConformance {
         }
     }
 
-    @Test("the outcome's direction, white line and range")
+    @Test("the outcome's white line and range")
     func outcome() throws {
         for row in try Fixtures.list("wording.json", "outcome") {
-            let lean = try row.value(Lean.self, "lean")
             let o = try Outcome(
-                pTooSoft: 0, pJustRight: row.num("pJustRight"), pTooFirm: 0, pWhiteRunny: row.num("pWhiteRunny"),
+                pTooSoft: 0, pJustRight: 0, pTooFirm: 0, pWhiteRunny: row.num("pWhiteRunny"),
                 pWhiteTender: 1 - row.num("pWhiteRunny"), pWhiteFirm: 0, pYolkWord: nil,
                 levelLow: row.num("levelLow"), levelMedian: row.num("levelLow"), levelHigh: row.num("levelHigh"),
-                lean: lean
+                lean: .balanced
             )
-            let label = "\(o.pJustRight) \(lean) \(o.pWhiteRunny)"
-            #expect(try directionKey(o) == row.str("direction"), "\(label) direction")
+            let label = "\(o.pWhiteRunny) \(o.levelLow)"
             #expect(try whiteAtRisk(o) == row.flag("whiteAtRisk"), "\(label) white")
             let range = try row.object("range")
             let args = try #require(range["args"] as? [String: String], "range \(row)")
             let r = rangeWords(o)
             #expect(try r.key == range.str("key"), "\(label) range key")
             #expect(r.args == args, "\(label) range args")
+        }
+    }
+
+    @Test("the line under the time, and what pressing it opens")
+    func certainty() throws {
+        let c = try Fixtures.object("wording.json", "certainty")
+        for row in try c.rows("keys") {
+            #expect(try certaintyKey(row.value(Certainty.self, "certainty")) == row.str("key"), "\(row)")
+        }
+        for row in try c.rows("words") {
+            let p = try #require(row["p"] as? [NSNumber], "p in \(row)").map(\.doubleValue)
+            let asked = try Int(row.num("asked"))
+            let w = wordCertainty(p, asked: asked)
+            let label = "\(p) asked \(asked)"
+            #expect(try w.certainty.rawValue == row.str("certainty"), "\(label) class")
+            #expect(try certaintyKey(w.certainty) == row.str("key"), "\(label) key")
+            for (name, got) in [("interval", intervalWords(w)), ("mostLikely", mostLikelyWords(w))] {
+                let e = try row.object(name)
+                #expect(try got.key == e.str("key"), "\(label) \(name) key")
+                let args = (e["args"] as? [String: NSNumber])?.mapValues(\.doubleValue) ?? [:]
+                #expect(got.args == args, "\(label) \(name) args")
+                #expect(got.words == (e["words"] as? [String: String]), "\(label) \(name) words")
+            }
+            #expect(try mostLikelyShown(w) == row.flag("mostLikelyShown"), "\(label) shown")
+            #expect(try mostLikelyOpened(w) == row.flag("mostLikelyOpened"), "\(label) opened")
         }
     }
 

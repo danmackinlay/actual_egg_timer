@@ -1,5 +1,7 @@
 /**
  * The (i): every disclosure on the page, one component (UI.md section 4).
+ * The certainty line under the time is a disclosure too, a line of words
+ * rather than an (i) (`button.disclose`), opened and closed the same way.
  */
 
 import { t } from './copy.js';
@@ -36,7 +38,7 @@ export function showInfo(button: HTMLButtonElement, visible: boolean): void {
  */
 export function wireInfoButtons(): void {
   labelInfoButtons();
-  for (const button of Array.from(document.querySelectorAll<HTMLButtonElement>('button.info'))) {
+  for (const button of Array.from(document.querySelectorAll<HTMLButtonElement>('button.info, button.disclose'))) {
     button.addEventListener('click', () => toggleDisclosure(button));
   }
 }

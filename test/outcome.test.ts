@@ -5,7 +5,7 @@
  * What is checked here is the reasoning - the answers are the ones the model
  * already predicts, the range leaves the taste offset out and keeps the noise
  * in, the clamps say what they mean - and, on simulated cooks, that the range
- * holds the egg about four times in five and the answers are calibrated.
+ * holds the egg about nine times in ten and the answers are calibrated.
  * `fixtures/outcome.json` pins the arithmetic for the Swift port; `npm run
  * decide -- outcome` prints the larger run and the cost.
  *
@@ -23,7 +23,7 @@ import {
   FEEDBACK_BAND, Feedback, Particle, Posterior, UNRELATED, WhiteReport, answerLikelihood,
   createPrior, updatePosterior, whiteAnswerProbabilities, yolkAnswerProbabilities,
 } from '../src/core/infer.js';
-import { LEAN_RATIO, Outcome, leanOf, predictOutcome } from '../src/core/outcome.js';
+import { LEAN_RATIO, LEVEL_HIGH_Q, LEVEL_LOW_Q, Outcome, leanOf, predictOutcome } from '../src/core/outcome.js';
 import { ALPHA_DEFAULT } from '../src/core/constants.js';
 import { eggFromMass } from '../src/core/geometry.js';
 import { logYolkTarget, sliderFromYolkDose } from '../src/core/solve.js';
@@ -91,15 +91,16 @@ test('the level range keeps the noise: it is wider than the particles alone, and
     return rows[rows.length - 1].t;
   };
   // About 1.2 times as wide here, from seed to seed 1.12-1.36 at 400
-  // particles and 1.17-1.24 at 4000 (LOGBOOK.md, 6 October 2026).
-  assert.ok(o.levelHigh - o.levelLow > 1.1 * (q(0.9) - q(0.1)), `${o.levelLow}-${o.levelHigh} against ${q(0.1)}-${q(0.9)}`);
+  // particles and 1.17-1.24 at 4000, measured on the 80% range (LOGBOOK.md,
+  // 6 October 2026); the bracket is the 90% range since the certainty draft.
+  assert.ok(o.levelHigh - o.levelLow > 1.1 * (q(LEVEL_HIGH_Q) - q(LEVEL_LOW_Q)), `${o.levelLow}-${o.levelHigh} against ${q(LEVEL_LOW_Q)}-${q(LEVEL_HIGH_Q)}`);
   // With next to no noise the mixture is the particles, and its points are
   // theirs, to within the step between neighbouring particles.
   const quiet: Posterior = { ...post, particles: post.particles.map((p) => ({ ...p, noise: 1e-6 })) };
   const s = predictOutcome(quiet, GRID, t, JAMMY);
-  assert.ok(Math.abs(s.levelLow - q(0.1)) < 2e-3, `${s.levelLow} against ${q(0.1)}`);
+  assert.ok(Math.abs(s.levelLow - q(LEVEL_LOW_Q)) < 2e-3, `${s.levelLow} against ${q(LEVEL_LOW_Q)}`);
   assert.ok(Math.abs(s.levelMedian - q(0.5)) < 2e-3, `${s.levelMedian} against ${q(0.5)}`);
-  assert.ok(Math.abs(s.levelHigh - q(0.9)) < 2e-3, `${s.levelHigh} against ${q(0.9)}`);
+  assert.ok(Math.abs(s.levelHigh - q(LEVEL_HIGH_Q)) < 2e-3, `${s.levelHigh} against ${q(LEVEL_HIGH_Q)}`);
 });
 
 test('the clamps: under the runny end reads 0, past the hard end reads 1', () => {
@@ -143,7 +144,7 @@ function egg(truth: Particle, t: number, target: number, random: () => number): 
 
 interface Tally { n: number; inside: number; under: number; over: number }
 
-test('on simulated cooks the level range holds the egg about four times in five, and the answers are calibrated', () => {
+test('on simulated cooks the level range holds the egg about nine times in ten, and the answers are calibrated', () => {
   // As test/decideOdds.test.ts: each cook's truth a draw from the prior, every
   // egg at the time the app would choose, the answers the truth's own. Here
   // the egg is drawn first - a delivered dose, the truth's time-scale plus its
@@ -205,8 +206,10 @@ test('on simulated cooks the level range holds the egg about four times in five,
   console.log(`# outcome, ${range.n} eggs: inside the range ${share(range.inside)}, under ${share(range.under)}, over ${share(range.over)}; `
     + `ECE too soft ${eces[0].toFixed(4)}, just right ${eces[1].toFixed(4)}, too firm ${eces[2].toFixed(4)}, runny ${eces[3].toFixed(4)}`);
   const inside = range.inside / range.n;
-  assert.ok(Math.abs(inside - 0.8) < 0.05, `inside ${inside}`);
-  assert.ok(range.under / range.n > 0.05 && range.under / range.n < 0.15, `under ${range.under}`);
-  assert.ok(range.over / range.n > 0.05 && range.over / range.n < 0.15, `over ${range.over}`);
+  // 87.7% inside, 6.1% under and 6.2% over with the 90% range (the
+  // `certainty` draft, 8 October 2026).
+  assert.ok(Math.abs(inside - (LEVEL_HIGH_Q - LEVEL_LOW_Q)) < 0.05, `inside ${inside}`);
+  assert.ok(range.under / range.n > 0.02 && range.under / range.n < 0.1, `under ${range.under}`);
+  assert.ok(range.over / range.n > 0.02 && range.over / range.n < 0.1, `over ${range.over}`);
   for (const ece of eces) assert.ok(ece < 0.06, `ECE ${eces.join(', ')}`);
 });

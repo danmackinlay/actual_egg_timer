@@ -28,38 +28,73 @@ public func refusalKey(_ v: Verdict, cooling: Cooling) -> CopyRef? {
 }
 
 /// The warning line while idle: the refusal, when there is one worth saying,
-/// since it says what to change; otherwise, when the level on screen is one the
-/// odds warn of (`lowOddsAt`), that it comes out right fewer than 3 times in 10
-/// so far. The app adds `doneness`, the word for the level on screen. One line,
-/// not two: a slider just moved out of the stripes says why it moved, and the
-/// next answer there carries the warning.
+/// since it says what to change; otherwise, when the level on screen is a
+/// dotted one (`lowOddsAt`: a wild guess, softer or firmer than every level
+/// that is not), that it is a wild guess so far. The app adds `doneness`, the
+/// word for the level on screen. One line, not two: a slider just moved out of
+/// the stripes says why it moved, and the next answer there carries the
+/// warning.
 public func warningKey(_ v: Verdict, lowOdds: Bool, cooling: Cooling) -> CopyRef? {
     if let refusal = refusalKey(v, cooling: cooling) { return refusal }
     guard lowOdds else { return nil }
-    return CopyRef("warn.lowOdds", ["hits": (reachOdds * 10).rounded(), "of": 10])
+    return CopyRef("warn.wildGuess")
+}
+
+// MARK: - The certainty
+
+/// The catalogue key of the line under the time (src/core/wording.ts, "How
+/// sure, in words").
+public func certaintyKey(_ c: Certainty) -> String {
+    switch c {
+    case .veryCertain: return "certainty.veryCertain"
+    case .ballpark: return "certainty.ballpark"
+    case .wildGuess: return "certainty.wildGuess"
+    }
+}
+
+/// A key with its counts (`args`, as a `CopyRef`'s) and its inserted words
+/// (`words`, each itself a doneness key for the caller to render).
+public struct WordsRef: Sendable, Equatable {
+    public let key: String
+    public let args: [String: Double]
+    public let words: [String: String]
+}
+
+/// The 90% interval in the slider's words: "9 times in 10: Soft to Fudgy.",
+/// or one word when one word holds it. `hits` in `of` is `certaintyMass`.
+public func intervalWords(_ w: WordCertainty) -> WordsRef {
+    let args: [String: Double] = ["hits": (certaintyMass * 10).rounded(), "of": 10]
+    if w.from == w.to {
+        return WordsRef(key: "certainty.interval.one", args: args, words: ["word": donenessAnchors[w.from].key])
+    }
+    return WordsRef(
+        key: "certainty.interval", args: args,
+        words: ["from": donenessAnchors[w.from].key, "to": donenessAnchors[w.to].key]
+    )
+}
+
+/// "Most likely: Fudgy."
+public func mostLikelyWords(_ w: WordCertainty) -> WordsRef {
+    WordsRef(key: "certainty.mostLikely", args: [:], words: ["word": donenessAnchors[w.mostLikely].key])
+}
+
+/// Whether "Most likely" shows under the line before it is pressed: only when
+/// the most likely word is not the word asked.
+public func mostLikelyShown(_ w: WordCertainty) -> Bool {
+    w.mostLikely != w.asked
+}
+
+/// Whether "Most likely" is in what pressing the line opens: when it is not
+/// already under the line, and the interval is more than one word.
+public func mostLikelyOpened(_ w: WordCertainty) -> Bool {
+    !mostLikelyShown(w) && w.from != w.to
 }
 
 // MARK: - The outcome
 
-/// P(just right) at or above which the yolk is "probably just right": more
-/// likely than not, and nothing less.
-public let directionLikely = 0.5
-
-/// The catalogue key of the direction sentence.
-public func directionKey(_ o: Outcome) -> String {
-    if o.pJustRight >= directionLikely {
-        switch o.lean {
-        case .firm: return "outcome.likely.firm"
-        case .soft: return "outcome.likely.soft"
-        case .balanced: return "outcome.likely"
-        }
-    }
-    switch o.lean {
-    case .firm: return "outcome.miss.firm"
-    case .soft: return "outcome.miss.soft"
-    case .balanced: return "outcome.unsure"
-    }
-}
+/// The direction ("Probably just right. If not, a little firm.") retired
+/// with the certainty draft (DECISIONS.md 97); the line under the time is
+/// `certaintyKey`'s.
 
 /// Whether the white gets its line.
 public func whiteAtRisk(_ o: Outcome) -> Bool {

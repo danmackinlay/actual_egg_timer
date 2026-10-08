@@ -76,6 +76,7 @@ extension Planner {
             warning = ""
             decision = nil
             outcome = nil
+            certainty = nil
             oddsProfile = nil
             advice = []
             held = Held()
@@ -178,6 +179,7 @@ extension Planner {
         chosen.decision = d.decision
         chosen.nudgeS = d.nudgeS
         chosen.outcome = d.outcome
+        chosen.certainty = d.certainty
         if answer.profile == nil {
             chosen.missing.append(decisionInputs(calibration, egg: egg, setup: answer.setup))
         }
@@ -318,6 +320,7 @@ extension Planner {
         answered = question
         decision = answer.decision
         outcome = answer.decision == nil ? nil : answer.outcome
+        certainty = answer.decision == nil ? nil : answer.certainty
         appliedNudgeS = answer.decision == nil ? 0 : answer.nudgeS
         oddsProfile = answer.profile
         advice = answer.advice
@@ -339,8 +342,9 @@ extension Planner {
         /// Why it was refused, if it was, and where the slider must go: only
         /// out of what the pan cannot deliver.
         var verdict: Verdict
-        /// Whether the level answered comes out right fewer than 3 times in
-        /// 10 so far (`lowOddsAt`): the dots, which the slider rests on.
+        /// Whether the level answered is a wild guess so far, softer or
+        /// firmer than every level that is not (`lowOddsAt`): the dots, which
+        /// the slider rests on.
         var lowOdds: Bool
         /// The setup this answer is about, so the warning can quote the pan
         /// the answer was computed for rather than whatever is current.
@@ -351,6 +355,8 @@ extension Planner {
         var decision: Decision? = nil
         /// What the egg at the chosen time will be like, with the decision.
         var outcome: Outcome? = nil
+        /// How sure I am of it, with the decision.
+        var certainty: CertaintyReading? = nil
         /// The nudge the chosen time took (`appliedNudge`).
         var nudgeS: Double = 0
         /// The odds at every level for this pot and posterior (Reach.swift),
