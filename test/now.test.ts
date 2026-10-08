@@ -7,7 +7,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { devClockAt, devTime, isDevHost, parseSpan } from '../src/ui/now.js';
+import { devClockAt, devTime, isDevHost, parseMoment, parseSpan } from '../src/ui/now.js';
 
 const REAL = 1_790_000_000_000;
 const KEPT = JSON.stringify({ speed: 60, real0_ms: REAL - 10_000, page0_ms: REAL + 3_600_000 });
@@ -24,6 +24,7 @@ test('2. off this machine the clock is the real one, whatever the address and th
     assert.equal(devClockAt(host, '?clock=60&at=+1h', null, REAL), null);
     assert.equal(devClockAt(host, '', KEPT, REAL), null);
     assert.equal(devClockAt(host, '?at=-15m', KEPT, REAL), null);
+    assert.equal(devClockAt(host, '?clock=0&at=2026-10-08T07:30:00Z', null, REAL), null);
   }
 });
 
@@ -55,6 +56,26 @@ test('4. on localhost: the speed and the shift asked for, carried on across a re
   assert.equal(devClockAt('localhost', '', null, REAL), null);
   // What does not read is the real clock.
   assert.equal(devClockAt('localhost', '?clock=-3', '{"speed":"fast"}', REAL), null);
+});
+
+test('4b. a stopped clock: at the moment set, however much real time passes, and kept so across a reload', () => {
+  const MOMENT = Date.UTC(2026, 9, 8, 7, 30);
+  assert.equal(parseMoment('2026-10-08T07:30:00Z'), MOMENT);
+  assert.equal(parseMoment('2026-10-08T09:30+02:00'), MOMENT);
+  for (const bad of ['', '2026-10-08', '07:30', 'tomorrow', '2026-10-08T07:30:00']) assert.equal(parseMoment(bad), null, bad);
+  const c = devClockAt('127.0.0.1', '?clock=0&at=2026-10-08T07:30:00Z', null, REAL);
+  assert.deepEqual(c, { speed: 0, real0_ms: REAL, page0_ms: MOMENT });
+  if (c === null) return;
+  assert.equal(devTime(c, REAL + 3_600_000), MOMENT);
+  // A reload an hour of real time later: still stopped, still at the moment.
+  const back = devClockAt('localhost', '', JSON.stringify(c), REAL + 3_600_000);
+  assert.ok(back !== null);
+  assert.equal(back.speed, 0);
+  assert.equal(devTime(back, REAL + 7_200_000), MOMENT);
+  // Stopped where the real clock is: still a clock of its own.
+  assert.deepEqual(devClockAt('localhost', '?clock=0', null, REAL), { speed: 0, real0_ms: REAL, page0_ms: REAL });
+  // An empty ?clock= is not a speed.
+  assert.equal(devClockAt('localhost', '?clock=', null, REAL), null);
 });
 
 /** The module as a page loads it, at `hostname` with `search`, the tab
@@ -98,4 +119,28 @@ test('6. the page on localhost: the clock asked for, its handle, and the log mar
   assert.equal(m.devClockUsed(), true);
   assert.equal(local.get('aet.devClock.used'), '1');
   assert.ok(win['aetClock'] !== undefined);
+});
+
+test('7. stepped from a script: stopped, set to a moment, shifted, and running again', async () => {
+  const { m, win } = await pageAt('127.0.0.1', '?clock=0&at=2026-10-08T07:30:00Z', null);
+  const clock = win['aetClock'] as import('../src/ui/now.js').ClockHandle;
+  const MOMENT = Date.UTC(2026, 9, 8, 7, 30);
+  assert.equal(m.nowMs(), MOMENT);
+  assert.equal(m.clockSpeed(), 1, 'the tick and the beeps ahead take a stopped clock\'s steps as seconds');
+  // A shift keeps it stopped: the moment moves by the span, exactly.
+  assert.equal(clock.shift('+7m40s'), MOMENT + 460_000);
+  assert.equal(clock.shift(-0.5), MOMENT + 459_500);
+  assert.equal(clock.state()?.speed, 0);
+  assert.equal(clock.set('2026-10-08T08:00:00Z'), MOMENT + 1_800_000);
+  assert.equal(clock.set(MOMENT), MOMENT);
+  assert.equal(m.nowMs(), MOMENT);
+  assert.throws(() => clock.set('soon'));
+  assert.throws(() => clock.speed(-1));
+  // Running again from where it stood.
+  clock.speed(60);
+  assert.equal(m.clockSpeed(), 60);
+  assert.ok(m.nowMs() >= MOMENT);
+  clock.speed(0);
+  const t = m.nowMs();
+  assert.equal(m.nowMs(), t);
 });

@@ -9,15 +9,19 @@
  * (`npm run e2e`, tools/e2e.ts):
  *
  *   ?clock=60        sixty seconds of the cook's time to the real second
+ *   ?clock=0         stopped: it moves only when it is moved
  *   ?at=+7m40s       the clock set 7 min 40 s ahead of the real one
  *   ?at=-15m         or a quarter of an hour behind
+ *   ?at=2026-10-08T07:30:00Z   or to that moment
  *   ?clock=off       back to the real clock
  *
  * The two combine. The parameters are read once and taken out of the
  * address, and the clock is kept in sessionStorage, so a reload carries on
  * from the time the page had reached, at the same speed; a new tab starts on
  * the real clock. `window.aetClock` sets it from a console or a script
- * (`shift('+20m')`, `speed(60)`, `off()`). While it is on, a mark sits in the
+ * (`shift('+20m')`, `set(moment)`, `speed(60)`, `speed(0)`, `off()`). A
+ * stopped clock is what a script steps through a cook with (`npm run e2e`):
+ * it is at the moment the script set, however slow the machine running it. While it is on, a mark sits in the
  * page's corner - the speed and the shift, no words - and sharing sends
  * nothing from this browser's log until Forget everything clears it
  * (`devClockUsed`, share.ts): an egg cooked on a made-up clock never reaches
@@ -26,13 +30,14 @@
  * What follows the clock: every countdown, deadline and record (they read
  * `nowMs()`), the tick (every 0.2 s of the cook's time, `tickMs`), and the
  * pull's beeps scheduled ahead on the audio clock (a pull 60 s of the cook's
- * time away is 1 s of audio at x60). What does not: the beeps' own rhythm, a
+ * time away is 1 s of audio at x60; on a stopped clock, 60 s, as on the real
+ * one, until the clock is next moved). What does not: the beeps' own rhythm, a
  * sound for a person, and the timers that are not spans of the cook (the
  * solve's and the settings' coalescing, a request's timeout).
  */
 
 export interface DevClock {
-  /** The cook's seconds to the real second. */
+  /** The cook's seconds to the real second; 0 is stopped. */
   speed: number;
   /** The real time and the page's time when the clock was last set, ms. */
   real0_ms: number;
@@ -58,6 +63,14 @@ export function parseSpan(text: string): number | null {
   return (m[1] === '-' ? -1 : 1) * Math.round(s * 1000);
 }
 
+/** A moment as `?at=` takes it: a date and time, ISO 8601 with its zone
+ *  (`2026-10-08T07:30:00Z`), ms since 1970. Null if it does not read. */
+export function parseMoment(text: string): number | null {
+  if (!/^\d{4}-\d\d-\d\dT\d\d:\d\d(:\d\d(\.\d+)?)?(Z|[+-]\d\d:\d\d)$/.test(text.trim())) return null;
+  const ms = Date.parse(text.trim());
+  return Number.isFinite(ms) ? ms : null;
+}
+
 /** The page's time on `clock` at the real time `real_ms`. */
 export function devTime(clock: DevClock, real_ms: number): number {
   return clock.page0_ms + clock.speed * (real_ms - clock.real0_ms);
@@ -69,7 +82,7 @@ function readClock(text: string | null): DevClock | null {
     const o = JSON.parse(text) as Partial<DevClock> | null;
     if (o === null || typeof o !== 'object') return null;
     const { speed, real0_ms, page0_ms } = o;
-    if (typeof speed !== 'number' || !(speed > 0) || !Number.isFinite(speed)) return null;
+    if (typeof speed !== 'number' || !(speed >= 0) || !Number.isFinite(speed)) return null;
     if (typeof real0_ms !== 'number' || !Number.isFinite(real0_ms)) return null;
     if (typeof page0_ms !== 'number' || !Number.isFinite(page0_ms)) return null;
     return { speed: speed, real0_ms: real0_ms, page0_ms: page0_ms };
@@ -96,13 +109,14 @@ export function devClockAt(hostname: string, search: string, stored: string | nu
   const speedText = params.get('clock');
   const atText = params.get('at');
   if (speedText === 'off') return null;
-  const speed = speedText === null ? null : Number(speedText);
-  const at = atText === null ? null : parseSpan(atText);
+  const speed = speedText === null || speedText.trim() === '' ? null : Number(speedText);
+  const by = atText === null ? null : parseSpan(atText);
+  const moment = atText === null || by !== null ? null : parseMoment(atText);
   const page = kept === null ? real_ms : devTime(kept, real_ms);
   return orNone({
-    speed: speed !== null && speed > 0 && Number.isFinite(speed) ? speed : (kept?.speed ?? 1),
+    speed: speed !== null && speed >= 0 && Number.isFinite(speed) ? speed : (kept?.speed ?? 1),
     real0_ms: real_ms,
-    page0_ms: at === null ? page : real_ms + at,
+    page0_ms: moment !== null ? moment : by !== null ? real_ms + by : page,
   });
 }
 
@@ -117,9 +131,11 @@ export function nowMs(): number {
   return dev === null ? Date.now() : devTime(dev, Date.now());
 }
 
-/** The cook's seconds to the real second: 1 but on the development clock. */
+/** The cook's seconds to the real second, for what runs in real ones (the
+ *  tick, the beeps scheduled ahead): 1 but on the development clock running
+ *  fast. A stopped clock's steps are the cook's seconds, so it is 1 too. */
 export function clockSpeed(): number {
-  return dev === null ? 1 : dev.speed;
+  return dev === null || dev.speed === 0 ? 1 : dev.speed;
 }
 
 /** Call `f` whenever the development clock is set (never on the live site). */
@@ -203,14 +219,17 @@ export interface ClockHandle {
   now(): number;
   /** The page's time moved by a span (`'+20m'`, or seconds). */
   shift(by: string | number): number;
-  /** The cook's seconds to the real second, from now on. */
+  /** The page's time set to a moment (ms since 1970, or as `?at=` takes
+   *  one), at the speed it had. */
+  set(at: string | number): number;
+  /** The cook's seconds to the real second, from now on; 0 stops it. */
   speed(x: number): number;
   off(): void;
   state(): DevClock | null;
 }
 
 function handle(): ClockHandle {
-  const fresh = (): DevClock => ({ speed: clockSpeed(), real0_ms: Date.now(), page0_ms: nowMs() });
+  const fresh = (): DevClock => ({ speed: dev === null ? 1 : dev.speed, real0_ms: Date.now(), page0_ms: nowMs() });
   return {
     now: nowMs,
     shift(by) {
@@ -220,8 +239,14 @@ function handle(): ClockHandle {
       setClock({ ...c, page0_ms: c.page0_ms + ms });
       return nowMs();
     },
+    set(at) {
+      const ms = typeof at === 'number' ? at : parseMoment(at);
+      if (ms === null || !Number.isFinite(ms)) throw new Error(`not a moment: ${String(at)}`);
+      setClock({ ...fresh(), page0_ms: ms });
+      return nowMs();
+    },
     speed(x) {
-      if (!(x > 0) || !Number.isFinite(x)) throw new Error(`not a speed: ${x}`);
+      if (!(x >= 0) || !Number.isFinite(x)) throw new Error(`not a speed: ${x}`);
       setClock({ ...fresh(), speed: x });
       return nowMs();
     },
