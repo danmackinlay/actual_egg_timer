@@ -54,6 +54,19 @@ enum LiveActivity {
         }
     }
 
+    #if DEBUG
+    /// Every card the system holds for the app, its state, stage and end,
+    /// to the debug log (`Screenshots.log`).
+    static func logAll(_ when: String) {
+        for activity in Activity<CookActivity>.activities {
+            let s = activity.content.state
+            Screenshots.log(
+                "\(when) activity \(activity.activityState) \(s.stage.rawValue) ends \(Int(s.ends.timeIntervalSince1970))"
+            )
+        }
+    }
+    #endif
+
     private static func content(
         _ state: CookActivity.ContentState
     ) -> ActivityContent<CookActivity.ContentState> {

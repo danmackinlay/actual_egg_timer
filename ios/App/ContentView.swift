@@ -172,20 +172,32 @@ struct ContentView: View {
         case "heating":
             guard cook.phase == .idle else { return }
             model.eggsIn()
+            guard Screenshots.cookAgo > 0 else { return }
+            Task {
+                await startedCook()
+                cook.moveBack(Screenshots.cookAgo)
+            }
         case "done":
             guard cook.phase == .idle else { return }
             model.eggsIn()
             Task {
-                // Once the cook has started, which waits on a solve.
-                for _ in 0..<50 where cook.phase == .idle {
-                    try? await Task.sleep(for: .milliseconds(200))
-                }
-                cook.skipToDone()
+                await startedCook()
+                cook.skipToDone(ago: Screenshots.doneAgo)
+                guard let answer = Screenshots.answer else { return }
+                try? await Task.sleep(for: .seconds(Screenshots.answerAfter))
+                model.answer(yolk: answer.yolk, white: answer.white)
             }
         default:
             if scene.hasPrefix("clause-"), let clause = Clause(rawValue: String(scene.dropFirst(7))) {
                 openClause = clause
             }
+        }
+    }
+
+    /// Once the cook has started, which waits on a solve.
+    private func startedCook() async {
+        for _ in 0..<50 where cook.phase == .idle {
+            try? await Task.sleep(for: .milliseconds(200))
         }
     }
     #endif

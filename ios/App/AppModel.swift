@@ -34,6 +34,11 @@ final class AppModel {
         #if DEBUG
         planner.seed(Screenshots.seedEggs)
         Perf.drive(planner)
+        LiveActivity.logAll("launch")
+        Task {
+            try? await Task.sleep(for: .seconds(3))
+            LiveActivity.logAll("launch+3s")
+        }
         #endif
         // After the calibration is loaded, which the restored cook's plan
         // reads. A cook too old to pick up leaves what Start again would: a

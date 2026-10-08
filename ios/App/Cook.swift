@@ -330,22 +330,46 @@ final class Cook {
     /// started, moved back in time so that the eggs came out on time and the
     /// cooling ended a moment ago. The questions after an egg, without
     /// waiting for one.
-    func skipToDone() {
+    func skipToDone(ago: Double = 2) {
         guard var cook = running, let plan else { return }
         let cooking = plan.cookTimeS
         let cooled = cook.choices.cooling == .counter ? 0 : plan.coolS
-        let start = Date.now.timeIntervalSince1970 - (cooking + cooled + 2)
-        let shift = start - cook.startedAtS
-        cook.idMs = (cook.idMs + shift * 1000).rounded()
-        cook.startedAtS = start
-        cook.coldSinceS = cook.coldSinceS.map { $0 + shift }
-        cook.firstHotAtS = cook.firstHotAtS.map { $0 + shift }
+        let start = Date.now.timeIntervalSince1970 - (cooking + cooled + ago)
+        cook = Self.shifted(cook, by: start - cook.startedAtS)
         let out = start + cooking
         cook.events = CookEvents(
             pulled: Pulled(dueS: out, outS: out, by: .cook, confirmed: true),
             cooledAtS: cook.choices.cooling == .counter ? nil : out + cooled
         )
         change(to: cook)
+    }
+
+    /// A debug build's `-cookAgo` (Screenshots.swift): the cook as it stands,
+    /// every time in it moved back `seconds`, and planned again.
+    func moveBack(_ seconds: Double) {
+        guard let cook = running else { return }
+        change(to: Self.shifted(cook, by: -seconds))
+    }
+
+    /// The cook with every clock time in it moved by `shift`, s.
+    private static func shifted(_ cook: RunningCook, by shift: Double) -> RunningCook {
+        var c = cook
+        c.idMs = (c.idMs + shift * 1000).rounded()
+        c.startedAtS += shift
+        c.coldSinceS = c.coldSinceS.map { $0 + shift }
+        c.firstHotAtS = c.firstHotAtS.map { $0 + shift }
+        c.correctedAtS = c.correctedAtS.map { $0 + shift }
+        c.events.boilAtS = c.events.boilAtS.map { $0 + shift }
+        c.events.cooledAtS = c.events.cooledAtS.map { $0 + shift }
+        c.events.rangAtS = c.events.rangAtS.map { $0 + shift }
+        c.events.pulled = c.events.pulled.map {
+            Pulled(dueS: $0.dueS + shift, outS: $0.outS + shift, by: $0.by, confirmed: $0.confirmed)
+        }
+        if var ran = c.asRan {
+            ran.correctedAtS = ran.correctedAtS.map { $0 + shift }
+            c.asRan = ran
+        }
+        return c
     }
     #endif
 
@@ -461,6 +485,12 @@ final class Cook {
     private func adopt(_ made: Made, for cook: RunningCook) {
         let next = made.plan
         let before = plan?.deadlines
+        #if DEBUG
+        Screenshots.log(
+            "plan pull \(Int(next.deadlines.cookEndS)) cooled \(next.deadlines.coolEndS.map { String(Int($0)) } ?? "-")"
+                + " lengthened \(next.lengthened) surface \(next.decided != nil)"
+        )
+        #endif
         plan = next
         plannedFor = cook
         if let o = made.outcome { outcome = o }

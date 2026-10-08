@@ -39,8 +39,55 @@ import EggTimerCore
 /// - `-shareServer http://localhost:8888`: send what sharing sends there
 ///   rather than to the live site (`Sharing.server`), for `npm run
 ///   serve:dev`.
+/// - `-cookAgo 7190`: with `-uiScreen heating`, the cook once started moved
+///   back that many seconds, every time in it (`Cook.moveBack`): a slow hob
+///   past its guesses, or a cook about to be too old, on screen.
+/// - `-doneAgo 3590`: with `-uiScreen done`, the cooling ended that many
+///   seconds ago rather than 2.
+/// - `-uiAnswer jammy`, `jammy/tender`, `/firm`: at Done, answer the yolk,
+///   the white or both, as the buttons would (`AppModel.answer`), after
+///   `-uiAnswerAfter 5` seconds (default 3), so a simulator nobody taps can
+///   answer.
+/// - `-provisionalAlarms YES`: ask for quiet notifications, which the system
+///   grants with no prompt, so the alarms are scheduled and read back on a
+///   simulator nobody taps.
+///
+/// `log` writes a line with the clock in epoch seconds to standard error and
+/// to `Library/Caches/aet.log` in the app's container: the alarms read back
+/// and the Live Activities seen.
 enum Screenshots {
+    static func log(_ line: String) {
+        let text = Data("AET \(Int(Date.now.timeIntervalSince1970)) \(line)\n".utf8)
+        FileHandle.standardError.write(text)
+        // And appended to Library/Caches/aet.log in the app's container, which
+        // a simulator's host reads (`simctl get_app_container … data`).
+        guard let dir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first else { return }
+        let url = dir.appendingPathComponent("aet.log")
+        if let handle = try? FileHandle(forWritingTo: url) {
+            handle.seekToEndOfFile()
+            handle.write(text)
+            try? handle.close()
+        } else {
+            try? text.write(to: url)
+        }
+    }
+
+    static var provisionalAlarms: Bool { UserDefaults.standard.bool(forKey: "provisionalAlarms") }
     static var scene: String? { UserDefaults.standard.string(forKey: "uiScreen") }
+    static var cookAgo: Double { UserDefaults.standard.double(forKey: "cookAgo") }
+    static var doneAgo: Double {
+        UserDefaults.standard.object(forKey: "doneAgo") == nil ? 2 : UserDefaults.standard.double(forKey: "doneAgo")
+    }
+    static var answerAfter: Double {
+        UserDefaults.standard.object(forKey: "uiAnswerAfter") == nil
+            ? 3 : UserDefaults.standard.double(forKey: "uiAnswerAfter")
+    }
+    /// `-uiAnswer`'s yolk and white, either possibly nil; nil when not given.
+    static var answer: (yolk: YolkWord?, white: WhiteReport?)? {
+        guard let raw = UserDefaults.standard.string(forKey: "uiAnswer") else { return nil }
+        let parts = raw.split(separator: "/", omittingEmptySubsequences: false).map(String.init)
+        return (YolkWord(rawValue: parts[0]), parts.count > 1 ? WhiteReport(rawValue: parts[1]) : nil)
+    }
     static var language: String? { UserDefaults.standard.string(forKey: "uiLanguage") }
     static var noAlarmPrompt: Bool { UserDefaults.standard.bool(forKey: "noAlarmPrompt") }
     static var sectionAhead: Double { UserDefaults.standard.double(forKey: "sectionAhead") }
