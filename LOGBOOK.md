@@ -5478,3 +5478,52 @@ only an egg whose pot's surface must still be built waits, as before. Driven
 on a simulator of its own (deleted after): `-uiScreen done -noAlarmPrompt
 YES`, Start again, the app terminated a second later: the log held the egg,
 unanswered, its forecast [0.391, 0.227, 0.382], and no stored cook.
+
+## 8 October 2026: the web's fast clock and scripted checks (SHIP-0.5 C2)
+
+The checks the running-cook review and its fixes made by hand - `Date.now`
+wrapped from the console, cooks moved into the past, `focus` events,
+oscillators counted - are now `npm run e2e`: fourteen scenarios in about
+53 s, each in a fresh browser context, run three times in a row without a
+failure. `0e23b9b` (the clock), `db9fec3` (Chrome, shared with the copy
+snapshot), and the scenarios.
+
+**The clock** (`src/ui/now.ts`). Every read of the time in `src/ui/` is
+`nowMs()`; off `localhost` and `127.0.0.1` it is `Date.now()` whatever the
+address or the tab's storage say (`test/now.test.ts`). The tick stays
+200 ms on the real clock and is 0.2 s of the cook's at speed (16 ms at
+x60); the other timers (coalescing, a request's timeout, a key's repeat)
+are not spans of the cook and stay real. The pull's beeps ahead on the
+audio clock are divided by the speed and set again when the clock moves;
+their rhythm stays a person's. Sharing: the simplest safe choice was to
+mark the log, not the records: while the clock is on, and in that browser
+until Forget everything, nothing is sent (`aet.devClock.used`), so no egg
+cooked on it reaches a server, and the record's format is untouched.
+
+**The scenarios**, each passing on this build: a cold cook at x60 (12.7
+minutes in 14 s: the pull's 75 beeps scheduled the cook's seconds / 60
+ahead and sounding at the pull with nothing rung again, the tap out, Done's
+50, Jammy logged with its forecast, Start again, the pan remembered); a hot
+start logging its unanswered egg; Cancel heating and cooking; a reload at
+each phase (same deadlines to 1e-6 s, same events, the clock kept); 1.1
+(75 at once 25 s past the pull, `timeout` written; straight past the
+cooling, the pull's 75, not Done's 50); 1.2 on the real clock (B to Cooking
+on A's tap, nothing written without it, A reloaded to Cooking); 2.2 (Heating
+at 7,100 s, idle at 7,210 s); 2.3 (final 0 then 1, Tender not taken); 2.4
+("jammy · peak yolk 65 °C" kept after Runny and a reload, where the plan
+now says 57.7 °C, the review's 57.73); a slow hob counting up (16:00,
+17:06 "so far"); `aet.cook.v2`/`v3` kept aside; sharing sends only final
+eggs (real clock, the stored cook moved 20 minutes back: nothing at Done,
+one 201 at Start again); and nothing sent from a log the clock touched. No
+bug found.
+
+**Seen, not changed.** The copy snapshot is not deterministic: two
+captures of the same build differ in up to 12 of 172 states (the hot
+cooks' certainty block, and a spoken minute in the cold cooks), as a pot's
+surface lands before or after the harness's next step; a capture of this
+branch differs from the merge base's in the same states and no others.
+A scenario that waits for the phase must wait for the label too: at x60 the
+page draws a tick behind the clock. CI is left alone: the suite has not
+been run on GitHub's Linux runners, and `CHROME` would have to name their
+binary.
+
